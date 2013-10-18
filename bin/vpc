@@ -1,0 +1,729 @@
+#!/usr/bin/perl
+
+use FindBin qw($Bin);
+use lib "$Bin/../lib";
+
+# Don't edit the line below, it must look exactly like this.
+# Everything above this line will be replaced #
+
+use PsN;
+use model;
+use tool::npc;
+use strict;
+use Getopt::Long;
+use common_options;
+use ui;
+use Cwd;
+use OSspecific;
+
+my $cmd_line = $0 . " " . join( " ", @ARGV );
+
+## Configure the command line parsing
+Getopt::Long::config("auto_abbrev");
+
+my %options;
+## Declare the options
+
+my %required_options = ('samples:i' => undef);
+my %optional_options = ( 'idv:s' => undef,
+			 'rawres_input:s' => undef,
+			 'offset_rawres:i' => undef,
+       "stratify_on:s" => undef,
+			 'no_of_strata:i' => undef,
+			 'refstrat:f' => undef,
+			 'lst_file:s' => undef,
+			 'msfo_file:s' => undef,
+			 'bin_by_count:i' => undef,
+			 'no_of_bins:i' => undef,
+			 'single_bin_size:s' => undef,
+			 'overlap_percent:i' => undef,
+			 'bin_array:s' => undef,
+			 'mirrors:i' => undef,
+			 'dv:s' => undef,
+			 'sim_table:s'=>undef,
+			 'orig_table:s'=>undef,
+			 'lloq:f'=>undef,
+			 'uloq:f'=>undef,
+			 'levels:s'=>undef,
+			 'keep_estimation!'=>undef,
+			 'noprediction'=>undef,
+			 'predcorr'=>undef,
+			 'lnDV:i'=>undef,
+			 'lower_bound:s'=>undef,
+			 'tte:s'=>undef,
+			 'sim_model:s'=>undef,
+			 'flip_comments!'=>undef,
+			 'fine_pi!'=>undef,
+			 'varcorr'=>undef,
+			 'n_simulation_models:i' => undef,
+			 'boxcox_lambda:f' => undef,
+			 'confidence_interval:i' => undef,
+          'censor:s' => undef,
+			 "copy_data!"=>undef,
+			 'auto_bin:s' => undef,
+			 'min_points_in_bin:i' => undef,
+			 );
+
+my $res = GetOptions( \%options,
+		      @common_options::get_opt_strings,
+		      keys(%required_options),
+		      keys(%optional_options) );
+exit unless $res;
+
+if (defined $options{'msfo_file'}){
+  if (defined $options{'extra_files'}){
+    $options{'extra_files'} .= ','.$options{'msfo_file'};
+  }else {
+    $options{'extra_files'} = $options{'msfo_file'};
+  }
+}
+
+
+
+common_options::setup( \%options, 'vpc' ); #calls set_globals etc, initiates random sequence
+
+
+my %help_text;
+
+$help_text{Pre_help_message} = <<'EOF';
+  vpc
+
+    Visual Predictive Check.
+
+EOF
+
+$help_text{Options} = <<'EOF';      
+    Options:
+
+      The options are given here in their long form. Any option may be
+      abbreviated to any nonconflicting prefix. The -threads option
+      may be abbreviated to -t(or even -thr).
+
+      The following options are valid:
+EOF
+
+$help_text{-h} = <<'EOF';
+      -h | -?
+      
+      With -h or -? vpc will print a list of options and exit.
+EOF
+      
+$help_text{-help} = <<'EOF';      
+      -help
+      
+      With -help vpc will print this, longer, help message.
+EOF
+
+$help_text{-samples} = <<'EOF';
+      -samples=number
+
+      Number of simulated datasets to generate, required.
+      Must be at least 20.
+EOF
+
+
+$help_text{-idv} = <<'EOF';
+      -idv=VARIABLE
+
+      Name of independent variable, optional, default TIME.
+      The vpc will bin the observations based on the independent 
+      variable, either by an automatic search (default),
+      or according to selected binning options.
+EOF
+
+$help_text{-censor} = <<'EOF';
+      -censor=VARIABLE
+
+      Name of variable which defines whether DV or similar is missing, e.g. due to drop-out.
+      1 means the observation is censored, 0 means the observation is not censored.
+      The variable must be requestable in $TABLE.
+EOF
+
+$help_text{-bin_by_count} = <<'EOF';
+      -bin_by_count= 1 | 0
+
+      Decide whether binning should be done based on the number of 
+      observations (1) in each bin or the width of the binning interval (0).
+      Required unless only the independent variable is specified without any
+      binning options, then forbidden.
+EOF
+
+$help_text{-no_of_bins} = <<'EOF';
+      -no_of_bins=N
+
+      Number of bins of approximately equal size to create. Optional.
+      The number must be larger than 1.
+      If used, the option -bin_by_count is required, while all other
+      binning options are forbidden.
+EOF
+
+$help_text{-single_bin_size} = <<'EOF';
+      -single_bin_size=X
+
+      A scalar specifying the size of individual bins. The number 
+      either specifies the number of observations in each bin or 
+      the width of the binning interval, depending on whether the 
+      option -bin_by_count is 1 or 0. If used, the option 
+      -bin_by_count is required and -overlap_percent is optional,
+      while all other binning options are forbidden.
+EOF
+
+$help_text{-overlap_percent} = <<'EOF';
+      -overlap_percent=Y
+
+      An integer specifying the percent overlap between consecutive bins. 
+      If used, the options -bin_by_count and -single_bin_size are required,
+      while all other binning options are forbidden.
+EOF
+
+$help_text{-boxcox_lambda} = <<'EOF';
+      -boxcox_lambda=Y
+
+      Setting this variable indicates that data is Box-Cox transformed. 
+      Data will be transformed to normal scale for eventual prediction correction,
+      and retransformed to Box-Cox before analysis and output.
+      Option cannot be used with lnDV.
+EOF
+
+$help_text{-bin_array} = <<'EOF';
+      -bin_array=x1,x2,...
+      
+      A comma-separated list of either the number of observations in each
+      bin or the boundaries between bins, depending on whether the option 
+      -bin_by_count is 1 or 0. If binning is done by count, the list 
+      must contain at least 2 numbers, otherwise 1 number is enough.
+      If used, the option -bin_by_count is required, while all other
+      binning options are forbidden.
+EOF
+
+$help_text{-stratify_on} = <<'EOF';
+      -stratify_on=VARIABLE
+
+      Variable to stratify on. The variable must be independent, i.e. be
+      the same for all simulations of a particular observation.
+      The vpc will stratify the data on unique values of the specified
+      variable, and perform separate analyses on each set. Stratification 
+      may also be done on parameter defined in the model.
+      The stratification variable must be requestable in $TABLE.
+      -stratify_on may be a comma-separated list
+      of multiple variables, then the first variable will be used for
+	  stratification and the rest simply added to $TABLE.
+EOF
+
+$help_text{-no_of_strata} = <<'EOF';
+      -no_of_strata=number
+
+      Only allowed together with -stratify_on.
+      An integer requesting the number of strata.
+      The number must be equal to or less than the number of unique 
+      values of the stratification variable.
+      If the number is smaller than the number of unique values, the 
+      observations will be grouped so that the number of observations in
+      each group/strata is approximately equal.
+EOF
+$help_text{-refstrat} = <<'EOF';
+      -refstrat=number
+
+      Only allowed together with -stratify_on.
+      Illegal together with -no_of_strata.
+      A number indicating the value of the stratification variable in the 
+      reference stratum used when computing delta-means.
+EOF
+$help_text{-fine_pi} = <<'EOF';
+      -fine_pi
+
+      Compute a finer grid of prediction intervals. If fine_pi is not set, the set of
+      prediction intervals is 0,40,80,90 and 95 percent. If fine_pi is set, the set of
+      intervals is 0,10,20,30,40,50,60,70,80,90 and 95 percent.
+
+EOF
+
+$help_text{-confidence_interval} = <<'EOF';
+      -confidence_interval=number
+
+      An integer between 1 and 99 specifying the confidence interval in percent.
+      Default is 95.
+EOF
+
+$help_text{-copy_data} = <<'EOF';
+    -copy_data
+    Set by default. Disable with -no-copy_data. By default PsN will copy
+    the data file into NM_run1 and set a local path in psn.mod, the actual
+    model file run with NONMEM. If -no-copy_data is set, PsN will not copy 
+    the data to NM_run1 but instead set a global path to the data file in
+    psn.mod. However, if the global path is very long there will be an NMtran
+    error caused by a line wrap in $DATA in psn.mod.
+EOF
+
+$help_text{-lst_file} = <<'EOF';
+      -lst_file=file
+
+      The vpc will update initial parameter estimates in the model to
+      the final values in the lst file. Optional parameter.
+      Cannot be used together with -msfo_file option nor with a model
+      containing a $NONPARAMETRIC record.
+EOF
+
+$help_text{-msfo_file} = <<'EOF';
+      -msfo_file=file
+
+      The vpc will use the NONMEM state defined in the update file.
+      Cannot be used together with -lst_file option.
+      If the modelfile contains a $NONPARAMETRIC record this parameter
+      is required, otherwise it is optional.
+EOF
+
+$help_text{-mirrors} = <<'EOF';
+      -mirrors=N
+
+      Generate output data for N mirror plots.
+EOF
+
+$help_text{-dv} = <<'EOF';
+      -dv=VARIABLE
+
+      Name of dependent variable. Default is DV.
+      Case sensitive, must be exactly the same case and spelling as in modelfile.
+      Maximum of 4 letters because of NONMEM limitation, unless either IPRED or IWRES.
+EOF
+
+$help_text{-sim_table} = <<'EOF';
+      -sim_table=file
+
+      Use an already created tablefile with simulated data,
+      instead of letting the program run the simulations.
+      This option can only be used together with -orig_table.
+      A modelfile must still be given as program argument, but it will not be run.
+EOF
+
+
+$help_text{-tte} = <<'EOF';
+      -tte=VARIABLE
+
+      Assume a time-to-event type model. PsN will add the tte-variable to $TABLE
+      of the simulation model (not the original data model), and format the output
+      differently compared to a regular vpc. The value in the tte-columns should
+      be equal to 0 if there was not an event, and non-zero otherwise. 
+      Check npc_vpc_userguide.pdf for details.
+EOF
+
+$help_text{-sim_model} = <<'EOF';
+      -sim_model=file
+
+      Use a separate input model for the simulations. 
+      See the userguide for details.
+EOF
+$help_text{-flip_comments} = <<'EOF';
+      -flip_comments
+
+      Method for handling user-defined simulation code in the model. If this option is set,
+      PsN will create the simulation model by flipping comments (commented lines will be
+      uncommented and vice versa) between the tags 
+      ;Sim_start 
+      and 
+      ;Sim_end
+      Note that the
+      tags must look exactly like that or the editing will fail. After creating
+      the simulation model PsN will remove $COV and $TABLE, change SEED, NSUBS 
+      and MAXEVAL in $SIM, and add a new $TABLE, but otherwise no changes will be made.
+      See the userguide for details.
+EOF
+
+$help_text{-orig_table} = <<'EOF';
+      -orig_table=file
+
+      Use an already created tablefile with original data,
+      instead of letting the program create it.
+      This option can only be used together with -sim_table.
+      A modelfile must still be given as program argument, but it will not be run.
+EOF
+
+$help_text{-levels} = <<'EOF';
+      -levels=level1,level2,...
+      
+      A comma-separated list of the boundaries for a categorization.
+      First category <= level1 < second category <= level2 etc.
+EOF
+
+$help_text{-lloq} = <<'EOF';
+      -lloq=number
+      
+      Lower Limit Of Quantification for left censored data.
+      See the userguide for details.
+EOF
+
+$help_text{-uloq} = <<'EOF';
+      -uloq=number
+      
+      Upper Limit Of Quantification for right censored data.
+      See the userguide for details.
+EOF
+
+$help_text{-keep_estimation} = <<'EOF';
+      -keep_estimation
+      
+      Perform post-hoc evalutaion step for each simulated dataset,
+      i.e. keep the $ESTIMATION record and set MAXEVALS to 0. In this case
+      variables such as IPRED(F) are based on the re-estimated post-hoc 
+      parameters.      
+EOF
+
+$help_text{-rawres_input} = <<'EOF';
+      -rawres_input=filename
+
+      A simple way to simulate with uncertainty. Note that it is normally not 
+      appropriate to do this in a vpc or npc. Instead of using identical parameter 
+      estimates for simulation of each new dataset, take parameter estimates from a 
+      raw_results.csv file, e.g. from a bootstrap run. The raw results file must 
+      contain at least as many samples as the input -samples to vpc, the labels for 
+      THETA/OMEGA/SIGMA in the file must match the labels in the (simulation) model 
+      given as input to vpc, the theta columns must be directly followed by the omega 
+      columns which must be directly followed by the sigma columns, and the first 
+      column must have header model just as a bootstrap raw_results file. Note that 
+      is is possible to generate a file with initial parameter estimates outside of 
+      PsN, as long as the file follows the format rules.
+EOF
+
+$help_text{-offset_rawres} = <<'EOF';
+      -offset_rawres=N
+
+      Only relevant in combination with rawres_input. Default 1.
+      The number of result lines to skip in the input raw results file
+      before starting to read final parameter estimates. In a regular
+      bootstrap raw_results file the first line of estimates refers to the
+      input model with the full dataset, so therefore the default offset is 1.
+EOF
+
+$help_text{-noprediction} = <<'EOF';
+      -noprediction
+      
+      Add NOPREDICTION to the $SIMULATION record of the simulation model
+      in addition to ONLYSIMULATION. This option is generally recommended
+      with likelihood models for odd type data.
+EOF
+
+$help_text{-predcorr} = <<'EOF';
+      -predcorr
+      
+      Perform prediction correction on dependent variable values before computing vpc results.
+      If option -varcorr is used simultaneously, prediction correction is performed first.
+      See userguide for details.
+EOF
+
+$help_text{-lnDV} = <<'EOF';
+      -lnDV=0, 1 or 2
+      
+      lnDV=0 is the default. PsN will not exponentiate DV values. If option -predcorr is used,
+             PsN will assume that values are on the normal scale.
+      lnDV=1 PsN exponentiates all DV values (and PRED values if these are needed)
+             before analysis (but after prediction/variability correction).
+      lnDV=2 is only allowed together with option -predcorr. PsN will assume DV and PRED are 
+             log-transformed but will not exponentiate.
+      lnDV=3 PsN log transforms all DV values (and PRED values if these are needed)
+             before analysis (and before prediction/variability correction).
+EOF
+
+$help_text{-lower_bound} = <<'EOF';
+      -lower_bound=number or variable
+      
+      Only allowed together with option -predcorr, and when lnDV= 0 or 1. Value can be either
+      a number or an independent variable present in $INPUT or defined in the modelfile.
+      See userguide for details.
+EOF
+
+$help_text{-varcorr} = <<'EOF';
+      -varcorr
+      
+      Perform variability correction on dependent variable values before computing vpc results.
+      If option -predcorr is used simultaneously, prediction correction is performed first.
+      See userguide for details.
+EOF
+
+$help_text{-n_simulation_models} = <<'EOF';
+      -n_simulation_models=N
+
+      Default 1, which means all simulations are run in the same modelfile.
+      By setting this option to a number N greater than 1, the 'samples' simulations
+      will be split equally between N model files, which can be run in parallel.
+      This option cannot be used together with option -sim_table or, if 
+      the NONMEM version < 7, together with -dv=CWRES.
+EOF
+
+$help_text{-auto_bin} = <<'EOF';
+      -auto_bin=auto
+      -auto_bin=min,max
+      -auto_bin=N
+      -auto_bin=unique
+
+      Automatic binning. The parameter gives how to search for the number of bins.
+      * "auto" means to try to estimate the number of bins needed automatically.
+      * min,max means to search for the number of bins between min and max, e.g. -auto_bin=5,15
+      * A single number forces binning into N bins, e.g. -auto_bin=7
+      * unique bins on unique values of the indpendent variable.
+      Default is auto.
+      This option can be used in conjunction with the min_points_in_bin option but not
+      with any other binning options.
+EOF
+
+$help_text{-min_points_in_bin} = <<'EOF';
+      -min_points_in_bin=N
+
+      Sets a constraint on the minimum allowed number of points in a bin when using
+      autobinning. This option cannot be used in conjunction with any other binning
+		options.
+EOF
+
+$help_text{Post_help_message} = <<'EOF';
+
+    Also see 'psn_options -h' for a description of PsN common options.
+EOF
+
+common_options::online_help( 'vpc', \%options, \%help_text, \%required_options, \%optional_options);
+
+## Check that we do have a model file
+if ( scalar(@ARGV) < 1 ) {
+  print "A model file must be specified (even when -sim_table and -orig_table are used).\n".
+      "Use 'vpc -h' for help.\n";
+  exit;
+}
+
+if( scalar(@ARGV) > 1 ){
+  print "VPC can only handle one modelfile. Check that all options begin with".
+      " -.\nUse 'vpc -h' for help.\n";die;
+  exit;
+}
+
+unless (defined $options{'copy_data'} and (not $options{'copy_data'})){
+    $options{'copy_data'}=1;
+}
+
+if (defined $options{'rawres_input'}){
+  my ( $dir, $file ) = OSspecific::absolute_path(cwd(), $options{'rawres_input'});
+  $options{'rawres_input'} = $dir . $file;
+  unless (-e $options{'rawres_input'}){
+    print "File ".$options{'rawres_input'}." does not exist";
+    exit;
+  }
+  $options{'n_simulation_models'} = $options{'samples'};
+  if (defined $options{'msfo_file'}){
+    print "Cannot use options rawres_input and msfo_file together.";
+    exit;
+  }
+}
+if (defined $options{'covariance_file'}){
+    print "Cannot use option covariance_file, removed.";
+    exit;
+  if (defined $options{'rawres_input'}){
+    print "Cannot use options covariance_file and rawres_input together.";
+    exit;
+  }
+  if (defined $options{'msfo_file'}){
+    print "Cannot use options covariance_file and msfo_file together.";
+    exit;
+  }
+  my ( $dir, $file ) = OSspecific::absolute_path(cwd(), $options{'covariance_file'});
+  $options{'covariance_file'} = $dir . $file;
+  unless (-e $options{'covariance_file'}){
+    print "File ".$options{'covariance_file'}." does not exist";
+    exit;
+  }
+  $options{'n_simulation_models'} = $options{'samples'};
+}
+
+
+my @bin_array=();
+
+if ( defined $options{'bin_array'} ){
+  foreach my $v (split(/,/,$options{'bin_array'})){
+    if (length($v)>0){
+      push(@bin_array,$v);
+    }
+  }
+  unless (scalar(@bin_array)>0){
+    die "Error: Could not parse list bin_array.\n";
+  }	
+}
+
+my @levels=();
+
+if ( defined $options{'levels'} ){
+  foreach my $v (split(/,/,$options{'levels'})){
+    if (length($v)>0){
+      push(@levels,$v);
+    }
+  }
+  unless (scalar(@levels)>0){
+    die "Error: Could not parse list levels.\n";
+  }	
+}
+
+if ( defined $options{'no_of_strata'} ){
+  unless (defined $options{'stratify_on'}){
+    die "Error: The VPC does not allow option no_of_strata unless a ".
+	"stratification column has been specified.\n";
+  }	
+  if (defined $options{'refstrat'}){
+    die "Error: The VPC does not allow option no_of_strata together ".
+	"with option refstrat.\n";
+  }
+}
+if (defined $options{'refstrat'} and (not defined $options{'stratify_on'})){
+    die "Error: The VPC does not allow option refstrat unless option stratify_on is ".
+	"also defined.\n";
+}
+
+if ((defined $options{'sim_table'}) && (defined $options{'orig_table'})){
+  #case when only one is defined will be caught in new
+  if ($options{'sim_table'} =~ /^~/){
+    die "Table filename must not start with ~.\n";
+  }
+  if ($options{'orig_table'} =~ /^~/){
+    die "Table filename must not start with ~.\n";
+  }
+
+  my $dir= getcwd();
+  #make paths global if only filename was given
+  unless ($options{'sim_table'} =~ /^\//  ){
+    $options{'sim_table'} = $dir.'/'.$options{'sim_table'};
+  }  
+  unless ($options{'orig_table'} =~ /^\//){
+    $options{'orig_table'} = $dir.'/'.$options{'orig_table'};
+  }  
+  #$recommend_estimation = 0;
+}
+if (defined $options{'sim_model'}){
+  my ($dir, $fil) = OSspecific::absolute_path($options{'sim_model'});
+
+  $options{'sim_model'} = $dir.$fil;
+}
+
+unless ( defined $options{'skip_data_parsing'} or $options{'drop_dropped'} ) {
+  $options{'skip_data_parsing'} = 1;
+}
+
+# Autobinning options
+my $auto_bin_mode;
+my $min_no_bins;
+my $max_no_bins;
+
+if (defined $options{'auto_bin'}) {
+	# Check forbidden options
+	if (defined $options{'bin_by_count'} or defined $options{'no_of_bins'} or defined $options{'bin_array'} or defined $options{'single_bin_size'} or defined $options{'overlap'}) {
+		die "The options -bin_by_count, -no_of_bins, -bin_array, -single_bin_size and -overlap cannot be used in conjunction with -auto_bin\n";
+	}
+
+	# Check the different options
+	if ($options{'auto_bin'} =~ /\Aunique\Z|\Au\Z/i) {
+		# Fall back to other options
+	} elsif ($options{'auto_bin'} =~ /\Aauto\Z|\Aa\Z/i) {
+		$auto_bin_mode = 'auto';
+	} elsif ($options{'auto_bin'} =~ /\A(\d+)\Z/) {
+		$auto_bin_mode = 'minmax';
+		$min_no_bins = $1;
+		$max_no_bins = $1;
+	} elsif ($options{'auto_bin'} =~ /\A(\d+),(\d+)\Z/) {
+		$auto_bin_mode = 'minmax';
+		$min_no_bins = $1;
+		$max_no_bins = $2;
+	} else {
+		die "Bad -auto_bin option\n";
+	}
+} else {
+	unless (defined $options{'bin_by_count'} or defined $options{'no_of_bins'} or defined $options{'bin_array'} or defined $options{'single_bin_size'} or defined $options{'overlap'}) {
+		$auto_bin_mode = 'auto';
+	}
+}
+
+if (defined $options{'min_points_in_bin'} and not defined $auto_bin_mode) {
+	die "The option -min_points_in_bin can only be used in conjunction with the -auto_bin option\n";
+}
+
+my $eval_string = common_options::model_parameters(\%options);
+
+my $model = model -> new ( eval( $eval_string ),
+			   filename                    => $ARGV[0],
+			   ignore_missing_output_files => 1,
+			   cwres                       => (($options{'dv'} eq 'CWRES') and ($PsN::nm_major_version < 7))  );
+
+if( defined $model -> msfi_names() ){
+  my @needed_files;
+  foreach my $msfi_files( @{$model -> msfi_names()} ){
+    #loop $PROB
+    if (defined $msfi_files){
+      foreach my $msfi_file( @{$msfi_files} ){
+	#loop instances
+	if ( defined $msfi_file ){
+	  my ( $dir, $file ) = OSspecific::absolute_path(cwd(),$msfi_file);
+	  push (@needed_files,$dir.$file) ;
+	}
+      }
+    }
+  }
+  if (scalar(@needed_files)>0){
+    if( defined $model -> extra_files ){
+      push(@{$model -> extra_files},@needed_files);
+    }else{
+      $model -> extra_files(\@needed_files);
+    }
+  }
+
+}
+
+
+my $vpc = tool::npc -> 
+    new ( eval( $common_options::parameters ),
+	  models	     => [ $model ],
+	  stratify_on        => $options{'stratify_on'},
+	  censor             => $options{'censor'},
+	  no_of_strata       => $options{'no_of_strata'},
+	  refstrat           => $options{'refstrat'},
+	  samples            => $options{'samples'},
+	  lst_file           => $options{'lst_file'},
+	  msfo_file          => $options{'msfo_file'},
+	  is_vpc             => 1,
+	  idv                => ((defined $options{'idv'})? $options{'idv'} :'TIME'),
+	  bin_by_count       => $options{'bin_by_count'},
+	  no_of_bins         => $options{'no_of_bins'},
+	  single_bin_size    => $options{'single_bin_size'},
+	  overlap_percent    => $options{'overlap_percent'},
+	  bin_array          => \@bin_array,
+	  mirrors            => $options{'mirrors'},
+	  dv                 => $options{'dv'},
+	  orig_table         => $options{'orig_table'},
+	  sim_table          => $options{'sim_table'},
+	  categorized        => ((scalar(@levels)>0)? 1:0),
+	  levels             => \@levels,
+	  lloq               => $options{'lloq'},
+	  uloq               => $options{'uloq'},
+	  keep_estimation    => $options{'keep_estimation'},
+	  noprediction       => $options{'noprediction'},
+	  predcorr           => $options{'predcorr'},
+	  lnDV               => $options{'lnDV'},
+	  lower_bound        => $options{'lower_bound'},
+	  varcorr            => $options{'varcorr'},
+	  fine_pi            => $options{'fine_pi'},
+	  tte                => $options{'tte'},
+	  copy_data	     => $options{'copy_data'},
+	  rawres_input	     => $options{'rawres_input'},
+	  offset_rawres	     => $options{'offset_rawres'},
+	  covariance_file     => $options{'covariance_file'},
+	  n_simulation_models => $options{'n_simulation_models'},
+	  boxcox_lambda      => $options{'boxcox_lambda'},
+	  sim_model          => $options{'sim_model'},
+	  flip_comments      => $options{'flip_comments'},
+	  confidence_interval => $options{'confidence_interval'},
+	  auto_bin_mode		=> $auto_bin_mode,
+	  min_no_bins			=> $min_no_bins,
+    max_no_bins			=> $max_no_bins,
+	  min_points_in_bin	=> $options{'min_points_in_bin'},
+	  );
+
+$vpc-> print_options (cmd_line => $cmd_line,
+		      toolname => 'vpc',
+		      local_options => [keys %optional_options],
+		      common_options => \@common_options::tool_options);
+
+$vpc -> run;
+$vpc -> print_results;
+ui -> print( category => 'vpc',
+	     message => "vpc done\n" );

@@ -1,0 +1,183 @@
+#!/usr/bin/perl
+
+use FindBin qw($Bin);
+use lib "$Bin/../lib";
+
+# Don't edit the line below, it must look exactly like this.
+# Everything above this line will be replaced #
+
+use PsN;
+use model;
+use tool::randtest;
+use strict;
+use ui;
+use Getopt::Long;
+use common_options;
+use Data::Dumper;
+
+my $cmd_line = $0 . " " . join( " ", @ARGV );
+
+## Configure the command line parsing
+Getopt::Long::config("auto_abbrev");
+
+## Declare the options
+my %options;
+
+my %required_options = ("samples:i"=>'',
+			"randomization_column:s"=> '');
+my %optional_options = ("stratify_on:s"=>'',
+			"base_model:s"=>'',
+			"match_transitions!"=>'',
+			"copy_data!"=>'');
+
+my $res = GetOptions( \%options, 
+		      @common_options::get_opt_strings,
+		      keys(%required_options),
+		      keys(%optional_options) );
+
+exit unless $res;
+
+common_options::setup( \%options, 'randtest' ); #calls set_globals etc, initiates random sequence
+
+
+my %help_text;
+$help_text{Pre_help_message} = <<'EOF';  
+    <h3 class="heading1">randtest</h3>
+      
+      Perform a randomization test.
+      
+    <h3 class="heading1">Usage:</h3>
+EOF
+
+    $help_text{Description} = <<'EOF';
+   <h3 class="heading1">Description:</h3>
+
+     The values in the randomization column are shuffled without replacement among
+     individuals. The input model is estimates with each of the randomized data sets.
+EOF
+    $help_text{Examples} = <<'EOF';
+   <h3 class="heading1">Example:</h3>
+
+      <p class="option">randtest -samples=1000 run89.mod</p>
+
+EOF
+
+    $help_text{Options} = <<'EOF';
+   <h3 class="heading1">Options:</h3>
+
+      The options are given here in their long form. Any option may be
+      abbreviated to any nonconflicting prefix.
+
+      The following options are valid:
+EOF
+    $help_text{-base_model} = <<'EOF';      
+      <p class="option">-base_model</p>
+
+      Run the original data set with this model, to use as reference when computing delta-ofv.
+EOF
+    $help_text{-samples} = <<'EOF';      
+      <p class="option">-samples</p>
+
+      The number of randomized datasets to generate.
+EOF
+
+    $help_text{-match_transitions} = <<'EOF';      
+      <p class="option">-match_transitions</p>
+
+      Default not used. Alternative method for copying randomization column values from
+      one individual to another during shuffling.
+EOF
+      
+    $help_text{-randomization_column} = <<'EOF';      
+      <p class="option">-randomization_column</p>
+
+    The name of the column where the values are to be shuffled among individuals.
+EOF
+    $help_text{-copy_data} = <<'EOF';
+      <p class="option">-copy_data</p>
+    Default not set. By default, the randomized datasets generated in the m1 
+    subdirectory are not copied to the NM_run subdirectories 
+    of modelfit_dir1. Relative data paths, ../../m1/ , are 
+    used in $DATA in the modelfiles in NM_run. This saves much disk space. 
+    If -copy_data is set, the randomized datasets are instead copied to the 
+    NM_run directories, and $DATA has the filename without any path.
+
+EOF
+
+    $help_text{-stratify_on} = <<'EOF';
+      <p class="option">-stratify_on=integer|string</p>
+
+      It may be necessary to use stratification in the randomization
+      procedure. For example, if the original data consists of two
+      groups of patients - say 10 patients with full pharmacokinetic
+      profiles and 90 patients with sparse steady state concentration
+      measurements - it may be wise to restrict the randomization
+      procedure to shuffle within the two groups.
+EOF
+
+
+    $help_text{Post_help_message} = <<'EOF';
+      Also see 'psn_options -h' for a description of common options.
+EOF
+
+common_options::online_help('randtest',\%options, \%help_text, \%required_options, \%optional_options);
+
+
+## Check that we do have a model file
+if ( scalar(@ARGV) < 1 ) {
+  print "A model file must be specified. Use 'randtest -h' for help.\n";
+  exit;
+}
+
+if( scalar(@ARGV) > 1 ){
+  print "randtest can only handle one modelfile. Use 'randtest -h' for help.\n";
+  exit;
+}
+
+if ( defined $options{'dummy_data'} ){
+  $options{'dummy_data'} = 0;
+}
+
+my $eval_string = common_options::model_parameters(\%options);
+
+my $model = model -> new ( eval( $eval_string ),
+			   filename                    => @ARGV[0],
+			   ignore_missing_output_files => 1 );
+
+if( $options{'shrinkage'} ) {
+  $model -> shrinkage_stats( enabled => 1 );
+}
+
+my $base_model;
+if (defined $options{'base_model'}){
+    $base_model = model ->
+	new ( eval( $eval_string ),
+	      filename => $options{'base_model'},
+	      ignore_missing_output_files => 1);
+}
+
+my $rand = tool::randtest -> 
+  new ( eval( $common_options::parameters ),
+	top_tool => 1,
+	prepend_model_file_name => 1,
+	models				     => [ $model ],
+	samples				     => $options{'samples'},
+	base_model			     => $base_model,
+	match_transitions	             => $options{'match_transitions'},
+	randomization_column                 => $options{'randomization_column'},
+	stratify_on                          => $options{'stratify_on'},
+	copy_data                            => $options{'copy_data'}
+	);
+
+$rand-> print_options (cmd_line => $cmd_line,
+		     toolname => 'randtest',
+		     local_options => [keys %optional_options],
+		     common_options => \@common_options::tool_options);
+
+
+$rand -> run;
+$rand -> prepare_results();
+$rand -> print_results();
+
+ui -> print( category => 'randtest',
+	     message  => "\nrandtest done.\n");

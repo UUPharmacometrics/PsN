@@ -1,0 +1,216 @@
+#!/usr/bin/perl
+
+use FindBin qw($Bin);
+use lib "$Bin/../lib";
+
+# Don't edit the line below, it must look exactly like this.
+# Everything above this line will be replaced #
+
+use PsN;
+use model;
+use tool::lasso;
+use strict;
+use Getopt::Long;
+use common_options;
+
+my $cmd_line = $0 . " " . join( " ", @ARGV );
+
+## Configure the command line parsing
+Getopt::Long::config("auto_abbrev");
+
+my %options;
+## Declare the options
+
+my %required_options = ( 'relations:s' => undef);
+my %optional_options = ( 'start_t:f' => undef,
+			 'stop_t:f' => undef,
+			 'step_t:f' => undef,
+			 'cutoff:f' => undef,
+			 'pred_ofv_start_t:f'=> undef,
+			 'groups:i'=> undef,
+			 'convergence:s'=> undef,
+			 'stratify_on:s'=> undef,
+			 'lst_file:s'=> undef);
+
+my $res = GetOptions( \%options,
+		      @common_options::get_opt_strings,
+		      keys(%required_options),
+		      keys(%optional_options) );
+exit unless $res;
+
+common_options::setup( \%options, 'lasso' ); #calls set_globals etc, initiates random sequence
+
+
+my %help_text;
+
+$help_text{Pre_help_message} = <<'EOF';
+  <h3 class="heading1">lasso</h3>
+
+    LASSO method for covariate model selection.
+
+EOF
+
+$help_text{Options} = <<'EOF';      
+    Options:
+
+      The options are given here in their long form. Any option may be
+      abbreviated to any nonconflicting prefix. The -threads option
+      may be abbreviated to -thr.
+
+      The following options are valid:
+EOF
+
+$help_text{-h} = <<'EOF';
+      -h | -?
+      
+      With -h or -? lasso will print a list of options and exit.
+EOF
+      
+$help_text{-help} = <<'EOF';      
+      -help
+      
+      With -help lasso will print this, longer, help message.
+EOF
+
+$help_text{-step_t} = <<'EOF';
+      -step_t=X
+
+    The steplength for t in the cross-validation. Default is 0.05. The 
+    step-length can be negative if start_t is larger than stop_t.
+EOF
+$help_text{-stratify_on} = <<'EOF';
+      -stratify_on=variable
+
+    Default not used. If the option is set, PsN will try to preserve the 
+    relative proportions of the values of this variable when creating the 
+    cross-validation datasets. The variable must be in the dataset (not in 
+    an extra data file or in the model).
+EOF
+
+$help_text{-start_t} = <<'EOF';
+      -start_t=X
+
+    The first t-value. Default is 0.
+EOF
+
+$help_text{-stop_t} = <<'EOF';
+      -stop_t=X
+
+    The last t-value. Default is 1.
+EOF
+
+$help_text{-cutoff} = <<'EOF';
+      -cutoff=X
+
+    The theta cutoff, if the absolute value of the estimated covariate 
+    theta is below cutoff then the theta will be fixed to zero. Default 
+    is 0.005.
+EOF
+
+$help_text{-convergence} = <<'EOF';
+      -convergence
+
+    The convergence criterion. Alternatives are 
+    'REACHMAX': Stop when program reaches max (stop_t), then best t-value is 
+    selected.     
+    'FIRSTMIN': Stop when predicted ofv increases from previous value (or 
+    when stop_t is reached). This is the default. 
+    'HALT': Stop when program crashes or when one model cannot terminate.
+EOF
+
+$help_text{-groups} = <<'EOF';
+      -groups=N
+
+    The number of validation groups in the cross-validation. Default 5, 
+    must be in the range 2-number of individuals in dataset. The larger 
+    the number the longer the cross-validation run-time.
+EOF
+$help_text{-pred_ofv_start_t} = <<'EOF';
+      -pred_ofv_start_t=X
+
+    Default not used. The total predicted ofv for the model with t=start_t.  
+    If the option is not set PsN will run the lasso model with t=start_t. 
+    If the value is given this will save time.
+EOF
+
+$help_text{-lst_file} = <<'EOF';
+      -lst_file=filename
+
+    Name of the lst-file with estimates for the input model. Default 
+    is the name of the input model with a .mod extension replaced with .lst.
+EOF
+$help_text{-relations} = <<'EOF';
+      -relations
+
+    The relations option is required. The parameter-covariate pairs to test 
+    and the parameterizations to use. The parameterizations are: 
+    1)categorical covariate (treated as nominal scale), 2)linear continuous 
+    covariate, 3)piece-wise linear -Y´hockey-stick¡ for continuous covariate.
+    The syntax is sensitive and must follow the form below. Note colons, 
+    commas. There must be no spaces in the list of relations. There are double 
+    commas before a new parameter. It is optional to input the breakpoint for 
+    the piece-wise linear relation (3), the number is then set after a second 
+    dash (-) as in WGT-3-45.2. Example (everything should be on the same line):
+		
+    -relations=CL:WGT-2,SEX-1,RACE-1,,V:WGT-3-45.2,,KA:WGT-3,APGR-2
+
+EOF
+
+$help_text{Post_help_message} = <<'EOF';
+    Also see 'psn_options -h' for a description of common PsN options.
+EOF
+
+common_options::online_help( 'lasso', \%options, \%help_text, \%required_options, \%optional_options);
+
+## Check that we do have a model file
+if ( scalar(@ARGV) < 1 ) {
+  print "A model file must be specified.\n";
+  exit;
+}
+
+if( scalar(@ARGV) > 1 ){
+  print "lasso can only handle one modelfile, you listed: ",join(',',@ARGV),"\n";
+  exit;
+}
+
+unless ( defined $options{'skip_data_parsing'} or $options{'drop_dropped'}) {
+  $options{'skip_data_parsing'} = 1;
+}
+
+unless ( $options{'retries'}>0 ){
+  print "\nWarning: option -retries is 0. For extreme setups with lasso you\n".
+      "may need as many as 5 retries, but zero is generally sufficient if\n".
+      "rounding errors during cross-validation are accepted.\n";
+}
+
+my $eval_string = common_options::model_parameters(\%options);
+
+my $model = model -> new ( eval( $eval_string ),
+			   filename                    => $ARGV[0],
+			   ignore_missing_output_files => 1);
+
+my $lasso = tool::lasso -> 
+    new ( eval( $common_options::parameters ),
+	  models	     => [ $model ],
+	  cutoff             => $options{'cutoff'},
+	  relations          => $options{'relations'},
+	  start_t            => $options{'start_t'},
+	  stop_t             => $options{'stop_t'},
+	  step_t	     => $options{'step_t'},
+	  pred_ofv_start_t      => $options{'pred_ofv_start_t'},
+	  groups  => $options{'groups'},
+	  convergence        => $options{'convergence'},
+	  stratify_on        => $options{'stratify_on'},
+	  lst_file           => $options{'lst_file'});
+
+$lasso-> print_options (cmd_line => $cmd_line,
+		      toolname => 'LASSO',
+		      local_options => [keys %optional_options],
+		      common_options => \@common_options::tool_options);
+
+$lasso -> run;
+$lasso -> prepare_results;
+$lasso -> print_results;
+ui -> print( category => 'lasso',
+	     message  => "\nlasso done\n");
+

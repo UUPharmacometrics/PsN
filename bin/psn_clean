@@ -1,0 +1,363 @@
+#!/usr/bin/perl
+
+# Only for Development
+use FindBin qw($Bin);
+use lib "$Bin/../lib";
+
+# Don't edit the line below, it must look exactly like this.
+# Everything above this line will be replaced #
+
+use PsN;
+use Getopt::Long;
+use File::Copy qw/cp mv/;
+use File::Glob;
+use strict;
+use Cwd;
+use Config;
+
+sub confirm {
+ my $input = <STDIN>;
+ if( $input =~ /^\s*[yY]\s*$/ ){
+   return 1;
+ }
+ return 0;
+}
+
+sub remove_list {
+  my $ref = shift;
+  my $interactive =shift;
+  my $topdir =shift;
+  my $dir_sep = "/";
+  if( $Config{osname} eq 'MSWin32' ){
+    $dir_sep = "\\";  
+  }
+  foreach my $file (@{$ref}){
+    my $longfile = "$topdir"."$dir_sep"."$file";
+    print "Bug, $longfile does not exist\n" unless (-e $longfile);
+    if ($interactive){
+      print "Remove $longfile [y/n]?: ";
+      unlink $longfile if ( confirm() );
+    }else{
+      unlink $longfile;      
+    }
+  }
+}
+
+sub remove_files {
+  my $dir = shift;
+  my $restart = shift;
+  my $tab = shift;
+  my $lst = shift;
+  my $csv = shift;
+  my $dta = shift;
+  my $messages = shift;
+  my $interactive = shift;
+  my $topdir =shift;
+  
+  my @files;
+  if ($restart){
+    @files = <$dir/psn-*.mod $dir/psn-*.lst $dir/compilation_output-*.txt>;
+    push (@files,<$dir/psn-*.ext $dir/psn-*.cov $dir/psn-*.cor $dir/psn-*.coi $dir/psn-*.phi >);
+    remove_list(\@files,$interactive,$topdir);
+    @files = <$dir/*tab*-[1-9] $dir/*tab*-[1-9][0-9]>;
+    my @templist;
+    foreach my $ff (@files){
+      push(@templist,$ff) if ($ff =~ /tab[0-9]*-[0-9]+$/);
+    }
+    remove_list(\@templist,$interactive,$topdir);
+    @files = <$dir/msfo-[1-9] msfo-[1-9][0-9]>;
+    remove_list(\@files,$interactive,$topdir);
+    @files = <$dir/*-[1-9].deriv $dir/*-[1-9][0-9].deriv $dir/*-[1-9].est $dir/*-[1-9][0-9].est>;
+    remove_list(\@files,$interactive,$topdir);
+
+  }
+  if ($tab){
+    @files = <$dir/*tab $dir/*tab[1-9] $dir/*tab[1-9][0-9] $dir/*tab[1-9][0-9][0-9]>;
+    remove_list(\@files,$interactive,$topdir);
+  }
+  if ($lst){
+    @files = <$dir/*.lst>;
+    push (@files,<$dir/*.ext $dir/*.cov $dir/*.cor $dir/*.coi $dir/*.phi >);
+    remove_list(\@files,$interactive,$topdir);
+  }
+  if ($csv){
+    my @temp_files = <$dir/*.csv>;
+    my @files;
+    foreach my $file (@temp_files){
+      push(@files,$file) unless ($file =~ /stats-runs\.csv/);
+    }
+    remove_list(\@files,$interactive,$topdir);
+  }
+  if ($dta){
+    @files = <$dir/*.dta>;
+    remove_list(\@files,$interactive,$topdir);
+    @files = <$dir/*.dat>;
+    remove_list(\@files,$interactive,$topdir);
+  }
+  if ($messages){
+    @files = <$dir/compilation_output*>;
+    push (@files,$dir.'nmfe_output.txt') if (-e $dir.'nmfe_output.txt');
+    push (@files,$dir.'INTER') if (-e $dir.'INTER');
+    push (@files,$dir.'monitoring_of_search.txt') if (-e $dir.'monitoring_of_search.txt');
+    push (@files,$dir.'psn_nonmem_error_messages.txt') if (-e $dir.'psn_nonmem_error_messages.txt');
+    remove_list(\@files,$interactive,$topdir);
+  }
+}
+
+my $h                         = '';
+my $help                      = '';
+my $interactive = 1;
+my $expand = 0;
+my $level = 2;
+my $nm_run = 0;
+my $mx = 0;
+my $restart = 0;
+my $tab = 0;
+my $lst = 0;
+my $csv = 0;
+my $dta = 0;
+my $messages = 0;
+my $all_nm = 0;
+my $all_mx = 0;
+my $modelfit = 0;
+
+my $res = GetOptions (
+		      'h|?'                       => \$h,
+		      'help'                      => \$help,
+		      "level=i" => \$level,
+		      "interactive!" => \$interactive,
+		      "nm_run" =>\$nm_run,
+		      "mx" => \$mx,
+		      "expand" => \$expand,
+		      "restart" => \$restart,
+		      "tab" => \$tab,
+		      "lst" => \$lst,
+		      "csv" => \$csv,
+		      "dta" => \$dta,
+		      "messages" => \$messages,
+		      "all_nm" => \$all_nm,
+		      "all_mx" => \$all_mx,
+		      "modelfit" => \$modelfit);
+
+exit unless $res;
+
+if($h or $help) {
+  print <<'ENDHELP';
+
+psn_clean
+    Delete files from PsN run directories. 
+
+Example: Remove all NM_run subdirectories of all boostrap_dir directories:
+    psn_clean bootstrap_dir -nm_run
+
+Required input: The name of a psn run directory.
+                Option -expand can be used to make psn_clean perform the cleaning 
+		in all directories starting with the given name.
+	      Example: bootstrap -expand will match bootstrap_dir1, bootstrap_dir2 and so on.
+	      bootstrap_dir2 -expand will match bootstrap_dir2, bootstrap_dir20 and so on.
+	      bootstrap_dir4 without the option expand will only match bootstrap_dir4.
+	      Multiple directory names may be given as input.
+
+Optional input: 
+
+-interactive                User must confirm removal of each item. Default set.
+                            Can be disabled with -no-interactive.
+
+
+-expand                     Add all possible extensions to the input directory name, and do 
+                            cleaning in all. Default not set.
+
+-level=N                    Default 2. Level 2-3 roughly corresponds to the -clean option to PsN. 
+                            Option -level sets a collection of the options below. If both level 
+                            and additional options are set, the individual setting is added to
+                            what is implied by -level. Note that level can be set also to 4.
+                            -level=2: -nm_run -messages -restart -dta -csv set, all other options unset
+                            -level=3: -all_nm -modelfit set, all other options unset
+                            -level=4: -all_nm -modelfit -all_mx set, all other options unset
+
+Where to clean:
+-nm_run                     Do cleaning in NM_run subdirectories.
+
+-mx                         Do cleaning in m1, m2... subdirectories.
+
+
+What to remove:
+-restart                    Remove all numbered restart files (psn-1.lst, psn-3.mod, psn-4.ext...)
+
+-tab                        Remove all files ending with tab and a number: cotab33, patab123...
+
+-lst                        Remove all files ending with .lst, .ext, .cov, .coi, .cor, .phi
+
+-dta                        Remove all files ending with .dta or .dat
+
+-csv                        Remove all files ending with .csv except stats-runs.csv
+
+-messages                   Remove INTER, compilation_output.txt,monitoring_of_search.txt,
+                            psn_nonmem_error_messages.txt, nmfe_output.txt
+
+-all_nm                     Remove all NM_run subdirectories completely
+
+-all_mx                     Remove all m1, m2... subdirectories completely
+
+-modelfit                   Remove all modelfit subdirectories (directories containing a set of NM_run
+                            subdirectories) completely. Default not set.
+
+ENDHELP
+exit;
+} 
+
+
+unless( $ARGV[0] ){
+    die "You must at least enter one directory name.\n";
+}
+
+my @recursive_dir = ('llp_dir1','scm_dir1','scm_dir2');
+my $maxnum=1000;
+
+#
+#-level=2: -nm_run -messages -restart -dta -csv set, all other options unset
+#-level=3: -all_nm -modelfit set, all other options unset
+#-level=4: -all_nm -modelfit -mx -tab -lst -dta -csv set, all other options unset
+
+if ($level == 2){
+    $nm_run = 1;
+    $restart = 1;
+    $csv = 1;
+    $dta = 1;
+    $messages = 1;
+}elsif ($level == 3){
+  $all_nm = 1;
+  $modelfit = 1;
+}elsif ($level == 4){
+  $all_mx = 1;
+  $all_nm = 1;
+  $modelfit = 1;
+}else{
+  die "option level must be 2, 3 or 4\n";
+}
+
+
+
+#expand list of topdirectories
+
+my @top_directories;
+
+foreach my $stem ( @ARGV ){  
+    push (@top_directories,$stem) if (-d $stem);
+    if ($expand){
+      my @contents = <$stem*>;
+      foreach my $thing (@contents){
+	push (@top_directories,$thing) if (-d $thing);
+      } 
+    }
+}
+my @extralist=();
+foreach my $tdir (@top_directories){
+    #find sublevel top_directories here. 
+  foreach my $subdir ('forward_scm_dir','backward_scm_dir',''){
+    my @contents = <$tdir/$subdir*>;
+    foreach my $thing (@contents){
+      push (@extralist,$thing) if (-d $thing);
+    } 
+  }
+  my $sub1 = $tdir.'/split_';
+  my @list = <$sub1*>;
+  foreach my $subdir (@list){
+    my $sub2 = $subdir.'/scm_xv_group';
+    my @contents = <$sub2*>;
+    foreach my $thing (@contents){
+      push (@extralist,$thing) if (-d $thing);
+    } 
+  }
+}
+push(@top_directories,@extralist);
+
+unless (scalar(@top_directories) > 0){
+    die "No directories found that match input ".join(' ',@ARGV)."\n";
+}
+
+my $homedir = getcwd();
+
+foreach my $tdir ( @top_directories ) {  
+  die unless chdir($homedir);
+  unless ( -d $tdir){
+    next;
+  }
+  my $topdir = $homedir.'/'.$tdir; 
+  chdir($topdir);
+  while (1){
+    foreach my $stem ('modelfit_dir','orig_modelfit_dir','simulation_dir','base_modelfit_dir',
+		      'derivatives_modelfit_dir','xv_dir/xv_pred_dir','xv_dir/derivatives_xv_pred_dir',
+		      'base_dir','frac_dir','wt_dir','reg_dir','alt_dir','mi_dir','modelfit_dir1_add'){
+      my @modelfits = <$stem*>;
+
+      foreach my $modf (@modelfits){ 
+	my @sub_nmruns = <$modf/NM_run*>;
+	foreach my $nmdir (@sub_nmruns){ 
+	    my $tmp = $nmdir.'/temp_dir';
+	    my @files = <$tmp/*>;
+	    remove_list(\@files,$interactive,$topdir);
+	    rmdir $tmp;
+	    if ($all_nm or $modelfit){
+		my @files = <$nmdir/*>;
+		remove_list(\@files,$interactive,$topdir);
+		rmdir $nmdir;
+	    }elsif ($nm_run){
+		remove_files($nmdir,$restart,$tab,$lst,$csv,$dta,$messages,$interactive,$topdir);
+	    }
+	}
+	if ($modelfit and not ($stem =~ /simulation_dir/)){
+	  my @files =  <$modf/*>;
+	  remove_list(\@files,$interactive,$topdir);
+	  rmdir $modf;
+	}
+      }
+    }
+    my @nmruns = <NM_run*>; #only for vpc npc
+    foreach my $nmdir (@nmruns){ 
+	my $tmp = $nmdir.'/temp_dir';
+	my @files = <$tmp/*>;
+	remove_list(\@files,$interactive,$topdir);
+	rmdir $tmp;
+      if ($all_nm){
+	my @files = <$nmdir/*>;
+	remove_list(\@files,$interactive,$topdir);
+	rmdir $nmdir;
+      }elsif ($nm_run){
+	remove_files($nmdir,$restart,$tab,$lst,$csv,$dta,$messages,$interactive,$topdir);
+      }
+    }
+    if ($all_mx){
+      my @mdir = <m?>;
+      foreach my $dir (@mdir){ 
+	my @files = <$dir/*>;
+	remove_list(\@files,$interactive,$topdir);
+	rmdir $dir;
+      }
+    }elsif ($mx){
+      my @mdir = <m?>;
+      foreach my $dir (@mdir){ 
+	remove_files($dir,$restart,$tab,$lst,$csv,$dta,$messages,$interactive,$topdir) if (-d $dir);
+      }
+    }
+    my $recursive=0;
+    foreach my $rd (@recursive_dir){
+      if (-e $rd){
+	$recursive=$rd;
+	last;
+      }
+    }
+    if ($recursive eq '0' or (not -d $recursive)){
+      last;
+    }else {
+      $topdir = $topdir.'/'.$recursive;
+      chdir ($topdir);
+    }
+
+  
+  } #end while
+  
+} #end foreach topdir
+
+
+exit;

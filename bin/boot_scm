@@ -1,0 +1,1007 @@
+#!/usr/bin/perl
+
+use FindBin qw($Bin);
+use lib "$Bin/../lib";
+
+# Don't edit the line below, it must look exactly like this.
+# Everything above this line will be replaced #
+
+use PsN;
+use file;
+use model;
+#use tool;
+use data;
+use tool::scm;
+use tool::scm::config_file;
+#use tool::modelfit;
+use Math::Random;
+use strict;
+use Getopt::Long;
+use Cwd;
+use common_options;
+use ui;
+use OSspecific;
+use File::Copy qw/cp mv/;
+
+my $cmd_line = $0 . " " . join( " ", @ARGV );
+
+my %options;
+
+my %required_options = ( "samples:i" => '');
+
+#remove options search_direction gof p_value p_forward p_backward
+#update_derivatives
+
+my %optional_options = ( "methodA!" => '',
+			 "stratify_on:s" => '',
+			 "run_final_models!" => '',
+			 "dummy_covariates:s"=> '');
+
+my $res = GetOptions( \%options, 
+		      @common_options::get_opt_strings,
+		      keys(%required_options),
+		      keys(%optional_options)
+    );
+exit unless $res;
+
+#cannot run setup here, must read config file first
+
+#below this line comes my %help_text;
+##move this up again
+my %help_text;
+$help_text{Pre_help_message} = <<'EOF';
+
+    Bootstrapped stepwise covariate model building from NONMEM models.
+        
+EOF
+
+$help_text{Description} = <<'EOF';
+
+    The Bootstrap Stepwise Covariate Model (BOOT_SCM) building tool 
+    of PsN implements bootstrapped model selection for a
+    covariate model. It relies on the SCM tool of PsN.
+        
+    A configuration file must be given as input. The format of the configuration 
+    file follows the format of the scm configuration file exactly.
+    
+EOF
+$help_text{Examples} = <<'EOF';    
+    Example:
+    
+    boot_scm config_run1.scm -samples=100
+
+EOF
+
+    $help_text{Options} = <<'EOF';
+
+    The options are given here in their long form. Any option may be
+    abbreviated to any nonconflicting prefix. The -threads option may
+    be abbreviated to <span class="style2">-thr</span>.
+
+    The following options are valid:
+
+EOF
+
+    $help_text{-h} = <<'EOF';
+    <p class="style2">-h | -?</p>
+
+    With -h or -? boot_scm will print a list of options and exit.
+EOF
+
+    $help_text{-help} = <<'EOF';
+    <p class="style2">-help</p>
+
+    With -help boot_scm will print this, longer, help message.
+EOF
+
+    $help_text{-stratify_on} = <<'EOF';
+      <p class="option">-stratify_on=integer|string</p>
+
+      It may be necessary to use stratification in the resampling
+      procedure. For example, if the original data consists of two
+      groups of patients - say 10 patients with full pharmacokinetic
+      profiles and 90 patients with sparse steady state concentration
+      measurements - it may be wise to restrict the resampling
+      procedure to resample within the two groups, producing bootstrap
+      data sets that all contain 10 rich + 90 sparse data patients but
+      with different compositions. The default is not to use
+      stratification. Set <span class="option">-stratify_on</span> to
+      the column that defines the two groups. If a string is used with
+      stratify_on the header in the datafile is used to map the string
+      to a column number.
+      The stratification variable must be found in the original dataset,
+      it cannot be defined in the model.
+
+EOF
+
+$help_text{-samples} = <<'EOF';
+      -samples=N
+
+    The number of bootstrapped datasets to run the scm on.
+EOF
+$help_text{-methodA} = <<'EOF';
+      -methodA
+
+    Default not set. If the scm option -linearize is not set, the bootstrap 
+    scm non-linear method will be used. If option -linearize is set, by 
+    default the bootstrap scm linear method B will be used. If option 
+    -linearize is set  together with option -methodA then the bootstrap 
+    scm linear method A will be used. If -linearize is not set and option 
+    -methodA is set this will result in an error message.
+EOF
+
+$help_text{-dummy_covariates} = <<'EOF';
+      -dummy_covariates=<list of existing covariates>
+
+    Default not used. If used, a new column for each listed covariate will 
+    be added to the dataset, containing a randomly permuted copy of the 
+    original covariate column and with header X<name of original covariate>. 
+    The dummy covariate will be tested for inclusion in the covariate model 
+    exactly like the original covariate.
+EOF
+$help_text{-run_final_models} = <<'EOF';
+    Default not set. If set then boot_scm will run the final models from 
+    each scm on the original dataset and collect the ofv values in the output 
+    file ofv_final.csv 
+EOF
+
+    $help_text{Post_help_message} = <<'EOF';
+    Also see 'scm -h' for a list of scm options,
+    and 'psn_options -h' for a description of common options.
+EOF
+
+
+common_options::online_help( 'boot_scm', \%options, \%help_text, \%required_options, \%optional_options);
+
+
+
+if (scalar(@ARGV)==1){
+  $options{'config_file'} = $ARGV[0];
+}
+if ( $options{'config_file'} eq ''){
+    print "Please specify a config file \n";
+    exit;
+}
+
+if ( $options{'samples'} eq '' ){
+  print "Option -samples is required. \n";
+  exit;
+}
+
+my $config_file;
+if( -e $options{'config_file'} ){
+  my $file = file -> new( name => $options{'config_file'}, path => '.' );
+  $config_file = 'tool::scm::config_file' -> new ( file => $file );
+  
+  foreach my $option ( keys %{$config_file -> valid_scalar_options} ){
+    if( defined $options{$option} ) {
+      $config_file -> $option($options{$option});
+    }elsif (defined $config_file -> $option){
+      #store tool_options so that can use common_options::restore in scm
+      foreach my $opt (@common_options::tool_options){
+	$opt =~ s/[!:|].*//g; #get rid of :s |? :i etcetera
+	if ($opt eq $option){
+	  $options{$option} = $config_file -> $option;
+	  last;
+	}
+      }
+    }
+  }
+
+  foreach my $option ( keys %{$config_file -> valid_code_options} ){
+    if( $options{$option} ){
+      $config_file -> $option(eval($options{$option}));
+    }
+  }
+
+  foreach my $option ( keys %{$config_file -> valid_array_options} ){
+    if( $options{$option} ){
+      my @arr = split( /,/ , $options{$option});
+      $config_file -> $option(\@arr);
+    }
+  }
+
+} else {
+  print "Error: config file $options{'config_file'} is missing.\n" ;
+  exit;
+}
+
+#calls get_defaults, set_globals etc, initiates random sequence, store tool_options
+common_options::setup( \%options, 'boot_scm' ); 
+
+if ($config_file->linearize){
+  die "Option -second_order is currently broken" 
+      if $config_file->second_order();
+  #two new options, linearize and lst-file
+  
+  if ($config_file->second_order()){
+    print "Warning: Option -second_order is intended for use together with option -foce\n" 
+	unless $config_file->foce();
+  }
+
+  die "option -linearize only works with NONMEM7" unless ($PsN::nm_major_version == 7);
+  
+
+  if ($config_file->derivatives_data()){
+    my ( $dir, $file ) = OSspecific::absolute_path('',$config_file->derivatives_data());
+    $config_file->derivatives_data($dir . $file);
+  }
+  if ($config_file->lst_file()){
+    my ( $dir, $file ) = OSspecific::absolute_path('',$config_file->lst_file());
+    $config_file->lst_file($dir . $file);
+  }
+
+}else{
+  die "Option -foce is only allowed together with option -linearize" 
+      if $config_file->foce();
+  die "Option -second_order is only allowed together with option -linearize" 
+      if $config_file->second_order();
+  die "Option -lst_file is only allowed together with option -linearize" 
+      if $config_file->lst_file();
+  die "Option -update_derivatives is only allowed together with option -linearize" 
+      if $config_file->update_derivatives();
+  die "Option -error is only allowed together with option -linearize" 
+      if $config_file->error();
+  die "Option -error_code is only allowed together with option -linearize" 
+      if $config_file->error_code();
+  die "Option -derivatives_data is only allowed together with option -linearize" 
+      if $config_file->derivatives_data();
+  die "Option -methodA is only allowed together with option -linearize" 
+      if $options{'methodA'};
+}
+
+my $direction = $config_file -> search_direction;
+die "You need to specify a search direction (forward/backward/both)\n" 
+    unless (defined $direction );
+
+
+my @inclusion_statistics;
+my $ofv_forward=undef;
+my $p_forward=undef;
+my $ofv_backward=undef;
+my $p_backward=undef;
+my $original_included=undef;
+my $original_base=undef;
+if( defined $config_file -> ofv_forward ){
+  $ofv_forward = $config_file -> ofv_forward ;
+}elsif (defined $config_file -> ofv_change()){
+  $ofv_forward = $config_file -> ofv_change();
+}
+
+if( defined $config_file -> ofv_backward ){
+  $ofv_backward = $config_file -> ofv_backward ;
+}elsif (defined $config_file -> ofv_change()){
+  $ofv_backward = $config_file -> ofv_change();
+}
+
+if( defined $config_file -> included_relations() ){
+  $original_included=$config_file -> included_relations();
+}
+
+if( defined $config_file -> base_criteria_values ){
+  $original_base = $config_file -> base_criteria_values();
+}
+
+if( defined $config_file -> p_forward ){
+  $p_forward = $config_file -> p_forward;
+}elsif (defined $config_file -> p_value()){
+  $p_forward = $config_file -> p_value;     
+}
+if( defined $config_file -> p_backward ){
+  $p_backward = $config_file -> p_backward;
+}elsif (defined $config_file -> p_value()){
+  $p_backward = $config_file -> p_value;     
+}
+
+
+my $return_dir = getcwd();
+my $main_directory = $options{'directory'};
+if (defined $main_directory){
+  $main_directory =$return_dir.'/'.$main_directory.'/';
+}else{
+  $main_directory= OSspecific::unique_path( 'boot_scm_dir' ,$return_dir);
+}
+
+mkdir( $main_directory) unless ( -d  $main_directory);
+
+#need a dummy tool object to print options
+# tool class requires a model, but we do not want to give one. Use dummy
+my $dummy_prob = model::problem -> new ( ignore_missing_files=> 1,
+					 prob_arr       => ['$PROB','$INPUT ID','$DATA dummy.txt']);
+
+my $dummy_model = model -> new (filename => 'dummy_for_mcmp',
+				  problems => [$dummy_prob],
+				  skip_data_parsing=> 1,
+				  ignore_missing_files => 1);
+my $dummy_tool = tool -> new(models => [$dummy_model],
+			     directory => $main_directory);
+$dummy_tool -> print_options(cmd_line => $cmd_line,
+			     toolname => 'boot_scm',
+			     local_options => [keys %optional_options],
+			     common_options => \@common_options::tool_options);
+
+
+
+my $modeldir = $main_directory.'/m1';
+mkdir( $modeldir) unless ( -d  $modeldir);
+my $preprocessdir = $main_directory.'/preprocess_data_dir';
+mkdir( $preprocessdir) unless ( -d  $preprocessdir);
+
+my $pathfinaldata;
+my $finalname;
+my $finalname_extra;
+my $finaldir;
+my $dname = 'forward';
+my $linBmodel;
+my $need_extra_boot_data=0;
+
+$dname = 'backward' if ($direction eq 'both' or $direction eq 'backward');
+if ($config_file->linearize){
+  $finalname='final_'.$dname.'_nonlinear.mod';
+  $finalname_extra='final_forward_nonlinear.mod' 
+      if ($direction eq 'both' or $direction eq 'backward');
+}else{
+  $finalname='final_'.$dname.'.mod';
+  $finalname_extra='final_forward.mod' 
+      if ($direction eq 'both' or $direction eq 'backward');
+}
+$finaldir = $main_directory.'/final_models';
+mkdir($finaldir) unless ( -d $finaldir);
+
+
+die("File " . $config_file->model() . "does not exist") 
+    unless (-e $config_file -> model());
+
+my $eval_string = common_options::model_parameters(\%options);
+my $model = model -> new ( eval $eval_string,
+			   filename           => $config_file -> model,
+			   target             => 'disk' ) ;
+if( $options{'shrinkage'} ) {
+  $model -> shrinkage_stats( enabled => 1 );
+}
+
+#must do filtering before shuffling 
+#must do filtering on IGNORE/ACCEPT here if in model
+#Do not edit input model to remove that statement,
+#want final models to be correct for original data
+my $full_filtered_data;
+my $do_filtering=0;
+my @check_list;
+my $ignorelist = $model-> get_option_value(record_name=>'data',
+					   option_name=>'IGNORE',
+					   option_index => 'all');
+push (@check_list,@{$ignorelist}) if (defined $ignorelist);
+my $accept_list = $model-> get_option_value(record_name=>'data',
+					    option_name=>'ACCEPT',
+					    option_index => 'all');
+push (@check_list,@{$accept_list}) if (defined $accept_list);
+foreach my $val (@check_list){
+  unless (length($val)==1){
+    ui -> print( category => 'boot_scm',
+		 message => "Running dummy model to filter data on IGNORE/ACCEPT before".
+		 " bootstrapping.",newline =>1 );
+    $do_filtering=1;
+    last;
+  } 
+}
+
+if ($do_filtering){
+  # If certain ID:s are ignored, this will interfere with bootstrap. Warn user, exit
+
+  #look for synonym
+  my $id_synonym;
+  $id_synonym = $model-> get_option_value(record_name=>'input',
+					  option_name=>'ID');
+  #we do not look for <synonym>=ID since PsN won't accept it anyway
+  #look for ignore/accept of ID/synonym
+
+  foreach my $igval (@check_list){
+    if (($igval =~ /[^a-zA-Z0-9_]+(ID)[^a-zA-Z0-9_]+/ ) ||
+	($id_synonym && ($igval =~ /[^a-zA-Z0-9_]+($id_synonym)[^a-zA-Z0-9_]+/ ) )){
+      die("Cannot IGNORE/ACCEPT based on ID since individuals are ".
+		     "renumbered during bootstrapping. Must edit the datafile ".
+		     "manually instead, before running boot_scm.\n");
+    }
+  }
+  #warn if code records with ID/synonym detected
+  my @check_code=();
+  my $record_ref = $model-> record(record_name => 'pk' );	
+  push (@check_code, @{$model-> pk})
+      if ( scalar(@{$record_ref}) > 0 );
+  
+  $record_ref = $model-> record(record_name => 'pred' );
+  push (@check_code,@{$model-> pred})
+      if ( scalar(@{$record_ref}) > 0 );
+  
+  $record_ref = $model-> record(record_name => 'error' );
+  push (@check_code,@{$model-> problems->[0]->errors->[0]->code})
+      if ( scalar(@{$record_ref}) > 0 );
+  
+  foreach my $line (@check_code){
+    if (($line =~ /(^|[^a-zA-Z0-9_]+)ID([^a-zA-Z0-9_]+|$)/ ) ||
+	($id_synonym && ($line =~ /(^|[^a-zA-Z0-9_]+)($id_synonym)([^a-zA-Z0-9_]+|$)/ ) )){
+      print "\nWarning:\nID/ID-synonym found in \$PK/\$PRED/\$ERROR.\n".
+	  "Bootstrapping renumbers individuals, which means that code\n".
+	  "based on ID-value might result in errors..\n\n";
+      last;
+    }
+  }
+
+
+}
+
+if ($do_filtering){
+  my $filtered_data_model = $model -> copy ( filename => 'filter_data.mod',
+					     directory => $preprocessdir, 
+					     copy_data          => 0,
+					     copy_output        => 0,
+					     skip_data_parsing => 1);
+  foreach my $out (@{$filtered_data_model-> outputs()}){
+    $out -> directory($filtered_data_model->directory());
+  }
+  my @filter_table_header;
+  my $datafile = 'filtered.dta';
+  my $dummycounter=0;
+  if( defined $filtered_data_model->problems()->[0] -> inputs and 
+      defined $filtered_data_model->problems()->[0] -> inputs -> [0] -> options ) {
+      foreach my $option ( @{$filtered_data_model->problems()->[0] -> inputs -> [0] -> options} ) {
+	  if ($option->name eq 'DROP' or $option->name eq 'SKIP'){
+	      if (defined $option->value and $option->value ne '' and not ($option->value eq 'DROP' or $option->value eq 'SKIP') ){
+		  push( @filter_table_header, $option -> value );
+	      }else{
+		  #simple drop used in $INPUT without name. Set dummy name as placeholder here.
+		  $dummycounter++;
+		  $option->value('DUMMY'.$dummycounter);
+		  push( @filter_table_header, $option -> value );
+	      }
+	  }else{
+	      push( @filter_table_header, $option -> name );
+	  }
+      }
+  } else {
+      die( "Trying to construct table for filtering data".
+		    " but no headers were found in \$INPUT" );
+  }
+  
+  foreach my $remove_rec ('abbreviated','msfi','contr','subroutine','prior','model','tol','infn','omega','pk','aesinitial','aes','des','error','pred','mix','theta','sigma','simulation','estimation','covariance','nonparametric','table','scatter','input'){
+    #removing input also, will add it back without DROP below
+    $filtered_data_model -> remove_records(type => $remove_rec);
+  }
+  
+  $filtered_data_model -> add_records(type => 'pred',
+				      record_strings => ['Y=THETA(1)+ETA(1)+EPS(1)']);
+  $filtered_data_model -> add_records(type => 'theta',
+				      record_strings => ['1']);
+  $filtered_data_model -> add_records(type => 'omega',
+				      record_strings => ['1']);
+  $filtered_data_model -> add_records(type => 'sigma',
+				      record_strings => ['1']);
+  $filtered_data_model -> add_records(type => 'estimation',
+				      record_strings => ['MAXEVALS=0 METHOD=ZERO']);
+  
+  # set $TABLE record
+  $filtered_data_model -> add_records( 
+    type           => 'table',
+    record_strings => [ join( ' ', @filter_table_header ).
+			' NOAPPEND NOPRINT ONEHEADER FILE='.$datafile]);
+  
+  #put back input without DROP
+  $filtered_data_model -> add_records(
+    type => 'input',
+    record_strings => [join(' ',@filter_table_header)]);
+  
+  $filtered_data_model->_write();
+  # run model in data_filtering_dir clean=3
+  my $filter_fit = tool::modelfit -> new
+      ( %{common_options::restore_options(@common_options::tool_options)},
+	base_directory => $preprocessdir,
+	directory      => $preprocessdir.'/data_filtering_dir/',
+	models         => [$filtered_data_model],
+	top_tool       => 0,
+	clean => 2  );
+  $filter_fit -> run;
+  my @idcolumns = @{$model -> idcolumns};
+  my $idcolumn = $idcolumns[0];
+  my $ignoresign = defined $model -> ignoresigns ? $model -> ignoresigns -> [0] : undef;
+  print "\n";
+  if ( defined $idcolumn ) {
+    $full_filtered_data = data -> new( 
+      idcolumn             => $idcolumn,
+      filename             => $datafile,
+      ignoresign           => $ignoresign,
+      directory            => $filtered_data_model -> directory,
+      ignore_missing_files => 0,
+      skip_parsing         => 0,
+      target               => 'mem');
+    #must copy model here and set $model to copy
+    my $newmodel = $model -> copy(filename => $preprocessdir.'/orig_model_filtered_data.mod',
+				  copy_data => 0, copy_output => 0,
+				  target => 'mem' );
+
+    foreach my $out (@{$newmodel-> outputs()}){
+      $out -> directory($newmodel->directory());
+    }
+    $newmodel -> _option_name( position	  => 0,
+			       record	  => 'data',
+			       problem_number => 1,
+			       new_name	  => $filtered_data_model -> directory.$datafile);
+    $newmodel -> datas()->[0] = $full_filtered_data;
+    $newmodel->_write(write_data => 0);
+    $model = $newmodel;
+  } else {
+    die( "No id column definition found in the model file." );
+  }
+  
+}
+
+if (defined $options{'dummy_covariates'}){
+  #this will take care of final full dataset, and pathfinaldata
+  print "Adding dummy covariates to dataset...   ";
+
+  my @covs =split(',',$options{'dummy_covariates'});
+  my $newname = 'model_with_xcov.mod';
+  my $newdataname = 'xcov_'.$model->datas->[0]->filename();
+  $pathfinaldata = '../preprocess_data_dir/'.$newdataname; #local path from $finaldir
+  $config_file -> model($newname);
+  $model ->directory($preprocessdir.'/');
+  $model ->filename($newname);
+  my @newout =(output -> new( filename             => 'model_with_xcov.lst',
+			      directory            => $preprocessdir.'/',
+			      ignore_missing_files => 1,
+			      target               => 'disk'));
+  $model->outputs(\@newout);
+
+  my @xcovnames = @{$model -> add_randomized_columns(
+		      filename => "$newdataname",
+		      column_headers => \@covs)};
+  my $index=-1;
+  foreach my $cov (@covs){
+    $index++;
+    #find if it is continuous or categ, add X.$cov to right list
+    my $found=0;
+    if (defined $config_file->continuous_covariates()){
+      foreach my $cont (@{$config_file->continuous_covariates()}){
+	if ($cont eq $cov){
+	  $found=1;
+	  push(@{$config_file->continuous_covariates()},$xcovnames[$index]);
+	  last;
+	}
+      }
+    }
+    if (defined $config_file->categorical_covariates()){
+      foreach my $cont (@{$config_file->categorical_covariates()}){
+	if ($cont eq $cov){
+	  die ("cannot set $cov both as categorical and continuous covariate") 
+	      if ($found);
+	  $found=1;
+	  push(@{$config_file->categorical_covariates()},$xcovnames[$index]);
+	  last;
+	}
+      }
+    }
+    if (defined $config_file->time_varying()){
+      foreach my $cont (@{$config_file->time_varying()}){
+	if ($cont eq $cov){
+	  push(@{$config_file->time_varying()},$xcovnames[$index]);
+	  last;
+	}
+      }
+    }
+    if (defined $config_file->logit()){
+      foreach my $cont (@{$config_file->logit()}){
+	if ($cont eq $cov){
+	  push(@{$config_file->logit()},$xcovnames[$index]);
+	  last;
+	}
+      }
+    }
+
+    foreach my $par ( sort keys %{$config_file -> test_relations} ){
+      foreach my $val ( @{$config_file -> test_relations->{$par}} ){
+	if ($val eq $cov){
+	  push (@{$config_file -> test_relations->{$par}},$xcovnames[$index]);
+	  last;
+	}
+      }
+    }
+
+    #if code defined then copy, same for inits, upper_bounds, lower_bounds 
+    #these are all hashes with same form par:cov-state
+
+    foreach my $section('inits','code','upper_bounds','lower_bounds'){
+      if( defined $config_file -> $section ){
+	my %newhash;
+	foreach my $parmcov ( keys %{$config_file -> $section} ){
+	  # Loop over parmcov settings.
+	  if( $parmcov =~ /^\s*(\*|\w+):(\*|\w+)-(\d+)\s*$/ ){
+	    my $parm = $1;
+	    my $oldcov = $2;
+	    my $state = $3;
+	    if ($oldcov eq $cov){
+	      $newhash{$parm.':'.$xcovnames[$index].'-'.$state}=
+		  $config_file -> $section -> {$parmcov};
+	    }
+	  }
+	}
+	foreach my $key (keys %newhash){
+	  $config_file -> $section -> {$key}=$newhash{$key};
+	}
+      }
+    }
+
+    #what about included relations? Does not make sense to use it there
+
+  }
+
+  $config_file->write(filename => $preprocessdir.'/updated_config.scm');
+  print "done\n";
+
+}else{
+  #no dummy covs, must manually fix full data path
+  #if original data not in return dir then copy data to main_directory, otherwise
+  #set local path ../../
+  if (($model -> datas()->[0]->directory() eq $return_dir.'/') or
+      ($model -> datas()->[0]->directory() eq $return_dir.'\\') or
+      ($model -> datas()->[0]->directory() eq $return_dir)) {
+    $pathfinaldata = '../../'.$model -> datas()->[0]->filename(); #local path from $finaldir
+  }else{
+    #copy original data to main_directory without path
+    cp($model -> datas()->[0]->full_name(),$finaldir.'/'.$model -> datas()->[0]->filename());
+    $pathfinaldata = $model -> datas()->[0]->filename();
+  }
+}
+
+chdir($main_directory);
+
+my $the_data;
+if ((not $config_file->linearize) or $options{'methodA'}){
+  $the_data = $model -> datas()->[0]; #is already filtered if needed
+}else{
+  #** Lin_B :
+  $need_extra_boot_data=1 if (defined $config_file->time_varying() and
+			      scalar(@{$config_file->time_varying()})>0);
+
+  my $time_varying = $config_file->time_varying();
+  $config_file->{'time_varying'}=undef; #FIXME for moose  #waste of time to run time_varying here, not needed
+  #must set in hash, if try to use function then will get value returned instead since
+  #input param not defined
+
+  #copy original model to local directory
+  $linBmodel = 
+      $model -> copy(filename => $preprocessdir.'/orig_model_for_derivatives.mod',
+		     copy_data => 0, copy_output => 0,
+		     target => 'mem' );
+  
+  foreach my $out (@{$linBmodel-> outputs()}){
+    $out -> directory($linBmodel->directory());
+  }
+  #  - Run non-linear model once + linearize. Filtering already done if needed
+  my $deriv_dir = $main_directory.'/compute_derivatives_dir';
+  ui -> print( category => 'boot_scm',
+	       message => "Linearizing input model to get derivatives data for bootstrap scm.",
+      newline =>1);
+  my $deriv_scm = tool::scm -> new ( eval( $common_options::parameters ),
+				     directory => $deriv_dir,
+				     config_file => $config_file,
+				     models	=> [$linBmodel],
+				     both_directions => 0,
+				     skip_filtering => 1);
+  $deriv_scm -> return_after_derivatives_done(1); #end scm prematurely
+  $deriv_scm -> run;
+  $config_file->time_varying($time_varying); #reset
+  
+  #in derivatives_covariates.dta ID is always 1, different set of columns entirely
+  $the_data = data -> new(directory => $deriv_dir,
+			  filename =>'derivatives_covariates.dta',
+			  target => 'mem',
+			  idcolumn => 1, 
+			  ignore_missing_files => 0,
+			  skip_parsing => 0);
+  print "\n";
+}
+
+
+chdir($main_directory);
+my ( $new_datas, $incl_ids, $incl_keys )
+    = $the_data -> bootstrap( directory   => $modeldir,
+			      name_stub   => 'bsdata',
+			      stratify_on => $options{'stratify_on'}, 
+			      samples     => $options{'samples'},
+			      target	     => 'disk',
+			      subjects =>{'default'=>($the_data -> count_ind)});
+
+my $extra_boot_datas;
+if ($need_extra_boot_data){
+  #either based on filtered data from compute_derivatives_dir
+  #or original $model -> datas()->[0];
+  $extra_boot_datas = $model->datas()->[0] -> 
+      bootstrap_from_keys( directory   => $modeldir,
+			   name_stub   => 'original_bsdata',
+			   key_references => $incl_keys,
+			   target	     => 'disk');
+}
+
+#print included individuals
+open( INCL, ">".$main_directory."/bs_ids.csv" ) ;
+print INCL 'bs_n';
+for( my $k = 1; $k <= scalar @{$incl_ids->[0]}; $k++ ) {
+  print INCL ",id$k";
+}
+print INCL "\n";
+for( my $k = 0; $k < scalar @{$incl_ids}; $k++ ) {
+  print INCL ($k+1);
+  for (my $i=0;$i<scalar(@{$incl_ids -> [$k]});$i++){
+    print INCL ','.sprintf("%i",$incl_ids -> [$k]->[$i]);
+  }
+  print INCL "\n";
+}
+close( INCL );
+#end print included individuals
+
+
+my @finalmodelnames;
+my @inclusion_header=('bs_n');
+foreach my $par ( sort keys %{$config_file -> test_relations} ){
+  foreach my $cov ( sort @{$config_file -> test_relations->{$par}} ){
+    #continuous or cat?
+    my $cat=1;
+    if (defined $config_file->continuous_covariates()){
+      foreach my $cont (@{$config_file->continuous_covariates()}){
+	if ($cont eq $cov){
+	  $cat=0;
+	  last;
+	}
+      }
+    }
+    #leave error checking of continuous/categorial to scm, here assume
+    #complete and non-overlapping
+
+    if ( $cat ) {
+      foreach my $state (@{$config_file -> valid_states->{'categorical'}}){
+	push(@inclusion_header,$par.'.'.$cov.'.'.$state) if ($state != 1);
+      }
+    } else {
+      foreach my $state (@{$config_file -> valid_states->{'continuous'}}){
+	push(@inclusion_header,$par.'.'.$cov.'.'.$state) if ($state != 1);
+      }
+    }
+  }
+}
+
+my $start_j=1;
+$start_j=0 if ($options{'run_final_models'});
+
+for ( my $j = $start_j; $j <= $options{'samples'}; $j++ ) {
+  chdir($main_directory);
+  $config_file -> included_relations($original_included) if (defined $original_included);
+  $config_file -> base_criteria_values($original_base) if (defined $original_base);
+
+  my ($model_dir, $filename) = OSspecific::absolute_path( $modeldir, 
+							  'bsmod_'.$j.'.mod' );
+
+  $filename = 'original.mod' if ($j==0);
+  my $new_mod = $model ->copy(
+    directory            => $model_dir,
+    filename             => $filename,
+    copy_output           => 1,
+    copy_data =>0,
+    target               => 'disk');
+    
+  if( $options{'shrinkage'} ) {
+    $new_mod -> shrinkage_stats( enabled => 1 );
+    $new_mod -> shrinkage_modules( $model -> shrinkage_modules );
+  }
+
+  if ((not $config_file->linearize) or $options{'methodA'}){
+    if ($j>0){
+      $new_mod -> datas ( [$new_datas -> [$j-1]] );#might not be in memory here
+    }else{
+      $new_mod -> datas ( [$the_data] );
+    }
+  }else{
+    if ($j>0){
+      $config_file->derivatives_data($main_directory.'/m1/bsdata_'.($j).'.dta');
+      if ($need_extra_boot_data){
+	$new_mod -> datas ( [$extra_boot_datas -> [$j-1]] );#might not be in memory here
+      }
+    }else{
+      #original model full filtered data
+      $config_file->derivatives_data($main_directory.'/compute_derivatives_dir/derivatives_covariates.dta');
+    }
+  }
+  $new_mod -> _write;
+  
+  my $scmdir = $main_directory.'/scm_dir'.$j;
+  $scmdir = $main_directory.'/scm_dir_original' if ($j==0);
+
+  my $samp = "sample $j";
+  $samp = "original model and full data" if ($j==0);
+  if( $direction eq 'forward' or $direction eq 'both' ){
+
+    $config_file -> ofv_change( $ofv_forward ) if( defined $ofv_forward );
+    $config_file -> p_value( $p_forward ) if( defined $p_forward );
+    $config_file -> search_direction( 'forward' );
+
+    ui->category('boot_scm');
+    print ui -> print( category => 'boot_scm',
+		       message => "Starting bootstrap scm forward search $samp",
+		       newline =>1);
+
+    my $scm = tool::scm -> 
+	new ( eval( $common_options::parameters ),
+	      directory => $scmdir,
+	      config_file => $config_file,
+	      models	=> [$new_mod],
+	      both_directions => ($direction eq 'both')? 1 : 0,
+	      p_backward => $p_backward,
+	      ofv_backward => $ofv_backward,
+	      skip_filtering => 1);
+  
+    ui->category('scm');
+    $scm -> run;
+
+    my %incl_hash;
+    if (defined $scm->included_relations() and 
+	scalar %{$scm->included_relations()} > 0 ) {
+      foreach my $par ( sort keys %{$scm->included_relations()} ) {
+	foreach my $cov ( sort keys %{$scm->included_relations()-> {$par}} ) {
+	  my $state = $scm->included_relations()-> {$par}{$cov}{'state'};
+	  if ($state != 1){
+	    $incl_hash{$par.'.'.$cov.'.'.$state}=1;
+	  }
+	}
+      }
+    }
+    push(@inclusion_statistics,\%incl_hash);
+
+    ui->category('boot_scm');
+    $scm=undef;
+    $new_mod = undef;
+
+  }else{
+    #  $direction is 'backward' 
+    
+    $config_file -> ofv_change( $ofv_backward ) if( defined $ofv_backward );
+    $config_file -> p_value( $p_backward ) if( defined $p_backward );
+    $config_file -> search_direction( 'backward' );
+
+    my $scm = tool::scm -> 
+	new ( eval( $common_options::parameters ),
+	      directory => $scmdir,
+	      models	=> [$new_mod],
+	      config_file => $config_file,
+	      skip_filtering => 1);
+
+    ui -> print( category => 'boot_scm',
+		 message => "Starting bootstrap scm backward search $samp",
+		 newline => 1);
+  
+    
+    ui->category('scm');
+    $scm -> run;
+    my %incl_hash;
+    if (defined $scm->included_relations() and 
+	scalar %{$scm->included_relations()} > 0 ) {
+      foreach my $par ( sort keys %{$scm->included_relations()} ) {
+	foreach my $cov ( sort keys %{$scm->included_relations()-> {$par}} ) {
+	  my $state = $scm->included_relations()-> {$par}{$cov}{'state'};
+	  if ($state != 1){
+	    $incl_hash{$par.$cov.$state}=1;
+	  }
+	}
+      }
+    }
+    push(@inclusion_statistics,\%incl_hash);
+
+    ui->category('boot_scm');
+
+  }
+
+
+  #copy final model after editing data
+  my $fname = $scmdir.'/final_models/'.$finalname;
+  if ((not -e $fname) and (defined $finalname_extra)){
+    $fname = $scmdir.'/final_models/'.$finalname_extra;
+  }
+  if (open( FILE, $fname )){
+    my @modelfile = <FILE>;
+    close( FILE );
+    my $datafound=0;
+    for ( my $i = 0; $i < scalar(@modelfile); $i++ ) {
+      if( $modelfile[$i] =~ /^\s*\$DATA\s+([^\s]+)/){
+      $modelfile[$i] =~ s/^\s*\$DATA\s+([^\s]+)/\$DATA $pathfinaldata/;
+      $datafound=1;
+      last;
+      }
+    }
+    die ("Did not find \$DATA record in final model file") unless ($datafound);
+    
+    my $outname = $finaldir.'/final_bs'.$j.'.mod';
+    open( MOD, ">  $outname");
+    foreach my $line (@modelfile){
+      print MOD $line;
+    }
+    close(MOD);
+    push(@finalmodelnames,$outname);
+  }else{
+    print "Warning: Could not open ".$fname." for reading" ;
+  } 
+} #end loop over samples
+
+
+#print stats for scm:s inclusion of covariates and individuals, see notes.org
+open( INCL, ">".$main_directory."/covariate_inclusion.csv" );
+print INCL join(',',@inclusion_header).",description\n";
+my $index=0;
+$index = -1 if ($options{'run_final_models'});
+foreach my $ref (@inclusion_statistics){
+  $index++;
+  print INCL "$index";
+  foreach my $key (@inclusion_header){
+    next if ($key eq 'bs_n');
+    if (defined $ref->{$key}){
+      print INCL ',1';
+    }else{
+      print INCL ',0';
+    }
+  }
+  my $nam = "bootstrap_$index";
+  $nam = 'full dataset' if ($index==0);
+  print INCL ",$nam\n";
+}
+close(INCL);
+
+
+#run final models to get ofv
+if ($options{'run_final_models'}){ 
+  ui -> print( category => 'boot_scm',
+	       message => "Running final models with full dataset",
+	       newline =>1);
+  chdir($finaldir);
+  my @modelarr;
+  foreach my $fname (@finalmodelnames){
+    my $mod = model -> new ( eval $eval_string,
+			     filename           => $fname,
+			     target             => 'disk' ) ;
+    if( $options{'shrinkage'} ) {
+      $mod -> shrinkage_stats( enabled => 1 );
+    }
+    
+    push (@modelarr,$mod); 
+  }
+  my $modelfit = tool::modelfit -> new ( eval( $common_options::parameters ),
+					 directory => undef,
+					 models	=> \@modelarr);
+
+  $modelfit->run;
+  #get ofvs from raw results and put in separate table ofv_final.csv
+  #prepend original model
+
+  my ($s, $l) = split(/,/, $modelfit->raw_line_structure-> {1} -> {'ofv'});
+  if (not defined $s){
+    ui->print(category => 'all',
+	      message=> "error undefined ofv pos in raw_line_structure",
+	      newline =>1);
+  }
+  my $oi = $s;
+  open( OFV, ">".$main_directory."/ofv_final.csv" );
+  print OFV "bs_n,OFV,description\n";
+
+  for ( my $i = 0; $i <scalar @{$modelfit -> raw_results}; $i++ ) {
+    my $nam = "bootstrap_$i";
+    $nam = 'original_model' if ($i==0);
+    if (defined $modelfit -> raw_results->[$i]->[$oi]){
+      print OFV "$i,".sprintf("%.4f",$modelfit -> raw_results->[$i]->[$oi]).",$nam\n";
+    }else{
+      print OFV "$i,NA,$nam\n";
+    }
+  }
+  close(OFV);
+}
+
+ui -> print( category => 'boot_scm',
+	     message => "\nboot_scm done",
+	     newline =>1);
+
+
+chdir($return_dir);

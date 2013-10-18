@@ -1,0 +1,75 @@
+#!/usr/bin/perl
+
+use FindBin qw($Bin);
+use lib "$Bin/../lib";
+
+# Don't edit the line below, it must look exactly like this.
+# Everything above this line will be replaced #
+
+use PsN;
+use strict;
+use Getopt::Long;
+use common_options;
+
+## Configure the command line parsing
+Getopt::Long::config("auto_abbrev");
+
+my %options;
+## Declare the options
+
+my %required_options = ();
+my %optional_options = ( 
+			 );
+
+my $res = GetOptions( \%options,
+		      @common_options::get_opt_strings,
+		      keys(%required_options),
+		      keys(%optional_options) );
+exit unless $res;
+
+my %help_text;
+
+$help_text{Pre_help_message} = <<'EOF';
+  <h3 class="heading1">psn_options</h3>
+
+    Common options for PsN, Perl speaks NONMEM.
+
+    Use 'psn_options -h "option"' for help on a specific option,
+    for example 'psn_options -h directory'.
+EOF
+
+$help_text{-h} = <<'EOF';
+      -h | -?
+      
+      With -h or -? psn_options will print a list of options and exit.
+EOF
+      
+$help_text{-help} = <<'EOF';      
+      -help
+      
+      With -help psn_options will print this, more descriptive, list of options and exit.
+EOF
+
+$help_text{Post_help_message} = <<'EOF';
+      Use 'psn -h' for a list of available psn scripts.
+EOF
+
+common_options::online_help( 'psn_options', \%options, \%help_text, \%required_options, \%optional_options);
+
+if (defined $options{'nm_version'}){
+  print "\nValid choices for option -nm_version:\n\n";
+  foreach my $ver ( keys %{$PsN::config -> {'nm_versions'}} ){
+    print "$ver\t (will call ".$PsN::config->{'nm_versions'}->{$ver}.")\n";
+  }
+  print "\n";
+  if (defined $PsN::config->{'nm_versions'}->{'default'}){
+    print "The default is ".$PsN::config->{'nm_versions'}->{'default'}."\n\n";
+  }
+
+}
+
+exit;
+
+
+
+

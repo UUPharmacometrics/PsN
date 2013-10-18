@@ -1,0 +1,182 @@
+#!/usr/local/bin/perl
+
+use FindBin qw($Bin);
+use lib "$Bin/../lib";
+
+# Don't edit the line below, it must look exactly like this.
+# Everything above this line will be replaced #
+
+use PsN;
+use model;
+use tool::mc;
+use strict;
+use Getopt::Long;
+use common_options;
+
+my $cmd_line = $0 . " " . join( " ", @ARGV );
+
+## Configure the command line parsing
+Getopt::Long::config("auto_abbrev");
+
+my %options;
+## Declare the options
+
+my %required_options = ( 'case_column:s' => 'column_name|column_number',
+			 'samples:i' => '100',
+			 'alternative_model:s' => 'alt.mod' );
+my %optional_options = ( "bins:i" => '',
+			 "selection_method:s" => '\'random\'|\'consecutive\'' );
+
+my $res = GetOptions( \%options,
+		      @common_options::get_opt_strings,
+		      keys(%required_options),
+		      keys(%optional_options) );
+exit unless $res;
+
+my %help_text;
+
+$help_text{Pre_help_message} = <<'EOF';
+  mc_cdd
+
+    Perl script for Monte-carlo Simulation of Case-Deletion Diagnostics of NONMEM runs.
+
+  Usage:
+EOF
+
+$help_text{Description} = <<'EOF';
+    Description:
+
+      The Case Deletion Diagnostics tool is run from the command line
+      with a few mandatory arguments. MC_CDD is run as a diagnostic after
+      a model is regarded finished or at least mature enough to run
+      validation tool on. You need to specify the NONMEM modelfile
+      with a model that have successful termination. You also have to
+      specify the number or name of the datafile column on which to
+      select for deletion. You do so with the case_column option.
+EOF
+
+$help_text{Examples} = <<'EOF';
+    Example:
+      
+      mc_cdd -model=run89.mod -case_column=10
+      
+      This will perform a Case Deletion Diagnostic on the model
+      specified in run89.mod based on the factors in column ten. If,
+      for example, column ten holds the ids of the seven centers
+      included in the study, this command will create seven copies of
+      the dataset, each with individuals included in one specific
+      center deleted. Say that the centers are numbered 1 to 7. Then
+      dataset 1 will have individuals from center 1 excluded, dataset
+      2 individuals from center 2 and so on.
+EOF
+
+$help_text{Options} = <<'EOF';      
+    Options:
+
+      The options are given here in their long form. Any option may be
+      abbreviated to any nonconflicting prefix. The -threads option
+      may be abbreviated to -t(or even -thr).
+
+      The following options are valid:
+EOF
+
+$help_text{-h} = <<'EOF';
+      -h | -?
+      
+      With -h or -? mc_cdd will print a list of options and exit.
+EOF
+      
+$help_text{-help} = <<'EOF';      
+      -help
+      
+      With -help mc_cdd will print this, longer, help message.
+EOF
+
+$help_text{-bins} = <<'EOF';
+      -bins=$number 
+
+      Sets the number of databins, or mc_cdd datasets, to use. If the
+      number of unique values, or factors, in the based_on column is
+      higher than the number of bins then one or more factors will be
+      deleted in each mc_cdd dataset. Specifying $number as higher than
+      the number of factors will have no effect. The bin number is
+      then set to the number of factors.
+      Default value = Number of unique values in the based_on column.
+EOF
+
+$help_text{-selection_method} = <<'EOF';
+      -selection_method='random' or 'consecutive'
+
+      Specifies whether the factors selected for exclusion should be
+      drawn randomly or consecutively from the datafile.
+      Default value = 'consecutive'
+EOF
+
+$help_text{-case_column} = <<'EOF';
+       -case_column=column_name|column_number
+EOF
+
+$help_text{Post_help_message} = <<'EOF';
+      Also see 'psn_options -help' for a description of common options.
+EOF
+
+common_options::online_help( 'mc_cdd', \%options, \%help_text, \%required_options, \%optional_options);
+
+## Check that we do have a model file
+if ( scalar(@ARGV) < 1 ) {
+  print "A model file must be specified. Use 'mc_cdd -h' for help.\n";
+  exit;
+}
+
+if( scalar(@ARGV) > 1 ){
+  print "MC_CDD can only handle one modelfile. Use 'mc_cdd -h' for help.\n";die;
+  exit;
+}
+
+unless ( defined $options{'case_column'} ){
+  print "case_column must be given\n" ;
+  exit;
+}
+
+unless ( defined $options{'alternative_model'} ){
+  print "alternative_model must be given\n" ;
+  exit;
+}
+
+unless ( defined $options{'samples'} ){
+  print "samples must be given\n" ;
+  exit;
+}
+
+ui -> category( 'mc_cdd' );
+ui -> silent(1) if( $options{'silent'} );
+
+my $eval_string = common_options::model_parameters(\%options);
+
+my $model = model -> new ( eval( $eval_string ),
+			   filename                    => $ARGV[0],
+			   ignore_missing_output_files => 1 );
+
+my $alternative_model = model ->
+    new ( eval( $eval_string ),
+	  filename                    => $options{'alternative_model'},
+	  ignore_missing_output_files => 1 );
+
+## Create new Mc_Cdd object:
+my $mc_cdd = tool::mc -> 
+    new ( eval( $common_options::parameters ),
+	  models	     => [ $model ],
+	  alternative_models => [ $alternative_model ],
+	  samples            => $options{'samples'},
+	  subtools           => ['cdd'],
+	  subtool_arguments  => {
+	    bins	     => $options{'bins'},
+	    selection_method => $options{'selection_method'},
+	    case_columns     => $options{'case_column'} } );
+
+open(CMD, ">", $mc_cdd -> directory . "/command.txt");
+print CMD $cmd_line, "\n";
+close(CMD);
+    
+$mc_cdd -> run;
+$mc_cdd -> print_results;

@@ -1,0 +1,294 @@
+#!/usr/bin/perl
+
+use FindBin qw($Bin);
+use lib "$Bin/../lib";
+
+# Don't edit the line below, it must look exactly like this.
+# Everything above this line will be replaced #
+
+use PsN;
+use model;
+use tool::llp;
+use strict;
+use Getopt::Long;
+use common_options;
+use ui;
+use Data::Dumper;
+
+my $cmd_line = $0 . " " . join( " ", @ARGV );
+
+my %options;
+
+my %required_options = ( "thetas:s"=>'theta list',
+			 "omegas:s"=>'omega list',
+			 "sigmas:s"=>'sigma list' );
+
+my %optional_options = ( "max_iterations:i" => '',
+			 "normq:f" => '',
+			 "outputfile:s" => '',
+			 "ofv_increase:f" => '',
+			 "significant_digits:i" => '',
+			 "rse_thetas:s" => 'theta rel. SE list',
+			 "rse_omegas:s" => 'omega rel. SE list',
+			 "rse_sigmas:s" => 'sigma rel. SE list',
+);
+
+my $res = GetOptions( \%options, 
+		      @common_options::get_opt_strings,
+		      keys(%required_options),
+		      keys(%optional_options) );
+
+exit unless $res;
+
+common_options::setup( \%options, 'llp' ); #calls set_globals etc, initiates random sequence
+
+my %help_text;
+
+$help_text{Pre_help_message} = <<'EOF';
+    <h3 class="heading1">llp</h3>
+
+      Log-likelihood profiling of NONMEM runs.
+
+    <h3 class="heading1">Usage:</h3>
+EOF
+
+$help_text{Description} = <<'EOF';
+    <h3 class="heading1">Description:</h3>
+
+      The Log-likelihood Profiling tool can be used to assess
+      confidence interval limits for parameter estimates. The
+      -2*log-likelihood of hierarchical models are chi-square
+      distributed. Fixing a parameter reduces the number of parameters
+      of the model by one. To be able to say, for a given level of
+      confidence, that there is a higher likelihood that the data has
+      been produced by a system described by the full model than by one
+      described by the reduced, the difference in the -2*log-likelihood
+      should be at least X. For example, using a confidence level of
+      95%, the difference (or X above) should be at least 3.84. The
+      minimal number of arguments include a modelfile name and a
+      listing of parameters, given that an output file with standard
+      error estimates exist.
+EOF
+
+$help_text{Examples} = <<'EOF';
+    <h3 class="heading1">Example:</h3>
+      
+      <p class="style2">llp run89.mod -thetas='1,2'</p>
+
+      This will make the llp tool try to estimate the confidence
+      intervals for thetas one and two of the model in run89.mod. It
+      will base the first guesses on the standard error estimates from
+      run89.lst.
+
+      <p class="style2">llp run89.mod -thetas='1,2' -rse_thetas='20,30'</p>
+
+      In this example, we explicitly specify the relative standard
+      errors which is necessary if we do not have an output file with
+      standard error estimates.
+EOF
+
+$help_text{Options} = <<'EOF';
+    <h3 class="heading1">Options:</h3>
+
+      The options are given here in their long form. Any option may be
+      abbreviated to any nonconflicting prefix. The <span class="style2">-threads</span> option
+      may be abbreviated to <span class="style2">-t</span>(or even <span class="style2">-thr</span>).
+    <br><br>
+      The following options are valid:
+EOF
+
+$help_text{-h} = <<'EOF';
+      <p class="style2">-h | -?</p>
+
+      With -h or -? llp will print a list of options and exit.
+EOF
+
+$help_text{-help} = <<'EOF';
+      <p class="style2">-help</p>
+      
+      With -help llp will print this, longer, help message.
+EOF
+
+$help_text{-outputfile} = <<'EOF';
+      <p class="style2">-outputfile=filename</p>
+
+      The name of the NONMEM output file. The default value is the
+      name of the model file with a '.mod' substituted with
+      '.lst'. Example: if the modelfile is run89.mod, the default name
+      of the output file is run89.lst. If the name of the modelfile is
+      cmd123 the default name of the output file is cmd123.lst. If the
+      name of your output file does not follow this standard, you have
+      to specify it with this option. 
+EOF
+      
+$help_text{-thetas} = <<'EOF';
+      -thetas=comma-separated list of parameter numbers
+
+      A comma-separated list, specifying the thetas for which the llp should 
+      try to assess confidence intervals.
+EOF
+
+$help_text{-rse_thetas} = <<'EOF';
+      <p class="style2">-rse_thetas=comma-separated list of relative standard errors</p>
+
+      A comma-separated list of the relative standard error, specified in 
+      percent (%), for each theta listed by option -thetas.
+EOF
+
+$help_text{-rse_omegas} = <<'EOF';
+      <p class="style2">-rse_omegas=comma-separated list of relative standard errors</p>
+
+      A comma-separated list of the relative standard error, specified in 
+      percent (%), for each omega listed by option -omegas.
+EOF
+
+$help_text{-rse_sigmas} = <<'EOF';
+      <p class="style2">-rse_sigmas=comma-separated list of relative standard errors</p>
+
+      A comma-separated list of the relative standard error, specified in 
+      percent (%), for each sigma listed by option -sigmas.
+EOF
+
+$help_text{-max_iterations} = <<'EOF';
+      <p class="style2">-max_iterations=integer</p>
+
+      Default value is 10. This number limits the number of search iterations 
+      for each interval limit. If the llp has not found the upper limit for a 
+      parameter after max_iteration number of guesses it terminates.
+EOF
+
+    $help_text{-significant_digits} = <<'EOF';
+      <p class="style2">-significant_digits=integer</p>
+
+      Default 3. Specifies the number of significant digits that is required 
+      for the test of the increase in objective function value. The default 
+      is 3, which means that the method will stop once the difference in 
+      objective function value is between 3.835 and 3.845 if -ofv_increase 
+      is set to 3.84 (default).
+EOF
+    $help_text{-normq} = <<'EOF';
+      <p class="style2">-normq=number</p>
+
+      Default value 1.96. The value is used for calculating the first guess of 
+      the confidence interval limits. If the standard errors (SE) exist, the 
+      guess will be maximum-likelihood estimate ± normq * SE, otherwise it 
+      will be MLE ± normq * rse_parameter/100 * MLE, where rse_parameter is 
+      rse_thetas, rse_omegas or rse_sigmas (optional input parameters). The 
+      default value or normq is 1.96 which translates to a 95% confidence 
+      interval assuming normal distribution of the parameter estimates.
+EOF
+
+    $help_text{-ofv_increase} = <<'EOF';
+      <p class="style2">-ofv_increase</p>
+
+      The increase in objective function value associated with the
+      desired confidence interval. The default value is 3.84.
+EOF
+    $help_text{-omegas} = <<'EOF';
+      <p class="style2">-omegas=comma-separated list of parameter numbers</p>
+
+      A comma-separated list, specifying the omegas for which the llp should 
+      try to assess confidence intervals.
+EOF
+
+    $help_text{-sigmas} = <<'EOF';
+      <p class="style2">-sigmas=comma-separated list of parameter numbers</p>
+
+      A comma-separated list, specifying the sigmas for which the llp should 
+      try to assess confidence intervals.
+EOF
+
+    $help_text{Post_help_message} = <<'EOF';
+      Also see 'psn_options -h' for a description of common options.
+EOF
+
+common_options::online_help( 'llp', \%options, \%help_text, \%required_options, \%optional_options);
+
+## Check that we do have a model file
+if ( scalar(@ARGV) < 1 ) {
+  print "At least on model file must be specified. Use 'llp -h' for help.\n";
+  exit;
+}
+
+if( scalar(@ARGV) > 1 ){
+  print "LLP can only handle one modelfile. Use 'llp -h' for help.\n";
+  exit;
+}
+
+unless( $options{'thetas'} or $options{'omegas'} or $options{'sigmas'}){
+  print "You must specify one of the '--thetas', '--omegas' or '--sigmas' options\n";
+  exit;
+}
+
+my @thetas     = split( ',',$options{'thetas'} );
+my @omegas     = split( ',',$options{'omegas'} );
+my @sigmas     = split( ',',$options{'sigmas'} );
+my @rse_thetas = split( ',',$options{'rse_thetas'} );
+my @rse_omegas = split( ',',$options{'rse_omegas'} );
+my @rse_sigmas = split( ',',$options{'rse_sigmas'} );
+
+my ( %checked_rse_thetas, %checked_rse_omegas, %checked_rse_sigmas );
+
+foreach my $param ( 'thetas', 'omegas', 'sigmas' ) {
+  my $nse = eval('$#rse_'.$param)+1;
+  if ( $nse > 0 ) {
+    my $npa = eval('$#'.$param)+1;
+    die "The number of $param ($npa) does not match the number of relative standard errors ($nse)\n"
+      if ( not $npa == $nse );
+    for ( my $i = 0; $i < $npa; $i++ ) {
+      eval( '$checked_rse_'.$param.'{$'.$param.'['.$i.']} = $rse_'.$param."[$i]" ),"\n";
+    }
+  }
+}
+
+unless ( defined $options{'skip_data_parsing'} or $options{'drop_dropped'} ) {
+  $options{'skip_data_parsing'} = 1;
+}
+
+
+my $eval_string = common_options::model_parameters(\%options);
+
+my $model = model -> new ( eval( $eval_string ),
+			   filename                    => $ARGV[0],
+			   ignore_missing_output_files => 1);
+
+if( $options{'nonparametric_etas'} or
+    $options{'nonparametric_marginals'} ) {
+  $model -> add_nonparametric_code;
+}
+	
+if( $options{'shrinkage'} ) {
+  $model -> shrinkage_stats( enabled => 1 );
+}
+
+## Create new Llp object:
+my $llp = tool::llp -> 
+  new ( eval( $common_options::parameters ),
+	max_iterations     => $options{'max_iterations'},
+	models		   => [ $model ],
+	normq              => $options{'normq'},
+	ofv_increase       => $options{'ofv_increase'},
+	significant_digits => $options{'significant_digits'},
+	run_thetas         => [\@thetas],
+	run_omegas         => [\@omegas],
+	run_sigmas         => [\@sigmas],
+	rse_thetas         => [\%checked_rse_thetas],
+	rse_omegas         => [\%checked_rse_omegas],
+	rse_sigmas         => [\%checked_rse_sigmas],
+	theta_interval_ratio_check => $options{'theta_interval_ratio_check'},
+	omega_interval_ratio_check => $options{'omega_interval_ratio_check'},
+	sigma_interval_ratio_check => $options{'sigma_interval_ratio_check'},
+	within_interval_check => $options{'within_interval_check'} );
+
+
+$llp-> print_options (cmd_line => $cmd_line,
+		      toolname => 'LLP',
+		      local_options => [keys %optional_options],
+		      common_options => \@common_options::tool_options);
+
+  $llp -> run;
+  $llp -> prepare_results();
+  $llp -> print_results;
+
+ui -> print( category => 'llp',
+	     message  => "llp done\n");

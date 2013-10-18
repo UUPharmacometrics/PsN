@@ -1,0 +1,389 @@
+#!/usr/bin/perl
+
+use FindBin qw($Bin);
+use lib "$Bin/../lib";
+
+# Don't edit the line below, it must look exactly like this.
+# Everything above this line will be replaced #
+
+use PsN;
+use model;
+use tool::mcmp;
+use strict;
+use Getopt::Long;
+use common_options;
+use ui;
+use Cwd;
+use OSspecific;
+
+my $cmd_line = $0 . " " . join( " ", @ARGV );
+
+## Configure the command line parsing
+Getopt::Long::config("auto_abbrev");
+
+my %options;
+## Declare the options
+
+my %required_options = ();
+my %optional_options = ( 'full_model:s' => undef,
+                         'reduced_model:s' => undef,
+                         'simulation_model:s' => undef,
+                         'stratify_on:s' => undef,
+			 'start_size:i' => undef,
+			 'significance_level:i' => undef,
+			 'increment:i' => undef,
+			 'max_size:i' => undef,
+			 'table_full:s' => undef,
+			 'table_reduced:s' => undef,
+			 'table_strata:s' => undef,
+			 'simdata:s' => undef,
+			 'n_bootstrap:i' => undef,
+			 'df:i' => undef,
+			 'critical_ofv:f' => undef,
+			 'target_power:i' => undef,
+			 'curve!' => undef
+			 );
+
+my $res = GetOptions( \%options,
+		      @common_options::get_opt_strings,
+		      keys(%required_options),
+		      keys(%optional_options) );
+exit unless $res;
+
+
+if (defined $options{'simdata'}){
+  my ($dir,$file) = OSspecific::absolute_path('', $options{'simdata'} );
+  $options{'simdata'} = $dir.$file;
+}
+
+common_options::setup( \%options, 'mcmp' ); #calls set_globals etc, initiates random sequence
+
+
+my %help_text;
+
+$help_text{Pre_help_message} = <<'EOF';
+  mcmp
+
+    Monte-Carlo Mapped Power
+EOF
+
+$help_text{Options} = <<'EOF';      
+    Options:
+
+      The options are given here in their long form. Any option may be
+      abbreviated to any nonconflicting prefix. The -threads option
+      may be abbreviated to -t(or even -thr).
+
+      The following options are valid:
+EOF
+
+$help_text{-h} = <<'EOF';
+      -h | -?
+      
+      With -h or -? mcmp will print a list of options and exit.
+EOF
+      
+$help_text{-help} = <<'EOF';      
+      -help
+      
+      With -help mcmp will print this, longer, help message.
+EOF
+
+$help_text{-reduced_model} = <<'EOF';
+      -reduced_model=file
+
+      The reduced model. Required, unless -table_reduced is used.
+EOF
+
+$help_text{-full_model} = <<'EOF';
+      -full_model=file
+
+      The full model. Required, unless -table_full is used.
+EOF
+
+$help_text{-simulation_model} = <<'EOF';
+      -simulation_model=file
+
+      The filename of the simulation model, optional. Default is the 
+      -full_model filename. If both -table_reduced and -table_full are 
+      specified, then option -simulation_model will be ignored. Cannot be 
+      used with option -simdata.
+EOF
+
+$help_text{-simdata} = <<'EOF';
+      -simdata=file
+
+      Optional. The name of a previously generated file with simulated data. 
+      Cannot be used together with option -simulation_model. If this option 
+      is set, no simulation will be performed by mcmp. Instead the file simdata
+      will be used as the datafile when estimating the full and reduced model.
+EOF
+
+$help_text{-n_bootstrap} = <<'EOF';
+      -n_bootstrap=number
+
+      Optional, default 10000. The number of bootstrapped delta-ofv:s to 
+      generate for each total sample size.
+EOF
+
+$help_text{-start_size} = <<'EOF';
+      -start_size=number
+
+      First total sample size (sum of samples from all strata) to test. 
+      Optional, default is 3*increment
+EOF
+
+$help_text{-max_size} = <<'EOF';
+      -max_size=number
+
+      The largest total sample size to plot for, optional, default equal to 
+      number of individuals in dataset.
+EOF
+
+$help_text{-increment} = <<'EOF';
+      -increment=number
+
+      Optional, default is the number of strata (1 if stratification is not 
+      used). Only consider setting this option if the stratification groups 
+      do not have equal size (the design is not balanced). Option -increment 
+      is the stepsize for the total sample size (sum of samples from all strata)
+      i.e. the distance on the x-axis between the points in a total sample size
+      vs. power plot.
+EOF
+
+$help_text{-df} = <<'EOF';
+      -df=number
+
+      Optional, default 1. The number of degrees of freedom for the chi-square 
+      test. Allowed values are 1-30 in steps of 1 and 40-100 in steps of 10. 
+      PsN will compute the power for significance levels 5%, 1% and 0.1% for 
+      the number of degrees of freedom.
+EOF
+
+$help_text{-significance_level} = <<'EOF';
+      -significance_level=number
+
+      Significance level for the chi-square test.
+      Default 5 (%). Permitted values are 5, 1 and 0.1.
+EOF
+
+$help_text{-critical_ofv} = <<'EOF';
+      -critical_ofv=number
+
+      Optional, no default. If specified, -critical_ofv will override the 
+      setting of -df. PsN will work with positive values internally 
+      (delta_ofv=reduced-full, check if delta_ofv > critical_ofv), but will 
+      automatically change the sign if the user gives a negative value.
+EOF
+
+$help_text{-target_power} = <<'EOF';
+      -target_power=number
+
+      The highest power for which the program will determine the
+      required sample size. Default 98.
+EOF
+
+$help_text{-curve} = <<'EOF';
+      -curve
+
+      Default set. Can be disabled with -no-curve. This option controls whether
+      the complete power curve up to the target power should be generated, 
+      or if the program should only compute the sample size required to achieve 
+      the target power.
+EOF
+
+$help_text{-stratify_on} = <<'EOF';
+      -stratify_on=VARIABLE
+
+      The name of the variable to stratify on, optional. Must be all uppercase 
+      and (unless NM7) at most 4 characters. Unless -table_strata is specified,
+      the variable must be possible to request in $TABLE, i.e. either present 
+      in $INPUT or defined in $PK/$PRED/$ERROR. PsN does not check that the 
+      variable is defined. If -reduced_model is specified then PsN will set 
+      $TABLE there, otherwise $TABLE will be set in the full model. The 
+      stratification table will not be generated from the simulation model. 
+      PsN will set $TABLE ID <stratify_on> FIRSTONLY NOAPPEND NOPRINT 
+      ONEHEADER FILE=strata.tab
+EOF
+
+$help_text{-table_full} = <<'EOF';
+      -table_full=file
+
+      Optional. The name of the table containing iofv for the full model. 
+      If this option is used, PsN will skip the estimation of the full model 
+      and read the table directly instead. For this option, iotab tables 
+      generated using PsN with option -iofv and NONMEM6 will work, as well 
+      as .phi-files generated with NONMEM7. Files generated in other ways 
+      must follow the following rules: There must be exactly one row per 
+      individual, all other lines (headers) must start with a non-number, 
+      the columns must be space or tab separated, and iofv must come in the 
+      last column.
+EOF
+
+$help_text{-table_reduced} = <<'EOF';
+      -table_reduced=file
+
+      Optional. The name of the table containing iofv for the reduced model. 
+      If this option is used, PsN will skip the estimation of the reduced 
+      model and read the table directly instead. The file must have the format 
+      defined in the -table_full help text.
+EOF
+$help_text{-table_strata} = <<'EOF';
+      -table_strata=file
+
+      Optional unless both -table_full and -table_reduced is used and 
+      stratify_on is set, then required. Table with stratification column. 
+      Must have only one row per individual, i.e. for example generated in 
+      NONMEM with FIRSTONLY (see option -stratify_on), and must have a header 
+      with ID and stratification variable name. Option -table_strata may be 
+      used even if neither of -table_full or -table_reduced are used, then the 
+      stratification column in -table_strata will be used instead of a table 
+      generated from the estimation of the full or reduced model.
+EOF
+
+
+
+
+$help_text{Post_help_message} = <<'EOF';
+
+    Also see 'psn_options -h' for a description of PsN common options.
+EOF
+
+common_options::online_help( 'mcmp', \%options, \%help_text, \%required_options, \%optional_options);
+
+## Check that we do not have a model file
+if ( scalar(@ARGV) > 0 ) {
+  print "Model files can only be specified using option -full_model and -reduced model.\n".
+      "Make sure that all options start with a '-' sign\n".
+      "Use 'mcmp -h' for help.\n";
+  exit;
+}
+
+my $dir= getcwd();
+if (defined $options{'table_reduced'}) {
+  if ($options{'table_reduced'} =~ /^~/){
+    die "Table filename must not start with ~.\n";
+  }
+  unless ($options{'table_reduced'} =~ /^\//  ){
+    $options{'table_reduced'} = $dir.'/'.$options{'table_reduced'};
+  }  
+}
+if (defined $options{'table_full'}) {
+  if ($options{'table_full'} =~ /^~/){
+    die "Table filename must not start with ~.\n";
+  }
+  unless ($options{'table_full'} =~ /^\//  ){
+    $options{'table_full'} = $dir.'/'.$options{'table_full'};
+  }  
+}
+if (defined $options{'table_strata'}){
+  if ($options{'table_strata'} =~ /^~/){
+    die "Table filename must not start with ~.\n";
+  }
+  unless ($options{'table_strata'} =~ /^\//){
+    $options{'table_strata'} = $dir.'/'.$options{'table_strata'};
+  }  
+}
+
+unless ( defined $options{'skip_data_parsing'} or $options{'drop_dropped'}) {
+  $options{'skip_data_parsing'} = 1;
+}
+
+my $eval_string = common_options::model_parameters(\%options);
+
+unless ( defined $options{'skip_data_parsing'} or $options{'drop_dropped'}) {
+  $options{'skip_data_parsing'} = 1;
+}
+
+my $full_model;
+my $reduced_model;
+my $simulation_model;
+if (defined $options{'full_model'}){
+    $full_model = model -> new ( eval( $eval_string ),
+				 filename                    => $options{'full_model'},
+				 ignore_missing_output_files => 1,
+				 iofv                  => ($PsN::nm_major_version < 7));
+}
+if (defined $options{'reduced_model'}){
+    $reduced_model = model -> new ( eval( $eval_string ),
+				    filename                    => $options{'reduced_model'},
+				    ignore_missing_output_files => 1,
+				    iofv                  => ($PsN::nm_major_version < 7));
+}
+
+if (defined $options{'simulation_model'} or 
+    (defined $options{'full_model'} and (not defined $options{'simdata'}))){
+    my $use_full=0;
+    my $file = $options{'simulation_model'};
+    unless (defined $file){
+	$file = $options{'full_model'} ;
+	$use_full =1;
+    }
+    $simulation_model = model -> new ( eval( $eval_string ),
+				       filename                    => $file,
+				       ignore_missing_output_files => 1);
+
+    if ($use_full){
+	foreach my $modprob (@{$simulation_model->problems()}){
+	    my $inp_ref =  $modprob -> inputs();
+	    if ( defined $inp_ref and defined $inp_ref -> [0] ) {
+		my $input = $inp_ref -> [0];
+		my $opt_ref = $input -> options;
+		if ( defined $opt_ref ) {
+		    my @options = @{$opt_ref};
+		    foreach my $option ( @options ) {
+			if  ($option -> value eq 'DROP' or $option -> value eq 'SKIP'
+			     or $option -> name eq 'DROP' or $option -> name eq 'SKIP'){
+			    die "When the full model is also used as the simulation model,\n".
+				"mcmp does not support DROP/SKIP in the full model.\n".
+				"Remove DROP/SKIP in the full model and try again.\n";
+			}
+		    }
+		}
+	    }
+	}
+    }
+
+}else{
+# tool class requires a model, but we do not want to give one. Use dummy
+  my $dummy_prob = model::problem -> new ( ignore_missing_files=> 1,
+					   prob_arr       => ['$PROB','$INPUT ID','$DATA dummy.txt']);
+  
+  $simulation_model = model -> new (filename => 'dummy_for_mcmp',
+				    problems => [$dummy_prob],
+				    skip_data_parsing=> 1,
+				    ignore_missing_files => 1);
+}
+
+my $mcmp = tool::mcmp -> 
+    new ( eval( $common_options::parameters ),
+	  stratify_on        => $options{'stratify_on'},
+	  increment          => $options{'increment'},
+	  start_size         => $options{'start_size'},
+	  max_size           => $options{'max_size'},
+	  target_power       => $options{'target_power'},
+	  curve              => $options{'curve'},
+	  table_full         => $options{'table_full'},
+	  table_reduced      => $options{'table_reduced'},
+	  table_strata       => $options{'table_strata'},
+	  n_bootstrap        => $options{'n_bootstrap'},
+	  df                 => $options{'df'},
+	  significance_level => $options{'significance_level'},
+	  critical_ofv       => $options{'critical_ofv'},
+	  simdata            => $options{'simdata'},
+	  full_model => $full_model,
+		reduced_model => $reduced_model,
+	  models => [$simulation_model]
+	  );
+
+
+$mcmp-> print_options (cmd_line => $cmd_line,
+		      toolname => 'MCMP',
+		      local_options => [keys %optional_options],
+		      common_options => \@common_options::tool_options);
+
+$mcmp -> run;
+$mcmp -> print_results;
+
+ui -> print( category => 'mcmp',
+	     message  => "mcmp done.\n");

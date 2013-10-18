@@ -1,0 +1,199 @@
+#!/usr/bin/perl
+
+# Only for Development
+use FindBin qw($Bin);
+use lib "$Bin/../lib";
+
+# Don't edit the line below, it must look exactly like this.
+# Everything above this line will be replaced #
+
+# Perl includes #
+use Config;
+use strict;
+use Getopt::Long;
+# External modules #
+use Math::Random;
+# PsN includes #
+use PsN;
+use tool::modelfit;
+use model;
+use common_options;
+use ui;
+use Cwd;
+use File::Copy qw/cp mv/;
+
+my $cmd_line = $0 . " " . join( " ", @ARGV );
+
+my %options;
+
+my %required_options = ();
+my %optional_options = ("prepend_options_to_lst!"=> undef,
+			 "prepend_model_to_lst!"=> undef,
+			 "model_dir_name!" => undef,
+			 "tail_output!" => undef,
+			 "wintail_exe:s" => undef,
+			 "wintail_command:s" => undef
+			 );
+
+my $res = GetOptions( \%options,
+		      @common_options::get_opt_strings,
+		      keys(%optional_options) );
+
+exit unless $res;
+
+
+common_options::setup( \%options, 'execute' ); #calls set_globals etc, initiates random sequence
+
+
+my %help_text;
+
+$help_text{Pre_help_message} = <<'EOF';
+  <h3 class="heading1">parallel_retries</h3>
+
+    Running a modelfile with multiple sets of tweaked initial estimates.
+    The program takes the same input as execute, see execute -h, except
+    that -min_retries is required and only a single input model can be used.
+EOF
+
+common_options::online_help('parallel_retries', \%options,\%help_text, \%required_options, \%optional_options);
+
+## Set the automatic renaming of modelfit directory
+if ( !$options{'directory'} && $options{'model_dir_name'} ) {
+ 
+    my $dirnamebase = $ARGV[0].".dir";
+    my $i = 1;
+    while(-e $dirnamebase.".$i") {$i++};
+    my $dirname = $dirnamebase.".$i";
+    $options{'directory'} = $dirname;
+}
+
+
+my @outputfiles;
+my $fake;
+if( $options{'outputfile'} ){
+  @outputfiles = split( /,/, $options{'outputfile'} );
+}
+
+
+my $models_array;
+
+unless ( defined $options{'skip_data_parsing'} or $options{'drop_dropped'}) {
+  $options{'skip_data_parsing'} = 1;
+}
+
+my $eval_string = common_options::model_parameters(\%options);
+
+foreach my $model_name ( @ARGV ){  
+  my $outputfile = shift @outputfiles;
+  my $model;
+  
+  $model = model -> new ( eval( $eval_string ),
+			  outputfile                  => $outputfile,
+			  filename                    => $model_name,
+			  ignore_missing_output_files => 1 );
+  
+  if( $options{'nonparametric_etas'} or
+      $options{'nonparametric_marginals'} ) {
+    $model -> add_nonparametric_code;
+  }
+  
+  if( $options{'shrinkage'} ) {
+    $model -> shrinkage_stats( enabled => 1 );
+  }
+  
+  push( @{$models_array}, $model );
+}
+
+if($options{'tail_output'} ) {
+  if($Config{osname} ne 'MSWin32'){
+    print "Warning: option -tail_output only works on Windows.\n";
+    $options{'tail_output'}=0;
+  }
+  unless (defined $options{'wintail_exe'} ) {
+    print "Warning: option -wintail_exe is not set, -tail_output will not work\n";
+    $options{'tail_output'}=0;
+  }
+  unless (defined $options{'wintail_command'} ) {
+    print "Warning: option -wintail_command is not set, -tail_output will not work\n";
+    $options{'tail_output'}=0;
+  }
+}
+
+my $modelfit;
+
+if( scalar @{$models_array} > 1 ) {
+  die "When using parallel_retries, no "
+      ."more than one model at a time may be run\n";
+}
+if(not (defined $options{'min_retries'}) or $options{'min_retries'}<1 ) {
+  die "No point using parallel_retries unless -min_retries>0\n";
+}
+
+my $return_dir = getcwd();
+my $main_directory = $options{'directory'};
+if (defined $main_directory){
+  $main_directory =$return_dir.'/'.$main_directory.'/';
+}else{
+  $main_directory= OSspecific::unique_path( 'parallel_retries_dir' ,$return_dir);
+}
+mkdir( $main_directory) unless ( -d  $main_directory);
+chdir($main_directory);
+my $main_model = $models_array -> [0] -> copy( filename    => $models_array -> [0]->filename(),
+					       copy_data   => 0,
+					       copy_output => 0,
+					       directory => $main_directory,
+					       target => 'mem');
+
+$main_model ->_write();
+$main_model->datas()->[0]->synchronize();
+$main_model->datas()->[0]->directory($main_directory);
+$main_model->datas()->[0]->_write();
+my $mod_array;
+push(@{$mod_array},$main_model);
+foreach (my $retry=1;$retry<=$options{'min_retries'};$retry++){
+  my $filestem = $models_array -> [0]->filename();
+  $filestem =~ s/\.mod//;
+  my $retry_mod = $models_array -> [0] -> copy( filename    => $filestem.'_retry'.$retry.'.mod',
+						copy_data   => 0,
+						copy_output => 0,
+						directory => $main_directory,
+						target => 'mem');
+  my @problems = @{$retry_mod -> problems};
+  my $degree = 0.1;
+  foreach my $prob ( @problems ) {
+    $prob -> set_random_inits ( degree => $degree );
+  }
+  $retry_mod -> _write();
+  push(@{$mod_array},$retry_mod);
+}
+#basedirect $main_directory
+$modelfit = tool::modelfit -> 
+    new ( eval( $common_options::parameters ),
+	  prepend_model_to_lst => $options{'prepend_model_to_lst'},
+	  prepend_model_file_name => 1,
+	  prepend_options_to_lst => $options{'prepend_options_to_lst'},
+	  tail_output => $options{'tail_output'},
+	  wintail_exe => $options{'wintail_exe'},
+	  wintail_command => $options{'wintail_command'},
+	  directory => 'modelfit_dir1',
+	  min_retries => 0,
+	  retries =>0,
+	  data_path =>'../../',
+	  models => $mod_array );  
+
+
+
+$modelfit-> print_options (cmd_line => $cmd_line,
+			   directory => $main_directory,
+			   toolname => 'parallel_retries',
+			   local_options => [keys %optional_options],
+			   common_options => \@common_options::tool_options);
+
+
+$modelfit -> run;
+
+mv('modelfit_dir1/raw_results.csv','raw_results.csv');
+
+
+ui -> print( category => 'parallel_retries',
+	     message => "\nparallel_retries done\n" );

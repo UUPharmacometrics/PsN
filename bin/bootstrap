@@ -1,0 +1,342 @@
+#!/usr/bin/perl
+
+use FindBin qw($Bin);
+use lib "$Bin/../lib";
+
+# Don't edit the line below, it must look exactly like this.
+# Everything above this line will be replaced #
+
+use PsN;
+use model;
+use tool::bootstrap;
+use strict;
+use ui;
+use Getopt::Long;
+use common_options;
+use Data::Dumper;
+
+my $cmd_line = $0 . " " . join( " ", @ARGV );
+
+## Configure the command line parsing
+Getopt::Long::config("auto_abbrev");
+
+## Declare the options
+my %options;
+
+my %required_options = ();
+my %optional_options = ("samples:i"=>'',
+			"sample_size:s"=>'',
+			"stratify_on:s"=>'',
+			"bca"=>'',
+			"dofv!"=>'',
+			"mceta:i"=>'',
+			"rplots"=>'',
+			"skip_minimization_terminated!"=>'',
+			"skip_covariance_step_terminated!"=>'',
+			"skip_with_covstep_warnings!"=>'',
+			"skip_estimate_near_boundary!"=>'',
+			"allow_ignore_id!"=>'',
+			"copy_data!"=>'',
+			);
+
+my $res = GetOptions( \%options, 
+		      @common_options::get_opt_strings,
+		      keys(%required_options),
+		      keys(%optional_options) );
+
+exit unless $res;
+
+common_options::setup( \%options, 'bootstrap' ); #calls set_globals etc, initiates random sequence
+
+
+my %help_text;
+$help_text{Pre_help_message} = <<'EOF';  
+    <h3 class="heading1">bootstrap</h3>
+      
+      Bootstrap using the percentile or BCa method.
+      
+    <h3 class="heading1">Usage:</h3>
+EOF
+
+    $help_text{Description} = <<'EOF';
+   <h3 class="heading1">Description:</h3>
+
+      The Bootstrap can be used to calculate bias, standard errors and
+      confidence intervals. It does so by resampling with replacement
+      from the data, see Efron B, An Introduction to the Bootstrap,
+      Chap. & Hall, London UK, 1993. To compute standard errors for
+      all parameters of a model using the non-parametric bootstrap
+      implemented here, roughly 200 model fits are necessary. To assess
+      95% confidence intervals approximatly 2000 runs will suffice.
+EOF
+    $help_text{Examples} = <<'EOF';
+   <h3 class="heading1">Example:</h3>
+
+      <p class="option">bootstrap -samples=200 run89.mod</p>
+
+      This will run a non-parametric bootstrap of 200 samples and give
+      you good estimates of the standard errors of the parameter
+      estimates. You may get some estimates for the confidence
+      intervals too, but they will generally not be of high quality.
+
+
+      <p class="option">bootstrap -samples=2000 -bca run89.mod</p>
+
+      This will run a non-parametric bootstrap using the BCa technique
+      (See An introduction to the bootstrap, Efron, 1993). The BCa is
+      intended for caclulation of second-order correct confidence
+      intervals.
+
+
+      <p class="option">bootstrap -samples=2000 -bca -stratify_on=GRP run89.mod </p>
+
+      This is the same BCa approach as above but with stratification
+      on the factors of the GRP variable.
+EOF
+
+    $help_text{Options} = <<'EOF';
+   <h3 class="heading1">Options:</h3>
+
+      The options are given here in their long form. Any option may be
+      abbreviated to any nonconflicting prefix. The -threads option
+      may be abbreviated to <span class="option">-t</span> (or even <span class="option">-thr</span>).
+
+      The following options are valid:
+EOF
+      
+    $help_text{-samples} = <<'EOF';      
+      <p class="option">-samples</p>
+
+      The number of bootstrapped datasets to generate.
+EOF
+    $help_text{-dofv} = <<'EOF';      
+      <p class="option">-dofv</p>
+
+      Compute delta-ofv by doing a MAXEVAL=0 run on orginal dataset with the 
+      bootstrap parameter estimates.
+EOF
+    $help_text{-mceta} = <<'EOF';      
+      <p class="option">-mceta</p>
+
+      Only allowed in combination with -dofv and when NM7.3 or later and
+      a classical estimation method is used. Set MCETA=N in $EST when
+      computing delta-ofv.
+EOF
+
+    $help_text{-sample_size} = <<'EOF';
+      <p class="option">-sample_size</p>
+
+      The number of subjects in each bootstrap data set. The default
+      value is set to the number of individuals in the original data
+      set.
+
+      When the resampling is stratified, the sample_size option can be
+      used to specify the exact number of samples that should be drawn
+      from each strata. Below follows an example of the syntax that
+      should be used in such a case. Stratification is here done based
+      on the study number, STUD, with the values 1001, 1002 and 1003.
+
+      -sample_size='1001=>12,1002=>24,1003=>10'
+
+      This example specifies that the bootstrap should use 12 samples
+      from study 1001, 24 samples from 1002 and 10 from study 1003.
+
+      If only one sample size is used together with stratified
+      resampling (the default case; sample_size=number of individuals
+      in the data set), the strata are assigned samples in proportion
+      to their size in the data set. Please note that this usage of
+      the sample_size option does not guarantee that the sum of the
+      samples of the strata is equal to the given sample_size since
+      PsN needs to round the figures to the closest integer. For a
+      sample size equal to the number of individuals in the data set,
+      the sum will however always be correct.
+
+EOF
+
+    $help_text{-bca} = <<'EOF';
+      <p class="option">-bca</p>
+
+      Using the <span class="option">-bca </span>option, the bootstrap
+      utility will calculate the confidence intervals through the BCa
+      method. The default approach however, is not to use the BCa (see
+      Efron B, An introduction to the Bootstrap, 1993). The BCa is
+      intended for calculation of second-order correct confidence
+      intervals. Using bca is very time-consuming. 
+EOF
+
+    $help_text{-copy_data} = <<'EOF';
+      <p class="option">-copy_data</p>
+    Default not set. By default, the bootstrapped datasets bs_pr1_<sample_no>.dta 
+    generated in the m1 subdirectory are not copied to the NM_run subdirectories 
+    of modelfit_dir1. Relative data paths, ../../m1/bs_pr1_<sample_no>.dta , are 
+    used in $DATA in the modelfiles in NM_run. This saves much disk space. 
+    If -copy_data is set, the bootstrapped datasets are instead copied to the 
+    NM_run directories, and $DATA has  bs_pr1_<sample_no>.dta without any path.
+
+EOF
+
+    $help_text{-stratify_on} = <<'EOF';
+      <p class="option">-stratify_on=integer|string</p>
+
+      It may be necessary to use stratification in the resampling
+      procedure. For example, if the original data consists of two
+      groups of patients - say 10 patients with full pharmacokinetic
+      profiles and 90 patients with sparse steady state concentration
+      measurements - it may be wise to restrict the resampling
+      procedure to resample within the two groups, producing bootstrap
+      data sets that all contain 10 rich + 90 sparse data patients but
+      with different compositions. The default is not to use
+      stratification. Set <span class="option">-stratify_on</span> to
+      the column (the name in INPUT in the model) that defines the two groups.
+
+      Note that the option sample_size has a different behavior when
+      stratified resampling is used.
+EOF
+
+    $help_text{-skip_covariance_step_terminated} = <<'EOF';
+      <p class="option">-skip_covariance_step_terminated</p>
+
+      With this option enabled, the bootstrap will skip all samples
+      where the NONMEM run terminated the covariance step.
+      Force disabling with -no-skip_covariance_step_terminated.
+EOF
+
+    $help_text{-skip_with_covstep_warnings} = <<'EOF';
+      <p class="option">-skip_with_covstep_warnings</p>
+
+      With this option enabled, the bootstrap will skip all samples
+      where the NONMEM run had warnings from the covariance step.
+      Force disabling with -no-skip_with_covstep_warnings.
+EOF
+ 
+    $help_text{-skip_minimization_terminated} = <<'EOF';
+      <p class="option">-skip_minimization_terminated</p>
+
+      With this option enabled, the bootstrap will skip all samples
+      where the NONMEM run terminated the minimization step.
+      Force disabling with -no-skip_minimization_terminated.
+EOF
+  
+    $help_text{-skip_estimate_near_boundary} = <<'EOF';
+      <p class="option">-skip_estimate_near_boundary</p>
+
+      With this option enabled, the bootstrap will skip all samples
+      where the NONMEM run signal that some estimates are near its
+      boundary.
+      Force disabling with -no-skip_estimate_near_boundary.
+EOF
+
+   $help_text{-allow_ignore_id} = <<'EOF';
+      <p class="option">-allow_ignore_id</p>
+
+      Allow IGNORE/ACCEPT statements in the $DATA record based on ID column.
+      Default not used, i.e. IGNORE/ACCEPT certain ID values is not allowed. 
+      Warning: If turned on, resampling of individuals
+      may be erroneous, since the script renumbers individuals before sampling.
+EOF
+
+    $help_text{-rplots} = <<'EOF';
+      <p class="option">-rplots</p>
+
+      Generate R script for making various plots of the result.
+      The script will be called bootstrap.R and be saved in the main
+      run directory. If R is configured in psn.conf the script will
+      also be run and a number of pdf-format plots be created.
+      Warning: The script may contain errors and should preferably 
+      only be used as a starting point by someone who knows R programming.
+EOF
+
+    $help_text{Post_help_message} = <<'EOF';
+      Also see 'psn_options -h' for a description of common options.
+EOF
+
+common_options::online_help('bootstrap',\%options, \%help_text, \%required_options, \%optional_options);
+
+
+## Check that we do have a model file
+if ( scalar(@ARGV) < 1 ) {
+  print "A model file must be specified. Use 'bootstrap -h' for help.\n";
+  exit;
+}
+
+if( scalar(@ARGV) > 1 ){
+  print "Bootstrap can only handle one modelfile. Use 'bootstrap -h' for help.\n";
+  exit;
+}
+
+if ( defined $options{'dummy_data'} ){
+  #never allow dummy_data with bootstrap
+  $options{'dummy_data'} = 0;
+}
+
+my $eval_string = common_options::model_parameters(\%options);
+
+my $model = model -> new ( eval( $eval_string ),
+			   filename                    => @ARGV[0],
+			   ignore_missing_output_files => 1 );
+
+if( $options{'shrinkage'} ) {
+  $model -> shrinkage_stats( enabled => 1 );
+}
+
+
+my $type = defined $options{'bca'} ? 'bca' : undef;
+
+
+if( defined $options{'sample_size'} ) {
+  $options{'sample_size'} = 'default=>'.$options{'sample_size'} if( $options{'sample_size'} =~ /^\d+$/ );
+} else {
+  $options{'sample_size'} = 'default=>'.$model -> datas() -> [0] -> count_ind();
+}
+my %subj_hash = eval($options{'sample_size'});
+if( $@ ) {
+  die $@."\nThe sample_size option must be either a single number or of the format 'strata1=>12,strata2=>34, ...' etc" ;
+}
+
+## Create new Bootstrap object:
+my $bs = tool::bootstrap -> 
+  new ( eval( $common_options::parameters ),
+	top_tool => 1,
+	prepend_model_file_name => 1,
+	models				     => [ $model ],
+	samples				     => $options{'samples'},
+	subjects			     => \%subj_hash,
+	type				     => $type,
+	stratify_on                          => $options{'stratify_on'},
+	dofv                                  => $options{'dofv'},
+	mceta                                 => $options{'mceta'},
+	skip_minimization_terminated         => $options{'skip_minimization_terminated'},
+	skip_covariance_step_terminated      => $options{'skip_covariance_step_terminated'},
+	skip_with_covstep_warnings           => $options{'skip_with_covstep_warnings'},
+	skip_estimate_near_boundary          => $options{'skip_estimate_near_boundary'},
+	se_confidence_intervals_level         => $options{'se_confidence_intervals_level'},
+	percentile_confidence_intervals_level => $options{'percentile_confidence_intervals_level'},
+	bca_confidence_intervals_level        => $options{'bca_confidence_intervals_level'},
+	se_confidence_intervals_check         => $options{'se_confidence_intervals_check'},
+	percentile_confidence_intervals_check => $options{'percentile_confidence_intervals_check'},
+	bca_confidence_intervals_check        => $options{'bca_confidence_intervals_check'},
+	allow_ignore_id                      => $options{'allow_ignore_id'},
+	copy_data                            => $options{'copy_data'}
+	);
+
+$bs-> print_options (cmd_line => $cmd_line,
+		     toolname => 'bootstrap',
+		     local_options => [keys %optional_options,'type'],
+		     common_options => \@common_options::tool_options);
+
+
+if ( $options{'summarize'} ) {
+  $bs -> prepare_results();
+  $bs -> print_results();
+} else {
+  $bs -> run;
+  $bs -> prepare_results();
+  $bs -> print_results();
+}
+
+if( $options{'rplots'} ){
+  $bs -> create_R_scripts();
+}
+
+ui -> print( category => 'bootstrap',
+	     message  => "\nBootstrap done.\n");

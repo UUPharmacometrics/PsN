@@ -1,0 +1,244 @@
+#!/usr/bin/perl
+
+use FindBin qw($Bin);
+use lib "$Bin/../lib";
+
+# Don't edit the line below, it must look exactly like this.
+# Everything above this line will be replaced #
+
+use PsN;
+use strict;
+use Getopt::Long;
+use common_options;
+
+## Configure the command line parsing
+Getopt::Long::config("auto_abbrev");
+
+my %options;
+## Declare the options
+
+my %required_options = ();
+my %optional_options = ( 
+			 'bootstrap' => '',
+			 'boot_scm' => '',
+			 'cdd' => '',
+			 'create_subsets' => '',
+			 'data_stats' => '',
+			 'execute' =>'',
+			 'extended_grid' => '',
+			 'frem' => '',
+			 'gls' => '',
+			 'mimp' => '',
+			 'lasso' => '',
+			 'linearize' => '',
+			 'llp' => '',
+			 'mcmp' => '',
+			 'nonpb' => '',
+			 'nm_versions' => '',
+			 'npc' => '',
+			 'parallel_retries' => '',
+			 'pind' => '',
+			 'psn_clean' => '',
+			 'psn_options' => '',
+			 'randtest' => '',
+			 'runrecord' => '',
+			 'scm' => '',
+			 'se_of_eta' => '',
+			 'sse' => '',
+			 'sumo' => '',
+			 'update_inits' => '',
+			 'vpc' => '',
+			 'xv_scm' => ''
+			 );
+
+
+my $res = GetOptions( \%options,
+		      @common_options::get_opt_strings,
+		      keys(%required_options),
+		      keys(%optional_options) );
+exit unless $res;
+
+my %help_text;
+
+$help_text{Pre_help_message} = <<'EOF';
+    Perl speaks NONMEM.
+
+    Listing of PsN scripts.
+EOF
+
+$help_text{-h} = <<'EOF';
+      -h | -?
+      
+      With -h or -? psn will print a list of scripts and exit.
+EOF
+      
+$help_text{-help} = <<'EOF';      
+      -help
+      
+      With -help psn will print this, more descriptive, list of scripts and exit.
+EOF
+
+$help_text{-bootstrap} = <<'EOF';
+      bootstrap - Bootstrap using the percentile or BCa method.
+EOF
+
+$help_text{-cdd} = <<'EOF';
+      cdd - Case Deletion Diagnostics
+EOF
+
+
+
+$help_text{-create_subsets} = <<'EOF';
+      create_subsets -  creates subsets of the individuals of
+      a dataset.
+EOF
+
+$help_text{-data_stats} = <<'EOF';
+      data_stats - Print simple statistics for dataset columns.
+EOF
+
+$help_text{-execute} = <<'EOF';
+      execute - NONMEM runs are started using one or multiple model files.
+EOF
+
+$help_text{-extended_grid} = <<'EOF';
+      extended_grid - non-parametric estimation on the extended grid.
+EOF
+
+$help_text{-frem} = <<'EOF';
+      frem - Full random effects modeling.
+EOF
+
+$help_text{-mimp} = <<'EOF';
+      mimp - Multiple imputation of missing covariates.
+EOF
+
+$help_text{-lasso} = <<'EOF';
+      lasso - Covariate model building using the LASSO method.
+EOF
+
+$help_text{-linearize} = <<'EOF';
+      linearize - Linearize a model.
+EOF
+
+$help_text{-llp} = <<'EOF';
+      llp - Log-Likelihood Profiling around maximum-likelihood parameter
+      estimates.
+EOF
+
+$help_text{-mcmp} = <<'EOF';
+      mcmp - Monte-Carlo mapped power. A fast method for power computations.
+EOF
+
+$help_text{-nm_versions} = <<'EOF';
+      -nm_versions is an option to this program psn, not a standalone script. 
+      The command 
+      psn -nm_versions 
+      will give a list of the available NONMEM versions defined in the 
+      configuration file psn.conf, i.e. the available alternatives for
+      common option -nm_version (see psn_options -h nm_version for details).
+EOF
+
+$help_text{-nonpb} = <<'EOF';
+      nonpb - Non-Parametric Bootstrap
+EOF
+
+$help_text{-npc} = <<'EOF';
+      npc - Numerical Predictive Check
+EOF
+
+$help_text{-parallel_retries} = <<'EOF';
+      parallel_retries - Running multiple copies of a single model with tweaked 
+      initial estimates in parallel.
+EOF
+
+$help_text{-pind} = <<'EOF';
+      pind - Individual Probabilities
+EOF
+
+$help_text{-psn_clean} = <<'EOF';
+      psn_clean - Automatic cleaning of PsN run directories.
+EOF
+
+$help_text{-psn_options} = <<'EOF';
+      psn_options - List options common to most PsN scripts.
+EOF
+
+$help_text{-runrecord} = <<'EOF';
+      runrecord - Create records of NONMEM runs
+EOF
+
+$help_text{-randtest} = <<'EOF';
+      randtest - Randomization testing
+EOF
+
+$help_text{-scm} = <<'EOF';
+      scm - Stepwise Covariate Model-building
+EOF
+
+$help_text{-se_of_eta} = <<'EOF';
+      se_of_eta - Standard Errors of Etas
+EOF
+
+
+$help_text{-sse} = <<'EOF';
+      sse - Stochastic Simulation and Estimation
+EOF
+
+$help_text{-sumo} = <<'EOF';
+      sumo - Summary of Output from NONMEM
+EOF
+
+$help_text{-update_inits} = <<'EOF';
+      update_inits - read final THETA, OMEGA and SIGMA estimates from a 
+      NONMEM output file and put into a given model file.
+EOF
+
+$help_text{-vpc} = <<'EOF';
+      vpc - Visual Predictive Check
+EOF
+
+$help_text{-gls} = <<'EOF';
+      gls - Generalized Least Squares approximations of the residual error.
+EOF
+
+$help_text{-xv_scm} = <<'EOF';
+      xv_scm - Cross-validated stepwise covariate model building.
+EOF
+
+$help_text{-boot_scm} = <<'EOF';
+      boot_scm - Boot-strapped stepwise covariate model building.
+EOF
+
+$help_text{Post_help_message} = <<'EOF';
+
+    Use 'psn -h "scriptname"' for a one-line description of a script,
+    for example 'psn -h sse'.
+
+    Use '"scriptname" -help' for details on a particular script,
+    for example 'sse -help'. Exception is -nm_versions which is only
+    an option to this program, see 'psn -h nm_versions'.
+
+    Use 'psn_options -h' for a list of common options to PsN.
+EOF
+
+common_options::online_help( 'psn', \%options, \%help_text, \%required_options, \%optional_options);
+
+
+
+if ((defined $options{'nm_versions'}) || (defined $options{'nm_version'})){
+  print "\nValid choices for option -nm_version ".
+      "(see 'psn_options -h nm_version' for details):\n\n";
+  foreach my $ver ( keys %{$PsN::config -> {'nm_versions'}} ){
+    printf "%-25s (%s)\n",$ver,$PsN::config->{'nm_versions'}->{$ver};
+  }
+  print "\n";
+  if (defined $PsN::config->{'nm_versions'}->{'default'}){
+    print "The default is ".$PsN::config->{'nm_versions'}->{'default'}."\n\n";
+  }else{
+    print "No default version is defined\n\n";
+  }
+
+}
+
+exit;

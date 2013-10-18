@@ -1,0 +1,63 @@
+output_style = SPLUS
+job_polling_interval=1
+
+[nm_versions]
+
+[default_options]
+threads=5
+nmfe=1
+nm_output=ext,cov,cor,coi,phi
+
+[default_execute_options]
+display_iterations=1
+
+[default_gls_options]
+samples=30
+
+[default_lasso_options]
+retries=5
+maxevals=50000
+
+[default_llp_options]
+within_interval_check = 0
+theta_interval_ratio_check = 1.3
+omega_interval_ratio_check = 1.6
+sigma_interval_ratio_check = 1.6
+
+[default_cdd_options]
+xv=0
+outside_n_sd_check = 2
+
+[default_bootstrap_options]
+skip_minimization_terminated = 1
+skip_covariance_step_terminated = 0
+skip_with_covstep_warnings = 0
+skip_estimate_near_boundary = 1 
+minimization_successful_limit = 0.8
+covariance_step_successful_limit = 0.8
+covariance_step_warnings_limit = 0.2
+estimate_near_boundary_limit = 0.2
+estimate_near_boundary_limit = 0.2
+se_confidence_intervals_level = 5
+percentile_confidence_intervals_level = 5
+bca_confidence_intervals_level = 5
+se_confidence_intervals_check = 0
+percentile_confidence_intervals_check = 0
+bca_confidence_intervals_check = 0
+large_bias_limit = 0.05
+
+[default_sumo_options]
+sd_rse=1
+correlation_limit=0.9
+condition_number_limit = 1000
+near_bound_sign_digits = 2
+near_zero_boundary_limit = 0.001
+sign_digits_off_diagonals = 2
+large_theta_cv_limit = 0.30
+large_omega_cv_limit = 0.50
+large_sigma_cv_limit = 0.30
+precision = 4
+c_level = 95
+
+
+

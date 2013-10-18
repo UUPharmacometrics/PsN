@@ -1,0 +1,418 @@
+#!/usr/bin/perl
+
+# Only for Development
+use FindBin qw($Bin);
+use lib "$Bin/../lib";
+
+# Don't edit the line below, it must look exactly like this.
+# Everything above this line will be replaced #
+
+# Perl includes #
+use strict;
+use Getopt::Long;
+# External modules #
+use Math::Random;
+# PsN includes #
+use PsN;
+use tool::modelfit;
+use model;
+use common_options;
+use ui;
+use File::Copy 'cp';
+use Data::Dumper;
+
+my $cmd_line = $0 . " " . join( " ", @ARGV );
+
+my %options;
+
+my %optional_options = ( 'dv_column:s'
+			);
+
+my $res = GetOptions( \%options,
+		      @common_options::get_opt_strings,
+		      keys(%optional_options) );
+
+exit unless $res;
+
+common_options::setup( \%options, 'se_of_eta' ); #calls set_globals etc, initiates random sequence
+
+my %help_text;
+$help_text{Pre_help_message} = <<'EOF';  
+    <h3 class="heading1">se_of_eta</h3>
+      
+      Perl script for getting standard errors of etas.
+      
+    <h3 class="heading1">Usage:</h3>
+EOF
+
+    $help_text{Description} = <<'EOF';
+   <h3 class="heading1">Description:</h3>
+
+      se_of_eta requires "MAXEVALS" to be abreviated to "MAX" if it
+      exists in the model file.
+
+EOF
+    $help_text{Examples} = <<'EOF';
+   <h3 class="heading1">Example:</h3>
+
+      <p class="style2">se_of_eta pheno.mod</p>
+
+       This will create a new directory se_of_eta_dirX where X is a
+       number increased every time you run the program. Inside that
+       directory it will create a new model file for each OMEGA in the
+       file. You will be able to retrieve the results from the
+       corresponding table file.
+EOF
+
+common_options::online_help('se_of_eta',\%options, \%help_text, {}, {});
+
+if ( scalar( @ARGV ) < 1 ) {
+  print "A model file must be specified. Use '$0 -h' for help.\n";
+  exit;
+}
+
+unless( defined $options{'dv_column'} ) {
+  $options{'dv_column'} = 'DV';
+}
+
+my( $base_dir, $dummy) = OSspecific::absolute_path( '', '' );
+
+my $directory;
+
+if ( defined $options{'directory'} ) {
+  my $dummy;
+  ( $directory, $dummy ) = OSspecific::absolute_path( $options{'directory'} );
+} else {
+  $directory = OSspecific::unique_path( 'se_of_eta_dir' ,
+					$base_dir );
+}
+
+unless( -d $directory ){
+  mkdir( $directory );
+  
+}
+
+my $eval_string = common_options::model_parameters(\%options);
+
+my $model;
+  
+$model = model -> new ( eval( $eval_string ),
+			filename                    => $ARGV[0],
+			ignore_missing_output_files => 1 );
+
+my $datafile_name = $model -> datas -> [0] -> full_name;
+
+chdir( $directory );
+
+my $modelfit;
+
+$modelfit = tool::modelfit -> 
+    new ( eval( $common_options::parameters ),
+	  directory => 'orig_modelfit_dir',
+	  models => [$model] );  
+
+$modelfit-> print_options (directory => '.',
+			   cmd_line => $cmd_line,
+			   toolname => 'modelfit',
+			   local_options => [keys %optional_options],
+			   common_options => \@common_options::tool_options);
+
+$modelfit -> run;
+
+my $nr_of_old_etas = $model -> nomegas -> [0];
+my $nr_of_old_sigmas = $model -> nsigmas -> [0];
+my $nr_of_old_thetas = $model -> nthetas;
+
+my %seen_eta;
+my %seen_eps;
+my %seen_err;
+
+my @models;
+
+my $data = $model -> datas -> [0];
+
+$data -> synchronize;
+
+my $ids = $data -> individuals;
+
+my $nrec = scalar @{$ids -> [0] -> subject_data};
+
+foreach my $id (0..$#{$ids}) {
+
+  my $model_copy = $model -> copy( filename => 'se_model_'.($id+1).'.mod',
+				   copy_data => ($id+1), # Trick to copy data once
+				   data_file_names => ['se_model.dta']);
+  
+  push(@models,$model_copy);
+	
+  $model_copy -> datas -> [0] -> synchronize;
+  $model_copy -> datas -> [0] -> filename('se_model.dta');
+  $model_copy -> datas -> [0] -> directory( $directory );
+  $model_copy -> datafiles(new_names => ['se_model.dta']);
+
+  $model_copy -> update_inits( from_output => $model -> outputs -> [0] );
+
+  # 1 Change all ETA(n) to THETA(n + $nr_of_old_thetas)
+
+  my $code_block;
+  my $pk = 0;
+  # Find PK or PRED block
+  if( defined $model_copy -> pk ){
+    $code_block = $model_copy -> pk;
+    $pk = 1;
+  } elsif( defined $model_copy -> pred ){
+    $code_block = $model_copy -> pred;
+  } else {
+    die "Error: No \$PK or \$PRED found... \n";
+  }
+  
+  for( my $row = 0; $row <= $#{$code_block}; $row++ ){
+
+    # High-tech RegExp to find ETA(n) and put n in $dummy. Then update
+    # $dummy and replace ETA(n) with THETA($dummy). Also register all
+    # n in ETA(n) by storing them in %seen_eta.
+
+    $code_block -> [$row] =~ s/ 
+	                        ([^H])ETA\((\d+)
+	                        (?{$seen_eta{$2}=1;$dummy=$2+$nr_of_old_thetas;})\)
+			      /$1THETA($dummy)/gx;
+  }
+
+  my $nr_of_new_thetas = $nr_of_old_thetas + scalar keys %seen_eta;
+
+  if( $pk ){
+    $model_copy -> pk( new_pk => $code_block );
+  } else {
+    $model_copy -> pred( new_pred => $code_block );
+  }
+
+  # Fixate all old thetas and omegas.
+
+  $model_copy -> fixed( parameter_type => 'theta',
+			new_values => [[(1)x $nr_of_old_thetas]] );
+
+  # Set low(0.01) initial values for the new thetas.
+
+  $model_copy -> initial_values( parameter_type => 'theta',
+				 add_if_absent => 1,
+				 parameter_numbers => [[($nr_of_old_thetas+1)..($nr_of_new_thetas)]],
+				 new_values => [[(0.01) x (($nr_of_new_thetas) - $nr_of_old_thetas)]]);
+
+  # Change all sigmas to omegas
+
+  my $sigmas = $model_copy -> initial_values( parameter_type => 'sigma' );
+
+  $model_copy -> remove_records( type => 'sigma' );
+  
+  my $nr_of_old_etas_with_corr = $model_copy -> nomegas( with_correlations => 1 ) -> [0];
+
+  $model_copy -> initial_values( parameter_type => 'omega',
+				 add_if_absent => 1,
+				 parameter_numbers => [[($nr_of_old_etas_with_corr+1)..($nr_of_old_etas_with_corr+$nr_of_old_sigmas)]],
+				 new_values => $sigmas );
+
+  $model_copy -> fixed( parameter_type => 'omega',
+ 			new_values => [[(1) x ($nr_of_old_etas_with_corr+$nr_of_old_sigmas)]] );
+
+  # Add EBAY column to dataset and change ID to IID
+
+  my $input = $model_copy -> record( record_name => 'input' );
+
+  $input->[0]->[0] =~ s/\$INPUT//;
+  chomp( $input->[0]->[ $#{$input->[0]} ] );
+  $input->[0]->[ $#{$input->[0]} ] .= ' EBAY L2';
+
+  $model_copy -> set_records( type => 'input',
+			      record_strings =>  $input->[0]);
+
+  # Get error block to replace EPS(n) with ETA(n + $nr_of_old_eta) and
+  # replace ERR(n) with ERR(n+$nr_of_old_eta)
+
+  my $error = $model_copy -> record( record_name => 'error' );
+
+  for( my $row = 0 ; $row <= $#{$error->[0]}; $row ++ ){
+
+    $error -> [0] -> [$row] =~ s/ 
+	                        (.)EPS\((\d+)
+	                        (?{$seen_eps{$2}=1;$dummy=$2+$nr_of_old_etas;})\)
+			      /$1ETA($dummy)/gx;
+
+    $error -> [0] -> [$row] =~ s/ 
+	                        (.)ERR\((\d+)
+	                        (?{$seen_err{$2}=1;$dummy=$2+$nr_of_old_etas;})\)
+			      /$1ETA($dummy)/gx;
+
+    
+    if( $error -> [0] -> [$row] =~ /(.*)Y(\s*)=(.*)/ ){
+
+      @{$error -> [0]} = ( @{$error -> [0]}[0..($row-1)],
+			   'IF( EBAY.LE.0 ) ' . $error -> [0] -> [$row],
+			   @{$error -> [0]}[$row+1..$#{$error->[0]}] );
+    }
+    
+  }
+
+  foreach( 1..$nr_of_old_etas ){
+    push(@{$error -> [0]}, '       IF( EBAY.EQ.'.($_).' ) Y = THETA(' . 
+	                   ($nr_of_old_thetas+$_) .
+	                   ") + ETA($_)\n");
+  }
+  
+  $model_copy -> set_records( type => 'error',
+			      record_strings => $error -> [0] );
+
+  # Set options in $EST and $COV
+
+  $model_copy -> maxeval( new_values  => [[9999]] );
+
+  if( scalar @{$model_copy -> record( record_name => 'covariance' )} > 0 ){
+    $model_copy -> remove_records( type => 'covariance' );
+  }
+  
+  $model_copy -> add_records( type => 'covariance',
+			      record_strings => ['MAT=R'] );
+
+  $model_copy -> set_records( type => 'estimation' );
+
+  $model_copy -> remove_records( type => 'table' );
+
+  $model_copy -> set_option( record_name => 'data',
+			     option_name => 'ACCEPT',
+			     option_value => '(ID.EQ.'.$ids -> [$id] -> idnumber().')' );
+
+  $model_copy -> _write;
+  
+}
+
+my $data_copy = $models[0] -> datas -> [0];
+
+my $ids = $data_copy -> individuals;
+
+
+####
+
+# Initially Mats/Rada requested that the L2 column should be
+# increasing with one, starting from zero for the first row of each
+# individual. It would increase until EBAY changed value from zero to
+# something else and then increase with a value following the sizes of
+# omega.
+
+# 2008-08-13 this changed to increase up until EBAY and then have a
+# constant value. Uncomment the lines below to restore the old
+# behavior. And add @L2_column[$_ - 1] to $L2_first_value in the
+# foreach{} below that.
+
+###
+
+# my $omegas = $models[0] -> problems -> [0] -> omegas();
+# my @L2_column;
+# my $L2_value = 0;
+
+# foreach my $omega( @{$omegas} ){
+#  $L2_value++;
+#  for( 1..$omega -> size() ){
+#    push( @L2_column, $L2_value );
+#  }
+# }
+
+foreach my $id( @{$ids} ){
+  my @last_row_of_id = split(/,/,$id -> subject_data -> [$#{$id -> subject_data}]);
+  my $DV_column = $data_copy -> column_head_indices -> {$options{'dv_column'}};
+
+  my $L2_first_value=0;
+  foreach my $row( @{$id -> subject_data} ){
+    $L2_first_value++;
+    $row .= ",0,$L2_first_value";
+  }
+  
+  for( 1..$nr_of_old_etas ) {
+    $last_row_of_id[$DV_column-1] = '0';
+    push( @{$id -> subject_data}, join(',', @last_row_of_id, $_, $L2_first_value+1 ));# + @L2_column[$_ - 1]  ) );
+  }
+}
+
+push( @{$data_copy->header}, 'EBAY', 'L2' );
+$data_copy -> synchronize;
+
+$data_copy -> _write;
+
+$modelfit = tool::modelfit -> 
+    new ( eval( $common_options::parameters ),
+	  directory => 'se_of_eta',
+	  models => \@models );  
+
+$modelfit -> run;
+
+# New Results section 9:th of June.
+
+my $num = scalar @{$ids};
+
+my (@theta,@setheta);
+my $ofv;
+
+open( FILE1,'>termination.csv' );
+open( FILE2,'>parameters.csv' );
+
+print FILE1 "ID, OFV\n"; 
+
+print FILE2 "ID,";
+
+foreach my $i( 1..$nr_of_old_thetas ){
+  print FILE2 "TH$i,";
+}
+
+foreach my $i( 1..$nr_of_old_etas ){
+  print FILE2 "ETA$i,";
+}
+
+foreach my $i( 1..$nr_of_old_thetas ){
+  print FILE2 "SEth$i,";
+}
+
+foreach my $i( 1..$nr_of_old_etas ){
+  if( $i == $nr_of_old_etas ){
+    print FILE2 "SEeta$i\n";
+  } else {
+    print FILE2 "SEeta$i,";
+  }
+}
+
+foreach my $i(1..$num) {
+  $ofv     = get_ofv($i);
+  @theta   = get_theta($i);
+  @setheta = get_setheta($i);
+
+  print FILE1 "ID$i,$ofv\n";
+  print FILE2 "ID$i,", join( ',', @theta,@setheta ), "\n";
+}
+
+
+#####################################################################################################################################
+###                                                         Subroutines                                                           ###
+#####################################################################################################################################
+
+### Retrieves the ofv from a NONMEM-output file using function "ofv" in PsN ###
+sub get_ofv {
+  my ($n) = @_;
+  my $lst = new output ('filename' => "se_model_$n.lst");
+  my $obf = $lst -> ofv;
+  return $obf -> [0][0];
+}
+
+### Retreives the estimated thetas from a NONMEM-output file using function "theta" in PsN ###
+sub get_theta {
+  my ($n) = @_;
+  my $lst = new output ('filename' => "se_model_$n.lst");
+  my $theta = $lst -> thetas;
+  if(defined $theta and defined $theta->[0] and defined $theta -> [0][0]){ return @{$theta -> [0][0]}; }
+  else { return ('.','.','.'); }
+}
+
+### Retreives the SEs estimated thetas from a NONMEM-output file using function "sethetas" in PsN ###
+sub get_setheta {
+  my ($n) = @_;
+  my $lst = new output ('filename' => "se_model_$n.lst");
+  my $setheta = $lst -> sethetas;
+  if(defined $setheta and defined $setheta->[0] and defined $setheta -> [0][0]){ return @{$setheta -> [0][0]}; }
+  else { return ('.','.','.'); }
+}

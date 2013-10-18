@@ -1,0 +1,419 @@
+#!/usr/bin/perl
+
+use FindBin qw($Bin);
+use lib "$Bin/../lib";
+
+# Don't edit the line below, it must look exactly like this.
+# Everything above this line will be replaced #
+
+use PsN;
+use model;
+use tool::sse;
+use strict;
+use Getopt::Long;
+use common_options;
+use Cwd;
+use OSspecific;
+
+my $cmd_line = $0 . " " . join( " ", @ARGV );
+
+## Configure the command line parsing
+Getopt::Long::config("auto_abbrev");
+
+my %options;
+## Declare the options
+
+my %required_options = ( 'samples:i' => undef);
+my %optional_options = ( 'alternative_models:s' => 'alt1.mod,alt2.mod,...',
+			 'ref_ofv:f' => undef,
+			 'parallel_simulations:i' => undef,
+			 'estimate_simulation!' => undef,
+			 'rawres_input:s' => undef,
+			 'offset_rawres:i' => undef,
+			 'in_filter:s' => undef,
+			 'out_filter:s' => undef,
+			 'recompute:s' => undef,
+			 'add_models'=> undef);
+
+my $res = GetOptions( \%options,
+		      @common_options::get_opt_strings,
+		      keys(%required_options),
+		      keys(%optional_options) );
+exit unless $res;
+
+common_options::setup( \%options, 'sse' ); #calls set_globals etc, initiates random sequence
+
+
+my %help_text;
+
+$help_text{Pre_help_message} = <<'EOF';
+  <h3 class="heading1">sse</h3>
+
+    Stochastic Simulation and Estimation of NONMEM models.
+EOF
+
+$help_text{Options} = <<'EOF';      
+    Options:
+
+      The options are given here in their long form. Any option may be
+      abbreviated to any nonconflicting prefix. The -threads option
+      may be abbreviated to -thr.
+
+      The following options are valid:
+EOF
+
+$help_text{-h} = <<'EOF';
+      -h | -?
+      
+      With -h or -? sse will print a list of options and exit.
+EOF
+      
+$help_text{-help} = <<'EOF';      
+      -help
+      
+      With -help sse will print this, longer, help message.
+EOF
+
+$help_text{-alternative_models} = <<'EOF';
+      -alternative_models=alt1.mod,alt2.mod,...
+
+      Optional. Comma-separated list of one or more alternative models 
+      to use for estimation with simulated datasets. 
+EOF
+
+$help_text{-samples} = <<'EOF';
+      -samples=N
+
+      The number of simulated datasets to generate. Must be at least 2.
+EOF
+
+$help_text{-estimate_simulation} = <<'EOF';
+      -estimate_simulation
+
+      By default, the simulation model is also used for estimation with
+      the simulated datasets. The resulting OFV values are used as reference
+      when evaluating the estimation results of alternative models. By setting
+      -no-estimate_simulation the estimation of the simulation model is turned
+      off, and the first alternative model is used as reference instead. See
+      also -ref_ofv.
+EOF
+
+$help_text{-ref_ofv} = <<'EOF';
+      -ref_ofv=500
+
+      Instead of using the OFV values from the estimation of a model as
+      reference when evaluating the other estimation results,
+      it is possible to set a fixed reference OFV value. If using ref_ofv,
+      it is not allowed to also estimate the simulation model. 
+EOF
+$help_text{-parallel_simulations} = <<'EOF';
+      -parallel_simulations=1
+
+      The number of parallel processes to start for the simulation step 
+      (not the estimation step) on a parallel computer. Default is the same
+      value as set for option -threads.
+EOF
+
+$help_text{-rawres_input} = <<'EOF';
+      -rawres_input=filename
+
+      A simple way to simulate with uncertainty. Instead of using identical 
+      parameter estimates for simulation of each new dataset, take parameter 
+      estimates from a raw_results.csv file, e.g. from a bootstrap run or the 
+      initial_estimates.csv file from a previous sse run with $PRIOR in the 
+      simulation model. The raw results file must contain at least as many 
+      samples as the input -samples to sse, the labels for  THETA/OMEGA/SIGMA 
+      in the file must match the labels in the simulation model given as input 
+      to sse, the theta columns must be directly followed by the omega columns 
+      which must be directly followed by the sigma columns, and the first column 
+      must have header model just as a bootstrap raw_results file. Note that is is 
+      possible to generate a file with initial parameter estimates outside of PsN, 
+      as long as the file follows the format rules.
+EOF
+$help_text{-offset_rawres} = <<'EOF';
+      -offset_rawres=N
+
+      Only relevant in combination with rawres_input. Default 1.
+      The number of result lines to skip in the input raw results file
+      before starting to read final parameter estimates. In a regular
+      bootstrap raw_results file the first line of estimates refers to the
+      input model with the full dataset, so therefore the default offset is 1.
+EOF
+
+$help_text{-in_filter} = <<'EOF';
+      -in_filter=comma-separated list of conditions
+
+      Only relevant in combination with rawres_input. Default not used.
+      The parameter estimates lines in the file can be filtered on values 
+      in the different columns. When specifying which column(s) the filtering 
+      should be based on, the exact column name must be used, 
+      e.g. minimization_successful. Filtering can only be based on columns 
+      with numeric values. The allowed relations are .gt. (greater than), 
+      .lt. (less than) and .eq. (equal to). Conditions are separated with commas. 
+      If the remaining number of lines after filtering is smaller than -samples, 
+      sse will stop with an error message. Then the user must either change the 
+      filtering rules or change -samples. If the user has created a file with 
+      parameter estimates outside of PsN, filtering can be done on any numeric 
+      column in that file. Do not set column headers containing .eq. or .lt. 
+      or .gt.in the user-generated file as this would interfere with the in_filter 
+      option syntax.
+    
+      Example: -in_filter=minimization_successful.eq.1,significant_digits.gt.3.5
+
+EOF
+
+$help_text{-out_filter} = <<'EOF';
+      -out_filter=comma-separated list of conditions
+
+      Default not used. The user may choose to only compute results based on 
+      estimations which fulfill certain conditions. The default is to only skip 
+      runs where the ofv cannot be read from the lst-file or is equal to 0. 
+      Filtering of output can be done on any numeric column in a standard sse 
+      raw_results file, for example minimization_successful, significant_digits 
+      and covariance_step_successful. The allowed relations are .gt. (greater than), 
+      .lt. (less than) and .eq. (equal to). Conditions are separated with commas. 
+      If the remaining number of estimation results after filtering is less than 2, 
+      sse will stop with an error message.
+    
+      Example: -out_filter=minimization_successful.eq.1,significant_digits.gt.3.5
+
+EOF
+
+$help_text{-recompute} = <<'EOF';
+      -recompute=raw results filename, including directory name
+
+      Default not set. Setting this option makes PsN recompute output statistics based on 
+      the specified raw_results file. Note that the filename must be given including the 
+      directory name. The user may change the -out_filter settings for the recomputation. 
+      Apart from -out_filter, the input model must be set, and -samples. 
+      Alternative models are not needed, information about them will be read from the raw results file.
+      Option -directory will be ignored, instead the directory specified as part of the file 
+      path will be used.
+
+      Example: -recompute=sse_dir12/raw_results_run1.csv
+EOF
+
+$help_text{-add_models} = <<'EOF';
+      -add_models
+
+      This option tells PsN to add the alternative models listed with option 
+      -alternative_models to an old sse run. All models given via option
+      -alternative_models will be estimated from scratch, so the alternatives from
+      the old run should not be listed again. The -add_models option requires that 
+      the old sse run has been completed without errors. It is necessary to also set 
+      the general PsN option -directory to the sse directory of the old run, 
+      e.g. -directory=sse_dir50.
+      The user must ensure that the -samples option in the new sse run is 
+      equal to or smaller than in the old run. If some simulated datasets are 
+      missing it will result in an error. 
+      The simulation model must still be given as input on the command-line.
+      If the option -estimate_simulation is set (it is set by default) old estimation 
+      results will be reloaded if existing, otherwise the simulation model will be
+      estimated.
+      The numbering of the extra models will start at the number of the last old
+      alternative plus 1.
+
+EOF
+
+$help_text{Post_help_message} = <<'EOF';
+    Also see 'psn_options -h' for a description of common PsN options.
+EOF
+
+common_options::online_help( 'sse', \%options, \%help_text, \%required_options, \%optional_options);
+
+## Check that we do have a model file
+if ( scalar(@ARGV) < 1 ) {
+  print "A simulation model file must be specified. Use 'sse -h' for help.\n";
+  exit;
+}
+
+if( scalar(@ARGV) > 1 ){
+  print "SSE can only handle one modelfile, you listed: ",join(',',@ARGV),". Use 'sse -h' for help.\n";die;
+  exit;
+}
+
+unless ( defined $options{'samples'} ){
+  print "samples must be given\n" ;
+  exit;
+}
+
+unless ( defined $options{'skip_data_parsing'} or $options{'drop_dropped'}) {
+  $options{'skip_data_parsing'} = 1;
+}
+
+if ( defined $options{'recompute'}){
+  my ( $dir, $file ) = OSspecific::absolute_path(cwd(), $options{'recompute'});
+  $options{'recompute'} = $file;
+  $options{'directory'} = $dir;
+
+  if ($dir eq cwd()){
+    print "You must give both filename and path as input to option -recompute\n";
+    exit;
+  }
+
+  unless( -e $options{'directory'}.$options{'recompute'}){
+    print "File ".$options{'directory'}.$options{'recompute'}." given with option -recompute does not exist.\n";
+    exit;
+  }
+}
+
+if ( defined $options{'add_models'}){
+  unless( defined $options{'directory'}){
+    print "When option -add_models is used, option -directory must also be used.\n";
+    exit;
+  }
+}
+
+if (defined $options{'rawres_input'}){
+  my ( $dir, $file ) = OSspecific::absolute_path(cwd(), $options{'rawres_input'});
+  $options{'rawres_input'} = $dir . $file;
+  unless (-e $options{'rawres_input'}){
+    print "File ".$options{'rawres_input'}." does not exist";
+    exit;
+  }
+}
+if (defined $options{'covariance_file'}){
+  if (defined $options{'rawres_input'}){
+    print "Cannot use options covariance_file and rawres_input together.";
+    exit;
+  }
+  $options{'offset_rawres'}=0; #not really necessary after moving offset to get_rawres_params
+  my ( $dir, $file ) = OSspecific::absolute_path(cwd(), $options{'covariance_file'});
+  $options{'covariance_file'} = $dir . $file;
+  unless (-e $options{'covariance_file'}){
+    print "File ".$options{'covariance_file'}." does not exist";
+    exit;
+  }
+}
+
+my $eval_string = common_options::model_parameters(\%options);
+
+my $model = model -> new ( eval( $eval_string ),
+			   filename                    => $ARGV[0],
+			   ignore_missing_output_files => 1);
+
+if( defined $model -> msfi_names() ){
+  my @needed_files;
+  foreach my $msfi_files( @{$model -> msfi_names()} ){
+    #loop $PROB
+    if (defined $msfi_files){
+      foreach my $msfi_file( @{$msfi_files} ){
+	#loop instances
+	if ( defined $msfi_file ){
+	  my ( $dir, $file ) = OSspecific::absolute_path(cwd(),$msfi_file);
+	  push (@needed_files,$dir.$file) ;
+	}
+      }
+    }
+  }
+  if (scalar(@needed_files)>0){
+    if( defined $model -> extra_files ){
+      push(@{$model -> extra_files},@needed_files);
+    }else{
+      $model -> extra_files(\@needed_files);
+    }
+  }
+
+}
+
+my @alternatives=();
+if ( defined $options{'alternative_models'} ){
+  #split string, assume comma separated
+  foreach my $altfile (split(/,/,$options{'alternative_models'})){
+    if (length($altfile)>0){
+      my $alternative_model = model ->
+	  new ( eval( $eval_string ),
+		filename => $altfile,
+		ignore_missing_output_files => 1);
+      push(@alternatives,$alternative_model);
+    }
+  }
+  if (scalar(@alternatives)<1){
+    die "Error: Option alternative_models used, but list of filenames could not be parsed.\n";
+  }	
+}else{
+
+  if ( defined $options{'add_models'} ){
+    print "When option -add_models is used, option -alternative_models must also be used.\n";
+    exit;
+  }
+
+  print "No alternative model given, will only estimate simulation model.\n" 
+      unless (defined $options{'recompute'} or (not $options{'estimate_simulation'}));
+  
+}
+
+my @in_filter=();
+if ( defined $options{'in_filter'} ){
+  unless (defined $options{'rawres_input'}){
+    print "Cannot use option -in_filter without option -rawres_input.\n";
+    exit;
+  }
+  #split string, assume comma separated
+  foreach my $filt (split(/,/,$options{'in_filter'})){
+    if ($filt =~ /.\.(gt|lt|eq)\.\d+\.?\d*/){
+      push(@in_filter,$filt);
+    }else{
+      die "Input filter $filt does not fulfill the format rules.\n";
+    }
+  }
+  if (scalar(@in_filter)<1){
+    die "Error: Option in_filter used, but list of conditions could not be parsed.\n";
+  }	
+}
+my @out_filter=();
+if ( defined $options{'out_filter'} ){
+  my @header =('model','problem','subproblem','covariance_step_run','minimization_successful','covariance_step_successful','covariance_step_warnings','estimate_near_boundary','rounding_errors','zero_gradients','final_zero_gradients','hessian_reset','s_matrix_singular','significant_digits','condition_number','ofv');
+  #split string, assume comma separated
+  foreach my $filt (split(/,/,$options{'out_filter'})){
+    if ($filt =~ /.\.(gt|lt|eq)\.\d+\.?\d*/){
+      my $col = $filt;
+      $col =~ s/(\.gt\.|\.lt\.|\.eq\.)(\d+\.?\d*)$//;
+      my $found=0;
+      foreach my $head (@header){
+	if ($head eq $col){
+	  $found=1;
+	  last;
+	}
+      }
+      die "$col is not included in a standard raw results header and may not be used for output filtering\n" 
+	  unless ($found);
+      push(@out_filter,$filt);
+    }else{
+      die "Output filter $filt does not fulfill the format rules.\n";
+    }
+  }
+  if (scalar(@out_filter)<1){
+    die "Error: Option out_filter used, but list of conditions could not be parsed.\n";
+  }	
+}
+
+my $sse = tool::sse -> 
+    new ( eval( $common_options::parameters ),
+	  estimate_simulation => $options{'estimate_simulation'},
+	  ref_ofv            => $options{'ref_ofv'},
+	  parallel_simulations => $options{'parallel_simulations'},
+	  add_models          => $options{'add_models'},
+	  rawres_input        => $options{'rawres_input'},
+	  offset_rawres       => $options{'offset_rawres'},
+	  covariance_file     => $options{'covariance_file'},
+	  models	     => [ $model ],
+	  top_tool           => 1,
+	  in_filter             => \@in_filter,
+	  out_filter             => \@out_filter,
+	  recompute             => $options{'recompute'},
+	  alternative_models => \@alternatives,
+	  samples            => $options{'samples'} );
+
+
+$sse-> print_options (cmd_line => $cmd_line,
+		      toolname => 'SSE',
+		      local_options => [keys %optional_options],
+		      common_options => \@common_options::tool_options);
+
+   
+$sse -> run unless ($options{'recompute'});
+$sse -> prepare_results;
+$sse -> print_results;
+ui -> print( category => 'sse',
+	     message => "\nsse done\n" );

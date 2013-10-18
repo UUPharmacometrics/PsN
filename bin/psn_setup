@@ -1,0 +1,33 @@
+#!/bin/bash
+
+echo "This scripts sets up the environment for running PsN on Kalkyl."
+echo 'Specifically, it replaces .bash_profile with a copy of /home/kajsa/.bash_profile'
+echo 'and creates a psn.conf file with suitable defaults, including -email_address'
+echo 'and -slurm_project.'
+echo ''
+echo 'Please enter your email address:'
+read EMAIL
+echo 'Please enter the Id of your Uppmax project (something like p2011021):'
+read PROJECT
+echo ''
+
+cd $HOME
+echo 'Replacing .bash_profile with a copy of /home/kajsa/.bash_profile'
+cp /home/kajsa/.bash_profile .
+echo 'done'
+
+echo 'Creating a new psn.conf based on /home/kajsa/PsN/psn.conf.template, changing'
+echo "email address to $EMAIL and project Id to $PROJECT"
+
+sed -e "s/youremailaddress/$EMAIL/" -e "s/youruppmaxproject/$PROJECT/" /home/kajsa/PsN/psn.conf.template > psn.conf
+
+echo 'done'
+echo 'Submitting a test run to the queue to test email and project settings'
+sbatch -A $PROJECT -t 0:0:10 -e dirt.psn_setup -o dirt.psn_setup -J psn_setup --mail-type=END --mail-user= $EMAIL bin/ls
+
+echo 'If you have not within 10 minutes received an email from SLURM saying something like'
+echo 'SLURM Job_id=NNNNNN Name=psn_setup Ended, Run time ...'
+echo 'then something went wrong with the setup and you should try again.'
+echo ''
+echo 'psn_setup script is done'
+echo ''

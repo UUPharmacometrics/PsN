@@ -1,0 +1,219 @@
+#!/usr/bin/perl
+
+use FindBin qw($Bin);
+use lib "$Bin/../lib";
+
+# Don't edit the line below, it must look exactly like this.
+# Everything above this line will be replaced #
+
+use PsN;
+use model;
+use tool::nonpb;
+use strict;
+use Getopt::Long;
+use common_options;
+
+my $cmd_line = $0 . " " . join( " ", @ARGV );
+
+## Configure the command line parsing
+Getopt::Long::config("auto_abbrev");
+
+my %options;
+## Declare the options
+
+my %required_options = ( 'samples:i' => '200');
+
+#option etas is not implemented, bootstrap always done on all etas
+my %optional_options = (#"etas:i"=>'',
+			"lst_file:s"=>'',
+			'nonpb_version:s' => ''
+			);
+
+my $res = GetOptions( \%options,
+		      @common_options::get_opt_strings,
+		      keys(%required_options),
+		      keys(%optional_options) );
+exit unless $res;
+
+common_options::setup( \%options, 'nonpb' ); #calls set_globals etc, initiates random sequence
+
+
+my %help_text;
+
+$help_text{Pre_help_message} = <<'EOF';
+  nonpb
+
+    Non-Parametric Bootstrap.
+
+  Usage:
+EOF
+
+$help_text{Options} = <<'EOF';      
+    Options:
+
+      The options are given here in their long form. Any option may be
+      abbreviated to any nonconflicting prefix. The -threads option
+      may be abbreviated to -t(or even -thr).
+
+      The following options are valid:
+EOF
+
+$help_text{-h} = <<'EOF';
+      -h | -?
+      
+      With -h or -? nonpb will print a list of options and exit.
+EOF
+      
+$help_text{-help} = <<'EOF';      
+      -help
+      
+      With -help nonpb will print this, longer, help message.
+EOF
+
+$help_text{-samples} = <<'EOF';
+      -samples=N
+
+      Required option. The number of samples for the bootstrap.
+
+EOF
+
+$help_text{-lst_file} = <<'EOF';
+      -lst_file=<filename>
+
+      Optional, the lst-file from where to read initial parameter estimates. 
+      Default is the same name as the model file but with .mod replaced with .lst.
+EOF
+
+$help_text{-nonpb_version} = <<'EOF';
+      -nonpb_version=1|2
+
+      Optional, the version of the script to run. Default is 1, the simplified version.
+      Version 2 is the full version.
+EOF
+
+
+$help_text{Post_help_message} = <<'EOF';
+      Also see 'psn_options -h' for a description of common options.
+EOF
+
+common_options::online_help( 'nonpb', \%options, \%help_text, \%required_options, \%optional_options);
+
+## Check that we do have a model file
+if ( scalar(@ARGV) < 1 ) {
+  print "A simulation model file must be specified. Use 'nonpb -h' for help.\n";
+  exit;
+}
+
+if( scalar(@ARGV) > 1 ){
+  print "NONPB can only handle one modelfile, you listed: ",
+  join(',',@ARGV),". Use 'nonpb -h' for help.\n";die;
+  exit;
+}
+
+my $lst_file;
+if (defined $options{'lst'}){
+  $lst_file=$options{'lst'};
+} else {
+  #assume modelfile ends with .mod
+  $lst_file = (substr ($ARGV[0],0,-3)).'lst'; #keep from beginning, skip last four characters
+  unless ( -e $lst_file ){
+    print "When option -lst is omitted, the name of the lst-file is assumed to be the same\n".
+	"as the modelfile except that the last three letters are lst. Cannot find file $lst_file\.";
+    exit;
+  }
+}
+
+if ( defined $options{'clean'} and $options{'clean'}>2){
+  print "Using clean above 2 is not possible, required files would be deleted.\n";
+  exit;
+}
+
+ui -> category( 'nonpb' );
+ui -> silent(1) if( $options{'silent'} );
+
+my $eval_string = common_options::model_parameters(\%options);
+
+my $model = model -> new ( eval( $eval_string ),
+			   filename                    => $ARGV[0],
+			   ignore_missing_output_files => 1 );
+
+my $nonpb = tool::nonpb -> 
+    new ( eval( $common_options::parameters ),
+	  models	     => [$model],
+	  lst_file           => $lst_file,
+	  samples            => $options{'samples'},
+	  etas               => $options{'etas'},
+	  nonpb_version            => $options{'nonpb_version'});
+
+
+$nonpb-> print_options (cmd_line => $cmd_line,
+		       toolname => 'nonpb',
+		       local_options => [keys %optional_options],
+		       common_options => \@common_options::tool_options);
+
+
+
+unless( -d $nonpb -> directory . "/intermediate_files" ){
+  mkdir( $nonpb -> directory . "/intermediate_files" );
+}
+unless( -d $nonpb -> directory . "/result_files" ){
+  mkdir( $nonpb -> directory . "/result_files" );
+}
+
+
+chdir( $nonpb -> directory );
+if ($nonpb ->nonpb_version() == 2){
+
+  #this is sec 1 and 2 of URS nonp_bootstrap_v2
+  #individual step 1a,1b,2a done by bootstrap tool, can simply collect results
+  #from bootstrap object
+
+  #1.0
+  ##do the bootstrap in a specific sub-directory of  nonpb_dirY : 'bootstrap'
+  #must carry a whole hash of options here, can lump them together according to Pontus, 
+
+  my $type = defined $options{'bca'} ? 'bca' : undef;
+  my $sample_size = 'default=>'.$model -> datas() -> [0] -> count_ind();
+
+  my %subj_hash = eval($sample_size);
+  my $bs = tool::bootstrap -> 
+      new ( eval( $common_options::parameters ),
+	    directory => 'bootstrap',
+	    subjects	=> \%subj_hash,
+	    models	=> [ $model ],
+	    samples	=> $options{'samples'}
+	    );
+  $bs -> run;
+  $bs -> prepare_results();
+  $bs -> print_results();
+
+  $nonpb->start_bs_models($bs->prepared_models->[0]{'own'});
+  $bs = undef;
+} else {
+  # version 1: run regular pind on original model
+  # URS section 1 and 2
+
+  my $pind = tool::pind -> 
+      new (   models	     => [$model],
+	      modelname      => 'original',
+	      tablename      => 'original.patab',
+	      ind_param      => 'eta',
+	      lst_file       => '../'.$lst_file,
+	      directory      => 'pind_dir1'
+	      );
+
+  $pind -> run;
+  $nonpb->n_individuals($pind->n_individuals);
+  $nonpb->pind_directories(['pind_dir1/']);
+
+  open( TMP, ">", 'ofv.done' );
+  print TMP "1"; 
+  close( TMP );
+  $pind = undef;
+}
+
+$nonpb -> run;
+1;
+
+ui -> print( category => 'nonpb',
+	     message  => "Non-parametric bootstrap done.\n");

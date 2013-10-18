@@ -1,0 +1,16 @@
+Please do the following:
+
+1) Make sure you have a working internet connection. Then open a (DOS)
+command window and run the command (all spaces and dashes are important)
+
+ppm install file-copy-recursive
+
+This installs a perl module needed for the alternative installation
+script. If there are error messages about this perl module installation
+you need to handle them before you can proceed to install PsN.
+
+2) Place the script setup_fallback.pl in the same folder as where you have the file
+setup.pl, i.e. in the PsN-Source folder. Then follow the same installation
+instructions as before, but wherever the instructions say 'setup.pl' use
+'setup_fallback.pl' instead.
+

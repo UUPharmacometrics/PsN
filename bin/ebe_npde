@@ -1,0 +1,231 @@
+#!/usr/bin/perl
+
+use FindBin qw($Bin);
+use lib "$Bin/../lib";
+
+# Don't edit the line below, it must look exactly like this.
+# Everything above this line will be replaced #
+
+use PsN;
+use model;
+use tool::ebe_npde;
+use strict;
+use Getopt::Long;
+use common_options;
+use Cwd;
+use OSspecific;
+
+my $cmd_line = $0 . " " . join( " ", @ARGV );
+
+## Configure the command line parsing
+Getopt::Long::config("auto_abbrev");
+
+my %options;
+## Declare the options
+
+my %required_options = ();
+my %optional_options = ( 'samples:i' => undef,
+			 'estimate_input!' => undef,
+			 'lst_file:s' => undef,
+			 'reminimize!' => undef,
+			 'gls_data_file!' => undef);
+
+my $res = GetOptions( \%options,
+		      @common_options::get_opt_strings,
+		      keys(%required_options),
+		      keys(%optional_options) );
+exit unless $res;
+
+common_options::setup( \%options, 'ebe_npde' ); #get defaults, 
+#calls set_globals etc, initiates random sequence
+
+my %help_text;
+
+$help_text{Pre_help_message} = <<'EOF';
+  <h3 class="heading1">ebe_npde</h3>
+
+    Generate ranked empirical Bayes estimates
+
+EOF
+
+$help_text{Options} = <<'EOF';      
+    Options:
+
+      The options are given here in their long form. Any option may be
+      abbreviated to any nonconflicting prefix. The -threads option
+      may be abbreviated to -thr.
+
+      The following options are valid:
+EOF
+
+$help_text{-h} = <<'EOF';
+      -h | -?
+      
+      With -h or -? ebe_npde will print a list of options and exit.
+EOF
+      
+$help_text{-help} = <<'EOF';      
+      -help
+      
+      With -help ebe_npde will print this, longer, help message.
+EOF
+
+$help_text{-samples} = <<'EOF';
+      -samples=N
+
+      Default 300. The number of simulations and reestimations to perform.
+EOF
+
+$help_text{-lst_file} = <<'EOF';
+      -lst_file=filename
+
+      Default not set. By default PsN will, before copying the input model to the 
+      simulation models, look for an output file with final estimates for the input 
+      model and if found update the initial estimates in the simulation models. If 
+      option -lst_file is set Psn will instead use the final estimates in the given 
+      file. If option is not set and no output file is found PsN will not update the 
+      estimates but instead rerun the input model, if option -estimate_input is set.
+EOF
+
+$help_text{-estimate_input} = <<'EOF';
+      -estimate_input
+
+      Default set. By default, PsN will rerun the input model to get parameter 
+      estimates unless an output file is found or option -lst_file is set. But 
+      if option -estimate_input is unset with -no-estimate_input and no lst-file 
+      is found then the parameter estimates set in the input model will be used
+      for simulations.
+EOF
+
+$help_text{-reminimize} = <<'EOF';
+      -reminimize
+
+      Default not set. By default, simulated datasets will be run with MAXEVAL=0 
+      (or equivalent for non-classical estimation methods). If option -reminimize 
+      is set then $EST will be the same as in the input model.
+EOF
+
+$help_text{-gls_data_file} = <<'EOF';
+      -gls_data_file=filename
+
+      Default gls_data.dta. A file with input data for the gls program is always 
+      generated. This option changes the name of that file. After this file is 
+      created, the gls program can be run with option -gls_model and -ind_shrinkage 
+      with minimum runtime, see gls_userguide.pdf
+EOF
+
+
+$help_text{Post_help_message} = <<'EOF';
+    Also see 'psn_options -h' for a description of common PsN options.
+EOF
+
+common_options::online_help( 'ebe_npde', \%options, \%help_text, \%required_options, \%optional_options);
+
+## Check that we do have a model file
+if ( scalar(@ARGV) < 1 ) {
+  print "An input model file must be specified. Use 'ebe_npde -h' for help.\n";
+  exit;
+}
+
+if( scalar(@ARGV) > 1 ){
+  print "EBE_NPDE can only handle one modelfile, you listed: ",join(',',@ARGV),". Use 'ebe_npde -h' for help.\n";die;
+  exit;
+}
+
+
+unless ( defined $options{'skip_data_parsing'} or $options{'drop_dropped'}) {
+  $options{'skip_data_parsing'} = 1;
+}
+
+unless ( defined $options{'samples'}) {
+  $options{'samples'}=300;
+}
+
+my $eval_string = common_options::model_parameters(\%options);
+
+my $model = model -> new ( eval( $eval_string ),
+			   filename                    => $ARGV[0],
+			   ignore_missing_output_files => 1);
+
+if( defined $model -> msfi_names() ){
+  my @needed_files;
+  foreach my $msfi_files( @{$model -> msfi_names()} ){
+    #loop $PROB
+    if (defined $msfi_files){
+      foreach my $msfi_file( @{$msfi_files} ){
+	#loop instances
+	if ( defined $msfi_file ){
+	  my ( $dir, $file ) = OSspecific::absolute_path(cwd(),$msfi_file);
+	  push (@needed_files,$dir.$file) ;
+	}
+      }
+    }
+  }
+  if (scalar(@needed_files)>0){
+    if( defined $model -> extra_files ){
+      push(@{$model -> extra_files},@needed_files);
+    }else{
+      $model -> extra_files(\@needed_files);
+    }
+  }
+
+}
+
+my $tnpri=0;
+if ( scalar (@{$model-> problems}) > 2 ){
+  die('Cannot have more than two $PROB in the input model.');
+}elsif  (scalar (@{$model-> problems}) == 2 ){
+  if ((defined $model-> problems->[0]->priors()) and 
+      scalar(@{$model-> problems->[0] -> priors()})>0 ){
+    foreach my $rec (@{$model-> problems->[0] -> priors()}){
+      foreach my $option ( @{$rec -> options} ) {
+	if ((defined $option) and 
+	    (($option->name eq 'TNPRI') || (index('TNPRI',$option ->name ) == 0))){
+	  $tnpri=1;
+	}
+      }
+    }
+  }
+  if ($tnpri){
+    unless( defined $model-> extra_files ){
+      die('When using $PRIOR TNPRI you must set option -extra_files to '.
+		     'the msf-file, otherwise the msf-file will not be copied to the NONMEM '.
+		     'run directory.');
+    }
+
+  }else{
+    print 'The input model must contain exactly one problem, unless'.
+	' first $PROB has $PRIOR TNPRI'."\n";
+    exit;
+  }
+}
+
+
+
+
+my $est_record = $model -> record( problem_number => (1+$tnpri),
+				   record_name => 'estimation' );
+unless( scalar(@{$est_record}) > 0 ){
+  print "The input model must have a \$EST record\n";
+  exit;
+}
+
+my $ebe_npde = tool::ebe_npde -> 
+    new ( eval( $common_options::parameters ),
+	  lst_file => $options{'lst_file'},
+	  estimate_input => $options{'estimate_input'},
+	  reminimize => $options{'reminimize'},
+	  gls_data_file => $options{'gls_data_file'},
+	  models	     => [ $model ],
+	  samples            => $options{'samples'} );
+
+
+$ebe_npde-> print_options (cmd_line => $cmd_line,
+		      toolname => 'EBE_NPDE',
+		      local_options => [keys %optional_options],
+		      common_options => \@common_options::tool_options);
+
+   
+$ebe_npde -> run;
+ui -> print( category => 'ebe_npde',
+	     message => "\nebe_npde done\n" );

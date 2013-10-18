@@ -1,0 +1,341 @@
+#!/usr/bin/perl
+
+use FindBin qw($Bin);
+use lib "$Bin/../lib";
+
+# Don't edit the line below, it must look exactly like this.
+# Everything above this line will be replaced #
+
+use PsN;
+use model;
+use tool::frem;
+use strict;
+use Getopt::Long;
+use common_options;
+use Cwd;
+use OSspecific;
+use ui;
+
+my $cmd_line = $0 . " " . join( " ", @ARGV );
+
+## Configure the command line parsing
+Getopt::Long::config("auto_abbrev");
+
+my %options;
+## Declare the options
+
+my %required_options = ();
+my %optional_options = ( 'invariant:s' => undef,
+			 'time_varying:s' => undef,
+			 'occasion:s' => undef,
+			 'parameters:s' => undef,
+			 'dv:s' => undef,
+			 'vpc!' => undef,
+			 'model3!' => undef,
+			 'check!' => undef,
+			 'estimate:i' => undef,
+			 'bsv_param:i' => undef,
+			 'N_invariant:i' => undef,
+			 'bov_param:i' => undef,
+			 'type:s' => undef);
+
+my $res = GetOptions( \%options,
+		      @common_options::get_opt_strings,
+		      keys(%required_options),
+		      keys(%optional_options) );
+exit unless $res;
+
+common_options::setup( \%options, 'gls' ); #get defaults, 
+#calls set_globals etc, initiates random sequence
+
+my %help_text;
+
+$help_text{Pre_help_message} = <<'EOF';
+  <h3 class="heading1">gls</h3>
+
+    Generalised Least Squares approximation of residual error.
+
+EOF
+
+$help_text{Options} = <<'EOF';      
+    Options:
+
+      The options are given here in their long form. Any option may be
+      abbreviated to any nonconflicting prefix. The -threads option
+      may be abbreviated to -thr.
+
+      The following options are valid:
+EOF
+
+$help_text{-h} = <<'EOF';
+      -h | -?
+      
+      With -h or -? gls will print a list of options and exit.
+EOF
+      
+$help_text{-help} = <<'EOF';      
+      -help
+      
+      With -help gls will print this, longer, help message.
+EOF
+
+$help_text{-invariant} = <<'EOF';
+      -invariant=list
+
+EOF
+$help_text{-time_varying} = <<'EOF';
+      -time_varying=list
+
+EOF
+
+$help_text{-occasion} = <<'EOF';
+      -occasion=column
+
+
+EOF
+
+$help_text{-parameters} = <<'EOF';
+      -parameters=list
+
+EOF
+
+$help_text{-dv} = <<'EOF';
+      -dv=column
+
+      Default
+EOF
+
+$help_text{-vpc} = <<'EOF';
+      -vpc
+
+      Default not set.
+EOF
+
+$help_text{-model3} = <<'EOF';
+      -model3
+
+      Default not set.
+EOF
+
+$help_text{-check} = <<'EOF';
+      -check
+
+      Default not set.
+EOF
+
+$help_text{-bsv_parameters} = <<'EOF';
+      -bsv_parameters=N
+
+EOF
+
+$help_text{-N_invariant} = <<'EOF';
+      -N_invariant=N
+
+EOF
+
+$help_text{-estimate} = <<'EOF';
+      -estimate=N
+
+EOF
+
+$help_text{-bov_parameters} = <<'EOF';
+      -bov_parameters=N
+
+EOF
+
+$help_text{-type} = <<'EOF';
+      -type=column
+
+EOF
+
+$help_text{Post_help_message} = <<'EOF';
+    Also see 'psn_options -h' for a description of common PsN options.
+EOF
+
+common_options::online_help( 'frem', \%options, \%help_text, \%required_options, \%optional_options);
+
+## Check that we do have a model file
+if ( scalar(@ARGV) < 1 ) {
+  print "An input model file must be specified. Use 'frem -h' for help.\n";
+  exit;
+}
+
+if( scalar(@ARGV) > 1 ){
+  print "FREM can only handle one modelfile, you listed: ",join(',',@ARGV),". Use 'frem -h' for help.\n";die;
+  exit;
+}
+
+#input checks
+if (defined $options{'model3'} and $options{'model3'}){
+    if (defined $options{'invariant'} ){
+	print "Option invariant is not allowed in combination with option model3.\n";
+	exit;
+    }
+    if (defined $options{'time_varying'} ){
+	print "Option time_varying is not allowed in combination with option model3.\n";
+	exit;
+    }
+    if (defined $options{'parameters'} ){
+	print "Option parameters is not allowed in combination with option model3.\n";
+	exit;
+    }
+
+    #			   filename                    => $ARGV[0],
+    #check here for annotation in input model, set options unless given on commmandline
+    #then continue with checks for required input options
+    if (defined $options{'bsv_parameters'} ){
+	print "Option bsv_parameters is required when option model3 is set.\n";
+	exit;
+    }
+    if (defined $options{'N_invariant'} ){
+	print "Option N_invariant is required when option model3 is set.\n";
+	exit;
+    }
+
+} else{
+    unless (defined $options{'invariant'} or defined $options{'time_varying'}){
+	print "At least one of options invariant or time_varying must be given when model3 is not set.\n";
+	exit;
+    }
+    if ((defined $options{'time_varying'}) xor ( defined $options{'parameters'})){
+	print "Options time_varying and parameters must either be both given or both not given\n";
+	exit;
+    }
+    if (defined $options{'bsv_parameters'} ){
+	print "Option bsv_parameters is not allowed without option model3.\n";
+	exit;
+    }
+    if (defined $options{'bov_parameters'} ){
+	print "Option bov_parameters is not allowed without option model3.\n";
+	exit;
+    }
+    if (defined $options{'N_invariant'} ){
+	print "Option N_invariant is not allowed without option model3.\n";
+	exit;
+    }
+    if (defined $options{'type'} ){
+	print "Option type is not allowed without option model3.\n";
+	exit;
+    }
+
+}
+
+#parse input
+my @invariant=();
+if (defined $options{'invariant'}){
+    #comma-separated list of names
+    foreach my $name (split(/,/,$options{'invariant'})){
+	if (length($name)>0){
+	    push(@invariant,$name);
+	}
+    }
+    $options{'N_invariant'} = scalar(@invariant); #now this option is ok without model3, because we know it is correct
+}
+
+my @time_varying=();
+if (defined $options{'time_varying'}){
+    #comma-separated list of names
+    foreach my $name (split(/,/,$options{'time_varying'})){
+	if (length($name)>0){
+	    push(@time_varying,$name);
+	}
+    }
+}
+
+my @parameters=();
+if (defined $options{'parameters'}){
+    #comma-separated list of names
+    foreach my $name (split(/,/,$options{'parameters'})){
+	if (length($name)>0){
+	    push(@parameters,$name);
+	}
+    }
+    $options{'bov_parameters'} = scalar(@parameters); #now this option is ok without model3, because we know it is correct
+}
+
+
+#checks left for frem->new: occ and dv exist in $INPUT if needed. type exists in $INPUT if given. 
+
+
+
+unless ( defined $options{'skip_data_parsing'} or $options{'drop_dropped'}) {
+    $options{'skip_data_parsing'} = 1;
+}
+
+my $eval_string = common_options::model_parameters(\%options);
+
+my $model = model -> new ( eval( $eval_string ),
+			   filename                    => $ARGV[0],
+			   ignore_missing_output_files => 1);
+
+if( defined $model -> msfi_names() ){
+    my @needed_files;
+    foreach my $msfi_files( @{$model -> msfi_names()} ){
+	#loop $PROB
+	if (defined $msfi_files){
+	    foreach my $msfi_file( @{$msfi_files} ){
+		#loop instances
+		if ( defined $msfi_file ){
+		    my ( $dir, $file ) = OSspecific::absolute_path(cwd(),$msfi_file);
+		    push (@needed_files,$dir.$file) ;
+		}
+	    }
+	}
+    }
+    if (scalar(@needed_files)>0){
+	if( defined $model -> extra_files ){
+	    push(@{$model -> extra_files},@needed_files);
+	}else{
+	    $model -> extra_files(\@needed_files);
+	}
+    }
+    
+}
+
+
+if ( scalar (@{$model-> problems}) > 1 ){
+    print "Cannot have more than one \$PROB in the input model.\n";
+    exit;
+}
+
+my $est_record = $model -> record( problem_number => 1,
+				   record_name => 'estimation' );
+unless( scalar(@{$est_record}) > 0 ){
+  print "The input model must have a \$EST record\n";
+  exit;
+}
+
+my $frem = tool::frem -> 
+    new ( eval( $common_options::parameters ),
+	  models	     => [ $model ],
+	  top_tool           => 1,
+	  parameters => \@parameters,
+	  time_varying => \@time_varying,
+	  invariant => \@invariant,
+	  bsv_parameters => $options{'bsv_parameters'}, 
+	  bov_parameters => $options{'bov_parameters'},
+	  estimate => $options{'estimate'}, 
+	  check => $options{'check'}, 
+	  vpc => $options{'vpc'}, 
+	  model3 => $options{'model3'}, 
+	  N_invariant => $options{'N_invariant'}, 
+	  occasion => $options{'occasion'}, 
+	  dv => $options{'dv'}, 
+	  type => $options{'type'} );
+
+ui -> print( category => 'frem',
+	     message => "have new frem\n" );
+
+
+$frem-> print_options (cmd_line => $cmd_line,
+		      toolname => 'frem',
+		      local_options => [keys %optional_options],
+		      common_options => \@common_options::tool_options);
+
+   
+$frem -> run;
+#$frem -> prepare_results;
+#$frem -> print_results; #only for frem_results.csv
+ui -> print( category => 'frem',
+	     message => "frem done\n" );
+
