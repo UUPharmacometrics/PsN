@@ -186,42 +186,6 @@ DIALIBFILES=debug.pm \
 	data/individual.pm \
 	data.pm \
 	table_file.pm \
-	model/problem/record.pm \
-  model/problem/code_record.pm \
-	model/problem/init_record.pm \
-	model/problem/abbreviated.pm \
-	model/problem/aes.pm \
-	model/problem/aesinitial.pm \
-	model/problem/contr.pm \
-	model/problem/covariance.pm \
-	model/problem/data.pm \
-	model/problem/des.pm \
-	model/problem/error.pm \
-	model/problem/estimation.pm \
-	model/problem/infn.pm \
-	model/problem/input.pm \
-	model/problem/msfi.pm \
-	model/problem/mix.pm \
-	model/problem/model.pm \
-	model/problem/nonparametric.pm \
-	model/problem/omega.pm \
-	model/problem/pk.pm \
-	model/problem/prior.pm \
-	model/problem/problem.pm \
-	model/problem/pred.pm \
-	model/problem/scatter.pm \
-	model/problem/anneal.pm \
-	model/problem/phis.pm \
-	model/problem/level.pm \
-	model/problem/etas.pm \
-	model/problem/bind.pm \
-	model/problem/sigma.pm \
-	model/problem/simulation.pm \
-	model/problem/sizes.pm \
-	model/problem/subroutine.pm \
-	model/problem/table.pm \
-	model/problem/theta.pm \
-	model/problem/tol.pm \
 	model/cwres_module.pm \
 	model/mirror_plot_module.pm \
 	model/iofv_module.pm \
