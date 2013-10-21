@@ -1,13 +1,3 @@
-# {{{ include statements
-
-start include statements
-use Carp;
-use Config;
-end include statements
-
-
-# {{{ Original Documentation
-
 ###############################################################
 #             		     INTRODUCTION                     #
 ###############################################################
@@ -99,35 +89,32 @@ end include statements
 
 #    Thereafter follows instructions. Names of output files will be given.
 
-# }}}
+package model::iofv_module;
 
-# {{{ new
+use Carp;
+use Config;
+use Moose;
+use MooseX::Params::Validate;
 
-start new
+has 'enabled' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'base_model' => ( is => 'rw', required => 1, isa => 'model', default => 0 );
+
+sub BUILD
 {
+	my $this  = shift;
+
   my $base_model = $this->base_model;
   
-  if( $base_model -> is_option_set( record => 'subroutine',
-				    name => 'CONTR' ) ){
-
+  if( $base_model -> is_option_set( record => 'subroutine', name => 'CONTR' ) ) {
     croak('CONTR in $SUBROUTINE is already set, iofv cannot be computed' );
-
   }
-
-  $base_model -> add_records( type => 'subroutine',
-			      record_strings => ['CONTR=iofvcont.f'] );
-
-  $base_model -> set_records( type => 'contr',
-			      record_strings => ['DATA=(ID)'] );
+  $base_model -> add_records( type => 'subroutine', record_strings => ['CONTR=iofvcont.f'] );
+  $base_model -> set_records( type => 'contr', record_strings => ['DATA=(ID)'] );
 }
-end new
 
-# }}}
-
-# {{{ post_process
-
-start post_process
+sub post_process
 {
+	my $self = shift;
 
   if( $PsN::nm_major_version == '7' ){
     croak("option -iofv is not yet supported for NONMEM7");
@@ -179,29 +166,26 @@ C     individual obj. funct. value for indiv. jj = cnt
 EOF
  
     close CONTR;
-
 }
-end post_process
 
-# }}}
-
-# {{{ post_run_process
-start post_run_process
+sub post_run_process
 {
+	my $self = shift;
+
   my $base_model = $self->base_model;
 
   # Figure out if we have an sdtab and what number it has
   my ( $sd_ref, $junk ) = $base_model -> problems -> [0] -> 
-      _option_val_pos( name        => 'FILE',
+      _option_val_pos( name => 'FILE',
 		       record_name => 'table',
 		       exact_match => 0 );
 
   my $sdno = '1';
 
-  if( defined $sd_ref ) {
+  if ( defined $sd_ref ) {
     foreach my $tabname ( @{$sd_ref} ) {
-      if( $tabname =~ /[sd,pa]tab(\d+)/ ) {
-	$sdno= $1;
+      if ( $tabname =~ /[sd,pa]tab(\d+)/ ) {
+				$sdno = $1;
       }
     }
   }
@@ -226,7 +210,7 @@ start post_run_process
       push( @values, $line[1] );
 
       if( $previous_id == $last_id and $line[0] == $first_id ){
-	push( @starting_points, $i );
+				push( @starting_points, $i );
       }
 
       $previous_id = $line[0];
@@ -259,71 +243,7 @@ start post_run_process
     croak("Unable to open iotab: iotab$sdno ." );
   }
 }
-end post_run_process
-# }}}
 
-print("Enter the name of the file with the OFVs for the basic model:\n");
-$basic = <STDIN>;
-
-print("Enter the name of the file with the OFVs for the full model:\n");
-$full = <STDIN>;
-
-print("Enter the number of subjects:\n"); 
-$ind = <STDIN> ;
-
-chomp($basic);
-chomp($full);
-
-$out1 = "deltofv1.res";
-
-## Open the files with OFVs and extract the relevant values
-open (FILE1, $basic) || die("Couldn't open $basic for reading!\n");
-while(<FILE1>) {
-  chomp;
-  ($id,$basic_mof) = split(' ',$_);
-  push @basic, $basic_mof;
-  push @id, $id;
-}
-@basic = splice(@basic,-$ind);
-@ids   = splice(@id,-$ind);
-close FILE1;
-
-open (FILE2, $full) || die("Couldn't open $full for reading!\n");
-while(<FILE2>) {
-  chomp;
-  ($junk,$full_mof) = split(' ',$_);
-  push @full, $full_mof;
-}
-@full = splice(@full,-$ind);
-close FILE2;
-
-## Compute the differences
-
-foreach $i (0..@basic-1) {
-  push @diff, $basic[$i] - $full[$i];
-}
-
-## Create the arrays to be printed
-foreach $diff (@diff) {
-  push @unsorted, sprintf "%12.4e%12.4e", $ids[$index],$diff[$index];
-  $index++;
-}
-
-@sorted = 
-  map  {$_-> [0]}
-  sort {$a -> [1] <=> $b ->[1]}
-  map  {[$_, (split ' ')[1]]}
-@unsorted;
-
-open (OUTFILE1, ">$out1") || 
-  die ("Cannot open output file $out1 for writing!\n");
-
-print OUTFILE1 ("ID DELTAOFV SORTID SORTDELTAOFV\n");
-$index = 0;
-foreach $diff (@diff) {
-  printf OUTFILE1 "%s    %s\n", $unsorted[$index],$sorted[$index];
-  $index++;
-}
-close OUTFILE1;
-print ("Output are in file ",$out1,"\n");
-
+no Moose;
+__PACKAGE__->meta->make_immutable;
+1;
