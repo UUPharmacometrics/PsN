@@ -140,14 +140,14 @@ is ($model->problems->[0]->estimations->[1], undef, "set_maxeval_zero: Removed e
 # update_inits
 $model = model->new(filename => "$modeldir/pheno.mod");
 
-$model->update_inits(from_output_file => "$modeldir/pheno.lst");
+$model->update_inits(from_output_file => "$modeldir/pheno_test.lst");
 
 my $lines = $model->record(record_name => 'sigma');
-ok ($lines->[0]->[0] =~ 0.0164153, "update_inits: new sigma");
+ok ($lines->[0]->[0] =~ 0.0164, "update_inits: new sigma");
 
 is ($model->problems->[0]->thetas->[0]->options->[0]->lobnd, 0, "update_inits: new theta lobnd");
-is ($model->problems->[0]->thetas->[0]->options->[0]->init, 0.00555363, "update_inits: new theta init");
+is ($model->problems->[0]->thetas->[0]->options->[0]->init, 0.00555, "update_inits: new theta init");
 is ($model->problems->[0]->thetas->[1]->options->[0]->lobnd, 0, "update_inits: new theta lobnd");
-is ($model->problems->[0]->thetas->[1]->options->[0]->init, 1.33638, "update_inits: new theta init");
+is ($model->problems->[0]->thetas->[1]->options->[0]->init, 1.34, "update_inits: new theta init");
 
 done_testing();
