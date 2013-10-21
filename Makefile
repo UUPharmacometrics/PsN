@@ -186,7 +186,6 @@ DIALIBFILES=debug.pm \
 	data/individual.pm \
 	data.pm \
 	table_file.pm \
-	model/cwres_module.pm \
 	model/mirror_plot_module.pm \
 	model/iofv_module.pm \
 	model/nonparametric_module.pm \

@@ -1,10 +1,18 @@
-start include statements
-use Carp;
-end include statements
+package model::cwres_module;
 
-# {{{ new
-start new
+use Carp;
+use Moose;
+use MooseX::Params::Validate;
+
+has 'enabled' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'cwtab_names' => ( is => 'rw', isa => 'ArrayRef[Str]', default => ['cwtab.est', 'cwtab'] );
+has 'sdno' => ( is => 'rw', isa => 'Int' );
+has 'mirror_plots' => ( is => 'rw', isa => 'Int' );
+has 'problem' => ( is => 'rw', required => 1, isa => 'Object' );
+
+sub BUILD
 {
+	my $this = shift;
 
   my $mirror_name = $this->mirror_plots ? 'sim' : '';
 
@@ -252,14 +260,13 @@ start new
 					   "IPRED DV $mdv NOPRINT ".
 					   "ONEHEADER FILE=cwtab".$this -> sdno().'.deriv'] );
 }
-end new
 
-# }}}
+}
 
-# {{{ post_process
-start post_process
+sub post_process
 {
-  
+	my $self = shift;
+
   my ($advan,$junk) = $self->problem -> _option_val_pos( record_name => 'subroutine',
 							       name => 'ADVAN',
 							       exact_match => 0);
@@ -331,6 +338,7 @@ EOF
     close INFN;
   }
 }
-end post_process
 
-# }}}
+no Moose;
+__PACKAGE__->meta->make_immutable;
+1;
