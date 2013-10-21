@@ -189,7 +189,6 @@ DIALIBFILES=debug.pm \
 	model/cwres_module.pm \
 	model/mirror_plot_module.pm \
 	model/iofv_module.pm \
-	model/shrinkage_module.pm \
 	model/nonparametric_module.pm \
 	model/problem.pm \
 	output/problem/subproblem.pm \

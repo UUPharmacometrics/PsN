@@ -17,7 +17,6 @@ lib/model/iofv_module.pm
 lib/model/mirror_plot_module.pm
 lib/model/nonparametric_module.pm
 lib/model/problem.pm
-lib/model/shrinkage_module.pm
 lib/nonmem.pm
 lib/output.pm
 lib/output/problem.pm
