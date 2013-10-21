@@ -873,15 +873,15 @@ start _scan_to_meth
 			}
 			if ( /(PORTION|OPTIMIZATION|BURN-IN|EXPECTATION ONLY PROCESS)( WAS | )NOT COMPLETED/ ) {
 				if ( /USER INTERRUPT/ ) {
-					$self->next_to_last_step_successful = 1;
+					$self->next_to_last_step_successful(1);
 				} else {
-					$self->next_to_last_step_successful = 0;
+					$self->next_to_last_step_successful(0);
 					last; #do not read anything more, this is a failure
 				}
 			} elsif ( /(PORTION|OPTIMIZATION|BURN-IN|EXPECTATION ONLY PROCESS)( WAS | )NOT TESTED/ ) {
-				$self->next_to_last_step_successful = 1;
+				$self->next_to_last_step_successful(1);
 			} elsif ( /(PORTION|OPTIMIZATION|BURN-IN|EXPECTATION ONLY PROCESS)( WAS | )COMPLETED/ ) {
-				$self->next_to_last_step_successful = 1;
+				$self->next_to_last_step_successful(1);
 			}
 			$start_pos++;
 			if ( $start_pos > $#{$self->lstfile} ) { #we found end of file
@@ -980,7 +980,7 @@ start _read_iteration_path
 	    if( /$method_exp/ ) {
 				my $string = $1;
 				$string =~ s/\s*$//; #remove trailing spaces
-					unless (($string =~ $self->{'method_string'}) or ($string eq $self->{'method_string'})) {
+					unless (($string =~ $self->method_string) or ($string eq $self->method_string)) {
 						croak("Error in read_iteration_path: METH in subprob has string\n"."$string ".
 								"instead of expected\n" . $self->method_string);
 					}
@@ -2684,7 +2684,7 @@ start parse_NM7_additional
 	unless ($success) {
 	  #erase, read everything from lst
 	  carp("Failed to read all matrices cov, cor and coi. Will try reading matrices from lst instead. Note: This is not an error unless all three" .
-									" additional output files cov, cor and coi are expected given the model input.") unless $self -> {'ignore_missing_files'};
+									" additional output files cov, cor and coi are expected given the model input.") unless $self -> ignore_missing_files;
 	  $self->raw_covmatrix([]);
 	  $self->correlation_matrix([]);
 		$self->output_matrix_headers([]);

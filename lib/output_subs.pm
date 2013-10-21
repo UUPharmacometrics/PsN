@@ -209,7 +209,11 @@ start get_single_value
 	if ($self->can($attribute)) {
 	  $arr = $self->$attribute(problems => [($problem_index + 1)], subproblems => [($subproblem_index + 1)]);
 	  if (defined $arr->[0]) {
-	    $return_value=$arr->[0]->[0];
+		  if (ref $arr->[0] eq "ARRAY"){
+			  $return_value=$arr->[0]->[0];
+		  }else{
+			  $return_value=$arr->[0];
+		  }
 	  } else {
 	    1;
 	  }
