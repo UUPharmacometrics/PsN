@@ -5,10 +5,10 @@ use Moose;
 use MooseX::Params::Validate;
 
 has 'enabled' => ( is => 'rw', isa => 'Bool', default => 0 );
-has 'cwtab_names' => ( is => 'rw', isa => 'ArrayRef[Str]', default => ['cwtab.est', 'cwtab'] );
+has 'cwtab_names' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { ['cwtab.est', 'cwtab'] } );
 has 'sdno' => ( is => 'rw', isa => 'Int' );
 has 'mirror_plots' => ( is => 'rw', isa => 'Int' );
-has 'problem' => ( is => 'rw', required => 1, isa => 'Object' );
+has 'problem' => ( is => 'rw', required => 1, isa => 'model::problem' );
 
 sub BUILD
 {
@@ -32,7 +32,7 @@ sub BUILD
 
   # Get current comres number
   my $comresno;
-  my ( $crno_ref, $junk ) = $prob ->
+  my ( $crno_ref ) = $prob ->
       _option_val_pos( name        => 'COMRES',
 		       record_name => 'abbreviated',
 		       exact_match => 0 );
@@ -56,7 +56,7 @@ sub BUILD
   my @cwtab_names = @{$this -> cwtab_names};
 
   # Figure out if we have an sdtab and what number it has
-  my ( $sd_ref, $junk ) = $prob ->
+  my ( $sd_ref ) = $prob ->
       _option_val_pos( name        => 'FILE',
 		       record_name => 'table',
 		       exact_match => 0 );
@@ -92,7 +92,7 @@ sub BUILD
   # "exact_match" we can search for a prefix of the different ADVAN
   # options.
 
-  my ($advan,$junk) = $prob -> _option_val_pos( record_name => 'subroutine',
+  my ($advan) = $prob -> _option_val_pos( record_name => 'subroutine',
 						name => 'ADVAN',
 						exact_match => 0);
 
@@ -108,7 +108,7 @@ sub BUILD
 	$prob -> preds -> [0] -> verbatim_first($code);
       }
       unshift(@{$code},
-	      # {{{ fortan code
+	      # fortan code
 	      ('"      COMMON /ROCM6/ THETAF(40),OMEGAF(30,30),SIGMAF(30,30)',
 	       '"      COMMON /ROCM7/ SETH(40),SEOM(30,30),SESIG(30,30)',
 	       '"      COMMON /ROCM8/ OBJECT ',
@@ -119,20 +119,19 @@ sub BUILD
 	       '"      INTEGER MODE ',
 	       '"      INTEGER NTH,NETA,NEPS ',
 	       "\"      DATA NTH,NETA,NEPS/$nthetas,$netas,$neps/ ")
-	      # }}}
 	      );
 
       # Abbrev code 
       $code = $prob -> preds -> [0] -> code;
       
-      # {{{ fortran code
+      # fortran code
       push( @{$code},
 	    ('"      IF (ICALL.EQ.0) THEN',
 	     '"C     open files here, if necessary',
 	     '"         OPEN(50,FILE=\'cwtab'.$this -> sdno().$mirror_name.'.est\')') );
 
       push( @{$code},
-	      # {{{ fortan code
+	      # fortan code
 	    ('"      ENDIF',
 	     '"      IF (ICALL.EQ.3) THEN',
 	     '"         MODE=0',
@@ -159,8 +158,6 @@ sub BUILD
 	     '" 99         FORMAT (20E15.7)',
 	     '" 98         FORMAT (2I8)',
 	     '" 97         FORMAT (10E15.7)')
-
-	    # }}}
 	    );
       
     }
@@ -245,7 +242,7 @@ sub BUILD
     $com++;
   }
 
-  my ($mdv,$junk) = $prob -> _option_val_pos( record_name => 'input',
+  my ($mdv) = $prob -> _option_val_pos( record_name => 'input',
 					      name => 'MDV' );
 
   if( defined $prob -> preds and scalar(@{$mdv}) == 0  ){
@@ -256,18 +253,16 @@ sub BUILD
 
   $prob -> add_records( type => 'table',
 			record_strings => ['ID ',
-					   join(' ',@table_row),
-					   "IPRED DV $mdv NOPRINT ".
-					   "ONEHEADER FILE=cwtab".$this -> sdno().'.deriv'] );
-}
-
+			join(' ',@table_row),
+			"IPRED DV $mdv NOPRINT ".
+			"ONEHEADER FILE=cwtab".$this -> sdno().'.deriv'] );
 }
 
 sub post_process
 {
 	my $self = shift;
 
-  my ($advan,$junk) = $self->problem -> _option_val_pos( record_name => 'subroutine',
+  my ($advan) = $self->problem -> _option_val_pos( record_name => 'subroutine',
 							       name => 'ADVAN',
 							       exact_match => 0);
 

@@ -6,7 +6,7 @@ use MooseX::Params::Validate;
 
 use model::problem::record::option;
 
-has 'options' => ( is => 'rw', isa => 'ArrayRef[Object]' );
+has 'options' => ( is => 'rw', isa => 'ArrayRef[model::problem::record::option]' );
 has 'record_arr' => ( is => 'rw', isa => 'Maybe[ArrayRef[Str]]' );
 has 'comment' => ( is => 'rw', isa => 'ArrayRef[Str]' );
 has 'print_order' => ( is => 'rw', isa => 'ArrayRef[Int]' );
@@ -15,7 +15,7 @@ sub BUILD
 {
 	my $this  = shift;
 
-  # To construct an option you inly need to suply an array of
+	# To construct an option you inly need to suply an array of
   # strings containg the record block. _read_option then parses
   # those strings.
   $this->_read_options;
