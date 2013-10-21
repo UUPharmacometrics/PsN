@@ -1,6 +1,10 @@
 *~
 *.tar.gz
 *.zip
+test/test_files/pheno.lst
+test/test_files/pheno5.lst
+test/test_files/pheno5.ext
+test/test_files/pheno5.phi
 lib/PsN.pm
 libgen/*
 lib/data.pm
