@@ -2189,7 +2189,6 @@ end index_matrix_binned_values
 
 	my $filt = $d -> create_row_filter(no_individuals=>$no_individuals);
 	my $all_rows_observations = (scalar(@{$filt}) > 0)? 0 : 1;
-
 	my $dv_header = $self->dv;
 	my $censor_header = $self->censor();
 	if ($PsN::nm_major_version < 7){
@@ -2215,18 +2214,6 @@ end index_matrix_binned_values
 		}
 	}
 	
-	#want to always read whole simulation, i.e. whole table. Compute how many 
-	#simulations can be read in each round given this condition and a limit of 400000 lines
-	#count lines in original tablefile
-	my $linecount=0;
-	open(ORIG, $orig_file ) or croak("Could not open tablefile.");
-	while (<ORIG>){
-		$linecount++;
-	}
-	close(ORIG);
-	my $max_read_sim = ($linecount >= 400000) ? 1 : int (400000/$linecount);
-	#my $max_read_sim = 2;
-	my $max_ind=$max_read_sim*$no_individuals; #individuals to read in one round
 
 	$filt = undef;
 	$d = undef;
@@ -2236,8 +2223,6 @@ end index_matrix_binned_values
 
 	#### New coding of simulation_model(s) will break the handling of DV in cwtab
 
-	my $rem = $self -> samples % $self -> n_simulation_models();
-	my $base = ($self -> samples - $rem)/$self -> n_simulation_models();
 	my @model_sims;
 	my $n_model_sims=0;
 	if (defined $self->sim_table){
@@ -2247,12 +2232,12 @@ end index_matrix_binned_values
 		$n_model_sims=scalar(@model_sims);
 	}
 	my $tables_read=0;
+	my $mdv_index;
+	my $dv_index;
+	my $censor_index;
+	my $obscount=0;
+
 	for( my $sim_i = 0; $sim_i < $n_model_sims; $sim_i++ ) {
-		my $samples = $base; #samples to read from model
-		if( $rem > 0 ) {
-			$samples += 1;
-			$rem--;
-		}
 		my $sim_file;
 		
 		#error if sim_table and n_simulation_models > 1
@@ -2280,114 +2265,91 @@ end index_matrix_binned_values
 			croak("File $sim_file \nwith table output for simulated data does not exist. ".
 				  "It is recommended to check lst-file\n$file_to_check \nfor NONMEM error messages.");
 		}
+
+		open (FILE, "$sim_file") or croak("Could not open $sim_file for reading");
 		
-
-		if (0){
-			#create empty dv and censor matrices of correct size
-			my $full_dv_matrix=[];
-			my $full_censor_matrix=[];
-			for (my $k=0; $k<$no_sim; $k++){
-				push(@{$full_dv_matrix},[]);
-				push(@{$full_dv_matrix},[]);
-			}
-			#open sim file.
-			#skip line TABLE
-			#split header on space, find index for $self->dv, 'MDV', $self->censor
-			#count tables
-			#loop over lines until next TABLE NO, split on space, check if mdv < 1 or mdv missing, store dv and censor in right place
-			#count stored values for each table, check that same count as original data
-
-
-		}
-		$d = data -> new(filename=>$sim_file,target =>'disk');
-		$d -> _read_header();
-		
-		#read portions of the simdatafiles, until all expected records read
-		#build data matrix so that there is one column for each simulation 
-		#(real data is first column) and one row for each data point.
-		#Store as one-dimensional array of rows, each row is comma-separated string of values
-		
-		my $skip_tab=0;
-		while ( $skip_tab<$samples){
-
-			@datearr=localtime;
-			$the_time=sprintf "%2.2d:%2.2d:%2.2d",$datearr[2],$datearr[1],$datearr[0];
-			$this_sec=$datearr[2]*3600+$datearr[1]*60+$datearr[0];
-			unless ($tables_read < $max_read_sim){
-				my $percent_done=int(100*$tables_read/$no_sim);
-				$percent_done = 1 if ($percent_done < 1);
-				my $sec_rem = $self->ceil('number'=>(100*($this_sec-$start_sec)/$percent_done));
-				my $minutes_remaining=$self->ceil('number'=>($sec_rem/60));	    
-				my $plural = ($minutes_remaining == 1)? '' : 's';
-				my $mess="Time $the_time, $percent_done\% done. ";
-				ui -> print (category=>'npc', message=>$mess);
-				ui -> print (category=>'vpc', message=>$mess);
-			}
-			
-			# max_ind is max_read_sim*number_of_inidvuals_per_table
-			$d-> _read_individuals('skip_tables'=>$skip_tab,'max_individuals'=>$max_ind);
-			croak('failed to read individuals in table data') unless (defined $d->individuals());
-			
-			##error check
-			my $tables_to_read= ($max_read_sim > ($samples-$skip_tab))? ($samples-$skip_tab): $max_read_sim;
-			my $individuals_expected = $tables_to_read*$no_individuals;
-			unless (scalar(@{$d->individuals()}) == $individuals_expected){
-				my $mess = "Did not find the expected number of individuals ($individuals_expected) to read in \n".
-					"$sim_file\n, found ".scalar(@{$d->individuals()}).". \n. A possible cause is that some simulations failed.\n".
-					"Check in \n$sim_file \n".
-					"that number of TABLE rows is equal to ".$samples.
-					" and that all TABLE sections contain ".
-					"observations for all individuals.\n";
+		while (1){
+			my $line = readline(FILE);
+			last unless (defined $line); #reached EOF
+			chomp $line;
+			next if ($line =~ /^TABLE NO/);
+			if ($line =~ /^\s*ID\s/){
+				if ($tables_read==0){
+					#first table, parse header
+					$line =~ s/^\s*//;
+					my @header = split (/\s+/,$line);
+					for (my $i=0; $i<scalar(@header);$i++){
+						if ($header[$i] eq $self->dv){
+							$dv_index = $i;
+							last;
+						}
+					}
+					unless (defined $dv_index){
+						croak("Could not find column with header for dependent variable ".$self->dv." in $sim_file\n");
+					}
+					if (defined $self->censor){
+						for (my $i=0; $i<scalar(@header);$i++){
+							if ($header[$i] eq $self->censor){
+								$censor_index = $i;
+								last;
+							}
+						}
+						unless (defined $censor_index){
+							croak("Could not find column with header for censor variable ".$self->censor." in $sim_file\n");
+						}
+					}
+					unless ($all_rows_observations){
+						for (my $i=0; $i<scalar(@header);$i++){
+							if ($header[$i] eq 'MDV'){
+								$mdv_index = $i;
+								last;
+							}
+						}
+						unless (defined $mdv_index){
+							croak("Could not find column with header MDV in $sim_file\n");
+						}
+					}
+					ui -> print (category=>'npc', 
+								 message=>'Reading sample ',
+								 newline => 0);
+					ui -> print (category=>'vpc', 
+								 message=>'Reading sample ',
+								 newline => 0);
+				}else{
+					#found new table, check if previous had right number obs
+					unless ($obscount == $no_observations){
+						croak ("Expected $no_observations observation rows after MDV filtering ".
+							   "but found $obscount. File is $sim_file, table count (starting from first sim file) is $tables_read");
+					}
+					$obscount=0;
+				}
+				$tables_read++;
+				ui -> print (category=>'npc', 
+							 message=>$tables_read.' ',
+							 newline => 0);
+				ui -> print (category=>'vpc', 
+							 message=>$tables_read.' ',
+							 newline => 0);
 				
-				if (defined $self->orig_table) {
-					croak($mess);
-				} else {
-					my $file_to_check = $self->searchdir. "/NM_run" . ($sim_i + 1+$self->run_the_original) . "/psn-1.lst";
-					croak($mess."Also check lst-file\n $file_to_check  \nfor error messages. ");
-				}
-			}
-			
-			$d -> synced(1);
-
-
-			if ($tables_read == 0){
-				$filt = $d -> create_row_filter('no_individuals'=>$no_individuals);
-				my $test_count=0;
-				unless ($all_rows_observations){
-					foreach (@{$filt}){
-						$test_count++ if ($_ > 0);
+			}elsif($line =~ /[0-9]/){
+				#assume this is data line, at least it is not empty
+				$line =~ s/^\s*//;
+				my @items = split (/\s+/,$line);
+				if ($all_rows_observations or $items[$mdv_index]<1){
+					$matrix[$obscount] .= ','.$items[$dv_index];
+					if (defined $self->censor()){
+						$censor_matrix[$obscount] .= ','.$items[$censor_index];
 					}
-					unless ($test_count == $no_observations){
-						croak("Number of observations $test_count after filtering ".
-							  "simulated data set were not equal to number after ".
-							  "filtering $no_observations original data set.");
-					}
+					$obscount++;
 				}
 			}
-			$tables_read += $tables_to_read;
-			my $column_data = $d -> column_to_array('column'=>$dv_header,'filter'=>$filt);
-			my $censor_column_data;
-			unless (scalar @{$column_data} >0){
-				croak("No ${\$self->dv} values found after filtering simulated data portion.");
-			}
-			if (defined $self->censor()){
-				$censor_column_data = $d -> column_to_array('column'=>$censor_header,'filter'=>$filt);
-				unless (scalar @{$censor_column_data} >0){
-					croak("No ".$self->censor().
-						  " values found after filtering simulated data portion.");
-				}
-			}
-			
-			$d-> flush();
-			
-			$d -> append_columns_to_matrix('matrix'=>\@matrix,'columns'=>$column_data);
-			$column_data = undef; 
-			if (defined $self->censor()){
-				$d -> append_columns_to_matrix('matrix'=>\@censor_matrix,'columns'=>$censor_column_data);
-				$censor_column_data = undef; 
-			}
-			$skip_tab += $max_read_sim;
-		} # end while ($skip_tab < $samples)
+		} #end loop over sim file lines
+		close FILE;
+		unless ($obscount == $no_observations){
+			croak ("Expected $no_observations observation rows after MDV filtering ".
+				   "but found $obscount. File is $sim_file, table count (starting from first sim file) is $tables_read");
+		}
+
 	} #endof loop over read simdata
 
 
@@ -2487,8 +2449,8 @@ end index_matrix_binned_values
 	}
 
 
-	ui -> print (category=>'npc', message=> "Done reading and formatting data, finishing run.");
-	ui -> print (category=>'vpc', message=> "Done reading and formatting data, finishing run.");
+	ui -> print (category=>'npc', message=> "\nDone reading and formatting data, finishing run.");
+	ui -> print (category=>'vpc', message=> "\nDone reading and formatting data, finishing run.");
 
 }
 end get_data_matrix
