@@ -1,6 +1,7 @@
 *~
 *.tar.gz
 *.zip
+test/unit/testcase.txt
 test/test_files/pheno.lst
 test/test_files/pheno5.lst
 test/test_files/pheno5.ext

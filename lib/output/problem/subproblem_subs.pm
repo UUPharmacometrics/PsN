@@ -836,93 +836,116 @@ start _scan_to_meth
 
 	while ( $_ = @{$self->lstfile}[ $start_pos++ ] ) { #Large reading loop
 	    if( /$method_exp/ ) {
-		$found_any_meth = 1;
-		$method_counter++;
-		my $string = $1;
-		$string =~ s/\s*$//; #remove trailing spaces
-		if ($string eq 'Chain Method Processing') {
-		    $read_terminated_by_obj = 0;
-		} else {
-		    $read_terminated_by_obj = 1;
-		}
-		if ($method_counter == scalar(@{$self->input_problem()->estimations()})) {
-			#check that strings also match
-			if ($string =~ /\(Evaluation\)/) {
-				$self->estimation_step_run(0);
+			$found_any_meth = 1;
+			$method_counter++;
+			my $string = $1;
+			$string =~ s/\s*$//; #remove trailing spaces
+			if ($string eq 'Chain Method Processing') {
+				$read_terminated_by_obj = 0;
+			} else {
+				$read_terminated_by_obj = 1;
 			}
-			unless (($string =~ $self->method_string) or ($string eq $self->method_string) or ($self->method_string =~ $string  )) {
-				croak("METH number $method_counter in subprob has string\n"."$string ".
-						"instead of expected\n".$self->method_string);
-		    }
-		    $start_pos = $start_pos - 1; #undo ++ in loop head, leave directly at #METH line
-		    last;
-		} elsif ($method_counter == (scalar(@{$self->input_problem()->estimations()}) - 1)
-			and $check_next_to_last_method) {
-		    $found_next_to_last_method = 1;
-		}
-	    } elsif( /0HESSIAN OF POSTERIOR DENSITY IS NON-POSITIVE-DEFINITE DURING SEARCH/ ) {
-		# This is an error that stops the execution
-		$self->finished_parsing(1);
-		last;
-	    } elsif ( /$term_exp/ ) {
-				if ($found_next_to_last_method) {
-		  #inner loop to find termination status of next to last step
-			while ( $_ = @{$self->lstfile}[ $start_pos ] ) {
-			if ( /$tere_exp/ ) {
-			    last; #break inner loop
-			}
-			if ( /(PORTION|OPTIMIZATION|BURN-IN|EXPECTATION ONLY PROCESS)( WAS | )NOT COMPLETED/ ) {
-				if ( /USER INTERRUPT/ ) {
-					$self->next_to_last_step_successful(1);
-				} else {
-					$self->next_to_last_step_successful(0);
-					last; #do not read anything more, this is a failure
+			if ($method_counter == scalar(@{$self->input_problem()->estimations()})) {
+				#check that strings also match
+				if ($string =~ /\(Evaluation\)/) {
+					$self->estimation_step_run(0);
 				}
-			} elsif ( /(PORTION|OPTIMIZATION|BURN-IN|EXPECTATION ONLY PROCESS)( WAS | )NOT TESTED/ ) {
-				$self->next_to_last_step_successful(1);
-			} elsif ( /(PORTION|OPTIMIZATION|BURN-IN|EXPECTATION ONLY PROCESS)( WAS | )COMPLETED/ ) {
-				$self->next_to_last_step_successful(1);
+				unless (($string =~ $self->method_string) or ($string eq $self->method_string) or ($self->method_string =~ $string  )) {
+					croak("METH number $method_counter in subprob has string\n"."$string ".
+						  "instead of expected\n".$self->method_string);
+				}
+				$start_pos = $start_pos - 1; #undo ++ in loop head, leave directly at #METH line
+				last;
+			} elsif ($method_counter == (scalar(@{$self->input_problem()->estimations()}) - 1)
+					 and $check_next_to_last_method) {
+				$found_next_to_last_method = 1;
 			}
-			$start_pos++;
-			if ( $start_pos > $#{$self->lstfile} ) { #we found end of file
-			    #EOF This should not happen, raise error
-			    my $errmess = "Reached end of file while scanning for termination message of next to last #METH\n";
-			    carp($errmess."$!" );
-			    $self -> parsing_error( message => $errmess."$!" );
-			    return; #not enough to break inner loop, must return
-			}
+	    } elsif( /0HESSIAN OF POSTERIOR DENSITY IS NON-POSITIVE-DEFINITE DURING SEARCH/ ) {
+			# This is an error that stops the execution
+			$self->finished_parsing(1);
+			last;
+	    } elsif ( /$term_exp/ ) {
+			if ($found_next_to_last_method) {
+				#inner loop to find termination status of next to last step
+				while ( $_ = @{$self->lstfile}[ $start_pos ] ) {
+					if ( /$tere_exp/ ) {
+						unless (defined $self -> next_to_last_step_successful){
+							print "Failed to read minimization status from next to last \$EST when last \$EST is IMP EONLY=1. minimization_successful may not be correct.\n";
+						}
+						last; #break inner loop
+					}
+					if ( /(PORTION|OPTIMIZATION|BURN-IN|EXPECTATION ONLY PROCESS)( WAS | )NOT COMPLETED/ ) {
+						if ( /USER INTERRUPT/ ) {
+							$self->next_to_last_step_successful(1);
+						} else {
+							$self->next_to_last_step_successful(0);
+							last; #do not read anything more, this is a failure
+						}
+					} elsif ( /(PORTION|OPTIMIZATION|BURN-IN|EXPECTATION ONLY PROCESS)( WAS | )NOT TESTED/ ) {
+						$self->next_to_last_step_successful(1);
+					} elsif ( /(PORTION|OPTIMIZATION|BURN-IN|EXPECTATION ONLY PROCESS)( WAS | )COMPLETED/ ) {
+						$self->next_to_last_step_successful(1);
+					}
+
+					if ( /^0MINIMIZATION SUCCESSFUL/ ) {
+						$self -> next_to_last_step_successful(1);
+					}
+					# "0ERROR RMATX-  1" should (if it exists) occur after the minim. succ message
+					if ( /0ERROR RMATX-  1/ ) {
+						$self -> next_to_last_step_successful(0);
+						last;
+					}
+
+					if ( /^0MINIMIZATION TERMINATED/ ) {
+						$self -> next_to_last_step_successful(0);
+						last;
+					}
+
+					if ( /^0SEARCH WITH ESTIMATION STEP WILL NOT PROCEED/ ) {
+						$self -> next_to_last_step_successful(0);
+						last;
+					}
+
+					$start_pos++;
+					if ( $start_pos > $#{$self->lstfile} ) { #we found end of file
+						#EOF This should not happen, raise error
+						my $errmess = "Reached end of file while scanning for termination message of next to last #METH\n";
+						carp($errmess."$!" );
+						$self -> parsing_error( message => $errmess."$!" );
+						return; #not enough to break inner loop, must return
+					}
 
 				}
-		}
+			}
 	    }elsif ( $read_terminated_by_obj and /0PROGRAM TERMINATED BY OBJ/ ) {
-		# This is an error message which terminates NONMEM. We
-		# return after reading the minimization message
-		$self -> minimization_successful(0);
-		$self -> finished_parsing(1);
-		$self -> _read_minimization_message();
-		last;
+			# This is an error message which terminates NONMEM. We
+			# return after reading the minimization message
+			$self -> minimization_successful(0);
+			$self -> finished_parsing(1);
+			$self -> _read_minimization_message();
+			last;
 	    }elsif( /0HESSIAN OF POSTERIOR DENSITY IS NON-POSITIVE-DEFINITE DURING SEARCH/ ) {
-		# This is an errror that stops the execution
-		$self -> finished_parsing(1);
-		last;
+			# This is an errror that stops the execution
+			$self -> finished_parsing(1);
+			last;
 	    } elsif ((not $found_any_meth) and $self->simulationstep and /\(EVALUATION\)/ ) {
-		#when simulation step sometimes no meth printed, do not look for it
-		$self->estimation_step_run(0);
-		last;
+			#when simulation step sometimes no meth printed, do not look for it
+			$self->estimation_step_run(0);
+			last;
 	    } elsif ((not $found_any_meth) and $self->simulationstep and /$objt_exp/ ) {
-		#when simulation step sometimes no meth printed, do not look for it
-		#this is fishy, but do not bail out yet
-		$start_pos = $start_pos - 2; #leave at name of est meth line
-		$self->estimation_step_run(0);
-		last;
+			#when simulation step sometimes no meth printed, do not look for it
+			#this is fishy, but do not bail out yet
+			$start_pos = $start_pos - 2; #leave at name of est meth line
+			$self->estimation_step_run(0);
+			last;
 	    }
 
 	    if( $start_pos > $#{$self->lstfile} ) { #we found end of file
-		#EOF This should not happen, raise error
-		my $errmess = "Reached end of file while scanning for #METH\n";
-		carp($errmess."$!" );
-		$self -> parsing_error( message => $errmess."$!" );
-		last;
+			#EOF This should not happen, raise error
+			my $errmess = "Reached end of file while scanning for #METH\n";
+			carp($errmess."$!" );
+			$self -> parsing_error( message => $errmess."$!" );
+			last;
 	    }
 
 	}			#End of large reading loop

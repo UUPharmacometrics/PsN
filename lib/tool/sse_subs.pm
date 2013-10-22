@@ -967,43 +967,43 @@ start general_setup
       
       $mod_sim -> run;
       if ($self->have_nwpri() or $self->have_tnpri()){
-	#parse inits_sims
-	for (my $i=1;$i<=$self->samples();$i++){
-	  my $file = $self->directory.'m'.$model_number.'/mc-'.$i.'.inits';
-	  open(INITS, $file) or die "Could not open file $file for reading.\n";
-	  my @lines = <INITS>;
-	  close( INITS);
-	  #4 lines, thetalabels, thetavalues, omegalabels, omegavalues
+		  #parse inits_sims
+		  for (my $i=1;$i<=$self->samples();$i++){
+			  my $file = $self->directory.'m'.$model_number.'/mc-'.$i.'.inits';
+			  open(INITS, $file) or die "Could not open file $file for reading.\n";
+			  my @lines = <INITS>;
+			  close( INITS);
+			  #4 lines, thetalabels, thetavalues, omegalabels, omegavalues
 #	  print "line 1".$lines[1]."\n";
-	  $lines[1] =~ s/^\s*//;
-	  $lines[1] =~ s/\s*$//;
-	  $lines[3] =~ s/^\s*//;
-	  $lines[3] =~ s/\s*$//;
-	  my @vals = split(/\s+/,$lines[1]) if (defined $lines[1]); 
+			  $lines[1] =~ s/^\s*//;
+			  $lines[1] =~ s/\s*$//;
+			  $lines[3] =~ s/^\s*//;
+			  $lines[3] =~ s/\s*$//;
+			  my @vals = split(/\s+/,$lines[1]) if (defined $lines[1]); 
 #	  print "vals ".join(',',@vals)."\n";
-	  $self -> initial_values -> {$i-1} -> {'theta'} = join(',',@vals);
-	  @vals = split(/\s+/,$lines[3]) if (defined $lines[3]); 
-	  $self -> initial_values -> {$i-1} -> {'omega'} = join(',',@vals);
-	}
-	$self -> initial_values -> write( $self -> directory.'simulation_initial_values' );
-	#output to raw_results like file for possible reuse.
-	my $file = $self -> directory.'initial_estimates.csv';
-	open(INITS, '>'.$file) or die "Could not open file $file for writing.\n";
-	#labels stored earlier
-	my @header = ('model',@{$thetalabels[$self->probnum()-1]},@{$omegalabels[$self->probnum()-1]},@{$sigmalabels[$self->probnum()-1]});
-	#To avoid problems if cells contain commas
-	print INITS join(",",map {s/\"/\"\"/g; '"'.$_.'"'} @header ),"\n";
+			  $self -> initial_values -> {$i-1} -> {'theta'} = join(',',@vals);
+			  @vals = split(/\s+/,$lines[3]) if (defined $lines[3]); 
+			  $self -> initial_values -> {$i-1} -> {'omega'} = join(',',@vals);
+		  }
+		  $self -> initial_values -> write( $self -> directory.'simulation_initial_values' );
+		  #output to raw_results like file for possible reuse.
+		  my $file = $self -> directory.'initial_estimates.csv';
+		  open(INITS, '>'.$file) or die "Could not open file $file for writing.\n";
+		  #labels stored earlier
+		  my @header = ('model',@{$thetalabels[$self->probnum()-1]},@{$omegalabels[$self->probnum()-1]},@{$sigmalabels[$self->probnum()-1]});
+		  #To avoid problems if cells contain commas
+		  print INITS join(",",map {s/\"/\"\"/g; '"'.$_.'"'} @header ),"\n";
 
-	my $original = '0,'.join(',',@thetaoriginals,).','.join(',',@omegaoriginals).','.
-	    join(',',@sigmaoriginals);
-	print INITS $original."\n";
-	for (my $i=1;$i<=$self->samples();$i++){
-	  print INITS "$i,".$self -> initial_values -> {$i-1} -> {'theta'}.
-	      ','.$self -> initial_values -> {$i-1} -> {'omega'}.','.
-	      $self -> initial_values -> {$i-1} -> {'sigma'}."\n";
-	}
-	close (INITS);
-	$self->{'initial_values'} = undef; #FIXME for Moose
+		  my $original = '0,'.join(',',@thetaoriginals,).','.join(',',@omegaoriginals).','.
+			  join(',',@sigmaoriginals);
+		  print INITS $original."\n";
+		  for (my $i=1;$i<=$self->samples();$i++){
+			  print INITS "$i,".$self -> initial_values -> {$i-1} -> {'theta'}.
+				  ','.$self -> initial_values -> {$i-1} -> {'omega'}.','.
+				  $self -> initial_values -> {$i-1} -> {'sigma'}."\n";
+		  }
+		  close (INITS);
+		  $self->{'initial_values'} = undef; #FIXME for Moose
       }
 
     }
