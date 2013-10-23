@@ -16,6 +16,8 @@ Rikard Nordgren, <rikard.nordgren@farmbio.uu.se>
 
 =head2 METHODS
 
+=over 4
+
 =cut
 
 package array;
@@ -28,17 +30,11 @@ our %EXPORT_TAGS = ('all' => [ qw(not_empty is_empty diff cumsum max min linspac
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 
 
-=head3 not_empty
-
-=head4 NAME
+=item not_empty
 
 not_empty - Check if an array is not empty.
 
-=head4 SYNOPSIS
-
 $boolean = not_empty($array_ref);
-
-=head4 DESCRIPTION
 
 Returns true of the array referred to by $array_ref is not empty and false otherwise. Also returns
 false if $array_ref is undef.
@@ -52,17 +48,11 @@ sub not_empty
 	return defined $x ? scalar @$x : 0;
 }
 
-=head3 is_empty
-
-=head4 NAME
+=item is_empty
 
 is_empty - Check if an array is empty.
 
-=head4 SYNOPSIS
-
 $boolean = is_empty($array_ref);
-
-=head4 DESCRIPTION
 
 Returns true of the array referred to by $array_ref is empty and false otherwise. Also returns
 true if $array_ref is undef.
@@ -76,17 +66,11 @@ sub is_empty
 	return defined $x ? !scalar @$x : 1;
 }
 
-=head3 diff
-
-=head4 NAME
+=item diff
 
 diff - Difference between consecutive array elements
 
-=head4 SYNOPSIS
-
 $result = diff($array_ref);
-
-=head4 DESCRIPTION
 
 Returns a reference to an array which is the difference between consecutive array elements in the original array.
 That is: $result[i] = array[i + 1] - array[i]
@@ -105,17 +89,11 @@ sub diff
 	return \@d;
 }
 
-=head3 cumsum
-
-=head4 NAME
+=item cumsum
 
 cumsum - Array cumulative sum
 
-=head4 SYNOPSIS
-
 $result = cumsum($array_ref);
-
-=head4 DESCRIPTION
 
 Returns a new array which is the cumulative sum of the elements of the input array.
 That is: result[i] = sum(array[0] .. array[i])
@@ -137,20 +115,14 @@ sub cumsum
 	return \@result;
 }
 
-=head3 max
-
-=head4 NAME
+=item max
 
 max - Maximum value in an array or list
-
-=head4 SYNOPSIS
 
 $max = max($array_ref);
 $max = max(@array);
 ($max, $index) = max($array_ref);
 ($max, $index) = max(@array);
-
-=head4 DESCRIPTION
 
 Returns the maximum value of an array by reference or list.
 If in list context the index of the maximum value is also returned.
@@ -199,20 +171,14 @@ sub max
 	}
 }
 
-=head3 min
-
-=head4 NAME
+=item min
 
 min - Maximum value in an array or list
-
-=head4 SYNOPSIS
 
 $min = min($array_ref);
 $min = min(@array);
 ($min, $index) = min($array_ref);
 ($min, $index) = min(@array);
-
-=head4 DESCRIPTION
 
 Returns the minimum value of an array by reference or list.
 If in list context the index of the minimum value is also returned.
@@ -260,17 +226,11 @@ sub min
 	}
 }
 
-=head3 linspace
-
-=head4 NAME
+=item linspace
 
 linspace - Create an array of linearly spaced numbers
 
-=head4 SYNOPSIS
-
 $array_ref = linspace($start, $end, $n);
-
-=head4 DESCRIPTION
 
 Returns a reference to an array with $n linearly spaced numbers in the range $start .. $end
 
@@ -297,17 +257,11 @@ sub linspace
 	return \@a;
 }
 
-=head3 unique
-
-=head4 NAME
+=item unique
 
 unique - Get the unique values of an array
 
-=head4 SYNOPSIS
-
 $array = unique($array_ref);
-
-=head4 DESCRIPTION
 
 Returns an array which contents are the unique values of the array referenced by $array_ref. The resulting array is sorted.
 
@@ -343,17 +297,11 @@ sub unique
 	}
 }
 
-=head3 add
-
-=head4 NAME
+=item add
 
 add - Add one array to another
 
-=head4 SYNOPSIS
-
 add($dest, $source);
-
-=head4 DESCRIPTION
 
 Elementwise add the $source array to the $dest array.
 
@@ -369,17 +317,11 @@ sub add
 	}
 }
 
-=head3 sum
-
-=head4 NAME
+=item sum
 
 sum - Calculate the sum of an array
 
-=head4 SYNOPSIS
-
 $the_sum = sum($array_ref);
-
-=head4 DESCRIPTION
 
 Calculates the sum of all the elements in the array referenced by $array_ref
 
@@ -397,3 +339,5 @@ sub sum
 
 	return $theSum;
 }
+
+=back
