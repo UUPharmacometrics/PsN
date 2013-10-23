@@ -1,0 +1,91 @@
+\documentclass[a4paper,12pt]{article}
+\title{LLP user guide\\ \vspace{2 mm} {\large PsN 3.6.2}}
+\date{2013-05-28}
+
+\usepackage[utf8]{inputenc}
+\usepackage{verbatim}
+\usepackage{longtable}
+\begin{document}
+
+\maketitle
+
+
+\section{Introduction}
+The Log Likelihood Profiling (LLP) tool is used to calculate confidence intervals of parameter values. Without the LLP the confidence intervals can be calculated with the standard errors of the parameters under the assumption that the parameter values are normally distributed. The LLP, however, makes no assumption of the shape of the distribution.
+\\
+The LLP tool will calculate the confidence intervals for any number of parameters in the model, working with one parameter at a time. By first fitting the original model and then fixing the parameter at values close to the NONMEM estimate, the LLP obtains the difference in likelihood between the original model and new, reduced model. The logarithm of the difference in likelihood is chi2 distributed and when that value is 3.84, the parameter value is at the 95\% confidence limit. The search for the limit is done on both sides of the original parameter value, and thus the LLP makes no assumption of symmetry or the parameter value distribution.
+\\
+\\
+Examples
+\begin{verbatim}
+llp run89.mod -thetas=1,2 -rse_thetas=20,30
+\end{verbatim}
+
+\section{Input and options}
+
+\subsection{Required input}
+A model file is required on the command-line. Then, at least one of the options -thetas, -omegas or -sigmas must be specified, see below. If an lst-file with standard error estimates already exists, no more input is needed. Otherwise, for each specified $\langle$parameter$\rangle$ (theta/omega/sigma) there must be a corresponding rse-value given by option -rse\_$\langle$parameter$\rangle$, see below. 
+
+\begin{longtable}{p{1in}p{4in}}
+\verb%-thetas=<theta number list>% & \\
+\nopagebreak
+ & A comma-separated list, specifying the thetas for which the llp should try to assess confidence intervals. \\
+\\
+\verb%-omegas= <omega number list>% & \\
+ & A comma-separated list, specifying the omegas for which the llp should try to assess confidence intervals. \\
+\\
+\verb%-sigmas=<sigma number list>% & \\
+ & A comma-separated list, specifying the sigmas for which the llp should try to assess confidence intervals. \\
+\\
+\end{longtable}
+
+\subsection{Optional input}
+
+\begin{longtable}{p{1in}p{4in}}
+\verb%-rse_thetas=<list>% & \\
+ & A comma-separated list of the relative standard error, specified in percent (\%), for each theta listed by option -thetas. \\
+\\
+\verb%-rse_omegas=<list>% & \\
+ & A comma-separated list of the relative standard error, specified in percent (\%), for each omega listed by option -omegas. \\
+\\
+\verb%-rse_sigmas=<list>% & \\
+ & A comma-separated list of the relative standard error, specified in percent (\%), for each sigma listed by option -sigmas. \\
+\\
+\verb%-max_iterations=N% & \\
+ & Default value is 10. This number limits the number of search iterations for each interval limit. If the llp has not found the upper limit for a parameter after max\_iteration number of guesses it terminates. \\
+\\
+\verb%-normq=X% & \\
+\nopagebreak
+ & Default value 1.96. The value is used for calculating the first guess of the confidence interval limits. If the standard errors (SE) exist, the guess will be maximum-likelihood estimate $\pm$ normq * SE, otherwise it will be MLE $\pm$ normq * rse\_parameter/100 * MLE, where rse\_parameter is rse\_thetas, rse\_omegas or rse\_sigmas (optional input parameters). The default value or normq is 1.96 which translates to a 95\% confidence interval assuming normal distribution of the parameter estimates. \\
+\\
+\verb%-outputfile=<filename>% & \\
+ & The name of the NONMEM output file. The default name is the name of the model file with '.mod' substituted with '.lst'. Example: if the modelfile is run89.mod, LLP will by default look for the outputfile run89.lst. If the name of the output file does not follow this standard, the name must be specifed with this option. \\
+\\
+\verb%-ofv_increase=X% & \\
+ & Default value 3.84. The increase in objective function value associated with the desired confidence interval. \\
+\\
+\verb%-significant_digits=N% & \\
+ & Default 3. Specifies the number of significant digits that is required for the test of the increase in objective function value. The default is 3, which means that the method will stop once the difference in objective function value is between 3.835 and 3.845 if -ofv\_increase is set to 3.84 (default). \\
+\end{longtable}
+
+\subsection{General PsN-options}
+
+For a complete list of common options see common\_options\_defaults\_versions.pdf, or psn\_options -h on the commandline.
+
+\begin{longtable}{p{1in}p{4in}}
+\verb|-directory=llp_dirN| & \\
+\nopagebreak
+ & The directory in which the script will run NONMEM can be named. The default name is “llp\_dirN” where N is increased by 1 each time you run the script. If the run is aborted or crashes, setting the directory to the one from which the script was running earlier can be done. PsN will then not run the model files that had finished, saving time. Note that same set of options must be given as when the run was started the first time. \\
+\\
+\verb|-help| & \\
+ & With -help llp will print a longer help message. \\
+\end{longtable}
+
+
+\section{Output}
+
+The file llp\_results.csv contains statistics and summaries specific for the llp. \\
+\\
+The raw\_results.csv file is a standard PsN file containing raw result data for termination status, parameter estimates, uncertainty estimates etc. for all model estimations. 
+
+\end{document}

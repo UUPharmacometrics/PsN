@@ -9,6 +9,7 @@ doc/*.pdf
 # The following are temporary
 lib/doc/execute_userguide.pdf
 lib/doc/cdd_userguide.pdf
+lib/doc/llp_userguide.pdf
 
 test/unit/testcase.txt
 test/test_files/pheno.lst
