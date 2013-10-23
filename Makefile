@@ -103,7 +103,6 @@ RELFILES=$(addprefix PsN-Source/lib/,$(LIBFILES)) \
 	lib/ext/Statistics/Distributions.pm \
 	lib/ext/Parallel/ForkManager.pm \
 	lib/ext/Config/Tiny.pm \
-	lib/ext/Color/Output.pm \
 	lib/ext/File/HomeDir.pm \
 	lib/matlab/bca.m \
 	lib/matlab/histograms.m \
@@ -215,6 +214,10 @@ DIALIBFILES=debug.pm \
 
 PERLFILES=$(addprefix lib/,$(DIALIBFILES))
 
+TEXFILES=$(wildcard doc/*.tex)
+PDFFILES=$(TEXFILES:.tex=.pdf)
+
+
 all: libgen $(PERLFILES)
 
 GENFILES=$(addprefix libgen/,$(DIALIBFILES))
@@ -232,7 +235,7 @@ lib/%.pm: libgen/%.pm lib/%_subs.pm
 .PHONY : clean
 
 clean:
-	@-rm -rf $(PERLFILES) $(DOCUMENTS) libgen PsN-Source bin/completion_files
+	@-rm -rf $(PERLFILES) $(DOCUMENTS) libgen PsN-Source bin/completion_files doc/*.aux doc/*.log doc/*.pdf PsN-Source.tar.gz PsN-Source.zip
 
 libgen/data%.pm : diagrams/data.dia
 	$(DIA2CODE) -t perl -d $(DIRPM) diagrams/data.dia
@@ -326,14 +329,11 @@ $(addprefix html/llp,$(HTML_STUBS)) : bin/llp lib/common_options.pm
 $(addprefix html/scm,$(HTML_STUBS)) : bin/scm lib/common_options.pm
 	perl $< --help --html
 
+doc/%.pdf: doc/%.tex
+	cd doc; pdflatex $*.tex
+	cp doc/*.pdf lib/doc 
 
-release: libgen rel_dir $(RELFILES) documents
-	@ cd PsN-Source/lib/doc/; zip PsN_pdf_documentation *.pdf *.xls *.scm
-	@ cd PsN-Source/lib/doc/; tar -czf PsN_pdf_documentation.tar.gz *.pdf *.xls *.scm
-	@ zip -r PsN-Source PsN-Source/
-	@ tar czf PsN-Source.tar.gz PsN-Source/
-
-release_no_html: libgen rel_dir $(RELFILES)
+release: libgen rel_dir $(RELFILES) $(PDFFILES)
 	@ cd PsN-Source/lib/doc/; zip PsN_pdf_documentation *.pdf *.xls *.scm
 	@ cd PsN-Source/lib/doc/; tar -czf PsN_pdf_documentation.tar.gz *.pdf *.xls *.scm
 	@ zip -r PsN-Source PsN-Source/
@@ -341,9 +341,7 @@ release_no_html: libgen rel_dir $(RELFILES)
 
 documentation: lib/doc/*.pdf
 	@ cd PsN-Source/lib/doc/; zip PsN_pdf_documentation *.pdf *.xls *.scm
-	@ cd PsN-Source/lib/doc/; tar -czf PsN_pdf_documentation.tar.gz *.pdf *.xls *.scm
-
-
+	@ cd PsN-Source/lib/doc/; tar -czf PsN_pdf_documentation.tar.gz *.pdf *.xls *.scm 
 
 
 BINFILES= boot_scm \

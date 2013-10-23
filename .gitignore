@@ -1,6 +1,12 @@
 *~
 *.tar.gz
 *.zip
+PsN-Source/*
+doc/*.aux
+doc/*.log
+doc/*.pdf
+# The one below is only temporary
+lib/doc/execute_userguide.pdf
 test/unit/testcase.txt
 test/test_files/pheno.lst
 test/test_files/pheno5.lst
