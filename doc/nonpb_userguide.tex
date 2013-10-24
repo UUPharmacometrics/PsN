@@ -1,0 +1,157 @@
+\documentclass[a4paper,12pt]{article}
+\title{NONPB user guide, PIND user guide\\ \vspace{2 mm} {\large PsN 3.6.2}}
+\date{2013-05-28}
+
+\usepackage[utf8]{inputenc}
+\usepackage{verbatim}
+\usepackage{longtable}
+\begin{document}
+
+\maketitle
+
+
+\section{Introduction}
+
+When parameter estimates are used in predictions or decisions, it is important to consider the magnitude of imprecision associated with the estimation. The nonpb\cite{Baverel} is a resampling-based method for estimating imprecision in nonparametric distribution (NPD) estimates obtained in NONMEM. Imprecision in the NPD can be estimated by means of two different resampling procedures. The full method, -nonpb\_version=2, relies on bootstrap sampling from the raw data and a re-estimation of both the preceding parametric (FOCE) and the nonparametric step. The simplified method, -nonpb\_version=1, relies on bootstrap sampling of individual nonparametric probability distributions. Nonparametric confidence intervals are computed. In addition of providing information about the precision of nonparametric parameter estimates, the nonpb methods can serve as diagnostic tools for the detection of misspecified parameter distributions.
+\\
+\\
+The P individuals method is availabe as a separate PsN script pind.
+\\
+\\
+Examples
+\begin{verbatim}
+nonpb run12.mod -samples=500
+
+pind run12.mod …
+\end{verbatim}
+
+\section{Input and options}
+
+\subsection{Options to nonpb}
+
+A model file is required on the command-line.
+
+\begin{longtable}{p{1in}p{4in}}
+\verb|-samples=N| & \\
+\nopagebreak
+ & The samples option is required. The number of samples in the bootstrap. \\
+\\
+\verb|-lst_file=file.lst| & \\
+\nopagebreak
+ & Name of the lst-file with estimates for the input model. Default is the name of the input model with a .mod extension	replaced with .lst. \\
+\\
+\verb|-nonpb_version=X| & \\
+\nopagebreak
+ & The version of the nonpb method. Default is 1, the simplified version. Version can also be set to 2, the full version. \\
+\\
+\end{longtable}
+
+\subsection{Options to pind}
+A model file is required on the command-line.
+
+\begin{longtable}{p{1in}p{4in}}
+\verb|-lst_file=file.lst| & \\
+\nopagebreak
+ & Name of  of the lst-file with estimates for the input model. Default is the name of the input model with a .mod extension replaced with .lst. \\
+\\
+\verb|-ind_param=eta or theta| & \\
+\nopagebreak
+ & Optional, default eta. The parameter to set in individual ofv model files. Possibilities are eta or theta. \\
+\\
+\end{longtable}
+
+\subsection{Some general PsN-options useful in combination with nonpb or pind}
+
+For a complete list of common options see common\_options\_defaults\_versions.pdf, or psn\_options -h on the commandline.
+
+\begin{longtable}{p{1in}p{4in}}
+\verb|-directory=run1_nonpb| & \\
+\nopagebreak
+ & The directory in which the script will run NONMEM can be named. The default name is “nonpb\_dirX” where X is increased by 1 each time you run the script. \\
+\\
+\verb|-seed=X| & \\
+\nopagebreak
+ & A seed for the random number generator can be specified. This makes the run reproducible. It acts as a starting point for the random number generator when creating the bootstrapped data sets. \\
+\\
+\verb|-threads=X| & \\
+\nopagebreak
+ & The number of parallel processes to start for the model runs on a parallel computer. \\
+\\
+\verb|-help| & \\
+\nopagebreak
+ & With -help PsN will print a longer help message. \\
+\\
+\end{longtable}
+
+\section{Output}
+Intermediate files written during the procedure are found in the intermediate\_files subdirectory of the nonpb run directory. In the result\_files subdirectory the files CI\_results\_ETAk.csv are found, where k=1,...,(number of ETAs). CI\_results\_ETAj.csv contains the mean, median, 25th, 50th, 90th and 95th confidence intervals.
+
+\section{Recovering a crashed/stopped nonpb}
+No special methods implemented. Try starting with the same command, with -directory set to existing run directory. Do not set option rerun.
+
+\section{Technical overview of algorithm}
+
+\begin{enumerate}
+\item Only if version 2 – full (version 1 simplified starts at step 3) : Create S bootstrapped datasets and estimate the input model with each of the S bootstrap datasets. 
+\item For input model (using original data, original model file and original final parameter estimates) and for each bootstrapped model, S+1 in total: Update initial estimates from the final parameter estimates of the bootstrap output run. 
+\item If version 2 (full): For S models from step 2 (excluding original model file), compute individual probabilities using procedure described in P-individuals section – this procedure ends up with S files P\_values\_j.csv, j=1,...,S and S table files bs\_model\_j.patab. For the original model file from step 2, modify and run model according to steps 1a-1h of P-individuals section, giving table file original.patab.
+	If version 1 (simplified): Compute individual probabilities for single input model using 	procedure described in P-individuals section – this procedure gives the file P\_values.csv and the 	table file original.patab.
+\item If version 2 (full): For each P\_values\_j.csv file, bootstrap individual vectors (columns) according to the bootstrap scheme in step 1; e.g. pick up individual vectors corresponding to the individuals contained in the bs\_pr1\_j.dta – name this new file P\_values\_bootstrapped\_j.csv
+	If version 1 (simplified): bootstrap individual vectors (columns) of P\_values.csv according to a 	newly generated bootstrap scheme S times. Name the S new files P\_values\_bootstrapped\_j.csv, 	j=1,...,S
+\item For each P\_values\_bootstrapped\_j.csv file, sum up rows.
+\item Create a new file called bootstrapped\_np\_probabilities\_j.csv which will contain ID column, all ETA values (ETA1-ETAX) from table file from step 3, if version 2 from bs\_model\_j.patab or if version 1 from original.patab S times, and BOTP column containing sum of the rows from step 5 (in total 2+X columns, X being number of ETAs). Note: Sum column represents probabilities.
+\item For each bootstrapped\_np\_probabilities\_j.csv, for each ETA\_k in file bootstrapped\_np\_probabilities\_j.csv, transform BOTP column into cumulative probability:
+	For each ETA\_k:
+\begin{itemize}
+	\item Sort the ETA column and BOTP column ascending (according the ETA value) 
+	\item Transform BOTP column into cumulative probability column (add them up cumulatively)
+	\item Output file(s) (X files for each j) called bootstrap\_CBJD\_ETAk\_j.csv which will contain 3 	columns: ID, ETA\_k, cumulative bootstrapped JD (CBJD))
+\end{itemize}
+\item For each ETA\_k, create a final file row1\_results\_ETA\_k.csv. From the file bootstrap\_CBJD\_ETAk\_j.csv, copy columns ETA\_k and CBJD and rename them ETAk\_j and CBJD\_j (will refer to these two columns as jth column pair in following text)
+\item From a file row1\_results\_ETA\_k.csv, create a new file, bootstrap\_CBJD\_ETAk\_adjusted.csv in which each ETAk\_j vector will be replaced with the ETA\_k vector from the original.patab from step 3 (sorted ascending) and each CBJD\_j vector will be adjusted so (CBJD\_j\_adjusted), that for each element of the ETA\_k vector in the Xth column, CBJD\_j value corresponding for the first lower element (first ETAk\_j value lower than ETAk value) of the ETAk\_j column will be chosen. 
+\item Compute confidence intervals (3*X files): a) Sort ascending ETAk values from original.patab from step 3 b) For each ETAk create a file called row2\_results\_ETAk.csv which will contain S+1 columns and i rows. First column contains ascending original ETAi values from step a). S columns contain X values of and CBJD\_j\_adjusted found in step 9, each row represents results for each ETAk\_i.
+\item For each ETAk: For each ETAi (row) in file row2\_results\_ETAk.csv, read out the mean, median, 25th, 50th, 90th and 95th confidence intervals (based on N values). Store results in CI\_results\_ETAk.csv which will contain 11 columns and I rows
+\end{enumerate}
+
+\section{P individuals procedure}
+
+\begin{enumerate}
+\item
+	\begin{enumerate}
+		\item Update initial estimates from the final parameter estimates of the original output (pind.lst) and FIX them (THETA/OMEGA and SIGMA)
+		\item Skip estimation step by setting MAXEVALS=0
+		\item Add \$NONPARAMETRIC UNCONDITIONAL
+		\item Add in \$PK if it exists, otherwise in \$PRED: 
+	JD = DEN\_ 
+	DNj = CDEN\_(j) 
+	where j= 1...X (which gives X rows) and where X is the number of ETAs in original model.
+		\item Add a nptab table to print ID, JD, ETAX and DNj. Set FIRSTONLY.
+		\item Remove \$COVARIANCE
+		\item Remove all other existing tables of original model file.
+		\item Run the model	(lst file named “np.lst”)
+	\end{enumerate}
+\item Read the nptab file produced in step 2 and create matrix that contains the Joint Density (JD) in a column (output the JD column of nptab into a separate file called jdtab). The sum of values in jdtab should equal 1 (within rounding error).
+\item For each row of the jdtab, denoted “i”:
+	\begin{enumerate}
+		\item create a copy of the modified model from step 1 and replace each ETAj in the \$PK, \$PRED and \$ERROR records in the model file with the value (number) for that ETAj obtained from the nptab file.
+		\item Add DATA=(ID) to \$CONTR.
+		\item Add \$SUBROUTINE record if not already present in modelfile.
+		\item Add CONTR=iofvcont.f to \$SUBROUTINE, where iofvcont.f is custom CONTR 	routine that prints individual objective function values to file "fort.80"
+		\item Fix OMEGAs to zero
+		\item Remove \$TABLE and \$NONPARAMETRIC
+		\item Run the model with MAXEVAL=0 (lst file named “ofv\_i.lst”)
+		\item Extract the last N lines from fort.80 file into a new file called "ofv\_model\_i", where N is the number of individuals.
+	\end{enumerate}
+\item From the N files called "ofv\_model\_i" create a new file called “ind\_ofv”. This file will have N columns and N rows and should be created using the following principle: starting with i=1, the values of "ofv\_model\_i" should be transposed to generate the first row of the file “ind\_ofv”. Thereafter the same procedure with i=2, 3, …N. 
+\item Computation of Likelihood and individual probabilities: For each value (iOFV) in the matrix ind\_ofv, calculate:  iL = exp(-iOFV/2). Then do a scalar multiplication between this matrix (iL) and the matrix with JD values (from jdtab such as 
+	[row1 (iL) (N values)*row1 (JD) (single value), row2 (iL)*row2 (JD)….] 
+	(output into file “L\_times\_P.csv” which thus will have dimension = N * N)
+\item Sum up each column in the resulting L\_times\_P.csv matrix. Output it as sum\_LP.csv file (dimensions: 1(row)*N (columns)
+\item Divide each column vector (each value in the column)  of L\_times\_P.csv matrix, with the value from the corresponding column of sum\_LP.csv (single value) and divide it with N. (output it as P\_values.csv file)
+\end{enumerate}
+
+\begin{thebibliography}{1}
+\bibitem{Baverel} Paul G. Baverel, Radojka M. Savic, Mats O. Karlsson, {\em Two bootstrapping routines for obtaining imprecision estimates for nonparametric parameter distributions in nonlinear mixed effects models}, J Pharmacokinet Pharmacodyn, 2010
+\end{thebibliography}
+
+\end{document}
