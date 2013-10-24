@@ -48,22 +48,28 @@ In addition, unique to execute and parallel\_retries:
 \\
 
 \begin{longtable}{p{1in}p{4in}}
-\mbox{\textbf{-model\_dir\_name}} & \\
+\verb|-model_dir_name| & \\
+\nopagebreak
  & Default not used. This option changes the basename of the run directory from modelfit\_dir to $\langle$modelfile$\rangle$.dir. where $\langle$modelfile$\rangle$ is the name of the first model file in the list given as arguments to execute. The directories will be numbered starting from 1, increasing the number each time execute is run with a model file with the same name. If the option directory is used it will override -model\_dir\_name.\\
 \\
-\mbox{\textbf{-prepend\_options\_to\_lst}} & \\
+\verb|-prepend_options_to_lst| & \\
+\nopagebreak
  & Default not used. This option makes PsN prepend the final lst-file (which is copied back to the directory from which execute was called) with the file version\_and\_option\_info.txt which contains run information, including     all actual values of optional PsN options. PsN can still parse the lst-file with the options prepended, so the file can still be used it as input to e.g. sumo, vpc or update\_inits. Disabled with -no-prepend\_options\_to\_lst if set in psn.conf.\\
 \\
-\mbox{\textbf{-tail\_output}} & \\
+\verb|-tail_output| & \\
+\nopagebreak
  & Default not used. This option only works for execute under Windows. Option -tail\_output specifies that execute should invoke a program (tail) that displays the output file, including the gradients, during minmization. The tail program is started automatically but it is up to the user to terminate the program. For the tail\_output option to work, a third party tail program must be installed. Tail programs that are known to work are WinTail and Tail for Win32.  The latter is recommended and can be downloaded at http://tailforwin32.sourceforge.net. It is also necessary to have correct settings of the variables wintail\_exe, which is the path to the tail program, and wintail\_command, which is the command for the tail program. The defaults, which work for the Tail for Win32 package, are seen below. These two variables can be set to other values in psn.conf.\\
 \\
-\mbox{\textbf{-wintail\_exe='string'}} & \\
+\verb|-wintail_exe='string'| & \\
+\nopagebreak
  & \verb|C:\Program Files\Tail-4.2.12\Tail.exe| is default. Only for Windows. See tail\_output for description.\\
 \\
-\mbox{\textbf{-wintail\_command='string'}} & \\
+\verb|-wintail_command='string'| & \\
+\nopagebreak
  & Default "tail OUTPUT”. Only for Windows. See -tail\_output for description.\\
 \\
-\mbox{\textbf{-copy\_data}} & \\
+\verb|-copy_data| & \\
+\nopagebreak
  & Default set. Disable with -no-copy\_data. By default, PsN will copy the datafile into NM\_run1 and set a local path in psn.mod, the actual modelfile run with NONMEM. If -no-copy\_data is set, PsN will not copy the data to NM\_run1 and instead set a global path to the datafile in psn.mod.\\
 \end{longtable}
 

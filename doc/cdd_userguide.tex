@@ -38,15 +38,19 @@ A model file is required on the command-line.
 
 \begin{longtable}{p{1in}p{4in}}
 \verb|-bins=N| & \\
+\nopagebreak
  & Sets the number of databins, or cdd datasets, to use. If the number of unique values, or factors, in the based\_on column is higher than N then one or more factors will be deleted in each cdd dataset. Specifying N as higher than the number of factors will have no effect. N is then reset to the number of factors. Default value = Number of unique values in the based\_on column. \\
 \\
 \verb|-xv| & \\
+\nopagebreak
  & Default true. Run the cross-validation step (-xv) or not (-no-xv). \\
 \\
 \verb%-selection_method=<random | consecutive>% & \\
+\nopagebreak
  & Default consecutive. Specifies whether the factors selected for exclusion should be drawn randomly or consecutively from the datafile. \\
 \\
 \verb|-outside_n_sd_check=X| & \\
+\nopagebreak
  & Default 2. Mark the runs with CS-CR outside X standard deviations of the PCA. \\
 \end{longtable}
 
@@ -60,12 +64,15 @@ For a complete list of common options see common\_options\_defaults\_versions.pd
  & The directory in which the script will run NONMEM can be named. The default name is “cdd\_dirN” where N is increased by 1 each time you run the script. If the run is aborted or crashes, setting the directory to the one from which the script was running earlier can be done. PsN will then not run the model files that had finished, saving time. Note that same set of options must be given as when the run was started the first time. \\
 \\
 \verb|-threads=N| & \\
+\nopagebreak
  & The number of parallel processes to start on a parallel computer. \\
 \\
 \verb|-help| & \\
+\nopagebreak
  & With -help a longer help message will be printed. \\
 \\
 \verb|-last_est_complete| & \\
+\nopagebreak
  & is optional and only applies with NONMEM7 and cdd option -xv. See common\_options\_defaults\_versions.pdf for details.
 \end{longtable}
 
