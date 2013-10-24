@@ -140,10 +140,7 @@ RELFILES=$(addprefix PsN-Source/lib/,$(LIBFILES)) \
 	bin/xv_scm \
 	bin/boot_scm \
 	bin/linearize \
-	lib/doc/nonpb_userguide.pdf \
-	lib/doc/mimp_userguide.pdf \
 	lib/doc/lasso_userguide.pdf \
-	lib/doc/sumo_userguide.pdf \
 	lib/doc/sse_userguide.pdf \
 	lib/doc/gls_userguide.pdf \
 	lib/doc/frem_userguide.pdf \
@@ -154,7 +151,6 @@ RELFILES=$(addprefix PsN-Source/lib/,$(LIBFILES)) \
 	lib/doc/mcmp_userguide.pdf \
 	lib/doc/bootstrap_userguide.pdf \
 	lib/doc/scm_userguide.pdf \
-	lib/doc/xv_scm_userguide.pdf \
 	lib/doc/boot_scm_userguide.pdf \
 	lib/doc/common_options_defaults_versions_psn.pdf \
 	lib/doc/known_bugs_and_workarounds.pdf \
