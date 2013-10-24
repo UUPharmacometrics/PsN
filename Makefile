@@ -153,9 +153,6 @@ RELFILES=$(addprefix PsN-Source/lib/,$(LIBFILES)) \
 	lib/doc/extended_grid_userguide.pdf \
 	lib/doc/mcmp_userguide.pdf \
 	lib/doc/bootstrap_userguide.pdf \
-	lib/doc/cdd_userguide.pdf \
-	lib/doc/llp_userguide.pdf \
-	lib/doc/execute_userguide.pdf \
 	lib/doc/scm_userguide.pdf \
 	lib/doc/xv_scm_userguide.pdf \
 	lib/doc/boot_scm_userguide.pdf \
@@ -331,7 +328,7 @@ $(addprefix html/scm,$(HTML_STUBS)) : bin/scm lib/common_options.pm
 
 doc/%.pdf: doc/%.tex
 	cd doc; pdflatex $*.tex
-	cp doc/*.pdf lib/doc 
+	cp doc/*.pdf PsN-Source/lib/doc 
 
 release: libgen rel_dir $(RELFILES) $(PDFFILES)
 	@ cd PsN-Source/lib/doc/; zip PsN_pdf_documentation *.pdf *.xls *.scm
@@ -339,7 +336,7 @@ release: libgen rel_dir $(RELFILES) $(PDFFILES)
 	@ zip -r PsN-Source PsN-Source/
 	@ tar czf PsN-Source.tar.gz PsN-Source/
 
-documentation: lib/doc/*.pdf
+documentation: lib/doc/*.pdf $(PDFFILES)
 	@ cd PsN-Source/lib/doc/; zip PsN_pdf_documentation *.pdf *.xls *.scm
 	@ cd PsN-Source/lib/doc/; tar -czf PsN_pdf_documentation.tar.gz *.pdf *.xls *.scm 
 
