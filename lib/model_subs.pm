@@ -2154,21 +2154,47 @@ end is_estimation
 
 # {{{ lower_bounds
 
-start lower_bounds
-      {
-	  # lower_bounds either sets or gets the initial values of the
-	  # parameter specified in the argument parameter_type for
-	  # each problem specified in problem_numbers. See L</fixed>.
-	  
-	@lower_bounds = @{ $self -> _init_attr
-			     ( parameter_type    => $parameter_type,
-			       parameter_numbers => \@parameter_numbers,
-			       problem_numbers           => \@problem_numbers,
-			       new_values        => \@new_values,
-			       with_priors       => $with_priors,
-			       attribute         => 'lobnd')};
-      }
-end lower_bounds
+	start lower_bounds
+{
+	# lower_bounds either sets or gets the initial values of the
+	# parameter specified in the argument parameter_type for
+	# each problem specified in problem_numbers. See L</fixed>.
+	
+	if ($parameter_type eq 'theta'){
+		@lower_bounds = @{ $self -> _init_attr
+							   ( parameter_type    => $parameter_type,
+								 parameter_numbers => \@parameter_numbers,
+								 problem_numbers           => \@problem_numbers,
+								 new_values        => \@new_values,
+								 with_priors       => $with_priors,
+								 attribute         => 'lobnd')};
+	}else{
+		#omega or sigma
+		if (scalar (@new_values)> 0){
+			croak("Trying to set lower bounds for $parameter_type, not allowed");
+		}
+		#pick up on diagonal first and then change elements to 0 or undef
+		@lower_bounds = @{ $self -> _init_attr
+							   ( parameter_type    => $parameter_type,
+								 parameter_numbers => \@parameter_numbers,
+								 problem_numbers           => \@problem_numbers,
+								 new_values        => \@new_values,
+								 with_priors       => $with_priors,
+								 attribute         => 'on_diagonal')};
+		for (my $prob=0; $prob < scalar(@lower_bounds); $prob++){
+			for (my $i=0; $i < scalar(@{$lower_bounds[$prob]}); $i++){
+				if ($lower_bounds[$prob]->[$i] == 1){
+					#on diagonal
+					$lower_bounds[$prob]->[$i] = 0;
+				}else{
+					$lower_bounds[$prob]->[$i] = undef;
+				}
+			}
+		}
+	}
+	
+}
+	end lower_bounds
 
 # }}} lower_bounds
 
@@ -4400,7 +4426,7 @@ end update_inits
 # {{{ upper_bounds
 
 start upper_bounds
-      {
+{
 	# upper_bounds either sets or gets the initial values of the
 	# parameter specified in I<parameter_type> for each
 	# subproblem specified in I<problem_numbers>. For each
@@ -4409,14 +4435,35 @@ start upper_bounds
 	# parameters in the subproblem for which the upper bounds
 	# are set, replaced or retrieved.
 
-	@upper_bounds = @{ $self -> _init_attr
-			     ( parameter_type    => $parameter_type,
-			       parameter_numbers => \@parameter_numbers,
-			       problem_numbers           => \@problem_numbers,
-			       new_values        => \@new_values,
-			       with_priors       => $with_priors,
-			       attribute         => 'upbnd')};
-      }
+	if ($parameter_type eq 'theta'){
+		@upper_bounds = @{ $self -> _init_attr
+							   ( parameter_type    => $parameter_type,
+								 parameter_numbers => \@parameter_numbers,
+								 problem_numbers           => \@problem_numbers,
+								 new_values        => \@new_values,
+								 with_priors       => $with_priors,
+								 attribute         => 'upbnd')};
+		
+	}else{
+		#omega or sigma
+		if (scalar (@new_values)> 0){
+			croak("Trying to set upper bounds for $parameter_type, not allowed");
+		}
+		#pick up on diagonal first to get correct output structure and then change elements to undef
+		@upper_bounds = @{ $self -> _init_attr
+							   ( parameter_type    => $parameter_type,
+								 parameter_numbers => \@parameter_numbers,
+								 problem_numbers           => \@problem_numbers,
+								 new_values        => \@new_values,
+								 with_priors       => $with_priors,
+								 attribute         => 'on_diagonal')};
+		for (my $prob=0; $prob < scalar(@upper_bounds); $prob++){
+			for (my $i=0; $i < scalar(@{$upper_bounds[$prob]}); $i++){
+				$upper_bounds[$prob]->[$i] = undef;
+			}
+		}
+	}
+}
 end upper_bounds
 
 # }}} upper_bounds
@@ -4595,6 +4642,7 @@ end _get_option_val_pos
 
 start _init_attr
       {
+
 	# The I<add_if_absent> argument tells the method to add an init (theta,omega,sigma)
 	# if the parameter number points to a non-existing parameter with parameter number
 	# one higher than the highest presently included. Only applicatble if
@@ -5147,3 +5195,4 @@ start get_option_value
 end get_option_value
 
 # }}} get_option_value
+
