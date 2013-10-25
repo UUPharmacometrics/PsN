@@ -151,7 +151,6 @@ RELFILES=$(addprefix PsN-Source/lib/,$(LIBFILES)) \
 	lib/doc/mcmp_userguide.pdf \
 	lib/doc/bootstrap_userguide.pdf \
 	lib/doc/scm_userguide.pdf \
-	lib/doc/boot_scm_userguide.pdf \
 	lib/doc/common_options_defaults_versions_psn.pdf \
 	lib/doc/known_bugs_and_workarounds.pdf \
 	lib/doc/psn_configuration.pdf \
