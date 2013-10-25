@@ -1,0 +1,160 @@
+\documentclass[a4paper,12pt]{article}
+\title{PsN and NONMEM7\\ \vspace{2 mm} {\large PsN 3.6.2}}
+\date{2013-05-29}
+
+\usepackage[utf8]{inputenc}
+\usepackage{verbatim}
+\usepackage{longtable}
+\begin{document}
+
+\maketitle
+
+
+\section{Introduction}
+PsN 3.6.2 has been tested with NONMEM 7.1.0, 7.1.2,  7.2.0 and 7.3.0 beta. Not all features of NONMEM 7 are supported. Some will simply be ignored while other may cause errors if used. See details below.
+
+\section{Running with an NMQual installation of NONMEM 7.2}
+
+Models can be run with NMQual8 and NONMEM 7.2 if PsN version is 3.5.3 or later, option -nmqual is set and the user has installed NONMEM using a slightly modified nm72.xml (changing the expected control stream suffix from .ctl to .mod), see document psn\_configuration.pdf. The configuration file must contain the path to the autolog.pl script, see psn\_configuration.pdf. The option -nmqual\_xml is needed, the default is log.xml (located in directory from where PsN is called). Options to nmfe72, which is invoked by autolog.pl, can be passed on by PsN via options -parafile, -nodes and -nmfe\_options, see below. PsN will start NM7.2 using the call (everything on one line)
+\\
+\\
+perl    full\_path\_to\_autolog\_set\_in\_psn.conf    xml\_file\_from\_option\_nmqual\_xml    run    ce path\_to\_psn\_generated\_run\_directory    psn (extra nmfe72 options)
+
+
+\section{Parallel execution of single models in NONMEM 7.2}
+
+PsN-3.4.2 and later supports the parallel execution feature of NONMEM 7.2 with nmfe. It is required that the NONMEM version number 7.2 or later is properly set in psn.conf, and that option -nmfe or -run\_on\_sge\_nmfe or -run\_on\_lsf\_nmfe or -nmqual is set. The feature is invoked by using PsN option -parafile=$\langle$file$\rangle$, and optionally -nodes=N, where $\langle$file$\rangle$ is the name of a NONMEM 7.2 parafile. PsN will copy the parafile down to the run directory and pass on the name and the nodes option as input to nmfe72. PsN will not check that an mpi daemon is running, or that any other necessary parallelization preparations have been done. Therefore the user must make sure it is possible to start nmfe72 with the parafile option before trying to do it through PsN.
+
+A defaults.pnm file can be copied down to the NM run directory by setting PsN option -extra\_files, see common\_options\_defaults\_versions\_psn.pdf.
+
+The parafile option is common to all PsN scripts, and is further described in common\_options\_defaults\_versions\_psn.pdf.
+
+The -threads option does not affect and is not affected by any parallel execution of a single model. The -threads option governs how many models PsN will submit for execution (by e.g. nmfe72) at a time. The user must ensure that the number of threads multiplied by the number of nodes used for a single model does not exceed what is desired. 
+
+If running on a cluster the user must set flags necessary for parallel execution, e.g. -pe for SGE, using the existing PsN options, e.g. -sge\_prepend\_flags, -lsf\_options or -slurm\_prepend\_flags. PsN does not do this automatically. Two new option have been added for the torque system, -torque\_queue and -torque\_prepend\_flags, which enables flexible settings through PsN.
+
+
+\section{New options to nmfe72}
+
+There is a set of new options to nmfe72, e.g. -xmloff. These options can be passed on by PsN using option -nmfe\_options, which accepts a comma-separated list of nmfe-options without the – signs. Option -nmfe\_options requires that -nmfe or -run\_on\_sge\_nmfe or -nmqual is set, and is further described in common\_options\_defaults\_versions\_psn.pdf. If setting option -nmfe\_options=licfile=some\_license\_file then the license file must also be set with the PsN option -extra\_files, unless an absolute path to the license file is given, in which case option -extra\_files is not needed. See common\_options\_defaults\_versions\_psn.pdf for a description of the -extra\_files option.
+
+\section{New forms of \$SIGMA and \$OMEGA in NM7.2}
+
+In NONMEM 7.2 it is possible to define \$SIGMA and \$OMEGA in new ways, and indicating this via options STANDARD/VARIANCE COVARIANCE/CORRELATION and CHOLESKY. PsN does accept these options and will pass them on when creating new models, but the output analysis and updating new models with final estimates from a previous run have not yet been adapted to these new forms, and performing an update would introduce errors. Updating is done by all scripts except execute, sse and parallel\_retries. PsN will print a warning when the new \$OMEGA/\$SIGMA options are encountered. Updating a model with another form of \$SIGMA/\$OMEGA with output from a previous run will result in errors, and this is done as part of many PsN programs, e.g. bootstrap, vpc, scm and update\_inits. 
+
+\section{Option ORDER in \$ESTIMATION}
+
+There is a new option called ORDER in \$EST in NONMEM 7.2. PsN cannot handle any but the default format, and will remove ORDER if found in \$EST.
+
+\section{New records \$SIZES \$LEVEL \$ANNEAL \$PHIS \$ETAS}
+
+PsN will accept and handle new records \$SIZES, \$LEVEL, \$ANNEAL, \$PHIS and \$ETAS.
+
+\section{Shorthand notation in \$THETA \$OMEGA \$SIGMA}
+
+PsN does not support VALUES option in \$OMEGA/\$SIGMA. PsN does not support the new shorthand notation in NM7.3 ( xN notation, SAME(n) notation).
+
+\section{Control stream in mixed case}
+
+In NONMEM 7.2. it is possible to write the control stream in mixed case. PsN does not support this. It is likely that options written in lower case will not be recognized correctly, which can cause errors.
+
+\section{New output files in NONMEM 7}
+
+PsN will set retry numbering for NM7.2 new output files .xml .phm .shk .grd .smt .rmt just as for .lst etc. The numbered files will be cleaned if clean $>=2$.
+
+Up until version 3.4.8, PsN will copy all NM7 output files back to the calling directory. In version 3.4.9 and later, only the lst-file will be copied by default. More files will be copied if the user sets the extensions of those files via the PsN option -nm\_output. Example: -nm\_output=ext,cov,cor. Note it the user lets the installation script create a psn.conf file then nm\_output will be set to -nm\_output=ext,cov,cor,coi,phi 
+
+Cleaning of NM7.2 output files: If clean$>=1$ then the following files are removed: LINKC.LNK, compile.lnk, gfortran.txt, ifort.txt, garbage.out, newline, nmexec.set, parafile.set, prcompile.set, prdefault.set, prsame.set, psn.log, rundir.set, runpdir.set, temporaryfile.xml, temp.out, trashfile.xxx, trskip.set, worker.set, xmloff.set, prsizes.f90, licfile.set, background.set, FMSG, FSIZES
+
+If cleani$>=2$ then the temp\_dir subdirectory will be removed.
+
+If clean $>=3$ is set then worker* subdirectories are removed when NM\_run is removed. If the worker subdirectories are called something other than worker* then cleaning with level=3 will fail.  
+
+
+\section{Turning off estimation in NONMEM 7}
+
+In some scripts PsN turns off estimation in some extra PsN-generated models. It is done in npc and vpc, in cdd if option -xv is set, and in execute if option -mirror\_plots or option -nonparametric\_etas is set. With NONMEM5 and NONMEM6 the estimation is easily skipped by setting MAXEVAL=0. NONMEM7 however,  can have multiple \$ESTIMATIONs and/or estimation methods for which MAXEVAL do not apply. Settings in one \$ESTIMATION will by default carry over to the next unless a new setting for the same option is set. This makes it much more complicated to automatically edit the modelfile to skip the estimation step and get correct output of PRED, DV etc. 
+
+Of the new estimation methods of NONMEM7, it is most natural to use IMP or IMPMAP with EONLY=1 for the purposes for which estimation is turned off. If PsN does not need ofv values from the run NITER=0 can be set. This is true for vpc, npc and execute with nonparametric\_etas or mirror\_plots. If ofv values are needed as in cdd, NITER=5-10 is sufficient according to NONMEM7 documentation. PsN will leave NITER unchanged in most cases (see exception below).
+
+When using NM7, there are two alternatives for the user when running a PsN script that turns off estimation. The first is to make sure 1) that the last \$ESTIMATION has METHOD set to either IMP, IMPMAP or a classical method and 2) that the last \$ESTIMATION is complete, i.e. that all options needed are explicitly set in that record so that none that are needed for that step are carried over from previous \$EST and 3) that PsN is informed of 1 and 2 by setting option -last\_est\_complete. If option -last\_est\_complete is set, PsN will do the following to turn off estimation: 
+\begin{enumerate}
+	\item remove all but the last \$ESTIMATION record 
+	\item If METHOD in last \$EST is classical: set MAXEVAL=0 
+\end{enumerate}
+or 
+If METHOD is IMP or IMPMAP: set EONLY=1. If running vpc, npc or execute with nonparametric\_etas or mirror\_plots also set NITER=0, otherwise do not change NITER.
+If METHOD is any other than classical or IMP/IMPMAP then the last \$EST is not changed and a warning is printed.
+
+The second alternative is to let PsN do everything automatically, by not setting option -last\_est\_complete. Then PsN will collect options (LAPLACIAN, METHOD, ISAMPLE...) from all \$ESTIMATION, removing $\langle$OPTION$\rangle$ if NO$\langle$OPTION$\rangle$ appears, unsetting LIKELIHOOD if PREDICTION appears, changing the value of ISAMPLE and METHOD if/when they appear again, and so on. PsN addresses the fact that options may be abbreviated in many ways. A number of options are skipped, such as FORMAT and FILE and options which only apply to the BAYES method, see list below. After scanning the options, all \$EST are removed and PsN creates a new one based on the collected options. 
+
+\begin{itemize}
+	\item If METHOD is classical (i.e. the last \$EST had a classical method), MAXEVAL=0 is set. The rest of the collected options are appended.
+	\item If METHOD=IMP or IMPMAP, then EONLY=1 is set. If running vpc, npc or execute with nonparametric\_etas or mirror\_plots also set NITER=0, otherwise do not change NITER. The rest of the collected options, including ISAMPLE if it is set, are appended. 
+	\item If METHOD is something other than classical/IMP/IMPMAP, then METHOD is changed to IMP, and EONLY=1 is set. For vpc, npc and for nonparametric\_etas and mirror\_plots NITER=0 and ISAMPLE=1 are set. For cdd NITER is not changed if it is already set in any of the \$ESTIMATION steps, otherwise NITER=10 is set. ISAMPLE is left to the default value for cdd. The rest of the collected options are appended.
+\end{itemize}
+
+If the option niter\_eonly is set, PsN will set NITER to this value regardless of estimation method and PsN tool (cdd, npc, vpc or execute). This option is independent of last\_est\_complete.
+The following options are skipped when PsN automatically collects options for an \$ESTIMATION record:
+\begin{verbatim}
+NOTITLE, NOLABEL, FORMAT, FILE, MSFO, IACCEPT, PACCEPT, OACCEPT,
+NSIGDIGITS, SIGDIGITS, ISAMPLE_M1, ISAMPLE_M2, ISAMPLE_M3,
+NBURN, PSAMPLE_M1, PSAMPLE_M2, PSAMPLE_M3, OSAMPLE_M1,
+OSAMPLE_M2, OSAMPLE_M3, THETABOUNDTEST, NOTHETABOUNDTEST, NOTBT,
+OMEGABOUNDTEST, NOOMEGABOUNDTEST, NOOBT, SIGMABOUNDTEST,
+NOSIGMABOUNDTEST, NOSBT
+\end{verbatim}
+Options MAXEVALS and EONLY are also skipped, since they will be set anyway in later steps.
+
+The CHAIN method (reading initial estimates from a rectangular file) will not work with vpc or npc, because all but the last \$ESTIMATION are removed as part of turning off estimation. See details, inluding a workaround, in the section CHAIN method. The cdd and execute scripts will work with CHAIN.
+
+
+\section{Raw and additional output, \$ESTIMATION options}
+
+When NONMEM7 raw and additional output (ext, coi, cov, cor, phi) files exist, parameter estimates will be read from these files instead of the lst-file. If additional output cannot be found the lst-file is used. NONMEM7 raw and additional output are handled the same way as lst-files. These files are numbered by retries and, if set in nm\_output, copied back to the calling directory.
+
+PsN only accepts default file names and default formatting of the raw and additional output. If any of the options NOTITLE, NOLABEL or FILE is set in any \$ESTIMATION record, PsN will set the option to the default value in the last \$ESTIMATION. Only the last \$ESTIMATION will be changed. If running sumo on output with non-default formatting, the run is likely to fail. If the delimiter is set to something other than spaces (the default) by using FORMAT or DELIM then PsN output parsing will fail.
+
+In all output, only results (parameter estimates, messages...) from the last \$ESTIMATION will be presented. The only exeception is the MINIMIZATION SUCCESSFUL flag, see that section.
+
+\section{MINIMIZATION SUCCESSFUL}
+
+The message MINIMIZATION SUCCESSFUL is important for PsN restart behaviour (see details in common\_options\_defaults\_versions.pdf) and sumo output, but it only appears for classical estimation methods. The following logic is used for setting the flag minimization\_successful:
+
+\begin{enumerate}
+\item Only status of last \$EST step is considered, except when last \$EST is IMP with EONLY=1 (see item 7)
+\item BURN-IN/(REDUCED) STATISTICAL PORTION/OPTIMIZATION NOT TESTED - successful
+\item BURN-IN/(REDUCED) STATISTICAL PORTION/OPTIMIZATION COMPLETED - successful
+\item BURN-IN/(REDUCED) STATISTICAL PORTION/OPTIMIZATION NOT COMPLETED PRIOR TO USER INTERRUPT - successful
+\item BURN-IN/(REDUCED) STATISTICAL PORTION/OPTIMIZATION NOT COMPLETED - failed
+\item If any of the two steps in SAEM failed - failed 
+\item If last \$EST is IMP with EONLY=1, the minimization status is determined by the next to last \$EST
+\end{enumerate}
+
+\section{Specifying the NONMEM version}
+
+The option nm\_version tells PsN (among other things) which NONMEM-version type of output file to expect. See document psn\_configuration.pdf for more information on nm\_version and psn.conf.
+
+\section{CHAIN method and parallel\_retries}
+
+There is a PsN script for running a set of copies of a model file with tweaked initial estimates in parallel. The script is called parallel\_retries and is described in execute\_userguide.pdf, as the script is just a variant of execute.
+
+NONMEM 7 can also be used to run a model with tweaked initial estimates. If using the CHAIN method of NONMEM7 and taking initial estimates from an existing file, that filename must be given to PsN with option -extra\_files, just as a file with a user-written Fortran subroutine. Note: NONMEM does not give an error message if the file with initial estimates is missing. The user must remember to set -extra\_files, otherwise NONMEM will use the initial estimates in the modelfile without giving any warning.
+
+If the file with adjusted initial estimates is generated by the same modelfile which then uses it, no extra PsN options are needed.
+
+Do not use PsN for running a modelfile with CHAIN as the method of a single \$ESTIMATION step, for example when only generating a file with intial estimates. PsN would change the name of the file where newly generated initial estimates are written (PsN-3.1.0). See section Raw and additional output, \$ESTIMATION options.
+
+The PsN option tweak\_inits will have no effect if CHAIN is used to take initial estimates from a separate file instead of the model specification itself.
+
+The CHAIN method (reading initial estimates from a rectangular file) will not work with vpc or npc. This is because PsN removes all but the last \$ESTIMATION as part of turning off estimation. It is recommended to generate an msfo file with the desired parameter values, and then send this to npc/vpc via the existing -msfo option. The cdd script will work with CHAIN, since there estimation is turned off in newly created modelfiles with initial estimates read from cdd:s own runs. Option mirror\_plots with execute will also work with CHAIN, since a separate \$PROBLEM with an \$MSFI record is generated for the simulations.
+
+\section{Shrinkage}
+
+Starting with PsN-3.1.0 shrinkage values are reported as percentages instead of fractions. If option -shrinkage is used, PsN will compute iwres shrinkage and eta shrinkage. From PsN-3.2.12 and on, shrinkage is never read from NONMEM output. PsN will compute shrinkage if option -shrinkage is set on the command-line.
+
+\section{CWRES and iofv}
+
+Since NONMEM7 can output both CWRES and iofv, those options are turned off when running PsN with NM7. Options -cwres and -iofv are still available with PsN3 and NM6.
+
+\end{document}

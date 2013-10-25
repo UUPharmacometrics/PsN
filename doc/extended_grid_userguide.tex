@@ -1,0 +1,130 @@
+\documentclass[a4paper,12pt]{article}
+\title{Extended grid user guide\\ \vspace{2 mm} {\large PsN 3.6.2}}
+\date{2013-05-28}
+
+\usepackage[utf8]{inputenc}
+\usepackage{verbatim}
+\usepackage{longtable}
+\begin{document}
+
+\maketitle
+
+
+\section{Introduction}
+Important note: The algorithm description in this guide is complete, but other information is still missing.
+\\
+\\
+Non-parametric estimation on the extended grid. \cite{someone}
+\\
+\\
+Example
+\begin{verbatim}
+extended_grid run1.mod
+\end{verbatim}
+
+\section{Input and options}
+
+\subsection{Extended\_grid-specific input}
+
+A model file is required on the command-line. No other options are required.
+
+\begin{longtable}{p{1in}p{4in}}
+\verb|-dv_column=<column_name>| & \\
+\nopagebreak
+ & The dependent variable column. Default DV. \\
+\\
+\verb|-id_column=<column_name>| & \\
+\nopagebreak
+ & The header of the column marking individuals. Default ID. \\
+\\
+\verb|-ids_to_simulate=N| & \\
+\nopagebreak
+ & The number of individuals to simulate. Default is the number of individuals in the original dataset. \\
+\\
+\verb|-omega_multiplier=number| & \\
+\nopagebreak
+ & Default 1. The initial omegas in the simulation model and extended model will be multiplied by this number. This gives inflation (or deflation if the multiplier \verb|<| 1) of the variance. \\
+\\
+\end{longtable}
+
+
+\subsection{Some common PsN-options useful with extended\_grid}
+
+For a complete list of common options see common\_options\_defaults\_versions.pdf, or psn\_options -h on the commandline.
+
+\begin{longtable}{p{1in}p{4in}}
+\verb|-directory=extended_grid_dirN| & \\
+\nopagebreak
+ & The directory in which the script will run NONMEM can be named. The default name is “extended\_grid\_dirN” where N is increased by 1 each time you run the script. If the run is aborted or crashes, setting the directory to the one from which the script was running earlier can be done. PsN will then not run the model files that had finished, saving time. \\
+\\
+\verb|-seed=N| & \\
+\nopagebreak
+ & A seed for the random number generator can be specified. This makes the run reproducible.   \\
+\\
+\verb|-help| & \\
+\nopagebreak
+ & With -help a longer help message will be printed. \\
+\\
+\end{longtable}
+
+
+\section{Output}
+
+File final\_nptab.csv
+
+\section{Known bugs and problems}
+
+If
+
+\section{Technical overview of algorithm}
+
+\begin{enumerate}
+\item A run directory extended\_grid\_dirN is created (unless option -dir is set to something different).
+\item The input model, without any changes, is run in the orig\_modelfit\_dir subdirectory. It is not checked that the input model does not contain NONP. Improvement: Add check that input model does not contain NONP.
+\item The input model is copied to the simulation model called simulation.mod, along with the original dataset where the copy is called simulation.dta. 
+\item Modifications in the simulation model:
+	\begin{enumerate}
+		\item The initial estimates are updated with the final estimates from the input model run.
+		\item If option -omega\_multiplier is set: For each OMEGA initial value, replace the initial value 'init' with 'init'*omega\_multiplier. Diagonal and non-diagonal values are treated alike. 
+		\item Remove \$ESTIMATION, \$COVARIANCE, \$TABLE.
+		\item Set \$SIMULATION ($\langle$seed$\rangle$) ONLYSIM
+Improvement: Add (seed2 UNIFORM) if new option -uniform is set.
+		\item Count the number of OMEGAs and set 
+\$TABLE ID ETA1 ETA2 ... ETA$\langle$nOMEGA$\rangle$ FIRSTONLY FILE=sim
+Note: 'ID' in this table is hard coded and is not affected by option id\_column
+Improvement: Replace ID based on  id\_column. Also add NOAPPEND NOPRINT ONEHEADER
+		\item If option -ids\_to\_simulate=N is set: If the number is smaller than or equal to the number of individuals in the dataset then all but the N first individuals are removed from simulation.dta. Else (N is larger than the number of individuals in the dataset) then the first individual in simulation.dta is copied N-$\langle$original number of ids$\rangle$ times and those individuals are appended so that simulation.dta contains N individuals in total. After modifications the IDs are renumbered ascending.
+Note: Handling of individuals is not affected by option id\_column, so it is likely that option -ids\_to\_simulate will fail if id\_column is not 'ID'. 
+Improvement: Add support for -id\_column and -ids\_to\_simulate in combination
+	\end{enumerate}
+\item The simulation model is run in the simulation\_dir subdirectory.
+\item The input model is copied to the extended grid model called extended.mod, along with the original dataset where the copy is called extended.dta. 
+\item Modifications in the extended grid model:
+	\begin{enumerate} 
+		\item The initial estimates are updated with the final estimates from the input model run.
+		\item If option -omega\_multiplier is set: For each OMEGA initial value, replace the initial value 'init' with 'init'*omega\_multiplier. Diagonal and non-diagonal values are treated alike. 
+		\item In extended.dta append a column of zeros and set header 'TYPE'. Also append rows for 'ids\_to\_simulate' (see help for this option) individuals, where each of these appended individuals have nOMEGA rows. On the ith row of extra individual j the DV column (either default DV or set with option dv\_column) is set to the ETAi value for individual j read from simulated file sim (steps 4e and 5 above), the ID column (either default ID or set with option id\_column) is set to j and the TYPE column to i.     
+		\item Append TYPE to \$INPUT
+		\item Edit \$ERROR (no warning if \$ERROR not present): Wherever EPS(n) is found replace it with ETA(n+n\_etas\_in\_original\_model). Enclose whole \$ERROR block with 'IF (TYPE.LE.0) THEN' and 'ENDIF' unless a line starting with 'IF' was found in the \$ERROR block. For each ETAi in the original model, append to \$ERROR a line
+ IF( TYPE.EQ.i ) Y = ETA(i)+ERR(2)*W/100000
+		\item For each ETA added in step 7e, add a \$OMEGA with initial value 1
+		\item Add \$SIGMA 1 FIX
+		\item set option MAXEVAL=0 POSTHOC in \$ESTIMATION (no check that estimation method is classic)
+		\item remove \$COVARIANCE
+		\item Add \$NONPARAMETRIC MARGINALS MSFO=MSF01 UNCONDITIONAL
+		\item in \$PRED/\$PK code block (error message if neither is found) append line
+ JD = DEN\_
+and for each ETAi in the original model a line  
+DNi=CDEN\_(i)
+		\item Add \$TABLE ID ETA1 ... ETA$\langle$n\_original\_omega$\rangle$ JD DN1 ... DN$\langle$n\_original\_omega$\rangle$ NOPRINT NOAPPEND FIRSTONLY FILE=nptab
+	\end{enumerate}
+\item The extended grid model is run in the extended\_dir subdirectory.
+\item Analyze the output in file nptab. 
+	\begin{enumerate}
+		\item First transform the JD column in two steps. In the first step leave the first $\langle$number of original individuals$\rangle$ rows unchanged, then transform the remaining rows according to new\_value=old\_value-(1/Ntotal) where Ntotal is the total number of rows in the JD column. In the second step transform all rows according to new\_value =old\_value*Ntotal/Noriginal where Noriginl is the number of original individuals.
+		\item For each eta column,  sort the ETAs and the transformed JD values as a group in ascending order based on the ETA values. Then create a new column with the cumulative sum of the sorted JD values.
+		\item Print a final output table ‘final\_nptab.csv’ with the transformed JD column followed by all pairs of sorted ETA and cumulative  JD sum columns.
+	\end{enumerate}
+\end{enumerate}
+
+\end{document}

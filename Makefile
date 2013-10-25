@@ -140,32 +140,13 @@ RELFILES=$(addprefix PsN-Source/lib/,$(LIBFILES)) \
 	bin/xv_scm \
 	bin/boot_scm \
 	bin/linearize \
-	lib/doc/lasso_userguide.pdf \
 	lib/doc/sse_userguide.pdf \
-	lib/doc/gls_userguide.pdf \
 	lib/doc/frem_userguide.pdf \
-	lib/doc/ebe_npde_userguide.pdf \
 	lib/doc/npc_vpc_userguide.pdf \
 	lib/doc/draft_vpc_automatic_binning.pdf \
-	lib/doc/extended_grid_userguide.pdf \
-	lib/doc/mcmp_userguide.pdf \
-	lib/doc/bootstrap_userguide.pdf \
 	lib/doc/scm_userguide.pdf \
-	lib/doc/common_options_defaults_versions_psn.pdf \
-	lib/doc/known_bugs_and_workarounds.pdf \
-	lib/doc/psn_configuration.pdf \
-	lib/doc/psn_installation.pdf \
-	lib/doc/PsN_and_NONMEM7.pdf \
 	lib/doc/runrecord_userguide.pdf \
 	lib/doc/runrecord_template.xls \
-	lib/doc/config_all_default_parameterizations_explicitly.scm \
-	lib/doc/config_centering_bivariate_covariate.scm \
-	lib/doc/config_different_parameterizations_different_covariates.scm \
-	lib/doc/config_emax_and_other_parameterizations.scm \
-	lib/doc/config_grouping_categorical_covariate.scm \
-	lib/doc/config_template_backward.scm \
-	lib/doc/config_template_linearize.scm \
-	lib/doc/config_template_standard.scm \
 	setup.pl \
 	README.txt )
 
@@ -322,10 +303,11 @@ $(addprefix html/scm,$(HTML_STUBS)) : bin/scm lib/common_options.pm
 	perl $< --help --html
 
 doc/%.pdf: doc/%.tex
-	cd doc; pdflatex $*.tex
-	cp doc/*.pdf PsN-Source/lib/doc 
+	cd doc; pdflatex $*.tex; pdflatex $*.tex
 
 release: libgen rel_dir $(RELFILES) $(PDFFILES)
+	@ cp doc/*.pdf PsN-Source/lib/doc
+	@ cp doc/*.scm PsN-Source/lib/doc
 	@ cd PsN-Source/lib/doc/; zip PsN_pdf_documentation *.pdf *.xls *.scm
 	@ cd PsN-Source/lib/doc/; tar -czf PsN_pdf_documentation.tar.gz *.pdf *.xls *.scm
 	@ zip -r PsN-Source PsN-Source/
