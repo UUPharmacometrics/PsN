@@ -141,10 +141,7 @@ RELFILES=$(addprefix PsN-Source/lib/,$(LIBFILES)) \
 	bin/boot_scm \
 	bin/linearize \
 	lib/doc/sse_userguide.pdf \
-	lib/doc/frem_userguide.pdf \
-	lib/doc/npc_vpc_userguide.pdf \
 	lib/doc/draft_vpc_automatic_binning.pdf \
-	lib/doc/scm_userguide.pdf \
 	lib/doc/runrecord_userguide.pdf \
 	lib/doc/runrecord_template.xls \
 	setup.pl \
@@ -303,7 +300,7 @@ $(addprefix html/scm,$(HTML_STUBS)) : bin/scm lib/common_options.pm
 	perl $< --help --html
 
 doc/%.pdf: doc/%.tex
-	cd doc; pdflatex $*.tex; pdflatex $*.tex
+	@ cd doc; pdflatex $*.tex; pdflatex $*.tex
 
 release: libgen rel_dir $(RELFILES) $(PDFFILES)
 	@ cp doc/*.pdf PsN-Source/lib/doc

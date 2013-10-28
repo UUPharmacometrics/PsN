@@ -1,0 +1,436 @@
+\documentclass[a4paper,12pt]{article}
+\title{SCM user guide\\ \vspace{2 mm} {\large PsN 3.6.3}}
+\date{2013-07-31}
+
+\usepackage[utf8]{inputenc}
+\usepackage{verbatim}
+\usepackage{longtable}
+\begin{document}
+
+\maketitle
+
+
+\section{Introduction}
+
+The Stepwise Covariate Model (SCM) building tool of PsN implements Forward Selection and Backward Elimination of covariates to a model. In short, one model for each relevant parameter-covariate relationship is prepared and tested in a univariate manner. In the first step the model that gives the best fit of the data according to some criteria is retained and taken forward to the next step. In the following steps all remaining parameter-covariate combinations are tested until no more covariates meet the criteria for being included into the model. The Forward Selection can be followed by Backward Elimination, which proceeds as the Forward Selection but reversely, using stricter criteria for model improvement. The Stepwise Covariate Model building procedure is run by the PsN tool scm. 
+
+\section{Data file}
+In PsN-3.5.3 and later versions the data file must have a header line, and the column headers must match \$INPUT of the input model. This is because the procedure for computing covariate statistics has been changed to accommodate functionality in boot\_scm and xv\_scm. 
+
+\section{Valid states for the parameter-covariate relations}
+There is a fixed set of parameter-covariate relations defined in scm, but the user can redefine one or more of the states using the code option, see below. This gives very high flexibility. The predefined shapes for the parameter-covariate relations for \emph{continuous} covariates are: none/not included, included as a linear relation, included as a piece-wise linear relation with two slopes (“hockey-stick”), included as an exponential relation and included as a power relation. The pre-defined parameterizations are shown in the section Default parameterizations. By default these parameterizations are assigned to numbers or \emph{states} according to 1:none,  2:linear, 3:hockey-stick, 4:exponential and 5:power, but any relation can be assigned to any number. The exception is the number 1, which must always correspond to none/not included. Further information is given in the help text on [valid\_states] and [code]. 
+
+\emph{Categorical} covariates are by default either not included or linearly included with an extra parameter added for each but the most common category. The default numbers are 1 and 2.
+
+The numbers 1-5, and higher numbers if the user has defined new relations using the [code] section, are used when specifying included parameter-covariate relations. Relationships are tried in the order the corresponding state numbers are listed in [valid\_states], see details below. The default is to try a later relationship in the list only if the preceding creates an significant change in the criteria for selection. Per default the relationships are not tried simultaneously, which means they are not compared with each other. The user can choose to have all later relations tried simultaneously by setting the option -parallel\_states, see details in the list of options below.
+
+\section{Inclusion and elimination criteria}
+A combination of a parameter and covariate is included if the change of OFV is significant according to the input p-value. The limit where the change is considered significant depends on the complexity of the relationship and is expressed in degrees of freedom. The linear relation adds one degree of freedom, the hockey-stick relation adds two, exponential only adds one. Categorical covariates adds as many degrees of freedom as there are categories minus 1. In forward search, for each covariate addition the program computes the lowest p-value for which this addition would still be significant. The covariate addition with the lowest p-value is selected, provided that this p-value is lower than the input forward p-value. In backward search the program computes which p-value would be required to accept going from each candidate reduced model to the current model. The candidate reduced model which would require the highest p-value to be replaced with the current model is selected, provided that this p-value is higher than the input backward p-value. 
+
+\section{Input}
+There are so many options to SCM that it is unpractical to specify them all on the command-line. Therefore the only option required on the command-line is the name of a configuration file, where other options are specified. Additional options are required, but may be specified either on the command-line or in the configuration file. If an option is specified both on the command-line and in the configuration file, the choice on the command-line has precedence. There are also options, of which some are required, that can only be specified in the configuration file. On the command-line options always begin with -, but in the configuration file the '-' must always be omitted. 
+
+\section{Configuration file}
+A set of example and template configuration files are found in the documentation directory, together will all userguides.
+
+The configuration file consists of a list of input options, followed by a set of sections with headers in square brackets. It lists the parameters and covariates, their types and which combinations that should be tested. The header of all sections must be enclosed by square brackets, see examples below. 
+
+At the top of the configuration file you can specify any scm command-line options and \emph{some} general PsN options that are normally given on the command line, such as “threads” and “nm\_version” (see description of option config\_file below for a more complete list). These options can still be given on the command line and will then override any options set in the configuration file. \emph{\textbf{Important note:}} All command-line options that the user chooses to set in the configuration file must come \emph{before} all bracket-header sections in the configuration file, otherwise the command-line options will be ignored.
+
+You can place a comment anywhere in the file by prefixing the line with a semicolon. \emph{Do not} add comments at the end of lines, always put comments on separate lines.
+
+\section{Options}
+\subsection{Required input which must be given on the command-line}
+
+\begin{longtable}{p{1in}p{4in}}
+\verb|-config_file=<filename>| & \\
+\nopagebreak
+ & Name of an scm configuration file, including search path if file is not stored in current directory. The configuration file may contain all scm command-line options and some optional general PsN options: \mbox{-nm\_version}, \mbox{-nmfe\_options}, \mbox{-abort\_on\_fail}, \mbox{-compress}, \mbox{-directory}, \mbox{-extra\_data\_files}, \mbox{-extra\_files}, \mbox{-picky}, \mbox{-retries}, \mbox{-threads} and \mbox{-tweak\_inits}. The file common\_options\_defaults\_versions\_psn.pdf describes all these options. \\
+ \\
+\end{longtable}
+
+As of PsN-3.4.3 it is possible to skip the option name for the configuration file, and call scm with
+\begin{verbatim}
+scm config.scm 
+\end{verbatim}
+instead of the traditional
+\begin{verbatim}
+scm -config_file=config.scm
+\end{verbatim}
+
+\subsection{Required input which can be given on the command-line or in the configuration file}
+When set in the configuration file, all these options must be set \emph{before} the first [$\langle$section$\rangle$].
+
+\begin{longtable}{p{1in}p{4in}}
+\verb|-search_direction=<direction>| & \\
+\nopagebreak
+ & No default. Possible choices are 'forward', 'backward' or 'both'. If backward is chosen, included\_relations is required input in the configuration file. \\
+\\
+\verb|-model=<filename>| & \\
+\nopagebreak
+ & No default. The name of the basic model file. \\
+\\
+\verb|-categorical_covariates=<list>| & \\
+\nopagebreak
+ & A comma separated list of the categorical covariates to be tested. The listed covariates must be found in the data set. May be omitted if continuous\_covariates is specified. \\
+\\
+\verb|-continuous_covariates=<list>| & \\
+\nopagebreak
+ & A comma separated list of the continuous covariates to be tested. The listed covariates must be found in the data set. May be omitted if categorical\_covariates is specified. \\
+\\
+\end{longtable}
+
+\subsection{Optional input which can be given on the command-line or in the configuration file}
+When set in the configuration file, all these options must be set before the first [$\langle$section$\rangle$].
+
+\begin{longtable}{p{1in}p{4in}}
+\verb|-gof=<>| & \\
+\nopagebreak
+ & Default is 'p\_value', other alternative is 'ofv'. Option decides which goodness-of-fit criteria should be used for deciding which model is better when comparing. \\
+\\
+\verb|-global_init=<>| & \\
+\nopagebreak
+ & Default is 0.001. With global\_init option the initial estimates of parameters in covariate function parameterizations are set to global\_init. If using inits section in configuration file individual initial values are used instead of one global. \\
+\\
+\verb|-logfile=<filename>| & \\
+\nopagebreak
+ & Default is scmlog.txt \\
+\\
+\verb|-p_forward=<>| & \\
+\nopagebreak
+ & Using the p\_forward option, you can specify the p-value to use for the forward selection. Used when an improvement is good enough for including parameters. \\
+\\
+\verb|-p_backward=<>| & \\
+\nopagebreak
+ & Using the p\_backward option, you can specify the p-value to use for the backward deletion. \\
+\\
+\verb|-p_value=<>| & \\
+\nopagebreak
+ & Use this option to set the p\_value for both forward and backward steps. \\
+\\
+\verb|-do_not_drop=<>| & \\
+\nopagebreak
+ & Default empty string. Since the number of columns are restricted to 20 for NONMEM (50 for NM7) it is necessary to minimize the number of undropped columns. The scm utility uses the '=DROP' syntax of NONMEM to exclude the covariate columns that are not currently tested in a specific candidate model. If some covariates are used in e.g. PK, PRED or TABLE in the basic model you must list them using the do\_not\_drop option to prevent them from being dropped. If the -linearize option is used, do\_not\_drop has a different usage, see the section on the linearization method below. \\
+\\
+\verb|-only_successful| & \\
+\nopagebreak
+ & Default not set. Only consider runs with MINIMIZATION SUCCESSFUL (or equivalent for non-classical estimation methods) when selecting the covariate to add/remove in each step. \\
+\\
+\verb|-parallel_states| & \\
+\nopagebreak
+ & Default not set. Instead of trying valid\_states sequentially, try all states after the current one simultaneously. It is currently not possible to stop testing a parameter-covariate relation that has been included in an lower state if there are higher states defined. To achieve this the user has to stop the search and restart with a new configuration file where no higher states are tested for the parameter-covariate pair. \\
+\\
+\verb|-max_steps| & \\
+\nopagebreak
+ & Do not take more that max\_steps forward steps, even if there are more covariates left to add and a significant inclusion was made in the last step. \\
+\\
+\end{longtable}
+
+
+\subsection{Optional input which can only be given in the configuration file}
+When set, all these options must be set \emph{before} the first [$\langle$section$\rangle$].
+
+\begin{longtable}{p{1in}p{4in}}
+\verb|-base_criteria_values=<perl code>| & \\
+\nopagebreak
+ & The argument to this option is some perl code (a hash). The base\_criteria\_values overrides default criteria for the goodness of fit function used. The default goodness of fit function takes its base\_criteria\_value to be the ofv of the initial model. The ofv of the initial model  can be set by
+
+base\_criteria\_values={ofv =$>$ 670}
+
+ where the number 670 should be be replaced by the ofv value of the model evaluated with all included relations. If base\_criteria\_values is set, then PsN does not have to evaluate the original model with included\_relations to get a ofv to use for comparisons.\\
+\\
+\verb|-logit=<list of parameters>| & \\
+\nopagebreak
+ & By default the value of the covariate function for a parameter is a  product of individual functions of the included covariates, and the typical value (TV) of the parameter is multiplied with the product. With option -logit the user can specify a list of parameters which should be treated as logit transformations, i.e. the value of the covariate function is a sum of individual functions, the sum should be added to the typical value of the parameter, and the value of each individual covariate function should be 0, not 1, when the corresponding THETA is 0. The thetas in a linear or hockey-stick relation on a logit parameter will be given lower and upper boundaries -20 and 20 by default. Important note: When a parameter is a logit transformation, the power and exponential covariate relations are not appropriate to add on this parameter. \\
+\\
+\verb|-time_varying=<list of covariates>| & \\
+\nopagebreak
+ & Handle time-varying covariates when computing median and mean of covariates. Requires that W is defined in \$ERROR/\$PRED. PsN does not check that W is defined. There will be an NMtran error if W is missing. Assume an ID has the following observations: a,b,c,d
+. 
+Corresponding covariate values: A,B,C,D
+
+Corresponding residual error magnitudes (W): Wa,Wb,Wc,Wd
+
+Corresponding absolute partial derivatives for ETA(1): Ga, Gb, Gc, Gd
+
+Average covariate value for this individual  AVCOV(ind) will be
+
+(A*Ga/Wa + B*Gb/Wb + C* Gc/Wc + D* Gd/Wd)/
+(Ga/Wa + Gb/Wb + Gc/Wc + Gd/Wd)
+
+The median/mean for this covariate with respect to the parameter which ETA(1) is on is the median/mean of AVCOV over all individuals.
+
+The derivatives needed for computing the new medians and means will be taken from an estimation of the input model without any included relations, even if included\_relations is defined in the config file. This is because the medians are needed to add the included relations to the model.\\
+\\
+\end{longtable}
+
+\subsection{Some optional general PsN options which are extra important for scm}
+
+\begin{longtable}{p{1in}p{4in}}
+\verb|-missing_data_token=<>| & \\
+\nopagebreak
+ & Default is -99. When some values of the covariates are missing in for some observations in the dataset it is necessary to let PsN know how missing values are coded in the dataset, otherwise the covariate function values will be very wrong. This option cannot be set in the configuration file (it will be ignored if set there). It must be set on the command-line. \\
+\\
+\verb|-directory=<>| & \\
+\nopagebreak
+ & The name of the run directory. The default is scm\_dirN, which N either 1 or the next unused number if there already are scm\_dirN directories present. When set in the configuration file, this option must be set before the first [$\langle$section$\rangle$]. \\
+\\
+\end{longtable}
+
+\subsection{Options  for the linearization method}
+
+Add covariates to a linearized version of the  original model. All these options must be set before the first [<section>] of the configuration file. The linearization method can only be used with models where the eta on each parameter (CL, V,...) to be tested is unique to that parameter, i.e. if  CL is listed in test\_relations and CL=TVCL*EXP(ETA(5)) then ETA(5) must not appear anywhere else in the model. Also, the linearization method is restricted to a certain set of models for the inter-individual variation, see below. Different parameters may have different ETA relations as long as each one is found in the list below.
+The recognized forms of inter-individual variation models are (using parameter PAR and ETA(1) as  examples):
+\begin{verbatim}
+PAR=TVPAR*EXP(ETA(1))	   	; exponential
+PAR=EXP(MU_1+ETA(1))     	; exponential
+PAR=EXP(ETA(1)+MU_1)    	; exponential
+PAR = TVPAR+TVPAR*ETA(1)     ; proportional
+PAR = TVPAR +ETA(1)*TVPAR    ; proportional
+PAR = TVPAR*(1 +ETA(1))          	; proportional
+PAR = TVPAR + ETA(1)   	 	; additive or logit depending on if PAR is flagged as a logit using 						option -logit
+\end{verbatim}
+To handle logit transformations, the user can model as follows
+\begin{verbatim}
+      TVBIO  = THETA(1)
+      TVPHI = LOG(TVBIO/(1-TVBIO))
+      PHI     = TVPHI+ETA(1)	
+      BIO    = EXP(PHI)/(1+EXP(PHI))
+\end{verbatim}
+and in the configuration file set PHI as the parameter to test covariates on using [test\_relations] and set logit=PHI.
+
+The covariate function will always be multiplied with (or added to if the parameter is a logit) TVPAR, so TVPAR must be used in the model.
+
+\begin{longtable}{p{1in}p{4in}}
+\verb|-linearize| & \\
+\nopagebreak
+ & Turn on the linearization method. By default not set. \\
+\\
+\verb|-foce| & \\
+\nopagebreak
+ & Linearize around empirical Bayes estimates. Default set. If unset  linearize around etas equal to 0. \\
+\\
+\verb|-second_order| & \\
+\nopagebreak
+ & This option is not fully implemented yet. Default not set. Use a second order Taylor expansion instead of a first order. \\
+\\
+\verb|-lst_file=filename| & \\
+\nopagebreak
+ & Default not used. Update original model with final estimates from this file before running model to obtain derivatives. \\
+\\
+\verb|-update_derivatives| & \\
+\nopagebreak
+ & Default not set. In each step, after selecting the covariate to add, rerun non-linear model to get updated derivatives for linearization. \\
+\\
+\verb|-epsilon| & \\
+\nopagebreak
+ & Default set. Linearize with respect to epsilons in addition to etas. Disable with epsilon=0 in the configuration file or -no-epsilon on the command-line, then no linearization with respect to epsilon is performed. \\
+\\
+\verb|-error=<add,prop,propadd,user>| & \\
+\nopagebreak
+ & No default. Only allowed to set when -no-epsilon is set. Use an approximate linearization of the error model instead of exact linearization with respect to epsilons. Alternatives are add for additive, prop for proportional, propadd for proportional plus additive and user for user defined. 
+For additive and proportional error (add and prop) it is required that the original model defines a variable W for weighting of EPS(1), for add
+\begin{verbatim}
+    W = THETA(x)
+    Y     = IPRED + W*EPS(1)
+\end{verbatim}
+and for prop
+\begin{verbatim}
+    W = THETA(x)*IPRED
+    Y     = IPRED + W*EPS(1)
+\end{verbatim}
+
+For proportional plus additive error (propadd) it is required that two variables WA and WP are defined so that the following holds 
+\begin{verbatim}
+    WA=THETA(x)
+    WP=THETA(y)
+    W     = SQRT(WA**2+(WP*IPRED)**2)
+    Y     = IPRED + W*EPS(1)
+\end{verbatim}
+If -error=user then the option -error\_code must be defined in the configuration file, and probably also do\_not\_drop (see below).The code can only use IPRED, EPS(x) and parameters listed with do\_not\_drop. IPRED must be used. F cannot be used. The code must have a \ (backslash) at the end of each line, except the last which cannot have a backslash. The code must not contain blank lines or comments.  \\
+\\
+\verb|-error_code=<nonmem code>| & \\
+\nopagebreak
+ & Only if error=user. Can only be set in the configuration file. Define Y, possibly on several lines, with NONMEM code using IPRED, EPS(x), and any parameters listed in do\_not\_drop. IPRED must be used for Y and F must not be used. When the NONMEM code spans several lines, each line must end with \ (a backslash) except the last one. It is important not to have \ at the end of the last line. There must be no empty lines and no comments in the error\_code. THETA(x) cannot be used. It will not work to have etas on the epsilons. \\
+\\
+\verb|-do_not_drop=list of parameters| & \\
+\nopagebreak
+ & When option -linearize is set, option -do\_not\_drop has a different functionality than otherwise. In combination with -linearize, this option must list all parameters except IPRED and EPS(x) that are used in -error\_code. It must also list parameters that are needed for IGNORE or ACCEPT statements. No other parameters should be listed here, for example do not list covariates that are in \$PK/\$PRED but not in error\_code. \\
+\\
+\verb|-derivatives_data=filename| & \\
+\nopagebreak
+ & Can only be set in the configuration file. It is possible to reuse the derivatives data from a previous run, the file derivatives\_covariates.dta, provided that the nonlinear model, the included\_relations, the list of covariates and the do\_not\_drop list is the same. The program does not check that these conditions are fulfilled, so if they are violated NMtran will fail or the program output will be incorrect. \\
+\\
+\verb|-noabort| & \\
+\nopagebreak
+ & Default not set. Only relevant if -linearize is set. With this option set, scm will add NOABORT in \$EST of the linearized models. \\
+\\
+\end{longtable}
+
+
+\section{Configuration file sections}
+All sections have a header enclosed by square brackets. The sections must come after the single line options. All the following sections except [test\_relations] are optional. 
+
+\subsection{test\_relations}
+The section test\_relations is required, and in there you list which covariates should be combined with which parameter. Implicitly you also tell the SCM which parameters there are. E.g.:
+
+\begin{verbatim}
+[test_relations]
+CL=WGT,AGE
+V=SMOK
+\end{verbatim}
+
+Note the square brackets around the section name. In the example WGT and AGE will be combined with clearance (CL) and SMOK will be combined with volume (V)
+
+\subsection{valid\_states}
+The section [valid\_states] lists which states should be tested for the covariates (default is 1,2 for categorical and 1,2,3 for continuous). Always put 1 first in the list. The scm was implemented to not allow setting different valid states for different covariates, but since any relation can be coupled to any state number except 1, this imposes no limitation. The user can replace the default relations coupled to the states for some parameters and or covariates using the [code] section of the configuration file, see more information below under code. The relationships are tried in the order their numbers are listed in [valid\_states]. The numbers do not have to be increasing, it is possible to set e.g. 1,5,4 as valid\_states for continuous covariates in which case (assuming the default state-relationship definitions) the power relation would be tested before the exponential. Per default, only if a relationship creates an significant change in the criteria for selection, the next relationship in the valid\_states list is tried. The relationships are not tried simultaneously so that they can be compared with each other. The user can set option -parallel\_states to make scm test all later states in the list simultaneously.
+
+\begin{verbatim}
+[valid_states]
+continuous = 1,2,4
+categorical = 1,2
+\end{verbatim}
+
+\subsection{included\_relations}
+If you want to include some relations from the beginning, you can use the [included\_relations] section:
+
+\begin{verbatim}
+[included_relations]
+CL=WGT-2,AGE-3
+\end{verbatim}
+
+Here WGT will be included linearly and AGE with the hockey-stick relation (assuming default relations for states 2 and 3) on CL already from the start. Following states in the list of valid\_states will be tried by the SCM, and the combination can be removed as part of the backwards elimination. If option search\_direction is set to backward, the section [included\_relations] is required (otherwise there will be no relations that PsN can remove during the backward search).
+
+If included\_relations is defined, PsN will run the input model with these relations before starting the search, in order to have a reference ofv value for computing the improvements when adding covariates. If base\_criteria\_values is set with an ofv-value, then the run with included\_relations is skipped. 
+
+\subsection{code}
+The code section allows you to define your own relation code for the different states. Never redefine state 1 (relation not included). The line [code] must only appear once, even if there are several different definitions in the section. For the code section you can write any NONMEM code you like on the right hand side of the first equal sign and it will be inserted into the model when that combination is included. In the code PsN will replace PAR with the parameter, for example CL, and COV with the covariate, for example WGT. In addition, median, mean, maximum and minimum will be replaced with the median, mean, maximum and minimum values of the covariate. The wildcard * can be used to define for many parameters and or covariates at once. E.g.:
+
+\begin{verbatim}
+[code]
+V:APGR-7=VAPGR=(THETA(1)*(APGR-7.0))
+V:POP-7=VPOP=(THETA(1)*(POP-median))
+CL:*-7=IF(COV.EQ.0) CLCOV = 1\ 
+             IF(COV.NE.0) CLCOV = (1 + THETA(1))
+\end{verbatim}
+
+The THETAs should be numbered from 1, starting over from 1 for each new parameterization. The numbers will be appropriately replaced when the relation is added in the model. You can either specify the code exactly (except for the THETA index) as in the V example, or you can use the wildcards * for the parameter and/or covariate to define multiple relations on one line as in the CL example.  If you use * on the left-hand side for the covariate and the name of the covariate is needed in the code, you should use COV. Similarly, if the wildcard * is used for the parameter on the left-hand side, PAR should be used in the code. PAR and COV will be substituted for the parameter and covariate names in the combination being included. If a single definitions spans multiple lines there must be a  “\textbackslash” at the end of all but the last line.
+
+It is possible to use the variables maximum, minimum, mean and median in the code. These words will be replaced by the actual maximum, minimum, mean and median computed for the covariate from the dataset. The words must be in lower case and spelled exactly as listed, otherwise they will not be recognized by PsN but passed on to the modelfile where they will cause errors. 
+
+Note that it is possible to use the ANCHOR functionality, see below, to define constants to use in the user-defined code.
+
+You can give the relation any state number you like. You can choose a state number which has a default relation (2-5) or add a new one. 
+
+Redefining existing states is useful when wanting to test different valid states for different covariates on different parameters. Starting with PsN-3.2.8 it is possible to use shortcut definitions for the pre-defined states when redefining using the code section. For example, if valid\_states for continuous covariates is 1,2,4 but the user wants the last valid state to be the power relation for covariate WGT, the user can redefine state 4 for WGT as follows
+\begin{verbatim}
+[code]
+*:WGT-4=power
+\end{verbatim}
+Then in state 4 the covariate WGT will always be added as a power relation instead of exponential (the default for state 4). The shortcuts are 'none' for not included, 'linear', 'hockey-stick', 'exponential' and 'power'. The shortcut definitions must be written without quotes, in lower case and be spelled exactly as listed. 
+
+\subsection{inits}
+The inits and bounds sections lets you set initial estimates for thetas introduced in the code and their corresponding bounds. The default bounds are set so that covariate functions cannot reach negative values, which is appropriate e.g. for parameters V and CL. For parameters that should be allowed both negative and positive values the user may wish to change the boundaries. The inits and bounds sections have very similar syntax, only inits will be shown here:
+
+\begin{verbatim}
+[inits]
+V:SMOK-2=0.01
+CL:*-2=0.01
+*:AGE-3=0.03,0.03
+\end{verbatim}
+
+The left hand side is of the form “PARAMETER:COVARIATE-STATE”. Both PARAMETER and COVARIATE can be an asterisk (*), which is a wildcard and is the same as repeating the line for each parameter and/or covariate. The STATE can be any one of 2-5 or a new state defined by the user in the code section. For the “inits” section the right hand side is a comma separated list of initial values for theta parameters put into the abbreviated code corresponding to the combination. Unless the states are redefined using the code option, for continuous variables the list for state 2 should be one value, for state 3 two values and for states 4 and 5 one value. For categorical covariates where STATE can only be 2 it is the number of categories that decides the number of initial values. The lower\_bounds and upper\_bounds sections follows the same rules and corresponds to the bounds for the theta parameters put into the abbreviated code. If you specify too few or too many values, those you exclude will be replaced by defaults and the extraneous will be ignored. 
+
+It is possible to use the variables maximum, minimum, mean and median in the inits and bounds sections. See more details in the [code] help. 
+
+
+\section{The ANCHOR functionality}
+SCM by default adds the covariate relationship functions first in \$PK/\$PRED, before any existing user-written code. Sometimes this is unpractical, for example if there are constants that the user needs in a custom [code] section. In this case the user can add the line
+\begin{verbatim}
+;;;SCM-ANCHOR
+\end{verbatim}
+at the line where it is okay for SCM to start to add the covariate function code, e.g. the line after the last constant has been defined. The line must look exactly as shown, for example there must be no spaces on the line and SCM-ANCHOR must be in capital letters. If the line is found, SCM will always write the lines up to and including 
+\begin{verbatim}
+;;;SCM-ANCHOR
+\end{verbatim}
+before adding any covariate code. If the linearize option is used, the code preceding the SCM-ANCHOR line will be kept in the linearized models. The ANCHOR functionality has no option, it is turned on and off by adding or removing the line in \$PK/\$PRED.
+
+\section{Missing coviariate values}
+The scm program handles missing coviariate values, provided that option missing\_data\_token is set correctly. If the covariate value is equal to missing\_data\_token, the missing value will be replaced by the median of the covariate. In the code this is done in a separate IF statement for missing values where the covariate value has been set to the median and the expression simplified, usually leading to the expression being equal to 1. For time-varying covariates the principle is the same: replace missing values with the median. See above help text for option time\_varying for a description of how to compute medians for time-varying covariates.  
+
+\section{Example}
+\begin{verbatim}
+scm -config_file=config_run5.scm -nm_version=7
+
+;contents of config_run5.scm
+model=pheno_with_cov.mod
+search_direction=both
+p_forward=0.05
+p_backward=0.01
+abort_on_fail=0
+retries=3
+continuous_covariates=WGT,APGR,CV1,CV2,CV3
+categorical_covariates=CVD1,CVD2,CVD3
+
+[test_relations]
+CL=WGT,APGR,CV1,CV2,CV3,CVD1,CVD2,CVD3
+V=WGT,APGR,CV1,CV2,CV3,CVD1,CVD2,CVD3
+
+[valid_states]
+continuous = 1,2,4
+categorical = 1,2
+\end{verbatim}
+
+\section{SCM output}
+The final models are in the final\_models subdirectory of the run directory. The logfile is scmlog1.txt, unless a different name was set using option logfile. The logfile contains ofv-values and p-values for the tested models, and tells which covariate relation was added or removed in each step. It also lists the directory where models from each step are found. All parameter estimates are in raw\_results1.csv. If option search\_direction is 'both' then the first level of the run directory is about the forward search (m1, modelfit\_dir1 belong to the forward search). The next levels of the forward search are in forward\_scm\_dir1 and below. The backward search is found in backward\_scm\_dir1 inside the main run directory.  
+
+
+\section{Diagnostics of the linearization method}
+If the linearization method was used, the logfile also lists the ofv values of the nonlinear base model (the derivatives model) and the linearized base model. Those two values should be very similar. If they are not, the results cannot be trusted. Check the files derivatives.lst and base\_model\_with\_included\_relations.lst for NONMEM minimization error messages. If the messages give no obvious explanation for why the values could be different the automatic linearization might have failed. Check if the program detected the correct type of ETA relationship (exponential/additive/proportional) for each parameter. 
+
+\section{Known bugs and problems}
+Two covariates will be mixed up if the complete name of one is the same as the beginning of another. Example: AP and APGR will result in errors, since AP is identical to the beginning of APGR. APX and APGR is okay, since the third letters X and G are different. 
+
+\section{Tricks}
+To build the full model, use p\_forward=1. Then any parameter inclusion that gives a drop in ofv will be accepted. Since the initial estimates of the model are updated after each parameter inclusion, the forward search may make it easier to estimate the parameters in the full model, compared to when adding all relations at once.
+
+To only run one step and not accept any relations, use p\_forward=0. Then the user can investigate raw\_results and the log-file to select the appropriate relation to add, and start a new run with [included\_relations] set.
+
+\section{Default parameterizations}
+Replace PAR with the parameter name, e.g. CL, and COV with the covariate name, e.g. WGT or SEX.
+If the parameter is listed as a logit the offset 1 in default functions for state 1 and 2 will be changed to 0.
+
+Default state 1:Covariate not included on the parameter
+\begin{verbatim}
+PARCOV=1
+\end{verbatim}
+
+Default state 2, continuous covariates: Linear function
+\begin{verbatim}
+PARCOV= ( 1 + THETA(1)*(COV - median))
+\end{verbatim}
+
+Default state 2, categorical covariates: Linear function (will be one extra line for each extra category)
+\begin{verbatim}
+IF(COV.EQ.1) PARCOV = 1  ; Most common
+IF(COV.EQ.0) PARCOV = ( 1 + THETA(1))
+\end{verbatim}
+
+Default state 3: Hockey-stick, or piece-wise linear, function. Continuous covariates only.
+\begin{verbatim}
+IF(COV.LE.median) PARCOV = ( 1 + THETA(1)*(COV - median))
+IF(COV.GT.median) PARCOV = ( 1 + THETA(2)*(COV - median))
+\end{verbatim}
+
+Default state 4: Exponential function. Continuous covariates only.
+\begin{verbatim}
+PARCOV= EXP(THETA(1)*(COV – median))
+\end{verbatim}
+
+Default state 5: Power function. Continuous covariates only.
+\begin{verbatim}
+PARCOV= ((COV/median)**THETA(1))
+\end{verbatim}
+
+
+\end{document}
