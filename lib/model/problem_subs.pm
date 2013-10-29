@@ -1376,8 +1376,8 @@ end _format_problem
 
 # {{{ _init_attr
 
-start _init_attr
-      {
+	start _init_attr
+{
 	# Private method, should preferably not be used outside model.pm
 	# The add_if_absent argument tells the method to add an init (theta,omega,sigma)
 	# if the parameter number points to a non-existing parameter with parameter number
@@ -1391,9 +1391,9 @@ start _init_attr
 
 	my @records;
 	if( defined $self->$accessor ){
-	  @records = @{$self->$accessor};
+		@records = @{$self->$accessor};
 	} else {
-	  @records = ();
+		@records = ();
 	}
 	
 	my @options = ();
@@ -1401,204 +1401,204 @@ start _init_attr
 	# {{{ Check that the size of parameter_numbers and new_values match
 	my %num_val;
 	if ( $#parameter_numbers >= 0 and $#new_values >= 0 ) {
-	  if ( $#parameter_numbers == $#new_values ) {
-	    for ( my $i = 0; $i <= $#new_values; $i++ ) {
-	      $num_val{$parameter_numbers[$i]} = $new_values[$i];
-	    }
-	  } else {
-	    die "Model::problem -> _init_attr: The number of specified ".
-	      "parameters (@parameter_numbers) and values (@new_values) do not match for parameter $parameter_type".
-		" and attribute $attribute\n";
-	  }
+		if ( $#parameter_numbers == $#new_values ) {
+			for ( my $i = 0; $i <= $#new_values; $i++ ) {
+				$num_val{$parameter_numbers[$i]} = $new_values[$i];
+			}
+		} else {
+			die "Model::problem -> _init_attr: The number of specified ".
+				"parameters (@parameter_numbers) and values (@new_values) do not match for parameter $parameter_type".
+				" and attribute $attribute\n";
+		}
 	}
 	# }}}
 
 	my $prev_size = 1;
 	if ( scalar @new_values > 0 ) {
-	  # {{{ Update values
+		# {{{ Update values
 
-	  # OBS! We are using 'normal' numbering in parameter_numbers, i.e. they begin
-	  # at one (1).
-	  my $opt_num = 1;
-	  # Ugly solution to add non-existing options:
-	  my %found;
-	  foreach my $num ( @parameter_numbers) {
+		# OBS! We are using 'normal' numbering in parameter_numbers, i.e. they begin
+		# at one (1).
+		my $opt_num = 1;
+		# Ugly solution to add non-existing options:
+		my %found;
+		foreach my $num ( @parameter_numbers) {
 #	    print "inpn: $num\n";
-	    $found{$num} = 0;
-	  }
-
-	  my @diagnostics = ();
-	  foreach my $record ( @records ) {
-	    if ( $record -> same() ) {
-	      # SAME == true: Nothing to be done. Just move forward to next $OMEGA but
-	      # increase counter first
-
-	      $opt_num += $prev_size;
-	    } else {
-	      foreach my $option ( @{$record -> options} ) {
-		if ( scalar @parameter_numbers > 0 ) {
-		  foreach my $num ( @parameter_numbers ) {
-		    if ( $num == $opt_num ) {
-		      $found{$num}++;
-		      if ( $attribute eq 'init' ) {
-			push( @diagnostics,
-			      $option -> check_and_set_init( new_value => $num_val{$num} ) );
-		      } elsif( $attribute eq 'fix' and defined $record -> size() 
-			       and ($record-> type() eq 'BLOCK') ){
-			# size() tells us this MIGHT be a block and we must fix on record level.
-			#check type also
-			$record -> fix( $num_val{$num} );
-		      } else {
-			$option -> $attribute( $num_val{$num} );
-		      }
-		    }
-		  }
-		} else {
-		  if ( $attribute eq 'init' ) {
-		    push( @diagnostics,
-			  $option -> check_and_set_init( new_value => shift( @new_values ) ) );
-		  } elsif( $attribute eq 'fix' and defined $record -> size()
-			   and ($record-> type() eq 'BLOCK')){
-		    # size() tells us this MIGHT a block and we must fix on record level.Check type also
-		    $record -> fix( shift( @new_values ) );
-		  } else {
-		    $option -> $attribute( shift( @new_values ) );
-		  }
+			$found{$num} = 0;
 		}
-		$opt_num++;
-	      }
-	      if( $parameter_type eq 'theta' ){
-		$prev_size = scalar @{$record -> options};
-	      } else {
-		my $size = $record -> size;
-		if( (defined $size) and ($record->type eq 'BLOCK') ) {
-		  $prev_size = ($size*($size+1))/2;
-		} else {
-		  $prev_size = scalar @{$record -> options};
+
+		my @diagnostics = ();
+		foreach my $record ( @records ) {
+			if ( $record -> same() ) {
+				# SAME == true: Nothing to be done. Just move forward to next $OMEGA but
+				# increase counter first
+
+				$opt_num += $prev_size;
+			} else {
+				foreach my $option ( @{$record -> options} ) {
+					if ( scalar @parameter_numbers > 0 ) {
+						foreach my $num ( @parameter_numbers ) {
+							if ( $num == $opt_num ) {
+								$found{$num}++;
+								if ( $attribute eq 'init' ) {
+									push( @diagnostics,
+										  $option -> check_and_set_init( new_value => $num_val{$num} ) );
+								} elsif( $attribute eq 'fix' and defined $record -> size() 
+										 and ($record-> type() eq 'BLOCK') ){
+									# size() tells us this MIGHT be a block and we must fix on record level.
+									#check type also
+									$record -> fix( $num_val{$num} );
+								} else {
+									$option -> $attribute( $num_val{$num} );
+								}
+							}
+						}
+					} else {
+						if ( $attribute eq 'init' ) {
+							push( @diagnostics,
+								  $option -> check_and_set_init( new_value => shift( @new_values ) ) );
+						} elsif( $attribute eq 'fix' and defined $record -> size()
+								 and ($record-> type() eq 'BLOCK')){
+							# size() tells us this MIGHT a block and we must fix on record level.Check type also
+							$record -> fix( shift( @new_values ) );
+						} else {
+							$option -> $attribute( shift( @new_values ) );
+						}
+					}
+					$opt_num++;
+				}
+				if( $parameter_type eq 'theta' ){
+					$prev_size = scalar @{$record -> options};
+				} else {
+					my $size = $record -> size;
+					if( (defined $size) and ($record->type eq 'BLOCK') ) {
+						$prev_size = ($size*($size+1))/2;
+					} else {
+						$prev_size = scalar @{$record -> options};
+					}
+				}
+			}
 		}
-	      }
-	    }
-	  }
-	  # If $add_if_absent is set, any parameters that were not found above are
-	  # added below:
-	  
-	  my @nums = sort {$a<=>$b} keys %found;
-	  my $new_record = "model::problem::$parameter_type" -> new();
-	  my $do_add_record;
-	  my $added_thetas=1;
-	  my $added_sigmas=1;
-	  my $added_omegas=1;
-	  foreach my $num ( @nums ) {
-	    if ( $add_if_absent and
-		 not $found{$num} ) {
-	      $do_add_record = 1;
-	      unless($num == $opt_num) {
-		croak("Attempt to add a parameter with higher number ($num) than the number\n".
-				           "of parameters + 1 ($opt_num)\n" );
-	      }
-	      # Get the last record of $parameter_type
-	      # my $new_record = $records[$#records];
-	      my $option_class;
+		# If $add_if_absent is set, any parameters that were not found above are
+		# added below:
+		
+		my @nums = sort {$a<=>$b} keys %found;
+		my $new_record = "model::problem::$parameter_type" -> new();
+		my $do_add_record;
+		my $added_thetas=1;
+		my $added_sigmas=1;
+		my $added_omegas=1;
+		foreach my $num ( @nums ) {
+			if ( $add_if_absent and
+				 not $found{$num} ) {
+				$do_add_record = 1;
+				unless($num == $opt_num) {
+					croak("Attempt to add a parameter with higher number ($num) than the number\n".
+						  "of parameters + 1 ($opt_num)\n" );
+				}
+				# Get the last record of $parameter_type
+				# my $new_record = $records[$#records];
+				my $option_class;
 
-	      my $coordinate_string;
-	      if( $parameter_type eq 'theta' ){
-		$option_class = 'model::problem::record::theta_option';
-		my $index = $self->record_count('record_name' => 'theta')+$added_thetas;
-		$coordinate_string='THETA'.$index;
-		$added_thetas++;
-	      } else {
-		$option_class = 'model::problem::record::init_option';
-		if( $parameter_type eq 'omega' ){
-		  my $index = $self->nomegas('with_correlations' => 0,'with_same' => 1)+$added_omegas;
-		  $coordinate_string='OMEGA('.$index.','.$index.')';
-		  $added_omegas++;
-		}else {
- 		  my $index = $self->sigmas('with_correlations' => 0,'with_same' => 1)+$added_sigmas;
-		  $coordinate_string='SIGMA('.$index.','.$index.')';
-		  $added_sigmas++;
+				my $coordinate_string;
+				if( $parameter_type eq 'theta' ){
+					$option_class = 'model::problem::record::theta_option';
+					my $index = $self->record_count('record_name' => 'theta')+$added_thetas;
+					$coordinate_string='THETA'.$index;
+					$added_thetas++;
+				} else {
+					$option_class = 'model::problem::record::init_option';
+					if( $parameter_type eq 'omega' ){
+						my $index = $self->nomegas('with_correlations' => 0,'with_same' => 1)+$added_omegas;
+						$coordinate_string='OMEGA('.$index.','.$index.')';
+						$added_omegas++;
+					}else {
+						my $index = $self->sigmas('with_correlations' => 0,'with_same' => 1)+$added_sigmas;
+						$coordinate_string='SIGMA('.$index.','.$index.')';
+						$added_sigmas++;
+					}
+				}
+
+				# Push a new option to this last record
+				my $option = $option_class -> new(coordinate_string => $coordinate_string);
+				if ( $attribute eq 'init' ) {
+					$option -> check_and_set_init( new_value => $num_val{$num} );
+				} elsif( $attribute eq 'fix' and defined $new_record -> size()
+						 and ($new_record-> type() eq 'BLOCK')){
+
+					# size() tells us this is MIGHT be a block and we must fix on
+					# record level. This will never happen, as we can't
+					# add BLOCKS, at least not like this.
+
+					$new_record -> fix( $num_val{$num} );
+				} else {
+					$option -> $attribute( $num_val{$num} );
+				}
+				$new_record->options([]) unless (defined $new_record->options());
+				push( @{$new_record->options}, $option );
+
+				# So we've added a parameter. Possible to add more,
+				# lets increase the highest found:
+				$opt_num++;
+			}
 		}
-	      }
+		if ( $attribute eq 'init' ) {
+			# We're updating but might be returning diagnostics
+			# Use the default return parameter parameter_values for this
+			@parameter_values = @diagnostics;
+		}
 
-	      # Push a new option to this last record
-	      my $option = $option_class -> new(coordinate_string => $coordinate_string);
-	      if ( $attribute eq 'init' ) {
-		$option -> check_and_set_init( new_value => $num_val{$num} );
-	      } elsif( $attribute eq 'fix' and defined $new_record -> size()
-		       and ($new_record-> type() eq 'BLOCK')){
+		if( $do_add_record ){
+			push( @records, $new_record );
+			$self->$accessor(\@records);
+		}
 
-		# size() tells us this is MIGHT be a block and we must fix on
-		# record level. This will never happen, as we can't
-		# add BLOCKS, at least not like this.
-
-		$new_record -> fix( $num_val{$num} );
-	      } else {
-		$option -> $attribute( $num_val{$num} );
-	      }
-	      $new_record->options([]) unless (defined $new_record->options());
-	      push( @{$new_record->options}, $option );
-
-	      # So we've added a parameter. Possible to add more,
-	      # lets increase the highest found:
-	      $opt_num++;
-	    }
-	  }
-	  if ( $attribute eq 'init' ) {
-	    # We're updating but might be returning diagnostics
-	    # Use the default return parameter parameter_values for this
-	    @parameter_values = @diagnostics;
-	  }
-
-	  if( $do_add_record ){
-	    push( @records, $new_record );
-	    $self->$accessor(\@records);
-	  }
-
-	  # }}} Update values
+		# }}} Update values
 	} else {
-	  # {{{ Retrieve values
+		# {{{ Retrieve values
 
-	  my @prev_values = ();
-	  my $done=0;
-	  foreach my $record ( @records ) {
-	    last if ($done);
-	    last if ($record->prior() and (not $with_priors));
-	    unless ( $record -> same() ) {
-	      @prev_values = ();
-	      if ( defined $record -> options ) {
-		foreach my $option ( @{$record -> options} ) {
-		  if ($option->prior() and (not $with_priors)){
-		    $done=1;
-		    last;
-		  }
-		  push( @prev_values, $option -> $attribute );
+		my @prev_values = ();
+		my $done=0;
+		foreach my $record ( @records ) {
+			last if ($done);
+			last if ($record->prior() and (not $with_priors));
+			unless ( $record -> same() ) {
+				@prev_values = ();
+				if ( defined $record -> options ) {
+					foreach my $option ( @{$record -> options} ) {
+						if ($option->prior() and (not $with_priors)){
+							$done=1;
+							last;
+						}
+						push( @prev_values, $option -> $attribute );
+					}
+				} else {
+					carp("Trying to get attribute $attribute, ".
+						 "but no options defined in record ".ref($record) );
+				}
+				$prev_size = $record -> size unless ( $record -> same );
+			}
+			if( $record -> same() and (not $get_same)) {
+				for( my $i = 0; $i <= $#prev_values; $i++ ) {
+					$prev_values[$i] = undef;
+				}
+			}
+			push( @parameter_values, @prev_values );
 		}
-	      } else {
-		carp("Trying to get attribute $attribute, ".
-				 "but no options defined in record ".ref($record) );
-	      }
-	      $prev_size = $record -> size unless ( $record -> same );
-	    }
-	    if( $record -> same() and (not $get_same)) {
-	      for( my $i = 0; $i <= $#prev_values; $i++ ) {
-		$prev_values[$i] = undef;
-	      }
-	    }
-	    push( @parameter_values, @prev_values );
-	  }
-	  
-	  if ( scalar @parameter_numbers > 0 ) {
-	    my @part_vals = ();
-	    foreach my $num ( @parameter_numbers ) {
-	      push( @part_vals, $parameter_values[$num -1] );
-	    }
-	    @parameter_values = @part_vals;
-	  } else {
-	    carp("Model::problem -> _init_attr: parameter_numbers undefined, using all." );
-	  }
-	  
-	  # }}} Retrieve values
+		
+		if ( scalar @parameter_numbers > 0 ) {
+			my @part_vals = ();
+			foreach my $num ( @parameter_numbers ) {
+				push( @part_vals, $parameter_values[$num -1] );
+			}
+			@parameter_values = @part_vals;
+		} else {
+			carp("Model::problem -> _init_attr: parameter_numbers undefined, using all." );
+		}
+		
+		# }}} Retrieve values
 	}
-      }
+}
 end _init_attr
 
 # }}} _init_attr

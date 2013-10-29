@@ -458,9 +458,9 @@ start _register_estimates
 			    $run{$param.'s'}->[0] ne '' );
 	      my %bounds;
 	      $bounds{'lower'} =
-		$orig_model -> lower_bounds( parameter_type => $param );
+			  $orig_model -> lower_bounds( parameter_type => $param );
 	      $bounds{'upper'} =
-		$orig_model -> upper_bounds( parameter_type => $param );
+			  $orig_model -> upper_bounds( parameter_type => $param );
 	      
 	      my $accessor    = $param.'s';
 	      my $logfunc   = $param.'_log';
