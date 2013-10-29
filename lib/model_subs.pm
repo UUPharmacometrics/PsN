@@ -2482,11 +2482,11 @@ start get_rawres_params
 	my $sum = scalar(@{$thetalabels[0]})+scalar(@{$omegalabels[0]})+scalar(@{$sigmalabels[0]});
 	$sum += scalar(@filter); #@filter is always defined, but may be empty - bug, may count some cols twice here
 	
-	unless (scalar(@header) > $sum and (($header[0] eq 'model') or ($header[1] eq 'model') ) ){
+	unless (scalar(@header) > $sum and (($header[0] eq 'model') or ($header[1] eq 'model') or ($header[2] eq 'model')) ){
 	    print "\n\nThe found headers are\n".join("   ",@header)."\n\n";
 
 	    croak("The file $filename does not follow the format rules.\n".
-		       "Either first or second column should be model, you have ".$header[0]." and ".$header[1].
+		       "Either first, second or third column should be model, you have ".$header[0].", ".$header[1]." and ".$header[2].
 		       ", need $sum cols and have ".scalar(@header)."\n");
 	}
 	if (($header[0] eq 'hypothesis') and ($offset == 1)){
