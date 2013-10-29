@@ -15,7 +15,7 @@ Getopt::Long::config("auto_abbrev");
 @tool_options = ( "abort_on_fail",
 		  "accepted_ofv_difference:f",
 		  "add_retries!",
-#		  "check_nmtran!",
+		  "check_nmtran!",
 		  "clean:i",
 		  "compress!",
 		  "condition_number_limit:f",
@@ -574,7 +574,7 @@ EOF
     specified in the psn.conf file.
 EOF
     $help_hash{-check_nmtran} = <<'EOF';
-    <p class="style2">-check_nmtran'string'</p>
+    <p class="style2">-check_nmtran</p>
 	Make PsN run NMtran on the model file before submitting the complete nmfe run to a cluster/grid
 	or forking on a local computer. On a cluster this saves time in the case of syntax errors in 
 	the model file, since the user does not have to wait for a slot on the cluster/grid before 
