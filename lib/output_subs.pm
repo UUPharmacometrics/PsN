@@ -65,7 +65,7 @@ end see_also
 
 # {{{ new
 
-start new
+	start new
 	# Usage:
 	# 
 	#   $outputObject -> new( filename => 'run1.lst' );
@@ -82,33 +82,34 @@ start new
 
 	carp("Initiating new\tNM::output object from file $parm{'filename'}" );
 
-	if ( defined $this->filename and $this->filename ne '' ) {
-		my $name;
-		my $directory;
-	  ( $directory, $name ) = OSspecific::absolute_path( $this->directory, $this->filename );
-		$this->directory($directory);
-		$this->filename($name);
 
-	  if ( $name =~ /\.lst$/ ) {
+if ( defined $this->filename and $this->filename ne '' ) {
+	my $name;
+	my $directory;
+	( $directory, $name ) = OSspecific::absolute_path( $this->directory, $this->filename );
+	$this->directory($directory);
+	$this->filename($name);
+
+	if ( $name =~ /\.lst$/ ) {
 	    $name =~ s/\.lst$//;
 	    $this->filename_root($name);
-	  } elsif(  $name =~ /\.res$/ ) {
+	} elsif(  $name =~ /\.res$/ ) {
 	    $name =~ s/\.res$//;
 	    $this->filename_root($name);
-	  }
-
-	  if ( -e $this->full_name ) { 
-	    if ($this->target eq 'mem') {
-	      $this->_read_problems;
-			}
-	  } else {
-	    croak("The NONMEM output file " . $this -> full_name . " does not exist" )
-					unless $this->ignore_missing_files;
-	  }
-	} else {
-	  croak("No filename specified or filename equals empty string!" );
-	  $this->filename('tempfile');
 	}
+
+	if ( -e $this->full_name ) { 
+	    if ($this->target eq 'mem') {
+			$this->_read_problems;
+		}
+	} else {
+	    croak("The NONMEM output file " . $this -> full_name . " does not exist" )
+			unless $this->ignore_missing_files;
+	}
+} else {
+	croak("No filename specified or filename equals empty string!" );
+	$this->filename('tempfile');
+}
 end new
 
 # }}} new
@@ -203,35 +204,41 @@ start covariance_step_run
     # Level:  Problem
 end covariance_step_run
 
-start get_single_value
+	start get_single_value
 	my $arr;
-	$return_value = undef;
-	if ($self->can($attribute)) {
-	  $arr = $self->$attribute(problems => [($problem_index + 1)], subproblems => [($subproblem_index + 1)]);
-	  if (defined $arr->[0]) {
-		  if (ref $arr->[0] eq "ARRAY"){
-			  $return_value=$arr->[0]->[0];
-		  }else{
-			  $return_value=$arr->[0];
-		  }
-	  } else {
+$return_value = undef;
+if ($self->can($attribute)) {
+	$arr = $self->$attribute(problems => [($problem_index + 1)], subproblems => [($subproblem_index + 1)]);
+	if (defined $arr->[0]) {
+		if (ref $arr->[0] eq "ARRAY"){
+			$return_value=$arr->[0]->[0];
+		}else{
+			$return_value=$arr->[0];
+		}
+	} else {
 	    1;
-	  }
-	} elsif ( ($attribute eq 'estimation_step_run') ) {
+	}
+} elsif ( ($attribute eq 'estimation_step_run') or
+		  ($attribute eq 'estimation_step_initiated')
+	) {
 # removed support ($attribute eq 'user_defined_prior') 
 #		or ($attribute eq 'omega_block_structure_type')
 #		or ($attribute eq 'sigma_block_structure_type')
 #		or ($attribute eq 'omega_block_sets')
 #		or ($attribute eq 'sigma_block_sets')
-	  $arr = $self->access_any(attribute => $attribute,
-				   problems => [($problem_index + 1)],
-				   subproblems => [(1)]);
-	  if (defined $arr->[0]) {
-	    $return_value=$arr->[0]->[0];
-	  }
-	} else {
-	  croak("unknown attribute $attribute");
+	$arr = $self->access_any(attribute => $attribute,
+							 problems => [($problem_index + 1)],
+							 subproblems => [(1)]);
+	if (defined $arr->[0]) {
+		if (ref $arr->[0] eq "ARRAY"){
+			$return_value=$arr->[0]->[0];
+		}else{
+			$return_value=$arr->[0];
+		}
 	}
+} else {
+	croak("unknown attribute $attribute");
+}
 end get_single_value
 
 start covariance_step_successful

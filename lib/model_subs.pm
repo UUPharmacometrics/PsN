@@ -2154,21 +2154,48 @@ end is_estimation
 
 # {{{ lower_bounds
 
-start lower_bounds
-      {
-	  # lower_bounds either sets or gets the initial values of the
-	  # parameter specified in the argument parameter_type for
-	  # each problem specified in problem_numbers. See L</fixed>.
-	  
-	@lower_bounds = @{ $self -> _init_attr
-			     ( parameter_type    => $parameter_type,
-			       parameter_numbers => \@parameter_numbers,
-			       problem_numbers           => \@problem_numbers,
-			       new_values        => \@new_values,
-			       with_priors       => $with_priors,
-			       attribute         => 'lobnd')};
-      }
-end lower_bounds
+	start lower_bounds
+{
+	# lower_bounds either sets or gets the initial values of the
+	# parameter specified in the argument parameter_type for
+	# each problem specified in problem_numbers. See L</fixed>.
+	
+	if ($parameter_type eq 'theta'){
+		@lower_bounds = @{ $self -> _init_attr
+							   ( parameter_type    => $parameter_type,
+								 parameter_numbers => \@parameter_numbers,
+								 problem_numbers           => \@problem_numbers,
+								 new_values        => \@new_values,
+								 with_priors       => $with_priors,
+								 attribute         => 'lobnd')};
+	}else{
+		print "get lower bound $parameter_type \n";
+		#omega or sigma
+		if (scalar (@new_values)> 0){
+			croak("Trying to set lower bounds for $parameter_type, not allowed");
+		}
+		#pick up on diagonal first and then change elements to 0 or undef
+		@lower_bounds = @{ $self -> _init_attr
+							   ( parameter_type    => $parameter_type,
+								 parameter_numbers => \@parameter_numbers,
+								 problem_numbers           => \@problem_numbers,
+								 new_values        => \@new_values,
+								 with_priors       => $with_priors,
+								 attribute         => 'on_diagonal')};
+		for (my $prob=0; $prob < scalar(@lower_bounds); $prob++){
+			for (my $i=0; $i < scalar($lower_bounds[$prob]); $i++){
+				if ($lower_bounds[$prob]->[$i] == 1){
+					#on diagonal
+					$lower_bounds[$prob]->[$i] = 0;
+				}else{
+					$lower_bounds[$prob]->[$i] = undef;
+				}
+			}
+		}
+	}
+	
+}
+	end lower_bounds
 
 # }}} lower_bounds
 
@@ -2420,6 +2447,7 @@ start get_rawres_params
 
 	foreach (@read_file){
 	  chomp;
+	  next unless (/[a-zA-Z0-9]/); #skip lines with only commas
 	  if (/\"/ ){
 	      #if any quotes at all
 	      #remove one column header at a time, check for each if enclosed in double quotes or not
@@ -2455,7 +2483,7 @@ start get_rawres_params
 	my @header = @{$ref};
 	my $sum = scalar(@{$thetalabels[0]})+scalar(@{$omegalabels[0]})+scalar(@{$sigmalabels[0]});
 	$sum += scalar(@filter); #@filter is always defined, but may be empty - bug, may count some cols twice here
-	
+	#print join(" ",@header)."\n\n";
 	unless (scalar(@header) > $sum and (($header[0] eq 'model') or ($header[1] eq 'model') ) ){
 	    print "\n\nThe found headers are\n".join("   ",@header)."\n\n";
 
@@ -2490,12 +2518,12 @@ start get_rawres_params
 	#scan for ofv label and first theta label. Then following should be rest of theta,omega,sigma
 	for (my $i=0; $i<scalar(@header);$i++){
 	    if ($header[$i] eq 'ofv'){
-		$ofvindex = $i;
+			$ofvindex = $i;
 	    }elsif ($header[$i] eq 'model'){
-		$modelindex = $i;
+			$modelindex = $i;
 	    }elsif ($header[$i] eq $thetalabels[0]->[0]){
-		$pos = $i;
-		last;
+			$pos = $i;
+			last;
 	    }
 	}
 	if ($pos == -1){
@@ -2529,53 +2557,56 @@ start get_rawres_params
 	    my $dirt = shift @file;
 	}
 	#loop through remaining lines, check if should be filtered out or saved to result hash
+	my $count_successful=0;
 	foreach my $line (@file){
-	  my $skip = 0;
-	  if ($require_numeric_ofv and (not looks_like_number($line->[$ofvindex]))){
-	      $skip=1;
-	  }else {
-	      for (my $i=0; $i< scalar(@filter_column_index);$i++){
-		  my $val = $line->[$filter_column_index[$i]];
- 		  if ($filter_relation[$i] =~ /(==|!=|>|<)/){
-		      #numeric relation
-		      if (($val eq 'NA') or ($val eq '')){
-			  $skip=1;
-			  last;
-		      }elsif(not looks_like_number($val)){
-			  print "\nError: value $val in input filter column ".
-			      $header[$filter_column_index[$i]]." does not look numeric. All input ".
-			      "filter columns must be numeric, skipping this line\n";
-			  $skip=1;
-			  last;
-		      }
-		  }
-		  #if we get here then $val was ok
-		  my $string;
- 		  if ($filter_relation[$i] =~ /(==|!=|>|<)/){
-		      #numeric relation
-		      $string=$val.$filter_relation[$i].$filter_value[$i];
-		  }else{
-		      $string ="\'".$val."\' $filter_relation[$i] \'".$filter_value[$i]."\'";
-		  }
-		  unless (eval($string)){
-		      $skip=1;
-		      last;
-		  }else{
-		      
-		  }
-	      }
-	  }
+		my $skip = 0;
+		if ($require_numeric_ofv and (not looks_like_number($line->[$ofvindex]))){
+			$skip=1;
+		}else {
+			for (my $i=0; $i< scalar(@filter_column_index);$i++){
+				my $val = $line->[$filter_column_index[$i]];
+				if ($filter_relation[$i] =~ /(==|!=|>|<)/){
+					#numeric relation
+					if (($val eq 'NA') or ($val eq '')){
+						$skip=1;
+						last;
+					}elsif(not looks_like_number($val)){
+						print "\nError: value $val in input filter column ".
+							$header[$filter_column_index[$i]]." does not look numeric. All input ".
+							"filter columns must be numeric, skipping this line\n";
+						$skip=1;
+						last;
+					}
+				}
+				#if we get here then $val was ok
+				my $string;
+				if ($filter_relation[$i] =~ /(==|!=|>|<)/){
+					#numeric relation
+					$string=$val.$filter_relation[$i].$filter_value[$i];
+				}else{
+					$string ="\'".$val."\' $filter_relation[$i] \'".$filter_value[$i]."\'";
+				}
+				unless (eval($string)){
+					$skip=1;
+					last;
+				}else{
+					1;
+				}
+			}
+		}
 	  next if ($skip);
 	  my %theta;
 	  my %omega;
 	  my %sigma;
+		$count_successful++;
 	  foreach my $label (keys %thetapos){
-	    my $val = $line->[$thetapos{$label}];
-	    unless (looks_like_number($val) ){
-		$skip =1;
-		print "\nWarning rawres input: $val in column $label does not look like a parameter value\n";
-	    }
-	    $theta{$label} = $val;
+		  my $val = $line->[$thetapos{$label}];
+#		  print "count $count_successful label:$label ".$thetapos{$label}." $val\n";
+		  unless (looks_like_number($val) ){
+			  $skip =1;
+			  print "\nWarning rawres input: $val in column $label does not look like a parameter value\n";
+		  }
+		  $theta{$label} = $val;
 	  }
 	  foreach my $label (keys %omegapos){
 	    my $val = $line->[$omegapos{$label}];
@@ -4400,7 +4431,7 @@ end update_inits
 # {{{ upper_bounds
 
 start upper_bounds
-      {
+{
 	# upper_bounds either sets or gets the initial values of the
 	# parameter specified in I<parameter_type> for each
 	# subproblem specified in I<problem_numbers>. For each
@@ -4409,14 +4440,36 @@ start upper_bounds
 	# parameters in the subproblem for which the upper bounds
 	# are set, replaced or retrieved.
 
-	@upper_bounds = @{ $self -> _init_attr
-			     ( parameter_type    => $parameter_type,
-			       parameter_numbers => \@parameter_numbers,
-			       problem_numbers           => \@problem_numbers,
-			       new_values        => \@new_values,
-			       with_priors       => $with_priors,
-			       attribute         => 'upbnd')};
-      }
+	if ($parameter_type eq 'theta'){
+		@upper_bounds = @{ $self -> _init_attr
+							   ( parameter_type    => $parameter_type,
+								 parameter_numbers => \@parameter_numbers,
+								 problem_numbers           => \@problem_numbers,
+								 new_values        => \@new_values,
+								 with_priors       => $with_priors,
+								 attribute         => 'upbnd')};
+		
+	}else{
+		#omega or sigma
+		print "get upper bound $parameter_type \n";
+		if (scalar (@new_values)> 0){
+			croak("Trying to set upper bounds for $parameter_type, not allowed");
+		}
+		#pick up on diagonal first to get correct output structure and then change elements to undef
+		@upper_bounds = @{ $self -> _init_attr
+							   ( parameter_type    => $parameter_type,
+								 parameter_numbers => \@parameter_numbers,
+								 problem_numbers           => \@problem_numbers,
+								 new_values        => \@new_values,
+								 with_priors       => $with_priors,
+								 attribute         => 'on_diagonal')};
+		for (my $prob=0; $prob < scalar(@upper_bounds); $prob++){
+			for (my $i=0; $i < scalar($upper_bounds[$prob]); $i++){
+				$upper_bounds[$prob]->[$i] = undef;
+			}
+		}
+	}
+}
 end upper_bounds
 
 # }}} upper_bounds
@@ -4595,6 +4648,7 @@ end _get_option_val_pos
 
 start _init_attr
       {
+
 	# The I<add_if_absent> argument tells the method to add an init (theta,omega,sigma)
 	# if the parameter number points to a non-existing parameter with parameter number
 	# one higher than the highest presently included. Only applicatble if

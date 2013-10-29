@@ -8,8 +8,11 @@ use ext::Config::Tiny;
 use ext::File::HomeDir;
 
 
-my $version = '3.6.10';
+my $version = '3.7.1';
 my $default_user_name;
+my $default_sitelib;
+my $default_bin;
+my $default_perlpath;
 my $use_user_name;
 my $is_root=0;
 my $uid;
@@ -23,11 +26,13 @@ if (eval('require File::Copy::Recursive')){
 
 
 my $is_win7=0;
+my $is_Vista=0;
 if ( $Config{osname} eq 'MSWin32' ){
   if (eval('require Win32')){ 
     #enough, now loaded
     my $winver=Win32::GetOSName();
     $is_win7 = 1 if ($winver eq 'Win7');
+	$is_Vista = 1 if ($winver eq 'WinVista');
 
 #Currently the possible values for the OS name are
 #    WinWin32s
@@ -45,6 +50,61 @@ if ( $Config{osname} eq 'MSWin32' ){
 #    Win7
   }
 }
+if (1){
+	$default_sitelib = $Config{sitelib};
+	$default_bin = $Config{bin};
+	$default_perlpath = $Config{perlpath};
+	if ( $Config{osname} eq 'MSWin32' ){
+		#"trying to find the perl binary via system command\n";
+		my $wherebin;
+		if ($is_win7 or $is_Vista){
+			$wherebin = `where perl`;
+		}else{
+			my $command = 'for %i in (perl.exe) do @echo. %~$PATH:i';
+			$wherebin=`$command`;
+		}
+		chomp $wherebin;
+		my $local_perlpath = $wherebin;
+		my $local_sitelib = $wherebin;
+		$local_sitelib =~ s/bin\\perl\.exe$/site\\lib/;
+		my $local_bin = $wherebin;
+		$local_bin =~ s/perl\.exe$//;
+
+		if ((defined $default_sitelib) and (-e $default_sitelib) and (-d $default_sitelib)){
+			#default-sitelib ok
+			1;
+		}elsif(length($local_sitelib)>0 and -d $local_sitelib){
+			$default_sitelib=$local_sitelib;
+		}else{
+			$default_sitelib=undef;
+		}
+		if ((defined $default_bin) and (-e $default_bin) and (-d $default_bin)){
+			#default  ok
+			1;
+		}elsif(length($local_bin)>0 and -d $local_bin){
+			$default_bin=$local_bin;
+		}else{
+			$default_bin=undef;
+		}
+		if ((defined $default_perlpath) and (-e $default_perlpath) and (-x $default_perlpath) and (not -d $default_perlpath)){
+			#default ok
+			1;
+		}elsif(length($local_perlpath)>0 and -x $local_perlpath and (not -d $local_perlpath)){
+			$default_perlpath=$local_perlpath;
+		}else{
+			$default_perlpath=undef;
+		}
+	}
+	unless (defined $default_perlpath and defined $default_bin and defined $default_sitelib){
+		print "\nWarning: There is something unusual with your Perl installation and configuration.\n".
+			"Will try to install anyway, but there may be problems.\n";
+	}
+
+}
+
+
+
+
 
 my $name_safe_version = $version;
 $name_safe_version =~ s/\./_/g;
@@ -343,14 +403,19 @@ sub quit {
 }
 
 sub get_input {
- my $default = shift;
- my $input = <STDIN>;
- chomp( $input );
- if( $input =~ /^\s*$/ ){
-   return( $default );
- } else {
-   return( $input );
- }
+	my $default = shift;
+	my $input = <STDIN>;
+	chomp( $input );
+	if( $input =~ /^\s*$/ ){
+		if (defined $default){
+			return( $default );
+		}else{
+			print "No input given and no default available, must exit.\n";
+			quit('abort');
+		}
+	} else {
+		return( $input );
+	}
 
 }
 
@@ -371,8 +436,7 @@ if( $Config{osname} eq 'linux' or $Config{osname} eq 'darwin'){
      $default_user_name=$1;
    }
  }else{
-   print "Hi $user, you don't look like root. You need root privileges to install PsN systemwide. Would you like to try anyway [y/n] ?\n";
-   quit('abort') unless( confirm() );
+   print "Hi $user, you don't look like root. Please note that you need root privileges to install PsN systemwide.\n";
  }
 }else{
   unless ($Config{osname} eq 'MSWin32'){
@@ -399,9 +463,9 @@ if (0){
 }
 
 
-print "PsN Utilities installation directory [$Config{bin}]:";
+print "PsN Utilities installation directory [$default_bin]:";
 
-$binary_dir = get_input( $Config{bin} );
+$binary_dir = get_input( $default_bin );
 
 unless( -e $binary_dir ){
  print "Directory $binary_dir does not exist. Would you like to create it?[y/n]\n";
@@ -415,9 +479,9 @@ unless( -e $binary_dir ){
  }
 }
 
-print "Path to perl binary used to run Utilities [$Config{perlpath}]:";
+print "Path to perl binary used to run Utilities [$default_perlpath]:";
 
-$perl_binary = get_input( $Config{perlpath} );
+$perl_binary = get_input( $default_perlpath );
 
 
 (my $volume,my $directory,my $file ) = File::Spec->splitpath( $perl_binary);
@@ -434,9 +498,9 @@ if(( $Config{osname} eq 'MSWin32' ) and ($perl_binary ne 'C:\Perl\bin\perl.exe')
 
 }
 
-print "PsN Core and Toolkit installation directory [$Config{sitelib}]:";
+print "PsN Core and Toolkit installation directory [$default_sitelib]:";
 
-$library_dir = get_input( $Config{sitelib} );
+$library_dir = get_input( $default_sitelib );
 
 unless( -e $library_dir ){
  print "Directory $library_dir does not exist. Would you like to create it? [y/n]\n";
@@ -811,7 +875,6 @@ if( $Config{osname} eq 'MSWin32' ){
   $dir_sep = "\\";  
   $folder = 'folder';
 }
-print "\nInstallation complete.\n";
 
 print "\nWould you like to copy the PsN documentation to a file system location of your choice?  [y/n] ";
 if (confirm()){
@@ -971,6 +1034,9 @@ if (confirm()){
 }
 
 
+my $configuration_done=0;
+$configuration_done=1 if ($keep_conf);
+
 if (not $keep_conf){
   my $conf_ok = 0;
   print "\nNow you must edit "."$library_dir"."$dir_sep"."PsN_$name_safe_version"."$dir_sep".
@@ -991,6 +1057,7 @@ if (not $keep_conf){
       if (-e $newf){
 	$offer_help=0;
 	$conf_ok=1;
+	$configuration_done=1;
 	print "Copied $old_psn_config_file to $newf.\n";
       }else{
 	print "Copying of old psn.conf failed.\n";
@@ -1006,16 +1073,23 @@ if (not $keep_conf){
     if (confirm()){
       $conf_ok = 
 	  create_conf ("$library_dir"."$dir_sep"."PsN_$name_safe_version"."$dir_sep",$perl_binary);
+	  $configuration_done=$conf_ok;
     }
   }
-  unless ($conf_ok ){
+
+}
+
+if ($configuration_done ){
+	print "\nInstallation complete.\n";
+}else{
+	print "\nInstallation partially complete. You still have to create psn.conf before you can run PsN.\n";
     print "A template psn.conf to edit is found in\n";
     print "$library_dir"."$dir_sep"."PsN_$name_safe_version\n"; 
     print "Detailed instructions are found in ";
     print "$library_dir$dir_sep"."PsN_$name_safe_version$dir_sep"."doc$dir_sep"."psn_configuration.pdf"."\n"; 
-  }
-
 }
+
+
 
 if( -e home() . "/psn.conf" ){
   print "\nPlease note that for you personally the configuration file you\n".

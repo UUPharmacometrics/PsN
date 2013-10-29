@@ -183,7 +183,8 @@ $help_text{-recompute} = <<'EOF';
       -recompute=raw results filename, including directory name
 
       Default not set. Setting this option makes PsN recompute output statistics based on 
-      the specified raw_results file. Note that the filename must be given including the 
+      the specified raw_results file. No simulations or estimations will be run.
+	  Note that the filename must be given including the 
       directory name. The user may change the -out_filter settings for the recomputation. 
       Apart from -out_filter, the input model must be set, and -samples. 
       Alternative models are not needed, information about them will be read from the raw results file.
@@ -249,6 +250,10 @@ if ( defined $options{'recompute'}){
   if ($dir eq cwd()){
     print "You must give both filename and path as input to option -recompute\n";
     exit;
+  }
+  unless (defined $options{'recompute'} and length($options{'recompute'})>0){
+	  print "No file name set for recompute\n";
+	  exit;
   }
 
   unless( -e $options{'directory'}.$options{'recompute'}){
