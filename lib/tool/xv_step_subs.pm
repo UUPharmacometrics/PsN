@@ -213,11 +213,15 @@ start modelfit_setup
 
       
       unless( $self -> predict_only ){
-	$self -> tools( [ tool::modelfit -> new ( 'models' => $self -> estimation_models,
-						  %modf_args ) ] );
+		  $self -> tools( [ tool::modelfit -> new ( 'models' => $self -> estimation_models,
+													%modf_args,
+													nmtran_skip_model => 2
+							) ] );
       } elsif( not $self -> estimate_only ) {
-	$self -> tools( [ tool::modelfit -> new ( 'models' => $self -> prediction_models,
-						  %modf_args ) ] );
+		  $self -> tools( [ tool::modelfit -> new ( 'models' => $self -> prediction_models,
+													%modf_args,
+													nmtran_skip_model => 2
+							) ] );
       }
 
       $self->stop_motion_call(tool=>'xv_step_subs',message => "a new modelfit object for estimation")
@@ -300,7 +304,9 @@ start modelfit_post_subtool_analyze
       if( @models_to_run > 0 ){
 	  $self -> tools([]) unless (defined $self->tools);
 	  push( @{$self -> tools}, tool::modelfit -> new ( 'models' => \@models_to_run,
-							   %modelfit_arg ) );
+													   %modelfit_arg,
+													   nmtran_skip_model => 2
+			) );
       }
     }
 end modelfit_post_subtool_analyze

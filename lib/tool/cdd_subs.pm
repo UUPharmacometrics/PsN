@@ -494,19 +494,20 @@ start general_setup
 	push( @{$self -> tools},
 	      $class ->
 	      new( %{common_options::restore_options(@common_options::tool_options)},
-		   models                => $new_models[0],
-		   threads               => $subm_threads,
-		   directory             => $self -> directory.'/'.$subdir.'_dir'.$model_number,
-		   _raw_results_callback => $self ->
-		          _modelfit_raw_results_callback( model_number => $model_number ),
-		   subtools              => \@subtools,
-		   parent_threads        => $own_threads,
-		   parent_tool_id        => $self -> tool_id,
-		   logfile	         => undef,
-		   raw_results           => undef,
-		   prepared_models       => undef,
-		   top_tool              => 0,
-		   %subargs ) );
+			   models                => $new_models[0],
+			   threads               => $subm_threads,
+			   nmtran_skip_model => 2,
+			   directory             => $self -> directory.'/'.$subdir.'_dir'.$model_number,
+			   _raw_results_callback => $self ->
+			   _modelfit_raw_results_callback( model_number => $model_number ),
+			   subtools              => \@subtools,
+			   parent_threads        => $own_threads,
+			   parent_tool_id        => $self -> tool_id,
+			   logfile	         => undef,
+			   raw_results           => undef,
+			   prepared_models       => undef,
+			   top_tool              => 0,
+			   %subargs ) );
 
 
 
@@ -634,18 +635,19 @@ start modelfit_analyze
 	      $self -> threads -> [1]:$self -> threads;
 	  my $mod_eval = tool::modelfit ->
 	      new( %{common_options::restore_options(@common_options::tool_options)},
-		   models           => $self -> prediction_models->[$model_number-1]{'own'},
-		   base_directory   => $self -> directory,
-		   directory        => $self -> directory.'evaluation_dir'.$model_number, 
-		   threads          => $xv_threads,
-		   _raw_results_callback => $self -> _modelfit_raw_results_callback( model_number => $model_number,
-										     cross_validation_set => 1 ),
-		   parent_tool_id   => $self -> tool_id,
-		   logfile	    => undef,
-		   raw_results      => undef,
-		   prepared_models  => undef,
-		   top_tool         => 0,
-		   retries          => 1 );
+			   models           => $self -> prediction_models->[$model_number-1]{'own'},
+			   base_directory   => $self -> directory,
+			   nmtran_skip_model => 2,
+			   directory        => $self -> directory.'evaluation_dir'.$model_number, 
+			   threads          => $xv_threads,
+			   _raw_results_callback => $self -> _modelfit_raw_results_callback( model_number => $model_number,
+																				 cross_validation_set => 1 ),
+			   parent_tool_id   => $self -> tool_id,
+			   logfile	    => undef,
+			   raw_results      => undef,
+			   prepared_models  => undef,
+			   top_tool         => 0,
+			   retries          => 1 );
 	  $Data::Dumper::Maxdepth = 2;
 	  print "Running xv runs\n";
 	  $mod_eval -> run;

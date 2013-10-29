@@ -241,7 +241,7 @@
             <dia:string>#scalar boolean#</dia:string>
           </dia:attribute>
           <dia:attribute name="value">
-            <dia:string>#0#</dia:string>
+            <dia:string>#1#</dia:string>
           </dia:attribute>
           <dia:attribute name="comment">
             <dia:string>##</dia:string>

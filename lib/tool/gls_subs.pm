@@ -655,21 +655,22 @@ start modelfit_setup
 
 
     if( $sim_no == $samples ) {
-      my $run_sim = tool::modelfit -> new( 
-	%{common_options::restore_options(@common_options::tool_options)},
-	top_tool         => 0,
-	models           => \@orig_and_sim_models,
-	base_directory   => $self -> directory,
-	directory        => $self -> directory.$simdirname.$model_number, 
-	parent_tool_id   => $self -> tool_id,
-	logfile	         => undef,
-	raw_results_file     => [$self ->raw_results_file()->[$model_number-1]], #change??
-	prepared_models       => undef,
-	shrinkage => 1,
-	_raw_results_callback => $self ->
-	_modelfit_raw_results_callback( model_number => $model_number ),
-	data_path =>'../../m'.$model_number.'/',
-	abort_on_fail => $self->abort_on_fail);
+		my $run_sim = tool::modelfit -> new( 
+			%{common_options::restore_options(@common_options::tool_options)},
+			top_tool         => 0,
+			models           => \@orig_and_sim_models,
+			base_directory   => $self -> directory,
+			directory        => $self -> directory.$simdirname.$model_number, 
+			parent_tool_id   => $self -> tool_id,
+			nmtran_skip_model => 2,
+			logfile	         => undef,
+			raw_results_file     => [$self ->raw_results_file()->[$model_number-1]], #change??
+			prepared_models       => undef,
+			shrinkage => 1,
+			_raw_results_callback => $self ->
+			_modelfit_raw_results_callback( model_number => $model_number ),
+			data_path =>'../../m'.$model_number.'/',
+			abort_on_fail => $self->abort_on_fail);
 
       ui -> print( category => 'gls',
 		   message  => "Running simulations to compute shrinkage" );

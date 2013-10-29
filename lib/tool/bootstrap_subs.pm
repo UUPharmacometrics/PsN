@@ -533,19 +533,20 @@ start general_setup
 	push( @{$self -> tools()},
 	      $class ->
 	      new( %{common_options::restore_options(@common_options::tool_options)},
-		   models		 => \@new_models,
-		   threads               => $subm_threads,
-		   directory             => $self ->directory().'/'.$subdir.'_dir'.$model_number,
-		   _raw_results_callback => $self ->
-		          _modelfit_raw_results_callback( model_number => $model_number ),
-		   subtools              => \@subtools,
-		   parent_threads        => $own_threads,
-		   parent_tool_id        => $self -> tool_id(),
-		   logfile		 => [$self -> logfile()->[$model_number-1]],
-		   raw_results           => undef,
-		   prepared_models       => undef,
-		   top_tool              => 0,
-		   %subargs ) );
+			   models		 => \@new_models,
+			   threads               => $subm_threads,
+			   directory             => $self ->directory().'/'.$subdir.'_dir'.$model_number,
+			   _raw_results_callback => $self ->
+			   _modelfit_raw_results_callback( model_number => $model_number ),
+			   subtools              => \@subtools,
+			   nmtran_skip_model => 2,
+			   parent_threads        => $own_threads,
+			   parent_tool_id        => $self -> tool_id(),
+			   logfile		 => [$self -> logfile()->[$model_number-1]],
+			   raw_results           => undef,
+			   prepared_models       => undef,
+			   top_tool              => 0,
+			   %subargs ) );
 
 	$self->stop_motion_call(tool=>'bootstrap',message => "Created a modelfit object to run all the models in ".
 				$self ->directory().'m'.$model_number)
@@ -846,24 +847,24 @@ start modelfit_analyze
 	    my @seed = split(' ',$rows[2]);
 	    shift( @seed ); # get rid of 'seed'-word
 	    $jackknife = tool::cdd::jackknife ->
-	      new( %{common_options::restore_options(@common_options::tool_options)},
-		   models           => [$self -> models -> [$model_number -1]],
-		   case_column     => $self -> models -> [$model_number -1]
-		   -> datas -> [0] -> idcolumn,
-		   _raw_results_callback => $self ->
-		   _jackknife_raw_results_callback( model_number => $model_number ),
-		   threads          => $jk_threads,
-		   parent_tool_id   => $self -> tool_id(),
-		   directory        => $stored_directory,
-		   bca_mode         => 1,
-		   shrinkage        => $self -> shrinkage(),
-		   nm_version       => $self -> nm_version(),
-		   nonparametric_marginals => $self -> nonparametric_marginals(),
-		   nonparametric_etas => $self -> nonparametric_etas(),
-		   adaptive         => $self -> adaptive(),
-		   rerun            => $self -> rerun(),
-		   verbose          => $self -> verbose(),
-		   cross_validate   => 0 );
+			new( %{common_options::restore_options(@common_options::tool_options)},
+				 models           => [$self -> models -> [$model_number -1]],
+				 case_column     => $self -> models -> [$model_number -1]
+				 -> datas -> [0] -> idcolumn,
+				 _raw_results_callback => $self ->
+				 _jackknife_raw_results_callback( model_number => $model_number ),
+				 threads          => $jk_threads,
+				 parent_tool_id   => $self -> tool_id(),
+				 directory        => $stored_directory,
+				 bca_mode         => 1,
+				 shrinkage        => $self -> shrinkage(),
+				 nm_version       => $self -> nm_version(),
+				 nonparametric_marginals => $self -> nonparametric_marginals(),
+				 nonparametric_etas => $self -> nonparametric_etas(),
+				 adaptive         => $self -> adaptive(),
+				 rerun            => $self -> rerun(),
+				 verbose          => $self -> verbose(),
+				 cross_validate   => 0 );
 
 	    random_set_seed( @seed );
 	    ui -> print( category => 'bootstrap',
@@ -1053,17 +1054,18 @@ start modelfit_analyze
 		push(@modelsarr,$dofvmodel);
 	    }
 	    my $modelfit = tool::modelfit -> new( 
-		%{common_options::restore_options(@common_options::tool_options)},
-		top_tool         => 0,
-		models           => \@modelsarr,
-		base_directory   => $self -> directory,
-		directory        => $self -> directory.'compute_dofv_dir'.$model_number, 
-		raw_results_file => [$self->directory.'raw_results_dofv.csv'],
-		parent_tool_id   => $self -> tool_id,
-		_raw_results_callback => $self ->_dofv_raw_results_callback( model_number => $model_number ),
-		logfile	         => undef,
-		data_path         =>'../../m'.$model_number.'/',
-		threads          => $self->threads);
+			%{common_options::restore_options(@common_options::tool_options)},
+			top_tool         => 0,
+			models           => \@modelsarr,
+			base_directory   => $self -> directory,
+			directory        => $self -> directory.'compute_dofv_dir'.$model_number, 
+			raw_results_file => [$self->directory.'raw_results_dofv.csv'],
+			nmtran_skip_model => 2,
+			parent_tool_id   => $self -> tool_id,
+			_raw_results_callback => $self ->_dofv_raw_results_callback( model_number => $model_number ),
+			logfile	         => undef,
+			data_path         =>'../../m'.$model_number.'/',
+			threads          => $self->threads);
 	    $modelfit->run;
 
 	    #if clean >=3 this file has been deleted, but the raw_results is ok thanks to explicit setting

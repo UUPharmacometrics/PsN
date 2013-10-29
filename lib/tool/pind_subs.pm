@@ -286,16 +286,17 @@ start modelfit_setup
 
 		$self->tools([]) unless defined $self->tools;
     push( @{$self->tools}, tool::modelfit ->
-				new( %{common_options::restore_options(@common_options::tool_options)},
-					models		   => $new_ofv_models,
-					parent_threads        => 1,
-					base_directory   => $self->directory,
-					directory        => $self->directory . 'ofv_dir', 
-					raw_results           => undef,
-					prepared_models       => undef,
-					top_tool              => 0,
-					prepend_model_file_name => 1
-	       ) );
+		  new( %{common_options::restore_options(@common_options::tool_options)},
+			   models		   => $new_ofv_models,
+			   nmtran_skip_model => 2,
+			   parent_threads        => 1,
+			   base_directory   => $self->directory,
+			   directory        => $self->directory . 'ofv_dir', 
+			   raw_results           => undef,
+			   prepared_models       => undef,
+			   top_tool              => 0,
+			   prepend_model_file_name => 1
+		  ) );
   }
   
 }

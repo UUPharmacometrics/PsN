@@ -1104,7 +1104,7 @@ start copy_model_and_input
 		$candidate_model -> _write( filename   => 'psn.mod' );# write_data => 1 );  #Kolla denna, den funkar inte utan wrap!!
 		$candidate_model -> flush_data;
 		$candidate_model -> store_inits;
-		$self->run_nmtran if ($self->check_nmtran);
+		$self->run_nmtran if ($run_nmtran);
 		
 		$self->stop_motion_call(tool=>'modelfit',message => "Copied ".$model->filename().
 								" to psn.mod in current directory. Modified table names.")
@@ -4176,7 +4176,14 @@ start run
 	  unless( exists $queue_info{$run} ){
 	    #if stats-runs.csv exists then copy_model_and_input does not do anything
 	    #but read psn.mod into candidate_model object
-	    $queue_info{$run}{'candidate_model'} = $self -> copy_model_and_input(model=>$models[$run],source => '../' );
+		  my $run_nmtran = 0;
+		  if ($self->check_nmtran and 
+			  (($run+1) < $self->nmtran_skip_model)){
+			  $run_nmtran = 1;
+		  }
+		  $queue_info{$run}{'candidate_model'} = $self -> copy_model_and_input(model=>$models[$run],
+																			   source => '../',
+																			   run_nmtran => $run_nmtran);
 	    $queue_info{$run}{'model'} = $models[$run];
 	    $queue_info{$run}{'modelfile_tainted'} = 1;
 	    $queue_info{$run}{'have_accepted_run'} = 0;
@@ -4192,7 +4199,7 @@ start run
 	    # {{{ printing progress
 
 	    # We don't want to print all starting models if they are
-	    # more than ten. But we allways want to print the first
+	    # more than ten. But we always want to print the first
 	    # and last
 	    
 	    my $modulus = (($#models+1) <= 10) ? 1 : (($#models+1) / 10);

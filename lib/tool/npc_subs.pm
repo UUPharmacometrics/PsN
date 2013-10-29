@@ -1589,16 +1589,17 @@ start modelfit_setup
       }
       #Kajsa 2013-10-04 changed top tool to 0, to get better raw_result_file name
       my $modfit = tool::modelfit ->
-	    new( %{common_options::restore_options(@common_options::tool_options)},
-		 models		 => \@runmodels,
-		 base_directory      => $self->directory, 
-		 directory => undef,
-		 parent_threads        => 1,
-		 raw_results           => undef,
-		 prepared_models       => undef,
-		 top_tool              => 0,
-		 prepend_model_file_name => 1,
-		 %subargs );
+		  new( %{common_options::restore_options(@common_options::tool_options)},
+			   models		 => \@runmodels,
+			   base_directory      => $self->directory, 
+			   directory => undef,
+			   nmtran_skip_model => 3,
+			   parent_threads        => 1,
+			   raw_results           => undef,
+			   prepared_models       => undef,
+			   top_tool              => 0,
+			   prepend_model_file_name => 1,
+			   %subargs );
       $self->searchdir($modfit->directory);
       $self->tools([]) unless defined $self->tools;
       push( @{$self->tools}, $modfit);

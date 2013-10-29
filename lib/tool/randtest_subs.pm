@@ -271,6 +271,7 @@ start modelfit_setup
 	       _raw_results_callback => $self ->
 	       _modelfit_raw_results_callback( model_number => $model_number ),
 	       subtools              => \@subtools,
+		   nmtran_skip_model => 2,
 	       logfile		 => [$self -> logfile()->[$model_number-1]],
 	       raw_results           => undef,
 	       prepared_models       => undef,
