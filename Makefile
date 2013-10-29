@@ -140,9 +140,6 @@ RELFILES=$(addprefix PsN-Source/lib/,$(LIBFILES)) \
 	bin/xv_scm \
 	bin/boot_scm \
 	bin/linearize \
-	lib/doc/sse_userguide.pdf \
-	lib/doc/draft_vpc_automatic_binning.pdf \
-	lib/doc/runrecord_userguide.pdf \
 	lib/doc/runrecord_template.xls \
 	setup.pl \
 	README.txt )
@@ -305,6 +302,7 @@ doc/%.pdf: doc/%.tex
 release: libgen rel_dir $(RELFILES) $(PDFFILES)
 	@ cp doc/*.pdf PsN-Source/lib/doc
 	@ cp doc/*.scm PsN-Source/lib/doc
+	@ cp doc/draft/*.pdf PsN-Source/lib/doc
 	@ cd PsN-Source/lib/doc/; zip PsN_pdf_documentation *.pdf *.xls *.scm
 	@ cd PsN-Source/lib/doc/; tar -czf PsN_pdf_documentation.tar.gz *.pdf *.xls *.scm
 	@ zip -r PsN-Source PsN-Source/
