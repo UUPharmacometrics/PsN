@@ -7,11 +7,13 @@ use warnings;
 use Test::More;
 use Test::Exception;
 use File::Path 'rmtree';
+use FindBin qw($Bin);
 
 #in psn.conf must set output_style = SPLUS, otherwise tests will fail. fix by setting here.
 
 our $dir = 'sse_test';
 our $private_test_files = $ENV{HOME}.'/.test_files';
+my $path = "$Bin/../../bin/";
 
 
 sub is_array{
@@ -125,7 +127,7 @@ my $model_dir = "../test_files";
 
 rmtree([ "./$dir" ]);
 
-my $command= "sse -samples=5 $model_dir/pheno.mod -alt=$model_dir/pheno.mod -seed=290805 -rawres=$model_dir/rawres_for_sse.csv  -directory=$dir -offset=1";
+my $command= $path."sse -samples=5 $model_dir/pheno.mod -alt=$model_dir/pheno.mod -seed=290805 -rawres=$model_dir/rawres_for_sse.csv  -directory=$dir -offset=1";
 
 system $command;
 
@@ -142,7 +144,7 @@ foreach my $key (keys %hash2_answer){
 
 rmtree([ "./$dir" ]);
 
-$command= "sse -samples=5 $private_test_files/moxonidine.mod -alt=$private_test_files/moxonidine.mod -seed=630992 -directory=$dir";
+$command= $path."sse -samples=5 $private_test_files/moxonidine.mod -alt=$private_test_files/moxonidine.mod -seed=630992 -directory=$dir";
 
 system $command;
 
