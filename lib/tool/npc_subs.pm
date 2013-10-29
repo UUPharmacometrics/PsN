@@ -18,7 +18,7 @@ end include
 
 # {{{ new
 
-start new
+	start new
 {
 	if (defined $this->auto_bin_mode) {
 		unless ($this->auto_bin_mode eq 'auto' or $this->auto_bin_mode eq 'minmax') {
@@ -30,21 +30,21 @@ start new
 		}
 	}
 
-  if ((defined $this->sim_table) || (defined $this->orig_table)) {
-    unless ((defined $this->sim_table) && (defined $this->orig_table)) {
-      croak("Options -sim_table and -orig_table can only " .
-		     "be used together, not individually\n");
-    }
-    unless ( -e $this->sim_table ) {
-      croak("Simulation data table file " . $this->sim_table . " could not be found.");
-    }
-    unless ( -e $this->orig_table ) {
-      croak("Original data table file " . $this->orig_table . " could not be found.");
-    }
-    if ($this->n_simulation_models > 1) {
-      croak("Options n_simulation_models and -sim_table cannot be used together.");
-    }
-    croak("Options -sim_model or -flip_comments cannot be used with -sim_table") 
+	if ((defined $this->sim_table) || (defined $this->orig_table)) {
+		unless ((defined $this->sim_table) && (defined $this->orig_table)) {
+			croak("Options -sim_table and -orig_table can only " .
+				  "be used together, not individually\n");
+		}
+		unless ( -e $this->sim_table ) {
+			croak("Simulation data table file " . $this->sim_table . " could not be found.");
+		}
+		unless ( -e $this->orig_table ) {
+			croak("Original data table file " . $this->orig_table . " could not be found.");
+		}
+		if ($this->n_simulation_models > 1) {
+			croak("Options n_simulation_models and -sim_table cannot be used together.");
+		}
+		croak("Options -sim_model or -flip_comments cannot be used with -sim_table") 
 			if (defined $this->sim_model or $this->flip_comments);
 	}
 	if (defined $this->sim_model or $this->flip_comments) {
@@ -52,101 +52,101 @@ start new
 			if (defined $this->sim_model and $this->flip_comments);
 		if ($this->keep_estimation or $this->noprediction) {
 			croak('Options -sim_model or -flip_comments cannot be used with '.
-					'-keep_estimation or -noprediction.');
+				  '-keep_estimation or -noprediction.');
 		}
-    if ($this->orig_table) {
-      croak('Options -sim_model or -flip_comments cannot be used with -orig_table');
-    }
-  }
-  if (defined $this->tte) {
-    croak("Options -tte and -mirrors cannot be used together.") 
+		if ($this->orig_table) {
+			croak('Options -sim_model or -flip_comments cannot be used with -orig_table');
+		}
+	}
+	if (defined $this->tte) {
+		croak("Options -tte and -mirrors cannot be used together.") 
 			if (defined $this->mirrors);
-    croak("Options -tte and -censor cannot be used together.") 
+		croak("Options -tte and -censor cannot be used together.") 
 			if (defined $this->censor);
-    croak("Options -tte and -predcorr cannot be used together.") 
+		croak("Options -tte and -predcorr cannot be used together.") 
 			if ($this->predcorr);
-    croak("Options -tte and -varcorr cannot be used together.") 
+		croak("Options -tte and -varcorr cannot be used together.") 
 			if ($this->varcorr);
-    croak("Options -tte and -lnDV cannot be used together.") 
+		croak("Options -tte and -lnDV cannot be used together.") 
 			if ($this->lnDV);
-    croak("Options -tte and -boxcox_lambda cannot be used together.") 
+		croak("Options -tte and -boxcox_lambda cannot be used together.") 
 			if ($this->boxcox_lambda);
-    croak("Options -tte and -uloq cannot be used together.") 
+		croak("Options -tte and -uloq cannot be used together.") 
 			if (defined $this->uloq);
-    croak("Options -tte and -lloq cannot be used together.") 
+		croak("Options -tte and -lloq cannot be used together.") 
 			if (defined $this->lloq);
 	}
 
-  if (( $this->confidence_interval() < 1) or ( $this->confidence_interval() > 99)) {
-    croak("Confidence interval must be between 1 and 99 percent.");
-  }
-  if (( $this->boxcox_lambda() < 0) or ( $this->boxcox_lambda() >= 1)) {
-    croak("boxcox-lambda must be > 0 and < 1.");
-  }
-  if ( $this->boxcox_lambda() > 0) {
-    if (defined $this->lnDV and ($this->lnDV > 0)) {
-      croak("Option -lnDV is not allowed when -boxcox_labmda is set.");
-    }
-    ui -> print (category=>'all', 
-	       message=>"Warning: option -boxcox_lambda has no effect unless option -predcorr is set.")	unless ($this->predcorr);
-  }
+	if (( $this->confidence_interval() < 1) or ( $this->confidence_interval() > 99)) {
+		croak("Confidence interval must be between 1 and 99 percent.");
+	}
+	if (( $this->boxcox_lambda() < 0) or ( $this->boxcox_lambda() >= 1)) {
+		croak("boxcox-lambda must be > 0 and < 1.");
+	}
+	if ( $this->boxcox_lambda() > 0) {
+		if (defined $this->lnDV and ($this->lnDV > 0)) {
+			croak("Option -lnDV is not allowed when -boxcox_labmda is set.");
+		}
+		ui -> print (category=>'all', 
+					 message=>"Warning: option -boxcox_lambda has no effect unless option -predcorr is set.")	unless ($this->predcorr);
+	}
 
 
-  if (defined $this->samples) {
-    if ( $this->samples < 20 ) {
-      croak("Program does not allow less than 20 samples.");
-    }
-  } else {
-    croak("Option -samples is required.");
-  }
+	if (defined $this->samples) {
+		if ( $this->samples < 20 ) {
+			croak("Program does not allow less than 20 samples.");
+		}
+	} else {
+		croak("Option -samples is required.");
+	}
 
-  if ($this->dv =~ /^(PRED|MDV|TIME|DATE|EVID|AMT|RATE|ID)$/) {
-    croak("It is not allowed to use ${\$this->dv} as the dependent".
-		   " variable,\nbecause it".
-		   " is the same for all simulations of a single observation.");
-  }
-  
-  if ($PsN::nm_major_version < 7) {
-    unless ($this->dv =~ /^(IPRED|IWRES|CWRES)$/ ) {
-      if (length($this->dv) > 4) {
+	if ($this->dv =~ /^(PRED|MDV|TIME|DATE|EVID|AMT|RATE|ID)$/) {
+		croak("It is not allowed to use ${\$this->dv} as the dependent".
+			  " variable,\nbecause it".
+			  " is the same for all simulations of a single observation.");
+	}
+	
+	if ($PsN::nm_major_version < 7) {
+		unless ($this->dv =~ /^(IPRED|IWRES|CWRES)$/ ) {
+			if (length($this->dv) > 4) {
 				croak("The dependent variable name (option -dv) can have at most".
-		       " 4 letters, unless it is IPRED/IWRES/CWRES, due to a limitation in NONMEM.");
-      }
-    }
-    if ($this->dv =~ /^CWRES$/ ) {
-      if ($this->n_simulation_models > 1) {
+					  " 4 letters, unless it is IPRED/IWRES/CWRES, due to a limitation in NONMEM.");
+			}
+		}
+		if ($this->dv =~ /^CWRES$/ ) {
+			if ($this->n_simulation_models > 1) {
 				croak(
-		       "Cannot use option -n_simulation_models if dv=CWRES and NONMEM version < 7");
-      }
-    }
-  }
+					"Cannot use option -n_simulation_models if dv=CWRES and NONMEM version < 7");
+			}
+		}
+	}
 
-  if (defined $this->mirrors) {
-    if ( $this->mirrors > 20) {
-      croak("Program does not allow more than 20 mirror plots.");
-    }
-    if (defined $this->censor || (defined $this->lloq ) || (defined $this->uloq)) {
+	if (defined $this->mirrors) {
+		if ( $this->mirrors > 20) {
+			croak("Program does not allow more than 20 mirror plots.");
+		}
+		if (defined $this->censor || (defined $this->lloq ) || (defined $this->uloq)) {
 			ui -> print (category => 'all', 
-		     message => "\nWarning: The mirror plot output in vpctab ".
-		     "will not be correctly filtered when censor/lloq/uloq is used.\n");
-    }
-  }
+						 message => "\nWarning: The mirror plot output in vpctab ".
+						 "will not be correctly filtered when censor/lloq/uloq is used.\n");
+		}
+	}
 
 
-  unless ( defined $this->orig_table) {
+	unless ( defined $this->orig_table) {
 
-    if (defined $this->sim_model) {
-      if (scalar (@{$this->models->[0]-> problems}) > 1 ) {
+		if (defined $this->sim_model) {
+			if (scalar (@{$this->models->[0]-> problems}) > 1 ) {
 				croak('Cannot have more than one $PROB in the input model '.
-		       'for the MAXEVAL=0 run.');
-      }
-    } else {
-      #must check sim_model separately if sim_model. Assume ok to check flip here
-      if (scalar (@{$this->models->[0]->problems}) > 2 ) {
+					  'for the MAXEVAL=0 run.');
+			}
+		} else {
+			#must check sim_model separately if sim_model. Assume ok to check flip here
+			if (scalar (@{$this->models->[0]->problems}) > 2 ) {
 				croak('Cannot have more than two $PROB in the simulation model.');
-      } elsif (scalar (@{$this->models->[0]->problems}) == 2 ) {
+			} elsif (scalar (@{$this->models->[0]->problems}) == 2 ) {
 				if ((defined $this->models->[0]->problems->[0]->priors()) and 
-						scalar(@{$this->models->[0]->problems->[0]->priors()}) > 0 ) {
+					scalar(@{$this->models->[0]->problems->[0]->priors()}) > 0 ) {
 					my $tnpri = 0;
 					foreach my $rec (@{$this->models->[0]->problems->[0]->priors()}) {
 						unless ((defined $rec) &&( defined $rec->options )) {
@@ -154,13 +154,14 @@ start new
 						}
 						foreach my $option ( @{$rec->options} ) {
 							if ((defined $option) and 
-									(($option->name eq 'TNPRI') || (index('TNPRI', $option->name ) == 0))) {
+								(($option->name eq 'TNPRI') || (index('TNPRI', $option->name ) == 0))) {
 								$tnpri = 1;
 							}
 						}
 					}
-	  
+					
 					$this->have_tnpri(1) if ($tnpri);
+	#				print "have tnpri\n";
 				}
 				if ($this->have_tnpri()) {
 					if (defined $this->rawres_input) {
@@ -168,18 +169,18 @@ start new
 					}
 					unless( defined $this->models->[0]->extra_files ) {
 						croak('When using $PRIOR TNPRI you must set option -extra_files to '.
-								'the msf-file, otherwise the msf-file will not be copied to the NONMEM '.
-								'run directory.');
+							  'the msf-file, otherwise the msf-file will not be copied to the NONMEM '.
+							  'run directory.');
 					}
 
 				} else {
 					croak('The simulation model must contain exactly one problem, unless'.
-							' first $PROB has $PRIOR TNPRI');
+						  ' first $PROB has $PRIOR TNPRI');
 				}
 			}
 			if ((not $this->have_tnpri()) and
-					(defined $this->models->[0]->problems->[0]->priors()) and 
-					scalar(@{$this->models->[0]->problems->[0]->priors()}) > 0 ) {
+				(defined $this->models->[0]->problems->[0]->priors()) and 
+				scalar(@{$this->models->[0]->problems->[0]->priors()}) > 0 ) {
 				$this->have_nwpri(1);
 				if (defined $this->rawres_input) {
 					croak('Cannot use option rawres_input if the simulation model has $PRIOR.');
@@ -195,33 +196,33 @@ start new
 	    croak("It is not allowed to set refstrat together with no_of_strata");
 	}
 
-  if (defined $this->stratify_on) {
-      my @list = split(',', $this->stratify_on);
-	  my $tmp = shift @list;
-      $this->stratify_on($tmp);
-	  print "strat ".$this->stratify_on."\n";
-      $this->extra_table_parameters(\@list) if (scalar (@list)>0);
-  } else {
-	  if (defined $this->refstrat()) {
-		  croak("It is not allowed to set refstrat unless stratify_on is set");
-	  }
-  }
+	if (defined $this->stratify_on) {
+		my @list = split(',', $this->stratify_on);
+		my $tmp = shift @list;
+		$this->stratify_on($tmp);
+#		print "strat ".$this->stratify_on."\n";
+		$this->extra_table_parameters(\@list) if (scalar (@list)>0);
+	} else {
+		if (defined $this->refstrat()) {
+			croak("It is not allowed to set refstrat unless stratify_on is set");
+		}
+	}
 	
 
-  my @check_cols;
-  push (@check_cols, $this->idv) if (defined $this->idv);
-  push (@check_cols, $this->stratify_on) 
+	my @check_cols;
+	push (@check_cols, $this->idv) if (defined $this->idv);
+	push (@check_cols, $this->stratify_on) 
 		if ((defined $this->stratify_on) && ('STRT' ne $this->stratify_on));
-  foreach my $col (@check_cols) {
-    my $var_text = ($col eq $this->stratify_on) ? 'stratification' : 'independent';
+	foreach my $col (@check_cols) {
+		my $var_text = ($col eq $this->stratify_on) ? 'stratification' : 'independent';
 		if ($col =~ /^(IPRED|IWRES|IRES|RES|WRES|DV|CWRES)$/) {
 			croak("It is not allowed to use $col as the $var_text ".
-					"variable, since it it is dependent and hence differs between ".
-					"simulations of the same observation.");
+				  "variable, since it it is dependent and hence differs between ".
+				  "simulations of the same observation.");
 		}
 
 		unless ( defined $this->orig_table) {
-      unless ($col =~ /^(PRED)$/) {
+			unless ($col =~ /^(PRED)$/) {
 				my $input_record = $this->models->[0]->record(record_name => 'input');
 				my $found = 0;
 				if ( scalar(@{$input_record}) > 0 ) { #always true
@@ -230,12 +231,12 @@ start new
 						if ( $line =~ /[\s]+$col=(SKIP|DROP)[\s]+/ ) {
 							$found = 1;
 							croak("Cannot SKIP/DROP the $var_text variable ".
-									"in the \$INPUT record.");
+								  "in the \$INPUT record.");
 							last;
 						} elsif ( $line =~ /[\s]+(SKIP|DROP)=$col[\s]+/ ) {
 							$found = 1;
 							croak("Cannot SKIP/DROP the $var_text variable ".
-									"in the \$INPUT record.");
+								  "in the \$INPUT record.");
 							last;
 						} elsif ($line =~ /[=\s]+$col[=\s]+/) {
 							$found = 1;
@@ -244,17 +245,17 @@ start new
 					}
 				}
 				ui -> print (category=>'vpc', 
-						message=>"\n\nWarning: The $var_text variable $col was ".
-						"not found in the \$INPUT record. ".
-						"If $col is not defined in the model, NONMEM will exit with error. ".
-						"If $col varies between the original data and/or simulated datasets, the  ".
-						"vpc output will be incorrect.\n") if !($found);
+							 message=>"\n\nWarning: The $var_text variable $col was ".
+							 "not found in the \$INPUT record. ".
+							 "If $col is not defined in the model, NONMEM will exit with error. ".
+							 "If $col varies between the original data and/or simulated datasets, the  ".
+							 "vpc output will be incorrect.\n") if !($found);
 				ui -> print (category=>'npc', 
-						message=>"\n\nWarning: The $var_text variable $col was ".
-						"not found in the \$INPUT record. ".
-						"If $col is not defined in the model, NONMEM will exit with error. ".
-						"If $col varies between the original data and/or simulated datasets, the  ".
-						"npc output will be incorrect.\n") if !($found);
+							 message=>"\n\nWarning: The $var_text variable $col was ".
+							 "not found in the \$INPUT record. ".
+							 "If $col is not defined in the model, NONMEM will exit with error. ".
+							 "If $col varies between the original data and/or simulated datasets, the  ".
+							 "npc output will be incorrect.\n") if !($found);
 			}
 		}
 	}
@@ -263,7 +264,7 @@ start new
 		for (my $i = 1; $i < scalar(@{$this->levels}); $i++) {
 			unless ($this->levels->[$i] > $this->levels->[$i - 1]) {
 				croak("List of category levels must be sorted in ".
-						"increasing order.");
+					  "increasing order.");
 			}
 		}
 	}
@@ -273,139 +274,146 @@ start new
 		}
 	}
 
-  if (defined $this->censor || (defined $this->lloq ) || (defined $this->uloq)) {
-    if ($this->predcorr) {
-      ui -> print (category => 'vpc',
-		   message => "Warning: When -censor/-lloq/-uloq is used in combination with -predcorr/-varcorr, ".
-		   "the prediction/variability correction is performed based on all PRED and all simulated ".
-		   "dependent variables, including those that are censored in later analyses. Therefore it ".
-		   "is important to simulate reasonable values for the dependent variable ".
-		   "even, for example, after drop-out.");
-    }
-  }
-  ##Checks for VPC
-  if ($this->is_vpc) {
+	if (defined $this->censor || (defined $this->lloq ) || (defined $this->uloq)) {
+		if ($this->predcorr) {
+			ui -> print (category => 'vpc',
+						 message => "Warning: When -censor/-lloq/-uloq is used in combination with -predcorr/-varcorr, ".
+						 "the prediction/variability correction is performed based on all PRED and all simulated ".
+						 "dependent variables, including those that are censored in later analyses. Therefore it ".
+						 "is important to simulate reasonable values for the dependent variable ".
+						 "even, for example, after drop-out.");
+		}
+	}
 
-    if (defined $this->lower_bound) {
-      croak("Option -lower_bound is only allowed together with -predcorr.") 
+	if (($this->have_tnpri or $this->have_nwpri or (defined $this->rawres_input)) and
+		$this->predcorr){
+		print "\n\nWarning: Prediction correction in combination with simulation with uncertainty is ".
+			"not supported. PsN will use the same PRED values (from original data) for all ".
+			"simulated dataset, even though PRED differs between simulations.\n\n";
+	}
+	##Checks for VPC
+	if ($this->is_vpc) {
+
+		if (defined $this->lower_bound) {
+			croak("Option -lower_bound is only allowed together with -predcorr.") 
 				unless ($this->predcorr);
-    }
+		}
 
-    if ((defined $this->lloq ) || (defined $this->uloq) ) {
-      if ($this->predcorr) {
+		if ((defined $this->lloq ) || (defined $this->uloq) ) {
+			if ($this->predcorr) {
 				ui -> print (category => 'vpc', 
-						message => "Warning: When -lloq/-uloq is used in combination with -predcorr, ".
-						"the censoring is performed before prediction correction. ".
-						"Therefore it could happen that some values which are originally within the boundaries of ".
-						"-lloq and -uloq appear to be outside these boundaries after the correction.");
-      }
-    }
-
-    if (defined $this->lnDV and ($this->lnDV > 0)) {
-      if (defined $this->lower_bound) {
-				croak("Option -lower_bound is not allowed when -lnDV=" . $this->lnDV);
-      }
-    }
-    if ($this->lnDV == 1) {
-      if ($this->stratify_on eq 'PRED') {
-				ui -> print (category => 'vpc', 
-						message => "Warning: Exponentiation of PRED and DV will be performed,\n".
-						"but strata boundaries from stratification on PRED will\n".
-						"be presented in vpc_results.csv as non-exponentiated values.");
+							 message => "Warning: When -lloq/-uloq is used in combination with -predcorr, ".
+							 "the censoring is performed before prediction correction. ".
+							 "Therefore it could happen that some values which are originally within the boundaries of ".
+							 "-lloq and -uloq appear to be outside these boundaries after the correction.");
 			}
-      if ( ($this->categorized) || (defined $this->lower_bound) ||
-					(defined $this->lloq ) || (defined $this->uloq)) {
-				ui -> print (category => 'vpc', 
-						message => "Warning: Exponentiation of PRED and DV will be performed,\n".
-						"but levels/boundaries given via options -lloq/-uloq/-levels/-lower_bound\n".
-						"will not be exponentiated (they must be given on the real scale).");
-      }
-    } elsif ($this->lnDV == 2) {
-      croak("-lnDV=2 is only allowed together with -predcorr.") 
-				unless ($this->predcorr);
-    } elsif ($this->lnDV == 3) {
+		}
+
+		if (defined $this->lnDV and ($this->lnDV > 0)) {
+			if (defined $this->lower_bound) {
+				croak("Option -lower_bound is not allowed when -lnDV=" . $this->lnDV);
+			}
+		}
+		if ($this->lnDV == 1) {
 			if ($this->stratify_on eq 'PRED') {
 				ui -> print (category => 'vpc', 
-						message=>"Warning: Log-transformation of PRED and DV will be performed,\n".
-						"but strata boundaries from stratification on PRED will\n".
-						"be presented in vpc_results.csv as non-transformed values.");
+							 message => "Warning: Exponentiation of PRED and DV will be performed,\n".
+							 "but strata boundaries from stratification on PRED will\n".
+							 "be presented in vpc_results.csv as non-exponentiated values.");
 			}
-      if (($this->categorized) || (defined $this->lower_bound)
-					|| (defined $this->lloq ) || (defined $this->uloq)) {
+			if ( ($this->categorized) || (defined $this->lower_bound) ||
+				 (defined $this->lloq ) || (defined $this->uloq)) {
 				ui -> print (category => 'vpc', 
-						message => "Warning: Log-transformation of PRED and DV will be performed,\n".
-						"but levels/boundaries given via options -lloq/-uloq/-levels/-lower_bound\n".
-						"will not be transformed (they must be given on the log scale).");
+							 message => "Warning: Exponentiation of PRED and DV will be performed,\n".
+							 "but levels/boundaries given via options -lloq/-uloq/-levels/-lower_bound\n".
+							 "will not be exponentiated (they must be given on the real scale).");
+			}
+		} elsif ($this->lnDV == 2) {
+			croak("-lnDV=2 is only allowed together with -predcorr.") 
+				unless ($this->predcorr);
+		} elsif ($this->lnDV == 3) {
+			if ($this->stratify_on eq 'PRED') {
+				ui -> print (category => 'vpc', 
+							 message=>"Warning: Log-transformation of PRED and DV will be performed,\n".
+							 "but strata boundaries from stratification on PRED will\n".
+							 "be presented in vpc_results.csv as non-transformed values.");
+			}
+			if (($this->categorized) || (defined $this->lower_bound)
+				|| (defined $this->lloq ) || (defined $this->uloq)) {
+				ui -> print (category => 'vpc', 
+							 message => "Warning: Log-transformation of PRED and DV will be performed,\n".
+							 "but levels/boundaries given via options -lloq/-uloq/-levels/-lower_bound\n".
+							 "will not be transformed (they must be given on the log scale).");
 			}
 		} elsif ($this->lnDV != 0) {
 			croak("Option -lnDV must be either 0, 1, 2 or 3.");
 		}
 
-    if ($this->varcorr) {
+		if ($this->varcorr) {
 			croak("option -varcorr is only allowed together with option -predcorr.")
 				unless ($this->predcorr);
-    }
+		}
 
-    unless (defined $this->idv) {
-      croak("VPC requires an independent variable column.");
-    }
-    
-    my $option_count = 0;
-    if (defined $this->no_of_bins) {
-      $option_count++;
-      unless (defined $this->bin_by_count) {
+		unless (defined $this->idv) {
+			croak("VPC requires an independent variable column.");
+		}
+		
+		my $option_count = 0;
+		if (defined $this->no_of_bins) {
+			$option_count++;
+			unless (defined $this->bin_by_count) {
 				croak("Option bin_by_count must be defined when ".
-						"option no_of_bins is used.");
+					  "option no_of_bins is used.");
 			}
 		}
 		if (scalar(@{$this->bin_array} > 0)) {
-      if ($option_count > 0) {
+			if ($option_count > 0) {
 				croak("Incompatible set of binning options. Use vpc -h for help.");
 			}
 			$option_count++;
 			unless (defined $this->bin_by_count) {
 				croak("Option bin_by_count must be defined when ".
-		       "option bin_array is used.");
-      }
-      if ($this->bin_by_count == 1) {
+					  "option bin_array is used.");
+			}
+			if ($this->bin_by_count == 1) {
 				#check at least two values and all counts larger than 0
 				unless (scalar(@{$this->bin_array}) > 1) {
 					croak("Must define at least two counts in bin_array ".
-							"when binning by count.");
+						  "when binning by count.");
 				}
 				foreach my $c ($this->bin_array) {
 					if ($c < 1) {
 						croak("Number of observations in each bin must ".
-								"be at least 1.");
+							  "be at least 1.");
 					}
 				}
 			} else {
 				#check at least one value and sorted in ascending order and increasing
 				unless (scalar(@{$this->bin_array}) > 0) {
 					croak("Must define at least one boundary in bin_array ".
-							"when binning by width.");
+						  "when binning by width.");
 				}
 				for (my $i = 1; $i < scalar(@{$this->bin_array}); $i++) {
 					unless ($this->bin_array->[$i] > $this->bin_array->[$i - 1]) {
 						croak("List of bin boundaries must be sorted and ".
-								"increasing.");
+							  "increasing.");
 					}
 				}
 			}
-      
-    }
-    
-    if (defined $this->single_bin_size) {
-      if ($option_count > 0) {
+			
+		}
+		
+		if (defined $this->single_bin_size) {
+			if ($option_count > 0) {
 				croak("Incompatible set of binning options. Use vpc -h for help.");
 			}
 			$option_count++;
 			unless ($this->single_bin_size > 0) {
 				croak("Option single_bin_size must be larger than 0.");
 			}
-      unless (defined $this->bin_by_count) {
+			unless (defined $this->bin_by_count) {
 				croak("Option bin_by_count must be defined when ".
-						"option single_bin_size is used.");
+					  "option single_bin_size is used.");
 			}
 			if (defined $this->overlap_percent) {
 				unless ($this->overlap_percent > 0) {
@@ -415,146 +423,146 @@ start new
 					croak("Option overlap must be smaller than 100\%.");
 				}
 			}
-      #else handle by translating to no_of_bins-alternative after know width/no of observations
+			#else handle by translating to no_of_bins-alternative after know width/no of observations
 		} else {
 			if (defined $this->overlap_percent) {
 				croak("Option single_bin_size must be defined when ".
-						"option overlap is used.");
+					  "option overlap is used.");
 			}
 		}
 
-    if (defined $this->bin_by_count) {
-      unless ($option_count > 0) {
+		if (defined $this->bin_by_count) {
+			unless ($option_count > 0) {
 				croak("Option bin_by_count is forbidden without ".
-						"additional binning options.");
+					  "additional binning options.");
 			}
 			unless ($this->bin_by_count eq '0' || $this->bin_by_count eq '1') {
 				croak("Option bin_by_count must be either 1 or 0.");
-      }
-    }
+			}
+		}
 
-  } 
-  #endof check vpc 
+	} 
+	#endof check vpc 
 
-  unless (defined $this->orig_table or defined $this->sim_model or $this->flip_comments) {
-    #no more checks when tablefiles given as input
+	unless (defined $this->orig_table or defined $this->sim_model or $this->flip_comments) {
+		#no more checks when tablefiles given as input
 
-    if ($this->keep_estimation && $this->noprediction) {
+		if ($this->keep_estimation && $this->noprediction) {
 			croak('Using both -keep_estimation and -noprediction is not allowed.');
-    }
+		}
 
-    my $require_icall = 0;
-    
-    foreach my $opt_name ('LIKELIHOOD', '-2LOGLIKELIHOOD', '-2LLIKELIHOOD') {
+		my $require_icall = 0;
+		
+		foreach my $opt_name ('LIKELIHOOD', '-2LOGLIKELIHOOD', '-2LLIKELIHOOD') {
 			if ( $this->models->[0]->is_option_set( record => 'estimation',
-						name => $opt_name, fuzzy_match => 1 )) {
+													name => $opt_name, fuzzy_match => 1 )) {
 				$require_icall = 1;
 				if ($this->categorized) {
 					ui -> print (category => 'all', 
-							message=> "****** Warning:\nOption $opt_name found in \$ESTIMATION.\n".
-							"Please note that the model file needs to be adapted for ".
-							"simulation of count/categorical data and a \$SIMULATION record needs to be\n".
-							"present in the model file.\n\n");
+								 message=> "****** Warning:\nOption $opt_name found in \$ESTIMATION.\n".
+								 "Please note that the model file needs to be adapted for ".
+								 "simulation of count/categorical data and a \$SIMULATION record needs to be\n".
+								 "present in the model file.\n\n");
 				} else {
 					ui -> print (category => 'all', 
-							message => "****** Warning:\nWhen \$ESTIMATION contains $opt_name ".
-							"the option -levels is generally recommended.\n") 
+								 message => "****** Warning:\nWhen \$ESTIMATION contains $opt_name ".
+								 "the option -levels is generally recommended.\n") 
 						if ($this->is_vpc and (not defined $this->tte));	  
 				}
 				unless ($this->noprediction) {
 					ui -> print (category => 'all', 
-							message => "****** Warning:\nWhen \$ESTIMATION contains $opt_name ".
-							"the option -noprediction is generally recommended.\n")	  
+								 message => "****** Warning:\nWhen \$ESTIMATION contains $opt_name ".
+								 "the option -noprediction is generally recommended.\n")	  
 						if ($this->is_vpc and (not defined $this->tte));
 				}
-	
+				
 			}
 		}  
 		my $opt_name = 'LAPLACIAN';
-    if ( $this->models->[0]->is_option_set( record => 'estimation', name => $opt_name, fuzzy_match => 1 )) {
+		if ( $this->models->[0]->is_option_set( record => 'estimation', name => $opt_name, fuzzy_match => 1 )) {
 			ui -> print (category => 'all', 
-					message => "****** Warning:\nOption $opt_name found in \$ESTIMATION \n".
-					"\$ESTIMATION will be removed for simulations, this may produce erroneous results.\n".
-					"Use option -keep_estimation to avoid deletion of \$ESTIMATION.\n")
+						 message => "****** Warning:\nOption $opt_name found in \$ESTIMATION \n".
+						 "\$ESTIMATION will be removed for simulations, this may produce erroneous results.\n".
+						 "Use option -keep_estimation to avoid deletion of \$ESTIMATION.\n")
 				unless ($this->keep_estimation);
-      #possible change, see to_do 61. Is current handling of NONP wrong?????
-    }
+			#possible change, see to_do 61. Is current handling of NONP wrong?????
+		}
 
 
-    ##look for F_FLAG in pred, error
-    my @flag_array;
-    push (@flag_array, @{$this->models->[0]->problems->[0]->errors->[0]->code})
+		##look for F_FLAG in pred, error
+		my @flag_array;
+		push (@flag_array, @{$this->models->[0]->problems->[0]->errors->[0]->code})
 			if (defined ($this->models->[0]->problems->[0]->errors));
-    
-    push (@flag_array, @{$this->models->[0]->problems->[0]->preds->[0]->code})	
+		
+		push (@flag_array, @{$this->models->[0]->problems->[0]->preds->[0]->code})	
 			if (defined $this->models->[0]->problems->[0]->preds);
-     
-    foreach my $line (@flag_array) {
-      next if ($line =~ /^\s*;/);
-      if ($line =~ /F_FLAG/) {
+		
+		foreach my $line (@flag_array) {
+			next if ($line =~ /^\s*;/);
+			if ($line =~ /F_FLAG/) {
 				$require_icall = 1;
 				ui -> print (category => 'all', 
-						message=> "****** Warning:\nThe option -levels is recommended when \$ERROR contains F_FLAG.\n") if (!$this->categorized && $this->is_vpc);
+							 message=> "****** Warning:\nThe option -levels is recommended when \$ERROR contains F_FLAG.\n") if (!$this->categorized && $this->is_vpc);
 				last;
 			}
 		}
 
-    #done looking for fflag
+		#done looking for fflag
 
 
-    my @needed_variables = ();
-    push (@needed_variables, 'STRT') if ($this->stratify_on eq 'STRT');
+		my @needed_variables = ();
+		push (@needed_variables, 'STRT') if ($this->stratify_on eq 'STRT');
 
-    push (@needed_variables, 'IPRED') if (($this->dv =~ /^(CWRES)$/) and ($PsN::nm_major_version < 7));
-    
-    if (scalar(@needed_variables) > 0) {
-      my @line_array;
-      push (@line_array, @{$this->models->[0]->problems->[0]->errors->[0]->code})
+		push (@needed_variables, 'IPRED') if (($this->dv =~ /^(CWRES)$/) and ($PsN::nm_major_version < 7));
+		
+		if (scalar(@needed_variables) > 0) {
+			my @line_array;
+			push (@line_array, @{$this->models->[0]->problems->[0]->errors->[0]->code})
 				if (defined ($this->models->[0]->problems->[0]->errors));
-      
+			
 			push (@line_array, @{$this->models->[0]->problems->[0]->preds->[0]->code})	
 				if (defined $this->models->[0]->problems->[0]->preds);
-      
+			
 			push (@line_array,@{$this->models->[0]->problems->[0]->pks->[0]->code})
 				if (defined $this->models->[0]->problems->[0]->pks);
-      
-      my $missing_variables = '';
+			
+			my $missing_variables = '';
 			foreach my $var (@needed_variables) {
 				my $found = 0;
 				foreach my $line (@line_array) {
 					#variable must be left hand side, i.e. first set of non-blank characters
 					#bug for STRT!!!
 					next if ( $line =~ /^\s*;/); #skip comments
-						if ($line =~ /^ *$var[ =]/) {
-							$found = 1;
-							last;
-						} 
+					if ($line =~ /^ *$var[ =]/) {
+						$found = 1;
+						last;
+					} 
 				}
 				$missing_variables = "$missing_variables $var" unless $found;
 			}
 			if (length($missing_variables) > 0) {
 				ui -> print (category=>'all', 
-						message=> "****** Warning:\nThe selected input options require the user to define".
-						"$missing_variables in the modelfile,\nbut $missing_variables ".
-						"could not be ".
-						"found in \$ERROR, \$PRED or \$PK. ");
+							 message=> "****** Warning:\nThe selected input options require the user to define".
+							 "$missing_variables in the modelfile,\nbut $missing_variables ".
+							 "could not be ".
+							 "found in \$ERROR, \$PRED or \$PK. ");
 
 			}
 		}
 #check for ICALL .EQ. 4
 
 		my @line_array;
-    push (@line_array, @{$this->models->[0]->problems->[0]->errors->[0]->code})
+		push (@line_array, @{$this->models->[0]->problems->[0]->errors->[0]->code})
 			if (defined ($this->models->[0]->problems->[0]->errors));
-    
+		
 		push (@line_array, @{$this->models->[0]->problems->[0]->preds->[0]->code})	
 			if (defined $this->models->[0]->problems->[0]->preds);
-    
+		
 		push (@line_array, @{$this->models->[0]->problems->[0]->pks->[0]->code})
 			if (defined $this->models->[0]->problems->[0]->pks);
-    
+		
 		my $found = 0;
-    foreach my $line (@line_array) {
+		foreach my $line (@line_array) {
 			next if ( $line =~ /^\s*;/); #skip comments
 			if ($line =~ /ICALL\s?\.EQ\.\s?4/) {
 				$found = 1;
@@ -562,74 +570,74 @@ start new
 			} 
 		}
 
-    if ($require_icall) {
-      croak("There must be an ICALL.EQ.4 block in the modelfile ".
-		     "when \$ESTIMATION contains -2LOGLIKELIHOOD/LIKELIHOOD ".
-		     "or \$ERROR/\$PRED contains F_FLAG. ".
-		     "See userguide section Handling BQL data.") unless $found;
-    } else {
-      if ($found) {
+		if ($require_icall) {
+			croak("There must be an ICALL.EQ.4 block in the modelfile ".
+				  "when \$ESTIMATION contains -2LOGLIKELIHOOD/LIKELIHOOD ".
+				  "or \$ERROR/\$PRED contains F_FLAG. ".
+				  "See userguide section Handling BQL data.") unless $found;
+		} else {
+			if ($found) {
 				ui -> print (category => 'all', 
-	       message => "******\nWarning: String ICALL.EQ.4 found in modelfile. Simulation statements\n".
-				 "will influence NPC/VPC simulations and might produce unwanted results.\n");
+							 message => "******\nWarning: String ICALL.EQ.4 found in modelfile. Simulation statements\n".
+							 "will influence NPC/VPC simulations and might produce unwanted results.\n");
 			}
 		}
-    ##endof ICALL check
+		##endof ICALL check
 
 
 
-  
-    if ( scalar (@{$this->models->[0]->record(record_name => 'simulation' )}) > 1 ) {
-      croak("Tool does not allow more than one \$SIMULATION".
-		     " record in the modelfile.");
-    }
+		
+		if ( scalar (@{$this->models->[0]->record(record_name => 'simulation' )}) > 1 ) {
+			croak("Tool does not allow more than one \$SIMULATION".
+				  " record in the modelfile.");
+		}
 
 
-    if ($this->keep_estimation) {
+		if ($this->keep_estimation) {
 			unless ( scalar (@{$this->models->[0]->record( record_name => 'estimation' )}) > 0 ) {
 				croak('Tool requires an $ESTIMATION record in '.
-						'the modelfile when option -keep_estimation is set.');
-      }
-    }
-  
-  } #end of checks for input model when user has not given separate simulation model  
-  
-  unless (defined $this->orig_table) {
-    my $np_record = $this->models->[0]->record(record_name => 'nonparametric');
+					  'the modelfile when option -keep_estimation is set.');
+			}
+		}
+		
+	} #end of checks for input model when user has not given separate simulation model  
+	
+	unless (defined $this->orig_table) {
+		my $np_record = $this->models->[0]->record(record_name => 'nonparametric');
 
-    if ( scalar (@{$this->models->[0]->record(record_name => 'table')}) > 0 ) {
-      carp('Tool will delete existing $TABLE records in the modelfile.');
-    }
-    if (defined $this->msfo_file) {
-      if (defined $this->lst_file) {
+		if ( scalar (@{$this->models->[0]->record(record_name => 'table')}) > 0 ) {
+			carp('Tool will delete existing $TABLE records in the modelfile.');
+		}
+		if (defined $this->msfo_file) {
+			if (defined $this->lst_file) {
 				croak('Tool does not allow using both -lst_file '.
-						'and -msfo_file options simultaneously.');
+					  'and -msfo_file options simultaneously.');
 			}
 		} else {
 			if( scalar(@{$np_record}) > 0 ) {
 				croak("Tool requires an msfo file when there is a \$NONPARAMETRIC record".
-						' in the modelfile.');
+					  ' in the modelfile.');
 			}
 		}
-  
-  #Synonym forbidden for MDV,ID
-  
-    foreach my $variable ('MDV','ID') {
-      my $input_record = $this->models->[0]->record(record_name => 'input');
-      if( scalar(@{$input_record}) > 0 ) { #always true
+		
+		#Synonym forbidden for MDV,ID
+		
+		foreach my $variable ('MDV','ID') {
+			my $input_record = $this->models->[0]->record(record_name => 'input');
+			if( scalar(@{$input_record}) > 0 ) { #always true
 				foreach my $line ( @{$input_record -> [0]} ) {
 					next if ( $line =~ /^\s*;/); #skip comments
-						if ( $line =~ /([\w]+)=(MDV|ID)[^\w]/ ) {
-							if (($variable eq $2) && !($1 =~ /(SKIP|DROP)/ )) {
-								croak("It is forbidden to use a synonym ".
-										"for $variable in the \$INPUT record.");
-							}
-							last;
+					if ( $line =~ /([\w]+)=(MDV|ID)[^\w]/ ) {
+						if (($variable eq $2) && !($1 =~ /(SKIP|DROP)/ )) {
+							croak("It is forbidden to use a synonym ".
+								  "for $variable in the \$INPUT record.");
 						}
+						last;
+					}
 					if ( $line =~ /(MDV|ID)=([\w]+)[^\w]/ ) {
 						if (($variable eq $1) && !($2 =~ /(SKIP|DROP)/ )) {
 							croak("It is forbidden to use a synonym ".
-									"for $variable in the \$INPUT record.");
+								  "for $variable in the \$INPUT record.");
 						}
 						last;
 					}
@@ -637,17 +645,17 @@ start new
 			}
 
 		}
-  
-    #check if synonyms used for DV If so, warn
-    my @reserved_labels = ('ID','L1','L2','MDV','RAW_','MRG_','RPT_','TIME','DATE');
-    push (@reserved_labels, ('DAT1','DAT2','DAT3','EVID','AMT','RATE','SS','II','ADDL'));
-    push (@reserved_labels, ('CMT','PCMT','CALL','CONT','SKIP','DROP'));
-    
-    my $check_it = 0;
-    if ($this->dv eq 'DV') {
-      $check_it = 1;
-    } else {
-      foreach my $lab (@reserved_labels) {
+		
+		#check if synonyms used for DV If so, warn
+		my @reserved_labels = ('ID','L1','L2','MDV','RAW_','MRG_','RPT_','TIME','DATE');
+		push (@reserved_labels, ('DAT1','DAT2','DAT3','EVID','AMT','RATE','SS','II','ADDL'));
+		push (@reserved_labels, ('CMT','PCMT','CALL','CONT','SKIP','DROP'));
+		
+		my $check_it = 0;
+		if ($this->dv eq 'DV') {
+			$check_it = 1;
+		} else {
+			foreach my $lab (@reserved_labels) {
 				if ($this->dv eq $lab) {
 					$check_it = 1;
 					last;
@@ -655,8 +663,8 @@ start new
 			}
 		}
 		my $found_synonym = 0;
-    if ($this->models->[0]->is_option_set(record => 'input', name => $this->dv)) {
-      my $value = $this->models->[0]->get_option_value(record_name => 'input', option_name => $this->dv);
+		if ($this->models->[0]->is_option_set(record => 'input', name => $this->dv)) {
+			my $value = $this->models->[0]->get_option_value(record_name => 'input', option_name => $this->dv);
 			if (defined $value) {
 				unless ($value =~ /(SKIP|DROP)/ ) {
 					$found_synonym = 1;
@@ -675,61 +683,61 @@ start new
 					}
 				}
 			}
-    }
+		}
 		ui -> print (category => 'all', 
-				message=> "****** Warning:\n".
-				"It seems like a synonym is used for the dependent variable ".
-				$this->dv . ". PsN will look for a column with header ".
-				$this->dv . " in the table output, ".
-				"and if it is not found, for example because NONMEM prints a synonym for ".
-				$this->dv . " as the header instead, then there will be no output from PsN.") 
+					 message=> "****** Warning:\n".
+					 "It seems like a synonym is used for the dependent variable ".
+					 $this->dv . ". PsN will look for a column with header ".
+					 $this->dv . " in the table output, ".
+					 "and if it is not found, for example because NONMEM prints a synonym for ".
+					 $this->dv . " as the header instead, then there will be no output from PsN.") 
 			if ($found_synonym);
 		ui -> print (category=>'all', 
-				message=>"Consider setting option -dv on the commandline.") 
+					 message=>"Consider setting option -dv on the commandline.") 
 			if ($found_synonym and ($this->dv eq 'DV'));
 
 
 		my $command_file = $this->directory . "/original_command.txt";
 
-    if ( -e $command_file ) {
-      #check if calls are compatible
-      open( CMD, $command_file ) or 
+		if ( -e $command_file ) {
+			#check if calls are compatible
+			open( CMD, $command_file ) or 
 				croak("Could not open ".$command_file);
 			my $row = <CMD>;
 			close(CMD);
-      my $str = $this->models->[0]->filename();
+			my $str = $this->models->[0]->filename();
 			unless ($row =~ /($str)/) {
 				ui -> print (category => 'all', 
-						message => "****** Warning:\nName of modelfile $str on command line does not match name of ".
-						"modelfile \nin restart directory ". $this->directory . "\n");
+							 message => "****** Warning:\nName of modelfile $str on command line does not match name of ".
+							 "modelfile \nin restart directory ". $this->directory . "\n");
 			}
 			if (defined $this->lst_file) {
 				unless ($row =~ /($this->lst_file)/) {
 					ui -> print (category=>'all', 
-							message=> "****** Warning:\nlst-file on command line was not used in call\n$row in".
-							" restart directory " . $this->directory . "\n");
+								 message=> "****** Warning:\nlst-file on command line was not used in call\n$row in".
+								 " restart directory " . $this->directory . "\n");
 				}
 			} elsif ($row =~ / \-lst/) {
 				ui -> print (category => 'all', 
-						message=> "****** Warning:\nNo lst-file was specified on command line, but an lst-file was used ".
-						"in call\n$row in restart directory " . $this->directory . "\n");
+							 message=> "****** Warning:\nNo lst-file was specified on command line, but an lst-file was used ".
+							 "in call\n$row in restart directory " . $this->directory . "\n");
 			}
 			if (defined $this->msfo_file) {
 				unless ($row =~ /($this->msfo_file)/) {
 					ui -> print (category=>'all', 
-							message=> "****** Warning:\nmsfo-file on command line was not used in call\n$row".
-							"in restart directory " . $this->directory . "\n");
+								 message=> "****** Warning:\nmsfo-file on command line was not used in call\n$row".
+								 "in restart directory " . $this->directory . "\n");
 				}
 			} elsif ($row =~ / \-msf/){
 				ui -> print (category => 'all', 
-						message => "****** Warning:\nNo msfo-file was specified on command line, but an msfo-file was used ".
-						"in call\n$row in restart directory " . $this->directory . "\n");
+							 message => "****** Warning:\nNo msfo-file was specified on command line, but an msfo-file was used ".
+							 "in call\n$row in restart directory " . $this->directory . "\n");
 			}
-      if (defined $this->samples) {
+			if (defined $this->samples) {
 				if ($row =~ / \-samp[^=]*=(\d+)/ ) {
 					unless ($1 == $this->samples) {
 						croak("-samples on command line is different from call\n$row".
-								"in restart directory ".$this->directory);
+							  "in restart directory ".$this->directory);
 					}
 				}
 			}
@@ -1287,18 +1295,20 @@ start modelfit_setup
   }elsif ( (not defined $self->sim_model()) and
 	   defined $self->models->[0]->outputs() and 
 	   defined $self->models->[0]->outputs()->[0] and
-	   $self->models->[0]->outputs->[0]->have_output()) {
-    $model_orig -> update_inits ( from_output => $self->models->[0]->outputs->[0],
-				  problem_number => $self->origprobnum());
-    if (defined $model_simulation){
-      $model_simulation -> update_inits ( from_output => $self->models->[0]->outputs->[0],
-					  problem_number => $self->simprobnum());
-    }
+	   $self->models->[0]->outputs->[0]->have_output() and
+		   $self->models->[0]->outputs->[0]->get_single_value(attribute => 'estimation_step_initiated',
+															  problem_index => ($self->origprobnum()-1))) {
+	  $model_orig -> update_inits ( from_output => $self->models->[0]->outputs->[0],
+									problem_number => $self->origprobnum());
+	  if (defined $model_simulation){
+		  $model_simulation -> update_inits ( from_output => $self->models->[0]->outputs->[0],
+											  problem_number => $self->simprobnum());
+	  }
   }elsif ( defined $self->sim_model() and
-	   defined $model_simulation_output){
-    $model_simulation -> update_inits ( from_output => $model_simulation_output,
-					problem_number => $self->simprobnum());
-
+		   defined $model_simulation_output){
+	  $model_simulation -> update_inits ( from_output => $model_simulation_output,
+										  problem_number => $self->simprobnum());
+	  
   }
 
 ####end update initial estimates############
@@ -2324,12 +2334,19 @@ end index_matrix_binned_values
 					$obscount=0;
 				}
 				$tables_read++;
-				ui -> print (category=>'npc', 
-							 message=>$tables_read.' ',
-							 newline => 0);
-				ui -> print (category=>'vpc', 
-							 message=>$tables_read.' ',
-							 newline => 0);
+
+				my $modulus = (($no_sim+1) <= 50) ? 1 : (($no_sim+1) / 50);
+	    
+				if ( $tables_read % $modulus == 0 or $tables_read == 1 or $tables_read == $no_sim ) {
+					ui -> print (category=>'npc', 
+								 message=>$tables_read.' ',
+								 newline => 0);
+					ui -> print (category=>'vpc', 
+								 message=>$tables_read.' ',
+								 newline => 0);
+				}
+
+
 				
 			}elsif($line =~ /[0-9]/){
 				#assume this is data line, at least it is not empty
@@ -3757,7 +3774,7 @@ end old_do_predcorr_and_varcorr
 		}
 		my ($file_volume,$file_directory, $file_file) = File::Spec -> splitpath( $fil);
 		$extra_value=$file_file;
-	} elsif (defined $self->flip_comments()){
+	} elsif ($self->flip_comments()){
 		$extra_value="flip comments $modelname";
 	}
 
