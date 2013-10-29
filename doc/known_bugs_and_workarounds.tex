@@ -1,0 +1,60 @@
+\documentclass[a4paper,12pt]{article}
+\title{Known bugs and workarounds\\ \vspace{2 mm} {\large PsN 3.6.2}}
+\date{2013-06-03}
+
+\usepackage[utf8]{inputenc}
+\usepackage{verbatim}
+\usepackage{longtable}
+\begin{document}
+
+\maketitle
+
+
+\section{Introduction}
+Work to fix bugs in PsN is ongoing, but often feature addition is prioritized over bug fixing, especially if there is a known workaround for the bug. This document list the most important known bugs, including workarounds when possible.   
+
+\section{Sensitive format for raw results input file in sse, vpc, npc}
+
+It is essential that if any of the column headers contains a comma, e.g. OMEGA(2,1), then every column header must be enclosed in double quotes. If none of the columns headers contains a comma then all or none of the column headers must be enclosed in double quotes. This is done automatically when PsN creates a raw results file but may be changed if the file is saved in e.g. Excel.
+
+
+\section{Remove leading empty column of csv-format data file}
+
+Bootstrap will crash if the first column of a csv-format datafile is empty.
+
+\section{Path problem on Windows: use Perl build 5.8.8.20}
+
+On some windows platforms a backward slash in the paths is missing and PsN cannot find the modelfile. Robert Kalicki reports that Perl build 5.8.8.20 on Vista works correctly, while 5.8.8.19 does not work.
+
+\section{Warning on Windows}
+
+Windows users may see a warning 
+
+'defined(@array) is deprecated at lib/output\_subs.pm line 841.(Maybe you should just omit the defined()?)' 
+
+every time PsN is run. This message can be ignored.
+
+\section{Ignore with extended\_grid script}
+Use IGNORE=@ in the \$DATA record rather than IGNORE=I (where I can stand for ID). Script will crash with IGNORE=I.
+
+\section{Calling old PsN versions on a Windows system with multiple PsN versions installed}
+On unix-type systems where multiple PsN versions are installed it is possible to call any version by adding the version number to the name of the PsN-script, e.g. execute-2.3.2 or bootstrap-3.0.0. This does not work on Windows. To call an older installed PsN version, use 
+
+\begin{verbatim}
+perl <full_path_to_PsN_executable\<name_of_PsN_script>
+\end{verbatim}
+
+for example
+
+\begin{verbatim}
+perl C:\Perl\bin\execute-2.3.2
+\end{verbatim}
+
+\section{Missing estimates in raw\_results.csv when first \$PROBLEM uses \$MSFI}
+When the first \$PROBLEM in the modelfile uses \$MSFI, and \$THETA, \$OMEGA and \$SIGMA are all missing in that \$PROBLEM, then there will be no theta/omega/sigma headers in raw\_results.csv and the parameter estimates will not be printed to the file.
+
+\section{Data values with more than five significant digits in sse}
+The simulated datasets used in sse are \$TABLE output from NONMEM, and NONMEM rounds off values when printing tables. In NONMEM6 1013201 is rounded to 1013200 (five significant digits), and if this makes a significant change to the model estimation, for example if the value is a covariate, then the sse results will be wrong. In NONMEM7 it is possible to set the FORMAT option in \$TABLE to make sure no important information is lost. With NONMEM6 the user must make sure the rounding to five significant digits does not harm the results.
+
+
+\end{document}

@@ -103,7 +103,6 @@ RELFILES=$(addprefix PsN-Source/lib/,$(LIBFILES)) \
 	lib/ext/Statistics/Distributions.pm \
 	lib/ext/Parallel/ForkManager.pm \
 	lib/ext/Config/Tiny.pm \
-	lib/ext/Color/Output.pm \
 	lib/ext/File/HomeDir.pm \
 	lib/matlab/bca.m \
 	lib/matlab/histograms.m \
@@ -141,40 +140,10 @@ RELFILES=$(addprefix PsN-Source/lib/,$(LIBFILES)) \
 	bin/xv_scm \
 	bin/boot_scm \
 	bin/linearize \
-	lib/doc/nonpb_userguide.pdf \
-	lib/doc/mimp_userguide.pdf \
-	lib/doc/lasso_userguide.pdf \
-	lib/doc/sumo_userguide.pdf \
 	lib/doc/sse_userguide.pdf \
-	lib/doc/gls_userguide.pdf \
-	lib/doc/frem_userguide.pdf \
-	lib/doc/ebe_npde_userguide.pdf \
-	lib/doc/npc_vpc_userguide.pdf \
 	lib/doc/draft_vpc_automatic_binning.pdf \
-	lib/doc/extended_grid_userguide.pdf \
-	lib/doc/mcmp_userguide.pdf \
-	lib/doc/bootstrap_userguide.pdf \
-	lib/doc/cdd_userguide.pdf \
-	lib/doc/llp_userguide.pdf \
-	lib/doc/execute_userguide.pdf \
-	lib/doc/scm_userguide.pdf \
-	lib/doc/xv_scm_userguide.pdf \
-	lib/doc/boot_scm_userguide.pdf \
-	lib/doc/common_options_defaults_versions_psn.pdf \
-	lib/doc/known_bugs_and_workarounds.pdf \
-	lib/doc/psn_configuration.pdf \
-	lib/doc/psn_installation.pdf \
-	lib/doc/PsN_and_NONMEM7.pdf \
 	lib/doc/runrecord_userguide.pdf \
 	lib/doc/runrecord_template.xls \
-	lib/doc/config_all_default_parameterizations_explicitly.scm \
-	lib/doc/config_centering_bivariate_covariate.scm \
-	lib/doc/config_different_parameterizations_different_covariates.scm \
-	lib/doc/config_emax_and_other_parameterizations.scm \
-	lib/doc/config_grouping_categorical_covariate.scm \
-	lib/doc/config_template_backward.scm \
-	lib/doc/config_template_linearize.scm \
-	lib/doc/config_template_standard.scm \
 	setup.pl \
 	README.txt )
 
@@ -215,6 +184,10 @@ DIALIBFILES=debug.pm \
 
 PERLFILES=$(addprefix lib/,$(DIALIBFILES))
 
+TEXFILES=$(wildcard doc/*.tex)
+PDFFILES=$(TEXFILES:.tex=.pdf)
+
+
 all: libgen $(PERLFILES)
 
 GENFILES=$(addprefix libgen/,$(DIALIBFILES))
@@ -232,7 +205,7 @@ lib/%.pm: libgen/%.pm lib/%_subs.pm
 .PHONY : clean
 
 clean:
-	@-rm -rf $(PERLFILES) $(DOCUMENTS) libgen PsN-Source bin/completion_files
+	@-rm -rf $(PERLFILES) $(DOCUMENTS) libgen PsN-Source bin/completion_files doc/*.aux doc/*.log doc/*.pdf PsN-Source.tar.gz PsN-Source.zip
 
 libgen/data%.pm : diagrams/data.dia
 	$(DIA2CODE) -t perl -d $(DIRPM) diagrams/data.dia
@@ -326,24 +299,20 @@ $(addprefix html/llp,$(HTML_STUBS)) : bin/llp lib/common_options.pm
 $(addprefix html/scm,$(HTML_STUBS)) : bin/scm lib/common_options.pm
 	perl $< --help --html
 
+doc/%.pdf: doc/%.tex
+	@ cd doc; pdflatex $*.tex; pdflatex $*.tex
 
-release: libgen rel_dir $(RELFILES) documents
+release: libgen rel_dir $(RELFILES) $(PDFFILES)
+	@ cp doc/*.pdf PsN-Source/lib/doc
+	@ cp doc/*.scm PsN-Source/lib/doc
 	@ cd PsN-Source/lib/doc/; zip PsN_pdf_documentation *.pdf *.xls *.scm
 	@ cd PsN-Source/lib/doc/; tar -czf PsN_pdf_documentation.tar.gz *.pdf *.xls *.scm
 	@ zip -r PsN-Source PsN-Source/
 	@ tar czf PsN-Source.tar.gz PsN-Source/
 
-release_no_html: libgen rel_dir $(RELFILES)
+documentation: lib/doc/*.pdf $(PDFFILES)
 	@ cd PsN-Source/lib/doc/; zip PsN_pdf_documentation *.pdf *.xls *.scm
-	@ cd PsN-Source/lib/doc/; tar -czf PsN_pdf_documentation.tar.gz *.pdf *.xls *.scm
-	@ zip -r PsN-Source PsN-Source/
-	@ tar czf PsN-Source.tar.gz PsN-Source/
-
-documentation: lib/doc/*.pdf
-	@ cd PsN-Source/lib/doc/; zip PsN_pdf_documentation *.pdf *.xls *.scm
-	@ cd PsN-Source/lib/doc/; tar -czf PsN_pdf_documentation.tar.gz *.pdf *.xls *.scm
-
-
+	@ cd PsN-Source/lib/doc/; tar -czf PsN_pdf_documentation.tar.gz *.pdf *.xls *.scm 
 
 
 BINFILES= boot_scm \

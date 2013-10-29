@@ -1,0 +1,176 @@
+\documentclass[a4paper,12pt]{article}
+\title{GLS user guide\\ \vspace{2 mm} {\large PsN 3.6.2}}
+\date{2013-05-28}
+
+\usepackage[utf8]{inputenc}
+\usepackage{verbatim}
+\usepackage{longtable}
+\begin{document}
+
+\maketitle
+
+
+\section{Overview}
+During the modelling process one may encounter scenarios where first-order conditional estimation with $\epsilon - \eta$ interaction (FOCEI) is indicated but may be prohibitively time consuming or unstable. Also, it may be a concern that a misspecification of the residual error model may translate to bias in structural or inter-individual variability parameters. These two problems may be overcome by using a generalised least squares (GLS) type approach where dependent variable predictions are obtained from a previous model fit and then used in the residual error model. The gls program automates this procedure.
+
+In summary the GLS method amounts to the following: Run the original model. In a second step IPRED is replaced with GLSP in the definition of W where GLSP is computed as 
+
+PRED$_{orig}$·iwres\_shrinkage + (1-iwres\_shrinkage$_{orig}$)*IPRED$_{orig}$, 
+
+where  PRED$_{orig}$ and IPRED$_{orig}$ are obtained from running the original model and iwres\_shrinkage is either a population shrinkage obtained from the original model run or a per-observation shrinkage based on simulations. The modified gls model is then estimated.
+\\
+\\
+Example
+\begin{verbatim}
+gls run1.mod
+\end{verbatim}
+
+\section{Input and options}
+
+\subsection{Required input}
+A model file is required on the command-line.
+
+
+\subsection{Optional input}
+
+\begin{longtable}{p{1in}p{4in}}
+\verb|-ind_shrinkage| & \\
+\nopagebreak
+ & Default not set. Compute per-observation iwres-shrinkage based on simulations. \\
+\\
+\verb|-samples=N| & \\
+\nopagebreak
+ & Default not used. Only relevant if -ind\_shrinkage is set and -gls\_model is not set. Creates N copies of input model with different seeds in \$SIM. Run to get N IWRES values for each data point yij. Compute  \\
+\\
+\verb|-reminimize| & \\
+\nopagebreak
+ & Default not set. Only relevant if -ind\_shrinkage is set and -gls\_model is not set. By default, simulated datasets will be run with MAXEVAL=0 (or equivalent for non-classical estimation methods). If option -reminimize is set then the same \$EST as in the input model will be used. \\
+\\
+\verb|-additive_theta=XX| & \\
+\nopagebreak
+ & Default not used. In gls model, add a small and fix additive error in W. The error is added by changing W=SQRT($\langle$expression$\rangle$) to W=SQRT(THETA(T)**2+$\langle$expression$\rangle$) in the gls model, where T is the order number of new \$THETA XX FIX added to the model. \\
+\\
+\verb|-iwres_shrinkage=X| & \\
+\nopagebreak
+ & Default not used. Forbidden in combination with -ind\_shrinkage. If the population iwres shrinkage from the input model run is already available, or if a special values such as 0 or 1 is desired, the user can give the value as input on the command-line. Important note: PsN reports shrinkage in percent in the raw\_results file, so if using the value from raw\_results as input that value must be divided by 100.   \\
+\\
+\verb|-gls_model| & \\
+\nopagebreak
+ & Default not set. Only possible together with option -iwres\_shrinkage or -ind-shrinkage. This option is to be used when a datafile with all data needed for the gls model run is already available, i.e. all input for the original model plus columns with PRED and IPRED from the original model run, and if -ind\_shrinkage is set also a ISHR column with per observation shrinkage values. The option indicates that \$DATA specifies the file with the gls input data, and that \$INPUT lists the parameters in the datafile. In \$INPUT the columns PPRE and PIPR must be present as headers for PRED and IPRED values, plus ISHR for the shrinkage column if -ind\_shrinkage is set. \\
+\\
+\verb|-sim_table| & \\
+\nopagebreak
+ &  Default not set. Only relevant if -ind\_shrinkage is set and -gls\_model is not set. PsN will delete all existing \$TABLE in the simulation models before adding a \$TABLE for per-observation IWRES values, but if option -sim\_table is set then an extra \$TABLE with diagnostic output is added to each simulation model. \\
+\\
+\verb|-set_simest| & \\
+\nopagebreak
+ &  Default not set. Only relevant if -gls\_model is not set. This option can be used to set different \$EST for original, simulation (if used) and final gls models, and to set a custom \$SIM for the simulation model. When this option is set, PsN will look for lines starting with certain tags in the input model. All lines starting with the tag
+
+;gls-final
+
+will be collected, the tag will be removed, and then PsN will check that the lines define a single \$EST record. This \$EST record will be set in the final model, instead of the one in the input model. If no ;gls-final tag is found the \$EST record in the final model will be the same as in the input model. All lines starting with the tag
+
+;gls-sim
+
+will also be collected, the tag will be removed, and then PsN will check that the lines define either a single \$EST or a single \$SIM, or one of each. If a \$SIM record is defined this will be used in the simulation model instead of any \$SIM found in the input model. If a \$EST record is defined this will be used in the simulation model instead of the \$EST found in the input model.\\
+\\
+\end{longtable}
+
+\subsection{Some common PsN-options useful with gls}
+
+For a complete list of common options see common\_options\_defaults\_versions.pdf, or psn\_options -h on the commandline.
+
+\begin{longtable}{p{1in}p{4in}}
+\verb|-directory=gls_dirN| & \\
+\nopagebreak
+ & The run directory can be named.  \\
+\\
+\verb|-help| & \\
+\nopagebreak
+ & With -help gls will print a longer help message. \\
+\\
+\end{longtable}
+
+\section{Output}
+
+The results are in the raw\_results file. If -ind\_shrinkage is set the individual shrinkage values are in ind\_iwres\_shrinkage.dta. All lst-files, model files and table files are in the m1 subdirectory.
+
+\section{Procedure overview}
+
+\subsection{Original input model (only done if -gls\_model is not set)}
+
+\begin{enumerate}
+\item If option -additive\_theta=XX is set, add \$THETA XX FIX as last \$THETA. Store order number T of new theta.
+\item Remove MSFO option from \$EST, if present.
+\item If the model has both \$PRIOR and \$SIM then set option TRUE=PRIOR in \$SIM. 
+\item Remove \$COVARIANCE, if present.
+\item If a lst-file is found for the input model, update initial estimates in input model based on lst-file.
+\item Copy undropped \$INPUT variables to new \$TABLE. In \$TABLE add IPRED PRED. Add NOPRINT ONEHEADER NOAPPEND FILE=glsinput.dta
+\item Run modified original input model. Let PsN compute iwres-shrinkage for this model regardless if option -ind\_shrinkage or -iwres\_shrinkage is set.
+\end{enumerate}
+
+\subsection{Simulation models (only done if option -ind\_shrinkage is set and -gls\_model is not set)}
+
+\begin{enumerate}
+\item Create 'samples' copies of modified original input model after modifications step 1-4 above.
+\item If \$SIM not present, create simple \$SIM (1234 NEW). Seed and NSUB will be set below.
+\item If option -set\_simest is set and a simulation record behind the tag ;gls-sim is found, use this new simulation record instead.  
+\item In each copy set unique seed in \$SIM and set NSUB=1.
+\item Set IGNORE=@ since datafile will get a header during copying. Keep any IGNORE=(...).
+\item Unless option reminimize is set, set MAXEVAL=0 (or corresponding for non-classical estimation methods). 
+\item If option -set\_simest is set and an estimation record behind the tag ;gls-sim is found, use this new estimation record instead. Do not change MAXEVAL in this new estimation record.
+\item If ONLYSIM is found in \$SIM then remove the \$EST record.
+\item Update initial estimates with output from running modified original input model (step 7 above).
+\item Remove existing \$TABLE.
+\item In each sim model, set \$TABLE IWRES ID NOPRINT ONEHEADER NOAPPEND FILE=iwres\_$\langle$order number$\rangle$.dta.
+\item If option -sim\_table is set: In each sim model set an extra \$TABLE
+ with ID TIME IPRED W IWRES NOPRINT ONEHEADER FILE=sdtab-sim$\langle$order number$\rangle$.dta to be used e.g. for diagnostics.
+\item Run 'samples' sim models. Let PsN compute iwres-shrinkage for all of them.
+\item Read all iwres\_$\langle$order number$\rangle$.dta files, storing all IWRES values per data point. Compute, per data point, ISHR\_ij=1-stdev(IWRES\_ij). Open glsinput.dta and append ISHR column with computed values. Print also shrinkage column to new file ind\_iwres\_shrinkage.dta
+\end{enumerate}
+
+\subsection{GLS model if option -gls\_model is not set}
+
+\begin{enumerate}
+\item Copy modified original input model after modifications step 1-3 in original input model section.
+\item Remove DROP columns completely from \$INPUT. Add variables PIPR and PPRE. If -ind\_shrinkage is set add variable ISHR. 
+\item remove \$SIM if present
+\item If \$PRIOR is set, remove option PLEV
+\item Update initial estimates with output from running modified original input model.
+\item change filename in \$DATA to glsinput.dta.
+\item If option -set\_simest is set and an estimation record is found behind the tag ;gls-final then use this estimation record instead of the old one.
+\item If \$TABLE is present: append -gls to filename set with FILE to distinguish from table output from original model.
+\item Set IGNORE=@ in \$DATA. Skip all old IGNOREs (glsinput.dta is filtered). 
+\item In \$DATA add option IGNORE=(PIPR.LE.0.000000001)
+\item add code in the very beginning of \$PRED/\$ERROR  
+
+SHRI = $\langle$iwres\_shrinkage from input model run or iwres\_shrinkage option or ISHR if if -ind\_shrinkage is set$\rangle$ 
+\begin{verbatim}
+IF(SHRI.LE.0) SHRI = 0
+GLSP = SHRI*PPRE + (1-SHRI)*PIPR
+\end{verbatim}
+\item check that W definition is of the form W=SQRT(...IPRED...) and replace IPRED with GLSP in W definition. If option -additive\_theta=XX is set, prepend THETA(T)**2+  to the expression inside parentheses of W=SQRT(...)  where T is order number of new THETA.
+\item Do 12) for every line of the form W=SQRT (...IPRED...).
+\item Run gls model. Let PsN compute iwres shrinkage for this model. Append raw\_results to raw\_results of original model, if original model was run.
+\end{enumerate}
+
+\subsection{GLS model if option -gls\_model is set}
+
+\begin{enumerate}
+\item If option -additive\_theta=XX is set, add \$THETA XX FIX as last \$THETA. Store order number T of new theta.
+\item Remove MSFO option from \$EST, if present.
+\item If a lst-file is found for the gls model, update initial estimates in gls model based on lst-file.
+\item In \$DATA add option IGNORE=(PIPR.LE.0.000000001)
+\item add code in the very beginning of \$PRED/\$ERROR  
+
+SHRI = $\langle$iwres\_shrinkage from input model run or iwres\_shrinkage option or ISHR if if -ind\_shrinkage is set$\rangle$
+\begin{verbatim}
+IF(SHRI.LE.0) SHRI = 0
+GLSP = SHRI*PPRE + (1-SHRI)*PIPR
+\end{verbatim}
+\item check that W definition is of the form W=SQRT(...IPRED...) and replace IPRED with GLSP in W definition. If option -additive\_theta=XX is set, prepend THETA(T)**2+  to the expression inside parentheses of W=SQRT(...)  where T is order number of new THETA.
+\item Do 6) for every line of the form W=SQRT (...IPRED...).
+\item Run gls model. Let PsN compute iwres shrinkage for this model. Append raw\_results to raw\_results of original model, if original model was run.
+\end{enumerate}
+
+\end{document}
