@@ -140,7 +140,6 @@ RELFILES=$(addprefix PsN-Source/lib/,$(LIBFILES)) \
 	bin/xv_scm \
 	bin/boot_scm \
 	bin/linearize \
-	lib/doc/runrecord_template.xls \
 	setup.pl \
 	README.txt )
 
@@ -297,12 +296,15 @@ $(addprefix html/scm,$(HTML_STUBS)) : bin/scm lib/common_options.pm
 	perl $< --help --html
 
 doc/%.pdf: doc/%.tex
-	@ cd doc; pdflatex $*.tex; pdflatex $*.tex
+	cd doc; pdflatex $*.tex >/dev/null; pdflatex $*.tex >/dev/null
+
+doc: $(PDFFILES)
 
 release: libgen rel_dir $(RELFILES) $(PDFFILES)
 	@ cp doc/*.pdf PsN-Source/lib/doc
 	@ cp doc/*.scm PsN-Source/lib/doc
 	@ cp doc/draft/*.pdf PsN-Source/lib/doc
+	@ cp doc/*.xls PsN-Source/lib/doc
 	@ cd PsN-Source/lib/doc/; zip PsN_pdf_documentation *.pdf *.xls *.scm
 	@ cd PsN-Source/lib/doc/; tar -czf PsN_pdf_documentation.tar.gz *.pdf *.xls *.scm
 	@ zip -r PsN-Source PsN-Source/
