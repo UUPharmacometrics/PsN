@@ -5340,7 +5340,7 @@ start npc_analyze
     my ($file_volume,$file_directory, $file_file) = File::Spec -> splitpath( $fil);
 #    print "$file_volume : $file_directory : $file_file\n";
     $extra_value=$file_file;
-  } elsif (defined $self->flip_comments()){
+  } elsif ($self->flip_comments()){
     $extra_value="flip comments $modelname";
   }
 

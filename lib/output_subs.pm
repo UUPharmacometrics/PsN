@@ -856,14 +856,16 @@ start _read_problems
 	      $reading_control_stream = 1;
 	      $found_control_stream = 1;
 	      #store index of line
-	      $control_stream_problem_start_index = $lstfile_pos;
+	      $control_stream_problem_start_index = $lstfile_pos-1; #must have -1 here to get $PROB
 	  } elsif (not $done_reading_control_stream and ($reading_control_stream) and (/^\s*\$PROB/)){
 	      #we ignore $SIZES here, not relevent for what we need in output handling
 	      #found first record of another $PROB
 	      #add previous $PROB
 	      $found_control_stream = 1;
-	      $control_stream_problem_end_index = $lstfile_pos - 1;
+	      $control_stream_problem_end_index = $lstfile_pos - 2; #must be -2 here otherwise get one too many lines
 	      my @control_lines = @lstfile[$control_stream_problem_start_index .. $control_stream_problem_end_index];
+#		  print "found new \$PROB\n";
+#		  print join(" \n",@control_lines)."\n";
 
 	      my $prob = model::problem -> new (
 					directory										=> $self->directory,
@@ -874,30 +876,47 @@ start _read_problems
 	      push( @control_stream_problems, $prob );
 
 	      #store index of line for new $PROB
-	      $control_stream_problem_start_index = $lstfile_pos;
+	      $control_stream_problem_start_index = $lstfile_pos-1; #must be -1 here to get new $PROB
 	  } elsif ((/^\s*NM\-TRAN MESSAGES/) or (/^\s*WARNINGS AND ERRORS \(IF ANY\)/) or (/^\s*License /) ) {
 
+#		  print "Found nmtran messages or warnings or license\n";
 	      if ((not $done_reading_control_stream) and $found_control_stream) {
-		  #add last control stream problem
-		  $control_stream_problem_end_index = $lstfile_pos - 1;
-		  my @control_lines = @lstfile[$control_stream_problem_start_index .. $control_stream_problem_end_index];
+			  #add last control stream problem
+			  $control_stream_problem_end_index = $lstfile_pos - 2; #must have -2 so do not get message line
+			  my @control_lines = @lstfile[$control_stream_problem_start_index .. $control_stream_problem_end_index];
+#			  print "add control stream\n";
+#			  print join("\n",@control_lines)."\n";
 
-		  my $prob = model::problem -> new (
-		      directory										=> $self->directory,
-			    ignore_missing_files        => 1,
-			    ignore_missing_output_files => 1,
-			    prob_arr                    => \@control_lines);
+			  my $prob = model::problem -> new (
+				  directory										=> $self->directory,
+				  ignore_missing_files        => 1,
+				  ignore_missing_output_files => 1,
+				  prob_arr                    => \@control_lines);
 
-		  push( @control_stream_problems, $prob );
+			  push( @control_stream_problems, $prob );
 
-		  $done_reading_control_stream = 1;
-		  $reading_control_stream = 0;
+			  $done_reading_control_stream = 1;
+			  $reading_control_stream = 0;
 	      }
 	  } elsif (/^1NONLINEAR MIXED EFFECTS MODEL PROGRAM/) {
+		  if (/VERSION 7/) {
+			  $lst_version = 7;
+		  } elsif (/VERSION VII /) {
+			  $lst_version = 7;
+		  } elsif (/VERSION 6/) {
+			  $lst_version = 6;
+		  } elsif (/VERSION VI /) {
+			  $lst_version = 6;
+		  } elsif (/VERSION V /) {
+			  $lst_version = 5;
+		  } else {
+			  croak("could not read NONMEM version information from output file " . $self->filename);
+		  }
+		  $self->nonmem_version($lst_version);
 
 	      if ((not $done_reading_control_stream) and $found_control_stream) {
 		  		#add last control stream problem
-		  		$control_stream_problem_end_index = $lstfile_pos - 1;
+		  		$control_stream_problem_end_index = $lstfile_pos - 2; #have not verified that 2 is ok here, infer from analogy to above cases
 		  		my @control_lines = @lstfile[$control_stream_problem_start_index .. $control_stream_problem_end_index];
 
 		  		my $prob = model::problem -> new (
@@ -911,20 +930,6 @@ start _read_problems
 		  		$reading_control_stream = 0;
 	      }
 
-	    if (/VERSION 7/) {
-	      $lst_version = 7;
-	    } elsif (/VERSION VII /) {
-	      $lst_version = 7;
-	    } elsif (/VERSION 6/) {
-	      $lst_version = 6;
-	    } elsif (/VERSION VI /) {
-	      $lst_version = 6;
-	    } elsif (/VERSION V /) {
-	      $lst_version = 5;
-	    } else {
-	      croak("could not read NONMEM version information from output file " . $self->filename);
-	    }
-	    $self->nonmem_version($lst_version);
 
 	  } elsif (/^\s*\#METH:/) {
 	      #NONMEM will print #METH also when simulation without estimation, do not count

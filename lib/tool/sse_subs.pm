@@ -646,6 +646,7 @@ end new
 			unless ($self->add_models()){
 
 				my $prob = $sim_model -> problems -> [$self->probnum()-1];
+				my $codeprob = $sim_model -> problems -> [0];
 				
 				# set $SIMULATION record
 				
@@ -840,20 +841,21 @@ end new
 #      } #end loop over problems
 
 				if ($self->have_nwpri or $self->have_tnpri()){
-#	  print "add code to sim no $sim_no\n";
 					#path to m1 to avoid extra output files
 
 					#already have the code in place. Now need to substitute output file name
 #	  $initscode[1]="  OPEN(50,FILE='../../m".$model_number."/)";
 					my $coderef;
-					my $coderef = $sim_model->problems->[0]-> pks -> [0] -> code if (defined $sim_model->problems->[0]-> pks);
+					$coderef = $codeprob-> pks -> [0] -> code if (defined $codeprob-> pks);
 					unless ( defined $coderef and scalar(@{$coderef}) > 0 ) {
-						$coderef = $sim_model->problems->[0]-> preds -> [0] -> code;
+						$coderef = $codeprob-> preds -> [0] -> code;
 					}
 					my $string = 'mc-'.$sim_no.'.inits';
+#					print "add code to sim no $sim_no string $string\n";
 					foreach my $line (@{$coderef}){
 						if (($line =~ /^  OPEN\(50,FILE=/) and ($line =~ /mc-1.inits/)){
 							$line =~ s/mc-1.inits/$string/;
+#							print "substrituted to $line\n";
 							last;
 						}
 					}

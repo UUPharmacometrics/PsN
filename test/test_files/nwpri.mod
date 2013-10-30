@@ -1,0 +1,38 @@
+
+$PROBLEM  PHENOBARB SIMPLE MODEL
+$INPUT  ID TIME AMT WGT APGR DV
+$DATA  pheno.dta IGNORE=@
+$SUBROUTINE  ADVAN1 TRANS2
+$PRIOR      NWPRI NTHETA=2 NETA=2 NEPS=1 NTHP=2 NETP=2 PLEV=0.99 NPEXP=1
+$PK
+
+      TVCL=THETA(1)
+      TVV=THETA(2)
+      CL=TVCL*EXP(ETA(1))
+      V=TVV*EXP(ETA(2))
+      S1=V
+$ERROR
+
+      W=F
+      Y=F+W*EPS(1)
+
+      IPRED=F         ;  individual-specific prediction
+      IRES=DV-IPRED   ;  individual-specific residual
+      IWRES=IRES/W    ;  individual-specific weighted residual
+
+$THETA  (0,0.00555363) ; CL
+$THETA  (0,1.33638) ; V
+$THETA  0.005 FIX
+$THETA  1.3 FIX
+$THETA  2 FIX
+$OMEGA BLOCK(2) 0.247074  ;       IVCL
+0  0.141581  ;        IVV
+$OMEGA  BLOCK(2) 1.55838E-07
+0 0.00638429 FIX
+$OMEGA BLOCK(2) 0.247074 
+0  0.141581  FIX
+$SIGMA  0.0164153
+$ESTIMATION  MAXEVALS=9997 SIGDIGITS=4 POSTHOC
+$COVARIANCE  PRINT=E
+
+

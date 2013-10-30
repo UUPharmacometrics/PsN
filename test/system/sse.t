@@ -8,6 +8,7 @@ use Test::More;
 use Test::Exception;
 use File::Path 'rmtree';
 use FindBin qw($Bin);
+use File::Copy 'cp';
 
 #in psn.conf must set output_style = SPLUS, otherwise tests will fail. fix by setting here.
 
@@ -158,6 +159,28 @@ foreach my $key (keys %hashmox_answer){
 }
 
 
+rmtree([ "./$dir" ]);
+
+my $tndir='tndir';
+mkdir($tndir);
+foreach my $file ("$model_dir/tnpri.mod","$model_dir/msf_tnpri","$model_dir/data_tnpri.csv"){
+	cp($file,"$tndir/.");
+}
+chdir($tndir);
+
+$command= $path."sse -samples=3 tnpri.mod -seed=630992 -directory=$dir";
+print "Running $command\n";
+my $rc = system($command);
+$rc = $rc >> 8;
+ok ($rc == 0, "$command, sse with prior tnpri should run ok");
+chdir('..');
+rmtree([ "./$tndir" ]);
+
+$command= $path."sse -samples=3 $model_dir/nwpri.mod -seed=630992 -directory=$dir";
+print "Running $command\n";
+$rc = system($command);
+$rc = $rc >> 8;
+ok ($rc == 0, "$command, sse with prior nwpri should run ok");
 
 rmtree([ "./$dir" ]);
 
