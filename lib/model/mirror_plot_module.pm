@@ -1,30 +1,39 @@
+package model::mirror_plot_module;
 
-# {{{ Documentation
+# The mirror plot module will add an extra problem that simulates from
+# the original model. We assume here that there is only one problem in
+# the original model.
 
-The mirror plot module will add an extra problem that simulates from
-the original model. We assume here that there is only one problem in
-the original model.
+# The parameters are the number of mirror plots to obtain (which is the
+# number of simulations we must perform).
 
-The parameters are the number of mirror plots to obtain (which is the
-number of simulations we must perform).
+# The tables will be renamed from *tab1 to *tab1sim
 
-The tables will be renamed from *tab1 to *tab1sim
 
-# }}}
 
-start include statements
 use Carp;
 use Math::Random;
-end include statements
-# {{{ new
+use Moose;
+use MooseX::Params::Validate;
 
-start new
+has 'enabled' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'cwres' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'mirror_from_lst' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'nr_of_mirrors' => ( is => 'rw', isa => 'Int' );
+has 'base_model' => ( is => 'rw', required => 1, isa => 'model' );
+has 'last_est_complete' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'niter_eonly' => ( is => 'rw', isa => 'Maybe[Int]' );
+
+sub BUILD
 {
+	my $this  = shift;
+	my %parm  = @_;
+
   my $base_model = $this->base_model;
   
   my $prob_num;
 
-  if( $this -> cwres and not $base_model -> is_run ){
+  if( $this -> cwres and not $base_model->is_run ){
     croak('To create mirror plots for cwres tables, you must have run the model with cwres separately' );
   }
 
@@ -90,7 +99,7 @@ start new
       my $table_file_names = $base_model -> table_names( problem_numbers => [1] );    
 
       for( my $i; $i < @{$table_file_names -> [0]}; $i++ ){
-	$table_file_names -> [0] -> [$i] =~ s/(.*)(\d+)(.*)/$1$2sim$3/;
+				$table_file_names -> [0] -> [$i] =~ s/(.*)(\d+)(.*)/$1$2sim$3/;
       }
       
       $base_model -> table_names( new_names => $table_file_names,
@@ -108,22 +117,22 @@ start new
     
   } else {
     
-    my $problems = $#{$base_model -> problems};
+    my $problems = $#{$base_model->problems};
     
     my $sh_mod = model::shrinkage_module -> new ( nomegas => $base_model -> nomegas -> [0],
 						  directory => $base_model -> directory(),
 						  problem_number => ($problems+2) );
 
-    
-    $sh_mod -> disable();
 
-    $base_model -> add_problem( init_data => { prob_arr => ['$PROB'],
-					       shrinkage_module => $sh_mod });
+    $sh_mod->disable();
+
+    $base_model->add_problem( init_data => { prob_arr => ['$PROB'], shrinkage_module => $sh_mod });
 
 		$base_model->active_problems([]) unless defined $base_model->active_problems;
     push( @{$base_model->active_problems}, 1 );
-    
-    push( @{$base_model->{'datas'}}, $base_model->datas->[0] );		# FIXME: To be changed when Moose is used
+
+		$base_model->datas([]) unless defined $base_model->datas;
+    push( @{$base_model->datas}, $base_model->datas->[0] );
 
     # 1. Add msfo to $estimation
 
@@ -226,6 +235,8 @@ start new
 					   niter_eonly => $this->niter_eonly,
 					   last_est_complete => $this->last_est_complete);
 }
-end new
 
-# }}}
+
+no Moose;
+__PACKAGE__->meta->make_immutable;
+1;

@@ -151,7 +151,6 @@ DIALIBFILES=debug.pm \
 	data/individual.pm \
 	data.pm \
 	table_file.pm \
-	model/mirror_plot_module.pm \
 	model/problem.pm \
 	output/problem/subproblem.pm \
 	output/problem.pm \
