@@ -51,6 +51,13 @@ sub bin_auto
 }
 
 
+# A portable infinity.
+sub inf
+{
+	return 9**9**9;
+}
+
+
 sub chooseK
 {
 #   CHOOSEK Function that determines the apppropriate number of bins
@@ -146,7 +153,7 @@ sub chooseK
 		if ($obj != 0) {
 			$index = $CH / $obj;
 		} else {
-			$index = 'inf';
+			$index = inf;
 		}
 
 		#determine largest index and best K so far
@@ -156,7 +163,7 @@ sub chooseK
 			$bestBinEdges = $binEdges;
 		}
 
-		last if ($index eq 'inf');
+		last if ($index == inf);
 	}
 
 	print "\n";
@@ -392,13 +399,13 @@ sub firstMethod
 			if (scalar(@extraction) > 0) {
 				$phi[$i] = min(\@extraction);
 			} else {
-				$phi[$i] = 'inf';
+				$phi[$i] = inf;
 			}
 		}
 
 		# Set all unset phi values to the min of its neighbours:
 		for (my $i = 1; $i < $numberOfUniqueIdv; $i++) {
-			if ($phi[$i] == 'inf') {
+			if ($phi[$i] == inf) {
 				$phi[$i] = min($phi[$i - 1], $phi[$i + 1]);
 			}
 		}
@@ -468,12 +475,12 @@ sub firstMethod
 #           left or to the right.
 
 	my @f;
-	$f[0] = [ ('inf') x $K ];
-	$f[1] = [ ('inf') x $K ];
-	$f[2] = [ ('inf') x $K ];
+	$f[0] = [ (inf) x $K ];
+	$f[1] = [ (inf) x $K ];
+	$f[2] = [ (inf) x $K ];
 
-	my $negB = [ ('inf') x $K ];
-	my $dfdx = [ ('inf') x $K ];
+	my $negB = [ (inf) x $K ];
+	my $dfdx = [ (inf) x $K ];
 
 	my $negBLeft;
 	my $negBRight;
@@ -572,7 +579,7 @@ sub firstMethod
 	my $stopCriteria = 1;
 
 	foreach (@$dfdx) {				# stopCriteria = all(dfdx==inf);
-		if ($_ != 'inf') {
+		if ($_ != inf) {
 			$stopCriteria = 0;
 			last;
 		}
@@ -626,11 +633,11 @@ sub firstMethod
  		}
 
 		# This edge is locally optimal for now so we mark this in f and dfdx
-		$f[0][$edi] = 'inf';
+		$f[0][$edi] = inf;
 		$f[1][$edi] = $minPOF;
-		$f[2][$edi] = 'inf';
+		$f[2][$edi] = inf;
 
-		$$dfdx[$edi] = 'inf';
+		$$dfdx[$edi] = inf;
 
 		# Update iteration number:
 		$iteration++;
@@ -638,7 +645,7 @@ sub firstMethod
 		# Update stop criteria
 		$stopCriteria = 1;
 		foreach (@$dfdx) {
-			if ($_ != 'inf') {
+			if ($_ != inf) {
 				$stopCriteria = 0;
 				last;
 			}
@@ -660,30 +667,30 @@ sub firstMethod
 
 			# How much the objective function decreases if a new bin edge is
 			# placed between bin edge K and K+1
-			$addDecrease = [ ('-inf') x $K ];
+			$addDecrease = [ (-inf) x $K ];
 
 			# The Part of the Objective Function for the added bin edge: 
-			my $addPOF = [ ('inf') x $K ];
+			my $addPOF = [ (inf) x $K ];
 
 			# The contribution to the between bin variability from the new bin 
 			# to the left of the addded bin edge:
-			my $newNegBLeft = [ ('inf') x $K ];
+			my $newNegBLeft = [ (inf) x $K ];
 
 			# The contribution to the between bin variability from the new bin 
 			# to the right of the addded bin edge:
-			my $newNegBRight = [ ('inf') x $K ];
+			my $newNegBRight = [ (inf) x $K ];
 
 			# The optimal position (in unqiue idv index) for the new bin edges:
 			my $addEdgeIndex = [ (0) x $K ];
 
 			# How much the objective function increases if a bin edge is
 			# removed:
-			my $removeIncrease = [ ('inf') x ($K - 1) ];
+			my $removeIncrease = [ (inf) x ($K - 1) ];
 
 			# The contribution to the between bin variability from the new bin 
 			# given by merging the bin to the left and to the right of the bin 
 			# edge removed:
-			my $removePOF = [ ('inf') x $K ];
+			my $removePOF = [ (inf) x $K ];
 
 			###################################################################
 
@@ -695,7 +702,7 @@ sub firstMethod
 
 			# Continue as long as there is any allowed place to insert a new
 			# bin edge:
-			if (any { $_ > -'inf' } @$addDecrease) {
+			if (any { $_ > -inf } @$addDecrease) {
 
 				# Calculate the increase of the objective function when
 				# removing any of the current bin edges:
@@ -1352,8 +1359,8 @@ sub calcPOF
 		# allowed, the value Inf will be returned for negB instead.
 
 		# Initialize negB variables of same length as loopRange
-		@negBleft = ('inf') x scalar(@$loopRange);
-		@negBright = ('inf') x scalar(@$loopRange);
+		@negBleft = (inf) x scalar(@$loopRange);
+		@negBright = (inf) x scalar(@$loopRange);
 
 		# Then assign their values:
 		for (my $i = 0; $i < @$POFLeft; $i++) {
@@ -1491,10 +1498,10 @@ sub calcAD
 		# We set the following variables to -inf and inf to be able 
 		# to recognize that the bin edge could not be placed:
 
-		$addDecrease = '-inf';
-		$newPOF = 'inf';
-		$negBLeft_result = 'inf';
-		$negBRight_result = 'inf';
+		$addDecrease = -inf;
+		$newPOF = inf;
+		$negBLeft_result = inf;
+		$negBRight_result = inf;
 		$edgeIndex = 0;
 	}
 
