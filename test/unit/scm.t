@@ -168,4 +168,35 @@ foreach my $key1 (keys %{$hash1_answer}){
 rmtree([ "./$dir" ]);
 
 
+$file = file -> new( name => 'config_nostep.scm', path => $scm_file_dir );
+$config_file = 'tool::scm::config_file' -> new ( file => $file );
+
+$models_array = [ model -> new ( filename           => $scm_file_dir.'/pheno_missing_9999.mod',
+								 missing_data_token => 9999,
+								 target             => 'disk' ) ] ;
+
+$scm = tool::scm ->  new ( nmfe =>1,
+						   models	=> $models_array,
+						   missing_data_token => 9999,
+						   directory => $dir,
+						   lst_file => $scm_file_dir.'/pheno_with_cov.lst',
+						   config_file => $config_file,
+						   both_directions => 0);
+
+
+$h1=get_stats(); #use same dir name (global $dir)
+
+#use same answers, pattern of missing data should not affect stats in this case
+$hash1_answer->{'CVD2'}->{'median'}=0;
+$hash1_answer->{'APGR'}->{'mean'}='  6.10';
+$hash1_answer->{'APGR'}->{'median'}='  6.00';
+foreach my $key1 (keys %{$hash1_answer}){
+    foreach my $key2 (keys %{$hash1_answer->{$key1}}){
+	cmp_ok($h1->{$key1}->{$key2},'eq',$hash1_answer->{$key1}->{$key2},"$key1 $key2");
+    }
+}
+
+rmtree([ "./$dir" ]);
+
+
 done_testing();

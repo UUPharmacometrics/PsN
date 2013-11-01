@@ -3734,55 +3734,55 @@ end select_best_model
 
 # {{{ print_finish_message
 
-start print_finish_message
-    {
-      my $ui_text;
-      # Log the run
-      $ui_text .= sprintf("%3s",$run+1) . sprintf("%25s",$self->models->[$run]->filename);
-      my $log_text = $run+1 . ',' . $self->models->[$run]->filename . ',';
-      if( $self->verbose or $self->quick_summarize ){
-	foreach my $param ( 'ofv', 'covariance_step_successful', 'minimization_message' ) {
-	  if( $param eq 'minimization_message' ){
-	    $ui_text .= "\n    ---------- Minimization Message ----------\n";
-	  }
-	  if( defined $candidate_model ){
-	    my $ests = $candidate_model -> outputs -> [0] -> $param;
-	    # Loop the problems
-	    for ( my $j = 0; $j < scalar @{$ests}; $j++ ) {
-	      if ( ref( $ests -> [$j][0] ) ne 'ARRAY' ) {
-		$ests -> [$j][0] =~ s/^\s*//;
-		$ests -> [$j][0] =~ s/\s*$//;
-		$log_text .= $ests -> [$j][0] .',';
-		$ui_text .= sprintf("%10s",$ests -> [$j][0]);
-	      } else {
-		
-		# Loop the parameter numbers (skip sub problem level)
-		for ( my $num = 0; $num < scalar @{$ests -> [$j][0]}; $num++ ) {
-		  $log_text .= $ests -> [$j][0][$num] .',';
-		  if( $param eq 'minimization_message' ){
-		    $ui_text .= "    ";
-		  }
-		  $ui_text .= sprintf("%12s",$ests -> [$j][0][$num]);
+	start print_finish_message
+{
+	my $ui_text;
+	# Log the run
+	$ui_text .= sprintf("%3s",$run+1) . sprintf("%25s",$self->models->[$run]->filename);
+	my $log_text = $run+1 . ',' . $self->models->[$run]->filename . ',';
+	if( $self->verbose or $self->quick_summarize and (not $self->clean > 2)){
+		foreach my $param ( 'ofv', 'covariance_step_successful', 'minimization_message' ) {
+			if( $param eq 'minimization_message' ){
+				$ui_text .= "\n    ---------- Minimization Message ----------\n";
+			}
+			if( defined $candidate_model ){
+				my $ests = $candidate_model -> outputs -> [0] -> $param;
+				# Loop the problems
+				for ( my $j = 0; $j < scalar @{$ests}; $j++ ) {
+					if ( ref( $ests -> [$j][0] ) ne 'ARRAY' ) {
+						$ests -> [$j][0] =~ s/^\s*//;
+						$ests -> [$j][0] =~ s/\s*$//;
+						$log_text .= $ests -> [$j][0] .',';
+						$ui_text .= sprintf("%10s",$ests -> [$j][0]);
+					} else {
+						
+						# Loop the parameter numbers (skip sub problem level)
+						for ( my $num = 0; $num < scalar @{$ests -> [$j][0]}; $num++ ) {
+							$log_text .= $ests -> [$j][0][$num] .',';
+							if( $param eq 'minimization_message' ){
+								$ui_text .= "    ";
+							}
+							$ui_text .= sprintf("%12s",$ests -> [$j][0][$num]);
+						}
+					}
+				}
+			}
+			if( $param eq 'minimization_message' ){
+				$ui_text .= "    ------------------------------------------\n\n";
+			}
 		}
-	      }
-	    }
-	  }
-	  if( $param eq 'minimization_message' ){
-	    $ui_text .= "    ------------------------------------------\n\n";
-	  }
-	}
-	ui -> print( category => 'all',
-		     message  => $ui_text,
-		     wrap     => 0,
-		     newline => 0); 
-      }	
+		ui -> print( category => 'all',
+					 message  => $ui_text,
+					 wrap     => 0,
+					 newline => 0); 
+	}	
 
-      open( LOG, ">>".$self->logfile->[0] );
-      print LOG $log_text;
-      print LOG "\n";
-      close LOG;
+	open( LOG, ">>".$self->logfile->[0] );
+	print LOG $log_text;
+	print LOG "\n";
+	close LOG;
 
-    }
+}
 end print_finish_message
 
 # }}}

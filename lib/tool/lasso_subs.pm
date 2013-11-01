@@ -105,12 +105,12 @@ start write_log
 }
 end write_log
 
-start get_categories 
+	start get_categories 
 {
-  my @individuals = @{$data->individuals};
-  my $first_id = @individuals[0];
-  die "data -> factor: No individuals defined in data object based on ",
-  $data->filename,"\n" unless defined $first_id;
+	my @individuals = @{$data->individuals};
+	my $first_id = @individuals[0];
+	die "data -> factor: No individuals defined in data object based on ",
+	$data->filename,"\n" unless defined $first_id;
 #  unless(defined($column_head) && 
 #	 defined($data->{'column_head_indices'}{$column_head}))  {
 #    croak("Error in data -> get_categories: unknown column:".
@@ -118,25 +118,25 @@ start get_categories
 #  } else {
 #    $column = $data -> {'column_head_indices'}{$column_head};
 #  }
-  
-  
-  my $type;
 	
-  foreach my $individual ( @individuals ) {
-    my $ifactors = $individual -> subject_data;
-    
-    for(my $i=0; $i<=$#{$ifactors}; $i++ ) {
-      my @recor = split(',', $ifactors -> [$i], $column_number+1);
-      $type = $recor[$column_number-1];
-      #Weight the individual data
-      my $value = 1/($#{$ifactors}+1);
-      if (exists $categories{$type}){
-	$categories{$type}+=$value;
-      } else {
-	$categories{$type}=$value;
-      }
-    }
-  }
+	
+	my $type;
+	
+	foreach my $individual ( @individuals ) {
+		my $ifactors = $individual -> subject_data;
+		
+		for(my $i=0; $i<=$#{$ifactors}; $i++ ) {
+			my @recor = split(',', $ifactors -> [$i], $column_number+1);
+			$type = $recor[$column_number-1];
+			#Weight the individual data
+			my $value = 1/($#{$ifactors}+1);
+			if (exists $categories{$type}){
+				$categories{$type}+=$value;
+			} else {
+				$categories{$type}=$value;
+			}
+		}
+	}
 }
 end get_categories
 

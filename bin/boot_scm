@@ -506,13 +506,14 @@ if ($do_filtering){
   print "\n";
   if ( defined $idcolumn ) {
     $full_filtered_data = data -> new( 
-      idcolumn             => $idcolumn,
-      filename             => $datafile,
-      ignoresign           => $ignoresign,
-      directory            => $filtered_data_model -> directory,
-      ignore_missing_files => 0,
-      skip_parsing         => 0,
-      target               => 'mem');
+		idcolumn             => $idcolumn,
+		filename             => $datafile,
+		missing_data_token => $filtered_data_model->missing_data_token,
+		ignoresign           => $ignoresign,
+		directory            => $filtered_data_model -> directory,
+		ignore_missing_files => 0,
+		skip_parsing         => 0,
+		target               => 'mem');
     #must copy model here and set $model to copy
     my $newmodel = $model -> copy(filename => $preprocessdir.'/orig_model_filtered_data.mod',
 				  copy_data => 0, copy_output => 0,
@@ -692,11 +693,12 @@ if ((not $config_file->linearize) or $options{'methodA'}){
   
   #in derivatives_covariates.dta ID is always 1, different set of columns entirely
   $the_data = data -> new(directory => $deriv_dir,
-			  filename =>'derivatives_covariates.dta',
-			  target => 'mem',
-			  idcolumn => 1, 
-			  ignore_missing_files => 0,
-			  skip_parsing => 0);
+						  filename =>'derivatives_covariates.dta',
+						  missing_data_token => $self->missing_data_token,
+						  target => 'mem',
+						  idcolumn => 1, 
+						  ignore_missing_files => 0,
+						  skip_parsing => 0);
   print "\n";
 }
 

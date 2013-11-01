@@ -31,7 +31,7 @@
 # {{{ include
 
 start include statements
-use Carp;
+	use Carp;
 use strict;
 use Cwd;
 use tool::modelfit;
@@ -45,8 +45,8 @@ end include statements
 
 # {{{ new
 
-start new
-      {
+	start new
+{
 	# <I>test_relations and p_value</I> can be specified
 	# as either a reference to a hash or as a reference to an
 	# array (for different settings for each model).
@@ -56,31 +56,31 @@ start new
 	my $do_filtering=0;
 #	print "new  ".$this->search_direction." ".$this->p_value."\n";
 	if( defined $this -> config_file_name or defined $this -> config_file ){
-	  #only true when scm is started
-	  $this -> read_config_file;
+		#only true when scm is started
+		$this -> read_config_file;
 
-	  croak("You need to specify \'models'\ either as argument or in the config file.")
-	      unless ( defined $this -> models and scalar @{$this -> models} > 0 );
+		croak("You need to specify \'models'\ either as argument or in the config file.")
+			unless ( defined $this -> models and scalar @{$this -> models} > 0 );
 
-	  if (scalar(@{$this -> models->[0]->problems()})>1){
-	      ui -> print( category => 'all',
-			   message  => "\nWarning:\n".
-			   "The scm program has not been tested with models with more than one\$PROBLEM.\n".
-			   "Check results carefully.",
-			   newline => 1);
-	  }
-	  unless (defined $this->derivatives_data or $this->skip_filtering){
-	    my @check_list;
-	    my $ignorelist = $this -> models->[0]-> get_option_value(record_name=>'data',
-									 option_name=>'IGNORE',
-									 option_index => 'all');
-	    push (@check_list,@{$ignorelist}) if (defined $ignorelist);
-	    my $accept_list = $this -> models->[0]-> get_option_value(record_name=>'data',
-									  option_name=>'ACCEPT',
-									  option_index => 'all');
-	    push (@check_list,@{$accept_list}) if (defined $accept_list);
-	    foreach my $val (@check_list){
-	      unless (length($val)==1){
+		if (scalar(@{$this -> models->[0]->problems()})>1){
+			ui -> print( category => 'all',
+						 message  => "\nWarning:\n".
+						 "The scm program has not been tested with models with more than one\$PROBLEM.\n".
+						 "Check results carefully.",
+						 newline => 1);
+		}
+		unless (defined $this->derivatives_data or $this->skip_filtering){
+			my @check_list;
+			my $ignorelist = $this -> models->[0]-> get_option_value(record_name=>'data',
+																	 option_name=>'IGNORE',
+																	 option_index => 'all');
+			push (@check_list,@{$ignorelist}) if (defined $ignorelist);
+			my $accept_list = $this -> models->[0]-> get_option_value(record_name=>'data',
+																	  option_name=>'ACCEPT',
+																	  option_index => 'all');
+			push (@check_list,@{$accept_list}) if (defined $accept_list);
+			foreach my $val (@check_list){
+				unless (length($val)==1){
 #	      print "\nWarning:\n".
 #		  "IGNORE/ACCEPT statement found in \$DATA.\n".
 #		  "scm program cannot at present handle IGNORE or ACCEPT\n".
@@ -88,70 +88,70 @@ start new
 #		  "covariates, meaning that e.g. centering will not be done\n".
 #		  "correctly. It is recommended to edit the datafile\n".
 #		  "manually instead, before running scm.\n\n";
-		ui -> print( category => 'scm',
-			     message  => "\nWarning:\n".
-			     "IGNORE/ACCEPT statement found in \$DATA.\n".
-			     "Will try to filter data automatically before computing statistics",
-			     newline => 1);
-		
-		$do_filtering=1;
-		
-		last;
-	      } 
-	    }
-	  }
+					ui -> print( category => 'scm',
+								 message  => "\nWarning:\n".
+								 "IGNORE/ACCEPT statement found in \$DATA.\n".
+								 "Will try to filter data automatically before computing statistics",
+								 newline => 1);
+					
+					$do_filtering=1;
+					
+					last;
+				} 
+			}
+		}
 	}
 
 	# This block is a duplicate of the settign of the 'directory' attribute in tool.pm
 	# It needs to be here too to make sure that the correct directory is set when
 	# resuming an scm.
 	if ( defined $parm{'directory'} ) {
-	  my $dummy;
-	  my $dir;
-	  ( $dir, $dummy ) = OSspecific::absolute_path( $parm{'directory'}, '');
-	  $this -> directory($dir);
+		my $dummy;
+		my $dir;
+		( $dir, $dummy ) = OSspecific::absolute_path( $parm{'directory'}, '');
+		$this -> directory($dir);
 	}
 	
 
 	if ($this->epsilon() == 1){
-	  croak("The option -error cannot be used when option -epsilon is set. ")  if
-	      ( defined $this -> error);
+		croak("The option -error cannot be used when option -epsilon is set. ")  if
+			( defined $this -> error);
 	}else{
-	  croak("The option -error must be used when option -epsilon is not set. ")  unless
-	      ( defined $this -> error);
+		croak("The option -error must be used when option -epsilon is not set. ")  unless
+			( defined $this -> error);
 	}
 
 	if (defined $this->error){
-	  croak("Unknown error form ".$this->error)  unless 
-	      ( $this -> error eq 'add' or 
-		$this -> error eq 'prop' or
-		$this -> error eq 'propadd' or
-		$this -> error eq 'exp' or
-		$this -> error eq 'user');
+		croak("Unknown error form ".$this->error)  unless 
+			( $this -> error eq 'add' or 
+			  $this -> error eq 'prop' or
+			  $this -> error eq 'propadd' or
+			  $this -> error eq 'exp' or
+			  $this -> error eq 'user');
 	}
 
 	if ($this -> error eq 'user'){
-	  unless ( defined $this -> error_code() )  {
-	    croak("You need to specify \'error_code'\ either as argument or in the config file ".
-			  "when option -error=user is set." );
-	  }
+		unless ( defined $this -> error_code() )  {
+			croak("You need to specify \'error_code'\ either as argument or in the config file ".
+				  "when option -error=user is set." );
+		}
 	}
 
 	if ($this -> step_number() == 1 and 
 	    defined $this->derivatives_data){
-	  ui -> print( category => 'scm',
-		       message  => "Warning: the program will not check the contents of the ".
-		       "derivatives data file ".$this->derivatives_data.". If columns are ".
-		       "missing NMtran will fail, and if values are incorrect the scm results ".
-		       "will be incorrect.",newline => 1);
+		ui -> print( category => 'scm',
+					 message  => "Warning: the program will not check the contents of the ".
+					 "derivatives data file ".$this->derivatives_data.". If columns are ".
+					 "missing NMtran will fail, and if values are incorrect the scm results ".
+					 "will be incorrect.",newline => 1);
 	}
 
 	$this->have_Math_CDF(1) if eval('require Statistics::Distributions'); #enough, now loaded
 	if ( lc($this -> gof()) eq 'p_value' and (not $this->have_Math_CDF())) {
 	    $this -> gof('ofv');
 	    ui -> print( category => 'scm',
-			 message  => "Warning: gof = p_value (the default) cannot be used when ".
-			 "Perl module Statistics::Distributions is not installed. Changed to gof = ofv",newline => 1);
+					 message  => "Warning: gof = p_value (the default) cannot be used when ".
+					 "Perl module Statistics::Distributions is not installed. Changed to gof = ofv",newline => 1);
 	}
 
 
@@ -160,11 +160,11 @@ start new
 	    $this -> p_value(0.05);
 	}
 	croak("Option p_value (p_forward/p_backward) must be either ".
-		   "0.05 (default), 0.01, 0.005 or 0.001 when Perl module Statistics::Distributions is ".
-		   "not installed")
+		  "0.05 (default), 0.01, 0.005 or 0.001 when Perl module Statistics::Distributions is ".
+		  "not installed")
 	    unless ($this->p_value() == 0.05 or $this->p_value() == 0.01 or
-		    $this->p_value() == 0.005 or $this->p_value() == 0.001
-		    or $this->have_Math_CDF() );
+				$this->p_value() == 0.005 or $this->p_value() == 0.001
+				or $this->have_Math_CDF() );
 	
 	croak("Option p_value (p_forward/p_backward) must be in the range 0-1")
 	    unless ($this->p_value >= 0 and $this->p_value <=1);
@@ -172,33 +172,33 @@ start new
 	
 
 	if (scalar(@{$this -> models}) > 1){
-	  if ($this->linearize){
-	    croak("scm object with option linearize can only be generated with a single model");
-	  }else{
-	    ui -> print( category => 'scm',
-			 message  =>"Warning: scm object generated with more than one model, not tested.",
-		newline => 1);
-	  }
+		if ($this->linearize){
+			croak("scm object with option linearize can only be generated with a single model");
+		}else{
+			ui -> print( category => 'scm',
+						 message  =>"Warning: scm object generated with more than one model, not tested.",
+						 newline => 1);
+		}
 	}
 	foreach my $model ( @{$this -> models} ) {
-	  foreach my $problem (@{$model->problems()}){
-	    if (defined $problem->nwpri_ntheta()){
-	      ui -> print( category => 'scm',
-			   message => "Warning: scm does not support \$PRIOR NWPRI.",
-			   newline => 1);
-	      last;
-	    }
-	  }
+		foreach my $problem (@{$model->problems()}){
+			if (defined $problem->nwpri_ntheta()){
+				ui -> print( category => 'scm',
+							 message => "Warning: scm does not support \$PRIOR NWPRI.",
+							 newline => 1);
+				last;
+			}
+		}
 	}
 	foreach my $par ( sort keys %{$this -> test_relations} ){
 	    $this->sum_covariates_hash->{$par}=0;
 	}
 	if (defined $this->logit and scalar(@{$this->logit()})>0){
-	  foreach my $par (@{$this->logit()}){
-	    croak("Cannot set logit for $par unless it is defined in test_relations")
-		unless (defined $this->sum_covariates_hash->{$par});
-	    $this->sum_covariates_hash->{$par}=1;
-	  }
+		foreach my $par (@{$this->logit()}){
+			croak("Cannot set logit for $par unless it is defined in test_relations")
+				unless (defined $this->sum_covariates_hash->{$par});
+			$this->sum_covariates_hash->{$par}=1;
+		}
 	}
 
 	#skipped numbering when more than one this->models
@@ -206,12 +206,12 @@ start new
 	    my @new_files=();
 	    my @old_files = @{$this->$accessor};
 	    for (my $i=0; $i < scalar(@old_files); $i++){
-		my $name;
-		my $ldir;
-		#will this move files that already have global path???
-		( $ldir, $name ) =
-		    OSspecific::absolute_path( $this ->directory(), $old_files[$i] );
-		push(@new_files,$ldir.$name) ;
+			my $name;
+			my $ldir;
+			#will this move files that already have global path???
+			( $ldir, $name ) =
+				OSspecific::absolute_path( $this ->directory(), $old_files[$i] );
+			push(@new_files,$ldir.$name) ;
 	    }
 	    $this->$accessor(\@new_files);
 	}	
@@ -222,52 +222,52 @@ start new
 	}	
 
 	unless ( defined $this -> test_relations ) {
-	  croak("You need to specify \'test_relations'\ either as argument or in the config file." );
+		croak("You need to specify \'test_relations'\ either as argument or in the config file." );
 	}
 	unless ( defined( $this -> categorical_covariates() ) 
-		 or defined( $this -> continuous_covariates() )) {
-	  croak("You must specify either " .
-			"categorical and/or continuous covariates either as argument or in the config file" );
+			 or defined( $this -> continuous_covariates() )) {
+		croak("You must specify either " .
+			  "categorical and/or continuous covariates either as argument or in the config file" );
 	}
 
 	if (defined $this->time_varying() and scalar(@{$this->time_varying()})>0){
-	  my %tmphash;
-	  foreach my $par ( sort keys %{$this -> test_relations()} ){
+		my %tmphash;
+		foreach my $par ( sort keys %{$this -> test_relations()} ){
 #	    ui -> print( category => 'all',
 #			 message  => "Warning: The derivatives needed for computing medians for time-varying ".
 #			 "covariates will be taken from an estimation of the input model without the relations ".
 #			 "defined in included_relations")
 #		if ( exists $this -> included_relations->{$par});
-	    foreach my $cov ( @{$this -> test_relations()->{$par}} ){
-	      $tmphash{$cov}=0;
-	    }
-	  }
+			foreach my $cov ( @{$this -> test_relations()->{$par}} ){
+				$tmphash{$cov}=0;
+			}
+		}
 
-	  my @continuous = defined $this -> continuous_covariates() ? @{$this -> continuous_covariates()} : ();
-	  foreach my $cov ( @continuous) {
-	    $tmphash{$cov}=1;
-	  }
+		my @continuous = defined $this -> continuous_covariates() ? @{$this -> continuous_covariates()} : ();
+		foreach my $cov ( @continuous) {
+			$tmphash{$cov}=1;
+		}
 
-	  foreach my $cov (@{$this->time_varying()}){
-	    unless (defined $tmphash{$cov} and ($tmphash{$cov}==1)){
-	      if ($this->linearize()){
-		croak("Cannot set time_varying for $cov unless it is defined in test_relations and continuous. With -linearize bivariate time-varying categorical covariates must be ".
-			   "defined as continuous");
-	      }else{
-		croak("Cannot set time_varying for $cov unless it is defined in test_relations and continuous. When -linearize is not set categorical covariates do not need to be ".
-			   "defined as time varying, scm will work anyway.");
-		
-	      }
-	    }
-	  }
+		foreach my $cov (@{$this->time_varying()}){
+			unless (defined $tmphash{$cov} and ($tmphash{$cov}==1)){
+				if ($this->linearize()){
+					croak("Cannot set time_varying for $cov unless it is defined in test_relations and continuous. With -linearize bivariate time-varying categorical covariates must be ".
+						  "defined as continuous");
+				}else{
+					croak("Cannot set time_varying for $cov unless it is defined in test_relations and continuous. When -linearize is not set categorical covariates do not need to be ".
+						  "defined as time varying, scm will work anyway.");
+					
+				}
+			}
+		}
 	}
 
 	# Check Errors and init
 	unless ( $this -> search_direction eq 'forward' or
-		 $this -> search_direction eq 'backward' or
-		 $this -> search_direction eq 'both' ) {
-	  croak("You must specify the search direction ".
-			"either as \"forward\" or \"backward\". Default is \"forward\"." );
+			 $this -> search_direction eq 'backward' or
+			 $this -> search_direction eq 'both' ) {
+		croak("You must specify the search direction ".
+			  "either as \"forward\" or \"backward\". Default is \"forward\"." );
 	}
 
 
@@ -284,46 +284,46 @@ start new
 	    
 	    my @not_found = ();
 	    foreach my $cov ( @continuous, @categorical ) {
-		#check if reserved words
-		if (($cov eq 'PAR') or ($cov eq 'COV')){
-		    croak("PAR and COV are reserved words in scm and must not be ".
-				  "used as name for a covariate.");
-		}
-	      push( @not_found, $cov )
-		  unless ( $this -> models->[0] -> is_option_set( record => 'input',
-								     name => $cov ) );
+			#check if reserved words
+			if (($cov eq 'PAR') or ($cov eq 'COV')){
+				croak("PAR and COV are reserved words in scm and must not be ".
+					  "used as name for a covariate.");
+			}
+			push( @not_found, $cov )
+				unless ( $this -> models->[0] -> is_option_set( record => 'input',
+																name => $cov ) );
 	    }
 	    if ( scalar @not_found ){
-		croak("Covariate(s) [ ". join(',', @not_found). " ] specified is not defined in " . 
-			       $this ->  models->[0] -> filename );
+			croak("Covariate(s) [ ". join(',', @not_found). " ] specified is not defined in " . 
+				  $this ->  models->[0] -> filename );
 	    }
 	}
 	
 	if ( defined $this -> test_relations() ) {
 	    foreach my $par ( sort keys %{$this -> test_relations()} ){
-		#check if reserved words
-		if (($par eq 'PAR') or ($par eq 'COV')){
-		    croak("PAR and COV are reserved words in scm ".
-				  "and must not be used as name for a parameter.");
-		}
+			#check if reserved words
+			if (($par eq 'PAR') or ($par eq 'COV')){
+				croak("PAR and COV are reserved words in scm ".
+					  "and must not be used as name for a parameter.");
+			}
 
-		my @not_found = ();
-		foreach my $cov ( @{$this -> test_relations()->{$par}} ){
-		    my @continuous = defined $this -> continuous_covariates() ? @{$this -> continuous_covariates()} : ();
-		    my @categorical = defined $this -> categorical_covariates() ? @{$this -> categorical_covariates()} : ();
-		    
-		    my $covariate_test = 0;
-		    foreach my $specified_cov ( @continuous, @categorical ) {
-			$covariate_test = 1 and last if( $cov eq $specified_cov );
-		    }
-		    push( @not_found, $cov ) unless ( $covariate_test );
-		}
-		if ( scalar @not_found and
-		     ( not defined $this -> models->[0] -> extra_files or 
-		       scalar @{$this -> models->[0] -> extra_files} == 0 ) ) {
-		    croak("Covariate(s) [ " . join( ',', @not_found ). " ] specified for parameter $par " . 
-				  "in test_relations is not defined as a covariate" );
-		}
+			my @not_found = ();
+			foreach my $cov ( @{$this -> test_relations()->{$par}} ){
+				my @continuous = defined $this -> continuous_covariates() ? @{$this -> continuous_covariates()} : ();
+				my @categorical = defined $this -> categorical_covariates() ? @{$this -> categorical_covariates()} : ();
+				
+				my $covariate_test = 0;
+				foreach my $specified_cov ( @continuous, @categorical ) {
+					$covariate_test = 1 and last if( $cov eq $specified_cov );
+				}
+				push( @not_found, $cov ) unless ( $covariate_test );
+			}
+			if ( scalar @not_found and
+				 ( not defined $this -> models->[0] -> extra_files or 
+				   scalar @{$this -> models->[0] -> extra_files} == 0 ) ) {
+				croak("Covariate(s) [ " . join( ',', @not_found ). " ] specified for parameter $par " . 
+					  "in test_relations is not defined as a covariate" );
+			}
 	    }
 	}
 
@@ -336,7 +336,7 @@ start new
 	    open( STAT, '<'.$this -> covariate_statistics_file );
 	    my $tmp;
 	    for ( <STAT> ) {
-		$tmp = $tmp.$_;
+			$tmp = $tmp.$_;
 	    }
 	    close( STAT );
 	    my $VAR1;
@@ -347,196 +347,197 @@ start new
 
 	    my $model;
 	    if ($do_filtering or 
-		(defined $this->time_varying() and 
-		 scalar(@{$this->time_varying()})>0)){
-		$model = $this->preprocess_data(model=>$this -> models->[0],
-						directory => $this ->directory,
-						test_relations => $this->test_relations(),
-						time_varying => $this->time_varying(),
-						filter => $do_filtering);
-		croak('preprocessing data failed to return a model') unless (defined $model);
+			(defined $this->time_varying() and 
+			 scalar(@{$this->time_varying()})>0)){
+			$model = $this->preprocess_data(model=>$this -> models->[0],
+											directory => $this ->directory,
+											test_relations => $this->test_relations(),
+											time_varying => $this->time_varying(),
+											filter => $do_filtering);
+			croak('preprocessing data failed to return a model') unless (defined $model);
 #	      print "filtered data use\n";
 	    }else{
 #	      print "full data use\n";
-		$model = $this -> models -> [0];
+			$model = $this -> models -> [0];
 	    }
 	    # Assume one $PROBLEM
 	    my %model_column_numbers; 
-
+		
 	    my $data = $model -> datas -> [0];
 	    if (defined $this->derivatives_data()){
-		#compute stats based on this file instead
+			#compute stats based on this file instead
 #	      ui -> print( category => 'all',
 #			   message  => "Computing covariate statistics based on ".$this->derivatives_data(),
 #			   newline  => 1);
-		my $ignoresign = defined $model -> ignoresigns ? $model->ignoresigns->[0]: undef;
-		
-		$data = data ->
-		    new( filename             => $this->derivatives_data(),
-			 ignoresign           => $ignoresign,
-			 #directory            => $this -> directory,
-			 ignore_missing_files => 0,
-			 skip_parsing         => 0,
-			 target               => 'mem');
-
-		#set header from this data, must have column headers otherwise die
-		if (defined $data->column_head_indices and scalar(keys %{$data->column_head_indices})>0){ 
-		    %model_column_numbers=%{$data->column_head_indices};
-		}else{
-		    croak("When using option derivatives_data (done implicitly in boot_scm) the given file must have a header.");
-		}
-		
-	    }else{
-		#use the model header when computing statistics
-		my $model_col_num = 1;
-		if( defined $model->problems()->[0] -> inputs and 
-		    defined $model->problems()->[0] -> inputs -> [0] -> options ) {
-		    foreach my $option ( @{$model->problems()->[0] -> inputs -> [0] -> options} ) {
-			if (($option->name eq 'DROP' or $option->name eq 'SKIP') and (defined $option->value)){
-			    $model_column_numbers{$option -> value}= $model_col_num;
+			my $ignoresign = defined $model -> ignoresigns ? $model->ignoresigns->[0]: undef;
+			
+			$data = data ->
+				new( filename             => $this->derivatives_data(),
+					 ignoresign           => $ignoresign,
+					 missing_data_token => $this->missing_data_token,
+					 #directory            => $this -> directory,
+					 ignore_missing_files => 0,
+					 skip_parsing         => 0,
+					 target               => 'mem');
+			
+			#set header from this data, must have column headers otherwise die
+			if (defined $data->column_head_indices and scalar(keys %{$data->column_head_indices})>0){ 
+				%model_column_numbers=%{$data->column_head_indices};
 			}else{
-			    $model_column_numbers{$option -> name}= $model_col_num;
+				croak("When using option derivatives_data (done implicitly in boot_scm) the given file must have a header.");
 			}
-			$model_col_num++;
-		    }
-		}
+			
+	    }else{
+			#use the model header when computing statistics
+			my $model_col_num = 1;
+			if( defined $model->problems()->[0] -> inputs and 
+				defined $model->problems()->[0] -> inputs -> [0] -> options ) {
+				foreach my $option ( @{$model->problems()->[0] -> inputs -> [0] -> options} ) {
+					if (($option->name eq 'DROP' or $option->name eq 'SKIP') and (defined $option->value)){
+						$model_column_numbers{$option -> value}= $model_col_num;
+					}else{
+						$model_column_numbers{$option -> name}= $model_col_num;
+					}
+					$model_col_num++;
+				}
+			}
 	    }
 	    
 	    unless ( defined $this -> covariate_statistics and scalar(keys %{$this -> covariate_statistics})>0) {
-		$this -> covariate_statistics({});
+			$this -> covariate_statistics({});
 #		print "set target mem\n";
-		$data -> target('mem');
-		unless( defined $data->individuals()  and (scalar(@{$data->individuals()})>0)){
-		    $data -> synchronize();
-		}
-		$data->synced(1); #we do not want to write to disk later
-
-		if ( defined $this -> continuous_covariates() ) {
-		    ui -> print( category => 'scm',
-				 message  => "Calculating continuous covariate statistics",
-				 newline => 1);
-
-		    my $ncov = scalar @{$this -> continuous_covariates()};
-		    my $status_bar = status_bar -> new( steps => $ncov );
-		    ui -> print( category => 'scm',
-				 message  => $status_bar -> print_step(),
-				 newline  => 0);
-		    
-		    for ( my $j = 1; $j <= $ncov; $j++ ) {
-			my $cov = $this -> continuous_covariates() -> [$j-1];
-			# Factors
-			unless (defined $model_column_numbers{$cov}){
-			    croak("Could not find continuous covariate $cov in \$INPUT of model:\n".
-					join(' ',(keys %model_column_numbers)));
-			    
+			$data -> target('mem');
+			unless( defined $data->individuals()  and (scalar(@{$data->individuals()})>0)){
+				$data -> synchronize();
 			}
-			$this -> covariate_statistics->{$cov}{'factors'} =
-			    $data -> factors( column => $model_column_numbers{$cov},
-					      unique_in_individual => 0,
-					      return_occurences => 1 );
-			# Statistics
-			$this -> covariate_statistics->{$cov}{'have_missing_data'} =
-			    $data -> have_missing_data( column => $model_column_numbers{$cov} );
-			
-			( $this -> covariate_statistics->{$cov}{'median'},
-			  $this -> covariate_statistics->{$cov}{'min'},
-			  $this -> covariate_statistics->{$cov}{'max'},
-			  $this -> covariate_statistics->{$cov}{'mean'} ) =
-			      $this -> calculate_continuous_statistics( data => $data,
-									covariate => $cov,
-									column_number => $model_column_numbers{$cov} );
+			$data->synced(1); #we do not want to write to disk later
 
-			#this is necessary for xv_scm
-			if (defined $this -> global_covariate_statistics and 
-			    scalar(keys %{$this -> global_covariate_statistics})>0){
+			if ( defined $this -> continuous_covariates() ) {
+				ui -> print( category => 'scm',
+							 message  => "Calculating continuous covariate statistics",
+							 newline => 1);
+
+				my $ncov = scalar @{$this -> continuous_covariates()};
+				my $status_bar = status_bar -> new( steps => $ncov );
+				ui -> print( category => 'scm',
+							 message  => $status_bar -> print_step(),
+							 newline  => 0);
+				
+				for ( my $j = 1; $j <= $ncov; $j++ ) {
+					my $cov = $this -> continuous_covariates() -> [$j-1];
+					# Factors
+					unless (defined $model_column_numbers{$cov}){
+						croak("Could not find continuous covariate $cov in \$INPUT of model:\n".
+							  join(' ',(keys %model_column_numbers)));
+						
+					}
+					$this -> covariate_statistics->{$cov}{'factors'} =
+						$data -> factors( column => $model_column_numbers{$cov},
+										  unique_in_individual => 0,
+										  return_occurences => 1 );
+					# Statistics
+					$this -> covariate_statistics->{$cov}{'have_missing_data'} =
+						$data -> have_missing_data( column => $model_column_numbers{$cov} );
+					
+					( $this -> covariate_statistics->{$cov}{'median'},
+					  $this -> covariate_statistics->{$cov}{'min'},
+					  $this -> covariate_statistics->{$cov}{'max'},
+					  $this -> covariate_statistics->{$cov}{'mean'} ) =
+						  $this -> calculate_continuous_statistics( data => $data,
+																	covariate => $cov,
+																	column_number => $model_column_numbers{$cov} );
+
+					#this is necessary for xv_scm
+					if (defined $this -> global_covariate_statistics and 
+						scalar(keys %{$this -> global_covariate_statistics})>0){
 #		    print "replacing subset max, min, have_missing_data stats with global\n";
-			    $this -> covariate_statistics->{$cov}{'have_missing_data'} = 
-				$this -> global_covariate_statistics->{$cov}{'have_missing_data'};
-			    $this -> covariate_statistics->{$cov}{'min'} = 
-				$this -> global_covariate_statistics->{$cov}{'min'};
-			    $this -> covariate_statistics->{$cov}{'max'} = 
-				$this -> global_covariate_statistics->{$cov}{'max'};
+						$this -> covariate_statistics->{$cov}{'have_missing_data'} = 
+							$this -> global_covariate_statistics->{$cov}{'have_missing_data'};
+						$this -> covariate_statistics->{$cov}{'min'} = 
+							$this -> global_covariate_statistics->{$cov}{'min'};
+						$this -> covariate_statistics->{$cov}{'max'} = 
+							$this -> global_covariate_statistics->{$cov}{'max'};
+					}
+
+
+					#my $nl = $j == $ncov ? "" : "\r"; 
+					if( $status_bar -> tick () ){
+						ui -> print( category => 'scm',
+									 message  => $status_bar -> print_step(),
+									 wrap     => 0,
+									 newline  => 0 );
+					}
+				}
+				ui -> print( category => 'scm',
+							 message  => " ... done",newline => 1 );
 			}
+			if ( defined $this -> categorical_covariates() and scalar(@{$this -> categorical_covariates()})>0) {
+				ui -> print( category => 'scm',
+							 message  => "Calculating categorical covariate statistics",
+							 newline => 1);
+				my $ncov = scalar @{$this -> categorical_covariates()};
+
+				my $status_bar = status_bar -> new( steps => $ncov );
+				ui -> print( category => 'scm',
+							 message  => $status_bar -> print_step(),
+							 newline  => 0);
+				
+				for ( my $j = 1; $j <= $ncov; $j++ ) {
+					my $cov = $this -> categorical_covariates() -> [$j-1];
+					unless (defined $model_column_numbers{$cov}){
+						croak("Could not find categorical covariate $cov in \$INPUT of model:\n".
+							  join(' ',(keys %model_column_numbers)));
+						
+					}
+					# Factors
+					$this -> covariate_statistics->{$cov}{'factors'} =
+						$data -> factors( column => $model_column_numbers{$cov},,
+										  unique_in_individual => 0,
+										  return_occurences => 1 );
+					# Statistics
+					$this -> covariate_statistics->{$cov}{'have_missing_data'} =
+						$data -> have_missing_data( column => $model_column_numbers{$cov} );
+
+					( $this -> covariate_statistics->{$cov}{'median'},
+					  $this -> covariate_statistics->{$cov}{'min'},
+					  $this -> covariate_statistics->{$cov}{'max'} ) =
+						  $this -> calculate_categorical_statistics
+						  ( factors => $this -> covariate_statistics->{$cov}{'factors'},
+							have_missing_data => $this -> covariate_statistics->{$cov}{'have_missing_data'},
+							data => $data,
+							covariate => $cov,
+							column_number => $model_column_numbers{$cov} );
 
 
-			#my $nl = $j == $ncov ? "" : "\r"; 
-			if( $status_bar -> tick () ){
-			    ui -> print( category => 'scm',
-					 message  => $status_bar -> print_step(),
-					 wrap     => 0,
-					 newline  => 0 );
-			}
-		    }
-		    ui -> print( category => 'scm',
-				 message  => " ... done",newline => 1 );
-		}
-		if ( defined $this -> categorical_covariates() and scalar(@{$this -> categorical_covariates()})>0) {
-		    ui -> print( category => 'scm',
-				 message  => "Calculating categorical covariate statistics",
-				 newline => 1);
-		    my $ncov = scalar @{$this -> categorical_covariates()};
-
-		    my $status_bar = status_bar -> new( steps => $ncov );
-		    ui -> print( category => 'scm',
-				 message  => $status_bar -> print_step(),
-				 newline  => 0);
-		    
-		    for ( my $j = 1; $j <= $ncov; $j++ ) {
-			my $cov = $this -> categorical_covariates() -> [$j-1];
-			unless (defined $model_column_numbers{$cov}){
-			    croak("Could not find categorical covariate $cov in \$INPUT of model:\n".
-					join(' ',(keys %model_column_numbers)));
-			    
-			}
-			# Factors
-			$this -> covariate_statistics->{$cov}{'factors'} =
-			    $data -> factors( column => $model_column_numbers{$cov},,
-					      unique_in_individual => 0,
-					      return_occurences => 1 );
-			# Statistics
-			$this -> covariate_statistics->{$cov}{'have_missing_data'} =
-			    $data -> have_missing_data( column => $model_column_numbers{$cov} );
-
-			( $this -> covariate_statistics->{$cov}{'median'},
-			  $this -> covariate_statistics->{$cov}{'min'},
-			  $this -> covariate_statistics->{$cov}{'max'} ) =
-			      $this -> calculate_categorical_statistics
-			      ( factors => $this -> covariate_statistics->{$cov}{'factors'},
-				have_missing_data => $this -> covariate_statistics->{$cov}{'have_missing_data'},
-				data => $data,
-				covariate => $cov,
-				column_number => $model_column_numbers{$cov} );
-
-
-			#this is necessary for xv_scm
-			if (defined $this -> global_covariate_statistics and scalar(keys %{$this ->global_covariate_statistics })>0){
+					#this is necessary for xv_scm
+					if (defined $this -> global_covariate_statistics and scalar(keys %{$this ->global_covariate_statistics })>0){
 #		    print "replacing subset max, min, have_missing_data stats with global\n";
-			    $this -> covariate_statistics->{$cov}{'have_missing_data'} = 
-				$this -> global_covariate_statistics->{$cov}{'have_missing_data'};
-			    $this -> covariate_statistics->{$cov}{'min'} = 
-				$this -> global_covariate_statistics->{$cov}{'min'};
-			    $this -> covariate_statistics->{$cov}{'max'} = 
-				$this -> global_covariate_statistics->{$cov}{'max'};
-			}
+						$this -> covariate_statistics->{$cov}{'have_missing_data'} = 
+							$this -> global_covariate_statistics->{$cov}{'have_missing_data'};
+						$this -> covariate_statistics->{$cov}{'min'} = 
+							$this -> global_covariate_statistics->{$cov}{'min'};
+						$this -> covariate_statistics->{$cov}{'max'} = 
+							$this -> global_covariate_statistics->{$cov}{'max'};
+					}
 
-			
-			if( $status_bar -> tick () ){
-			    ui -> print( category => 'scm',
-					 message  => $status_bar -> print_step(),
-					 wrap     => 0,
-					 newline  => 0 );
+					
+					if( $status_bar -> tick () ){
+						ui -> print( category => 'scm',
+									 message  => $status_bar -> print_step(),
+									 wrap     => 0,
+									 newline  => 0 );
+					}
+				}
+				ui -> print( category => 'scm',
+							 message  => " ... done",
+							 newline => 1);
 			}
-		    }
-		    ui -> print( category => 'scm',
-				 message  => " ... done",
-				 newline => 1);
-		}
 #	      print "stats computed\n";
-		$data -> target('disk');
+			$data -> target('disk');
 	    }
 	    if (defined $this->filtered_data_model){
-		$this->filtered_data_model -> flush_data();
-		$this->filtered_data_model -> flush();
+			$this->filtered_data_model -> flush_data();
+			$this->filtered_data_model -> flush();
 	    }
 	    open( STAT, '>'.$this -> covariate_statistics_file );
 	    $Data::Dumper::Purity = 1;
@@ -551,77 +552,77 @@ start new
 	my %p_values;
 	#For unlimited stepping: p = 100% /JR
 	$p_values{'1'}     = {1=>0,
-			      2=>0,
-			      3=>0,
-			      4=>0,
-			      5=>0,
-			      6=>0,
-			      7=>0,
-			      8=>0,
-			      9=>0,
-			      10=>0};
+						  2=>0,
+						  3=>0,
+						  4=>0,
+						  5=>0,
+						  6=>0,
+						  7=>0,
+						  8=>0,
+						  9=>0,
+						  10=>0};
 	## p= 0.05
 	$p_values{'0.05'}  = {1=>3.84,
-			      2=>5.99,
-			      3=>7.81,
-			      4=>9.49,
-			      5=>11.07,
-			      6=>12.59,	
-			      7=>14.07,
-			      8=>15.51,	
-			      9=>16.92,	
-			      10=>18.31};
+						  2=>5.99,
+						  3=>7.81,
+						  4=>9.49,
+						  5=>11.07,
+						  6=>12.59,	
+						  7=>14.07,
+						  8=>15.51,	
+						  9=>16.92,	
+						  10=>18.31};
 	## p=0.01
 	$p_values{'0.01'}  = {1=>6.63,
-			      2=>9.21,
-			      3=>11.34,
-			      4=>13.28,
-			      5=>15.09,
-			      6=>16.81,
-			      7=>18.48,
-			      8=>20.09,
-			      9=>21.67,
-			      10=>23.21};
+						  2=>9.21,
+						  3=>11.34,
+						  4=>13.28,
+						  5=>15.09,
+						  6=>16.81,
+						  7=>18.48,
+						  8=>20.09,
+						  9=>21.67,
+						  10=>23.21};
 	## p=0.005
 	$p_values{'0.005'} = {1=>7.88,
-			      2=>10.60,
-			      3=>12.84,
-			      4=>14.86,
-			      5=>16.75,
-			      6=>18.55,
-			      7=>20.28,
-			      8=>21.95,
-			      9=>23.59,
-			      10=>25.19};
+						  2=>10.60,
+						  3=>12.84,
+						  4=>14.86,
+						  5=>16.75,
+						  6=>18.55,
+						  7=>20.28,
+						  8=>21.95,
+						  9=>23.59,
+						  10=>25.19};
 	## p=0.001
 	$p_values{'0.001'} = {1=>10.83,
-			      2=>13.82,
-			      3=>16.27,
-			      4=>18.47,
-			      5=>20.52,
-			      6=>22.46,
-			      7=>24.32,
-			      8=>26.12,
-			      9=>27.88,
-			      10=>29.59};
+						  2=>13.82,
+						  3=>16.27,
+						  4=>18.47,
+						  5=>20.52,
+						  6=>22.46,
+						  7=>24.32,
+						  8=>26.12,
+						  9=>27.88,
+						  10=>29.59};
 
 	unless ($this -> p_value()== 0.05 or $this -> p_value() == 0.01 or
-		$this -> p_value() == 0.005 or $this -> p_value() == 0.001){
-	  #create new table for this value using CDF
-	  my %phash;
-	  for (my $i=1; $i<11; $i++){
+			$this -> p_value() == 0.005 or $this -> p_value() == 0.001){
+		#create new table for this value using CDF
+		my %phash;
+		for (my $i=1; $i<11; $i++){
 #	    $phash{$i} = Math::CDF::qchisq((1-($this -> p_value())), $i);
 #	    my $tmp = Math::CDF::qchisq((1-($this -> p_value())), $i);
-	    if ($this -> p_value() <= 0){
-	      $phash{$i} = 1000000;
-	    }elsif ($this -> p_value() >= 1){
-	      $phash{$i} = 0;
-	    }else{
-	      $phash{$i} = Statistics::Distributions::chisqrdistr($i,($this -> p_value()));
-	    }
+			if ($this -> p_value() <= 0){
+				$phash{$i} = 1000000;
+			}elsif ($this -> p_value() >= 1){
+				$phash{$i} = 0;
+			}else{
+				$phash{$i} = Statistics::Distributions::chisqrdistr($i,($this -> p_value()));
+			}
 #	    print "$tmp ".$phash{$i}."\n";
-	  }
-	  $p_values{$this -> p_value()}=\%phash;
+		}
+		$p_values{$this -> p_value()}=\%phash;
 	}
 
 
@@ -635,173 +636,173 @@ start new
 	    my $first = 1;
 	    #no existing relations files
 	    foreach my $par ( sort keys %{$this -> test_relations()} ) {
-		foreach my $cov ( @{$this -> test_relations()->{$par}} ){
-		    # Here the ofv-drops should be defined
-		    # I've started 2004-11-09
-		    my $ofv_changes = $p_values{$this -> p_value()};
-		    if ( defined $this -> ofv_change ) {
-			# If only one ofv_drop given for all models and all relations
-			while ( my ( $df, $ofv ) = each %{$this -> ofv_change} ) {
-			    $ofv_changes -> {$df} = $ofv;
-			}
-			if ( $first ) {
-			    open( LOG, ">>".$this -> logfile -> [0] );
-			    print LOG "Using user-defined ofv change criteria\n";
-			    print LOG "Degree of freedom  |  Required ofv change\n";
-			    my @dfs = sort {$a <=> $b} keys %{$ofv_changes};
-			    foreach my $df ( @dfs ) {
-				print LOG "         $df         -          ",
-				$ofv_changes -> {$df},"\n";
-			    }
-			    close( LOG );
-			}
-		    } 
-		    $this -> relations->{$par}{$cov}{'ofv_changes'} = $ofv_changes;
-		    # Is this covariate continuous or not?
-		    my $continuous = 1;
-		    if (defined $this -> categorical_covariates()){
-			foreach my $cat ( @{$this -> categorical_covariates()} ) {
-			    $continuous = 0 if ( $cov eq $cat );
-			}
-		    }
-		    $this -> relations->{$par}{$cov}{'continuous'} = $continuous;
-		    my @valid_states;
-		    if ( $continuous ) {
-			@valid_states = @{$this -> valid_states->{'continuous'}};
-		    } else {
-			#categorical
-			@valid_states = @{$this -> valid_states->{'categorical'}};
-		    }
-		    croak("No valid states defined for ".
-			       (($continuous)? 'continuous':'categorical'))
-			if (scalar(@valid_states) == 0);
-		    croak("The first valid state must always be 1")
-			unless ($valid_states[0] == 1); #unless have included relations with this state at least
-		    
-		    $this -> relations->{$par}{$cov}{'state'} = 1;
-		    foreach my $state ( @valid_states ) {
-			if ( defined $this -> relations->{$par}{$cov}{'code'}{$state} ) {
-			    if ( not ref $this -> relations->{$par}{$cov}{'code'}{$state} eq 'ARRAY' ) {
-				croak("The code specified for $par $cov $state is not ".
-					      "an array\n" );
-			    } else {
-				for ( @{$this -> relations->{$par}{$cov}{'code'}{$state}} ) {
-				    s/PARCOV/$par$cov/g;
-				    s/PAR/$par/g;
-				    s/COV/$cov/g;
-#			  print "store ".$_."\n";
+			foreach my $cov ( @{$this -> test_relations()->{$par}} ){
+				# Here the ofv-drops should be defined
+				# I've started 2004-11-09
+				my $ofv_changes = $p_values{$this -> p_value()};
+				if ( defined $this -> ofv_change ) {
+					# If only one ofv_drop given for all models and all relations
+					while ( my ( $df, $ofv ) = each %{$this -> ofv_change} ) {
+						$ofv_changes -> {$df} = $ofv;
+					}
+					if ( $first ) {
+						open( LOG, ">>".$this -> logfile -> [0] );
+						print LOG "Using user-defined ofv change criteria\n";
+						print LOG "Degree of freedom  |  Required ofv change\n";
+						my @dfs = sort {$a <=> $b} keys %{$ofv_changes};
+						foreach my $df ( @dfs ) {
+							print LOG "         $df         -          ",
+							$ofv_changes -> {$df},"\n";
+						}
+						close( LOG );
+					}
+				} 
+				$this -> relations->{$par}{$cov}{'ofv_changes'} = $ofv_changes;
+				# Is this covariate continuous or not?
+				my $continuous = 1;
+				if (defined $this -> categorical_covariates()){
+					foreach my $cat ( @{$this -> categorical_covariates()} ) {
+						$continuous = 0 if ( $cov eq $cat );
+					}
 				}
-			    }
-			} else {
-			    croak("No code defined for relation $par-$cov state $state\n") 
-				if ($state > 5);
-			    $this -> relations->{$par}{$cov}{'code'}{$state} = [];
-			}
-			$this -> relations->{$par}{$cov}{'inits'}{$state} = [] unless
-			    ( defined $this -> relations->{$par}{$cov}{'inits'}{$state} );
-			$this -> relations->{$par}{$cov}{'bounds'}{$state} = {} unless
-			    ( defined $this -> relations->{$par}{$cov}{'bounds'}{$state} );
+				$this -> relations->{$par}{$cov}{'continuous'} = $continuous;
+				my @valid_states;
+				if ( $continuous ) {
+					@valid_states = @{$this -> valid_states->{'continuous'}};
+				} else {
+					#categorical
+					@valid_states = @{$this -> valid_states->{'categorical'}};
+				}
+				croak("No valid states defined for ".
+					  (($continuous)? 'continuous':'categorical'))
+					if (scalar(@valid_states) == 0);
+				croak("The first valid state must always be 1")
+					unless ($valid_states[0] == 1); #unless have included relations with this state at least
+				
+				$this -> relations->{$par}{$cov}{'state'} = 1;
+				foreach my $state ( @valid_states ) {
+					if ( defined $this -> relations->{$par}{$cov}{'code'}{$state} ) {
+						if ( not ref $this -> relations->{$par}{$cov}{'code'}{$state} eq 'ARRAY' ) {
+							croak("The code specified for $par $cov $state is not ".
+								  "an array\n" );
+						} else {
+							for ( @{$this -> relations->{$par}{$cov}{'code'}{$state}} ) {
+								s/PARCOV/$par$cov/g;
+								s/PAR/$par/g;
+								s/COV/$cov/g;
+#			  print "store ".$_."\n";
+							}
+						}
+					} else {
+						croak("No code defined for relation $par-$cov state $state\n") 
+							if ($state > 5);
+						$this -> relations->{$par}{$cov}{'code'}{$state} = [];
+					}
+					$this -> relations->{$par}{$cov}{'inits'}{$state} = [] unless
+						( defined $this -> relations->{$par}{$cov}{'inits'}{$state} );
+					$this -> relations->{$par}{$cov}{'bounds'}{$state} = {} unless
+						( defined $this -> relations->{$par}{$cov}{'bounds'}{$state} );
 #		    print "have state $state $par $cov ".$this -> relations->{$par}{$cov}{'inits'}{$state}->[0]." \n";
 #		    print "have ".$this -> relations->{$par}{$cov}{'bounds'}{$state}{'lower'}->[0]." \n";
 #		    print "have ".$this -> relations->{$par}{$cov}{'bounds'}{$state}{'upper'}->[0]." \n";
-			my %local_statistics = %{$this -> covariate_statistics->{$cov}};
-			if (defined $this->medians->{$par.'_'.$cov}){
+					my %local_statistics = %{$this -> covariate_statistics->{$cov}};
+					if (defined $this->medians->{$par.'_'.$cov}){
 #		      print "$par $cov median old ".$local_statistics{'median'}.
 #			  " new ".$this->medians->{$par.'_'.$cov}."\n";
-			    $local_statistics{'median'} = $this->medians->{$par.'_'.$cov};
-			    if ($local_statistics{'median'}< $local_statistics{'min'}){
-				croak("computed median ".$local_statistics{'median'}.
-					   " of time-varying $cov on $par is smaller than min $cov ".
-					   $local_statistics{'min'});
-			    }
-			    if ($local_statistics{'median'}> $local_statistics{'max'}){
-				croak("computed median ".$local_statistics{'median'}.
-					   " of time-varying $cov on $par is larger than max $cov ".
-					   $local_statistics{'max'});
-			    }
-			}
-			if (defined $this->means->{$par.'_'.$cov}){
+						$local_statistics{'median'} = $this->medians->{$par.'_'.$cov};
+						if ($local_statistics{'median'}< $local_statistics{'min'}){
+							croak("computed median ".$local_statistics{'median'}.
+								  " of time-varying $cov on $par is smaller than min $cov ".
+								  $local_statistics{'min'});
+						}
+						if ($local_statistics{'median'}> $local_statistics{'max'}){
+							croak("computed median ".$local_statistics{'median'}.
+								  " of time-varying $cov on $par is larger than max $cov ".
+								  $local_statistics{'max'});
+						}
+					}
+					if (defined $this->means->{$par.'_'.$cov}){
 #		      print "$par $cov mean old ".$local_statistics{'mean'}.
 #			  " new ".$this->means->{$par.'_'.$cov}."\n";
-			    $local_statistics{'mean'} = $this->means->{$par.'_'.$cov};
-			    if ($local_statistics{'mean'}< $local_statistics{'min'}){
-				croak("computed mean ".$local_statistics{'mean'}.
-					   " of time-varying $cov on $par is smaller than min $cov ".
-					   $local_statistics{'min'});
-			    }
-			    if ($local_statistics{'mean'}> $local_statistics{'max'}){
-				croak("computed mean ".$local_statistics{'mean'}.
-					   " of time-varying $cov on $par is larger than max $cov ".
-					   $local_statistics{'max'});
-			    }
-			}
-			( $this -> relations->{$par}{$cov}{'code'}{$state},
-			  $this -> relations->{$par}{$cov}{'nthetas'}{$state},
-			  $this -> relations->{$par}{$cov}{'inits'}{$state},
-			  $this -> relations->{$par}{$cov}{'bounds'}{$state} ) =
-			      $this -> create_code( start_theta => 1,
-						    parameter   => $par,
-						    covariate   => $cov,
-						    continuous  => $continuous,
-						    state       => $state,
-						    code        => $this -> relations->{$par}{$cov}{'code'}{$state},
-						    inits       => $this -> relations->{$par}{$cov}{'inits'}{$state},
-						    bounds      => $this -> relations->{$par}{$cov}{'bounds'}{$state},
-						    statistics  => \%local_statistics,
+						$local_statistics{'mean'} = $this->means->{$par.'_'.$cov};
+						if ($local_statistics{'mean'}< $local_statistics{'min'}){
+							croak("computed mean ".$local_statistics{'mean'}.
+								  " of time-varying $cov on $par is smaller than min $cov ".
+								  $local_statistics{'min'});
+						}
+						if ($local_statistics{'mean'}> $local_statistics{'max'}){
+							croak("computed mean ".$local_statistics{'mean'}.
+								  " of time-varying $cov on $par is larger than max $cov ".
+								  $local_statistics{'max'});
+						}
+					}
+					( $this -> relations->{$par}{$cov}{'code'}{$state},
+					  $this -> relations->{$par}{$cov}{'nthetas'}{$state},
+					  $this -> relations->{$par}{$cov}{'inits'}{$state},
+					  $this -> relations->{$par}{$cov}{'bounds'}{$state} ) =
+						  $this -> create_code( start_theta => 1,
+												parameter   => $par,
+												covariate   => $cov,
+												continuous  => $continuous,
+												state       => $state,
+												code        => $this -> relations->{$par}{$cov}{'code'}{$state},
+												inits       => $this -> relations->{$par}{$cov}{'inits'}{$state},
+												bounds      => $this -> relations->{$par}{$cov}{'bounds'}{$state},
+												statistics  => \%local_statistics,
 #						statistics  => $this -> covariate_statistics->{$cov},
-						    sum_covariates  => $this->sum_covariates_hash->{$par},
-						    missing_data_token => $this -> missing_data_token);
+												sum_covariates  => $this->sum_covariates_hash->{$par},
+												missing_data_token => $this -> missing_data_token);
 #		    print "created state $state $par $cov ".$this -> relations->{$par}{$cov}{'inits'}{$state}->[0]." \n";
 #		    print "created ".$this -> relations->{$par}{$cov}{'bounds'}{$state}{'lower'}->[0]." \n";
 #		    print "created ".$this -> relations->{$par}{$cov}{'bounds'}{$state}{'upper'}->[0]." \n";
-			if ( defined $this->included_relations() and 
-			     exists $this -> included_relations->{$par} and
-			     exists $this -> included_relations->{$par}{$cov} and
-			     $this -> included_relations->{$par}{$cov}{'state'} == $state ) {
-			    $this -> included_relations->{$par}{$cov}{'code'} =
-				$this -> relations->{$par}{$cov}{'code'}{$state};
-			    $this -> included_relations->{$par}{$cov}{'nthetas'} =
-				$this -> relations->{$par}{$cov}{'nthetas'}{$state};
-			    $this -> included_relations->{$par}{$cov}{'inits'} =
-				$this -> relations->{$par}{$cov}{'inits'}{$state};
-			    $this -> included_relations->{$par}{$cov}{'bounds'} =
-				$this -> relations->{$par}{$cov}{'bounds'}{$state};
-			}
-		    } #end loop over valid states
-		    $first = 0;
-		    #check that no included relations for invalid states
-		    if ( defined $this->included_relations() and
-			 exists $this -> included_relations->{$par} and
-			 exists $this -> included_relations->{$par}{$cov}){
-			my $included_state =$this -> included_relations->{$par}{$cov}{'state'};
-			my $found = 0;
-			foreach my $state (@valid_states){
-			    $found = 1 if ($state == $included_state);
-			}
-			croak("State $included_state is not listed in valid_states for ".
-				   (($continuous)? 'continuous':'categorical')." covariates and therefore cannot ".
-				   "be set as the state for relation $par-$cov in included_relations.")
-			    unless ($found);
-		    }
-		} #end loop over cov
+					if ( defined $this->included_relations() and 
+						 exists $this -> included_relations->{$par} and
+						 exists $this -> included_relations->{$par}{$cov} and
+						 $this -> included_relations->{$par}{$cov}{'state'} == $state ) {
+						$this -> included_relations->{$par}{$cov}{'code'} =
+							$this -> relations->{$par}{$cov}{'code'}{$state};
+						$this -> included_relations->{$par}{$cov}{'nthetas'} =
+							$this -> relations->{$par}{$cov}{'nthetas'}{$state};
+						$this -> included_relations->{$par}{$cov}{'inits'} =
+							$this -> relations->{$par}{$cov}{'inits'}{$state};
+						$this -> included_relations->{$par}{$cov}{'bounds'} =
+							$this -> relations->{$par}{$cov}{'bounds'}{$state};
+					}
+				} #end loop over valid states
+				$first = 0;
+				#check that no included relations for invalid states
+				if ( defined $this->included_relations() and
+					 exists $this -> included_relations->{$par} and
+					 exists $this -> included_relations->{$par}{$cov}){
+					my $included_state =$this -> included_relations->{$par}{$cov}{'state'};
+					my $found = 0;
+					foreach my $state (@valid_states){
+						$found = 1 if ($state == $included_state);
+					}
+					croak("State $included_state is not listed in valid_states for ".
+						  (($continuous)? 'continuous':'categorical')." covariates and therefore cannot ".
+						  "be set as the state for relation $par-$cov in included_relations.")
+						unless ($found);
+				}
+			} #end loop over cov
 	    } # end loop over par
 	    
 	    #check that no included relations for covariates not in test_relations
 	    foreach my $par ( sort keys %{$this -> included_relations} ) {
-		foreach my $cov (sort keys %{$this -> included_relations->{$par}} ){
-		    my $found=0;
-		    if ( defined $this -> test_relations() ) {
-			foreach my $testpar ( sort keys %{$this -> test_relations()} ){
-			    next unless ($testpar eq $par);
-			    foreach my $testcov ( @{$this -> test_relations()->{$par}} ){
-				$found = 1 if ($testcov eq $cov);
-			    }
+			foreach my $cov (sort keys %{$this -> included_relations->{$par}} ){
+				my $found=0;
+				if ( defined $this -> test_relations() ) {
+					foreach my $testpar ( sort keys %{$this -> test_relations()} ){
+						next unless ($testpar eq $par);
+						foreach my $testcov ( @{$this -> test_relations()->{$par}} ){
+							$found = 1 if ($testcov eq $cov);
+						}
+					}
+				}
+				croak("Relation $par-$cov is not listed in test_relations and therefore ".
+					  "cannot be set in included_relations.")
+					unless ($found);
 			}
-		    }
-		    croak("Relation $par-$cov is not listed in test_relations and therefore ".
-			       "cannot be set in included_relations.")
-			unless ($found);
-		}
 	    }
 	    open( RELATIONS, '>'.$this -> relations_file );
 	    $Data::Dumper::Purity = 1;
@@ -811,421 +812,424 @@ start new
 	    
 	}#end loop models
 #	}
-      }
+}
 end new
 
 # }}}
 
 
-start preprocess_data
-    {
-      #in ref of model, directory, $time_varying $test_relations
-      #out model
+	start preprocess_data
+{
+	#in ref of model, directory, $time_varying $test_relations
+	#out model
 
-      $filtered_data_model = $model -> copy ( filename => 'filter_data.mod',
-					      directory => $directory, 
-					      output_same_directory => 1,
-					      copy_data          => 0,
-					      copy_output        => 0,
-					      skip_data_parsing => 1);
-      die "no problems" unless defined $filtered_data_model->problems();
-      die "more than one problem" unless (scalar(@{$filtered_data_model->problems()})==1);
+	$filtered_data_model = $model -> copy ( filename => 'filter_data.mod',
+											directory => $directory, 
+											output_same_directory => 1,
+											copy_data          => 0,
+											copy_output        => 0,
+											skip_data_parsing => 1);
 
-      my $datafile = 'filtered.dta';
-      my $timevarfile = '_time_varying.dta';
-      my %parmcovhash;
-      my %parmetahash;
-      my $run_mess;
-      my @filter_table_header;
+	die "no problems" unless defined $filtered_data_model->problems();
+	die "more than one problem" unless (scalar(@{$filtered_data_model->problems()})==1);
 
-      my $only_filter = 0;
+	my $datafile = 'filtered.dta';
+	my $timevarfile = '_time_varying.dta';
+	my %parmcovhash;
+	my %parmetahash;
+	my $run_mess;
+	my @filter_table_header;
 
-      #must handle DROP here without header name.
-      my $dummycounter=0;
-      if( defined $filtered_data_model->problems()->[0] -> inputs and 
-	  defined $filtered_data_model->problems()->[0] -> inputs -> [0] -> options ) {
-	  foreach my $option ( @{$filtered_data_model->problems()->[0] -> inputs -> [0] -> options} ) {
-	      if ($option->name eq 'DROP' or $option->name eq 'SKIP'){
-		  if (defined $option->value and $option->value ne '' and not ($option->value eq 'DROP' or $option->value eq 'SKIP') ){
-		      push( @filter_table_header, $option -> value );
-		  }else{
-		      #simple drop used in $INPUT without name. Set dummy name as placeholder here.
-		      $dummycounter++;
-		      $option->value('DUMMY'.$dummycounter);
-		      push( @filter_table_header, $option -> value );
-		  }
-	      }else{
-		  push( @filter_table_header, $option -> name );
-	      }
-	  }
-      } else {
-	  croak("Trying to construct table for filtering data".
-			" but no headers were found in \$INPUT" );
-      }
-      foreach my $remove_rec ('simulation','covariance','table','scatter','input'){
-	  #will put back input without DROP below
-	  $filtered_data_model -> remove_records(type => $remove_rec);
-      }
+	my $only_filter = 0;
+
+	#must handle DROP here without header name.
+	my $dummycounter=0;
+	if( defined $filtered_data_model->problems()->[0] -> inputs and 
+		defined $filtered_data_model->problems()->[0] -> inputs -> [0] -> options ) {
+		foreach my $option ( @{$filtered_data_model->problems()->[0] -> inputs -> [0] -> options} ) {
+			if ($option->name eq 'DROP' or $option->name eq 'SKIP'){
+				if (defined $option->value and $option->value ne '' and not ($option->value eq 'DROP' or $option->value eq 'SKIP') ){
+					push( @filter_table_header, $option -> value );
+				}else{
+					#simple drop used in $INPUT without name. Set dummy name as placeholder here.
+					$dummycounter++;
+					$option->value('DUMMY'.$dummycounter);
+					push( @filter_table_header, $option -> value );
+				}
+			}else{
+				push( @filter_table_header, $option -> name );
+			}
+		}
+	} else {
+		croak("Trying to construct table for filtering data".
+			  " but no headers were found in \$INPUT" );
+	}
+	foreach my $remove_rec ('simulation','covariance','table','scatter','input'){
+		#will put back input without DROP below
+		$filtered_data_model -> remove_records(type => $remove_rec);
+	}
     
 
-      if (defined $time_varying and scalar(@{$time_varying}>0)){
+	if (defined $time_varying and scalar(@{$time_varying}>0)){
 
-	#collect all parameters with time-varying cov on them
-	my $pair_counter=0;
-	my $parm_counter=0;
-	my %test_relations = %{$test_relations};
-	foreach my $par ( sort keys %test_relations ){
-	  my @covarr=();
-	  foreach my $cov ( @{$test_relations{$par}} ){
-	    foreach my $tvar (@{$time_varying}){
-	      if ($cov eq $tvar){
-		push(@covarr,$cov);
-		$pair_counter++;
-		last;
-	      }
-	    }
-	  }
-	  if (scalar(@covarr)>0){
-	    $parmcovhash{$par} =\@covarr;
-	    $parm_counter++;
-	  }
-	}
-
-
-	my $new_comresno = $parm_counter+$pair_counter;
-
-	$run_mess = "Running input model to determine median of time-varying covariates";	
-	if (($new_comresno + 2*$parm_counter + scalar(@filter_table_header))>50){
-	    if ($PsN::nm_minor_version >= 2){
-		my $max = $new_comresno + 2*$parm_counter + scalar(@filter_table_header);
-		
-		my $pdt_value = $filtered_data_model->get_option_value( option_name => 'PDT',
-								    record_name => 'sizes',
-								     fuzzy_match => 0);
-	      
-		if (defined $pdt_value){
-		    $max=$pdt_value if ($pdt_value > $max);
-		}
-		my $pd_value = $filtered_data_model->get_option_value( option_name => 'PD',
-								       record_name => 'sizes',
-								       fuzzy_match => 0);
-		
-		if (defined $pd_value){
-		    $max=$pdt_value if ($pdt_value > $max);
+		#collect all parameters with time-varying cov on them
+		my $pair_counter=0;
+		my $parm_counter=0;
+		my %test_relations = %{$test_relations};
+		foreach my $par ( sort keys %test_relations ){
+			my @covarr=();
+			foreach my $cov ( @{$test_relations{$par}} ){
+				foreach my $tvar (@{$time_varying}){
+					if ($cov eq $tvar){
+						push(@covarr,$cov);
+						$pair_counter++;
+						last;
+					}
+				}
+			}
+			if (scalar(@covarr)>0){
+				$parmcovhash{$par} =\@covarr;
+				$parm_counter++;
+			}
 		}
 
-		if (defined $filtered_data_model ->problems->[0]->sizess() 
-		    and scalar(@{$filtered_data_model ->problems->[0]->sizess()})>0){
-		    $filtered_data_model -> set_option(record_name => 'sizes',
-						       record_number => 1,
-						       option_name => 'PDT',
-						       option_value => $max,
-						       fuzzy_match => 0);
-		  
-		  }else{
-		      $filtered_data_model -> add_records( type => 'sizes',
-							   record_strings => [ " PDT=".$max ] );
-		  }
+
+		my $new_comresno = $parm_counter+$pair_counter;
+
+		$run_mess = "Running input model to determine median of time-varying covariates";	
+		if (($new_comresno + 2*$parm_counter + scalar(@filter_table_header))>50){
+			if ($PsN::nm_minor_version >= 2){
+				my $max = $new_comresno + 2*$parm_counter + scalar(@filter_table_header);
+				
+				my $pdt_value = $filtered_data_model->get_option_value( option_name => 'PDT',
+																		record_name => 'sizes',
+																		fuzzy_match => 0);
+				
+				if (defined $pdt_value){
+					$max=$pdt_value if ($pdt_value > $max);
+				}
+				my $pd_value = $filtered_data_model->get_option_value( option_name => 'PD',
+																	   record_name => 'sizes',
+																	   fuzzy_match => 0);
+				
+				if (defined $pd_value){
+					$max=$pdt_value if ($pdt_value > $max);
+				}
+
+				if (defined $filtered_data_model ->problems->[0]->sizess() 
+					and scalar(@{$filtered_data_model ->problems->[0]->sizess()})>0){
+					$filtered_data_model -> set_option(record_name => 'sizes',
+													   record_number => 1,
+													   option_name => 'PDT',
+													   option_value => $max,
+													   fuzzy_match => 0);
+					
+				}else{
+					$filtered_data_model -> add_records( type => 'sizes',
+														 record_strings => [ " PDT=".$max ] );
+				}
+				
+			}else{
+				my $num = $new_comresno + 2*$parm_counter + scalar(@filter_table_header);
+				my $mess = "$num items needed in \$TABLE, too many for NONMEM. ".
+					"Use NM version 7.2 or later, which can handle more items.".
+					"If you are already using 7.2 or later, check that the version info in psn.conf is correct.";
+				croak($mess);
+			}	    
+			
+		}
 		
-	    }else{
-		my $num = $new_comresno + 2*$parm_counter + scalar(@filter_table_header);
-		my $mess = "$num items needed in \$TABLE, too many for NONMEM. ".
-		    "Use NM version 7.2 or later, which can handle more items.".
-		    "If you are already using 7.2 or later, check that the version info in psn.conf is correct.";
-		croak($mess);
-	    }	    
-
-	}
-
-	#update_inits from $model output
-	if (defined $model->outputs() and 
-	    defined $model ->outputs()->[0] and
-	    $model ->outputs()->[0]-> have_output()){
-	  $filtered_data_model -> update_inits ( from_output => $model->outputs()->[0]);
-	}elsif( $self->linearize and $self->lst_file ){
-	  $filtered_data_model -> update_inits (from_output_file => $self->lst_file());
-	}
+		#update_inits from $model output
+		if (defined $model->outputs() and 
+			defined $model ->outputs()->[0] and
+			$model ->outputs()->[0]-> have_output()){
+			$filtered_data_model -> update_inits ( from_output => $model->outputs()->[0]);
+		}elsif( $self->linearize and $self->lst_file ){
+			$filtered_data_model -> update_inits (from_output_file => $self->lst_file());
+		}
 
 
-	my $comresno;
-	if (defined $filtered_data_model ->problems->[0]->abbreviateds() 
-	    and scalar(@{$filtered_data_model ->problems->[0]->abbreviateds()})>0){
-	  # Get current comres number
-	  $comresno = $filtered_data_model->get_option_value( option_name => 'COMRES',
-							      record_name => 'abbreviated');
-	      
-	  $new_comresno += $comresno if ( defined $comresno );
-	  $filtered_data_model->set_option( option_name => 'COMRES',
-					  record_name => 'abbreviated',
-					  fuzzy_match => 1,
-					  option_value => $new_comresno);
-	}else {
-	  # Add $ABBREVIATED if necessary
-	  $filtered_data_model -> add_records( type => 'abbreviated',
-					     record_strings => [ "COMRES=".($new_comresno) ] );
-	}
+		my $comresno;
+		if (defined $filtered_data_model ->problems->[0]->abbreviateds() 
+			and scalar(@{$filtered_data_model ->problems->[0]->abbreviateds()})>0){
+			# Get current comres number
+			$comresno = $filtered_data_model->get_option_value( option_name => 'COMRES',
+																record_name => 'abbreviated');
+			
+			$new_comresno += $comresno if ( defined $comresno );
+			$filtered_data_model->set_option( option_name => 'COMRES',
+											  record_name => 'abbreviated',
+											  fuzzy_match => 1,
+											  option_value => $new_comresno);
+		}else {
+			# Add $ABBREVIATED if necessary
+			$filtered_data_model -> add_records( type => 'abbreviated',
+												 record_strings => [ "COMRES=".($new_comresno) ] );
+		}
 
-	my @code;
-	@code = @{$filtered_data_model -> pk( problem_number => 1 )};
-	unless ( $#code > 0 ) {
-	  @code = @{$filtered_data_model -> pred( problem_number => 1 )};
-	}
-	if ( $#code <= 0 ) {
-	  croak("Neither PK or PRED defined in " .
-			$filtered_data_model -> filename . ", cannot match parameters to ETAs\n" );
-	}
+		my @code;
+		@code = @{$filtered_data_model -> pk( problem_number => 1 )};
+		unless ( $#code > 0 ) {
+			@code = @{$filtered_data_model -> pred( problem_number => 1 )};
+		}
+		if ( $#code <= 0 ) {
+			croak("Neither PK or PRED defined in " .
+				  $filtered_data_model -> filename . ", cannot match parameters to ETAs\n" );
+		}
 
-	foreach my $parameter ( keys %parmcovhash ){
-	  my $etanum = 0;
-	  for ( @code ) {
-	    my $row = $_;
-	    if ( $row =~ /^\s*(\w+)\s*=\s*/ and $1 eq $parameter ){
-	      $row =~ s/^\s*(\w+)\s*=\s*//;
-	      my ($line,$comment) = split( ';', $row, 2 );
-	      chomp $line;
-	      if ($line =~ s/[^A-Z0-9_]ETA\(([0-9]+)\)//){
-		$etanum = $1;
-	      }else{
-		last;
-	      }
-	      
-	      if ($line =~ s/[^A-Z0-9_]ETA\(([0-9]+)\)//){
-		croak("Could not determine the ETA ".
-			      "coupled to $parameter,\n".
-			      " two ETA(<number>) found ".
-			      "on $parameter = ... row\n" );
-	      }
-	    }
-	  }
-	  if ( $etanum ) {
-	    $parmetahash{$parameter}=$etanum;
-	  }else{
-	    my $mes = "Could not determine the ETA coupled to $parameter\n";
-	    $mes .= " i.e. no $parameter = (expression with ETA) was ".
-		"found in \$PK or \$PRED\n" ;
-	    croak($mes );
-	  }
-	}
+		foreach my $parameter ( keys %parmcovhash ){
+			my $etanum = 0;
+			for ( @code ) {
+				my $row = $_;
+				if ( $row =~ /^\s*(\w+)\s*=\s*/ and $1 eq $parameter ){
+					$row =~ s/^\s*(\w+)\s*=\s*//;
+					my ($line,$comment) = split( ';', $row, 2 );
+					chomp $line;
+					if ($line =~ s/[^A-Z0-9_]ETA\(([0-9]+)\)//){
+						$etanum = $1;
+					}else{
+						last;
+					}
+					
+					if ($line =~ s/[^A-Z0-9_]ETA\(([0-9]+)\)//){
+						croak("Could not determine the ETA ".
+							  "coupled to $parameter,\n".
+							  " two ETA(<number>) found ".
+							  "on $parameter = ... row\n" );
+					}
+				}
+			}
+			if ( $etanum ) {
+				$parmetahash{$parameter}=$etanum;
+			}else{
+				my $mes = "Could not determine the ETA coupled to $parameter\n";
+				$mes .= " i.e. no $parameter = (expression with ETA) was ".
+					"found in \$PK or \$PRED\n" ;
+				croak($mes );
+			}
+		}
 
-	#can look for ADVAN<any number> this way
-	my ($advan,$junk) = $filtered_data_model->problems->[0] -> _option_val_pos( record_name => 'subroutine',
-										  name => 'ADVAN',
-										  exact_match => 0);
-	my $have_advan = scalar(@{$advan}) > 0;
+		#can look for ADVAN<any number> this way
+		my ($advan,$junk) = $filtered_data_model->problems->[0] -> _option_val_pos( record_name => 'subroutine',
+																					name => 'ADVAN',
+																					exact_match => 0);
+		my $have_advan = scalar(@{$advan}) > 0;
 	    
-	my $code_records;
-	if( $have_advan ){
-	  # We have an ADVAN option in $SUBROUTINE, get $ERROR code
-	  $code_records = $filtered_data_model->problems->[0]-> errors();
-	} else {
-	  # No ADVAN subroutine, we should modify $PRED code
-	  $code_records = $filtered_data_model->problems->[0] -> preds;
-	}
+		my $code_records;
+		if( $have_advan ){
+			# We have an ADVAN option in $SUBROUTINE, get $ERROR code
+			$code_records = $filtered_data_model->problems->[0]-> errors();
+		} else {
+			# No ADVAN subroutine, we should modify $PRED code
+			$code_records = $filtered_data_model->problems->[0] -> preds;
+		}
 
-	# Get code array reference, so we can update the code inplace.
-	my $coderef = $code_records -> [0] -> verbatim_last;
+		# Get code array reference, so we can update the code inplace.
+		my $coderef = $code_records -> [0] -> verbatim_last;
 	    
-	unless( defined $coderef ){
-	  $coderef = [];
-	  $code_records -> [0] -> verbatim_last($coderef);
-	}
-	
+		unless( defined $coderef ){
+			$coderef = [];
+			$code_records -> [0] -> verbatim_last($coderef);
+		}
+		
 
-	
-	my $com = defined $comresno ? $comresno + 1 : 1;
-	foreach my $par ( keys %parmcovhash ){
-	  my @tablestrings =();
-	  push( @{$coderef},"\"  COM($com)=".'ABS(G('.$parmetahash{$par}.',1))/W' );
-	  push( @tablestrings, "COM($com)=$par".'RATIO');
-	  $com++;
-	    
-	  foreach my $cov (@{$parmcovhash{$par}}){
-	    push( @{$coderef},"\"  COM($com)=$cov".'*ABS(G('.$parmetahash{$par}.',1))/W' );
-	    push( @tablestrings, "COM($com)=$par$cov".'NUM');
-	    $com++;
-	  }
-	  $filtered_data_model -> 
-	      add_records( type           => 'table',
-			   record_strings => [ 'MDV ID '.join( ' ', @tablestrings ).
-					       ' NOAPPEND NOPRINT ONEHEADER FILE='.$par.$timevarfile]);
-	}
+		
+		my $com = defined $comresno ? $comresno + 1 : 1;
+		foreach my $par ( keys %parmcovhash ){
+			my @tablestrings =();
+			push( @{$coderef},"\"  COM($com)=".'ABS(G('.$parmetahash{$par}.',1))/W' );
+			push( @tablestrings, "COM($com)=$par".'RATIO');
+			$com++;
+			
+			foreach my $cov (@{$parmcovhash{$par}}){
+				push( @{$coderef},"\"  COM($com)=$cov".'*ABS(G('.$parmetahash{$par}.',1))/W' );
+				push( @tablestrings, "COM($com)=$par$cov".'NUM');
+				$com++;
+			}
+			$filtered_data_model -> 
+				add_records( type           => 'table',
+							 record_strings => [ 'MDV ID '.join( ' ', @tablestrings ).
+												 ' NOAPPEND NOPRINT ONEHEADER FILE='.$par.$timevarfile]);
+		}
 
-      }else{
-	#only $filter is true
-	$only_filter = 1;	
-      }
-
-      if ($only_filter){
-	  foreach my $remove_rec ('abbreviated','msfi','contr','subroutine','prior','model','tol','infn','omega','pk','aesinitial','aes','des','error','pred','mix','theta','sigma','estimation','nonparametric'){
-	      $filtered_data_model -> remove_records(type => $remove_rec);
-	  }
-	
-	  $filtered_data_model -> add_records(type => 'pred',
-					      record_strings => ['Y=THETA(1)+ETA(1)+EPS(1)']);
-	  
-	  $filtered_data_model -> add_records(type => 'theta',
-					      record_strings => ['1']);
-	  $filtered_data_model -> add_records(type => 'omega',
-					      record_strings => ['1']);
-	  $filtered_data_model -> add_records(type => 'sigma',
-					      record_strings => ['1']);
-	  $filtered_data_model -> add_records(type => 'estimation',
-					      record_strings => ['MAXEVALS=0 METHOD=ZERO']);
-      }
-      # set $TABLE record
-	  
-      if ($filter){
-	if (length($run_mess)>0 ){
-	  $run_mess .= " and to filter data";
 	}else{
-	  $run_mess = "Running dummy model to filter data";
+		#only $filter is true
+		$only_filter = 1;	
 	}
-      
-	$filtered_data_model -> add_records( type           => 'table',
-					     record_strings => [ join( ' ', @filter_table_header ).
-								 ' NOAPPEND NOPRINT ONEHEADER FILE='.$datafile]);
-      }
-      #put back input without DROP
-      $filtered_data_model -> add_records(
-	type => 'input',
-	record_strings => [join(' ',@filter_table_header)]);
 
-      $filtered_data_model->_write();
-      # run model in data_filtering_dir clean=3
-      my $filter_fit = tool::modelfit -> new
-	  ( %{common_options::restore_options(@common_options::tool_options)},
-	    base_directory => $directory,
-	    directory      => $directory.'/data_preprocessing_dir/',
-	    models         => [$filtered_data_model],
-	    top_tool       => 0,
-	    clean => 3  );
-      ui -> print( category => 'all',
-		   message  => $run_mess,newline => 1 );
-      $filter_fit -> run;
+	if ($only_filter){
+		foreach my $remove_rec ('abbreviated','msfi','contr','subroutine','prior','model','tol','infn','omega','pk','aesinitial','aes','des','error','pred','mix','theta','sigma','estimation','nonparametric'){
+			$filtered_data_model -> remove_records(type => $remove_rec);
+		}
+		
+		$filtered_data_model -> add_records(type => 'pred',
+											record_strings => ['Y=THETA(1)+ETA(1)+EPS(1)']);
+		
+		$filtered_data_model -> add_records(type => 'theta',
+											record_strings => ['1']);
+		$filtered_data_model -> add_records(type => 'omega',
+											record_strings => ['1']);
+		$filtered_data_model -> add_records(type => 'sigma',
+											record_strings => ['1']);
+		$filtered_data_model -> add_records(type => 'estimation',
+											record_strings => ['MAXEVALS=0 METHOD=ZERO']);
+	}
+	# set $TABLE record
+	
+	if ($filter){
+		if (length($run_mess)>0 ){
+			$run_mess .= " and to filter data";
+		}else{
+			$run_mess = "Running dummy model to filter data";
+		}
+		
+		$filtered_data_model -> add_records( type           => 'table',
+											 record_strings => [ join( ' ', @filter_table_header ).
+																 ' NOAPPEND NOPRINT ONEHEADER FILE='.$datafile]);
+	}
+	#put back input without DROP
+	$filtered_data_model -> add_records(
+		type => 'input',
+		record_strings => [join(' ',@filter_table_header)]);
+
+	$filtered_data_model->_write();
+	# run model in data_filtering_dir clean=3
+	my $filter_fit = tool::modelfit -> new
+		( %{common_options::restore_options(@common_options::tool_options)},
+		  base_directory => $directory,
+		  directory      => $directory.'/data_preprocessing_dir/',
+		  models         => [$filtered_data_model],
+		  top_tool       => 0,
+		  clean => 3  );
+	ui -> print( category => 'all',
+				 message  => $run_mess,newline => 1 );
+
+	$filter_fit -> run;
 
 
-      if (defined $time_varying and scalar(@{$time_varying}>0)){
-	foreach my $par ( keys %parmcovhash ){
-	  my $ncov = scalar(@{$parmcovhash{$par}});
-	  open( FILE, "$directory$par$timevarfile" ) ||
-	      croak("Could not open $directory$par$timevarfile"." for reading" );
-	  my @lines = <FILE>;
-	  close( FILE );
-	  my @sum_arr=(0) x $ncov;
-	  my @ave_arr;
+	if (defined $time_varying and scalar(@{$time_varying}>0)){
+		foreach my $par ( keys %parmcovhash ){
+			my $ncov = scalar(@{$parmcovhash{$par}});
+			open( FILE, "$directory$par$timevarfile" ) ||
+				croak("Could not open $directory$par$timevarfile"." for reading" );
+			my @lines = <FILE>;
+			close( FILE );
+			my @sum_arr=(0) x $ncov;
+			my @ave_arr;
 
-	  for (my $i=0; $i<$ncov;$i++){
-	    $ave_arr[$i]=[];
-	  }
-	  my $prev_id;
-	  my $ratsum=0;
-	  foreach (@lines){
-	    chomp;
-	    next unless (/^\s*0/); #only use lines with mdv=0
-	    my @vals=split;
-	    #items in @vals are
-	    # MDV ID $parRATIO (array over) $par$covNUM
+			for (my $i=0; $i<$ncov;$i++){
+				$ave_arr[$i]=[];
+			}
+			my $prev_id;
+			my $ratsum=0;
+			foreach (@lines){
+				chomp;
+				next unless (/^\s*0/); #only use lines with mdv=0
+				my @vals=split;
+				#items in @vals are
+				# MDV ID $parRATIO (array over) $par$covNUM
 #	    print join( ' ', @vals)."\n";
 
-	    unless ((not defined $prev_id) or ($vals[1] == $prev_id)){
-	      #found new id, process it
-	      
-	      for (my $i=0; $i<$ncov;$i++){
+				unless ((not defined $prev_id) or ($vals[1] == $prev_id)){
+					#found new id, process it
+					
+					for (my $i=0; $i<$ncov;$i++){
 #		croak("Cannot divide by 0 (ratiosum) when computing median for ".
 #		    "time-varying covariate on $par id $prev_id") if ($ratsum == 0);
-		  #do not die: if $ratsum is zero it must be that the whole expression is 0
-		  if ($ratsum == 0){
-		      push(@{$ave_arr[$i]},0);
-		  }else{
-		      push(@{$ave_arr[$i]},$sum_arr[$i]/$ratsum);
-		  }
+						#do not die: if $ratsum is zero it must be that the whole expression is 0
+						if ($ratsum == 0){
+							push(@{$ave_arr[$i]},0);
+						}else{
+							push(@{$ave_arr[$i]},$sum_arr[$i]/$ratsum);
+						}
 #		print " ".$sum_arr[$i];
-	      }
+					}
 #	      print join(' ',@{$ave_arr[0]})."\n" if ($par eq 'CL');
 #	      print "id $prev_id ".($sum_arr[0])/$ratsum."\n" if ($par eq 'CL');
 #	      print "id $prev_id $ratsum ".$sum_arr[0]." ".($sum_arr[0])/$ratsum."\n" if ($par eq 'CL');
-	      #reset
-	      @sum_arr=(0) x $ncov;
-	      $ratsum=0;
-	    }
-	    #store new
-	    $ratsum += $vals[2];
-	    for (my $i=0; $i<$ncov;$i++){
-	      $sum_arr[$i] += $vals[$i+3];
+					#reset
+					@sum_arr=(0) x $ncov;
+					$ratsum=0;
+				}
+				#store new
+				$ratsum += $vals[2];
+				for (my $i=0; $i<$ncov;$i++){
+					$sum_arr[$i] += $vals[$i+3];
 #	      print " ".$sum_arr[$i];
-	    } 
+				} 
 #	    print "\n $prev_id 0".$vals[1]."\n";
-	    $prev_id = $vals[1];
-	  }
-	  #process the last one
-	  #new id, process
-	  for (my $i=0; $i<$ncov;$i++){
+				$prev_id = $vals[1];
+			}
+			#process the last one
+			#new id, process
+			for (my $i=0; $i<$ncov;$i++){
 #	    croak("Cannot divide by 0 (ratiosum) when computing median for ".
 #		       "time-varying covariate on $par id $prev_id") if ($ratsum == 0);
-	      #do not die: if $ratsum is zero it must be that the whole expression is 0
-	      if ($ratsum == 0){
-		  push(@{$ave_arr[$i]},0);
-	      }else{
-		  push(@{$ave_arr[$i]},$sum_arr[$i]/$ratsum);
-	      }
+				#do not die: if $ratsum is zero it must be that the whole expression is 0
+				if ($ratsum == 0){
+					push(@{$ave_arr[$i]},0);
+				}else{
+					push(@{$ave_arr[$i]},$sum_arr[$i]/$ratsum);
+				}
 #		print " ".$sum_arr[$i];
-	  } 
+			} 
 #	  print " ".($sum_arr[0])/$ratsum."\n" if ($par eq 'CL');
 #	  print " $ratsum ".$sum_arr[0]."\n" if ($par eq 'CL');
 
 #	  print "id $prev_id $ratsum ".$sum_arr[0]." ".($sum_arr[0])/$ratsum."\n" if ($par eq 'CL');
-	  
-	  open( LOG, ">>".$self -> logfile -> [0] ); #model_number -1
-	  for (my $i=0; $i<$ncov;$i++){
-	    my $cov = $parmcovhash{$par}->[$i];
-	    my @sorted_array =  (sort {$a <=> $b} @{$ave_arr[$i]}); #sort ascending
+			
+			open( LOG, ">>".$self -> logfile -> [0] ); #model_number -1
+			for (my $i=0; $i<$ncov;$i++){
+				my $cov = $parmcovhash{$par}->[$i];
+				my @sorted_array =  (sort {$a <=> $b} @{$ave_arr[$i]}); #sort ascending
 #	    print join( ' ', @sorted_array)."\n" if($par eq 'CL' and $cov eq 'WGT');
-	    my $len= scalar( @sorted_array );
-	    my $median;
-	    if( $len  % 2 ){
-	      $median = $sorted_array[($len-1)/2];
-	    } else {
-	      $median = ($sorted_array[$len/2]+$sorted_array[($len-2)/2])/ 2;
-	    }
-	    $self->medians->{$par.'_'.$cov}=$median;
+				my $len= scalar( @sorted_array );
+				my $median;
+				if( $len  % 2 ){
+					$median = $sorted_array[($len-1)/2];
+				} else {
+					$median = ($sorted_array[$len/2]+$sorted_array[($len-2)/2])/ 2;
+				}
+				$self->medians->{$par.'_'.$cov}=$median;
 
-	    my $sum=0;
-	    foreach my $val (@sorted_array){
-	      $sum += $val;
-	    }
-	    $self->means->{$par.'_'.$cov}=$sum/$len if ($len>0);
-	    $median = sprintf("%6.2f", $median );
-	    my $mean = sprintf("%6.2f", $sum/$len ) if ($len>0);
-	    print LOG "Time-varying $cov on $par (ETA".$parmetahash{$par}.
-") has median $median and mean $mean\n";
-	  }
-	  close LOG;
+				my $sum=0;
+				foreach my $val (@sorted_array){
+					$sum += $val;
+				}
+				$self->means->{$par.'_'.$cov}=$sum/$len if ($len>0);
+				$median = sprintf("%6.2f", $median );
+				my $mean = sprintf("%6.2f", $sum/$len ) if ($len>0);
+				print LOG "Time-varying $cov on $par (ETA".$parmetahash{$par}.
+					") has median $median and mean $mean\n";
+			}
+			close LOG;
+		}
 	}
-      }
 
-      if ($filter){
-	#create data object from table
+	if ($filter){
+		#create data object from table
 
-	my @idcolumns = @{$model -> idcolumns};
-	my $idcolumn = $idcolumns[0];
-	my $ignoresign = defined $model -> ignoresigns ? $model -> ignoresigns -> [0] : undef;
-	if ( defined $idcolumn ) {
-	  $filtered_data_model->datas([data ->
-				       new( idcolumn             => $idcolumn,
-					    filename             => $datafile,
-					    ignoresign           => $ignoresign,
-					    directory            => $filtered_data_model -> directory,
-					    ignore_missing_files => 0,
-					    skip_parsing         => 0,
-					    target               => 'mem')]) ;
+		my @idcolumns = @{$model -> idcolumns};
+		my $idcolumn = $idcolumns[0];
+		my $ignoresign = defined $model -> ignoresigns ? $model -> ignoresigns -> [0] : undef;
+		if ( defined $idcolumn ) {
+			$filtered_data_model->datas([data ->
+										 new( idcolumn             => $idcolumn,
+											  filename             => $datafile,
+											  ignoresign           => $ignoresign,
+											  directory            => $filtered_data_model -> directory,
+											  missing_data_token => $self->missing_data_token,
+											  ignore_missing_files => 0,
+											  skip_parsing         => 0,
+											  target               => 'mem')]) ;
 #	$filtered_data_model->_write();
-	} else {
-	  croak("No id column definition found in the model file." );
+		} else {
+			croak("No id column definition found in the model file." );
+		}
 	}
-      }
 
 
-    }
+}
 end preprocess_data
 
 # {{{ read_config_file
@@ -3354,11 +3358,12 @@ start run_xv_pred_step
 	    $model_copy_pred -> ignoresigns -> [0] : undef;
 	my $pred_data = data ->
 	    new( filename		  => $file,
-		 directory		  => $dir,
-		 target		  => 'mem',
-		 ignoresign		  => $ignoresign,
-		 skip_parsing         => 0,
-		 idcolumn		  => $model_copy_pred -> {'datas'}->[0]-> idcolumn );
+			 directory		  => $dir,
+			 missing_data_token => $self->missing_data_token,
+			 target		  => 'mem',
+			 ignoresign		  => $ignoresign,
+			 skip_parsing         => 0,
+			 idcolumn		  => $model_copy_pred -> {'datas'}->[0]-> idcolumn );
 #	  $pred_data ->_write(); 
 	$self->xv_pred_data($pred_data);
 

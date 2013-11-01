@@ -491,10 +491,10 @@
             <dia:string>#missing_data_token#</dia:string>
           </dia:attribute>
           <dia:attribute name="type">
-            <dia:string>#scalar string#</dia:string>
+            <dia:string>#scalar integer#</dia:string>
           </dia:attribute>
           <dia:attribute name="value">
-            <dia:string>#"-99"#</dia:string>
+            <dia:string>#-99#</dia:string>
           </dia:attribute>
           <dia:attribute name="comment">
             <dia:string>##</dia:string>

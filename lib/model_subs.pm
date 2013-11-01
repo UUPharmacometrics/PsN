@@ -131,8 +131,8 @@ of the data and output objects are set.
 
 =cut
 
-start new
-    {
+	start new
+{
 	if ( defined $parm{'problems'} ) {
 	    $this->problems($parm{'problems'});
 	} else {
@@ -144,21 +144,21 @@ start new
 	}
 
 	if ($this->maxevals > 0){
-	  if ( defined $this->problems ) {
-	    my $n_prob = scalar(@{$this->problems});
-	    for (my $probnum=1; $probnum<= $n_prob; $probnum++){
-	      unless ($this->is_option_set(record=>'estimation',
-					   name=>'MSFO',
-					   problem_number => $probnum,
-					   fuzzy_match => 1)){
-		$this->add_option(record_name=>'estimation',
-				  option_name=>'MSFO',
-				  problem_numbers=> [$probnum],
-				  option_value => ( $probnum == 1 ? 'psn_msf':('psn_msf_pr'.$probnum)), 
-				  add_record=>0);
-	      }
-	    }
-	  }
+		if ( defined $this->problems ) {
+			my $n_prob = scalar(@{$this->problems});
+			for (my $probnum=1; $probnum<= $n_prob; $probnum++){
+				unless ($this->is_option_set(record=>'estimation',
+											 name=>'MSFO',
+											 problem_number => $probnum,
+											 fuzzy_match => 1)){
+					$this->add_option(record_name=>'estimation',
+									  option_name=>'MSFO',
+									  problem_numbers=> [$probnum],
+									  option_value => ( $probnum == 1 ? 'psn_msf':('psn_msf_pr'.$probnum)), 
+									  add_record=>0);
+				}
+			}
+		}
 	}
 
 	if ( defined $parm{'active_problems'} ) {
@@ -166,92 +166,93 @@ start new
 	} elsif ( defined $this->problems ) {
 	    my @active = ();
 	    for ( @{$this->problems} ) {
-				push( @active, 1 );
+			push( @active, 1 );
 	    }
 	    $this->active_problems(\@active);
 	}
 
 	if ( defined $this->extra_files ) {
-	  for( my $i; $i < scalar @{$this->extra_files}; $i++ ) {
-	    my ( $dir, $file ) = OSspecific::absolute_path( $this->directory, $this->extra_files->[$i]);
-	    $this->extra_files->[$i] = $dir . $file;
-	  }
+		for( my $i; $i < scalar @{$this->extra_files}; $i++ ) {
+			my ( $dir, $file ) = OSspecific::absolute_path( $this->directory, $this->extra_files->[$i]);
+			$this->extra_files->[$i] = $dir . $file;
+		}
 	}
 	
 	# Read datafiles, if any.
-        unless( defined $this -> {'datas'} and not $this->quick_reload ) {		# FIXME: Nonstandard accessor. Fix with Moose.
+	unless( defined $this -> {'datas'} and not $this->quick_reload ) {		# FIXME: Nonstandard accessor. Fix with Moose.
 	    my @idcolumns = @{$this -> idcolumns};
 	    my @datafiles = @{$this -> datafiles('absolute_path' => 1)};
 	    for ( my $i = 0; $i <= $#datafiles; $i++ ) {
-	      my $datafile = $datafiles[$i];
-	      if ($this->d2u() and -e $datafile){
-		my $doit= `od -c $datafile | grep -c '\\r'`;
-		chomp ($doit);
-		if ($doit > 0){
-		  print "Converting $datafile using dos2unix\n";
-		  system("dos2unix -q $datafile");
-		}
-	      }
-	      my $idcolumn = $idcolumns[$i];
-	      my $ignoresign = defined $this -> ignoresigns ? $this -> ignoresigns -> [$i] : undef;
-	      my @model_header = @{$this->problems->[$i]->header};
-	      #should the model header not be used here?
-	      if ( defined $idcolumn ) {
-		push ( @{$this -> {'datas'}}, data ->
-		       new( idcolumn             => $idcolumn,
-			    filename             => $datafile,
-			    ignoresign           => $ignoresign,
-			    directory            => $this->directory,
-			    ignore_missing_files => $this->ignore_missing_files || $this->ignore_missing_data,
-			    skip_parsing         => $this->skip_data_parsing,
-			    target               => $this -> {'target'}) );		#FIXME: Nonstandard accessor. Fix with Moose
-	      } else {
-		croak("New model to be created from ".$this -> full_name().
-				". Data file is ".$datafile.
-				". No id column definition found in the model file." );
-	      }
+			my $datafile = $datafiles[$i];
+			if ($this->d2u() and -e $datafile){
+				my $doit= `od -c $datafile | grep -c '\\r'`;
+				chomp ($doit);
+				if ($doit > 0){
+					print "Converting $datafile using dos2unix\n";
+					system("dos2unix -q $datafile");
+				}
+			}
+			my $idcolumn = $idcolumns[$i];
+			my $ignoresign = defined $this -> ignoresigns ? $this -> ignoresigns -> [$i] : undef;
+			my @model_header = @{$this->problems->[$i]->header};
+			#should the model header not be used here?
+			if ( defined $idcolumn ) {
+				push ( @{$this -> {'datas'}}, data ->
+					   new( idcolumn             => $idcolumn,
+							filename             => $datafile,
+							ignoresign           => $ignoresign,
+							missing_data_token   => $this->missing_data_token,
+							directory            => $this->directory,
+							ignore_missing_files => $this->ignore_missing_files || $this->ignore_missing_data,
+							skip_parsing         => $this->skip_data_parsing,
+							target               => $this -> {'target'}) );		#FIXME: Nonstandard accessor. Fix with Moose
+			} else {
+				croak("New model to be created from ".$this -> full_name().
+					  ". Data file is ".$datafile.
+					  ". No id column definition found in the model file." );
+			}
 	    }
 	}
 
 	# Read outputfile, if any.
-        if ( !defined $this->outputs ) {
-					unless( defined $this -> {'outputfile'} ){		# FIXME: Nonstandard accessor. Fix with Moose.
-						if( $this -> filename() =~ /\.mod$/ ) {
-							($this -> {'outputfile'} = $this -> {'filename'}) =~ s/\.mod$/.lst/;
-						} else {
-							$this -> outputfile( $this -> filename().'.lst' );
-						}
-					}
-					$this->outputs([]);
-					push ( @{$this->outputs}, output ->
-							new( filename             => $this -> {'outputfile'},
-								directory            => $this->directory,
-								ignore_missing_files =>
-								$this->ignore_missing_files || $this->ignore_missing_output_files,
-								target               => $this -> {'target'}));
-				}
+	if ( !defined $this->outputs ) {
+		unless( defined $this -> {'outputfile'} ){		# FIXME: Nonstandard accessor. Fix with Moose.
+			if( $this -> filename() =~ /\.mod$/ ) {
+				($this -> {'outputfile'} = $this -> {'filename'}) =~ s/\.mod$/.lst/;
+			} else {
+				$this -> outputfile( $this -> filename().'.lst' );
+			}
+		}
+		$this->outputs([]);
+		push ( @{$this->outputs}, output ->
+			   new( filename             => $this -> {'outputfile'},
+					directory            => $this->directory,
+					ignore_missing_files =>
+					$this->ignore_missing_files || $this->ignore_missing_output_files,
+					target               => $this -> {'target'}));
+	}
 
 	# Adding mirror_plots module here, since it can add
 	# $PROBLEMS. Also it needs to know wheter an lst file exists
 	# or not.
 
 	if( $this->mirror_plots > 0 ){
-	  my $mirror_plot_module = model::mirror_plot_module -> new( base_model => $this, 
-								     nr_of_mirrors => $this->mirror_plots,
-								     cwres => $this->cwres,
-								     mirror_from_lst => $this->mirror_from_lst,
-								     niter_eonly => $this->niter_eonly,
-								     last_est_complete => $this->last_est_complete);
-	  push( @{$this -> {'mirror_plot_modules'}}, $mirror_plot_module );    #FIXME: Should have had an accessor. Fix with Moose
+		my $mirror_plot_module = model::mirror_plot_module -> new( base_model => $this, 
+																   nr_of_mirrors => $this->mirror_plots,
+																   cwres => $this->cwres,
+																   mirror_from_lst => $this->mirror_from_lst,
+																   niter_eonly => $this->niter_eonly,
+																   last_est_complete => $this->last_est_complete);
+		push( @{$this -> {'mirror_plot_modules'}}, $mirror_plot_module );    #FIXME: Should have had an accessor. Fix with Moose
 	}
 
 	if ( $this->iofv > 0 ) {
-	  my $iofv_module = model::iofv_module -> new( base_model => $this);
+		my $iofv_module = model::iofv_module -> new( base_model => $this);
 		$this->iofv_modules([]) unless defined $this->iofv_modules;
-	  push( @{$this->iofv_modules}, $iofv_module );
+		push( @{$this->iofv_modules}, $iofv_module );
 	}
 
-      }
+}
 end new
 
 # }}} new
@@ -940,6 +941,7 @@ start copy
 	      push @new_datas, data ->
 		new( filename		  => $data -> filename,
 		     directory		  => $data -> directory,
+			 missing_data_token   => $data -> missing_data_token,
 		     target		  => 'disk',
 		     ignoresign		  => $ignoresign,
 		     skip_parsing         => ($self -> skip_data_parsing() or $skip_data_parsing),
@@ -1155,29 +1157,30 @@ end datas
 # well.
 
 # start datafile
-      {
+{
 	# datafile either retrieves or sets a new name for the datafile in the first problem of the
 	# model. This method is only here for compatibility reasons. Don't use it. Use L</datafiles> instead.
 
 	if( defined $new_name ){
-	  $self -> _option_name( position => 0, 
-				 record   => 'data', 
-				 problem_number  => $problem_number,
-				 new_name => $new_name);
-	  my $ignoresign = defined $self -> ignoresigns ?
-	    $self -> ignoresigns -> [$problem_number-1] : undef;
-	  my @model_header = @{$self -> problems -> [$problem_number-1] -> header};
-	  $self -> {'datas'} -> [$problem_number-1] = data ->
-	    new( idcolumn             => $self -> idcolumn( problem_number => $problem_number ),
-		 ignoresign           => $ignoresign,
-		 filename             => $new_name,
-		 ignore_missing_files => $self->ignore_missing_files,
-		 skip_parsing         => $self -> skip_data_parsing(),
-		 target               => $self -> {'target'} );
+		$self -> _option_name( position => 0, 
+							   record   => 'data', 
+							   problem_number  => $problem_number,
+							   new_name => $new_name);
+		my $ignoresign = defined $self -> ignoresigns ?
+			$self -> ignoresigns -> [$problem_number-1] : undef;
+		my @model_header = @{$self -> problems -> [$problem_number-1] -> header};
+		$self -> {'datas'} -> [$problem_number-1] = data ->
+			new( idcolumn             => $self -> idcolumn( problem_number => $problem_number ),
+				 ignoresign           => $ignoresign,
+				 filename             => $new_name,
+				 missing_data_token => $self -> missing_data_token,
+				 ignore_missing_files => $self->ignore_missing_files,
+				 skip_parsing         => $self -> skip_data_parsing(),
+				 target               => $self -> {'target'} );
 	} else {
 	    $name = $self -> _option_name( position => 0, record => 'data', problem_number => $problem_number );
 	}
-      }
+}
 # end datafile
 
 # }}} datafile
@@ -1229,7 +1232,7 @@ is given, the returned file names will have the path to file as well.
 =cut
 
 start datafiles
-      {
+{
 	# The datafiles method retrieves or sets the names of the
 	# datafiles specified in the $DATA record of each problem. The
 	# problem_numbers argument can be used to control which
@@ -1238,90 +1241,92 @@ start datafiles
 
 	unless( scalar(@problem_numbers)>0 ){
 		$self->problems([]) unless defined $self->problems;
-	  @problem_numbers = (1 .. $#{$self->problems}+1);
+		@problem_numbers = (1 .. $#{$self->problems}+1);
 	}
 	if ( scalar @new_names > 0 ) {
-	  my $i = 0;
-	  my @idcolumns = @{$self ->
-			      idcolumns( problem_numbers => \@problem_numbers )};
-	  foreach my $new_name ( @new_names ) {
-	    if ( $absolute_path ) {
-	      my $tmp;
-	      ($tmp, $new_name) = OSspecific::absolute_path('', $new_name );
-	      $new_name = $tmp . $new_name;
-	    }
+		my $i = 0;
+		my @idcolumns = @{$self ->
+							  idcolumns( problem_numbers => \@problem_numbers )};
+		foreach my $new_name ( @new_names ) {
+			if ( $absolute_path ) {
+				my $tmp;
+				($tmp, $new_name) = OSspecific::absolute_path('', $new_name );
+				$new_name = $tmp . $new_name;
+			}
 
-	    $self -> _option_name( position	  => 0, 
-				   record	  => 'data', 
-				   problem_number => $problem_numbers[$i],
-				   new_name	  => $new_name);
-	    my $ignoresign = defined $self -> ignoresigns ? $self -> ignoresigns -> [$i] : undef;
-	    my @model_header = @{$self -> problems -> [$i] -> header};
-	    $self -> {'datas'} -> [$problem_numbers[$i]-1] = data ->
-	      new( idcolumn             => $idcolumns[$i],
-		   ignoresign           => $ignoresign,
-		   filename             => $new_name,
-		   ignore_missing_files => $self->ignore_missing_files,
-		   skip_parsing         => $self -> skip_data_parsing(),
-		   target               => $self -> {'target'} );
-	    $i++;
-	  }
+			$self -> _option_name( position	  => 0, 
+								   record	  => 'data', 
+								   problem_number => $problem_numbers[$i],
+								   new_name	  => $new_name);
+			my $ignoresign = defined $self -> ignoresigns ? $self -> ignoresigns -> [$i] : undef;
+			my @model_header = @{$self -> problems -> [$i] -> header};
+			$self -> {'datas'} -> [$problem_numbers[$i]-1] = data ->
+				new( idcolumn             => $idcolumns[$i],
+					 ignoresign           => $ignoresign,
+					 missing_data_token => $self->missing_data_token,
+					 filename             => $new_name,
+					 ignore_missing_files => $self->ignore_missing_files,
+					 skip_parsing         => $self -> skip_data_parsing(),
+					 target               => $self -> {'target'} );
+			$i++;
+		}
 	} else {
-	  foreach my $prob_num ( @problem_numbers ) {
-	    if ( $absolute_path ) {
-	      my ($d_dir, $d_name);
-	      ($d_dir, $d_name) =
-		  OSspecific::absolute_path($self->directory, $self ->_option_name( position	 => 0,
-											  record	 => 'data',
-											  problem_number => $prob_num ) );
-	      push( @names, $d_dir . $d_name );
-	    } else {
-	      my $name = $self -> _option_name( position       => 0,
-						record	       => 'data',
-						problem_number => $prob_num );
-	      $name =~ s/.*[\/\\]//;
-	      push( @names, $name );
-	    }
-	  }
+		foreach my $prob_num ( @problem_numbers ) {
+			if ( $absolute_path ) {
+				my ($d_dir, $d_name);
+				($d_dir, $d_name) =
+					OSspecific::absolute_path($self->directory, $self ->_option_name( position	 => 0,
+																					  record	 => 'data',
+																					  problem_number => $prob_num ) );
+				push( @names, $d_dir . $d_name );
+			} else {
+				my $name = $self -> _option_name( position       => 0,
+												  record	       => 'data',
+												  problem_number => $prob_num );
+				$name =~ s/.*[\/\\]//;
+				push( @names, $name );
+			}
+		}
 	}
-      }
+}
 end datafiles
 
 # }}} datafiles
 
 
-start set_file
-      {
+	start set_file
+{
 	my @problem_numbers;
 	if ( $problem_number == 0 ){
 		$self->problems([]) unless defined $self->problems;
-	  @problem_numbers = (1 .. $#{$self->problems}+1);
+		@problem_numbers = (1 .. $#{$self->problems}+1);
 	}else {
-	  push (@problem_numbers,$problem_number);
+		push (@problem_numbers,$problem_number);
 	}
 	foreach my $num (@problem_numbers){
-	  $self -> _option_name( position	  => 0, 
-				 record	  => $record, 
-				 problem_number => $num,
-				 new_name	  => $new_name);
+		$self -> _option_name( position	  => 0, 
+							   record	  => $record, 
+							   problem_number => $num,
+							   new_name	  => $new_name);
 
-	  if ($record eq 'data'){
-	    my @idcolumns = @{$self ->
-				  idcolumns( problem_numbers => \@problem_numbers )};
-	    
-	    my $ignoresign = defined $self -> ignoresigns ? $self -> ignoresigns -> [($num-1)] : undef;
-	    my @model_header = @{$self -> problems -> [($num-1)] -> header};
-	    $self -> {'datas'} -> [($num-1)] = data ->
-		new( idcolumn             => $idcolumns[($num-1)],
-		     ignoresign           => $ignoresign,
-		     filename             => $new_name,
-		     ignore_missing_files => $self->ignore_missing_files,
-		     skip_parsing         => $self -> skip_data_parsing(),
-		     target               => $self -> {'target'} );
-	  }
+		if ($record eq 'data'){
+			my @idcolumns = @{$self ->
+								  idcolumns( problem_numbers => \@problem_numbers )};
+			
+			my $ignoresign = defined $self -> ignoresigns ? $self -> ignoresigns -> [($num-1)] : undef;
+			my @model_header = @{$self -> problems -> [($num-1)] -> header};
+			$self -> {'datas'} -> [($num-1)] = data ->
+				new( idcolumn             => $idcolumns[($num-1)],
+					 ignoresign           => $ignoresign,
+					 missing_data_token => $self->missing_data_token,
+					 filename             => $new_name,
+					 ignore_missing_files => $self->ignore_missing_files,
+					 skip_parsing         => $self -> skip_data_parsing(),
+					 target               => $self -> {'target'} );
+		}
 
 	}
-      }
+}
 end set_file
 
 

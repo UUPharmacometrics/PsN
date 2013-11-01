@@ -363,6 +363,7 @@ start resample
 		  $boot = data->new( header      => \@header,
 							 idcolumn    => $self->idcolumn,
 							 ignoresign  => $self->ignoresign,
+							 missing_data_token => $self->missing_data_token,
 							 individuals => \@bs_inds,
 							 filename    => $new_name,
 							 ignore_missing_files => 1,
@@ -390,6 +391,7 @@ start resample
 	    }
 	    $boot = data->new( idcolumn => $self->idcolumn,
 				 ignoresign  => $self->ignoresign,
+				 missing_data_token => $self->missing_data_token,
 				 filename    => $new_name,
 				 ignore_missing_files => 1,
 				 target      => $target );
@@ -422,6 +424,7 @@ start resample
 	    $boot = data->new( header      => \@header,
 				 idcolumn    => $self->idcolumn,
 				 ignoresign  => $self->ignoresign,
+				 missing_data_token => $self->missing_data_token,
 				 individuals => \@bs_inds,
 				 filename    => $new_name,
 				 ignore_missing_files => 1,
@@ -437,6 +440,7 @@ start resample
 	    }
 	    $boot = data->new( idcolumn    => $self->idcolumn,
 				 ignoresign  => $self->ignoresign,
+				 missing_data_token => $self->missing_data_token,
 				 filename    => $new_name,
 				 ignore_missing_files => 1,
 				 target      => $target );
@@ -498,6 +502,7 @@ start resample_from_keys
 	$boot = data->new( header      => \@header,
 			     idcolumn    => $self->idcolumn,
 			     ignoresign  => $self->ignoresign,
+					   missing_data_token => $self->missing_data_token,
 			     individuals => \@bs_inds,
 			     filename    => $new_name,
 			     ignore_missing_files => 1,
@@ -589,6 +594,7 @@ start case_deletion
 	  my $newdata = data ->
 	      new ( header      => \@header,
 		    ignoresign  => $self->ignoresign,
+				missing_data_token => $self->missing_data_token,
 		    idcolumn    => $self->idcolumn,
 		    individuals => \@cd_inds,
 		    target      => $target,
@@ -597,6 +603,7 @@ start case_deletion
 	  my $deldata = data ->
 	      new ( header      => \@header,
 		    ignoresign  => $self->ignoresign,
+				missing_data_token => $self->missing_data_token,
 		    idcolumn    => $self->idcolumn,
 		    individuals => \@del_inds,
 		    target      => $target,
@@ -616,8 +623,8 @@ end case_deletion
 
 
 # {{{ copy
-start copy
-      {
+	start copy
+{
 	# filename: new data file name.
 	# 
 	# target: keep the copy in memory ('mem') or write it to disk and flush the memory ('disk').
@@ -630,6 +637,7 @@ start copy
 
 	$new_data = Storable::dclone( $self );
 	$new_data->skip_parsing ( $self->skip_parsing());
+	$new_data->missing_data_token($self->missing_data_token());
 	$new_data->synced(0);
 	$new_data->individuals([]);
 	unless ($self->skip_parsing()) {
@@ -638,7 +646,7 @@ start copy
 	# Set the new file name for the copy
 	$new_data->directory( $directory );
 	$new_data->filename( $filename );
-      }
+}
 end copy
 
 # }}} copy
@@ -1698,6 +1706,7 @@ start randomize_data
 	}
 	my $newdata = data->new( header      => \@header,
 				 idcolumn    => $self->idcolumn,
+				missing_data_token => $self->missing_data_token,			 
 				 ignoresign  => $self->ignoresign,
 				 individuals => \@new_individuals,
 				 filename    => $new_name,
@@ -2009,6 +2018,7 @@ start subsets
 				      comment              => \@comment,
 				      ignoresign           => $self->ignoresign,
 				      individuals          => $subset_ids[$j],
+								missing_data_token => $self->missing_data_token,
 				      ignore_missing_files => 1,
 				      target               => $target,
 				      idcolumn             => $self->idcolumn,
@@ -2045,6 +2055,7 @@ start subsets
 				      comment              => \@comment,
 				      ignoresign           => $self->ignoresign,
 				      individuals          => $subset_ids[$j],
+								missing_data_token => $self->missing_data_token,
 				      ignore_missing_files => 1,
 				      target               => $target,
 				      idcolumn             => $self->idcolumn,
@@ -2077,6 +2088,7 @@ start subset
 	}
 	$subset = data->new ( header      => \@header,
 				comment     => \@comment,
+								missing_data_token => $self->missing_data_token,
 				ignoresign  => $self->ignoresign,
 				individuals => \@subset_inds,
 				idcolumn    => $self->idcolumn,
