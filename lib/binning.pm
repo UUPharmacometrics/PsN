@@ -667,7 +667,7 @@ sub firstMethod
 
 			# How much the objective function decreases if a new bin edge is
 			# placed between bin edge K and K+1
-			$addDecrease = [ (-inf) x $K ];
+			$addDecrease = [ (-inf()) x $K ];
 
 			# The Part of the Objective Function for the added bin edge: 
 			my $addPOF = [ (inf) x $K ];
@@ -702,7 +702,7 @@ sub firstMethod
 
 			# Continue as long as there is any allowed place to insert a new
 			# bin edge:
-			if (any { $_ > -inf } @$addDecrease) {
+			if (any { $_ > -inf() } @$addDecrease) {
 
 				# Calculate the increase of the objective function when
 				# removing any of the current bin edges:
@@ -1498,7 +1498,7 @@ sub calcAD
 		# We set the following variables to -inf and inf to be able 
 		# to recognize that the bin edge could not be placed:
 
-		$addDecrease = -inf;
+		$addDecrease = -inf();
 		$newPOF = inf;
 		$negBLeft_result = inf;
 		$negBRight_result = inf;
