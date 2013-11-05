@@ -3740,7 +3740,7 @@ end select_best_model
 	# Log the run
 	$ui_text .= sprintf("%3s",$run+1) . sprintf("%25s",$self->models->[$run]->filename);
 	my $log_text = $run+1 . ',' . $self->models->[$run]->filename . ',';
-	if( $self->verbose or $self->quick_summarize and (not $self->clean > 2)){
+	if( ($self->verbose or $self->quick_summarize) and (not $self->clean > 2)){
 		foreach my $param ( 'ofv', 'covariance_step_successful', 'minimization_message' ) {
 			if( $param eq 'minimization_message' ){
 				$ui_text .= "\n    ---------- Minimization Message ----------\n";

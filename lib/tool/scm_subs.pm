@@ -908,13 +908,6 @@ end new
 				if (defined $pdt_value){
 					$max=$pdt_value if ($pdt_value > $max);
 				}
-				my $pd_value = $filtered_data_model->get_option_value( option_name => 'PD',
-																	   record_name => 'sizes',
-																	   fuzzy_match => 0);
-				
-				if (defined $pd_value){
-					$max=$pdt_value if ($pdt_value > $max);
-				}
 
 				if (defined $filtered_data_model ->problems->[0]->sizess() 
 					and scalar(@{$filtered_data_model ->problems->[0]->sizess()})>0){
@@ -1055,7 +1048,49 @@ end new
 	}else{
 		#only $filter is true
 		$only_filter = 1;	
+
 	}
+
+	#may still have to fix PD for number of $INPUT items
+	if (scalar(@filter_table_header)>50){
+		if ($PsN::nm_minor_version >= 2){
+			my $max = scalar(@filter_table_header);
+			
+			my $pd_value = $filtered_data_model->get_option_value( option_name => 'PD',
+																   record_name => 'sizes',
+																   fuzzy_match => 0);
+			
+			if (defined $pd_value){
+				$max=$pd_value if ($pd_value > $max);
+			}
+
+			if (defined $filtered_data_model ->problems->[0]->sizess() 
+				and scalar(@{$filtered_data_model ->problems->[0]->sizess()})>0){
+				$filtered_data_model -> set_option(record_name => 'sizes',
+												   record_number => 1,
+												   option_name => 'PD',
+												   option_value => $max,
+												   fuzzy_match => 0);
+				
+			}else{
+				$filtered_data_model -> add_records( type => 'sizes',
+													 record_strings => [ " PD=".$max ] );
+			}
+			
+		}else{
+			my $num = scalar(@filter_table_header);
+			my $mess = "$num items needed in \$INPUT in filter model, too many for NONMEM. ".
+				"Use NM version 7.2 or later, which can handle more items.".
+				"If you are already using 7.2 or later, check that the version info in psn.conf is correct.\n".
+				"Alternatively, create a new data set so that no IGNORE=(list) and hence no filtering is needed, ".
+				" or a data set ".
+				"with fewer columns than 50. Note that it is not enough to DROP ".
+				"columns, they must be removed completely from the data set.";
+			croak($mess);
+		}	    
+		
+	}
+
 
 	if ($only_filter){
 		foreach my $remove_rec ('abbreviated','msfi','contr','subroutine','prior','model','tol','infn','omega','pk','aesinitial','aes','des','error','pred','mix','theta','sigma','estimation','nonparametric'){
@@ -2106,7 +2141,7 @@ start linearize_setup
 									fuzzy_match => 0);
 		      
 		      if (defined $pd_value){
-			  $max=$pdt_value if ($pdt_value > $max);
+				  $max=$pd_value if ($pd_value > $max);
 		      }
 		      $self->sizes_pd($max);
 		      

@@ -694,7 +694,7 @@ if ((not $config_file->linearize) or $options{'methodA'}){
   #in derivatives_covariates.dta ID is always 1, different set of columns entirely
   $the_data = data -> new(directory => $deriv_dir,
 						  filename =>'derivatives_covariates.dta',
-						  missing_data_token => $self->missing_data_token,
+						  missing_data_token => $config_file->missing_data_token,
 						  target => 'mem',
 						  idcolumn => 1, 
 						  ignore_missing_files => 0,
