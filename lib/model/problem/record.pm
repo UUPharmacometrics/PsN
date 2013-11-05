@@ -15,7 +15,7 @@ sub BUILD
 {
 	my $this  = shift;
 
-	# To construct an option you inly need to suply an array of
+	# To construct an option you only need to supply an array of
   # strings containg the record block. _read_option then parses
   # those strings.
   $this->_read_options;
