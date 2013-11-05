@@ -1556,22 +1556,20 @@ start output_files
   }
 
 
-  my @problems = @{$self -> problems};
-  for( my $i = 0; $i <= $#problems; $i++ ) {
-    if( $problems[$i-1] -> shrinkage_module -> enabled ) {
-      my ( $dir, $eta_filename ) =
-	  OSspecific::absolute_path( undef,
-				     $problems[$i] -> shrinkage_module -> eta_tablename );
+	my @problems = @{$self -> problems};
+	for( my $i = 0; $i < scalar(@problems); $i++ ) {
+		if( $problems[$i] -> shrinkage_module -> enabled ) {
+			my ( $dir, $eta_filename ) = OSspecific::absolute_path( undef,
+				$problems[$i] -> shrinkage_module -> eta_tablename );
       
-      push( @file_names, $eta_filename );
+			push( @file_names, $eta_filename );
       
-      my ( $dir, $wres_filename ) =
-	  OSspecific::absolute_path( undef,
-				     $problems[$i] -> shrinkage_module -> wres_tablename );
+			my ( $dir, $wres_filename ) = OSspecific::absolute_path( undef,
+				$problems[$i] -> shrinkage_module -> wres_tablename );
       
-      push( @file_names, $wres_filename );
-    }
-  }
+			push( @file_names, $wres_filename );
+		}
+	}
 
 }
 end output_files
@@ -1933,7 +1931,7 @@ end ignore_lists
 
 
 start indexes
-      {
+{
 	# Usage:
 	#
 	#   @indexArray = @{$modelObject -> indexes( 'parameter_type' => 'omega' )};
@@ -1951,7 +1949,7 @@ start indexes
 	# THETA1, THETA2, THETA3...
 	# OMEGA(1,1) OMEGA (1,2)...
 	# SIGMA (1,1) SIGMA (2,2)...
-        # <snip> indexes_old
+	# <snip> indexes_old
 	# The Indexes method calculates the index for a
 	# parameter. Off-diagonal elements will get a index 'i_j', where i
 	# is the row number and j is the column number
@@ -1959,21 +1957,21 @@ start indexes
 
 	unless( scalar(@problem_numbers) > 0 ){
 		$self->problems([]) unless defined $self->problems;
-	  @problem_numbers = (1 .. $#{$self->problems}+1);
+		@problem_numbers = (1 .. $#{$self->problems}+1);
 	}
 	my @problems = @{$self->problems};
-        foreach my $i ( @problem_numbers ) {
-	  if ( defined $problems[ $i-1 ] ) {
-	    push( @indexes,
-		  $problems[ $i-1 ] ->
-		  indexes( parameter_type => $parameter_type,
-			   parameter_numbers => $parameter_numbers[ $i-1 ],
-			   with_priors => $with_priors) );
-	  } else {
-	    croak("Problem number $i does not exist!" );
-	  }
+	foreach my $i ( @problem_numbers ) {
+		if ( defined $problems[ $i-1 ] ) {
+			push( @indexes,
+				$problems[ $i-1 ] ->
+				indexes( parameter_type => $parameter_type,
+					parameter_numbers => $parameter_numbers[ $i-1 ],
+					with_priors => $with_priors) );
+		} else {
+			croak("Problem number $i does not exist!" );
+		}
 	}
-      }
+}
 end indexes
 
 # }}} indexes
