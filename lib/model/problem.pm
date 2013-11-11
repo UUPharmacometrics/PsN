@@ -26,7 +26,6 @@ use MooseX::Params::Validate;
 use model::mirror_plot_module;
 use model::cwres_module;
 use model::problem::nonparametric;
-use table_file;
 use model::problem::theta;
 use model::problem::sigma;
 use model::problem::omega;
@@ -59,6 +58,7 @@ use model::problem::subroutine;
 use model::problem::data;
 use model::problem::input;
 use model::problem::problem;
+use data;
 
 has 'problems' => ( is => 'rw', isa => 'Maybe[ArrayRef[model::problem::problem]]' );
 has 'inputs' => ( is => 'rw', isa => 'Maybe[ArrayRef[model::problem::input]]' );
@@ -92,7 +92,7 @@ has 'tols' => ( is => 'rw', isa => 'Maybe[ArrayRef[model::problem::tol]]' );
 has 'omegas' => ( is => 'rw', isa => 'Maybe[ArrayRef[model::problem::omega]]' );
 has 'sigmas' => ( is => 'rw', isa => 'Maybe[ArrayRef[model::problem::sigma]]' );
 has 'thetas' => ( is => 'rw', isa => 'Maybe[ArrayRef[model::problem::theta]]' );
-has 'table_files' => ( is => 'rw', isa => 'Maybe[ArrayRef[table_file]]' );
+has 'table_files' => ( is => 'rw', isa => 'Maybe[ArrayRef[data]]' );
 has 'nonparametrics' => ( is => 'rw', isa => 'Maybe[ArrayRef[model::problem::nonparametric]]' );
 has 'cwres_modules' => ( is => 'rw', isa => 'Maybe[ArrayRef[model::cwres_module]]' );
 has 'mirror_plot_modules' => ( is => 'rw', isa => 'Maybe[ArrayRef[model::mirror_plot_module]]' );
@@ -236,15 +236,6 @@ sub add_nonparametric
 	);
 	$self->nonparametrics([]) unless defined $self->nonparametrics;
 	push( @{$self->nonparametrics}, model::problem::nonparametric->new( %{$parm{'init_data'}} ) );
-}
-
-sub add_table_file
-{
-	my ($self, %parm) = validated_hash(@_, 
-		init_data => {isa => 'Any', optional => 0}
-	);
-	$self->table_files([]) unless defined $self->table_files;
-	push( @{$self->table_files}, model::problem::table_file->new( %{$parm{'init_data'}} ) );
 }
 
 sub add_theta
@@ -588,7 +579,7 @@ sub add_prior_distribution
 			     record_strings => ["$val FIX"]);
       }
       
-      my $ref = $from_output->get_single_value(attribute=>'covariance_matrix',
+      $ref = $from_output->get_single_value(attribute=>'covariance_matrix',
 					       problem_index=>($problem_number-1),
 					       subproblem_index=>0);
       unless (defined $ref){
@@ -621,7 +612,7 @@ sub add_prior_distribution
 
       #Add $OMEGA FIX where size is neta and initial estimates are final $OMEGA estimate 
       #from lst. Form must match original $OMEGA form in lst.
-      my $ref = $from_output->get_single_value(attribute=>'omegacoordval',
+      $ref = $from_output->get_single_value(attribute=>'omegacoordval',
 					       problem_index => ($problem_number-1),
 					       subproblem_index => 0);
 

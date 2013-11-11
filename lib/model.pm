@@ -594,7 +594,7 @@ sub copy
 
 	# {{{ update the shrinkage modules
 
-	my @problems = @{$new_model -> problems};
+	@problems = @{$new_model -> problems};
 	for( my $i = 1; $i <= scalar @problems; $i++ ) {
 	  $problems[ $i-1 ] -> shrinkage_module -> nomegas( $new_model -> nomegas()->[$i-1] );
 	}
@@ -2811,14 +2811,14 @@ sub msfo_names
 # I<new_names> must be the same as the size of
 # I<problem_numbers>.
 
-	my ( $name_ref, $junk ) = $self -> 
+	my ( $name_ref ) = $self -> 
 	_option_val_pos( name	     => 'MSFO',
 		record_name     => 'estimation',
 		problem_numbers => \@problem_numbers,
 		new_values	     => \@new_names );
 
 
-	my ( $nonp_name_ref, $junk ) = $self ->
+	my ( $nonp_name_ref ) = $self ->
 	_option_val_pos( name            => 'MSFO',
 		record_name     => 'nonparametric',
 		problem_numbers => \@problem_numbers,
@@ -3226,7 +3226,7 @@ sub update_inits
 		    if (($namesvalues{$name} ne 'matched') and ($namesvalues{$name} != 0));
 	      }
 	    }
-	    if (($param eq @params[$#params]) and ($update_omegas or $update_sigmas) and $ensure_diagonal_dominance){
+	    if (($param eq $params[$#params]) and ($update_omegas or $update_sigmas) and $ensure_diagonal_dominance){
 		$problem->ensure_diagonal_dominance(verbose => 1); #ensure_diagonal_dominance only set from update_inits program
 	    }
 	  } #each problem
@@ -3731,12 +3731,15 @@ sub output_files
 	my @problems = @{$self -> problems};
 	for( my $i = 0; $i < scalar(@problems); $i++ ) {
 		if( $problems[$i] -> shrinkage_module -> enabled ) {
-			my ( $dir, $eta_filename ) = OSspecific::absolute_path( undef,
+			my $dir;
+			my $eta_filename;
+			( $dir, $eta_filename ) = OSspecific::absolute_path( undef,
 				$problems[$i] -> shrinkage_module -> eta_tablename );
       
 			push( @file_names, $eta_filename );
       
-			my ( $dir, $wres_filename ) = OSspecific::absolute_path( undef,
+			my $wres_filename;
+			( $dir, $wres_filename ) = OSspecific::absolute_path( undef,
 				$problems[$i] -> shrinkage_module -> wres_tablename );
       
 			push( @file_names, $wres_filename );

@@ -150,7 +150,6 @@ DIALIBFILES=debug.pm \
 	file.pm \
 	data/individual.pm \
 	data.pm \
-	table_file.pm \
 	output/problem/subproblem.pm \
 	output/problem.pm \
 	output.pm \
@@ -268,9 +267,6 @@ libgen/tool/scm/config_file.pm libgen/tool/scm.pm : diagrams/scm.dia
 
 libgen/tool.pm : diagrams/tool.dia
 	$(DIA2CODE) -t perl -d $(DIRPM) diagrams/tool.dia
-
-libgen/table_file.pm libgen/model%.pm : diagrams/model.dia
-	$(DIA2CODE) -t perl -d $(DIRPM) diagrams/model.dia
 
 libgen/output%.pm : diagrams/output.dia
 	$(DIA2CODE) -t perl -d $(DIRPM) diagrams/output.dia
