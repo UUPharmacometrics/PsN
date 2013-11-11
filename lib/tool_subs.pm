@@ -785,18 +785,21 @@ start run
 	    if ($self->stop_motion());
 	
 	if( $self->clean >= 3 and not $self->top_tool ) {
-	  
-	  my $top_dir = $self->directory;
-	  foreach my $dir ( <$top_dir/m*> ){
-	    if( $dir =~ /m[0123456789]+$/ ){
-	      unlink( <$dir/*> );
-	      rmdir( $dir );
-	    }
-	  }
-
-	  my $dir = $self->directory;
-	  unlink( <$dir/*> );
-	  rmdir( $dir );
+	#	print "\nhej\n";
+		my $top_dir = $self->directory;
+		foreach my $dir ( <$top_dir/m*> ){
+			if( $dir =~ /m[0123456789]+$/ ){
+				unlink( <$dir/*> );
+				rmdir( $dir );
+			}
+		}
+		my @NM_runs=<$top_dir/NM_run*>;
+		unless (scalar(@NM_runs)>0){
+			#kkep if error made NM_run stay
+			my $dir = $self->directory;
+			unlink( <$dir/*> );
+			rmdir( $dir );
+		}
 	}
       }
 end run

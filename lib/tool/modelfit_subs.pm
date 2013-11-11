@@ -555,9 +555,9 @@ start prepare_raw_results
 
 	unless (defined $self->raw_results) {
 	  croak("Failed to collect raw results from lst-file(s).\n".
-			"Check lst-file(s) and psn_nonmem_error_messages.txt in ".
+			"Check lst-file(s) and ".$self->general_error_file." or ".$self->nmtran_error_file." in ".
 			"NM_run directory/-ies for errors.\n".
-			"If lst-file and psn_nonmem_error_messages.txt are missing\n".
+			"If lst-file and error file are missing\n".
 			"check perl installation and perl settings in psn.conf. ".
 			"If applicable, also check cluster settings.\n");
 	}
@@ -1137,7 +1137,7 @@ start copy_model_and_output
   for (my $i=0; $i<12; $i++){
     #an ls might make files sync and become visible
     $dirt = `ls -la 2>&1` unless ($Config{osname} eq 'MSWin32');
-    last if((-e $checkname) or (-e 'psn_nonmem_error_messages.txt'));#psn.lst exists or will never appear
+    last if((-e $checkname) or (-e $self->general_error_file) or (-e $self->nmtran_error_file));#psn.lst exists or will never appear
     sleep(6);
   }
 
@@ -1276,42 +1276,42 @@ start copy_model_and_output
 
 
     if( $self->clean >= 2 ){
-      unlink( <temp_dir/*> );
-      rmdir( 'temp_dir' );
-      my $msfo=$final_model -> get_option_value(record_name => 'estimation',
-						option_name => 'MSFO');
-      if (defined $msfo){
-	$msfo = $self -> get_retry_name( filename => $msfo,
-					 retry => $use_run-1 );
-      }
-      my $max_retry = $self->retries;
-      $max_retry = $self->min_retries if ($self->min_retries > $max_retry);
-      $max_retry++; #first run with number 1 is not a retry
-      for ( my $i = 1; $i <= $max_retry; $i++ ) {
-	foreach my $filename ( @output_files,'psn.mod','compilation_output.txt','nmqual_messages.txt'){
+		unlink( <temp_dir/*> );
+		rmdir( 'temp_dir' );
+		my $msfo=$final_model -> get_option_value(record_name => 'estimation',
+												  option_name => 'MSFO');
+		if (defined $msfo){
+			$msfo = $self -> get_retry_name( filename => $msfo,
+											 retry => $use_run-1 );
+		}
+		my $max_retry = $self->retries;
+		$max_retry = $self->min_retries if ($self->min_retries > $max_retry);
+		$max_retry++; #first run with number 1 is not a retry
+		for ( my $i = 1; $i <= $max_retry; $i++ ) {
+			foreach my $filename ( @output_files,'psn.mod','compilation_output.txt','nmqual_messages.txt'){
 
-	  my $use_name = $self -> get_retry_name( filename => $filename,
-						  retry => $i-1 );
-	  unlink( $use_name );
-	  my $crash=1;
-	  my $del_name = $self -> get_retry_name( filename => $filename,
-						  retry => $i-1,
-						  crash => $crash);
-	  while (-e $del_name){
-	    $crash++;
-	    my $next_name = $self -> get_retry_name( filename => $filename,
-						     retry => $i-1,
-						     crash => $crash);
-	    unlink( $del_name ) unless (($use_name eq $msfo) and 
-					(not -e $next_name));
-	    $del_name = $next_name;
-	  }
-	}
-      }
-      unlink( @{$model -> datafiles} );
-      unlink 'psn.nmqual_out';
-      $self->stop_motion_call(tool=>'modelfit',message => "Clean level is >=2. Removed all numbered retry files")
-	  if ($self->stop_motion()> 1);
+				my $use_name = $self -> get_retry_name( filename => $filename,
+														retry => $i-1 );
+				unlink( $use_name );
+				my $crash=1;
+				my $del_name = $self -> get_retry_name( filename => $filename,
+														retry => $i-1,
+														crash => $crash);
+				while (-e $del_name){
+					$crash++;
+					my $next_name = $self -> get_retry_name( filename => $filename,
+															 retry => $i-1,
+															 crash => $crash);
+					unlink( $del_name ) unless (($use_name eq $msfo) and 
+												(not -e $next_name));
+					$del_name = $next_name;
+				}
+			}
+		}
+		unlink( @{$model -> datafiles} );
+		unlink 'psn.nmqual_out';
+		$self->stop_motion_call(tool=>'modelfit',message => "Clean level is >=2. Removed all numbered retry files")
+			if ($self->stop_motion()> 1);
     }
   }
 
@@ -2666,6 +2666,16 @@ start restart_needed
   
   # We need the trail of files to select the most appropriate at the end
   # (see copy_model_and_output)
+
+
+sub general_error{
+	my $message=shift;
+	open( FILE, '>>'.$self->general_error_file );
+	print FILE "\n".$message."\n";
+	close(FILE);
+
+}
+
   
 	unless( defined $parm{'queue_info'} ){
 		# The queue_info must be defined here!
@@ -2679,10 +2689,10 @@ start restart_needed
 	my $modelfile_tainted = \$queue_info_ref -> {'modelfile_tainted'};
 	my $nmqual='nmqual_messages.txt';
 	#if missing psn.lst is due to NMtran or compilation failure we should see a file 
-	#psn_nonmem_error_messages.txt in the directory. Then do not wait, continue directly with
+	#$self->general_error_file or $self->nmtran_error_file in the directory. Then do not wait, continue directly with
 	#storing failure messages. On the other hand, if we do not see psn.lst due to
-	#a file sync delay, there will be no psn_nonmem_error_messages. Wait for a long time
-	#to see if psn_nonmem_error_messages appears. Then check quickly for psn.lst again and then
+	#a file sync delay, there will be no $self->general_error_file. Wait for a long time
+	#to see if $self->general_error_file appears. Then check quickly for psn.lst again and then
 	#exit with failure message
 
 	#neither psn_nonmem_error_messages.txt nor psn.lst will appear if run killed or
@@ -2695,7 +2705,7 @@ start restart_needed
 		#an ls might make files sync and become visible
 		$dirt = `ls -la 2>&1` unless ($Config{osname} eq 'MSWin32');
 		last if((-e 'stats-runs.csv') or (-e 'psn.lst') or (-e 'job_submission_error')
-				or (-e 'psn_nonmem_error_messages.txt')
+				or (-e $self->general_error_file)
 				or (-e $self->nmtran_error_file));#psn.lst exists or will never appear
 		sleep(6);
 	}
@@ -2763,6 +2773,7 @@ start restart_needed
 				not defined $output_file -> problems ){
 				# This should not happen if we are able to parse the output file correctly
 				$run_results -> [${$tries}] -> {'failed'} = 'lst-file file exists but could not be parsed correctly';
+				general_error('lst-file file exists but could not be parsed correctly');
 				return(0);
 			}
 
@@ -2976,6 +2987,7 @@ start restart_needed
 			}elsif (not(-e 'FREPORT')){
 				$failure = 'NMtran failed';
 				$failure_mess="NMtran failed. There is no output for model ".($run_no+1) ;
+				general_error($failure_mess);
 				ui -> print( category => 'all', message  => $failure_mess,newline => 1 );
 				$run_results -> [${$tries}] -> {'failed'} = $failure;
 				$output_file -> flush;
@@ -2991,6 +3003,7 @@ start restart_needed
 				$failure = 'NONMEM run failed';
 				$failure_mess="NONMEM run failed. Check the lst-file in NM_run".($run_no+1).
 					" for errors" ;
+				general_error($failure_mess);
 				ui -> print( category => 'all', message  => $failure_mess,newline => 1 );
 				$run_results -> [${$tries}] -> {'failed'} = $failure;
 				$output_file -> flush;
@@ -3377,6 +3390,7 @@ start restart_needed
 						$failure_mess .= $_."\n";
 					}
 					close( MESS );
+				general_error($failure_mess);
 				}else{
 					$failure .= ' - check cluster status and cluster settings in psn.conf';
 				}
@@ -3396,6 +3410,7 @@ start restart_needed
 				$failure_mess .= "Due to the NMtran errors there is no output for $nmrundir";
 			}else{
 				$failure_mess = "NMtran failed. There is no output for $nmrundir";
+				general_error($failure_mess);
 			}
 		}elsif (not(-e 'nonmem.exe' or -e 'nonmem' or -e 'nonmem5' or -e 'nonmem6' or -e 'nonmem7' )){
 			$failure = 'Compilation failed';
@@ -3406,6 +3421,7 @@ start restart_needed
 				$failure_mess = "Fortran compilation by the NONMEM's nmfe script failed. Cannot start NONMEM.\n".
 					"Go to the NM_run".($run_no+1)." subdirectory and run psn.mod with NONMEM's nmfe script to diagnose the problem.";
 			}
+			general_error($failure_mess);
 		}elsif (-e 'OUTPUT' or -e 'output'){
 			$failure = 'NONMEM run interrupted';
 			$failure_mess="NONMEM run interrupted. There is no lst-file for $nmrundir";
@@ -3577,24 +3593,52 @@ start select_best_model
       push( @{$self->raw_results}, @raw_row );
       push( @{$self->raw_nonp_results}, @raw_row ) if (defined $self->raw_nonp_results);
  
-    }else{
-      my @raw_results_rows = @{$queue_info_ref -> {'raw_results'} -> [$selected-1]};
-      
-      foreach my $row ( @raw_results_rows ){
-				shift( @{$row} );
-				unshift( @{$row}, $run_no+1 );
-      }
+	  #partial cleaning
 
-			$self->raw_results([]) unless defined $self->raw_results;
-      push( @{$self->raw_results}, @raw_results_rows );
-      push( @{$self->raw_nonp_results}, @{$queue_info_ref -> {'raw_nonp_results'} -> [$selected-1]} )
-				if (defined $self->raw_nonp_results and defined $queue_info_ref -> {'raw_nonp_results'} -> [$selected-1]);
-      
-      
-      $self -> copy_model_and_output( final_model   => $candidate_model,
-				      model         => $model,
-				      use_run       => $selected ? $selected : '' );
-      
+	  if ( $self->clean >= 1 and $PsN::warnings_enabled == 0 ) {
+		  unlink 'nonmem', 'nonmem5','nonmem6','nonmem7',
+		  'nonmem5_adaptive','nonmem6_adaptive','nonmem7_adaptive', 
+		  'nonmem.exe','FDATA', 'FREPORT', 'FSUBS', 'FSUBS.f','FSUBS.f90', 
+		  'FSUBS.for', 'LINK.LNK', 'FSTREAM', 'FCON.orig', 'FLIB', 'FCON','PRDERR',
+		  'nmprd4p.mod','nul',
+		  'fsubs','fsubs.f','fsubs.for','fsubs.f90','FSUBS2','FSUBS_MU.F90';
+
+		  unlink 'LINKC.LNK','compile.lnk','gfortran.txt','ifort.txt','garbage.out',
+		  'newline','nmexec.set','parafile.set','prcompile.set','prdefault.set',
+		  'prsame.set','psn.log','rundir.set','runpdir.set','temporaryfile.xml';
+		  unlink 'temp.out','trashfile.xxx','trskip.set','worker.set','xmloff.set';
+		  unlink 'prsizes.f90','licfile.set','background.set','FSIZES';
+		  #do not delete INTER, needed for saving data from crashed runs
+
+		  unlink( <worker*/*> );
+		  my @removedir = <worker*>;
+		  foreach my $remdir (@removedir){
+			  rmdir ($remdir) if (-d $remdir);
+		  }
+
+		  if( $self->clean >= 2 ){
+			  unlink( <temp_dir/*> );
+			  rmdir( 'temp_dir' );
+		  }
+	  }
+    }else{
+		my @raw_results_rows = @{$queue_info_ref -> {'raw_results'} -> [$selected-1]};
+		
+		foreach my $row ( @raw_results_rows ){
+			shift( @{$row} );
+			unshift( @{$row}, $run_no+1 );
+		}
+		
+		$self->raw_results([]) unless defined $self->raw_results;
+		push( @{$self->raw_results}, @raw_results_rows );
+		push( @{$self->raw_nonp_results}, @{$queue_info_ref -> {'raw_nonp_results'} -> [$selected-1]} )
+			if (defined $self->raw_nonp_results and defined $queue_info_ref -> {'raw_nonp_results'} -> [$selected-1]);
+		
+		
+		$self -> copy_model_and_output( final_model   => $candidate_model,
+										model         => $model,
+										use_run       => $selected ? $selected : '' );
+		
     }
 
   }
@@ -4347,22 +4391,23 @@ start run
 	      # {{{ cleaning and done file
 
 	      if( $self->clean >= 3 ){
-		unlink( <$work_dir/worker*/*> );
-		my @removedir = <$work_dir/worker*>;
-		foreach my $remdir (@removedir){
-		  rmdir ($remdir) if (-d $remdir);
-		}
-		unless (-e $work_dir.'/psn_nonmem_error_messages.txt'){ 
-		    #leave if error message,
-		    unlink( <$work_dir/*> )  ; 
-		    unless( rmdir( $work_dir ) ){debug -> warn( message => "Unable to remove $work_dir directory: $! ." )};
-		    $self->stop_motion_call(tool=>'modelfit',message => "clean level is >=3, removed $work_dir")
-			if ($self->stop_motion()> 1);
-		}
-		sleep(2);
+			  unlink( <$work_dir/worker*/*> );
+			  my @removedir = <$work_dir/worker*>;
+			  foreach my $remdir (@removedir){
+				  rmdir ($remdir) if (-d $remdir);
+			  }
+			  unless ((-e $work_dir.'/'.$self->general_error_file) or (-e $work_dir.'/'.$self->nmtran_error_file)){ 
+
+				  #leave if error message,
+				  unlink( <$work_dir/*> )  ; 
+				  unless( rmdir( $work_dir ) ){debug -> warn( message => "Unable to remove $work_dir directory: $! ." )};
+				  $self->stop_motion_call(tool=>'modelfit',message => "clean level is >=3, removed $work_dir")
+					  if ($self->stop_motion()> 1);
+			  }
+			  sleep(2);
 	      } else {
-		
-		
+			  1;
+			  
 	      }
 
 	      # }}}
@@ -4408,24 +4453,33 @@ start run
 
       # {{{ clean $self -> directory 
       if( $self->clean >= 2 ){
-	unlink($self->directory . '/model_NMrun_translation.txt');
-	unlink($self->directory . '/modelfit.log');
+		  unlink($self->directory . '/model_NMrun_translation.txt');
+		  unlink($self->directory . '/modelfit.log');
       }
       if( not $self->top_tool and $self->clean >= 3 ){
-	my $dir = $self->directory;
-	unlink( <$dir/NM_run*/worker*/*> );
-	my @removedir = <$dir/NM_run*/worker*>;
-	foreach my $remdir (@removedir){
-	  rmdir ($remdir) if (-d $remdir);
-	}
-	unlink( <$dir/NM_run*/*> );
-	for( <$dir/NM_run*> ) {
-	  rmdir();
-	}
-	unlink( <$dir/*> );
-	rmdir( $dir );
-	$self->stop_motion_call(tool=>'modelfit',message => "clean level is >=3, removing $dir completely")
-	    if ($self->stop_motion()> 1);
+		  my $dir = $self->directory;
+		  unlink( <$dir/NM_run*/worker*/*> );
+		  my @removedir = <$dir/NM_run*/worker*>;
+		  foreach my $remdir (@removedir){
+			  rmdir ($remdir) if (-d $remdir);
+		  }
+		  my $keep_this=0;
+		  foreach my $work_dir (<$dir/NM_run*>){
+			  if ((-e $work_dir.'/'.$self->general_error_file) or (-e $work_dir.'/'.$self->nmtran_error_file)){ 
+				  #leave if error message,
+				  $keep_this=1;
+			  }else{
+				  unlink( <$work_dir/*> );
+				  rmdir($work_dir);
+			  }
+		  }
+		  unlink( <$dir/raw_results_structure> );
+		  unless ($keep_this){
+			  unlink( <$dir/*> );
+			  rmdir( $dir );
+			  $self->stop_motion_call(tool=>'modelfit',message => "clean level is >=3, removing $dir completely")
+				  if ($self->stop_motion()> 1);
+		  }
       }
       # }}}
 

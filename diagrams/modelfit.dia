@@ -457,8 +457,29 @@
             <dia:boolean val="false"/>
           </dia:attribute>
         </dia:composite>
-
-
+        <dia:composite type="umlattribute">
+          <dia:attribute name="name">
+            <dia:string>#general_error_file#</dia:string>
+          </dia:attribute>
+          <dia:attribute name="type">
+            <dia:string>#scalar string#</dia:string>
+          </dia:attribute>
+          <dia:attribute name="value">
+            <dia:string>#'psn_nonmem_error_messages.txt'#</dia:string>
+          </dia:attribute>
+          <dia:attribute name="comment">
+            <dia:string>##</dia:string>
+          </dia:attribute>
+          <dia:attribute name="visibility">
+            <dia:enum val="0"/>
+          </dia:attribute>
+          <dia:attribute name="abstract">
+            <dia:boolean val="false"/>
+          </dia:attribute>
+          <dia:attribute name="class_scope">
+            <dia:boolean val="false"/>
+          </dia:attribute>
+        </dia:composite>
         <dia:composite type="umlattribute">
           <dia:attribute name="name">
             <dia:string>#base_msfo_name#</dia:string>
