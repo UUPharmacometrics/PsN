@@ -12,6 +12,7 @@ use strict;
 use Carp;
 use Math::Trig;	# For pi
 use array qw(:all);
+use POSIX qw(ceil);
 
 sub bin_range
 {
@@ -667,7 +668,7 @@ sub firstMethod
 
 			# How much the objective function decreases if a new bin edge is
 			# placed between bin edge K and K+1
-			$addDecrease = [ (-inf) x $K ];
+			$addDecrease = [ (-inf()) x $K ];
 
 			# The Part of the Objective Function for the added bin edge: 
 			my $addPOF = [ (inf) x $K ];
@@ -702,7 +703,7 @@ sub firstMethod
 
 			# Continue as long as there is any allowed place to insert a new
 			# bin edge:
-			if (any { $_ > -inf } @$addDecrease) {
+			if (any { $_ > -inf() } @$addDecrease) {
 
 				# Calculate the increase of the objective function when
 				# removing any of the current bin edges:
@@ -989,30 +990,50 @@ sub gaussFilter
 
 	my @smoothedDensity;
 
+	my $spacing = (scalar(@$mesh) - 1) / ($$mesh[-1] - $$mesh[0]);
+	my $mid;
+	my $gauss;
+
 	# Perform a convolution between the Gauss Kernel and the data density
 	for (my $i = 0; $i < @$density; $i++) {
-		for (my $k = 0; $k < @$mesh; $k++) {
-			$smoothedDensity[$k] += $$density[$i] * exp( (($$mesh[$k] - $$idv[$i]) / $sigma)**2 * (-1/2)) / sqrt(2 * pi);
+		$mid = ceil(($$idv[$i] - $$mesh[0]) * $spacing);
+
+		# Loop forward from midpoint and backward from midpoint separately. Stop is the kernel function is close to zero.
+		my $k = $mid;
+		my $cont = 1;
+		while ($cont && $k < scalar(@$mesh)) {
+			$gauss = exp( (($$mesh[$k] - $$idv[$i]) / $sigma)**2 * (-1/2)) / sqrt(2 * pi);
+			if ($gauss < 10**-12) {
+				$cont = 0;
+			} else {
+				$smoothedDensity[$k] += $$density[$i] * $gauss;
+			}
+			$k++;
+		}	
+
+		my $k = $mid - 1;
+		my $cont = 1;
+		while ($cont && $k >= 0) {
+			$gauss = exp( (($$mesh[$k] - $$idv[$i]) / $sigma)**2 * (-1/2)) / sqrt(2 * pi);
+			if ($gauss < 10**-12) {
+				$cont = 0;
+			} else {
+				$smoothedDensity[$k] += $$density[$i] * $gauss;
+			}
+			$k--;
 		}
+
+		#Old simpler inner loop
+		#for (my $k = 0; $k < @$mesh; $k++) {
+		#		$smoothedDensity[$k] += $$density[$i] * exp( (($$mesh[$k] - $$idv[$i]) / $sigma)**2 * (-1/2)) / sqrt(2 * pi);
+		#	}	
 	}
-
-	#@smoothedDensity = map { $smoothedDensity[$_] + $$density[$i] * exp( (($$mesh[$_] - $$idv[$i]) / $sigma)**2 * (-1/2)) / sqrt(2 * pi) } 0..$#$mesh;
-
-	#for (my $i = 0; $i < @$density; $i++) {
-		# Done in several steps to make it easy to follow the original matlab code. Rewrite for speed
-	#	my @step1 = map { ($_ - $$idv[$i]) / $sigma } @$mesh;								# (mesh - idv(i)) / sigma
-	#	my @step2 = map { exp($_ * $_ * (-1/2)) / sqrt(2 * pi) } @step1;				# gaussKernel(...)
-	#	my @step3 = map { $_ * $$density[$i] } @step2;										# density(i) * ...
-	#	@smoothedDensity = map { $smoothedDensity[$_] + $step3[$_] } 0..$#step3;	# smoothedDensity = smoothedDensity + ...
-	#}
 
 	# Normalize smoothed density so that the integral over it is 1.
 
 	foreach (@smoothedDensity) {
 		$_ /= ($sigma * $N);
 	}
-
-	#@smoothedDensity = map {$_ / ($sigma * $N) } @smoothedDensity;
 
 	return \@smoothedDensity;
 }
@@ -1498,7 +1519,7 @@ sub calcAD
 		# We set the following variables to -inf and inf to be able 
 		# to recognize that the bin edge could not be placed:
 
-		$addDecrease = -inf;
+		$addDecrease = -inf();
 		$newPOF = inf;
 		$negBLeft_result = inf;
 		$negBRight_result = inf;

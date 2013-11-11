@@ -16,14 +16,11 @@ lib/data.pm
 lib/data/individual.pm
 lib/debug.pm
 lib/file.pm
-lib/model.pm
-lib/model/problem.pm
 lib/nonmem.pm
 lib/output.pm
 lib/output/problem.pm
 lib/output/problem/subproblem.pm
 lib/status_bar.pm
-lib/table_file.pm
 lib/tool.pm
 lib/tool/bootstrap.pm
 lib/tool/cdd.pm
