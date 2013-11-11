@@ -154,7 +154,6 @@ DIALIBFILES=debug.pm \
 	output/problem/subproblem.pm \
 	output/problem.pm \
 	output.pm \
-	model.pm \
 	tool.pm \
 	tool/modelfit.pm \
 	tool/llp.pm \

@@ -97,7 +97,7 @@ has 'nonparametrics' => ( is => 'rw', isa => 'Maybe[ArrayRef[model::problem::non
 has 'cwres_modules' => ( is => 'rw', isa => 'Maybe[ArrayRef[model::cwres_module]]' );
 has 'mirror_plot_modules' => ( is => 'rw', isa => 'Maybe[ArrayRef[model::mirror_plot_module]]' );
 has 'cwres' => ( is => 'rw', isa => 'Bool', default => 0 );
-has 'mirror_plots' => ( is => 'rw', isa => 'Int', default => 0 );
+has 'mirror_plots' => ( is => 'rw', isa => 'Maybe[Int]', default => 0 );
 has 'directory' => ( is => 'rw', isa => 'Str' );
 has 'ignore_missing_files' => ( is => 'rw', isa => 'Bool', default => 1 );
 has 'ignore_missing_output_files' => ( is => 'rw', isa => 'Bool', default => 1 );
@@ -785,7 +785,8 @@ sub _init_attr
 		 parameter_numbers => { isa => 'Maybe[ArrayRef[Int]]', optional => 1 },
 		 attribute => { isa => 'Str', optional => 1 },
 		 new_values => { isa => 'ArrayRef[Maybe[Str]]', optional => 1, default => [] },
-		 add_if_absent => { isa => 'Bool', default => 0, optional => 1 }
+		 add_if_absent => { isa => 'Bool', default => 0, optional => 1 },
+		MX_PARAMS_VALIDATE_NO_CACHE => 1,
 	);
 	my $parameter_type = $parm{'parameter_type'};
 	my $get_same = $parm{'get_same'};
@@ -1158,7 +1159,8 @@ sub _option_val_pos
 		instance_numbers => { isa => 'ArrayRef[Int]', optional => 1, default => [] },
 		name => { isa => 'Str', optional => 1 },
 		new_values => { isa => 'ArrayRef[Str]', optional => 1, default => [] },
-		exact_match => { isa => 'Bool', default => 1, optional => 1 }
+		exact_match => { isa => 'Bool', default => 1, optional => 1 },
+		MX_PARAMS_VALIDATE_NO_CACHE => 1,
 	);
 	my $record_name = $parm{'record_name'};
 	my @instance_numbers = @{$parm{'instance_numbers'}};
@@ -1729,7 +1731,8 @@ sub set_records
 	my $self = shift;
 	my %parm = validated_hash(\@_,
 		record_strings => { isa => 'ArrayRef[Str]', default => [] },
-		type => { isa => 'Str' }
+		type => { isa => 'Str' },
+		MX_PARAMS_VALIDATE_NO_CACHE => 1,
 	);
 	my @record_strings = @{$parm{'record_strings'}};
 	my $type = $parm{'type'};

@@ -16,7 +16,6 @@ lib/data.pm
 lib/data/individual.pm
 lib/debug.pm
 lib/file.pm
-lib/model.pm
 lib/nonmem.pm
 lib/output.pm
 lib/output/problem.pm

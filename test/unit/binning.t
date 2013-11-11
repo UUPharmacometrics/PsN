@@ -50,11 +50,11 @@ ok ((binning::any { $_ == 2 } (9, 9, 1, 2)), "Any 1");
 $b = binning::linspace(1, 2, 5);
 $a = binning::gaussFilter(\@a, \@b, $b, 0.2);
 
-is ($$a[0], 0.755854279357488, "gaussFilter 0");
+is ($$a[0], 0.75585427935736, "gaussFilter 0");
 is ($$a[1], 0.125588126607087, "gaussFilter 1");
 is ($$a[2], 0.000864113627775956, "gaussFilter 2");
 is ($$a[3], 0.06279411801682412, "gaussFilter 3");
-is ($$a[4], 0.377927139679190, "gaussFilter 4");
+is ($$a[4], 0.37792713967868, "gaussFilter 4");
 
 # Test of equalSize
 @a = qw(93 1 1 60 1 7 1 5 5 1 1 3 2 5 1 1 1 62 7 1 5 5 1 4 1 5 1 1 1 1 1 60 8 1 5 7 1 1 2 1 4 2 1 1 1 1 1 61 6 1 6 5 1 1 1 2 4 2 1 1 92 62 1 4 6 4 3 1 3 1 2 1 3 59 2 1 5 6 5 2 2 3 2 2 1 1 1 57
