@@ -1,0 +1,292 @@
+Tue Nov  5 14:24:57 CET 2013
+$PROBLEM    STUDY DESIGN COURSE
+$INPUT      ID DOSE TIME DV ARM CRCL MDV1 MDV2
+$DATA       data_tnpri.csv IGNORE=@
+$MSFI       msf_tnpri ONLYREAD
+$PRIOR      TNPRI (PROBLEM 2) IVAR=0
+$PRED 
+
+  BASELINE    = THETA(1)*EXP(ETA(1))  
+  PLACEBO_MAX = THETA(2)* (1+ETA(2))     
+  PLACEBO_HL  = THETA(3) 
+  SLP         = THETA(4)*EXP(ETA(3))
+  PLACEBO     = PLACEBO_MAX*(1-EXP(-LOG(2)/PLACEBO_HL*TIME)) 
+  IPRED       = BASELINE + PLACEBO + SLP*DOSE 
+  Y           = IPRED+EPS(1)
+; Change from baseline (CFB) for diagnostics 
+   IF(TIME.EQ.0) BASE_DV=DV
+   CFB         = DV - BASE_DV
+
+
+
+$PROBLEM    2
+$INPUT      ID DOSE TIME DV ARM CRCL MDV1 MDV2
+$DATA       data_tnpri.csv IGNORE=@ REWIND
+$THETA  98.7078 ; 1_BASELINE
+$THETA  22.759 ; 2_PLACEBO_MAX
+$THETA  0.745253 ; 3_PLACEBO_HL
+$THETA  0.556133 ; 4_SLP
+$OMEGA  BLOCK(2)
+ 0.232539  ; 1_OM_BASELINE
+ -0.021345 0.113703  ; 2_OM_PLC_MAX
+$OMEGA  0.107531  ;   3_OM_SLP
+$SIGMA  127.891  ;    1_SIGMA
+;$SIML (98798) NSUB=1 TRUE=PRIOR
+$ESTIMATION METHOD=COND MAXEVAL=3
+
+
+NM-TRAN MESSAGES
+  
+ WARNINGS AND ERRORS (IF ANY) FOR PROBLEM    1
+             
+ (WARNING  2) NM-TRAN INFERS THAT THE DATA ARE POPULATION.
+             
+ (WARNING  13) WITH USER-WRITTEN PRED OR $PRED, NM-TRAN CANNOT APPEND THE
+ MDV DATA ITEM.
+  
+ WARNINGS AND ERRORS (IF ANY) FOR PROBLEM    2
+             
+ (WARNING  2) NM-TRAN INFERS THAT THE DATA ARE POPULATION.
+             
+ (WARNING  13) WITH USER-WRITTEN PRED OR $PRED, NM-TRAN CANNOT APPEND THE
+ MDV DATA ITEM.
+ CREATING MUMODEL ROUTINE...
+
+License Registered to: Uppsala University
+Expiration Date:    14 MAR 2014
+Current Date:        5 NOV 2013
+Days until program expires : 134
+1NONLINEAR MIXED EFFECTS MODEL PROGRAM (NONMEM) VERSION 7.2.0
+ ORIGINALLY DEVELOPED BY STUART BEAL, LEWIS SHEINER, AND ALISON BOECKMANN
+ CURRENT DEVELOPERS ARE ROBERT BAUER, ICON DEVELOPMENT SOLUTIONS,
+ AND ALISON BOECKMANN. IMPLEMENTATION, EFFICIENCY, AND STANDARDIZATION
+ PERFORMED BY NOUS INFOSYSTEMS.
+ 
+ PROBLEM NO.:         1
+ STUDY DESIGN COURSE                                                     
+0DATA CHECKOUT RUN:              NO 
+ DATA SET LOCATED ON UNIT NO.:    2
+ THIS UNIT TO BE REWOUND:        NO 
+ NO. OF DATA RECS IN DATA SET:      360
+ NO. OF DATA ITEMS IN DATA SET:   8
+ ID DATA ITEM IS DATA ITEM NO.:   1
+ DEP VARIABLE IS DATA ITEM NO.:   4
+0LABELS FOR DATA ITEMS:
+ ID DOSE TIME DV ARM CRCL MDV1 MDV2
+0FORMAT FOR DATA:
+ (8E7.0)                                                                         
+ 
+ TOT. NO. OF OBS RECS:      360
+ TOT. NO. OF INDIVIDUALS:     90
+0MODEL SPECIFICATION FILE INPUT
+ EST. RESCALED:   NO 
+
+ THE FOLLOWING LABELS ARE EQUIVALENT
+ PRED=NPRED
+ RES=NRES
+ WRES=NWRES
+0
+ PRIOR SUBROUTINE USER-SUPPLIED
+1
+
+
+ #TBLN:      0
+ #METH: First Order Conditional Estimation (Evaluation)
+
+1
+ PROBLEM NO.:         2
+ 2                                                                       
+0DATA CHECKOUT RUN:              NO 
+ DATA SET LOCATED ON UNIT NO.:    2
+ THIS UNIT TO BE REWOUND:        NO 
+ NO. OF DATA RECS IN DATA SET:      360
+ NO. OF DATA ITEMS IN DATA SET:   8
+ ID DATA ITEM IS DATA ITEM NO.:   1
+ DEP VARIABLE IS DATA ITEM NO.:   4
+0LABELS FOR DATA ITEMS:
+ ID DOSE TIME DV ARM CRCL MDV1 MDV2
+0FORMAT FOR DATA:
+ (8E7.0)                                                                         
+ 
+ TOT. NO. OF OBS RECS:      360
+ TOT. NO. OF INDIVIDUALS:     90
+0LENGTH OF THETA:   4
+0DEFAULT THETA BOUNDARY TEST OMITTED:    NO 
+0OMEGA HAS BLOCK FORM:
+  1
+  1  1
+  0  0  2
+0DEFAULT OMEGA BOUNDARY TEST OMITTED:    NO 
+0SIGMA HAS SIMPLE DIAGONAL FORM WITH DIMENSION:   1
+0DEFAULT SIGMA BOUNDARY TEST OMITTED:    NO 
+0INITIAL ESTIMATE OF THETA:
+   0.9871E+02  0.2276E+02  0.7453E+00  0.5561E+00
+0INITIAL ESTIMATE OF OMEGA:
+ BLOCK SET NO.   BLOCK                                                                    FIXED
+        1                                                                                   NO 
+                  0.2325E+00
+                 -0.2134E-01   0.1137E+00
+        2                                                                                   NO 
+                  0.1075E+00
+0INITIAL ESTIMATE OF SIGMA:
+ 0.1279E+03
+0ESTIMATION STEP OMITTED:           NO 
+ CONDITIONAL ESTIMATES USED:       YES 
+ CENTERED ETA:                      NO 
+ EPS-ETA INTERACTION:               NO 
+ LAPLACIAN OBJ. FUNC.:              NO 
+ NO. OF FUNCT. EVALS. ALLOWED:          3
+ NO. OF SIG. FIGURES REQUIRED:       3
+ INTERMEDIATE PRINTOUT:            YES 
+ ESTIMATE OUTPUT TO MSF:            NO 
+ IND. OBJ. FUNC. VALUES SORTED:     NO 
+
+ THE FOLLOWING LABELS ARE EQUIVALENT
+ PRED=NPRED
+ RES=NRES
+ WRES=NWRES
+0
+ PRIOR SUBROUTINE USER-SUPPLIED
+1
+
+
+ #TBLN:      1
+ #METH: First Order Conditional Estimation
+
+ MONITORING OF SEARCH:
+
+
+0ITERATION NO.:    0    OBJECTIVE VALUE:   2514.20815854705        NO. OF FUNC. EVALS.:   7
+ CUMULATIVE NO. OF FUNC. EVALS.:        7
+ NPARAMETR:  9.8708E+01  2.2759E+01  7.4525E-01  5.5613E-01  2.3254E-01 -2.1345E-02  1.1370E-01  1.0753E-01  1.2789E+02
+ PARAMETER:  1.0000E-01  1.0000E-01  1.0000E-01  1.0000E-01  1.0000E-01 -1.0000E-01  1.0000E-01  1.0000E-01  1.0000E-01
+ GRADIENT:   6.0160E+02  3.3277E+01 -6.7669E+00  1.0311E+01  1.8315E-01 -3.1681E-01 -4.7948E-02  2.7491E-04  1.4012E-02
+
+ #TERM:
+0MINIMIZATION TERMINATED
+ DUE TO MAX. NO. OF FUNCTION EVALUATIONS EXCEEDED
+ NO. OF FUNCTION EVALUATIONS USED:        7
+ NO. OF SIG. DIGITS UNREPORTABLE
+
+ ETABAR IS THE ARITHMETIC MEAN OF THE ETA-ESTIMATES,
+ AND THE P-VALUE IS GIVEN FOR THE NULL HYPOTHESIS THAT THE TRUE MEAN IS 0.
+
+ ETABAR:        -3.3157E-03 -1.3243E-02  3.9851E-04
+ SE:             4.9486E-02  1.5590E-02  7.6840E-03
+
+ P VAL.:         9.4658E-01  3.9564E-01  9.5864E-01
+
+ ETAshrink(%):   2.1009E+00  5.5893E+01  7.7645E+01
+ EPSshrink(%):   1.6360E+01
+
+ #TERE:
+ Elapsed estimation time in seconds:     0.02
+1
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ ************************************************************************************************************************
+ ********************                                                                                ********************
+ ********************                        FIRST ORDER CONDITIONAL ESTIMATION                      ********************
+ #OBJT:**************                       MINIMUM VALUE OF OBJECTIVE FUNCTION                      ********************
+ ********************                                                                                ********************
+ ************************************************************************************************************************
+ 
+
+
+
+
+
+ #OBJV:********************************************     2514.208       **************************************************
+1
+ ************************************************************************************************************************
+ ********************                                                                                ********************
+ ********************                        FIRST ORDER CONDITIONAL ESTIMATION                      ********************
+ ********************                             FINAL PARAMETER ESTIMATE                           ********************
+ ********************                                                                                ********************
+ ************************************************************************************************************************
+ 
+
+
+ THETA - VECTOR OF FIXED EFFECTS PARAMETERS   *********
+
+
+         TH 1      TH 2      TH 3      TH 4     
+ 
+         9.87E+01  2.28E+01  7.45E-01  5.56E-01
+ 
+
+
+ OMEGA - COV MATRIX FOR RANDOM EFFECTS - ETAS  ********
+
+
+            ETA1      ETA2      ETA3   
+ 
+ ETA1
++        2.33E-01
+ 
+ ETA2
++       -2.13E-02  1.14E-01
+ 
+ ETA3
++        0.00E+00  0.00E+00  1.08E-01
+ 
+
+
+ SIGMA - COV MATRIX FOR RANDOM EFFECTS - EPSILONS  ****
+
+
+            EPS1   
+ 
+ EPS1
++        1.28E+02
+ 
+1
+
+
+ OMEGA - CORR MATRIX FOR RANDOM EFFECTS - ETAS  *******
+
+
+            ETA1      ETA2      ETA3   
+ 
+ ETA1
++        4.82E-01
+ 
+ ETA2
++       -1.31E-01  3.37E-01
+ 
+ ETA3
++        0.00E+00  0.00E+00  3.28E-01
+ 
+
+
+ SIGMA - CORR MATRIX FOR RANDOM EFFECTS - EPSILONS  ***
+
+
+            EPS1   
+ 
+ EPS1
++        1.13E+01
+ 
+Stop Time:
+Tue Nov  5 14:24:57 CET 2013
+This file was created using /opt/nm72/run/nmfe72
+Started  Tue Nov  5 14:24:57 2013
+Finished Tue Nov  5 14:24:57 2013

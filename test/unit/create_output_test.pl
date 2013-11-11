@@ -16,7 +16,8 @@ $SIG{__WARN__} = sub {
 #our $test_files = '/home/kajsa/dev_PsN_tools/new_lst_parser/';
 our $test_files = '/home/kajsa/kod-psn/PsN4/test/test_files/output/';
 #my $outfile = 'onePROB/oneEST/withSIM/cov_nsub2_V7_30_beta.lst';
-my $outfile = 'nm73/example6b_V7_30_beta.lst';
+#my $outfile = 'nm73/example6b_V7_30_beta.lst';
+my $outfile = 'multPROB/multEST/noSIM/p1_p2_tab_noest_V7_30_beta.lst';
 
 open (OUT,">testcase.txt");
 my $outobj = output -> new ('filename'=> $test_files.$outfile);
@@ -25,6 +26,7 @@ print OUT '$answer_hashes[$index]={};'."\n";
 print OUT '$answer_hashes[$index]->{file}='."'".$outfile."'".";\n";
 print OUT '$answer_hashes[$index]->{answers}={};'."\n";
 if( $outobj -> parsed_successfully ){
+	print OUT '$answer_hashes[$index]->{parsed_successfully}=1'.";\n";
 	my $minim = $outobj->access_any(attribute => 'estimation_step_run');
 	print "problems ".scalar(@{$minim})."\n";
 	for (my $prob=0; $prob < scalar(@{$minim}); $prob++){
@@ -55,6 +57,8 @@ if( $outobj -> parsed_successfully ){
 			}
 		}
 	}
+}else{
+	print OUT '$answer_hashes[$index]->{parsed_successfully}=0'.";\n";
 }
 close OUT;
 

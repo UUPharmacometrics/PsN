@@ -48,11 +48,9 @@ for (my $i=0; $i< scalar(@answer_hashes); $i++){
 	}
 
 	my $outobj = output -> new ('filename'=> $outfile);
-	ok($outobj->parsed_successfully, "output file $outfile parsed successfully");
+	cmp_ok($outobj->parsed_successfully,'==',$answer_hashes[$i]->{parsed_successfully}, "output file $outfile parsed successfully");
 
 	unless( $outobj -> parsed_successfully ){
-	    print "Unable to read everything from outputfile, parser error message:\n";
-	    print $outobj -> parsing_error_message();
 	    next;
 	}
 	foreach my $prob (keys $answer_hashes[$i]->{answers}){
@@ -63,6 +61,12 @@ for (my $i=0; $i< scalar(@answer_hashes); $i++){
 														subproblem_index=> $subprob, 
 														attribute=>$attr),
 							 $answer_hashes[$i]->{answers}->{$prob}->{$subprob}->{$attr},"$fname $attr prob $prob subprob $subprob");
+				}elsif ($attr =~ /^condition_number/){
+					my $tval = sprintf ("%.7f",$outobj->get_single_value(problem_index => $prob, 
+																		 subproblem_index=> $subprob,
+																		 attribute=>$attr));
+					my $ansval = sprintf ("%.7f",$answer_hashes[$i]->{answers}->{$prob}->{$subprob}->{$attr} );
+					cmp_ok($tval,'eq',$ansval,"$fname $attr prob $prob subprob $subprob");
 				}else{
 					cmp_ok($outobj->get_single_value(problem_index => $prob, 
 													 subproblem_index=> $subprob,
