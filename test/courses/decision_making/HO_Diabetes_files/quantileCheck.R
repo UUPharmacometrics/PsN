@@ -1,0 +1,56 @@
+##------------ Function to output 5%, 50%, 95% quantiles of CFB of HbA1c
+##------------ of a specified column with 2 specified TIMEs, w & w/o DRUG ----------
+quantCFB <- function(dname,time1,time2) {
+  d <- read.csv(dname,skip=1,head=T,sep="")
+  d.4 <- subset(d, TRT == 0)
+  d.4.start <- subset(d.4,!duplicated(ID))
+  d.4.end <- d.4[order(-d.4$TIME),]
+  d.4.90 <- subset(d.4.end, TIME <= time1)
+  d.4.90 <- subset(d.4.90, !duplicated(ID))
+  d.4.180 <- subset(d.4.end, TIME <= time2)
+  d.4.180 <- subset(d.4.180, !duplicated(ID))
+  d.4.end <- subset(d.4.end,!duplicated(ID))
+  
+  d.4.trt <- subset(d, TRT == 1)  
+  d.4.trt.start <- subset(d.4.trt,!duplicated(ID))
+  d.4.trt.end <- d.4.trt[order(-d.4.trt$TIME),]
+  d.4.trt.90 <- subset(d.4.trt.end, TIME <= time1)
+  d.4.trt.90 <- subset(d.4.trt.90, !duplicated(ID))
+  d.4.trt.180 <- subset(d.4.trt.end, TIME <= time2)
+  d.4.trt.180 <- subset(d.4.trt.180, !duplicated(ID))
+  d.4.trt.end <- subset(d.4.trt.end,!duplicated(ID))  
+  print("========NO ACTIVE DRUG TREATMENT================")
+  print(paste("dHbA1c at day ",time1," for ",dname,sep=""))
+  print(quantile(d.4.90$CFB, probs = c(0.05, 0.5, 0.95)))
+  print("================================================")
+  print(paste("dHbA1c at day ",time2," for ",dname,sep=""))
+  print(quantile(d.4.180$CFB, probs = c(0.05, 0.5, 0.95)))
+  print("================================================")
+  print(paste("dHbA1c at last day for ",dname,sep=""))
+  print(quantile(d.4.end$CFB, probs = c(0.05, 0.5, 0.95)))
+  print("========   ACTIVE DRUG TREATMENT================")
+  print(paste("dHbA1c at day ",time1," for ",dname,sep=""))
+  print(quantile(d.4.trt.90$CFB, probs = c(0.05, 0.5, 0.95)))
+  print("================================================")
+  print(paste("dHbA1c at day ",time2," for ",dname,sep=""))
+  print(quantile(d.4.trt.180$CFB, probs = c(0.05, 0.5, 0.95)))
+  print("================================================")
+  print(paste("dHbA1c at last day for ",dname,sep=""))
+  print(quantile(d.4.trt.end$CFB, probs = c(0.05, 0.5, 0.95)))  
+  return()
+}
+
+quantCFB("simtab51",84,182)
+quantCFB("simtab52",84,182)
+quantCFB("simtab53",84,182)
+quantCFB("simtab54",84,182)
+
+quantCFB("simtab61",84,182)
+quantCFB("simtab62",84,182)
+quantCFB("simtab63",84,182)
+quantCFB("simtab64",84,182)
+
+quantCFB("simtab71",84,182)
+quantCFB("simtab72",84,182)
+quantCFB("simtab73",84,182)
+quantCFB("simtab74",84,182)
