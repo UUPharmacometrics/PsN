@@ -1,10 +1,6 @@
-\documentclass[a4paper,12pt]{article}
-\title{CDD user guide\\ \vspace{2 mm} {\large PsN 3.6.2}}
-\date{2013-05-28}
+\input{inputs/format_header.tex}
+\guidetitle{CDD user guide}
 
-\usepackage[utf8]{inputenc}
-\usepackage{verbatim}
-\usepackage{longtable}
 \begin{document}
 
 \maketitle
@@ -12,11 +8,7 @@
 
 \section{Introduction}
 The Case Deletions Diagnostics (CDD) algorithm is a tool primarily used to identify influential components of the dataset, usually individuals. The CDD works by identifying groups in the data set and creating one new data set for each member of the group, where that member has been removed. The model is run once with each new data set. The PsN implementation of the CDD can take any column as base for the grouping and all rows with the same value in that column will be considered a group as long as no individual contain multiple values in that column.
-\\
-\\
-One should take care that the grouping creates sensible individual records. PsN will renumber the ID column so that two individuals with the same ID will not end up next to each other.b
-\\
-\\
+One should take care that the grouping creates sensible individual records. PsN will renumber the ID column so that two individuals with the same ID will not end up next to each other.
 Examples
 \begin{verbatim}
 cdd moxonidine.mod -case_column=1
@@ -28,53 +20,49 @@ cdd pheno.mod -case_column=AGE
 \subsection{Required input}
 A model file is required on the command-line.
 
-\begin{longtable}{p{1in}p{4in}}
-\verb%-case_column=<name|number>% & \\
-\nopagebreak
- & The column on which the case-deletion is done. You can either use the name of the column as specified in the \mbox{\$INPUT} record in the model file or you can use the column number. Numbering starts with 1.
-\end{longtable}
+\begin{optionlist}
+\optdefault{case\_column}{name|number}
+The column on which the case-deletion is done. You can either use the name of the column as specified in the \mbox{\$INPUT} record in the model file or you can use the column number. Numbering starts with 1.
+
+\nextopt
+\end{optionlist}
 
 \subsection{Optional input}
 
-\begin{longtable}{p{1in}p{4in}}
-\verb|-bins=N| & \\
-\nopagebreak
- & Sets the number of databins, or cdd datasets, to use. If the number of unique values, or factors, in the based\_on column is higher than N then one or more factors will be deleted in each cdd dataset. Specifying N as higher than the number of factors will have no effect. N is then reset to the number of factors. Default value = Number of unique values in the based\_on column. \\
-\\
-\verb|-xv| & \\
-\nopagebreak
- & Default true. Run the cross-validation step (-xv) or not (-no-xv). \\
-\\
-\verb%-selection_method=<random | consecutive>% & \\
-\nopagebreak
- & Default consecutive. Specifies whether the factors selected for exclusion should be drawn randomly or consecutively from the datafile. \\
-\\
-\verb|-outside_n_sd_check=X| & \\
-\nopagebreak
- & Default 2. Mark the runs with CS-CR outside X standard deviations of the PCA. \\
-\end{longtable}
+\begin{optionlist}
+\optdefault{bins}{N}
+Sets the number of databins, or cdd datasets, to use. If the number of unique values, or factors, in the based\_on column is higher than N then one or more factors will be deleted in each cdd dataset. Specifying N as higher than the number of factors will have no effect. N is then reset to the number of factors. Default value = Number of unique values in the based\_on column. 
+\nextopt
+\optname{xv}
+Default true. Run the cross-validation step (-xv) or not (-no-xv). 
+\nextopt
+\optdefault{selection\_method}{random | consecutive}
+Default consecutive. Specifies whether the factors selected for exclusion should be drawn randomly or consecutively from the datafile. 
+\nextopt
+\optdefault{outside\_n\_sd\_check}{X}
+Default 2. Mark the runs with CS-CR outside X standard deviations of the PCA. 
+\nextopt
+\end{optionlist}
 
 \subsection{Some common PsN-options}
 
 For a complete list of common options see common\_options\_defaults\_versions.pdf, or psn\_options -h on the commandline.
 
-\begin{longtable}{p{1in}p{4in}}
-\verb|-directory=cdd_dirN| & \\
-\nopagebreak
- & The directory in which the script will run NONMEM can be named. The default name is “cdd\_dirN” where N is increased by 1 each time you run the script. If the run is aborted or crashes, setting the directory to the one from which the script was running earlier can be done. PsN will then not run the model files that had finished, saving time. Note that same set of options must be given as when the run was started the first time. \\
-\\
-\verb|-threads=N| & \\
-\nopagebreak
- & The number of parallel processes to start on a parallel computer. \\
-\\
-\verb|-help| & \\
-\nopagebreak
- & With -help a longer help message will be printed. \\
-\\
-\verb|-last_est_complete| & \\
-\nopagebreak
- & is optional and only applies with NONMEM7 and cdd option -xv. See common\_options\_defaults\_versions.pdf for details.
-\end{longtable}
+\begin{optionlist}
+\optdefault{directory}{cdd\_dirN}
+The directory in which the script will run NONMEM can be named. The default name is “cdd\_dirN” where N is increased by 1 each time you run the script. If the run is aborted or crashes, setting the directory to the one from which the script was running earlier can be done. PsN will then not run the model files that had finished, saving time. Note that same set of options must be given as when the run was started the first time. 
+\nextopt
+\optdefault{threads}{N}
+The number of parallel processes to start on a parallel computer. 
+\nextopt
+\optname{help}
+With -help a longer help message will be printed. 
+\nextopt
+\optname{last\_est\_complete}
+is optional and only applies with NONMEM7 and cdd option -xv. See common\_options\_defaults\_versions.pdf for details.
+
+\nextopt
+\end{optionlist}
 
 
 \section{Known bugs/issues}

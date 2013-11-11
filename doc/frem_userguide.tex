@@ -1,10 +1,6 @@
-\documentclass[a4paper,12pt]{article}
-\title{FREM technical description\\ \vspace{2 mm} {\large PsN 3.6.9}}
-\date{2013-08-16}
+\input{inputs/format_header.tex}
+\guidetitle{FREM tecnical description}
 
-\usepackage[utf8]{inputenc}
-\usepackage{verbatim}
-\usepackage{longtable}
 \begin{document}
 
 \maketitle
@@ -13,8 +9,6 @@
 \section{Introduction}
 
 The frem script creates a set of models to gradually include random effects on “everything” to simultaneously account for all parameter-covariate relations. [TODO Description of frem methodology should be added.] If option -vpc is set then script will prepare model that can be run with vpc.
-\\
-\\
 Example
 \begin{verbatim}
 frem -covariates run1.mod
@@ -22,8 +16,6 @@ frem -covariates run1.mod
 
 
 TODO: limit the number of ETAs that get correlation with covariate ETAs, do not use all ETAs originally in model. Ok to require that ETAs that should not be included are in a separate leading block and the ETAs to be used in a single following block. Need parameter start-eta or similar that defaults to 1.
-\\
-\\
 TODO: add automatic handling of categorical covariates that are not bivariate, user-defined pooling or one category for each value. For now require that they are bivariate.
  -categorical=NYHA:2,3:1,4,,CC,,BB:1,5
 
@@ -36,8 +28,6 @@ The m1 subdirectory of the frem run directory will contain all the generated mod
 \section{Input and options}
 \subsection{frem-specific input}
 A model file is required on the command-line. Unless option -model3 is set (see below) the input model code must not include covariates that are listed in options -invariant or -time\_varying. Also, the input model must not include  BOV on any parameters, only BSV is allowed. For each parameter listed with option -parameters the input model must have a line 
-\\
-\\
 $<$par$>$=TV$<$par$>$ (BSV-expression)
 
 If there is no BSV for the parameter, i.e. the value is equal to the typical value, the user must still include an expression with 0 in the place of the BSV eta, using the desired form (additive, proportional, exponential,..). This is necessary to enable PsN to automatically add the BOV code. The 0 must be enclosed in parentheses, otherwise the frem program will not recognize it. Example with placeholder for additive inclusion of BOV:
@@ -55,79 +45,63 @@ If option -model3 is set then it is assumed that the input model file is a Model
 
 \subsection{frem options}
 
-\begin{longtable}{p{1in}p{4in}}
-\verb|-invariant=<list>| & \\
-\nopagebreak
- & A comma-separated list of covariates that are time invariant. Optional if -time\_varying is given, not allowed if -model3 is set, otherwise required. Names used in \$INPUT. \\
-\\
-\verb|-time_varying=<list>| & \\
-\nopagebreak
- & A comma-separated list of time-varying covariates. Optional if -invariant is given, not allowed if -model3 is set, otherwise required. Names used in \$INPUT. \\
-\\
-\verb|-occasion=name| & \\
-\nopagebreak
- & Default OCC. Needed if -time\_varying is set or both -model3 and -bov\_parameters, otherwise ignored. The name of the column that defines occasions. Name used in \$INPUT, not data set. \\
-\\
-\verb|-parameters=<list>| & \\
-\nopagebreak
- & Required if -time-varying is set, otherwise not allowed. A comma-separated list of model parameters that should have between-occasion variability added. \\
-\\
-\verb|-dv=name| & \\
-\nopagebreak
- & Default is DV. The name of the dependent variable. Name used in \$INPUT. \\
-\\
-\verb|-vpc| & \\
-\nopagebreak
- & Default not set. If set then script will prepare frem model that can be run with the vpc script (separate PsN call). If -model3 is set then this option will be set automatically.  \\
-\\
-\verb|-model3| & \\
-\nopagebreak
- & Default not set. If set then it is assumed that the input model is of type Model 3 created earlier by this script. Then frem will only create vpc model.  \\
-\\
-\verb|-check| & \\
-\nopagebreak
- & Set by default, disable with -no-check. Run safety check after data set 2 generation. \\
-\\
-\verb|-estimate=number| & \\
-\nopagebreak
- & Optional, default not defined. The number (0, 1, 2 or 3) of the last model to estimate in the frem sequence. All models with a higher number will still be created, but not estimated. If option model3 is not set and -estimation $>$= 0, estimation of Model 0 (the input model) will be skipped if a lst-file for the input model is found, i.e. a file with same stem but extension .lst instead of .mod. If option model3 is set and -estimation$>$=3, estimation of Model 3 (the input model when option model3 is set) will be skipped if a lst-file is found, i.e. a file with same stem but extension .lst instead of .mod. TODO Functionality to update initials of individual models with better estimates if some models are run at a later stage. \\
-\\
-\verb|-bsv_parameters=N| & \\
-\nopagebreak
- & Required if -model3 is set, otherwise not allowed. The number of model parameters (not covariates) that have BSV etas. (This number should be equal to the number of etas in Model 0/input model in the frem run that generated the input model3) \\
-\\
-\verb|-N_invariant=N| & \\
-\nopagebreak
- & Required if -model3 and -bov\_parameters are both set, otherwise not allowed. The number of invariant covariates that have BSV etas. (This number should be equal to the number of invariant covariates given with option -invariant to the frem run that generated the input model3) \\
-\\
-\verb|-bov_parameters=N| & \\
-\nopagebreak
- & Optional if -model3 is set, otherwise not allowed. The number of model parameters that have BOV etas. (This number should be equal to the number of parameters given with option -parameters to the frem run that generated the input model3)  \\
-\\
-\verb|-type=COL| & \\
-\nopagebreak
- & Default FREMTYPE. Only allowed if -model3 is set. The name of the column that distinguishes between original and covariate observations. The value in the FREMTYPE column must be 0 for original observations and larger than 0 for covariate observations.  \\
-\\
-\end{longtable}
+\begin{optionlist}
+\optdefault{invariant}{list}
+A comma-separated list of covariates that are time invariant. Optional if -time\_varying is given, not allowed if -model3 is set, otherwise required. Names used in \$INPUT. 
+\nextopt
+\optdefault{time\_varying}{list}
+A comma-separated list of time-varying covariates. Optional if -invariant is given, not allowed if -model3 is set, otherwise required. Names used in \$INPUT. 
+\nextopt
+\optdefault{occasion}{name}
+Default OCC. Needed if -time\_varying is set or both -model3 and -bov\_parameters, otherwise ignored. The name of the column that defines occasions. Name used in \$INPUT, not data set. 
+\nextopt
+\optdefault{parameters}{list}
+Required if -time-varying is set, otherwise not allowed. A comma-separated list of model parameters that should have between-occasion variability added. 
+\nextopt
+\optdefault{dv}{name}
+Default is DV. The name of the dependent variable. Name used in \$INPUT. 
+\nextopt
+\optname{vpc}
+Default not set. If set then script will prepare frem model that can be run with the vpc script (separate PsN call). If -model3 is set then this option will be set automatically.  
+\nextopt
+\optname{model3}
+Default not set. If set then it is assumed that the input model is of type Model 3 created earlier by this script. Then frem will only create vpc model.  
+\nextopt
+\optname{check}
+Set by default, disable with -no-check. Run safety check after data set 2 generation. 
+\nextopt
+\optdefault{estimate}{number}
+Optional, default not defined. The number (0, 1, 2 or 3) of the last model to estimate in the frem sequence. All models with a higher number will still be created, but not estimated. If option model3 is not set and -estimation $>$= 0, estimation of Model 0 (the input model) will be skipped if a lst-file for the input model is found, i.e. a file with same stem but extension .lst instead of .mod. If option model3 is set and -estimation$>$=3, estimation of Model 3 (the input model when option model3 is set) will be skipped if a lst-file is found, i.e. a file with same stem but extension .lst instead of .mod. TODO Functionality to update initials of individual models with better estimates if some models are run at a later stage. 
+\nextopt
+\optdefault{bsv\_parameters}{N}
+Required if -model3 is set, otherwise not allowed. The number of model parameters (not covariates) that have BSV etas. (This number should be equal to the number of etas in Model 0/input model in the frem run that generated the input model3) 
+\nextopt
+\optdefault{N\_invariant}{N}
+Required if -model3 and -bov\_parameters are both set, otherwise not allowed. The number of invariant covariates that have BSV etas. (This number should be equal to the number of invariant covariates given with option -invariant to the frem run that generated the input model3) 
+\nextopt
+\optdefault{bov\_parameters}{N}
+Optional if -model3 is set, otherwise not allowed. The number of model parameters that have BOV etas. (This number should be equal to the number of parameters given with option -parameters to the frem run that generated the input model3)  
+\nextopt
+\optdefault{type}{COL}
+Default FREMTYPE. Only allowed if -model3 is set. The name of the column that distinguishes between original and covariate observations. The value in the FREMTYPE column must be 0 for original observations and larger than 0 for covariate observations.  
+\nextopt
+\end{optionlist}
 
 
 \subsection{Some general PsN-options which are interesting in combination with frem}
 For a complete list of common options see common\_options\_defaults\_versions.pdf, or psn\_options -h on the command-line.
 
-\begin{longtable}{p{1in}p{4in}}
-\verb|-directory=name| & \\
-\nopagebreak
- & Name of run directory \\
-\\
-\verb|-c| & \\
-\nopagebreak
- & A \\
-\\
-\verb|-o| & \\
-\nopagebreak
- & R. \\
-\\
-\end{longtable}
+\begin{optionlist}
+\optdefault{directory}{name}
+Name of run directory 
+\nextopt
+\optname{c}
+A 
+\nextopt
+\optname{o}
+R. 
+\nextopt
+\end{optionlist}
 
 
 \subsection{Model 0, Dataset 0}
@@ -140,7 +114,6 @@ Create a new data set.
 	\item Determine a name for the FREMTYPE column to be added to the input data set. TODO: If \$INPUT, \$PK, \$PRED or \$ERROR already contains a variable called FREMTYPE then check if FREMTYPE1 is available, and so on. In following steps assume name is FREMTYPE.
 	\item In input dataset: Find EVID and/or MDV columns. If neither found then stop with error message. Find DV column. Find FREMTYPE column. Find OCC column, if there are time-varying covariates listed with the time-varying option. For each invariant and time-varying covariate  determine a unique FREMTYPE value > 0. FREMTYPE=0 is reserved for original observations.
 	\item Run a dummy NONMEM model where FREMTYPE=0 to filter the original data on any IGNORE/ACCEPT and to get a new data file from \$TABLE where the column headers are the same as in \$INPUT but a FREMTYPE column is added with all zeros as values. Also add MDV if not EVID or MDV in data set. In the dummy models no columns are DROPped or SKIPped. \$TABLE NOPRINT ONEHEADER NOAPPEND.  Do not need to use RFORMAT in \$TABLE since problem with .EQ. and string matching only occurs with IGNORE/ACCEPT.
-\\
 Then loop over each individual: 
 
 \begin{enumerate}

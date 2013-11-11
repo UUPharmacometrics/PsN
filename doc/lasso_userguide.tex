@@ -1,10 +1,6 @@
-\documentclass[a4paper,12pt]{article}
-\title{LASSO user guide\\ \vspace{2 mm} {\large PsN 3.6.2}}
-\date{2013-08-09}
+\input{inputs/format_header.tex}
+\guidetitle{LASSO user guide}
 
-\usepackage[utf8]{inputenc}
-\usepackage{verbatim}
-\usepackage{longtable}
 \begin{document}
 
 \maketitle
@@ -14,8 +10,6 @@
 Covariate models for population pharmacokinetics and pharmacodynamics are often built with a stepwise covariate modelling procedure (SCM, available in PsN). When analysing a small dataset this method may produce a covariate model that suffers from selection bias and poor predictive performance. The lasso \cite{Ribbing} is a method suggested to remedy these problems. It may also be faster than SCM and provide a validation of the covariate model. In the lasso all covariates must be standardised to have zero mean and standard deviation one. Subsequently, the model containing all potential covariate–parameter relations is fitted with a restriction: the sum of the absolute covariate coefficients must be smaller than a value, t. The restriction will force some coefficients towards zero while the others are estimated with shrinkage. This means in practice that when fitting the model the covariate relations are tested for inclusion at the same time as the included relations are estimated. For a given SCM analysis, the model size depends on the P-value required for selection. In the lasso the model size instead depends on the value of t which can be estimated using cross-validation.
 
 The lasso program does not support \$PRIOR in the input model.
-\\
-\\
 Examples
 \begin{verbatim}
 lasso run2.mod -relations=CL:CLCR-2,WT-3,,V:WT-2 -seed=2011
@@ -26,48 +20,38 @@ lasso run2.mod -relations=CL:CLCR-2,WT-3,,V:WT-2 -seed=2011
 \subsection{Lasso-specific input}
 A model file is required on the command-line.
 
-\begin{longtable}{p{1in}p{4in}}
-\verb|-relations=<list>| & \\
-\nopagebreak
- & The relations option is required. The parameter-covariate pairs to test and the parameterizations to use. The parameterizations are: 1)categorical covariate (treated as nominal scale), 2)linear continuous covariate, 3)piece-wise linear “hockey-stick” for continuous covariate. The syntax is sensitive and must follow the form below. Note colons, commas. There must be no spaces in the list of relations. There are double commas before a new parameter. It is optional to input the breakpoint for the piece-wise linear relation (3), the number is then set after a second dash (-) as in WGT-3-45.2. Example (everything should be on the same line):		-relations= CL:WGT-2,SEX-1,RACE-1,,V:WGT-3-45.2,,KA:WGT-3,APGR-2 \\
-\\
-\verb|-lst_file=file.lst| & \\
-\nopagebreak
- & Name of the lst-file with estimates for the input model. Default is the name of the input model with a .mod extension	replaced with .lst. \\
-\\
-\verb|-groups=N| & \\
-\nopagebreak
- & The number of validation groups in the cross-validation. Default 5, must be in the range 2-number of individuals in dataset. The larger the number the longer the cross-validation run-time. \\
-\\
-\verb|-step_t=X| & \\
-\nopagebreak
- & The steplength for t in the cross-validation. Default is 0.05. The step-length can be negative if start\_t is larger than stop\_t. \\
-\\
-\verb|-start_t=X| & \\
-\nopagebreak
- & The first t-value. Default is 0. \\
-\\
-\verb|-stop_t=X| & \\
-\nopagebreak
- & The last t-value. Default is 1. \\
-\\
-\verb|-cutoff=X| & \\
-\nopagebreak
- & The theta cutoff, if the absolute value of the estimated covariate theta is below cutoff then the theta will be fixed to zero. Default is 0.005. \\
-\\
-\verb|-convergence='FIRSTMIN'| & \\
-\nopagebreak
- & FIRSTMIN is the default. The convergence criterion. Alternatives are 'REACHMAX': Stop when program reaches max (stop\_t), then best t-value is selected. 'FIRSTMIN': Stop when predicted ofv increases from previous value (or when stop\_t is reached). 'HALT': Stop when program crashes or when one model cannot terminate. \\
-\\
-\verb|-pred_ofv_start_t=X| & \\
-\nopagebreak
- & Default not used. The total predicted ofv for the model with t=start\_t.  If the option is not set PsN will run the lasso model with t=start\_t. If the value is given this will save time. \\
-\\
-\verb|-stratify_on=variable| & \\
-\nopagebreak
- & Default not used. If the option is set, PsN will try to preserve the relative proportions of the values of this variable when creating the cross-validation datasets. The variable must be in the dataset (not in an extra data file). \\
-\\
-\end{longtable}
+\begin{optionlist}
+\optdefault{relations}{list}
+The relations option is required. The parameter-covariate pairs to test and the parameterizations to use. The parameterizations are: 1)categorical covariate (treated as nominal scale), 2)linear continuous covariate, 3)piece-wise linear “hockey-stick” for continuous covariate. The syntax is sensitive and must follow the form below. Note colons, commas. There must be no spaces in the list of relations. There are double commas before a new parameter. It is optional to input the breakpoint for the piece-wise linear relation (3), the number is then set after a second dash (-) as in WGT-3-45.2. Example (everything should be on the same line):		-relations= CL:WGT-2,SEX-1,RACE-1,,V:WGT-3-45.2,,KA:WGT-3,APGR-2 
+\nextopt
+\optdefault{lst\_file}{file.lst}
+Name of the lst-file with estimates for the input model. Default is the name of the input model with a .mod extension	replaced with .lst. 
+\nextopt
+\optdefault{groups}{N}
+The number of validation groups in the cross-validation. Default 5, must be in the range 2-number of individuals in dataset. The larger the number the longer the cross-validation run-time. 
+\nextopt
+\optdefault{step\_t}{X}
+The steplength for t in the cross-validation. Default is 0.05. The step-length can be negative if start\_t is larger than stop\_t. 
+\nextopt
+\optdefault{start\_t}{X}
+The first t-value. Default is 0. 
+\nextopt
+\optdefault{stop\_t}{X}
+The last t-value. Default is 1. 
+\nextopt
+\optdefault{cutoff}{X}
+The theta cutoff, if the absolute value of the estimated covariate theta is below cutoff then the theta will be fixed to zero. Default is 0.005. 
+\nextopt
+\optdefault{convergence}{'FIRSTMIN'}
+FIRSTMIN is the default. The convergence criterion. Alternatives are 'REACHMAX': Stop when program reaches max (stop\_t), then best t-value is selected. 'FIRSTMIN': Stop when predicted ofv increases from previous value (or when stop\_t is reached). 'HALT': Stop when program crashes or when one model cannot terminate. 
+\nextopt
+\optdefault{pred\_ofv\_start\_t}{X}
+Default not used. The total predicted ofv for the model with t=start\_t.  If the option is not set PsN will run the lasso model with t=start\_t. If the value is given this will save time. 
+\nextopt
+\optdefault{stratify\_on}{variable}
+Default not used. If the option is set, PsN will try to preserve the relative proportions of the values of this variable when creating the cross-validation datasets. The variable must be in the dataset (not in an extra data file). 
+\nextopt
+\end{optionlist}
 
 \subsection{Some general PsN-options which are interesting in combination with lasso}
 
@@ -79,40 +63,32 @@ Retries in lasso work slightly differently from retries in other PsN scripts. Be
 
 Picking the best retry results is done as in other PsN scripts, see details in common\_options\_defaults\_versions\_psn.pdf. It does not matter if some retries have thetas that are set to zero.
 
-\begin{longtable}{p{1in}p{4in}}
-\verb|-directory=run1_lasso| & \\
-\nopagebreak
- & The directory in which the script will run NONMEM can be named. The default name is “lasso\_dirX” where X is increased by 1 each time you run the script. \\
-\\
-\verb|-significant_digits_accept='number'| & \\
-\nopagebreak
- & Default not used. Normally lasso tries new initial estimates unless 'MINIMZATION SUCCESSFUL' is found in the NONMEM output file. With the -significant\_digits\_accept, lasso will only rerun if the resulting significant digits is lower than the value specified with this option. Setting this option may reduce run times considerably. It may or may not affect the final results. \\
-\\
-\verb|-maxevals=N| & \\
-\nopagebreak
- & This option is important for lasso, since the difficult minimizations in the cross-validation may require many evaluations. In the template psn.conf maxevals is set to 50000. Will only work for classical estimation methods. NONMEM only allows 9999 function evaluations. PsN can expand this limit by adding an MSFO option to \$ESTIMATION. Later when NONMEM hits the max number of function evaluations allowed by NONMEM (9999) PsN will remove initial estimates from the model-file and add \$MSFI and restart NONMEM. This will be repeated until the number of function evaluations specified with option -maxevals has been reached. Note: PsN does not change the MAXEVALS setting in the model-file, therefore the number of evaluations set on the command-line may be exceeded before PsN does the check if the run should be restarted with msfi or not. \\
-\\
-\verb|-retries=N| & \\
-\nopagebreak
- & If minimization is not successful, PsN can do a retry with cut thetas (only lasso) and/or randomly tweaked inits. For extreme examples with lasso option retries may have to be as much as 20. On the other hand, -retries=0 is generally enough if rounding errors are acceptable (see above for the option significant\_digits\_accept) \\
-\\
-\verb|-min_retries=N| & \\
-\nopagebreak
- & Do not set this option with lasso; it may interfere with the handling of runs with rounding errors. \\
-\\
-\verb|-seed=X| & \\
-\nopagebreak
- & A seed for the random number generator can be specified. This makes the run reproducible. It acts as a starting point for the random number generator to produce the random number that will be used for creating the cross-validation data sets. \\
-\\
-\verb|-threads=X| & \\
-\nopagebreak
- & The number of parallel processes to start for the model runs on a parallel computer. Setting this value to something larger than the number of groups (cross-validation data sets) will have no effect. \\
-\\
-\verb|-help| & \\
-\nopagebreak
- & With -help lasso will print a longer help message. \\
-\\
-\end{longtable}
+\begin{optionlist}
+\optdefault{directory}{run1\_lasso}
+The directory in which the script will run NONMEM can be named. The default name is “lasso\_dirX” where X is increased by 1 each time you run the script. 
+\nextopt
+\optdefault{significant\_digits\_accept}{'number'}
+Default not used. Normally lasso tries new initial estimates unless 'MINIMZATION SUCCESSFUL' is found in the NONMEM output file. With the -significant\_digits\_accept, lasso will only rerun if the resulting significant digits is lower than the value specified with this option. Setting this option may reduce run times considerably. It may or may not affect the final results. 
+\nextopt
+\optdefault{maxevals}{N}
+This option is important for lasso, since the difficult minimizations in the cross-validation may require many evaluations. In the template psn.conf maxevals is set to 50000. Will only work for classical estimation methods. NONMEM only allows 9999 function evaluations. PsN can expand this limit by adding an MSFO option to \$ESTIMATION. Later when NONMEM hits the max number of function evaluations allowed by NONMEM (9999) PsN will remove initial estimates from the model-file and add \$MSFI and restart NONMEM. This will be repeated until the number of function evaluations specified with option -maxevals has been reached. Note: PsN does not change the MAXEVALS setting in the model-file, therefore the number of evaluations set on the command-line may be exceeded before PsN does the check if the run should be restarted with msfi or not. 
+\nextopt
+\optdefault{retries}{N}
+If minimization is not successful, PsN can do a retry with cut thetas (only lasso) and/or randomly tweaked inits. For extreme examples with lasso option retries may have to be as much as 20. On the other hand, -retries=0 is generally enough if rounding errors are acceptable (see above for the option significant\_digits\_accept) 
+\nextopt
+\optdefault{min\_retries}{N}
+Do not set this option with lasso; it may interfere with the handling of runs with rounding errors. 
+\nextopt
+\optdefault{seed}{X}
+A seed for the random number generator can be specified. This makes the run reproducible. It acts as a starting point for the random number generator to produce the random number that will be used for creating the cross-validation data sets. 
+\nextopt
+\optdefault{threads}{X}
+The number of parallel processes to start for the model runs on a parallel computer. Setting this value to something larger than the number of groups (cross-validation data sets) will have no effect. 
+\nextopt
+\optname{help}
+With -help lasso will print a longer help message. 
+\nextopt
+\end{optionlist}
 
 \section{Output}
 

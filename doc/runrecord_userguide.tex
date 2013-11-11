@@ -1,10 +1,6 @@
-\documentclass[a4paper,12pt]{article}
-\title{RUNRECORD user guide\\ \vspace{2 mm} {\large PsN 3.6.2}}
-\date{2013-05-28}
+\input{inputs/format_header.tex}
+\guidetitle{RUNRECORD user guide}
 
-\usepackage[utf8]{inputenc}
-\usepackage{verbatim}
-\usepackage{longtable}
 \begin{document}
 
 \maketitle
@@ -85,7 +81,7 @@ $COV PRINT=E
 \section{Information tags}
 Just below the \$PROBLEM statement are lines that begin with two semi-colon, which contains structured information about the run. 
 
-\begin{longtable}{|p{1.5in}|p{3.5in}|}
+\begin{optionlist}
 \hline
 Information tag & Description/Purpose \\
 \hline
@@ -107,7 +103,8 @@ Residual variability & A description of how the residual variability is modeled.
 \hline
 Estimation & A description of the estimation options used. \\
 \hline
-\end{longtable}
+\nextopt
+\end{optionlist}
 
 Note that it is only Based on: that expects information on the same line. The other information tags are placeholders for the line just below it until the line of the next information tag.
 
@@ -134,52 +131,41 @@ This will make runrecord to extract information from runs 1-10 and put it in a f
 
 The behavior of run record can be influenced by options:
 
-\begin{longtable}{p{1in}p{4in}}
-\verb|-from| & \\
-\nopagebreak
- & Run number to start processing from. Default is 1. \\
-\\
-\verb|-to| & \\
-\nopagebreak
- & The highest run number to process. Mandatory. \\
-\\
-\verb|-root| & \\
-\nopagebreak
- & "root" name of the model files. Defaults to “run”, e.g. run1.mod \\
-\\
-\verb|-res_file| & \\
-\nopagebreak
- & The name of the results file. The default is “AAruninfo.txt”. \\
-\\
-\verb|-mod_ext| & \\
-\nopagebreak
- & Model file extension. Defaults to “mod”, e.g. run1.mod. \\
-\\
-\verb|-out_ext| & \\
-\nopagebreak
- & Ouput file extension. Defaults to “lst”, e.g. run1.lst. \\
-\\
-\verb|-sep| & \\
-\nopagebreak
- & Separator between fields in the AAruninfo.txt file. Defaults to “;”. \\
-\\
-\verb|-rsep| & \\
-\nopagebreak
- & Separator between comment rows read from the model file. This is pasted between rows -within fields- in the output file. \\
-\\
-\verb|-max_lvl| & \\
-\nopagebreak
- & Max number of model children levels. \\
-\\
-\verb|-var| & \\
-\nopagebreak
- & Whether omegas and sigmas should be reported as variances or sd. Default is 'no'. \\
-\\
-\verb|-rse| & \\
-\nopagebreak
- & Whether standard errors should be reported as relative SEs or not. The default is 'yes'. \\
-\\
-\end{longtable}
+\begin{optionlist}
+\optname{from}
+Run number to start processing from. Default is 1. 
+\nextopt
+\optname{to}
+The highest run number to process. Mandatory. 
+\nextopt
+\optname{root}
+"root" name of the model files. Defaults to “run”, e.g. run1.mod 
+\nextopt
+\optname{res\_file}
+The name of the results file. The default is “AAruninfo.txt”. 
+\nextopt
+\optname{mod\_ext}
+Model file extension. Defaults to “mod”, e.g. run1.mod. 
+\nextopt
+\optname{out\_ext}
+Ouput file extension. Defaults to “lst”, e.g. run1.lst. 
+\nextopt
+\optname{sep}
+Separator between fields in the AAruninfo.txt file. Defaults to “;”. 
+\nextopt
+\optname{rsep}
+Separator between comment rows read from the model file. This is pasted between rows -within fields- in the output file. 
+\nextopt
+\optname{max\_lvl}
+Max number of model children levels. 
+\nextopt
+\optname{var}
+Whether omegas and sigmas should be reported as variances or sd. Default is 'no'. 
+\nextopt
+\optname{rse}
+Whether standard errors should be reported as relative SEs or not. The default is 'yes'. 
+\nextopt
+\end{optionlist}
 
 \section{Importing the txt file into Excel}
 The txt file can just be opened in Excel using the standard File-$>$Open procedure. This will open an unformatted version of the txt file. However, to improve readability and consistency, it may be more convenient to use the Data-$>$Get external data command instead. This will create a connection between the spread sheet and the AArunInfo.txt file that can easily be updated without loosing carefully applied formatting. The following procedure is proposed:

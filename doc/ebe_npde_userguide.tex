@@ -1,10 +1,6 @@
-\documentclass[a4paper,12pt]{article}
-\title{EBE\_NPDE user guide\\ \vspace{2 mm} {\large PsN 3.6.2}}
-\date{2013-04-09}
-
-\usepackage[utf8]{inputenc}
-\usepackage{verbatim}
-\usepackage{longtable}
+\input{inputs/format_header.tex}
+\guidetitle{EBE\_NPDE user guide}
+%last review 2013-10-30 Kajsa
 \begin{document}
 
 \maketitle
@@ -13,8 +9,6 @@
 \section{Overview}
 
 The ebe\_npde script is work in progress.
-\\
-\\
 Example
 \begin{verbatim}
 ebe_npde run1.mod
@@ -28,32 +22,26 @@ A model file is required on the command-line.
 
 \subsection{Optional input}
 
-\begin{longtable}{p{1in}p{4in}}
-\verb|-lst_file=filename| & \\
-\nopagebreak
- & Default not set. By default PsN will, before copying the input model to the simulation models, look for an output file with final estimates for the input model and if found update the initial estimates in the simulation models. If option -lsf\_file is set Psn will instead use the final estimates in the given file. If option is not set and no output file is found PsN will not update the estimates but instead rerun the input model, if option -estimate\_input is set. \\
-\\
-\verb|-estimate_input| & \\
-\nopagebreak
- & Default set. By default, PsN will rerun the input model to get parameter estimates unless an output file is found or option -lst\_file is set. But if option -estimate\_input is unset with -no-estimate\_input and no lst-file is found then the parameter estimates set in the input model will be used for simulations. \\
-\\
-\verb|-samples=N| & \\
-\nopagebreak
- & Default 300. The number of simulations and reestimations to run. \\
-\\
-\verb|-reminimize| & \\
-\nopagebreak
- & Default not set. By default, simulated datasets will be run with MAXEVAL=0 (or equivalent for non-classical estimation methods). If option -reminimize is set then \$EST will be the same as in the input model. \\
-\\
-\verb|-gls_data_file=filename| & \\
-\nopagebreak
- & Default gls\_data.dta. A file with input data for the gls program is always generated. This option changes the name of that file. After this file is created, the gls program can be run with option \mbox{-gls\_model} and -ind\_shrinkage with minimum runtime, see gls\_userguide.pdf \\
-\\
-\verb|-iov=<list>| & \\
-\nopagebreak
- & TODO: list of iov etas, to be treated from all other etas assumed to be iiv. \\
-\\
-\end{longtable}
+\begin{optionlist}
+\optdefault{lst\_file}{filename}
+Default not set. By default PsN will, before copying the input model to the simulation models, look for an output file with final estimates for the input model and if found update the initial estimates in the simulation models. If option -lsf\_file is set Psn will instead use the final estimates in the given file. If option is not set and no output file is found PsN will not update the estimates but instead rerun the input model, if option -estimate\_input is set. 
+\nextopt
+\optname{estimate\_input}
+Default set. By default, PsN will rerun the input model to get parameter estimates unless an output file is found or option -lst\_file is set. But if option -estimate\_input is unset with -no-estimate\_input and no lst-file is found then the parameter estimates set in the input model will be used for simulations. 
+\nextopt
+\optdefault{samples}{N}
+Default 300. The number of simulations and reestimations to run. 
+\nextopt
+\optname{reminimize}
+Default not set. By default, simulated datasets will be run with MAXEVAL=0 (or equivalent for non-classical estimation methods). If option -reminimize is set then \$EST will be the same as in the input model. 
+\nextopt
+\optdefault{gls\_data\_file}{filename}
+Default gls\_data.dta. A file with input data for the gls program is always generated. This option changes the name of that file. After this file is created, the gls program can be run with option \mbox{-gls\_model} and -ind\_shrinkage with minimum runtime, see gls\_userguide.pdf 
+\nextopt
+\optdefault{iov}{list}
+TODO: list of iov etas, to be treated from all other etas assumed to be iiv. 
+\nextopt
+\end{optionlist}
 
 
 
@@ -61,16 +49,14 @@ A model file is required on the command-line.
 
 For a complete list of common options see common\_options\_defaults\_versions.pdf, or psn\_options -h on the commandline.
 
-\begin{longtable}{p{1in}p{4in}}
-\verb|-directory=ebe_npde_dirN| & \\
-\nopagebreak
- & The run directory can be named.  \\
-\\
-\verb|-help| & \\
-\nopagebreak
- & With -help ebe\_npde will print a longer help message. \\
-\\
-\end{longtable}
+\begin{optionlist}
+\optdefault{directory}{ebe\_npde\_dirN}
+The run directory can be named.  
+\nextopt
+\optname{help}
+With -help ebe\_npde will print a longer help message. 
+\nextopt
+\end{optionlist}
 
 
 \section{Output}
@@ -87,14 +73,8 @@ The results are in eta\_npde.csv and iwres\_npde.csv. Also there are files decor
 \item run modified original input model and 'samples' sim models.
 \item Read all iwres\_$\langle$order number$\rangle$.dta files, storing IWRES values per data point. Compute, per data point, ISHR\_ij=1-sd(IWRES\_ij). Open orig\_pred.dta, append ISHR column with computed values, and print to gls\_input.dta. Print also shrinkage column to new file ind\_iwres\_shrinkage.dta. File gls\_input.dta can be used as input when running gls program, see gls\_userguide.pdf.
 \item Read all eta files. For each individual do the following: Collect the simulated ETA values in a matrix A, where rows go from simulation 1 to simulation 'samples' and columns go from 1 to 'number of ETA'. Compute the empirical variance-covariance matrix of A. 
-\\
-\\
 (The matlab code for this would be cov(A), while PsN computes RTR*diag(1/(samples-1)) where R is the upper triangular matrix from the QR-decomposition of a matrix B which is matrix A where the column mean has been subtracted from each column,  and diag(1/(samples-1)) is a diagonal matrix where all elements are equal to 1/(samples-1)). 
-\\
-\\
 The original and simulated ETA vectors are all decorrelated by subtracting the mean and multiplying them with the inverse of the Cholesky factor of the variance-covariance matrix. (In PsN the system  R*diag(1/sqrt(samples-1))*vec\_decorr=vec is solved by back substitution followed by multiplication with sqrt(samples-1) )
-\\
-\\
 Compute per individual the order numbers of the decorrelated original ETA values in a sorted array of all the decorrelated simulated values. In file eta\_rank.csv, print values ID,rank where rank =ordernum/(samples+1). In file decorrelated\_eta.csv print the decorrelated original ETA. These two files will have one line per individual.
 \item (Not necessary, division preserves rank) For each data point do the following: Compute the variance of the simulated IWRES\_ij values (normalize with samples-1). Divide the original IWRES value minus the mean and all simulated values minus the mean with the variance. Compute the order number of the transformed original IWRES value in a sorted array of all the transformed simulated values. In file iwres\_rank.csv, print values ID,MDV,rank for each data point where rank =ordernum/(samples+1).  
 \end{enumerate}

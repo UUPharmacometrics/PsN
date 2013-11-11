@@ -1,10 +1,6 @@
-\documentclass[a4paper,12pt]{article}
-\title{NPC/VPC user guide\\ \vspace{2 mm} {\large PsN 3.6.10}}
-\date{2013-10-16}
+\input{inputs/format_header.tex}
+\guidetitle{VPC and NPC user guide}
 
-\usepackage[utf8]{inputenc}
-\usepackage{verbatim}
-\usepackage{longtable}
 \begin{document}
 
 \maketitle
@@ -69,42 +65,34 @@ vpc moxonidine.mod -samples=1000 -seed=123 -idv=TIME -bin_by_count=1
 
 Input:  a modelfile is required.
 
-\begin{longtable}{p{1in}p{4in}}
-\verb|-samples=<number>| & \\
-\nopagebreak
- & is required, the number of simulated datasets to generate. 20 is the minimum accepted value. \\
-\\
-\verb|-msfo=<file>| & \\
-\nopagebreak
- & is optional, unless the model has \$NONP record then an msfo-file 	is required. Use final parameter estimates from msfo-file instead of initial estimates from modelfile when simulating. VPC does not perform estimation. \\
-\\
-\verb|-lst=<file>| & \\
-\nopagebreak
- & is optional, but forbidden together with -msfo. Use final parameter estimates from this lst-file for the simulation. By default PsN will look for a file with the same name as the regular input model, or the simulation model if option -sim\_model is used, but with suffix .lst instead of .mod. If such a file is found then option -lst=$<$modelfile$>$.lst is set automatically. VPC does not perform estimation. \\
-\\
-\verb|-stratify_on=<variable>| & \\
-\nopagebreak
- & is optional. See subsection Stratification options below. The stratify\_on option may be a comma-separated list of several variable names. \\
-\\
-\verb|-no_of_strata=N| & \\
-\nopagebreak
- & is optional, only allowed when -stratify\_on is used. See subsection Stratification options.  \\
-\\
-\verb|-refstrat=value| & \\
-\nopagebreak
- & is optional, only allowed when stratify\_on is used, not allowed in combination with -no\_of\_strata. See subsection Stratification options.  \\
-\\
-\verb|-tte=<variable>| & \\
-\nopagebreak
- & is an optional argument, but it is required to assume (repeated) time-to-event type models. Cannot be used together with option -mirror, -censor, -predcorr, -varcorr,  -lnDV, -uloq, -lloq or -boxcox\_lambda. The tte-variable needs to be defined in the simulation model and must take the value 0 if the observation is not an event and non-zero if it is an event (including events and censored events). PsN will add the tte-variable to \$TABLE of the simulation model (not the original data model). PsN will format the output differently compared to a regular vpc, to specifically suit the kaplan.plot functionality in Xpose (e.g. filtering of simulation output based on tte-variable). See section VPC for Time-to-event models below.   \\
-\\
-\verb|-sim_model=<file>| & \\
-\nopagebreak
- & is optional. Cannot be used together with -flip\_comments, -keep\_estimation or -noprediction. By default PsN will create a simulation model based on the  required input model, but by using option -sim\_model it is possible to use a separate input model for the simulations. PsN will remove \$COV and \$TABLE, change SEED and NSUBS in \$SIM, add a new \$TABLE and  update initial estimates if option -lst is set or add \$MSFI if option -msfo is used, but otherwise no changes will be made to the user defined simulation model. See section Modified models. Note that -lst will be set automatically if a file with the same name as the regular input model but with suffix lst intead of mod is found. \\
-\\
-\verb|-flip_comments| & \\
-\nopagebreak
- & is optional. Cannot be used together with -sim\_model, -keep\_estimation or -noprediction. By default PsN will create a simulation model based on the  required input model, but option -flip\_comments invokes a method for handling user-defined simulation code in the required input model. If option is set, PsN will create the simulation model by flipping comments (commented lines will be uncommented and vice versa) between the tags
+\begin{optionlist}
+\optdefault{samples}{number}
+is required, the number of simulated datasets to generate. 20 is the minimum accepted value. 
+\nextopt
+\optdefault{msfo}{file}
+is optional, unless the model has \$NONP record then an msfo-file 	is required. Use final parameter estimates from msfo-file instead of initial estimates from modelfile when simulating. VPC does not perform estimation. 
+\nextopt
+\optdefault{lst}{file}
+is optional, but forbidden together with -msfo. Use final parameter estimates from this lst-file for the simulation. By default PsN will look for a file with the same name as the regular input model, or the simulation model if option -sim\_model is used, but with suffix .lst instead of .mod. If such a file is found then option -lst=$<$modelfile$>$.lst is set automatically. VPC does not perform estimation. 
+\nextopt
+\optdefault{stratify\_on}{variable}
+is optional. See subsection Stratification options below. The stratify\_on option may be a comma-separated list of several variable names. 
+\nextopt
+\optdefault{no\_of\_strata}{N}
+is optional, only allowed when -stratify\_on is used. See subsection Stratification options.  
+\nextopt
+\optdefault{refstrat}{value}
+is optional, only allowed when stratify\_on is used, not allowed in combination with -no\_of\_strata. See subsection Stratification options.  
+\nextopt
+\optdefault{tte}{variable}
+is an optional argument, but it is required to assume (repeated) time-to-event type models. Cannot be used together with option -mirror, -censor, -predcorr, -varcorr,  -lnDV, -uloq, -lloq or -boxcox\_lambda. The tte-variable needs to be defined in the simulation model and must take the value 0 if the observation is not an event and non-zero if it is an event (including events and censored events). PsN will add the tte-variable to \$TABLE of the simulation model (not the original data model). PsN will format the output differently compared to a regular vpc, to specifically suit the kaplan.plot functionality in Xpose (e.g. filtering of simulation output based on tte-variable). See section VPC for Time-to-event models below.   
+\nextopt
+\optdefault{sim\_model}{file}
+is optional. Cannot be used together with -flip\_comments, -keep\_estimation or -noprediction. By default PsN will create a simulation model based on the  required input model, but by using option -sim\_model it is possible to use a separate input model for the simulations. PsN will remove \$COV and \$TABLE, change SEED and NSUBS in \$SIM, add a new \$TABLE and  update initial estimates if option -lst is set or add \$MSFI if option -msfo is used, but otherwise no changes will be made to the user defined simulation model. See section Modified models. Note that -lst will be set automatically if a file with the same name as the regular input model but with suffix lst intead of mod is found. 
+\nextopt
+\optname{flip\_comments}
+is optional. Cannot be used together with -sim\_model, -keep\_estimation or -noprediction. By default PsN will create a simulation model based on the  required input model, but option -flip\_comments invokes a method for handling user-defined simulation code in the required input model. If option is set, PsN will create the simulation model by flipping comments (commented lines will be uncommented and vice versa) between the tags
+
 
 \begin{verbatim}
 ;Sim_start
@@ -126,54 +114,43 @@ then the MAXEVAL=0 model will be run as such and the simulation model will inste
 ACCEPT(TYPE.EQ.1) 
 \end{verbatim}
 The tags may appear multiple times. Note that the tags must look exactly  as above or the editing will fail. When creating the simulation model PsN will remove \$COV and \$TABLE, change SEED and NSUBS in \$SIM, add a new \$TABLE and  update initial estimates if option -lst is set or add \$MSFI if option -msfo is used, but otherwise no changes will be made to the code. See section Modified models.\\
-\\
-\verb|-dv=<variable>| & \\
-\nopagebreak
- & is optional, default is DV. If a synonym for DV is set in \$INPUT, the synonym must be set as the dependent variable on the commandline, -dv=$<$synonym$>$. \\
-\\
-\verb|-keep_estimation| & \\
-\nopagebreak
- & is optional, by default not set. If this option is set, a post-hoc evaluation step is performed for each simulated dataset (\$ESTIMATION is kept and MAXEVALS is set to 0). Note that in this case variables such as IPRED(F) are based on the re-estimated post-hoc parameters. Also note that in earlier program versions keep\_estimation was set or unset automatically, see section Additional rules and logic 3). \\
-\\
-\verb|-noprediction| & \\
-\nopagebreak
- & is optional, by default not set. If set, NOPREDICTION will be added to the \$SIMULATION record of the simulation model, in addition to ONLYSIMULATION. This option is generally recommended with likelihood models for odd type data (i.e. -2LOGLIKELIHOOD or LIKELIHOOD in \$ESTIMATION). It is not allowed to use -noprediction in combination with the option \mbox{-keep\_estimation}. \\
-\\
-\verb|-orig_table=<filename>| & \\
-\nopagebreak
- & is optional, only allowed when -sim\_table is also used. Give tablefile with original data as input directly instead of letting the program generate them. \\
-\\
-\verb|-sim_table=<filename>| & \\
-\nopagebreak
- & is optional, only allowed when -orig\_table is also used. Give tablefile with simulated data as input directly instead of letting the program generate them. \\
-\\
-\verb|-n_simulation_models=N| & \\
-\nopagebreak
- & is optional, default is 1. The default 1 means all simulations are run in the same modelfile. By setting this option to a number N greater than 1, the 'samples' simulations will be split equally between N model files, which can be run in parallel. This option cannot be used together with option -sim\_table or, if the NONMEM version $<$ 7, together with -dv=CWRES. Important: Two runs will give different results if -n\_simulation\_models are set to different numbers even if the -seed option is the same. This is because the random number generator of NONMEM will change state when reading the seed from the \$SIM record from a new simulation modelfile. This state change does not occur when NONMEM simply continues simulating from the same modelfile. \\
-\\
-\verb|-censor=<variable>| & \\
-\nopagebreak
- & is optional, default not used. Name of variable which defines whether the observation of the dependent variable is missing, e.g. due to drop-out. 1 means the observation is censored, 0 means the observation is not censored. The variable must be requestable in \$TABLE. This option is not applicable for time-to-event data, please read the section 'VPC for time-to-event models'. \\
-\\
-\verb|-confidence_interval=CC| & \\
-\nopagebreak
- & is optional, default is 95. The confidence interval in percent. \\
-\\
-\verb|-fine_pi| & \\
-\nopagebreak
- & is optional, default not set. If not set, the the prediction intervals computed are 0, 40, 80, 90 and 95\%. If the option is set, then the prediction intervals computed are 0, 10, 20, 30, 40, 50, 60, 70, 80, 90 and 95\%.  \\
-\\
-\verb|-mirrors=N| & \\
-\nopagebreak
- & optional, the number of mirror plot data sets to produce. Specific VPC. \\
-\\
-\verb|-idv=<variable>| & \\
-\nopagebreak
- & optional, default TIME, the independent variable to bin on. Specific for VPC. (old  option was -bin\_on, without default value) \\
-\\
-\verb|-Either of 12 binning option combinations for independent variable| & \\
-\nopagebreak
- & optional – it is forbidden to use more than one of these combinations. For details see section VPC binning below.
+\nextopt
+\optdefault{dv}{variable}
+is optional, default is DV. If a synonym for DV is set in \$INPUT, the synonym must be set as the dependent variable on the commandline, -dv=$<$synonym$>$. 
+\nextopt
+\optname{keep\_estimation}
+is optional, by default not set. If this option is set, a post-hoc evaluation step is performed for each simulated dataset (\$ESTIMATION is kept and MAXEVALS is set to 0). Note that in this case variables such as IPRED(F) are based on the re-estimated post-hoc parameters. Also note that in earlier program versions keep\_estimation was set or unset automatically, see section Additional rules and logic 3). 
+\nextopt
+\optname{noprediction}
+is optional, by default not set. If set, NOPREDICTION will be added to the \$SIMULATION record of the simulation model, in addition to ONLYSIMULATION. This option is generally recommended with likelihood models for odd type data (i.e. -2LOGLIKELIHOOD or LIKELIHOOD in \$ESTIMATION). It is not allowed to use -noprediction in combination with the option \mbox{-keep\_estimation}. 
+\nextopt
+\optdefault{orig\_table}{filename}
+is optional, only allowed when -sim\_table is also used. Give tablefile with original data as input directly instead of letting the program generate them. 
+\nextopt
+\optdefault{sim\_table}{filename}
+is optional, only allowed when -orig\_table is also used. Give tablefile with simulated data as input directly instead of letting the program generate them. 
+\nextopt
+\optdefault{n\_simulation\_models}{N}
+is optional, default is 1. The default 1 means all simulations are run in the same modelfile. By setting this option to a number N greater than 1, the 'samples' simulations will be split equally between N model files, which can be run in parallel. This option cannot be used together with option -sim\_table or, if the NONMEM version $<$ 7, together with -dv=CWRES. Important: Two runs will give different results if -n\_simulation\_models are set to different numbers even if the -seed option is the same. This is because the random number generator of NONMEM will change state when reading the seed from the \$SIM record from a new simulation modelfile. This state change does not occur when NONMEM simply continues simulating from the same modelfile. 
+\nextopt
+\optdefault{censor}{variable}
+is optional, default not used. Name of variable which defines whether the observation of the dependent variable is missing, e.g. due to drop-out. 1 means the observation is censored, 0 means the observation is not censored. The variable must be requestable in \$TABLE. This option is not applicable for time-to-event data, please read the section 'VPC for time-to-event models'. 
+\nextopt
+\optdefault{confidence\_interval}{CC}
+is optional, default is 95. The confidence interval in percent. 
+\nextopt
+\optname{fine\_pi}
+is optional, default not set. If not set, the the prediction intervals computed are 0, 40, 80, 90 and 95\%. If the option is set, then the prediction intervals computed are 0, 10, 20, 30, 40, 50, 60, 70, 80, 90 and 95\%.  
+\nextopt
+\optdefault{mirrors}{N}
+optional, the number of mirror plot data sets to produce. Specific VPC. 
+\nextopt
+\optdefault{idv}{variable}
+optional, default TIME, the independent variable to bin on. Specific for VPC. (old  option was -bin\_on, without default value) 
+\nextopt
+\optname{Either of 12 binning option combinations for independent variable}
+optional – it is forbidden to use more than one of these combinations. For details see section VPC binning below.
+
 \begin{itemize}
 	\item -autobin=auto   (default)
 	\item -autobin=$<$number of bins$>$
@@ -188,62 +165,50 @@ The tags may appear multiple times. Note that the tags must look exactly  as abo
 	\item -bin\_by\_count=0 -single\_bin\_size=X
 	\item -bin\_by\_count=1 -single\_bin\_size=X
 \end{itemize} \\
-\\
-\verb|-min_points_in_bin=N| & \\
-\nopagebreak
- & Optional, used only if -autobin (except -autobin=unique) is selected. Set to disallow bins of size smaller than N. Default is 10. \\
-\\
-\verb|-lloq=<number>| & \\
-\nopagebreak
- & optional, the lower limit of quantification for left censored data. Specific for VPC. \\
-\\
-\verb|-uloq=<number>| & \\
-\nopagebreak
- & optional, the upper limit of quantification for right censored data. Specific for VPC. \\
-\\
-\verb|-levels=<number1,number2>| & \\
-\nopagebreak
- & optional, the boundaries for a categorization. Category 1$<$=number1 $<$ category 2 $<$= number2, etc. Specific for VPC. \\
-\\
-\verb|-predcorr| & \\
-\nopagebreak
- & optional. Perform prediction correction of dependent variable values. Specific for VPC. For details see section VPC predcorr and varcorr below. If the dependent variable is log transformed or has a lower bound not equal to 0 it can be important to specify the optional variables -lnDV and lower\_bound (see below). The predcorr feature will not work well if there is an upper bound, e.g. when the dependent variable is logit transformed. \\
-\\
-\verb|-varcorr| & \\
-\nopagebreak
- & optional, only allowed together with -predcorr. Perform variability correction of dependent variable values. Specific for VPC. For details see section VPC predcorr and varcorr below. \\
-\\
-\verb|-lnDV=<0,1,2,3>| & \\
-\nopagebreak
- & optional, default 0. Mainly for use with -predcorr. lnDV=0 or 1may be used independently of -predcorr, but -lnDV=2 is only allowed together with predcorr. Variable to indicate if the dependent variable is log-transformed (ln(DV)) or not and how that should be handled.
+\nextopt
+\optdefault{min\_points\_in\_bin}{N}
+Optional, used only if -autobin (except -autobin=unique) is selected. Set to disallow bins of size smaller than N. Default is 10. 
+\nextopt
+\optdefault{lloq}{number}
+optional, the lower limit of quantification for left censored data. Specific for VPC. 
+\nextopt
+\optdefault{uloq}{number}
+optional, the upper limit of quantification for right censored data. Specific for VPC. 
+\nextopt
+\optdefault{levels}{number1,number2}
+optional, the boundaries for a categorization. Category 1$<$=number1 $<$ category 2 $<$= number2, etc. Specific for VPC. 
+\nextopt
+\optname{predcorr}
+optional. Perform prediction correction of dependent variable values. Specific for VPC. For details see section VPC predcorr and varcorr below. If the dependent variable is log transformed or has a lower bound not equal to 0 it can be important to specify the optional variables -lnDV and lower\_bound (see below). The predcorr feature will not work well if there is an upper bound, e.g. when the dependent variable is logit transformed. 
+\nextopt
+\optname{varcorr}
+optional, only allowed together with -predcorr. Perform variability correction of dependent variable values. Specific for VPC. For details see section VPC predcorr and varcorr below. 
+\nextopt
+\optdefault{lnDV}{0,1,2,3}
+optional, default 0. Mainly for use with -predcorr. lnDV=0 or 1may be used independently of -predcorr, but -lnDV=2 is only allowed together with predcorr. Variable to indicate if the dependent variable is log-transformed (ln(DV)) or not and how that should be handled.
+
 \begin{itemize}
 	\item -lnDV=0   =	Default. No exponentiation of DV will be performed. In combination with -predcorr -lnDV=0 indicates that DV is untransformed.
 	\item -lnDV=1   =	DV and PRED values will be exponentiated. Indicates log-transformed DV and that VPC results should be presented on normal scale. May be used independently of -predcorr.
 	\item -lnDV=2   =	Only in combination with –predcorr. Indicates log-transformed DV that should be maintained.
 	\item -lnDV=3  =  DV and PRED values will be log-transformed. May be used independently of \mbox{-predcorr}.
 \end{itemize} \\
-\\
-\verb|-boxcox_lambda=x| & \\
-\nopagebreak
- & Setting this variable indicates that data is Box-Cox transformed. Data will be transformed to normal scale for eventual prediction correction, and retransformed to Box-Cox before analysis and output. Option cannot be used with lnDV. The transformation is (DV*lambda+1)**(1/lambda) for Box-Cox to normal, and (DV**lambda-1)/lambda for normal to Box-Cox. \\
-\\
-\verb|-lower_bound=<either a number or a name of an independent variable>| & \\
-\nopagebreak
- & optional, default not set . Only allowed in combination with predcorr and -lnDV=0. Lower boundary for typical model prediction (PRED). The specified boundary must be strictly lower than the lowest value. If the boundary is given as a number, that number will be used for all observations. If  instead a variable is given then it must be independent, and defined either in the model file or present in \$INPUT.  If -lower\_bound is not set but -predcorr is used, a lower bound of 0 will be assumed. \\
-\\
-\verb|-rawres_input=filename| & \\
-\nopagebreak
- & A simple way to simulate with uncertainty. Note that it is normally not appropriate to do this in a vpc or npc. Instead of using identical parameter estimates for simulation of each new dataset, take parameter estimates from a raw\_results.csv file, e.g. from a bootstrap run or the intial\_estimates.csv file from a previous sse run with \$PRIOR in the simulation model. The raw results file must be comma-separated and contain at least as many samples as the input -samples to sse, the labels for  THETA/OMEGA/SIGMA in the file must match the labels in the simulation model given as input to sse, the theta columns must be directly followed by the omega columns which must be directly followed by the sigma columns, and the column header must be model either in the first column just as in a bootstrap raw\_results file or in the second column as in a sse raw\_results file. If a column header contains a comma, e.g. OMEGA(2,2), then that header must be enclosed in double quotes. This is done automatically in PsN raw results files. Note that is is possible to generate a file with initial parameter estimates outside of PsN, as long as the file follows the format rules. \\
-\\
-\verb|-offset_rawres=N| & \\
-\nopagebreak
- & Only relevant in combination with -rawres\_input. Default 1. The number of result lines to skip in the input raw results file before starting to read final parameter estimates. In a regular bootstrap raw\_results file the first line of estimates refers to the input model with the full dataset, so therefore the default offset is 1. \\
-\\
-\verb|-copy_data| & \\
-\nopagebreak
- & Default set. Disable with -no-copy\_data. By default, PsN will copy the datafile into NM\_run1 and set a local path in psn.mod, the actual modelfile run with NONMEM. If -no-copy\_data is set, PsN will not copy the data to NM\_run1 and instead set a global path to the datafile in psn.mod. However, if the global path is very long then there will be an NMtran error  caused by a line wrap in \$DATA in psn.mod.  \\
-\\
-\end{longtable}
+\nextopt
+\optdefault{boxcox\_lambda}{x}
+Setting this variable indicates that data is Box-Cox transformed. Data will be transformed to normal scale for eventual prediction correction, and retransformed to Box-Cox before analysis and output. Option cannot be used with lnDV. The transformation is (DV*lambda+1)**(1/lambda) for Box-Cox to normal, and (DV**lambda-1)/lambda for normal to Box-Cox. 
+\nextopt
+\optdefault{lower\_bound}{either a number or a name of an independent variable}
+optional, default not set . Only allowed in combination with predcorr and -lnDV=0. Lower boundary for typical model prediction (PRED). The specified boundary must be strictly lower than the lowest value. If the boundary is given as a number, that number will be used for all observations. If  instead a variable is given then it must be independent, and defined either in the model file or present in \$INPUT.  If -lower\_bound is not set but -predcorr is used, a lower bound of 0 will be assumed. 
+\nextopt
+\optdefault{rawres\_input}{filename}
+A simple way to simulate with uncertainty. Note that it is normally not appropriate to do this in a vpc or npc. Instead of using identical parameter estimates for simulation of each new dataset, take parameter estimates from a raw\_results.csv file, e.g. from a bootstrap run or the intial\_estimates.csv file from a previous sse run with \$PRIOR in the simulation model. The raw results file must be comma-separated and contain at least as many samples as the input -samples to sse, the labels for  THETA/OMEGA/SIGMA in the file must match the labels in the simulation model given as input to sse, the theta columns must be directly followed by the omega columns which must be directly followed by the sigma columns, and the column header must be model either in the first column just as in a bootstrap raw\_results file or in the second or third column as in a sse raw\_results file. If a column header contains a comma, e.g. OMEGA(2,2), then that header must be enclosed in double quotes. This is done automatically in PsN raw results files. Note that is is possible to generate a file with initial parameter estimates outside of PsN, as long as the file follows the format rules. 
+\nextopt
+\optdefault{offset\_rawres}{N}
+Only relevant in combination with -rawres\_input. Default 1. The number of result lines to skip in the input raw results file before starting to read final parameter estimates. In a regular bootstrap raw\_results file the first line of estimates refers to the input model with the full dataset, so therefore the default offset is 1. 
+\nextopt
+\optname{copy\_data}
+Default set. Disable with -no-copy\_data. By default, PsN will copy the datafile into NM\_run1 and set a local path in psn.mod, the actual modelfile run with NONMEM. If -no-copy\_data is set, PsN will not copy the data to NM\_run1 and instead set a global path to the datafile in psn.mod. However, if the global path is very long then there will be an NMtran error  caused by a line wrap in \$DATA in psn.mod.  
+\end{optionlist}
 
 
 
@@ -291,24 +256,21 @@ It is possible to skip the simulation step entirely by specifying both options -
 \subsection{Common options in PsN which are extra important for NPC and VPC (examples)}
 For a complete list of common options see common\_options\_defaults\_versions.pdf, or psn\_options -h on the commandline.
 
-\begin{longtable}{p{1in}p{4in}}
-\verb|-last_est_complete| & \\
-\nopagebreak
- & optional and only applies with NONMEM7 and if option -keep\_estimation is set. See section NPC and VPC with NONMEM7. \\
-\\
-\verb|-seed=<random seed> | & \\
-\nopagebreak
- & Using this option makes it possible to regenerate simulation results. \\
-\\
-\verb|-directory=<directory name>| & \\
-\nopagebreak
- & name of new directory or directory to restart from \\
-\\
-\verb|-nm_version=<nonmem version> | & \\
-\nopagebreak
- &  \\
-\\
-\end{longtable}
+\begin{optionlist}
+\nextopt
+\optname{last\_est\_complete}
+optional and only applies with NONMEM7 and if option -keep\_estimation is set. See section NPC and VPC with NONMEM7. 
+\nextopt
+\optdefault{seed}{random seed }
+Using this option makes it possible to regenerate simulation results. 
+\nextopt
+\optdefault{directory}{directory name}
+name of new directory or directory to restart from 
+\nextopt
+\optdefault{nm\_version}{nonmem version }
+
+\nextopt
+\end{optionlist}
 
 Important note: you can use the -directory option e.g when you have run a simulation with a particular model earlier and you want to stratify on a new column or use a different set of binning options. You can reuse NPC simulations in a VPC analysis and vice versa, since the underlying program is essentially the same. The default directory name will be of the form npc\_dirN, regardless of whether the original run was done using NPC or VPC. This will save time since much of the processing won't have to be redone. The old npc\_results.csv or vpc\_results.csv file will be renamed so that they are not overwritten.
 
@@ -322,84 +284,65 @@ npc moxonidine.mod -lst=moxonidine.lst -samples=500
 
 Input: a modelfile is required.
 
-\begin{longtable}{p{1in}p{4in}}
-\verb|-samples=<number>| & \\
-\nopagebreak
- & is required, the number of simulated datasets to generate. \\
-\\
-\verb|-msfo=<file>| & \\
-\nopagebreak
- & is optional, unless the model has \$NONP record then an msfo-file 	is required. As with VPC. \\
-\\
-\verb|-lst=<file>| & \\
-\nopagebreak
- & is optional, but forbidden together with -msfo. Use final parameter estimates from this lst-file. Npc does not perform estimation. \\
-\\
-\verb|-stratify_on=<variable>| & \\
-\nopagebreak
- & is optional.  \\
-\\
-\verb|-no_of_strata=N| & \\
-\nopagebreak
- & is optional, only allowed when -stratify\_on is used. \\
-\\
-\verb|-refstrat=value| & \\
-\nopagebreak
- & is optional, only allowed when -stratify\_on is used. \\
-\\
-\verb|-dv=<variable>| & \\
-\nopagebreak
- & is optional, default is DV. If a synonym for DV is set in \$INPUT, the synonym must be set as the dependent variable on the commandline, -dv=<synonym>. \\
-\\
-\verb|-keep_estimation| & \\
-\nopagebreak
- & is optional, by default not set. As VPC. \\
-\\
-\verb|-noprediction| & \\
-\nopagebreak
- & is optional, by default not set. As VPC. \\
-\\
-\verb|-orig_table=<filename>| & \\
-\nopagebreak
- & is optional, only allowed when -sim\_table is also used. As VPC. \\
-\\
-\verb|-sim_table=<filename>| & \\
-\nopagebreak
- & is optional, only allowed when -orig\_table is also used. As VPC. \\
-\\
-\verb|-n_simulation_models=N| & \\
-\nopagebreak
- & is optional, default is 1. As VPC. \\
-\\
-\verb|-confidence_interval=CC| & \\
-\nopagebreak
- & is optional, default is 95. The confidence interval in percent. \\
-\\
-\verb|-censor=<variable>| & \\
-\nopagebreak
- & is optional, default not used. As VPC. \\
-\\
-\verb|-sim_model=<file>| & \\
-\nopagebreak
- & is optional. As VPC.    \\
-\\
-\verb|-flip_comments| & \\
-\nopagebreak
- & is optional. As VPC. \\
-\\
-\verb|-rawres_input=<file>| & \\
-\nopagebreak
- & is optional. As VPC.    \\
-\\
-\verb|-offset_rawres=N| & \\
-\nopagebreak
- & optional. As VPC. \\
-\\
-\verb|-copy_data| & \\
-\nopagebreak
- & Set by default. As VPC. \\
-\\
-\end{longtable}
+\begin{optionlist}
+\optdefault{samples}{number}
+is required, the number of simulated datasets to generate. 
+\nextopt
+\optdefault{msfo}{file}
+is optional, unless the model has \$NONP record then an msfo-file 	is required. As with VPC. 
+\nextopt
+\optdefault{lst}{file}
+is optional, but forbidden together with -msfo. Use final parameter estimates from this lst-file. Npc does not perform estimation. 
+\nextopt
+\optdefault{stratify\_on}{variable}
+is optional.  
+\nextopt
+\optdefault{no\_of\_strata}{N}
+is optional, only allowed when -stratify\_on is used. 
+\nextopt
+\optdefault{refstrat}{value}
+is optional, only allowed when -stratify\_on is used. 
+\nextopt
+\optdefault{dv}{variable}
+is optional, default is DV. If a synonym for DV is set in \$INPUT, the synonym must be set as the dependent variable on the commandline, -dv=<synonym>. 
+\nextopt
+\optname{keep\_estimation}
+is optional, by default not set. As VPC. 
+\nextopt
+\optname{noprediction}
+is optional, by default not set. As VPC. 
+\nextopt
+\optdefault{orig\_table}{filename}
+is optional, only allowed when -sim\_table is also used. As VPC. 
+\nextopt
+\optdefault{sim\_table}{filename}
+is optional, only allowed when -orig\_table is also used. As VPC. 
+\nextopt
+\optdefault{n\_simulation\_models}{N}
+is optional, default is 1. As VPC. 
+\nextopt
+\optdefault{confidence\_interval}{CC}
+is optional, default is 95. The confidence interval in percent. 
+\nextopt
+\optdefault{censor}{variable}
+is optional, default not used. As VPC. 
+\nextopt
+\optdefault{sim\_model}{file}
+is optional. As VPC.    
+\nextopt
+\optname{flip\_comments}
+is optional. As VPC. 
+\nextopt
+\optdefault{rawres\_input}{file}
+is optional. As VPC.    
+\nextopt
+\optdefault{offset\_rawres}{N}
+optional. As VPC. 
+\nextopt
+\optname{copy\_data}
+Set by default. As VPC. 
+\nextopt
+\end{optionlist}
 
 
 \section {VPC for time-to-event models}

@@ -1,10 +1,7 @@
-\documentclass[a4paper,12pt]{article}
-\title{NONPB user guide, PIND user guide\\ \vspace{2 mm} {\large PsN 3.6.2}}
-\date{2013-05-28}
+\input{inputs/format_header.tex}
+\guidetitle{NONPB and PIND user guides}
 
-\usepackage[utf8]{inputenc}
-\usepackage{verbatim}
-\usepackage{longtable}
+
 \begin{document}
 
 \maketitle
@@ -13,11 +10,7 @@
 \section{Introduction}
 
 When parameter estimates are used in predictions or decisions, it is important to consider the magnitude of imprecision associated with the estimation. The nonpb\cite{Baverel} is a resampling-based method for estimating imprecision in nonparametric distribution (NPD) estimates obtained in NONMEM. Imprecision in the NPD can be estimated by means of two different resampling procedures. The full method, -nonpb\_version=2, relies on bootstrap sampling from the raw data and a re-estimation of both the preceding parametric (FOCE) and the nonparametric step. The simplified method, -nonpb\_version=1, relies on bootstrap sampling of individual nonparametric probability distributions. Nonparametric confidence intervals are computed. In addition of providing information about the precision of nonparametric parameter estimates, the nonpb methods can serve as diagnostic tools for the detection of misspecified parameter distributions.
-\\
-\\
 The P individuals method is availabe as a separate PsN script pind.
-\\
-\\
 Examples
 \begin{verbatim}
 nonpb run12.mod -samples=500
@@ -31,57 +24,48 @@ pind run12.mod …
 
 A model file is required on the command-line.
 
-\begin{longtable}{p{1in}p{4in}}
-\verb|-samples=N| & \\
-\nopagebreak
- & The samples option is required. The number of samples in the bootstrap. \\
-\\
-\verb|-lst_file=file.lst| & \\
-\nopagebreak
- & Name of the lst-file with estimates for the input model. Default is the name of the input model with a .mod extension	replaced with .lst. \\
-\\
-\verb|-nonpb_version=X| & \\
-\nopagebreak
- & The version of the nonpb method. Default is 1, the simplified version. Version can also be set to 2, the full version. \\
-\\
-\end{longtable}
+\begin{optionlist}
+\optdefault{samples}{N}
+The samples option is required. The number of samples in the bootstrap. 
+\nextopt
+\optdefault{lst\_file}{file.lst}
+Name of the lst-file with estimates for the input model. Default is the name of the input model with a .mod extension	replaced with .lst. 
+\nextopt
+\optdefault{nonpb\_version}{X}
+The version of the nonpb method. Default is 1, the simplified version. Version can also be set to 2, the full version. 
+\nextopt
+\end{optionlist}
 
 \subsection{Options to pind}
 A model file is required on the command-line.
 
-\begin{longtable}{p{1in}p{4in}}
-\verb|-lst_file=file.lst| & \\
-\nopagebreak
- & Name of  of the lst-file with estimates for the input model. Default is the name of the input model with a .mod extension replaced with .lst. \\
-\\
-\verb|-ind_param=eta or theta| & \\
-\nopagebreak
- & Optional, default eta. The parameter to set in individual ofv model files. Possibilities are eta or theta. \\
-\\
-\end{longtable}
+\begin{optionlist}
+\optdefault{lst\_file}{file.lst}
+Name of  of the lst-file with estimates for the input model. Default is the name of the input model with a .mod extension replaced with .lst. 
+\nextopt
+\optdefault{ind\_param}{eta or theta}
+Optional, default eta. The parameter to set in individual ofv model files. Possibilities are eta or theta. 
+\nextopt
+\end{optionlist}
 
 \subsection{Some general PsN-options useful in combination with nonpb or pind}
 
 For a complete list of common options see common\_options\_defaults\_versions.pdf, or psn\_options -h on the commandline.
 
-\begin{longtable}{p{1in}p{4in}}
-\verb|-directory=run1_nonpb| & \\
-\nopagebreak
- & The directory in which the script will run NONMEM can be named. The default name is “nonpb\_dirX” where X is increased by 1 each time you run the script. \\
-\\
-\verb|-seed=X| & \\
-\nopagebreak
- & A seed for the random number generator can be specified. This makes the run reproducible. It acts as a starting point for the random number generator when creating the bootstrapped data sets. \\
-\\
-\verb|-threads=X| & \\
-\nopagebreak
- & The number of parallel processes to start for the model runs on a parallel computer. \\
-\\
-\verb|-help| & \\
-\nopagebreak
- & With -help PsN will print a longer help message. \\
-\\
-\end{longtable}
+\begin{optionlist}
+\optdefault{directory}{run1\_nonpb}
+The directory in which the script will run NONMEM can be named. The default name is “nonpb\_dirX” where X is increased by 1 each time you run the script. 
+\nextopt
+\optdefault{seed}{X}
+A seed for the random number generator can be specified. This makes the run reproducible. It acts as a starting point for the random number generator when creating the bootstrapped data sets. 
+\nextopt
+\optdefault{threads}{X}
+The number of parallel processes to start for the model runs on a parallel computer. 
+\nextopt
+\optname{help}
+With -help PsN will print a longer help message. 
+\nextopt
+\end{optionlist}
 
 \section{Output}
 Intermediate files written during the procedure are found in the intermediate\_files subdirectory of the nonpb run directory. In the result\_files subdirectory the files CI\_results\_ETAk.csv are found, where k=1,...,(number of ETAs). CI\_results\_ETAj.csv contains the mean, median, 25th, 50th, 90th and 95th confidence intervals.

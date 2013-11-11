@@ -1,10 +1,6 @@
-\documentclass[a4paper,12pt]{article}
-\title{Extended grid user guide\\ \vspace{2 mm} {\large PsN 3.6.2}}
-\date{2013-05-28}
+\input{inputs/format_header.tex}
+\guidetitle{Extended grid user guide}
 
-\usepackage[utf8]{inputenc}
-\usepackage{verbatim}
-\usepackage{longtable}
 \begin{document}
 
 \maketitle
@@ -12,11 +8,7 @@
 
 \section{Introduction}
 Important note: The algorithm description in this guide is complete, but other information is still missing.
-\\
-\\
 Non-parametric estimation on the extended grid. \cite{someone}
-\\
-\\
 Example
 \begin{verbatim}
 extended_grid run1.mod
@@ -28,44 +20,37 @@ extended_grid run1.mod
 
 A model file is required on the command-line. No other options are required.
 
-\begin{longtable}{p{1in}p{4in}}
-\verb|-dv_column=<column_name>| & \\
-\nopagebreak
- & The dependent variable column. Default DV. \\
-\\
-\verb|-id_column=<column_name>| & \\
-\nopagebreak
- & The header of the column marking individuals. Default ID. \\
-\\
-\verb|-ids_to_simulate=N| & \\
-\nopagebreak
- & The number of individuals to simulate. Default is the number of individuals in the original dataset. \\
-\\
-\verb|-omega_multiplier=number| & \\
-\nopagebreak
- & Default 1. The initial omegas in the simulation model and extended model will be multiplied by this number. This gives inflation (or deflation if the multiplier \verb|<| 1) of the variance. \\
-\\
-\end{longtable}
+\begin{optionlist}
+\optdefault{dv\_column}{column\_name}
+The dependent variable column. Default DV. 
+\nextopt
+\optdefault{id\_column}{column\_name}
+The header of the column marking individuals. Default ID. 
+\nextopt
+\optdefault{ids\_to\_simulate}{N}
+The number of individuals to simulate. Default is the number of individuals in the original dataset. 
+\nextopt
+\optdefault{omega\_multiplier}{number}
+Default 1. The initial omegas in the simulation model and extended model will be multiplied by this number. This gives inflation (or deflation if the multiplier \verb|<| 1) of the variance. 
+\nextopt
+\end{optionlist}
 
 
 \subsection{Some common PsN-options useful with extended\_grid}
 
 For a complete list of common options see common\_options\_defaults\_versions.pdf, or psn\_options -h on the commandline.
 
-\begin{longtable}{p{1in}p{4in}}
-\verb|-directory=extended_grid_dirN| & \\
-\nopagebreak
- & The directory in which the script will run NONMEM can be named. The default name is “extended\_grid\_dirN” where N is increased by 1 each time you run the script. If the run is aborted or crashes, setting the directory to the one from which the script was running earlier can be done. PsN will then not run the model files that had finished, saving time. \\
-\\
-\verb|-seed=N| & \\
-\nopagebreak
- & A seed for the random number generator can be specified. This makes the run reproducible.   \\
-\\
-\verb|-help| & \\
-\nopagebreak
- & With -help a longer help message will be printed. \\
-\\
-\end{longtable}
+\begin{optionlist}
+\optdefault{directory}{extended\_grid\_dirN}
+The directory in which the script will run NONMEM can be named. The default name is “extended\_grid\_dirN” where N is increased by 1 each time you run the script. If the run is aborted or crashes, setting the directory to the one from which the script was running earlier can be done. PsN will then not run the model files that had finished, saving time. 
+\nextopt
+\optdefault{seed}{N}
+A seed for the random number generator can be specified. This makes the run reproducible.   
+\nextopt
+\optname{help}
+With -help a longer help message will be printed. 
+\nextopt
+\end{optionlist}
 
 
 \section{Output}
@@ -91,8 +76,7 @@ If
 Improvement: Add (seed2 UNIFORM) if new option -uniform is set.
 		\item Count the number of OMEGAs and set 
 \$TABLE ID ETA1 ETA2 ... ETA$\langle$nOMEGA$\rangle$ FIRSTONLY FILE=sim
-Note: 'ID' in this table is hard coded and is not affected by option id\_column
-Improvement: Replace ID based on  id\_column. Also add NOAPPEND NOPRINT ONEHEADER
+Note: 'ID' in set to option id\_column.
 		\item If option -ids\_to\_simulate=N is set: If the number is smaller than or equal to the number of individuals in the dataset then all but the N first individuals are removed from simulation.dta. Else (N is larger than the number of individuals in the dataset) then the first individual in simulation.dta is copied N-$\langle$original number of ids$\rangle$ times and those individuals are appended so that simulation.dta contains N individuals in total. After modifications the IDs are renumbered ascending.
 Note: Handling of individuals is not affected by option id\_column, so it is likely that option -ids\_to\_simulate will fail if id\_column is not 'ID'. 
 Improvement: Add support for -id\_column and -ids\_to\_simulate in combination

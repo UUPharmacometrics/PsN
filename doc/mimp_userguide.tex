@@ -1,10 +1,6 @@
-\documentclass[a4paper,12pt]{article}
-\title{MIMP user guide\\ \vspace{2 mm} {\large PsN 3.6.2}}
-\date{2013-05-28}
+\input{inputs/format_header.tex}
+\guidetitle{MIMP user guide}
 
-\usepackage[utf8]{inputenc}
-\usepackage{verbatim}
-\usepackage{longtable}
 \begin{document}
 
 \maketitle
@@ -12,8 +8,6 @@
 
 \section{Overview}
 The mimp program implements the multiple imputation method\cite{Johansson}.
-\\
-\\
 Example
 \begin{verbatim}
 mimp -base_model=base.mod -reg_model=reg.mod -mi_model=mi.mod
@@ -24,66 +18,57 @@ mimp -base_model=base.mod -reg_model=reg.mod -mi_model=mi.mod
 \subsection{Required input}
 Unlike other PsN scripts mimp does not take a bare model file name as input. All model file names are given as options. The dataset needs to contain a column that depicts for each row in the dataset if the covariate that is partly missing is missing or observed.
 
-\begin{longtable}{p{1in}p{4in}}
-\verb|-base_model=<filename>| & \\
-\nopagebreak
- & Base model. This is the model without the code snippet describing the effect of the covariate (that is partly missing) on the parameters. The individual parameter (empirical Bayes) estimates, of the parameter(s) on which the covariate has an effect, contains information about the individual response. The individual parameter estimates should be printed in \$TABLE of the base model. The model must contain a complete \$TABLE containing items exactly matching \$INPUT of the next model in the sequence. PsN does not check that \$TABLE is correctly defined.  \\
-\\
-\verb|-reg_model=<filename>| & \\
-\nopagebreak
- & Regression model.  The regression model estimates the relationship between the partly missing covariate, the response (individual parameter estimates from the base model) and other (completely observed) covariates that carry information about the missing covariate. The partly missing covariate will be the dependent variable (DV) in this model and the column in the dataset that depicts if the covariate is missing or observed will be the missing dependent variable (MDV). The regression model must contain a complete \$TABLE containing items exactly matching \$INPUT of the multiple imputation model. \\
-\\
-\verb|-mi_model=<filename>| & \\
-\nopagebreak
- & Multiple imputation model. This model must contain one simulation part and one estimation part, followed by both a \$SIM and a \$EST record. The simulation part should contain the code for imputation of the missing covariate while the estimation part should be the final model including the code for the effect of the covariate on the parameters. \\
-\\
-\end{longtable}
+\begin{optionlist}
+\optdefault{base\_model}{filename}
+Base model. This is the model without the code snippet describing the effect of the covariate (that is partly missing) on the parameters. The individual parameter (empirical Bayes) estimates, of the parameter(s) on which the covariate has an effect, contains information about the individual response. The individual parameter estimates should be printed in \$TABLE of the base model. The model must contain a complete \$TABLE containing items exactly matching \$INPUT of the next model in the sequence. PsN does not check that \$TABLE is correctly defined.  
+\nextopt
+\optdefault{reg\_model}{filename}
+Regression model.  The regression model estimates the relationship between the partly missing covariate, the response (individual parameter estimates from the base model) and other (completely observed) covariates that carry information about the missing covariate. The partly missing covariate will be the dependent variable (DV) in this model and the column in the dataset that depicts if the covariate is missing or observed will be the missing dependent variable (MDV). The regression model must contain a complete \$TABLE containing items exactly matching \$INPUT of the multiple imputation model. 
+\nextopt
+\optdefault{mi\_model}{filename}
+Multiple imputation model. This model must contain one simulation part and one estimation part, followed by both a \$SIM and a \$EST record. The simulation part should contain the code for imputation of the missing covariate while the estimation part should be the final model including the code for the effect of the covariate on the parameters. 
+\nextopt
+\end{optionlist}
 
 
 \pagebreak
 
 \subsection{Optional input}
 
-\begin{longtable}{p{1in}p{4in}}
-\verb|-imputations=M| & \\
-\nopagebreak
- & Default 6. The number of imputations to perform for each dataset. \\
-\\
-\verb|-sim_model=<filename>| & \\
-\nopagebreak
- & Simulation model. This model must contain a correct \$SIM record and a complete \$TABLE containing items exactly matching \$INPUT of the base model. PsN does not check that \$TABLE is correctly defined. \\
-\\
-\verb|-samples=N| & \\
-\nopagebreak
- & Number of datasets to simulate. Only relevant together with option -sim\_model, required if sim\_model is given. \\
-\\
-\verb|-chain_models= <file1,file2,...>| & \\
-\nopagebreak
- & An ordered list of chain models. These models can be used if there is a need for additional estimation models in between the base model and the regression model. The models must be listed in the order in which they are to be estimated. Each model must contain a complete \$TABLE containing items exactly matching \$INPUT of the next model in the sequence (the next chain model or the regression model if it is the last chain model). PsN does not check that \$TABLE is correctly defined.   \\
-\\
-\verb|-alt_models=<model_1, model_2,...>| & \\
-\nopagebreak
- & A comma-separated list of filenames of alternative models. \\
-\\
-\end{longtable}
+\begin{optionlist}
+\optdefault{imputations}{M}
+Default 6. The number of imputations to perform for each dataset. 
+\nextopt
+\optdefault{sim\_model}{filename}
+Simulation model. This model must contain a correct \$SIM record and a complete \$TABLE containing items exactly matching \$INPUT of the base model. PsN does not check that \$TABLE is correctly defined. 
+\nextopt
+\optdefault{samples}{N}
+Number of datasets to simulate. Only relevant together with option -sim\_model, required if sim\_model is given. 
+\nextopt
+\optdefault{chain\_models}{file1,file2,...}
+An ordered list of chain models. These models can be used if there is a need for additional estimation models in between the base model and the regression model. The models must be listed in the order in which they are to be estimated. Each model must contain a complete \$TABLE containing items exactly matching \$INPUT of the next model in the sequence (the next chain model or the regression model if it is the last chain model). PsN does not check that \$TABLE is correctly defined.   
+\nextopt
+\optdefault{alt\_models}{model\_1, model\_2,...}
+A comma-separated list of filenames of alternative models. 
+\nextopt
+\end{optionlist}
 
 \subsection{Some common PsN-options useful with mimp}
 
 For a complete list of common options see common\_options\_defaults\_versions.pdf, or psn\_options -h on the commandline.
 
-\begin{longtable}{p{1in}p{4in}}
-\verb|-directory=mimp_dirN| & \\
-\nopagebreak
- & The run directory can be named. \\
-\\
-\verb|-seed=X| & \\
-\nopagebreak
- & Random seed.
-\\
-\verb|-help| & \\
-\nopagebreak
- & With -help mimp will print a longer help message. \\
-\end{longtable}
+\begin{optionlist}
+\optdefault{directory}{mimp\_dirN}
+The run directory can be named. 
+\nextopt
+\optdefault{seed}{X}
+Random seed.
+
+\nextopt
+\optname{help}
+With -help mimp will print a longer help message. 
+\nextopt
+\end{optionlist}
 
 
 \section{Output}

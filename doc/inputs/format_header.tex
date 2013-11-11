@@ -1,0 +1,40 @@
+\documentclass[a4paper,12pt]{article}
+\setlength{\marginparwidth}{0pt}%35
+\setlength{\marginparsep}{0pt}%?
+\setlength{\evensidemargin}{0pt}
+\setlength{\oddsidemargin}{0pt}
+
+\usepackage[utf8]{inputenc}
+\usepackage{verbatim}
+\usepackage{longtable}
+\usepackage{alltt}
+\usepackage{ifthen}
+\newcommand{\guidetitle}[1]{ 
+\title{#1\\ \vspace{2 mm} {\large PsN 3.7.2}}
+\date{2013-10-30}
+}
+
+%\newenvironment{optionlist}{\begin{longtable}{p{1.5cm}p{7cm}}}{\end{longtable}}
+
+%\newcommand{\optname}[1]{\vspace{0pt}\parbox[t][1.0\baselineskip]{1.5cm}{\strut\alltt-#1\strut} &} 
+%\newcommand{\optdefault}[2]{\vspace{0pt}\parbox[t][1.0\baselineskip]{1.5cm}{\strut\alltt{\alltt-#1}={\it #2}\strut}&}
+%\newcommand{\opttextbegin}{\vspace{0pt}\parbox[t][1.0\baselineskip]{7cm}}
+
+
+
+\newenvironment{optionlist}{
+\renewcommand{\arraystretch}{1.1}
+\setlength{\textwidth}{500pt}
+\begin{longtable}{p{3cm}p{13cm}}}
+{\end{longtable}}
+
+%\newcommand{\optname}[1]{\vspace{-1mm}\bfseries\texttt-#1 & \\ 
+
+\newcommand{\optname}[1]{\bfseries\texttt-#1 & \\ 
+\nopagebreak &} 
+\newcommand{\optdefault}[2]{{\bfseries\texttt-#1}{\mbox{ = \it #2}} & \\ 
+\nopagebreak &}
+%\newcommand{\optname}[1]{\alltt-#1                                                                   .&}
+%\newcommand{\optdefault}[2]{{\alltt-#1}={\it #2}                                                        . &}
+
+\newcommand{\nextopt}{\\}

@@ -1,81 +1,61 @@
-\documentclass[a4paper,12pt]{article}
-\title{EXECUTE user guide\\ \vspace{2 mm} {\large PsN 3.6.2}}
-\date{2013-05-28}
+\input{inputs/format_header.tex}
+\guidetitle{EXECUTE user guide}
+%last review 2013-10-30 Kajsa
 
-\usepackage[utf8]{inputenc}
-\usepackage{verbatim}
-\usepackage{longtable}
 \begin{document}
 
 \maketitle
 
 
 \section{Introduction}
-
-The execute script is a PsN tool allows you to run multiple modelfiles either sequentially or in parallel. It is an nmfe replacement with advanced extra
+The execute script is a PsN tool that allows you to run multiple modelfiles either sequentially or in parallel. It is an nmfe replacement with advanced extra
 functionality.
 
 Execute creates subdirectories where it puts NONMEMs input and output files, to make sure that parallel NONMEM runs do not interfere with each other.
 The top directory is by default named 'modelfit\_dirX' where 'X' is a number that starts at 1 and is increased by one each time you run execute.
-\\
-\\
 Example
 \begin{verbatim}
 execute -threads=2 -retries=5 phenobarbital.mod pheno_alternate.mod
 \end{verbatim}
 
 \section{The parallel\_retries script}
-
 The retries (see documentation in common\_options\_defaults\_versions\_psn.pdf) are always done serially in execute and other PsN programs. The parallel\_retries script is a help script that takes a single model as input, creates 'min\_retries' extra copies of this model with tweaked initial estimates, and then runs the original plus the extra models in parallel in separate NM\_run subdirectories. Results are summarized in raw\_results.csv in the run directory. The script does not select the best retry, but the user must do that manually based on raw\_results.csv. The script parallel\_retries takes the same input as execute, except that only a single model is accepted as input, and option -min\_retries is required. 
-\\
-\\
-\\
 Example
 \begin{verbatim}
 parallel_retries run33.mod -min_retries=4 -threads=5 -seed=12345
 \end{verbatim}
 
 \section{Input and options}
-
 \subsection{Required execute input}
 A model file is required on the command-line.
 
 \subsection{Optional input}
-All options listed in common\_options\_defaults\_versions\_psn.pdf apply to execute and parallel\_retries. Those are the most important options for execute. They were originally implemented for this tool, but now they are common to most PsN scripts.
-\\
-\\
+All options listed in common\_options\_defaults\_versions\_psn.pdf apply to execute and parallel\_retries. Those are the most important options for execute. They were originally implemented for this tool, but now they are common to most PsN scripts.\\
 In addition, unique to execute and parallel\_retries:
-\\
 
-\begin{longtable}{p{1in}p{4in}}
-\verb|-model_dir_name| & \\
-\nopagebreak
- & Default not used. This option changes the basename of the run directory from modelfit\_dir to $\langle$modelfile$\rangle$.dir. where $\langle$modelfile$\rangle$ is the name of the first model file in the list given as arguments to execute. The directories will be numbered starting from 1, increasing the number each time execute is run with a model file with the same name. If the option directory is used it will override -model\_dir\_name.\\
-\\
-\verb|-prepend_options_to_lst| & \\
-\nopagebreak
- & Default not used. This option makes PsN prepend the final lst-file (which is copied back to the directory from which execute was called) with the file version\_and\_option\_info.txt which contains run information, including     all actual values of optional PsN options. PsN can still parse the lst-file with the options prepended, so the file can still be used it as input to e.g. sumo, vpc or update\_inits. Disabled with -no-prepend\_options\_to\_lst if set in psn.conf.\\
-\\
-\verb|-tail_output| & \\
-\nopagebreak
- & Default not used. This option only works for execute under Windows. Option -tail\_output specifies that execute should invoke a program (tail) that displays the output file, including the gradients, during minmization. The tail program is started automatically but it is up to the user to terminate the program. For the tail\_output option to work, a third party tail program must be installed. Tail programs that are known to work are WinTail and Tail for Win32.  The latter is recommended and can be downloaded at http://tailforwin32.sourceforge.net. It is also necessary to have correct settings of the variables wintail\_exe, which is the path to the tail program, and wintail\_command, which is the command for the tail program. The defaults, which work for the Tail for Win32 package, are seen below. These two variables can be set to other values in psn.conf.\\
-\\
-\verb|-wintail_exe='string'| & \\
-\nopagebreak
- & \verb|C:\Program Files\Tail-4.2.12\Tail.exe| is default. Only for Windows. See tail\_output for description.\\
-\\
-\verb|-wintail_command='string'| & \\
-\nopagebreak
- & Default "tail OUTPUT”. Only for Windows. See -tail\_output for description.\\
-\\
-\verb|-copy_data| & \\
-\nopagebreak
- & Default set. Disable with -no-copy\_data. By default, PsN will copy the datafile into NM\_run1 and set a local path in psn.mod, the actual modelfile run with NONMEM. If -no-copy\_data is set, PsN will not copy the data to NM\_run1 and instead set a global path to the datafile in psn.mod.\\
-\end{longtable}
+\begin{optionlist}
+\optname{model\_dir\_name}
+Default not used. This option changes the basename of the run directory from modelfit\_dir to $\langle$modelfile$\rangle$.dir. where $\langle$modelfile$\rangle$ is the name of the first model file in the list given as arguments to execute. The directories will be numbered starting from 1, increasing the number each time execute is run with a model file with the same name. If the option directory is used it will override -model\_dir\_name.
+\nextopt
+\optname{prepend\_options\_to\_lst}
+Default not used. This option makes PsN prepend the final lst-file (which is copied back to the directory from which execute was called) with the file version\_and\_option\_info.txt which contains run information, including     all actual values of optional PsN options. PsN can still parse the lst-file with the options prepended, so the file can still be used it as input to e.g. sumo, vpc or update\_inits. Disabled with -no-prepend\_options\_to\_lst if set in psn.conf.
+\nextopt
+\optname{tail\_output}
+Default not used. This option only works for execute under Windows. Option -tail\_output specifies that execute should invoke a program (tail) that displays the output file, including the gradients, during minmization. The tail program is started automatically but it is up to the user to terminate the program. For the tail\_output option to work, a third party tail program must be installed. Tail programs that are known to work are WinTail and Tail for Win32.  The latter is recommended and can be downloaded at http://tailforwin32.sourceforge.net. It is also necessary to have correct settings of the variables wintail\_exe, which is the path to the tail program, and wintail\_command, which is the command for the tail program. The defaults, which work for the Tail for Win32 package, are seen below. These two variables can be set to other values in psn.conf.
+\nextopt
+\optdefault{wintail\_exe}{string}
+Default \verb|C:\Program Files\Tail-4.2.12\Tail.exe|. Only for Windows. See tail\_output for description.
+\nextopt
+\optdefault{wintail\_command}{string}
+Default "tail OUTPUT”. Only for Windows. See -tail\_output for description.
+\nextopt
+\optname{copy\_data}
+Default set. Disable with -no-copy\_data. By default, PsN will copy the datafile into NM\_run1 and set a local path in psn.mod, the actual modelfile run with NONMEM. If -no-copy\_data is set, PsN will not copy the data to NM\_run1 and instead set a global path to the datafile in psn.mod.
+\nextopt
+\end{optionlist}
 
 
 \section{Output}
-
 When the NONMEM runs are finished, the output and table files will be copied to the directory where execute started in which means that you can normaly ignore the 'modelfit\_dirX' directory. If you need to access any special files you can find them inside the 'modelfit\_dirX'. Inside the 'modelfit\_dirX' you find a few subdirectories named 'NM\_runY'. For each model file you specified on the command line there will be one 'NM\_runY' directory in which the actual NONMEM execution takes place. The order of the 'NM\_runY' directories corresponds to the order of the modelfiles given on the command line. The first run will take place inside 'NM\_run1', the second in 'NM\_run2' and so on.
 
 

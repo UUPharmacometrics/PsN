@@ -1,0 +1,53 @@
+\input{inputs/format_header.tex}
+\guidetitle{SIR user guide}
+
+\begin{document}
+
+\maketitle
+
+
+\section{Introduction}
+Sampling Importance Resampling.
+Example
+\begin{verbatim}
+execute -threads=2 -retries=5 phenobarbital.mod pheno_alternate.mod
+\end{verbatim}
+
+\section{Input and options}
+A model file is required on the command-line.
+
+\begin{optionlist}
+\optdefault{predictions}{N}
+Default 5000. The number of ofv predictions to generate with parameter uncertainty and MAXEVAL=0.
+\nextopt
+\optdefault{rawres\_input}{filename}
+Required unless input model has \$PRIOR, then not allowed.
+\nextopt
+\optdefault{offset\_rawres}{N}
+Default 1. The number of parameter sets to skip in rawres file. Only allowed in combination with rawres\_input.
+\nextopt
+\optdefault{in\_filter}{condition on numerical col}
+Default not used. Only allowed in combination with rawres\_input.
+\nextopt
+\optdefault{sample\_size}{N}
+Default 1000. The number of ofv predictions to generate with parameter uncertainty and MAXEVAL=0.
+\nextopt
+\optname{with\_replacement}
+Default not set. 
+\nextopt
+\end{optionlist}
+
+
+\section{Algorithm}
+\begin{enumerate}
+\item Create 'prediction' parameter sets, either with rawres input or \$PRIOR. As in sse simulation but MAXEVAL=0 instead of simulation. 
+All have same dataset. Multiple \$PROB same file if rawres input to save overhead.
+Save vectors. Set MAXEVAL=0 and run to get ofv.
+\item Compute weights for each parameter vector from 1) based on covariance matrix. Numerator is $ofv_i$. Denominator is function of
+covmatrix and param vector i, involves Cholesky. See script.
+\item Sample sample\_size new parameter vectors from set in 1) with or without replacement with probability to be chosen from 2).
+\end{enumerate}
+
+See email and script from AnneGaelle.
+
+\end{document}

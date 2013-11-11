@@ -1,10 +1,6 @@
-\documentclass[a4paper,12pt]{article}
-\title{SSE user guide\\ \vspace{2 mm} {\large PsN 3.6.8}}
-\date{2013-09-16}
+\input{inputs/format_header.tex}
+\guidetitle{SSE user guide}
 
-\usepackage[utf8]{inputenc}
-\usepackage{verbatim}
-\usepackage{longtable}
 \begin{document}
 
 \maketitle
@@ -27,95 +23,82 @@ sse pheno.mod -samples=500 -seed=12345 -threads=5
 \section{Input and options}
 \subsection{SSE-specific input}
 A model file is required on the command-line.
-\begin{longtable}{p{1in}p{4in}}
-\verb|-samples=N| & \\
-\nopagebreak
- & The number of simulated datasets to generate is a required option. N must be greater than or equal to 2. \\
-\\
-\verb|-alternative_models =alt1,alt2,alt3| & \\
-\nopagebreak
- & A space-free comma-separated list of model files with alternative models is optional. If not given, only the input model will be fitted to the simulated data. \\
-\\
-\verb|-no-estimate_simulation| & \\
-\nopagebreak
- & By default, the simulated datasets are estimated with the input model. The OFV-values from these estimations are used as reference when computing statistics on results from estimations with the alternative models. By using the option -no-estimate\_simulation (no option value), the input model will not be used to estimate (only to simulate). Instead, either a given reference OFV-value will be used (see option -ref\_ofv) or the OFV-values from the first alternative model will be treated as the reference ones. Regardless of how option -no-estimate\_simulation is set, the initial estimates in the simulation model will be used as reference when computing bias, rmse and rsebias for theta, omega and sigma. If simulating with uncertainty then the reference values will be different for each simulated dataset. \\
-\\
-\verb|-ref_ofv=X| & \\
-\nopagebreak
- & A reference OFV-value to use when computing statistics for the results from the alternative models. This option is only allowed together with -no-estimate\_simulation. \\
-\\
-\verb|-parallel_simulation=X| & \\
-\nopagebreak
- & The number of parallel processes to start for the simulation step (not the estimation step) on a parallel computer. Default is the same setting as option -threads. \\
-\\
-\verb|-add_models| & \\
-\nopagebreak
- & This option tells PsN to add the alternative models listed with option -alternative\_models to an old sse run. All models given via option -alternative\_models will be estimated from scratch, so the alternatives from the old run should not be listed in the input again. The -add\_models option requires that the old sse run has been completed without errors. It is necessary to also set the general PsN option -directory to the sse directory of the old run,       e.g. -directory=sse\_dir50. The user must ensure that the -samples option in the new sse run is equal to or smaller than in the old run. If some simulated datasets are missing it will result in an error.       The simulation model must still be given as input on the command-line. If the option -estimate\_simulation is set (it is set by default) old estimation results will be reloaded if they exist, otherwise the simulation model will be estimated. The numbering of the extra models will start at the number of the last old alternative plus 1. Results for the added models are in file sse\_results\_add1.csv \\
-\\
-\verb|-rawres_input=filename| & \\
-\nopagebreak
- & A simple way to simulate with uncertainty. Instead of using identical parameter estimates for simulation of each new dataset, take parameter estimates from a raw\_results.csv file, e.g. from a bootstrap run or the intial\_estimates.csv file from a previous sse run with \$PRIOR in the simulation model. The raw results file must be comma-separated and contain at least as many samples as the input -samples to sse, the labels for  THETA/OMEGA/SIGMA in the file must match the labels in the simulation model given as input to sse, the theta columns must be directly followed by the omega columns which must be directly followed by the sigma columns, and the column header must be model either in the first column just as in a bootstrap raw\_results file or in the second column as in a sse raw\_results file. If a column header contains a comma, e.g. OMEGA(2,2), then that header must be enclosed in double quotes. This is done automatically in PsN raw results files. Note that is is possible to generate a file with initial parameter estimates outside of PsN, as long as the file follows the format rules. \\
-\\
-\verb|-offset_rawres=N| & \\
-\nopagebreak
- & Only relevant in combination with -rawres\_input. Default 1. The number of result lines to skip in the input raw results file before starting to read final parameter estimates. In a regular bootstrap raw\_results file, and also in an initial\_estimates.csv file from an sse run, the first line of estimates refers to the input model with the full dataset, so therefore the default offset is 1. \\
-\\
-\verb|-in_filter=<comma-separated list of conditions>| & \\
-\nopagebreak
- & Only relevant in combination with -rawres\_input. Default not used. The parameter estimates lines in the file can be filtered on values in the different columns. When specifying which column(s) the filtering should be based on, the exact column name must be used, e.g. minimization\_successful. Filtering can only be based on columns with numeric values. The allowed relations are .gt. (greater than), .lt. (less than) and .eq. (equal to). If the value in the filter column is 'NA' then that parameter set will be skipped, regardless of the defined filter relation. Conditions are separated with commas. If the remaining number of lines after filtering is smaller than -samples, sse will stop with an error message. Then the user must either change the filtering rules or change -samples. If the user has created a file with parameter estimates outside of PsN, filtering can be done on any numeric column in that file. Do not set column headers containing .eq. or .lt. or .gt.in the user-generated file as this would interfere with the in\_filter option syntax.
+\begin{optionlist}
+\optdefault{samples}{N}
+The number of simulated datasets to generate is a required option. N must be greater than or equal to 2. 
+\nextopt
+\optdefault{alternative\_models }{alt1,alt2,alt3}
+A space-free comma-separated list of model files with alternative models is optional. If not given, only the input model will be fitted to the simulated data. 
+\nextopt
+\optname{no-estimate\_simulation}
+By default, the simulated datasets are estimated with the input model. The OFV-values from these estimations are used as reference when computing statistics on results from estimations with the alternative models. By using the option -no-estimate\_simulation (no option value), the input model will not be used to estimate (only to simulate). Instead, either a given reference OFV-value will be used (see option -ref\_ofv) or the OFV-values from the first alternative model will be treated as the reference ones. Regardless of how option -no-estimate\_simulation is set, the initial estimates in the simulation model will be used as reference when computing bias, rmse and rsebias for theta, omega and sigma. If simulating with uncertainty then the reference values will be different for each simulated dataset. 
+\nextopt
+\optdefault{ref\_ofv}{X}
+A reference OFV-value to use when computing statistics for the results from the alternative models. This option is only allowed together with -no-estimate\_simulation. 
+\nextopt
+\optdefault{parallel\_simulation}{X}
+The number of parallel processes to start for the simulation step (not the estimation step) on a parallel computer. Default is the same setting as option -threads. 
+\nextopt
+\optname{add\_models}
+This option tells PsN to add the alternative models listed with option -alternative\_models to an old sse run. All models given via option -alternative\_models will be estimated from scratch, so the alternatives from the old run should not be listed in the input again. The -add\_models option requires that the old sse run has been completed without errors. It is necessary to also set the general PsN option -directory to the sse directory of the old run,       e.g. -directory=sse\_dir50. The user must ensure that the -samples option in the new sse run is equal to or smaller than in the old run. If some simulated datasets are missing it will result in an error.       The simulation model must still be given as input on the command-line. If the option -estimate\_simulation is set (it is set by default) old estimation results will be reloaded if they exist, otherwise the simulation model will be estimated. The numbering of the extra models will start at the number of the last old alternative plus 1. Results for the added models are in file sse\_results\_add1.csv 
+\nextopt
+\optdefault{rawres\_input}{filename}
+A simple way to simulate with uncertainty. Instead of using identical parameter estimates for simulation of each new dataset, take parameter estimates from a raw\_results.csv file, e.g. from a bootstrap run or the intial\_estimates.csv file from a previous sse run with \$PRIOR in the simulation model. The raw results file must be comma-separated and contain at least as many samples as the input -samples to sse, the labels for  THETA/OMEGA/SIGMA in the file must match the labels in the simulation model given as input to sse, the theta columns must be directly followed by the omega columns which must be directly followed by the sigma columns, and the column header must be model either in the first column just as in a bootstrap raw\_results file or in the second or third column as in a sse raw\_results file. If a column header contains a comma, e.g. OMEGA(2,2), then that header must be enclosed in double quotes. This is done automatically in PsN raw results files. Note that is is possible to generate a file with initial parameter estimates outside of PsN, as long as the file follows the format rules. 
+\nextopt
+\optdefault{offset\_rawres}{N}
+Only relevant in combination with -rawres\_input. Default 1. The number of result lines to skip in the input raw results file before starting to read final parameter estimates. In a regular bootstrap raw\_results file, and also in an initial\_estimates.csv file from an sse run, the first line of estimates refers to the input model with the full dataset, so therefore the default offset is 1. 
+\nextopt
+\optdefault{in\_filter}{comma-separated list of conditions}
+Only relevant in combination with -rawres\_input. Default not used. The parameter estimates lines in the file can be filtered on values in the different columns. When specifying which column(s) the filtering should be based on, the exact column name must be used, e.g. minimization\_successful. Filtering can only be based on columns with numeric values. The allowed relations are .gt. (greater than), .lt. (less than) and .eq. (equal to). If the value in the filter column is 'NA' then that parameter set will be skipped, regardless of the defined filter relation. Conditions are separated with commas. If the remaining number of lines after filtering is smaller than -samples, sse will stop with an error message. Then the user must either change the filtering rules or change -samples. If the user has created a file with parameter estimates outside of PsN, filtering can be done on any numeric column in that file. Do not set column headers containing .eq. or .lt. or .gt.in the user-generated file as this would interfere with the in\_filter option syntax.
+
 
 Example:
 \begin{verbatim}
 -in_filter=minimization_successful.eq.1,
 significant_digits.gt.3.5
 \end{verbatim} \\
-\\
-\verb|-out_filter=<comma-separated list of conditions| & \\
-\nopagebreak
- & Default not used. The user may choose to only compute results based on estimations which fulfill certain conditions. The default is to only skip runs where the ofv cannot be read from the lst-file or is equal to 0. Filtering of output can be done on any numeric column in a standard sse raw\_results file, for example minimization\_successful, significant\_digits and covariance\_step\_successful. The allowed relations are .gt. (greater than), .lt. (less than) and .eq. (equal to). If the value in the filter column is 'NA' then that parameter set will be skipped, regardless of the defined filter relation. Conditions are separated with commas. If the remaining number of estimation results after filtering is less than 2, sse will stop with an error message.
+\nextopt
+\optdefault{out\_filter}{comma-separated list of conditions}
+Default not used. The user may choose to only compute results based on estimations which fulfill certain conditions. The default is to only skip runs where the ofv cannot be read from the lst-file or is equal to 0. Filtering of output can be done on any numeric column in a standard sse raw\_results file, for example minimization\_successful, significant\_digits and covariance\_step\_successful. The allowed relations are .gt. (greater than), .lt. (less than) and .eq. (equal to). If the value in the filter column is 'NA' then that parameter set will be skipped, regardless of the defined filter relation. Conditions are separated with commas. If the remaining number of estimation results after filtering is less than 2, sse will stop with an error message.
+
 
 Example:
 \begin{verbatim}
 -out_filter=minimization_successful.eq.1,
 significant_digits.gt.3.5
 \end{verbatim} \\
-\\
-\verb|-recompute=<raw results filename, including directory name>| & \\
-\nopagebreak
- & Default not set. Setting this option makes PsN recompute output statistics based on the specified raw\_results file. Note that the filename must be given including the directory name. The user may change the -out\_filter settings for the recomputation. Apart from -out\_filter, the input model must be set, and -samples. Alternative models are not needed, information about them will be read from the raw results file. Option -directory will be ignored, instead the directory specified as part of the file path will be used.
+\nextopt
+\optdefault{recompute}{raw results filename, including directory name}
+Default not set. Setting this option makes PsN recompute output statistics based on the specified raw\_results file. Note that the filename must be given including the directory name. The user may change the -out\_filter settings for the recomputation. Apart from -out\_filter, the input model must be set, and -samples. Alternative models are not needed, information about them will be read from the raw results file. Option -directory will be ignored, instead the directory specified as part of the file path will be used.
+
 
 Example:
 \begin{verbatim}
 -recompute=sse_dir12/raw_results_run1.csv
 \end{verbatim}
-\\
-\end{longtable}
+\nextopt
+\end{optionlist}
 
 \subsection{Some general PsN-options which are useful in combination with sse }
 For a complete list of common options see common\_options\_defaults\_versions.pdf, or psn\_options -h on the commandline. The option -abort\_on\_fail (see common\_options\_..) will only affect the estimations of the simulated datasets. PsN always aborts if a simulation in sse fails.
 
-\begin{longtable}{p{1in}p{4in}}
-\verb|-clean=X| & \\
-\nopagebreak
- & To be able to reuse old simulation datasets and runs do not set clean to more than 2. \\
-\\
-\verb|-directory=sse_dirX| & \\
-\nopagebreak
- & The directory in which the script will run NONMEM can be named. The default name is “sse\_dirX” where X is increased by 1 each time you run the script. If the run is aborted or crashes, setting the directory to the one from which the script was running earlier can be done. PsN will then not run the model files that had finished, saving time. Note that same set of options must be given as when the run was started the first time. \\
-\\
-\verb|-seed=X| & \\
-\nopagebreak
- & A seed for the random number generator can be specified. This makes the run reproducible. It acts as a starting point for the random number generator to produce the random number that will be present in the simulation control file. \\
-\\
-\verb|-threads=X| & \\
-\nopagebreak
- & The number of parallel processes to start for the estimation step (not the simulation) on a parallel computer. \\
-\\
-\verb|-help| & \\
-\nopagebreak
- & With -help sse will print a longer help message. \\
-\\
-\end{longtable}
+\begin{optionlist}
+\optdefault{clean}{X}
+To be able to reuse old simulation datasets and runs do not set clean to more than 2. 
+\nextopt
+\optdefault{directory}{sse\_dirX}
+The directory in which the script will run NONMEM can be named. The default name is “sse\_dirX” where X is increased by 1 each time you run the script. If the run is aborted or crashes, setting the directory to the one from which the script was running earlier can be done. PsN will then not run the model files that had finished, saving time. Note that same set of options must be given as when the run was started the first time. 
+\nextopt
+\optdefault{seed}{X}
+A seed for the random number generator can be specified. This makes the run reproducible. It acts as a starting point for the random number generator to produce the random number that will be present in the simulation control file. 
+\nextopt
+\optdefault{threads}{X}
+The number of parallel processes to start for the estimation step (not the simulation) on a parallel computer. 
+\nextopt
+\optname{help}
+With -help sse will print a longer help message. 
+\nextopt
+\end{optionlist}
 
 
 \subsection{Special cases}

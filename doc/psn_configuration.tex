@@ -1,24 +1,14 @@
-\documentclass[a4paper,12pt]{article}
-\title{PsN configuration\\ \vspace{2 mm} {\large PsN 3.6.2}}
-\date{2013-05-28}
+\input{inputs/format_header.tex}
+\guidetitle{PsN configuration}
 
-\usepackage[utf8]{inputenc}
-\usepackage{verbatim}
-\usepackage{longtable}
 \begin{document}
 
 \maketitle
 
 \section{The quick and easy way}
 Let the installation script create psn.conf for you. If you have already installed PsN and did not let the script create psn.conf but have changed your mind now, redo the PsN installation and have psn.conf automatically generated this time. If you will run PsN locally on your computer with a standard NONMEM install you are then done.
-\\
-\\
 If you have a previous PsN 3 installation then you can copy psn.conf from the old installation to the new one.
-\\
-\\
 If you have a NMQual installation of NONMEM you need to read the section  “Running  NMQual-generated perl scripts from within PsN”, change one or a few lines in the [nm\_versions] section of psn.conf, and possibly redo the NMQual installation of NONMEM. 
-\\
-\\
 If you have other needs then you need to read the rest of this document.
 
 \section{Introduction}
@@ -30,24 +20,12 @@ user's home-directory (UNIX) or the user's desktop (Microsoft Windows). If a use
 
 \section{Section in psn.conf}
 The organizing of settings in psn.conf is important. They must be set in the correct section. A section starts with
-\\
-\\
 \verb|[section_name]| 
-\\
-\\
 (a new line where square brackets enclose the section name), for example
-\\
-\\
 \verb|[nm_versions]|.
-\\
-\\
 The exception is the first section which starts at the beginning of the file and has no name.
 A section ends with 
-\\
-\\
 \verb|[next_section_name]|
-\\
-\\
 or the end of the file.
 
 \section{Setting defaults for command line options in psn.conf}
@@ -55,8 +33,6 @@ or the end of the file.
 The user can override source code defaults by setting options in the appropriate section in psn.conf. Settings on the command line will override settings in psn.conf. The option names used in psn.conf are the same as would be used on the command line, and documentation can be found in common\_options\_defaults\_versions\_psn.pdf. Some options do not take any value on the commandline, for example -run\_on\_sge, but if set in psn.conf those options must also have a value (1 or 0). If such an option is set in psn.conf, for example
 -run\_on\_sge = 1, the option can be disabled on the commandline by using -no, for example 
 -no-run\_on\_sge. The -no prefix cannot be used in psn.conf, instead set the option to 0.
-\\
-\\
 The syntax in psn.conf is as follows: Options values to be used for all tools must be set in the section \verb|[default_options]| 
 On each row in the section the option name (without leading minus-sign) comes first. Then there an equal sign and then the value. Spaces may be added around the equal sign. Options which on the commandline can be set just by giving the option name, e.g. abort\_on\_fail, must in psn.conf be given the value 1. Examples:
 \begin{verbatim}
@@ -76,8 +52,6 @@ If running PsN on unix but editing psn.conf on Windows, make sure to save psn.co
 
 \section{Changes in PsN 3.4.2 to handle NONMEM 7.2}
 The new features of NONMEM 7.2 makes it necessary to set also the subversion number in psn.conf, to enable PsN to handle NM7.1 and NM7.2 differently. For older PsN versions the NONMEM version  number set in [nm\_versions] must only be 5, 6 or 7, but starting with 3.4.2 it may include subversion number, e.g. as in 7.1 or 7.2. Subversion number is not required for NM7.1 or older, but correctly specifying subversion number is necessary to be able to use NM7.2-specific features. The major version number and the subversion number should be entered with a dot in between, no spaces.  
-\\
-\\
 So far NONMEM7.2 is supported if option -nmfe, -run\_on\_lsf\_nmfe, -run\_on\_slurm, -run\_on\_sge\_nmfe or -nmqual is set. 
 \begin{verbatim}
 [nm_versions]
@@ -159,13 +133,9 @@ The user must set any NM7.2-specific options via -parafile and -nodes and/or -nm
 \begin{enumerate}
 	\item change aliases in nm72.xml just as for any NMQual8 installation, see NMQual8 documentation.
 	\item Also change this
-	\\
 \verb|<do on='run' in='$_2'>target/util/nmfe72 $_1 $_3.ctl $_3.lst</do>|
-\\
 to this:
-\\
 \verb|<do on='run' in='$_2'>target/util/nmfe72 $_1 $_3.mod $_3.lst</do>|
-\\
 in nm72.xml (i.e. change the expected suffix of control streams from .ctl to .mod) and then perform a standard install, per NMQual8 documentation.
 \end{enumerate}
 
