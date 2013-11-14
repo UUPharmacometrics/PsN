@@ -197,7 +197,7 @@ lib/%.pm: libgen/%.pm lib/%_subs.pm
 .PHONY : clean
 
 clean:
-	@-rm -rf $(PERLFILES) $(DOCUMENTS) libgen PsN-Source bin/completion_files doc/*.aux doc/*.log doc/*.pdf PsN-Source.tar.gz PsN-Source.zip
+	@-rm -rf $(PERLFILES) $(DOCUMENTS) libgen PsN-Source bin/completion_files doc/*.aux doc/*.log doc/*.pdf doc/inputs/*eps-converted-to.pdf PsN-Source.tar.gz PsN-Source.zip
 
 libgen/data%.pm : diagrams/data.dia
 	$(DIA2CODE) -t perl -d $(DIRPM) diagrams/data.dia
@@ -296,7 +296,6 @@ doc: $(PDFFILES)
 release: libgen rel_dir $(RELFILES) $(PDFFILES)
 	@ cp doc/*.pdf PsN-Source/lib/doc
 	@ cp doc/*.scm PsN-Source/lib/doc
-	@ cp doc/draft/*.pdf PsN-Source/lib/doc
 	@ cp doc/*.xls PsN-Source/lib/doc
 	@ cd PsN-Source/lib/doc/; zip PsN_pdf_documentation *.pdf *.xls *.scm
 	@ cd PsN-Source/lib/doc/; tar -czf PsN_pdf_documentation.tar.gz *.pdf *.xls *.scm

@@ -5,6 +5,7 @@ PsN-Source/*
 doc/*.aux
 doc/*.log
 doc/*.pdf
+doc/inputs/*eps-converted-to.pdf
 test/unit/testcase.txt
 test/test_files/pheno.lst
 test/test_files/pheno5.lst
