@@ -1,5 +1,4 @@
 \input{inputs/format_header.tex}
-%\documentclass[11pt,a4paper]{article}
 \usepackage{algorithm}
 \usepackage{algorithmic}
 \usepackage{graphicx}
@@ -12,13 +11,14 @@
 \usepackage[normalem]{ulem}
 \newcommand{\hilight}[1]{\colorbox{yellow}{#1}}
 
-\guidetitle{VPC automatic binning technical description}
+\guidetitle{VPC automatic binning algorithm}
 
 \begin{document}
 
 \maketitle
 
-Also to be able to calculate the percentiles, each bin needs a certain number of points (usually any bin with less than 10 points would create confidence intervals so large that they don't contribute to the VPC).
+\section{Introduction}
+This is a description of the automatic binning algorithm used in PsN. The algorithm was created in a undergraduate project \cite{Sonehag} and later included as the default binning of the vpc program.
 
 \section{Binning Method}
 The algorithm is based on K-means clustering \cite{KMeans}, which was first used for vpc binning by Lavielle and Bleakley \cite{Lavielle}.
@@ -29,12 +29,12 @@ It aims to partition the set of $n$ observations $(x_1, x_2, ..., x_n)$ into $K$
 	  \label{eq:WCSS} 
 \end{equation}
 
-This is a clustering method for arbitrary dimensions but for the purpose of binning, only the 1D case is considered. How eq. \ref{eq:WCSS} is minimized is explained in the appendix, section A.
+This is a clustering method for arbitrary dimensions but for the purpose of binning, only the 1D case is considered. How eq. \ref{eq:WCSS} is minimized is explained in the appendix, section A. Also to be able to calculate the percentiles, each bin needs a certain number of points (usually any bin with less than 10 points would create confidence intervals so large that they don't contribute to the VPC).
 
 As we described earlier this method is good in cases where the data consists of clusters of measurements with similar variances. In general, this is not the case for our data and the method could split a cluster of measurements into different bins where the variability is high while merging two clusters of measurements into the same bin where the variability is low as shown in Figure \ref{potEx:subfig1}.
 \par
 
-The problem is solved by adding a penalty term to the K-means minimization criteria, which penalizes adding a bin where the data is dense. Let $W$ be the within-group variability:
+The problem can be addressed by adding a penalty term to the K-means minimization criteria, which penalizes adding a bin where the data is dense. Let $W$ be the within-group variability:
 \begin{equation}
 	W_k = \sum_{i \in I_k} (x_i - \bar{x}_k)^2.
 \end{equation}
@@ -156,7 +156,7 @@ To make the minimization algorithm more efficient, instead of minimizing the wit
 \end{equation}
 
 and $x_{kl}$ is the $x$ value in the $l:th$ point in bin $k$ and $n_k$ is the number of points in bin $k$.
-\newpage
+
 \begin{algorithm}
 	\caption{Minimization Algorithm}
 	 Continue optimization until the following stop criteria is fulfilled: 
@@ -189,7 +189,7 @@ and $x_{kl}$ is the $x$ value in the $l:th$ point in bin $k$ and $n_k$ is the nu
 \end{algorithm}
 \newpage
 \subsection{Choosing the number of bins}
-Determining the number of bins in the data is an important problem. It affects the resolution of the VPC and hence, also point 1 in the desired binning characteristics. In some cases the number of bins is obvious, which is the case in Figure \ref{vpcEx}. In general this is not the case and the number of bins must be estimated by the user of the VPC based on some prior knowledge of the data or estimated somehow. Since we want a fully automatic binning we need a method that does this for us.
+Determining the number of bins in the data is an important problem. It affects the resolution of the VPC. In some cases the number of bins is obvious. In general this is not the case and the number of bins must be estimated by the user of the VPC based on some prior knowledge of the data or estimated somehow. Since we want a fully automatic binning we need a method that does this for us.
 \par
 A simple and direct strategy would be to use our objective function (eq. \ref{eq:Method1} ) not only to place our bins but also to estimate the number of bins. For our two methods presented in the previous section, we then get the following: 
 
@@ -205,7 +205,7 @@ There exists a variety of methods to estimate the number of bins. In an article 
 \end{equation}
 where B is defined in eq. \ref{eq:B}.
 
-Tests of this method gave good results on most but not all data sets when using Method 1. It had a tendency to overestimate the number of bins. It performed worse when incorporating y, that is, Method 2.
+Tests of this method gave good results on most but not all data sets when using Method 1. It had a tendency to overestimate the number of bins.
 \par
 Because our first approach to use the objective function had a tendency to underestimate the number of bins and the Calinski \& Harbaszs method had the opposite tendency the quotient was tested:
 
@@ -218,7 +218,6 @@ In many of the cases where the data was well separated both the objective functi
 
 \begin{thebibliography}{99}
 	\bibitem{Sonehag} Christian Sonehag, Niklas Olofsson and Rasmus Simander, {\em Automatic binning in visual predictive checks}, Feb 2012, Undergraduate project http://www.it.uu.se/edu/course/homepage/projektTDB/ht11/project4/Report\_ht11\_04.pdf
- \bibitem{VPCPros} M. Bergstrand, A. Hooker, J. Wallin, M. Karlsson, {\em Prediction-Corrected Visual Predictive Checks for Diagnosing Nonlinear Mixed-Effects Models}, January 4, 2011
  \bibitem{Lavielle} M. Laville, K. Bleakley, {\em Automatic data binning for improved visual diagnosis of pharmacometric models}, June 9, 2011
  \bibitem{GaussianKernel} Silverman, B.W. {\em Density Estimation for Statistics and Data Analysis}, 1998.
  \bibitem{KMeans} J.B. MacQueen. Some methods for classification and analysis of multivariate observations. {\em Proceedings of 5th Berkeley Symposium on Mathematical Statistics and Probability}, pages 281-297. University of California Press, 1967.
