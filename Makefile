@@ -16,7 +16,6 @@ LIBFILES=debug.pm \
 	file.pm \
 	data/individual.pm \
 	data.pm \
-	table_file.pm \
 	model/problem/record/option.pm \
 	model/problem/record/init_option.pm \
 	model/problem/record/theta_option.pm \
@@ -294,6 +293,7 @@ doc/%.pdf: doc/%.tex
 doc: $(PDFFILES)
 
 release: libgen rel_dir $(RELFILES) $(PDFFILES)
+	@ mkdir PsN-Source/lib/doc
 	@ cp doc/*.pdf PsN-Source/lib/doc
 	@ cp doc/*.scm PsN-Source/lib/doc
 	@ cp doc/*.xls PsN-Source/lib/doc
