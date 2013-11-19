@@ -1,0 +1,72 @@
+\input{inputs/format_header.tex}
+\guidetitle{Developer's guide}
+
+\begin{document}
+
+\maketitle
+
+  
+\section{Introduction}
+
+This document is intended for PsN developers. It is work in progress.
+
+\section{Build environment}
+The documentation is made in \LaTeX and pdfs can be generated with \verb|make doc|. The
+packages texlive-extra-util and texlive-science are needed to build all documents.
+
+\section{Style guide}
+
+\subsection{Methods}
+
+Names of private methods should start with an underscore.
+\begin{verbatim}
+sub _this_is_a_private_method
+{
+
+}
+\end{verbatim}
+
+
+\subsection{Attributes}
+triggers should be named \_attribute\_set
+\begin{verbatim}
+has 'filename' => (is => 'rw', isa => 'Str', trigger => \&_filename_set );
+
+sub _filename_set
+{
+  my $self = shift;
+  my $parm = shift;
+  my $old_parm = shift;
+
+	if ($parm ne $old_parm) {
+    print "We are changing the filename!\n";
+  }
+}
+\end{verbatim}
+
+clearers should be named clear\_attribute
+\begin{verbatim}
+has 'filenames' => (is => 'rw', isa => 'ArrayRef[Str]', clearer => 'clear_filenames' );
+
+if ($need_to_delete) {
+  $self->clear_filenames;
+}
+\end{verbatim}
+
+predicates should be named has\_attribute
+\begin{verbatim}
+has 'filename' => (is => 'rw', isa => 'Str', predicate => 'has_filename' );
+
+if ($self->has_filename) {
+  print "The filename attribute exists\n";
+}
+\end{verbatim}
+
+don't use parentheses for getters
+\begin{verbatim}
+  if ($self->filename eq 'my_file') {
+    print "Is my_file\n";
+  }
+\end{verbatim}
+
+\end{document}
