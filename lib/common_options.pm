@@ -577,9 +577,17 @@ EOF
     $help_hash{-check_nmtran} = <<'EOF';
     <p class="style2">-check_nmtran</p>
 	Make PsN run NMtran on the model file before submitting the complete nmfe run to a cluster/grid
-	or forking on a local computer. On a cluster this saves time in the case of syntax errors in 
-	the model file, since the user does not have to wait for a slot on the cluster/grid before 
-	the error is detected. On a local computer the error handling is improved.
+	or forking on a local computer. This adds a bit of overhead but on a cluster this still 
+	saves time in the case of syntax errors in the model file, since the user does not 
+	have to wait for a slot on the cluster/grid before the error is detected. 
+	On a local computer the error handling is improved.
+
+	When running multiple copies of a model with different data sets, e.g. in a bootstrap,
+	only the first model will be checked.
+
+	The nmtran check requires that it is the installation directory to NONMEM that is set in psn.conf, 
+	rather than the full path to an executable script. If the path to a script is given instead
+	of an NM install directory the nmtran check will not be performed.
 EOF
     $help_hash{-niter_eonly} = <<'EOF';
     <p class="style2">-niter_eonly</p>
@@ -607,25 +615,15 @@ EOF
 
     $help_hash{-nmfe} = <<'EOF';
     <p class="style2">-nmfe</p>
-    New feature in PsN3.  Invoke nmfe6 or nmfe7 (not nmfe5) from within PsN 
-    instead of doing stepwise compiling and execution. PsN will look for nmfeX, 
-    where X is the NONMEM version number specified in psn.conf,  
-    in first the /util then the /run and last the /. subdirectory of the 
-    NONMEM installation directory specified in psn.conf, and call 
-    the first instance found. The compiler settings in psn.conf are not needed. 
-    On some computer architechtures it  may still be necessary to perform stepwise 
-    compiling and execution, i.e. nmfe cannot be used.
-    Option prepend_model_to_lst should not be used with nmfe option, then
-    the model would be prepended both by PsN and by nmfe.
+    Invoke NONMEM via the nmfe script (or a custom wrapper) from within PsN. 
+    Unless option -nmqual is set, option -nmfe is required, however -nmfe is 
+	set automatically if the user sets e.g. run_on_sge_nmfe, 
+    run_on_lsf_nmfe or run_on_slurm. Also, -nmfe is set in the default configuration file.
 
-    Option nmfe is set automatically if the user sets e.g. run_on_sge_nmfe, 
-    run_on_lsf_nmfe or run_on_slurm.
 EOF
     $help_hash{-nmfe_options} = <<'EOF';
     <p class="style2">-nmfe_options='options for nmfe'</p>
-    Only relevant if option -nmfe or -nmqual is set 
-    and NONMEM7.2 or later is used. Note that -nmfe is sometimes set automatically, 
-    see help for -nmfe.
+    Only relevant if NONMEM7.2 or later is used.
     A comma-separated list of options that will be passed on to nmfe.
     The options must be given without the - (PsN will add them), i.e.
     PsN option -nmfe_options=prsame,xmloff will append
@@ -736,8 +734,13 @@ EOF
     $help_hash{-seed} = <<'EOF';
     <p class="style2">-seed='string'</p>
     You can set your own random seed to make PsN runs reproducible.
-    The random seed will be used with the <span class="style2">-retries</span> option 
-    and with e.g. the bootstrap, vpc, npc and nonpb scripts. 
+	The random seed is a string, and may include spaces if the whole string 
+	is enclosed with single	quotes as in -seed='123 abc'. It is important to 
+    know that, because of the way the Perl pseudo-random number generator works, 
+    for two similar string seeds the random sequences may be identical. 
+    This is the case e.g. with the two different seeds 123 and 122. 
+    Setting the same seed guarantees the same sequence, but setting two slightly different 
+    seeds does not guarantee two different random sequences, that must be verified.
 EOF
 
     $help_hash{-verbose} = <<'EOF';
@@ -889,25 +892,7 @@ EOF
 
     $help_hash{-rerun} = <<'EOF';
     <p class="style2">-rerun='integer'</p>
-    PsN can redo or resume a run using information in PsN run 
-    directory(see documentation for <span class="style2">-directory</span>). It is called 
-    a rerun. During a rerun PsN will consider to redo parts of 
-    the run. With the <span class="style2">-rerun</span> option you can control which parts 
-    will be redone. The default value of <span class="style2">-rerun</span> is 1. 
-    With rerun set to 1 PsN will rerun any model with a missing 
-    list file. Notice that every "retry" (see the documentation 
-    for <span class="style2">-retries</span> and <span class="style2">-min_retries</span>) will be considered for a rerun.
-    This means you can change the value of the <span class="style2">-retries</span> and 
-    <span class="style2">-min_retries</span> options if you like more or less retries. 
-    Setting <span class="style2">-rerun</span> to 0 means that PsN will not check for 
-    missing or incomplete "retry" list files. This is useful
-    if you have one or more run modelfiles and you wish to have 
-    a PsN raw_results file or a PsN summary, you do a  
-    run with them as arguments and specify <span class="style2">-rerun=0</span>, PsN will not 
-    do any NONMEM run, but produce useful output summary. 
-    You can also set <span class="style2">-rerun</span> to 2, and PsN will ignore any existing 
-    list files and rerun everything, creating raw_results and 
-    summaries from the new listfiles.
+    Do not use this option. It is to be removed.
 EOF
 
     $help_hash{-run_on_lsf} = <<'EOF';
@@ -1007,7 +992,7 @@ EOF
 
     $help_hash{-sde} = <<'EOF';
     <p class="style2">-sde</p>
-    If you are running SDE models, you must use this option, otherwise
+    If you are running SDE models, you may have to use this option, otherwise
     PsN will print the records of the modelfile in the wrong order, and the NONMEM runs
     will fail.
 EOF
