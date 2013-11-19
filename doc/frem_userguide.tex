@@ -1,5 +1,6 @@
 \input{inputs/format_header.tex}
 \guidetitle{FREM tecnical description}
+%Kajsa review 2013-11-15
 
 \begin{document}
 
@@ -7,6 +8,7 @@
 
 
 \section{Introduction}
+Note: The frem script is work in progress and is not fully functional yet.
 
 The frem script creates a set of models to gradually include random effects on “everything” to simultaneously account for all parameter-covariate relations. [TODO Description of frem methodology should be added.] If option -vpc is set then script will prepare model that can be run with vpc.
 Example
@@ -26,7 +28,6 @@ Do pooling during filtering step, replace original covariate name with a set of 
 The m1 subdirectory of the frem run directory will contain all the generated models, lst-files for the estimated models, and dataset 2.
 
 \section{Input and options}
-\subsection{frem-specific input}
 A model file is required on the command-line. Unless option -model3 is set (see below) the input model code must not include covariates that are listed in options -invariant or -time\_varying. Also, the input model must not include  BOV on any parameters, only BSV is allowed. For each parameter listed with option -parameters the input model must have a line 
 $<$par$>$=TV$<$par$>$ (BSV-expression)
 
@@ -35,15 +36,13 @@ $<$par$>$=TV$<$par$>$ + (0)
 
 If option -model3 is set then it is assumed that the input model file is a Model 3 created earlier by the frem script, and then other assumptions about the contents of the model are made. See below for a detailed description of Model 3.
 
-\subsection{Restrictions on the input model}
+{\bf Restrictions on the input model}
 \begin{itemize}
 	\item Time-varying covariates must only vary between occasions, not within occasions. 
 	\item There must be no parameter called FREMTYPE in \$INPUT/\$PK/\$PRED/\$ERROR.
 	\item	Categorical covariates must be bivariate.
 	\item TODO: If -vpc is set: Form of TV$<$par$>$ or THETA directly
 \end{itemize}
-
-\subsection{frem options}
 
 \begin{optionlist}
 \optdefault{invariant}{list}
@@ -94,12 +93,6 @@ For a complete list of common options see common\_options\_defaults\_versions.pd
 \begin{optionlist}
 \optdefault{directory}{name}
 Name of run directory 
-\nextopt
-\optname{c}
-A 
-\nextopt
-\optname{o}
-R. 
 \nextopt
 \end{optionlist}
 

@@ -1,6 +1,6 @@
 \input{inputs/format_header.tex}
 \guidetitle{MCMP user guide}
-
+%Kajsa review 2013-11-18
 
 \begin{document}
 
@@ -9,7 +9,7 @@
 
 \section{Introduction}
 MCMP – Monte-Carlo Mapped Power \cite{Vong}  – is a tool for power computations.
-Examples
+Example\\
 \begin{verbatim}
 mcmp -full_model=mod1.mod -stratify_on=DOSE -reduced_model=mod2.mod -seed=123
 \end{verbatim}
@@ -79,7 +79,7 @@ For a complete list of common options see common\_options\_defaults\_versions.pd
 \optdefault{directory}{mcmp\_dirX}
 The directory in which the script will run NONMEM can be named. The default name is “mcmp\_dirX” where X is increased by 1 each time you run the script. 
 \nextopt
-\optdefault{seed}{X}
+\optdefault{seed}{string}
 A seed for the random number generator can be specified. This makes the run reproducible. It acts as a starting point for the random number generator to produce the random number that will be used for the bootstrapping of the iofv:s. 
 \nextopt
 \optdefault{threads}{X}
@@ -91,15 +91,15 @@ With -help mcmp will print a longer help message.
 \end{optionlist}
 
 \section{Output}
-
 The output from each mcmp is mcmp\_results.csv which contains a table with header total\_X,power at 5\%,power at 1\%,power at 0.1\%, (headers for N from each strata). One row for each total sample size (total\_X). The table can be plotted in excel. The results are also printed to screen as they are produced, and the user can terminate the run with Ctrl-C if the obtained power is deemed sufficient. The file mcmp\_results.csv will contain the values that were computed before the interruption.
 
-\section{Recovering a crashed/stopped mcmp}
+\section{Known bugs}
+If estimation of the full and/or reduced model fails but NONMEM 7 still produces a .phi-file with the initial individual ofv-values, then PsN will not detect the failed estimation but continue to bootstrap from the .phi-file.
 
+\section{Recovering a crashed/stopped mcmp}
 If the simulation finished but none of the estimations finished, then start over in a new run directory but use option -simdata with the dataset from the simulation step. If one or two of the estimations finished, then start in new directory using option -table\_reduced and/or -table\_full and possibly -table\_strata. 
 
 \section{Discussion on strata sample sizes}
-
 The increment and start\_size options may seem complicated, so here is a detailed background to the design of those options in PsN.
 
 We start with some examples to explain a method which is not implemented in PsN. When the design is perfectly balanced, choosing the number of individuals to sample from each strata in each iteration is trivial. It is more complicated to define an algorithm that works in all cases with any design. Consider the following three cases:

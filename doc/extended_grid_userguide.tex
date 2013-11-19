@@ -1,5 +1,6 @@
 \input{inputs/format_header.tex}
 \guidetitle{Extended grid user guide}
+%Kajsa review 2013-11-15
 
 \begin{document}
 
@@ -8,7 +9,7 @@
 
 \section{Introduction}
 Important note: The algorithm description in this guide is complete, but other information is still missing.
-Non-parametric estimation on the extended grid. \cite{someone}
+Non-parametric estimation on the extended grid. 
 Example
 \begin{verbatim}
 extended_grid run1.mod
@@ -44,7 +45,7 @@ For a complete list of common options see common\_options\_defaults\_versions.pd
 \optdefault{directory}{extended\_grid\_dirN}
 The directory in which the script will run NONMEM can be named. The default name is “extended\_grid\_dirN” where N is increased by 1 each time you run the script. If the run is aborted or crashes, setting the directory to the one from which the script was running earlier can be done. PsN will then not run the model files that had finished, saving time. 
 \nextopt
-\optdefault{seed}{N}
+\optdefault{seed}{string}
 A seed for the random number generator can be specified. This makes the run reproducible.   
 \nextopt
 \optname{help}
@@ -59,7 +60,7 @@ File final\_nptab.csv
 
 \section{Known bugs and problems}
 
-If
+No safeguard against infinite squared weighted individual residual in auto-generated code.
 
 \section{Technical overview of algorithm}
 

@@ -1,25 +1,28 @@
 \input{inputs/format_header.tex}
 \guidetitle{PsN installation}
-
+%Kajsa review 2013-11-18
 \begin{document}
 
 \maketitle
 
+\section{Required software}
 Before you install PsN, you should make sure that the following programs are installed on your computer:
 \begin{itemize}
-	\item NONMEM 
+\item NONMEM 
 
 Please note that if you intend to run PsN with NMQual8 the nm72.xml file must be slightly modified (to expect .mod instead of .ctl as the control stream suffix) before NONMEM installation, see document psn\_configuration.pdf, otherwise PsN's NMQual8 support will not work.
-
-You must verify that all NONMEM installations you intend to use can be run directly via the nmfe/NMQual scripts and that they produce complete output files. If you plan to use the parallelization features of NONMEM7.2 you must also verify that you can run NONMEM in parallel directly with nmfe72.
-
-If running NONMEM with nmfe/NMQual does not work then PsN will not work. 
 	\item Perl5
 	\item Perl modules Math::Random, Statistics::Distributions, Archive::Zip and File::Copy::Recursive (installation instructions below). PsN can be run without Statistics::Distributions, Archive::Zip and File::Copy::Recursive but some scm and vpc features and a scm bugfix will not be available.
 \end{itemize}
 
-\section{Install Perl modules Math::Random, Statistics::Distributions, Archive:Zip, File::Copy::Recursive}
-PsN requires the Perl module Math::Random to be installed on your computer. The other modules are very useful, but not absolutely required. The following paragraphs describe the setup procedure for different operating systems. 
+\section{Verify that you NONMEM installation works properly}
+\begin{enumerate}
+\item Make sure that you can run NONMEM directly via the nmfe script (or with NMQual). If this does not work then it will not work via PsN either.
+\item If you intent to run NONMEM in parallel then you must make sure you can do it directly via the nmfe script. If this does not work then it will not work via PsN either.
+\end{enumerate}
+
+\section{Install required Perl modules}
+PsN requires the Perl module Math::Random to be installed on your computer. Some other modules are very useful, but not absolutely required. The following paragraphs describe the setup procedure for different operating systems. 
 \subsection{Windows (ActivePerl)}
 For this procedure to work you must be connected to the internet, because the package is downloaded from the web. Pay attention to any warning messages from Windows that talk about internet connection problems, such problems must be solved before doing the installations.
 
@@ -30,37 +33,20 @@ ppm install statistics-distributions
 ppm install archive-zip
 ppm install file-copy-recursive
 \end{verbatim}
-An alternative way, using the GUI:
-
-\begin{enumerate}
-\item Start the Perl package manager (Start$>>$All programs$>>$ Active Perl$>>$Perl Package Manager).
-\item Type math-random in the search box at the top of the Perl package manager (PPM) window (note the minus instead of the double colons). 
-\item Right click on the Math-Random package (select the package without suffix after Math-Random, you can increase the width of the column showing the package names to be sure) and select 'Install' (could be under menu Actions). Sometimes Math::Random is already installed by default, then you do not have to reinstall it, proceed to step 4.
-\item Type statistics-distributions in the search box at the top of the Perl package manager (PPM) window (note the minus instead of the double colons). 
-\item Right click on the Statistics-Distributions package (select the package without suffix after Statistics-Distributions) and select 'Install' (could be under menu Actions)
-\item Type archive-zip in the search box at the top of the Perl package manager (PPM) window (note the minus instead of the double colons). 
-\item Right click on the Archive-Zip package (select the package without suffix) and select 'Install' (could be under menu Actions)
-\item Type file-copy-recursive in the search box at the top of the Perl package manager (PPM) window (note the minus instead of the double colons). 
-\item Right click on the File-Copy-Recursive package (select the package without suffix) and select 'Install' (could be under menu Actions)
-\item Click on 'Run marked actions' (can be a green arrow in the menu) or press [CTRL+ENTER]
-\end{enumerate}
 
 
 \subsection{Linux}
 
-\begin{enumerate}
-\item Download the Math-Random package from the CPAN website 
-\item Unpack the archive to a temporary directory of your choice 
-\item Open a command line window and move to the directory chosen in step 2 
-\item Run: \verb|perl Makefile.PL|
-\item Run: \verb|make| 
-\item Run: \verb|sudo make install| (the install script will automatically locate the Perl module directory and put Math::Random in a suitable place) 
-\item Delete the temporary directory from step 2.
-\end{enumerate}
+Start a command window and run the following commands (hit Enter after each command), prepend sudo if necessary:
+\begin{verbatim}
+cpan -i Math::Random
+cpan -i Statistics::Distributions
+cpan -i Archive::Zip
+cpan -i File::Copy::Recursive
+cpan -i Storable
+\end{verbatim}
 
-The other modules are installed in the same way.
-
-\section{PsN installation instructions}
+\section{Run the PsN installation script}
 
 \begin{enumerate}
 \item Unpack the file you downloaded from psn.sourceforge.net. It will create a directory called PsN-Source.

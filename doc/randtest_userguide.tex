@@ -1,6 +1,6 @@
 \input{inputs/format_header.tex}
 \guidetitle{RANDTEST user guide}
-
+%review Kajsa 2013-11-18
 \begin{document}
 
 \maketitle
@@ -8,18 +8,16 @@
 
 \section{Introduction}
 
-Randtest is a tool for randomization tests.
+Randtest is a tool for randomization tests. The program will shuffle the values in the randomization 
+column 'samples' times and run the model with each of the new datasets. The results will be summarized in the csv-format raw\_results-file. 
 Example
 \begin{verbatim}
 randtest run1.mod -samples=1000 -randomization_col=DGRP -base_model=run0.mod
 \end{verbatim}
 
 \section{Input and options}
-
-\subsection{Randtest-specific input}
-
+\subsection{Input specific to randtest}
 A model file is required on the command-line.
-
 \begin{optionlist}
 \optdefault{samples}{N}
 The number of randomized datasets to generate, required. 
@@ -49,7 +47,7 @@ For a complete list of common options see common\_options\_defaults\_versions.pd
 \optdefault{directory}{randtest\_dirN}
 The directory in which the script will run NONMEM can be named. The default name is “randtest\_dirN” where N is increased by 1 each time you run the script. If the run is aborted or crashes, setting the directory to the one from which the script was running earlier can be done. PsN will then not run the model files that had finished, saving time. 
 \nextopt
-\optdefault{seed}{N}
+\optdefault{seed}{string}
 A seed for the random number generator can be specified. This makes the run reproducible. Important note: the results of two runs will be different even if the seed is the same if the lst-file of the input model and the base model are present at the start of one run but not the other. Running the input model or base model changes the state of the random number generator, and therefore the randomized datasets will be different depending on if the input and base models are run or not before generating the  new datasets. 
 \nextopt
 \optdefault{clean}{N}
@@ -70,11 +68,31 @@ During shuffling the sequence of randomization column values from the records of
 
 \subsection{If -match\_transitions is not set, the default}
 
-By default, when option -match\_transitions is not set, PsN will copy values record by record. If the sequence of 'copy-from' values is shorter than 'copy-to' then PsN will do 'last-observation-carry-forward'. Example: Copying [0,1,1] to [0,0,2,2] will give result [0,1,1,1] when -match\_transitions is not set. Missing data marked by e.g. -99 or values that are '.' (a dot) will be handled like any other value. 
+By default, when option -match\_transitions is not set, PsN will copy values record by record. If the sequence of 'copy-from' values is shorter than 'copy-to' then PsN will do 'last-observation-carry-forward'. Example: 
+Copying [0,1,1] to [0,0,2,2] will give result [0,1,1,1] when -match\_transitions is not set. Missing data marked by e.g. -99 or values that are '.' (a dot) will be handled like any other value. 
 
 \subsection{If match\_transitions is set}
 
-If option -match\_transitions is set, PsN will match transitions instead of records in the sequence of values. The 'copy-from' sequence determines the values after each transition, while the 'copy-to' sequence determines where the transitions should be. Example: Copying [0,1,1] to [0,0,2,2] will give result [0,0,1,1], i.e. the resulting sequence has 0 before the first transition and 1 after the first transition. If the 'copy-from' sequence has fewer transitions than 'copy-to' then PsN will do 'last-observation-carry-forward'. Example: Copying [0,1,1,1] to [0,0,2,3] will give result [0,0,1,1]. If the dataset has missing data marked with something numeric, e.g. -99, then going from an observation to -99 will not be counted as a transition, and -99 will not be copied. Example: Copying [1,-99,1,0] to [0,0,2,2] with -match\_transitions will give result [1,1,0,0]. Copying [1,1,1,0] to [0,-99,2,2] will give result [1,1,0,0]. Copying from [-99,1,1,0] to [0,0,2,2] with will give result [1,1,0,0]. Non-numeric values, e.g. . (a dot) will be lumped together and treated as any non-missing value, so going from an observation to a dot will be considered a transition. Example: Copying [0,0,1,1] to  [.,0,0,0] will give result [0,1,1,1] 
+If option -match\_transitions is set, PsN will match transitions instead of records in the sequence of values. The 'copy-from' sequence determines the values after each transition, while the 'copy-to' sequence determines where the transitions should be. Example: 
+\begin{itemize}
+\item Copying [0,1,1] to [0,0,2,2] will give result [0,0,1,1], i.e. the resulting sequence has 0 before the first transition and 1 after the first transition. 
+\end{itemize}
+
+\noindent If the 'copy-from' sequence has fewer transitions than 'copy-to' then PsN will do 'last-observation-carry-forward'. Example:
+\begin{itemize}
+\item Copying [0,1,1,1] to [0,0,2,3] will give result [0,0,1,1]. 
+\end{itemize}
+\noindent If the dataset has missing data marked with something numeric, e.g. -99, then going from an observation to -99 will not be counted as a transition, and -99 will not be copied. Examples:
+\begin{itemize}
+\item Copying [1,-99,1,0] to [0,0,2,2] will give result [1,1,0,0]. 
+\item Copying [1,1,1,0] to [0,-99,2,2] will give result [1,1,0,0].
+\item Copying [-99,1,1,0] to [0,0,2,2] will give result [1,1,0,0]. 
+\end{itemize}
+
+\noindent Non-numeric values, e.g. . (a dot) will be lumped together and treated as any non-missing value, so going from an observation to a dot will be considered a transition. Example:
+\begin{itemize}
+\item Copying [0,0,1,1] to  [.,0,0,0] will give result [0,1,1,1] 
+\end{itemize}
 
 \section{Output}
 

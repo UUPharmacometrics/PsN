@@ -1,6 +1,6 @@
 \input{inputs/format_header.tex}
 \guidetitle{NONPB and PIND user guides}
-
+%Kajsa review 2013-11-18
 
 \begin{document}
 
@@ -19,11 +19,8 @@ pind run12.mod …
 \end{verbatim}
 
 \section{Input and options}
-
 \subsection{Options to nonpb}
-
 A model file is required on the command-line.
-
 \begin{optionlist}
 \optdefault{samples}{N}
 The samples option is required. The number of samples in the bootstrap. 
@@ -38,7 +35,6 @@ The version of the nonpb method. Default is 1, the simplified version. Version c
 
 \subsection{Options to pind}
 A model file is required on the command-line.
-
 \begin{optionlist}
 \optdefault{lst\_file}{file.lst}
 Name of  of the lst-file with estimates for the input model. Default is the name of the input model with a .mod extension replaced with .lst. 
@@ -49,14 +45,12 @@ Optional, default eta. The parameter to set in individual ofv model files. Possi
 \end{optionlist}
 
 \subsection{Some general PsN-options useful in combination with nonpb or pind}
-
 For a complete list of common options see common\_options\_defaults\_versions.pdf, or psn\_options -h on the commandline.
-
 \begin{optionlist}
 \optdefault{directory}{run1\_nonpb}
 The directory in which the script will run NONMEM can be named. The default name is “nonpb\_dirX” where X is increased by 1 each time you run the script. 
 \nextopt
-\optdefault{seed}{X}
+\optdefault{seed}{string}
 A seed for the random number generator can be specified. This makes the run reproducible. It acts as a starting point for the random number generator when creating the bootstrapped data sets. 
 \nextopt
 \optdefault{threads}{X}
@@ -70,11 +64,7 @@ With -help PsN will print a longer help message.
 \section{Output}
 Intermediate files written during the procedure are found in the intermediate\_files subdirectory of the nonpb run directory. In the result\_files subdirectory the files CI\_results\_ETAk.csv are found, where k=1,...,(number of ETAs). CI\_results\_ETAj.csv contains the mean, median, 25th, 50th, 90th and 95th confidence intervals.
 
-\section{Recovering a crashed/stopped nonpb}
-No special methods implemented. Try starting with the same command, with -directory set to existing run directory. Do not set option rerun.
-
 \section{Technical overview of algorithm}
-
 \begin{enumerate}
 \item Only if version 2 – full (version 1 simplified starts at step 3) : Create S bootstrapped datasets and estimate the input model with each of the S bootstrap datasets. 
 \item For input model (using original data, original model file and original final parameter estimates) and for each bootstrapped model, S+1 in total: Update initial estimates from the final parameter estimates of the bootstrap output run. 
@@ -102,7 +92,7 @@ No special methods implemented. Try starting with the same command, with -direct
 \begin{enumerate}
 \item
 	\begin{enumerate}
-		\item Update initial estimates from the final parameter estimates of the original output (pind.lst) and FIX them (THETA/OMEGA and SIGMA)
+		\item Update initial estimates in the input model from the final parameter estimates and FIX them (THETA/OMEGA and SIGMA)
 		\item Skip estimation step by setting MAXEVALS=0
 		\item Add \$NONPARAMETRIC UNCONDITIONAL
 		\item Add in \$PK if it exists, otherwise in \$PRED: 
@@ -114,7 +104,7 @@ No special methods implemented. Try starting with the same command, with -direct
 		\item Remove all other existing tables of original model file.
 		\item Run the model	(lst file named “np.lst”)
 	\end{enumerate}
-\item Read the nptab file produced in step 2 and create matrix that contains the Joint Density (JD) in a column (output the JD column of nptab into a separate file called jdtab). The sum of values in jdtab should equal 1 (within rounding error).
+\item Read the nptab file produced in the previous step and create matrix that contains the Joint Density (JD) in a column (output the JD column of nptab into a separate file called jdtab). The sum of values in jdtab should equal 1 (within rounding error).
 \item For each row of the jdtab, denoted “i”:
 	\begin{enumerate}
 		\item create a copy of the modified model from step 1 and replace each ETAj in the \$PK, \$PRED and \$ERROR records in the model file with the value (number) for that ETAj obtained from the nptab file.

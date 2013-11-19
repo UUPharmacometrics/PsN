@@ -1,10 +1,9 @@
 \input{inputs/format_header.tex}
 \guidetitle{RUNRECORD user guide}
-
+%Kajsa review 2013-11-19
 \begin{document}
 
 \maketitle
-
 
 RunRecord is a PsN based script that facilitates the creation of run records for NONMEM runs. It takes a range of run numbers as input, extracts information and generates a txt file that can be imported into Excel for further manipulation. The information extracted includes parameter estimates, standard errors, condition number, objective function value (OFV), parameter names and information about model components. Some of this comes from the NONMEM output files while some parts are extracted from user-supplied information in the NONMEM model file.
 
@@ -77,11 +76,11 @@ $SIGMA  0.0231
 $EST NOABORT POSTHOC
 $COV PRINT=E
 \end{verbatim}
-
+\newpage
 \section{Information tags}
 Just below the \$PROBLEM statement are lines that begin with two semi-colon, which contains structured information about the run. 
 
-\begin{optionlist}
+\begin{longtable}{p{3cm}p{9.5cm}}
 \hline
 Information tag & Description/Purpose \\
 \hline
@@ -103,66 +102,60 @@ Residual variability & A description of how the residual variability is modeled.
 \hline
 Estimation & A description of the estimation options used. \\
 \hline
-\nextopt
-\end{optionlist}
+\end{longtable}
 
-Note that it is only Based on: that expects information on the same line. The other information tags are placeholders for the line just below it until the line of the next information tag.
-
-An information tag may be empty, but it is a good idea to still keep the tag in the model file.  If a tag should be empty (like Inter-occasion variability: if no IOV is in the model), only include the line with the tag, not the empty information line below it.
-
-The order of the tags is irrelevant.
-
-The number of the tags (as in the example above) is irrelevant. As a matter of fact, the numbering is not necessary at all but may be a good way to impose some order.
-
-The colon (:) after the tag is required, as is the exact spelling.
-
+\begin{itemize}
+\item Note that it is only Based on: that expects information on the same line. The other information tags are placeholders for the line just below it until the line of the next information tag.
+\item An information tag may be empty, but it is a good idea to still keep the tag in the model file.  If a tag should be empty (like Inter-occasion variability: if no IOV is in the model), only include the line with the tag, not the empty information line below it.
+\item The order of the tags is irrelevant.
+\item The number of the tags (as in the example above) is irrelevant. As a matter of fact, the numbering is not necessary at all but may be a good way to impose some order.
+\item The colon (:) after the tag is required, as is the exact spelling.
+\end{itemize}
 \section{Parameter labels}
 Each initial parameter estimate can optionally have an associated label. This is specified by adding a semi-colon and the label after the initial parameter estimate. When constructing  the txt file, the runrecord script indexes the parameter estimates after the labels. This means that, for example, THETA(1) may be CL in one run and V and the second as long as the label is correctly specified. It also means that parameters should be given consistent labels across runs.
 
-\section{}unning runrecord/options
+\section{Running runrecord}
 
 In the simplest form, runrecord is run in the following way:
-
 \begin{verbatim}
 runrecord -to=10
 \end{verbatim}
-
 This will make runrecord to extract information from runs 1-10 and put it in a file called AArunInfo.txt. 
 
 The behavior of run record can be influenced by options:
 
 \begin{optionlist}
-\optname{from}
+\optdefault{from}{N}
 Run number to start processing from. Default is 1. 
 \nextopt
-\optname{to}
+\optdefault{to}{N}
 The highest run number to process. Mandatory. 
 \nextopt
-\optname{root}
+\optdefault{root}{string}
 "root" name of the model files. Defaults to “run”, e.g. run1.mod 
 \nextopt
-\optname{res\_file}
+\optdefault{res\_file}{file name}
 The name of the results file. The default is “AAruninfo.txt”. 
 \nextopt
-\optname{mod\_ext}
+\optdefault{mod\_ext}{string}
 Model file extension. Defaults to “mod”, e.g. run1.mod. 
 \nextopt
-\optname{out\_ext}
+\optdefault{out\_ext}{string}
 Ouput file extension. Defaults to “lst”, e.g. run1.lst. 
 \nextopt
-\optname{sep}
+\optdefault{sep}{sign}
 Separator between fields in the AAruninfo.txt file. Defaults to “;”. 
 \nextopt
-\optname{rsep}
+\optdefault{rsep}{sign}
 Separator between comment rows read from the model file. This is pasted between rows -within fields- in the output file. 
 \nextopt
-\optname{max\_lvl}
+\optdefault{max\_lvl}{N}
 Max number of model children levels. 
 \nextopt
-\optname{var}
+\optdefault{var}{yes or no}
 Whether omegas and sigmas should be reported as variances or sd. Default is 'no'. 
 \nextopt
-\optname{rse}
+\optdefault{rse}{yes or no}
 Whether standard errors should be reported as relative SEs or not. The default is 'yes'. 
 \nextopt
 \end{optionlist}

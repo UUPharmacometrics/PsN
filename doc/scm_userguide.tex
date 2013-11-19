@@ -1,5 +1,6 @@
 \input{inputs/format_header.tex}
 \guidetitle{SCM user guide}
+%review Kajsa 2013-11-19
 
 \begin{document}
 
@@ -14,11 +15,11 @@ The Stepwise Covariate Model (SCM) building tool of PsN implements Forward Selec
 In PsN-3.5.3 and later versions the data file must have a header line, and the column headers must match \$INPUT of the input model. This is because the procedure for computing covariate statistics has been changed to accommodate functionality in boot\_scm and xv\_scm. 
 
 \section{Valid states for the parameter-covariate relations}
-There is a fixed set of parameter-covariate relations defined in scm, but the user can redefine one or more of the states using the code option, see below. This gives very high flexibility. The predefined shapes for the parameter-covariate relations for \emph{continuous} covariates are: none/not included, included as a linear relation, included as a piece-wise linear relation with two slopes (“hockey-stick”), included as an exponential relation and included as a power relation. The pre-defined parameterizations are shown in the section Default parameterizations. By default these parameterizations are assigned to numbers or \emph{states} according to 1:none,  2:linear, 3:hockey-stick, 4:exponential and 5:power, but any relation can be assigned to any number. The exception is the number 1, which must always correspond to none/not included. Further information is given in the help text on [valid\_states] and [code]. 
+There is a fixed set of parameter-covariate relations defined in scm, but the user can redefine one or more of the states using the code option, see below. This gives very high flexibility. The predefined shapes for the parameter-covariate relations for \emph{continuous} covariates are: none/not included, included as a linear relation, included as a piece-wise linear relation with two slopes (“hockey-stick”), included as an exponential relation and included as a power relation. The pre-defined parameterizations are shown in the section Default parameterizations. By default these parameterizations are assigned to numbers or \emph{states} according to 1:none,  2:linear, 3:hockey-stick, 4:exponential and 5:power, but any relation can be assigned to any number. The exception is the number 1, which must always correspond to none/not included. Further information is given in the help text on \verb|[valid_states]| and \verb|[code]|. 
 
 \emph{Categorical} covariates are by default either not included or linearly included with an extra parameter added for each but the most common category. The default numbers are 1 and 2.
 
-The numbers 1-5, and higher numbers if the user has defined new relations using the [code] section, are used when specifying included parameter-covariate relations. Relationships are tried in the order the corresponding state numbers are listed in [valid\_states], see details below. The default is to try a later relationship in the list only if the preceding creates an significant change in the criteria for selection. Per default the relationships are not tried simultaneously, which means they are not compared with each other. The user can choose to have all later relations tried simultaneously by setting the option -parallel\_states, see details in the list of options below.
+The numbers 1-5, and higher numbers if the user has defined new relations using the \verb|[code]| section, are used when specifying included parameter-covariate relations. Relationships are tried in the order the corresponding state numbers are listed in \verb|[valid_states]|, see details below. The default is to try a later relationship in the list only if the preceding creates an significant change in the criteria for selection. Per default the relationships are not tried simultaneously, which means they are not compared with each other. The user can choose to have all later relations tried simultaneously by setting the option -parallel\_states, see details in the list of options below.
 
 \section{Inclusion and elimination criteria}
 A combination of a parameter and covariate is included if the change of OFV is significant according to the input p-value. The limit where the change is considered significant depends on the complexity of the relationship and is expressed in degrees of freedom. The linear relation adds one degree of freedom, the hockey-stick relation adds two, exponential only adds one. Categorical covariates adds as many degrees of freedom as there are categories minus 1. In forward search, for each covariate addition the program computes the lowest p-value for which this addition would still be significant. The covariate addition with the lowest p-value is selected, provided that this p-value is lower than the input forward p-value. In backward search the program computes which p-value would be required to accept going from each candidate reduced model to the current model. The candidate reduced model which would require the highest p-value to be replaced with the current model is selected, provided that this p-value is higher than the input backward p-value. 
@@ -54,7 +55,8 @@ scm -config_file=config.scm
 \end{verbatim}
 
 \subsection{Required input which can be given on the command-line or in the configuration file}
-When set in the configuration file, all these options must be set \emph{before} the first [$\langle$section$\rangle$].
+When set in the configuration file, all these options must be set \emph{before} the 
+first \verb|[|\emph{section}\verb|]|.
 
 \begin{optionlist}
 \optdefault{search\_direction}{direction}
@@ -64,36 +66,37 @@ No default. Possible choices are 'forward', 'backward' or 'both'. If backward is
 No default. The name of the basic model file. 
 \nextopt
 \optdefault{categorical\_covariates}{list}
-A comma separated list of the categorical covariates to be tested. The listed covariates must be found in the data set. May be omitted if continuous\_covariates is specified. 
+A comma separated list of the categorical covariates to be tested. The listed covariates must be found in \$INPUT of the model file. Headers in the data file will be ignored. This list may be omitted if continuous\_covariates is specified. 
 \nextopt
 \optdefault{continuous\_covariates}{list}
-A comma separated list of the continuous covariates to be tested. The listed covariates must be found in the data set. May be omitted if categorical\_covariates is specified. 
+A comma separated list of the continuous covariates to be tested. The listed covariates must be found in \$INPUT of the model file. Headers in the data file will be ignored. This list may be omitted if categorical\_covariates is specified. 
 \nextopt
 \end{optionlist}
 
 \subsection{Optional input which can be given on the command-line or in the configuration file}
-When set in the configuration file, all these options must be set before the first [$\langle$section$\rangle$].
+When set in the configuration file, all these options must be set before the first 
+\verb|[|\emph{section}\verb|]|.
 
 \begin{optionlist}
 \optdefault{gof}{}
 Default is 'p\_value', other alternative is 'ofv'. Option decides which goodness-of-fit criteria should be used for deciding which model is better when comparing. 
 \nextopt
-\optdefault{global\_init}{}
+\optdefault{global\_init}{x}
 Default is 0.001. With global\_init option the initial estimates of parameters in covariate function parameterizations are set to global\_init. If using inits section in configuration file individual initial values are used instead of one global. 
 \nextopt
 \optdefault{logfile}{filename}
 Default is scmlog.txt 
 \nextopt
-\optdefault{p\_forward}{}
-Using the p\_forward option, you can specify the p-value to use for the forward selection. Used when an improvement is good enough for including parameters. 
+\optdefault{p\_forward}{x}
+Default 0.05. Using the p\_forward option, you can specify the p-value to use for the forward selection. Used when an improvement is good enough for including parameters. 
 \nextopt
-\optdefault{p\_backward}{}
-Using the p\_backward option, you can specify the p-value to use for the backward deletion. 
+\optdefault{p\_backward}{x}
+Default 0.05. Using the p\_backward option, you can specify the p-value to use for the backward deletion. 
 \nextopt
-\optdefault{p\_value}{}
+\optdefault{p\_value}{x}
 Use this option to set the p\_value for both forward and backward steps. 
 \nextopt
-\optdefault{do\_not\_drop}{}
+\optdefault{do\_not\_drop}{comma-separated list of parameters in INPUT}
 Default empty string. Since the number of columns are restricted to 20 for NONMEM (50 for NM7) it is necessary to minimize the number of undropped columns. The scm utility uses the '=DROP' syntax of NONMEM to exclude the covariate columns that are not currently tested in a specific candidate model. If some covariates are used in e.g. PK, PRED or TABLE in the basic model you must list them using the do\_not\_drop option to prevent them from being dropped. If the -linearize option is used, do\_not\_drop has a different usage, see the section on the linearization method below. 
 \nextopt
 \optname{only\_successful}
@@ -102,14 +105,15 @@ Default not set. Only consider runs with MINIMIZATION SUCCESSFUL (or equivalent 
 \optname{parallel\_states}
 Default not set. Instead of trying valid\_states sequentially, try all states after the current one simultaneously. It is currently not possible to stop testing a parameter-covariate relation that has been included in an lower state if there are higher states defined. To achieve this the user has to stop the search and restart with a new configuration file where no higher states are tested for the parameter-covariate pair. 
 \nextopt
-\optname{max\_steps}
+\optdefault{max\_steps}{N}
 Do not take more that max\_steps forward steps, even if there are more covariates left to add and a significant inclusion was made in the last step. 
 \nextopt
 \end{optionlist}
 
 
 \subsection{Optional input which can only be given in the configuration file}
-When set, all these options must be set \emph{before} the first [$\langle$section$\rangle$].
+When set, all these options must be set \emph{before} the first 
+\verb|[|\emph{section}\verb|]|.
 
 \begin{optionlist}
 \optdefault{base\_criteria\_values}{perl code}
@@ -120,7 +124,7 @@ base\_criteria\_values={ofv =$>$ 670}
 
  where the number 670 should be be replaced by the ofv value of the model evaluated with all included relations. If base\_criteria\_values is set, then PsN does not have to evaluate the original model with included\_relations to get a ofv to use for comparisons.\\
 \nextopt
-\optdefault{logit}{list of parameters}
+\optdefault{logit}{comma-separated list of parameters}
 By default the value of the covariate function for a parameter is a  product of individual functions of the included covariates, and the typical value (TV) of the parameter is multiplied with the product. With option -logit the user can specify a list of parameters which should be treated as logit transformations, i.e. the value of the covariate function is a sum of individual functions, the sum should be added to the typical value of the parameter, and the value of each individual covariate function should be 0, not 1, when the corresponding THETA is 0. The thetas in a linear or hockey-stick relation on a logit parameter will be given lower and upper boundaries -20 and 20 by default. Important note: When a parameter is a logit transformation, the power and exponential covariate relations are not appropriate to add on this parameter. 
 \nextopt
 \optdefault{time\_varying}{list of covariates}
@@ -147,17 +151,20 @@ The derivatives needed for computing the new medians and means will be taken fro
 \subsection{Some optional general PsN options which are extra important for scm}
 
 \begin{optionlist}
-\optdefault{missing\_data\_token}{}
+\optdefault{missing\_data\_token}{string}
 Default is -99. When some values of the covariates are missing in for some observations in the dataset it is necessary to let PsN know how missing values are coded in the dataset, otherwise the covariate function values will be very wrong. This option cannot be set in the configuration file (it will be ignored if set there). It must be set on the command-line. 
 \nextopt
-\optdefault{directory}{}
-The name of the run directory. The default is scm\_dirN, which N either 1 or the next unused number if there already are scm\_dirN directories present. When set in the configuration file, this option must be set before the first [$\langle$section$\rangle$]. 
+\optdefault{directory}{dirname}
+The name of the run directory. The default is scm\_dirN, which N either 1 or the next unused number if there already are scm\_dirN directories present. When set in the configuration file, this option must be set before the first 
+\verb|[|\emph{section}\verb|]|.
 \nextopt
 \end{optionlist}
 
 \subsection{Options  for the linearization method}
 
-Add covariates to a linearized version of the  original model. All these options must be set before the first [<section>] of the configuration file. The linearization method can only be used with models where the eta on each parameter (CL, V,...) to be tested is unique to that parameter, i.e. if  CL is listed in test\_relations and CL=TVCL*EXP(ETA(5)) then ETA(5) must not appear anywhere else in the model. Also, the linearization method is restricted to a certain set of models for the inter-individual variation, see below. Different parameters may have different ETA relations as long as each one is found in the list below.
+Add covariates to a linearized version of the  original model. All these options must be set before the first 
+\verb|[|\emph{section}\verb|]|
+of the configuration file. The linearization method can only be used with models where the eta on each parameter (CL, V,...) to be tested is unique to that parameter, i.e. if  CL is listed in test\_relations and CL=TVCL*EXP(ETA(5)) then ETA(5) must not appear anywhere else in the model. Also, the linearization method is restricted to a certain set of models for the inter-individual variation, see below. Different parameters may have different ETA relations as long as each one is found in the list below.
 The recognized forms of inter-individual variation models are (using parameter PAR and ETA(1) as  examples):
 \begin{verbatim}
 PAR=TVPAR*EXP(ETA(1))	   	; exponential
@@ -175,7 +182,9 @@ To handle logit transformations, the user can model as follows
       PHI     = TVPHI+ETA(1)	
       BIO    = EXP(PHI)/(1+EXP(PHI))
 \end{verbatim}
-and in the configuration file set PHI as the parameter to test covariates on using [test\_relations] and set logit=PHI.
+and in the configuration file set PHI as the parameter to test covariates on using 
+\verb|[test_relations]| 
+and set logit=PHI.
 
 The covariate function will always be multiplied with (or added to if the parameter is a logit) TVPAR, so TVPAR must be used in the model.
 
@@ -198,7 +207,7 @@ Default not set. In each step, after selecting the covariate to add, rerun non-l
 \optname{epsilon}
 Default set. Linearize with respect to epsilons in addition to etas. Disable with epsilon=0 in the configuration file or -no-epsilon on the command-line, then no linearization with respect to epsilon is performed. 
 \nextopt
-\optdefault{error}{add,prop,propadd,user}
+\optdefault{error}{add,prop,propadd or user}
 No default. Only allowed to set when -no-epsilon is set. Use an approximate linearization of the error model instead of exact linearization with respect to epsilons. Alternatives are add for additive, prop for proportional, propadd for proportional plus additive and user for user defined. 
 
 For additive and proportional error (add and prop) it is required that the original model defines a variable W for weighting of EPS(1), for add
@@ -237,9 +246,11 @@ Default not set. Only relevant if -linearize is set. With this option set, scm w
 
 
 \section{Configuration file sections}
-All sections have a header enclosed by square brackets. The sections must come after the single line options. All the following sections except [test\_relations] are optional. 
+All sections have a header enclosed by square brackets. The sections must come after the single line options. All the following sections except 
+\verb|[test_relations]| 
+are optional. 
 
-\subsection{test\_relations}
+\subsection{[test\_relations]}
 The section test\_relations is required, and in there you list which covariates should be combined with which parameter. Implicitly you also tell the SCM which parameters there are. E.g.:
 
 \begin{verbatim}
@@ -250,8 +261,14 @@ V=SMOK
 
 Note the square brackets around the section name. In the example WGT and AGE will be combined with clearance (CL) and SMOK will be combined with volume (V)
 
-\subsection{valid\_states}
-The section [valid\_states] lists which states should be tested for the covariates (default is 1,2 for categorical and 1,2,3 for continuous). Always put 1 first in the list. The scm was implemented to not allow setting different valid states for different covariates, but since any relation can be coupled to any state number except 1, this imposes no limitation. The user can replace the default relations coupled to the states for some parameters and or covariates using the [code] section of the configuration file, see more information below under code. The relationships are tried in the order their numbers are listed in [valid\_states]. The numbers do not have to be increasing, it is possible to set e.g. 1,5,4 as valid\_states for continuous covariates in which case (assuming the default state-relationship definitions) the power relation would be tested before the exponential. Per default, only if a relationship creates an significant change in the criteria for selection, the next relationship in the valid\_states list is tried. The relationships are not tried simultaneously so that they can be compared with each other. The user can set option -parallel\_states to make scm test all later states in the list simultaneously.
+\subsection{[valid\_states]}
+The section 
+\verb|[valid_states]| 
+lists which states should be tested for the covariates (default is 1,2 for categorical and 1,2,3 for continuous). Always put 1 first in the list. The scm was implemented to not allow setting different valid states for different covariates, but since any relation can be coupled to any state number except 1, this imposes no limitation. The user can replace the default relations coupled to the states for some parameters and or covariates using the 
+\verb|[code]| 
+section of the configuration file, see more information below under code. The relationships are tried in the order their numbers are listed in 
+\verb|[valid_states]|. 
+The numbers do not have to be increasing, it is possible to set e.g. 1,5,4 as valid\_states for continuous covariates in which case (assuming the default state-relationship definitions) the power relation would be tested before the exponential. Per default, only if a relationship creates an significant change in the criteria for selection, the next relationship in the valid\_states list is tried. The relationships are not tried simultaneously so that they can be compared with each other. The user can set option -parallel\_states to make scm test all later states in the list simultaneously.
 
 \begin{verbatim}
 [valid_states]
@@ -259,20 +276,24 @@ continuous = 1,2,4
 categorical = 1,2
 \end{verbatim}
 
-\subsection{included\_relations}
-If you want to include some relations from the beginning, you can use the [included\_relations] section:
+\subsection{[included\_relations]}
+If you want to include some relations from the beginning, you can use the 
+\verb|[included_relations]| 
+section:
 
 \begin{verbatim}
 [included_relations]
 CL=WGT-2,AGE-3
 \end{verbatim}
 
-Here WGT will be included linearly and AGE with the hockey-stick relation (assuming default relations for states 2 and 3) on CL already from the start. Following states in the list of valid\_states will be tried by the SCM, and the combination can be removed as part of the backwards elimination. If option search\_direction is set to backward, the section [included\_relations] is required (otherwise there will be no relations that PsN can remove during the backward search).
+Here WGT will be included linearly and AGE with the hockey-stick relation (assuming default relations for states 2 and 3) on CL already from the start. Following states in the list of valid\_states will be tried by the SCM, and the combination can be removed as part of the backwards elimination. If option search\_direction is set to backward, the section 
+\verb|[included_relations]|
+is required (otherwise there will be no relations that PsN can remove during the backward search).
 
 If included\_relations is defined, PsN will run the input model with these relations before starting the search, in order to have a reference ofv value for computing the improvements when adding covariates. If base\_criteria\_values is set with an ofv-value, then the run with included\_relations is skipped. 
 
-\subsection{code}
-The code section allows you to define your own relation code for the different states. Never redefine state 1 (relation not included). The line [code] must only appear once, even if there are several different definitions in the section. For the code section you can write any NONMEM code you like on the right hand side of the first equal sign and it will be inserted into the model when that combination is included. In the code PsN will replace PAR with the parameter, for example CL, and COV with the covariate, for example WGT. In addition, median, mean, maximum and minimum will be replaced with the median, mean, maximum and minimum values of the covariate. The wildcard * can be used to define for many parameters and or covariates at once. E.g.:
+\subsection{[code]}
+The code section allows you to define your own relation code for the different states. Never redefine state 1 (relation not included). The line \verb|[code]| must only appear once, even if there are several different definitions in the section. For the code section you can write any NONMEM code you like on the right hand side of the first equal sign and it will be inserted into the model when that combination is included. In the code PsN will replace PAR with the parameter, for example CL, and COV with the covariate, for example WGT. In addition, median, mean, maximum and minimum will be replaced with the median, mean, maximum and minimum values of the covariate. The wildcard * can be used to define for many parameters and or covariates at once. E.g.:
 
 \begin{verbatim}
 [code]
@@ -299,7 +320,7 @@ Redefining existing states is useful when wanting to test different valid states
 \end{verbatim}
 Then in state 4 the covariate WGT will always be added as a power relation instead of exponential (the default for state 4). The shortcuts are 'none' for not included, 'linear', 'hockey-stick', 'exponential' and 'power'. The shortcut definitions must be written without quotes, in lower case and be spelled exactly as listed. 
 
-\subsection{inits}
+\subsection{[inits]}
 The inits and bounds sections lets you set initial estimates for thetas introduced in the code and their corresponding bounds. The default bounds are set so that covariate functions cannot reach negative values, which is appropriate e.g. for parameters V and CL. For parameters that should be allowed both negative and positive values the user may wish to change the boundaries. The inits and bounds sections have very similar syntax, only inits will be shown here:
 
 \begin{verbatim}
@@ -311,11 +332,12 @@ CL:*-2=0.01
 
 The left hand side is of the form “PARAMETER:COVARIATE-STATE”. Both PARAMETER and COVARIATE can be an asterisk (*), which is a wildcard and is the same as repeating the line for each parameter and/or covariate. The STATE can be any one of 2-5 or a new state defined by the user in the code section. For the “inits” section the right hand side is a comma separated list of initial values for theta parameters put into the abbreviated code corresponding to the combination. Unless the states are redefined using the code option, for continuous variables the list for state 2 should be one value, for state 3 two values and for states 4 and 5 one value. For categorical covariates where STATE can only be 2 it is the number of categories that decides the number of initial values. The lower\_bounds and upper\_bounds sections follows the same rules and corresponds to the bounds for the theta parameters put into the abbreviated code. If you specify too few or too many values, those you exclude will be replaced by defaults and the extraneous will be ignored. 
 
-It is possible to use the variables maximum, minimum, mean and median in the inits and bounds sections. See more details in the [code] help. 
+It is possible to use the variables maximum, minimum, mean and median in the inits and bounds sections. See more details in the \verb|[code]| help. 
 
 
 \section{The ANCHOR functionality}
-SCM by default adds the covariate relationship functions first in \$PK/\$PRED, before any existing user-written code. Sometimes this is unpractical, for example if there are constants that the user needs in a custom [code] section. In this case the user can add the line
+SCM by default adds the covariate relationship functions first in \$PK/\$PRED, before any existing user-written code. Sometimes this is unpractical, for example if there are constants that the user needs in a custom 
+\verb|[code]| section. In this case the user can add the line
 \begin{verbatim}
 ;;;SCM-ANCHOR
 \end{verbatim}
@@ -364,7 +386,8 @@ Two covariates will be mixed up if the complete name of one is the same as the b
 \section{Tricks}
 To build the full model, use p\_forward=1. Then any parameter inclusion that gives a drop in ofv will be accepted. Since the initial estimates of the model are updated after each parameter inclusion, the forward search may make it easier to estimate the parameters in the full model, compared to when adding all relations at once.
 
-To only run one step and not accept any relations, use p\_forward=0. Then the user can investigate raw\_results and the log-file to select the appropriate relation to add, and start a new run with [included\_relations] set.
+To only run one step and not accept any relations, use p\_forward=0. Then the user can investigate raw\_results and the log-file to select the appropriate relation to add, and start a new run with 
+\verb|[included_relations]| set.
 
 \section{Default parameterizations}
 Replace PAR with the parameter name, e.g. CL, and COV with the covariate name, e.g. WGT or SEX.

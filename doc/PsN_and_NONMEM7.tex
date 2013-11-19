@@ -1,27 +1,26 @@
 \input{inputs/format_header.tex}
 \guidetitle{PsN and NONMEM7}
-
+%Kajsa review 2013-11-18
 \begin{document}
 
 \maketitle
 
 
 \section{Introduction}
-PsN 3.6.2 has been tested with NONMEM 7.1.0, 7.1.2,  7.2.0 and 7.3.0 beta. Not all features of NONMEM 7 are supported. Some will simply be ignored while other may cause errors if used. See details below.
+This version of PsN has been tested with NONMEM 7.1.0, 7.1.2,  7.2.0 and 7.3.0 beta. Not all features of NONMEM 7 are supported. Some will simply be ignored while other may cause errors if used. See details below.
 
 \section{Running with an NMQual installation of NONMEM 7.2}
-
 Models can be run with NMQual8 and NONMEM 7.2 if PsN version is 3.5.3 or later, option -nmqual is set and the user has installed NONMEM using a slightly modified nm72.xml (changing the expected control stream suffix from .ctl to .mod), see document psn\_configuration.pdf. The configuration file must contain the path to the autolog.pl script, see psn\_configuration.pdf. The option -nmqual\_xml is needed, the default is log.xml (located in directory from where PsN is called). Options to nmfe72, which is invoked by autolog.pl, can be passed on by PsN via options -parafile, -nodes and -nmfe\_options, see below. PsN will start NM7.2 using the call (everything on one line)
 perl    full\_path\_to\_autolog\_set\_in\_psn.conf    xml\_file\_from\_option\_nmqual\_xml    run    ce path\_to\_psn\_generated\_run\_directory    psn (extra nmfe72 options)
 
 
 \section{Parallel execution of single models in NONMEM 7.2}
+PsN-3.4.2 and later supports the parallel execution feature of NONMEM 7.2 with nmfe. It is required that the NONMEM version number 7.2 or later is properly set in psn.conf. 
+The feature is invoked by using PsN option -parafile=$\langle$file$\rangle$, and optionally -nodes=N, where $\langle$file$\rangle$ is the name of a NONMEM 7.2 parafile. PsN will copy the parafile down to the run directory and pass on the name and the nodes option as input to nmfe72. PsN can currently only handle one parafile at a time. The parafile option is common to all PsN scripts, and is further described in common\_options\_defaults\_versions\_psn.pdf.
 
-PsN-3.4.2 and later supports the parallel execution feature of NONMEM 7.2 with nmfe. It is required that the NONMEM version number 7.2 or later is properly set in psn.conf, and that option -nmfe or -run\_on\_sge\_nmfe or -run\_on\_lsf\_nmfe or -nmqual is set. The feature is invoked by using PsN option -parafile=$\langle$file$\rangle$, and optionally -nodes=N, where $\langle$file$\rangle$ is the name of a NONMEM 7.2 parafile. PsN will copy the parafile down to the run directory and pass on the name and the nodes option as input to nmfe72. PsN will not check that an mpi daemon is running, or that any other necessary parallelization preparations have been done. Therefore the user must make sure it is possible to start nmfe72 with the parafile option before trying to do it through PsN.
+PsN will not check that an mpi daemon is running, or that any other necessary parallelization preparations have been done. Therefore the user must make sure it is possible to run parallel NONMEM with nmfe72 before trying to do it through PsN.
 
 A defaults.pnm file can be copied down to the NM run directory by setting PsN option -extra\_files, see common\_options\_defaults\_versions\_psn.pdf.
-
-The parafile option is common to all PsN scripts, and is further described in common\_options\_defaults\_versions\_psn.pdf.
 
 The -threads option does not affect and is not affected by any parallel execution of a single model. The -threads option governs how many models PsN will submit for execution (by e.g. nmfe72) at a time. The user must ensure that the number of threads multiplied by the number of nodes used for a single model does not exceed what is desired. 
 
@@ -29,27 +28,26 @@ If running on a cluster the user must set flags necessary for parallel execution
 
 
 \section{New options to nmfe72}
-
-There is a set of new options to nmfe72, e.g. -xmloff. These options can be passed on by PsN using option -nmfe\_options, which accepts a comma-separated list of nmfe-options without the – signs. Option -nmfe\_options requires that -nmfe or -run\_on\_sge\_nmfe or -nmqual is set, and is further described in common\_options\_defaults\_versions\_psn.pdf. If setting option -nmfe\_options=licfile=some\_license\_file then the license file must also be set with the PsN option -extra\_files, unless an absolute path to the license file is given, in which case option -extra\_files is not needed. See common\_options\_defaults\_versions\_psn.pdf for a description of the -extra\_files option.
+There is a set of new options to nmfe72, e.g. -xmloff. These options can be passed on by PsN using option -nmfe\_options, which accepts a comma-separated list of nmfe-options without the – signs. Option -nmfe\_options is further described in common\_options\_defaults\_versions\_psn.pdf. If setting option -nmfe\_options=licfile=some\_license\_file then the license file must also be set with the PsN option -extra\_files, unless an absolute path to the license file is given, in which case option -extra\_files is not needed. See common\_options\_defaults\_versions\_psn.pdf for a description of the -extra\_files option.
 
 \section{New forms of \$SIGMA and \$OMEGA in NM7.2}
-
 In NONMEM 7.2 it is possible to define \$SIGMA and \$OMEGA in new ways, and indicating this via options STANDARD/VARIANCE COVARIANCE/CORRELATION and CHOLESKY. PsN does accept these options and will pass them on when creating new models, but the output analysis and updating new models with final estimates from a previous run have not yet been adapted to these new forms, and performing an update would introduce errors. Updating is done by all scripts except execute, sse and parallel\_retries. PsN will print a warning when the new \$OMEGA/\$SIGMA options are encountered. Updating a model with another form of \$SIGMA/\$OMEGA with output from a previous run will result in errors, and this is done as part of many PsN programs, e.g. bootstrap, vpc, scm and update\_inits. 
 
 \section{Option ORDER in \$ESTIMATION}
-
 There is a new option called ORDER in \$EST in NONMEM 7.2. PsN cannot handle any but the default format, and will remove ORDER if found in \$EST.
 
-\section{New records \$SIZES \$LEVEL \$ANNEAL \$PHIS \$ETAS}
-
+\section{Supported new records \$SIZES \$LEVEL \$ANNEAL \$PHIS \$ETAS}
 PsN will accept and handle new records \$SIZES, \$LEVEL, \$ANNEAL, \$PHIS and \$ETAS.
 
-\section{Shorthand notation in \$THETA \$OMEGA \$SIGMA}
+\section{Unsupported new records}
+PsN does not yet support new records \$THETAI \$THI \$THETAR \$THR \$THETAP \$THETAPV \$OMEGAP \$OMEGAPD
+\$SIGMAP \$SIGMAPD. Using them will result in an error.
 
-PsN does not support VALUES option in \$OMEGA/\$SIGMA. PsN does not support the new shorthand notation in NM7.3 ( xN notation, SAME(n) notation).
+\section{Shorthand notation in \$THETA \$OMEGA \$SIGMA}
+PsN does not support VALUES option in \$OMEGA/\$SIGMA. 
+PsN does not support the new shorthand notation in NM7.3 ( xN notation, SAME(n) notation).
 
 \section{Control stream in mixed case}
-
 In NONMEM 7.2. it is possible to write the control stream in mixed case. PsN does not support this. It is likely that options written in lower case will not be recognized correctly, which can cause errors.
 
 \section{New output files in NONMEM 7}
@@ -63,7 +61,6 @@ Cleaning of NM7.2 output files: If clean$>=1$ then the following files are remov
 If cleani$>=2$ then the temp\_dir subdirectory will be removed.
 
 If clean $>=3$ is set then worker* subdirectories are removed when NM\_run is removed. If the worker subdirectories are called something other than worker* then cleaning with level=3 will fail.  
-
 
 \section{Turning off estimation in NONMEM 7}
 
@@ -149,6 +146,6 @@ Starting with PsN-3.1.0 shrinkage values are reported as percentages instead of 
 
 \section{CWRES and iofv}
 
-Since NONMEM7 can output both CWRES and iofv, those options are turned off when running PsN with NM7. Options -cwres and -iofv are still available with PsN3 and NM6.
+Since NONMEM7 can output both CWRES and iofv, those options are turned off when running PsN with NM7. Options -cwres and -iofv are still available with PsN and NM6.
 
 \end{document}

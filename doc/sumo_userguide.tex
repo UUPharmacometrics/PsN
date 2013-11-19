@@ -1,5 +1,9 @@
 \input{inputs/format_header.tex}
+\setlength{\evensidemargin}{0pt}
+\setlength{\oddsidemargin}{0pt}
+
 \guidetitle{SUMO user guide}
+%review Kajsa 2013-11-19
 
 \begin{document}
 
@@ -23,21 +27,21 @@ The above command may produce output similar to this:
 
 run33.lst
 
-Successful minimization                                           [    OK   ]   
-No rounding errors                                                [    OK   ]   
-No zero gradients                                                 [    OK   ]   
-No final zero gradients                                           [    OK   ]   
-Hessian not reset                                                 [    OK   ]   
-Parameter(s) near boundary                                        [    WARNING   ]   
+Successful minimization                                         [    OK   ]   
+No rounding errors                                              [    OK   ]   
+No zero gradients                                               [    OK   ]   
+No final zero gradients                                         [    OK   ]   
+Hessian not reset                                               [    OK   ]   
+Parameter(s) near boundary                                      [    WARNING   ]   
 OMEGA(2,2)	0.000112	0
-Covariance step                                                   [    OK   ]   
-Large standard errors found                                       [    WARNING   ]   
+Covariance step                                                 [    OK   ]   
+Large standard errors found                                     [    WARNING   ]   
 OMEGA(1,1)	1.08589
 OMEGA(2,2)	1.01786
 OMEGA(3,2)	0.848024
 OMEGA(3,3)	0.548035
-Large condition number                                            [    WARNING   ]   
-Correlations                                                      [    OK   ]
+Large condition number                                          [    WARNING   ]   
+Correlations                                                    [    OK   ]
 
     0MINIMIZATION SUCCESSFUL
     NO. OF FUNCTION EVALUATIONS USED:  172
@@ -53,19 +57,24 @@ Correlations                                                      [    OK   ]
     Objective function value: 116.966
     Condition number: 1.215e+004
 
-           THETA                          OMEGA                         SIGMA            
-THETA1      1.87  (-0.2503)  OMEGA(1,1)   1.277  (-1.086)  SIGMA(1,1)   0.478  (-0.2762) 
-THETA2    0.0862 (-0.05139)  OMEGA(2,2) 0.01058  (-1.018)                                
-THETA3    0.0398 (-0.08266)  OMEGA(3,2)  0.9187  (-0.848)
-                             OMEGA(3,3)  0.6768  (-0.548)
+           THETA                          OMEGA                      SIGMA            
+THETA1    1.87  (-0.2503)  OMEGA(1,1)   1.277  (-1.086) SIGMA(1,1) 0.478  (-0.2762) 
+THETA2  0.0862 (-0.05139)  OMEGA(2,2) 0.01058  (-1.018)                                
+THETA3  0.0398 (-0.08266)  OMEGA(3,2)  0.9187  (-0.848)
+                           OMEGA(3,3)  0.6768  (-0.548)
 
 -----------------------------------------------------------------------
 \end{verbatim}
 
-The first section of the output from sumo contains run diagnostics. They are largely self-explanatory but some of them depends on cut-off values. For example, the diagnostics for a large condition number compares the obtained condition number to a cut-off value, normally 1000. The default values for the cut-off values can be changed by setting them in [default\_sumo\_options] in psn.conf. It is possible to override a default value by specifying it as an option to sumo (see below).
+The first section of the output from sumo contains run diagnostics. They are largely self-explanatory but some of them depends on cut-off values. For example, the diagnostics for a large condition number compares the obtained condition number to a cut-off value, normally 1000. The default values for the cut-off values can be changed by setting them in 
+\verb|[default_sumo_options]| in psn.conf. It is possible to override a default value by specifying it as an option to sumo (see below).
 \\ 
 Next are the NONMEM minimization messages and \$COV messages, including etabars etc. Following this is the objective function value. If \$COV has been requested with the PRINT=E option (so that NONMEM reports eigenvalues) the condition number is also reported (the ratio between the largest and smallest eigenvalue)
-The column THETA contains the theta estimates as reported in the NONMEM output file and the numbers in parentheses after the theta estimates, are the relative standard errors (SE/Est). The square    roots of the estimates of the diagonal elements of the OMEGA and SIGMA matrices in the NONMEM output file are reported in the OMEGA and SIGMA columns (except when -ci is used, see below). The off-diagonal estimates are reported as the corresponding correlations, i.e. sqrt(cov(om1,om2)/(var(om1)*var(om2))). The numbers in parentheses after the OMEGA and SIGMA columns are the relative SEs of the *variance* and *covariance* estimates, as taken from the NONMEM output file (but see option -ci and -sd\_rse below).
+The column THETA contains the theta estimates as reported in the NONMEM output file and the numbers in parentheses after the theta estimates, are the relative standard errors (SE/Est). The square    roots of the estimates of the diagonal elements of the OMEGA and SIGMA matrices in the NONMEM output file are reported in the OMEGA and SIGMA columns (except when -ci is used, see below). The off-diagonal estimates are reported as the corresponding correlations, i.e. 
+$\sqrt{\frac{cov(om1,om2)}{var(om1)*var(om2)}}$. 
+The numbers in parentheses after the OMEGA and SIGMA columns are the relative SEs of the 
+\emph{variance} and 
+\emph{covariance} estimates, as taken from the NONMEM output file (but see option -ci and -sd\_rse below).
 Relative standard errors are not displayed unless NONMEM reports the standard errors in the output file, i.e. when the covariance step has been requested and has terminated successfully.
 
 
@@ -81,7 +90,7 @@ A lst-file is required on the command-line.
 \optdefault{c\_level}{'number'}
 Default 95. This option specifies the coverage of the confidence interval computed by the -ci option (see below). Allowed values are 90, 95, 99 and 99.5 
 \nextopt
-\optname{ci or -confidence\_interval}
+\optname{ci}
 Default not set. This option computes and reports the traditional confidence intervals for the parameter estimates instead of the relative standard errors: CI = estimate +/- c\_level*SE. With this option the parameter estimates reported in the OMEGA and SIGMA columns are the numbers given in the NONMEM output file, i.e. no transformation to CVs or correlations is performed. 
 \nextopt
 \optdefault{condition\_number\_limit}{'number'}
@@ -111,7 +120,7 @@ Default 1. The default is for sumo to report the results only for the first subp
 \optdefault{near\_bound\_sign\_digits}{'integer'}
 Default 2. When a parameter estimates is equal to a boundary with these many signi ficant digits, a warning will be issued. The default is for NONEM VI to report if parameter estimates are close to a boundary value but this can be turned off. The boundary test in sumo is independent of the way NONMEM is configured and will report these types of issues in output from NONMEM. 
 \nextopt
-\optdefault{near\_zero\_boundary\_limit }{'number'}
+\optdefault{near\_zero\_boundary\_limit}{'number'}
 Default 0.001. If the bound is 0, the boundary test will issue a warning if the estimate is this close to zero. 
 \nextopt
 \optname{check\_run}

@@ -1,5 +1,6 @@
 \input{inputs/format_header.tex}
 \guidetitle{XV\_SCM user guide}
+%review Kajsa 2013-11-19
 
 \begin{document}
 
@@ -40,15 +41,18 @@ Do not set scm option -only\_successful in xv\_scm. That option would interfere 
 
 \section{Algorithm overview}
 
-For each split: Divide the dataset into 'groups' equally sized subsets, using stratification if option -stratify\_on is set.
-For each data subset: Call the selected subset the prediction/test data and the remaining 'groups'-1 subsets the estimation/training data. Run a regular scm on the estimation data, using the scm input option given on the command-line and the configuration file except forcing options search\_direction=forward, p\_forward=1,  gof=p\_value, -no-update\_derivatives. For the base model and for the model selected by the scm in each iteration a  prediction run is performed. The prediction run is  done by copying the model, updating the initial estimates with the final estimates for the same model based on the estimation data, setting MAXEVAL=0 or equivalent for non-classical estimation methods, and running the model with the prediction data. The OFV of the prediction run is then collected and reported in output.
+For each split: 
+\begin{itemize}
+\item[] Divide the dataset into 'groups' equally sized subsets, using stratification if option -stratify\_on is set.
+\item[] For each data subset: 
+\begin{itemize}
+\item[] Call the selected subset the prediction/test data and the remaining 'groups'-1 subsets the estimation/training data. 
+\item[] Run a regular scm on the estimation data, using the scm input option given on the command-line and the configuration file except forcing options search\_direction=forward, p\_forward=1,  gof=p\_value, -no-update\_derivatives. For the base model and for the model selected by the scm in each iteration a  prediction run is performed. The prediction run is  done by copying the model, updating the initial estimates with the final estimates for the same model based on the estimation data, setting MAXEVAL=0 or equivalent for non-classical estimation methods, and running the model with the prediction data. The OFV of the prediction run is then collected and reported in output.
 If the linearization method is used (option -linearize to scm), then a prediction step is needed also for the derivatives model. After running the nonlinear derivatives model on the estimation data, a prediction step is run as above for the derivatives model. Then the derivatives output from the derivatives prediction step replaces the original prediction data in the prediction steps for all the linearized models, including the linearized base model.
-
+\end{itemize}
+\end{itemize}
 \section{Output}
 The files xv\_ofv\_results.csv,  xv\_relation\_rank\_order.csv and xv\_percent\_inclusion\_by\_level.csv contain results and summaries of the runs.
 
-\section{Prediction step with automatic data wrapping}
-
-If option linearize is used and the number of data items needed for the linearized model exceeds what NONMEM can handle, scm and xv\_scm will try to automatically wrap data. NONMEM model files with multiple \$PROB are used for the nonlinear model run to obtain derivatives, to output all the items in \$TABLE. \$MSFI is used in the extra \$PROB to transfer parameter values. When also the first \$PROB uses \$MSFI, as is the case in the prediction step for for the derivatives run, option POPETAS=\emph{nETA}, where \emph{nETA} is the total number of ETAs in the model, is added to \$MSFI for all but the first \$PROB in the modelfile.
 
 \end{document}

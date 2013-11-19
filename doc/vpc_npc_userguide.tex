@@ -1,5 +1,6 @@
 \input{inputs/format_header.tex}
 \guidetitle{VPC and NPC user guide}
+%review Kajsa 2013-11-19
 
 \begin{document}
 
@@ -148,9 +149,9 @@ optional, the number of mirror plot data sets to produce. Specific VPC.
 \optdefault{idv}{variable}
 optional, default TIME, the independent variable to bin on. Specific for VPC. (old  option was -bin\_on, without default value) 
 \nextopt
-\optname{Either of 12 binning option combinations for independent variable}
-optional – it is forbidden to use more than one of these combinations. For details see section VPC binning below.
-
+\end{optionlist}
+\noindent{\bf Either of 12 binning option combinations for independent variable}
+Optional, but it is forbidden to use more than one of these combinations. For details see section VPC binning below.
 \begin{itemize}
 	\item -autobin=auto   (default)
 	\item -autobin=$<$number of bins$>$
@@ -164,8 +165,8 @@ optional – it is forbidden to use more than one of these combinations. For det
 	\item -bin\_by\_count=1 -single\_bin\_size=X -overlap=Y
 	\item -bin\_by\_count=0 -single\_bin\_size=X
 	\item -bin\_by\_count=1 -single\_bin\_size=X
-\end{itemize} \\
-\nextopt
+\end{itemize}
+\begin{optionlist}
 \optdefault{min\_points\_in\_bin}{N}
 Optional, used only if -autobin (except -autobin=unique) is selected. Set to disallow bins of size smaller than N. Default is 10. 
 \nextopt
@@ -201,7 +202,7 @@ Setting this variable indicates that data is Box-Cox transformed. Data will be t
 optional, default not set . Only allowed in combination with predcorr and -lnDV=0. Lower boundary for typical model prediction (PRED). The specified boundary must be strictly lower than the lowest value. If the boundary is given as a number, that number will be used for all observations. If  instead a variable is given then it must be independent, and defined either in the model file or present in \$INPUT.  If -lower\_bound is not set but -predcorr is used, a lower bound of 0 will be assumed. 
 \nextopt
 \optdefault{rawres\_input}{filename}
-A simple way to simulate with uncertainty. Note that it is normally not appropriate to do this in a vpc or npc. Instead of using identical parameter estimates for simulation of each new dataset, take parameter estimates from a raw\_results.csv file, e.g. from a bootstrap run or the intial\_estimates.csv file from a previous sse run with \$PRIOR in the simulation model. The raw results file must be comma-separated and contain at least as many samples as the input -samples to sse, the labels for  THETA/OMEGA/SIGMA in the file must match the labels in the simulation model given as input to sse, the theta columns must be directly followed by the omega columns which must be directly followed by the sigma columns, and the column header must be model either in the first column just as in a bootstrap raw\_results file or in the second or third column as in a sse raw\_results file. If a column header contains a comma, e.g. OMEGA(2,2), then that header must be enclosed in double quotes. This is done automatically in PsN raw results files. Note that is is possible to generate a file with initial parameter estimates outside of PsN, as long as the file follows the format rules. 
+A simple way to simulate with uncertainty. Instead of using identical parameter estimates for simulation of each new dataset, take parameter estimates from a raw\_results.csv file, e.g. from a bootstrap run or the intial\_estimates.csv file from a previous sse run with \$PRIOR in the simulation model. The raw results file must be comma-separated and contain at least as many samples as the input -samples to sse, the labels for  THETA/OMEGA/SIGMA in the file must match the labels in the simulation model given as input to sse, the theta columns must be directly followed by the omega columns which must be directly followed by the sigma columns, and the column header must be model either in the first column just as in a bootstrap raw\_results file or in the second or third column as in a sse raw\_results file. If a column header contains a comma, e.g. OMEGA(2,2), then that header must be enclosed in double quotes. This is done automatically in PsN raw results files. Note that is is possible to generate a file with initial parameter estimates outside of PsN, as long as the file follows the format rules. 
 \nextopt
 \optdefault{offset\_rawres}{N}
 Only relevant in combination with -rawres\_input. Default 1. The number of result lines to skip in the input raw results file before starting to read final parameter estimates. In a regular bootstrap raw\_results file the first line of estimates refers to the input model with the full dataset, so therefore the default offset is 1. 
@@ -233,8 +234,8 @@ An additional alternative is to supply the program with a complete simulation mo
 \subsection{Handling BQL data}
 It is important to retain the BQL observation in the data-set when doing VPCs (see Bergstrand, M. et al. AAPS J, 2009. 11(2): p. 371-380. for more details). It should be done irrespectively of what method that is used to handle or not handle the BQL observations when estimating. The M3/M4 code used to include BQL samples in the estimation is only applicable to estimation and not to simulation. With the M3/M4 code the BQL observations are treated as categorical observations (i.e. $<$LOQ). When you simulate you want to generate simulated concentration observations at all time points in your data-set (also where the observations was $<$LOQ). If you simulate with the M3/M4 code active the prediction at BQL samples in your data-set (F\_FLAG=1) will be the probability for the observation to be <LOQ and not a concentration. For this reason PsN highlights that if F\_FLAG is used there needs to be a special simulation block (ICALL.EQ.4) where the prediction is coded to be continuous (F\_FLAG=0) for all observations. In theory it should be possible to have the M3/M4 cod in a block that only applies to estimation but NONMEM often gives error messages when this is tried. For that reason it is recommended to construct a new control stream for the VPC (e.g. run1vpc.mod). In the new model file remove code that relates to the M3/M4 method so that continuous predictions are given at all observations. It is important that the DV value for all BQL observations are set to a value below LOQ (e.g. LOQ/2) in the data-set. 
 
-\subsection{Simulation uncertainty}
-It is possible to simulate with uncertainty in npc/vpc, either by using option -rawres\_input or by having \$PRIOR in the input/simulation model. Note that including uncertainty in vpc or npc simulations is normally not appropriate. 
+\subsection{Simulation with uncertainty}
+It is possible to simulate with uncertainty in npc/vpc, either by using option -rawres\_input or by having \$PRIOR in the input/simulation model.
 
 \subsection{Stratification options}
 -stratify\_on=$<$variable$>$ The user can stratify on a variable found in \$INPUT or define a variable called STRT in the model code and then set -stratify\_on=STRT. The later alternative allows the user to do stratification on any combination of data columns or model variable, since STRT may be defined in any way the user chooses. The vpc program will add STRT to the \$TABLE record, and if STRT is not defined in the model-file NONMEM will exit with an error. 
@@ -261,7 +262,7 @@ For a complete list of common options see common\_options\_defaults\_versions.pd
 \optname{last\_est\_complete}
 optional and only applies with NONMEM7 and if option -keep\_estimation is set. See section NPC and VPC with NONMEM7. 
 \nextopt
-\optdefault{seed}{random seed }
+\optdefault{seed}{string}
 Using this option makes it possible to regenerate simulation results. 
 \nextopt
 \optdefault{directory}{directory name}
@@ -463,7 +464,7 @@ The script checks the input, see section Input checks. Then two modified modelfi
 
 \section{Modified models}
 
-\subsection{Neither -flip\_comments or -sim\_model used}
+\subsection{When neither -flip\_comments or -sim\_model used}
 Model for original data:  
 \begin{itemize}
 	\item Any \$TABLE record is removed, and a new one is added, see [1].
@@ -491,7 +492,7 @@ Model for simulated data:
 	\item If -noprediction is set, NOPREDICTION is set in the \$SIMULATION record. 
 \end{itemize}
 
-\subsection{If option -flip\_comments or -sim\_model is used}
+\subsection{When option -flip\_comments or -sim\_model is used}
 Model for original data:  
 \begin{itemize}
 	\item Any \$TABLE record is removed, and a new one is added.
@@ -594,15 +595,21 @@ If option -censor is used, the missing observations are removed. If option -pred
 
 \section{Percentile and confidence interval calculations}
 In the analysis sections below, the Z\% percentile of V values is the i:th value in a sorted list of the V values where the lowest value has index 0 (instead of 1) and i is computed as i= (Z/100)*(V-1) rounded to the nearest integer (numbers \#.5 are rounded up). The exception is the 50\% percentile which is computed directly as the median of the V values. If V is even the median is interpolated. The mean is computed directly as the arithmetic mean of the V values, and the delta-mean is the different between the arithmetic mean of the V values and the reference mean computed for the reference stratum.  The CC\% confidence interval (CI) “from” value is computed as the (100-CC)/2\% percentile (2.5\% percentile if confidence\_interval is the default 95\%). The CC\% CI “to” value is the j:th value in the sorted list of V values where j=V-i-1 and i is calculated as above.
-
+\newpage
 \section{Dependent variable matrix analysis for NPC}
 For each strata:\{
-	For each prediction interval (PI) Y\%: \{
-		For each observation (each row in DV matrix)\{
-			The simulated DV values are sorted in ascending order. Then it is noted for each 				dataset, the real dataset as well as each simulated, if its DV value falls below the 				50-(Y/2)\% percentile (below the PI), above the 50+(Y/2)\% percentile (above the 				PI) or inside the percentiles (inside the PI) of the sorted simulated observations. 				The number of observations above and below the PI are counted for each dataset 				separately. 
-		 \} 
-		Report the counts of real observations below and above the Y\% PI. Sort the counts of 			simulated observations below/above the PI in ascending order. Report the CC\% CI of the 		percentage of simulated observations below/above the PI, and mark with a * (warning) if 		the count of real observations below/above the PI fall outside the CI.
-	\}
+\begin{itemize}
+\item[] For each prediction interval (PI) Y\%: \{
+\begin{itemize}
+\item[] For each observation (each row in DV matrix)\{
+\begin{itemize}
+\item[] The simulated DV values are sorted in ascending order. Then it is noted for each dataset, the real dataset as well as each simulated, if its DV value falls below the 50-(Y/2)\% percentile (below the PI), above the 50+(Y/2)\% percentile (above the PI) or inside the percentiles (inside the PI) of the sorted simulated observations. The number of observations above and below the PI are counted for each dataset separately.
+\end{itemize}
+\}\\
+Report the counts of real observations below and above the Y\% PI. Sort the counts of simulated observations below/above the PI in ascending order. Report the CC\% CI of the percentage of simulated observations below/above the PI, and mark with a * (warning) if the count of real observations below/above the PI fall outside the CI.
+\end{itemize}
+\}
+\end{itemize}
 \}
 \section{NPC results diagnostics}
 For each strata: compute confidence intervals for the number of * (warnings) for simulated data: Check each simulated dataset, as if it were the real data, to see whether the counts of datapoints below or above each PI falls outside the CC\% CI of the number of points above/below. Assign a * (warning) to the dataset if the count is outside the CI, just as for the real dataset. Save the accumulated * counts in a vector with one element per simulated dataset. Repeat for all PI boundaries, i.e. 2*(no of PI:s) times. Report the mean, median and CC\% CI for the number of * assigned to a single simulated dataset (mean, median and CC\% CI of integer elements in the vector). Report the theoretical mean which would be obtained if the number of simulated datasets was very large. Compare the * statistics with the total count for the real dataset in the strata. 

@@ -1,5 +1,6 @@
 \input{inputs/format_header.tex}
 \guidetitle{LASSO user guide}
+%review Kajsa 2013-11-18
 
 \begin{document}
 
@@ -42,7 +43,7 @@ The last t-value. Default is 1.
 \optdefault{cutoff}{X}
 The theta cutoff, if the absolute value of the estimated covariate theta is below cutoff then the theta will be fixed to zero. Default is 0.005. 
 \nextopt
-\optdefault{convergence}{'FIRSTMIN'}
+\optdefault{convergence}{FIRSTMIN or REACHMAX or HALT}
 FIRSTMIN is the default. The convergence criterion. Alternatives are 'REACHMAX': Stop when program reaches max (stop\_t), then best t-value is selected. 'FIRSTMIN': Stop when predicted ofv increases from previous value (or when stop\_t is reached). 'HALT': Stop when program crashes or when one model cannot terminate. 
 \nextopt
 \optdefault{pred\_ofv\_start\_t}{X}
@@ -79,7 +80,7 @@ If minimization is not successful, PsN can do a retry with cut thetas (only lass
 \optdefault{min\_retries}{N}
 Do not set this option with lasso; it may interfere with the handling of runs with rounding errors. 
 \nextopt
-\optdefault{seed}{X}
+\optdefault{seed}{string}
 A seed for the random number generator can be specified. This makes the run reproducible. It acts as a starting point for the random number generator to produce the random number that will be used for creating the cross-validation data sets. 
 \nextopt
 \optdefault{threads}{X}
@@ -206,12 +207,13 @@ Subsequent models tested during cross-validation have other values of T-VALUE.
 \item Compute covariate statistics.
 \item Create the lasso model by adding all covariate relations to input model. Normalize parameters using covariate statistics. See details in lasso reference article.
 \item Create cross-validation data sets, possibly using stratification. Divide data into N groups. Create N estimation datasets where estimation dataset j is the total dataset minus group j. There are N prediction datasets where prediction dataset j is identical to group j. 
-\item Set t=start\_t. 
-\item Run an xv step with lasso model unless option pred\_ofv\_start\_t is given. An xv step consists of N estimations, one for each estimation dataset, and N predictions, one for each prediction dataset. The prediction j is a MAXEVAL=0 run with initial estimates set to the final estimates from estimation run j. (Note: \emph{the default starting position is start\_t=0, where cross validation of the base model is performed})
-\item Set t=t+step\_t and run an xv step (see step 6).
-\item Check convergence. If convergence is not reached, goto 7. If converged continue to 8.
+\item Set t=start\_t. The default starting position is start\_t=0.
+If option pred\_ofv\_start\_t is given then go to step 6 (change t again), otherwise go to step 7 (run an xv step).
+\item Set t=t+step\_t. 
+\item Run an xv step with lasso model. An xv step consists of N estimations, one for each estimation dataset, and N predictions, one for each prediction dataset. The prediction j is a MAXEVAL=0 run with initial estimates set to the final estimates from estimation run j. Note: if t=0 the lasso model collapses to the base model.
+\item Check convergence. If convergence is not reached, go back to step 6. If converged continue to 9.
 \item Run the lasso model with optimal t on the whole (original) dataset. 
-10. Add the covariate relations and parameters from the optimal lasso model run (only relations with thetas larger than cutoff) to the input model, fix the selected covariate thetas as the lasso restriction has been removed and run the input model on the whole dataset.
+\item Add the covariate relations and parameters from the optimal lasso model run (only relations with thetas larger than cutoff) to the input model, fix the selected covariate thetas as the lasso restriction has been removed and run the input model on the whole dataset.
 \end{enumerate}
 
 

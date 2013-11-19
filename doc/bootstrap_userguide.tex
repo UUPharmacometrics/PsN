@@ -1,6 +1,7 @@
 \input{inputs/format_header.tex}
 \guidetitle{Bootstrap user guide}
 \begin{document}
+%revision 2013-11-15 Kajsa
 
 \maketitle
 
@@ -67,7 +68,7 @@ For a complete list of common options see common\_options\_defaults\_versions.pd
 \optdefault{directory}{bootstrap\_dirN}
 The directory in which the script will run NONMEM can be named. The default name is “bootstrap\_dirN” where N is increased by 1 each time you run the script. If the run is aborted or crashes, setting the directory to the one from which the script was running earlier can be done. PsN will then not run the model files that had finished, saving time. 
 \nextopt
-\optdefault{seed}{N}
+\optdefault{seed}{string}
 A seed for the random number generator can be specified. This makes the run reproducible. Important note: the results of two runs will be different even if the seed is the same if the lst-file of the base model is present at the start of one run but not the other. Running the base model changes the state of the random number generator, and therefore the bootstrapped datasets will be different depending on if the base model is run or not before generating the  new datasets. 
 \nextopt
 \optdefault{clean}{N}
@@ -86,7 +87,9 @@ With -help bootstrap will print a longer help message.
 
 The file bootstrap\_results.csv contains statistics and summaries specific for the bootstrap.
 
-The raw\_results1.csv file is a standard PsN file containing raw result data for termination status, parameter estimates, uncertainty estimates etc. for all model estimations. The first row is for the original dataset. 
+The raw\_results1.csv file is a standard PsN file containing raw result data for termination status, parameter estimates, uncertainty estimates etc. for all model estimations. The first row is for the original dataset.
+
+A file delta\_ofv.csv is created if option -dofv is set, see section Computing delta-ofv.
 
 included\_individuals1.csv: One row per bootstrapped dataset. Each row consists of the ID:s of the individuals in that dataset. Note that different individuals may have the same ID number in a NONMEM dataset. The numbers appear in the order the individuals appear in the datafile.
 
@@ -114,7 +117,7 @@ The program creates N (N=number of samples), datasets of size M (M=sample\_size)
 
 \section{Computing delta-ofv}
 
-If option -dofv is set, PsN will perform a MAXEVAL=0 run for each set of bootstrap parameter estimates using the original model and data. This is done after all other runs and computations are completed, including any Bca step. The results will be printed to a table file called delta\_ofv.csv where the first column is bootstrap data id and the second delta-ofv which is computed as 
+If option -dofv is set, PsN will perform a MAXEVAL=0 run for each set of bootstrap parameter estimates using the original model and data. This is done after all other runs and computations are completed, including any Bca step. The results will be printed to a csv file called delta\_ofv.csv where the first column is bootstrap data id and the second delta-ofv which is computed as 
 $\mathrm{ofv}_{bs,maxev=0}$ – $\mathrm{ofv}_{original}$. If option -mceta=N is set and NM7.3 or later is used and the estimation method is classical then option MCETA=N will be set in \$ESTIMATION. There will be up to 200 \$PROBLEMs defined in each model file (control stream) to reduce PsN overhead when calling NONMEM.
 
 It is possible to restart a previously run bootstrap to compute delta-ofv without rerunning all bootstrap estimations, provided that option -clean was set to 2 or less in the original run. Simply run bootstrap again with option -directory set to the existing run directory. PsN will intiate reruns of all bootstrap samples, but reread existing output instead of really starting NONMEM. Then the delta-ofv models will be run. If option -bca was set in the original bootstrap run it is important to set -bca also in the restart, otherwise the jackknife results will be overwritten. 

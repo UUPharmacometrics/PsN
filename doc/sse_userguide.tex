@@ -1,5 +1,6 @@
 \input{inputs/format_header.tex}
 \guidetitle{SSE user guide}
+%review Kajsa 2013-11-19
 
 \begin{document}
 
@@ -9,11 +10,7 @@
 \section{Introduction}
 
 
-SSE – Stochastic Simulation and Estimation – is a tool for model comparison and hypothesis testing. First, using a given model, henceforth called the input model, a number of simulated datasets are generated. Then the input model and a set of alternative models are fitted to the simulated data. Finally, a set of statistical measures are computed for the parameter estimates and objective function values of the various models. 
-
-
-\section{Examples}
-
+SSE – Stochastic Simulation and Estimation – is a tool for model comparison and hypothesis testing. First, using a given model, henceforth called the input model, a number of simulated datasets are generated. Then the input model and a set of alternative models are fitted to the simulated data. Finally, a set of statistical measures are computed for the parameter estimates and objective function values of the various models. Examples:
 \begin{verbatim}
 sse moxonidine.mod -samples=1000 -alternative_models=alt1.mod,alt2.mod
 
@@ -21,17 +18,16 @@ sse pheno.mod -samples=500 -seed=12345 -threads=5
 \end{verbatim}
 
 \section{Input and options}
-\subsection{SSE-specific input}
 A model file is required on the command-line.
 \begin{optionlist}
 \optdefault{samples}{N}
 The number of simulated datasets to generate is a required option. N must be greater than or equal to 2. 
 \nextopt
-\optdefault{alternative\_models }{alt1,alt2,alt3}
-A space-free comma-separated list of model files with alternative models is optional. If not given, only the input model will be fitted to the simulated data. 
+\optdefault{alternative\_models}{alt1,alt2,alt3}
+A comma-separated list of model files with alternative models is optional. If not given, only the input model will be fitted to the simulated data. 
 \nextopt
-\optname{no-estimate\_simulation}
-By default, the simulated datasets are estimated with the input model. The OFV-values from these estimations are used as reference when computing statistics on results from estimations with the alternative models. By using the option -no-estimate\_simulation (no option value), the input model will not be used to estimate (only to simulate). Instead, either a given reference OFV-value will be used (see option -ref\_ofv) or the OFV-values from the first alternative model will be treated as the reference ones. Regardless of how option -no-estimate\_simulation is set, the initial estimates in the simulation model will be used as reference when computing bias, rmse and rsebias for theta, omega and sigma. If simulating with uncertainty then the reference values will be different for each simulated dataset. 
+\optname{estimate\_simulation}
+By default, the simulated datasets are estimated with the input model. The OFV-values from these estimations are used as reference when computing statistics on results from estimations with the alternative models. If -no-estimate\_simulation (no option value) is set, the input model will not be used to estimate (only to simulate). Instead, either a given reference OFV-value will be used (see option -ref\_ofv) or the OFV-values from the first alternative model will be treated as the reference ones. Regardless of how option -no-estimate\_simulation is set, the initial estimates in the simulation model will be used as reference when computing bias, rmse and rsebias for theta, omega and sigma. If simulating with uncertainty then the reference values will be different for each simulated dataset. 
 \nextopt
 \optdefault{ref\_ofv}{X}
 A reference OFV-value to use when computing statistics for the results from the alternative models. This option is only allowed together with -no-estimate\_simulation. 
@@ -51,8 +47,7 @@ Only relevant in combination with -rawres\_input. Default 1. The number of resul
 \optdefault{in\_filter}{comma-separated list of conditions}
 Only relevant in combination with -rawres\_input. Default not used. The parameter estimates lines in the file can be filtered on values in the different columns. When specifying which column(s) the filtering should be based on, the exact column name must be used, e.g. minimization\_successful. Filtering can only be based on columns with numeric values. The allowed relations are .gt. (greater than), .lt. (less than) and .eq. (equal to). If the value in the filter column is 'NA' then that parameter set will be skipped, regardless of the defined filter relation. Conditions are separated with commas. If the remaining number of lines after filtering is smaller than -samples, sse will stop with an error message. Then the user must either change the filtering rules or change -samples. If the user has created a file with parameter estimates outside of PsN, filtering can be done on any numeric column in that file. Do not set column headers containing .eq. or .lt. or .gt.in the user-generated file as this would interfere with the in\_filter option syntax.
 
-
-Example:
+Example (there must be no linebreaks in the actual command):
 \begin{verbatim}
 -in_filter=minimization_successful.eq.1,
 significant_digits.gt.3.5
@@ -89,7 +84,7 @@ To be able to reuse old simulation datasets and runs do not set clean to more th
 \optdefault{directory}{sse\_dirX}
 The directory in which the script will run NONMEM can be named. The default name is “sse\_dirX” where X is increased by 1 each time you run the script. If the run is aborted or crashes, setting the directory to the one from which the script was running earlier can be done. PsN will then not run the model files that had finished, saving time. Note that same set of options must be given as when the run was started the first time. 
 \nextopt
-\optdefault{seed}{X}
+\optdefault{seed}{string}
 A seed for the random number generator can be specified. This makes the run reproducible. It acts as a starting point for the random number generator to produce the random number that will be present in the simulation control file. 
 \nextopt
 \optdefault{threads}{X}
@@ -207,4 +202,12 @@ In sse\_results.csv no individual parameter estimates are reported. Mean, median
 
 The OFV values are treated differently. By default, the OFV value obtained when estimating parameters using the input model is used as the reference for each simulated dataset, and the OFV values obtained when estimating the alternative models are compared with this reference. There are two alternative methods. The first is to set the option -no-estimate\_simulation without setting -ref\_ofv. In this case the OFV-values from the first alternative model are used as references. The second alternative is to set -no-estimate\_simulation together with -ref\_ofv=X, and then X is used as the reference OFV value for all alternative models.
 
+\section{Warnings}
+The sse can fill up the disk unless the user is careful. 
+The sse will not delete existing \$TABLE from any of the input models. 
+This is intentional, because in some applications table output is needed.
+The number of table files generated will be the number if \$TABLE multiplied with the number of samples.
+Also, if the user has supplied \$SIMULATION in the simulation model, PsN will only change SEED in there, nothing else. 
+In particular, NSUBS will not be changed, although NSUBS should not be set at all for the sse. If the user 
+accidentally sets NSUBS=N, all output will be multiplied by N.
 \end{document}

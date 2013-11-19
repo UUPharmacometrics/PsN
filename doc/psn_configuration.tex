@@ -1,13 +1,13 @@
 \input{inputs/format_header.tex}
 \guidetitle{PsN configuration}
-
+%review Kajsa 2013-11-18 
 \begin{document}
 
 \maketitle
 
 \section{The quick and easy way}
 Let the installation script create psn.conf for you. If you have already installed PsN and did not let the script create psn.conf but have changed your mind now, redo the PsN installation and have psn.conf automatically generated this time. If you will run PsN locally on your computer with a standard NONMEM install you are then done.
-If you have a previous PsN 3 installation then you can copy psn.conf from the old installation to the new one.
+If you have a previous PsN 3 installation then you can copy psn.conf from the old installation to the new one, and that will work.
 If you have a NMQual installation of NONMEM you need to read the section  “Running  NMQual-generated perl scripts from within PsN”, change one or a few lines in the [nm\_versions] section of psn.conf, and possibly redo the NMQual installation of NONMEM. 
 If you have other needs then you need to read the rest of this document.
 
@@ -18,7 +18,7 @@ The configuration file psn.conf is required to make PsN run correctly. In the co
 PsN will look for psn.conf at two different places, in PsN installation directory and in either
 user's home-directory (UNIX) or the user's desktop (Microsoft Windows). If a user-level configuration file is found, the settings in this file will override the settings in the system-wide (PsN installation directory) configuration file. This is important to remember when trying to sort out a PsN-related problem.
 
-\section{Section in psn.conf}
+\section{Sections in psn.conf}
 The organizing of settings in psn.conf is important. They must be set in the correct section. A section starts with
 \verb|[section_name]| 
 (a new line where square brackets enclose the section name), for example
@@ -44,7 +44,9 @@ Options with values:
 threads = 5
 sge_prepend_flags = -V 
 \end{verbatim}
-Options for specific scripts, e.g. llp, can be set in the sections \verb|[default_<scriptname>_options]| , for example \verb|[default_llp_options]|. New sections may be added, just set the heading \verb|default_<scriptname>_options| in square brackets. Example:
+Options for specific scripts, e.g. llp, can be set in the sections\\
+\verb|[default_<scriptname>_options]| , for example\\
+ \verb|[default_llp_options]|. New sections may be added, example:\\
 \verb|[default_sse_options]|
 
 \section{Warning}
@@ -63,31 +65,41 @@ So far NONMEM7.2 is supported if option -nmfe, -run\_on\_lsf\_nmfe, -run\_on\_sl
 
 
 \section{Perl executable}
-
-
 For users with Windows7 and 64bit, and for Windows users in general, this is an important section to read unless you let the installation script create psn.conf.
 
 In psn.conf, in the top section that does not have a header, it is sometimes necessary to set
 
 \begin{enumerate}
-		\item remote\_perl=some\_path\_to\_perl
+\item remote\_perl=some\_path\_to\_perl
 where the default is simply 'perl'. It is not used with run\_lsf\_nmfe, run\_on\_sge\_nmfe or run\_on\_slurm, but it is used together with run\_on\_lsf, run\_on\_torque, run\_on\_zink and run\_on\_sge. It is the path to the Perl version for running nonmem.pm (where the nonmem runs are started but no setup or analysis is done) on the remote system.
 
-	\item perl=some\_path\_to\_perl
+\item perl=some\_path\_to\_perl
 where the default is \verb|C:\Perl\bin\perl.exe| on Windows and perl on Unix. This is the Perl version used to run nonmem.pm when using local execution. If you are using Windows, the Perl version should be the same as the one chosen during the installation using the setup script (the choice for "Path to perl binary used to run Utilities” in the setup).
-For users with Windows7 and 64bit, the default setting in psn.conf is likely to not work, most likely the correct setting is \verb|C:\Perl64\bin\perl.exe|. The installation script will probably find the correct version, pay attention to what it suggests for "Path to perl binary used to run Utilities” and copy to psn.conf. 
+For users with Windows7 and 64bit, the default setting in psn.conf is likely to not work, most likely the correct setting is 
+\verb|C:\Perl64\bin\perl.exe|. 
+The installation script will probably find the correct version, pay attention to what it suggests for "Path to perl binary used to run Utilities” and copy to psn.conf. 
 \end{enumerate}
 
 All other parts of PsN (setting up runs, bootstrapping datasets, extracting results, performing analyses...) is done using the perl version set during installation. This version is hard 
 coded into the programs. Obviously this perl version can be different for different versions of PsN.
 
-If there are spaces in the Windows file paths, e.g.  \verb|C:\Program files\ACTIVEPERL.588.EN\bin\perl.exe| then the following trick must be used: Take the first 6 characters of the path level containing a space (e.g. Progra), append a tilde, then a number representing the instance of the replaced pattern, i.e. 1, giving \verb|C:\Progra~1\ACTIVEPERL.588.EN\bin\perl.exe|. If you have more spaces in the same path (e.g. \verb|C:\Program Files\ACTIVE PERL\version xxx\|) the replacement would be \verb|C:\Progra~1\ACTIVE~1\versio~1\|
+If there are spaces in the Windows file paths, e.g. \\
+\verb|C:\Program files\ACTIVEPERL.588.EN\bin\perl.exe| 
+then the following trick must be used: Take the first 6 characters of the path level containing a space (e.g. Progra), append a tilde, then a number representing the instance of the replaced pattern, i.e. 1, 
+giving\\
+\verb|C:\Progra~1\ACTIVEPERL.588.EN\bin\perl.exe|. 
+If you have more spaces in the same path, e.g.\\ 
+\verb|C:\Program Files\ACTIVE PERL\version xxx\|) 
+the replacement would be \\
+\verb|C:\Progra~1\ACTIVE~1\versio~1\|
 
 \section{Essential NONMEM information}
 It is necessary to specify NONMEM installation information in psn.conf. This is done in the section
 \begin{verbatim}
 [nm_versions]
+\end{verbatim}
 in psn.conf. The format is 
+\begin{verbatim}
 name=installation_directory,version_number
 \end{verbatim}
 The NONMEM version number must only be 5, 6 or 7 for older PsN versions, but must include subversion number, e.g. as in 7.2, starting with PsN-3.4.2. The major version number and the subversion number should be entered with a dot in between, no spaces.  
