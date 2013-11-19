@@ -140,7 +140,8 @@ has 'tbs_thetanum' => ( is => 'rw', isa => 'Int' );
 has 'synced' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'target' => ( is => 'rw', isa => 'Str', default => 'mem', trigger => \&_target_set );
 has 'missing_data_token' => ( is => 'rw', isa => 'Maybe[Int]', default => -99 );
-
+has 'last_est_complete' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'niter_eonly' => ( is => 'rw', isa => 'Maybe[Int]' );
 
 # FIXME: This is a workaround to not execute triggers at construction.
 my $in_constructor = 0;
