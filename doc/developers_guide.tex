@@ -14,6 +14,17 @@ This document is intended for PsN developers. It is work in progress.
 The documentation is made in \LaTeX and pdfs can be generated with \verb|make doc|. The
 packages texlive-extra-util and texlive-science are needed to build all documents.
 
+\section{Revision control}
+PsN use git as revision control system. This chapter give some best practices.
+
+\subsection{Tagging}
+All releases of PsN should be tagged with its version number with an annotated tag. Remember
+that tags need to be pushed separately.
+\begin{verbatim}
+git tag -a 4.0.0 - m "My tag message"
+git push origin --tags
+\end{verbatim}
+
 \section{Style guide}
 
 \subsection{Methods}

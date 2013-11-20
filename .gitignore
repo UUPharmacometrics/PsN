@@ -20,7 +20,6 @@ lib/file.pm
 lib/nonmem.pm
 lib/output.pm
 lib/output/problem.pm
-lib/output/problem/subproblem.pm
 lib/status_bar.pm
 lib/tool.pm
 lib/tool/bootstrap.pm

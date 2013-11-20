@@ -1332,7 +1332,7 @@ sub get_rawres_params
 	my %parm = validated_hash(\@_,
 		 filename => { isa => 'Str', optional => 0 },
 		 filter => { isa => 'ArrayRef[Str]', optional => 1 },
-		 string_filter => { isa => 'ArrayRef[Str]', optional => 1 },
+		 string_filter => { isa => 'Maybe[ArrayRef[Str]]', optional => 1 },
 		 require_numeric_ofv => { isa => 'Bool', default => 0, optional => 1 },
 		 offset => { isa => 'Int', optional => 0 }
 	);
