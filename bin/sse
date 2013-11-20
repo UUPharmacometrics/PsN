@@ -24,16 +24,18 @@ my %options;
 ## Declare the options
 
 my %required_options = ( 'samples:i' => undef);
-my %optional_options = ( 'alternative_models:s' => 'alt1.mod,alt2.mod,...',
-			 'ref_ofv:f' => undef,
-			 'parallel_simulations:i' => undef,
-			 'estimate_simulation!' => undef,
-			 'rawres_input:s' => undef,
-			 'offset_rawres:i' => undef,
-			 'in_filter:s' => undef,
-			 'out_filter:s' => undef,
-			 'recompute:s' => undef,
-			 'add_models'=> undef);
+my %optional_options = (
+	'alternative_models:s' => 'alt1.mod,alt2.mod,...',
+	'ref_ofv:f' => undef,
+	'parallel_simulations:i' => undef,
+	'estimate_simulation!' => undef,
+	'rawres_input:s' => undef,
+	'offset_rawres:i' => undef,
+	'in_filter:s' => undef,
+	'out_filter:s' => undef,
+	'recompute:s' => undef,
+	'add_models'=> undef,
+	'random_estimation_inits' => undef);
 
 my $res = GetOptions( \%options,
 		      @common_options::get_opt_strings,
@@ -213,7 +215,13 @@ $help_text{-add_models} = <<'EOF';
       estimated.
       The numbering of the extra models will start at the number of the last old
       alternative plus 1.
+EOF
 
+$help_text{-random_estimation_inits} = <<'EOF';
+      -random_estimation_inits
+
+			This option turns off simulation with uncertainty and instead give the random
+			inputs to the estimation step. Need to have a rawres_input file specified.
 EOF
 
 $help_text{Post_help_message} = <<'EOF';
@@ -393,22 +401,23 @@ if ( defined $options{'out_filter'} ){
   }	
 }
 
-my $sse = tool::sse -> 
-    new ( eval( $common_options::parameters ),
-	  estimate_simulation => $options{'estimate_simulation'},
-	  ref_ofv            => $options{'ref_ofv'},
-	  parallel_simulations => $options{'parallel_simulations'},
-	  add_models          => $options{'add_models'},
-	  rawres_input        => $options{'rawres_input'},
-	  offset_rawres       => $options{'offset_rawres'},
-	  covariance_file     => $options{'covariance_file'},
-	  models	     => [ $model ],
-	  top_tool           => 1,
-	  in_filter             => \@in_filter,
-	  out_filter             => \@out_filter,
-	  recompute             => $options{'recompute'},
-	  alternative_models => \@alternatives,
-	  samples            => $options{'samples'} );
+my $sse = tool::sse -> new (
+	eval( $common_options::parameters ),
+	estimate_simulation		=> $options{'estimate_simulation'},
+	ref_ofv            		=> $options{'ref_ofv'},
+	parallel_simulations	=> $options{'parallel_simulations'},
+	add_models          	=> $options{'add_models'},
+	rawres_input        	=> $options{'rawres_input'},
+	offset_rawres       	=> $options{'offset_rawres'},
+	covariance_file     	=> $options{'covariance_file'},
+	models	     					=> [ $model ],
+	top_tool           		=> 1,
+	in_filter             => \@in_filter,
+	out_filter            => \@out_filter,
+	recompute             => $options{'recompute'},
+	alternative_models 		=> \@alternatives,
+	samples            		=> $options{'samples'},
+	random_estimation_inits => $options{'random_estimation_inits'}, );
 
 
 $sse-> print_options (cmd_line => $cmd_line,
