@@ -193,7 +193,7 @@ optional, default 0. Mainly for use with -predcorr. lnDV=0 or 1may be used indep
 	\item -lnDV=1   =	DV and PRED values will be exponentiated. Indicates log-transformed DV and that VPC results should be presented on normal scale. May be used independently of -predcorr.
 	\item -lnDV=2   =	Only in combination with –predcorr. Indicates log-transformed DV that should be maintained.
 	\item -lnDV=3  =  DV and PRED values will be log-transformed. May be used independently of \mbox{-predcorr}.
-\end{itemize} \\
+\end{itemize}
 \nextopt
 \optdefault{boxcox\_lambda}{x}
 Setting this variable indicates that data is Box-Cox transformed. Data will be transformed to normal scale for eventual prediction correction, and retransformed to Box-Cox before analysis and output. Option cannot be used with lnDV. The transformation is (DV*lambda+1)**(1/lambda) for Box-Cox to normal, and (DV**lambda-1)/lambda for normal to Box-Cox. 

@@ -325,24 +325,65 @@ start modelfit_setup
 							croak("get_rawres_params returned undef");
 						}
 
-						$sim_model -> update_inits(from_hash => $sampled_params_arr->[0]); 
-						my @paramarr = ();
+						if ( $self->random_estimation_inits){
+							#do not simulate with uncertainty but estimate with random inits instead.
+							#must still store simulation initial values even if do not simulate with uncertainty
+
+							my $tmp = $sim_model->nsigmas(problem_numbers => [1],
+														  with_correlations => 1);
+							my $n_initials = $tmp->[0];
+							$tmp = $sim_model->initial_values(problem_numbers => [1],	
+															  parameter_type => 'sigma',
+															  get_same => 1);
+							my @sigmavalues=@{$tmp->[0]};
+							croak('Error number of initial sigmas.') 
+								unless (scalar(@sigmavalues) == $n_initials);
+
+							$tmp = $sim_model->nomegas(problem_numbers => [1],
+													   with_correlations => 1);
+							$n_initials = $tmp->[0];
+							$tmp = $sim_model->initial_values(problem_numbers => [1],	
+															  parameter_type => 'omega',
+															  get_same => 1);
+							my @omegavalues=@{$tmp->[0]};
+							croak('Error number of initial omegas.') 
+								unless (scalar(@omegavalues) == $n_initials);
+							$tmp = $sim_model->nthetas(problem_number => 1);
+
+							$n_initials = $tmp;
+							$tmp = $sim_model->initial_values(problem_numbers => [1],	
+															  parameter_type => 'theta');
+							my @thetavalues=@{$tmp->[0]};
+							croak('Error number of initial thetas.') 
+								unless (scalar(@thetavalues) == $n_initials);
+
+							$self -> initial_values -> {$model_index} -> {'theta'} = join(',',@thetavalues);
+							$self -> initial_values -> {$model_index} -> {'omega'} = join(',',@omegavalues);
+							$self -> initial_values -> {$model_index} -> {'sigma'} = join(',',@sigmavalues);
+
+
+						}else{
+							$sim_model -> update_inits(from_hash => $sampled_params_arr->[0]); 
+							my @paramarr = ();
 						
-						foreach my $label (@{$thetalabels[0]}){
-							push(@paramarr,$sampled_params_arr->[0]->{'theta'}->{$label});
+							foreach my $label (@{$thetalabels[0]}){
+								push(@paramarr,$sampled_params_arr->[0]->{'theta'}->{$label});
+							}
+							$self -> initial_values -> {$model_index} -> {'theta'} = join(',',@paramarr);
+							@paramarr = ();
+							foreach my $label (@{$omegalabels[0]}){
+								push(@paramarr,$sampled_params_arr->[0]->{'omega'}->{$label});
+							}
+							$self -> initial_values -> {$model_index} -> {'omega'} = join(',',@paramarr);
+							@paramarr = ();
+							foreach my $label (@{$sigmalabels[0]}){
+								push(@paramarr,$sampled_params_arr->[0]->{'sigma'}->{$label});
+							}
+							$self -> initial_values -> {$model_index} -> {'sigma'} = join(',',@paramarr);
 						}
-						$self -> initial_values -> {$model_index} -> {'theta'} = join(',',@paramarr);
-						@paramarr = ();
-						foreach my $label (@{$omegalabels[0]}){
-							push(@paramarr,$sampled_params_arr->[0]->{'omega'}->{$label});
-						}
-						$self -> initial_values -> {$model_index} -> {'omega'} = join(',',@paramarr);
-						@paramarr = ();
-						foreach my $label (@{$sigmalabels[0]}){
-							push(@paramarr,$sampled_params_arr->[0]->{'sigma'}->{$label});
-						}
-						$self -> initial_values -> {$model_index} -> {'sigma'} = join(',',@paramarr);
+
 					}elsif (defined $self->covariance_file){
+						#another way of simualting with uncertainty
 						#cannot have tnpri if in here, need not use $self->probnum()
 						@thetalabels = @{$sim_model -> labels( parameter_type => 'theta', generic => 0)};
 						@omegalabels = @{$sim_model -> labels( parameter_type => 'omega', generic => 0)};
@@ -380,6 +421,7 @@ start modelfit_setup
 						}
 						$self -> initial_values -> {$model_index} -> {'sigma'} = join(',',@paramarr);
 					}elsif ($self->have_nwpri() or $self->have_tnpri()){
+						#another way of simualting with uncertainty
 						#only store sigmas. thetas and omegas come after sim
 						#must use $self->probnum()
 						@thetalabels = @{$sim_model -> labels( parameter_type => 'theta', generic => 0)};
@@ -408,6 +450,7 @@ start modelfit_setup
 
 
 					} else {
+						#we do not simulate with uncertainty
 						#need not use probnum
 
 						my $tmp = $sim_model->nsigmas(problem_numbers => [1],
@@ -540,7 +583,7 @@ start modelfit_setup
 						target      => 'disk',
 						copy_data   => 0,
 						copy_output => 0);
-					if (defined $sampled_params_arr) {
+					if (defined $sampled_params_arr and (not $self->random_estimation_inits)) {
 						$sim_model->update_inits(from_hash => $sampled_params_arr->[($sim_no-1)]); 
 						my @paramarr = ();
 						foreach my $label (@{$thetalabels[0]}) {
@@ -561,6 +604,7 @@ start modelfit_setup
 						$self -> initial_values -> {($sim_no-1)} -> {'sigma'} = 
 							$self -> initial_values -> {0} -> {'sigma'};
 					} else {
+						#no simulation with uncertainty, just copy inits from first sample, because they are all the same
 						$self -> initial_values -> {($sim_no-1)} -> {'theta'} = 
 							$self -> initial_values -> {0} -> {'theta'};
 						$self -> initial_values -> {($sim_no-1)} -> {'omega'} = 
@@ -1115,6 +1159,7 @@ start modelfit_setup
 													   record_number => 0); #0 means all
 					
 				} else {
+					#not sim_no==1
 					$est_alternative = $alt_est_models[0] ->
 						copy( filename    => $self -> directory.'m'.$model_number.'/'.$alt_name,
 							  target      => 'disk',
@@ -1130,6 +1175,11 @@ start modelfit_setup
 					$est_alternative -> shrinkage_stats( enabled => 1 );
 
 				}
+				if (defined $sampled_params_arr and $self->random_estimation_inits) {
+					$est_alternative -> update_inits(from_hash => $sampled_params_arr->[$sim_no-1]);
+
+				}
+
 				push( @alt_est_models, $est_alternative );
 
 			} #end loop over sim_no
@@ -1677,7 +1727,7 @@ start prepare_results
 	$return_section{'labels'} = [[],['Date','samples run','simulation model',
 									 'PsN version','NONMEM version','Sim. with uncertainty']];
 	my $uncertainty = 'no';
-	if (defined $self->rawres_input()){
+	if (defined $self->rawres_input() and (not $self->random_estimation_inits)){
 		$uncertainty = 'raw results file';
 	}elsif ($self->have_nwpri()){
 		$uncertainty = 'NWPRI';
@@ -1708,7 +1758,7 @@ start prepare_results
 		@reference_values=('Alt. model '.$self->first_alternative.' result');
 	}
 
-	unless (defined $self->rawres_input() or $self->have_nwpri() or $self->have_tnpri()){
+	unless ((defined $self->rawres_input() and $self->random_estimation_inits) or $self->have_nwpri() or $self->have_tnpri()){
 		foreach my $measure ( 'theta','omega','sigma' ){
 			my $tmp = $model->indexes(problem_numbers => [$self->probnum()],
 									  parameter_type => $measure);
@@ -1927,7 +1977,7 @@ start prepare_results
 												 end_row_index => $model_index*$samples+$samples-1,
 												 initial_values => $init );
 
-					  unless (defined $self->rawres_input() or $self->have_nwpri() or $self->have_tnpri()){
+					  unless ((defined $self->rawres_input() and $self->random_estimation_inits)or $self->have_nwpri() or $self->have_tnpri()){
 						  #not sim with uncertainty, all inits are the same
 						  $rse = ($init->[0] != 0)? 100*$stdev/(($init->[0])*sqrt($samples)) : 'NA';
 					  }
