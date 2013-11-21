@@ -19,7 +19,6 @@ lib/debug.pm
 lib/file.pm
 lib/nonmem.pm
 lib/output.pm
-lib/output/problem.pm
 lib/status_bar.pm
 lib/tool.pm
 lib/tool/bootstrap.pm

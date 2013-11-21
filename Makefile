@@ -149,7 +149,6 @@ DIALIBFILES=debug.pm \
 	file.pm \
 	data/individual.pm \
 	data.pm \
-	output/problem.pm \
 	output.pm \
 	tool.pm \
 	tool/modelfit.pm \
