@@ -1,6 +1,7 @@
 *~
 *.tar.gz
 *.zip
+*.swp
 PsN-Source/*
 doc/*.aux
 doc/*.log
@@ -18,7 +19,6 @@ lib/data/individual.pm
 lib/debug.pm
 lib/file.pm
 lib/nonmem.pm
-lib/output.pm
 lib/status_bar.pm
 lib/tool.pm
 lib/tool/bootstrap.pm

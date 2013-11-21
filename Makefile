@@ -149,7 +149,6 @@ DIALIBFILES=debug.pm \
 	file.pm \
 	data/individual.pm \
 	data.pm \
-	output.pm \
 	tool.pm \
 	tool/modelfit.pm \
 	tool/llp.pm \
@@ -264,9 +263,6 @@ libgen/tool/scm/config_file.pm libgen/tool/scm.pm : diagrams/scm.dia
 
 libgen/tool.pm : diagrams/tool.dia
 	$(DIA2CODE) -t perl -d $(DIRPM) diagrams/tool.dia
-
-libgen/output%.pm : diagrams/output.dia
-	$(DIA2CODE) -t perl -d $(DIRPM) diagrams/output.dia
 
 documents: $(DOCUMENTS)
 
