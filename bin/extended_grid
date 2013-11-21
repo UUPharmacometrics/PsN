@@ -355,8 +355,7 @@ foreach my $id_num ( 1..$n_id_to_simulate ){
     push( @new_id_rows, join(',',@new_row ) );
   }
   my $new_id = data::individual -> new( idcolumn => $last_id + $id_num,
-					subject_data => \@new_id_rows,
-					data_id => $data_copy->data_id );
+					subject_data => \@new_id_rows);
   push( @{$data_copy -> individuals}, $new_id );
 }
 

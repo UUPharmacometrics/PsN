@@ -147,7 +147,6 @@ DIALIBFILES=debug.pm \
 	status_bar.pm \
 	nonmem.pm \
 	file.pm \
-	data/individual.pm \
 	data.pm \
 	tool.pm \
 	tool/modelfit.pm \

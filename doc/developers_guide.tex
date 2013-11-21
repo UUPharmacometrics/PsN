@@ -1,5 +1,6 @@
 \input{inputs/format_header.tex}
 \guidetitle{Developer's guide}
+\usepackage{hyperref}
 
 \begin{document}
 
@@ -28,6 +29,24 @@ git push origin --tags
 \section{Style guide}
 
 \subsection{Methods}
+
+All methods should validate their parameters with validated\_hash in MooseX::Params::Validate
+
+\begin{verbatim}
+use MooseX::Params::Validate;
+
+sub my_method
+{
+  my ($self, %parm) = validated_hash(@_,
+    parameter1 => { isa => 'Str', optional => 0 },
+    parameter2 => { isa => 'Num', default => '28' },
+  );
+
+  # ...
+}
+\end{verbatim}
+
+See the MooseX::Params::Validate documentation \cite{params} and Moose::Types documentation \cite{types} for more information.
 
 Names of private methods should start with an underscore.
 \begin{verbatim}
@@ -79,5 +98,11 @@ don't use parentheses for getters
     print "Is my_file\n";
   }
 \end{verbatim}
+
+\begin{thebibliography}{1}
+	\bibitem{params} {\em MooseX::Params::Validate}, \url{http://search.cpan.org/\~drolsky/MooseX-Params-Validate-0.18/lib/MooseX/Params/Validate.pm}, CPAN
+	\bibitem{types} {\em Moose::Manual::Types}, \url{http://search.cpan.org/~ether/Moose-2.1005/lib/Moose/Manual/Types.pod}, CPAN
+\end{thebibliography}
+
 
 \end{document}

@@ -1,14 +1,33 @@
-# {{{ include
-
-start include statements
+package data::individual;
 use Carp;
 use ui;
-end include
+use Moose;
+use MooseX::Params::Validate;
 
-# }}} include statements
+has 'idcolumn' => ( is => 'rw', isa => 'Int', default => 1 );
+has 'idnumber' => ( is => 'rw', isa => 'Num', trigger => \&_idnumber_set );
+has 'subject_data' => ( is => 'rw', isa => 'ArrayRef' );
+has 'init_data' => ( is => 'rw', isa => 'ArrayRef' );
+
+# FIXME: This is a workaround to not execute triggers at construction.
+my $in_constructor = 0;
+
+sub BUILDARGS
+{
+	my $this = shift;
+
+	$in_constructor = 1;
+
+	return $this->SUPER::BUILDARGS(@_);
+}
 
 
-start new
+sub BUILD
+{
+	my $this = shift;
+
+	$in_constructor = 0;
+
 	# The idnumber attribute does not have an explicit default value but
 	# is, if no number is given, instead set to the value of the first
 	# id column which is assumed only to contain one value.
@@ -27,13 +46,34 @@ start new
 	    $this -> idnumber(@data[$this->idcolumn - 1] );
 	  }
 	} else {
-	  die "Error in data::individual -> new: No init_data specified.\n"
-	    unless ( defined $this->init_data );
-	  $this -> _read_data;
+	  die "Error in data::individual -> new: init_data not supported.\n";
+		#  unless ( defined $this->init_data );
+		#$this -> _read_data;
 	}
-end new
+}
 
-start copy
+sub _idnumber_set
+{
+	my $self = shift;
+	my $parm = shift;
+
+	if ($in_constructor) { return; }
+
+	if ( defined $parm ) {
+	  for( my $i = 0 ; $i < scalar(@{$self->subject_data}); $i++ ) {
+	    my @row = split( /,/, $self->subject_data->[$i] );
+	    $row[ $self->idcolumn - 1 ] = $parm;
+	    $self->subject_data->[$i] = join(',', @row);
+	  }
+	}
+}
+
+
+sub copy
+{
+	my $self = shift;
+	my $individual_copy;
+
 	my @new_data = ();
 	foreach my $row ( @{$self->subject_data} ) {
 		my $new_row = $row;
@@ -44,124 +84,66 @@ start copy
 						idcolumn     => $self->idcolumn,
 				    idnumber     => $self->idnumber,
 				    subject_data => \@new_data );
-end copy
 
-# {{{ diff
+	return $individual_copy;
+}
 
-start diff
-  my @data      = @{$self->subject_data};
-  my @diff_data = @{$against_individual -> subject_data};
-  for ( my $i = 0; $i <= $#data; $i++ ) {
-    my @data_row = split( /,/ , $data[$i] );
-    my @diff_data_row = split( /,/ , $diff_data[$i] );
-    if( $largest ) {
-      for( my $j = 0; $j <= $#columns; $j++ ) {
-				my $diff = $data_row[$columns[$j] - 1] - $diff_data_row[$columns[$j] - 1];
-		  	$diff = abs($diff) if( $absolute_diff );
-				if( $diff_as_fraction ) {
-	  			if ( defined $diff_data_row[$columns[$j] - 1] and not $diff_data_row[$columns[$j] - 1] == 0 ) {
-	    			$diff = $diff / $diff_data_row[$columns[$j] - 1];
-	  			} elsif ( not $diff == 0 ) { # If $diff == 0 we can leave it as it is even if we formally
-	    			print "ID: ",$self->idcolumn," ID2: ",$against_individual->idcolumn,"\n";
-	    			print "DATA1: ", join("\n", @data), "\n";
-	    			print "DATA2: ", join("\n", @diff_data), "\n";
-	    			# would require a division by the original value
-	    			croak("The difference of column ".$columns[$j].
-			  			" was requested as a fraction but the original value was ".
-			  			"found to be zero: a division is impossible." );
-	  			}
-				}
-
-				if ( not defined $diff_results{$columns[$j]} or not defined $diff_results{$columns[$j]}{'diff'} or $diff > $diff_results{$columns[$j]}{'diff'} ) {
-	  			$diff_results{$columns[$j]}{'diff'} = $diff;
-	  			$diff_results{$columns[$j]}{'self'} = $data_row[$columns[$j]-1];
-	  			$diff_results{$columns[$j]}{'test'} = $diff_data_row[$columns[$j]-1];
-				}
-			}
-    } else {
-      die "individual -> diff is only implemented for finding the largest difference at any observation at this point\n";
-    }
-  }
-end diff
-
-# }}} diff
-
-# {{{ drop_columns
-
-start drop_columns
-	my @new_data;
-	my @data = @{$self->subject_data};
-	for( my $i = 0; $i <= $#data; $i++ ) {
-	  my @new_row;
-	  my @data_row = split( /,/, $data[$i] );
-	  for( my $j = 0; $j < scalar @data_row; $j++ ) {
-	    push( @new_row, $data_row[$j] ) if ( not $drop[$j] );
-	  }
-	  push( @new_data, join( ',', @new_row ) );
-	}
-	$self->subject_data(\@new_data);
-end drop_columns
-
-# }}} drop_columns
-
-start evaluate_expression
-#not used anywhere, build on this for randtest?
-	my $new_expr;
-  my $data = $self->subject_data;
-	if ( defined $expression ) {
-	  if ( $all_rows ) {
-	    $result = 1;
-	    foreach my $row ( @{$data} ) {
-	      my @row = split( /,/ , $row );
-	      ( $new_expr = $expression ) =~ s/{}/\$row[ \$column-1 ]/g;
-	      $result = $result * eval( $new_expr );
-	    }
-	  } else {
-	    my @row = split( /,/, $data -> [0] );
-	    ( $new_expr = $expression ) =~ s/{}/\$row[ \$column-1 ]/g;
-	    $result = eval( $new_expr );
-	  }
-	}
-end evaluate_expression
-
-start factors
-	my @data = @{$self->subject_data};
-#factors is hash of values to ref of array of which line indices those values occur at.
-	for ( my $i = 0; $i <= $#data; $i++ ) {
-	  my @data_row = split( /,/, $data[$i] );
-	  push( @{$factors{$data_row[$column-1]}}, $i );
-	}
-end factors
-
-start idnumber
-	if ( defined $parm ) {
-	  for( my $i = 0 ; $i < scalar(@{$self->subject_data}); $i++ ) {
-	    my @row = split( /,/, $self->subject_data->[$i] );
-	    $row[ $self->idcolumn - 1 ] = $parm;
-	    $self->subject_data->[$i] = join(',', @row);
-	  }
-	}
-end idnumber
-
-start recalc_column
-	my ( $new_expr );
-	for( my $i = 0 ; $i < scalar(@{$self->subject_data}); $i++ ) {
-	  my @row = split( /,/, $self->subject_data->[$i] );
-    ( $new_expr = $expression ) =~ s/{}/\$row[ \$column-1 ]/g;
-    $row[ $column-1 ] = eval( $new_expr );
-	  $self->subject_data->[$i] = join(',', @row);
-	}
-end recalc_column
-
-start _read_data
-	if ( defined $self->init_data ) {
-	  $self->subject_data = $self->init_data;
-	  $self->init_data = undef;
-	}
-end _read_data
-
-start add_frem_lines
+sub evaluate_expression
 {
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+		column => { isa => 'Int', default => 1, optional => 1 },
+		expression => { isa => 'Str', optional => 1 },
+		all_rows => { isa => 'Bool', default => 0, optional => 1 }
+	);
+	my $column = $parm{'column'};
+	my $expression = $parm{'expression'};
+	my $all_rows = $parm{'all_rows'};
+	my $result = 0;
+
+	#not used anywhere, build on this for randtest?
+	my $new_expr;
+	my $data = $self->subject_data;
+	if ( defined $expression ) {
+		if ( $all_rows ) {
+			$result = 1;
+			foreach my $row ( @{$data} ) {
+				my @row = split( /,/ , $row );
+				( $new_expr = $expression ) =~ s/{}/\$row[ \$column-1 ]/g;
+				$result = $result * eval( $new_expr );
+			}
+		} else {
+			my @row = split( /,/, $data -> [0] );
+			( $new_expr = $expression ) =~ s/{}/\$row[ \$column-1 ]/g;
+			$result = eval( $new_expr );
+		}
+	}
+
+	return $result;
+}
+
+sub add_frem_lines
+{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+		 type_index => { isa => 'Int', optional => 0 },
+		 occ_index => { isa => 'Int', optional => 1 },
+		 mdv_index => { isa => 'Maybe[Int]', optional => 1 },
+		 evid_index => { isa => 'Int', optional => 1 },
+		 missing_data_token => { isa => 'Str', default => "-99", optional => 1 },
+		 cov_indices => { isa => 'Ref', optional => 1 },
+		 first_timevar_type => { isa => 'Int', optional => 0 }
+	);
+	my $type_index = $parm{'type_index'};
+	my $occ_index = $parm{'occ_index'};
+	my $mdv_index = $parm{'mdv_index'};
+	my $evid_index = $parm{'evid_index'};
+	my $missing_data_token = $parm{'missing_data_token'};
+	my $cov_indices = $parm{'cov_indices'};
+	my $first_timevar_type = $parm{'first_timevar_type'};
+	my @invariant_values;
+	my @timevar_values;
+
     sub median{
 	#input reference to array
 	#return median which is middle value if uneven number of values
@@ -325,13 +307,86 @@ start add_frem_lines
     
     $self->subject_data(\@newlines); #replace old data
     
+	return \@invariant_values ,\@timevar_values;
+}
+
+sub recalc_column
+{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+		 column => { isa => 'Int', optional => 1 },
+		 expression => { isa => 'Str', optional => 1 }
+	);
+	my $column = $parm{'column'};
+	my $expression = $parm{'expression'};
+
+	my ( $new_expr );
+	for( my $i = 0 ; $i < scalar(@{$self->subject_data}); $i++ ) {
+	  my @row = split( /,/, $self->subject_data->[$i] );
+    ( $new_expr = $expression ) =~ s/{}/\$row[ \$column-1 ]/g;
+    $row[ $column-1 ] = eval( $new_expr );
+	  $self->subject_data->[$i] = join(',', @row);
+	}
 
 }
-end add_frem_lines
+
+sub write
+{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+		 subj_data => { isa => 'ArrayRef[Str]', optional => 1 }
+	);
+	my @subj_data = $parm{'subj_data'};
 
 
+}
 
-start append_column
+sub STORABLE_freeze
+{
+	my $self = shift;
+	my $return_value = '';
+
+
+	return $return_value;
+}
+
+sub STORABLE_thaw
+{
+	my $self = shift;
+
+
+}
+
+sub drop_columns
+{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+		 drop => { isa => 'ArrayRef[Bool]', optional => 1 }
+	);
+	my @drop = $parm{'drop'};
+
+	my @new_data;
+	my @data = @{$self->subject_data};
+	for( my $i = 0; $i <= $#data; $i++ ) {
+	  my @new_row;
+	  my @data_row = split( /,/, $data[$i] );
+	  for( my $j = 0; $j < scalar @data_row; $j++ ) {
+	    push( @new_row, $data_row[$j] ) if ( not $drop[$j] );
+	  }
+	  push( @new_data, join( ',', @new_row ) );
+	}
+	$self->subject_data(\@new_data);
+
+}
+
+sub append_column
+{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+		 new_values => { isa => 'Ref', optional => 0 }
+	);
+	my $new_values = $parm{'new_values'};
+
 {
     #in is array of numbers. Verify that length of array is equal to number of lines,
     #otherwise die with error
@@ -350,9 +405,17 @@ start append_column
     $self->subject_data(\@newlines); #replace old data
 
 }
-end append_column
 
-start append_individual
+}
+
+sub append_individual
+{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+		 new_individual => { isa => 'Ref', optional => 1 }
+	);
+	my $new_individual = $parm{'new_individual'};
+
 {
     #in is right hand side individual. Verify that length of data arrays are equal
     #otherwise die with error
@@ -372,19 +435,106 @@ start append_individual
     $self->subject_data(\@newlines); #replace old data
 
 }
-end append_individual
 
-start split_
+}
+
+sub diff
 {
-	my @new_data = ();
-	foreach my $row ( @{$self->subject_data} ) {
-		my $new_row = $row;
-	  push ( @new_data, $new_row );
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+		 against_individual => { isa => 'data::individual', optional => 0 },
+		 columns => { isa => 'ArrayRef[Int]', optional => 0 },
+		 absolute_diff => { isa => 'Bool', default => 1, optional => 1 },
+		 largest => { isa => 'Bool', default => 1, optional => 1 },
+		 smallest => { isa => 'Bool', default => 0, optional => 1 },
+		 diff_as_fraction => { isa => 'Bool', default => 1, optional => 1 }
+	);
+	my $against_individual = $parm{'against_individual'};
+	my @columns = $parm{'columns'};
+	my $absolute_diff = $parm{'absolute_diff'};
+	my $largest = $parm{'largest'};
+	my $smallest = $parm{'smallest'};
+	my %diff_results;
+	my $diff_as_fraction = $parm{'diff_as_fraction'};
+
+  my @data      = @{$self->subject_data};
+  my @diff_data = @{$against_individual -> subject_data};
+  for ( my $i = 0; $i <= $#data; $i++ ) {
+    my @data_row = split( /,/ , $data[$i] );
+    my @diff_data_row = split( /,/ , $diff_data[$i] );
+    if( $largest ) {
+      for( my $j = 0; $j <= $#columns; $j++ ) {
+				my $diff = $data_row[$columns[$j] - 1] - $diff_data_row[$columns[$j] - 1];
+		  	$diff = abs($diff) if( $absolute_diff );
+				if( $diff_as_fraction ) {
+	  			if ( defined $diff_data_row[$columns[$j] - 1] and not $diff_data_row[$columns[$j] - 1] == 0 ) {
+	    			$diff = $diff / $diff_data_row[$columns[$j] - 1];
+	  			} elsif ( not $diff == 0 ) { # If $diff == 0 we can leave it as it is even if we formally
+	    			print "ID: ",$self->idcolumn," ID2: ",$against_individual->idcolumn,"\n";
+	    			print "DATA1: ", join("\n", @data), "\n";
+	    			print "DATA2: ", join("\n", @diff_data), "\n";
+	    			# would require a division by the original value
+	    			croak("The difference of column ".$columns[$j].
+			  			" was requested as a fraction but the original value was ".
+			  			"found to be zero: a division is impossible." );
+	  			}
+				}
+
+				if ( not defined $diff_results{$columns[$j]} or not defined $diff_results{$columns[$j]}{'diff'} or $diff > $diff_results{$columns[$j]}{'diff'} ) {
+	  			$diff_results{$columns[$j]}{'diff'} = $diff;
+	  			$diff_results{$columns[$j]}{'self'} = $data_row[$columns[$j]-1];
+	  			$diff_results{$columns[$j]}{'test'} = $diff_data_row[$columns[$j]-1];
+				}
+			}
+    } else {
+      die "individual -> diff is only implemented for finding the largest difference at any observation at this point\n";
+    }
+  }
+
+	return \%diff_results;
+}
+
+sub factors
+{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+		 column => { isa => 'Int', optional => 1 }
+	);
+	my $column = $parm{'column'};
+	my %factors;
+
+	my @data = @{$self->subject_data};
+#factors is hash of values to ref of array of which line indices those values occur at.
+	for ( my $i = 0; $i <= $#data; $i++ ) {
+	  my @data_row = split( /,/, $data[$i] );
+	  push( @{$factors{$data_row[$column-1]}}, $i );
 	}
 
-	$individual_copy = data::individual -> new (
-						idcolumn     => $self->idcolumn,
-				    idnumber     => $self->idnumber,
-				    subject_data => \@new_data );
+	return \%factors;
 }
-end copy
+
+# Code never reached?
+#sub _read_data
+#{
+#	my $self = shift;
+#
+#	if ( defined $self->init_data ) {
+#	  $self->subject_data($self->init_data);
+#	  $self->clear_init_data;
+#	}
+#}
+
+sub _set_idnumber
+{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+		 newnum => { isa => 'Num', optional => 1 }
+	);
+	my $newnum = $parm{'newnum'};
+
+
+}
+
+no Moose;
+__PACKAGE__->meta->make_immutable;
+1;
