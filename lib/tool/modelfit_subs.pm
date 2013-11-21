@@ -774,6 +774,9 @@ start create_sub_dir
 	unless( -e $tmp_dir ){
 	    mkdir( $tmp_dir );
 	}
+	open( FILE, '>'.$tmp_dir.'/modelname' );
+	print FILE "$modelname\n";
+	close(FILE);
     }
 end create_sub_dir
 
@@ -1256,6 +1259,7 @@ start copy_model_and_output
     unlink 'temp.out','trashfile.xxx','trskip.set','worker.set','xmloff.set';
     unlink 'prsizes.f90','licfile.set','background.set','FMSG','FSIZES';
     #do not delete INTER, needed for saving data from crashed runs
+	unlink 'modelname';
 
     unlink( <worker*/*> );
     my @removedir = <worker*>;
@@ -4195,7 +4199,8 @@ start run
 	  
 	  my $stoptmp = '';
 	  $stoptmp = "Created NM_run".($run+1)."." unless (-d 'NM_run'.($run+1));
-	  $self -> create_sub_dir( subDir => '/NM_run'.($run+1) );
+	  $self -> create_sub_dir( subDir => '/NM_run'.($run+1),
+							   modelname => $models[$run]->filename);
 	  chdir( 'NM_run'.($run+1) );
 	  $self->stop_motion_call(tool=>'modelfit',message => $stoptmp." Moved to NM_run".($run+1).".")
 	      if ($self->stop_motion()> 1);

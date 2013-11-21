@@ -28,12 +28,16 @@ my %options;
 
 my %required_options = ();
 my %optional_options = ("prepend_options_to_lst!"=> undef,
-			 "prepend_model_to_lst!"=> undef,
-			 "model_dir_name!" => undef,
-			 "tail_output!" => undef,
-			 "wintail_exe:s" => undef,
-			 "wintail_command:s" => undef
-			 );
+						"prepend_model_to_lst!"=> undef,
+						"model_dir_name!" => undef,
+						'rawres_input:s' => undef,
+						'offset_rawres:i' => undef,
+						'samples:i' => undef,
+						'in_filter:s' => undef,
+						"tail_output!" => undef,
+						"wintail_exe:s" => undef,
+						"wintail_command:s" => undef
+	);
 
 my $res = GetOptions( \%options,
 		      @common_options::get_opt_strings,
@@ -50,10 +54,69 @@ my %help_text;
 $help_text{Pre_help_message} = <<'EOF';
   <h3 class="heading1">parallel_retries</h3>
 
-    Running a modelfile with multiple sets of tweaked initial estimates.
+    Running a modelfile with multiple sets of tweaked initial estimates,
+	either randomly perturbed or from rawres_input.
     The program takes the same input as execute, see execute -h, except
-    that -min_retries is required and only a single input model can be used.
+    that either -min_retries or -rawres_input is required and 
+	only a single input model can be used.
 EOF
+
+$help_text{-rawres_input} = <<'EOF';
+      -rawres_input=filename
+
+      An alternative way to estimate with different initial estimates. 
+	  Instead of using initial estimates from a random perturbation,
+      take parameter initial values from a raw_results-like file.
+      The raw results file must contain at least as many 
+      samples as the input -samples to parallel_retries, the labels for  THETA/OMEGA/SIGMA 
+      in the file must match the labels in the simulation model given as input 
+      to parallel_retries, the theta columns must be directly followed by the omega columns 
+      which must be directly followed by the sigma columns, and the first column 
+      must have header model just as a bootstrap raw_results file. Note that is is 
+      possible to generate a file with initial parameter estimates outside of PsN, 
+      as long as the file follows the format rules.
+EOF
+$help_text{-offset_rawres} = <<'EOF';
+      -offset_rawres=N
+
+      Only relevant in combination with rawres_input. Default 1.
+      The number of result lines to skip in the input raw results file
+      before starting to read final parameter estimates. In a regular
+      bootstrap raw_results file the first line of estimates refers to the
+      input model with the full dataset, so therefore the default offset is 1.
+EOF
+
+$help_text{-samples} = <<'EOF';
+      -samples=N
+
+      Only relevant in combination with rawres_input. 
+      The number of parameter sets to use from the the input raw results file.
+	  Default is to use all sets after skipping the first 'offset_rawres' sets.
+EOF
+
+$help_text{-in_filter} = <<'EOF';
+      -in_filter=comma-separated list of conditions
+
+      Only relevant in combination with rawres_input. Default not used.
+      The parameter estimates lines in the file can be filtered on values 
+      in the different columns. When specifying which column(s) the filtering 
+      should be based on, the exact column name must be used, 
+      e.g. minimization_successful. Filtering can only be based on columns 
+      with numeric values. The allowed relations are .gt. (greater than), 
+      .lt. (less than) and .eq. (equal to). Conditions are separated with commas. 
+      If the remaining number of lines after filtering is smaller than -samples, 
+      parallel_retries will stop with an error message. Then the user must either change the 
+      filtering rules or change -samples. If the user has created a file with 
+      parameter estimates outside of PsN, filtering can be done on any numeric 
+      column in that file. Do not set column headers containing .eq. or .lt. 
+      or .gt.in the user-generated file as this would interfere with the in_filter 
+      option syntax.
+    
+      Example: -in_filter=minimization_successful.eq.1,significant_digits.gt.3.5
+
+EOF
+
+
 
 common_options::online_help('parallel_retries', \%options,\%help_text, \%required_options, \%optional_options);
 
@@ -125,8 +188,12 @@ if( scalar @{$models_array} > 1 ) {
   die "When using parallel_retries, no "
       ."more than one model at a time may be run\n";
 }
-if(not (defined $options{'min_retries'}) or $options{'min_retries'}<1 ) {
-  die "No point using parallel_retries unless -min_retries>0\n";
+if( (not (defined $options{'min_retries'}) or ($options{'min_retries'}<1)) and (not defined $options{'rawres_input'}) ) {
+  die "No point using parallel_retries unless -min_retries>0 or -rawres_input is defined\n";
+}
+
+if( ((defined $options{'min_retries'}) and ($options{'min_retries'}>0)) and (defined $options{'rawres_input'}) ) {
+  die "Cannot use both -min_retries>0 and -rawres_input\n";
 }
 
 my $return_dir = getcwd();
@@ -150,21 +217,86 @@ $main_model->datas()->[0]->directory($main_directory);
 $main_model->datas()->[0]->_write();
 my $mod_array;
 push(@{$mod_array},$main_model);
-foreach (my $retry=1;$retry<=$options{'min_retries'};$retry++){
-  my $filestem = $models_array -> [0]->filename();
-  $filestem =~ s/\.mod//;
-  my $retry_mod = $models_array -> [0] -> copy( filename    => $filestem.'_retry'.$retry.'.mod',
-						copy_data   => 0,
-						copy_output => 0,
-						directory => $main_directory,
-						target => 'mem');
-  my @problems = @{$retry_mod -> problems};
-  my $degree = 0.1;
-  foreach my $prob ( @problems ) {
-    $prob -> set_random_inits ( degree => $degree );
-  }
-  $retry_mod -> _write();
-  push(@{$mod_array},$retry_mod);
+if (defined $options{'rawres_input'}){
+	my $offset=1;
+	$offset= $options{'offset_rawres'} if (defined $options{'offset_rawres'});
+	my @in_filter=();
+	if ( defined $options{'in_filter'} ){
+		#split string, assume comma separated
+		foreach my $filt (split(/,/,$options{'in_filter'})){
+			if ($filt =~ /.\.(gt|lt|eq)\.\d+\.?\d*/){
+				push(@in_filter,$filt);
+			}else{
+				die "Input filter $filt does not fulfill the format rules.\n";
+			}
+		}
+		if (scalar(@in_filter)<1){
+			die "Error: Option in_filter used, but list of conditions could not be parsed.\n";
+		}	
+	}
+
+	my $sampled_params_arr = $main_model->get_rawres_params(filename => '../'.$options{'rawres_input'},
+															filter => \@in_filter,
+															offset => $offset);
+
+	my $samples;
+	if (defined $sampled_params_arr) {
+		if (defined $options{'samples'}){
+			$samples=$options{'samples'};
+			croak("Cannot have zero samples") if ($samples==0);
+			unless (scalar(@{$sampled_params_arr}) >= ($samples)) {
+				if (defined $options{'in_filter'}) {
+					croak("Too few sets (lines) of parameter values in\n".
+						  "rawres file after filtering. Have ".scalar(@{$sampled_params_arr}).
+						  " but need at least $samples\n");
+				} else {
+					croak("Too few sets (lines) of parameter values in\n".
+						  "rawres file. Have ".scalar(@{$sampled_params_arr}).
+						  " but need at least ".
+						  ($samples + $options{'offset_rawres'}).".\n");
+				}
+			}
+
+		}else{
+			$samples = scalar(@{$sampled_params_arr});
+			if ($samples < 1){
+				croak("No lines left in rawres (after filtering)");
+			}
+		}
+	} else {
+		croak("get_rawres_params returned undef");
+	}
+	foreach (my $retry=1;$retry<=$samples;$retry++){
+		my $filestem = $models_array -> [0]->filename();
+		$filestem =~ s/\.mod//;
+		my $retry_mod = $models_array -> [0] -> copy( filename    => $filestem.'_init'.$retry.'.mod',
+													  copy_data   => 0,
+													  copy_output => 0,
+													  directory => $main_directory,
+													  target => 'mem');
+		$retry_mod -> update_inits(from_hash => $sampled_params_arr->[$retry-1]); 
+
+		$retry_mod -> _write();
+		push(@{$mod_array},$retry_mod);
+	}
+
+}else{
+	foreach (my $retry=1;$retry<=$options{'min_retries'};$retry++){
+		my $filestem = $models_array -> [0]->filename();
+		$filestem =~ s/\.mod//;
+		my $retry_mod = $models_array -> [0] -> copy( filename    => $filestem.'_retry'.$retry.'.mod',
+													  copy_data   => 0,
+													  copy_output => 0,
+													  directory => $main_directory,
+													  target => 'mem');
+		my @problems = @{$retry_mod -> problems};
+		my $degree = 0.1;
+		foreach my $prob ( @problems ) {
+			$prob -> set_random_inits ( degree => $degree );
+		}
+		$retry_mod -> _write();
+		push(@{$mod_array},$retry_mod);
+	}
 }
 #basedirect $main_directory
 $modelfit = tool::modelfit -> 
