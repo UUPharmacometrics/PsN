@@ -49,7 +49,7 @@ has 'parameter_path' => ( is => 'rw', isa => 'ArrayRef[ArrayRef[Num]]' );
 has 'parsed' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'parsed_successfully' => ( is => 'rw', isa => 'Bool', default => 1 );
 has 'parsing_error_message' => ( is => 'rw', isa => 'Str' );
-has 'pval' => ( is => 'rw', isa => 'ArrayRef[Num]' );
+has 'pval' => ( is => 'rw', isa => 'ArrayRef[Str]' );
 has 'raw_cormatrix' => ( is => 'rw', isa => 'ArrayRef[Num]' );
 has 'correlation_matrix' => ( is => 'rw', isa => 'ArrayRef[Num]' );
 has 'output_matrix_headers' => ( is => 'rw', isa => 'ArrayRef[Str]' );

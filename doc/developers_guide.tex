@@ -30,6 +30,7 @@ git push origin --tags
 
 \subsection{Methods}
 
+\subsubsection{Parameter validation}
 All methods should validate their parameters with validated\_hash in MooseX::Params::Validate
 
 \begin{verbatim}
@@ -47,6 +48,18 @@ sub my_method
 \end{verbatim}
 
 See the MooseX::Params::Validate documentation \cite{params} and Moose::Types documentation \cite{types} for more information.
+
+Remember to turn off the parameter caching if you give default values that can vary between calls.
+
+\begin{verbatim}
+my ($self, %parm) = validated_hash(@_,
+  parameter1 => { isa => 'Str', optional => 0 },
+  parameter2 => { isa => 'Num', default => $self->some_method },
+  MX_PARAMS_VALIDATE_NO_CACHE => 1
+);
+\end{verbatim}
+
+\subsubsection{Private methods}
 
 Names of private methods should start with an underscore.
 \begin{verbatim}
