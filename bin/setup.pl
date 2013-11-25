@@ -120,8 +120,8 @@ my @utilities = (
                  'boot_scm','gls','ebe_npde','frem','randtest','linearize'
 		 );
 
-my @win_modules = ('Math::Random');
-my @nix_modules = ('Math::Random','Storable');
+my @win_modules = ('Moose', 'MooseX::Params::Validate', 'Math::Random');
+my @nix_modules = ('Moose', 'MooseX::Params::Validate', 'Math::Random','Storable');
 my @recommended_modules = ('Archive::Zip','Statistics::Distributions');
 
 my @modules;
