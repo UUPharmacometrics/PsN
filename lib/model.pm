@@ -3305,7 +3305,7 @@ sub _write
 	my $self = shift;
 	my %parm = validated_hash(\@_,
 		filename => { isa => 'Str', default => $self->full_name, optional => 1 },
-		number_format => { isa => 'Int', optional => 1 },
+		number_format => { isa => 'Maybe[Int]', optional => 1 },
 		write_data => { isa => 'Bool', default => 0, optional => 1 },
 		MX_PARAMS_VALIDATE_NO_CACHE => 1,
 	);
