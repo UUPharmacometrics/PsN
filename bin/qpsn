@@ -8,11 +8,11 @@ NAME=qpsn
 #submitargs="-b y -S /bin/bash -cwd -j y"
 submitargs="-p core -n 1"
 
-#should look for $HOME/psn.conf and set email address and project id
+#should look for $HOME/psn.conf and set email address and project/account id
 #if do not find psn.conf then exit with error
-#slurm_project
+#slurm_account /project
 #email_address
-project=`sed -n 's/^slurm_project=//p' $HOME/psn.conf`
+account=`sed -n 's/^slurm_account=//p' $HOME/psn.conf`
 email=`sed -n 's/^email_address=//p' $HOME/psn.conf`
 mail="--mail-user=$email --mail-type=ALL"
 if [ -z "$email" ] && [ "${email+xxx}" = "xxx" ]; then $mail=''; fi
@@ -33,12 +33,12 @@ model=''
 if [[ `echo $@|wc -w` -gt 1 ]];then
     tool=$1
     prog=`type -p $tool`;shift
-    #loop over $@ to see if slurm_project is set
+    #loop over $@ to see if slurm_account is set
     for option in $@
     do  
 #    	echo $option
-	if test `expr match "$option" '\-slurm_pro'` -gt 0; then 
-	project=${option##-*=}
+	if test `expr match "$option" '\-slurm_acc'` -gt 0; then 
+	account=${option##-*=}
 	fi
 	if test `expr match "$option" '\-no\-sen'` -gt 0; then 
 	mail=''
@@ -58,7 +58,7 @@ if [[ `echo $@|wc -w` -gt 1 ]];then
     echo ""
     echo "$tool run messages will be printed to file $file"
     echo ""
-    echo "sbatch -e $file -o $file -A $project $mail $submitargs -J $jobname $prog $@"
+    echo "sbatch -e $file -o $file -A $account $mail $submitargs -J $jobname $prog $@"
 #    qsub $submitargs -N $jobname $prog $@
 else
     echo "$0 requires number at least one PsN command as argument"

@@ -76,7 +76,8 @@ Getopt::Long::config("auto_abbrev");
 		  "significant_digits_accept:f",
 		  "sign_digits_off_diagonals:i",
 		  "slurm_prepend_flags:s",
-		  "slurm_project:s",
+		  "slurm_account:s",
+		  "slurm_partition:s",
 		  "stop_motion:i",
 		  "threads:i",
 		  "torque_queue:s",
@@ -1159,9 +1160,14 @@ EOF
     string. The extra flags will be prepended to standard set in sbatch call.
 
 EOF
-    $help_hash{-slurm_project} = <<'EOF';
-    <p class="style2">-slurm_project='string'</p>
+    $help_hash{-slurm_account} = <<'EOF';
+    <p class="style2">-slurm_account='string'</p>
     Only valid with -run_on_slurm. Maps to sbatch -A option.
+
+EOF
+    $help_hash{-slurm_partition} = <<'EOF';
+    <p class="style2">-slurm_partition='string'</p>
+    Only valid with -run_on_slurm. Maps to sbatch -p option.
 
 EOF
 
