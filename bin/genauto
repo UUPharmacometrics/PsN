@@ -108,9 +108,15 @@ print <<'EOF';
 		COMPREPLY=( "${COMPREPLY[@]/%/ }" )
 		COMPREPLY=( "${COMPREPLY[@]/= /=}" )
 	else
-		COMPREPLY=( $(compgen -f -- ${cur}) )
-		COMPREPLY=( "${COMPREPLY[@]/%/ }" )
+		FILES=( $(compgen -f -- ${cur}) )
+		FILES=( "${FILES[@]/%/ }" )
+		DIRS=( $(compgen -d -- ${cur}) )
+		DIRS=( "${DIRS[@]/%//}" )
+		COMPREPLY=("${DIRS[@]}" "${FILES[@]}")
 	fi
 }
 EOF
+
+#		FILES=( $(compgen -f -X '!*.@(mod|ctl)' -- ${cur}) )
+
 print "complete -o nospace -F _$filename $filename\n";
