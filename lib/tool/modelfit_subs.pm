@@ -2146,11 +2146,11 @@ start slurm_submit
 
   my $flags = ' -J '.$jobname;
   $flags .= ' -o nmfe.output -e nmfe.output ';
-  if (defined $self->slurm_project()){
-    $flags .= ' -A '.$self->slurm_project() ;
+  if (defined $self->slurm_account()){
+    $flags .= ' -A '.$self->slurm_account() ;
   }else{
       if( $PsN::config -> {'default_options'} -> {'uppmax'}){
-	  croak("slurm project must be defined on uppmax");
+	  croak("slurm account must be defined on uppmax");
       }
   }
   if (defined $self->max_runtime()){
@@ -2165,7 +2165,9 @@ start slurm_submit
     }
     $flags .= ' -t '.$self->max_runtime() ;
   }
-
+  if (defined $self->slurm_partition()){
+    $flags .= ' -p '.$self->slurm_partition() ;
+  }
 #at most 3GB RAM 
   if( $PsN::config -> {'default_options'} -> {'uppmax'}){
       $flags .= ' -p core -n 1 '; #single core
