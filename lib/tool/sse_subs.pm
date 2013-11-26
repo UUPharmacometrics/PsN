@@ -104,6 +104,12 @@ start modelfit_setup
 	return if (defined $self->recompute);
 	my $model = $self -> models -> [$model_number-1];
 	my @alternatives = @{$self -> alternative_models}; #may be empty
+	unless ($self->keep_tables){
+		$model -> remove_records( type => 'table' );
+		for (my $i=0; $i< scalar(@alternatives); $i++){
+			$alternatives[$i]-> remove_records( type => 'table' );
+		}
+	}
 	my ( @seed, $new_datas, $skip_ids, $skip_keys, $skip_values );
 	my ( @orig_est_models, @alt_est_models );
 	my ( $sim_model, $est_alternative );
@@ -203,7 +209,7 @@ start modelfit_setup
 			my $orig_out = "mc-orig-$sim_no.lst";
 			if ( $sim_no == 1 ) {
 				if ($self->add_models) {
-					#get table file names from original model. Keep in simulation
+					#get table file names from original model. Keep in simulation if keep_tables is set
 					my $tbl_nm_ref = $model -> get_option_value(
 						record_name  => 'table',
 						option_name  => 'FILE',
@@ -682,6 +688,12 @@ start modelfit_setup
 					
 					$prob -> set_records( type => 'simulation',
 										  record_strings => \@new_record );
+					foreach my $altopt ('SUBPROBLEMS','SUBPROBS','NSUBPROBLEMS','NSUBPROBS','NSUBS'){
+						#many synonyms for same thing
+						$prob -> remove_option( record_name  => 'simulation',
+												option_name  => $altopt,
+												fuzzy_match => 1); #default is remove for all records
+					}
 					
 				} else {
 					

@@ -339,22 +339,25 @@ start general_setup
 		      target               => 'disk',
 		      ignore_missing_files => 1 );
 
+		  unless ($self->keep_tables){
+			  $new_mod -> remove_records( type => 'table' );
+		  }
 	      if( $self -> shrinkage() ) {
-		$new_mod -> shrinkage_stats( enabled => 1 );
-		$new_mod -> shrinkage_modules( $model -> shrinkage_modules );
+			  $new_mod -> shrinkage_stats( enabled => 1 );
+			  $new_mod -> shrinkage_modules( $model -> shrinkage_modules );
 #		my @problems = @{$new_mod -> problems};
 #		for( my $i = 1; $i <= scalar @problems; $i++ ) {
 #		  $problems[ $i-1 ] -> shrinkage_module -> model( $new_mod );
 #		}
 	      }
-
+		  
 	      $new_mod -> datas ( [$new_datas -> [$j]] );
 
 	      if( $self -> nonparametric_etas() or
-		  $self -> nonparametric_marginals() ) {
-		$new_mod -> add_nonparametric_code;
+			  $self -> nonparametric_marginals() ) {
+			  $new_mod -> add_nonparametric_code;
 	      }
-
+		  
 	      $new_mod -> update_inits( from_output => $output );
 	      $new_mod -> _write;
 
@@ -498,6 +501,12 @@ start general_setup
 #		     dummy_data => $dummy_data
 		     );
 #	      $new_mod -> target( 'disk' );
+
+		  unless ($self->keep_tables){
+			  $new_mod -> remove_records( type => 'table' );
+		  }
+
+
 	      push( @new_models, $new_mod );
 #	      print "$j\n";
 #	      print Dumper $new_mod;
@@ -948,110 +957,110 @@ start modelfit_analyze
 	    my @problem_lines=();
 	    while ($samples_done < scalar(@{$sampled_params_arr})){
 		#copy datafile to run directory m1  and later set local path to datafile in model
-		cp($model->datas->[0]->full_name(),$self->directory().'m'.$model_number.'/'.$model->datas->[0]->filename());
-		#copy the model
-		$dofvmodel = $model ->  copy( filename    => $self -> directory().'m'.$model_number."/dofv_$dofvnum.mod",
-					      output_same_directory => 1,
-					      copy_data   => 0,
-					      copy_output => 0);
-		$dofvnum++;
-
-		$dofvmodel->set_maxeval_zero(need_ofv => 1);
-		if (($PsN::nm_major_version >= 7) and ($PsN::nm_minor_version >= 3)){
-		    if ($self->mceta() > 0){
-			$dofvmodel->set_option(problem_numbers => [1],
-					       record_name => 'estimation',
-					       option_name => 'MCETA',
-					       option_value => $self->mceta());
-		    }
-		}
-		foreach my $record ('table','simulation','covariance','scatter'){
-		    $dofvmodel -> remove_records (problem_numbers => [1],
-						  keep_last => 0,
-						  type => $record);
-		}
-
-
-		if (scalar(@problem_lines)<1){
-		    #first iteration
-		    $dummymodel = $dofvmodel ->  copy( filename    => $self -> directory().'m'.$model_number.'/'.$dummyname,
-						       output_same_directory => 1,
-						       target => 'mem',
-						       copy_data   => 0,
-						       copy_output => 0);
-		    chdir($self -> directory().'m'.$model_number);
-		    $dummymodel->datafiles(problem_numbers => [1],
-					   new_names => [$model->datas->[0]->filename()]);
-		    chdir($self -> directory());
-
-		    #set $DATA REWIND
-		    $dummymodel->add_option(problem_numbers => [1],
-					    record_name => 'data',
-					    option_name => 'REWIND');
-		    
-		    #remove most records, keep only $PROB, $INPUT, $DATA, $THETA, $OMEGA, $SIGMA $EST
-		    foreach my $record ('table','simulation','pk','pred','error','covariance','scatter','msfi','subroutine',
-					'abbreviated','sizes','contr','prior','model','tol','infn','aesinitial',
-					'aes','des','mix','nonparametric'){
-			$dummymodel -> remove_records (problem_numbers => [1],
-						       keep_last => 0,
-						       type => $record);
-		    }
-		    my $linesarray = $dummymodel->problems->[0]->_format_problem;
-		    #we cannot use this array directly, must make sure items do not contain line breaks
-		    foreach my $line (@{$linesarray}){
-			my @arr = split(/\n/,$line);
-			push(@problem_lines,@arr);
-		    }
-		    unlink($self -> directory().'m'.$model_number.'/'.$dummyname);
-		    $dummymodel = undef;
-		}
-
-		#need to set data object , setting record not enough
-		#chdir so can use local data file name
-		chdir($self -> directory().'m'.$model_number);
-		$dofvmodel->datafiles(problem_numbers => [1],
-				      new_names => [$model->datas->[0]->filename()]);
-
-		chdir($self -> directory());
-
-		#update ests for first $PROB in real model
-		$dofvmodel -> update_inits(from_hash => $sampled_params_arr->[$samples_done]); 
-		push(@{$self->dofv_samples},$sampled_params_arr->[$samples_done]->{'model'});
-		$samples_done++;
-		my $probnum=2;
-		for (my $i=1; $i<200; $i++){
-		    last if ($samples_done == scalar(@{$sampled_params_arr}));
-		    #add one $PROB per $i, update inits from hash
-		    my $sh_mod = model::shrinkage_module -> new ( nomegas => $dofvmodel -> nomegas -> [0],
-								  directory => $dofvmodel -> directory(),
-								  problem_number => $probnum );
-
-		    push(@{$dofvmodel->problems()},
-			 model::problem ->
-			 new ( directory                   => $dofvmodel->directory,
-			       ignore_missing_files        => 1,
-			       ignore_missing_output_files => 1,
-			       sde                         => $dofvmodel->sde,
-			       omega_before_pk             => $dofvmodel->omega_before_pk,
-			       cwres                       => $dofvmodel->cwres,
-			       tbs                         => 0,
-			       tbs_param                    => 0,
-			       prob_arr                    => \@problem_lines,
-			       shrinkage_module            => $sh_mod )
-			);
-		    push(@{$dofvmodel->active_problems()},1);
-		    push(@{$dofvmodel->datas()},$dofvmodel->datas()->[0]);
-		    $dofvmodel -> _write();
+			cp($model->datas->[0]->full_name(),$self->directory().'m'.$model_number.'/'.$model->datas->[0]->filename());
+			#copy the model
+			$dofvmodel = $model ->  copy( filename    => $self -> directory().'m'.$model_number."/dofv_$dofvnum.mod",
+										  output_same_directory => 1,
+										  copy_data   => 0,
+										  copy_output => 0);
+			$dofvnum++;
+			
+			$dofvmodel->set_maxeval_zero(need_ofv => 1);
+			if (($PsN::nm_major_version >= 7) and ($PsN::nm_minor_version >= 3)){
+				if ($self->mceta() > 0){
+					$dofvmodel->set_option(problem_numbers => [1],
+										   record_name => 'estimation',
+										   option_name => 'MCETA',
+										   option_value => $self->mceta());
+				}
+			}
+			foreach my $record ('table','simulation','covariance','scatter'){
+				$dofvmodel -> remove_records (problem_numbers => [1],
+											  keep_last => 0,
+											  type => $record);
+			}
+			
+			
+			if (scalar(@problem_lines)<1){
+				#first iteration
+				$dummymodel = $dofvmodel ->  copy( filename    => $self -> directory().'m'.$model_number.'/'.$dummyname,
+												   output_same_directory => 1,
+												   target => 'mem',
+												   copy_data   => 0,
+												   copy_output => 0);
+				chdir($self -> directory().'m'.$model_number);
+				$dummymodel->datafiles(problem_numbers => [1],
+									   new_names => [$model->datas->[0]->filename()]);
+				chdir($self -> directory());
+				
+				#set $DATA REWIND
+				$dummymodel->add_option(problem_numbers => [1],
+										record_name => 'data',
+										option_name => 'REWIND');
+				
+				#remove most records, keep only $PROB, $INPUT, $DATA, $THETA, $OMEGA, $SIGMA $EST
+				foreach my $record ('table','simulation','pk','pred','error','covariance','scatter','msfi','subroutine',
+									'abbreviated','sizes','contr','prior','model','tol','infn','aesinitial',
+									'aes','des','mix','nonparametric'){
+					$dummymodel -> remove_records (problem_numbers => [1],
+												   keep_last => 0,
+												   type => $record);
+				}
+				my $linesarray = $dummymodel->problems->[0]->_format_problem;
+				#we cannot use this array directly, must make sure items do not contain line breaks
+				foreach my $line (@{$linesarray}){
+					my @arr = split(/\n/,$line);
+					push(@problem_lines,@arr);
+				}
+				unlink($self -> directory().'m'.$model_number.'/'.$dummyname);
+				$dummymodel = undef;
+			}
+			
+			#need to set data object , setting record not enough
+			#chdir so can use local data file name
+			chdir($self -> directory().'m'.$model_number);
+			$dofvmodel->datafiles(problem_numbers => [1],
+								  new_names => [$model->datas->[0]->filename()]);
+			
+			chdir($self -> directory());
+			
+			#update ests for first $PROB in real model
+			$dofvmodel -> update_inits(from_hash => $sampled_params_arr->[$samples_done]); 
+			push(@{$self->dofv_samples},$sampled_params_arr->[$samples_done]->{'model'});
+			$samples_done++;
+			my $probnum=2;
+			for (my $i=1; $i<200; $i++){
+				last if ($samples_done == scalar(@{$sampled_params_arr}));
+				#add one $PROB per $i, update inits from hash
+				my $sh_mod = model::shrinkage_module -> new ( nomegas => $dofvmodel -> nomegas -> [0],
+															  directory => $dofvmodel -> directory(),
+															  problem_number => $probnum );
+				
+				push(@{$dofvmodel->problems()},
+					 model::problem ->
+					 new ( directory                   => $dofvmodel->directory,
+						   ignore_missing_files        => 1,
+						   ignore_missing_output_files => 1,
+						   sde                         => $dofvmodel->sde,
+						   omega_before_pk             => $dofvmodel->omega_before_pk,
+						   cwres                       => $dofvmodel->cwres,
+						   tbs                         => 0,
+						   tbs_param                    => 0,
+						   prob_arr                    => \@problem_lines,
+						   shrinkage_module            => $sh_mod )
+					);
+				push(@{$dofvmodel->active_problems()},1);
+				push(@{$dofvmodel->datas()},$dofvmodel->datas()->[0]);
+				$dofvmodel -> _write();
 #		    print "probnum $probnum, samples_done $samples_done\n";
-		    $dofvmodel->update_inits(from_hash => $sampled_params_arr->[$samples_done],
-					     problem_number=> $probnum);
-		    push(@{$self->dofv_samples},$sampled_params_arr->[$samples_done]->{'model'});
-		    $samples_done++;
-		    $probnum++;
-		}
-		$dofvmodel -> _write();
-		push(@modelsarr,$dofvmodel);
+				$dofvmodel->update_inits(from_hash => $sampled_params_arr->[$samples_done],
+										 problem_number=> $probnum);
+				push(@{$self->dofv_samples},$sampled_params_arr->[$samples_done]->{'model'});
+				$samples_done++;
+				$probnum++;
+			}
+			$dofvmodel -> _write();
+			push(@modelsarr,$dofvmodel);
 	    }
 	    my $modelfit = tool::modelfit -> new( 
 			%{common_options::restore_options(@common_options::tool_options)},

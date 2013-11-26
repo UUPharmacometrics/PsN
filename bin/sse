@@ -29,6 +29,7 @@ my %optional_options = (
 	'ref_ofv:f' => undef,
 	'parallel_simulations:i' => undef,
 	'estimate_simulation!' => undef,
+	'keep_tables!' => undef,
 	'rawres_input:s' => undef,
 	'offset_rawres:i' => undef,
 	'in_filter:s' => undef,
@@ -98,6 +99,15 @@ $help_text{-estimate_simulation} = <<'EOF';
       -no-estimate_simulation the estimation of the simulation model is turned
       off, and the first alternative model is used as reference instead. See
       also -ref_ofv.
+EOF
+
+$help_text{-keep_tables} = <<'EOF';
+      -keep_tables
+
+      By default, all $TABLE will be deleted from the simulation and 
+	  alternative models, to save disk space. If option -keep_tables is set, 
+	  PsN will instead keep $TABLE and number the file names according to
+	  the sample number.
 EOF
 
 $help_text{-ref_ofv} = <<'EOF';
@@ -407,6 +417,7 @@ my $sse = tool::sse -> new (
 	ref_ofv            		=> $options{'ref_ofv'},
 	parallel_simulations	=> $options{'parallel_simulations'},
 	add_models          	=> $options{'add_models'},
+	keep_tables          	=> $options{'keep_tables'},
 	rawres_input        	=> $options{'rawres_input'},
 	offset_rawres       	=> $options{'offset_rawres'},
 	covariance_file     	=> $options{'covariance_file'},

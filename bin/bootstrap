@@ -25,18 +25,19 @@ my %options;
 
 my %required_options = ();
 my %optional_options = ("samples:i"=>'',
-			"sample_size:s"=>'',
-			"stratify_on:s"=>'',
-			"bca"=>'',
-			"dofv!"=>'',
-			"mceta:i"=>'',
-			"rplots"=>'',
-			"skip_minimization_terminated!"=>'',
-			"skip_covariance_step_terminated!"=>'',
-			"skip_with_covstep_warnings!"=>'',
-			"skip_estimate_near_boundary!"=>'',
-			"allow_ignore_id!"=>'',
-			"copy_data!"=>'',
+						"sample_size:s"=>'',
+						"stratify_on:s"=>'',
+						'keep_tables!' => undef,
+						"bca"=>'',
+						"dofv!"=>'',
+						"mceta:i"=>'',
+						"rplots"=>'',
+						"skip_minimization_terminated!"=>'',
+						"skip_covariance_step_terminated!"=>'',
+						"skip_with_covstep_warnings!"=>'',
+						"skip_estimate_near_boundary!"=>'',
+						"allow_ignore_id!"=>'',
+						"copy_data!"=>'',
 			);
 
 my $res = GetOptions( \%options, 
@@ -162,6 +163,14 @@ EOF
       Efron B, An introduction to the Bootstrap, 1993). The BCa is
       intended for calculation of second-order correct confidence
       intervals. Using bca is very time-consuming. 
+EOF
+
+$help_text{-keep_tables} = <<'EOF';
+      -keep_tables
+
+      By default, all $TABLE will be deleted from the bootstrap models, 
+	  to save disk space. If option -keep_tables is set, 
+	  PsN will instead keep $TABLE.
 EOF
 
     $help_text{-copy_data} = <<'EOF';
@@ -302,6 +311,7 @@ my $bs = tool::bootstrap ->
 	samples				     => $options{'samples'},
 	subjects			     => \%subj_hash,
 	type				     => $type,
+	keep_tables          	=> $options{'keep_tables'},
 	stratify_on                          => $options{'stratify_on'},
 	dofv                                  => $options{'dofv'},
 	mceta                                 => $options{'mceta'},
