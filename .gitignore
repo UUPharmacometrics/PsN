@@ -17,7 +17,6 @@ libgen/*
 lib/debug.pm
 lib/file.pm
 lib/nonmem.pm
-lib/status_bar.pm
 lib/tool.pm
 lib/tool/bootstrap.pm
 lib/tool/cdd.pm

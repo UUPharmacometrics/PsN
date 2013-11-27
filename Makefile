@@ -144,7 +144,6 @@ RELFILES=$(addprefix PsN-Source/lib/,$(LIBFILES)) \
 
 DIALIBFILES=debug.pm \
 	ui.pm \
-	status_bar.pm \
 	nonmem.pm \
 	file.pm \
 	tool.pm \
@@ -198,9 +197,6 @@ libgen/debug.pm : diagrams/debug.dia
 
 libgen/ui.pm : diagrams/ui.dia
 	$(DIA2CODE) -t perl -d $(DIRPM) diagrams/ui.dia
-
-libgen/status_bar.pm : diagrams/status_bar.dia
-	$(DIA2CODE) -t perl -d $(DIRPM) diagrams/status_bar.dia
 
 libgen/nonmem.pm : diagrams/nonmem.dia
 	$(DIA2CODE) -t perl -d $(DIRPM) diagrams/nonmem.dia	
