@@ -15,7 +15,6 @@ test/test_files/pheno5.phi
 lib/PsN.pm
 libgen/*
 lib/debug.pm
-lib/file.pm
 lib/nonmem.pm
 lib/tool.pm
 lib/tool/bootstrap.pm

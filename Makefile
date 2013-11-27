@@ -145,7 +145,6 @@ RELFILES=$(addprefix PsN-Source/lib/,$(LIBFILES)) \
 DIALIBFILES=debug.pm \
 	ui.pm \
 	nonmem.pm \
-	file.pm \
 	tool.pm \
 	tool/modelfit.pm \
 	tool/llp.pm \
@@ -200,9 +199,6 @@ libgen/ui.pm : diagrams/ui.dia
 
 libgen/nonmem.pm : diagrams/nonmem.dia
 	$(DIA2CODE) -t perl -d $(DIRPM) diagrams/nonmem.dia	
-
-libgen/file.pm : diagrams/file.dia
-	$(DIA2CODE) -t perl -d $(DIRPM) diagrams/file.dia
 
 libgen/tool/modelfit.pm : diagrams/modelfit.dia
 	$(DIA2CODE) -t perl -d $(DIRPM) diagrams/modelfit.dia
