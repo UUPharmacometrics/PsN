@@ -147,7 +147,6 @@ DIALIBFILES=debug.pm \
 	status_bar.pm \
 	nonmem.pm \
 	file.pm \
-	data.pm \
 	tool.pm \
 	tool/modelfit.pm \
 	tool/llp.pm \
@@ -193,9 +192,6 @@ lib/%.pm: libgen/%.pm lib/%_subs.pm
 
 clean:
 	@-rm -rf $(PERLFILES) $(DOCUMENTS) libgen PsN-Source bin/completion_files doc/*.aux doc/*.log doc/*.pdf doc/inputs/*eps-converted-to.pdf PsN-Source.tar.gz PsN-Source.zip
-
-libgen/data.pm : diagrams/data.dia
-	$(DIA2CODE) -t perl -d $(DIRPM) diagrams/data.dia
 
 libgen/debug.pm : diagrams/debug.dia
 	$(DIA2CODE) -t perl -d $(DIRPM) diagrams/debug.dia
