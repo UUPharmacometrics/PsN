@@ -5,12 +5,11 @@ use strict;
 use warnings;
 use File::Path 'rmtree';
 use Test::More;
-use FindBin qw($Bin);
+use lib "../.."; #location of includes.pm
+use includes; #file with paths to PsN packages and $path variable definition
 use File::Copy 'cp';
 
-#making sure commands in HO HIV run ok, missing extra credit sse:s
 
-my $path = "$Bin/../../../bin/";
 our $dir = 'Simultaneous_test';
 my $model_dir = "Simultaneous";
 my @needed = <$model_dir/*>;
@@ -21,8 +20,8 @@ foreach my $file (@needed){
 chdir($dir);
 #change back samp to 50 if running for real
 my @command_list=(
-[$path."execute run81.mod  -model_dir_name","task 1 of 2"],
-[$path."vpc run81.mod -tte=RTTE -flip_comments -samples=20 -compress -clean=3 -stratify_on=FLG,DV1,TRET,HR,CONC,CE,AGE,SEX,WT,CRCL"
+[$includes::path."execute run81.mod  -model_dir_name","task 1 of 2"],
+[$includes::path."vpc run81.mod -tte=RTTE -flip_comments -samples=20 -compress -clean=3 -stratify_on=FLG,DV1,TRET,HR,CONC,CE,AGE,SEX,WT,CRCL"
  ,"task 2 of 2"]
 	);
 foreach my $ref (@command_list){

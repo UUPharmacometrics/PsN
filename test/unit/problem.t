@@ -3,13 +3,13 @@
 use strict;
 use warnings;
 use Test::More;
-use FindBin qw($Bin);
-use lib "$Bin/../../lib"; 	# PsN packages
+use lib ".."; #location of includes.pm
+use includes; #file with paths to PsN packages
 
 use model;
 use model::problem;
 
-my $modeldir = "$Bin/../test_files";
+my $modeldir = "../test_files";
 my $model = model->new(filename => "$modeldir/pheno.mod");
 my $problem = $model->problems->[0];
 

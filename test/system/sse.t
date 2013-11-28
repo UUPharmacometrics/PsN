@@ -7,14 +7,16 @@ use warnings;
 use Test::More;
 use Test::Exception;
 use File::Path 'rmtree';
-use FindBin qw($Bin);
+use lib ".."; #location of includes.pm
+use includes; #file with paths to PsN packages and $path variable definition
+
 use File::Copy 'cp';
 
 #in psn.conf must set output_style = SPLUS, otherwise tests will fail. fix by setting here.
 
 our $dir = 'sse_test';
 our $private_test_files = $ENV{HOME}.'/.test_files';
-my $path = "$Bin/../../bin/";
+#our $private_test_files = '../private_test_files'; #keep this comment for easy creation of test_package
 
 # FIXME: $func and $facit are switched.
 sub is_array{
@@ -128,7 +130,7 @@ my $model_dir = "../test_files";
 
 rmtree([ "./$dir" ]);
 
-my $command= $path."sse -samples=5 $model_dir/pheno.mod -alt=$model_dir/pheno.mod -seed=290805 -rawres=$model_dir/rawres_for_sse.csv  -directory=$dir -offset=1";
+my $command= $includes::path."sse -samples=5 $model_dir/pheno.mod -alt=$model_dir/pheno.mod -seed=290805 -rawres=$model_dir/rawres_for_sse.csv  -directory=$dir -offset=1";
 
 system $command;
 
@@ -145,7 +147,7 @@ foreach my $key (keys %hash2_answer){
 
 rmtree([ "./$dir" ]);
 
-$command= $path."sse -samples=5 $private_test_files/moxonidine.mod -alt=$private_test_files/moxonidine.mod -seed=630992 -directory=$dir";
+$command= $includes::path."sse -samples=5 $private_test_files/moxonidine.mod -alt=$private_test_files/moxonidine.mod -seed=630992 -directory=$dir";
 
 system $command;
 
@@ -172,7 +174,7 @@ foreach my $file ("$model_dir/tnpri.mod","$model_dir/msf_tnpri","$model_dir/data
 }
 chdir($tndir);
 
-$command= $path."sse -samples=3 tnpri.mod -seed=630992 -directory=$dir";
+$command= $includes::path."sse -samples=3 tnpri.mod -seed=630992 -directory=$dir";
 print "Running $command\n";
 my $rc = system($command);
 $rc = $rc >> 8;
@@ -180,7 +182,7 @@ ok ($rc == 0, "$command, sse with prior tnpri should run ok");
 chdir('..');
 rmtree([ "./$tndir" ]);
 
-$command= $path."sse -samples=3 $model_dir/nwpri.mod -seed=630992 -directory=$dir";
+$command= $includes::path."sse -samples=3 $model_dir/nwpri.mod -seed=630992 -directory=$dir";
 print "Running $command\n";
 $rc = system($command);
 $rc = $rc >> 8;

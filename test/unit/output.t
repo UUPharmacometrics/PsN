@@ -7,13 +7,14 @@ use warnings;
 use Test::More;
 use Test::Exception;
 use Math::Random;
-use FindBin qw($Bin);
-use lib "$Bin/../../lib"; 	# PsN packages
-use lib "$Bin/../test_files/output";
+use lib ".."; #location of includes.pm
+use includes; #file with paths to PsN packages
+
+use lib "../test_files/output";
 use answers;
 use output;
 
-our $test_files = $Bin.'/../test_files/output/';
+our $test_files = '../test_files/output/';
 
 $SIG{__WARN__} = sub {
 	my $message = shift;
@@ -53,9 +54,9 @@ for (my $i=0; $i< scalar(@answer_hashes); $i++){
 	unless( $outobj -> parsed_successfully ){
 	    next;
 	}
-	foreach my $prob (keys $answer_hashes[$i]->{answers}){
-		foreach my $subprob (keys $answer_hashes[$i]->{answers}->{$prob}){
-			foreach my $attr (keys $answer_hashes[$i]->{answers}->{$prob}->{$subprob}){
+	foreach my $prob (keys %{$answer_hashes[$i]->{answers}}){
+		foreach my $subprob (keys %{$answer_hashes[$i]->{answers}->{$prob}}){
+			foreach my $attr (keys %{$answer_hashes[$i]->{answers}->{$prob}->{$subprob}}){
 				if ($attr =~ /^(sethetas|seomegas|sesigmas|thetas|omegas|sigmas)/){
 					cmp_array($outobj->get_single_value(problem_index => $prob, 
 														subproblem_index=> $subprob, 

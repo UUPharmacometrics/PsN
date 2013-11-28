@@ -5,12 +5,12 @@ use strict;
 use warnings;
 use File::Path 'rmtree';
 use Test::More;
-use FindBin qw($Bin);
+use lib "../.."; #location of includes.pm
+use includes; #file with paths to PsN packages and $path variable definition
 use File::Copy 'cp';
 
 #making sure commands in HO HCV (Hepatitis C) run ok, no extra credit runs
 
-my $path = "$Bin/../../../bin/";
 our $dir = 'HepatitisC_test';
 my $model_dir = "HO_HepatitisC_files";
 my @needed = <$model_dir/*>;
@@ -19,8 +19,8 @@ foreach my $file (@needed){
 	cp($file,$dir.'/.');
 }
 chdir($dir);
-my @command_list=([$path."execute run53.mod -model_dir_name","task 1a"],
-				  [$path."sse run53.mod -no-estimate -samples=10 -rawres_input=sim_raw_res53_3.csv -dir=sse53","task 2b"] #reduced samples from 1000
+my @command_list=([$includes::path."execute run53.mod -model_dir_name","task 1a"],
+				  [$includes::path."sse run53.mod -no-estimate -samples=5 -rawres_input=sim_raw_res53_3.csv -dir=sse53","task 2b"] #reduced samples from 1000
 	);
 foreach my $ref (@command_list){
 	my $command=$ref->[0];

@@ -6,19 +6,19 @@ use warnings;
 use Test::More;
 use Test::Exception;
 use File::Path 'rmtree';
+use lib ".."; #location of includes.pm
+use includes; #file with paths to PsN packages and $path variable definition
 use FindBin qw($Bin);
-use lib "$Bin/../../lib"; 	# PsN packages
+
 use data;
 use file;
 use tool::scm::config_file;
 use tool::scm;
 use common_options;
-use PsN;
 
 our $dir = 'scm_test';
 our $scm_file_dir="$Bin/../test_files/scm";
 our $file_dir="$Bin/../test_files";
-our $private_test_files = $ENV{HOME}.'/.test_files';
 
 
 sub is_array{

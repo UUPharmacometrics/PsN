@@ -5,12 +5,12 @@ use strict;
 use warnings;
 use File::Path 'rmtree';
 use Test::More;
-use FindBin qw($Bin);
+use lib "../.."; #location of includes.pm
+use includes; #file with paths to PsN packages and $path variable definition
 use File::Copy 'cp';
 
 #making sure commands in HO HCV (Hepatitis C) run ok, no extra credit runs
 
-my $path = "$Bin/../../../bin/";
 our $dir = 'Bootstrap_dOFV_test';
 my $model_dir = "HO_Bootstrap_dOFV_files";
 my @needed = <$model_dir/*>;
@@ -20,12 +20,12 @@ foreach my $file (@needed){
 }
 chdir($dir);
 my @command_list=(
-	[$path."execute run1.mod -model_dir_name","Task 1a"],
-	[$path."sumo run1.lst","Task 1b"],
-	[$path."bootstrap run1.mod -samples=100 -dofv -dir=boot1a -seed=1234567","Task 2"],
-	[$path."bootstrap run1.mod -samples=100 -dofv -dir=boot1b -seed=7654321","Task 4"],
-	[$path."execute run2.mod -model_dir_name","Task 5a"],
-	[$path."bootstrap run2.mod -samples=100 -dofv -dir=boot2 -seed=1234567","Task 5b"]
+	[$includes::path."execute run1.mod -model_dir_name","Task 1a"],
+	[$includes::path."sumo run1.lst","Task 1b"],
+	[$includes::path."bootstrap run1.mod -samples=10 -dofv -dir=boot1a -seed=1234567","Task 2"],
+	[$includes::path."bootstrap run1.mod -samples=10 -dofv -dir=boot1b -seed=7654321","Task 4"],
+	[$includes::path."execute run2.mod -model_dir_name","Task 5a"],
+	[$includes::path."bootstrap run2.mod -samples=10 -dofv -dir=boot2 -seed=1234567","Task 5b"]
 	);
 foreach my $ref (@command_list){
 	my $command=$ref->[0];

@@ -9,9 +9,10 @@ use File::Path 'rmtree';
 use Test::More;
 use List::Util qw(first);
 use FindBin qw($Bin);
+use lib ".."; #location of includes.pm
+use includes; #file with paths to PsN packages and $path variable definition
 
 our $dir = 'execute_test';
-my $path = "$Bin/../../bin/";
 
 my $model_dir = "../test_files";
 
@@ -22,7 +23,7 @@ rmtree([ "./$dir" ]);
 my @shrinking_results = (40.5600924453085, -0.185810314125491, 89.4892871889343);		# Calculated with PsN-3.6.2 on Doris
 my @shrinking_headings = ('shrinkage_eta1(%)', 'shrinkage_eta2(%)', 'shrinkage_iwres(%)');
 
-my @command_line = ($path."execute $model_dir/pheno.mod -shrinkage -directory=$dir",
+my @command_line = ($includes::path."execute $model_dir/pheno.mod -shrinkage -directory=$dir",
                    );
 
 my $is_equal;

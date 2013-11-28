@@ -8,8 +8,9 @@ use warnings;
 use Test::More;
 use Test::Exception;
 use Math::Random;
+use lib ".."; #location of includes.pm
+use includes; #file with paths to PsN packages
 use FindBin qw($Bin);
-use lib "$Bin/../../lib"; 	# PsN packages
 use data;
 
 

@@ -3,10 +3,9 @@
 use strict;
 use warnings;
 use Test::More;
-use FindBin qw($Bin);
-use lib "$Bin/../../lib"; 	# PsN packages
+use lib ".."; #location of includes.pm
+use includes; #file with paths to PsN packages
 
-use PsN;
 use model::problem::record::theta_option;
 
 # Test new and read option

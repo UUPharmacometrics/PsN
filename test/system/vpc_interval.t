@@ -6,10 +6,10 @@ use strict;
 use warnings;
 use File::Path 'rmtree';
 use Test::More;
-use FindBin qw($Bin);
+use lib ".."; #location of includes.pm
+use includes; #file with paths to PsN packages and $path variable definition
 
 our $dir = 'vpc_test';
-my $path = "$Bin/../../bin/";
 
 my $truematrix=
 [[1.7300E+01,1.5591E+01,2.0031E+01,1.3769E+01,1.7572E+01,1.3515E+01,4.1674E+01,2.6360E+01,9.6451E+00,4.4075E+01,1.1120E+01,2.2924E+01,2.9936E+01,1.4643E+01,1.5146E+01,3.2476E+01,2.2444E+01,1.7241E+01,3.6800E+01,2.0314E+01,1.3952E+01],
@@ -119,7 +119,7 @@ rmtree([ "./$dir" ]);
 
 #test will fail if pheno5.lst present in model dir
 unlink("$model_dir/pheno5.lst");
-my $command = $path."vpc -samples=20 $model_dir/pheno5.mod -auto_bin=2 -directory=$dir -seed=12345 -min_point=5";
+my $command = $includes::path."vpc -samples=20 $model_dir/pheno5.mod -auto_bin=2 -directory=$dir -seed=12345 -min_point=5";
 system $command;
 
 my $newmatrix = get_dv_matrix();
@@ -139,7 +139,7 @@ for (my $i=0; $i< 2; $i++){
 rmtree([ "./$dir" ]);
 
 #split simulation over multiple tabs
-$command = $path."vpc -samples=20 $model_dir/pheno5.mod -auto_bin=2 -directory=$dir -seed=12345 -min_point=5 -n_sim=2";
+$command = $includes::path."vpc -samples=20 $model_dir/pheno5.mod -auto_bin=2 -directory=$dir -seed=12345 -min_point=5 -n_sim=2";
 system $command;
 
 $newmatrix = get_dv_matrix();
