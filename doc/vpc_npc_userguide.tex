@@ -153,10 +153,10 @@ optional, default TIME, the independent variable to bin on. Specific for VPC. (o
 \noindent{\bf Either of 12 binning option combinations for independent variable}
 Optional, but it is forbidden to use more than one of these combinations. For details see section VPC binning below.
 \begin{itemize}
-	\item -autobin=auto   (default)
-	\item -autobin=$<$number of bins$>$
-	\item -autobin=$<$start bins$>$, $<$stop bins$>$
-	\item -autobin=unique
+	\item -auto\_bin=auto   (default)
+	\item -auto\_bin=$<$number of bins$>$
+	\item -auto\_bin=$<$start bins$>$, $<$stop bins$>$
+	\item -auto\_bin=unique
 	\item -bin\_by\_count=0 -bin\_array=boundary1,boundary2,...
 	\item -bin\_by\_count=1 -bin\_array=count1,count2,...
 	\item -bin\_by\_count=0 -no\_of\_bins=X
@@ -168,7 +168,7 @@ Optional, but it is forbidden to use more than one of these combinations. For de
 \end{itemize}
 \begin{optionlist}
 \optdefault{min\_points\_in\_bin}{N}
-Optional, used only if -autobin (except -autobin=unique) is selected. Set to disallow bins of size smaller than N. Default is 10. 
+Optional, used only if -auto\_bin (except -auto\_bin=unique) is selected. Set to disallow bins of size smaller than N. Default is 10. 
 \nextopt
 \optdefault{lloq}{number}
 optional, the lower limit of quantification for left censored data. Specific for VPC. 
