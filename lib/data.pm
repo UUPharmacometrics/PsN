@@ -2033,12 +2033,12 @@ sub randomize_data
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 rand_index => { isa => 'Int', optional => 0 },
-		 stratify_index => { isa => 'Int', optional => 1 },
-		 name_stub => { isa => 'Str', optional => 1 },
-		 samples => { isa => 'Int', optional => 0 },
-		 equal_obs => { isa => 'Bool', optional => 0 },
-		 directory => { isa => 'Str', optional => 1 }
+		rand_index => { isa => 'Int', optional => 0 },
+		stratify_index => { isa => 'Maybe[Int]', optional => 1 },
+		name_stub => { isa => 'Str', optional => 1 },
+		samples => { isa => 'Int', optional => 0 },
+		equal_obs => { isa => 'Bool', optional => 0 },
+		directory => { isa => 'Str', optional => 1 }
 	);
 	my $rand_index = $parm{'rand_index'};
 	my $stratify_index = $parm{'stratify_index'};
@@ -2048,63 +2048,60 @@ sub randomize_data
 	my $directory = $parm{'directory'};
 	my @data_objects;
 
-{
-    #in is mandatory integer samples
-    #mandatory integer rand_index index of randomization column
-    #optional integer stratify_index
-    #mandatory boolean equal_obs
-    #optional string name_stub
-    #optional directory where to write results
-    #return array of data objects
+	#in is mandatory integer samples
+	#mandatory integer rand_index index of randomization column
+	#optional integer stratify_index
+	#mandatory boolean equal_obs
+	#optional string name_stub
+	#optional directory where to write results
+	#return array of data objects
 #    print "randomize equal obs is $equal_obs\n";
-    #setup
-    my ($left_side_individuals,$right_side_individuals,$rand_values,$stratify_values) = 
+	#setup
+	my ($left_side_individuals,$right_side_individuals,$rand_values,$stratify_values) = 
 	$self->split_vertically(split_index => $rand_index,
-				stratify_index => $stratify_index);
+		stratify_index => $stratify_index);
 
-    my $n_individuals = scalar(@{$rand_values});
-    my @header = @{$self->header()};
-    my @stratified_data=();
-    if (defined $stratify_index){
-	@stratified_data = @{$self->stratify_indices(stratify_values => $stratify_values)};
-    }else{
-	push(@stratified_data,[0 .. ($n_individuals-1)]);
-    }
-
-    for (my $i=0; $i<$samples; $i++){
-	my $new_name = defined $name_stub ? $name_stub."_".($i+1).".dta" : "rand_".($i+1).".dta";
-	$new_name = $directory.'/'.$new_name if (defined $directory);
-	my @new_individuals=();
-	foreach my $individual (@{$left_side_individuals}){
-	    push(@new_individuals,$individual->copy());
+	my $n_individuals = scalar(@{$rand_values});
+	my @header = @{$self->header()};
+	my @stratified_data=();
+	if (defined $stratify_index){
+		@stratified_data = @{$self->stratify_indices(stratify_values => $stratify_values)};
+	}else{
+		push(@stratified_data,[0 .. ($n_individuals-1)]);
 	}
-	for (my $j=0; $j < scalar(@stratified_data); $j++){
-	    my @shuffled_indices = @{$stratified_data[$j]};
-	    $self-> _fisher_yates_shuffle(array => \@shuffled_indices);
-	    for (my $k=0; $k< scalar(@shuffled_indices); $k++){
-		my $base_index = $stratified_data[$j]->[$k];
-		my $rand_index = $shuffled_indices[$k];
-		my $new_values = $self->reconcile_column(old_values => $rand_values->[$base_index],
-							 template_values => $rand_values->[$rand_index],
-							 equal_obs => $equal_obs);
-		$new_individuals[$base_index]->append_column(new_values => $new_values);
-		$new_individuals[$base_index]->append_individual(new_individual => $right_side_individuals->[$base_index]);
-	    }
-	}
-	my $newdata = data->new( header      => \@header,
-				 idcolumn    => $self->idcolumn,
-				missing_data_token => $self->missing_data_token,			 
-				 ignoresign  => $self->ignoresign,
-				 individuals => \@new_individuals,
-				 filename    => $new_name,
-				 ignore_missing_files => 1,
-				 target      => 'mem' );
-	$newdata->_write;
-	$newdata->flush;
-	push(@data_objects,$newdata);
-    }
 
-}
+	for (my $i=0; $i<$samples; $i++){
+		my $new_name = defined $name_stub ? $name_stub."_".($i+1).".dta" : "rand_".($i+1).".dta";
+		$new_name = $directory.'/'.$new_name if (defined $directory);
+		my @new_individuals=();
+		foreach my $individual (@{$left_side_individuals}){
+			push(@new_individuals,$individual->copy());
+		}
+		for (my $j=0; $j < scalar(@stratified_data); $j++){
+			my @shuffled_indices = @{$stratified_data[$j]};
+			$self-> _fisher_yates_shuffle(array => \@shuffled_indices);
+			for (my $k=0; $k< scalar(@shuffled_indices); $k++){
+				my $base_index = $stratified_data[$j]->[$k];
+				my $rand_index = $shuffled_indices[$k];
+				my $new_values = $self->reconcile_column(old_values => $rand_values->[$base_index],
+					template_values => $rand_values->[$rand_index],
+					equal_obs => $equal_obs);
+				$new_individuals[$base_index]->append_column(new_values => $new_values);
+				$new_individuals[$base_index]->append_individual(new_individual => $right_side_individuals->[$base_index]);
+			}
+		}
+		my $newdata = data->new( header      => \@header,
+			idcolumn    => $self->idcolumn,
+			missing_data_token => $self->missing_data_token,			 
+			ignoresign  => $self->ignoresign,
+			individuals => \@new_individuals,
+			filename    => $new_name,
+			ignore_missing_files => 1,
+			target      => 'mem' );
+		$newdata->_write;
+		$newdata->flush;
+		push(@data_objects,$newdata);
+	}
 
 	return \@data_objects;
 }
@@ -2230,32 +2227,28 @@ sub stratify_indices
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 stratify_values => { isa => 'Ref', optional => 0 }
+		stratify_values => { isa => 'Ref', optional => 0 }
 	);
 	my @stratified_indices;
 	my $stratify_values = $parm{'stratify_values'};
 
-{
-    #used when creating data for randomization test
-    #input is ref of array of stratification values
-    #output is stratified_indices, array of refs of arrays of stratification indices
-    #stratification is done on unique values of stratification values
-    
-    my %values_hash;
-    my $next_index=0;
-    
-    for (my $i=0; $i< scalar (@{$stratify_values}); $i++){
-	my $value = $stratify_values->[$i];
-	unless (defined $values_hash{$value}){
-	    $values_hash{$value} = $next_index;
-	    push(@stratified_indices,[]);
-	    $next_index++;
+	#used when creating data for randomization test
+	#input is ref of array of stratification values
+	#output is stratified_indices, array of refs of arrays of stratification indices
+	#stratification is done on unique values of stratification values
+
+	my %values_hash;
+	my $next_index=0;
+
+	for (my $i=0; $i< scalar (@{$stratify_values}); $i++){
+		my $value = $stratify_values->[$i];
+		unless (defined $values_hash{$value}){
+			$values_hash{$value} = $next_index;
+			push(@stratified_indices,[]);
+			$next_index++;
+		}
+		push(@{$stratified_indices[$values_hash{$value}]},$i);
 	}
-	push(@{$stratified_indices[$values_hash{$value}]},$i);
-    }
-
-
-}
 
 	return \@stratified_indices;
 }
@@ -2351,7 +2344,6 @@ sub drop_dropped
 	);
 	my @model_header = defined $parm{'model_header'} ? @{$parm{'model_header'}} : ();
 
-{
 	# This method removes columns that has '=DROP' value in the
 	# model header as given by $INPUT. The model header must be
 	# transfered to this method through the model_header
@@ -2394,8 +2386,6 @@ sub drop_dropped
 	$self->synced(0);
 }
 
-}
-
 sub register_in_database
 {
 	my $self = shift;
@@ -2410,7 +2400,6 @@ sub register_in_database
 	my @individual_ids = defined $parm{'individual_ids'} ? @{$parm{'individual_ids'}} : ();
 	my $resampled = $parm{'resampled'};
 	my $data_id;
-
 
 	return $data_id;
 }
@@ -2433,7 +2422,6 @@ sub get_eta_matrix
 	my $n_eta = $parm{'n_eta'};
 	my @eta_matrix = ();
 
-{
     #used in frem
   $self->synchronize;
 
@@ -2467,7 +2455,6 @@ sub get_eta_matrix
 			print join(' ', @{$row}) . "\n";
 		}
   }
-}
 
 	return \@eta_matrix;
 }
@@ -2529,39 +2516,34 @@ sub _write
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 filename => { isa => 'Str', default => $self->full_name, optional => 1 },
-		 MX_PARAMS_VALIDATE_NO_CACHE => 1
+		filename => { isa => 'Str', default => $self->full_name, optional => 1 },
+		MX_PARAMS_VALIDATE_NO_CACHE => 1
 	);
 	my $filename = $parm{'filename'};
 
-	{
-      die "ERROR: data->_write: No filename set in data object.\n"
-	  if( $filename eq '' );
+	die "ERROR: data->_write: No filename set in data object.\n"
+	if( $filename eq '' );
 
-#      print "individuals in memory to print is ".scalar(@{$self->individuals()})." \n" if defined $self->individuals();
 	unless( defined $self->individuals()  and (scalar(@{$self->individuals()})>0)){
-	  # If we don't have any individuals and write to a new
-	  # filename, we must first read individuals from the old
-	  # file. A call to synchronize will do that. There is no risk
-	  # of a infinite loop here since synchronize allways writes to
-	  # "full_name".
-	  
-	  unless( $filename eq $self->full_name and (not $self->skip_parsing())){
-	    $self->synchronize;
-	  } 
+		# If we don't have any individuals and write to a new
+		# filename, we must first read individuals from the old
+		# file. A call to synchronize will do that. There is no risk
+		# of a infinite loop here since synchronize allways writes to
+		# "full_name".
+
+		unless( $filename eq $self->full_name and (not $self->skip_parsing())){
+			$self->synchronize;
+		} 
 	}
-	
+
 	open(FILE,">$filename") || 
-	    die "Could not create $filename\n";
+	die "Could not create $filename\n";
 	my $data_ref = $self->format_data;
 	my @data = @{$data_ref};
 	for ( @data ) {
-	  print ( FILE );
+		print ( FILE );
 	}
 	close(FILE);
-
-    }
-
 }
 
 sub _fisher_yates_shuffle
@@ -2590,7 +2572,6 @@ sub _read_first_individual
 	);
 	my $datafile = $parm{'datafile'};
 	my @ind_data;
-
 
 	return \@ind_data;
 }
@@ -2673,8 +2654,6 @@ sub _read_individuals
 	open(DATAFILE,"$filename") || die "Could not open $filename for reading";
 
 	my ( @new_row, $new_ID, $old_ID, @init_data );
-
-
 
 	my ( $sth, $dbh, $first_row_id, $first_value_id );
 	my $insert = 1;
