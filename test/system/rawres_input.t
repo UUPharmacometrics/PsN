@@ -4,7 +4,7 @@
 use strict;
 use warnings;
 use File::Path 'rmtree';
-use Test::More;
+use Test::More tests=>4;
 use FindBin qw($Bin);
 use File::Copy 'cp';
 use lib ".."; #location of includes.pm
@@ -18,10 +18,10 @@ our $ssedir = 'sse_test';
 my $model_dir = "$Bin/../test_files";
 
 my @commands = 
-	($includes::path."bootstrap -samples=5 $model_dir/pheno.mod -dir=$bootdir",
-	 $includes::path."sse $model_dir/pheno.mod -rawres_input=$bootdir/raw_results_pheno.csv -samples=5 -no-est -dir=$dir",
-	 $includes::path."sse $model_dir/pheno.mod  -samples=20 -dir=$ssedir",
-	 $includes::path."vpc $model_dir/pheno.mod -rawres_input=$ssedir/raw_results_pheno.csv -offset=0 -samples=20 -auto_bin=unique -dir=$dir");
+	($includes::bootstrap." -samples=5 $model_dir/pheno.mod -dir=$bootdir",
+	 $includes::sse." $model_dir/pheno.mod -rawres_input=$bootdir/raw_results_pheno.csv -samples=5 -no-est -dir=$dir",
+	 $includes::sse." $model_dir/pheno.mod  -samples=20 -dir=$ssedir",
+	 $includes::vpc." $model_dir/pheno.mod -rawres_input=$ssedir/raw_results_pheno.csv -offset=0 -samples=20 -auto_bin=unique -dir=$dir");
 
 
 

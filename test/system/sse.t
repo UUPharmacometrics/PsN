@@ -4,7 +4,7 @@
 
 use strict;
 use warnings;
-use Test::More;
+use Test::More tests=> 486;
 use Test::Exception;
 use File::Path 'rmtree';
 use lib ".."; #location of includes.pm
@@ -18,27 +18,35 @@ our $dir = 'sse_test';
 our $private_test_files = $ENV{HOME}.'/.test_files';
 #our $private_test_files = '../private_test_files'; #keep this comment for easy creation of test_package
 
-# FIXME: $func and $facit are switched.
 sub is_array{
-    my $func=shift;
     my $facit=shift;
+    my $func=shift;
     my $label=shift;
 
     is (scalar(@{$func}),scalar(@{$facit}),"$label, equal length");
 
     my $min = scalar(@{$func});
     $min = scalar(@{$facit}) if (scalar(@{$facit})< $min);
-    for (my $i=0; $i<$min; $i++){
-	if ($facit->[$i] eq 'NA'){
-	    cmp_ok($func->[$i],'eq',$facit->[$i],"$label, index $i");
-	}else{
-	    cmp_ok($func->[$i],'==',$facit->[$i],"$label, index $i");
+
+	my $truncate = 0;
+	if ($label =~ /(skewness|kurtosis)/){
+		$truncate=1;
 	}
+    for (my $i=0; $i<$min; $i++){
+		if ($facit->[$i] eq 'NA'){
+			cmp_ok($func->[$i],'eq',$facit->[$i],"$label, index $i");
+		}else{
+			if ($truncate){
+				my $left=substr(sprintf("%.11f",$func->[$i]), 0, -1);
+				my $right=substr(sprintf("%.11f",$facit->[$i]), 0, -1);				
+				cmp_ok($left,'==',$right,"$label, index $i");
+			}else{
+				cmp_ok($func->[$i],'==',$facit->[$i],"$label, index $i");
+			}
+		}
     }		
 	
 }
-
-
 
 sub get_stats
 {
@@ -130,7 +138,7 @@ my $model_dir = "../test_files";
 
 rmtree([ "./$dir" ]);
 
-my $command= $includes::path."sse -samples=5 $model_dir/pheno.mod -alt=$model_dir/pheno.mod -seed=290805 -rawres=$model_dir/rawres_for_sse.csv  -directory=$dir -offset=1";
+my $command= $includes::sse." -samples=5 $model_dir/pheno.mod -alt=$model_dir/pheno.mod -seed=290805 -rawres=$model_dir/rawres_for_sse.csv  -directory=$dir -offset=1";
 
 system $command;
 
@@ -147,15 +155,12 @@ foreach my $key (keys %hash2_answer){
 
 rmtree([ "./$dir" ]);
 
-$command= $includes::path."sse -samples=5 $private_test_files/moxonidine.mod -alt=$private_test_files/moxonidine.mod -seed=630992 -directory=$dir";
+$command= $includes::sse." -samples=5 $private_test_files/moxonidine.mod -alt=$private_test_files/moxonidine.mod -seed=630992 -directory=$dir";
 
 system $command;
 
 ($h1,$h2)=get_stats();
 
-# Special hack to truncate all kurtosis values to 13 decimals.
-$h1->{'kurtosis'} = [ map { ($_ ne 'NA') ? substr(sprintf("%.14f", $_), 0, -1) : $_ } @{$h1->{'kurtosis'}} ];
-$h2->{'kurtosis'} = [ map { ($_ ne 'NA') ? substr(sprintf("%.14f", $_), 0, -1) : $_ } @{$h2->{'kurtosis'}} ];
 
 foreach my $key (keys %hashmox_answer){
     is_array ($hashmox_answer{$key},$h1->{$key},"sse sim model compare $key");
@@ -174,7 +179,7 @@ foreach my $file ("$model_dir/tnpri.mod","$model_dir/msf_tnpri","$model_dir/data
 }
 chdir($tndir);
 
-$command= $includes::path."sse -samples=3 tnpri.mod -seed=630992 -directory=$dir";
+$command= $includes::sse." -samples=3 tnpri.mod -seed=630992 -directory=$dir";
 print "Running $command\n";
 my $rc = system($command);
 $rc = $rc >> 8;
@@ -182,7 +187,7 @@ ok ($rc == 0, "$command, sse with prior tnpri should run ok");
 chdir('..');
 rmtree([ "./$tndir" ]);
 
-$command= $includes::path."sse -samples=3 $model_dir/nwpri.mod -seed=630992 -directory=$dir";
+$command= $includes::sse." -samples=3 $model_dir/nwpri.mod -seed=630992 -directory=$dir";
 print "Running $command\n";
 $rc = system($command);
 $rc = $rc >> 8;

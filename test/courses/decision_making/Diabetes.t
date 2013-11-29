@@ -20,21 +20,24 @@ foreach my $file (@needed){
 chdir($dir);
 
 my @command_list=(
-	[$includes::path."execute run51.mod -dir=run51 ","Task 3a: run51"],
-	[$includes::path."execute run52.mod -dir=run52 ","Task 3b: run52"],
-	[$includes::path."execute run53.mod -dir=run53 ","Task 3c: run53"],
-	[$includes::path."execute run54.mod -dir=run54 ","Task 3d: run54"],
-	[$includes::path."execute run61.mod -dir=run61 ","Task 3e: run61"],
-	[$includes::path."execute run62.mod -dir=run62 ","Task 3f: run62"],
-	[$includes::path."execute run63.mod -dir=run63 ","Task 3g: run63"],
-	[$includes::path."execute run64.mod -dir=run64 ","Task 3h: run64"],
-	[$includes::path."execute run71.mod -dir=run71 ","Task 3i: run71"],
-	[$includes::path."execute run72.mod -dir=run72 ","Task 3j: run72"],
-	[$includes::path."execute run73.mod -dir=run73 ","Task 3k: run73"],
-	[$includes::path."execute run74.mod -dir=run74 ","Task 3l: run74"],
-	[$includes::path."vpc run51.mod -dir=run51vpc -dv=CFB -stratify=TRT -samples=20 -rawres_inp=raw_results_run51.csv","Task 6a: run51 vpc"], #samp=500
-	[$includes::path."vpc run52.mod -dir=run52vpc -dv=CFB -stratify=TRT -samples=20 -rawres_inp=raw_results_run52.csv","Task 6b: run52 vpc"]
+	[$includes::execute." run51.mod -dir=run51 ","Task 3a: run51"],
+	[$includes::execute." run52.mod -dir=run52 ","Task 3b: run52"],
+	[$includes::execute." run53.mod -dir=run53 ","Task 3c: run53"],
+	[$includes::execute." run54.mod -dir=run54 ","Task 3d: run54"],
+	[$includes::execute." run61.mod -dir=run61 ","Task 3e: run61"],
+	[$includes::execute." run62.mod -dir=run62 ","Task 3f: run62"],
+	[$includes::execute." run63.mod -dir=run63 ","Task 3g: run63"],
+	[$includes::execute." run64.mod -dir=run64 ","Task 3h: run64"],
+	[$includes::execute." run71.mod -dir=run71 ","Task 3i: run71"],
+	[$includes::execute." run72.mod -dir=run72 ","Task 3j: run72"],
+	[$includes::execute." run73.mod -dir=run73 ","Task 3k: run73"],
+	[$includes::execute." run74.mod -dir=run74 ","Task 3l: run74"],
+	[$includes::vpc." run51.mod -dir=run51vpc -dv=CFB -stratify=TRT -samples=20 -rawres_inp=raw_results_run51.csv","Task 6a: run51 vpc"], #samp=500
+	[$includes::vpc." run52.mod -dir=run52vpc -dv=CFB -stratify=TRT -samples=20 -rawres_inp=raw_results_run52.csv","Task 6b: run52 vpc"]
 	);
+
+plan tests => scalar(@command_list);
+
 foreach my $ref (@command_list){
 	my $command=$ref->[0];
 	my $comment=$ref->[1];

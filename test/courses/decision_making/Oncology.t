@@ -21,16 +21,17 @@ foreach my $file (@needed){
 }
 chdir($dir);
 my @command_list=(
-	[$includes::path."execute run1sim.mod -model_dir_name","task 1:1"],
-	[$includes::path."execute run2.mod -model_dir_name","task 1:5 a"],
-	[$includes::path."sumo run2.lst","task 1:5 b"],
-	[$includes::path."execute run3.mod -model_dir_name","task 1:5 c"],
-	[$includes::path."sumo run3.lst","task 1:5 b"],
-	[$includes::path."execute run5.mod -model_dir_name","task 1:6 a"],
-	[$includes::path."sumo run5.lst","task 1:6 b"],
-	[$includes::path."vpc run2.mod -tte=RTTE -flip_comments -samples=20 -clean=2 -dir=vpc1 -stratify_on=ECOG,META,TSR6,BASET","task 7"],
-	[$includes::path."sse -samples=3  run2sim.mod -no-estimate_simulation -alternative_models=1_alt1.mod,2_alt1.mod,3_alt1.mod,4_alt1.mod","task 8c with only 3 samples due to runtime"] #this takes too long with original samples=100, just run 3 here instead of 100
+	[$includes::execute." run1sim.mod -model_dir_name","task 1:1"],
+	[$includes::execute." run2.mod -model_dir_name","task 1:5 a"],
+	[$includes::sumo." run2.lst","task 1:5 b"],
+	[$includes::execute." run3.mod -model_dir_name","task 1:5 c"],
+	[$includes::sumo." run3.lst","task 1:5 b"],
+	[$includes::execute." run5.mod -model_dir_name","task 1:6 a"],
+	[$includes::sumo." run5.lst","task 1:6 b"],
+	[$includes::vpc." run2.mod -tte=RTTE -flip_comments -samples=20 -clean=2 -dir=vpc1 -stratify_on=ECOG,META,TSR6,BASET","task 7"],
+	[$includes::sse." -samples=3  run2sim.mod -no-estimate_simulation -alternative_models=1_alt1.mod,2_alt1.mod,3_alt1.mod,4_alt1.mod","task 8c with only 3 samples due to runtime"] #this takes too long with original samples=100, just run 3 here instead of 100
 	);
+plan tests => scalar(@command_list);
 foreach my $ref (@command_list){
 	my $command=$ref->[0];
 	my $comment=$ref->[1];

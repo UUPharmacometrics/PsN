@@ -3,7 +3,7 @@
 
 use strict;
 use warnings;
-use Test::More;
+use Test::More tests=>23;
 use Test::Exception;
 use File::Path 'rmtree';
 use lib ".."; #location of includes.pm

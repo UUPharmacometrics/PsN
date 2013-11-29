@@ -23,21 +23,22 @@ foreach my $file (@needed){
 chdir($dir);
 
 my @command_list=(
-	[$includes::path."execute run0.mod -model_dir_name","task 1a 1"],
-	[$includes::path."execute run1.mod -model_dir_name","task 1a 2"],
-	[$includes::path."sumo run0.lst","task 1b 1"],
-	[$includes::path."sumo run1.lst","task 1b 2"],
-	[$includes::path."randtest run1.mod -samples=10 -base_model=run0.mod -random=DOSE -dir=randtest1 ","task 1d"],
-	[$includes::path."vpc run1.mod -stratify_on=ARM -auto_bin=unique -samples=20 -dir=vpc1","task 2a"],
-	[$includes::path."vpc run1.mod -stratify_on=ARM  -auto_bin=unique -samples=20 -dir=vpc1CFB -dv=CFB","task 2b"],
-	[$includes::path."bootstrap run1.mod -samples=20 -dir=boot1 -stratify_on=ARM","task 2c"],
-	[$includes::path."vpc run1.mod  -auto_bin=unique -stratify_on=ARM -samples=20 -dir=vpc1boot -rawres_in=boot1/raw_results_run1.csv","task 2e"],
-	[$includes::path."vpc run5.mod  -auto_bin=unique -stratify_on=ARM -samples=20 -dir=vpc5 -rawres_in=boot1/raw_results_run1.csv","task 3a"],
-	[$includes::path."vpc run5.mod -samples=20 -auto_bin=unique -stratify=ARM -dir=vpc5_NO_PU","task 3b"],
-	[$includes::path."vpc run5.mod -samples=20 -auto_bin=unique -stratify=ARM -dir=vpc5DD -refstrat=0 -dv=CFB -rawres=boot1/raw_results_run1.csv","task 3d"],
-	[$includes::path."execute run9.mod -extra_output=fort.50,fort.60 -model_dir_name","task 4b"],
-	[$includes::path."vpc run9.mod -samples=20 -stratify=ARM -dir=vpc9 -auto_bin=unique","task 4a"]
+	[$includes::execute." run0.mod -model_dir_name","task 1a 1"],
+	[$includes::execute." run1.mod -model_dir_name","task 1a 2"],
+	[$includes::sumo." run0.lst","task 1b 1"],
+	[$includes::sumo." run1.lst","task 1b 2"],
+	[$includes::randtest." run1.mod -samples=10 -base_model=run0.mod -random=DOSE -dir=randtest1 ","task 1d"],
+	[$includes::vpc." run1.mod -stratify_on=ARM -auto_bin=unique -samples=20 -dir=vpc1","task 2a"],
+	[$includes::vpc." run1.mod -stratify_on=ARM  -auto_bin=unique -samples=20 -dir=vpc1CFB -dv=CFB","task 2b"],
+	[$includes::bootstrap." run1.mod -samples=20 -dir=boot1 -stratify_on=ARM","task 2c"],
+	[$includes::vpc." run1.mod  -auto_bin=unique -stratify_on=ARM -samples=20 -dir=vpc1boot -rawres_in=boot1/raw_results_run1.csv","task 2e"],
+	[$includes::vpc." run5.mod  -auto_bin=unique -stratify_on=ARM -samples=20 -dir=vpc5 -rawres_in=boot1/raw_results_run1.csv","task 3a"],
+	[$includes::vpc." run5.mod -samples=20 -auto_bin=unique -stratify=ARM -dir=vpc5_NO_PU","task 3b"],
+	[$includes::vpc." run5.mod -samples=20 -auto_bin=unique -stratify=ARM -dir=vpc5DD -refstrat=0 -dv=CFB -rawres=boot1/raw_results_run1.csv","task 3d"],
+	[$includes::execute." run9.mod -extra_output=fort.50,fort.60 -model_dir_name","task 4b"],
+	[$includes::vpc." run9.mod -samples=20 -stratify=ARM -dir=vpc9 -auto_bin=unique","task 4a"]
 	); 
+plan tests => scalar(@command_list);
 
 
 

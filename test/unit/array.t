@@ -2,7 +2,7 @@
 
 use strict;
 use warnings;
-use Test::More;
+use Test::More tests=>55;
 use Test::Exception;
 use lib ".."; #location of includes.pm
 use includes; #file with paths to PsN packages

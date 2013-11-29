@@ -5,7 +5,7 @@
 use strict;
 use warnings;
 use File::Path 'rmtree';
-use Test::More;
+use Test::More tests=>9;
 use lib ".."; #location of includes.pm
 use includes; #file with paths to PsN packages and $path variable definition
 
@@ -47,9 +47,9 @@ my @a;
 rmtree([ "./$dir" ]);
 
 # Commands that should return error
-my @command_line = ($includes::path."vpc -samples=20 $model_dir/pheno.mod -min_points_in_bin=28 -bin_array=10,20,30 -directory=$dir",       # Min points in bin without -auto_bin
-                 $includes::path."vpc -samples=20 $model_dir/pheno.mod -auto_bin=20 -bin_array=10,20,30 -directory=$dir",     # Mixing auto_bin with bin_array
-                 $includes::path."vpc -samples=20 $model_dir/pheno.mod -auto_bin=auto -bin_by_count=0 -directory=$dir",       # Mixing auto_bin with bin_by_count
+my @command_line = ($includes::vpc." -samples=20 $model_dir/pheno.mod -min_points_in_bin=28 -bin_array=10,20,30 -directory=$dir",       # Min points in bin without -auto_bin
+					$includes::vpc." -samples=20 $model_dir/pheno.mod -auto_bin=20 -bin_array=10,20,30 -directory=$dir",     # Mixing auto_bin with bin_array
+					$includes::vpc." -samples=20 $model_dir/pheno.mod -auto_bin=auto -bin_by_count=0 -directory=$dir",       # Mixing auto_bin with bin_by_count
                  ); 
 my $rc;
 
@@ -71,13 +71,13 @@ my @results = ([-8.888, 16.5, 42.65, 68.15, 93, 127.9, 148.4, 204.8, 390.1888],
                [49.6,98.2,146.8,195.4,244,292.6,341.2,389.8],
               );
 
-@command_line = ($includes::path."vpc -samples=20 $model_dir/pheno.mod -auto_bin=auto -directory=$dir",       # The automatic option (same as default below)
-                    $includes::path."vpc -samples=20 $model_dir/pheno.mod -auto_bin=10 -directory=$dir",         # Pre-defined number of bins
-                    $includes::path."vpc -samples=20 $model_dir/pheno.mod -auto_bin=4,7 -directory=$dir",        # Search in a range
-                    $includes::path."vpc -samples=20 $model_dir/pheno.mod -directory=$dir",                       # Auto find number of bins. Default behaviour
-                    $includes::path."vpc -samples=20 $model_dir/pheno.mod -auto_bin=unique  -directory=$dir",     # Bin on unique values
-                    $includes::path."vpc -samples=20 $model_dir/pheno.mod -bin_by_count=0 -no_of_bins=8  -directory=$dir",
-                   );
+@command_line = ($includes::vpc." -samples=20 $model_dir/pheno.mod -auto_bin=auto -directory=$dir",       # The automatic option (same as default below)
+				 $includes::vpc." -samples=20 $model_dir/pheno.mod -auto_bin=10 -directory=$dir",         # Pre-defined number of bins
+				 $includes::vpc." -samples=20 $model_dir/pheno.mod -auto_bin=4,7 -directory=$dir",        # Search in a range
+				 $includes::vpc." -samples=20 $model_dir/pheno.mod -directory=$dir",                       # Auto find number of bins. Default behaviour
+				 $includes::vpc." -samples=20 $model_dir/pheno.mod -auto_bin=unique  -directory=$dir",     # Bin on unique values
+				 $includes::vpc." -samples=20 $model_dir/pheno.mod -bin_by_count=0 -no_of_bins=8  -directory=$dir",
+	);
 
 my $is_equal;
 

@@ -21,20 +21,23 @@ foreach my $file (@needed){
 chdir($dir);
 
 my @command_list=(
-	[$includes::path."execute run10.mod -model_dir_name","task 1a 1"],
-	[$includes::path."sumo run10.lst","task 1a 2"],
-	[$includes::path."llp run10.mod -thetas=5 -dir=llp10","task 1b"],
-	[$includes::path."bootstrap -samples=10 run10.mod -dir=boot10","task 1c"],
-	[$includes::path."sse run11.mod -samples=10 -dir=sseMEM -seed=1234 -alt=run12.mod,run13.mod -rawres=boot10/raw_results_run10.csv","task 2a"],
-	[$includes::path."sse run11.mod -samples=3 -dir=sseMEM_lowED50 -seed=1234 -alt=run12.mod -rawres=boot10/raw_results_run10.csv -in_filter=5_ED50.lt.60","task 2c"],
-	[$includes::path."sse run11.mod -samples=10 -dir=sseCFB -seed=1234 -alt=run14.mod,run15.mod,run16.mod -rawres=boot10/raw_results_run10.csv -no-est","task 2e"],
-	[$includes::path."update_inits run17.template run10.lst -out=run17.mod","task 3a"], #change $DATA to data17.csv also
-	[$includes::path."mcmp -full_model=run17.mod -reduced_model=run13.mod -stratify_on=ARM -dir=mcmpMEM","task 3b"],
-	[$includes::path."mcmp -simulation_model=run17.mod -full_model=run14.mod -reduced_model=run16.mod -stratify_on=ARM -dir=mcmpCFB","task 3c"],
-	[$includes::path."update_inits run18.template run10.lst -out=run18.mod","task 3a"],
-	[$includes::path."sse run18.mod -samples=20 -dir=sse18","task 4a"],
-	[$includes::path."vpc run19.mod -samples=20 -idv=DOSE -flip_comments -rawres_input=sse18/raw_results_run18.csv -offset_rawres=0 -dir=vpcMEM300 -auto_bin=unique","task 4b"]
+	[$includes::execute." run10.mod -model_dir_name","task 1a 1"],
+	[$includes::sumo." run10.lst","task 1a 2"],
+	[$includes::llp." run10.mod -thetas=5 -dir=llp10","task 1b"],
+	[$includes::bootstrap." -samples=10 run10.mod -dir=boot10","task 1c"],
+	[$includes::sse." run11.mod -samples=10 -dir=sseMEM -seed=1234 -alt=run12.mod,run13.mod -rawres=boot10/raw_results_run10.csv","task 2a"],
+	[$includes::sse." run11.mod -samples=3 -dir=sseMEM_lowED50 -seed=1234 -alt=run12.mod -rawres=boot10/raw_results_run10.csv -in_filter=5_ED50.lt.60","task 2c"],
+	[$includes::sse." run11.mod -samples=10 -dir=sseCFB -seed=1234 -alt=run14.mod,run15.mod,run16.mod -rawres=boot10/raw_results_run10.csv -no-est","task 2e"],
+	[$includes::update_inits." run17.template run10.lst -out=run17.mod","task 3a"], #change $DATA to data17.csv also
+	[$includes::mcmp." -full_model=run17.mod -reduced_model=run13.mod -stratify_on=ARM -dir=mcmpMEM","task 3b"],
+	[$includes::mcmp." -simulation_model=run17.mod -full_model=run14.mod -reduced_model=run16.mod -stratify_on=ARM -dir=mcmpCFB","task 3c"],
+	[$includes::update_inits." run18.template run10.lst -out=run18.mod","task 3a"],
+	[$includes::sse." run18.mod -samples=20 -dir=sse18","task 4a"],
+	[$includes::vpc." run19.mod -samples=20 -idv=DOSE -flip_comments -rawres_input=sse18/raw_results_run18.csv -offset_rawres=0 -dir=vpcMEM300 -auto_bin=unique","task 4b"]
 	);
+
+plan tests => scalar(@command_list);
+
 foreach my $ref (@command_list){
 	my $command=$ref->[0];
 	my $comment=$ref->[1];

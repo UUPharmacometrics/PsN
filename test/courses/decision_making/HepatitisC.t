@@ -19,9 +19,11 @@ foreach my $file (@needed){
 	cp($file,$dir.'/.');
 }
 chdir($dir);
-my @command_list=([$includes::path."execute run53.mod -model_dir_name","task 1a"],
-				  [$includes::path."sse run53.mod -no-estimate -samples=5 -rawres_input=sim_raw_res53_3.csv -dir=sse53","task 2b"] #reduced samples from 1000
+my @command_list=([$includes::execute." run53.mod -model_dir_name","task 1a"],
+				  [$includes::sse." run53.mod -no-estimate -samples=5 -rawres_input=sim_raw_res53_3.csv -dir=sse53","task 2b"] #reduced samples from 1000
 	);
+plan tests => scalar(@command_list);
+
 foreach my $ref (@command_list){
 	my $command=$ref->[0];
 	my $comment=$ref->[1];

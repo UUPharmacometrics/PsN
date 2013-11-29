@@ -5,7 +5,7 @@
 use strict;
 use warnings;
 use File::Path 'rmtree';
-use Test::More;
+use Test::More tests=>660;
 use lib ".."; #location of includes.pm
 use includes; #file with paths to PsN packages and $path variable definition
 
@@ -119,7 +119,7 @@ rmtree([ "./$dir" ]);
 
 #test will fail if pheno5.lst present in model dir
 unlink("$model_dir/pheno5.lst");
-my $command = $includes::path."vpc -samples=20 $model_dir/pheno5.mod -auto_bin=2 -directory=$dir -seed=12345 -min_point=5";
+my $command = $includes::vpc." -samples=20 $model_dir/pheno5.mod -auto_bin=2 -directory=$dir -seed=12345 -min_point=5";
 system $command;
 
 my $newmatrix = get_dv_matrix();
@@ -139,7 +139,7 @@ for (my $i=0; $i< 2; $i++){
 rmtree([ "./$dir" ]);
 
 #split simulation over multiple tabs
-$command = $includes::path."vpc -samples=20 $model_dir/pheno5.mod -auto_bin=2 -directory=$dir -seed=12345 -min_point=5 -n_sim=2";
+$command = $includes::vpc." -samples=20 $model_dir/pheno5.mod -auto_bin=2 -directory=$dir -seed=12345 -min_point=5 -n_sim=2";
 system $command;
 
 $newmatrix = get_dv_matrix();

@@ -5,7 +5,7 @@
 use strict;
 use warnings;
 use File::Path 'rmtree';
-use Test::More;
+use Test::More tests=>1;
 use FindBin qw($Bin);
 use lib ".."; #location of includes.pm
 use includes; #file with paths to PsN packages and $path variable definition
@@ -15,7 +15,7 @@ my $model_dir = "$Bin/../test_files";
 
 rmtree([ "./$dir" ]);
 
-my $command = $includes::path."gls $model_dir/glstags.mod -samples=3 -set_simest -ind_shrink -dir=$dir";
+my $command = $includes::gls." $model_dir/glstags.mod -samples=3 -set_simest -ind_shrink -dir=$dir";
 
 my  $rc = system($command);
 $rc = $rc >> 8;

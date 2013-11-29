@@ -21,19 +21,21 @@ foreach my $file (@needed){
 chdir($dir);
 #change back samp to 50 if running for real
 #get a lot orf warning for task1 because of trailing empty lines in uncert_sse_1.csv, ok
-my @command_list=([$includes::path."sse sse_1u.mod -samples=5 -seed=12345 -rawres_input=uncertainty_sse_1.csv -offset=1".
+my @command_list=([$includes::sse." sse_1u.mod -samples=5 -seed=12345 -rawres_input=uncertainty_sse_1.csv -offset=1".
 				   " -no-estimate_simulation -dir=sim1u ","task 1c:1"],
-				  [$includes::path."sse sse_2u.mod -samples=5 -seed=12345 -rawres_input=uncertainty_sse_2.csv -offset=1".
+				  [$includes::sse." sse_2u.mod -samples=5 -seed=12345 -rawres_input=uncertainty_sse_2.csv -offset=1".
 				   " -no-estimate_simulation -dir=sim2u ","task 1c:2"],
-				  [$includes::path."sse sse_3u.mod -samples=5 -seed=12345 -rawres_input=uncertainty_sse_3.csv -offset=1".
+				  [$includes::sse." sse_3u.mod -samples=5 -seed=12345 -rawres_input=uncertainty_sse_3.csv -offset=1".
 				   " -no-estimate_simulation -dir=sim3u ","task 1c:3"],
-				  [$includes::path."sse sse_CI_1u.mod -samples=5 -seed=12345 -rawres_input=uncertainty_sse_CI_1.csv -offset=1".
+				  [$includes::sse." sse_CI_1u.mod -samples=5 -seed=12345 -rawres_input=uncertainty_sse_CI_1.csv -offset=1".
 				   " -no-estimate_simulation -dir=sim_CI_1u ","task 1e:1"],
-				  [$includes::path."sse sse_CI_2u.mod -samples=5 -seed=12345 -rawres_input=uncertainty_sse_CI_2.csv -offset=1".
+				  [$includes::sse." sse_CI_2u.mod -samples=5 -seed=12345 -rawres_input=uncertainty_sse_CI_2.csv -offset=1".
 				   " -no-estimate_simulation -dir=sim_CI_2u ","task 1e:2"],
-				  [$includes::path."sse sse_CI_3u.mod -samples=5 -seed=12345 -rawres_input=uncertainty_sse_CI_3.csv -offset=1".
+				  [$includes::sse." sse_CI_3u.mod -samples=5 -seed=12345 -rawres_input=uncertainty_sse_CI_3.csv -offset=1".
 				   " -no-estimate_simulation -dir=sim_CI_3u ","task 1e:3"],
 	);
+plan tests => scalar(@command_list);
+
 foreach my $ref (@command_list){
 	my $command=$ref->[0];
 	my $comment=$ref->[1];

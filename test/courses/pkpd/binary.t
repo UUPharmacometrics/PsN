@@ -20,9 +20,11 @@ foreach my $file (@needed){
 chdir($dir);
 #change back samp to 50 if running for real
 my @command_list=(
-	[$includes::path."execute run36.mod -model_dir_name","task 1 of 2"],
-	[$includes::path."vpc run36vpc.mod -samples=20 -seed=1234 -levels=1.5 -dir=vpc_36 -lst=run36.lst -stratify_on=DOSE -nopred -dv=SMXH","task 2 of 2"]
+	[$includes::execute." run36.mod -model_dir_name","task 1 of 2"],
+	[$includes::vpc." run36vpc.mod -samples=20 -seed=1234 -levels=1.5 -dir=vpc_36 -lst=run36.lst -stratify_on=DOSE -nopred -dv=SMXH","task 2 of 2"]
 	);
+plan tests => scalar(@command_list);
+
 foreach my $ref (@command_list){
 	my $command=$ref->[0];
 	my $comment=$ref->[1];

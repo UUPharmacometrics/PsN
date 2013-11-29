@@ -18,12 +18,14 @@ foreach my $file (@needed){
 	cp($file,$dir.'/.');
 }
 chdir($dir);
-#change back samp to 50 if running for real
+
 my @command_list=(
-[$includes::path."execute run81.mod  -model_dir_name","task 1 of 2"],
-[$includes::path."vpc run81.mod -tte=RTTE -flip_comments -samples=20 -compress -clean=3 -stratify_on=FLG,DV1,TRET,HR,CONC,CE,AGE,SEX,WT,CRCL"
+	[$includes::execute." run81.mod  -model_dir_name","task 1 of 2"],
+	[$includes::vpc." run81.mod -tte=RTTE -flip_comments -samples=20 -compress -clean=3 -stratify_on=FLG,DV1,TRET,HR,CONC,CE,AGE,SEX,WT,CRCL"
  ,"task 2 of 2"]
 	);
+plan tests => scalar(@command_list);
+
 foreach my $ref (@command_list){
 	my $command=$ref->[0];
 	my $comment=$ref->[1];
