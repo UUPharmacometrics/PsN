@@ -79,6 +79,9 @@ For a complete list of common options see common\_options\_defaults\_versions.pd
 \optdefault{directory}{mcmp\_dirX}
 The directory in which the script will run NONMEM can be named. The default name is “mcmp\_dirX” where X is increased by 1 each time you run the script. 
 \nextopt
+\optdefault{nm\_output}{comma-separated list of NM output file extensions}
+A comma-separated list of NONMEM output file extenstions (e.g. ext,phi,cov). By default only the lst-file will be copied back to the calling directory, but the mcmp program will fail unless the phi-file is copied also, i.e. it is necessary to set at least -nm\_output=phi when mcmp is run, unless it is not set in the psn.conf-file.
+\nextopt
 \optdefault{seed}{string}
 A seed for the random number generator can be specified. This makes the run reproducible. It acts as a starting point for the random number generator to produce the random number that will be used for the bootstrapping of the iofv:s. 
 \nextopt
@@ -95,6 +98,8 @@ The output from each mcmp is mcmp\_results.csv which contains a table with heade
 
 \section{Known bugs}
 If estimation of the full and/or reduced model fails but NONMEM 7 still produces a .phi-file with the initial individual ofv-values, then PsN will not detect the failed estimation but continue to bootstrap from the .phi-file.
+
+The mcmp requires that -nm\_output=phi or -nm\_output=phi,\emph{more file extensions} is set, either on the command-line or in psn.conf.
 
 \section{Recovering a crashed/stopped mcmp}
 If the simulation finished but none of the estimations finished, then start over in a new run directory but use option -simdata with the dataset from the simulation step. If one or two of the estimations finished, then start in new directory using option -table\_reduced and/or -table\_full and possibly -table\_strata. 
