@@ -29,7 +29,7 @@ sub is_array{
     $min = scalar(@{$facit}) if (scalar(@{$facit})< $min);
 
 	my $truncate = 0;
-	if ($label =~ /(skewness|kurtosis)/){
+	if ($label =~ /(skewness|kurtosis|mean)/){
 		$truncate=1;
 	}
     for (my $i=0; $i<$min; $i++){
