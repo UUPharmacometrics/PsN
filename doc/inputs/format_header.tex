@@ -3,14 +3,21 @@
 %\setlength{\marginparsep}{0pt}%?
 %\setlength{\evensidemargin}{0pt}
 %\setlength{\oddsidemargin}{0pt}
-
+\usepackage{lmodern}
 \usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{textcomp}
 \usepackage{verbatim}
 \usepackage{enumitem}
 \usepackage{longtable}
 \usepackage{alltt}
 \usepackage{ifthen}
-\newcommand{\guidetitle}[1]{ 
+
+% Reduce the size of the underscore
+\usepackage{relsize}
+\renewcommand{\_}{\textscale{.7}{\textunderscore}}
+
+\newcommand{\guidetitle}[1]{
 \title{#1\\ \vspace{2 mm} {\large PsN 3.7.5}}
 \date{2013-11-19}
 }
