@@ -4328,8 +4328,14 @@ start run
 	    # Make sure that each process gets a unique random sequence:
 	    my $tmpseed = defined $self->seed() ? $self->seed() : random_uniform_integer(1,1,99999999);
 	    my $tmptry  = exists $queue_info{$run}{'tries'} ? $queue_info{$run}{'tries'} : 0;
-	    random_set_seed(($tmpseed+100000*($run+1)),($tmptry+1));
- 
+	  #have two alternatives: first for backward reproducability of sequences
+	  #second to prevent bug when very large number of models
+	  if ($run < 5000){
+		  random_set_seed(($tmpseed+100000*($run+1)),($tmptry+1));
+	  }else{
+		  my $phrase = "seed $tmpseed try $tmptry run $run";
+		  random_set_seed_from_phrase($phrase);
+	  }
 	    my %options_hash = %{$self -> _get_run_options(run_id => $run)};
 	    
 	  #careful here, option maxevals is set on commandline, but model->maxeval() is 
