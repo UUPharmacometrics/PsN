@@ -2464,7 +2464,7 @@ sub column_to_array
 	my $self = shift;
 	my %parm = validated_hash(\@_,
 		 column => { isa => 'Str', optional => 0 },
-		 filter => { isa => 'ArrayRef[Int]', optional => 1 }
+		 filter => { isa => 'ArrayRef', optional => 1 }		# Warning: Do not use ArrayRef[Int] here. Causes Perl to crash. Bug report filed
 	);
 	my $column = $parm{'column'};
 	my @array;
