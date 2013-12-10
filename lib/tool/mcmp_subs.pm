@@ -604,8 +604,10 @@ start read_data
   close(FH);
   if (defined $self->stratify_on()){
     if ($line_i != $n_individuals){
-      croak("The number of individuals in $reduced_file and ".
-		 $self->table_strata()." are not the same.");
+		croak("The number of individuals in reduced.phi ($line_i) and strata.tab ($n_individuals) are not the same.\nCheck the files manually.\n".
+			  "Possibly rerun reduced.mod manually to investigate the error.\n".
+			  "$reduced_file\n".
+			  $self->table_strata()."\n");
     }
   }else{
     $n_individuals = $line_i;
