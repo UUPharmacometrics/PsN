@@ -1,0 +1,74 @@
+\input{../inputs/format_header.tex}
+\guidetitle{PsN input and output}
+
+\begin{document}
+
+\maketitle
+\section{Common input and output}
+\subsection{Input}
+All PsN programs require at least one NONMEM control stream file as input, 
+and the data file set in \$DATA must be present.
+\subsection{Output}
+\begin{description}
+\item[raw\_results]
+The raw\_results file is common output from PsN programs. It is a structured
+comma-separated file containing a table with one header row. Following the header are one result
+line per sub-problem per \$PROBLEM per model that was run.
+The columns include model, problem and subproblem number, a 
+set of booleans depending on the settings in the model
+(e.g. estimation\_step\_run), the ofv, parameter estimates, standard errors,
+etc. The number of columns and the headers depend on the structure of the model,
+comments in the model file, the PsN program generating the file and the options
+to the particular run.
+The name of the raw\_results file always starts with raw\_results but the end depends on the 
+PsN program and the name of the model file.
+\item[<program>\_results.csv]
+Most PsN programs produce a <program>\_results.csv file, for example bootstrap\_results.csv. 
+It is a human readable comma separated file intended for viewing in e.g. Excel. 
+It contains run information and 
+result summaries. There are multiple sections spanning varying numbers of rows and columns.
+\end{description}
+
+\section{Output files per PsN program}
+\subsection{bootstrap}
+\begin{enumerate}
+\item raw\_results 
+\item bootstrap\_results.csv 
+\end{enumerate}
+\subsection{cdd}
+\begin{enumerate}
+\item raw\_results 
+\item cdd\_results.csv 
+\end{enumerate}
+\subsection{execute}
+\begin{enumerate}
+\item raw\_results
+\item A set of standard NONMEM output files
+\end{enumerate}
+\subsection{llp}
+\begin{enumerate}
+\item raw\_results 
+\item llp\_results.csv 
+\end{enumerate}
+\subsection{randtest}
+\begin{enumerate}
+\item raw\_results 
+\end{enumerate}
+\subsection{scm}
+\begin{enumerate}
+\item raw\_results
+\item A human readable log file
+\item A NONMEM control stream with the final model
+\end{enumerate}
+\subsection{sse}
+\begin{enumerate}
+\item raw\_results 
+\item sse\_results.csv 
+\end{enumerate}
+\subsection{vpc}
+\begin{enumerate}
+\item vpctab, which is used as input to Xpose when results are visualized
+\item vpc\_results.csv 
+\end{enumerate}
+
+\end{document}
