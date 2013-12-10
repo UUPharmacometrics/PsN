@@ -14,6 +14,10 @@ use File::Copy 'cp';
 
 #in psn.conf must set output_style = SPLUS, otherwise tests will fail. fix by setting here.
 
+#tnpri is NM version dependent due to msfi file, 730 or 72.
+#our $nm=730;
+our $nm=72;
+
 our $dir = 'sse_test';
 our $private_test_files = $ENV{HOME}.'/.test_files';
 #our $private_test_files = '../private_test_files'; #keep this comment for easy creation of test_package
@@ -28,20 +32,19 @@ sub is_array{
     my $min = scalar(@{$func});
     $min = scalar(@{$facit}) if (scalar(@{$facit})< $min);
 
-	my $truncate = 0;
-	if ($label =~ /(skewness|kurtosis|mean)/){
-		$truncate=1;
-	}
     for (my $i=0; $i<$min; $i++){
 		if ($facit->[$i] eq 'NA'){
 			cmp_ok($func->[$i],'eq',$facit->[$i],"$label, index $i");
 		}else{
-			if ($truncate){
-				my $left=substr(sprintf("%.11f",$func->[$i]), 0, -1);
-				my $right=substr(sprintf("%.11f",$facit->[$i]), 0, -1);				
+			if ($nm == 730){
+				my $left=substr(sprintf("%.3e",$func->[$i]), 0, -1);
+				my $right=substr(sprintf("%.3e",$facit->[$i]), 0, -1);				
 				cmp_ok($left,'==',$right,"$label, index $i");
 			}else{
-				cmp_ok($func->[$i],'==',$facit->[$i],"$label, index $i");
+				my $left=substr(sprintf("%.9e",$func->[$i]), 0, -1);
+				my $right=substr(sprintf("%.9e",$facit->[$i]), 0, -1);				
+				cmp_ok($left,'==',$right,"$label, index $i");
+#				cmp_ok($func->[$i],'==',$facit->[$i],"$label, index $i");
 			}
 		}
     }		
@@ -174,12 +177,21 @@ rmtree([ "./$dir" ]);
 
 my $tndir='tndir';
 mkdir($tndir);
-foreach my $file ("$model_dir/tnpri.mod","$model_dir/msf_tnpri","$model_dir/data_tnpri.csv"){
-	cp($file,"$tndir/.");
+my $mod;
+if ($nm == 730){
+	foreach my $file ("$model_dir/tnpri_nm730.mod","$model_dir/msf_tnpri_nm730","$model_dir/data_tnpri.csv"){
+		cp($file,"$tndir/.");
+	}
+	$mod='tnpri_nm730.mod';
+}else{
+	foreach my $file ("$model_dir/tnpri.mod","$model_dir/msf_tnpri","$model_dir/data_tnpri.csv"){
+		cp($file,"$tndir/.");
+	}
+	$mod='tnpri.mod';
 }
 chdir($tndir);
 
-$command= $includes::sse." -samples=3 tnpri.mod -seed=630992 -directory=$dir";
+$command= $includes::sse." -samples=3 $mod -seed=630992 -directory=$dir";
 print "Running $command\n";
 my $rc = system($command);
 $rc = $rc >> 8;
