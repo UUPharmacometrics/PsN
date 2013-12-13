@@ -26,7 +26,6 @@ lib/tool/gls.pm
 lib/tool/lasso.pm
 lib/tool/llp.pm
 lib/tool/mcmp.pm
-lib/tool/modelfit.pm
 lib/tool/nonpb.pm
 lib/tool/npc.pm
 lib/tool/pind.pm

@@ -146,7 +146,6 @@ DIALIBFILES=debug.pm \
 	ui.pm \
 	nonmem.pm \
 	tool.pm \
-	tool/modelfit.pm \
 	tool/llp.pm \
 	tool/cdd.pm \
 	tool/cdd/jackknife.pm \
@@ -199,9 +198,6 @@ libgen/ui.pm : diagrams/ui.dia
 
 libgen/nonmem.pm : diagrams/nonmem.dia
 	$(DIA2CODE) -t perl -d $(DIRPM) diagrams/nonmem.dia	
-
-libgen/tool/modelfit.pm : diagrams/modelfit.dia
-	$(DIA2CODE) -t perl -d $(DIRPM) diagrams/modelfit.dia
 
 libgen/tool/llp.pm : diagrams/llp.dia
 	$(DIA2CODE) -t perl -d $(DIRPM) diagrams/llp.dia
