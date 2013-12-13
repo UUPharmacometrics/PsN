@@ -77,7 +77,6 @@ has 'estimation_step_initiated' => ( is => 'rw', isa => 'Bool', default => 0 );
 sub BUILD
 {
 	my $this  = shift;
-	my %parm  = @_;
 
 	# Read Global data
 	$this->_read_nrecs;

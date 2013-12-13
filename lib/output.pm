@@ -16,7 +16,7 @@ use MooseX::Params::Validate;
 use output::problem;
 
 has 'problems' => ( is => 'rw', isa => 'ArrayRef[output::problem]' );
-has 'directory' => ( is => 'rw', isa => 'Str' );
+has 'directory' => ( is => 'rw', isa => 'Maybe[Str]' );
 has 'control_stream_problems' => ( is => 'rw', isa => 'ArrayRef' );
 has 'filename_root' => ( is => 'rw', isa => 'Str' );
 has 'filename' => ( is => 'rw', isa => 'Str' );
@@ -80,7 +80,6 @@ has 'parsing_error_message' => ( is => 'rw', isa => 'Str' );
 sub BUILD
 {
 	my $this  = shift;
-	my %parm  = @_;
 
 	# Usage:
 	# 
@@ -96,7 +95,7 @@ sub BUILD
 	# be left on disk in an effort to preserve memory. The file
 	# will be read if needed.
 
-	carp("Initiating new\tNM::output object from file $parm{'filename'}" );
+	carp("Initiating new\tNM::output object from file " . $this->filename );
 
 	if ( defined $this->filename and $this->filename ne '' ) {
 		my $name;

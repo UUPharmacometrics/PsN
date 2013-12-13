@@ -116,7 +116,6 @@ has 'burn_in_iterations' => ( is => 'rw', isa => 'Int' );
 sub BUILD
 {
 	my $this  = shift;
-	my %parm  = @_;
 
 	$this->have_sigmas(1) if (defined $this->input_problem()->sigmas() and scalar(@{$this->input_problem()->sigmas()}) > 0);
 

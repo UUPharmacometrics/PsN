@@ -27,7 +27,6 @@ has 'niter_eonly' => ( is => 'rw', isa => 'Maybe[Int]' );
 sub BUILD
 {
 	my $this  = shift;
-	my %parm  = @_;
 
   my $base_model = $this->base_model;
   

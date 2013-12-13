@@ -26,7 +26,7 @@ has 'skip_parsing' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'column_head_indices' => ( is => 'rw', isa => 'HashRef[Str]', default => sub { {} } );
 has 'found_missing_data' => ( is => 'rw', isa => 'HashRef[Str]', default => sub { {} } );
 has 'comment' => ( is => 'rw', isa => 'ArrayRef[Str]' );
-has 'directory' => ( is => 'rw', isa => 'Str' );
+has 'directory' => ( is => 'rw', isa => 'Maybe[Str]' );
 has 'filename' => ( is => 'rw', isa => 'Str' );
 has 'cont_column' => ( is => 'rw', isa => 'Int' );
 has 'header' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { [] } );

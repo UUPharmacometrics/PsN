@@ -119,9 +119,8 @@ has 'eta_shrinkage_table' => ( is => 'rw', isa => 'Str' );
 sub BUILD
 {
 	my $this  = shift;
-	my %parm  = @_;
 
-	unless ( defined $parm{'problems'} ) {
+	unless ( defined $this->problems ) {
 		# Parse given problem lines.
 		$this -> _read_records();
 

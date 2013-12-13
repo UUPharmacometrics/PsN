@@ -158,7 +158,8 @@ sub BUILDARGS
 sub BUILD
 {
 	my $this  = shift;
-	my %parm  = @_;
+	my $parmref = shift;
+	my %parm = %{$parmref};
 
 	$in_constructor = 0;
 
