@@ -66,6 +66,7 @@ LIBFILES=debug.pm \
 	output.pm \
 	model.pm \
 	tool.pm \
+	newtool.pm \
 	tool/modelfit.pm \
 	tool/llp.pm \
 	tool/cdd.pm \
@@ -97,6 +98,7 @@ RELFILES=$(addprefix PsN-Source/lib/,$(LIBFILES)) \
 	lib/hotkey.pm \
 	lib/binning.pm \
 	lib/array.pm \
+	lib/include_modules.pm \
 	lib/ext/Math/SigFigs.pm \
 	lib/ext/Math/MatrixReal.pm \
 	lib/ext/Statistics/Distributions.pm \

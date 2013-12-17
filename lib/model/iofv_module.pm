@@ -92,7 +92,7 @@
 package model::iofv_module;
 
 #use Carp;
-use PsN;
+use include_modules;
 use Config;
 use Moose;
 use MooseX::Params::Validate;

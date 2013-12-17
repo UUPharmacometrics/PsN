@@ -32,7 +32,7 @@
 
 start include statements
 #	use Carp;
-	use PsN;
+	use include_modules;
 use strict;
 use Cwd;
 use tool::modelfit;

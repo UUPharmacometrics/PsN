@@ -1,6 +1,6 @@
 package output::problem::subproblem;
 #use Carp;
-use PsN;
+use include_modules;
 use Config;
 use ext::Math::MatrixReal;
 use ui;

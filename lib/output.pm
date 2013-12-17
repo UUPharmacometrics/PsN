@@ -2,7 +2,7 @@ package output;
 
 # A Perl module for parsing NONMEM output files
 #use Carp;
-use PsN;
+use include_modules;
 use Digest::MD5 'md5_hex';
 use OSspecific;
 use Storable;

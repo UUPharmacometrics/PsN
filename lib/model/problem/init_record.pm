@@ -1,6 +1,6 @@
 package model::problem::init_record;
 #use Carp;
-use PsN;
+use include_modules;
 use model::problem::record::init_option;
 
 use Moose;

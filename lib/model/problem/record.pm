@@ -1,6 +1,6 @@
 package model::problem::record;
 #use Carp;
-use PsN;
+use include_modules;
 use Moose;
 use MooseX::Params::Validate;
 

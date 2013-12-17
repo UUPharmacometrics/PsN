@@ -23,7 +23,7 @@ Rikard Nordgren, <rikard.nordgren@farmbio.uu.se>
 package array;
 
 #use Carp;
-use PsN;
+use include_modules;
 
 require Exporter;
 our @ISA = qw(Exporter);

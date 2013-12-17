@@ -10,7 +10,7 @@ our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 
 use strict;
 #use Carp;
-use PsN;
+use include_modules;
 use Math::Trig;	# For pi
 use array qw(:all);
 use POSIX qw(ceil);

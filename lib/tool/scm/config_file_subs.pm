@@ -1,7 +1,7 @@
 # {{{ include statements
 start include statements
 #use Carp;
-	use PsN;
+	use include_modules;
 use ext::Config::Tiny;
 end include statements
 # }}}

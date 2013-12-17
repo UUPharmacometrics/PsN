@@ -3,7 +3,7 @@ use Cwd;
 use Config;
 use strict;
 #use Carp;
-use PsN;
+use include_modules;
 use File::Spec;
 
 ## Change the appropriate "system" command below to reflect your

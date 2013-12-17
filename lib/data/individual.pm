@@ -1,6 +1,6 @@
 package data::individual;
 #use Carp;
-use PsN;
+use include_modules;
 use ui;
 use Moose;
 use MooseX::Params::Validate;

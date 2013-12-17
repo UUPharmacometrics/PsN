@@ -12,7 +12,7 @@ package model::mirror_plot_module;
 
 
 #use Carp;
-use PsN;
+use include_modules;
 use Math::Random;
 use Moose;
 use MooseX::Params::Validate;

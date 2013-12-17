@@ -37,7 +37,7 @@ end see_also
 start include statements
 {
 #	use Carp;
-	use PsN;
+	use include_modules;
 	use tool::xv_step;
 }
 end include statements

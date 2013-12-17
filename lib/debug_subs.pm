@@ -46,7 +46,7 @@
 # {{{ include
 start include statements
 #use Carp;
-use PsN;
+use include_modules;
 use Text::Wrap;
 
 # These variables are used for mapping level names to numbers.

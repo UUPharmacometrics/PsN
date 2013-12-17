@@ -1,6 +1,6 @@
 package model::problem;
 #use Carp;
-use PsN;
+use include_modules;
 use Data::Dumper;
 my @print_order_omega_before_pk = ('sizes','problem','abbreviated','input','bind','data','msfi','contr','subroutine','prior','model','tol','infn','omega','anneal','pk','level','aesinitial','aes','des','error','pred','mix','theta','sigma','etas','phis','simulation','estimation','covariance','nonparametric','table','scatter');
 my @print_order = ('sizes','problem','abbreviated','input','bind','data','msfi','contr','subroutine','prior','model','tol','infn','pk','level','aesinitial','aes','des','error','pred','mix','theta','omega','anneal','sigma','etas','phis','simulation','estimation','covariance','nonparametric','table','scatter');

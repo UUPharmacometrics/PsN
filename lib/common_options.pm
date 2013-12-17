@@ -3,7 +3,7 @@ package common_options;
 #use Carp;
 use FindBin qw($Bin);
 use lib "$Bin/../lib";
-use PsN;
+use include_modules;
 use Getopt::Long;
 use Text::Wrap;
 use Math::Random;
