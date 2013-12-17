@@ -457,18 +457,18 @@ start modelfit_setup
       chomp $row;
       next if ($row =~ /TABLE NO/);
       if ($row =~ /IWRE/){
-	$header = $row."\n";
-	next;
+		  $header = $row."\n";
+		  next;
       }
       #order is IWRES ID ...
       $row =~ s/^\s*//;
       my ($iwres,$rest)=split(/\s+/,$row,2);
       if ($nsim>1){
-	push(@{$matrix[$obs_index]},$iwres);
-	$sums[$obs_index] += $iwres;
+		  push(@{$matrix[$obs_index]},$iwres);
+		  $sums[$obs_index] += $iwres;
       }else{
-	$matrix[$obs_index]=[$iwres];
-	$sums[$obs_index]=$iwres;
+		  $matrix[$obs_index]=[$iwres];
+		  $sums[$obs_index]=$iwres;
       }
       $obs_index++;
     }
@@ -522,14 +522,14 @@ start modelfit_setup
       my $pd=0;
 
       foreach my $val (@{$matrix[$obs]}){
-	my $transf= ($val-$mean)/$stdev;
-	$pde++ if ($transf < $original);
-	$pd++ if ($val < $untrans_original);
+		  my $transf= ($val-$mean)/$stdev;
+		  $pde++ if ($transf < $original);
+		  $pd++ if ($val < $untrans_original);
       }
       $pde = 1 if ($pde == 0);
       $pde = ($nsim-1) if ($pde == $nsim);
       $pde=$pde/$nsim;
-
+	  
       $pd = 1 if ($pd == 0);
       $pd = ($nsim-1) if ($pd == $nsim);
       $pd=$pd/$nsim;
@@ -633,42 +633,42 @@ start modelfit_setup
   #TODO must skip etas for OMEGA 0 FIX here
   my $printid=-2;
   foreach my $file (@all_eta_files){
-    #first is original
-    open( PHI, $file ) or croak("Could not find $file");
-    $nsamples++;
-    my $id_index = 0;
-    while (my $row = <PHI>){
-      chomp $row;
-      next if ($row =~ /TABLE NO/);
-      $row =~ s/^\s*//;
-      my @values=split(/\s+/,$row);
-      if ($row =~ /ETA/){
-	unless (defined $header){
-	  $header = 'ID';
-	  $neta = scalar(@values);
-	  $header .= ','.join(',',@values);
-	}
-	next;
-      }
-
-      print "\n$id_index\n" if ($nsamples==6 and $id_index==$printid);
-      if ($nsamples>1){
-	for (my $j=0;$j<$neta;$j++){
-	  push(@{$etamatrix->[$j][$id_index]},$values[$j]);
-	  print join(',',@{$etamatrix->[$j][$id_index]})."\n" if ($nsamples==6 and $id_index==$printid);
-	  $mean_array->[$j][$id_index] += $values[$j];
-	}
-      }else{
-	for (my $j=0;$j<$neta;$j++){
-	  $etamatrix->[$j][$id_index]=[$values[$j]];
-	  $mean_array->[$j][$id_index] = 0; #do not count original in mean
-	}
-      }
-      $id_index++;
-      print "\n\n" if ($nsamples==6 and $id_index==$printid);
-    }
-    close(PHI);
-    
+	  #first is original
+	  open( PHI, $file ) or croak("Could not find $file");
+	  $nsamples++;
+	  my $id_index = 0;
+	  while (my $row = <PHI>){
+		  chomp $row;
+		  next if ($row =~ /TABLE NO/);
+		  $row =~ s/^\s*//;
+		  my @values=split(/\s+/,$row);
+		  if ($row =~ /ETA/){
+			  unless (defined $header){
+				  $header = 'ID';
+				  $neta = scalar(@values);
+				  $header .= ','.join(',',@values);
+			  }
+			  next;
+		  }
+		  
+		  print "\n$id_index\n" if ($nsamples==6 and $id_index==$printid);
+		  if ($nsamples>1){
+			  for (my $j=0;$j<$neta;$j++){
+				  push(@{$etamatrix->[$j][$id_index]},$values[$j]);
+				  print join(',',@{$etamatrix->[$j][$id_index]})."\n" if ($nsamples==6 and $id_index==$printid);
+				  $mean_array->[$j][$id_index] += $values[$j];
+			  }
+		  }else{
+			  for (my $j=0;$j<$neta;$j++){
+				  $etamatrix->[$j][$id_index]=[$values[$j]];
+				  $mean_array->[$j][$id_index] = 0; #do not count original in mean
+			  }
+		  }
+		  $id_index++;
+		  print "\n\n" if ($nsamples==6 and $id_index==$printid);
+	  }
+	  close(PHI);
+	  
   }
   
 
@@ -759,52 +759,52 @@ start modelfit_setup
     #transform etamatrix for each simulation of id $id
     
     for (my $k=0;$k<$nsim;$k++){
-      my @simvec;
-      for (my $j=0;$j<$neta;$j++){
-	#must subtract mean here also
-	my $val = shift(@{$etamatrix->[$j][$id]});
-	push(@{$untransf_etamatrix->[$j][$id]},$val);
-	push(@simvec,$val-$meanvec[$j]);
-      }
-    
-      #solve R'*x=simvec
-
-      if(0){
-	  #naive division by 0 protection
-	  if ($Rmat->[0][0] != 0) {
-	      $simvec[0]=$simvec[0]/$Rmat->[0][0];
-	  } else {
-	      $simvec[0]=0;
-	  }
-	  
-	  for (my $i=1;$i<$ncol;$i++){
-	      my $sum=0;
-	      for (my $j=0;$j<$i;$j++){
-		  $sum += ($Rmat->[$i][$j])*$simvec[$j];
-	      }
-	      if ($Rmat->[$i][$i] != 0) {
-		  $simvec[$i]=($simvec[$i]-$sum)/$Rmat->[$i][$i];
-	      } else {
-		  $simvec[$i]=0;
-	      }
-	  }
-      }else{
-	  my $numerr = linear_algebra::upper_triangular_transpose_solve($Rmat,\@simvec);
-	  #TODO handle numerr
-      }
-  
-
-      #solve diag(1/sqrt(N-1))*transf=x
-      for (my $j=0;$j<$ncol;$j++){
-	$simvec[$j]=$simvec[$j]*$sqrt;
-      }
-
-
-      for (my $j=0;$j<$neta;$j++){
-	push(@{$transf_etamatrix->[$j][$id]},$simvec[$j]);
-      }
+		my @simvec;
+		for (my $j=0;$j<$neta;$j++){
+			#must subtract mean here also
+			my $val = shift(@{$etamatrix->[$j][$id]});
+			push(@{$untransf_etamatrix->[$j][$id]},$val);
+			push(@simvec,$val-$meanvec[$j]);
+		}
+		
+		#solve R'*x=simvec
+		
+		if(0){
+			#naive division by 0 protection
+			if ($Rmat->[0][0] != 0) {
+				$simvec[0]=$simvec[0]/$Rmat->[0][0];
+			} else {
+				$simvec[0]=0;
+			}
+			
+			for (my $i=1;$i<$ncol;$i++){
+				my $sum=0;
+				for (my $j=0;$j<$i;$j++){
+					$sum += ($Rmat->[$i][$j])*$simvec[$j];
+				}
+				if ($Rmat->[$i][$i] != 0) {
+					$simvec[$i]=($simvec[$i]-$sum)/$Rmat->[$i][$i];
+				} else {
+					$simvec[$i]=0;
+				}
+			}
+		}else{
+			my $numerr = linear_algebra::upper_triangular_transpose_solve($Rmat,\@simvec);
+			#TODO handle numerr
+		}
+		
+		
+		#solve diag(1/sqrt(N-1))*transf=x
+		for (my $j=0;$j<$ncol;$j++){
+			$simvec[$j]=$simvec[$j]*$sqrt;
+		}
+		
+		
+		for (my $j=0;$j<$neta;$j++){
+			push(@{$transf_etamatrix->[$j][$id]},$simvec[$j]);
+		}
     }
-
+	
   } #end loop over id
 
 
@@ -838,31 +838,31 @@ start modelfit_setup
       my $pde=0;
 
       foreach my $val (@{$transf_etamatrix->[$j]->[$i]}){
-	$pde++ if ($val < $original);
+		  $pde++ if ($val < $original);
       }
       $pde = 1 if ($pde == 0);
       $pde = ($nsim-1) if ($pde == $nsim);
       $pde=$pde/$nsim;
-
+	  
       print RANK ','.sprintf("%.6f",$pde);
       print DAT ','.sprintf("%.6f",-(Statistics::Distributions::udistr($pde)))
-	  if ($self->have_CDF());
+		  if ($self->have_CDF());
       print ORI ','.sprintf("%.6f",$original);
     }
     for (my $j=0;$j<$neta;$j++){
-      my $original = shift(@{$untransf_etamatrix->[$j]->[$i]});
-      my $pd=0;
-
-      my $ordernum=1;
-      foreach my $val (@{$untransf_etamatrix->[$j]->[$i]}){
-	$pd++ if ($val < $original);
-      }
-      $pd = 1 if ($pd == 0);
-      $pd = ($nsim-1) if ($pd == $nsim);
-      $pd=$pd/$nsim;
-      print DAT2 ','.sprintf("%.6f",-(Statistics::Distributions::udistr($pd)))
-	  if ($self->have_CDF());
-      print ORI2 ','.sprintf("%.6f",$original);
+		my $original = shift(@{$untransf_etamatrix->[$j]->[$i]});
+		my $pd=0;
+		
+		my $ordernum=1;
+		foreach my $val (@{$untransf_etamatrix->[$j]->[$i]}){
+			$pd++ if ($val < $original);
+		}
+		$pd = 1 if ($pd == 0);
+		$pd = ($nsim-1) if ($pd == $nsim);
+		$pd=$pd/$nsim;
+		print DAT2 ','.sprintf("%.6f",-(Statistics::Distributions::udistr($pd)))
+			if ($self->have_CDF());
+		print ORI2 ','.sprintf("%.6f",$original);
     }
     print DAT "\n";
     print RANK "\n";
@@ -875,7 +875,7 @@ start modelfit_setup
   close ORI;
   close DAT2;
   close ORI2;
-
+  
 }
 end modelfit_setup
 
