@@ -1,33 +1,51 @@
 \input{../inputs/format_header.tex}
-\guidetitle{PsN input and output}
+\doctitle{PsN input and output}
 
 \begin{document}
 
 \maketitle
-\section{Common input and output}
-\subsection{Input}
-All PsN programs require at least one NONMEM control stream file as input, 
-and the data file set in \$DATA must be present.
-\subsection{Output}
-\begin{description}
-\item[raw\_results]
-The raw\_results file is common output from PsN programs. It is a structured
-comma-separated file containing a table with one header row. Following the header are one result
+\section{Input}
+All PsN programs require one NONMEM control stream file as input, 
+and the data file set in \$DATA must be present. 
+The execute and sse programs allow any number of extra control stream files in addition to the first required one.
+Then there is a large set of options which changes with every PsN version, and where the allowed options 
+depend on the NONMEM control stream(s), the data file, the NONMEM version used for the PsN run and 
+the grid/cluster that PsN is to be run on. The list of options is preferably passed along as a long string.
+
+The scm program also takes a text file, the scm config file, as input. It lists the covariates to be tested, the parameterizations
+to use, etc.
+\section{Common output}
+\subsection{raw\_results}
+The raw\_results file is common output from all PsN programs. 
+From the Connector development perspective the 
+raw\_results file is a set of NONMEM output objects that are summarized and stored in csv-format.
+One PsN program can take a raw\_results file from another run as input.
+The raw\_results file is PsN's own common estimation output object.
+
+From connector it is better to use NONMEM output conversion to produce common object, and then output an array of those.
+
+PsN's raw\_results file is  the form in which output from one PsN program is passed as input to another.
+
+is simply a list of NONMEM output object in 
+
+
+The raw\_results file is a structured
+comma-separated text file containing a table with one header row. Following the header are one result
 line per sub-problem per \$PROBLEM per model that was run.
 The columns include model, problem and subproblem number, a 
-set of booleans depending on the settings in the model
+set of booleans referring to important parts of the model
 (e.g. estimation\_step\_run), the ofv, parameter estimates, standard errors,
 etc. The number of columns and the headers depend on the structure of the model,
 comments in the model file, the PsN program generating the file and the options
 to the particular run.
 The name of the raw\_results file always starts with raw\_results but the end depends on the 
 PsN program and the name of the model file.
-\item[<program>\_results.csv]
+\subsection{<program>\_results.csv}
 Most PsN programs produce a <program>\_results.csv file, for example bootstrap\_results.csv. 
-It is a human readable comma separated file intended for viewing in e.g. Excel. 
+It is a comma separated text file intended for viewing in e.g. Excel. 
 It contains run information and 
 result summaries. There are multiple sections spanning varying numbers of rows and columns.
-\end{description}
+
 
 \section{Output files per PsN program}
 \subsection{bootstrap}
@@ -43,7 +61,7 @@ result summaries. There are multiple sections spanning varying numbers of rows a
 \subsection{execute}
 \begin{enumerate}
 \item raw\_results
-\item A set of standard NONMEM output files
+\item A set of standard NONMEM output files (.lst, .ext, etc) and tables if \$TABLE was used.
 \end{enumerate}
 \subsection{llp}
 \begin{enumerate}
@@ -58,7 +76,7 @@ result summaries. There are multiple sections spanning varying numbers of rows a
 \begin{enumerate}
 \item raw\_results
 \item A human readable log file
-\item A NONMEM control stream with the final model
+\item A NONMEM control stream file
 \end{enumerate}
 \subsection{sse}
 \begin{enumerate}
