@@ -158,6 +158,10 @@ sub get_default_nm_versions
 	my $version;
 	if ((-x $dir.'\run\nmfe72.bat') or (-x $dir.'\util\nmfe72.bat')){
 	  $version='7.2';
+	}elsif ((-x $dir.'\run\nmfe73.bat') or (-x $dir.'\util\nmfe73.bat')){
+	  $version='7.3';
+	}elsif ((-x $dir.'\run\nmfe74.bat') or (-x $dir.'\util\nmfe74.bat')){
+	  $version='7.4';
 	}elsif ((-x $dir.'\run\nmfe7.bat') or (-x $dir.'\util\nmfe7.bat')){
 	  $version='7.1';
 	}
@@ -180,6 +184,10 @@ sub get_default_nm_versions
 	my $version;
 	if ((-x $dir.'/run/nmfe72') or (-x $dir.'/util/nmfe72')){
 	  $version='7.2';
+	}elsif ((-x $dir.'/run/nmfe73') or (-x $dir.'/util/nmfe73')){
+	  $version='7.3';
+	}elsif ((-x $dir.'/run/nmfe74') or (-x $dir.'/util/nmfe74')){
+	  $version='7.4';
 	}elsif ((-x $dir.'/run/nmfe7') or (-x $dir.'/util/nmfe7')){
 	  $version='7.1';
 	}
@@ -237,9 +245,13 @@ sub get_nm_version
 		   ));
     if ((-d $dir) and ((-d $dir.'\run') or (-d $dir.'\util'))){
       if ((-x $dir.'\run\nmfe72.bat') or (-x $dir.'\util\nmfe72.bat')){
-	$version='7.2';
+		  $version='7.2';
+      }elsif ((-x $dir.'\run\nmfe73.bat') or (-x $dir.'\util\nmfe73.bat')){
+		  $version='7.3';
+      }elsif ((-x $dir.'\run\nmfe74.bat') or (-x $dir.'\util\nmfe74.bat')){
+		  $version='7.4';
       }elsif ((-x $dir.'\run\nmfe7.bat') or (-x $dir.'\util\nmfe7.bat')){
-	$version='7.1';
+		  $version='7.1';
       }
     }
   }else{
@@ -248,11 +260,15 @@ sub get_nm_version
 		     ((-d $dir.'/util') and (-x $dir.'/util/nmfe6'))
 		   ));
     if ((-d $dir) and ((-d $dir.'/run') or (-d $dir.'/util'))){
-      if ((-x $dir.'/run/nmfe72') or (-x $dir.'/util/nmfe72')){
-	$version='7.2';
-      }elsif ((-x $dir.'/run/nmfe7') or (-x $dir.'/util/nmfe7')){
-	$version='7.1';
-      }
+		if ((-x $dir.'/run/nmfe72') or (-x $dir.'/util/nmfe72')){
+			$version='7.2';
+		}elsif ((-x $dir.'/run/nmfe73') or (-x $dir.'/util/nmfe73')){
+			$version='7.3';
+		}elsif ((-x $dir.'/run/nmfe74') or (-x $dir.'/util/nmfe74')){
+			$version='7.4';
+		}elsif ((-x $dir.'/run/nmfe7') or (-x $dir.'/util/nmfe7')){
+			$version='7.1';
+		}
     }
   }
 
