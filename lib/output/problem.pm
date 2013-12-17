@@ -1,5 +1,6 @@
 package output::problem;
-use Carp;
+#use Carp;
+use PsN;
 use Config;
 use Moose;
 use MooseX::Params::Validate;

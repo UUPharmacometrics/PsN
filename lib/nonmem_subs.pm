@@ -5,7 +5,7 @@ if( $0 =~ /nonmem.pm$/ ) {
   use FindBin qw($Bin);
   use lib "$Bin";
 }
-use Carp;
+use ext::Carp;
 use File::Copy 'cp';
 use Config;
 use Cwd;

@@ -9,7 +9,8 @@ our %EXPORT_TAGS = ( 'all' => [ qw(number_of_bins_range number_of_bins_auto bin_
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 
 use strict;
-use Carp;
+#use Carp;
+use PsN;
 use Math::Trig;	# For pi
 use array qw(:all);
 use POSIX qw(ceil);

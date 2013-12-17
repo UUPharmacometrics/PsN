@@ -1,6 +1,7 @@
 package model::problem::record::init_option;
 
-use Carp;
+#use Carp;
+use PsN;
 use Math::Random;
 use Moose;
 use MooseX::Params::Validate;

@@ -48,7 +48,8 @@ end see_also
 # {{{ include
 start include statements
     {
-	use Carp;
+#	use Carp;
+	use PsN;
 	use tool::modelfit;
     }
 end include statements

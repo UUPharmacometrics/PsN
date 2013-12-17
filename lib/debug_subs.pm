@@ -45,8 +45,8 @@
 
 # {{{ include
 start include statements
-use Carp;
-use Carp qw(cluck);
+#use Carp;
+use PsN;
 use Text::Wrap;
 
 # These variables are used for mapping level names to numbers.
@@ -239,7 +239,7 @@ start warn
 	  my $text;
 	  
 	  if( $the_instance -> {'level'} >= 3 ){
-	    my @longmess = split( /\n/, Carp::longmess );
+	    my @longmess = split( /\n/, ext::Carp::longmess );
 	    my $arr = scalar(@longmess);
 	    $prefix = '  ' x ($arr-2);
 	  } 
@@ -290,7 +290,7 @@ start die
       if( $the_instance -> {'level'} >= 0 ){
 	my $prefix = "";
 	if( $the_instance -> {'level'} >= 3 ){
-	  my @longmess = split( /\n/, Carp::longmess );
+	  my @longmess = split( /\n/, ext::Carp::longmess );
 	  my $arr = scalar(@longmess);
 	  $prefix = '  ' x ($arr-2);
 	}
@@ -298,7 +298,7 @@ start die
 	if (defined $the_instance -> {'logfile'}){
 	  open( LOG, '>>'.$the_instance->{'logfile'});
 	  print LOG ( $prefix . $self -> level_name(level => 0) . ': ' . $message . "\n");
-	  print LOG Carp::shortmess;
+	  print LOG ext::Carp::shortmess;
 	  print LOG "\n";
 	  close LOG;
 	}

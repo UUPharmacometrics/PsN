@@ -1,5 +1,6 @@
 package model::problem::theta;
-use Carp;
+#use Carp;
+use PsN;
 use model::problem::record::theta_option;
 
 use Moose;

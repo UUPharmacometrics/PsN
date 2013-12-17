@@ -11,7 +11,8 @@ package model::mirror_plot_module;
 
 
 
-use Carp;
+#use Carp;
+use PsN;
 use Math::Random;
 use Moose;
 use MooseX::Params::Validate;

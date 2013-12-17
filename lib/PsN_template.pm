@@ -1,4 +1,8 @@
-use Carp;
+require Exporter;
+our @ISA = qw(Exporter);
+our @EXPORT = qw(cluck longmess carp croak);
+
+use ext::Carp;
 use ext::Config::Tiny;
 use ext::File::HomeDir;
 

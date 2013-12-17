@@ -91,7 +91,8 @@
 
 package model::iofv_module;
 
-use Carp;
+#use Carp;
+use PsN;
 use Config;
 use Moose;
 use MooseX::Params::Validate;
