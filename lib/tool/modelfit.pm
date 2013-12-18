@@ -689,7 +689,7 @@ sub run
 
 			if ($threads > 1) {
 
-				if ($run > 1) {
+				if ($run > 0) {
 					my $start_sleep = Time::HiRes::time();
 
 					my ($min_sleep, $max_sleep); # min_sleep is in microseconds and max_sleep is in seconds.
@@ -710,10 +710,7 @@ sub run
 						$max_sleep = $min_sleep;
 					}
 
-					# Dont wait for psn.lst if clean >= 3 it might have been
-					# removed.
-
-					while( not( -e 'NM_run'.($run-1).'/psn.lst' ) and not $self->clean >= 3 and 
+					while( (not( -e 'NM_run'.($run).'/psn.lst' )) and 
 						(Time::HiRes::time() - $start_sleep) < $max_sleep ) {
 						Time::HiRes::usleep($min_sleep);
 					}
