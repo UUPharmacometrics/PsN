@@ -28,6 +28,19 @@ git push origin --tags
 
 \section{Style guide}
 
+\subsection{Object construction}
+
+Remember the construction order in Moose. If we have a superclass called parent and a subclass called child and call \verb|child->new| the constructors will be executed in the following order:
+
+\begin{enumerate}
+	\item child->BUILDARGS
+	\item parent->BUILDARGS
+	\item Moose internal construction
+	\item parent->BUILD
+	\item child->BUILD
+\end{enumerate}
+
+
 \subsection{Methods}
 
 \subsubsection{Parameter validation}
@@ -105,12 +118,10 @@ if ($self->has_filename) {
 }
 \end{verbatim}
 
-don't use parentheses for getters
-\begin{verbatim}
-  if ($self->filename eq 'my_file') {
-    print "Is my_file\n";
-  }
-\end{verbatim}
+\subsection{External modules}
+
+As a workaround for a bug in the Carp package \verb|use include_modules;| should be used instead of \verb|use Carp;|. All the ordinary Carp methods will be exported.
+
 
 \begin{thebibliography}{1}
 	\bibitem{params} {\em MooseX::Params::Validate}, \url{http://search.cpan.org/\~drolsky/MooseX-Params-Validate-0.18/lib/MooseX/Params/Validate.pm}, CPAN
