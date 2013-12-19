@@ -1,0 +1,72 @@
+#!/usr/bin/perl
+
+# Only for Development
+use FindBin qw($Bin);
+use lib "$Bin/../lib";
+
+# Don't edit the line below, it must look exactly like this.
+# Everything above this line will be replaced #
+
+# Perl includes #
+use Config;
+use strict;
+use Getopt::Long;
+# External modules #
+use Math::Random;
+# PsN includes #
+use ui;
+use PsN;
+use common_options;
+use Cwd;
+
+my %options;
+
+my %required_options = ();
+my %optional_options = (
+	"opt1" => undef,
+	"opt2" => undef,
+);
+
+my $res = GetOptions( \%options,
+					  @common_options::get_opt_strings,
+					  keys(%optional_options) );
+
+exit unless $res;
+
+common_options::setup( \%options, 'pval' ); #calls set_globals etc, initiates random sequence
+
+my %help_text;
+
+$help_text{opt1} = <<'EOF';
+EOF
+
+$help_text{opt2} = <<'EOF';
+EOF
+
+common_options::online_help('pvar', \%options, \%help_text, \%required_options, \%optional_options);
+
+# Collect and check the mandatory arguments
+my $scm_directory;
+my @model_files;
+
+foreach my $arg (@ARGV) {
+	if (-d $arg) {
+		if (defined $scm_directory) {
+			die("Can only take one scm run directory");
+		} elsif (@model_files) {
+			die("Cannot mix scm_directory and modelfiles");
+		} else {
+			$scm_directory = $arg;
+		}
+	} else {
+		if (defined $scm_directory) {
+			die("Cannot mix scm_directory and modelfiles");
+		} else {
+			push @model_files, $arg;
+		}
+	}
+}
+
+if (!defined $scm_directory and @model_files == 0) {
+	die("Must specify one scm run directory or at least one model file");
+}
