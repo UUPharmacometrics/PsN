@@ -20,6 +20,15 @@ pvar scm_dir1
 \subsection{Required input}
 Required arguments are either an scm run directory or a list of model files.
 
+\begin{optionlist}
+\optdefault{samples}{n}
+Number of simulated datasets to generate. Must be at least 1.
+\nextopt
+\optdefault{parameters}{CL,V,...}
+A comma separated list of parameters.
+\nextopt
+\end{optionlist}
+
 \subsection{Optional input}
 
 \begin{optionlist}
@@ -30,5 +39,27 @@ Text text tex
 Default true.
 \nextopt
 \end{optionlist}
+
+\section{Description}
+
+Parametric variability can calculate how much of the variability that is explained by the parameters of different models.
+
+\section{Algorithm}
+
+\begin{enumerate}
+	\item Input: List of models.
+	\item For each model:
+	\begin{enumerate}
+		\item Create two new models. One for EPV and one for PV
+		\item If model has been run update the initial values from results.
+		\item Remove \$EST
+		\item If model already contain \$SIMULATION give a warning but keep \$SIMULATION
+		\item Add \$SIMULATION (<seed>) NSUBS=<samples> ONLYSIM
+		\item Add \$TABLE NOPRINT NOAPPEND FIRSTONLY ONEHEADER ID FILE=<EPV|PV><n>.tab <par1> <par2> ...
+		\item Set \$OMEGA 0 FIX for the EPV model
+	\end{enumerate}
+	\item Run models
+	\item Loop through table-files
+\end{enumerate}
 
 \end{document}

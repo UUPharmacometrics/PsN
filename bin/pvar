@@ -18,6 +18,8 @@ use ui;
 use PsN;
 use common_options;
 use Cwd;
+use model;
+use tool::pvar;
 
 my %options;
 
@@ -37,10 +39,10 @@ common_options::setup( \%options, 'pval' ); #calls set_globals etc, initiates ra
 
 my %help_text;
 
-$help_text{opt1} = <<'EOF';
+$help_text{-samples} = <<'EOF';
 EOF
 
-$help_text{opt2} = <<'EOF';
+$help_text{-parameters} = <<'EOF';
 EOF
 
 common_options::online_help('pvar', \%options, \%help_text, \%required_options, \%optional_options);
@@ -69,4 +71,19 @@ foreach my $arg (@ARGV) {
 
 if (!defined $scm_directory and @model_files == 0) {
 	die("Must specify one scm run directory or at least one model file");
+}
+
+# Collect modelfiles from scm_directory
+if (defined $scm_directory) {
+	@model_files = pvar->get_models_from_scm_directory($scm_directory);
+}
+
+# Create the model objects
+my @models;
+my $eval_string = common_options::model_parameters(\%options);
+
+foreach $model_name (@model_files) {
+	push(@models, model->new(eval($eval_String),
+			filename => $model_name,
+		));
 }
