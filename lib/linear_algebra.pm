@@ -248,16 +248,16 @@ sub upper_triangular_transpose_solve{
     $solution->[0]=$solution->[0]/$Umat->[0][0];
 
     for (my $i=1;$i<$ncol;$i++){
-      my $sum=0;
-      for (my $j=0;$j<$i;$j++){
-	$sum += ($Umat->[$i][$j])*$solution->[$j];
-      }
-      return $numerical_error if ($Umat->[$i][$i] == 0);
-      $solution->[$i]=($solution->[$i]-$sum)/$Umat->[$i][$i];
+		my $sum=0;
+		for (my $j=0;$j<$i;$j++){
+			$sum += ($Umat->[$i][$j])*$solution->[$j];
+		}
+		return $numerical_error if ($Umat->[$i][$i] == 0);
+		$solution->[$i]=($solution->[$i]-$sum)/$Umat->[$i][$i];
     }
-
+	
     return 0;
-
+	
 }
 
 sub upper_triangular_identity_solve{

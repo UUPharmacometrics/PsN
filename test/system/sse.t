@@ -15,8 +15,8 @@ use File::Copy 'cp';
 #in psn.conf must set output_style = SPLUS, otherwise tests will fail. fix by setting here.
 
 #tnpri is NM version dependent due to msfi file, 730 or 72.
-#our $nm=730;
-our $nm=72;
+our $nm=730;
+#our $nm=72;
 
 our $dir = 'sse_test';
 our $private_test_files = $ENV{HOME}.'/.test_files';

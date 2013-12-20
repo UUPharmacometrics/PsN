@@ -6,6 +6,9 @@ PsN-Source/*
 doc/*.aux
 doc/*.log
 doc/*.pdf
+doc/ddmore/*.aux
+doc/ddmore/*.log
+doc/ddmore/*.pdf
 doc/inputs/*eps-converted-to.pdf
 test/unit/testcase.txt
 test/test_files/pheno.lst
