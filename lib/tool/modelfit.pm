@@ -446,195 +446,29 @@ sub run
 	my @queue = (0..$#models);
 	my $all_jobs_started = 0;
 
-	# We loop while there is content in the queue (which shrinks and grows)
-	# and while we have jobs running (represented in the queue_info)
+	# We loop while there is content in the queue (which shrinks when jobs are submitted and grows when restarts are needed)
+	# and while we have jobs running, i.e. scalar keys %queue_map > 0 (represented in the queue_info)
 
-	my $poll_count = 0;
-	while( @queue or (scalar keys %queue_map > 0) ){
-		$poll_count++;
-		# We start by looking for jobs that have been started and
-		# finished. If we find one, we set $pid to that job.
+	while( (scalar(@queue) > 0) or (scalar keys %queue_map > 0) ){
 
-		my $pid = 0;
-
-		# {{{ Get potiential finished pid
-
-		foreach my $check_pid( keys %queue_map ){
-
-			if( $check_pid =~ /^rerun_/ ){
-
-				# A pid that starts with "rerun" is a rerun and is always
-				# "finished".
-
-				$pid = $check_pid;
-				last;
-			}elsif( $check_pid =~ /^fail_/ ){
-
-				# A pid fail_ is a failed grid submit and is always
-				# "finished".
-
-				$pid = $check_pid;
-				last;
-			}
-
-			# Diffrent environments have diffrent ways of reporting
-			# job status. Here we check which environment we are in
-			# and act accordingly.
-
-			if ( $self->run_on_ud ) {
-
-				$pid = $self -> ud_monitor( jobId => $check_pid );
-
-				if( $pid ){
-					$self -> ud_retrieve( jobId => $check_pid,
-						run_no => $queue_map{$check_pid} );
-				}
-
-			} elsif ( $self->run_on_sge ) {
-
-				$pid = $self -> sge_monitor( jobId => $check_pid );
-
-			} elsif ( $self->run_on_sge_nmfe ) {
-
-				$pid = $self -> sge_nmfe_monitor( jobId => $check_pid );
-
-			} elsif ( $self->run_on_slurm ) {
-
-				$pid = $self -> slurm_monitor( jobId => $check_pid );
-
-			} elsif ( $self->run_on_zink ) {
-
-				$pid = $self -> zink_monitor( jobId => $check_pid );
-
-			} elsif ( $self->run_on_lsf ) {
-
-				$pid = $self -> lsf_monitor( jobId => $check_pid );
-
-			} elsif ( $self->run_on_lsf_nmfe ) {
-
-				$pid = $self -> lsf_nmfe_monitor( jobId => $check_pid );
-
-			} elsif ( $self->run_on_torque ) {
-
-				$pid = $self -> torque_monitor( jobId => $check_pid );
-
-			} else { # Local process poll
-
-				if( $Config{osname} eq 'MSWin32' ){
-
-					my $exit_code;
-
-					# GetExitCode is supposed to return a value indicating
-					# if the process is still running, however it seems to
-					# allways return 0. $exit_code however is update and
-					# seems to be nonzero if the process is running.
-
-					$queue_info{$queue_map{$check_pid}}{'winproc'}->GetExitCode($exit_code);
-
-					if( $exit_code == 0 ){
-						$pid = $check_pid;
-					}
-
-				} else {
-
-					$pid = waitpid($check_pid, WNOHANG);
-
-					# Waitpid will return $check_pid if that process has
-					# finished and 0 if it is still running.
-
-					if( $pid == -1 ){
-						# If waitpid return -1 the child has probably finished
-						# and has been "Reaped" by someone else. We treat this
-						# case as the child has finished. If this happens many
-						# times in the same NM_runX directory, there is probably
-						# something wrong and we die(). (I [PP] suspect that we
-						# never/seldom reach 10 reruns in one NM_runX directory)
-
-						my $run = $queue_map{$check_pid};
-
-						$queue_info{$run}{'nr_wait'}++;
-						if( $queue_info{$run}{'nr_wait'} > 10 ){
-							croak("Nonmem run was lost\n");
-						}
-						$pid = $check_pid;
-					}
-
-					# If the pid is not set, the job is not finished and we
-					# check if it has been running longer than it should, and we
-					# kill it.
-					if (0){
-						unless( $pid ){
-							if ( $self->max_runtime and 
-								time > $queue_info{$queue_map{$check_pid}}->{'start_time'} + $self->max_runtime ) {
-
-								# Only works on windows
-
-								if( $Config{osname} ne 'MSWin32' ){
-
-									ui->print(category=>'all',message=>"Job ".$check_pid." exceeded run time, trying to kill",newline => 1);
-									my $try=1;
-									while( kill( 0, $check_pid ) ){
-										if( $try <= 5 ){
-											kill( 'TERM', $check_pid );
-										} else {
-											kill( 'KILL', $check_pid );
-										}
-										waitpid( $check_pid, 0);
-										sleep(1);
-									}
-									ui->print(category=>'all',message=>"Job $check_pid killed successfully on try nr $try",newline => 1);
-								}
-							}
-						}
-					}
-				}
-			}
-
-			last if $pid;
-
-		}
-
-		# }}}
-
-		if( not $pid ){
-
-			# No process has finished. 
-
-			# {{{ Return to polling if queue is empty or we have max number of jobs running.
-
-			if( (scalar @queue == 0) or scalar keys %queue_map >= $threads ){
-
-				# In that case we should not start another job. (Also
-				# sleep to make polling less demanding).
-
-				if( defined $PsN::config -> {'_'} -> {'job_polling_interval'} and
-					$PsN::config -> {'_'} -> {'job_polling_interval'} > 0 ) {
-					sleep($PsN::config -> {'_'} -> {'job_polling_interval'});
-				} else {
-					sleep(1);
-				}
-
-				next; # Return to polling for finished jobs.
-			}
-
-			# }}}
-
+		if ( (scalar @queue > 0) and (scalar keys %queue_map < $threads) ){
+			#we may start a new job here 
 			# This is where we initiate a new job:
-
+			
 			my $run = shift(@queue);
 			$self->stop_motion_call(tool => 'modelfit', message => "Prepare to start the next job in the run queue")
-			if ($self->stop_motion() > 1);
-
+				if ($self->stop_motion() > 1);
+			
 			# {{{ check for no run conditions. (e.g. job already run)
-
+			
 			if ( -e $self->models->[$run]->outputs->[0]->full_name and $self->rerun < 1 ) {
-
+				
 				if( not -e './NM_run' . ($run+1) . '/done' ){
 					# here we have an .lst file, no done file and we are not
 					# rerunning NONMEM. Which means we must create fake NM_run and
 					# "done" files. (Usually this case occurs if we want to
 					# use execute to create a summary or run table).
-
+					
 					mkdir( "./NM_run" . ($run+1) );
 					open( DONE, ">./NM_run". ($run+1) ."/done.1" );
 					print DONE "This is faked\nseed: 1 1\n" ;
@@ -665,22 +499,22 @@ sub run
 
 				if ( $run % $modulus == 0 or $run == 0 or $run == $#models ) {
 					ui -> print( category => 'all', wrap => 0, newline => 0,
-						message  => 'D:'.( $run + 1 ).' .. ' )
-					unless( $self->parent_threads > 1 or $self->verbose );
+								 message  => 'D:'.( $run + 1 ).' .. ' )
+						unless( $self->parent_threads > 1 or $self->verbose );
 				}
 
 				$queue_info{$run}{'candidate_model'} =
-				model -> new( filename => "./NM_run" . ($run + 1) . "/psn.mod",
-					target               => 'disk',
-					ignore_missing_files => 1,
-					quick_reload         => 1,
-					cwres                => $models[$run] -> cwres() );
+					model -> new( filename => "./NM_run" . ($run + 1) . "/psn.mod",
+								  target               => 'disk',
+								  ignore_missing_files => 1,
+								  quick_reload         => 1,
+								  cwres                => $models[$run] -> cwres() );
 				$self->print_finish_message( candidate_model => $queue_info{$run}{'candidate_model'}, run => $run );
 
 				$self->prepared_models([]) unless defined $self->prepared_models;
 				push( @{$self->prepared_models->[$run]{'own'}}, $queue_info{$run}{'candidate_model'} );
 
-				next; # We are done with this model. It has already been run. Go back to polling.
+				next; # We are done with this model. It has already been run. Go back to main while loop.
 			}
 
 			# }}}
@@ -711,7 +545,7 @@ sub run
 					}
 
 					while( (not( -e 'NM_run'.($run).'/psn.lst' )) and 
-						(Time::HiRes::time() - $start_sleep) < $max_sleep ) {
+						   (Time::HiRes::time() - $start_sleep) < $max_sleep ) {
 						Time::HiRes::usleep($min_sleep);
 					}
 				}
@@ -731,10 +565,10 @@ sub run
 			my $stoptmp = '';
 			$stoptmp = "Created NM_run".($run+1)."." unless (-d 'NM_run'.($run+1));
 			$self -> create_sub_dir( subDir => '/NM_run'.($run+1),
-				modelname => $models[$run]->filename);
+									 modelname => $models[$run]->filename);
 			chdir( 'NM_run'.($run+1) );
 			$self->stop_motion_call(tool=>'modelfit',message => $stoptmp." Moved to NM_run".($run+1).".")
-			if ($self->stop_motion()> 1);
+				if ($self->stop_motion()> 1);
 
 			## Start tail of output if requested. Only works for Win32.
 			if( $Config{osname} eq 'MSWin32' and $self->tail_output ) {
@@ -743,11 +577,11 @@ sub run
 				my $prio_class = "NORMAL_PRIORITY_CLASS";
 
 				Win32::Process::Create(my $ProcessObj,
-					eval($self->wintail_exe),
-					eval($self->wintail_command),
-					0,
-					$prio_class,
-					".");
+									   eval($self->wintail_exe),
+									   eval($self->wintail_command),
+									   0,
+									   $prio_class,
+									   ".");
 			}
 
 			# Initiate queue_info entry (unless its a retry)
@@ -761,8 +595,8 @@ sub run
 					$run_nmtran = 1;
 				}
 				$queue_info{$run}{'candidate_model'} = $self -> copy_model_and_input(model=>$models[$run],
-					source => '../',
-					run_nmtran => $run_nmtran);
+																					 source => '../',
+																					 run_nmtran => $run_nmtran);
 				$queue_info{$run}{'model'} = $models[$run];
 				$queue_info{$run}{'modelfile_tainted'} = 1;
 				$queue_info{$run}{'have_accepted_run'} = 0;
@@ -800,147 +634,314 @@ sub run
 					# diffrentiate between allready run processes.
 
 					ui -> print( category => 'all', wrap => 0, newline => 0,
-						message  => 'S:'.($run+1).' .. ' )
-					unless ( $self->parent_threads > 1 or $self->verbose );
+								 message  => 'S:'.($run+1).' .. ' )
+						unless ( $self->parent_threads > 1 or $self->verbose );
 				}
 				$started_all_models = 1 if ($run == $#models);
 
 				# }}}
 			} else {
 				$self->stop_motion_call(tool => 'modelfit', message => "Did not have to copy model and input, this is a retry.")
-				if ($self->stop_motion() > 1);
+					if ($self->stop_motion() > 1);
 			}
 
 			my %options_hash = %{$self -> _get_run_options(run_id => $run)}; 
 
 			$self -> run_nonmem ( run_no          => $run,
-				nm_version      => $options_hash{'nm_version'},
-				queue_info      => $queue_info{$run},
-				queue_map       => \%queue_map);
+								  nm_version      => $options_hash{'nm_version'},
+								  queue_info      => $queue_info{$run},
+								  queue_map       => \%queue_map);
 
 			ui -> print( category => 'all', message  => "\nAll executions started.",newline => 1 )
 				if ($started_all_models and $self->parent_threads <= 1  and not $self->verbose and not $started_all_models_print);
 			$started_all_models_print = 1;
 			chdir('..');
 			$self->stop_motion_call(tool=>'modelfit',message => "change directory one level up")
-			if ($self->stop_motion > 1);
+				if ($self->stop_motion > 1);
 
 			ui -> category( $old_category );
 
 			# }}}
 
-		} else { 
 
-			# {{{ Here, a process has finished and we check for restarts.
 
-			my $run = $queue_map{$pid};
+			next; #go back to main while loop to check if there is another job that can be started
+		}
+	
 
-			my $candidate_model = $queue_info{$run}{'candidate_model'};
+		# We could not start a new job, so we look for jobs that have been started and
+		# finished. If we find one, we set $pid to that job.
+		#we must loop here until a job is finished, because we know we cannot start new job
+		# until one is finished
 
-			my $work_dir = 'NM_run' . ($run+1) ;
-			chdir($work_dir);
-			$self->stop_motion_call(tool=>'modelfit',message => "A NONMEM run has finished (system process with id $pid ".
-				"has disappeared).\n".
-				"Changed to directory $work_dir of this process to check results.")
-			if ($self->stop_motion() > 1);
+		my $pid = 0;
 
-			$self->compute_cwres(queue_info => $queue_info{$run}, run_no => $run);
+		# {{{ Get potiential finished pid
 
-			$self->compute_iofv(queue_info => $queue_info{$run}, run_no => $run);
-
-			# Make sure that each process gets a unique random sequence:
-			my $tmpseed = defined $self->seed() ? $self->seed() : random_uniform_integer(1,1,99999999);
-			my $tmptry  = exists $queue_info{$run}{'tries'} ? $queue_info{$run}{'tries'} : 0;
-			#have two alternatives: first for backward reproducability of sequences
-			#second to prevent bug when very large number of models
-			if ($run < 5000){
-				random_set_seed(($tmpseed+100000*($run+1)),($tmptry+1));
-			}else{
-				my $phrase = "seed $tmpseed try $tmptry run $run";
-				random_set_seed_from_phrase($phrase);
-			}
-
-			my %options_hash = %{$self -> _get_run_options(run_id => $run)};
-
-			for my $key (keys %options_hash) {			# ADDED
-				delete $options_hash{$key} unless defined $options_hash{$key};
-			}
-
-			#careful here, option maxevals is set on commandline, but model->maxeval() is 
-			#array of values actually set in modelfile
-			my $do_restart = $self -> restart_needed( %options_hash,
-				queue_info  => $queue_info{$run},
-				run_no      => $run,
-				maxevals		=> $candidate_model->maxevals);
-
-			if ($self->abort_on_fail) {
-				my $tries = \$queue_info{$run} -> {'tries'};
-				if ($queue_info{$run}->{'run_results'}->[${$tries}]->{'failed'}) {
-					$do_restart = 0;
-					@queue = ();
-				}
-			}
-
-			if ($do_restart) {
-				unshift(@queue, $run);
-				delete($queue_map{$pid});
-				chdir('..');	    
-				$self->stop_motion_call(tool => 'modelfit', message => "Had to do restart, put job in queue.\nChange directory one level up ")
-				if ($self->stop_motion() > 1);
+		while (not $pid){
+			# (sleep to make polling less demanding).
+					
+			if( defined $PsN::config -> {'_'} -> {'job_polling_interval'} and
+				$PsN::config -> {'_'} -> {'job_polling_interval'} > 0 ) {
+				sleep($PsN::config -> {'_'} -> {'job_polling_interval'});
 			} else {
-				$self->stop_motion_call(tool => 'modelfit', message => "did not have to restart this model")
-				if ($self->stop_motion() > 1);
-				$self -> select_best_model(run_no          => $run,
-					nm_version      => $options_hash{'nm_version'},
-					queue_info      => $queue_info{$run});
+				sleep(1);
+			}
 
-				# {{{ Print finishing messages
+			foreach my $check_pid( keys %queue_map ){
+				
+				if( $check_pid =~ /^rerun_/ ){
+					
+					# A pid that starts with "rerun" is a rerun and is always
+					# "finished".
+					
+					$pid = $check_pid;
+					last;
+				}elsif( $check_pid =~ /^fail_/ ){
+					
+					# A pid fail_ is a failed grid submit and is always
+					# "finished".
+					
+					$pid = $check_pid;
+					last;
+				}
+				
+				# Diffrent environments have diffrent ways of reporting
+				# job status. Here we check which environment we are in
+				# and act accordingly.
+				
+				if ( $self->run_on_ud ) {
+					
+					$pid = $self -> ud_monitor( jobId => $check_pid );
+					
+					if( $pid ){
+						$self -> ud_retrieve( jobId => $check_pid,
+											  run_no => $queue_map{$check_pid} );
+					}
+					
+				} elsif ( $self->run_on_sge ) {
+					
+					$pid = $self -> sge_monitor( jobId => $check_pid );
+					
+				} elsif ( $self->run_on_sge_nmfe ) {
+					
+					$pid = $self -> sge_nmfe_monitor( jobId => $check_pid );
+					
+				} elsif ( $self->run_on_slurm ) {
+					
+					$pid = $self -> slurm_monitor( jobId => $check_pid );
 
-				if( scalar @queue == 0 ) {
-					if( $all_jobs_started == 0 ) {
+				} elsif ( $self->run_on_zink ) {
 
-						ui -> print( category => 'all',
-							message  => "Waiting for all NONMEM runs to finish:",
-							newline => 1 ) 
-						if( $self->parent_threads <= 1 and $threads > 1 and not $self->verbose );
+					$pid = $self -> zink_monitor( jobId => $check_pid );
 
-						$all_jobs_started = 1;
-					} 
+				} elsif ( $self->run_on_lsf ) {
 
-					my $modulus = (($#models+1) <= 10) ? 1 : (($#models+1) / 10)+1;
+					$pid = $self -> lsf_monitor( jobId => $check_pid );
 
-					if ( $run % $modulus == 0 or $run == 0 or $run == $#models ) {
-						ui -> print( category => 'all',
-							message  => 'F:'.($run+1).' .. ',
-							wrap => 0,
-							newline => 0)
-						unless ( $self->parent_threads > 1 or $self->verbose );
+				} elsif ( $self->run_on_lsf_nmfe ) {
+
+					$pid = $self -> lsf_nmfe_monitor( jobId => $check_pid );
+
+				} elsif ( $self->run_on_torque ) {
+
+					$pid = $self -> torque_monitor( jobId => $check_pid );
+
+				} else { # Local process poll
+
+					if( $Config{osname} eq 'MSWin32' ){
+
+						my $exit_code;
+
+						# GetExitCode is supposed to return a value indicating
+						# if the process is still running, however it seems to
+						# allways return 0. $exit_code however is update and
+						# seems to be nonzero if the process is running.
+
+						$queue_info{$queue_map{$check_pid}}{'winproc'}->GetExitCode($exit_code);
+
+						if( $exit_code == 0 ){
+							$pid = $check_pid;
+						}
+
+					} else {
+
+						$pid = waitpid($check_pid, WNOHANG);
+
+						# Waitpid will return $check_pid if that process has
+						# finished and 0 if it is still running.
+
+						if( $pid == -1 ){
+							# If waitpid return -1 the child has probably finished
+							# and has been "Reaped" by someone else. We treat this
+							# case as the child has finished. If this happens many
+							# times in the same NM_runX directory, there is probably
+							# something wrong and we die(). (I [PP] suspect that we
+							# never/seldom reach 10 reruns in one NM_runX directory)
+
+							my $run = $queue_map{$check_pid};
+
+							$queue_info{$run}{'nr_wait'}++;
+							if( $queue_info{$run}{'nr_wait'} > 10 ){
+								croak("Nonmem run was lost\n");
+							}
+							$pid = $check_pid;
+						}
+
+						# If the pid is not set, the job is not finished and we
+						# check if it has been running longer than it should, and we
+						# kill it.
+						if (0){
+							unless( $pid ){
+								if ( $self->max_runtime and 
+									 time > $queue_info{$queue_map{$check_pid}}->{'start_time'} + $self->max_runtime ) {
+
+									# Only works on windows
+
+									if( $Config{osname} ne 'MSWin32' ){
+
+										ui->print(category=>'all',message=>"Job ".$check_pid." exceeded run time, trying to kill",newline => 1);
+										my $try=1;
+										while( kill( 0, $check_pid ) ){
+											if( $try <= 5 ){
+												kill( 'TERM', $check_pid );
+											} else {
+												kill( 'KILL', $check_pid );
+											}
+											waitpid( $check_pid, 0);
+											sleep(1);
+										}
+										ui->print(category=>'all',message=>"Job $check_pid killed successfully on try nr $try",newline => 1);
+									}
+								}
+							}
+						}
 					}
 				}
 
-				# }}}	      
+				last if $pid; #we found a finished run, do not loop over more running pid
 
-				chdir( '..' );
-				$self->stop_motion_call(tool=>'modelfit',message => "changed directory one level up")
-				if ($self->stop_motion()> 1);
+			} #end loop over running pid
 
-				# {{{ cleaning and done file
 
-				if( $self->clean >= 3 ){
-					unlink( <$work_dir/worker*/*> );
+			if( not $pid ){
+
+				# No process has finished. 
+				# we cannot start another job
+				next; # Return to polling for finished jobs.
+			
+			} else { 
+
+				# {{{ Here, a process has finished and we check for restarts.
+
+				my $run = $queue_map{$pid};
+
+				my $candidate_model = $queue_info{$run}{'candidate_model'};
+
+				my $work_dir = 'NM_run' . ($run+1) ;
+				chdir($work_dir);
+				$self->stop_motion_call(tool=>'modelfit',message => "A NONMEM run has finished (system process with id $pid ".
+										"has disappeared).\n".
+										"Changed to directory $work_dir of this process to check results.")
+					if ($self->stop_motion() > 1);
+
+				$self->compute_cwres(queue_info => $queue_info{$run}, run_no => $run);
+
+				$self->compute_iofv(queue_info => $queue_info{$run}, run_no => $run);
+
+				# Make sure that each process gets a unique random sequence:
+				my $tmpseed = defined $self->seed() ? $self->seed() : random_uniform_integer(1,1,99999999);
+				my $tmptry  = exists $queue_info{$run}{'tries'} ? $queue_info{$run}{'tries'} : 0;
+				#have two alternatives: first for backward reproducability of sequences
+				#second to prevent bug when very large number of models
+				if ($run < 5000){
+					random_set_seed(($tmpseed+100000*($run+1)),($tmptry+1));
+				}else{
+					my $phrase = "seed $tmpseed try $tmptry run $run";
+					random_set_seed_from_phrase($phrase);
+				}
+
+				my %options_hash = %{$self -> _get_run_options(run_id => $run)};
+
+				for my $key (keys %options_hash) {			# ADDED
+					delete $options_hash{$key} unless defined $options_hash{$key};
+				}
+
+				#careful here, option maxevals is set on commandline, but model->maxeval() is 
+				#array of values actually set in modelfile
+				my $do_restart = $self -> restart_needed( %options_hash,
+														  queue_info  => $queue_info{$run},
+														  run_no      => $run,
+														  maxevals		=> $candidate_model->maxevals);
+
+				if ($self->abort_on_fail) {
+					my $tries = \$queue_info{$run} -> {'tries'};
+					if ($queue_info{$run}->{'run_results'}->[${$tries}]->{'failed'}) {
+						$do_restart = 0;
+						@queue = ();
+					}
+				}
+
+				if ($do_restart) {
+					unshift(@queue, $run);
+					delete($queue_map{$pid});
+					chdir('..');	    
+					$self->stop_motion_call(tool => 'modelfit', message => "Had to do restart, put job in queue.\nChange directory one level up ")
+						if ($self->stop_motion() > 1);
+				} else {
+					$self->stop_motion_call(tool => 'modelfit', message => "did not have to restart this model")
+						if ($self->stop_motion() > 1);
+					$self -> select_best_model(run_no          => $run,
+											   nm_version      => $options_hash{'nm_version'},
+											   queue_info      => $queue_info{$run});
+					
+					# {{{ Print finishing messages
+					
+					if( scalar @queue == 0 ) {
+						if( $all_jobs_started == 0 ) {
+
+							ui -> print( category => 'all',
+										 message  => "Waiting for all NONMEM runs to finish:",
+										 newline => 1 ) 
+								if( $self->parent_threads <= 1 and $threads > 1 and not $self->verbose );
+							
+							$all_jobs_started = 1;
+						} 
+						
+						my $modulus = (($#models+1) <= 10) ? 1 : (($#models+1) / 10)+1;
+						
+						if ( $run % $modulus == 0 or $run == 0 or $run == $#models ) {
+							ui -> print( category => 'all',
+										 message  => 'F:'.($run+1).' .. ',
+										 wrap => 0,
+										 newline => 0)
+								unless ( $self->parent_threads > 1 or $self->verbose );
+						}
+					}
+
+					# }}}	      
+
+					chdir( '..' );
+					$self->stop_motion_call(tool=>'modelfit',message => "changed directory one level up")
+						if ($self->stop_motion()> 1);
+
+					# {{{ cleaning and done file
+					
+					if( $self->clean >= 3 ){
+						unlink( <$work_dir/worker*/*> );
 						my @removedir = <$work_dir/worker*>;
 						foreach my $remdir (@removedir){
 							rmdir ($remdir) if (-d $remdir);
 						}
 						unless ((-e $work_dir.'/'.$self->general_error_file) or (-e $work_dir.'/'.$self->nmtran_error_file)){ 
-
+							
 							#leave if error message,
 							unlink( <$work_dir/*> )  ; 
 							unless( rmdir( $work_dir ) ){debug -> warn( message => "Unable to remove $work_dir directory: $! ." )};
 							$self->stop_motion_call(tool=>'modelfit',message => "clean level is >=3, removed $work_dir")
-							if ($self->stop_motion()> 1);
+								if ($self->stop_motion()> 1);
 						}
-						sleep(2);
+			#			sleep(2);
 					} else {
 						1;
 
@@ -949,8 +950,8 @@ sub run
 					# }}}
 
 					$self -> print_finish_message( candidate_model => $candidate_model,
-						run => $run );
-
+												   run => $run );
+					
 					if( $threads <= 1 ) {
 						$self->prepared_models([]) unless defined $self->prepared_models;
 						push( @{$self->prepared_models->[$run]{'own'}}, $candidate_model );
@@ -960,45 +961,43 @@ sub run
 					delete( $queue_map{$pid} );
 				}
 
-				next;
-
-				# }}}
 
 			}
-		} # queue loop ends here
+			#If we get this far then we found a $pid so just continue, this loop will break now
+		} # end while (not $pid). 
 
+	} #end while loop over jobs left to start or jobs left running
+	#  Print finish message
 
-		# {{{ Print finish message
-
-		ui -> print( category => 'all', message  => " done",newline => 1 ) 
-			if( $self->parent_threads <= 1 and $threads > 1 and not $self->verbose);
-
-		# }}}
+	ui -> print( category => 'all', message  => " done",newline => 1 ) 
+		if( $self->parent_threads <= 1 and $threads > 1 and not $self->verbose);
+	
+	# }}}
 
 		# }}} local execution
+	
+	$self->prepare_raw_results();
 
-		$self->prepare_raw_results();
+	$self->print_raw_results();
 
-		$self->print_raw_results();
-
-		chdir($cwd);
-		$self->stop_motion_call(tool=>'modelfit', message => "changed directory to $cwd")
+	chdir($cwd);
+	$self->stop_motion_call(tool=>'modelfit', message => "changed directory to $cwd")
 		if ($self->stop_motion() > 1);
 
 		# {{{ clean $self -> directory 
-		if( $self->clean >= 2 ){
-			unlink($self->directory . '/model_NMrun_translation.txt');
-			unlink($self->directory . '/modelfit.log');
-		}
-		if( not $self->top_tool and $self->clean >= 3 ){
-			my $dir = $self->directory;
-			unlink( <$dir/NM_run*/worker*/*> );
-			my @removedir = <$dir/NM_run*/worker*>;
-			foreach my $remdir (@removedir){
+	if( $self->clean >= 2 ){
+		unlink($self->directory . '/model_NMrun_translation.txt');
+		unlink($self->directory . '/modelfit.log');
+	}
+	if( not $self->top_tool and $self->clean >= 3 ){
+		my $dir = $self->directory;
+		unlink( <$dir/NM_run*/worker*/*> );
+		my @removedir = <$dir/NM_run*/worker*>;
+		foreach my $remdir (@removedir){
 			rmdir ($remdir) if (-d $remdir);
-			}
-			my $keep_this=0;
-			foreach my $work_dir (<$dir/NM_run*>){
+		}
+		my $keep_this=0;
+		foreach my $work_dir (<$dir/NM_run*>){
 			if ((-e $work_dir.'/'.$self->general_error_file) or (-e $work_dir.'/'.$self->nmtran_error_file)){ 
 				#leave if error message,
 				$keep_this=1;
@@ -2295,9 +2294,10 @@ sub slurm_submit
       $self->full_path_nmfe(). ' '.
       " psn.mod psn.lst $background ".$parastring." ".$switches;
 
-  unless ($Config{osname} eq 'MSWin32' or $Config{osname} eq 'MSWin64'){
-      system('echo sbatch '.$submitstring.' "2>&1" > sbatchcommand');
-  }
+	unless ($Config{osname} eq 'MSWin32' or $Config{osname} eq 'MSWin64'){
+		system('echo sbatch '.$submitstring.' "2>&1" > sbatchcommand');
+	}
+	sleep(1); #wait to let other nodes sync files here?
 #How do I pick up the job id from sbatch?
 #Sbatch writes its output on stderr, not stdout. If you submit a job within a perl 
 #script, you could use something like this to capture the job id:
