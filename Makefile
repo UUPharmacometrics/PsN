@@ -92,6 +92,7 @@ RELFILES=$(addprefix PsN-Source/lib/,$(LIBFILES)) \
 	lib/PsN_template.pm \
 	lib/common_options.pm \
 	lib/linear_algebra.pm \
+	lib/npde_util.pm \
 	lib/psn.conf_template \
 	lib/psn.conf \
 	lib/OSspecific.pm \
