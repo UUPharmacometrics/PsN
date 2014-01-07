@@ -2973,16 +2973,16 @@ sub update_inits
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 from_output => { isa => 'output', optional => 1 },
-		 from_output_file => { isa => 'Str', optional => 1 },
-		 from_model => { isa => 'model', optional => 1 },
-		 from_hash => { isa => 'Ref', optional => 1 },
-		 problem_number => { isa => 'Maybe[Int]', optional => 1 },
-		 ignore_missing_parameters => { isa => 'Bool', default => 0, optional => 1 },
-		 ensure_diagonal_dominance => { isa => 'Bool', default => 0, optional => 1 },
-		 update_omegas => { isa => 'Bool', default => 1, optional => 1 },
-		 update_sigmas => { isa => 'Bool', default => 1, optional => 1 },
-		 update_thetas => { isa => 'Bool', default => 1, optional => 1 }
+		from_output => { isa => 'output', optional => 1 },
+		from_output_file => { isa => 'Str', optional => 1 },
+		from_model => { isa => 'model', optional => 1 },
+		from_hash => { isa => 'Ref', optional => 1 },
+		problem_number => { isa => 'Maybe[Int]', optional => 1 },
+		ignore_missing_parameters => { isa => 'Bool', default => 0, optional => 1 },
+		ensure_diagonal_dominance => { isa => 'Bool', default => 0, optional => 1 },
+		update_omegas => { isa => 'Bool', default => 1, optional => 1 },
+		update_sigmas => { isa => 'Bool', default => 1, optional => 1 },
+		update_thetas => { isa => 'Bool', default => 1, optional => 1 }
 	);
 	my $from_output = $parm{'from_output'};
 	my $from_output_file = $parm{'from_output_file'};
@@ -3028,211 +3028,201 @@ sub update_inits
 	# and thereafter updating the $modobj object. See L</units> and L</labels>.
 	#
 
-	croak("update_inits: No output object defined and" . 
-		      " no output object found through the model object specified." )
-	    unless ( ( defined $from_model and 
-		       ( defined $from_model -> outputs and 
-			 defined $from_model -> outputs->[0] ) ) or
-		     defined $from_output or
-		     defined $from_output_file or
-		     defined $from_hash);
-	if ((defined $from_model) and ((defined  $from_output )or (defined  $from_output_file ))){
-	  croak("update_inits: Illegal usage, cannot specify both from_model" . 
-			  " and from_output(_file)." )
+	croak("update_inits: No output object defined and no output object found through the model object specified.")
+	unless ( ( defined $from_model and ( defined $from_model -> outputs and defined $from_model -> outputs->[0] ) ) or
+		defined $from_output or defined $from_output_file or defined $from_hash);
+	if ((defined $from_model) and ((defined $from_output) or (defined $from_output_file))) {
+		croak("update_inits: Illegal usage, cannot specify both from_model and from_output(_file).");
 	}
-	if ((defined $from_hash) and ((defined  $from_output )or (defined  $from_output_file ))){
-	  croak("update_inits: Illegal usage, cannot specify both from_hash" . 
-			  " and from_output(_file)." )
+	if ((defined $from_hash) and ((defined $from_output) or (defined $from_output_file))) {
+		croak("update_inits: Illegal usage, cannot specify both from_hash and from_output(_file).");
 	}
-	if ((defined $from_hash) and (defined  $from_model )){
-	  croak("update_inits: Illegal usage, cannot specify both from_hash" . 
-			  " and from_model." )
+	if ((defined $from_hash) and (defined $from_model )) {
+		croak("update_inits: Illegal usage, cannot specify both from_hash and from_model.");
 	}
 	my %allparams;
 	if ( defined $from_output ) {
-	  carp("using output object ".
-			 "specified as argument\n" );
+		carp("using output object specified as argument\n");
 	} elsif ( defined $from_hash ) {
-	  $from_output = undef;
-	  %allparams = %{$from_hash};
+		$from_output = undef;
+		%allparams = %{$from_hash};
 	} elsif ( defined $from_output_file ) {
-	  $from_output = output -> new( filename => $from_output_file);
+		$from_output = output->new(filename => $from_output_file);
 	} else {
-	  $from_output = @{$from_model -> outputs}[0]; #assume 1st $PROB??
+		$from_output = @{$from_model->outputs}[0]; #assume 1st $PROB
 	}
 
 	my @params = ();
-	if( $update_thetas ){
-	  push( @params, 'theta' );
+	if( $update_thetas ) {
+		push( @params, 'theta' );
 	}
 	if( $update_omegas ) {
-	  push( @params, 'omega' );
+		push( @params, 'omega' );
 	}
 	if( $update_sigmas ) {
-	  push( @params, 'sigma' );
+		push( @params, 'sigma' );
 	}
 
 	foreach my $param ( @params ) {
-	  my ( @intermediate_coordslabels, @from_coordval );
-	  my $access = $param.'coordval';
-	  my $from_string;
-	  my @problems = @{$self->problems};
-	  my %param_hash;
+		my ( @intermediate_coordslabels, @from_coordval );
+		my $access = $param.'coordval';
+		my $from_string;
+		my @problems = @{$self->problems};
+		my %param_hash;
 
-	  if (defined $from_hash){
-	    unless (($#problems == 0) or (defined $problem_number)){
-	      croak("Updating initial estimates from hash ".
-			      "can only be done with single PROB models unless parameter ".
-			      "problem number has been defined");
-	    }
-	    #go directly to defining %namesvalues below
-	    $from_string = 'input hash';
-	  }else {
-	    # Since initial estimates are specified on the problem level and not on
-	    # the subproblem level we use the estimates from the outputs first subproblem
-	    @from_coordval = @{$from_output -> $access ( subproblems => [1] )};
-	    if ( defined $from_model ) {
-	      @intermediate_coordslabels = 
-		  @{$from_model -> get_coordslabels( parameter_type => $param )};
-	      $from_string = 'from-model '.$from_model -> full_name();
-	      croak("The number of problems are not the same in ".
-			      "$from_string (".($#intermediate_coordslabels+1).")".
-			      " and the model to be updated ".$self -> full_name." (".
-			      ($#problems+1).")" ) 
-		  unless ($#problems == $#intermediate_coordslabels );
-	    } else {
-	      $from_string = 'from-output '.$from_output -> full_name();
-	      if (defined $problem_number){
-		croak("The problem number to update ($problem_number) ".
-				"does not exist in $from_string (only ".($#from_coordval+1)." problems)")
-		    unless ($problem_number<=($#from_coordval +1));
-		croak("The problem number to update ($problem_number) ".
-				"does not exist in the model to be updated ".
-				$self -> full_name." ( only ".($#problems+1)." problems)")
-		    unless ($problem_number <=($#problems +1));
-	      }else{
-		croak("The number of problems are not the same in $from_string ".
-				" (".($#from_coordval+1).")".
-				" and the model to be updated ".
-				$self -> full_name." (".
-				($#problems+1).")" ) unless ( $#problems == $#from_coordval );
-	      }
-	    }
-	  }
-
-	  # Loop over the problems:
-	  for ( my $i = 0; $i <= $#problems; $i++ ) {
-	    next if (defined $problem_number and (($problem_number-1) != $i));
-	    my $problem = $problems[$i];
-	    unless ( defined  $problem) {
-	      croak("Problem number ".($i+1)." does not exist" );
-	    }
-	    my $accessor = $param.'s';
-	    unless( $problem-> can($accessor) ){
-	      croak("Error unknown parameter type: $param" );
-	    }
-	    my @records;
-	    if (defined $problem -> $accessor()) {
-	      @records = @{$problem -> $accessor()};
-	    }
-	    next unless (scalar(@records) > 0); #no parameter in this problem
-
-	    my @diagnostics;
-	    my %namesvalues;
-
-	    #if we have intermediate then first match coordinates between intermediate and from,
-	    #and replace 'from' coordinates with the intermediate labels, if available
-
-	    if (defined $from_hash){
-	      %namesvalues = %{$allparams{$param}};
-	    }else{
-	      if (defined $from_coordval[$i]){
-		unless (defined $from_coordval[$i]->[0]){
-		  croak("No $param values read from output for problem ".($i+1));
-		}
-		if ( defined $from_model and defined $intermediate_coordslabels[$i]) {
-		  my %fromval = %{$from_coordval[$i]->[0]};
-		  my %intermediate = %{$intermediate_coordslabels[$i]};
-		  foreach my $coord (keys %fromval){
-		    #if there is no label for the coord, get_coordslabels stores the coordinate string 
-		    #as the hash value. Always defined.
-		    my $name = $intermediate{$coord}; #this is either coordinate string or label
-		    $namesvalues{$name} = $fromval{$coord}; 
-		  }
+		if (defined $from_hash){
+			unless (($#problems == 0) or (defined $problem_number)){
+				croak("Updating initial estimates from hash ".
+					"can only be done with single PROB models unless parameter ".
+					"problem number has been defined");
+			}
+			#go directly to defining %namesvalues below
+			$from_string = 'input hash';
 		}else {
-		  %namesvalues = %{$from_coordval[$i]->[0]};
+			# Since initial estimates are specified on the problem level and not on
+			# the subproblem level we use the estimates from the outputs first subproblem
+			@from_coordval = @{$from_output -> $access ( subproblems => [1] )};
+			if ( defined $from_model ) {
+				@intermediate_coordslabels = @{$from_model -> get_coordslabels( parameter_type => $param )};
+				$from_string = 'from-model '.$from_model -> full_name();
+				croak("The number of problems are not the same in ".
+					"$from_string (".($#intermediate_coordslabels+1).")".
+					" and the model to be updated ".$self -> full_name." (".
+					($#problems+1).")" ) 
+				unless ($#problems == $#intermediate_coordslabels);
+			} else {
+				$from_string = 'from-output '.$from_output->full_name();
+				if (defined $problem_number){
+					croak("The problem number to update ($problem_number) ".
+						"does not exist in $from_string (only ".($#from_coordval+1)." problems)")
+					unless ($problem_number<=($#from_coordval +1));
+					croak("The problem number to update ($problem_number) ".
+						"does not exist in the model to be updated ".
+						$self -> full_name." ( only ".($#problems+1)." problems)")
+					unless ($problem_number <=($#problems +1));
+				}else{
+					croak("The number of problems are not the same in $from_string ".
+						" (".($#from_coordval+1).")".
+						" and the model to be updated ".
+						$self -> full_name." (".
+						($#problems+1).")" ) unless ( $#problems == $#from_coordval );
+				}
+			}
 		}
-	      }
-	    }
-	    #loop through records and options
-	    #if record is same then skip
-	    #if fix but not ignore_missing we still match values to see if any missing
-	    #name of own param is label if from_model defined and label defined, otherwise coord
-	    #look up value in namesvalues hash, replace value with "matched"
 
-	    my $any_same=0;
-	    foreach my $record (@records){
-	      next if ($record->prior());
-	      my $store_rec = 1;
-	      if  ($record->same() ){
-		$any_same=1; # we can match nothing, cannot do error check
-		next;
-	      }
-	      if  ($record->fix()){
-		$store_rec = 0; 
-		next if ($ignore_missing_parameters or $any_same);
-	      }
-	      unless (defined $record -> options()){
-		  croak("$param record has no values");
-	      }
-	      foreach my $option (@{$record -> options()}) {
-		next if ($option->prior());
-		my $store_val = $store_rec;
-		if ($option->fix()){
-		  $store_val = 0;
-		  next if ($ignore_missing_parameters or $any_same);
-		}
-		my $name = $option -> coordinate_string();
-		if (((defined $from_model) or (defined $from_hash)) and 
-		    (defined $option -> label())){
-		  $name = $option -> label();#do matching on label instead of coordinate
-		}
-		if (defined $namesvalues{$name}){
-		  my $value = $namesvalues{$name};
-		  croak("Multiple instances of label $name in problem to update, ".
-		      "ambiguous parameter matching by label.") 
-		      if ($value eq 'matched');
-		  if ($store_val){
-		    push( @diagnostics,
-			  $option -> check_and_set_init( new_value => $value ) );
-		  }
-		  $namesvalues{$name} = 'matched';
-		} else {
-		  unless ($ignore_missing_parameters){
-		    unless ($option->value() == 0 and (not $option->on_diagonal())){
-		      my $mes = "update_inits: No match for $param $name found in $from_string";
-		      carp($mes);
-		      print $mes."\n";
-		    }
-		  }
-		}
-	      }
-	    }
+		# Loop over the problems:
+		for ( my $i = 0; $i <= $#problems; $i++ ) {
+			next if (defined $problem_number and (($problem_number-1) != $i));
+			my $problem = $problems[$i];
+			unless ( defined  $problem) {
+				croak("Problem number ".($i+1)." does not exist" );
+			}
+			my $accessor = $param.'s';
+			unless( $problem-> can($accessor) ){
+				croak("Error unknown parameter type: $param" );
+			}
+			my @records;
+			if (defined $problem -> $accessor()) {
+				@records = @{$problem -> $accessor()};
+			}
+			next unless (scalar(@records) > 0); #no parameter in this problem
 
-	    #check if any values not matched
-	    #we store same but they will not be matched even if all correct,
-	    #so this only catches errors if no same
-	    unless ($ignore_missing_parameters or $any_same){
-	      foreach my $name (keys %namesvalues){
-		croak("No match for $param ".
-			    "$name found in problem to update") 
-		    if (($namesvalues{$name} ne 'matched') and ($namesvalues{$name} != 0));
-	      }
-	    }
-	    if (($param eq $params[$#params]) and ($update_omegas or $update_sigmas) and $ensure_diagonal_dominance){
-		$problem->ensure_diagonal_dominance(verbose => 1); #ensure_diagonal_dominance only set from update_inits program
-	    }
-	  } #each problem
+			my @diagnostics;
+			my %namesvalues;
+
+			#if we have intermediate then first match coordinates between intermediate and from,
+			#and replace 'from' coordinates with the intermediate labels, if available
+
+			if (defined $from_hash){
+				%namesvalues = %{$allparams{$param}};
+			}else{
+				if (defined $from_coordval[$i]){
+					unless (defined $from_coordval[$i]->[0]){
+						croak("No $param values read from output for problem ".($i+1));
+					}
+					if ( defined $from_model and defined $intermediate_coordslabels[$i]) {
+						my %fromval = %{$from_coordval[$i]->[0]};
+						my %intermediate = %{$intermediate_coordslabels[$i]};
+						foreach my $coord (keys %fromval){
+							#if there is no label for the coord, get_coordslabels stores the coordinate string 
+							#as the hash value. Always defined.
+							my $name = $intermediate{$coord}; #this is either coordinate string or label
+							$namesvalues{$name} = $fromval{$coord}; 
+						}
+					}else {
+						%namesvalues = %{$from_coordval[$i]->[0]};
+					}
+				}
+			}
+			#loop through records and options
+			#if record is same then skip
+			#if fix but not ignore_missing we still match values to see if any missing
+			#name of own param is label if from_model defined and label defined, otherwise coord
+			#look up value in namesvalues hash, replace value with "matched"
+
+			my $any_same=0;
+			foreach my $record (@records){
+				next if ($record->prior());
+				my $store_rec = 1;
+				if  ($record->same() ){
+					$any_same=1; # we can match nothing, cannot do error check
+					next;
+				}
+				if  ($record->fix()){
+					$store_rec = 0; 
+					next if ($ignore_missing_parameters or $any_same);
+				}
+				unless (defined $record -> options()){
+					croak("$param record has no values");
+				}
+				foreach my $option (@{$record -> options()}) {
+					next if ($option->prior());
+					my $store_val = $store_rec;
+					if ($option->fix()){
+						$store_val = 0;
+						next if ($ignore_missing_parameters or $any_same);
+					}
+					my $name = $option -> coordinate_string();
+					if (((defined $from_model) or (defined $from_hash)) and 
+						(defined $option -> label())){
+						$name = $option -> label();#do matching on label instead of coordinate
+					}
+					if (defined $namesvalues{$name}){
+						my $value = $namesvalues{$name};
+						croak("Multiple instances of label $name in problem to update, ".
+							"ambiguous parameter matching by label.") 
+						if ($value eq 'matched');
+						if ($store_val){
+							push( @diagnostics,
+								$option -> check_and_set_init( new_value => $value ) );
+						}
+						$namesvalues{$name} = 'matched';
+					} else {
+						unless ($ignore_missing_parameters){
+							unless ($option->value() == 0 and (not $option->on_diagonal())){
+								my $mes = "update_inits: No match for $param $name found in $from_string";
+								carp($mes);
+								print $mes."\n";
+							}
+						}
+					}
+				}
+			}
+
+			#check if any values not matched
+			#we store same but they will not be matched even if all correct,
+			#so this only catches errors if no same
+			unless ($ignore_missing_parameters or $any_same){
+				foreach my $name (keys %namesvalues){
+					croak("No match for $param ".
+						"$name found in problem to update") 
+					if (($namesvalues{$name} ne 'matched') and ($namesvalues{$name} != 0));
+				}
+			}
+			if (($param eq $params[$#params]) and ($update_omegas or $update_sigmas) and $ensure_diagonal_dominance){
+				$problem->ensure_diagonal_dominance(verbose => 1); #ensure_diagonal_dominance only set from update_inits program
+			}
+		} #each problem
 	} #each param
 }
 
@@ -3461,12 +3451,10 @@ sub is_run
 	# 
 	# is_run returns true if the outputobject owned by the
 	# modelobject has valid outpudata either in memory or on disc.
-	if ( defined $self->outputs ) {
-	  if ( @{$self->outputs}[0] -> have_output ){
+	if (defined $self->outputs) {
+	  if (@{$self->outputs}[0]->have_output) {
 	    $return_value = 1;
 	  }
-	} else {
-	  $return_value = 0;
 	}
 
 	return $return_value;
@@ -4168,21 +4156,26 @@ sub remove_records
 	);
 	my $type = $parm{'type'};
 	my $keep_last = $parm{'keep_last'};
-	my @problem_numbers = defined $parm{'problem_numbers'} ? @{$parm{'problem_numbers'}} : ();
+	my @problem_numbers;
 
-	unless( scalar(@problem_numbers)>0 ){
-		$self->problems([]) unless defined $self->problems;
-	  @problem_numbers = (1 .. $#{$self->problems}+1);
+	if (not defined $self->problems) {
+		croak("The model does not contain any problems");
 	}
 
-	my @problems;
-	@problems = @{$self -> problems()} if (defined $self ->problems());
-	foreach my $i ( @problem_numbers ) {
-	  if ( defined $problems[ $i-1 ] ) {
-	    $problems[$i-1] -> remove_records( 'type' => $type, keep_last => $keep_last );
+	if (defined $parm{'problem_numbers'}) {
+		@problem_numbers = @{$parm{'problem_numbers'}};
+	} else {
+		@problem_numbers = (1 .. scalar($self->problems));
+	}
+	
+	my @problems = @{$self->problems};
+
+	foreach my $i (@problem_numbers) {
+	  if (defined $problems[$i-1]) {
+	    $problems[$i-1]->remove_records(type => $type, keep_last => $keep_last);
 	  } else {
 	    croak("Problem number $i, does not exist" );
-	  } 
+	  }
 	}
 }
 
@@ -4293,30 +4286,30 @@ sub subroutine_files
 	my $self = shift;
 	my @fsubs;
 
-  my %fsubs;
-  foreach my $subr( 'PRED','CRIT', 'CONTR', 'CCONTR', 'MIX', 'CONPAR', 'OTHER', 'PRIOR', 'INFN' ){
-    my ( $model_fsubs, $junk ) = $self -> _option_val_pos( record_name => 'subroutine',
-							   name => $subr );
-    if( @{$model_fsubs} > 0 ){
-      foreach my $prob_fsubs ( @{$model_fsubs} ){
-	foreach my $fsub( @{$prob_fsubs} ){
-	  $fsubs{$fsub} = 1;
+	my %fsubs;
+	foreach my $subr( 'PRED','CRIT', 'CONTR', 'CCONTR', 'MIX', 'CONPAR', 'OTHER', 'PRIOR', 'INFN' ){
+		my ( $model_fsubs, $junk ) = $self -> _option_val_pos( record_name => 'subroutine',
+			name => $subr );
+		if( @{$model_fsubs} > 0 ){
+			foreach my $prob_fsubs ( @{$model_fsubs} ){
+				foreach my $fsub( @{$prob_fsubs} ){
+					$fsubs{$fsub} = 1;
+				}
+			}
+		}
 	}
-      }
-    }
-  }
 
-  # BUG , nonmem6 might not require the file to be named .f And I've
-  # seen examples of files named .txt
+	# BUG , nonmem6 might not require the file to be named .f And I've
+	# seen examples of files named .txt
 
-  @fsubs = keys %fsubs;
-  if( @fsubs > 0  ){
-    for( my $i = 0; $i <= $#fsubs; $i ++ ){
-      unless( $fsubs[$i] =~ /\.f$/ ){
-	$fsubs[$i] .= '.f';
-      }
-    }
-  }
+	@fsubs = keys %fsubs;
+	if( @fsubs > 0  ){
+		for( my $i = 0; $i <= $#fsubs; $i ++ ){
+			unless( $fsubs[$i] =~ /\.f$/ ){
+				$fsubs[$i] .= '.f';
+			}
+		}
+	}
 
 	return \@fsubs;
 }
@@ -4737,7 +4730,7 @@ sub flush
 	if( defined $self->problems and ( !$self->synced or $force ) ) {
 		$self -> _write;
 	}
-	$self -> {'problems'} = undef;	#FIXME: Change for Moose
+	$self->{'problems'} = undef;	#FIXME: Change for Moose
 	$self->synced(0);
 }
 
@@ -4747,10 +4740,21 @@ sub update_prior_information
 	my $self = shift;
 
 	foreach my $problem (@{$self->problems}) {
-	  $problem -> update_prior_information() if (defined $problem);
+	  $problem->update_prior_information;
 	}
 }
 
+sub set_all_omegas_to_zero
+{
+	my $self = shift;
+
+	foreach my $omega (@{$self->problems->[0]->omegas}) {
+		foreach my $option (@{$omega->options}) {
+			$option->init(0);
+			$option->fix(1);
+		}
+	}
+}
 
 sub _read_problems
 {

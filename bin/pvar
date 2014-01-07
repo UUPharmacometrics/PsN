@@ -23,10 +23,12 @@ use tool::pvar;
 
 my %options;
 
-my %required_options = ();
+my %required_options = (
+	"samples" => undef,
+	"parameters" => undef
+);
+
 my %optional_options = (
-	"opt1" => undef,
-	"opt2" => undef,
 );
 
 my $res = GetOptions( \%options,
@@ -73,6 +75,8 @@ if (!defined $scm_directory and @model_files == 0) {
 	die("Must specify one scm run directory or at least one model file");
 }
 
+my @parameters = split(',', $options{'parameters'});
+
 # Collect modelfiles from scm_directory
 if (defined $scm_directory) {
 	@model_files = pvar->get_models_from_scm_directory($scm_directory);
@@ -87,3 +91,5 @@ foreach $model_name (@model_files) {
 			filename => $model_name,
 		));
 }
+
+my $pvar = tool::pvar->new(eval($common_options::parameters), parameters => \@parameters, models => \@models); 

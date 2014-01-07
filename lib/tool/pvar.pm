@@ -5,13 +5,12 @@ use MooseX::Params::Validate;
 
 extends 'newtool';
 
-has 'models' => (is => 'rw', isa => 'ArrayRef[model]');
+has 'parameters' => (is => 'rw', isa => 'ArrayRef[Str]');
 
 sub BUILD
 {
-	# Check that each model only has one problem
 	foreach my $model (@models) {
-		if (@{$model->problems} != 1) {
+		if (@{$model->problems} > 1) {
 			croak("More than one problem per model is currently not supported");
 		}
 	}
@@ -26,23 +25,34 @@ sub modelfit_setup
 {
 	my $self = shift;
 
-	foreach $model ($self->models) {
+	for (my $i = 0; $i < scalar($self->models); $i++) {
+		my $model = $self->models->[$i];
 		foreach $variant ('epv', 'pv') {
 			my $new_model = $model->copy(output_same_directory => 0);
-			if ($new_model->has_output) {
-				$new_model->update_inits;
+
+			if ($new_model->is_run) {
+				$new_model->update_inits(from_model => $model);
 			}
+
 			if ($variant eq 'epv') {
-				# Set all omegas to 0 FIX
-				foreach my $omega (@{$model->problems->[0]->omegas}) {
-					foreach my $option (@{$omega->options}) {
-						print "QQ", $option->name, "QQ", $option->value, "QQ\n";
-					}
-				}
+				$new_model->set_all_omegas_to_zero();
 			}
+
+			$new_model->remove_records(type => 'estimation');
+
+			my $simulation;
+			if (defined $new_model->problems->[0]->simulations) {
+				$simulation = $new_model->problem->[0]->simulations->[0];
+			}
+			if (not defined $simulation) {
+				;
+			}
+
+			$new_model->add_records(type => 'table', record_strings => [@{$self->parameters}, 'NOPRINT','NOAPPEND','FIRSTONLY', 'ONEHEADER', "FILE=$variant$i.tab"]);
 		}
 	}
 }
+
 
 sub modelfit_analyze
 {

@@ -530,148 +530,148 @@ sub add_prior_distribution
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 from_output => { isa => 'output', optional => 1 },
-		 problem_number => { isa => 'Int', default => 0, optional => 1 },
-		 df_string => { isa => 'Str', optional => 0 }
+		from_output => { isa => 'output', optional => 1 },
+		problem_number => { isa => 'Int', default => 0, optional => 1 },
+		df_string => { isa => 'Str', optional => 0 }
 	);
 	my $from_output = $parm{'from_output'};
 	my $problem_number = $parm{'problem_number'};
 	my $df_string = $parm{'df_string'};
 
-      #First check that do not already have prior
-      if ((defined $self->priors()) and scalar(@{$self -> priors()})>0 ){
-				print "Warning: Cannot add prior to \$PROB which already has a \$PRIOR\n";
-				return;
-      }
-      #Set ntheta=number of THETAs in input model.
-      #Set neta=number of diagonal OMEGAs in input model.
-      #Set neps=0
-      #Set nthp=ntheta
-      #Set netp=neta
-      my $ntheta = $self->record_count(record_name=> 'theta');
-      my $nthp = $ntheta;
-      my $neta = $self->nomegas('with_same'=>1, 'with_correlations' => 0);
-      my $netp=$neta;
-      my $neps=0;
-      #Add record to simulation model
-      #$PRIOR NWPRI NTHETA=ntheta,NETA=neta,NEPS=neps,NTHP=nthp,NETP=netp
-      #Need to set NPEXP?? number of prior experiments
-      my $plev='';
-      $plev= 'PLEV=0.99' 
-	  if ((defined $self->simulations()) and scalar(@{$self -> simulations()})>0 );
-      my $record_string=" NWPRI NTHETA=$ntheta NETA=$neta NTHP=$nthp NETP=$netp $plev";
-      $self -> set_records( 'type' => 'prior',
-			    'record_strings' => [$record_string] );
-
-
-      #Add ntheta new $THETA FIX. Initial estimates are final THETA estimates from lst-file.
-      my $ref = $from_output->get_single_value(attribute=>'thetacoordval',
-					       problem_index => ($problem_number-1),
-					       subproblem_index => 0);
-      unless (defined $ref){
-	print "Cannot add prior if output data lacks THETA estimates\n";
-	return;
-      }
-      my %thetas = %{$ref};
-      for (my $i=1;$i<=$nthp;$i++){
-	my $val=$thetas{'THETA'.$i};
-	$self -> add_records(type => 'theta',
-			     record_strings => ["$val FIX"]);
-      }
-      
-      $ref = $from_output->get_single_value(attribute=>'covariance_matrix',
-					       problem_index=>($problem_number-1),
-					       subproblem_index=>0);
-      unless (defined $ref){
-	print "Cannot add prior if output data lacks covariance matrix\n";
-	return;
-      }
-
-      #Add diagonal $OMEGA FIX where initial estimates is the leading ntheta block 
-      #from the variance-covariance matrix in .cov
-      my @record_strings = ();
-      my $index=0;
-      for (my $i=0;$i<$nthp;$i++){
-	my @arr;
-	for (my $j=0;$j<=$i;$j++){
-	  if ($j == $i){
-	    my $init = sprintf("%.15G",$ref->[$index]);#must format with E here
-	    push(@arr,$init,'FIX');
-	  }
-	  $index++;
+	#First check that do not already have prior
+	if ((defined $self->priors()) and scalar(@{$self -> priors()})>0 ){
+		print "Warning: Cannot add prior to \$PROB which already has a \$PRIOR\n";
+		return;
 	}
-	push(@record_strings,join(' ',@arr));
-      }
-      my @omega_variance;
-      for (my $i=1+$nthp;$i<=($netp+$nthp);$i++){
-	my $index=-1+$i*$i/2;
-	push(@omega_variance,$ref->[$index]);
-      }
-      $self -> add_records(type => 'omega',
-			   record_strings => \@record_strings);
+	#Set ntheta=number of THETAs in input model.
+	#Set neta=number of diagonal OMEGAs in input model.
+	#Set neps=0
+	#Set nthp=ntheta
+	#Set netp=neta
+	my $ntheta = $self->record_count(record_name=> 'theta');
+	my $nthp = $ntheta;
+	my $neta = $self->nomegas('with_same'=>1, 'with_correlations' => 0);
+	my $netp=$neta;
+	my $neps=0;
+	#Add record to simulation model
+	#$PRIOR NWPRI NTHETA=ntheta,NETA=neta,NEPS=neps,NTHP=nthp,NETP=netp
+	#Need to set NPEXP?? number of prior experiments
+	my $plev='';
+	$plev= 'PLEV=0.99' 
+	if ((defined $self->simulations()) and scalar(@{$self -> simulations()})>0 );
+	my $record_string=" NWPRI NTHETA=$ntheta NETA=$neta NTHP=$nthp NETP=$netp $plev";
+	$self -> set_records( 'type' => 'prior',
+		'record_strings' => [$record_string] );
 
-      #Add $OMEGA FIX where size is neta and initial estimates are final $OMEGA estimate 
-      #from lst. Form must match original $OMEGA form in lst.
-      $ref = $from_output->get_single_value(attribute=>'omegacoordval',
-					       problem_index => ($problem_number-1),
-					       subproblem_index => 0);
 
-      unless (defined $ref){
-	print "Cannot add prior if output data lacks OMEGA estimates\n";
-	return;
-      }
-      my %omegas = %{$ref};
-
-      #loop over this models omega records
-      #create copy of record
-      #use coordinate strings to replace inits with values from output
-
-      my $set_prior_etas=0;
-      my @all_formatted;
-      my $size=0;
-      foreach my $record (@{$self->omegas()}){
-	last if ($set_prior_etas >= $neta);
-	my @record_strings;
-	my $block = 0;
-	if ($record->type() eq 'BLOCK'){
-	  $block = 1;
-	  if ($record->same()){
-	    @record_strings = ('BLOCK SAME');
-	    $self->add_records(type=> 'omega',
-			       record_strings => \@record_strings);
-	    $set_prior_etas += $size;
-	    next;
-	  }else{
-	    $size = $record->size();
-	    @record_strings = ("BLOCK($size) FIX");
-	  }
-	}else{
-	  $size = 0;
+	#Add ntheta new $THETA FIX. Initial estimates are final THETA estimates from lst-file.
+	my $ref = $from_output->get_single_value(attribute=>'thetacoordval',
+		problem_index => ($problem_number-1),
+		subproblem_index => 0);
+	unless (defined $ref){
+		print "Cannot add prior if output data lacks THETA estimates\n";
+		return;
 	}
-	foreach my $opt (@{$record->options()}){
-	  my $label = $opt->coordinate_string();
-	  my $init = sprintf("%.15G",$omegas{$label});#must format with E here
-	  if ($block){
-	    push(@record_strings,"$init");
-	  }else{
-	    $size++;
-	    push(@record_strings,"$init FIX");
-	  }
+	my %thetas = %{$ref};
+	for (my $i=1;$i<=$nthp;$i++){
+		my $val=$thetas{'THETA'.$i};
+		$self -> add_records(type => 'theta',
+			record_strings => ["$val FIX"]);
 	}
-	$set_prior_etas += $size;
-	print "Error too many new omegas\n" if ($set_prior_etas > $neta);
-	$self->add_records(type=> 'omega',
-			   record_strings => \@record_strings);
-      }
 
-      my @dflist = split(/,/,$df_string);
-      foreach my $df (@dflist){
-	$self -> add_records(type => 'theta',
-			     record_strings => ["$df FIX"]);
-      }
+	$ref = $from_output->get_single_value(attribute=>'covariance_matrix',
+		problem_index=>($problem_number-1),
+		subproblem_index=>0);
+	unless (defined $ref){
+		print "Cannot add prior if output data lacks covariance matrix\n";
+		return;
+	}
 
-      #immediately after adding $PRIOR etc must run update_prior_information on problem
-      $self->update_prior_information();
+	#Add diagonal $OMEGA FIX where initial estimates is the leading ntheta block 
+	#from the variance-covariance matrix in .cov
+	my @record_strings = ();
+	my $index=0;
+	for (my $i=0;$i<$nthp;$i++){
+		my @arr;
+		for (my $j=0;$j<=$i;$j++){
+			if ($j == $i){
+				my $init = sprintf("%.15G",$ref->[$index]);#must format with E here
+				push(@arr,$init,'FIX');
+			}
+			$index++;
+		}
+		push(@record_strings,join(' ',@arr));
+	}
+	my @omega_variance;
+	for (my $i=1+$nthp;$i<=($netp+$nthp);$i++){
+		my $index=-1+$i*$i/2;
+		push(@omega_variance,$ref->[$index]);
+	}
+	$self -> add_records(type => 'omega',
+		record_strings => \@record_strings);
+
+	#Add $OMEGA FIX where size is neta and initial estimates are final $OMEGA estimate 
+	#from lst. Form must match original $OMEGA form in lst.
+	$ref = $from_output->get_single_value(attribute=>'omegacoordval',
+		problem_index => ($problem_number-1),
+		subproblem_index => 0);
+
+	unless (defined $ref){
+		print "Cannot add prior if output data lacks OMEGA estimates\n";
+		return;
+	}
+	my %omegas = %{$ref};
+
+	#loop over this models omega records
+	#create copy of record
+	#use coordinate strings to replace inits with values from output
+
+	my $set_prior_etas=0;
+	my @all_formatted;
+	my $size=0;
+	foreach my $record (@{$self->omegas()}){
+		last if ($set_prior_etas >= $neta);
+		my @record_strings;
+		my $block = 0;
+		if ($record->type() eq 'BLOCK'){
+			$block = 1;
+			if ($record->same()){
+				@record_strings = ('BLOCK SAME');
+				$self->add_records(type=> 'omega',
+					record_strings => \@record_strings);
+				$set_prior_etas += $size;
+				next;
+			}else{
+				$size = $record->size();
+				@record_strings = ("BLOCK($size) FIX");
+			}
+		}else{
+			$size = 0;
+		}
+		foreach my $opt (@{$record->options()}){
+			my $label = $opt->coordinate_string();
+			my $init = sprintf("%.15G",$omegas{$label});#must format with E here
+			if ($block){
+				push(@record_strings,"$init");
+			}else{
+				$size++;
+				push(@record_strings,"$init FIX");
+			}
+		}
+		$set_prior_etas += $size;
+		print "Error too many new omegas\n" if ($set_prior_etas > $neta);
+		$self->add_records(type=> 'omega',
+			record_strings => \@record_strings);
+	}
+
+	my @dflist = split(/,/,$df_string);
+	foreach my $df (@dflist){
+		$self -> add_records(type => 'theta',
+			record_strings => ["$df FIX"]);
+	}
+
+	#immediately after adding $PRIOR etc must run update_prior_information on problem
+	$self->update_prior_information();
 }
 
 sub store_inits
@@ -1461,7 +1461,6 @@ sub add_option
 		} elsif ($record_number == 0) {
 			@record_numbers = 1 .. scalar(@records);
 		} elsif ($record_number == -1) {
-			#last
 			push(@record_numbers,scalar(@records));
 		} else {
 			croak("illegal input record_number $record_number to add_option");
@@ -1469,8 +1468,7 @@ sub add_option
 
 		foreach my $recnum ( @record_numbers ) {
     #numbering starts at 1, unlike array indices
-    $records[$recnum-1]-> add_option( init_data => { name  => $option_name,
-						     value => $option_value } );
+    $records[$recnum-1]->add_option( init_data => { name  => $option_name, value => $option_value } );
 		}
 	} else {
 		if( $add_record ) {
@@ -1685,12 +1683,11 @@ sub add_records
 
 	# add_records( type => 'subroutine',
 	#               record_strings => ['OTHER=get_cov', 'OTHER=read'] )
-	# TODO change name from record to records.
-
+	#
 	# To read add a record, we figure out what its full class name
 	# is. Then we check if we have an accessor for the record type,
 	# if we do then the record is valid and we call the appropriate
-	# contructor. Both record_strings an type are mandatory.
+	# contructor. Both record_strings and type are mandatory.
 
 	my $rec_class = "model::problem::$type";
 	my $accessor = $type.'s';
