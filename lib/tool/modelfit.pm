@@ -2192,122 +2192,119 @@ sub slurm_submit
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 model => { isa => 'model', optional => 1 },
-		 nm_version => { isa => 'Str', optional => 1 },
-		 nodes => { isa => 'Int', default => 0, optional => 1 },
-		 queue_info => { isa => 'Ref', optional => 1 }
-	);
+							  model => { isa => 'model', optional => 1 },
+							  nm_version => { isa => 'Str', optional => 1 },
+							  nodes => { isa => 'Int', default => 0, optional => 1 },
+							  queue_info => { isa => 'Ref', optional => 1 }
+		);
 	my $jobId = -1;
 	my $model = $parm{'model'};
 	my $nm_version = $parm{'nm_version'};
 	my $nodes = $parm{'nodes'};
 	my $queue_info = $parm{'queue_info'};
 
-  unless (defined $self->full_path_nmfe()){
-    $self->nmfe_setup(nm_version => $nm_version);
-  }
-  #edit nmfe7, add which file it is and nmfe_error
+	unless (defined $self->full_path_nmfe()){
+		$self->nmfe_setup(nm_version => $nm_version);
+	}
+	#edit nmfe7, add which file it is and nmfe_error
 
 
-  # clean up from old compile
-  unless ($PsN::nm_major_version == 7 
-	  and defined $PsN::nm_minor_version and $PsN::nm_minor_version >1){
-    unlink( 'FMSG','FLIB','FCON', 'FDATA', 'FREPORT','FSUBS', 'FSUBS.f','FSUBS.f90','FSUBS2','nmprd4p.mod');
-    unlink('fsubs','fsubs.f90');
-    unlink('LINK.LNK','FSTREAM', 'PRDERR', 'nonmem.exe', 'nonmem','FSUBS.for');
-    unlink('nonmem5', 'nonmem6', 'nonmem7','nonmem5_adaptive', 'nonmem6_adaptive','nonmem7_adaptive' );
-    unlink('ifort.txt','g95.txt','gfortran.txt','gfcompile.bat','g95compile.bat');
-  }
-  unlink('psn.lst','nmfe_error','OUTPUT','output','job_submission_error');
+	# clean up from old compile
+	unless ($PsN::nm_major_version == 7 
+			and defined $PsN::nm_minor_version and $PsN::nm_minor_version >1){
+		unlink( 'FMSG','FLIB','FCON', 'FDATA', 'FREPORT','FSUBS', 'FSUBS.f','FSUBS.f90','FSUBS2','nmprd4p.mod');
+		unlink('fsubs','fsubs.f90');
+		unlink('LINK.LNK','FSTREAM', 'PRDERR', 'nonmem.exe', 'nonmem','FSUBS.for');
+		unlink('nonmem5', 'nonmem6', 'nonmem7','nonmem5_adaptive', 'nonmem6_adaptive','nonmem7_adaptive' );
+		unlink('ifort.txt','g95.txt','gfortran.txt','gfcompile.bat','g95compile.bat');
+	}
+	unlink('psn.lst','nmfe_error','OUTPUT','output','job_submission_error');
 
-  #only support nmfe here, not nmqual or PsN compile
+	#only support nmfe here, not nmqual or PsN compile
 
-  my $jobname = $queue_info -> {'model'} -> filename;
-  $jobname = 'psn_'.$jobname if ($jobname =~ /^[0-9]/);
-  my $background = '-background';
-  $background = '' if ($PsN::nm_major_version == 6);
+	my $jobname = $queue_info -> {'model'} -> filename;
+	$jobname = 'psn_'.$jobname if ($jobname =~ /^[0-9]/);
+	my $background = '-background';
+	$background = '' if ($PsN::nm_major_version == 6);
 
-  my $parastring = '';
-  unless ($self->parafile() eq 'none'){
-    $parastring = '"-parafile='.$self->parafile().'"';
-  }
-  if ($nodes > 0){
-    $parastring .= ' "[nodes]='.$nodes.'"';
-  }
-  my $switches='';
-  unless ($self->nmfe_options() eq 'none'){
-    my @switches = split( /,/ ,$self->nmfe_options());
-    foreach my $sw (@switches){
-      $switches .= ' -'.$sw;
-    }
-  }
+	my $parastring = '';
+	unless ($self->parafile() eq 'none'){
+		$parastring = '"-parafile='.$self->parafile().'"';
+	}
+	if ($nodes > 0){
+		$parastring .= ' "[nodes]='.$nodes.'"';
+	}
+	my $switches='';
+	unless ($self->nmfe_options() eq 'none'){
+		my @switches = split( /,/ ,$self->nmfe_options());
+		foreach my $sw (@switches){
+			$switches .= ' -'.$sw;
+		}
+	}
 
-  #cwd default in slurm
-  # -J jobname
-  #need to check translation for -b y
+	#cwd default in slurm
+	# -J jobname
+	#need to check translation for -b y
 
-  my $flags = ' -J '.$jobname;
-  $flags .= ' -o nmfe.output -e nmfe.output ';
-  if (defined $self->slurm_account()){
-    $flags .= ' -A '.$self->slurm_account() ;
-  }else{
-      if( $PsN::config -> {'default_options'} -> {'uppmax'}){
-	  croak("slurm account must be defined on uppmax");
-      }
-  }
-  if (defined $self->max_runtime()){
-    #Acceptable time formats include #minutes", 
-    #minutes:seconds", #hours:minutes:seconds", #days-hours", 
-    #days-hours:minutes¡ and ´days-hours:minutes:seconds". 
-    unless (($self->max_runtime() =~ /^[0-9]+$/) or
-	    ($self->max_runtime() =~ /^[0-9]+\:[0-9]+\:[0-9]+$/) or
-	    ($self->max_runtime() =~ /^[0-9]+\-[0-9]+$/)){
-      croak("max_runtime must have format minutes, ".
-		 "hours:minutes:seconds, or days-hours");
-    }
-    $flags .= ' -t '.$self->max_runtime() ;
-  }
-  if (defined $self->slurm_partition()){
-    $flags .= ' -p '.$self->slurm_partition() ;
-  }
+	my $flags = ' -J '.$jobname;
+	$flags .= ' -o nmfe.output -e nmfe.output ';
+	if (defined $self->slurm_account()){
+		$flags .= ' -A '.$self->slurm_account() ;
+	}else{
+		if( $PsN::config -> {'default_options'} -> {'uppmax'}){
+			croak("slurm account must be defined on uppmax");
+		}
+	}
+	if (defined $self->max_runtime()){
+		#Acceptable time formats include #minutes", 
+		#minutes:seconds", #hours:minutes:seconds", #days-hours", 
+		#days-hours:minutes¡ and ´days-hours:minutes:seconds". 
+		unless (($self->max_runtime() =~ /^[0-9]+$/) or
+				($self->max_runtime() =~ /^[0-9]+\:[0-9]+\:[0-9]+$/) or
+				($self->max_runtime() =~ /^[0-9]+\-[0-9]+$/)){
+			croak("max_runtime must have format minutes, ".
+				  "hours:minutes:seconds, or days-hours");
+		}
+		$flags .= ' -t '.$self->max_runtime() ;
+	}
+	if (defined $self->slurm_partition()){
+		$flags .= ' -p '.$self->slurm_partition() ;
+	}
 #at most 3GB RAM 
-  if( $PsN::config -> {'default_options'} -> {'uppmax'}){
-      $flags .= ' -p core -n 1 '; #single core
-  }
+	if( $PsN::config -> {'default_options'} -> {'uppmax'}){
+		$flags .= ' -p core -n 1 '; #single core
+	}
 
-  if ($queue_info -> {'send_email'} and defined $self->email_address()){
-    if ($queue_info -> {'send_email'}  == 2){
-      $flags .= ' --mail-user='.$self->email_address().' --mail-type=ALL ';
-    }else{
-      $flags .= ' --mail-user='.$self->email_address().' --mail-type=END ';
-    }
-  }
+	if ($queue_info -> {'send_email'} and defined $self->email_address()){
+		if ($queue_info -> {'send_email'}  == 2){
+			$flags .= ' --mail-user='.$self->email_address().' --mail-type=ALL ';
+		}else{
+			$flags .= ' --mail-user='.$self->email_address().' --mail-type=END ';
+		}
+	}
 
- #-t "hours:minutes:seconds", "days-hours"
+	#-t "hours:minutes:seconds", "days-hours"
 
 #sbatch -J psn:pheno.mod -o nmfe.output -e nmfe.output -p core -n 1 -t 0:3:0 -A p2011021 /bubo/sw/apps/nonmem/nm_7.1.0_g_reg/run/nmfe7 pheno.mod pheno.lst -background
 
-  if (defined $self->slurm_prepend_flags()){
-    $flags = ' '.$self->slurm_prepend_flags().$flags;
-  }
-  my $submitstring = $flags .' '. 
-      $self->full_path_nmfe(). ' '.
-      " psn.mod psn.lst $background ".$parastring." ".$switches;
+	if (defined $self->slurm_prepend_flags()){
+		$flags = ' '.$self->slurm_prepend_flags().$flags;
+	}
+	my $submitstring = $flags .' '. 
+		$self->full_path_nmfe(). ' '.
+		" psn.mod psn.lst $background ".$parastring." ".$switches;
 
 	unless ($Config{osname} eq 'MSWin32' or $Config{osname} eq 'MSWin64'){
 		system('echo sbatch '.$submitstring.' "2>&1" > sbatchcommand');
 	}
 	sleep(1); #wait to let other nodes sync files here?
-#How do I pick up the job id from sbatch?
-#Sbatch writes its output on stderr, not stdout. If you submit a job within a perl 
-#script, you could use something like this to capture the job id:
 
-  my $outp = `sbatch $submitstring 2>&1`;
-  #write error to job_submission_error instead, set jobid to -1, and continue?
-  ($outp =~ /Submitted batch job (\d+)/)
-      or croak("Slurm submit failed.\nSystem error message: $outp" );
-  $jobId = $1;
-  
+	my $outp = `sbatch $submitstring 2>&1`;
+	#write error to job_submission_error instead, set jobid to -1, and continue?
+	($outp =~ /Submitted batch job (\d+)/)
+		or croak("Slurm submit failed.\nSystem error message: $outp" );
+	$jobId = $1;
+	
 	return $jobId;
 }
 
@@ -2423,26 +2420,43 @@ sub slurm_monitor
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 jobId => { isa => 'Int', optional => 1 }
-	);
+							  jobId => { isa => 'Int', optional => 1 }
+		);
 	my $jobId = $parm{'jobId'};
 
-  #squeue -j 12345, --jobs
+	#squeue -j 12345, --jobs
 
-  my $outp = `squeue -h -j $jobId`;
-  if (defined $outp){
-    if ($outp =~ /(i|I)nvalid/){
-      return $jobId; # This job is finished since not in queue
-    }elsif ($outp =~ /^\s*$jobId\s/){
-	#assume jobId first item in string, possibly with leading whitespace
-      #job still left
-      return 0;
-    }else{
-      return $jobId; # This job is finished since not in queue
-    }
-  }else{
-    return $jobId; # This job is finished since not in queue
-  }
+	my $outp = `squeue -h -j $jobId 2>&1`;
+	if (defined $outp){
+		if ($outp =~ /(i|I)nvalid/){
+			#this is due to some Slurm error. We sleep for 3 sec to make sure the problem was not
+			#due to too early polling, and then try again. If error message persists then assume job
+			#id will never be valid, i.e. finished. That definitely can happen.
+			sleep(3);
+			my $outp2 = `squeue -h -j $jobId 2>&1`;
+			if (defined $outp2){
+				if ($outp2 =~ /(i|I)nvalid/){
+					return $jobId; # Give up. This job is finished since not in queue
+				}elsif ($outp2 =~ /^\s*$jobId\s/){
+					#assume jobId first item in string, possibly with leading whitespace
+					#job still left
+					return 0;
+				}else{
+					return $jobId; # This job is finished since not in queue
+				}
+			}else{
+				return $jobId; # This job is finished since not in queue
+			}
+		}elsif ($outp =~ /^\s*$jobId\s/){
+			#assume jobId first item in string, possibly with leading whitespace
+			#job still left
+			return 0;
+		}else{
+			return $jobId; # This job is finished since not in queue
+		}
+	}else{
+		return $jobId; # This job is finished since not in queue
+	}
 }
 
 sub zink_submit
