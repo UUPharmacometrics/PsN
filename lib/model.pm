@@ -4165,16 +4165,16 @@ sub remove_records
 	if (defined $parm{'problem_numbers'}) {
 		@problem_numbers = @{$parm{'problem_numbers'}};
 	} else {
-		@problem_numbers = (1 .. scalar($self->problems));
+		@problem_numbers = (1 .. scalar(@{$self->problems}));
 	}
-	
+
 	my @problems = @{$self->problems};
 
 	foreach my $i (@problem_numbers) {
 	  if (defined $problems[$i-1]) {
 	    $problems[$i-1]->remove_records(type => $type, keep_last => $keep_last);
 	  } else {
-	    croak("Problem number $i, does not exist" );
+	    croak("Problem number $i, does not exist");
 	  }
 	}
 }

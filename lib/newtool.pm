@@ -860,7 +860,7 @@ sub run
 	$self->stop_motion_call(tool=> 'tool', message => "Changed directory to " . $self->directory)
 	    if ($self->stop_motion());
 
-	$self -> pre_fork_setup;
+	$self->pre_fork_setup;
 
 	my @models = @{$self->models};
 	# Use the thread number of this tool level:

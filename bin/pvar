@@ -24,8 +24,8 @@ use tool::pvar;
 my %options;
 
 my %required_options = (
-	"samples" => undef,
-	"parameters" => undef
+	"samples:i" => undef,
+	"parameters:s" => undef,
 );
 
 my %optional_options = (
@@ -33,6 +33,7 @@ my %optional_options = (
 
 my $res = GetOptions( \%options,
 					  @common_options::get_opt_strings,
+						keys(%required_options),
 					  keys(%optional_options) );
 
 exit unless $res;
@@ -42,12 +43,24 @@ common_options::setup( \%options, 'pval' ); #calls set_globals etc, initiates ra
 my %help_text;
 
 $help_text{-samples} = <<'EOF';
+      Number of simulated datasets to generate.
+      Mandatory.
 EOF
 
 $help_text{-parameters} = <<'EOF';
+      Comma separated list of parameter to investigate.
+			Mandatory.
 EOF
 
 common_options::online_help('pvar', \%options, \%help_text, \%required_options, \%optional_options);
+
+if (not defined $options{'samples'}) {
+	die "Option -samples is required.";
+}
+
+if (not defined $options{'parameters'}) {
+	die "Option -parameters is required.";
+}
 
 # Collect and check the mandatory arguments
 my $scm_directory;
@@ -86,10 +99,16 @@ if (defined $scm_directory) {
 my @models;
 my $eval_string = common_options::model_parameters(\%options);
 
-foreach $model_name (@model_files) {
-	push(@models, model->new(eval($eval_String),
+foreach my $model_name (@model_files) {
+	push(@models, model->new(eval($eval_string),
 			filename => $model_name,
 		));
 }
 
-my $pvar = tool::pvar->new(eval($common_options::parameters), parameters => \@parameters, models => \@models); 
+my $pvar = tool::pvar->new(eval($common_options::parameters),
+	samples => $options{'samples'},
+	parameters => \@parameters,
+	models => \@models);
+
+$pvar->run();
+

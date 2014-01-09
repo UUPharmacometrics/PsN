@@ -27,7 +27,6 @@ sub get_or_set_seed
 			} elsif (not defined $seed_option[1]) {
 				$current_seed[1] = $1;
 				$seed_option[1] = $option;
-			} else {
 				last;
 			}
 		}

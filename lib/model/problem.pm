@@ -1692,25 +1692,27 @@ sub add_records
 	my $rec_class = "model::problem::$type";
 	my $accessor = $type.'s';
 	my $n_previous_rows = 0;
-	if ($type eq 'omega'){
+	if ($type eq 'omega') {
 		$n_previous_rows = $self->nomegas('with_correlations' => 0,'with_same' => 1);
-	}elsif ($type eq 'sigma'){
+	} elsif ($type eq 'sigma') {
 		$n_previous_rows = $self->nsigmas('with_correlations' => 0,'with_same' => 1);
-	}elsif ($type eq 'theta'){
+	} elsif ($type eq 'theta') {
 		#this will be with priors
 		$n_previous_rows = $self->record_count('record_name' => 'theta');
 	}
 
-	if( $self -> can($accessor) ){
+	if ($self->can($accessor)) {
+		my $record;
 		$self->$accessor([]) unless defined $self->$accessor;
-		if (($type eq 'omega') or ($type eq 'sigma') or ($type eq 'theta')){
-			push( @{$self->$accessor}, $rec_class -> new ( record_arr => \@record_strings,
-					n_previous_rows => $n_previous_rows));
+		if (($type eq 'omega') or ($type eq 'sigma') or ($type eq 'theta')) {
+			$record = $rec_class->new(record_arr => \@record_strings, n_previous_rows => $n_previous_rows);
 		} else {
-			push( @{$self->$accessor}, $rec_class -> new ( record_arr => \@record_strings ));
-		} 
+			$record = $rec_class->new(record_arr => \@record_strings);
+		}
+		push(@{$self->$accessor}, $record);
+		return $record;
 	} else {
-		croak("Trying to add unknown record: $type" );
+		croak("Trying to add unknown record: $type");
 	}
 }
 
