@@ -2418,16 +2418,18 @@ sub get_eta_matrix
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 n_eta => { isa => 'Int', optional => 1 }
-	);
+							  n_eta => { isa => 'Int', optional => 0 },
+							  start_eta => { isa => 'Int', optional => 0 }
+		);
 	my $n_eta = $parm{'n_eta'};
+	my $start_eta = $parm{'start_eta'};
 	my @eta_matrix = ();
 
     #used in frem
-  $self->synchronize;
+	$self->synchronize;
 
-  my @columns = ();
-  for (my $eta=1; $eta <= $n_eta; $eta++) {
+	my @columns = ();
+	for (my $eta=$start_eta; $eta < ($n_eta+$start_eta); $eta++) {
 		my $col = 'ETA('.$eta.')';
 		my $index = $self->column_head_indices->{$col} - 1; #need to verify -1 here
 		if ( $index < 0 or $index > $#{$self->header()} ) {
@@ -2435,27 +2437,27 @@ sub get_eta_matrix
 			return [];
  		}
  		push(@columns,$index);
-  }
-  
-  # to minimize risk of errors.
+	}
+	
+	# to minimize risk of errors.
 
-  foreach my $individual ( @{$self->individuals} ){
-      foreach my $individual_row( @{$individual->subject_data} ){
-	  my @row = split(/,/ , $individual_row);
-	  my @new_row=();
-	  foreach my $index (@columns){
-	      push( @new_row, $row[$index] );
-	  }
-	  push( @eta_matrix, \@new_row );
-      }
-  }  
+	foreach my $individual ( @{$self->individuals} ){
+		foreach my $individual_row( @{$individual->subject_data} ){
+			my @row = split(/,/ , $individual_row);
+			my @new_row=();
+			foreach my $index (@columns){
+				push( @new_row, $row[$index] );
+			}
+			push( @eta_matrix, \@new_row );
+		}
+	}  
 
-  if (0) {
+	if (0) {
 		print "printing eta matrix inside data\n";
 		foreach my $row (@eta_matrix) {
 			print join(' ', @{$row}) . "\n";
 		}
-  }
+	}
 
 	return \@eta_matrix;
 }

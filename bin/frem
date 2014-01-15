@@ -34,9 +34,10 @@ my %optional_options = ( 'invariant:s' => undef,
 			 'model3!' => undef,
 			 'check!' => undef,
 			 'estimate:i' => undef,
-			 'bsv_param:i' => undef,
+			 'bsv_parameters:i' => undef,
+			 'start_eta:i' => undef,
 			 'N_invariant:i' => undef,
-			 'bov_param:i' => undef,
+			 'bov_parameters:i' => undef,
 			 'type:s' => undef);
 
 my $res = GetOptions( \%options,
@@ -103,6 +104,11 @@ $help_text{-dv} = <<'EOF';
       -dv=column
 
       Default
+EOF
+$help_text{-start_eta} = <<'EOF';
+      -start_eta=x
+
+      Default 1
 EOF
 
 $help_text{-vpc} = <<'EOF';
@@ -313,6 +319,7 @@ my $frem = tool::frem ->
 	  time_varying => \@time_varying,
 	  invariant => \@invariant,
 	  bsv_parameters => $options{'bsv_parameters'}, 
+	  start_eta => $options{'start_eta'}, 
 	  bov_parameters => $options{'bov_parameters'},
 	  estimate => $options{'estimate'}, 
 	  check => $options{'check'}, 

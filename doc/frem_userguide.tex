@@ -16,9 +16,8 @@ Example
 frem -covariates run1.mod
 \end{verbatim}
 
-
-TODO: limit the number of ETAs that get correlation with covariate ETAs, do not use all ETAs originally in model. Ok to require that ETAs that should not be included are in a separate leading block and the ETAs to be used in a single following block. Need parameter start-eta or similar that defaults to 1.
-TODO: add automatic handling of categorical covariates that are not bivariate, user-defined pooling or one category for each value. For now require that they are bivariate.
+\subsection{TODO}
+Add automatic handling of categorical covariates that are not bivariate, user-defined pooling or one category for each value. For now require that they are bivariate.
  -categorical=NYHA:2,3:1,4,,CC,,BB:1,5
 
 Do pooling during filtering step, replace original covariate name with a set of numbered ones. 
@@ -28,37 +27,29 @@ Do pooling during filtering step, replace original covariate name with a set of 
 The m1 subdirectory of the frem run directory will contain all the generated models, lst-files for the estimated models, and dataset 2.
 
 \section{Input and options}
-A model file is required on the command-line. Unless option -model3 is set (see below) the input model code must not include covariates that are listed in options -invariant or -time\_varying. Also, the input model must not include  BOV on any parameters, only BSV is allowed. For each parameter listed with option -parameters the input model must have a line 
-$<$par$>$=TV$<$par$>$ (BSV-expression)
+A model file is required on the command-line.
 
-If there is no BSV for the parameter, i.e. the value is equal to the typical value, the user must still include an expression with 0 in the place of the BSV eta, using the desired form (additive, proportional, exponential,..). This is necessary to enable PsN to automatically add the BOV code. The 0 must be enclosed in parentheses, otherwise the frem program will not recognize it. Example with placeholder for additive inclusion of BOV:
-$<$par$>$=TV$<$par$>$ + (0)
-
-If option -model3 is set then it is assumed that the input model file is a Model 3 created earlier by the frem script, and then other assumptions about the contents of the model are made. See below for a detailed description of Model 3.
-
-{\bf Restrictions on the input model}
-\begin{itemize}
-	\item Time-varying covariates must only vary between occasions, not within occasions. 
-	\item There must be no parameter called FREMTYPE in \$INPUT/\$PK/\$PRED/\$ERROR.
-	\item	Categorical covariates must be bivariate.
-	\item TODO: If -vpc is set: Form of TV$<$par$>$ or THETA directly
-\end{itemize}
-
+\subsection{Options}
 \begin{optionlist}
-\optdefault{invariant}{list}
-A comma-separated list of covariates that are time invariant. Optional if -time\_varying is given, not allowed if -model3 is set, otherwise required. Names used in \$INPUT. 
-\nextopt
-\optdefault{time\_varying}{list}
-A comma-separated list of time-varying covariates. Optional if -invariant is given, not allowed if -model3 is set, otherwise required. Names used in \$INPUT. 
-\nextopt
-\optdefault{occasion}{name}
-Default OCC. Needed if -time\_varying is set or both -model3 and -bov\_parameters, otherwise ignored. The name of the column that defines occasions. Name used in \$INPUT, not data set. 
-\nextopt
-\optdefault{parameters}{list}
-Required if -time-varying is set, otherwise not allowed. A comma-separated list of model parameters that should have between-occasion variability added. 
-\nextopt
 \optdefault{dv}{name}
 Default is DV. The name of the dependent variable. Name used in \$INPUT. 
+\nextopt
+\optdefault{time\_varying}{list}
+A comma-separated list of time-varying covariates. Names used in \$INPUT. Optional if -invariant is given, not allowed if -model3 is set, otherwise required. 
+\nextopt
+\optdefault{occasion}{name}
+Default OCC. The name of the column that defines occasions. Name used in \$INPUT, not data set. Needed if -time\_varying is set or both -model3 and -bov\_parameters, otherwise ignored.   
+\nextopt
+\optdefault{parameters}{list}
+A comma-separated list of model parameters that should have between-occasion variability added. 
+Required if -time\_varying is set, otherwise not allowed. 
+\nextopt
+\optdefault{invariant}{list}
+A comma-separated list of covariates that are time invariant. Names used in \$INPUT. Optional if -time\_varying is given, not allowed if -model3 is set, otherwise required. 
+\nextopt
+\optdefault{start\_eta}{positive integer}
+The order number of the first ETA to get correlation with covariate ETAs. The default is 1, which means all ETAs will be correlated to 
+covariates.
 \nextopt
 \optname{vpc}
 Default not set. If set then script will prepare frem model that can be run with the vpc script (separate PsN call). If -model3 is set then this option will be set automatically.  
@@ -73,7 +64,8 @@ Set by default, disable with -no-check. Run safety check after data set 2 genera
 Optional, default not defined. The number (0, 1, 2 or 3) of the last model to estimate in the frem sequence. All models with a higher number will still be created, but not estimated. If option model3 is not set and -estimation $>$= 0, estimation of Model 0 (the input model) will be skipped if a lst-file for the input model is found, i.e. a file with same stem but extension .lst instead of .mod. If option model3 is set and -estimation$>$=3, estimation of Model 3 (the input model when option model3 is set) will be skipped if a lst-file is found, i.e. a file with same stem but extension .lst instead of .mod. TODO Functionality to update initials of individual models with better estimates if some models are run at a later stage. 
 \nextopt
 \optdefault{bsv\_parameters}{N}
-Required if -model3 is set, otherwise not allowed. The number of model parameters (not covariates) that have BSV etas. (This number should be equal to the number of etas in Model 0/input model in the frem run that generated the input model3) 
+Required if -model3 is set, otherwise not allowed. The number of model parameters (not covariates) that have BSV etas. This number should be equal to Y-\emph{start\_eta}+1, where Y is the number of etas in Model 0/input model in the frem run that generated the input model3, and 
+\emph{start\_eta} is the integer set with option -start\_eta. 
 \nextopt
 \optdefault{N\_invariant}{N}
 Required if -model3 and -bov\_parameters are both set, otherwise not allowed. The number of invariant covariates that have BSV etas. (This number should be equal to the number of invariant covariates given with option -invariant to the frem run that generated the input model3) 
@@ -86,6 +78,34 @@ Default FREMTYPE. Only allowed if -model3 is set. The name of the column that di
 \nextopt
 \end{optionlist}
 
+\subsection{Restrictions on the input model}
+These restrictions apply when option -model3 is not set. 
+If option -model3 is set then it is assumed that the input model file is a Model 3 created earlier 
+by the frem script, and then other assumptions about the contents of the model are made. See below for a detailed description of Model 3.
+\begin{itemize}
+	\item Time-varying covariates must only vary between occasions, not within occasions. 
+	\item There must be no parameter called FREMTYPE in \$INPUT/\$PK/\$PRED/\$ERROR.
+	\item Categorical covariates must be bivariate.
+    \item All ETAs that are not to get correlation with covariate ETAs have ETA number < -start\_eta.
+    \item All ETAs that are to get correlation with covariate ETAs have ETA number >= -start\_eta.
+    \item The input model code must not include covariates that are listed in 
+    options -invariant or -time\_varying.
+    \item The input model must not include BOV on any parameters, only BSV is allowed.
+    \item For each parameter listed with option -parameters the input model must have a line \\
+    TV$<$par$>$= expression (possibly including THETA)
+    \item For each parameter listed with option -parameters the input model must have a line \\
+    $<$par$>$=TV$<$par$>$ (BSV-expression)
+    \item If there is no BSV for a parameter listed with option -parameters, 
+    i.e. the value is equal to the typical value, the user must still 
+    include an expression with 0 in the place of the BSV eta, using the desired form (additive, proportional, exponential,..). 
+    This is necessary to enable PsN to automatically add the BOV code. The 0 must be enclosed in parentheses, otherwise the 
+    frem program will not recognize it. Example with placeholder for additive inclusion of BOV:\\
+    $<$par$>$=TV$<$par$>$ + (0) \\
+    Example with placeholder for exponential inclusion of BOV:\\
+    $<$par$>$=TV$<$par$>$*EXP(0) 
+%	\item TODO: If -vpc is set: Form of TV$<$par$>$ or THETA directly
+\end{itemize}
+
 
 \subsection{Some general PsN-options which are interesting in combination with frem}
 For a complete list of common options see common\_options\_defaults\_versions.pdf, or psn\_options -h on the command-line.
@@ -97,29 +117,55 @@ Name of run directory
 \end{optionlist}
 
 
-\subsection{Model 0, Dataset 0}
+\section{Model 0, Dataset 0}
 The input model, input dataset.
 
-\subsection{Dataset 2}
+\section{Dataset 2}
 
 Create a new data set.
 \begin{enumerate} 
-	\item Determine a name for the FREMTYPE column to be added to the input data set. TODO: If \$INPUT, \$PK, \$PRED or \$ERROR already contains a variable called FREMTYPE then check if FREMTYPE1 is available, and so on. In following steps assume name is FREMTYPE.
+	\item Determine a name for the FREMTYPE column to be added to the input data set. 
+TODO: Error check if \$INPUT, \$PK, \$PRED or \$ERROR already contains a variable called FREMTYPE.
 	\item In input dataset: Find EVID and/or MDV columns. If neither found then stop with error message. Find DV column. Find FREMTYPE column. Find OCC column, if there are time-varying covariates listed with the time-varying option. For each invariant and time-varying covariate  determine a unique FREMTYPE value > 0. FREMTYPE=0 is reserved for original observations.
 	\item Run a dummy NONMEM model where FREMTYPE=0 to filter the original data on any IGNORE/ACCEPT and to get a new data file from \$TABLE where the column headers are the same as in \$INPUT but a FREMTYPE column is added with all zeros as values. Also add MDV if not EVID or MDV in data set. In the dummy models no columns are DROPped or SKIPped. \$TABLE NOPRINT ONEHEADER NOAPPEND.  Do not need to use RFORMAT in \$TABLE since problem with .EQ. and string matching only occurs with IGNORE/ACCEPT.
-Then loop over each individual: 
-
+\item Then loop over each individual: 
 \begin{enumerate}
-	\item Copy first observation line for individual. i.e. first line where MDV/EVID ==0. Loop over each invariant covariate: Add new line just before first observation line for individual. Set DV value to covariate value on copied line. Set FREMTYPE to type-value for this covariate. If MDV present then MDV=0 if have covariate value, MDV=1 if value is missing. If EVID present then EVID=0 if non-missing covariate value, otherwise EVID=2. Store non-missing covariate values in array, one array per covariate, to be able to compute medians and variance-covariance matrix later to be used as initial estimates in \$THETA and \$OMEGA. 
-	\item Loop over each occasion (if OCC defined). Copy first line observation line for this occasion. Warn if multiple  covariate values within the data records of one occasion. Inner loop over each time-varying covariate: Add new line as first data set line for this occasion. Set DV value to covariate value for this occasion. Set FREMTYPE to type-value for this covariate. If MDV present then MDV=0 if have covariate value, otherwise MDV=1. If EVID present then EVID=0 if have covariate value, otherwise EVID=2. Store non-missing time-varying covariate values to compute median over occasions for this individual, median is one scalar per covariate. Then store non-missing medians in array, one array per time-varying covariate, to compute median of medians later for \$THETA, and variance-covariance matrix  to be used in \$OMEGA.
+	\item Copy first observation line for individual. i.e. first line where MDV/EVID ==0. 
+Loop over each invariant covariate: Add new line just before first observation line for individual. 
+Set DV value to covariate value on copied line. 
+Set FREMTYPE to type-value for this covariate. 
+If MDV present then MDV=0 if have covariate value, MDV=1 if value is missing. 
+If EVID present then EVID=0 if non-missing covariate value, otherwise EVID=2. 
+Store non-missing covariate values in array, one array per covariate, to be able to compute medians and 
+variance-covariance matrix later to be used as initial estimates in \$THETA and \$OMEGA. 
+	\item Loop over each occasion (if OCC defined). 
+Copy first line observation line for this occasion. 
+Warn if multiple  covariate values within the data records of one occasion. 
+Inner loop over each time-varying covariate: 
+\begin{enumerate}
+	\item Add new line as first data set line for this occasion. 
+    \item Set DV value to covariate value for this occasion. 
+    \item Set FREMTYPE to type-value for this covariate. 
+    \item If MDV present then MDV=0 if have covariate value, otherwise MDV=1. 
+    If EVID present then EVID=0 if have covariate value, otherwise EVID=2. 
+    \item Store non-missing time-varying covariate values (to compute median over occasions for this individual, 
+    median is one scalar per covariate.) 
+    \item[] (end inner loop over time-varying cov)
 \end{enumerate}
-end loop over individuals
+\item[] (end loop over occasions)
+\item Compute median of time-varying cov over occasions for this individual, median is one scalar per covariate.
+\item Then store non-missing medians in array, one array per time-varying covariate, (to compute 
+median of medians later for \$THETA, and variance-covariance matrix  to be used in \$OMEGA).
+\item[] (end loop over individuals)
+\end{enumerate}
+
 	\item Compute medians of invariant and time-varying covariates. Also compute variance-covariance matrix of invariant covariates, and of medians (over occasions) for time-varying. Two separate variance-covariance matrices. If missing values then just skip.
 \end{enumerate}
 
 This dataset is used for Model 2 and all consecutive models.
 
-\subsection{Data check model, Dataset 2}
+\section{Data check model, Dataset 2}
+\subsection{Initiation}
 Copy Model 0.
 
 \subsection{DATA changes}
@@ -130,16 +176,16 @@ Append extra items to \$INPUT: MDV(possibly) and FREMTYPE.
 
 For safety check, done if option -check is set: Estimate Data check model. OFV should be identical to Model 0 OFV.
 
-\subsection{Model 1}
+\section{Model 1}
 This filling in of \$OMEGA is only done if there are invariant covariates listed with the -invariate option.
 
-TODO: leave first start-eta omegas intact, only fill in rest.
-
-Copy the input model and change \$OMEGA from whatever form in Model 0 to a single large BLOCK. Initials that are non-zero in Model 0 are copied from there or taken from Model 0 lst-file, if present. Off-diagonal elements that are new to Model 1 are set to small non-zero values that preserve strict diagonal dominance OR compute ETA-covariances from estimation output phi file if available. 
+Copy the input model and change \$OMEGA for \emph{start\_eta} to last eta from whatever form in Model 0 to a single large BLOCK. 
+Initials that are non-zero in Model 0 are copied from there or taken from Model 0 lst-file, if present. 
+Off-diagonal elements that are new to Model 1 are set to small non-zero values that preserve strict 
+diagonal dominance OR compute ETA-covariances from estimation output phi file if available. 
 The large \$OMEGA block of Model 1 is called the BSV\_par block.
 
-
-\subsection{Model 2-all covariates}
+\section{Model 2-all covariates}
 
 For BOV the script defines a variable BOV$<$par$>$ for each parameter, and then BOV$<$par$>$ is set equal to different ETAs depending on the occasion. Same for BOV$<$covariate$>$. See details below. This method is safer to implement than having switch variables for occasions that are 1 or 0 depending on the occasion, and then use a long sum of products between switch variables and ETAs. 
 
@@ -208,7 +254,7 @@ Locate line with
 $<$par$>$ = TV$<$par$>$ (expression defining form of BSV/IIV relation)
 Raise error if not found, or if multiple instances are found. Use old lin-scm code to figure out which form (additive, exp, prop) of BSV relation. Require user to define placeholder with right form if $<$par$>$=TV$<$par$>$, i.e, no BSV eta at all. Add BOV$<$parameter$>$ at appropriate place in $<$par$>$=TV$<$par$>$... expression.
 
-\section{PRED or ERROR changes at end}
+\subsection{PRED or ERROR changes at end}
 In \$PRED or \$ERROR, whichever is present:
 At the very end
 \begin{verbatim}
@@ -227,10 +273,10 @@ END IF
 (do not define a case for FREMTYPE=0, original obs. Leave original code as it is for that)
 
 
-\subsection{Model 2-only time-varying}
+\section{Model 2-only time-varying}
 Use dataset but in \$DATA set IGNORE for all FREMTYPE for invariant covariates. Build model based on Model 0 (no filling in of BSV block). Add code and parameters according to Model 2 instructions above but set the number of invariant covariates N\_invariant to 0.
 
-\subsection{Model 3}
+\section{Model 3}
 
 This models have same number of ETAs as Model 2, but the BSV and BOV blocks are filled in, 1+N\_occasions huge \$OMEGA blocks and reordered ETAs. Take care of initials.
 
