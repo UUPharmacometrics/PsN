@@ -14,11 +14,11 @@ Models can be run with NMQual8 and NONMEM 7.2 if PsN version is 3.5.3 or later, 
 perl    full\_path\_to\_autolog\_set\_in\_psn.conf    xml\_file\_from\_option\_nmqual\_xml    run    ce path\_to\_psn\_generated\_run\_directory    psn (extra nmfe72 options)
 
 
-\section{Parallel execution of single models in NONMEM 7.2}
-PsN-3.4.2 and later supports the parallel execution feature of NONMEM 7.2 with nmfe. It is required that the NONMEM version number 7.2 or later is properly set in psn.conf. 
-The feature is invoked by using PsN option -parafile=$\langle$file$\rangle$, and optionally -nodes=N, where $\langle$file$\rangle$ is the name of a NONMEM 7.2 parafile. PsN will copy the parafile down to the run directory and pass on the name and the nodes option as input to nmfe72. PsN can currently only handle one parafile at a time. The parafile option is common to all PsN scripts, and is further described in common\_options\_defaults\_versions\_psn.pdf.
+\section{Parallel execution of single models in NONMEM 7.2 and higher}
+PsN-3.4.2 and later supports the parallel execution feature of NONMEM 7.2 and higher with nmfe. It is required that the NONMEM version number 7.2 or later is properly set in psn.conf. 
+The feature is invoked by using PsN option -parafile=$\langle$file$\rangle$, and optionally -nodes=N, where $\langle$file$\rangle$ is the name of a NONMEM parafile. PsN will copy the parafile down to the run directory and pass on the name and the nodes option as input to nmfe72. PsN can currently only handle one parafile at a time. The parafile option is common to all PsN scripts, and is further described in common\_options\_defaults\_versions\_psn.pdf.
 
-PsN will not check that an mpi daemon is running, or that any other necessary parallelization preparations have been done. Therefore the user must make sure it is possible to run parallel NONMEM with nmfe72 before trying to do it through PsN.
+PsN will not check that an mpi daemon is running, or that any other necessary parallelization preparations have been done. Therefore the user must make sure it is possible to run parallel NONMEM with the nmfe script before trying to do it through PsN.
 
 A defaults.pnm file can be copied down to the NM run directory by setting PsN option -extra\_files, see common\_options\_defaults\_versions\_psn.pdf.
 
@@ -27,31 +27,28 @@ The -threads option does not affect and is not affected by any parallel executio
 If running on a cluster the user must set flags necessary for parallel execution, e.g. -pe for SGE, using the existing PsN options, e.g. -sge\_prepend\_flags, -lsf\_options or -slurm\_prepend\_flags. PsN does not do this automatically. Two new option have been added for the torque system, -torque\_queue and -torque\_prepend\_flags, which enables flexible settings through PsN.
 
 
-\section{New options to nmfe72}
+\section{New options to nmfe72, nmfe73}
 There is a set of new options to nmfe72, e.g. -xmloff. These options can be passed on by PsN using option -nmfe\_options, which accepts a comma-separated list of nmfe-options without the – signs. Option -nmfe\_options is further described in common\_options\_defaults\_versions\_psn.pdf. If setting option -nmfe\_options=licfile=some\_license\_file then the license file must also be set with the PsN option -extra\_files, unless an absolute path to the license file is given, in which case option -extra\_files is not needed. See common\_options\_defaults\_versions\_psn.pdf for a description of the -extra\_files option.
 
-\section{New forms of \$SIGMA and \$OMEGA in NM7.2}
+\section{New forms of \$SIGMA and \$OMEGA}
 In NONMEM 7.2 it is possible to define \$SIGMA and \$OMEGA in new ways, and indicating this via options STANDARD/VARIANCE COVARIANCE/CORRELATION and CHOLESKY. PsN does accept these options and will pass them on when creating new models, but the output analysis and updating new models with final estimates from a previous run have not yet been adapted to these new forms, and performing an update would introduce errors. Updating is done by all scripts except execute, sse and parallel\_retries. PsN will print a warning when the new \$OMEGA/\$SIGMA options are encountered. Updating a model with another form of \$SIGMA/\$OMEGA with output from a previous run will result in errors, and this is done as part of many PsN programs, e.g. bootstrap, vpc, scm and update\_inits. 
 
 \section{Option ORDER in \$ESTIMATION}
 There is a new option called ORDER in \$EST in NONMEM 7.2. PsN cannot handle any but the default format, and will remove ORDER if found in \$EST.
 
-\section{Supported new records \$SIZES \$LEVEL \$ANNEAL \$PHIS \$ETAS}
-PsN will accept and handle new records \$SIZES, \$LEVEL, \$ANNEAL, \$PHIS and \$ETAS.
-
-\section{Unsupported new records}
-PsN does not yet support new records \$THETAI \$THI \$THETAR \$THR \$THETAP \$THETAPV \$OMEGAP \$OMEGAPD
-\$SIGMAP \$SIGMAPD. Using them will result in an error.
+\section{Supported new records}
+PsN will accept and handle new records \$SIZES, \$LEVEL, \$ANNEAL, \$PHIS and \$ETAS,
+\$THETAI \$THI \$THETAR \$THR \$THETAP \$THETAPV \$OMEGAP \$OMEGAPD
+\$SIGMAP \$SIGMAPD.
 
 \section{Shorthand notation in \$THETA \$OMEGA \$SIGMA}
 PsN does not support VALUES option in \$OMEGA/\$SIGMA. 
 PsN does not support the new shorthand notation in NM7.3 ( xN notation, SAME(n) notation).
 
 \section{Control stream in mixed case}
-In NONMEM 7.2. it is possible to write the control stream in mixed case. PsN does not support this. It is likely that options written in lower case will not be recognized correctly, which can cause errors.
+In NONMEM 7.2 and higher it is possible to write the control stream in mixed case. PsN does not support this. It is likely that options written in lower case will not be recognized correctly, which can cause errors.
 
 \section{New output files in NONMEM 7}
-
 PsN will set retry numbering for NM7.2 new output files .xml .phm .shk .grd .smt .rmt just as for .lst etc. The numbered files will be cleaned if clean $>=2$.
 
 Up until version 3.4.8, PsN will copy all NM7 output files back to the calling directory. In version 3.4.9 and later, only the lst-file will be copied by default. More files will be copied if the user sets the extensions of those files via the PsN option -nm\_output. Example: -nm\_output=ext,cov,cor. Note it the user lets the installation script create a psn.conf file then nm\_output will be set to -nm\_output=ext,cov,cor,coi,phi 
