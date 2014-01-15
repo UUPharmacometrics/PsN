@@ -2,25 +2,74 @@ package model::problem;
 #use Carp;
 use include_modules;
 use Data::Dumper;
-my @print_order_omega_before_pk = ('sizes','problem','abbreviated','input','bind','data','msfi','contr','subroutine','prior','model','tol','infn','omega','anneal','pk','level','aesinitial','aes','des','error','pred','mix','theta','sigma','etas','phis','simulation','estimation','covariance','nonparametric','table','scatter');
-my @print_order = ('sizes','problem','abbreviated','input','bind','data','msfi','contr','subroutine','prior','model','tol','infn','pk','level','aesinitial','aes','des','error','pred','mix','theta','omega','anneal','sigma','etas','phis','simulation','estimation','covariance','nonparametric','table','scatter');
-my @sde_print_order = ('sizes','problem','abbreviated','input','bind','data','msfi','contr','subroutine','prior','model','tol','infn','theta','omega','anneal','sigma','etas','phis','pk','level','aesinitial','aes','des','error','pred','mix','simulation','estimation','covariance','nonparametric','table','scatter');
+my @print_order_omega_before_pk = ('sizes','problem','abbreviated','input','bind','data','msfi','contr','subroutine','prior','thetap','thetapv','omegap','omegapd','sigmap','sigmapd','model','tol','infn','omega','anneal','pk','level','aesinitial','aes','des','error','pred','mix','theta','thetai','thetar','sigma','etas','phis','simulation','estimation','covariance','nonparametric','table','scatter');
+my @print_order = ('sizes','problem','abbreviated','input','bind','data','msfi','contr','subroutine','prior','thetap','thetapv','omegap','omegapd','sigmap','sigmapd','model','tol','infn','pk','level','aesinitial','aes','des','error','pred','mix','theta','thetai','thetar','omega','anneal','sigma','etas','phis','simulation','estimation','covariance','nonparametric','table','scatter');
+my @sde_print_order = ('sizes','problem','abbreviated','input','bind','data','msfi','contr','subroutine','prior','thetap','thetapv','omegap','omegapd','sigmap','sigmapd','model','tol','infn','theta','thetai','thetar','omega','anneal','sigma','etas','phis','pk','level','aesinitial','aes','des','error','pred','mix','simulation','estimation','covariance','nonparametric','table','scatter');
 my %abbreviations;
 my %unsupported_records;
+
 
 # Here we intialize a hash used to find long names for abbreviated
 # record names. We use the print_order array which contains all
 # allowed record types.
 
+
 foreach my $record_name( @print_order,'warnings','finedata' ){
-  my $uc_short_type = substr(uc($record_name),0,3);;
-  $uc_short_type = $uc_short_type.' ' if ( $record_name eq 'aes' );
-  $uc_short_type = $uc_short_type.'I' if ( $record_name eq 'aesinitial' );
-  $abbreviations{$uc_short_type} = $record_name;
+	my $uc_short_type = _get_uc_short_type($record_name);
+	$abbreviations{$uc_short_type} = $record_name;
 }
-foreach my $rec ('THETAI','THI','THETAR','THR','THETAP','THETAPV','OMEGAP','OMEGAPD','SIGMAP','SIGMAPD'){
-    $unsupported_records{$rec}=1;
+#foreach my $rec ('THETAI','THI','THETAR','THR','THETAP','THETAPV','OMEGAP','OMEGAPD','SIGMAP','SIGMAPD'){
+#    $unsupported_records{$rec}=1;
+#}
+
+
+sub _get_uc_short_type{
+	my $record_name = shift;
+
+	# As of NM7.3 there are many THETA variants, and the default handling
+	# cannot distinguish between THETA and its abbreviations plus THETAI=THI THETAR=THR THETAP THETAPV
+	# Require that THETAI THI THETAR THR THETAP THETAPV must be spelled exactly like that, no abbreviations.
+	# Treat any other TH:ish string as $THETA
+
+	my $uc_short_type = substr(uc($record_name),0,3);
+	if ( $uc_short_type eq 'AES'){
+		if (length($record_name)>3){
+			#this must be aesinitial
+			$uc_short_type = $uc_short_type.'I';
+		}else{
+			#must be aes
+			$uc_short_type = $uc_short_type.' ' ;
+		}
+	}elsif( $uc_short_type eq 'THE'){
+		if (lc($record_name) eq 'thetai'){
+			$uc_short_type = 'THI';
+		}elsif (lc($record_name) eq 'thetar'){
+			$uc_short_type = 'THR';
+		}elsif (lc($record_name) eq 'thetap') {
+			$uc_short_type = 'THETAP';
+		}elsif (lc($record_name) eq 'thetapv') {
+			$uc_short_type = 'THETAPV';
+		}
+		#else stick with $uc_short_type THE, it is THETA
+	}elsif( $uc_short_type eq 'OME'){
+		if (lc($record_name) eq 'omegap') {
+			$uc_short_type = 'OMEGAP';
+		}elsif (lc($record_name) eq 'omegapd') {
+			$uc_short_type = 'OMEGAPD';
+		}
+		#else stick with $uc_short_type OME, it is OMEGA
+	}elsif( $uc_short_type eq 'SIG'){
+		if (lc($record_name) eq 'sigmap') {
+			$uc_short_type = 'SIGMAP';
+		}elsif (lc($record_name) eq 'sigmapd') {
+			$uc_short_type = 'SIGMAPD';
+		}
+		#else stick with $uc_short_type SIG, it is SIGMA
+	}
+	#else stick with whatever short type
+	return $uc_short_type;
 }
+
 
 use Moose;
 use MooseX::Params::Validate;
@@ -28,8 +77,16 @@ use model::mirror_plot_module;
 use model::cwres_module;
 use model::problem::nonparametric;
 use model::problem::theta;
+use model::problem::thetai;
+use model::problem::thetar;
+use model::problem::thetap;
+use model::problem::thetapv;
 use model::problem::sigma;
+use model::problem::sigmap;
+use model::problem::sigmapd;
 use model::problem::omega;
+use model::problem::omegap;
+use model::problem::omegapd;
 use model::problem::tol;
 use model::problem::estimation;
 use model::problem::pred;
@@ -91,8 +148,16 @@ has 'preds' => ( is => 'rw', isa => 'Maybe[ArrayRef[model::problem::pred]]' );
 has 'estimations' => ( is => 'rw', isa => 'Maybe[ArrayRef[model::problem::estimation]]' );
 has 'tols' => ( is => 'rw', isa => 'Maybe[ArrayRef[model::problem::tol]]' );
 has 'omegas' => ( is => 'rw', isa => 'Maybe[ArrayRef[model::problem::omega]]' );
+has 'omegaps' => ( is => 'rw', isa => 'Maybe[ArrayRef[model::problem::omegap]]' );
+has 'omegapds' => ( is => 'rw', isa => 'Maybe[ArrayRef[model::problem::omegapd]]' );
 has 'sigmas' => ( is => 'rw', isa => 'Maybe[ArrayRef[model::problem::sigma]]' );
+has 'sigmaps' => ( is => 'rw', isa => 'Maybe[ArrayRef[model::problem::sigmap]]' );
+has 'sigmapds' => ( is => 'rw', isa => 'Maybe[ArrayRef[model::problem::sigmapd]]' );
 has 'thetas' => ( is => 'rw', isa => 'Maybe[ArrayRef[model::problem::theta]]' );
+has 'thetais' => ( is => 'rw', isa => 'Maybe[ArrayRef[model::problem::thetai]]' );
+has 'thetars' => ( is => 'rw', isa => 'Maybe[ArrayRef[model::problem::thetar]]' );
+has 'thetaps' => ( is => 'rw', isa => 'Maybe[ArrayRef[model::problem::thetap]]' );
+has 'thetapvs' => ( is => 'rw', isa => 'Maybe[ArrayRef[model::problem::thetapv]]' );
 has 'table_files' => ( is => 'rw', isa => 'Maybe[ArrayRef[data]]' );
 has 'nonparametrics' => ( is => 'rw', isa => 'Maybe[ArrayRef[model::problem::nonparametric]]' );
 has 'cwres_modules' => ( is => 'rw', isa => 'Maybe[ArrayRef[model::cwres_module]]' );
@@ -1834,102 +1899,214 @@ sub _read_records
 	}
 }
 
-sub get_full_omega
+sub check_start_eta
+{
+	#in frem check that start_eta parameter is acceptable
+	# return order number (starts at 1) of omega record that starts with start eta
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+							  start_eta => {isa => 'Int', optional => 0}
+		);
+	my $start_eta = $parm{'start_eta'};
+	my $omega_record_count=0;
+	my $start_omega_record;
+	croak ("start_eta must be positive") if ($start_eta < 1);
+	my $netas = 0;
+	my $prev;
+	foreach my $omega (@{$self->omegas} ) {
+		last if ($omega->prior());
+		$omega_record_count++;
+		if ($netas == ($start_eta -1)){
+			$start_omega_record=$omega_record_count;
+			last;
+		}elsif($netas > ($start_eta -1)){
+			croak("start_eta value illegal, start_eta must be first eta of an \$OMEGA record. Rewrite model.");
+		}
+		my $size = $omega -> size;
+		my $type = $omega -> type;
+		if ($omega->same()){
+			croak("First \$OMEGA cannot be SAME")
+				unless (defined $prev);
+			$netas += $prev;
+		} elsif( defined $size ) {
+			$netas += $size;
+			$prev = $size;
+		} elsif (defined $omega->options) {
+			$netas += scalar @{$omega -> options};
+			$prev = scalar @{$omega -> options};
+		} else {
+			croak("Failed to parse \$OMEGA." );
+		}
+		
+	}
+	unless (defined $start_omega_record){
+		croak("could not determine start omega record");
+		#should be allowed to have start eta > than neta?
+	}
+	return $start_omega_record;
+}
+
+sub get_matrix
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		covmatrix => { isa => 'Ref', optional => 1 }
-	);
-	my $covmatrix = $parm{'covmatrix'};
-	my @new_omega = ();
-
-	#create one big full omega block as new_omega->[$row][$col]
-	#input is optional covmatrix to be used for 0 off-diags
-	#if old off-diagonals not present then set small values to ensure strict diagonal dominance
-	my $size = $self->nomegas(with_correlations => 0, with_same => 1);
-
-	for (my $i=0; $i < $size; $i++){
-		push(@new_omega,[0 x $size]);
+							  type => {isa => 'Str', optional => 0},
+							  start_row => {isa => 'Int', optional => 0},
+							  end_row => {isa => 'Int', optional => 1}
+		);
+	my $type = $parm{'type'};
+	my $start_row = $parm{'start_row'};
+	my $end_row = $parm{'end_row'};
+	my $accessor;
+	if ($type eq 'omega'){
+		$accessor = 'omegas';
+	}elsif($type eq 'sigma'){
+		$accessor = 'sigmas';
+	}else{
+		croak('Unknown parameter type '.$type.' in problem->get_matrix');
+	}
+	my $sa = 'n'.$accessor;
+	my $old_size = $self->$sa(with_correlations => 0, with_same => 1);
+	if ($old_size < $start_row){
+		croak ("Illegal input to get_matrix, start_row $start_row larger than size $old_size");
+	}
+	$end_row = $old_size unless (defined $end_row);
+	if ($end_row < $start_row){
+		croak ("Illegal input to get_matrix, end_row $end_row smaller than start_row $start_row");
+	}
+	my $new_size = ($end_row - $start_row +1);
+	my @old_matrix=();
+	for (my $i=0; $i < $old_size; $i++){
+		push(@old_matrix,[(0) x $old_size]);
 	}
 
+	my @records =  @{$self -> $accessor};
 
-	##Determine minimum difference between off-diagonal absolute sum and diagonal,
-	#needed to determine appropriate values to fill in
-	#at the same time store current values in matrix @new_omega
-	my $minimum_difference;
-	my @records;
-	if (defined $self -> omegas()) {
-		@records = @{$self -> omegas()};
-	}
-	my @off_diagonal_sum = 0 x $size; 
-	my @diagonal_value = 0 x $size; 
 	my $block_size;
 	my $prev_rows=0;
-	foreach my $record (@records){
-		if  ($record->same() ){
-			#store values in new_omega
+	for (my $i=0; $i<scalar(@records); $i++){
+		#print "$i\n";
+		if  ($records[$i]->same() ){
+			#store values in old_matrix
 			my $old_start = $prev_rows - $block_size;
 			for (my $row=0; $row< $block_size; $row++){
 				for (my $col=0; $col<=$row; $col++){
-					my $value = $new_omega[$old_start+$row][$old_start+$col];
-					$new_omega[$prev_rows+$row][$prev_rows+$col] = $value;
+					my $value = $old_matrix[$old_start+$row][$old_start+$col];
+					$old_matrix[$prev_rows+$row][$prev_rows+$col] = $value;
+					#print "same $value prev_rows $prev_rows\n";
 				}
 			}
-			next; #need not compute sums if same
+			$prev_rows += $block_size;
+			next;
 		}
-		unless (defined $record -> options()){
-			croak("OMEGA record has no values");
+		unless (defined $records[$i] -> options()){
+			croak("$type record has no values");
 		}
-
-		if ($record -> type() eq 'BLOCK'){
-			$block_size = $record->size();
+		if (defined $records[$i] -> size() and ($records[$i] -> size() > 0)){
+			$block_size = $records[$i]->size();
+		}else{
+			$block_size = 1;
 		}
-
-		foreach my $option (@{$record -> options()}) {
+		foreach my $option (@{$records[$i] -> options()}) {
 			my $name = $option -> coordinate_string();
 			croak("unknown coord $name ") unless ($name =~ /A\((\d+),(\d+)\)/ );
-			croak("row in $name outside size $size") if ($1 > $size );
-			croak("col in $name outside size $size") if ($2 > $size );
+			croak("row in $name outside size $old_size") if ($1 > $old_size );
+			croak("col in $name outside size $old_size") if ($2 > $old_size );
 			my $value = $option ->init();
-			$new_omega[($1-1)][($2-1)] = $value;
-			my $val = abs($value);
+			$old_matrix[($1-1)][($2-1)] = $value;
 			if ($option->on_diagonal()){
 				croak("col and row in $name not diagonal element") unless ($2 == $1 );
-				$diagonal_value[($1-1)] = $val;
 				$prev_rows++;
-			}else{
-				$off_diagonal_sum[($1-1)] += $val;
-				$off_diagonal_sum[($2-1)] += $val;
 			}
+		}
+	}
+
+	my $diff=$start_row-1;
+	my @new_matrix=();
+	for (my $i=0; $i < $new_size; $i++){
+		push(@new_matrix,[(0) x $new_size]);
+		for (my $j=0; $j < $new_size; $j++){
+			$new_matrix[$i][$j] = $old_matrix[$i+$diff][$j+$diff];
+		}
+	}
+
+	unless ($new_matrix[$new_size-1][$new_size-1] > 0){
+		print "\n";
+		for (my $i=0; $i< scalar(@new_matrix); $i++){
+			print join(' ',@{$new_matrix[$i]})."\n";
+		}
+
+		croak ("Error in problem->get_matrix: new matrix not filled up. start_row $start_row");
+	}
+
+	return \@new_matrix;
+
+}
+sub get_filled_omega_matrix
+{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+							  covmatrix => { isa => 'Ref', optional => 1 },
+							  start_eta => { isa => 'Int', optional => 0 }
+		);
+	my $covmatrix = $parm{'covmatrix'};
+	my $start_eta = $parm{'start_eta'};
+
+	#create one big full omega block (lower triangular) as new_omega->[$row][$col]
+	#input is optional covmatrix to be used for 0 off-diags
+	#if old off-diagonals not present then set small values to ensure strict diagonal dominance
+
+	my $new_full_omega = $self->get_matrix( type=> 'omega',
+											start_row => $start_eta);
+	
+	##Determine minimum difference between off-diagonal absolute sum and diagonal,
+	#needed to determine appropriate values to fill in
+	my $minimum_difference;
+	my $new_size = scalar(@{$new_full_omega});
+
+	if (defined $covmatrix and (not scalar(@{$covmatrix}) == $new_size)){
+		croak("Error input get_filled_omega_matrix, size existing is $new_size after start_eta $start_eta ".
+			"while size covmatrix is ".scalar(@{$covmatrix}));
+	}
+	my @off_diagonal_sum = 0 x $new_size; 
+	my @diagonal_value = 0 x $new_size; 
+
+	for (my $row=0; $row< $new_size; $row++){
+		my $val = abs($new_full_omega->[$row][$row]);
+		$diagonal_value[$row] = $val;
+		for (my $col=0; $col < $row; $col++){
+			my $val = abs($new_full_omega->[$row][$col]);
+			$off_diagonal_sum[$row] += $val;
+			$off_diagonal_sum[$col] += $val;
 		}
 	}
 
 	$minimum_difference = $diagonal_value[0]-$off_diagonal_sum[0];
-	for (my $i=1; $i<$size; $i++){
+	for (my $i=1; $i<$new_size; $i++){
 		my $diff = $diagonal_value[$i]-$off_diagonal_sum[$i];
 		$minimum_difference = $diff if ($diff< $minimum_difference and ($diff>0));
 	}
 
 	my $max_off_diagonal = 0.01; #check Ron's hands on for typical value here
-	my $temp = ($minimum_difference/($size-1));
+	my $temp = ($minimum_difference/($new_size-1));
 	$max_off_diagonal = $temp*(0.9) if ($temp < $max_off_diagonal);
 	#print "max off diag is $max_off_diagonal\n";
 	#fill off-diagonals in new_omega
 	my $k=1;
-	for (my $row=0; $row< $size; $row++){
+	for (my $row=0; $row< $new_size; $row++){
 		for (my $col=0; $col<$row; $col++){
-			if ($new_omega[$row][$col] == 0){
-				if (defined $covmatrix){
-					$new_omega[$row][$col] = $covmatrix->[$row][$col];
+			if ($new_full_omega->[$row][$col] == 0){
+				if (defined $covmatrix and (abs($covmatrix->[$row][$col]) > 0.000001)  ){
+					$new_full_omega->[$row][$col] = $covmatrix->[$row][$col];
 				}else{
-					$new_omega[$row][$col] = ($max_off_diagonal - 0.0001*($k % 10));
+					$new_full_omega->[$row][$col] = ($max_off_diagonal - 0.0001*($k % 10));
 					$k++;
 				}
 			}
 		}
 	}
 
-	return \@new_omega;
+	return $new_full_omega;
 }
 
 sub add_omega_block
@@ -2422,20 +2599,15 @@ sub _normalize_record_name
 	# a warning might be nice though ) (Errorhandling is now done in
 	# "read_records".
 
+
+
 	if ($unsupported_records{uc($record_name)} > 0){
 		debug->die(message => "\nPsN does not yet support record \$".$record_name." in the control stream, but adding support is on the todo-list.\n");
 	}
-	my $uc_short_type = substr(uc($record_name),0,3);
-	if ($uc_short_type eq 'AES'){
-		if (length($record_name)>3){
-			#this must be aesinitial
-			$uc_short_type = $uc_short_type.'I';
-		}else{
-			#must be aes
-			$uc_short_type = $uc_short_type.' ' ;
-		}
-	}
+	my $uc_short_type = _get_uc_short_type($record_name);
+
 	$normalized_name = $abbreviations{$uc_short_type};
+
 	unless (length($normalized_name)>0){
 		debug->die(message => "\nPsN does not support record \$".$record_name." in the control stream\n");
 	}

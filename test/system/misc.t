@@ -4,7 +4,7 @@
 use strict;
 use warnings;
 use File::Path 'rmtree';
-use Test::More tests=>13;
+use Test::More tests=>12;
 use FindBin qw($Bin);
 use File::Copy 'cp';
 use lib ".."; #location of includes.pm
@@ -24,7 +24,6 @@ my @commands =
 	 $includes::npc." -samples=20 $model_dir/mox2.mod  -dir=$dir",
 	 $includes::data_stats." $model_dir/mox_simulated.csv",
 	 $includes::data_stats." $model_dir/pheno.dta",
-	 $includes::frem." -time_var=WT,NYHA -occ=VISI -param=PHI -invar=SEX -vpc $model_dir/mox_no_bov.mod -est=3  -dir=$dir",
 	 $includes::execute." $model_dir/pheno5.mod  -dir=$dir",
 	 $includes::ebe_npde." -samples=20 $model_dir/pheno_cond.mod  -dir=$dir");
 
