@@ -9,7 +9,8 @@ use output::problem::subproblem;
 my $nrec_exp = '^\s*NO. OF DATA RECS IN DATA SET:\s*(\d*)|^\s*TOT. NO. OF DATA RECS:\s*(\d*)';
 my $nobs_exp = ' TOT. NO. OF OBS RECS:\s*(\d*)';
 my $nind_exp = ' TOT. NO. OF INDIVIDUALS:\s*(\d*)';
-my $subprob_exp = '^ PROBLEM NO\.:\s*(\d+)\s*SUBPROBLEM NO\.:\s*(\d+)';
+my $subprob_exp = '^ PROBLEM NO\.:\s*(\d+)\s*SUBPROBLEM NO\.:\s*(\d+|\*\*\*\*)';
+my $star_subprob_number=9999;
 my $method_exp = '^ #METH:\s*(.*)';
 my $est_time_exp = '^ Elapsed estimation time in seconds:\s*(.+)';
 my $cov_time_exp = '^ Elapsed covariance time in seconds:\s*(.+)';
@@ -807,6 +808,11 @@ sub _read_subproblems
 						$subproblem_index = $subproblem_number; 
 					} else { #we found new problem
 						$subproblem_number = $2;
+						if ($subproblem_number eq '****'){
+							#In NM 7.3.0 amything above 9999 is output as ****
+							$star_subprob_number++;
+							$subproblem_number = $star_subprob_number;
+						}
 						$subproblem_index = $subproblem_number - 1; # Assuming problems come in order
 					}
 				} else {

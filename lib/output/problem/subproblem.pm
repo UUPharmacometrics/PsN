@@ -1678,15 +1678,15 @@ sub _compute_comegas_or_csigmas
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 omega_or_sigma => { isa => 'Str', optional => 0 }
-	);
+							  omega_or_sigma => { isa => 'Str', optional => 0 }
+		);
 	my $omega_or_sigma = $parm{'omega_or_sigma'};
 
 	@_ = (); #otherwise params will be sent on to cmp_coords
 	# This method transforms omegas or sigmas.
 	#zeros are stored. 0 may mean not estimated
 	my $error_printed = 0;
-  if ( ($omega_or_sigma eq 'omega' and defined $self->omegacoordval) or ($omega_or_sigma eq 'sigma' and defined $self->sigmacoordval) ) {
+	if ( ($omega_or_sigma eq 'omega' and defined $self->omegacoordval) or ($omega_or_sigma eq 'sigma' and defined $self->sigmacoordval) ) {
 		my %valueshash;
 		if ($omega_or_sigma eq 'omega') {
 			%valueshash = %{$self->omegacoordval};
@@ -1704,45 +1704,52 @@ sub _compute_comegas_or_csigmas
       my $col = $2;
       $omega_or_sigma_value = undef;
       unless ( $valueshash{$name} eq 'NA') {
-				if ($row == $col) {
-	  			#diagonal
-	  			if ( $valueshash{$name} >= 0 ) {
-	    			$omega_or_sigma_value = sqrt( $valueshash{$name} );
-	  			} else {
-	    			ui -> print( category => 'all', message  => "Warning: cannot take the square root of $omega_or_sigma with value " . $valueshash{$name} );
-	  			}
-				} else {
-	  			# If we are off the diagonal, we need to find two
-	  			# on-diagonal omegas, one on the same column and one on
-	  			# the same row.
-	  			my $name_a = uc($omega_or_sigma) . '(' . $row . ',' . $row . ')';
-					my $name_b = uc($omega_or_sigma) . '(' . $col . ',' . $col . ')';
-					if ((not (defined $valueshash{$name_a} and defined $valueshash{$name_b}) or $valueshash{$name_a} eq 'NA' or $valueshash{$name_b} eq 'NA') and ($error_printed < 3)) {
-						ui -> print( category => 'all',
-			   			message  => "Error, missing element $name_a and/or $name_b while $name is defined. Was the delimiter set to anything other than space in \$EST? ");
-	      		$error_printed++;
-					} else {
-						$omega_or_sigma_value = $valueshash{$name};
-						my $denominator = $valueshash{$name_a} * $valueshash{$name_b};
-						if ( $denominator <= 0.00001 ) { # To avoid division by zero
-							$omega_or_sigma_value = undef;
-						} elsif ( $omega_or_sigma_value >= sqrt($denominator) ) { 
-							# This rounding handles cases when the offdiagonals
-							# are greater or equal to one.
-							$omega_or_sigma_value = $omega_or_sigma_value / ( int( 10000 * sqrt($denominator) ) / 10000 );
-						} else {
-							$omega_or_sigma_value = $omega_or_sigma_value / sqrt($denominator);
-						}
-					}
-				}
-			}
-			if ($omega_or_sigma eq 'omega') {
-				$self->comegas([]) unless defined $self->comegas;
-				push @{$self->comegas}, $omega_or_sigma_value;
-			} else {
-				$self->csigmas([]) unless defined $self->csigmas;
-				push @{$self->csigmas}, $omega_or_sigma_value;
-			}
+		  if ($row == $col) {
+			  #diagonal
+			  if ( $valueshash{$name} >= 0 ) {
+				  $omega_or_sigma_value = sqrt( $valueshash{$name} );
+			  } else {
+				  ui -> print( category => 'all', message  => "Warning: cannot take the square root of $omega_or_sigma with value " . $valueshash{$name} );
+			  }
+		  } else {
+			  # If we are off the diagonal, we need to find two
+			  # on-diagonal omegas, one on the same column and one on
+			  # the same row.
+			  my $name_a = uc($omega_or_sigma) . '(' . $row . ',' . $row . ')';
+			  my $name_b = uc($omega_or_sigma) . '(' . $col . ',' . $col . ')';
+			  if ((not (defined $valueshash{$name_a} and defined $valueshash{$name_b}) or $valueshash{$name_a} eq 'NA' or $valueshash{$name_b} eq 'NA') and ($error_printed < 3)) {
+				  ui -> print( category => 'all',
+							   message  => "Error, missing element $name_a and/or $name_b while $name is defined. Was the delimiter set to anything other than space in \$EST? ");
+				  $error_printed++;
+				  if (0){
+					  print "$omega_or_sigma table ".$self->table_number."\n";
+					  foreach my $key (keys %valueshash){
+						  print "$key ".$valueshash{$key}."\n";
+					  }
+				  }
+
+			  } else {
+				  $omega_or_sigma_value = $valueshash{$name};
+				  my $denominator = $valueshash{$name_a} * $valueshash{$name_b};
+				  if ( $denominator <= 0.00001 ) { # To avoid division by zero
+					  $omega_or_sigma_value = undef;
+				  } elsif ( $omega_or_sigma_value >= sqrt($denominator) ) { 
+					  # This rounding handles cases when the offdiagonals
+					  # are greater or equal to one.
+					  $omega_or_sigma_value = $omega_or_sigma_value / ( int( 10000 * sqrt($denominator) ) / 10000 );
+				  } else {
+					  $omega_or_sigma_value = $omega_or_sigma_value / sqrt($denominator);
+				  }
+			  }
+		  }
+	  }
+	  if ($omega_or_sigma eq 'omega') {
+		  $self->comegas([]) unless defined $self->comegas;
+		  push @{$self->comegas}, $omega_or_sigma_value;
+	  } else {
+		  $self->csigmas([]) unless defined $self->csigmas;
+		  push @{$self->csigmas}, $omega_or_sigma_value;
+	  }
     }
   }
 }
