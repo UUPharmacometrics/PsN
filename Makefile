@@ -38,6 +38,8 @@ LIBFILES=debug.pm \
 	model/problem/model.pm \
 	model/problem/nonparametric.pm \
 	model/problem/omega.pm \
+	model/problem/omegap.pm \
+	model/problem/omegapd.pm \
 	model/problem/pk.pm \
 	model/problem/prior.pm \
 	model/problem/problem.pm \
@@ -49,11 +51,17 @@ LIBFILES=debug.pm \
 	model/problem/etas.pm \
 	model/problem/bind.pm \
 	model/problem/sigma.pm \
+	model/problem/sigmap.pm \
+	model/problem/sigmapd.pm \
 	model/problem/simulation.pm \
 	model/problem/sizes.pm \
 	model/problem/subroutine.pm \
 	model/problem/table.pm \
 	model/problem/theta.pm \
+	model/problem/thetai.pm \
+	model/problem/thetar.pm \
+	model/problem/thetap.pm \
+	model/problem/thetapv.pm \
 	model/problem/tol.pm \
 	model/cwres_module.pm \
 	model/mirror_plot_module.pm \
@@ -106,6 +114,7 @@ RELFILES=$(addprefix PsN-Source/lib/,$(LIBFILES)) \
 	lib/ext/Parallel/ForkManager.pm \
 	lib/ext/Config/Tiny.pm \
 	lib/ext/File/HomeDir.pm \
+	lib/ext/Carp.pm \
 	lib/matlab/bca.m \
 	lib/matlab/histograms.m \
 	lib/matlab/profiles.m \
