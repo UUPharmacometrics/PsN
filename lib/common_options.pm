@@ -203,19 +203,44 @@ sub set_globals {
 sub get_defaults {
   my $options = shift;
   my $tool    = shift;
-  foreach my $default_option ( keys %{$PsN::config -> {'default_'.$tool.'_options'}} ){
-    unless( exists $options -> {$default_option} ){
-      $options -> {$default_option} = $PsN::config -> {'default_'.$tool.'_options'} -> {$default_option};
-    }
-    
+
+  my $nm_string='';
+  if (exists $options -> {'nm_version'}){
+	  #if nm_version is set on the command-line, even if set explicitly to 'default'
+	  # we do nothing if nm_version is set in config file, then this feature is not invoked
+	  $nm_string = $options -> {'nm_version'};
   }
 
+  if (length($nm_string)>0){
+	  foreach my $default_option ( keys %{$PsN::config -> {'default_'.$tool.'_options_'.$nm_string}} ){
+		  unless( exists $options -> {$default_option} ){
+			  #unless already set on command line
+			  $options -> {$default_option} = $PsN::config -> {'default_'.$tool.'_options_'.$nm_string} -> {$default_option};
+		  }
+	  }
+  }
+
+  foreach my $default_option ( keys %{$PsN::config -> {'default_'.$tool.'_options'}} ){
+    unless( exists $options -> {$default_option} ){
+		#unless already set on command line or above
+		$options -> {$default_option} = $PsN::config -> {'default_'.$tool.'_options'} -> {$default_option};
+    }
+  }
+
+  if (length($nm_string)>0){
+	  foreach my $default_option ( keys %{$PsN::config -> {'default_options_'.$nm_string}} ){
+		  unless( exists $options -> {$default_option} ){
+			  #unless already set on command line or above
+			  $options -> {$default_option} = $PsN::config -> {'default_options_'.$nm_string} -> {$default_option};
+		  }
+	  }
+  }
 
   foreach my $default_option ( keys %{$PsN::config -> {'default_options'}} ){
     unless( exists $options -> {$default_option} ){
-      $options -> {$default_option} = $PsN::config -> {'default_options'} -> {$default_option};
+		#unless already set on command line OR above
+		$options -> {$default_option} = $PsN::config -> {'default_options'} -> {$default_option};
     }
-    
   }
   $options -> {'top_tool'} = 1;
 }
