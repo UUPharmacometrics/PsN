@@ -565,10 +565,10 @@ my $form = '%.' . $options{'precision'} . 'g';
 			if (  $outobj -> covariance_step_successful -> [$problems][$sub_problems] eq '0' ) {
 			    $cov_mess = acknowledge( 'Covariance step', 'ERROR');
 			} else {
-			    if ( $outobj -> covariance_step_successful -> [$problems][$sub_problems] eq '1' ) {
-				$cov_mess = acknowledge( 'Covariance step ', 'OK');
+			    if ( $outobj -> covariance_step_warnings -> [$problems][$sub_problems] eq '0' ) {
+					$cov_mess = acknowledge( 'Covariance step ', 'OK');
 			    }else {
-				$cov_mess = acknowledge( 'Covariance step', 'WARNING');
+					$cov_mess = acknowledge( 'Covariance step', 'WARNING');
 			    }
 
 			    my ( $l_se, $f_cv ) =
