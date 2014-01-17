@@ -27,7 +27,7 @@ use include_modules;
 
 require Exporter;
 our @ISA = qw(Exporter);
-our %EXPORT_TAGS = ('all' => [ qw(not_empty is_empty diff cumsum max min linspace unique add sum) ]);
+our %EXPORT_TAGS = ('all' => [ qw(not_empty is_empty diff cumsum max min linspace unique add sum mean variance) ]);
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 
 
@@ -339,6 +339,30 @@ sub sum
 	}
 
 	return $theSum;
+}
+
+
+sub mean
+{
+	my $ref = shift;
+	
+	croak("Input reference to mean() not defined") unless defined($ref);
+	croak("Input array to mean() is empty") unless (@$ref > 0);
+
+	return sum($ref) / scalar(@$ref);
+}
+
+sub variance
+{
+	my $ref = shift;
+	my $mean = mean($ref);
+
+	my $sum = 0;
+	foreach my $val (@$ref) {
+		$sum += ($val - $mean) ** 2;
+	}
+
+	return (1 / (scalar(@$ref) - 1)) * $sum;
 }
 
 =back

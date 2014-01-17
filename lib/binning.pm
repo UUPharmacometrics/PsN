@@ -1561,16 +1561,6 @@ sub eps
 	return($e);
 }
 
-sub mean
-{
-	my $ref = shift;
-
-	croak("Input reference to mean() not defined") unless defined($ref);
-	croak("Input array to mean() is empty") unless (@$ref > 0);
-
-	return (sum($ref) / @$ref);
-}
-
 sub variability
 {
 	my $ref = shift;

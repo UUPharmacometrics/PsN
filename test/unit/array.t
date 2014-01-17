@@ -2,7 +2,7 @@
 
 use strict;
 use warnings;
-use Test::More tests=>55;
+use Test::More tests => 57;
 use Test::Exception;
 use lib ".."; #location of includes.pm
 use includes; #file with paths to PsN packages
@@ -113,5 +113,13 @@ shift @b;
 is (array::sum(\@a), 10, "A simple sum");
 is (array::sum([]), 0, "Sum of an empty array");
 dies_ok ( sub { sum(undef) }, "Sum of an undef array");
+
+# Test of mean
+is (array::mean(\@a), 2.5, "A simple mean");
+
+# Test of variance
+@a = qw(1 2 4 4);
+is (array::variance(\@a), 2.25, "A simple variance"); 
+
 
 done_testing();

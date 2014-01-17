@@ -21,14 +21,16 @@ use Cwd;
 use model;
 use tool::pvar;
 
+my $cmd_line = $0 . " " . join( " ", @ARGV );
 my %options;
 
 my %required_options = (
-	"samples:i" => undef,
 	"parameters:s" => undef,
 );
 
 my %optional_options = (
+	"samples:i" => undef,
+	"models" => undef,
 );
 
 my $res = GetOptions( \%options,
@@ -44,7 +46,7 @@ my %help_text;
 
 $help_text{-samples} = <<'EOF';
       Number of simulated datasets to generate.
-      Mandatory.
+      Default 100.
 EOF
 
 $help_text{-parameters} = <<'EOF';
@@ -52,10 +54,15 @@ $help_text{-parameters} = <<'EOF';
 			Mandatory.
 EOF
 
+$help_text{-models} = <<'EOF';
+      Expect a list of models as command arguments instead of an scm logfile.
+			Optional.
+EOF
+
 common_options::online_help('pvar', \%options, \%help_text, \%required_options, \%optional_options);
 
 if (not defined $options{'samples'}) {
-	die "Option -samples is required.";
+	$options{'samples'} = 100;
 }
 
 if (not defined $options{'parameters'}) {
@@ -63,37 +70,24 @@ if (not defined $options{'parameters'}) {
 }
 
 # Collect and check the mandatory arguments
-my $scm_directory;
 my @model_files;
 
-foreach my $arg (@ARGV) {
-	if (-d $arg) {
-		if (defined $scm_directory) {
-			die("Can only take one scm run directory");
-		} elsif (@model_files) {
-			die("Cannot mix scm_directory and modelfiles");
-		} else {
-			$scm_directory = $arg;
-		}
-	} else {
-		if (defined $scm_directory) {
-			die("Cannot mix scm_directory and modelfiles");
-		} else {
-			push @model_files, $arg;
-		}
+if ($options{'models'}) {
+	foreach my $arg (@ARGV) {
+		push @model_files, $arg;
 	}
-}
-
-if (!defined $scm_directory and @model_files == 0) {
-	die("Must specify one scm run directory or at least one model file");
+	if (@model_files == 0) {
+		die("Must specify at least one model file when model option is set");
+	}
+} else {
+	my $scm_logfile = $ARGV[0];
+	if (not defined $scm_logfile or defined $ARGV[1]) {
+		die("Must specify one and only one scm logfile");
+	}
+	@model_files = tool::pvar->get_models_from_scm_directory($scm_logfile);
 }
 
 my @parameters = split(',', $options{'parameters'});
-
-# Collect modelfiles from scm_directory
-if (defined $scm_directory) {
-	@model_files = pvar->get_models_from_scm_directory($scm_directory);
-}
 
 # Create the model objects
 my @models;
@@ -110,5 +104,11 @@ my $pvar = tool::pvar->new(eval($common_options::parameters),
 	parameters => \@parameters,
 	models => \@models);
 
+$pvar->print_options (cmd_line => $cmd_line,
+		      toolname => 'PVAR',
+		      local_options => [keys %optional_options],
+		      common_options => \@common_options::tool_options);
+
 $pvar->run();
 
+ui->print(category => 'pvar', message => "pvar done\n");
