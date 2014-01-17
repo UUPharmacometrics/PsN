@@ -3,12 +3,23 @@ package includes;
 #our @ISA = qw(Exporter);
 #our @EXPORT = qw(done_testing);
 
-use lib "/home/kajsa/kod-psn/PsN4/lib";
-use lib "/home/kajsa/kod-psn/PsN4";
-use PsN;
 use strict;
 
-our $path = "/home/kajsa/kod-psn/PsN4/bin/";
+my $username = getpwuid($<);
+our $path;
+
+if ($username eq 'rikard') {
+	use lib "/home/rikard/PsN4/lib";
+	use lib "/home/rikard/PsN4";
+	$path = "/home/rikard/PsN4/bin/";
+} elsif ($username eq 'kajsa') {
+	use lib "/home/kajsa/kod-psn/PsN4/lib";
+	use lib "/home/kajsa/kod-psn/PsN4";
+	$path = "/home/kajsa/kod-psn/PsN4/bin/";
+}
+
+use PsN;
+
 our $version = '';
 
 #n41 cluster 
