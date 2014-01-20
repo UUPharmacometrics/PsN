@@ -2327,7 +2327,9 @@ sub update_prior_information
 {
 	my $self = shift;
 
-	#if $PRIOR NWPRI then get NTHETA and NETA
+	#if records THETAP or THETAPV or OMEGAP or OMEGAPD exists together with NTHETA or NETA then die
+	# if new records exist then do not set prior flag for any records. Otherwise proceed to prior flag setting
+	#if $PRIOR NWPRI then get NTHETA and NETA unless have new records NM7.3
 	#loop through $THETA and $OMEGA and set prior=1 for 
 	#all params after the estimated ones
 
@@ -2384,12 +2386,29 @@ sub update_prior_information
 					}
 				}
 			}
+			my $any_new_prior_record=0;
+			my @newrecs = ('THETAP','THETAPV','OMEGAP','OMEGAPD','SIGMAP','SIGMAPD');
+			foreach my $newprec (@newrecs){
+				my $acc = lc($newprec).'s';
+				if ((defined $self->$acc) and scalar(@{$self->$acc})>0){
+					$any_new_prior_record=1;
+					last;
+				}
+			}
+			if ($any_new_prior_record and ((defined $neta) or (defined $ntheta))){
+				croak("PsN does not support NETA or NTHETA in \$PRIOR in combination with new prior defining records ".
+					  join(',',@newrecs));
+			}
+
+			
+			#if we have any_new_prior_record it is vital that nwpri_ntheta and nwpri_neta remain undef,
+			#since these attributes are used as an indication that $THETA and $OMEGA contain prior information
+			return if $any_new_prior_record;
+
 			unless (defined $neta){
-				print "\nWarning: Did not find NETA in \$PRIOR\n";
 				$neta=0;
 			}
 			unless (defined $ntheta){
-				print "\nWarning: Did not find NTHETA in \$PRIOR\n";
 				$ntheta=0;
 			}
 			$self->nwpri_ntheta($ntheta);
