@@ -34,8 +34,13 @@ sub modelfit_setup
 
 	for (my $i = 0; $i < scalar(@{$self->models}); $i++) {
 		my $model = $self->models->[$i];
+
 		foreach my $variant ('epv', 'pv') {
-			my $new_model = $model->copy(output_same_directory => 1, filename => $self->directory . "/m1/$variant$i.mod");
+			my $new_model = $model->copy(
+				output_same_directory => 1,
+				filename => $self->directory . "/m1/$variant$i.mod",
+				copy_data => 0,
+			);
 
 			if ($model->is_run) {
 				$new_model->update_inits(from_model => $model);
@@ -157,7 +162,16 @@ sub _get_data
 	my $model_number = shift;
 	my $number_of_samples = shift;
 
-	my $number_of_individuals = scalar(@{$self->models->[$model_number]->datas->[0]->individuals});
+	# Find number of indivudals
+	my $number_of_individuals = 0;
+	<$file>;
+	<$file>;
+	my $row;
+	while (defined($row = <$file>) && $row !~ /^TABLE/) {
+		$number_of_individuals++;
+	}
+	seek $file, 0, 0;
+
 	my @matrix;
 
 	foreach my $sample (1 .. $number_of_samples) {
@@ -199,7 +213,11 @@ sub _read_next_model
 		if (/Parameter-covariate relation chosen in this \w+ step: (.+)/) {
 			my $model = $1;
 			$model =~ tr/\-//d;
-			return $model;
+			if ($model eq '') {
+				return undef;
+			} else {
+				return $model;
+			}
 		}
 	}
 
@@ -218,10 +236,11 @@ sub get_models_from_scm_directory
 	my $path = _read_next_path($logfile);
 	my $model_name;
 	while (defined $path) {
-		$model_name = _read_next_model($logfile);
+		$model_name = _read_next_model($logfile);	
 		next if not defined $model_name;
 		$model_name = File::Spec->catpath(undef, $path, "$model_name.mod");
 		push @model_files, $model_name;
+	} continue {
 		$path = _read_next_path($logfile);
 	}
 
@@ -230,6 +249,51 @@ sub get_models_from_scm_directory
 	return @model_files;
 }
 
+sub set_data_files_from_scmdir
+{
+	my $self = shift;
+	my @models = @_;
+
+	my $top_base_dir;
+	my $top_filename;
+
+	for (my $i = 0; $i < scalar(@models); $i++) {
+		my $model = $models[$i];
+		my $data_filename_with_path = $model->outputs->[0]->problems->[0]->input_problem->datas->[0]->options->[0]->name;
+
+		(undef, undef, my $data_filename) = File::Spec->splitpath($data_filename_with_path);
+		my @directories = File::Spec->splitdir($model->directory);
+		pop @directories;
+		pop @directories;
+		my $fullname_base = File::Spec->catfile(@directories, $data_filename);
+		my $directory_name_base = File::Spec->catdir(@directories);
+		push @directories, "modelfit_dir1";
+		push @directories, "NM_run1";
+		my $fullname_alt = File::Spec->catfile(@directories, $data_filename);
+		my $directory_name_alt = File::Spec->catdir(@directories);
+
+		my $data = $model->datas->[0];
+
+		if (-e $fullname_base) {
+			if (not defined $top_base_dir) {
+				$top_base_dir = $directory_name_base;
+				$top_filename = $data_filename;
+			}
+			$data->filename($data_filename);
+			$data->directory($directory_name_base);
+		} elsif (defined $top_base_dir) {
+			$data->filename($top_filename);
+			$data->directory($top_base_dir);
+		} elsif (-e $fullname_alt) {
+			$data->filename($data_filename);
+			$data->directory($directory_name_alt);
+		} else {
+			Carp("The data file $data_filename could not be found. Please copy it to $directory_name_base and rerun pvar");
+		}
+
+print "**", $data->full_name, "**\n";
+	}
+}
 
 
 no Moose;

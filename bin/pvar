@@ -96,7 +96,12 @@ my $eval_string = common_options::model_parameters(\%options);
 foreach my $model_name (@model_files) {
 	push(@models, model->new(eval($eval_string),
 			filename => $model_name,
+			ignore_missing_data => 1,
 		));
+}
+
+if (not $options{'models'}) {
+	tool::pvar->set_data_files_from_scmdir(@models);
 }
 
 my $pvar = tool::pvar->new(eval($common_options::parameters),
