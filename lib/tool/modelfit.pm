@@ -1183,7 +1183,7 @@ sub select_best_model
 	  if ( $self->clean >= 1 and $PsN::warnings_enabled == 0 ) {
 		  unlink 'nonmem', 'nonmem5','nonmem6','nonmem7',
 		  'nonmem5_adaptive','nonmem6_adaptive','nonmem7_adaptive', 
-		  'nonmem.exe','FDATA', 'FREPORT', 'FSUBS', 'FSUBS.f','FSUBS.f90', 
+		  'nonmem.exe','nonmem_mpi.exe','nonmem_mpi','NONMEM_MPI.exe','FDATA', 'FREPORT', 'FSUBS', 'FSUBS.f','FSUBS.f90', 
 		  'FSUBS.for', 'LINK.LNK', 'FSTREAM', 'FCON.orig', 'FLIB', 'FCON','PRDERR',
 		  'nmprd4p.mod','nul',
 		  'fsubs','fsubs.f','fsubs.for','fsubs.f90','FSUBS2','FSUBS_MU.F90';
@@ -1349,7 +1349,7 @@ sub select_best_model
 				}
 			}
 
-			unlink 'nonmem', 'nonmem6', 'nonmem5','nonmem.exe', 'nonmem6_adaptive', 'nonmem5_adaptive';
+			unlink 'nonmem','nonmem_mpi' ,'nonmem6', 'nonmem5','nonmem.exe','nonmem_mpi.exe','NONMEM_MPI.exe','nonmem6_adaptive', 'nonmem5_adaptive';
 			unlink 'nonmem7', 'nonmem7_adaptive';
 		}
 
@@ -3211,7 +3211,7 @@ sub restart_needed
 				}
 			}elsif (not(-e 'FREPORT')){
 				$failure = 'NMtran failed';
-			}elsif (not(-e 'nonmem.exe' or -e 'nonmem' or -e 'nonmem5' or -e 'nonmem6' or -e 'nonmem7' )){
+			}elsif (not(-e 'nonmem.exe' or -e 'nonmem' or -e 'nonmem_mpi.exe' or -e 'NONMEM_MPI.exe' or -e 'nonmem_mpi' or -e 'nonmem5' or -e 'nonmem6' or -e 'nonmem7' )){
 				$failure = 'Compilation failed';
 			}elsif (-e 'OUTPUT' or -e 'output'){
 				$failure = 'NONMEM run interrupted';
@@ -3366,7 +3366,7 @@ sub restart_needed
 				$run_results -> [${$tries}] -> {'failed'} = $failure;
 				$output_file -> flush;
 				return(0);
-			}elsif (not(-e 'nonmem.exe' or -e 'nonmem' or -e 'nonmem5' or -e 'nonmem6' or -e 'nonmem7' )){
+			}elsif (not(-e 'nonmem.exe' or -e 'nonmem' or -e 'nonmem_mpi.exe' or -e 'NONMEM_MPI.exe' or -e 'nonmem_mpi' or -e 'nonmem5' or -e 'nonmem6' or -e 'nonmem7' )){
 				$failure = 'Compilation failed';
 				$failure_mess="Compilation failed. There is no output for model ".($run_no+1) ;
 				ui -> print( category => 'all', message  => $failure_mess,newline => 1 );
@@ -3786,7 +3786,7 @@ sub restart_needed
 				$failure_mess = "NMtran failed. There is no output for $nmrundir";
 				general_error($failure_mess);
 			}
-		}elsif (not(-e 'nonmem.exe' or -e 'nonmem' or -e 'nonmem5' or -e 'nonmem6' or -e 'nonmem7' )){
+		}elsif (not(-e 'nonmem.exe' or -e 'NONMEM_MPI.exe' or -e 'nonmem_mpi.exe' or -e 'nonmem_mpi' or -e 'nonmem' or -e 'nonmem5' or -e 'nonmem6' or -e 'nonmem7' )){
 			$failure = 'Compilation failed';
 			if ($self->nmqual){
 				$failure_mess = "Fortran compilation by NMQual failed. Cannot start NONMEM.\n".

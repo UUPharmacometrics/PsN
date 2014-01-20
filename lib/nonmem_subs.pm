@@ -311,7 +311,7 @@ end new
 		$self -> store_message( message => $mess);
 		return 0;
 	}
-	unless(-e "nonmem.exe" or -e "nonmem" ) {
+	unless(-e "nonmem.exe" or -e "nonmem" or -e 'nonmem_mpi' or -e 'nonmem_mpi.exe' or -e 'NONMEM_MPI.exe' ) {
 		my $mess = "Fortran Compilation by $nmfe failed. No NONMEM executable produced.\n".
 			"Run psn.mod in NM_runX subdirectory with $nmfe directly to diagnose the problem.";
 		$self -> store_message( message => $mess);
@@ -454,7 +454,7 @@ end run_with_nmfe
 		$self -> store_message( message => $mess);
 		return 0;
 	}
-	unless(-e "nonmem.exe" or -e "nonmem" ) {
+	unless(-e "nonmem.exe" or -e "nonmem" or -e 'nonmem_mpi.exe' or -e 'nonmem_mpi' or -e 'NONMEM_MPI.exe') {
 		my $mess = "Fortran Compilation failed. No NONMEM executable produced.\n".
 			"Run psn.mod in NM_runX subdirectory with $nmqual directly to diagnose the problem.";
 		$self -> store_message( message => $mess);
