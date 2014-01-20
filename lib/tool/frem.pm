@@ -1,77 +1,106 @@
-# {{{ include statements
+package tool::frem;
 
-start include statements
-#use Carp;
-	use include_modules;
+use include_modules;
 use tool::modelfit;
 use Math::Random;
 use Data::Dumper;
 use Config;
 use linear_algebra;
 use ui;
-end include statements
 
-# }}} include statements
 
-# {{{ new
+use Moose;
+use MooseX::Params::Validate;
 
-	start new
+extends 'newtool';
+
+
+has 'bsv_parameters' => ( is => 'rw', isa => 'Int' );
+has 'start_eta' => ( is => 'rw', isa => 'Int', default => 1 );
+has 'bov_parameters' => ( is => 'rw', isa => 'Int' );
+has 'N_invariant' => ( is => 'rw', isa => 'Int' );
+has 'filtered_datafile' => ( is => 'rw', isa => 'Str' );
+has 'N_time_varying' => ( is => 'rw', isa => 'Int' );
+has 'estimate' => ( is => 'rw', isa => 'Int', default => -1 );
+has 'type' => ( is => 'rw', isa => 'Str', default => 'FREMTYPE' );
+has 'typeorder' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
+has 'occasionlist' => ( is => 'rw', isa => 'ArrayRef[Int]', default => sub { [] } );
+has 'extra_input_items' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { [] } );
+has 'invariant_median' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
+has 'timevar_median' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
+has 'invariant_covmatrix' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
+has 'timevar_covmatrix' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
+has 'check' => ( is => 'rw', isa => 'Bool', default => 1 );
+has 'model3' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'vpc' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'dv' => ( is => 'rw', isa => 'Str', default => 'DV' );
+has 'occasion' => ( is => 'rw', isa => 'Str', default => 'OCC' );
+has 'parameters' => ( is => 'rw', isa => 'ArrayRef[Str]' );
+has 'time_varying' => ( is => 'rw', isa => 'ArrayRef[Str]' );
+has 'invariant' => ( is => 'rw', isa => 'ArrayRef[Str]' );
+has 'final_model_directory' => ( is => 'rw', isa => 'Str' );
+has 'logfile' => ( is => 'rw', isa => 'ArrayRef', default => sub { ['frem.log'] } );
+has 'results_file' => ( is => 'rw', isa => 'Str', default => 'frem_results.csv' );
+
+
+
+sub BUILD
 {
+	my $this  = shift;
 
-    for my $accessor ('logfile','raw_results_file','raw_nonp_file'){
+	for my $accessor ('logfile','raw_results_file','raw_nonp_file'){
 		my @new_files=();
 		my @old_files = @{$this->$accessor};
 		for (my $i=0; $i < scalar(@old_files); $i++){
 			my $name;
 			my $ldir;
 			( $ldir, $name ) =
-				OSspecific::absolute_path( $this ->directory(), $old_files[$i] );
+			OSspecific::absolute_path( $this ->directory(), $old_files[$i] );
 			push(@new_files,$ldir.$name) ;
 		}
 		$this->$accessor(\@new_files);
-    }	
+	}	
 
-
-    foreach my $model ( @{$this -> models} ) {
+	foreach my $model ( @{$this -> models} ) {
 		foreach my $problem (@{$model->problems()}){
 			if (defined $problem->nwpri_ntheta()){
 				ui -> print( category => 'all',
-							 message => "Warning: frem does not support \$PRIOR NWPRI.",
-							 newline => 1);
+					message => "Warning: frem does not support \$PRIOR NWPRI.",
+					newline => 1);
 				last;
 			}
 		}
-    }
-    
-    if ( scalar (@{$this -> models->[0]-> problems}) > 1 ){
+	}
+
+	if ( scalar (@{$this -> models->[0]-> problems}) > 1 ){
 		croak('Cannot have more than one $PROB in the input model.');
-    }
+	}
 
-    #checks left for frem->new:
-    #if bov_parameters is > 0 then must have occasion in $input
-    #if model3 is not true then must have dv in $input
-    #if model3 is true then must have type in $input
-    my $occ_ok=1;
-    my $dv_ok=1;
-    my $type_ok=1;
-    if ($this->model3()){
+	#checks left for frem->new:
+	#if bov_parameters is > 0 then must have occasion in $input
+	#if model3 is not true then must have dv in $input
+	#if model3 is true then must have type in $input
+	my $occ_ok=1;
+	my $dv_ok=1;
+	my $type_ok=1;
+	if ($this->model3()){
 		$type_ok=0;
-    }else{
+	}else{
 		$dv_ok=0;
-    }
-    if ($this->bov_parameters()>0){
+	}
+	if ($this->bov_parameters()>0){
 		$occ_ok=0;
-    }
+	}
 
-    my $prob = $this -> models->[0]-> problems -> [0];
-    if (defined $prob->priors()){
+	my $prob = $this -> models->[0]-> problems -> [0];
+	if (defined $prob->priors()){
 		croak("frem does not support \$PRIOR");
-    }
+	}
 
-    if( defined $prob -> inputs and defined $prob -> inputs -> [0] -> options ) {
+	if( defined $prob -> inputs and defined $prob -> inputs -> [0] -> options ) {
 		foreach my $option ( @{$prob -> inputs -> [0] -> options} ) {
 			unless (($option -> value eq 'DROP' or $option -> value eq 'SKIP'
-					 or $option -> name eq 'DROP' or $option -> name eq 'SKIP')){
+						or $option -> name eq 'DROP' or $option -> name eq 'SKIP')){
 				$dv_ok = 1 if ($option -> name() eq $this->dv()); 
 				$type_ok = 1 if ($option -> name() eq $this->type()); 
 				$occ_ok = 1 if ($option -> name() eq $this->occasion()); 
@@ -80,20 +109,20 @@ end include statements
 		croak("type column ".$this->type()." not found in \$INPUT" ) unless $type_ok;
 		croak("dependent column ".$this->dv()." not found in \$INPUT" ) unless $dv_ok;
 		croak("occasion column ".$this->occasion()." not found in \$INPUT" ) unless $occ_ok;
-    } else {
+	} else {
 		croak("Trying to check parameters in input model".
-		      " but no headers were found in \$INPUT" );
-    }
-
+			" but no headers were found in \$INPUT" );
+	}
 }
-end new
 
-# }}}
+sub modelfit_setup
+{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+		 model_number => { isa => 'Int', optional => 1 }
+	);
+	my $model_number = $parm{'model_number'};
 
-
-
-	start modelfit_setup
-{ 
 	my $model = $self -> models -> [$model_number-1];
 
 	#TODO make sure phi is copied back, make sure $self->nm_output includes phi
@@ -121,7 +150,6 @@ end new
 			#if start_omega_record is 1 we will push nothing
 			push(@leading_omega_records,$model-> problems -> [0]->omegas->[$i]);
 		}
-
 
 		$n_invariant = scalar(@{$self->invariant()});
 		$n_time_varying = scalar(@{$self->time_varying()});
@@ -174,9 +202,6 @@ end new
 		}
 		$data_check_model ->_write();
 
-
-
-
 		my $output_0;
 		my $eta_covariance_0;
 		my $output_1;
@@ -215,9 +240,7 @@ end new
 					 base_directory	 => $self -> directory(),
 					 directory		 => $self -> directory().'/'.$run1_name.'_modelfit_dir'.$model_number,
 					 models		 => \@run1_models,
-#		   raw_results           => undef,
 					 top_tool              => 0);
-#		   %subargs );
 			
 			ui -> print( category => 'all', message =>  $run1_message);
 			$run1_fit -> run;
@@ -277,13 +300,10 @@ end new
 						$nonzero = 1 if ($eta_covariance_0->[$row][$row] > 0);
 					}
 					$eta_covariance_0 = undef unless $nonzero;
-#		  print "found only zeros \n" unless $nonzero;
 				}
 			}
 		}
 		
-
-
 		##########################################################################################
 		#Create Model 1
 		##########################################################################################
@@ -326,9 +346,7 @@ end new
 					 base_directory	 => $frem_model1 -> directory(),
 					 directory		 => $self -> directory().'/model1_modelfit_dir'.$model_number,
 					 models		 => [$frem_model1],
-#		   raw_results           => undef,
 					 top_tool              => 0);
-#		   %subargs );
 			
 			ui -> print( category => 'all', message => "\nExecuting FREM Model 1" );
 			$one_fit -> run;
@@ -388,9 +406,7 @@ end new
 					 base_directory	 => $frem_model2 -> directory(),
 					 directory		 => $self -> directory().'/model2_modelfit_dir'.$model_number,
 					 models		 => [$frem_model2],
-#		   raw_results           => undef,
 					 top_tool              => 0);
-#		   %subargs );
 			
 			ui -> print( category => 'all', message => "\nExecuting FREM Model 2" );
 			$two_fit -> run;
@@ -522,16 +538,13 @@ end new
 					 base_directory	 => $frem_model3 -> directory(),
 					 directory		 => $self -> directory().'/model3_modelfit_dir'.$model_number,
 					 models		 => [$frem_model3],
-#		   raw_results           => undef,
 					 top_tool              => 0);
-#		   %subargs );
 			
 			ui -> print( category => 'all', message => "\nExecuting FREM Model 3" );
 			$three_fit -> run;
 			$output_3 = $frem_model3 -> outputs -> [0] if ($frem_model3 -> is_run());
 		}
 
-		
 	}else{
 		#option model3
 		$frem_model3 = $model ->
@@ -704,9 +717,7 @@ end new
 				 base_directory	 => $frem_vpc_model1 -> directory(),
 				 directory	 => $self -> directory().'/vpc1_modelfit_dir'.$model_number,
 				 models		 => [$frem_vpc_model1],
-#		   raw_results           => undef,
 				 top_tool              => 0);
-#		   %subargs );
 		
 		ui -> print( category => 'all', message => "\nExecuting FREM vpc model 1" );
 		$vpc1_fit -> run;
@@ -799,24 +810,299 @@ end new
 		$frem_vpc_model2->_write();
 
 	}#end if vpc
+}
+
+sub _modelfit_raw_results_callback
+{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+		 model_number => { isa => 'Int', optional => 1 }
+	);
+	my $model_number = $parm{'model_number'};
+	my $subroutine;
 
 
+    #this is just a placeholder
+my ($dir,$file) = 
+    OSspecific::absolute_path( $self -> directory,
+			       $self -> raw_results_file->[$model_number-1] );
+my ($npdir,$npfile) = 
+    OSspecific::absolute_path( $self -> directory,
+			       $self -> raw_nonp_file->[$model_number -1]);
 
 
+#my $orig_mod = $self -> models[$model_number-1];
+$subroutine = sub {
+
+  my $modelfit = shift;
+  my $mh_ref   = shift;
+  my %max_hash = %{$mh_ref};
+  
+};
+return $subroutine;
 
 
+	return \&subroutine;
+}
 
+sub modelfit_analyze
+{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+		 model_number => { isa => 'Int', optional => 1 }
+	);
+	my $model_number = $parm{'model_number'};
 
 
 }
-end modelfit_setup
 
-
-
-
-
-	start set_frem_records
+sub prepare_results
 {
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+		arg1  => { isa => 'Int', optional => 1 }
+	);
+}
+
+sub create_data2
+{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+		model => { isa => 'Ref', optional => 0 },
+		filename => { isa => 'Str', optional => 0 }
+	);
+	my $model = $parm{'model'};
+	my $filename = $parm{'filename'};
+	my $outdatafile;
+
+	#in ref of model, 
+	#filename of new filter model
+	#out name of data file $outdatafile with full path
+
+	my $filtered_data_model = $model -> copy ( filename => $filename,
+		output_same_directory => 1,
+		copy_data          => 0,
+		copy_output        => 0,
+		skip_data_parsing => 1);
+
+	die "no problems" unless defined $filtered_data_model->problems();
+	die "more than one problem" unless (scalar(@{$filtered_data_model->problems()})==1);
+
+	$self->filtered_datafile('filtered_plus_type0.dta');
+
+	my @filter_table_header;
+
+	#need to handle DROP SKIP without value
+	my $dummycounter=0;
+	if( defined $filtered_data_model->problems()->[0] -> inputs and 
+		defined $filtered_data_model->problems()->[0] -> inputs -> [0] -> options ) {
+		foreach my $option ( @{$filtered_data_model->problems()->[0] -> inputs -> [0] -> options} ) {
+			if ($option->name eq 'DROP' or $option->name eq 'SKIP'){
+				if (defined $option->value and $option->value ne '' and not ($option->value eq 'DROP' or $option->value eq 'SKIP') ){
+					push( @filter_table_header, $option -> value );
+				}else{
+					#simple drop used in $INPUT without name. Set dummy name as placeholder here.
+					$dummycounter++;
+					$option->value('DUMMY'.$dummycounter);
+					push( @filter_table_header, $option -> value );
+				}
+			}else{
+				push( @filter_table_header, $option -> name );
+			}
+		}
+	} else {
+		croak("Trying to construct table for filtering data".
+			" but no headers were found in \$INPUT" );
+	}
+	my $new_input_string = join(' ',@filter_table_header);
+	#do not want to drop anything, keep everything for table. Unset DROP in $INPUT of the model
+	$filtered_data_model->problems()->[0]->set_records(type => 'input',
+		record_strings => [$new_input_string]);
+
+	$self->typeorder([$self->dv()]); #index 0 is original obs column name
+	if (scalar(@{$self->invariant()})>0){
+		push(@{$self->typeorder()},@{$self->invariant()}); #add list of invariant covariate names to typeorder
+	}
+	my $first_timevar_type = scalar(@{$self->typeorder()});
+	if (scalar(@{$self->time_varying()})>0){
+		push(@{$self->typeorder()},@{$self->time_varying()}); #add list of time_varying covariate names to typeorder
+	}
+	my @cov_indices = (-1) x scalar(@{$self->typeorder()}); #initiate with invalid indices
+
+	my $evid_index;
+	my $mdv_index;
+	my $type_index;
+	my $occ_index;
+	for (my $i=0; $i< scalar(@filter_table_header); $i++){
+		if ($filter_table_header[$i] eq 'EVID'){
+			$evid_index = $i;
+		}elsif($filter_table_header[$i] eq 'MDV'){
+			$mdv_index = $i;
+		}elsif($filter_table_header[$i] eq $self->type()){
+			$type_index = $i;
+		}elsif($filter_table_header[$i] eq $self->occasion()){
+			$occ_index = $i;
+		}else{
+			#0 is dv
+			for (my $j=0; $j< scalar(@cov_indices); $j++){
+				if($filter_table_header[$i] eq $self->typeorder()->[$j]){
+					$cov_indices[$j] = $i;
+					last;
+				}
+			}
+		}
+	}
+	unless (defined $evid_index or defined $mdv_index){
+		push(@filter_table_header,'MDV');
+		$mdv_index = $#filter_table_header;
+		push(@{$self->extra_input_items()},'MDV');
+	}
+	if (defined $type_index){
+		croak($self->type()." already defined in input model, not allowed.");
+	}else{
+		push(@filter_table_header,$self->type());
+		$type_index = $#filter_table_header;
+		push(@{$self->extra_input_items()},$self->type());
+	}
+	unless (defined $occ_index or ($self->bov_parameters()<1)){
+		croak("occasion column ".$self->occasion()." not found in input model.");
+	}
+	if ($cov_indices[0] < 0){
+		croak("dependent value ".$self->dv()." not found in input model.");
+	}
+	for (my $j=1; $j< scalar(@cov_indices); $j++){
+		if ($cov_indices[$j] < 0){
+			croak("covariate column ".$self->typeorder()->[$j]." not found in input model.");
+		}
+	}
+
+	foreach my $remove_rec ('abbreviated','msfi','contr','subroutine','prior','model','tol','infn','omega','pk','aesinitial','aes','des','error','pred','mix','theta','sigma','simulation','estimation','covariance','nonparametric','table','scatter'){
+		$filtered_data_model -> remove_records(type => $remove_rec);
+	}
+
+	$filtered_data_model -> add_records(type => 'pred',
+		record_strings => [$self->type().'=0','Y=THETA(1)+ETA(1)+EPS(1)']);
+
+	$filtered_data_model -> add_records(type => 'theta',
+		record_strings => ['1']);
+	$filtered_data_model -> add_records(type => 'omega',
+		record_strings => ['1']);
+	$filtered_data_model -> add_records(type => 'sigma',
+		record_strings => ['1']);
+	$filtered_data_model -> add_records(type => 'estimation',
+		record_strings => ['MAXEVALS=0 METHOD=ZERO']);
+
+	# set $TABLE record
+
+	$filtered_data_model -> add_records( type           => 'table',
+		record_strings => [ join( ' ', @filter_table_header ).
+			' NOAPPEND NOPRINT ONEHEADER FORMAT=sG15.7 FILE='.$self->filtered_datafile]);
+
+	$filtered_data_model->_write();
+	# run model in data_filtering_dir clean=3
+	my $filter_fit = tool::modelfit -> new
+	( %{common_options::restore_options(@common_options::tool_options)},
+		base_directory => $self->directory(),
+		directory      => $self->directory().'/create_data2_dir/',
+		models         => [$filtered_data_model],
+		top_tool       => 0,
+		clean => 2  );
+	ui -> print( category => 'all',
+		message  => "Running dummy model to filter data and add ".$self->type()." for Data set 2",
+		newline => 1 );
+	$filter_fit -> run;
+
+	my $filtered_data = data -> new(filename=>$filtered_data_model->directory().$self->filtered_datafile);
+
+	foreach my $covariate (@{$self->invariant()}){
+		my %strata = %{$filtered_data-> factors( column_head => $covariate,
+		return_occurences =>1,
+		unique_in_individual => 1,
+		ignore_missing => 1)};
+
+		if ( $strata{'Non-unique values found'} eq '1' ) {
+			ui -> print( category => 'all',
+				message => "\nWarning: Individuals were found to have multiple values ".
+				"in the $covariate column, which will not be handled correctly by the frem script. ".
+				"Consider terminating this run and setting ".
+				"covariate $covariate as time-varying instead.\n" );
+		}
+	}
+
+	if (defined $occ_index){
+		my $factors = $filtered_data -> factors( column => ($occ_index+1),
+			ignore_missing =>1,
+			unique_in_individual => 0,
+			return_occurences => 1 );
+
+		#key is the factor, e.g. occasion 1. Value is the number of occurences
+		my @temp=();
+		#sort occasions ascending.
+		foreach my $key (sort {$a <=> $b} keys (%{$factors})){
+			push(@temp,sprintf("%.12G",$key));
+		}
+		$self->occasionlist(\@temp); 
+
+	}
+	$outdatafile = 'frem_data2.dta';
+	$filtered_data -> filename($outdatafile); #change name so that when writing to disk get new file
+
+	my $invariant_matrix; #array of arrays
+	my $timevar_matrix; #array of arrays of arrays
+
+	#this writes new data to disk
+	($invariant_matrix,$timevar_matrix) = 
+	$filtered_data->add_frem_lines( occ_index => $occ_index,
+		evid_index => $evid_index,
+		mdv_index => $mdv_index,
+		type_index => $type_index,
+		cov_indices => \@cov_indices,
+		first_timevar_type => $first_timevar_type);
+
+
+
+	my $inv_covariance = [];
+	my $inv_median = [];
+	my $timev_covariance = [];
+	my $timev_median = [];
+	my $err = linear_algebra::row_cov_median($invariant_matrix,$inv_covariance,$inv_median,$self->missing_data_token());
+	if ($err != 0){
+		print "failed to compute invariant covariates covariance\n";
+	}else{
+		$self->invariant_median($inv_median);
+		$self->invariant_covmatrix($inv_covariance);
+	}
+	$err = linear_algebra::row_cov_median($timevar_matrix,$timev_covariance,$timev_median,$self->missing_data_token());
+	if ($err != 0){
+		print "failed to compute time-varying covariates covariance\n";
+	}else{
+		$self->timevar_median($timev_median);
+		$self->timevar_covmatrix($timev_covariance);
+	}
+
+	return $outdatafile;
+}
+
+sub set_frem_records
+{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+		 model => { isa => 'Ref', optional => 0 },
+		 n_invariant => { isa => 'Int', optional => 0 },
+		 n_time_varying => { isa => 'Int', optional => 0 },
+		 model_type => { isa => 'Str', optional => 0 },
+		 epsnum => { isa => 'Int', optional => 0 },
+		 ntheta => { isa => 'Int', optional => 0 },
+		 output_2 => { isa => 'Ref', optional => 1 }
+	);
+	my $model = $parm{'model'};
+	my $n_invariant = $parm{'n_invariant'};
+	my $n_time_varying = $parm{'n_time_varying'};
+	my $model_type = $parm{'model_type'};
+	my $epsnum = $parm{'epsnum'};
+	my $ntheta = $parm{'ntheta'};
+	my $output_2 = $parm{'output_2'};
+
     #in is ref of model
     #model_type 2 or 3 or vpc1 or vpc2
     #local number n_time_varying. If 0 then locally ignore bov_parameters
@@ -1091,224 +1377,15 @@ end modelfit_setup
 		$model -> error( problem_number => 1,
 						 new_error         => \@error );
     }
-
-
 }
-end set_frem_records
 
-
-	start create_data2
+sub cleanup
 {
-    #in ref of model, 
-    #filename of new filter model
-    #out name of data file $outdatafile with full path
-    
-    my $filtered_data_model = $model -> copy ( filename => $filename,
-											   output_same_directory => 1,
-											   copy_data          => 0,
-											   copy_output        => 0,
-											   skip_data_parsing => 1);
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+		  arg1 => { isa => 'Int', optional => 1 }
+	);
 
-    die "no problems" unless defined $filtered_data_model->problems();
-    die "more than one problem" unless (scalar(@{$filtered_data_model->problems()})==1);
-
-    $self->filtered_datafile('filtered_plus_type0.dta');
-
-    my @filter_table_header;
-
-    #need to handle DROP SKIP without value
-    my $dummycounter=0;
-    if( defined $filtered_data_model->problems()->[0] -> inputs and 
-		defined $filtered_data_model->problems()->[0] -> inputs -> [0] -> options ) {
-		foreach my $option ( @{$filtered_data_model->problems()->[0] -> inputs -> [0] -> options} ) {
-			if ($option->name eq 'DROP' or $option->name eq 'SKIP'){
-				if (defined $option->value and $option->value ne '' and not ($option->value eq 'DROP' or $option->value eq 'SKIP') ){
-					push( @filter_table_header, $option -> value );
-				}else{
-					#simple drop used in $INPUT without name. Set dummy name as placeholder here.
-					$dummycounter++;
-					$option->value('DUMMY'.$dummycounter);
-					push( @filter_table_header, $option -> value );
-				}
-			}else{
-				push( @filter_table_header, $option -> name );
-			}
-		}
-    } else {
-		croak("Trying to construct table for filtering data".
-		      " but no headers were found in \$INPUT" );
-    }
-    my $new_input_string = join(' ',@filter_table_header);
-    #do not want to drop anything, keep everything for table. Unset DROP in $INPUT of the model
-    $filtered_data_model->problems()->[0]->set_records(type => 'input',
-													   record_strings => [$new_input_string]);
-
-    $self->typeorder([$self->dv()]); #index 0 is original obs column name
-    if (scalar(@{$self->invariant()})>0){
-		push(@{$self->typeorder()},@{$self->invariant()}); #add list of invariant covariate names to typeorder
-    }
-    my $first_timevar_type = scalar(@{$self->typeorder()});
-    if (scalar(@{$self->time_varying()})>0){
-		push(@{$self->typeorder()},@{$self->time_varying()}); #add list of time_varying covariate names to typeorder
-    }
-    my @cov_indices = (-1) x scalar(@{$self->typeorder()}); #initiate with invalid indices
-
-    my $evid_index;
-    my $mdv_index;
-    my $type_index;
-    my $occ_index;
-    for (my $i=0; $i< scalar(@filter_table_header); $i++){
-		if ($filter_table_header[$i] eq 'EVID'){
-			$evid_index = $i;
-		}elsif($filter_table_header[$i] eq 'MDV'){
-			$mdv_index = $i;
-		}elsif($filter_table_header[$i] eq $self->type()){
-			$type_index = $i;
-		}elsif($filter_table_header[$i] eq $self->occasion()){
-			$occ_index = $i;
-		}else{
-			#0 is dv
-			for (my $j=0; $j< scalar(@cov_indices); $j++){
-				if($filter_table_header[$i] eq $self->typeorder()->[$j]){
-					$cov_indices[$j] = $i;
-					last;
-				}
-			}
-		}
-    }
-    unless (defined $evid_index or defined $mdv_index){
-		push(@filter_table_header,'MDV');
-		$mdv_index = $#filter_table_header;
-		push(@{$self->extra_input_items()},'MDV');
-    }
-    if (defined $type_index){
-		croak($self->type()." already defined in input model, not allowed.");
-    }else{
-		push(@filter_table_header,$self->type());
-		$type_index = $#filter_table_header;
-		push(@{$self->extra_input_items()},$self->type());
-    }
-    unless (defined $occ_index or ($self->bov_parameters()<1)){
-		croak("occasion column ".$self->occasion()." not found in input model.");
-    }
-    if ($cov_indices[0] < 0){
-		croak("dependent value ".$self->dv()." not found in input model.");
-    }
-    for (my $j=1; $j< scalar(@cov_indices); $j++){
-		if ($cov_indices[$j] < 0){
-			croak("covariate column ".$self->typeorder()->[$j]." not found in input model.");
-		}
-    }
-    
-    foreach my $remove_rec ('abbreviated','msfi','contr','subroutine','prior','model','tol','infn','omega','pk','aesinitial','aes','des','error','pred','mix','theta','sigma','simulation','estimation','covariance','nonparametric','table','scatter'){
-		$filtered_data_model -> remove_records(type => $remove_rec);
-    }
-	
-    $filtered_data_model -> add_records(type => 'pred',
-										record_strings => [$self->type().'=0','Y=THETA(1)+ETA(1)+EPS(1)']);
-
-    $filtered_data_model -> add_records(type => 'theta',
-										record_strings => ['1']);
-    $filtered_data_model -> add_records(type => 'omega',
-										record_strings => ['1']);
-    $filtered_data_model -> add_records(type => 'sigma',
-										record_strings => ['1']);
-    $filtered_data_model -> add_records(type => 'estimation',
-										record_strings => ['MAXEVALS=0 METHOD=ZERO']);
-
-    # set $TABLE record
-	
-    $filtered_data_model -> add_records( type           => 'table',
-										 record_strings => [ join( ' ', @filter_table_header ).
-															 ' NOAPPEND NOPRINT ONEHEADER FORMAT=sG15.7 FILE='.$self->filtered_datafile]);
-
-    $filtered_data_model->_write();
-    # run model in data_filtering_dir clean=3
-    my $filter_fit = tool::modelfit -> new
-		( %{common_options::restore_options(@common_options::tool_options)},
-		  base_directory => $self->directory(),
-		  directory      => $self->directory().'/create_data2_dir/',
-		  models         => [$filtered_data_model],
-		  top_tool       => 0,
-		  clean => 2  );
-    ui -> print( category => 'all',
-				 message  => "Running dummy model to filter data and add ".$self->type()." for Data set 2",
-				 newline => 1 );
-    $filter_fit -> run;
-
-    my $filtered_data = data -> new(filename=>$filtered_data_model->directory().$self->filtered_datafile);
-
-    foreach my $covariate (@{$self->invariant()}){
-		my %strata = %{$filtered_data-> factors( column_head => $covariate,
-												 return_occurences =>1,
-												 unique_in_individual => 1,
-												 ignore_missing => 1)};
-
-		if ( $strata{'Non-unique values found'} eq '1' ) {
-			ui -> print( category => 'all',
-						 message => "\nWarning: Individuals were found to have multiple values ".
-						 "in the $covariate column, which will not be handled correctly by the frem script. ".
-						 "Consider terminating this run and setting ".
-						 "covariate $covariate as time-varying instead.\n" );
-		}
-    }
-
-    if (defined $occ_index){
-		my $factors = $filtered_data -> factors( column => ($occ_index+1),
-												 ignore_missing =>1,
-												 unique_in_individual => 0,
-												 return_occurences => 1 );
-
-		#key is the factor, e.g. occasion 1. Value is the number of occurences
-		my @temp=();
-		#sort occasions ascending.
-		foreach my $key (sort {$a <=> $b} keys (%{$factors})){
-			push(@temp,sprintf("%.12G",$key));
-		}
-		$self->occasionlist(\@temp); 
-
-    }
-    $outdatafile = 'frem_data2.dta';
-    $filtered_data -> filename($outdatafile); #change name so that when writing to disk get new file
-
-    my $invariant_matrix; #array of arrays
-    my $timevar_matrix; #array of arrays of arrays
-
-    #this writes new data to disk
-    ($invariant_matrix,$timevar_matrix) = 
-		$filtered_data->add_frem_lines( occ_index => $occ_index,
-										evid_index => $evid_index,
-										mdv_index => $mdv_index,
-										type_index => $type_index,
-										cov_indices => \@cov_indices,
-										first_timevar_type => $first_timevar_type);
-    
-
-
-    my $inv_covariance = [];
-    my $inv_median = [];
-    my $timev_covariance = [];
-    my $timev_median = [];
-    my $err = linear_algebra::row_cov_median($invariant_matrix,$inv_covariance,$inv_median,$self->missing_data_token());
-    if ($err != 0){
-		print "failed to compute invariant covariates covariance\n";
-    }else{
-		$self->invariant_median($inv_median);
-		$self->invariant_covmatrix($inv_covariance);
-    }
-    $err = linear_algebra::row_cov_median($timevar_matrix,$timev_covariance,$timev_median,$self->missing_data_token());
-    if ($err != 0){
-		print "failed to compute time-varying covariates covariance\n";
-    }else{
-		$self->timevar_median($timev_median);
-		$self->timevar_covmatrix($timev_covariance);
-    }
-}
-end create_data2
-
-
-start cleanup
-{
   #remove tablefiles in simulation NM_runs, they are 
   #copied to m1 by modelfit and read from there anyway.
   for (my $samp=1;$samp<=$self->samples(); $samp++){
@@ -1317,105 +1394,7 @@ start cleanup
   }
 
 }
-end cleanup
 
-
-
-
-# {{{ _modelfit_raw_results_callback
-
-start _modelfit_raw_results_callback
-
-    #this is just a placeholder
-my ($dir,$file) = 
-    OSspecific::absolute_path( $self -> directory,
-			       $self -> raw_results_file->[$model_number-1] );
-my ($npdir,$npfile) = 
-    OSspecific::absolute_path( $self -> directory,
-			       $self -> raw_nonp_file->[$model_number -1]);
-
-
-#my $orig_mod = $self -> models[$model_number-1];
-$subroutine = sub {
-
-  my $modelfit = shift;
-  my $mh_ref   = shift;
-  my %max_hash = %{$mh_ref};
-  
-};
-return $subroutine;
-
-end _modelfit_raw_results_callback
-
-# }}} _modelfit_raw_results_callback
-
-
-# {{{ max_and_min
-
-start max_and_min
-{
-  #input is integers $column_index, $start_row_index, $end_row_index 
-  
-  unless( $end_row_index ){
-    $end_row_index = $#{$self -> raw_results};
-  }
-
-  croak("Bad row index input") if ($start_row_index >= $end_row_index);
-
-#  $maximum=$self->raw_results->[$start_row_index][$column_index];
-#  $minimum=$self->raw_results->[$start_row_index][$column_index];
-  $maximum = -1000000000;
-  $minimum =  1000000000;
-  for (my $i=$start_row_index; $i<=$end_row_index; $i++){
-    if ($use_runs[$i-$start_row_index]){
-      if (defined $self->raw_results->[$i][$column_index]){
-	$maximum = $self->raw_results->[$i][$column_index] if
-	    ($self->raw_results->[$i][$column_index] > $maximum); 
-	$minimum = $self->raw_results->[$i][$column_index] if
-	    ($self->raw_results->[$i][$column_index] < $minimum); 
-      }else{
-#	$warn=1;
-      }
-    }
-  }
-}
-end max_and_min
-
-# }}} max_and_min
-
-
-# {{{ median
-
-start median
-{
-  #input is integers $column_index, $start_row_index, $end_row_index 
-  
-  unless( $end_row_index ){
-    $end_row_index = $#{$self -> raw_results};
-  }
-  
-  croak("Bad row index input") if ($start_row_index >= $end_row_index);
-
-  my @temp;
-  
-  for (my $i=$start_row_index; $i<=$end_row_index; $i++){
-    if ($use_runs[$i-$start_row_index]){
-      if (defined $self->raw_results->[$i][$column_index]){
-	push( @temp, $self->raw_results->[$i][$column_index] );
-      }else{
-#	$warn=1;
-      }
-    }
-  }
-  
-  @temp = sort({$a <=> $b} @temp);
-  if( scalar( @temp ) % 2 ){
-    $median = $temp[$#temp/2];
-  } else {
-    $median = ($temp[@temp/2]+$temp[(@temp-2)/2]) / 2;
-  }
- 
-}
-end median
-
-# }}} median
+no Moose;
+__PACKAGE__->meta->make_immutable;
+1;

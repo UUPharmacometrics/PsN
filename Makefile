@@ -163,7 +163,6 @@ DIALIBFILES=debug.pm \
 	tool/cdd/jackknife.pm \
 	tool/sse.pm \
 	tool/gls.pm \
-	tool/frem.pm \
 	tool/ebe_npde.pm \
 	tool/xv_step.pm \
 	tool/xv.pm \
