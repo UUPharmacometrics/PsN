@@ -5,7 +5,7 @@
 
 use strict;
 use warnings;
-use Test::More tests=>166;
+use Test::More tests=>168;
 use Test::Exception;
 use Math::Random;
 use lib ".."; #location of includes.pm
@@ -14,30 +14,30 @@ use FindBin qw($Bin);
 use data;
 
 
-sub is_array{
-    my $func=shift;
-    my $facit=shift;
-    my $label=shift;
+sub is_array
+{
+	my $func=shift;
+	my $facit=shift;
+	my $label=shift;
 
-    is (scalar(@{$func}),scalar(@{$facit}),"$label, equal length");
+	is (scalar(@{$func}),scalar(@{$facit}),"$label, equal length");
 
-    my $min = scalar(@{$func});
-    $min = scalar(@{$facit}) if (scalar(@{$facit})< $min);
-    for (my $i=0; $i<$min; $i++){
-    	is ($func->[$i],$facit->[$i],"$label, index $i");
-    }		
-	
+	my $min = scalar(@{$func});
+	$min = scalar(@{$facit}) if (scalar(@{$facit})< $min);
+	for (my $i=0; $i<$min; $i++){
+		is ($func->[$i],$facit->[$i],"$label, index $i");
+	}		
 }
 
 
-my $data = data ->new( 
+my $data = data->new( 
    idcolumn             => 1,
    filename             => 'testdata_no_missing.csv',
    directory            => "$Bin/../test_files",
    ignore_missing_files => 0,
    skip_parsing         => 0,
    target               => 'mem');
-my $dotdata = data ->new( 
+my $dotdata = data->new( 
    idcolumn             => 1,
    filename             => 'testdata_with_dot.csv',
    directory            => "$Bin/../test_files",
@@ -151,5 +151,20 @@ is_array ($eta_matrix->[5],['1.29845E-05','-1.44714E-05','1.98524E-05','8.67448E
 is_array ($eta_matrix->[73],['8.98237E-06','-1.58557E-05','-6.15118E-05','9.96136E-05'],"eta matrix start_eta 4 n_eta 4 row index 73");
 
 
-done_testing;
+# full_name
+my $data = data->new;
+$data->filename('perl');
 
+if ($^O =~ /Win/) {
+	$data->directory('C:\usr\bin');
+	is($data->full_name, 'C:\usr\bin\perl', "Test windows path"); 
+	$data->directory("C:\\usr\\bin\\");
+	is($data->full_name, 'C:\usr\bin\perl', "Test windows path with trailing slash");
+} else {
+	$data->directory('/usr/bin');
+	is($data->full_name, '/usr/bin/perl', "Test UNIX path");
+	$data->directory('/usr/bin/');
+	is($data->full_name, '/usr/bin/perl', "Test UNIX path with trailing slash");
+}
+
+done_testing;

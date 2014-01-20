@@ -18,8 +18,6 @@ use MooseX::Params::Validate;
 use data::individual;
 
 
-
-
 my @primary_column_names = ('ID', 'DATE', 'DAT1', 'DAT2', 'DAT3' ,'L1', 'L2', 'DV', 'MDV', 'RAW_', 'MRG_', 'RPT_', 'TIME', 'DROP', 'SKIP', 'EVID', 'AMT', 'RATE', 'SS', 'II', 'ADDL', 'CMT', 'PCMT', 'CALL');
 
 has 'individuals' => ( is => 'rw', isa => 'ArrayRef[data::individual]' );
@@ -297,12 +295,12 @@ sub add_frem_lines
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 type_index => { isa => 'Int', optional => 0 },
-		 occ_index => { isa => 'Int', optional => 1 },
-		 evid_index => { isa => 'Int', optional => 1 },
-		 mdv_index => { isa => 'Maybe[Int]', optional => 1 },
-		 cov_indices => { isa =>'Ref', optional => 1 },
-		 first_timevar_type => { isa => 'Int', optional => 0 }
+		type_index => { isa => 'Int', optional => 0 },
+		occ_index => { isa => 'Int', optional => 1 },
+		evid_index => { isa => 'Int', optional => 1 },
+		mdv_index => { isa => 'Maybe[Int]', optional => 1 },
+		cov_indices => { isa =>'Ref', optional => 1 },
+		first_timevar_type => { isa => 'Int', optional => 0 }
 	);
 	my $type_index = $parm{'type_index'};
 	my $occ_index = $parm{'occ_index'};
@@ -313,29 +311,23 @@ sub add_frem_lines
 	my @invariant_matrix;
 	my @timevar_matrix;
 
-{
+	my $first_id = $self->individuals()->[0];
 
-    my $first_id = $self->individuals()->[0];
-    
-    croak("No individuals defined in data object based on ".
-		  $self->full_name ) unless ( defined $first_id );
-    
-    foreach my $individual ( @{$self->individuals()} ) {
-	my ($invariants,$timevar) =  $individual->add_frem_lines( occ_index => $occ_index,
-								  evid_index => $evid_index,
-								  missing_data_token => $self->missing_data_token(),
-								  mdv_index => $mdv_index,
-								  type_index => $type_index,
-								  cov_indices => $cov_indices,
-								  first_timevar_type => $first_timevar_type);
-	push(@invariant_matrix,$invariants);
-	push(@timevar_matrix,$timevar);
+	croak("No individuals defined in data object based on ".
+		$self->full_name ) unless ( defined $first_id );
 
-    }
-    $self->_write;
-
-
-}
+	foreach my $individual ( @{$self->individuals()} ) {
+		my ($invariants,$timevar) =  $individual->add_frem_lines( occ_index => $occ_index,
+			evid_index => $evid_index,
+			missing_data_token => $self->missing_data_token(),
+			mdv_index => $mdv_index,
+			type_index => $type_index,
+			cov_indices => $cov_indices,
+			first_timevar_type => $first_timevar_type);
+		push(@invariant_matrix,$invariants);
+		push(@timevar_matrix,$timevar);
+	}
+	$self->_write;
 
 	return \@invariant_matrix ,\@timevar_matrix;
 }
@@ -344,11 +336,11 @@ sub case_deletion
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 bins => { isa => 'Num', optional => 1 },
-		 case_column => { isa => 'Int', optional => 1 },
-		 selection => { isa => 'Maybe[Str]', default => 'consecutive', optional => 1 },
-		 target => { isa => 'Str', default => 'disk', optional => 1 },
-		 directory => { isa => 'Str', optional => 1 }
+		bins => { isa => 'Num', optional => 1 },
+		case_column => { isa => 'Int', optional => 1 },
+		selection => { isa => 'Maybe[Str]', default => 'consecutive', optional => 1 },
+		target => { isa => 'Str', default => 'disk', optional => 1 },
+		directory => { isa => 'Str', optional => 1 }
 	);
 	my $bins = $parm{'bins'};
 	my $case_column = $parm{'case_column'};
@@ -361,7 +353,6 @@ sub case_deletion
 	my @remainders;
 	my $directory = $parm{'directory'};
 
-{
 	# case_deletion creates subsets of the data. The number of
 	# subsets is specified by the bins argument. The individuals
 	# of each subset is selected randomly or in ascending
@@ -371,25 +362,24 @@ sub case_deletion
 	# on. Valid case_column values are either the column number
 	# (pure digits) or the name of the column in the (optional)
 	# header row.
-#	croak("Cannot perform data->case_deletion when skip_parsing is set") 
-#	    if ($self->skip_parsing()); #sync takes care of this
+
 	$self->individuals([]) unless defined $self->individuals; #FIXME
 	$self->synchronize;
 	my @header    = @{$self->header()};
 	if ( not defined $case_column ) {
-	  croak("case_column must be specified" );
+		croak("case_column must be specified" );
 	} else {
-	  if ( not $case_column =~ /^\d/ ) {
-	    for ( my $i = 0; $i <= $#header; $i++ ) {
-	      $case_column = $i+1 if ( $header[$i] eq $case_column );
-	    }
-	  }
+		if ( not $case_column =~ /^\d/ ) {
+			for ( my $i = 0; $i <= $#header; $i++ ) {
+				$case_column = $i+1 if ( $header[$i] eq $case_column );
+			}
+		}
 	}
 	$bins = defined $bins ? $bins :
-	  scalar keys %{$self->factors( column => $case_column)};
+	scalar keys %{$self->factors( column => $case_column)};
 	my %factors   = %{$self->factors( column => $case_column )};
 	if ( $factors{'Non-unique values found'} eq '1' ) {
-	  croak("Individuals were found to have multiple values in column number $case_column. ".
+		croak("Individuals were found to have multiple values in column number $case_column. ".
 			"Column $case_column cannot be used for case deletion." );
 	}
 
@@ -402,58 +392,57 @@ sub case_deletion
 	my ( $k, $j, $i ) = ( 0, 0, 0 );
 	# Create the binsizes
 	for ( $j = 0; $j < $maxbins; $j++ ) {
-	  $binsize[ $k++ ]++;
-	  $k = 0 if( $k >= $bins );
+		$binsize[ $k++ ]++;
+		$k = 0 if( $k >= $bins );
 	}
 	$self->_fisher_yates_shuffle( array => \@ftrs ) if( $selection eq 'random' );
 	for ( $k = 0; $k < $bins; $k++ ) {
-	  for ( $j = 0; $j < $binsize[ $k ]; $j++ ) {
+		for ( $j = 0; $j < $binsize[ $k ]; $j++ ) {
 			push( @{$skipped_keys[ $k ]}, @{$factors{ $ftrs[ $i ] }} );
 			push( @{$skipped_values[ $k ]}, $ftrs[ $i++ ] );
-	  }
+		}
 	}
 
 	for ( $k = 0; $k < $bins; $k++ ) {
-	  my @cd_inds = ();
-	  my @del_inds = ();
-	SELKEYS: foreach my $key ( 0..$maxkey ) {
-	  foreach my $skipped ( @{$skipped_keys[ $k ]} ) {
-	    if ( $key == $skipped ) {
-	      push( @{$skipped_ids[ $k ]}, $individuals -> [ $skipped ]->idnumber );
-	      push( @del_inds, $individuals->[ $key ]->copy );
-	      next SELKEYS;
-	    }
-	  }
-	  push( @cd_inds, $individuals->[ $key ]->copy );
+		my @cd_inds = ();
+		my @del_inds = ();
+		SELKEYS: foreach my $key ( 0..$maxkey ) {
+			foreach my $skipped ( @{$skipped_keys[ $k ]} ) {
+				if ( $key == $skipped ) {
+					push( @{$skipped_ids[ $k ]}, $individuals -> [ $skipped ]->idnumber );
+					push( @del_inds, $individuals->[ $key ]->copy );
+					next SELKEYS;
+				}
+			}
+			push( @cd_inds, $individuals->[ $key ]->copy );
+		}
+		# Set ignore_missing_files = 1 to make it possible to get the result
+		# in memory only
+		my $newdata = data ->
+		new ( header      => \@header,
+			ignoresign  => $self->ignoresign,
+			missing_data_token => $self->missing_data_token,
+			idcolumn    => $self->idcolumn,
+			individuals => \@cd_inds,
+			target      => $target,
+			filename    => $directory . '/cdd_' . ($k + 1) . '.dta',
+			ignore_missing_files => 1 );
+		my $deldata = data ->
+		new ( header      => \@header,
+			ignoresign  => $self->ignoresign,
+			missing_data_token => $self->missing_data_token,
+			idcolumn    => $self->idcolumn,
+			individuals => \@del_inds,
+			target      => $target,
+			filename    => $directory . '/rem_' . ($k + 1) . '.dta',
+			ignore_missing_files => 1 );
+		push( @subsets, $newdata );
+		push( @remainders, $deldata );
+		$newdata->_write;
+		$newdata->flush;
+		$deldata->_write;
+		$deldata->flush;
 	}
-	  # Set ignore_missing_files = 1 to make it possible to get the result
-	  # in memory only
-	  my $newdata = data ->
-	      new ( header      => \@header,
-		    ignoresign  => $self->ignoresign,
-				missing_data_token => $self->missing_data_token,
-		    idcolumn    => $self->idcolumn,
-		    individuals => \@cd_inds,
-		    target      => $target,
-		    filename    => $directory . '/cdd_' . ($k + 1) . '.dta',
-		    ignore_missing_files => 1 );
-	  my $deldata = data ->
-	      new ( header      => \@header,
-		    ignoresign  => $self->ignoresign,
-				missing_data_token => $self->missing_data_token,
-		    idcolumn    => $self->idcolumn,
-		    individuals => \@del_inds,
-		    target      => $target,
-		    filename    => $directory . '/rem_' . ($k + 1) . '.dta',
-		    ignore_missing_files => 1 );
-	  push( @subsets, $newdata );
-	  push( @remainders, $deldata );
-	  $newdata->_write;
-	  $newdata->flush;
-	  $deldata->_write;
-	  $deldata->flush;
-	}
-      }
 
 	return \@subsets ,\@skipped_ids ,\@skipped_keys ,\@skipped_values ,\@remainders;
 }
@@ -1574,7 +1563,6 @@ sub resample
 				  croak("A sample size for strata $factor could not be found ".
 						"and no default sample size was set" );
 			  }
-#			  print "factor $factor keys $keys len ".scalar(@{$key_list})."\n";
 			  for ( my $i = 0; $i < $keys; $i++ ) {
 				  my $list_ref = random_uniform_integer(1,0,(scalar(@{$key_list}) - 1));
 				  push( @bs_inds, $individuals -> [ $key_list->[$list_ref] ]->copy );
@@ -1931,16 +1919,16 @@ sub synchronize
 sub full_name
 {
 	my $self = shift;
-
-	return $self->directory . $self->filename;
+	my $path = File::Spec->catfile(($self->directory), $self->filename);
+	return $path;
 }
 
 sub split_vertically
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 split_index => { isa => 'Int', optional => 0 },
-		 stratify_index => { isa => 'Maybe[Int]', optional => 1 }
+		split_index => { isa => 'Int', optional => 0 },
+		stratify_index => { isa => 'Maybe[Int]', optional => 1 }
 	);
 	my $split_index = $parm{'split_index'};
 	my $stratify_index = $parm{'stratify_index'};
@@ -1949,83 +1937,80 @@ sub split_vertically
 	my @split_values;
 	my @stratify_values;
 
-{
-    #split data set on column with index $split_index and extract stratification col
-    #and return left_side_individuals and right_side_individuals as two arrays of individual objects, 
-    #and split_values as ref of array of refs of arrays
-    # and stratification values as array
-    #without changing $self object. split values returned as array of array over individuals
-    #used in randomization data generation
+	#split data set on column with index $split_index and extract stratification col
+	#and return left_side_individuals and right_side_individuals as two arrays of individual objects, 
+	#and split_values as ref of array of refs of arrays
+	# and stratification values as array
+	#without changing $self object. split values returned as array of array over individuals
+	#used in randomization data generation
 
-    $self->synchronize();
-    unless (defined $self->individuals() and scalar(@{$self->individuals()})>0){
-	croak("cannot do split_vertically on empty data object");
+	$self->synchronize();
+	unless (defined $self->individuals() and scalar(@{$self->individuals()})>0){
+		croak("cannot do split_vertically on empty data object");
 
-    }
-    my @individuals = @{$self->individuals()};
-    unless (defined $individuals[0] ) {
-	croak("first individual not defined in split_vertically");
-
-    }
-    
-    my @ind_data = @{$individuals[0]->subject_data};
-    my $ncol = scalar(split(/,/,$ind_data[0]));
-    if (($split_index < 0) || ($split_index >= $ncol)){
-	croak("illegal split_index $split_index in data->split_vertically, have $ncol columns");
-    }
-    if (defined $stratify_index and (($stratify_index < 0) || ($stratify_index >= $ncol) || ($stratify_index == $split_index))  ){
-	croak("illegal stratify_index $stratify_index in data->split_vertically, ".
-		   "have $ncol columns and slit index $split_index");
-    }
-    my $left_start=0;
-    my $left_end=$split_index-1;
-    my $right_start=$split_index+1;
-    my $right_end=$ncol-1;
-    my $warned_stratify_error=0;
-
-    for ( my $id = 0; $id <= $#individuals; $id++ ) {
-	my $idnumber = $individuals[$id]->idnumber;
-	my $idcolumn = $individuals[$id]->idcolumn;
-	my @data = @{$individuals[$id]->subject_data};
-	my @left_data=();
-	my @right_data=();
-	my @values=();
-	for ( my $i = 0; $i < scalar(@data); $i++ ) {
-	    my @data_row = split( /,/, $data[$i] );
-	    push(@values,$data_row[$split_index]);
-	    if (defined $stratify_index){
-		if ($i==0){
-		    push(@stratify_values,$data_row[$stratify_index]);
-		}else{
-		    if (not $warned_stratify_error and ($data_row[$stratify_index] != $stratify_values[-1])){
-			print "ERROR in randomization test preparation: non-unique values for stratification variable\n".
-			    "found for individual index $i, using first value and ignoring the rest.\n";
-			$warned_stratify_error=1;
-		    }
-		}
-	    }
-	    if ($left_end >= $left_start){
-		push( @left_data, join( ',', @data_row[$left_start .. $left_end] ) );
-	    }else{
-		push(@left_data,'');
-	    }
-	    if ($right_start <= $right_end){
-		push( @right_data, join( ',', @data_row[$right_start .. $right_end] ) );
-	    }else{
-		push(@right_data,'');
-	    }
 	}
-	
-	push(@split_values,\@values);
-	push( @left_side_individuals, data::individual->new( idnumber     => $idnumber,
-							idcolumn     => $idcolumn,
-							subject_data => \@left_data ));
-	push( @right_side_individuals, data::individual->new( idnumber     => $idnumber,
-							 idcolumn     => $idcolumn,
-							 subject_data => \@right_data ));
-    }
+	my @individuals = @{$self->individuals()};
+	unless (defined $individuals[0] ) {
+		croak("first individual not defined in split_vertically");
 
-}
+	}
+
+	my @ind_data = @{$individuals[0]->subject_data};
+	my $ncol = scalar(split(/,/,$ind_data[0]));
+	if (($split_index < 0) || ($split_index >= $ncol)){
+		croak("illegal split_index $split_index in data->split_vertically, have $ncol columns");
+	}
+	if (defined $stratify_index and (($stratify_index < 0) || ($stratify_index >= $ncol) || ($stratify_index == $split_index))  ){
+		croak("illegal stratify_index $stratify_index in data->split_vertically, ".
+			"have $ncol columns and slit index $split_index");
+	}
+	my $left_start=0;
+	my $left_end=$split_index-1;
+	my $right_start=$split_index+1;
+	my $right_end=$ncol-1;
+	my $warned_stratify_error=0;
+
+	for ( my $id = 0; $id <= $#individuals; $id++ ) {
+		my $idnumber = $individuals[$id]->idnumber;
+		my $idcolumn = $individuals[$id]->idcolumn;
+		my @data = @{$individuals[$id]->subject_data};
+		my @left_data=();
+		my @right_data=();
+		my @values=();
+		for ( my $i = 0; $i < scalar(@data); $i++ ) {
+			my @data_row = split( /,/, $data[$i] );
+			push(@values,$data_row[$split_index]);
+			if (defined $stratify_index){
+				if ($i==0){
+					push(@stratify_values,$data_row[$stratify_index]);
+				}else{
+					if (not $warned_stratify_error and ($data_row[$stratify_index] != $stratify_values[-1])){
+						print "ERROR in randomization test preparation: non-unique values for stratification variable\n".
+						"found for individual index $i, using first value and ignoring the rest.\n";
+						$warned_stratify_error=1;
+					}
+				}
+			}
+			if ($left_end >= $left_start){
+				push( @left_data, join( ',', @data_row[$left_start .. $left_end] ) );
+			}else{
+				push(@left_data,'');
+			}
+			if ($right_start <= $right_end){
+				push( @right_data, join( ',', @data_row[$right_start .. $right_end] ) );
+			}else{
+				push(@right_data,'');
+			}
+		}
+
+		push(@split_values,\@values);
+		push( @left_side_individuals, data::individual->new( idnumber     => $idnumber,
+				idcolumn     => $idcolumn,
+				subject_data => \@left_data ));
+		push( @right_side_individuals, data::individual->new( idnumber     => $idnumber,
+				idcolumn     => $idcolumn,
+				subject_data => \@right_data ));
+	}
 
 	return \@left_side_individuals ,\@right_side_individuals ,\@split_values ,\@stratify_values;
 }
@@ -2056,7 +2041,7 @@ sub randomize_data
 	#optional string name_stub
 	#optional directory where to write results
 	#return array of data objects
-#    print "randomize equal obs is $equal_obs\n";
+
 	#setup
 	my ($left_side_individuals,$right_side_individuals,$rand_values,$stratify_values) = 
 	$self->split_vertically(split_index => $rand_index,
