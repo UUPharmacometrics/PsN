@@ -104,16 +104,19 @@ if (not $options{'models'}) {
 	tool::pvar->set_data_files_from_scmdir(@models);
 }
 
+my $dummy_model = model->create_dummy_model;
+
 my $pvar = tool::pvar->new(eval($common_options::parameters),
 	samples => $options{'samples'},
 	parameters => \@parameters,
-	models => \@models);
+	models => [ $dummy_model ],
+	pvar_models => \@models);
 
 $pvar->print_options (cmd_line => $cmd_line,
 		      toolname => 'PVAR',
 		      local_options => [keys %optional_options],
 		      common_options => \@common_options::tool_options);
 
-$pvar->run();
+$pvar->run;
 
-ui->print(category => 'pvar', message => "pvar done\n");
+print "pvar done\n";

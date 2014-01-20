@@ -12,13 +12,13 @@ extends 'newtool';
 
 has 'parameters' => (is => 'rw', isa => 'ArrayRef[Str]');
 has 'samples' => (is => 'rw', isa => 'Int');
-
+has 'pvar_models' => (is => 'rw', isa => 'ArrayRef[model]');
 
 sub BUILD
 {
 	my $self = shift;
 
-	foreach my $model (@{$self->models}) {
+	foreach my $model (@{$self->pvar_models}) {
 		if (@{$model->problems} > 1) {
 			croak("More than one problem per model is currently not supported");
 		}
@@ -32,14 +32,15 @@ sub modelfit_setup
 
 	my @modified_models;
 
-	for (my $i = 0; $i < scalar(@{$self->models}); $i++) {
-		my $model = $self->models->[$i];
+	for (my $i = 0; $i < scalar(@{$self->pvar_models}); $i++) {
+		my $model = $self->pvar_models->[$i];
 
 		foreach my $variant ('epv', 'pv') {
 			my $new_model = $model->copy(
 				output_same_directory => 1,
-				filename => $self->directory . "/m1/$variant$i.mod",
+				filename => File::Spec->catfile(($self->directory, "m1"), "$variant$i.mod"),
 				copy_data => 0,
+				data_file_names => [ 'anyname?' ],
 			);
 
 			if ($model->is_run) {
@@ -56,7 +57,7 @@ sub modelfit_setup
 
 			my $simulation;
 			if (defined $new_model->problems->[0]->simulations) {
-				$simulation = $new_model->problem->[0]->simulations->[0];
+				$simulation = $new_model->problems->[0]->simulations->[0];
 			}
 			if (not defined $simulation) {
 				my $samples;
@@ -73,7 +74,7 @@ sub modelfit_setup
 			$new_model->add_records(type => 'table', record_strings => [@{$self->parameters}, 'NOPRINT','NOAPPEND','FIRSTONLY', 'ONEHEADER', "FILE=$variant$i.tab"]);
 
 			$new_model->_write;
-
+print "**", $new_model->datas->[0]->full_name, "**\n";
 			push(@modified_models, $new_model);
 		}
 	}
@@ -103,7 +104,7 @@ sub modelfit_analyze
 
 	print $output_file "Type,Model,", join(',', @{$self->parameters}), "\n";; 
 
-	for my $model_number (0 .. scalar(@{$self->models} - 1)) {
+	for my $model_number (0 .. scalar(@{$self->pvar_models} - 1)) {
 		$epv_array = $self->_get_epv($model_number);
 		$pv_array = $self->_get_pv($model_number);
 		foreach my $i (0 .. scalar(@$epv_array) - 1) {
@@ -291,7 +292,6 @@ sub set_data_files_from_scmdir
 			Carp("The data file $data_filename could not be found. Please copy it to $directory_name_base and rerun pvar");
 		}
 
-print "**", $data->full_name, "**\n";
 	}
 }
 
