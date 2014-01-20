@@ -35,6 +35,10 @@ A reference OFV-value to use when computing statistics for the results from the 
 \optdefault{parallel\_simulation}{X}
 The number of parallel processes to start for the simulation step (not the estimation step) on a parallel computer. Default is the same setting as option -threads. 
 \nextopt
+\optname{keep\_tables}
+By default, all pre-existing \$TABLE will be deleted from the simulation and alternative models, to save disk space. If option -keep\_tables is set, 
+PsN will instead keep \$TABLE and number the file names according to the sample number.
+\nextopt
 \optname{add\_models}
 This option tells PsN to add the alternative models listed with option -alternative\_models to an old sse run. All models given via option -alternative\_models will be estimated from scratch, so the alternatives from the old run should not be listed in the input again. The -add\_models option requires that the old sse run has been completed without errors. It is necessary to also set the general PsN option -directory to the sse directory of the old run,       e.g. -directory=sse\_dir50. The user must ensure that the -samples option in the new sse run is equal to or smaller than in the old run. If some simulated datasets are missing it will result in an error.       The simulation model must still be given as input on the command-line. If the option -estimate\_simulation is set (it is set by default) old estimation results will be reloaded if they exist, otherwise the simulation model will be estimated. The numbering of the extra models will start at the number of the last old alternative plus 1. Results for the added models are in file sse\_results\_add1.csv 
 \nextopt
@@ -53,9 +57,15 @@ Example (there must be no linebreaks in the actual command):
 significant_digits.gt.3.5
 \end{verbatim} \\
 \nextopt
+\optname{random\_estimation\_inits}
+This option can only be used in combination with -rawres\_input. It turns off 
+simulation with uncertainty and instead uses the parameter values from the 
+rawres\_input file as initial values for the estimation step. When this 
+option is not used, the estimation initial values will be the values
+used for simulating data.
+\nextopt
 \optdefault{out\_filter}{comma-separated list of conditions}
 Default not used. The user may choose to only compute results based on estimations which fulfill certain conditions. The default is to only skip runs where the ofv cannot be read from the lst-file or is equal to 0. Filtering of output can be done on any numeric column in a standard sse raw\_results file, for example minimization\_successful, significant\_digits and covariance\_step\_successful. The allowed relations are .gt. (greater than), .lt. (less than) and .eq. (equal to). If the value in the filter column is 'NA' then that parameter set will be skipped, regardless of the defined filter relation. Conditions are separated with commas. If the remaining number of estimation results after filtering is less than 2, sse will stop with an error message.
-
 
 Example:
 \begin{verbatim}
@@ -169,11 +179,11 @@ The program creates N (N= number of samples) simulation model files that are mod
 \subsection{Important features of the N simulation model files generated from the input model}
 \begin{itemize}
 	\item In \$DATA record IGNORE and ACCEPT statements are kept intact.
-	\item If the input model contains a \$SIMULATION record, the record is kept intact, except that the random seeds are set to different values in each copy, and it is made sure that TRUE=PRIOR is set if the input model has \$PRIOR. If there is no existing \$SIMULATION record, the program creates a new one according to \$SIMULATION ($<$random seed$>$) ONLYSIMULATION and adds TRUE=PRIOR if the input model has \$PRIOR.
+	\item If the input model contains a \$SIMULATION record, the record is kept intact, except that the random seeds are set to different values in each copy, option NSUBS/SUBPROBLEMS is removed, and it is made sure that TRUE=PRIOR is set if the input model has \$PRIOR. If there is no existing \$SIMULATION record, the program creates a new one according to \$SIMULATION ($<$random seed$>$) ONLYSIMULATION and adds TRUE=PRIOR if the input model has \$PRIOR.
 	\item If any \$ESTIMATION record contains LIKELIHOOD, -2LOGLIKELIHOOD, -2LLIKELIHOOD or LAPLACIAN, then ONLYSIMULATION NOPREDICTION is set in \$SIMULATION.  
 	\item All \$ESTIMATION records are removed. 
 	\item Any \$COVARIANCE record is removed. 
-	\item Old \$TABLE records are kept, and the filename in option FILE=$<$filename$>$ will have trailing numberes removed and then be numbered -sim-i, where i is the order number of the simulation model file. 
+	\item If option -keep\_tables is not set, old \$TABLE records are removed. Otherwise old \$TABLE records are kept, and the filename in option FILE=$<$filename$>$ will have trailing numberes removed and then be numbered -sim-i, where i is the order number of the simulation model file. 
 	\item In the newly generated \$TABLE record for the simulated dataset the option FILE=$<$simdata$>$ is set, where $<$simdata$>$ is a unique name for each simulation model file.
 	\item If option -rawres\_input is set, then replace the THETA/OMEGA/SIGMA parameter values in the ith simulation model with the final estimates from the ith results line in the input raw\_results file.
 \end{itemize}
@@ -184,9 +194,9 @@ The program creates N (N= number of samples) simulation model files that are mod
 	\item In \$DATA record, IGNORE is set to @ (i.e. ignore text lines), replacing any old IGNORE=$<$single character$>$. All old IGNORE=(list) and ACCEPT statements are kept. The user must be cautious regarding statistics if IGNORE or ACCEPT statements differ between models.
 	\item Any \$SIMULATION record is removed from the first \$PROBLEM.
 	\item All \$ESTIMATION records are kept. If MSFO=$<$filename$>$ is specified, $<$filename$>$ will first have any trailing numbers removed, and then $<$filename$>$ will have the same numbering appended as the name of the modelfile itself (see above).
-	\item In \$TABLE records of the first \$PROBLEM, the filename in FILE=<filename> will have trailing numberes removed and then be numbered as the modelfile, see above. 
+	\item If option -keep\_tables is not set, old \$TABLE records are removed. Otherwise, in \$TABLE records of the first \$PROBLEM, the filename in FILE=<filename> will have trailing numbers removed and then be numbered as the modelfile, see above. 
 	\item Input is set to $<$simdata$>$ from one of the simulation model files. 
-	\item If an alternative model has a second \$PROBLEM (this is not allowed for the input model unless the first \$PROB has \$PRIOR TNPRI), then it is assumed that the first \$PROB has MSFO=$<$filename$>$ in \$ESTIMATION and that the second \$PROBLEM has an \$MSFI record. PsN will set the same numbered filename in MSFO and MSFI. It is also assumed that the second \$PROBLEM has a \$TABLE record. In the first \$TABLE of the second \$PROBLEM PsN will set FILE=simtabX-Y.dat, where X-Y is numbers as above. The filename in \$DATA of the second \$PROB will be set to the same <simdata> as in the first \$PROBLEM, but IGNORE statements will not be changed. This means that the user must ensure that there is an IGNORE=@ in \$DATA of the second \$PROBLEM. PsN will not change the random seeds in \$SIMULATION, but since the simulated datasets used as input are different, the table output will also be different.
+	\item If an alternative model has a second \$PROBLEM (this is not allowed for the input model unless the first \$PROB has \$PRIOR TNPRI), then it is assumed that the first \$PROB has MSFO=$<$filename$>$ in \$ESTIMATION and that the second \$PROBLEM has an \$MSFI record. PsN will set the same numbered filename in MSFO and MSFI. It is also assumed that the second \$PROBLEM has a \$TABLE record (it is not checked that -keep\_tables is set, the user must do that). In the first \$TABLE of the second \$PROBLEM PsN will set FILE=simtabX-Y.dat, where X-Y is numbers as above. The filename in \$DATA of the second \$PROB will be set to the same <simdata> as in the first \$PROBLEM, but IGNORE statements will not be changed. This means that the user must ensure that there is an IGNORE=@ in \$DATA of the second \$PROBLEM. PsN will not change the random seeds in \$SIMULATION, but since the simulated datasets used as input are different, the table output will also be different.
 	\item If the input model is to be estimated and it has \$PRIOR set, then option PLEV is removed from \$PRIOR.
 \end{itemize}
 
@@ -202,12 +212,4 @@ In sse\_results.csv no individual parameter estimates are reported. Mean, median
 
 The OFV values are treated differently. By default, the OFV value obtained when estimating parameters using the input model is used as the reference for each simulated dataset, and the OFV values obtained when estimating the alternative models are compared with this reference. There are two alternative methods. The first is to set the option -no-estimate\_simulation without setting -ref\_ofv. In this case the OFV-values from the first alternative model are used as references. The second alternative is to set -no-estimate\_simulation together with -ref\_ofv=X, and then X is used as the reference OFV value for all alternative models.
 
-\section{Warnings}
-The sse can fill up the disk unless the user is careful. 
-The sse will not delete existing \$TABLE from any of the input models. 
-This is intentional, because in some applications table output is needed.
-The number of table files generated will be the number if \$TABLE multiplied with the number of samples.
-Also, if the user has supplied \$SIMULATION in the simulation model, PsN will only change SEED in there, nothing else. 
-In particular, NSUBS will not be changed, although NSUBS should not be set at all for the sse. If the user 
-accidentally sets NSUBS=N, all output will be multiplied by N.
 \end{document}

@@ -230,8 +230,11 @@ EOF
 $help_text{-random_estimation_inits} = <<'EOF';
       -random_estimation_inits
 
-			This option turns off simulation with uncertainty and instead give the random
-			inputs to the estimation step. Need to have a rawres_input file specified.
+	This option can only be used in combination with -rawres_input. It turns off 
+	simulation with uncertainty and instead uses the parameter values from the 
+	rawres_input file as initial values for the estimation step. When this 
+	option is not used, the estimation initial values will be the values
+	used for simulating data.
 EOF
 
 $help_text{Post_help_message} = <<'EOF';

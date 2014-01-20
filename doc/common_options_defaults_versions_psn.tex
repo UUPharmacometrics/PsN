@@ -383,8 +383,11 @@ Default not used. Experimental clustering on Windows machine. Non-functional 200
 \optname{run\_on\_slurm}
 Default not used. Use slurm queueing system. When run\_on\_slurm is set option -nmfe will be set automatically. 
 \nextopt
-\optdefault{slurm\_project}{string}
-Default empty. Only valid with -run\_on\_slurm, then optional. Maps to sbatch option -A. 
+\optdefault{slurm\_account}{string}
+Default empty. Only valid with -run\_on\_slurm, then optional. Maps to sbatch option -A. This option was called -slurm\_project in PsN3, but it has been renamed to match the slurm system documentation where the term is 'account'.
+\nextopt
+\optdefault{slurm\_partition}{string}
+Default empty. Only valid with -run\_on\_slurm, then optional. Maps to sbatch option -p.
 \nextopt
 \optdefault{max\_runtime}{'string'}
 Default not used. Only allowed with -run\_on\_slurm. A limit on how long a slurm run may go on before being aborted (option -t to sbatch). Format is either minutes, e.g. -max\_runtime=10, or hours:minutes:seconds, e.g. -max\_runtime=4:0:0, or days-hours, e.g. -max\_runtime=3-0 

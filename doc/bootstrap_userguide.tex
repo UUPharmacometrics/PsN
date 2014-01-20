@@ -30,6 +30,10 @@ The number of subjects in each bootstrap data set. The default       value is se
 \optdefault{stratify\_on}{column name}
 It may be necessary to use stratification in the resampling procedure. For example, if the original data consists of two groups of patients - say 10 patients with full pharmacokinetic profiles and 90 patients with sparse steady state concentration measurements - it may be wise to restrict the resampling procedure to resample within the two groups, producing bootstrap data sets that all contain 10 rich + 90 sparse data patients but with different compositions. The default is not to use stratification. Set -stratify\_on to the column (the name in \$INPUT) that defines the two groups. Note that the option sample\_size has a different behaviour when stratified resampling is used. 
 \nextopt
+\optname{keep\_tables}
+By default, all \$TABLE will be deleted from the bootstrap models, to save disk space. If option -keep\_tables is set, 
+PsN will instead keep \$TABLE, which can require much disk space.
+\nextopt
 \optname{bca}
 Default not used. When used, the bootstrap utility will calculate the confidence intervals through the BCa method \cite{Efron}. The BCa is intended for calculation of second-order correct confidence intervals. Warning: Using bca is very time-consuming. 
 \nextopt
@@ -103,7 +107,7 @@ The row order is consistent between the files raw\_results, included\_individual
 
 If a csv-format dataset has an empty first column, i.e. there is a leading comma on each line in the datafile, bootstrap will crash. Avoid the problem by editing the datafile, removing the leading empty column.
 
-It is recommented to remove all \$TABLE from the modelfile, otherwise there will be much extra output produced. For the same reason it is recommended to remove PRINT options from \$ESTIMATION. 
+It is recommended to remove PRINT options from \$ESTIMATION, to save disk space.
 
 ACCEPT/IGNORE statements based on ID will cause errors since PsN renumbers the individuals during bootstrapping. There is an input check for this, but it is recommended to not rely on this check.
 
