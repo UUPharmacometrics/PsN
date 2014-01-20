@@ -5129,6 +5129,20 @@ sub _init_attr
 	return \@parameter_values;
 }
 
+
+sub create_dummy_model
+{
+  my $dummy_prob = model::problem->new(ignore_missing_files=> 1,
+					   prob_arr       => ['$PROB','$INPUT ID','$DATA dummy.txt']);
+  
+  my $model = model->new(filename => 'dummy',
+				    problems => [$dummy_prob],
+				    skip_data_parsing=> 1,
+				    ignore_missing_files => 1);
+
+	return $model;
+}
+
 no Moose;
 __PACKAGE__->meta->make_immutable;
 1;

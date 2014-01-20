@@ -344,15 +344,9 @@ if (defined $options{'simulation_model'} or
 	}
     }
 
-}else{
-# tool class requires a model, but we do not want to give one. Use dummy
-  my $dummy_prob = model::problem -> new ( ignore_missing_files=> 1,
-					   prob_arr       => ['$PROB','$INPUT ID','$DATA dummy.txt']);
-  
-  $simulation_model = model -> new (filename => 'dummy_for_mcmp',
-				    problems => [$dummy_prob],
-				    skip_data_parsing=> 1,
-				    ignore_missing_files => 1);
+} else {
+	# tool class requires a model, but we do not want to give one. Use dummy
+  $simulation_model = model->create_dummy_model;
 }
 
 my $mcmp = tool::mcmp -> 
