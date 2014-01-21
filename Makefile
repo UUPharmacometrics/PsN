@@ -163,7 +163,6 @@ DIALIBFILES=debug.pm \
 	tool/xv_step.pm \
 	tool/xv.pm \
 	tool/lasso.pm \
-	tool/mcmp.pm \
 	tool/pind.pm \
 	tool/bootstrap.pm \
 	tool/randtest.pm \
@@ -216,9 +215,6 @@ libgen/tool/xv_step.pm libgen/tool/xv.pm : diagrams/xv.dia
 
 libgen/tool/lasso.pm : diagrams/lasso.dia
 	$(DIA2CODE) -t perl -d $(DIRPM) diagrams/lasso.dia
-
-libgen/tool/mcmp.pm : diagrams/mcmp.dia
-	$(DIA2CODE) -t perl -d $(DIRPM) diagrams/mcmp.dia
 
 libgen/tool/pind.pm : diagrams/pind.dia
 	$(DIA2CODE) -t perl -d $(DIRPM) diagrams/pind.dia

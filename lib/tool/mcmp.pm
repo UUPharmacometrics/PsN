@@ -1,7 +1,6 @@
-# {{{ include_statements
-start include statements
-	use include_modules;
-#use Carp;
+package tool::mcmp;
+
+use include_modules;
 use Data::Dumper;
 use Math::Random;
 use strict;
@@ -11,13 +10,43 @@ use ui;
 use Config;
 use File::Copy qw/cp mv/;
 use OSspecific;
-end include
-# }}}
+use Moose;
+use MooseX::Params::Validate;
 
-# {{{ new
+extends 'newtool';
 
-start new
+has 'samples_hash' => ( is => 'rw', isa => 'HashRef', default => sub { {} } );
+has 'df' => ( is => 'rw', isa => 'Int', default => 1 );
+has 'rounding' => ( is => 'rw', isa => 'Int', default => 1 );
+has 'strata_ofv' => ( is => 'rw', isa => 'HashRef', default => sub { {} } );
+has 'strata_to_index' => ( is => 'rw', isa => 'HashRef', default => sub { {} } );
+has 'index_to_strata' => ( is => 'rw', isa => 'HashRef', default => sub { {} } );
+has 'n_individuals' => ( is => 'rw', isa => 'Int' );
+has 'significance_level' => ( is => 'rw', isa => 'Num', default => 5 );
+has 'significance_index' => ( is => 'rw', isa => 'Int', default => 0 );
+has 'simdata' => ( is => 'rw', isa => 'Str' );
+has 'table_full' => ( is => 'rw', isa => 'Str' );
+has 'table_reduced' => ( is => 'rw', isa => 'Str' );
+has 'table_strata' => ( is => 'rw', isa => 'Str' );
+has 'n_bootstrap' => ( is => 'rw', isa => 'Int', default => 10000 );
+has 'stratify_on' => ( is => 'rw', isa => 'Str' );
+has 'increment' => ( is => 'rw', isa => 'Int' );
+has 'start_size' => ( is => 'rw', isa => 'Int' );
+has 'max_size' => ( is => 'rw', isa => 'Int' );
+has 'target_power' => ( is => 'rw', isa => 'Int', default => 98 );
+has 'critical_ofv' => ( is => 'rw', isa => 'Num' );
+has 'critical_array' => ( is => 'rw', isa => 'ArrayRef[Num]', default => sub { [] } );
+has 'algorithm' => ( is => 'rw', isa => 'Int', default => 1 );
+has 'curve' => ( is => 'rw', isa => 'Bool', default => 1 );
+has 'reduced_model' => ( is => 'rw', isa => 'model' );
+has 'full_model' => ( is => 'rw', isa => 'model' );
+has 'logfile' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { ['mcmp.log'] } );
+has 'results_file' => ( is => 'rw', isa => 'Str', default => 'mcmp_results.csv' );
+
+sub BUILD
 {
+	my $this  = shift;
+	my %parm  = @_;
 
   if (defined $this->table_full){
     unless ( -e $this->table_full ){
@@ -108,18 +137,15 @@ start new
     croak("Unless NONMEM7 is used, -stratify_on must be at most 4 characters")
 	if (length($this->stratify_on)>4);
   }
-
-
 }
-end new
 
-# }}}
-
-
-
-# {{{ modelfit_setup
-start modelfit_setup
+sub modelfit_setup
 {
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+		 model_number => { isa => 'Int', optional => 1 }
+	);
+	my $model_number = $parm{'model_number'};
 
   if (defined $self->critical_ofv()){
     if ($self->critical_ofv()<0){
@@ -504,172 +530,15 @@ start modelfit_setup
 	     data_path =>'../../m'.$model_number.'/',
 	     ) );
   ui -> print (category=>'mcmp', message=> "\nEstimating:");
-
 }
-end modelfit_setup
-# }}}
 
-
-# {{{ create_unique_values_hash
-
-start create_unique_values_hash
+sub modelfit_analyze
 {
-  #in @sorted_column
-  #out %value_hash
-  my $value_index = 0;
-
-  foreach my $val  (@{$sorted_column}){
-    if ($value_index == 0){
-      $value_hash{$value_index}=$val;
-      $value_index++;
-      next;
-    }
-    unless ($val == $value_hash{($value_index-1)}){
-      $value_hash{$value_index}=$val;
-      $value_index++;
-    }
-    last if ($val == $sorted_column->[-1])
-  }
-}
-end create_unique_values_hash
-
-# }}}
-
-
-start read_data
-{
-
-  my ($full_file,$reduced_file);
-  my @strata;
-  my $n_individuals;
-  my $n_strata=1;
-  my %index_to_strata_hash;
-  my %strata_to_index_hash;
-
-  if (defined $self->table_full()){
-    $full_file = $self->table_full();
-  } else {
-    if ($PsN::nm_major_version < 7){
-      $full_file = $self->full_model()->directory().'full.iotab1';
-    }else{
-      $full_file = $self->full_model()->directory().'full.phi';
-    }
-  }
-  unless ( -e $full_file ){
-    croak("File $full_file \nwith iofv output for full model does not exist.");
-  }
-    
-  if (defined $self->table_reduced()){
-    $reduced_file = $self->table_reduced();
-  } else {
-    if ($PsN::nm_major_version < 7){
-      $reduced_file = $self->reduced_model()->directory().'reduced.iotab1';
-    }else{
-      $reduced_file = $self->reduced_model()->directory().'reduced.phi';
-    }
-  }
-
-  unless ( -e $reduced_file ){
-    croak("File $reduced_file \nwith iofv output for reduced model does not exist.");
-  }
-    
-  if (defined $self->stratify_on()){
-    unless ( -e $self->table_strata() ){
-      croak("File ".$self->table_strata().
-		   " \nwith stratification data does not exist.");
-    }
-    my $d = data -> new(filename=>$self->table_strata()); #läser in allt. 
-    
-    $n_individuals= scalar(@{$d->individuals});
-    @strata = @{$d -> column_to_array('column'=>$self->stratify_on())};
-    $d = undef;
-    %index_to_strata_hash = 
-	%{$self->create_unique_values_hash(sorted_column => [(sort {$a <=> $b} @strata)])}; 
-    $n_strata = scalar(keys %index_to_strata_hash );
-    foreach my $key (keys %index_to_strata_hash){
-      $strata_to_index_hash{$index_to_strata_hash{$key}}=$key;
-    }
-  }
-   
-  my @delta_ofv = (0) x $n_individuals;
-
-  my $line_i=0;
-  open(FH, $reduced_file ) or croak("Could not open reduced file.");
-  while (<FH>){
-    next unless (/^\s*[0-9]/);
-    #split on space, take the last value
-    my @arr = split;
-    $delta_ofv[$line_i]=$arr[-1];
-    $line_i++;
-  }
-  close(FH);
-  if (defined $self->stratify_on()){
-    if ($line_i != $n_individuals){
-		croak("The number of individuals in reduced.phi ($line_i) and strata.tab ($n_individuals) are not the same.\nCheck the files manually.\n".
-			  "Possibly rerun reduced.mod manually to investigate the error.\n".
-			  "$reduced_file\n".
-			  $self->table_strata()."\n");
-    }
-  }else{
-    $n_individuals = $line_i;
-  }  
-
-  my %strata_ofv;
-  for (my $i=0;$i< $n_strata; $i++){
-    $strata_ofv{$i}=[()];
-  }
-  
-  $line_i=0;
-  open(FH, $full_file ) or croak("Could not open full file.");
-  while (<FH>){
-    next unless (/^\s*[0-9]/);
-    #split on space, take the last value
-    #stratify here already
-    my @arr = split;
-    if (defined $self->stratify_on()){
-      push(@{$strata_ofv{$strata_to_index_hash{$strata[$line_i]}}},
-	   ($delta_ofv[$line_i] - $arr[-1]));
-    }else{
-      push(@{$strata_ofv{0}},($delta_ofv[$line_i] - $arr[-1]));
-    }
-    $line_i++;
-  }
-  close(FH);
-  if ($line_i != $n_individuals){
-    croak("The number of individuals in $reduced_file and ".
-	       "$full_file are not the same.");
-  }  
-  unless (defined $self->max_size()){
-    $self->max_size($n_individuals);
-  }
-  $self->strata_ofv(\%strata_ofv);
-  $self->strata_to_index(\%strata_to_index_hash);
-  $self->index_to_strata(\%index_to_strata_hash);
-  $self->n_individuals($n_individuals);
-
-  ui -> print (category=>'mcmp', message=> "Done reading and stratifying iofv.");
-
-}
-end read_data
-
-# }}}
-
-start cleanup
-{
-  unlink $self -> directory."simulation_dir1/NM_run1/mcmp-sim.dat";
-  unlink $self -> directory."simulation_dir1/NM_run1/mcmp-sim-1.dat";
-  unlink $self -> directory."modelfit_dir1/NM_run1/iotab1";
-  unlink $self -> directory."modelfit_dir1/NM_run1/iotab1-1";
-  unlink $self -> directory."modelfit_dir1/NM_run2/iotab1";
-  unlink $self -> directory."modelfit_dir1/NM_run2/iotab1-1";
-
-#  rmdir $self -> directory."m1";
-}
-end cleanup
-
-# {{{ modelfit_analyze
-start modelfit_analyze
-{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+		 model_number => { isa => 'Num', optional => 1 }
+	);
+	my $model_number = $parm{'model_number'};
 
   $self -> read_data(); #creates $self variables
 
@@ -873,12 +742,16 @@ start modelfit_analyze
   close(RES);
   $self->cleanup();
 }
-end modelfit_analyze
-# }}} modelfit_analyze
 
-# {{{ round
-start round
+sub round
 {
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+		 number => { isa => 'Num', optional => 0 }
+	);
+	my $number = $parm{'number'};
+	my $integer_out;
+
   my $floor=int($number);
   my $rem=$number-$floor;
   if ($rem >= 0){
@@ -887,13 +760,18 @@ start round
     $integer_out = (abs($rem) >= 0.5)? $floor-1 : $floor;
   }
 
+	return $integer_out;
 }
-end round
-#}}} round
 
-# {{{ ceil
-start ceil
+sub ceil
 {
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+		 number => { isa => 'Num', optional => 0 }
+	);
+	my $number = $parm{'number'};
+	my $integer_out;
+
   my $floor=int($number);
   my $rem=$number-$floor;
   if ($rem > 0){
@@ -903,13 +781,32 @@ start ceil
     $integer_out = $floor;
   } 
 
+	return $integer_out;
 }
-end ceil
-#}}} ceil
 
-
-start get_total_samples
+sub median
 {
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+		 sorted_array => { isa => 'Ref', optional => 1 }
+	);
+	my $sorted_array = $parm{'sorted_array'};
+	my $result;
+
+	return $result;
+}
+
+sub get_total_samples
+{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+		 last_N => { isa => 'Ref', optional => 1 },
+		 last_Y => { isa => 'Ref', optional => 1 }
+	);
+	my $last_N = $parm{'last_N'};
+	my $last_Y = $parm{'last_Y'};
+	my $total_samples;
+
   if ($last_N->[0] == 0){ #most recent step
     #this is the first iteration
     $total_samples = $self->ceil(number=> (10/$self->increment()))*$self->increment();
@@ -943,5 +840,170 @@ start get_total_samples
   }
   $self->samples_hash->{$total_samples}=1;
     
+	return $total_samples;
 }
-end get_total_samples
+
+sub read_data
+{
+	my $self = shift;
+
+  my ($full_file,$reduced_file);
+  my @strata;
+  my $n_individuals;
+  my $n_strata=1;
+  my %index_to_strata_hash;
+  my %strata_to_index_hash;
+
+  if (defined $self->table_full()){
+    $full_file = $self->table_full();
+  } else {
+    if ($PsN::nm_major_version < 7){
+      $full_file = $self->full_model()->directory().'full.iotab1';
+    }else{
+      $full_file = $self->full_model()->directory().'full.phi';
+    }
+  }
+  unless ( -e $full_file ){
+    croak("File $full_file \nwith iofv output for full model does not exist.");
+  }
+    
+  if (defined $self->table_reduced()){
+    $reduced_file = $self->table_reduced();
+  } else {
+    if ($PsN::nm_major_version < 7){
+      $reduced_file = $self->reduced_model()->directory().'reduced.iotab1';
+    }else{
+      $reduced_file = $self->reduced_model()->directory().'reduced.phi';
+    }
+  }
+
+  unless ( -e $reduced_file ){
+    croak("File $reduced_file \nwith iofv output for reduced model does not exist.");
+  }
+    
+  if (defined $self->stratify_on()){
+    unless ( -e $self->table_strata() ){
+      croak("File ".$self->table_strata().
+		   " \nwith stratification data does not exist.");
+    }
+    my $d = data -> new(filename=>$self->table_strata()); #läser in allt. 
+    
+    $n_individuals= scalar(@{$d->individuals});
+    @strata = @{$d -> column_to_array('column'=>$self->stratify_on())};
+    $d = undef;
+    %index_to_strata_hash = 
+	%{$self->create_unique_values_hash(sorted_column => [(sort {$a <=> $b} @strata)])}; 
+    $n_strata = scalar(keys %index_to_strata_hash );
+    foreach my $key (keys %index_to_strata_hash){
+      $strata_to_index_hash{$index_to_strata_hash{$key}}=$key;
+    }
+  }
+   
+  my @delta_ofv = (0) x $n_individuals;
+
+  my $line_i=0;
+  open(FH, $reduced_file ) or croak("Could not open reduced file.");
+  while (<FH>){
+    next unless (/^\s*[0-9]/);
+    #split on space, take the last value
+    my @arr = split;
+    $delta_ofv[$line_i]=$arr[-1];
+    $line_i++;
+  }
+  close(FH);
+  if (defined $self->stratify_on()){
+    if ($line_i != $n_individuals){
+		croak("The number of individuals in reduced.phi ($line_i) and strata.tab ($n_individuals) are not the same.\nCheck the files manually.\n".
+			  "Possibly rerun reduced.mod manually to investigate the error.\n".
+			  "$reduced_file\n".
+			  $self->table_strata()."\n");
+    }
+  }else{
+    $n_individuals = $line_i;
+  }  
+
+  my %strata_ofv;
+  for (my $i=0;$i< $n_strata; $i++){
+    $strata_ofv{$i}=[()];
+  }
+  
+  $line_i=0;
+  open(FH, $full_file ) or croak("Could not open full file.");
+  while (<FH>){
+    next unless (/^\s*[0-9]/);
+    #split on space, take the last value
+    #stratify here already
+    my @arr = split;
+    if (defined $self->stratify_on()){
+      push(@{$strata_ofv{$strata_to_index_hash{$strata[$line_i]}}},
+	   ($delta_ofv[$line_i] - $arr[-1]));
+    }else{
+      push(@{$strata_ofv{0}},($delta_ofv[$line_i] - $arr[-1]));
+    }
+    $line_i++;
+  }
+  close(FH);
+  if ($line_i != $n_individuals){
+    croak("The number of individuals in $reduced_file and ".
+	       "$full_file are not the same.");
+  }  
+  unless (defined $self->max_size()){
+    $self->max_size($n_individuals);
+  }
+  $self->strata_ofv(\%strata_ofv);
+  $self->strata_to_index(\%strata_to_index_hash);
+  $self->index_to_strata(\%index_to_strata_hash);
+  $self->n_individuals($n_individuals);
+
+  ui -> print (category=>'mcmp', message=> "Done reading and stratifying iofv.");
+}
+
+sub cleanup
+{
+	my $self = shift;
+
+  unlink $self->directory . "simulation_dir1/NM_run1/mcmp-sim.dat";
+  unlink $self->directory . "simulation_dir1/NM_run1/mcmp-sim-1.dat";
+  unlink $self->directory . "modelfit_dir1/NM_run1/iotab1";
+  unlink $self->directory . "modelfit_dir1/NM_run1/iotab1-1";
+  unlink $self->directory . "modelfit_dir1/NM_run2/iotab1";
+  unlink $self->directory . "modelfit_dir1/NM_run2/iotab1-1";
+}
+
+sub create_unique_values_hash
+{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+		 sorted_column => { isa => 'Ref', optional => 1 }
+	);
+	my %value_hash;
+	my $sorted_column = $parm{'sorted_column'};
+
+  #in @sorted_column
+  #out %value_hash
+  my $value_index = 0;
+
+  foreach my $val  (@{$sorted_column}){
+    if ($value_index == 0){
+      $value_hash{$value_index}=$val;
+      $value_index++;
+      next;
+    }
+    unless ($val == $value_hash{($value_index-1)}){
+      $value_hash{$value_index}=$val;
+      $value_index++;
+    }
+    last if ($val == $sorted_column->[-1])
+  }
+
+	return \%value_hash;
+}
+
+sub mcmp_analyze
+{
+	my $self = shift;
+}
+
+no Moose;
+__PACKAGE__->meta->make_immutable;
+1;
