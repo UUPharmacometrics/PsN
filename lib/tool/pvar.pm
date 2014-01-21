@@ -74,7 +74,7 @@ sub modelfit_setup
 			$new_model->add_records(type => 'table', record_strings => [@{$self->parameters}, 'NOPRINT','NOAPPEND','FIRSTONLY', 'ONEHEADER', "FILE=$variant$i.tab"]);
 
 			$new_model->_write;
-print "**", $new_model->datas->[0]->full_name, "**\n";
+
 			push(@modified_models, $new_model);
 		}
 	}
