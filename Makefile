@@ -294,6 +294,8 @@ documentation: lib/doc/*.pdf $(PDFFILES)
 	@ cd PsN-Source/lib/doc/; zip PsN_pdf_documentation *.pdf *.xls *.scm
 	@ cd PsN-Source/lib/doc/; tar -czf PsN_pdf_documentation.tar.gz *.pdf *.xls *.scm 
 
+testpackage:
+	@ zip -r psn_test_package test
 
 BINFILES= boot_scm \
 	bootstrap \
