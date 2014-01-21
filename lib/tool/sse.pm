@@ -1,20 +1,46 @@
-# {{{ include statements
+package tool::sse;
 
-start include statements
-#use Carp;
 use include_modules;
 use tool::cdd;
 use tool::modelfit;
 use Math::Random;
 use Data::Dumper;
 use Config;
-end include statements
+use Moose;
+use MooseX::Params::Validate;
 
-# }}} include statements
+extends 'newtool';
 
-# {{{ new
+has 'samples' => ( is => 'rw', isa => 'Int', default => 100 );
+has 'alternative_models' => ( is => 'rw', isa => 'ArrayRef[model]', default => sub { [] } );
+has 'random_estimation_inits' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'mc_models' => ( is => 'rw', isa => 'ArrayRef[model]', default => sub { [] } );
+has 'initial_values' => ( is => 'rw', isa => 'Any' );
+has 'first_alternative' => ( is => 'rw', isa => 'Int' );
+has 'bayes' => ( is => 'rw', isa => 'Bool', isa => 0 );
+has 'simulation_rawres' => ( is => 'rw', isa => 'Str' );
+has 'in_filter' => ( is => 'rw', isa => 'ArrayRef[Str]' );
+has 'out_filter' => ( is => 'rw', isa => 'ArrayRef[Str]' );
+has 'covariance_file' => ( is => 'rw', isa => 'Str' );
+has 'rawres_input' => ( is => 'rw', isa => 'Str' );
+has 'offset_rawres' => ( is => 'rw', isa => 'Int', default => 1 );
+has 'add_models' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'recompute' => ( is => 'rw', isa => 'Str' );
+has 'ref_ofv' => ( is => 'rw', isa => 'Num' );
+has 'parallel_simulations' => ( is => 'rw', isa => 'Int' );
+has 'estimate_simulation' => ( is => 'rw', isa => 'Bool', default => 1 );
+has 'keep_tables' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'have_nwpri' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'have_tnpri' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'probnum' => ( is => 'rw', isa => 'Int', default => 1 );
+has 'logfile' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { ['sse.log'] } );
+has 'results_file' => ( is => 'rw', isa => 'Str', default => 'sse_results.csv' );
 
-start new
+
+sub BUILD
+{
+	my $this  = shift;
+	my %parm  = @_;
 
 	if ($this->random_estimation_inits and not defined $this->rawres_input) {
 		croak('Need rawres_input when using random_estimation_inits');
@@ -32,9 +58,9 @@ start new
 		$this->$accessor(\@new_files);
 	}	
 
-	if ( scalar (@{$this -> models->[0]-> problems}) > 2 ){
+	if ( scalar (@{$this -> models->[0]-> problems}) > 2 ) {
 		croak('Cannot have more than two $PROB in the simulation model.');
-	}elsif  (scalar (@{$this -> models->[0]-> problems}) == 2 ){
+	} elsif (scalar (@{$this -> models->[0]-> problems}) == 2 ) {
 		if ((defined $this -> models->[0]-> problems->[0]->priors()) and 
 			scalar(@{$this -> models->[0]-> problems->[0] -> priors()})>0 ){
 			my $tnpri=0;
@@ -94,13 +120,17 @@ start new
 			croak("Must set -samples to at least 2.");
 		}
 	}
-end new
 
-# }}}
+}
 
+sub modelfit_setup
+{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+		 model_number => { isa => 'Int', optional => 1 }
+	);
+	my $model_number = $parm{'model_number'};
 
-
-start modelfit_setup
 { 
 	return if (defined $self->recompute);
 	my $model = $self -> models -> [$model_number-1];
@@ -1417,39 +1447,17 @@ start modelfit_setup
 			  _modelfit_raw_results_callback( model_number => $model_number ),
 			  %subargs ) );
 }
-end modelfit_setup
-
-
-
-start cleanup
-{
-  #remove tablefiles in simulation NM_runs, they are 
-  #copied to m1 by modelfit and read from there anyway.
-  for (my $samp=1;$samp<=$self->samples(); $samp++){
-    unlink $self -> directory."/simulation_dir1/NM_run".$samp."/mc-sim-".$samp.".dat";
-    unlink $self -> directory."/simulation_dir1/NM_run".$samp."/mc-sim-".$samp."-1.dat"; #retry
-  }
 
 }
-end cleanup
 
-
-
-# {{{ modelfit_analyze
-
-start modelfit_analyze
-	return if (defined $self->recompute);
-	return if ((scalar(@{$self -> alternative_models}) < 1) && 
-		(not $self->estimate_simulation));
-
-	$self -> tools->[0] -> print_results if (defined $self->tools); 
-end modelfit_analyze
-
-# }}}
-
-# {{{ _modelfit_raw_results_callback
-
-start _modelfit_raw_results_callback
+sub _modelfit_raw_results_callback
+{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+		 model_number => { isa => 'Int', optional => 1 }
+	);
+	my $model_number = $parm{'model_number'};
+	my $subroutine;
 
 # Use the mc's raw_results file.
 my ($dir,$file) = 
@@ -1655,16 +1663,28 @@ $subroutine = sub {
 	
 };
 return $subroutine;
+}
 
-end _modelfit_raw_results_callback
+sub modelfit_analyze
+{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+		 model_number => { isa => 'Int', optional => 1 }
+	);
+	my $model_number = $parm{'model_number'};
 
-# }}} _modelfit_raw_results_callback
+	return if (defined $self->recompute);
+	return if ((scalar(@{$self -> alternative_models}) < 1) && 
+		(not $self->estimate_simulation));
 
-# {{{ prepare_results
+	$self -> tools->[0] -> print_results if (defined $self->tools); 
+}
 
-start prepare_results
-{ 
-	$self -> cleanup();
+sub prepare_results
+{
+	my $self = shift;
+
+	$self->cleanup();
 	my $n_alternatives=0;
 	my $samples = $self -> samples;
 	if (defined $self->recompute()){
@@ -2153,50 +2173,67 @@ start prepare_results
 		  }
 	  } #end second loop model_index 
 	}
-
-} 
-end prepare_results
-
-# }}}
-
-
-
-start format_initials
-{
-    #in is initials_object reference of config-tiny object
-    #out is initials_hash (reference of) hash  with keys theta omega sigma, of arrays over parameter indices of arrays over samples
-
-    my %n_initials;
-
-    my $n_samples=scalar(keys %{$initials_object});
-    $initials_hash{'theta'} = [];
-    $initials_hash{'omega'} = [];
-    $initials_hash{'sigma'} = [];
-
-    foreach my $measure ('theta','omega','sigma'){
-	my @arr = split(/,/,$initials_object -> {0} -> {$measure});
-	$n_initials{$measure}=scalar(@arr);
-	for (my $i=0; $i< $n_initials{$measure}; $i++){
-	    push(@{$initials_hash{$measure}},[]);
-	}
-    }
-
-    for (my $sample=0; $sample< $n_samples; $sample++){
-	foreach my $measure ('theta','omega','sigma'){
-	    my @arr = split(/,/,$initials_object -> {$sample} -> {$measure});
-	    for (my $i=0; $i< $n_initials{$measure}; $i++){
-		push(@{$initials_hash{$measure}->[$i]},$arr[$i]);
-	    }
-	}
-    }
 }
-end format_initials
 
-
-# {{{ rmse_percent
-
-start compute_rmse
+sub format_initials
 {
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+		initials_object => { isa => 'Ref', optional => 1 },
+		initial_value => { isa => 'Num', optional => 1 }
+	);
+	my $initials_object = $parm{'initials_object'};
+	my $initial_value = $parm{'initial_value'};
+	my %initials_hash;
+
+	#in is initials_object reference of config-tiny object
+	#out is initials_hash (reference of) hash  with keys theta omega sigma, of arrays over parameter indices of arrays over samples
+
+	my %n_initials;
+
+	my $n_samples=scalar(keys %{$initials_object});
+	$initials_hash{'theta'} = [];
+	$initials_hash{'omega'} = [];
+	$initials_hash{'sigma'} = [];
+
+	foreach my $measure ('theta','omega','sigma'){
+		my @arr = split(/,/,$initials_object -> {0} -> {$measure});
+		$n_initials{$measure}=scalar(@arr);
+		for (my $i=0; $i< $n_initials{$measure}; $i++){
+			push(@{$initials_hash{$measure}},[]);
+		}
+	}
+
+	for (my $sample=0; $sample< $n_samples; $sample++){
+		foreach my $measure ('theta','omega','sigma'){
+			my @arr = split(/,/,$initials_object -> {$sample} -> {$measure});
+			for (my $i=0; $i< $n_initials{$measure}; $i++){
+				push(@{$initials_hash{$measure}->[$i]},$arr[$i]);
+			}
+		}
+	}
+
+	return \%initials_hash;
+}
+
+sub compute_rmse
+{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+		 use_runs => { isa => 'ArrayRef[Bool]', optional => 0 },
+		 column_index => { isa => 'Int', optional => 0 },
+		 start_row_index => { isa => 'Int', default => 0, optional => 1 },
+		 end_row_index => { isa => 'Int', optional => 1 },
+		 initial_values => { isa => 'ArrayRef', optional => 0 }
+	);
+	my @use_runs = defined $parm{'use_runs'} ? @{$parm{'use_runs'}} : ();
+	my $column_index = $parm{'column_index'};
+	my $start_row_index = $parm{'start_row_index'};
+	my $end_row_index = $parm{'end_row_index'};
+	my @initial_values = defined $parm{'initial_values'} ? @{$parm{'initial_values'}} : ();
+	my $rmse;
+	my $relative_rmse_percent;
+
   #input is integers $column_index, $start_row_index, $end_row_index and ref of array floats @initial_values
   #output is scalar $rmse_percent
 
@@ -2242,13 +2279,29 @@ start compute_rmse
   }else{
     $relative_rmse_percent= 100*sqrt($sum_squared_relative_errors/$row_count_relative);
   }
+
+	return $rmse ,$relative_rmse_percent;
 }
-end compute_rmse
 
-
-
-start compute_bias
+sub compute_bias
 {
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+		 use_runs => { isa => 'ArrayRef[Bool]', optional => 0 },
+		 column_index => { isa => 'Int', optional => 0 },
+		 start_row_index => { isa => 'Int', default => 0, optional => 1 },
+		 end_row_index => { isa => 'Int', optional => 1 },
+		 initial_values => { isa => 'ArrayRef', optional => 0 }
+	);
+	my @use_runs = defined $parm{'use_runs'} ? @{$parm{'use_runs'}} : ();
+	my $column_index = $parm{'column_index'};
+	my $start_row_index = $parm{'start_row_index'};
+	my $end_row_index = $parm{'end_row_index'};
+	my @initial_values = defined $parm{'initial_values'} ? @{$parm{'initial_values'}} : ();
+	my $absolute_bias;
+	my $relative_absolute_bias_percent;
+	my $relative_bias_percent;
+
   #input is integers $column_index, $start_row_index, $end_row_index and ref of array floata $initial_values
   #output is scalar $relative_bias_percent
 
@@ -2299,15 +2352,73 @@ start compute_bias
       $relative_bias_percent= ($sum_relative_errors/$row_count_relative)*100;
       $relative_absolute_bias_percent= ($sum_relative_absolute_errors/$row_count_relative)*100;
   }
+
+	return $absolute_bias ,$relative_absolute_bias_percent ,$relative_bias_percent;
 }
-end compute_bias
 
-
-
-# {{{ skewness_and_kurtosis
-
-start skewness_and_kurtosis
+sub median
 {
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+		use_runs => { isa => 'ArrayRef[Bool]', optional => 0 },
+		column_index => { isa => 'Int', optional => 0 },
+		start_row_index => { isa => 'Int', default => 0, optional => 1 },
+		end_row_index => { isa => 'Int', optional => 1 }
+	);
+	my @use_runs = defined $parm{'use_runs'} ? @{$parm{'use_runs'}} : ();
+	my $column_index = $parm{'column_index'};
+	my $start_row_index = $parm{'start_row_index'};
+	my $end_row_index = $parm{'end_row_index'};
+	my $median;
+
+	#input is integers $column_index, $start_row_index, $end_row_index 
+
+	unless( $end_row_index ){
+		$end_row_index = $#{$self -> raw_results};
+	}
+
+	croak("Bad row index input") if ($start_row_index >= $end_row_index);
+
+	my @temp;
+
+	for (my $i=$start_row_index; $i<=$end_row_index; $i++){
+		if ($use_runs[$i-$start_row_index]){
+			if (defined $self->raw_results->[$i][$column_index]){
+				push( @temp, $self->raw_results->[$i][$column_index] );
+			}else{
+			}
+		}
+	}
+
+	@temp = sort({$a <=> $b} @temp);
+	if( scalar( @temp ) % 2 ){
+		$median = $temp[$#temp/2];
+	} else {
+		$median = ($temp[@temp/2]+$temp[(@temp-2)/2]) / 2;
+	}
+
+	return $median;
+}
+
+sub skewness_and_kurtosis
+{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+		 use_runs => { isa => 'ArrayRef[Bool]', optional => 0 },
+		 column_index => { isa => 'Int', optional => 0 },
+		 start_row_index => { isa => 'Int', default => 0, optional => 1 },
+		 end_row_index => { isa => 'Int', optional => 1 }
+	);
+	my @use_runs = defined $parm{'use_runs'} ? @{$parm{'use_runs'}} : ();
+	my $column_index = $parm{'column_index'};
+	my $start_row_index = $parm{'start_row_index'};
+	my $end_row_index = $parm{'end_row_index'};
+	my $skewness;
+	my $kurtosis;
+	my $mean;
+	my $stdev;
+	my $warn = 0;
+
   #input is integers $column_index, $start_row_index, $end_row_index 
   
   unless( $end_row_index ){
@@ -2362,15 +2473,26 @@ start skewness_and_kurtosis
     $kurtosis = -3 + $sum_errors_pow4/($row_count*($stdev**4));
 
   }
+
+	return $skewness ,$kurtosis ,$mean ,$stdev ,$warn;
 }
-end skewness_and_kurtosis
 
-# }}} skewness_and_kurtosis
-
-# {{{ max_and_min
-
-start max_and_min
+sub max_and_min
 {
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+		 use_runs => { isa => 'ArrayRef[Bool]', optional => 0 },
+		 column_index => { isa => 'Int', optional => 0 },
+		 start_row_index => { isa => 'Int', default => 0, optional => 1 },
+		 end_row_index => { isa => 'Int', optional => 1 }
+	);
+	my @use_runs = defined $parm{'use_runs'} ? @{$parm{'use_runs'}} : ();
+	my $column_index = $parm{'column_index'};
+	my $start_row_index = $parm{'start_row_index'};
+	my $end_row_index = $parm{'end_row_index'};
+	my $maximum;
+	my $minimum;
+
   #input is integers $column_index, $start_row_index, $end_row_index 
   
   unless( $end_row_index ){
@@ -2392,43 +2514,22 @@ start max_and_min
 			}
     }
   }
+
+	return $maximum ,$minimum;
 }
-end max_and_min
 
-# }}} max_and_min
-
-
-# {{{ median
-
-start median
+sub cleanup
 {
-  #input is integers $column_index, $start_row_index, $end_row_index 
-  
-  unless( $end_row_index ){
-    $end_row_index = $#{$self -> raw_results};
-  }
-  
-  croak("Bad row index input") if ($start_row_index >= $end_row_index);
+	my $self = shift;
 
-  my @temp;
-  
-  for (my $i=$start_row_index; $i<=$end_row_index; $i++){
-    if ($use_runs[$i-$start_row_index]){
-      if (defined $self->raw_results->[$i][$column_index]){
-	push( @temp, $self->raw_results->[$i][$column_index] );
-      }else{
-      }
-    }
+  #remove tablefiles in simulation NM_runs, they are 
+  #copied to m1 by modelfit and read from there anyway.
+  for (my $samp=1;$samp<=$self->samples(); $samp++) {
+    unlink $self -> directory."/simulation_dir1/NM_run".$samp."/mc-sim-".$samp.".dat";
+    unlink $self -> directory."/simulation_dir1/NM_run".$samp."/mc-sim-".$samp."-1.dat"; #retry
   }
-  
-  @temp = sort({$a <=> $b} @temp);
-  if( scalar( @temp ) % 2 ){
-    $median = $temp[$#temp/2];
-  } else {
-    $median = ($temp[@temp/2]+$temp[(@temp-2)/2]) / 2;
-  }
- 
 }
-end median
 
-# }}} median
+no Moose;
+__PACKAGE__->meta->make_immutable;
+1;

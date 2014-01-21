@@ -160,7 +160,6 @@ DIALIBFILES=debug.pm \
 	tool.pm \
 	tool/cdd.pm \
 	tool/cdd/jackknife.pm \
-	tool/sse.pm \
 	tool/ebe_npde.pm \
 	tool/xv_step.pm \
 	tool/xv.pm \
@@ -209,9 +208,6 @@ libgen/nonmem.pm : diagrams/nonmem.dia
 
 libgen/tool/cdd/jackknife.pm libgen/tool/cdd.pm : diagrams/cdd.dia
 	$(DIA2CODE) -t perl -d $(DIRPM) diagrams/cdd.dia
-
-libgen/tool/sse.pm : diagrams/sse.dia
-	$(DIA2CODE) -t perl -d $(DIRPM) diagrams/sse.dia
 
 libgen/tool/frem.pm : diagrams/frem.dia
 	$(DIA2CODE) -t perl -d $(DIRPM) diagrams/frem.dia
