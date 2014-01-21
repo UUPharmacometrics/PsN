@@ -774,7 +774,7 @@ sub _read_subproblems
 			my $string = $1;
 			$string =~ s/\s*$//; #remove trailing spaces
 			$no_est = 1 if ($self->lstfile->[$self->lstfile_pos] =~ /^1$/ and (length($string) < 1));
-			if ($self->lstfile->[ $self->lstfile_pos - 2] =~ /^\s*\#TBLN:\s*(.*)/) {
+			if ($self->lstfile->[ $self->lstfile_pos - 2] =~ /^\s*\#TBLN:\s*([0-9]+)/) {
 				#if previous line is #TBLN then this will help us find right table in extra output
 				#and also right #METH
 				$self->table_number($1);
