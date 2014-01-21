@@ -158,7 +158,6 @@ DIALIBFILES=debug.pm \
 	ui.pm \
 	nonmem.pm \
 	tool.pm \
-	tool/llp.pm \
 	tool/cdd.pm \
 	tool/cdd/jackknife.pm \
 	tool/sse.pm \

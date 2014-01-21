@@ -1,27 +1,45 @@
-# Det finns ingen mening med att kunna specificera subproblem eftersom vi bara kan fixera
-# parametervärden på problemnivå.
-# Det finns dessutom lite värde i att kunna spec. problem eftersom vi än så länge inte kan
-# köra problem var för sig via PsN och om man har flera problem i en modellfil så skulle
-# alla köras även om man bara är intresserad av ett. Så man får helt enkelt editera
-# modellfilen och ta bort onödiga problem.
+package tool::llp;
 
-# {{{ include
-
-start include statements
-#use Carp;
-	use include_modules;
+use include_modules;
 use File::Copy 'cp';
 use ext::Math::SigFigs;
 use tool::modelfit;
 use Data::Dumper;
-end include
+use Moose;
+use MooseX::Params::Validate;
 
-# }}} include statements
+extends 'newtool';
 
-# {{{ new
+has 'max_iterations' => ( is => 'rw', isa => 'Int', default => 10 );
+has 'significant_digits' => ( is => 'rw', isa => 'Int', default => 3 );
+has 'normq' => ( is => 'rw', isa => 'Num', default => 1.96 );
+has 'ofv_increase' => ( is => 'rw', isa => 'Num', default => 3.84 );
+has 'theta_log' => ( is => 'rw', isa => 'HashRef' );
+has 'run_thetas' => ( is => 'rw', isa => 'ArrayRef' );
+has 'run_omegas' => ( is => 'rw', isa => 'ArrayRef' );
+has 'run_sigmas' => ( is => 'rw', isa => 'ArrayRef' );
+has 'omega_log' => ( is => 'rw', isa => 'HashRef' );
+has 'sigma_log' => ( is => 'rw', isa => 'HashRef' );
+has 'orig_ofvs' => ( is => 'rw', isa => 'ArrayRef' );
+has 'logfile' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { ['llplog.csv'] } );
+has 'no_header_logfile' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { ['llplog_no_header.csv'] } );
+has 'results_file' => ( is => 'rw', isa => 'Str', default => 'llp_results.csv' );
+has 'rse_thetas' => ( is => 'rw', isa => 'ArrayRef' );
+has 'rse_omegas' => ( is => 'rw', isa => 'ArrayRef' );
+has 'rse_sigmas' => ( is => 'rw', isa => 'ArrayRef' );
+has 'iteration' => ( is => 'rw', isa => 'Int', default => 1 );
+has 'theta_interval_ratio_check' => ( is => 'rw', isa => 'Num', default => 1.3 );
+has 'omega_interval_ratio_check' => ( is => 'rw', isa => 'Num', default => 1.6 );
+has 'sigma_interval_ratio_check' => ( is => 'rw', isa => 'Num', default => 1.6 );
+has 'within_interval_check' => ( is => 'rw', isa => 'Int', default => 0 );
+has 'unstacked_logfile' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { ['unstacked_llplog.csv'] } );
 
-start new
-      {
+
+sub BUILD
+{
+	my $this  = shift;
+	my %parm  = @_;
+
 	my @various_input_formats = ( 'run_thetas', 'run_omegas', 'run_sigmas',
 				      'rse_thetas', 'rse_omegas', 'rse_sigmas' );
 	foreach my $var ( @various_input_formats ) {
@@ -35,7 +53,6 @@ start new
 	  }
 	}
 
-	
 	#skipped numbering when more than 1 model
 	for my $accessor ( 'logfile', 'unstacked_logfile', 'raw_results_file','no_header_logfile',
 			   'raw_nonp_file'){
@@ -51,16 +68,16 @@ start new
 	    $this->$accessor(\@new_files);
 	}	
 
-      }
-end new
+}
 
-# }}}
+sub modelfit_setup
+{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+		 model_number => { isa => 'Int', optional => 1 }
+	);
+	my $model_number = $parm{'model_number'};
 
-
-# {{{ modelfit_setup
-
-start modelfit_setup
-      {
 	my $model = $self -> models -> [$model_number-1];
 
 	my $mfit_threads = ref( $self -> threads ) eq 'ARRAY' ? 
@@ -172,171 +189,53 @@ start modelfit_setup
 	}
 
 	# }}} modelfit
+}
 
-      }
-end modelfit_setup
+sub confidence_limits
+{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+		 width => { isa => 'Num', optional => 1 },
+		 parameter => { isa => 'Str', optional => 1 }
+	);
+	my $width = $parm{'width'};
+	my $parameter = $parm{'parameter'};
+	my @limits;
 
-# }}}
-
-# {{{ _create_models
-
-start _create_models
-      {
-
-	# --------------------  Initiate the run parameters -------------------------
-
-	# {{{ initiate params
-
-	my %run;
-	$run{'thetas'} = (ref( $self -> run_thetas -> [0] ) eq 'ARRAY') ? 
-	  $self -> run_thetas -> [$model_number-1]:$self -> run_thetas;
-	$run{'omegas'} = (ref( $self -> run_omegas -> [0] ) eq 'ARRAY') ? 
-	  $self -> run_omegas -> [$model_number-1]:$self -> run_omegas;
-	$run{'sigmas'} = (ref( $self -> run_sigmas -> [0] ) eq 'ARRAY') ? 
-	  $self -> run_sigmas -> [$model_number-1]:$self -> run_sigmas;
-
-	my $model = $self -> models -> [$model_number-1];
-
-	# }}} initiate params
-
-	# ------------------  Create the fixed parameter models ---------------------
-
-	# {{{ create models
-
-	# Loop over the parameters
-	foreach my $param ( 'theta', 'omega', 'sigma' ) {
-	    my $logfunc = $param.'_log';
-	  # jump to next parameter if no parameter of this type should be run
-	  next unless ( defined $run{$param.'s'} and
-			scalar @{$run{$param.'s'}} > 0 and
-			$run{$param.'s'}->[0] ne '' );
-	  my @par_nums = @{$run{$param.'s'}};
-	  my %par_log  = %{$self -> $logfunc};
-	  # Loop over the parameter numbers of interest
-	  foreach my $num ( @par_nums ) {
-	    my @active = @{$model -> active_problems};
-	    my $skip_model = 1;
-	    foreach my $val ( @active ) {
-	      $skip_model = 0 if ( $val );
-	    }
-	    foreach my $side ( 'lower', 'upper' ) {
-	      # todo: Maybe not necessary to copy data file as well. This is done by
-	      # default in model->copy.
-	      my $filename = substr($param,0,2).$num.$side.'.mod';
-	      my $model_dir = $self ->directory.'/m'.$model_number.'/';
-	      my ($output_dir, $outputfilename) =
-		  OSspecific::absolute_path( $self ->directory.'/m'.$model_number.'/',
-					     substr($param,0,2).$num.
-					     $side.'.lst');
-	      if ( not $done ) {
-
-		# ----------------------  Create model  -----------------------------
-
-		# {{{ create
-
-		my $new_mod = $model -> copy( filename    => $filename,
-					      directory   => $model_dir,
-					      copy_data   => 0,
-					      copy_output => 0 );
-		$new_mod -> extra_files( $model -> extra_files ),
-		$new_mod -> ignore_missing_files( 1 );
-		$new_mod -> outputfile( $output_dir . $outputfilename );
-		$new_mod -> ignore_missing_files( 0 );
-
-		$new_mod -> _write;
-
-		$new_mod -> update_inits( from_output => $model -> outputs -> [0] );
-		my $active_flag = 0;
-		# Loop over the problems:
-		for ( my $j = 1; $j <= scalar @{$par_log{$num}}; $j++ ) {
-		  # Is this side of the problem finished?
-		  carp("This side is finished!" )
-		      if ( $self->$logfunc->{$num}->[$j-1]->[2]->{$side} );
-		  next if $self->$logfunc->{$num}->[$j-1]->[2]->{$side};
-		  my $sofar = scalar @{$par_log{$num}->[$j-1]->[0]};
-		  my $guess;
-		  if ( $side eq 'lower' ) {
-		    $guess = $par_log{$num}->[$j-1]->[0]->[0];
-		  } else {
-		    $guess = $par_log{$num}->[$j-1]->[0]->[$sofar-1];
-		  }
-		  my @diagnostics =
-		      @{$new_mod -> initial_values( parameter_type    => $param,
-						    parameter_numbers => [[$num]],
-						    problem_numbers   => [$j],
-						    new_values        => [[$guess]] )};
-		  if ( $side eq 'lower' ) {
-		    $par_log{$num}->[$j-1]->[0]->[0] = $diagnostics[0][2];
-		  } else {
-		    $par_log{$num}->[$j-1]->[0]->[$sofar-1] = $diagnostics[0][2];
-		  }
-		  carp("Registering used value ".
-				 $diagnostics[0][2]." for the $side side" );
-		  $new_mod -> fixed( parameter_type    => $param,
-				     parameter_numbers => [[$num]],
-				     problem_numbers   => [$j],
-				     new_values        => [[1]] );
-		  $active_flag = 1;
+	if ( defined $self -> results ){
+	  for ( my $i = 0; $i < scalar @{$self -> results -> {'own'}}; $i++ ) {
+	    my %num_lim;
+	    if ( defined $self->results -> {'own'}->[$i]->{$parameter.'_log'} ) {
+	      my @nums = sort {$a <=> $b} keys %{$self->results -> {'own'} ->
+						   [$i]->{$parameter.'_log'}};
+	      foreach my $num ( @nums ) {
+		my @prob_lim = ();
+		for ( my $j = 0; $j < scalar @{$self->results -> {'own'}->
+						 [$i]->{$parameter.'_log'}->{$num}}; $j++ ) {
+		  my @last_lvl = @{$self->results -> {'own'}->
+				     [$i]->{$parameter.'_log'}->{$num}->[$j]};
+		  push( @prob_lim, [$last_lvl[0][0],$last_lvl[0][scalar @{$last_lvl[0]}-1]] );
 		}
-		if ( $active_flag ) {
-		  $new_mod -> _write;
-		  push( @new_models, $new_mod );
-		  $self->{$param.'_models'}->{$num}->{$side} = $new_mod;
-		}
-
-		# }}} create
-
-	      } else {
-
-		# -------------------------  Resume  --------------------------------
-
-		# {{{ resume
-
-		my $active_flag = 0;
-		# Loop over the problems:
-		for ( my $j = 1; $j <= scalar @{$par_log{$num}}; $j++ ) {
-		  # Is this side of the problem finished?
-		  carp("This side is finished!" )
-		      if ( $self->$logfunc->{$num}->[$j-1]->[2]->{$side} );
-		  next if $self->$logfunc->{$num}->[$j-1]->[2]->{$side};
-		  $active_flag = 1;
-		}
-		if ( $active_flag ) {
-		  my $new_mod = model -> new( directory   => $model_dir,
-					      filename    => $filename,
-					      outputfile  => $outputfilename,
-					      extra_files => $model -> extra_files,
-					      target      => 'disk',
-					      ignore_missing_files => 1 );
-		  # Set the correct data file for the object
-		  my $moddir = $model -> directory;
-		  my @datafiles = @{$model -> datafiles};
-		  for( my $df = 0; $df <= $#datafiles; $df++ ) {
-		    $datafiles[$df] = $moddir.'/'.$datafiles[$df];
-		  }
-		  $new_mod -> datafiles( new_names => \@datafiles );
-		  push( @new_models, $new_mod );
-		  $self->{$param.'_models'}->{$num}->{$side} = $new_mod;
-		}
-
-		# }}} resume
-
+		$num_lim{$num} = \@prob_lim;
 	      }
 	    }
+	    push( @limits, \%num_lim );
 	  }
 	}
 
-	# }}} create models
+	return \@limits;
+}
 
-      }	
-end _create_models
-
-# }}} _create_models
-
-# {{{ _register_estimates
-
-start _register_estimates
-      {
+sub _register_estimates
+{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+		 model_number => { isa => 'Int', optional => 1 },
+		 first => { isa => 'Bool', default => 0, optional => 1 }
+	);
+	my $model_number = $parm{'model_number'};
+	my $first = $parm{'first'};
+	my $active = 0;
 
 	# Förenkla loggen: param_log{parameternr}[prob][[estimates...][ofv...]]
 	# Antag att man spec. paramnr som gäller ? alla modeller och problem,
@@ -539,15 +438,18 @@ start _register_estimates
 	}
 	close ( LOG );
 	close ( LOG2 );
-      }
-end _register_estimates
 
-# }}} _register_estimates
+	return $active;
+}
 
-# {{{ modelfit_analyze
+sub modelfit_analyze
+{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+		 model_number => { isa => 'Int', optional => 1 }
+	);
+	my $model_number = $parm{'model_number'};
 
-start modelfit_analyze
-      {
 	my $own_threads = ref( $self -> threads ) eq 'ARRAY' ?
 	  $self -> threads -> [0]:$self -> threads;
 
@@ -647,119 +549,175 @@ start modelfit_analyze
 	  # Execute the script
 	  system( $PsN::config -> {'_'} -> {'R'}." CMD BATCH llp.R" );
 	}
-      }
-end modelfit_analyze
+}
 
-# }}} modelfit_analyze
+sub _create_models
+{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+		 model_number => { isa => 'Int', optional => 1 },
+		 done => { isa => 'Bool', default => 0, optional => 1 }
+	);
+	my $model_number = $parm{'model_number'};
+	my $done = $parm{'done'};
+	my @new_models;
 
-# {{{ prepare_results
+	# --------------------  Initiate the run parameters -------------------------
 
-start prepare_results
-      {
-	$self -> read_raw_results();
-#	}
+	# {{{ initiate params
 
-	unless( defined $self->raw_line_structure){
-	  print "reading raw line structure in ".$self->directory().'raw_results_structure'."\n";
-	  $self->raw_line_structure( ext::Config::Tiny -> read( $self->directory().'raw_results_structure'));
-	}
-	for ( my $i = 0; $i < scalar @{$self->raw_results}; $i++ ) { # All models
-	  my $orig_mod = $self -> models->[$i];
-	  my @params = ( 'theta', 'omega', 'sigma' );
-	  my ( %param_nums, %labels, %orig_estimates );
-	  foreach my $param ( @params ) {
-	    my $modlabels = $orig_mod -> labels( parameter_type => $param );
-	    $labels{$param} = $modlabels -> [0]; # Only one problem
-	    $param_nums{$param} = scalar @{$modlabels -> [0]} if ( defined $modlabels );
-	    my $orig_ests    = $orig_mod -> get_values_to_labels ( category => $param);
-	    $orig_estimates{$param} = $orig_ests->[0][0];
-	  }
-	  my ( %ci, %near_bound, %max_iterations, %interval_ratio,
-	       %skewed, %within_interval );
+	my %run;
+	$run{'thetas'} = (ref( $self -> run_thetas -> [0] ) eq 'ARRAY') ? 
+	  $self -> run_thetas -> [$model_number-1]:$self -> run_thetas;
+	$run{'omegas'} = (ref( $self -> run_omegas -> [0] ) eq 'ARRAY') ? 
+	  $self -> run_omegas -> [$model_number-1]:$self -> run_omegas;
+	$run{'sigmas'} = (ref( $self -> run_sigmas -> [0] ) eq 'ARRAY') ? 
+	  $self -> run_sigmas -> [$model_number-1]:$self -> run_sigmas;
 
-	  # The 9 on the row below is offset for iteration,
-	  # parameter.type, parameter.number, side, finish.message,
-	  # model, problem, subproblem, ofv
+	my $model = $self -> models -> [$model_number-1];
 
-	  # Skip original run:
-	  for ( my $j = 1; $j < scalar @{$self -> raw_results->[$i]}; $j++ ) {
-	    my $row = $self -> raw_results->[$i][$j];
+	# }}} initiate params
 
-	    my ($start,$len) = split(/,/,$self->raw_line_structure-> {'1'} -> {$row -> [1]});
-	    #$row->[1] is parameter.type in rawres
-	    #$row->[2] is parameter.number in rawres
-	    #$row->[3] is side in rawres
-	    #$num is index in rawres of this param  
-	    my $num = $start+($row -> [2]  - 1);
+	# ------------------  Create the fixed parameter models ---------------------
 
-	    $ci{$row -> [1]}{$row -> [2]}{$row -> [3]} = $row -> [$num];
-	    if ( $row -> [4] eq 'near.boundary' ) {
-	      $near_bound{$row -> [1]}{$row -> [2]}{$row -> [3]} = 1;
-	    } elsif ( $row -> [4] eq 'max.iterations' ) {
-	      $max_iterations{$row -> [1]}{$row -> [2]}{$row -> [3]} = 1;
+	# {{{ create models
+
+	# Loop over the parameters
+	foreach my $param ( 'theta', 'omega', 'sigma' ) {
+	    my $logfunc = $param.'_log';
+	  # jump to next parameter if no parameter of this type should be run
+	  next unless ( defined $run{$param.'s'} and
+			scalar @{$run{$param.'s'}} > 0 and
+			$run{$param.'s'}->[0] ne '' );
+	  my @par_nums = @{$run{$param.'s'}};
+	  my %par_log  = %{$self -> $logfunc};
+	  # Loop over the parameter numbers of interest
+	  foreach my $num ( @par_nums ) {
+	    my @active = @{$model -> active_problems};
+	    my $skip_model = 1;
+	    foreach my $val ( @active ) {
+	      $skip_model = 0 if ( $val );
 	    }
-	  }
-	  my ( @ci_labels, @ci_values, @li_values );
-	  $ci_labels[1] = [ 'lower', 'maximum.likelihood.estimate',
-			    'upper', 'interval.ratio', 'near.bound','max.iterations' ];
-	  foreach my $param ( @params ) {
-	    next if ( not defined $ci{$param} );
-	    my @nums = sort { $a <=> $b } keys %{$ci{$param}};
-	    foreach my $num ( @nums ) {
-	      push( @{$ci_labels[0]}, $labels{$param}[$num-1] );
-	      if ( defined $ci{$param}{$num}{'lower'} and 
-		   defined $ci{$param}{$num}{'upper'} ) {
-		if( abs( $ci{$param}{$num}{'lower'} - $orig_estimates{$param}[$num-1] ) == 0 ){
-		  $interval_ratio{$param}{$num} = 'INF';
-		} else {
-		  $interval_ratio{$param}{$num} =
-		      abs( $ci{$param}{$num}{'upper'} - $orig_estimates{$param}[$num-1] ) /
-		      abs( $ci{$param}{$num}{'lower'} - $orig_estimates{$param}[$num-1] );
-		  if ( $interval_ratio{$param}{$num} > $self -> {$param.'_interval_ratio_check'} or
-		       $interval_ratio{$param}{$num} < 1/$self -> {$param.'_interval_ratio_check'} ) {
-		    $skewed{$param}{$num} = 1;
+	    foreach my $side ( 'lower', 'upper' ) {
+	      # todo: Maybe not necessary to copy data file as well. This is done by
+	      # default in model->copy.
+	      my $filename = substr($param,0,2).$num.$side.'.mod';
+	      my $model_dir = $self ->directory.'/m'.$model_number.'/';
+	      my ($output_dir, $outputfilename) =
+		  OSspecific::absolute_path( $self ->directory.'/m'.$model_number.'/',
+					     substr($param,0,2).$num.
+					     $side.'.lst');
+	      if ( not $done ) {
+
+		# ----------------------  Create model  -----------------------------
+
+		# {{{ create
+
+		my $new_mod = $model -> copy( filename    => $filename,
+					      directory   => $model_dir,
+					      copy_data   => 0,
+					      copy_output => 0 );
+		$new_mod -> extra_files( $model -> extra_files ),
+		$new_mod -> ignore_missing_files( 1 );
+		$new_mod -> outputfile( $output_dir . $outputfilename );
+		$new_mod -> ignore_missing_files( 0 );
+
+		$new_mod -> _write;
+
+		$new_mod -> update_inits( from_output => $model -> outputs -> [0] );
+		my $active_flag = 0;
+		# Loop over the problems:
+		for ( my $j = 1; $j <= scalar @{$par_log{$num}}; $j++ ) {
+		  # Is this side of the problem finished?
+		  carp("This side is finished!" )
+		      if ( $self->$logfunc->{$num}->[$j-1]->[2]->{$side} );
+		  next if $self->$logfunc->{$num}->[$j-1]->[2]->{$side};
+		  my $sofar = scalar @{$par_log{$num}->[$j-1]->[0]};
+		  my $guess;
+		  if ( $side eq 'lower' ) {
+		    $guess = $par_log{$num}->[$j-1]->[0]->[0];
 		  } else {
-		    $skewed{$param}{$num} = 0;
+		    $guess = $par_log{$num}->[$j-1]->[0]->[$sofar-1];
 		  }
-		  if ( $self -> within_interval_check < $ci{$param}{$num}{'upper'} and
-		       $self -> within_interval_check > $ci{$param}{$num}{'lower'} ) {
-		    $within_interval{$param}{$num} = 1;
+		  my @diagnostics =
+		      @{$new_mod -> initial_values( parameter_type    => $param,
+						    parameter_numbers => [[$num]],
+						    problem_numbers   => [$j],
+						    new_values        => [[$guess]] )};
+		  if ( $side eq 'lower' ) {
+		    $par_log{$num}->[$j-1]->[0]->[0] = $diagnostics[0][2];
 		  } else {
-		    $within_interval{$param}{$num} = 0;
+		    $par_log{$num}->[$j-1]->[0]->[$sofar-1] = $diagnostics[0][2];
 		  }
+		  carp("Registering used value ".
+				 $diagnostics[0][2]." for the $side side" );
+		  $new_mod -> fixed( parameter_type    => $param,
+				     parameter_numbers => [[$num]],
+				     problem_numbers   => [$j],
+				     new_values        => [[1]] );
+		  $active_flag = 1;
 		}
+		if ( $active_flag ) {
+		  $new_mod -> _write;
+		  push( @new_models, $new_mod );
+		  $self->{$param.'_models'}->{$num}->{$side} = $new_mod;
+		}
+
+		# }}} create
+
+	      } else {
+
+		# -------------------------  Resume  --------------------------------
+
+		# {{{ resume
+
+		my $active_flag = 0;
+		# Loop over the problems:
+		for ( my $j = 1; $j <= scalar @{$par_log{$num}}; $j++ ) {
+		  # Is this side of the problem finished?
+		  carp("This side is finished!" )
+		      if ( $self->$logfunc->{$num}->[$j-1]->[2]->{$side} );
+		  next if $self->$logfunc->{$num}->[$j-1]->[2]->{$side};
+		  $active_flag = 1;
+		}
+		if ( $active_flag ) {
+		  my $new_mod = model -> new( directory   => $model_dir,
+					      filename    => $filename,
+					      outputfile  => $outputfilename,
+					      extra_files => $model -> extra_files,
+					      target      => 'disk',
+					      ignore_missing_files => 1 );
+		  # Set the correct data file for the object
+		  my $moddir = $model -> directory;
+		  my @datafiles = @{$model -> datafiles};
+		  for( my $df = 0; $df <= $#datafiles; $df++ ) {
+		    $datafiles[$df] = $moddir.'/'.$datafiles[$df];
+		  }
+		  $new_mod -> datafiles( new_names => \@datafiles );
+		  push( @new_models, $new_mod );
+		  $self->{$param.'_models'}->{$num}->{$side} = $new_mod;
+		}
+
+		# }}} resume
+
 	      }
-	      my @row;
-	      push( @row, $ci{$param}{$num}{'lower'} );
-	      push( @row, $orig_estimates{$param}[$num-1] );
-	      push( @row, $ci{$param}{$num}{'upper'} );
-	      push( @row, $interval_ratio{$param}{$num} );
-	      push( @row, $near_bound{$param}{$num}{'upper'} ? 1 : $near_bound{$param}{$num}{'lower'} ? 1 : 0 );
-	      push( @row, $max_iterations{$param}{$num}{'upper'} ? 1 : $max_iterations{$param}{$num}{'lower'} ? 1 : 0 );
-	      push( @ci_values, \@row );
 	    }
 	  }
-#	  $self -> {'confidence_intervals'}[$i]	= \%ci;
-#	  $self -> {'interval_ratio'}[$i]	= \%interval_ratio;
-#	  $self -> {'skewed_intervals'}[$i]	= \%skewed;
-#	  $self -> {'hit_max_iterations'}[$i]	= \%max_iterations;
-#	  $self -> {'near_boundary'}[$i]	= \%near_bound;
-#	  $self -> {'within_interval'}[$i]	= \%within_interval;
- 	  my %return_section;
-	  $return_section{'name'} = 'confidence.intervals';
-	  $return_section{'labels'} = \@ci_labels;
-	  $return_section{'values'} = \@ci_values;
- 	  unshift( @{$self -> results->[$i]{'own'}},\%return_section );
 	}
-      }
-end prepare_results
 
-# }}} prepare_results
+	# }}} create models
 
-# {{{ _modelfit_raw_results_callback
+	return \@new_models;
+}
 
-start _modelfit_raw_results_callback
-      {
+sub _modelfit_raw_results_callback
+{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+		 model_number => { isa => 'Num', optional => 1 }
+	);
+	my $model_number = $parm{'model_number'};
+	my $subroutine;
 
 	# This functions creates a subrouting which will be called by
 	# the modelfit subtool. The subroutine will add columns to the
@@ -872,50 +830,295 @@ start _modelfit_raw_results_callback
 
 	};
 	return $callback;
-      }
-end _modelfit_raw_results_callback
+}
 
-# }}} _modelfit_raw_results_callback
+sub _make_new_guess
+{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+		model_number => { isa => 'Int', optional => 1 },
+		first => { isa => 'Bool', default => 0, optional => 1 },
+		done => { isa => 'Bool', default => 0, optional => 1 }
+	);
+	my $model_number = $parm{'model_number'};
+	my $first = $parm{'first'};
+	my $done = $parm{'done'};
 
-# {{{ update_raw_results
+	my %run;
+	$run{'thetas'} = (ref( $self -> run_thetas -> [0] ) eq 'ARRAY') ? 
+	$self -> run_thetas -> [$model_number-1]:$self -> run_thetas;
+	$run{'omegas'} = (ref( $self -> run_omegas -> [0] ) eq 'ARRAY') ? 
+	$self -> run_omegas -> [$model_number-1]:$self -> run_omegas;
+	$run{'sigmas'} = (ref( $self -> run_sigmas -> [0] ) eq 'ARRAY') ? 
+	$self -> run_sigmas -> [$model_number-1]:$self -> run_sigmas;
 
-start update_raw_results
-      {
+	my $orig_output;
+	my $orig_model = $self -> models -> [$model_number-1];
+	if ( $first ) {
+		croak("No output object defined through model" )
+		unless ( defined $orig_model -> outputs -> [0] );
+		$orig_output = $orig_model -> outputs -> [0];
+	}
+	# Loop over the parameter names
+	foreach my $param ( 'theta', 'omega', 'sigma' ) {
+		# jump to next parameter if no parameter of this type should be run
+		next unless ( defined $run{$param.'s'} and
+			scalar @{$run{$param.'s'}} > 0 and
+			$run{$param.'s'}->[0] ne '' );
+		my $accessor    = $param.'s';
+		my $logfunc = $param.'_log';
+		my $rsefunc = 'rse_'.$param.'s';
+		my @par_nums    = @{$run{$param.'s'}};
+		my $diagonals = $orig_model -> on_diagonal( parameter_type => $param );
+		my %bounds;
+		$bounds{'lower'} =
+		$orig_model -> lower_bounds( parameter_type => $param );
+		if ($param eq 'omega' or $param eq 'sigma' and defined $diagonals){
+			for ( my $j = 0; $j < scalar @{$bounds{'lower'}}; $j++ ) {
+				next unless (defined $diagonals->[$j]);
+				foreach my $num ( @par_nums ) {
+					if (defined $diagonals->[$j][$num-1] and $diagonals->[$j][$num-1]== 1){
+						$bounds{'lower'}->[$j][$num-1] = 0 
+						unless (defined $bounds{'lower'}->[$j][$num-1]);
+					}
+				}
+			}
+		}
+		$bounds{'upper'} =
+		$orig_model -> upper_bounds( parameter_type => $param );
+		if ( $first ) {
+			my $orig_ests    = $orig_model -> get_values_to_labels ( category => $param);
+			my $orig_se_ests = $orig_model -> get_values_to_labels ( category => 'se'.$param);
+			# Loop over the parameter numbers of interest
+			foreach my $num ( @par_nums ) {
+				# Loop over the problems:
+				for ( my $j = 0; $j < scalar @{$orig_ests}; $j++ ) {
+					die "Subproblems are not allowed for the log-likelihood profiling tool\n"
+					if ( scalar @{$orig_ests->[$j]} > 1 );
+					my $orig  = $orig_ests->[$j][0][$num-1];
+					my $upbnd = $bounds{'upper'}->[$j][$num-1];
+					my $lobnd = $bounds{'lower'}->[$j][$num-1];
+					my $width;
+					if ( defined $orig_se_ests->[$j][0][$num-1] ) {
+						$width = abs( $orig_se_ests->[$j][0][$num-1] *
+							$self -> normq );
+					} elsif ( defined $self -> $rsefunc->[$model_number-1]{$num} ) {
+						$width = abs( $self -> $rsefunc->[$model_number-1]{$num}/100*abs($orig) *
+							$self -> normq );
+					} else {
+						die "No estimate of the standard error of $param $num is available from the output file nor from the command line\n";
+					}
+					my $upper = $orig + $width;
+					my $lower = $orig - $width;
+
+					$lower = ( defined $lobnd and $lower < $lobnd  ) ?
+					($lobnd-$orig)*0.9+$orig : $lower;
+					$upper = ( defined $upbnd and $upper > $upbnd ) ?
+					($upbnd-$orig)*0.9+$orig : $upper;
+					unshift( @{$self->$logfunc->{$num}->[$j]->[0]}, $lower );
+					push( @{$self->$logfunc->{$num}->[$j]->[0]}, $upper );
+				}
+			}
+		} else {
+			# Loop over the parameter numbers of interest
+			foreach my $num ( @par_nums ) {
+				# Loop over the problems:
+				for ( my $j = 0; $j < scalar @{$bounds{'lower'}}; $j++ ) {
+					my %guesses;
+					foreach my $side ( 'lower', 'upper' ) {
+						# Is this side of the problem finished?
+						next if $self->$logfunc->{$num}->[$j]->[2]->{$side};
+						# Collect the model outputs
+						carp("Making new guess for $param number $num on the $side side" );
+						my $bound = $bounds{$side}->[$j][$num-1];
+						my $guess =
+						$self -> _guess( param_log => $self->$logfunc->{$num}->[$j],
+							side => $side );
+						if ( defined $bounds{$side}->[$j][$num-1] ) {
+							$guess =
+							$self -> _try_bounds( guess     => $guess,
+								side      => $side,
+								bound     => $bounds{$side}->[$j][$num-1],
+								param_log => $self->$logfunc->
+								{
+									$num}->[$j]->[0]);
+						}
+						$guesses{$side} = $guess;
+						if ( not defined $guess ) {
+							print "Warning: The search for the $side CI-limit for $param $num ".
+							"could not continue due to numerical difficulties\n";
+							$self->$logfunc->{$num}->[$j]->[2]->{$side} = 1;
+						}
+					}
+					unshift( @{$self->$logfunc->{$num}->[$j]->[0]}, $guesses{'lower'} )
+					if ( defined $guesses{'lower'} );
+					push( @{$self->$logfunc->{$num}->[$j]->[0]}, $guesses{'upper'} )
+					if ( defined $guesses{'upper'} );
+				}
+			}
+		}
+	}
+	# Logging must be done fairly quick, therefore this loop by itself
+	open( DONE, '>'.$self ->directory."/m$model_number/done" );
+	foreach my $param ( 'theta', 'omega', 'sigma' ) {
+		my $logfunc = $param.'_log';
+		next unless ( defined $self->$logfunc );
+		while ( my ( $num, $probs ) = each %{$self->$logfunc} ) {
+			# Loop over the problems:
+			for ( my $prob = 0; $prob < scalar @{$probs}; $prob++ ) {
+				foreach my $side ( 'lower', 'upper' ) {
+					next if $self->$logfunc->{$num}->[$prob]->[2]->{$side};
+					my $log_size = scalar @{$probs -> [$prob] -> [0]};
+					if ( $side eq 'lower' ) {
+						print DONE "$param $num $prob $side ",
+						$probs -> [$prob] -> [0] -> [0],"\n";
+					} elsif ( $side eq 'upper' ) {
+						print DONE "$param $num $prob $side ",
+						$probs -> [$prob] -> [0] -> [$log_size-1],"\n";
+					}
+				}
+			}
+		}
+	}
+	close( DONE );
+}
+
+sub update_raw_results
+{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+		model_number => { isa => 'Int', optional => 1 }
+	);
+	my $model_number = $parm{'model_number'};
+
 	my ($dir,$file) = OSspecific::absolute_path( $self ->directory,
-						     $self -> raw_results_file->[$model_number-1] );
+		$self -> raw_results_file->[$model_number-1] );
 	open( RRES, $dir.$file );
 	my @rres = <RRES>;
 	close( RRES );
 	open( RRES, '>',$dir.$file );
 	my @new_rres;
 	foreach my $row_str ( @rres ) {
-	  chomp( $row_str );
-	  my @row = split( ',', $row_str );
-	  if ( $row[0] eq $self -> iteration ) {
-	    # The [0] is the problem level, should be removed
-	      my $logfunc = $row[1].'_log';
-	    if ( $self -> $logfunc->{$row[2]}[0][2]{$row[3]} == 1 ) {
-	      $row[4] = 'limit.found';
-	    } elsif ( $self -> $logfunc->{$row[2]}[0][2]{$row[3]} == 2 ) {
-	      $row[4] = 'near.boundary';
-	    } elsif ( $self -> max_iterations <= 1 ) {
-	      $row[4] = 'max.iterations';
-	    }
-	  }
-	  push( @new_rres, \@row );
-	  print RRES join(',',@row ),"\n";
-      }
+		chomp( $row_str );
+		my @row = split( ',', $row_str );
+		if ( $row[0] eq $self -> iteration ) {
+			# The [0] is the problem level, should be removed
+			my $logfunc = $row[1].'_log';
+			if ( $self -> $logfunc->{$row[2]}[0][2]{$row[3]} == 1 ) {
+				$row[4] = 'limit.found';
+			} elsif ( $self -> $logfunc->{$row[2]}[0][2]{$row[3]} == 2 ) {
+				$row[4] = 'near.boundary';
+			} elsif ( $self -> max_iterations <= 1 ) {
+				$row[4] = 'max.iterations';
+			}
+		}
+		push( @new_rres, \@row );
+		print RRES join(',',@row ),"\n";
+	}
 	close( RRES );
 	$self -> raw_results->[$model_number-1] = \@new_rres;
-      }
-end update_raw_results
+}
 
-# }}} update_raw_results
+sub create_matlab_scripts
+{
+	my $self = shift;
 
-# {{{ _try_bounds
+	if( defined $PsN::lib_dir ){
+		unless( -e $PsN::lib_dir . '/matlab/profiles.m') {
+			croak('LLP matlab template scripts are not installed, no matlab scripts will be generated.' );
+			return;
+		}
 
-start _try_bounds
-      {
+		open( PROF, $PsN::lib_dir . '/matlab/profiles.m' );
+		my @file = <PROF>;
+		close( PROF );	
+		my $found_code;
+		my $code_area_start=0;
+		my $code_area_end=0;
+
+		for(my $i = 0;$i < scalar(@file); $i++) {
+			if( $file[$i] =~ /% ---------- Autogenerated code below ----------/ ){
+				$found_code = 1;
+				$code_area_start = $i;
+			}
+			if( $file[$i] =~ /% ---------- End autogenerated code ----------/ ){
+				unless( $found_code ){
+					croak('LLP matlab template script is malformated, no matlab scripts will be generated' );
+					return;
+				}
+				$code_area_end = $i;
+			}
+		}
+
+		my @auto_code;
+		push( @auto_code, "str_format = '%30s';\n\n" );
+
+		my %param_names;
+
+		push( @auto_code, "col_names = [ " );
+
+		foreach my $param ( 'theta','omega','sigma' ) {
+			my $labels = $self -> models -> [0] -> labels( parameter_type => $param );
+			if ( defined $labels ){
+				foreach my $label ( @{$labels -> [0]} ){
+					push( @auto_code, "	      sprintf(str_format,'",$label,"');\n" );
+				}
+			}
+		}
+		push( @auto_code, "	      ];\n\n" );
+		push( @auto_code, "goal = 3.84;\n\n" );
+
+		push( @auto_code, "filename = '".$self -> no_header_logfile->[0]."';\n" );
+
+		splice( @file, $code_area_start, ($code_area_end - $code_area_start), @auto_code );	
+		open( OUTFILE, ">", $self ->directory . "/profiles.m" );
+		print OUTFILE "addpath " . $PsN::lib_dir . ";\n";
+		print OUTFILE @file ;
+		close OUTFILE;
+
+		open( LOGFILE, "<", $self -> logfile->[0] );
+		my @log = <LOGFILE>;
+		close LOGFILE;
+
+		open( OUTFILE, ">", $self -> no_header_logfile->[0] );
+		for( my $i = 1; $i <= $#log; $i ++ ){ #Skip header
+			$log[$i]=~s/NA\,/NaN\,/g;
+			print OUTFILE $log[$i];
+		}
+		close OUTFILE;
+
+	} else {
+		croak('matlab_dir not configured, no matlab scripts will be generated.');
+		return;
+	}
+}
+
+sub create_R_scripts
+{
+	my $self = shift;
+
+	unless( -e $PsN::lib_dir . '/R-scripts/llp.R' ){
+		croak('LLP R-script are not installed, no R scripts will be generated.' );
+		return;
+	}
+	cp ( $PsN::lib_dir . '/R-scripts/llp.R', $self ->directory );
+}
+
+sub _try_bounds
+{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+		 param_log => { isa => 'ArrayRef[Num]', optional => 1 },
+		 guess => { isa => 'Num', optional => 1 },
+		 side => { isa => 'Str', optional => 1 },
+		 bound => { isa => 'Num', optional => 1 }
+	);
+	my @param_log = defined $parm{'param_log'} ? @{$parm{'param_log'}} : ();
+	my $guess = $parm{'guess'};
+	my $side = $parm{'side'};
+	my $bound = $parm{'bound'};
+	my $new_value;
+
 	if ( ( $side eq 'lower' and $guess < $bound ) or
 	     ( $side eq 'upper' and $guess > $bound ) ) {
 	  my @s_log = sort { $a <=> $b } @param_log;
@@ -930,15 +1133,21 @@ start _try_bounds
 	}
 
 	$new_value = $guess;
-      }
-end _try_bounds
 
-# }}} _try_bounds
+	return $new_value;
+}
 
-# {{{ _aag
+sub _aag
+{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+		 x => { isa => 'ArrayRef[Num]', optional => 1 },
+		 y => { isa => 'ArrayRef[Num]', optional => 1 }
+	);
+	my @x = defined $parm{'x'} ? @{$parm{'x'}} : ();
+	my @y = defined $parm{'y'} ? @{$parm{'y'}} : ();
+	my @polynomial;
 
-start _aag
-      {
 	my $total = scalar(@x);
 	croak("No data supplied to the polynomial approximation".
 		      " algorithm in the log-likelihood profiling tool" ) if ( $total < 1 );
@@ -974,23 +1183,35 @@ start _aag
 	my $apr3 = ($y - $apr2*$x1 - $apr1*$x2)/$total;
 
 	@polynomial = ($apr1,$apr2,$apr3);
-      }
-end _aag
 
-# }}} _aag
+	return \@polynomial;
+}
 
-# {{{ _guess
-
-start _guess
-      {
+sub _guess
+{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+		 param_log => { isa => 'ArrayRef', optional => 1 },
+		 side => { isa => 'Str', optional => 1 },
+		 param => { isa => 'Str', optional => 1 },
+		 num => { isa => 'Int', optional => 1 },
+		 probnum => { isa => 'Int', optional => 1 }
+	);
+	my @param_log = defined $parm{'param_log'} ? @{$parm{'param_log'}} : ();
+	my $guess;
+	my $side = $parm{'side'};
+	my $param = $parm{'param'};
+	my $num = $parm{'num'};
+	my $probnum = $parm{'probnum'};
+	
 	my @x = @{$param_log[0]};
 	my @y = @{$param_log[1]};
 	
 	croak('The number of logged parameter values ('.
-		      scalar @{$param_log[0]}.
-		      ') does not match the number of logged ofv-diffs ('.
-		      scalar @{$param_log[1]}.')' ) if ( scalar @{$param_log[0]} !=
-							 scalar @{$param_log[1]} );
+		scalar @{$param_log[0]}.
+		') does not match the number of logged ofv-diffs ('.  scalar @{$param_log[1]}.')' )
+	if ( scalar @{$param_log[0]} != scalar @{$param_log[1]} );
+
 	my ( @x1, @y1 );
 	
 	my $points = scalar(@x);
@@ -1052,15 +1273,121 @@ start _guess
 	    }
 	  }
 	}
-      }
-end _guess
 
-# }}} _guess
+	return $guess;
+}
 
-# {{{ _test_sigdig
+sub prepare_results
+{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+		 model_number => { isa => 'Int', optional => 1 }
+	);
+	my $model_number = $parm{'model_number'};
 
-start _test_sigdig
-      {
+	$self -> read_raw_results();
+
+	unless( defined $self->raw_line_structure){
+	  print "reading raw line structure in ".$self->directory().'raw_results_structure'."\n";
+	  $self->raw_line_structure( ext::Config::Tiny -> read( $self->directory().'raw_results_structure'));
+	}
+	for ( my $i = 0; $i < scalar @{$self->raw_results}; $i++ ) { # All models
+	  my $orig_mod = $self -> models->[$i];
+	  my @params = ( 'theta', 'omega', 'sigma' );
+	  my ( %param_nums, %labels, %orig_estimates );
+	  foreach my $param ( @params ) {
+	    my $modlabels = $orig_mod -> labels( parameter_type => $param );
+	    $labels{$param} = $modlabels -> [0]; # Only one problem
+	    $param_nums{$param} = scalar @{$modlabels -> [0]} if ( defined $modlabels );
+	    my $orig_ests    = $orig_mod -> get_values_to_labels ( category => $param);
+	    $orig_estimates{$param} = $orig_ests->[0][0];
+	  }
+	  my ( %ci, %near_bound, %max_iterations, %interval_ratio,
+	       %skewed, %within_interval );
+
+	  # The 9 on the row below is offset for iteration,
+	  # parameter.type, parameter.number, side, finish.message,
+	  # model, problem, subproblem, ofv
+
+	  # Skip original run:
+	  for ( my $j = 1; $j < scalar @{$self -> raw_results->[$i]}; $j++ ) {
+	    my $row = $self -> raw_results->[$i][$j];
+
+	    my ($start,$len) = split(/,/,$self->raw_line_structure-> {'1'} -> {$row -> [1]});
+	    #$row->[1] is parameter.type in rawres
+	    #$row->[2] is parameter.number in rawres
+	    #$row->[3] is side in rawres
+	    #$num is index in rawres of this param  
+	    my $num = $start+($row -> [2]  - 1);
+
+	    $ci{$row -> [1]}{$row -> [2]}{$row -> [3]} = $row -> [$num];
+	    if ( $row -> [4] eq 'near.boundary' ) {
+	      $near_bound{$row -> [1]}{$row -> [2]}{$row -> [3]} = 1;
+	    } elsif ( $row -> [4] eq 'max.iterations' ) {
+	      $max_iterations{$row -> [1]}{$row -> [2]}{$row -> [3]} = 1;
+	    }
+	  }
+	  my ( @ci_labels, @ci_values, @li_values );
+	  $ci_labels[1] = [ 'lower', 'maximum.likelihood.estimate',
+			    'upper', 'interval.ratio', 'near.bound','max.iterations' ];
+	  foreach my $param ( @params ) {
+	    next if ( not defined $ci{$param} );
+	    my @nums = sort { $a <=> $b } keys %{$ci{$param}};
+	    foreach my $num ( @nums ) {
+	      push( @{$ci_labels[0]}, $labels{$param}[$num-1] );
+	      if ( defined $ci{$param}{$num}{'lower'} and 
+		   defined $ci{$param}{$num}{'upper'} ) {
+		if( abs( $ci{$param}{$num}{'lower'} - $orig_estimates{$param}[$num-1] ) == 0 ){
+		  $interval_ratio{$param}{$num} = 'INF';
+		} else {
+		  $interval_ratio{$param}{$num} =
+		      abs( $ci{$param}{$num}{'upper'} - $orig_estimates{$param}[$num-1] ) /
+		      abs( $ci{$param}{$num}{'lower'} - $orig_estimates{$param}[$num-1] );
+		  if ( $interval_ratio{$param}{$num} > $self -> {$param.'_interval_ratio_check'} or
+		       $interval_ratio{$param}{$num} < 1/$self -> {$param.'_interval_ratio_check'} ) {
+		    $skewed{$param}{$num} = 1;
+		  } else {
+		    $skewed{$param}{$num} = 0;
+		  }
+		  if ( $self -> within_interval_check < $ci{$param}{$num}{'upper'} and
+		       $self -> within_interval_check > $ci{$param}{$num}{'lower'} ) {
+		    $within_interval{$param}{$num} = 1;
+		  } else {
+		    $within_interval{$param}{$num} = 0;
+		  }
+		}
+	      }
+	      my @row;
+	      push( @row, $ci{$param}{$num}{'lower'} );
+	      push( @row, $orig_estimates{$param}[$num-1] );
+	      push( @row, $ci{$param}{$num}{'upper'} );
+	      push( @row, $interval_ratio{$param}{$num} );
+	      push( @row, $near_bound{$param}{$num}{'upper'} ? 1 : $near_bound{$param}{$num}{'lower'} ? 1 : 0 );
+	      push( @row, $max_iterations{$param}{$num}{'upper'} ? 1 : $max_iterations{$param}{$num}{'lower'} ? 1 : 0 );
+	      push( @ci_values, \@row );
+	    }
+	  }
+ 	  my %return_section;
+	  $return_section{'name'} = 'confidence.intervals';
+	  $return_section{'labels'} = \@ci_labels;
+	  $return_section{'values'} = \@ci_values;
+ 	  unshift( @{$self -> results->[$i]{'own'}},\%return_section );
+	}
+}
+
+sub _test_sigdig
+{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+		 number => { isa => 'Num', optional => 1 },
+		 goal => { isa => 'Num', optional => 1 },
+		 sigdig => { isa => 'Int', optional => 1 }
+	);
+	my $number = $parm{'number'};
+	my $goal = $parm{'goal'};
+	my $test;
+	my $sigdig = $parm{'sigdig'};
+
 	$number = &FormatSigFigs($number, $sigdig );
 	if ( $goal == 0 ) {
 	  $number = sprintf( "%.4f", $number );
@@ -1069,378 +1396,10 @@ start _test_sigdig
 	  $goal = &FormatSigFigs($goal, $sigdig );
 	}
 	$test = $number eq $goal ? 1 : 0;
-      }
-end _test_sigdig
 
-# }}} _test_sigdig
+	return $test;
+}
 
-# {{{ _make_new_guess
-
-start _make_new_guess
-      {
-#	if ( not $done ) {
-	  my %run;
-	  $run{'thetas'} = (ref( $self -> run_thetas -> [0] ) eq 'ARRAY') ? 
-	    $self -> run_thetas -> [$model_number-1]:$self -> run_thetas;
-	  $run{'omegas'} = (ref( $self -> run_omegas -> [0] ) eq 'ARRAY') ? 
-	    $self -> run_omegas -> [$model_number-1]:$self -> run_omegas;
-	  $run{'sigmas'} = (ref( $self -> run_sigmas -> [0] ) eq 'ARRAY') ? 
-	    $self -> run_sigmas -> [$model_number-1]:$self -> run_sigmas;
-
-	  my $orig_output;
-	  my $orig_model = $self -> models -> [$model_number-1];
-	  if ( $first ) {
-	    croak("No output object defined through model" )
-		unless ( defined $orig_model -> outputs -> [0] );
-	    $orig_output = $orig_model -> outputs -> [0];
-	  }
-	  # Loop over the parameter names
-	  foreach my $param ( 'theta', 'omega', 'sigma' ) {
-	    # jump to next parameter if no parameter of this type should be run
-	    next unless ( defined $run{$param.'s'} and
-			  scalar @{$run{$param.'s'}} > 0 and
-			  $run{$param.'s'}->[0] ne '' );
-	    my $accessor    = $param.'s';
-	    my $logfunc = $param.'_log';
-	    my $rsefunc = 'rse_'.$param.'s';
-	    my @par_nums    = @{$run{$param.'s'}};
-	    my $diagonals = $orig_model -> on_diagonal( parameter_type => $param );
-	    my %bounds;
-	    $bounds{'lower'} =
-	      $orig_model -> lower_bounds( parameter_type => $param );
-	    if ($param eq 'omega' or $param eq 'sigma' and defined $diagonals){
-	      for ( my $j = 0; $j < scalar @{$bounds{'lower'}}; $j++ ) {
-		next unless (defined $diagonals->[$j]);
-		foreach my $num ( @par_nums ) {
-		  if (defined $diagonals->[$j][$num-1] and $diagonals->[$j][$num-1]== 1){
-		    $bounds{'lower'}->[$j][$num-1] = 0 
-			unless (defined $bounds{'lower'}->[$j][$num-1]);
-		  }
-		}
-	      }
-	    }
-	    $bounds{'upper'} =
-	      $orig_model -> upper_bounds( parameter_type => $param );
-	    if ( $first ) {
-	      my $orig_ests    = $orig_model -> get_values_to_labels ( category => $param);
-	      my $orig_se_ests = $orig_model -> get_values_to_labels ( category => 'se'.$param);
-	      # Loop over the parameter numbers of interest
-	      foreach my $num ( @par_nums ) {
-		# Loop over the problems:
-		for ( my $j = 0; $j < scalar @{$orig_ests}; $j++ ) {
-		  die "Subproblems are not allowed for the log-likelihood profiling tool\n"
-		    if ( scalar @{$orig_ests->[$j]} > 1 );
-		  my $orig  = $orig_ests->[$j][0][$num-1];
-		  my $upbnd = $bounds{'upper'}->[$j][$num-1];
-		  my $lobnd = $bounds{'lower'}->[$j][$num-1];
-		  my $width;
-		  if ( defined $orig_se_ests->[$j][0][$num-1] ) {
-		    $width = abs( $orig_se_ests->[$j][0][$num-1] *
-				  $self -> normq );
-		  } elsif ( defined $self -> $rsefunc->[$model_number-1]{$num} ) {
-		    $width = abs( $self -> $rsefunc->[$model_number-1]{$num}/100*abs($orig) *
-				  $self -> normq );
-		  } else {
-		    die "No estimate of the standard error of $param $num is available from the output file nor from the command line\n";
-		  }
-		  my $upper = $orig + $width;
-		  my $lower = $orig - $width;
-
-		  $lower = ( defined $lobnd and $lower < $lobnd  ) ?
-		    ($lobnd-$orig)*0.9+$orig : $lower;
-		  $upper = ( defined $upbnd and $upper > $upbnd ) ?
-		    ($upbnd-$orig)*0.9+$orig : $upper;
-		  unshift( @{$self->$logfunc->{$num}->[$j]->[0]}, $lower );
-		  push( @{$self->$logfunc->{$num}->[$j]->[0]}, $upper );
-		}
-	      }
-	    } else {
-	      # Loop over the parameter numbers of interest
-	      foreach my $num ( @par_nums ) {
-		# Loop over the problems:
-		for ( my $j = 0; $j < scalar @{$bounds{'lower'}}; $j++ ) {
-		  my %guesses;
-		  foreach my $side ( 'lower', 'upper' ) {
-		    # Is this side of the problem finished?
-		    next if $self->$logfunc->{$num}->[$j]->[2]->{$side};
-		    # Collect the model outputs
-		    carp("Making new guess for $param number $num on the $side side" );
-		    my $bound = $bounds{$side}->[$j][$num-1];
-		    my $guess =
-		      $self -> _guess( param_log => $self->$logfunc->{$num}->[$j],
-				       side => $side );
-		    if ( defined $bounds{$side}->[$j][$num-1] ) {
-		      $guess =
-			$self -> _try_bounds( guess     => $guess,
-					      side      => $side,
-					      bound     => $bounds{$side}->[$j][$num-1],
-					      param_log => $self->$logfunc->
-					      {
-					       $num}->[$j]->[0]);
-		    }
-		    $guesses{$side} = $guess;
-		    if ( not defined $guess ) {
-		      print "Warning: The search for the $side CI-limit for $param $num ".
-			  "could not continue due to numerical difficulties\n";
-		      $self->$logfunc->{$num}->[$j]->[2]->{$side} = 1;
-		    }
-		  }
-		  unshift( @{$self->$logfunc->{$num}->[$j]->[0]}, $guesses{'lower'} )
-		    if ( defined $guesses{'lower'} );
-		  push( @{$self->$logfunc->{$num}->[$j]->[0]}, $guesses{'upper'} )
-		    if ( defined $guesses{'upper'} );
-		}
-	      }
-	    }
-	  }
-	  # Logging must be done fairly quick, therefore this loop by itself
-	  open( DONE, '>'.$self ->directory."/m$model_number/done" );
-	  foreach my $param ( 'theta', 'omega', 'sigma' ) {
-	    my $logfunc = $param.'_log';
-	    next unless ( defined $self->$logfunc );
-	    while ( my ( $num, $probs ) = each %{$self->$logfunc} ) {
-	      # Loop over the problems:
-	      for ( my $prob = 0; $prob < scalar @{$probs}; $prob++ ) {
-		foreach my $side ( 'lower', 'upper' ) {
-		  next if $self->$logfunc->{$num}->[$prob]->[2]->{$side};
-		  my $log_size = scalar @{$probs -> [$prob] -> [0]};
-		  if ( $side eq 'lower' ) {
-		    print DONE "$param $num $prob $side ",
-		      $probs -> [$prob] -> [0] -> [0],"\n";
-		  } elsif ( $side eq 'upper' ) {
-		    print DONE "$param $num $prob $side ",
-		      $probs -> [$prob] -> [0] -> [$log_size-1],"\n";
-		  }
-		}
-	      }
-	    }
-	  }
-	  close( DONE );
-      }
-end _make_new_guess
-
-# }}} _make_new_guess
-
-# {{{ confidence_limits
-
-start confidence_limits
-      {
-	if ( defined $self -> results ){
-	  for ( my $i = 0; $i < scalar @{$self -> results -> {'own'}}; $i++ ) {
-	    my %num_lim;
-	    if ( defined $self->results -> {'own'}->[$i]->{$parameter.'_log'} ) {
-	      my @nums = sort {$a <=> $b} keys %{$self->results -> {'own'} ->
-						   [$i]->{$parameter.'_log'}};
-	      foreach my $num ( @nums ) {
-		my @prob_lim = ();
-		for ( my $j = 0; $j < scalar @{$self->results -> {'own'}->
-						 [$i]->{$parameter.'_log'}->{$num}}; $j++ ) {
-		  my @last_lvl = @{$self->results -> {'own'}->
-				     [$i]->{$parameter.'_log'}->{$num}->[$j]};
-		  push( @prob_lim, [$last_lvl[0][0],$last_lvl[0][scalar @{$last_lvl[0]}-1]] );
-		}
-		$num_lim{$num} = \@prob_lim;
-	      }
-	    }
-	    push( @limits, \%num_lim );
-	  }
-	}
-      }
-end confidence_limits
-
-# }}} confidence_limits
-
-# {{{ print_results
-
-start print_results
-      {
-	# Run the print_results specific for the subtool
-	my $sub_print_results = $self -> subtools -> [0];
-	if ( defined $sub_print_results ) {
-	  sub get_dim {
-	    my $arr      = shift;
-	    my $dim      = shift;
-	    my $size_ref = shift;
-	    $dim++;
-	    if ( defined $arr and ref($arr) eq 'ARRAY' ) {
-	      push( @{$size_ref}, scalar @{$arr} );
-	      ( $dim, $size_ref ) = get_dim( $arr->[0], $dim, $size_ref );
-	    }
-	    return ( $dim, $size_ref );
-	  }
-	  sub format_value {
-	    my $val = shift;
-	    if ( not defined $val or $val eq '' ) {
-	      return sprintf("%10s",$PsN::output_style).',';
-	    } else {
-	      $_ = $val;
-	      my $nodot = /.*\..*/ ? 0 : 1;
-	      $_ =~ s/\.//g;
-	      if ( /.*\D+.*/ or $nodot) {
-		return sprintf("%10s",$val).',';
-	      } else {
-		return sprintf("%10.5f",$val).',';
-	      }
-	    }
-	  }
-	  croak("No results_file defined" )
-	    unless ( defined $self -> results_file );
-	  open ( RES, ">".$self ->directory.'/'.$self -> results_file );
-	  if ( defined $self -> results ) {
-	    my @all_results = @{$self -> results};
-	    for ( my $i = 0; $i <= $#all_results; $i++ ) {
-	      if ( defined $all_results[$i]{'own'} ) {
-		my @my_results = @{$all_results[$i]{'own'}};
-		for ( my $j = 0; $j <= $#my_results; $j++ ) {
-		  # These size estimates include the problem and sub_problem dimensions:
-		  my ( $ldim, $lsize_ref ) = get_dim( $my_results[$j]{'labels'}, -1, [] );
-		  my ( $vdim, $vsize_ref ) = get_dim( $my_results[$j]{'values'}, -1, [] );
-		  print RES $my_results[$j]{'name'},"\n" if ( $vdim > 1 );
-		  if ( defined $my_results[$j]{'values'} and
-		       scalar @{$my_results[$j]{'values'}} >= 0 ) {
-		    my @values  = @{$my_results[$j]{'values'}};
-		    my @labels;
-		    if ( defined $my_results[$j]{'labels'} and
-			 scalar @{$my_results[$j]{'labels'}} >= 0 ) {
-		      @labels = @{$my_results[$j]{'labels'}};
-		    }
-		    # Print Header Labels
-		    if ( $ldim == 0 ) {
-		      my $label = \@labels;
-		      print RES ','.format_value($label),"\n";
-		    } elsif ( $ldim == 2 ) {
-		      print RES ',';
-		      for ( my $n = 0; $n < scalar @{$labels[1]}; $n++ ) {
-			my $label = $labels[1][$n];
-			print RES format_value($label);
-		      }
-		      print RES "\n" if ( scalar @{$labels[1]} );
-		    }
-		    # Print the values:
-		    if ( $vdim == 0 ) {
-		      print RES ','.format_value(\@values),"\n";
-		    } elsif ( $vdim == 1 ) {
-		      for ( my $m = 0; $m < scalar @{\@values}; $m++ ) {
-			my $label = $labels[$m];
-			print RES ','.format_value($label);
-			my $val = $values[$m];
-			print RES ','.format_value($val),"\n";
-		      }
-		    } elsif ( $vdim == 2 ) {
-		      for ( my $m = 0; $m < scalar @{\@values}; $m++ ) {
-			my $label;
-			if ( $ldim == 1 ) {
-			  $label = $labels[$m];
-			} elsif ( $ldim == 2 ) {
-			  $label = $labels[0][$m];
-			}
-			print RES format_value($label);
-			if ( defined $values[$m] ) {
-			  for ( my $n = 0; $n < scalar @{$values[$m]}; $n++ ) {
-			    print RES format_value($values[$m][$n]);
-			  }
-			}
-			print RES "\n";
-		      }
-		    }
-		  }
-		}
-	      }
-	    }
-	  }
-	  close( RES );
-	} else {
-	  carp("No subtools defined".
-			 ", using default printing routine" );
-	}
-      }
-end print_results
-
-# }}}
-
-# {{{ create_matlab_scripts
-start create_matlab_scripts
-    {
-      if( defined $PsN::lib_dir ){
-	unless( -e $PsN::lib_dir . '/matlab/profiles.m') {
-	  croak('LLP matlab template scripts are not installed, no matlab scripts will be generated.' );
-	  return;
-	}
-
-	open( PROF, $PsN::lib_dir . '/matlab/profiles.m' );
-	my @file = <PROF>;
-	close( PROF );	
-      	my $found_code;
-	my $code_area_start=0;
-	my $code_area_end=0;
-	
-	for(my $i = 0;$i < scalar(@file); $i++) {
-	  if( $file[$i] =~ /% ---------- Autogenerated code below ----------/ ){
-	    $found_code = 1;
-	    $code_area_start = $i;
-	  }
-	  if( $file[$i] =~ /% ---------- End autogenerated code ----------/ ){
-	    unless( $found_code ){
-	      croak('LLP matlab template script is malformated, no matlab scripts will be generated' );
-	      return;
-	    }
-	    $code_area_end = $i;
-	  }
-	}
-	
-	my @auto_code;
-	push( @auto_code, "str_format = '%30s';\n\n" );
-	
-	my %param_names;
-
-	push( @auto_code, "col_names = [ " );
-	
-	foreach my $param ( 'theta','omega','sigma' ) {
-	  my $labels = $self -> models -> [0] -> labels( parameter_type => $param );
-	  if ( defined $labels ){
-	    foreach my $label ( @{$labels -> [0]} ){
-	      push( @auto_code, "	      sprintf(str_format,'",$label,"');\n" );
-	    }
-	  }
-	}
-        push( @auto_code, "	      ];\n\n" );
-        push( @auto_code, "goal = 3.84;\n\n" );
-	
-        push( @auto_code, "filename = '".$self -> no_header_logfile->[0]."';\n" );
-	
-	splice( @file, $code_area_start, ($code_area_end - $code_area_start), @auto_code );	
-	open( OUTFILE, ">", $self ->directory . "/profiles.m" );
-	print OUTFILE "addpath " . $PsN::lib_dir . ";\n";
-	print OUTFILE @file ;
-	close OUTFILE;
-	
-	open( LOGFILE, "<", $self -> logfile->[0] );
-	my @log = <LOGFILE>;
-	close LOGFILE;
-	
-	open( OUTFILE, ">", $self -> no_header_logfile->[0] );
-	for( my $i = 1; $i <= $#log; $i ++ ){ #Skip header
-	    $log[$i]=~s/NA\,/NaN\,/g;
-	    print OUTFILE $log[$i];
-	}
-	close OUTFILE;
-
-      } else {
-	croak('matlab_dir not configured, no matlab scripts will be generated.');
-	return;
-      }
-    }
-end create_matlab_scripts
-# }}}
-
-# {{{ create_R_scripts
-start create_R_scripts
-    {
-      unless( -e $PsN::lib_dir . '/R-scripts/llp.R' ){
-	croak('LLP R-script are not installed, no R scripts will be generated.' );
-	return;
-      }
-      cp ( $PsN::lib_dir . '/R-scripts/llp.R', $self ->directory );
-    }
-end create_R_scripts
-# }}}
+no Moose;
+__PACKAGE__->meta->make_immutable;
+1;
