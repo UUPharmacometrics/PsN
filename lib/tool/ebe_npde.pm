@@ -1,93 +1,108 @@
-# {{{ include statements
+package tool::ebe_npde;
 
-start include statements
-#use Carp;
-	use include_modules;
+use include_modules;
 use tool::modelfit;
 use Math::Random;
 use Data::Dumper;
 use Config;
 use linear_algebra;
 use npde_util;
-end include statements
+use Moose;
+use MooseX::Params::Validate;
 
-# }}} include statements
+extends 'newtool';
 
-# {{{ new
-
-start new
-
-$this->have_CDF(1) if eval('require Statistics::Distributions'); #enough, now loaded
-
-for my $accessor ('logfile','raw_results_file','raw_nonp_file'){
-    my @new_files=();
-    my @old_files = @{$this->$accessor};
-    for (my $i=0; $i < scalar(@old_files); $i++){
-	my $name;
-	my $ldir;
-	( $ldir, $name ) =
-	    OSspecific::absolute_path( $this ->directory(), $old_files[$i] );
-	push(@new_files,$ldir.$name) ;
-    }
-    $this->$accessor(\@new_files);
-}	
+has 'samples' => ( is => 'rw', isa => 'Int' );
+has 'lst_file' => ( is => 'rw', isa => 'Str' );
+has 'estimate_input' => ( is => 'rw', isa => 'Bool', default => 1 );
+has 'have_CDF' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'reminimize' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'gls_data_file' => ( is => 'rw', isa => 'Str', default => 'gls_data.dta' );
+has 'have_nwpri' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'have_tnpri' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'probnum' => ( is => 'rw', isa => 'Int', default => 1 );
+has 'logfile' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { ['ebe_npde.log'] } );
+has 'results_file' => ( is => 'rw', isa => 'Str', default => 'ebe_npde_results.csv' );
 
 
-if ( scalar (@{$this->models->[0]->problems}) > 2 ){
-  croak('Cannot have more than two $PROB in the input model.');
-}elsif  (scalar (@{$this->models->[0]->problems}) == 2 ){
-  if ((defined $this->models->[0]->problems->[0]->priors()) and 
-      scalar(@{$this->models->[0]->problems->[0]->priors()})>0 ){
-    my $tnpri=0;
-    foreach my $rec (@{$this->models->[0]->problems->[0] -> priors()}){
-      unless ((defined $rec) &&( defined $rec -> options )){
-	carp("No options for rec \$PRIOR" );
-      }
-      foreach my $option ( @{$rec -> options} ) {
-	if ((defined $option) and 
-	    (($option->name eq 'TNPRI') || (index('TNPRI',$option ->name ) == 0))){
-	  $tnpri=1;
+sub BUILD
+{
+	my $this  = shift;
+	my %parm  = @_;
+
+	$this->have_CDF(1) if eval('require Statistics::Distributions'); #enough, now loaded
+
+	for my $accessor ('logfile','raw_results_file','raw_nonp_file'){
+		my @new_files=();
+		my @old_files = @{$this->$accessor};
+		for (my $i=0; $i < scalar(@old_files); $i++){
+			my $name;
+			my $ldir;
+			( $ldir, $name ) =
+			OSspecific::absolute_path( $this ->directory(), $old_files[$i] );
+			push(@new_files,$ldir.$name) ;
+		}
+		$this->$accessor(\@new_files);
+	}	
+
+
+	if ( scalar (@{$this->models->[0]->problems}) > 2 ){
+		croak('Cannot have more than two $PROB in the input model.');
+	}elsif  (scalar (@{$this->models->[0]->problems}) == 2 ){
+		if ((defined $this->models->[0]->problems->[0]->priors()) and 
+			scalar(@{$this->models->[0]->problems->[0]->priors()})>0 ){
+			my $tnpri=0;
+			foreach my $rec (@{$this->models->[0]->problems->[0] -> priors()}){
+				unless ((defined $rec) &&( defined $rec -> options )){
+					carp("No options for rec \$PRIOR" );
+				}
+				foreach my $option ( @{$rec -> options} ) {
+					if ((defined $option) and 
+						(($option->name eq 'TNPRI') || (index('TNPRI',$option ->name ) == 0))){
+						$tnpri=1;
+					}
+				}
+			}
+
+			$this->have_tnpri(1) if ($tnpri);
+		}
+		if ($this->have_tnpri()){
+			unless( defined $this->models->[0]->extra_files ){
+				croak('When using $PRIOR TNPRI you must set option -extra_files to '.
+					'the msf-file, otherwise the msf-file will not be copied to the NONMEM '.
+					'run directory.');
+			}
+
+		}else{
+			croak('The input model must contain exactly one problem, unless'.
+				' first $PROB has $PRIOR TNPRI');
+		}
+		my $est_record = $this->models->[0]->record( problem_number => (1+$this->have_tnpri()),
+			record_name => 'estimation' );
+		unless (defined $est_record and scalar(@{$est_record})>0){
+			croak('Input model must have an estimation record');
+		}
+
 	}
-      }
-    }
 
-    $this->have_tnpri(1) if ($tnpri);
-  }
-  if ($this->have_tnpri()){
-    unless( defined $this->models->[0]->extra_files ){
-      croak('When using $PRIOR TNPRI you must set option -extra_files to '.
-		     'the msf-file, otherwise the msf-file will not be copied to the NONMEM '.
-		     'run directory.');
-    }
-
-  }else{
-    croak('The input model must contain exactly one problem, unless'.
-	' first $PROB has $PRIOR TNPRI');
-  }
-  my $est_record = $this->models->[0]->record( problem_number => (1+$this->have_tnpri()),
-						     record_name => 'estimation' );
-  unless (defined $est_record and scalar(@{$est_record})>0){
-    croak('Input model must have an estimation record');
-  }
+	my $meth = $this->models->[0]->get_option_value( record_name  => 'estimation',
+		problem_index => (0+$this->have_tnpri()),
+		option_name  => 'METHOD',
+		option_index => 0);
+	if (not (defined $meth) or ($meth eq '0') or ($meth =~ /^ZE/)){
+		croak('Cannot run ebe_npde if METHOD=0, all ETAs will be 0');
+	}
 
 }
 
-my $meth = $this->models->[0]->get_option_value( record_name  => 'estimation',
-						       problem_index => (0+$this->have_tnpri()),
-						       option_name  => 'METHOD',
-						       option_index => 0);
-if (not (defined $meth) or ($meth eq '0') or ($meth =~ /^ZE/)){
-  croak('Cannot run ebe_npde if METHOD=0, all ETAs will be 0');
-}
+sub modelfit_setup
+{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+		 model_number => { isa => 'Int', optional => 1 }
+	);
+	my $model_number = $parm{'model_number'};
 
-end new
-
-# }}}
-
-
-
-start modelfit_setup
-{ 
 	my $model = $self->models->[$model_number-1];
 	my ( @seed, $new_datas, $skip_ids, $skip_keys, $skip_values );
 	my @orig_and_sim_models;
@@ -766,323 +781,174 @@ start modelfit_setup
 
 		}
 
-
 		last; #must break while here
 	}
-
-  
 }
-end modelfit_setup
 
-
-
-
-start cleanup
+sub _modelfit_raw_results_callback
 {
-  #remove tablefiles in simulation NM_runs, they are 
-  #copied to m1 by modelfit and read from there anyway.
-  for (my $samp=1;$samp<=$self->samples(); $samp++){
-    unlink $self->directory . "/simulation_dir1/NM_run" . $samp . "/mc-sim-" . $samp . ".dat";
-    unlink $self->directory . "/simulation_dir1/NM_run" . $samp . "/mc-sim-" . $samp . "-1.dat"; #retry
-  }
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+		model_number => { isa => 'Int', optional => 1 }
+	);
+	my $model_number = $parm{'model_number'};
+	my $subroutine;
 
-}
-end cleanup
+	# Use the mc's raw_results file.
+	my ($dir,$file) = 
+	OSspecific::absolute_path( $self->directory,
+		$self -> raw_results_file->[$model_number-1] );
+	my ($npdir,$npfile) = 
+	OSspecific::absolute_path( $self->directory,
+		$self -> raw_nonp_file -> [$model_number-1]);
 
+	$subroutine = sub {
+		#can have 2 $PROB if tnpri and est_sim, interesting with 2nd $PROB only
+		my $modelfit = shift;
+		my $mh_ref   = shift;
+		my %max_hash = %{$mh_ref};
+		$modelfit -> raw_results_file( [$dir.$file] );
+		$modelfit -> raw_nonp_file( [$npdir.$npfile] );
+		$modelfit -> raw_results_append( 1 ) if ($self->first_callback eq '0');
+		my $totsamples=1;
+		$totsamples = $self -> samples() if (defined $self -> samples());
 
+		# a column with run type, original or sim is prepended. 
 
+		#if prior tnpri nothing will be in raw_results for first $PROB, can
+		#take first row for model as final estimates as usual, even if
+		#it happens to be from second $PROB
 
-# {{{ _modelfit_raw_results_callback
+		if ( defined $modelfit -> raw_results() ) {
+			$self->stop_motion_call(tool=>'ebe_npde',message => "Preparing to rearrange raw_results in memory, adding ".
+				"model name information")
+			if ($self->stop_motion());
 
-start _modelfit_raw_results_callback
+			my $n_rows = scalar(@{$modelfit -> raw_results()});
 
-# Use the mc's raw_results file.
-my ($dir,$file) = 
-    OSspecific::absolute_path( $self->directory,
-			       $self -> raw_results_file->[$model_number-1] );
-my ($npdir,$npfile) = 
-    OSspecific::absolute_path( $self->directory,
-			       $self -> raw_nonp_file -> [$model_number-1]);
+			my $last_model= 0;
+			my $sample = 0; 
 
+			if ($self->first_callback){
+				unshift( @{$modelfit->raw_results_header}, 'run_type' );
+			}
 
-$subroutine = sub {
-  #can have 2 $PROB if tnpri and est_sim, interesting with 2nd $PROB only
-  my $modelfit = shift;
-  my $mh_ref   = shift;
-  my %max_hash = %{$mh_ref};
-  $modelfit -> raw_results_file( [$dir.$file] );
-  $modelfit -> raw_nonp_file( [$npdir.$npfile] );
-  $modelfit -> raw_results_append( 1 ) if ($self->first_callback eq '0');
-  my $totsamples=1;
-  $totsamples = $self -> samples() if (defined $self -> samples());
-
-
-  # a column with run type, original or sim is prepended. 
-
-  #if prior tnpri nothing will be in raw_results for first $PROB, can
-  #take first row for model as final estimates as usual, even if
-  #it happens to be from second $PROB
-
-  if ( defined $modelfit -> raw_results() ) {
-    $self->stop_motion_call(tool=>'ebe_npde',message => "Preparing to rearrange raw_results in memory, adding ".
-			    "model name information")
-	if ($self->stop_motion());
-    
-    my $n_rows = scalar(@{$modelfit -> raw_results()});
-
-    my $last_model= 0;
-    my $sample = 0; 
-
-    if ($self->first_callback){
-      unshift( @{$modelfit->raw_results_header}, 'run_type' );
-    }
-
-    my $type;
-    if ($self->first_callback) {
-      $type='original';
-    }else{
-      $type='simulation';
-    }
-    for (my $i=0; $i< $n_rows; $i++){
-      my $this_model = $modelfit -> raw_results()->[$i]->[0]; 
-      my $step= ($this_model-$last_model);
-      if ($last_model > 0 and $step>0){
-	$type='simulation';
-      }
-      if ($step < 0){
-	ui -> print( category => 'ebe_npde',
-		     message  => "Warning: It seems the raw_results is not sorted");
-      }else {
-
-	$sample += $step; #normally +1, sometimes 0,sometimes 2 or more
-	unshift( @{$modelfit -> raw_results()->[$i]}, $type );
-
-      }
-      $last_model=$this_model;
-    }
-
-    if ($self->first_callback){
-      $self->raw_line_structure($modelfit->raw_line_structure);
-
-      my $laststart=0;
-      foreach my $mod (sort({$a <=> $b} keys %{$self->raw_line_structure})){
-	foreach my $category (keys %{$self->raw_line_structure -> {$mod}}){
-	  next if ($category eq 'line_numbers');
-	  my ($start,$len) = split(',',$self->raw_line_structure -> {$mod}->{$category});
-	  $self->raw_line_structure -> {$mod}->{$category} = ($start+1).','.$len; #add 1 for hypothesis
-	  $laststart=($start+$len) if (($start+$len)> $laststart);
-	}
-	$self->raw_line_structure -> {$mod}->{'run_type'} = '0,1';
-      }
-
-      $self->raw_line_structure->write( $dir.'raw_results_structure' );
-    }
-  } #end if defined modelfit->raw_results
-
-  if ( defined $modelfit -> raw_nonp_results() ) {
-    
-    my $n_rows = scalar(@{$modelfit -> raw_nonp_results()});
-
-    my $last_model= 0;
-    my $sample = 0; 
-    my $type;
-    if ($self->first_callback ){
-      $type='original';
-    }else{
-      $type='simulation';
-    }
-
-    unshift( @{$modelfit->raw_nonp_results_header}, 'run_type' );
-    
-    for (my $i=0; $i< $n_rows; $i++){
-      my $this_model = $modelfit -> raw_nonp_results()->[$i]->[0]; 
-      my $step= ($this_model-$last_model);
-      if ($last_model > 0 and $step>0){
+			my $type;
+			if ($self->first_callback) {
+				$type='original';
+			}else{
 				$type='simulation';
-      }
-      if ($step < 0){
-				ui -> print( category => 'ebe_npde',
-		     message  => "Warning: It seems the raw_nonp_results is not sorted");
-      } else {
-				$sample += $step; #normally +1, sometimes 0,sometimes 2 or more
-				unshift( @{$modelfit -> raw_nonp_results()->[$i]}, $type );
+			}
+			for (my $i=0; $i< $n_rows; $i++){
+				my $this_model = $modelfit -> raw_results()->[$i]->[0]; 
+				my $step= ($this_model-$last_model);
+				if ($last_model > 0 and $step>0){
+					$type='simulation';
+				}
+				if ($step < 0){
+					ui -> print( category => 'ebe_npde',
+						message  => "Warning: It seems the raw_results is not sorted");
+				}else {
 
-      }
-      $last_model=$this_model;
-    }
+					$sample += $step; #normally +1, sometimes 0,sometimes 2 or more
+					unshift( @{$modelfit -> raw_results()->[$i]}, $type );
 
-  } #end if defined modelfit->raw_nonp_results
+				}
+				$last_model=$this_model;
+			}
+
+			if ($self->first_callback){
+				$self->raw_line_structure($modelfit->raw_line_structure);
+
+				my $laststart=0;
+				foreach my $mod (sort({$a <=> $b} keys %{$self->raw_line_structure})){
+					foreach my $category (keys %{$self->raw_line_structure -> {$mod}}){
+						next if ($category eq 'line_numbers');
+						my ($start,$len) = split(',',$self->raw_line_structure -> {$mod}->{$category});
+						$self->raw_line_structure -> {$mod}->{$category} = ($start+1).','.$len; #add 1 for hypothesis
+						$laststart=($start+$len) if (($start+$len)> $laststart);
+					}
+					$self->raw_line_structure -> {$mod}->{'run_type'} = '0,1';
+				}
+
+				$self->raw_line_structure->write( $dir.'raw_results_structure' );
+			}
+		} #end if defined modelfit->raw_results
+
+		if ( defined $modelfit -> raw_nonp_results() ) {
+
+			my $n_rows = scalar(@{$modelfit -> raw_nonp_results()});
+
+			my $last_model= 0;
+			my $sample = 0; 
+			my $type;
+			if ($self->first_callback ){
+				$type='original';
+			}else{
+				$type='simulation';
+			}
+
+			unshift( @{$modelfit->raw_nonp_results_header}, 'run_type' );
+
+			for (my $i=0; $i< $n_rows; $i++){
+				my $this_model = $modelfit -> raw_nonp_results()->[$i]->[0]; 
+				my $step= ($this_model-$last_model);
+				if ($last_model > 0 and $step>0){
+					$type='simulation';
+				}
+				if ($step < 0){
+					ui -> print( category => 'ebe_npde',
+						message  => "Warning: It seems the raw_nonp_results is not sorted");
+				} else {
+					$sample += $step; #normally +1, sometimes 0,sometimes 2 or more
+					unshift( @{$modelfit -> raw_nonp_results()->[$i]}, $type );
+
+				}
+				$last_model=$this_model;
+			}
+
+		} #end if defined modelfit->raw_nonp_results
 
 
-  @{$self->raw_results_header} = @{$modelfit->raw_results_header};
-  @{$self->raw_nonp_results_header} = @{$modelfit->raw_nonp_results_header};
-  #  New header
-  
-};
-return $subroutine;
+		@{$self->raw_results_header} = @{$modelfit->raw_results_header};
+		@{$self->raw_nonp_results_header} = @{$modelfit->raw_nonp_results_header};
+		#  New header
 
-end _modelfit_raw_results_callback
-
-# }}} _modelfit_raw_results_callback
-
-# {{{ prepare_results
-
-start prepare_results
-{ 
-  $self -> cleanup();
-
-
-} 
-end prepare_results
-
-# }}}
-
-
-# {{{ rmse_percent
-
-start rmse_percent
-{
-  #input is integers $column_index, $start_row_index, $end_row_index and scalar float $initial_value
-  #output is scalar $rmse_percent
-
-  unless ($end_row_index) {
-		$self->raw_results([]) unless defined $self->raw_results;
-    $end_row_index = $#{$self->raw_results};
-  }
-
-  croak("Bad row index input") if ($start_row_index > $end_row_index);
-  my $row_count = 0;
-  my $sum_squared_errors=0;
-  for (my $i=$start_row_index; $i<=$end_row_index; $i++){
-    if ($use_runs[$i-$start_row_index]){
-      if (defined $self->raw_results->[$i][$column_index]) {
-				$sum_squared_errors += ($self->raw_results->[$i][$column_index] - $initial_value)**2;
-				$row_count++;
-      }else{
-      }
-    }
-  }
-  
-  if ($row_count == 0){
-    $rmse_percent='NA';
-  }elsif ($initial_value == 0){
-    carp("Initial value 0, returning absolute rmse instead of relative.");
-    $rmse_percent= sqrt($sum_squared_errors/$row_count);
-  }else{
-    $rmse_percent= (sqrt($sum_squared_errors/$row_count))*100/abs($initial_value);
-  }
+	};
+	return $subroutine;
 }
-end rmse_percent
 
-# }}} rmse_percent
-
-# {{{ bias_percent
-
-start bias_percent
+sub modelfit_analyze
 {
-  #input is integers $column_index, $start_row_index, $end_row_index and scalar float $initial_value
-  #output is scalar $bias_percent
-
-  unless( $end_row_index ){
-		$self->raw_results([]) unless defined $self->raw_results;
-    $end_row_index = $#{$self->raw_results};
-  }
-  
-  croak("Bad row index input") if ($start_row_index > $end_row_index);
-  
-  my $row_count = 0;
-  my $sum_errors=0;
-  for (my $i=$start_row_index; $i<=$end_row_index; $i++){
-    if ($use_runs[$i-$start_row_index]){
-      if (defined $self->raw_results->[$i][$column_index]){
-				$sum_errors += ($self->raw_results->[$i][$column_index] - $initial_value);
-				$row_count++;
-      }else{
-      }
-    }
-  }
-
-  if ($row_count == 0){
-    $bias_percent='NA';
-  }elsif ($initial_value == 0){
-    carp("Initial value 0, returning absolute bias instead of relative.");
-    $bias_percent= ($sum_errors/$row_count);
-  }else{
-    $bias_percent= ($sum_errors/$row_count)*100/abs($initial_value);
-  }
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+		 model_number => { isa => 'Int', optional => 1 }
+	);
+	my $model_number = $parm{'model_number'};
 }
-end bias_percent
 
-# }}} bias_percent
-
-# {{{ skewness_and_kurtosis
-
-start skewness_and_kurtosis
+sub prepare_results
 {
-  #input is integers $column_index, $start_row_index, $end_row_index 
-  
-  unless( $end_row_index ){
-		$self->raw_results([]) unless defined $self->raw_results;
-    $end_row_index = $#{$self->raw_results};
-  }
-
-  croak("Bad row index input") if ($start_row_index >= $end_row_index);
-
-  my $row_count = 0;
-  my $sum_values=0;
-  for (my $i=$start_row_index; $i<=$end_row_index; $i++){
-    if ($use_runs[$i-$start_row_index]){
-      if (defined $self->raw_results->[$i][$column_index]){
-	$sum_values += $self->raw_results->[$i][$column_index];
-	$row_count++;
-      }else{
-	$warn=$i-$start_row_index+1;
-      }
-    }
-  }
-
-  if ($row_count < 2){
-    $stdev='NA';
-    $skewness='NA';
-    $kurtosis='NA';
-    return;
-  }
-
-  $mean=$sum_values/$row_count;
-
-  my $error=0;
-  my $sum_errors_pow2=0;
-  my $sum_errors_pow3=0;
-  my $sum_errors_pow4=0;
-
-  for (my $i=$start_row_index; $i<=$end_row_index; $i++){
-    if (defined $self->raw_results->[$i][$column_index]){
-      $error = ($self->raw_results->[$i][$column_index] - $mean);
-      $sum_errors_pow2 += $error**2;
-      $sum_errors_pow3 += $error**3;
-      $sum_errors_pow4 += $error**4;
-    }
-  }
-
-  ## TODO fråga om missing values. och om SD
-
-  $stdev=0;
-  unless( $sum_errors_pow2 == 0 ){
-
-    $stdev= sqrt ($sum_errors_pow2/($row_count-1));
-    $skewness = $sum_errors_pow3/($row_count*($stdev**3));
-    $kurtosis = -3 + $sum_errors_pow4/($row_count*($stdev**4));
-
-  }
+	my $self = shift;
+  $self->cleanup();
 }
-end skewness_and_kurtosis
 
-# }}} skewness_and_kurtosis
-
-# {{{ max_and_min
-
-start max_and_min
+sub max_and_min
 {
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+		 use_runs => { isa => 'ArrayRef[Bool]', optional => 0 },
+		 column_index => { isa => 'Int', optional => 0 },
+		 start_row_index => { isa => 'Int', default => 0, optional => 1 },
+		 end_row_index => { isa => 'Int', optional => 1 }
+	);
+	my @use_runs = defined $parm{'use_runs'} ? @{$parm{'use_runs'}} : ();
+	my $column_index = $parm{'column_index'};
+	my $start_row_index = $parm{'start_row_index'};
+	my $end_row_index = $parm{'end_row_index'};
+	my $maximum;
+	my $minimum;
+
   #input is integers $column_index, $start_row_index, $end_row_index 
   
   unless( $end_row_index ){
@@ -1103,44 +969,22 @@ start max_and_min
       }
     }
   }
+
+	return $maximum ,$minimum;
 }
-end max_and_min
 
-# }}} max_and_min
-
-
-# {{{ median
-
-start median
+sub cleanup
 {
-  #input is integers $column_index, $start_row_index, $end_row_index 
-  
-  unless( $end_row_index ){
-		$self->raw_results([]) unless defined $self->raw_results;
-    $end_row_index = $#{$self->raw_results};
-  }
-  
-  croak("Bad row index input") if ($start_row_index >= $end_row_index);
+	my $self = shift;
 
-  my @temp;
-  
-  for (my $i=$start_row_index; $i<=$end_row_index; $i++){
-    if ($use_runs[$i-$start_row_index]){
-      if (defined $self->raw_results->[$i][$column_index]){
-				push( @temp, $self->raw_results->[$i][$column_index] );
-      }else{
-      }
-    }
+  #remove tablefiles in simulation NM_runs, they are 
+  #copied to m1 by modelfit and read from there anyway.
+  for (my $samp=1;$samp<=$self->samples(); $samp++){
+    unlink $self->directory . "/simulation_dir1/NM_run" . $samp . "/mc-sim-" . $samp . ".dat";
+    unlink $self->directory . "/simulation_dir1/NM_run" . $samp . "/mc-sim-" . $samp . "-1.dat"; #retry
   }
-  
-  @temp = sort({$a <=> $b} @temp);
-  if( scalar( @temp ) % 2 ){
-    $median = $temp[$#temp/2];
-  } else {
-    $median = ($temp[@temp/2]+$temp[(@temp-2)/2]) / 2;
-  }
- 
 }
-end median
 
-# }}} median
+no Moose;
+__PACKAGE__->meta->make_immutable;
+1;
