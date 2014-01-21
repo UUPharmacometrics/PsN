@@ -27,7 +27,6 @@ lib/tool/ebe_npde.pm
 lib/tool/lasso.pm
 lib/tool/mcmp.pm
 lib/tool/nonpb.pm
-lib/tool/npc.pm
 lib/tool/pind.pm
 lib/tool/randtest.pm
 lib/tool/scm.pm
