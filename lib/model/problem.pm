@@ -2471,8 +2471,10 @@ sub tbs_transform
 				"option -tbs in combination");
 	}      
 
+	#TODO add extra theta for power (zeta)
+
 	my $newthetanum;
-	$newthetanum=$self -> record_count( record_name => 'theta' )+1;
+	$newthetanum=$self -> record_count( record_name => 'theta' )+1; #this is the lambda
 	$self->tbs_thetanum($newthetanum);
 	if (defined $self->tbs_param()){
 		$self->add_records( type => 'theta',
@@ -2516,6 +2518,7 @@ sub tbs_transform
 	for (my $i=$#code; $i>=0;$i--){
 		if (($code[$i] =~ /[^a-zA-Z_0-9]IPRED\s*=/) or
 				($code[$i] =~ /^IPRED\s*=/)){
+			#TODO code for zeta here, power..... ORder of defnitions is important IPRED, W, IPRTR
 	  @code =  (@code[0..$i],
 		    " LAMBDA = THETA($newthetanum)\n",
 		    " IPRTR=IPRED\n",

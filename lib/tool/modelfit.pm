@@ -4175,7 +4175,8 @@ sub write_tbs_files
 		'      if (icall.le.1) return'."\n".
 		'      w=y'."\n".
 		"\n".
-		'         y=(y**theta('.$thetanum.')-one)/theta('.$thetanum.')'."\n".
+		'         if(theta('.$thetanum.').eq.0) y=log(y)'."\n".
+		'         if(theta('.$thetanum.').ne.0) y=(y**theta('.$thetanum.')-one)/theta('.$thetanum.')'."\n".
 		"\n".
 		"\n".
 		'      call cels (c1,c2,c3,ier1,ier2)'."\n".
@@ -4198,7 +4199,8 @@ sub write_tbs_files
 		'      if (icall.le.1) return'."\n".
 		'      w=y(1)'."\n".
 		"\n".
-		'         y(1)=(y(1)**theta('.$thetanum.')-one)/theta('.$thetanum.')'."\n".
+		'         if(theta('.$thetanum.').eq.0) y(1)=log(y(1))'."\n".
+		'         if(theta('.$thetanum.').ne.0) y(1)=(y(1)**theta('.$thetanum.')-one)/theta('.$thetanum.')'."\n".
 		"\n".
 		"\n".
 		'      call cels (c1,c2,c3,ier1,ier2)'."\n".
