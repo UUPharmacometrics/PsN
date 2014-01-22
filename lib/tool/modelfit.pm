@@ -788,34 +788,6 @@ sub run
 							$pid = $check_pid;
 						}
 
-						# If the pid is not set, the job is not finished and we
-						# check if it has been running longer than it should, and we
-						# kill it.
-						if (0){
-							unless( $pid ){
-								if ( $self->max_runtime and 
-									 time > $queue_info{$queue_map{$check_pid}}->{'start_time'} + $self->max_runtime ) {
-
-									# Only works on windows
-
-									if( $Config{osname} ne 'MSWin32' ){
-
-										ui->print(category=>'all',message=>"Job ".$check_pid." exceeded run time, trying to kill",newline => 1);
-										my $try=1;
-										while( kill( 0, $check_pid ) ){
-											if( $try <= 5 ){
-												kill( 'TERM', $check_pid );
-											} else {
-												kill( 'KILL', $check_pid );
-											}
-											waitpid( $check_pid, 0);
-											sleep(1);
-										}
-										ui->print(category=>'all',message=>"Job $check_pid killed successfully on try nr $try",newline => 1);
-									}
-								}
-							}
-						}
 					}
 				}
 
@@ -1926,7 +1898,6 @@ sub sge_submit
       $self->parafile() . ' ' .
       $self->nodes() . ' ' .
       $fsubs . ' > JobId';
-  print $qsubstring if (0);
   if( system( $qsubstring ) ){
     croak("Grid submit failed.\nSystem error message: $!" );
   }
@@ -2098,8 +2069,6 @@ sub lsf_nmfe_submit
 
   my $submitstring = 'bsub '.$self->lsf_options().' < lsf_jobscript 2>&1'; 
 
-  ui -> print( category => 'all', message  => "\n".$submitstring, newline => 1 ) if (0);
-	
   my $lsf_out = `$submitstring`;
   if ($lsf_out=~/Job \<(\d+)\> is submitted/) {
     $jobId=$1;

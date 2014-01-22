@@ -948,19 +948,7 @@ sub _read_ofv
 				$self->clear_ofv;
 			} else {
 				$_ = @{$self->lstfile}[ $start_pos++];
-				if (0) {
-					#only true for BAYES
-					(undef, my $objs, undef) = split(' ',$_,3);
-					if ( $objs =~ /\*\*\*\*\*\*/ ) {
-						$self -> ofv($ofvt);
-					} else {
-						my $dic = $ofvt+$objs*$objs/2;
-						$self -> ofv($dic);
-						$self -> dic($dic);
-					}
-				}else{
-					$self -> ofv($ofvt);
-				}
+				$self -> ofv($ofvt);
 				$start_pos--;
 			}
 			last;
@@ -1721,13 +1709,6 @@ sub _compute_comegas_or_csigmas
 				  ui -> print( category => 'all',
 							   message  => "Error, missing element $name_a and/or $name_b while $name is defined. Was the delimiter set to anything other than space in \$EST? ");
 				  $error_printed++;
-				  if (0){
-					  print "$omega_or_sigma table ".$self->table_number."\n";
-					  foreach my $key (keys %valueshash){
-						  print "$key ".$valueshash{$key}."\n";
-					  }
-				  }
-
 			  } else {
 				  $omega_or_sigma_value = $valueshash{$name};
 				  my $denominator = $valueshash{$name_a} * $valueshash{$name_b};
@@ -2633,15 +2614,6 @@ sub parse_NM7_raw
 				} elsif ($header_labels[$i] =~ /SIGMA/) {
 					$sesigmacoordval{$header_labels[$i]} = $val unless ($val eq 'NA');
 				} elsif ($header_labels[$i] =~ /OBJ/) {
-					#set dic if have std
-					if (0) {
-						if (($val ne 'NA') and ($val != 0)){
-							#assume Bayes
-							my $dic = $self->ofv() + $val * $val / 2;
-							$self->ofv($dic);
-							$self->dic($dic);
-						}
-					}
 				} else { 
 					my $mes = "Unknown header label ".$header_labels[$i]." in raw output.";
 					croak($mes);

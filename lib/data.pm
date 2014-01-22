@@ -2437,13 +2437,6 @@ sub get_eta_matrix
 		}
 	}  
 
-	if (0) {
-		print "printing eta matrix inside data\n";
-		foreach my $row (@eta_matrix) {
-			print join(' ', @{$row}) . "\n";
-		}
-	}
-
 	return \@eta_matrix;
 }
 

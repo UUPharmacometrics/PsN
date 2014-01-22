@@ -3663,29 +3663,6 @@ start modelfit_analyze
 	  {$chosen_covariate}{'state'};
 	}
 	$state = defined $state ? $state : $valid_states[0];
-#	  my $state = $self -> included_relations->{$chosen_parameter}
-#	  {$chosen_covariate}{'state'};
-	if (0){
-	  if ( $self -> search_direction eq 'forward' ) {
-	    my $flag = 0;
-	    for( my $s_idx = 0; $s_idx <= $#valid_states; $s_idx++ ) {
-	      if ( $flag ) {
-		$state = $valid_states[$s_idx];
-		last;
-	      }
-	      $flag = 1 if( $state == $valid_states[$s_idx] );
-	    }
-	  } elsif ( $self -> search_direction eq 'backward' ) {
-	    my $flag = 0;
-	    for( my $s_idx = $#valid_states; $s_idx >= 0; $s_idx-- ) {
-	      if ( $flag ) {
-		$state = $valid_states[$s_idx];
-		last;
-	      }
-	      $flag = 1 if( $state == $valid_states[$s_idx] );
-	    }
-	  }
-	}
 	$state = $chosen_state;
 	# If the state is 1 (not included); remove the relation.
 	if ( $state == 1 ) {
@@ -3700,7 +3677,6 @@ start modelfit_analyze
 	  $self -> included_relations->{$chosen_parameter}{$chosen_covariate}{'state'} = $state;
 	  $self -> included_relations->{$chosen_parameter}{$chosen_covariate}{'theta_estimates'} =
 	      $self -> resulting_model -> get_values_to_labels(category => 'theta');
-#	      $self -> resulting_model -> outputs -> [0] -> thetas -> [0][0];
 	  $self -> included_relations->{$chosen_parameter}{$chosen_covariate}{'code'} =
 	      $self -> relations()->{$chosen_parameter}{$chosen_covariate}{'code'}{$state};
 	  $self -> included_relations->{$chosen_parameter}{$chosen_covariate}{'nthetas'} =
@@ -6566,38 +6542,6 @@ start write_log
 	    print LOG "\n";
 	  }
 
-	  if (0){
-	    foreach my $kind ( 'categorical', 'continuous' ) {
-	      print LOG sprintf("%-15s",'KIND'),uc( $kind ),"\n";
-	      print LOG sprintf("%-15s",'VALID_STATES');
-	      foreach my $state ( @{$self -> valid_states->{$kind}} ) {
-		print LOG sprintf("%-4s",$state)
-		  }
-	      print LOG "\n";
-	      print LOG sprintf("%-15s",'COVARIATES');
-	      foreach my $cov ( @{$self -> {lc($kind).'_covariates'}} ) {
-		print LOG sprintf("%-8s",$cov);
-	      }
-	      print LOG "\n";
-	      foreach my $par ( sort keys %{$included_relations} ) {
-		print LOG sprintf("%-15s",'INCL'),sprintf("%-8s",$par);
-		foreach my $cov ( sort keys %{$included_relations -> {$par}} ) {
-		  # Is this covariate continuous or not?
-		  my $continuous = 1;
-		  if (defined $self -> categorical_covariates()){
-		      foreach my $cat ( @{$self -> categorical_covariates()} ) {
-			  $continuous = 0 if ( $cov eq $cat );
-		      }
-		  }
-		  if ( ( $continuous and $kind eq 'continuous' ) or
-		       not $continuous and $kind eq 'categorical' ) {
-		    print LOG sprintf("%-8s",$cov.'-'.$included_relations -> {$par}{$cov}{'state'});
-		  }
-		}
-		print LOG "\n";
-	      }
-	    }
-	  }
 	}
 	print LOG "--------------------\n\n";
 	close( LOG );

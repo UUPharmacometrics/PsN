@@ -687,7 +687,6 @@ sub xv_step_init
 
 	print_log ($own_parameters->{'logfile'}->[0],  "Last OFV sum: " . $own_parameters->{'last_ofv_sum'} ."\n");
 	$own_parameters -> {'last_t_value'}+=$own_parameters->{'steplength'};
-	print "Leaving xv_step_init\n" if (0);
 }
 
 sub xv_step_analyze
@@ -912,8 +911,6 @@ sub xv_step_analyze
 		print_log ($own_parameters->{'logfile'}->[0],"t-value smaller or equal to " .$own_parameters->{'stop_t'} . "\n");
 		$retur = 0 if ($own_parameters->{'converge'} ne "HALT");
 	}
-
-	print "Leaving xv_step_analyze\n" if (0);
 
 	return $retur;
 }

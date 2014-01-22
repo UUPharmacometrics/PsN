@@ -2269,11 +2269,6 @@ sub ensure_diagonal_dominance
 	      unless ($val > $off_diagonal_sum[($1-1)] ){
 		  my $ratio = $val/$off_diagonal_sum[($1-1)]; # less than 1, larger than 0 (abs sum, pos diag)
 		  $adjust_row{$1} = $ratio*(0.99);
-		  #skip inflation
-		  if (0){
-		      my $new_val = 1.05*$off_diagonal_sum[($1-1)]; #five percent larger than sum
-		      $option -> check_and_set_init( new_value => $new_val );
-		  }
 	      }
 	    }
 	    #new loop here to decrease off-diag

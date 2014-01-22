@@ -1140,23 +1140,8 @@ sub labels
 	      for ( my $j = 0; $j < scalar @{$labels[0]}; $j++ ) {
 		$labels[$i][$j] = $labels[0][$j];
 	      }
-	    }elsif (0) {
-	      #dangerous to turn this on, some models do not have thetas/sigmas/omegas,
-	      # do not want to add them.
-	      #must check for msfi and 1st prob
-	      my $namefunc = $parameter_type.'names';
-	      if (defined $self -> outputs()
-		  and defined $self -> outputs()-> [0] 
-		  and defined $self -> outputs()-> [0]-> $namefunc ()){
-		my $namesref = $self -> outputs()-> [0]-> $namefunc ();
-		if (defined $namesref->[$i] and defined $namesref->[$i]->[0]){
-		  for ( my $j = 0; $j < scalar @{$namesref->[$i]->[0]}; $j++ ) {
-		    $labels[$i][$j]=$namesref->[$i]->[0]->[$j];
-		  }
-		}
-	      }
 	    }
-	  } #end if scalar == 0
+	  }
 	}
 
 	return \@labels;

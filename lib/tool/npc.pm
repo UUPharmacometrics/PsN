@@ -1441,28 +1441,6 @@ sub modelfit_setup
     }
     
   }
-  if (0){
-    #option turned off, assumptions do not hold
-    if (defined $self->covariance_file()){
-      if (defined $model_simulation){
-	$sampled_params_arr = 
-	    $model_simulation -> get_covariance_params(filename => $self->covariance_file(),
-						       samples => $self->samples());
-      }else{
-	$sampled_params_arr = 
-	    $model_orig -> get_covariance_params(filename => $self->covariance_file(),
-						 samples => $self->samples());
-      }
-      if (defined $sampled_params_arr){
-	unless (scalar(@{$sampled_params_arr}) >= ($self->samples())){
-	  croak("Too few sets of parameter values generated ".
-		      "by get_covariance_params. This is a bug, please report it. ");
-	}
-      }else{
-	croak("get_rawres_params returned undef");
-      }
-    } 
-  }
 
   for( my $i = 0; $i < $self -> n_simulation_models(); $i++ ) {
     my $samples = $base;
@@ -5140,18 +5118,6 @@ sub subset_npc_analyze
       @sorted_sim_values = sort {$a <=> $b} @values; #sort numerically ascending
     }
 
-    if (0){
-      printf "\n%.3f ",$orig_value;
-      foreach my $v (@values){
-	printf "%.3f ",$v;
-      }
-      printf "\n%.3f ",$orig_value;
-      foreach my $v (@sorted_sim_values){
-	printf "%.3f ",$v;
-      }
-      print "\n\n";
-    }
-    
     if (scalar(@sorted_sim_values) == 0){
       for (my $i=0; $i<$no_pred_ints; $i++){
 	$lower_limit[$i] = '';
@@ -5251,20 +5217,6 @@ sub subset_npc_analyze
       $obs_counter++;
       ### end VPC diagnostics
     
-      if (0){
-	for (my $i=0; $i<$no_pred_ints; $i++){
-	  printf "%.0f %.3f %.3f\n",$pred_int[$i],$lower_limit[$i],$upper_limit[$i] if ($self->verbose);
-	  for (my $j=0; $j<= $no_sim; $j++){
-	    print "$lower_count[$i]->[$j] ";
-	  }
-	  print "\n";
-	  for (my $j=0; $j<= $no_sim; $j++){
-	    print "$upper_count[$i]->[$j] ";
-	  }
-	  print "\n\n";
-	}
-	print "\n";
-      }
     } #endof if at least 1 uncensored sim
 
   } #endof foreach row
@@ -5294,14 +5246,7 @@ sub subset_npc_analyze
   }
   $low_ind = $self->round('number'=>((100-$ci)*($non_zeros-1)/200)); #index of start of ci % interval
   $high_ind = $non_zeros - $low_ind - 1; #index of end  of  c_i% interval
-  print "$low_ind $high_ind\n" if (0);
 
-
-  if (0){
-    print "$no_sim $point_counter $high_ind $low_ind\n\n";
-  }
-
-  
   #loop over prediction intervals, compute results for each interval
   for (my $i=0; $i<$no_pred_ints; $i++){
     my $warn=' '; 
@@ -5343,18 +5288,7 @@ sub subset_npc_analyze
 
     my @result_row_values =($lower_count[$i]->[0],$realperc,$warn,$sorted_arr[$low_ind],
 			    $sorted_arr[$high_ind]);
-    if (0){
-      print "$realperc ";
-      for (my $j=0; $j<= $no_sim; $j++){
-	print "$lower_count[$i]->[$j] ";
-      }
-      print "\n  ";
-      for (my $j=0; $j<$no_sim; $j++){
-	print "$perc_arr[$j] ";
-      }
-      print "\n\n";
-    }
-    
+
     $warn=' ';
     $realperc = undef;
     if ($count_max[0] > 0){

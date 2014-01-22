@@ -288,7 +288,6 @@ end new
 		unless ($self->display_iterations()==1){
 			$submitstring = $submitstring .= ' > nmfe_output.txt' ;
 		}
-		print "\n$submitstring\n" if (0);
 		system($submitstring); 
 
 		if ( -e "/proc/self/lock" ) {
@@ -408,7 +407,6 @@ end run_with_nmfe
 	}else{
 		$command_string = " $modelfile $nmqualoutput ";
 	}
-	print "perl $nmqual $command_string" if (0);
 
 	my ( $start_time, $fin_time );
 	$start_time = localtime();

@@ -204,27 +204,6 @@ sub add_frem_lines
        push(@timevar_matrix,[]);
     }
 
-    #TODO: set to 0 in firstline find AMT RATE II ADDL SS and set to 0 if
-    #no obs line found for individual
-    #change CMT?
-
-
-    #loop for error check only, tab error here
-    if (0){
-	for ( my $i=1; $i < scalar(@data); $i++ ){
-	    my @row = split( /,/ , $data[$i] );
-	    for (my $type=1; $type < $first_timevar_type; $type++){
-		unless (($row[$cov_indices->[$type]] == $invariant_values[$type-1]) or
-			($row[$cov_indices->[$type]] == 0) or
-			($row[$cov_indices->[$type]] == $missing_data_token)){
-		    #non-unique covariate value found for individual
-		    print "Warning: non-unique covariate value ".$row[$cov_indices->[$type]]." found for ".
-			" covariate in column ".($cov_indices->[$type] +1)."\n";
-		}
-	    }
-	}
-    }
-
     my %occasions={};
     for ( my $i = 0; $i <= $#data; $i++ ) {
 	my @data_row = split( /,/ , $data[$i] );
