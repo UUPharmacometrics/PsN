@@ -160,7 +160,6 @@ DIALIBFILES=debug.pm \
 	tool.pm \
 	tool/cdd.pm \
 	tool/cdd/jackknife.pm \
-	tool/xv.pm \
 	tool/lasso.pm \
 	tool/pind.pm \
 	tool/bootstrap.pm \
@@ -208,9 +207,6 @@ libgen/tool/cdd/jackknife.pm libgen/tool/cdd.pm : diagrams/cdd.dia
 
 libgen/tool/frem.pm : diagrams/frem.dia
 	$(DIA2CODE) -t perl -d $(DIRPM) diagrams/frem.dia
-
-libgen/tool/xv_step.pm libgen/tool/xv.pm : diagrams/xv.dia
-	$(DIA2CODE) -t perl -d $(DIRPM) diagrams/xv.dia
 
 libgen/tool/lasso.pm : diagrams/lasso.dia
 	$(DIA2CODE) -t perl -d $(DIRPM) diagrams/lasso.dia

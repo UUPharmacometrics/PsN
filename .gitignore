@@ -29,5 +29,4 @@ lib/tool/pind.pm
 lib/tool/randtest.pm
 lib/tool/scm.pm
 lib/tool/scm/config_file.pm
-lib/tool/xv.pm
 lib/ui.pm
