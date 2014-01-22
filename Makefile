@@ -160,7 +160,6 @@ DIALIBFILES=debug.pm \
 	tool.pm \
 	tool/cdd.pm \
 	tool/cdd/jackknife.pm \
-	tool/xv_step.pm \
 	tool/xv.pm \
 	tool/lasso.pm \
 	tool/pind.pm \

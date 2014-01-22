@@ -1,5 +1,5 @@
 package newtool;
-#use Carp;
+
 use include_modules;
 use ext::Parallel::ForkManager;
 use strict;
@@ -19,7 +19,7 @@ use MooseX::Params::Validate;
 use model;
 
 has 'models' => ( is => 'rw', isa => 'ArrayRef[model]' );
-has 'tools' => ( is => 'rw', isa => 'ArrayRef[tool]' );
+has 'tools' => ( is => 'rw', isa => 'ArrayRef' );		# FIXME: Add tool
 has 'first_callback' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'adaptive' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'raw_line_structure' => ( is => 'rw', isa => 'Ref' );
