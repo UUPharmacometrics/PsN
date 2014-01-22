@@ -158,8 +158,6 @@ DIALIBFILES=debug.pm \
 	ui.pm \
 	nonmem.pm \
 	tool.pm \
-	tool/cdd.pm \
-	tool/cdd/jackknife.pm \
 	tool/pind.pm \
 	tool/bootstrap.pm \
 	tool/randtest.pm \
@@ -200,9 +198,6 @@ libgen/ui.pm : diagrams/ui.dia
 
 libgen/nonmem.pm : diagrams/nonmem.dia
 	$(DIA2CODE) -t perl -d $(DIRPM) diagrams/nonmem.dia	
-
-libgen/tool/cdd/jackknife.pm libgen/tool/cdd.pm : diagrams/cdd.dia
-	$(DIA2CODE) -t perl -d $(DIRPM) diagrams/cdd.dia
 
 libgen/tool/frem.pm : diagrams/frem.dia
 	$(DIA2CODE) -t perl -d $(DIRPM) diagrams/frem.dia

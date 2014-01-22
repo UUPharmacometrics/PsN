@@ -21,8 +21,6 @@ lib/debug.pm
 lib/nonmem.pm
 lib/tool.pm
 lib/tool/bootstrap.pm
-lib/tool/cdd.pm
-lib/tool/cdd/jackknife.pm
 lib/tool/nonpb.pm
 lib/tool/pind.pm
 lib/tool/randtest.pm
