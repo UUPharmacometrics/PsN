@@ -159,7 +159,6 @@ DIALIBFILES=debug.pm \
 	nonmem.pm \
 	tool.pm \
 	tool/pind.pm \
-	tool/randtest.pm \
 	tool/nonpb.pm \
 	tool/scm/config_file.pm \
 	tool/scm.pm \
@@ -206,9 +205,6 @@ libgen/tool/pind.pm : diagrams/pind.dia
 
 libgen/tool/nonpb.pm : diagrams/nonpb.dia
 	$(DIA2CODE) -t perl -d $(DIRPM) diagrams/nonpb.dia
-
-libgen/tool/randtest.pm : diagrams/randtest.dia
-	$(DIA2CODE) -t perl -d $(DIRPM) diagrams/randtest.dia
 
 libgen/tool/scm/config_file.pm libgen/tool/scm.pm : diagrams/scm.dia
 	$(DIA2CODE) -t perl -d $(DIRPM) diagrams/scm.dia

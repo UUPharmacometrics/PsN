@@ -22,7 +22,6 @@ lib/nonmem.pm
 lib/tool.pm
 lib/tool/nonpb.pm
 lib/tool/pind.pm
-lib/tool/randtest.pm
 lib/tool/scm.pm
 lib/tool/scm/config_file.pm
 lib/ui.pm

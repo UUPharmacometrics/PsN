@@ -16,8 +16,7 @@ our $dir = 'misc_test';
 my $model_dir = "$Bin/../test_files";
 
 my @commands = 
-	($includes::randtest . " $model_dir/mox1.mod -samples=5 -randomization_column=DOSE -dir=$dir",
-	 $includes::mcmp." -n_bootstrap=5 -full=$model_dir/pheno.mod -reduced=$model_dir/pheno.mod  -dir=$dir",
+	($includes::mcmp." -n_bootstrap=5 -full=$model_dir/pheno.mod -reduced=$model_dir/pheno.mod  -dir=$dir",
 	 $includes::cdd." -case_column=ID $model_dir/pheno5.mod -xv  -dir=$dir",
 	 $includes::cdd." $model_dir/mox1.mod -case_column=DGRP  -dir=$dir",
 	 $includes::llp." $model_dir/pheno.mod -thetas=2 -omegas=1,2  -dir=$dir",
