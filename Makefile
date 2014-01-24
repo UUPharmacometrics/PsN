@@ -161,7 +161,6 @@ DIALIBFILES=debug.pm \
 	tool/pind.pm \
 	tool/nonpb.pm \
 	tool/scm/config_file.pm \
-	tool/scm.pm \
 
 PERLFILES=$(addprefix lib/,$(DIALIBFILES))
 
