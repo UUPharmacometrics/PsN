@@ -121,6 +121,7 @@ sub BUILD
 	$this->have_sigmas(1) if (defined $this->input_problem()->sigmas() and scalar(@{$this->input_problem()->sigmas()}) > 0);
 
 	$this->have_omegas(1) if (defined $this->input_problem()->omegas() and scalar(@{$this->input_problem()->omegas()}) > 0);
+	$this->final_gradients([]);
 
 	$this -> parse_NM7_raw() if (defined $this->nm_output_files->{'raw'});
 	$this -> parse_NM7_additional() if (defined $this->nm_output_files->{'cov'} and
