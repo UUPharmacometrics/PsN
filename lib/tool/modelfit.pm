@@ -20,7 +20,7 @@ use Time::HiRes;
 use Moose;
 use MooseX::Params::Validate;
 
-extends 'newtool';
+extends 'tool';
 
 my @nm7_extensions = ('.ext','.cov','.cor','.coi','.phi','.phm',
 		      '.shk','.grd','.xml','.smt','.rmt');

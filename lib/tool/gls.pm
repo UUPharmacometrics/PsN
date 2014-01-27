@@ -8,7 +8,7 @@ use Config;
 use Moose;
 use MooseX::Params::Validate;
 
-extends 'newtool';
+extends 'tool';
 
 has 'samples' => ( is => 'rw', isa => 'Int' );
 has 'gls_model' => ( is => 'rw', isa => 'Bool', default => 0 );

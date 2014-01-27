@@ -9,7 +9,7 @@ use Config;
 use Moose;
 use MooseX::Params::Validate;
 
-extends 'newtool';
+extends 'tool';
 
 has 'samples' => ( is => 'rw', isa => 'Int', default => 100 );
 has 'alternative_models' => ( is => 'rw', isa => 'ArrayRef[model]', default => sub { [] } );

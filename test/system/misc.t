@@ -1,10 +1,9 @@
 #!/etc/bin/perl
 
-
 use strict;
 use warnings;
 use File::Path 'rmtree';
-use Test::More tests=>13;
+use Test::More tests=>12;
 use FindBin qw($Bin);
 use File::Copy 'cp';
 use lib ".."; #location of includes.pm
@@ -16,8 +15,7 @@ our $dir = 'misc_test';
 my $model_dir = "$Bin/../test_files";
 
 my @commands = 
-	($includes::mcmp." -n_bootstrap=5 -full=$model_dir/pheno.mod -reduced=$model_dir/pheno.mod  -dir=$dir",
-	 $includes::cdd." -case_column=ID $model_dir/pheno5.mod -xv  -dir=$dir",
+	($includes::cdd." -case_column=ID $model_dir/pheno5.mod -xv  -dir=$dir",
 	 $includes::cdd." $model_dir/mox1.mod -case_column=DGRP  -dir=$dir",
 	 $includes::llp." $model_dir/pheno.mod -thetas=2 -omegas=1,2  -dir=$dir",
 	 $includes::vpc." -samples=20 $model_dir/mox1.mod -stratif=AGE -no_of_strata=3 -auto_bin=12  -dir=$dir",

@@ -13,7 +13,7 @@ use OSspecific;
 use Moose;
 use MooseX::Params::Validate;
 
-extends 'newtool';
+extends 'tool';
 
 has 'samples_hash' => ( is => 'rw', isa => 'HashRef', default => sub { {} } );
 has 'df' => ( is => 'rw', isa => 'Int', default => 1 );
@@ -143,604 +143,604 @@ sub modelfit_setup
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 model_number => { isa => 'Int', optional => 1 }
+		model_number => { isa => 'Int', optional => 1 }
 	);
 	my $model_number = $parm{'model_number'};
 
-  if (defined $self->critical_ofv()){
-    if ($self->critical_ofv()<0){
-      $self->critical_array([(-1*$self->critical_ofv())]);
-    }else{
-      $self->critical_array([($self->critical_ofv())]);
-    }
-    $self->significance_index(0);
-  }else{
-    #store table
-    my %df_table;
-    #,,,"Chi-Square Table ",
-    #,"one-tailed",0.050,0.010,0.001
-    $df_table{1}=[(3.84,6.63490,10.828)];
-    $df_table{2}=[(5.99,9.21,13.816)];
-    $df_table{3}=[(7.81,11.34,16.266)];
-    $df_table{4}=[(9.49,13.28,18.467)];
-    $df_table{5}=[(11.07,15.09,20.515)];
-    $df_table{6}=[(12.59,16.81,22.458)];
-    $df_table{7}=[(14.07,18.48,24.322)];
-    $df_table{8}=[(15.51,20.09,26.125)];
-    $df_table{9}=[(16.9190,21.6660,27.877)];
-    $df_table{10}=[(18.3070,23.2093,29.588)];
-    $df_table{11}=[(19.68,24.7250,31.264)];
-    $df_table{12}=[(21.03,26.2170,32.909)];
-    $df_table{13}=[(22.36,27.6883,34.528)];
-    $df_table{14}=[(23.68,29.1413,36.123)];
-    $df_table{15}=[(25,30.5779,37.697)];
-    $df_table{16}=[(26.3,31.9999,39.252)];
-    $df_table{17}=[(27.59,33.4087,40.790)];
-    $df_table{18}=[(28.87,34.8053,42.312)];
-    $df_table{19}=[(30.14,36.1908,43.820)];
-    $df_table{20}=[(31.41,37.5662,45.315)];
-    $df_table{21}=[(32.67,38.9321,46.797)];
-    $df_table{22}=[(33.92,40.2894,48.268)];
-    $df_table{23}=[(35.17,41.6384,49.728)];
-    $df_table{24}=[(36.42,42.9798,51.179)];
-    $df_table{25}=[(37.65,44.3141,52.620)];
-    $df_table{26}=[(38.89,45.6417,54.052)];
-    $df_table{27}=[(40.11,46.9630,55.476)];
-    $df_table{28}=[(41.34,48.2782,56.892)];
-    $df_table{29}=[(42.56,49.5879,58.302)];
-    $df_table{30}=[(43.77,50.8922,59.703)];
-    $df_table{40}=[(55.76,63.6907,73.402)];
-    $df_table{50}=[(67.5,76.1539,86.661)];
-    $df_table{60}=[(79.08,88.3794,99.607)];
-    $df_table{70}=[(90.53,100.425,112.317)];
-    $df_table{80}=[(101.88,112.329,124.839)];
-    $df_table{90}=[(113.15,124.116,137.208)];
-    $df_table{100}=[(124.34,135.807,149.449)];
-    croak("No internal value for critical ofv at ".$self->df().
-	       " degrees of freedom") unless (defined $df_table{$self->df()});
-    $self->critical_array($df_table{$self->df()});
+	if (defined $self->critical_ofv()){
+		if ($self->critical_ofv()<0){
+			$self->critical_array([(-1*$self->critical_ofv())]);
+		}else{
+			$self->critical_array([($self->critical_ofv())]);
+		}
+		$self->significance_index(0);
+	}else{
+		#store table
+		my %df_table;
+		#,,,"Chi-Square Table ",
+		#,"one-tailed",0.050,0.010,0.001
+		$df_table{1}=[(3.84,6.63490,10.828)];
+		$df_table{2}=[(5.99,9.21,13.816)];
+		$df_table{3}=[(7.81,11.34,16.266)];
+		$df_table{4}=[(9.49,13.28,18.467)];
+		$df_table{5}=[(11.07,15.09,20.515)];
+		$df_table{6}=[(12.59,16.81,22.458)];
+		$df_table{7}=[(14.07,18.48,24.322)];
+		$df_table{8}=[(15.51,20.09,26.125)];
+		$df_table{9}=[(16.9190,21.6660,27.877)];
+		$df_table{10}=[(18.3070,23.2093,29.588)];
+		$df_table{11}=[(19.68,24.7250,31.264)];
+		$df_table{12}=[(21.03,26.2170,32.909)];
+		$df_table{13}=[(22.36,27.6883,34.528)];
+		$df_table{14}=[(23.68,29.1413,36.123)];
+		$df_table{15}=[(25,30.5779,37.697)];
+		$df_table{16}=[(26.3,31.9999,39.252)];
+		$df_table{17}=[(27.59,33.4087,40.790)];
+		$df_table{18}=[(28.87,34.8053,42.312)];
+		$df_table{19}=[(30.14,36.1908,43.820)];
+		$df_table{20}=[(31.41,37.5662,45.315)];
+		$df_table{21}=[(32.67,38.9321,46.797)];
+		$df_table{22}=[(33.92,40.2894,48.268)];
+		$df_table{23}=[(35.17,41.6384,49.728)];
+		$df_table{24}=[(36.42,42.9798,51.179)];
+		$df_table{25}=[(37.65,44.3141,52.620)];
+		$df_table{26}=[(38.89,45.6417,54.052)];
+		$df_table{27}=[(40.11,46.9630,55.476)];
+		$df_table{28}=[(41.34,48.2782,56.892)];
+		$df_table{29}=[(42.56,49.5879,58.302)];
+		$df_table{30}=[(43.77,50.8922,59.703)];
+		$df_table{40}=[(55.76,63.6907,73.402)];
+		$df_table{50}=[(67.5,76.1539,86.661)];
+		$df_table{60}=[(79.08,88.3794,99.607)];
+		$df_table{70}=[(90.53,100.425,112.317)];
+		$df_table{80}=[(101.88,112.329,124.839)];
+		$df_table{90}=[(113.15,124.116,137.208)];
+		$df_table{100}=[(124.34,135.807,149.449)];
+		croak("No internal value for critical ofv at ".$self->df().
+			" degrees of freedom") unless (defined $df_table{$self->df()});
+		$self->critical_array($df_table{$self->df()});
 
-    if ($self->significance_level() == 5){
-      $self->significance_index(0);
-    }elsif ($self->significance_level() == 1){
-      $self->significance_index(1);
-    }elsif ($self->significance_level() == 0.1){
-      $self->significance_index(2);
-    }else{
-      croak("Illegal value for -significance_level");
-    }
+		if ($self->significance_level() == 5){
+			$self->significance_index(0);
+		}elsif ($self->significance_level() == 1){
+			$self->significance_index(1);
+		}elsif ($self->significance_level() == 0.1){
+			$self->significance_index(2);
+		}else{
+			croak("Illegal value for -significance_level");
+		}
 
-  }
-
-
-
-  $self->target_power($self->round(number=> $self->target_power()));
-
-  return if (defined $self->table_full() and defined $self->table_reduced());
-
-  my $simulated_file;
-  my $time_in_input=0;
-  my $datx_in_input=0;
-  my @table_header=();
-  unless ($self -> models -> [0]->filename() eq 'dummy_for_mcmp'){
-    my $sim_model = $self -> models -> [0] ->
-	copy( filename    => $self -> directory.'m1/simulation.mod',
-	      target      => 'disk',
-	      copy_data   => 1,
-	      copy_output => 0);
-    $sim_model -> drop_dropped unless $sim_model->skip_data_parsing();
-
-    if ($sim_model-> is_option_set(record=>'input',name=>'TIME')){
-      #this assumes no synonym, and TIME is always option, not value.
-      $time_in_input=1;
-    }
-    foreach my $col ('DATE','DAT1','DAT2','DAT3'){
-      if ($sim_model-> is_option_set(record=>'input',name=>$col)){
-	#this assumes no synonym, and name always options, not value.
-	$datx_in_input=1;
-	last;
-      }
-    }
-	  
-    #set IGNORE=@ since datafile will
-    #get a header during copying. Keep IGNORE=LIST
-    my $sim_ignorelist = $sim_model -> get_option_value( record_name  => 'data',
-							 problem_index => 0,
-							 option_name  => 'IGNORE',
-							 option_index => 'all');
-    $sim_model -> remove_option( record_name  => 'data',
-				 problem_numbers => [(1)],
-				 option_name  => 'IGNORE',
-				 fuzzy_match => 1);
-    
-    if ((defined $sim_ignorelist) and scalar (@{$sim_ignorelist})>0){
-      foreach my $val (@{$sim_ignorelist}){
-	unless (length($val)==1){
-	  #unless single character ignore, cannot keep that since need @
-	  $sim_model -> add_option( record_name  => 'data',
-				    problem_numbers => [(1)],
-				    option_name  => 'IGNORE',
-				    option_value => $val);
 	}
-      }
-    }
-    $sim_model -> add_option( record_name  => 'data',
-			      problem_numbers => [(1)],
-			      option_name  => 'IGNORE',
-			      option_value => '@');
-    
-    my $prob = $sim_model -> problems -> [0];
-    
-    # set $SIMULATION record
-    
-    my $sim_record = $sim_model -> record( problem_number => 1,
-					   record_name => 'simulation' );
-    
-    if( scalar(@{$sim_record}) > 0 ){
-      my @new_record;
-      foreach my $sim_line ( @{$sim_record -> [0]} ){
-	my $new_line;
-	while( $sim_line =~ /([^()]*)(\([^()]+\))(.*)/g ){
-	  my $head = $1;
-	  my $old_seed = $2;
-	  $sim_line = $3;
-	  $new_line .= $head;
-	  
-	  while( $old_seed =~ /(\D*)(\d+)(.*)/ ){
-	    $new_line .= $1;
-	    $new_line .= random_uniform_integer( 1, 0, 1000000 ); # Upper limit is from nmhelp 
-	    $old_seed = $3;
-	  }
-	  
-	  $new_line .= $old_seed;
-	  
+
+
+
+	$self->target_power($self->round(number=> $self->target_power()));
+
+	return if (defined $self->table_full() and defined $self->table_reduced());
+
+	my $simulated_file;
+	my $time_in_input=0;
+	my $datx_in_input=0;
+	my @table_header=();
+	unless ($self -> models -> [0]->filename() eq 'dummy_for_mcmp'){
+		my $sim_model = $self -> models -> [0] ->
+		copy( filename    => $self -> directory.'m1/simulation.mod',
+			target      => 'disk',
+			copy_data   => 1,
+			copy_output => 0);
+		$sim_model -> drop_dropped unless $sim_model->skip_data_parsing();
+
+		if ($sim_model-> is_option_set(record=>'input',name=>'TIME')){
+			#this assumes no synonym, and TIME is always option, not value.
+			$time_in_input=1;
+		}
+		foreach my $col ('DATE','DAT1','DAT2','DAT3'){
+			if ($sim_model-> is_option_set(record=>'input',name=>$col)){
+				#this assumes no synonym, and name always options, not value.
+				$datx_in_input=1;
+				last;
+			}
+		}
+
+		#set IGNORE=@ since datafile will
+		#get a header during copying. Keep IGNORE=LIST
+		my $sim_ignorelist = $sim_model -> get_option_value( record_name  => 'data',
+			problem_index => 0,
+			option_name  => 'IGNORE',
+			option_index => 'all');
+		$sim_model -> remove_option( record_name  => 'data',
+			problem_numbers => [(1)],
+			option_name  => 'IGNORE',
+			fuzzy_match => 1);
+
+		if ((defined $sim_ignorelist) and scalar (@{$sim_ignorelist})>0){
+			foreach my $val (@{$sim_ignorelist}){
+				unless (length($val)==1){
+					#unless single character ignore, cannot keep that since need @
+					$sim_model -> add_option( record_name  => 'data',
+						problem_numbers => [(1)],
+						option_name  => 'IGNORE',
+						option_value => $val);
+				}
+			}
+		}
+		$sim_model -> add_option( record_name  => 'data',
+			problem_numbers => [(1)],
+			option_name  => 'IGNORE',
+			option_value => '@');
+
+		my $prob = $sim_model -> problems -> [0];
+
+		# set $SIMULATION record
+
+		my $sim_record = $sim_model -> record( problem_number => 1,
+			record_name => 'simulation' );
+
+		if( scalar(@{$sim_record}) > 0 ){
+			my @new_record;
+			foreach my $sim_line ( @{$sim_record -> [0]} ){
+				my $new_line;
+				while( $sim_line =~ /([^()]*)(\([^()]+\))(.*)/g ){
+					my $head = $1;
+					my $old_seed = $2;
+					$sim_line = $3;
+					$new_line .= $head;
+
+					while( $old_seed =~ /(\D*)(\d+)(.*)/ ){
+						$new_line .= $1;
+						$new_line .= random_uniform_integer( 1, 0, 1000000 ); # Upper limit is from nmhelp 
+						$old_seed = $3;
+					}
+
+					$new_line .= $old_seed;
+
+				}
+
+				push( @new_record, $new_line.$sim_line );
+			}
+
+			$prob -> set_records( type => 'simulation',
+				record_strings => \@new_record );
+		} else {
+
+			my $seed = random_uniform_integer( 1, 0, 1000000 ); # Upper limit is from nmhelp
+			$prob -> set_records( type           => 'simulation',
+				record_strings => [ '(' . $seed .
+					') ONLYSIMULATION' ] );
+		}
+
+		if( $sim_model -> is_option_set( problem_number => 1,record => 'estimation',
+				name => 'LIKELIHOOD',fuzzy_match => 1 )
+				or
+			$sim_model -> is_option_set( problem_number => 1,record => 'estimation',
+				name => '-2LOGLIKELIHOOD',fuzzy_match => 1 )
+				or
+			$sim_model -> is_option_set( problem_number => 1, record => 'estimation',
+				name => '-2LLIKELIHOOD',fuzzy_match => 1 )
+				or
+			$sim_model -> is_option_set( problem_number => 1, record => 'estimation',
+				name => 'LAPLACIAN',fuzzy_match => 1 )
+		){
+			#set_nopred_onlysim
+			unless ($sim_model -> is_option_set( problem_number => 1,record => 'simulation',
+					name => 'NOPREDICTION',fuzzy_match => 1 )){
+				$sim_model -> set_option(record_name => 'simulation',
+					option_name => 'NOPRED');
+			}
+			unless ($sim_model -> is_option_set( problem_number => 1,record => 'simulation',
+					name => 'ONLYSIMULATION',fuzzy_match => 1 )){
+				$sim_model -> set_option(record_name => 'simulation',
+					option_name => 'ONLYSIM');
+			}
+		}
+
+		# remove $EST and $COV
+		$prob -> remove_records(type => 'estimation');
+		$prob -> remove_records(type => 'covariance');
+		$prob -> remove_records(type => 'nonparametric');
+
+		# set $TABLE record
+		#when copying $INPUT to $TABLE: remove DATX
+		#if not TIME present, remove TIME
+		#if not TIME present but DATX then add back TIME at the end
+
+		@table_header=();
+		if( defined $prob -> inputs and defined $prob -> inputs -> [0] -> options ) {
+			foreach my $option ( @{$prob -> inputs -> [0] -> options} ) {
+				push( @table_header, $option -> name ) unless 
+				(($option -> value eq 'DROP' or $option -> value eq 'SKIP'
+							or $option -> name eq 'DROP' or $option -> name eq 'SKIP') ||
+					($option -> name =~ /DAT(E|1|2|3)/) ||
+					((not $time_in_input) && ($option -> name =~ /TIME/)));
+			}
+			if ((not $time_in_input) && ($datx_in_input )){
+				push( @table_header, 'TIME');
+			}
+		} else {
+			croak("Trying to construct table for monte-carlo simulation".
+				" but no headers were found in \$model_number-INPUT" );
+		}
+
+		$simulated_file = "mcmp-sim.dat";
+		$prob -> set_records( type           => 'table',
+			record_strings => [ join( ' ', @table_header ).
+				' NOPRINT NOAPPEND ONEHEADER FILE='.
+				$simulated_file ] );
+		$sim_model -> _write( write_data => 1 );
+		my $mod_sim = tool::modelfit -> new( %{common_options::restore_options(@common_options::tool_options)},
+			top_tool         => 0,
+			models           => [$sim_model],
+			base_directory   => $self -> directory,
+			directory        => $self -> directory.
+			'simulation_dir'.$model_number, 
+			retries          => 1,
+			logfile	         => undef,
+			raw_results           => undef,
+			prepared_models       => undef,
+			threads          => 1,
+			data_path =>'../../m1/');
+		ui -> print (category=>'mcmp', message=> "Simulating data:");
+		$mod_sim -> run;
+		unless (-e $self -> directory.'m1/'."$simulated_file"){
+			croak("It appears the simulation part of mcmp failed.".
+				" (The file ".$self -> directory.'m1/'."$simulated_file"." is missing.)".
+				" Check the raw_results file in ".$self -> directory.".");
+		}
+
 	}
-	
-	push( @new_record, $new_line.$sim_line );
-      }
-	
-      $prob -> set_records( type => 'simulation',
-			    record_strings => \@new_record );
-    } else {
-      
-      my $seed = random_uniform_integer( 1, 0, 1000000 ); # Upper limit is from nmhelp
-      $prob -> set_records( type           => 'simulation',
-			    record_strings => [ '(' . $seed .
-						') ONLYSIMULATION' ] );
-    }
 
-    if( $sim_model -> is_option_set( problem_number => 1,record => 'estimation',
-				     name => 'LIKELIHOOD',fuzzy_match => 1 )
-	or
-	$sim_model -> is_option_set( problem_number => 1,record => 'estimation',
-				     name => '-2LOGLIKELIHOOD',fuzzy_match => 1 )
-	or
-	$sim_model -> is_option_set( problem_number => 1, record => 'estimation',
-				     name => '-2LLIKELIHOOD',fuzzy_match => 1 )
-	or
-	$sim_model -> is_option_set( problem_number => 1, record => 'estimation',
-				     name => 'LAPLACIAN',fuzzy_match => 1 )
-	){
-      #set_nopred_onlysim
-      unless ($sim_model -> is_option_set( problem_number => 1,record => 'simulation',
-					   name => 'NOPREDICTION',fuzzy_match => 1 )){
-	$sim_model -> set_option(record_name => 'simulation',
-				 option_name => 'NOPRED');
-      }
-      unless ($sim_model -> is_option_set( problem_number => 1,record => 'simulation',
-					   name => 'ONLYSIMULATION',fuzzy_match => 1 )){
-	$sim_model -> set_option(record_name => 'simulation',
-				 option_name => 'ONLYSIM');
-      }
-    }
-	  
-    # remove $EST and $COV
-    $prob -> remove_records(type => 'estimation');
-    $prob -> remove_records(type => 'covariance');
-    $prob -> remove_records(type => 'nonparametric');
-	  
-    # set $TABLE record
-    #when copying $INPUT to $TABLE: remove DATX
-    #if not TIME present, remove TIME
-    #if not TIME present but DATX then add back TIME at the end
-    
-    @table_header=();
-    if( defined $prob -> inputs and defined $prob -> inputs -> [0] -> options ) {
-      foreach my $option ( @{$prob -> inputs -> [0] -> options} ) {
-	push( @table_header, $option -> name ) unless 
-	    (($option -> value eq 'DROP' or $option -> value eq 'SKIP'
-	      or $option -> name eq 'DROP' or $option -> name eq 'SKIP') ||
-	     ($option -> name =~ /DAT(E|1|2|3)/) ||
-	     ((not $time_in_input) && ($option -> name =~ /TIME/)));
-      }
-      if ((not $time_in_input) && ($datx_in_input )){
-	  push( @table_header, 'TIME');
-      }
-    } else {
-      croak("Trying to construct table for monte-carlo simulation".
-		    " but no headers were found in \$model_number-INPUT" );
-    }
-  
-    $simulated_file = "mcmp-sim.dat";
-    $prob -> set_records( type           => 'table',
-			  record_strings => [ join( ' ', @table_header ).
-					      ' NOPRINT NOAPPEND ONEHEADER FILE='.
-					      $simulated_file ] );
-    $sim_model -> _write( write_data => 1 );
-    my $mod_sim = tool::modelfit -> new( %{common_options::restore_options(@common_options::tool_options)},
-					 top_tool         => 0,
-					 models           => [$sim_model],
-					 base_directory   => $self -> directory,
-					 directory        => $self -> directory.
-					 'simulation_dir'.$model_number, 
-					 retries          => 1,
-					 logfile	         => undef,
-					 raw_results           => undef,
-					 prepared_models       => undef,
-					 threads          => 1,
-					 data_path =>'../../m1/');
-    ui -> print (category=>'mcmp', message=> "Simulating data:");
-    $mod_sim -> run;
-    unless (-e $self -> directory.'m1/'."$simulated_file"){
-      croak("It appears the simulation part of mcmp failed.".
-		 " (The file ".$self -> directory.'m1/'."$simulated_file"." is missing.)".
-		 " Check the raw_results file in ".$self -> directory.".");
-    }
+	my @estimate_models;
+	my @table_strings;
 
-  }
+	if (defined $self->stratify_on() and (not defined $self->table_strata())){
+		$self->table_strata('strata.tab');
+		@table_strings = ('ID',$self->stratify_on(),'FIRSTONLY','NOAPPEND',
+			'ONEHEADER','NOPRINT',
+			'FILE='.$self->table_strata());
+	}
+	#reduced model
+	if (defined $self->reduced_model()){
+		$self->reduced_model()->directory($self->directory().'m1/');
+		$self->reduced_model()->filename('reduced.mod');
+		$self->reduced_model() -> ignore_missing_files( 1 );
+		$self->reduced_model() -> outputfile( $self -> reduced_model()->directory().'reduced.lst');
+		$self->reduced_model() -> ignore_missing_files( 0 );
+		my @extra_output=();
+		if (scalar(@table_strings)>0){
+			$self->reduced_model() -> add_records(type => 'table',
+				record_strings => \@table_strings);
+			push(@extra_output,$self->table_strata());
+		}
+		$self->table_strata($self -> reduced_model()->directory().'reduced.'.$self->table_strata());
+		if ($PsN::nm_major_version < 7){
+			push(@extra_output,'iotab1');
+		}else{
+			push(@extra_output,'psn.phi');
+		}
+		$self->reduced_model()->extra_output(\@extra_output);
 
-  my @estimate_models;
-  my @table_strings;
-  
-  if (defined $self->stratify_on() and (not defined $self->table_strata())){
-    $self->table_strata('strata.tab');
-    @table_strings = ('ID',$self->stratify_on(),'FIRSTONLY','NOAPPEND',
-		      'ONEHEADER','NOPRINT',
-		      'FILE='.$self->table_strata());
-  }
-  #reduced model
-  if (defined $self->reduced_model()){
-    $self->reduced_model()->directory($self->directory().'m1/');
-    $self->reduced_model()->filename('reduced.mod');
-    $self->reduced_model() -> ignore_missing_files( 1 );
-    $self->reduced_model() -> outputfile( $self -> reduced_model()->directory().'reduced.lst');
-    $self->reduced_model() -> ignore_missing_files( 0 );
-    my @extra_output=();
-    if (scalar(@table_strings)>0){
-      $self->reduced_model() -> add_records(type => 'table',
-					    record_strings => \@table_strings);
-      push(@extra_output,$self->table_strata());
-    }
-    $self->table_strata($self -> reduced_model()->directory().'reduced.'.$self->table_strata());
-    if ($PsN::nm_major_version < 7){
-      push(@extra_output,'iotab1');
-    }else{
-      push(@extra_output,'psn.phi');
-    }
-    $self->reduced_model()->extra_output(\@extra_output);
-
-    push(@estimate_models,$self->reduced_model());
-  }
-  if (defined $self->full_model()){
-    $self->full_model()->directory($self->directory().'m1/');
-    $self->full_model()->filename('full.mod');
-    $self->full_model() -> ignore_missing_files( 1 );
-    $self->full_model() -> outputfile( $self -> full_model()->directory().'full.lst');
-    $self->full_model() -> ignore_missing_files( 0 );
-    my @extra_output=();
-    if ((scalar(@table_strings)>0) and not (defined $self->reduced_model())){
-      $self->full_model()-> add_records(type => 'table',
-				       record_strings => \@table_strings);
-      push(@extra_output,$self->table_strata());
-      $self->table_strata($self -> full_model()->directory().'full.'.$self->table_strata());
-    }
-    if ($PsN::nm_major_version < 7){
-      push(@extra_output,'iotab1');
-    }else{
-      push(@extra_output,'psn.phi');
-    }
-    $self->full_model()->extra_output(\@extra_output);
-    push(@estimate_models,$self->full_model());
-  }
+		push(@estimate_models,$self->reduced_model());
+	}
+	if (defined $self->full_model()){
+		$self->full_model()->directory($self->directory().'m1/');
+		$self->full_model()->filename('full.mod');
+		$self->full_model() -> ignore_missing_files( 1 );
+		$self->full_model() -> outputfile( $self -> full_model()->directory().'full.lst');
+		$self->full_model() -> ignore_missing_files( 0 );
+		my @extra_output=();
+		if ((scalar(@table_strings)>0) and not (defined $self->reduced_model())){
+			$self->full_model()-> add_records(type => 'table',
+				record_strings => \@table_strings);
+			push(@extra_output,$self->table_strata());
+			$self->table_strata($self -> full_model()->directory().'full.'.$self->table_strata());
+		}
+		if ($PsN::nm_major_version < 7){
+			push(@extra_output,'iotab1');
+		}else{
+			push(@extra_output,'psn.phi');
+		}
+		$self->full_model()->extra_output(\@extra_output);
+		push(@estimate_models,$self->full_model());
+	}
 
 
-  foreach my $mod (@estimate_models){
-    if (defined $simulated_file or defined $self->simdata()){
-      #remove any DATX in $INPUT (drop_dropped does not)
-      foreach my $col ('DATE','DAT1','DAT2','DAT3'){
-	$mod -> remove_option(record_name => 'input',
-			      problem_numbers => [(1)],
-			      option_name => $col);
-      }
-      #if added time then remove TIME (if present) and then add TIME (must be last in list)
-      if ((not $time_in_input) && ($datx_in_input)){
-	$mod -> remove_option(record_name => 'input',
-			      problem_numbers => [(1)],
-			      option_name => 'TIME');
-	$mod -> set_option(record_name => 'input',
-			   problem_numbers => [(1)],
-			   option_name => 'TIME');
-      }
-      
-      $mod -> remove_records(problem_numbers => [(1)],
-			     type => 'simulation' );
-      
-      #ignore @ since simdata contains header rows. 
-      #keep old ignores. It is up to the user to make sure datasets are comparable
-      
-      my $ignorelist = $mod -> get_option_value( record_name  => 'data',
-						 problem_index => 0,
-						 option_name  => 'IGNORE',
-						 option_index => 'all');
-      $mod -> remove_option( record_name  => 'data',
-			     problem_numbers => [(1)],
-			     option_name  => 'IGNORE',
-			     fuzzy_match => 1);
-      
-      if (scalar (@{$ignorelist})>0){
-	foreach my $val (@{$ignorelist}){
-	  unless ($val =~ /^.$/){
-	    #unless single character ignore, cannot keep that since need @
-	    $mod -> add_option( record_name  => 'data',
+	foreach my $mod (@estimate_models){
+		if (defined $simulated_file or defined $self->simdata()){
+			#remove any DATX in $INPUT (drop_dropped does not)
+			foreach my $col ('DATE','DAT1','DAT2','DAT3'){
+				$mod -> remove_option(record_name => 'input',
+					problem_numbers => [(1)],
+					option_name => $col);
+			}
+			#if added time then remove TIME (if present) and then add TIME (must be last in list)
+			if ((not $time_in_input) && ($datx_in_input)){
+				$mod -> remove_option(record_name => 'input',
+					problem_numbers => [(1)],
+					option_name => 'TIME');
+				$mod -> set_option(record_name => 'input',
+					problem_numbers => [(1)],
+					option_name => 'TIME');
+			}
+
+			$mod -> remove_records(problem_numbers => [(1)],
+				type => 'simulation' );
+
+			#ignore @ since simdata contains header rows. 
+			#keep old ignores. It is up to the user to make sure datasets are comparable
+
+			my $ignorelist = $mod -> get_option_value( record_name  => 'data',
+				problem_index => 0,
+				option_name  => 'IGNORE',
+				option_index => 'all');
+			$mod -> remove_option( record_name  => 'data',
 				problem_numbers => [(1)],
 				option_name  => 'IGNORE',
-				option_value => $val);
-	  }
+				fuzzy_match => 1);
+
+			if (scalar (@{$ignorelist})>0){
+				foreach my $val (@{$ignorelist}){
+					unless ($val =~ /^.$/){
+						#unless single character ignore, cannot keep that since need @
+						$mod -> add_option( record_name  => 'data',
+							problem_numbers => [(1)],
+							option_name  => 'IGNORE',
+							option_value => $val);
+					}
+				}
+			}
+			$mod -> add_option( record_name  => 'data',
+				problem_numbers => [(1)],
+				option_name  => 'IGNORE',
+				option_value => '@');
+			##done fixing ignore
+			$mod->ignore_missing_files(1);
+			my $sim_file;
+			if (defined $self->simdata()){
+				#simdata has global path, fixed in mcmp
+				my $dirt;
+				($dirt, $simulated_file) =
+				OSspecific::absolute_path('', $self -> simdata() );
+				cp($self -> simdata(),$self -> directory.'m1/'.$simulated_file);
+			}
+			$sim_file= $self -> directory.'m1/'.$simulated_file;
+			$mod -> set_file( record => 'data',new_name => $sim_file); #default all recs
+		}else{
+			ui -> print (category=>'mcmp', message=> "\n Warning: No simulation data defined\n");
+		}
+
+		$mod -> _write;
 	}
-      }
-      $mod -> add_option( record_name  => 'data',
-			  problem_numbers => [(1)],
-			  option_name  => 'IGNORE',
-			  option_value => '@');
-      ##done fixing ignore
-      $mod->ignore_missing_files(1);
-      my $sim_file;
-      if (defined $self->simdata()){
-	#simdata has global path, fixed in mcmp
-	my $dirt;
-	($dirt, $simulated_file) =
-	    OSspecific::absolute_path('', $self -> simdata() );
-	cp($self -> simdata(),$self -> directory.'m1/'.$simulated_file);
-      }
-      $sim_file= $self -> directory.'m1/'.$simulated_file;
-      $mod -> set_file( record => 'data',new_name => $sim_file); #default all recs
-    }else{
-      ui -> print (category=>'mcmp', message=> "\n Warning: No simulation data defined\n");
-    }
 
-    $mod -> _write;
-  }
+	#set filename/dir to m1, set extra_output iotab eller phi
+	#_write
 
-  #set filename/dir to m1, set extra_output iotab eller phi
-  #_write
-
-  $self->tools([]) unless (defined $self->tools);
-  push( @{$self -> tools},
-	tool::modelfit ->
-	new( %{common_options::restore_options(@common_options::tool_options)},
-	     base_directory	 => $self -> directory,
-	     directory		 => $self -> directory.
-	     '/modelfit_dir'.$model_number,
-	     models		 => \@estimate_models,
-	     parent_threads        => 1,
-	     raw_results           => undef,
-	     prepared_models       => undef,
-	     top_tool              => 0,
-	     prepend_model_file_name => 1,
-	     data_path =>'../../m'.$model_number.'/',
-	     ) );
-  ui -> print (category=>'mcmp', message=> "\nEstimating:");
+	$self->tools([]) unless (defined $self->tools);
+	push( @{$self -> tools},
+		tool::modelfit ->
+		new( %{common_options::restore_options(@common_options::tool_options)},
+			base_directory	 => $self -> directory,
+			directory		 => $self -> directory.
+			'/modelfit_dir'.$model_number,
+			models		 => \@estimate_models,
+			parent_threads        => 1,
+			raw_results           => undef,
+			prepared_models       => undef,
+			top_tool              => 0,
+			prepend_model_file_name => 1,
+			data_path =>'../../m'.$model_number.'/',
+		) );
+	ui -> print (category=>'mcmp', message=> "\nEstimating:");
 }
 
 sub modelfit_analyze
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 model_number => { isa => 'Num', optional => 1 }
+		model_number => { isa => 'Num', optional => 1 }
 	);
 	my $model_number = $parm{'model_number'};
 
-  $self -> read_data(); #creates $self variables
+	$self -> read_data(); #creates $self variables
 
-  my %strata_size;
-  my %strata_ofv = %{$self->strata_ofv};
-  $self->strata_ofv({});
-  my %strata_to_index = %{$self->strata_to_index};
-  $self->strata_to_index({});
-  my %index_to_strata = %{$self->index_to_strata};
-  $self->index_to_strata({});
-  my $n_strata = scalar(keys %strata_ofv);
-  for (my $i=0;$i< $n_strata; $i++){
-    $strata_size{$i}=scalar(@{$strata_ofv{$i}});
-  }
-
-  unless (defined $self->increment()){
-    $self->increment($n_strata);
-  }
-  if ($self->increment() < $n_strata){
-    print "\nWarning\nThe option increment (".$self->increment().") is set smaller than the number ".
-	"of strata ($n_strata),\n".
-	"which does not make sense according to the intended use of this option (see the userguide).\n".
-	"The results will be correct but the computations may be inefficient.\n\n";
-    sleep(2);
-  }
-
-  my $n_critical = scalar(@{$self->critical_array});
-  open( RES, ">".$self->results_file()) or die "could not open ".$self->results_file();
-  print RES "total_X,";
-  if ($n_critical == 1){
-    print RES "power";
-  }else{
-    print RES "power at 5%,power at 1%,power at 0.1%";
-  }
-  if (defined $self->stratify_on()){
-    foreach my $strata (0 .. ($n_strata-1)){
-      print RES ",N ".$self->stratify_on()."=".(sprintf "%d",$index_to_strata{$strata});
-    }
-  }
-  print RES "\n";
-  print "total_X,power\n";
-
-  unless (defined $self->start_size()){
-    $self->start_size(3*$self->increment());
-  }
-
-  my $n_consecutive=0;
-
-  my @indices;
-  my $converged = 0;    
-  my @last_N=(0,0);
-  my @last_Y=(0,0);
-  my $step_index=0;
-  my $n_consecutive=0;
-  my %best;
-  $best{'N_below'}=0;
-  $best{'N_above'}=$self->max_size();
-  $best{'Y_below'}=0;
-  $best{'Y_above'}=2;
-
-
-  while (not $converged){
-    my @n_above_critical= (0) x $n_critical;
-    my $goal_total_samples;
-    if ($self->curve()){
-      #get next total samples by simple stepping
-      $goal_total_samples = ($self->start_size()+$step_index*$self->increment());
-      $step_index++;
-      $converged = 1 if (($self->start_size()+$step_index*$self->increment()) 
-			 > $self->max_size()); #do not go beyond max_size regardless of results
-    }else{
-      #get next total samples by secant method
-      $goal_total_samples= $self->get_total_samples('last_N' => \@last_N,
-						    'last_Y' => \@last_Y);
-      last if ($goal_total_samples < 1); #error code
-    }
-    
-    my $total_samples=0;
-    my @strata_N= (0) x $n_strata;
-
-
-    if ($self->algorithm()==1 ){
-      #alg 1
-      my @bootstrap_ofv = (0) x $self->n_bootstrap();
-
-      foreach my $strata (0 .. ($n_strata-1)){
-	my $strata_samples= 
-	    $self->round(number=>($goal_total_samples*$strata_size{$strata}/$self->n_individuals));
-	$strata_N[$strata] = $strata_samples;
-	$total_samples +=$strata_samples;
-	foreach (1 .. $strata_samples){
-	  @indices = random_uniform_integer($self->n_bootstrap(),0,($strata_size{$strata}-1));
-	  foreach my $j (0 .. ($self->n_bootstrap()-1)){
-	    $bootstrap_ofv[$j] += $strata_ofv{$strata}->[$indices[$j]];
-	  }
+	my %strata_size;
+	my %strata_ofv = %{$self->strata_ofv};
+	$self->strata_ofv({});
+	my %strata_to_index = %{$self->strata_to_index};
+	$self->strata_to_index({});
+	my %index_to_strata = %{$self->index_to_strata};
+	$self->index_to_strata({});
+	my $n_strata = scalar(keys %strata_ofv);
+	for (my $i=0;$i< $n_strata; $i++){
+		$strata_size{$i}=scalar(@{$strata_ofv{$i}});
 	}
-      }
 
-      if ($total_samples == 0){
-	if ($self->curve()){
-	  next;
+	unless (defined $self->increment()){
+		$self->increment($n_strata);
+	}
+	if ($self->increment() < $n_strata){
+		print "\nWarning\nThe option increment (".$self->increment().") is set smaller than the number ".
+		"of strata ($n_strata),\n".
+		"which does not make sense according to the intended use of this option (see the userguide).\n".
+		"The results will be correct but the computations may be inefficient.\n\n";
+		sleep(2);
+	}
+
+	my $n_critical = scalar(@{$self->critical_array});
+	open( RES, ">".$self->results_file()) or die "could not open ".$self->results_file();
+	print RES "total_X,";
+	if ($n_critical == 1){
+		print RES "power";
 	}else{
-	  die "error alg 1 no-curve\n";
+		print RES "power at 5%,power at 1%,power at 0.1%";
 	}
-      }
-      
-      foreach my $val (@bootstrap_ofv){
-	foreach my $k (0 .. ($n_critical-1)){
-	  last if $val <= $self->critical_array->[$k];
-	  $n_above_critical[$k]++; 
+	if (defined $self->stratify_on()){
+		foreach my $strata (0 .. ($n_strata-1)){
+			print RES ",N ".$self->stratify_on()."=".(sprintf "%d",$index_to_strata{$strata});
+		}
 	}
-      }
-    } else {
-      #algorithm 2
-      foreach my $str (0 .. ($n_strata-1)){
-	my $strata_samples= 
-	    $self->round(number=>($goal_total_samples*$strata_size{$str}/$self->n_individuals));
-	$strata_N[$str] = $strata_samples;
-	$total_samples +=$strata_samples;
-      }
-      if ($total_samples == 0){
-	if ($self->curve()){
-	  next;
-	}else{
-	  die "error alg 2 no-curve\n";
-	}
-      }
-      
-      my $delta_ofv=0;
-      my $strata;
-      my @indices=();
-      foreach my $i (1 .. $self->n_bootstrap()){
-	$delta_ofv=0;
-	foreach $strata (0 .. ($n_strata-1)){
-	  @indices = random_uniform_integer($strata_N[$strata],0,($strata_size{$strata}-1));
-	  foreach my $ind (@indices){
-	    $delta_ofv += $strata_ofv{$strata}->[$ind];
-	  }
+	print RES "\n";
+	print "total_X,power\n";
+
+	unless (defined $self->start_size()){
+		$self->start_size(3*$self->increment());
 	}
 
-	foreach my $k (0 .. ($n_critical-1)){
-	  last if $delta_ofv <= $self->critical_array->[$k];
-	  $n_above_critical[$k]++; 
-	}
-      }
-    } #end algorithm 2
+	my $n_consecutive=0;
 
-    ################
-    #print results
-    my @row=("$total_samples");
-    foreach my $k (0 .. ($n_critical-1)){
-      push(@row,sprintf "%5.1f",($n_above_critical[$k]*100/$self->n_bootstrap()));
-    }
-    print "$total_samples,".$row[$self->significance_index+1]."\n";
-    if (defined $self->stratify_on()){
-      push(@row,@strata_N);
-    }
-    print RES (join ',',@row)."\n";
-    
-    ##################
-    #convergence tests
-    $last_N[1] = $last_N[0];
-    $last_N[0]=$total_samples;
-    if ($self->curve()){
-      if ( ($row[$self->significance_index+1] > $self->target_power())
-	   or ($row[$self->significance_index+1] >= 100 )){
-	$n_consecutive++;
-      }else{
-	$n_consecutive=0;
-      }
-      $converged=1 if ($n_consecutive > 2);
-    }else{
-      #no curve, secant method instead
-      #until two last values are not the same but either adjacent and on
-      # either side of power goal or both are at goal if rounded to zero decimals
-      $last_Y[1] = $last_Y[0];
-      $last_Y[0]= $n_above_critical[$self->significance_index]/$self->n_bootstrap();
-      if ($last_Y[0]< ($self->target_power()/100)){
-	if ($last_Y[0] >= $best{'Y_below'} and $last_N[0] > $best{'N_below'}){
-	  $best{'Y_below'} =  $last_Y[0];
-	  $best{'N_below'} =  $last_N[0];
-	}
-      }elsif($last_Y[0] <= $best{'Y_above'} and $last_N[0] < $best{'N_above'}){
-	$best{'Y_above'} =  $last_Y[0];
-	$best{'N_above'} =  $last_N[0];
-      }
-      
-      if ( abs($best{'N_above'}-$best{'N_below'}) < 1.5*$self->increment()){
-	$converged =1;
-	print "Convergence achieved.\nTarget power ".$self->target_power()."% is obtained for a total ".
-	    "sample size between ".$best{'N_below'}." (power ".
-	    (sprintf "%5.1f",$best{'Y_below'}*100)."%) and ".
-	    $best{'N_above'}." (power ".
-	    (sprintf "%5.1f",$best{'Y_above'}*100)."%).\n";
-      }
-    } #end convergence test no curve
+	my @indices;
+	my $converged = 0;    
+	my @last_N=(0,0);
+	my @last_Y=(0,0);
+	my $step_index=0;
+	my $n_consecutive=0;
+	my %best;
+	$best{'N_below'}=0;
+	$best{'N_above'}=$self->max_size();
+	$best{'Y_below'}=0;
+	$best{'Y_above'}=2;
 
-  } #end while not converged 
-  
-  print "See mcmp_results.csv for more detailed results.\n";
-  close(RES);
-  $self->cleanup();
+
+	while (not $converged){
+		my @n_above_critical= (0) x $n_critical;
+		my $goal_total_samples;
+		if ($self->curve()){
+			#get next total samples by simple stepping
+			$goal_total_samples = ($self->start_size()+$step_index*$self->increment());
+			$step_index++;
+			$converged = 1 if (($self->start_size()+$step_index*$self->increment()) 
+				> $self->max_size()); #do not go beyond max_size regardless of results
+		}else{
+			#get next total samples by secant method
+			$goal_total_samples= $self->get_total_samples('last_N' => \@last_N,
+				'last_Y' => \@last_Y);
+			last if ($goal_total_samples < 1); #error code
+		}
+
+		my $total_samples=0;
+		my @strata_N= (0) x $n_strata;
+
+
+		if ($self->algorithm()==1 ){
+			#alg 1
+			my @bootstrap_ofv = (0) x $self->n_bootstrap();
+
+			foreach my $strata (0 .. ($n_strata-1)){
+				my $strata_samples= 
+				$self->round(number=>($goal_total_samples*$strata_size{$strata}/$self->n_individuals));
+				$strata_N[$strata] = $strata_samples;
+				$total_samples +=$strata_samples;
+				foreach (1 .. $strata_samples){
+					@indices = random_uniform_integer($self->n_bootstrap(),0,($strata_size{$strata}-1));
+					foreach my $j (0 .. ($self->n_bootstrap()-1)){
+						$bootstrap_ofv[$j] += $strata_ofv{$strata}->[$indices[$j]];
+					}
+				}
+			}
+
+			if ($total_samples == 0){
+				if ($self->curve()){
+					next;
+				}else{
+					die "error alg 1 no-curve\n";
+				}
+			}
+
+			foreach my $val (@bootstrap_ofv){
+				foreach my $k (0 .. ($n_critical-1)){
+					last if $val <= $self->critical_array->[$k];
+					$n_above_critical[$k]++; 
+				}
+			}
+		} else {
+			#algorithm 2
+			foreach my $str (0 .. ($n_strata-1)){
+				my $strata_samples= 
+				$self->round(number=>($goal_total_samples*$strata_size{$str}/$self->n_individuals));
+				$strata_N[$str] = $strata_samples;
+				$total_samples +=$strata_samples;
+			}
+			if ($total_samples == 0){
+				if ($self->curve()){
+					next;
+				}else{
+					die "error alg 2 no-curve\n";
+				}
+			}
+
+			my $delta_ofv=0;
+			my $strata;
+			my @indices=();
+			foreach my $i (1 .. $self->n_bootstrap()){
+				$delta_ofv=0;
+				foreach $strata (0 .. ($n_strata-1)){
+					@indices = random_uniform_integer($strata_N[$strata],0,($strata_size{$strata}-1));
+					foreach my $ind (@indices){
+						$delta_ofv += $strata_ofv{$strata}->[$ind];
+					}
+				}
+
+				foreach my $k (0 .. ($n_critical-1)){
+					last if $delta_ofv <= $self->critical_array->[$k];
+					$n_above_critical[$k]++; 
+				}
+			}
+		} #end algorithm 2
+
+		################
+		#print results
+		my @row=("$total_samples");
+		foreach my $k (0 .. ($n_critical-1)){
+			push(@row,sprintf "%5.1f",($n_above_critical[$k]*100/$self->n_bootstrap()));
+		}
+		print "$total_samples,".$row[$self->significance_index+1]."\n";
+		if (defined $self->stratify_on()){
+			push(@row,@strata_N);
+		}
+		print RES (join ',',@row)."\n";
+
+		##################
+		#convergence tests
+		$last_N[1] = $last_N[0];
+		$last_N[0]=$total_samples;
+		if ($self->curve()){
+			if ( ($row[$self->significance_index+1] > $self->target_power())
+					or ($row[$self->significance_index+1] >= 100 )){
+				$n_consecutive++;
+			}else{
+				$n_consecutive=0;
+			}
+			$converged=1 if ($n_consecutive > 2);
+		}else{
+			#no curve, secant method instead
+			#until two last values are not the same but either adjacent and on
+			# either side of power goal or both are at goal if rounded to zero decimals
+			$last_Y[1] = $last_Y[0];
+			$last_Y[0]= $n_above_critical[$self->significance_index]/$self->n_bootstrap();
+			if ($last_Y[0]< ($self->target_power()/100)){
+				if ($last_Y[0] >= $best{'Y_below'} and $last_N[0] > $best{'N_below'}){
+					$best{'Y_below'} =  $last_Y[0];
+					$best{'N_below'} =  $last_N[0];
+				}
+			}elsif($last_Y[0] <= $best{'Y_above'} and $last_N[0] < $best{'N_above'}){
+				$best{'Y_above'} =  $last_Y[0];
+				$best{'N_above'} =  $last_N[0];
+			}
+
+			if ( abs($best{'N_above'}-$best{'N_below'}) < 1.5*$self->increment()){
+				$converged =1;
+				print "Convergence achieved.\nTarget power ".$self->target_power()."% is obtained for a total ".
+				"sample size between ".$best{'N_below'}." (power ".
+				(sprintf "%5.1f",$best{'Y_below'}*100)."%) and ".
+				$best{'N_above'}." (power ".
+				(sprintf "%5.1f",$best{'Y_above'}*100)."%).\n";
+			}
+		} #end convergence test no curve
+
+	} #end while not converged 
+
+	print "See mcmp_results.csv for more detailed results.\n";
+	close(RES);
+	$self->cleanup();
 }
 
 sub round

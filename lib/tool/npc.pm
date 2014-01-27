@@ -16,7 +16,7 @@ use binning;
 use Moose;
 use MooseX::Params::Validate;
 
-extends 'newtool';
+extends 'tool';
 
 has 'is_vpc' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'searchdir' => ( is => 'rw', isa => 'Str' );

@@ -13,7 +13,7 @@ use Data::Dumper;
 use Moose;
 use MooseX::Params::Validate;
 
-extends 'newtool';
+extends 'tool';
 
 
 has 'bca_print_order' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { ['diagnostic_means','means','bias','bca_confidence_intervals','standard_error_confidence_intervals','standard_errors','medians','jackknife_means','percentile_confidence_intervals'] } );

@@ -8,7 +8,7 @@ use MooseX::Params::Validate;
 use array qw(:all);
 use tool::modelfit;
 
-extends 'newtool';
+extends 'tool';
 
 has 'parameters' => (is => 'rw', isa => 'ArrayRef[Str]');
 has 'samples' => (is => 'rw', isa => 'Int');

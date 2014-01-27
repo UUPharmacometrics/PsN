@@ -5,7 +5,7 @@ use tool::xv_step;
 use Moose;
 use MooseX::Params::Validate;
 
-extends 'newtool';
+extends 'tool';
 
 has 'xv_steps' => ( is => 'rw', isa => 'ArrayRef[xv_step]' );
 has 'subtools' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { ['xv_step'] } );

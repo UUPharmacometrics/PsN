@@ -10,7 +10,7 @@ use ui;
 use Moose;
 use MooseX::Params::Validate;
 
-extends 'newtool';
+extends 'tool';
 
 has 'lst_file' => ( is => 'rw', required => 1, isa => 'Str' );
 has 'njd' => ( is => 'rw', isa => 'Str' );

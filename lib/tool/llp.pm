@@ -8,7 +8,7 @@ use Data::Dumper;
 use Moose;
 use MooseX::Params::Validate;
 
-extends 'newtool';
+extends 'tool';
 
 has 'max_iterations' => ( is => 'rw', isa => 'Int', default => 10 );
 has 'significant_digits' => ( is => 'rw', isa => 'Int', default => 3 );

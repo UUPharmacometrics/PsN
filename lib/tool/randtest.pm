@@ -11,7 +11,7 @@ use Data::Dumper;
 use Moose;
 use MooseX::Params::Validate;
 
-extends 'newtool';
+extends 'tool';
 
 has 'randtest_raw_results' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 has 'copy_data' => ( is => 'rw', isa => 'Bool', default => 0 );

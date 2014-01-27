@@ -11,7 +11,7 @@ use status_bar;
 use Moose;
 use MooseX::Params::Validate;
 
-extends 'newtool';
+extends 'tool';
 
 use tool::scm::config_file;
 

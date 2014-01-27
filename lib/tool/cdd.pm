@@ -11,7 +11,7 @@ use Data::Dumper;
 use Moose;
 use MooseX::Params::Validate;
 
-extends 'newtool';
+extends 'tool';
 
 has 'case_column' => ( is => 'rw', required => 1, isa => 'Int' );
 has 'bins' => ( is => 'rw', isa => 'Any' );

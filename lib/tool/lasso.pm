@@ -10,7 +10,7 @@ use OSspecific;
 use Moose;
 use MooseX::Params::Validate;
 
-extends 'newtool';
+extends 'tool';
 
 has 'relations' => ( is => 'rw', required => 1, isa => 'Str' );
 has 'covariate_statistics_file' => ( is => 'rw', isa => 'Str', default => 'covariate_statistics.txt' );

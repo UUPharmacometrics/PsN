@@ -10,7 +10,7 @@ use npde_util;
 use Moose;
 use MooseX::Params::Validate;
 
-extends 'newtool';
+extends 'tool';
 
 has 'samples' => ( is => 'rw', isa => 'Int' );
 has 'lst_file' => ( is => 'rw', isa => 'Str' );

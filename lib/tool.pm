@@ -1,4 +1,4 @@
-package newtool;
+package tool;
 
 use include_modules;
 use ext::Parallel::ForkManager;

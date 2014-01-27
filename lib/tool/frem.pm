@@ -12,7 +12,7 @@ use ui;
 use Moose;
 use MooseX::Params::Validate;
 
-extends 'newtool';
+extends 'tool';
 
 
 has 'bsv_parameters' => ( is => 'rw', isa => 'Int' );

@@ -5,7 +5,7 @@ use tool::modelfit;
 use Moose;
 use MooseX::Params::Validate;
 
-extends 'newtool';
+extends 'tool';
 
 #start description
     # When we started discussions on implementing crossvalidation we
