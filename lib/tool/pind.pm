@@ -1,6 +1,5 @@
-# {{{ include_statements
-start include statements
-#use Carp;
+package tool::pind;
+
 use include_modules;
 use Data::Dumper;
 use Math::Random;
@@ -8,59 +7,71 @@ use strict;
 use tool::modelfit;
 use model;
 use ui;
-end include
-# }}}
+use Moose;
+use MooseX::Params::Validate;
 
-# {{{ new
+extends 'newtool';
 
-start new
+has 'lst_file' => ( is => 'rw', required => 1, isa => 'Str' );
+has 'njd' => ( is => 'rw', isa => 'Str' );
+has 'ignore_individuals_above' => ( is => 'rw', isa => 'Int' );
+has 'ind_param' => ( is => 'rw', isa => 'Str', default => 'eta' );
+has 'n_individuals' => ( is => 'rw', isa => 'Int' );
+has 'tablename' => ( is => 'rw', isa => 'Str', default => 'nptab' );
+has 'modelname' => ( is => 'rw', isa => 'Str', default => 'np' );
+has 'jd_model' => ( is => 'rw', isa => 'model' );
+has 'logfile' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { ['pind.log'] } );
+has 'results_file' => ( is => 'rw', isa => 'Str', default => 'pind_results.csv' );
+
+
+sub BUILD
 {
-  if ( scalar (@{$this->models->[0]->problems}) != 1 ) {
-    croak('The input model must contain exactly one problem.');
-  }
+	my $this  = shift;
 
-  if ($this->ind_param eq 'eta') {
-    my $record_ref = $this->models->[0]->record(record_name => 'omega' );
-    unless ( scalar(@{$record_ref}) > 0 ){ 
-      croak('The input model must contain at least one $OMEGA record.');
-    }
-  } elsif ($this->ind_param eq 'theta') {
-    my $record_ref = $this->models->[0]->record(record_name => 'theta' );
-    unless ( scalar(@{$record_ref}) > 0 ){ 
-      croak('The input model must contain at least one $THETA record.');
-    }
-  } else {
-    croak('Illegal choice for option -ind_param.');
-  }
-  
-  unless ($this->lst_file eq '0') {
-    #allow setting file string to 0. In this case no updating of initial estimates will be done
-    #used when calling pind from nonp_bootstrap
-    unless ( -e $this->lst_file ) {
-      croak("Cannot find lst-file " . $this->lst_file);
-    }
-  }
+	if ( scalar (@{$this->models->[0]->problems}) != 1 ) {
+		croak('The input model must contain exactly one problem.');
+	}
 
-  unless (length($this->tablename) > 0) {
-    croak("Length of string tablename is 0.");
-  }
+	if ($this->ind_param eq 'eta') {
+		my $record_ref = $this->models->[0]->record(record_name => 'omega' );
+		unless ( scalar(@{$record_ref}) > 0 ){ 
+			croak('The input model must contain at least one $OMEGA record.');
+		}
+	} elsif ($this->ind_param eq 'theta') {
+		my $record_ref = $this->models->[0]->record(record_name => 'theta' );
+		unless ( scalar(@{$record_ref}) > 0 ){ 
+			croak('The input model must contain at least one $THETA record.');
+		}
+	} else {
+		croak('Illegal choice for option -ind_param.');
+	}
 
-  if (defined $this->ignore_individuals_above) {
-    unless (defined $this->njd) {
-      croak("Option -ignore_individuals_above only allowed toghether with -njd");
-    }
-  }
-  
-}  
-end new
+	unless ($this->lst_file eq '0') {
+		#allow setting file string to 0. In this case no updating of initial estimates will be done
+		#used when calling pind from nonp_bootstrap
+		unless ( -e $this->lst_file ) {
+			croak("Cannot find lst-file " . $this->lst_file);
+		}
+	}
 
-# }}}
+	unless (length($this->tablename) > 0) {
+		croak("Length of string tablename is 0.");
+	}
 
+	if (defined $this->ignore_individuals_above) {
+		unless (defined $this->njd) {
+			croak("Option -ignore_individuals_above only allowed toghether with -njd");
+		}
+	}
+}
 
-# {{{ modelfit_setup
-
-start modelfit_setup
+sub modelfit_setup
 {
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+		 model_number => { isa => 'Int', optional => 1 }
+	);
+	my $model_number = $parm{'model_number'};
 
   if (defined $self->njd) {
     unless (defined $self->ignore_individuals_above) {
@@ -299,16 +310,27 @@ start modelfit_setup
 			   prepend_model_file_name => 1
 		  ) );
   }
-  
 }
-end modelfit_setup
 
-# }}} modelfit_setup
-
-# {{{ modelfit_analyze
-
-start modelfit_analyze
+sub _modelfit_raw_results_callback
 {
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+		 model_number => { isa => 'Int', optional => 1 }
+	);
+	my $model_number = $parm{'model_number'};
+	my $subroutine;
+
+	return \&subroutine;
+}
+
+sub modelfit_analyze
+{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+		 model_number => { isa => 'Int', optional => 1 }
+	);
+	my $model_number = $parm{'model_number'};
 
   my $ind_ofv_matrix = $self-> get_ind_ofv_matrix(number_of_individuals => $self->n_individuals);
 
@@ -336,23 +358,16 @@ start modelfit_analyze
   # standpoint I think we are ok unless we have huge number of
   # individuals. / Pontus
 }
-end modelfit_analyze
 
-# }}}
-
-# {{{ _modelfit_raw_results_callback
-
-#start _modelfit_raw_results_callback
-
-#end _modelfit_raw_results_callback
-
-# }}} _modelfit_raw_results_callback
-
-
-# {{{ sum_vector_entries
-
-start sum_vector_entries
+sub sum_vector_entries
 {
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+		 vector => { isa => 'Ref', optional => 1 }
+	);
+	my $vector = $parm{'vector'};
+	my $sum_entries;
+
   #input $vector is reference to single-dimension array 
   #output is scalar $sum_entries
   #sort in ascending order and add from smallest to avoid numerical issues
@@ -366,15 +381,135 @@ start sum_vector_entries
   foreach my $entr (@sorted_values){
     $sum_entries+=$entr;
   }
+
+	return $sum_entries;
 }
-end sum_vector_entries
 
-# }}} sum_vector_entries
-
-# {{{ scale_exp_half_neg_vector
-
-start scale_exp_half_neg_vector
+sub scale_vector
 {
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+		 vector => { isa => 'Ref', optional => 1 },
+		 factor => { isa => 'Num', optional => 0 }
+	);
+	my $vector = $parm{'vector'};
+	my $factor = $parm{'factor'};
+	my @return_vector;
+
+  #input $vector is reference to single-dimension array
+  #additional input is scalar $factor , e.g $individuals
+  # output is return_vector
+
+  unless (scalar(@{$vector}) > 0){
+    croak("Error scale_vector: Empty vector.");
+  }
+
+  foreach my $val (@{$vector}){
+    push (@return_vector,$factor*$val);
+  }
+
+	return \@return_vector;
+}
+
+sub get_raw_ofv_vector
+{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+		 number_of_individuals => { isa => 'Num', optional => 0 }
+	);
+	my $number_of_individuals = $parm{'number_of_individuals'};
+	my @ofv_array;
+
+  # input number_of_individuals
+  #output ofv_array 
+
+  my $raw_line_struct = $self->tools->[0]->raw_line_structure;
+  my ($ofv_pos, $length) = split(/,/, $raw_line_struct -> {1} -> {'ofv'});
+
+  if( not (defined $ofv_pos) || $ofv_pos == 0 ){
+    croak("Something went wrong. There seem to ".
+		 "be OFV values missing from the lst-files of the ofv_model runs.");
+  }
+
+  my $raw_file = $self->directory . 'ofv_dir/raw_results.csv'; #ugly, should use variable...
+  unless ( -e $raw_file ){
+    croak("File $raw_file does not exist.");
+  }
+  open( RAW, $raw_file ) or croak("Could not open $raw_file.");
+
+  my $dirt = <RAW>; #skip first line, header
+  while (my $row = <RAW>){
+    chomp $row;
+    my @temp = split(/,/,$row);
+    #check ofv is a reasonable number 
+    if ($temp[$ofv_pos] eq '0'){
+      my $n=1+scalar(@ofv_array);
+      ui -> print (category=>'pind', 
+		   message=>"Warning: OFV value = 0 from lst-file ofv_model_$n.lst");
+    }
+    if ($temp[$ofv_pos] =~ /^-?\d*\.?\d*$/){ #is a number
+      push (@ofv_array,$temp[$ofv_pos]);
+    } else {
+      my $n=1+scalar(@ofv_array);
+      my $mess = "OFV value number $n in \n$raw_file \n is not a number. ".
+	  "Check if running ofv_model_$n.mod failed.";
+      ui -> print (category=>'pind', message=>$mess);
+      push (@ofv_array,-99);
+    }
+  }
+  close(RAW);
+  unless (scalar(@ofv_array) == $number_of_individuals){
+    my $mess = "Wrong number of ofv values read from $raw_file.";
+    ui -> print (category=>'pind', 
+		 message=>"Error: $mess");
+  }
+
+	return \@ofv_array;
+}
+
+sub create_iofvcont
+{
+	my $self = shift;
+
+  #code for custom CONTR routine that will print individual ofv values
+  #do not indent, NONMEM is sensitive...
+  #print lots of decimals for high precision iofv
+  #no input no output parameters
+
+  mkdir( 'm2' ) unless( -d 'm2' );
+
+  unless( -e 'm2/iofvcont.f' ){
+    open(IOFVCONT , '>', 'm2/iofvcont.f');
+    
+    print IOFVCONT <<'EOF';
+      subroutine contr (icall,cnt,ier1,ier2)
+      parameter (no=1000)
+      common /rocm1/ y(no),data(no,3),nobs
+      integer nobs, un
+      double precision cnt,y
+      DATA un /80/
+      if (icall.le.1) return
+      call ncontr (cnt,ier1,ier2,l2r)
+      write(un,10) data(1,1),cnt
+   10 FORMAT(1F6.2,1F27.12)
+      return
+      end
+EOF
+    close( IOFVCONT );
+  }
+}
+
+sub scale_exp_half_neg_vector
+{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+		 vector => { isa => 'Ref', optional => 1 },
+		 factor => { isa => 'Num', optional => 0 }
+	);
+	my $vector = $parm{'vector'};
+	my $factor = $parm{'factor'};
+	my @l_vector;
+
   #this is used in 2.5.1
   #input $vector is reference to single-dimension array
   #additional input is scalar $factor 
@@ -388,37 +523,18 @@ start scale_exp_half_neg_vector
     push (@l_vector ,$factor*exp(-0.5*$val));
   }
 
+	return \@l_vector;
 }
-end scale_exp_half_neg_vector
 
-# }}} scale_exp_half_neg_vector
-
-# {{{ scale_vector
-
-start scale_vector
+sub column_sums
 {
-  #input $vector is reference to single-dimension array
-  #additional input is scalar $factor , e.g $individuals
-  # output is return_vector
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+		 matrix => { isa => 'Ref', optional => 1 }
+	);
+	my $matrix = $parm{'matrix'};
+	my @column_sum_vector;
 
-  unless (scalar(@{$vector}) > 0){
-    croak("Error scale_vector: Empty vector.");
-  }
-
-  foreach my $val (@{$vector}){
-    push (@return_vector,$factor*$val);
-  }
-
-}
-end scale_vector
-
-# }}} scale_vector
-
-
-# {{{ column_sums
-
-start column_sums
-{
   #input $matrix is array of references to row value arrays 
   #output is reference to vector column_sum_vector
   #sorting is used to avoid numerical problems which are otherwise likely
@@ -449,15 +565,21 @@ start column_sums
       $column_sum_vector[$i] += $val;
     }
   }
+
+	return \@column_sum_vector;
 }
-end column_sums
 
-# }}} column_sums
-
-# {{{ inverse_scale_columns
-
-start inverse_scale_columns
+sub inverse_scale_columns
 {
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+		 matrix => { isa => 'Ref', optional => 1 },
+		 denominator_vector => { isa => 'Ref', optional => 1 }
+	);
+	my $matrix = $parm{'matrix'};
+	my $denominator_vector = $parm{'denominator_vector'};
+	my @scaled_matrix;
+
   #input is vector reference $denominator_vector
   #input $matrix is ref of array of references to row value arrays 
   #output is $scaled_matrix
@@ -486,51 +608,64 @@ start inverse_scale_columns
     }
     push (@scaled_matrix,\@new_row);
   }
+
+	return \@scaled_matrix;
 }
-end inverse_scale_columns
 
-# }}} inverse_scale_columns
-
-# {{{ create_iofvcont
-
-start create_iofvcont
+sub get_ind_ofv_matrix
 {
-  #code for custom CONTR routine that will print individual ofv values
-  #do not indent, NONMEM is sensitive...
-  #print lots of decimals for high precision iofv
-  #no input no output parameters
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+		 number_of_individuals => { isa => 'Int', optional => 0 }
+	);
+	my $number_of_individuals = $parm{'number_of_individuals'};
+	my @ind_ofv_matrix;
 
-  mkdir( 'm2' ) unless( -d 'm2' );
+  #this is sec 2.2.7 + section 2.3 in URS individual probability script
+  #post-processing of individual fort.80
+  #input is scalar $number_of_individuals
+  #need input directory??
+  #return ind_ofv_matrix
 
-  unless( -e 'm2/iofvcont.f' ){
-    open(IOFVCONT , '>', 'm2/iofvcont.f');
-    
-    print IOFVCONT <<'EOF';
-      subroutine contr (icall,cnt,ier1,ier2)
-      parameter (no=1000)
-      common /rocm1/ y(no),data(no,3),nobs
-      integer nobs, un
-      double precision cnt,y
-      DATA un /80/
-      if (icall.le.1) return
-      call ncontr (cnt,ier1,ier2,l2r)
-      write(un,10) data(1,1),cnt
-   10 FORMAT(1F6.2,1F27.12)
-      return
-      end
-EOF
-    close( IOFVCONT );
+  for (my $id=1; $id<=$number_of_individuals; $id++ ){
+    open (IND, '<', "m2/ofv_model_$id.fort.80") || 
+	    croak("Couldn't open m2/ofv_model_$id.fort.80 for reading: $!");
+
+    my @ind_ofv;
+    while(<IND>) {
+      chomp;
+      my ($junk,$ind_ofv) = split(' ',$_); #first col is what???
+      push @ind_ofv, $ind_ofv;
+    }
+    close IND;
+    @ind_ofv = splice(@ind_ofv,-$number_of_individuals); #only last section is what we want
+    push( @ind_ofv_matrix, \@ind_ofv );
   }
+
+  $self->verify_ind_ofv_matrix(ind_ofv_matrix => \@ind_ofv_matrix,
+			       number_of_individuals => $number_of_individuals);
+
+  open( FILE, ">","ind_ofv.csv" );
+  foreach my $sub_arr (@ind_ofv_matrix ){
+    print( FILE join( ',', @{$sub_arr} ), "\n" );
+  }
+  close( FILE );
+
+	return \@ind_ofv_matrix;
 }
-end create_iofvcont
 
-# }}} create_iofvcont
-
-
-# {{{ get_jd_vector_eta_matrix
-
-start get_jd_vector_eta_matrix
+sub get_jd_vector_eta_matrix
 {
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+		 number_of_etas => { isa => 'Int', optional => 0 },
+		 table_file => { isa => 'Str', optional => 0 }
+	);
+	my $number_of_etas = $parm{'number_of_etas'};
+	my $table_file = $parm{'table_file'};
+	my @jd_vector;
+	my @eta_matrix;
+
   #this is sec 2.1 in URS individual probability script plus ETA reading.
   #input is file name for table file with ID JD ETA1..ETAX DN1..DNX  make sure table has header
   #input is scalar $number_of_etas
@@ -610,15 +745,21 @@ start get_jd_vector_eta_matrix
     }
   }
 
+	return \@jd_vector ,\@eta_matrix;
 }
-end get_jd_vector_eta_matrix
 
-# }}} get_jd_vector_eta_matrix
-
-# {{{ alt_get_jd_vector_eta_matrix
-
-start alt_get_jd_vector_eta_matrix
+sub alt_get_jd_vector_eta_matrix
 {
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+		 number_of_etas => { isa => 'Int', optional => 0 },
+		 table_file => { isa => 'Str', optional => 0 }
+	);
+	my $number_of_etas = $parm{'number_of_etas'};
+	my $table_file = $parm{'table_file'};
+	my @jd_vector;
+	my @eta_matrix;
+
   #NOT USED!!! intented for increased number of significant digits in values
   #this is sec 2.1 in URS individual probability script plus ETA reading.
   #input is file name for table file with ID JD ETA1..ETAX DN1..DNX  make sure table has header
@@ -685,16 +826,22 @@ start alt_get_jd_vector_eta_matrix
 		    "ETA and JD values found.");
   }
 
+	return \@jd_vector ,\@eta_matrix;
 }
-end alt_get_jd_vector_eta_matrix
 
-# }}} alt_get_jd_vector_eta_matrix
-
-
-# {{{ setup_ind_ofv_models
-
-start setup_ind_ofv_models
+sub setup_ind_ofv_models
 {
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+		 number_of_individuals => { isa => 'Int', optional => 0 },
+		 number_of_etas => { isa => 'Int', optional => 0 },
+		 eta_matrix => { isa => 'Ref', optional => 1 }
+	);
+	my $number_of_individuals = $parm{'number_of_individuals'};
+	my $number_of_etas = $parm{'number_of_etas'};
+	my $eta_matrix = $parm{'eta_matrix'};
+	my @new_ofv_models;
+
   #this is sec 2.2 with 2.2.1-2.2.6 (not 2.2.7 )in URS individual probability script
   #run command is the main run in bin/pind script
   #input scalar number_of_individuals scalar number_of_etas
@@ -831,111 +978,19 @@ start setup_ind_ofv_models
       push( @new_ofv_models, $copy );
     }
     
+	return \@new_ofv_models;
 }
-end setup_ind_ofv_models
 
-# }}} setup_ind_ofv_models
-
-
-
-# {{{ get_ind_ofv_matrix
-
-start get_ind_ofv_matrix
+sub verify_ind_ofv_matrix
 {
-  #this is sec 2.2.7 + section 2.3 in URS individual probability script
-  #post-processing of individual fort.80
-  #input is scalar $number_of_individuals
-  #need input directory??
-  #return ind_ofv_matrix
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+		 number_of_individuals => { isa => 'Int', optional => 0 },
+		 ind_ofv_matrix => { isa => 'Ref', optional => 1 }
+	);
+	my $number_of_individuals = $parm{'number_of_individuals'};
+	my $ind_ofv_matrix = $parm{'ind_ofv_matrix'};
 
-  for (my $id=1; $id<=$number_of_individuals; $id++ ){
-    open (IND, '<', "m2/ofv_model_$id.fort.80") || 
-	    croak("Couldn't open m2/ofv_model_$id.fort.80 for reading: $!");
-
-    my @ind_ofv;
-    while(<IND>) {
-      chomp;
-      my ($junk,$ind_ofv) = split(' ',$_); #first col is what???
-      push @ind_ofv, $ind_ofv;
-    }
-    close IND;
-    @ind_ofv = splice(@ind_ofv,-$number_of_individuals); #only last section is what we want
-    push( @ind_ofv_matrix, \@ind_ofv );
-  }
-
-  $self->verify_ind_ofv_matrix(ind_ofv_matrix => \@ind_ofv_matrix,
-			       number_of_individuals => $number_of_individuals);
-
-  open( FILE, ">","ind_ofv.csv" );
-  foreach my $sub_arr (@ind_ofv_matrix ){
-    print( FILE join( ',', @{$sub_arr} ), "\n" );
-  }
-  close( FILE );
-
-}
-end get_ind_ofv_matrix
-
-# }}} get_ind_ofv_matrix
-
-# {{{ get_raw_ofv_vector
-
-start get_raw_ofv_vector
-{
-  # input number_of_individuals
-  #output ofv_array 
-
-  my $raw_line_struct = $self->tools->[0]->raw_line_structure;
-  my ($ofv_pos, $length) = split(/,/, $raw_line_struct -> {1} -> {'ofv'});
-
-  if( not (defined $ofv_pos) || $ofv_pos == 0 ){
-    croak("Something went wrong. There seem to ".
-		 "be OFV values missing from the lst-files of the ofv_model runs.");
-  }
-
-  my $raw_file = $self->directory . 'ofv_dir/raw_results.csv'; #ugly, should use variable...
-  unless ( -e $raw_file ){
-    croak("File $raw_file does not exist.");
-  }
-  open( RAW, $raw_file ) or croak("Could not open $raw_file.");
-
-  my $dirt = <RAW>; #skip first line, header
-  while (my $row = <RAW>){
-    chomp $row;
-    my @temp = split(/,/,$row);
-    #check ofv is a reasonable number 
-    if ($temp[$ofv_pos] eq '0'){
-      my $n=1+scalar(@ofv_array);
-      ui -> print (category=>'pind', 
-		   message=>"Warning: OFV value = 0 from lst-file ofv_model_$n.lst");
-    }
-    if ($temp[$ofv_pos] =~ /^-?\d*\.?\d*$/){ #is a number
-      push (@ofv_array,$temp[$ofv_pos]);
-    } else {
-      my $n=1+scalar(@ofv_array);
-      my $mess = "OFV value number $n in \n$raw_file \n is not a number. ".
-	  "Check if running ofv_model_$n.mod failed.";
-      ui -> print (category=>'pind', message=>$mess);
-      push (@ofv_array,-99);
-    }
-  }
-  close(RAW);
-  unless (scalar(@ofv_array) == $number_of_individuals){
-    my $mess = "Wrong number of ofv values read from $raw_file.";
-    ui -> print (category=>'pind', 
-		 message=>"Error: $mess");
-  }
-
-
-}
-end get_raw_ofv_vector
-
-# }}} get_raw_ofv_vector
-
-
-# {{{ verify_ind_ofv_matrix
-
-start verify_ind_ofv_matrix
-{
   #this is verification described between sec 2.3 and 2.5 in URS for p_individuals
   #input is reference to ind_ofv_matrix and scalar number of individuals
 
@@ -954,14 +1009,19 @@ start verify_ind_ofv_matrix
     }
   }
 }
-end verify_ind_ofv_matrix
 
-# }}} verify_ind_ofv_matrix
-
-# {{{ create_LxP_matrix_sum_LP_vector_P_values_matrix
-
-start create_LxP_matrix_sum_LP_vector_P_values_matrix
+sub create_LxP_matrix_sum_LP_vector_P_values_matrix
 {
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+		 number_of_individuals => { isa => 'Int', optional => 0 },
+		 ind_ofv_matrix => { isa => 'Ref', optional => 1 },
+		 jd_vector => { isa => 'Ref', optional => 1 }
+	);
+	my $number_of_individuals = $parm{'number_of_individuals'};
+	my $ind_ofv_matrix = $parm{'ind_ofv_matrix'};
+	my $jd_vector = $parm{'jd_vector'};
+
   #this is sec 2.5.1 and 2.5.2 and 2.6 of URS individual probability script
   #input is scalar $number_of_individuals
   #input reference to matrix $ind_ofv_matrix 
@@ -1132,16 +1192,20 @@ start create_LxP_matrix_sum_LP_vector_P_values_matrix
     print( FILE join( ',', @{$sub_arr} ), "\n" );
   }
   close( FILE );
-
 }
-end create_LxP_matrix_sum_LP_vector_P_values_matrix
 
-# }}} create_LxP_matrix_sum_LP_vector_P_values_matrix
-
-# {{{ verify_P_values_matrix
-    
-start verify_P_values_matrix
+sub verify_P_values_matrix
 {
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+		 number_of_individuals => { isa => 'Int', optional => 0 },
+		 P_values_matrix => { isa => 'Ref', optional => 1 },
+		 jd_vector => { isa => 'Ref', optional => 1 }
+	);
+	my $number_of_individuals = $parm{'number_of_individuals'};
+	my $P_values_matrix = $parm{'P_values_matrix'};
+	my $jd_vector = $parm{'jd_vector'};
+
   #this is verification described after sec 2.6 in URS for p_individuals
   #input is reference to P_values_matrix and scalar number of individuals
   #input reference to jd_vector
@@ -1197,14 +1261,12 @@ start verify_P_values_matrix
       my $perc = $ratio*100;
       my $line = sprintf "%4.2e, %4.2e ,%5.2f, %i\n", $jd, $abs_error, $perc, $i+1 ;
       unless ($header_printed){
-#	ui -> print (category=>'pind', message=> $header );
 	$header_printed = 1;
       }
-#      ui -> print (category=>'pind', message=>$line);
     }
   }
-#  ui -> print (category=>'pind', message=>" ");
 }
-end verify_P_values_matrix
 
-# }}} verify_P_values_matrix
+no Moose;
+__PACKAGE__->meta->make_immutable;
+1;
