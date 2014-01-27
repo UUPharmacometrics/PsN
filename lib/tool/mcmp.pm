@@ -46,7 +46,6 @@ has 'results_file' => ( is => 'rw', isa => 'Str', default => 'mcmp_results.csv' 
 sub BUILD
 {
 	my $this  = shift;
-	my %parm  = @_;
 
   if (defined $this->table_full){
     unless ( -e $this->table_full ){

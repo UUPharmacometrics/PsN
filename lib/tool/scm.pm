@@ -92,8 +92,8 @@ has 'short_logfile' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { ['
 
 sub BUILD
 {
-	my $this  = shift;
-	my %parm  = @_;
+	my $this = shift;
+	my %parm = %{$_[0]};
 
 	# <I>test_relations and p_value</I> can be specified
 	# as either a reference to a hash or as a reference to an

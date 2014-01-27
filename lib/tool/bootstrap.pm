@@ -62,7 +62,6 @@ has 'large_bias_limit' => ( is => 'rw', isa => 'Num', default => 0.05 );
 sub BUILD
 {
 	my $this  = shift;
-	my %parm  = @_;
 
 	for my $accessor ('logfile','raw_results_file','raw_nonp_file'){
 		my @new_files = ();

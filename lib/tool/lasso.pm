@@ -40,7 +40,6 @@ has 'results_file' => ( is => 'rw', isa => 'Str', default => 'lasso_results.csv'
 sub BUILD
 {
 	my $this  = shift;
-	my %parm  = @_;
 
 	if ( scalar (@{$this -> models->[0]-> problems}) != 1 ){
 		croak('The input model must contain exactly one problem.');

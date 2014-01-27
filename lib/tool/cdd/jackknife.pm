@@ -11,7 +11,6 @@ has 'results_file' => ( is => 'rw', isa => 'Str', default => 'jackknife_results.
 sub BUILD
 {
 	my $this  = shift;
-	my %parm  = @_;
 
 	my @mo_bins = ();
 	foreach my $model ( @{$this->models} ) {

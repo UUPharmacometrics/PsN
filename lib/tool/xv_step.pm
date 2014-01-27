@@ -65,7 +65,6 @@ has 'last_est_complete' => ( is => 'rw', isa => 'Bool', default => 0 );
 sub BUILD
 {
 	my $this  = shift;
-	my %parm  = @_;
 
 	my $model;
 	$model = $this -> models -> [0];

@@ -31,7 +31,6 @@ has 'results_file' => ( is => 'rw', isa => 'Str', default => 'nonpb_results.csv'
 sub BUILD
 {
 	my $this  = shift;
-	my %parm  = @_;
 
 	unless ($this->nonpb_version == 1 || $this->nonpb_version == 2) {
 		croak('nonpb version must be either 1 or 2 (2 is default).');

@@ -25,7 +25,6 @@ sub BUILDARGS
 sub BUILD
 {
 	my $this  = shift;
-	my %parm  = @_;
 
 	$in_constructor = 0;
 

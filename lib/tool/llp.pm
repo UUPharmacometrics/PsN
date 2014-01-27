@@ -38,7 +38,6 @@ has 'unstacked_logfile' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub 
 sub BUILD
 {
 	my $this  = shift;
-	my %parm  = @_;
 
 	my @various_input_formats = ( 'run_thetas', 'run_omegas', 'run_sigmas',
 				      'rse_thetas', 'rse_omegas', 'rse_sigmas' );

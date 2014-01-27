@@ -40,7 +40,6 @@ has 'results_file' => ( is => 'rw', isa => 'Str', default => 'sse_results.csv' )
 sub BUILD
 {
 	my $this  = shift;
-	my %parm  = @_;
 
 	if ($this->random_estimation_inits and not defined $this->rawres_input) {
 		croak('Need rawres_input when using random_estimation_inits');

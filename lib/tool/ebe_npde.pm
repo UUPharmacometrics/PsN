@@ -28,7 +28,6 @@ has 'results_file' => ( is => 'rw', isa => 'Str', default => 'ebe_npde_results.c
 sub BUILD
 {
 	my $this  = shift;
-	my %parm  = @_;
 
 	$this->have_CDF(1) if eval('require Statistics::Distributions'); #enough, now loaded
 

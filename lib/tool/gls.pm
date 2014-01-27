@@ -28,7 +28,6 @@ has 'results_file' => ( is => 'rw', isa => 'Str', default => 'gls_results.csv' )
 sub BUILD
 {
 	my $this  = shift;
-	my %parm  = @_;
 
 	for my $accessor ('logfile','raw_results_file','raw_nonp_file'){
 		my @new_files=();

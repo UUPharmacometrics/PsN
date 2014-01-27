@@ -106,7 +106,6 @@ has 'results_file' => ( is => 'rw', isa => 'Str', default => 'npc_results.csv' )
 sub BUILD
 {
 	my $this  = shift;
-	my %parm  = @_;
 
 	if (defined $this->auto_bin_mode) {
 		unless ($this->auto_bin_mode eq 'auto' or $this->auto_bin_mode eq 'minmax') {
