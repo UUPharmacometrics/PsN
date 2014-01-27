@@ -15,8 +15,8 @@ use File::Copy 'cp';
 #in psn.conf must set output_style = SPLUS, otherwise tests will fail. fix by setting here.
 
 #tnpri is NM version dependent due to msfi file, 730 or 72.
-our $nm=730;
-#our $nm=72;
+PsN::set_nonmem_info('default');
+our $nm_version = $PsN::nm_major_version * 100 + $PsN::nm_minor_version * 10;
 
 our $dir = 'sse_test';
 our $private_test_files = $ENV{HOME}.'/.test_files';
@@ -36,15 +36,14 @@ sub is_array{
 		if ($facit->[$i] eq 'NA'){
 			cmp_ok($func->[$i],'eq',$facit->[$i],"$label, index $i");
 		}else{
-			if ($nm == 730){
+			if ($nm_version >= 730) {
 				my $left=substr(sprintf("%.3e",$func->[$i]), 0, -1);
 				my $right=substr(sprintf("%.3e",$facit->[$i]), 0, -1);				
 				cmp_ok($left,'==',$right,"$label, index $i");
-			}else{
+			} else {
 				my $left=substr(sprintf("%.9e",$func->[$i]), 0, -1);
 				my $right=substr(sprintf("%.9e",$facit->[$i]), 0, -1);				
 				cmp_ok($left,'==',$right,"$label, index $i");
-#				cmp_ok($func->[$i],'==',$facit->[$i],"$label, index $i");
 			}
 		}
     }		
@@ -178,12 +177,12 @@ rmtree([ "./$dir" ]);
 my $tndir='tndir';
 mkdir($tndir);
 my $mod;
-if ($nm == 730){
+if ($nm_version >= 730) {
 	foreach my $file ("$model_dir/tnpri_nm730.mod","$model_dir/msf_tnpri_nm730","$model_dir/data_tnpri.csv"){
 		cp($file,"$tndir/.");
 	}
 	$mod='tnpri_nm730.mod';
-}else{
+} else {
 	foreach my $file ("$model_dir/tnpri.mod","$model_dir/msf_tnpri","$model_dir/data_tnpri.csv"){
 		cp($file,"$tndir/.");
 	}
