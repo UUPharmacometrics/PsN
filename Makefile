@@ -155,7 +155,6 @@ RELFILES=$(addprefix PsN-Source/lib/,$(LIBFILES)) \
 	README.txt )
 
 DIALIBFILES=debug.pm \
-	ui.pm \
 	nonmem.pm \
 	tool/scm/config_file.pm \
 
@@ -186,9 +185,6 @@ clean:
 
 libgen/debug.pm : diagrams/debug.dia
 	$(DIA2CODE) -t perl -d $(DIRPM) diagrams/debug.dia
-
-libgen/ui.pm : diagrams/ui.dia
-	$(DIA2CODE) -t perl -d $(DIRPM) diagrams/ui.dia
 
 libgen/nonmem.pm : diagrams/nonmem.dia
 	$(DIA2CODE) -t perl -d $(DIRPM) diagrams/nonmem.dia	

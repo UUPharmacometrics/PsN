@@ -1,33 +1,21 @@
-# Like the Debug class the user_interface (ui) class is a little bit
-# special in that it should never be instanciated. An instance (named
-# ui) is kept globally which can be accessed by the members of the
-# ui class if they are called statically. Calling a member staticaly
-# means that you adress them using the perl module name, for example:
-#
-# ui -> print( 'print this on the screen' );
-#
-# Notice that there is no $ in front of 'ui'. Here print is called
-# "statically". In other words, it means "call a member without an
-# instance".
-#
+package ui;
 
-# {{{ include
-start include statements
+use strict;
 use Text::Wrap;
+use MooseX::Params::Validate;
 
-my $the_instance = ui::new();
-end include statements
-# }}}
+# Class attributes
+our $category;
+our $package;
+our $subroutine;
+our $logfile;
+our $silent;
 
-# {{{ new
-start new
-end new
-# }}}
-
-# {{{ category
-
-start category
+sub category
 {
+	my $self = shift;
+	my $parm = shift;
+
 	# Usage:
 	#
 	# ui -> category( 'bootstrap' )
@@ -39,21 +27,18 @@ start category
 	#
 	# If you don't give any argument the current category is returned.
 
-	if ( defined($parm) ) {
-		$the_instance -> {'category'} = $parm;
+	if (defined($parm)) {
+		$ui::category = $parm;
 	} else {
-		return $the_instance -> {'category'};
+		return $ui::category;
 	}
-	return;
 }
-end category
 
-# }}}
-
-# {{{ package
-
-start package
+sub package
 {
+	my $self = shift;
+	my $parm = shift;
+
 	# Usage:
 	#
 	# ui -> package( 'output' )
@@ -66,20 +51,17 @@ start package
 	# If you don't give any argument the current package is returned.
 
 	if ( defined($parm) ) {
-		$the_instance -> {'package'} = $parm;
+		$ui::package = $parm;
 	} else {
-		return $the_instance -> {'package'};
+		return $ui::package;
 	}
-	return;
 }
-end package
 
-# }}}
-
-# {{{ subroutine
-
-start subroutine
+sub subroutine
 {
+	my $self = shift;
+	my $parm = shift;
+
 	# Usage:
 	#
 	# ui -> subroutine( 'output' )
@@ -92,19 +74,50 @@ start subroutine
 	# If you don't give any argument the current subroutine is returned.
 
 	if ( defined($parm) ) {
-		$the_instance -> {'subroutine'} = $parm;
+		$ui::subroutine = $parm;
 	} else {
-		return $the_instance -> {'subroutine'};
+		return $ui::subroutine;
 	}
-	return;
 }
-end subroutine
 
-# }}}
-
-# {{{ print
-start print
+sub logfile
 {
+	my $self = shift;
+	my $parm = shift;
+
+	if ( defined($parm) ) {
+		$ui::logfile = $parm;
+	} else {
+		return $ui::logfile;
+	}
+}
+
+sub silent
+{
+	my $self = shift;
+	my $parm = shift;
+
+	if ( defined($parm) ) {
+		$ui::silent = $parm;
+	} else {
+		return $ui::silent;
+	}
+}
+
+sub print
+{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+		 message => { isa => 'Str', default => 'Default warning message', optional => 1 },
+		 category => { isa => 'Str', optional => 0 },
+		 wrap => { isa => 'Bool', default => 1, optional => 1 },
+		 newline => { isa => 'Bool', default => 1, optional => 1 }
+	);
+	my $message = $parm{'message'};
+	my $category = $parm{'category'};
+	my $wrap = $parm{'wrap'};
+	my $newline = $parm{'newline'};
+
 	# Usage:
 	#
 	# ui -> print( category => 'bootstrap',
@@ -120,16 +133,16 @@ start print
 	# ui::print could be used to create a message in the GUI. And
 	# in that case, an extra "\n" might be annoying.
 
-	if( $the_instance -> {'category'} eq $category or $category eq 'all' ) {
+	if( $ui::category eq $category or $category eq 'all' ) {
 		my ( $package_junk, $filename, $line, $subroutine, $junk ) = caller(1);
 		my @names = split( '::', $subroutine );
 		$subroutine = $names[$#names];
 		my $package = join( '::', @names[0..$#names-1] );
 
-		if ( ( not defined $the_instance -> {'package'} or
-					$the_instance -> {'package'} eq $package ) and
-				( not defined $the_instance -> {'subroutine'} or
-					$the_instance -> {'subroutine'} eq $subroutine ) ) {
+		if ( ( not defined $ui::package or
+					$ui::package eq $package ) and
+				( not defined $ui::subroutine or
+					$ui::subroutine eq $subroutine ) ) {
 	  
 			my $prefix;
 			my $text;
@@ -142,9 +155,9 @@ start print
 				$text = $message . $nl;
 			}
 
-			if( $the_instance -> {'silent'} ) {
-				if (defined $the_instance->{'logfile'}) {
-					open( LOG, '>>'.$the_instance->{'logfile'});
+			if( $ui::silent ) {
+				if (defined $ui::logfile) {
+					open( LOG, '>>' . $ui::logfile);
 					print LOG ( $text );
 					close LOG;
 				}
@@ -154,42 +167,26 @@ start print
 		}
 	}
 }
-end print
-# }}}
 
-# {{{ status_bar
-start status_bar
+sub status_bar
 {
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+		 sofar => { isa => 'Num', optional => 1 },
+		 goal => { isa => 'Num', optional => 1 },
+		 width => { isa => 'Int', default => 50, optional => 1 }
+	);
+	my $sofar = $parm{'sofar'};
+	my $goal = $parm{'goal'};
+	my $width = $parm{'width'};
+	my $bar;
+
 	if ( $goal != 0 ) {
 		my $part = int(($sofar / $goal) * $width);
 		$bar = "\r" . '|' . '.' x $part . ' ' x ($width - $part) . '|';
 	}
-}
-end status_bar
-# }}}
 
-# {{{ silent
-start silent
-{
-	if ( defined($parm) ) {
-		$the_instance -> {'silent'} = $parm;
-	} else {
-		return $the_instance -> {'silent'};
-	}
-	return;
+	return $bar;
 }
-end silent
-# }}}
 
-# {{{ logfile
-start logfile
-{
-	if ( defined($parm) ) {
-		$the_instance -> {'logfile'} = $parm;
-	} else {
-		return $the_instance -> {'logfile'};
-	}
-	return;
-}
-end logfile
-# }}}
+1;
