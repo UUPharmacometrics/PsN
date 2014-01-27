@@ -20,6 +20,5 @@ libgen/*
 lib/debug.pm
 lib/nonmem.pm
 lib/tool.pm
-lib/tool/nonpb.pm
 lib/tool/scm/config_file.pm
 lib/ui.pm
