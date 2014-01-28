@@ -209,7 +209,13 @@ Bill Frame: http://www.ncbi.nlm.nih.gov/pubmed/19904583
 \end{enumerate}
 \nextopt
 \optdefault{tbs\_param}{string}
-Default not set. Initial value string, using NM-TRAN syntax, for parameter in Transform Both Sides method, e.g. '(-1, 0.5, 1)' or 'O FIX'. The string must be enclosed in single quotes and not include any comments. If tbs\_param is set then option -tbs will be set automatically. See option -tbs for more details. 
+Default not set. Initial value string, using NM-TRAN syntax, for lambda parameter in Transform Both Sides method, e.g. '(-1, 0.5, 1)' or 'O FIX'. The string must be enclosed in single quotes and not include any comments. If tbs\_param is set then option -tbs will be set automatically. See option -tbs for more details. 
+\nextopt
+\optdefault{tbs\_zeta}{string}
+Default not set. Initial value string, using NM-TRAN syntax, for zeta parameter in Transform Both Sides method, e.g. '(-1, 0.5, 1)' or 'O FIX'. The string must be enclosed in single quotes and not include any comments. If tbs\_zeta is set then option -tbs will be set automatically. See option -tbs for more details. Options tbs\_zeta and tbs\_delta cannot be used in combination.  
+\nextopt
+\optdefault{tbs\_delta}{string}
+Default not set. Initial value string, using NM-TRAN syntax, for delta parameter in Transform Both Sides method, e.g. '(-1, 0.5, 1)' or 'O FIX'. The string must be enclosed in single quotes and not include any comments. If tbs\_delta is set then option -tbs will be set automatically. See option -tbs for more details. Options tbs\_zeta and tbs\_delta cannot be used in combination.  
 \nextopt
 \optdefault{threads}{'integer'}
 Default 1. Use the threads option to enable parallel execution of multiple NONMEM runs. On a desktop computer it is recommended to set -threads to the number of CPUs in the system plus one. You can specify more threads, but it will probably not increase the performance. If you are running on a computer cluster, you should consult your system administrator to find out how many threads you can specify. The -threads option will be ignored if you run on a grid system, since grids have their own scheduling algorithms. 

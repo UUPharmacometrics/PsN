@@ -137,6 +137,8 @@ has 'sde' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'omega_before_pk' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'tbs' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'tbs_param' => ( is => 'rw', isa => 'Maybe[Str]' );
+has 'tbs_zeta' => ( is => 'rw', isa => 'Maybe[Str]' );
+has 'tbs_delta' => ( is => 'rw', isa => 'Maybe[Str]' );
 has 'tbs_thetanum' => ( is => 'rw', isa => 'Int' );
 has 'synced' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'target' => ( is => 'rw', isa => 'Str', default => 'mem', trigger => \&_target_set );
@@ -2315,7 +2317,7 @@ sub nthetas
 
 	if((not $with_priors) and 
 	   defined $self->problems()->[$problem_number - 1] -> nwpri_ntheta()){
-	  $nthetas = $self->problems()->[$problem_number - 1] -> nwpri_ntheta();
+		$nthetas = $self->problems()->[$problem_number - 1] -> nwpri_ntheta();
 	}else{
 	  $nthetas = 
 	      $self -> _parameter_count( 'record' => 'theta', 
@@ -4831,6 +4833,8 @@ sub _read_problems
 					cwres                       => $self->cwres,
 					tbs                         => $self->tbs,
 					tbs_param                   => $self->tbs_param,
+					tbs_delta                   => $self->tbs_delta,
+					tbs_zeta                   => $self->tbs_zeta,
 					mirror_plots                => $self->mirror_plots,
 					prob_arr                    => \@problem_lines,
 					shrinkage_module            => $sh_mod );

@@ -174,6 +174,8 @@ has 'nwpri_neta' => ( is => 'rw', isa => 'Int' );
 has 'omega_before_pk' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'tbs' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'tbs_param' => ( is => 'rw', isa => 'Maybe[Str]' );
+has 'tbs_zeta' => ( is => 'rw', isa => 'Maybe[Str]' );
+has 'tbs_delta' => ( is => 'rw', isa => 'Maybe[Str]' );
 has 'tbs_thetanum' => ( is => 'rw', isa => 'Int' );
 has 'shrinkage_module' => ( is => 'rw', isa => 'model::shrinkage_module' );
 has 'eigen_value_code' => ( is => 'rw', isa => 'Bool', default => 1 );
@@ -2472,7 +2474,8 @@ sub tbs_transform
 	}      
 
 	#TODO add extra theta for power (zeta)
-
+	my $handle_W=0;
+	my $zeta_line='';
 	my $newthetanum;
 	$newthetanum=$self -> record_count( record_name => 'theta' )+1; #this is the lambda
 	$self->tbs_thetanum($newthetanum);
@@ -2483,67 +2486,141 @@ sub tbs_transform
 		$self->add_records( type => 'theta',
 				record_strings => ['1 ; tbs_lambda'] );
 	}
+	#if neither zeta nor delta defined then do not add anything more
+	#both cannot be defined, input check in common_options
+	if (defined $self->tbs_delta()){
+		$handle_W = 1;
+		$zeta_line = ' DELTA = THETA('.($newthetanum+1).')'."\n".' ZETA = LAMBDA + DELTA'."\n";
+		$self->add_records( type => 'theta',
+							record_strings => [$self->tbs_delta().' ; tbs_delta'] );
+	}elsif (defined $self->tbs_zeta()){
+		$handle_W = 1;
+		$zeta_line = ' ZETA = THETA('.($newthetanum+1).')'."\n";
+		$self->add_records( type => 'theta',
+							record_strings => [$self->tbs_zeta().' ; tbs_zeta'] );
+	}
+	
 	#PRED or ERROR
 	my @code;
 	@code = @{$self -> errors()->[0]->code()} if (defined $self -> errors());
 	my $use_pred = 0;
 	unless ( $#code > 0 ) {
-	@code = @{$self -> preds()->[0]->code()} if (defined $self -> preds());
-	$use_pred = 1;
+		@code = @{$self -> preds()->[0]->code()} if (defined $self -> preds());
+		$use_pred = 1;
 	}
 	if ( $#code <= 0 ) {
 		croak("Neither ERROR or PRED defined, cannot use -tbs\n" );
 	}
 
-	#locate first use IWRES in right-hand-side, same for W, IPRED. Check Uppsala style
-	#IF ELSE around IPRED, IWRES and Y
+	#locate first use of IWRES in right-hand-side, same for W, IPRED. Check Uppsala style
+	#TODO cannot handle IF ELSE around IPRED, IWRES and Y
 
 	my $found=0;
+	my $W_line='';
 	for (my $i=$#code; $i>=0;$i--){
 		if (($code[$i] =~ /[^a-zA-Z_0-9]Y\s*=/) or
-				($code[$i] =~ /^Y\s*=/)){
+			($code[$i] =~ /^Y\s*=/)){
 			if ($found){
 				croak("Cannot handle multiple-line definitions of Y with option -tbs.");
 			}else{
-				#remove Y line
+				#remove Y=... line
 				@code =  (@code[0..$i-1],
-						@code[$i+1..$#code]);
+						  @code[$i+1..$#code]);
 				$found=1;
 			}
-		}
+		}elsif($handle_W and ($code[$i] =~ /^\s*W\s*=\s*(.*)$/)){
+			my $line = $1;
+			if (length($W_line)>0){
+				croak("Cannot handle multiple-line definitions of W with option -tbs.");
+			}else{
+				#store W=... line
+				#reformat W line
+				my $iprtheta;
+				my $addtheta;
+				if ($line =~ /SQRT/){
+					#find the theta coupled to IPRED and remove it 
+					if ($line =~ s/\bIPRED\s*\*\s*THETA\((\d+)\)//){
+						$iprtheta = $1;
+					}elsif($line =~ s/\bTHETA\((\d+)\)\s*\*\s*IPRED\b//){
+						$iprtheta = $1;
+					}else{
+						croak ("Could not parse IPRED*THETA part of $line when transforming for tbs\n");
+					} 
+					#find the additive theta and set it 0 FIX
+					if($line =~ s/\bTHETA\((\d+)\)//){
+						$addtheta = $1;
+					}else{
+						croak ("Could not parse additive THETA part of $line when transforming for tbs\n");
+					} 
+					#find $addtheta theta in list of theta records. Need to loop since do not know which record
+					my $thetacount = 0;
+					my $setfix=0;
+					foreach my $rec (@{$self->thetas}){
+						if( defined $rec -> options and ($thetacount + scalar(@{$rec -> options}))>=$addtheta ){
+							$rec->options()->[$addtheta-$thetacount-1]->lobnd(undef);
+							$rec->options()->[$addtheta-$thetacount-1]->upbnd(undef);
+							$rec->options()->[$addtheta-$thetacount-1]->init(0);
+							$rec->options()->[$addtheta-$thetacount-1]->fix(1);
+							$setfix=1;
+							last;
+						}else{
+							$thetacount += scalar(@{$rec -> options});
+						}
+					}
+					croak("Could not set THETA $addtheta to 0 FIX") unless $setfix;
+					#construct new W string
+					$W_line = ' W = THETA('.$iprtheta.')*IPRED**ZETA+THETA('.$addtheta.')'."\n";
+				}else{
+					#replace every occurrence of IPRED with IPRED**ZETA
+					$line =~ s/\bIPRED\b/IPRED\*\*ZETA/g ;
+					$W_line = ' W = '.$line."\n";
+				}
+				@code =  (@code[0..$i-1],
+						  @code[$i+1..$#code]);
+			}
+		} 
 	}
 	croak("Failed to find Y definition row in \$PK/\$ERROR") unless ($found);
-
+	croak("Failed to find W definition row in \$PK/\$ERROR") unless ((not $handle_W ) or (length($W_line)>0));
+	
+	#Find last occurrence of IPRED = ... by scanning from the end.
+	#Then keep the IPRED row, and then insert extra stuff directly after
+	#insert modified W as first insertion after IPRED
 	my $ipredrow=0;
 	for (my $i=$#code; $i>=0;$i--){
 		if (($code[$i] =~ /[^a-zA-Z_0-9]IPRED\s*=/) or
-				($code[$i] =~ /^IPRED\s*=/)){
-			#TODO code for zeta here, power..... ORder of defnitions is important IPRED, W, IPRTR
-	  @code =  (@code[0..$i],
-		    " LAMBDA = THETA($newthetanum)\n",
-		    " IPRTR=IPRED\n",
-		    " IF (LAMBDA .NE. 0 .AND. IPRED .NE.0) THEN\n",
-		    "    IPRTR=(IPRED**LAMBDA-1)/LAMBDA\n",
-		    " ENDIF\n",
-		    " IF (LAMBDA .EQ. 0 .AND. IPRED .NE.0) THEN\n",
-		    "    IPRTR=LOG(IPRED)\n",
-		    " ENDIF\n",
-		    " IF (LAMBDA .NE. 0 .AND. IPRED .EQ.0) THEN\n",
-		    "    IPRTR=-1/LAMBDA\n",
-		    " ENDIF\n",
-		    " IF (LAMBDA .EQ. 0 .AND. IPRED .EQ.0) THEN\n",
-		    "    IPRTR=-1000000000\n",
-		    " ENDIF\n",
-		    " IPRED=IPRTR\n",
-		    @code[$i+1..$#code]);
-	  $ipredrow = $i+14;
-	  $found=1;
-	  last;
-	}
+			($code[$i] =~ /^IPRED\s*=/)){
+			# $zeta_line and $W_line can be empty
+			@code =  (@code[0..$i],
+					  " LAMBDA = THETA($newthetanum)\n",
+					  $zeta_line,
+					  $W_line,
+					  " IPRTR=IPRED\n",
+					  " IF (LAMBDA .NE. 0 .AND. IPRED .NE.0) THEN\n",
+					  "    IPRTR=(IPRED**LAMBDA-1)/LAMBDA\n",
+					  " ENDIF\n",
+					  " IF (LAMBDA .EQ. 0 .AND. IPRED .NE.0) THEN\n",
+					  "    IPRTR=LOG(IPRED)\n",
+					  " ENDIF\n",
+					  " IF (LAMBDA .NE. 0 .AND. IPRED .EQ.0) THEN\n",
+					  "    IPRTR=-1/LAMBDA\n",
+					  " ENDIF\n",
+					  " IF (LAMBDA .EQ. 0 .AND. IPRED .EQ.0) THEN\n",
+					  "    IPRTR=-1000000000\n",
+					  " ENDIF\n",
+					  " IPRED=IPRTR\n",
+					  @code[$i+1..$#code]);
+			$ipredrow = $i+14;
+			$found=1;
+			last;
+		}
 	}
 	croak("Failed to find IPRED definition row in \$PK/\$ERROR. ".
 			"Do not know where in code to add IPRED transformation.") unless ($found);
 	$found=0;
+
+	#find last occurrence of IWRES=... by scanning from the end
+	#keep that line and then insert stuff directly after it
 	for (my $i=$#code; $i>=0;$i--){
 		if (($code[$i] =~ /[^a-zA-Z_0-9]IWRES\s*=/) or
 				($code[$i] =~ /^IWRES\s*=/)){

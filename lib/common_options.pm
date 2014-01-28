@@ -92,22 +92,24 @@ Getopt::Long::config("auto_abbrev");
 
 
 @model_options = ("extra_files:s",
-		  "extra_output:s",
-		  "d2u!",
-		  "maxevals:i",
-		  "missing_data_token:i",
-		  "tbs!",
-		  "tbs_param:s",
-		  "sde",
-		  "cwres",
-		  "mirror_plots:i",
-		  "iofv",
-		  "mirror_from_lst!",
-		  "omega_before_pk!",
-		  "outputfile:s",
-		  "last_est_complete!",
-		  "niter_eonly:i",
-		  "skip_data_parsing!"
+				  "extra_output:s",
+				  "d2u!",
+				  "maxevals:i",
+				  "missing_data_token:i",
+				  "tbs!",
+				  "tbs_param:s",
+				  "tbs_zeta:s",
+				  "tbs_delta:s",
+				  "sde",
+				  "cwres",
+				  "mirror_plots:i",
+				  "iofv",
+				  "mirror_from_lst!",
+				  "omega_before_pk!",
+				  "outputfile:s",
+				  "last_est_complete!",
+				  "niter_eonly:i",
+				  "skip_data_parsing!"
     );
 
 my @script_options = ( "debug:i",
@@ -291,8 +293,11 @@ sub sanity_checks {
       die "You cannot set both sde and omega_before_pk";
     }
   }
-  if( defined $options -> {'tbs_param'} ){
+  if( defined $options -> {'tbs_param'} or defined $options-> {'tbs_zeta'} or defined $options-> {'tbs_delta'}){
     $options -> {'tbs'}=1;
+  }
+  if( defined $options-> {'tbs_zeta'} and defined $options-> {'tbs_delta'}){
+	  die "You cannot set both tbs_zeta and tbs_delta";
   }
   if( $options -> {'run_on_sge_nmfe'} ){
     if( $options -> {'run_on_sge'} ){
@@ -1254,6 +1259,26 @@ EOF
     method, e.g. '(-1, 0.5, 1)' or 'O FIX'. The string must be enclosed 
     in single quotes and not include any comments.
     If tbs_param is set then option -tbs will be set automatically.
+    See the userguide common_options_defaults_versions_psn for details.
+EOF
+    $help_hash{-tbs_zeta} = <<'EOF';
+    <p class="style2">-tbs_zeta</p>
+    Default not set. Initial value string, using NM-TRAN syntax, 
+    for parameter zeta in Transform Both Sides 
+    method, e.g. '(-1, 0.5, 1)' or 'O FIX'. The string must be enclosed 
+    in single quotes and not include any comments.
+	Cannot be used in combination with tbs_delta.
+    If tbs_zeta is set then option -tbs will be set automatically.
+    See the userguide common_options_defaults_versions_psn for details.
+EOF
+    $help_hash{-tbs_delta} = <<'EOF';
+    <p class="style2">-tbs_delta</p>
+    Default not set. Initial value string, using NM-TRAN syntax, 
+    for parameter delta in Transform Both Sides 
+    method, e.g. '(-1, 0.5, 1)' or 'O FIX'. The string must be enclosed 
+    in single quotes and not include any comments.
+	Cannot be used in combination with tbs_zeta.
+    If tbs_delta is set then option -tbs will be set automatically.
     See the userguide common_options_defaults_versions_psn for details.
 EOF
 
