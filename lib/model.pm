@@ -14,7 +14,6 @@ use Math::Random qw(random_multivariate_normal);
 use Scalar::Util qw(looks_like_number);
 my @nm7_extensions = ('.ext','.cov','.cor','.coi','.phi','.phm',
 		      '.shk','.grd','.xml','.smt','.rmt');
-use debug;
 use model::iofv_module;
 use model::nonparametric_module;
 use model::shrinkage_module;

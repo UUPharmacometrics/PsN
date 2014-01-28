@@ -1,6 +1,28 @@
-# {{{ include statements
+package nonmem;
 
-start include statements
+use Moose;
+use MooseX::Params::Validate;
+
+has 'error_message' => ( is => 'rw', isa => 'Str' );
+has 'fsubs' => ( is => 'rw', isa => 'ArrayRef[Str]' );
+has 'display_iterations' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'full_path_executable' => ( is => 'rw', isa => 'Str' );
+has 'nmqual' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'nm_directory' => ( is => 'rw', isa => 'Str' );
+has 'nm_minor_version' => ( is => 'rw', isa => 'Str' );
+has 'nm_major_version' => ( is => 'rw', isa => 'Str' );
+has 'parafile' => ( is => 'rw', isa => 'Str' );
+has 'nodes' => ( is => 'rw', isa => 'Int', default => 0 );
+has 'nonmem_options' => ( is => 'rw', isa => 'Str' );
+has 'modelfile' => ( is => 'rw', required => 1, isa => 'Str' );
+has 'nice' => ( is => 'rw', isa => 'Int', default => 19 );
+has 'nmtran_message' => ( is => 'rw', isa => 'Any' );
+has 'outputfile' => ( is => 'rw', isa => 'Str' );
+has 'version' => ( is => 'rw', isa => 'Int|Str', default => 5 );
+has 'show_version' => ( is => 'rw', isa => 'Bool', default => 1 );
+has 'adaptive' => ( is => 'rw', isa => 'Bool', default => 0 );
+
+
 if( $0 =~ /nonmem.pm$/ ) {
   use FindBin qw($Bin);
   use lib "$Bin";
@@ -47,22 +69,20 @@ if( $0 =~ /nonmem.pm$/ ) {
 		carp($mess );
 	}
 }
-end include statements
-
-# }}}
 
 
-# {{{ new
-	
-	start new
+
+sub BUILD
 {
+	my $this  = shift;
+
 	unless( defined $this -> outputfile ){
 		my $tmp = $this -> modelfile;
 		$tmp =~ s/\.mod$/\.lst/;
 		$this -> outputfile($tmp);
 	}
 	my @check_paths=('/run/','/util/','/');
-
+	no warnings;		# Avoid a warning from the globals being not declared. The fix is to not use globals.
 	my $confignmdir = $PsN::nmdir;
 	unless( defined $confignmdir ){
 		my $mess = "Unknown NONMEM version ".$this -> version." specified.\n";
@@ -72,6 +92,7 @@ end include statements
 	$this -> nm_directory($confignmdir);
 	$this -> nm_major_version($PsN::nm_major_version);
 	$this -> nm_minor_version($PsN::nm_minor_version);
+	use warnings;
 	my $found_nonmem =0;
 	unless (defined $this -> nm_major_version){
 		my $mess;
@@ -103,7 +124,6 @@ end include statements
 						$this->full_path_executable($script);
 						$found = 1;
 						$found_nonmem=1;
-#						print "found minor\n";
 						last;
 					} 
 				}
@@ -124,7 +144,6 @@ end include statements
 	my $windows = 0;
 	$windows=1 if ($Config{osname} eq 'MSWin32');
 
-
 	my $nmfe='';
 	my $suffix='';
 	unless ($found_nonmem or $this->nmqual){
@@ -133,13 +152,11 @@ end include statements
 			$nmfe="$nmdir$path"."nmfe$version$subversion$suffix";
 			if( -x $nmfe ){
 				$this->full_path_executable($nmfe);
-#				print "found version\n";
 				$found_nonmem=1;
 				last;
 			} 
 		}
 	}
-
 
 	if ($this->nmqual){
 		if ( -x $this->nm_directory){
@@ -152,7 +169,6 @@ end include statements
 				return 0;	  
 			} else{
 				$this->full_path_executable($this->nm_directory);
-#				print "found nmqual\n";
 				$found_nonmem = 1;
 			}
 		}else{
@@ -169,7 +185,6 @@ end include statements
 			if(( -x "$nmdir" ) and (not -d "$nmdir")){
 				$found_nonmem=1;
 				$this->full_path_executable($nmdir);
-#				print "found executable\n";
 			
 				if ($version == 7){
 					if (defined $subversion){
@@ -197,17 +212,31 @@ end include statements
 		$this -> error_message($mess);
 		return 0;
 	} 
-
-
 }
-end new
 
-# }}}
-
-# {{{ run_with_nmfe
-
-	start run_with_nmfe
+sub store_message
 {
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+		 message => { isa => 'Str', optional => 1 },
+		 die_after => { isa => 'Bool', default => 0, optional => 1 }
+	);
+	my $message = $parm{'message'};
+	my $die_after = $parm{'die_after'};
+
+	open( ERR, '>>psn_nonmem_error_messages.txt' );
+	print( ERR  $message);
+	close (ERR);
+
+	if ($die_after){
+	    croak($message);
+	}
+}
+
+sub run_with_nmfe
+{
+	my $self = shift;
+	my $return_value = 1;
 
 	my $version = $self -> nm_major_version;
 	my $subversion = $self -> nm_minor_version;
@@ -325,17 +354,14 @@ end new
 	print( OUT "Finished $fin_time\n" );
 	close( OUT );
 
-
+	return $return_value;
 }
-end run_with_nmfe
 
-# }}}
-
-# {{{ run_with_nmqual
-
-	start run_with_nmqual
+sub run_with_nmqual
 {
-#	print "run with nmqual\n";
+	my $self = shift;
+	my $return_value = 1;
+
 	unless (defined $self -> nm_major_version){
 		my $mess;
 		open( FH, "<", 'psn_nonmem_error_messages.txt' );
@@ -499,27 +525,9 @@ end run_with_nmfe
 	print( OUT "Finished $fin_time\n" );
 	close( OUT );
 
+	return $return_value;
 }
-end run_with_nmqual
 
-# }}}
-
-
-
-# {{{ store_message
-
-	start store_message
-{ 
-	open( ERR, '>>psn_nonmem_error_messages.txt' );
-	print( ERR  $message);
-	close (ERR);
-
-	if ($die_after){
-	    croak($message);
-	}
-}
-end store_message
-
-# }}}
-
-
+no Moose;
+__PACKAGE__->meta->make_immutable;
+1;

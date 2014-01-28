@@ -16,7 +16,3 @@ test/test_files/pheno5.lst
 test/test_files/pheno5.ext
 test/test_files/pheno5.phi
 lib/PsN.pm
-libgen/*
-lib/debug.pm
-lib/nonmem.pm
-lib/tool/scm/config_file.pm

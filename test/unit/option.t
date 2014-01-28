@@ -5,7 +5,6 @@ use warnings;
 use Test::More tests=>8;
 use lib ".."; #location of includes.pm
 use includes; #file with paths to PsN packages
-use debug;
 
 use model::problem::record::option;
 

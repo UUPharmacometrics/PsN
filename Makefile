@@ -4,11 +4,6 @@ HTML_STUBS=_synopsis.php _description.php _options.php _examples.php
 
 DOCUMENTS=$(foreach pre,$(BIN),$(foreach suff,$(HTML_STUBS),$(addprefix html/$(pre),$(suff))))
 
-DIA2CODE=dia2code
-FILLSCRIPT=perl ./bin/fill_diacode.pl
-DIRPM=libgen/
-DIRSUBS=lib/
-PERLDIRS=-I/home/pontus/perl
 LIBFILES=debug.pm \
 	ui.pm \
 	status_bar.pm \
@@ -154,43 +149,13 @@ RELFILES=$(addprefix PsN-Source/lib/,$(LIBFILES)) \
 	setup.pl \
 	README.txt )
 
-DIALIBFILES=debug.pm \
-	nonmem.pm \
-	tool/scm/config_file.pm \
-
-PERLFILES=$(addprefix lib/,$(DIALIBFILES))
-
 TEXFILES=$(wildcard doc/*.tex)
 PDFFILES=$(TEXFILES:.tex=.pdf)
-
-
-all: libgen $(PERLFILES)
-
-GENFILES=$(addprefix libgen/,$(DIALIBFILES))
-.PRECIOUS: $(GENFILES)
-
-libgen:
-	@ mkdir -p libgen
-
-lib/%.pm: libgen/%.pm lib/%_subs.pm
-	 @ cp libgen/$*.pm libgen/$*_temp.pm
-	 @ $(FILLSCRIPT) libgen/$*_temp.pm lib/$*_subs.pm
-	 @ cp libgen/$*_temp.pm $@
-	 @ perl $(PERLDIRS) -I./$(@D) -I./lib -c $@ -W -t -T|| (rm $@ && false)
 
 .PHONY : clean
 
 clean:
-	@-rm -rf $(PERLFILES) $(DOCUMENTS) libgen PsN-Source bin/completion_files doc/*.aux doc/*.log doc/*.pdf doc/inputs/*eps-converted-to.pdf PsN-Source.tar.gz PsN-Source.zip
-
-libgen/debug.pm : diagrams/debug.dia
-	$(DIA2CODE) -t perl -d $(DIRPM) diagrams/debug.dia
-
-libgen/nonmem.pm : diagrams/nonmem.dia
-	$(DIA2CODE) -t perl -d $(DIRPM) diagrams/nonmem.dia	
-
-libgen/tool/scm/config_file.pm libgen/tool/scm.pm : diagrams/scm.dia
-	$(DIA2CODE) -t perl -d $(DIRPM) diagrams/scm.dia
+	@-rm -rf $(DOCUMENTS) libgen PsN-Source bin/completion_files doc/*.aux doc/*.log doc/*.pdf doc/inputs/*eps-converted-to.pdf PsN-Source.tar.gz PsN-Source.zip
 
 documents: $(DOCUMENTS)
 
