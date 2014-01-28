@@ -1,14 +1,14 @@
 #!/etc/bin/perl
 
 # Testing the following features of execute:
+#		* smoke test
 #		* shrinkage
-# * tbs
+#		* tbs
 
 use strict;
 use warnings;
 use File::Path 'rmtree';
-#use Test::More tests=>7;
-use Test::More tests=>3;
+use Test::More tests=>4;
 use List::Util qw(first);
 use FindBin qw($Bin);
 use lib ".."; #location of includes.pm
@@ -66,6 +66,27 @@ foreach my $i (0..$#command_line) {
   }
   rmtree([ "./$dir" ]);
 }
+
+
+
+#############################
+
+$dir = 'execute_test';
+$model_dir = "$Bin/../test_files";
+
+my @commands = 
+	($includes::execute . " $model_dir/pheno5.mod  -dir=$dir",
+	);
+
+rmtree([ "./$dir" ]);
+foreach my $command (@commands){
+	print "Running $command\n";
+	my $rc = system($command);
+	$rc = $rc >> 8;
+	ok ($rc == 0, "$command, should run ok");
+	rmtree([ "./$dir" ]);
+}
+rmtree([ "./$dir" ]);
 
 
 done_testing();

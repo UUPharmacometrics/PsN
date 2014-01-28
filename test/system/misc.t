@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 use File::Path 'rmtree';
-use Test::More tests=>11;
+use Test::More tests=>8;
 use FindBin qw($Bin);
 use File::Copy 'cp';
 use lib ".."; #location of includes.pm
@@ -15,14 +15,11 @@ our $dir = 'misc_test';
 my $model_dir = "$Bin/../test_files";
 
 my @commands = 
-	($includes::cdd." -case_column=ID $model_dir/pheno5.mod -xv  -dir=$dir",
-	 $includes::cdd." $model_dir/mox1.mod -case_column=DGRP  -dir=$dir",
-	 $includes::llp." $model_dir/pheno.mod -thetas=2 -omegas=1,2  -dir=$dir",
+	($includes::llp." $model_dir/pheno.mod -thetas=2 -omegas=1,2  -dir=$dir",
 	 $includes::vpc." -samples=20 $model_dir/mox1.mod -stratif=AGE -no_of_strata=3 -auto_bin=12  -dir=$dir",
 	 $includes::npc." -samples=20 $model_dir/mox2.mod  -dir=$dir",
 	 $includes::data_stats." $model_dir/mox_simulated.csv",
 	 $includes::data_stats." $model_dir/pheno.dta",
-	 $includes::execute." $model_dir/pheno5.mod  -dir=$dir",
 	 $includes::ebe_npde." -samples=20 $model_dir/pheno_cond.mod  -dir=$dir");
 
 
