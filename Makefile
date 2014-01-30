@@ -4,8 +4,7 @@ HTML_STUBS=_synopsis.php _description.php _options.php _examples.php
 
 DOCUMENTS=$(foreach pre,$(BIN),$(foreach suff,$(HTML_STUBS),$(addprefix html/$(pre),$(suff))))
 
-LIBFILES=debug.pm \
-	ui.pm \
+LIBFILES= ui.pm \
 	status_bar.pm \
 	nonmem.pm \
 	file.pm \
@@ -69,7 +68,6 @@ LIBFILES=debug.pm \
 	output.pm \
 	model.pm \
 	tool.pm \
-	newtool.pm \
 	tool/modelfit.pm \
 	tool/llp.pm \
 	tool/cdd.pm \
@@ -99,7 +97,6 @@ RELFILES=$(addprefix PsN-Source/lib/,$(LIBFILES)) \
 	lib/psn.conf_template \
 	lib/psn.conf \
 	lib/OSspecific.pm \
-	lib/hotkey.pm \
 	lib/binning.pm \
 	lib/array.pm \
 	lib/include_modules.pm \
@@ -179,7 +176,7 @@ doc/%.pdf: doc/%.tex
 
 doc: $(PDFFILES)
 
-release: libgen rel_dir $(RELFILES) $(PDFFILES)
+release: rel_dir $(RELFILES) $(PDFFILES)
 	@ mkdir PsN-Source/lib/doc
 	@ cp doc/*.pdf PsN-Source/lib/doc
 	@ cp doc/*.scm PsN-Source/lib/doc
