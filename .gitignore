@@ -10,6 +10,7 @@ doc/ddmore/*.aux
 doc/ddmore/*.log
 doc/ddmore/*.pdf
 doc/inputs/*eps-converted-to.pdf
+doc/developers_guide.out
 test/unit/testcase.txt
 test/test_files/pheno.lst
 test/test_files/pheno5.lst

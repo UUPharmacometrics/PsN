@@ -87,6 +87,7 @@ LIBFILES= ui.pm \
 	tool/nonpb.pm \
 	tool/scm/config_file.pm \
 	tool/scm.pm \
+	tool/pvar.pm \
 
 RELFILES=$(addprefix PsN-Source/lib/,$(LIBFILES)) \
 	$(addprefix PsN-Source/, \
@@ -143,6 +144,8 @@ RELFILES=$(addprefix PsN-Source/lib/,$(LIBFILES)) \
 	bin/xv_scm \
 	bin/boot_scm \
 	bin/linearize \
+	bin/crossval \
+	bin/pvar \
 	setup.pl \
 	README.txt )
 
@@ -152,7 +155,7 @@ PDFFILES=$(TEXFILES:.tex=.pdf)
 .PHONY : clean
 
 clean:
-	@-rm -rf $(DOCUMENTS) libgen PsN-Source bin/completion_files doc/*.aux doc/*.log doc/*.pdf doc/inputs/*eps-converted-to.pdf PsN-Source.tar.gz PsN-Source.zip
+	@-rm -rf $(DOCUMENTS) libgen PsN-Source psn_test_package.zip bin/completion_files doc/*.aux doc/*.log doc/*.pdf doc/inputs/*eps-converted-to.pdf PsN-Source.tar.gz PsN-Source.zip
 
 documents: $(DOCUMENTS)
 

@@ -14,8 +14,8 @@ use Getopt::Long;
 # External modules #
 use Math::Random;
 # PsN includes #
-use ui;
 use PsN;
+use ui;
 use common_options;
 use Cwd;
 use model;

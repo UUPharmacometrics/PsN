@@ -152,7 +152,7 @@ is_array ($eta_matrix->[73],['8.98237E-06','-1.58557E-05','-6.15118E-05','9.9613
 
 
 # full_name
-my $data = data->new;
+my $data = data->new(filename => $phifile);
 $data->filename('perl');
 
 if ($^O =~ /Win/) {

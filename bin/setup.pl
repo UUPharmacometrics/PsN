@@ -8,7 +8,7 @@ use ext::Config::Tiny;
 use ext::File::HomeDir;
 
 
-my $version = '4.0.4';
+my $version = '4.1.0';
 my $default_user_name;
 my $default_sitelib;
 my $default_bin;
@@ -117,7 +117,7 @@ my @utilities = (
 	'vpc',
 	'pind','nonpb','extended_grid','psn','psn_options','psn_clean',
 	'runrecord','mcmp','lasso','mimp','xv_scm','parallel_retries',
-	'boot_scm','gls','ebe_npde','frem','randtest','linearize'
+	'boot_scm','gls','ebe_npde','frem','randtest','linearize', 'crossval', 'pvar',
 	);
 
 my @win_modules = ('Moose', 'MooseX::Params::Validate', 'Math::Random');
