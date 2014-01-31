@@ -157,7 +157,8 @@ my $scm = tool::scm ->
 	  test_relations         => {},
 	  categorical_covariates => [],
 	  continuous_covariates  => [],
-	  both_directions => 0);
+	  both_directions => 0,
+		directory_name_prefix => 'linearize');
 
 $scm-> print_options (cmd_line => $cmd_line,
 		      toolname => 'scm',

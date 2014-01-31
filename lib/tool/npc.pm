@@ -83,7 +83,7 @@ has 'bin_by_count' => ( is => 'rw', isa => 'Bool' );
 has 'no_of_bins' => ( is => 'rw', isa => 'Int' );
 has 'single_bin_size' => ( is => 'rw', isa => 'Int' );
 has 'overlap_percent' => ( is => 'rw', isa => 'Num' );
-has 'bin_array' => ( is => 'rw', isa => 'ArrayRef[Num]' );
+has 'bin_array' => ( is => 'rw', isa => 'ArrayRef[Num]', default => sub { [] } );
 has 'categorized' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'levels' => ( is => 'rw', isa => 'ArrayRef[Num]' );
 has 'lloq' => ( is => 'rw', isa => 'Num' );
@@ -101,7 +101,7 @@ has 'simulation_models' => ( is => 'rw', isa => 'ArrayRef' );
 has 'original_model' => ( is => 'rw', isa => 'model' );
 has 'logfile' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { ['npc.lop'] } );
 has 'results_file' => ( is => 'rw', isa => 'Str', default => 'npc_results.csv' );
-
+has 'nca' => ( is => 'rw', isa => 'Bool', default => 0 );
 
 sub BUILD
 {
@@ -219,13 +219,11 @@ sub BUILD
 		}
 	}
 
-
 	unless ( defined $this->orig_table) {
 
 		if (defined $this->sim_model) {
 			if (scalar (@{$this->models->[0]-> problems}) > 1 ) {
-				croak('Cannot have more than one $PROB in the input model '.
-					  'for the MAXEVAL=0 run.');
+				croak('Cannot have more than one $PROB in the input model for the MAXEVAL=0 run.');
 			}
 		} else {
 			#must check sim_model separately if sim_model. Assume ok to check flip here
@@ -248,7 +246,6 @@ sub BUILD
 					}
 					
 					$this->have_tnpri(1) if ($tnpri);
-	#				print "have tnpri\n";
 				}
 				if ($this->have_tnpri()) {
 					if (defined $this->rawres_input) {
@@ -287,7 +284,6 @@ sub BUILD
 		my @list = split(',', $this->stratify_on);
 		my $tmp = shift @list;
 		$this->stratify_on($tmp);
-#		print "strat ".$this->stratify_on."\n";
 		$this->extra_table_parameters(\@list) if (scalar (@list)>0);
 	} else {
 		if (defined $this->refstrat()) {
@@ -449,8 +445,7 @@ sub BUILD
 		if (defined $this->no_of_bins) {
 			$option_count++;
 			unless (defined $this->bin_by_count) {
-				croak("Option bin_by_count must be defined when ".
-					  "option no_of_bins is used.");
+				croak("Option bin_by_count must be defined when option no_of_bins is used.");
 			}
 		}
 		if (scalar(@{$this->bin_array} > 0)) {
@@ -459,31 +454,26 @@ sub BUILD
 			}
 			$option_count++;
 			unless (defined $this->bin_by_count) {
-				croak("Option bin_by_count must be defined when ".
-					  "option bin_array is used.");
+				croak("Option bin_by_count must be defined when option bin_array is used.");
 			}
 			if ($this->bin_by_count == 1) {
 				#check at least two values and all counts larger than 0
 				unless (scalar(@{$this->bin_array}) > 1) {
-					croak("Must define at least two counts in bin_array ".
-						  "when binning by count.");
+					croak("Must define at least two counts in bin_array when binning by count.");
 				}
 				foreach my $c ($this->bin_array) {
 					if ($c < 1) {
-						croak("Number of observations in each bin must ".
-							  "be at least 1.");
+						croak("Number of observations in each bin must be at least 1.");
 					}
 				}
 			} else {
 				#check at least one value and sorted in ascending order and increasing
 				unless (scalar(@{$this->bin_array}) > 0) {
-					croak("Must define at least one boundary in bin_array ".
-						  "when binning by width.");
+					croak("Must define at least one boundary in bin_array when binning by width.");
 				}
 				for (my $i = 1; $i < scalar(@{$this->bin_array}); $i++) {
 					unless ($this->bin_array->[$i] > $this->bin_array->[$i - 1]) {
-						croak("List of bin boundaries must be sorted and ".
-							  "increasing.");
+						croak("List of bin boundaries must be sorted and increasing.");
 					}
 				}
 			}
@@ -562,7 +552,6 @@ sub BUILD
 								 "the option -noprediction is generally recommended.\n")	  
 						if ($this->is_vpc and (not defined $this->tte));
 				}
-				
 			}
 		}  
 		my $opt_name = 'LAPLACIAN';
@@ -574,7 +563,6 @@ sub BUILD
 				unless ($this->keep_estimation);
 			#possible change, see to_do 61. Is current handling of NONP wrong?????
 		}
-
 
 		##look for F_FLAG in pred, error
 		my @flag_array;
@@ -595,7 +583,6 @@ sub BUILD
 		}
 
 		#done looking for fflag
-
 
 		my @needed_variables = ();
 		push (@needed_variables, 'STRT') if ($this->stratify_on eq 'STRT');
@@ -631,9 +618,7 @@ sub BUILD
 				ui -> print (category=>'all', 
 							 message=> "****** Warning:\nThe selected input options require the user to define".
 							 "$missing_variables in the modelfile,\nbut $missing_variables ".
-							 "could not be ".
-							 "found in \$ERROR, \$PRED or \$PK. ");
-
+							 "could not be found in \$ERROR, \$PRED or \$PK. ");
 			}
 		}
 #check for ICALL .EQ. 4
@@ -824,10 +809,8 @@ sub BUILD
 					}
 				}
 			}
-
 		}
 	}
-
 }
 
 sub modelfit_setup
@@ -852,6 +835,8 @@ sub modelfit_setup
 				$self->bound_variable($self->lower_bound);
 			}
 		}
+	} elsif ($self->nca) {
+		$type = 'nca';
 	}
 
   $self->npc_alert_written(1); #initiate to 1 so that won't be written.
@@ -1102,14 +1087,13 @@ sub modelfit_setup
     }
   }
 
-  
-#get rid of $SCAT records, if any
+	#get rid of $SCAT records, if any
   $model_orig -> remove_records(type => 'scatter');
 
-#logic for use of MDV column as basis for finding which rows are observations
-#request MDV in $TABLE if no $PRED record or if there is a $PRED record and 
-#MDV is in the input
-#if there is a $PRED but no MDV in input then all rows will be observations
+	#logic for use of MDV column as basis for finding which rows are observations
+	#request MDV in $TABLE if no $PRED record or if there is a $PRED record and 
+	#MDV is in the input
+	#if there is a $PRED but no MDV in input then all rows will be observations
 
   my $MDV = '';
   if (defined $self->tte()) {
@@ -1137,7 +1121,7 @@ sub modelfit_setup
     #have already checked no synonym. If value defined then SKIP/DROP ->don't include
   }
 
-######## fix $TABLE record: remove any existing. create a new correct one.
+	######## fix $TABLE record: remove any existing. create a new correct one.
 
   #store $TABLE if FILE=cwtab<>.deriv, i.e. dv is CWRES, add it back to models later
   my @extra_table_record;
@@ -1174,7 +1158,7 @@ sub modelfit_setup
   if (defined $self->censor()){
     push (@rec_strings,$self->censor());
   }
-  if ($self->is_vpc) {
+  if ($self->is_vpc or $self->nca) {
     push (@rec_strings, $self->idv) unless ($self->idv eq 'PRED');
     push (@rec_strings, $self->bound_variable) if (defined $self->bound_variable);
   }
@@ -1682,17 +1666,26 @@ sub modelfit_analyze
 	);
 	my $model_number = $parm{'model_number'};
 
-	$self->stop_motion_call(tool=>'npc/vpc',message => "done running the models. Do analysis.")
-	if ($self->stop_motion());
-
-	if (defined $self->tte()){
-		$self-> get_tte_data();
+	# If we ran an nca move data files and return
+	if ($self->nca) {
+		chdir 'm1';
+		foreach my $filename (glob '*.dta') {
+			rename $filename, "../$filename";
+		}
 		return;
 	}
 
-	$self -> get_data_matrix(); #creates global @data_matrix and global censor_data_matrix
+	$self->stop_motion_call(tool=>'npc/vpc',message => "done running the models. Do analysis.")
+	if ($self->stop_motion);
 
-	my $no_sim= (split(/,/,$self->data_matrix->[0])) -1;
+	if (defined $self->tte) {
+		$self->get_tte_data;
+		return;
+	}
+
+	$self->get_data_matrix; #creates global @data_matrix and global censor_data_matrix
+
+	my $no_sim= (split(/,/,$self->data_matrix->[0])) - 1;
 	unless ($no_sim == $self->samples) {
 		croak("Number of simulated datasets in matrix file $no_sim is\n".
 			"different from number ${\$self->samples} in input (option -samples).");
@@ -1704,14 +1697,13 @@ sub modelfit_analyze
 
 	$self->create_stratified_data(); #identical stratification for censoring variable
 
-
 	if ($self->is_vpc) {
 		$self->vpc_analyze();
 	} else {
 		$self->npc_analyze();
 	}
 
-	$self -> cleanup();
+	$self->cleanup;
 
 	#compress m1
 	if ($self->compress) {

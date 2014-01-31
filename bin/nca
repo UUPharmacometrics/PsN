@@ -1,0 +1,422 @@
+#!/usr/bin/perl
+
+use FindBin qw($Bin);
+use lib "$Bin/../lib";
+
+# Don't edit the line below, it must look exactly like this.
+# Everything above this line will be replaced #
+
+use PsN;
+use model;
+use tool::npc;
+use strict;
+use Getopt::Long;
+use common_options;
+use ui;
+use Cwd;
+use OSspecific;
+
+sub print_option
+{
+	my $fh = shift;
+	my $option_name = shift;
+	my $option_value = shift;
+
+	print $fh ", $option_name = $option_value";
+}
+
+
+my $cmd_line = $0 . " " . join( " ", @ARGV );
+
+## Configure the command line parsing
+Getopt::Long::config("auto_abbrev");
+
+my %options;
+## Declare the options
+
+my %required_options = ();
+my %optional_options = ('samples:i' => undef, 
+			 'idv:s' => undef,
+			 'rawres_input:s' => undef,
+			 'offset_rawres:i' => undef,
+       "stratify_on:s" => undef,
+			 'lst_file:s' => undef,
+			 'msfo_file:s' => undef,
+			 'dv:s' => undef,
+			 'lloq:f'=>undef,
+			 'uloq:f'=>undef,
+			 'levels:s'=>undef,
+			 'keep_estimation!'=>undef,
+			 'noprediction'=>undef,
+			 'sim_model:s'=>undef,
+			 'flip_comments!'=>undef,
+       'censor:s' => undef,
+			 "copy_data!"=>undef,
+			 );
+
+my $res = GetOptions( \%options,
+		      @common_options::get_opt_strings,
+		      keys(%required_options),
+		      keys(%optional_options) );
+exit unless $res;
+
+
+if (not defined $options{'samples'}) {
+	$options{'samples'} = 1000;
+}
+
+if (defined $options{'msfo_file'}){
+  if (defined $options{'extra_files'}){
+    $options{'extra_files'} .= ','.$options{'msfo_file'};
+  }else {
+    $options{'extra_files'} = $options{'msfo_file'};
+  }
+}
+
+common_options::setup( \%options, 'nca' ); #calls set_globals etc, initiates random sequence
+
+my %help_text;
+
+$help_text{Pre_help_message} = <<'EOF';
+  nca
+
+    Non-Compartmental Analysis
+
+EOF
+
+$help_text{Options} = <<'EOF';      
+    Options:
+
+      The options are given here in their long form. Any option may be
+      abbreviated to any nonconflicting prefix. The -threads option
+      may be abbreviated to -t(or even -thr).
+
+      The following options are valid:
+EOF
+
+$help_text{-h} = <<'EOF';
+      -h | -?
+      
+      With -h or -? nca will print a list of options and exit.
+EOF
+      
+$help_text{-help} = <<'EOF';      
+      -help
+      
+      With -help nca will print this, longer, help message.
+EOF
+
+$help_text{-samples} = <<'EOF';
+      -samples=number
+
+      Number of simulated datasets to generate, required.
+      Must be at least 20.
+EOF
+
+
+$help_text{-idv} = <<'EOF';
+      -idv=VARIABLE
+
+      Name of independent variable, optional, default TIME.
+EOF
+
+$help_text{-censor} = <<'EOF';
+      -censor=VARIABLE
+
+      Name of variable which defines whether DV or similar is missing, e.g. due to drop-out.
+      1 means the observation is censored, 0 means the observation is not censored.
+      The variable must be requestable in $TABLE.
+EOF
+
+$help_text{-stratify_on} = <<'EOF';
+      -stratify_on=VARIABLE
+
+      Variable to stratify on. The variable must be independent, i.e. be
+      the same for all simulations of a particular observation.
+      The nca will stratify the data on unique values of the specified
+      variable, and perform separate analyses on each set. Stratification 
+      may also be done on parameter defined in the model.
+      The stratification variable must be requestable in $TABLE.
+      -stratify_on may be a comma-separated list
+      of multiple variables, then the first variable will be used for
+	  stratification and the rest simply added to $TABLE.
+EOF
+
+$help_text{-copy_data} = <<'EOF';
+    -copy_data
+    Set by default. Disable with -no-copy_data. By default PsN will copy
+    the data file into NM_run1 and set a local path in psn.mod, the actual
+    model file run with NONMEM. If -no-copy_data is set, PsN will not copy 
+    the data to NM_run1 but instead set a global path to the data file in
+    psn.mod. However, if the global path is very long there will be an NMtran
+    error caused by a line wrap in $DATA in psn.mod.
+EOF
+
+$help_text{-lst_file} = <<'EOF';
+      -lst_file=file
+
+      The nca will update initial parameter estimates in the model to
+      the final values in the lst file. Optional parameter.
+      Cannot be used together with -msfo_file option nor with a model
+      containing a $NONPARAMETRIC record.
+EOF
+
+$help_text{-msfo_file} = <<'EOF';
+      -msfo_file=file
+
+      The nca will use the NONMEM state defined in the update file.
+      Cannot be used together with -lst_file option.
+      If the modelfile contains a $NONPARAMETRIC record this parameter
+      is required, otherwise it is optional.
+EOF
+
+$help_text{-dv} = <<'EOF';
+      -dv=VARIABLE
+
+      Name of dependent variable. Default is DV.
+      Case sensitive, must be exactly the same case and spelling as in modelfile.
+      Maximum of 4 letters because of NONMEM limitation, unless either IPRED or IWRES.
+EOF
+
+$help_text{-sim_model} = <<'EOF';
+      -sim_model=file
+
+      Use a separate input model for the simulations. 
+      See the userguide for details.
+EOF
+$help_text{-flip_comments} = <<'EOF';
+      -flip_comments
+
+      Method for handling user-defined simulation code in the model. If this option is set,
+      PsN will create the simulation model by flipping comments (commented lines will be
+      uncommented and vice versa) between the tags 
+      ;Sim_start 
+      and 
+      ;Sim_end
+      Note that the
+      tags must look exactly like that or the editing will fail. After creating
+      the simulation model PsN will remove $COV and $TABLE, change SEED, NSUBS 
+      and MAXEVAL in $SIM, and add a new $TABLE, but otherwise no changes will be made.
+      See the userguide for details.
+EOF
+
+$help_text{-levels} = <<'EOF';
+      -levels=level1,level2,...
+      
+      A comma-separated list of the boundaries for a categorization.
+      First category <= level1 < second category <= level2 etc.
+EOF
+
+$help_text{-lloq} = <<'EOF';
+      -lloq=number
+      
+      Lower Limit Of Quantification for left censored data.
+      See the userguide for details.
+EOF
+
+$help_text{-uloq} = <<'EOF';
+      -uloq=number
+      
+      Upper Limit Of Quantification for right censored data.
+      See the userguide for details.
+EOF
+
+$help_text{-keep_estimation} = <<'EOF';
+      -keep_estimation
+      
+      Perform post-hoc evalutaion step for each simulated dataset,
+      i.e. keep the $ESTIMATION record and set MAXEVALS to 0. In this case
+      variables such as IPRED(F) are based on the re-estimated post-hoc 
+      parameters.      
+EOF
+
+$help_text{-rawres_input} = <<'EOF';
+      -rawres_input=filename
+
+      A simple way to simulate with uncertainty. Instead of using identical parameter 
+      estimates for simulation of each new dataset, take parameter estimates from a 
+      raw_results.csv file, e.g. from a bootstrap run. The raw results file must 
+      contain at least as many samples as the input -samples to nca, the labels for 
+      THETA/OMEGA/SIGMA in the file must match the labels in the (simulation) model 
+      given as input to nca, the theta columns must be directly followed by the omega 
+      columns which must be directly followed by the sigma columns, and the first 
+      column must have header model just as a bootstrap raw_results file. Note that 
+      is is possible to generate a file with initial parameter estimates outside of 
+      PsN, as long as the file follows the format rules.
+EOF
+
+$help_text{-offset_rawres} = <<'EOF';
+      -offset_rawres=N
+
+      Only relevant in combination with rawres_input. Default 1.
+      The number of result lines to skip in the input raw results file
+      before starting to read final parameter estimates. In a regular
+      bootstrap raw_results file the first line of estimates refers to the
+      input model with the full dataset, so therefore the default offset is 1.
+EOF
+
+$help_text{-noprediction} = <<'EOF';
+      -noprediction
+      
+      Add NOPREDICTION to the $SIMULATION record of the simulation model
+      in addition to ONLYSIMULATION. This option is generally recommended
+      with likelihood models for odd type data.
+EOF
+
+$help_text{Post_help_message} = <<'EOF';
+
+    Also see 'psn_options -h' for a description of PsN common options.
+EOF
+
+common_options::online_help( 'nca', \%options, \%help_text, \%required_options, \%optional_options);
+
+## Check that we do have a model file
+if ( scalar(@ARGV) < 1 ) {
+  print "A model file must be specified.\nUse 'nca -h' for help.\n";
+  exit;
+}
+
+if( scalar(@ARGV) > 1 ) {
+  print "NCA can only handle one modelfile. Check that all options begin with".
+      " -.\nUse 'nca -h' for help.\n";die;
+  exit;
+}
+
+unless (defined $options{'copy_data'} and (not $options{'copy_data'})) {
+    $options{'copy_data'} = 1;
+}
+
+if (defined $options{'rawres_input'}) {
+  my ( $dir, $file ) = OSspecific::absolute_path(cwd(), $options{'rawres_input'});
+  $options{'rawres_input'} = $dir . $file;
+  unless (-e $options{'rawres_input'}) {
+    print "File ".$options{'rawres_input'}." does not exist";
+    exit;
+  }
+  if (defined $options{'msfo_file'}) {
+    print "Cannot use options rawres_input and msfo_file together.";
+    exit;
+  }
+}
+if (defined $options{'covariance_file'}) {
+    print "Cannot use option covariance_file, removed.";
+    exit;
+  if (defined $options{'rawres_input'}) {
+    print "Cannot use options covariance_file and rawres_input together.";
+    exit;
+  }
+  if (defined $options{'msfo_file'}) {
+    print "Cannot use options covariance_file and msfo_file together.";
+    exit;
+  }
+  my ( $dir, $file ) = OSspecific::absolute_path(cwd(), $options{'covariance_file'});
+  $options{'covariance_file'} = $dir . $file;
+  unless (-e $options{'covariance_file'}) {
+    print "File ".$options{'covariance_file'}." does not exist";
+    exit;
+  }
+}
+
+
+my @levels = ();
+
+if ( defined $options{'levels'} ){
+  foreach my $v (split(/,/,$options{'levels'})){
+    if (length($v)>0){
+      push(@levels,$v);
+    }
+  }
+  unless (scalar(@levels)>0){
+    die "Error: Could not parse list levels.\n";
+  }	
+}
+
+if (defined $options{'sim_model'}){
+  my ($dir, $fil) = OSspecific::absolute_path($options{'sim_model'});
+
+  $options{'sim_model'} = $dir.$fil;
+}
+
+unless ( defined $options{'skip_data_parsing'} or $options{'drop_dropped'} ) {
+  $options{'skip_data_parsing'} = 1;
+}
+
+my $eval_string = common_options::model_parameters(\%options);
+
+my $model = model->new( eval( $eval_string ),
+			   filename                    => $ARGV[0],
+			   ignore_missing_output_files => 1,
+			   cwres                       => (($options{'dv'} eq 'CWRES') and ($PsN::nm_major_version < 7))  );
+
+if( defined $model->msfi_names() ){
+  my @needed_files;
+  foreach my $msfi_files( @{$model -> msfi_names()} ){
+    #loop $PROB
+    if (defined $msfi_files){
+      foreach my $msfi_file( @{$msfi_files} ){
+	#loop instances
+	if ( defined $msfi_file ){
+	  my ( $dir, $file ) = OSspecific::absolute_path(cwd(),$msfi_file);
+	  push (@needed_files,$dir.$file) ;
+	}
+      }
+    }
+  }
+  if (scalar(@needed_files)>0){
+    if( defined $model -> extra_files ){
+      push(@{$model -> extra_files},@needed_files);
+    }else{
+      $model -> extra_files(\@needed_files);
+    }
+  }
+
+}
+
+
+my $nca = tool::npc -> 
+    new ( eval( $common_options::parameters ),
+	  models	           => [ $model ],
+	  stratify_on        => $options{'stratify_on'},
+	  censor             => $options{'censor'},
+	  samples            => $options{'samples'},
+	  lst_file           => $options{'lst_file'},
+	  msfo_file          => $options{'msfo_file'},
+	  idv                => ((defined $options{'idv'}) ? $options{'idv'} : 'TIME'),
+	  dv                 => $options{'dv'},
+	  categorized        => ((scalar(@levels) > 0) ? 1:0),
+	  levels             => \@levels,
+	  lloq               => $options{'lloq'},
+	  uloq               => $options{'uloq'},
+	  keep_estimation    => $options{'keep_estimation'},
+	  noprediction       => $options{'noprediction'},
+	  copy_data	     		 => $options{'copy_data'},
+	  rawres_input	     => $options{'rawres_input'},
+	  offset_rawres	     => $options{'offset_rawres'},
+	  covariance_file    => $options{'covariance_file'},
+	  sim_model          => $options{'sim_model'},
+	  flip_comments      => $options{'flip_comments'},
+		directory_name_prefix => 'nca',
+		nca								 => 1,
+	  );
+
+$nca->print_options (cmd_line => $cmd_line,
+		      toolname => 'NCA',
+		      local_options => [keys %optional_options],
+		      common_options => \@common_options::tool_options);
+
+$nca->run;
+$nca->print_results;
+
+my $script_filename = $nca->directory . "runnca.R";
+open my $fh, ">", $script_filename;
+
+print $fh 'nca(';
+
+print_option($fh, 'timeNm', $nca->idv);
+print_option($fh, 'concNm', $nca->dv);
+
+print $fh ')';
+
+close $fh;
+
+ui->print( category => 'nca', message => "nca done\n" );

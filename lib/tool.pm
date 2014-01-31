@@ -19,7 +19,7 @@ use MooseX::Params::Validate;
 use model;
 
 has 'models' => ( is => 'rw', isa => 'ArrayRef[model]' );
-has 'tools' => ( is => 'rw', isa => 'ArrayRef' );		# FIXME: Add tool
+has 'tools' => ( is => 'rw', isa => 'ArrayRef[tool]' );
 has 'first_callback' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'adaptive' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'raw_line_structure' => ( is => 'rw', isa => 'Ref' );
@@ -142,6 +142,8 @@ has 'sge_queue' => ( is => 'rw', isa => 'Str' );
 has 'torque_prepend_flags' => ( is => 'rw', isa => 'Str' );
 has 'torque_queue' => ( is => 'rw', isa => 'Str' );
 has 'run_on_torque' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'directory_name_prefix' => ( is => 'rw', isa => 'Str' );
+
 
 sub BUILDARGS
 {
@@ -279,12 +281,9 @@ sub BUILD
 	if ( defined $parm{'base_directory'} ) {
 		$this->base_directory($parm{'base_directory'});
 	} else {
-		my ($uniquePath, $file) = OSspecific::absolute_path( '', '' );
+		my ($uniquePath, $file) = OSspecific::absolute_path('', '');
 		$this->base_directory($uniquePath);
 	}
-
-	my @tool_name_full = split( '::', ref $this );
-	my $tool_name = $tool_name_full[$#tool_name_full];
 
 	# The directory is the folder where the tools stores temporary data and 
 	# runs subtools (or in the modelfit case, runs NONMEM)
@@ -294,12 +293,17 @@ sub BUILD
 		( $dir, $dummy ) = OSspecific::absolute_path( $parm{'directory'}, '');
 		$this->directory($dir);
 	} else {
-		my $file;
-		$this->directory(OSspecific::unique_path( $tool_name.'_dir', $this->base_directory ));
+		my $tool_name;
+		if (defined $this->directory_name_prefix) {
+			$tool_name = $this->directory_name_prefix;
+		} else {
+			my @tool_name_full = split('::', ref $this);
+			$tool_name = $tool_name_full[$#tool_name_full];
+		}
+		$this->directory(OSspecific::unique_path($tool_name . '_dir', $this->base_directory));
 	}
 	if (ui->silent() and not defined ui->logfile()){
 		ui->logfile($this->directory . 'run_messages.txt');
-		#debug->logfile($this->directory . 'run_messages.txt');
 	}
 
 	# Create my temporary directory
