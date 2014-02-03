@@ -8,7 +8,8 @@
 use strict;
 use warnings;
 use File::Path 'rmtree';
-use Test::More tests=>4;
+use Test::More tests=>12;
+#use Test::More tests=>3;
 use List::Util qw(first);
 use FindBin qw($Bin);
 use lib ".."; #location of includes.pm
@@ -25,11 +26,15 @@ my @shrinking_results = (40.5600924453085, -0.185810314125491, 89.4892871889343)
 my @shrinking_headings = ('shrinkage_eta1(%)', 'shrinkage_eta2(%)', 'shrinkage_iwres(%)');
 
 my @command_line = ($includes::execute." $model_dir/pheno.mod -shrinkage -directory=$dir",
-#					$includes::execute." $model_dir/tbs2.mod -tbs_delta='(-1,0.01,1)' -directory=$dir",
-#					$includes::execute." $model_dir/tbs.mod -tbs_delta='(-1,0.01,1)' -directory=$dir",
-#					$includes::execute." $model_dir/tbs.mod -tbs_zeta=1 -directory=$dir",
-#					$includes::execute." $model_dir/tbs.mod -tbs -directory=$dir",
-#					$includes::execute." $model_dir/tbs.mod -tbs_param='(-2,1,2)' -directory=$dir",
+					$includes::execute." $model_dir/tbs1.mod -tbs  -directory=$dir", #prop
+					$includes::execute." $model_dir/tbs1.mod -dtbs  -directory=$dir", #prop
+					$includes::execute." $model_dir/tbs1a.mod -tbs  -directory=$dir", #add
+					$includes::execute." $model_dir/tbs1a.mod -dtbs  -directory=$dir", #add
+					$includes::execute." $model_dir/tbs1.mod -tbs_delta='(-1,0.01,1)'  -directory=$dir",
+					$includes::execute." $model_dir/tbs1a.mod -tbs_delta='(-1,0.01,1)'  -directory=$dir",
+					$includes::execute." $model_dir/tbs1a.mod -tbs_zeta='(-1,0.01,1)'  -directory=$dir",
+					$includes::execute." $model_dir/tbs1.mod -tbs_lambda='(-2,1,2)'  -directory=$dir",
+					$includes::execute." $model_dir/tbs1.mod -tbs_lambda='(-2,1,2)' -dtbs  -directory=$dir",
                    );
 
 my $is_equal;

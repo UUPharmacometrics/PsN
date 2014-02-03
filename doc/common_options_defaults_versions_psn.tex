@@ -203,19 +203,35 @@ Bill Frame: http://www.ncbi.nlm.nih.gov/pubmed/19904583
  and the tranformed  IPRED used instead of IPRED.  
 	\item The IWRES definition is changed to 
  IWRES=((DV**LAMBDA-1)/LAMBDA-IPRED\_trans)/W
-	\item The error model is changed to additive, if not already additive:
+	\item Any IPRED dependence in the W definition is removed.
+    \item The W definition will be moved to directly before the LAMBDA definition.
+	\item The error model is changed to:
  Y=IPRED\_trans+EPS(1)*W
 	\item In \$SUB two fortran routines, contra.txt and ccontra\_mod2.txt are added. These files are automatically printed to the run directory. In the file ccontra\_mod2.txt that is created, the x in theta(x) points to the new theta that was added in the model file.
 \end{enumerate}
 \nextopt
-\optdefault{tbs\_param}{string}
-Default not set. Initial value string, using NM-TRAN syntax, for lambda parameter in Transform Both Sides method, e.g. '(-1, 0.5, 1)' or 'O FIX'. The string must be enclosed in single quotes and not include any comments. If tbs\_param is set then option -tbs will be set automatically. See option -tbs for more details. 
+\optname{dtbs}
+Default not set. Invokes Dynamic Transform Both Sides method. Very similar to -tbs, see above, but with some 
+differences and additions:
+\begin{enumerate}
+\item A new parameter ZETA will be defined. This parameter is either equal to a new THETA that is 
+automatically added to the model, or equal to  LAMBDA+DELTA, where DELTA is equal to a new
+THETA parameter that is automatically added.
+\item Any IPRED term in the W definition will be replaced with IPRED**ZETA.
+Any THETAs that are not multiplied with IPRED in the W definition will be set to 0 FIX.
+If W does not depend on IPRED at all in the input model, then W = old\_definition will be replaced by
+W = (IPRED**ZETA)*old\_definition.
+\end{enumerate}
+\nextopt
+\optdefault{tbs\_lambda}{string}
+Default not set. Initial value string, using NM-TRAN syntax, for lambda parameter in Transform Both Sides method, e.g. '(-1, 0.5, 1)' or 'O FIX'. The string must be enclosed in single quotes and not include any comments. If tbs\_lambda is set then option -tbs will be set automatically, unless option -dtbs or -tbs\_zeta or -tbs\_delta is set. 
+See option -tbs for more details. 
 \nextopt
 \optdefault{tbs\_zeta}{string}
-Default not set. Initial value string, using NM-TRAN syntax, for zeta parameter in Transform Both Sides method, e.g. '(-1, 0.5, 1)' or 'O FIX'. The string must be enclosed in single quotes and not include any comments. If tbs\_zeta is set then option -tbs will be set automatically. See option -tbs for more details. Options tbs\_zeta and tbs\_delta cannot be used in combination.  
+Default not set. Initial value string, using NM-TRAN syntax, for zeta parameter in Dynamic Transform Both Sides method, e.g. '(-1, 0.5, 1)' or 'O FIX'. The string must be enclosed in single quotes and not include any comments. If tbs\_zeta is set then option -dtbs will be set automatically. See option -dtbs for more details. Options tbs\_zeta and tbs\_delta cannot be used in combination.  
 \nextopt
 \optdefault{tbs\_delta}{string}
-Default not set. Initial value string, using NM-TRAN syntax, for delta parameter in Transform Both Sides method, e.g. '(-1, 0.5, 1)' or 'O FIX'. The string must be enclosed in single quotes and not include any comments. If tbs\_delta is set then option -tbs will be set automatically. See option -tbs for more details. Options tbs\_zeta and tbs\_delta cannot be used in combination.  
+Default not set. Initial value string, using NM-TRAN syntax, for delta parameter in Dynamic Transform Both Sides method, e.g. '(-1, 0.5, 1)' or 'O FIX'. The string must be enclosed in single quotes and not include any comments. If tbs\_delta is set then option -dtbs will be set automatically. See option -dtbs for more details. Options tbs\_zeta and tbs\_delta cannot be used in combination.  
 \nextopt
 \optdefault{threads}{'integer'}
 Default 1. Use the threads option to enable parallel execution of multiple NONMEM runs. On a desktop computer it is recommended to set -threads to the number of CPUs in the system plus one. You can specify more threads, but it will probably not increase the performance. If you are running on a computer cluster, you should consult your system administrator to find out how many threads you can specify. The -threads option will be ignored if you run on a grid system, since grids have their own scheduling algorithms. 

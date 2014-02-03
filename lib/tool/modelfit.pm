@@ -3925,7 +3925,7 @@ sub copy_model_and_input
 			#clean 2. 
 			#must copy input again
 			
-			if ($model->tbs()){
+			if ($model->tbs() or $model->dtbs()){
 				$self->write_tbs_files(thetanum => $model->tbs_thetanum());
 			}
 			#use psn.mod as candidate model
@@ -4007,7 +4007,7 @@ sub copy_model_and_input
 		
 	}else{
 		
-		if ($model->tbs()){
+		if ($model->tbs() or $model->dtbs()){
 			$self->write_tbs_files(thetanum => $model->tbs_thetanum());
 		}
 		

@@ -97,7 +97,8 @@ Getopt::Long::config("auto_abbrev");
 				  "maxevals:i",
 				  "missing_data_token:i",
 				  "tbs!",
-				  "tbs_param:s",
+				  "dtbs!",
+				  "tbs_lambda:s",
 				  "tbs_zeta:s",
 				  "tbs_delta:s",
 				  "sde",
@@ -293,11 +294,17 @@ sub sanity_checks {
       die "You cannot set both sde and omega_before_pk";
     }
   }
-  if( defined $options -> {'tbs_param'} or defined $options-> {'tbs_zeta'} or defined $options-> {'tbs_delta'}){
-    $options -> {'tbs'}=1;
+  if(defined $options-> {'tbs_zeta'} or defined $options-> {'tbs_delta'}){
+	  if ($options->{'tbs'}){
+		  die ("You cannot set -tbs with -tbs_zeta or -tbs_delta, you should use -dtbs");
+	  }
+	  $options -> {'dtbs'}=1;
   }
   if( defined $options-> {'tbs_zeta'} and defined $options-> {'tbs_delta'}){
 	  die "You cannot set both tbs_zeta and tbs_delta";
+  }
+  if( defined $options -> {'tbs_lambda'} and (not defined $options-> {'dtbs'} or (not $options->{'dtbs'}))){
+    $options -> {'tbs'}=1;
   }
   if( $options -> {'run_on_sge_nmfe'} ){
     if( $options -> {'run_on_sge'} ){
@@ -1251,14 +1258,21 @@ EOF
     'the Uppsala way', i.e. with IWRES and W and SIGMA 1 FIX.
     See the userguide common_options_defaults_versions_psn for details.
 EOF
+    $help_hash{-tbs} = <<'EOF';
+    <p class="style2">-dtbs</p>
+    Default not set. Invokes Dynamic Transform Both Sides method. Model must be coded
+    'the Uppsala way', i.e. with IWRES and W and SIGMA 1 FIX.
+    See the userguide common_options_defaults_versions_psn for details.
+EOF
 
-    $help_hash{-tbs_param} = <<'EOF';
-    <p class="style2">-tbs_param</p>
+    $help_hash{-tbs_lambda} = <<'EOF';
+    <p class="style2">-tbs_lambda</p>
     Default not set. Initial value string, using NM-TRAN syntax, 
     for parameter in Transform Both Sides 
     method, e.g. '(-1, 0.5, 1)' or 'O FIX'. The string must be enclosed 
     in single quotes and not include any comments.
-    If tbs_param is set then option -tbs will be set automatically.
+    If tbs_lambda is set then option -tbs will be set automatically 
+    unless -dtbs or -tbs_delta or -tbs_zeta is set.
     See the userguide common_options_defaults_versions_psn for details.
 EOF
     $help_hash{-tbs_zeta} = <<'EOF';
@@ -1268,7 +1282,7 @@ EOF
     method, e.g. '(-1, 0.5, 1)' or 'O FIX'. The string must be enclosed 
     in single quotes and not include any comments.
 	Cannot be used in combination with tbs_delta.
-    If tbs_zeta is set then option -tbs will be set automatically.
+    If tbs_zeta is set then option -dtbs will be set automatically.
     See the userguide common_options_defaults_versions_psn for details.
 EOF
     $help_hash{-tbs_delta} = <<'EOF';
@@ -1278,7 +1292,7 @@ EOF
     method, e.g. '(-1, 0.5, 1)' or 'O FIX'. The string must be enclosed 
     in single quotes and not include any comments.
 	Cannot be used in combination with tbs_zeta.
-    If tbs_delta is set then option -tbs will be set automatically.
+    If tbs_delta is set then option -dtbs will be set automatically.
     See the userguide common_options_defaults_versions_psn for details.
 EOF
 

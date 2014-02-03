@@ -18,7 +18,7 @@ foreach my $record_name( @print_order,'warnings','finedata' ){
 	my $uc_short_type = _get_uc_short_type($record_name);
 	$abbreviations{$uc_short_type} = $record_name;
 }
-#foreach my $rec ('THETAI','THI','THETAR','THR','THETAP','THETAPV','OMEGAP','OMEGAPD','SIGMAP','SIGMAPD'){
+#foreach my $rec (){
 #    $unsupported_records{$rec}=1;
 #}
 
@@ -173,7 +173,8 @@ has 'nwpri_ntheta' => ( is => 'rw', isa => 'Int' );
 has 'nwpri_neta' => ( is => 'rw', isa => 'Int' );
 has 'omega_before_pk' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'tbs' => ( is => 'rw', isa => 'Bool', default => 0 );
-has 'tbs_param' => ( is => 'rw', isa => 'Maybe[Str]' );
+has 'dtbs' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'tbs_lambda' => ( is => 'rw', isa => 'Maybe[Str]' );
 has 'tbs_zeta' => ( is => 'rw', isa => 'Maybe[Str]' );
 has 'tbs_delta' => ( is => 'rw', isa => 'Maybe[Str]' );
 has 'tbs_thetanum' => ( is => 'rw', isa => 'Int' );
@@ -267,10 +268,10 @@ sub BUILD
 				mirror_plots => $this->mirror_plots } );
 	}
 
-	if( $this->tbs ){
+	if( $this->tbs or $this->dtbs){
 		if (defined $this->nwpri_ntheta()){
 			ui -> print( category => 'all',
-					message => "Warning: \$PRIOR NWPRI is not supported in combination with -tbs.",
+					message => "Warning: \$PRIOR NWPRI is not supported in combination with -tbs or -dtbs.",
 					newline => 1);
 		}
 
@@ -2456,34 +2457,19 @@ sub tbs_transform
 
 	if ((defined $self->priors()) and scalar(@{$self -> priors()})>0 ){
 		croak("The current version of PsN does not support \$PRIOR and ".
-				"option -tbs in combination");
+				"option -tbs or -dtbs in combination");
 	}      
 
-	#TODO add extra theta for power (zeta)
-	my $handle_W=0;
 	my $zeta_line='';
 	my $newthetanum;
 	$newthetanum=$self -> record_count( record_name => 'theta' )+1; #this is the lambda
 	$self->tbs_thetanum($newthetanum);
-	if (defined $self->tbs_param()){
+	if (defined $self->tbs_lambda()){
 		$self->add_records( type => 'theta',
-				record_strings => [$self->tbs_param().' ; tbs_lambda'] );
+				record_strings => [$self->tbs_lambda().' ; tbs_lambda'] );
 	}else{
 		$self->add_records( type => 'theta',
 				record_strings => ['1 ; tbs_lambda'] );
-	}
-	#if neither zeta nor delta defined then do not add anything more
-	#both cannot be defined, input check in common_options
-	if (defined $self->tbs_delta()){
-		$handle_W = 1;
-		$zeta_line = ' DELTA = THETA('.($newthetanum+1).')'."\n".' ZETA = LAMBDA + DELTA'."\n";
-		$self->add_records( type => 'theta',
-							record_strings => [$self->tbs_delta().' ; tbs_delta'] );
-	}elsif (defined $self->tbs_zeta()){
-		$handle_W = 1;
-		$zeta_line = ' ZETA = THETA('.($newthetanum+1).')'."\n";
-		$self->add_records( type => 'theta',
-							record_strings => [$self->tbs_zeta().' ; tbs_zeta'] );
 	}
 	
 	#PRED or ERROR
@@ -2500,7 +2486,7 @@ sub tbs_transform
 
 	#locate first use of IWRES in right-hand-side, same for W, IPRED. Check Uppsala style
 	#TODO cannot handle IF ELSE around IPRED, IWRES and Y
-
+	my $zeta_default=1;
 	my $found=0;
 	my $W_line='';
 	for (my $i=$#code; $i>=0;$i--){
@@ -2514,17 +2500,17 @@ sub tbs_transform
 						  @code[$i+1..$#code]);
 				$found=1;
 			}
-		}elsif($handle_W and ($code[$i] =~ /^\s*W\s*=\s*(.*)$/)){
+		}elsif($code[$i] =~ /^\s*W\s*=\s*(.*)$/){
 			my $line = $1;
 			if (length($W_line)>0){
-				croak("Cannot handle multiple-line definitions of W with option -tbs.");
+				croak("Cannot handle multiple-line definitions of W with option -tbs or -dtbs.");
 			}else{
 				#store W=... line
 				#reformat W line
 				my $iprtheta;
 				my $addtheta;
 				if ($line =~ /SQRT/){
-					#find the theta coupled to IPRED and remove it 
+					#find the theta coupled to IPRED and remove it from the string
 					if ($line =~ s/\bIPRED\s*\*\s*THETA\((\d+)\)//){
 						$iprtheta = $1;
 					}elsif($line =~ s/\bTHETA\((\d+)\)\s*\*\s*IPRED\b//){
@@ -2532,42 +2518,94 @@ sub tbs_transform
 					}else{
 						croak ("Could not parse IPRED*THETA part of $line when transforming for tbs\n");
 					} 
-					#find the additive theta and set it 0 FIX
+					#find the additive theta
 					if($line =~ s/\bTHETA\((\d+)\)//){
 						$addtheta = $1;
 					}else{
 						croak ("Could not parse additive THETA part of $line when transforming for tbs\n");
 					} 
-					#find $addtheta theta in list of theta records. Need to loop since do not know which record
+
+					my $zerofixtheta = $iprtheta; #if tbs
+					$zerofixtheta = $addtheta if ($self->dtbs());
+
+					#find $zerofixtheta theta in list of theta records. Need to loop since do not know which record
 					my $thetacount = 0;
 					my $setfix=0;
 					foreach my $rec (@{$self->thetas}){
-						if( defined $rec -> options and ($thetacount + scalar(@{$rec -> options}))>=$addtheta ){
-							$rec->options()->[$addtheta-$thetacount-1]->lobnd(undef);
-							$rec->options()->[$addtheta-$thetacount-1]->upbnd(undef);
-							$rec->options()->[$addtheta-$thetacount-1]->init(0);
-							$rec->options()->[$addtheta-$thetacount-1]->fix(1);
+						if( defined $rec -> options and ($thetacount + scalar(@{$rec -> options}))>=$zerofixtheta ){
+							$rec->options()->[$zerofixtheta-$thetacount-1]->lobnd(undef);
+							$rec->options()->[$zerofixtheta-$thetacount-1]->upbnd(undef);
+							$rec->options()->[$zerofixtheta-$thetacount-1]->init(0);
+							$rec->options()->[$zerofixtheta-$thetacount-1]->fix(1);
 							$setfix=1;
 							last;
 						}else{
 							$thetacount += scalar(@{$rec -> options});
 						}
 					}
-					croak("Could not set THETA $addtheta to 0 FIX") unless $setfix;
+					croak("Could not set THETA $zerofixtheta to 0 FIX") unless $setfix;
 					#construct new W string
-					$W_line = ' W = THETA('.$iprtheta.')*IPRED**ZETA+THETA('.$addtheta.')'."\n";
+					if ($self->dtbs()){
+						$W_line = ' W = THETA('.$iprtheta.')*IPRED**ZETA+THETA('.$addtheta.')'."\n";
+					}else{
+						$W_line = ' W = THETA('.$iprtheta.')+THETA('.$addtheta.')'."\n";
+					}
+				}elsif ($line =~ /\bIPRED\b/){
+					if ($self->dtbs()){
+						#replace every occurrence of IPRED with IPRED**ZETA
+						$line =~ s/\bIPRED\b/IPRED\*\*ZETA/g ;
+						$W_line = ' W = '.$line."\n";
+					}else{
+						#remove IPRED dependence.
+						$line =~ s/\*\s*IPRED\b//g ;
+						$line =~ s/\bIPRED\s*\*//g ;
+						$line =~ s/\+\s*IPRED\b//g ;
+						$line =~ s/\bIPRED\s*\+//g ;
+						if ($line =~ /\bIPRED\b/){
+							croak ("Failed to remove IPRED from $line for tbs");
+						}
+						$W_line = ' W = '.$line."\n";
+					}
 				}else{
-					#replace every occurrence of IPRED with IPRED**ZETA
-					$line =~ s/\bIPRED\b/IPRED\*\*ZETA/g ;
-					$W_line = ' W = '.$line."\n";
+					#some additive error
+					if ($self->dtbs()){
+						#remove leading whitespace
+						$line =~ s/^\s*//;
+						#prepend IPRED**ZETA*
+						$W_line = ' W = (IPRED**ZETA)*'.$line."\n";
+						$zeta_default=0.001; #close to zero but not exactly 0 since NM will not allow it
+					}else{
+						#tbs, leave as is 
+						$W_line = ' W = '.$line."\n";
+					}
+
 				}
+
 				@code =  (@code[0..$i-1],
 						  @code[$i+1..$#code]);
 			}
 		} 
 	}
 	croak("Failed to find Y definition row in \$PK/\$ERROR") unless ($found);
-	croak("Failed to find W definition row in \$PK/\$ERROR") unless ((not $handle_W ) or (length($W_line)>0));
+	croak("Failed to find W definition row in \$PK/\$ERROR") unless (length($W_line)>0);
+
+
+	#if $self->tbs rather than $self->dtbs then do not add anything more
+	if (defined $self->tbs_delta()){
+		$zeta_line = ' DELTA = THETA('.($newthetanum+1).')'."\n".' ZETA = LAMBDA + DELTA'."\n";
+		$self->add_records( type => 'theta',
+							record_strings => [$self->tbs_delta().' ; tbs_delta'] );
+	}elsif (defined $self->tbs_zeta()){
+		$zeta_line = ' ZETA = THETA('.($newthetanum+1).')'."\n";
+		$self->add_records( type => 'theta',
+							record_strings => [$self->tbs_zeta().' ; tbs_zeta'] );
+	}elsif ($self->dtbs()){
+		#default ZETA
+		$zeta_line = ' ZETA = THETA('.($newthetanum+1).')'."\n";
+		$self->add_records( type => 'theta',
+							record_strings => [$zeta_default.' ; tbs_zeta'] );
+	}
+
 	
 	#Find last occurrence of IPRED = ... by scanning from the end.
 	#Then keep the IPRED row, and then insert extra stuff directly after

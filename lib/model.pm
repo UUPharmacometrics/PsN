@@ -134,7 +134,8 @@ has 'run_no' => ( is => 'rw', isa => 'Int', default => 0 );
 has 'sde' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'omega_before_pk' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'tbs' => ( is => 'rw', isa => 'Bool', default => 0 );
-has 'tbs_param' => ( is => 'rw', isa => 'Maybe[Str]' );
+has 'dtbs' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'tbs_lambda' => ( is => 'rw', isa => 'Maybe[Str]' );
 has 'tbs_zeta' => ( is => 'rw', isa => 'Maybe[Str]' );
 has 'tbs_delta' => ( is => 'rw', isa => 'Maybe[Str]' );
 has 'tbs_thetanum' => ( is => 'rw', isa => 'Int' );
@@ -2964,6 +2965,8 @@ sub update_inits
 		from_hash => { isa => 'Ref', optional => 1 },
 		problem_number => { isa => 'Maybe[Int]', optional => 1 },
 		ignore_missing_parameters => { isa => 'Bool', default => 0, optional => 1 },
+		update_fix => { isa => 'Bool', default => 0, optional => 1 },
+		skip_output_zeros => { isa => 'Bool', default => 0, optional => 1 },
 		ensure_diagonal_dominance => { isa => 'Bool', default => 0, optional => 1 },
 		update_omegas => { isa => 'Bool', default => 1, optional => 1 },
 		update_sigmas => { isa => 'Bool', default => 1, optional => 1 },
@@ -2979,6 +2982,8 @@ sub update_inits
 	my $update_omegas = $parm{'update_omegas'};
 	my $update_sigmas = $parm{'update_sigmas'};
 	my $update_thetas = $parm{'update_thetas'};
+	my $update_fix = $parm{'update_fix'};
+	my $skip_output_zeros = $parm{'skip_output_zeros'};
 
 	# Usage:
 	#
@@ -3153,7 +3158,7 @@ sub update_inits
 					$any_same=1; # we can match nothing, cannot do error check
 					next;
 				}
-				if  ($record->fix()){
+				if  ($record->fix() and (not $update_fix)){
 					$store_rec = 0; 
 					next if ($ignore_missing_parameters or $any_same);
 				}
@@ -3163,7 +3168,7 @@ sub update_inits
 				foreach my $option (@{$record -> options()}) {
 					next if ($option->prior());
 					my $store_val = $store_rec;
-					if ($option->fix()){
+					if ($option->fix() and (not $update_fix)){
 						$store_val = 0;
 						next if ($ignore_missing_parameters or $any_same);
 					}
@@ -3175,11 +3180,13 @@ sub update_inits
 					if (defined $namesvalues{$name}){
 						my $value = $namesvalues{$name};
 						croak("Multiple instances of label $name in problem to update, ".
-							"ambiguous parameter matching by label.") 
-						if ($value eq 'matched');
+							  "ambiguous parameter matching by label.") 
+							if ($value eq 'matched');
+						$store_val = 0 if ($value == 0 and $skip_output_zeros);
 						if ($store_val){
+							#will change value even if fix
 							push( @diagnostics,
-								$option -> check_and_set_init( new_value => $value ) );
+								  $option -> check_and_set_init( new_value => $value ) );
 						}
 						$namesvalues{$name} = 'matched';
 					} else {
@@ -4802,7 +4809,8 @@ sub _read_problems
 					omega_before_pk             => $self->omega_before_pk,
 					cwres                       => $self->cwres,
 					tbs                         => $self->tbs,
-					tbs_param                   => $self->tbs_param,
+					dtbs                         => $self->dtbs,
+					tbs_lambda                   => $self->tbs_lambda,
 					tbs_delta                   => $self->tbs_delta,
 					tbs_zeta                   => $self->tbs_zeta,
 					mirror_plots                => $self->mirror_plots,
