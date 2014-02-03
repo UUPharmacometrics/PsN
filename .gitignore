@@ -17,4 +17,10 @@ test/test_files/pheno5.lst
 test/test_files/pheno5.ext
 test/test_files/pheno5.phi
 development/completion_files
+test/test_files/tbs1.ext
+test/test_files/tbs1.lst
+test/test_files/tbs1.phi
+test/test_files/tbs1a.ext
+test/test_files/tbs1a.lst
+test/test_files/tbs1a.phi
 lib/PsN.pm

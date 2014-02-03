@@ -23,7 +23,7 @@ $rc = $rc >> 8;
 
 ok ($rc == 0, "frem that should run ok");
 
-rmtree([ "./$dir" ]);
+#rmtree([ "./$dir" ]);
 
 
 done_testing();

@@ -13,7 +13,7 @@ Note: The frem script is work in progress and is not fully functional yet.
 The frem script creates a set of models to gradually include random effects on “everything” to simultaneously account for all parameter-covariate relations. [TODO Description of frem methodology should be added.] If option -vpc is set then script will prepare model that can be run with vpc.
 Example
 \begin{verbatim}
-frem -covariates run1.mod
+frem -covariates TODO run1.mod
 \end{verbatim}
 
 \subsection{TODO}
@@ -35,53 +35,34 @@ A model file is required on the command-line.
 Default is DV. The name of the dependent variable. Name used in \$INPUT. 
 \nextopt
 \optdefault{time\_varying}{list}
-A comma-separated list of time-varying covariates. Names used in \$INPUT. Optional if -invariant is given, not allowed if -model3 is set, otherwise required. 
+A comma-separated list of time-varying covariates. Names used in \$INPUT. Optional if -invariant is given, not allowed if restarting an old run, otherwise required. 
 \nextopt
 \optdefault{occasion}{name}
-Default OCC. The name of the column that defines occasions. Name used in \$INPUT, not data set. Needed if -time\_varying is set or both -model3 and -bov\_parameters, otherwise ignored.   
+Default OCC. The name of the column that defines occasions. Name used in \$INPUT, not data set. Needed if -time\_varying is set, otherwise ignored.   
 \nextopt
 \optdefault{parameters}{list}
 A comma-separated list of model parameters that should have between-occasion variability added. 
 Required if -time\_varying is set, otherwise not allowed. 
 \nextopt
 \optdefault{invariant}{list}
-A comma-separated list of covariates that are time invariant. Names used in \$INPUT. Optional if -time\_varying is given, not allowed if -model3 is set, otherwise required. 
+A comma-separated list of covariates that are time invariant. Names used in \$INPUT. Optional if -time\_varying is given, not allowed if restarting an old run, otherwise required. 
 \nextopt
 \optdefault{start\_eta}{positive integer}
 The order number of the first ETA to get correlation with covariate ETAs. The default is 1, which means all ETAs will be correlated to 
-covariates.
+covariates. Not allowed if restarting an old run.
 \nextopt
 \optname{vpc}
-Default not set. If set then script will prepare frem model that can be run with the vpc script (separate PsN call). If -model3 is set then this option will be set automatically.  
-\nextopt
-\optname{model3}
-Default not set. If set then it is assumed that the input model is of type Model 3 created earlier by this script. Then frem will only create vpc model.  
+Default not set. If set then script will create a frem model that can be run with the vpc script (separate PsN call).  
 \nextopt
 \optname{check}
 Set by default, disable with -no-check. Run safety check after data set 2 generation. 
 \nextopt
 \optdefault{estimate}{number}
-Optional, default not defined. The number (0, 1, 2 or 3) of the last model to estimate in the frem sequence. All models with a higher number will still be created, but not estimated. If option model3 is not set and -estimation $>$= 0, estimation of Model 0 (the input model) will be skipped if a lst-file for the input model is found, i.e. a file with same stem but extension .lst instead of .mod. If option model3 is set and -estimation$>$=3, estimation of Model 3 (the input model when option model3 is set) will be skipped if a lst-file is found, i.e. a file with same stem but extension .lst instead of .mod. TODO Functionality to update initials of individual models with better estimates if some models are run at a later stage. 
-\nextopt
-\optdefault{bsv\_parameters}{N}
-Required if -model3 is set, otherwise not allowed. The number of model parameters (not covariates) that have BSV etas. This number should be equal to Y-\emph{start\_eta}+1, where Y is the number of etas in Model 0/input model in the frem run that generated the input model3, and 
-\emph{start\_eta} is the integer set with option -start\_eta. 
-\nextopt
-\optdefault{N\_invariant}{N}
-Required if -model3 and -bov\_parameters are both set, otherwise not allowed. The number of invariant covariates that have BSV etas. (This number should be equal to the number of invariant covariates given with option -invariant to the frem run that generated the input model3) 
-\nextopt
-\optdefault{bov\_parameters}{N}
-Optional if -model3 is set, otherwise not allowed. The number of model parameters that have BOV etas. (This number should be equal to the number of parameters given with option -parameters to the frem run that generated the input model3)  
-\nextopt
-\optdefault{type}{COL}
-Default FREMTYPE. Only allowed if -model3 is set. The name of the column that distinguishes between original and covariate observations. The value in the FREMTYPE column must be 0 for original observations and larger than 0 for covariate observations.  
+Optional, default not defined. The number (0, 1, 2 or 3) of the last model to estimate in the frem sequence. All models with a higher number will still be created, but not estimated. When restarting in an existing frem run directory, estimation of models that have an existing lst-file will be skipped even if the -estimate option is set to a higher number.
 \nextopt
 \end{optionlist}
 
 \subsection{Restrictions on the input model}
-These restrictions apply when option -model3 is not set. 
-If option -model3 is set then it is assumed that the input model file is a Model 3 created earlier 
-by the frem script, and then other assumptions about the contents of the model are made. See below for a detailed description of Model 3.
 \begin{itemize}
 	\item Time-varying covariates must only vary between occasions, not within occasions. 
 	\item There must be no parameter called FREMTYPE in \$INPUT/\$PK/\$PRED/\$ERROR.
@@ -274,7 +255,7 @@ END IF
 
 
 \section{Model 2-only time-varying}
-Use dataset but in \$DATA set IGNORE for all FREMTYPE for invariant covariates. Build model based on Model 0 (no filling in of BSV block). Add code and parameters according to Model 2 instructions above but set the number of invariant covariates N\_invariant to 0.
+Use dataset 2 but in \$DATA set IGNORE for all FREMTYPE for invariant covariates. Build model based on Model 0 (no filling in of BSV block). Add code and parameters according to Model 2 instructions above but set the number of invariant covariates N\_invariant to 0.
 
 \section{Model 3}
 
@@ -344,7 +325,7 @@ If a frem model file of type Model 3 is given on the command-line, then the frem
 Create frem\_vpc1.mod
 
 \begin{enumerate}
-	\item Take input model (Model 3). Update inits from estimation, if available. TODO: Option to run Model 3 if lst not available. Afterwards FIX \$THETA and \$OMEGA. Unfix all \$SIGMA.
+	\item Take input model (Model 3). Update inits from estimation, if available. Afterwards FIX \$THETA and \$OMEGA. Unfix all \$SIGMA.
 	\item Set IGNORE=(FREMTYPE.GT.0) where FREMTYPE can be replaced using option -type.
 (The FREMTYPE that is not a time-varying or invariant covariate. Use .GT. to ensure numerical comparison instead of string comparison in NONMEM.)
 	\item Remove \$COV.

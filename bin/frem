@@ -26,19 +26,14 @@ my %options;
 
 my %required_options = ();
 my %optional_options = ( 'invariant:s' => undef,
-			 'time_varying:s' => undef,
-			 'occasion:s' => undef,
-			 'parameters:s' => undef,
-			 'dv:s' => undef,
-			 'vpc!' => undef,
-			 'model3!' => undef,
-			 'check!' => undef,
-			 'estimate:i' => undef,
-			 'bsv_parameters:i' => undef,
-			 'start_eta:i' => undef,
-			 'N_invariant:i' => undef,
-			 'bov_parameters:i' => undef,
-			 'type:s' => undef);
+						 'time_varying:s' => undef,
+						 'occasion:s' => undef,
+						 'parameters:s' => undef,
+						 'dv:s' => undef,
+						 'vpc!' => undef,
+						 'check!' => undef,
+						 'estimate:i' => undef,
+						 'start_eta:i' => undef);
 
 my $res = GetOptions( \%options,
 		      @common_options::get_opt_strings,
@@ -117,26 +112,10 @@ $help_text{-vpc} = <<'EOF';
       Default not set.
 EOF
 
-$help_text{-model3} = <<'EOF';
-      -model3
-
-      Default not set.
-EOF
-
 $help_text{-check} = <<'EOF';
       -check
 
       Default not set.
-EOF
-
-$help_text{-bsv_parameters} = <<'EOF';
-      -bsv_parameters=N
-
-EOF
-
-$help_text{-N_invariant} = <<'EOF';
-      -N_invariant=N
-
 EOF
 
 $help_text{-estimate} = <<'EOF';
@@ -144,15 +123,6 @@ $help_text{-estimate} = <<'EOF';
 
 EOF
 
-$help_text{-bov_parameters} = <<'EOF';
-      -bov_parameters=N
-
-EOF
-
-$help_text{-type} = <<'EOF';
-      -type=column
-
-EOF
 
 $help_text{Post_help_message} = <<'EOF';
     Also see 'psn_options -h' for a description of common PsN options.
@@ -171,80 +141,47 @@ if( scalar(@ARGV) > 1 ){
   exit;
 }
 
-#input checks
-if (defined $options{'model3'} and $options{'model3'}){
-    if (defined $options{'invariant'} ){
-	print "Option invariant is not allowed in combination with option model3.\n";
-	exit;
-    }
-    if (defined $options{'time_varying'} ){
-	print "Option time_varying is not allowed in combination with option model3.\n";
-	exit;
-    }
-    if (defined $options{'parameters'} ){
-	print "Option parameters is not allowed in combination with option model3.\n";
-	exit;
-    }
-
-    #			   filename                    => $ARGV[0],
-    #check here for annotation in input model, set options unless given on commmandline
-    #then continue with checks for required input options
-    if (defined $options{'bsv_parameters'} ){
-	print "Option bsv_parameters is required when option model3 is set.\n";
-	exit;
-    }
-    if (defined $options{'N_invariant'} ){
-	print "Option N_invariant is required when option model3 is set.\n";
-	exit;
-    }
-
-} else{
+my $done_file = 'template_models_done.pl';
+if (defined $options{'directory'} and -e $options{'directory'}.'/'.$done_file){
+	#use done file parameters, ignore command-line
+	foreach my $opt ('invariant','time_varying','parameters','start_eta','occasion','dv'){
+		if (defined $options{$opt}){
+			print "The file $done_file already exists in directory ".$options{'directory'}.", option -$opt not allowed.";
+			exit;
+		}
+	}
+}else{
+	#input checks
     unless (defined $options{'invariant'} or defined $options{'time_varying'}){
-	print "At least one of options invariant or time_varying must be given when model3 is not set.\n";
-	exit;
+		print "At least one of options invariant or time_varying must be given when starting a new run.\n";
+		exit;
     }
     if ((defined $options{'time_varying'}) xor ( defined $options{'parameters'})){
-	print "Options time_varying and parameters must either be both given or both not given\n";
-	exit;
+		print "Options time_varying and parameters must either be both given or both not given\n";
+		exit;
     }
-    if (defined $options{'bsv_parameters'} ){
-	print "Option bsv_parameters is not allowed without option model3.\n";
-	exit;
-    }
-    if (defined $options{'bov_parameters'} ){
-	print "Option bov_parameters is not allowed without option model3.\n";
-	exit;
-    }
-    if (defined $options{'N_invariant'} ){
-	print "Option N_invariant is not allowed without option model3.\n";
-	exit;
-    }
-    if (defined $options{'type'} ){
-	print "Option type is not allowed without option model3.\n";
-	exit;
-    }
-
+	
 }
+
 
 #parse input
 my @invariant=();
 if (defined $options{'invariant'}){
     #comma-separated list of names
     foreach my $name (split(/,/,$options{'invariant'})){
-	if (length($name)>0){
-	    push(@invariant,$name);
-	}
+		if (length($name)>0){
+			push(@invariant,$name);
+		}
     }
-    $options{'N_invariant'} = scalar(@invariant); #now this option is ok without model3, because we know it is correct
 }
 
 my @time_varying=();
 if (defined $options{'time_varying'}){
     #comma-separated list of names
     foreach my $name (split(/,/,$options{'time_varying'})){
-	if (length($name)>0){
-	    push(@time_varying,$name);
-	}
+		if (length($name)>0){
+			push(@time_varying,$name);
+		}
     }
 }
 
@@ -252,17 +189,11 @@ my @parameters=();
 if (defined $options{'parameters'}){
     #comma-separated list of names
     foreach my $name (split(/,/,$options{'parameters'})){
-	if (length($name)>0){
-	    push(@parameters,$name);
-	}
+		if (length($name)>0){
+			push(@parameters,$name);
+		}
     }
-    $options{'bov_parameters'} = scalar(@parameters); #now this option is ok without model3, because we know it is correct
 }
-
-
-#checks left for frem->new: occ and dv exist in $INPUT if needed. type exists in $INPUT if given. 
-
-
 
 unless ( defined $options{'skip_data_parsing'} or $options{'drop_dropped'}) {
     $options{'skip_data_parsing'} = 1;
@@ -273,27 +204,30 @@ my $eval_string = common_options::model_parameters(\%options);
 my $model = model -> new ( eval( $eval_string ),
 			   filename                    => $ARGV[0],
 			   ignore_missing_output_files => 1);
+if ($model->tbs){
+	die "frem is incompatible with option -tbs\n";
+}
 
 if( defined $model -> msfi_names() ){
     my @needed_files;
     foreach my $msfi_files( @{$model -> msfi_names()} ){
-	#loop $PROB
-	if (defined $msfi_files){
-	    foreach my $msfi_file( @{$msfi_files} ){
-		#loop instances
-		if ( defined $msfi_file ){
-		    my ( $dir, $file ) = OSspecific::absolute_path(cwd(),$msfi_file);
-		    push (@needed_files,$dir.$file) ;
+		#loop $PROB
+		if (defined $msfi_files){
+			foreach my $msfi_file( @{$msfi_files} ){
+				#loop instances
+				if ( defined $msfi_file ){
+					my ( $dir, $file ) = OSspecific::absolute_path(cwd(),$msfi_file);
+					push (@needed_files,$dir.$file) ;
+				}
+			}
 		}
-	    }
-	}
     }
     if (scalar(@needed_files)>0){
-	if( defined $model -> extra_files ){
-	    push(@{$model -> extra_files},@needed_files);
-	}else{
-	    $model -> extra_files(\@needed_files);
-	}
+		if( defined $model -> extra_files ){
+			push(@{$model -> extra_files},@needed_files);
+		}else{
+			$model -> extra_files(\@needed_files);
+		}
     }
     
 }
@@ -313,25 +247,21 @@ unless( scalar(@{$est_record}) > 0 ){
 
 my $frem = tool::frem -> 
     new ( eval( $common_options::parameters ),
-	  models	     => [ $model ],
-	  top_tool           => 1,
-	  parameters => \@parameters,
-	  time_varying => \@time_varying,
-	  invariant => \@invariant,
-	  bsv_parameters => $options{'bsv_parameters'}, 
-	  start_eta => $options{'start_eta'}, 
-	  bov_parameters => $options{'bov_parameters'},
-	  estimate => $options{'estimate'}, 
-	  check => $options{'check'}, 
-	  vpc => $options{'vpc'}, 
-	  model3 => $options{'model3'}, 
-	  N_invariant => $options{'N_invariant'}, 
-	  occasion => $options{'occasion'}, 
-	  dv => $options{'dv'}, 
-	  type => $options{'type'} );
+		  models	     => [ $model ],
+		  top_tool           => 1,
+		  done_file => $done_file,
+		  parameters => \@parameters,
+		  time_varying => \@time_varying,
+		  invariant => \@invariant,
+		  start_eta => $options{'start_eta'}, 
+		  estimate => $options{'estimate'}, 
+		  check => $options{'check'}, 
+		  vpc => $options{'vpc'}, 
+		  occasion => $options{'occasion'}, 
+		  dv => $options{'dv'}); 
 
-ui -> print( category => 'frem',
-	     message => "have new frem\n" );
+#ui -> print( category => 'frem',
+#	     message => "have new frem\n" );
 
 
 $frem-> print_options (cmd_line => $cmd_line,
