@@ -2017,7 +2017,7 @@ sub get_bin_ceilings_from_value
 	my %parm = validated_hash(\@_,
 		 data_column => { isa => 'ArrayRef[Num]', optional => 0 },
 		 data_indices => { isa => 'ArrayRef[Num]', optional => 0 },
-		 n_bins => { isa => 'Int', optional => 1 },
+		 n_bins => { isa => 'Maybe[Int]', optional => 1 },
 		 single_bin_size => { isa => 'Maybe[Int]', optional => 1 },
 		 list_boundaries => { isa => 'ArrayRef[Num]', optional => 1 }
 	);
