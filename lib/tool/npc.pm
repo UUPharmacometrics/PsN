@@ -20,7 +20,7 @@ extends 'tool';
 
 has 'is_vpc' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'searchdir' => ( is => 'rw', isa => 'Str' );
-has 'refstrat' => ( is => 'rw', isa => 'Num' );
+has 'refstrat' => ( is => 'rw', isa => 'Num', clearer => 'clear_refstrat' );
 has 'fine_pi' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'confidence_interval' => ( is => 'rw', isa => 'Int', default => 95 );
 has 'covariance_file' => ( is => 'rw', isa => 'Str' );
@@ -44,18 +44,18 @@ has 'npc_alert_written' => ( is => 'rw', isa => 'Bool' );
 has 'detection_censored' => ( is => 'rw', isa => 'Bool' );
 has 'run_the_original' => ( is => 'rw', isa => 'Bool' );
 has 'run_the_sim' => ( is => 'rw', isa => 'Bool' );
-has 'data_matrix' => ( is => 'rw', isa => 'ArrayRef' );
-has 'censor_data_matrix' => ( is => 'rw', isa => 'ArrayRef' );
+has 'data_matrix' => ( is => 'rw', isa => 'ArrayRef', clearer => 'clear_data_matrix' );
+has 'censor_data_matrix' => ( is => 'rw', isa => 'ArrayRef', clearer => 'clear_censor_data_matrix' );
 has 'n_simulations' => ( is => 'rw', isa => 'Int' );
 has 'n_observations' => ( is => 'rw', isa => 'Int' );
 has 'strata_matrix' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 has 'strata_labels' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
-has 'strata_variable_vector' => ( is => 'rw', isa => 'Maybe[ArrayRef]', default => sub { [] } );
+has 'strata_variable_vector' => ( is => 'rw', isa => 'Maybe[ArrayRef]', default => sub { [] }, clearer => 'clear_strata_variable_vector' );
 has 'stratified_data' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
-has 'idv_array' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
+has 'idv_array' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] }, clearer => 'clear_idv_array' );
 has 'pred_array' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 has 'bound_array' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
-has 'id_array' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
+has 'id_array' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] }, clearer => 'clear_id_array' );
 has 'binned_data' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 has 'censor_binned_data' => ( is => 'rw', isa => 'ArrayRef' );
 has 'bin_ceilings' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
@@ -1754,7 +1754,7 @@ sub create_unique_values_hash
 		unless ($found_reference){
 			print "\n\nERROR: The reference stratum value refstrat was set to ".$self->stratify_on()."=".$reference." but no observations were found where ".
 			$self->stratify_on()."=".$reference.". Continuing analysis with refstrat undefined.\n\n";
-			$self->{'refstrat'} = undef;  #FIXME for Moose
+			$self->clear_refstrat;
 		}
 	}
 
@@ -3149,9 +3149,9 @@ sub create_binned_data
 
   close $bin_file;
 
-  $self->{'idv_array'}=undef; #FIXME: With Moose
-  $self->{'id_array'}=undef;
-  $self->{'strata_variable_vector'}=undef;
+  $self->clear_idv_array;
+  $self->clear_id_array;
+  $self->clear_strata_variable_vector;
 
   $self->reprint_mirror_and_plot_data() if ($self->varcorr 
 					    or $self->predcorr
@@ -3671,7 +3671,7 @@ sub create_stratified_data
     }
     push(@all_strata,\@strata_data);
   }
-  $self->{'data_matrix'}=undef; #FIXME: With Moose
+  $self->clear_data_matrix;
   $self->stratified_data(\@all_strata);
 
   if (defined $self->censor_data_matrix){
@@ -3683,7 +3683,7 @@ sub create_stratified_data
       }
       push(@cens_all_strata,\@strata_data);
     }
-    $self->{'censor_data_matrix'} = undef; #FIXME: For Moose
+    $self->clear_censor_data_matrix;
     $self->censor_stratified_data(\@cens_all_strata);
   }
 
@@ -3712,7 +3712,7 @@ sub vpc_analyze
 		for (my $strat_ind=1; $strat_ind<$no_of_strata; $strat_ind++){
 			unless ($ref_n_bins == scalar(@{$self->binned_data->[$strat_ind]})){
 				print "\n ERROR: cannot use refstrat option unless equal number of bins in all strata. Continuing analysis with refstrat undefined\n\n";
-				$self->{'refstrat'} = undef; #FIXME for Moose
+				$self->clear_refstrat;
 				last;
 			}
 		}  

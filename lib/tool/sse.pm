@@ -15,7 +15,7 @@ has 'samples' => ( is => 'rw', isa => 'Int', default => 100 );
 has 'alternative_models' => ( is => 'rw', isa => 'ArrayRef[model]', default => sub { [] } );
 has 'random_estimation_inits' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'mc_models' => ( is => 'rw', isa => 'ArrayRef[model]', default => sub { [] } );
-has 'initial_values' => ( is => 'rw', isa => 'Any' );
+has 'initial_values' => ( is => 'rw', isa => 'Any', clearer => 'clear_initial_values' );
 has 'first_alternative' => ( is => 'rw', isa => 'Int' );
 has 'bayes' => ( is => 'rw', isa => 'Bool', isa => 0 );
 has 'simulation_rawres' => ( is => 'rw', isa => 'Str' );
@@ -945,7 +945,7 @@ sub modelfit_setup
 		unless ($self->add_models()){
 			unless ($self->have_nwpri() or $self->have_tnpri()){
 				$self -> initial_values -> write( $self -> directory.'simulation_initial_values' );
-				$self->{'initial_values'} = undef; #FIXME for Moose
+				$self->clear_initial_values;
 			}
 			my $threads = $self -> parallel_simulations ? $self -> parallel_simulations : $self->threads;
 
@@ -1005,7 +1005,7 @@ sub modelfit_setup
 						$self -> initial_values -> {$i-1} -> {'sigma'}."\n";
 				}
 				close (INITS);
-				$self->{'initial_values'} = undef; #FIXME for Moose
+				$self->clear_initial_values;
 			}
 
 		}

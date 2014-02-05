@@ -277,11 +277,12 @@ if( -e $options{'config_file'} ){
 #calls get_defaults, set_globals etc, initiates random sequence, store tool_options
 common_options::setup( \%options, 'xv_scm' ); 
 
-$config_file -> gof('p_value');
-$config_file -> p_value(1);
-$config_file -> search_direction('forward');
-$config_file -> update_derivatives(0);
-$config_file -> {'ofv_change'} = undef if defined ($config_file -> ofv_change()); #FIXME for Moose
+$config_file->gof('p_value');
+$config_file->p_value(1);
+$config_file->search_direction('forward');
+$config_file->update_derivatives(0);
+$config_file->{'ofv_change'} = undef if defined ($config_file -> ofv_change()); #FIXME for Moose
+
 my $original_included=undef;
 if( defined $config_file -> included_relations() ){
   $original_included=$config_file -> included_relations();

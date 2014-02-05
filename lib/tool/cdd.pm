@@ -1319,7 +1319,7 @@ sub _modelfit_raw_results_callback
 			foreach my $row ( @{$modelfit -> raw_results} ) {
 				unshift( @{$row}, 'cross_validation' );
 			}
-			$modelfit -> {'raw_results_header'} = undef; # May be a bit silly to do... #FIXME for Moose
+			$modelfit->clear_raw_results_header;
 		} else {
 
 			my %dummy;

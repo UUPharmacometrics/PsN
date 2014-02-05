@@ -884,9 +884,6 @@ sub fractions
 	my $unique_in_individual = $parm{'unique_in_individual'};
 	my %fractions;
 
-{
-	#FIXME: This method is not used. Remove?
-
 	my %factors = $self->factors( 'return_occurences' => 1, 
 			'unique_in_individual' => $unique_in_individual,
 			'column_head' => $column_head,
@@ -907,7 +904,6 @@ sub fractions
 			$fractions{$factor} = $amount / $sum;
 		}
 	}
-}
 
 	return \%fractions;
 }

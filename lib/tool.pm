@@ -59,7 +59,7 @@ has 'prepend_model_file_name' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'raw_results' => ( is => 'rw', isa => 'ArrayRef' );
 has 'raw_results_append' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'raw_results_file' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { ['raw_results.csv'] } );
-has 'raw_results_header' => ( is => 'rw', isa => 'ArrayRef[Str]', default =>
+has 'raw_results_header' => ( is => 'rw', isa => 'ArrayRef[Str]', clearer => 'clear_raw_results_header', default =>
 	sub {  ['model','problem','subproblem','covariance_step_run','minimization_successful','covariance_step_successful',
 			'covariance_step_warnings','estimate_near_boundary','rounding_errors','zero_gradients','final_zero_gradients','hessian_reset',
 			's_matrix_singular','significant_digits','condition_number','est_methods','nburn_set','burn_in_iter','burn_in_conv','model_run_time',
@@ -674,7 +674,7 @@ sub read_raw_results
 	);
 	my $model_number = $parm{'model_number'};
 
-	undef $self -> {'raw_results_header'};	# FIXME: Do in moose
+	$self->clear_raw_results_header;
 	for ( my $i = 1; $i <= scalar @{$self->models}; $i++ ) { # All models
 	  if ( defined $self->raw_results_file and -e $self->raw_results_file->[$i-1] ) {
 	    open( RRES, $self->raw_results_file->[$i - 1] );

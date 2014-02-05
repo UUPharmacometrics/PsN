@@ -16,13 +16,20 @@ use ui;
 use Cwd;
 use OSspecific;
 
+my $first_call = 1;
+
 sub print_option
 {
 	my $fh = shift;
 	my $option_name = shift;
 	my $option_value = shift;
 
-	print $fh ", $option_name = $option_value";
+	if ($first_call) {
+		print $fh "$option_name = $option_value";
+		$first_call = 0;
+	} else {
+		print $fh ", $option_name = $option_value";
+	}
 }
 
 
@@ -373,8 +380,7 @@ if( defined $model->msfi_names() ){
 }
 
 
-my $nca = tool::npc -> 
-    new ( eval( $common_options::parameters ),
+my $nca = tool::npc->new(eval($common_options::parameters),
 	  models	           => [ $model ],
 	  stratify_on        => $options{'stratify_on'},
 	  censor             => $options{'censor'},
@@ -383,7 +389,7 @@ my $nca = tool::npc ->
 	  msfo_file          => $options{'msfo_file'},
 	  idv                => ((defined $options{'idv'}) ? $options{'idv'} : 'TIME'),
 	  dv                 => $options{'dv'},
-	  categorized        => ((scalar(@levels) > 0) ? 1:0),
+	  categorized        => ((scalar(@levels) > 0) ? 1 : 0),
 	  levels             => \@levels,
 	  lloq               => $options{'lloq'},
 	  uloq               => $options{'uloq'},
@@ -412,10 +418,14 @@ open my $fh, ">", $script_filename;
 
 print $fh 'nca(';
 
-print_option($fh, 'timeNm', $nca->idv);
-print_option($fh, 'concNm', $nca->dv);
+print_option($fh, 'origFile', '"nca_original.npctab.dta"');
+print_option($fh, 'timeNm', '"' . $nca->idv . '"');
+print_option($fh, 'concNm', '"' . $nca->dv . '"');
+print_option($fh, 'simFile', '"nca_simulation.1.npctab.dta"');
+print_option($fh, 'simConcNm', '"' . $nca->dv . '"'); 
+print_option($fh, 'nsim', $nca->samples);
 
-print $fh ')';
+print $fh ")\n";
 
 close $fh;
 
