@@ -716,6 +716,7 @@ my $vpc = tool::npc ->
 	  min_no_bins			=> $min_no_bins,
     max_no_bins			=> $max_no_bins,
 	  min_points_in_bin	=> $options{'min_points_in_bin'},
+		directory_name_prefix => 'vpc',
 	  );
 
 $vpc-> print_options (cmd_line => $cmd_line,
