@@ -155,7 +155,7 @@ PDFFILES=$(TEXFILES:.tex=.pdf)
 .PHONY : clean
 
 clean:
-	@-rm -rf $(DOCUMENTS) libgen PsN-Source psn_test_package.zip bin/completion_files doc/*.aux doc/*.log doc/*.pdf doc/inputs/*eps-converted-to.pdf PsN-Source.tar.gz PsN-Source.zip
+	@-rm -rf $(DOCUMENTS) PsN-Source psn_test_package.zip development/completion_files doc/*.aux doc/*.log doc/*.pdf doc/inputs/*eps-converted-to.pdf PsN-Source.tar.gz PsN-Source.zip
 
 documents: $(DOCUMENTS)
 
