@@ -225,13 +225,13 @@ BINFILES= boot_scm \
 	vpc \
 	xv_scm \
 
-bin/completion_files:
-	@ mkdir -p bin/completion_files
+development/completion_files:
+	@ mkdir -p development/completion_files
 
 .PHONY: completion
-completion: bin/completion_files
+completion: development/completion_files
 	cd bin; \
-	$(foreach file, $(BINFILES), perl genauto $(file) >completion_files/$(file);)
+	$(foreach file, $(BINFILES), perl ../development/genauto $(file) >../development/completion_files/$(file);)
 
 
 
