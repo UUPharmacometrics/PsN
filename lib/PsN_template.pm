@@ -2,12 +2,12 @@ use ext::Carp;
 use ext::Config::Tiny;
 use ext::File::HomeDir;
 
-$nmdir;
-$nm_major_version;
-$nm_minor_version;
-$compiler_label;
+our $nmdir;
+our $nm_major_version;
+our $nm_minor_version;
+our $compiler_label;
 
-$warnings_enabled;
+our $warnings_enabled;
 
 # Default disable all warnings except those coming from Getopt
 # Enable all warnings if $warnings_enabled is set
@@ -38,9 +38,9 @@ unless( exists $config -> {'high_INF'} ){
   $config -> {'high_INF'} = 1000000;
 }
 
-$out_miss_data;
-$output_header;
-$factorize_strings;
+our $out_miss_data;
+our $output_header;
+our $factorize_strings;
 if ( $config -> {'_'} -> {'output_style'} eq 'SPLUS' ) {
   $out_miss_data = 'NA';
   $output_header = 1;
@@ -67,7 +67,6 @@ sub set_nonmem_info {
   $compiler_label = undef;
   my $version = undef;
   my @list = split(/,/ , $config -> {'nm_versions'} -> { $version_label } );
-  #($nmdir,$version,$compiler_label) = split(/,/ , $config -> {'nm_versions'} -> { $version_label } );
   $nmdir = shift(@list);
   $nmdir =~ s/^\s+//g;
   $version = shift(@list);
