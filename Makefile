@@ -180,18 +180,18 @@ doc/%.pdf: doc/%.tex
 doc: $(PDFFILES)
 
 release: rel_dir $(RELFILES) $(PDFFILES)
-	@ mkdir PsN-Source/lib/doc
-	@ cp doc/*.pdf PsN-Source/lib/doc
-	@ cp doc/*.scm PsN-Source/lib/doc
-	@ cp doc/*.xls PsN-Source/lib/doc
-	@ cd PsN-Source/lib/doc/; zip PsN_pdf_documentation *.pdf *.xls *.scm
-	@ cd PsN-Source/lib/doc/; tar -czf PsN_pdf_documentation.tar.gz *.pdf *.xls *.scm
+	@ mkdir PsN-Source/doc
+	@ cp doc/*.pdf PsN-Source/doc
+	@ cp doc/*.scm PsN-Source/doc
+	@ cp doc/*.xls PsN-Source/doc
+	@ cd PsN-Source/doc/; zip PsN_pdf_documentation *.pdf *.xls *.scm
+	@ cd PsN-Source/doc/; tar -czf PsN_pdf_documentation.tar.gz *.pdf *.xls *.scm
 	@ zip -r PsN-Source PsN-Source/
 	@ tar czf PsN-Source.tar.gz PsN-Source/
 
-documentation: lib/doc/*.pdf $(PDFFILES)
-	@ cd PsN-Source/lib/doc/; zip PsN_pdf_documentation *.pdf *.xls *.scm
-	@ cd PsN-Source/lib/doc/; tar -czf PsN_pdf_documentation.tar.gz *.pdf *.xls *.scm 
+documentation: doc/*.pdf $(PDFFILES)
+	@ cd PsN-Source/doc/; zip PsN_pdf_documentation *.pdf *.xls *.scm
+	@ cd PsN-Source/doc/; tar -czf PsN_pdf_documentation.tar.gz *.pdf *.xls *.scm 
 
 testpackage:
 	@ zip -r psn_test_package test

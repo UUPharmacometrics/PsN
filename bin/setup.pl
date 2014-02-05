@@ -466,18 +466,7 @@ if( $Config{osname} eq 'linux' or $Config{osname} eq 'darwin'){
 my $binary_dir;
 my $library_dir;
 my $perl_binary;
-my $add_psn_aliases=0;
 my $old_psn_config_file;
-
-if (0){
-	print "Would you like to allow using prefix psn_ for all PsN program names,\n".
-		"for example psn_execute for execute? Only needed if there is already installed\n".
-		"software with the same name, e.g. scm, as any of the PsN programs. [y/n]\n";
-	if( confirm() ){
-		$add_psn_aliases=1;
-	}
-}
-
 
 print "PsN Utilities installation directory [$default_bin]:";
 
@@ -504,7 +493,6 @@ $perl_binary = get_input( $default_perlpath );
 my $runperl_name="runperl.bat";
 my $runperl_binary = File::Spec->catpath( $volume, $directory, $runperl_name);
 
-#print "\n $runperl_binary \n";
 if(( $Config{osname} eq 'MSWin32' ) and ($perl_binary ne 'C:\Perl\bin\perl.exe')){
 	print "Warning: If you are running on Windows and the path to the perl binary \n".
 		"set in the previous question was something other than ".'C:\Perl\bin\perl.exe'.
@@ -636,10 +624,7 @@ if ($have_file_copy){
 }
 
 my $confirmed = 0;
-foreach my $file ( @utilities ){
-	
-	#system( $copy_cmd . " " . File::Spec -> catfile( "bin", $file ) . " " . File::Spec -> catfile( $binary_dir, "$file-$version" ) );
-	
+foreach my $file ( @utilities ) {
 	unless (open( INST , "<" , File::Spec -> catfile( "bin", $file ) )){
 		print "Could not open ".File::Spec -> catfile( "bin", $file ).
 			" for reading, unable to install $file: $!\n";
@@ -743,31 +728,14 @@ foreach my $file ( @utilities ){
 					print "Could not copy $runperl_binary to $binary_dir\\$file.bat : $!\n";
 					quit('abort');
 				}
-				if ($add_psn_aliases){
-					unless (fcopy("$binary_dir\\$file-$version","$binary_dir\\psn_$file")){
-						print "Could not copy $binary_dir\\$file-$version to  $binary_dir\\psn_$file : $!\n";
-						quit('abort');
-					}
-					unless (fcopy("$runperl_binary","$binary_dir\\psn_$file.bat")){
-						print "Could not copy $runperl_binary to $binary_dir\\psn_$file.bat : $!\n";
-						quit('abort');
-					}
-				}
 			}else{
 				#win but no file copy
 				system( "copy /Y \"$binary_dir\\$file-$version\" \"$binary_dir\\$file\"" );
 				system( "copy /Y \"$runperl_binary\" \"$binary_dir\\$file.bat\"" );
-				if ($add_psn_aliases){
-					system( "copy /Y \"$binary_dir\\$file-$version\" \"$binary_dir\\psn_$file\"" );
-					system( "copy /Y \"$runperl_binary\" \"$binary_dir\\psn_$file.bat\"" );
-				}
 			}
 		} else {
 			#unix
 			symlink( "$binary_dir/$file-$version", "$binary_dir/$file" );
-			if ($add_psn_aliases){
-				symlink( "$binary_dir/$file-$version", "$binary_dir/psn_$file" );
-			}
 		}
 		if ($file eq 'update_inits'){
 			if( $Config{osname} eq 'MSWin32' ){
@@ -780,30 +748,10 @@ foreach my $file ( @utilities ){
 						print "Could not copy $runperl_binary to $binary_dir\\update.bat : $!\n";
 						quit('abort');
 					}
-					if ($add_psn_aliases){
-						unless (fcopy("$binary_dir\\$file-$version","$binary_dir\\psn_update")){
-							print "Could not copy $binary_dir\\$file-$version to  $binary_dir\\psn_update : $!\n";
-							quit('abort');
-						}
-						unless (fcopy("$runperl_binary","$binary_dir\\psn_update.bat")){
-							print "Could not copy $runperl_binary to $binary_dir\\psn_update.bat : $!\n";
-							quit('abort');
-						}
-					}
 				}else{
 					#win but no file copy
 					system( "copy /Y \"$binary_dir\\$file-$version\" \"$binary_dir\\update\"" );
 					system( "copy /Y \"$runperl_binary\" \"$binary_dir\\update.bat\"" );
-					if ($add_psn_aliases){
-						system( "copy /Y \"$binary_dir\\$file-$version\" \"$binary_dir\\psn_update\"" );
-						system( "copy /Y \"$runperl_binary\" \"$binary_dir\\psn_update.bat\"" );
-					}
-				}
-			} else {
-				#unix
-#	symlink( "$binary_dir/$file-$version", "$binary_dir/update" );
-				if ($add_psn_aliases){
-					symlink( "$binary_dir/$file-$version", "$binary_dir/psn_update" );
 				}
 			}
 		}
@@ -928,7 +876,6 @@ if (confirm()){
 				my $home = $ENV{USERPROFILE};
 				if (defined $home){
 					$input =~ s/^%USERPROFILE%/$home/;
-#	  print "$input\n";
 					$ok=1;
 				}else{
 					print "$input does not look like a full search path including drive letter. Please try again.\n";
@@ -943,7 +890,6 @@ if (confirm()){
 				my $home=home();
 				$input =~ s/^~/$home/;
 				$ok=1;
-#	print "$input\n";
 			}else{
 				print "$input does not look like a full search path (does not begin with /). Please try again.\n";
 			}
@@ -985,7 +931,6 @@ if (confirm()){
 	my $newdir = File::Spec -> catdir($input,"PsN_documentation");
 	if ($ok){
 		if( mkpath( $newdir ) ){ 
-#      print "made $newdir\n";
 			unless ( $Config{osname} eq 'MSWin32' ){
 				if (length($use_user_name)>0){
 					my @arr = ($newdir);
@@ -993,7 +938,6 @@ if (confirm()){
 				}
 			}
 		}else{ 
-#      print "did not make  $newdir\n";
 			if (-d $newdir){
 				unless ( $Config{osname} eq 'MSWin32' ){
 					if (length($use_user_name)>0){
@@ -1011,23 +955,20 @@ if (confirm()){
 		if ($have_file_copy){
 			my @file_list;
 			if ( $Config{osname} eq 'MSWin32' ){
-				@file_list = <lib\\doc\\*.scm lib\\doc\\*.pdf lib\\doc\\*.xls>;
-			}else{
-				@file_list = <lib/doc/*.scm lib/doc/*.pdf lib/doc/*.xls>;
+				@file_list = <doc\\*.scm doc\\*.pdf doc\\*.xls>;
+			} else {
+				@file_list = <doc/*.scm doc/*.pdf doc/*.xls>;
 			}
-			my $dest = File::Spec -> catfile( "$newdir","." );
-			foreach my $ff (@file_list){
+			my $dest = File::Spec->catfile("$newdir", ".");
+			foreach my $ff (@file_list) {
 				fcopy($ff, $dest);
 			}
-		}else{
-			my $full_command = $copy_recursive_cmd . " " . File::Spec -> catfile( "lib","doc","*.scm" ) . " \"" .
-				$newdir. "\""; 
+		} else {
+			my $full_command = $copy_recursive_cmd . " " . File::Spec->catfile("doc", "*.scm") . " \"" . $newdir. "\""; 
 			system($full_command);
-			my $full_command = $copy_recursive_cmd . " " . File::Spec -> catfile( "lib","doc","*.pdf" ) . " \"" .
-				$newdir. "\""; 
+			my $full_command = $copy_recursive_cmd . " " . File::Spec->catfile("doc", "*.pdf") . " \"" . $newdir. "\""; 
 			system($full_command);
-			my $full_command = $copy_recursive_cmd . " " . File::Spec -> catfile( "lib","doc","*.xls" ) . " \"" .
-				$newdir. "\""; 
+			my $full_command = $copy_recursive_cmd . " " . File::Spec->catfile("doc", "*.xls") . " \"" . $newdir. "\""; 
 			system($full_command);
 		}
 	}
