@@ -196,7 +196,7 @@ Bill Frame: http://www.ncbi.nlm.nih.gov/pubmed/19904583
  Model must be coded “the Uppsala way”, i.e. with IWRES and W and SIGMA 1 FIX. Also, the user must use untransformed data (e.g. no log-transformation or similar) in the model, and the possible range of IPRED and DV must not include negative values. If IPRED or DV becomes negative there will be a NONMEM error when running the tbs-modified model. 
  When -tbs is set, PsN will make the following changes to the model file before running:
 \begin{enumerate}
-	\item add a THETA representing the Box-Cox LAMBDA parameter to be estimated. Default (can be changed with option -tbs\_param) is no lower boundary, initial estimate 1, no upper boundary.
+	\item add a THETA representing the Box-Cox LAMBDA parameter to be estimated. Default (can be changed with option -tbs\_lambda) is no lower boundary, initial estimate 1, no upper boundary.
 	\item A set of IF-statements will make sure log transformations are made instead of Box-Cox if the LAMBDA estimate is 0. IF statements will also handle the cases IPRED=0 and DV=0.
 	\item IPRED will be transformed as 
  IPRED\_trans=(IPRED**LAMBDA-1)/LAMBDA, 
@@ -211,8 +211,7 @@ Bill Frame: http://www.ncbi.nlm.nih.gov/pubmed/19904583
 \end{enumerate}
 \nextopt
 \optname{dtbs}
-Default not set. Invokes Dynamic Transform Both Sides method. Very similar to -tbs, see above, but with some 
-differences and additions:
+Default not set. Invokes Dynamic Transform Both Sides method. The model code is modified the same way as with -tbs, see above, except that the W definition is changed using a new ZETA parameter:
 \begin{enumerate}
 \item A new parameter ZETA will be defined. This parameter is either equal to a new THETA that is 
 automatically added to the model, or equal to  LAMBDA+DELTA, where DELTA is equal to a new
@@ -224,14 +223,14 @@ W = (IPRED**ZETA)*old\_definition.
 \end{enumerate}
 \nextopt
 \optdefault{tbs\_lambda}{string}
-Default not set. Initial value string, using NM-TRAN syntax, for lambda parameter in Transform Both Sides method, e.g. '(-1, 0.5, 1)' or 'O FIX'. The string must be enclosed in single quotes and not include any comments. If tbs\_lambda is set then option -tbs will be set automatically, unless option -dtbs or -tbs\_zeta or -tbs\_delta is set. 
+Default 1 if option -tbs is set. Initial value string, using NM-TRAN syntax, for lambda parameter in Transform Both Sides method, e.g. '(-1, 0.5, 1)' or '0 FIX'. The string must be enclosed in single quotes and not include any comments. If tbs\_lambda is set then option -tbs will be set automatically, unless option -dtbs or -tbs\_zeta or -tbs\_delta is set. 
 See option -tbs for more details. 
 \nextopt
 \optdefault{tbs\_zeta}{string}
-Default not set. Initial value string, using NM-TRAN syntax, for zeta parameter in Dynamic Transform Both Sides method, e.g. '(-1, 0.5, 1)' or 'O FIX'. The string must be enclosed in single quotes and not include any comments. If tbs\_zeta is set then option -dtbs will be set automatically. See option -dtbs for more details. Options tbs\_zeta and tbs\_delta cannot be used in combination.  
+Default 0.001 if W does not depend on IPRED, default 1 otherwise. Initial value string, using NM-TRAN syntax, for zeta parameter in Dynamic Transform Both Sides method, e.g. '(-1, 0.5, 1)' or '0 FIX'. The string must be enclosed in single quotes and not include any comments. If -tbs\_zeta is set then option -dtbs will be set automatically. See option -dtbs for more details. Options tbs\_zeta and tbs\_delta cannot be used in combination.  
 \nextopt
 \optdefault{tbs\_delta}{string}
-Default not set. Initial value string, using NM-TRAN syntax, for delta parameter in Dynamic Transform Both Sides method, e.g. '(-1, 0.5, 1)' or 'O FIX'. The string must be enclosed in single quotes and not include any comments. If tbs\_delta is set then option -dtbs will be set automatically. See option -dtbs for more details. Options tbs\_zeta and tbs\_delta cannot be used in combination.  
+Default not set. Initial value string, using NM-TRAN syntax, for delta parameter in Dynamic Transform Both Sides method, e.g. '(-1, 0.5, 1)' or '0 FIX'. The string must be enclosed in single quotes and not include any comments. If tbs\_delta is set then option -dtbs will be set automatically. See option -dtbs for more details. Options tbs\_zeta and tbs\_delta cannot be used in combination.  
 \nextopt
 \optdefault{threads}{'integer'}
 Default 1. Use the threads option to enable parallel execution of multiple NONMEM runs. On a desktop computer it is recommended to set -threads to the number of CPUs in the system plus one. You can specify more threads, but it will probably not increase the performance. If you are running on a computer cluster, you should consult your system administrator to find out how many threads you can specify. The -threads option will be ignored if you run on a grid system, since grids have their own scheduling algorithms. 

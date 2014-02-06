@@ -74,24 +74,5 @@ foreach my $i (0..$#command_line) {
 
 
 
-#############################
-
-$dir = 'execute_test';
-$model_dir = "$Bin/../test_files";
-
-my @commands = 
-	($includes::execute . " $model_dir/pheno5.mod  -dir=$dir",
-	);
-
-rmtree([ "./$dir" ]);
-foreach my $command (@commands){
-	print "Running $command\n";
-	my $rc = system($command);
-	$rc = $rc >> 8;
-	ok ($rc == 0, "$command, should run ok");
-	rmtree([ "./$dir" ]);
-}
-rmtree([ "./$dir" ]);
-
 
 done_testing();

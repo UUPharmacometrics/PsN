@@ -17,6 +17,11 @@ test/test_files/pheno5.lst
 test/test_files/pheno5.ext
 test/test_files/pheno5.phi
 development/completion_files
+test/test_files/pheno.ext
+test/test_files/pheno.phi
+test/test_files/phenomsf
+test/test_files/prob_1.psn_etas
+test/test_files/prob_1.psn_wres
 test/test_files/tbs1.ext
 test/test_files/tbs1.lst
 test/test_files/tbs1.phi
