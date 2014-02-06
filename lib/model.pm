@@ -1,5 +1,5 @@
 package model;
-#use Carp;
+
 use include_modules;
 use Digest::MD5 'md5_hex';
 use Cwd;
@@ -12,17 +12,16 @@ use POSIX qw(ceil floor);
 use model::shrinkage_module;
 use Math::Random qw(random_multivariate_normal);
 use Scalar::Util qw(looks_like_number);
-my @nm7_extensions = ('.ext','.cov','.cor','.coi','.phi','.phm',
-		      '.shk','.grd','.xml','.smt','.rmt');
 use model::iofv_module;
 use model::nonparametric_module;
 use model::shrinkage_module;
 use output;
 use data;
 use model::problem;
-
 use Moose;
 use MooseX::Params::Validate;
+
+my @nm7_extensions = ('.ext','.cov','.cor','.coi','.phi','.phm', '.shk','.grd','.xml','.smt','.rmt');
 
 =head1 Description
 
@@ -2276,7 +2275,7 @@ sub nsigmas
 	my $with_correlations = $parm{'with_correlations'};
 	my $with_same = $parm{'with_same'};
 
-# returns the number of sigmas in the model for the given problem number.
+	# returns the number of sigmas in the model for the given problem number.
 
 	unless( scalar(@problem_numbers)>0 ){
 		$self->problems([]) unless defined $self->problems;
@@ -2404,12 +2403,12 @@ sub print
 	my $self = shift;
 
 	# Prints the formatted model to standard out.
-	
+
 	my ( @formatted );
 	foreach my $problem ( @{$self->problems} ) {
-	    foreach my $line (@{$problem-> _format_problem}){
-		print $line;
-	    }
+		foreach my $line (@{$problem->_format_problem}) {
+			print $line;
+		}
 	}
 }
 
@@ -2474,7 +2473,7 @@ sub get_option_value
 	my $return_value;
 
 	#$modelObject -> get_option_value(record_name => 'recordName', option_name => 'optionName',
-        #                         problem_index => <index>, record_index => <index>/'all', 
+	#                         problem_index => <index>, record_index => <index>/'all', 
 	#                         option_index => <index>/'all',
 	#                         fuzzy_match => 1/0)
 	# record_name and option_name are required. All other have default 0. Fuzzy match default 1.
@@ -2604,8 +2603,8 @@ sub restore_inits
 	# temporary values and later restore them.
 
 	if ( defined $self->problems ) {
-	  foreach my $problem ( @{$self->problems} ){
-	    $problem -> restore_inits;
+	  foreach my $problem (@{$self->problems}) {
+	    $problem->restore_inits;
 	  }
 	}
 }
@@ -3589,78 +3588,62 @@ sub _option_val_pos
 	return \@values ,\@positions;
 }
 
-sub name_val
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		 problem_numbers => { isa => 'ArrayRef[Int]', optional => 1 },
-		 parameter_type => { isa => 'Str', optional => 1 },
-		 parameter_numbers => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
-	my @problem_numbers = defined $parm{'problem_numbers'} ? @{$parm{'problem_numbers'}} : ();
-	my @names_values;
-	my $parameter_type = $parm{'parameter_type'};
-	my @parameter_numbers = defined $parm{'parameter_numbers'} ? @{$parm{'parameter_numbers'}} : ();
-
-	return \@names_values;
-}
-
 sub input_files
 {
 	my $self = shift;
 	my @file_names;
 
-  # TODO: Skip the dataset for now, when I [PP] rewrite the
-  # "model::copy" routine, I will revisit this.
+	# TODO: Skip the dataset for now, when I [PP] rewrite the
+	# "model::copy" routine, I will revisit this.
 
-  # msfi files
-  if( scalar @{$self -> msfi_names()} > 0 ){
-    foreach my $msfi_files( @{$self -> msfi_names()} ){
-      foreach my $msfi_file( @{$msfi_files} ){
-	my ( $dir, $filename ) = OSspecific::absolute_path($self -> directory,
-							   $msfi_file );
-	push( @file_names, [$dir, $filename] );
-      }
-    }
-  } else {
+	# msfi files
+	if( scalar @{$self -> msfi_names()} > 0 ){
+		foreach my $msfi_files( @{$self -> msfi_names()} ){
+			foreach my $msfi_file( @{$msfi_files} ){
+				my ( $dir, $filename ) = OSspecific::absolute_path($self -> directory,
+					$msfi_file );
+				push( @file_names, [$dir, $filename] );
+			}
+		}
+	} else {
 
-    # If we don't have $MSFI we can consider $EST MSFO as input.
+		# If we don't have $MSFI we can consider $EST MSFO as input.
 
-    foreach my $msfo_files( @{$self -> msfo_names()} ){
-      foreach my $msfo_file( @{$msfo_files} ){
-	my ( $dir, $filename ) = OSspecific::absolute_path($self -> directory,
-							   $msfo_file );
-	push( @file_names, [$dir, $filename] );
-      }
-    }
-  }
+		foreach my $msfo_files( @{$self -> msfo_names()} ){
+			foreach my $msfo_file( @{$msfo_files} ){
+				my ( $dir, $filename ) = OSspecific::absolute_path($self -> directory,
+					$msfo_file );
+				push( @file_names, [$dir, $filename] );
+			}
+		}
+	}
 
-  # TODO: as with data files, revisit this when model::copy is
-  # rewritten.
+	# TODO: as with data files, revisit this when model::copy is
+	# rewritten.
 
-  # Copy extra fortran files specified in "$SUBROUTINE"
+	# Copy extra fortran files specified in "$SUBROUTINE"
 
-  if( defined( $self -> subroutine_files ) ){
-    foreach my $sub_file ( @{$self -> subroutine_files} ){
-      my ( $dir, $filename ) = OSspecific::absolute_path( $self -> directory,
-							  $sub_file );
-      push( @file_names, [$dir, $filename] );
-    }
-  }
+	if( defined( $self -> subroutine_files ) ){
+		foreach my $sub_file ( @{$self -> subroutine_files} ){
+			my ( $dir, $filename ) = OSspecific::absolute_path( $self -> directory,
+				$sub_file );
+			push( @file_names, [$dir, $filename] );
+		}
+	}
 
-  # Copy extra files the user specified.
+	# Copy extra files the user specified.
 
-  if( defined $self -> extra_files ){
-    foreach my $x_file (@{$self -> extra_files}){
-      my ( $dir, $filename ) = OSspecific::absolute_path( $self -> directory,
-							  $x_file );
-      #add check that file exists
-      croak("File $dir$filename listed as ".
-		      "extra input to NONMEM, but the file does not exist.")
-	  unless (-e $dir.$filename);
-      push( @file_names, [$dir, $filename] );
-    }
-  }  
+	if( defined $self -> extra_files ){
+		foreach my $x_file (@{$self -> extra_files}){
+			my ( $dir, $filename ) = OSspecific::absolute_path( $self -> directory,
+				$x_file );
+			#add check that file exists
+			croak("File $dir$filename listed as ".
+				"extra input to NONMEM, but the file does not exist.")
+			unless (-e $dir.$filename);
+			push( @file_names, [$dir, $filename] );
+		}
+	}  
 
 	return \@file_names;
 }
@@ -3670,40 +3653,40 @@ sub output_files
 	my $self = shift;
 	my @file_names;
 
-  push( @file_names, $self -> outputs -> [0] -> filename );
+	push( @file_names, $self -> outputs -> [0] -> filename );
 
 
-  if (defined $self -> outputs -> [0] -> filename_root()){
-    foreach my $ext (@nm7_extensions){
-# copy also raw in this loop
-#      next if ($ext eq '.ext');
-      push( @file_names, $self -> outputs -> [0] -> filename_root().$ext);
-    }
-  }
-  
-  if( defined $self -> table_names ){
-    foreach my $table_files( @{$self -> table_names} ){
-      foreach my $table_file( @{$table_files} ){
+	if (defined $self -> outputs -> [0] -> filename_root()){
+		foreach my $ext (@nm7_extensions){
+			# copy also raw in this loop
+			#      next if ($ext eq '.ext');
+			push( @file_names, $self -> outputs -> [0] -> filename_root().$ext);
+		}
+	}
+
+	if( defined $self -> table_names ){
+		foreach my $table_files( @{$self -> table_names} ){
+			foreach my $table_file( @{$table_files} ){
 				my ($dir, $filename) = OSspecific::absolute_path( undef, $table_file );
 				push( @file_names, $filename );
-      }
-    }
-  }
+			}
+		}
+	}
 
-  if( defined $self -> msfo_names() ){
-    foreach my $msfo_files( @{$self -> msfo_names()} ){
-      foreach my $msfo_file( @{$msfo_files} ){
+	if( defined $self -> msfo_names() ){
+		foreach my $msfo_files( @{$self -> msfo_names()} ){
+			foreach my $msfo_file( @{$msfo_files} ){
 				my ( $dir, $filename ) = OSspecific::absolute_path( undef, $msfo_file );
 				push( @file_names, $filename );
-      }
-    }
-  }
+			}
+		}
+	}
 
-  if ( defined $self->extra_output ) {
-    foreach my $extra_out ( @{$self->extra_output} ){
-      push( @file_names, $extra_out );
-    }
-  }
+	if ( defined $self->extra_output ) {
+		foreach my $extra_out ( @{$self->extra_output} ){
+			push( @file_names, $extra_out );
+		}
+	}
 
 	my @problems = @{$self -> problems};
 	for( my $i = 0; $i < scalar(@problems); $i++ ) {
@@ -3712,13 +3695,13 @@ sub output_files
 			my $eta_filename;
 			( $dir, $eta_filename ) = OSspecific::absolute_path( undef,
 				$problems[$i] -> shrinkage_module -> eta_tablename );
-      
+
 			push( @file_names, $eta_filename );
-      
+
 			my $wres_filename;
 			( $dir, $wres_filename ) = OSspecific::absolute_path( undef,
 				$problems[$i] -> shrinkage_module -> wres_tablename );
-      
+
 			push( @file_names, $wres_filename );
 		}
 	}
@@ -4218,51 +4201,51 @@ sub is_estimation
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problem_number => { isa => 'Int', default => 0, optional => 1 }
+		problem_number => { isa => 'Int', default => 0, optional => 1 }
 	);
 	my $problem_number = $parm{'problem_number'};
 	my $is_est = 0;
 
-      #this function is used to check whether we should care about minimization status 
-      #for possible retries. We only care of we are doing a real estimation
-      
-      $is_est = 1;
-      my $problems = $self->problems;
-      if( defined $problems -> [$problem_number - 1] ) {
-	my $problem = $problems -> [$problem_number - 1];
-	# If we don't have an ESTIMATION record we are simulating.
-	$is_est = 0 unless( defined $problem->estimations and
-			    scalar( @{$problem->estimations} ) > 0 );
-	
-	# If we have a ONLYSIM option in the simulation record.
-	$is_est = 0 if( $self -> is_option_set ( name           => 'ONLYSIM', 
-						 record         => 'simulation', 
-						 problem_number => $problem_number ));
+	#this function is used to check whether we should care about minimization status 
+	#for possible retries. We only care of we are doing a real estimation
 
-	if ($PsN::nm_major_version == 7){
-	  # If single estimation step and max evaluations is zero we are not estimating
-	  if ( defined $problem->estimations and
-	       scalar( @{$problem->estimations} ) == 1 ){
-	    my $max = $self -> get_option_value(record_name => 'estimation', option_name => 'MAXEVALS',
-						problem_index => 0, record_index => 0,option_index => 0);
-	    
-	    $is_est = 0 if (defined $max and $max == 0);
-	    my $eonly = $self -> get_option_value(record_name => 'estimation', option_name => 'EONLY',
-						problem_index => 0, record_index => 0,option_index => 0);
-	    
-	    $is_est = 0 if (defined $eonly and $eonly == 1);
-	  }
+	$is_est = 1;
+	my $problems = $self->problems;
+	if( defined $problems -> [$problem_number - 1] ) {
+		my $problem = $problems -> [$problem_number - 1];
+		# If we don't have an ESTIMATION record we are simulating.
+		$is_est = 0 unless( defined $problem->estimations and
+			scalar( @{$problem->estimations} ) > 0 );
+
+		# If we have a ONLYSIM option in the simulation record.
+		$is_est = 0 if( $self -> is_option_set ( name           => 'ONLYSIM', 
+				record         => 'simulation', 
+				problem_number => $problem_number ));
+
+		if ($PsN::nm_major_version == 7){
+			# If single estimation step and max evaluations is zero we are not estimating
+			if ( defined $problem->estimations and
+				scalar( @{$problem->estimations} ) == 1 ){
+				my $max = $self -> get_option_value(record_name => 'estimation', option_name => 'MAXEVALS',
+					problem_index => 0, record_index => 0,option_index => 0);
+
+				$is_est = 0 if (defined $max and $max == 0);
+				my $eonly = $self -> get_option_value(record_name => 'estimation', option_name => 'EONLY',
+					problem_index => 0, record_index => 0,option_index => 0);
+
+				$is_est = 0 if (defined $eonly and $eonly == 1);
+			}
+		} else {
+			$is_est = 0 if( defined $self -> maxeval(problem_numbers => [$problem_number]) and
+				defined $self -> maxeval(problem_numbers => [$problem_number])->[0][0] and
+				$self -> maxeval(problem_numbers => [$problem_number])->[0][0] == 0 );
+		}
+		# Anything else?
+
+		# If non of the above is true, we are estimating.
 	} else {
-	  $is_est = 0 if( defined $self -> maxeval(problem_numbers => [$problem_number]) and
-			  defined $self -> maxeval(problem_numbers => [$problem_number])->[0][0] and
-			  $self -> maxeval(problem_numbers => [$problem_number])->[0][0] == 0 );
+		carp('Problem nr. $problem_number not defined. Assuming estimation' );
 	}
-	# Anything else?
-
-	# If non of the above is true, we are estimating.
-      } else {
-				carp('Problem nr. $problem_number not defined. Assuming estimation' );
-      }
 
 	return $is_est;
 }
@@ -4322,18 +4305,6 @@ sub flush_data
 	    $data -> flush;
 	  }
 	}
-}
-
-sub register_in_database
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		 force => { isa => 'Bool', default => 0, optional => 1 }
-	);
-	my $force = $parm{'force'};
-	my $model_id;
-
-	return $model_id;
 }
 
 sub remove_option

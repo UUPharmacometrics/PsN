@@ -462,7 +462,6 @@ sub copy
 	my $ignore_missing_files = $parm{'ignore_missing_files'};
 	my $target = $parm{'target'};
 
-{
 	# filename: new data file name.
 	# 
 	# target: keep the copy in memory ('mem') or write it to disk and flush the memory ('disk').
@@ -484,7 +483,6 @@ sub copy
 	# Set the new file name for the copy
 	$new_data->directory( $directory );
 	$new_data->filename( $filename );
-}
 
 	return $new_data;
 }
@@ -494,18 +492,13 @@ sub count_ind
 	my $self = shift;
 	my $num = 0;
 
-{
 	# Returns the number of individuals in the data set.
-#	croak("Cannot perform data->count_ind when skip_parsing is set") 
-#	    if ($self->skip_parsing()); #sync takes care of this
 	$self->synchronize; 
-	if( defined $self->individuals() ) {
-	  $num = scalar @{$self->individuals()};
+	if (defined $self->individuals) {
+	  $num = scalar @{$self->individuals};
 	} else {
-	  croak("No individuals found in file ".
-			$self->filename() );
+	  croak("No individuals found in file " . $self->filename);
 	}
-}
 
 	return $num;
 }
@@ -709,39 +702,36 @@ sub format_data
 	my $self = shift;
 	my @form_data;
 
-{
-# format_data called from _write which does synchronize
-		$self->individuals([]) unless defined $self->individuals;
-    my $header = $self->header();
-    my $have_header=0;
-    if (defined $header) {
-			$have_header = 1 if (scalar(@{$header})>0);
-    }
-    
-    # format the data for NONMEM (simple comma-separated layout)
-    if ( defined $self->comment() ) {
-			my @comment   = @{$self->comment()};
-			for ( @comment ) {
-			    1;
-#	    push( @form_data ); #this is a bug, should push something here!
-			}
+	# format_data called from _write which does synchronize
+	$self->individuals([]) unless defined $self->individuals;
+	my $header = $self->header();
+	my $have_header=0;
+	if (defined $header) {
+		$have_header = 1 if (scalar(@{$header})>0);
+	}
+
+	# format the data for NONMEM (simple comma-separated layout)
+	if ( defined $self->comment() ) {
+		my @comment   = @{$self->comment()};
+		for ( @comment ) {
+			1;
 		}
-    
-    if ( $have_header and defined $self->ignoresign ) {
-			my $istr;
-			if ( $self->ignoresign ne '@' ) {
-				$istr = $self->ignoresign;
-			}
-	
-			push( @form_data, $istr.join(',',@{$self->header()})."\n" );
-	
+	}
+
+	if ( $have_header and defined $self->ignoresign ) {
+		my $istr;
+		if ( $self->ignoresign ne '@' ) {
+			$istr = $self->ignoresign;
 		}
-		foreach my $individual ( @{$self->individuals()} ) {
-			foreach my $row ( @{$individual->subject_data} ) {
-				push( @form_data, $row ."\n" );
-			}
+
+		push( @form_data, $istr.join(',',@{$self->header()})."\n" );
+
+	}
+	foreach my $individual ( @{$self->individuals()} ) {
+		foreach my $row ( @{$individual->subject_data} ) {
+			push( @form_data, $row ."\n" );
 		}
-}
+	}
 
 	return \@form_data;
 }
@@ -763,7 +753,6 @@ sub factors
 	my $return_occurences = $parm{'return_occurences'};
 	my %factors;
 
-{
 	# Either column (number, starting at 1) or column_head must be specified.
 	#
 	# The default behaviour is to return a hash with the factors as keys
@@ -780,10 +769,7 @@ sub factors
 	# as keys and the number of occurences as values.
 	#
 
-#	croak("Cannot perform data->factors when skip_parsing is set") 
-#	    if ($self->skip_parsing()); #sync takes care of this
 	$self->synchronize;
-
 
 	# Check if $column(-index) is defined and valid, else try to find index
 	# using column_head
@@ -817,7 +803,6 @@ sub factors
 		       $ifactors[1] == $self->missing_data_token)){ 
 		  %factors = ( 'Non-unique values found' => 1 );
 	      }
-#	    last; #Absolutely vital to not stop here!!!
 	  }
 	  croak("No value found in column $column in individual ".
 			$individual->idnumber ) if ( scalar @ifactors == 0 );
@@ -841,7 +826,6 @@ sub factors
 	  }
 	  $key++;
 	}
-      }
 
 	return \%factors;
 }
@@ -850,23 +834,20 @@ sub flush
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 force => { isa => 'Bool', default => 0, optional => 1 }
+		force => { isa => 'Bool', default => 0, optional => 1 }
 	);
 	my $force = $parm{'force'};
 
-
 	# synchronizes the object with the file on disk and empties
 	# most of the objects attributes to save memory.
-    if( (defined $self->individuals() and scalar(@{$self->individuals()})>0 )and ( !$self->synced() or $force ) ) {
-	$self->_write;
-    }
-    
-    $self->comment([]);
-    $self->individuals([]);
-    $self->synced(0);
-    $self->found_missing_data({});
+	if( (defined $self->individuals() and scalar(@{$self->individuals()})>0 )and ( !$self->synced() or $force ) ) {
+		$self->_write;
+	}
 
-
+	$self->comment([]);
+	$self->individuals([]);
+	$self->synced(0);
+	$self->found_missing_data({});
 }
 
 sub fractions
@@ -1007,7 +988,6 @@ sub median
 	my $unique_in_individual = $parm{'unique_in_individual'};
 	my $return_value;
 
-{
 	$self->synchronize;
 	my $first_id = $self->individuals()->[0];
 	die "data->median: No individuals defined in data object based on ",
@@ -1057,7 +1037,6 @@ sub median
 	}    
 	
 	$self->_median->[$column] = $return_value;
-}
 
 	return $return_value;
 }
@@ -1066,13 +1045,13 @@ sub mean
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 column => { isa => 'Maybe[Int]', optional => 1 },
-		 column_head => { isa => 'Str', optional => 1 },
-		 hi_cutoff => { isa => 'Num', optional => 1 },
-		 low_cutoff => { isa => 'Num', optional => 1 },
-		 subset_column => { isa => 'Maybe[Int]', optional => 1 },
-		 subset_syntax => { isa => 'Str', default => ' != undef', optional => 1 },
-		 global_mean => { isa => 'Bool', default => 0, optional => 1 }
+		column => { isa => 'Maybe[Int]', optional => 1 },
+		column_head => { isa => 'Str', optional => 1 },
+		hi_cutoff => { isa => 'Num', optional => 1 },
+		low_cutoff => { isa => 'Num', optional => 1 },
+		subset_column => { isa => 'Maybe[Int]', optional => 1 },
+		subset_syntax => { isa => 'Str', default => ' != undef', optional => 1 },
+		global_mean => { isa => 'Bool', default => 0, optional => 1 }
 	);
 	my $column = $parm{'column'};
 	my $column_head = $parm{'column_head'};
@@ -1083,86 +1062,83 @@ sub mean
 	my $global_mean = $parm{'global_mean'};
 	my $return_value;
 
-  {
-     # Returns mean value of a column
-     # If a individual has more than one observation, a mean
-     # value for each individual is calculated first, then the mean
-     # value over the individuals. If hi_cutoff is defined the mean function
-     # will cut all value below the cutoff, and set their value to
-     # 0. It's used to calculate the HI-mean/LOW-mean of a column for
-     # e.g. Hockey-stick covariates. If both hi_cutoff and low_cutoff
-     # are defined only the hi_cutoff will be used.  See L</max>.
-    $self->synchronize;
-    my $first_id = $self->individuals()->[0];
-    die "data->median: No individuals defined in data object based on ",
-    $self->full_name,"\n" unless defined $first_id;
+	# Returns mean value of a column
+	# If a individual has more than one observation, a mean
+	# value for each individual is calculated first, then the mean
+	# value over the individuals. If hi_cutoff is defined the mean function
+	# will cut all value below the cutoff, and set their value to
+	# 0. It's used to calculate the HI-mean/LOW-mean of a column for
+	# e.g. Hockey-stick covariates. If both hi_cutoff and low_cutoff
+	# are defined only the hi_cutoff will be used.  See L</max>.
+	$self->synchronize;
+	my $first_id = $self->individuals()->[0];
+	die "data->median: No individuals defined in data object based on ",
+	$self->full_name,"\n" unless defined $first_id;
 
-    my @data_row = split( /,/ , $first_id->subject_data ->[0] );
+	my @data_row = split( /,/ , $first_id->subject_data ->[0] );
 
-     unless ( defined $column  && defined( $data_row[$column-1] ) ) {
-       unless (defined($column_head) && defined($self->column_head_indices->{$column_head})) {
-	   die "Error in data->mean: unknown column: \"$column_head\" or invalid column number: \"$column\"\n";
-       } else {
-	   $column = $self->column_head_indices->{$column_head};
-       }
-     }
-    
-    ## Here the calculation starts
-    my $num_individuals = 0;
-    my $sum = 0;
-	
-    my $all_data_rows = 0;
-    foreach my $individual ( @{$self->individuals()} ) {
-	  
-      my $ifactors = $individual->subject_data;
-      my $individual_sum = 0;
-      my $data_rows = 0;
-      for (my $i = 0; $i <= $#{$ifactors}; $i++) {
-	
-	  # data is stored in strings. We need to split them into an
-	  # array.
-	  
-	  my @data_row = split( /,/, $ifactors->[$i] );
-	  if ( $data_row[$column - 1] == $self->missing_data_token ) {
-	      next;
-	  }
-	  
-	  if( defined $subset_column and not eval ( $data_row[$subset_column - 1].$subset_syntax ) ) {
-	      next;
-	  }
-	  if (defined $hi_cutoff) {
-	      if ($data_row[$column - 1] > $hi_cutoff) {
-		  $individual_sum += $data_row[$column - 1] - $hi_cutoff;
-	      }
-	  }
-	  else {
-	      if (defined $low_cutoff) {
-		  if ($data_row[$column - 1]<$low_cutoff) {
-		      $individual_sum += $low_cutoff - $data_row[$column - 1];
-		  }
-	      } else {
-		  $individual_sum += $data_row[$column-1];
-	      }
-	  }
-	  $data_rows++;
-      }
-      if( $global_mean ) {
-	  $sum += $individual_sum;
-	  $num_individuals += $data_rows;
-      } else {
-	  if( $data_rows != 0 ) {
-	      $sum += $individual_sum/$data_rows;
-	      $num_individuals ++
-	  }
-#	  $num_individuals ++; #Kajsa 2013-09-30: this is not correct, if all obs missing for this individual then should not count it
-	  #in denominator. Put individual count inside if statement to check there were any observations
-      }
-      $all_data_rows += $data_rows;
-    }
-    if( $num_individuals != 0 ) {
-	$return_value = $sum / $num_individuals;
-    }
-  }
+	unless ( defined $column  && defined( $data_row[$column-1] ) ) {
+		unless (defined($column_head) && defined($self->column_head_indices->{$column_head})) {
+			die "Error in data->mean: unknown column: \"$column_head\" or invalid column number: \"$column\"\n";
+		} else {
+			$column = $self->column_head_indices->{$column_head};
+		}
+	}
+
+	## Here the calculation starts
+	my $num_individuals = 0;
+	my $sum = 0;
+
+	my $all_data_rows = 0;
+	foreach my $individual ( @{$self->individuals()} ) {
+
+		my $ifactors = $individual->subject_data;
+		my $individual_sum = 0;
+		my $data_rows = 0;
+		for (my $i = 0; $i <= $#{$ifactors}; $i++) {
+
+			# data is stored in strings. We need to split them into an
+			# array.
+
+			my @data_row = split( /,/, $ifactors->[$i] );
+			if ( $data_row[$column - 1] == $self->missing_data_token ) {
+				next;
+			}
+
+			if( defined $subset_column and not eval ( $data_row[$subset_column - 1].$subset_syntax ) ) {
+				next;
+			}
+			if (defined $hi_cutoff) {
+				if ($data_row[$column - 1] > $hi_cutoff) {
+					$individual_sum += $data_row[$column - 1] - $hi_cutoff;
+				}
+			}
+			else {
+				if (defined $low_cutoff) {
+					if ($data_row[$column - 1]<$low_cutoff) {
+						$individual_sum += $low_cutoff - $data_row[$column - 1];
+					}
+				} else {
+					$individual_sum += $data_row[$column-1];
+				}
+			}
+			$data_rows++;
+		}
+		if( $global_mean ) {
+			$sum += $individual_sum;
+			$num_individuals += $data_rows;
+		} else {
+			if( $data_rows != 0 ) {
+				$sum += $individual_sum/$data_rows;
+				$num_individuals ++
+			}
+			#in denominator. Put individual count inside if statement to check there were any observations
+		}
+		$all_data_rows += $data_rows;
+	}
+	if( $num_individuals != 0 ) {
+		$return_value = $sum / $num_individuals;
+	}
 
 	return $return_value;
 }
@@ -1171,13 +1147,13 @@ sub sd
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 column => { isa => 'Maybe[Int]', optional => 1 },
-		 column_head => { isa => 'Str', optional => 1 },
-		 hi_cutoff => { isa => 'Num', optional => 1 },
-		 low_cutoff => { isa => 'Num', optional => 1 },
-		 subset_column => { isa => 'Int', optional => 1 },
-		 subset_syntax => { isa => 'Str', default => ' != undef', optional => 1 },
-		 global_sd => { isa => 'Bool', default => 0, optional => 1 }
+		column => { isa => 'Maybe[Int]', optional => 1 },
+		column_head => { isa => 'Str', optional => 1 },
+		hi_cutoff => { isa => 'Num', optional => 1 },
+		low_cutoff => { isa => 'Num', optional => 1 },
+		subset_column => { isa => 'Int', optional => 1 },
+		subset_syntax => { isa => 'Str', default => ' != undef', optional => 1 },
+		global_sd => { isa => 'Bool', default => 0, optional => 1 }
 	);
 	my $column = $parm{'column'};
 	my $column_head = $parm{'column_head'};
@@ -1188,117 +1164,114 @@ sub sd
 	my $global_sd = $parm{'global_sd'};
 	my $return_value;
 
-  {
-    # This sub returns standard deviation for a specific column
-    # If there are more than one sample/individual the value used for that specific
-    # individual is the mean value of its samples.
-    # The cut-offs are for hockey stick variables. I.e. If one individual value is
-    # lower than the hi-cutoff the individual value will be zero.
-    # HI_cutoff is used to calculate the HI-mean of a column.
-    # If cut_off is undef it won't be used
-    # See L</max>.
-    # If skip_zeros is 1 (default is 0) values that are exactly 0 are skipped,
-    # needed when computing shrinkage
-     $self->synchronize;
-     my $first_id = $self->individuals()->[0];
-     croak("No individuals defined in data object based on ".
-		   $self->full_name ) unless defined $first_id;
-     
-     my @data_row = split( /,/ , $first_id->subject_data ->[0] );
+	# This sub returns standard deviation for a specific column
+	# If there are more than one sample/individual the value used for that specific
+	# individual is the mean value of its samples.
+	# The cut-offs are for hockey stick variables. I.e. If one individual value is
+	# lower than the hi-cutoff the individual value will be zero.
+	# HI_cutoff is used to calculate the HI-mean of a column.
+	# If cut_off is undef it won't be used
+	# See L</max>.
+	# If skip_zeros is 1 (default is 0) values that are exactly 0 are skipped,
+	# needed when computing shrinkage
+	$self->synchronize;
+	my $first_id = $self->individuals()->[0];
+	croak("No individuals defined in data object based on ".
+		$self->full_name ) unless defined $first_id;
 
-     unless ( defined $column  && defined( $data_row[$column-1] ) ) {
-       unless (defined($column_head) && defined($self->column_head_indices->{$column_head})) {
-				 croak("Unknown column: \"$column_head\" or "
-		       ."invalid column number: \"$column\"" );
-       } else {
-				 $column = $self->column_head_indices->{$column_head};
-       }
-     }
-     
-     ## Here the calculation starts
-     my $num_individuals = 0;
-     my $sum = 0;
-     my $mean;
-     if (defined $hi_cutoff) {
-       $mean = $self->mean(column   => $column,
-			   hi_cutoff => $hi_cutoff,
-			   global_mean => $global_sd );
-     } elsif (defined $low_cutoff) {	  
-       $mean = $self->mean(column   => $column,
-			   low_cutoff => $low_cutoff,
-			   global_mean => $global_sd );
-     } else {
-       $mean = $self->mean( column        => $column,
-			    subset_column => $subset_column,
-			    subset_syntax => $subset_syntax,
-			    global_mean => $global_sd );
-     }
+	my @data_row = split( /,/ , $first_id->subject_data ->[0] );
 
-     foreach my $individual ( @{$self->individuals()} ) {
-       my $ifactors = $individual->subject_data;
-       my $individual_sum = 0;
-       my $data_rows = 0;
-			for (my $i = 0; $i <= $#{$ifactors}; $i++ ) {
+	unless ( defined $column  && defined( $data_row[$column-1] ) ) {
+		unless (defined($column_head) && defined($self->column_head_indices->{$column_head})) {
+			croak("Unknown column: \"$column_head\" or "
+				."invalid column number: \"$column\"" );
+		} else {
+			$column = $self->column_head_indices->{$column_head};
+		}
+	}
 
-				# data is stored in strings. We need to split them into an
-				# array.
+	## Here the calculation starts
+	my $num_individuals = 0;
+	my $sum = 0;
+	my $mean;
+	if (defined $hi_cutoff) {
+		$mean = $self->mean(column   => $column,
+			hi_cutoff => $hi_cutoff,
+			global_mean => $global_sd );
+	} elsif (defined $low_cutoff) {	  
+		$mean = $self->mean(column   => $column,
+			low_cutoff => $low_cutoff,
+			global_mean => $global_sd );
+	} else {
+		$mean = $self->mean( column        => $column,
+			subset_column => $subset_column,
+			subset_syntax => $subset_syntax,
+			global_mean => $global_sd );
+	}
 
-	 my @data_row = split( /,/, $ifactors->[$i] );
+	foreach my $individual ( @{$self->individuals()} ) {
+		my $ifactors = $individual->subject_data;
+		my $individual_sum = 0;
+		my $data_rows = 0;
+		for (my $i = 0; $i <= $#{$ifactors}; $i++ ) {
 
-	 if ( $data_row[$column - 1] == $self->missing_data_token ) {
-	   next;
-	 }
+			# data is stored in strings. We need to split them into an
+			# array.
 
-	 if( defined $subset_column and not eval ( $data_row[$subset_column - 1] . $subset_syntax ) ) {
-	   next;
-	 }
+			my @data_row = split( /,/, $ifactors->[$i] );
 
-	 if (defined $hi_cutoff) {
-	   if ($data_row[$column - 1]>$hi_cutoff) {
-	     if( $global_sd ) {
-	       $individual_sum += ($data_row[$column - 1] - $hi_cutoff - $mean) ** 2;
-	     } else {
-	       $individual_sum += $data_row[$column - 1] - $hi_cutoff;
-	     }
-	   }
-	 } else {
-	   if (defined $low_cutoff) {
-	     if ($data_row[$column - 1] < $low_cutoff) {
-	       if( $global_sd ) {
-					 $individual_sum += ($low_cutoff - $data_row[$column-1] - $mean) ** 2;
-	       } else {
-					 $individual_sum += $low_cutoff - $data_row[$column-1];
-	       }
-	     }
-	   } else {
-	     if( $global_sd ) {
-	       $individual_sum += ($data_row[$column-1] - $mean) ** 2;
-	     } else {
-	       $individual_sum += $data_row[$column-1];
-	     }
-	   }
-	 }
-	 $data_rows++;
-       }
-       if( $global_sd ) {
-				 $sum += $individual_sum;
-				 $num_individuals += $data_rows;
-       } else {
-				 if( $data_rows != 0 ) {
-					 $sum += ($individual_sum/$data_rows - $mean) ** 2;
-				 }
-				 $num_individuals++;
-       }
-     }
-     if( $num_individuals < 2 ) {
-       $return_value = 0;
-     } else {
-       if( $num_individuals != 0 ) {
-				 $return_value = (1/($num_individuals-1)*$sum) ** 0.5;
-       }
-     }
-   }
+			if ( $data_row[$column - 1] == $self->missing_data_token ) {
+				next;
+			}
 
+			if( defined $subset_column and not eval ( $data_row[$subset_column - 1] . $subset_syntax ) ) {
+				next;
+			}
+
+			if (defined $hi_cutoff) {
+				if ($data_row[$column - 1]>$hi_cutoff) {
+					if( $global_sd ) {
+						$individual_sum += ($data_row[$column - 1] - $hi_cutoff - $mean) ** 2;
+					} else {
+						$individual_sum += $data_row[$column - 1] - $hi_cutoff;
+					}
+				}
+			} else {
+				if (defined $low_cutoff) {
+					if ($data_row[$column - 1] < $low_cutoff) {
+						if( $global_sd ) {
+							$individual_sum += ($low_cutoff - $data_row[$column-1] - $mean) ** 2;
+						} else {
+							$individual_sum += $low_cutoff - $data_row[$column-1];
+						}
+					}
+				} else {
+					if( $global_sd ) {
+						$individual_sum += ($data_row[$column-1] - $mean) ** 2;
+					} else {
+						$individual_sum += $data_row[$column-1];
+					}
+				}
+			}
+			$data_rows++;
+		}
+		if( $global_sd ) {
+			$sum += $individual_sum;
+			$num_individuals += $data_rows;
+		} else {
+			if( $data_rows != 0 ) {
+				$sum += ($individual_sum/$data_rows - $mean) ** 2;
+			}
+			$num_individuals++;
+		}
+	}
+	if( $num_individuals < 2 ) {
+		$return_value = 0;
+	} else {
+		if( $num_individuals != 0 ) {
+			$return_value = (1/($num_individuals-1)*$sum) ** 0.5;
+		}
+	}
 
 	return $return_value;
 }
@@ -1307,8 +1280,8 @@ sub min
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 column => { isa => 'Maybe[Int]', optional => 1 },
-		 column_head => { isa => 'Str', optional => 1 }
+		column => { isa => 'Maybe[Int]', optional => 1 },
+		column_head => { isa => 'Str', optional => 1 }
 	);
 	my $column = $parm{'column'};
 	my $column_head = $parm{'column_head'};
@@ -1317,36 +1290,36 @@ sub min
 	$self->synchronize; 
 	my $tmp_column = $self->column_head_indices->{$column_head};
 
-# The if-statement below used to be a cache of allready calculated
-# means. But since individuals can be accessed in so many ways, we
-# don't know when this cache should be updated. Its easier to
-# recalculate the min. Maybe we can include this optimization in the
-# future, if it turns out to be a bottleneck
-	  my $first_id = $self->individuals()->[0];
-	  die "data->min: No individuals defined in data object based on ",
-	    $self->full_name,"\n" unless defined $first_id;
-	
-		my @data_row = split( /,/ , $first_id->subject_data ->[0] );
+	# The if-statement below used to be a cache of allready calculated
+	# means. But since individuals can be accessed in so many ways, we
+	# don't know when this cache should be updated. Its easier to
+	# recalculate the min. Maybe we can include this optimization in the
+	# future, if it turns out to be a bottleneck
+	my $first_id = $self->individuals()->[0];
+	die "data->min: No individuals defined in data object based on ",
+	$self->full_name,"\n" unless defined $first_id;
 
-	  unless ( defined $column  && defined( $data_row[$column-1] ) ) {
-	    unless (defined($column_head) && defined($self->column_head_indices->{$column_head})) {
-	      die "Error in data->min: unknown column: \"$column_head\" or invalid column number: \"$column\"\n";
-	    } else {
-	      $column = $self->column_head_indices->{$column_head};
-	    }
-	  }
-	  foreach my $individual ( @{$self->individuals()} ) {
-	    my $ifactors = $individual->factors( 'column' => $column );
-	    foreach ( keys %{$ifactors} ) {
-	      next if ( $_ == $self->missing_data_token );
-	      if ( defined ($return_value) ) {
-					$return_value = $_ < $return_value ? $_ : $return_value;
-	      } else {
-					$return_value = $_;
-	      }
-	    }
-	  }
-	  $self->flush if ( $self->target eq 'disk' );
+	my @data_row = split( /,/ , $first_id->subject_data ->[0] );
+
+	unless ( defined $column  && defined( $data_row[$column-1] ) ) {
+		unless (defined($column_head) && defined($self->column_head_indices->{$column_head})) {
+			die "Error in data->min: unknown column: \"$column_head\" or invalid column number: \"$column\"\n";
+		} else {
+			$column = $self->column_head_indices->{$column_head};
+		}
+	}
+	foreach my $individual ( @{$self->individuals()} ) {
+		my $ifactors = $individual->factors( 'column' => $column );
+		foreach ( keys %{$ifactors} ) {
+			next if ( $_ == $self->missing_data_token );
+			if ( defined ($return_value) ) {
+				$return_value = $_ < $return_value ? $_ : $return_value;
+			} else {
+				$return_value = $_;
+			}
+		}
+	}
+	$self->flush if ( $self->target eq 'disk' );
 
 	return $return_value;
 }
@@ -1355,19 +1328,19 @@ sub merge
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 mergeobj => { isa => 'data', optional => 1 }
+		mergeobj => { isa => 'data', optional => 1 }
 	);
 	my $mergeobj = $parm{'mergeobj'};
 
 	$self->synchronize if ($self->skip_parsing());
 
 	unless (defined $self->individuals()){
-	    $self->individuals([]);
+		$self->individuals([]);
 	}
 	unless (defined $mergeobj->individuals()){
-	    $mergeobj->individuals([]);
+		$mergeobj->individuals([]);
 	}
-        push( @{$self->individuals()}, @{$mergeobj->individuals} );
+	push( @{$self->individuals()}, @{$mergeobj->individuals} );
 }
 
 sub range
@@ -1381,7 +1354,6 @@ sub range
 	my $column_head = $parm{'column_head'};
 	my $return_value;
 
-{
 	my $tmp_column;
 	if (defined $self->column_head_indices and defined $self->column_head_indices->{$column_head}) {
 	  $tmp_column = $self->column_head_indices->{$column_head};
@@ -1402,7 +1374,6 @@ sub range
 	    $self->{'target'} = 'disk';
 	  }
 	}
-}
 
 	return $return_value;
 }
@@ -1419,7 +1390,7 @@ sub recalc_column
 	my $expression = $parm{'expression'};
 	my $column_head = $parm{'column_head'};
 
-    #FIXME not used anywhere. USE this to compute stratification col on the fly? need multiple column input
+	#FIXME not used anywhere. USE this to compute stratification col on the fly? need multiple column input
 	# Recalculates a column based on expression. Also, see L</max>. 
 	$self->synchronize;
 	
@@ -1448,41 +1419,19 @@ sub renumber_ascending
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 start_at => { isa => 'Int', default => 1, optional => 1 }
+		start_at => { isa => 'Int', default => 1, optional => 1 }
 	);
 	my $start_at = $parm{'start_at'};
 
-{
-# Renumbers the individuals (changes the subject identifiers) so that
-# all have unique integer numbers starting with start_at and
-# ascending. The primary use of this
-# method is not to order the individuals after their identifiers but to
-# ensure that all individuals have unique identifiers.
+	# Renumbers the individuals (changes the subject identifiers) so that
+	# all have unique integer numbers starting with start_at and
+	# ascending. The primary use of this
+	# method is not to order the individuals after their identifiers but to
+	# ensure that all individuals have unique identifiers.
 
-#	croak("Cannot perform data->renumber_ascending when skip_parsing is set") 
-#	    if ($self->skip_parsing()); #sync handles this
 	$self->synchronize;
 	foreach my $individual ( @{$self->individuals()} ) {
-	  $individual->idnumber ( $start_at++ );
-	}
-	$self->synced(0);
-}
-
-}
-
-sub renumber_descending
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		 start_at => { isa => 'Int', default => $self->count_ind, optional => 1 },
-		 MX_PARAMS_VALIDATE_NO_CACHE => 1
-	);
-	my $start_at = $parm{'start_at'};
-
-    #FIXME not used anywhere, remove?
-	$self->synchronize;
-	foreach my $individual ( @{$self->individuals()} ) {
-		$individual->idnumber ( $start_at-- );
+		$individual->idnumber ( $start_at++ );
 	}
 	$self->synced(0);
 }
@@ -1508,8 +1457,6 @@ sub resample
 	my @incl_individuals;
 	my @included_keys;
 	my $model_id = $parm{'model_id'};
-
-      {
 
 	$self->individuals([]) unless defined $self->individuals;
 	$self->synchronize;
@@ -1617,10 +1564,10 @@ sub resample
 	  unless ( $resume and -e $new_name ) {
  	    @header = @{$self->header()};
 			$self->individuals([]) unless defined $self->individuals; # FIXME
- 	    $individuals = $self->individuals();
+ 	    $individuals = $self->individuals;
 	    for ( my $i = 1; $i <= $size; $i++ ) {
-	      $key_ref = random_uniform_integer(1,0,scalar @{$individuals}-1);
-	      push( @bs_inds, $individuals->[ $key_ref ]->copy );
+	      $key_ref = random_uniform_integer(1, 0, scalar @{$individuals} - 1);
+	      push( @bs_inds, $individuals->[$key_ref]->copy );
 	      push( @included_keys, $key_ref );
 	      push( @incl_individuals, $individuals->[ $key_ref ]->idnumber );
 	      push( @bs_id_ids, $id_ids[ $key_ref ] );
@@ -1660,7 +1607,6 @@ sub resample
 	    $boot->flush;
 	  }
 	}
-      }
 
 	return $boot ,\@incl_individuals ,\@included_keys;
 }
@@ -1709,23 +1655,6 @@ sub resample_from_keys
 	return $boot;
 }
 
-sub __subset
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		 based_on => { isa => 'Num', default => 1, optional => 1 },
-		 expression => { isa => 'Str', optional => 1 }
-	);
-	my $based_on = $parm{'based_on'};
-	my $expression = $parm{'expression'};
-	my $subset;
-	my @incl_individuals;
-	my @included_keys;
-
-
-	return $subset ,\@incl_individuals ,\@included_keys;
-}
-
 sub subsets
 {
 	my $self = shift;
@@ -1741,10 +1670,10 @@ sub subsets
 	my @subsets;
 	my @incl_ids;
 
-#this is used in xv_step_subs.pm and nowhere else
-#input is integer bins integer stratify_on
-#add possibility to have stratify_on $column_head which is then translated to column number
-#or make it only on column head instead of column number
+	#this is used in xv_step_subs.pm and nowhere else
+	#input is integer bins integer stratify_on
+	#add possibility to have stratify_on $column_head which is then translated to column number
+	#or make it only on column head instead of column number
 
 	$self->synchronize;
 	my @header  = @{$self->header()};
@@ -1879,37 +1808,37 @@ sub synchronize
 {
 	my $self = shift;
 
-      # synchronizes the object with the file on disk	  
-      unless( $self->synced() ){
-	if( defined $self->individuals() and
-	    scalar @{$self->individuals()} > 0 ){
-	  # We should not read new data from file if we 
-	  # have an individuals defined?
-	  # Perhaps there should be an attribute
-	  # 'from_file' that overrides this and reads in
-	  # the data from the file specified in filename
-	  # and overwrites whatever the object already
-	  # contains?
-	  $self->_write;
+	# synchronizes the object with the file on disk	  
+	unless( $self->synced() ){
+		if( defined $self->individuals() and
+			scalar @{$self->individuals()} > 0 ){
+			# We should not read new data from file if we 
+			# have an individuals defined?
+			# Perhaps there should be an attribute
+			# 'from_file' that overrides this and reads in
+			# the data from the file specified in filename
+			# and overwrites whatever the object already
+			# contains?
+			$self->_write;
 
-	} else {
-	  if( -e $self->full_name ){
-	    unless( defined $self->header() and scalar @{$self->header()} > 0 ){
-	      $self->_read_header;
-	    }
-	    $self->_read_individuals;
-	  } else {
-	    croak("Fatal error: datafile: " . $self->full_name . " does not exist." );
-	    return;
-	  }
+		} else {
+			if( -e $self->full_name ){
+				unless( defined $self->header() and scalar @{$self->header()} > 0 ){
+					$self->_read_header;
+				}
+				$self->_read_individuals;
+			} else {
+				croak("Fatal error: datafile: " . $self->full_name . " does not exist." );
+				return;
+			}
+		}
 	}
-      }
-      my $i = 1;
-      foreach my $head ( @{$self->header()} ) {
-				$self->column_head_indices->{$head} = $i;
-				$i++;
-      }
-      $self->synced(1);
+	my $i = 1;
+	foreach my $head ( @{$self->header()} ) {
+		$self->column_head_indices->{$head} = $i;
+		$i++;
+	}
+	$self->synced(1);
 }
 
 sub full_name
@@ -1943,12 +1872,10 @@ sub split_vertically
 	$self->synchronize();
 	unless (defined $self->individuals() and scalar(@{$self->individuals()})>0){
 		croak("cannot do split_vertically on empty data object");
-
 	}
 	my @individuals = @{$self->individuals()};
 	unless (defined $individuals[0] ) {
 		croak("first individual not defined in split_vertically");
-
 	}
 
 	my @ind_data = @{$individuals[0]->subject_data};
@@ -2368,33 +2295,6 @@ sub drop_dropped
 	$self->synced(0);
 }
 
-sub register_in_database
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		 model_id => { isa => 'Int', optional => 1 },
-		 force => { isa => 'Bool', default => 0, optional => 1 },
-		 individual_ids => { isa => 'ArrayRef[Int]', optional => 1 },
-		 resampled => { isa => 'Bool', default => 0, optional => 1 }
-	);
-	my $model_id = $parm{'model_id'};
-	my $force = $parm{'force'};
-	my @individual_ids = defined $parm{'individual_ids'} ? @{$parm{'individual_ids'}} : ();
-	my $resampled = $parm{'resampled'};
-	my $data_id;
-
-	return $data_id;
-}
-
-sub register_di_relation
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		 individual_ids => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
-	my @individual_ids = defined $parm{'individual_ids'} ? @{$parm{'individual_ids'}} : ();
-}
-
 sub get_eta_matrix
 {
 	my $self = shift;
@@ -2406,7 +2306,7 @@ sub get_eta_matrix
 	my $start_eta = $parm{'start_eta'};
 	my @eta_matrix = ();
 
-    #used in frem
+	#used in frem
 	$self->synchronize;
 
 	my @columns = ();
@@ -2527,30 +2427,18 @@ sub _fisher_yates_shuffle
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 array => { isa => 'ArrayRef[Str]', optional => 1 }
+		array => { isa => 'ArrayRef[Str]', optional => 1 }
 	);
 	my @array = defined $parm{'array'} ? @{$parm{'array'}} : ();
 
 	my $arr_ref = $parm{'array'};
 	carp("Array of zero length received" )
-		if ( scalar @{$arr_ref} < 1 );
+	if ( scalar @{$arr_ref} < 1 );
 	my $i;
 	for ($i = @$arr_ref; --$i;) {
 		my $j = random_uniform_integer(1, 0, $i);
 		@$arr_ref[$i, $j] = @$arr_ref[$j, $i];
 	}
-}
-
-sub _read_first_individual
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		 datafile => { isa => 'Ref', optional => 1 }
-	);
-	my $datafile = $parm{'datafile'};
-	my @ind_data;
-
-	return \@ind_data;
 }
 
 sub _read_header
@@ -2741,10 +2629,10 @@ sub create_row_filter
 		croak("Cannot use this function with non-synced data.");
 	}
 
-	my %index_hash=();
-	my $index=0;
+	my %index_hash = ();
+	my $index = 0;
 	my $keep;
-	my $ind_counter=0;
+	my $ind_counter = 0;
 
 	my $count=scalar(@{$self->individuals()});
 	if ($no_individuals < 1){

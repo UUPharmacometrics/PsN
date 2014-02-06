@@ -6582,18 +6582,6 @@ sub preprocess_data
 	return $filtered_data_model;
 }
 
-sub register_in_database
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		force => { isa => 'Bool', default => 0, optional => 1 }
-	);
-	my $force = $parm{'force'};
-	my $scm_id;
-
-	return $scm_id;
-}
-
 no Moose;
 __PACKAGE__->meta->make_immutable;
 1;

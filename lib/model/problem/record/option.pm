@@ -3,7 +3,7 @@ package model::problem::record::option;
 use Moose;
 use MooseX::Params::Validate;
 
-has 'option_string' => ( is => 'rw', isa => 'Maybe[Str]' );
+has 'option_string' => ( is => 'rw', isa => 'Maybe[Str]', clearer => 'clear_option_string' );
 has 'name' => ( is => 'rw', isa => 'Str' );
 has 'value' => ( is => 'rw', isa => 'Maybe[Str]' );
 
@@ -13,7 +13,7 @@ sub BUILD
 
 	if ( defined $self->option_string ) {
 		$self->_read_option;
-		$self->option_string(undef);
+		$self->clear_option_string;
 	}
 }
 
@@ -36,8 +36,8 @@ sub _format_option
 	my $self = shift;
 	my $formatted = $self->name;
 
-	if ( defined $self->value and $self->value ne '' ) {
-	    $formatted = $formatted . '=' . $self->value; #NTHETA=4,NETA=4,NTHP=4,NETP=4
+	if (defined $self->value and $self->value ne '') {
+		$formatted = $formatted . '=' . $self->value; #NTHETA=4,NETA=4,NTHP=4,NETP=4
 	}
 
 	return $formatted;

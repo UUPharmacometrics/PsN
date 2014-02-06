@@ -475,15 +475,6 @@ sub pre_fork_setup
 	}
 }
 
-sub print_raw_results
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		 model_number => { isa => 'Int', optional => 1 }
-	);
-	my $model_number = $parm{'model_number'};
-}
-
 sub print_results
 {
 	my $self = shift;
@@ -1005,7 +996,6 @@ sub setup
 	);
 	my $model_number = $parm{'model_number'};
 
-
 	$self -> _prepare_model( model_number => $model_number );
 
 	# Run the setup specific for the subtool
@@ -1016,22 +1006,6 @@ sub setup
 			$self -> $sub_setup( model_number => $model_number );
 		}
 	}
-}
-
-sub register_in_database
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		 force => { isa => 'Bool', default => 0, optional => 1 },
-		 execute_id => { isa => 'Int', default => 1, optional => 1 },
-		 cdd_id => { isa => 'Int', default => 1, optional => 1 }
-	);
-	my $force = $parm{'force'};
-	my $tool_id;
-	my $execute_id = $parm{'execute_id'};
-	my $cdd_id = $parm{'cdd_id'};
-
-	return $tool_id;
 }
 
 sub log_object

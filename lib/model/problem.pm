@@ -1326,20 +1326,6 @@ sub _option_val_pos
 	return \@values ,\@positions;
 }
 
-sub name_val
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		 parameter_type => { isa => 'Str', optional => 1 },
-		 parameter_numbers => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
-	my $parameter_type = $parm{'parameter_type'};
-	my @parameter_numbers = @{$parm{'parameter_numbers'}};
-	my @names_values;
-
-	return \@names_values;
-}
-
 sub remove_records
 {
 	my $self = shift;

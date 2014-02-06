@@ -1,9 +1,3 @@
-BIN=bootstrap cdd execute llp scm
-
-HTML_STUBS=_synopsis.php _description.php _options.php _examples.php
-
-DOCUMENTS=$(foreach pre,$(BIN),$(foreach suff,$(HTML_STUBS),$(addprefix html/$(pre),$(suff))))
-
 LIBFILES= ui.pm \
 	status_bar.pm \
 	nonmem.pm \
@@ -157,23 +151,6 @@ PDFFILES=$(TEXFILES:.tex=.pdf)
 clean:
 	@-rm -rf $(DOCUMENTS) PsN-Source psn_test_package.zip development/completion_files doc/*.aux doc/*.log doc/*.pdf doc/inputs/*eps-converted-to.pdf PsN-Source.tar.gz PsN-Source.zip
 
-documents: $(DOCUMENTS)
-
-$(addprefix html/bootstrap,$(HTML_STUBS)) : bin/bootstrap lib/common_options.pm
-	perl $< --help --html
-
-$(addprefix html/cdd,$(HTML_STUBS)) : bin/cdd lib/common_options.pm
-	perl $< --help --html
-
-$(addprefix html/execute,$(HTML_STUBS)) : bin/execute lib/common_options.pm
-	perl $< --help --html
-
-$(addprefix html/llp,$(HTML_STUBS)) : bin/llp lib/common_options.pm
-	perl $< --help --html
-
-$(addprefix html/scm,$(HTML_STUBS)) : bin/scm lib/common_options.pm
-	perl $< --help --html
-
 doc/%.pdf: doc/%.tex
 	cd doc; pdflatex $*.tex >/dev/null; pdflatex $*.tex >/dev/null
 
@@ -232,10 +209,6 @@ development/completion_files:
 completion: development/completion_files
 	cd bin; \
 	$(foreach file, $(BINFILES), perl ../development/genauto $(file) >../development/completion_files/$(file);)
-
-
-
-
 
 PsN-Source/setup.pl: bin/setup.pl
 	@ cp bin/setup.pl $@
