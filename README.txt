@@ -2,6 +2,9 @@
 Installation
 ************************
 
+- PsN4 requires at least Perl version 5.10.1 (please note that users of
+the free version of ActiveState Perl probably need an even higher version)
+
 - Depending on your Perl distribution you may have to install the following
 perl packages which are required for PsN4:
 

@@ -108,6 +108,7 @@ RELFILES=$(addprefix PsN-Source/lib/,$(LIBFILES)) \
 	lib/R-scripts/llp.R \
 	lib/R-scripts/cdd.R \
 	lib/R-scripts/bootstrap.R \
+	bin/nca \
 	bin/psn \
 	bin/psn_options \
 	bin/psn_clean \
@@ -156,7 +157,10 @@ doc/%.pdf: doc/%.tex
 
 doc: $(PDFFILES)
 
-release: rel_dir $(RELFILES) $(PDFFILES)
+release: completion rel_dir $(RELFILES) $(PDFFILES)
+	@ mkdir PsN-Source/development
+	@ mkdir PsN-Source/development/completion_files
+	@ cp development/completion_files/* PsN-Source/development/completion_files
 	@ mkdir PsN-Source/doc
 	@ cp doc/*.pdf PsN-Source/doc
 	@ cp doc/*.scm PsN-Source/doc
@@ -180,18 +184,21 @@ BINFILES= boot_scm \
 	ebe_npde \
 	execute \
 	extended_grid \
+	frem \
+	gls \
 	lasso \
 	linearize \
 	llp \
-	mc_cdd \
 	mcmp \
 	mimp \
+	nca \
 	nonpb \
 	npc \
 	parallel_retries \
 	pind \
 	psn \
 	psn_options \
+	pvar \
 	randtest \
 	runrecord \
 	scm \
