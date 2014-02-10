@@ -2274,6 +2274,9 @@ sub slurm_submit
 		or croak("Slurm submit failed.\nSystem error message: $outp" );
 	$jobId = $1;
 	
+	unless ($Config{osname} eq 'MSWin32' or $Config{osname} eq 'MSWin64'){
+		system('echo sbatch '.$jobId.' "2>&1" > jobId');
+	}
 	return $jobId;
 }
 
@@ -2395,36 +2398,39 @@ sub slurm_monitor
 
 	#squeue -j 12345, --jobs
 
-	my $outp = `squeue -h -j $jobId 2>&1`;
+	#list only completed, cancelled... job with right id without header
+	my $outp = `squeue -h --states CA,CD,F,NF,TO -j $jobId 2>&1`;
 	if (defined $outp){
 		if ($outp =~ /(i|I)nvalid/){
-			#this is due to some Slurm error. We sleep for 3 sec to make sure the problem was not
-			#due to too early polling, and then try again. If error message persists then assume job
+			#this is either because the job finished so long ago (MinJobAge)
+			#that is has disappeared, 
+			#or due to some Slurm error. We sleep for 3 sec to make sure there was not an error
+			#due to too early polling, and then try again. If message persists then assume job
 			#id will never be valid, i.e. finished. That definitely can happen.
 			sleep(3);
-			my $outp2 = `squeue -h -j $jobId 2>&1`;
+			my $outp2 = `squeue -h --states CA,CD,F,NF,TO -j $jobId 2>&1`;
 			if (defined $outp2){
 				if ($outp2 =~ /(i|I)nvalid/){
 					return $jobId; # Give up. This job is finished since not in queue
 				}elsif ($outp2 =~ /^\s*$jobId\s/){
 					#assume jobId first item in string, possibly with leading whitespace
-					#job still left
-					return 0;
+					#job is finished
+					return $jobId;
 				}else{
-					return $jobId; # This job is finished since not in queue
+					return 0; # Assume some error message, not finished
 				}
 			}else{
-				return $jobId; # This job is finished since not in queue
+				return 0; # not finished since empty output when asking for finished jobs
 			}
 		}elsif ($outp =~ /^\s*$jobId\s/){
 			#assume jobId first item in string, possibly with leading whitespace
-			#job still left
-			return 0;
+			#job in set of finished ones
+			return $jobId;
 		}else{
-			return $jobId; # This job is finished since not in queue
+			return 0; #Assume some error message, not finished
 		}
 	}else{
-		return $jobId; # This job is finished since not in queue
+		return 0; # Not finished since empty output
 	}
 }
 
