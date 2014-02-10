@@ -2453,20 +2453,27 @@ sub _read_header
 	open(DATAFILE,"$filename") || 
 	die "Could not open $filename for reading";
 	my $columns;
+	my $found_data=0;
 	while (<DATAFILE>) {
 		s/\s*\,\s*/\,/g;
 		$tmp_row    = $_;
 		if ( ! (/^\s*\d+|^\s*\./) ) {
 			$data[$row] = $tmp_row;
 			$row++;
+#			print " $row ";
 		} else {
-			# We have reached the first data-row, return.
+			# We have reached the first data-row, break
 			$columns = scalar split(/\,\s*|\s+/);
+			$found_data=1;
+#			print "read_header found data row, row index is $row\n";
 			last;
 		}
 	}
 	close(DATAFILE);
-
+	print "\nWarning: Found no data lines in ".$self->filename().
+		". This can happen e.g.\nif you have a data file in old MacOSX format and run on unix/linux,\n".
+		"in which case the workaround is to run mac2unix on ".$self->filename()."\n"  unless $found_data ;
+	
 	chomp( $hdrstring = pop(@data)); #last value of array
 	@header = split(/\,\s*|\s+/,$hdrstring);
 	# the \Q and \E here are to escape wierd ignoresigns
@@ -2501,6 +2508,7 @@ sub _read_header
 	}
 
 	$self->header(\@header);
+#	print "read header ".join(' ',@header)."\n";
 	$self->comment(\@data);
 }
 
