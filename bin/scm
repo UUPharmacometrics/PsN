@@ -406,8 +406,9 @@ if( $models_array->[0] -> is_option_set( record => 'abbreviated', name => 'REPLA
 my $scm;
 
 if( $direction eq 'forward' or $direction eq 'both' ){
-  print ui -> print( category => 'scm',
-		     message => "Starting scm forward search" );
+	ui -> print( category => 'scm',
+				 message => "Starting scm forward search" );
+
 
   my $orig_ofv;
   my $orig_p_value;
@@ -452,7 +453,6 @@ if( $direction eq 'forward' or $direction eq 'both' ){
 			toolname => 'scm',
 			local_options => [keys %optional_options],
 			common_options => \@common_options::tool_options);
-
 
 
   $scm -> run;
