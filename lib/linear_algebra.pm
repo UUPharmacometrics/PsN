@@ -118,31 +118,34 @@ sub cholesky {
     return $input_error unless ($mrow == $ncol);
 
     for (my $j=0; $j< $ncol; $j++){
-	if ($j>0) {
-	    #i=j
-	    my $sum=0;
-	    for (my $k=0; $k<$j ; $k++){
-		$sum=$sum+($Aref->[$k][$j])**2;
-	    }
-	    my $diff = $Aref->[$j][$j]-$sum;
-	    return $numerical_error if ($diff < 0);
-	    $Aref->[$j][$j]=sqrt($diff);
-	    return $numerical_error if ($Aref->[$j][$j] == 0);
-	    #i=j+1:n
-	    for (my $i=($j+1); $i<$ncol; $i++){
-		my $sum=0;
-		for (my $k=0; $k<$j ; $k++){
-		    $sum=$sum+($Aref->[$k][$j])*($Aref->[$k][$i]);
+		if ($j>0) {
+			#i=j
+			my $sum=0;
+			for (my $k=0; $k<$j ; $k++){
+				$sum=$sum+($Aref->[$k][$j])**2;
+			}
+			my $diff = $Aref->[$j][$j]-$sum;
+			return $numerical_error if ($diff < 0);
+			$Aref->[$j][$j]=sqrt($diff);
+			return $numerical_error if ($Aref->[$j][$j] == 0);
+			#i=j+1:n
+			for (my $i=($j+1); $i<$ncol; $i++){
+				my $sum=0;
+				for (my $k=0; $k<$j ; $k++){
+					$sum=$sum+($Aref->[$k][$j])*($Aref->[$k][$i]);
+				}
+				$Aref->[$j][$i]=($Aref->[$j][$i]-$sum)/($Aref->[$j][$j]);
+			}
+		} else {
+			$Aref->[0][0]=sqrt($Aref->[0][0]);
+			if ($Aref->[0][0] == 0){
+				print "cholesky leading element is 0";
+				return $numerical_error ;
+			}
+			for (my $i=1; $i< $ncol; $i++){
+				$Aref->[0][$i]=$Aref->[0][$i]/($Aref->[0][0]);
+			}
 		}
-		$Aref->[$j][$i]=($Aref->[$j][$i]-$sum)/($Aref->[$j][$j]);
-	    }
-	} else {
-	    $Aref->[0][0]=sqrt($Aref->[0][0]);
-	    return $numerical_error if ($Aref->[0][0] == 0);
-	    for (my $i=1; $i< $ncol; $i++){
-		$Aref->[0][$i]=$Aref->[0][$i]/($Aref->[0][0]);
-	    }
-	}
     }
 
     return 0;
@@ -511,7 +514,7 @@ sub row_cov_median{
     return $input_error if ($nrow < 2);
     my $ncol = scalar(@{$Aref->[0]});
     for (my $row=1; $row< $nrow; $row++){
-	return $input_error if (scalar(@{$Aref->[$row]}) != $ncol);
+		return $input_error if (scalar(@{$Aref->[$row]}) != $ncol);
     }
 
     my @sum = (0) x $ncol;
@@ -520,64 +523,64 @@ sub row_cov_median{
 
     #initialize square result matrix
     for (my $i=0; $i<$ncol; $i++){
-	push(@{$varcov},[(0) x $ncol]);
+		push(@{$varcov},[(0) x $ncol]);
     }
     @{$median} = (0) x $ncol;
 
     for (my $col=0; $col< $ncol; $col++){
-	my @values=();
-	for (my $row=0; $row< $nrow; $row++){
-	    unless ($Aref->[$row][$col] == $missing_data_token){
-		$sum[$col] = $sum[$col] + $Aref->[$row][$col];
-		$N_array[$col] = $N_array[$col]+1; 
-		push(@values,$Aref->[$row][$col]);
-	    }
-	}
-	return $input_error if ($N_array[$col]<2);
-	$mean[$col]=$sum[$col]/$N_array[$col];
-	print "mean $col is ".$mean[$col]."\n" if $debug;
-	$median->[$col]=median(\@values);
-	#variance
-	my $sum_errors_pow2=0;
-	for (my $row=0; $row< $nrow; $row++){
-	    unless ($Aref->[$row][$col] == $missing_data_token){
-		$sum_errors_pow2 = $sum_errors_pow2 + ($Aref->[$row][$col] - $mean[$col])**2;
-	    }
-	}
-	unless ( $sum_errors_pow2 == 0 ){
-	    #if sum is 0 then assume all estimates 0, just ignore
-	    $varcov->[$col][$col]= $sum_errors_pow2/($N_array[$col]-1);
-	    print "variance $col is ".$varcov->[$col][$col]."\n" if $debug;
-	}
-
-	#covariance
-	#here $j is always smaller than $col, meaning that mean is already computed 
-	#how handle missing in one but not the other...? 
-	#if xor missing then add to N_local but not to sum_errors_prod. Is like assuming missin value is equal to mean, 
-	#which is not too bad
-	for (my $j=0; $j< $col; $j++){
-	    my $sum_errors_prod=0;
-	    my $N_local=0;
-	    for (my $i=0; $i< $nrow; $i++){
-		if (($Aref->[$i][$col] != $missing_data_token) and ($Aref->[$i][$j] != $missing_data_token)){
-		    #have both values
-		    $sum_errors_prod = $sum_errors_prod + ($Aref->[$i][$col] - $mean[$col])*($Aref->[$i][$j] - $mean[$j]);
-		    $N_local++;
-		}elsif (($Aref->[$i][$col] == $missing_data_token) xor ($Aref->[$i][$j] == $missing_data_token)){
-		    $N_local++;
-		    #have one value but not the other, pretend missing value is equal to mean.
+		my @values=();
+		for (my $row=0; $row< $nrow; $row++){
+			unless ($Aref->[$row][$col] == $missing_data_token){
+				$sum[$col] = $sum[$col] + $Aref->[$row][$col];
+				$N_array[$col] = $N_array[$col]+1; 
+				push(@values,$Aref->[$row][$col]);
+			}
 		}
-		#if both missing then just skip
-	    }
-	    unless( $sum_errors_prod == 0 ){
-		#if sum is 0 then assume all estimates 0, just ignore
-		$varcov->[$j][$col]= $sum_errors_prod/($N_local-1);
-		$varcov->[$col][$j]=$varcov->[$j][$col]; 
-	    }
-	}
+		return $input_error if ($N_array[$col]<2);
+		$mean[$col]=$sum[$col]/$N_array[$col];
+		print "mean $col is ".$mean[$col]."\n" if $debug;
+		$median->[$col]=median(\@values);
+		#variance
+		my $sum_errors_pow2=0;
+		for (my $row=0; $row< $nrow; $row++){
+			unless ($Aref->[$row][$col] == $missing_data_token){
+				$sum_errors_pow2 = $sum_errors_pow2 + ($Aref->[$row][$col] - $mean[$col])**2;
+			}
+		}
+		unless ( $sum_errors_pow2 == 0 ){
+			#if sum is 0 then assume all estimates 0, just ignore
+			$varcov->[$col][$col]= $sum_errors_pow2/($N_array[$col]-1);
+			print "variance $col is ".$varcov->[$col][$col]."\n" if $debug;
+		}
+
+		#covariance
+		#here $j is always smaller than $col, meaning that mean is already computed 
+		#how handle missing in one but not the other...? 
+		#if xor missing then add to N_local but not to sum_errors_prod. Is like assuming missin value is equal to mean, 
+		#which is not too bad
+		for (my $j=0; $j< $col; $j++){
+			my $sum_errors_prod=0;
+			my $N_local=0;
+			for (my $i=0; $i< $nrow; $i++){
+				if (($Aref->[$i][$col] != $missing_data_token) and ($Aref->[$i][$j] != $missing_data_token)){
+					#have both values
+					$sum_errors_prod = $sum_errors_prod + ($Aref->[$i][$col] - $mean[$col])*($Aref->[$i][$j] - $mean[$j]);
+					$N_local++;
+				}elsif (($Aref->[$i][$col] == $missing_data_token) xor ($Aref->[$i][$j] == $missing_data_token)){
+					$N_local++;
+					#have one value but not the other, pretend missing value is equal to mean.
+				}
+				#if both missing then just skip
+			}
+			unless( $sum_errors_prod == 0 ){
+				#if sum is 0 then assume all estimates 0, just ignore
+				$varcov->[$j][$col]= $sum_errors_prod/($N_local-1);
+				$varcov->[$col][$j]=$varcov->[$j][$col]; 
+			}
+		}
 
     }
-
+	
     return 0;
 }
 
@@ -597,45 +600,45 @@ sub frem_conditional_omega_block{
 
     my $err=cholesky($omegaref);
     if ($err > 0){
-	print "cholesky error in frem\n";
-	return $err ;
+		print "cholesky error $err in frem\n";
+		return $err ;
     }
     my $refInv = [];
     $err = lower_triangular_identity_solve($omegaref,$n_eta,$refInv);
     if ($err > 0){
-	print "lower triang error in frem\n";
-	return $err ;
+		print "lower triang error $err in frem\n";
+		return $err ;
     }
 
 
     my $Rmat=[];
     $err = QR_factorize($refInv,$Rmat);
     if ($err > 0){
-	print "QR error in frem\n";
-	return $err ;
+		print "QR error in frem\n";
+		return $err ;
     }
 
 
     my $refRInv = [];
     $err = upper_triangular_identity_solve($Rmat,$refRInv);
     if ($err > 0){
-	print "upper triang error in frem\n";
-	return $err ;
+		print "upper triang error in frem\n";
+		return $err ;
     }
     return $err if ($err > 0);
 
     $err = upper_triangular_UUT_multiply($refRInv,$result);
     if ($err > 0){
-	print "multiply error in frem\n";
-	return $err ;
+		print "multiply error in frem\n";
+		return $err ;
     }
 
     #fill in full matrix to avoid sorrows outside this function 
     my $dim = scalar(@{$result});
     for (my $row=0; $row<$dim; $row++){
-	for (my $col=0; $col<$dim; $col++){
-	    $result->[$col][$row]=$result->[$row][$col];
-	}
+		for (my $col=0; $col<$dim; $col++){
+			$result->[$col][$row]=$result->[$row][$col];
+		}
     }
 
     return 0;

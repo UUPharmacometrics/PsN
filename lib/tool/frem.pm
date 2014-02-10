@@ -8,6 +8,7 @@ use Config;
 use linear_algebra;
 use ui;
 use File::Copy qw/cp mv/;
+use File::Path 'rmtree';
 
 
 use Moose;
@@ -15,7 +16,7 @@ use MooseX::Params::Validate;
 
 extends 'tool';
 
-my $joindata = 'data_plus_conditional_tv.tab';
+my $joindata = 'frem_vpc.dta';
 my $fremtype = 'FREMTYPE'; 
 my $name_check_model = 'check_data.mod';
 my $name_model0 = 'model_0.mod';
@@ -25,17 +26,17 @@ my $name_model2_timevar = 'model_2_timevar.mod';
 my $name_model2_invar = 'model_2_invariant.mod';
 my $name_model3 = 'model_3.mod';
 my $name_modelvpc_1 = 'vpc_model_1.mod';
-my $name_modelvpc_2 = 'vpc_model_2.mod';
+my $name_modelvpc_2 = 'vpc_model_2_template.mod';
+my $name_vpc_final = 'frem_vpc.mod';
 my $data2name = 'frem_data2.dta';
 my $undefined = 'undefined';
+my $smallval = 0.0001;
 
-has 'bsv_parameters' => ( is => 'rw', isa => 'Int' );
-has 'start_eta' => ( is => 'rw', isa => 'Int', default => 1 );
-has 'bov_parameters' => ( is => 'rw', isa => 'Int' );
+has 'start_eta' => ( is => 'rw', isa => 'Int');
 has 'done_file' => ( is => 'rw', isa => 'Str', default => 'template_models_done.pl');
 #has 'original_data' => ( is => 'rw', isa => 'Str');
 has 'filtered_datafile' => ( is => 'rw', isa => 'Str' );
-has 'estimate' => ( is => 'rw', isa => 'Int', default => -1 );
+has 'estimate' => ( is => 'rw', isa => 'Int', default => 3 );
 has 'typeorder' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 has 'occasionlist' => ( is => 'rw', isa => 'ArrayRef[Int]', default => sub { [] } );
 has 'extra_input_items' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { [] } );
@@ -50,10 +51,8 @@ has 'occasion' => ( is => 'rw', isa => 'Str', default => 'OCC' );
 has 'parameters' => ( is => 'rw', isa => 'ArrayRef[Str]' );
 has 'time_varying' => ( is => 'rw', isa => 'ArrayRef[Str]' );
 has 'invariant' => ( is => 'rw', isa => 'ArrayRef[Str]' );
-has 'final_model_directory' => ( is => 'rw', isa => 'Str' );
 has 'logfile' => ( is => 'rw', isa => 'ArrayRef', default => sub { ['frem.log'] } );
 has 'results_file' => ( is => 'rw', isa => 'Str', default => 'frem_results.csv' );
-
 
 
 sub BUILD
@@ -84,6 +83,9 @@ sub BUILD
 		}
 	}
 
+	if (defined $this->start_eta() and (scalar(@{$this->invariant})<1)){
+		croak('No allowed to set option -start_eta when option -invariant is not set');
+	}
 	if ( scalar (@{$this -> models->[0]-> problems}) > 1 ){
 		croak('Cannot have more than one $PROB in the input model.');
 	}
@@ -145,7 +147,13 @@ sub create_template_models
 	my $start_eta = $self->start_eta();
 	my $bsv_parameters;
 	my $bov_parameters = scalar(@{$self->parameters()});
-	my $phi_file_0;
+	my @occasion_labels = ();
+	my @bsv_par_labels=(); 
+	my @bsv_cov_labels=(); 
+	my @bov_par_labels=();
+	my @bov_cov_labels=();
+	my $model1_updated=0;
+
 
 	#local objects
 	my $frem_model0;
@@ -165,7 +173,6 @@ sub create_template_models
 
 	if ($model -> is_run()){
 		$output_0 =  $model ->outputs()->[0];
-		$phi_file_0 = $model -> directory().$model->filename();
 		if ( defined $output_0){
 			$mod0_ofv = $output_0->get_single_value(attribute=> 'ofv');
 		}else{
@@ -174,18 +181,26 @@ sub create_template_models
 	}else{
 		$mod0_ofv = $undefined;
 	}
-
+	$total_orig_etas = $model->problems->[0]->nomegas( with_correlations => 0,
+													   with_same => 1);
+	
 	#copy original data to m1. Then only use that file, use relative data path in modelfits
 	#only set data record string in all models, do not mess with data object and chdir and such
 	#since we are not running any models here
 
 	my $original_data_name = '../'.$model->datas->[0]->filename();
 	cp($model->datas->[0]->full_name(),$self->directory().'/'.$model->datas->[0]->filename());
-	$start_omega_record = $model-> problems -> [0]->check_start_eta(start_eta => $start_eta);
-	for (my $i=0; $i< ($start_omega_record-1);$i++){
-		#if start_omega_record is 1 we will push nothing
-		push(@leading_omega_records,$model-> problems -> [0]->omegas->[$i]);
+	if ($n_invariant > 0){
+		$start_eta = 1 unless (defined $start_eta);
+		$bsv_parameters = ($total_orig_etas-$start_eta+1);
+		$start_omega_record = $model-> problems -> [0]->check_start_eta(start_eta => $start_eta);
+	}else{
+		#no invariant stuff
+		$start_eta = $total_orig_etas+1; #not yet exist
+		$bsv_parameters = 0;
+		$start_omega_record = scalar(@{$model-> problems -> [0]->omegas()})+1; #not yet exist
 	}
+
 	
 	##########################################################################################
 	#Create Model 0
@@ -203,9 +218,6 @@ sub create_template_models
 #	$frem_model0->problems->[0]->datas->[0]->options->[0]->name($original_data_name);
 	$frem_model0 ->_write();
 	#read number of etas already in model and set bsv_parameters
-	$total_orig_etas = $frem_model0->problems->[0]->nomegas( with_correlations => 0,
-															 with_same => 1);
-	$bsv_parameters = ($total_orig_etas-$start_eta+1);
 	
 	##########################################################################################
 	#Create data set 2
@@ -215,7 +227,32 @@ sub create_template_models
 						bov_parameters => $bov_parameters);
 	
 	$n_occasions = scalar(@{$self->occasionlist()}); #attribute set inside createdata2
-	
+
+	##########################################################################################
+	#Create labels
+	##########################################################################################
+	if ($n_occasions >0){
+		for (my $i=0; $i< $n_occasions; $i++){
+			push(@occasion_labels,$self->occasion().'='.$self->occasionlist()->[$i]);
+		}
+	}
+
+	if ($n_invariant > 0){
+		for (my $i=0; $i< $n_invariant; $i++){
+			push(@bsv_cov_labels,'BSV cov '.$self->invariant()->[$i]);
+		}
+	}
+	if ($bov_parameters > 0){
+		for (my $i=0; $i< $bov_parameters; $i++){
+			push(@bov_par_labels,'BOV par '.$self->parameters()->[$i]);
+		}
+	}
+	if ($n_time_varying > 0){
+		for (my $i=0; $i< $n_time_varying; $i++){
+			push(@bov_cov_labels,'BOV cov '.$self->time_varying()->[$i]);
+		}
+	}
+
 	##########################################################################################
 	#Create Data check model
 	##########################################################################################
@@ -280,7 +317,6 @@ sub create_template_models
 		$run1_fit -> run;
 		if ($frem_model0 -> is_run()){
 			$output_0 = $frem_model0 -> outputs -> [0] ;
-			$phi_file_0 = $frem_model0 -> directory().$frem_model0->filename();
 		}
 	}
 	if ($self->check()){
@@ -303,7 +339,6 @@ sub create_template_models
 	#to be able to do model-> new later
 	$frem_model0->problems->[0]->datas->[0]->options->[0]->name($original_data_name);
 	$frem_model0 ->_write();
-	$phi_file_0 =~ s/mod$/phi/;
 
 	##########################################################################################
 	#Create Model 1
@@ -318,17 +353,27 @@ sub create_template_models
 	if (defined $output_0){
 		$frem_model1 -> update_inits ( from_output => $output_0,
 									   problem_number => 1);
+		$model1_updated=1;
 	}
 
-	#	  print "using empirical omega fill\n";
-	my $BSV_par_block = $frem_model1-> problems -> [0]->get_filled_omega_matrix(start_eta => $start_eta);
+	if ($n_invariant > 0){
+		#	  print "using empirical omega fill\n";
+		my $BSV_par_block = $frem_model1-> problems -> [0]->get_filled_omega_matrix(start_eta => $start_eta);
+		
+		@leading_omega_records = ();
+		for (my $i=0; $i< ($start_omega_record-1);$i++){
+			#if start_omega_record is 1 we will push nothing
+			#if no invariant stuff we will push all
+			push(@leading_omega_records,$frem_model1-> problems -> [0]->omegas->[$i]);
+		}
 
-	#reset $start_omega_record and on, not not kill all
-	$frem_model1 -> problems -> [0]-> omegas(\@leading_omega_records);
+		#reset $start_omega_record and on, not not kill all
+		$frem_model1 -> problems -> [0]-> omegas(\@leading_omega_records);
 	
-	#TODO get labels from input model for bsv par block
-	$frem_model1-> problems -> [0]->add_omega_block(new_omega => $BSV_par_block);
-
+		$frem_model1-> problems -> [0]->add_omega_block(new_omega => $BSV_par_block,
+														labels => \@bsv_par_labels);
+	
+	}
 	$frem_model1->problems->[0]->datas->[0]->options->[0]->name($original_data_name);
 	$frem_model1 ->_write();
 
@@ -354,16 +399,17 @@ sub create_template_models
 	
 	
 	#set theta omega sigma code input
-	#TODO adjust this function to start_eta
 
 	$self->set_frem_records(model => $frem_model2,
 							n_time_varying => $n_time_varying,
 							n_invariant => $n_invariant,
+							start_eta => $start_eta,
 							epsnum => $epsnum,
 							ntheta => $ntheta,
+							vpc => 0,
 							bsv_parameters => $bsv_parameters,
 							bov_parameters => $bov_parameters,
-							model_type =>'2');
+							model_type =>2);
 
 	$frem_model2->_write();
 
@@ -372,8 +418,7 @@ sub create_template_models
 	#Create Model 2 only invariant
 	##########################################################################################
 
-	if (0){
-		#need to double check definitions here. Based on 0 or 1??
+	if ($n_invariant > 0){
 		$frem_model2_invar = $frem_model1 ->  copy( filename    => $self -> directory().'m1/'.$name_model2_invar,
 													output_same_directory => 1,
 													copy_data   => 0,
@@ -388,13 +433,15 @@ sub create_template_models
 		
 		#set theta omega sigma code input
 		$self->set_frem_records(model => $frem_model2_invar,
+								start_eta => $start_eta,
 								n_time_varying => 0,
 								n_invariant => $n_invariant,
 								bsv_parameters => $bsv_parameters,
 								bov_parameters => $bov_parameters,
 								epsnum => $epsnum,
 								ntheta => $ntheta,
-								model_type =>'2');
+								vpc => 0,
+								model_type =>2);
 		
 		$frem_model2_invar->_write();
 	}
@@ -402,33 +449,36 @@ sub create_template_models
 	#Create Model 2 only time-varying
 	##########################################################################################
 	
-	#base on model 0
-	$frem_model2_timevar = $frem_model0 ->  copy( filename    => $self -> directory().'m1/'.$name_model2_timevar,
-													 output_same_directory => 1,
-													 copy_data   => 0,
-													 copy_output => 0);
-
-	#DATA changes
-	#skip set data object , since not running anything here 
-
-	#change data file name to local name so that not too long set ignore also.
-	$frem_model2_timevar-> set_records(type => 'data',
-									   record_strings => [$data2name.' IGNORE=@ ACCEPT=('.$fremtype.'.LT.1) '.
-														  'ACCEPT=('.$fremtype.'.GT.'.$n_invariant.')']);
-	
-	
-	#set theta omega sigma code input
-	$self->set_frem_records(model => $frem_model2_timevar,
-							n_time_varying => $n_time_varying,
-							n_invariant => 0,
-							epsnum => $epsnum,
-							bsv_parameters => $bsv_parameters,
-							bov_parameters => $bov_parameters,
-							ntheta => $ntheta,
-							model_type =>'2');
-	
-	$frem_model2_timevar->_write();
+	if ($n_time_varying > 0){
+		#base on model 0
+		$frem_model2_timevar = $frem_model0 ->  copy( filename    => $self -> directory().'m1/'.$name_model2_timevar,
+													  output_same_directory => 1,
+													  copy_data   => 0,
+													  copy_output => 0);
 		
+		#DATA changes
+		#skip set data object , since not running anything here 
+		
+		#change data file name to local name so that not too long set ignore also.
+		$frem_model2_timevar-> set_records(type => 'data',
+										   record_strings => [$data2name.
+															  ' IGNORE=@ ACCEPT=('.$fremtype.'.LT.1,'.$fremtype.'.GT.'.$n_invariant.')']);
+		
+		
+		#set theta omega sigma code input
+		$self->set_frem_records(model => $frem_model2_timevar,
+								n_time_varying => $n_time_varying,
+								start_eta => $start_eta,
+								n_invariant => 0,
+								epsnum => $epsnum,
+								bsv_parameters => $bsv_parameters,
+								bov_parameters => $bov_parameters,
+								vpc => 0,
+								ntheta => $ntheta,
+								model_type =>2);
+		
+		$frem_model2_timevar->_write();
+	}
 	##########################################################################################
 	#Create Model 3
 	##########################################################################################
@@ -450,13 +500,15 @@ sub create_template_models
 	$self->set_frem_records(model => $frem_model3,
 							n_time_varying => $n_time_varying,
 							n_invariant => $n_invariant,
+							start_eta => $start_eta,
 							epsnum => $epsnum,
 							ntheta => $ntheta,
 							bsv_parameters => $bsv_parameters,
+							vpc => 0,
 							bov_parameters => $bov_parameters,
-							model_type =>'3');
+							model_type =>3);
 #	
-
+	
 	$frem_model3->_write();
 
 	##########################################################################################
@@ -465,9 +517,14 @@ sub create_template_models
 	
 	$frem_vpc_model1 = $frem_model3 ->  copy( filename    => $self -> directory().'m1/'.$name_modelvpc_1,
 											  output_same_directory => 1,
-											  copy_data   => 1,
+											  copy_data   => 0,
 											  copy_output => 0,
 											  skip_data_parsing => 1);      
+
+	#change data file name to local name so that not too long set ignore also.
+	$frem_vpc_model1-> set_records(type => 'data',
+							   record_strings => [$data2name.' IGNORE=@ IGNORE=('.$fremtype.'.GT.0)']);
+
 	#fix omega
 	foreach my $rec (@{$frem_vpc_model1->problems()->[0]->omegas()}){
 		$rec->fix(1) unless $rec->same();
@@ -479,16 +536,13 @@ sub create_template_models
 		}
 	}
 	#unfix all sigma
-	$frem_vpc_model1 -> fixed( parameter_type => 'sigma',
-							   new_values => [[(0) x $frem_vpc_model1 -> nsigmas -> [0] ]] );
+	foreach my $rec (@{$frem_vpc_model1->problems()->[0]->sigmas()}){
+		$rec->fix(0) unless $rec->same();
+		foreach my $opt (@{$rec->options()}){
+			$opt->fix(0);
+		}
+	}
 	
-	#the data object is correct but need to set IGNORE
-	#assume no old ignores for FREMTYPE
-	$frem_vpc_model1-> add_option(problem_numbers => [1],
-								  record_name => 'data',
-								  option_name => 'IGNORE',
-								  option_value=>'('.$fremtype.'.GT.0)');
-		
 	$frem_vpc_model1 -> remove_records(type => 'covariance');
 	
 	
@@ -520,20 +574,24 @@ sub create_template_models
 	#store mapping replacestring to CTVpar
 	#my %oldstring_to_CTVpar;
 	@etanum_to_thetanum= (0) x $bsv_parameters;
+	my %etanum_to_parameter;
 	for (my $i=0; $i<scalar(@code); $i++) {
 		next if ( $code[$i] =~ /^\s*\;/); #comment line
 		if ( $code[$i] =~ /^\s*(\w+)\s*=.*\bETA\((\d+)\)/  ){
-			#TODO handle placeholder (0) for ETA here??? if no bsv but need BOV
+			#Assume no need to handle placeholder (0) for ETA here
 			my $etanum = $2;
 			my $new_param = $1;
 			if ($etanum_to_thetanum[$etanum] != 0){
 				croak("Found multiple lines with ETA($etanum) in vpc_model1, ambigous");
 			}
-			if ($etanum > $bsv_parameters){
+			if ($etanum > ($total_orig_etas)){
+				#we added this theta, not an original one
 				next;
 			}
-			if ( $code[$i] =~ /^.+=.*\bTHETA\((\d+)\)/  ){
+			$etanum_to_parameter{$etanum}=$new_param;
+			if (0 and ( $code[$i] =~ /^.+=.*\bTHETA\((\d+)\)/  )){
 				#coupling on same line as in CL=THETA(2)*EXP(ETA(1))
+				#we do not allow this
 				$etanum_to_thetanum[$etanum]=$1;
 				$oldstring_to_CTVpar{'THETA('.$1.')'} = 'CTV'.$new_param;
 			}else{
@@ -572,6 +630,15 @@ sub create_template_models
 		print "\n";
 	}
 
+	for (my $i=$start_eta;$i< ($start_eta + $bsv_parameters);$i++){
+		if (defined $etanum_to_parameter{$i}){
+			push(@bsv_par_labels,'BSV par '.$etanum_to_parameter{$i});
+		}else{
+			push(@bsv_par_labels,'BSV par ');
+		}
+	}
+
+
 	#To create combined data simply print table with both filtered input data and new conditional data
 	#The conditional headers will have wrong headers in table file to be used as data, but that is fine
 	#as long as $INPUT in vpc2 is correct
@@ -581,7 +648,8 @@ sub create_template_models
 		defined $frem_vpc_model1->problems()->[0] -> inputs -> [0] -> options ) {
 		foreach my $option ( @{$frem_vpc_model1->problems()->[0] -> inputs -> [0] -> options} ) {
 			unless ( $option -> name eq 'DROP' or $option -> name eq 'SKIP' or
-					 $option -> value eq 'DROP' or $option -> value eq 'SKIP'){
+					 $option -> value eq 'DROP' or $option -> value eq 'SKIP' or
+					 $option -> name eq $fremtype){
 				push(@vpc1_table_params,$option -> name);
 				push( @vpc2_input_params, $option -> name );
 			}
@@ -590,17 +658,17 @@ sub create_template_models
 		croak("Trying to construct table for filtering data".
 			  " but no headers were found in \$INPUT" );
 	}
-
+	
 	for (my $etanum=1; $etanum< scalar(@etanum_to_thetanum); $etanum++){
 		my $par = $theta_parameter{$etanum_to_thetanum[$etanum]}; # parameter that has ETA on it
 		push(@vpc1_table_params,$par);
 		push( @vpc2_input_params, 'CTV'.$par);
 	}
-
+	
 	$frem_vpc_model1 -> add_records( type           => 'table',
 									 record_strings => [ join( ' ', @vpc1_table_params ).
 														 ' NOAPPEND NOPRINT ONEHEADER FORMAT=sG15.7 FILE='.$joindata]);
-
+	
 	$frem_vpc_model1->problems->[0]->datas->[0]->options->[0]->name($data2name);
 	$frem_vpc_model1->_write();
 
@@ -608,46 +676,57 @@ sub create_template_models
 	#Create Model 2 vpc
 	##########################################################################################
 	
-	$frem_vpc_model2 = $frem_model3 ->  copy( filename    => $self -> directory().'m1/'.$name_modelvpc_2,
+	$frem_vpc_model2 = $frem_model1 ->  copy( filename    => $self -> directory().'m1/'.$name_modelvpc_2,
 											  output_same_directory => 1,
 											  copy_data   => 0,
 											  copy_output => 0);
 
 	$frem_vpc_model2->ignore_missing_files(1);
 
-	#move most of this to subroutine, too complex to have here, similar to prev. modifications?
-	
 	#DATA changes
 	#skip set data object , since not running anything here 
 	#change data file name to local name so that not too long set ignore also.
 	$frem_vpc_model2-> set_records(type => 'data',
-								   record_strings => [$joindata.' IGNORE=@ IGNORE=('.$fremtype.'.GT.0)']);
+								   record_strings => [$joindata.' IGNORE=@ ']);
 
-	#fix theta ???
-	if (1){
-		foreach my $rec (@{$frem_vpc_model2->problems()->[0]->thetas()}){
-			foreach my $opt (@{$rec->options()}){
-				$opt->fix(1);
-			}
-		}
-	}
-	#fix all sigma
-	$frem_vpc_model2 -> fixed( parameter_type => 'sigma',
-							   new_values => [[(1) x $frem_vpc_model1 -> nsigmas -> [0] ]] );
-	
-	
-	$frem_vpc_model2 -> remove_records(type => 'covariance');
-	
+	$self->set_frem_records(model => $frem_vpc_model2,
+							n_time_varying => $n_time_varying,
+							n_invariant => $n_invariant,
+							start_eta => $start_eta,
+							epsnum => $epsnum,
+							ntheta => $ntheta,
+							bsv_parameters => $bsv_parameters,
+							vpc => 1,
+							bov_parameters => $bov_parameters,
+							model_type =>2);
+
 	my $new_input_string = join(' ',@vpc2_input_params);
 	$frem_vpc_model2->problems()->[0]->set_records(type => 'input',
 												   record_strings => [$new_input_string]);
+
+
+
+	#fix theta  ??
+	#must at least fix the ones that are replace by CTVPAR, since NM error otherwise?
+	foreach my $rec (@{$frem_vpc_model2->problems()->[0]->thetas()}){
+		foreach my $opt (@{$rec->options()}){
+			$opt->fix(1);
+		}
+	}
+	#fix all sigma ??
+	#foreach my $rec (@{$frem_vpc_model2->problems()->[0]->sigmas()}){
+	#	$rec->fix(1) unless $rec->same();
+	#}
 	
-	#replace TVpar with CTVpar, or if no TV then THETAx with CTVpar
+	$frem_vpc_model2 -> remove_records(type => 'covariance');
+	
+	
+	#replace TVpar with CTVpar
 	my @code;
-	@code = @{$frem_vpc_model1 -> pk( problem_number => 1 )};
+	@code = @{$frem_vpc_model2 -> pk( problem_number => 1 )};
 	my $use_pred = 0;
 	unless ( $#code > 0 ) {
-		@code = @{$frem_vpc_model1 -> pred( problem_number => 1 )};
+		@code = @{$frem_vpc_model2 -> pred( problem_number => 1 )};
 		$use_pred = 1;
 	}
 	if ( $#code <= 0 ) {
@@ -661,7 +740,7 @@ sub create_template_models
 			if ( $code[$i] =~ /^(\s*)$oldstring\s*=/ ){
 				$code[$i] = $1.$oldstring.'='.$oldstring_to_CTVpar{$oldstring};
 				$found = 1;
-				last; #done substitution for this par, cont outer loop
+				#do not break here, may be multiple definitions, replace all
 			}
 		}
 		croak("could not find where to set\n".$oldstring.'='.$oldstring_to_CTVpar{$oldstring}) unless $found;
@@ -676,11 +755,10 @@ sub create_template_models
 	
 	$frem_vpc_model2->_write();
 
-
-	my @dumper_names=qw(n_invariant n_time_varying n_occasions total_orig_etas start_omega_record *theta_parameter use_pred *oldstring_to_CTVpar *etanum_to_thetanum start_eta bsv_parameters bov_parameters phi_file_0);
+	my @dumper_names=qw(n_invariant n_time_varying n_occasions total_orig_etas start_omega_record *theta_parameter use_pred *oldstring_to_CTVpar *etanum_to_thetanum start_eta bsv_parameters bov_parameters *occasion_labels *bsv_par_labels *bsv_cov_labels *bov_par_labels *bov_cov_labels model1_updated );
 	open(FH, '>'.$self->done_file()) or die "Could not open file ".$self->done_file()." for writing.\n";
 	print FH Data::Dumper->Dump(
-		[$n_invariant,$n_time_varying,$n_occasions,$total_orig_etas,$start_omega_record,\%theta_parameter,$use_pred,\%oldstring_to_CTVpar,\@etanum_to_thetanum,$start_eta,$bsv_parameters,$bov_parameters,$phi_file_0],
+		[$n_invariant,$n_time_varying,$n_occasions,$total_orig_etas,$start_omega_record,\%theta_parameter,$use_pred,\%oldstring_to_CTVpar,\@etanum_to_thetanum,$start_eta,$bsv_parameters,$bov_parameters,\@occasion_labels,\@bsv_par_labels,\@bsv_cov_labels,\@bov_par_labels,\@bov_cov_labels,$model1_updated],
 		\@dumper_names
 		);
 	close FH;
@@ -698,7 +776,6 @@ sub modelfit_setup
 
 	my $model = $self -> models -> [$model_number-1];
 
-	#TODO make sure phi is copied back, make sure $self->nm_output includes phi
 
 	#declare variables
 	#these should be same set as "variables to store" in create_template_models
@@ -714,9 +791,15 @@ sub modelfit_setup
 	my $start_eta;
 	my $bsv_parameters;
 	my $bov_parameters;
-	my $phi_file_0;
+	my @occasion_labels;
+	my @bsv_par_labels; 
+	my @bsv_cov_labels; 
+	my @bov_par_labels;
+	my @bov_cov_labels;
+	my $model1_updated;
 
 	#read from done_file, do eval on string to slurp variable values
+	my $rundir;
 
 	unless (-e $self->done_file()){
 		$self->create_template_models( model => $self -> models -> [$model_number-1]);
@@ -738,13 +821,16 @@ sub modelfit_setup
     my $frem_model2 = model -> new ( %{common_options::restore_options(@common_options::model_options)},
 									 filename                    => 'm1/'.$name_model2_all,
 									 ignore_missing_output_files => 1 );
-    my $frem_model2_timevar = model -> new ( %{common_options::restore_options(@common_options::model_options)},
-											 filename                    => 'm1/'.$name_model2_timevar,
-											 ignore_missing_output_files => 1 );
-	
-    my $frem_model2_invar;
-	#need to double check definitions here. Based on 0 or 1??
-	if (0){
+    my $frem_model2_timevar;
+
+	if (-e 'm1/'.$name_model2_timevar){
+		$frem_model2_timevar = model -> new ( %{common_options::restore_options(@common_options::model_options)},
+											  filename                    => 'm1/'.$name_model2_timevar,
+											  ignore_missing_output_files => 1 );
+	}
+	my $frem_model2_invar;
+
+	if (-e 'm1/'.$name_model2_invar){
 		$frem_model2_invar = model -> new ( %{common_options::restore_options(@common_options::model_options)},
 											filename                    => 'm1/'.$name_model2_invar,
 											ignore_missing_output_files => 1 );
@@ -776,11 +862,6 @@ sub modelfit_setup
 	my $eta_covariance_2;
 
 
-	for (my $i=0; $i< ($start_omega_record-1);$i++){
-		#if start_omega_record is 1 we will push nothing
-		push(@leading_omega_records,$frem_model0-> problems -> [0]->omegas->[$i]);
-	}
-
 
 	##########################################################################################
 	#Run Model 0
@@ -788,11 +869,14 @@ sub modelfit_setup
 
 	if ($frem_model0->is_run()){
 		$output_0 = $frem_model0 -> outputs -> [0];
-	}elsif (not -e $phi_file_0 and ($self->estimate() >= 0)){
+	}elsif ($self->estimate() >= 0 and (not $model1_updated)){
+		$rundir = $self -> directory().'/model_0_modelfit_dir1';
+		rmtree([ "$rundir" ]) if (-e $rundir);
+
 		my $zero_fit = tool::modelfit ->
 			new( %{common_options::restore_options(@common_options::tool_options)},
 				 base_directory	 => $frem_model0 -> directory(),
-				 directory		 => $self -> directory().'/model_0_modelfit_dir1',
+				 directory		 => $rundir,
 				 models		 => [$frem_model0],
 				 top_tool              => 0);
 		
@@ -801,41 +885,6 @@ sub modelfit_setup
 		$output_0 = $frem_model0 -> outputs -> [0] if ($frem_model0 -> is_run());
 	}
 
-	##########################################################################################
-	#Compute ETA covariance matrix from model 0 
-	##########################################################################################
-
-	if (-e $phi_file_0 and (not $frem_model1->is_run())){
-		my $phi = data -> new(filename=>$phi_file_0) if (-e $phi_file_0);
-		my $eta_matrix = $phi -> get_eta_matrix( start_eta => $start_eta,
-												 n_eta => $bsv_parameters) if (defined $phi);
-		if (defined $eta_matrix and defined $eta_matrix->[0] and scalar(@{$eta_matrix->[0]})==$bsv_parameters ){
-			$eta_covariance_0 = [];
-			my $err = linear_algebra::row_cov($eta_matrix,$eta_covariance_0);
-			if ($err != 0){
-				print "failed to compute eta covariance model 0\n";
-				$eta_covariance_0 = undef;
-			}else{
-				if (0){
-					#print to file??
-					print "printing eta cov\n";
-					for (my $row=0; $row<$bsv_parameters; $row++){
-						for (my $col=0; $col<$bsv_parameters; $col++){
-							printf("  %.4f",$eta_covariance_0->[$row][$col]); #matlab format
-						}
-						print "\n";
-					}
-					print "\n";
-				}
-				#verify that not all zero
-				my $nonzero=0;
-				for (my $row=0; $row<$bsv_parameters; $row++){
-					$nonzero = 1 if ($eta_covariance_0->[$row][$row] > 0);
-				}
-				$eta_covariance_0 = undef unless $nonzero;
-			}
-		}
-	}
 	
 	##########################################################################################
 	#Update and run Model 1
@@ -844,30 +893,7 @@ sub modelfit_setup
 	if ($frem_model1->is_run()){
 		$output_1 = $frem_model1 -> outputs -> [0];
 	}else{
-		if (0 and defined $eta_covariance_0 and (scalar(@{$eta_covariance_0}) >0)){
-			#get filled omega only fills in nonzero values, but we have done empirical fill above
-			#redo update inits but set zeros from output to reset
-			#assume output_0 defined when phi file existed above
-			croak("mod 0 phi file existed but not lst-file") unless (defined $output_0);
-			$frem_model1 -> update_inits ( from_output => $output_0,
-										   ignore_missing_parameters => 1,
-										   update_fix => 1,
-										   skip_output_zeros => 0,
-										   problem_number => 1);
-
-			my $BSV_par_block;
-			#	  print "using ETA cov omega fill\n";
-			$BSV_par_block = $frem_model1-> problems -> [0]->get_filled_omega_matrix(covmatrix => $eta_covariance_0,
-																					 start_eta => $start_eta);
-
-			#reset $start_omega_record and on, not not kill all
-			$frem_model1 -> problems -> [0]-> omegas(\@leading_omega_records);
-	
-			#TODO get labels from input model for bsv par block
-			$frem_model1-> problems -> [0]->add_omega_block(new_omega => $BSV_par_block);
-
-			$frem_model1 ->_write();
-		}elsif (defined $output_0){
+		if (defined $output_0 and (not $model1_updated)){
 			$frem_model1 -> update_inits ( from_output => $output_0,
 										   ignore_missing_parameters => 1,
 										   update_fix => 1,
@@ -876,10 +902,12 @@ sub modelfit_setup
 		}
 		if ($self->estimate() >= 1){
 			#estimate model 1 if estimation is requested
+			$rundir = $self -> directory().'/model1_modelfit_dir1';
+			rmtree([ "$rundir" ]) if (-e $rundir);
 			my $one_fit = tool::modelfit ->
 				new( %{common_options::restore_options(@common_options::tool_options)},
 					 base_directory	 => $frem_model1 -> directory(),
-					 directory		 => $self -> directory().'/model1_modelfit_dir1',
+					 directory		 => $rundir,
 					 models		 => [$frem_model1],
 					 top_tool              => 0);
 			
@@ -907,10 +935,12 @@ sub modelfit_setup
 
 		if ($self->estimate() >= 2){
 			#estimate model 2 if estimation is requested
+			$rundir = $self -> directory().'/model2_modelfit_dir1';
+			rmtree([ "$rundir" ]) if (-e $rundir);
 			my $two_fit = tool::modelfit ->
 				new( %{common_options::restore_options(@common_options::tool_options)},
 					 base_directory	 => $frem_model2 -> directory(),
-					 directory		 => $self -> directory().'/model2_modelfit_dir1',
+					 directory		 => $rundir,
 					 models		 => [$frem_model2],
 					 top_tool              => 0);
 			
@@ -924,15 +954,14 @@ sub modelfit_setup
 	#Update Model 2 only invariant
 	##########################################################################################
 
-	#need to check definition of model here
-	if (0){
-		#Update inits from output, if any TODO handle model differences
-		if (defined $output_1){
-			$frem_model2_invar -> update_inits ( from_output => $output_1,
-												 problem_number => 1);
-			$frem_model2_invar->_write();
-		}
+	#Update inits from output, if any
+	if (defined $output_1 and defined $frem_model2_invar){
+		$frem_model2_invar -> update_inits ( from_output => $output_1,
+											 ignore_missing_parameters => 1,
+											 problem_number => 1);
+		$frem_model2_invar->_write();
 	}
+   
 
 	##########################################################################################
 	#Update Model 2 only time-varying
@@ -940,7 +969,7 @@ sub modelfit_setup
 
 	#Update inits from output, if any
 	#based on mod 0, there should be no fill in of block as in mod 1
-	if (defined $output_0){
+	if (defined $output_0 and defined $frem_model2_timevar and (not $model1_updated)){
 		$frem_model2_timevar -> update_inits ( from_output => $output_0,
 											   ignore_missing_parameters => 1,
 											   update_fix => 1,
@@ -959,9 +988,93 @@ sub modelfit_setup
 		$output_3 = $frem_model3 -> outputs -> [0];
 	}else{
 		#Update inits from output, if any
-		if (0 and defined $output_2){
-			#handle reordered etas
- 
+		if (defined $output_2){
+			
+			$frem_model3 -> update_inits ( from_output => $output_2,
+										   ignore_missing_parameters => 0,
+										   update_fix => 1,
+										   skip_output_zeros => 0,
+										   update_omegas => 0,
+										   update_sigmas => 1,
+										   update_thetas => 1,
+										   problem_number => 1);
+
+			@leading_omega_records=();
+			my $mod3_bov_record = $start_omega_record; #record number in mod 3, model to update
+			$mod3_bov_record = $start_omega_record+1 if($n_invariant > 0);
+			if ($mod3_bov_record > 1){
+				#update all *before* bov blocks
+				$frem_model3 -> update_inits ( from_output => $output_2,
+											   ignore_missing_parameters => 1,
+											   update_fix => 1,
+											   skip_output_zeros => 1,
+											   update_omegas => 1,
+											   update_sigmas => 0,
+											   update_thetas => 0,
+											   start_record => 1,
+											   end_record => ($mod3_bov_record-1),
+											   problem_number => 1);
+				
+			}
+
+
+			#create new BOV_all_occ1 to add
+			if ($n_time_varying > 0){
+				for (my $i=0; $i< ($mod3_bov_record-1);$i++){
+					push(@leading_omega_records,$frem_model3-> problems -> [0]->omegas->[$i]);
+				}
+				#reset omega
+				$frem_model3 -> problems -> [0]-> omegas(\@leading_omega_records);
+				#first update intits in mod2
+				$frem_model2 -> update_inits ( from_output => $output_2,
+											   ignore_missing_parameters => 0,
+											   update_fix => 1,
+											   problem_number => 1);
+
+				my $mod2_bov_record=$start_omega_record;
+				$mod2_bov_record=$start_omega_record+2 if ($n_invariant>0);
+				my $BOV_par_occ1 = $frem_model2->problems->[0]->get_record_matrix(type => 'omega',
+																				  row_format => 1,
+																				  record_number => $mod2_bov_record);
+				my $BOV_cov_occ1 = $frem_model2->problems->[0]->get_record_matrix(type => 'omega',
+																				  row_format => 1,
+																				  record_number => ($mod2_bov_record+$n_occasions));
+
+				#create full block to add to mod3
+				my $dim1 = scalar(@{$BOV_par_occ1});
+				my $new_size = $dim1+scalar(@{$BOV_cov_occ1});
+				my $BOV_all_occ1=[];
+				for (my $i=0 ; $i< $new_size; $i++){
+					push(@{$BOV_all_occ1},[(0) x $new_size]);
+				}
+				for (my $i=0 ; $i< $dim1; $i++){
+					for (my $j=0 ; $j<=$i; $j++){
+						$BOV_all_occ1->[$i][$j] = $BOV_par_occ1->[$i][$j];
+					}
+				}
+				for (my $i=$dim1; $i< $new_size; $i++){
+					for (my $j=0 ; $j<$dim1; $j++){
+						$BOV_all_occ1->[$i][$j] = $smallval;
+					}
+					for (my $j=$dim1 ; $j<=$i; $j++){
+						$BOV_all_occ1->[$i][$j] = $BOV_cov_occ1->[$i-$dim1][$j-$dim1];
+					}
+				}
+				my @all_labels = @bov_par_labels;
+				push(@all_labels,@bov_cov_labels);
+				$frem_model3 -> problems -> [0]-> add_omega_block(new_omega => $BOV_all_occ1,
+																  labels=>\@all_labels);
+
+				#BOV_all_occ2-end
+				for (my $i=1; $i< $n_occasions; $i++){
+					$frem_model3 -> add_records (type => 'omega',
+												 record_strings => ['BLOCK SAME ;'.$occasion_labels[$i]]);
+					
+				}
+
+			}
+
+			$frem_model3->_write();
 		}elsif (defined $output_1){ 
 			$frem_model3 -> update_inits ( from_output => $output_1,
 										   ignore_missing_parameters => 1,
@@ -974,10 +1087,12 @@ sub modelfit_setup
 
 		if ($self->estimate() >= 3){
 			#estimate model 3 if estimation is requested
+			$rundir = $self -> directory().'/model3_modelfit_dir1';
+			rmtree([ "$rundir" ]) if (-e $rundir);
 			my $three_fit = tool::modelfit ->
 				new( %{common_options::restore_options(@common_options::tool_options)},
 					 base_directory	 => $frem_model3 -> directory(),
-					 directory		 => $self -> directory().'/model3_modelfit_dir1',
+					 directory		 => $rundir,
 					 models		 => [$frem_model3],
 					 top_tool              => 0);
 			
@@ -1001,16 +1116,16 @@ sub modelfit_setup
 				$frem_vpc_model1 -> update_inits ( from_output => $output_3,
 												   ignore_missing_parameters => 1,
 												   update_fix => 1,
-												   skip_output_zeros => 1,
 												   problem_number => 1);
 				$frem_vpc_model1->_write();
 			}
+			$rundir = $self -> directory().'/vpc1_modelfit_dir1';
+			rmtree([ "$rundir" ]) if (-e $rundir);
 
-			
 			my $vpc1_fit = tool::modelfit ->
 				new( %{common_options::restore_options(@common_options::tool_options)},
 					 base_directory	 => $frem_vpc_model1 -> directory(),
-					 directory	 => $self -> directory().'/vpc1_modelfit_dir1',
+					 directory	 => $rundir,
 					 models		 => [$frem_vpc_model1],
 					 top_tool              => 0);
 			
@@ -1028,14 +1143,105 @@ sub modelfit_setup
 		##########################################################################################
 
 
-		#Update inits from output3, if any
-		if (defined $output_3){
-			$frem_vpc_model2 -> update_inits ( from_output => $output_3,
+		#Update inits from output_vpc_1, if any
+		#otherwise no point in doing anything
+		if (defined $output_vpc_1){
+			@leading_omega_records=();
+			$frem_vpc_model2 -> update_inits ( from_output => $output_vpc_1,
 											   ignore_missing_parameters => 1,
 											   update_fix => 1,
-											   skip_output_zeros => 1,
+											   skip_output_zeros => 0,
+											   update_omegas => 0,
+											   update_sigmas => 1,
+											   update_thetas => 1,
 											   problem_number => 1);
+			if ($start_omega_record > 1){
+				#update all *before* start_omega_record  
+				$frem_vpc_model2 -> update_inits ( from_output => $output_vpc_1,
+												   ignore_missing_parameters => 1,
+												   update_fix => 1,
+												   skip_output_zeros => 0,
+												   update_omegas => 1,
+												   update_sigmas => 0,
+												   update_thetas => 0,
+												   start_record => 1,
+												   end_record => ($start_omega_record-1),
+												   problem_number => 1);
+				for (my $i=0; $i< ($start_omega_record-1);$i++){
+					push(@leading_omega_records,$frem_vpc_model2-> problems -> [0]->omegas->[$i]);
+				}
+
+			}
+			#reset $start_omega_record and on, not not kill all
+			$frem_vpc_model2 -> problems -> [0]-> omegas(\@leading_omega_records);
+
+			#compute conditional omega blocks
+
+			#first update intits in vpc1. NEcessary since fix????
+			$frem_vpc_model1 -> update_inits ( from_output => $output_vpc_1,
+											   ignore_missing_parameters => 0,
+											   update_fix => 1,
+											   problem_number => 1);
+	
+			my $bov_record;
+			#TODO can get something not pos def from here.... round up diagonals in get_record_matrix???
+			if ($n_invariant > 0){
+				$bov_record = $start_omega_record+1;
+				my $BSV_all = $frem_vpc_model1->problems->[0]->get_record_matrix(type => 'omega',
+																				 row_format => 0,
+																				 record_number => $start_omega_record);
+				my $new_BSV_par = [];
+				my $res = linear_algebra::frem_conditional_omega_block($BSV_all,$bsv_parameters,$new_BSV_par);
+				if ($res == 1){
+					print "\nError when calling frem_conditional_omega_block for BSV, probably BSV_all part of omega from Model 3 ".
+						"was not positive definite. Take care of this manually and restart frem.\n";
+					exit;
+				}
+				if ($res == 2){
+					croak("\nInput error when calling frem_conditional_omega_block for BSV, this is a bug.\n");
+				}
+			
+				$frem_vpc_model2 -> problems -> [0]-> add_omega_block(new_omega => $new_BSV_par,
+																	  labels => \@bsv_par_labels);
+			}else{
+				$bov_record = $start_omega_record;
+			}
+			if ($n_time_varying > 0){
+				my $BOV_all_occ1 = $frem_vpc_model1->problems->[0]->get_record_matrix(type => 'omega',
+																					  row_format => 0,
+																					  record_number => $bov_record);
+
+				my $new_BOV_par_occ1 = [];
+				my $res = linear_algebra::frem_conditional_omega_block($BOV_all_occ1,$bov_parameters,$new_BOV_par_occ1);
+				if ($res == 1){
+					print "\nError when calling frem_conditional_omega_block for BOV, ".
+						"probably BOV_all_occ1 part of omega from Model 3 ".
+						"was not positive definite. Take care of this manually and restart frem.\n";
+					exit;
+				}
+				if ($res == 2){
+					croak("\nInput error when calling frem_conditional_omega_block for BOV, this is a bug.\n");
+				}
+
+				$frem_vpc_model2 -> problems -> [0]-> add_omega_block(new_omega => $new_BOV_par_occ1,
+																	  labels => \@bov_par_labels);
+				#add block same
+				#BOV_par_occ2-end
+				for (my $i=1; $i< $n_occasions; $i++){
+					$frem_vpc_model2 -> add_records (type => 'omega',
+													 record_strings => ['BLOCK SAME ;'.$occasion_labels[$i]]);
+					
+				}
+			}
+
 			$frem_vpc_model2->_write();
+			#copy model and move data to final names in run dir
+			cp($frem_vpc_model2->full_name(),$name_vpc_final);
+			mv($frem_vpc_model1->directory().$joindata,$joindata);
+
+		}else{
+			croak("No output from frem_vpc1 run, cannot create final vpc model");
+
 		}
 
 
@@ -1322,14 +1528,15 @@ sub set_frem_records
 							  model => { isa => 'Ref', optional => 0 },
 							  n_invariant => { isa => 'Int', optional => 0 },
 							  n_time_varying => { isa => 'Int', optional => 0 },
-							  model_type => { isa => 'Str', optional => 0 },
+							  model_type => { isa => 'Int', optional => 0 },
+							  vpc => { isa => 'Bool', optional => 0 },
+							  start_eta => { isa => 'Int', optional => 0 },
 							  epsnum => { isa => 'Int', optional => 0 },
 							  ntheta => { isa => 'Int', optional => 0 },
 							  bsv_parameters => { isa => 'Int', optional => 0 },
-							  bov_parameters => { isa => 'Int', optional => 0 },
-							  output_2 => { isa => 'Ref', optional => 1 }
+							  bov_parameters => { isa => 'Int', optional => 0 }
 		);
-	my $model = $parm{'model'};
+	my $model = $parm{'model'}; #this will always be model1
 	my $n_invariant = $parm{'n_invariant'};
 	my $n_time_varying = $parm{'n_time_varying'};
 	my $model_type = $parm{'model_type'};
@@ -1337,34 +1544,31 @@ sub set_frem_records
 	my $ntheta = $parm{'ntheta'};
 	my $bsv_parameters = $parm{'bsv_parameters'};
 	my $bov_parameters = $parm{'bov_parameters'};
-	my $output_2 = $parm{'output_2'};
+	my $start_eta = $parm{'start_eta'};
+	my $vpc = $parm{'vpc'};
 
     #in is ref of model
-    #model_type 2 or 3 or vpc1 or vpc2
+    #model_type 2 or 3
     #local number n_time_varying. If 0 then locally ignore bov_parameters
     #local number n_invariant
     #epsnum
     #ntheta
     #this sets theta omega sigma code input
 
-	#TODO adjust code to start_eta
-
-    unless ($model_type eq '2' or $model_type eq '3'){
-#    unless ($model_type eq '2' or $model_type eq '3' or $model_type eq 'vpc1' or $model_type eq 'vpc2'){
-		croak("invalid model_type $model_type input to set_theta_omega_code");
+    unless ($model_type == 2 or $model_type ==3){
+		croak("invalid model_type $model_type input to set_frem_records");
     }
-    if ($model_type eq 'vpc1' or $model_type eq 'vpc2'){
-		croak("vpc not implemented yet");
-    }
-
     my $n_occasions = scalar(@{$self->occasionlist()});
 
-    #INPUT changes
-    foreach my $item (@{$self->extra_input_items()}){
-		$model -> add_option(problem_numbers => [1],
-							 record_name => 'input',
-							 option_name => $item);
-    }
+    #INPUT changes. This would be undone for vpc2, but does not hurt to do it here
+	if (not $vpc){
+		foreach my $item (@{$self->extra_input_items()}){
+			#mdv and fremtype
+			$model -> add_option(problem_numbers => [1],
+								 record_name => 'input',
+								 option_name => $item);
+		}
+	}
     
     #SIGMA changes
     $model->add_records(type => 'sigma',
@@ -1372,64 +1576,92 @@ sub set_frem_records
 						record_strings => ['0.0000001 FIX ; EPSCOV']);
 
 
-    #THETA changes
-    my @theta_strings =();
-    for (my $i=0; $i< $n_invariant; $i++){
-		push(@theta_strings,' '.sprintf("%.12G",$self->invariant_median()->[$i]).'; TV'.$self->invariant()->[$i]);
+    #THETA changes from Mod 1
+	
+	if (not $vpc){
+		my @theta_strings =();
+		for (my $i=0; $i< $n_invariant; $i++){
+			push(@theta_strings,' '.sprintf("%.12G",$self->invariant_median()->[$i]).'; TV'.$self->invariant()->[$i]);
+		}
+		for (my $i=0; $i< $n_time_varying; $i++){
+			push(@theta_strings,' '.sprintf("%.12G",$self->timevar_median()->[$i]).'; TV'.$self->time_varying()->[$i]);
+		}
+		$model->add_records(type => 'theta',
+							problem_numbers => [1],
+							record_strings => \@theta_strings);
+	}
+
+    #OMEGA changes starting from Mod1
+	#BSV part
+    if (($n_invariant > 0) and (not $vpc)){
+		#this is BSV_cov
+		my @labels=();
+		foreach my $cov (@{$self->invariant()}){
+			push(@labels,"BSV cov $cov");
+		}
+		$model-> problems -> [0]->add_omega_block(new_omega => $self->invariant_covmatrix(),
+												  labels => \@labels);
+		if($model_type == 3){
+			#replace with BSV_all (full block from BSV_par + BSV_cov
+			my $BSV_all_block = $model-> problems -> [0]->get_filled_omega_matrix(start_eta => $start_eta);
+
+			my $start_omega_record = $model-> problems -> [0]->check_start_eta(start_eta => $start_eta);
+			my @leading_omega_records=();
+			for (my $i=0; $i< ($start_omega_record-1);$i++){
+				#if start_omega_record is 1 we will push nothing
+				push(@leading_omega_records,$model-> problems -> [0]->omegas->[$i]);
+			}
+			#reset $start_omega_record and on, do not kill all
+			$model -> problems -> [0]-> omegas(\@leading_omega_records);
+			
+			$model -> problems -> [0]->add_omega_block(new_omega => $BSV_all_block);
+		}
     }
-    for (my $i=0; $i< $n_time_varying; $i++){
-		push(@theta_strings,' '.sprintf("%.12G",$self->timevar_median()->[$i]).'; TV'.$self->time_varying()->[$i]);
-    }
-    $model->add_records(type => 'theta',
-						problem_numbers => [1],
-						record_strings => \@theta_strings);
 
 
-    #OMEGA changes
-    if ($n_invariant > 0){
-#	if (($model_type eq '3') and (defined $output_2)){
-	    #TODO take block estimates from output_2
-
-#	}else{
-	    $model-> problems -> [0]->add_omega_block(new_omega => $self->invariant_covmatrix(),
-												  labels => $self->invariant());
-#	}
-    }
+    #OMEGA changes starting from Mod1
+	#BOV part
     if ($n_time_varying > 0){
 
-		if ($model_type eq '2'){
+		if ($model_type == 2){ #2 or vpc2
 			my $BOV_par_block;
 			my @bovlabels=();
 			for (my $i=0 ; $i< $bov_parameters; $i++){
-				push(@{$BOV_par_block},[(0.0002) x $bov_parameters]);
+				push(@{$BOV_par_block},[($smallval) x $bov_parameters]);
 				$BOV_par_block->[$i][$i] = 0.01;
 				push(@bovlabels,'BOV par '.$self->parameters()->[$i]);
 			}
+			#BOV_par_occ1
 			$model-> problems -> [0]->add_omega_block(new_omega => $BOV_par_block,
 													  labels => \@bovlabels);
+			#BOV_par_occ2-end
 			for (my $i=1; $i< $n_occasions; $i++){
 				$model -> add_records (type => 'omega',
 									   record_strings => ['BLOCK SAME ; '.$self->occasion().'='.$self->occasionlist()->[$i]]);
 				
 			}
-			$model-> problems -> [0]->add_omega_block(new_omega => $self->timevar_covmatrix,
-													  labels => $self->time_varying());
-			for (my $i=1; $i< $n_occasions; $i++){
-				$model -> add_records (type => 'omega',
-									   record_strings => ['BLOCK SAME ; '.$self->occasion().'='.$self->occasionlist()->[$i]]);
-				
+			if (not $vpc){
+				#BOV_cov, do not add this for vpc2
+				#BOV_cov_occ1
+				my @labels=();
+				foreach my $cov (@{$self->time_varying()}){
+					push(@labels,"BOV cov $cov");
+				}
+				$model-> problems -> [0]->add_omega_block(new_omega => $self->timevar_covmatrix,
+														  labels => \@labels);
+				#BOV_cov_occ2-end
+				for (my $i=1; $i< $n_occasions; $i++){
+					$model -> add_records (type => 'omega',
+										   record_strings => ['BLOCK SAME ; '.$self->occasion().'='.$self->occasionlist()->[$i]]);
+					
+				}
 			}
-		}elsif ($model_type eq '3'){
+		}elsif ($model_type == 3){
 			my $BOV_all_block;
 			my @bovlabels=();
-
-#	    if (defined $output_2){
-			#TODO: if have model 2 output use other initials here
-			#get bov par block as it is. then look further down for bov cov block, get as it is
-			#finally take phi-file and compute extra off-diagonals
-#	    }else{	
+			
 			for (my $i=0 ; $i< ($bov_parameters+$n_time_varying); $i++){
-				push(@{$BOV_all_block},[(0.0001) x ($bov_parameters+$n_time_varying)]);
+				push(@{$BOV_all_block},[($smallval) x ($bov_parameters+$n_time_varying)]);
 				$BOV_all_block->[$i][$i] = 0.01;
 				if ($i < $bov_parameters){
 					push(@bovlabels,'BOV par '.$self->parameters()->[$i]);
@@ -1444,7 +1676,7 @@ sub set_frem_records
 						$self->timevar_covmatrix()->[$i][$j];
 				}
 			}
-#	    }
+
 			$model-> problems -> [0]->add_omega_block(new_omega => $BOV_all_block,
 													  labels => \@bovlabels);
 			for (my $i=1; $i< $n_occasions; $i++){
@@ -1472,41 +1704,58 @@ sub set_frem_records
     }
 
 
-
+	
     #PK/PRED changes at beginning A
-    my @begin_code =(';;;FREM CODE BEGIN A');
-    for (my $i=0; $i< $n_invariant; $i++){
-		push(@begin_code,'BSV'.$self->invariant()->[$i].' = ETA('.($bsv_parameters+$i+1).')' );
-    }
-    if ($n_time_varying > 0){
+	my @begin_code =(';;;FREM CODE BEGIN A');
+	
+	if (not $vpc and ($n_invariant > 0)){
+		#this is for BSV_cov
+		for (my $i=0; $i< $n_invariant; $i++){
+			push(@begin_code,'BSV'.$self->invariant()->[$i].' = ETA('.($start_eta+$bsv_parameters+$i).')' );
+		}
+	}
+	if ($n_time_varying > 0){
 		for (my $i=0 ; $i< $bov_parameters; $i++){
 			push(@begin_code,'BOV'.$self->parameters()->[$i].' = 0' );
 		}
-		for (my $i=0 ; $i< $n_time_varying; $i++){
-			push(@begin_code,'BOV'.$self->time_varying()->[$i].' = 0' );
+
+		if (not $vpc){
+			for (my $i=0 ; $i< $n_time_varying; $i++){
+				push(@begin_code,'BOV'.$self->time_varying()->[$i].' = 0' );
+			}
 		}
-		if ($model_type eq '2'){
+		if ($model_type == 2){
+			#for BOV_par
 			for (my $i=0; $i< $n_occasions; $i++){
 				push(@begin_code,'IF ('.$self->occasion().'.EQ.'.$self->occasionlist()->[$i].') THEN' );
-				my $offset = $bsv_parameters+$n_invariant+$i*$bov_parameters;
+				my $offset = ($start_eta-1)+$bsv_parameters+$n_invariant+$i*$bov_parameters;
+				if ($vpc){
+					#smaller offset if vpc
+					$offset = ($start_eta-1)+$bsv_parameters+$i*$bov_parameters;
+				}
 				for (my $j=0 ; $j< $bov_parameters; $j++){
 					push(@begin_code,'   BOV'.$self->parameters()->[$j].' = ETA('.($offset+$j+1).')');
 				}
 				push(@begin_code,'END IF' );
 			}
-			for (my $i=0; $i< $n_occasions; $i++){
-				push(@begin_code,'IF ('.$self->occasion().'.EQ.'.$self->occasionlist()->[$i].') THEN' );
-				my $offset = $bsv_parameters+$n_invariant;
-				$offset = $offset+$bov_parameters*$n_occasions+$i*$n_time_varying;
-				for (my $j=0 ; $j< $n_time_varying; $j++){
-					push(@begin_code,'   BOV'.$self->time_varying()->[$j].' = ETA('.($offset+$j+1).')');
+			
+			if (not $vpc){
+				#BOV_cov
+				for (my $i=0; $i< $n_occasions; $i++){
+					push(@begin_code,'IF ('.$self->occasion().'.EQ.'.$self->occasionlist()->[$i].') THEN' );
+					my $offset = ($start_eta-1)+$bsv_parameters+$n_invariant;
+					$offset = $offset+$bov_parameters*$n_occasions+$i*$n_time_varying;
+					for (my $j=0 ; $j< $n_time_varying; $j++){
+						push(@begin_code,'   BOV'.$self->time_varying()->[$j].' = ETA('.($offset+$j+1).')');
+					}
+					push(@begin_code,'END IF' );
 				}
-				push(@begin_code,'END IF' );
 			}
-		}elsif ($model_type eq '3'){
+			
+		}elsif ($model_type == 3){
 			for (my $i=0; $i< $n_occasions; $i++){
 				push(@begin_code,'IF ('.$self->occasion().'.EQ.'.$self->occasionlist()->[$i].') THEN' );
-				my $offset = $bsv_parameters+$n_invariant+$i*($bov_parameters+$n_time_varying);
+				my $offset = ($start_eta-1)+$bsv_parameters+$n_invariant+$i*($bov_parameters+$n_time_varying);
 				for (my $j=0 ; $j< $bov_parameters; $j++){
 					push(@begin_code,'   BOV'.$self->parameters()->[$j].' = ETA('.($offset+$j+1).')');
 				}
@@ -1519,27 +1768,29 @@ sub set_frem_records
 		}else{
 			croak("bug in loop set_theta_omega_code");
 		}
-    }
-    push(@begin_code,';;;FREM CODE END A' );
+	}
+	push(@begin_code,';;;FREM CODE END A' );
 
-    
+
+    my @end_code =();
     #ERROR/PRED changes at end
-    my @end_code = (';;;FREM CODE BEGIN C');
-    for (my $i=0; $i< $n_invariant; $i++){
-		push(@end_code,'Y'.($i+1).' = THETA('.($ntheta+$i+1).') + BSV'.$self->invariant()->[$i]);
-    }
-    for (my $i=0; $i< $n_time_varying; $i++){
-		push(@end_code,'Y'.($n_invariant+$i+1).' = THETA('.($ntheta+$n_invariant+$i+1).') + BOV'.$self->time_varying()->[$i]);
-    }
-    for (my $i=1; $i<=($n_invariant+$n_time_varying); $i++){
-		push(@end_code,'IF ('.$fremtype.'.EQ.'.$i.') THEN' );
-		push(@end_code,'   Y = Y'.$i.'+EPS('.$epsnum.')' );
-		push(@end_code,'   IPRED = Y'.$i );
-		push(@end_code,'END IF' );
-    }
-
-    push(@end_code,';;;FREM CODE END C' );
-
+	if (not $vpc){
+		@end_code = (';;;FREM CODE BEGIN C');
+		for (my $i=0; $i< $n_invariant; $i++){
+			push(@end_code,'Y'.($i+1).' = THETA('.($ntheta+$i+1).') + BSV'.$self->invariant()->[$i]);
+		}
+		for (my $i=0; $i< $n_time_varying; $i++){
+			push(@end_code,'Y'.($n_invariant+$i+1).' = THETA('.($ntheta+$n_invariant+$i+1).') + BOV'.$self->time_varying()->[$i]);
+		}
+		for (my $i=1; $i<=($n_invariant+$n_time_varying); $i++){
+			push(@end_code,'IF ('.$fremtype.'.EQ.'.$i.') THEN' );
+			push(@end_code,'   Y = Y'.$i.'+EPS('.$epsnum.')' );
+			push(@end_code,'   IPRED = Y'.$i );
+			push(@end_code,'END IF' );
+		}
+		
+		push(@end_code,';;;FREM CODE END C' );
+	}
 
 
     #PK/PRED changes at beginning B
@@ -1548,18 +1799,16 @@ sub set_frem_records
 			my $success = 0;
 			my $etanum = 0;
 			my $bov= 'BOV'.$parameter;
-			
-#	for (reverse  @code ) {
+			#	for (reverse  @code ) {
 			for (my $i=$#code; $i>=0 ; $i--) {
 				next if ( $code[$i] =~ /^\s*;/); #comment line
 				$_ = $code[$i];
-				if ( /^\s*(\w+)\s*=\s*/ and $1 eq $parameter ){
+				if ( /^\s*(\w+)\s*=\s*/ and ($1 eq $parameter) ){
 					s/^(\s*\w+\s*=\s*)//;
 					my $left = $1;
 					my ($right,$comment) = split( ';', $_, 2 );
 
-					#TODO use \b boundary matching here, subst with $1 etc
-					if ($right =~ /[^A-Z0-9_]ETA\(([0-9]+)\)/){
+					if ($right =~ /\bETA\(([0-9]+)\)/){
 						#add BOV
 						$etanum = $1;
 						$right =~ s/ETA\($etanum\)/(ETA($etanum)+$bov)/;

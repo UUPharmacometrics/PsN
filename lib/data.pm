@@ -296,8 +296,8 @@ sub add_frem_lines
 	my $self = shift;
 	my %parm = validated_hash(\@_,
 		type_index => { isa => 'Int', optional => 0 },
-		occ_index => { isa => 'Int', optional => 1 },
-		evid_index => { isa => 'Int', optional => 1 },
+		occ_index => { isa => 'Maybe[Int]', optional => 1 },
+		evid_index => { isa => 'Maybe[Int]', optional => 1 },
 		mdv_index => { isa => 'Maybe[Int]', optional => 1 },
 		cov_indices => { isa =>'Ref', optional => 1 },
 		first_timevar_type => { isa => 'Int', optional => 0 }
@@ -773,6 +773,7 @@ sub factors
 
 	# Check if $column(-index) is defined and valid, else try to find index
 	# using column_head
+	croak("No individuals stored from ".$self->full_name ) unless ( defined $self->individuals() );
 	my $first_id = $self->individuals()->[0];
 
 	croak("No individuals defined in data object based on ".

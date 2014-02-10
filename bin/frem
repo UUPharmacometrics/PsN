@@ -72,7 +72,7 @@ EOF
 $help_text{-help} = <<'EOF';      
       -help
       
-      With -help gls will print this, longer, help message.
+      With -help frem will print this, longer, help message.
 EOF
 
 $help_text{-invariant} = <<'EOF';
@@ -98,7 +98,7 @@ EOF
 $help_text{-dv} = <<'EOF';
       -dv=column
 
-      Default
+      Default DV
 EOF
 $help_text{-start_eta} = <<'EOF';
       -start_eta=x
@@ -142,13 +142,18 @@ if( scalar(@ARGV) > 1 ){
 }
 
 my $done_file = 'template_models_done.pl';
-if (defined $options{'directory'} and -e $options{'directory'}.'/'.$done_file){
-	#use done file parameters, ignore command-line
-	foreach my $opt ('invariant','time_varying','parameters','start_eta','occasion','dv'){
-		if (defined $options{$opt}){
-			print "The file $done_file already exists in directory ".$options{'directory'}.", option -$opt not allowed.";
-			exit;
+if (defined $options{'directory'} and -d $options{'directory'}){
+	if(-e $options{'directory'}.'/'.$done_file){
+		#use done file parameters, ignore command-line
+		foreach my $opt ('invariant','time_varying','parameters','start_eta','occasion','dv'){
+			if (defined $options{$opt}){
+				print "The file $done_file already exists in directory ".$options{'directory'}.", option -$opt not allowed.";
+				exit;
+			}
 		}
+	}else{
+		print "Cannot restart in existing directory ".$options{'directory'}." because file $done_file is not found there.";
+		exit;
 	}
 }else{
 	#input checks
@@ -271,6 +276,11 @@ $frem-> print_options (cmd_line => $cmd_line,
 
    
 $frem -> run;
+
+if ($frem->vpc and -e $frem->directory.'frem_vpc.mod'){
+	print "The prepared frem vpc model is ".$frem->directory."frem_vpc.mod\n";
+}
+
 #$frem -> prepare_results;
 #$frem -> print_results; #only for frem_results.csv
 ui -> print( category => 'frem',
