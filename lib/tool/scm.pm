@@ -390,14 +390,14 @@ sub BUILD
 			my $ignoresign = defined $model -> ignoresigns ? $model->ignoresigns->[0]: undef;
 
 			$data = data ->
-			new( filename             => $this->derivatives_data(),
-				ignoresign           => $ignoresign,
-				missing_data_token => $this->missing_data_token,
-				#directory            => $this -> directory,
-				ignore_missing_files => 0,
-				skip_parsing         => 0,
-				target               => 'mem');
-
+				new( filename             => $this->derivatives_data(),
+					 ignoresign           => $ignoresign,
+					 missing_data_token => $this->missing_data_token,
+					 #directory            => $this -> directory,
+					 ignore_missing_files => 0,
+					 skip_parsing         => 0,
+					 target               => 'mem');
+			
 			#set header from this data, must have column headers otherwise die
 			if (defined $data->column_head_indices and scalar(keys %{$data->column_head_indices})>0){ 
 				%model_column_numbers=%{$data->column_head_indices};
@@ -425,6 +425,11 @@ sub BUILD
 			$this -> covariate_statistics({});
 			$data -> target('mem');
 			unless( defined $data->individuals()  and (scalar(@{$data->individuals()})>0)){
+				if ($data->synced()){
+					#should not happen!
+					print "\nError: Resetting sync in data object for scm\n";
+					$data->synced(0);
+				}
 				$data -> synchronize();
 			}
 			$data->synced(1); #we do not want to write to disk later
