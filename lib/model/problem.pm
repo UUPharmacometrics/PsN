@@ -1935,6 +1935,78 @@ sub check_start_eta
 	return $start_omega_record;
 }
 
+sub get_record_matrix
+{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+							  type => {isa => 'Str', optional => 0},
+							  row_format => {isa => 'Bool', optional => 0},
+							  record_number => {isa => 'Int', optional => 0}
+		);
+	my $type = $parm{'type'};
+	my $record_number = $parm{'record_number'};
+	my $row_format = $parm{'row_format'};
+	my $accessor;
+	if ($type eq 'omega'){
+		$accessor = 'omegas';
+	}elsif($type eq 'sigma'){
+		$accessor = 'sigmas';
+	}else{
+		croak('Unknown parameter type '.$type.' in problem->get_record_matrix');
+	}
+
+	my @records =  @{$self -> $accessor};
+	if ($record_number > scalar(@records)){
+		croak("illegal input to get_record_matrix $record_number when number of records is ".scalar(@records));
+	}
+	if ($record_number < 1){
+		croak("illegal input to get_record_matrix $record_number");
+	}
+
+	my $record_index = $record_number-1;
+	if ($records[$record_index]->same()){
+		croak("illegal input to get_record_matrix, record is SAME, record_number $record_number");
+	}
+	my $size = $records[$record_index]->size();
+	unless (defined $size and $size > 0){
+		$size =1;
+	}
+	my @new_matrix =();
+	for (my $i=0; $i< $size; $i++){
+		push(@new_matrix,[(0) x $size]);
+	}
+	unless (defined $records[$record_index] -> options()){
+		croak("$type record has no values");
+	}
+	my @options = @{$records[$record_index] -> options()};
+	my $name = $options[0] -> coordinate_string();
+	croak("unknown coord $name ") unless ($name =~ /A\((\d+),(\d+)\)/ );
+	my $startrow = $1;
+	my $col = $2;
+	if ($options[0]->on_diagonal()){
+		croak("col and row in $name not diagonal element") unless ($startrow == $col );
+	}else{
+		croak("first element not on diagonal");
+	}
+
+	foreach my $option (@options) {
+		my $name = $option -> coordinate_string();
+		croak("unknown coord $name ") unless ($name =~ /A\((\d+),(\d+)\)/ );
+		my $value = $option ->init();
+		if ($row_format){
+			$new_matrix[($1-$startrow)][($2-$startrow)] = $value;
+		}else{
+			$new_matrix[($2-$startrow)][($1-$startrow)] = $value;
+		}
+		if ($option->on_diagonal()){
+			croak("col and row in $name not diagonal element") unless ($2 == $1 );
+		}
+	}
+
+	return \@new_matrix;
+
+}
+
 sub get_matrix
 {
 	my $self = shift;
@@ -2031,6 +2103,8 @@ sub get_matrix
 	return \@new_matrix;
 
 }
+
+
 sub get_filled_omega_matrix
 {
 	my $self = shift;
@@ -2040,10 +2114,11 @@ sub get_filled_omega_matrix
 		);
 	my $covmatrix = $parm{'covmatrix'};
 	my $start_eta = $parm{'start_eta'};
+	my $smallval = 0.0001;
 
 	#create one big full omega block (lower triangular) as new_omega->[$row][$col]
 	#input is optional covmatrix to be used for 0 off-diags
-	#if old off-diagonals not present then set small values to ensure strict diagonal dominance
+	#if old off-diagonals not present then set small values
 
 	my $new_full_omega = $self->get_matrix( type=> 'omega',
 											start_row => $start_eta);
@@ -2076,9 +2151,12 @@ sub get_filled_omega_matrix
 		$minimum_difference = $diff if ($diff< $minimum_difference and ($diff>0));
 	}
 
-	my $max_off_diagonal = 0.01; #check Ron's hands on for typical value here
-	my $temp = ($minimum_difference/($new_size-1));
-	$max_off_diagonal = $temp*(0.9) if ($temp < $max_off_diagonal);
+	my $max_off_diagonal = $smallval; #check Ron's hands on for typical value here
+	my $temp = $minimum_difference;
+	if ($new_size > 1){
+		$temp = ($minimum_difference/($new_size-1));
+	}
+	$max_off_diagonal = abs($temp)*(0.9) if (abs($temp) < $max_off_diagonal);
 	#print "max off diag is $max_off_diagonal\n";
 	#fill off-diagonals in new_omega
 	my $k=1;
@@ -2088,7 +2166,7 @@ sub get_filled_omega_matrix
 				if (defined $covmatrix and (abs($covmatrix->[$row][$col]) > 0.000001)  ){
 					$new_full_omega->[$row][$col] = $covmatrix->[$row][$col];
 				}else{
-					$new_full_omega->[$row][$col] = ($max_off_diagonal - 0.0001*($k % 10));
+					$new_full_omega->[$row][$col] = $max_off_diagonal;
 					$k++;
 				}
 			}
@@ -2102,13 +2180,13 @@ sub add_omega_block
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 new_omega => { isa => 'Ref', optional => 1 },
+		 new_omega => { isa => 'Ref', optional => 0 },
 		 labels => { isa => 'Ref', optional => 1 }
 	);
 	my $new_omega = $parm{'new_omega'};
 	my $labels = $parm{'labels'};
 
-	#input is $new_omega
+	#input is $new_omega as $new_omega->[$row][$col]
 	#
 	# add new BLOCK(size)
 
@@ -2116,10 +2194,11 @@ sub add_omega_block
 	return if ($size < 1);
 	my @record_lines=();
 	push(@record_lines,'BLOCK('.$size.') ');
+	my $form = '  %.6G';
 	for (my $row=0; $row< $size; $row++){
 		my $line;
 		for (my $col=0; $col<=$row; $col++){
-			my $str= sprintf("  %.6f",$new_omega->[$row][$col]);
+			my $str= sprintf("$form",$new_omega->[$row][$col]); 
 			$line = $line.' '.$str;
 		}
 		my $comment ='';
@@ -2511,9 +2590,9 @@ sub tbs_transform
 				my $addtheta;
 				if ($line =~ /SQRT/){
 					#find the theta coupled to IPRED and remove it from the string
-					if ($line =~ s/\bIPRED\s*\*\s*THETA\((\d+)\)//){
+					if ($line =~ s/\bIPRED\*\*2\s*\*\s*THETA\((\d+)\)//){
 						$iprtheta = $1;
-					}elsif($line =~ s/\bTHETA\((\d+)\)\s*\*\s*IPRED\b//){
+					}elsif($line =~ s/\bTHETA\((\d+)\)\*\*2\s*\*\s*IPRED\b//){
 						$iprtheta = $1;
 					}else{
 						croak ("Could not parse IPRED*THETA part of $line when transforming for tbs\n");

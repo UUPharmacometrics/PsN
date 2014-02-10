@@ -2955,6 +2955,7 @@ sub add_randomized_columns
 	return \@xcolumn_names;
 }
 
+
 sub update_inits
 {
 	my $self = shift;
@@ -2970,7 +2971,9 @@ sub update_inits
 		ensure_diagonal_dominance => { isa => 'Bool', default => 0, optional => 1 },
 		update_omegas => { isa => 'Bool', default => 1, optional => 1 },
 		update_sigmas => { isa => 'Bool', default => 1, optional => 1 },
-		update_thetas => { isa => 'Bool', default => 1, optional => 1 }
+		update_thetas => { isa => 'Bool', default => 1, optional => 1 },
+		start_record => { isa => 'Int', optional => 1 },
+		end_record => { isa => 'Int', optional => 1 },
 	);
 	my $from_output = $parm{'from_output'};
 	my $from_output_file = $parm{'from_output_file'};
@@ -2984,6 +2987,8 @@ sub update_inits
 	my $update_thetas = $parm{'update_thetas'};
 	my $update_fix = $parm{'update_fix'};
 	my $skip_output_zeros = $parm{'skip_output_zeros'};
+	my $start_record = $parm{'start_record'};
+	my $end_record = $parm{'end_record'};
 
 	# Usage:
 	#
@@ -3114,6 +3119,16 @@ sub update_inits
 			my @records;
 			if (defined $problem -> $accessor()) {
 				@records = @{$problem -> $accessor()};
+				if (defined $start_record){
+					croak ("start_record $start_record cannot be smaller than 1 ") if ($start_record < 1);
+					unless (defined $end_record){
+						$end_record = scalar(@records);
+					}else{
+						croak ("end_record $end_record cannot be larger than number of records") if (scalar(@records) < $end_record);
+					}
+					croak ("end_record $end_record cannot be smaller than start_record $start_record") if ($end_record < $start_record);
+					@records = @records[($start_record-1) .. ($end_record-1)];
+				}
 			}
 			next unless (scalar(@records) > 0); #no parameter in this problem
 
