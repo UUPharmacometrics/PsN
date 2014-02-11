@@ -8,7 +8,8 @@ use ext::Config::Tiny;
 use ext::File::HomeDir;
 
 
-my $version = '4.1.1';
+my $version = '4.1.2';
+
 my $default_user_name;
 my $default_sitelib;
 my $default_bin;
@@ -50,7 +51,6 @@ if ( $Config{osname} eq 'MSWin32' ){
 #    Win7
 	}
 }
-if (1){
 	$default_sitelib = $Config{sitelib};
 	$default_bin = $Config{bin};
 	$default_perlpath = $Config{perlpath};
@@ -99,11 +99,6 @@ if (1){
 		print "\nWarning: There is something unusual with your Perl installation and configuration.\n".
 			"Will try to install anyway, but there may be problems.\n";
 	}
-
-}
-
-
-
 
 
 my $name_safe_version = $version;

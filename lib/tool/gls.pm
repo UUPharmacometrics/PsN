@@ -816,9 +816,7 @@ sub modelfit_setup
 	if ( defined $self -> subtool_arguments ) {
 		%subargs = %{$self -> subtool_arguments};
 	}
-	if (1){
-		$subargs{'data_path'}='../../m'.$model_number.'/';
-	}
+	$subargs{'data_path'}='../../m'.$model_number.'/';
 
 	$self->stop_motion_call(tool=>'gls',message => "Preparing to run gls model ")
 	if ($self->stop_motion());

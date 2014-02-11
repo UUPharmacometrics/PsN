@@ -103,29 +103,26 @@ cmp_ok(abs($decorr->[1]->[3]->[3]-(-0.748626468429881)),'<',$diff,'decorr sim3 E
 cmp_ok(abs($decorr->[0]->[4]->[3]-(-0.046093664205007)),'<',$diff,'decorr sim3 ETA1 ind 5');
 cmp_ok(abs($decorr->[1]->[4]->[3]-(1.153780181600242)),'<',$diff,'decorr sim3 ETA2 ind 5');
 
-if (1){
-	for (my $i=0;$i < scalar(@{$decorr->[0]}); $i++){
-		for (my $k=0;$k < scalar(@{$decorr->[0]->[$i]}); $k++){
-			for (my $j=0;$j < scalar(@{$decorr}); $j++){
-				print $decorr->[$j]->[$i]->[$k]." ";
-			}
-			print "\n";
+for (my $i=0;$i < scalar(@{$decorr->[0]}); $i++){
+	for (my $k=0;$k < scalar(@{$decorr->[0]->[$i]}); $k++){
+		for (my $j=0;$j < scalar(@{$decorr}); $j++){
+			print $decorr->[$j]->[$i]->[$k]." ";
 		}
 		print "\n";
 	}
+	print "\n";
 }
    
 my $npde = [];
 my $pde=[];
 $ok = npde_util::npde_comp($decorr,$pde,$npde);
 is ($ok, 0, "npde_comp eta return status");
-if (1){
-	for (my $i=0;$i < scalar(@{$pde->[0]}); $i++){
-		for (my $j=0;$j < scalar(@{$pde}); $j++){
-			print $pde->[$j]->[$i].' ';
-		}
-		print "\n";
+
+for (my $i=0;$i < scalar(@{$pde->[0]}); $i++){
+	for (my $j=0;$j < scalar(@{$pde}); $j++){
+		print $pde->[$j]->[$i].' ';
 	}
+	print "\n";
 }
 
 

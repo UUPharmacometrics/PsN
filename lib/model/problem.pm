@@ -2276,7 +2276,7 @@ sub ensure_diagonal_dominance
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 verbose => { isa => 'Bool', default => 0, optional => 1 }
+		verbose => { isa => 'Bool', default => 0, optional => 1 }
 	);
 	my $verbose = $parm{'verbose'};
 
@@ -2293,96 +2293,94 @@ sub ensure_diagonal_dominance
 	#add value  to sum for diagonal(row) and diagonal (col)
 	#loop through options again, if not on-diagonal, skip.
 	#if on-diagonal, check that value strictly greater than sum.
-	  #otherwise compute deflation factor
+	#otherwise compute deflation factor
 
 	#dont touch priors
 	foreach my $param ('omega','sigma') {
-	  my $adjusted = 0;
-	  my $accessor = $param.'s';
-	  my $size_accessor = 'n'.$param.'s';
-	  my @records;
-	  if (defined $self -> $accessor()) {
-	    @records = @{$self -> $accessor()};
-	  }
-	  next unless (scalar(@records) > 0); #no parameter in this problem
-	  my $size = $self->$size_accessor('with_correlations' => 0,'with_same' => 1);
-	  my @off_diagonal_sum = 0 x $size; 
-	  foreach my $record (@records){
-	    next unless ($record -> type() eq 'BLOCK');
-	    if  ($record->same() or $record->fix() or $record->prior()){
-	      next;
-	    }
-	    next if ($record->size() < 2);
-	    unless (defined $record -> options()){
-	      croak("$param record has no values");
-	    }
-	    foreach my $option (@{$record -> options()}) {
-	      next if ($option->on_diagonal());
-	      my $name = $option -> coordinate_string();
-	      croak("unknown coord $name ") unless ($name =~ /A\((\d+),(\d+)\)/ );
-	      croak("row in $name outside size $size") if ($1 > $size );
-	      croak("col in $name outside size $size") if ($2 > $size );
-	      my $val = abs($option ->init());
-	      $off_diagonal_sum[($1-1)] += $val;
-	      $off_diagonal_sum[($2-1)] += $val;
-	    }
-	    my %adjust_row = {};
-	    foreach my $option (@{$record -> options()}) {
-	      next unless ($option->on_diagonal());
-	      my $name = $option -> coordinate_string();
-	      croak("unknown coord $name ") unless ($name =~ /A\((\d+),(\d+)\)/ );
-	      croak("row in $name outside size $size") if ($1 > $size );
-	      croak("col and row in $name not diagonal element") unless ($2 == $1 );
-	      my $val = $option ->init();
-	      unless ($val > $off_diagonal_sum[($1-1)] ){
-		  my $ratio = $val/$off_diagonal_sum[($1-1)]; # less than 1, larger than 0 (abs sum, pos diag)
-		  $adjust_row{$1} = $ratio*(0.99);
-	      }
-	    }
-	    #new loop here to decrease off-diag
-	    if (1){
-		foreach my $option (@{$record -> options()}) {
-		    next if ($option->on_diagonal());
-		    my $name = $option -> coordinate_string();
-		    croak("unknown coord $name ") unless ($name =~ /A\((\d+),(\d+)\)/ );
-		    croak("row in $name outside size $size") if ($1 > $size );
-		    croak("col in $name outside size $size") if ($2 > $size );
-		    my $deflate = 1;
-		    foreach my $row (keys %adjust_row){
-			if ($row == $1 or $row == $2){
-			    $deflate = $adjust_row{$row} if ($adjust_row{$row} < $deflate);
-			}
-		    }
-		    next unless ($deflate < 1);
-		    my $val = $option ->init();
-		    my $value = $val*$deflate;
-		    if ($value < 1 and $value > 0){
-			$value = sprintf "%.5f", $value; #need to control so dont get e notation
-			$value     = '0' if eval($value) == 0;
-		    }elsif ($value > -1 and $value < 0){
-			$value = sprintf "%.4f", $value; #need to control so dont get e notation
-			$value     = '0' if eval($value) == 0;
-		    }else{
-			$value = sprintf "%6.2f", $value; #need to control so dont get e notation
-			my ($big,$small) = split('\.',$value);
-			$small           = substr($small,0,3);
-			if ((length($big)+ length($small)) > 7){
-			    $value = $big;
-			}else{
-			    $value     = $big.'.'.$small;
-			}
-			$value     = '0' if eval($value) == 0;
-		    }
-		    
-		    $adjusted = 1;
-		    $option -> check_and_set_init( new_value => $value );
-		    
+		my $adjusted = 0;
+		my $accessor = $param.'s';
+		my $size_accessor = 'n'.$param.'s';
+		my @records;
+		if (defined $self -> $accessor()) {
+			@records = @{$self -> $accessor()};
 		}
-	    }
-	  }
-	  if ($adjusted and $verbose){
-	      print "Decreased off-diagonal values of $param from input to ensure strict diagonal dominance in output model.\n";
-	  }
+		next unless (scalar(@records) > 0); #no parameter in this problem
+		my $size = $self->$size_accessor('with_correlations' => 0,'with_same' => 1);
+		my @off_diagonal_sum = 0 x $size; 
+		foreach my $record (@records){
+			next unless ($record -> type() eq 'BLOCK');
+			if  ($record->same() or $record->fix() or $record->prior()){
+				next;
+			}
+			next if ($record->size() < 2);
+			unless (defined $record -> options()){
+				croak("$param record has no values");
+			}
+			foreach my $option (@{$record -> options()}) {
+				next if ($option->on_diagonal());
+				my $name = $option -> coordinate_string();
+				croak("unknown coord $name ") unless ($name =~ /A\((\d+),(\d+)\)/ );
+				croak("row in $name outside size $size") if ($1 > $size );
+				croak("col in $name outside size $size") if ($2 > $size );
+				my $val = abs($option ->init());
+				$off_diagonal_sum[($1-1)] += $val;
+				$off_diagonal_sum[($2-1)] += $val;
+			}
+			my %adjust_row = {};
+			foreach my $option (@{$record -> options()}) {
+				next unless ($option->on_diagonal());
+				my $name = $option -> coordinate_string();
+				croak("unknown coord $name ") unless ($name =~ /A\((\d+),(\d+)\)/ );
+				croak("row in $name outside size $size") if ($1 > $size );
+				croak("col and row in $name not diagonal element") unless ($2 == $1 );
+				my $val = $option ->init();
+				unless ($val > $off_diagonal_sum[($1-1)] ){
+					my $ratio = $val/$off_diagonal_sum[($1-1)]; # less than 1, larger than 0 (abs sum, pos diag)
+					$adjust_row{$1} = $ratio*(0.99);
+				}
+			}
+			#new loop here to decrease off-diag
+			foreach my $option (@{$record -> options()}) {
+				next if ($option->on_diagonal());
+				my $name = $option -> coordinate_string();
+				croak("unknown coord $name ") unless ($name =~ /A\((\d+),(\d+)\)/ );
+				croak("row in $name outside size $size") if ($1 > $size );
+				croak("col in $name outside size $size") if ($2 > $size );
+				my $deflate = 1;
+				foreach my $row (keys %adjust_row){
+					if ($row == $1 or $row == $2){
+						$deflate = $adjust_row{$row} if ($adjust_row{$row} < $deflate);
+					}
+				}
+				next unless ($deflate < 1);
+				my $val = $option ->init();
+				my $value = $val*$deflate;
+				if ($value < 1 and $value > 0){
+					$value = sprintf "%.5f", $value; #need to control so dont get e notation
+					$value     = '0' if eval($value) == 0;
+				}elsif ($value > -1 and $value < 0){
+					$value = sprintf "%.4f", $value; #need to control so dont get e notation
+					$value     = '0' if eval($value) == 0;
+				}else{
+					$value = sprintf "%6.2f", $value; #need to control so dont get e notation
+					my ($big,$small) = split('\.',$value);
+					$small           = substr($small,0,3);
+					if ((length($big)+ length($small)) > 7){
+						$value = $big;
+					}else{
+						$value     = $big.'.'.$small;
+					}
+					$value     = '0' if eval($value) == 0;
+				}
+
+				$adjusted = 1;
+				$option -> check_and_set_init( new_value => $value );
+
+			}
+		}
+		if ($adjusted and $verbose){
+			print "Decreased off-diagonal values of $param from input to ensure strict diagonal dominance in output model.\n";
+		}
 	}
 }
 

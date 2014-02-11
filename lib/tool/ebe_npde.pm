@@ -98,7 +98,7 @@ sub modelfit_setup
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 model_number => { isa => 'Int', optional => 1 }
+		model_number => { isa => 'Int', optional => 1 }
 	);
 	my $model_number = $parm{'model_number'};
 
@@ -108,47 +108,46 @@ sub modelfit_setup
 	my $orig_model;
 	my $sim_model;
 	my @msfo_stems_original;
-	
+
 	$self->probnum(2) if ($self->have_tnpri());
-	
+
 	my @table_header;
 	my @all_iwres_files;
 	my @orig_table_names;
-	
+
 	my $newthetanum=$model->nthetas(problem_number => $self->probnum())+1;
 	my $sim_record;
 	my $simdirname='simulation_dir'; 
 	my $shrinkage_value;
 	$self->first_callback(1);
-	
+
 	$orig_model = $model ->
-		copy( filename    => $self->directory . 'm' . $model_number . '/original.mod',
-			  target      => 'disk',
-			  copy_data   => 1,
-			  copy_output => 0);
-	
+	copy( filename    => $self->directory . 'm' . $model_number . '/original.mod',
+		target      => 'disk',
+		copy_data   => 1,
+		copy_output => 0);
+
 	$orig_model -> drop_dropped unless $orig_model->skip_data_parsing();
-	
-	
+
 	#create sim record if not present
 	$sim_record = $orig_model -> record( problem_number => $self->probnum(),
-										 record_name => 'simulation' );
+		record_name => 'simulation' );
 	if( scalar(@{$sim_record}) > 0 ){
 		$sim_record = $sim_record->[0];
 		foreach my $altopt ('SUBPROBLEMS','SUBPROBS','NSUBPROBLEMS','NSUBPROBS','NSUBS'){
 			#NONMEM accepts a heck of a lot of alternatives...
 			$orig_model -> remove_option(record_name => 'simulation',
-										 option_name => $altopt,
-										 fuzzy_match => 1,
-										 problem_numbers => [$self->probnum()]);
-			
+				option_name => $altopt,
+				fuzzy_match => 1,
+				problem_numbers => [$self->probnum()]);
+
 		}
 		if ($self->have_nwpri() or $self->have_tnpri()){
 			$orig_model -> remove_option(record_name => 'simulation',
-										 option_name => 'TRUE',
-										 fuzzy_match => 1,
-										 problem_numbers => [$self->probnum()]);
-			
+				option_name => 'TRUE',
+				fuzzy_match => 1,
+				problem_numbers => [$self->probnum()]);
+
 		}
 	}else{
 		# set $SIMULATION record
@@ -156,36 +155,36 @@ sub modelfit_setup
 		$sim_record = \@arr;#dummy seed
 	}
 	$sim_record->[0] .= ' SUBPROB=1';
-	
+
 	if ($self->have_nwpri() or $self->have_tnpri()){
 		$sim_record->[0] .= ' TRUE=PRIOR';
 	}
 	$orig_model -> remove_records( type => 'simulation' );
-	
+
 	$orig_model -> remove_option( record_name  => 'estimation',
-								  option_name  => 'MSFO',
-								  fuzzy_match => 1,
-								  problem_numbers => [($self->probnum())],
-								  record_number => 0); #0 means all
+		option_name  => 'MSFO',
+		fuzzy_match => 1,
+		problem_numbers => [($self->probnum())],
+		record_number => 0); #0 means all
 	# set $TABLE record
-	
+
 	my $oprob = $orig_model -> problems -> [$self->probnum()-1];
 	if( defined $oprob -> inputs and defined $oprob -> inputs -> [0] -> options ) {
 		foreach my $option ( @{$oprob -> inputs -> [0] -> options} ) {
 			push( @table_header, $option -> name ) unless 
-				(($option -> value eq 'DROP' or $option -> value eq 'SKIP'
-				  or $option -> name eq 'DROP' or $option -> name eq 'SKIP'));
+			(($option -> value eq 'DROP' or $option -> value eq 'SKIP'
+						or $option -> name eq 'DROP' or $option -> name eq 'SKIP'));
 		}
 	} else {
 		croak("Trying to construct table for simulation".
-			  " but no headers were found in \$model_number-INPUT" );
+			" but no headers were found in \$model_number-INPUT" );
 	}
 	#never IWRES in orig model, only in sims
 	$oprob -> add_records( type           => 'table',
-						   record_strings => [ join( ' ', @table_header ).
-											   ' IPRED PRED NOPRINT NOAPPEND ONEHEADER FILE=orig_pred.dta']);
+		record_strings => [ join( ' ', @table_header ).
+			' IPRED PRED NOPRINT NOAPPEND ONEHEADER FILE=orig_pred.dta']);
 	$oprob -> add_records( type           => 'table',
-						   record_strings => ['IWRES ID MDV NOPRINT NOAPPEND ONEHEADER FILE=original_iwres.dta']);
+		record_strings => ['IWRES ID MDV NOPRINT NOAPPEND ONEHEADER FILE=original_iwres.dta']);
 
 	push( @all_iwres_files, $self->directory . 'm' . $model_number . '/original_iwres.dta' );
 
@@ -216,7 +215,7 @@ sub modelfit_setup
 		push(@use_etas,@these);
 		@prev = @these;
 	}
-	
+
 	for (my $i=1; $i<=scalar(@use_etas); $i++){
 		push(@eta_headers,'ETA('.$i.')') if ($use_etas[$i-1] == 1);
 	} 
@@ -228,18 +227,18 @@ sub modelfit_setup
 			croak("lst file " . $self->lst_file . " could not be parsed.");
 		}
 		$orig_model -> update_inits ( from_output => $orig_model_output,
-									  problem_number => $self->probnum());
+			problem_number => $self->probnum());
 		$orig_model -> _write( write_data => 1 );
 		push( @orig_and_sim_models, $orig_model );
 		$simdirname='orig_and_simulation_dir'; 
 	}elsif (defined $model ->outputs() and 
-			defined $model->outputs()->[0] and
-			$model->outputs()->[0]-> have_output()){
+		defined $model->outputs()->[0] and
+		$model->outputs()->[0]-> have_output()){
 		#we do not need to run original before sims, because already have final ests
 		$orig_model_output = $model->outputs()->[0];
 		$orig_model -> update_inits ( from_output => $orig_model_output,
-									  problem_number => $self->probnum(),
-									  ignore_missing_parameters => 1);
+			problem_number => $self->probnum(),
+			ignore_missing_parameters => 1);
 		$orig_model -> _write( write_data => 1 );
 		push( @orig_and_sim_models, $orig_model );
 		$simdirname='orig_and_simulation_dir'; 
@@ -261,23 +260,23 @@ sub modelfit_setup
 			_modelfit_raw_results_callback( model_number => $model_number ),
 			data_path =>'../../m'.$model_number.'/',
 			abort_on_fail => $self->abort_on_fail);
-		
+
 		ui -> print( category => 'ebe_npde',
-					 message  => "Running original model to get final parameter estimates for simulation" );
-		
+			message  => "Running original model to get final parameter estimates for simulation" );
+
 		$run_orig -> run;
 		$self->first_callback(0);
-		
+
 		unless (defined $run_orig->raw_results) {
 			croak("Running original model failed. Check output in ".$run_orig->directory());
 		}
-		
+
 		if (defined $orig_model->outputs() and 
 			defined $orig_model->outputs()->[0] and
 			$orig_model->outputs()->[0]-> have_output()){
 			$orig_model_output = $orig_model->outputs()->[0];
 			$orig_model -> update_inits ( from_output => $orig_model_output,
-										  problem_number => $self->probnum());
+				problem_number => $self->probnum());
 		}
 	}else{
 		#must in any case run original to get ETAs, IPRED etc, but here we dont update inits
@@ -285,83 +284,77 @@ sub modelfit_setup
 		push( @orig_and_sim_models, $orig_model );
 		$simdirname='orig_and_simulation_dir'; 
 	}
-	
+
 	my $samples = $self -> samples();
-	
+
 	my @all_eta_files = ($self->directory . 'm' . $model_number . '/original.phi');
 
 	for( my $sim_no = 1; $sim_no <= $samples ; $sim_no++ ) {
-		
+
 		my $sim_name = "sim-$sim_no.mod";
 		my $sim_out = "sim-$sim_no.lst";
 		my $etafile = 'sim-'.$sim_no.'.phi';
 		push(@all_eta_files,$self->directory . 'm' . $model_number . '/' . $etafile);
-		
+
 		if( $sim_no == 1 ) {
 			$sim_model = $orig_model->
-				copy( filename    => $self->directory . 'm' . $model_number . '/' . $sim_name,
-					  target      => 'disk',
-					  copy_data   => 0,
-					  copy_output => 0);
+			copy( filename    => $self->directory . 'm' . $model_number . '/' . $sim_name,
+				target      => 'disk',
+				copy_data   => 0,
+				copy_output => 0);
 			$sim_model -> remove_records( type => 'table' );
 			$sim_model -> remove_records( type => 'covariance' );
 			$sim_model -> shrinkage_stats( enabled => 0 );
-			
-			#TODO 
-			if (1){
-				#set IGNORE=@ since datafile will
-				#get a header during copying. Keep IGNORE=LIST
-				
-				my $sim_ignorelist = $orig_model -> get_option_value( record_name  => 'data',
-																	  problem_index => ($self->probnum()-1),
-																	  option_name  => 'IGNORE',
-																	  option_index => 'all');
-				$sim_model -> remove_option( record_name  => 'data',
-											 problem_numbers => [($self->probnum())],
-											 option_name  => 'IGNORE',
-											 fuzzy_match => 1);
-				
-				if ((defined $sim_ignorelist) and scalar (@{$sim_ignorelist})>0){
-					foreach my $val (@{$sim_ignorelist}){
-						unless (length($val)==1){
-							#unless single character ignore, cannot keep that since need @
-							$sim_model -> add_option( record_name  => 'data',
-													  problem_numbers => [($self->probnum())],
-													  option_name  => 'IGNORE',
-													  option_value => $val);
-						}
+
+			#set IGNORE=@ since datafile will
+			#get a header during copying. Keep IGNORE=LIST
+
+			my $sim_ignorelist = $orig_model -> get_option_value( record_name  => 'data',
+				problem_index => ($self->probnum()-1),
+				option_name  => 'IGNORE',
+				option_index => 'all');
+			$sim_model -> remove_option( record_name  => 'data',
+				problem_numbers => [($self->probnum())],
+				option_name  => 'IGNORE',
+				fuzzy_match => 1);
+
+			if ((defined $sim_ignorelist) and scalar (@{$sim_ignorelist})>0){
+				foreach my $val (@{$sim_ignorelist}){
+					unless (length($val)==1){
+						#unless single character ignore, cannot keep that since need @
+						$sim_model -> add_option( record_name  => 'data',
+							problem_numbers => [($self->probnum())],
+							option_name  => 'IGNORE',
+							option_value => $val);
 					}
 				}
-				$sim_model -> add_option( record_name  => 'data',
-										  problem_numbers => [($self->probnum())],
-										  option_name  => 'IGNORE',
-										  option_value => '@');
 			}
-			
+			$sim_model -> add_option( record_name  => 'data',
+				problem_numbers => [($self->probnum())],
+				option_name  => 'IGNORE',
+				option_value => '@');
+
 			# set $TABLE record
-			
+
 			$sim_model -> add_records( type           => 'table',
-									   problem_numbers => [($self->probnum())],
-									   record_strings => ['IWRES ID NOPRINT NOAPPEND ONEHEADER FILE=dummy']);
-			
+				problem_numbers => [($self->probnum())],
+				record_strings => ['IWRES ID NOPRINT NOAPPEND ONEHEADER FILE=dummy']);
+
 			unless ($self->reminimize()){
 				$sim_model -> set_maxeval_zero(print_warning => 1,
-											   last_est_complete => $self->last_est_complete(),
-											   niter_eonly => $self->niter_eonly(),
-											   need_ofv => 1);
+					last_est_complete => $self->last_est_complete(),
+					niter_eonly => $self->niter_eonly(),
+					need_ofv => 1);
 			}
-			
 
-		}else{
+		} else {
 			$sim_model = $orig_and_sim_models[$#orig_and_sim_models]->
-				copy( filename    => $self->directory . 'm' . $model_number . '/' . $sim_name,
-					  target      => 'disk',
-					  copy_data   => 0,
-					  copy_output => 0);
-			
+			copy( filename    => $self->directory . 'm' . $model_number . '/' . $sim_name,
+				target      => 'disk',
+				copy_data   => 0,
+				copy_output => 0);
 
 		}#end if elsesim_no==1
-
 
 		$sim_model -> ignore_missing_files( 1 );
 		$sim_model -> outputfile( $self->directory . 'm' . $model_number . '/' . $sim_out );
@@ -377,40 +370,38 @@ sub modelfit_setup
 				my $old_seed = $2;
 				$sim_line = $3;
 				$new_line .= $head;
-				
+
 				while( $old_seed =~ /(\D*)(\d+)(.*)/ ){
 					$new_line .= $1;
 					$new_line .= random_uniform_integer( 1, 0, 1000000 ); # Upper limit is from nmhelp 
 					$old_seed = $3;
 				}
-				
+
 				$new_line .= $old_seed;
-	
+
 			}
 			push( @new_record, $new_line.$sim_line );
 		}
-    
+
 		$prob -> set_records( type => 'simulation',
-							  record_strings => \@new_record );
+			record_strings => \@new_record );
 
 		my $iwres_file = "iwres-$sim_no.dta";
 		$prob -> remove_option( record_name  => 'table',
-								option_name  => 'FILE',
-								fuzzy_match => 1,
-								record_number => 1);
-      
+			option_name  => 'FILE',
+			fuzzy_match => 1,
+			record_number => 1);
+
 		$prob -> add_option(record_name  => 'table',
-							record_number  => 1,
-							option_name  => 'FILE',
-							option_value => $iwres_file );   
+			record_number  => 1,
+			option_name  => 'FILE',
+			option_value => $iwres_file );   
 
 		push( @all_iwres_files, $self->directory . 'm' . $model_number . '/' . $iwres_file );
 
 
 		$sim_model -> _write( write_data => 0 );
 		push( @orig_and_sim_models, $sim_model );
-
-
 
 	} #end loop over number of simulations
 
@@ -426,17 +417,16 @@ sub modelfit_setup
 		raw_results_file     => [$self ->raw_results_file()->[0]], #change??
 		prepared_models       => undef,
 		shrinkage => 0,
-		_raw_results_callback => $self ->
-		_modelfit_raw_results_callback( model_number => $model_number ),
+		_raw_results_callback => $self -> _modelfit_raw_results_callback( model_number => $model_number ),
 		data_path =>'../../m'.$model_number.'/',
 		abort_on_fail => $self->abort_on_fail);
-	
+
 	ui -> print( category => 'ebe_npde',
-				 message  => "Running simulations and reestimations" );
-	
+		message  => "Running simulations and reestimations" );
+
 	$run_sim -> run;
 	$self->first_callback(0);
-  
+
 	unless (defined $run_sim->raw_results){
 		croak("Running simulations failed. Check output in ".$run_sim->directory());
 	}
@@ -444,20 +434,20 @@ sub modelfit_setup
 	while (1){
 		my @extra_headers=('ID','MDV');
 		my @headers = ('IWRES');
-		my $id_mdv_matrix=[];
-		my $dummy_matrix=[];
-		my $est_matrix=[];
-		my $mean_matrix=[];
+		my $id_mdv_matrix = [];
+		my $dummy_matrix = [];
+		my $est_matrix = [];
+		my $mean_matrix = [];
 		my $decorr = [];
-		my $stdev =[];
+		my $stdev = [];
 		my $npde = [];
-		my $pde=[];
+		my $pde = [];
 
 		my $npd = [];
-		my $pd=[];
+		my $pd = [];
 
-		my @found_files=();
-		unless (-e $all_iwres_files[0]){
+		my @found_files = ();
+		unless (-e $all_iwres_files[0]) {
 			print "\nError iwres: original iwres file not found, iwres results cannot be computed\n";
 			last;
 		}
@@ -466,11 +456,11 @@ sub modelfit_setup
 			print "\nError in read_table_files for iwres: $ret. iwres results cannot be computed\n";
 			last;
 		}
-		foreach my $file (@all_iwres_files){
+		foreach my $file (@all_iwres_files) {
 			push(@found_files,$file);
 		}
 		$ret = npde_util::read_table_files(\@found_files,\@headers,$est_matrix,$mean_matrix,1);
-		unless ($ret ==0){
+		unless ($ret == 0) {
 			print "\nError in read_table_files for iwres: $ret. iwres results cannot be computed\n";
 			last;
 		}
@@ -488,7 +478,7 @@ sub modelfit_setup
 			my $first=1;
 			open(EBE_NPDE, '>'.$self->gls_data_file()) || die("Couldn't open ".$self->gls_data_file()." : $!");
 			open(DAT, ">ind_iwres_shrinkage.dta") || 
-				die("Couldn't open ind_iwres_shrinkage.dta : $!");
+			die("Couldn't open ind_iwres_shrinkage.dta : $!");
 			chomp $tmp[1];
 			print EBE_NPDE $tmp[1]."       ISHR\n";
 			print DAT "ISHR\n";
@@ -521,7 +511,7 @@ sub modelfit_setup
 				last;
 			}
 			open(DAT, ">iwres_npde.csv") || 
-				die("Couldn't open iwres_npde.csv : $!");
+			die("Couldn't open iwres_npde.csv : $!");
 			print DAT "ID,MDV,NPDE\n";
 			for (my $i=0; $i<scalar(@{$npde->[0]});$i++){
 				print DAT $id_mdv_matrix->[0]->[$i]->[0].','.$id_mdv_matrix->[1]->[$i]->[0].',';
@@ -537,7 +527,7 @@ sub modelfit_setup
 			}
 
 			open(DAT, ">iwres_npd.csv") || 
-				die("Couldn't open iwres_npd.csv : $!");
+			die("Couldn't open iwres_npd.csv : $!");
 			print DAT "ID,MDV,NPD\n";
 			for (my $i=0; $i<scalar(@{$npd->[0]});$i++){
 				print DAT $id_mdv_matrix->[0]->[$i]->[0].','.$id_mdv_matrix->[1]->[$i]->[0].',';
@@ -548,10 +538,10 @@ sub modelfit_setup
 		}
 
 		open(ORI, ">decorrelated_original_iwres.csv") || 
-			die("Couldn't open decorrelated_original_iwres.csv : $!");
+		die("Couldn't open decorrelated_original_iwres.csv : $!");
 		print ORI "ID,MDV,IWRES_STAR\n";
 		open(ORI2, ">raw_original_iwres.csv") || 
-			die("Couldn't open raw_original_iwres.csv : $!");
+		die("Couldn't open raw_original_iwres.csv : $!");
 		print ORI2 "ID,MDV,IWRES\n";
 		for (my $i=0; $i<scalar(@{$decorr->[0]});$i++){
 			print ORI $id_mdv_matrix->[0]->[$i]->[0].','.$id_mdv_matrix->[1]->[$i]->[0].',';
@@ -603,7 +593,7 @@ sub modelfit_setup
 			last;
 		}
 		open(ORI, ">raw_original_eta.csv") || 
-			die("Couldn't open raw_original_eta.csv : $!");
+		die("Couldn't open raw_original_eta.csv : $!");
 		print ORI "ID,".join(',',@eta_headers)."\n";
 		for (my $i=0; $i<scalar(@{$est_matrix->[0]});$i++){
 			print ORI $id_matrix->[0]->[$i]->[0];
@@ -621,7 +611,7 @@ sub modelfit_setup
 		}
 
 		open(ORI, ">decorrelated_original_eta.csv") || 
-			die("Couldn't open decorrelated_original_eta.csv : $!");
+		die("Couldn't open decorrelated_original_eta.csv : $!");
 		print ORI "ID,".join(',',@eta_headers)."\n";
 		for (my $i=0; $i<scalar(@{$decorr->[0]});$i++){
 			print ORI $id_matrix->[0]->[$i]->[0];
@@ -638,7 +628,7 @@ sub modelfit_setup
 			last;
 		}
 		open(DAT, ">eta_pde.csv") || 
-			die("Couldn't open eta_pde.csv : $!");
+		die("Couldn't open eta_pde.csv : $!");
 		print DAT "ID,".join(',',@eta_headers)."\n";
 		for (my $i=0; $i<scalar(@{$pde->[0]});$i++){
 			print DAT $id_matrix->[0]->[$i]->[0];
@@ -648,10 +638,10 @@ sub modelfit_setup
 			print DAT "\n";
 		}
 		close (DAT);
-		
+
 		if ($self->have_CDF()){
 			open(DAT, ">eta_npde.csv") || 
-				die("Couldn't open eta_npde.csv : $!");
+			die("Couldn't open eta_npde.csv : $!");
 			print DAT "ID,".join(',',@eta_headers)."\n";
 			for (my $i=0; $i<scalar(@{$npde->[0]});$i++){
 				print DAT $id_matrix->[0]->[$i]->[0];
@@ -667,7 +657,7 @@ sub modelfit_setup
 				last;
 			}
 			open(DAT, ">eta_npd.csv") || 
-				die("Couldn't open eta_npd.csv : $!");
+			die("Couldn't open eta_npd.csv : $!");
 			print DAT "ID,".join(',',@eta_headers)."\n";
 			for (my $i=0; $i<scalar(@{$npd->[0]});$i++){
 				print DAT $id_matrix->[0]->[$i]->[0];
@@ -724,7 +714,7 @@ sub modelfit_setup
 			last;
 		}
 		open(ORI, ">raw_original_iofv.csv") || 
-			die("Couldn't open raw_original_iofv.csv : $!");
+		die("Couldn't open raw_original_iofv.csv : $!");
 		print ORI "ID,OFV,MEAN_SIM,SD_SIM\n";
 		for (my $i=0; $i<scalar(@{$est_matrix->[0]});$i++){
 			print ORI $id_matrix->[0]->[$i]->[0].',';
@@ -733,7 +723,7 @@ sub modelfit_setup
 		close ORI;
 
 		open(ORI, ">decorrelated_original_iofv.csv") || 
-			die("Couldn't open decorrelated_original_iofv.csv : $!");
+		die("Couldn't open decorrelated_original_iofv.csv : $!");
 		print ORI "ID,OFV\n";
 		for (my $i=0; $i<scalar(@{$decorr->[0]});$i++){
 			print ORI $id_matrix->[0]->[$i]->[0].',';
@@ -747,17 +737,17 @@ sub modelfit_setup
 			last;
 		}
 		open(DAT, ">iofv_pde.csv") || 
-			die("Couldn't open iofv_pde.csv : $!");
+		die("Couldn't open iofv_pde.csv : $!");
 		print DAT "ID,OFV_PDE\n";
 		for (my $i=0; $i<scalar(@{$pde->[0]});$i++){
 			print DAT $id_matrix->[0]->[$i]->[0].',';
 			printf DAT ("%.8f\n",$pde->[0]->[$i]);
 		}
 		close (DAT);
-		
+
 		if ($self->have_CDF()){
 			open(DAT, ">iofv_npde.csv") || 
-				die("Couldn't open iofv_npde.csv : $!");
+			die("Couldn't open iofv_npde.csv : $!");
 			print DAT "ID,OFV_NPDE\n";
 			for (my $i=0; $i<scalar(@{$npde->[0]});$i++){
 				print DAT $id_matrix->[0]->[$i]->[0].',';
@@ -770,7 +760,7 @@ sub modelfit_setup
 				last;
 			}
 			open(DAT, ">iofv_npd.csv") || 
-				die("Couldn't open iofv_npd.csv : $!");
+			die("Couldn't open iofv_npd.csv : $!");
 			print DAT "ID,OFV_NPD\n";
 			for (my $i=0; $i<scalar(@{$npd->[0]});$i++){
 				print DAT $id_matrix->[0]->[$i]->[0].',';
