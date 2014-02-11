@@ -18,7 +18,7 @@ Points to consider if you are to use the VPC functionality for a new problem:
 
 \begin{itemize}
 	\item How many simulations do you wish to base your VPC on? The more extreme percentiles you are interested in the more simulations are typically necessary. Specify this with option -samples.
-	\item Where do you get the parameter estimates to simulate from? Either these needs to be specified in the NONMEM model file (as initial estimates) or you should supply an lst file, see the option -lst.
+	\item Where do you get the parameter estimates to simulate from? Either these needs to be specified in the NONMEM model file (as initial estimates) or you should supply an lst file, see the option -lst\_file.
 	\item If you are analyzing a time-to-event model then the processing done by VPC is very different from the regular case, and many options do not apply. Please read the section 'VPC for time-to-event models' before reading any other part of this guide.
 \end{itemize}
 
@@ -48,7 +48,7 @@ Points to consider if you are to use the VPC functionality for a new problem:
 
 A template call for a  first try is (substitute as needed):
 \begin{verbatim}
-vpc  run32.mod -lst=run32.lst -samples=500 -bin_by_count=1
+vpc  run32.mod -lst_file=run32.lst -samples=500 -bin_by_count=1
 -no_of_bins=10
 \end{verbatim}
 Results are in the file vpc\_results.csv (see details in section Output for vpc). Preferably use Xpose to visualize the results, because the file vpc\_results.csv does not contain any graphs. Please refer to the Xpose documentation for instructions on visualization.
@@ -70,11 +70,11 @@ Input:  a modelfile is required.
 \optdefault{samples}{number}
 is required, the number of simulated datasets to generate. 20 is the minimum accepted value. 
 \nextopt
-\optdefault{msfo}{file}
+\optdefault{msfo\_file}{file}
 is optional, unless the model has \$NONP record then an msfo-file 	is required. Use final parameter estimates from msfo-file instead of initial estimates from modelfile when simulating. VPC does not perform estimation. 
 \nextopt
-\optdefault{lst}{file}
-is optional, but forbidden together with -msfo. Use final parameter estimates from this lst-file for the simulation. By default PsN will look for a file with the same name as the regular input model, or the simulation model if option -sim\_model is used, but with suffix .lst instead of .mod. If such a file is found then option -lst=$<$modelfile$>$.lst is set automatically. VPC does not perform estimation. 
+\optdefault{lst\_file}{file}
+is optional, but forbidden together with -msfo\_file. Use final parameter estimates from this lst-file for the simulation. By default PsN will look for a file with the same name as the regular input model, or the simulation model if option -sim\_model is used, but with suffix .lst instead of .mod. If such a file is found then option -lst\_file=$<$modelfile$>$.lst is set automatically. VPC does not perform estimation. 
 \nextopt
 \optdefault{stratify\_on}{variable}
 is optional. See subsection Stratification options below. The stratify\_on option may be a comma-separated list of several variable names. 
@@ -89,7 +89,7 @@ is optional, only allowed when stratify\_on is used, not allowed in combination 
 is an optional argument, but it is required to assume (repeated) time-to-event type models. Cannot be used together with option -mirror, -censor, -predcorr, -varcorr,  -lnDV, -uloq, -lloq or -boxcox\_lambda. The tte-variable needs to be defined in the simulation model and must take the value 0 if the observation is not an event and non-zero if it is an event (including events and censored events). PsN will add the tte-variable to \$TABLE of the simulation model (not the original data model). PsN will format the output differently compared to a regular vpc, to specifically suit the kaplan.plot functionality in Xpose (e.g. filtering of simulation output based on tte-variable). See section VPC for Time-to-event models below.   
 \nextopt
 \optdefault{sim\_model}{file}
-is optional. Cannot be used together with -flip\_comments, -keep\_estimation or -noprediction. By default PsN will create a simulation model based on the  required input model, but by using option -sim\_model it is possible to use a separate input model for the simulations. PsN will remove \$COV and \$TABLE, change SEED and NSUBS in \$SIM, add a new \$TABLE and  update initial estimates if option -lst is set or add \$MSFI if option -msfo is used, but otherwise no changes will be made to the user defined simulation model. See section Modified models. Note that -lst will be set automatically if a file with the same name as the regular input model but with suffix lst intead of mod is found. 
+is optional. Cannot be used together with -flip\_comments, -keep\_estimation or -noprediction. By default PsN will create a simulation model based on the  required input model, but by using option -sim\_model it is possible to use a separate input model for the simulations. PsN will remove \$COV and \$TABLE, change SEED and NSUBS in \$SIM, add a new \$TABLE and  update initial estimates if option -lst\_file is set or add \$MSFI if option -msfo\_file is used, but otherwise no changes will be made to the user defined simulation model. See section Modified models. Note that -lst\_file will be set automatically if a file with the same name as the regular input model but with suffix lst intead of mod is found. 
 \nextopt
 \optname{flip\_comments}
 is optional. Cannot be used together with -sim\_model, -keep\_estimation or -noprediction. By default PsN will create a simulation model based on the  required input model, but option -flip\_comments invokes a method for handling user-defined simulation code in the required input model. If option is set, PsN will create the simulation model by flipping comments (commented lines will be uncommented and vice versa) between the tags
@@ -114,7 +114,7 @@ then the MAXEVAL=0 model will be run as such and the simulation model will inste
 ;IGNORE(TYPE.EQ.1)
 ACCEPT(TYPE.EQ.1) 
 \end{verbatim}
-The tags may appear multiple times. Note that the tags must look exactly  as above or the editing will fail. When creating the simulation model PsN will remove \$COV and \$TABLE, change SEED and NSUBS in \$SIM, add a new \$TABLE and  update initial estimates if option -lst is set or add \$MSFI if option -msfo is used, but otherwise no changes will be made to the code. See section Modified models.\\
+The tags may appear multiple times. Note that the tags must look exactly  as above or the editing will fail. When creating the simulation model PsN will remove \$COV and \$TABLE, change SEED and NSUBS in \$SIM, add a new \$TABLE and  update initial estimates if option -lst\_file is set or add \$MSFI if option -msfo\_file is used, but otherwise no changes will be made to the code. See section Modified models.\\
 \nextopt
 \optdefault{dv}{variable}
 is optional, default is DV. If a synonym for DV is set in \$INPUT, the synonym must be set as the dependent variable on the commandline, -dv=$<$synonym$>$. 
@@ -219,15 +219,15 @@ The option -samples is required. The scripts does not allow -samples to be small
 
 \begin{enumerate}
 	\item Default: the initial estimates from the lst-file with the same name as the modelfile but with .mod replaced with .lst, e.g. run123.lst if the modelfile is run123.mod. If no such lst-file exists the estimates from the modelfile are used.
-	\item the final estimates from a lst-file whose name is not the modelfile name with .mod replaced with .lst: use command-line option -lst=$\langle$filename$\rangle$
-	\item the final estimates from an msfo-file: use command-line option -msfo=$<$filename$>$
+	\item the final estimates from a lst-file whose name is not the modelfile name with .mod replaced with .lst: use command-line option -lst\_file=$\langle$filename$\rangle$
+	\item the final estimates from an msfo-file: use command-line option -msfo\_file=$<$filename$>$
 	\item final estimates from a raw\_results file, e.g. from a bootstrap. This method implies using a different set of estimates for each sample. 
 	\item parameter estimates drawn from a prior distribution defined using \$PRIOR in the input/simulation model.
 \end{enumerate}
 
 Alternatives 4) and 5) result in simulation with uncertainty. Note that this is normally not appropriate for a vpc or npc. 
 
-The user may either skip the \$SIMULATION record entirely and let the program produce it according to the rules specified in section Modified models – model for simulated data. Or the user can include a complete \$SIMULATION record, for example when using special random distributions. Inclusion of a \$SIMULATION record is needed when simulating categorical data is intended (vpc with -levels option). In this case the model file must be equipped with IF(ICALL.EQ.4) coding to separate the simulation model from the estimation model, and the \$SIMULATION record must contain both a normal seed and a uniform seed (1234 UNIFORM). If there is a user-defined \$SIMULATION record, the program will replace the random seeds, set NSUBPROBLEMS to the number of samples requested on the input line, check that TRUE=FINAL is set in the case when the option -msfo is used, and set/unset ONLYSIMULATION to be compatible with the option keep\_estimation. If option rawres\_input is used, the program will create one simulation model per sample.
+The user may either skip the \$SIMULATION record entirely and let the program produce it according to the rules specified in section Modified models – model for simulated data. Or the user can include a complete \$SIMULATION record, for example when using special random distributions. Inclusion of a \$SIMULATION record is needed when simulating categorical data is intended (vpc with -levels option). In this case the model file must be equipped with IF(ICALL.EQ.4) coding to separate the simulation model from the estimation model, and the \$SIMULATION record must contain both a normal seed and a uniform seed (1234 UNIFORM). If there is a user-defined \$SIMULATION record, the program will replace the random seeds, set NSUBPROBLEMS to the number of samples requested on the input line, check that TRUE=FINAL is set in the case when the option -msfo\_file is used, and set/unset ONLYSIMULATION to be compatible with the option keep\_estimation. If option rawres\_input is used, the program will create one simulation model per sample.
 
 An additional alternative is to supply the program with a complete simulation model, either via option -flip\_comments or option -sim\_model. In both cases the program will only change seeds and NSUBPROBLEMS in \$SIMULATION. No other changes to that particular record will be made.
 
@@ -280,7 +280,7 @@ As stated above, the NPC and VPC have many parts in common. All NPC options are 
 
 Example
 \begin{verbatim}
-npc moxonidine.mod -lst=moxonidine.lst -samples=500 
+npc moxonidine.mod -lst_file=moxonidine.lst -samples=500 
 \end{verbatim}
 
 Input: a modelfile is required.
@@ -289,11 +289,11 @@ Input: a modelfile is required.
 \optdefault{samples}{number}
 is required, the number of simulated datasets to generate. 
 \nextopt
-\optdefault{msfo}{file}
+\optdefault{msfo\_file}{file}
 is optional, unless the model has \$NONP record then an msfo-file 	is required. As with VPC. 
 \nextopt
-\optdefault{lst}{file}
-is optional, but forbidden together with -msfo. Use final parameter estimates from this lst-file. Npc does not perform estimation. 
+\optdefault{lst\_file}{file}
+is optional, but forbidden together with -msfo\_file. Use final parameter estimates from this lst-file. Npc does not perform estimation. 
 \nextopt
 \optdefault{stratify\_on}{variable}
 is optional.  
@@ -381,7 +381,7 @@ For the original data, kaplan.plot in Xpose requires that EVID is present and th
 
 The vpc script checks the input, see section Input checks. Then two modified modelfiles are created, or the two input models are updated: one for generating original data table output and one for generating simulated data table output, see section Modified models. Note that if option -tte is set, PsN will automatically remove all  IGNORE/ACCEPT statements, except IGNORE=@ or similar,  when creating the simulation model (unless -sim\_model or -flip\_comments is set, see help text for these options). In the model for original data the IGNORE/ACCEPT statements are not changed. If deleting IGNORE/ACCEPT for the simulations is not enough to create a correct simulation model then the user must instead supply PsN with a separate simulation model, using option -sim\_model or -flip\_comments.
 
-The model parameters will never be reestimated. If an lst-file is given as input or an lst-file is found by replacing .mod with .lst in the modelfile name, the initial estimate in both models will be updated using the final estimates from the lst-file. If an msfo-file is given using option -msfo both models will have an \$MSFI record added. Otherwise the initial parameter estimates will not be changed in the two modelfiles. 
+The model parameters will never be reestimated. If an lst-file is given as input or an lst-file is found by replacing .mod with .lst in the modelfile name, the initial estimate in both models will be updated using the final estimates from the lst-file. If an msfo-file is given using option -msfo\_file both models will have an \$MSFI record added. Otherwise the initial parameter estimates will not be changed in the two modelfiles. 
 
 The two modified models are run using PsN. The real data is only filtered on already present ACCEPT/IGNORE statements in the input model, and the table is named mytab$<$runno$>$ to suit the automatic data reading of Xpose. If -stratify\_on has been used, then all variables defined will be included in mytab<runno>. The simulation output is filtered on the variable specified using option -tte: all lines where the value in the tte column is equal to 0 are removed. Variables given using option stratify\_on will be included in simulation output. Also, three additional columns are created: one for the accumulated number of events for the (simulated) individual, one for the order number of the simulated individual (a number between 1 and “samples”*N\_individuals), and one for the order number of the simulation (a number between 1 and “samples”).  Finally the formatted simulated output is zipped. If PsN fails to zip the file it must be done manually before Xpose can be used to produce the final plots using command kaplan.plot.
 
@@ -443,8 +443,8 @@ The script checks the input, see section Input checks. Then two modified modelfi
 	\item If the -dv variable is neither of DV, RES, WRES or CWRES it must be defined in the \$PK, \$PRED or \$ERROR record. 
 	\item -mirrors, the number of mirror plot data sets to generate in VPC, can be at most 20.
 	\item If reanalyzing an old run (i.e. the -directory=$<$directoryname$>$ option is used and $<$directoryname$>$ contains the results of an old run), the modelfile name must be the same in the new and original calls.
-	\item If reanalyzing an old run, -lst option must either be used in both or neither of the calls.
-	\item If reanalyzing an old run, -msfo option must either be used in both or neither of the calls.
+	\item If reanalyzing an old run, -lst\_file option must either be used in both or neither of the calls.
+	\item If reanalyzing an old run, -msfo\_file option must either be used in both or neither of the calls.
 	\item If reanalyzing an old run, -samples must be the same in both calls.
 	\item If reanalyzing an old run, and keep\_estimation is set, keep\_estimation must have been set also in the original call.
 	\item It is not allowed to use synonyms for ID or MDV in the \$INPUT record.
@@ -696,7 +696,7 @@ Otherwise (there is a \$PRED record)
 The program cannot detect nor handle missing values in the table output (variables 
 requested in the generated \$TABLE record) by any other method than option -censor. Missing values that are not dealt with using option -censor will lead to erroneous output. 
 
-It will not work to read initial parameter estimates from a separate file using the CHAIN command. Instead, the user can either create an msfo-file and use option -msfo or use the -orig\_table and -sim\_table options.
+It will not work to read initial parameter estimates from a separate file using the CHAIN command. Instead, the user can either create an msfo-file and use option -msfo\_file or use the -orig\_table and -sim\_table options.
 
 
 \begin{thebibliography}{1}
