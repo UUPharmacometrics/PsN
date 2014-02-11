@@ -46,19 +46,17 @@ my %optional_options = ('samples:i' => undef,
 			 'idv:s' => undef,
 			 'rawres_input:s' => undef,
 			 'offset_rawres:i' => undef,
-       "stratify_on:s" => undef,
+       "columns:s" => undef,
 			 'lst_file:s' => undef,
 			 'msfo_file:s' => undef,
 			 'dv:s' => undef,
-			 'lloq:f'=>undef,
-			 'uloq:f'=>undef,
-			 'levels:s'=>undef,
 			 'keep_estimation!'=>undef,
 			 'noprediction'=>undef,
 			 'sim_model:s'=>undef,
 			 'flip_comments!'=>undef,
        'censor:s' => undef,
 			 "copy_data!"=>undef,
+			 "nca_options:s"=>undef
 			 );
 
 my $res = GetOptions( \%options,
@@ -135,18 +133,10 @@ $help_text{-censor} = <<'EOF';
       The variable must be requestable in $TABLE.
 EOF
 
-$help_text{-stratify_on} = <<'EOF';
-      -stratify_on=VARIABLE
+$help_text{-columns} = <<'EOF';
+      -columns=VARIABLE1,VARIABLE2,...
 
-      Variable to stratify on. The variable must be independent, i.e. be
-      the same for all simulations of a particular observation.
-      The nca will stratify the data on unique values of the specified
-      variable, and perform separate analyses on each set. Stratification 
-      may also be done on parameter defined in the model.
-      The stratification variable must be requestable in $TABLE.
-      -stratify_on may be a comma-separated list
-      of multiple variables, then the first variable will be used for
-	  stratification and the rest simply added to $TABLE.
+			A comma separated list of variables to add to the nca tables.
 EOF
 
 $help_text{-copy_data} = <<'EOF';
@@ -207,27 +197,6 @@ $help_text{-flip_comments} = <<'EOF';
       See the userguide for details.
 EOF
 
-$help_text{-levels} = <<'EOF';
-      -levels=level1,level2,...
-      
-      A comma-separated list of the boundaries for a categorization.
-      First category <= level1 < second category <= level2 etc.
-EOF
-
-$help_text{-lloq} = <<'EOF';
-      -lloq=number
-      
-      Lower Limit Of Quantification for left censored data.
-      See the userguide for details.
-EOF
-
-$help_text{-uloq} = <<'EOF';
-      -uloq=number
-      
-      Upper Limit Of Quantification for right censored data.
-      See the userguide for details.
-EOF
-
 $help_text{-keep_estimation} = <<'EOF';
       -keep_estimation
       
@@ -268,6 +237,14 @@ $help_text{-noprediction} = <<'EOF';
       Add NOPREDICTION to the $SIMULATION record of the simulation model
       in addition to ONLYSIMULATION. This option is generally recommended
       with likelihood models for odd type data.
+EOF
+
+$help_text{-nca_options} = <<'EOF';
+      -nca_options=option_string
+
+			The option_string will be copied verbatim to the R script created to invok nca.R.
+			Strings containing spaces or double quotes can be encloset within single quotes.
+			Example: nca run1.mod -nca_options='blq = "yes", blqNm = "BLQ"'
 EOF
 
 $help_text{Post_help_message} = <<'EOF';
@@ -324,20 +301,6 @@ if (defined $options{'covariance_file'}) {
   }
 }
 
-
-my @levels = ();
-
-if ( defined $options{'levels'} ){
-  foreach my $v (split(/,/,$options{'levels'})){
-    if (length($v)>0){
-      push(@levels,$v);
-    }
-  }
-  unless (scalar(@levels)>0){
-    die "Error: Could not parse list levels.\n";
-  }	
-}
-
 if (defined $options{'sim_model'}){
   my ($dir, $fil) = OSspecific::absolute_path($options{'sim_model'});
 
@@ -382,17 +345,13 @@ if( defined $model->msfi_names() ){
 
 my $nca = tool::npc->new(eval($common_options::parameters),
 	  models	           => [ $model ],
-	  stratify_on        => $options{'stratify_on'},
+	  stratify_on        => $options{'columns'},
 	  censor             => $options{'censor'},
 	  samples            => $options{'samples'},
 	  lst_file           => $options{'lst_file'},
 	  msfo_file          => $options{'msfo_file'},
 	  idv                => ((defined $options{'idv'}) ? $options{'idv'} : 'TIME'),
 	  dv                 => $options{'dv'},
-	  categorized        => ((scalar(@levels) > 0) ? 1 : 0),
-	  levels             => \@levels,
-	  lloq               => $options{'lloq'},
-	  uloq               => $options{'uloq'},
 	  keep_estimation    => $options{'keep_estimation'},
 	  noprediction       => $options{'noprediction'},
 	  copy_data	     		 => $options{'copy_data'},
@@ -424,6 +383,10 @@ print_option($fh, 'concNm', '"' . $nca->dv . '"');
 print_option($fh, 'simFile', '"nca_simulation.1.npctab.dta"');
 print_option($fh, 'simConcNm', '"' . $nca->dv . '"'); 
 print_option($fh, 'nsim', $nca->samples);
+
+if (defined $options{'nca_options'}) {
+	print $fh ", ", $options{'nca_options'};
+}
 
 print $fh ")\n";
 
