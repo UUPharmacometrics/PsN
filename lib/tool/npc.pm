@@ -1183,10 +1183,20 @@ sub modelfit_setup
     push (@rec_strings, $self->tte()) 
 	if (defined $self->tte() and ($self->tte() ne $self->dv));
   }
-  
+ 
+	# Remove duplicate columns
+	my @rec_strings2;
+	my %column_seen;
+	foreach my $column (@rec_strings) {
+		if (not $column_seen{$column}) {
+			push @rec_strings2, $column;
+			$column_seen{$column} = 1;
+		}
+	}
+	@rec_strings = @rec_strings2;
+
   push (@rec_strings,('ONEHEADER','NOPRINT'));
   push (@tte_strings,('ONEHEADER','NOPRINT'));
-
 
   push (@rec_strings,('FILE=npctab.dta'));
   push (@tte_strings,('FILE=npctab.dta'));

@@ -342,10 +342,15 @@ if( defined $model->msfi_names() ){
 
 }
 
+my $column_array = $model->problems->[0]->inputs->[0]->get_nonskipped_columns;
+my $columns = join(",", @$column_array);
+if (defined $options{'columns'}) {
+	$columns = $columns . ',' . $options{'columns'};
+}
 
 my $nca = tool::npc->new(eval($common_options::parameters),
 	  models	           => [ $model ],
-	  stratify_on        => $options{'columns'},
+	  stratify_on        => $columns,
 	  censor             => $options{'censor'},
 	  samples            => $options{'samples'},
 	  lst_file           => $options{'lst_file'},
@@ -381,8 +386,6 @@ print_option($fh, 'origFile', '"nca_original.npctab.dta"');
 print_option($fh, 'timeNm', '"' . $nca->idv . '"');
 print_option($fh, 'concNm', '"' . $nca->dv . '"');
 print_option($fh, 'simFile', '"nca_simulation.1.npctab.dta"');
-print_option($fh, 'simConcNm', '"' . $nca->dv . '"'); 
-print_option($fh, 'nsim', $nca->samples);
 
 if (defined $options{'nca_options'}) {
 	print $fh ", ", $options{'nca_options'};
