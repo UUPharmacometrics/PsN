@@ -1,5 +1,5 @@
 package output::problem::subproblem;
-#use Carp;
+
 use include_modules;
 use Config;
 use ext::Math::MatrixReal;
@@ -26,7 +26,7 @@ has 'cvsesigmas' => ( is => 'rw', isa => 'ArrayRef[Maybe[Value]]' );
 has 'cvsethetas' => ( is => 'rw', isa => 'ArrayRef[Maybe[Value]]' );
 has 'shrinkage_eta' => ( is => 'rw', isa => 'ArrayRef[Value]' );
 has 'shrinkage_eps' => ( is => 'rw', isa => 'ArrayRef[Value]' );
-has 'eigens' => ( is => 'rw', isa => 'ArrayRef[Num]' );
+has 'eigens' => ( is => 'rw', isa => 'ArrayRef' );
 has 'etabar' => ( is => 'rw', isa => 'ArrayRef[Num]' );
 has 'feval' => ( is => 'rw', isa => 'Num' );
 has 'final_gradients' => ( is => 'rw', isa => 'ArrayRef[Num]' );
