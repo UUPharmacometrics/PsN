@@ -41,9 +41,8 @@ Getopt::Long::config("auto_abbrev");
 my %options;
 ## Declare the options
 
-my %required_options = ();
-my %optional_options = ('samples:i' => undef, 
-			 'idv:s' => undef,
+my %required_options = ('samples:i' => undef);
+my %optional_options = ('idv:s' => undef,
 			 'rawres_input:s' => undef,
 			 'offset_rawres:i' => undef,
        "columns:s" => undef,
@@ -65,10 +64,6 @@ my $res = GetOptions( \%options,
 		      keys(%optional_options) );
 exit unless $res;
 
-
-if (not defined $options{'samples'}) {
-	$options{'samples'} = 1000;
-}
 
 if (defined $options{'msfo_file'}){
   if (defined $options{'extra_files'}){
