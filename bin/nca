@@ -55,7 +55,8 @@ my %optional_options = ('idv:s' => undef,
 			 'flip_comments!'=>undef,
        'censor:s' => undef,
 			 "copy_data!"=>undef,
-			 "nca_options:s"=>undef
+			 "nca_options:s"=>undef,
+			 'include_all_columns' => undef,
 			 );
 
 my $res = GetOptions( \%options,
@@ -242,6 +243,12 @@ $help_text{-nca_options} = <<'EOF';
 			Example: nca run1.mod -nca_options='blq = "yes", blqNm = "BLQ"'
 EOF
 
+$help_text{-include_all_columns} = <<'EOF';
+      -include_all_columns
+
+			Include all non-skipped columns in $INPUT to the tables
+EOF
+
 $help_text{Post_help_message} = <<'EOF';
 
     Also see 'psn_options -h' for a description of PsN common options.
@@ -337,10 +344,14 @@ if( defined $model->msfi_names() ){
 
 }
 
-my $column_array = $model->problems->[0]->inputs->[0]->get_nonskipped_columns;
-my $columns = join(",", @$column_array);
+my $columns;
+if (defined $options{'include_all_columns'}) {
+	my $column_array = $model->problems->[0]->inputs->[0]->get_nonskipped_columns;
+	$columns = join(",", @$column_array);
+	$columns .= ',' if (defined $options{'columns'});
+}
 if (defined $options{'columns'}) {
-	$columns = $columns . ',' . $options{'columns'};
+	$columns .= $options{'columns'};
 }
 
 my $nca = tool::npc->new(eval($common_options::parameters),
