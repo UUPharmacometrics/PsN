@@ -12,20 +12,20 @@ The PsN NCA can feed the nca R-script with simulated data. It is based on the si
 Example:
 
 \begin{verbatim}
-nca run1.mod
+nca run1.mod -samples=1000
 \end{verbatim}
 
 Input: a modelfile is required.
 
 \begin{optionlist}
 \optdefault{samples}{number}
-The number of simulated datasets to generate. 1000 is the default. 
+The number of simulated datasets to generate. This option in mandatory and must be 20 or higher. 
 \nextopt
 \optdefault{msfo}{file}
 is optional, unless the model has \$NONP record then an msfo-file	is required. Use final parameter estimates from msfo-file instead of initial estimates from modelfile when simulating.
 \nextopt
 \optdefault{lst}{file}
-is optional, but forbidden together with -msfo. Use final parameter estimates from this lst-file for the simulation. By default PsN will look for a file with the same name as the regular input model, or the simulation model if option -sim\_model is used, but with suffix .lst instead of .mod. If such a file is found then option -lst=$<$modelfile$>$.lst is set automatically. VPC does not perform estimation. 
+is optional, but forbidden together with -msfo. Use final parameter estimates from this lst-file for the simulation. By default PsN will look for a file with the same name as the regular input model, or the simulation model if option -sim\_model is used, but with suffix .lst instead of .mod. If such a file is found then option -lst=$<$modelfile$>$.lst is set automatically.
 \nextopt
 \optdefault{columns}{var1,var2,...}
 is optional. The columns option is a comma-separated list of variable names. All listed variables will be added to the nca table output.
@@ -67,17 +67,8 @@ is optional, by default not set. If this option is set, a post-hoc evaluation st
 \optname{noprediction}
 is optional, by default not set. If set, NOPREDICTION will be added to the \$SIMULATION record of the simulation model, in addition to ONLYSIMULATION. This option is generally recommended with likelihood models for odd type data (i.e. -2LOGLIKELIHOOD or LIKELIHOOD in \$ESTIMATION). It is not allowed to use -noprediction in combination with the option \mbox{-keep\_estimation}. 
 \nextopt
-\optdefault{censor}{variable}
-is optional, default not used. Name of variable which defines whether the observation of the dependent variable is missing, e.g. due to drop-out. 1 means the observation is censored, 0 means the observation is not censored. The variable must be requestable in \$TABLE. This option is not applicable for time-to-event data, please read the section 'VPC for time-to-event models'. 
-\nextopt
 \optdefault{idv}{variable}
 optional, default TIME, the independent variable. 
-\nextopt
-\optdefault{lloq}{number}
-optional, the lower limit of quantification for left censored data. Specific for VPC. 
-\nextopt
-\optdefault{uloq}{number}
-optional, the upper limit of quantification for right censored data. Specific for VPC. 
 \nextopt
 \optdefault{rawres\_input}{filename}
 A simple way to simulate with uncertainty. Instead of using identical parameter estimates for simulation of each new dataset, take parameter estimates from a raw\_results.csv file, e.g. from a bootstrap run or the intial\_estimates.csv file from a previous sse run with \$PRIOR in the simulation model. The raw results file must be comma-separated and contain at least as many samples as the input -samples to sse, the labels for THETA/OMEGA/SIGMA in the file must match the labels in the simulation model given as input to sse, the theta columns must be directly followed by the omega columns which must be directly followed by the sigma columns, and the column header must be model either in the first column just as in a bootstrap raw\_results file or in the second or third column as in a sse raw\_results file. If a column header contains a comma, e.g. OMEGA(2,2), then that header must be enclosed in double quotes. This is done automatically in PsN raw results files. Note that is is possible to generate a file with initial parameter estimates outside of PsN, as long as the file follows the format rules. 
@@ -87,6 +78,9 @@ Only relevant in combination with -rawres\_input. Default 1. The number of resul
 \nextopt
 \optname{nca\_options}
 This option takes a string that will be copied verbatim to the R script created to invoke nca.R. Strings containing spaces or double quotes can be enclosed within single quotes. Example: \verb|nca run1.mod -nca_options='blq = "yes", blqNm = "BLQ"'|
+\nextopt
+\optname{include\_all\_columns}
+If set all columns in \$INPUT, that are not marked as skipped or dropped, will be included in the tables.
 \nextopt
 \end{optionlist}
 
@@ -109,49 +103,10 @@ The user may either skip the \$SIMULATION record entirely and let the program pr
 
 An additional alternative is to supply the program with a complete simulation model, either via option -flip\_comments or option -sim\_model. In both cases the program will only change seeds and NSUBPROBLEMS in \$SIMULATION. No other changes to that particular record will be made.
 
-\subsection{Handling BQL data}
-It is important to retain the BQL observation in the data-set when doing VPCs (see Bergstrand, M. et al. AAPS J, 2009. 11(2): p. 371-380. for more details). It should be done irrespectively of what method that is used to handle or not handle the BQL observations when estimating. The M3/M4 code used to include BQL samples in the estimation is only applicable to estimation and not to simulation. With the M3/M4 code the BQL observations are treated as categorical observations (i.e. $<$LOQ). When you simulate you want to generate simulated concentration observations at all time points in your data-set (also where the observations was $<$LOQ). If you simulate with the M3/M4 code active the prediction at BQL samples in your data-set (F\_FLAG=1) will be the probability for the observation to be <LOQ and not a concentration. For this reason PsN highlights that if F\_FLAG is used there needs to be a special simulation block (ICALL.EQ.4) where the prediction is coded to be continuous (F\_FLAG=0) for all observations. In theory it should be possible to have the M3/M4 cod in a block that only applies to estimation but NONMEM often gives error messages when this is tried. For that reason it is recommended to construct a new control stream for the VPC (e.g. run1vpc.mod). In the new model file remove code that relates to the M3/M4 method so that continuous predictions are given at all observations. It is important that the DV value for all BQL observations are set to a value below LOQ (e.g. LOQ/2) in the data-set. 
-
-\subsection{Simulation with uncertainty}
-It is possible to simulate with uncertainty in npc/vpc, either by using option -rawres\_input or by having \$PRIOR in the input/simulation model.
-
-\subsection{Dependent variable option, -dv}
-The default dependent variable to do the analysis on is DV. Other possible choices are IPRED, IRES, IWRES, IPRED, RES, WRES or any other variable defined in the \$PRED/\$ERROR/\$PK record in the modelfile. Defining a new variable allows the user to, for example, perform any sort of transformation of the observations. CWRES may also be chosen, but Xpose (a post-processing program in R) may not be able to handle large tablefiles and tablefiles lacking a run number. 
-
-\subsection{Common options in PsN which are interesting for NCA (examples)}
-For a complete list of common options see common\_options\_defaults\_versions.pdf, or psn\_options -h on the commandline.
-
-\begin{optionlist}
-\nextopt
-\optname{last\_est\_complete}
-optional and only applies with NONMEM7 and if option -keep\_estimation is set. See section NPC and VPC with NONMEM7. 
-\nextopt
-\optdefault{seed}{string}
-Using this option makes it possible to regenerate simulation results. 
-\nextopt
-\optdefault{directory}{directory name}
-name of new directory or directory to restart from 
-\nextopt
-\optdefault{nm\_version}{nonmem version }
-
-\nextopt
-\end{optionlist}
-
-Important note: you can use the -directory option e.g when you have run a simulation with a particular model earlier and you want to stratify on a new column or use a different set of binning options. You can reuse NPC simulations in a VPC analysis and vice versa, since the underlying program is essentially the same. The default directory name will be of the form npc\_dirN, regardless of whether the original run was done using NPC or VPC. This will save time since much of the processing won't have to be redone. The old npc\_results.csv or vpc\_results.csv file will be renamed so that they are not overwritten.
+For more information about the details of the simulation see the relevant sections of the vpc documentation.
 
 \section{Output}
-
-\section{General process}
-The script checks the input, see section Input checks. Then two modified modelfiles are created, one for generating original data table output and one for generating simulated data table output. The model parameters will never be reestimated. Unless an lst- or msfo-file is given as input or an lst-file is found by replacing .mod with .lst in the modelfile name, the initial parameter estimates from the modelfile will be used for the simulations. The two modified models are run using PsN, and the output in the tablefiles are processed and analyzed according to sections Table output processing and DV matrix analysis for NPC/VPC below. 
-
-\section{Modified models}
-
-\section{Table output processing}
-The dependent variable values in observation rows are extracted from original data and simulation table files. The values are saved to disc as a matrix in csv-format. One row per observation, original dataset in the first column and simulated datasets in columns 2-(n\_samples+1). The values saved to disk are never prediction or variability corrected.
-
-If option -censor is used, censor variable values in observation rows are extracted from original data and simulation table files. The values are saved to disc as a matrix in csv-format. One row per observation, original dataset in the first column and simulated datasets in columns 2-(n\_samples+1).
-
-\section{Censoring of data}
-If option -censor is used, the missing observations are removed. If option -predcorr is used in combination with option -lloq or -uloq, the observations outside the boundaries of -lloq and -uloq are also removed.
+Two modified modelfiles are created, one for generating original data table output and one for generating simulated data table output. The model parameters will never be reestimated. Unless an lst- or msfo-file is given as input or an lst-file is found by replacing .mod with .lst in the modelfile name, the initial parameter estimates from the modelfile will be used for the simulations. The two modified models are run using PsN.
+An R-script snippet called runnca.R is created. It will contain a call to the nca R-script with some parameters filled in.
 
 \end{document}

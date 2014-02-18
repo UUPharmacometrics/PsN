@@ -53,7 +53,6 @@ my %optional_options = ('idv:s' => undef,
 			 'noprediction'=>undef,
 			 'sim_model:s'=>undef,
 			 'flip_comments!'=>undef,
-       'censor:s' => undef,
 			 "copy_data!"=>undef,
 			 "nca_options:s"=>undef,
 			 'include_all_columns' => undef,
@@ -119,14 +118,6 @@ $help_text{-idv} = <<'EOF';
       -idv=VARIABLE
 
       Name of independent variable, optional, default TIME.
-EOF
-
-$help_text{-censor} = <<'EOF';
-      -censor=VARIABLE
-
-      Name of variable which defines whether DV or similar is missing, e.g. due to drop-out.
-      1 means the observation is censored, 0 means the observation is not censored.
-      The variable must be requestable in $TABLE.
 EOF
 
 $help_text{-columns} = <<'EOF';
@@ -357,7 +348,6 @@ if (defined $options{'columns'}) {
 my $nca = tool::npc->new(eval($common_options::parameters),
 	  models	           => [ $model ],
 	  stratify_on        => $columns,
-	  censor             => $options{'censor'},
 	  samples            => $options{'samples'},
 	  lst_file           => $options{'lst_file'},
 	  msfo_file          => $options{'msfo_file'},
