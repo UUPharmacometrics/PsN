@@ -11,6 +11,7 @@ use FindBin qw($Bin);
 use lib ".."; #location of includes.pm
 use includes; #file with paths to PsN packages and $path variable definition
 
+my $interactive=0;
 our $dir = 'frem_test';
 my $model_dir = "../test_files";
 
@@ -36,8 +37,10 @@ foreach my $command (@commands){
 	ok ($rc == 0, "$command");
 	
 	if ($rc == 0){
-		print "hit return to remove $dir and continue: ";
-		my $input = <STDIN>;
+		if ($interactive){
+			print "hit return to remove $dir and continue: ";
+			my $input = <STDIN>;
+		}
 		rmtree([ "./$dir" ]);
 	}else{
 		exit;

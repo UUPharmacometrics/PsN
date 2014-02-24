@@ -140,10 +140,7 @@ sub create_template_models
 	my $n_occasions;
 	my $total_orig_etas;
 	my $start_omega_record;
-	my %theta_parameter;
 	my $use_pred;
-	my %oldstring_to_CTVpar;
-	my @etanum_to_thetanum;
 	my $start_eta = $self->start_eta();
 	my $bsv_parameters;
 	my $bov_parameters = scalar(@{$self->parameters()});
@@ -153,6 +150,7 @@ sub create_template_models
 	my @bov_par_labels=();
 	my @bov_cov_labels=();
 	my $model1_updated=0;
+	my @CTV_parameters;
 
 
 	#local objects
@@ -217,8 +215,50 @@ sub create_template_models
 	#set the data file name without changing data object. Always first option in data record
 #	$frem_model0->problems->[0]->datas->[0]->options->[0]->name($original_data_name);
 	$frem_model0 ->_write();
-	#read number of etas already in model and set bsv_parameters
+
+	#find etas already in model and set bsv_labels
+	#find parameters that have ETAs on them already
+	#search in Model 0 because there we have not added BOV ETAS
+	my @code;
+	@code = @{$frem_model0 -> pk( problem_number => 1 )};
+	$use_pred = 0;
+	unless ( $#code > 0 ) {
+		@code = @{$frem_model0 -> pred( problem_number => 1 )};
+		$use_pred = 1;
+	}
+	if ( $#code <= 0 ) {
+		croak("Neither PK or PRED defined in model 0");
+	}
+
+	my %CTV_par;
+	foreach my $p (@{$self->parameters()}){
+		$CTV_par{$p}=1;
+	}
 	
+	my @TVPAR=();
+	#find all TV par on left hand side. Allow IF lines
+	for (my $i=0; $i<scalar(@code); $i++) {
+		next if ( $code[$i] =~ /^\s*\;/); #comment line
+		if ( $code[$i] =~ /^[^;]*\bTV(\w+)\s*=/  ){
+			push(@TVPAR,$1);
+		}
+	}
+	#find all par = lines and check if have ETA, then add to CTV hash. Allow IF lines
+	my %etanum_to_parameter;
+	foreach my $par (@TVPAR){
+#		next if (defined $CTV_par{$par}); #we already know this has BOV ETA but we want to get etanum mapping
+		for (my $i=0; $i<scalar(@code); $i++) {
+			next if ( $code[$i] =~ /^\s*\;/); #comment line
+			if ( $code[$i] =~ /^[^;]*\b$par\s*=.*\bETA\((\d+)\)/  ){
+				my $num = $1;
+				$etanum_to_parameter{$1}=$par;
+				$CTV_par{$par} =1;
+				last;
+			}
+		}
+	}
+	@CTV_parameters = (keys %CTV_par);
+
 	##########################################################################################
 	#Create data set 2
 	##########################################################################################
@@ -234,6 +274,16 @@ sub create_template_models
 	if ($n_occasions >0){
 		for (my $i=0; $i< $n_occasions; $i++){
 			push(@occasion_labels,$self->occasion().'='.$self->occasionlist()->[$i]);
+		}
+	}
+
+	if ($n_invariant > 0){
+		for (my $i=$start_eta;$i< ($start_eta + $bsv_parameters);$i++){
+			if (defined $etanum_to_parameter{$i}){
+				push(@bsv_par_labels,'BSV par '.$etanum_to_parameter{$i});
+			}else{
+				push(@bsv_par_labels,'BSV par ');
+			}
 		}
 	}
 
@@ -545,100 +595,6 @@ sub create_template_models
 	
 	$frem_vpc_model1 -> remove_records(type => 'covariance');
 	
-	
-	my @code;
-	@code = @{$frem_vpc_model1 -> pk( problem_number => 1 )};
-	$use_pred = 0;
-	unless ( $#code > 0 ) {
-		@code = @{$frem_vpc_model1 -> pred( problem_number => 1 )};
-		$use_pred = 1;
-	}
-	if ( $#code <= 0 ) {
-		croak("Neither PK or PRED defined in vpc model 1");
-	}
-	#find all thetas on right hand side where left hand is not Y or Ynumber
-	#store mapping theta number and parameter name
-	for (my $i=0; $i<scalar(@code); $i++) {
-		if ( $code[$i] =~ /^\s*(\w+)\s*=.*\bTHETA\((\d+)\)/  ){
-			$theta_parameter{$2} = $1 unless ($1 =~ /^Y\d*$/);
-		}
-	}
-	if (0){
-		print "\n";
-		foreach my $num (sort keys %theta_parameter){
-			print "THETA($num) to ".$theta_parameter{$num}."\n";
-		}
-		print "done theta map\n";
-	}
-	#find mapping eta number to theta number
-	#store mapping replacestring to CTVpar
-	#my %oldstring_to_CTVpar;
-	@etanum_to_thetanum= (0) x $bsv_parameters;
-	my %etanum_to_parameter;
-	for (my $i=0; $i<scalar(@code); $i++) {
-		next if ( $code[$i] =~ /^\s*\;/); #comment line
-		if ( $code[$i] =~ /^\s*(\w+)\s*=.*\bETA\((\d+)\)/  ){
-			#Assume no need to handle placeholder (0) for ETA here
-			my $etanum = $2;
-			my $new_param = $1;
-			if ($etanum_to_thetanum[$etanum] != 0){
-				croak("Found multiple lines with ETA($etanum) in vpc_model1, ambigous");
-			}
-			if ($etanum > ($total_orig_etas)){
-				#we added this theta, not an original one
-				next;
-			}
-			$etanum_to_parameter{$etanum}=$new_param;
-			if (0 and ( $code[$i] =~ /^.+=.*\bTHETA\((\d+)\)/  )){
-				#coupling on same line as in CL=THETA(2)*EXP(ETA(1))
-				#we do not allow this
-				$etanum_to_thetanum[$etanum]=$1;
-				$oldstring_to_CTVpar{'THETA('.$1.')'} = 'CTV'.$new_param;
-			}else{
-				#loop to find indirect coupling as in TVCL=THETA(2), CL=TVCL*EXP(ETA(1))
-				my $found = 0;
-				foreach my $thetanum (keys %theta_parameter){
-					my $par = $theta_parameter{$thetanum};
-					if ( $code[$i] =~ /=.*\b$par\b/  ){
-						$etanum_to_thetanum[$etanum]=$thetanum;
-						$found=1;
-						#replace indirect coupling parameter and instead set left hand param from ETA line to theta mapping
-						$theta_parameter{$thetanum} = $new_param;
-						$oldstring_to_CTVpar{$par} = 'CTV'.$new_param;
-						last;
-					}
-				}
-				croak("Could not find THETA coupled to ETA($etanum) in vpc_model1") unless ($found);
-			}
-		}
-	}
-	if (0){
-		print "\n";
-		for (my $etanum=1; $etanum< scalar(@etanum_to_thetanum); $etanum++){
-			if ($etanum_to_thetanum[$etanum] == 0){
-				croak("Could not find ETA($etanum) in code vpc_model1");
-			}
-			print "ETA($etanum) to THETA(".$etanum_to_thetanum[$etanum].")\n";
-		}
-		print "\n";
-	}
-	if (0){
-		print "\n";
-		foreach my $key (keys %oldstring_to_CTVpar){
-			print "oldstring $key to be replaced with ".$oldstring_to_CTVpar{$key}."\n";
-		}
-		print "\n";
-	}
-
-	for (my $i=$start_eta;$i< ($start_eta + $bsv_parameters);$i++){
-		if (defined $etanum_to_parameter{$i}){
-			push(@bsv_par_labels,'BSV par '.$etanum_to_parameter{$i});
-		}else{
-			push(@bsv_par_labels,'BSV par ');
-		}
-	}
-
-
 	#To create combined data simply print table with both filtered input data and new conditional data
 	#The conditional headers will have wrong headers in table file to be used as data, but that is fine
 	#as long as $INPUT in vpc2 is correct
@@ -659,8 +615,7 @@ sub create_template_models
 			  " but no headers were found in \$INPUT" );
 	}
 	
-	for (my $etanum=1; $etanum< scalar(@etanum_to_thetanum); $etanum++){
-		my $par = $theta_parameter{$etanum_to_thetanum[$etanum]}; # parameter that has ETA on it
+	foreach my $par (@CTV_parameters){
 		push(@vpc1_table_params,$par);
 		push( @vpc2_input_params, 'CTV'.$par);
 	}
@@ -732,18 +687,20 @@ sub create_template_models
 	if ( $#code <= 0 ) {
 		croak("Neither PK or PRED defined in vpc model 1");
 	}
-	
-	foreach my $oldstring (keys %oldstring_to_CTVpar){
+
+	foreach my $par (@CTV_parameters){
+		my $ctv = 'CTV'.$par;
+		my $tv = 'TV'.$par;
 		my $found = 0;
 		for (my $i=0; $i<scalar(@code); $i++) {
 			next if ( $code[$i] =~ /^\s*\;/); #comment line
-			if ( $code[$i] =~ /^(\s*)$oldstring\s*=/ ){
-				$code[$i] = $1.$oldstring.'='.$oldstring_to_CTVpar{$oldstring};
+			if ( $code[$i] =~ /^([^;]*)\b$tv\s*=/ ){
+				$code[$i] = $1.$tv.'='.$ctv;
 				$found = 1;
 				#do not break here, may be multiple definitions, replace all
 			}
 		}
-		croak("could not find where to set\n".$oldstring.'='.$oldstring_to_CTVpar{$oldstring}) unless $found;
+		croak("could not find where to set\n".$tv.'='.$ctv) unless $found;
 	}
 	if ( $use_pred ) {
 		$frem_vpc_model2 -> pred( problem_number => 1,
@@ -755,10 +712,10 @@ sub create_template_models
 	
 	$frem_vpc_model2->_write();
 
-	my @dumper_names=qw(n_invariant n_time_varying n_occasions total_orig_etas start_omega_record *theta_parameter use_pred *oldstring_to_CTVpar *etanum_to_thetanum start_eta bsv_parameters bov_parameters *occasion_labels *bsv_par_labels *bsv_cov_labels *bov_par_labels *bov_cov_labels model1_updated );
+	my @dumper_names=qw(n_invariant n_time_varying n_occasions total_orig_etas start_omega_record use_pred start_eta bsv_parameters bov_parameters *occasion_labels *bsv_par_labels *bsv_cov_labels *bov_par_labels *bov_cov_labels model1_updated *CTV_parameters);
 	open(FH, '>'.$self->done_file()) or die "Could not open file ".$self->done_file()." for writing.\n";
 	print FH Data::Dumper->Dump(
-		[$n_invariant,$n_time_varying,$n_occasions,$total_orig_etas,$start_omega_record,\%theta_parameter,$use_pred,\%oldstring_to_CTVpar,\@etanum_to_thetanum,$start_eta,$bsv_parameters,$bov_parameters,\@occasion_labels,\@bsv_par_labels,\@bsv_cov_labels,\@bov_par_labels,\@bov_cov_labels,$model1_updated],
+		[$n_invariant,$n_time_varying,$n_occasions,$total_orig_etas,$start_omega_record,$use_pred,$start_eta,$bsv_parameters,$bov_parameters,\@occasion_labels,\@bsv_par_labels,\@bsv_cov_labels,\@bov_par_labels,\@bov_cov_labels,$model1_updated,\@CTV_parameters],
 		\@dumper_names
 		);
 	close FH;
@@ -784,10 +741,7 @@ sub modelfit_setup
 	my $n_occasions;
 	my $total_orig_etas;
 	my $start_omega_record;
-	my %theta_parameter;
 	my $use_pred;
-	my %oldstring_to_CTVpar;
-	my @etanum_to_thetanum;
 	my $start_eta;
 	my $bsv_parameters;
 	my $bov_parameters;
@@ -797,6 +751,7 @@ sub modelfit_setup
 	my @bov_par_labels;
 	my @bov_cov_labels;
 	my $model1_updated;
+	my @CTV_parameters;
 
 	#read from done_file, do eval on string to slurp variable values
 	my $rundir;
@@ -1391,10 +1346,12 @@ sub create_data2
 			}
 		}
 	}
+	my $add_mdv=0;
 	unless (defined $evid_index or defined $mdv_index){
 		push(@filter_table_header,'MDV');
 		$mdv_index = $#filter_table_header;
 		push(@{$self->extra_input_items()},'MDV');
+		$add_mdv=1;
 	}
 	if (defined $type_index){
 		croak($fremtype." already defined in input model, not allowed.");
@@ -1415,21 +1372,50 @@ sub create_data2
 		}
 	}
 
-	foreach my $remove_rec ('abbreviated','msfi','contr','subroutine','prior','model','tol','infn','omega','pk','aesinitial','aes','des','error','pred','mix','theta','sigma','simulation','estimation','covariance','nonparametric','table','scatter'){
-		$filtered_data_model -> remove_records(type => $remove_rec);
+	my $message;
+	if ($add_mdv){
+		#cannot have dummy model, NONMEM cannot append MDV
+		foreach my $remove_rec ('simulation','covariance','table','scatter','estimation'){
+			$filtered_data_model -> remove_records(type => $remove_rec);
+		}
+		my @code;
+		@code = @{$filtered_data_model -> pk( problem_number => 1 )};
+		my $use_pred = 0;
+		unless ( $#code > 0 ) {
+			@code = @{$filtered_data_model -> pred( problem_number => 1 )};
+			$use_pred = 1;
+		}
+		if ( $#code <= 0 ) {
+			croak("Neither PK or PRED defined in model 0");
+		}
+		push(@code,$fremtype.'=0');
+		if ( $use_pred ) {
+			$filtered_data_model -> pred( problem_number => 1,
+										  new_pred       => \@code );
+		} else {
+			$filtered_data_model -> pk( problem_number => 1,
+										new_pk         => \@code );
+		}
+		
+		$message = "Running with MAXEVAL=0 to filter data and add MDV ".$fremtype." for Data set 2";
+	}else{
+		foreach my $remove_rec ('abbreviated','msfi','contr','subroutine','prior','model','tol','infn','omega','pk','aesinitial','aes','des','error','pred','mix','theta','sigma','simulation','estimation','covariance','nonparametric','table','scatter'){
+			$filtered_data_model -> remove_records(type => $remove_rec);
+		}
+		
+		$filtered_data_model -> add_records(type => 'pred',
+											record_strings => [$fremtype.'=0','Y=THETA(1)+ETA(1)+EPS(1)']);
+		
+		$filtered_data_model -> add_records(type => 'theta',
+											record_strings => ['1']);
+		$filtered_data_model -> add_records(type => 'omega',
+											record_strings => ['1']);
+		$filtered_data_model -> add_records(type => 'sigma',
+											record_strings => ['1']);
+		$message = "Running dummy model to filter data and add ".$fremtype." for Data set 2";
 	}
-
-	$filtered_data_model -> add_records(type => 'pred',
-		record_strings => [$fremtype.'=0','Y=THETA(1)+ETA(1)+EPS(1)']);
-
-	$filtered_data_model -> add_records(type => 'theta',
-		record_strings => ['1']);
-	$filtered_data_model -> add_records(type => 'omega',
-		record_strings => ['1']);
-	$filtered_data_model -> add_records(type => 'sigma',
-		record_strings => ['1']);
 	$filtered_data_model -> add_records(type => 'estimation',
-		record_strings => ['MAXEVALS=0 METHOD=ZERO']);
+										record_strings => ['MAXEVALS=0 METHOD=ZERO']);
 
 	# set $TABLE record
 
@@ -1447,7 +1433,7 @@ sub create_data2
 		top_tool       => 0,
 		clean => 2  );
 	ui -> print( category => 'all',
-		message  => "Running dummy model to filter data and add ".$fremtype." for Data set 2",
+		message  => $message,
 		newline => 1 );
 	$filter_fit -> run;
 
@@ -1476,7 +1462,7 @@ sub create_data2
 
 		#key is the factor, e.g. occasion 1. Value is the number of occurences
 		my @temp=();
-		#sort occasions ascending.
+		#sort occasions ascending 
 		foreach my $key (sort {$a <=> $b} keys (%{$factors})){
 			push(@temp,sprintf("%.12G",$key));
 		}
@@ -1581,10 +1567,14 @@ sub set_frem_records
 	if (not $vpc){
 		my @theta_strings =();
 		for (my $i=0; $i< $n_invariant; $i++){
-			push(@theta_strings,' '.sprintf("%.12G",$self->invariant_median()->[$i]).'; TV'.$self->invariant()->[$i]);
+			my $val=$self->invariant_median()->[$i];
+			$val=0.001 if ($val==0);
+			push(@theta_strings,' '.sprintf("%.12G",$val).'; TV'.$self->invariant()->[$i]);
 		}
 		for (my $i=0; $i< $n_time_varying; $i++){
-			push(@theta_strings,' '.sprintf("%.12G",$self->timevar_median()->[$i]).'; TV'.$self->time_varying()->[$i]);
+			my $val=$self->timevar_median()->[$i];
+			$val=0.001 if ($val==0);
+			push(@theta_strings,' '.sprintf("%.12G",$val).'; TV'.$self->time_varying()->[$i]);
 		}
 		$model->add_records(type => 'theta',
 							problem_numbers => [1],
@@ -1793,7 +1783,7 @@ sub set_frem_records
 	}
 
 
-    #PK/PRED changes at beginning B
+    #PK/PRED changes at beginning B: Add BOV on parameters
     if ( $n_time_varying > 0){
 		foreach my $parameter (@{$self->parameters()}){
 			my $success = 0;

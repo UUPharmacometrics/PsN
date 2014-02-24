@@ -19,7 +19,9 @@ frem run1.mod -time_varying=WT -occasion=VISI -parameters=PHI,LAG
 \end{verbatim}
 
 \section{Output}
-The m1 subdirectory of the frem run directory will contain all the generated models, lst-files for the estimated models, and dataset 2. The main run directory will contain the frem\_vpc model and dataset, if option -vpc was set.
+The main run directory will contain the frem\_vpc model and frem\_vpc dataset, if option -vpc was set.
+The m1 subdirectory of the frem run directory will contain all other generated models, 
+lst-files for the estimated models, and dataset 2 (the frem dataset). 
 
 \section{Input and options}
 A model file is required on the command-line.
@@ -62,16 +64,18 @@ Optional, default 3. The number (0, 1, 2 or 3) of the last model to estimate in 
 	\item Time-varying covariates must only vary between occasions, not within occasions. 
 	\item There must be no parameter called FREMTYPE in \$INPUT/\$PK/\$PRED/\$ERROR.
 	\item Categorical covariates must be bivariate.
-    \item All BSV ETAs that are not to get correlation with invariant covariate ETAs have ETA number < -start\_eta.
-    \item All BSV ETAs that are to get correlation with invariant covariate ETAs have ETA number >= -start\_eta.
+    \item All BSV ETAs that are not to have covariance with invariant covariate ETAs estimated must have ETA number < start\_eta.
+    \item All BSV ETAs that are to have covariance with invariant covariate ETAs estimated must have ETA number >= start\_eta.
     \item The input model code must not include covariates that are listed in 
     options -invariant or -time\_varying.
     \item The input model must not include BOV on any parameters, only BSV is allowed.
-    \item For each parameter listed with option -parameters the input model must have a line \\
-    TV$<$par$>$= expression (where expression possibly includes THETA)
-    \item For each parameter listed with option -parameters the input model must have a line \\
-    $<$par$>$=TV$<$par$>$ (BSV-expression)
-    \item If there is no BSV for a parameter listed with option -parameters, 
+    \item All model parameters (for example CL, V, KA) must be defined using \\
+    TV$<$par$>$= expression possibly based on THETA, and\\
+    $<$par$>$= expression using TV$<$par$>$ and possibly BSV ETA
+    \item For each parameter listed with option -parameters, 
+    the line defining $<$par$>$ 
+    must include a BSV-expression. Even if there is no 
+    BSV for a parameter listed with option -parameters, 
     i.e. the value is equal to the typical value, the user must still 
     include an expression with 0 in the place of the BSV eta, using the desired form (additive, proportional, exponential,..). 
     This is necessary to enable PsN to automatically add the BOV code. The 0 must be enclosed in parentheses, otherwise the 
@@ -100,12 +104,14 @@ used where possible to set suitable initial estimates in the subsequent run. If 
 run the vpc1 model using estimates from model 3 as initial estimates, and finally process output to generate a frem vpc model.
 
 \section{Practical considerations}
-It can be expected that not all models in the frem sequence minimize successfully, and that this in turns causes subsequent
-steps to fail. When this happens, the user can copy the problematic model and data from the m1 subdirectory and experiment with
+It can be expected that not all models in the frem sequence minimize successfully, and that this in turns 
+causes problems or errors in subsequent steps. 
+When this happens, the user can copy the problematic model and data from the m1 subdirectory and experiment with
 different initial estimates to get the minimization to succeed. Then the user should manually remove old output files for the
-failed run(s) from the m1 subdirectory and replace them with output from the manipulated successful run, using the same 
-output file names. It is important to keep output files for all the successful runs, otherwise PsN would rerun all models without output files
-in m1.
+failed run from the m1 subdirectory and replace them with output from the manipulated successful run, using the same 
+output file names. It is important to keep output files for all the successful runs preceeding the failed run, 
+otherwise PsN would rerun all models that do not have output files
+in m1. Output files from all steps after the manipulated step should also be removed.
 Finally the frem run should be restarted setting option -directory to the existing directory, and skipping 
 options that are not allowed when restarting a run (see information in list of options). The script
 will then use the existing output files as a starting point when continuing the analysis.
@@ -122,10 +128,9 @@ The input model, input dataset.
 \section{Dataset 2}
 Create a new data set.
 \begin{enumerate} 
-	\item Determine a name for the FREMTYPE column to be added to the input data set. 
-TODO: Error check if \$INPUT, \$PK, \$PRED or \$ERROR already contains a variable called FREMTYPE.
-	\item In input dataset: Find EVID and/or MDV columns. If neither found then stop with error message. Find DV column. Find FREMTYPE column. Find OCC column, if there are time-varying covariates listed with the time-varying option. For each invariant and time-varying covariate  determine a unique FREMTYPE value > 0. FREMTYPE=0 is reserved for original observations.
-	\item Run a dummy NONMEM model where FREMTYPE=0 to filter the original data on any IGNORE/ACCEPT and to get a new data file from \$TABLE where the column headers are the same as in \$INPUT but a FREMTYPE column is added with all zeros as values. Also add MDV if not EVID or MDV in data set. In the dummy models no columns are DROPped or SKIPped. \$TABLE NOPRINT ONEHEADER NOAPPEND.  Do not need to use RFORMAT in \$TABLE since problem with .EQ. and string matching only occurs with IGNORE/ACCEPT.
+	\item In input dataset: Find EVID and/or MDV columns. If neither found then MDV will be added. Find DV column. Find FREMTYPE column. Find OCC column, if there are time-varying covariates listed with the time-varying option. For each invariant and time-varying covariate  determine a unique FREMTYPE value > 0. FREMTYPE=0 is reserved for original observations.
+    \item Create a filter model. This is either a dummy NONMEM model or, if MDV has to be added, the original model with MAXEVAL=0 METHOD=ZERO and without \$COV. 
+	\item Run the filter model where FREMTYPE=0 to filter the original data on any IGNORE/ACCEPT and to get a new data file from \$TABLE where the column headers are the same as in \$INPUT but a FREMTYPE column is added with all zeros as values. Also add MDV if not EVID or MDV in data set. In the dummy models no columns are DROPped or SKIPped.
 \item Then loop over each individual: 
 \begin{enumerate}
 	\item Copy first observation line for individual. i.e. first line where MDV/EVID ==0. 
@@ -138,7 +143,6 @@ Store non-missing covariate values in array, one array per covariate, to be able
 variance-covariance matrix later to be used as initial estimates in \$THETA and \$OMEGA. 
 	\item Loop over each occasion (if OCC defined). 
 Copy first line observation line for this occasion. 
-Warn if multiple  covariate values within the data records of one occasion. 
 Inner loop over each time-varying covariate: 
 \begin{enumerate}
 	\item Add new line as first data set line for this occasion. 
@@ -177,11 +181,9 @@ For safety check, done if option -check is set: Estimate Data check model. OFV s
 \section{Model 1}
 This filling in of \$OMEGA is only done if there are invariant covariates listed with the -invariate option.
 
-Copy the input model and change \$OMEGA for \emph{start\_eta} to last eta from whatever form in Model 0 to a single large BLOCK. 
+Copy the input model and change \$OMEGA for start\_eta to last eta from whatever form in Model 0 to a single large BLOCK. 
 Initials that are non-zero in Model 0 are copied from there or taken from Model 0 lst-file, if present. 
-Off-diagonal elements that are new to Model 1 are set to small non-zero values that preserve strict 
-diagonal dominance.
-% OR compute ETA-covariances from estimation output phi file if available. 
+Off-diagonal elements that are new to Model 1 are set to small non-zero values.
 The large \$OMEGA block of Model 1 is called the BSV\_par block.
 
 \section{Model 2-all covariates}
@@ -190,8 +192,9 @@ For BOV the script defines a variable BOV$<$par$>$ for each parameter, and then 
 %This method is safer to implement than having switch variables for occasions that are 1 or 0 depending on the occasion, and then use a long sum of products between switch variables and ETAs. 
 
 \subsection{SETUP}
-Count number n\_theta of already present THETAS in Model 0. Count number bsv\_parameters of already present ETAs 
-(equal to dimensionality of total \$OMEGAs in Model 0) minus (\emph{start\_eta}-1). 
+Count number n\_theta of already present THETAS in Model 0. Count number bsv\_parameters, which is
+equal to already present ETAs 
+(dimensionality of total \$OMEGAs in Model 0) minus (start\_eta-1). 
 Count number of n\_eps already present (dimensionality of \$SIGMA in Model 0), set epsnum=n\_eps+1.
 Build Model 2 based on Model 1, which is only different from Model 0 if option -invariant is set (a filled BSV\_par block).
 
@@ -212,6 +215,7 @@ Then, if have time-varying covariates:
 \begin{itemize}
 \item BOV\_par\_occ1: Add one full BLOCK(bov\_parameters) where initials is: diagonal 0.01 and off-diagonals small enough to make strictly diagonally dominant
 At each line, possibly add comment with BOV$<$parameter$>$ to be used as label for ETA in PsN
+%could in filtering print individual parameters and compute variance??? Use .cov from previous step??? probably not
 \item BOV\_par\_occ2-end: Then, for each occasion that is not the first occasion add BLOCK SAME.
 \item BOV\_cov\_occ1: Add one full BLOCK(N\_time-var) where initials is variance-covariance matrix of time-varying covariates computed during creation of dataset
 At each line, possibly add comment with covariate name to be used as label for ETA in PsN
@@ -224,36 +228,40 @@ In \$SIGMA add
 \subsection{THETA changes}
 Loop over all covariates (invariant plus time-varying), j=1...N\_covtot, add lines
 \$THETA init ; TVcovname
-where init is median of covariate computed during creation of new data set. Store mapping Tvcovname – THETA(n\_theta+j). Possibly set boundaries to max and min for covariate, in that case need to find that during generation of dataset 2.
+where init is median of covariate computed during creation of new data set. If median is exactly zero set
+init to a very small positive value. 
+Store mapping TVcovname – THETA(n\_theta+j). 
+TODO: Possibly set boundaries to max and min for covariate, in that case need to find that during generation of dataset 2.
 
 \subsection{PK or PRED changes at beginning, A}
 In \$PK or \$PRED, whichever is present:
 At the very beginning (unless have FREM-ANCHOR analogue to scm- anchor) the following code: \\
-Loop over invariant covariates j=1...N\_invariant, add lines\\
-\begin{verbatim}BSV<cov> = ETA(bsv_parameters+j)
-\end{verbatim}
-Loop over parameters, initialize BOV PK (provided there are any time-varying cov)
-\begin{verbatim}BOV<parameter>=0
-\end{verbatim}
-Loop over occasions k=1...N\_occ , one IF block per occasion
-\begin{verbatim}IF (OCC .EQ. k) THEN
-\end{verbatim}
-[inner loop over parameters j=1...bov\_parameters]
-\begin{verbatim}BOV<parameter> = ETA(bsv_parameters+N_invariant+(k-1)*bov_parameters+j)
-END IF
-\end{verbatim}
-Loop over time-varying covariates, initialize BOV tcov
-\begin{verbatim}BOV<covariate>=0
-\end{verbatim}
-Loop over occasions k=1...N\_occ , one IF block per occasion
-\begin{verbatim}IF (OCC .EQ. k) THEN
-\end{verbatim}
-[inner loop over time-varying covariates j=1...N\_time-var]
-\begin{verbatim}
-BOV<covariate> = ETA(bsv_parameters+N_invariant+N_occ*Nparams+(k-1)*N_time-var+j)
-END IF
-\end{verbatim}
+Loop over invariant covariates j=1...N\_invariant, add lines
 
+\noindent BSV$<$cov$>$ = ETA(offset+j)
+
+\noindent Loop over parameters, initialize BOV PK (provided there are any time-varying cov)
+
+\noindent BOV$<$parameter$>$=0
+
+\noindent Loop over occasions k=1...N\_occ , one IF block per occasion
+
+\noindent IF (OCC .EQ. k) THEN\\
+(inner loop over parameters j=1$\ldots$bov\_parameters)\\
+BOV$<$parameter$>$ = ETA(offset+N\_invariant+(k-1)*bov\_parameters+j)\\
+END IF
+
+\noindent Loop over time-varying covariates, initialize BOV tcov
+BOV$<$covariate$>$=0
+
+\noindent Loop over occasions k=1...N\_occ , one IF block per occasion
+
+IF (OCC .EQ. k) THEN
+
+\noindent (inner loop over time-varying covariates j=1...N\_time-var)
+
+\noindent BOV<covariate> = ETA(offset+N\_invariant+N\_occ*Nparams+(k-1)*N\_time-var+j)\\
+END IF
 
 \subsection{PK or PRED changes at beginning, B}
 In \$PK or \$PRED (continuing):
@@ -303,9 +311,10 @@ Same as Model 2.
 Same as Model 2.
 
 \subsection{OMEGA changes}
-BSV\_all: One full BLOCK(bsv\_parameters+N\_invariant) where bsv\_parameters is total dimensionality of \$OMEGAs in Model 0 and N\_inv is number of invariant covariates.
+BSV\_all: One full BLOCK(bsv\_parameters+N\_invariant).
 %Initials: EITHER from eta estimates from Model 2 (from .phi-file), compute variance-covariance matrix. OR 
-Same initials as in Model 2 plus small values to fill in full block.
+Same initials as in Model 2 plus small values to fill in full block. When Model 2 is estimated
+the final estimates can be used to set initials in Model 3.
 
 Then, provided have time-varying covariates:
 BOV\_all\_occ1: Add one full BLOCK(bov\_parameters+N\_time-var) where bov\_parameters is number of parameters set with -parameters option.
@@ -325,7 +334,7 @@ In $PK or $PRED, whichever is present:
 At the very beginning (unless have FREM-ANCHOR analogue to scm- anchor) the following code: 
 Loop over invariant covariates j=1...N\_inv, add lines
 \begin{verbatim}
-BSV<cov> = ETA(bsv_parameters+j)
+BSV<cov> = ETA(offset+j)
 \end{verbatim}
 Loop over parameters, initialize BOV PK (provided there are any time-varying cov)
 \begin{verbatim}
@@ -341,11 +350,11 @@ IF (OCC .EQ. k) THEN
 \end{verbatim}
 [First inner loop, over parameters j=1...bov\_parameters]
 \begin{verbatim}
-BOV<parameter> = ETA(bsv_parameters+N_inv+(k-1)*(bov_parameters+N_variant)+j)
+BOV<parameter> = ETA(offset+N_invariant+(k-1)*(bov_parameters+N_timevar)+j)
 \end{verbatim}
 [Second inner loop (still inside IF BLOCK, but outside first inner loop), over time-varying covariates j=1...N\_variant]
 \begin{verbatim}
-BOV<covariate> = ETA(bsv_parameters+N_inv+(k-1)*(bov_parameters+N_variant)+bov_parameters+j)
+BOV<covariate> = ETA(offset+N_invariant+(k-1)*(bov_parameters+N_timevar)+bov_parameters+j)
 END IF
 \end{verbatim}
 
@@ -365,17 +374,14 @@ Create frem\_vpc1.mod
 	\item Take input model (Model 3). Update inits from estimation, if available. Afterwards FIX \$THETA and \$OMEGA. Unfix all \$SIGMA.
 	\item Set IGNORE=@ IGNORE=(FREMTYPE.GT.0)
 	\item Remove \$COV.
-	\item In \$PK or \$PRED, whichever is present: 
-Find all THETAs on right hand side where left hand is not Y$<$number$>$ or Y. Store mapping THETA number and left hand parameter name. Assume at most one THETA in right hand expression.  
-Locate ETAs with numbers start\_eta to (start\_eta-1+bsv\_parameters) 
-where bsv\_parameters is the number of BSV etas for parameters. 
-Figure out the mapping between ETAnumber and THETAnumber. The script shall handle link 
-indirectly via THETA-parameter mapping as in 
-\begin{verbatim}
-TVCL=THETA(2)
-CL=TVCL*EXP(ETA(1))
-\end{verbatim}  
-Assume no other connections than that. If not find THETA number then raise error.
+	\item In \$PK or \$PRED, whichever is present:
+Figure out which parameters that have BSV and/or BOV eta(s) on them. BOV ETAs may not have been present in Model 0, but added in Model 2. 
+Parameters may have BOV ETA without BSV eta, and vice versa. 
+First take all parameters listed with option -parameters, since they have had BOV ETAs added. Then find additional parameters, 
+if any, that have BSV ETA already in model 0.
+To do this: Find all code lines starting with TV$<$par$>=$ in Model 0. Then find the lines starting with the corresponding $<$par$>=$ and
+check if there is any ETA in the right hand side expression. If yes, then store the parameter name $<$par$>$.  
+% If not find THETA number then raise error.
 	\item Add \$TABLE with list of all undropped \$INPUT variables plus names of parameters that have BSV eta  + ONEHEADER NOAPPEND NOPRINT FILE=frem\_vpc.dta
 	\item Store sequence of headers in \$TAB to be used in \$INPUT in model frem\_vpc2.mod, but in this list prepend parameter names with CTV to separate from other params.
 	\item Run model with NM.
@@ -395,8 +401,8 @@ Create frem\_vpc2.mod
     BOV<cov>, and renumber remaining ETAs accordingly.
     \item Make the same ``PK or PRED changes at beginning, B'' as in Model 2.
 	\item Set \$INPUT to sequence of headers from step 1 (contents of table file frem\_vpc.dta but prepend CTV for params)
-	\item Use THETA-parameter and ETA-THETA mappings from Step 1 to set TV$<$par$>$ = CTV$<$par$>$ for 
-parameters that have BSV ETA on them.
+	\item Use parameter list from Step 1 to set TV$<$par$>$ = CTV$<$par$>$ for 
+parameters that have BSV ETA and/or BOV ETA on them.
 	\item Read final estimated BSV\_all omega block from lst-file and compute conditional omega block, 
     see Appendix “Compute conditional omega block” below. In \$OMEGA replace BSV\_par block with 
     conditional omega block from computation.
@@ -411,9 +417,12 @@ Now a regular vpc can be run on frem\_vpc2.mod found in the frem run directory.
 \section{Appendix: Compute conditional omega block}
 frem\_vpc\_cond\_om.R
 Input is omega block from lst-file (or csv file om\_block.csv) 
-(Detailed description TODO)
+\begin{enumerate}
+\item Make a Cholesky decomposition of omega, $\Omega=GG^T$
+\item
+\end{enumerate}
 Ok to run on block from BOV omega?
 
 
 
-\end{document}
+\end{document} 
