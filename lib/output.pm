@@ -2707,7 +2707,7 @@ sub _read_problems
 	  } elsif (/^\s*\#METH:/) {
 	      #NONMEM will print #METH also when simulation without estimation, do not count
 	      # these occurences: #METH line followed by line with 1 and nothing more
-	      unless ($lstfile[$lstfile_pos] =~ /^1$/) {
+	      unless ($lstfile[$lstfile_pos] =~ /^1\s*$/) {
 		  		$meth_counter++;
 		  		if ($lstfile[ $lstfile_pos - 2 ] =~ /^\s*\#TBLN:\s*([0-9]+)/) {
 		      	#if previous line is #TBLN then this will help us find right table in extra output

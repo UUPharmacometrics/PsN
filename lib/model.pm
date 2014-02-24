@@ -1360,6 +1360,8 @@ sub get_rawres_params
 
 	foreach (@read_file){
 	  chomp;
+	  #remove all windows line feed also if we are on unix but use a windows raw results
+	  s/\r//g;
 	  if (/\"/ ){
 	      #if any quotes at all
 	      #remove one column header at a time, check for each if enclosed in double quotes or not
@@ -4768,6 +4770,10 @@ sub _read_problems
 
 		@modelfile = <FILE>;
 		close( FILE );
+		foreach (@modelfile){
+			#remove any windows line feed if we are running a dos format file on unix 
+			s/\r//g;
+		}
 
 	}
 	my $start_index = 0;
