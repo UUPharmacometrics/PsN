@@ -29,31 +29,31 @@ my %optional_options = ( 'full_model:s' => undef,
                          'reduced_model:s' => undef,
                          'simulation_model:s' => undef,
                          'stratify_on:s' => undef,
-			 'start_size:i' => undef,
-			 'significance_level:i' => undef,
-			 'increment:i' => undef,
-			 'max_size:i' => undef,
-			 'table_full:s' => undef,
-			 'table_reduced:s' => undef,
-			 'table_strata:s' => undef,
-			 'simdata:s' => undef,
-			 'n_bootstrap:i' => undef,
-			 'df:i' => undef,
-			 'critical_ofv:f' => undef,
-			 'target_power:i' => undef,
-			 'curve!' => undef
-			 );
+						 'start_size:i' => undef,
+						 'significance_level:i' => undef,
+						 'increment:i' => undef,
+						 'max_size:i' => undef,
+						 'table_full:s' => undef,
+						 'table_reduced:s' => undef,
+						 'table_strata:s' => undef,
+						 'simdata:s' => undef,
+						 'n_bootstrap:i' => undef,
+						 'df:i' => undef,
+						 'critical_ofv:f' => undef,
+						 'target_power:i' => undef,
+						 'curve!' => undef
+	);
 
 my $res = GetOptions( \%options,
-		      @common_options::get_opt_strings,
-		      keys(%required_options),
-		      keys(%optional_options) );
+					  @common_options::get_opt_strings,
+					  keys(%required_options),
+					  keys(%optional_options) );
 exit unless $res;
 
 
 if (defined $options{'simdata'}){
-  my ($dir,$file) = OSspecific::absolute_path('', $options{'simdata'} );
-  $options{'simdata'} = $dir.$file;
+	my ($dir,$file) = OSspecific::absolute_path('', $options{'simdata'} );
+	$options{'simdata'} = $dir.$file;
 }
 
 common_options::setup( \%options, 'mcmp' ); #calls set_globals etc, initiates random sequence
@@ -261,38 +261,38 @@ if ( scalar(@ARGV) > 0 ) {
 
 my $dir= getcwd();
 if (defined $options{'table_reduced'}) {
-  if ($options{'table_reduced'} =~ /^~/){
-    die "Table filename must not start with ~.\n";
-  }
-  unless ($options{'table_reduced'} =~ /^\//  ){
-    $options{'table_reduced'} = $dir.'/'.$options{'table_reduced'};
-  }  
+	if ($options{'table_reduced'} =~ /^~/){
+		die "Table filename must not start with ~.\n";
+	}
+	unless ($options{'table_reduced'} =~ /^\//  ){
+		$options{'table_reduced'} = $dir.'/'.$options{'table_reduced'};
+	}  
 }
 if (defined $options{'table_full'}) {
-  if ($options{'table_full'} =~ /^~/){
-    die "Table filename must not start with ~.\n";
-  }
-  unless ($options{'table_full'} =~ /^\//  ){
-    $options{'table_full'} = $dir.'/'.$options{'table_full'};
-  }  
+	if ($options{'table_full'} =~ /^~/){
+		die "Table filename must not start with ~.\n";
+	}
+	unless ($options{'table_full'} =~ /^\//  ){
+		$options{'table_full'} = $dir.'/'.$options{'table_full'};
+	}  
 }
 if (defined $options{'table_strata'}){
-  if ($options{'table_strata'} =~ /^~/){
-    die "Table filename must not start with ~.\n";
-  }
-  unless ($options{'table_strata'} =~ /^\//){
-    $options{'table_strata'} = $dir.'/'.$options{'table_strata'};
-  }  
+	if ($options{'table_strata'} =~ /^~/){
+		die "Table filename must not start with ~.\n";
+	}
+	unless ($options{'table_strata'} =~ /^\//){
+		$options{'table_strata'} = $dir.'/'.$options{'table_strata'};
+	}  
 }
 
 unless ( defined $options{'skip_data_parsing'} or $options{'drop_dropped'}) {
-  $options{'skip_data_parsing'} = 1;
+	$options{'skip_data_parsing'} = 1;
 }
 
 my $eval_string = common_options::model_parameters(\%options);
 
 unless ( defined $options{'skip_data_parsing'} or $options{'drop_dropped'}) {
-  $options{'skip_data_parsing'} = 1;
+	$options{'skip_data_parsing'} = 1;
 }
 
 my $full_model;
@@ -300,15 +300,15 @@ my $reduced_model;
 my $simulation_model;
 if (defined $options{'full_model'}){
     $full_model = model -> new ( eval( $eval_string ),
-				 filename                    => $options{'full_model'},
-				 ignore_missing_output_files => 1,
-				 iofv                  => ($PsN::nm_major_version < 7));
+								 filename                    => $options{'full_model'},
+								 ignore_missing_output_files => 1,
+								 iofv                  => ($PsN::nm_major_version < 7));
 }
 if (defined $options{'reduced_model'}){
     $reduced_model = model -> new ( eval( $eval_string ),
-				    filename                    => $options{'reduced_model'},
-				    ignore_missing_output_files => 1,
-				    iofv                  => ($PsN::nm_major_version < 7));
+									filename                    => $options{'reduced_model'},
+									ignore_missing_output_files => 1,
+									iofv                  => ($PsN::nm_major_version < 7));
 }
 
 if (defined $options{'simulation_model'} or 
@@ -316,68 +316,68 @@ if (defined $options{'simulation_model'} or
     my $use_full=0;
     my $file = $options{'simulation_model'};
     unless (defined $file){
-	$file = $options{'full_model'} ;
-	$use_full =1;
+		$file = $options{'full_model'} ;
+		$use_full =1;
     }
     $simulation_model = model -> new ( eval( $eval_string ),
-				       filename                    => $file,
-				       ignore_missing_output_files => 1);
+									   filename                    => $file,
+									   ignore_missing_output_files => 1);
 
     if ($use_full){
-	foreach my $modprob (@{$simulation_model->problems()}){
-	    my $inp_ref =  $modprob -> inputs();
-	    if ( defined $inp_ref and defined $inp_ref -> [0] ) {
-		my $input = $inp_ref -> [0];
-		my $opt_ref = $input -> options;
-		if ( defined $opt_ref ) {
-		    my @options = @{$opt_ref};
-		    foreach my $option ( @options ) {
-			if  ($option -> value eq 'DROP' or $option -> value eq 'SKIP'
-			     or $option -> name eq 'DROP' or $option -> name eq 'SKIP'){
-			    die "When the full model is also used as the simulation model,\n".
-				"mcmp does not support DROP/SKIP in the full model.\n".
-				"Remove DROP/SKIP in the full model and try again.\n";
+		foreach my $modprob (@{$simulation_model->problems()}){
+			my $inp_ref =  $modprob -> inputs();
+			if ( defined $inp_ref and defined $inp_ref -> [0] ) {
+				my $input = $inp_ref -> [0];
+				my $opt_ref = $input -> options;
+				if ( defined $opt_ref ) {
+					my @options = @{$opt_ref};
+					foreach my $option ( @options ) {
+						if  ($option -> value eq 'DROP' or $option -> value eq 'SKIP'
+							 or $option -> name eq 'DROP' or $option -> name eq 'SKIP'){
+							die "When the full model is also used as the simulation model,\n".
+								"mcmp does not support DROP/SKIP in the full model.\n".
+								"Remove DROP/SKIP in the full model and try again.\n";
+						}
+					}
+				}
 			}
-		    }
 		}
-	    }
-	}
     }
 
 } else {
 	# tool class requires a model, but we do not want to give one. Use dummy
-  $simulation_model = model->create_dummy_model;
+	$simulation_model = model->create_dummy_model;
 }
 
 my $mcmp = tool::mcmp -> 
     new ( eval( $common_options::parameters ),
-	  stratify_on        => $options{'stratify_on'},
-	  increment          => $options{'increment'},
-	  start_size         => $options{'start_size'},
-	  max_size           => $options{'max_size'},
-	  target_power       => $options{'target_power'},
-	  curve              => $options{'curve'},
-	  table_full         => $options{'table_full'},
-	  table_reduced      => $options{'table_reduced'},
-	  table_strata       => $options{'table_strata'},
-	  n_bootstrap        => $options{'n_bootstrap'},
-	  df                 => $options{'df'},
-	  significance_level => $options{'significance_level'},
-	  critical_ofv       => $options{'critical_ofv'},
-	  simdata            => $options{'simdata'},
-	  full_model => $full_model,
-		reduced_model => $reduced_model,
-	  models => [$simulation_model]
-	  );
+		  stratify_on        => $options{'stratify_on'},
+		  increment          => $options{'increment'},
+		  start_size         => $options{'start_size'},
+		  max_size           => $options{'max_size'},
+		  target_power       => $options{'target_power'},
+		  curve              => $options{'curve'},
+		  table_full         => $options{'table_full'},
+		  table_reduced      => $options{'table_reduced'},
+		  table_strata       => $options{'table_strata'},
+		  n_bootstrap        => $options{'n_bootstrap'},
+		  df                 => $options{'df'},
+		  significance_level => $options{'significance_level'},
+		  critical_ofv       => $options{'critical_ofv'},
+		  simdata            => $options{'simdata'},
+		  full_model => $full_model,
+		  reduced_model => $reduced_model,
+		  models => [$simulation_model]
+	);
 
 
 $mcmp-> print_options (cmd_line => $cmd_line,
-		      toolname => 'MCMP',
-		      local_options => [keys %optional_options],
-		      common_options => \@common_options::tool_options);
+					   toolname => 'MCMP',
+					   local_options => [keys %optional_options],
+					   common_options => \@common_options::tool_options);
 
 $mcmp -> run;
 $mcmp -> print_results;
 
 ui -> print( category => 'mcmp',
-	     message  => "mcmp done.\n");
+			 message  => "mcmp done.\n");

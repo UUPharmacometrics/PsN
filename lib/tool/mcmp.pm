@@ -47,103 +47,103 @@ sub BUILD
 {
 	my $this  = shift;
 
-  if (defined $this->table_full){
-    unless ( -e $this->table_full ){
-      croak("Full model table file ".$this->table_full." could not be found.");
-    }
-    if (defined $this -> full_model){
-      croak("Ambigous input. Cannot define both -table_full and -full_model");
-    }
-  }elsif (not (defined $this -> full_model)){
-    croak("Either -table_full or -full_model must be defined");
-  }
+	if (defined $this->table_full){
+		unless ( -e $this->table_full ){
+			croak("Full model table file ".$this->table_full." could not be found.");
+		}
+		if (defined $this -> full_model){
+			croak("Ambigous input. Cannot define both -table_full and -full_model");
+		}
+	}elsif (not (defined $this -> full_model)){
+		croak("Either -table_full or -full_model must be defined");
+	}
 
-  croak("target_power cannot exceed 100%") if
-      ($this->target_power > 100);
+	croak("target_power cannot exceed 100%") if
+		($this->target_power > 100);
 
-  if (defined $this->simdata){
-    croak("Option simdata set to ".$this->simdata.
-	       " but file does not exist.\n") unless (-e $this->simdata);
-    croak("Cannot set both option -simulation_model and ".
-	       "option -simdata in the same run")
-	unless ($this -> models -> [0]->filename() eq 'dummy_for_mcmp');
-  }
+	if (defined $this->simdata){
+		croak("Option simdata set to ".$this->simdata.
+			  " but file does not exist.\n") unless (-e $this->simdata);
+		croak("Cannot set both option -simulation_model and ".
+			  "option -simdata in the same run")
+			unless ($this -> models -> [0]->filename() eq 'dummy');
+	}
 
-  if (defined $this->table_reduced){
-    unless ( -e $this->table_reduced ){
-      croak("Reduced model table file ".$this->table_reduced." could not be found.");
-    }
-    if (defined $this -> reduced_model){
-      croak("Ambigous input. Cannot define both -table_reduced and -reduced_model");
-    }
-  }elsif (not (defined $this -> reduced_model)){
-    croak("Either -table_reduced or -reduced_model must be defined");
-  }
+	if (defined $this->table_reduced){
+		unless ( -e $this->table_reduced ){
+			croak("Reduced model table file ".$this->table_reduced." could not be found.");
+		}
+		if (defined $this -> reduced_model){
+			croak("Ambigous input. Cannot define both -table_reduced and -reduced_model");
+		}
+	}elsif (not (defined $this -> reduced_model)){
+		croak("Either -table_reduced or -reduced_model must be defined");
+	}
 
-  if (defined $this->table_strata){
-    unless ( -e $this->table_strata ){
-      croak("Strata table file ".$this->table_strata." could not be found.");
-    }
-  }elsif (not (defined $this -> reduced_model or defined $this->full_model)){
-    croak("When -table_strata is not defined, either -full_model or -reduced_model must be defined") if (defined $this->stratify_on);
-  }
+	if (defined $this->table_strata){
+		unless ( -e $this->table_strata ){
+			croak("Strata table file ".$this->table_strata." could not be found.");
+		}
+	}elsif (not (defined $this -> reduced_model or defined $this->full_model)){
+		croak("When -table_strata is not defined, either -full_model or -reduced_model must be defined") if (defined $this->stratify_on);
+	}
 
-  if ($this->df < 1){
-    croak("option -df, degrees of freedom, cannot be less than 1");
-  }
+	if ($this->df < 1){
+		croak("option -df, degrees of freedom, cannot be less than 1");
+	}
 
-  unless ($this->algorithm > 0 and $this->algorithm < 3){
-    croak("option -algorithm must be 1 or 2");
-  }
+	unless ($this->algorithm > 0 and $this->algorithm < 3){
+		croak("option -algorithm must be 1 or 2");
+	}
 
-  if (defined $this->critical_ofv){
-    if  ($this->df >1){
-      ui -> print (category=>'mcmp', 
-		   message=>"Warning: When option -critical_ofv is used, option -df is ignored");
-    }
-    if  ($this->significance_level != 5){
-      ui -> print (category=>'mcmp', 
-		   message=>"Warning: When option -critical_ofv is used, option -significance_level is ignored");
-    }
-  }else{
-    if  (not ($this->significance_level == 5
-	      or $this->significance_level == 1
-	      or $this->significance_level == 0.1)){
-      croak("option -significance_level must be either 5, 1 or 0.1");
-    }
-  }
+	if (defined $this->critical_ofv){
+		if  ($this->df >1){
+			ui -> print (category=>'mcmp', 
+						 message=>"Warning: When option -critical_ofv is used, option -df is ignored");
+		}
+		if  ($this->significance_level != 5){
+			ui -> print (category=>'mcmp', 
+						 message=>"Warning: When option -critical_ofv is used, option -significance_level is ignored");
+		}
+	}else{
+		if  (not ($this->significance_level == 5
+				  or $this->significance_level == 1
+				  or $this->significance_level == 0.1)){
+			croak("option -significance_level must be either 5, 1 or 0.1");
+		}
+	}
 
-  if ($this->n_bootstrap < 1){
-    croak("option -n_bootstrap cannot be less than 1");
-  }
+	if ($this->n_bootstrap < 1){
+		croak("option -n_bootstrap cannot be less than 1");
+	}
 
-  if ((defined $this->increment) and  $this->increment < 1){
-    croak("option -increment cannot be smaller than 1.");
-  }
-  if ((defined $this->start_size) and  $this->start_size < 1){
-    croak("option -start_size cannot be smaller than 1.");
-  }
+	if ((defined $this->increment) and  $this->increment < 1){
+		croak("option -increment cannot be smaller than 1.");
+	}
+	if ((defined $this->start_size) and  $this->start_size < 1){
+		croak("option -start_size cannot be smaller than 1.");
+	}
 
-  if (defined $this->max_size){
-    if (defined $this->start_size){
-      croak("option -start_size cannot be larger than -max_size") if
-	  ($this->start_size > $this->max_size);
-    }elsif ((defined $this->increment) and  $this->increment > $this->max_size){ 
-      croak("option -increment cannot be larger than -max_size");
-    }
-  }
-  if (defined $this->stratify_on and ($PsN::nm_major_version < 7)){
-    croak("Unless NONMEM7 is used, -stratify_on must be at most 4 characters")
-	if (length($this->stratify_on)>4);
-  }
+	if (defined $this->max_size){
+		if (defined $this->start_size){
+			croak("option -start_size cannot be larger than -max_size") if
+				($this->start_size > $this->max_size);
+		}elsif ((defined $this->increment) and  $this->increment > $this->max_size){ 
+			croak("option -increment cannot be larger than -max_size");
+		}
+	}
+	if (defined $this->stratify_on and ($PsN::nm_major_version < 7)){
+		croak("Unless NONMEM7 is used, -stratify_on must be at most 4 characters")
+			if (length($this->stratify_on)>4);
+	}
 }
 
 sub modelfit_setup
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		model_number => { isa => 'Int', optional => 1 }
-	);
+							  model_number => { isa => 'Int', optional => 1 }
+		);
 	my $model_number = $parm{'model_number'};
 
 	if (defined $self->critical_ofv()){
@@ -196,7 +196,7 @@ sub modelfit_setup
 		$df_table{90}=[(113.15,124.116,137.208)];
 		$df_table{100}=[(124.34,135.807,149.449)];
 		croak("No internal value for critical ofv at ".$self->df().
-			" degrees of freedom") unless (defined $df_table{$self->df()});
+			  " degrees of freedom") unless (defined $df_table{$self->df()});
 		$self->critical_array($df_table{$self->df()});
 
 		if ($self->significance_level() == 5){
@@ -221,12 +221,12 @@ sub modelfit_setup
 	my $time_in_input=0;
 	my $datx_in_input=0;
 	my @table_header=();
-	unless ($self -> models -> [0]->filename() eq 'dummy_for_mcmp'){
+	unless ($self -> models -> [0]->filename() eq 'dummy'){
 		my $sim_model = $self -> models -> [0] ->
-		copy( filename    => $self -> directory.'m1/simulation.mod',
-			target      => 'disk',
-			copy_data   => 1,
-			copy_output => 0);
+			copy( filename    => $self -> directory.'m1/simulation.mod',
+				  target      => 'disk',
+				  copy_data   => 1,
+				  copy_output => 0);
 		$sim_model -> drop_dropped unless $sim_model->skip_data_parsing();
 
 		if ($sim_model-> is_option_set(record=>'input',name=>'TIME')){
@@ -244,36 +244,36 @@ sub modelfit_setup
 		#set IGNORE=@ since datafile will
 		#get a header during copying. Keep IGNORE=LIST
 		my $sim_ignorelist = $sim_model -> get_option_value( record_name  => 'data',
-			problem_index => 0,
-			option_name  => 'IGNORE',
-			option_index => 'all');
+															 problem_index => 0,
+															 option_name  => 'IGNORE',
+															 option_index => 'all');
 		$sim_model -> remove_option( record_name  => 'data',
-			problem_numbers => [(1)],
-			option_name  => 'IGNORE',
-			fuzzy_match => 1);
+									 problem_numbers => [(1)],
+									 option_name  => 'IGNORE',
+									 fuzzy_match => 1);
 
 		if ((defined $sim_ignorelist) and scalar (@{$sim_ignorelist})>0){
 			foreach my $val (@{$sim_ignorelist}){
 				unless (length($val)==1){
 					#unless single character ignore, cannot keep that since need @
 					$sim_model -> add_option( record_name  => 'data',
-						problem_numbers => [(1)],
-						option_name  => 'IGNORE',
-						option_value => $val);
+											  problem_numbers => [(1)],
+											  option_name  => 'IGNORE',
+											  option_value => $val);
 				}
 			}
 		}
 		$sim_model -> add_option( record_name  => 'data',
-			problem_numbers => [(1)],
-			option_name  => 'IGNORE',
-			option_value => '@');
+								  problem_numbers => [(1)],
+								  option_name  => 'IGNORE',
+								  option_value => '@');
 
 		my $prob = $sim_model -> problems -> [0];
 
 		# set $SIMULATION record
 
 		my $sim_record = $sim_model -> record( problem_number => 1,
-			record_name => 'simulation' );
+											   record_name => 'simulation' );
 
 		if( scalar(@{$sim_record}) > 0 ){
 			my @new_record;
@@ -299,37 +299,37 @@ sub modelfit_setup
 			}
 
 			$prob -> set_records( type => 'simulation',
-				record_strings => \@new_record );
+								  record_strings => \@new_record );
 		} else {
 
 			my $seed = random_uniform_integer( 1, 0, 1000000 ); # Upper limit is from nmhelp
 			$prob -> set_records( type           => 'simulation',
-				record_strings => [ '(' . $seed .
-					') ONLYSIMULATION' ] );
+								  record_strings => [ '(' . $seed .
+													  ') ONLYSIMULATION' ] );
 		}
 
 		if( $sim_model -> is_option_set( problem_number => 1,record => 'estimation',
-				name => 'LIKELIHOOD',fuzzy_match => 1 )
-				or
+										 name => 'LIKELIHOOD',fuzzy_match => 1 )
+			or
 			$sim_model -> is_option_set( problem_number => 1,record => 'estimation',
-				name => '-2LOGLIKELIHOOD',fuzzy_match => 1 )
-				or
+										 name => '-2LOGLIKELIHOOD',fuzzy_match => 1 )
+			or
 			$sim_model -> is_option_set( problem_number => 1, record => 'estimation',
-				name => '-2LLIKELIHOOD',fuzzy_match => 1 )
-				or
+										 name => '-2LLIKELIHOOD',fuzzy_match => 1 )
+			or
 			$sim_model -> is_option_set( problem_number => 1, record => 'estimation',
-				name => 'LAPLACIAN',fuzzy_match => 1 )
-		){
+										 name => 'LAPLACIAN',fuzzy_match => 1 )
+			){
 			#set_nopred_onlysim
 			unless ($sim_model -> is_option_set( problem_number => 1,record => 'simulation',
-					name => 'NOPREDICTION',fuzzy_match => 1 )){
+												 name => 'NOPREDICTION',fuzzy_match => 1 )){
 				$sim_model -> set_option(record_name => 'simulation',
-					option_name => 'NOPRED');
+										 option_name => 'NOPRED');
 			}
 			unless ($sim_model -> is_option_set( problem_number => 1,record => 'simulation',
-					name => 'ONLYSIMULATION',fuzzy_match => 1 )){
+												 name => 'ONLYSIMULATION',fuzzy_match => 1 )){
 				$sim_model -> set_option(record_name => 'simulation',
-					option_name => 'ONLYSIM');
+										 option_name => 'ONLYSIM');
 			}
 		}
 
@@ -347,43 +347,43 @@ sub modelfit_setup
 		if( defined $prob -> inputs and defined $prob -> inputs -> [0] -> options ) {
 			foreach my $option ( @{$prob -> inputs -> [0] -> options} ) {
 				push( @table_header, $option -> name ) unless 
-				(($option -> value eq 'DROP' or $option -> value eq 'SKIP'
-							or $option -> name eq 'DROP' or $option -> name eq 'SKIP') ||
-					($option -> name =~ /DAT(E|1|2|3)/) ||
-					((not $time_in_input) && ($option -> name =~ /TIME/)));
+					(($option -> value eq 'DROP' or $option -> value eq 'SKIP'
+					  or $option -> name eq 'DROP' or $option -> name eq 'SKIP') ||
+					 ($option -> name =~ /DAT(E|1|2|3)/) ||
+					 ((not $time_in_input) && ($option -> name =~ /TIME/)));
 			}
 			if ((not $time_in_input) && ($datx_in_input )){
 				push( @table_header, 'TIME');
 			}
 		} else {
 			croak("Trying to construct table for monte-carlo simulation".
-				" but no headers were found in \$model_number-INPUT" );
+				  " but no headers were found in \$model_number-INPUT" );
 		}
 
 		$simulated_file = "mcmp-sim.dat";
 		$prob -> set_records( type           => 'table',
-			record_strings => [ join( ' ', @table_header ).
-				' NOPRINT NOAPPEND ONEHEADER FILE='.
-				$simulated_file ] );
+							  record_strings => [ join( ' ', @table_header ).
+												  ' NOPRINT NOAPPEND ONEHEADER FILE='.
+												  $simulated_file ] );
 		$sim_model -> _write( write_data => 1 );
 		my $mod_sim = tool::modelfit -> new( %{common_options::restore_options(@common_options::tool_options)},
-			top_tool         => 0,
-			models           => [$sim_model],
-			base_directory   => $self -> directory,
-			directory        => $self -> directory.
-			'simulation_dir'.$model_number, 
-			retries          => 1,
-			logfile	         => undef,
-			raw_results           => undef,
-			prepared_models       => undef,
-			threads          => 1,
-			data_path =>'../../m1/');
+											 top_tool         => 0,
+											 models           => [$sim_model],
+											 base_directory   => $self -> directory,
+											 directory        => $self -> directory.
+											 'simulation_dir'.$model_number, 
+											 retries          => 1,
+											 logfile	         => undef,
+											 raw_results           => undef,
+											 prepared_models       => undef,
+											 threads          => 1,
+											 data_path =>'../../m1/');
 		ui -> print (category=>'mcmp', message=> "Simulating data:");
 		$mod_sim -> run;
 		unless (-e $self -> directory.'m1/'."$simulated_file"){
 			croak("It appears the simulation part of mcmp failed.".
-				" (The file ".$self -> directory.'m1/'."$simulated_file"." is missing.)".
-				" Check the raw_results file in ".$self -> directory.".");
+				  " (The file ".$self -> directory.'m1/'."$simulated_file"." is missing.)".
+				  " Check the raw_results file in ".$self -> directory.".");
 		}
 
 	}
@@ -394,8 +394,8 @@ sub modelfit_setup
 	if (defined $self->stratify_on() and (not defined $self->table_strata())){
 		$self->table_strata('strata.tab');
 		@table_strings = ('ID',$self->stratify_on(),'FIRSTONLY','NOAPPEND',
-			'ONEHEADER','NOPRINT',
-			'FILE='.$self->table_strata());
+						  'ONEHEADER','NOPRINT',
+						  'FILE='.$self->table_strata());
 	}
 	#reduced model
 	if (defined $self->reduced_model()){
@@ -407,7 +407,7 @@ sub modelfit_setup
 		my @extra_output=();
 		if (scalar(@table_strings)>0){
 			$self->reduced_model() -> add_records(type => 'table',
-				record_strings => \@table_strings);
+												  record_strings => \@table_strings);
 			push(@extra_output,$self->table_strata());
 		}
 		$self->table_strata($self -> reduced_model()->directory().'reduced.'.$self->table_strata());
@@ -429,7 +429,7 @@ sub modelfit_setup
 		my @extra_output=();
 		if ((scalar(@table_strings)>0) and not (defined $self->reduced_model())){
 			$self->full_model()-> add_records(type => 'table',
-				record_strings => \@table_strings);
+											  record_strings => \@table_strings);
 			push(@extra_output,$self->table_strata());
 			$self->table_strata($self -> full_model()->directory().'full.'.$self->table_strata());
 		}
@@ -448,49 +448,49 @@ sub modelfit_setup
 			#remove any DATX in $INPUT (drop_dropped does not)
 			foreach my $col ('DATE','DAT1','DAT2','DAT3'){
 				$mod -> remove_option(record_name => 'input',
-					problem_numbers => [(1)],
-					option_name => $col);
+									  problem_numbers => [(1)],
+									  option_name => $col);
 			}
 			#if added time then remove TIME (if present) and then add TIME (must be last in list)
 			if ((not $time_in_input) && ($datx_in_input)){
 				$mod -> remove_option(record_name => 'input',
-					problem_numbers => [(1)],
-					option_name => 'TIME');
+									  problem_numbers => [(1)],
+									  option_name => 'TIME');
 				$mod -> set_option(record_name => 'input',
-					problem_numbers => [(1)],
-					option_name => 'TIME');
+								   problem_numbers => [(1)],
+								   option_name => 'TIME');
 			}
 
 			$mod -> remove_records(problem_numbers => [(1)],
-				type => 'simulation' );
+								   type => 'simulation' );
 
 			#ignore @ since simdata contains header rows. 
 			#keep old ignores. It is up to the user to make sure datasets are comparable
 
 			my $ignorelist = $mod -> get_option_value( record_name  => 'data',
-				problem_index => 0,
-				option_name  => 'IGNORE',
-				option_index => 'all');
+													   problem_index => 0,
+													   option_name  => 'IGNORE',
+													   option_index => 'all');
 			$mod -> remove_option( record_name  => 'data',
-				problem_numbers => [(1)],
-				option_name  => 'IGNORE',
-				fuzzy_match => 1);
+								   problem_numbers => [(1)],
+								   option_name  => 'IGNORE',
+								   fuzzy_match => 1);
 
 			if (scalar (@{$ignorelist})>0){
 				foreach my $val (@{$ignorelist}){
 					unless ($val =~ /^.$/){
 						#unless single character ignore, cannot keep that since need @
 						$mod -> add_option( record_name  => 'data',
-							problem_numbers => [(1)],
-							option_name  => 'IGNORE',
-							option_value => $val);
+											problem_numbers => [(1)],
+											option_name  => 'IGNORE',
+											option_value => $val);
 					}
 				}
 			}
 			$mod -> add_option( record_name  => 'data',
-				problem_numbers => [(1)],
-				option_name  => 'IGNORE',
-				option_value => '@');
+								problem_numbers => [(1)],
+								option_name  => 'IGNORE',
+								option_value => '@');
 			##done fixing ignore
 			$mod->ignore_missing_files(1);
 			my $sim_file;
@@ -498,7 +498,7 @@ sub modelfit_setup
 				#simdata has global path, fixed in mcmp
 				my $dirt;
 				($dirt, $simulated_file) =
-				OSspecific::absolute_path('', $self -> simdata() );
+					OSspecific::absolute_path('', $self -> simdata() );
 				cp($self -> simdata(),$self -> directory.'m1/'.$simulated_file);
 			}
 			$sim_file= $self -> directory.'m1/'.$simulated_file;
@@ -515,19 +515,19 @@ sub modelfit_setup
 
 	$self->tools([]) unless (defined $self->tools);
 	push( @{$self -> tools},
-		tool::modelfit ->
-		new( %{common_options::restore_options(@common_options::tool_options)},
-			base_directory	 => $self -> directory,
-			directory		 => $self -> directory.
-			'/modelfit_dir'.$model_number,
-			models		 => \@estimate_models,
-			parent_threads        => 1,
-			raw_results           => undef,
-			prepared_models       => undef,
-			top_tool              => 0,
-			prepend_model_file_name => 1,
-			data_path =>'../../m'.$model_number.'/',
-		) );
+		  tool::modelfit ->
+		  new( %{common_options::restore_options(@common_options::tool_options)},
+			   base_directory	 => $self -> directory,
+			   directory		 => $self -> directory.
+			   '/modelfit_dir'.$model_number,
+			   models		 => \@estimate_models,
+			   parent_threads        => 1,
+			   raw_results           => undef,
+			   prepared_models       => undef,
+			   top_tool              => 0,
+			   prepend_model_file_name => 1,
+			   data_path =>'../../m'.$model_number.'/',
+		  ) );
 	ui -> print (category=>'mcmp', message=> "\nEstimating:");
 }
 
@@ -535,8 +535,8 @@ sub modelfit_analyze
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		model_number => { isa => 'Num', optional => 1 }
-	);
+							  model_number => { isa => 'Num', optional => 1 }
+		);
 	my $model_number = $parm{'model_number'};
 
 	$self -> read_data(); #creates $self variables
@@ -558,9 +558,9 @@ sub modelfit_analyze
 	}
 	if ($self->increment() < $n_strata){
 		print "\nWarning\nThe option increment (".$self->increment().") is set smaller than the number ".
-		"of strata ($n_strata),\n".
-		"which does not make sense according to the intended use of this option (see the userguide).\n".
-		"The results will be correct but the computations may be inefficient.\n\n";
+			"of strata ($n_strata),\n".
+			"which does not make sense according to the intended use of this option (see the userguide).\n".
+			"The results will be correct but the computations may be inefficient.\n\n";
 		sleep(2);
 	}
 
@@ -607,11 +607,11 @@ sub modelfit_analyze
 			$goal_total_samples = ($self->start_size()+$step_index*$self->increment());
 			$step_index++;
 			$converged = 1 if (($self->start_size()+$step_index*$self->increment()) 
-				> $self->max_size()); #do not go beyond max_size regardless of results
+							   > $self->max_size()); #do not go beyond max_size regardless of results
 		}else{
 			#get next total samples by secant method
 			$goal_total_samples= $self->get_total_samples('last_N' => \@last_N,
-				'last_Y' => \@last_Y);
+														  'last_Y' => \@last_Y);
 			last if ($goal_total_samples < 1); #error code
 		}
 
@@ -625,7 +625,7 @@ sub modelfit_analyze
 
 			foreach my $strata (0 .. ($n_strata-1)){
 				my $strata_samples= 
-				$self->round(number=>($goal_total_samples*$strata_size{$strata}/$self->n_individuals));
+					$self->round(number=>($goal_total_samples*$strata_size{$strata}/$self->n_individuals));
 				$strata_N[$strata] = $strata_samples;
 				$total_samples +=$strata_samples;
 				foreach (1 .. $strata_samples){
@@ -654,7 +654,7 @@ sub modelfit_analyze
 			#algorithm 2
 			foreach my $str (0 .. ($n_strata-1)){
 				my $strata_samples= 
-				$self->round(number=>($goal_total_samples*$strata_size{$str}/$self->n_individuals));
+					$self->round(number=>($goal_total_samples*$strata_size{$str}/$self->n_individuals));
 				$strata_N[$str] = $strata_samples;
 				$total_samples +=$strata_samples;
 			}
@@ -703,7 +703,7 @@ sub modelfit_analyze
 		$last_N[0]=$total_samples;
 		if ($self->curve()){
 			if ( ($row[$self->significance_index+1] > $self->target_power())
-					or ($row[$self->significance_index+1] >= 100 )){
+				 or ($row[$self->significance_index+1] >= 100 )){
 				$n_consecutive++;
 			}else{
 				$n_consecutive=0;
@@ -728,10 +728,10 @@ sub modelfit_analyze
 			if ( abs($best{'N_above'}-$best{'N_below'}) < 1.5*$self->increment()){
 				$converged =1;
 				print "Convergence achieved.\nTarget power ".$self->target_power()."% is obtained for a total ".
-				"sample size between ".$best{'N_below'}." (power ".
-				(sprintf "%5.1f",$best{'Y_below'}*100)."%) and ".
-				$best{'N_above'}." (power ".
-				(sprintf "%5.1f",$best{'Y_above'}*100)."%).\n";
+					"sample size between ".$best{'N_below'}." (power ".
+					(sprintf "%5.1f",$best{'Y_below'}*100)."%) and ".
+					$best{'N_above'}." (power ".
+					(sprintf "%5.1f",$best{'Y_above'}*100)."%).\n";
 			}
 		} #end convergence test no curve
 
@@ -746,18 +746,18 @@ sub round
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 number => { isa => 'Num', optional => 0 }
-	);
+							  number => { isa => 'Num', optional => 0 }
+		);
 	my $number = $parm{'number'};
 	my $integer_out;
 
-  my $floor=int($number);
-  my $rem=$number-$floor;
-  if ($rem >= 0){
-    $integer_out = ($rem >= 0.5)? $floor+1 : $floor;
-  } else {
-    $integer_out = (abs($rem) >= 0.5)? $floor-1 : $floor;
-  }
+	my $floor=int($number);
+	my $rem=$number-$floor;
+	if ($rem >= 0){
+		$integer_out = ($rem >= 0.5)? $floor+1 : $floor;
+	} else {
+		$integer_out = (abs($rem) >= 0.5)? $floor-1 : $floor;
+	}
 
 	return $integer_out;
 }
@@ -766,19 +766,19 @@ sub ceil
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 number => { isa => 'Num', optional => 0 }
-	);
+							  number => { isa => 'Num', optional => 0 }
+		);
 	my $number = $parm{'number'};
 	my $integer_out;
 
-  my $floor=int($number);
-  my $rem=$number-$floor;
-  if ($rem > 0){
-    $integer_out = $floor+1;
-  } else {
-    #equal or  neg
-    $integer_out = $floor;
-  } 
+	my $floor=int($number);
+	my $rem=$number-$floor;
+	if ($rem > 0){
+		$integer_out = $floor+1;
+	} else {
+		#equal or  neg
+		$integer_out = $floor;
+	} 
 
 	return $integer_out;
 }
@@ -787,8 +787,8 @@ sub median
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 sorted_array => { isa => 'Ref', optional => 1 }
-	);
+							  sorted_array => { isa => 'Ref', optional => 1 }
+		);
 	my $sorted_array = $parm{'sorted_array'};
 	my $result;
 
@@ -799,45 +799,45 @@ sub get_total_samples
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 last_N => { isa => 'Ref', optional => 1 },
-		 last_Y => { isa => 'Ref', optional => 1 }
-	);
+							  last_N => { isa => 'Ref', optional => 1 },
+							  last_Y => { isa => 'Ref', optional => 1 }
+		);
 	my $last_N = $parm{'last_N'};
 	my $last_Y = $parm{'last_Y'};
 	my $total_samples;
 
-  if ($last_N->[0] == 0){ #most recent step
-    #this is the first iteration
-    $total_samples = $self->ceil(number=> (10/$self->increment()))*$self->increment();
-    $self->rounding(1);
-  }elsif ($last_N->[1] == 0){ #step before most recent
-    #this is the second iteration
-    #second (y range 0 to 1) from y2=exp(-a/N2), a=-ln(y1)*N1, 
-    #N2=-a/ln(power_goal)=ln(y1)*N1/ln(power_goal), roudn to multiple of increment 
-    #If larger than max_size then warn and reduce to 50 rounded up to mult increment
-    die "Y out of range" unless ($last_Y->[0] > 0 and $last_Y->[0]<=1);
-    my $N=log($last_Y->[0])*$last_N->[0]/log($self->target_power()/100);
-    $total_samples = int($N/$self->increment())*$self->increment(); #round down
-    $total_samples = int(50/$self->increment())*$self->increment() 
-	if ($total_samples > $self->max_size());
-    $self->rounding(-1*$self->rounding);      
-  }else{
-    #standard iteration
-    return -1 unless ($last_Y->[0] > 0 and $last_Y->[0]<=1);
-    return -1 unless ($last_Y->[1] > 0 and $last_Y->[1]<=1);
-    return -1 if ($last_Y->[0] == $last_Y->[1]);
-    my $N=$last_N->[0]+(($self->target_power()/100)-$last_Y->[0])*($last_N->[0]-$last_N->[1])/($last_Y->[0]-$last_Y->[1]);
-    $total_samples = $self->ceil(number=> ($N/$self->increment()))*$self->increment();
-    $self->rounding(-1*$self->rounding);      
-  }
-  $self->rounding(1) if($total_samples <= $self->increment());
+	if ($last_N->[0] == 0){ #most recent step
+		#this is the first iteration
+		$total_samples = $self->ceil(number=> (10/$self->increment()))*$self->increment();
+		$self->rounding(1);
+	}elsif ($last_N->[1] == 0){ #step before most recent
+		#this is the second iteration
+		#second (y range 0 to 1) from y2=exp(-a/N2), a=-ln(y1)*N1, 
+		#N2=-a/ln(power_goal)=ln(y1)*N1/ln(power_goal), roudn to multiple of increment 
+		#If larger than max_size then warn and reduce to 50 rounded up to mult increment
+		die "Y out of range" unless ($last_Y->[0] > 0 and $last_Y->[0]<=1);
+		my $N=log($last_Y->[0])*$last_N->[0]/log($self->target_power()/100);
+		$total_samples = int($N/$self->increment())*$self->increment(); #round down
+		$total_samples = int(50/$self->increment())*$self->increment() 
+			if ($total_samples > $self->max_size());
+		$self->rounding(-1*$self->rounding);      
+	}else{
+		#standard iteration
+		return -1 unless ($last_Y->[0] > 0 and $last_Y->[0]<=1);
+		return -1 unless ($last_Y->[1] > 0 and $last_Y->[1]<=1);
+		return -1 if ($last_Y->[0] == $last_Y->[1]);
+		my $N=$last_N->[0]+(($self->target_power()/100)-$last_Y->[0])*($last_N->[0]-$last_N->[1])/($last_Y->[0]-$last_Y->[1]);
+		$total_samples = $self->ceil(number=> ($N/$self->increment()))*$self->increment();
+		$self->rounding(-1*$self->rounding);      
+	}
+	$self->rounding(1) if($total_samples <= $self->increment());
 
-  while (defined $self->samples_hash->{$total_samples} or ($total_samples < $self->increment())){
-    $total_samples += ($self->rounding)*$self->increment();
-    $self->rounding(1) if ($total_samples <= 0);
-    $self->rounding(-1) if ($total_samples > $self->max_size());
-  }
-  $self->samples_hash->{$total_samples}=1;
+	while (defined $self->samples_hash->{$total_samples} or ($total_samples < $self->increment())){
+		$total_samples += ($self->rounding)*$self->increment();
+		$self->rounding(1) if ($total_samples <= 0);
+		$self->rounding(-1) if ($total_samples > $self->max_size());
+	}
+	$self->samples_hash->{$total_samples}=1;
     
 	return $total_samples;
 }
@@ -846,154 +846,154 @@ sub read_data
 {
 	my $self = shift;
 
-  my ($full_file,$reduced_file);
-  my @strata;
-  my $n_individuals;
-  my $n_strata=1;
-  my %index_to_strata_hash;
-  my %strata_to_index_hash;
+	my ($full_file,$reduced_file);
+	my @strata;
+	my $n_individuals;
+	my $n_strata=1;
+	my %index_to_strata_hash;
+	my %strata_to_index_hash;
 
-  if (defined $self->table_full()){
-    $full_file = $self->table_full();
-  } else {
-    if ($PsN::nm_major_version < 7){
-      $full_file = $self->full_model()->directory().'full.iotab1';
-    }else{
-      $full_file = $self->full_model()->directory().'full.phi';
-    }
-  }
-  unless ( -e $full_file ){
-    croak("File $full_file \nwith iofv output for full model does not exist.");
-  }
+	if (defined $self->table_full()){
+		$full_file = $self->table_full();
+	} else {
+		if ($PsN::nm_major_version < 7){
+			$full_file = $self->full_model()->directory().'full.iotab1';
+		}else{
+			$full_file = $self->full_model()->directory().'full.phi';
+		}
+	}
+	unless ( -e $full_file ){
+		croak("File $full_file \nwith iofv output for full model does not exist.");
+	}
     
-  if (defined $self->table_reduced()){
-    $reduced_file = $self->table_reduced();
-  } else {
-    if ($PsN::nm_major_version < 7){
-      $reduced_file = $self->reduced_model()->directory().'reduced.iotab1';
-    }else{
-      $reduced_file = $self->reduced_model()->directory().'reduced.phi';
-    }
-  }
+	if (defined $self->table_reduced()){
+		$reduced_file = $self->table_reduced();
+	} else {
+		if ($PsN::nm_major_version < 7){
+			$reduced_file = $self->reduced_model()->directory().'reduced.iotab1';
+		}else{
+			$reduced_file = $self->reduced_model()->directory().'reduced.phi';
+		}
+	}
 
-  unless ( -e $reduced_file ){
-    croak("File $reduced_file \nwith iofv output for reduced model does not exist.");
-  }
+	unless ( -e $reduced_file ){
+		croak("File $reduced_file \nwith iofv output for reduced model does not exist.");
+	}
     
-  if (defined $self->stratify_on()){
-    unless ( -e $self->table_strata() ){
-      croak("File ".$self->table_strata().
-		   " \nwith stratification data does not exist.");
-    }
-    my $d = data -> new(filename=>$self->table_strata()); #läser in allt. 
-    
-    $n_individuals= scalar(@{$d->individuals});
-    @strata = @{$d -> column_to_array('column'=>$self->stratify_on())};
-    $d = undef;
-    %index_to_strata_hash = 
-	%{$self->create_unique_values_hash(sorted_column => [(sort {$a <=> $b} @strata)])}; 
-    $n_strata = scalar(keys %index_to_strata_hash );
-    foreach my $key (keys %index_to_strata_hash){
-      $strata_to_index_hash{$index_to_strata_hash{$key}}=$key;
-    }
-  }
-   
-  my @delta_ofv = (0) x $n_individuals;
+	if (defined $self->stratify_on()){
+		unless ( -e $self->table_strata() ){
+			croak("File ".$self->table_strata().
+				  " \nwith stratification data does not exist.");
+		}
+		my $d = data -> new(filename=>$self->table_strata()); #läser in allt. 
+		
+		$n_individuals= scalar(@{$d->individuals});
+		@strata = @{$d -> column_to_array('column'=>$self->stratify_on())};
+		$d = undef;
+		%index_to_strata_hash = 
+			%{$self->create_unique_values_hash(sorted_column => [(sort {$a <=> $b} @strata)])}; 
+		$n_strata = scalar(keys %index_to_strata_hash );
+		foreach my $key (keys %index_to_strata_hash){
+			$strata_to_index_hash{$index_to_strata_hash{$key}}=$key;
+		}
+	}
+	
+	my @delta_ofv = (0) x $n_individuals;
 
-  my $line_i=0;
-  open(FH, $reduced_file ) or croak("Could not open reduced file.");
-  while (<FH>){
-    next unless (/^\s*[0-9]/);
-    #split on space, take the last value
-    my @arr = split;
-    $delta_ofv[$line_i]=$arr[-1];
-    $line_i++;
-  }
-  close(FH);
-  if (defined $self->stratify_on()){
-    if ($line_i != $n_individuals){
-		croak("The number of individuals in reduced.phi ($line_i) and strata.tab ($n_individuals) are not the same.\nCheck the files manually.\n".
-			  "Possibly rerun reduced.mod manually to investigate the error.\n".
-			  "$reduced_file\n".
-			  $self->table_strata()."\n");
-    }
-  }else{
-    $n_individuals = $line_i;
-  }  
+	my $line_i=0;
+	open(FH, $reduced_file ) or croak("Could not open reduced file.");
+	while (<FH>){
+		next unless (/^\s*[0-9]/);
+		#split on space, take the last value
+		my @arr = split;
+		$delta_ofv[$line_i]=$arr[-1];
+		$line_i++;
+	}
+	close(FH);
+	if (defined $self->stratify_on()){
+		if ($line_i != $n_individuals){
+			croak("The number of individuals in reduced.phi ($line_i) and strata.tab ($n_individuals) are not the same.\nCheck the files manually.\n".
+				  "Possibly rerun reduced.mod manually to investigate the error.\n".
+				  "$reduced_file\n".
+				  $self->table_strata()."\n");
+		}
+	}else{
+		$n_individuals = $line_i;
+	}  
 
-  my %strata_ofv;
-  for (my $i=0;$i< $n_strata; $i++){
-    $strata_ofv{$i}=[()];
-  }
-  
-  $line_i=0;
-  open(FH, $full_file ) or croak("Could not open full file.");
-  while (<FH>){
-    next unless (/^\s*[0-9]/);
-    #split on space, take the last value
-    #stratify here already
-    my @arr = split;
-    if (defined $self->stratify_on()){
-      push(@{$strata_ofv{$strata_to_index_hash{$strata[$line_i]}}},
-	   ($delta_ofv[$line_i] - $arr[-1]));
-    }else{
-      push(@{$strata_ofv{0}},($delta_ofv[$line_i] - $arr[-1]));
-    }
-    $line_i++;
-  }
-  close(FH);
-  if ($line_i != $n_individuals){
-    croak("The number of individuals in $reduced_file and ".
-	       "$full_file are not the same.");
-  }  
-  unless (defined $self->max_size()){
-    $self->max_size($n_individuals);
-  }
-  $self->strata_ofv(\%strata_ofv);
-  $self->strata_to_index(\%strata_to_index_hash);
-  $self->index_to_strata(\%index_to_strata_hash);
-  $self->n_individuals($n_individuals);
+	my %strata_ofv;
+	for (my $i=0;$i< $n_strata; $i++){
+		$strata_ofv{$i}=[()];
+	}
+	
+	$line_i=0;
+	open(FH, $full_file ) or croak("Could not open full file.");
+	while (<FH>){
+		next unless (/^\s*[0-9]/);
+		#split on space, take the last value
+		#stratify here already
+		my @arr = split;
+		if (defined $self->stratify_on()){
+			push(@{$strata_ofv{$strata_to_index_hash{$strata[$line_i]}}},
+				 ($delta_ofv[$line_i] - $arr[-1]));
+		}else{
+			push(@{$strata_ofv{0}},($delta_ofv[$line_i] - $arr[-1]));
+		}
+		$line_i++;
+	}
+	close(FH);
+	if ($line_i != $n_individuals){
+		croak("The number of individuals in $reduced_file and ".
+			  "$full_file are not the same.");
+	}  
+	unless (defined $self->max_size()){
+		$self->max_size($n_individuals);
+	}
+	$self->strata_ofv(\%strata_ofv);
+	$self->strata_to_index(\%strata_to_index_hash);
+	$self->index_to_strata(\%index_to_strata_hash);
+	$self->n_individuals($n_individuals);
 
-  ui -> print (category=>'mcmp', message=> "Done reading and stratifying iofv.");
+	ui -> print (category=>'mcmp', message=> "Done reading and stratifying iofv.");
 }
 
 sub cleanup
 {
 	my $self = shift;
 
-  unlink $self->directory . "simulation_dir1/NM_run1/mcmp-sim.dat";
-  unlink $self->directory . "simulation_dir1/NM_run1/mcmp-sim-1.dat";
-  unlink $self->directory . "modelfit_dir1/NM_run1/iotab1";
-  unlink $self->directory . "modelfit_dir1/NM_run1/iotab1-1";
-  unlink $self->directory . "modelfit_dir1/NM_run2/iotab1";
-  unlink $self->directory . "modelfit_dir1/NM_run2/iotab1-1";
+	unlink $self->directory . "simulation_dir1/NM_run1/mcmp-sim.dat";
+	unlink $self->directory . "simulation_dir1/NM_run1/mcmp-sim-1.dat";
+	unlink $self->directory . "modelfit_dir1/NM_run1/iotab1";
+	unlink $self->directory . "modelfit_dir1/NM_run1/iotab1-1";
+	unlink $self->directory . "modelfit_dir1/NM_run2/iotab1";
+	unlink $self->directory . "modelfit_dir1/NM_run2/iotab1-1";
 }
 
 sub create_unique_values_hash
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 sorted_column => { isa => 'Ref', optional => 1 }
-	);
+							  sorted_column => { isa => 'Ref', optional => 1 }
+		);
 	my %value_hash;
 	my $sorted_column = $parm{'sorted_column'};
 
-  #in @sorted_column
-  #out %value_hash
-  my $value_index = 0;
+	#in @sorted_column
+	#out %value_hash
+	my $value_index = 0;
 
-  foreach my $val  (@{$sorted_column}){
-    if ($value_index == 0){
-      $value_hash{$value_index}=$val;
-      $value_index++;
-      next;
-    }
-    unless ($val == $value_hash{($value_index-1)}){
-      $value_hash{$value_index}=$val;
-      $value_index++;
-    }
-    last if ($val == $sorted_column->[-1])
-  }
+	foreach my $val  (@{$sorted_column}){
+		if ($value_index == 0){
+			$value_hash{$value_index}=$val;
+			$value_index++;
+			next;
+		}
+		unless ($val == $value_hash{($value_index-1)}){
+			$value_hash{$value_index}=$val;
+			$value_index++;
+		}
+		last if ($val == $sorted_column->[-1])
+	}
 
 	return \%value_hash;
 }
