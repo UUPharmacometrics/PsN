@@ -83,8 +83,11 @@ LIBFILES= ui.pm \
 	tool/scm.pm \
 	tool/pvar.pm \
 
+BINFILES=$(wildcard bin/*)
+
 RELFILES=$(addprefix PsN-Source/lib/,$(LIBFILES)) \
 	$(addprefix PsN-Source/, \
+	$(BINFILES) \
 	lib/PsN_template.pm \
 	lib/common_options.pm \
 	lib/linear_algebra.pm \
@@ -108,39 +111,6 @@ RELFILES=$(addprefix PsN-Source/lib/,$(LIBFILES)) \
 	lib/R-scripts/llp.R \
 	lib/R-scripts/cdd.R \
 	lib/R-scripts/bootstrap.R \
-	bin/nca \
-	bin/psn \
-	bin/psn_options \
-	bin/psn_clean \
-	bin/execute \
-	bin/cdd \
-	bin/sse \
-	bin/gls \
-	bin/frem \
-	bin/ebe_npde \
-	bin/pind \
-	bin/nonpb \
-	bin/npc \
-	bin/mcmp \
-	bin/vpc \
-	bin/llp \
-	bin/scm \
-	bin/bootstrap \
-	bin/randtest \
-	bin/sumo \
-	bin/lasso \
-	bin/runrecord \
-	bin/extended_grid \
-	bin/data_stats \
-	bin/se_of_eta \
-	bin/update_inits \
-	bin/mimp \
-	bin/parallel_retries \
-	bin/xv_scm \
-	bin/boot_scm \
-	bin/linearize \
-	bin/crossval \
-	bin/pvar \
 	setup.pl \
 	README.txt )
 
@@ -177,7 +147,7 @@ documentation: doc/*.pdf $(PDFFILES)
 testpackage:
 	@ zip -r psn_test_package test
 
-BINFILES= boot_scm \
+COMPFILES=boot_scm \
 	bootstrap \
 	cdd \
 	crossval \
@@ -215,7 +185,7 @@ development/completion_files:
 .PHONY: completion
 completion: development/completion_files
 	cd bin; \
-	$(foreach file, $(BINFILES), perl ../development/genauto $(file) >../development/completion_files/$(file);)
+	$(foreach file, $(COMPFILES), perl ../development/genauto $(file) >../development/completion_files/$(file);)
 
 PsN-Source/setup.pl: bin/setup.pl
 	@ cp bin/setup.pl $@

@@ -112,7 +112,7 @@ my @utilities = (
 	'vpc',
 	'pind','nonpb','extended_grid','psn','psn_options','psn_clean',
 	'runrecord','mcmp','lasso','mimp','xv_scm','parallel_retries',
-	'boot_scm','gls','ebe_npde','frem','randtest','linearize', 'crossval', 'pvar', 'nca'
+	'boot_scm','gls','ebe_npde','frem','randtest','linearize', 'crossval', 'pvar', 'nca', 'vpctable'
 	);
 
 my @win_modules = ('Moose', 'MooseX::Params::Validate', 'Math::Random');
