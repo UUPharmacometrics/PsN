@@ -1,13 +1,16 @@
 #  Copyright (c) 1996, 1997 by Steffen Beyer. All rights reserved.
 #  Copyright (c) 1999 by Rodolphe Ortalo. All rights reserved.
-#  Copyright (c) 2001,2002 by Jonathan Leto. All rights reserved.
+#  Copyright (c) 2001-2011 by Jonathan Leto. All rights reserved.
 #  This package is free software; you can redistribute it and/or
 #  modify it under the same terms as Perl itself.
 
 package Math::MatrixReal;
 
 use strict;
-use Carp;
+use warnings;
+use ext::Carp; #Kajsa 2014-02-25
+use Data::Dumper;
+use Scalar::Util qw/reftype/;
 use vars qw(@ISA @EXPORT @EXPORT_OK %EXPORT_TAGS $VERSION);
 require Exporter;
 
@@ -15,18 +18,19 @@ require Exporter;
 @EXPORT = qw();
 @EXPORT_OK = qw(min max);
 %EXPORT_TAGS = (all => [@EXPORT_OK]);
-$VERSION = '1.9';
+$VERSION = '2.11';
 
 use overload
+     '.'   => '_concat',
      'neg' => '_negate',
        '~' => '_transpose',
     'bool' => '_boolean',
        '!' => '_not_boolean',
-      '""' => '_stringify',
      'abs' => '_norm',
        '+' => '_add',
        '-' => '_subtract',
        '*' => '_multiply',
+       '/' => '_divide',
       '**' => '_exponent',
       '+=' => '_assign_add',
       '-=' => '_assign_subtract',
@@ -45,277 +49,376 @@ use overload
       'gt' => '_greater_than',
       'ge' => '_greater_than_or_equal',
        '=' => '_clone',
-     'exp' => '_exp',
-     'sin' => '_sin',
-     'cos' => '_cos',
+      '""' => '_stringify',
 'fallback' =>   undef;
+
+=head1 NAME
+
+Math::MatrixReal - Matrix of Reals
+
+Implements the data type "matrix of real numbers" (and consequently also
+"vector of real numbers").
+
+=head1 SYNOPSIS
+
+my $a = Math::MatrixReal->new_random(5, 5);
+
+my $b = $a->new_random(10, 30, { symmetric=>1, bounded_by=>[-1,1] });
+
+my $c = $b * $a ** 3;
+
+my $d = $b->new_from_rows( [ [ 5, 3 ,4], [3, 4, 5], [ 2, 4, 1 ] ] );
+
+print $a;
+
+my $row        = ($a * $b)->row(3);
+
+my $col        = (5*$c)->col(2);
+
+my $transpose  = ~$c;
+
+my $transpose  = $c->transpose;
+
+my $inverse    = $a->inverse; 
+
+my $inverse    = 1/$a;
+
+my $inverse    = $a ** -1;
+
+my $determinant= $a->det;
+
+=cut
 
 sub new
 {
-    croak "Usage: \$new_matrix = Math::MatrixReal->new(\$rows,\$columns);"
-      if (@_ != 3);
+    croak "Usage: \$new_matrix = Math::MatrixReal->new(\$rows,\$columns);" if (@_ != 3);
 
-    my ($proto,$rows,$cols) =  @_;
-    my $class = ref($proto) || $proto || 'Math::MatrixReal';
-    my($i,$j,$this);
+    my ($self,$rows,$cols) =  @_;
+    my $class = ref($self) || $self || 'Math::MatrixReal';
 
     croak "Math::MatrixReal::new(): number of rows must be integer > 0"
-      unless ($rows > 0 and  $rows == int($rows) );
+      unless ($rows > 0 and $rows == int($rows) );
 
     croak "Math::MatrixReal::new(): number of columns must be integer > 0"
       unless ($cols > 0 and $cols == int($cols) );
 
-    $this = [ [ ], $rows, $cols ];
+    my $this = [ [ ], $rows, $cols ];
 
-    # Creates first empty row
+    # Create the first empty row and pre-lengthen 
     my $empty = [ ];
-    $#$empty = $cols - 1; # Lengthens the array
-    for (my $j = 0; $j < $cols; $j++)
-    {
-	$empty->[$j] = 0.0;
-    }
-    $this->[0][0] = $empty;
-    # Creates other rows (by copying)
-    for (my $i = 1; $i < $rows; $i++)
-    {
-	my $arow = [ ];
-	@$arow = @$empty;
-	$this->[0][$i] = $arow;
-    }
-    bless($this, $class);
-    return($this);
+    $#$empty = $cols - 1;          
+
+    map { $empty->[$_] = 0.0 } ( 0 .. $cols-1 );
+
+    # Create a row at a time
+    map { $this->[0][$_] = [ @$empty ] } ( 0 .. $rows-1);
+
+    bless $this, $class;
 }
+
 sub new_diag {
-	croak "Usage: \$new_matrix = Math::MatrixReal->new_diag( [ 1, 2, 3] );"
-		unless (@_ == 2 );
-	my ($proto,$diag) = @_;
-	my $class = ref($proto) || $proto || 'Math::MatrixReal';
-	my $matrix;
-	my $n = scalar(@$diag);
+    croak "Usage: \$new_matrix = Math::MatrixReal->new_diag( [ 1, 2, 3] );" unless (@_ == 2 );
+    my ($self,$diag) = @_;
+    my $n = scalar @$diag;
 
-	croak "Math::MatrixReal::new_diag(): Third argument must be an arrayref" 
-		unless (ref($diag) eq "ARRAY");
+    croak "Math::MatrixReal::new_diag(): Third argument must be an arrayref" unless (ref($diag) eq "ARRAY");
 
-	$matrix = Math::MatrixReal->new($n,$n);
-	$matrix = $matrix->each_diag(  sub { shift @$diag } );
-	return $matrix;
+    my $matrix = Math::MatrixReal->new($n,$n);
+
+    map { $matrix->[0][$_][$_] = shift @$diag } ( 0 .. $n-1);
+    return $matrix;
+}
+sub new_tridiag {
+    croak "Usage: \$new_matrix = Math::MatrixReal->new_tridiag( [ 1, 2, 3], [ 4, 5, 6, 7], [-1,-2,-3] );" unless (@_ == 4 );
+    my ($self,$lower,$diag,$upper) = @_;
+    my $matrix;
+    my ($l,$n,$m) =   (scalar(@$lower),scalar(@$diag),scalar(@$upper)); 
+    my ($k,$p)=(-1,-1);
+
+    croak "Math::MatrixReal::new_tridiag(): Arguments must be arrayrefs" unless 
+	ref $diag eq 'ARRAY' && ref $lower eq 'ARRAY' && ref $upper eq 'ARRAY';
+    croak "Math::MatrixReal::new_tridiag(): new_tridiag(\$lower,\$diag,\$upper) diagonal dimensions incompatible" unless 
+	($l == $m && $n == ($l+1));
+
+    $matrix = Math::MatrixReal->new_diag($diag);
+    $matrix = $matrix->each( 
+		sub { 
+		    my ($e,$i,$j) = @_;
+		    if    (($i-$j) == -1) { $k++; return $upper->[$k];} 
+		    elsif (    $i  == $j) {       return $e;          }
+		    elsif (($i-$j) ==  1) { $p++; return $lower->[$p];}
+		} 
+		);
+    return $matrix;
 }
 
-sub new_from_string
-{
+sub new_random { 
+    croak "Usage: \$new_matrix = Math::MatrixReal->new_random(\$n,\$m, { symmetric => 1, bounded_by => [-5,5], integer => 1 } );" 
+        if (@_ < 2);
+    my ($self, $rows, $cols, $options ) = @_;
+    (($options = $cols) and ($cols = $rows)) if ref $cols eq 'HASH';
+    my ($min,$max) = defined $options->{bounded_by} ?  @{ $options->{bounded_by} } : ( 0, 10);
+    my $integer = $options->{integer}; 
+    $self = ref($self) || $self || 'Math::MatrixReal';
+   
+    $cols ||= $rows; 
+    croak "Math::MatrixReal::new_random(): number of rows must = number of cols for symmetric option" 
+        if ($rows != $cols and $options->{symmetric} );
+
+    croak "Math::MatrixReal::new_random(): number of rows must be integer > 0" 
+        unless ($rows > 0 and  $rows == int($rows) ) && ($cols > 0 and $cols == int($cols) ) ;
+
+    croak "Math::MatrixReal::new_random(): bounded_by interval length must be > 0" 
+        unless (defined $min && defined $max && $min < $max );
+
+    croak "Math::MatrixReal::new_random(): tridiag option only for square matrices"   
+        if (($options->{tridiag} || $options->{tridiagonal}) && $rows != $cols);
+
+    croak "Math::MatrixReal::new_random(): diagonal option only for square matrices " 
+        if (($options->{diag} || $options->{diagonal}) && ($rows != $cols));
+
+    my $matrix = Math::MatrixReal->new($rows,$cols);
+    my $random_code = sub { $integer ? int($min + rand($max-$min)) : $min + rand($max-$min) } ;
+
+    $matrix = $options->{diag} || $options->{diagonal} ? $matrix->each_diag($random_code) :  $matrix->each($random_code); 
+    $matrix = $matrix->each( sub {my($e,$i,$j)=@_; ( abs($i-$j)>1 ) ?  0 : $e } ) if ($options->{tridiag} || $options->{tridiagonal} );
+    $options->{symmetric} ? 0.5*($matrix + ~$matrix) : $matrix;
+}
+	
+sub new_from_string#{{{
+{#{{{
     croak "Usage: \$new_matrix = Math::MatrixReal->new_from_string(\$string);"
       if (@_ != 2);
 
-    my ($proto,$string)  = @_;
-    my $class  = ref($proto) || $proto || 'Math::MatrixReal';
-    my($line,$values);
-    my($rows,$cols);
-    my($row,$col);
-    my($warn,$this);
+    my ($self,$string)  = @_;
+    my $class  = ref($self) || $self || 'Math::MatrixReal';
+    my ($line,$values);
+    my ($rows,$cols);
+    my ($row,$col);
+    my ($warn,$this);
 
     $warn = $rows = $cols = 0;
 
-    $values = [ ];
-    while ($string =~ m!^\s*
-  \[ \s+ ( (?: [+-]? \d+ (?: \. \d* )? (?: E [+-]? \d+ )? \s+ )+ ) \] \s*? \n
-    !ix)
-    {
-        $line = $1;
-        $string = $';
-        $values->[$rows] = [ ];
-        @{$values->[$rows]} = split(' ', $line);
-        $col = @{$values->[$rows]};
-        if ($col != $cols)
-        {
-            unless ($cols == 0) { $warn = 1; }
-            if ($col > $cols) { $cols = $col; }
-        }
-        $rows++;
+    $values = [ ]; 
+	while ($string =~ m!^\s* \[ \s+ ( (?: [+-]? \d+ (?: \. \d*)? (?: E [+-]? \d+ )? \s+ )+ ) \] \s*? \n !ix) { 
+			$line = $1; $string = $';
+			$values->[$rows] = [ ]; @{$values->[$rows]} = split(' ', $line);
+			$col = @{$values->[$rows]};
+	 		if ($col != $cols) { 
+				unless ($cols == 0) { $warn = 1; } 
+				if ($col > $cols) { $cols = $col; } 
+			} 
+			$rows++; 
+	} 
+	if ($string !~ m/^\s*$/) {
+        chomp $string;
+        my $error_msg = "Math::MatrixReal::new_from_string(): syntax error in input string: $string";
+        croak $error_msg;
     }
-    if ($string !~ m!^\s*$!)
-    {
-        #croak
-	print "Math::MatrixReal::new_from_string(): syntax error in input string";
-	print "String is\n$string\n---\n";
-	croak;
-    }
-    if ($rows == 0)
-    {
-        croak "Math::MatrixReal::new_from_string(): empty input string";
-    }
-    if ($warn)
-    {
-        warn "Math::MatrixReal::new_from_string(): missing elements will be set to zero!\n";
-    }
-    $this = Math::MatrixReal::new($class,$rows,$cols);
-    for ( $row = 0; $row < $rows; $row++ )
-    {
-        for ( $col = 0; $col < @{$values->[$row]}; $col++ )
-        {
-            $this->[0][$row][$col] = $values->[$row][$col];
-        }
-    }
-    return($this);
+		if ($rows == 0) { croak "Math::MatrixReal::new_from_string(): empty input string"; } 
+		if ($warn) { warn "Math::MatrixReal::new_from_string(): missing elements will be set to zero!\n"; } 
+		$this = Math::MatrixReal::new($class,$rows,$cols); 
+		for ( $row = 0; $row < $rows; $row++ ) { 
+			for ( $col = 0; $col < @{$values->[$row]}; $col++ ) {
+			$this->[0][$row][$col] = $values->[$row][$col]; 
+			}
+		} 
+		return $this; 
+}#}}}#}}}
+
+# from Math::MatrixReal::Ext1 (msouth@fulcrum.org)
+sub new_from_cols { 
+    my $self = shift;
+    my $extra_args = ( @_ > 1 && ref($_[-1]) eq 'HASH' ) ? pop : {};
+    $extra_args->{_type} = 'column';
+    $self->_new_from_rows_or_cols(@_, $extra_args );
 }
-# from Math::MatrixReal::Ext1
-sub new_from_cols {
-	my $proto = shift;
-	my $class = ref($proto) || $proto;
-	my $ref_to_cols = shift;
-	my @cols = @{$ref_to_cols};
-
-	my $cols = scalar( @cols );
-
-	my $matrix = 0;
-	my $rows = 0;
-
-	# each arg is a column, but we don't know what form they're
-	# in yet
-
-	my $col_index = 0;
-	foreach my $col (@cols) {
-		# it's one-based
-		$col_index ++;
-		my $ref = ref( $col ) ;
-
-		if ( $ref =~ /^Math::MatrixReal/ ) {
-			# it's already a Math::MatrixReal something
-		} elsif ( $ref eq 'ARRAY' ) {
-			my @array = @$col;
-			my $length = scalar( @array );
-			$col = $class->new_from_string( '[ '. join( " ]\n[ ", @array) ." ]\n" );
-		} elsif ( $ref eq '' ) {
-			# we hope this is a string
-			$col = $class->new_from_string( $col );
-		} else {
-			# we have no idea, error time!
-			croak __PACKAGE__."::new_from_cols(): sorry, I have no clue what you sent me!  I only know how to deal with array refs, strings, and things that are already in the Math::MatrixReal hierarchy \n";
-		}
-		my ($length, $one) = $col->dim;
-		croak __PACKAGE__."::new_from_cols(): This isn't a column vector"
-			  unless ($one == 1) ;
-
-		# if we already have a height, check that this is the same
-		if ($rows) {
-			croak __PACKAGE__."::new_from_cols(): This column vector has $length elements and an earlier one had $rows"
-			  unless ($length == $rows) ;
-		}
-		# else, we have a new height 
-		# TODO: maybe this should check for zero
-		else {
-			$rows = $length;
-		}
-
-		# create the matrix the first time through
-		unless ($matrix) {
-			$matrix = $class->new($rows, $cols);
-		}
-
-		foreach my $row_index (1..$rows){
-			my $value = $col->element($row_index, 1);
-			$matrix->assign($row_index, $col_index, $value);
-		}
-
-	}
-	return $matrix;
+# from Math::MatrixReal::Ext1 (msouth@fulcrum.org)
+sub new_from_columns {
+    my $self = shift;
+    $self->new_from_cols(@_);
 }
-#from Math::MatrixReal::Ext1
+# from Math::MatrixReal::Ext1 (msouth@fulcrum.org)
 sub new_from_rows {
-	my $proto = shift;
-	my $class = ref($proto) || $proto;
-	my $ref_to_rows = shift;
-	my @rows = @{$ref_to_rows};
+    my $self = shift;
+    my $extra_args = ( @_ > 1 && ref($_[-1]) eq 'HASH' ) ? pop : {};
+    $extra_args->{_type} = 'row';
 
-	my $rows = scalar( @rows );
+    $self->_new_from_rows_or_cols(@_, $extra_args );
+}
 
-	my $matrix = 0;
-	my $cols = 0;
+sub reshape {
+    my ($self, $rows, $cols, $values) = @_;
 
-	# each arg is a column, but we don't know what form they're
-	# in yet
+    my @cols = ();
+    my $p = 0;
+    for my $c (1..$cols) {
+        push @cols, [@{$values}[$p .. $p + $rows - 1]];
+        $p += $rows;
+    }
 
-	my $row_index = 0;
-	foreach my $row (@rows) {
-		# it's one-based
-		$row_index ++;
-		my $ref = ref( $row ) ;
+    return $self->new_from_cols( \@cols );
+}
 
-		if ( $ref =~ /^Math::MatrixReal/ ) {
-			# it's already a Math::MatrixReal something
-		}
-		elsif ( $ref eq 'ARRAY' ) {
-			my @array = @$row;
-			my $length = scalar( @array );
-			$row = $class->new_from_string( '[ '. join( " ", @array) ." ]\n" );
-		}
-		elsif ( $ref eq '' ) {
-			# we hope this is a string
-			$row = $class->new_from_string( $row );
-		}
-		else {
-			# we have no idea, error time!
-			croak "Math::MatrixReal::new_from_rows(): Argument must be an arrayref,string or Math::MatrixReal object";
-		}
-		my ($one, $length) = $row->dim;
-		croak __PACKAGE__."::new_from_rows(): This isn't a column vector"
-			  unless ($one == 1) ;
+# from Math::MatrixReal::Ext1 (msouth@fulcrum.org)
+sub _new_from_rows_or_cols {
+    my $proto = shift;
+    my $class = ref($proto) || $proto;
+    my $ref_to_vectors = shift;
 
-		# if we already have a height, check that this is the same
-		if ($cols) {
-			croak "Math::MatrixReal::new_from_rows(): Column mismatch $length != $cols"
-			  unless ($length == $cols) ;
-		}
-		# else, we have a new width  FIXME maybe this should check for zero
-		else {
-			$cols = $length;
-		}
+    # these additional args are internal at the moment,  but in the future the user could pass e.g. {pad=>1} to
+    # request padding
+    my $args = pop;
+    my $vector_type = $args->{_type};
+    die "Internal ".__PACKAGE__." error" unless $vector_type =~ /^(row|column)$/;
 
-		# create the matrix the first time through
-		unless ($matrix) {
-			$matrix = $class->new($rows, $cols);
-		}
+    # step back one frame because this private method is  not how the user called it
+    my $caller_subname = (caller(1))[3];
 
-		foreach my $col_index (1..$cols){
-			my $value = $row->element(1, $col_index);
-			$matrix->assign($row_index, $col_index, $value);
-		}
+    croak "$caller_subname: need a reference to an array of ${vector_type}s" unless reftype($ref_to_vectors) eq 'ARRAY';
 
-	}
-	return $matrix;
+    my @vectors = @{$ref_to_vectors};
+    my $matrix;
+    my $other_type = {row=>'column', column=>'row'}->{$vector_type};
+    my %matrix_dim = (
+        $vector_type => scalar( @vectors ), 
+        $other_type  => 0,  # we will correct this in a bit
+    );
+
+    # row and column indices are one based
+    my $current_vector_count = 1; 
+    foreach my $current_vector (@vectors) {
+        # dimension is one-based, so we're
+        # starting with one here and incrementing
+        # as we go.  The other dimension is fixed (for now, until
+        # we add the 'pad' option), and gets set later
+        my $ref = ref( $current_vector ) ;
+
+        if ( $ref eq '' ) {
+            # we hope this is a properly formatted Math::MatrixReal string,
+            # but if not we just let the Math::MatrixReal die() do it's
+            # thing
+            $current_vector = $class->new_from_string( $current_vector );
+        } elsif ( $ref eq 'ARRAY' ) {
+            my @array = @$current_vector;
+            croak "$caller_subname: one $vector_type you gave me was a ref to an array with no elements" unless @array;
+            # we need to create the right kind of string based on whether
+            # they said they were sending us rows or columns:
+            if ($vector_type eq 'row') {
+                $current_vector = $class->new_from_string( '[ '. join( " ", @array) ." ]\n" );
+            } else {
+                $current_vector = $class->new_from_string( '[ '. join( " ]\n[ ", @array) ." ]\n" );
+            }
+        } elsif ( $ref ne 'HASH' and 
+                ( $current_vector->isa('Math::MatrixReal') || 
+                  $current_vector->isa('Math::MatrixComplex')
+                ) ) {
+            # it's already a Math::MatrixReal something.
+            # we don't need to do anything, it will all
+            # work out
+        } else {
+            # we have no idea, error time!
+            croak "$caller_subname: I only know how to deal with array refs, strings, and things that inherit from Math::MatrixReal\n";
+        }
+
+        # starting now we know $current_vector isa Math::MatrixReal thingy
+        my @vector_dims = $current_vector->dim;
+
+        #die unless the appropriate dimension is 1
+        croak "$caller_subname: I don't accept $other_type vectors" unless ($vector_dims[ $vector_type eq 'row' ? 0 : 1 ] == 1) ;
+
+        # the other dimension is the length of our vector
+        my $length =  $vector_dims[ $vector_type eq 'row' ? 1 : 0 ];
+
+        # set the "other" dimension to the length of this
+        # vector the first time through
+        $matrix_dim{$other_type} ||= $length;
+
+        # die unless length of this vector matches the first length
+        croak "$caller_subname: one $vector_type has [$length] elements and another one had [$matrix_dim{$other_type}]--all of the ${vector_type}s passed in must have the same dimension"
+              unless ($length == $matrix_dim{$other_type}) ;
+
+        # create the matrix the first time through
+        $matrix ||= $class->new($matrix_dim{row}, $matrix_dim{column});
+
+        # step along the vector assigning the value of each element
+        # to the correct place in the matrix we're building
+        foreach my $element_index ( 1..$length ){
+            # args for vector assignment:
+            # initialize both to one and reset the correct
+            # one below
+            my ($v_r, $v_c) = (1,1);
+
+            # args for matrix assignment
+            my ($row_index, $column_index, $value);
+
+            if ($vector_type eq 'row') {
+                $row_index           = $current_vector_count;
+                $v_c = $column_index = $element_index;
+            } else {
+                $v_r = $row_index    = $element_index;
+                $column_index        = $current_vector_count;
+            }
+            $value = $current_vector->element($v_r, $v_c);
+            $matrix->assign($row_index, $column_index, $value);
+        }
+        $current_vector_count ++ ;
+    }
+    return $matrix;
 }
 
 sub shadow
 {
-    croak "Usage: \$new_matrix = \$some_matrix->shadow();"
-      if (@_ != 1);
+    croak "Usage: \$new_matrix = \$some_matrix->shadow();" if (@_ != 1);
 
-    my($matrix) = @_;
-    my($temp);
+    my ($matrix) = @_;
 
-    $temp = $matrix->new($matrix->[1],$matrix->[2]);
-    return($temp);
+    return $matrix->new($matrix->[1],$matrix->[2]);
 }
 
+=over 4
+
+=item * $matrix->display_precision($integer)
+
+Sets the default precision when matrices are printed or stringified.
+$matrix->display_precision(0) will only show the integer part of all the
+entries of $matrix and $matrix->display_precision() will return to the default
+scientific display notation. This method does not effect the precision of the
+calculations.
+
+=back
+
+=cut 
+
+sub display_precision 
+{
+    my ($self,$n) = @_;
+    if (defined $n) { 
+        croak "Usage: \$matrix->display_precision(\$nonnegative_integer);" if ($n < 0);
+        $self->[4] = int $n;
+    } else {
+        $self->[4] = undef;
+    }
+}
 
 sub copy
 {
     croak "Usage: \$matrix1->copy(\$matrix2);"
       if (@_ != 2);
 
-    my($matrix1,$matrix2) = @_;
-    my($rows1,$cols1) = ($matrix1->[1],$matrix1->[2]);
-    my($rows2,$cols2) = ($matrix2->[1],$matrix2->[2]);
-    my($i,$j);
+    my ($matrix1,$matrix2) = @_;
+    my ($rows1,$cols1) = ($matrix1->[1],$matrix1->[2]);
+    my ($rows2,$cols2) = ($matrix2->[1],$matrix2->[2]);
+    my ($i,$j);
 
-    croak "Math::MatrixReal::copy(): matrix size mismatch"
-      unless (($rows1 == $rows2) && ($cols1 == $cols2));
+    croak "Math::MatrixReal::copy(): matrix size mismatch" unless $rows1 == $rows2 && $cols1 == $cols2;
 
     for ( $i = 0; $i < $rows1; $i++ )
     {
-	my $r1 = []; # New array ref
-	my $r2 = $matrix2->[0][$i];
-	@$r1 = @$r2; # Copy whole array directly
-	$matrix1->[0][$i] = $r1;
+        my $r1            = []; 
+        my $r2            = $matrix2->[0][$i];
+        @$r1              = @$r2;              # Copy whole array directly
+        $matrix1->[0][$i] = $r1;
     }
     if (defined $matrix2->[3]) # is an LR decomposition matrix!
     {
@@ -327,15 +430,14 @@ sub copy
 
 sub clone
 {
-    croak "Usage: \$twin_matrix = \$some_matrix->clone();"
-      if (@_ != 1);
+    croak "Usage: \$twin_matrix = \$some_matrix->clone();" if (@_ != 1);
 
     my($matrix) = @_;
     my($temp);
 
     $temp = $matrix->new($matrix->[1],$matrix->[2]);
     $temp->copy($matrix);
-    return($temp);
+    return $temp;
 }
 
 ## trace() : return the sum of the diagonal elements
@@ -345,211 +447,168 @@ sub trace {
     my $matrix = shift;
     my($rows,$cols) = ($matrix->[1],$matrix->[2]);
     my $trace = 0;
-    my($j);
 
-    croak "Math::MatrixReal::trace(): matrix is not quadratic"
-      unless ($rows == $cols);
+    croak "Math::MatrixReal::trace(): matrix is not quadratic" unless ($rows == $cols);
 
+    map { $trace += $matrix->[0][$_][$_] } (0 .. $cols-1);
 
-    for ( $j = 0; $j < $cols; $j++ )
-    {
-        $trace += $matrix->[0][$j][$j];
-    }
-    return($trace);
+    return $trace;
 }
+sub submatrix {
+    my $self = shift;
+    my ($x1, $y1, $x2, $y2) = @_;
+    croak "Math::MatrixReal::submatrix(): indices must be positive integers"
+        unless ($x1 >= 1 && $x2 >= 1 && $y1 >=1 && $y2 >=1 );
+    my($rows,$cols) = ($self->[1],$self->[2]);
+    my($sr,$sc)     = ( 1+abs($x1-$x2), 1+abs($y1-$y2) );
+    my $submatrix = $self->new( $sr, $sc );
 
+    for (my $i = $x1-1; $i < $x2; $i++ ) {
+        for (my $j = $y1-1; $j < $y2; $j++ ) {
+            $submatrix->[0][$i-($x1-1)][$j-($y1-1)] = $self->[0][$i][$j];
+        }
+    }
+    return $submatrix;
+}
 ## return the minor corresponding to $r and $c
 ## eliminate row $r and col $c , and return the $r-1 by $c-1 matrix
 sub minor {
-	croak "Usage: \$minor = \$matrix->minor(\$r,\$c);" unless (@_ == 3);
-	my ($matrix,$r,$c) = @_;
-	my ($rows,$cols) = $matrix->dim();
+    croak "Usage: \$minor = \$matrix->minor(\$r,\$c);" unless (@_ == 3);
+    my ($matrix,$r,$c) = @_;
+    my ($rows,$cols) = $matrix->dim();
 
-        croak "Math::MatrixReal::minor(): \$matrix must be at least 2x2"
-                unless ($rows > 1 and $cols > 1);
-	croak "Math::MatrixReal::minor(): $r and $c must be positive" 
-		unless ($r > 0 and $c > 0 );
-	croak "Math::MatrixReal::minor(): matrix has no $r,$c element" 
-		unless ($r <= $rows and $c <= $cols );
+    croak "Math::MatrixReal::minor(): \$matrix must be at least 2x2"
+        unless ($rows > 1 and $cols > 1);
+    croak "Math::MatrixReal::minor(): $r and $c must be positive" 
+        unless ($r > 0 and $c > 0 );
+    croak "Math::MatrixReal::minor(): matrix has no $r,$c element" 
+        unless ($r <= $rows and $c <= $cols );
 
-        my $minor = new Math::MatrixReal($rows-1,$cols-1);
-	my ($i,$j) = (0,0);
+    my $minor = new Math::MatrixReal($rows-1,$cols-1);
+    my ($i,$j) = (0,0);
 
-	## assign() might have been easier, but this should be faster
-	## the element can be in any of 4 regions compared to the eliminated
-	## row and col:
-	## above and to the left, above and to the right
-	## below and to the left, below and to the right
+    ## assign() might have been easier, but this should be faster
+    ## the element can be in any of 4 regions compared to the eliminated
+    ## row and col:
+    ## above and to the left, above and to the right
+    ## below and to the left, below and to the right
 
-	for(; $i < $rows; $i++){
-		for(;$j < $rows; $j++ ){
-			if( $i >= $r && $j >= $c ){
-				$minor->[0][$i-1][$j-1] = $matrix->[0][$i][$j];
-			} elsif ( $i >= $r && $j < $c ){
-				$minor->[0][$i-1][$j] = $matrix->[0][$i][$j];
-			} elsif ( $i < $r && $j < $c ){
-				$minor->[0][$i][$j] = $matrix->[0][$i][$j];
-			} elsif ( $i < $r && $j >= $c ){
-				$minor->[0][$i][$j-1] = $matrix->[0][$i][$j];
-			} else {
-				croak "Very bad things";
-			}
-		}
-		$j = 0;
-	}
-	return ($minor);
+    for(; $i < $rows; $i++){
+        for(;$j < $rows; $j++ ){
+            if( $i >= $r && $j >= $c ){
+                $minor->[0][$i-1][$j-1] = $matrix->[0][$i][$j];
+            } elsif ( $i >= $r && $j < $c ){
+                $minor->[0][$i-1][$j] = $matrix->[0][$i][$j];
+            } elsif ( $i < $r && $j < $c ){
+                $minor->[0][$i][$j] = $matrix->[0][$i][$j];
+            } elsif ( $i < $r && $j >= $c ){
+                $minor->[0][$i][$j-1] = $matrix->[0][$i][$j];
+            } else {
+                croak "Very bad things";
+            }
+        }
+        $j = 0;
+    }
+    return ($minor);
 }
 sub swap_col {
-        croak "Usage: \$matrix->swap_col(\$col1,\$col2); " unless (@_ == 3);
-        my ($matrix,$col1,$col2) = @_;
-        my ($rows,$cols) = $matrix->dim();
-        my (@temp);
+    croak "Usage: \$matrix->swap_col(\$col1,\$col2); " unless (@_ == 3);
+    my ($matrix,$col1,$col2) = @_;
+    my ($rows,$cols) = $matrix->dim();
+    my (@temp);
 
-        croak "Math::MatrixReal::swap_col(): col index is not valid"
-                unless ( $col1 <= $cols && $col2 <= $cols &&
-                         $col1 == int($col1) &&
-                         $col2 == int($col2) );
-        $col1--;$col2--;
-        for(my $i=0;$i < $rows;$i++){
-                $temp[$i] = $matrix->[0][$i][$col1];
-                $matrix->[0][$i][$col1] = $matrix->[0][$i][$col2];
-                $matrix->[0][$i][$col2] =  $temp[$i];
-        }
+    croak "Math::MatrixReal::swap_col(): col index is not valid"
+        unless ( $col1 <= $cols && $col2 <= $cols &&
+             $col1 == int($col1) &&
+             $col2 == int($col2) );
+    $col1--;$col2--;
+    for(my $i=0;$i < $rows;$i++){
+        $temp[$i] = $matrix->[0][$i][$col1];
+        $matrix->[0][$i][$col1] = $matrix->[0][$i][$col2];
+        $matrix->[0][$i][$col2] =  $temp[$i];
+    }
 }
 sub swap_row {
-	croak "Usage: \$matrix->swap_row(\$row1,\$row2); " unless (@_ == 3);
-	my ($matrix,$row1,$row2) = @_;
-	my ($rows,$cols) = $matrix->dim();
-	my (@temp);	
+    croak "Usage: \$matrix->swap_row(\$row1,\$row2); " unless (@_ == 3);
+    my ($matrix,$row1,$row2) = @_;
+    my ($rows,$cols) = $matrix->dim();
+    my (@temp);
 
-	croak "Math::MatrixReal::swap_row(): row index is not valid"
-		unless ( $row1 <= $rows && $row2 <= $rows && 
-			 $row1 == int($row1) && 
-			 $row2 == int($row2) ); 
-	$row1--;$row2--;	
-	for(my $j=0;$j < $cols;$j++){
-		$temp[$j] = $matrix->[0][$row1][$j];
-		$matrix->[0][$row1][$j] = $matrix->[0][$row2][$j];
-		$matrix->[0][$row2][$j] =  $temp[$j];
-	}
+    croak "Math::MatrixReal::swap_row(): row index is not valid"
+        unless ( $row1 <= $rows && $row2 <= $rows && 
+             $row1 == int($row1) && 
+             $row2 == int($row2) ); 
+    $row1--;$row2--;
+    for(my $j=0;$j < $cols;$j++){
+        $temp[$j] = $matrix->[0][$row1][$j];
+        $matrix->[0][$row1][$j] = $matrix->[0][$row2][$j];
+        $matrix->[0][$row2][$j] =  $temp[$j];
+    }
 }
-# TODO: docs
-# no worky
+
 sub assign_row {
-	croak "Usage: \$matrix->assign_row(\$row,\$row_vec);"  unless (@_ == 3);
-	my ($matrix,$row,$row_vec) = @_;
-	my ($rows1,$cols1) = $matrix->dim();
-	my ($rows2,$cols2) = $row_vec->dim();
-	
-	croak "Math::MatrixReal::assign_row(): row mismatch" if ($rows1 != $rows2);
-	croak "Math::MatrixReal::assign_row(): not a row vector" unless( $cols2 == 1);
+    croak "Usage: \$matrix->assign_row(\$row,\$row_vec);"  unless (@_ == 3);
+    my ($matrix,$row,$row_vec) = @_;
+    my ($rows1,$cols1) = $matrix->dim();
+    my ($rows2,$cols2) = $row_vec->dim();
+   
+    croak "Math::MatrixReal::assign_row(): number of columns mismatch" if ($cols1 != $cols2);
+    croak "Math::MatrixReal::assign_row(): not a row vector" unless( $rows2 == 1);
 
-	@{$matrix->[0][--$row]} = @{$row_vec->[0][0]};
-
+    @{$matrix->[0][--$row]} = @{$row_vec->[0][0]};
+    return $matrix;
 }
 # returns the number of zeroes in a row
 sub _count_zeroes_row {
-	my ($matrix) = @_;
-	my ($rows,$cols) = $matrix->dim();
-	my $count = 0;	
-	croak "_count_zeroes_row(): only 1 row, buddy" unless ($rows == 1);
+    my ($matrix) = @_;
+    my ($rows,$cols) = $matrix->dim();
+    my $count = 0;
+    croak "_count_zeroes_row(): only 1 row, buddy" unless ($rows == 1);
 
-	for(my $i=0;$i < $cols;$i++){
-		$count++ unless $matrix->[0][0][$i];
-	}
-	return $count;
+    map { $count++ unless $matrix->[0][0][$_] } (0 .. $cols-1);
+    return $count;
 }
 ## divide a row by it's largest abs() element
 sub _normalize_row {
-	my ($matrix) = @_;
-	my ($rows,$cols) = $matrix->dim();
-	my $new_row = Math::MatrixReal->new(1,$cols);
+    my ($matrix) = @_;
+    my ($rows,$cols) = $matrix->dim();
+    my $new_row = Math::MatrixReal->new(1,$cols);
 
-       	my $big = abs($matrix->[0][0][0]);
-	for(my $j=0;$j < $cols; $j++ ){
-		$big = $big < abs($matrix->[0][0][$j])
-			? abs($matrix->[0][0][$j]) : $big;
-	}
-	next unless $big;
-	# now $big is biggest element in row
-	for(my $j = 0;$j < $cols; $j++ ){
-		$new_row->[0][0][$j]  = $matrix->[0][0][$j] / $big;
-	}
-	return $new_row;
+    my $big = abs($matrix->[0][0][0]);
+    for(my $j=0;$j < $cols; $j++ ){
+        $big = $big < abs($matrix->[0][0][$j])
+            ? abs($matrix->[0][0][$j]) : $big;
+    }
+    next unless $big;
+    # now $big is biggest element in row
+    for(my $j = 0;$j < $cols; $j++ ){
+        $new_row->[0][0][$j]  = $matrix->[0][0][$j] / $big;
+    }
+    return $new_row;
 
 }
-#### doesn't work
-=crap
-sub row_echelon {
-	my ($matrix) = @_;
-	my ($rows,$cols) = $matrix->dim();
-	my $big;
-	my $tmprow;
-
-	for(my $i = 0;$i < $rows; $i++ ){
-		$big = abs($matrix->[0][$i][0]);
-		for(my $j=0;$j < $cols; $j++ ){
-			$big = $big < abs($matrix->[0][$i][$j]) 
-				? abs($matrix->[0][$i][$j]) : $big;
-		}
-		next unless $big;
-		# now $big is biggest element in row
-                for(my $j = 0;$j < $cols; $j++ ){
-                	$matrix->[0][$i][$j]  /= $big;
-                }
-		# now all elements are between [-1,1] and 
-		# dependence can be easily checked
-	}
-
-	for(my $i = 0;$i < $rows; $i++ ){
-		for(my $k = 0; $k < $rows; $k++ ){
-			next if ($i == $k);
-			print "i,k = $i,$k\n";
-			$tmprow = $matrix->row($i+1) + $matrix->row($k+1);
-			print "tmprow= $tmprow\n";
-			print "tmprow has " . $tmprow->_count_zeroes_row . " zeroes.\n";
-			print "i+1 has " . $matrix->row($i+1)->_count_zeroes_row . " zeroes\n";
-			print "k+1 has " . $matrix->row($k+1)->_count_zeroes_row . " zeroes\n";
-
-			$tmprow = $tmprow->_normalize_row;	
-			if( $tmprow->norm_sum == 0 ){
-				for(my $j=0;$j<$cols;$j++){
-					$matrix->[0][$k][$j] = 0;
-				}
-			} elsif ( $tmprow->_count_zeroes_row > $matrix->row($i+1)->_count_zeroes_row ){
-				print "tmprow has more zeroes, replacing row " . ($i+1) . "\n";
-				## assign row	
-				$matrix->assign_row($i+1,$tmprow);
-			} elsif ( $tmprow->_count_zeroes_row > $matrix->row($k+1)->_count_zeroes_row ){
-				print "tmprow has more zeroes, replacing row " . ($k+1) . "\n";
-				$matrix->assign_row($k+1,$tmprow);
-			}	
-					
-		}
-	}
-	return $matrix;
-}
-=cut
 
 sub cofactor {
-	my ($matrix) = @_;
-	my ($rows,$cols) = $matrix->dim();
-	
-	croak "Math::MatrixReal::cofactor(): Matrix is not quadratic" 
-		unless ($rows == $cols);	
+    my ($matrix) = @_;
+    my ($rows,$cols) = $matrix->dim();
 
-	# black magic ahead
-	my $cofactor = $matrix->each( sub { my($v,$i,$j) = @_;
-					($i+$j) % 2 == 0 ? $matrix->minor($i,$j)->det()
-					: -1*$matrix->minor($i,$j)->det(); 
-					} );
-	return ($cofactor);
+    croak "Math::MatrixReal::cofactor(): Matrix is not quadratic" 
+        unless ($rows == $cols);
+
+    # black magic ahead
+    my $cofactor = $matrix->each( 
+        sub { 
+            my($v,$i,$j) = @_;
+            ($i+$j) % 2 == 0 ? $matrix->minor($i,$j)->det() : -1*$matrix->minor($i,$j)->det(); 
+        });
+    return ($cofactor);
 }
 
 sub adjoint {
-	my ($matrix) = @_;
-	return ~($matrix->cofactor);
+    my ($matrix) = @_;
+    return ~($matrix->cofactor);
 }
+
 sub row
 {
     croak "Usage: \$row_vector = \$matrix->row(\$row);"
@@ -558,40 +617,36 @@ sub row
     my($matrix,$row) = @_;
     my($rows,$cols) = ($matrix->[1],$matrix->[2]);
     my($temp);
-    my($j);
 
-    croak "Math::MatrixReal::row(): row index out of range"
-      if (($row < 1) || ($row > $rows));
+    croak "Math::MatrixReal::row(): row index out of range" if ($row < 1 || $row > $rows);
 
     $row--;
     $temp = $matrix->new(1,$cols);
-    for ( $j = 0; $j < $cols; $j++ )
+    for ( my $j = 0; $j < $cols; $j++ )
     {
         $temp->[0][0][$j] = $matrix->[0][$row][$j];
     }
     return($temp);
 }
-
+sub col{ return (shift)->column(shift) }
 sub column
 {
-    croak "Usage: \$column_vector = \$matrix->column(\$column);"
-      if (@_ != 2);
+    croak "Usage: \$column_vector = \$matrix->column(\$column);" if (@_ != 2);
 
     my($matrix,$col) = @_;
     my($rows,$cols) = ($matrix->[1],$matrix->[2]);
-    my($temp);
-    my($i);
+    #my($temp);
+    #my($i);
+    my $col_vector;
 
-    croak "Math::MatrixReal::column(): column index out of range"
-      if (($col < 1) || ($col > $cols));
+    croak "Math::MatrixReal::column(): column index out of range" if ($col < 1 || $col > $cols);
 
     $col--;
-    $temp = $matrix->new($rows,1);
-    for ( $i = 0; $i < $rows; $i++ )
-    {
-        $temp->[0][$i][0] = $matrix->[0][$i][$col];
-    }
-    return($temp);
+    $col_vector = $matrix->new($rows,1);
+
+    map { $col_vector->[0][$_][0] = $matrix->[0][$_][$col] } (0 .. $rows-1);
+
+    return $col_vector;
 }
 
 sub _undo_LR
@@ -599,94 +654,75 @@ sub _undo_LR
     croak "Usage: \$matrix->_undo_LR();"
       if (@_ != 1);
 
-    my($this) = @_;
+    my($self) = @_;
 
-    undef $this->[3];
-    undef $this->[4];
-    undef $this->[5];
+    undef $self->[3];
+    undef $self->[4];
+    undef $self->[5];
 }
-
+# brrr
 sub zero
 {
-    croak "Usage: \$matrix->zero();"
-      if (@_ != 1);
+    croak "Usage: \$matrix->zero();" if (@_ != 1);
 
-    my($this) = @_;
-    my($rows,$cols) = ($this->[1],$this->[2]);
-    my($i,$j);
+    my ($self) = @_;
+    my ($rows,$cols) = ($self->[1],$self->[2]);
 
-    $this->_undo_LR();
+    $self->_undo_LR();
 
-    # Zero first row
-    for (my $j = 0; $j < $cols; $j++ )
-    {
-	$this->[0][0][$j] = 0.0;
-    }
-    # Then propagate to other rows
-    for (my $i = 0; $i < $rows; $i++)
-    {
-	@{$this->[0][$i]} = @{$this->[0][0]};
-    }
+    # zero out first row 
+    map {  $self->[0][0][$_] = 0.0              } (0 .. $cols-1);
+    
+    # copy that to the other rows
+    map {  @{$self->[0][$_]} = @{$self->[0][0]} } (0 .. $rows-1);
+
+    return $self;
 }
 
 sub one
 {
-    croak "Usage: \$matrix->one();"
-      if (@_ != 1);
+    croak "Usage: \$matrix->one();" if (@_ != 1);
 
-    my($this) = @_;
-    my($rows,$cols) = ($this->[1],$this->[2]);
-    my($i,$j);
+    my ($self) = @_;
+    my ($rows,$cols) = ($self->[1],$self->[2]);
 
-# No need for this: done by the 'zero()'
-#    $this->_undo_LR();
-    $this->zero(); # We rely on zero() efficiency
-    for (my $i = 0; $i < $rows; $i++ )
-    {
-        $this->[0][$i][$i] = 1.0;
-    }
+    $self->zero(); # We rely on zero() efficiency
+
+    map { $self->[0][$_][$_] = 1.0 } (0 .. $rows-1);
+
+    return $self;
 }
 
 sub assign
 {
-    croak "Usage: \$matrix->assign(\$row,\$column,\$value);"
-      if (@_ != 4);
+    croak "Usage: \$matrix->assign(\$row,\$column,\$value);" if (@_ != 4);
 
-    my($this,$row,$col,$value) = @_;
-    my($rows,$cols) = ($this->[1],$this->[2]);
+    my($self,$row,$col,$value) = @_;
+    my($rows,$cols) = ($self->[1],$self->[2]);
 
-    croak "Math::MatrixReal::assign(): row index out of range"
-      if (($row < 1) || ($row > $rows));
+    croak "Math::MatrixReal::assign(): row index out of range" if (($row < 1) || ($row > $rows));
+    croak "Math::MatrixReal::assign(): column index out of range" if (($col < 1) || ($col > $cols));
 
-    croak "Math::MatrixReal::assign(): column index out of range"
-      if (($col < 1) || ($col > $cols));
-
-    $this->_undo_LR();
-
-    $this->[0][--$row][--$col] = $value;
+    $self->_undo_LR();
+    $self->[0][--$row][--$col] = $value;
 }
 
 sub element
 {
-    croak "Usage: \$value = \$matrix->element(\$row,\$column);"
-      if (@_ != 3);
+    croak "Usage: \$value = \$matrix->element(\$row,\$column);" if (@_ != 3);
 
-    my($this,$row,$col) = @_;
-    my($rows,$cols) = ($this->[1],$this->[2]);
+    my($self,$row,$col) = @_;
+    my($rows,$cols) = ($self->[1],$self->[2]);
 
-    croak "Math::MatrixReal::element(): row index out of range"
-      if (($row < 1) || ($row > $rows));
+    croak "Math::MatrixReal::element(): row index out of range" if (($row < 1) || ($row > $rows));
+    croak "Math::MatrixReal::element(): column index out of range" if (($col < 1) || ($col > $cols));
 
-    croak "Math::MatrixReal::element(): column index out of range"
-      if (($col < 1) || ($col > $cols));
-
-    return( $this->[0][--$row][--$col] );
+    return( $self->[0][--$row][--$col] );
 }
 
 sub dim  #  returns dimensions of a matrix
 {
-    croak "Usage: (\$rows,\$columns) = \$matrix->dim();"
-      if (@_ != 1);
+    croak "Usage: (\$rows,\$columns) = \$matrix->dim();" if (@_ != 1);
 
     my($matrix) = @_;
 
@@ -695,11 +731,10 @@ sub dim  #  returns dimensions of a matrix
 
 sub norm_one  #  maximum of sums of each column
 {
-    croak "Usage: \$norm_one = \$matrix->norm_one();"
-      if (@_ != 1);
+    croak "Usage: \$norm_one = \$matrix->norm_one();" if (@_ != 1);
 
-    my($this) = @_;
-    my($rows,$cols) = ($this->[1],$this->[2]);
+    my($self) = @_;
+    my($rows,$cols) = ($self->[1],$self->[2]);
 
     my $max = 0.0;
     for (my $j = 0; $j < $cols; $j++)
@@ -707,57 +742,55 @@ sub norm_one  #  maximum of sums of each column
         my $sum = 0.0;
         for (my $i = 0; $i < $rows; $i++)
         {
-            $sum += abs( $this->[0][$i][$j] );
+            $sum += abs( $self->[0][$i][$j] );
         }
-	$max = $sum if ($sum > $max);
+        $max = $sum if ($sum > $max);
     }
     return($max);
 }
 ## sum of absolute value of every element
 sub norm_sum {
-	croak "Usage: \$norm_sum = \$matrix->norm_sum();"
-		unless (@_ == 1);
-	my ($matrix) = @_;
-	my $norm = 0;
-	$matrix->each( sub { $norm+=abs(shift);	} );
-	return $norm;
+    croak "Usage: \$norm_sum = \$matrix->norm_sum();" unless (@_ == 1);
+    my ($matrix) = @_;
+    my $norm = 0;
+    $matrix->each( sub { $norm+=abs(shift); } );
+    return $norm;
 }
 sub norm_frobenius {
-	my ($m) = @_;
-	my ($r,$c) = $m->dim;
-	my $s=0;
+    my ($m) = @_;
+    my ($r,$c) = $m->dim;
+    my $s=0;
 
-	$m->each( sub { $s+=abs(shift)**2 } );
-	return sqrt($s);
+    $m->each( sub { $s+=abs(shift)**2 } );
+    return sqrt($s);
 }
 
 # Vector Norm 
 sub norm_p {
-	my ($v,$p) = @_;
-	# sanity check on $p	
-	croak "Math::MatrixReal:norm_p: argument must be a row or column vector"
-		unless ( $v->is_row_vector || $v->is_col_vector );
-	croak "Math::MatrixReal::norm_p: $p must be >= 1" 
-		unless ($p =~ m/Inf(inity)?/i || $p >= 1);
+    my ($v,$p) = @_;
+    # sanity check on $p
+    croak "Math::MatrixReal:norm_p: argument must be a row or column vector" 
+        unless ( $v->is_row_vector || $v->is_col_vector );
+    croak "Math::MatrixReal::norm_p: $p must be >= 1" 
+        unless ($p =~ m/Inf(inity)?/i || $p >= 1);
 
-	if( $p =~ m/^(Inf|Infinity)$/i ){
-		my $max = $v->element(1,1);
-		$v->each ( sub { my $x=abs(shift); $max = $x if( $x > $max ); } );
-		return $max;
-	}
+    if( $p =~ m/^(Inf|Infinity)$/i ){
+        my $max = $v->element(1,1);
+        $v->each ( sub { my $x=abs(shift); $max = $x if( $x > $max ); } );
+        return $max;
+    }
 
-	my $s=0;
-	$v->each( sub { $s+= (abs(shift))**$p; } );
-	return $s ** (1/$p);
+    my $s=0;
+    $v->each( sub { $s+= (abs(shift))**$p; } );
+    return $s ** (1/$p);
 
 }
 sub norm_max  #  maximum of sums of each row
 {
-    croak "Usage: \$norm_max = \$matrix->norm_max();"
-      if (@_ != 1);
+    croak "Usage: \$norm_max = \$matrix->norm_max();" if (@_ != 1);
 
-    my($this) = @_;
-    my($rows,$cols) = ($this->[1],$this->[2]);
+    my($self) = @_;
+    my($rows,$cols) = ($self->[1],$self->[2]);
 
     my $max = 0.0;
     for (my $i = 0; $i < $rows; $i++)
@@ -765,9 +798,9 @@ sub norm_max  #  maximum of sums of each row
         my $sum = 0.0;
         for (my $j = 0; $j < $cols; $j++)
         {
-            $sum += abs( $this->[0][$i][$j] );
+            $sum += abs( $self->[0][$i][$j] );
         }
-	$max = $sum if ($sum > $max);
+        $max = $sum if ($sum > $max);
     }
     return($max);
 }
@@ -797,57 +830,56 @@ sub negate
 ## each(): evaluate a coderef on each element and return a new matrix
 ## of said 
 sub each {
-	croak "Usage: \$new_matrix = \$matrix->each( \&sub );" unless (@_ == 2 );
-	my($matrix,$function) = @_;
-	my($rows,$cols) = ($matrix->[1],$matrix->[2]);
-	my($new_matrix) = $matrix->clone();
+    croak "Usage: \$new_matrix = \$matrix->each( \&sub );" unless (@_ == 2 );
+    my($matrix,$function) = @_;
+    my($rows,$cols) = ($matrix->[1],$matrix->[2]);
+    my($new_matrix) = $matrix->clone();
 
-	croak "Math::MatrixReal::each(): argument is not a sub reference" unless ref($function);
-	$new_matrix->_undo_LR();
+    croak "Math::MatrixReal::each(): argument is not a sub reference" unless ref($function);
+    $new_matrix->_undo_LR();
 
-	for (my $i = 0; $i < $rows; $i++ ) {
-		for (my $j = 0; $j < $cols; $j++ ) {
-			no strict 'refs';
-			# $i,$j are 1-based as of 1.7
-			$new_matrix->[0][$i][$j] = &{ $function }($matrix->[0][$i][$j],$i+1,$j+1) ;
-		}
-	}
-	return ($new_matrix);
+    for (my $i = 0; $i < $rows; $i++ ) {
+        for (my $j = 0; $j < $cols; $j++ ) {
+            no strict 'refs';
+            # $i,$j are 1-based as of 1.7
+            $new_matrix->[0][$i][$j] = &{ $function }($matrix->[0][$i][$j],$i+1,$j+1) ;
+        }
+    }
+    return ($new_matrix);
 }
 ## each_diag(): same as each() but only diag elements
 sub each_diag { 
-        croak "Usage: \$new_matrix = \$matrix->each_diag( \&sub );" unless (@_ == 2 );
-        my($matrix,$function) = @_;
-        my($rows,$cols) = ($matrix->[1],$matrix->[2]);
-        my($new_matrix) = $matrix->clone();
+    croak "Usage: \$new_matrix = \$matrix->each_diag( \&sub );" unless (@_ == 2 );
+    my($matrix,$function) = @_;
+    my($rows,$cols) = ($matrix->[1],$matrix->[2]);
+    my($new_matrix) = $matrix->clone();
 
-        croak "Math::MatrixReal::each(): argument is not a sub reference" unless ref($function);
-	croak "Matrix is not quadratic" unless ($rows == $cols);
+    croak "Math::MatrixReal::each(): argument is not a sub reference" unless ref($function);
+    croak "Matrix is not quadratic" unless ($rows == $cols);
 
-        $new_matrix->_undo_LR();
+    $new_matrix->_undo_LR();
 
-        for (my $i = 0; $i < $rows; $i++ ) {
-                for (my $j = 0; $j < $cols; $j++ ) {
-			next unless ($i == $j);
-                        no strict 'refs';
-			# $i,$j are 1-based as of 1.7
-                        $new_matrix->[0][$i][$j] = &{ $function }($matrix->[0][$i][$j],$i+1,$j+1) ;
-                }
+    for (my $i = 0; $i < $rows; $i++ ) {
+        for (my $j = 0; $j < $cols; $j++ ) {
+            next unless ($i == $j);
+            no strict 'refs';
+            # $i,$j are 1-based as of 1.7
+            $new_matrix->[0][$i][$j] = &{ $function }($matrix->[0][$i][$j],$i+1,$j+1) ;
         }
-        return ($new_matrix);
+    }
+    return ($new_matrix);
 }
 
 ## Make computing the inverse more user friendly
 sub inverse {
-	croak "Usage: \$inverse = \$matrix->inverse();" unless (@_ == 1);
-	my ($matrix) = @_;
-	return $matrix->decompose_LR->invert_LR;
+    croak "Usage: \$inverse = \$matrix->inverse();" unless (@_ == 1);
+    my ($matrix) = @_;
+    return $matrix->decompose_LR->invert_LR;
 }
 
 sub transpose {
 
-    croak "Usage: \$matrix1->transpose(\$matrix2);"
-      if (@_ != 2);
+    croak "Usage: \$matrix1->transpose(\$matrix2);" if (@_ != 2);
 
     my($matrix1,$matrix2) = @_;
     my($rows1,$cols1) = ($matrix1->[1],$matrix1->[2]);
@@ -872,9 +904,7 @@ sub transpose {
             }
             $matrix1->[0][$i][$i] = $matrix2->[0][$i][$i];
         }
-    }
-    else # ($rows1 != $cols1)
-    {
+    } else {                                # ($rows1 != $cols1) 
         for (my $i = 0; $i < $rows1; $i++)
         {
             for (my $j = 0; $j < $cols1; $j++)
@@ -887,14 +917,12 @@ sub transpose {
 
 sub add
 {
-    croak "Usage: \$matrix1->add(\$matrix2,\$matrix3);"
-      if (@_ != 3);
+    croak "Usage: \$matrix1->add(\$matrix2,\$matrix3);" if (@_ != 3);
 
     my($matrix1,$matrix2,$matrix3) = @_;
     my($rows1,$cols1) = ($matrix1->[1],$matrix1->[2]);
     my($rows2,$cols2) = ($matrix2->[1],$matrix2->[2]);
     my($rows3,$cols3) = ($matrix3->[1],$matrix3->[2]);
-    my($i,$j);
 
     croak "Math::MatrixReal::add(): matrix size mismatch"
       unless (($rows1 == $rows2) && ($rows1 == $rows3) &&
@@ -902,26 +930,23 @@ sub add
 
     $matrix1->_undo_LR();
 
-    for ( $i = 0; $i < $rows1; $i++ )
+    for ( my $i = 0; $i < $rows1; $i++ )
     {
-        for ( $j = 0; $j < $cols1; $j++ )
+        for ( my $j = 0; $j < $cols1; $j++ )
         {
-            $matrix1->[0][$i][$j] =
-            $matrix2->[0][$i][$j] + $matrix3->[0][$i][$j];
+            $matrix1->[0][$i][$j] = $matrix2->[0][$i][$j] + $matrix3->[0][$i][$j];
         }
     }
 }
 
 sub subtract
 {
-    croak "Usage: \$matrix1->subtract(\$matrix2,\$matrix3);"
-      if (@_ != 3);
+    croak "Usage: \$matrix1->subtract(\$matrix2,\$matrix3);" if (@_ != 3);
 
     my($matrix1,$matrix2,$matrix3) = @_;
     my($rows1,$cols1) = ($matrix1->[1],$matrix1->[2]);
     my($rows2,$cols2) = ($matrix2->[1],$matrix2->[2]);
     my($rows3,$cols3) = ($matrix3->[1],$matrix3->[2]);
-    my($i,$j);
 
     croak "Math::MatrixReal::subtract(): matrix size mismatch"
       unless (($rows1 == $rows2) && ($rows1 == $rows3) &&
@@ -929,12 +954,11 @@ sub subtract
 
     $matrix1->_undo_LR();
 
-    for ( $i = 0; $i < $rows1; $i++ )
+    for ( my $i = 0; $i < $rows1; $i++ )
     {
-        for ( $j = 0; $j < $cols1; $j++ )
+        for ( my $j = 0; $j < $cols1; $j++ )
         {
-            $matrix1->[0][$i][$j] =
-            $matrix2->[0][$i][$j] - $matrix3->[0][$i][$j];
+            $matrix1->[0][$i][$j] = $matrix2->[0][$i][$j] - $matrix3->[0][$i][$j];
         }
     }
 }
@@ -947,19 +971,15 @@ sub multiply_scalar
     my($matrix1,$matrix2,$scalar) = @_;
     my($rows1,$cols1) = ($matrix1->[1],$matrix1->[2]);
     my($rows2,$cols2) = ($matrix2->[1],$matrix2->[2]);
-    my($i,$j);
 
     croak "Math::MatrixReal::multiply_scalar(): matrix size mismatch"
       unless (($rows1 == $rows2) && ($cols1 == $cols2));
 
     $matrix1->_undo_LR();
 
-    for ( $i = 0; $i < $rows1; $i++ )
+    for ( my $i = 0; $i < $rows1; $i++ )
     {
-        for ( $j = 0; $j < $cols1; $j++ )
-        {
-            $matrix1->[0][$i][$j] = $matrix2->[0][$i][$j] * $scalar;
-        }
+        map { $matrix1->[0][$i][$_] = $matrix2->[0][$i][$_] * $scalar } (0 .. $cols1-1);
     }
 }
 
@@ -971,12 +991,10 @@ sub multiply
     my($matrix1,$matrix2) = @_;
     my($rows1,$cols1) = ($matrix1->[1],$matrix1->[2]);
     my($rows2,$cols2) = ($matrix2->[1],$matrix2->[2]);
-    my($temp);
 
-    croak "Math::MatrixReal::multiply(): matrix size mismatch"
-      unless ($cols1 == $rows2);
+    croak "Math::MatrixReal::multiply(): matrix size mismatch" unless ($cols1 == $rows2);
 
-    $temp = $matrix1->new($rows1,$cols2);
+    my $temp = $matrix1->new($rows1,$cols2);
     for (my $i = 0; $i < $rows1; $i++ )
     {
         for (my $j = 0; $j < $cols2; $j++ )
@@ -984,7 +1002,7 @@ sub multiply
             my $sum = 0.0;
             for (my $k = 0; $k < $cols1; $k++ )
             {
-	      $sum += ( $matrix1->[0][$i][$k] * $matrix2->[0][$k][$j] );
+                $sum += ( $matrix1->[0][$i][$k] * $matrix2->[0][$k][$j] );
             }
             $temp->[0][$i][$j] = $sum;
         }
@@ -993,100 +1011,112 @@ sub multiply
 }
 
 sub exponent {       
-	croak "Usage: \$matrix_exp = \$matrix1->exponent(\$integer);" if(@_ != 2 );
-	my($matrix,$argument) = @_;
-	my($rows,$cols) = ($matrix->[1],$matrix->[2]);
-	my($name) = "'**'"; 
-	my($temp) = $matrix->clone();       
+    croak "Usage: \$matrix_exp = \$matrix1->exponent(\$integer);" if(@_ != 2 );
+    my($matrix,$argument) = @_;
+    my($rows,$cols) = ($matrix->[1],$matrix->[2]);
+    my($name) = "'**'"; 
+    my($temp) = $matrix->clone();       
 
-	croak "Matrix is not quadratic" unless ($rows == $cols);
-	croak "Exponent must be integer" unless ($argument =~ m/^[+-]?\d+$/ );
+    croak "Matrix is not quadratic" unless ($rows == $cols);
+    croak "Exponent must be integer" unless ($argument =~ m/^[+-]?\d+$/ );
 
-	return($matrix) if ($argument == 1);
+    return($matrix) if ($argument == 1);
 
-	$temp->_undo_LR();
+    $temp->_undo_LR();
 
-	# negative exponent is (A^-1)^n
-	if( $argument < 0 ){ 
-		my $LR = $matrix->decompose_LR();
-		my $inverse = $LR->invert_LR();
-		unless (defined $inverse){
-			carp "Matrix has no inverse";
-			return undef;	
-		}
-		$temp = $inverse->clone();
-		if( $inverse ){
-			return($inverse) if ($argument == -1);
-				for( 2 .. abs($argument) ){ 
-					$temp = multiply($inverse,$temp);
-			    	}
-		    	return($temp);
-        	} else {   
-			# TODO: is this the right behaviour?
-            		carp "Cannot compute negative exponent, inverse does not exist";
-			return undef;
-		}
-	# matrix to zero power is identity matrix
-	} elsif( $argument == 0 ){
-		$temp->one();
-		return ($temp);
-	}
+    # negative exponent is (A^-1)^n
+    if( $argument < 0 ){ 
+        my $LR = $matrix->decompose_LR();
+        my $inverse = $LR->invert_LR();
+        unless (defined $inverse){
+            carp "Matrix has no inverse";
+            return undef;
+        }
+        $temp = $inverse->clone();
+        if( $inverse ){
+            return($inverse) if ($argument == -1);
+                for( 2 .. abs($argument) ){ 
+                    $temp = multiply($inverse,$temp);
+                    }
+                return($temp);
+            } else {   
+               # TODO: is this the right behaviour?
+               carp "Cannot compute negative exponent, inverse does not exist";
+               return undef;
+        }
+    # matrix to zero power is identity matrix
+    } elsif( $argument == 0 ){
+        $temp->one();
+        return ($temp);
+    }
 
-	# if it is diagonal, just raise diagonal entries to power
-	if( $matrix->is_diagonal() ){
-		$temp = $temp->each_diag( sub { (shift)**$argument } );
-		return ($temp);
-	
-	} else {
-		for( 2 .. $argument ){
-			$temp = multiply($matrix,$temp);
-		}
-		return ($temp);
-	}
+    # if it is diagonal, just raise diagonal entries to power
+    if( $matrix->is_diagonal() ){
+        $temp = $temp->each_diag( sub { (shift)**$argument } );
+        return ($temp);
+    
+    } else {
+        for( 2 .. $argument ){
+            $temp = multiply($matrix,$temp);
+        }
+        return ($temp);
+    }
 }
 
 sub min
 {
-    croak "Usage: \$minimum = Math::MatrixReal::min(\$number1,\$number2);"
-      if (@_ != 2);
 
-    return( $_[0] < $_[1] ? $_[0] : $_[1] );
+    if ( @_ == 1 ) {
+        my $matrix = shift;
+
+        croak "Usage: \$minimum = Math::MatrixReal::min(\$number1,\$number2) or $matrix->min" if (@_ > 2);
+        croak "invalid" unless ref $matrix eq 'Math::MatrixReal';
+
+        my $min = $matrix->element(1,1);
+        $matrix->each( sub { my ($e,$i,$j) = @_; $min = $e if $e < $min; } );
+        return $min; 
+    } 
+    $_[0] < $_[1] ? $_[0] : $_[1];
 }
 
 sub max
 {
-    croak "Usage: \$maximum = Math::MatrixReal::max(\$number1,\$number2);"
-      if (@_ != 2);
+    if ( @_ == 1 ) {
+        my $matrix = shift;
 
-    return( $_[0] > $_[1] ? $_[0] : $_[1] );
+        croak "Usage: \$maximum = Math::MatrixReal::max(\$number1,\$number2) or $matrix->max" if (@_ > 2);
+        croak "Math::MatrixReal::max(\$matrix) \$matrix is not a Math::MatrixReal matrix" unless ref $matrix eq 'Math::MatrixReal';
+ 
+        my $max = $matrix->element(1,1);
+        $matrix->each( sub { my ($e,$i,$j) = @_; $max = $e if $e > $max; } );
+        return $max; 
+    } 
+
+    $_[0] > $_[1] ? $_[0] : $_[1];
 }
 
 sub kleene
 {
-    croak "Usage: \$minimal_cost_matrix = \$cost_matrix->kleene();"
-      if (@_ != 1);
+    croak "Usage: \$minimal_cost_matrix = \$cost_matrix->kleene();" if (@_ != 1);
 
     my($matrix) = @_;
     my($rows,$cols) = ($matrix->[1],$matrix->[2]);
-    my($i,$j,$k,$n);
-    my($temp);
 
-    croak "Math::MatrixReal::kleene(): matrix is not quadratic"
-      unless ($rows == $cols);
+    croak "Math::MatrixReal::kleene(): matrix is not quadratic" unless ($rows == $cols);
 
-    $temp = $matrix->new($rows,$cols);
+    my $temp = $matrix->new($rows,$cols);
     $temp->copy($matrix);
     $temp->_undo_LR();
-    $n = $rows;
-    for ( $i = 0; $i < $n; $i++ )
+    my $n = $rows;
+    for ( my $i = 0; $i < $n; $i++ )
     {
         $temp->[0][$i][$i] = min( $temp->[0][$i][$i] , 0 );
     }
-    for ( $k = 0; $k < $n; $k++ )
+    for ( my $k = 0; $k < $n; $k++ )
     {
-        for ( $i = 0; $i < $n; $i++ )
+        for ( my $i = 0; $i < $n; $i++ )
         {
-            for ( $j = 0; $j < $n; $j++ )
+            for ( my $j = 0; $j < $n; $j++ )
             {
                 $temp->[0][$i][$j] = min( $temp->[0][$i][$j] ,
                                         ( $temp->[0][$i][$k] +
@@ -1303,9 +1333,7 @@ sub solve_LR
                 $dimension++;
                 $x_vector->[0][($perm_col->[$i])][0] = 0;
             }
-        }
-        else
-        {
+        } else {
             $sum = $y_vector->[0][$i][0];
             for ( $j = ($i + 1); $j < $n; $j++ )
             {
@@ -1321,9 +1349,7 @@ sub solve_LR
         if ($dimension == $n)
         {
             $base_matrix->one();
-        }
-        else
-        {
+        } else {
             for ( $k = 0; $k < $dimension; $k++ )
             {
                 $base_matrix->[0][($perm_col->[($n-$k-1)])][$k] = 1;
@@ -1358,6 +1384,7 @@ sub invert_LR
       unless ((defined $matrix->[3]) && ($rows == $cols));
 
     $n = $rows;
+    #print Dumper [ $matrix ];
     if ($matrix->[0][$n-1][$n-1] != 0)
     {
         $inv_matrix = $matrix->new($n,$n);
@@ -1375,15 +1402,15 @@ sub invert_LR
                 {
                     $inv_matrix->[0][$i][$j] = $x_vector->[0][$i][0];
                 }
-            }
-            else
-            {
+            } else {
                 die "Math::MatrixReal::invert_LR(): unexpected error - please inform author!\n";
             }
         }
         return($inv_matrix);
-    }
-    else { return(); } # matrix is not invertible!
+    } else {   
+        warn __PACKAGE__ . qq{: matrix not invertible\n};
+        return; 
+    } 
 }
 
 sub condition
@@ -1393,8 +1420,7 @@ sub condition
 
     # make this work when given no args
 
-    croak "Usage: \$condition = \$matrix->condition(\$inverse_matrix);"
-      if (@_ != 2);
+    croak "Usage: \$condition = \$matrix->condition(\$inverse_matrix);" if (@_ != 2);
 
     my($matrix1,$matrix2) = @_;
     my($rows1,$cols1) = ($matrix1->[1],$matrix1->[2]);
@@ -1416,23 +1442,23 @@ sub condition
 ## very fast if matrix is diagonal or triangular
 
 sub det {
-	croak "Usage: \$determinant = \$matrix->det_LR();" unless (@_ == 1);
-	my ($matrix) = @_;
-	my ($rows,$cols) = $matrix->dim();
-	my $det = 1;
+    croak "Usage: \$determinant = \$matrix->det_LR();" unless (@_ == 1);
+    my ($matrix) = @_;
+    my ($rows,$cols) = $matrix->dim();
+    my $det = 1;
 
-	croak "Math::MatrixReal::det(): Matrix is not quadratic"
-		unless ($rows == $cols);
-	
-	# diagonal will match too	
-	if( $matrix->is_upper_triangular() ){
-		$matrix->each_diag( sub { $det*=shift; } );
-	} elsif ( $matrix->is_lower_triangular() ){
-		$matrix->each_diag( sub { $det*=shift; } );
-	} else {
-		return $matrix->decompose_LR->det_LR();
-	}
-	return $det;
+    croak "Math::MatrixReal::det(): Matrix is not quadratic"
+        unless ($rows == $cols);
+    
+    # diagonal will match too
+    if( $matrix->is_upper_triangular() ){
+        $matrix->each_diag( sub { $det*=shift; } );
+    } elsif ( $matrix->is_lower_triangular() ){
+        $matrix->each_diag( sub { $det*=shift; } );
+    } else {
+        return $matrix->decompose_LR->det_LR();
+    }
+    return $det;
 }
 
 sub det_LR  #  determinant of LR decomposition matrix
@@ -1456,7 +1482,7 @@ sub det_LR  #  determinant of LR decomposition matrix
 }
 
 sub rank_LR {
-	return (shift)->order_LR;
+    return (shift)->order_LR;
 }
 
 sub order_LR  #  order of LR decomposition matrix (number of non-zero equations)
@@ -1487,7 +1513,6 @@ sub scalar_product
     my($vector1,$vector2) = @_;
     my($rows1,$cols1) = ($vector1->[1],$vector1->[2]);
     my($rows2,$cols2) = ($vector2->[1],$vector2->[2]);
-    my($k,$sum);
 
     croak "Math::MatrixReal::scalar_product(): 1st vector is not a column vector"
       unless ($cols1 == 1);
@@ -1498,18 +1523,14 @@ sub scalar_product
     croak "Math::MatrixReal::scalar_product(): vector size mismatch"
       unless ($rows1 == $rows2);
 
-    $sum = 0;
-    for ( $k = 0; $k < $rows1; $k++ )
-    {
-        $sum += $vector1->[0][$k][0] * $vector2->[0][$k][0];
-    }
-    return($sum);
+    my $sum = 0;
+    map { $sum +=  $vector1->[0][$_][0] * $vector2->[0][$_][0] } ( 0 .. $rows1-1);
+    return $sum;
 }
 
 sub vector_product
 {
-    croak "Usage: \$vector_product = \$vector1->vector_product(\$vector2);"
-      if (@_ != 2);
+    croak "Usage: \$vector_product = \$vector1->vector_product(\$vector2);" if (@_ != 2);
 
     my($vector1,$vector2) = @_;
     my($rows1,$cols1) = ($vector1->[1],$vector1->[2]);
@@ -1543,15 +1564,16 @@ sub vector_product
 
 sub length
 {
-    croak "Usage: \$length = \$vector->length();"
-      if (@_ != 1);
+    croak "Usage: \$length = \$vector->length();" if (@_ != 1);
 
     my($vector) = @_;
     my($rows,$cols) = ($vector->[1],$vector->[2]);
     my($k,$comp,$sum);
 
-    croak "Math::MatrixReal::length(): vector is not a column vector"
-      unless ($cols == 1);
+    croak "Math::MatrixReal::length(): vector is not a row or column vector"
+      unless ($cols == 1 || $rows ==1 );
+
+    $vector = ~$vector if ($rows == 1 );
 
     $sum = 0;
     for ( $k = 0; $k < $rows; $k++ )
@@ -1559,7 +1581,7 @@ sub length
         $comp = $vector->[0][$k][0];
         $sum += $comp * $comp;
     }
-    return( sqrt( $sum ) );
+    return sqrt $sum;
 }
 
 sub _init_iteration
@@ -1818,60 +1840,60 @@ sub _householder_vectors ($)
     my @p = ();
     for (my $i = ($rows-1); $i > 1; $i--)
     {
-	my $scale = 0.0;
-	# Computes norm of one column (below diagonal)
-	for (my $k = 0; $k < $i; $k++)
-	{
-	    $scale += abs($Q->[0][$i][$k]);
-	}
-	if ($scale == 0.0)
-	{ # skip the transformation
-	    $e->[$i-1] = $Q->[0][$i][$i-1];
-	}
-	else
-	{
-	    my $h = 0.0;
-	    for (my $k = 0; $k < $i; $k++)
-	    { # Used scaled Q for transformation
-		$Q->[0][$i][$k] /= $scale;
-		# Form sigma in h
-		$h += $Q->[0][$i][$k] * $Q->[0][$i][$k];
-	    }
-	    my $t1 = $Q->[0][$i][$i-1];
-	    my $t2 = (($t1 >= 0.0) ? -sqrt($h) : sqrt($h));
-	    $e->[$i-1] = $scale * $t2; # Update off-diagonals
-	    $h -= $t1 * $t2;
-	    $Q->[0][$i][$i-1] -= $t2;
-	    my $f = 0.0;
-	    for (my $j = 0; $j < $i; $j++)
-	    {
-		$Q->[0][$j][$i] = $Q->[0][$i][$j] / $h;
-		my $g = 0.0;
-		for (my $k = 0; $k <= $j; $k++)
-		{
-		    $g += $Q->[0][$j][$k] * $Q->[0][$i][$k];
-		}
-		for (my $k = $j+1; $k < $i; $k++)
-		{
-		    $g += $Q->[0][$k][$j] * $Q->[0][$i][$k];
-		}
-		# Form elements of P
-		$p[$j] = $g / $h;
-		$f += $p[$j] * $Q->[0][$i][$j];
-	    }
-	    my $hh = $f / ($h + $h);
-	    for (my $j = 0; $j < $i; $j++)
-	    {
-		my $t3 = $Q->[0][$i][$j];
-		my $t4 = $p[$j] - $hh * $t3;
-		$p[$j] = $t4;
-		for (my $k = 0; $k <= $j; $k++)
-		{
-		    $Q->[0][$j][$k] -= $t3 * $p[$k]
-			+ $t4 * $Q->[0][$i][$k];
-		}
-	    }
-	}
+    my $scale = 0.0;
+    # Computes norm of one column (below diagonal)
+    for (my $k = 0; $k < $i; $k++)
+    {
+        $scale += abs($Q->[0][$i][$k]);
+    }
+    if ($scale == 0.0)
+    { # skip the transformation
+        $e->[$i-1] = $Q->[0][$i][$i-1];
+    }
+    else
+    {
+        my $h = 0.0;
+        for (my $k = 0; $k < $i; $k++)
+        { # Used scaled Q for transformation
+            $Q->[0][$i][$k] /= $scale;
+            # Form sigma in h
+            $h += $Q->[0][$i][$k] * $Q->[0][$i][$k];
+        }
+        my $t1 = $Q->[0][$i][$i-1];
+        my $t2 = (($t1 >= 0.0) ? -sqrt($h) : sqrt($h));
+        $e->[$i-1] = $scale * $t2; # Update off-diagonals
+        $h -= $t1 * $t2;
+        $Q->[0][$i][$i-1] -= $t2;
+        my $f = 0.0;
+        for (my $j = 0; $j < $i; $j++)
+        {
+            $Q->[0][$j][$i] = $Q->[0][$i][$j] / $h;
+            my $g = 0.0;
+            for (my $k = 0; $k <= $j; $k++)
+            {
+                $g += $Q->[0][$j][$k] * $Q->[0][$i][$k];
+            }
+            for (my $k = $j+1; $k < $i; $k++)
+            {
+                $g += $Q->[0][$k][$j] * $Q->[0][$i][$k];
+            }
+            # Form elements of P
+            $p[$j] = $g / $h;
+            $f += $p[$j] * $Q->[0][$i][$j];
+        }
+        my $hh = $f / ($h + $h);
+        for (my $j = 0; $j < $i; $j++)
+        {
+            my $t3 = $Q->[0][$i][$j];
+            my $t4 = $p[$j] - $hh * $t3;
+            $p[$j] = $t4;
+            for (my $k = 0; $k <= $j; $k++)
+            {
+                $Q->[0][$j][$k] -= $t3 * $p[$k]
+                + $t4 * $Q->[0][$i][$k];
+            }
+        }
+    }
     }
     # Updates for i == 0,1
     $e->[0] = $Q->[0][1][0];    
@@ -1882,25 +1904,25 @@ sub _householder_vectors ($)
     $Q->[0][1][0] = $Q->[0][0][1] = 0.0;
     for (my $i = 2; $i < $rows; $i++)
     {
-	for (my $j = 0; $j < $i; $j++)
-	{
-	    my $g = 0.0;
-	    for (my $k = 0; $k < $i; $k++)
-	    {
-		$g += $Q->[0][$i][$k] * $Q->[0][$k][$j];
-	    }
-	    for (my $k = 0; $k < $i; $k++)
-	    {
-		$Q->[0][$k][$j] -= $g * $Q->[0][$k][$i];
-	    }
-	}
-	$d->[$i] = $Q->[0][$i][$i];
-	# Reset row and column of Q for next iteration
-	$Q->[0][$i][$i] = 1.0;
-	for (my $j = 0; $j < $i; $j++)
-	{
-	    $Q->[0][$i][$j] = $Q->[0][$j][$i] = 0.0;
-	}
+        for (my $j = 0; $j < $i; $j++)
+        {
+            my $g = 0.0;
+            for (my $k = 0; $k < $i; $k++)
+            {
+                $g += $Q->[0][$i][$k] * $Q->[0][$k][$j];
+            }
+            for (my $k = 0; $k < $i; $k++)
+            {
+                $Q->[0][$k][$j] -= $g * $Q->[0][$k][$i];
+            }
+        }
+        $d->[$i] = $Q->[0][$i][$i];
+        # Reset row and column of Q for next iteration
+        $Q->[0][$i][$i] = 1.0;
+        for (my $j = 0; $j < $i; $j++)
+        {
+            $Q->[0][$i][$j] = $Q->[0][$j][$i] = 0.0;
+        }
     }
     return ($d, $e);
 }
@@ -1913,15 +1935,13 @@ sub _pythag ($$)
     my $ab = abs($b);
     if ($aa > $ab)
     {
-	# NB: Not needed!: return 0.0 if ($aa == 0.0);
-	my $t = $ab / $aa;
-	return ($aa * sqrt(1.0 + $t*$t));
-    }
-    else
-    {
-	return 0.0 if ($ab == 0.0);
-	my $t = $aa / $ab;
-	return ($ab * sqrt(1.0 + $t*$t));
+        # NB: Not needed!: return 0.0 if ($aa == 0.0);
+        my $t = $ab / $aa;
+        return ($aa * sqrt(1.0 + $t*$t));
+    } else {
+        return 0.0 if ($ab == 0.0);
+        my $t = $aa / $ab;
+        return ($ab * sqrt(1.0 + $t*$t));
     }
 }
 
@@ -1936,58 +1956,58 @@ sub _tridiagonal_QLimplicit
     # Start real computation
     for (my $l = 0; $l < $rows; $l++)
     {
-	my $iter = 0;
-	my $m;
-	OUTER:
-	do {
-	    for ($m = $l; $m < ($rows - 1); $m++)
-	    {
-		my $dd = abs($d->[$m]) + abs($d->[$m+1]);
-		last if ((abs($e->[$m]) + $dd) == $dd);
-	    }
-	    if ($m != $l)
-	    {
-		## why only allow 30 iterations?
-		croak("Too many iterations!") if ($iter++ >= 30);
-		my $g = ($d->[$l+1] - $d->[$l])
-		    / (2.0 * $e->[$l]);
-		my $r = _pythag($g, 1.0);
-		$g = $d->[$m] - $d->[$l]
-		    + $e->[$l] / ($g + (($g >= 0.0) ? abs($r) : -abs($r)));
-		my ($p,$s,$c) = (0.0, 1.0,1.0);
-		for (my $i = ($m-1); $i >= $l; $i--)
-		{
-		    my $ii = $i + 1;
-		    my $f = $s * $e->[$i];
-		    my $t = _pythag($f, $g);
-		    $e->[$ii] = $t;
-		    if ($t == 0.0)
-		    {
-			$d->[$ii] -= $p;
-			$e->[$m] = 0.0;
-			next OUTER;
-		    }
-		    my $b = $c * $e->[$i];
-		    $s = $f / $t;
-		    $c = $g / $t;
-		    $g = $d->[$ii] - $p;
-		    my $t2 = ($d->[$i] - $g) * $s + 2.0 * $c * $b;
-		    $p = $s * $t2;
-		    $d->[$ii] = $g + $p;
-		    $g = $c * $t2 - $b;
-		    for (my $k = 0; $k < $rows; $k++)
-		    {
-			my $t1 = $EV->[0][$k][$ii];
-			my $t2 = $EV->[0][$k][$i];
-			$EV->[0][$k][$ii] = $s * $t2 + $c * $t1;
-			$EV->[0][$k][$i] = $c * $t2 - $s * $t1;
-		    }
-		}
-		$d->[$l] -= $p;
-		$e->[$l] = $g;
-		$e->[$m] = 0.0;
-	    }
-	} while ($m != $l);
+        my $iter = 0;
+        my $m;
+        OUTER:
+        do {
+            for ($m = $l; $m < ($rows - 1); $m++)
+            {
+                my $dd = abs($d->[$m]) + abs($d->[$m+1]);
+                last if ((abs($e->[$m]) + $dd) == $dd);
+            }
+            if ($m != $l)
+            {
+                ## why only allow 30 iterations?
+                croak("Too many iterations!") if ($iter++ >= 30);
+                my $g = ($d->[$l+1] - $d->[$l])
+                    / (2.0 * $e->[$l]);
+                my $r = _pythag($g, 1.0);
+                $g = $d->[$m] - $d->[$l]
+                    + $e->[$l] / ($g + (($g >= 0.0) ? abs($r) : -abs($r)));
+                my ($p,$s,$c) = (0.0, 1.0,1.0);
+            for (my $i = ($m-1); $i >= $l; $i--)
+            {
+                my $ii = $i + 1;
+                my $f = $s * $e->[$i];
+                my $t = _pythag($f, $g);
+                $e->[$ii] = $t;
+                if ($t == 0.0)
+                {
+                    $d->[$ii] -= $p;
+                    $e->[$m] = 0.0;
+                    next OUTER;
+                }
+                my $b = $c * $e->[$i];
+                $s = $f / $t;
+                $c = $g / $t;
+                $g = $d->[$ii] - $p;
+                my $t2 = ($d->[$i] - $g) * $s + 2.0 * $c * $b;
+                $p = $s * $t2;
+                $d->[$ii] = $g + $p;
+                $g = $c * $t2 - $b;
+                for (my $k = 0; $k < $rows; $k++)
+                {
+                    my $t1 = $EV->[0][$k][$ii];
+                    my $t2 = $EV->[0][$k][$i];
+                    $EV->[0][$k][$ii] = $s * $t2 + $c * $t1;
+                    $EV->[0][$k][$i] = $c * $t2 - $s * $t1;
+                }
+            }
+            $d->[$l] -= $p;
+            $e->[$l] = $g;
+            $e->[$m] = 0.0;
+            }
+        } while ($m != $l);
     }
     return;
 }
@@ -2007,65 +2027,65 @@ sub _householder_values ($)
     my @p = ();
     for (my $i = ($rows - 1); $i > 1; $i--)
     {
-	my $scale = 0.0;
-	for (my $k = 0; $k < $i; $k++)
-	{
-	    $scale += abs($Q->[0][$i][$k]);
-	}
-	if ($scale == 0.0)
-	{ # skip the transformation
-	    $e->[$i-1] = $Q->[0][$i][$i-1];
-	}
-	else
-	{
-	    my $h = 0.0;
-	    for (my $k = 0; $k < $i; $k++)
-	    { # Used scaled Q for transformation
-		$Q->[0][$i][$k] /= $scale;
-		# Form sigma in h
-		$h += $Q->[0][$i][$k] * $Q->[0][$i][$k];
-	    }
-	    my $t = $Q->[0][$i][$i-1];
-	    my $t2 = (($t >= 0.0) ? -sqrt($h) : sqrt($h));
-	    $e->[$i-1] = $scale * $t2; # Updates off-diagonal
-	    $h -= $t * $t2;
-	    $Q->[0][$i][$i-1] -= $t2;
-	    my $f = 0.0;
-	    for (my $j = 0; $j < $i; $j++)
-	    {
-		my $g = 0.0;
-		for (my $k = 0; $k <= $j; $k++)
-		{
-		    $g += $Q->[0][$j][$k] * $Q->[0][$i][$k];
-		}
-		for (my $k = $j+1; $k < $i; $k++)
-		{
-		    $g += $Q->[0][$k][$j] * $Q->[0][$i][$k];
-		}
-		# Form elements of P
-		$p[$j] = $g / $h;
-		$f += $p[$j] * $Q->[0][$i][$j];
-	    }
-	    my $hh = $f / ($h + $h);
-	    for (my $j = 0; $j < $i; $j++)
-	    {
-		my $t = $Q->[0][$i][$j];
-		my $g = $p[$j] - $hh * $t;
-		$p[$j] = $g;
-		for (my $k = 0; $k <= $j; $k++)
-		{
-		    $Q->[0][$j][$k] -= $t * $p[$k]
-			+ $g * $Q->[0][$i][$k];
-		}
-	    }
-	}
+        my $scale = 0.0;
+        for (my $k = 0; $k < $i; $k++)
+        {
+            $scale += abs($Q->[0][$i][$k]);
+        }
+        if ($scale == 0.0)
+        { # skip the transformation
+            $e->[$i-1] = $Q->[0][$i][$i-1];
+        }
+        else
+        {
+            my $h = 0.0;
+            for (my $k = 0; $k < $i; $k++)
+            { # Used scaled Q for transformation
+                $Q->[0][$i][$k] /= $scale;
+                # Form sigma in h
+                $h += $Q->[0][$i][$k] * $Q->[0][$i][$k];
+            }
+            my $t = $Q->[0][$i][$i-1];
+            my $t2 = (($t >= 0.0) ? -sqrt($h) : sqrt($h));
+            $e->[$i-1] = $scale * $t2; # Updates off-diagonal
+            $h -= $t * $t2;
+            $Q->[0][$i][$i-1] -= $t2;
+            my $f = 0.0;
+            for (my $j = 0; $j < $i; $j++)
+            {
+                my $g = 0.0;
+                for (my $k = 0; $k <= $j; $k++)
+                {
+                    $g += $Q->[0][$j][$k] * $Q->[0][$i][$k];
+                }
+                for (my $k = $j+1; $k < $i; $k++)
+                {
+                    $g += $Q->[0][$k][$j] * $Q->[0][$i][$k];
+                }
+                # Form elements of P
+                $p[$j] = $g / $h;
+                $f += $p[$j] * $Q->[0][$i][$j];
+            }
+            my $hh = $f / ($h + $h);
+            for (my $j = 0; $j < $i; $j++)
+            {
+                my $t = $Q->[0][$i][$j];
+                my $g = $p[$j] - $hh * $t;
+                $p[$j] = $g;
+                for (my $k = 0; $k <= $j; $k++)
+                {
+                    $Q->[0][$j][$k] -= $t * $p[$k]
+                    + $g * $Q->[0][$i][$k];
+                }
+            }
+        }
     }
     # Updates for i==1
     $e->[0] =  $Q->[0][1][0];
     # Updates diagonal elements
     for (my $i = 0; $i < $rows; $i++)
     {
-	$d->[$i] =  $Q->[0][$i][$i];
+        $d->[$i] =  $Q->[0][$i][$i];
     }
     return ($d, $e);
 }
@@ -2081,50 +2101,50 @@ sub _tridiagonal_QLimplicit_values
     # Start real computation
     for (my $l = 0; $l < $rows; $l++)
     {
-	my $iter = 0;
-	my $m;
-	OUTER:
-	do {
-	    for ($m = $l; $m < ($rows - 1); $m++)
-	    {
-		my $dd = abs($d->[$m]) + abs($d->[$m+1]);
-		last if ((abs($e->[$m]) + $dd) == $dd);
-	    }
-	    if ($m != $l)
-	    {
-		croak("Too many iterations!") if ($iter++ >= 30);
-		my $g = ($d->[$l+1] - $d->[$l])
-		    / (2.0 * $e->[$l]);
-		my $r = _pythag($g, 1.0);
-		$g = $d->[$m] - $d->[$l]
-		    + $e->[$l] / ($g + (($g >= 0.0) ? abs($r) : -abs($r)));
-		my ($p,$s,$c) = (0.0, 1.0,1.0);
-		for (my $i = ($m-1); $i >= $l; $i--)
-		{
-		    my $ii = $i + 1;
-		    my $f = $s * $e->[$i];
-		    my $t = _pythag($f, $g);
-		    $e->[$ii] = $t;
-		    if ($t == 0.0)
-		    {
-			$d->[$ii] -= $p;
-			$e->[$m] = 0.0;
-			next OUTER;
-		    }
-		    my $b = $c * $e->[$i];
-		    $s = $f / $t;
-		    $c = $g / $t;
-		    $g = $d->[$ii] - $p;
-		    my $t2 = ($d->[$i] - $g) * $s + 2.0 * $c * $b;
-		    $p = $s * $t2;
-		    $d->[$ii] = $g + $p;
-		    $g = $c * $t2 - $b;
-		}
-		$d->[$l] -= $p;
-		$e->[$l] = $g;
-		$e->[$m] = 0.0;
-	    }
-	} while ($m != $l);
+        my $iter = 0;
+        my $m;
+        OUTER:
+        do {
+            for ($m = $l; $m < ($rows - 1); $m++)
+            {
+                my $dd = abs($d->[$m]) + abs($d->[$m+1]);
+                last if ((abs($e->[$m]) + $dd) == $dd);
+            }
+            if ($m != $l)
+            {
+                croak("Too many iterations!") if ($iter++ >= 30);
+                my $g = ($d->[$l+1] - $d->[$l])
+                    / (2.0 * $e->[$l]);
+                my $r = _pythag($g, 1.0);
+                $g = $d->[$m] - $d->[$l]
+                    + $e->[$l] / ($g + (($g >= 0.0) ? abs($r) : -abs($r)));
+                my ($p,$s,$c) = (0.0, 1.0,1.0);
+                for (my $i = ($m-1); $i >= $l; $i--)
+                {
+                    my $ii = $i + 1;
+                    my $f = $s * $e->[$i];
+                    my $t = _pythag($f, $g);
+                    $e->[$ii] = $t;
+                    if ($t == 0.0)
+                    {
+                        $d->[$ii] -= $p;
+                        $e->[$m] = 0.0;
+                        next OUTER;
+                    }
+                    my $b = $c * $e->[$i];
+                    $s = $f / $t;
+                    $c = $g / $t;
+                    $g = $d->[$ii] - $p;
+                    my $t2 = ($d->[$i] - $g) * $s + 2.0 * $c * $b;
+                    $p = $s * $t2;
+                    $d->[$ii] = $g + $p;
+                    $g = $c * $t2 - $b;
+                }
+                $d->[$l] -= $p;
+                $e->[$l] = $g;
+                $e->[$m] = 0.0;
+            }
+        } while ($m != $l);
     }
     return;
 }
@@ -2138,7 +2158,7 @@ sub householder ($)
     my ($rows, $cols) = ($A->[1], $A->[2]);
 
     croak "Matrix is not quadratic"
-	unless ($rows = $cols);
+        unless ($rows = $cols);
     croak "Matrix is not symmetric"
         unless ($A->is_symmetric());
 
@@ -2153,12 +2173,12 @@ sub householder ($)
     my $T = $A->shadow();
     for (my $i = 0; $i < $rows; $i++)
     { # Set diagonal
-	$T->[0][$i][$i] = $diag->[$i];
+        $T->[0][$i][$i] = $diag->[$i];
     }
     for (my $i = 0; $i < ($rows-1); $i++)
     { # Set off diagonals
-	$T->[0][$i+1][$i] = $offdiag->[$i];
-	$T->[0][$i][$i+1] = $offdiag->[$i];
+        $T->[0][$i+1][$i] = $offdiag->[$i];
+        $T->[0][$i][$i+1] = $offdiag->[$i];
     }
     return ($T, $Q);
 }
@@ -2168,51 +2188,51 @@ sub householder ($)
 # previously reduced to tridiagonal form.
 sub tri_diagonalize ($;$)
 {
-  my ($T,$Q) = @_; # Q may be 0 if the original matrix is really tridiagonal
+    my ($T,$Q) = @_; # Q may be 0 if the original matrix is really tridiagonal
 
-  my ($rows, $cols) = ($T->[1], $T->[2]);
+    my ($rows, $cols) = ($T->[1], $T->[2]);
 
-  croak "Matrix is not quadratic"
-    unless ($rows = $cols);
-  croak "Matrix is not tridiagonal"
-	unless ($T->is_tridiagonal()); # DONE
+    croak "Matrix is not quadratic"
+        unless ($rows = $cols);
+    croak "Matrix is not tridiagonal"
+        unless ($T->is_tridiagonal()); # DONE
 
-  my $EV;
-  # Obtain/Creates the todo eigenvectors matrix
-  if ($Q)
+    my $EV;
+    # Obtain/Creates the todo eigenvectors matrix
+    if ($Q)
     {
-      $EV = $Q->clone();
+        $EV = $Q->clone();
     }
-  else
+    else
     {
-      $EV = $T->shadow();
-      $EV->one();
+        $EV = $T->shadow();
+        $EV->one();
     }
-  # Allocates diagonal vector
-  my $diag = [ ];
-  # Initializes it with T
-  for (my $i = 0; $i < $rows; $i++)
+    # Allocates diagonal vector
+    my $diag = [ ];
+    # Initializes it with T
+    for (my $i = 0; $i < $rows; $i++)
     {
-      $diag->[$i] = $T->[0][$i][$i];
+        $diag->[$i] = $T->[0][$i][$i];
     }
-  # Allocate temporary vector for off-diagonal elements
-  my $offdiag = [ ];
-  for (my $i = 1; $i < $rows; $i++)
+    # Allocate temporary vector for off-diagonal elements
+    my $offdiag = [ ];
+    for (my $i = 1; $i < $rows; $i++)
     {
-      $offdiag->[$i-1] = $T->[0][$i][$i-1];
+        $offdiag->[$i-1] = $T->[0][$i][$i-1];
     }
 
-  # Calls the calculus routine
-  $EV->_tridiagonal_QLimplicit($diag, $offdiag);
+    # Calls the calculus routine
+    $EV->_tridiagonal_QLimplicit($diag, $offdiag);
 
-  # Allocate eigenvalues vector
-  my $v = Math::MatrixReal->new($rows,1);
-  # Fills it
-  for (my $i = 0; $i < $rows; $i++)
+    # Allocate eigenvalues vector
+    my $v = Math::MatrixReal->new($rows,1);
+    # Fills it
+    for (my $i = 0; $i < $rows; $i++)
     {
-	$v->[0][$i][0] = $diag->[$i];
+        $v->[0][$i][0] = $diag->[$i];
     }
-  return ($v, $EV);
+    return ($v, $EV);
 }
 
 # Main routine for diagonalization of a real symmetric
@@ -2226,7 +2246,7 @@ sub sym_diagonalize ($)
     my ($rows, $cols) = ($M->[1], $M->[2]);
     
     croak "Matrix is not quadratic"
-	unless ($rows = $cols);
+        unless ($rows = $cols);
     croak "Matrix is not symmetric"
         unless ($M->is_symmetric());
     
@@ -2245,7 +2265,7 @@ sub sym_diagonalize ($)
     # Fills it
     for (my $i = 0; $i < $rows; $i++)
     {
-	$val->[0][$i][0] = $diag->[$i];
+        $val->[0][$i][0] = $diag->[$i];
     }
     return ($val, $VEC);
 }
@@ -2258,7 +2278,7 @@ sub householder_tridiagonal ($)
     my ($rows, $cols) = ($A->[1], $A->[2]);
 
     croak "Matrix is not quadratic"
-	unless ($rows = $cols);
+        unless ($rows = $cols);
     croak "Matrix is not symmetric"
         unless ($A->is_symmetric());
 
@@ -2275,12 +2295,12 @@ sub householder_tridiagonal ($)
     $T->zero();
     for (my $i = 0; $i < $rows; $i++)
     { # Set diagonal
-	$T->[0][$i][$i] = $diag->[$i];
+        $T->[0][$i][$i] = $diag->[$i];
     }
     for (my $i = 0; $i < ($rows-1); $i++)
     { # Set off diagonals
-	$T->[0][$i+1][$i] = $offdiag->[$i];
-	$T->[0][$i][$i+1] = $offdiag->[$i];
+        $T->[0][$i+1][$i] = $offdiag->[$i];
+        $T->[0][$i][$i+1] = $offdiag->[$i];
     }
     return $T;
 }
@@ -2290,63 +2310,58 @@ sub householder_tridiagonal ($)
 # matrix previously reduced to tridiagonal form.
 sub tri_eigenvalues ($;$)
 {
-  my ($T) = @_;
-  my ($rows, $cols) = ($T->[1], $T->[2]);
+    my ($T) = @_;
+    my ($rows, $cols) = ($T->[1], $T->[2]);
 
-  croak "Matrix is not quadratic"
-    unless ($rows = $cols);
-  croak "Matrix is not tridiagonal"
-	unless ($T->is_tridiagonal() ); # DONE
+    croak "Matrix is not quadratic"
+        unless ($rows = $cols);
+    croak "Matrix is not tridiagonal"
+        unless ($T->is_tridiagonal() ); # DONE
 
-  # Allocates diagonal vector
-  my $diag = [ ];
-  # Initializes it with T
-  for (my $i = 0; $i < $rows; $i++)
+    # Allocates diagonal vector
+    my $diag = [ ];
+    # Initializes it with T
+    for (my $i = 0; $i < $rows; $i++)
     {
-      $diag->[$i] = $T->[0][$i][$i];
+        $diag->[$i] = $T->[0][$i][$i];
     }
-  # Allocate temporary vector for off-diagonal elements
-  my $offdiag = [ ];
-  for (my $i = 1; $i < $rows; $i++)
+    # Allocate temporary vector for off-diagonal elements
+    my $offdiag = [ ];
+    for (my $i = 1; $i < $rows; $i++)
     {
-      $offdiag->[$i-1] = $T->[0][$i][$i-1];
+        $offdiag->[$i-1] = $T->[0][$i][$i-1];
     }
 
-  # Calls the calculus routine (T is not touched)
-  $T->_tridiagonal_QLimplicit_values($diag, $offdiag);
+    # Calls the calculus routine (T is not touched)
+    $T->_tridiagonal_QLimplicit_values($diag, $offdiag);
 
-  # Allocate eigenvalues vector
-  my $v = Math::MatrixReal->new($rows,1);
-  # Fills it
-  for (my $i = 0; $i < $rows; $i++)
+    # Allocate eigenvalues vector
+    my $v = Math::MatrixReal->new($rows,1);
+    # Fills it
+    for (my $i = 0; $i < $rows; $i++)
     {
-	$v->[0][$i][0] = $diag->[$i];
+        $v->[0][$i][0] = $diag->[$i];
     }
-  return $v;
+    return $v;
 }
 
 ## more general routine than sym_eigenvalues
 sub eigenvalues ($){
-	my ($matrix) = @_;
-	my ($rows,$cols) = $matrix->dim();
-	my $i=0;
+    my ($matrix) = @_;
+    my ($rows,$cols) = $matrix->dim();
 
-	#return sym_eigenvalues($matrix) if $matrix->is_symmetric();	
-	
-	croak "Matrix is not quadratic" unless ($rows == $cols);
+    croak "Matrix is not quadratic" unless ($rows == $cols);
 
-	if($matrix->is_upper_triangular() || $matrix->is_lower_triangular() ){
-		my $l = Math::MatrixReal->new($rows,1);
-		for(;$i < $rows; $i++ ){
-			$l->[0][$i][0] = $matrix->[0][$i][$i];
-		}
-		return $l;
-	}
+    if($matrix->is_upper_triangular() || $matrix->is_lower_triangular() ){
+        my $l = Math::MatrixReal->new($rows,1);
+        map { $l->[0][$_][0] = $matrix->[0][$_][$_] } (0 .. $rows-1);
+        return $l;
+    }
 
-	return sym_eigenvalues($matrix) if $matrix->is_symmetric();
+    return sym_eigenvalues($matrix) if $matrix->is_symmetric();
 
-	carp "Math::MatrixReal::eigenvalues(): Matrix is not symmetric or triangular";
-	return undef;
+    carp "Math::MatrixReal::eigenvalues(): Matrix is not symmetric or triangular";
+    return undef;
 
 }
 # Main routine for diagonalization of a real symmetric
@@ -2359,10 +2374,8 @@ sub sym_eigenvalues ($)
     my ($M) = @_;
     my ($rows, $cols) = ($M->[1], $M->[2]);
     
-    croak "Matrix is not quadratic"
-	unless ($rows == $cols); 
-    croak "Matrix is not symmetric"
-        unless ($M->is_symmetric());
+    croak "Matrix is not quadratic" unless ($rows == $cols); 
+    croak "Matrix is not symmetric" unless ($M->is_symmetric);
 
     # Copy matrix in temporary
     my $A = $M->clone();
@@ -2376,67 +2389,85 @@ sub sym_eigenvalues ($)
     # Allocate eigenvalues vector
     my $val = Math::MatrixReal->new($rows,1);
     # Fills it
-    for (my $i = 0; $i < $rows; $i++)
-    {
-	$val->[0][$i][0] = $diag->[$i];
-    }
+    map { $val->[0][$_][0] = $diag->[$_] } ( 0 .. $rows-1);
+
     return $val;
 }
 #TODO: docs+test
 sub is_positive_definite {
-        my ($matrix) = @_;
-        my ($r,$c) = $matrix->dim;
-        my $ev = $matrix->eigenvalues;
-	my $pos = 1;
-        $ev->each(sub { my $x = shift; if ($x <= 0){ $pos=0;return; } } );
-        return $pos;
+    my ($matrix) = @_;
+    my ($r,$c) = $matrix->dim;
+
+    croak "Math::MatrixReal::is_positive_definite(): Matrix is not square" unless ($r == $c);
+    # must have positive (i.e REAL) eigenvalues to be positive definite
+    return 0 unless $matrix->is_symmetric;
+
+    my $ev = $matrix->eigenvalues;
+    my $pos = 1;
+    $ev->each(sub { my $x = shift; if ($x <= 0){ $pos=0;return; } } );
+    return $pos;
 }
+#TODO: docs+test
+sub is_positive_semidefinite {
+    my ($matrix) = @_;
+    my ($r,$c) = $matrix->dim;
+
+    croak "Math::MatrixReal::is_positive_semidefinite(): Matrix is not square" unless ($r == $c);
+    # must have nonnegative (i.e REAL) eigenvalues to be positive semidefinite
+    return 0 unless $matrix->is_symmetric;
+
+    my $ev = $matrix->eigenvalues;
+    my $pos = 1;
+    $ev->each(sub { my $x = shift; if ($x < 0){ $pos=0;return; } } );
+    return $pos;
+}
+sub is_row { return (shift)->is_row_vector }
+sub is_col { return (shift)->is_col_vector }
 
 sub is_row_vector {
-	my ($m) = @_;
-	my ($r,$c) = $m->dim;
-	return 1 if ($r == 1);
+    my ($m) = @_;
+    my $r = $m->[1];
+    $r == 1 ? 1 : 0;
 }
 sub is_col_vector {
-        my ($m) = @_;
-        my ($r,$c) = $m->dim;
-        return 1 if ($c == 1);
+    my ($m) = @_;
+    my $c = $m->[2];
+    $c == 1 ? 1 : 0;
 }
 
 sub is_orthogonal($) {
-	my ($matrix) = @_;
-	##croak "Math::MatrixReal::is_orthogonal(): Matrix is not quadratic"
+    my ($matrix) = @_;
 
-	return 0 unless( $matrix->is_quadratic() );
-	
-	my $one = $matrix->shadow();
-	$one->one;
+    return 0 unless $matrix->is_quadratic;
 
-	abs(~$matrix * $matrix - $one) < 1e-12 ? return 1 : return 0;
+    my $one = $matrix->shadow();
+    $one->one;
+
+    abs(~$matrix * $matrix - $one) < 1e-12 ? return 1 : return 0;
 
 }
 
 sub is_positive($) {
-	my ($m) = @_;
-	my $pos = 1;
-	$m->each( sub { if( (shift) <= 0){ $pos = 0;return;} } );
-	return $pos;
+    my ($m) = @_;
+    my $pos = 1;
+    $m->each( sub { if( (shift) <= 0){ $pos = 0;return;} } );
+    return $pos;
 }
 sub is_negative($) {
-        my ($m) = @_;
-        my $neg = 1;
-        $m->each( sub { if( (shift) >= 0){ $neg = 0;return;} } );
-        return $neg;
+    my ($m) = @_;
+    my $neg = 1;
+    $m->each( sub { if( (shift) >= 0){ $neg = 0;return;} } );
+    return $neg;
 }
 
 
 sub is_periodic($$) {
-	my ($m,$k) = @_;
+    my ($m,$k) = @_;
         return 0 unless $m->is_quadratic();
-	abs($m**(int($k)+1) - $m) < 1e-12 ? return 1 : return 0;
+    abs($m**(int($k)+1) - $m) < 1e-12 ? return 1 : return 0;
 }
 sub is_idempotent($) {
-	return (shift)->is_periodic(1);
+    return (shift)->is_periodic(1);
 }
 
 # Boolean check routine to see if a matrix is
@@ -2451,259 +2482,336 @@ sub is_symmetric ($)
   for (my $i = 1; $i < $rows; $i++)
     {
       for (my $j = 0; $j < $i; $j++)
-	{
-	  return 0 unless ($M->[0][$i][$j] == $M->[0][$j][$i]);
-	}
+        {
+          return 0 unless ($M->[0][$i][$j] == $M->[0][$j][$i]);
+        }
     }
   return 1;
 }
 # Boolean check to see if matrix is tridiagonal
 sub is_tridiagonal ($) {
-	my ($M) = @_;
-        my ($rows,$cols) = ($M->[1],$M->[2]);
-        my ($i,$j) = (0,0); 
-	# if it is not quadratic it cannot be tridiag
-	return 0 unless ($rows == $cols);
+    my ($M) = @_;
+    my ($rows,$cols) = ($M->[1],$M->[2]);
+    my ($i,$j) = (0,0); 
+    # if it is not quadratic it cannot be tridiag
+    return 0 unless ($rows == $cols);
 
-	for(;$i < $rows; $i++ ){
-		for(;$j < $cols; $j++ ){
-			#print "debug: testing $i,$j = " . $M->[0][$i][$j] . "\n";
-			# skip diag and diag+-1
-			next if ($i == $j);		
-			next if ($i+1 == $j);
-			next if ($i-1 == $j);
-			return 0 if $M->[0][$i][$j];
-		}
-		$j = 0;
-	}
-	return 1;	
+    for(;$i < $rows; $i++ ){
+        for(;$j < $cols; $j++ ){
+            #print "debug: testing $i,$j = " . $M->[0][$i][$j] . "\n";
+            # skip diag and diag+-1
+            next if ($i == $j);
+            next if ($i+1 == $j);
+            next if ($i-1 == $j);
+            return 0 if $M->[0][$i][$j];
+        }
+        $j = 0;
+    }
+    return 1;
 }
 # Boolean check to see if matrix is upper triangular
 # i.e all nonzero elements are above main diagonal
 sub is_upper_triangular {
-	my ($M) = @_;
-	my ($rows,$cols) = $M->dim();
-	my ($i,$j) = (1,0);
-	return 0 unless ($rows == $cols);
-	
-	for(;$i < $rows; $i++ ){
-		for(;$j < $cols;$j++ ){
-			next if ($i <= $j);
-			return 0 if $M->[0][$i][$j];
-		}
-		$j = 0;
-	}
-	return 1;
+    my ($M) = @_;
+    my ($rows,$cols) = $M->dim();
+    my ($i,$j) = (1,0);
+    return 0 unless ($rows == $cols);
+    
+    for(;$i < $rows; $i++ ){
+        for(;$j < $cols;$j++ ){
+            next if ($i <= $j);
+            return 0 if $M->[0][$i][$j];
+        }
+        $j = 0;
+    }
+    return 1;
 }
 # Boolean check to see if matrix is lower triangular
 # i.e all nonzero elements are lower main diagonal
 sub is_lower_triangular {
-        my ($M) = @_;
-        my ($rows,$cols) = $M->dim();
-        my ($i,$j) = (0,1);
-        return 0 unless ($rows == $cols);
+    my ($M) = @_;
+    my ($rows,$cols) = $M->dim();
+    my ($i,$j) = (0,1);
+    return 0 unless ($rows == $cols);
 
-        for(;$i < $rows; $i++ ){
-                for(;$j < $cols;$j++ ){
-                        next if ($i >= $j);
-                        return 0 if $M->[0][$i][$j];
-                }
-                $j = 0;
+    for(;$i < $rows; $i++ ){
+        for(;$j < $cols;$j++ ){
+            next if ($i >= $j);
+            return 0 if $M->[0][$i][$j];
         }
-        return 1;
+        $j = 0;
+    }
+    return 1;
 }
 
 # Boolean check to see if matrix is diagonal
 sub is_diagonal ($) {
-	my ($M) = @_;
-	my ($rows,$cols) = ($M->[1],$M->[2]);
-	my ($i,$j) = (0,0);
-	return 0 unless ($rows == $cols );
-	for(;$i < $rows; $i++ ){
-		for(;$j < $cols; $j++ ){
-			# skip diag elements
-			next if ($i == $j);
-			return 0 if $M->[0][$i][$j];	
-		}
-		$j = 0;
-	}
-	return 1;
+    my ($M) = @_;
+    my ($rows,$cols) = ($M->[1],$M->[2]);
+    my ($i,$j) = (0,0);
+    return 0 unless ($rows == $cols );
+    for(;$i < $rows; $i++ ){
+        for(;$j < $cols; $j++ ){
+            # skip diag elements
+            next if ($i == $j);
+            return 0 if $M->[0][$i][$j];
+        }
+        $j = 0;
+    }
+    return 1;
 }
 sub is_quadratic ($) {
-	croak "Usage: \$matrix->is_quadratic()" unless (@_ == 1);
-	my ($matrix) = @_;
-	$matrix->[1] == $matrix->[2] ? return 1 : return 0;
+    croak "Usage: \$matrix->is_quadratic()" unless (@_ == 1);
+    my ($matrix) = @_;
+    $matrix->[1] == $matrix->[2] ? return 1 : return 0;
 }
 
 sub is_square($) {
-        croak "Usage: \$matrix->is_square()" unless (@_ == 1);
-	return (shift)->is_quadratic();
+    croak "Usage: \$matrix->is_square()" unless (@_ == 1);
+    return (shift)->is_quadratic();
 }
 
 sub is_LR($) {
-	croak "Usage: \$matrix->is_LR()" unless (@_ == 1);
-	return (shift)->[3] ? 1 : 0;
+    croak "Usage: \$matrix->is_LR()" unless (@_ == 1);
+    return (shift)->[3] ? 1 : 0;
 }
-###
+
 sub is_normal{
-	my ($matrix) = @_;
-	my ($rows,$cols) = $matrix->dim;
-	return 0 unless ($rows == $cols);
-	
-	return 1 if ( ~$matrix * $matrix - $matrix * ~$matrix < 1e-8 );
-	return 0;
-	
+    my ($matrix,$eps) = @_;
+    my ($rows,$cols) = $matrix->dim;
+   
+    $eps ||= 1e-8; 
+
+    (~$matrix * $matrix - $matrix * ~$matrix < $eps ) ? 1 : 0;
+
 }
+
 sub is_skew_symmetric{
-	my ($m) = @_;
-	my ($rows, $cols) = $m->dim;
-	# if it is not quadratic it cannot be skew symmetric...
-	return 0 unless ($rows == $cols);
-	for (my $i = 1; $i < $rows; $i++) {
-		for (my $j = 0; $j < $i; $j++) {
-			return 0 unless ($m->[0][$i][$j] == -$m->[0][$j][$i]);
-		}
-	}
-	return 1;
+    my ($m) = @_;
+    my ($rows, $cols) = $m->dim;
+    # if it is not quadratic it cannot be skew symmetric...
+    return 0 unless ($rows == $cols);
+    for (my $i = 1; $i < $rows; $i++) {
+        for (my $j = 0; $j < $i; $j++) {
+            return 0 unless ($m->[0][$i][$j] == -$m->[0][$j][$i]);
+        }
+    }
+    return 1;
 
 }
 ####
 sub is_gramian{
-	my ($m) = @_;
-	my ($rows,$cols) = $m->dim;
-	my $neg=0;
-	# gramian matrix must be symmetric
-	return 0 unless $m->is_symmetric;
+    my ($m) = @_;
+    my ($rows,$cols) = $m->dim;
+    my $neg=0;
+    # gramian matrix must be symmetric
+    return 0 unless $m->is_symmetric;
 
-	# must have all non-negative eigenvalues
-        my $ev = $m->eigenvalues;
-        $ev->each(sub { $neg++ if ((shift)<0) } );
+    # must have all non-negative eigenvalues
+    my $ev = $m->eigenvalues;
+    $ev->each(sub { $neg++ if ((shift)<0) } );
 
-	return $neg ? 0 : 1;
+    return $neg ? 0 : 1;
 }
 sub is_binary{
-        my ($m) = @_;
-        my ($rows, $cols) = $m->dim;
-        for (my $i = 0; $i < $rows; $i++) {
-                for (my $j = 0; $j < $cols; $j++) {
-                        return 0 unless ($m->[0][$i][$j] == 1 || $m->[0][$i][$j] == 0);
-                }
+    my ($m) = @_;
+    my ($rows, $cols) = $m->dim;
+    for (my $i = 0; $i < $rows; $i++) {
+        for (my $j = 0; $j < $cols; $j++) {
+            return 0 unless ($m->[0][$i][$j] == 1 || $m->[0][$i][$j] == 0);
         }
-        return 1;
+    }
+    return 1;
 
 }
 sub as_scilab {
-	return (shift)->as_matlab;
+    return (shift)->as_matlab;
 }
 
 sub as_matlab {
-	my ($m) = shift;
-        my %args = ( 
-                format => "%s",
-                name => "",
-		semi => 0,
-                @_);
-        my ($row,$col) = $m->dim;
-	my $s = "";
-	
-	if( $args{name} ){
-		$s = "$args{name} = ";
-	}
-	$s .= "[";
-	$m->each( 
-		sub { my($x,$i,$j) = @_;
-			$s .= sprintf(" $args{format}",$x);
-			$s .= ";\n" if( $j == $col && $i != $row);
-		}
-		);
-	$s .= "]";
-	$s .= ";" if $args{semi};
-	return $s;
+    my ($m) = shift;
+    my %args = ( 
+        format => "%s",
+        name => "",
+        semi => 0,
+        @_);
+    my ($row,$col) = $m->dim;
+    my $s = "";
+    
+    if( $args{name} ){
+        $s = "$args{name} = ";
+    }
+    $s .= "[";
+    $m->each( 
+        sub { my($x,$i,$j) = @_;
+            $s .= sprintf(" $args{format}",$x);
+            $s .= ";\n" if( $j == $col && $i != $row);
+        }
+        );
+    $s .= "]";
+    $s .= ";" if $args{semi};
+    return $s;
 }
 #TODO: docs+test
 sub as_yacas{
-	my ($m) = shift;
-        my %args = (
-                format => "%s",
-                name => "",
-                semi => 0,
-                @_);
-	my ($row,$col) = $m->dim;
-        my $s = "";
+    my ($m) = shift;
+    my %args = (
+        format => "%s",
+        name => "",
+        semi => 0,
+        @_);
+    my ($row,$col) = $m->dim;
+    my $s = "";
 
-        if( $args{name} ){
-                $s = "$args{name} := ";
-        }
-        $s .= "{";
+    if( $args{name} ){
+        $s = "$args{name} := ";
+    }
+    $s .= "{";
 
-	$m->each(
-                sub { my($x,$i,$j) = @_;
-			$s .= "{" if ($j == 1);
+    $m->each(
+        sub { my($x,$i,$j) = @_;
+            $s .= "{" if ($j == 1);
                         $s .= sprintf("$args{format}",$x);
                         $s .= "," if( $j != $col );
-			$s .= "}," if ($j == $col && $i != $row);
-		}
-	);
-	$s .= "}}";
+            $s .= "}," if ($j == $col && $i != $row);
+        }
+    );
+    $s .= "}}";
 
-	return $s;
+    return $s;
 }
-#TODO: any ideas for a good test?
+
 sub as_latex{
-	my ($m) = shift;
-	my %args = ( 
-		format => "%s",
-		name => "",
-		align => "c",
-		@_);
+    my ($m) = shift;
+    my %args = (
+        format       => "%s",
+        name         => "",
+        align        => "c",
+        display_math => 0,
+    @_);
 
 
-	my ($row,$col) = $m->dim;
-	my $inside;
-	my $s = <<LATEX;
-\$
+    my ($row,$col) = $m->dim;
+    my $inside;
+    my $s = <<LATEX;
 \\left( \\begin{array}{%COLS%}
 %INSIDE%\\end{array} \\right)
-\$
 LATEX
-	$args{align} = lc $args{align};
-	if( $args{align} !~ m/^(c|l|r)$/ ){
-		croak "Math::MatrixReal::as_latex(): Invalid alignment '$args{align}'";
-	}
+    $args{align} = lc $args{align};
+    if( $args{align} !~ m/^(c|l|r)$/ ){
+        croak "Math::MatrixReal::as_latex(): Invalid alignment '$args{align}'";
+    }
 
-	$s =~ s/%COLS%/$args{align} x $col/em;
+    $s =~ s/%COLS%/$args{align} x $col/em;
 
-	if( $args{name} ){
-		$s = "\$$args{name} = \$ " . $s;
-	}
-	$m->each( 
-		sub { my($x,$i,$j)=@_;
+    if( $args{name} ){
+        $s = "$args{name} = $s";
+    }
+    $m->each(
+        sub {
+            my ($x,$i,$j) = @_;
+            $x = sprintf($args{format},$x);
 
-			$x = sprintf($args{format},$x);
-
-			# last element in each row gets a \\
-			if ($j == $col && $i != $row){
-		 		$inside .= "$x \\\\"."\n";
-			# the annoying last line has neither
-			} elsif( $j == $col && $i == $row){ 
-				$inside .= "$x\n";
-			} else {
-				$inside .= "$x&";
-			}
-		} 
-	);
-	$s =~ s/%INSIDE%/$inside/gm;
-	return $s;
+            # last element in each row gets a \\
+            if ($j == $col && $i != $row){
+                $inside .= "$x \\\\"."\n";
+            # the annoying last line has neither
+            } elsif( $j == $col && $i == $row){ 
+                $inside .= "$x\n";
+            } else {
+                $inside .= "$x&";
+            }
+        } 
+    );
+    if($args{displaymath}){
+            $s = "\\[$s\\]";
+    } else {
+            $s = "\$$s\$";
+    }
+    $s =~ s/%INSIDE%/$inside/gm;
+    return $s;
 }
 #### 
-sub spectral_radius {
-	my ($matrix) = @_;
-	my ($r,$c) = $matrix->dim;
-	my $ev = $matrix->eigenvalues;
-	my $radius=0;
-	$ev->each(sub { my $x = shift; $radius = $x if (abs($x) > $radius); } );
-	return $radius;
+sub spectral_radius 
+{
+    my ($matrix) = @_;
+    my ($r,$c) = $matrix->dim;
+    my $ev = $matrix->eigenvalues;
+    my $radius=0;
+    $ev->each(sub { my $x = shift; $radius = $x if (abs($x) > $radius); } );
+    return $radius;
 }
+
+sub maximum {
+	my ($matrix) = @_;
+	my ($rows, $columns) = $matrix->dim;
+
+	my $max = [];
+	my $max_p = [];
+
+	if ($rows == 1) {
+		($max, $max_p) = _max_column($matrix->row(1)->_transpose, $columns);
+	} elsif ($columns == 1) { 	
+		($max, $max_p) = _max_column($matrix->column(1), $rows);
+	} else {
+		for my $c (1..$columns) {
+			my ($m, $mp) = _max_column($matrix->column($c), $rows);
+			push @$max, $m;
+			push @$max_p, $mp;
+		}
+	}
+	return wantarray ? ($max, $max_p) : $max
+}
+
+sub _max_column {
+	# passing $rows allows for some extra (minimal) efficiency
+	my ($column, $rows) = @_;
+
+	my ($m, $mp) = ($column->element(1, 1), 1);
+	for my $l (1..$rows) {
+		if ($column->element($l, 1) > $m) {
+			$m = $column->element($l, 1);
+			$mp = $l;
+		}
+	}
+	return ($m, $mp);
+}
+
+sub minimum {
+	my ($matrix) = @_;
+	my ($rows, $columns) = $matrix->dim;
+
+	my $min = [];
+	my $min_p = [];
+
+	if ($rows == 1) {
+		($min, $min_p) = _min_column($matrix->row(1)->_transpose, $columns);
+	} elsif ($columns == 1) { 	
+		($min, $min_p) = _min_column($matrix->column(1), $rows);
+	} else {
+		for my $c (1..$columns) {
+			my ($m, $mp) = _min_column($matrix->column($c), $rows);
+			push @$min, $m;
+			push @$min_p, $mp;
+		}
+	}
+	return wantarray ? ($min, $min_p) : $min
+}
+
+sub _min_column {
+	# passing $rows allows for some extra (minimal) efficiency
+	my ($column, $rows) = @_;
+
+	my ($m, $mp) = ($column->element(1, 1), 1);
+	for my $l (1..$rows) {
+		if ($column->element($l, 1) < $m) {
+			$m = $column->element($l, 1);
+			$mp = $l;
+		}
+	}
+	return ($m, $mp);
+}
+
 
 
                 ########################################
@@ -2711,43 +2819,58 @@ sub spectral_radius {
                 # define overloaded operators section: #
                 #                                      #
                 ########################################
-
-sub _negate
+sub _concat
 {
     my($object,$argument,$flag) = @_;
-#   my($name) = "neg"; 
-    my($temp);
+    my($orows,$ocols) 		= ($object->[1],$object->[2]);
+    my($name)			= "concat";
 
-    $temp = $object->new($object->[1],$object->[2]);
+
+    if ((defined $argument) && ref($argument) && (ref($argument) !~ /^SCALAR$|^ARRAY$|^HASH$|^CODE$|^REF$/)) {
+    	my($arows,$acols) 		= ($argument->[1],$argument->[2]);
+        croak "Math::MatrixReal: Matrices must have same number of rows in concatenation" unless ($orows == $arows);
+     	my $result = $object->new($orows,$ocols+$acols);
+        for ( my $i = 0; $i < $arows; $i++ ) {
+            for ( my $j = 0; $j < $ocols + $acols; $j++ ) {
+		$result->[0][$i][$j] = ( $j <  $ocols ) ? $object->[0][$i][$j] : $argument->[0][$i][$j - $ocols] ;
+            }
+        }
+        return $result;
+    } elsif (defined $argument) {
+	return "$object" . $argument;
+
+    } else {
+        croak "Math::MatrixReal $name: wrong argument type";
+    }
+}
+sub _negate
+{
+    my($object) = @_;
+
+    my $temp = $object->new($object->[1],$object->[2]);
     $temp->negate($object);
     return($temp);
 }
 
 sub _transpose
 {
-    my($object,$argument,$flag) = @_;
-#   my($name) = "'~'"; 
-    my($temp);
-
-    $temp = $object->new($object->[2],$object->[1]);
+    my ($object) = @_;
+    my $temp = $object->new($object->[2],$object->[1]);
     $temp->transpose($object);
-    return($temp);
-
+    return $temp;
 }
 
 sub _boolean
 {
-    my($object,$argument,$flag) = @_;
-#   my($name) = "bool"; 
+    my($object) = @_;
     my($rows,$cols) = ($object->[1],$object->[2]);
-    my($i,$j,$result);
 
-    #TODO: ugly...
-    $result = 0;
+    my $result = 0;
+
     BOOL:
-    for ( $i = 0; $i < $rows; $i++ )
+    for ( my $i = 0; $i < $rows; $i++ )
     {
-        for ( $j = 0; $j < $cols; $j++ )
+        for ( my $j = 0; $j < $cols; $j++ )
         {
             if ($object->[0][$i][$j] != 0)
             {
@@ -2761,16 +2884,14 @@ sub _boolean
 #TODO: ugly copy+paste
 sub _not_boolean
 {
-    my($object,$argument,$flag) = @_;
-#   my($name) = "'!'"; 
-    my($rows,$cols) = ($object->[1],$object->[2]);
-    my($i,$j,$result);
+    my ($object) = @_;
+    my ($rows,$cols) = ($object->[1],$object->[2]);
 
-    $result = 1;
+    my $result = 1;
     NOTBOOL:
-    for ( $i = 0; $i < $rows; $i++ )
+    for ( my $i = 0; $i < $rows; $i++ )
     {
-        for ( $j = 0; $j < $cols; $j++ )
+        for ( my $j = 0; $j < $cols; $j++ )
         {
             if ($object->[0][$i][$j] != 0)
             {
@@ -2784,44 +2905,45 @@ sub _not_boolean
 
 sub _stringify
 {
-    my($object,$argument,$flag) = @_;
-#   my($name) = '""'; 
-    my($rows,$cols) = ($object->[1],$object->[2]);
-    my($i,$j,$s);
+    my ($self) = @_;
+    my ($rows,$cols) = ($self->[1],$self->[2]);
 
-    $s = '';
-    for ( $i = 0; $i < $rows; $i++ )
+    my $precision = $self->[4];
+
+    my $format = !defined $precision ? '% #-19.12E ' : '% #-19.'.$precision.'f ';
+    $format = '% #-12d' if defined $precision && $precision == 0;
+
+    my $s = '';
+    for ( my $i = 0; $i < $rows; $i++ )
     {
         $s .= "[ ";
-        for ( $j = 0; $j < $cols; $j++ )
+        for ( my $j = 0; $j < $cols; $j++ )
         {
-            $s .= sprintf("% #-19.12E ", $object->[0][$i][$j]);
+            $s .= sprintf $format , $self->[0][$i][$j];
         }
         $s .= "]\n";
     }
-    return($s);
+    return $s;
 }
 
 sub _norm
 {
-    my($object,$argument,$flag) = @_;
-#   my($name) = "abs"; 
+    my ($self) = @_;
 
-    return( $object->norm_one() );
+    return $self->norm_one() ;
 }
 
 sub _add
 {
     my($object,$argument,$flag) = @_;
     my($name) = "'+'"; 
-    my($temp);
 
     if ((defined $argument) && ref($argument) &&
         (ref($argument) !~ /^SCALAR$|^ARRAY$|^HASH$|^CODE$|^REF$/))
     {
         if (defined $flag)
         {
-            $temp = $object->new($object->[1],$object->[2]);
+            my $temp = $object->new($object->[1],$object->[2]);
             $temp->add($object,$argument);
             return($temp);
         }
@@ -2841,17 +2963,16 @@ sub _subtract
 {
     my($object,$argument,$flag) = @_;
     my($name) = "'-'"; 
-    my($temp);
 
     if ((defined $argument) && ref($argument) &&
         (ref($argument) !~ /^SCALAR$|^ARRAY$|^HASH$|^CODE$|^REF$/))
     {
         if (defined $flag)
         {
-            $temp = $object->new($object->[1],$object->[2]);
+            my $temp = $object->new($object->[1],$object->[2]);
             if ($flag) { $temp->subtract($argument,$object); }
             else       { $temp->subtract($object,$argument); }
-            return($temp);
+            return $temp;
         }
         else
         {
@@ -2867,13 +2988,65 @@ sub _subtract
 
 sub _exponent 
 {
-    my($matrix,$argument,$flag) = @_;
+    my($matrix, $exp) = @_;
     my($rows,$cols) = ($matrix->[1],$matrix->[2]);
-    my($name) = "'**'"; 
 
-    return $matrix->exponent( $argument );
+    return $matrix->exponent( $exp );
 }
+sub _divide
+{
+	my($matrix,$argument,$flag) = @_;
+	# TODO: check dimensions of everything!
+	my($mrows,$mcols) = ($matrix->[1],$matrix->[2]);
+	my($arows,$acols)=(0,0);
+	my($name) = "'/'";
+	my $temp = $matrix->clone();
+	my $arg;
+	my ($inv,$m1);
 
+	if( ref($argument) =~ /Math::MatrixReal/ ){ 
+		$arg =  $argument->clone();  
+		($arows,$acols)=($arg->[1],$arg->[2]);
+	}
+	#print "DEBUG: flag= $flag\n";
+	#print "DEBUG: arg=$arg\n";
+	if( $flag == 1) {
+		  #print "DEBUG: ref(arg)= " . ref($arg) . "\n";
+		if( ref($argument) =~ /Math::MatrixReal/ ){
+			#print "DEBUG: arg is a matrix \n";
+			# Matrix Division = A/B = A*B^(-1)
+			croak "Math::MatrixReal $name: this operation is defined only for square matrices" unless ($arows == $acols);
+			return $temp->multiply(  $arg->inverse() );	
+
+		} else {
+			#print "DEBUG: Arg is scalar\n";
+			#print "DEBUG:arows,acols=$arows,$acols\n";
+			#print "DEBGU:mrows,mcols=$mrows,$mcols\n";
+			 croak "Math::MatrixReal $name: this operation is defined only for square matrices" unless ($mrows == $mcols);
+			$temp->multiply_scalar( $temp , $argument);
+			return $temp;
+		}
+        } else {
+	#print "DEBUG: temp=\n";
+	#print $temp . "\n";
+	#print "DEBUG: ref(arg)= " . ref($arg) . "\n";
+	#print "DEBUG: arg=\n";
+	#print $arg ."\n";
+	if( ref($arg) =~ /Math::MatrixReal/ ){
+		#print "DEBUG: matrix division\n";
+		if( $arg->is_col_vector() ){
+			print "DEBUG: $arg is a col vector\n";
+		}
+		croak "Math::MatrixReal $name: this operation is defined only for square matrices" unless ($arows == $acols);
+		$inv = $arg->inverse();
+		return $temp->multiply($inv);
+	} else {
+		$temp->multiply_scalar($temp,1/$argument);
+		return $temp;
+	}
+    }
+   
+}
 
 sub _multiply
 {
@@ -2915,31 +3088,28 @@ sub _multiply
 
 sub _assign_add
 {
-    my($object,$argument,$flag) = @_;
-#   my($name) = "'+='"; 
+    my($object,$argument) = @_;
 
     return( &_add($object,$argument,undef) );
 }
 
 sub _assign_subtract
 {
-    my($object,$argument,$flag) = @_;
-#   my($name) = "'-='"; 
+    my($object,$argument) = @_;
 
     return( &_subtract($object,$argument,undef) );
 }
 
 sub _assign_multiply
 {
-    my($object,$argument,$flag) = @_;
-#   my($name) = "'*='"; 
+    my($object,$argument) = @_;
 
     return( &_multiply($object,$argument,undef) );
 }
 
 sub _assign_exponent {
-	my($object,$arg,$flag) = @_;
-	return ( &_exponent($object,$arg,undef) );
+    my($object,$arg) = @_;
+    return ( &_exponent($object,$arg,undef) );
 }
 
 sub _equal
@@ -2978,16 +3148,17 @@ sub _not_equal
     my($object,$argument,$flag) = @_;
     my($name) = "'!='"; 
     my($rows,$cols) = ($object->[1],$object->[2]);
-    my($i,$j,$result);
 
     if ((defined $argument) && ref($argument) &&
         (ref($argument) !~ /^SCALAR$|^ARRAY$|^HASH$|^CODE$|^REF$/))
     {
-        $result = 0;
+	my ($r,$c) = $argument->dim;
+	return 1 unless ($r == $rows && $c == $cols );
+    my $result = 0;
         NOTEQUAL:
-        for ( $i = 0; $i < $rows; $i++ )
+        for ( my $i = 0; $i < $rows; $i++ )
         {
-            for ( $j = 0; $j < $cols; $j++ )
+            for ( my $j = 0; $j < $cols; $j++ )
             {
                 if ($object->[0][$i][$j] != $argument->[0][$i][$j])
                 {
@@ -2996,10 +3167,8 @@ sub _not_equal
                 }
             }
         }
-        return($result);
-    }
-    else
-    {
+        return $result;
+    } else {
         croak "Math::MatrixReal $name: wrong argument type";
     }
 }
@@ -3015,9 +3184,7 @@ sub _less_than
         if ((defined $flag) && $flag)
         {
             return( $argument->norm_one() < $object->norm_one() );
-        }
-        else
-        {
+        } else {
             return( $object->norm_one() < $argument->norm_one() );
         }
     }
@@ -3026,14 +3193,10 @@ sub _less_than
         if ((defined $flag) && $flag)
         {
             return( abs($argument) < $object->norm_one() );
-        }
-        else
-        {
+        } else {
             return( $object->norm_one() < abs($argument) );
         }
-    }
-    else
-    {
+    } else {
         croak "Math::MatrixReal $name: wrong argument type";
     }
 }
@@ -3049,25 +3212,17 @@ sub _less_than_or_equal
         if ((defined $flag) && $flag)
         {
             return( $argument->norm_one() <= $object->norm_one() );
-        }
-        else
-        {
+        } else {
             return( $object->norm_one() <= $argument->norm_one() );
         }
-    }
-    elsif ((defined $argument) && !(ref($argument)))
-    {
+    } elsif ((defined $argument) && !(ref($argument))) {
         if ((defined $flag) && $flag)
         {
             return( abs($argument) <= $object->norm_one() );
-        }
-        else
-        {
+        } else {
             return( $object->norm_one() <= abs($argument) );
         }
-    }
-    else
-    {
+    } else {
         croak "Math::MatrixReal $name: wrong argument type";
     }
 }
@@ -3083,25 +3238,17 @@ sub _greater_than
         if ((defined $flag) && $flag)
         {
             return( $argument->norm_one() > $object->norm_one() );
-        }
-        else
-        {
+        } else {
             return( $object->norm_one() > $argument->norm_one() );
         }
-    }
-    elsif ((defined $argument) && !(ref($argument)))
-    {
+    } elsif ((defined $argument) && !(ref($argument))) {
         if ((defined $flag) && $flag)
         {
             return( abs($argument) > $object->norm_one() );
-        }
-        else
-        {
+        } else {
             return( $object->norm_one() > abs($argument) );
         }
-    }
-    else
-    {
+    } else {
         croak "Math::MatrixReal $name: wrong argument type";
     }
 }
@@ -3117,142 +3264,46 @@ sub _greater_than_or_equal
         if ((defined $flag) && $flag)
         {
             return( $argument->norm_one() >= $object->norm_one() );
-        }
-        else
-        {
+        } else {
             return( $object->norm_one() >= $argument->norm_one() );
         }
-    }
-    elsif ((defined $argument) && !(ref($argument)))
-    {
+    } elsif ((defined $argument) && !(ref($argument))) {
         if ((defined $flag) && $flag)
         {
             return( abs($argument) >= $object->norm_one() );
-        }
-        else
-        {
+        } else {
             return( $object->norm_one() >= abs($argument) );
         }
-    }
-    else
-    {
+    } else {
         croak "Math::MatrixReal $name: wrong argument type";
     }
-}
-sub _exp {
-	my ($matrix,$arg,$flag) = @_;
-	my $new_matrix = $matrix->clone();
-	my ($rows,$cols) = $matrix->dim();
-	
-	$new_matrix->_undo_LR();
-
-	croak "Math::MatrixReal::exp(): Matrix is not quadratic" unless ($rows == $cols);
-	croak "Math::MatrixReal::exp(): Only diagonal matrices supported" unless ( $matrix->is_diagonal() );
-
-	$new_matrix = $matrix->each_diag( sub { exp(shift) } );
-	return $new_matrix;
-
-}
-sub _cos {
-        my ($matrix,$arg,$flag) = @_;
-        my $new_matrix = $matrix->clone();
-        my ($rows,$cols) = $matrix->dim();
-
-        $new_matrix->_undo_LR();
-
-        croak "Math::MatrixReal::cos(): Matrix is not quadratic" unless ($rows == $cols);
-        croak "Math::MatrixReal::cos(): Only diagonal matrices supported" unless ( $matrix->is_diagonal() );
-
-        $new_matrix = $matrix->each_diag( sub { cos(shift) } );
-        return $new_matrix;
-}
-sub _sin {
-        my ($matrix,$arg,$flag) = @_;
-        my $new_matrix = $matrix->clone();
-        my ($rows,$cols) = $matrix->dim();
-
-        $new_matrix->_undo_LR();
-
-        croak "Math::MatrixReal::sin(): Matrix is not quadratic" unless ($rows == $cols);
-        croak "Math::MatrixReal::sin(): Only diagonal matrices supported" unless ( $matrix->is_diagonal() );
-
-        $new_matrix = $matrix->each_diag( sub { sin(shift) } );
-        return $new_matrix;
-
 }
 
 sub _clone
 {
-    my($object,$argument,$flag) = @_;
-#   my($name) = "'='"; 
-    my($temp);
+    my($object) = @_;
 
-    $temp = $object->new($object->[1],$object->[2]);
+    my $temp = $object->new($object->[1],$object->[2]);
     $temp->copy($object);
     $temp->_undo_LR();
-    return($temp);
+    return $temp;
 }
-
-sub _trace
-{
-    my($text,$object,$argument,$flag) = @_;
-
-    unless (defined $object)   { $object   = 'undef'; };
-    unless (defined $argument) { $argument = 'undef'; };
-    unless (defined $flag)     { $flag     = 'undef'; };
-    if (ref($object))   { $object   = ref($object);   }
-    if (ref($argument)) { $argument = ref($argument); }
-    print "$text: \$obj='$object' \$arg='$argument' \$flag='$flag'\n";
-}
-
-1;
-
+{ no warnings; 42 }
 __END__
 
-=head1 NAME
 
-Math::MatrixReal - Matrix of Reals
-
-Implements the data type "matrix of reals" (and consequently also
-"vector of reals").
-
-=head1 DESCRIPTION
-
-Implements the data type "matrix of reals", which can be used almost
-like any other basic Perl type thanks to B<OPERATOR OVERLOADING>, i.e.,
-
-  $product = $matrix1 * $matrix2;
-
-does what you would like it to do (a matrix multiplication).
-
-Also features many important operations and methods: matrix norm,
-matrix transposition, matrix inverse, determinant of a matrix, order
-and numerical condition of a matrix, scalar product of vectors, vector
-product of vectors, vector length, projection of row and column vectors,
-a comfortable way for reading in a matrix from a file, the keyboard or
-your code, and many more.
-
-Allows to solve linear equation systems using an efficient algorithm
-known as "L-R-decomposition" and several approximative (iterative) methods.
-
-Features an implementation of Kleene's algorithm to compute the minimal
-costs for all paths in a graph with weighted edges (the "weights" being
-the costs associated with each edge).
-
-=head1 SYNOPSIS
+=head1 FUNCTIONS
 
 =head2 Constructor Methods And Such
 
-=item *
+=over 4
 
-C<use Math::MatrixReal;>
+=item * use Math::MatrixReal;
 
 Makes the methods and overloaded operators of this module available
 to your program.
 
-=item *
-
-C<$new_matrix = new Math::MatrixReal($rows,$columns);>
+=item * $new_matrix = new Math::MatrixReal($rows,$columns);
 
 The matrix object constructor method. A new matrix of size $rows by $columns
 will be created, with the value C<0.0> for all elements.
@@ -3260,17 +3311,13 @@ will be created, with the value C<0.0> for all elements.
 Note that this method is implicitly called by many of the other methods
 in this module.
 
-=item *
-
-C<$new_matrix = $some_matrix-E<gt>>C<new($rows,$columns);>
+=item * $new_matrix = $some_matrix-E<gt>new($rows,$columns);
 
 Another way of calling the matrix object constructor method.
 
-Matrix "C<$some_matrix>" is not changed by this in any way.
+Matrix $some_matrix is not changed by this in any way.
 
-=item *
-
-C<$new_matrix = $matrix-E<gt>new_from_cols( [ $column_vector|$array_ref|$string, ... ] )>
+=item * $new_matrix = $matrix-E<gt>new_from_cols( [ $column_vector|$array_ref|$string, ... ] )
 
 Creates a new matrix given a reference to an array of any of the following:
 
@@ -3281,25 +3328,23 @@ Creates a new matrix given a reference to an array of any of the following:
 =item * references to arrays
 
 =item * strings properly formatted to create a column with Math::MatrixReal's
-C<new_from_string> command
+new_from_string command
 
 =back
 
 You may mix and match these as you wish.  However, all must be of the
 same dimension--no padding happens automatically.  Example: 
 
-	my $matrix = Math::MatrixReal->new_from_cols( [ [1,2], [3,4] ] );
-	print $matrix;
+    my $matrix = Math::MatrixReal->new_from_cols( [ [1,2], [3,4] ] );
+    print $matrix;
 
 will print
 
-	[  1.000000000000E+00  3.000000000000E+00 ]
-	[  2.000000000000E+00  4.000000000000E+00 ]
+    [  1.000000000000E+00  3.000000000000E+00 ]
+    [  2.000000000000E+00  4.000000000000E+00 ]
 
 
-=item * 
-
-C<new_from_rows( [ $row_vector|$array_ref|$string, ... ] )>
+=item * new_from_rows( [ $row_vector|$array_ref|$string, ... ] )
 
 Creates a new matrix given a reference to an array of any of the following:
 
@@ -3309,7 +3354,7 @@ Creates a new matrix given a reference to an array of any of the following:
 
 =item * references to arrays
 
-=item * strings properly formatted to create a row with Math::MatrixReal's C<new_from_string> command
+=item * strings properly formatted to create a row with Math::MatrixReal's new_from_string command
 
 =back
 
@@ -3325,27 +3370,58 @@ will print
         [  3.000000000000E+00  4.000000000000E+00 ]
 
 
-=item *
+=item * $new_matrix = Math::MatrixReal-E<gt>new_random($rows, $cols, %options );
 
-C<$new_matrix = Math::MatrixReal-E<gt>new_diag( $array_ref );>
+This method allows you to create a random matrix with various properties controlled
+by the %options matrix, which is optional. The default values of the %options matrix
+are { integer => 0, symmetric => 0, tridiagonal => 0, diagonal => 0, bounded_by => [0,10] } .
+
+ Example: 
+
+    $matrix = Math::MatrixReal->new_random(4, { diagonal => 1, integer => 1 }  );
+    print $matrix;
+
+will print a 4x4 random diagonal matrix with integer entries between zero and ten, something like
+
+    [  5.000000000000E+00  0.000000000000E+00  0.000000000000E+00  0.000000000000E+00 ]
+    [  0.000000000000E+00  2.000000000000E+00  0.000000000000E+00  0.000000000000E+00 ]
+    [  0.000000000000E+00  0.000000000000E+00  1.000000000000E+00  0.000000000000E+00 ]
+    [  0.000000000000E+00  0.000000000000E+00  0.000000000000E+00  8.000000000000E+00 ]
+
+
+=item * $new_matrix = Math::MatrixReal-E<gt>new_diag( $array_ref );
 
 This method allows you to create a diagonal matrix by only specifying
 the diagonal elements. Example: 
-	
-	$matrix = Math::MatrixReal->new_diag( [ 1,2,3,4 ] );
-	print $matrix;
+
+    $matrix = Math::MatrixReal->new_diag( [ 1,2,3,4 ] );
+    print $matrix;
 
 will print
 
-	[  1.000000000000E+00  0.000000000000E+00  0.000000000000E+00  0.000000000000E+00 ]
-	[  0.000000000000E+00  2.000000000000E+00  0.000000000000E+00  0.000000000000E+00 ]
-	[  0.000000000000E+00  0.000000000000E+00  3.000000000000E+00  0.000000000000E+00 ]
-	[  0.000000000000E+00  0.000000000000E+00  0.000000000000E+00  4.000000000000E+00 ]
+    [  1.000000000000E+00  0.000000000000E+00  0.000000000000E+00  0.000000000000E+00 ]
+    [  0.000000000000E+00  2.000000000000E+00  0.000000000000E+00  0.000000000000E+00 ]
+    [  0.000000000000E+00  0.000000000000E+00  3.000000000000E+00  0.000000000000E+00 ]
+    [  0.000000000000E+00  0.000000000000E+00  0.000000000000E+00  4.000000000000E+00 ]
 
 
-=item *
+=item * $new_matrix = Math::MatrixReal-E<gt>new_tridiag( $lower, $diag, $upper );
 
-C<$new_matrix = Math::MatrixReal-E<gt>>C<new_from_string($string);>
+This method allows you to create a tridiagonal matrix by only specifying
+the lower diagonal, diagonal and upper diagonal, respectively.
+
+    $matrix = Math::MatrixReal->new_tridiag( [ 6, 4, 2 ], [1,2,3,4], [1, 8, 9] );
+    print $matrix;
+
+will print
+
+    [  1.000000000000E+00  1.000000000000E+00  0.000000000000E+00  0.000000000000E+00 ]
+    [  6.000000000000E+00  2.000000000000E+00  8.000000000000E+00  0.000000000000E+00 ]
+    [  0.000000000000E+00  4.000000000000E+00  3.000000000000E+00  9.000000000000E+00 ]
+    [  0.000000000000E+00  0.000000000000E+00  2.000000000000E+00  4.000000000000E+00 ]
+
+
+=item * $new_matrix = Math::MatrixReal-E<gt>new_from_string($string);
 
 This method allows you to read in a matrix from a string (for
 instance, from the keyboard, from a file or from your code).
@@ -3469,27 +3545,21 @@ the following warning will be printed to STDERR:
 If everything is okay, the method returns an object reference to the
 (newly allocated) matrix containing the elements you specified.
 
-=item *
-
-C<$new_matrix = $some_matrix-E<gt>shadow();>
+=item * $new_matrix = $some_matrix-E<gt>shadow();
 
 Returns an object reference to a B<NEW> but B<EMPTY> matrix
 (filled with zero's) of the B<SAME SIZE> as matrix "C<$some_matrix>".
 
 Matrix "C<$some_matrix>" is not changed by this in any way.
 
-=item *
-
-C<$matrix1-E<gt>copy($matrix2);>
+=item * $matrix1-E<gt>copy($matrix2);
 
 Copies the contents of matrix "C<$matrix2>" to an B<ALREADY EXISTING>
 matrix "C<$matrix1>" (which must have the same size as matrix "C<$matrix2>"!).
 
 Matrix "C<$matrix2>" is not changed by this in any way.
 
-=item *
-
-C<$twin_matrix = $some_matrix-E<gt>clone();>
+=item * $twin_matrix = $some_matrix-E<gt>clone();
 
 Returns an object reference to a B<NEW> matrix of the B<SAME SIZE> as
 matrix "C<$some_matrix>". The contents of matrix "C<$some_matrix>" have
@@ -3499,12 +3569,45 @@ C<$a = $b>, when C<$a> and C<$b> are matrices.
 
 Matrix "C<$some_matrix>" is not changed by this in any way.
 
+=item * $matrix = Math::MatrixReal->reshape($rows, $cols, $array_ref);
+
+Return a matrix with the specified dimensions (C<$rows> x C<$cols>)  whose
+elements are taken from the array reference C<$array_ref>.  The elements of
+the matrix are accessed in column-major order (like Fortran arrays are
+stored).
+
+     $matrix = Math::MatrixReal->reshape(4, 3, [1..12]);
+
+Creates the following matrix:
+
+    [ 1    5    9 ]
+    [ 2    6   10 ]
+    [ 3    7   11 ]
+    [ 4    8   12 ]
+
+=back
 
 =head2 Matrix Row, Column and Element operations
 
-=item *
+=over 4
 
-C<$row_vector = $matrix-E<gt>row($row);>
+=item * $value = $matrix-E<gt>element($row,$column);
+
+Returns the value of a specific element of the matrix "C<$matrix>",
+located in row "C<$row>" and column "C<$column>".
+
+B<NOTE:> Unlike Perl, matrices are indexed with base-one indexes. Thus, the
+first element of the matrix is placed in the B<first> line, B<first> column:
+
+    $elem = $matrix->element(1, 1); # first element of the matrix.
+    
+=item * $matrix-E<gt>assign($row,$column,$value);
+
+Explicitly assigns a value "C<$value>" to a single element of the
+matrix "C<$matrix>", located in row "C<$row>" and column "C<$column>",
+thereby replacing the value previously stored there.
+
+=item * $row_vector = $matrix-E<gt>row($row);
 
 This is a projection method which returns an object reference to
 a B<NEW> matrix (which in fact is a (row) vector since it has only
@@ -3513,9 +3616,7 @@ already been copied.
 
 Matrix "C<$matrix>" is not changed by this in any way.
 
-=item *
-
-C<$column_vector = $matrix-E<gt>column($column);>
+=item * $column_vector = $matrix-E<gt>column($column);
 
 This is a projection method which returns an object reference to
 a B<NEW> matrix (which in fact is a (column) vector since it has
@@ -3524,24 +3625,7 @@ only one column) to which column number "C<$column>" of matrix
 
 Matrix "C<$matrix>" is not changed by this in any way.
 
-=item *
-
-C<$matrix-E<gt>assign($row,$column,$value);>
-
-Explicitly assigns a value "C<$value>" to a single element of the
-matrix "C<$matrix>", located in row "C<$row>" and column "C<$column>",
-thereby replacing the value previously stored there.
-
-=item *
-
-C<$value = $matrix-E<gt>>C<element($row,$column);>
-
-Returns the value of a specific element of the matrix "C<$matrix>",
-located in row "C<$row>" and column "C<$column>".
-
-=item *
-
-C<$new_matrix = $matrix-E<gt>each( \&function )>;
+=item * $new_matrix = $matrix-E<gt>each( \&function );
 
 Creates a new matrix by evaluating a code reference on each element of the 
 given matrix. The function is passed the element, the row index and the column
@@ -3550,25 +3634,23 @@ executed statement ) is the value given to the corresponding element in $new_mat
 
 Example:
 
-	# add 1 to every element in the matrix
-	$matrix = $matrix->each ( sub { (shift) + 1 } );
+    # add 1 to every element in the matrix
+    $matrix = $matrix->each ( sub { (shift) + 1 } );
 
 
 Example:
 
-	my $cofactor = $matrix->each( sub { my(undef,$i,$j) = @_;
-		($i+$j) % 2 == 0 ? $matrix->minor($i,$j)->det()
-		: -1*$matrix->minor($i,$j)->det();
-		} );
+    my $cofactor = $matrix->each( sub { my(undef,$i,$j) = @_;
+        ($i+$j) % 2 == 0 ? $matrix->minor($i,$j)->det()
+        : -1*$matrix->minor($i,$j)->det();
+        } );
 
 This code needs some explanation. For each element of $matrix, it throws away the actual value
 and stores the row and column indexes in $i and $j. Then it sets element [$i,$j] in $cofactor
 to the determinant of C<$matrix-E<gt>minor($i,$j)> if it is an "even" element, or C<-1*$matrix-E<gt>minor($i,$j)>
 if it is an "odd" element.
 
-=item *
-
-C<$new_matrix = $matrix-E<gt>each_diag( \&function )>;
+=item * $new_matrix = $matrix-E<gt>each_diag( \&function );
 
 Creates a new matrix by evaluating a code reference on each diagonal element of the 
 given matrix. The function is passed the element, the row index and the column
@@ -3576,28 +3658,66 @@ index, in that order. The value the function returns ( or the value of the last
 executed statement ) is the value given to the corresponding element in $new_matrix.
 
 
-=item * 
-
-C<$matrix-E<gt>swap_col( $col1, $col2 );>
+=item * $matrix-E<gt>swap_col( $col1, $col2 );
 
 This method takes two one-based column numbers and swaps the values of each element in each column.
 C<$matrix-E<gt>swap_col(2,3)> would replace column 2 in $matrix with column 3, and replace column
 3 with column 2. 
 
-=item * 
-
-C<$matrix-E<gt>swap_row( $row1, $row2 );>
+=item * $matrix-E<gt>swap_row( $row1, $row2 );
 
 This method takes two one-based row numbers and swaps the values of each element in each row.
 C<$matrix-E<gt>swap_row(2,3)> would replace row 2 in $matrix with row 3, and replace row
 3 with row 2. 
 
+=item * $matrix-E<gt>assign_row( $row_number , $new_row_vector );
+
+This method takes a one-based row number and assigns row $row_number of $matrix
+with $new_row_vector and returns the resulting matrix.
+C<$matrix-E<gt>assign_row(5, $x)> would replace row 5 in $matrix with the row vector $x.
+
+=item * $matrix-E<gt>maximum();  and  $matrix-E<gt>minimum();
+
+These two methods work similarly, one for computing the maximum element or
+elements from a matrix, and the minimum element or elements from a matrix.
+They work in a similar way as Octave/MatLab max/min functions.
+
+When computing the maximum or minimum from a vector (vertical or horizontal),
+only one element is returned. When  computing the maximum or minimum from a
+matrix, the maximum/minimum element for each column is returned in an array
+reference.
+
+When called in list context, the function returns a pair, where the first
+element is the maximum/minimum element (or elements) and the second is the
+position of that value in the vector (first occurrence), or the row where it
+occurs, for matrices.
+
+Consider the matrix and vector below for the following examples:
+
+           [ 1 9 4 ] 
+      $A = [ 3 5 2 ]       $B = [ 8 7 9 5 3 ]
+           [ 8 7 6 ]
+
+When used in scalar context:
+
+    $max = $A->maximum();    # $max = [ 8, 9, 6 ]
+    $min = $B->minimum();    # $min = 3
+
+When used in list context:
+
+    ($min, $pos) = $A->minimum(); # $min = [ 1 5 2 ]
+                                  # $pos = [ 1 2 2 ]
+    ($max, $pos) = $B->maximum(); # $max = 9
+                                  # $pos = 3
+
+
+=back
 
 =head2 Matrix Operations
 
-=item *
+=over 4
 
-C<$det = $matrix-E<gt>det();>
+=item * $det = $matrix-E<gt>det();
 
 Returns the determinant of the matrix, without going through
 the rigamarole of computing a LR decomposition. This method should
@@ -3694,32 +3814,32 @@ between two vectors is just a special case of a p-norm, when p is
 equal to 2.
 
 Example:
-	$a = Math::MatrixReal->new_from_cols([[1,2,3]]);
-	$p1   = $a->norm_p(1);	
+    $a = Math::MatrixReal->new_from_cols([[1,2,3]]);
+    $p1   = $a->norm_p(1);
         $p2   = $a->norm_p(2);    
         $p3   = $a->norm_p(3);    
-	$pinf = $a->norm_p("Inf");
+    $pinf = $a->norm_p("Inf");
 
-	print "(1,2,3,Inf) norm:\n$p1\n$p2\n$p3\n$pinf\n";
+    print "(1,2,3,Inf) norm:\n$p1\n$p2\n$p3\n$pinf\n";
 
-	$i1 = $a->new_from_rows([[1,0]]);
-	$i2 = $a->new_from_rows([[0,1]]);
+    $i1 = $a->new_from_rows([[1,0]]);
+    $i2 = $a->new_from_rows([[0,1]]);
 
-	# this should be sqrt(2) since it is the same as the 
-	# hypotenuse of a 1 by 1 right triangle
+    # this should be sqrt(2) since it is the same as the 
+    # hypotenuse of a 1 by 1 right triangle
 
-	$dist  = ($i1-$i2)->norm_p(2);
-	print "Distance is $dist, which should be " . sqrt(2) . "\n";
+    $dist  = ($i1-$i2)->norm_p(2);
+    print "Distance is $dist, which should be " . sqrt(2) . "\n";
 
 Output:
 
-	(1,2,3,Inf) norm:
-	6
-	3.74165738677394139
-	3.30192724889462668
-	3
+    (1,2,3,Inf) norm:
+    6
+    3.74165738677394139
+    3.30192724889462668
+    3
 
-	Distance is 1.41421356237309505, which should be 1.41421356237309505
+    Distance is 1.41421356237309505, which should be 1.41421356237309505
 
 
 
@@ -3825,25 +3945,25 @@ inverse of a matrix is the cofactor matrix transposed divided by the original
 determinant of the matrix. 
 
 The following two inverses should be exactly the same:
-	
-	my $inverse1 = $matrix->inverse;
-	my $inverse2 = ~($matrix->cofactor)->each( sub { (shift)/$matrix->det() } );
+
+    my $inverse1 = $matrix->inverse;
+    my $inverse2 = ~($matrix->cofactor)->each( sub { (shift)/$matrix->det() } );
 
 Caveat: Although the cofactor matrix is simple algorithm to compute the inverse of a matrix, and
 can be used with pencil and paper for small matrices, it is comically slower than 
 the native C<inverse()> function. Here is a small benchmark:
 
-	# $matrix1 is 15x15
-	$det = $matrix1->det;
-	timethese( 10,
+    # $matrix1 is 15x15
+    $det = $matrix1->det;
+    timethese( 10,
         {'inverse' => sub { $matrix1->inverse(); },
           'cofactor' => sub { (~$matrix1->cofactor)->each ( sub { (shift)/$det; } ) }
         } );
 
 
-	Benchmark: timing 10 iterations of LR, cofactor, inverse...
+    Benchmark: timing 10 iterations of LR, cofactor, inverse...
         inverse:  1 wallclock secs ( 0.56 usr +  0.00 sys =  0.56 CPU) @ 17.86/s (n=10)
-  	cofactor: 36 wallclock secs (36.62 usr +  0.01 sys = 36.63 CPU) @  0.27/s (n=10)
+    cofactor: 36 wallclock secs (36.62 usr +  0.01 sys = 36.63 CPU) @  0.27/s (n=10)
 
 =item *
 
@@ -3852,8 +3972,11 @@ C<$adjoint = $matrix-E<gt>adjoint();>
 The adjoint is just the transpose of the cofactor matrix. This method is 
 just an alias for C< ~($matrix-E<gt>cofactor)>.
 
+=back
 
 =head2 Arithmetic Operations
+
+=over 4
 
 =item *
 
@@ -3942,8 +4065,11 @@ be an integer. If it is zero, the identity matrix is returned. If a negative
 integer is given, the inverse will be computed (if it exists) and then raised
 the the absolute value of C<$integer>. The matrix must be quadratic.
 
+=back
 
 =head2 Boolean Matrix Operations
+
+=over 4
 
 =item * 
 
@@ -4105,6 +4231,8 @@ Returns a boolean value indicating if the matrix is a col vector.
 A col vector is a matrix which is nx1. Note that the 1x1 matrix is
 both a row and column vector.
 
+=back 
+
 =head2 Eigensystems
 
 =over 2
@@ -4195,9 +4323,7 @@ operation is similar to the householder() method, but potentially
 a little more efficient as the transformation matrix is not
 computed.
 
-=item *
-
-C<$l = $T-E<gt>tri_eigenvalues();>
+=item * $l = $T-E<gt>tri_eigenvalues();
 
 This method computesthe eigenvalues of the symmetric
 tridiagonal matrix B<T>. On output, $l is a vector
@@ -4209,9 +4335,9 @@ when eigenvectors are not needed.
 
 =head2 Miscellaneous 
 
-=item *
+=over 4
 
-C<$matrix-E<gt>zero();>
+=item * $matrix-E<gt>zero();
 
 Assigns a zero to every element of the matrix "C<$matrix>", i.e.,
 erases all values previously stored there, thereby effectively
@@ -4224,9 +4350,7 @@ characteristic of a Ring is that multiplication is not commutative,
 i.e., in general, "C<matrix1 * matrix2>" is not the same as
 "C<matrix2 * matrix1>"!)
 
-=item *
-
-C<$matrix-E<gt>one();>
+=item * $matrix-E<gt>one();
 
 Assigns one's to the elements on the main diagonal (elements (1,1),
 (2,2), (3,3) and so on) of matrix "C<$matrix>" and zero's to all others,
@@ -4252,17 +4376,17 @@ element can be used so that a LaTeX string of "$name = " is prepended to the str
 
 Example:
 
-	my $a = Math::MatrixReal->new_from_cols([[ 1.234, 5.678, 9.1011],[1,2,3]] );
-	print $a->as_latex( ( format => "%.2f", align => "l",name => "A" ) );
+    my $a = Math::MatrixReal->new_from_cols([[ 1.234, 5.678, 9.1011],[1,2,3]] );
+    print $a->as_latex( ( format => "%.2f", align => "l",name => "A" ) );
 
-Output:
-	$A = $ $
-	\left( \begin{array}{ll}
-	1.23&1.00 \\
-	5.68&2.00 \\
-	9.10&3.00
-	\end{array} \right)
-	$
+    Output:
+    $A = $ $
+    \left( \begin{array}{ll}
+    1.23&1.00 \\
+    5.68&2.00 \\
+    9.10&3.00
+    \end{array} \right)
+    $
 
 =item *
 
@@ -4278,12 +4402,12 @@ be set to 1 to that a semicolon is appended (so Matlab does not print out the ma
 
 Example:
 
-	$a = Math::MatrixReal->new_from_cols([[ 1.234, 5.678, 9.1011],[1,2,3]] );
-	print $a->as_yacas( ( format => "%.2f", align => "l",name => "A" ) );
+    $a = Math::MatrixReal->new_from_cols([[ 1.234, 5.678, 9.1011],[1,2,3]] );
+    print $a->as_yacas( ( format => "%.2f", align => "l",name => "A" ) );
 
 Output:
 
-	A := {{1.23,1.00},{5.68,2.00},{9.10,3.00}}
+    A := {{1.23,1.00},{5.68,2.00},{9.10,3.00}}
 
 =item *
 
@@ -4302,8 +4426,8 @@ Example:
         print $a->as_matlab( ( format => "%.3f", name => "A",semi => 1 ) );
 
 Output:
-	A = [ 1.234 5.678 9.101;
- 	 1.000 2.000 3.000];
+        A = [ 1.234 5.678 9.101;
+         1.000 2.000 3.000];
 
 
 =item *
@@ -4316,14 +4440,23 @@ same matrix format.
 =item *
 
 C<$minimum = Math::MatrixReal::min($number1,$number2);>
+C<$minimum = Math::MatrixReal::min($matrix);>
+C<<$minimum = $matrix->min;>>
 
-Returns the minimum of the two numbers "C<number1>" and "C<number2>".
+Returns the minimum of the two numbers "C<number1>" and "C<number2>" if called with two arguments, 
+or returns the value of the smallest element of a matrix if called with one argument or as an object
+method.
 
 =item *
 
 C<$maximum = Math::MatrixReal::max($number1,$number2);>
+C<$maximum = Math::MatrixReal::max($number1,$number2);>
+C<$maximum = Math::MatrixReal::max($matrix);>
+C<<$maximum = $matrix->max;>>
 
-Returns the maximum of the two numbers "C<number1>" and "C<number2>".
+Returns the maximum of the two numbers "C<number1>" and "C<number2>" if called with two arguments,
+or returns the value of the largest element of a matrix if called with one arguemnt or as on object
+method.
 
 =item *
 
@@ -4799,10 +4932,10 @@ This is actually a shortcut for
 
   $length = sqrt( $vector->scalar_product($vector) );
 
-and returns the length of a given (column!) vector "C<$vector>".
+and returns the length of a given column or row vector "C<$vector>".
 
 Note that the "length" calculated by this method is in fact the
-"two"-norm of a vector "C<$vector>"!
+"two"-norm (also know as the Euclidean norm) of a vector "C<$vector>"!
 
 The general definition for norms of vectors is the following:
 
@@ -4928,7 +5061,7 @@ function has an absolute value less than one in an area around the
 point "C<x(*)>" for which "C<Phi( x(*) ) = x(*)>" is to be true, and
 if the start vector "C<x(0)>" lies within that area!
 
-This is best verified grafically, which unfortunately is impossible
+This is best verified graphically, which unfortunately is impossible
 to do in this textual documentation!
 
 See literature on Numerical Analysis for details!
@@ -5020,6 +5153,8 @@ Experiment!
 Remember that in most cases, it is probably advantageous to first
 "normalize()" your equation system prior to solving it!
 
+=back
+
 =head1 OVERLOADED OPERATORS
 
 =head2 SYNOPSIS
@@ -5034,10 +5169,14 @@ Unary operators:
 
 =item *
 
+Binary operators:
+
+"C<.>"
+
 Binary (arithmetic) operators:
 
 "C<+>", "C<->", "C<*>", "C<**>",
-"C<+=>", "C<-=>", "C<*=>", "C<**=>"
+"C<+=>", "C<-=>", "C<*=>", "C</=>","C<**=>"
 
 =item *
 
@@ -5056,6 +5195,28 @@ only.
 =head2 DESCRIPTION
 
 =over 5
+
+=item '.'
+
+Concatenation
+
+Returns the two matrices concatenated side by side.
+
+Example:
+	$c = $a . $b;
+
+For example, 
+if  
+
+	$a=[ 1 2 ]   $b=[ 5 6 ]		
+	   [ 3 4 ]      [ 7 8 ]		
+then
+
+	$c=[ 1 2 5 6 ]
+           [ 3 4 7 8 ]
+
+Note that only matrices with the same number of rows may be concatenated.
+
 
 =item '-'
 
@@ -5123,8 +5284,8 @@ Converts the given matrix into a string.
 Uses scientific representation to keep precision loss to a minimum in case
 you want to read this string back in again later with "new_from_string()".
 
-Uses a 13-digit mantissa and a 20-character field for each element so that
-lines will wrap nicely on an 80-column screen.
+By default a 13-digit mantissa and a 20-character field for each element is used
+so that lines will wrap nicely on an 80-column screen. 
 
 Examples:
 
@@ -5193,6 +5354,14 @@ Examples:
     $matrix_B = $matrix_A * -1;
 
     $matrix_A *= -1;
+
+=item '/'
+
+Division
+
+Currently a shortcut for doing $a * $b ** -1 is $a / $b, which works for square matrices. One 
+can also use 1/$a .
+
 
 =item '**'
 
@@ -5326,22 +5495,22 @@ Uses the "one"-norm for matrices and Perl's built-in "abs()" for scalars.
 =head1 SEE ALSO
 
 Math::VectorReal, Math::PARI, Math::MatrixBool,
-DFA::Kleene, Math::Kleene,
+Math::Vec, DFA::Kleene, Math::Kleene,
 Set::IntegerRange, Set::IntegerFast .
 
 =head1 VERSION
 
-This man page documents Math::MatrixReal version 1.9.
+This man page documents Math::MatrixReal version 2.10
 
-The latest version can always be found at
-http://leto.net/code/Math-MatrixReal/
+The latest code can be found at
+https://github.com/leto/math--matrixreal .
 
 =head1 AUTHORS
 
 Steffen Beyer <sb@engelschall.com>, Rodolphe Ortalo <ortalo@laas.fr>,
-Jonathan Leto <jonathan@leto.net>.
+Jonathan "Duke" Leto <jonathan@leto.net>.
 
-Currently maintained by Jonathan Leto, send all bugs/patches to me.
+Currently maintained by Jonathan "Duke" Leto, send all bugs/patches to me.
 
 =head1 CREDITS
 
@@ -5352,7 +5521,7 @@ lectures in Numerical Analysis!
 
 =head1 COPYRIGHT
 
-Copyright (c) 1996-2002 by Steffen Beyer, Rodolphe Ortalo, Jonathan Leto.
+Copyright (c) 1996-2011 by Steffen Beyer, Rodolphe Ortalo, Jonathan "Duke" Leto.
 All rights reserved.
 
 =head1 LICENSE AGREEMENT
