@@ -21,6 +21,10 @@ my $have_file_copy = 0;
 my $directory_separator;
 my $is_win7 = 0;
 my $is_Vista = 0;
+my $binary_dir;
+my $library_dir;
+my $perl_binary;
+my $old_psn_config_file;
 
 setup_globals();
 
@@ -703,11 +707,6 @@ if ($Config{osname} eq 'linux' or $Config{osname} eq 'darwin') {
 	}
 }
 
-my $binary_dir;
-my $library_dir;
-my $perl_binary;
-my $old_psn_config_file;
-
 print "PsN Utilities installation directory [$default_bin]:";
 $binary_dir = get_input($default_bin);
 create_directory($binary_dir);
@@ -743,7 +742,6 @@ if (running_on_windows()) {
 	$copy_cmd = "cp";
 	$copy_recursive_cmd = "cp -r";
 }
-
 
 print "\nThe next step is to check Perl module dependencies.
 If a module is missing, you must install it, e.g. from CPAN,
@@ -1033,6 +1031,8 @@ if (not $keep_conf) {
 
 }
 
+warn_about_local_configuration();
+
 if ($configuration_done) {
 	print "\nInstallation complete.\n";
 } else {
@@ -1042,11 +1042,6 @@ if ($configuration_done) {
 	print "Detailed instructions are found in ";
 	print "$library_dir$directory_separator"."PsN_$name_safe_version$directory_separator"."doc$directory_separator"."psn_configuration.pdf"."\n"; 
 }
-
-
-warn_about_local_configuration();
-
-
 
 print "\n\nPress ENTER to exit the installation program.\n";
 my $dirt = <STDIN>;
