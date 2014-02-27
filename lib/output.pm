@@ -436,36 +436,36 @@ sub near_bounds
 	    my %diagonal = {};
 	    my %label = {};
 	    foreach my $record (@records) {
-				if  ($record->same() or $record->fix() or $record->prior()) {
+			if  ($record->same() or $record->fix() or $record->prior()) {
 		    	next;
-				}
-				unless (defined $record -> options()) {
+			}
+			unless (defined $record -> options()) {
 		    	croak("$param record has no values in near_bounds in output object");
-		 		}
-				foreach my $option (@{$record -> options()}) {
+			}
+			foreach my $option (@{$record -> options()}) {
 		    	if ($option->fix() or $option->prior()) {
-			 			next;
+					next;
 		    	}
 		    	my $name = $option -> coordinate_string();
 		    	if ( $param eq 'theta' ) {
-			 			$diagonal{$name} = 0; #ensure hash entry defined even if theta
+					$diagonal{$name} = 0; #ensure hash entry defined even if theta
 		  			$lobnd{$name} = $option ->lobnd();
 		  			$lobnd{$name} = -1000000 unless (defined $lobnd{$name});
 		  			$upbnd{$name} = $option ->upbnd();
 		  			$upbnd{$name} = 1000000 unless (defined $upbnd{$name});
 		  			if (defined $option ->label()) {
-		      		$label{$name} = $option ->label();
+						$label{$name} = $option ->label();
 		  			} else {
-		      	$label{$name} = $name;
+						$label{$name} = $name;
 		  			}
 		     	} else {    # on_diagonal is only defined for omegas and sigmas
 		  			if ( (not $option -> on_diagonal()) and $option->init() == 0) {
-		      		next;
-		      		#do not check off-diagonal zeros
+						next;
+						#do not check off-diagonal zeros
 		  			}
 		  			$diagonal{$name} = $option -> on_diagonal();
 		     	}
-		 		}
+			}
 	    }
 
 	    if ( $param eq 'theta' ) {
