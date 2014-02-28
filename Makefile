@@ -63,6 +63,7 @@ LIBFILES= ui.pm \
 	model.pm \
 	tool.pm \
 	tool/modelfit.pm \
+	tool/sir.pm \
 	tool/llp.pm \
 	tool/cdd.pm \
 	tool/cdd/jackknife.pm \
@@ -124,6 +125,7 @@ RELFILES=$(addprefix PsN-Source/lib/,$(LIBFILES)) \
 	bin/mcmp \
 	bin/vpc \
 	bin/llp \
+	bin/sir \
 	bin/scm \
 	bin/bootstrap \
 	bin/randtest \
@@ -189,6 +191,7 @@ BINFILES= boot_scm \
 	lasso \
 	linearize \
 	llp \
+	sir \
 	mcmp \
 	mimp \
 	nca \
