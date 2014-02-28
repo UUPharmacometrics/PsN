@@ -52,16 +52,16 @@ for (my $i = 0; $i < @output_files; $i++) {
 
 # get_coordslabels method
 my $coordslabels = $model->get_coordslabels(parameter_type => 'theta');
-is ((keys %{$$coordslabels[0]})[0], 'THETA1', 'get_coordslabels theta 1');
-is ((keys %{$$coordslabels[0]})[1], 'THETA2', 'get_coordslabels theta 2');
-is ((values %{$$coordslabels[0]})[0], 'CL', 'get_coordslabels theta 3');
-is ((values %{$$coordslabels[0]})[1], 'V', 'get_coordslabels theta 4');
+is ((sort keys %{$$coordslabels[0]})[0], 'THETA1', 'get_coordslabels theta 1');
+is ((sort keys %{$$coordslabels[0]})[1], 'THETA2', 'get_coordslabels theta 2');
+is ((sort values %{$$coordslabels[0]})[0], 'CL', 'get_coordslabels theta 3');
+is ((sort values %{$$coordslabels[0]})[1], 'V', 'get_coordslabels theta 4');
 
 $coordslabels = $model->get_coordslabels(parameter_type => 'omega');
-is ((keys %{$$coordslabels[0]})[0], 'OMEGA(2,2)', 'get_coordslabels omega 1');
-is ((keys %{$$coordslabels[0]})[1], 'OMEGA(1,1)', 'get_coordslabels omega 2');
-is ((values %{$$coordslabels[0]})[0], 'IVV', 'get_coordslabels omega 3');
-is ((values %{$$coordslabels[0]})[1], 'IVCL', 'get_coordslabels omega 4');
+is ((sort keys %{$$coordslabels[0]})[0], 'OMEGA(1,1)', 'get_coordslabels omega 1');
+is ((sort keys %{$$coordslabels[0]})[1], 'OMEGA(2,2)', 'get_coordslabels omega 2');
+is ((sort values %{$$coordslabels[0]})[0], 'IVCL', 'get_coordslabels omega 3');
+is ((sort values %{$$coordslabels[0]})[1], 'IVV', 'get_coordslabels omega 4');
 
 # idcolumns method
 my $columns = $model->idcolumns(problem_numbers => [0]);
