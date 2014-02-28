@@ -310,6 +310,7 @@ sub format_arg {
     return "\"".$arg."\"".$suffix;
 }
 
+no warnings;
 sub Regexp::CARP_TRACE {
     my $arg = "$_[0]";
     downgrade($arg, 1);
@@ -334,7 +335,7 @@ sub Regexp::CARP_TRACE {
     }
     return "qr($arg)$suffix";
 }
-
+use warnings;
 # Takes an inheritance cache and a package and returns
 # an anon hash of known inheritances and anon array of
 # inheritances which consequences have not been figured
