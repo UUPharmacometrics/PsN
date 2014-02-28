@@ -15,6 +15,7 @@ use Math::Trig;	# For pi
 use Math::Random;
 use output;
 use array qw(:all);
+use linear_algebra;
 
 extends 'tool';
 
@@ -38,34 +39,24 @@ sub BUILD
 			my $name;
 			my $ldir;
 			( $ldir, $name ) =
-			OSspecific::absolute_path( $this ->directory(), $old_files[$i] );
+				OSspecific::absolute_path( $this ->directory(), $old_files[$i] );
 			push(@new_files,$ldir.$name) ;
 		}
 		$this->$accessor(\@new_files);
 	}	
 
 	croak("No \$PROBLEM in input model") unless 
-	(defined $this ->models()->[0]->problems and scalar(@{$this ->models()->[0]->problems})>0);
+		(defined $this ->models()->[0]->problems and scalar(@{$this ->models()->[0]->problems})>0);
 
 	croak("No \$INPUT found") unless 
-	(defined $this ->models()->[0]->problems->[0]->inputs and 
-		scalar(@{$this ->models()->[0]->problems->[0]->inputs})>0);
+		(defined $this ->models()->[0]->problems->[0]->inputs and 
+		 scalar(@{$this ->models()->[0]->problems->[0]->inputs})>0);
 	croak("No \$DATA found") unless 
-	(defined $this ->models()->[0]->problems->[0]->datas and 
-		scalar(@{$this ->models()->[0]->problems->[0]->datas})>0);
+		(defined $this ->models()->[0]->problems->[0]->datas and 
+		 scalar(@{$this ->models()->[0]->problems->[0]->datas})>0);
 
-	#make sure IGNORE=C is not used
-	my @ignores = $this->models->[0]->get_option_value(record_name=>'data', 
-		option_name=>'IGNORE',
-		problem_index=>0, 
-		record_index=>0,
-		option_index=>'all');
-
-	foreach my $ig (@ignores){
-		croak("PsN sir cannot handle IGNORE=C. Use IGNORE=@ instead\n")
-		if ($ig eq 'C');
-	}
-
+	#TODO support multiple $PROB
+	croak("sir does not yet support more than 1 $PROB in model ") if (scalar(@{$this ->models()->[0]->problems})>1);
 
 
 	croak("Number of samples must be larger than 0") unless ($this->samples()>0);
@@ -75,7 +66,7 @@ sub mvnpdf{
 	my %parm = validated_hash(\@_,
 							  inverse_covmatrix => { isa => 'Math::MatrixReal', optional => 0 },
 							  mu => { isa => 'Math::MatrixReal', optional => 0 },
-							  xvec_array => { isa => 'ArrayRef[Math::MatrixReal]', optional => 0 }
+							  xvec_array => { isa => 'ArrayRef[ArrayRef[Num]]', optional => 0 }
 	);
 	my $inverse_covmatrix = $parm{'inverse_covmatrix'};
 	my $mu = $parm{'mu'};
@@ -101,11 +92,13 @@ sub mvnpdf{
 	my $delta = $mu->shadow(); #zeros matrix same size as $mu
 
 	foreach my $xvec (@{$xvec_array}){
-		($rows,$columns) = $xvec->dim();
-		unless ($rows == 1 and $columns == $k){
-			croak("Input error mvnpdf: xvec should have dimension (1,$k) but has dimension ($rows,$columns)");
+		unless (scalar(@{$xvec}) == $k){
+			croak("Input error mvnpdf: xvec should have dimension $k but has dimension ".scalar(@{$xvec}));
 		}
-		$delta->subtract($xvec,$mu); #now $delta is $xvec - $mu
+		for (my $i=0; $i< $k; $i++){
+			$delta->assign(1,($i+1),($xvec->[$i] - $mu->element(1,($i+1))));
+		}
+		#now $delta is $xvec - $mu
 		my $product_left = $delta->multiply($inverse_covmatrix);
 		my $product=$product_left->multiply(~$delta); # ~ is transpose
 		push(@pdf_array,$det_factor*exp(-0.5 * $product->element(1,1)));
@@ -114,6 +107,7 @@ sub mvnpdf{
 
 	return \@pdf_array;
 }
+
 
 sub compute_weights{
 	my %parm = validated_hash(\@_,
@@ -132,23 +126,198 @@ sub compute_weights{
 		croak("compute_weights: pdf_array is length $len but dofv_array is length ".scalar(@{$dofv_array}));
 	}
 
-	my @weights=();
+	my %hash;
+	$hash{'weights'}=[];
+	$hash{'cdf'}=[];
+	my $cumsum=0;
 	for (my $i=0; $i< $len; $i++){
 		#we check in mvnpdf that weight is not zero??
+		my $wgt;
 		if ($pdf_array->[$i] > 0){
-			push(@weights,exp(-0.5*($dofv_array->[$i]))/($pdf_array->[$i]));
+			$wgt=exp(-0.5*($dofv_array->[$i]))/($pdf_array->[$i]);
 		}else{
-			push(@weights,$bignum);
+			$wgt=$bignum;
+		}
+		push(@{$hash{'weights'}},$wgt);
+		$cumsum = $cumsum+$wgt;
+		push(@{$hash{'cdf'}},$cumsum);
+	}
+	return \%hash;
+}
+
+sub recompute_weights{
+	my %parm = validated_hash(\@_,
+							  weight_hash => { isa => 'HashRef', optional => 0 },
+							  reset_index => { isa => 'Int', optional => 0 }
+		);
+	my $weight_hash = $parm{'weight_hash'};
+	my $reset_index = $parm{'reset_index'};
+	
+	my $len = scalar(@{$weight_hash->{'weights'}});
+	if ($reset_index < 0 or $reset_index >= $len){
+		croak("illlegal input to recompute_weights, reset_index is $reset_index but length of weights is $len");
+	} 
+	$weight_hash->{'weights'}->[$reset_index] = 0;
+	my $cumsum=0;
+	$cumsum = $weight_hash->{'cdf'}->[$reset_index-1] if ($reset_index > 0);
+	#loop over rest and recompute cdf
+	for (my $i=$reset_index; $i< $len; $i++){
+		$cumsum = $cumsum+$weight_hash->{'weights'}->[$i]; #first round this wgt is 0
+		$weight_hash->{'cdf'}->[$i] = $cumsum;
+	}
+}
+
+sub weighted_sample{
+	my %parm = validated_hash(\@_,
+							  cdf => { isa => 'ArrayRef[Num]', optional => 0 }
+		);
+	my $cdf = $parm{'cdf'};
+	my $len = scalar(@{$cdf});
+	croak("empty cdf into weighted_sample") unless ($len>0);
+	my $max = $cdf->[$len-1];
+	my $val = Math::Random::random_uniform(1,0,$max); # n low high
+
+	for (my $i=0; $i< $len; $i++){
+		return $i if ($val <= $cdf->[$i]);
+	}
+
+}
+
+sub empirical_statistics{
+	my %parm = validated_hash(\@_,
+							  samples_array => { isa => 'ArrayRef[ArrayRef[Num]]', optional => 0 },
+							  sample_counts => { isa => 'ArrayRef[Num]', optional => 0 }
+		);
+	my $samples_array = $parm{'samples_array'};
+	my $sample_counts = $parm{'sample_counts'};
+
+	my $len = scalar(@{$samples_array});
+	croak("empty set of samples to empirical_statistics") unless ($len >0);
+	my $dim = scalar(@{$samples_array->[0]});
+	croak("empty set of values in samples_array to empirical_statistics") unless ($dim >0);
+	my $len2 = scalar(@{$sample_counts});
+	croak("empty set of sample_counts to empirical_statistics") unless ($len2 >0);
+	croak("number $len of sets in samples_array is not the same as number $len2 in sample_counts") unless ($len == $len2);
+
+	#create samples matrix
+	my @Amatrix=();
+	my @parameter_vectors=();
+	my @sums=(0) x $dim;
+	for (my $j=0; $j< $dim; $j++){
+		push(@parameter_vectors,[]);
+	}
+
+	for (my $i=0; $i< $len; $i++){
+		for (my $k=0; $k< $sample_counts->[$i]; $k++){
+			push(@Amatrix,$samples_array->[$i]);
+			for (my $j=0; $j< $dim; $j++){
+				push(@{$parameter_vectors[$j]},$samples_array->[$i]->[$j]);
+				$sums[$j] = $sums[$j] + $samples_array->[$i]->[$j];
+			}
 		}
 	}
-	return \@weights;
+
+	my %resulthash;
+	$resulthash{'covar'}=[];
+	my $err1 = linear_algebra::row_cov(\@Amatrix,$resulthash{'covar'});
+	if ($err1 == 1){
+		croak ("numerical error in linear_algebra rowcov");
+	}elsif ($err1 == 2){
+		croak ("input error to linear_algebra rowcov");
+	}
+
+	#TODO univariate percentiles or something
+
+	my @indices=();
+
+	my @pred_int = sort {$a <=> $b} 0,40,80,90,95;
+	my @temp =();
+	foreach my $pi (@pred_int){
+		if ($pi == 0){
+			push (@temp,50); #need to have median last of these three for order in diagnostics output
+		}else {
+			push (@temp,(100-$pi)/2);
+			push (@temp,(100-(100-$pi)/2));
+		}
+	}
+	my @perc_limit = sort {$a <=> $b} @temp;
+	my $no_perc_limits = scalar(@perc_limit);
+	my @limit_index = (0) x $no_perc_limits;
+
+ 	for (my $j=0; $j< $no_perc_limits; $j++){
+		if ($perc_limit[$j] == 50){
+			$limit_index[$j] = -1; #signal to use median
+		}else{
+			$limit_index[$j] = round(number=>$perc_limit[$j]*($len-1)/100);
+		}
+	}
+
+
+	$resulthash{'mean'}=[];
+	$resulthash{'percentiles_labels'}=\@perc_limit;
+	$resulthash{'percentiles_values'}=[];
+ 	for (my $j=0; $j< $dim; $j++){
+		push(@{$resulthash{'mean'}},($sums[$j]/$len));
+		my @sorted = (sort {$a <=> $b} @{$parameter_vectors[$j]}); #sort ascending
+		my @limit =();
+		for (my $k=0; $k< scalar(@limit_index); $k++){
+			if ($limit_index[$k] > 0){
+				push(@limit,$sorted[$limit_index[$k]]);
+			}else{
+				#median
+				push(@limit,median(sorted_array => \@sorted));
+			}
+			push(@{$resulthash{'percentiles_values'}},\@limit);
+
+		}
+	}
+
+	return \%resulthash;
+}
+
+sub median
+{
+	my %parm = validated_hash(\@_,
+							  sorted_array => { isa => 'Ref', optional => 1 }
+		);
+	my $sorted_array = $parm{'sorted_array'};
+	my $result;
+
+	my $len = scalar( @{$sorted_array} );
+	
+	if( $len  % 2 ){
+		$result = $sorted_array->[($len-1)/2];
+	} else {
+		$result = ($sorted_array->[$len/2]+$sorted_array->[($len-2)/2])/ 2;
+	}
+
+	return $result;
+}
+
+sub round
+{
+	my %parm = validated_hash(\@_,
+							  number => { isa => 'Num', optional => 0 }
+		);
+	my $number = $parm{'number'};
+	my $integer_out;
+	
+	my $floor=int($number);
+	my $rem=$number-$floor;
+	if ($rem >= 0){
+		$integer_out = ($rem >= 0.5)? $floor+1 : $floor;
+	} else {
+		$integer_out = (abs($rem) >= 0.5)? $floor-1 : $floor;
+	}
+
+	return $integer_out;
 }
 
 sub get_determinant_factor
 {
 	my %parm = validated_hash(\@_,
-		inverse_covmatrix => { isa => 'Math::MatrixReal', optional => 0 },
-		k => { isa => 'Int', optional => 0 }
+							  inverse_covmatrix => { isa => 'Math::MatrixReal', optional => 0 },
+							  k => { isa => 'Int', optional => 0 }
 	);
 	my $inverse_covmatrix = $parm{'inverse_covmatrix'};
 	my $k = $parm{'k'};
@@ -203,58 +372,72 @@ sub get_nonmem_parameters
 	} else {
 	    croak("No problems defined in output object in get_nonmem_parameters");
 	}
-	my @records;
-	if (defined $init_problem -> thetas()) {
-		@records = @{$init_problem -> thetas()};
-	}
-	croak("No thetas in model in output file") unless (scalar(@records) > 0); #no parameter in this problem
 
-	my @values=();
-	my @lower_bounds=();
-	my @upper_bounds=();
-	my @names=();
+	my %hash;
+	$hash{'labels'}=[];
+	$hash{'lower_bounds'}=[];
+	$hash{'upper_bounds'}=[];
+	$hash{'values'}=[];
+	$hash{'param'}=[];
 
-	my $thetacoordval = $output -> get_single_value(attribute => 'thetacoordval'); #ref to a hash
-	croak("No thetacoordval in output object") unless (defined $thetacoordval);
-
-	foreach my $record (@records){
-		if  ($record->same() or $record->fix() or $record->prior()) {
-			next;
+	#TODO verify that this is the parameter order in invcov
+	foreach my $param ('theta','omega','sigma'){
+		my $accessor=$param.'s';
+		my $coordval = $output -> get_single_value(attribute => $param.'coordval'); #ref to a hash
+		croak("No $param coordval in output object") unless (defined $coordval);
+		my @records;
+		if (defined $init_problem -> $accessor) {
+			@records = @{$init_problem -> $accessor};
 		}
-		unless (defined $record -> options()) {
-			croak("theta record has no values in get_nonmem_parameters in output object");
-		}
-		foreach my $option (@{$record -> options()}) {
-			if ($option->fix() or $option->prior()) {
+		next unless (scalar(@records) > 0); #no parameter in this problem
+
+		foreach my $record (@records){
+			if  ($record->same() or $record->fix() or $record->prior()) {
 				next;
 			}
-			my $coord = $option -> coordinate_string();
-			my $name = $coord;
-			if (defined $option ->label()) {
-				$name = $option ->label();
+			unless (defined $record -> options()) {
+				croak("$param record has no values in get_nonmem_parameters in output object");
 			}
-			push(@names,$name);
-			my $lobnd = $option ->lobnd();
-			$lobnd = -1000000 unless (defined $lobnd);
-			push(@lower_bounds,$lobnd);
-			my $upbnd = $option ->upbnd();
-			$upbnd = 1000000 unless (defined $upbnd);
-			push(@upper_bounds,$upbnd);
-			my $value = $thetacoordval->{$coord};
-			croak("No estimate for theta $coord") unless (defined $value);
-			push(@values,$value);
+			foreach my $option (@{$record -> options()}) {
+				if ($option->fix() or $option->prior()) {
+					next;
+				}
+				if ($param eq 'theta'){
+					my $lobnd = $option ->lobnd();
+					$lobnd = -1000000 unless (defined $lobnd);
+					push(@{$hash{'lower_bounds'}},$lobnd);
+					my $upbnd = $option ->upbnd();
+					$upbnd = 1000000 unless (defined $upbnd);
+					push(@{$hash{'upper_bounds'}},$upbnd);
+				}else{
+		  			if ($option -> on_diagonal()){
+						push(@{$hash{'lower_bounds'}},0);
+						push(@{$hash{'upper_bounds'}},1000000);
+					}else{	 
+						if ($option->init() == 0) {
+							#do not check off-diagonal zeros
+							next;
+						}else{
+							push(@{$hash{'lower_bounds'}},-1);
+							push(@{$hash{'upper_bounds'}},1);
+						}
+		  			}
+				}
+				my $coord = $option -> coordinate_string();
+				my $name = $coord;
+				if (defined $option ->label()) {
+					$name = $option ->label();
+				}
+				push(@{$hash{'labels'}},$name);
+				push(@{$hash{'param'}},$param);
+				my $value = $coordval->{$coord};
+				croak("No estimate for $param $coord") unless (defined $value);
+				push(@{$hash{'values'}},$value);
+			}
 		}
 	}
 
-#$THETA  (0,0.0105) ; CL
-#$THETA  (0,1.0500) ; V
-#$THETA  (0,0.65)
-#$THETA  (0,0.5)
-#$THETA  (0,0.2)
-
-	#TODO get also diagonal omegas here, and diagonal sigmas with bounds
-
-	return \@values;
+	return \%hash;
 }
 
 sub sample_multivariate_normal
@@ -317,7 +500,7 @@ sub sample_multivariate_normal
 			}
 			next unless $accept;
 			#my $xvec = $mu->new_from_rows( [[0.006,1,0.5,0.4,0.1]] );
-			push(@samples_array,$mu->new_from_rows( [$xvec] ));
+			push(@samples_array,$xvec);
 			$counter++;
 			last if ($counter == $samples);
 		}
@@ -329,6 +512,34 @@ sub sample_multivariate_normal
 	}
 	return \@samples_array;
 
+}
+
+sub create_sampled_params_arr{
+	#to be used in update_inits (from_hash=> $sampled_params_arr->[$k],ignore_missing_parameters=>1);
+	my %parm = validated_hash(\@_,
+							  samples_array => { isa => 'ArrayRef[ArrayRef[Num]]', optional => 0 },
+							  labels_hash => { isa => 'HashRef', optional => 0 }
+		);
+	my $samples_array = $parm{'samples_array'};
+	my $labels_hash = $parm{'labels_hash'};
+	
+	my @allparams=();
+
+	foreach my $sample (@{$samples_array}){
+		my %allpar;
+		$allpar{'theta'} = {};
+		$allpar{'omega'} = {};
+		$allpar{'sigma'} = {};
+		for (my $i=0; $i<scalar(@{$sample}); $i++){
+			my $label = $labels_hash->{'labels'}->[$i];
+			my $param = $labels_hash->{'param'}->[$i];
+			my $value = $sample->[$i];
+			$allpar{$param}->{$label} = $value;
+		}
+		push (@allparams,\%allpar);
+	}
+
+	return \@allparams;
 }
 
 sub get_nonmem_covmatrix
