@@ -259,10 +259,10 @@ sub format_arg {
                 local $@;
 	        local $in_recurse = 1;
 		local $SIG{__DIE__} = sub{};
-                eval {$arg->can('CARP_TRACE') }
+                eval {$arg->can('myCARP_TRACE') }
             })
         {
-            return $arg->CARP_TRACE();
+            return $arg->myCARP_TRACE();
         }
         elsif (!$in_recurse &&
 	       defined($RefArgFormatter) &&
@@ -310,8 +310,7 @@ sub format_arg {
     return "\"".$arg."\"".$suffix;
 }
 
-no warnings;
-sub Regexp::CARP_TRACE {
+sub Regexp::myCARP_TRACE {
     my $arg = "$_[0]";
     downgrade($arg, 1);
     if(UTF8_REGEXP_PROBLEM && is_utf8($arg)) {
@@ -335,7 +334,7 @@ sub Regexp::CARP_TRACE {
     }
     return "qr($arg)$suffix";
 }
-use warnings;
+
 # Takes an inheritance cache and a package and returns
 # an anon hash of known inheritances and anon array of
 # inheritances which consequences have not been figured
@@ -708,7 +707,7 @@ Carp gives two ways to control this.
 
 =item 1.
 
-For objects, a method, C<CARP_TRACE>, will be called, if it exists.  If
+For objects, a method, C<myCARP_TRACE>, will be called, if it exists.  If
 this method doesn't exist, or it recurses into C<Carp>, or it otherwise
 throws an exception, this is skipped, and Carp moves on to the next option,
 otherwise checking stops and the string returned is used.  It is recommended
@@ -725,7 +724,7 @@ and the string returned is used.
 
 =item 3.
 
-Otherwise, if neither C<CARP_TRACE> nor C<$Carp::RefArgFormatter> is
+Otherwise, if neither C<myCARP_TRACE> nor C<$Carp::RefArgFormatter> is
 available, stringify the value ignoring any overloading.
 
 =back
@@ -765,7 +764,7 @@ Defaults to C<0>.
 =head2 $Carp::RefArgFormatter
 
 This variable sets a general argument formatter to display references.
-Plain scalars and objects that implement C<CARP_TRACE> will not go through
+Plain scalars and objects that implement C<myCARP_TRACE> will not go through
 this formatter.  Calling C<Carp> from within this function is not supported.
 
 local $Carp::RefArgFormatter = sub {
