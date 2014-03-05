@@ -103,17 +103,18 @@ sub modelfit_setup
 		my $message = "Running input model";
 
 		my $orig_fit = tool::modelfit ->
-		new( %{common_options::restore_options(@common_options::tool_options)},
-			base_directory	 => $self ->directory(),
-			directory		 => $self ->directory().
-			'/orig_modelfit_dir'.$model_number,
-			models		 => [$model],
-			threads               => $self->threads,
-			logfile	         => undef,
-			raw_results           => undef,
-			prepared_models       => undef,
-			top_tool              => 0,
-			%subargs );
+			new( %{common_options::restore_options(@common_options::tool_options)},
+				 base_directory	 => $self ->directory(),
+				 directory		 => $self ->directory().
+				 '/orig_modelfit_dir'.$model_number,
+				 models		 => [$model],
+				 threads               => $self->threads,
+				 nm_output => 'ext,cov,coi,cor,phi',
+				 logfile	         => undef,
+				 raw_results           => undef,
+				 prepared_models       => undef,
+				 top_tool              => 0,
+				 %subargs );
 
 		ui -> print( category => 'sir',
 			message => $message );
@@ -272,9 +273,11 @@ sub compute_weights{
 	$hash{'cdf'}=[];
 	my $cumsum=0;
 	for (my $i=0; $i< $len; $i++){
-		#we check in mvnpdf that weight is not zero??
+		#we check in mvnpdf that pdf is not zero??
 		my $wgt;
-		if ($pdf_array->[$i] > 0){
+		if (not defined $dofv_array->[$i]){
+			$wgt = 0;
+		}elsif ($pdf_array->[$i] > 0){
 			$wgt=exp(-0.5*($dofv_array->[$i]))/($pdf_array->[$i]);
 		}else{
 			$wgt=$bignum;
@@ -795,13 +798,15 @@ sub _modelfit_raw_results_callback
 	my $resamples = $self->resamples();
 	my $with_replacement = $self->with_replacement();
 
+	my $orig_mod = $self ->models()->[$model_number-1];
+
+
 	$subroutine = sub {
 		my $modelfit = shift;
 		my $mh_ref   = shift;
 		my %max_hash = %{$mh_ref};
 		$modelfit -> raw_results_file([$dir.$file] );
 		$modelfit -> raw_nonp_file( [$dir.$nonp_file] );
-
 
 		$self->raw_line_structure($modelfit -> raw_line_structure());
 
@@ -816,18 +821,13 @@ sub _modelfit_raw_results_callback
 		my @delta_ofv=();
 		my $index = 0;
 		foreach my $row ( @{$modelfit -> raw_results()} ) {
-			my $delta_ofv = $row->[$ofvindex] - $original_ofv;
+			my $delta_ofv;
+			if (defined $row->[$ofvindex]){
+				$delta_ofv = $row->[$ofvindex] - $original_ofv;
+			}else{
+				$delta_ofv = undef;
+			}
 			push(@delta_ofv,$delta_ofv);
-#			my $pdf = $pdf_vector->[$index];
-#			my $wgt;
-#			if ($pdf > 0){
-#				$wgt=exp(-0.5*($delta_ofv))/($pdf);
-#			}else{
-#				$wgt=1e10;
-#			}
-			
-#			my @oldrow =@{$row};
-#			$row = [@oldrow[0 .. $ofvindex],$delta_ofv,$pdf,$wgt,0,@oldrow[$ofvindex+1 .. $#oldrow]]; 
 			$index++;
 		}
 		my $wghash = tool::sir::compute_weights(pdf_array => $pdf_vector,
@@ -852,7 +852,23 @@ sub _modelfit_raw_results_callback
 					$original_weights[$index],$times_sampled[$index],@oldrow[$ofvindex+1 .. $#oldrow]]; 
 			$index++;
 		}
+
+		# The prepare_raw_results in the modelfit will fix the
+		# raw_results for each maxev0 model, we must add
+		# the result for the original model.
+
+		my %dummy;
+		my ($raw_results_row, $nonp_rows) = $self -> create_raw_results_rows( max_hash => $mh_ref,
+																			  model => $orig_mod,
+																			  raw_line_structure => \%dummy );
+		$orig_mod -> outputs -> [0] -> flush;
+		$raw_results_row->[0]->[0] = 'input';
+		my @oldrow =@{$raw_results_row->[0]};
+		my $row = [@oldrow[0 .. $ofvindex],0,undef,undef,undef,@oldrow[$ofvindex+1 .. $#oldrow]]; 
 		
+		unshift( @{$modelfit -> raw_results()}, @{[$row]} );
+
+		#fix the header
 		
 		my @old_header = @{$modelfit -> raw_results_header()};
 		my $headerindex;
