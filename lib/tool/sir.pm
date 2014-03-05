@@ -20,12 +20,22 @@ use linear_algebra;
 extends 'tool';
 
 has 'sir_raw_results' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
-has 'copy_data' => ( is => 'rw', isa => 'Bool', default => 0 );
-has 'samples' => ( is => 'rw', required => 1, isa => 'Int' );
-has 'base_model' => ( is => 'rw', isa => 'model' );
 has 'logfile' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { ['sirlog.csv'] } );
 has 'results_file' => ( is => 'rw', isa => 'Str', default => 'sir_results.csv' );
-has 'reference_column' => ( is => 'rw', isa => 'Str' );
+
+has 'copy_data' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'with_replacement' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'samples' => ( is => 'rw', required => 1, isa => 'Int' );
+has 'resamples' => ( is => 'rw', required => 1, isa => 'Int' );
+has 'covmat_input' => ( is => 'rw', isa => 'Str' );
+has 'rawres_input' => ( is => 'rw', isa => 'Str' );
+has 'offset_rawres' => ( is => 'rw', isa => 'Int', default => 1 );
+has 'in_filter' => ( is => 'rw', isa => 'ArrayRef[Str]' );
+has 'inflation' => ( is => 'rw', isa => 'Num', default => 1 );
+has 'mceta' => ( is => 'rw', isa => 'Int', default => 0 );
+
+has 'original_ofv' => ( is => 'rw', isa => 'Num');
+has 'pdf_vector' => ( is => 'rw', isa => 'ArrayRef[Num]' );
 
 
 sub BUILD
@@ -56,11 +66,142 @@ sub BUILD
 		 scalar(@{$this ->models()->[0]->problems->[0]->datas})>0);
 
 	#TODO support multiple $PROB
-	croak("sir does not yet support more than 1 $PROB in model ") if (scalar(@{$this ->models()->[0]->problems})>1);
+	croak("sir does not yet support more than 1 \$PROB in model ") if (scalar(@{$this ->models()->[0]->problems})>1);
 
 
 	croak("Number of samples must be larger than 0") unless ($this->samples()>0);
+	croak("Number of resamples must be larger than 0") unless ($this->resamples()>0);
+	croak("Number of resamples cannot be larger than samples unless with_replacement is set") unless 
+		(($this->resamples() <= $this->samples) or ($this->with_replacement));
+	
+
 }
+
+sub modelfit_setup
+{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+		model_number => { isa => 'Int', optional => 1 }
+	);
+	my $model_number = $parm{'model_number'};
+
+	my $model = $self ->models() -> [$model_number-1];
+
+	# ------------------------  Run original run if not already done  -------------------------------
+
+	unless ( $model -> is_run ) {
+		my %subargs = ();
+		if ( defined $self -> subtool_arguments() ) {
+			%subargs = %{$self -> subtool_arguments()};
+		}
+
+		if( $self -> nonparametric_etas() or
+			$self -> nonparametric_marginals() ) {
+			$model -> add_nonparametric_code;
+		}
+		my @models=();
+		my $message = "Running input model";
+
+		my $orig_fit = tool::modelfit ->
+		new( %{common_options::restore_options(@common_options::tool_options)},
+			base_directory	 => $self ->directory(),
+			directory		 => $self ->directory().
+			'/orig_modelfit_dir'.$model_number,
+			models		 => [$model],
+			threads               => $self->threads,
+			logfile	         => undef,
+			raw_results           => undef,
+			prepared_models       => undef,
+			top_tool              => 0,
+			%subargs );
+
+		ui -> print( category => 'sir',
+			message => $message );
+
+		$orig_fit -> run;
+
+	}
+
+	my $output = $model -> outputs -> [0];
+	unless (defined $output){
+		croak("No output object from input model");
+	}
+
+	my $original_ofv = $output->get_single_value(attribute => 'ofv');
+	if (defined $original_ofv){
+		$self->original_ofv($original_ofv);
+	}else{
+		croak("No ofv from input model result files");
+	}
+
+	my $icm = get_nonmem_inverse_covmatrix(output => $output);
+	my $covmatrix = get_nonmem_covmatrix(output => $output);
+	my $parameter_hash = get_nonmem_parameters(output => $output);
+
+	#$model-> get_values_to_labels(category => $param);
+#			$paramnames = $model -> labels(parameter_type => $param);
+
+	my $values = $parameter_hash->{'filtered_values'};
+	my $mat = new Math::MatrixReal(1,1);
+	my $muvector = $mat->new_from_rows( [$values] );
+
+	my $vectorsamples = sample_multivariate_normal(samples=>$self->samples,
+												   covmatrix => $covmatrix,
+												   lower_bound => $parameter_hash->{'lower_bounds'},
+												   upper_bound => $parameter_hash->{'upper_bounds'},
+												   mu => $muvector);
+	
+	my $sampled_params_arr = create_sampled_params_arr(samples_array => $vectorsamples,
+													   labels_hash => $parameter_hash);
+	
+	
+	$self->pdf_vector(mvnpdf(inverse_covmatrix => $icm,
+							 mu => $muvector,
+							 xvec_array => $vectorsamples));
+
+	my $modelsarr = model::create_maxeval_zero_models_array(
+		sampled_params_arr => $sampled_params_arr,
+		mceta => $self->mceta(),
+		ignore_missing_parameters => 1,
+		basedirectory => $self->directory,
+		subdirectory => $self->directory().'m'.$model_number.'/',
+		model => $model,
+		purpose => 'sir'
+		);
+	
+	$self -> prepared_models -> [$model_number-1]{'own'} = $modelsarr;
+
+	my @subtools = ();
+	@subtools = @{$self -> subtools()} if (defined $self->subtools());
+	shift( @subtools );
+	my %subargs = ();
+	if ( defined $self -> subtool_arguments() ) {
+		%subargs = %{$self -> subtool_arguments()};
+	}
+	if (not $self->copy_data()){
+		$subargs{'data_path'}='../../m'.$model_number.'/';
+	}
+	$self->tools([]) unless (defined $self->tools());
+
+	push( @{$self -> tools()},
+		tool::modelfit ->
+		new( %{common_options::restore_options(@common_options::tool_options)},
+			 models		 => $modelsarr,
+			 directory             => undef,
+			 _raw_results_callback => $self ->
+			 _modelfit_raw_results_callback( model_number => $model_number ),
+			 subtools              => \@subtools,
+			 nmtran_skip_model => 2,
+			 raw_results           => undef,
+			 prepared_models       => undef,
+			 top_tool              => 0,
+			 %subargs ) );
+	
+	$self->stop_motion_call(tool=>'sir',message => "Created a modelfit object to run all the models in ".
+							$self ->directory().'m'.$model_number)
+		if ($self->stop_motion());
+}
+
 
 sub mvnpdf{
 	my %parm = validated_hash(\@_,
@@ -374,10 +515,10 @@ sub get_nonmem_parameters
 	}
 
 	my %hash;
-	$hash{'labels'}=[];
+	$hash{'filtered_labels'}=[];
 	$hash{'lower_bounds'}=[];
 	$hash{'upper_bounds'}=[];
-	$hash{'values'}=[];
+	$hash{'filtered_values'}=[];
 	$hash{'param'}=[];
 
 	#TODO verify that this is the parameter order in invcov
@@ -428,11 +569,11 @@ sub get_nonmem_parameters
 				if (defined $option ->label()) {
 					$name = $option ->label();
 				}
-				push(@{$hash{'labels'}},$name);
+				push(@{$hash{'filtered_labels'}},$name);
 				push(@{$hash{'param'}},$param);
 				my $value = $coordval->{$coord};
 				croak("No estimate for $param $coord") unless (defined $value);
-				push(@{$hash{'values'}},$value);
+				push(@{$hash{'filtered_values'}},$value);
 			}
 		}
 	}
@@ -531,7 +672,7 @@ sub create_sampled_params_arr{
 		$allpar{'omega'} = {};
 		$allpar{'sigma'} = {};
 		for (my $i=0; $i<scalar(@{$sample}); $i++){
-			my $label = $labels_hash->{'labels'}->[$i];
+			my $label = $labels_hash->{'filtered_labels'}->[$i];
 			my $param = $labels_hash->{'param'}->[$i];
 			my $value = $sample->[$i];
 			$allpar{$param}->{$label} = $value;
@@ -615,237 +756,9 @@ sub get_nonmem_inverse_covmatrix
 }
 
 
-sub modelfit_setup
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		model_number => { isa => 'Int', optional => 1 }
-	);
-	my $model_number = $parm{'model_number'};
-
-	my $model = $self ->models() -> [$model_number-1];
-
-	# Check which models that hasn't been run and run them 
-
-	# ------------------------  Run original run  -------------------------------
-
-	unless ( $model -> is_run and ((not defined $self->base_model) or $self->base_model->is_run) ) {
-		my %subargs = ();
-		if ( defined $self -> subtool_arguments() ) {
-			%subargs = %{$self -> subtool_arguments()};
-		}
-
-		if( $self -> nonparametric_etas() or
-			$self -> nonparametric_marginals() ) {
-			$model -> add_nonparametric_code unless ($model->is_run);
-			$self->base_model -> add_nonparametric_code if (defined $self->base_model and not $self->base_model->is_run);
-		}
-		my @models=();
-		my $message = "Executing ";
-		unless ($model->is_run){
-			push(@models,$model) ;
-			$message .= "input model";
-		}
-		if (defined $self->base_model and not $self->base_model->is_run){
-			push(@models,$self->base_model) ;
-			if ($model->is_run){
-				$message .= "base model";
-			}else{
-				$message .= "and base model";
-			}
-		}
-
-		my $orig_fit = tool::modelfit ->
-		new( %{common_options::restore_options(@common_options::tool_options)},
-			base_directory	 => $self ->directory(),
-			directory		 => $self ->directory().
-			'/orig_modelfit_dir'.$model_number,
-			models		 => \@models,
-			threads               => $self->threads,
-			logfile	         => undef,
-			raw_results           => undef,
-			prepared_models       => undef,
-			top_tool              => 0,
-			%subargs );
-
-		ui -> print( category => 'sir',
-			message => $message );
-
-		$orig_fit -> run;
-
-	}
-
-	my $output = $model -> outputs -> [0];
-	my $base_output;
-	$base_output = $self->base_model -> outputs ->[0] if (defined $self->base_model);
-	my $new_mod;
-	my @problems   = @{$model -> problems};
-	my @new_models;
-
-	if (scalar(@{$model -> datas})>1){
-		print "\nWarning: PsN sir only randomizes first data file, seems like model has more than one data file\n";
-	}
-
-	my $orig_data = $model -> datas->[0];
-
-	my $done = ( -e $self ->directory()."/m$model_number/done" ) ? 1 : 0;
-	my $new_datas;
-	if ( not $done ) {
-		ui -> print( category => 'sir',
-			message  => "Randomizing column ".$self->randomization_column." in ".$orig_data -> filename );
-
-		$new_datas = $orig_data -> randomize_data( directory   => $self ->directory().'/m'.$model_number,
-			name_stub   => 'rand',
-			samples     => $self->samples(),
-			stratify_index => $self->strat_index(), 
-			rand_index => $self->rand_index(), 
-			equal_obs => (not $self->match_transitions()));
-
-		$self->stop_motion_call(tool=>'sir',message => "Created randomized datasets in ".
-			$self ->directory().'m'.$model_number)
-		if ($self->stop_motion());
-
-		for ( my $j = 0; $j < $self->samples(); $j++ ) {
-			my @data_arr = ($new_datas->[$j]) x scalar(@{$model->problems});
-
-			$new_mod = $model ->  copy( filename    => $self -> directory().'m'.$model_number.'/rand_'.($j+1).'.mod',
-				output_same_directory => 1,
-				copy_data   => 0,
-				copy_output => 0);
-
-			$new_mod->datas(\@data_arr); #sets record and data object. Number of $PROBS and length data_arr must match
-
-			if( $self -> shrinkage() ) {
-				$new_mod -> shrinkage_stats( enabled => 1 );
-				$new_mod -> shrinkage_modules( $model -> shrinkage_modules );
-			}
-
-			if( $self -> nonparametric_etas() or
-				$self -> nonparametric_marginals() ) {
-				$new_mod -> add_nonparametric_code;
-			}
-
-			$new_mod -> update_inits( from_output => $output );
-			$new_mod -> _write;
-
-			push( @new_models, $new_mod );
-		}
-		$self->stop_motion_call(tool=>'sir',message => "Created one modelfile per dataset in ".
-			$self ->directory().'m'.$model_number)
-		if ($self->stop_motion());
-
-		# Create a checkpoint. Log the samples and individuals.
-		open( DONE, ">".$self ->directory()."/m$model_number/done" ) ;
-		print DONE "Randomization of ",$orig_data -> filename, " performed\n";
-		print DONE $self->samples()." samples\n";
-		close( DONE );
-	} else {
-		ui -> print( category => 'sir',
-			message  => "Recreating sir from previous run." );
-
-		# Recreate the datasets and models from a checkpoint
-		my ($stored_filename, $stored_samples);
-		my ($stored_filename_found, $stored_samples_found);
-		open( DONE, $self ->directory()."/m$model_number/done" );
-		while( <DONE> ){
-			if( /^Randomization of (.+) performed$/ ){
-				$stored_filename = $1;
-				$stored_filename_found = 1;
-				next;
-			}
-			if( /^(\d+) samples$/ ){
-				ui -> print( category => 'sir',
-					message  => "Samples saved: $1" );
-				$stored_samples = $1;
-				$stored_samples_found = 1;
-				next;
-			}
-		}
-		close( DONE );
-		unless( $stored_filename_found and $stored_samples_found ) {
-			croak("The sir/m1/done file could not be parsed.");
-		}
-		if ( $stored_samples < $self->samples() ) {
-			croak("The number of samples saved in previous run ($stored_samples) ".
-				"is smaller than the number of samples specified for this run (".
-				$self->samples().")" );
-		}
-
-		# Reinitiate the model objects
-		for ( my $j = 1; $j <= $self->samples(); $j++ ) {
-			my ($model_dir, $filename) = OSspecific::absolute_path( $self ->directory().'/m'.$model_number,
-				'rand_'.($j+1).'.mod' );
-
-			$new_mod = model ->
-			new( directory   => $model_dir,
-				filename    => $filename,
-				extra_files => $model -> extra_files,
-				target      => 'disk',
-				ignore_missing_files => 1,
-			);
-			push( @new_models, $new_mod );
-		}
-		ui -> print( category => 'sir',
-			message  => "Using $stored_samples previously randomized ".
-			"data sets sets from $stored_filename" )
-	}
-
-	$self -> prepared_models -> [$model_number-1]{'own'} = \@new_models;
-
-	my @subtools = ();
-	@subtools = @{$self -> subtools()} if (defined $self->subtools());
-	shift( @subtools );
-	my %subargs = ();
-	if ( defined $self -> subtool_arguments() ) {
-		%subargs = %{$self -> subtool_arguments()};
-	}
-	if (not $self->copy_data()){
-		$subargs{'data_path'}='../../m'.$model_number.'/';
-	}
-	$self->tools([]) unless (defined $self->tools());
-
-	push( @{$self -> tools()},
-		tool::modelfit ->
-		new( %{common_options::restore_options(@common_options::tool_options)},
-			models		 => \@new_models,
-			threads               => $self->threads,
-			directory             => $self ->directory().'/modelfit_dir'.$model_number,
-			_raw_results_callback => $self ->
-			_modelfit_raw_results_callback( model_number => $model_number ),
-			subtools              => \@subtools,
-			nmtran_skip_model => 2,
-			logfile		 => [$self -> logfile()->[$model_number-1]],
-			raw_results           => undef,
-			prepared_models       => undef,
-			top_tool              => 0,
-			%subargs ) );
-
-	$self->stop_motion_call(tool=>'sir',message => "Created a modelfit object to run all the models in ".
-		$self ->directory().'m'.$model_number)
-	if ($self->stop_motion());
-}
 
 
 
-sub calculate_delta_ofv
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		model_number => { isa => 'Int', optional => 1 }
-	);
-	my $model_number = $parm{'model_number'};
-}
-
-sub general_setup
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		model_number => { isa => 'Int', optional => 1 },
-		class => { isa => 'Str', optional => 1 }
-	);
-	my $model_number = $parm{'model_number'};
-	my $class = $parm{'class'};
-}
 
 sub modelfit_analyze
 {
@@ -858,38 +771,29 @@ sub modelfit_analyze
 	1;
 }
 
-sub modelfit_post_fork_analyze
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		model_number => { isa => 'Int', optional => 1 }
-	);
-	my $model_number = $parm{'model_number'};
-}
+
+
 
 sub _modelfit_raw_results_callback
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		model_number => { isa => 'Int', optional => 1 }
-	);
+							  model_number => { isa => 'Int', optional => 0 }
+		);
 	my $model_number = $parm{'model_number'};
 	my $subroutine;
 
-	# Use the  raw_results file.
 	my ($dir,$file) = 
-	OSspecific::absolute_path( $self ->directory(),
-		$self -> raw_results_file()->[$model_number-1] );
+		OSspecific::absolute_path( $self ->directory(),
+								   $self -> raw_results_file()->[$model_number-1] );
 	my ($dir,$nonp_file) = 
-	OSspecific::absolute_path( $self ->directory(),
-		$self -> raw_nonp_file()->[$model_number-1] );
-	my $orig_mod = $self ->models()->[$model_number-1];
-	my $base_mod_ofv;
-	my $base_mod;
-	if (defined $self->base_model and $self->base_model->is_run){
-		$base_mod= $self->base_model;
-		$base_mod_ofv=$self->base_model->outputs->[0]->ofv(); #array over problems and subprobs
-	}
+		OSspecific::absolute_path( $self ->directory(),
+								   $self -> raw_nonp_file()->[$model_number-1] );
+	my $original_ofv = $self ->original_ofv();
+	my $pdf_vector = $self->pdf_vector();
+	my $samples = $self->samples();
+	my $resamples = $self->resamples();
+	my $with_replacement = $self->with_replacement();
 
 	$subroutine = sub {
 		my $modelfit = shift;
@@ -898,67 +802,79 @@ sub _modelfit_raw_results_callback
 		$modelfit -> raw_results_file([$dir.$file] );
 		$modelfit -> raw_nonp_file( [$dir.$nonp_file] );
 
-		# The prepare_raw_results in the modelfit will fix the
-		# raw_results for each rand sample model, we must add
-		# the result for the original model.
 
-		my %dummy;
-
-		my ($raw_results_row, $nonp_rows) = $self -> create_raw_results_rows( max_hash => $mh_ref,
-			model => $orig_mod,
-			raw_line_structure => \%dummy );
-
-		my ($base_raw_results_row, $base_nonp_rows);
-		if (defined $base_mod){
-			($base_raw_results_row, $base_nonp_rows) = $self -> create_raw_results_rows( max_hash => $mh_ref,
-				model => $base_mod,
-				raw_line_structure => \%dummy );
-		}
-		$orig_mod -> outputs -> [0] -> flush;
-		$raw_results_row->[0]->[0] = 'input';
-
-		unshift( @{$modelfit -> raw_results()}, @{$raw_results_row} );
-		if (defined $base_raw_results_row){
-			$base_raw_results_row->[0]->[0] = 'base';
-			unshift( @{$modelfit -> raw_results()}, @{$base_raw_results_row} ) ;
-		}
 		$self->raw_line_structure($modelfit -> raw_line_structure());
 
-		if ( defined $base_mod_ofv ) {
-			my ($start,$len) = split(',',$self->raw_line_structure() -> {1}->{'problem'});
-			my $probindex = $start;
-			my ($start,$len) = split(',',$self->raw_line_structure() -> {1}->{'subproblem'});
-			my $subindex = $start;
-			my ($start,$len) = split(',',$self->raw_line_structure() -> {1}->{'ofv'});
-			my $ofvindex=$start;
-			croak("could not find ofv in raw results header") unless (defined $ofvindex);
+		my ($start,$len) = split(',',$self->raw_line_structure() -> {1}->{'problem'});
+		my $probindex = $start;
+		my ($start,$len) = split(',',$self->raw_line_structure() -> {1}->{'subproblem'});
+		my $subindex = $start;
+		my ($start,$len) = split(',',$self->raw_line_structure() -> {1}->{'ofv'});
+		my $ofvindex=$start;
+		croak("could not find ofv in raw results header") unless (defined $ofvindex);
 
-			foreach my $row ( @{$modelfit -> raw_results()} ) {
-				my $delta_ofv = $row->[$ofvindex] - $base_mod_ofv->[($row->[$probindex]-1)]->[($row->[$subindex]-1)];
-				my @oldrow =@{$row};
-				$row = [@oldrow[0 .. $ofvindex],$delta_ofv,@oldrow[$ofvindex+1 .. $#oldrow]]; 
-			}
+		my @delta_ofv=();
+		my $index = 0;
+		foreach my $row ( @{$modelfit -> raw_results()} ) {
+			my $delta_ofv = $row->[$ofvindex] - $original_ofv;
+			push(@delta_ofv,$delta_ofv);
+#			my $pdf = $pdf_vector->[$index];
+#			my $wgt;
+#			if ($pdf > 0){
+#				$wgt=exp(-0.5*($delta_ofv))/($pdf);
+#			}else{
+#				$wgt=1e10;
+#			}
+			
+#			my @oldrow =@{$row};
+#			$row = [@oldrow[0 .. $ofvindex],$delta_ofv,$pdf,$wgt,0,@oldrow[$ofvindex+1 .. $#oldrow]]; 
+			$index++;
+		}
+		my $wghash = tool::sir::compute_weights(pdf_array => $pdf_vector,
+												dofv_array => \@delta_ofv);
 
-			my @old_header = @{$modelfit -> raw_results_header()};
-			my $headerindex;
-			for (my $k=0; $k<scalar(@old_header);$k++){
-				$headerindex = $k if ($old_header[$k] eq 'ofv');
-			}
-			$modelfit -> raw_results_header(
-				[@old_header[0 .. $headerindex],'deltaofv',@old_header[$headerindex+1 .. $#old_header]]);
+		my @original_weights = @{$wghash->{'weights'}};
+		my @times_sampled = (0) x $samples;
 
-			foreach my $mod (sort({$a <=> $b} keys %{$self->raw_line_structure()})){
-				foreach my $category (keys %{$self->raw_line_structure() -> {$mod}}){
-					next if ($category eq 'line_numbers');
-					my ($start,$len) = split(',',$self->raw_line_structure() -> {$mod}->{$category});
-					$self->raw_line_structure() -> {$mod}->{$category} = ($start+1).','.$len
-					if ($start > $ofvindex); #+1 for deltaofv
-				}
-				$self->raw_line_structure() -> {$mod}->{'deltaofv'} = ($ofvindex+1).',1';
+		for (my $i=0; $i<$resamples; $i++){
+			my $sample_index = tool::sir::weighted_sample(cdf => $wghash->{'cdf'});
+			$times_sampled[$sample_index]++;
+			unless ($with_replacement or $i==$resamples){
+				tool::sir::recompute_weights(weight_hash => $wghash,
+											 reset_index => $sample_index);
 			}
 		}
-		$self->raw_line_structure() -> {'input'} = $self->raw_line_structure() -> {'1'}; #input model
-		$self->raw_line_structure() -> {'base'} = $self->raw_line_structure() -> {'1'}; 
+
+		$index=0;
+		foreach my $row ( @{$modelfit -> raw_results()} ) {
+			my @oldrow =@{$row};
+			$row = [@oldrow[0 .. $ofvindex],$delta_ofv[$index],$pdf_vector->[$index],
+					$original_weights[$index],$times_sampled[$index],@oldrow[$ofvindex+1 .. $#oldrow]]; 
+			$index++;
+		}
+		
+		
+		my @old_header = @{$modelfit -> raw_results_header()};
+		my $headerindex;
+		for (my $k=0; $k<scalar(@old_header);$k++){
+			$headerindex = $k if ($old_header[$k] eq 'ofv');
+		}
+		$modelfit -> raw_results_header(
+			[@old_header[0 .. $headerindex],'deltaofv','PDF','weight','resamples',@old_header[$headerindex+1 .. $#old_header]]);
+		
+		foreach my $mod (sort({$a <=> $b} keys %{$self->raw_line_structure()})){
+			foreach my $category (keys %{$self->raw_line_structure() -> {$mod}}){
+				next if ($category eq 'line_numbers');
+				my ($start,$len) = split(',',$self->raw_line_structure() -> {$mod}->{$category});
+				$self->raw_line_structure() -> {$mod}->{$category} = ($start+4).','.$len
+					if ($start > $ofvindex); #+4 for deltaofv PDF weight resamples
+			}
+			$self->raw_line_structure() -> {$mod}->{'deltaofv'} = ($ofvindex+1).',1';
+			$self->raw_line_structure() -> {$mod}->{'PDF'} = ($ofvindex+2).',1';
+			$self->raw_line_structure() -> {$mod}->{'weight'} = ($ofvindex+3).',1';
+			$self->raw_line_structure() -> {$mod}->{'resamples'} = ($ofvindex+4).',1';
+		}
+		
 		$self->raw_line_structure() -> write( $dir.'raw_results_structure' );
 
 		$self -> raw_results_header($modelfit -> raw_results_header());

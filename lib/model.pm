@@ -285,6 +285,144 @@ sub BUILD
 	}
 }
 
+
+sub create_maxeval_zero_models_array
+{
+	my %parm = validated_hash(\@_,
+							  subdirectory => { isa => 'Str', optional => 0 },
+							  basedirectory => { isa => 'Str', optional => 0 },
+							  ignore_missing_parameters => { isa => 'Bool', default => 0, optional => 1 },
+							  sampled_params_arr => { isa => 'ArrayRef', optional => 0 },
+							  model => { isa => 'model', optional => 0 },
+							  mceta => { isa => 'Int', optional => 1 },
+							  purpose => { isa => 'Str', optional => 0 }
+	);
+	my $model = $parm{'model'};
+	my $subdirectory = $parm{'subdirectory'};
+	my $basedirectory = $parm{'basedirectory'};
+	my $sampled_params_arr = $parm{'sampled_params_arr'};
+	my $mceta = $parm{'mceta'};
+	my $purpose = $parm{'purpose'};
+	my $ignore_missing_parameters = $parm{'ignore_missing_parameters'};
+
+	my $samples_done=0;
+	my $run_num=1;
+	my @modelsarr=();
+	my $run_model;
+	my $dummymodel;
+	my $dummyname='dummy.mod';
+	my @problem_lines=();
+	while ($samples_done < scalar(@{$sampled_params_arr})){
+		#copy datafile to subdirectory (run directory m1)  and later set local path to datafile in model
+		cp($model->datas->[0]->full_name(),$subdirectory.$model->datas->[0]->filename());
+		#copy the model
+		$run_model = $model ->  copy( filename    => $subdirectory.$purpose.'_'.$run_num.'.mod',
+									  output_same_directory => 1,
+									  copy_data   => 0,
+									  copy_output => 0);
+		$run_num++;
+
+		$run_model->set_maxeval_zero(need_ofv => 1);
+		if (($PsN::nm_major_version >= 7) and ($PsN::nm_minor_version >= 3)){
+			if ($mceta > 0){
+				$run_model->set_option(problem_numbers => [1],
+									   record_name => 'estimation',
+									   option_name => 'MCETA',
+									   option_value => $mceta);
+			}
+		}
+		foreach my $record ('table','simulation','covariance','scatter'){
+			$run_model -> remove_records (problem_numbers => [1],
+										  keep_last => 0,
+										  type => $record);
+		}
+
+		if (scalar(@problem_lines)<1){
+			#first iteration
+			$dummymodel = $run_model ->  copy( filename    => $subdirectory.$dummyname,
+											   output_same_directory => 1,
+											   target => 'mem',
+											   copy_data   => 0,
+											   copy_output => 0);
+			chdir($subdirectory);
+			$dummymodel->datafiles(problem_numbers => [1],
+								   new_names => [$model->datas->[0]->filename()]);
+			chdir($basedirectory);
+
+			#set $DATA REWIND
+			$dummymodel->add_option(problem_numbers => [1],
+									record_name => 'data',
+									option_name => 'REWIND');
+
+			#remove most records, keep only $PROB, $INPUT, $DATA, $THETA, $OMEGA, $SIGMA $EST
+			foreach my $record ('table','simulation','pk','pred','error','covariance','scatter','msfi','subroutine',
+								'abbreviated','sizes','contr','prior','model','tol','infn','aesinitial',
+								'aes','des','mix','nonparametric'){
+				$dummymodel -> remove_records (problem_numbers => [1],
+											   keep_last => 0,
+											   type => $record);
+			}
+			my $linesarray = $dummymodel->problems->[0]->_format_problem;
+			#we cannot use this array directly, must make sure items do not contain line breaks
+			foreach my $line (@{$linesarray}){
+				my @arr = split(/\n/,$line);
+				push(@problem_lines,@arr);
+			}
+			unlink($subdirectory.$dummyname);
+			$dummymodel = undef;
+		}
+
+		#need to set data object , setting record not enough
+		#chdir so can use local data file name
+		chdir($subdirectory);
+		$run_model->datafiles(problem_numbers => [1],
+							  new_names => [$model->datas->[0]->filename()]);
+
+		chdir($basedirectory);
+
+		#update ests for first $PROB in real model
+		$run_model -> update_inits(from_hash => $sampled_params_arr->[$samples_done],
+								   ignore_missing_parameters => $ignore_missing_parameters); 
+
+		$samples_done++;
+		my $probnum=2;
+		for (my $i=1; $i<200; $i++){
+			last if ($samples_done == scalar(@{$sampled_params_arr}));
+			#add one $PROB per $i, update inits from hash
+			my $sh_mod = model::shrinkage_module -> new ( nomegas => $run_model -> nomegas -> [0],
+														  directory => $run_model -> directory(),
+														  problem_number => $probnum );
+
+			push(@{$run_model->problems()},
+				 model::problem ->
+				 new ( directory                   => $run_model->directory,
+					   ignore_missing_files        => 1,
+					   ignore_missing_output_files => 1,
+					   sde                         => $run_model->sde,
+					   omega_before_pk             => $run_model->omega_before_pk,
+					   cwres                       => $run_model->cwres,
+					   tbs                         => 0,
+					   dtbs                         => 0,
+					   prob_arr                    => \@problem_lines,
+					   shrinkage_module            => $sh_mod )
+				);
+			push(@{$run_model->active_problems()},1);
+			push(@{$run_model->datas()},$run_model->datas()->[0]);
+			$run_model -> _write();
+			$run_model->update_inits(from_hash => $sampled_params_arr->[$samples_done],
+									 problem_number=> $probnum,
+									 ignore_missing_parameters => $ignore_missing_parameters);
+			$samples_done++;
+			$probnum++;
+		}
+		$run_model -> _write();
+		push(@modelsarr,$run_model);
+	}
+
+	return \@modelsarr;
+
+}
+
 sub _datas_set
 {
 	my $self = shift;

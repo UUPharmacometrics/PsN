@@ -35,13 +35,13 @@ cmp_ok($icm->element(5,3),'==',-1.03606E+02,'inverse element 5,3');
 cmp_ok($icm->element(5,5),'==',5.96396E+03,'inverse element 5,5');
 
 my $hash = tool::sir::get_nonmem_parameters(output => $output);
-my $thetas = $hash->{'values'};
+my $thetas = $hash->{'filtered_values'};
 
-cmp_ok($hash->{'values'}->[0],'==',5.55363E-03,' theta 1');
-cmp_ok($hash->{'values'}->[1],'==',1.33638E+00,' theta 2');
-cmp_ok($hash->{'values'}->[2],'==',4.97064E-01,' theta 3');
-cmp_ok($hash->{'values'}->[3],'==',3.76272E-01,' theta 4');
-cmp_ok($hash->{'values'}->[4],'==',1.28122E-01,' theta 5');
+cmp_ok($hash->{'filtered_values'}->[0],'==',5.55363E-03,' theta 1');
+cmp_ok($hash->{'filtered_values'}->[1],'==',1.33638E+00,' theta 2');
+cmp_ok($hash->{'filtered_values'}->[2],'==',4.97064E-01,' theta 3');
+cmp_ok($hash->{'filtered_values'}->[3],'==',3.76272E-01,' theta 4');
+cmp_ok($hash->{'filtered_values'}->[4],'==',1.28122E-01,' theta 5');
 cmp_ok($hash->{'lower_bounds'}->[0],'==',0,' lower bound theta 1');
 cmp_ok($hash->{'lower_bounds'}->[1],'==',0,' lower bound theta 2');
 cmp_ok($hash->{'lower_bounds'}->[2],'==',0,' lower bound theta 3');
