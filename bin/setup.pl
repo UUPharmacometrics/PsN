@@ -25,6 +25,8 @@ my $binary_dir;
 my $library_dir;
 my $perl_binary;
 my $old_psn_config_file;
+my $copy_cmd;
+my $copy_recursive_cmd;
 
 setup_globals();
 
@@ -633,33 +635,31 @@ sub create_directory
 
 sub test_perl_modules
 {
-	if (confirm()) {  
-		print "\nTesting required modules:\n";
-		foreach my $module (@modules) {
-			my $ok = 0;
-			$ok = 1 if eval("require " . $module);
-			if ($ok) {
-				print "Module $module ok\n";
-			} else {
-				print "Perl module $module is missing, you must install it before running PsN.\n";
-			}
-		} 
-		print "\nDone testing required modules.\n";
-		print "\nTesting recommended but not required modules...\n";
-		foreach my $module (@recommended_modules){
-			my $ok = 0;
-			$ok = 1 if eval("require " . $module);
-			if ($ok) {
-				print "Module $module ok\n";
-			} else {
-				print "Perl module $module is missing, you can run PsN without it but some features will be disabled.\n";
-			}
-		} 
+	print "\nTesting required modules:\n";
+	foreach my $module (@modules) {
+		my $ok = 0;
+		$ok = 1 if eval("require " . $module);
+		if ($ok) {
+			print "Module $module ok\n";
+		} else {
+			print "Perl module $module is missing, you must install it before running PsN.\n";
+		}
+	} 
+	print "\nDone testing required modules.\n";
+	print "\nTesting recommended but not required modules...\n";
+	foreach my $module (@recommended_modules){
+		my $ok = 0;
+		$ok = 1 if eval("require " . $module);
+		if ($ok) {
+			print "Module $module ok\n";
+		} else {
+			print "Perl module $module is missing, you can run PsN without it but some features will be disabled.\n";
+		}
+	} 
 
-		print "Tests done.\n\n";
-		print "Continue installing PsN (installing is possible even if modules are missing)[y/n]?";
-		abort() unless (confirm());
-	}
+	print "Tests done.\n\n";
+	print "Continue installing PsN (installing is possible even if modules are missing)[y/n]?";
+	abort() unless (confirm());
 }
 
 sub warn_about_local_configuration
@@ -681,6 +681,37 @@ sub warn_about_local_configuration
 		"$library_dir" . "$directory_separator" . "PsN_$name_safe_version" . "$directory_separator" . "psn.conf\n";
 	}
 }
+
+sub copy_file
+{
+	my $source = shift;
+	my $dest = shift;
+	
+	# This sub works currently only on windows
+	if ($have_file_copy) {
+		unless (fcopy($source, $dest)) {
+			abort("Could not copy $source to $dest : $!\n");
+		}
+	} else {
+		system("copy /Y \"$source\" \"$dest\"");
+	}
+}
+
+sub create_bat_file
+{
+	my $name = shift;
+
+	my $bat_file;
+
+	unless (open $bat_file, ">", $name) {
+		abort("Could not open $name: $!\n");
+	}
+
+	print $bat_file '@echo off' . "\n" .'perl %~dp0%0.pl %*' . "\n";
+
+	close $bat_file;
+}
+
 
 print "\nThis is the PsN installer. I will install PsN version $version.\n".
     "You need to answer a few questions. If a default value is presented\n".
@@ -730,8 +761,6 @@ print "PsN Core and Toolkit installation directory [$default_sitelib]:";
 $library_dir = get_input($default_sitelib);
 create_directory($library_dir);
 
-my $copy_cmd;
-my $copy_recursive_cmd;
 
 if (running_on_windows()) {
 	$copy_cmd = "copy /Y";
@@ -788,7 +817,7 @@ if ($have_file_copy) {
 	}
 } else {
 	#do not have File::Copy
-	system( $copy_cmd . " \"" . $newconf . "\" old.conf" ) if $keep_conf;
+	system($copy_cmd . " \"" . $newconf . "\" old.conf") if $keep_conf;
 	
 	my $full_command = $copy_recursive_cmd . " " . File::Spec -> catfile( "lib", "*" ) . " \"" . $thelibdir . "\""; 
 	system($full_command);
@@ -800,7 +829,7 @@ if ($have_file_copy) {
 			abort("It is recommended to run the command\n".
 				"ppm install file-copy-recursive\n".
 				"in a command window, and then try to install PsN again, using the same setup script.\n");
-		}else{
+		} else {
 			abort("It is recommended to install File::Copy::Recursive".
 				"and then try to install PsN again, using the same setup script.\n");
 		}
@@ -810,62 +839,56 @@ if ($have_file_copy) {
 }
 
 my $confirmed = 0;
-foreach my $file ( @utilities ) {
+foreach my $file (@utilities) {
 	copy_and_modify_bin_files($file, $binary_dir);
 
 	my $copy_the_binaries = 0;
 	if (-e "$binary_dir/$file") {
 		
 		if (not running_on_windows()) {
-			my $link = readlink( "$binary_dir/execute" );
-			if( $old_version eq 'X_X_X' and not($link eq '') ) {
+			my $link = readlink("$binary_dir/execute");
+			if ($old_version eq 'X_X_X' and not($link eq '')) {
 				$link =~ /-(\d+\.\d+\.\d+)/;
 				$old_version = $1;
 			}
-		}
-		
-		if (running_on_windows()) {
-			my $link = open(IN,"$binary_dir/execute");
-			if( $old_version eq 'X_X_X' and $link) {
-				while(<IN>){
-					if(/^use PsN/){
+		} elsif (running_on_windows()) {
+			my $link = open(IN, "$binary_dir/execute");
+			if ($old_version eq 'X_X_X' and $link) {
+				while (<IN>) {
+					if (/^use PsN/) {
 						s/^use PsN\_//;
 						s/\s.*//;
 						s/\_/\./g;
 						s/\;//;
-						$old_version=$_;
+						$old_version = $_;
 					}
 				}
 				close(IN);
 			}
 		}
+
 		my $tmp = $old_version;
 		$tmp =~ s/\./\_/g;
-		$old_psn_config_file = File::Spec -> catfile( $library_dir, "PsN_$tmp", "psn.conf" );
+		$old_psn_config_file = File::Spec->catfile($library_dir, "PsN_$tmp", "psn.conf");
 		$old_psn_config_file = undef unless (-e $old_psn_config_file);
 		
-		if( $old_version eq $version ){
-			
-			if( not $confirmed ){
-				
-				print( "\nThis version ($version) looks like an older installed\n",
+		if ($old_version eq $version) {
+			if (not $confirmed) {
+				print("\nThis version ($version) looks like an older installed\n",
 					   "version ($old_version) of PsN. Would you like to make\n",
-					   "this version ($version) the default? [y/n]" );
-				
+					   "this version ($version) the default? [y/n]");
 				$confirmed = 1;
 				$overwrite = confirm();
 			}
 		}
 		if (not $confirmed) {
-			
-			print( "\nAn older version($old_version) of PsN is installed. Would you like to\n",
-				   "make this version ($version) the default? [y/n]" );
-			
+			print("\nAn older version($old_version) of PsN is installed. Would you like to\n",
+				   "make this version ($version) the default? [y/n]");
 			$confirmed = 1;
 			$overwrite = confirm();
 		}
-		if( $overwrite ){
-			unlink( "$binary_dir/$file" );
+		if ($overwrite) {
+			unlink("$binary_dir/$file");
 			$copy_the_binaries = 1;
 		}
 		
@@ -875,45 +898,30 @@ foreach my $file ( @utilities ) {
 	
 	if ($copy_the_binaries) {
 		if (running_on_windows()) {
-			if ($have_file_copy) {
-				unless (fcopy("$binary_dir\\$file-$version", "$binary_dir\\$file")) {
-					abort("Could not copy $binary_dir\\$file-$version to $binary_dir\\$file : $!\n");
-				}
-				unless (fcopy("$runperl_binary", "$binary_dir\\$file.bat")){
-					abort("Could not copy $runperl_binary to $binary_dir\\$file.bat : $!\n");
-				}
-			} else {
-				#win but no file copy
-				system("copy /Y \"$binary_dir\\$file-$version\" \"$binary_dir\\$file\"");
-				system("copy /Y \"$runperl_binary\" \"$binary_dir\\$file.bat\"");
-			}
+			copy_file("$binary_dir\\$file-$version", "$binary_dir\\$file");
+			copy_file($runperl_binary, "$binary_dir\\$file.bat");
 		} else {
-			#unix
-			symlink( "$binary_dir/$file-$version", "$binary_dir/$file" );
+			symlink("$binary_dir/$file-$version", "$binary_dir/$file");
 		}
-		if ($file eq 'update_inits'){
+		if ($file eq 'update_inits') {
 			if (running_on_windows()) {
-				if ($have_file_copy ){
-					unless (fcopy("$binary_dir\\$file-$version","$binary_dir\\update")){
-						abort("Could not copy $binary_dir\\$file-$version to  $binary_dir\\update : $!\n");
-					}
-					unless (fcopy("$runperl_binary","$binary_dir\\update.bat")){
-						abort("Could not copy $runperl_binary to $binary_dir\\update.bat : $!\n");
-					}
-				}else{
-					#win but no file copy
-					system( "copy /Y \"$binary_dir\\$file-$version\" \"$binary_dir\\update\"" );
-					system( "copy /Y \"$runperl_binary\" \"$binary_dir\\update.bat\"" );
-				}
+				copy_file("$binary_dir\\$file-$version", "$binary_dir\\update");
+				copy_file($runperl_binary, "$binary_dir\\update.bat");
 			}
 		}
 	}
+
+	# Make the versioned script directly executable
+	if (running_on_windows()) {	
+		rename("$binary_dir\\$file-$version", "$binary_dir\\$file-$version.pl");
+		create_bat_file("$binary_dir\\$file-$version.bat");
+	}
 }
 
-unless (open( TEMPLATE, "lib/PsN_template.pm" )){
+unless (open(TEMPLATE, "lib/PsN_template.pm")) {
 	abort("Unable to open PsN_template.pm in lib: $!\n");
 }
-unless (open( PSN, '>', "$library_dir" . "/PsN_$name_safe_version.pm" )){
+unless (open(PSN, '>', "$library_dir" . "/PsN_$name_safe_version.pm")) {
 	abort("Unable to install PsN_$name_safe_version.pm in $library_dir: $!\n");
 }
 
@@ -922,11 +930,11 @@ if (running_on_windows()) {
 	$library_dir = Win32::GetShortPathName($library_dir);
 }
 
-print( PSN "package PsN;\n" );
-print( PSN "use lib '$library_dir/PsN_$name_safe_version';\n" );
-print( PSN "\$lib_dir = '$library_dir/PsN_$name_safe_version';\n" );
-print( PSN "\$config_file = '$library_dir/PsN_$name_safe_version/psn.conf';\n" );
-print( PSN "\$version = '$version';\n" );
+print(PSN "package PsN;\n");
+print(PSN "use lib '$library_dir/PsN_$name_safe_version';\n");
+print(PSN "\$lib_dir = '$library_dir/PsN_$name_safe_version';\n");
+print(PSN "\$config_file = '$library_dir/PsN_$name_safe_version/psn.conf';\n");
+print(PSN "\$version = '$version';\n");
 
 for ( <TEMPLATE> ) {
 	print PSN $_;
@@ -935,44 +943,38 @@ close( PSN );
 close( TEMPLATE );
 
 
-my $copy_PsNpm=0;
+my $copy_PsNpm = 0;
 
-if( -e "$library_dir/PsN.pm" ){
-	if( $overwrite ){
-		unlink( "$library_dir/PsN.pm" );
-		$copy_PsNpm=1;
+if (-e "$library_dir/PsN.pm") {
+	if ($overwrite) {
+		unlink("$library_dir/PsN.pm");
+		$copy_PsNpm = 1;
 	}
 }else{
-	$copy_PsNpm=1;
+	$copy_PsNpm = 1;
 }
-if ($copy_PsNpm){
+if ($copy_PsNpm) {
 	if (running_on_windows()) {
-		if ($have_file_copy ){
-			unless (fcopy("$library_dir\\PsN_$name_safe_version.pm","$library_dir\\PsN.pm")){
-				abort("Could not copy $library_dir\\PsN_$name_safe_version.pm to $library_dir\\PsN.pm : $!\n");
-			}
-		}else{
-			system("copy \"$library_dir\\PsN_$name_safe_version.pm\" \"$library_dir\\PsN.pm\"" );
-		}
+		copy_file("$library_dir\\PsN_$name_safe_version.pm", "$library_dir\\PsN.pm");
 	} else {
-		symlink( "$library_dir/PsN_$name_safe_version.pm", "$library_dir/PsN.pm" );
+		symlink("$library_dir/PsN_$name_safe_version.pm", "$library_dir/PsN.pm");
 	}
 }
 
-unless (open( PSN, '<', "$library_dir" . "/PsN_$name_safe_version/nonmem.pm" )){
+unless (open( PSN, '<', "$library_dir" . "/PsN_$name_safe_version/nonmem.pm")) {
 	abort("Unable to install PsN-$name_safe_version/nonmem.pm in $library_dir: $!\n");
 }
 
 my @nonmem_pm = <PSN>;
 
-close( PSN );
+close(PSN);
 
-unless (open( PSN, '>', "$library_dir" . "/PsN_$name_safe_version/nonmem.pm" )){
+unless (open(PSN, '>', "$library_dir" . "/PsN_$name_safe_version/nonmem.pm")) {
 	abort("Unable to install PsN_$name_safe_version/nonmem.pm in $library_dir: $!\n");
 }
 
-for( @nonmem_pm ){
-	if( /require PsN/ ){
+for (@nonmem_pm) {
+	if (/require PsN/) {
 		print PSN "require PsN_$name_safe_version;\n";
 	} else {
 		print PSN;
@@ -1003,9 +1005,9 @@ if (not $keep_conf) {
 
 		if (confirm()) {
 			if ($have_file_copy) {
-				fcopy($old_psn_config_file,$newf);
+				fcopy($old_psn_config_file, $newf);
 			} else {
-				system($copy_cmd." \"".$old_psn_config_file."\" \"".$newf. "\"") ;
+				system($copy_cmd . " \"" . $old_psn_config_file . "\" \"" . $newf . "\"") ;
 			}
 			if (-e $newf){
 				$offer_help = 0;
