@@ -915,6 +915,13 @@ foreach my $file (@utilities) {
 	if (running_on_windows()) {	
 		rename("$binary_dir\\$file-$version", "$binary_dir\\$file-$version.pl");
 		create_bat_file("$binary_dir\\$file-$version.bat");
+
+		# Conversion of previously installed scripts
+		foreach my $name (glob "$binary_dir\\$file-*") {
+			next if $name =~ /(.bat|.pl)$/;
+			rename($name, "$name.pl");
+			create_bat_file("$name.bat");
+		}
 	}
 }
 
