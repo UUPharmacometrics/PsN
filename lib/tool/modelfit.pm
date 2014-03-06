@@ -2279,6 +2279,9 @@ sub slurm_submit
 			next;
 		}else{
 			print "Slurm submit failed.\nSystem error message: $outp\nConsidering this model failed." ;
+			unless ($Config{osname} eq 'MSWin32' or $Config{osname} eq 'MSWin64'){
+				system('echo '.$outp.'  > job_submission_error');
+			}
 			$jobId = -1;
 			last;
 		}	
@@ -3174,22 +3177,23 @@ sub restart_needed
 				$failure = 'File system problem or NMtran could not be initiated (the NMtran output file FDATA is missing)';
 				if ($self->run_local) {
 					$failure .= ' - check perl settings in psn.conf and perl installation';
+				}elsif (-e 'job_submission_error'){
+					open( MESS, '<job_submission_error' );
+					$failure = '';
+					$failure_mess = "Job submission error:\n";
+					while(<MESS>) {
+						chomp;
+						$failure .= $_.' ';
+						$failure_mess .= $_."\n";
+					}
+					close( MESS );
+#				general_error($failure_mess);
 				} elsif ($self->run_on_sge_nmfe) {
 					$failure .= ' - check cluster status and cluster settings in psn.conf';
 				} elsif ($self->run_on_lsf_nmfe) {
 					
-					if (-e 'job_submission_error'){
-						open( MESS, '<job_submission_error' );
-						$failure = '';
-						while(<MESS>) {
-							chomp;
-							$failure .= $_.' ';
-						}
-						close( MESS );
-						
-					}else{
-						$failure .= ' - check cluster status and cluster settings in psn.conf';
-					}
+					$failure .= ' - check cluster status and cluster settings in psn.conf';
+					
 				}else{
 					$failure .= ' - check cluster status and cluster settings and remote_perl in psn.conf';
 				}
@@ -3316,24 +3320,22 @@ sub restart_needed
 				if ($self->run_local) {
 					$failure_mess .= " It is recommended to check the perl installation, and perl settings in psn.conf." ;
 					$failure .= ' - check perl settings in psn.conf and perl installation';
+				}elsif (-e 'job_submission_error'){
+					open( MESS, '<job_submission_error' );
+					$failure = '';
+					$failure_mess = "Job submission error:\n";
+					while(<MESS>) {
+						chomp;
+						$failure .= $_.' ';
+						$failure_mess .= $_."\n";
+					}
+					close( MESS );
+					#general_error($failure_mess);
 				} elsif ($self->run_on_sge_nmfe) {
 					$failure_mess .= " It is recommended to check cluster status, and cluster settings in psn.conf." ;
 					$failure .= ' - check cluster status and cluster settings in psn.conf';
 				} elsif ($self->run_on_lsf_nmfe) {
-
-					if (-e 'job_submission_error') {
-						open( MESS, '<job_submission_error' );
-						$failure = '';
-						$failure_mess = "Job submission error:\n";
-						while(<MESS>) {
-							chomp;
-							$failure .= $_ . ' ';
-							$failure_mess .= $_."\n";
-						}
-						close( MESS );
-					}else{
-						$failure .= ' - check cluster status and cluster settings in psn.conf';
-					}
+					$failure .= ' - check cluster status and cluster settings in psn.conf';
 				}else{
 					$failure_mess .= " It is recommended to check cluster status, and cluster settings and remote_perl in psn.conf." ;
 					$failure .= ' - check cluster status, and cluster settings and remote_perl in psn.conf';
@@ -3733,25 +3735,23 @@ sub restart_needed
 			if ($self->run_local) {
 				$failure_mess .= " It is recommended to check the perl installation, and perl settings in psn.conf." ;
 				$failure .= ' - check perl settings in psn.conf and perl installation';
+			}elsif (-e 'job_submission_error'){
+				open( MESS, '<job_submission_error' );
+				$failure = '';
+				$failure_mess = "Job submission error:\n";
+				while(<MESS>) {
+					chomp;
+					$failure .= $_.' ';
+					$failure_mess .= $_."\n";
+				}
+				close( MESS );
+				general_error($failure_mess);
+				
 			} elsif ($self->run_on_sge_nmfe) {
 				$failure_mess .= " It is recommended to check cluster status, and cluster settings in psn.conf." ;
 				$failure .= ' - check cluster status and cluster settings in psn.conf';
 			} elsif ($self->run_on_lsf_nmfe) {
-				
-				if (-e 'job_submission_error'){
-					open( MESS, '<job_submission_error' );
-					$failure = '';
-					$failure_mess = "Job submission error:\n";
-					while(<MESS>) {
-						chomp;
-						$failure .= $_.' ';
-						$failure_mess .= $_."\n";
-					}
-					close( MESS );
-				general_error($failure_mess);
-				}else{
-					$failure .= ' - check cluster status and cluster settings in psn.conf';
-				}
+				$failure .= ' - check cluster status and cluster settings in psn.conf';
 			}else{
 				$failure_mess .= " It is recommended to check cluster status, and cluster settings and remote_perl in psn.conf." ;
 				$failure .= ' - check cluster status, and cluster settings and remote_perl in psn.conf';
