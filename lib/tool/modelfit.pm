@@ -2266,14 +2266,23 @@ sub slurm_submit
 	unless ($Config{osname} eq 'MSWin32' or $Config{osname} eq 'MSWin64'){
 		system('echo sbatch '.$submitstring.' "2>&1" > sbatchcommand');
 	}
-	sleep(1); #wait to let other nodes sync files here?
 
-	my $outp = `sbatch $submitstring 2>&1`;
-	#write error to job_submission_error instead, set jobid to -1, and continue?
-	($outp =~ /Submitted batch job (\d+)/)
-		or croak("Slurm submit failed.\nSystem error message: $outp" );
-	$jobId = $1;
-	
+	for (my $i=0; $i<10; $i++){
+		sleep(1); #wait to let other nodes sync files here?
+		my $outp = `sbatch $submitstring 2>&1`;
+		#write error to job_submission_error instead, set jobid to -1, and continue?
+		if ($outp =~ /Submitted batch job (\d+)/){
+			$jobId = $1;
+			last;
+		}elsif($outp =~ /Socket timed out/){
+			#try again. jobId is -1 by initiation 
+			next;
+		}else{
+			print "Slurm submit failed.\nSystem error message: $outp\nConsidering this model failed." ;
+			$jobId = -1;
+			last;
+		}	
+	}
 	unless ($Config{osname} eq 'MSWin32' or $Config{osname} eq 'MSWin64'){
 		system('echo sbatch '.$jobId.' "2>&1" > jobId');
 	}
