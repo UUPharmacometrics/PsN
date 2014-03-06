@@ -2276,6 +2276,7 @@ sub slurm_submit
 			last;
 		}elsif($outp =~ /Socket timed out/){
 			#try again. jobId is -1 by initiation 
+			sleep(3);
 			next;
 		}else{
 			print "Slurm submit failed.\nSystem error message: $outp\nConsidering this model failed." ;
