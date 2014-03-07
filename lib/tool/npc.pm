@@ -856,14 +856,10 @@ sub modelfit_setup
   if (defined $self->sim_model()) {
     $user_sim_model = 1;
     my $temp_model = model -> new ( 
-      extra_files => $model_orig->extra_files(),
-      last_est_complete => $model_orig->last_est_complete(),
-      niter_eonly => $model_orig->niter_eonly(),
-      skip_data_parsing => $model_orig->skip_data_parsing(),
-      sde => $model_orig->sde(),
-      filename                    => $self->sim_model(),
-      ignore_missing_output_files => 1,
-      cwres                       => (($self->dv eq 'CWRES') and ($PsN::nm_major_version < 7))  );
+		%{common_options::restore_options(@common_options::model_options)},
+		filename                    => $self->sim_model(),
+		ignore_missing_output_files => 1,
+		cwres                       => (($self->dv eq 'CWRES') and ($PsN::nm_major_version < 7))  );
 
 
     if (defined $temp_model->outputs() and 
@@ -932,14 +928,10 @@ sub modelfit_setup
     close(MOD);
 
     $model_simulation = model -> new ( 
-      extra_files => $model_orig->extra_files(),
-      last_est_complete => $model_orig->last_est_complete(),
-      niter_eonly => $model_orig->niter_eonly(),
-      skip_data_parsing => $model_orig->skip_data_parsing(),
-      sde => $model_orig->sde(),
-      filename                    => $simname,
-      ignore_missing_output_files => 1,
-      cwres                       => (($self->dv eq 'CWRES') and ($PsN::nm_major_version < 7))  );
+		%{common_options::restore_options(@common_options::model_options)},
+		filename                    => $simname,
+		ignore_missing_output_files => 1,
+		cwres                       => (($self->dv eq 'CWRES') and ($PsN::nm_major_version < 7))  );
   }
 
   if (defined $model_simulation) {
