@@ -1,6 +1,9 @@
 LIBFILES= ui.pm \
 	status_bar.pm \
 	nonmem.pm \
+	nonmemrun.pm \
+	nonmemrun/localunix.pm \
+	nonmemrun/localwindows.pm \
 	file.pm \
 	data/individual.pm \
 	data.pm \

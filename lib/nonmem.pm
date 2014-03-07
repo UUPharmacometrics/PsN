@@ -22,24 +22,25 @@ has 'version' => ( is => 'rw', isa => 'Int|Str', default => 5 );
 has 'show_version' => ( is => 'rw', isa => 'Bool', default => 1 );
 has 'adaptive' => ( is => 'rw', isa => 'Bool', default => 0 );
 
-
 if( $0 =~ /nonmem.pm$/ ) {
   use FindBin qw($Bin);
   use lib "$Bin";
 }
+
 use ext::Carp;
 use File::Copy 'cp';
 use Config;
 use Cwd;
+
 if( $0 =~ /nonmem.pm$/ ) {
 	require PsN;
 	my $version = $ARGV[3];
 	my $compile = $ARGV[4];
 	my $execute = $ARGV[5];
 
-	PsN::set_nonmem_info($version); #version
+	PsN::set_nonmem_info($version);
 
-	my $nonmem = nonmem -> new( modelfile       => $ARGV[0],
+	my $nonmem = nonmem -> new(modelfile => $ARGV[0],
 								outputfile      => $ARGV[1],
 								nice            => $ARGV[2], 
 								version         => $version,
@@ -48,71 +49,54 @@ if( $0 =~ /nonmem.pm$/ ) {
 								parafile        => $ARGV[8], 
 								nodes           => $ARGV[9], 
 								fsubs           => [split( /,/ , $ARGV[10] )],
-								nmqual            => $execute == 3 ? 1:0,
+								nmqual          => $execute == 3 ? 1 : 0,
 								show_version    => 0);
 
-	if( $execute == 2){ #run nmfe
-		unless ($nonmem -> run_with_nmfe())
-		{
-			carp($nonmem -> error_message );
-		}
-		#more checking here?
-	}elsif( $execute == 3){ #run nmqualscript
-		unless ($nonmem -> run_with_nmqual())
-		{
-			carp($nonmem -> error_message );
-		}
-	} else {
-		my $mess = "PsN can only be run if option -nmfe or -run_on_sge_nmfe is set.\n".
-			" Separate compiling and running is not supported.";
-		$nonmem->store_message(message => $mess);
-		carp($mess );
-	}
+	$nonmem->run;
 }
-
 
 
 sub BUILD
 {
-	my $this  = shift;
+	my $this = shift;
 
-	unless( defined $this -> outputfile ){
-		my $tmp = $this -> modelfile;
+	if (not defined $this->outputfile) {
+		my $tmp = $this->modelfile;
 		$tmp =~ s/\.mod$/\.lst/;
-		$this -> outputfile($tmp);
+		$this->outputfile($tmp);
 	}
-	my @check_paths=('/run/','/util/','/');
+	my @check_paths = ('/run/','/util/','/');
 	no warnings;		# Avoid a warning from the globals being not declared. The fix is to not use globals.
 	my $confignmdir = $PsN::nmdir;
-	unless( defined $confignmdir ){
-		my $mess = "Unknown NONMEM version ".$this -> version." specified.\n";
-		$this->store_message('message' =>$mess);
+	if (not defined $confignmdir) {
+		my $mess = "Unknown NONMEM version " . $this->version . " specified.\n";
+		$this->store_message('message' => $mess);
 		print $mess;
 	}
-	$this -> nm_directory($confignmdir);
-	$this -> nm_major_version($PsN::nm_major_version);
-	$this -> nm_minor_version($PsN::nm_minor_version);
+	$this->nm_directory($confignmdir);
+	$this->nm_major_version($PsN::nm_major_version);
+	$this->nm_minor_version($PsN::nm_minor_version);
 	use warnings;
-	my $found_nonmem =0;
-	unless (defined $this -> nm_major_version){
+	my $found_nonmem = 0;
+	unless (defined $this->nm_major_version) {
 		my $mess;
-		open( FH, "<", 'psn_nonmem_error_messages.txt' );
-		while( <FH> ){
+		open(FH, "<", 'psn_nonmem_error_messages.txt');
+		while (<FH>) {
 			chomp;
-			$mess .= " ".$_."\n";
+			$mess .= " " . $_ . "\n";
 		}
-		close( FH );
-		$this -> error_message($mess);
+		close(FH);
+		$this->error_message($mess);
 		return 0;
 	}
 
-	if ($this -> nm_major_version == 7){
+	if ($this->nm_major_version == 7) {
 		if (not defined $this -> nm_minor_version and (not $this->nmqual)){
 			my $nmdir = $this -> nm_directory;
 			my $windows = 0;
-			$windows=1 if ($Config{osname} eq 'MSWin32');
-			my $suffix='';
-			$suffix='.bat' if ($windows);
+			$windows = 1 if ($Config{osname} eq 'MSWin32');
+			my $suffix = '';
+			$suffix = '.bat' if ($windows);
 			#Try to figure out the subversion
 			my $found = 0;
 			foreach my $subv (('1','2','3','4','5','6','7','8','9')){
@@ -123,17 +107,17 @@ sub BUILD
 						$this -> nm_minor_version($subv);
 						$this->full_path_executable($script);
 						$found = 1;
-						$found_nonmem=1;
+						$found_nonmem = 1;
 						last;
 					} 
 				}
 			}
 		}
-		if (defined $this -> nm_minor_version){
+		if (defined $this->nm_minor_version) {
 			#PsN.pm makes sure this is only one character, no dots
 			#only want subversion number if subversion > 1
-			$this -> nm_minor_version('') unless ($this -> nm_minor_version>1 );
-		}else{
+			$this -> nm_minor_version('') unless ($this->nm_minor_version > 1);
+		} else {
 			$this -> nm_minor_version('');
 		}
 	}
@@ -142,7 +126,7 @@ sub BUILD
 	my $subversion = $this -> nm_minor_version;
 	my $nmdir = $this -> nm_directory;
 	my $windows = 0;
-	$windows=1 if ($Config{osname} eq 'MSWin32');
+	$windows = 1 if ($Config{osname} eq 'MSWin32');
 
 	my $nmfe='';
 	my $suffix='';
@@ -200,8 +184,8 @@ sub BUILD
 			}
 		}
 	}
-	unless ($found_nonmem){
-		my $looked_in= join ' or ',@check_paths;
+	unless ($found_nonmem) {
+		my $looked_in = join ' or ', @check_paths;
 		my $err_version = ( defined $nmdir and $nmdir ne '' ) ? $nmdir : '[not configured]';
 		my $mess = "Unable to find executable nmfe$version$subversion$suffix ".
 			"in any of the subdirectories\n".
@@ -212,6 +196,21 @@ sub BUILD
 		$this -> error_message($mess);
 		return 0;
 	} 
+}
+
+sub run
+{
+	my $self = shift;
+
+	if (not $self->nmqual) {
+		if (not $self->run_with_nmfe) {
+			carp($self->error_message);
+		}
+	} else {
+		if (not $self->run_with_nmqual) {
+			carp($self->error_message);
+		}
+	}
 }
 
 sub store_message
@@ -238,10 +237,10 @@ sub run_with_nmfe
 	my $self = shift;
 	my $return_value = 1;
 
-	my $version = $self -> nm_major_version;
-	my $subversion = $self -> nm_minor_version;
+	my $version = $self->nm_major_version;
+	my $subversion = $self->nm_minor_version;
 	my $windows = 0;
-	$windows=1 if ($Config{osname} eq 'MSWin32');
+	$windows = 1 if ($Config{osname} eq 'MSWin32');
 	my $nmfe = $self->full_path_executable();
 
 	my @para_arr = ();
@@ -258,7 +257,7 @@ sub run_with_nmfe
 	my @sw_arr = ();
 	if (defined $self->nonmem_options() and ($self->nonmem_options() ne 'none')){
 		my @switches = split( /,/ ,$self->nonmem_options());
-		foreach my $sw (@switches){
+		foreach my $sw (@switches) {
 			push(@sw_arr,' -'.$sw);
 		}
 	}
@@ -274,16 +273,16 @@ sub run_with_nmfe
 	unlink('psn.lst','OUTPUT','output','nmfe_error');
 
 
-	my $outputfile = $self -> outputfile;
-	my $modelfile = $self -> modelfile;
+	my $outputfile = $self->outputfile;
+	my $modelfile = $self->modelfile;
 	
 	#need to add skiptr here for some cases if $subversion==2
 
 	my ( $start_time, $fin_time );
 	$start_time = localtime();
 
-	if($windows){
-		my $command ="$nmfe $modelfile $outputfile ";
+	if ($windows) {
+		my $command = "$nmfe $modelfile $outputfile ";
 		$command .= ' -background ' if ($self -> nm_major_version == 7);
 		$command .= (join (' ',@para_arr)).' ' if (scalar(@para_arr)>0);
 		$command .= (join (' ',@sw_arr)).' ' if (scalar(@sw_arr)>0);
@@ -312,9 +311,8 @@ sub run_with_nmfe
 			}
 		}
 
-		my $submitstring = 'nice -n ' . $self -> nice . 
-			" $nmfe $modelfile $outputfile ".$background ;
-		unless ($self->display_iterations()==1){
+		my $submitstring = 'nice -n ' . $self->nice . " $nmfe $modelfile $outputfile " . $background;
+		unless ($self->display_iterations() == 1) {
 			$submitstring = $submitstring .= ' > nmfe_output.txt' ;
 		}
 		system($submitstring); 
