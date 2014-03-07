@@ -1,0 +1,45 @@
+\input{inputs/format_header.tex}
+\guidetitle{EXECUTE user guide}
+%Kajsa review 2014-03-07
+
+\begin{document}
+
+\maketitle
+
+
+\section{Introduction}
+The linearize script is a PsN tool that allows you to automatically linearize a model and obtain the derivatives dataset to use for further 
+model development.
+
+Example
+\begin{verbatim}
+linearize run1.mod
+\end{verbatim}
+
+
+\section{Input and options}
+\subsection{Required input}
+A model file is required on the command-line.
+
+\subsection{Optional input}
+\begin{optionlist}
+\optname{epsilon}
+Linearize with respect to epsilon, set by default. Disable with -no-epsilon.
+\nextopt
+\optname{error}
+Only relevant if -no-epsilon is set. 
+Use an approximate linearization of the error model instead of an exact.
+Alternatives are add (for additive), prop (for proportional) or
+propadd (for proportional plus additive).
+The error model must be defined in a particular way when this option is used,
+see the scm userguide for details.
+\nextopt
+\optname{foce}
+Set by default. Expand around conditional ETA estimates instead of around ETA=0. To expand around ETA=0 set -no-foce.
+\nextopt
+\end{optionlist}
+
+\section{Output}
+Linearized model file with name xx and data file with name nn.
+
+\end{document}
