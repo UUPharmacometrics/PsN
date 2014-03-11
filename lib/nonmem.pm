@@ -9,7 +9,7 @@ has 'display_iterations' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'full_path_executable' => ( is => 'rw', isa => 'Str' );
 has 'nmqual' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'nm_directory' => ( is => 'rw', isa => 'Str' );
-has 'nm_minor_version' => ( is => 'rw', isa => 'Str' );
+has 'nm_minor_version' => ( is => 'rw', isa => 'Maybe[Str]' );
 has 'nm_major_version' => ( is => 'rw', isa => 'Str' );
 has 'parafile' => ( is => 'rw', isa => 'Str' );
 has 'nodes' => ( is => 'rw', isa => 'Int', default => 0 );
