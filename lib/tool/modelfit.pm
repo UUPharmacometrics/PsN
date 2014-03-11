@@ -14,6 +14,7 @@ use nonmem;
 use nonmemrun;
 use nonmemrun::localunix;
 use nonmemrun::localwindows;
+use nonmemrun::slurm;
 use output;
 use OSspecific;
 use ui;
@@ -23,8 +24,7 @@ use MooseX::Params::Validate;
 
 extends 'tool';
 
-my @nm7_extensions = ('.ext','.cov','.cor','.coi','.phi','.phm',
-		      '.shk','.grd','.xml','.smt','.rmt');
+my @nm7_extensions = ('.ext','.cov','.cor','.coi','.phi','.phm', '.shk','.grd','.xml','.smt','.rmt');
 
 has 'data_path' => ( is => 'rw', isa => 'Str' );
 has 'tail_output' => ( is => 'rw', isa => 'Bool', default => 0 );
@@ -319,7 +319,7 @@ sub BUILD
 	# I<grid_adress> is the URL of the grid submission server,
 	# e.g. hagrid.it.uu.se.
 
-	if ( defined $this->logfile ) {
+	if (defined $this->logfile) {
 		$this->logfile([join('', OSspecific::absolute_path( $this->directory, $this->logfile->[0]) ) ]);
 	}
 
@@ -680,8 +680,6 @@ sub run
 					$pid = $self -> sge_monitor( jobId => $check_pid );
 				} elsif ( $self->run_on_sge_nmfe ) {
 					$pid = $self -> sge_nmfe_monitor( jobId => $check_pid );
-				} elsif ( $self->run_on_slurm ) {
-					$pid = $self -> slurm_monitor( jobId => $check_pid );
 				} elsif ( $self->run_on_zink ) {
 					$pid = $self -> zink_monitor( jobId => $check_pid );
 				} elsif ( $self->run_on_lsf ) {
@@ -690,7 +688,7 @@ sub run
 					$pid = $self -> lsf_nmfe_monitor( jobId => $check_pid );
 				} elsif ( $self->run_on_torque ) {
 					$pid = $self -> torque_monitor( jobId => $check_pid );
-				} else { # Local process
+				} else { # Everything available as nonmemrun objects
 					my $nonmemrun = $queue_info{$queue_map{$check_pid}}{'nonmemrun'};
 					$pid = $nonmemrun->monitor(check_pid => $check_pid);
 				}
@@ -2049,18 +2047,18 @@ sub slurm_submit
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-							  model => { isa => 'model', optional => 1 },
-							  nm_version => { isa => 'Str', optional => 1 },
-							  nodes => { isa => 'Int', default => 0, optional => 1 },
-							  queue_info => { isa => 'Ref', optional => 1 }
-		);
+		model => { isa => 'model', optional => 1 },
+		nm_version => { isa => 'Str', optional => 1 },
+		nodes => { isa => 'Int', default => 0, optional => 1 },
+		queue_info => { isa => 'Ref', optional => 1 }
+	);
 	my $jobId = -1;
 	my $model = $parm{'model'};
 	my $nm_version = $parm{'nm_version'};
 	my $nodes = $parm{'nodes'};
 	my $queue_info = $parm{'queue_info'};
 
-	unless (defined $self->full_path_nmfe()) {
+	if (not defined $self->full_path_nmfe()) {
 		$self->nmfe_setup(nm_version => $nm_version);
 	}
 	#edit nmfe7, add which file it is and nmfe_error
@@ -2122,18 +2120,18 @@ sub slurm_submit
 		}
 		$flags .= ' -t '.$self->max_runtime() ;
 	}
-	if (defined $self->slurm_partition()){
-		$flags .= ' -p '.$self->slurm_partition() ;
+	if (defined $self->slurm_partition()) {
+		$flags .= ' -p ' . $self->slurm_partition() ;
 	}
 	#at most 3GB RAM 
 	if( $PsN::config -> {'default_options'} -> {'uppmax'}) {
 		$flags .= ' -p core -n 1 '; #single core
 	}
 
-	if ($queue_info -> {'send_email'} and defined $self->email_address()){
-		if ($queue_info -> {'send_email'}  == 2){
+	if ($queue_info -> {'send_email'} and defined $self->email_address()) {
+		if ($queue_info -> {'send_email'}  == 2) {
 			$flags .= ' --mail-user='.$self->email_address().' --mail-type=ALL ';
-		}else{
+		} else {
 			$flags .= ' --mail-user='.$self->email_address().' --mail-type=END ';
 		}
 	}
@@ -2142,40 +2140,34 @@ sub slurm_submit
 
 	#sbatch -J psn:pheno.mod -o nmfe.output -e nmfe.output -p core -n 1 -t 0:3:0 -A p2011021 /bubo/sw/apps/nonmem/nm_7.1.0_g_reg/run/nmfe7 pheno.mod pheno.lst -background
 
-	if (defined $self->slurm_prepend_flags()){
-		$flags = ' '.$self->slurm_prepend_flags().$flags;
+	if (defined $self->slurm_prepend_flags()) {
+		$flags = ' ' . $self->slurm_prepend_flags() . $flags;
 	}
-	my $submitstring = $flags .' '. 
-		$self->full_path_nmfe(). ' '.
+	my $submitstring = $flags . ' ' . $self->full_path_nmfe() . ' ' .
 		" psn.mod psn.lst $background ".$parastring." ".$switches;
 
-	unless ($Config{osname} eq 'MSWin32'){
-		system('echo sbatch '.$submitstring.' "2>&1" > sbatchcommand');
-	}
+	system('echo sbatch '.$submitstring.' "2>&1" > sbatchcommand');
 
-	for (my $i=0; $i<10; $i++){
+	for (my $i=0; $i<10; $i++) {
 		sleep(1); #wait to let other nodes sync files here?
 		my $outp = `sbatch $submitstring 2>&1`;
 		#write error to job_submission_error instead, set jobid to -1, and continue?
 		if ($outp =~ /Submitted batch job (\d+)/){
 			$jobId = $1;
 			last;
-		}elsif($outp =~ /Socket timed out/){
+		} elsif($outp =~ /Socket timed out/) {
 			#try again. jobId is -1 by initiation 
 			sleep(3);
 			next;
-		}else{
+		} else {
 			print "Slurm submit failed.\nSystem error message: $outp\nConsidering this model failed." ;
-			unless ($Config{osname} eq 'MSWin32' or $Config{osname} eq 'MSWin64'){
-				system('echo '.$outp.'  > job_submission_error');
-			}
+			system('echo ' . $outp . '  > job_submission_error');
 			$jobId = -1;
 			last;
 		}	
 	}
-	unless ($Config{osname} eq 'MSWin32' or $Config{osname} eq 'MSWin64'){
-		system('echo sbatch '.$jobId.' "2>&1" > jobId');
-	}
+	system('echo sbatch '.$jobId.' "2>&1" > jobId');
+
 	return $jobId;
 }
 
@@ -2274,62 +2266,16 @@ sub nmfe_setup
 		}
 	}
 
-  unless ($found_nonmem){
+  if (not $found_nonmem) {
     my $looked_in= join ' or ',@check_paths;
     my $err_version = ( defined $nmdir and $nmdir ne '' ) ? $nmdir : '[not configured]';
     my $mess = "Unable to find executable nmfe$major$minor$suffix ".
-	"in any of the subdirectories\n".
-	"$looked_in of the NONMEM installation directory.\n".
-	"The NONMEM installation directory is $err_version for version [".
-	$nm_version."] according to psn.conf.";
+			"in any of the subdirectories\n".
+			"$looked_in of the NONMEM installation directory.\n".
+			"The NONMEM installation directory is $err_version for version [".
+			$nm_version."] according to psn.conf.";
     croak($mess);
   }
-}
-
-sub slurm_monitor
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		jobId => { isa => 'Int', optional => 1 }
-	);
-	my $jobId = $parm{'jobId'};
-
-	#squeue -j 12345, --jobs
-
-	#list only completed, cancelled... job with right id without header
-	my $outp = `squeue -h --states CA,CD,F,NF,TO -j $jobId 2>&1`;
-	if (defined $outp) {
-		if ($outp =~ /(i|I)nvalid/) {
-			#this is either because the job finished so long ago (MinJobAge)
-			#that is has disappeared, 
-			#or due to some Slurm error. We sleep for 3 sec to make sure there was not an error
-			#due to too early polling, and then try again. If message persists then assume job
-			#id will never be valid, i.e. finished. That definitely can happen.
-			sleep(3);
-			my $outp2 = `squeue -h --states CA,CD,F,NF,TO -j $jobId 2>&1`;
-			if (defined $outp2) {
-				if ($outp2 =~ /(i|I)nvalid/) {
-					return $jobId; # Give up. This job is finished since not in queue
-				} elsif ($outp2 =~ /^\s*$jobId\s/) {
-					#assume jobId first item in string, possibly with leading whitespace
-					#job is finished
-					return $jobId;
-				} else {
-					return 0; # Assume some error message, not finished
-				}
-			} else {
-				return 0; # not finished since empty output when asking for finished jobs
-			}
-		} elsif ($outp =~ /^\s*$jobId\s/) {
-			#assume jobId first item in string, possibly with leading whitespace
-			#job in set of finished ones
-			return $jobId;
-		} else {
-			return 0; #Assume some error message, not finished
-		}
-	} else {
-		return 0; # Not finished since empty output
-	}
 }
 
 sub zink_submit
@@ -2440,16 +2386,15 @@ sub lsf_monitor
 
 	if ($stdout=~/DONE/m) {
 		return $jobId; # Return the jobId found.
-	}elsif (($stdout=~/is not found/) or
+	} elsif (($stdout=~/is not found/) or
 		($stdout=~/illegal option/) or
 		($stdout=~/Illegal job ID/) or
 		($stdout=~/No unfinished job found/)){
 		ui -> print( category => 'all', message  => $stdout,newline => 1 );
-		ui -> print( category => 'all', message  => "lsf run error, jobID $jobId not".
-			"recognized by system:",newline => 1 );
+		ui -> print( category => 'all', message  => "lsf run error, jobID $jobId not recognized by system:",newline => 1 );
 		return $jobId; # Return the jobId so that do not get infinite loop, 
 		#let restart_needed detect and handle error (no psn.lst, no NMtran etc)
-	}else{
+	} else {
 		return 0;
 	}
 }
@@ -2810,7 +2755,9 @@ sub run_nonmem
 			}else{
 				$queue_map->{$jobId} = $run_no;
 			}
-		} elsif ( $self -> run_on_slurm() ) {
+		} elsif ($self->run_on_slurm()) {
+			my $nonmem_run = nonmemrun::slurm->new();
+			$queue_info->{'nonmemrun'} = $nonmem_run;
 			my $jobId = $self -> slurm_submit( model => $candidate_model,
 											   queue_info => $queue_info,
 											   nm_version => $nm_version,
