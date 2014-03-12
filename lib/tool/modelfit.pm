@@ -2073,10 +2073,10 @@ sub slurm_submit
 	}
 	unlink('psn.lst','nmfe_error','OUTPUT','output','job_submission_error');
 
-	#only support nmfe here, not nmqual or PsN compile
+	#only support nmfe here, not nmqual
 
 	my $jobname = $queue_info -> {'model'} -> filename;
-	$jobname = 'psn_'.$jobname if ($jobname =~ /^[0-9]/);
+	$jobname = 'psn_' . $jobname if ($jobname =~ /^[0-9]/);
 	my $background = '-background';
 	$background = '' if ($PsN::nm_major_version == 6);
 
@@ -2171,6 +2171,7 @@ sub slurm_submit
 	return $jobId;
 }
 
+# FIXME: nmfe_setup is now moved to nonmemrun. Some methods here still uses this old version. It will be removed when the refactoring is done.
 sub nmfe_setup
 {
 	my $self = shift;
@@ -2238,7 +2239,7 @@ sub nmfe_setup
 		foreach my $path (@check_paths) {
 			if( -x "$nmdir$path"."nmfe$major$minor$suffix") {
 				$self->full_path_nmfe("$nmdir$path"."nmfe$major$minor$suffix");
-				$found_nonmem=1;
+				$found_nonmem = 1;
 				last;
 			} 
 		}
@@ -2248,15 +2249,15 @@ sub nmfe_setup
 	unless ($found_nonmem){
 		if( (-x "$nmdir") and (not -d "$nmdir") ){
 			$self->full_path_nmfe("$nmdir");
-			$found_nonmem=1;
+			$found_nonmem = 1;
 
 			croak("NONMEM major version (5,6 or 7) is not defined in psn.conf ".
 				"for $nm_version") unless (defined $major);
 			if ($major == 7){
-				if (defined $minor){
+				if (defined $minor) {
 					#PsN.pm makes sure this is only one character, no dots
 					#only want subversion number if subversion >1
-					$minor='' unless ($minor>1 );
+					$minor='' unless ($minor > 1);
 				} else {
 					$minor = '';
 				}
@@ -2267,7 +2268,7 @@ sub nmfe_setup
 	}
 
   if (not $found_nonmem) {
-    my $looked_in= join ' or ',@check_paths;
+    my $looked_in = join ' or ', @check_paths;
     my $err_version = ( defined $nmdir and $nmdir ne '' ) ? $nmdir : '[not configured]';
     my $mess = "Unable to find executable nmfe$major$minor$suffix ".
 			"in any of the subdirectories\n".
@@ -2644,7 +2645,7 @@ sub run_nonmem
 			
 			if ($Config{osname} eq 'MSWin32') {
 
-				my $nonmem_run = nonmemrun::localwindows->new();
+				my $nonmem_run = nonmemrun::localwindows->new(nm_version => $nm_version);
 				$queue_info->{'nonmemrun'} = $nonmem_run;
 
 				my $perl_bin = ($PsN::config -> {'_'} -> {'perl'} ? $PsN::config -> {'_'} -> {'perl'} : 'C:\Perl\bin\perl.exe');
@@ -2678,7 +2679,7 @@ sub run_nonmem
 
 			} else {
 
-				my $nonmem_run = nonmemrun::localunix->new();
+				my $nonmem_run = nonmemrun::localunix->new(nm_version => $nm_version);
 				$queue_info->{'nonmemrun'} = $nonmem_run;
 				# Unix execution
 
@@ -2756,7 +2757,7 @@ sub run_nonmem
 				$queue_map->{$jobId} = $run_no;
 			}
 		} elsif ($self->run_on_slurm()) {
-			my $nonmem_run = nonmemrun::slurm->new();
+			my $nonmem_run = nonmemrun::slurm->new(nm_version => $nm_version);
 			$queue_info->{'nonmemrun'} = $nonmem_run;
 			my $jobId = $self -> slurm_submit( model => $candidate_model,
 											   queue_info => $queue_info,
@@ -3151,7 +3152,7 @@ sub restart_needed
 				if ($self->run_local) {
 					$failure_mess .= " It is recommended to check the perl installation, and perl settings in psn.conf." ;
 					$failure .= ' - check perl settings in psn.conf and perl installation';
-				}elsif (-e 'job_submission_error'){
+				} elsif (-e 'job_submission_error') {
 					open( MESS, '<job_submission_error' );
 					$failure = '';
 					$failure_mess = "Job submission error:\n";
@@ -3167,7 +3168,7 @@ sub restart_needed
 					$failure .= ' - check cluster status and cluster settings in psn.conf';
 				} elsif ($self->run_on_lsf_nmfe) {
 					$failure .= ' - check cluster status and cluster settings in psn.conf';
-				}else{
+				} else {
 					$failure_mess .= " It is recommended to check cluster status, and cluster settings and remote_perl in psn.conf." ;
 					$failure .= ' - check cluster status, and cluster settings and remote_perl in psn.conf';
 				}
@@ -3175,7 +3176,7 @@ sub restart_needed
 				$run_results -> [${$tries}] -> {'failed'} = $failure;
 				$output_file -> flush;
 				return(0);
-			}elsif (not(-e 'FREPORT')){
+			} elsif (not(-e 'FREPORT')) {
 				$failure = 'NMtran failed';
 				$failure_mess="NMtran failed. There is no output for model ".($run_no+1) ;
 				general_error($failure_mess);
@@ -3183,24 +3184,22 @@ sub restart_needed
 				$run_results -> [${$tries}] -> {'failed'} = $failure;
 				$output_file -> flush;
 				return(0);
-			}elsif (not(-e 'nonmem.exe' or -e 'nonmem' or -e 'nonmem_mpi.exe' or -e 'NONMEM_MPI.exe' or -e 'nonmem_mpi' or -e 'nonmem5' or -e 'nonmem6' or -e 'nonmem7' )){
+			} elsif (not(-e 'nonmem.exe' or -e 'nonmem' or -e 'nonmem_mpi.exe' or -e 'NONMEM_MPI.exe' or -e 'nonmem_mpi' or -e 'nonmem5' or -e 'nonmem6' or -e 'nonmem7' )) {
 				$failure = 'Compilation failed';
 				$failure_mess="Compilation failed. There is no output for model ".($run_no+1) ;
 				ui -> print( category => 'all', message  => $failure_mess,newline => 1 );
 				$run_results -> [${$tries}] -> {'failed'} = $failure;
 				$output_file -> flush;
 				return(0);
-			}elsif (not $output_file -> lst_interrupted()){
+			} elsif (not $output_file -> lst_interrupted()) {
 				$failure = 'NONMEM run failed';
-				$failure_mess="NONMEM run failed. Check the lst-file in NM_run".($run_no+1).
-					" for errors" ;
+				$failure_mess = "NONMEM run failed. Check the lst-file in NM_run" . ($run_no+1) . " for errors";
 				general_error($failure_mess);
 				ui -> print( category => 'all', message  => $failure_mess,newline => 1 );
 				$run_results -> [${$tries}] -> {'failed'} = $failure;
 				$output_file -> flush;
 				return(0);
-			} elsif( $self->handle_crashes and 
-					 $queue_info_ref -> {'crashes'} < $self -> crash_restarts() ) {
+			} elsif( $self->handle_crashes and $queue_info_ref->{'crashes'} < $self->crash_restarts() ) {
 
 				# If the lst file is interrupted (no end time printed by nmfe), this is
 				# a sign of a crashed run. This is not a NONMEM error as such

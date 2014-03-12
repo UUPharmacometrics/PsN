@@ -4,6 +4,8 @@ use include_modules;
 use Moose;
 use MooseX::Params::Validate;
 
+extends 'nonmemrun';
+
 has 'windows_process' => ( is => 'rw', isa => 'Win32::Process' );
 
 sub monitor

@@ -4,6 +4,11 @@ use include_modules;
 use Moose;
 use MooseX::Params::Validate;
 
+extends 'nonmemrun';
+
+has 'send_email' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'email_address' => ( is => 'rw', isa => 'Str' );
+has 'slurm_partition' => ( is => 'rw', isa => 'Str' );
 
 sub monitor
 {

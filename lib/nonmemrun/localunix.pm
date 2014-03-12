@@ -5,7 +5,9 @@ use POSIX ":sys_wait_h";
 use Moose;
 use MooseX::Params::Validate;
 
-has 'nr_wait' => ( is => 'rw', isa => 'Int', default => 0 );
+extends 'nonmemrun';
+
+has '_nr_wait' => ( is => 'rw', isa => 'Int', default => 0 );
 
 sub monitor
 {
@@ -28,9 +30,9 @@ sub monitor
 		# something wrong and we die(). (I [PP] suspect that we
 		# never/seldom reach 10 reruns in one NM_runX directory)
 
-		$self->nr_wait($self->nr_wait + 1);
+		$self->_nr_wait($self->_nr_wait + 1);
 
-		if ($self->nr_wait > 10) {
+		if ($self->_nr_wait > 10) {
 			croak("Nonmem run was lost\n");
 		}
 		$pid = $check_pid;
