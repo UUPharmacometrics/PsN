@@ -51,16 +51,16 @@ has 'parsed' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'parsed_successfully' => ( is => 'rw', isa => 'Bool', default => 1 );
 has 'parsing_error_message' => ( is => 'rw', isa => 'Str' );
 has 'pval' => ( is => 'rw', isa => 'ArrayRef[Str]' );
-has 'raw_cormatrix' => ( is => 'rw', isa => 'ArrayRef[Num]' );
+has 'raw_cormatrix' => ( is => 'rw', isa => 'ArrayRef' );
 has 'correlation_matrix' => ( is => 'rw', isa => 'ArrayRef[Num]' );
 has 'output_matrix_headers' => ( is => 'rw', isa => 'ArrayRef[Str]' );
-has 'raw_covmatrix' => ( is => 'rw', isa => 'ArrayRef[Num]' );
-has 'raw_invcovmatrix' => ( is => 'rw', isa => 'ArrayRef[Num]' );
+has 'raw_covmatrix' => ( is => 'rw', isa => 'ArrayRef' );
+has 'raw_invcovmatrix' => ( is => 'rw', isa => 'ArrayRef' );
 has 'raw_omegas' => ( is => 'rw', isa => 'ArrayRef[Num]' );
 has 'raw_seomegas' => ( is => 'rw', isa => 'ArrayRef[Num]' );
 has 'raw_sesigmas' => ( is => 'rw', isa => 'ArrayRef[Num]' );
 has 'raw_sigmas' => ( is => 'rw', isa => 'ArrayRef[Num]' );
-has 'raw_tmatrix' => ( is => 'rw', isa => 'ArrayRef[Num]' );
+has 'raw_tmatrix' => ( is => 'rw', isa => 'ArrayRef' );
 has 'significant_digits' => ( is => 'rw', isa => 'Num' );
 has 'sigmacoordval' => ( is => 'rw', isa => 'HashRef' );
 has 'sesigmacoordval' => ( is => 'rw', isa => 'HashRef' );
@@ -274,104 +274,108 @@ sub _read_covmatrix
 # {{{ sub make square
 	
 	sub make_square {
-	  my $m_ref = shift;
-	  my @matrix = @{$m_ref};
-	  # Make the matrix square:
-	  my $elements = scalar @matrix; # = M*(M+1)/2
-	  my $M = -0.5 + sqrt( 0.25 + 2 * $elements );
-	  my @square;
-	  for ( my $m = 1; $m <= $M; $m++ ) {
-	    for ( my $n = 1; $n <= $m; $n++ ) {
-	      push( @{$square[$m-1]}, $matrix[($m-1)*$m/2 + $n - 1] );
-	      unless ( $m == $n ) {
+		my $m_ref = shift;
+		my @matrix = @{$m_ref};
+		# Make the matrix square:
+		my $elements = scalar @matrix; # = M*(M+1)/2
+		my $M = -0.5 + sqrt( 0.25 + 2 * $elements );
+		my @square;
+		for ( my $m = 1; $m <= $M; $m++ ) {
+			for ( my $n = 1; $n <= $m; $n++ ) {
+				push( @{$square[$m-1]}, $matrix[($m-1)*$m/2 + $n - 1] );
+				unless ( $m == $n ) {
 					push( @{$square[$n-1]}, $matrix[($m-1)*$m/2 + $n - 1] );
-	      }
-	    }
-	  }
-	  return \@square;
+				}
+			}
+		}
+		return \@square;
 	}
 	
 	# }}}
 
 	while ( $_ = @{$self->lstfile}[ $start_pos++ ] ) {
-	  if (/T MATRIX/) {
-	    while ( $_ = @{$self->lstfile}[ $start_pos++ ] ) {
-	      if (/^ TH (\d)/ or /^\s+TH (\d) \| /) { # Read matrix and get out of inner while loop
+		if (/T MATRIX/) {
+			while ( $_ = @{$self->lstfile}[ $start_pos++ ] ) {
+				if (/^ TH (\d)/ or /^\s+TH (\d) \| /) { # Read matrix and get out of inner while loop
 					my $temp_matrix;
 					( $start_pos, $temp_matrix, $t_success, $dummyheaders )  = $self ->
-						_read_matrixoestimates( pos => $start_pos-1 ) and last;
+						_read_matrixoestimates( pos => $start_pos-1 );# and last;
 					$self->tmatrix($temp_matrix);
-	      }
-	    }
-	    last;		 # No covariance matrix will be found!
-	  }
-	  if (/    COVARIANCE MATRIX OF ESTIMATE/) {
-	    while( $_ = @{$self->lstfile}[ $start_pos++ ] ) {
-	      if (/^ TH (\d)/ or /^\s+TH (\d) \| /) { # Read matrix and get out of inner while loop
+					last;
+				}
+			}
+			last;		 # No covariance matrix will be found!
+		}
+		if (/    COVARIANCE MATRIX OF ESTIMATE/) {
+			while( $_ = @{$self->lstfile}[ $start_pos++ ] ) {
+				if (/^ TH (\d)/ or /^\s+TH (\d) \| /) { # Read matrix and get out of inner while loop
 					my $temp_matrix;
-					( $start_pos, $temp_matrix, $c_success, $dummyheaders ) = $self -> _read_matrixoestimates( pos => $start_pos - 1 ) and last;
+					( $start_pos, $temp_matrix, $c_success, $dummyheaders ) = $self -> _read_matrixoestimates( pos => $start_pos - 1 );# and last;
 					$self->raw_covmatrix($temp_matrix);
-	      }
-	    }
-	  }
-	  if (/    CORRELATION MATRIX OF ESTIMATE/) {
-	    while( $_ = @{$self->lstfile}[ $start_pos++ ] ) {
-	      if (/^ TH (\d)/ or /^\s+TH (\d) \| /) { # Read matrix and get out of inner while loop
+					last;
+				}
+			}
+		}
+		if (/    CORRELATION MATRIX OF ESTIMATE/) {
+			while( $_ = @{$self->lstfile}[ $start_pos++ ] ) {
+				if (/^ TH (\d)/ or /^\s+TH (\d) \| /) { # Read matrix and get out of inner while loop
 					my $temp_matrix;
-					( $start_pos, $temp_matrix, $corr_success, $headers ) = $self -> _read_matrixoestimates( pos => $start_pos - 1 ) and last;
+					( $start_pos, $temp_matrix, $corr_success, $headers ) = $self -> _read_matrixoestimates( pos => $start_pos - 1 );# and last;
 					$self->raw_cormatrix($temp_matrix);
-	      }
-	    }
-	  }
-	  if (/    INVERSE COVARIANCE MATRIX OF ESTIMATE/) {
-	    while( $_ = @{$self->lstfile}[ $start_pos++ ] ) {
-	      if (/^ TH (\d)/ or /^\s+TH (\d) \| /) { # Read matrix and get out of inner while loop
+					last;
+				}
+			}
+		}
+		if (/    INVERSE COVARIANCE MATRIX OF ESTIMATE/) {
+			while( $_ = @{$self->lstfile}[ $start_pos++ ] ) {
+				if (/^ TH (\d)/ or /^\s+TH (\d) \| /) { # Read matrix and get out of inner while loop
 					my $temp_matrix;
-					( $start_pos, $temp_matrix, $i_success, $dummyheaders ) = $self -> _read_matrixoestimates( pos => $start_pos - 1 ) and last;
+					( $start_pos, $temp_matrix, $i_success, $dummyheaders ) = $self -> _read_matrixoestimates( pos => $start_pos - 1 );# and last;
 					$self->raw_invcovmatrix($temp_matrix);
-	      }
-	    }
-	    last;					# Last matrix?
-	  }
+					last;
+				}
+			}
+			last;					# Last matrix?
+		}
 	}
 	$self->t_matrix([]) unless defined $self->t_matrix;
 	$self->raw_tmatrix([]) unless defined $self->raw_tmatrix;
 	foreach my $element ( @{$self->raw_tmatrix} ) {
-	  push( @{$self->t_matrix}, eval($element) ) unless ( $element eq '.........' );
+		push( @{$self->t_matrix}, eval($element) ) unless ( $element eq '.........' );
 	}
 	$self->covariance_matrix([]) unless defined $self->covariance_matrix;
 	$self->raw_covmatrix([]) unless defined $self->raw_covmatrix;
 	foreach my $element ( @{$self->raw_covmatrix} ) {
-	  push( @{$self->covariance_matrix}, eval($element) ) unless ( $element eq '.........' );
+		push( @{$self->covariance_matrix}, eval($element) ) unless ( $element eq '.........' );
 	}
 	$self->correlation_matrix([]) unless defined $self->correlation_matrix;
 	$self->raw_cormatrix([]) unless defined $self->raw_cormatrix;
 	foreach my $element ( @{$self->raw_cormatrix} ) {
-	  push( @{$self->correlation_matrix}, eval($element) ) unless ( $element eq '.........' );
+		push( @{$self->correlation_matrix}, eval($element) ) unless ( $element eq '.........' );
 	}
 
 	if ( defined $self->raw_invcovmatrix ) {
-	  my $matrix_ref = make_square( clear_dots( $self->raw_invcovmatrix ));
-	  if (scalar(@{$matrix_ref}) > 0) {
-	    $self->inverse_covariance_matrix(Math::MatrixReal->new_from_cols($matrix_ref));
-	  }
+		my $matrix_ref = make_square( clear_dots( $self->raw_invcovmatrix ));
+		if (scalar(@{$matrix_ref}) > 0) {
+			$self->inverse_covariance_matrix(Math::MatrixReal->new_from_cols($matrix_ref));
+		}
 	}
 
 	if (defined $headers) {
-	  #need to get rid of row headers for lines with only .....
-	  my $row = 1;
-	  my $col = 1;
-	  foreach my $element ( @{$self->raw_cormatrix } ) {
-	    if (($col == 1) and ($element ne '.........' )) {
+		#need to get rid of row headers for lines with only .....
+		my $row = 1;
+		my $col = 1;
+		foreach my $element ( @{$self->raw_cormatrix } ) {
+			if (($col == 1) and ($element ne '.........' )) {
 				$self->output_matrix_headers([]) unless defined $self->output_matrix_headers;
-	      push( @{$self->output_matrix_headers}, $headers->[$row - 1]); 
-	    }
-	    $col++;
-	    if ($col > $row) {
-	      $col = 1;
-	      $row++;
-	    }
-	  }
+				push( @{$self->output_matrix_headers}, $headers->[$row - 1]); 
+			}
+			$col++;
+			if ($col > $row) {
+				$col = 1;
+				$row++;
+			}
+		}
 	}
 
 	#If something has gone right!
@@ -2696,7 +2700,6 @@ sub parse_NM7_raw
 sub parse_NM7_additional
 {
 	my $self = shift;
-
 	#must be done after raw
 	unless ($self->NM7_parsed_raw()){
 	  croak('parse_NM7_additional must be called *after* parse_NM7_raw');
@@ -2806,7 +2809,7 @@ sub parse_NM7_additional
 	    push( @{$self->output_matrix_headers}, @column_headers );
 		} elsif ($type eq 'coi') {
 			if (scalar(@matrix_array) > 0) {
-	      $self->inverse_covariance_matrix(Math::MatrixReal -> new_from_cols(\@matrix_array));
+				$self->inverse_covariance_matrix(Math::MatrixReal -> new_from_cols(\@matrix_array));
 			}
 		} elsif ($type eq 'phi') {
 			1; #nothing yet
