@@ -24,6 +24,7 @@ has 'logfile' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { ['sirlog
 has 'results_file' => ( is => 'rw', isa => 'Str', default => 'sir_results.csv' );
 
 has 'copy_data' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'recompute' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'with_replacement' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'samples' => ( is => 'rw', required => 1, isa => 'Int' );
 has 'resamples' => ( is => 'rw', required => 1, isa => 'Int' );
@@ -31,6 +32,7 @@ has 'covmat_input' => ( is => 'rw', isa => 'Str' );
 has 'rawres_input' => ( is => 'rw', isa => 'Str' );
 has 'offset_rawres' => ( is => 'rw', isa => 'Int', default => 1 );
 has 'in_filter' => ( is => 'rw', isa => 'ArrayRef[Str]' );
+has 'out_filter' => ( is => 'rw', isa => 'ArrayRef[Str]' );
 has 'inflation' => ( is => 'rw', isa => 'Num', default => 1 );
 has 'mceta' => ( is => 'rw', isa => 'Int', default => 0 );
 
@@ -137,6 +139,12 @@ sub modelfit_setup
 
 	my $icm = get_nonmem_inverse_covmatrix(output => $output);
 	my $covmatrix = get_nonmem_covmatrix(output => $output);
+
+	if ($self->inflation() != 1){
+		inflate_covmatrix(matrix => $covmatrix,
+						  inflation => $self->inflation());
+	}
+
 	my $parameter_hash = get_nonmem_parameters(output => $output);
 
 	#$model-> get_values_to_labels(category => $param);
@@ -145,6 +153,9 @@ sub modelfit_setup
 	my $values = $parameter_hash->{'filtered_values'};
 	my $mat = new Math::MatrixReal(1,1);
 	my $muvector = $mat->new_from_rows( [$values] );
+
+	ui -> print( category => 'sir',
+				 message => "Sampling from the truncated multivariate normal distribution");
 
 	my $vectorsamples = sample_multivariate_normal(samples=>$self->samples,
 												   covmatrix => $covmatrix,
@@ -160,6 +171,8 @@ sub modelfit_setup
 							 mu => $muvector,
 							 xvec_array => $vectorsamples));
 
+	ui -> print( category => 'sir',
+				 message => "Creating parameter vector evaluation models...");
 	my $modelsarr = model::create_maxeval_zero_models_array(
 		sampled_params_arr => $sampled_params_arr,
 		mceta => $self->mceta(),
@@ -329,19 +342,27 @@ sub weighted_sample{
 
 sub empirical_statistics{
 	my %parm = validated_hash(\@_,
-							  samples_array => { isa => 'ArrayRef[ArrayRef[Num]]', optional => 0 },
-							  sample_counts => { isa => 'ArrayRef[Num]', optional => 0 }
+							  sampled_params_arr => { isa => 'ArrayRef[HashRef]', optional => 0 },
+							  labels_hash => { isa => 'HashRef', optional => 0 }
 		);
-	my $samples_array = $parm{'samples_array'};
-	my $sample_counts = $parm{'sample_counts'};
+	my $sampled_params_arr = $parm{'sampled_params_arr'};
+	my $labels_hash = $parm{'labels_hash'};
 
-	my $len = scalar(@{$samples_array});
+	my $len = scalar(@{$sampled_params_arr});
 	croak("empty set of samples to empirical_statistics") unless ($len >0);
-	my $dim = scalar(@{$samples_array->[0]});
-	croak("empty set of values in samples_array to empirical_statistics") unless ($dim >0);
-	my $len2 = scalar(@{$sample_counts});
-	croak("empty set of sample_counts to empirical_statistics") unless ($len2 >0);
-	croak("number $len of sets in samples_array is not the same as number $len2 in sample_counts") unless ($len == $len2);
+	my $dim = scalar(@{$labels_hash->{'filtered_labels'}});
+	croak("empty set of labels to empirical_statistics") unless ($dim >0);
+	croak("column resamples is missing from sampled_params_arr in empirical_statistics") unless (defined $sampled_params_arr->[0]->{'resamples'});
+
+	my @all_labels=();
+	my @all_params=();
+
+	for (my $i=0; $i<$dim; $i++){
+		#order is theta omega sigma
+		push(@all_labels,$labels_hash->{'filtered_labels'}->[$i]);
+		push(@all_params,$labels_hash->{'param'}->[$i]);
+	}
+
 
 	#create samples matrix
 	my @Amatrix=();
@@ -352,11 +373,16 @@ sub empirical_statistics{
 	}
 
 	for (my $i=0; $i< $len; $i++){
-		for (my $k=0; $k< $sample_counts->[$i]; $k++){
-			push(@Amatrix,$samples_array->[$i]);
+		my @vector=();
+		for (my $j=0; $j<$dim; $j++){
+			push(@vector,$sampled_params_arr->[$i]->{$all_params[$j]}->{$all_labels[$j]});
+		}
+
+		for (my $k=0; $k<$sampled_params_arr->[$i]->{'resamples'} ; $k++){
+			push(@Amatrix,\@vector);
 			for (my $j=0; $j< $dim; $j++){
-				push(@{$parameter_vectors[$j]},$samples_array->[$i]->[$j]);
-				$sums[$j] = $sums[$j] + $samples_array->[$i]->[$j];
+				push(@{$parameter_vectors[$j]},$vector[$j]);
+				$sums[$j] = $sums[$j] + $vector[$j];
 			}
 		}
 	}
@@ -369,8 +395,6 @@ sub empirical_statistics{
 	}elsif ($err1 == 2){
 		croak ("input error to linear_algebra rowcov");
 	}
-
-	#TODO univariate percentiles or something
 
 	my @indices=();
 
@@ -402,17 +426,20 @@ sub empirical_statistics{
 	$resulthash{'percentiles_values'}=[];
  	for (my $j=0; $j< $dim; $j++){
 		push(@{$resulthash{'mean'}},($sums[$j]/$len));
+	}
+ 	for (my $j=0; $j< scalar(@limit_index); $j++){
+		push(@{$resulthash{'percentiles_values'}},[(0) x $dim]);
+	}
+
+ 	for (my $j=0; $j< $dim; $j++){
 		my @sorted = (sort {$a <=> $b} @{$parameter_vectors[$j]}); #sort ascending
-		my @limit =();
 		for (my $k=0; $k< scalar(@limit_index); $k++){
 			if ($limit_index[$k] > 0){
-				push(@limit,$sorted[$limit_index[$k]]);
+				$resulthash{'percentiles_values'}->[$k]->[$j] = $sorted[$limit_index[$k]];
 			}else{
 				#median
-				push(@limit,median(sorted_array => \@sorted));
+				$resulthash{'percentiles_values'}->[$k]->[$j] = median(sorted_array => \@sorted);
 			}
-			push(@{$resulthash{'percentiles_values'}},\@limit);
-
 		}
 	}
 
@@ -509,12 +536,15 @@ sub get_nonmem_parameters
 		croak("Trying get_nonmem_parameters but unable to read everything from outputfile, parser error message:\n".
 			  $output -> parsing_error_message());
 	}
+	unless ( not_empty($output->problems) ) {
+	    $output -> _read_problems;
+	}
 
 	my $init_problem;
 	if ( not_empty($output->problems) ) {
 		$init_problem = $output->problems->[0]->input_problem();
-	} else {
-	    croak("No problems defined in output object in get_nonmem_parameters");
+	}else{
+		croak("No problems defined in output object in get_nonmem_parameters");
 	}
 
 	my %hash;
@@ -684,6 +714,33 @@ sub create_sampled_params_arr{
 	}
 
 	return \@allparams;
+}
+
+sub inflate_covmatrix
+{
+	my %parm = validated_hash(\@_,
+							  matrix => { isa => 'ArrayRef[ArrayRef[Num]]', optional => 0 },
+							  inflation => { isa => 'Num', optional => 0 }
+		);
+	my $matrix = $parm{'matrix'};
+	my $inflation = $parm{'inflation'};
+
+	my $dim = scalar(@{$matrix});
+	unless ($dim > 0){
+		croak("Input error inflate_covmatrix: dimension is 0 ");
+	}
+	unless (scalar(@{$matrix->[0]})==$dim){
+		croak("Input error inflate_covmatrix: covmatrix is not square ");
+	}
+	unless ($inflation > 0){
+		croak("Input error inflate_covmatrix: inflation must be larger than 0");
+	}
+	for (my $i=0;$i< $dim; $i++){
+		for (my $j=0;$j< $dim; $j++){
+			$matrix->[$i]->[$j] = ($matrix->[$i]->[$j])*$inflation;
+		}
+	}
+
 }
 
 sub get_nonmem_covmatrix
@@ -904,8 +961,81 @@ sub _modelfit_raw_results_callback
 sub prepare_results
 {
 	my $self = shift;
+	ui -> print( category => 'sir',
+				 message => "\nAnalyzing results");
 
-	1;
+	if ($self->recompute()){
+		#change results_file so that old is not overwritten
+		my $fname = $self->results_file();
+		$fname =~ s/\.csv$/_recompute/ ;
+		my $addnum=1;
+		while (-e $self -> directory."/$fname$addnum".'.csv'){
+			$addnum++;
+		}
+		$self->results_file("$fname$addnum".'.csv');
+		$self -> raw_results_file->[0] = $self->directory().$self->recompute();
+	}
+
+#	print "prepare results model name ".$self -> models -> [0]->full_name."\n";
+	my $model = $self -> models -> [0];
+	my $sampled_params_arr = 
+		$model -> get_rawres_params(filename => $self->raw_results_file()->[0],
+									filter => $self->out_filter,
+									require_numeric_ofv => 0,
+									extra_columns => ['resamples'],
+									offset => 1); 
+
+	## Prepare general run info for output file
+	my %return_section;
+	$return_section{'name'} = 'SIR run info';
+	my $modelname=$model ->filename();
+	$return_section{'labels'} = [[],['Date','samples','resamples','model','PsN version','NONMEM version']];
+
+	my @datearr=localtime;
+	my $the_date=($datearr[5]+1900).'-'.($datearr[4]+1).'-'.($datearr[3]);
+	$return_section{'values'} = [[$the_date,$self->samples,$self->resamples(),$modelname,'v'.$PsN::version,$self->nm_version]];
+	#results is initialized in tool.dia
+	push( @{$self -> results->[0]{'own'}},\%return_section );
+
+
+	my $output = $model -> outputs -> [0];
+	unless (defined $output){
+		croak("No output object from input model");
+	}
+
+#	print "output is ".$output->full_name."\n";
+
+	my $parameter_hash = get_nonmem_parameters(output => $output);
+	my $resulthash = empirical_statistics( sampled_params_arr => $sampled_params_arr,
+										   labels_hash => $parameter_hash);
+
+	#hash
+
+	my %mean_section;
+	$mean_section{'name'}='Mean over resamples';
+	$mean_section{'labels'}=[[],$parameter_hash->{'filtered_labels'}];
+	$mean_section{'values'}=[$resulthash->{'mean'}];
+	push( @{$self -> results->[0]{'own'}},\%mean_section );
+
+	my %perc_section;
+	my @perc_labels=();
+	foreach my $lab (@{$resulthash->{'percentiles_labels'}}){
+		push(@perc_labels,$lab.'%');
+	}
+
+	$perc_section{'name'}='Percentiles';
+	$perc_section{'labels'}=[\@perc_labels,$parameter_hash->{'filtered_labels'}];
+	$perc_section{'values'}=$resulthash->{'percentiles_values'};
+	push( @{$self -> results->[0]{'own'}},\%perc_section );
+
+	my %covar_section;
+	$covar_section{'name'}='Empirical covariance matrix';
+	$covar_section{'labels'}=[$parameter_hash->{'filtered_labels'},$parameter_hash->{'filtered_labels'}];
+	$covar_section{'values'}=$resulthash->{'covar'};
+	push( @{$self -> results->[0]{'own'}},\%covar_section );
+
+
+
 }
 
 no Moose;

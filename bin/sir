@@ -25,15 +25,16 @@ my %options;
 
 my %required_options = ("samples:i"=>'',
 			"resamples:i"=> '');
-my %optional_options = ("covmat_input:s"=>'',
-						'rawres_input:s' => undef,
-						'offset_rawres:i' => undef,
-						'in_filter:s' => undef,
-						#	'out_filter:s' => undef,
-						"mceta:i"=>'',
-						"inflation:f" => '',
-						"with_replacement!"=>'',
-						"copy_data!"=>'');
+my %optional_options = (
+#	"covmat_input:s"=>'',
+#	'rawres_input:s' => undef,
+#	'offset_rawres:i' => undef,
+#	'in_filter:s' => undef,
+	'out_filter:s' => undef,
+	"mceta:i"=>'',
+	"inflation:f" => '',
+	"with_replacement!"=>'',
+	"copy_data!"=>'');
 
 my $res = GetOptions( \%options, 
 		      @common_options::get_opt_strings,
@@ -49,7 +50,7 @@ my %help_text;
 $help_text{Pre_help_message} = <<'EOF';  
     <h3 class="heading1">sir</h3>
       
-      Perform a randomization test.
+      Sampling Importance Resampling.
       
     <h3 class="heading1">Usage:</h3>
 EOF
@@ -57,13 +58,13 @@ EOF
     $help_text{Description} = <<'EOF';
    <h3 class="heading1">Description:</h3>
 
-     The values in the randomization column are shuffled without replacement among
-     individuals. The input model is estimates with each of the randomized data sets.
+     Sample data vectors using the covariance matrix. 
+	 Resample vectors based on weights. Compute confidence intervals from resampled vectors.
 EOF
     $help_text{Examples} = <<'EOF';
    <h3 class="heading1">Example:</h3>
 
-      <p class="option">sir -samples=1000 run89.mod</p>
+      <p class="option">sir -samples=10000 -resamples=200 run89.mod</p>
 
 EOF
 
@@ -208,6 +209,22 @@ if ( defined $options{'in_filter'} ){
 		die "Error: Option in_filter used, but list of conditions could not be parsed.\n";
 	}	
 }
+my @out_filter=();
+if ( defined $options{'out_filter'} ){
+	#split string, assume comma separated
+	foreach my $filt (split(/,/,$options{'out_filter'})){
+		if ($filt =~ /.\.(gt|lt|eq)\.\d+\.?\d*/){
+			push(@out_filter,$filt);
+		}else{
+			die "Output filter $filt does not fulfill the format rules.\n";
+		}
+	}
+	if (scalar(@out_filter)<1){
+		die "Error: Option out_filter used, but list of conditions could not be parsed.\n";
+	}	
+}
+
+
 
 my $eval_string = common_options::model_parameters(\%options);
 
@@ -228,6 +245,7 @@ my $sir = tool::sir ->
 	rawres_input        	=> $options{'rawres_input'},
 	offset_rawres       	=> $options{'offset_rawres'},
 	in_filter             => \@in_filter,
+	out_filter             => \@out_filter,
 	copy_data                            => $options{'copy_data'}
 	);
 

@@ -2,7 +2,7 @@
 
 use strict;
 use warnings;
-use Test::More tests => 64;
+use Test::More tests => 127;
 #use Test::More;
 use Test::Exception;
 use lib ".."; #location of includes.pm
@@ -13,6 +13,9 @@ use Math::Random;
 use output;
 use tool::sir;
 use FindBin qw($Bin);
+
+
+#Tests needed for SIR
 
 # sub get_user_covmatrix (from csv file, verify square and symmetric)
 
@@ -185,8 +188,8 @@ cmp_ok($times_sampled[0],'==',39,'times sampled 0');
 cmp_ok($times_sampled[1],'==',46,'times sampled 1');
 cmp_ok($times_sampled[2],'==',15,'times sampled 2');
 
-my $statshash = tool::sir::empirical_statistics(samples_array => $gotsamples,
-												sample_counts => \@times_sampled);
+#my $statshash = tool::sir::empirical_statistics(samples_array => $gotsamples,
+#												sample_counts => \@times_sampled);
 
 
 my $xvec = $icm->new_from_rows( [$gotsamples->[0]] );
@@ -220,5 +223,97 @@ my $base=tool::sir::get_determinant_factor(inverse_covmatrix => $icm,
 #print "\nbase $base\n";
 my $matlab_base = 4.465034382516543e+06;
 cmp_ok(abs($base-$matlab_base),'<',0.00000001,'base diff to matlab');
+
+
+$dir ="$Bin/../test_files/";
+#$dir='temp/';
+$file='mox_sir.lst';
+$output= output -> new (filename => $dir.$file);
+
+my $icm = tool::sir::get_nonmem_inverse_covmatrix(output => $output);
+
+cmp_ok($icm->element(1,1),'==',eval(4.05821E-01),'inverse element 1,1');
+cmp_ok($icm->element(3,1),'==',5.71808E+00,'inverse element 3,1');
+cmp_ok($icm->element(1,3),'==',5.71808E+00,'inverse element 1,3');
+cmp_ok($icm->element(1,5),'==',-3.17183E+00,'inverse element 1,5');
+cmp_ok($icm->element(4,2),'==',1.38220E+01,'inverse element 4,2');
+cmp_ok($icm->element(5,3),'==',-2.66596E+02,'inverse element 5,3');
+cmp_ok($icm->element(5,5),'==',1.48718E+04,'inverse element 5,5');
+cmp_ok($icm->element(6,2),'==',-7.76844E-01,'inverse element 6,2');
+cmp_ok($icm->element(5,6),'==',-3.88572E+02,'inverse element 5,6');
+cmp_ok($icm->element(6,6),'==',3.04099E+02,'inverse element 6,6');
+cmp_ok($icm->element(1,7),'==',-4.35392E-02,'inverse element 1,7');
+cmp_ok($icm->element(7,3),'==',-6.35795E+01,'inverse element 7,3');
+cmp_ok($icm->element(7,7),'==',2.50300E+01,'inverse element 7,7');
+cmp_ok($icm->element(8,3),'==',3.32151E+02,'inverse element 8,3');
+cmp_ok($icm->element(5,8),'==',-4.85426E+02,'inverse element 5,8');
+cmp_ok($icm->element(8,7),'==',-2.94627E+00,'inverse element 8,7');
+cmp_ok($icm->element(8,8),'==',6.84766E+02,'inverse element 8,8');
+
+$hash = tool::sir::get_nonmem_parameters(output => $output);
+
+my $params = $hash->{'filtered_values'};
+
+cmp_ok($hash->{'filtered_values'}->[0],'==',3.28661E+01,' theta 1');
+cmp_ok($hash->{'filtered_values'}->[1],'==',2.10323E+01,' theta 2');
+cmp_ok($hash->{'filtered_values'}->[2],'==',2.92049E-01,' theta 3');
+cmp_ok($hash->{'filtered_values'}->[3],'==',9.91440E-02,' theta 4');
+cmp_ok($hash->{'filtered_values'}->[4],'==',3.34511E-01,' theta 5');
+cmp_ok($hash->{'filtered_values'}->[5],'==',4.08636E-01,' OM 1,1');
+cmp_ok($hash->{'filtered_values'}->[6],'==',1.10186E+00,' OM 2,2');
+cmp_ok($hash->{'filtered_values'}->[7],'==',2.07708E-01,' OM 3,3');
+cmp_ok($hash->{'lower_bounds'}->[0],'==',0,' lower bound theta 1');
+cmp_ok($hash->{'lower_bounds'}->[1],'==',0,' lower bound theta 2');
+cmp_ok($hash->{'lower_bounds'}->[2],'==',0,' lower bound theta 3');
+cmp_ok($hash->{'lower_bounds'}->[3],'==',0,' lower bound theta 4');
+cmp_ok($hash->{'lower_bounds'}->[4],'==',0,' lower bound theta 5');
+cmp_ok($hash->{'lower_bounds'}->[5],'==',0,' lower bound OM 1,1');
+cmp_ok($hash->{'lower_bounds'}->[6],'==',0,' lower bound OM 2,2');
+cmp_ok($hash->{'lower_bounds'}->[7],'==',0,' lower bound OM 3,3');
+cmp_ok($hash->{'upper_bounds'}->[0],'==',1000000,' upper bound theta 1');
+cmp_ok($hash->{'upper_bounds'}->[1],'==',1000000,' upper bound theta 2');
+cmp_ok($hash->{'upper_bounds'}->[2],'==',1000000,' upper bound theta 3');
+cmp_ok($hash->{'upper_bounds'}->[3],'==',1000000,' upper bound theta 4');
+cmp_ok($hash->{'upper_bounds'}->[4],'==',1000000,' upper bound theta 5');
+cmp_ok($hash->{'upper_bounds'}->[5],'==',1000000,' upper bound OM 1,1');
+cmp_ok($hash->{'upper_bounds'}->[6],'==',1000000,' upper bound OM 2,2');
+cmp_ok($hash->{'upper_bounds'}->[7],'==',1000000,' upper bound OM 3,3');
+
+$mu = $mat->new_from_rows( [$params] );
+
+#print $mu;
+
+cmp_ok($mu->element(1,1),'==',3.28661E+01,'mu 1,1');
+cmp_ok($mu->element(1,8),'==',2.07708E-01,'mu 1,8');
+
+#my $nsamples=3;
+
+$covar = tool::sir::get_nonmem_covmatrix(output => $output);
+
+cmp_ok($covar->[0]->[0],'==',6.10693E+00,'covar element 1,1');
+cmp_ok($covar->[1]->[5],'==',1.18743E-02,'covar element 2,6');
+cmp_ok($covar->[2]->[2],'==',3.75907E-04,'covar element 3,3');
+cmp_ok($covar->[3]->[1],'==',-4.02777E-02,'covar element 4,2');
+cmp_ok($covar->[4]->[7],'==',6.19395E-05,'covar element 5,8');
+cmp_ok($covar->[7]->[0],'==',1.53110E-02,'covar element 8,1');
+cmp_ok($covar->[6]->[5],'==',7.25938E-03,'covar element 7,6');
+cmp_ok($covar->[7]->[7],'==',1.69362E-03,'covar element 8,8');
+cmp_ok($covar->[6]->[3],'==',2.75131E-03,'covar element 7,4');
+cmp_ok($covar->[4]->[6],'==',-3.05686E-04,'covar element 5,7');
+
+tool::sir::inflate_covmatrix(matrix => $covar,
+							 inflation => 2);
+
+cmp_ok($covar->[0]->[0],'==',eval(2*6.10693E+00),'inflated covar element 1,1');
+cmp_ok($covar->[1]->[5],'==',eval(2*1.18743E-02),'inflated covar element 2,6');
+cmp_ok($covar->[2]->[2],'==',eval(2*3.75907E-04),'inflated covar element 3,3');
+cmp_ok($covar->[3]->[1],'==',eval(2*-4.02777E-02),'inflated covar element 4,2');
+cmp_ok($covar->[4]->[7],'==',eval(2*6.19395E-05),'inflated covar element 5,8');
+cmp_ok($covar->[7]->[0],'==',eval(2*1.53110E-02),'inflated covar element 8,1');
+cmp_ok($covar->[6]->[5],'==',eval(2*7.25938E-03),'inflated covar element 7,6');
+cmp_ok($covar->[7]->[7],'==',eval(2*1.69362E-03),'inflated covar element 8,8');
+cmp_ok($covar->[6]->[3],'==',eval(2*2.75131E-03),'inflated covar element 7,4');
+cmp_ok($covar->[4]->[6],'==',eval(2*-3.05686E-04),'inflated covar element 5,7');
+
 
 done_testing();

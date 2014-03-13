@@ -1456,22 +1456,25 @@ sub get_rawres_params
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 filename => { isa => 'Str', optional => 0 },
-		 filter => { isa => 'ArrayRef[Str]', optional => 1 },
-		 string_filter => { isa => 'Maybe[ArrayRef[Str]]', optional => 1 },
-		 require_numeric_ofv => { isa => 'Bool', default => 0, optional => 1 },
-		 offset => { isa => 'Int', optional => 0 }
-	);
+							  filename => { isa => 'Str', optional => 0 },
+							  filter => { isa => 'ArrayRef[Str]', optional => 1 },
+							  string_filter => { isa => 'Maybe[ArrayRef[Str]]', optional => 1 },
+							  extra_columns => { isa => 'Maybe[ArrayRef[Str]]', optional => 1 },
+							  require_numeric_ofv => { isa => 'Bool', default => 0, optional => 1 },
+							  offset => { isa => 'Int', optional => 0 }
+		);
 	my $filename = $parm{'filename'};
 	my @filter = defined $parm{'filter'} ? @{$parm{'filter'}}: ();
 	my @string_filter = defined $parm{'string_filter'} ? @{$parm{'string_filter'}} : ();
+	my @extra_columns = defined $parm{'extra_columns'} ? @{$parm{'extra_columns'}} : ();
 	my $require_numeric_ofv = $parm{'require_numeric_ofv'};
 	my $offset = $parm{'offset'};
 	my @allparams;
+	my $extra_count = scalar(@extra_columns);
 
 	#input is filename + offset and possibly array filter and possibly array string_filter
-	  #input require_numeric_ofv is special filter, default false, if true then check that looks_like_number(ofv)
-	  #input 
+	#input require_numeric_ofv is special filter, default false, if true then check that looks_like_number(ofv)
+	#input 
 	#output is hash of arrays of hashes allparams
 
 	my @thetalabels = @{$self -> labels( parameter_type => 'theta', generic => 0)};
@@ -1479,10 +1482,10 @@ sub get_rawres_params
 	my @sigmalabels = @{$self -> labels( parameter_type => 'sigma', generic => 0)};
 
 	if (scalar(@thetalabels) != 1 or scalar(@omegalabels) != 1 or scalar(@sigmalabels) != 1){
-	  croak("get_rawres_params can only be done if exactly one \$PROB");
+		croak("get_rawres_params can only be done if exactly one \$PROB");
 	}
 	unless (defined $thetalabels[0] and defined $omegalabels[0] and defined $sigmalabels[0]){
-	  croak("all labels references are not defined in get_rawres_params");
+		croak("all labels references are not defined in get_rawres_params");
 	}
 
 	my %thetapos;
@@ -1497,38 +1500,38 @@ sub get_rawres_params
 	my @file;
 
 	foreach (@read_file){
-	  chomp;
-	  #remove all windows line feed also if we are on unix but use a windows raw results
-	  s/\r//g;
-	  if (/\"/ ){
-	      #if any quotes at all
-	      #remove one column header at a time, check for each if enclosed in double quotes or not
-	      my $header = $_;
-	      my @tmp =();
-	      while (length($header)>0){
-			  $header =~ s/^\s*//; #remove leading whitespace
-			  my $col;
-			  if ($header =~ /^\"/){
-				  #enclosed double quotes, handle more than one in a row
-				  if ($header =~ /^\"+([^"]+)\"+\s*\,?/){
-					  $header =~ s/^\"+([^"]+)\"+\s*\,?//; #" 
-					  $col = $1; 
-				  }else{
-					  croak("Failed parsing the header of the rawres input file\n$header");
-				  }
-			  }else{
-				  #no quotes
-				  $header =~ s/([^,]+)\,?// ; #" 
-				  $col = $1; 
-			  }
-			  # we allow empty matches
-			  push(@tmp,$col);
-	      }
-	      push (@file,\@tmp);
-	  } else {
-	    my @tmp = split(',',$_);
-	    push (@file,\@tmp);
-	  }
+		chomp;
+		#remove all windows line feed also if we are on unix but use a windows raw results
+		s/\r//g;
+		if (/\"/ ){
+			#if any quotes at all
+			#remove one column header at a time, check for each if enclosed in double quotes or not
+			my $header = $_;
+			my @tmp =();
+			while (length($header)>0){
+				$header =~ s/^\s*//; #remove leading whitespace
+				my $col;
+				if ($header =~ /^\"/){
+					#enclosed double quotes, handle more than one in a row
+					if ($header =~ /^\"+([^"]+)\"+\s*\,?/){
+						$header =~ s/^\"+([^"]+)\"+\s*\,?//; #" 
+						$col = $1; 
+					}else{
+						croak("Failed parsing the header of the rawres input file\n$header");
+					}
+				}else{
+					#no quotes
+					$header =~ s/([^,]+)\,?// ; #" 
+					$col = $1; 
+				}
+				# we allow empty matches
+				push(@tmp,$col);
+			}
+			push (@file,\@tmp);
+		} else {
+			my @tmp = split(',',$_);
+			push (@file,\@tmp);
+		}
 	}
 
 	my $ref = shift @file;
@@ -1540,14 +1543,14 @@ sub get_rawres_params
 	    print "\n\nThe found headers are\n".join("   ",@header)."\n\n";
 
 	    croak("The file $filename does not follow the format rules.\n".
-		       "Either first, second or third column should be model, you have ".$header[0].", ".$header[1]." and ".$header[2].
-		       ", need $sum cols and have ".scalar(@header)."\n");
+			  "Either first, second or third column should be model, you have ".$header[0].", ".$header[1]." and ".$header[2].
+			  ", need $sum cols and have ".scalar(@header)."\n");
 	}
 	if (($header[0] eq 'hypothesis') and ($offset == 1)){
 	    print "\nWarning: Your rawres_input file looks like an sse raw results file,\n".
-		"but you use offset_rawres=1 which is the default suitable for bootstrap\n".
-		"raw results files. If you want to include also the first model\n".
-		"from the raw results file then rerun with offset_rawres=0.\n\n";
+			"but you use offset_rawres=1 which is the default suitable for bootstrap\n".
+			"raw results files. If you want to include also the first model\n".
+			"from the raw results file then rerun with offset_rawres=0.\n\n";
 	}
 
 	#parse filter
@@ -1567,41 +1570,57 @@ sub get_rawres_params
 	my $pos=-1;
 	my $ofvindex=-1;
 	my $modelindex=-1;
+	my @extra_indices = (-1) x $extra_count;
 	#scan for ofv label and first theta label. Then following should be rest of theta,omega,sigma
 	for (my $i=0; $i<scalar(@header);$i++){
 	    if ($header[$i] eq 'ofv'){
-		$ofvindex = $i;
+			$ofvindex = $i;
 	    }elsif ($header[$i] eq 'model'){
-		$modelindex = $i;
+			$modelindex = $i;
 	    }elsif ($header[$i] eq $thetalabels[0]->[0]){
-		$pos = $i;
-		last;
-	    }
+			$pos = $i;
+	    }elsif($extra_count > 0){
+			for (my $j=0; $j< $extra_count; $j++){
+				if ($header[$i] eq $extra_columns[$j]){
+					$extra_indices[$j] = $i;
+					last;
+				}
+			}
+		}
 	}
 	if ($pos == -1){
-	  croak("could not find header ".$thetalabels[0]->[0]." in rawres ".
-		     "header\n".join(' ',@header)."\n");
+		croak("could not find header ".$thetalabels[0]->[0]." in rawres ".
+			  "header\n".join(' ',@header)."\n");
 	}
 	if (($ofvindex == -1) and ($require_numeric_ofv)){
 	    croak("could not find header ofv in rawres ".
-		       "header\n".join(' ',@header)."\n");
+			  "header\n".join(' ',@header)."\n");
 	}
+	if($extra_count > 0){
+		for (my $j=0; $j< $extra_count; $j++){
+			if ($extra_indices[$j] == -1){
+				croak("could not find header ".$extra_columns[$j]." in rawres ".
+					  "header\n".join(' ',@header)."\n");
+			}
+		}
+	}
+	
 	foreach my $lab (@{$thetalabels[0]}){
-	  $thetapos{$lab} = $pos;
-	  $pos++;
+		$thetapos{$lab} = $pos;
+		$pos++;
 	}
 	foreach my $lab (@{$omegalabels[0]}){
-	  $omegapos{$lab} = $pos;
-	  $pos++;
+		$omegapos{$lab} = $pos;
+		$pos++;
 	}
 	foreach my $lab (@{$sigmalabels[0]}){
-	  $sigmapos{$lab} = $pos;
-	  $pos++;
+		$sigmapos{$lab} = $pos;
+		$pos++;
 	}
 
 	if ($pos > scalar(@header)){
-	  croak("assigned position for theta/omega/sigma greater than number ".
-	      "of items in raw_res header");
+		croak("assigned position for theta/omega/sigma greater than number ".
+			  "of items in raw_res header");
 	}
 	
 	#skip the offset first lines of @file
@@ -1610,82 +1629,89 @@ sub get_rawres_params
 	}
 	#loop through remaining lines, check if should be filtered out or saved to result hash
 	foreach my $line (@file){
-	  my $skip = 0;
-	  if ($require_numeric_ofv and (not looks_like_number($line->[$ofvindex]))){
-	      $skip=1;
-	  }else {
-	      for (my $i=0; $i< scalar(@filter_column_index);$i++){
-		  my $val = $line->[$filter_column_index[$i]];
- 		  if ($filter_relation[$i] =~ /(==|!=|>|<)/){
-		      #numeric relation
-		      if (($val eq 'NA') or ($val eq '')){
-			  $skip=1;
-			  last;
-		      }elsif(not looks_like_number($val)){
-			  print "\nError: value $val in input filter column ".
-			      $header[$filter_column_index[$i]]." does not look numeric. All input ".
-			      "filter columns must be numeric, skipping this line\n";
-			  $skip=1;
-			  last;
-		      }
-		  }
-		  #if we get here then $val was ok
-		  my $string;
- 		  if ($filter_relation[$i] =~ /(==|!=|>|<)/){
-		      #numeric relation
-		      $string=$val.$filter_relation[$i].$filter_value[$i];
-		  }else{
-		      $string ="\'".$val."\' $filter_relation[$i] \'".$filter_value[$i]."\'";
-		  }
-		  unless (eval($string)){
-		      $skip=1;
-		      last;
-		  }else{
-		      
-		  }
-	      }
-	  }
-	  next if ($skip);
-	  my %theta;
-	  my %omega;
-	  my %sigma;
-	  foreach my $label (keys %thetapos){
-	    my $val = $line->[$thetapos{$label}];
-	    unless (looks_like_number($val) ){
-		$skip =1;
-		print "\nWarning rawres input: $val in column $label does not look like a parameter value\n";
-	    }
-	    $theta{$label} = $val;
-	  }
-	  foreach my $label (keys %omegapos){
-	    my $val = $line->[$omegapos{$label}];
-	    unless (looks_like_number($val) ){
-		$skip =1;
-		print "\nWarning rawres input: $val in column $label does not look like a parameter value\n";
-	    }
-	    $omega{$label} = $val;
-	  }
-	  foreach my $label (keys %sigmapos){
-	    my $val = $line->[$sigmapos{$label}];
-	    unless (looks_like_number($val) ){
-		$skip =1;
-		print "\nWarning rawres input: $val in column $label does not look like a parameter value\n";
-	    }
-	    $sigma{$label} = $val;
-	  }
-	  next if ($skip);
+		my $skip = 0;
+		if ($require_numeric_ofv and (not looks_like_number($line->[$ofvindex]))){
+			$skip=1;
+		}else {
+			for (my $i=0; $i< scalar(@filter_column_index);$i++){
+				my $val = $line->[$filter_column_index[$i]];
+				if ($filter_relation[$i] =~ /(==|!=|>|<)/){
+					#numeric relation
+					if (($val eq 'NA') or ($val eq '')){
+						$skip=1;
+						last;
+					}elsif(not looks_like_number($val)){
+						print "\nError: value $val in input filter column ".
+							$header[$filter_column_index[$i]]." does not look numeric. All input ".
+							"filter columns must be numeric, skipping this line\n";
+						$skip=1;
+						last;
+					}
+				}
+				#if we get here then $val was ok
+				my $string;
+				if ($filter_relation[$i] =~ /(==|!=|>|<)/){
+					#numeric relation
+					$string=$val.$filter_relation[$i].$filter_value[$i];
+				}else{
+					$string ="\'".$val."\' $filter_relation[$i] \'".$filter_value[$i]."\'";
+				}
+				unless (eval($string)){
+					$skip=1;
+					last;
+				}else{
+					
+				}
+			}
+		}
+		next if ($skip);
+		my %theta;
+		my %omega;
+		my %sigma;
+		foreach my $label (keys %thetapos){
+			my $val = $line->[$thetapos{$label}];
+			unless (looks_like_number($val) ){
+				$skip =1;
+				print "\nWarning rawres input: $val in column $label does not look like a parameter value\n";
+			}
+			$theta{$label} = $val;
+		}
+		foreach my $label (keys %omegapos){
+			my $val = $line->[$omegapos{$label}];
+			unless (looks_like_number($val) ){
+				$skip =1;
+				print "\nWarning rawres input: $val in column $label does not look like a parameter value\n";
+			}
+			$omega{$label} = $val;
+		}
+		foreach my $label (keys %sigmapos){
+			my $val = $line->[$sigmapos{$label}];
+			unless (looks_like_number($val) ){
+				$skip =1;
+				print "\nWarning rawres input: $val in column $label does not look like a parameter value\n";
+			}
+			$sigma{$label} = $val;
+		}
+		next if ($skip);
 
-	  my %allpar;
-	  $allpar{'theta'} = \%theta;
-	  $allpar{'omega'} = \%omega;
-	  $allpar{'sigma'} = \%sigma;
-	  if ($require_numeric_ofv){
-	      $allpar{'ofv'} = $line->[$ofvindex];
-	  }
-	  if ($modelindex >= 0){
-	      $allpar{'model'} = $line->[$modelindex];
-	  }
-	  push (@allparams,\%allpar);
+		my %allpar;
+		$allpar{'theta'} = \%theta;
+		$allpar{'omega'} = \%omega;
+		$allpar{'sigma'} = \%sigma;
+		if ($require_numeric_ofv){
+			$allpar{'ofv'} = $line->[$ofvindex];
+		}
+		if ($modelindex >= 0){
+			$allpar{'model'} = $line->[$modelindex];
+		}
+		if($extra_count > 0){
+			for (my $j=0; $j< $extra_count; $j++){
+				my $ind = $extra_indices[$j];
+				my $lab = $extra_columns[$j]; 
+				$allpar{$lab} = $line->[$ind];
+			}
+		}
+		push (@allparams,\%allpar);
 	}  
 
 	return \@allparams;
