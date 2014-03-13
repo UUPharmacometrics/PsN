@@ -357,11 +357,11 @@ sub near_bounds
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 zero_limit => { isa => 'Num', default => 0.01, optional => 1 },
-		 significant_digits => { isa => 'Int', default => 2, optional => 1 },
-		 off_diagonal_sign_digits => { isa => 'Int', default => 2, optional => 1 },
-		 parameter_numbers => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  zero_limit => { isa => 'Num', default => 0.01, optional => 1 },
+							  significant_digits => { isa => 'Int', default => 2, optional => 1 },
+							  off_diagonal_sign_digits => { isa => 'Int', default => 2, optional => 1 },
+							  parameter_numbers => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my $zero_limit = $parm{'zero_limit'};
 	my $significant_digits = $parm{'significant_digits'};
 	my $off_diagonal_sign_digits = $parm{'off_diagonal_sign_digits'};
@@ -371,30 +371,30 @@ sub near_bounds
 	my @parameter_numbers = defined $parm{'parameter_numbers'} ? @{$parm{'parameter_numbers'}} : ();
 
 	sub test_sigdig {
-	  my ( $number, $goal, $sigdig, $zerolim ) = @_;
-	  $number = &FormatSigFigs($number, $sigdig );
-	  my $test;
-	  if ( $goal == 0 ) {
-	    $test = abs($number) < $zerolim ? 1 : 0;
-	  } else {
-	    $goal = &FormatSigFigs($goal, $sigdig );
-	    $test = $number eq $goal ? 1 : 0;
-	  }
-	  return $test;
+		my ( $number, $goal, $sigdig, $zerolim ) = @_;
+		$number = &FormatSigFigs($number, $sigdig );
+		my $test;
+		if ( $goal == 0 ) {
+			$test = abs($number) < $zerolim ? 1 : 0;
+		} else {
+			$goal = &FormatSigFigs($goal, $sigdig );
+			$test = $number eq $goal ? 1 : 0;
+		}
+		return $test;
 	}
 	sub cmp_coords {
-	  if ($a =~ /THETA/){
-	    return substr($a,5) <=> substr($b,5);
-	  } else {
-	    ($a.$b) =~ /\((\d+)\,(\d+)\)[A-Z]*\((\d+)\,(\d+)\)/;
-	    return $2+(($1-1)*$1)/2 <=> $4+(($3-1)*$3)/2; 
-	  }
+		if ($a =~ /THETA/){
+			return substr($a,5) <=> substr($b,5);
+		} else {
+			($a.$b) =~ /\((\d+)\,(\d+)\)[A-Z]*\((\d+)\,(\d+)\)/;
+			return $2+(($1-1)*$1)/2 <=> $4+(($3-1)*$3)/2; 
+		}
 	}
 
 	my @init_problems;
 	if ( not_empty($self->problems) ) {
 	    foreach my $pr (@{$self->problems}) {
-				push(@init_problems,$pr->input_problem());
+			push(@init_problems,$pr->input_problem());
 	    }
 	} else {
 	    croak("No problems defined in output object in near_bounds");
@@ -402,125 +402,125 @@ sub near_bounds
 
 
 	foreach my $param ( 'theta', 'omega', 'sigma' ) {
-	  my $setm =  eval( '$self -> '.$param.'s' );
-	  my $nameref =  eval( '$self -> '.$param.'names' );
-	  next unless( defined $setm and defined $nameref); 
-	  my @estimates  = @{$setm};
-	  #it is assumed here that 'fixed' has element for "full" lower triangular omega and sigma
-	  # lower_theta_bounds etc have elements for all theta 1, 2, 3...
-	  for ( my $i = 0; $i <= $#estimates; $i++ ) {
-	    #loop problem level
-	    next unless( defined $estimates[$i] );
-	      
-	    #prepare init data
-	    next unless (scalar(@init_problems) > $i and defined ($init_problems[$i]));
-	    my $accessor = $param.'s';
-	    unless( $init_problems[$i]-> can($accessor) ) {
+		my $setm =  eval( '$self -> '.$param.'s' );
+		my $nameref =  eval( '$self -> '.$param.'names' );
+		next unless( defined $setm and defined $nameref); 
+		my @estimates  = @{$setm};
+		#it is assumed here that 'fixed' has element for "full" lower triangular omega and sigma
+		# lower_theta_bounds etc have elements for all theta 1, 2, 3...
+		for ( my $i = 0; $i <= $#estimates; $i++ ) {
+			#loop problem level
+			next unless( defined $estimates[$i] );
+			
+			#prepare init data
+			next unless (scalar(@init_problems) > $i and defined ($init_problems[$i]));
+			my $accessor = $param.'s';
+			unless( $init_problems[$i]-> can($accessor) ) {
 				croak("Error unknown parameter type: $param" );
-	    }
-	    my @records;
-	    if (defined $init_problems[$i] -> $accessor()) {
+			}
+			my @records;
+			if (defined $init_problems[$i] -> $accessor()) {
 				@records = @{$init_problems[$i] -> $accessor()};
-	    }
-	    next unless (scalar(@records) > 0); #no parameter in this problem
+			}
+			next unless (scalar(@records) > 0); #no parameter in this problem
 
 
-	    #loop through records and options of input problem
-	    #if record is same or fix then skip
-	    #name of own param is coord
-	    #prior theta omega sigma always come after the regular inits in input model. Therefore still ok to match on coords
-	    #for non-prior parameters
+			#loop through records and options of input problem
+			#if record is same or fix then skip
+			#name of own param is coord
+			#prior theta omega sigma always come after the regular inits in input model. Therefore still ok to match on coords
+			#for non-prior parameters
 
-	    my %lobnd = {};
-	    my %upbnd = {};
-	    my %diagonal = {};
-	    my %label = {};
-	    foreach my $record (@records) {
+			my %lobnd = {};
+			my %upbnd = {};
+			my %diagonal = {};
+			my %label = {};
+			foreach my $record (@records) {
 				if  ($record->same() or $record->fix() or $record->prior()) {
-		    	next;
+					next;
 				}
 				unless (defined $record -> options()) {
-		    	croak("$param record has no values in near_bounds in output object");
-		 		}
+					croak("$param record has no values in near_bounds in output object");
+				}
 				foreach my $option (@{$record -> options()}) {
-		    	if ($option->fix() or $option->prior()) {
-			 			next;
-		    	}
-		    	my $name = $option -> coordinate_string();
-		    	if ( $param eq 'theta' ) {
-			 			$diagonal{$name} = 0; #ensure hash entry defined even if theta
-		  			$lobnd{$name} = $option ->lobnd();
-		  			$lobnd{$name} = -1000000 unless (defined $lobnd{$name});
-		  			$upbnd{$name} = $option ->upbnd();
-		  			$upbnd{$name} = 1000000 unless (defined $upbnd{$name});
-		  			if (defined $option ->label()) {
-		      		$label{$name} = $option ->label();
-		  			} else {
-		      	$label{$name} = $name;
-		  			}
-		     	} else {    # on_diagonal is only defined for omegas and sigmas
-		  			if ( (not $option -> on_diagonal()) and $option->init() == 0) {
-		      		next;
-		      		#do not check off-diagonal zeros
-		  			}
-		  			$diagonal{$name} = $option -> on_diagonal();
-		     	}
-		 		}
-	    }
+					if ($option->fix() or $option->prior()) {
+						next;
+					}
+					my $name = $option -> coordinate_string();
+					if ( $param eq 'theta' ) {
+						$diagonal{$name} = 0; #ensure hash entry defined even if theta
+						$lobnd{$name} = $option ->lobnd();
+						$lobnd{$name} = -1000000 unless (defined $lobnd{$name});
+						$upbnd{$name} = $option ->upbnd();
+						$upbnd{$name} = 1000000 unless (defined $upbnd{$name});
+						if (defined $option ->label()) {
+							$label{$name} = $option ->label();
+						} else {
+							$label{$name} = $name;
+						}
+					} else {    # on_diagonal is only defined for omegas and sigmas
+						if ( (not $option -> on_diagonal()) and $option->init() == 0) {
+							next;
+							#do not check off-diagonal zeros
+						}
+						$diagonal{$name} = $option -> on_diagonal();
+					}
+				}
+			}
 
-	    if ( $param eq 'theta' ) {
+			if ( $param eq 'theta' ) {
 				#first round in loop over params
 				$near_bounds[$i] = [];
 				$found_bounds[$i] = [];
 		 		$found_estimates[$i] = [];
-	    }
+			}
 
-	    for ( my $j = 0; $j < scalar @{$estimates[$i]}; $j++ ) {
+			for ( my $j = 0; $j < scalar @{$estimates[$i]}; $j++ ) {
 				#loop subproblem level
 				if ( $param eq 'theta' ) {
-		    	#first round in loop over params
-		     	$near_bounds[$i][$j] = [];
-		     	$found_bounds[$i][$j] = [];
-		    	$found_estimates[$i][$j] = [];
+					#first round in loop over params
+					$near_bounds[$i][$j] = [];
+					$found_bounds[$i][$j] = [];
+					$found_estimates[$i][$j] = [];
 		 		}
 		 		next unless( defined $estimates[$i][$j] and defined $nameref->[$i][$j]);
 		 		my @values = @{$estimates[$i][$j]};
 		 		my @names = @{$nameref->[$i][$j]};
-		  
+				
 		 		my $debug_count = 0;
 		 		for (my $k=0; $k< scalar(@values); $k++) {
-		     	next unless (defined $diagonal{$names[$k]}); #defined also for theta as long as value to check
-		     	$debug_count++;
-		     	if ( $param eq 'theta' ) {
-		  			if ( test_sigdig( $values[$k], $lobnd{$names[$k]}, $significant_digits, $zero_limit ) ) {
-		      		push( @{$near_bounds[$i][$j]}, $names[$k] );
-		      		push( @{$found_bounds[$i][$j]}, $lobnd{$names[$k]} );
-		      		push( @{$found_estimates[$i][$j]}, $values[$k] );
-		  			}
-		  			if ( test_sigdig( $values[$k], $upbnd{$names[$k]}, $significant_digits, $zero_limit ) ) {
+					next unless (defined $diagonal{$names[$k]}); #defined also for theta as long as value to check
+					$debug_count++;
+					if ( $param eq 'theta' ) {
+						if ( test_sigdig( $values[$k], $lobnd{$names[$k]}, $significant_digits, $zero_limit ) ) {
+							push( @{$near_bounds[$i][$j]}, $names[$k] );
+							push( @{$found_bounds[$i][$j]}, $lobnd{$names[$k]} );
+							push( @{$found_estimates[$i][$j]}, $values[$k] );
+						}
+						if ( test_sigdig( $values[$k], $upbnd{$names[$k]}, $significant_digits, $zero_limit ) ) {
 							push( @{$near_bounds[$i][$j]},  $names[$k] );
-		      		push( @{$found_bounds[$i][$j]}, $upbnd{$names[$k]} );
-		      		push( @{$found_estimates[$i][$j]}, $values[$k] );
-		  			}
-		     	} else {
-		  			#omega or sigma
-		  			my ( $upper, $lower, $sigdig );
-		  			if ($diagonal{$names[$k]}) { # on diagonal
-		      		( $lower, $upper, $sigdig ) = ( 0, 1000000, $significant_digits );
-		  			} else {
-		      		( $lower, $upper, $sigdig ) = ( -1, 1, $off_diagonal_sign_digits );
-		  			}
-		  			if ( test_sigdig( $values[$k], $lower, $sigdig, $zero_limit ) ) {
-		      		push( @{$near_bounds[$i][$j]}, $names[$k] );
-		     			push( @{$found_bounds[$i][$j]}, $lower ); #limit
-		      		push( @{$found_estimates[$i][$j]}, $values[$k] );
-		  			}
-		  			if ( test_sigdig( $values[$k], $upper, $sigdig, $zero_limit ) ) {
-		      		push( @{$near_bounds[$i][$j]}, $names[$k] );
-		      		push( @{$found_bounds[$i][$j]}, $upper ); #limit
-		      		push( @{$found_estimates[$i][$j]}, $values[$k] );
-		  			}
-		     	}
+							push( @{$found_bounds[$i][$j]}, $upbnd{$names[$k]} );
+							push( @{$found_estimates[$i][$j]}, $values[$k] );
+						}
+					} else {
+						#omega or sigma
+						my ( $upper, $lower, $sigdig );
+						if ($diagonal{$names[$k]}) { # on diagonal
+							( $lower, $upper, $sigdig ) = ( 0, 1000000, $significant_digits );
+						} else {
+							( $lower, $upper, $sigdig ) = ( -1, 1, $off_diagonal_sign_digits );
+						}
+						if ( test_sigdig( $values[$k], $lower, $sigdig, $zero_limit ) ) {
+							push( @{$near_bounds[$i][$j]}, $names[$k] );
+							push( @{$found_bounds[$i][$j]}, $lower ); #limit
+							push( @{$found_estimates[$i][$j]}, $values[$k] );
+						}
+						if ( test_sigdig( $values[$k], $upper, $sigdig, $zero_limit ) ) {
+							push( @{$near_bounds[$i][$j]}, $names[$k] );
+							push( @{$found_bounds[$i][$j]}, $upper ); #limit
+							push( @{$found_estimates[$i][$j]}, $values[$k] );
+						}
+					}
 		 		}
 			}
 	 	}

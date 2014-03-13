@@ -63,6 +63,7 @@ LIBFILES= ui.pm \
 	model.pm \
 	tool.pm \
 	tool/modelfit.pm \
+	tool/sir.pm \
 	tool/llp.pm \
 	tool/cdd.pm \
 	tool/cdd/jackknife.pm \
@@ -159,6 +160,7 @@ COMPFILES=boot_scm \
 	lasso \
 	linearize \
 	llp \
+	sir \
 	mcmp \
 	mimp \
 	nca \

@@ -285,6 +285,144 @@ sub BUILD
 	}
 }
 
+
+sub create_maxeval_zero_models_array
+{
+	my %parm = validated_hash(\@_,
+							  subdirectory => { isa => 'Str', optional => 0 },
+							  basedirectory => { isa => 'Str', optional => 0 },
+							  ignore_missing_parameters => { isa => 'Bool', default => 0, optional => 1 },
+							  sampled_params_arr => { isa => 'ArrayRef', optional => 0 },
+							  model => { isa => 'model', optional => 0 },
+							  mceta => { isa => 'Int', optional => 1 },
+							  purpose => { isa => 'Str', optional => 0 }
+	);
+	my $model = $parm{'model'};
+	my $subdirectory = $parm{'subdirectory'};
+	my $basedirectory = $parm{'basedirectory'};
+	my $sampled_params_arr = $parm{'sampled_params_arr'};
+	my $mceta = $parm{'mceta'};
+	my $purpose = $parm{'purpose'};
+	my $ignore_missing_parameters = $parm{'ignore_missing_parameters'};
+
+	my $samples_done=0;
+	my $run_num=1;
+	my @modelsarr=();
+	my $run_model;
+	my $dummymodel;
+	my $dummyname='dummy.mod';
+	my @problem_lines=();
+	while ($samples_done < scalar(@{$sampled_params_arr})){
+		#copy datafile to subdirectory (run directory m1)  and later set local path to datafile in model
+		cp($model->datas->[0]->full_name(),$subdirectory.$model->datas->[0]->filename());
+		#copy the model
+		$run_model = $model ->  copy( filename    => $subdirectory.$purpose.'_'.$run_num.'.mod',
+									  output_same_directory => 1,
+									  copy_data   => 0,
+									  copy_output => 0);
+		$run_num++;
+
+		$run_model->set_maxeval_zero(need_ofv => 1);
+		if (($PsN::nm_major_version >= 7) and ($PsN::nm_minor_version >= 3)){
+			if ($mceta > 0){
+				$run_model->set_option(problem_numbers => [1],
+									   record_name => 'estimation',
+									   option_name => 'MCETA',
+									   option_value => $mceta);
+			}
+		}
+		foreach my $record ('table','simulation','covariance','scatter'){
+			$run_model -> remove_records (problem_numbers => [1],
+										  keep_last => 0,
+										  type => $record);
+		}
+
+		if (scalar(@problem_lines)<1){
+			#first iteration
+			$dummymodel = $run_model ->  copy( filename    => $subdirectory.$dummyname,
+											   output_same_directory => 1,
+											   target => 'mem',
+											   copy_data   => 0,
+											   copy_output => 0);
+			chdir($subdirectory);
+			$dummymodel->datafiles(problem_numbers => [1],
+								   new_names => [$model->datas->[0]->filename()]);
+			chdir($basedirectory);
+
+			#set $DATA REWIND
+			$dummymodel->add_option(problem_numbers => [1],
+									record_name => 'data',
+									option_name => 'REWIND');
+
+			#remove most records, keep only $PROB, $INPUT, $DATA, $THETA, $OMEGA, $SIGMA $EST
+			foreach my $record ('table','simulation','pk','pred','error','covariance','scatter','msfi','subroutine',
+								'abbreviated','sizes','contr','prior','model','tol','infn','aesinitial',
+								'aes','des','mix','nonparametric'){
+				$dummymodel -> remove_records (problem_numbers => [1],
+											   keep_last => 0,
+											   type => $record);
+			}
+			my $linesarray = $dummymodel->problems->[0]->_format_problem;
+			#we cannot use this array directly, must make sure items do not contain line breaks
+			foreach my $line (@{$linesarray}){
+				my @arr = split(/\n/,$line);
+				push(@problem_lines,@arr);
+			}
+			unlink($subdirectory.$dummyname);
+			$dummymodel = undef;
+		}
+
+		#need to set data object , setting record not enough
+		#chdir so can use local data file name
+		chdir($subdirectory);
+		$run_model->datafiles(problem_numbers => [1],
+							  new_names => [$model->datas->[0]->filename()]);
+
+		chdir($basedirectory);
+
+		#update ests for first $PROB in real model
+		$run_model -> update_inits(from_hash => $sampled_params_arr->[$samples_done],
+								   ignore_missing_parameters => $ignore_missing_parameters); 
+
+		$samples_done++;
+		my $probnum=2;
+		for (my $i=1; $i<200; $i++){
+			last if ($samples_done == scalar(@{$sampled_params_arr}));
+			#add one $PROB per $i, update inits from hash
+			my $sh_mod = model::shrinkage_module -> new ( nomegas => $run_model -> nomegas -> [0],
+														  directory => $run_model -> directory(),
+														  problem_number => $probnum );
+
+			push(@{$run_model->problems()},
+				 model::problem ->
+				 new ( directory                   => $run_model->directory,
+					   ignore_missing_files        => 1,
+					   ignore_missing_output_files => 1,
+					   sde                         => $run_model->sde,
+					   omega_before_pk             => $run_model->omega_before_pk,
+					   cwres                       => $run_model->cwres,
+					   tbs                         => 0,
+					   dtbs                         => 0,
+					   prob_arr                    => \@problem_lines,
+					   shrinkage_module            => $sh_mod )
+				);
+			push(@{$run_model->active_problems()},1);
+			push(@{$run_model->datas()},$run_model->datas()->[0]);
+			$run_model -> _write();
+			$run_model->update_inits(from_hash => $sampled_params_arr->[$samples_done],
+									 problem_number=> $probnum,
+									 ignore_missing_parameters => $ignore_missing_parameters);
+			$samples_done++;
+			$probnum++;
+		}
+		$run_model -> _write();
+		push(@modelsarr,$run_model);
+	}
+
+	return \@modelsarr;
+
+}
+
 sub _datas_set
 {
 	my $self = shift;
@@ -1318,22 +1456,25 @@ sub get_rawres_params
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 filename => { isa => 'Str', optional => 0 },
-		 filter => { isa => 'ArrayRef[Str]', optional => 1 },
-		 string_filter => { isa => 'Maybe[ArrayRef[Str]]', optional => 1 },
-		 require_numeric_ofv => { isa => 'Bool', default => 0, optional => 1 },
-		 offset => { isa => 'Int', optional => 0 }
-	);
+							  filename => { isa => 'Str', optional => 0 },
+							  filter => { isa => 'ArrayRef[Str]', optional => 1 },
+							  string_filter => { isa => 'Maybe[ArrayRef[Str]]', optional => 1 },
+							  extra_columns => { isa => 'Maybe[ArrayRef[Str]]', optional => 1 },
+							  require_numeric_ofv => { isa => 'Bool', default => 0, optional => 1 },
+							  offset => { isa => 'Int', optional => 0 }
+		);
 	my $filename = $parm{'filename'};
 	my @filter = defined $parm{'filter'} ? @{$parm{'filter'}}: ();
 	my @string_filter = defined $parm{'string_filter'} ? @{$parm{'string_filter'}} : ();
+	my @extra_columns = defined $parm{'extra_columns'} ? @{$parm{'extra_columns'}} : ();
 	my $require_numeric_ofv = $parm{'require_numeric_ofv'};
 	my $offset = $parm{'offset'};
 	my @allparams;
+	my $extra_count = scalar(@extra_columns);
 
 	#input is filename + offset and possibly array filter and possibly array string_filter
-	  #input require_numeric_ofv is special filter, default false, if true then check that looks_like_number(ofv)
-	  #input 
+	#input require_numeric_ofv is special filter, default false, if true then check that looks_like_number(ofv)
+	#input 
 	#output is hash of arrays of hashes allparams
 
 	my @thetalabels = @{$self -> labels( parameter_type => 'theta', generic => 0)};
@@ -1341,10 +1482,10 @@ sub get_rawres_params
 	my @sigmalabels = @{$self -> labels( parameter_type => 'sigma', generic => 0)};
 
 	if (scalar(@thetalabels) != 1 or scalar(@omegalabels) != 1 or scalar(@sigmalabels) != 1){
-	  croak("get_rawres_params can only be done if exactly one \$PROB");
+		croak("get_rawres_params can only be done if exactly one \$PROB");
 	}
 	unless (defined $thetalabels[0] and defined $omegalabels[0] and defined $sigmalabels[0]){
-	  croak("all labels references are not defined in get_rawres_params");
+		croak("all labels references are not defined in get_rawres_params");
 	}
 
 	my %thetapos;
@@ -1359,38 +1500,38 @@ sub get_rawres_params
 	my @file;
 
 	foreach (@read_file){
-	  chomp;
-	  #remove all windows line feed also if we are on unix but use a windows raw results
-	  s/\r//g;
-	  if (/\"/ ){
-	      #if any quotes at all
-	      #remove one column header at a time, check for each if enclosed in double quotes or not
-	      my $header = $_;
-	      my @tmp =();
-	      while (length($header)>0){
-			  $header =~ s/^\s*//; #remove leading whitespace
-			  my $col;
-			  if ($header =~ /^\"/){
-				  #enclosed double quotes, handle more than one in a row
-				  if ($header =~ /^\"+([^"]+)\"+\s*\,?/){
-					  $header =~ s/^\"+([^"]+)\"+\s*\,?//; #" 
-					  $col = $1; 
-				  }else{
-					  croak("Failed parsing the header of the rawres input file\n$header");
-				  }
-			  }else{
-				  #no quotes
-				  $header =~ s/([^,]+)\,?// ; #" 
-				  $col = $1; 
-			  }
-			  # we allow empty matches
-			  push(@tmp,$col);
-	      }
-	      push (@file,\@tmp);
-	  } else {
-	    my @tmp = split(',',$_);
-	    push (@file,\@tmp);
-	  }
+		chomp;
+		#remove all windows line feed also if we are on unix but use a windows raw results
+		s/\r//g;
+		if (/\"/ ){
+			#if any quotes at all
+			#remove one column header at a time, check for each if enclosed in double quotes or not
+			my $header = $_;
+			my @tmp =();
+			while (length($header)>0){
+				$header =~ s/^\s*//; #remove leading whitespace
+				my $col;
+				if ($header =~ /^\"/){
+					#enclosed double quotes, handle more than one in a row
+					if ($header =~ /^\"+([^"]+)\"+\s*\,?/){
+						$header =~ s/^\"+([^"]+)\"+\s*\,?//; #" 
+						$col = $1; 
+					}else{
+						croak("Failed parsing the header of the rawres input file\n$header");
+					}
+				}else{
+					#no quotes
+					$header =~ s/([^,]+)\,?// ; #" 
+					$col = $1; 
+				}
+				# we allow empty matches
+				push(@tmp,$col);
+			}
+			push (@file,\@tmp);
+		} else {
+			my @tmp = split(',',$_);
+			push (@file,\@tmp);
+		}
 	}
 
 	my $ref = shift @file;
@@ -1402,14 +1543,14 @@ sub get_rawres_params
 	    print "\n\nThe found headers are\n".join("   ",@header)."\n\n";
 
 	    croak("The file $filename does not follow the format rules.\n".
-		       "Either first, second or third column should be model, you have ".$header[0].", ".$header[1]." and ".$header[2].
-		       ", need $sum cols and have ".scalar(@header)."\n");
+			  "Either first, second or third column should be model, you have ".$header[0].", ".$header[1]." and ".$header[2].
+			  ", need $sum cols and have ".scalar(@header)."\n");
 	}
 	if (($header[0] eq 'hypothesis') and ($offset == 1)){
 	    print "\nWarning: Your rawres_input file looks like an sse raw results file,\n".
-		"but you use offset_rawres=1 which is the default suitable for bootstrap\n".
-		"raw results files. If you want to include also the first model\n".
-		"from the raw results file then rerun with offset_rawres=0.\n\n";
+			"but you use offset_rawres=1 which is the default suitable for bootstrap\n".
+			"raw results files. If you want to include also the first model\n".
+			"from the raw results file then rerun with offset_rawres=0.\n\n";
 	}
 
 	#parse filter
@@ -1429,41 +1570,57 @@ sub get_rawres_params
 	my $pos=-1;
 	my $ofvindex=-1;
 	my $modelindex=-1;
+	my @extra_indices = (-1) x $extra_count;
 	#scan for ofv label and first theta label. Then following should be rest of theta,omega,sigma
 	for (my $i=0; $i<scalar(@header);$i++){
 	    if ($header[$i] eq 'ofv'){
-		$ofvindex = $i;
+			$ofvindex = $i;
 	    }elsif ($header[$i] eq 'model'){
-		$modelindex = $i;
+			$modelindex = $i;
 	    }elsif ($header[$i] eq $thetalabels[0]->[0]){
-		$pos = $i;
-		last;
-	    }
+			$pos = $i;
+	    }elsif($extra_count > 0){
+			for (my $j=0; $j< $extra_count; $j++){
+				if ($header[$i] eq $extra_columns[$j]){
+					$extra_indices[$j] = $i;
+					last;
+				}
+			}
+		}
 	}
 	if ($pos == -1){
-	  croak("could not find header ".$thetalabels[0]->[0]." in rawres ".
-		     "header\n".join(' ',@header)."\n");
+		croak("could not find header ".$thetalabels[0]->[0]." in rawres ".
+			  "header\n".join(' ',@header)."\n");
 	}
 	if (($ofvindex == -1) and ($require_numeric_ofv)){
 	    croak("could not find header ofv in rawres ".
-		       "header\n".join(' ',@header)."\n");
+			  "header\n".join(' ',@header)."\n");
 	}
+	if($extra_count > 0){
+		for (my $j=0; $j< $extra_count; $j++){
+			if ($extra_indices[$j] == -1){
+				croak("could not find header ".$extra_columns[$j]." in rawres ".
+					  "header\n".join(' ',@header)."\n");
+			}
+		}
+	}
+	
 	foreach my $lab (@{$thetalabels[0]}){
-	  $thetapos{$lab} = $pos;
-	  $pos++;
+		$thetapos{$lab} = $pos;
+		$pos++;
 	}
 	foreach my $lab (@{$omegalabels[0]}){
-	  $omegapos{$lab} = $pos;
-	  $pos++;
+		$omegapos{$lab} = $pos;
+		$pos++;
 	}
 	foreach my $lab (@{$sigmalabels[0]}){
-	  $sigmapos{$lab} = $pos;
-	  $pos++;
+		$sigmapos{$lab} = $pos;
+		$pos++;
 	}
 
 	if ($pos > scalar(@header)){
-	  croak("assigned position for theta/omega/sigma greater than number ".
-	      "of items in raw_res header");
+		croak("assigned position for theta/omega/sigma greater than number ".
+			  "of items in raw_res header");
 	}
 	
 	#skip the offset first lines of @file
@@ -1472,82 +1629,89 @@ sub get_rawres_params
 	}
 	#loop through remaining lines, check if should be filtered out or saved to result hash
 	foreach my $line (@file){
-	  my $skip = 0;
-	  if ($require_numeric_ofv and (not looks_like_number($line->[$ofvindex]))){
-	      $skip=1;
-	  }else {
-	      for (my $i=0; $i< scalar(@filter_column_index);$i++){
-		  my $val = $line->[$filter_column_index[$i]];
- 		  if ($filter_relation[$i] =~ /(==|!=|>|<)/){
-		      #numeric relation
-		      if (($val eq 'NA') or ($val eq '')){
-			  $skip=1;
-			  last;
-		      }elsif(not looks_like_number($val)){
-			  print "\nError: value $val in input filter column ".
-			      $header[$filter_column_index[$i]]." does not look numeric. All input ".
-			      "filter columns must be numeric, skipping this line\n";
-			  $skip=1;
-			  last;
-		      }
-		  }
-		  #if we get here then $val was ok
-		  my $string;
- 		  if ($filter_relation[$i] =~ /(==|!=|>|<)/){
-		      #numeric relation
-		      $string=$val.$filter_relation[$i].$filter_value[$i];
-		  }else{
-		      $string ="\'".$val."\' $filter_relation[$i] \'".$filter_value[$i]."\'";
-		  }
-		  unless (eval($string)){
-		      $skip=1;
-		      last;
-		  }else{
-		      
-		  }
-	      }
-	  }
-	  next if ($skip);
-	  my %theta;
-	  my %omega;
-	  my %sigma;
-	  foreach my $label (keys %thetapos){
-	    my $val = $line->[$thetapos{$label}];
-	    unless (looks_like_number($val) ){
-		$skip =1;
-		print "\nWarning rawres input: $val in column $label does not look like a parameter value\n";
-	    }
-	    $theta{$label} = $val;
-	  }
-	  foreach my $label (keys %omegapos){
-	    my $val = $line->[$omegapos{$label}];
-	    unless (looks_like_number($val) ){
-		$skip =1;
-		print "\nWarning rawres input: $val in column $label does not look like a parameter value\n";
-	    }
-	    $omega{$label} = $val;
-	  }
-	  foreach my $label (keys %sigmapos){
-	    my $val = $line->[$sigmapos{$label}];
-	    unless (looks_like_number($val) ){
-		$skip =1;
-		print "\nWarning rawres input: $val in column $label does not look like a parameter value\n";
-	    }
-	    $sigma{$label} = $val;
-	  }
-	  next if ($skip);
+		my $skip = 0;
+		if ($require_numeric_ofv and (not looks_like_number($line->[$ofvindex]))){
+			$skip=1;
+		}else {
+			for (my $i=0; $i< scalar(@filter_column_index);$i++){
+				my $val = $line->[$filter_column_index[$i]];
+				if ($filter_relation[$i] =~ /(==|!=|>|<)/){
+					#numeric relation
+					if (($val eq 'NA') or ($val eq '')){
+						$skip=1;
+						last;
+					}elsif(not looks_like_number($val)){
+						print "\nError: value $val in input filter column ".
+							$header[$filter_column_index[$i]]." does not look numeric. All input ".
+							"filter columns must be numeric, skipping this line\n";
+						$skip=1;
+						last;
+					}
+				}
+				#if we get here then $val was ok
+				my $string;
+				if ($filter_relation[$i] =~ /(==|!=|>|<)/){
+					#numeric relation
+					$string=$val.$filter_relation[$i].$filter_value[$i];
+				}else{
+					$string ="\'".$val."\' $filter_relation[$i] \'".$filter_value[$i]."\'";
+				}
+				unless (eval($string)){
+					$skip=1;
+					last;
+				}else{
+					
+				}
+			}
+		}
+		next if ($skip);
+		my %theta;
+		my %omega;
+		my %sigma;
+		foreach my $label (keys %thetapos){
+			my $val = $line->[$thetapos{$label}];
+			unless (looks_like_number($val) ){
+				$skip =1;
+				print "\nWarning rawres input: $val in column $label does not look like a parameter value\n";
+			}
+			$theta{$label} = $val;
+		}
+		foreach my $label (keys %omegapos){
+			my $val = $line->[$omegapos{$label}];
+			unless (looks_like_number($val) ){
+				$skip =1;
+				print "\nWarning rawres input: $val in column $label does not look like a parameter value\n";
+			}
+			$omega{$label} = $val;
+		}
+		foreach my $label (keys %sigmapos){
+			my $val = $line->[$sigmapos{$label}];
+			unless (looks_like_number($val) ){
+				$skip =1;
+				print "\nWarning rawres input: $val in column $label does not look like a parameter value\n";
+			}
+			$sigma{$label} = $val;
+		}
+		next if ($skip);
 
-	  my %allpar;
-	  $allpar{'theta'} = \%theta;
-	  $allpar{'omega'} = \%omega;
-	  $allpar{'sigma'} = \%sigma;
-	  if ($require_numeric_ofv){
-	      $allpar{'ofv'} = $line->[$ofvindex];
-	  }
-	  if ($modelindex >= 0){
-	      $allpar{'model'} = $line->[$modelindex];
-	  }
-	  push (@allparams,\%allpar);
+		my %allpar;
+		$allpar{'theta'} = \%theta;
+		$allpar{'omega'} = \%omega;
+		$allpar{'sigma'} = \%sigma;
+		if ($require_numeric_ofv){
+			$allpar{'ofv'} = $line->[$ofvindex];
+		}
+		if ($modelindex >= 0){
+			$allpar{'model'} = $line->[$modelindex];
+		}
+		if($extra_count > 0){
+			for (my $j=0; $j< $extra_count; $j++){
+				my $ind = $extra_indices[$j];
+				my $lab = $extra_columns[$j]; 
+				$allpar{$lab} = $line->[$ind];
+			}
+		}
+		push (@allparams,\%allpar);
 	}  
 
 	return \@allparams;

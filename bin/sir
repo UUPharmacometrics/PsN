@@ -1,0 +1,263 @@
+#!/usr/bin/perl
+
+use FindBin qw($Bin);
+use lib "$Bin/../lib";
+
+# Don't edit the line below, it must look exactly like this.
+# Everything above this line will be replaced #
+
+use PsN;
+use model;
+use tool::sir;
+use strict;
+use ui;
+use Getopt::Long;
+use common_options;
+use Data::Dumper;
+
+my $cmd_line = $0 . " " . join( " ", @ARGV );
+
+## Configure the command line parsing
+Getopt::Long::config("auto_abbrev");
+
+## Declare the options
+my %options;
+
+my %required_options = ("samples:i"=>'',
+			"resamples:i"=> '');
+my %optional_options = (
+#	"covmat_input:s"=>'',
+#	'rawres_input:s' => undef,
+#	'offset_rawres:i' => undef,
+#	'in_filter:s' => undef,
+	'out_filter:s' => undef,
+	"mceta:i"=>'',
+	"inflation:f" => '',
+	"with_replacement!"=>'',
+	"copy_data!"=>'');
+
+my $res = GetOptions( \%options, 
+		      @common_options::get_opt_strings,
+		      keys(%required_options),
+		      keys(%optional_options) );
+
+exit unless $res;
+
+common_options::setup( \%options, 'sir' ); #calls set_globals etc, initiates random sequence
+
+
+my %help_text;
+$help_text{Pre_help_message} = <<'EOF';  
+    <h3 class="heading1">sir</h3>
+      
+      Sampling Importance Resampling.
+      
+    <h3 class="heading1">Usage:</h3>
+EOF
+
+    $help_text{Description} = <<'EOF';
+   <h3 class="heading1">Description:</h3>
+
+     Sample data vectors using the covariance matrix. 
+	 Resample vectors based on weights. Compute confidence intervals from resampled vectors.
+EOF
+    $help_text{Examples} = <<'EOF';
+   <h3 class="heading1">Example:</h3>
+
+      <p class="option">sir -samples=10000 -resamples=200 run89.mod</p>
+
+EOF
+
+    $help_text{Options} = <<'EOF';
+   <h3 class="heading1">Options:</h3>
+
+      The options are given here in their long form. Any option may be
+      abbreviated to any nonconflicting prefix.
+
+      The following options are valid:
+EOF
+
+    $help_text{-samples} = <<'EOF';      
+      <p class="option">-samples=N</p>
+
+      The number of parameter vectors to generate.
+EOF
+
+    $help_text{-resamples} = <<'EOF';      
+      <p class="option">-resamples=N</p>
+
+      The number of parameter vectors to resample based on the weights
+	  computed from delta ofv and the pdf.
+EOF
+    $help_text{-mceta} = <<'EOF';      
+      <p class="option">-mceta=N</p>
+
+      Only allowed when NM7.3 or later and
+      a classical estimation method is used. Set MCETA=N in $ESTIMATION.
+EOF
+
+$help_text{-rawres_input} = <<'EOF';
+      -rawres_input=filename
+
+      If rawres_input is given, sir will take samples sets of parameter
+	  vectors from this file, starting on line offset_rawres+1, instead of
+      drawing samples from a truncated multivariate normal distribution 
+	  based on the input model parameter estimates and 
+	  covariance matrix.
+      The raw results file must contain at least as many 
+      samples as the input -samples to sir, the labels for  THETA/OMEGA/SIGMA 
+      in the file must match the labels in the model given as input 
+      to sir, the theta columns must be directly followed by the omega columns 
+      which must be directly followed by the sigma columns, and the first or
+	  second column must have header model. Note that is is 
+      possible to generate a file with initial parameter estimates outside 
+	  of PsN, as long as the file follows the format rules.
+EOF
+$help_text{-offset_rawres} = <<'EOF';
+      -offset_rawres=N
+
+      Only relevant in combination with rawres_input. Default 1.
+      The number of result lines to skip in the input raw results file
+      before starting to read final parameter estimates. In a regular
+      bootstrap raw_results file the first line of estimates refers to the
+      input model with the full dataset, so therefore the default offset is 1.
+EOF
+
+$help_text{-in_filter} = <<'EOF';
+      -in_filter=comma-separated list of conditions
+
+      Only relevant in combination with rawres_input. Default not used.
+      The parameter estimates lines in the file can be filtered on values 
+      in the different columns. When specifying which column(s) the filtering 
+      should be based on, the exact column name must be used, 
+      e.g. minimization_successful. Filtering can only be based on columns 
+      with numeric values. The allowed relations are .gt. (greater than), 
+      .lt. (less than) and .eq. (equal to). Conditions are separated with commas. 
+      If the remaining number of lines after filtering is smaller than -samples, 
+      sir will stop with an error message. Then the user must either change the 
+      filtering rules or change -samples. If the user has created a file with 
+      parameter estimates outside of PsN, filtering can be done on any numeric 
+      column in that file. Do not set column headers containing .eq. or .lt. 
+      or .gt.in the user-generated file as this would interfere with the in_filter 
+      option syntax.
+    
+      Example: -in_filter=minimization_successful.eq.1,significant_digits.gt.3.5
+
+EOF
+    $help_text{-copy_data} = <<'EOF';
+      <p class="option">-copy_data</p>
+    Default not set. 
+EOF
+    $help_text{-with_replacement} = <<'EOF';
+      <p class="option">-with_replacement</p>
+    By default resampling is done without replacement, but if option
+	-with_replacement is set, resampling will be done with replacement.
+EOF
+    $help_text{-covmat_input} = <<'EOF';
+      <p class="option">-covmat_input=filename</p>
+    Only allowed together with rawres_input. If given, this matrix is
+	used for computing the weights.
+EOF
+    $help_text{-inflation} = <<'EOF';
+      <p class="option">-inflation=X</p>
+    Default is 1, which is the same as no inflation. If given, the covariance
+	matrix will be multiplied with this number before the parameter vectors
+	are sampled from the truncated multivariate normal distribution.
+EOF
+
+
+    $help_text{Post_help_message} = <<'EOF';
+      Also see 'psn_options -h' for a description of common options.
+EOF
+
+common_options::online_help('sir',\%options, \%help_text, \%required_options, \%optional_options);
+
+
+## Check that we do have a model file
+if ( scalar(@ARGV) < 1 ) {
+  print "A model file must be specified. Use 'sir -h' for help.\n";
+  exit;
+}
+
+if( scalar(@ARGV) > 1 ){
+  print "sir can only handle one modelfile. Use 'sir -h' for help.\n";
+  exit;
+}
+
+if ( defined $options{'covmat_input'} ){
+	unless (defined $options{'rawres_input'}){
+		print "Cannot use option -covmat_input without option -rawres_input.\n";
+		exit;
+	}
+}
+my @in_filter=();
+
+if ( defined $options{'in_filter'} ){
+	unless (defined $options{'rawres_input'}){
+		print "Cannot use option -in_filter without option -rawres_input.\n";
+		exit;
+	}
+	#split string, assume comma separated
+	foreach my $filt (split(/,/,$options{'in_filter'})){
+		if ($filt =~ /.\.(gt|lt|eq)\.\d+\.?\d*/){
+			push(@in_filter,$filt);
+		}else{
+			die "Input filter $filt does not fulfill the format rules.\n";
+		}
+	}
+	if (scalar(@in_filter)<1){
+		die "Error: Option in_filter used, but list of conditions could not be parsed.\n";
+	}	
+}
+my @out_filter=();
+if ( defined $options{'out_filter'} ){
+	#split string, assume comma separated
+	foreach my $filt (split(/,/,$options{'out_filter'})){
+		if ($filt =~ /.\.(gt|lt|eq)\.\d+\.?\d*/){
+			push(@out_filter,$filt);
+		}else{
+			die "Output filter $filt does not fulfill the format rules.\n";
+		}
+	}
+	if (scalar(@out_filter)<1){
+		die "Error: Option out_filter used, but list of conditions could not be parsed.\n";
+	}	
+}
+
+
+
+my $eval_string = common_options::model_parameters(\%options);
+
+my $model = model -> new ( eval( $eval_string ),
+			   filename                    => @ARGV[0],
+			   ignore_missing_output_files => 1 );
+
+my $sir = tool::sir -> 
+  new ( eval( $common_options::parameters ),
+	top_tool => 1,
+	models				     => [ $model ],
+	with_replacement				     => $options{'with_replacement'},
+	samples				     => $options{'samples'},
+	resamples				     => $options{'resamples'},
+	mceta				     => $options{'mceta'},
+	inflation				     => $options{'inflation'},
+	covmat_input				     => $options{'covmat_input'},
+	rawres_input        	=> $options{'rawres_input'},
+	offset_rawres       	=> $options{'offset_rawres'},
+	in_filter             => \@in_filter,
+	out_filter             => \@out_filter,
+	copy_data                            => $options{'copy_data'}
+	);
+
+$sir-> print_options (cmd_line => $cmd_line,
+		     toolname => 'sir',
+		     local_options => [keys %optional_options],
+		     common_options => \@common_options::tool_options);
+
+
+$sir -> run;
+$sir -> prepare_results();
+$sir -> print_results();
+
+ui -> print( category => 'sir',
+	     message  => "\nsir done.\n");
