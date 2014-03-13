@@ -9,7 +9,6 @@ our %EXPORT_TAGS = ( 'all' => [ qw(number_of_bins_range number_of_bins_auto bin_
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 
 use strict;
-#use Carp;
 use include_modules;
 use Math::Trig;	# For pi
 use array qw(:all);
@@ -58,6 +57,12 @@ sub inf
 {
 	return 9**9**9;
 }
+
+# Algorithm parameters
+my $kurtosis_cutoff = 2.5;	# C
+my $kernel_scaling = 0.25;	# 1/R
+my $phi_scaling = 7.8;			# The constant C in alpha
+my $index_selection = 2;		# The index for choosing K: 0 is the objective function, 1 is the CH index, 2 is the ratio
 
 
 sub chooseK
@@ -157,6 +162,14 @@ sub chooseK
 		} else {
 			$index = inf;
 		}
+
+		# Select one of the indices C and obj
+		if ($index_selection == 0) {
+			$index = $obj;
+		} elsif ($index_selection == 1) {
+			$index = $CH;
+		}
+			
 
 		#determine largest index and best K so far
 		if ((not defined($maxOlifIndex)) or ($index > $maxOlifIndex)) {
@@ -381,10 +394,10 @@ sub firstMethod
 			my $currentKurtosis = $fourthMoment / ($currentStdIdv ** 4);
 
 			# Smooth the data density function according to the Kurtosis value
-			if ($currentKurtosis > 2.5) {
+			if ($currentKurtosis > $kurtosis_cutoff) {
 				add(\@sumDensity, gaussFilter(\@uniqueIdvSliced, \@uniqueIdvNSliced, $idvMesh, $currentStdIdv));
 			} else {
-				add(\@sumDensity, gaussFilter(\@uniqueIdvSliced, \@uniqueIdvNSliced, $idvMesh, 0.25 * $currentStdIdv));
+				add(\@sumDensity, gaussFilter(\@uniqueIdvSliced, \@uniqueIdvNSliced, $idvMesh, $kernel_scaling * $currentStdIdv));
 			}
 
 		}
@@ -413,7 +426,7 @@ sub firstMethod
 		}
 
 		# Scale the phi function:
-		my $beta = 7.8 * max(\@W);
+		my $beta = $phi_scaling * max(\@W);
 
 		@phi = map { $_ * $beta } @phi;
 
