@@ -4892,11 +4892,21 @@ sub update_prior_information
 sub set_all_omegas_to_zero
 {
 	my $self = shift;
+	my $fixed = 0;
 
 	foreach my $omega (@{$self->problems->[0]->omegas}) {
+		if ($omega->type eq 'BLOCK' and not $omega->same) {
+			$omega->fix(1);
+			$fixed = 1;
+		} else {
+			$fixed = 0;
+		}
+
 		foreach my $option (@{$omega->options}) {
 			$option->init(0);
-			$option->fix(1);
+			if (not $fixed) {
+				$option->fix(1);
+			}
 		}
 	}
 }
