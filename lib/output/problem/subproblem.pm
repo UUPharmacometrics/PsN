@@ -29,7 +29,7 @@ has 'shrinkage_eps' => ( is => 'rw', isa => 'ArrayRef[Value]' );
 has 'eigens' => ( is => 'rw', isa => 'ArrayRef' );
 has 'etabar' => ( is => 'rw', isa => 'ArrayRef[Num]' );
 has 'feval' => ( is => 'rw', isa => 'Num' );
-has 'final_gradients' => ( is => 'rw', isa => 'ArrayRef[Num]' );
+has 'final_gradients' => ( is => 'rw', isa => 'ArrayRef' );
 has 'finalparam' => ( is => 'rw', isa => 'ArrayRef[Num]' );
 has 'funcevalpath' => ( is => 'rw', isa => 'ArrayRef[Num]' );
 has 'gradient_path' => ( is => 'rw', isa => 'ArrayRef[Ref]' );
