@@ -161,6 +161,9 @@ sub modelfit_setup
 												   covmatrix => $covmatrix,
 												   lower_bound => $parameter_hash->{'lower_bounds'},
 												   upper_bound => $parameter_hash->{'upper_bounds'},
+												   param => $parameter_hash->{'param'},
+												   coords => $parameter_hash->{'filtered_coords'},
+												   block_number => $parameter_hash->{'block_number'},
 												   mu => $muvector);
 	
 	my $sampled_params_arr = create_sampled_params_arr(samples_array => $vectorsamples,
@@ -549,6 +552,8 @@ sub get_nonmem_parameters
 
 	my %hash;
 	$hash{'filtered_labels'}=[];
+	$hash{'filtered_coords'}=[];
+	$hash{'block_number'}=[];
 	$hash{'lower_bounds'}=[];
 	$hash{'upper_bounds'}=[];
 	$hash{'filtered_values'}=[];
@@ -556,6 +561,8 @@ sub get_nonmem_parameters
 
 	#TODO verify that this is the parameter order in invcov
 	foreach my $param ('theta','omega','sigma'){
+		my $block_number=0;
+		my $block_count=0;
 		my $accessor=$param.'s';
 		my $coordval = $output -> get_single_value(attribute => $param.'coordval'); #ref to a hash
 		croak("No $param coordval in output object") unless (defined $coordval);
@@ -571,6 +578,12 @@ sub get_nonmem_parameters
 			}
 			unless (defined $record -> options()) {
 				croak("$param record has no values in get_nonmem_parameters in output object");
+			}
+			if (($param ne 'theta') and ($record->type eq 'BLOCK')){
+				$block_count++;
+				$block_number = $block_count;
+			}else{
+				$block_number = 0;
 			}
 			foreach my $option (@{$record -> options()}) {
 				if ($option->fix() or $option->prior()) {
@@ -604,9 +617,13 @@ sub get_nonmem_parameters
 				}
 				push(@{$hash{'filtered_labels'}},$name);
 				push(@{$hash{'param'}},$param);
+				push(@{$hash{'block_number'}},$block_number);
 				my $value = $coordval->{$coord};
 				croak("No estimate for $param $coord") unless (defined $value);
 				push(@{$hash{'filtered_values'}},$value);
+				$coord =~ /(\d+,?\d*)/;
+				push(@{$hash{'filtered_coords'}},$1);
+
 			}
 		}
 	}
@@ -621,12 +638,18 @@ sub sample_multivariate_normal
 							  covmatrix => { isa => 'ArrayRef[ArrayRef[Num]]', optional => 0 },
 							  lower_bound => { isa => 'ArrayRef[Num]', optional => 0 },
 							  upper_bound => { isa => 'ArrayRef[Num]', optional => 0 },
+							  param => { isa => 'ArrayRef', optional => 0 },
+							  block_number => { isa => 'ArrayRef', optional => 0 },
+							  coords => { isa => 'ArrayRef', optional => 0 },
 							  mu => { isa => 'Math::MatrixReal', optional => 0 }							  
 		);
 	my $samples = $parm{'samples'};
 	my $covmatrix = $parm{'covmatrix'};
 	my $lower_bound = $parm{'lower_bound'};
 	my $upper_bound = $parm{'upper_bound'};
+	my $param = $parm{'param'};
+	my $block_number = $parm{'block_number'};
+	my $coords = $parm{'coords'};
 	my $mu = $parm{'mu'};
 	
 	my ($rows,$columns) = $mu->dim();
@@ -644,7 +667,16 @@ sub sample_multivariate_normal
 		croak("Input error sample_multivariate_normal: mu vector has dimension $dim but lower_bound has dimension ".scalar(@{$lower_bound}));
 	}
 	unless (scalar(@{$upper_bound})==$dim){
-		croak("Input error sample_multivariate_normal: mu vector has dimension $dim but lower_bound has dimension ".scalar(@{$upper_bound}));
+		croak("Input error sample_multivariate_normal: mu vector has dimension $dim but upper_bound has dimension ".scalar(@{$upper_bound}));
+	}
+	unless (scalar(@{$block_number})==$dim){
+		croak("Input error sample_multivariate_normal: mu vector has dimension $dim but block_number has dimension ".scalar(@{$block_number}));
+	}
+	unless (scalar(@{$param})==$dim){
+		croak("Input error sample_multivariate_normal: mu vector has dimension $dim but param has dimension ".scalar(@{$param}));
+	}
+	unless (scalar(@{$coords})==$dim){
+		croak("Input error sample_multivariate_normal: mu vector has dimension $dim but coords has dimension ".scalar(@{$coords}));
 	}
 	unless (scalar($samples)>0){
 		croak("Input error sample_multivariate_normal: samples must be larger than 0");
@@ -654,6 +686,100 @@ sub sample_multivariate_normal
 		push(@muvec,$mu->element(1,$i));
 	}
 	
+
+	my $check_sigma_posdef=0;
+	my $check_omega_posdef=0;
+	my @sigma_hashes=();
+	my @omega_hashes=();
+	my @row_index=();
+	my @col_index=();
+	for (my $i=0; $i< $dim; $i++){
+		if ($param->[$i] eq 'omega' or $param->[$i] eq 'sigma'){
+			my ($row,$col) = split(',',$coords->[$i]);
+			push(@row_index,($row-1));
+			push(@col_index,($col-1));
+			unless ($row == $col){
+				$check_sigma_posdef=1 if ($param->[$i] eq 'sigma');
+				$check_omega_posdef=1 if ($param->[$i] eq 'omega');
+			}
+		}else{
+			push(@row_index,-1);
+			push(@col_index,-1);
+		} 
+	}
+	#handle different blocks
+	#if block_number changes AND the new number is nonzero then we have the 0,0 index of a new block
+	#loop here to reset indices so that start at 0 for each block
+	if ($check_sigma_posdef){
+		my $prev_block_number=0;
+		my $offset=0;
+		my $index=0;
+		for (my $i=0; $i< $dim; $i++){
+			if ($param->[$i] eq 'sigma'){
+				if ($block_number->[$i] > 0){
+					if ($block_number->[$i] == $prev_block_number){
+						#add to existing block, keep same offset
+						if (($row_index[$i]-$offset+1) > $sigma_hashes[$index]->{'size'}){
+							$sigma_hashes[$index]->{'size'} = ($row_index[$i]-$offset+1);
+						}
+						if ($row_index[$i] != $col_index[$i]){
+							$sigma_hashes[$index]->{'offdiag'}=1;
+						}
+					}else{
+						push(@sigma_hashes,{});
+						$index = scalar(@sigma_hashes)-1;
+						#new block, change offset
+						$offset = $row_index[$i];
+						$sigma_hashes[$index]->{'block_number'}=$block_number->[$i];
+						$sigma_hashes[$index]->{'offset'}=$offset;
+						$sigma_hashes[$index]->{'offdiag'}=0;
+						$sigma_hashes[$index]->{'size'}=1;
+					}
+					$row_index[$i] = $row_index[$i] -$offset;
+					$col_index[$i] = $col_index[$i] -$offset;
+				}else{
+					$offset=0; #unnecessary?
+				}
+				$prev_block_number=$block_number->[$i];
+			}
+		}
+	}
+	if ($check_omega_posdef){
+		my $prev_block_number=0;
+		my $offset=0;
+		my $index=0;
+		for (my $i=0; $i< $dim; $i++){
+			if ($param->[$i] eq 'omega'){
+				if ($block_number->[$i] > 0){
+					if ($block_number->[$i] == $prev_block_number){
+						#add to existing block, keep same offset
+						if (($row_index[$i]-$offset+1) > $omega_hashes[$index]->{'size'}){
+							$omega_hashes[$index]->{'size'} = ($row_index[$i]-$offset+1);
+						}
+						if ($row_index[$i] != $col_index[$i]){
+							$omega_hashes[$index]->{'offdiag'}=1;
+						}
+					}else{
+						push(@omega_hashes,{});
+						$index = scalar(@omega_hashes)-1;
+						#new block, change offset
+						$offset = $row_index[$i];
+						$omega_hashes[$index]->{'block_number'}=$block_number->[$i];
+						$omega_hashes[$index]->{'offset'}=$offset;
+						$omega_hashes[$index]->{'offdiag'}=0;
+						$omega_hashes[$index]->{'size'}=1;
+					}
+					$row_index[$i] = $row_index[$i] -$offset;
+					$col_index[$i] = $col_index[$i] -$offset;
+				}else{
+					$offset=0; #unnecessary?
+				}
+				$prev_block_number=$block_number->[$i];
+			}
+		}
+	}
+
+
 	my @samples_array=();
 	my $counter=0;
 
@@ -673,7 +799,67 @@ sub sample_multivariate_normal
 				}
 			}
 			next unless $accept;
-			#my $xvec = $mu->new_from_rows( [[0.006,1,0.5,0.4,0.1]] );
+			if ($check_sigma_posdef){
+				foreach my $ref (@sigma_hashes){
+					next unless ($ref->{'offdiag'}==1);
+					my $size = $ref->{'size'};
+					my $mat = [];
+					for (my $k=0; $k< $size; $k++){
+						push(@{$mat},[(0) x $size]);
+					}
+					my $num = $ref->{'block_number'};
+					for (my $i=0; $i< $dim; $i++){
+						if (($param->[$i] eq 'sigma') and ($block_number->[$i] == $num)){
+							my $row=$row_index[$i];
+							my $col=$col_index[$i];
+							$mat->[$row]->[$col]=$xvec->[$i];
+							$mat->[$col]->[$row]=$xvec->[$i];
+						}
+					}
+					#if get numerical error on cholesky then do not accept
+					my $err = linear_algebra::cholesky($mat);
+					if ($err == 1){
+						$accept = 0;
+						last;
+					}
+				}
+			}
+			next unless $accept;
+			if ($check_omega_posdef){
+				foreach my $ref (@omega_hashes){
+					next unless ($ref->{'offdiag'}==1);
+#					foreach my $key(keys %{$ref}){
+#						print "$key ".$ref->{$key}."\n";
+#					}
+					my $size = $ref->{'size'};
+					my $mat = [];
+					for (my $k=0; $k< $size; $k++){
+						push(@{$mat},[(0) x $size]);
+					}
+					my $num = $ref->{'block_number'};
+					for (my $i=0; $i< $dim; $i++){
+						if (($param->[$i] eq 'omega') and ($block_number->[$i] == $num)){
+							my $row=$row_index[$i];
+							my $col=$col_index[$i];
+							$mat->[$row]->[$col]=$xvec->[$i];
+							$mat->[$col]->[$row]=$xvec->[$i];
+						}
+					}
+#					for (my $i=0; $i< $size; $i++){
+#						print join(' ',@{$mat->[$i]})."\n";
+#					}
+					#if get numerical error on cholesky then do not accept
+					my $err = linear_algebra::cholesky($mat);
+					if ($err == 1){
+						$accept = 0;
+#						print "cholesky skip\n";
+						last;
+					}else{
+#						print "cholesky accept\n";
+					}
+				}
+			}
+			next unless $accept;
 			push(@samples_array,$xvec);
 			$counter++;
 			last if ($counter == $samples);

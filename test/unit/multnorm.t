@@ -2,7 +2,7 @@
 
 use strict;
 use warnings;
-use Test::More tests => 127;
+use Test::More tests => 134;
 #use Test::More;
 use Test::Exception;
 use lib ".."; #location of includes.pm
@@ -92,6 +92,9 @@ my $gotsamples = tool::sir::sample_multivariate_normal(samples=>$nsamples,
 													   covmatrix => $covar,
 													   lower_bound => $hash->{'lower_bounds'},
 													   upper_bound => $hash->{'upper_bounds'},
+													   param => $hash->{'param'},
+													   coords => $hash->{'filtered_coords'},
+													   block_number => $hash->{'block_number'},
 													   mu => $mu
 	);
 
@@ -279,6 +282,12 @@ cmp_ok($hash->{'upper_bounds'}->[5],'==',1000000,' upper bound OM 1,1');
 cmp_ok($hash->{'upper_bounds'}->[6],'==',1000000,' upper bound OM 2,2');
 cmp_ok($hash->{'upper_bounds'}->[7],'==',1000000,' upper bound OM 3,3');
 
+cmp_ok($hash->{'filtered_coords'}->[3],'eq','4',' coord theta 4');
+cmp_ok($hash->{'filtered_coords'}->[4],'eq','5',' coord theta 5');
+cmp_ok($hash->{'filtered_coords'}->[5],'eq','1,1',' coord OM 1,1');
+cmp_ok($hash->{'filtered_coords'}->[6],'eq','2,2',' coord OM 2,2');
+cmp_ok($hash->{'filtered_coords'}->[7],'eq','3,3',' coord OM 3,3');
+
 $mu = $mat->new_from_rows( [$params] );
 
 #print $mu;
@@ -314,6 +323,42 @@ cmp_ok($covar->[6]->[5],'==',eval(2*7.25938E-03),'inflated covar element 7,6');
 cmp_ok($covar->[7]->[7],'==',eval(2*1.69362E-03),'inflated covar element 8,8');
 cmp_ok($covar->[6]->[3],'==',eval(2*2.75131E-03),'inflated covar element 7,4');
 cmp_ok($covar->[4]->[6],'==',eval(2*-3.05686E-04),'inflated covar element 5,7');
+
+
+$dir ="$Bin/../test_files/";
+#$dir='temp/';
+$file='mox_sir_block2.lst';
+$output= output -> new (filename => $dir.$file);
+
+$hash = tool::sir::get_nonmem_parameters(output => $output);
+
+$params = $hash->{'filtered_values'};
+
+#cmp_ok($hash->{'filtered_values'}->[0],'==',3.28661E+01,' theta 1');
+
+$mu = $mat->new_from_rows( [$params] );
+
+#print $mu;
+$covar = tool::sir::get_nonmem_covmatrix(output => $output);
+
+cmp_ok($covar->[7]->[6],'==',eval(3.36412E-02),'covar element 8,7');
+cmp_ok($covar->[8]->[7],'==',eval(2.52026E-03),'covar element 9,8');
+
+
+$nsamples=3;
+
+#random_set_seed_from_phrase("hej pa dig");
+my $gotsamples = tool::sir::sample_multivariate_normal(samples=>$nsamples,
+													   covmatrix => $covar,
+													   lower_bound => $hash->{'lower_bounds'},
+													   upper_bound => $hash->{'upper_bounds'},
+													   param => $hash->{'param'},
+													   coords => $hash->{'filtered_coords'},
+													   block_number => $hash->{'block_number'},
+													   mu => $mu
+	);
+
+
 
 
 done_testing();

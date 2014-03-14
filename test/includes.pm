@@ -77,6 +77,7 @@ our $sumo = $path.'sumo'.$version;
 our $update_inits = $path.'update_inits'.$version;
 our $vpc = $path.'vpc'.$version;
 our $xv_scm = $path.'xv_scm'.$version;
+our $sir = $path.'sir'.$version;
 
 
 #uncomment for MAC, doris, n41, (5.10.0, 5.8.8, 5.10.1)
