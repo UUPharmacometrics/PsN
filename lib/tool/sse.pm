@@ -2219,12 +2219,12 @@ sub compute_rmse
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 use_runs => { isa => 'ArrayRef[Bool]', optional => 0 },
-		 column_index => { isa => 'Int', optional => 0 },
-		 start_row_index => { isa => 'Int', default => 0, optional => 1 },
-		 end_row_index => { isa => 'Int', optional => 1 },
-		 initial_values => { isa => 'ArrayRef', optional => 0 }
-	);
+							  use_runs => { isa => 'ArrayRef[Bool]', optional => 0 },
+							  column_index => { isa => 'Int', optional => 0 },
+							  start_row_index => { isa => 'Int', default => 0, optional => 1 },
+							  end_row_index => { isa => 'Int', optional => 1 },
+							  initial_values => { isa => 'ArrayRef', optional => 0 }
+		);
 	my @use_runs = defined $parm{'use_runs'} ? @{$parm{'use_runs'}} : ();
 	my $column_index = $parm{'column_index'};
 	my $start_row_index = $parm{'start_row_index'};
@@ -2233,51 +2233,51 @@ sub compute_rmse
 	my $rmse;
 	my $relative_rmse_percent;
 
-  #input is integers $column_index, $start_row_index, $end_row_index and ref of array floats @initial_values
-  #output is scalar $rmse_percent
+	#input is integers $column_index, $start_row_index, $end_row_index and ref of array floats @initial_values
+	#output is scalar $rmse_percent
 
-  unless( $end_row_index ){
-    $end_row_index = $#{$self -> raw_results};
-  }
-
-  croak("Bad row index input") if ($start_row_index > $end_row_index);
-  my $nrows = $end_row_index - $start_row_index +1;
-  if ($nrows < scalar(@initial_values)){
-      print "Warning: more reference values than samples\n";
-  }
-  if ($nrows > scalar(@initial_values)){
-      croak("the number of samples is larger than the number of set of simulation initial values\n");
-  }
-  my $row_count_relative = 0;
-  my $row_count_abs = 0;
-  my $sum_squared_errors=0;
-  my $sum_squared_relative_errors=0;
-  for (my $i=$start_row_index; $i<=$end_row_index; $i++){
-    if ($use_runs[$i-$start_row_index]){
-	if (defined $self->raw_results->[$i][$column_index]){
-	    $sum_squared_errors += ($self->raw_results->[$i][$column_index] - $initial_values[$i-$start_row_index])**2;
-	    $row_count_abs++;
-	    if ($initial_values[$i-$start_row_index] != 0){
-		$row_count_relative++;
-		$sum_squared_relative_errors += 
-		    (($self->raw_results->[$i][$column_index] - $initial_values[$i-$start_row_index])/$initial_values[$i-$start_row_index])**2;
-	    }
+	unless( $end_row_index ){
+		$end_row_index = $#{$self -> raw_results};
 	}
-    }
-  }
 
-  #$rmse abs
-  if ($row_count_abs == 0){
-      $rmse='NA';
-  }else{
-      $rmse = sqrt($sum_squared_errors/$row_count_abs);
-  }
-  #$relative_rmse
-  if ($row_count_relative == 0){
-    $relative_rmse_percent='NA';
-  }else{
-    $relative_rmse_percent= 100*sqrt($sum_squared_relative_errors/$row_count_relative);
-  }
+	croak("Bad row index input") if ($start_row_index > $end_row_index);
+	my $nrows = $end_row_index - $start_row_index +1;
+	if ($nrows < scalar(@initial_values)){
+		print "Warning: more reference values than samples\n";
+	}
+	if ($nrows > scalar(@initial_values)){
+		croak("the number of samples is larger than the number of set of simulation initial values\n");
+	}
+	my $row_count_relative = 0;
+	my $row_count_abs = 0;
+	my $sum_squared_errors=0;
+	my $sum_squared_relative_errors=0;
+	for (my $i=$start_row_index; $i<=$end_row_index; $i++){
+		if ($use_runs[$i-$start_row_index]){
+			if (defined $self->raw_results->[$i][$column_index]){
+				$sum_squared_errors += ($self->raw_results->[$i][$column_index] - $initial_values[$i-$start_row_index])**2;
+				$row_count_abs++;
+				if ($initial_values[$i-$start_row_index] != 0){
+					$row_count_relative++;
+					$sum_squared_relative_errors += 
+						(($self->raw_results->[$i][$column_index] - $initial_values[$i-$start_row_index])/$initial_values[$i-$start_row_index])**2;
+				}
+			}
+		}
+	}
+
+	#$rmse abs
+	if ($row_count_abs == 0){
+		$rmse='NA';
+	}else{
+		$rmse = sqrt($sum_squared_errors/$row_count_abs);
+	}
+	#$relative_rmse
+	if ($row_count_relative == 0){
+		$relative_rmse_percent='NA';
+	}else{
+		$relative_rmse_percent= 100*sqrt($sum_squared_relative_errors/$row_count_relative);
+	}
 
 	return $rmse ,$relative_rmse_percent;
 }
@@ -2403,11 +2403,11 @@ sub skewness_and_kurtosis
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 use_runs => { isa => 'ArrayRef[Bool]', optional => 0 },
-		 column_index => { isa => 'Int', optional => 0 },
-		 start_row_index => { isa => 'Int', default => 0, optional => 1 },
-		 end_row_index => { isa => 'Int', optional => 1 }
-	);
+							  use_runs => { isa => 'ArrayRef[Bool]', optional => 0 },
+							  column_index => { isa => 'Int', optional => 0 },
+							  start_row_index => { isa => 'Int', default => 0, optional => 1 },
+							  end_row_index => { isa => 'Int', optional => 1 }
+		);
 	my @use_runs = defined $parm{'use_runs'} ? @{$parm{'use_runs'}} : ();
 	my $column_index = $parm{'column_index'};
 	my $start_row_index = $parm{'start_row_index'};
@@ -2418,60 +2418,64 @@ sub skewness_and_kurtosis
 	my $stdev;
 	my $warn = 0;
 
-  #input is integers $column_index, $start_row_index, $end_row_index 
-  
-  unless( $end_row_index ){
-    $end_row_index = $#{$self -> raw_results};
-  }
+	#input is integers $column_index, $start_row_index, $end_row_index 
+	
+	unless( $end_row_index ){
+		$end_row_index = $#{$self -> raw_results};
+	}
 
-  croak("Bad row index input") if ($start_row_index >= $end_row_index);
+	croak("Bad row index input") if ($start_row_index >= $end_row_index);
 
-  my $row_count = 0;
-  my $sum_values=0;
-  for (my $i=$start_row_index; $i<=$end_row_index; $i++){
-    if ($use_runs[$i-$start_row_index]){
-      if (defined $self->raw_results->[$i][$column_index]){
-	$sum_values += $self->raw_results->[$i][$column_index];
-	$row_count++;
-      }else{
-	$warn=$i-$start_row_index+1;
-      }
-    }
-  }
+	my $row_count = 0;
+	my $sum_values=0;
+	for (my $i=$start_row_index; $i<=$end_row_index; $i++){
+		if ($use_runs[$i-$start_row_index]){
+			if (defined $self->raw_results->[$i][$column_index]){
+				$sum_values += $self->raw_results->[$i][$column_index];
+				$row_count++;
+			}else{
+				$warn=$i-$start_row_index+1;
+			}
+		}
+	}
 
-  if ($row_count < 2){
-    $stdev='NA';
-    $skewness='NA';
-    $kurtosis='NA';
-    return;
-  }
+	if ($row_count < 2){
+		$stdev='NA';
+		$skewness='NA';
+		$kurtosis='NA';
+		return;
+	}
 
-  $mean=$sum_values/$row_count;
+	$mean=$sum_values/$row_count;
 
-  my $error=0;
-  my $sum_errors_pow2=0;
-  my $sum_errors_pow3=0;
-  my $sum_errors_pow4=0;
+	my $error=0;
+	my $sum_errors_pow2=0;
+	my $sum_errors_pow3=0;
+	my $sum_errors_pow4=0;
 
-  for (my $i=$start_row_index; $i<=$end_row_index; $i++){
-    if (defined $self->raw_results->[$i][$column_index]){
-      $error = ($self->raw_results->[$i][$column_index] - $mean);
-      $sum_errors_pow2 += $error**2;
-      $sum_errors_pow3 += $error**3;
-      $sum_errors_pow4 += $error**4;
-    }
-  }
+	for (my $i=$start_row_index; $i<=$end_row_index; $i++){
+		if (defined $self->raw_results->[$i][$column_index]){
+			$error = ($self->raw_results->[$i][$column_index] - $mean);
+			$sum_errors_pow2 += $error**2;
+			$sum_errors_pow3 += $error**3;
+			$sum_errors_pow4 += $error**4;
+		}
+	}
 
-  ## TODO fråga om missing values. och om SD
+	## TODO fråga om missing values. och om SD
 
-  $stdev=0;
-  unless( $sum_errors_pow2 == 0 ){
+	$stdev=0;
+	unless( $sum_errors_pow2 == 0 ){
 
-    $stdev= sqrt ($sum_errors_pow2/($row_count-1));
-    $skewness = $sum_errors_pow3/($row_count*($stdev**3));
-    $kurtosis = -3 + $sum_errors_pow4/($row_count*($stdev**4));
-
-  }
+		$stdev= sqrt ($sum_errors_pow2/($row_count-1));
+		if ($row_count > 2){
+			$skewness = ($sum_errors_pow3*row_count)/(($row_count-1)*($row_count-2)*($stdev**3));
+		}
+		if ($row_count > 3){
+			$kurtosis = -3*(($row_count-1)**2)/(($row_count-2)*($row_count-3)) + 
+				($sum_errors_pow4*$row_count*($row_count+1))/(($row_count-1)*($row_count-2)*($row_count-3)*($stdev**4));
+		}
+	}
 
 	return $skewness ,$kurtosis ,$mean ,$stdev ,$warn;
 }

@@ -19,7 +19,7 @@ PsN::set_nonmem_info('default');
 our $nm_version = $PsN::nm_major_version * 100 + $PsN::nm_minor_version * 10;
 
 our $dir = 'sse_test';
-our $private_test_files = $ENV{HOME}.'/.test_files';
+#our $private_test_files = $ENV{HOME}.'/.test_files';
 #our $private_test_files = '../private_test_files'; #keep this comment for easy creation of test_package
 
 sub is_array{
@@ -36,15 +36,7 @@ sub is_array{
 		if ($facit->[$i] eq 'NA'){
 			cmp_ok($func->[$i],'eq',$facit->[$i],"$label, index $i");
 		}else{
-			if ($nm_version >= 730) {
-				my $left=substr(sprintf("%.3e",$func->[$i]), 0, -1);
-				my $right=substr(sprintf("%.3e",$facit->[$i]), 0, -1);				
-				cmp_ok($left,'==',$right,"$label, index $i");
-			} else {
-				my $left=substr(sprintf("%.9e",$func->[$i]), 0, -1);
-				my $right=substr(sprintf("%.9e",$facit->[$i]), 0, -1);				
-				cmp_ok($left,'==',$right,"$label, index $i");
-			}
+			cmp_ok($func->[$i],'==',$facit->[$i],"$label, index $i");
 		}
     }		
 	
@@ -52,51 +44,52 @@ sub is_array{
 
 sub get_stats
 {
-  open my $fh, "<", "$dir/sse_results.csv";
+	my $filename = shift;
+	open my $fh, "<", "$filename";
 
-  my @arr = <$fh>;
-  close $fh;
+	my @arr = <$fh>;
+	close $fh;
 
-  my %hash1;
-  my %hash2;
-  my $model_num=0;
-  foreach my $line (@arr){
-      chomp $line;
-      if ($line =~ /mean/){
-	  $model_num++;
-      }
-      if ($model_num > 0){
-	  my @row=();
-	  my @fields = split(',',$line);
-	  my $name;
-	  foreach my $fi (@fields){
-	      $fi =~ s/"//g;
-	      $fi =~ s/\s//g;
-	      next if (length($fi)<1);
-	      if (not defined $name){
-		  $name = $fi;
-	      }else{
-		  if ($model_num==1){
-		      push(@{$hash1{$name}},$fi);
-		  }elsif ($model_num==2){
-		      push(@{$hash2{$name}},$fi);
-		  }
-	      }
-	  }
-      }
-  }
+	my %hash1;
+	my %hash2;
+	my $model_num=0;
+	foreach my $line (@arr){
+		chomp $line;
+		if ($line =~ /mean/){
+			$model_num++;
+		}
+		if ($model_num > 0){
+			my @row=();
+			my @fields = split(',',$line);
+			my $name;
+			foreach my $fi (@fields){
+				$fi =~ s/"//g;
+				$fi =~ s/\s//g;
+				next if (length($fi)<1);
+				if (not defined $name){
+					$name = $fi;
+				}else{
+					if ($model_num==1){
+						push(@{$hash1{$name}},$fi);
+					}elsif ($model_num==2){
+						push(@{$hash2{$name}},$fi);
+					}
+				}
+			}
+		}
+	}
 
-  return \%hash1,\%hash2;
+	return \%hash1,\%hash2;
 }
 
 
 my %hash1_answer;
 
-$hash1_answer{'mean'}=[850.69721,0.0059,1.25481,0.47664,0.15605,0.04421];
-$hash1_answer{'median'}=[886.1627,0.00599,1.19442,0.33584,0.17555,0.03841];
-$hash1_answer{'sd'}=[70.36831,0.00115,0.25474,0.36767,0.04236,0.02370];
-$hash1_answer{'max'}=[893.11888,0.00759,1.59578,1.07335,0.20230,0.08439];
-$hash1_answer{'min'}=[727.19295,0.00442,0.93873,0.14183,0.09653,0.02306];
+$hash1_answer{'mean'}=[8.506972e+02,5.899348e-03,1.254811e+00,4.766418e-01,1.560518e-01,4.421124e-02];
+$hash1_answer{'median'}=[886.16269865,0.00599329,1.19442000,0.33583900,0.17555400,0.03840540];
+$hash1_answer{'sd'}=[70.36830837,0.00115304,0.25473677,0.36767435,0.04235623,0.02369889];
+$hash1_answer{'max'}=[893.11888212,0.00758713,1.59578000,1.07335000,0.20229900,0.08439290];
+$hash1_answer{'min'}=[7.27193e+02,4.42164e-03,9.38734e-01,1.41833e-01,9.65318e-02,2.30567e-02];
 $hash1_answer{'skewness'}=[-0.980355361852059,0.19174,0.12024,0.65768,-0.302196258427144,0.80208];
 $hash1_answer{'kurtosis'}=[-1.0460220774539,-1.53556034798459,-1.84345525268636,-1.44818697131046,-1.88568106779018,-1.20523729858608];
 $hash1_answer{'rmse'}=[0.00122,0.10101,0.32626,0.04596,0.01794];
@@ -139,12 +132,15 @@ my $model_dir = "../test_files";
 
 
 rmtree([ "./$dir" ]);
+my $resultsfile = 'sse_test/sse_results_recompute1.csv';
 
-my $command= $includes::sse." -samples=5 $model_dir/pheno.mod -alt=$model_dir/pheno.mod -seed=290805 -rawres=$model_dir/rawres_for_sse.csv  -directory=$dir -offset=1";
+chdir('sse_pheno');
+unlink($resultsfile);
+my $command= $includes::sse." -samples=5 pheno.mod  -recompute=sse_test/raw_results_pheno.csv";
 
 system $command;
 
-my ($h1,$h2)=get_stats();
+my ($h1,$h2)=get_stats($resultsfile);
 
 foreach my $key (keys %hash1_answer){
     is_array ($hash1_answer{$key},$h1->{$key},"sse sim model compare $key");
@@ -152,16 +148,18 @@ foreach my $key (keys %hash1_answer){
 foreach my $key (keys %hash2_answer){
     is_array ($hash2_answer{$key},$h2->{$key},"sse alt model compare $key");
 }
+unlink($resultsfile);
+chdir('..');
 
+#rmtree([ "./$dir" ]);
 
-
-rmtree([ "./$dir" ]);
-
-$command= $includes::sse." -samples=5 $private_test_files/moxonidine.mod -alt=$private_test_files/moxonidine.mod -seed=630992 -directory=$dir";
+chdir('sse_mox');
+unlink($resultsfile);
+$command= $includes::sse." -samples=5 moxonidine.mod -recompute=sse_test/raw_results_moxonidine.csv";
 
 system $command;
 
-($h1,$h2)=get_stats();
+($h1,$h2)=get_stats($resultsfile);
 
 
 foreach my $key (keys %hashmox_answer){
@@ -170,9 +168,9 @@ foreach my $key (keys %hashmox_answer){
 foreach my $key (keys %hashmox_answer){
     is_array ($hashmox_answer{$key},$h2->{$key},"sse alt model compare $key");
 }
-
-
-rmtree([ "./$dir" ]);
+unlink($resultsfile);
+chdir('..');
+#rmtree([ "./$dir" ]);
 
 my $tndir='tndir';
 mkdir($tndir);
@@ -190,7 +188,7 @@ if ($nm_version >= 730) {
 }
 chdir($tndir);
 
-$command= $includes::sse." -samples=3 $mod -seed=630992 -directory=$dir";
+my $command= $includes::sse." -samples=3 $mod -seed=630992 -directory=$dir";
 print "Running $command\n";
 my $rc = system($command);
 $rc = $rc >> 8;
