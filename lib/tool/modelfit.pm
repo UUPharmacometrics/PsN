@@ -10,7 +10,6 @@ use File::Glob;
 use FindBin qw($Bin);
 use Storable;
 use Math::Random;
-use nonmem;
 use nonmemrun;
 use nonmemrun::localunix;
 use nonmemrun::localwindows;
