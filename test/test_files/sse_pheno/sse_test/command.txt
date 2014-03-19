@@ -1,0 +1,1 @@
+/home/kajsa/kod-psn/PsN4/bin/sse -samples=5 pheno.mod -alt=pheno.mod -seed=290805 -rawres=rawres_for_sse.csv -dir=sse_test -offset=1
