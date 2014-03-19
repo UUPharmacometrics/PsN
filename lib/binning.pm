@@ -997,10 +997,11 @@ sub gaussFilter
 		$N += $_;
 	}
 
-	# Optimal sigma for Gauss kernel under some assumptions of the distribution
+	# Optimal h for Gauss kernel under some assumptions of the distribution
 	# of the data points. 
 	# See report for more details.
-	my $sigma = $std * ($N ** -0.2);
+
+	my $h = $std * ($N ** -0.2);
 
 	my @smoothedDensity;
 
@@ -1016,7 +1017,7 @@ sub gaussFilter
 		my $k = $mid;
 		my $cont = 1;
 		while ($cont && $k < scalar(@$mesh)) {
-			$gauss = exp( (($$mesh[$k] - $$idv[$i]) / $sigma)**2 * (-1/2)) / sqrt(2 * pi);
+			$gauss = exp( (($$mesh[$k] - $$idv[$i]) / $h)**2 * (-1/2)) / sqrt(2 * pi);
 			if ($gauss < 10**-12) {
 				$cont = 0;
 			} else {
@@ -1028,7 +1029,7 @@ sub gaussFilter
 		my $k = $mid - 1;
 		my $cont = 1;
 		while ($cont && $k >= 0) {
-			$gauss = exp( (($$mesh[$k] - $$idv[$i]) / $sigma)**2 * (-1/2)) / sqrt(2 * pi);
+			$gauss = exp( (($$mesh[$k] - $$idv[$i]) / $h)**2 * (-1/2)) / sqrt(2 * pi);
 			if ($gauss < 10**-12) {
 				$cont = 0;
 			} else {
@@ -1039,14 +1040,14 @@ sub gaussFilter
 
 		#Old simpler inner loop
 		#for (my $k = 0; $k < @$mesh; $k++) {
-		#		$smoothedDensity[$k] += $$density[$i] * exp( (($$mesh[$k] - $$idv[$i]) / $sigma)**2 * (-1/2)) / sqrt(2 * pi);
+		#		$smoothedDensity[$k] += $$density[$i] * exp( (($$mesh[$k] - $$idv[$i]) / $h)**2 * (-1/2)) / sqrt(2 * pi);
 		#	}	
 	}
 
 	# Normalize smoothed density so that the integral over it is 1.
 
 	foreach (@smoothedDensity) {
-		$_ /= ($sigma * $N);
+		$_ /= ($h * $N);
 	}
 
 	return \@smoothedDensity;
