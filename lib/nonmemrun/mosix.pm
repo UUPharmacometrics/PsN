@@ -1,4 +1,4 @@
-package nonmemrun::localunix;
+package nonmemrun::mosix;
 
 use include_modules;
 use POSIX ":sys_wait_h";
@@ -24,8 +24,19 @@ sub submit
 
 	my $pid = fork();
 	if ($pid == 0) {
-		exec($nmfe_command);
-		exit; # Die Here if exec failed. Probably happens very rarely.
+		$nmfe_command = 'mosenv -e ' . $nmfe_command;
+		if (-e "/proc/self/lock") {
+			open(my $fh, ">", "/proc/self/lock") || die "Could not unlock myself!\n";
+			print $fh "0";
+			close($fh);
+		}
+		system($nmfe_command);
+		if (-e "/proc/self/lock") {
+			open(my $fh, ">", "/proc/self/lock") || die "Could not lock myself!\n";
+			print $fh "1";
+			close($fh);
+		}
+		exit;
 	}
 
 	return $pid;

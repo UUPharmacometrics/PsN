@@ -8,7 +8,14 @@ use MooseX::Params::Validate;
 has 'nm_version' => ( is => 'rw', isa => 'Str', required => 1 );
 has 'full_path_nmtran' => ( is => 'rw', isa => 'Str' );
 has 'full_path_nmfe' => ( is => 'rw', isa => 'Str' );
-
+has 'email_address' => ( is => 'rw', isa => 'Maybe[Str]' );
+has 'send_email' => ( is => 'rw', isa => 'Maybe[Str]' );
+has 'nmfe_options' => ( is => 'rw', isa => 'Str' );
+has 'prepend_flags' => ( is => 'rw', isa => 'Maybe[Str]' );
+has 'max_runtime' => ( is => 'rw', isa => 'Maybe[Str]' );
+has 'parafile' => (is => 'rw', isa => 'Maybe[Str]' );
+has 'nodes' => ( is => 'rw', isa => 'Int', default => 0 );
+has 'model' => ( is => 'rw', isa => 'model' );
 
 sub BUILD
 {
@@ -17,6 +24,46 @@ sub BUILD
 	$self->nmfe_setup_paths(nm_version => $self->nm_version);
 }
 
+sub create_nmfe_command
+{
+	my $self = shift;
+
+	my $parastring = '';
+	if ($PsN::nm_major_version >= 7) {
+		$parastring .= '-background ';
+	}
+	if (defined $self->parafile) {
+		if ($PsN::nm_major_version >= 7 and $PsN::nm_minor_version >= 2) {
+			$parastring .= '"-parafile=' . $self->parafile . '"';
+		} else {
+			croak("Cannot use parafile with NM7.1 or earlier");
+		}
+		if ($self->nodes > 0) {
+			$parastring .= ' "[nodes]=' . $self->nodes . '"';
+		}
+	}
+	if (defined $self->nmfe_options) {
+		$parastring .= " " . $self->nmfe_options;
+	}
+
+	my $command = $self->full_path_nmfe . " psn.mod psn.lst " . $parastring;
+
+	return $command;
+}
+
+sub pre_compile_cleanup
+{
+	# leave cleaning to nmfe
+	unless ($PsN::nm_major_version == 7 and defined $PsN::nm_minor_version and $PsN::nm_minor_version > 1) {
+		unlink('FMSG', 'FLIB', 'FCON', 'FDATA', 'FREPORT', 'FSUBS', 'FSUBS.f', 'FSUBS.f90', 'FSUBS2', 'nmprd4p.mod');
+		unlink('fsubs', 'fsubs.f90');
+		unlink('LINK.LNK', 'FSTREAM', 'PRDERR', 'nonmem.exe', 'nonmem', 'FSUBS.for');
+		unlink('nonmem5', 'nonmem6', 'nonmem7', 'nonmem5_adaptive', 'nonmem6_adaptive', 'nonmem7_adaptive');
+		unlink('ifort.txt', 'g95.txt', 'gfortran.txt', 'gfcompile.bat', 'g95compile.bat');
+	}
+	unlink('psn.lst', 'nmfe_error', 'OUTPUT', 'output', 'job_submission_error');
+  unlink('lsf_stderr_stdout', 'lsf_jobscript');
+}
 sub nmfe_setup_paths
 {
 	my $self = shift;

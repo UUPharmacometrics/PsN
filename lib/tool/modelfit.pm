@@ -15,6 +15,12 @@ use nonmemrun;
 use nonmemrun::localunix;
 use nonmemrun::localwindows;
 use nonmemrun::slurm;
+use nonmemrun::torque;
+use nonmemrun::lsf;
+use nonmemrun::zink;
+use nonmemrun::sge;
+use nonmemrun::mosix;
+use nonmemrun::ud;
 use output;
 use OSspecific;
 use ui;
@@ -330,14 +336,14 @@ sub BUILD
 		$this->nonmem_options($this->nmqual_xml . ',' . $this->nmfe_options);
 	} elsif ($this->nmfe or $this->run_on_sge_nmfe) {
 		$this->nonmem_options($this->nmfe_options);
-		unless (defined $this->full_path_nmtran()) {
+		unless (defined $this->full_path_nmtran) {
 			$this->nmfe_setup(nm_version => $this->nm_version);
 		}
 	}
 
-	if( $this->run_on_lsf or $this->run_on_ud or $this->run_on_zink or
+	if ($this->run_on_lsf or $this->run_on_ud or $this->run_on_zink or
 		$this->run_on_torque or $this->run_on_slurm or $this->run_on_lsf_nmfe or
-		$this->run_on_sge_nmfe or $this->run_on_sge ) {
+		$this->run_on_sge_nmfe or $this->run_on_sge) {
 		$this->run_local(0);
 	} else {
 		$this->run_local(1);
@@ -546,16 +552,16 @@ sub run
 				my $prio_class = "NORMAL_PRIORITY_CLASS";
 
 				Win32::Process::Create(my $ProcessObj,
-									   eval($self->wintail_exe),
-									   eval($self->wintail_command),
-									   0,
-									   $prio_class,
-									   ".");
+					eval($self->wintail_exe),
+					eval($self->wintail_command),
+					0,
+					$prio_class,
+					".");
 			}
 
 			# Initiate queue_info entry (unless its a retry)
 
-			unless( exists $queue_info{$run} ) {
+			unless (exists $queue_info{$run}) {
 				#if stats-runs.csv exists then copy_model_and_input does not do anything
 				#but read psn.mod into candidate_model object
 				my $run_nmtran = 0;
@@ -573,7 +579,6 @@ sub run
 				$queue_info{$run}{'raw_results'} = [];
 				$queue_info{$run}{'raw_nonp_results'} = [];
 				$queue_info{$run}{'start_time'} = 0;
-				$queue_info{$run}{'send_email'} = 0;
 
 				# printing progress
 
@@ -583,34 +588,33 @@ sub run
 
 				my $modulus = (($#models+1) <= 10) ? 1 : (($#models+1) / 10);
 
-				if ($self->send_email()){
+				if ($self->send_email) {
 					my $mail_modulus = (($#models+1) <= 3) ? 1 : (($#models+1) / 5);
-					if ( $run == 0 ) {
-						$queue_info{$run}{'send_email'} = 2 ; #ALL
-					}elsif ( $run % $mail_modulus == 0 or $run == $#models ) {
-						$queue_info{$run}{'send_email'} = 1; #END
+					if ($run == 0) {
+						$queue_info{$run}{'send_email'} = 'ALL';
+					} elsif ($run % $mail_modulus == 0 or $run == $#models) {
+						$queue_info{$run}{'send_email'} = 'END';
 					}
 				}
 
-				if ( $run % $modulus == 0 or $run == 0 or $run == $#models ) {
+				if ($run % $modulus == 0 or $run == 0 or $run == $#models) {
 					#only slurm_submit uses email info right now
 					# The unless checks if tool owning the modelfit is
 					# running more modelfits, in wich case we should be
 					# silent to avoid confusion. The $done check is made do
 					# diffrentiate between allready run processes.
 
-					ui -> print( category => 'all', wrap => 0, newline => 0,
-								 message  => 'S:'.($run+1).' .. ' )
-						unless ( $self->parent_threads > 1 or $self->verbose );
+					ui -> print(category => 'all', wrap => 0, newline => 0, message  => 'S:'.($run+1).' .. ')
+						unless ($self->parent_threads > 1 or $self->verbose);
 				}
 				$started_all_models = 1 if ($run == $#models);
 
 			} else {
 				$self->stop_motion_call(tool => 'modelfit', message => "Did not have to copy model and input, this is a retry.")
-					if ($self->stop_motion() > 1);
+					if ($self->stop_motion > 1);
 			}
 
-			my %options_hash = %{$self -> _get_run_options(run_id => $run)}; 
+			my %options_hash = %{$self->_get_run_options(run_id => $run)}; 
 
 			$self -> run_nonmem(run_no => $run,
 								  nm_version      => $options_hash{'nm_version'},
@@ -649,16 +653,15 @@ sub run
 				sleep(1);
 			}
 
-			foreach my $check_pid( keys %queue_map ){
-				
-				if( $check_pid =~ /^rerun_/ ){
+			foreach my $check_pid (keys %queue_map) {
+				if ($check_pid =~ /^rerun_/) {
 					
 					# A pid that starts with "rerun" is a rerun and is always
 					# "finished".
 					
 					$pid = $check_pid;
 					last;
-				}elsif( $check_pid =~ /^fail_/ ){
+				} elsif ($check_pid =~ /^fail_/) {
 					
 					# A pid fail_ is a failed grid submit and is always
 					# "finished".
@@ -667,38 +670,14 @@ sub run
 					last;
 				}
 				
-				# Different environments have different ways of reporting
-				# job status. Here we check which environment we are in
-				# and act accordingly.
-
-				if ( $self->run_on_ud ) {
-					$pid = $self -> ud_monitor( jobId => $check_pid );
-					if ($pid) {
-						$self -> ud_retrieve( jobId => $check_pid, run_no => $queue_map{$check_pid} );
-					}
-				} elsif ( $self->run_on_sge ) {
-					$pid = $self -> sge_monitor( jobId => $check_pid );
-				} elsif ( $self->run_on_sge_nmfe ) {
-					$pid = $self -> sge_nmfe_monitor( jobId => $check_pid );
-				} elsif ( $self->run_on_zink ) {
-					$pid = $self -> zink_monitor( jobId => $check_pid );
-				} elsif ( $self->run_on_lsf ) {
-					$pid = $self -> lsf_monitor( jobId => $check_pid );
-				} elsif ( $self->run_on_lsf_nmfe ) {
-					$pid = $self -> lsf_nmfe_monitor( jobId => $check_pid );
-				} elsif ( $self->run_on_torque ) {
-					$pid = $self -> torque_monitor( jobId => $check_pid );
-				} else { # Everything available as nonmemrun objects
-					my $nonmemrun = $queue_info{$queue_map{$check_pid}}{'nonmemrun'};
-					$pid = $nonmemrun->monitor(check_pid => $check_pid);
-				}
+				# Check the job status
+				my $nonmemrun = $queue_info{$queue_map{$check_pid}}{'nonmemrun'};
+				$pid = $nonmemrun->monitor(jobId => $check_pid);
 
 				last if $pid; #we found a finished run, do not loop over more running pid
+			}
 
-			} #end loop over running pid
-
-
-			if( not $pid ){
+			if (not $pid) {
 
 				# No process has finished. 
 				# we cannot start another job
@@ -889,335 +868,208 @@ sub select_best_model
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 run_no => { isa => 'Int', optional => 1 },
-		 nm_version => { isa => 'Str', optional => 1 },
-		 queue_info => { isa => 'HashRef', optional => 0 }
+		run_no => { isa => 'Int', optional => 1 },
+		nm_version => { isa => 'Str', optional => 1 },
+		queue_info => { isa => 'HashRef', optional => 0 }
 	);
 	my $run_no = $parm{'run_no'};
 	my $nm_version = $parm{'nm_version'};
 	my %queue_info = defined $parm{'queue_info'} ? %{$parm{'queue_info'}} : ();
 
-  # -------------- Notes about Final model selection -----------------
-  
-  # Since we have reruns with pertubation and now also forced (or
-  # automatic) pertubation the final model is not equal to the
-  # original model. We consider three implicit subsets. Those that pass
-  # the picky test, those that don't pass the picky test but have ofv
-  # and, finally, those that doesn't produce an ofv. 
+	# -------------- Notes about Final model selection -----------------
+
+	# Since we have reruns with pertubation and now also forced (or
+	# automatic) pertubation the final model is not equal to the
+	# original model. We consider three implicit subsets. Those that pass
+	# the picky test, those that don't pass the picky test but have ofv
+	# and, finally, those that doesn't produce an ofv. 
 
 
-  #pass picky will only be defined if picky option is set in run
-  #The final model will be the one that passes picky,
-  # otherwise it will be the model that has the lowest ofv value,
-  # unless a model with minimization successful has an ofv where
-  # ofv_successful-accepted_ofv_difference is the lowest. 
-  # If two models are equal based on ofv with minimization-succcessful correction
-  # then significant digits will decide which is best.
-  # If no ofv value is produced it will be the basic model.
-      
-  # Get all runs that passed the picky test (if picky is used)
+	#pass picky will only be defined if picky option is set in run
+	#The final model will be the one that passes picky,
+	# otherwise it will be the model that has the lowest ofv value,
+	# unless a model with minimization successful has an ofv where
+	# ofv_successful-accepted_ofv_difference is the lowest. 
+	# If two models are equal based on ofv with minimization-succcessful correction
+	# then significant digits will decide which is best.
+	# If no ofv value is produced it will be the basic model.
 
-  my $queue_info_ref = $parm{'queue_info'};
-  my $run_results = $queue_info_ref -> {'run_results'};
-  my $model = $queue_info_ref -> {'model'};
-  my $candidate_model = $queue_info_ref -> {'candidate_model'};
-  if (-e 'stats-runs.csv'){
-    $self->stop_motion_call(tool=>'modelfit',message => "Have previously copied best model to psn.mod.")
-	if ($self->stop_motion()> 1);
-    if ( $run_results -> [0] -> {'failed'} ){
-      my @raw_row = [($run_no+1,'1','1','run failed: '.($run_results -> [0] -> {'failed'}))];
+	# Get all runs that passed the picky test (if picky is used)
+
+	my $queue_info_ref = $parm{'queue_info'};
+	my $run_results = $queue_info_ref -> {'run_results'};
+	my $model = $queue_info_ref -> {'model'};
+	my $candidate_model = $queue_info_ref -> {'candidate_model'};
+	if (-e 'stats-runs.csv'){
+		$self->stop_motion_call(tool=>'modelfit',message => "Have previously copied best model to psn.mod.")
+		if ($self->stop_motion()> 1);
+		if ( $run_results -> [0] -> {'failed'} ){
+			my @raw_row = [($run_no+1,'1','1','run failed: '.($run_results -> [0] -> {'failed'}))];
 			$self->raw_results([]) unless defined $self->raw_results;
-      push( @{$self->raw_results}, @raw_row );
-      push( @{$self->raw_nonp_results}, @raw_row ) if (defined $self->raw_nonp_results);
-    }else{
-      my @raw_results_rows = @{$queue_info_ref -> {'raw_results'} -> [0]};
+			push( @{$self->raw_results}, @raw_row );
+			push( @{$self->raw_nonp_results}, @raw_row ) if (defined $self->raw_nonp_results);
+		}else{
+			my @raw_results_rows = @{$queue_info_ref -> {'raw_results'} -> [0]};
 			foreach my $row ( @raw_results_rows ){
 				shift( @{$row} );
 				unshift( @{$row}, $run_no+1 );
 			}
 			$self->raw_results([]) unless defined $self->raw_results;
-      push( @{$self->raw_results}, @raw_results_rows );
-      push( @{$self->raw_nonp_results}, @{$queue_info_ref -> {'raw_nonp_results'} -> [0]} )
-				if (defined $self->raw_nonp_results and defined $queue_info_ref -> {'raw_nonp_results'} -> [0]);
-    }
+			push( @{$self->raw_results}, @raw_results_rows );
+			push( @{$self->raw_nonp_results}, @{$queue_info_ref -> {'raw_nonp_results'} -> [0]} )
+			if (defined $self->raw_nonp_results and defined $queue_info_ref -> {'raw_nonp_results'} -> [0]);
+		}
 
-  }else{
-    $self->stop_motion_call(tool=>'modelfit',message => "check which run was the best ")
-	if ($self->stop_motion()> 1);
-    
-    unless( defined $parm{'queue_info'} ){
-      # The queue_info must be defined here!
+	}else{
+		$self->stop_motion_call(tool=>'modelfit',message => "check which run was the best ")
+		if ($self->stop_motion()> 1);
+
+		unless( defined $parm{'queue_info'} ){
+			# The queue_info must be defined here!
 			croak("Internal run queue corrupt\n" );
 		}
 
-    my $selected;
-    my $best_significant_digits = 0;
-    my $best_passed_picky = 0;
-    my $best_successful = 0;
+		my $selected;
+		my $best_significant_digits = 0;
+		my $best_passed_picky = 0;
+		my $best_successful = 0;
 
-    my $have_any_ofv=0;
-    my $best_corrected_ofv=999999999;
-    my $best_actual_picky_ofv=999999999;
-    my $accepted_ofv_diff = $self->accepted_ofv_difference;
-    my $warning;
+		my $have_any_ofv=0;
+		my $best_corrected_ofv=999999999;
+		my $best_actual_picky_ofv=999999999;
+		my $accepted_ofv_diff = $self->accepted_ofv_difference;
+		my $warning;
 
-    for(my $i = 0; $i < scalar @{$run_results}; $i++ ){
-      if( defined( $run_results -> [$i] -> {'ofv'} )  ) {
-	$have_any_ofv=1;
-	if ($run_results->[$i]->{'minimization_successful'}){
-	  if (($run_results -> [$i] -> {'ofv'}-$accepted_ofv_diff) < $best_corrected_ofv){
-	    $best_corrected_ofv = ($run_results -> [$i] -> {'ofv'}-$accepted_ofv_diff);
-	  }
-	  if ( $run_results -> [$i] -> {'pass_picky'}
-	       and $run_results -> [$i] -> {'ofv'} < $best_actual_picky_ofv){
-	    $best_actual_picky_ofv = $run_results -> [$i] -> {'ofv'};
-	  } 
-	}else{
-	  if ($run_results -> [$i] -> {'ofv'} < $best_corrected_ofv){
-	    $best_corrected_ofv = $run_results -> [$i] -> {'ofv'};
-	  }
-	}
-      }
-    }
-    
-    for(my $i = 0; $i < scalar @{$run_results}; $i++ ){
-      if (defined($run_results->[$i]->{'ofv'})){
+		for(my $i = 0; $i < scalar @{$run_results}; $i++ ){
+			if( defined( $run_results -> [$i] -> {'ofv'} )  ) {
+				$have_any_ofv=1;
+				if ($run_results->[$i]->{'minimization_successful'}){
+					if (($run_results -> [$i] -> {'ofv'}-$accepted_ofv_diff) < $best_corrected_ofv){
+						$best_corrected_ofv = ($run_results -> [$i] -> {'ofv'}-$accepted_ofv_diff);
+					}
+					if ( $run_results -> [$i] -> {'pass_picky'}
+							and $run_results -> [$i] -> {'ofv'} < $best_actual_picky_ofv){
+						$best_actual_picky_ofv = $run_results -> [$i] -> {'ofv'};
+					} 
+				}else{
+					if ($run_results -> [$i] -> {'ofv'} < $best_corrected_ofv){
+						$best_corrected_ofv = $run_results -> [$i] -> {'ofv'};
+					}
+				}
+			}
+		}
+
+		for(my $i = 0; $i < scalar @{$run_results}; $i++ ){
+			if (defined($run_results->[$i]->{'ofv'})){
 				my $corrected = $run_results->[$i]->{'ofv'};
 				$corrected = ($run_results->[$i]->{'ofv'} - $accepted_ofv_diff) 
-					if ($run_results->[$i]->{'minimization_successful'});
+				if ($run_results->[$i]->{'minimization_successful'});
 
-	#picky always precedence, but might need to warn
-	if ( $run_results -> [$i] -> {'pass_picky'}){ 
-	  if (($run_results->[$i]->{'ofv'} <= $best_actual_picky_ofv)
-	      and (not $best_passed_picky)){
-	    #if more than 1 has best actual picky ofv then pick 1st of them
-	    $selected = ($i+1);
-	    $best_passed_picky = 1 ;
-	    $best_successful = 1 ;
-	    $best_significant_digits = $run_results -> [$i] -> {'significant_digits'};
-	    $warning = "Warning: Could be a local minimum\n" if ($corrected > $best_corrected_ofv)
-	  }
-	}elsif ($corrected <= $best_corrected_ofv and (not $best_passed_picky)){
-	  #never get here if pass picky
-	  if (defined $selected){
-	    #we have two equal corrected ofv
-	    if ( $run_results -> [$i] -> {'minimization_successful'} 
-					and ((not $best_successful) or
-						($best_successful and 
-						 ($best_significant_digits<$run_results->[$i]->{'significant_digits'})))){
-	      $selected = ($i+1);
-	      $best_passed_picky = 0;
-	      $best_successful = 1 ;
-	      $best_significant_digits = $run_results -> [$i] -> {'significant_digits'};
-	    }elsif ( (not $best_successful) and
-		     ($best_significant_digits<$run_results->[$i]->{'significant_digits'})){
-	      $selected = ($i+1);
-	      $best_passed_picky = 0 ;
-	      $best_successful = 0 ;
-	      $best_significant_digits = $run_results -> [$i] -> {'significant_digits'};
-	    }
-	  } else {
-	    $selected = ($i+1);
-	    $best_passed_picky = 0 ;
-	    if ( $run_results -> [$i] -> {'minimization_successful'}){
-	      $best_successful = 1 ;
-	    } else {
-	      $best_successful = 0 ;
-	    }
-	    $best_significant_digits = $run_results -> [$i] -> {'significant_digits'};
-	  }
-	}
-      }
-    }
+				#picky always precedence, but might need to warn
+				if ( $run_results -> [$i] -> {'pass_picky'}){ 
+					if (($run_results->[$i]->{'ofv'} <= $best_actual_picky_ofv)
+							and (not $best_passed_picky)){
+						#if more than 1 has best actual picky ofv then pick 1st of them
+						$selected = ($i+1);
+						$best_passed_picky = 1 ;
+						$best_successful = 1 ;
+						$best_significant_digits = $run_results -> [$i] -> {'significant_digits'};
+						$warning = "Warning: Could be a local minimum\n" if ($corrected > $best_corrected_ofv)
+					}
+				}elsif ($corrected <= $best_corrected_ofv and (not $best_passed_picky)){
+					#never get here if pass picky
+					if (defined $selected){
+						#we have two equal corrected ofv
+						if ( $run_results -> [$i] -> {'minimization_successful'} 
+								and ((not $best_successful) or
+								($best_successful and 
+									($best_significant_digits<$run_results->[$i]->{'significant_digits'})))){
+							$selected = ($i+1);
+							$best_passed_picky = 0;
+							$best_successful = 1 ;
+							$best_significant_digits = $run_results -> [$i] -> {'significant_digits'};
+						}elsif ( (not $best_successful) and
+							($best_significant_digits<$run_results->[$i]->{'significant_digits'})){
+							$selected = ($i+1);
+							$best_passed_picky = 0 ;
+							$best_successful = 0 ;
+							$best_significant_digits = $run_results -> [$i] -> {'significant_digits'};
+						}
+					} else {
+						$selected = ($i+1);
+						$best_passed_picky = 0 ;
+						if ( $run_results -> [$i] -> {'minimization_successful'}){
+							$best_successful = 1 ;
+						} else {
+							$best_successful = 0 ;
+						}
+						$best_significant_digits = $run_results -> [$i] -> {'significant_digits'};
+					}
+				}
+			}
+		}
 
-    $selected = defined $selected ? $selected : 1; #if none has defined ofv then select 1st
-    
-    open( STAT, '>stats-runs.csv' );
-    print STAT Dumper \@{$run_results};
-    print STAT "Selected $selected\n";
-    print STAT "$warning" if (defined $warning);
-    close( STAT );
+		$selected = defined $selected ? $selected : 1; #if none has defined ofv then select 1st
 
-    if ( $run_results -> [$selected-1] -> {'failed'} ){
-      my @raw_row = [($run_no+1,'1','1','run failed: '.($run_results -> [$selected-1] -> {'failed'}))];
+		open( STAT, '>stats-runs.csv' );
+		print STAT Dumper \@{$run_results};
+		print STAT "Selected $selected\n";
+		print STAT "$warning" if (defined $warning);
+		close( STAT );
+
+		if ( $run_results -> [$selected-1] -> {'failed'} ){
+			my @raw_row = [($run_no+1,'1','1','run failed: '.($run_results -> [$selected-1] -> {'failed'}))];
 			$self->raw_results([]) unless defined $self->raw_results;
-      push( @{$self->raw_results}, @raw_row );
-      push( @{$self->raw_nonp_results}, @raw_row ) if (defined $self->raw_nonp_results);
- 
-	  #partial cleaning
+			push( @{$self->raw_results}, @raw_row );
+			push( @{$self->raw_nonp_results}, @raw_row ) if (defined $self->raw_nonp_results);
 
-	  if ( $self->clean >= 1 and $PsN::warnings_enabled == 0 ) {
-		  unlink 'nonmem', 'nonmem5','nonmem6','nonmem7',
-		  'nonmem5_adaptive','nonmem6_adaptive','nonmem7_adaptive', 
-		  'nonmem.exe','nonmem_mpi.exe','nonmem_mpi','NONMEM_MPI.exe','FDATA', 'FREPORT', 'FSUBS', 'FSUBS.f','FSUBS.f90', 
-		  'FSUBS.for', 'LINK.LNK', 'FSTREAM', 'FCON.orig', 'FLIB', 'FCON','PRDERR',
-		  'nmprd4p.mod','nul',
-		  'fsubs','fsubs.f','fsubs.for','fsubs.f90','FSUBS2','FSUBS_MU.F90';
+			#partial cleaning
 
-		  unlink 'LINKC.LNK','compile.lnk','gfortran.txt','ifort.txt','garbage.out',
-		  'newline','nmexec.set','parafile.set','prcompile.set','prdefault.set',
-		  'prsame.set','psn.log','rundir.set','runpdir.set','temporaryfile.xml';
-		  unlink 'temp.out','trashfile.xxx','trskip.set','worker.set','xmloff.set';
-		  unlink 'prsizes.f90','licfile.set','background.set','FSIZES';
-		  #do not delete INTER, needed for saving data from crashed runs
+			if ( $self->clean >= 1 and $PsN::warnings_enabled == 0 ) {
+				unlink 'nonmem', 'nonmem5','nonmem6','nonmem7',
+				'nonmem5_adaptive','nonmem6_adaptive','nonmem7_adaptive', 
+				'nonmem.exe','nonmem_mpi.exe','nonmem_mpi','NONMEM_MPI.exe','FDATA', 'FREPORT', 'FSUBS', 'FSUBS.f','FSUBS.f90', 
+				'FSUBS.for', 'LINK.LNK', 'FSTREAM', 'FCON.orig', 'FLIB', 'FCON','PRDERR',
+				'nmprd4p.mod','nul',
+				'fsubs','fsubs.f','fsubs.for','fsubs.f90','FSUBS2','FSUBS_MU.F90';
 
-		  unlink( <worker*/*> );
-		  my @removedir = <worker*>;
-		  foreach my $remdir (@removedir){
-			  rmdir ($remdir) if (-d $remdir);
-		  }
+				unlink 'LINKC.LNK','compile.lnk','gfortran.txt','ifort.txt','garbage.out',
+				'newline','nmexec.set','parafile.set','prcompile.set','prdefault.set',
+				'prsame.set','psn.log','rundir.set','runpdir.set','temporaryfile.xml';
+				unlink 'temp.out','trashfile.xxx','trskip.set','worker.set','xmloff.set';
+				unlink 'prsizes.f90','licfile.set','background.set','FSIZES';
+				#do not delete INTER, needed for saving data from crashed runs
 
-		  if( $self->clean >= 2 ){
-			  unlink( <temp_dir/*> );
-			  rmdir( 'temp_dir' );
-		  }
-	  }
-    }else{
-		my @raw_results_rows = @{$queue_info_ref -> {'raw_results'} -> [$selected-1]};
-		
-		foreach my $row ( @raw_results_rows ){
-			shift( @{$row} );
-			unshift( @{$row}, $run_no+1 );
-		}
-		
-		$self->raw_results([]) unless defined $self->raw_results;
-		push( @{$self->raw_results}, @raw_results_rows );
-		push( @{$self->raw_nonp_results}, @{$queue_info_ref -> {'raw_nonp_results'} -> [$selected-1]} )
+				unlink(<worker*/*>);
+				my @removedir = <worker*>;
+				foreach my $remdir (@removedir){
+					rmdir ($remdir) if (-d $remdir);
+				}
+
+				if( $self->clean >= 2 ) {
+					unlink( <temp_dir/*> );
+					rmdir( 'temp_dir' );
+				}
+			}
+		} else {
+			my @raw_results_rows = @{$queue_info_ref -> {'raw_results'} -> [$selected-1]};
+
+			foreach my $row ( @raw_results_rows ){
+				shift( @{$row} );
+				unshift( @{$row}, $run_no+1 );
+			}
+
+			$self->raw_results([]) unless defined $self->raw_results;
+			push( @{$self->raw_results}, @raw_results_rows );
+			push( @{$self->raw_nonp_results}, @{$queue_info_ref -> {'raw_nonp_results'} -> [$selected-1]} )
 			if (defined $self->raw_nonp_results and defined $queue_info_ref -> {'raw_nonp_results'} -> [$selected-1]);
-		
-		
-		$self -> copy_model_and_output( final_model   => $candidate_model,
-										model         => $model,
-										use_run       => $selected ? $selected : '' );
-		
-    }
 
-  }
 
-  if ( $self->nonparametric_etas and ( not -e 'np_etas.lst' or $self->rerun >=2 ) ) {
-    
-    # ---------------------  Create nonp eta model  -----------------------------
-    
-    # nonp eta model
-
-    if( not -e 'np_etas.lst' or $self->rerun >= 2 ){
-      
-      ui -> print( category => 'execute',
-		   message  => 'Creating NPETA model',newline => 1 );
-      
-      my $np_eta_mod = $candidate_model ->
-	  copy( filename    => $self->directory .
-		'NM_run'.($run_no+1).'/np_etas.mod',
-		target      => 'mem',
-		copy_data   => 0,
-		copy_output => 0);
-      
-
-      my $nprob = 0;
-      if ( defined $candidate_model->problems ) {
-				$nprob = scalar(@{$candidate_model->problems});
-      } else {
-				carp("No problems defined in candidate_model" );
-      }
-      # We should have an MSFO file here
-      for( my $i = 0; $i < $nprob; $i++ ) {
-				my @msfo_arr = @{$candidate_model ->  get_option_value( option_name  => 'MSFO',
-								record_name  => 'estimation',
-								record_index => 'all',
-								problem_index => $i)};
-				my $msfi;
-				while (not defined $msfi){
-					$msfi = pop(@msfo_arr);
-				}
-				$np_eta_mod -> set_records( problem_numbers => [($i+1)],
-						type            =>'msfi',
-						record_strings  => ["$msfi"]); 
-				$np_eta_mod -> set_records( problem_numbers => [($i+1)],
-						type           => 'nonparametric',
-						record_strings => [ 'ETAS UNCONDITIONAL '.
-						'MSFO=npmsfo'.($i+1) ] );
-			}
-			$np_eta_mod -> remove_option( record_name => 'estimation',
-					option_name => 'MSFO' );
-			$np_eta_mod -> remove_records( type => 'theta' );
-			$np_eta_mod -> remove_records( type => 'omega' );
-			$np_eta_mod -> remove_records( type => 'sigma' );
-			$np_eta_mod -> remove_records( type => 'table' );
-			my @nomegas = @{$candidate_model -> nomegas};
-
-			for( my $i = 0; $i <= $#nomegas; $i++ ) {
-				my $marg_str = 'ID';
-				for( my $j = 1; $j <= $nomegas[$i]; $j++ ) {
-					$marg_str = $marg_str.' ETA'.$j;
-				}
-				$marg_str = $marg_str.' FILE='.$model -> filename.'.nonp_etas'.
-					' NOAPPEND ONEHEADER NOPRINT FIRSTONLY';
-				$np_eta_mod -> add_records( problem_numbers => [($i+1)],
-						type            => 'table',
-						record_strings  => [ $marg_str ] );	  
-			}
-
-			$np_eta_mod -> set_maxeval_zero(print_warning => 0,need_ofv => 0,
-					niter_eonly => $self->niter_eonly,
-					last_est_complete => $self->last_est_complete);
-
-			$np_eta_mod -> _write;
-
-      # ----------------------  run nonp eta model  -------------------------------
-      
-      # run eta model
-
-      ui -> print( category => 'execute',
-		   message  => 'Running NPETA model',newline => 1 );
-      
-      my $nonmem_object = nonmem -> new(
-				adaptive => $self->adaptive,
-				modelfile => 'np_etas.mod',
-				version => $nm_version,
-				nice => $self->nice,
-				show_version => 0,
-				display_iterations => $self->display_iterations(),
-				parafile => $self->parafile(),
-				nodes => $self->nodes(),
-				nonmem_options => $self->nonmem_options()
-				);
-
-			if ($self->nmfe) {
-				unless ($nonmem_object -> run_with_nmfe())
-				{
-					croak($nonmem_object -> error_message );
-				}
-			}elsif ($self->nmqual){
-				unless ($nonmem_object -> run_with_nmqual())
-				{
-					croak($nonmem_object -> error_message );
-				}
-			} else {
-				$nonmem_object -> fsubs( $np_eta_mod -> subroutine_files );
-
-				unless( $nonmem_object -> compile() ){
-					croak("NONMEM compilation failed:\n" . $nonmem_object -> error_message );
-				}
-				if( $nonmem_object -> nmtran_message =~ /WARNING/s and $self->verbose ){
-					ui -> print(category => 'all',
-							message => "NONMEM Warning: " . $nonmem_object -> nmtran_message,
-							newline => 1);
-				}
-				$nonmem_object -> execute();
-			}
-      
-      foreach my $table_files( @{$np_eta_mod -> table_names} ){
-				foreach my $table_file( @{$table_files} ){
-					my $dir = $model -> directory;
-					cp( $table_file, $dir  );
-				}
-			}
-
-			unlink 'nonmem','nonmem_mpi' ,'nonmem6', 'nonmem5','nonmem.exe','nonmem_mpi.exe','NONMEM_MPI.exe','nonmem6_adaptive', 'nonmem5_adaptive';
-			unlink 'nonmem7', 'nonmem7_adaptive';
+			$self -> copy_model_and_output( final_model   => $candidate_model,
+				model         => $model,
+				use_run       => $selected ? $selected : '' );
 		}
-
-  }
+	}
 }
 
 sub get_retry_name
@@ -1637,540 +1489,6 @@ sub _get_run_options
 	return \%options_hash;
 }
 
-sub ud_submit
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		 model => { isa => 'model', optional => 0 }
-	);
-	my $model = $parm{'model'};
-	my $jobId = -1;
-
-  my $script;
-  unless( defined $PsN::config -> {'_'} -> {'ud_nonmem'} ){
-    if( $Config{osname} eq 'MSWin32' ) {
-      $script = 'nonmem.bat';
-    } else {
-      $script = 'nonmem.sh';
-    }
-  } else {
-    $script = $PsN::config -> {'_'} -> {'ud_nonmem'};
-  }
-  
-  if( system( "$script -s " . $model -> filename . "> nonmem_sh_stdout"  ) ){
-    croak("UD submit script failed, check that $script is in your PATH.\nSystem error message: $!" );
-  }
-  
-  open(JOBFILE, "JobId") or croak("Couldn't open UD grid JobId file for reading: $!" );
-  $jobId = <JOBFILE>;
-  close(JOBFILE);
-  
-	return $jobId;
-}
-
-sub ud_monitor
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		 jobId => { isa => 'Int', optional => 1 }
-	);
-	my $jobId = $parm{'jobId'};
-
-	#this cannot possible work, but leave it here if any user wants to use ud. 
-	# will be easy to fix this
-  my $script;
-  unless( defined $PsN::config -> {'_'} -> {'ud_nonmem'} ){
-    if( $Config{osname} eq 'MSWin32' ) {
-      $script = 'nonmem.bat';
-    } else {
-      $script = 'nonmem.sh';
-    }
-  } else {
-    $script = $PsN::config -> {'_'} -> {'ud_nonmem'};
-  }
-
-
-  my $stdout; # Variable to store output from "nonmem.bat"
-
-  my $response = `$script -l $jobId 2>&1`;
-
-  carp("$response" );
-  if( $response =~ /Job State:\s+Completed/ ){ # regexp to find finished jobs.
-      carp("Returning $jobId" );
-      return $jobId; # Return the jobId found.
-  }
-
-  return 0;
-}
-
-sub ud_retrieve
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		 jobId => { isa => 'Int', optional => 1 },
-		 run_no => { isa => 'Int', optional => 1 }
-	);
-	my $jobId = $parm{'jobId'};
-	my $run_no = $parm{'run_no'};
-
-  my $script;
-  unless( defined $PsN::config -> {'_'} -> {'ud_nonmem'} ){
-    if( $Config{osname} eq 'MSWin32' ) {
-      $script = 'nonmem.bat';
-    } else {
-      $script = 'nonmem.sh';
-    }
-  } else {
-    $script = $PsN::config -> {'_'} -> {'ud_nonmem'};
-  }
-
-  my $subDir = "NM_run".($run_no+1);
-  my ($tmp_dir, $file) = OSspecific::absolute_path( $self->directory . '/' .
-						    $subDir, '');
-  if( system("$script -b -c -d ".$tmp_dir." -r $jobId > nonmem_bat_stdout") ){
-    croak("UD submit script failed.\nSystem error message:$!" );
-  }
-  
-  if( $Config{osname} ne 'MSWin32' ){
-    cp($tmp_dir.'/psn.LST',$tmp_dir.'/psn.lst');
-    unlink($tmp_dir.'/psn.LST');
-  }
-}
-
-sub ud_retrieve2
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		 jobId => { isa => 'Int', optional => 1 }
-	);
-	my $jobId = $parm{'jobId'};
-}
-
-sub sge_submit
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		 model => { isa => 'model', optional => 1 },
-		 nm_version => { isa => 'Str', optional => 1 },
-		 queue_info => { isa => 'Ref', optional => 1 }
-	);
-	my $jobId = -1;
-	my $model = $parm{'model'};
-	my $nm_version = $parm{'nm_version'};
-	my $queue_info = $parm{'queue_info'};
-
-  my $fsubs = join( ',' , @{$model -> subroutine_files} );
-
-  my $execution = 1 + $self->nmfe + 2 * ($self->nmqual); 
-  # if nmfe is set, then sum will be 2, which means nmfe in nonmem.pm. If -nmqual is set sum will be 3 -> nmqual
-  my $jobname = $queue_info -> {'model'} -> filename;
-  $jobname = 'psn_'.$jobname if ($jobname =~ /^[0-9]/);
-  my $flags = ' -cwd -b y -N ';
-  if (defined $self->sge_prepend_flags()){
-    $flags = ' '.$self->sge_prepend_flags().$flags;
-  }
-  my $qsubstring = 'qsub '.$flags. 
-      $jobname.
-      ($self->sge_resource ? ' -l '.$self->sge_resource.' ' : ' ') .
-      ($self->sge_queue ? '-q '.$self->sge_queue.' ' : ' ') .
-      ($PsN::config -> {'_'} -> {'remote_perl'} ? ' ' . $PsN::config -> {'_'} -> {'remote_perl'} : ' perl ') . " -I" .
-      $PsN::lib_dir ."/../ " . 
-      $PsN::lib_dir . "/nonmem.pm" . 
-      " psn.mod psn.lst " . 
-      $self->nice . " ". 
-      $nm_version . " " .
-      1 . " " . # compilation
-      $execution . " " . # execution
-      $self->display_iterations() . ' ' .
-      $self->nonmem_options() . ' ' .
-      $self->parafile() . ' ' .
-      $self->nodes() . ' ' .
-      $fsubs . ' > JobId';
-  if( system( $qsubstring ) ){
-    croak("Grid submit failed.\nSystem error message: $!" );
-  }
-  
-  open(JOBFILE, "JobId") or croak("Couldn't open grid JobId file for reading: $!" );
-  while( <JOBFILE> ){
-    if( /Your job (\d+)/ ){
-      $jobId = $1;
-    }
-  }
-  close(JOBFILE);
-
-	return $jobId;
-}
-
-sub sge_nmfe_submit
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		 model => { isa => 'model', optional => 1 },
-		 nm_version => { isa => 'Str', optional => 1 },
-		 nodes => { isa => 'Int', default => 0, optional => 1 },
-		 queue_info => { isa => 'Ref', optional => 1 }
-	);
-	my $jobId = -1;
-	my $model = $parm{'model'};
-	my $nm_version = $parm{'nm_version'};
-	my $nodes = $parm{'nodes'};
-	my $queue_info = $parm{'queue_info'};
-
-  unless (defined $self->full_path_nmfe()){
-    $self->nmfe_setup(nm_version => $nm_version);
-  }
-  #edit nmfe7, add which file it is and nmfe_error
-
-  # clean up from old compile
-  unless ($PsN::nm_major_version == 7 
-	  and defined $PsN::nm_minor_version and $PsN::nm_minor_version >1){
-    unlink( 'FMSG','FLIB','FCON', 'FDATA', 'FREPORT','FSUBS', 'FSUBS.f','FSUBS.f90','FSUBS2','nmprd4p.mod');
-    unlink('fsubs','fsubs.f90');
-    unlink('LINK.LNK','FSTREAM', 'PRDERR', 'nonmem.exe', 'nonmem','FSUBS.for');
-    unlink('nonmem5', 'nonmem6', 'nonmem7','nonmem5_adaptive', 'nonmem6_adaptive','nonmem7_adaptive' );
-    unlink('ifort.txt','g95.txt','gfortran.txt','gfcompile.bat','g95compile.bat');
-  }
-  unlink('psn.lst','nmfe_error','OUTPUT','output','job_submission_error');
-
-  #only support nmfe here, not nmqual or PsN compile
-
-  my $jobname = $queue_info -> {'model'} -> filename;
-  $jobname = 'psn_'.$jobname if ($jobname =~ /^[0-9]/);
-  my $background = '-background';
-  $background = '' if ($PsN::nm_major_version == 6);
-
-  #cwd default in slurm
-  # -J jobname
-  #need to check translation for -b y
-
-  my $flags = ' -N '.$jobname.' -j y -cwd -b y';
-  if (defined $self->sge_prepend_flags()){
-    $flags = ' '.$self->sge_prepend_flags().$flags;
-  }
-  my $parastring = '';
-  unless ($self->parafile() eq 'none'){
-    $parastring = '"-parafile='.$self->parafile().'"';
-  }
-  if ($nodes > 0){
-    $parastring .= ' "[nodes]='.$nodes.'"';
-  }
-  my $switches = '';
-  unless ($self->nmfe_options() eq 'none') {
-    my @switches = split( /,/ ,$self->nmfe_options());
-    foreach my $sw (@switches) {
-      $switches .= ' -'.$sw;
-    }
-  }
-
-  my $submitstring = $flags. 
-      ($self->sge_resource ? ' -l '.$self->sge_resource.' ' : ' ') .
-      ($self->sge_queue ? '-q '.$self->sge_queue.' ' : ' ') .
-      $self->full_path_nmfe(). ' '.
-      " psn.mod psn.lst $background ".$parastring." ".$switches;
-
-  unless ($Config{osname} eq 'MSWin32' or $Config{osname} eq 'MSWin64'){
-      system('echo qsub '.$submitstring.' > qsubcommand');
-  }
-
-  my $outp = `qsub $submitstring`;
-  #write error to job_submission_error instead, let jobid be -1, and continue?
-  ($outp =~ /^Your job (\d+)/)
-      or croak("Grid submit failed.\nSystem error message: $outp" );
-  $jobId = $1;
-
-	return $jobId;
-}
-
-sub lsf_nmfe_submit
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		 model => { isa => 'model', optional => 1 },
-		 nm_version => { isa => 'Str', optional => 1 },
-		 nodes => { isa => 'Int', default => 0, optional => 1 },
-		 queue_info => { isa => 'Ref', optional => 1 }
-	);
-	my $jobId = -1;
-	my $model = $parm{'model'};
-	my $nm_version = $parm{'nm_version'};
-	my $nodes = $parm{'nodes'};
-	my $queue_info = $parm{'queue_info'};
-
-  unless (defined $self->full_path_nmfe()){
-    $self->nmfe_setup(nm_version => $nm_version);
-  }
-
-
-  # clean up from old compile
-  unless ($PsN::nm_major_version == 7 
-	  and defined $PsN::nm_minor_version and $PsN::nm_minor_version >1){
-    unlink( 'FMSG','FLIB','FCON', 'FDATA', 'FREPORT','FSUBS', 'FSUBS.f','FSUBS.f90','FSUBS2','nmprd4p.mod');
-    unlink('fsubs','fsubs.f90');
-    unlink('LINK.LNK','FSTREAM', 'PRDERR', 'nonmem.exe', 'nonmem','FSUBS.for');
-    unlink('nonmem5', 'nonmem6', 'nonmem7','nonmem5_adaptive', 'nonmem6_adaptive','nonmem7_adaptive' );
-    unlink('ifort.txt','g95.txt','gfortran.txt','gfcompile.bat','g95compile.bat');
-  }
-  unlink('psn.lst','nmfe_error','OUTPUT','output','job_submission_error');
-  unlink('lsf_stderr_stdout','lsf_jobscript');
-
-  #only support nmfe here, not nmqual or PsN compile
-
-  my $jobname = $queue_info -> {'model'} -> filename;
-  $jobname = 'psn_'.$jobname if ($jobname =~ /^[0-9]/);
-  $jobname = $self->lsf_job_name if (defined $self->lsf_job_name);
-  my $background = '-background';
-  $background = '' if ($PsN::nm_major_version == 6 or $PsN::nm_major_version == 5);
-
-  open( SUB, '>lsf_jobscript' );
-  print SUB ( "#BSUB -J $jobname\n" );
-  print SUB ( "#BSUB -e lsf_stderr_stdout\n" );
-  print SUB ( "#BSUB -o lsf_stderr_stdout\n" );
-  print SUB ( "#BSUB -q ".$self->lsf_queue."\n" ) 
-      if (defined $self->lsf_queue);
-  print SUB ( "#BSUB -P ".$self->lsf_project_name."\n" ) 
-      if (defined $self->lsf_project_name);
-  print SUB ( "#BSUB -c ".$self->lsf_ttl."\n" ) 
-      if (defined $self->lsf_ttl);
-  print SUB ( "#BSUB -R ".$self->lsf_resources."\n" ) 
-      if (defined $self->lsf_resources);
-
-  my $parastring = '';
-  unless ($self->parafile() eq 'none'){
-    $parastring = '"-parafile='.$self->parafile().'"';
-  }
-  if ($nodes > 0){
-    $parastring .= ' "[nodes]='.$nodes.'"';
-  }
-  my $switches='';
-  unless ($self->nmfe_options() eq 'none'){
-    my @switches = split( /,/ ,$self->nmfe_options());
-    foreach my $sw (@switches){
-      $switches .= ' -'.$sw;
-    }
-  }
-
-  print SUB ($self->full_path_nmfe().' '.
-	     " psn.mod psn.lst $background ".$parastring.' '.$switches."\n");
-  close (SUB);
-
-  my $submitstring = 'bsub '.$self->lsf_options().' < lsf_jobscript 2>&1'; 
-
-  my $lsf_out = `$submitstring`;
-  if ($lsf_out=~/Job \<(\d+)\> is submitted/) {
-    $jobId=$1;
-  } else{
-    open( ERR, '>job_submission_error' );
-    print ERR ('COMMAND: '.$submitstring."\n");
-    print ERR ('SYSTEM RESPONSE: '.$lsf_out."\n");
-    print ERR ("RESULT: bsub command was not successful, could not submit nmfe run\n");
-    close (ERR);
-    ui -> print( category => 'all', message  => $lsf_out,newline => 1 );
-    ui -> print( category => 'all', message  => "bsub command was not successful, could not submit nmfe run",newline => 1 );
-    #now jobId is -1, handled outside, setting job to failed and never running bjobs.
-  }
-
-  sleep($self->lsf_sleep()) if (defined $self->lsf_sleep());
-
-	return $jobId;
-}
-
-sub sge_monitor
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		 jobId => { isa => 'Int', optional => 1 }
-	);
-	my $jobId = $parm{'jobId'};
-
-	my $response = `qstat -j $jobId 2>&1`;
-	
-	if( $response =~ /Following jobs do not exist/ ){ # regexp to find finished jobs.
-		return $jobId;
-	}
-	
-	return 0;
-}
-
-sub sge_nmfe_monitor
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		 jobId => { isa => 'Int', optional => 1 }
-	);
-	my $jobId = $parm{'jobId'};
-
-  my $response = `qstat -j $jobId 2>&1`;
-
-  if($response =~ /Following jobs do not exist/ ){ # regexp to find finished jobs.
-      return $jobId;
-  }elsif($response =~ /^usage: qstat/ ){
-      return $jobId;
-  }
-
-  return 0;
-}
-
-sub lsf_nmfe_monitor
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		jobId => { isa => 'Int', optional => 1 }
-	);
-	my $jobId = $parm{'jobId'};
-
-	my $string = "bjobs $jobId 2>&1";
-	my $answer = `$string`;
-
-	# /m flag in regex:
-	#Treat string as multiple lines. That is, change "^" and "$" from matching 
-	#the start or end of the string to matching the start or end of any line 
-	#anywhere within the string. Skip /m when looking for DONE, unless using also
-	#line beginning
-
-	if (($answer=~/^$jobId /m) and ($answer=~/ DONE /)) {
-		return $jobId; # Return the jobId found.
-	}elsif (($answer=~/is not found/) or
-		($answer=~/illegal option/) or
-		($answer=~/Illegal job ID/) or
-		($answer=~/No unfinished job found/)){
-		ui -> print( category => 'all', message  => $answer,newline => 1 );
-		ui -> print( category => 'all', message  => "lsf run error, jobID $jobId not".
-			"recognized by system:",newline => 1 );
-		return $jobId; # Return the jobId so that do not get infinite loop, 
-		#let restart_needed detect and handle error (no psn.lst, no NMtran etc)
-	}else{
-		return 0; #try again later
-	}
-}
-
-sub slurm_submit
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		model => { isa => 'model', optional => 1 },
-		nm_version => { isa => 'Str', optional => 1 },
-		nodes => { isa => 'Int', default => 0, optional => 1 },
-		queue_info => { isa => 'Ref', optional => 1 }
-	);
-	my $jobId = -1;
-	my $model = $parm{'model'};
-	my $nm_version = $parm{'nm_version'};
-	my $nodes = $parm{'nodes'};
-	my $queue_info = $parm{'queue_info'};
-
-	if (not defined $self->full_path_nmfe()) {
-		$self->nmfe_setup(nm_version => $nm_version);
-	}
-	#edit nmfe7, add which file it is and nmfe_error
-
-	# clean up from old compile
-	unless ($PsN::nm_major_version == 7 and defined $PsN::nm_minor_version and $PsN::nm_minor_version > 1) {
-		unlink('FMSG','FLIB','FCON', 'FDATA', 'FREPORT','FSUBS', 'FSUBS.f','FSUBS.f90','FSUBS2','nmprd4p.mod');
-		unlink('fsubs','fsubs.f90');
-		unlink('LINK.LNK','FSTREAM', 'PRDERR', 'nonmem.exe', 'nonmem','FSUBS.for');
-		unlink('nonmem5', 'nonmem6', 'nonmem7','nonmem5_adaptive', 'nonmem6_adaptive','nonmem7_adaptive' );
-		unlink('ifort.txt','g95.txt','gfortran.txt','gfcompile.bat','g95compile.bat');
-	}
-	unlink('psn.lst','nmfe_error','OUTPUT','output','job_submission_error');
-
-	#only support nmfe here, not nmqual
-
-	my $jobname = $queue_info -> {'model'} -> filename;
-	$jobname = 'psn_' . $jobname if ($jobname =~ /^[0-9]/);
-	my $background = '-background';
-	$background = '' if ($PsN::nm_major_version == 6);
-
-	my $parastring = '';
-	unless ($self->parafile() eq 'none') {
-		$parastring = '"-parafile='.$self->parafile().'"';
-	}
-	if ($nodes > 0) {
-		$parastring .= ' "[nodes]='.$nodes.'"';
-	}
-	my $switches = '';
-	unless ($self->nmfe_options() eq 'none') {
-		my @switches = split( /,/ ,$self->nmfe_options());
-		foreach my $sw (@switches) {
-			$switches .= ' -'.$sw;
-		}
-	}
-
-	#cwd default in slurm
-	# -J jobname
-	#need to check translation for -b y
-
-	my $flags = ' -J '.$jobname;
-	$flags .= ' -o nmfe.output -e nmfe.output ';
-	if (defined $self->slurm_account()){
-		$flags .= ' -A '.$self->slurm_account() ;
-	} else {
-		if( $PsN::config -> {'default_options'} -> {'uppmax'}){
-			croak("slurm account must be defined on uppmax");
-		}
-	}
-	if (defined $self->max_runtime()){
-		#Acceptable time formats include #minutes", 
-		#minutes:seconds", #hours:minutes:seconds", #days-hours", 
-		#days-hours:minutes¡ and ´days-hours:minutes:seconds". 
-		unless (($self->max_runtime() =~ /^[0-9]+$/) or
-				($self->max_runtime() =~ /^[0-9]+\:[0-9]+\:[0-9]+$/) or
-				($self->max_runtime() =~ /^[0-9]+\-[0-9]+$/)){
-			croak("max_runtime must have format minutes, ".
-				  "hours:minutes:seconds, or days-hours");
-		}
-		$flags .= ' -t '.$self->max_runtime() ;
-	}
-	if (defined $self->slurm_partition()) {
-		$flags .= ' -p ' . $self->slurm_partition() ;
-	}
-	#at most 3GB RAM 
-	if( $PsN::config -> {'default_options'} -> {'uppmax'}) {
-		$flags .= ' -p core -n 1 '; #single core
-	}
-
-	if ($queue_info -> {'send_email'} and defined $self->email_address()) {
-		if ($queue_info -> {'send_email'}  == 2) {
-			$flags .= ' --mail-user='.$self->email_address().' --mail-type=ALL ';
-		} else {
-			$flags .= ' --mail-user='.$self->email_address().' --mail-type=END ';
-		}
-	}
-
-	#-t "hours:minutes:seconds", "days-hours"
-
-	#sbatch -J psn:pheno.mod -o nmfe.output -e nmfe.output -p core -n 1 -t 0:3:0 -A p2011021 /bubo/sw/apps/nonmem/nm_7.1.0_g_reg/run/nmfe7 pheno.mod pheno.lst -background
-
-	if (defined $self->slurm_prepend_flags()) {
-		$flags = ' ' . $self->slurm_prepend_flags() . $flags;
-	}
-	my $submitstring = $flags . ' ' . $self->full_path_nmfe() . ' ' .
-		" psn.mod psn.lst $background ".$parastring." ".$switches;
-
-	system('echo sbatch '.$submitstring.' "2>&1" > sbatchcommand');
-
-	for (my $i=0; $i<10; $i++) {
-		sleep(1); #wait to let other nodes sync files here?
-		my $outp = `sbatch $submitstring 2>&1`;
-		#write error to job_submission_error instead, set jobid to -1, and continue?
-		if ($outp =~ /Submitted batch job (\d+)/){
-			$jobId = $1;
-			last;
-		} elsif($outp =~ /Socket timed out/) {
-			#try again. jobId is -1 by initiation 
-			sleep(3);
-			next;
-		} else {
-			print "Slurm submit failed.\nSystem error message: $outp\nConsidering this model failed." ;
-			system('echo ' . $outp . '  > job_submission_error');
-			$jobId = -1;
-			last;
-		}	
-	}
-	system('echo sbatch '.$jobId.' "2>&1" > jobId');
-
-	return $jobId;
-}
-
 # FIXME: nmfe_setup is now moved to nonmemrun. Some methods here still uses this old version. It will be removed when the refactoring is done.
 sub nmfe_setup
 {
@@ -2277,219 +1595,6 @@ sub nmfe_setup
 			$nm_version."] according to psn.conf.";
     croak($mess);
   }
-}
-
-sub zink_submit
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		 model => { isa => 'model', optional => 1 },
-		 nm_version => { isa => 'Str', optional => 1 },
-		 queue_info => { isa => 'Ref', optional => 1 }
-	);
-	my $jobId = -1;
-	my $model = $parm{'model'};
-	my $nm_version = $parm{'nm_version'};
-	my $queue_info = $parm{'queue_info'};
-
-  require File::Temp;# qw/tempfile tempdir/;
-  require Sys::Hostname;
-  require LockFile::Simple;# qw/lock unlock trylock/;  # Non-standard module
-  
-  ###################################################################################################
-  ###### JobSpecification code and variables                                           ##############
-  ###################################################################################################
-
-  ## Specifies the top level directory of the Zink directory structure. Should be specified via psn.conf
-  my $ZinkDir = $PsN::config -> {'_'} -> {'zink_dir'};
-
-  ## Specify the queing directory/Job Specification drop zone. I suggest this is hardcoded and not specifiable in psn.conf.
-  my $ZinkJobDir =$ZinkDir."/ZinkJobs";
-  
-  ## $JobName: Name of job. Default could be model file name.
-  ## $JobPriority: Priority of job. Between 0-5 (0=low). Default should be 3.
-  ## $ExePath: Directory in which the run is to be executed.
-  ## $Command: String with command to be executed, e.g. "nmfe6 run1.mod run1.lst"
-  
-  my $host = Sys::Hostname::hostname();
-  my $fsubs = join( ',' , @{$model -> subroutine_files} );
-
-  my $execution = 1 + $self->nmfe + 2 * ($self->nmqual); 
-  # if nmfe is set, then sum will be 2, which means nmfe in nonmem.pm. If -nmqual is set sum will be 3 -> nmqual
-
-  my $command = ($PsN::config -> {'_'} -> {'remote_perl'} ? ' ' . $PsN::config -> {'_'} -> {'remote_perl'} : ' perl ') . " -I" .
-                 $PsN::lib_dir ."/../ " . 
-		 $PsN::lib_dir . "/nonmem.pm" . 
-		 " psn.mod psn.lst " . 
-		 $self->nice . " ". 
-		 $nm_version . " " .
-		 1 . " " . # compilation
-		 $execution . " " . # execution
-		 $self->display_iterations() . ' ' .
-		 $self->nonmem_options() . ' ' .
-		 $self->parafile() . ' ' .
-		 $self->nodes() . ' ' .
-		 $fsubs;
-
-  my $path = getcwd();
-  my $jobname = $queue_info -> {'model'} -> filename;
-  (my $FH,$jobId) = File::Temp::tempfile("$host-XXXXXXXXXXXXXXXXX",DIR => $ZinkJobDir,SUFFIX=>'.znk');
-  LockFile::Simple::lock $jobId;
-  print $FH "SUBMITHOST: $host\n";
-  print $FH "JOBNAME:  $jobname\n";
-  print $FH "PRIORITY: 3\n";
-  print $FH "EXEPATH: $path\n";
-  print $FH "COMMAND: $command\n";
-  close $FH;
-  LockFile::Simple::unlock $jobId;
-  $jobId = OSspecific::nopath($jobId);
-
-	return $jobId;
-}
-
-sub zink_monitor
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		 jobId => { isa => 'Int', optional => 1 }
-	);
-	my $jobId = $parm{'jobId'};
-
-  ## Specifies the top level directory of the Zink directory structure. Should be specified via psn.conf
-  my $ZinkDir = $PsN::config -> {'_'} -> {'zink_dir'};
-  
-  ## Specify the queing directory/Job Specification drop zone. I suggest this is hardcoded and not specifiable in psn.conf.
-  my $ZinkDoneDir =$ZinkDir."/ZinkDone";
-
-  if( -e "$ZinkDoneDir/$jobId" ){
-    return $jobId;
-  } else {
-    return 0;
-  }
-}
-
-sub lsf_monitor
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		jobId => { isa => 'Int', optional => 1 }
-	);
-	my $jobId = $parm{'jobId'};
-
-	my $string = "bjobs $jobId 2>&1";
-	my $stdout = `$string`;
-
-	# /m flag in regex:
-	#Treat string as multiple lines. That is, change "^" and "$" from matching 
-	#the start or end of the string to matching the start or end of any line 
-	#anywhere within the string. Skip /m when looking for DONE, unless using also
-	#jobID?
-
-	if ($stdout=~/DONE/m) {
-		return $jobId; # Return the jobId found.
-	} elsif (($stdout=~/is not found/) or
-		($stdout=~/illegal option/) or
-		($stdout=~/Illegal job ID/) or
-		($stdout=~/No unfinished job found/)){
-		ui -> print( category => 'all', message  => $stdout,newline => 1 );
-		ui -> print( category => 'all', message  => "lsf run error, jobID $jobId not recognized by system:",newline => 1 );
-		return $jobId; # Return the jobId so that do not get infinite loop, 
-		#let restart_needed detect and handle error (no psn.lst, no NMtran etc)
-	} else {
-		return 0;
-	}
-}
-
-sub torque_submit
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		 model => { isa => 'model', optional => 1 },
-		 nm_version => { isa => 'Str', optional => 1 },
-		 queue_info => { isa => 'Ref', optional => 1 }
-	);
-	my $jobId = -1;
-	my $model = $parm{'model'};
-	my $nm_version = $parm{'nm_version'};
-	my $queue_info = $parm{'queue_info'};
-
-  my $fsubs = join( ',' , @{$model -> subroutine_files} );
-
-  my $execution = 1 + $self->nmfe + 2 * ($self->nmqual); 
-  # if nmfe is set, then sum will be 2, which means nmfe in nonmem.pm. If -nmqual is set sum will be 3 -> nmqual
-
-  open(JOBSCRIPT, ">JobScript") or croak("Couldn't open Torque JobScript file for writing: $!" );
-  print JOBSCRIPT
-      "cd ".getcwd()."\n".
-		($PsN::config -> {'_'} -> {'remote_perl'} ? ' ' . $PsN::config -> {'_'} -> {'remote_perl'} : ' perl ') . " -I" .
-		$PsN::lib_dir ."/../ " . 
-		$PsN::lib_dir . "/nonmem.pm" . 
-		" psn.mod psn.lst " .
-		$self->nice . " ".
-		$nm_version . " " .
-		1 . " " . # compilation
-		$execution . " " . # execution
-		$self->display_iterations() . ' ' .
-		$self->nonmem_options() . ' ' .
-		$self->parafile().' ' .
-		$self->nodes() . ' ' .
-		$fsubs;
-  close(JOBSCRIPT);
-
-  my $jobname= "psn:" . $queue_info -> {'model'} -> filename;
-  $jobname =~ s/\ /_/g;
-  my $prepend = '';
-  if (defined $self->torque_prepend_flags()){
-    $prepend = ' '.$self->torque_prepend_flags().' ';
-  }
-
-  my $queue_string = ' ';
-  $queue_string = ' -q '.$PsN::config->{'_'}->{'torque_queue'}.' ' 
-      if ($PsN::config -> {'_'}  -> {'torque_queue'});
-  $queue_string = ' -q '.$self->torque_queue().' ' if (defined $self->torque_queue());
-  if( system( 'qsub '.
-	      $prepend.
-	      ' -N '.$jobname .
-	      $queue_string .
-	      ' JobScript > JobId' ) ){
-    croak("Torque submit failed.\nSystem error message: $!" );
-  }
-  
-  open(JOBFILE, "JobId") or croak("Couldn't open torque JobId file for reading: $!" );
-  while( <JOBFILE> ){
-    if( /(\d+.[0-9A-Za-z\-\.]*)/ ){
-      $jobId = $1;
-    }
-  }
-  close(JOBFILE);
-
-	return $jobId;
-}
-
-sub torque_monitor
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		jobId => { isa => 'Int', optional => 1 }
-	);
-	my $jobId = $parm{'jobId'};
-
-	carp("Checking Torque queue for $jobId");
-	my $response = `qstat $jobId 2>&1`;
-
-	carp("Result: (OUT+ERR) $response");
-	if($response =~ /Unknown Job Id/ ){ # regexp to find finished jobs.
-		# The job is completed by default
-		return $jobId; # Return the jobId found.
-	}
-	elsif ($response =~ /Job id/) { # regexp to find running jobs
-		# The job is not completed
-		return 0;
-	}
-	else {
-		# something else happened, FIXME: there should probably be something different here
-		return 0;
-	}
 }
 
 sub run_nonmem
@@ -2608,184 +1713,146 @@ sub run_nonmem
 		# Execution step 
 		
 		if ($self->run_local) {
-			
-			# Normal local execution
-
-			#my $nonmem = nonmem->new(
-			#	modelfile => 'psn.mod',
-			#	outputfile => 'psn.lst',
-			#	nice => $self->nice,
-			#	version => $nm_version,
-			#	nmqual => $self->nmqual,
-			#	display_iterations => $self->display_iterations,
-			#	nonmem_options => $self->nonmem_options,
-			#	parafile => $self->parafile,
-			#	nodes => $self->nodes,
-			#	fsubs => [split( /,/ , join( ',' , @{$candidate_model->subroutine_files} ) )],
-			#	show_version => 0,
-			#);
-
-			# if nmfe is set, then sum will be 2, which means nmfe in nonmem.pm. If -nmqual is set sum will be 3
-			my $command_line_options = " -I" .
-				$PsN::lib_dir ."/../ " . 
-				$PsN::lib_dir . "/nonmem.pm" . 
-				" psn.mod psn.lst " . 
-				$self->nice . " " . 
-				$nm_version . " " .
-				1 . " " . # compilation
-				(1 + $self->nmfe + 2 * ($self->nmqual)) . " " . # execution
-				$self->display_iterations() . ' ' .
-				$self->nonmem_options() . ' ' .
-				$self->parafile() . ' '.
-				$self->nodes() . ' ' .
-				join( ',' , @{$candidate_model->subroutine_files} );
-
-			$self->stop_motion_call(tool => 'modelfit', message => "About to start NONMEM run with command\n$command_line_options")
-				if ($self->stop_motion() > 1);
-			
+			my $nonmem_run;
 			if ($Config{osname} eq 'MSWin32') {
-
-				my $nonmem_run = nonmemrun::localwindows->new(nm_version => $nm_version);
-				$queue_info->{'nonmemrun'} = $nonmem_run;
-
-				my $perl_bin = ($PsN::config -> {'_'} -> {'perl'} ? $PsN::config -> {'_'} -> {'perl'} : 'C:\Perl\bin\perl.exe');
-
-				unless (-e $perl_bin) {
-					if (defined $PsN::config -> {'_'} -> {'perl'}) {
-						ui->print(category=> 'all', message =>
-								  "\nWarning: Perl binary ".$perl_bin." set in psn.conf cannot be found. ".
-								  "Check setting of\n".
-								  "perl= ...\n".
-								  "in psn.conf, see psn_configuration.pdf.",
-								  newline => 1);
-					} else {
-						ui -> print(category => 'all', message => 
-									 "\nWarning: Perl binary ".$perl_bin." (the default) cannot be found. ".
-									 "You need to set\n".
-									 "perl= ...\n".
-									 "in psn.conf, see psn_configuration.pdf.",
-									 newline => 1);
-					}
-				}
-
-				require Win32::Process;
-				require Win32;
-				sub ErrorReport{ print Win32::FormatMessage(Win32::GetLastError()); }
-				my $proc;
-				Win32::Process::Create($proc, $perl_bin, $perl_bin . $command_line_options, 0, $Win32::Process::NORMAL_PRIORITY_CLASS, '.') || die ErrorReport();
-			
-				$nonmem_run->windows_process($proc);
-				$queue_map->{$proc->GetProcessID()} = $run_no;
-
+				$nonmem_run = nonmemrun::localwindows->new(
+					nm_version => $nm_version,
+					nmfe_options => $self->create_nmfe_options_string,
+				);
+			} elsif ($self->run_on_mosix) {
+				$nonmem_run = nonmemrun::mosix->new(
+					nm_version => $nm_version,
+					parafile => $self->parafile ne 'none' ? $self->parafile : undef,
+					nmfe_options => $self->create_nmfe_options_string,
+					nodes => $self->nodes,
+				);
 			} else {
-
-				my $nonmem_run = nonmemrun::localunix->new(nm_version => $nm_version);
-				$queue_info->{'nonmemrun'} = $nonmem_run;
-				# Unix execution
-
-				my $perl_bin = ($PsN::config -> {'_'} -> {'perl'} ? $PsN::config -> {'_'} -> {'perl'} : ' perl ');
-
-				my $pid = fork();
-				if ($pid == 0) {
-					my $execstring = $perl_bin . $command_line_options;
-					$execstring = 'mosenv -e ' . $execstring if ($self->run_on_mosix());
-					exec($execstring);
-					exit; # Die Here if exec failed. Probably happens very rarely.
-				}
-				$queue_map->{$pid} = $run_no;
+				$nonmem_run = nonmemrun::localunix->new(
+					nm_version => $nm_version,
+					parafile => $self->parafile ne 'none' ? $self->parafile : undef,
+					nmfe_options => $self->create_nmfe_options_string,
+					nodes => $self->nodes,
+				);
 			}
+
+			$queue_info->{'nonmemrun'} = $nonmem_run;
+			my $pid = $nonmem_run->submit;
+			$queue_map->{$pid} = $run_no;
 
 			$queue_info->{'start_time'} = time;
 
-		} elsif ( $self->run_on_lsf ) {
-			
-			# lsf_submit will call the "nonmem" module that will figure
-			# out that we want to run remotely. If we are also compiling
-			# remotely, it will be done from here as well.
-			
-			my $jobId = $self -> lsf_submit( model => $candidate_model,
-											 nm_version => $nm_version,
-											 work_dir   => $self->directory . "/NM_run$run_no/");
-			
-			if ($jobId == -1){
-				$queue_map->{'fail_'.$run_no} = $run_no;
-			}else{
-				$queue_map->{$jobId} = $run_no;
-			}
-			
-		} elsif ( $self->run_on_lsf_nmfe ) {
-
-			my $jobId = $self -> lsf_nmfe_submit( model => $candidate_model,
-												  queue_info => $queue_info,
-												  nm_version => $nm_version,
-												  nodes => $self->nodes());
-			if ($jobId == -1){
-				$queue_map->{'fail_'.$run_no} = $run_no;
-			}else{
-				$queue_map->{$jobId} = $run_no;
-			}
-			
-		} elsif ( $self -> run_on_ud() ) {
-			carp("Submitting to the UD system" );  
-			my $jobId = $self -> ud_submit( model => $candidate_model );
-			
-			if ($jobId == -1){
-				$queue_map->{'fail_'.$run_no} = $run_no;
-			}else{
-				$queue_map->{$jobId} = $run_no;
-			}
-			
-		} elsif ( $self -> run_on_sge() ) {
-			my $jobId = $self -> sge_submit( model => $candidate_model,
-											 queue_info => $queue_info,
-											 nm_version => $nm_version );
-			
-			if ($jobId == -1){
-				$queue_map->{'fail_'.$run_no} = $run_no;
-			}else{
-				$queue_map->{$jobId} = $run_no;
-			}
-		} elsif ( $self -> run_on_sge_nmfe() ) {
-			my $jobId = $self -> sge_nmfe_submit( model => $candidate_model,
-												  queue_info => $queue_info,
-												  nm_version => $nm_version,
-												  nodes => $self->nodes());
-			
-			if ($jobId == -1){
-				$queue_map->{'fail_'.$run_no} = $run_no;
-			}else{
-				$queue_map->{$jobId} = $run_no;
-			}
-		} elsif ($self->run_on_slurm()) {
-			my $nonmem_run = nonmemrun::slurm->new(nm_version => $nm_version);
+		} elsif ($self->run_on_lsf or $self->run_on_lsf_nmfe) {
+			my $nonmem_run = nonmemrun::lsf->new(
+				parafile => $self->parafile ne 'none' ? $self->parafile : undef,
+				nmfe_options => $self->create_nmfe_options_string,
+				prepend_flags => $self->lsf_prepend_flags,
+				partition => $self->slurm_partition,
+				nodes => $self->nodes,
+				model => $queue_info->{'model'},
+				nm_version => $nm_version,
+				lsf_job_name => $self->lsf_job_name,
+				lsf_project_name => $self->lsf_project_name,
+				lsf_queue => $self->lsf_queue,
+				lsf_resources => $self->lsf_resources,
+				lsf_ttl => $self->lsf_ttl,
+				lsf_sleep => $self->lsf_sleep,
+				lsf_options => $self->lsf_options,
+			);
 			$queue_info->{'nonmemrun'} = $nonmem_run;
-			my $jobId = $self -> slurm_submit( model => $candidate_model,
-											   queue_info => $queue_info,
-											   nm_version => $nm_version,
-											   nodes => $self->nodes());
+			my $jobId = $nonmem_run->submit;
+			if ($jobId == -1) {
+				$queue_map->{'fail_'.$run_no} = $run_no;
+			} else {
+				$queue_map->{$jobId} = $run_no;
+			}
+		} elsif ($self->run_on_ud) {
+			my $nonmem_run = nonmemrun::ud->new(
+				parafile => $self->parafile ne 'none' ? $self->parafile : undef,
+				nmfe_options => $self->create_nmfe_options_string,
+				nodes => $self->nodes,
+				model => $queue_info->{'model'},
+				nm_version => $nm_version,
+				directory => $self->directory,
+				run_no => $run_no,
+			);
+			$queue_info->{'nonmemrun'} = $nonmem_run;
+			my $jobId = $nonmem_run->submit;
 			if ($jobId == -1){
 				$queue_map->{'fail_'.$run_no} = $run_no;
 			}else{
 				$queue_map->{$jobId} = $run_no;
 			}
-		} elsif ( $self -> run_on_torque() ) {
-			my $jobId = $self -> torque_submit( model => $candidate_model,
-												queue_info => $queue_info,
-												nm_version => $nm_version );
-			
-			if ($jobId == -1){
+		} elsif ($self->run_on_sge or $self->run_on_sge_nmfe) {
+			my $nonmem_run = nonmemrun::sge->new(
+				parafile => $self->parafile ne 'none' ? $self->parafile : undef,
+				nmfe_options => $self->create_nmfe_options_string,
+				prepend_flags => $self->sge_prepend_flags,
+				max_runtime => $self->max_runtime,
+				partition => $self->slurm_partition,
+				nodes => $self->nodes,
+				model => $queue_info->{'model'},
+				nm_version => $nm_version,
+				resource => $self->sge_resource,
+				queue => $self->sge_queue,
+			);
+			$queue_info->{'nonmemrun'} = $nonmem_run;
+			my $jobId = $nonmem_run->submit;
+			if ($jobId == -1) {
 				$queue_map->{'fail_'.$run_no} = $run_no;
-			}else{
+			} else {
 				$queue_map->{$jobId} = $run_no;
 			}
-		} elsif ( $self -> run_on_zink() ) {
-			my $jobId = $self -> zink_submit( model => $candidate_model,
-											  queue_info => $queue_info,
-											  nm_version => $nm_version );
-			
-			if ($jobId == -1){
+		} elsif ($self->run_on_slurm) {
+			my $nonmem_run = nonmemrun::slurm->new(
+				nm_version => $nm_version,
+				parafile => $self->parafile ne 'none' ? $self->parafile : undef,
+				email_address => $self->email_address,
+				send_email => $queue_info->{'send_email'},
+				nmfe_options => $self->create_nmfe_options_string,
+				prepend_flags => $self->slurm_prepend_flags,
+				max_runtime => $self->max_runtime,
+				partition => $self->slurm_partition,
+				nodes => $self->nodes,
+				model => $queue_info->{'model'},
+				account => $self->slurm_account,
+			);
+			$queue_info->{'nonmemrun'} = $nonmem_run;
+			my $jobId = $nonmem_run->submit;
+			if ($jobId == -1) {
 				$queue_map->{'fail_'.$run_no} = $run_no;
-			}else{
+			} else {
+				$queue_map->{$jobId} = $run_no;
+			}
+		} elsif ($self->run_on_torque) {
+			my $nonmem_run = nonmemrun::torque->new(
+				prepend_flags => $self->torque_prepend_flags,
+				model => $queue_info->{'model'},
+				nm_version => $nm_version,
+				torque_queue => $self->torque_queue,
+				nmfe_options => $self->create_nmfe_options_string,
+				nodes => $self->nodes,
+				parafile => $self->parafile ne 'none' ? $self->parafile : undef,
+			);
+			$queue_info->{'nonmemrun'} = $nonmem_run;
+			my $jobId = $nonmem_run->submit;
+			if ($jobId == -1) {
+				$queue_map->{'fail_'.$run_no} = $run_no;
+			} else {
+				$queue_map->{$jobId} = $run_no;
+			}
+		} elsif ($self->run_on_zink) {
+			my $nonmem_run = nonmemrun::zink->new(
+				nm_version => $nm_version,
+				model => $queue_info->{'model'},
+				parafile => $self->parafile ne 'none' ? $self->parafile : undef,
+				nmfe_options => $self->create_nmfe_options_string,
+				nodes => $self->nodes,
+			);
+			$queue_info->{'nonmemrun'} = $nonmem_run;
+			my $jobId = $nonmem_run->submit;
+			if ($jobId == -1) {
+				$queue_map->{'fail_'.$run_no} = $run_no;
+			} else {
 				$queue_map->{$jobId} = $run_no;
 			}
 		}
@@ -3649,7 +2716,7 @@ sub run_nmtran
 	my $self = shift;
 	my $ok;
 
-	$ok=1;
+	$ok = 1;
 	if ($self->check_nmtran and defined $self->full_path_nmtran and (length($self->full_path_nmtran)>0)){
 		my $command = $self->full_path_nmtran.'  < psn.mod > FMSG';
 		system($command);
@@ -3716,7 +2783,7 @@ sub copy_model_and_input
 	my $run_nmtran = $parm{'run_nmtran'};
 	my $candidate_model;
 
-	if (-e 'stats-runs.csv' and $self->add_retries()) {
+	if (-e 'stats-runs.csv' and $self->add_retries) {
 		#possible reasons: 
 		#a) Restart after -clean > 1. Then we do not know the true restart number of psn.lst
 		#b) Restart after completed run -clean <= 1. Best retry is copied to psn.lst, don't know which.
@@ -3724,16 +2791,14 @@ sub copy_model_and_input
 		#remove stats-runs here. Then pick highest retry file in directory as
 		#candidate model, otherwise psn.mod
 		#If do not have any retry file must copy input again, was removed during clean=2
-		$self->stop_motion_call(tool=>'modelfit',
-								message => "have stats-runs but doing add_retries")
-			if ($self->stop_motion()> 1);
-		
+		$self->stop_motion_call(tool=>'modelfit', message => "have stats-runs but doing add_retries")
+			if ($self->stop_motion > 1);
 		
 		unlink 'stats-runs.csv';
-		if (-e 'psn-1.mod'){
+		if (-e 'psn-1.mod') {
 			$self->stop_motion_call(tool=>'modelfit',
 									message => "old clean<2")
-				if ($self->stop_motion()> 1);
+				if ($self->stop_motion > 1);
 			
 			#clean 1. Data is left. Remove psn.mod and psn.lst
 			#use last retry as candidate model. move last retry to psn.mod and
@@ -3744,8 +2809,8 @@ sub copy_model_and_input
 			unlink 'psn.coi';
 			unlink 'psn.cor';
 			
-			my $last_retry=1;
-			while (-e 'psn-'.($last_retry+1).'.mod'){
+			my $last_retry = 1;
+			while (-e 'psn-'.($last_retry+1).'.mod') {
 				$last_retry++;
 			}
 			mv('psn-'.($last_retry).'.mod','psn.mod');
@@ -3754,19 +2819,19 @@ sub copy_model_and_input
 			mv('psn-'.($last_retry).'.cor','psn.cor') if (-e 'psn-'.($last_retry).'.cor');
 			mv('psn-'.($last_retry).'.coi','psn.coi') if (-e 'psn-'.($last_retry).'.coi');
 			
-			$candidate_model =  model -> new (
+			$candidate_model = model->new(
 				outputfile                  => 'psn.lst',
 				filename                    => 'psn.mod',
 				ignore_missing_output_files	=> 1,
-				ignore_missing_data					=> 0);
-		} else{
-			$self->stop_motion_call(tool=>'modelfit',
-									message => "old clean>1")
-				if ($self->stop_motion()> 1);
+				ignore_missing_data					=> 0
+			);
+		} else {
+			$self->stop_motion_call(tool=>'modelfit', message => "old clean>1")
+				if ($self->stop_motion > 1);
 			#clean 2. 
 			#must copy input again
 			
-			if ($model->tbs() or $model->dtbs()){
+			if ($model->tbs or $model->dtbs){
 				$self->write_tbs_files(thetanum => $model->tbs_thetanum());
 			}
 			#use psn.mod as candidate model
@@ -3867,7 +2932,6 @@ sub copy_model_and_input
 		} else {
 			croak('No datafiles set in modelfile.' );
 		}
-		
 		
 		# Set the table names to a short version 
 		my @new_table_names = ();
@@ -4134,7 +3198,6 @@ sub copy_model_and_output
 		}
 		close (LSTFILE);
 	}
-	#end Kajsa 2008-09-16
 
 	my @nmout;
 	@nmout = split( /,/ ,$self->nm_output()) if (defined $self->nm_output());
@@ -4176,7 +3239,6 @@ sub copy_model_and_output
 		} else {
 			cp( $use_name, $dir .$filename );
 		}
-
 
 	}
 
@@ -4269,96 +3331,6 @@ if ( $self->clean >= 3 ) {
 	system('compact /c /s /q > NUL')
 	if ( $self->compress and $Config{osname} eq 'MSWin32' );
 }
-}
-
-sub lsf_submit
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		model => { isa => 'model', optional => 0 },
-		nm_version => { isa => 'Str', optional => 0 },
-		work_dir => { isa => 'Str', optional => 1 }
-	);
-	my $jobId = -1;
-	my $model = $parm{'model'};
-	my $nm_version = $parm{'nm_version'};
-	my $work_dir = $parm{'work_dir'};
-
-	# This method will submit the nonmem.pm file as a script to the
-	# LSF system.
-
-	my $fsubs = join( ',' , @{$model -> subroutine_files} );
-
-	my $execution = 1 + $self->nmfe + 2 * ($self->nmqual); 
-	# if nmfe is set, then sum will be 2, which means nmfe in nonmem.pm. If -nmqual is set sum will be 3
-	for( my $i = 1; $i <= 5; $i++ ){
-		my $str = "bsub -e stderr -o stdout " .
-		($self->lsf_queue ? " -q " . $self->lsf_queue : ' ') .
-		($self->lsf_project_name ? " -P " . $self->lsf_project_name : ' ') .
-		($self->lsf_job_name ? " -J " . $self->lsf_job_name : ' ') .
-		($self->lsf_ttl ? " -c " . $self->lsf_ttl : ' ') .
-		($self->lsf_resources ? " -R " . $self->lsf_resources : ' ') .
-		$self->lsf_options . " \"sleep 3 && " .
-		($PsN::config -> {'_'} -> {'remote_perl'} ? ' ' . $PsN::config -> {'_'} -> {'remote_perl'} : ' perl ') . " -I" .
-		$PsN::lib_dir ."/../ " . 
-		$PsN::lib_dir . "/nonmem.pm" . 
-		" psn.mod psn.lst " . 
-		$self->nice . " ". 
-		$nm_version . " " .
-		1 . ' ' .
-		$execution . ' ' .
-		$self->display_iterations() . ' ' .
-		$self->nonmem_options() . ' ' .
-		$self->parafile() . ' '.
-		$self->nodes() . ' ' .
-		$fsubs . " \"";
-
-		my $response = `$str 2>&1`;
-
-		if ($response=~/Job \<(\d+)\> is submitted/) {
-			$jobId=$1;
-		} 
-
-
-		unless( $response =~ /System call failed/ or
-			$response =~ /Bad argument/ or
-			$response =~ /Request aborted by esub/ or
-			$response =~ /Bad user ID/ ) {
-			last;
-		}
-
-		if( $response =~ /Bad argument/ or
-			$response =~ /Request aborted by esub/ or
-			$response =~ /Bad user ID/ ) {
-			sleep(($i+1)**2);
-		} else {
-			chdir( $work_dir );
-		}
-		ui -> print( category => 'all', message  => 
-			"bsub command was not successful, trying ".(5-$i)." times more",
-			newline => 1);
-	}
-	sleep($self->lsf_sleep());
-
-	return $jobId;
-}
-
-sub umbrella_submit
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		 model => { isa => 'model', optional => 0 },
-		 nm_version => { isa => 'Str', optional => 0 },
-		 prepare_jobs => { isa => 'Bool', default => 0, optional => 1 },
-		 queue_info => { isa => 'Ref', optional => 1 }
-	);
-	my $model = $parm{'model'};
-	my $nm_version = $parm{'nm_version'};
-	my $job_id = -1;
-	my $prepare_jobs = $parm{'prepare_jobs'};
-	my $queue_info = $parm{'queue_info'};
-
-	return $job_id;
 }
 
 sub calculate_raw_results_width
@@ -4587,6 +3559,21 @@ sub create_sub_dir
 	close(FILE);
 
 	return $tmp_dir;
+}
+
+sub create_nmfe_options_string
+{
+	my $self = shift;
+	my $switches = '';
+
+	unless ($self->nmfe_options eq 'none') {
+		my @switches = split(/,/, $self->nmfe_options);
+		foreach my $sw (@switches) {
+			$switches .= ' -' . $sw;
+		}
+	}
+
+	return $switches;
 }
 
 no Moose;

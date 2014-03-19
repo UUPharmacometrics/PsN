@@ -6,9 +6,97 @@ use MooseX::Params::Validate;
 
 extends 'nonmemrun';
 
-has 'send_email' => ( is => 'rw', isa => 'Bool', default => 0 );
-has 'email_address' => ( is => 'rw', isa => 'Str' );
-has 'slurm_partition' => ( is => 'rw', isa => 'Str' );
+has 'partition' => ( is => 'rw', isa => 'Maybe[Str]' );
+has 'account' => ( is => 'rw', isa => 'Maybe[Str]' );
+
+sub submit
+{
+	my $self = shift;
+	my $jobId = -1;
+
+	$self->pre_compile_cleanup;
+
+	#only support nmfe here, not nmqual
+
+	my $jobname = $self->model->filename;
+	$jobname = 'psn_' . $jobname if ($jobname =~ /^[0-9]/);
+
+	#cwd default in slurm
+	# -J jobname
+	#need to check translation for -b y
+
+	my $flags = ' -J ' . $jobname;
+	$flags .= ' -o nmfe.output -e nmfe.output ';
+	if (defined $self->account) {
+		$flags .= ' -A ' . $self->account;
+	} else {
+		if ($PsN::config -> {'default_options'} -> {'uppmax'}) {
+			croak("slurm account must be defined on uppmax");
+		}
+	}
+	if (defined $self->max_runtime) {
+		#Acceptable time formats include #minutes", 
+		#minutes:seconds", #hours:minutes:seconds", #days-hours", 
+		#days-hours:minutes¡ and ´days-hours:minutes:seconds". 
+		unless (($self->max_runtime =~ /^[0-9]+$/) or
+				($self->max_runtime =~ /^[0-9]+\:[0-9]+\:[0-9]+$/) or
+				($self->max_runtime =~ /^[0-9]+\-[0-9]+$/)) {
+			croak("max_runtime must have format minutes, hours:minutes:seconds, or days-hours");
+		}
+		$flags .= ' -t ' . $self->max_runtime ;
+	}
+	if (defined $self->partition) {
+		$flags .= ' -p ' . $self->partition;
+	}
+	#at most 3GB RAM 
+	if ($PsN::config->{'default_options'}->{'uppmax'}) {
+		$flags .= ' -p core -n 1 '; #single core
+	}
+
+	if (defined $self->send_email and defined $self->email_address) {
+		if ($self->send_email eq 'ALL') {
+			$flags .= ' --mail-user='.$self->email_address . ' --mail-type=ALL ';
+		} else {
+			$flags .= ' --mail-user='.$self->email_address . ' --mail-type=END ';
+		}
+	}
+
+	#-t "hours:minutes:seconds", "days-hours"
+
+	#sbatch -J psn:pheno.mod -o nmfe.output -e nmfe.output -p core -n 1 -t 0:3:0 -A p2011021 /bubo/sw/apps/nonmem/nm_7.1.0_g_reg/run/nmfe7 pheno.mod pheno.lst -background
+
+	if (defined $self->prepend_flags) {
+		$flags = ' ' . $self->prepend_flags . $flags;
+	}
+	my $nmfe_command = $self->create_nmfe_command;
+
+	my $submitstring = $flags . ' ' . $nmfe_command;
+
+	system('echo sbatch ' . $submitstring . ' "2>&1" > sbatchcommand');
+
+	for (my $i = 0; $i < 10; $i++) {
+		sleep(1); #wait to let other nodes sync files here?
+		my $outp = `sbatch $submitstring 2>&1`;
+		#write error to job_submission_error instead, set jobid to -1, and continue?
+		if ($outp =~ /Submitted batch job (\d+)/) {
+			$jobId = $1;
+			last;
+		} elsif($outp =~ /Socket timed out/) {
+			#try again. jobId is -1 by initiation 
+			sleep(3);
+			next;
+		} else {
+			print "Slurm submit failed.\nSystem error message: $outp\nConsidering this model failed.";
+			system('echo ' . $outp . '  > job_submission_error');
+			$jobId = -1;
+			last;
+		}	
+	}
+	system('echo sbatch '.$jobId.' "2>&1" > jobId');
+
+	return $jobId;
+}
+
 
 sub monitor
 {
