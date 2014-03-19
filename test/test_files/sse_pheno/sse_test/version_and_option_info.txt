@@ -1,0 +1,76 @@
+PsN version: development
+Run started: 2014-03-19 at 14:03
+version_and_option_info.txt is overwitten if the run is restarted later using option -directory.
+The original file from the first call is saved as original_version_and_option_info.txt.
+
+Command:
+/home/kajsa/kod-psn/PsN4/bin/sse -samples=5 pheno.mod -recompute=sse_test/raw_results_pheno.csv
+
+Actual values optional SSE options (undefined values not listed):
+-add_models=0
+-alternative_models=
+-estimate_simulation=1
+-in_filter=
+-keep_tables=0
+-offset_rawres=1
+-out_filter=
+-random_estimation_inits=0
+-recompute=raw_results_pheno.csv
+
+Actual values optional PsN (common) options (undefined values not listed):
+-abort_on_fail=0
+-accepted_ofv_difference=0.5
+-add_retries=0
+-check_nmtran=1
+-clean=1
+-compress=0
+-condition_number_limit=1000
+-correlation_limit=0.85
+-crash_restarts=4
+-directory=/home/kajsa/kod-psn/PsN4/test/unit/sse_pheno/sse_test/
+-display_iterations=0
+-drop_dropped=0
+-handle_crashes=1
+-handle_msfo=0
+-large_omega_cv_limit=0.8
+-large_sigma_cv_limit=0.8
+-large_theta_cv_limit=0.5
+-last_est_complete=0
+-lsf_sleep=3
+-min_retries=0
+-missing_data_token=-99
+-near_bound_sign_digits=2
+-near_zero_boundary_limit=0.01
+-nice=19
+-nm_output=phi,ext
+-nm_version=default
+-nmfe=1
+-nmfe_options=prdefault,xmloff
+-nmqual=0
+-nodes=0
+-nonparametric_etas=0
+-nonparametric_marginals=0
+-parafile=none
+-picky=0
+-prepend_model_file_name=0
+-quick_summarize=0
+-rerun=1
+-retries=0
+-run_on_lsf=0
+-run_on_lsf_nmfe=0
+-run_on_mosix=0
+-run_on_sge=0
+-run_on_sge_nmfe=0
+-run_on_slurm=0
+-run_on_torque=0
+-run_on_ud=0
+-run_on_zink=0
+-seed=948270
+-send_email=0
+-shrinkage=0
+-sign_digits_off_diagonals=2
+-significant_digits_accept=0
+-stop_motion=0
+-threads=4
+-tweak_inits=1
+-verbose=0

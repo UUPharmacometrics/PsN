@@ -130,10 +130,10 @@ The 'true' values in the formulas below are always the initial parameter estimat
 \emph{sd = standard deviation of estimated parameter $x_i$.}
 
 \[
-Skewness = N^{-1} sd^{-3} \sum_{i=1}^N(x_i - \bar{x})^3
+Skewness = \frac{N}{(N-1)\cdot(N-2)} sd^{-3} \sum_{i=1}^N(x_i - \bar{x})^3
 \]
 \[
-Kurtosis = N^{-1} sd^{-4} \sum_{i=1}^N(x_i - \bar{x})^4 - 3
+Kurtosis = \frac{N\cdot(N+1)}{(N-1)\cdot(N-2)\cdot(N-3)} sd^{-4} \sum_{i=1}^N(x_i - \bar{x})^4 - \frac{3\cdot(N-1)^2}{(N-2)\cdot(N-3)}
 \]
 \[
 rmse = \sqrt{\frac{1}{N} \sum_i(est_i - true_i)^2}

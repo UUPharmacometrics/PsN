@@ -1,0 +1,1 @@
+/home/kajsa/kod-psn/PsN4/bin/sse -samples=5 moxonidine.mod -alt=moxonidine.mod -seed=630992 -dir=sse_test

@@ -510,27 +510,28 @@ sub print_results
       return ( $dim, $size_ref );
     }
 
-    ### format_value returns a string for a given number. If the value
-    ### is not defined it is returned as NaN or NA, depending on the
-    ### output_style configured. Numbers without decimals get 10
-    ### digits, Numbers with decimals get 10 digis and 5 decimal
-    ### values.
-    
-    sub format_value {
-      my $val = shift;
-      if ( not defined $val or $val eq '' ) {
+		### format_value returns a string for a given number. If the value
+		### is not defined it is returned as NaN or NA, depending on the
+		### output_style configured. Numbers without decimals get 10
+		### digits, Numbers with decimals get 10 digis and 5 decimal
+		### values.
+		
+		sub format_value {
+			my $val = shift;
+			if ( not defined $val or $val eq '' ) {
 				return sprintf("%16s",$PsN::out_miss_data).',';
-      } else {
+			} else {
 				$_ = $val;
 				my $nodot = /.*\..*/ ? 0 : 1;
 				$_ =~ s/\.//g;
 				if ( /.*\D+.*/ or $nodot) { #non-digit or no decimal point
 					return sprintf("%14s", $val) . ',';
 				} else {
-					return sprintf("%14.5f", $val) . ',';
+#					return sprintf("%14.5f", $val) . ','; #gives only 5 decimals, may round too much
+					return sprintf("%14.7g", $val) . ','; #7 value digits
 				}
-      }
-    }
+			}
+		}
 
 
     ### format_label does the same thing as format value, but does not

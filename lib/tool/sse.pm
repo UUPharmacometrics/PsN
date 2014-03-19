@@ -44,7 +44,7 @@ sub BUILD
 	if ($this->random_estimation_inits and not defined $this->rawres_input) {
 		croak('Need rawres_input when using random_estimation_inits');
 	}
-		
+	
 	for my $accessor ('logfile', 'raw_results_file', 'raw_nonp_file'){
 		my @new_files = ();
 		my @old_files = @{$this->$accessor};
@@ -83,13 +83,13 @@ sub BUILD
 			}
 			unless( defined $this -> models->[0]-> extra_files ){
 				croak('When using $PRIOR TNPRI you must set option -extra_files to '.
-					'the msf-file, otherwise the msf-file will not be copied to the NONMEM '.
-					'run directory.');
+					  'the msf-file, otherwise the msf-file will not be copied to the NONMEM '.
+					  'run directory.');
 			}
 
 		}else{
 			croak('The simulation model must contain exactly one problem, unless'.
-				' first $PROB has $PRIOR TNPRI');
+				  ' first $PROB has $PRIOR TNPRI');
 		}
 	}
 	if ((not $this->have_tnpri()) and
@@ -126,8 +126,8 @@ sub modelfit_setup
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 model_number => { isa => 'Int', optional => 1 }
-	);
+							  model_number => { isa => 'Int', optional => 1 }
+		);
 	my $model_number = $parm{'model_number'};
 
 { 
@@ -342,8 +342,8 @@ sub modelfit_setup
 						}
 						$sampled_params_arr = 
 							$sim_model->get_rawres_params(filename => $self->rawres_input,
-															filter => $self->in_filter,
-															offset => $self->offset_rawres);
+														  filter => $self->in_filter,
+														  offset => $self->offset_rawres);
 						if (defined $sampled_params_arr) {
 							unless (scalar(@{$sampled_params_arr}) >= ($self->samples)) {
 								if (defined $self->in_filter) {
@@ -401,7 +401,7 @@ sub modelfit_setup
 						}else{
 							$sim_model -> update_inits(from_hash => $sampled_params_arr->[0]); 
 							my @paramarr = ();
-						
+							
 							foreach my $label (@{$thetalabels[0]}){
 								push(@paramarr,$sampled_params_arr->[0]->{'theta'}->{$label});
 							}
@@ -1390,7 +1390,7 @@ sub modelfit_setup
 					 message  => "Using $stored_samples data sets, previously simulated ".
 					 "from $stored_filename1 through $stored_filename2\n" )
 			unless $self -> parent_threads > 1;
-	
+		
 	} #end $done
 
 
@@ -1453,228 +1453,228 @@ sub _modelfit_raw_results_callback
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 model_number => { isa => 'Int', optional => 1 }
-	);
+							  model_number => { isa => 'Int', optional => 1 }
+		);
 	my $model_number = $parm{'model_number'};
 	my $subroutine;
 
 # Use the mc's raw_results file.
-my ($dir,$file) = 
-    OSspecific::absolute_path( $self -> directory,
-			       $self -> raw_results_file ->[$model_number-1] );
-my ($npdir,$npfile) = 
-    OSspecific::absolute_path( $self -> directory,
-			       $self -> raw_nonp_file -> [$model_number-1]);
+	my ($dir,$file) = 
+		OSspecific::absolute_path( $self -> directory,
+								   $self -> raw_results_file ->[$model_number-1] );
+	my ($npdir,$npfile) = 
+		OSspecific::absolute_path( $self -> directory,
+								   $self -> raw_nonp_file -> [$model_number-1]);
 
-$subroutine = sub {
-	#can have 2 $PROB if tnpri and est_sim, interesting with 2nd $PROB only
-	my $modelfit = shift;
-	my $mh_ref   = shift;
-	my %max_hash = %{$mh_ref};
-	$modelfit -> raw_results_file( [$dir.$file] ); #file to print to
-	$modelfit -> raw_nonp_file( [$npdir.$npfile] );
-	
-	#if prior tnpri nothing will be in raw_results for first $PROB, can
-	#take first row for model as final estimates as usual, even if
-	#it happens to be from second $PROB
-
-	# {{{ New leading text on each row
-	#we will rearrange rows so that all first $PROBS come before all second $PROBS. Then second
-	#$PROBS will be ignored in analysis
-	#exception if estimate_simulation and tnpri, then in the first model it is the second $PROB
-	#that should be used
-
-	if ( defined $modelfit -> raw_results() ) {
-		$self->stop_motion_call(tool=>'sse',message => "Preparing to rearrange raw_results in memory, adding ".
-								"model name information")
-			if ($self->stop_motion());
+	$subroutine = sub {
+		#can have 2 $PROB if tnpri and est_sim, interesting with 2nd $PROB only
+		my $modelfit = shift;
+		my $mh_ref   = shift;
+		my %max_hash = %{$mh_ref};
+		$modelfit -> raw_results_file( [$dir.$file] ); #file to print to
+		$modelfit -> raw_nonp_file( [$npdir.$npfile] );
 		
-		my @rows = @{$modelfit -> raw_results()};
-		my $n_rows = scalar(@rows);
-		my @firsts;
-		my @seconds;
-		my $last_model= 0;
-		my $alternative_counter= $self->first_alternative()-1;
-		
-		my $sample = 0; 
-		my $altname;
-		
-		my @simestrows;
-		if (defined $self->simulation_rawres and -e $self->simulation_rawres){
-			open(RAW, $self->simulation_rawres);
-			while(<RAW>) {
-				chomp;
-				my @line = split(',',$_);
-				push(@firsts,\@line) if ($line[0] eq 'simulation');
-			}
-			close(RAW);
-			#already checked that right count of lines
-			$alternative_counter++;
-			$altname = 'mc-alternative_'.$alternative_counter;
-		}elsif( $self -> estimate_simulation ){
-			$altname = 'simulation';
-		}else{
-			$alternative_counter++;
-			$altname = 'mc-alternative_'.$alternative_counter;
-		}
+		#if prior tnpri nothing will be in raw_results for first $PROB, can
+		#take first row for model as final estimates as usual, even if
+		#it happens to be from second $PROB
 
-		for (my $i=0; $i< $n_rows; $i++){
-			my $this_model = $rows[$i]->[0]; 
-			my $step= ($this_model-$last_model);
-			if ($step < 0){
-				ui -> print( category => 'sse',
-							 message  => "Error: It seems the raw_results is not sorted".
-							 ". Statistics in sse_results will be wrong");
-			}else {
-				#if 0 step and problem column is 1 then error
-				$sample += $step; #normally +1, sometimes 0,sometimes 2 or more
-				if ($step > 1){
-					ui -> print( category => 'sse',
-								 message  => "Warning: It seems the estimation of $altname".
-								 "did not produce any results with dataset ".($sample-1).
-								 ". Statistics in sse_results might be wrong, it is recommended".
-								 "to check manually using raw_results.");
+		# {{{ New leading text on each row
+		#we will rearrange rows so that all first $PROBS come before all second $PROBS. Then second
+		#$PROBS will be ignored in analysis
+		#exception if estimate_simulation and tnpri, then in the first model it is the second $PROB
+		#that should be used
+
+		if ( defined $modelfit -> raw_results() ) {
+			$self->stop_motion_call(tool=>'sse',message => "Preparing to rearrange raw_results in memory, adding ".
+									"model name information")
+				if ($self->stop_motion());
+			
+			my @rows = @{$modelfit -> raw_results()};
+			my $n_rows = scalar(@rows);
+			my @firsts;
+			my @seconds;
+			my $last_model= 0;
+			my $alternative_counter= $self->first_alternative()-1;
+			
+			my $sample = 0; 
+			my $altname;
+			
+			my @simestrows;
+			if (defined $self->simulation_rawres and -e $self->simulation_rawres){
+				open(RAW, $self->simulation_rawres);
+				while(<RAW>) {
+					chomp;
+					my @line = split(',',$_);
+					push(@firsts,\@line) if ($line[0] eq 'simulation');
 				}
-				if ($step == 0 and ($rows[$i]->[1] == 1)){
-					ui -> print( category => 'sse',
-								 message  => "Warning: There seems to be missing lines in raw_results ".
-								 "(step 0 and PROB is 1, model $this_model), or the lines are not sorted by PROBLEM. ".
-								 "Statistics in sse_results might be wrong, it is recommended".
-								 "to check manually using raw_results.");
-				}
-			}
-
-			if ($sample > $self -> samples){
-				#next alternative
+				close(RAW);
+				#already checked that right count of lines
 				$alternative_counter++;
 				$altname = 'mc-alternative_'.$alternative_counter;
-				$sample=1;
-			}
-			if ($step > 0){
-				#new model
-				unshift( @{$rows[$i]}, $sample );
-				unshift( @{$rows[$i]}, $altname );
-				push(@firsts,$rows[$i]);
+			}elsif( $self -> estimate_simulation ){
+				$altname = 'simulation';
 			}else{
-				#step==0, second problem same model
-				unshift( @{$rows[$i]}, $sample );
-				unshift( @{$rows[$i]}, $altname );
-				push(@seconds,$rows[$i]);
-			}
-			$last_model=$this_model;
-		}
-
-		push(@firsts,@seconds); #assume analysis ignores the last rows
-		$modelfit -> raw_results(\@firsts); #replace with set of resorted $PROBS
-
-		unshift( @{$modelfit -> raw_results_header}, 'sample' );
-		unshift( @{$modelfit -> raw_results_header}, 'hypothesis' );
-
-		$self->raw_line_structure($modelfit -> raw_line_structure);
-
-		foreach my $mod (sort({$a <=> $b} keys %{$self->raw_line_structure})){
-			foreach my $category (keys %{$self->raw_line_structure -> {$mod}}){
-				next if ($category eq 'line_numbers');
-				my ($start,$len) = split(',',$self->raw_line_structure -> {$mod}->{$category});
-				$self->raw_line_structure -> {$mod}->{$category} = ($start+2).','.$len; #add 2 for hypothesis, simdatanum
-			}
-			$self->raw_line_structure -> {$mod}->{'hypothesis'} = '0,1';
-			$self->raw_line_structure -> {$mod}->{'sample'} = '1,1';
-		}
-		if (not $self->add_models and $self -> estimate_simulation ){
-			$self->raw_line_structure -> write( $dir.'raw_results_structure_simest' );
-		}elsif (defined $self->simulation_rawres and -e $self->simulation_rawres
-				and -e $dir.'raw_results_structure_simest'){
-			#read and prepend to raw_line_structure
-			my $structure = ext::Config::Tiny -> read($dir.'raw_results_structure_simest');
-			#first move all old models 'samples' steps down. make sure to start from end
-			#so that do not overwrite, sort descending
-			foreach my $mod (sort({$b <=> $a} keys %{$self->raw_line_structure})){
-				$self->raw_line_structure -> {($mod+$self->samples())} = 
-					$self->raw_line_structure -> {$mod};
-			}
-			for (my $mod =1;$mod <= $self->samples(); $mod++){
-				$self->raw_line_structure -> {$mod} = $structure -> {$mod};
-			}
-
-		}
-		$self->raw_line_structure -> write( $dir.'raw_results_structure' );
-	} #end if defined modelfit->raw_results
-	if ( defined $modelfit -> raw_nonp_results() ) {
-		my @rows = @{$modelfit -> raw_nonp_results()};
-		my $n_rows = scalar(@rows);
-		my @firsts;
-		my @seconds;
-		my $last_model= 0;
-		my $alternative_counter= $self->first_alternative()-1;
-		my $sample = 0; 
-		my $altname;
-
-		if( $self -> estimate_simulation ){
-			$altname = 'simulation';
-		}else{
-			$alternative_counter++;
-			$altname = 'mc-alternative_'.$alternative_counter;
-		}
-
-		for (my $i=0; $i< $n_rows; $i++){
-			my $this_model = $rows[$i]->[0]; 
-			my $step= ($this_model-$last_model);
-			if ($step < 0){
-				ui -> print( category => 'sse',
-							 message  => "Warning: It seems the file nonparametric_raw_results is not sorted");
-			}else {
-				#if 0 step and problem column is 1 then error
-				$sample += $step; #normally +1, sometimes 0,sometimes 2 or more
-			}
-
-			if ($sample > $self -> samples){
-				#next alternative
 				$alternative_counter++;
 				$altname = 'mc-alternative_'.$alternative_counter;
-				$sample=1;
 			}
-			if ($step > 0){
-				#new model
-				unshift( @{$rows[$i]}, $sample );
-				unshift( @{$rows[$i]}, $altname );
-				push(@firsts,$rows[$i]);
+
+			for (my $i=0; $i< $n_rows; $i++){
+				my $this_model = $rows[$i]->[0]; 
+				my $step= ($this_model-$last_model);
+				if ($step < 0){
+					ui -> print( category => 'sse',
+								 message  => "Error: It seems the raw_results is not sorted".
+								 ". Statistics in sse_results will be wrong");
+				}else {
+					#if 0 step and problem column is 1 then error
+					$sample += $step; #normally +1, sometimes 0,sometimes 2 or more
+					if ($step > 1){
+						ui -> print( category => 'sse',
+									 message  => "Warning: It seems the estimation of $altname".
+									 "did not produce any results with dataset ".($sample-1).
+									 ". Statistics in sse_results might be wrong, it is recommended".
+									 "to check manually using raw_results.");
+					}
+					if ($step == 0 and ($rows[$i]->[1] == 1)){
+						ui -> print( category => 'sse',
+									 message  => "Warning: There seems to be missing lines in raw_results ".
+									 "(step 0 and PROB is 1, model $this_model), or the lines are not sorted by PROBLEM. ".
+									 "Statistics in sse_results might be wrong, it is recommended".
+									 "to check manually using raw_results.");
+					}
+				}
+
+				if ($sample > $self -> samples){
+					#next alternative
+					$alternative_counter++;
+					$altname = 'mc-alternative_'.$alternative_counter;
+					$sample=1;
+				}
+				if ($step > 0){
+					#new model
+					unshift( @{$rows[$i]}, $sample );
+					unshift( @{$rows[$i]}, $altname );
+					push(@firsts,$rows[$i]);
+				}else{
+					#step==0, second problem same model
+					unshift( @{$rows[$i]}, $sample );
+					unshift( @{$rows[$i]}, $altname );
+					push(@seconds,$rows[$i]);
+				}
+				$last_model=$this_model;
+			}
+
+			push(@firsts,@seconds); #assume analysis ignores the last rows
+			$modelfit -> raw_results(\@firsts); #replace with set of resorted $PROBS
+
+			unshift( @{$modelfit -> raw_results_header}, 'sample' );
+			unshift( @{$modelfit -> raw_results_header}, 'hypothesis' );
+
+			$self->raw_line_structure($modelfit -> raw_line_structure);
+
+			foreach my $mod (sort({$a <=> $b} keys %{$self->raw_line_structure})){
+				foreach my $category (keys %{$self->raw_line_structure -> {$mod}}){
+					next if ($category eq 'line_numbers');
+					my ($start,$len) = split(',',$self->raw_line_structure -> {$mod}->{$category});
+					$self->raw_line_structure -> {$mod}->{$category} = ($start+2).','.$len; #add 2 for hypothesis, simdatanum
+				}
+				$self->raw_line_structure -> {$mod}->{'hypothesis'} = '0,1';
+				$self->raw_line_structure -> {$mod}->{'sample'} = '1,1';
+			}
+			if (not $self->add_models and $self -> estimate_simulation ){
+				$self->raw_line_structure -> write( $dir.'raw_results_structure_simest' );
+			}elsif (defined $self->simulation_rawres and -e $self->simulation_rawres
+					and -e $dir.'raw_results_structure_simest'){
+				#read and prepend to raw_line_structure
+				my $structure = ext::Config::Tiny -> read($dir.'raw_results_structure_simest');
+				#first move all old models 'samples' steps down. make sure to start from end
+				#so that do not overwrite, sort descending
+				foreach my $mod (sort({$b <=> $a} keys %{$self->raw_line_structure})){
+					$self->raw_line_structure -> {($mod+$self->samples())} = 
+						$self->raw_line_structure -> {$mod};
+				}
+				for (my $mod =1;$mod <= $self->samples(); $mod++){
+					$self->raw_line_structure -> {$mod} = $structure -> {$mod};
+				}
+
+			}
+			$self->raw_line_structure -> write( $dir.'raw_results_structure' );
+		} #end if defined modelfit->raw_results
+		if ( defined $modelfit -> raw_nonp_results() ) {
+			my @rows = @{$modelfit -> raw_nonp_results()};
+			my $n_rows = scalar(@rows);
+			my @firsts;
+			my @seconds;
+			my $last_model= 0;
+			my $alternative_counter= $self->first_alternative()-1;
+			my $sample = 0; 
+			my $altname;
+
+			if( $self -> estimate_simulation ){
+				$altname = 'simulation';
 			}else{
-				#step==0, second problem same model
-				unshift( @{$rows[$i]}, $sample );
-				unshift( @{$rows[$i]}, $altname );
-				push(@seconds,$rows[$i]);
+				$alternative_counter++;
+				$altname = 'mc-alternative_'.$alternative_counter;
 			}
-			$last_model=$this_model;
-		}
 
-		push(@firsts,@seconds); #assume analysis ignores the last rows
-		$modelfit -> raw_nonp_results(\@firsts); #replace with set of resorted $PROBS
-		unshift( @{$modelfit -> raw_nonp_results_header}, 'sample' );
-		unshift( @{$modelfit -> raw_nonp_results_header}, 'hypothesis' );
+			for (my $i=0; $i< $n_rows; $i++){
+				my $this_model = $rows[$i]->[0]; 
+				my $step= ($this_model-$last_model);
+				if ($step < 0){
+					ui -> print( category => 'sse',
+								 message  => "Warning: It seems the file nonparametric_raw_results is not sorted");
+				}else {
+					#if 0 step and problem column is 1 then error
+					$sample += $step; #normally +1, sometimes 0,sometimes 2 or more
+				}
 
-	} #end if defined modelfit->raw_nonp_results
+				if ($sample > $self -> samples){
+					#next alternative
+					$alternative_counter++;
+					$altname = 'mc-alternative_'.$alternative_counter;
+					$sample=1;
+				}
+				if ($step > 0){
+					#new model
+					unshift( @{$rows[$i]}, $sample );
+					unshift( @{$rows[$i]}, $altname );
+					push(@firsts,$rows[$i]);
+				}else{
+					#step==0, second problem same model
+					unshift( @{$rows[$i]}, $sample );
+					unshift( @{$rows[$i]}, $altname );
+					push(@seconds,$rows[$i]);
+				}
+				$last_model=$this_model;
+			}
+
+			push(@firsts,@seconds); #assume analysis ignores the last rows
+			$modelfit -> raw_nonp_results(\@firsts); #replace with set of resorted $PROBS
+			unshift( @{$modelfit -> raw_nonp_results_header}, 'sample' );
+			unshift( @{$modelfit -> raw_nonp_results_header}, 'hypothesis' );
+
+		} #end if defined modelfit->raw_nonp_results
 
 
-	$self -> raw_results_header(\@{$modelfit -> raw_results_header});
-	$self -> raw_nonp_results_header(\@{$modelfit -> raw_nonp_results_header});
-	#  New header
-	
-};
-return $subroutine;
+		$self -> raw_results_header(\@{$modelfit -> raw_results_header});
+		$self -> raw_nonp_results_header(\@{$modelfit -> raw_nonp_results_header});
+		#  New header
+		
+	};
+	return $subroutine;
 }
 
 sub modelfit_analyze
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 model_number => { isa => 'Int', optional => 1 }
-	);
+							  model_number => { isa => 'Int', optional => 1 }
+		);
 	my $model_number = $parm{'model_number'};
 
 	return if (defined $self->recompute);
 	return if ((scalar(@{$self -> alternative_models}) < 1) && 
-		(not $self->estimate_simulation));
+			   (not $self->estimate_simulation));
 
 	$self -> tools->[0] -> print_results if (defined $self->tools); 
 }
@@ -2178,9 +2178,9 @@ sub format_initials
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		initials_object => { isa => 'Ref', optional => 1 },
-		initial_value => { isa => 'Num', optional => 1 }
-	);
+							  initials_object => { isa => 'Ref', optional => 1 },
+							  initial_value => { isa => 'Num', optional => 1 }
+		);
 	my $initials_object = $parm{'initials_object'};
 	my $initial_value = $parm{'initial_value'};
 	my %initials_hash;
@@ -2219,12 +2219,12 @@ sub compute_rmse
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 use_runs => { isa => 'ArrayRef[Bool]', optional => 0 },
-		 column_index => { isa => 'Int', optional => 0 },
-		 start_row_index => { isa => 'Int', default => 0, optional => 1 },
-		 end_row_index => { isa => 'Int', optional => 1 },
-		 initial_values => { isa => 'ArrayRef', optional => 0 }
-	);
+							  use_runs => { isa => 'ArrayRef[Bool]', optional => 0 },
+							  column_index => { isa => 'Int', optional => 0 },
+							  start_row_index => { isa => 'Int', default => 0, optional => 1 },
+							  end_row_index => { isa => 'Int', optional => 1 },
+							  initial_values => { isa => 'ArrayRef', optional => 0 }
+		);
 	my @use_runs = defined $parm{'use_runs'} ? @{$parm{'use_runs'}} : ();
 	my $column_index = $parm{'column_index'};
 	my $start_row_index = $parm{'start_row_index'};
@@ -2233,51 +2233,51 @@ sub compute_rmse
 	my $rmse;
 	my $relative_rmse_percent;
 
-  #input is integers $column_index, $start_row_index, $end_row_index and ref of array floats @initial_values
-  #output is scalar $rmse_percent
+	#input is integers $column_index, $start_row_index, $end_row_index and ref of array floats @initial_values
+	#output is scalar $rmse_percent
 
-  unless( $end_row_index ){
-    $end_row_index = $#{$self -> raw_results};
-  }
-
-  croak("Bad row index input") if ($start_row_index > $end_row_index);
-  my $nrows = $end_row_index - $start_row_index +1;
-  if ($nrows < scalar(@initial_values)){
-      print "Warning: more reference values than samples\n";
-  }
-  if ($nrows > scalar(@initial_values)){
-      croak("the number of samples is larger than the number of set of simulation initial values\n");
-  }
-  my $row_count_relative = 0;
-  my $row_count_abs = 0;
-  my $sum_squared_errors=0;
-  my $sum_squared_relative_errors=0;
-  for (my $i=$start_row_index; $i<=$end_row_index; $i++){
-    if ($use_runs[$i-$start_row_index]){
-	if (defined $self->raw_results->[$i][$column_index]){
-	    $sum_squared_errors += ($self->raw_results->[$i][$column_index] - $initial_values[$i-$start_row_index])**2;
-	    $row_count_abs++;
-	    if ($initial_values[$i-$start_row_index] != 0){
-		$row_count_relative++;
-		$sum_squared_relative_errors += 
-		    (($self->raw_results->[$i][$column_index] - $initial_values[$i-$start_row_index])/$initial_values[$i-$start_row_index])**2;
-	    }
+	unless( $end_row_index ){
+		$end_row_index = $#{$self -> raw_results};
 	}
-    }
-  }
 
-  #$rmse abs
-  if ($row_count_abs == 0){
-      $rmse='NA';
-  }else{
-      $rmse = sqrt($sum_squared_errors/$row_count_abs);
-  }
-  #$relative_rmse
-  if ($row_count_relative == 0){
-    $relative_rmse_percent='NA';
-  }else{
-    $relative_rmse_percent= 100*sqrt($sum_squared_relative_errors/$row_count_relative);
-  }
+	croak("Bad row index input") if ($start_row_index > $end_row_index);
+	my $nrows = $end_row_index - $start_row_index +1;
+	if ($nrows < scalar(@initial_values)){
+		print "Warning: more reference values than samples\n";
+	}
+	if ($nrows > scalar(@initial_values)){
+		croak("the number of samples is larger than the number of set of simulation initial values\n");
+	}
+	my $row_count_relative = 0;
+	my $row_count_abs = 0;
+	my $sum_squared_errors=0;
+	my $sum_squared_relative_errors=0;
+	for (my $i=$start_row_index; $i<=$end_row_index; $i++){
+		if ($use_runs[$i-$start_row_index]){
+			if (defined $self->raw_results->[$i][$column_index]){
+				$sum_squared_errors += ($self->raw_results->[$i][$column_index] - $initial_values[$i-$start_row_index])**2;
+				$row_count_abs++;
+				if ($initial_values[$i-$start_row_index] != 0){
+					$row_count_relative++;
+					$sum_squared_relative_errors += 
+						(($self->raw_results->[$i][$column_index] - $initial_values[$i-$start_row_index])/$initial_values[$i-$start_row_index])**2;
+				}
+			}
+		}
+	}
+
+	#$rmse abs
+	if ($row_count_abs == 0){
+		$rmse='NA';
+	}else{
+		$rmse = sqrt($sum_squared_errors/$row_count_abs);
+	}
+	#$relative_rmse
+	if ($row_count_relative == 0){
+		$relative_rmse_percent='NA';
+	}else{
+		$relative_rmse_percent= 100*sqrt($sum_squared_relative_errors/$row_count_relative);
+	}
 
 	return $rmse ,$relative_rmse_percent;
 }
@@ -2286,12 +2286,12 @@ sub compute_bias
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 use_runs => { isa => 'ArrayRef[Bool]', optional => 0 },
-		 column_index => { isa => 'Int', optional => 0 },
-		 start_row_index => { isa => 'Int', default => 0, optional => 1 },
-		 end_row_index => { isa => 'Int', optional => 1 },
-		 initial_values => { isa => 'ArrayRef', optional => 0 }
-	);
+							  use_runs => { isa => 'ArrayRef[Bool]', optional => 0 },
+							  column_index => { isa => 'Int', optional => 0 },
+							  start_row_index => { isa => 'Int', default => 0, optional => 1 },
+							  end_row_index => { isa => 'Int', optional => 1 },
+							  initial_values => { isa => 'ArrayRef', optional => 0 }
+		);
 	my @use_runs = defined $parm{'use_runs'} ? @{$parm{'use_runs'}} : ();
 	my $column_index = $parm{'column_index'};
 	my $start_row_index = $parm{'start_row_index'};
@@ -2301,56 +2301,56 @@ sub compute_bias
 	my $relative_absolute_bias_percent;
 	my $relative_bias_percent;
 
-  #input is integers $column_index, $start_row_index, $end_row_index and ref of array floata $initial_values
-  #output is scalar $relative_bias_percent
+	#input is integers $column_index, $start_row_index, $end_row_index and ref of array floata $initial_values
+	#output is scalar $relative_bias_percent
 
-  unless( $end_row_index ){
-    $end_row_index = $#{$self -> raw_results};
-  }
-  
-  croak("Bad row index input") if ($start_row_index > $end_row_index);
-  my $nrows = $end_row_index - $start_row_index +1;
-  if ($nrows < scalar(@initial_values)){
-      print "Warning: more reference values than samples\n";
-  }
-  if ($nrows > scalar(@initial_values)){
-      croak("the number of samples is larger than the number of set of simulation initial values\n");
-  }
-  
-  my $row_count_abs = 0;
-  my $row_count_relative = 0;
-  my $sum_errors=0;
-  my $sum_relative_errors=0;
-  my $sum_relative_absolute_errors=0;
-  for (my $i=$start_row_index; $i<=$end_row_index; $i++){
-    if ($use_runs[$i-$start_row_index]){
-      if (defined $self->raw_results->[$i][$column_index]){
-	$sum_errors += ($self->raw_results->[$i][$column_index] - $initial_values[$i-$start_row_index]);
-	$row_count_abs++;
-	if ($initial_values[$i-$start_row_index] != 0){
-	    $row_count_relative++;
-	    $sum_relative_errors += 
-		($self->raw_results->[$i][$column_index] - $initial_values[$i-$start_row_index])/($initial_values[$i-$start_row_index]);
-	    $sum_relative_absolute_errors += 
-		($self->raw_results->[$i][$column_index] - $initial_values[$i-$start_row_index])/abs($initial_values[$i-$start_row_index]);
-	    #possibly change to abs in numerator for relative_absolute
+	unless( $end_row_index ){
+		$end_row_index = $#{$self -> raw_results};
 	}
-      }
-    }
-  }
+	
+	croak("Bad row index input") if ($start_row_index > $end_row_index);
+	my $nrows = $end_row_index - $start_row_index +1;
+	if ($nrows < scalar(@initial_values)){
+		print "Warning: more reference values than samples\n";
+	}
+	if ($nrows > scalar(@initial_values)){
+		croak("the number of samples is larger than the number of set of simulation initial values\n");
+	}
+	
+	my $row_count_abs = 0;
+	my $row_count_relative = 0;
+	my $sum_errors=0;
+	my $sum_relative_errors=0;
+	my $sum_relative_absolute_errors=0;
+	for (my $i=$start_row_index; $i<=$end_row_index; $i++){
+		if ($use_runs[$i-$start_row_index]){
+			if (defined $self->raw_results->[$i][$column_index]){
+				$sum_errors += ($self->raw_results->[$i][$column_index] - $initial_values[$i-$start_row_index]);
+				$row_count_abs++;
+				if ($initial_values[$i-$start_row_index] != 0){
+					$row_count_relative++;
+					$sum_relative_errors += 
+						($self->raw_results->[$i][$column_index] - $initial_values[$i-$start_row_index])/($initial_values[$i-$start_row_index]);
+					$sum_relative_absolute_errors += 
+						($self->raw_results->[$i][$column_index] - $initial_values[$i-$start_row_index])/abs($initial_values[$i-$start_row_index]);
+					#possibly change to abs in numerator for relative_absolute
+				}
+			}
+		}
+	}
 
-  if ($row_count_abs == 0){
-      $absolute_bias='NA';
-  }else{
-      $absolute_bias=$sum_errors/$row_count_abs;
-  }
-  if ($row_count_relative == 0){
-      $relative_bias_percent ='NA';
-      $relative_absolute_bias_percent='NA';
-  }else{
-      $relative_bias_percent= ($sum_relative_errors/$row_count_relative)*100;
-      $relative_absolute_bias_percent= ($sum_relative_absolute_errors/$row_count_relative)*100;
-  }
+	if ($row_count_abs == 0){
+		$absolute_bias='NA';
+	}else{
+		$absolute_bias=$sum_errors/$row_count_abs;
+	}
+	if ($row_count_relative == 0){
+		$relative_bias_percent ='NA';
+		$relative_absolute_bias_percent='NA';
+	}else{
+		$relative_bias_percent= ($sum_relative_errors/$row_count_relative)*100;
+		$relative_absolute_bias_percent= ($sum_relative_absolute_errors/$row_count_relative)*100;
+	}
 
 	return $absolute_bias ,$relative_absolute_bias_percent ,$relative_bias_percent;
 }
@@ -2359,11 +2359,11 @@ sub median
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		use_runs => { isa => 'ArrayRef[Bool]', optional => 0 },
-		column_index => { isa => 'Int', optional => 0 },
-		start_row_index => { isa => 'Int', default => 0, optional => 1 },
-		end_row_index => { isa => 'Int', optional => 1 }
-	);
+							  use_runs => { isa => 'ArrayRef[Bool]', optional => 0 },
+							  column_index => { isa => 'Int', optional => 0 },
+							  start_row_index => { isa => 'Int', default => 0, optional => 1 },
+							  end_row_index => { isa => 'Int', optional => 1 }
+		);
 	my @use_runs = defined $parm{'use_runs'} ? @{$parm{'use_runs'}} : ();
 	my $column_index = $parm{'column_index'};
 	my $start_row_index = $parm{'start_row_index'};
@@ -2403,11 +2403,11 @@ sub skewness_and_kurtosis
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 use_runs => { isa => 'ArrayRef[Bool]', optional => 0 },
-		 column_index => { isa => 'Int', optional => 0 },
-		 start_row_index => { isa => 'Int', default => 0, optional => 1 },
-		 end_row_index => { isa => 'Int', optional => 1 }
-	);
+							  use_runs => { isa => 'ArrayRef[Bool]', optional => 0 },
+							  column_index => { isa => 'Int', optional => 0 },
+							  start_row_index => { isa => 'Int', default => 0, optional => 1 },
+							  end_row_index => { isa => 'Int', optional => 1 }
+		);
 	my @use_runs = defined $parm{'use_runs'} ? @{$parm{'use_runs'}} : ();
 	my $column_index = $parm{'column_index'};
 	my $start_row_index = $parm{'start_row_index'};
@@ -2418,60 +2418,64 @@ sub skewness_and_kurtosis
 	my $stdev;
 	my $warn = 0;
 
-  #input is integers $column_index, $start_row_index, $end_row_index 
-  
-  unless( $end_row_index ){
-    $end_row_index = $#{$self -> raw_results};
-  }
+	#input is integers $column_index, $start_row_index, $end_row_index 
+	
+	unless( $end_row_index ){
+		$end_row_index = $#{$self -> raw_results};
+	}
 
-  croak("Bad row index input") if ($start_row_index >= $end_row_index);
+	croak("Bad row index input") if ($start_row_index >= $end_row_index);
 
-  my $row_count = 0;
-  my $sum_values=0;
-  for (my $i=$start_row_index; $i<=$end_row_index; $i++){
-    if ($use_runs[$i-$start_row_index]){
-      if (defined $self->raw_results->[$i][$column_index]){
-	$sum_values += $self->raw_results->[$i][$column_index];
-	$row_count++;
-      }else{
-	$warn=$i-$start_row_index+1;
-      }
-    }
-  }
+	my $row_count = 0;
+	my $sum_values=0;
+	for (my $i=$start_row_index; $i<=$end_row_index; $i++){
+		if ($use_runs[$i-$start_row_index]){
+			if (defined $self->raw_results->[$i][$column_index]){
+				$sum_values += $self->raw_results->[$i][$column_index];
+				$row_count++;
+			}else{
+				$warn=$i-$start_row_index+1;
+			}
+		}
+	}
 
-  if ($row_count < 2){
-    $stdev='NA';
-    $skewness='NA';
-    $kurtosis='NA';
-    return;
-  }
+	if ($row_count < 2){
+		$stdev='NA';
+		$skewness='NA';
+		$kurtosis='NA';
+		return;
+	}
 
-  $mean=$sum_values/$row_count;
+	$mean=$sum_values/$row_count;
 
-  my $error=0;
-  my $sum_errors_pow2=0;
-  my $sum_errors_pow3=0;
-  my $sum_errors_pow4=0;
+	my $error=0;
+	my $sum_errors_pow2=0;
+	my $sum_errors_pow3=0;
+	my $sum_errors_pow4=0;
 
-  for (my $i=$start_row_index; $i<=$end_row_index; $i++){
-    if (defined $self->raw_results->[$i][$column_index]){
-      $error = ($self->raw_results->[$i][$column_index] - $mean);
-      $sum_errors_pow2 += $error**2;
-      $sum_errors_pow3 += $error**3;
-      $sum_errors_pow4 += $error**4;
-    }
-  }
+	for (my $i=$start_row_index; $i<=$end_row_index; $i++){
+		if (defined $self->raw_results->[$i][$column_index]){
+			$error = ($self->raw_results->[$i][$column_index] - $mean);
+			$sum_errors_pow2 += $error**2;
+			$sum_errors_pow3 += $error**3;
+			$sum_errors_pow4 += $error**4;
+		}
+	}
 
-  ## TODO fråga om missing values. och om SD
+	## TODO fråga om missing values. och om SD
 
-  $stdev=0;
-  unless( $sum_errors_pow2 == 0 ){
+	$stdev=0;
+	unless( $sum_errors_pow2 == 0 ){
 
-    $stdev= sqrt ($sum_errors_pow2/($row_count-1));
-    $skewness = $sum_errors_pow3/($row_count*($stdev**3));
-    $kurtosis = -3 + $sum_errors_pow4/($row_count*($stdev**4));
-
-  }
+		$stdev= sqrt ($sum_errors_pow2/($row_count-1));
+		if ($row_count > 2){
+			$skewness = ($sum_errors_pow3*$row_count)/(($row_count-1)*($row_count-2)*($stdev**3));
+		}
+		if ($row_count > 3){
+			$kurtosis = -3*(($row_count-1)**2)/(($row_count-2)*($row_count-3)) + 
+				($sum_errors_pow4*$row_count*($row_count+1))/(($row_count-1)*($row_count-2)*($row_count-3)*($stdev**4));
+		}
+	}
 
 	return $skewness ,$kurtosis ,$mean ,$stdev ,$warn;
 }
@@ -2480,11 +2484,11 @@ sub max_and_min
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 use_runs => { isa => 'ArrayRef[Bool]', optional => 0 },
-		 column_index => { isa => 'Int', optional => 0 },
-		 start_row_index => { isa => 'Int', default => 0, optional => 1 },
-		 end_row_index => { isa => 'Int', optional => 1 }
-	);
+							  use_runs => { isa => 'ArrayRef[Bool]', optional => 0 },
+							  column_index => { isa => 'Int', optional => 0 },
+							  start_row_index => { isa => 'Int', default => 0, optional => 1 },
+							  end_row_index => { isa => 'Int', optional => 1 }
+		);
 	my @use_runs = defined $parm{'use_runs'} ? @{$parm{'use_runs'}} : ();
 	my $column_index = $parm{'column_index'};
 	my $start_row_index = $parm{'start_row_index'};
@@ -2492,27 +2496,27 @@ sub max_and_min
 	my $maximum;
 	my $minimum;
 
-  #input is integers $column_index, $start_row_index, $end_row_index 
-  
-  unless( $end_row_index ){
-    $end_row_index = $#{$self -> raw_results};
-  }
+	#input is integers $column_index, $start_row_index, $end_row_index 
+	
+	unless( $end_row_index ){
+		$end_row_index = $#{$self -> raw_results};
+	}
 
-  croak("Bad row index input") if ($start_row_index >= $end_row_index);
+	croak("Bad row index input") if ($start_row_index >= $end_row_index);
 
-  $maximum = -1000000000;
-  $minimum =  1000000000;
-  for (my $i=$start_row_index; $i<=$end_row_index; $i++){
-    if ($use_runs[$i-$start_row_index]){
-      if (defined $self->raw_results->[$i][$column_index]){
+	$maximum = -1000000000;
+	$minimum =  1000000000;
+	for (my $i=$start_row_index; $i<=$end_row_index; $i++){
+		if ($use_runs[$i-$start_row_index]){
+			if (defined $self->raw_results->[$i][$column_index]){
 				$maximum = $self->raw_results->[$i][$column_index] if
-				($self->raw_results->[$i][$column_index] > $maximum); 
+					($self->raw_results->[$i][$column_index] > $maximum); 
 				$minimum = $self->raw_results->[$i][$column_index] if
-				($self->raw_results->[$i][$column_index] < $minimum); 
+					($self->raw_results->[$i][$column_index] < $minimum); 
 			}else{
 			}
-    }
-  }
+		}
+	}
 
 	return $maximum ,$minimum;
 }
@@ -2521,12 +2525,12 @@ sub cleanup
 {
 	my $self = shift;
 
-  #remove tablefiles in simulation NM_runs, they are 
-  #copied to m1 by modelfit and read from there anyway.
-  for (my $samp=1;$samp<=$self->samples(); $samp++) {
-    unlink $self -> directory."/simulation_dir1/NM_run".$samp."/mc-sim-".$samp.".dat";
-    unlink $self -> directory."/simulation_dir1/NM_run".$samp."/mc-sim-".$samp."-1.dat"; #retry
-  }
+	#remove tablefiles in simulation NM_runs, they are 
+	#copied to m1 by modelfit and read from there anyway.
+	for (my $samp=1;$samp<=$self->samples(); $samp++) {
+		unlink $self -> directory."/simulation_dir1/NM_run".$samp."/mc-sim-".$samp.".dat";
+		unlink $self -> directory."/simulation_dir1/NM_run".$samp."/mc-sim-".$samp."-1.dat"; #retry
+	}
 }
 
 no Moose;
