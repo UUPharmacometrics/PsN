@@ -577,7 +577,6 @@ sub run
 				$queue_info{$run}{'run_results'} = [];
 				$queue_info{$run}{'raw_results'} = [];
 				$queue_info{$run}{'raw_nonp_results'} = [];
-				$queue_info{$run}{'start_time'} = 0;
 
 				# printing progress
 
@@ -615,19 +614,19 @@ sub run
 
 			my %options_hash = %{$self->_get_run_options(run_id => $run)}; 
 
-			$self -> run_nonmem(run_no => $run,
+			$self->run_nonmem(run_no => $run,
 								  nm_version      => $options_hash{'nm_version'},
 								  queue_info      => $queue_info{$run},
 								  queue_map       => \%queue_map);
 
-			ui -> print( category => 'all', message  => "\nAll executions started.",newline => 1 )
+			ui -> print(category => 'all', message  => "\nAll executions started.", newline => 1)
 				if ($started_all_models and $self->parent_threads <= 1  and not $self->verbose and not $started_all_models_print);
 			$started_all_models_print = 1;
 			chdir('..');
-			$self->stop_motion_call(tool=>'modelfit',message => "change directory one level up")
+			$self->stop_motion_call(tool=>'modelfit', message => "change directory one level up")
 				if ($self->stop_motion > 1);
 
-			ui -> category( $old_category );
+			ui -> category($old_category);
 
 			next; #go back to main while loop to check if there is another job that can be started
 		}
@@ -645,9 +644,8 @@ sub run
 		while (not $pid) {
 			# (sleep to make polling less demanding).
 					
-			if( defined $PsN::config -> {'_'} -> {'job_polling_interval'} and
-				$PsN::config -> {'_'} -> {'job_polling_interval'} > 0 ) {
-				sleep($PsN::config -> {'_'} -> {'job_polling_interval'});
+			if (defined $PsN::config->{'_'}->{'job_polling_interval'} and $PsN::config->{'_'}->{'job_polling_interval'} > 0) {
+				sleep($PsN::config->{'_'}->{'job_polling_interval'});
 			} else {
 				sleep(1);
 			}
@@ -671,7 +669,7 @@ sub run
 				
 				# Check the job status
 				my $nonmemrun = $queue_info{$queue_map{$check_pid}}{'nonmemrun'};
-				$pid = $nonmemrun->monitor(jobId => $check_pid);
+				$pid = $nonmemrun->monitor;
 
 				last if $pid; #we found a finished run, do not loop over more running pid
 			}
@@ -690,12 +688,12 @@ sub run
 
 				my $candidate_model = $queue_info{$run}{'candidate_model'};
 
-				my $work_dir = 'NM_run' . ($run+1) ;
+				my $work_dir = 'NM_run' . ($run + 1) ;
 				chdir($work_dir);
 				$self->stop_motion_call(tool=>'modelfit',message => "A NONMEM run has finished (system process with id $pid ".
 										"has disappeared).\n".
 										"Changed to directory $work_dir of this process to check results.")
-					if ($self->stop_motion() > 1);
+					if ($self->stop_motion > 1);
 
 				$self->compute_cwres(queue_info => $queue_info{$run}, run_no => $run);
 
@@ -706,14 +704,14 @@ sub run
 				my $tmptry  = exists $queue_info{$run}{'tries'} ? $queue_info{$run}{'tries'} : 0;
 				#have two alternatives: first for backward reproducability of sequences
 				#second to prevent bug when very large number of models
-				if ($run < 5000){
-					random_set_seed(($tmpseed+100000*($run+1)),($tmptry+1));
+				if ($run < 5000) {
+					random_set_seed(($tmpseed + 100000 * ($run + 1)), ($tmptry + 1));
 				}else{
 					my $phrase = "seed $tmpseed try $tmptry run $run";
 					random_set_seed_from_phrase($phrase);
 				}
 
-				my %options_hash = %{$self -> _get_run_options(run_id => $run)};
+				my %options_hash = %{$self->_get_run_options(run_id => $run)};
 
 				for my $key (keys %options_hash) {			# ADDED
 					delete $options_hash{$key} unless defined $options_hash{$key};
@@ -721,13 +719,13 @@ sub run
 
 				#careful here, option maxevals is set on commandline, but model->maxeval() is 
 				#array of values actually set in modelfile
-				my $do_restart = $self -> restart_needed( %options_hash,
+				my $do_restart = $self -> restart_needed(%options_hash,
 														  queue_info  => $queue_info{$run},
 														  run_no      => $run,
 														  maxevals		=> $candidate_model->maxevals);
 
 				if ($self->abort_on_fail) {
-					my $tries = \$queue_info{$run} -> {'tries'};
+					my $tries = \$queue_info{$run}->{'tries'};
 					if ($queue_info{$run}->{'run_results'}->[${$tries}]->{'failed'}) {
 						$do_restart = 0;
 						@queue = ();
@@ -1695,24 +1693,24 @@ sub run_nonmem
 				mv($new_name,$filename);
 			}
 			$queue_map->{'rerun_'.$run_no} = $run_no; #Fake pid
-			$self->stop_motion_call(tool=>'modelfit',
+			$self->stop_motion_call(tool => 'modelfit',
 									message => "psn-prevrun.lst exists and not retry or psn.lst. ".
 									"Move to psn.lst and give fake pid of ".'rerun_'.$run_no.
 									' to make it look like psn.mod is run, '.
 									'so that output will be checked the usual way.')
-				if ($self->stop_motion());
+				if ($self->stop_motion);
 			return;
 		}
 	}
 	
 	# We do not expect any values of rerun lower than 1 here. (a bug otherwise...)
-	if ( not -e 'psn-' . ( $tries + 1 ) . '.lst' or $self->rerun >= 2 ) {
+	if (not -e 'psn-' . ($tries + 1) . '.lst' or $self->rerun >= 2) {
 		#missing psn-1.lst etc or force rerun
 		
 		# Execution step 
-		
+		my $nonmem_run;
+
 		if ($self->run_local) {
-			my $nonmem_run;
 			if ($Config{osname} eq 'MSWin32') {
 				$nonmem_run = nonmemrun::localwindows->new(
 					nm_version => $nm_version,
@@ -1738,15 +1736,8 @@ sub run_nonmem
 					display_iterations => $self->display_iterations,
 				);
 			}
-
-			$queue_info->{'nonmemrun'} = $nonmem_run;
-			my $pid = $nonmem_run->submit;
-			$queue_map->{$pid} = $run_no;
-
-			$queue_info->{'start_time'} = time;
-
 		} elsif ($self->run_on_lsf or $self->run_on_lsf_nmfe) {
-			my $nonmem_run = nonmemrun::lsf->new(
+			$nonmem_run = nonmemrun::lsf->new(
 				parafile => $self->parafile ne 'none' ? $self->parafile : undef,
 				nmfe_options => $self->nmfe_options,
 				nodes => $self->nodes,
@@ -1760,15 +1751,8 @@ sub run_nonmem
 				lsf_sleep => $self->lsf_sleep,
 				lsf_options => $self->lsf_options,
 			);
-			$queue_info->{'nonmemrun'} = $nonmem_run;
-			my $jobId = $nonmem_run->submit;
-			if ($jobId == -1) {
-				$queue_map->{'fail_'.$run_no} = $run_no;
-			} else {
-				$queue_map->{$jobId} = $run_no;
-			}
 		} elsif ($self->run_on_ud) {
-			my $nonmem_run = nonmemrun::ud->new(
+			$nonmem_run = nonmemrun::ud->new(
 				parafile => $self->parafile ne 'none' ? $self->parafile : undef,
 				nmfe_options => $self->nmfe_options,
 				nodes => $self->nodes,
@@ -1777,15 +1761,8 @@ sub run_nonmem
 				directory => $self->directory,
 				run_no => $run_no,
 			);
-			$queue_info->{'nonmemrun'} = $nonmem_run;
-			my $jobId = $nonmem_run->submit;
-			if ($jobId == -1){
-				$queue_map->{'fail_'.$run_no} = $run_no;
-			}else{
-				$queue_map->{$jobId} = $run_no;
-			}
 		} elsif ($self->run_on_sge or $self->run_on_sge_nmfe) {
-			my $nonmem_run = nonmemrun::sge->new(
+			$nonmem_run = nonmemrun::sge->new(
 				parafile => $self->parafile ne 'none' ? $self->parafile : undef,
 				nmfe_options => $self->nmfe_options,
 				prepend_flags => $self->sge_prepend_flags,
@@ -1795,15 +1772,8 @@ sub run_nonmem
 				resource => $self->sge_resource,
 				queue => $self->sge_queue,
 			);
-			$queue_info->{'nonmemrun'} = $nonmem_run;
-			my $jobId = $nonmem_run->submit;
-			if ($jobId == -1) {
-				$queue_map->{'fail_'.$run_no} = $run_no;
-			} else {
-				$queue_map->{$jobId} = $run_no;
-			}
 		} elsif ($self->run_on_slurm) {
-			my $nonmem_run = nonmemrun::slurm->new(
+			$nonmem_run = nonmemrun::slurm->new(
 				nm_version => $nm_version,
 				parafile => $self->parafile ne 'none' ? $self->parafile : undef,
 				email_address => $self->email_address,
@@ -1816,15 +1786,8 @@ sub run_nonmem
 				model => $queue_info->{'model'},
 				account => $self->slurm_account,
 			);
-			$queue_info->{'nonmemrun'} = $nonmem_run;
-			my $jobId = $nonmem_run->submit;
-			if ($jobId == -1) {
-				$queue_map->{'fail_'.$run_no} = $run_no;
-			} else {
-				$queue_map->{$jobId} = $run_no;
-			}
 		} elsif ($self->run_on_torque) {
-			my $nonmem_run = nonmemrun::torque->new(
+			$nonmem_run = nonmemrun::torque->new(
 				prepend_flags => $self->torque_prepend_flags,
 				model => $queue_info->{'model'},
 				nm_version => $nm_version,
@@ -1833,31 +1796,25 @@ sub run_nonmem
 				nodes => $self->nodes,
 				parafile => $self->parafile ne 'none' ? $self->parafile : undef,
 			);
-			$queue_info->{'nonmemrun'} = $nonmem_run;
-			my $jobId = $nonmem_run->submit;
-			if ($jobId == -1) {
-				$queue_map->{'fail_'.$run_no} = $run_no;
-			} else {
-				$queue_map->{$jobId} = $run_no;
-			}
 		} elsif ($self->run_on_zink) {
-			my $nonmem_run = nonmemrun::zink->new(
+			$nonmem_run = nonmemrun::zink->new(
 				nm_version => $nm_version,
 				model => $queue_info->{'model'},
 				parafile => $self->parafile ne 'none' ? $self->parafile : undef,
 				nmfe_options => $self->nmfe_options,
 				nodes => $self->nodes,
 			);
-			$queue_info->{'nonmemrun'} = $nonmem_run;
-			my $jobId = $nonmem_run->submit;
-			if ($jobId == -1) {
-				$queue_map->{'fail_'.$run_no} = $run_no;
-			} else {
-				$queue_map->{$jobId} = $run_no;
-			}
 		}
 
-	} elsif ( $self->rerun >= 1 ) {
+		$queue_info->{'nonmemrun'} = $nonmem_run;
+		my $jobId = $nonmem_run->submit;
+		if ($jobId == -1) {
+			$queue_map->{'fail_' . $run_no} = $run_no;
+		} else {
+			$queue_map->{$jobId} = $run_no;
+		}
+
+	} elsif ($self->rerun >= 1) {
 		#psn-(tries+1).lst exists, and rerun < 2
 		
 		# We are not forcing a rerun, but we want to recheck the

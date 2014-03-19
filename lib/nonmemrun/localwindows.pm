@@ -28,16 +28,15 @@ sub submit
 	Win32::Process::Create($proc, $self->full_path_nmfe, $nmfe_command, 0, $Win32::Process::NORMAL_PRIORITY_CLASS, '.') || die ErrorReport();
 	$self->windows_process($proc);
 
-	return $proc->GetProcessID();
+	my $pid = $proc->GetProcessID();
+	$self->job_id($pid);
+	return $pid;
 }
 
 sub monitor
 {
 	my $self = shift;
-	my %parm = validated_hash(\@_,
-		jobId => { isa => 'Any' }
-	);
-	my $jobId = $parm{'jobId'};
+	my $jobId = $self->job_id;
 
 	require Win32::Process;
 	require Win32;

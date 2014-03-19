@@ -44,6 +44,7 @@ sub submit
 		exit;
 	}
 
+	$self->job_id($pid);
 	return $pid;
 }
 
@@ -51,10 +52,7 @@ sub submit
 sub monitor
 {
 	my $self = shift;
-	my %parm = validated_hash(\@_,
-		jobId => { isa => 'Any' }
-	);
-	my $jobId = $parm{'jobId'};
+	my $jobId = $self->job_id;
 
 	my $pid = waitpid($jobId, WNOHANG);
 

@@ -42,16 +42,14 @@ sub submit
 			system('echo ' . $error . ' > job_submission_error');
 		}
 	}
+	$self->job_id($jobId);
 	return $jobId;
 }
 
 sub monitor
 {
 	my $self = shift;
-	my %parm = validated_hash(\@_,
-		 jobId => { isa => 'Int', optional => 1 }
-	);
-	my $jobId = $parm{'jobId'};
+	my $jobId = $self->job_id;
 
 	#this cannot possible work, but leave it here if any user wants to use ud. 
 	# will be easy to fix this

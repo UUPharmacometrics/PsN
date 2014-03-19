@@ -44,16 +44,14 @@ sub submit
   LockFile::Simple::unlock $jobId;
   $jobId = OSspecific::nopath($jobId);
 
+	$self->job_id($jobId);
 	return $jobId;
 }
 
 sub monitor
 {
 	my $self = shift;
-	my %parm = validated_hash(\@_,
-		 jobId => { isa => 'Int', optional => 1 }
-	);
-	my $jobId = $parm{'jobId'};
+	my $jobId = $self->job_id;
 
   ## Specifies the top level directory of the Zink directory structure. Should be specified via psn.conf
   my $ZinkDir = $PsN::config->{'_'}->{'zink_dir'};

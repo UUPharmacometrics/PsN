@@ -33,19 +33,15 @@ sub submit
 		exit; # Die Here if exec failed. Probably happens very rarely.
 	}
 
+	$self->job_id($pid);
 	return $pid;
 }
-
 
 sub monitor
 {
 	my $self = shift;
-	my %parm = validated_hash(\@_,
-		jobId => { isa => 'Any' }
-	);
-	my $jobId = $parm{'jobId'};
 
-	my $pid = waitpid($jobId, WNOHANG);
+	my $pid = waitpid($self->job_id, WNOHANG);
 
 	# Waitpid will return $check_pid if that process has
 	# finished and 0 if it is still running.
@@ -63,7 +59,7 @@ sub monitor
 		if ($self->_nr_wait > 10) {
 			croak("Nonmem run was lost\n");
 		}
-		$pid = $jobId;
+		$pid = $self->job_id;
 	}
 
 	return $pid;

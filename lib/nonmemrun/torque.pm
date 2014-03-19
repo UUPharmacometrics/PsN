@@ -47,26 +47,25 @@ sub submit
 	  system('echo ' . $error . ' > job_submission_error');
 
 	  $jobId = -1;
-  }else{
-  	  open(JOBFILE, "JobId") or croak("Couldn't open torque JobId file for reading: $!" );
-	  while( <JOBFILE> ){
-		  if( /(\d+.[0-9A-Za-z\-\.]*)/ ){
-			  $jobId = $1;
-		  }
-	  }
-	  close(JOBFILE);
-  }
-  return $jobId;
+	} else {
+		open(JOBFILE, "JobId") or croak("Couldn't open torque JobId file for reading: $!");
+		while (<JOBFILE>) {
+			if (/(\d+.[0-9A-Za-z\-\.]*)/) {
+				$jobId = $1;
+			}
+		}
+		close(JOBFILE);
+	}
+
+	$self->job_id($jobId);
+	return $jobId;
 }
 
 
 sub monitor
 {
 	my $self = shift;
-	my %parm = validated_hash(\@_,
-		jobId => { isa => 'Int', optional => 1 }
-	);
-	my $jobId = $parm{'jobId'};
+	my $jobId = $self->job_id;
 
 	carp("Checking Torque queue for $jobId");
 	my $response = `qstat $jobId 2>&1`;

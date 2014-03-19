@@ -95,6 +95,7 @@ sub submit
 	}
 	system('echo '.$jobId.' > jobId');
 
+	$self->job_id($jobId);
 	return $jobId;
 }
 
@@ -102,10 +103,7 @@ sub submit
 sub monitor
 {
 	my $self = shift;
-	my %parm = validated_hash(\@_,
-		jobId => { isa => 'Int', optional => 1 }
-	);
-	my $jobId = $parm{'jobId'};
+	my $jobId = $self->job_id;
 
 	#squeue -j 12345, --jobs
 

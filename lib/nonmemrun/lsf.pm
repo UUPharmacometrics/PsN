@@ -64,6 +64,7 @@ sub submit
 
   sleep($self->lsf_sleep) if (defined $self->lsf_sleep);
 
+	$self->job_id($jobId);
 	return $jobId;
 }
 
@@ -71,10 +72,7 @@ sub submit
 sub monitor
 {
 	my $self = shift;
-	my %parm = validated_hash(\@_,
-		jobId => { isa => 'Int', optional => 1 }
-	);
-	my $jobId = $parm{'jobId'};
+	my $jobId = $self->job_id;
 
 	my $string = "bjobs $jobId 2>&1";
 	my $stdout = `$string`;

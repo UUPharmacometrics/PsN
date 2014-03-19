@@ -5,6 +5,7 @@ use include_modules;
 use Moose;
 use MooseX::Params::Validate;
 
+has 'job_id' => (is => 'rw', isa => 'Int' );
 has 'nm_version' => ( is => 'rw', isa => 'Str', required => 1 );
 has 'full_path_nmtran' => ( is => 'rw', isa => 'Str' );
 has 'full_path_nmfe' => ( is => 'rw', isa => 'Str' );
