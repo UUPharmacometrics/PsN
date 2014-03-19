@@ -7,7 +7,7 @@ use lib 'lib';
 use ext::Config::Tiny;
 use ext::File::HomeDir;
 
-my $version = '4.1.2';
+my $version = '4.1.3';
 
 my $default_user_name;
 my $default_sitelib;

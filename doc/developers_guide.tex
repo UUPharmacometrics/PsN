@@ -10,8 +10,35 @@
 \section{Introduction}
 
 This document is intended for PsN developers. It is work in progress.
+\section{Installing a non-public version of PsN for running and testing}
+\begin{itemize}
+\item Install git \cite{git}. 
+\item Do git clone in a suitable place on your computer.
+\begin{verbatim}
+git clone git://git.code.sf.net/p/psn/PsN4 PsN4
+\end{verbatim}
+\item Change directory to PsN4.
+\begin{verbatim}
+cd PsN4
+\end{verbatim}
+\item Run commands 
+\begin{verbatim}
+make clean
+make release
+\end{verbatim}
+\noindent which gives you a directory PsN-Source.
+\item Change directory to PsN-Source.
+\begin{verbatim}
+cd PsN-Source
+\end{verbatim}
+\item Run the setup script, as you would with if you had downloaded an installation package from psn.sf.net
+\begin{verbatim}
+perl setup.pl
+\end{verbatim}
+\item To be able to run the tests in PsN4/test on the PsN version you just installed, you need to edit PsN4/test/includes.pm to set the right use lib statements. The includes.pm file is currently needed to run tests on non-default PsN versions on a system where multiple versions of PsN are installed. 
+\end{itemize}
 
-\section{Installing development version of PsN}
+\section{Installing development version of PsN to make contributions to the code}
 \begin{itemize}
 \item Install git \cite{git}. 
 \item Do git clone in a suitable place on your computer, and checkout a suitable branch. On linux:
@@ -21,7 +48,6 @@ git clone git://git.code.sf.net/p/psn/PsN4 PsN4
 git checkout -b NLP origin/NLP 
 
 \end{verbatim}
-\pagebreak
 \noindent Then do the following (assuming linux):
 \item Add the PsN4/bin directory to your \$PATH variable, so that you can call PsN scripts without including the path.
 \item Copy the file PsN4/lib/PsN\_template.pm to PsN4/lib/PsN.pm. Open PsN.pm and add the following lines at the very top, before
@@ -39,9 +65,6 @@ You can use PsN4/lib/psn.conf\_template as a template and just fill in the [nm\_
 according to psn\_configuration.pdf.
 \item Make sure you have the required Perl modules listed in PsN4/README.txt installed.
 \item To be able to run the tests in PsN4/test you need to edit PsN4/test/includes.pm to set the right use statements for your user. 
-\item A few
-tests in PsN4/test/system/sse.t are guaranteed to fail since they use a model and datafile that is not public and therefore not included in the
-repository. To skip these tests you can comment out the commands using private\_test\_files in PsN4/test/system/sse.t.
 \item To be able to push your changes on the git server you need create a SourceForge account, 
 and then ask the PsN team to give you permission to push on PsN4.
 Stay on the NLP branch so that git pull and git push will be on that branch. 
@@ -50,12 +73,12 @@ Stay on the NLP branch so that git pull and git push will be on that branch.
 \section{Testing}
 The PsN4/test directory contains the tests. Unit tests are in PsN4/test/unit and system tests in PsN4/test/system. 
 Unit tests are defined as tests that do not involve \emph{running} NONMEM, while system tests is all the rest. 
-Scripts unit\_tests.pl and system\_tests.pl in 
+Script unit\_tests.pl and system\_tests.pl in 
 PsN4/test will run all tests (i.e. all .t scripts) in the unit and system subdirectories, respectively. 
-Individual test scripts are run with e.g. perl bootstrap.t. 
-Currently a few
-tests in PsN4/test/system/sse.t are guaranteed to fail since they use a model and datafile that is not public and therefore not included in the
-repository. To skip these tests you can comment out the commands using private\_test\_files in PsN4/test/system/sse.t.
+Individual test scripts are run with e.g. 
+\begin{verbatim}
+prove bootstrap.t
+\end{verbatim}
 \section{Build environment}
 The documentation is made in \LaTeX and pdfs can be generated with \verb|make doc|. The
 packages texlive-extra-util and texlive-science are needed to build all documents.
