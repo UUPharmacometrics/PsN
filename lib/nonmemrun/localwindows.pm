@@ -7,6 +7,7 @@ use MooseX::Params::Validate;
 extends 'nonmemrun';
 
 has 'windows_process' => ( is => 'rw', isa => 'Win32::Process' );
+has 'display_iterations' => ( is => 'rw', isa => 'Bool', default => 0 );
 
 sub submit
 {
@@ -19,12 +20,16 @@ sub submit
 	require Win32;
 	sub ErrorReport{ print Win32::FormatMessage(Win32::GetLastError()); }
 	my $proc;
+
+	if (not $self->display_iterations) {
+		$nmfe_command .= ' >' . $self->nmfe_output_file;
+	}
+
 	Win32::Process::Create($proc, $self->full_path_nmfe, $nmfe_command, 0, $Win32::Process::NORMAL_PRIORITY_CLASS, '.') || die ErrorReport();
 	$self->windows_process($proc);
 
 	return $proc->GetProcessID();
 }
-
 
 sub monitor
 {

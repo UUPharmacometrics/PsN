@@ -1717,6 +1717,7 @@ sub run_nonmem
 				$nonmem_run = nonmemrun::localwindows->new(
 					nm_version => $nm_version,
 					nmfe_options => $self->create_nmfe_options_string,
+					display_iterations => $self->display_iterations,
 				);
 			} elsif ($self->run_on_mosix) {
 				$nonmem_run = nonmemrun::mosix->new(
@@ -1724,6 +1725,7 @@ sub run_nonmem
 					parafile => $self->parafile ne 'none' ? $self->parafile : undef,
 					nmfe_options => $self->create_nmfe_options_string,
 					nodes => $self->nodes,
+					display_iterations => $self->display_iterations,
 				);
 			} else {
 				$nonmem_run = nonmemrun::localunix->new(
@@ -1731,6 +1733,7 @@ sub run_nonmem
 					parafile => $self->parafile ne 'none' ? $self->parafile : undef,
 					nmfe_options => $self->create_nmfe_options_string,
 					nodes => $self->nodes,
+					display_iterations => $self->display_iterations,
 				);
 			}
 

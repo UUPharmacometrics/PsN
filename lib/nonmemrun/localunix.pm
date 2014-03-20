@@ -8,7 +8,8 @@ use MooseX::Params::Validate;
 extends 'nonmemrun';
 
 has '_nr_wait' => ( is => 'rw', isa => 'Int', default => 0 );
-has 'nice' => (is => 'rw', isa => 'Maybe[Int]' );
+has 'nice' => ( is => 'rw', isa => 'Maybe[Int]' );
+has 'display_iterations' => ( is => 'rw', isa => 'Bool', default => 0 );
 
 sub submit
 {
@@ -20,6 +21,10 @@ sub submit
 
 	if ($self->nice) {
 		$nmfe_command = 'nice -n '. $self->nice . " $nmfe_command";
+	}
+
+	if (not $self->display_iterations) {
+		$nmfe_command .= ' >' . $self->nmfe_output_file;
 	}
 
 	my $pid = fork();

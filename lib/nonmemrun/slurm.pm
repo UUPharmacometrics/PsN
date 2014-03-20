@@ -26,7 +26,7 @@ sub submit
 	#need to check translation for -b y
 
 	my $flags = ' -J ' . $jobname;
-	$flags .= ' -o nmfe.output -e nmfe.output ';
+	$flags .= ' -o ' . $self->nmfe_output_file . ' -e ' . $self->nmfe_output_file. ' ';
 	if (defined $self->account) {
 		$flags .= ' -A ' . $self->account;
 	} else {

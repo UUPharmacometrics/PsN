@@ -16,6 +16,7 @@ has 'max_runtime' => ( is => 'rw', isa => 'Maybe[Str]' );
 has 'parafile' => (is => 'rw', isa => 'Maybe[Str]' );
 has 'nodes' => ( is => 'rw', isa => 'Int', default => 0 );
 has 'model' => ( is => 'rw', isa => 'model' );
+has 'nmfe_output_file' => ( is => 'rw', isa => 'Str', default => 'nmfe_output.txt' );
 
 sub BUILD
 {
@@ -64,6 +65,7 @@ sub pre_compile_cleanup
 	unlink('psn.lst', 'nmfe_error', 'OUTPUT', 'output', 'job_submission_error');
   unlink('lsf_stderr_stdout', 'lsf_jobscript');
 }
+
 sub nmfe_setup_paths
 {
 	my $self = shift;
@@ -170,7 +172,6 @@ sub nmfe_setup_paths
     croak($mess);
   }
 }
-
 
 no Moose;
 __PACKAGE__->meta->make_immutable;
