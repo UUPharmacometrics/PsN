@@ -24,7 +24,7 @@ sub is_array{
 	
 }
 
-my $modeldir = "../test_files";
+my $modeldir = $includes::testfiledir;
 my $model = model->new(filename => "$modeldir/pheno.mod");
 my $problem = $model->problems->[0];
 

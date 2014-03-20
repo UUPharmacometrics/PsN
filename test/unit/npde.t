@@ -5,14 +5,14 @@ use strict;
 use warnings;
 use Test::More;	#count them!
 use Test::Exception;
-use File::Path 'rmtree';		
+use File::Path 'rmtree';	
 use lib ".."; #location of includes.pm
 use includes; #file with paths to PsN packages
 use npde_util;
 use file;
 use tool::ebe_npde;
 
-my $filedir = '../test_files/npde/';
+my $filedir = $includes::testfiledir . '/npde/';
 #my @file_array=($filedir.'original.etas',$filedir.'sim-1.etas',$filedir.'sim-2.etas',$filedir.'sim-3.etas');
 my @file_array=($filedir.'original.phi',$filedir.'sim-1.phi',$filedir.'sim-2.phi',$filedir.'sim-3.phi');
 

@@ -1,22 +1,24 @@
 package includes;
-#require Exporter;
-#our @ISA = qw(Exporter);
-#our @EXPORT = qw(done_testing);
 
 use strict;
+use File::Spec;
+use Cwd;
 
-my $username = getpwuid($<);
-our $path;
-
-if ($username eq 'rikard') {
-	use lib "/home/rikard/PsN4/lib";
-	use lib "/home/rikard/PsN4";
-	$path = "/home/rikard/PsN4/bin/";
-} elsif ($username eq 'kajsa') {
-	use lib "/home/kajsa/kod-psn/PsN4/lib";
-	use lib "/home/kajsa/kod-psn/PsN4";
-	$path = "/home/kajsa/kod-psn/PsN4/bin/";
+# Setup an include path to the lib directory
+# First get the path of this module and split out the directory part
+# Then make it into an absolute path
+BEGIN
+{
+	my ($volume, $directory, $file) = File::Spec->splitpath(__FILE__);
+	my $libpath = Cwd::abs_path($volume . $directory . '../lib');
+	unshift @INC, $libpath;
 }
+
+# Get an absolute path to the scripts
+my ($volume, $directory, $file) = File::Spec->splitpath(__FILE__);
+our $path = Cwd::abs_path($volume . $directory . '../bin');
+
+our $testfiledir = Cwd::abs_path($volume . $directory . 'test_files');
 
 use PsN;
 

@@ -10,11 +10,13 @@ use Math::Random;
 use lib ".."; #location of includes.pm
 use includes; #file with paths to PsN packages
 
-use lib "../test_files/output";
-use answers;
+#use lib "../test_files/output";
+
+unshift @INC, $includes::testfiledir . '/output';
+require answers;
 use output;
 
-our $test_files = '../test_files/output/';
+our $test_files = $includes::testfiledir . '/output/';
 
 $SIG{__WARN__} = sub {
 	my $message = shift;
@@ -79,6 +81,4 @@ for (my $i=0; $i< scalar(@answer_hashes); $i++){
 	}
 }
 
-
 done_testing;
-

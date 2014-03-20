@@ -3,12 +3,14 @@
 use strict;
 use warnings;
 use Test::More tests=>91;
-use lib ".."; #location of includes.pm
+use FindBin qw($Bin);
+use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages
 
 use model;
 
-sub is_array{
+sub is_array
+{
     my $func=shift;
     my $facit=shift;
     my $label=shift;
@@ -20,10 +22,9 @@ sub is_array{
     for (my $i=0; $i<$min; $i++){
     	is ($func->[$i],$facit->[$i],"$label, index $i");
     }		
-	
 }
 
-my $modeldir = "../test_files";
+my $modeldir = $includes::testfiledir;
 
 my $model = model->new(filename => "$modeldir/pheno.mod");
 
