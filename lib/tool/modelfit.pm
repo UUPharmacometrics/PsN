@@ -421,15 +421,15 @@ sub run
 	# initialized to all models in the tool. Note that if X is in
 	# the queue, it doesn't mean NM_runX exists.
 
-	my @queue = (0..$#models);
+	my @queue = (0 .. $#models);
 	my $all_jobs_started = 0;
 
 	# We loop while there is content in the queue (which shrinks when jobs are submitted and grows when restarts are needed)
 	# and while we have jobs running, i.e. scalar keys %queue_map > 0 (represented in the queue_info)
 
-	while( (scalar(@queue) > 0) or (scalar keys %queue_map > 0) ) {
+	while ((scalar(@queue) > 0) or (scalar keys %queue_map > 0)) {
 
-		if ( (scalar @queue > 0) and (scalar keys %queue_map < $threads) ){
+		if ((scalar(@queue) > 0) and (scalar keys %queue_map < $threads)) {
 			#we may start a new job here 
 			# This is where we initiate a new job:
 			
@@ -439,58 +439,60 @@ sub run
 			
 			# check for no run conditions. (e.g. job already run)
 			
-			if ( -e $self->models->[$run]->outputs->[0]->full_name and $self->rerun < 1 ) {
+			if (-e $self->models->[$run]->outputs->[0]->full_name and $self->rerun < 1) {
 				
-				if( not -e './NM_run' . ($run+1) . '/done' ){
+				if (not -e './NM_run' . ($run + 1) . '/done') {
 					# here we have an .lst file, no done file and we are not
 					# rerunning NONMEM. Which means we must create fake NM_run and
 					# "done" files. (Usually this case occurs if we want to
 					# use execute to create a summary or run table).
 					
-					mkdir( "./NM_run" . ($run+1) );
-					open( DONE, ">./NM_run". ($run+1) ."/done.1" );
-					print DONE "This is faked\nseed: 1 1\n" ;
-					close( DONE );
+					mkdir("./NM_run" . ($run + 1));
+					open(DONE, ">./NM_run". ($run+1) . "/done.1");
+					print DONE "This is faked\nseed: 1 1\n";
+					close(DONE);
 
 					my ($raw_results_row, $nonp_row) = $self->create_raw_results_rows(
 						max_hash => $self->max_hash,
 						model => $self->models->[$run],
 						model_number => $run + 1,
-						raw_line_structure => $self->raw_line_structure );
+						raw_line_structure => $self->raw_line_structure
+					);
 
 					$self->raw_results([]) unless defined $self->raw_results;
 					$self->raw_nonp_results([]) unless defined $self->raw_nonp_results;
 
-					push( @{$self->raw_results}, @{$raw_results_row} );
-					push( @{$self->raw_nonp_results}, @{$nonp_row} );
+					push(@{$self->raw_results}, @{$raw_results_row});
+					push(@{$self->raw_nonp_results}, @{$nonp_row});
 
 					# TODO Must copy tablefiles if they exist.
 
 					# We use the existing .lst file as the final product.
-					cp( $self->models->[$run]->outputs->[0]->full_name, './NM_run' . ($run+1) .'/psn.lst' );
+					cp($self->models->[$run]->outputs->[0]->full_name, './NM_run' . ($run+1) . '/psn.lst');
 					#copy NM7 files also...
 				}
 
 				# TODO Should check for tablefiles.
 
-				my $modulus = (($#models+1) <= 10) ? 1 : (($#models+1) / 10)+1;
+				my $modulus = (($#models + 1) <= 10) ? 1 : (($#models + 1) / 10) + 1;
 
-				if ( $run % $modulus == 0 or $run == 0 or $run == $#models ) {
-					ui -> print( category => 'all', wrap => 0, newline => 0,
-								 message  => 'D:'.( $run + 1 ).' .. ' )
-						unless( $self->parent_threads > 1 or $self->verbose );
+				if ($run % $modulus == 0 or $run == 0 or $run == $#models) {
+					ui -> print(category => 'all', wrap => 0, newline => 0,
+								 message  => 'D:' . ($run + 1) . ' .. ')
+						unless($self->parent_threads > 1 or $self->verbose);
 				}
 
-				$queue_info{$run}{'candidate_model'} =
-					model -> new( filename => "./NM_run" . ($run + 1) . "/psn.mod",
-								  target               => 'disk',
-								  ignore_missing_files => 1,
-								  quick_reload         => 1,
-								  cwres                => $models[$run] -> cwres() );
-				$self->print_finish_message( candidate_model => $queue_info{$run}{'candidate_model'}, run => $run );
+				$queue_info{$run}{'candidate_model'} = model->new(
+						filename => "./NM_run" . ($run + 1) . "/psn.mod",
+						target               => 'disk',
+						ignore_missing_files => 1,
+						quick_reload         => 1,
+						cwres                => $models[$run] -> cwres()
+					);
+				$self->print_finish_message(candidate_model => $queue_info{$run}{'candidate_model'}, run => $run);
 
 				$self->prepared_models([]) unless defined $self->prepared_models;
-				push( @{$self->prepared_models->[$run]{'own'}}, $queue_info{$run}{'candidate_model'} );
+				push(@{$self->prepared_models->[$run]{'own'}}, $queue_info{$run}{'candidate_model'});
 
 				next; # We are done with this model. It has already been run. Go back to main while loop.
 			}
@@ -516,12 +518,12 @@ sub run
 						$max_sleep = 0;
 					}
 
-					if( $min_sleep > $max_sleep * 1000000 ){
+					if ($min_sleep > $max_sleep * 1000000) {
 						$max_sleep = $min_sleep;
 					}
 
-					while( (not( -e 'NM_run'.($run).'/psn.lst' )) and 
-						   (Time::HiRes::time() - $start_sleep) < $max_sleep ) {
+					while ((not(-e 'NM_run' . ($run) . '/psn.lst')) and 
+						   (Time::HiRes::time() - $start_sleep) < $max_sleep) {
 						Time::HiRes::usleep($min_sleep);
 					}
 				}
@@ -564,7 +566,7 @@ sub run
 				#if stats-runs.csv exists then copy_model_and_input does not do anything
 				#but read psn.mod into candidate_model object
 				my $run_nmtran = 0;
-				if ($self->check_nmtran and (($run+1) < $self->nmtran_skip_model)) {
+				if ($self->check_nmtran and (($run + 1) < $self->nmtran_skip_model)) {
 					$run_nmtran = 1;
 				}
 				$queue_info{$run}{'candidate_model'} = $self -> copy_model_and_input(model => $models[$run], source => '../', run_nmtran => $run_nmtran);
@@ -584,10 +586,10 @@ sub run
 				# more than ten. But we always want to print the first
 				# and last
 
-				my $modulus = (($#models+1) <= 10) ? 1 : (($#models+1) / 10);
+				my $modulus = (($#models + 1) <= 10) ? 1 : (($#models + 1) / 10);
 
 				if ($self->send_email) {
-					my $mail_modulus = (($#models+1) <= 3) ? 1 : (($#models+1) / 5);
+					my $mail_modulus = (($#models + 1) <= 3) ? 1 : (($#models + 1) / 5);
 					if ($run == 0) {
 						$queue_info{$run}{'send_email'} = 'ALL';
 					} elsif ($run % $mail_modulus == 0 or $run == $#models) {
@@ -623,7 +625,7 @@ sub run
 				if ($started_all_models and $self->parent_threads <= 1  and not $self->verbose and not $started_all_models_print);
 			$started_all_models_print = 1;
 			chdir('..');
-			$self->stop_motion_call(tool=>'modelfit', message => "change directory one level up")
+			$self->stop_motion_call(tool => 'modelfit', message => "change directory one level up")
 				if ($self->stop_motion > 1);
 
 			ui -> category($old_category);
@@ -688,9 +690,9 @@ sub run
 
 				my $candidate_model = $queue_info{$run}{'candidate_model'};
 
-				my $work_dir = 'NM_run' . ($run + 1) ;
+				my $work_dir = 'NM_run' . ($run + 1);
 				chdir($work_dir);
-				$self->stop_motion_call(tool=>'modelfit',message => "A NONMEM run has finished (system process with id $pid ".
+				$self->stop_motion_call(tool => 'modelfit', message => "A NONMEM run has finished (system process with id $pid ".
 										"has disappeared).\n".
 										"Changed to directory $work_dir of this process to check results.")
 					if ($self->stop_motion > 1);
@@ -700,20 +702,20 @@ sub run
 				$self->compute_iofv(queue_info => $queue_info{$run}, run_no => $run);
 
 				# Make sure that each process gets a unique random sequence:
-				my $tmpseed = defined $self->seed() ? $self->seed() : random_uniform_integer(1,1,99999999);
+				my $tmpseed = defined $self->seed ? $self->seed : random_uniform_integer(1, 1, 99999999);
 				my $tmptry  = exists $queue_info{$run}{'tries'} ? $queue_info{$run}{'tries'} : 0;
 				#have two alternatives: first for backward reproducability of sequences
 				#second to prevent bug when very large number of models
 				if ($run < 5000) {
 					random_set_seed(($tmpseed + 100000 * ($run + 1)), ($tmptry + 1));
-				}else{
+				} else {
 					my $phrase = "seed $tmpseed try $tmptry run $run";
 					random_set_seed_from_phrase($phrase);
 				}
 
 				my %options_hash = %{$self->_get_run_options(run_id => $run)};
 
-				for my $key (keys %options_hash) {			# ADDED
+				for my $key (keys %options_hash) {
 					delete $options_hash{$key} unless defined $options_hash{$key};
 				}
 
@@ -737,23 +739,19 @@ sub run
 					delete($queue_map{$pid});
 					chdir('..');	    
 					$self->stop_motion_call(tool => 'modelfit', message => "Had to do restart, put job in queue.\nChange directory one level up ")
-						if ($self->stop_motion() > 1);
+						if ($self->stop_motion > 1);
 				} else {
 					$self->stop_motion_call(tool => 'modelfit', message => "did not have to restart this model")
-						if ($self->stop_motion() > 1);
-					$self -> select_best_model(run_no          => $run,
-											   nm_version      => $options_hash{'nm_version'},
-											   queue_info      => $queue_info{$run});
+						if ($self->stop_motion > 1);
+					$self->select_best_model(run_no => $run, nm_version => $options_hash{'nm_version'}, queue_info => $queue_info{$run});
 					
 					# Print finishing messages
 					
 					if( scalar @queue == 0 ) {
 						if( $all_jobs_started == 0 ) {
 
-							ui -> print( category => 'all',
-										 message  => "Waiting for all NONMEM runs to finish:",
-										 newline => 1 ) 
-								if( $self->parent_threads <= 1 and $threads > 1 and not $self->verbose );
+							ui -> print( category => 'all', message => "Waiting for all NONMEM runs to finish:", newline => 1 ) 
+								if ($self->parent_threads <= 1 and $threads > 1 and not $self->verbose);
 							
 							$all_jobs_started = 1;
 						} 
@@ -1107,47 +1105,44 @@ sub set_msfo_to_msfi
 	my $retry = $parm{'retry'};
 	my $queue_info = $parm{'queue_info'};
 
-	my $filename = $queue_info -> {'model'} -> get_option_value(record_name => 'estimation',
+	my $filename = $queue_info->{'model'}->get_option_value(record_name => 'estimation',
 		option_name => 'MSFO');
 
 	$filename = $self->base_msfo_name if (defined $self->base_msfo_name);
-	unless (defined $filename){
+	unless (defined $filename) {
 		ui -> print( category => 'all',  message  => "Warning, no MSFO option in model, ".
 			"set_msfo_to_msfi will fail (used when handling option maxevals)",
 			newline => 1);
 	}
 
-	my $msfo = $self -> get_retry_name( 'filename' => $filename,
-		'retry' => $retry );
+	my $msfo = $self->get_retry_name('filename' => $filename,
+		'retry' => $retry);
 
 	my $msfi;
 
-	if( $candidate_model -> outputs -> [0] -> msfo_has_terminated() ){
-
-		$msfi = $msfo . '-step' . ($queue_info -> {'crashes'}-1);
-
-		$candidate_model->remove_records( type => 'estimation' );
-
+	if ($candidate_model->outputs->[0]->msfo_has_terminated) {
+		$msfi = $msfo . '-step' . ($queue_info->{'crashes'} - 1);
+		$candidate_model->remove_records(type => 'estimation');
 	} else {
-		$msfi = $self -> get_retry_name( 'filename' => $filename,
+		$msfi = $self->get_retry_name(
+			'filename' => $filename,
 			'retry' => $retry,
-			crash => $queue_info -> {'crashes'});
+			crash => $queue_info->{'crashes'},
+		);
 	}
 
-	unless( -e $msfi ){
-		ui -> print( category => 'all',  message  => "Warning, MSFO file $msfi does not exist, ".
+	unless (-e $msfi) {
+		ui -> print( category => 'all', message  => "Warning, MSFO file $msfi does not exist, ".
 			"set_msfo_to_msfi will fail (used when handling option maxevals)",
 			newline => 1);
 	}
 
-	$candidate_model->set_records(type=>'msfi',
-		record_strings => [$msfi]);
+	$candidate_model->set_records(type => 'msfi', record_strings => [$msfi]);
 
-	$candidate_model->remove_records(type=>'theta');
-	$candidate_model->remove_records(type=>'omega');
-	$candidate_model->remove_records(type=>'sigma');
+	$candidate_model->remove_records(type => 'theta');
+	$candidate_model->remove_records(type => 'omega');
+	$candidate_model->remove_records(type => 'sigma');
 	$candidate_model->_write;
-
 }
 
 sub reset_msfo
@@ -1608,19 +1603,19 @@ sub run_nonmem
 	my $run_no = $parm{'run_no'};
 	my $queue_map = $parm{'queue_map'};
 
-	my $candidate_model = $queue_info -> {'candidate_model'};
-	my $tries = $queue_info -> {'tries'};
-	my $model = $queue_info -> {'model'};
+	my $candidate_model = $queue_info->{'candidate_model'};
+	my $tries = $queue_info->{'tries'};
+	my $model = $queue_info->{'model'};
 
 	#an ls might make files sync and become visible
 	my $dirt = `ls -la 2>&1` unless ($Config{osname} eq 'MSWin32');
 
-	if ($self->rerun >= 2 ) {
+	if ($self->rerun >= 2) {
 		unlink ('psn.lst') if (-e 'psn.lst');
 		unlink ('psn-prevrun.lst') if (-e 'psn-prevrun.lst');
 	}
 
-	if (-e $self->nmtran_error_file){
+	if (-e $self->nmtran_error_file) {
 		#give fake pid and go directly to restart needed. Do not copy or move anything
 		$queue_map->{'rerun_'.$run_no} = $run_no; #Fake pid
 		
@@ -1629,8 +1624,7 @@ sub run_nonmem
 								'rerun_'.$run_no.' and do not run anything.')
 			if ($self->stop_motion());
 		return;
-		
-		
+
 	} elsif (-e 'stats-runs.csv') {
 		#possible reasons: 
 		#a) Restart after -clean > 1. Then we do not know the true restart number of psn.lst
@@ -1907,16 +1901,16 @@ sub restart_needed
 	}
 
   
-	unless( defined $parm{'queue_info'} ){
+	unless (defined $parm{'queue_info'}) {
 		# The queue_info must be defined here!
 		croak("Internal run queue corrupt\n" );
 	}
 	my $queue_info_ref = $parm{'queue_info'};
-	my $run_results = $queue_info_ref -> {'run_results'};
-	my $tries = \$queue_info_ref -> {'tries'};
-	my $model = $queue_info_ref -> {'model'};
-	my $candidate_model = $queue_info_ref -> {'candidate_model'};
-	my $modelfile_tainted = \$queue_info_ref -> {'modelfile_tainted'};
+	my $run_results = $queue_info_ref->{'run_results'};
+	my $tries = \$queue_info_ref->{'tries'};
+	my $model = $queue_info_ref->{'model'};
+	my $candidate_model = $queue_info_ref->{'candidate_model'};
+	my $modelfile_tainted = \$queue_info_ref->{'modelfile_tainted'};
 	my $nmqual = 'nmqual_messages.txt';
 	#if missing psn.lst is due to NMtran or compilation failure we should see a file 
 	#$self->general_error_file or $self->nmtran_error_file in the directory. Then do not wait, continue directly with
@@ -1931,7 +1925,7 @@ sub restart_needed
 
 	#according to NFS documentaion max cache (delay) time is 60 sec.
 	my $dirt;
-	for (my $i=0; $i<20; $i++){
+	for (my $i = 0; $i < 20; $i++) {
 		#an ls might make files sync and become visible
 		#TODO if queue map says failed submit then do not wait here
 		$dirt = `ls -la 2>&1` unless ($Config{osname} eq 'MSWin32');
@@ -1946,13 +1940,13 @@ sub restart_needed
 	my $lstsuccess = 0;
 	my $eta_shrinkage_name;
 	my $iwres_shrinkage_name;
-	if( -e 'stats-runs.csv' ){
+	if (-e 'stats-runs.csv') {
 		#this is a rerun, we should not do anything here, no copying or anything except
 		#reading raw results to memory
 		#candidate model should have psn.lst as output file
 
 		my ($raw_results_row, $nonp_row);
-		if ($candidate_model->nthetas(problem_number=>1)==0 ){
+		if ($candidate_model->nthetas(problem_number => 1) == 0) {
 
 			#problem here if got rid of theta omega sigma as part of handle maxevals.
 			#candidate model has no labels
@@ -2226,7 +2220,7 @@ sub restart_needed
 				$run_results -> [${$tries}] -> {'failed'} = $failure;
 				$output_file -> flush;
 				return(0);
-			} elsif( $self->handle_crashes and $queue_info_ref->{'crashes'} < $self->crash_restarts() ) {
+			} elsif($self->handle_crashes and $queue_info_ref->{'crashes'} < $self->crash_restarts) {
 
 				# If the lst file is interrupted (no end time printed by nmfe), this is
 				# a sign of a crashed run. This is not a NONMEM error as such
@@ -2234,11 +2228,9 @@ sub restart_needed
 				# mark this for rerunning but do not increase the $tries
 				# variable but instead increase $crashes and check whether
 				# this value is below or equal to $crash_restarts.
-				carp("Restarting crashed run ".
-					 $output_file -> full_name().
-					 "\n".$output_file -> parsing_error_message() );
+				carp("Restarting crashed run " . $output_file->full_name . "\n" . $output_file->parsing_error_message);
 				
-				$queue_info_ref -> {'crashes'}++;
+				$queue_info_ref->{'crashes'}++;
 
 				#now we could be restarting after the main PsN process has been killed, and
 				#the crashes counter has been reset. Therefore check existence of files from 
@@ -2293,7 +2285,7 @@ sub restart_needed
 				return(0);
 			}
 		}elsif (( $maxevals > 0 ) and (not $cut_thetas_maxevals)){
-			my $exceeded=0;
+			my $exceeded = 0;
 			for ( @{$output_file -> minimization_message() -> [0][0]} ) {
 				if ( /\s*MAX. NO. OF FUNCTION EVALUATIONS EXCEEDED\s*/) {
 					$exceeded=1;
@@ -2306,22 +2298,19 @@ sub restart_needed
 						$queue_info_ref -> {'evals'} = $output_file -> get_single_value(attribute=> 'feval');
 					}
 					
-					if( $maxevals > $queue_info_ref -> {'evals'} ){
-						$queue_info_ref -> {'crashes'}++;	      
+					if ($maxevals > $queue_info_ref->{'evals'}) {
+						$queue_info_ref->{'crashes'}++;
 						my $stopmess ='moved ';
-						foreach my $filename ( @{$candidate_model -> output_files},'psn.mod','compilation_output.txt',
-											   $self->base_msfo_name) {
+						foreach my $filename (@{$candidate_model->output_files}, 'psn.mod', 'compilation_output.txt', $self->base_msfo_name) {
 							next unless (defined $filename);
-							my $old_name = $self -> get_retry_name( filename => $filename,
-																	retry => ${$tries} );
-							my $new_name = $self -> get_retry_name( filename => $filename,
-																	retry => ${$tries},
-																	crash => $queue_info_ref -> {'crashes'});
-							mv( $old_name, $new_name );
+							my $old_name = $self->get_retry_name(filename => $filename, retry => ${$tries});
+							my $new_name = $self->get_retry_name(filename => $filename, retry => ${$tries},
+																	crash => $queue_info_ref->{'crashes'});
+							mv($old_name, $new_name);
 
 							$stopmess .= "$old_name to $new_name, ";
 						}
-						$self -> set_msfo_to_msfi( candidate_model => $candidate_model,
+						$self -> set_msfo_to_msfi(candidate_model => $candidate_model,
 												   retry => ${$tries},
 												   queue_info => $queue_info_ref);
 						#set msfo to msfi does model print
