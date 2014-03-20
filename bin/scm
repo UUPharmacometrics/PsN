@@ -18,6 +18,7 @@ use Cwd;
 use common_options;
 use ui;
 use OSspecific;
+use File::Copy qw/cp mv/;
 
 my $cmd_line = $0 . " " . join( " ", @ARGV );
 
@@ -26,50 +27,45 @@ my %options;
 my %required_options = ( "config_file:s" => '');
 
 my %optional_options = ( "search_direction:s" => 'forward|backward|both',
-			 "gof:s" => '',
-			 "global_init:s" => '',
-			 "logfile:s" => '',
-			 "model:s" => '',
-			 "noabort!" => '',
-			 "max_steps:i" => '',
-			 "p_value:s" => '',
-			 "p_forward:s" => '',
-			 "p_backward:s" => '',
-			 "do_not_drop:s" => '',
-			 "linearize!" => '',
-			 "epsilon!" => '',
-			 "foce!" => '',
-			 "lst_file:s" => '',
-			 "update_derivatives!" => '',
-			 "only_successful!" => '',
-			 "parallel_states!" => '',
-			 "error:s"=> '');
+						 "gof:s" => '',
+						 "global_init:s" => '',
+						 "logfile:s" => '',
+						 "model:s" => '',
+						 "noabort!" => '',
+						 "max_steps:i" => '',
+						 "p_value:s" => '',
+						 "p_forward:s" => '',
+						 "p_backward:s" => '',
+						 "do_not_drop:s" => '',
+						 "linearize!" => '',
+						 "epsilon!" => '',
+						 "foce!" => '',
+						 "lst_file:s" => '',
+						 "update_derivatives!" => '',
+						 "only_successful!" => '',
+						 "parallel_states!" => '',
+						 "error:s"=> '');
 
 my $res = GetOptions( \%options, 
-		      @common_options::get_opt_strings,
-		      keys(%required_options),
-		      keys(%optional_options)
-		      );
+					  @common_options::get_opt_strings,
+					  keys(%required_options),
+					  keys(%optional_options)
+	);
 exit unless $res;
 
 #cannot run setup here, must read config file first
 
 my %help_text;
 $help_text{Pre_help_message} = <<'EOF';
-  <h3 class="heading1">scm</h3>
+<h3 class="heading1">scm</h3>
 
-  Stepwise covariate model building from NONMEM models.
+	Stepwise covariate model building from NONMEM models.
 
-  <h3 class="heading1">Usage:</h3>
+	<h3 class="heading1">Usage:</h3>
 EOF
 
     $help_text{Description} = <<'EOF';
-<style type="text/css">
-<!--
-.style5 {font-family: "Courier New", Courier, monospace; font-weight: bold; font-size: 14px; }
--->
-</style>
-  <h3 class="heading1">Description:</h3>
+	<h3 class="heading1">Description:</h3>
 
     The Stepwise Covariate Model (SCM) building tool of PsN implements
     Forward Selection and Backward Elimination of covariates to a
@@ -94,22 +90,22 @@ EOF
 EOF
 
     $help_text{Examples} = <<'EOF';
-  <h3 class="heading1">Examples:</h3>
+<h3 class="heading1">Examples:</h3>
 
     Execute an SCM using parameters set in the config file
     'phenobarbital.scm'.
     
-       <p class="style2">$ scm -config_file=phenobarbital.scm</p>
+	<p class="style2">$ scm -config_file=phenobarbital.scm</p>
 
     Execute an SCM using parameters set in the config file
     'phenobarbital.scm'. But override the retries and the seed
     parameter.
 
-       <p class="style2">$ scm -config_file=phenobarbital.scm -retries=5 -seed=12345 phenobarbital.mod</p>
+	<p class="style2">$ scm -config_file=phenobarbital.scm -retries=5 -seed=12345 phenobarbital.mod</p>
 EOF
-		
+	
     $help_text{Options} = <<'EOF';
-  <h3 class="heading1">Options:</h3>
+<h3 class="heading1">Options:</h3>
 
     The options are given here in their long form. Any option may be
     abbreviated to any nonconflicting prefix. The -threads option may
@@ -119,30 +115,30 @@ EOF
 EOF
 
     $help_text{-h} = <<'EOF';
-    <p class="style2">-h | -?</p>
+<p class="style2">-h | -?</p>
 
     With -h or -? scm will print a list of options and exit.
 EOF
 
     $help_text{-help} = <<'EOF';
-    <p class="style2">-help</p>
+<p class="style2">-help</p>
 
     With -help scm will print this, longer, help message.
 EOF
 
     $help_text{-config_file} = <<'EOF';
-    <p class="style2">-config_file</p>
+<p class="style2">-config_file</p>
 
     A file of an scm configuration file.
 EOF
 
     $help_text{-search_direction} = <<'EOF';
-    <p class="style2">-search_direction</p>
+<p class="style2">-search_direction</p>
 
     Which search task to perform: backward, forward or both is allowed.
 EOF
-$help_text{-max_steps} = <<'EOF';
-      -max_steps=N
+	$help_text{-max_steps} = <<'EOF';
+-max_steps=N
 
     Do not take more that max_steps forward steps,
     even if there are more covariates left to add and a significant
@@ -150,54 +146,54 @@ $help_text{-max_steps} = <<'EOF';
 EOF
 
     $help_text{-gof} = << 'EOF';
-    <p class="style2">-gof</p>
+<p class="style2">-gof</p>
 
     Goodness of fit function. Either pval (default) or ofv.
 EOF
     
     $help_text{-global_init} = << 'EOF';
-    <p class="style2">-global_init</p>
+<p class="style2">-global_init</p>
     Default is 0.001. With global_init option the initial estimates of parameters
     in covariate parameterizations are set to global_init. If using inits section 
     in configuration file individual initial values are used instead of one global.
 EOF
 
     $help_text{-logfile} = << 'EOF';
-    <p class="style2">-logfile</p>
+<p class="style2">-logfile</p>
 
     Default scmlog.txt. The name of the logfile.
 EOF
 
     $help_text{-model} = << 'EOF';
-    <p class="style2">-model</p>
+<p class="style2">-model</p>
 
     The name of the basic model file, without any parameter-covariate
     relations included.
 EOF
 
     $help_text{-p_value} = << 'EOF';
-    <p class="style2">-p_value</p>
+<p class="style2">-p_value</p>
 
     Use this option to set the p_value for both forward and backward
     steps simultaneously.
 EOF
 
     $help_text{-p_forward} = << 'EOF';
-    <p class="style2">-p_forward</p>
+<p class="style2">-p_forward</p>
 
     Using the p_forward option, you can specify the p-value to use for
     the forward selection.
 EOF
 
     $help_text{-p_backward} = << 'EOF';
-    <p class="style2">-p_backward</p>
+<p class="style2">-p_backward</p>
 
     Using the p_backward option, you can specify the p-value to use
     for the backward deletion.
 EOF
     
     $help_text{-do_not_drop} = << 'EOF';
-    <p class="style2">-do_not_drop</p>
+<p class="style2">-do_not_drop</p>
 
     To save memory it is desirable to minimize the number of undropped columns
     in the candidate models. The scm program uses the '=DROP' syntax of NONMEM 
@@ -214,20 +210,20 @@ EOF
 EOF
 
     $help_text{-noabort} = <<'EOF';
-    <p class="style2">-noabort</p>
+<p class="style2">-noabort</p>
 
     Default not set. Only relevant with the linearize method. If set,
     the program will add NOABORT to $EST of the linearized models.
     
 EOF
     $help_text{-linearize} = <<'EOF';
-    <p class="style2">-linearize</p>
+<p class="style2">-linearize</p>
 
     Add covariate relations to a linearized version of the input model instead of
     to the original nonlinear model.
 EOF
     $help_text{-second_order} = <<'EOF';
-    <p class="style2">-second_order</p>
+<p class="style2">-second_order</p>
 
     Only relevant with linearize method. Use second order Taylor expansion around
     ETAs instead of default first order expansion.
@@ -235,26 +231,26 @@ EOF
     
 EOF
     $help_text{-foce} = <<'EOF';
-    <p class="style2">-foce</p>
+<p class="style2">-foce</p>
 
     Set by default. Only relevant with linearize method. Expand around 
     conditional ETA estimates instead of around ETA=0.    
 EOF
     $help_text{-update_derivatives} = <<'EOF';
-    <p class="style2">-update_derivatives</p>
+<p class="style2">-update_derivatives</p>
 
     Only relevant with linearize method. Run nonlinear model with new covariate 
     added to get updated derivates after each iteration, instead of reusing 
     derivatives from model without covariates.
 EOF
     $help_text{-derivatives_data} = <<'EOF';
-    <p class="style2">-derivatives_data</p>
+<p class="style2">-derivatives_data</p>
 
     Only relevant with linearize method. Give derivatives data as table input
     rather than letting the scm run the nonlinear model to obtain them. Saves time.
 EOF
     $help_text{-error} = <<'EOF';
-    <p class="style2">-error</p>
+<p class="style2">-error</p>
 
     Only relevant with linearize method, and only if -no-epsilon is set. 
     Use an approximated linearization of the error model instead of an exact.
@@ -265,26 +261,26 @@ EOF
     see the scm userguide for details.
 EOF
     $help_text{-epsilon} = <<'EOF';
-    <p class="style2">-epsilon</p>
+<p class="style2">-epsilon</p>
 
     Only relevant with linearize method. Linearize with respect to epsilons,
     set by default. Disable with -no-epsilon.
 EOF
     $help_text{-lst_file} = <<'EOF';
-    <p class="style2">-lst_file</p>
+<p class="style2">-lst_file</p>
 
     Default not used. Update original model with final estimates from this file 
     before running model to obtain derivatives.
 EOF
     $help_text{-only_successful} = <<'EOF';
-    <p class="style2">-only_successful</p>
+<p class="style2">-only_successful</p>
 
     Only consider runs with MINIMIZATION SUCCESSFUL 
     (or equivalent for non-classical estimation methods) when 
     selecting the covariate to add/remove in each step.
 EOF
     $help_text{-parallel_states} = <<'EOF';
-    <p class="style2">-parallel_states</p>
+<p class="style2">-parallel_states</p>
 
     If this option is set, scm will test all valid_states simultaneously
     instead of the default method to test valid_states sequentially, only
@@ -292,10 +288,10 @@ EOF
 EOF
 
     $help_text{Post_help_message} = <<'EOF';
-    Also see 'psn_options -h' for a description of common options.
+Also see 'psn_options -h' for a description of common options.
 EOF
 
-common_options::online_help( 'scm', \%options, \%help_text, \%required_options, \%optional_options);
+	common_options::online_help( 'scm', \%options, \%help_text, \%required_options, \%optional_options);
 
 if ( $options{'config_file'} eq '' and (scalar(@ARGV)==1)){
     $options{'config_file'} = $ARGV[0];
@@ -309,83 +305,83 @@ if ( $options{'config_file'} eq ''){
 
 my $config_file;
 if( -e $options{'config_file'} ){
-  my $file = file -> new( name => $options{'config_file'}, path => '.' );
-  $config_file = 'tool::scm::config_file' -> new ( file => $file );
+	my $file = file -> new( name => $options{'config_file'}, path => '.' );
+	$config_file = 'tool::scm::config_file' -> new ( file => $file );
 
 
-  foreach my $option ( keys %{$config_file -> valid_scalar_options} ){
-    if( defined $options{$option} ) {
-      $config_file -> $option($options{$option});
-    }elsif (defined $config_file -> $option){
-      #store tool_options so that can use common_options::restore in scm
-      foreach my $opt (@common_options::tool_options){
-	$opt =~ s/[!:|].*//g; #get rid of :s |? :i etcetera
-	if ($opt eq $option){
-	  $options{$option} = $config_file -> $option;
-	  last;
+	foreach my $option ( keys %{$config_file -> valid_scalar_options} ){
+		if( defined $options{$option} ) {
+			$config_file -> $option($options{$option});
+		}elsif (defined $config_file -> $option){
+			#store tool_options so that can use common_options::restore in scm
+			foreach my $opt (@common_options::tool_options){
+				$opt =~ s/[!:|].*//g; #get rid of :s |? :i etcetera
+				if ($opt eq $option){
+					$options{$option} = $config_file -> $option;
+					last;
+				}
+			}
+		}
 	}
-      }
-    }
-  }
 
-  foreach my $option ( keys %{$config_file -> valid_code_options} ){
-    if( $options{$option} ){
-      $config_file -> $option(eval($options{$option}));
-    }
-  }
+	foreach my $option ( keys %{$config_file -> valid_code_options} ){
+		if( $options{$option} ){
+			$config_file -> $option(eval($options{$option}));
+		}
+	}
 
-  foreach my $option ( keys %{$config_file -> valid_array_options} ){
-    if( $options{$option} ){
-      my @arr = split( /,/ , $options{$option});
-      $config_file -> $option(\@arr);
-    }
-  }
+	foreach my $option ( keys %{$config_file -> valid_array_options} ){
+		if( $options{$option} ){
+			my @arr = split( /,/ , $options{$option});
+			$config_file -> $option(\@arr);
+		}
+	}
 
 } else {
-  print "Error: config file $options{'config_file'} is missing.\n" ;
-  exit;
+	print "Error: config file $options{'config_file'} is missing.\n" ;
+	exit;
 }
 
 #calls get_defaults, set_globals etc, initiates random sequence, store tool_options
 common_options::setup( \%options, 'scm' ); 
 
 if ($config_file->linearize){
-  die "Option -second_order is currently broken" 
-      if $config_file->second_order();
-  #two new options, linearize and lst-file
+	die "Option -second_order is currently broken" 
+		if $config_file->second_order();
+	#two new options, linearize and lst-file
 
-  if ($config_file->second_order()){
-    print "Warning: Option -second_order is intended for use together with option -foce\n" 
-	unless $config_file->foce();
-  }
+	if ($config_file->second_order()){
+		print "Warning: Option -second_order is intended for use together with option -foce\n" 
+			unless $config_file->foce();
+	}
 
-  die "option -linearize only works with NONMEM7" unless ($PsN::nm_major_version == 7);
+	die "option -linearize only works with NONMEM7" unless ($PsN::nm_major_version == 7);
 
 
-  if ($config_file->derivatives_data()){
-    my ( $dir, $file ) = OSspecific::absolute_path('',$config_file->derivatives_data());
-    $config_file->derivatives_data($dir . $file);
-  }
-  if ($config_file->lst_file()){
-    my ( $dir, $file ) = OSspecific::absolute_path('',$config_file->lst_file());
-    $config_file->lst_file($dir . $file);
-  }
+	if ($config_file->derivatives_data()){
+		my ( $dir, $file ) = OSspecific::absolute_path('',$config_file->derivatives_data());
+		$config_file->derivatives_data($dir . $file);
+	}
+	if ($config_file->lst_file()){
+		my ( $dir, $file ) = OSspecific::absolute_path('',$config_file->lst_file());
+		$config_file->lst_file($dir . $file);
+	}
 
 }else{
-  die "Option -foce is only allowed together with option -linearize" 
-      if $config_file->foce();
-  die "Option -second_order is only allowed together with option -linearize" 
-      if $config_file->second_order();
-  die "Option -lst_file is only allowed together with option -linearize" 
-      if $config_file->lst_file();
-  die "Option -update_derivatives is only allowed together with option -linearize" 
-      if $config_file->update_derivatives();
-  die "Option -error is only allowed together with option -linearize" 
-      if $config_file->error();
-  die "Option -error_code is only allowed together with option -linearize" 
-      if $config_file->error_code();
-  die "Option -derivatives_data is only allowed together with option -linearize" 
-      if $config_file->derivatives_data();
+	die "Option -foce is only allowed together with option -linearize" 
+		if $config_file->foce();
+	die "Option -second_order is only allowed together with option -linearize" 
+		if $config_file->second_order();
+	die "Option -lst_file is only allowed together with option -linearize" 
+		if $config_file->lst_file();
+	die "Option -update_derivatives is only allowed together with option -linearize" 
+		if $config_file->update_derivatives();
+	die "Option -error is only allowed together with option -linearize" 
+		if $config_file->error();
+	die "Option -error_code is only allowed together with option -linearize" 
+		if $config_file->error_code();
+	die "Option -derivatives_data is only allowed together with option -linearize" 
+		if $config_file->derivatives_data();
 }
 
 
@@ -393,11 +389,11 @@ my $direction = $config_file -> search_direction;
 die "You need to specify a search direction (forward/backward/both)\n" unless (defined $direction );
 my $eval_string = common_options::model_parameters(\%options);
 my $models_array = [ model -> new ( eval $eval_string,
-				 filename           => $config_file -> model,
-				 target             => 'disk' ) ] ;
+									filename           => $config_file -> model,
+									target             => 'disk' ) ] ;
 
 if( $options{'shrinkage'} ) {
-  $models_array->[0] -> shrinkage_stats( enabled => 1 );
+	$models_array->[0] -> shrinkage_stats( enabled => 1 );
 }
 
 if( $models_array->[0] -> is_option_set( record => 'abbreviated', name => 'REPLACE' ) ){
@@ -410,107 +406,113 @@ if( $direction eq 'forward' or $direction eq 'both' ){
 				 message => "Starting scm forward search" );
 
 
-  my $orig_ofv;
-  my $orig_p_value;
-  my $ofv_backward=undef;
-  my $p_backward=undef;
-  if( -e $options{'config_file'} ){
-    
-    if( defined $config_file -> ofv_forward ){
-      $orig_ofv = $config_file -> ofv_change;
-      $config_file -> ofv_change($config_file -> ofv_forward);
-    }
-    
-    if( defined $config_file -> p_forward ){
-      $orig_p_value = $config_file -> p_value;
-      $config_file -> p_value( $config_file -> p_forward );
-    }
+	my $orig_ofv;
+	my $orig_p_value;
+	my $ofv_backward=undef;
+	my $p_backward=undef;
+	if( -e $options{'config_file'} ){
+		
+		if( defined $config_file -> ofv_forward ){
+			$orig_ofv = $config_file -> ofv_change;
+			$config_file -> ofv_change($config_file -> ofv_forward);
+		}
+		
+		if( defined $config_file -> p_forward ){
+			$orig_p_value = $config_file -> p_value;
+			$config_file -> p_value( $config_file -> p_forward );
+		}
 
-    if( defined $config_file -> ofv_backward ){
-      $ofv_backward = $config_file -> ofv_backward ;
-    }elsif (defined $orig_ofv){
-      $ofv_backward = $orig_ofv;
-    }
+		if( defined $config_file -> ofv_backward ){
+			$ofv_backward = $config_file -> ofv_backward ;
+		}elsif (defined $orig_ofv){
+			$ofv_backward = $orig_ofv;
+		}
 
-    if( defined $config_file -> p_backward ){
-      $p_backward = $config_file -> p_backward;
-    }elsif (defined $orig_p_value){
-      $p_backward = $orig_p_value;     
-    }
-  }
-  
-  $config_file -> search_direction( 'forward' );
+		if( defined $config_file -> p_backward ){
+			$p_backward = $config_file -> p_backward;
+		}elsif (defined $orig_p_value){
+			$p_backward = $orig_p_value;     
+		}
+	}
+	
+	$config_file -> search_direction( 'forward' );
 
-  $scm = tool::scm -> 
-      new ( eval( $common_options::parameters ),
-	    models	=> $models_array,
-	    config_file => $config_file,
-	    both_directions => ($direction eq 'both')? 1 : 0,
-	    p_backward => $p_backward,
-	    ofv_backward => $ofv_backward);
-  
-  $scm-> print_options (cmd_line => $cmd_line,
-			toolname => 'scm',
-			local_options => [keys %optional_options],
-			common_options => \@common_options::tool_options);
+	$scm = tool::scm -> 
+		new ( eval( $common_options::parameters ),
+			  models	=> $models_array,
+			  config_file => $config_file,
+			  both_directions => ($direction eq 'both')? 1 : 0,
+			  p_backward => $p_backward,
+			  ofv_backward => $ofv_backward);
+	
+	$scm-> print_options (cmd_line => $cmd_line,
+						  toolname => 'scm',
+						  local_options => [keys %optional_options],
+						  common_options => \@common_options::tool_options);
 
+	#copy config file to rundir
+	my ( $dir, $file ) = OSspecific::absolute_path('',$options{'config_file'});
+	cp($dir.$file,$scm->directory().$file);
 
-  $scm -> run;
-  
-  if( -e $options{'config_file'} ){
-    if( defined $orig_ofv ){
-      $config_file -> ofv_change( $orig_ofv );
-    }
-    
-    if( defined $orig_p_value ){
-      $config_file -> p_value( $orig_p_value );
-    }
+	$scm -> run;
+	
+	if( -e $options{'config_file'} ){
+		if( defined $orig_ofv ){
+			$config_file -> ofv_change( $orig_ofv );
+		}
+		
+		if( defined $orig_p_value ){
+			$config_file -> p_value( $orig_p_value );
+		}
 
-    if( defined $scm -> base_criteria_values ){
-      $config_file -> base_criteria_values( $scm -> base_criteria_values );
-    }
+		if( defined $scm -> base_criteria_values ){
+			$config_file -> base_criteria_values( $scm -> base_criteria_values );
+		}
 
-    if( defined $scm -> included_relations ){
-      $config_file -> included_relations( $scm -> included_relations );
-    }
-  }
+		if( defined $scm -> included_relations ){
+			$config_file -> included_relations( $scm -> included_relations );
+		}
+	}
 }
 
 if( $direction eq 'backward' ){
-  
-  if( -e $options{'config_file'} ){
-    if( defined $config_file -> ofv_backward ){
-      $config_file -> ofv_change( $config_file -> ofv_backward );
-    }
+	
+	if( -e $options{'config_file'} ){
+		if( defined $config_file -> ofv_backward ){
+			$config_file -> ofv_change( $config_file -> ofv_backward );
+		}
 
-    if( defined $config_file -> p_backward ){
-      $config_file -> p_value( $config_file -> p_backward );
-    }
-    
-  }
+		if( defined $config_file -> p_backward ){
+			$config_file -> p_value( $config_file -> p_backward );
+		}
+		
+	}
 
-  $config_file -> search_direction( 'backward' );
+	$config_file -> search_direction( 'backward' );
 
-  my $scm_back = tool::scm -> 
-      new ( eval( $common_options::parameters ),
-	    directory   => $options{'directory'},
-	    models	=> $models_array,
-	    config_file => $config_file );
-
-
-  ui -> print( category => 'scm',
-	       message => "Starting scm backward search" );
-  
-  $scm_back-> print_options (cmd_line => $cmd_line,
-			     toolname => 'scm',
-			     local_options => [keys %optional_options],
-			     common_options => \@common_options::tool_options);
+	my $scm_back = tool::scm -> 
+		new ( eval( $common_options::parameters ),
+			  directory   => $options{'directory'},
+			  models	=> $models_array,
+			  config_file => $config_file );
 
 
+	ui -> print( category => 'scm',
+				 message => "Starting scm backward search" );
+	
+	$scm_back-> print_options (cmd_line => $cmd_line,
+							   toolname => 'scm',
+							   local_options => [keys %optional_options],
+							   common_options => \@common_options::tool_options);
 
-  $scm_back -> run;
+	#copy config file to rundir
+	my ( $dir, $file ) = OSspecific::absolute_path('',$options{'config_file'});
+	cp($dir.$file,$scm_back->directory().$file);
+
+
+	$scm_back -> run;
 
 }
 
 ui -> print( category => 'scm',
-	     message => "scm done\n" );
+			 message => "scm done\n" );
