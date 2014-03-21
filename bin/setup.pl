@@ -822,7 +822,7 @@ if ($have_file_copy) {
 	my $full_command = $copy_recursive_cmd . " " . File::Spec -> catfile( "lib", "*" ) . " \"" . $thelibdir . "\""; 
 	system($full_command);
 
-	unless (-e "$library_dir" . "/PsN_$name_safe_version/nonmem.pm" ) {
+	unless (-e "$library_dir" . "/PsN_$name_safe_version/model.pm" ) {
 		print "Copying of files to $library_dir" . "/PsN_$name_safe_version/".
 			" failed, the following command did not work\n$full_command\n";
 		if (running_on_windows()) {
@@ -943,12 +943,11 @@ print(PSN "\$lib_dir = '$library_dir/PsN_$name_safe_version';\n");
 print(PSN "\$config_file = '$library_dir/PsN_$name_safe_version/psn.conf';\n");
 print(PSN "\$version = '$version';\n");
 
-for ( <TEMPLATE> ) {
+for (<TEMPLATE>) {
 	print PSN $_;
 }
-close( PSN );
-close( TEMPLATE );
-
+close(PSN);
+close(TEMPLATE);
 
 my $copy_PsNpm = 0;
 
@@ -967,27 +966,6 @@ if ($copy_PsNpm) {
 		symlink("$library_dir/PsN_$name_safe_version.pm", "$library_dir/PsN.pm");
 	}
 }
-
-unless (open( PSN, '<', "$library_dir" . "/PsN_$name_safe_version/nonmem.pm")) {
-	abort("Unable to install PsN-$name_safe_version/nonmem.pm in $library_dir: $!\n");
-}
-
-my @nonmem_pm = <PSN>;
-
-close(PSN);
-
-unless (open(PSN, '>', "$library_dir" . "/PsN_$name_safe_version/nonmem.pm")) {
-	abort("Unable to install PsN_$name_safe_version/nonmem.pm in $library_dir: $!\n");
-}
-
-for (@nonmem_pm) {
-	if (/require PsN/) {
-		print PSN "require PsN_$name_safe_version;\n";
-	} else {
-		print PSN;
-	}
-}
-close PsN;
 
 print "\nWould you like to copy the PsN documentation to a file system location of your choice?  [y/n] ";
 if (confirm()) {
