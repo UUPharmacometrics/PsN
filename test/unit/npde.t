@@ -6,7 +6,8 @@ use warnings;
 use Test::More;	#count them!
 use Test::Exception;
 use File::Path 'rmtree';	
-use lib ".."; #location of includes.pm
+use FindBin qw($Bin);
+use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages
 use npde_util;
 use file;

@@ -4,13 +4,13 @@ use strict;
 use warnings;
 use File::Path 'rmtree';
 use Test::More tests=>1;
-use FindBin qw($Bin);
 use File::Copy 'cp';
-use lib ".."; #location of includes.pm
+use FindBin qw($Bin);
+use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages and $path variable definition
 
 our $dir = 'llp_test';
-my $model_dir = "$Bin/../test_files";
+my $model_dir = $includes::testfiledir;
 
 my @commands = 
 	($includes::llp." $model_dir/pheno.mod -thetas=2 -omegas=1,2 -dir=$dir",

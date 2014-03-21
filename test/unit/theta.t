@@ -3,7 +3,8 @@
 use strict;
 use warnings;
 use Test::More tests=>6;
-use lib ".."; #location of includes.pm
+use FindBin qw($Bin);
+use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages
 
 use model::problem::theta;

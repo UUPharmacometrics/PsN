@@ -12,11 +12,14 @@ BEGIN
 	my ($volume, $directory, $file) = File::Spec->splitpath(__FILE__);
 	my $libpath = Cwd::abs_path($volume . $directory . '../lib');
 	unshift @INC, $libpath;
+
+print "<$libpath>\n";
 }
 
 # Get an absolute path to the scripts
 my ($volume, $directory, $file) = File::Spec->splitpath(__FILE__);
 our $path = Cwd::abs_path($volume . $directory . '../bin');
+$path .= '/';
 
 our $testfiledir = Cwd::abs_path($volume . $directory . 'test_files');
 

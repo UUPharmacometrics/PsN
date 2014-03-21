@@ -7,11 +7,11 @@ use warnings;
 use File::Path 'rmtree';
 use Test::More tests=>1;
 use FindBin qw($Bin);
-use lib ".."; #location of includes.pm
+use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages and $path variable definition
 
 our $dir = 'crossval_test';
-my $model_dir = "../test_files";
+my $model_dir = $includes::testfiledir;
 
 rmtree([ "./$dir" ]);
 

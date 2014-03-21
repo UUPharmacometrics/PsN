@@ -6,7 +6,8 @@ use strict;
 use warnings;
 use File::Path 'rmtree';
 use Test::More tests=>9;
-use lib ".."; #location of includes.pm
+use FindBin qw($Bin);
+use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages and $path variable definition
 
 our $dir = 'vpc_test';
@@ -41,7 +42,7 @@ sub compare_bins
   return 1;
 }
 
-my $model_dir = "../test_files";
+my $model_dir = $includes::testfiledir;
 
 my @a;
 rmtree([ "./$dir" ]);

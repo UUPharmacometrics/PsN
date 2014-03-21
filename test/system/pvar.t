@@ -4,12 +4,12 @@ use strict;
 use warnings;
 use File::Path 'rmtree';
 use Test::More tests=>1;
-use lib ".."; #location of includes.pm
-use includes; #file with paths to PsN packages and $path variable definition
 use FindBin qw($Bin);
+use lib "$Bin/.."; #location of includes.pm
+use includes; #file with paths to PsN packages and $path variable definition
 
 my $dir = 'pvar_test';
-our $scm_file_dir="$Bin/../test_files/scm";
+our $scm_file_dir = $includes::testfiledir . '/scm';
 
 my $scm_command = "scm config_normal.scm -directory=$dir";
 my $pvar_command = "pvar scmlog1.txt -parameters=CL,V -directory=$dir";

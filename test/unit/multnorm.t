@@ -5,7 +5,8 @@ use warnings;
 use Test::More tests => 134;
 #use Test::More;
 use Test::Exception;
-use lib ".."; #location of includes.pm
+use FindBin qw($Bin);
+use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages
 use ext::Math::MatrixReal qw(all); 
 use Math::Trig;	# For pi

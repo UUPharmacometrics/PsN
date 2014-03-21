@@ -6,8 +6,8 @@ use MooseX::Params::Validate;
 
 extends 'nonmemrun';
 
-has 'resource' => ( is => 'rw', isa => 'Str' );
-has 'queue' => ( is => 'rw', isa => 'Str' );
+has 'resource' => ( is => 'rw', isa => 'Maybe[Str]' );
+has 'queue' => ( is => 'rw', isa => 'Maybe[Str]' );
 
 
 sub submit

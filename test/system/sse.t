@@ -7,7 +7,8 @@ use Test::More tests=> 2;
 #use Test::More;
 use Test::Exception;
 use File::Path 'rmtree';
-use lib ".."; #location of includes.pm
+use FindBin qw($Bin);
+use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages and $path variable definition
 
 use File::Copy 'cp';
@@ -17,7 +18,7 @@ use File::Copy 'cp';
 #tnpri is NM version dependent due to msfi file, 730 or 72.
 PsN::set_nonmem_info('default');
 our $nm_version = $PsN::nm_major_version * 100 + $PsN::nm_minor_version * 10;
-my $model_dir = "../test_files";
+my $model_dir = $includes::testfiledir;
 
 
 

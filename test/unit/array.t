@@ -4,7 +4,8 @@ use strict;
 use warnings;
 use Test::More tests => 57;
 use Test::Exception;
-use lib ".."; #location of includes.pm
+use FindBin qw($Bin);
+use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages
 
 

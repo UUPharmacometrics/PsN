@@ -8,12 +8,12 @@ use File::Path 'rmtree';
 #use Test::More tests=>1;
 use Test::More;
 use FindBin qw($Bin);
-use lib ".."; #location of includes.pm
+use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages and $path variable definition
 
 my $interactive=0;
 our $dir = 'frem_test';
-my $model_dir = "../test_files";
+my $model_dir = $includes::testfiledir;
 
 rmtree([ "./$dir" ]);
 
