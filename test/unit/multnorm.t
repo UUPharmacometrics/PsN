@@ -3,7 +3,6 @@
 use strict;
 use warnings;
 use Test::More tests => 134;
-#use Test::More;
 use Test::Exception;
 use FindBin qw($Bin);
 use lib "$Bin/.."; #location of includes.pm
@@ -105,12 +104,11 @@ my $gotsamples = tool::sir::sample_multivariate_normal(samples=>$nsamples,
 my $sampled_params_arr = tool::sir::create_sampled_params_arr(samples_array => $gotsamples,
 															  labels_hash => $hash);
 
-cmp_ok(eval($sampled_params_arr->[0]->{'theta'}->{'CL'}),'==',0.00579867653819879,'sampled CL');
-cmp_ok(eval($sampled_params_arr->[0]->{'theta'}->{'V'}),'==',1.20800900217457,'sampled V');
-cmp_ok(eval($sampled_params_arr->[0]->{'theta'}->{'THETA3'}),'==',0.568698687977855,'sampled THETA3');
-cmp_ok(eval($sampled_params_arr->[0]->{'theta'}->{'THETA4'}),'==',0.369700885223909,'sampled THETA4');
-cmp_ok(eval($sampled_params_arr->[0]->{'theta'}->{'THETA5'}),'==',0.118821314516974,'sampled THETA5');
-
+cmp_float($sampled_params_arr->[0]->{'theta'}->{'CL'}, 0.00579867653819879, 'sampled CL');
+cmp_float($sampled_params_arr->[0]->{'theta'}->{'V'}, 1.20800900217457, 'sampled V');
+cmp_float($sampled_params_arr->[0]->{'theta'}->{'THETA3'}, 0.568698687977855, 'sampled THETA3');
+cmp_float($sampled_params_arr->[0]->{'theta'}->{'THETA4'}, 0.369700885223909, 'sampled THETA4');
+cmp_float($sampled_params_arr->[0]->{'theta'}->{'THETA5'}, 0.118821314516974, 'sampled THETA5');
 
 my $pdf=tool::sir::mvnpdf(inverse_covmatrix => $icm,
 						  mu => $mu,

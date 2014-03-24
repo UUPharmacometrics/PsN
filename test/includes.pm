@@ -3,6 +3,12 @@ package includes;
 use strict;
 use File::Spec;
 use Cwd;
+use Test::More;
+
+require Exporter;
+our @ISA = qw(Exporter);
+our @EXPORT = qw(cmp_float);
+
 
 # Setup an include path to the lib directory
 # First get the path of this module and split out the directory part
@@ -12,8 +18,6 @@ BEGIN
 	my ($volume, $directory, $file) = File::Spec->splitpath(__FILE__);
 	my $libpath = Cwd::abs_path($volume . $directory . '../lib');
 	unshift @INC, $libpath;
-
-print "<$libpath>\n";
 }
 
 # Get an absolute path to the scripts
@@ -84,6 +88,19 @@ our $vpc = $path.'vpc'.$version;
 our $xv_scm = $path.'xv_scm'.$version;
 our $sir = $path.'sir'.$version;
 
+
+sub cmp_float
+{
+	my $x = shift;
+	my $y = shift;
+	my $text = shift;
+
+	$x = sprintf("%.13e", $x);
+	$y = sprintf("%.13e", $y);
+
+	print "<<$x, $y>>\n";
+	cmp_ok($x, '==', $y, $text);
+}
 
 #uncomment for MAC, doris, n41, (5.10.0, 5.8.8, 5.10.1)
 #sub done_testing{
