@@ -98,7 +98,6 @@ sub cmp_float
 	$x = sprintf("%.13e", $x);
 	$y = sprintf("%.13e", $y);
 
-	print "<<$x, $y>>\n";
 	cmp_ok($x, '==', $y, $text);
 }
 
