@@ -1,5 +1,6 @@
 package tool::pvar;
 
+use include_modules;
 use Math::Random;
 use File::Spec;
 use Moose;
@@ -289,7 +290,7 @@ sub set_data_files_from_scmdir
 			$data->filename($data_filename);
 			$data->directory($directory_name_alt);
 		} else {
-			Carp("The data file $data_filename could not be found. Please copy it to $directory_name_base and rerun pvar");
+			carp("The data file $data_filename could not be found. Please copy it to $directory_name_base and rerun pvar");
 		}
 
 	}
