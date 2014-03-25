@@ -714,6 +714,7 @@ sub copy
 					missing_data_token   => $data -> missing_data_token,
 					target		  => 'disk',
 					ignoresign		  => $ignoresign,
+					 ignore_missing_files => $self->ignore_missing_files,
 					skip_parsing         => ($self -> skip_data_parsing() or $skip_data_parsing),
 					idcolumn		  => $data -> idcolumn );
 			}
