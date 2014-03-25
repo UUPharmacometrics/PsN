@@ -16,11 +16,11 @@ use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages and $path variable definition
 
 
-our $dir = 'execute_test';
+our $tempdir = create_test_dir;
+our $dir = "$tempdir/execute_test";
 my $model_dir = $includes::testfiledir;
 
 my @a;
-rmtree([ "./$dir" ]);
 
 # Test option shrinking
 my @shrinking_results = (40.5600924453085, -0.185810314125491, 89.4892871889343);		# Calculated with PsN-3.6.2 on Doris
@@ -49,7 +49,7 @@ my $is_equal;
 
 foreach my $i (0..$#command_line) {
 
-  if ($i == 0){
+  if ($i == 0) {
 	  #shrinkage
 	  system $command_line[$i];
 	  # Search the raw_results file for the specific columns and compare values
@@ -69,18 +69,16 @@ foreach my $i (0..$#command_line) {
 	  }
 
 	  close $fh;
-  }else{
+  } else {
 	  my $command= $command_line[$i];
 	  print "Running $command\n";
 	  my $rc = system($command);
 	  $rc = $rc >> 8;
 	  ok ($rc == 0, "$command, should run ok");
-#	  die;
   }
-  rmtree([ "./$dir" ]);
+  rmtree([$dir]);
 }
 
-
-
+remove_test_dir;
 
 done_testing();

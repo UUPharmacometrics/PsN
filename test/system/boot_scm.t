@@ -9,7 +9,8 @@ use FindBin qw($Bin);
 use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages and $path variable definition
 
-our $dir = 'boot_scm_test';
+our $tempdir = create_test_dir;
+our $dir = "boot_scm_test";
 my $model_dir = $includes::testfiledir;
 
 my @needed=("$model_dir/scm/pheno_with_cov.mod",
@@ -19,12 +20,11 @@ my @needed=("$model_dir/scm/pheno_with_cov.mod",
 			"$model_dir/scm_config.scm",
 			"$model_dir/mox_simulated.csv"			
 	);
-my $bootdir='boot_xv_scm_test';
-rmtree([ "./$bootdir" ]);
+my $bootdir = "$tempdir/boot_xv_scm_test";
 
 mkdir($bootdir);
-foreach my $file (@needed){
-	cp($file,"$bootdir/.");
+foreach my $file (@needed) {
+	cp($file, "$bootdir/.");
 }
 chdir($bootdir);
 my @scmcommands = 
@@ -35,11 +35,11 @@ foreach my $command (@scmcommands){
 	print "Running $command\n";
 	my $rc = system($command);
 	$rc = $rc >> 8;
-print "L\n"; #Something is fishy when test harness runs this test. To print something extra here fixes it.	
+	print "L\n"; #Something is fishy when test harness runs this test. To print something extra here fixes it.	
 	ok ($rc == 0, "$command, should run ok");
-	rmtree([ "./$dir" ]);
+	rmtree(["./$dir"]);
 }
-chdir('..');
-rmtree([ "./$bootdir" ]);
+
+remove_test_dir;
 
 done_testing();

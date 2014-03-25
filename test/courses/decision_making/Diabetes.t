@@ -4,18 +4,20 @@ use strict;
 use warnings;
 use File::Path 'rmtree';
 use Test::More;
-use lib "../.."; #location of includes.pm
+use FindBin qw($Bin);
+use lib "$Bin/../.."; #location of includes.pm
 use includes; #file with paths to PsN packages and $path variable definition
 use File::Copy 'cp';
 
 #making sure commands in HO HIV run ok, missing extra credit sse:s
 
-our $dir = 'Diabetes_test';
-my $model_dir = "HO_Diabetes_files";
+our $tempdir = create_test_dir;
+our $dir = "$tempdir/Diabetes_test";
+my $model_dir = "$Bin/HO_Diabetes_files";
 my @needed = <$model_dir/*>;
 mkdir($dir);
-foreach my $file (@needed){
-	cp($file,$dir.'/.');
+foreach my $file (@needed) {
+	cp($file, $dir . '/.');
 }
 chdir($dir);
 
@@ -47,9 +49,6 @@ foreach my $ref (@command_list){
 	ok ($rc == 0, "$comment ");
 }
 
-chdir('..');
-rmtree([ "./$dir" ]); #with all sub run dirs
-
-
+remove_test_dir;
 
 done_testing();

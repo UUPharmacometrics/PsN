@@ -1,6 +1,5 @@
 #!/etc/bin/perl
 
-
 use strict;
 use warnings;
 use Test::More;	#count them!
@@ -14,14 +13,12 @@ use file;
 use tool::ebe_npde;
 
 my $filedir = $includes::testfiledir . '/npde/';
-#my @file_array=($filedir.'original.etas',$filedir.'sim-1.etas',$filedir.'sim-2.etas',$filedir.'sim-3.etas');
 my @file_array=($filedir.'original.phi',$filedir.'sim-1.phi',$filedir.'sim-2.phi',$filedir.'sim-3.phi');
 
-#my @headers = ('ETA1','ETA2');
 my @headers = ('ETA(1)','ETA(2)');
 
-my $est_matrix=[];
-my $mean_matrix=[];
+my $est_matrix = [];
+my $mean_matrix = [];
 
 my $ok = npde_util::read_table_files(\@file_array,\@headers,$est_matrix,$mean_matrix,1);
 	#in reference to empty array to put results [over columns][over individuals][over samples/files]
@@ -115,17 +112,16 @@ for (my $i=0;$i < scalar(@{$decorr->[0]}); $i++){
 }
    
 my $npde = [];
-my $pde=[];
-$ok = npde_util::npde_comp($decorr,$pde,$npde);
+my $pde = [];
+$ok = npde_util::npde_comp($decorr, $pde, $npde);
 is ($ok, 0, "npde_comp eta return status");
 
-for (my $i=0;$i < scalar(@{$pde->[0]}); $i++){
-	for (my $j=0;$j < scalar(@{$pde}); $j++){
+for (my $i=0;$i < scalar(@{$pde->[0]}); $i++) {
+	for (my $j=0;$j < scalar(@{$pde}); $j++) {
 		print $pde->[$j]->[$i].' ';
 	}
 	print "\n";
 }
-
 
 
 @headers = ('OBJ');

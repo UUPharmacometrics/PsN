@@ -1,22 +1,23 @@
 #!/etc/bin/perl
 
-
 use strict;
 use warnings;
 use File::Path 'rmtree';
 use Test::More;
-use lib "../.."; #location of includes.pm
+use FindBin qw($Bin);
+use lib "$Bin/../.."; #location of includes.pm
 use includes; #file with paths to PsN packages and $path variable definition
 use File::Copy 'cp';
 
 #making sure commands in HO HCV (Hepatitis C) run ok, no extra credit runs
 
-our $dir = 'HepatitisC_test';
-my $model_dir = "HO_HepatitisC_files";
+our $tempdir = create_test_dir;
+our $dir = "$tempdir/HepatitisC_test";
+my $model_dir = "$Bin/HO_HepatitisC_files";
 my @needed = <$model_dir/*>;
 mkdir($dir);
-foreach my $file (@needed){
-	cp($file,$dir.'/.');
+foreach my $file (@needed) {
+	cp($file, $dir . '/.');
 }
 chdir($dir);
 my @command_list=([$includes::execute." run53.mod -model_dir_name","task 1a"],
@@ -32,9 +33,7 @@ foreach my $ref (@command_list){
 	$rc = $rc >> 8;
 	ok ($rc == 0, "$comment ");
 }
-chdir('..');
-rmtree([ "./$dir" ]); #with all sub run dirs
 
-
+remove_test_dir;
 
 done_testing();

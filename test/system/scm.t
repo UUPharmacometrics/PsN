@@ -1,6 +1,5 @@
 #!/etc/bin/perl
 
-
 use strict;
 use warnings;
 use Test::More tests=>23;
@@ -16,7 +15,8 @@ use tool::scm::config_file;
 use tool::scm;
 use common_options;
 
-our $dir = 'scm_test';
+our $tempdir = create_test_dir;
+our $dir = "$tempdir/scm_test";
 our $scm_file_dir = $includes::testfiledir . '/scm';
 our $file_dir = $includes::testfiledir;
 
@@ -39,8 +39,6 @@ sub is_array{
     }		
 	
 }
-
-rmtree([ "./$dir" ]);
 
 my @config_files = qw (
 config_ignore.scm
@@ -68,35 +66,35 @@ config_grouping_categorical.scm
 config_hockey.scm
 );
 
-foreach my $cfile (@config_files){
-    my $file = file -> new( name => $cfile, path => $scm_file_dir );
-    my $config_file = 'tool::scm::config_file' -> new ( file => $file );
-    my $modfile = $config_file->model();
-    my $lstfile = $modfile;
-    $lstfile =~ s/mod$/lst/;
-    $lstfile = $scm_file_dir.'/'.$lstfile;
-    $lstfile = undef unless ($config_file->linearize());
+foreach my $cfile (@config_files) {
+	my $file = file -> new( name => $cfile, path => $scm_file_dir );
+	my $config_file = 'tool::scm::config_file' -> new ( file => $file );
+	my $modfile = $config_file->model();
+	my $lstfile = $modfile;
+	$lstfile =~ s/mod$/lst/;
+	$lstfile = $scm_file_dir.'/'.$lstfile;
+	$lstfile = undef unless ($config_file->linearize());
 
-    my $models_array = [ model -> new ( filename           => $scm_file_dir.'/'.$modfile,
-					target             => 'disk' ) ] ;
-    
-    my %options;
-    $options{'nmfe'}=1;
-    $options{'directory'}=$dir;
-    common_options::setup( \%options, 'scm' ); 
-    
-    my $scm = tool::scm ->  new ( nmfe =>1,
-				  models	=> $models_array,
-				  directory => $dir,
-				  lst_file => $lstfile,
-				  config_file => $config_file,
-				  both_directions => 0);
+	my $models_array = [ model -> new ( filename           => $scm_file_dir.'/'.$modfile,
+			target             => 'disk' ) ] ;
 
-    lives_ok {$scm->run()} "Running $cfile";
+	my %options;
+	$options{'nmfe'}=1;
+	$options{'directory'}=$dir;
+	common_options::setup( \%options, 'scm' ); 
 
-    rmtree([ "./$dir" ]);
+	my $scm = tool::scm ->  new ( nmfe =>1,
+		models	=> $models_array,
+		directory => $dir,
+		lst_file => $lstfile,
+		config_file => $config_file,
+		both_directions => 0);
 
+	lives_ok {$scm->run()} "Running $cfile";
+
+	rmtree([$dir]);
 }
 
+remove_test_dir;
 
 done_testing();

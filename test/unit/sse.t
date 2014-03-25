@@ -133,32 +133,31 @@ $hashmox_answer{'relative_absolute_bias'}=[9.711418,38.58046,16.495,-60.217,7.17
 
 my $model_dir = $includes::testfiledir . "/";
 
-our $dir = 'temp';
-rmtree([ "./$dir" ]);
+my $dir = create_test_dir;
 
-dircopy($model_dir.'sse_pheno',$dir);
+dircopy($model_dir . 'sse_pheno', $dir);
 chdir($dir);
 
 my $resultsfile = 'sse_test/sse_results_recompute1.csv';
 
 unlink($resultsfile);
-my $command= $includes::sse." -samples=5 pheno.mod  -recompute=sse_test/raw_results_pheno.csv";
+my $command = $includes::sse." -samples=5 pheno.mod  -recompute=sse_test/raw_results_pheno.csv";
 
 system $command;
 
-my ($h1,$h2)=get_stats($resultsfile);
+my ($h1, $h2) = get_stats($resultsfile);
 
-foreach my $key (keys %hash1_answer){
-    is_array ($hash1_answer{$key},$h1->{$key},"sse sim model compare $key");
+foreach my $key (keys %hash1_answer) {
+	is_array ($hash1_answer{$key}, $h1->{$key}, "sse sim model compare $key");
 }
-foreach my $key (keys %hash2_answer){
-    is_array ($hash2_answer{$key},$h2->{$key},"sse alt model compare $key");
+foreach my $key (keys %hash2_answer) {
+	is_array ($hash2_answer{$key}, $h2->{$key}, "sse alt model compare $key");
 }
 unlink($resultsfile);
 chdir('..');
 
-rmtree([ "./$dir" ]);
-dircopy($model_dir.'sse_mox',$dir);
+rmtree([$dir]);
+dircopy($model_dir . 'sse_mox', $dir);
 chdir($dir);
 
 unlink($resultsfile);
@@ -166,7 +165,7 @@ $command= $includes::sse." -samples=5 moxonidine.mod -recompute=sse_test/raw_res
 
 system $command;
 
-($h1,$h2)=get_stats($resultsfile);
+($h1, $h2) = get_stats($resultsfile);
 
 
 foreach my $key (keys %hashmox_answer){
@@ -176,9 +175,7 @@ foreach my $key (keys %hashmox_answer){
     is_array ($hashmox_answer{$key},$h2->{$key},"sse alt model compare $key");
 }
 unlink($resultsfile);
-chdir('..');
-rmtree([ "./$dir" ]);
 
-
+remove_test_dir;
 
 done_testing();

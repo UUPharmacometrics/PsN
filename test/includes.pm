@@ -4,10 +4,11 @@ use strict;
 use File::Spec;
 use Cwd;
 use Test::More;
+use File::Path 'rmtree';
 
 require Exporter;
 our @ISA = qw(Exporter);
-our @EXPORT = qw(cmp_float);
+our @EXPORT = qw(cmp_float create_test_dir remove_test_dir);
 
 
 # Setup an include path to the lib directory
@@ -99,6 +100,20 @@ sub cmp_float
 	$y = sprintf("%.13e", $y);
 
 	cmp_ok($x, '==', $y, $text);
+}
+
+sub create_test_dir
+{
+	my $dir = File::Spec->tmpdir() . "/PsN-test";
+	rmtree([$dir]);
+	mkdir($dir);
+	return $dir;
+}
+
+sub remove_test_dir
+{
+	chdir;		# Move to home in case we are cd:ed into the directory to remove.
+	rmtree([File::Spec->tmpdir() . "/PsN-test"]);
 }
 
 #uncomment for MAC, doris, n41, (5.10.0, 5.8.8, 5.10.1)

@@ -21,34 +21,32 @@ our $nm_version = $PsN::nm_major_version * 100 + $PsN::nm_minor_version * 10;
 my $model_dir = $includes::testfiledir;
 
 
+our $tempdir = create_test_dir;
+our $dir = "$tempdir/sse_test";
 
-our $dir = 'sse_test';
-
-rmtree([ "./$dir" ]);
-
-my $tndir='tndir';
+my $tndir = "$tempdir/tndir";
 mkdir($tndir);
 my $mod;
 if ($nm_version >= 730) {
 	foreach my $file ("$model_dir/tnpri_nm730.mod","$model_dir/msf_tnpri_nm730","$model_dir/data_tnpri.csv"){
-		cp($file,"$tndir/.");
+		cp($file, "$tndir/.");
 	}
-	$mod='tnpri_nm730.mod';
+	$mod = 'tnpri_nm730.mod';
 } else {
 	foreach my $file ("$model_dir/tnpri.mod","$model_dir/msf_tnpri","$model_dir/data_tnpri.csv"){
-		cp($file,"$tndir/.");
+		cp($file, "$tndir/.");
 	}
-	$mod='tnpri.mod';
+	$mod = 'tnpri.mod';
 }
 chdir($tndir);
 
-my $command= $includes::sse." -samples=3 $mod -seed=630992 -directory=$dir";
+my $command = $includes::sse." -samples=3 $mod -seed=630992 -directory=$dir";
 print "Running $command\n";
 my $rc = system($command);
 $rc = $rc >> 8;
 ok ($rc == 0, "$command, sse with prior tnpri should run ok");
 chdir('..');
-rmtree([ "./$tndir" ]);
+rmtree([$tndir]);
 
 $command= $includes::sse." -samples=3 $model_dir/nwpri.mod -seed=630992 -directory=$dir";
 print "Running $command\n";
@@ -56,7 +54,6 @@ $rc = system($command);
 $rc = $rc >> 8;
 ok ($rc == 0, "$command, sse with prior nwpri should run ok");
 
-rmtree([ "./$dir" ]);
-
+remove_test_dir;
 
 done_testing();

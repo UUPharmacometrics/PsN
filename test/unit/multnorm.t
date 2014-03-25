@@ -12,7 +12,6 @@ use Math::Trig;	# For pi
 use Math::Random;
 use output;
 use tool::sir;
-use FindBin qw($Bin);
 
 
 #Tests needed for SIR
@@ -22,10 +21,9 @@ use FindBin qw($Bin);
 
 #sub resample
 
-my $dir ="$Bin/../test_files/";
-#my $dir='/home/kajsa/kod-psn/3PsN/devel/';
-my $file='matrixreal.lst';
-my $output= output -> new (filename => $dir.$file);
+my $dir = $includes::testfiledir . "/";
+my $file = 'matrixreal.lst';
+my $output = output->new(filename => $dir . $file);
 
 my $icm = tool::sir::get_nonmem_inverse_covmatrix(output => $output);
 
@@ -227,10 +225,9 @@ my $matlab_base = 4.465034382516543e+06;
 cmp_ok(abs($base-$matlab_base),'<',0.00000001,'base diff to matlab');
 
 
-$dir ="$Bin/../test_files/";
-#$dir='temp/';
-$file='mox_sir.lst';
-$output= output -> new (filename => $dir.$file);
+$dir = $includes::testfiledir . "/";
+$file = 'mox_sir.lst';
+$output= output->new (filename => $dir . $file);
 
 my $icm = tool::sir::get_nonmem_inverse_covmatrix(output => $output);
 
@@ -324,10 +321,9 @@ cmp_ok($covar->[6]->[3],'==',eval(2*2.75131E-03),'inflated covar element 7,4');
 cmp_ok($covar->[4]->[6],'==',eval(2*-3.05686E-04),'inflated covar element 5,7');
 
 
-$dir ="$Bin/../test_files/";
-#$dir='temp/';
+$dir = $includes::testfiledir . "/";
 $file='mox_sir_block2.lst';
-$output= output -> new (filename => $dir.$file);
+$output= output->new(filename => $dir . $file);
 
 $hash = tool::sir::get_nonmem_parameters(output => $output);
 
@@ -356,8 +352,5 @@ my $gotsamples = tool::sir::sample_multivariate_normal(samples=>$nsamples,
 													   block_number => $hash->{'block_number'},
 													   mu => $mu
 	);
-
-
-
 
 done_testing();

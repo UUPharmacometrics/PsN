@@ -10,7 +10,8 @@ use FindBin qw($Bin);
 use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages and $path variable definition
 
-our $dir = 'vpc_test';
+our $tempdir = create_test_dir;
+our $dir = "$tempdir/vpc_test";
 
 my $truematrix=
 [[1.7300E+01,1.5591E+01,2.0031E+01,1.3769E+01,1.7572E+01,1.3515E+01,4.1674E+01,2.6360E+01,9.6451E+00,4.4075E+01,1.1120E+01,2.2924E+01,2.9936E+01,1.4643E+01,1.5146E+01,3.2476E+01,2.2444E+01,1.7241E+01,3.6800E+01,2.0314E+01,1.3952E+01],
@@ -116,8 +117,6 @@ sub get_stats
 my $model_dir = $includes::testfiledir;
 
 
-rmtree([ "./$dir" ]);
-
 #test will fail if pheno5.lst present in model dir
 unlink("$model_dir/pheno5.lst");
 my $command = $includes::vpc." -samples=20 $model_dir/pheno5.mod -auto_bin=2 -directory=$dir -seed=12345 -min_point=5";
@@ -128,16 +127,16 @@ my $newmatrix = get_dv_matrix();
 is (scalar(@{$newmatrix}),scalar(@{$truematrix}),"DV matrices, equal num rows");
 my $num = scalar(@{$newmatrix});
 
-for (my $i=0; $i< $num; $i++){
+for (my $i = 0; $i < $num; $i++) {
 	is_array ($newmatrix->[$i],$truematrix->[$i],"DV matrix row index $i");
 }
 
-my $stats=get_stats();
-for (my $i=0; $i< 2; $i++){
+my $stats = get_stats();
+for (my $i = 0; $i < 2; $i++){
 	is_array ($stats->[$i],$truestats->[$i],"stats row index $i");
 }
 
-rmtree([ "./$dir" ]);
+rmtree([$dir]);
 
 #split simulation over multiple tabs
 $command = $includes::vpc." -samples=20 $model_dir/pheno5.mod -auto_bin=2 -directory=$dir -seed=12345 -min_point=5 -n_sim=2";
@@ -145,13 +144,13 @@ system $command;
 
 $newmatrix = get_dv_matrix();
 
-is (scalar(@{$newmatrix}),scalar(@{$truematrix2}),"DV matrices n_sim=2, equal num rows");
+is (scalar(@{$newmatrix}), scalar(@{$truematrix2}), "DV matrices n_sim=2, equal num rows");
 $num = scalar(@{$newmatrix});
 
-for (my $i=0; $i< $num; $i++){
+for (my $i=0; $i< $num; $i++) {
 	is_array ($newmatrix->[$i],$truematrix2->[$i],"DV matrix n_sim=2 row index $i");
 }
 
-rmtree([ "./$dir" ]);
+remove_test_dir;
 
 done_testing();

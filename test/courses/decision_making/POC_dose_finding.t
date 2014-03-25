@@ -1,22 +1,23 @@
 #!/etc/bin/perl
 
-
 use strict;
 use warnings;
 use File::Path 'rmtree';
 use Test::More;
 use File::Copy 'cp';
-use lib "../.."; #location of includes.pm
+use FindBin qw($Bin);
+use lib "$Bin/../.."; #location of includes.pm
 use includes; #file with paths to PsN packages and $path variable definition
 
 #making sure commands in HO POC_and_dose_finding/Study_design_dose_finding run ok
 
-our $dir = 'POC_dosefinding_test';
-my $model_dir = "HO_POC_dose_finding_files";
+our $tempdir = create_test_dir;
+our $dir = "$tempdir/POC_dosefinding_test";
+my $model_dir = "$Bin/HO_POC_dose_finding_files";
 my @needed = <$model_dir/*>;
 mkdir($dir);
-foreach my $file (@needed){
-	cp($file,$dir.'/.');
+foreach my $file (@needed) {
+	cp($file, $dir . '/.');
 }
 chdir($dir);
 
@@ -47,9 +48,6 @@ foreach my $ref (@command_list){
 	ok ($rc == 0, "$comment ");
 }
 
-
-chdir('..');
-rmtree([ "./$dir" ]); #with all sub run dirs
-
+remove_test_dir;
 
 done_testing();

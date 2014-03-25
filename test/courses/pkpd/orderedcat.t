@@ -4,13 +4,14 @@ use warnings;
 use File::Path 'rmtree';
 use Test::More;
 use File::Copy 'cp';
-use lib "../.."; #location of includes.pm
+use FindBin qw($Bin);
+use lib "$Bin/../.."; #location of includes.pm
 use includes; #file with paths to PsN packages and $path variable definition
 
 
-
-our $dir = 'OrderedCat_test';
-my $model_dir = "OrderedCat";
+our $tempdir = create_test_dir;
+our $dir = "$tempdir/OrderedCat_test";
+my $model_dir = "$Bin/OrderedCat";
 my @needed = <$model_dir/*>;
 mkdir($dir);
 foreach my $file (@needed){
@@ -24,18 +25,15 @@ my @command_list=(
 	);
 plan tests => scalar(@command_list);
 
-foreach my $ref (@command_list){
-	my $command=$ref->[0];
-	my $comment=$ref->[1];
+foreach my $ref (@command_list) {
+	my $command = $ref->[0];
+	my $comment = $ref->[1];
 	print "Running $comment:\n$command\n";
 	my $rc = system($command);
 	$rc = $rc >> 8;
 	ok ($rc == 0, "$comment ");
 }
 
-chdir('..');
-rmtree([ "./$dir" ]); #with all sub run dirs
-
-
+remove_test_dir;
 
 done_testing();

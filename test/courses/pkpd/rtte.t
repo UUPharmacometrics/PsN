@@ -5,17 +5,18 @@ use strict;
 use warnings;
 use File::Path 'rmtree';
 use Test::More;
-use lib "../.."; #location of includes.pm
+use FindBin qw($Bin);
+use lib "$Bin/../.."; #location of includes.pm
 use includes; #file with paths to PsN packages and $path variable definition
 use File::Copy 'cp';
 
-
-our $dir = 'RTTE_test';
-my $model_dir = "RepeatedTTE";
+our $tempdir = create_test_dir;
+our $dir = "$tempdir/RTTE_test";
+my $model_dir = "$Bin/RepeatedTTE";
 my @needed = <$model_dir/*>;
 mkdir($dir);
-foreach my $file (@needed){
-	cp($file,$dir.'/.');
+foreach my $file (@needed) {
+	cp($file, $dir . '/.');
 }
 chdir($dir);
 #change back samp to 50 if running for real
@@ -29,18 +30,15 @@ my @command_list=(
 	);
 plan tests => scalar(@command_list);
 
-foreach my $ref (@command_list){
-	my $command=$ref->[0];
-	my $comment=$ref->[1];
+foreach my $ref (@command_list) {
+	my $command = $ref->[0];
+	my $comment = $ref->[1];
 	print "Running $comment:\n$command\n";
 	my $rc = system($command);
 	$rc = $rc >> 8;
 	ok ($rc == 0, "$comment ");
 }
 
-chdir('..');
-rmtree([ "./$dir" ]); #with all sub run dirs
-
-
+remove_test_dir;
 
 done_testing();

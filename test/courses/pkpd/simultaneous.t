@@ -1,17 +1,17 @@
 #!/etc/bin/perl
 
-
 use strict;
 use warnings;
 use File::Path 'rmtree';
 use Test::More;
-use lib "../.."; #location of includes.pm
+use FindBin qw($Bin);
+use lib "$Bin/../.."; #location of includes.pm
 use includes; #file with paths to PsN packages and $path variable definition
 use File::Copy 'cp';
 
-
-our $dir = 'Simultaneous_test';
-my $model_dir = "Simultaneous";
+our $tempdir = create_test_dir;
+our $dir = "$tempdir/Simultaneous_test";
+my $model_dir = "$Bin/Simultaneous";
 my @needed = <$model_dir/*>;
 mkdir($dir);
 foreach my $file (@needed){
@@ -35,9 +35,6 @@ foreach my $ref (@command_list){
 	ok ($rc == 0, "$comment ");
 }
 
-chdir('..');
-rmtree([ "./$dir" ]); #with all sub run dirs
-
-
+remove_test_dir;
 
 done_testing();

@@ -15,32 +15,30 @@ use tool::scm::config_file;
 use tool::scm;
 use common_options;
 
-
-our $dir = 'scm_test';
+our $tempdir = create_test_dir;
+our $dir = "$tempdir/scm_test";
 our $scm_file_dir = $includes::testfiledir . '/scm';
 our $file_dir = $includes::testfiledir;
 
+sub is_array
+{
+	my $func=shift;
+	my $facit=shift;
+	my $label=shift;
 
-sub is_array{
-    my $func=shift;
-    my $facit=shift;
-    my $label=shift;
+	is (scalar(@{$func}),scalar(@{$facit}),"$label, equal length");
 
-    is (scalar(@{$func}),scalar(@{$facit}),"$label, equal length");
+	my $min = scalar(@{$func});
+	$min = scalar(@{$facit}) if (scalar(@{$facit})< $min);
+	for (my $i = 0; $i < $min; $i++) {
+		if ($facit->[$i] eq 'NA') {
+			cmp_ok($func->[$i], 'eq', $facit->[$i], "$label, index $i");
+		} else {
+			cmp_ok($func->[$i], '==', $facit->[$i], "$label, index $i");
+		}
+	}		
 
-    my $min = scalar(@{$func});
-    $min = scalar(@{$facit}) if (scalar(@{$facit})< $min);
-    for (my $i=0; $i<$min; $i++){
-	if ($facit->[$i] eq 'NA'){
-	    cmp_ok($func->[$i],'eq',$facit->[$i],"$label, index $i");
-	}else{
-	    cmp_ok($func->[$i],'==',$facit->[$i],"$label, index $i");
-	}
-    }		
-	
 }
-
-
 
 sub get_stats
 {
@@ -56,7 +54,6 @@ sub get_stats
 #    $this -> covariate_statistics($VAR1);
 
 }
-
 
 my $hash1_answer = {
           'APGR' => {
@@ -107,15 +104,13 @@ my $hash1_answer = {
         };
 
 
-
-rmtree([ "./$dir" ]);
 my $file = file -> new( name => 'config_nostep.scm', path => $scm_file_dir );
 my $config_file = 'tool::scm::config_file' -> new ( file => $file );
 
 my $models_array = [ model -> new ( filename           => $scm_file_dir.'/pheno_with_cov.mod',
 				    target             => 'disk' ) ] ;
 
-my  $scm = tool::scm ->  new ( nmfe =>1,
+my  $scm = tool::scm->new(nmfe => 1,
 			       models	=> $models_array,
 			       directory => $dir,
 			       lst_file => $scm_file_dir.'/pheno_with_cov.lst',
@@ -123,19 +118,19 @@ my  $scm = tool::scm ->  new ( nmfe =>1,
 			       both_directions => 0);
 
 
-my $h1=get_stats();
+my $h1 = get_stats();
 
 
 
-foreach my $key1 (keys %{$hash1_answer}){
-    foreach my $key2 (keys %{$hash1_answer->{$key1}}){
-	cmp_ok($h1->{$key1}->{$key2},'eq',$hash1_answer->{$key1}->{$key2},"$key1 $key2");
-    }
+foreach my $key1 (keys %{$hash1_answer}) {
+	foreach my $key2 (keys %{$hash1_answer->{$key1}}) {
+		cmp_ok($h1->{$key1}->{$key2},'eq',$hash1_answer->{$key1}->{$key2},"$key1 $key2");
+	}
 }
 
-rmtree([ "./$dir" ]);
+rmtree([$dir]);
 
-$file = file -> new( name => 'config_nostep.scm', path => $scm_file_dir );
+$file = file->new( name => 'config_nostep.scm', path => $scm_file_dir );
 $config_file = 'tool::scm::config_file' -> new ( file => $file );
 
 $models_array = [ model -> new ( filename           => $scm_file_dir.'/pheno_missing.mod',
@@ -154,20 +149,19 @@ $scm = tool::scm ->  new ( nmfe =>1,
 			       both_directions => 0);
 
 
-$h1=get_stats(); #use same dir name (global $dir)
+$h1 = get_stats(); #use same dir name (global $dir)
 
 #use same answers, pattern of missing data should not affect stats in this case
 $hash1_answer->{'CVD2'}->{'median'}=0;
 $hash1_answer->{'APGR'}->{'mean'}='  6.10';
 $hash1_answer->{'APGR'}->{'median'}='  6.00';
-foreach my $key1 (keys %{$hash1_answer}){
-    foreach my $key2 (keys %{$hash1_answer->{$key1}}){
-	cmp_ok($h1->{$key1}->{$key2},'eq',$hash1_answer->{$key1}->{$key2},"$key1 $key2");
-    }
+foreach my $key1 (keys %{$hash1_answer}) {
+	foreach my $key2 (keys %{$hash1_answer->{$key1}}) {
+		cmp_ok($h1->{$key1}->{$key2},'eq',$hash1_answer->{$key1}->{$key2},"$key1 $key2");
+	}
 }
 
-rmtree([ "./$dir" ]);
-
+rmtree([$dir]);
 
 $file = file -> new( name => 'config_nostep.scm', path => $scm_file_dir );
 $config_file = 'tool::scm::config_file' -> new ( file => $file );
@@ -176,7 +170,7 @@ $models_array = [ model -> new ( filename           => $scm_file_dir.'/pheno_mis
 								 missing_data_token => 9999,
 								 target             => 'disk' ) ] ;
 
-$scm = tool::scm ->  new ( nmfe =>1,
+$scm = tool::scm->new(nmfe => 1,
 						   models	=> $models_array,
 						   missing_data_token => 9999,
 						   directory => $dir,
@@ -185,19 +179,18 @@ $scm = tool::scm ->  new ( nmfe =>1,
 						   both_directions => 0);
 
 
-$h1=get_stats(); #use same dir name (global $dir)
+$h1 = get_stats(); #use same dir name (global $dir)
 
 #use same answers, pattern of missing data should not affect stats in this case
 $hash1_answer->{'CVD2'}->{'median'}=0;
 $hash1_answer->{'APGR'}->{'mean'}='  6.10';
 $hash1_answer->{'APGR'}->{'median'}='  6.00';
-foreach my $key1 (keys %{$hash1_answer}){
-    foreach my $key2 (keys %{$hash1_answer->{$key1}}){
-	cmp_ok($h1->{$key1}->{$key2},'eq',$hash1_answer->{$key1}->{$key2},"$key1 $key2");
-    }
+foreach my $key1 (keys %{$hash1_answer}) {
+	foreach my $key2 (keys %{$hash1_answer->{$key1}}) {
+		cmp_ok($h1->{$key1}->{$key2},'eq',$hash1_answer->{$key1}->{$key2},"$key1 $key2");
+	}
 }
 
-rmtree([ "./$dir" ]);
-
+remove_test_dir;
 
 done_testing();

@@ -10,7 +10,8 @@ use FindBin qw($Bin);
 use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages and $path variable definition
 
-our $dir = 'vpc_test';
+our $tempdir = create_test_dir;
+our $dir = "$tempdir/vpc_test";
 
 sub get_bins
 {
@@ -45,7 +46,6 @@ sub compare_bins
 my $model_dir = $includes::testfiledir;
 
 my @a;
-rmtree([ "./$dir" ]);
 
 # Commands that should return error
 my @command_line = ($includes::vpc." -samples=20 $model_dir/pheno.mod -min_points_in_bin=28 -bin_array=10,20,30 -directory=$dir",       # Min points in bin without -auto_bin
@@ -61,7 +61,7 @@ foreach my $i (0..$#command_line) {
 	ok ($rc != 0, "Command that should return error: $command_line[$i]");
 }
 
-rmtree([ "./$dir" ]);
+rmtree([$dir]);
 
 # Commands that should store bins in vpc_bins.txt
 my @results = ([-8.888, 16.5, 42.65, 68.15, 93, 127.9, 148.4, 204.8, 390.1888],
@@ -93,12 +93,12 @@ foreach my $i (0..$#command_line) {
     print "Error in binning: $command_line[$i]\n";
     print "Should be: @{$results[$i]}\n";
     print "Was: @a\n";
-    rmtree([ "./npc_dir1" ]);
+  	rmtree([$dir]);
   }
 
 	ok ($is_equal, "Testing: $command_line[$i]");
 }
 
-rmtree([ "./$dir" ]);
+remove_test_dir;
 
 done_testing();

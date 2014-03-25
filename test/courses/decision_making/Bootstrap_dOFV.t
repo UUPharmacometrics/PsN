@@ -1,19 +1,19 @@
 #!/etc/bin/perl
 
-
 use strict;
 use warnings;
 use File::Path 'rmtree';
 use Test::More;
-use lib "../.."; #location of includes.pm
+use FindBin qw($Bin);
+use lib "$Bin/../.."; #location of includes.pm
 use includes; #file with paths to PsN packages and $path variable definition
 use File::Copy 'cp';
 
 #making sure commands in HO HCV (Hepatitis C) run ok, no extra credit runs
 
-
-our $dir = 'Bootstrap_dOFV_test';
-my $model_dir = "HO_Bootstrap_dOFV_files";
+our $tempdir = create_test_dir;
+our $dir = "$tempdir/Bootstrap_dOFV_test";
+my $model_dir = "$Bin/HO_Bootstrap_dOFV_files";
 my @needed = <$model_dir/*>;
 mkdir($dir);
 foreach my $file (@needed){
@@ -37,9 +37,7 @@ foreach my $ref (@command_list){
 	$rc = $rc >> 8;
 	ok ($rc == 0, "$comment ");
 }
-chdir('..');
-rmtree([ "./$dir" ]); #with all sub run dirs
 
-
+remove_test_dir;
 
 done_testing();

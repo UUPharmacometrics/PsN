@@ -11,8 +11,6 @@ use FindBin qw($Bin);
 use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages
 
-#use lib "../test_files/output";
-
 unshift @INC, $includes::testfiledir . '/output';
 require answers;
 use output;
@@ -23,7 +21,8 @@ $SIG{__WARN__} = sub {
 	my $message = shift;
 };
 
-sub cmp_array{
+sub cmp_array
+{
     my $func=shift;
     my $facit=shift;
     my $label=shift;
@@ -51,7 +50,7 @@ for (my $i=0; $i< scalar(@answer_hashes); $i++){
 	    next;
 	}
 
-	my $outobj = output -> new ('filename'=> $outfile);
+	my $outobj = output -> new ('filename' => $outfile);
 	cmp_ok($outobj->parsed_successfully,'==',$answer_hashes[$i]->{parsed_successfully}, "output file $outfile parsed successfully");
 
 	unless( $outobj -> parsed_successfully ){

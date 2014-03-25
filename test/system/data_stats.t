@@ -19,7 +19,7 @@ my @commands =
 	 $includes::data_stats." $model_dir/pheno.dta",
 	 );
 
-foreach my $command (@commands){
+foreach my $command (@commands) {
 	print "Running $command\n";
 	my $rc = system($command);
 	$rc = $rc >> 8;
