@@ -2861,7 +2861,8 @@ sub copy_model_and_input
 						push( @data_file_names, $filename );
 					}
 				} else {
-					croak('No datafiles set in modelfile.' );
+					print "\nNo data objects for model ".$model->filename()."\n";
+					carp('No datafiles set in modelfile.' );
 				}
 				# save references to own data and output objects
 				my $datas   = $model->datas;
@@ -2889,10 +2890,15 @@ sub copy_model_and_input
 				
 			}
 			
+
+			#it is an error if data is missing here, but we ignore it and let
+			#nonmem crash due to missing data, will be handled better that way than having croak in data.pm
+			#TODO mark the model as failed even before NMrun if data is missing, so do not waste nm call
+
 			$candidate_model =  model -> new (outputfile                  => 'psn.lst',
 											  filename                    => 'psn.mod',
 											  ignore_missing_output_files => 1,
-											  ignore_missing_data => 0);
+											  ignore_missing_data => 1);
 			
 			$candidate_model -> shrinkage_modules( $model -> shrinkage_modules );
 			
@@ -2932,7 +2938,8 @@ sub copy_model_and_input
 				push( @new_data_names, $filename );
 			}
 		} else {
-			croak('No datafiles set in modelfile.' );
+			print "\nNo data objects for model ".$model->filename()."\n";
+			carp('No datafiles set in modelfile.' );
 		}
 		
 		# Set the table names to a short version 
@@ -2966,6 +2973,11 @@ sub copy_model_and_input
 		# Copy the model object. Set the new (shorter) data file names.
 		# datafiles are copied by model
 		#data_file_names are only used if copy_data=1
+
+		#it is an error if data is missing here, but we ignore it and let
+		#nonmem crash due to missing data, will be handled better that way than having croak in data.pm
+		#TODO mark the model as failed even before NMrun if data is missing, so do not waste nm call
+
 		$candidate_model = $model -> copy( filename              => 'psn.mod',
 										   data_file_names       => \@new_data_names,
 										   copy_data             => $copy_data );
