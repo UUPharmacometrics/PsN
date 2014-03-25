@@ -70,15 +70,30 @@ and then ask the PsN team to give you permission to push on PsN4.
 Stay on the NLP branch so that git pull and git push will be on that branch. 
 \end{itemize}
 
+
 \section{Testing}
 The PsN4/test directory contains the tests. Unit tests are in PsN4/test/unit and system tests in PsN4/test/system. 
 Unit tests are defined as tests that do not involve \emph{running} NONMEM, while system tests is all the rest. 
-Script unit\_tests.pl and system\_tests.pl in 
-PsN4/test will run all tests (i.e. all .t scripts) in the unit and system subdirectories, respectively. 
-Individual test scripts are run with e.g. 
+Tests can be run by using the command \verb|prove| (which is bundled with perl). The unit tests can be run by issuing the command
+\begin{verbatim}
+prove -r unit
+\end{verbatim}
+and the system tests can be run with
+\begin{verbatim}
+prove -r system
+\end{verbatim}
+
+Test can be run from any directory given a path to prove:
+\begin{verbatim}
+prove -r PsN4/test/unit
+\end{verbatim}
+
+Individual test scripts can be run with e.g. 
 \begin{verbatim}
 prove bootstrap.t
 \end{verbatim}
+
+
 \section{Build environment}
 The documentation is made in \LaTeX and pdfs can be generated with \verb|make doc|. The
 packages texlive-extra-util and texlive-science are needed to build all documents.
