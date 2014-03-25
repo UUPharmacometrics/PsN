@@ -1010,9 +1010,15 @@ sub modelfit_setup
 
 		}
 
+
 		for( my $j = 0; $j <= $#orig_est_models; $j++ ) {
 			#can be 0 est models
 			my $sim_file = $self -> directory.'m'.$model_number.'/'."mc-sim-".($j+1).".dat";
+
+			#it is an error if the data file does not exist here, but we ignore that for now
+			# and let the NM run fail instead, letting the other runs continur
+			$orig_est_models[$j] -> ignore_missing_files(1);
+			$orig_est_models[$j] -> skip_data_parsing(1);
 			$orig_est_models[$j] -> set_file( record => 'data',
 											  new_name => $sim_file,
 											  problem_number => 0); #0 means all
@@ -1275,6 +1281,11 @@ sub modelfit_setup
 
 			for( my $j = 0; $j <= $#alt_est_models; $j++ ) {
 				my $sim_file = $self -> directory.'m'.$model_number.'/'."mc-sim-".($j+1).".dat";
+				#it is an error if the data file does not exist here, but we ignore that for now
+				# and let the NM run fail instead, letting the other runs continue
+				$alt_est_models[$j] -> ignore_missing_files(1);
+				$alt_est_models[$j] -> skip_data_parsing(1);
+
 				$alt_est_models[$j] -> set_file( record => 'data',new_name => $sim_file); #default all recs
 				$alt_est_models[$j] -> _write;
 				$alt_est_models[$j] -> flush_data();
@@ -1874,11 +1885,13 @@ sub prepare_results
 			  my ($s, $l) = split(/,/, $self->raw_line_structure 
 								  -> {1+$model_index*$samples + $sample_index} -> {$measure});
 			  
+			  my $skip = 0;
 			  if( defined $s and $start != 0 and $s != $start ){
 				  croak("Internal structure corrupted at $model_index, ".
 						"$samples, $_, $measure, this is a bug" );
 			  } elsif (not defined $s){
-				  print "error undefined $measure pos in raw_line_structure\n";
+#				  print "error undefined $measure pos in raw_line_structure\n";
+				  $skip=1;
 			  } else {
 				  $start = $s;
 			  }
@@ -1888,8 +1901,9 @@ sub prepare_results
 			  }
 			  if ($measure eq 'ofv'){
 				  #do the filtering here
-				  my $skip = 0;
+				  #skip can already be 1 if run crashed
 				  for (my $i=0; $i< scalar(@filter_column);$i++){
+					  last if $skip;
 					  #find the index
 					  my ($filter_index, $dirt) = split(/,/, $self->raw_line_structure 
 														-> {1+$model_index*$samples + $sample_index} 
