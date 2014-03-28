@@ -119,7 +119,7 @@ sub BUILD
 			}
 		} else {
 			croak("The NONMEM output file " . $this -> full_name . " does not exist" )
-			unless $this->ignore_missing_files;
+				unless $this->ignore_missing_files;
 		}
 	} else {
 		croak("No filename specified or filename equals empty string!" );
@@ -130,8 +130,8 @@ sub BUILD
 sub add_problem
 {
 	my ($self, %parm) = validated_hash(\@_, 
-		init_data => {isa => 'Any', optional => 0}
-	);
+									   init_data => {isa => 'Any', optional => 0}
+		);
 	$self->problems([]) unless defined $self->problems;
 	push( @{$self->problems}, output::problem->new( %{$parm{'init_data'}} ) );
 
@@ -141,8 +141,8 @@ sub copy
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 filename => { isa => 'Str', optional => 1 }
-	);
+							  filename => { isa => 'Str', optional => 1 }
+		);
 	my $filename = $parm{'filename'};
 	my $new_output;
 
@@ -155,11 +155,11 @@ sub access_any
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 attribute => { isa => 'Str', optional => 0 },
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 parameter_numbers => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  attribute => { isa => 'Str', optional => 0 },
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  parameter_numbers => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my $attribute = $parm{'attribute'};
 	my @return_value;
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
@@ -176,59 +176,61 @@ sub access_any
 	# dimensional array.
 
 	if ( $self -> have_output ) {
-	  unless ( not_empty($self->problems) ) {
-	    $self -> _read_problems;
-	  }
+		unless ( not_empty($self->problems) ) {
+			$self -> _read_problems;
+		}
 	} else {
-	  croak("Trying to access output object, that have no data on file(" . $self->full_name . ") or in memory" );
+#	  croak("Trying to access output object, that have no data on file(" . $self->full_name . ") or in memory" );
+		print "\nTrying to access output object, that have no data on file(" . $self->full_name . ") or in memory\n" ;
+		return [];
 	}
 
 	my @own_problems;
 	if( defined $self->problems ) {
-	  unless( scalar(@problems) > 0 ){
-	    carp("Problems undefined, using all" );
-	    @problems = (1 .. scalar @{$self->problems});
-	  }
-	  @own_problems = @{$self->problems};
+		unless( scalar(@problems) > 0 ){
+			carp("Problems undefined, using all" );
+			@problems = (1 .. scalar @{$self->problems});
+		}
+		@own_problems = @{$self->problems};
 	} else {
-	  return \@return_value; #Return the empty array
+		return \@return_value; #Return the empty array
 	}
 
 	foreach my $i ( @problems ) {
-	  if ( defined $own_problems[$i - 1] ) {
-	    if (( defined( $own_problems[$i - 1] -> can( $attribute ) ) ) and (not $attribute eq 'estimation_step_run')) {
-	      carp("method $attribute defined on the problem level" );
-	      my $meth_ret = $own_problems[$i - 1] -> $attribute;
-	      if ( ref($meth_ret) eq "HASH" ) {
+		if ( defined $own_problems[$i - 1] ) {
+			if (( defined( $own_problems[$i - 1] -> can( $attribute ) ) ) and (not $attribute eq 'estimation_step_run')) {
+				carp("method $attribute defined on the problem level" );
+				my $meth_ret = $own_problems[$i - 1] -> $attribute;
+				if ( ref($meth_ret) eq "HASH" ) {
 					push( @return_value, $meth_ret ) if defined $meth_ret;
-	      } elsif ( ref ($meth_ret) ) {
+				} elsif ( ref ($meth_ret) ) {
 					my @prob_attr = @{$meth_ret};
 					if ( scalar @parameter_numbers > 0 ) {
-		  			my @tmp_arr = ();
-		  			foreach my $num ( @parameter_numbers ) {
-		    			if ( $num > 0 and $num <= scalar @prob_attr ) {
-		      			push( @tmp_arr, $prob_attr[$num - 1] );
-		    			} else {
-		      			croak("( $attribute ): no such parameter number $num!" . "(" . scalar @prob_attr . " exists)" );
-		    			}
-		  			}
-		  			@prob_attr = @tmp_arr;
+						my @tmp_arr = ();
+						foreach my $num ( @parameter_numbers ) {
+							if ( $num > 0 and $num <= scalar @prob_attr ) {
+								push( @tmp_arr, $prob_attr[$num - 1] );
+							} else {
+								croak("( $attribute ): no such parameter number $num!" . "(" . scalar @prob_attr . " exists)" );
+							}
+						}
+						@prob_attr = @tmp_arr;
 					}
 					push( @return_value, \@prob_attr );
-	      } else {
+				} else {
 					push( @return_value, $meth_ret ) if defined $meth_ret;
-	      }
-	    } else {
-	      carp("method $attribute defined on the subproblem level" );
-	      my $problem_ret = $own_problems[$i - 1] -> access_any(
-									attribute         => $attribute,
-									subproblems       => \@subproblems,
-									parameter_numbers => \@parameter_numbers );
-	      push( @return_value, $problem_ret ) if defined $problem_ret;
-	    }
-	  } else {
-	    croak("No such problem " . ($i - 1) );
-	  }
+				}
+			} else {
+				carp("method $attribute defined on the subproblem level" );
+				my $problem_ret = $own_problems[$i - 1] -> access_any(
+					attribute         => $attribute,
+					subproblems       => \@subproblems,
+					parameter_numbers => \@parameter_numbers );
+				push( @return_value, $problem_ret ) if defined $problem_ret;
+			}
+		} else {
+			croak("No such problem " . ($i - 1) );
+		}
 	}
 	return \@return_value;
 }
@@ -237,11 +239,11 @@ sub high_correlations
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 limit => { isa => 'Num', default => 0.95, optional => 1 },
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 parameter_numbers => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  limit => { isa => 'Num', default => 0.95, optional => 1 },
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  parameter_numbers => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my $limit = $parm{'limit'};
 	my @high_correlations;
 	my @found_correlations;
@@ -250,44 +252,44 @@ sub high_correlations
 	my @parameter_numbers = defined $parm{'parameter_numbers'} ? @{$parm{'parameter_numbers'}} : ();
 
 	my $correlation_matrix = $self -> correlation_matrix( problems    => \@problems,
-							      subproblems => \@subproblems );
+														  subproblems => \@subproblems );
 	my @matrix_headers = @{$self -> output_matrix_headers( problems    => \@problems,
-							     subproblems => \@subproblems )};
+														   subproblems => \@subproblems )};
 
 	my $found_any = 0;
 	for ( my $i = 0; $i < scalar @{$correlation_matrix}; $i++ ) {
-	  for ( my $j = 0; $j < scalar @{$correlation_matrix -> [$i]}; $j++ ) {
-	  	next unless (defined $correlation_matrix -> [$i][$j]);
-	    if ((scalar @{$correlation_matrix -> [$i][$j]})>0) {
-		  	$found_any = 1;
-		  	last;
-	    }
-	  }
-	  last if $found_any;
+		for ( my $j = 0; $j < scalar @{$correlation_matrix -> [$i]}; $j++ ) {
+			next unless (defined $correlation_matrix -> [$i][$j]);
+			if ((scalar @{$correlation_matrix -> [$i][$j]})>0) {
+				$found_any = 1;
+				last;
+			}
+		}
+		last if $found_any;
 	}
 	return unless $found_any;
 
 	for ( my $i = 0; $i < scalar @{$correlation_matrix}; $i++ ) {
-	  my ( @prob_corr, @pf_corr );
-	  my @names = {$matrix_headers[$i]};
+		my ( @prob_corr, @pf_corr );
+		my @names = {$matrix_headers[$i]};
 
-	  for ( my $j = 0; $j < scalar @{$correlation_matrix -> [$i]}; $j++ ) {
-	    my ( @sp_corr, @spf_corr );;
-	    my $idx = 0;
-	    for ( my $row = 1; $row <= scalar @names; $row++ ) {
+		for ( my $j = 0; $j < scalar @{$correlation_matrix -> [$i]}; $j++ ) {
+			my ( @sp_corr, @spf_corr );;
+			my $idx = 0;
+			for ( my $row = 1; $row <= scalar @names; $row++ ) {
 				for ( my $col = 1; $col <= $row; $col++ ) {
-		    	if ( not ( $row == $col ) and $correlation_matrix -> [$i][$j][$idx] > $limit or $correlation_matrix -> [$i][$j][$idx] < -$limit ) {
-		  			push( @sp_corr, $names[$row-1]."-".$names[$col-1] );
-		  			push( @spf_corr, $correlation_matrix -> [$i][$j][$idx] );
+					if ( not ( $row == $col ) and $correlation_matrix -> [$i][$j][$idx] > $limit or $correlation_matrix -> [$i][$j][$idx] < -$limit ) {
+						push( @sp_corr, $names[$row-1]."-".$names[$col-1] );
+						push( @spf_corr, $correlation_matrix -> [$i][$j][$idx] );
 					}
 					$idx++;
-	      }
-	    }
-	    push( @prob_corr, \@sp_corr );
-	    push( @pf_corr, \@spf_corr );
-	  }
-	  push( @high_correlations, \@prob_corr );
-	  push( @found_correlations, \@pf_corr );
+				}
+			}
+			push( @prob_corr, \@sp_corr );
+			push( @pf_corr, \@spf_corr );
+		}
+		push( @high_correlations, \@prob_corr );
+		push( @found_correlations, \@pf_corr );
 	}
 	return \@high_correlations ,\@found_correlations;
 }
@@ -296,13 +298,13 @@ sub large_standard_errors
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 theta_cv_limit => { isa => 'Num', default => 0.95, optional => 1 },
-		 omega_cv_limit => { isa => 'Num', default => 0.95, optional => 1 },
-		 sigma_cv_limit => { isa => 'Num', default => 0.95, optional => 1 },
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 parameter_numbers => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  theta_cv_limit => { isa => 'Num', default => 0.95, optional => 1 },
+							  omega_cv_limit => { isa => 'Num', default => 0.95, optional => 1 },
+							  sigma_cv_limit => { isa => 'Num', default => 0.95, optional => 1 },
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  parameter_numbers => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my $theta_cv_limit = $parm{'theta_cv_limit'};
 	my $omega_cv_limit = $parm{'omega_cv_limit'};
 	my $sigma_cv_limit = $parm{'sigma_cv_limit'};
@@ -312,42 +314,42 @@ sub large_standard_errors
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : () ;
 	my @parameter_numbers = defined $parm{'parameter_numbers'} ? @{$parm{'parameter_numbers'}} : ();
 
-		foreach my $param ( 'theta', 'omega', 'sigma' ) {
-	  my @cvs   = eval( '@{$self -> cvse'.$param.'s( problems    => \@problems,'.
-			    'subproblems => \@subproblems )}' );
-	  my @allnames   = eval( '@{$self -> '.$param.'names( problems    => \@problems,'.
-			    'subproblems => \@subproblems )}' );
-	  for ( my $i = 0; $i <= $#cvs; $i++ ) {
-	    #problem
-	    if ( $param eq 'theta' ) {
-	      $large_standard_errors_names[$i] = [];
-	    }
-	    next unless( defined $cvs[$i] );
-	    for ( my $j = 0; $j < scalar @{$cvs[$i]}; $j++ ) {
-	      #subproblem
-	      my (@large_values,@large_names);
-	      if ( $param eq 'theta' ) {
+	foreach my $param ( 'theta', 'omega', 'sigma' ) {
+		my @cvs   = eval( '@{$self -> cvse'.$param.'s( problems    => \@problems,'.
+						  'subproblems => \@subproblems )}' );
+		my @allnames   = eval( '@{$self -> '.$param.'names( problems    => \@problems,'.
+							   'subproblems => \@subproblems )}' );
+		for ( my $i = 0; $i <= $#cvs; $i++ ) {
+			#problem
+			if ( $param eq 'theta' ) {
+				$large_standard_errors_names[$i] = [];
+			}
+			next unless( defined $cvs[$i] );
+			for ( my $j = 0; $j < scalar @{$cvs[$i]}; $j++ ) {
+				#subproblem
+				my (@large_values,@large_names);
+				if ( $param eq 'theta' ) {
 					$large_standard_errors_names[$i][$j] = [] ;
-	      }
-	      next unless( defined $cvs[$i][$j] );
-	      unless ( defined $allnames[$i][$j] ) {
+				}
+				next unless( defined $cvs[$i][$j] );
+				unless ( defined $allnames[$i][$j] ) {
 					croak("no names matching  cvse:s");
-	      }
-	      my @values = @{$cvs[$i][$j]};
-	      my @names = @{$allnames[$i][$j]};
-	      unless ( scalar (@names) == scalar (@values) ) {
+				}
+				my @values = @{$cvs[$i][$j]};
+				my @names = @{$allnames[$i][$j]};
+				unless ( scalar (@names) == scalar (@values) ) {
 					croak("names do not match cvse:s");
-	      }
-	      for ( my $k = 0; $k < scalar (@values); $k++ ) {
+				}
+				for ( my $k = 0; $k < scalar (@values); $k++ ) {
 					if ( abs($values[$k]) > eval('$'.$param.'_cv_limit')) {
-		  			push (@large_values,$values[$k]);
-		  			push (@large_names,$names[$k]);
+						push (@large_values,$values[$k]);
+						push (@large_names,$names[$k]);
 					}
-	      }
-	      $large_standard_errors_names[$i][$j] = \@large_names ;
-	      $large_standard_errors_values[$i][$j] = \@large_values ;
-	    }
-	  }
+				}
+				$large_standard_errors_names[$i][$j] = \@large_names ;
+				$large_standard_errors_values[$i][$j] = \@large_values ;
+			}
+		}
 	}
 
 	return \@large_standard_errors_names ,\@large_standard_errors_values;
@@ -532,9 +534,9 @@ sub comegas
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @comegas = @{$self->access_any(attribute => 'comegas', problems => \@problems, subproblems => \@subproblems)};
@@ -580,9 +582,9 @@ sub condition_number
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @condition_number = @{$self->access_any(attribute=>'condition_number',problems=>\@problems,subproblems=>\@subproblems)};
@@ -599,9 +601,9 @@ sub covariance_step_run
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @covariance_step_run = @{$self->access_any(attribute=>'covariance_step_run',problems=>\@problems,subproblems=>\@subproblems)};
@@ -617,9 +619,9 @@ sub covariance_step_successful
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @covariance_step_successful = @{$self->access_any(attribute=>'covariance_step_successful',problems=>\@problems,subproblems=>\@subproblems)};
@@ -636,9 +638,9 @@ sub estimate_near_boundary
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @estimate_near_boundary = @{$self->access_any(attribute=>'estimate_near_boundary',problems=>\@problems,subproblems=>\@subproblems)};
@@ -651,9 +653,9 @@ sub covariance_step_warnings
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @covariance_step_warnings = @{$self->access_any(attribute=>'covariance_step_warnings',problems=>\@problems,subproblems=>\@subproblems)};
@@ -671,9 +673,9 @@ sub s_matrix_singular
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @s_matrix_singular = @{$self->access_any(attribute=>'s_matrix_singular',problems=>\@problems,subproblems=>\@subproblems)};
@@ -686,9 +688,9 @@ sub csigmas
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @csigmas = @{$self->access_any(attribute=>'csigmas',problems=>\@problems,subproblems=>\@subproblems)};
@@ -707,9 +709,9 @@ sub cvsethetas
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @cvsethetas = @{$self->access_any(attribute=>'cvsethetas',problems=>\@problems,subproblems=>\@subproblems)};
@@ -727,9 +729,9 @@ sub cvseomegas
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @cvseomegas = @{$self->access_any(attribute=>'cvseomegas',problems=>\@problems,subproblems=>\@subproblems)};
@@ -747,9 +749,9 @@ sub cvsesigmas
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @cvsesigmas = @{$self->access_any(attribute=>'cvsesigmas',problems=>\@problems,subproblems=>\@subproblems)};
@@ -767,9 +769,9 @@ sub shrinkage_eta
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @shrinkage_eta = @{$self->access_any(attribute=>'shrinkage_eta',problems=>\@problems,subproblems=>\@subproblems)};
@@ -782,9 +784,9 @@ sub shrinkage_eps
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @shrinkage_eps = @{$self->access_any(attribute=>'shrinkage_eps',problems=>\@problems,subproblems=>\@subproblems)};
@@ -797,9 +799,9 @@ sub eigens
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @eigens = @{$self->access_any(attribute=>'eigens',problems=>\@problems,subproblems=>\@subproblems)};
@@ -815,9 +817,9 @@ sub etabar
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @etabar = @{$self->access_any(attribute=>'etabar',problems=>\@problems,subproblems=>\@subproblems)};
@@ -833,9 +835,9 @@ sub feval
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @feval = @{$self->access_any(attribute=>'feval',problems=>\@problems,subproblems=>\@subproblems)};
@@ -852,9 +854,9 @@ sub finalparam
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @finalparam = @{$self->access_any(attribute=>'finalparam',problems=>\@problems,subproblems=>\@subproblems)};
@@ -871,9 +873,9 @@ sub final_gradients
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @final_gradients = @{$self->access_any(attribute=>'final_gradients',problems=>\@problems,subproblems=>\@subproblems)};
@@ -890,8 +892,8 @@ sub fixedomegas
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problem_index => { isa => 'Int', optional => 1 }
-	);
+							  problem_index => { isa => 'Int', optional => 1 }
+		);
 	my $problem_index = $parm{'problem_index'};
 	my @fixedomegas;
 
@@ -900,7 +902,7 @@ sub fixedomegas
 	# if they were not.
 
 	if ( defined $self->problems and defined $self->problems->[$problem_index]
-			and defined $self->problems->[$problem_index]->fixedomegas()) {
+		 and defined $self->problems->[$problem_index]->fixedomegas()) {
 		@fixedomegas = @{$self->problems->[$problem_index]->fixedomegas()};
 	}
 
@@ -911,9 +913,9 @@ sub estimated_sigmas
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @estimatedsigmas = @{$self->access_any(attribute=>'estimatedsigmas',problems=>\@problems,subproblems=>\@subproblems)};
@@ -926,9 +928,9 @@ sub estimated_thetas
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @estimatedthetas = @{$self->access_any(attribute=>'estimatedthetas',problems=>\@problems,subproblems=>\@subproblems)};
@@ -941,9 +943,9 @@ sub estimated_omegas
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @estimatedomegas = @{$self->access_any(attribute=>'estimatedomegas',problems=>\@problems,subproblems=>\@subproblems)};
@@ -956,9 +958,9 @@ sub est_thetanames
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @est_thetanames = @{$self->access_any(attribute=>'est_thetanames',problems=>\@problems,subproblems=>\@subproblems)};
@@ -971,9 +973,9 @@ sub est_omeganames
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @est_omeganames = @{$self->access_any(attribute=>'est_omeganames',problems=>\@problems,subproblems=>\@subproblems)};
@@ -986,9 +988,9 @@ sub est_sigmanames
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @est_sigmanames = @{$self->access_any(attribute=>'est_sigmanames',problems=>\@problems,subproblems=>\@subproblems)};
@@ -1001,8 +1003,8 @@ sub fixedsigmas
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problem_index => { isa => 'Int', optional => 1 }
-	);
+							  problem_index => { isa => 'Int', optional => 1 }
+		);
 	my $problem_index = $parm{'problem_index'};
 	my @fixedsigmas;
 
@@ -1011,8 +1013,8 @@ sub fixedsigmas
 	# if they were not.
 
 	if ( defined $self->problems and defined $self->problems->[$problem_index]
-			and defined $self->problems->[$problem_index]->fixedsigmas()) {
-      @fixedsigmas = @{$self->problems->[$problem_index]->fixedsigmas()};
+		 and defined $self->problems->[$problem_index]->fixedsigmas()) {
+		@fixedsigmas = @{$self->problems->[$problem_index]->fixedsigmas()};
 	}
 	return \@fixedsigmas;
 }
@@ -1021,8 +1023,8 @@ sub fixedthetas
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problem_index => { isa => 'Int', optional => 1 }
-	);
+							  problem_index => { isa => 'Int', optional => 1 }
+		);
 	my $problem_index = $parm{'problem_index'};
 	my @fixedthetas;
 
@@ -1031,7 +1033,7 @@ sub fixedthetas
 	# if they were not.
 
 	if ( defined $self->problems and defined $self->problems->[$problem_index]
-			and defined $self->problems->[$problem_index]->fixedthetas()) {
+		 and defined $self->problems->[$problem_index]->fixedthetas()) {
 		@fixedthetas = @{$self->problems->[$problem_index]->fixedthetas()};
 	}
 	return \@fixedthetas;
@@ -1058,9 +1060,9 @@ sub funcevalpath
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @funcevalpath = @{$self->access_any(attribute=>'funcevalpath',problems=>\@problems,subproblems=>\@subproblems)};
@@ -1076,9 +1078,9 @@ sub gradient_path
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @gradient_path = @{$self->access_any(attribute=>'gradient_path',problems=>\@problems,subproblems=>\@subproblems)};
@@ -1100,9 +1102,9 @@ sub have_output
 	# is output data in memory.
 
 	if ( -e $self->full_name || not_empty($self->problems) ) {
-	  return 1;
+		return 1;
 	} else {
-	  return 0;
+		return 0;
 	}
 
 	return $return_value;
@@ -1112,9 +1114,9 @@ sub have_user_defined_prior
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @user_defined_prior = @{$self->access_any(attribute=>'user_defined_prior',problems=>\@problems,subproblems=>\@subproblems)};
@@ -1127,9 +1129,9 @@ sub initgrad
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @initgrad = @{$self->access_any(attribute=>'initgrad',problems=>\@problems,subproblems=>\@subproblems)};
@@ -1145,9 +1147,9 @@ sub initthetas
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @initthetas = @{$self->access_any(attribute=>'initthetas',problems=>\@problems,subproblems=>\@subproblems)};
@@ -1166,9 +1168,9 @@ sub omega_indexes
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @omega_indexes = @{$self->access_any(attribute=>'omega_indexes',problems=>\@problems,subproblems=>\@subproblems)};
@@ -1181,9 +1183,9 @@ sub sigma_indexes
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @sigma_indexes = @{$self->access_any(attribute=>'sigma_indexes',problems=>\@problems,subproblems=>\@subproblems)};
@@ -1196,9 +1198,9 @@ sub iternum
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @iternum = @{$self->access_any(attribute=>'iternum',problems=>\@problems,subproblems=>\@subproblems)};
@@ -1211,8 +1213,8 @@ sub labels
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 parameter_type => { isa => 'Str', optional => 1 }
-	);
+							  parameter_type => { isa => 'Str', optional => 1 }
+		);
 	my $parameter_type = $parm{'parameter_type'};
 	my @labels;
 
@@ -1267,9 +1269,9 @@ sub nind
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @nind = @{$self->access_any(attribute=>'nind',problems=>\@problems,subproblems=>\@subproblems)};
@@ -1286,9 +1288,9 @@ sub nobs
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @nobs = @{$self->access_any(attribute=>'nobs',problems=>\@problems,subproblems=>\@subproblems)};
@@ -1305,9 +1307,9 @@ sub npofv
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @npofv = @{$self->access_any(attribute=>'npofv',problems=>\@problems,subproblems=>\@subproblems)};
@@ -1324,9 +1326,9 @@ sub nrecs
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @nrecs = @{$self->access_any(attribute=>'nrecs',problems=>\@problems,subproblems=>\@subproblems)};
@@ -1343,9 +1345,9 @@ sub npomegas
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @npomegas = @{$self->access_any(attribute=>'npomegas',problems=>\@problems,subproblems=>\@subproblems)};
@@ -1362,9 +1364,9 @@ sub npetabars
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @npetabars = @{$self->access_any(attribute=>'npetabars',problems=>\@problems,subproblems=>\@subproblems)};
@@ -1381,9 +1383,9 @@ sub nth
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @nth = @{$self->access_any(attribute=>'nth',problems=>\@problems,subproblems=>\@subproblems)};
@@ -1401,9 +1403,9 @@ sub ofvpath
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @ofvpath = @{$self->access_any(attribute=>'ofvpath',problems=>\@problems,subproblems=>\@subproblems)};
@@ -1419,10 +1421,10 @@ sub get_single_value
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		attribute => { isa => 'Str', optional => 0 },
-		problem_index => { isa => 'Int', default => 0, optional => 1 },
-		subproblem_index => { isa => 'Int', default => 0, optional => 1 }
-	);
+							  attribute => { isa => 'Str', optional => 0 },
+							  problem_index => { isa => 'Int', default => 0, optional => 1 },
+							  subproblem_index => { isa => 'Int', default => 0, optional => 1 }
+		);
 	my $attribute = $parm{'attribute'};
 	my $problem_index = $parm{'problem_index'};
 	my $subproblem_index = $parm{'subproblem_index'};
@@ -1442,16 +1444,16 @@ sub get_single_value
 			1;
 		}
 	} elsif ( ($attribute eq 'estimation_step_run') or
-		($attribute eq 'estimation_step_initiated')
-	) {
+			  ($attribute eq 'estimation_step_initiated')
+		) {
 # removed support ($attribute eq 'user_defined_prior') 
 #		or ($attribute eq 'omega_block_structure_type')
 #		or ($attribute eq 'sigma_block_structure_type')
 #		or ($attribute eq 'omega_block_sets')
 #		or ($attribute eq 'sigma_block_sets')
 		$arr = $self->access_any(attribute => $attribute,
-			problems => [($problem_index + 1)],
-			subproblems => [(1)]);
+								 problems => [($problem_index + 1)],
+								 subproblems => [(1)]);
 		if (defined $arr->[0]) {
 			if (ref $arr->[0] eq "ARRAY"){
 				$return_value=$arr->[0]->[0];
@@ -1469,9 +1471,9 @@ sub ofv
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @ofv = @{$self->access_any(attribute=>'ofv',problems=>\@problems,subproblems=>\@subproblems)};
@@ -1488,9 +1490,9 @@ sub dic
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @dic = @{$self->access_any(attribute=>'dic',problems=>\@problems,subproblems=>\@subproblems)};
@@ -1504,9 +1506,9 @@ sub have_omegas
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @have_omegas = @{$self->access_any(attribute=>'have_omegas',problems=>\@problems,subproblems=>\@subproblems)};
@@ -1519,9 +1521,9 @@ sub have_sigmas
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @have_sigmas = @{$self->access_any(attribute=>'have_sigmas',problems=>\@problems,subproblems=>\@subproblems)};
@@ -1534,9 +1536,9 @@ sub omega_block_structure
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 },
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 },
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @omega_block_structure = @{$self->access_any(attribute=>'omega_block_structure',problems=>\@problems,subproblems=>\@subproblems)};
@@ -1556,9 +1558,9 @@ sub omegacoordval
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @omegacoordval = @{$self->access_any(attribute=>'omegacoordval',problems=>\@problems,subproblems=>\@subproblems)};
@@ -1576,9 +1578,9 @@ sub seomegacoordval
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @seomegacoordval = @{$self->access_any(attribute=>'seomegacoordval',problems=>\@problems,subproblems=>\@subproblems)};
@@ -1596,9 +1598,9 @@ sub omeganames
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @omeganames = @{$self->access_any(attribute=>'omeganames',problems=>\@problems,subproblems=>\@subproblems)};
@@ -1615,9 +1617,9 @@ sub cvseomegacoordval
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @cvseomegacoordval = @{$self->access_any(attribute=>'cvseomegacoordval',problems=>\@problems,subproblems=>\@subproblems)};
@@ -1630,9 +1632,9 @@ sub cvsesigmacoordval
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @cvsesigmacoordval = @{$self->access_any(attribute=>'cvsesigmacoordval',problems=>\@problems,subproblems=>\@subproblems)};
@@ -1645,9 +1647,9 @@ sub covariance_matrix
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @covariance_matrix = @{$self->access_any(attribute=>'covariance_matrix',problems=>\@problems,subproblems=>\@subproblems)};
@@ -1660,9 +1662,9 @@ sub cvsethetacoordval
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @cvsethetacoordval = @{$self->access_any(attribute=>'cvsethetacoordval',problems=>\@problems,subproblems=>\@subproblems)};
@@ -1675,9 +1677,9 @@ sub comegacoordval
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @comegacoordval = @{$self->access_any(attribute=>'comegacoordval',problems=>\@problems,subproblems=>\@subproblems)};
@@ -1690,9 +1692,9 @@ sub csigmacoordval
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @csigmacoordval = @{$self->access_any(attribute=>'csigmacoordval',problems=>\@problems,subproblems=>\@subproblems)};
@@ -1705,10 +1707,10 @@ sub omegas
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 parameter_numbers => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  parameter_numbers => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @parameter_numbers = defined $parm{'parameter_numbers'} ? @{$parm{'parameter_numbers'}} : ();
@@ -1726,9 +1728,9 @@ sub parameter_path
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @parameter_path = @{$self->access_any(attribute=>'parameter_path',problems=>\@problems,subproblems=>\@subproblems)};
@@ -1745,9 +1747,9 @@ sub pval
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @pval = @{$self->access_any(attribute=>'pval',problems=>\@problems,subproblems=>\@subproblems)};
@@ -1764,9 +1766,9 @@ sub raw_covmatrix
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @raw_covmatrix = @{$self->access_any(attribute=>'raw_covmatrix',problems=>\@problems,subproblems=>\@subproblems)};
@@ -1783,9 +1785,9 @@ sub inverse_covariance_matrix
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @inverse_covariance_matrix = @{$self->access_any(attribute=>'inverse_covariance_matrix',problems=>\@problems,subproblems=>\@subproblems)};
@@ -1803,9 +1805,9 @@ sub raw_cormatrix
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @raw_cormatrix = @{$self->access_any(attribute=>'raw_cormatrix',problems=>\@problems,subproblems=>\@subproblems)};
@@ -1822,9 +1824,9 @@ sub correlation_matrix
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @correlation_matrix = @{$self->access_any(attribute=>'correlation_matrix',problems=>\@problems,subproblems=>\@subproblems)};
@@ -1837,9 +1839,9 @@ sub output_matrix_headers
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @output_matrix_headers = @{$self->access_any(attribute=>'output_matrix_headers',problems=>\@problems,subproblems=>\@subproblems)};
@@ -1852,9 +1854,9 @@ sub raw_omegas
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @raw_omegas = @{$self->access_any(attribute=>'raw_omegas',problems=>\@problems,subproblems=>\@subproblems)};
@@ -1872,9 +1874,9 @@ sub raw_seomegas
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @raw_seomegas = @{$self->access_any(attribute=>'raw_seomegas',problems=>\@problems,subproblems=>\@subproblems)};
@@ -1892,9 +1894,9 @@ sub raw_sesigmas
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @raw_sesigmas = @{$self->access_any(attribute=>'raw_sesigmas',problems=>\@problems,subproblems=>\@subproblems)};
@@ -1912,9 +1914,9 @@ sub raw_sigmas
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @raw_sigmas = @{$self->access_any(attribute=>'raw_sigmas',problems=>\@problems,subproblems=>\@subproblems)};
@@ -1932,9 +1934,9 @@ sub raw_tmatrix
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @raw_tmatrix = @{$self->access_any(attribute=>'raw_tmatrix',problems=>\@problems,subproblems=>\@subproblems)};
@@ -1951,10 +1953,10 @@ sub seomegas
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 parameter_numbers => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  parameter_numbers => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @parameter_numbers = defined $parm{'parameter_numbers'} ? @{$parm{'parameter_numbers'}} : ();
@@ -1971,10 +1973,10 @@ sub sesigmas
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 parameter_numbers => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  parameter_numbers => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @parameter_numbers = defined $parm{'parameter_numbers'} ? @{$parm{'parameter_numbers'}} : ();
@@ -1991,10 +1993,10 @@ sub sethetas
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 parameter_numbers => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  parameter_numbers => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @parameter_numbers = defined $parm{'parameter_numbers'} ? @{$parm{'parameter_numbers'}} : ();
@@ -2011,9 +2013,9 @@ sub significant_digits
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @significant_digits = @{$self->access_any(attribute=>'significant_digits',problems=>\@problems,subproblems=>\@subproblems)};
@@ -2029,9 +2031,9 @@ sub sigma_block_structure
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @sigma_block_structure = @{$self->access_any(attribute=>'sigma_block_structure',problems=>\@problems,subproblems=>\@subproblems)};
@@ -2050,9 +2052,9 @@ sub sigmacoordval
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @sigmacoordval = @{$self->access_any(attribute=>'sigmacoordval',problems=>\@problems,subproblems=>\@subproblems)};
@@ -2070,9 +2072,9 @@ sub sesigmacoordval
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @sesigmacoordval = @{$self->access_any(attribute=>'sesigmacoordval',problems=>\@problems,subproblems=>\@subproblems)};
@@ -2090,9 +2092,9 @@ sub sigmanames
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @sigmanames = @{$self->access_any(attribute=>'sigmanames',problems=>\@problems,subproblems=>\@subproblems)};
@@ -2109,10 +2111,10 @@ sub sigmas
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 parameter_numbers => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  parameter_numbers => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @parameter_numbers = defined $parm{'parameter_numbers'} ? @{$parm{'parameter_numbers'}} : ();
@@ -2129,9 +2131,9 @@ sub simulationstep
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @simulationstep = @{$self->access_any(attribute=>'simulationstep',problems=>\@problems,subproblems=>\@subproblems)};
@@ -2148,9 +2150,9 @@ sub minimization_successful
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @minimization_successful = @{$self->access_any(attribute=>'minimization_successful',problems=>\@problems,subproblems=>\@subproblems)};
@@ -2167,9 +2169,9 @@ sub upper_omega_bounds
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @upper_omega_bounds = @{$self->access_any(attribute=>'upper_omega_bounds',problems=>\@problems,subproblems=>\@subproblems)};
@@ -2182,9 +2184,9 @@ sub lower_omega_bounds
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @lower_omega_bounds = @{$self->access_any(attribute=>'lower_omega_bounds',problems=>\@problems,subproblems=>\@subproblems)};
@@ -2197,9 +2199,9 @@ sub upper_sigma_bounds
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @upper_sigma_bounds = @{$self->access_any(attribute=>'upper_sigma_bounds',problems=>\@problems,subproblems=>\@subproblems)};
@@ -2212,9 +2214,9 @@ sub lower_sigma_bounds
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @lower_sigma_bounds = @{$self->access_any(attribute=>'lower_sigma_bounds',problems=>\@problems,subproblems=>\@subproblems)};
@@ -2227,15 +2229,15 @@ sub upper_theta_bounds
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problem_index => { isa => 'Int', optional => 1 }
-	);
+							  problem_index => { isa => 'Int', optional => 1 }
+		);
 	my $problem_index = $parm{'problem_index'};
 	my @upper_theta_bounds;
 
 # returns a vector of numbers
 
 	if ( defined $self->problems and defined $self->problems->[$problem_index]
-			and defined $self->problems->[$problem_index]->upper_theta_bounds()) {
+		 and defined $self->problems->[$problem_index]->upper_theta_bounds()) {
 		@upper_theta_bounds = @{$self->problems->[$problem_index]->upper_theta_bounds()};
 	}
 
@@ -2246,15 +2248,15 @@ sub lower_theta_bounds
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problem_index => { isa => 'Int', optional => 1 }
-	);
+							  problem_index => { isa => 'Int', optional => 1 }
+		);
 	my $problem_index = $parm{'problem_index'};
 	my @lower_theta_bounds;
 
 	# returns a vector of numbers
 
 	if ( defined $self->problems and defined $self->problems->[$problem_index]
-			and defined $self->problems->[$problem_index]->lower_theta_bounds()) {
+		 and defined $self->problems->[$problem_index]->lower_theta_bounds()) {
 		@lower_theta_bounds = @{$self->problems->[$problem_index]->lower_theta_bounds()};
 	}
 	return \@lower_theta_bounds;
@@ -2264,9 +2266,9 @@ sub final_zero_gradients
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @final_zero_gradients = @{$self->access_any(attribute=>'final_zero_gradients',problems=>\@problems,subproblems=>\@subproblems)};
@@ -2279,9 +2281,9 @@ sub hessian_reset
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @hessian_reset = @{$self->access_any(attribute=>'hessian_reset',problems=>\@problems,subproblems=>\@subproblems)};
@@ -2294,9 +2296,9 @@ sub zero_gradients
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @zero_gradients = @{$self->access_any(attribute=>'zero_gradients',problems=>\@problems,subproblems=>\@subproblems)};
@@ -2309,9 +2311,9 @@ sub rounding_errors
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @rounding_errors = @{$self->access_any(attribute=>'rounding_errors',problems=>\@problems,subproblems=>\@subproblems)};
@@ -2324,9 +2326,9 @@ sub minimization_message
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @minimization_message = @{$self->access_any(attribute=>'minimization_message',problems=>\@problems,subproblems=>\@subproblems)};
@@ -2343,9 +2345,9 @@ sub thetacoordval
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @thetacoordval = @{$self->access_any(attribute=>'thetacoordval',problems=>\@problems,subproblems=>\@subproblems)};
@@ -2363,9 +2365,9 @@ sub sethetacoordval
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @sethetacoordval = @{$self->access_any(attribute=>'sethetacoordval',problems=>\@problems,subproblems=>\@subproblems)};
@@ -2383,9 +2385,9 @@ sub sum_estimation_time
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @sum_estimation_time = @{$self->access_any(attribute=>'sum_estimation_time',problems=>\@problems,subproblems=>\@subproblems)};
@@ -2399,9 +2401,9 @@ sub burn_in_convergence
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @burn_in_convergence = @{$self->access_any(attribute=>'burn_in_convergence',problems=>\@problems,subproblems=>\@subproblems)};
@@ -2414,9 +2416,9 @@ sub burn_in_iterations
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @burn_in_iterations = @{$self->access_any(attribute=>'burn_in_iterations',problems=>\@problems,subproblems=>\@subproblems)};
@@ -2429,9 +2431,9 @@ sub sum_covariance_time
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @sum_covariance_time = @{$self->access_any(attribute=>'sum_covariance_time',problems=>\@problems,subproblems=>\@subproblems)};
@@ -2445,9 +2447,9 @@ sub thetanames
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @thetanames = @{$self->access_any(attribute=>'thetanames',problems=>\@problems,subproblems=>\@subproblems)};
@@ -2464,10 +2466,10 @@ sub thetas
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 parameter_numbers => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  parameter_numbers => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @parameter_numbers = defined $parm{'parameter_numbers'} ? @{$parm{'parameter_numbers'}} : ();
@@ -2518,9 +2520,9 @@ sub parameter_significant_digits
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @parameter_significant_digits = @{$self->access_any(attribute=>'parameter_significant_digits',problems=>\@problems,subproblems=>\@subproblems)};
@@ -2533,8 +2535,8 @@ sub parsing_error
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 message => { isa => 'Str', optional => 1 }
-	);
+							  message => { isa => 'Str', optional => 1 }
+		);
 	my $message = $parm{'message'};
 
 	$self->parsed_successfully( 0 );
@@ -2561,6 +2563,7 @@ sub _read_problems
 	$months{'Oct'} = 9;
 	$months{'Nov'} = 10;
 	$months{'Dec'} = 11;
+
 
 	my @lstfile = OSspecific::slurp_file($self-> full_name ) ;
 
@@ -2589,189 +2592,202 @@ sub _read_problems
 
 	my $j = $#lstfile;
 	while ( $_ = $lstfile[ $j -- ] ) {
-	  if (/^\s*(Sun|Mon|Tue|Wed|Thu|Fri|Sat)\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)/){
-	    $endtime_string = $_;
-	    last;
-	  }elsif (/^1NONLINEAR MIXED EFFECTS MODEL PROGRAM/){
-	    #if we end up here the lst-file is incomplete, was no end time printed
-	    #by nmfe
-	    $self->lst_interrupted(1);
-	    last;
-	  }
+		if (/^\s*(Sun|Mon|Tue|Wed|Thu|Fri|Sat)\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)/){
+			$endtime_string = $_;
+			last;
+		}elsif (/^1NONLINEAR MIXED EFFECTS MODEL PROGRAM/){
+			#if we end up here the lst-file is incomplete, was no end time printed
+			#by nmfe
+			$self->lst_interrupted(1);
+			last;
+		}
 	}
 
 
 	while ( $_ = $lstfile[ $lstfile_pos++ ] ) {
-	  if ((not defined ($starttime_string) and not defined ($problem_start)) and (/^\s*(Sun|Mon|Tue|Wed|Thu|Fri|Sat)\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)/)) {
-	    $starttime_string = $_;
-	    if (defined $endtime_string) {
-	      $starttime_string =~ s/\s*$//; #remove trailing spaces
-	      my ($wday, $mon, $mday, $tt, $zone, $year) = split(/\s+/, $starttime_string);
-	      $mon = $months{$mon}; #convert to numeric
-	      my ($hour, $min, $sec) = split(':',$tt);
-	      my $starttime = timelocal($sec, $min, $hour, $mday, $mon, $year);
+		if ((not defined ($starttime_string) and not defined ($problem_start)) and (/^\s*(Sun|Mon|Tue|Wed|Thu|Fri|Sat)\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)/)) {
+			$starttime_string = $_;
+			if (defined $endtime_string) {
+				$starttime_string =~ s/\s*$//; #remove trailing spaces
+				my ($wday, $mon, $mday, $tt, $zone, $year) = split(/\s+/, $starttime_string);
+				$mon = $months{$mon}; #convert to numeric
+				my ($hour, $min, $sec) = split(':',$tt);
+				my $starttime = timelocal($sec, $min, $hour, $mday, $mon, $year);
 
-	      $endtime_string =~ s/\s*$//; #remove trailing spaces
-	      ($wday, $mon, $mday, $tt, $zone, $year) = split(/\s+/, $endtime_string);
-	      $mon = $months{$mon}; #convert to numeric
-	      ($hour, $min, $sec) = split(':', $tt);
-	      my $endtime = timelocal($sec, $min, $hour, $mday, $mon, $year);
-	      my $runtime = $endtime - $starttime; # in seconds
-	      next if ($runtime == 0);
-	      my $seconds = $runtime % 60;
-	      my $minutes = (($runtime - $seconds) / 60) % 60;
-	      my $hours = ($runtime - $seconds - 60 * $minutes) / 3600;
-	      $self->runtime(sprintf "%i:%02i:%02i", $hours, $minutes, $seconds);
-	    }
-	  } elsif (not $done_reading_control_stream and (not $reading_control_stream) and (/^\s*\$PROB/)) {
-	      #we ignore $SIZES here, not relevent for what we need in output handling
-	      #found first record of control stream
-	      $reading_control_stream = 1;
-	      $found_control_stream = 1;
-	      #store index of line
-	      $control_stream_problem_start_index = $lstfile_pos-1; #must have -1 here to get $PROB
-	  } elsif (not $done_reading_control_stream and ($reading_control_stream) and (/^\s*\$PROB/)){
-	      #we ignore $SIZES here, not relevent for what we need in output handling
-	      #found first record of another $PROB
-	      #add previous $PROB
-	      $found_control_stream = 1;
-	      $control_stream_problem_end_index = $lstfile_pos - 2; #must be -2 here otherwise get one too many lines
-	      my @control_lines = @lstfile[$control_stream_problem_start_index .. $control_stream_problem_end_index];
+				$endtime_string =~ s/\s*$//; #remove trailing spaces
+				($wday, $mon, $mday, $tt, $zone, $year) = split(/\s+/, $endtime_string);
+				$mon = $months{$mon}; #convert to numeric
+				($hour, $min, $sec) = split(':', $tt);
+				my $endtime = timelocal($sec, $min, $hour, $mday, $mon, $year);
+				my $runtime = $endtime - $starttime; # in seconds
+				next if ($runtime == 0);
+				my $seconds = $runtime % 60;
+				my $minutes = (($runtime - $seconds) / 60) % 60;
+				my $hours = ($runtime - $seconds - 60 * $minutes) / 3600;
+				$self->runtime(sprintf "%i:%02i:%02i", $hours, $minutes, $seconds);
+			}
+		} elsif (not $done_reading_control_stream and (not $reading_control_stream) and (/^\s*\$PROB/)) {
+			#we ignore $SIZES here, not relevent for what we need in output handling
+			#found first record of control stream
+			$reading_control_stream = 1;
+			$found_control_stream = 1;
+			#store index of line
+			$control_stream_problem_start_index = $lstfile_pos-1; #must have -1 here to get $PROB
+		} elsif (not $done_reading_control_stream and ($reading_control_stream) and (/^\s*\$PROB/)){
+			#we ignore $SIZES here, not relevent for what we need in output handling
+			#found first record of another $PROB
+			#add previous $PROB
+			$found_control_stream = 1;
+			$control_stream_problem_end_index = $lstfile_pos - 2; #must be -2 here otherwise get one too many lines
+			my @control_lines = @lstfile[$control_stream_problem_start_index .. $control_stream_problem_end_index];
 #		  print "found new \$PROB\n";
 #		  print join(" \n",@control_lines)."\n";
 
-	      my $prob = model::problem -> new (
+			my $prob = model::problem -> new (
+				directory										=> $self->directory,
+				ignore_missing_files        => 1,
+				ignore_missing_output_files => 1,
+				prob_arr                    => \@control_lines);
+
+			push( @control_stream_problems, $prob );
+
+			#store index of line for new $PROB
+			$control_stream_problem_start_index = $lstfile_pos-1; #must be -1 here to get new $PROB
+		} elsif ((/^\s*NM\-TRAN MESSAGES/) or (/^\s*WARNINGS AND ERRORS \(IF ANY\)/) or (/^\s*License /) ) {
+
+#		  print "Found nmtran messages or warnings or license\n";
+			if ((not $done_reading_control_stream) and $found_control_stream) {
+				#add last control stream problem
+				$control_stream_problem_end_index = $lstfile_pos - 2; #must have -2 so do not get message line
+				my @control_lines = @lstfile[$control_stream_problem_start_index .. $control_stream_problem_end_index];
+#			  print "add control stream\n";
+#			  print join("\n",@control_lines)."\n";
+
+				my $prob = model::problem -> new (
 					directory										=> $self->directory,
 					ignore_missing_files        => 1,
 					ignore_missing_output_files => 1,
 					prob_arr                    => \@control_lines);
 
-	      push( @control_stream_problems, $prob );
+				push( @control_stream_problems, $prob );
 
-	      #store index of line for new $PROB
-	      $control_stream_problem_start_index = $lstfile_pos-1; #must be -1 here to get new $PROB
-	  } elsif ((/^\s*NM\-TRAN MESSAGES/) or (/^\s*WARNINGS AND ERRORS \(IF ANY\)/) or (/^\s*License /) ) {
+				$done_reading_control_stream = 1;
+				$reading_control_stream = 0;
+			}
+		} elsif (/^1NONLINEAR MIXED EFFECTS MODEL PROGRAM/) {
+			if (/VERSION 7/) {
+				$lst_version = 7;
+			} elsif (/VERSION VII /) {
+				$lst_version = 7;
+			} elsif (/VERSION 6/) {
+				$lst_version = 6;
+			} elsif (/VERSION VI /) {
+				$lst_version = 6;
+			} elsif (/VERSION V /) {
+				$lst_version = 5;
+			} else {
+				croak("could not read NONMEM version information from output file " . $self->filename);
+			}
+			$self->nonmem_version($lst_version);
 
-#		  print "Found nmtran messages or warnings or license\n";
-	      if ((not $done_reading_control_stream) and $found_control_stream) {
-			  #add last control stream problem
-			  $control_stream_problem_end_index = $lstfile_pos - 2; #must have -2 so do not get message line
-			  my @control_lines = @lstfile[$control_stream_problem_start_index .. $control_stream_problem_end_index];
-#			  print "add control stream\n";
-#			  print join("\n",@control_lines)."\n";
-
-			  my $prob = model::problem -> new (
-				  directory										=> $self->directory,
-				  ignore_missing_files        => 1,
-				  ignore_missing_output_files => 1,
-				  prob_arr                    => \@control_lines);
-
-			  push( @control_stream_problems, $prob );
-
-			  $done_reading_control_stream = 1;
-			  $reading_control_stream = 0;
-	      }
-	  } elsif (/^1NONLINEAR MIXED EFFECTS MODEL PROGRAM/) {
-		  if (/VERSION 7/) {
-			  $lst_version = 7;
-		  } elsif (/VERSION VII /) {
-			  $lst_version = 7;
-		  } elsif (/VERSION 6/) {
-			  $lst_version = 6;
-		  } elsif (/VERSION VI /) {
-			  $lst_version = 6;
-		  } elsif (/VERSION V /) {
-			  $lst_version = 5;
-		  } else {
-			  croak("could not read NONMEM version information from output file " . $self->filename);
-		  }
-		  $self->nonmem_version($lst_version);
-
-	      if ((not $done_reading_control_stream) and $found_control_stream) {
+			if ((not $done_reading_control_stream) and $found_control_stream) {
 		  		#add last control stream problem
 		  		$control_stream_problem_end_index = $lstfile_pos - 2; #have not verified that 2 is ok here, infer from analogy to above cases
 		  		my @control_lines = @lstfile[$control_stream_problem_start_index .. $control_stream_problem_end_index];
 
 		  		my $prob = model::problem -> new (
 		      		directory                   => $self->directory,
-			    		ignore_missing_files        => 1,
-			    		ignore_missing_output_files => 1,
-			    		prob_arr                    => \@control_lines);
+					ignore_missing_files        => 1,
+					ignore_missing_output_files => 1,
+					prob_arr                    => \@control_lines);
 
 		  		push( @control_stream_problems, $prob );
 		  		$done_reading_control_stream = 1;
 		  		$reading_control_stream = 0;
-	      }
+			}
 
 
-	  } elsif (/^\s*\#METH:/) {
-	      #NONMEM will print #METH also when simulation without estimation, do not count
-	      # these occurences: #METH line followed by line with 1 and nothing more
-	      unless ($lstfile[$lstfile_pos] =~ /^1\s*$/) {
-		  		$meth_counter++;
-		  		if ($lstfile[ $lstfile_pos - 2 ] =~ /^\s*\#TBLN:\s*([0-9]+)/) {
-		      	#if previous line is #TBLN then this will help us find right table in extra output
-		      	$tbln = $1;
-		  		}
-	      }
-	  } elsif ( /^ PROBLEM NO\.:\s+\d+\s+$/ or $lstfile_pos > $#lstfile ) {
-	    if ( defined $problem_start ) {
-	      my $adj = 1;
-	      my @problem_lstfile =	@lstfile[$problem_start .. ($lstfile_pos - $adj)];
+		} elsif (/^\s*\#METH:/) {
+			#NONMEM will print #METH also when simulation without estimation, do not count
+			# these occurences: #METH line followed by line with 1 and nothing more
+			unless ($lstfile[$lstfile_pos] =~ /^1\s*$/) {
+				$meth_counter++;
+				if ($lstfile[ $lstfile_pos - 2 ] =~ /^\s*\#TBLN:\s*([0-9]+)/) {
+					#if previous line is #TBLN then this will help us find right table in extra output
+					$tbln = $1;
+				}
+			}
+		} elsif ( /^ PROBLEM NO\.:\s+\d+\s+$/ or $lstfile_pos > $#lstfile ) {
+			if ( defined $problem_start ) {
+				my $adj = 1;
+				my @problem_lstfile =	@lstfile[$problem_start .. ($lstfile_pos - $adj)];
 
-	      #We send full raw_file, cov_file... arrays to problem object
-	      #the right table number will be extracted there using $n_previous_meth
-	      #or $tbln if present
-	      #we skip tables that must come from restarted numbering (<= previous number),
-	      #NM7 table numbering in additional output is inconsistent and we cannot handle it
-	      #those numbers will be taken from lst-file instead, good enough since rare case
-	      #if nm_major_version<=6 undefined arrays, okay
+				#We send full raw_file, cov_file... arrays to problem object
+				#the right table number will be extracted there using $n_previous_meth
+				#or $tbln if present
+				#we skip tables that must come from restarted numbering (<= previous number),
+				#NM7 table numbering in additional output is inconsistent and we cannot handle it
+				#those numbers will be taken from lst-file instead, good enough since rare case
+				#if nm_major_version<=6 undefined arrays, okay
 
-	      croak("Problems reading the lst-file (NONMEM output file).".
-			 		" The line\n".
-			 		"1NONLINEAR MIXED EFFECTS MODEL PROGRAM VERSION...\n".
-			 		"was not found.") unless (defined $lst_version);
-	      croak("Could not find a model file copy (control stream) at top of lst-file for problem number ".
-			 ($problem_index + 1) . " in lst-file. The nmfe script normally copies the model file but PsN cannot find it.")
-		  unless (defined $control_stream_problems[$problem_index]);
-	      $self -> add_problem ( init_data => 
-			             { lstfile		    => \@problem_lstfile,
-				       ignore_missing_files => $self -> ignore_missing_files(),
-				       nm_major_version     => $lst_version,
-				       filename_root	    	=> $self -> filename_root(),
-				       directory	    			=> $self -> directory(),
-				       n_previous_meth      => $n_previous_meth,
-				       table_number         => $tbln,
-				       input_problem        => $control_stream_problems[$problem_index]});
+				if (not defined $lst_version){
+					print "\nProblems reading the lst-file (NONMEM output file).".
+						" The line\n".
+						"1NONLINEAR MIXED EFFECTS MODEL PROGRAM VERSION...\n".
+						"was not found.\n";
+					$self -> parsed_successfully(0);
+					my $mes = $self->parsing_error_message();
+					$mes .= ' lst-file corrupted, could not find line 1NONLINEAR MIXED EFFECTS MODEL PROGRAM VERSION... ';
+					$self -> parsing_error_message( $mes );
+					return 0;
+				}
 
-	      $problem_index++;
-	      @problem_lstfile = undef;
+				if (not defined $control_stream_problems[$problem_index]){
+					print "\nCould not find a model file copy (control stream) at top of lst-file for problem number ".
+						($problem_index + 1) . " in lst-file\n".$self->full_name.
+						"\nThe nmfe script normally copies the model file but PsN cannot find it.\n";
+					$self -> parsed_successfully(0);
+					my $mes = $self->parsing_error_message();
+					$mes .= ' lst-file corrupted, could not find control stream copy for all PROBLEM NO ';
+					$self -> parsing_error_message( $mes );
+				}else{
+					$self -> add_problem ( init_data => 
+										   { lstfile		    => \@problem_lstfile,
+											 ignore_missing_files => $self -> ignore_missing_files(),
+											 nm_major_version     => $lst_version,
+											 filename_root	    	=> $self -> filename_root(),
+											 directory	    			=> $self -> directory(),
+											 n_previous_meth      => $n_previous_meth,
+											 table_number         => $tbln,
+											 input_problem        => $control_stream_problems[$problem_index]});
+					$problem_index++;
+					my @problems = @{$self->problems};
+					
+					my $mes = $self->parsing_error_message();
+					$mes .= $problems[$#problems] -> parsing_error_message();
+					$self -> parsing_error_message( $mes );
+					$self -> parsed_successfully($self -> parsed_successfully() * $problems[$#problems] -> parsed_successfully());
+
+					$self -> msfo_has_terminated($self -> msfo_has_terminated() + $problems[$#problems] -> msfo_has_terminated());
+				}		  
+				@problem_lstfile = undef;
 #	      $tbln = undef; leave this. Instead reread table number in problem_subs.pm
-	      $success = 1;
-	      $n_previous_meth = $meth_counter;
-
-	      my @problems = @{$self->problems};
-
-	      my $mes = $self->parsing_error_message();
-	      $mes .= $problems[$#problems] -> parsing_error_message();
-	      $self -> parsing_error_message( $mes );
-	      $self -> parsed_successfully($self -> parsed_successfully() * $problems[$#problems] -> parsed_successfully());
-
-	      $self -> msfo_has_terminated($self -> msfo_has_terminated() + $problems[$#problems] -> msfo_has_terminated());
-
-	    }  #end if defined problem start
-	    $problem_start = $lstfile_pos;
-	  }
+				$success = 1;
+				$n_previous_meth = $meth_counter;
+				
+			}  #end if defined problem start
+			$problem_start = $lstfile_pos;
+		}
 	}
 
 	$self->control_stream_problems(\@control_stream_problems);
 	unless( $success ) {
-	  carp('Could not find a PROBLEM NO statement in "' .
+		carp('Could not find a PROBLEM NO statement in "' .
 			 $self -> full_name . '"' . "\n" ) unless $self->ignore_missing_files;
 
-	  $self->parsing_error( message => 'Could not find a PROBLEM NO statement in "' . $self->full_name . '"' . "\n" );
-	  $self->parsed_successfully(0);
-	  return 0;
+		$self->parsing_error( message => 'Could not find a PROBLEM NO statement in "' . $self->full_name . '"' . "\n" );
+		$self->parsed_successfully(0);
+		return 0;
 	}
 
 	$self->parsed(1);
@@ -2781,9 +2797,9 @@ sub initomegas
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @initomegas = @{$self->access_any(attribute=>'initomegas',problems=>\@problems,subproblems=>\@subproblems)};
@@ -2800,9 +2816,9 @@ sub initsigmas
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problems => { isa => 'ArrayRef[Int]', optional => 1 },
-		 subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @initsigmas = @{$self->access_any(attribute=>'initsigmas',problems=>\@problems,subproblems=>\@subproblems)};
