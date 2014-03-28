@@ -15,25 +15,33 @@ sub submit
 	my $self = shift;
 	my $jobId = -1;
 
-  my $script;
-  unless(defined $PsN::config->{'_'}->{'ud_nonmem'}) {
-    if( $Config{osname} eq 'MSWin32' ) {
-      $script = 'nonmem.bat';
-    } else {
-      $script = 'nonmem.sh';
-    }
-  } else {
-    $script = $PsN::config -> {'_'} -> {'ud_nonmem'};
-  }
-  
-  if (system("$script -s " . $self->model->filename . "> nonmem_sh_stdout")) {
-    croak("UD submit script failed, check that $script is in your PATH.\nSystem error message: $!");
-  }
-  
-  open(JOBFILE, "JobId") or croak("Couldn't open UD grid JobId file for reading: $!");
-  $jobId = <JOBFILE>;
-  close(JOBFILE);
-  
+	my $script;
+	unless(defined $PsN::config->{'_'}->{'ud_nonmem'}) {
+		if( $Config{osname} eq 'MSWin32' ) {
+			$script = 'nonmem.bat';
+		} else {
+			$script = 'nonmem.sh';
+		}
+	} else {
+		$script = $PsN::config -> {'_'} -> {'ud_nonmem'};
+	}
+	
+	if (system("$script -s " . $self->model->filename . "> nonmem_sh_stdout")) {
+		my $error = "$!";
+		print "UD submit script failed, check that $script is in your PATH.\nSystem error message: $error";
+		chomp($error);
+		system('echo ' . $error . ' > job_submission_error');
+	}else{
+		if (open(JOBFILE, "JobId")){ 
+			$jobId = <JOBFILE>;
+			close(JOBFILE);
+		}else{
+			my $error = "$!";
+			print "UD submit script failed, could not open file JobID: $error";
+			chomp($error);
+			system('echo ' . $error . ' > job_submission_error');
+		}
+	}
 	return $jobId;
 }
 

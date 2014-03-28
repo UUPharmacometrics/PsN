@@ -1716,7 +1716,9 @@ sub run_nonmem
 			if ($Config{osname} eq 'MSWin32') {
 				$nonmem_run = nonmemrun::localwindows->new(
 					nm_version => $nm_version,
+					parafile => $self->parafile ne 'none' ? $self->parafile : undef,
 					nmfe_options => $self->create_nmfe_options_string,
+					nodes => $self->nodes,
 					display_iterations => $self->display_iterations,
 				);
 			} elsif ($self->run_on_mosix) {
@@ -1747,8 +1749,6 @@ sub run_nonmem
 			my $nonmem_run = nonmemrun::lsf->new(
 				parafile => $self->parafile ne 'none' ? $self->parafile : undef,
 				nmfe_options => $self->create_nmfe_options_string,
-				prepend_flags => $self->lsf_prepend_flags,
-				partition => $self->slurm_partition,
 				nodes => $self->nodes,
 				model => $queue_info->{'model'},
 				nm_version => $nm_version,
@@ -1789,8 +1789,6 @@ sub run_nonmem
 				parafile => $self->parafile ne 'none' ? $self->parafile : undef,
 				nmfe_options => $self->create_nmfe_options_string,
 				prepend_flags => $self->sge_prepend_flags,
-				max_runtime => $self->max_runtime,
-				partition => $self->slurm_partition,
 				nodes => $self->nodes,
 				model => $queue_info->{'model'},
 				nm_version => $nm_version,

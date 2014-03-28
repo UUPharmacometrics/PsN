@@ -6,13 +6,13 @@ use MooseX::Params::Validate;
 
 extends 'nonmemrun';
 
-has 'lsf_job_name' => ( is => 'rw', isa => 'Str' );
-has 'lsf_project_name' => ( is => 'rw', isa => 'Str' );
-has 'lsf_queue' => ( is => 'rw', isa => 'Str' );
-has 'lsf_resources' => ( is => 'rw', isa => 'Str' );
-has 'lsf_ttl' => ( is => 'rw', isa => 'Str' );
-has 'lsf_sleep' => ( is => 'rw', isa => 'Int', default => 3 );
-has 'lsf_options' => ( is => 'rw', isa => 'Str' );
+has 'lsf_job_name' => ( is => 'rw', isa => 'Maybe[Str]' );
+has 'lsf_project_name' => ( is => 'rw', isa => 'Maybe[Str]' );
+has 'lsf_queue' => ( is => 'rw', isa => 'Maybe[Str]' );
+has 'lsf_resources' => ( is => 'rw', isa => 'Maybe[Str]' );
+has 'lsf_ttl' => ( is => 'rw', isa => 'Maybe[Str]' );
+has 'lsf_sleep' => ( is => 'rw', isa => 'Maybe[Int]', default => 3 );
+has 'lsf_options' => ( is => 'rw', isa => 'Maybe[Str]' );
 
 sub submit
 {
@@ -51,6 +51,7 @@ sub submit
   if ($lsf_out =~ /Job \<(\d+)\> is submitted/) {
     $jobId = $1;
   } else {
+	  chomp($lsf_out);
     open(ERR, '>job_submission_error');
     print ERR ("COMMAND: $submitstring\n");
     print ERR ("SYSTEM RESPONSE: $lsf_out\n");
