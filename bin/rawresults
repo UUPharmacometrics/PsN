@@ -1,0 +1,285 @@
+#!/usr/bin/perl
+
+# Only for Development
+use FindBin qw($Bin);
+use lib "$Bin/../lib";
+
+# Don't edit the line below, it must look exactly like this.
+# Everything above this line will be replaced #
+
+# Perl includes #
+use Config;
+use strict;
+use Getopt::Long;
+# External modules #
+use Math::Random;
+# PsN includes #
+use PsN;
+use tool::modelfit;
+use model;
+use common_options;
+use ui;
+use Cwd;
+use File::Glob;
+use File::Copy qw/cp mv/;
+use File::Path 'rmtree';
+
+
+my %options;
+
+my %required_options = ( "path:s" => undef);
+my %optional_options = ("outfile:s" => undef,
+						"help" => undef,
+						"h" => undef
+	);
+
+my $res = GetOptions( \%options,
+					  keys(%required_options),keys(%optional_options) );
+
+exit unless $res;
+
+common_options::setup( \%options, 'rawresults' ); #calls set_globals etc, initiates random sequence
+
+
+my %help_text;
+
+$help_text{Pre_help_message} = <<'EOF';
+  <h3 class="heading1">rawresults</h3>
+
+    Getting a raw results file from all model files with results in a directory path
+
+EOF
+
+    $help_text{Description} = <<'EOF';
+  <h3 class="heading1">Description:</h3>
+
+	Get a raw results file
+EOF
+
+
+    $help_text{Options} = <<'EOF';
+  <h3 class="heading1">Options:</h3>
+
+    The options are given here in their long form. Any option may be
+    abbreviated to any nonconflicting prefix.
+    The following options are valid:
+EOF
+$help_text{-h} = <<'EOF';
+      -h | -?
+      
+      With -h or -? rawresults will print a list of options and exit.
+EOF
+      
+$help_text{-help} = <<'EOF';      
+      -help
+      
+      With -help rawresults will print this, longer, help message.
+EOF
+
+$help_text{-path} = <<'EOF';
+    <p class="style2">-path='string'</p>
+    The directory that holds the model files and lst-files
+EOF
+
+
+$help_text{-outfile} = <<'EOF';
+    <p class="style2">outfile='string'</p>
+    Name of output file.
+EOF
+
+
+$help_text{Post_help_message} = <<'EOF';
+EOF
+
+
+common_options::online_help('rawresults', \%options,\%help_text, \%required_options, \%optional_options);
+
+
+my @models_array;
+
+
+my $path = $options{'path'};
+unless (defined $path){
+	print "please specify path to .mod-files\n" ;
+	exit;
+}
+if (defined $options{'outfile'} and -e $options{'outfile'}){
+	print "outfile ".$options{'outfile'}." already exists. Please rename, remove, or choose another outfile name\n";
+	exit;
+}
+
+my $sse = 0;
+if ((-e $path.'/mc-orig-1.mod') or (-e $path.'mc-alt_1-1.mod')){
+	$sse =1;
+} 
+
+my @counts=();
+my @modnames=();
+
+
+print "Processing...\n";
+if (not $sse){
+	my @files = <$path/*.mod>;
+	#print join(' ',@files)."\n";
+	
+	foreach my $mod (@files){
+		my $model = model -> new(  filename   => $mod,
+								   ignore_missing_files => 1 );
+		push( @models_array, $model );# if ($model -> is_run);
+	}
+	
+	
+}else{
+	
+	my @files = <$path/mc-orig-?.mod $path/mc-orig-??.mod $path/mc-orig-???.mod $path/mc-orig-????.mod $path/mc-orig-?????.mod>;
+	#print join(' ',@files)."\n";
+	
+	if (scalar(@files)>0){
+		push(@counts,scalar(@files));
+		push(@modnames,'simulation');
+	}
+	
+	foreach my $mod (@files){
+		my $model = model -> new(  filename   => $mod,
+								   ignore_missing_files => 1 );
+		push( @models_array, $model );# if ($model -> is_run);
+	}
+	
+	
+	my $alt=0;
+	my $altsamples=0;
+	while (1){
+		$alt++;
+		my @files = <$path/mc-alt_$alt-?.mod $path/mc-alt_$alt-??.mod $path/mc-alt_$alt-???.mod $path/mc-alt_$alt-????.mod $path/mc-alt_$alt-?????.mod>;
+		last if (scalar(@files)<1);
+		push(@counts,scalar(@files));
+		push(@modnames,'mc-alternative_'.$alt);
+		#print join(' ',@files)."\n";
+		foreach my $mod (@files){
+			my $model = model -> new(  filename   => $mod,
+									   ignore_missing_files => 1 );
+			push( @models_array, $model );# if ($model -> is_run);
+		}
+		
+	}
+}
+
+my $modelfit = tool::modelfit -> new(
+	directory_name_prefix => 'rawresults',
+	models => \@models_array);  
+
+$modelfit->raw_results([]);
+$modelfit->raw_nonp_results([]);
+for (my $i=0; $i < scalar(@models_array); $i++){
+	my ($raw_results_row, $nonp_row) = $modelfit->create_raw_results_rows(
+		max_hash => $modelfit->max_hash,
+		model => $modelfit->models->[$i],
+		model_number => $i + 1,
+		raw_line_structure => $modelfit->raw_line_structure );
+
+	push( @{$modelfit->raw_results}, @{$raw_results_row} );
+	push( @{$modelfit->raw_nonp_results}, @{$nonp_row} );
+
+}
+
+if ($sse){
+
+	my @rows = @{$modelfit -> raw_results()};
+	my $n_rows = scalar(@rows);
+	my @firsts;
+	my @seconds;
+	my $last_model= 0;
+	
+	my $sample = 0; 
+	my $altname = shift(@modnames) unless (scalar(@modnames)<1);
+	my $thiscount = shift(@counts) unless (scalar(@counts)<1);
+	
+	for (my $i=0; $i< $n_rows; $i++){
+		my $this_model = $rows[$i]->[0]; 
+		my $step= ($this_model-$last_model);
+		if ($step < 0){
+			print(message  => "Error: It seems the raw_results is not sorted".
+				  ". Statistics in sse_results will be wrong");
+		}else {
+			#if 0 step and problem column is 1 then error
+			$sample += $step; #normally +1, sometimes 0,sometimes 2 or more
+			if ($step > 1){
+				print( "Warning: It seems the estimation of $altname".
+					   "did not produce any results with dataset ".($sample-1).
+					   ". Statistics in sse_results might be wrong, it is recommended".
+					   "to check manually using raw_results.");
+			}
+			if ($step == 0 and ($rows[$i]->[1] == 1)){
+				print("Warning: There seems to be missing lines in raw_results ".
+					  "(step 0 and PROB is 1, model $this_model), or the lines are not sorted by PROBLEM. ".
+					  "Statistics in sse_results might be wrong, it is recommended".
+					  "to check manually using raw_results.");
+			}
+		}
+
+		if ($sample > $thiscount){
+			$altname = shift(@modnames) unless (scalar(@modnames)<1);
+			$thiscount = shift(@counts) unless (scalar(@counts)<1);
+			$sample=1;
+		}
+		if ($step > 0){
+			#new model
+			unshift( @{$rows[$i]}, $sample );
+			unshift( @{$rows[$i]}, $altname );
+			push(@firsts,$rows[$i]);
+		}else{
+			#step==0, second problem same model
+			unshift( @{$rows[$i]}, $sample );
+			unshift( @{$rows[$i]}, $altname );
+			push(@seconds,$rows[$i]);
+		}
+		$last_model=$this_model;
+	}
+
+	push(@firsts,@seconds); #assume analysis ignores the last rows
+	$modelfit -> raw_results(\@firsts); #replace with set of resorted $PROBS
+
+	unshift( @{$modelfit -> raw_results_header}, 'sample' );
+	unshift( @{$modelfit -> raw_results_header}, 'hypothesis' );
+
+	foreach my $mod (sort({$a <=> $b} keys %{$modelfit->raw_line_structure})){
+		foreach my $category (keys %{$modelfit->raw_line_structure -> {$mod}}){
+			next if ($category eq 'line_numbers');
+			my ($start,$len) = split(',',$modelfit->raw_line_structure -> {$mod}->{$category});
+			$modelfit->raw_line_structure -> {$mod}->{$category} = ($start+2).','.$len; #add 2 for hypothesis, simdatanum
+		}
+		$modelfit->raw_line_structure -> {$mod}->{'hypothesis'} = '0,1';
+		$modelfit->raw_line_structure -> {$mod}->{'sample'} = '1,1';
+	}
+}
+
+
+$modelfit->prepare_raw_results();
+
+$modelfit->print_raw_results();
+
+my $rawfile = $modelfit->directory.$modelfit->raw_results_file->[0];
+my $structfile = $modelfit->directory.'/raw_results_structure';
+if (defined $options{'outfile'}){
+	my ($volume, $directory, $file) = File::Spec->splitpath($options{'outfile'});
+	mv($rawfile,$options{'outfile'});
+	if (-e $volume.$directory.'raw_results_structure'){
+		mv($volume.$directory.'raw_results_structure',$volume.$directory.'raw_results_structure_old');
+	}
+	mv($structfile,$volume.$directory.'raw_results_structure');
+	rmtree($modelfit->directory);
+	$rawfile = $options{'outfile'};
+}elsif($sse){
+	#one step up from m1
+	my $abspath = Cwd::abs_path($path.'/../raw_results_recover.csv');
+	my ($volume, $directory, $file) = File::Spec->splitpath($abspath);
+	mv($rawfile,$abspath);
+	if (-e $volume.$directory.'raw_results_structure'){
+		mv($volume.$directory.'raw_results_structure',$volume.$directory.'raw_results_structure_old');
+	}
+	mv($structfile,$volume.$directory.'raw_results_structure');
+	rmtree($modelfit->directory);
+	$rawfile = $abspath;
+}
+
+print "\ndone, raw_results file is $rawfile\n";

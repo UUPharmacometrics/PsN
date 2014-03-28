@@ -181,6 +181,7 @@ COMPFILES=boot_scm \
 	psn_options \
 	pvar \
 	randtest \
+	rawresults \
 	runrecord \
 	scm \
 	se_of_eta \
