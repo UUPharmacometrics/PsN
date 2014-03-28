@@ -1439,7 +1439,7 @@ sub print_raw_results
   ## raw_line_structure should be printed to disk here for fast
   ## resumes. In the future
   
-  $self->raw_line_structure->write( 'raw_results_structure' );
+  $self->raw_line_structure->write( $dir.'raw_results_structure' );
   $self->stop_motion_call(tool=>'modelfit',message => "Printed file $raw_file")
       if ($self->stop_motion());
 }
