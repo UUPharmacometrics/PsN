@@ -1917,6 +1917,8 @@ sub restart_needed
 	my $nm_version = $parm{'nm_version'};
 	my %queue_info = defined $parm{'queue_info'} ? %{$parm{'queue_info'}} : ();
 
+	
+
 	# -------------- Notes about automatic pertubation and retries -----------------
   
   # Automatic pertubation of initial estimates are useful for two
@@ -1976,6 +1978,7 @@ sub restart_needed
 	my $dirt;
 	for (my $i=0; $i<20; $i++){
 		#an ls might make files sync and become visible
+		#TODO if queue map says failed submit then do not wait here
 		$dirt = `ls -la 2>&1` unless ($Config{osname} eq 'MSWin32');
 		last if((-e 'stats-runs.csv') or (-e 'psn.lst') or (-e 'job_submission_error')
 				or (-e $self->general_error_file)
@@ -2621,6 +2624,8 @@ sub restart_needed
 		$lstsuccess = 1; # We did find the lst file.
 
 	} else {
+		$self->stop_motion_call(tool=>'modelfit',message => "no psn.lst at all, try to diagnose")
+			if ($self->stop_motion()> 1);
 		#we do not have any psn.lst. Cannot happen if nmfe 
 		#and overtime kill by system, at least model and NMtran mess
 		my $nmrundir = 'the model in NM_run'.($run_no+1);
@@ -2632,7 +2637,7 @@ sub restart_needed
 				$failure .= ' - check perl settings in psn.conf and perl installation';
 			}elsif (-e 'job_submission_error'){
 				open( MESS, '<job_submission_error' );
-				$failure = '';
+				$failure = 'Job submission error: ';
 				$failure_mess = "Job submission error:\n";
 				while(<MESS>) {
 					chomp;

@@ -27,29 +27,35 @@ sub submit
 
 	$self->pre_compile_cleanup;
 
-  #only support nmfe here, not nmqual
+	#only support nmfe here, not nmqual
 
 	my $nmfe_command = $self->create_nmfe_command;
 
-  my $jobname = $self->model->filename;
-  $jobname = 'psn_' . $jobname if ($jobname =~ /^[0-9]/);
+	my $jobname = $self->model->filename;
+	$jobname = 'psn_' . $jobname if ($jobname =~ /^[0-9]/);
 
-  my $flags = ' -N ' . $jobname . ' -j y -cwd -b y';
-  if (defined $self->prepend_flags) {
-    $flags = ' ' . $self->prepend_flags . $flags;
-  }
-  
-  my $submitstring = $flags . 
-      ($self->resource ? ' -l ' . $self->resource . ' ' : ' ') .
-      ($self->queue ? '-q ' . $self->queue . ' ' : ' ') . $nmfe_command;
+	my $flags = ' -N ' . $jobname . ' -j y -cwd -b y';
+	if (defined $self->prepend_flags) {
+		$flags = ' ' . $self->prepend_flags . $flags;
+	}
+	
+	my $submitstring = $flags . 
+		($self->resource ? ' -l ' . $self->resource . ' ' : ' ') .
+		($self->queue ? '-q ' . $self->queue . ' ' : ' ') . $nmfe_command;
 
 	system('echo qsub '.$submitstring.' > qsubcommand');
 
-  my $outp = `qsub $submitstring`;
-  #write error to job_submission_error instead, let jobid be -1, and continue?
-  ($outp =~ /^Your job (\d+)/)
-      or croak("Grid submit failed.\nSystem error message: $outp" );
-  $jobId = $1;
+	my $outp = `qsub $submitstring 2>&1`;
+	chomp($outp);
+
+	if ($outp =~ /^Your job (\d+)/) {
+		$jobId = $1;
+	} else {
+		print "SGE submit failed.\nSystem error message: $outp\nConsidering this model failed.";
+		system('echo ' . $outp . ' > job_submission_error');
+		$jobId = -1;
+	}
+	system('echo '.$jobId.' > jobId');
 
 	return $jobId;
 }
@@ -59,19 +65,19 @@ sub monitor
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 jobId => { isa => 'Int', optional => 1 }
-	);
+							  jobId => { isa => 'Int', optional => 1 }
+		);
 	my $jobId = $parm{'jobId'};
 
-  my $response = `qstat -j $jobId 2>&1`;
+	my $response = `qstat -j $jobId 2>&1`;
 
-  if ($response =~ /Following jobs do not exist/) {
-      return $jobId;
-  } elsif ($response =~ /^usage: qstat/) {
-      return $jobId;
-  }
+	if ($response =~ /Following jobs do not exist/) {
+		return $jobId;
+	} elsif ($response =~ /^usage: qstat/) {
+		return $jobId;
+	}
 
-  return 0;
+	return 0;
 }
 
 no Moose;
