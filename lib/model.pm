@@ -2781,7 +2781,7 @@ sub set_records
 	my $self = shift;
 	my %parm = validated_hash(\@_,
 		 type => { isa => 'Str', optional => 1 },
-		 record_strings => { isa => 'ArrayRef[Str]', optional => 0 },
+		 record_strings => { isa => 'ArrayRef', optional => 0 },
 		 problem_numbers => { isa => 'ArrayRef[Int]', optional => 1 }
 	);
 	my $type = $parm{'type'};
