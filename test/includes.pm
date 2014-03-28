@@ -5,10 +5,11 @@ use File::Spec;
 use Cwd;
 use Test::More;
 use File::Path 'rmtree';
+use File::Copy 'cp';
 
 require Exporter;
 our @ISA = qw(Exporter);
-our @EXPORT = qw(cmp_float create_test_dir remove_test_dir);
+our @EXPORT = qw(cmp_float create_test_dir remove_test_dir copy_test_files);
 
 
 # Setup an include path to the lib directory
@@ -102,9 +103,14 @@ sub cmp_float
 	cmp_ok($x, '==', $y, $text);
 }
 
+sub _test_dir_name
+{
+	return File::Spec->tmpdir() . "/PsN-test";
+}
+
 sub create_test_dir
 {
-	my $dir = File::Spec->tmpdir() . "/PsN-test";
+	my $dir = _test_dir_name;
 	rmtree([$dir]);
 	mkdir($dir);
 	return $dir;
@@ -113,7 +119,14 @@ sub create_test_dir
 sub remove_test_dir
 {
 	chdir;		# Move to home in case we are cd:ed into the directory to remove.
-	rmtree([File::Spec->tmpdir() . "/PsN-test"]);
+	rmtree([_test_dir_name]);
+}
+
+sub copy_test_files
+{
+	foreach $file (@_) {
+		cp("$testfiledir/$file", _test_dir_name);
+	}
 }
 
 #uncomment for MAC, doris, n41, (5.10.0, 5.8.8, 5.10.1)
