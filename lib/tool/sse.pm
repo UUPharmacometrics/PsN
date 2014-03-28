@@ -16,7 +16,7 @@ has 'alternative_models' => ( is => 'rw', isa => 'ArrayRef[model]', default => s
 has 'random_estimation_inits' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'mc_models' => ( is => 'rw', isa => 'ArrayRef[model]', default => sub { [] } );
 has 'initial_values' => ( is => 'rw', isa => 'Any', clearer => 'clear_initial_values' );
-has 'first_alternative' => ( is => 'rw', isa => 'Int' );
+has 'first_alternative' => ( is => 'rw', isa => 'Maybe[Int]' );
 has 'bayes' => ( is => 'rw', isa => 'Bool', isa => 0 );
 has 'simulation_rawres' => ( is => 'rw', isa => 'Str' );
 has 'in_filter' => ( is => 'rw', isa => 'ArrayRef[Str]' );
