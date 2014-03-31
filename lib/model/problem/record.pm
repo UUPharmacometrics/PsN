@@ -7,8 +7,8 @@ use MooseX::Params::Validate;
 use model::problem::record::option;
 
 has 'options' => ( is => 'rw', isa => 'ArrayRef[model::problem::record::option]', default => sub { [] } );
-has 'record_arr' => ( is => 'rw', isa => 'Maybe[ArrayRef[Str]]' );
-has 'comment' => ( is => 'rw', isa => 'ArrayRef[Str]' );
+has 'record_arr' => ( is => 'rw', isa => 'Maybe[ArrayRef]' );
+has 'comment' => ( is => 'rw', isa => 'ArrayRef' );
 has 'print_order' => ( is => 'rw', isa => 'ArrayRef[Int]' );
 
 sub BUILD

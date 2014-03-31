@@ -1774,7 +1774,7 @@ sub set_records
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		record_strings => { isa => 'ArrayRef[Str]', default => [] },
+		record_strings => { isa => 'ArrayRef', default => [] },
 		type => { isa => 'Str' },
 		MX_PARAMS_VALIDATE_NO_CACHE => 1,
 	);
