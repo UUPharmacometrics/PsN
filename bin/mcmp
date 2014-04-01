@@ -253,8 +253,7 @@ common_options::online_help( 'mcmp', \%options, \%help_text, \%required_options,
 
 ## Check that we do not have a model file
 if ( scalar(@ARGV) > 0 ) {
-  print "Model files can only be specified using option -full_model and -reduced model.\n".
-      "Make sure that all options start with a '-' sign\n".
+  print "Make sure that all options start with a '-' sign\n".
       "Use 'mcmp -h' for help.\n";
   exit;
 }
