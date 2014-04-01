@@ -3,7 +3,8 @@
 use strict;
 use warnings;
 use Test::More tests => 19;
-use lib "../.."; #location of includes.pm
+use FindBin qw($Bin);
+use lib "$Bin/../.."; #location of includes.pm
 use includes; #file with paths to PsN packages
 
 my @readpipe_list;
@@ -17,7 +18,7 @@ BEGIN
 use nonmemrun::slurm;
 use model;
 
-my $model = model->new(filename => "../../test_files/pheno5.mod");
+my $model = model->new(filename => $includes::testfiledir . "/pheno5.mod");
 my $nonmemrun = nonmemrun::slurm->new(nm_version => 'default', model => $model);
 
 $nonmemrun->submit;
@@ -40,8 +41,8 @@ my $cmd = $readpipe_list[0];
 like($cmd, qr/\Asbatch\s+/, "command name");
 like($cmd, qr/\s+-background\s+/, "background in call string");
 like($cmd, qr/2>&1/, "redirection");
-like($cmd, qr/\s+-o\s+nmfe\.output\s+/, "stdout redirection");
-like($cmd, qr/\s+-e\s+nmfe\.output\s+/, "stderr redirection");
+like($cmd, qr/\s+-o\s+nmfe_output\.txt\s+/, "stdout redirection");
+like($cmd, qr/\s+-e\s+nmfe_output\.txt\s+/, "stderr redirection");
 like($cmd, qr/\s+-J\s+pheno5.mod\s+/, "jobname");
 unlike($cmd, $re_account, "no account");
 unlike($cmd, $re_maxruntime, "no maxruntime");
