@@ -712,6 +712,43 @@ sub create_bat_file
 	close $bat_file;
 }
 
+sub get_psn_version
+{
+	my $version = shift;
+
+	$version =~ /(\d+)\.(\d+)\.(\d+)/;
+	return ($1, $2, $3);
+}
+
+# Update from the old comma separated format of nmfe_options
+sub update_conf_file
+{
+	my $conf_file = shift;
+	my $old_version = shift;
+
+	(my $major, my $minor, my $maint) = get_psn_version($old_version);
+	unless ($major > 4 or ($major == 4 and $minor > 1) or ($major == 4 and $minor == 1 and $maint > 3)) {
+		open my $old_conf, "<", $conf_file;
+		open my $new_conf, ">", "$conf_file.new";
+		while (<$old_conf>) {
+			if (/nmfe_options=(.*)/) {
+				my @arr = split /,/, $1;
+				my $str = "nmfe_options=";
+				foreach my $opt (@arr) {
+					$str .= "-$opt ";
+				}
+				$str .= "\n";
+				print $new_conf $str;
+			} else {
+				print $new_conf $_;
+			}
+		}
+		close $old_conf;
+		close $new_conf;
+		unlink $conf_file;
+		rename "$conf_file.new", $conf_file;
+	}
+}
 
 print "\nThis is the PsN installer. I will install PsN version $version.\n".
     "You need to answer a few questions. If a default value is presented\n".
@@ -994,11 +1031,12 @@ if (not $keep_conf) {
 			} else {
 				system($copy_cmd . " \"" . $old_psn_config_file . "\" \"" . $newf . "\"") ;
 			}
-			if (-e $newf){
+			if (-e $newf) {
 				$offer_help = 0;
 				$conf_ok = 1;
 				$configuration_done = 1;
 				print "Copied $old_psn_config_file to $newf.\n";
+				update_conf_file($newf, $old_version);
 			} else {
 				print "Copying of old psn.conf failed.\n";
 			}

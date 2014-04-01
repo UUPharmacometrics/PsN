@@ -80,7 +80,7 @@ has 'subtool_arguments' => ( is => 'rw', isa => 'HashRef' );
 has 'threads' => ( is => 'rw', isa => 'Int', default => 1 );
 has 'parafile' => ( is => 'rw', isa => 'Str', default => 'none' );
 has 'nodes' => ( is => 'rw', isa => 'Int', default => 0 );
-has 'nmfe_options' => ( is => 'rw', isa => 'Str', default => 'none' );
+has 'nmfe_options' => ( is => 'rw', isa => 'Maybe[Str]' );
 has 'nm_output' => ( is => 'rw', isa => 'Str' );
 has 'nmqual_xml' => ( is => 'rw', isa => 'Str' );
 has 'nonmem_options' => ( is => 'rw', isa => 'Str', default => 'none' );

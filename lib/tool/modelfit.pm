@@ -1717,7 +1717,7 @@ sub run_nonmem
 				$nonmem_run = nonmemrun::localwindows->new(
 					nm_version => $nm_version,
 					parafile => $self->parafile ne 'none' ? $self->parafile : undef,
-					nmfe_options => $self->create_nmfe_options_string,
+					nmfe_options => $self->nmfe_options,
 					nodes => $self->nodes,
 					display_iterations => $self->display_iterations,
 				);
@@ -1725,7 +1725,7 @@ sub run_nonmem
 				$nonmem_run = nonmemrun::mosix->new(
 					nm_version => $nm_version,
 					parafile => $self->parafile ne 'none' ? $self->parafile : undef,
-					nmfe_options => $self->create_nmfe_options_string,
+					nmfe_options => $self->nmfe_options,
 					nodes => $self->nodes,
 					display_iterations => $self->display_iterations,
 				);
@@ -1733,7 +1733,7 @@ sub run_nonmem
 				$nonmem_run = nonmemrun::localunix->new(
 					nm_version => $nm_version,
 					parafile => $self->parafile ne 'none' ? $self->parafile : undef,
-					nmfe_options => $self->create_nmfe_options_string,
+					nmfe_options => $self->nmfe_options,
 					nodes => $self->nodes,
 					display_iterations => $self->display_iterations,
 				);
@@ -1748,7 +1748,7 @@ sub run_nonmem
 		} elsif ($self->run_on_lsf or $self->run_on_lsf_nmfe) {
 			my $nonmem_run = nonmemrun::lsf->new(
 				parafile => $self->parafile ne 'none' ? $self->parafile : undef,
-				nmfe_options => $self->create_nmfe_options_string,
+				nmfe_options => $self->nmfe_options,
 				nodes => $self->nodes,
 				model => $queue_info->{'model'},
 				nm_version => $nm_version,
@@ -1770,7 +1770,7 @@ sub run_nonmem
 		} elsif ($self->run_on_ud) {
 			my $nonmem_run = nonmemrun::ud->new(
 				parafile => $self->parafile ne 'none' ? $self->parafile : undef,
-				nmfe_options => $self->create_nmfe_options_string,
+				nmfe_options => $self->nmfe_options,
 				nodes => $self->nodes,
 				model => $queue_info->{'model'},
 				nm_version => $nm_version,
@@ -1787,7 +1787,7 @@ sub run_nonmem
 		} elsif ($self->run_on_sge or $self->run_on_sge_nmfe) {
 			my $nonmem_run = nonmemrun::sge->new(
 				parafile => $self->parafile ne 'none' ? $self->parafile : undef,
-				nmfe_options => $self->create_nmfe_options_string,
+				nmfe_options => $self->nmfe_options,
 				prepend_flags => $self->sge_prepend_flags,
 				nodes => $self->nodes,
 				model => $queue_info->{'model'},
@@ -1808,7 +1808,7 @@ sub run_nonmem
 				parafile => $self->parafile ne 'none' ? $self->parafile : undef,
 				email_address => $self->email_address,
 				send_email => $queue_info->{'send_email'},
-				nmfe_options => $self->create_nmfe_options_string,
+				nmfe_options => $self->nmfe_options,
 				prepend_flags => $self->slurm_prepend_flags,
 				max_runtime => $self->max_runtime,
 				partition => $self->slurm_partition,
@@ -1829,7 +1829,7 @@ sub run_nonmem
 				model => $queue_info->{'model'},
 				nm_version => $nm_version,
 				torque_queue => $self->torque_queue,
-				nmfe_options => $self->create_nmfe_options_string,
+				nmfe_options => $self->nmfe_options,
 				nodes => $self->nodes,
 				parafile => $self->parafile ne 'none' ? $self->parafile : undef,
 			);
@@ -1845,7 +1845,7 @@ sub run_nonmem
 				nm_version => $nm_version,
 				model => $queue_info->{'model'},
 				parafile => $self->parafile ne 'none' ? $self->parafile : undef,
-				nmfe_options => $self->create_nmfe_options_string,
+				nmfe_options => $self->nmfe_options,
 				nodes => $self->nodes,
 			);
 			$queue_info->{'nonmemrun'} = $nonmem_run;
@@ -3576,21 +3576,6 @@ sub create_sub_dir
 	close(FILE);
 
 	return $tmp_dir;
-}
-
-sub create_nmfe_options_string
-{
-	my $self = shift;
-	my $switches = '';
-
-	unless ($self->nmfe_options eq 'none') {
-		my @switches = split(/,/, $self->nmfe_options);
-		foreach my $sw (@switches) {
-			$switches .= ' -' . $sw;
-		}
-	}
-
-	return $switches;
 }
 
 no Moose;

@@ -429,31 +429,20 @@ sub sanity_checks {
   }
 
   if (defined $options->{'nmfe_options'}) {
-    unless ($options->{'nmfe'} or $options->{'nmqual'}) {
-      my $mes = "Option -nmfe_options cannot be set without option -nmfe or -nmqual.\n";
-      croak($mes);
-    }
-    if ($PsN::nm_major_version == 7 and defined $PsN::nm_minor_version and $PsN::nm_minor_version > 1) {
-      my @switches = split(/,/, $options->{'nmfe_options'});
-			foreach my $sw (@switches) {
-				unless (($sw =~ /^(background|prsame|prcompile|prdefault|tprdefault|trskip|xmloff)$/) or ($sw =~ /^(maxlim|rundir|runpdir|parafile|nmexec|licfile|locfile)/)) {
-					print "\nWarning: nmfe option $sw not recognized, but PsN will pass it on.\n";
-				}
-			}
-    } else {
-      $options->{'nmfe_options'} = undef;
-    }
-  }
+ 		if ($options{'nmfe_options'} =~ /\w+,\w+/) {
+			carp("Note that PsN will no longer take a comma separated list for nmfe_options. The argument is now added as it is to the nmfe call.");
+		}
+	}
 
-  if(defined $options -> {'nm_output'}){
+  if(defined $options -> {'nm_output'}) {
     my @nmout = split( /,/ ,$options -> {'nm_output'});
-    foreach my $out (@nmout){
+    foreach my $out (@nmout) {
       $out =~ s/^\.//;
-      if ($out =~ /^lst$/ ){
-	print "\nInformation: The lst-file will always be copied back, no need to set it with option -nm_output.\n";
+      if ($out =~ /^lst$/) {
+				print "\nInformation: The lst-file will always be copied back, no need to set it with option -nm_output.\n";
       }
-      unless ($out =~ /^(lst|ext|cov|cor|coi|phi|phm|shk|grd|xml|smt|rmt)$/ ){
-	print "\nWarning: NM output file extension $out not recognized, but PsN will copy back such files if found.\n";
+      unless ($out =~ /^(lst|ext|cov|cor|coi|phi|phm|shk|grd|xml|smt|rmt)$/) {
+				print "\nWarning: NM output file extension $out not recognized, but PsN will copy back such files if found.\n";
       }
       
     }
