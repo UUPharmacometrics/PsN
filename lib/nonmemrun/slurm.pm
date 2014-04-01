@@ -76,7 +76,7 @@ sub submit
 
 	for (my $i = 0; $i < 10; $i++) {
 		sleep(1); #wait to let other nodes sync files here?
-		my $outp = `sbatch $submitstring 2>&1`;
+		my $outp = readpipe("sbatch $submitstring 2>&1");
 		chomp($outp);
 		#write error to job_submission_error instead, set jobid to -1, and continue?
 		if ($outp =~ /Submitted batch job (\d+)/) {
@@ -87,8 +87,8 @@ sub submit
 			sleep(3);
 			next;
 		} else {
-			print "Slurm submit failed.\nSystem error message: $outp\nConsidering this model failed.";
-			system('echo ' . $outp . ' > job_submission_error');
+			print "Slurm submit failed.\nSystem error message: $outp\nConsidering this model failed.\n";
+			system('echo ' . $outp . '  > job_submission_error');
 			$jobId = -1;
 			last;
 		}	
