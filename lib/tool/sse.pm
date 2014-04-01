@@ -1337,7 +1337,8 @@ sub modelfit_setup
 																	  $model_number,
 																	  "mc-orig-$j.lst" );
 				my $est_original = model ->
-					new( directory   => $model_dir,
+					new(%{common_options::restore_options(@common_options::model_options)},
+						directory   => $model_dir,
 						 filename    => $orig_name,
 						 outputfile  => $orig_out,
 						 extra_files => $model -> extra_files,
@@ -1373,7 +1374,8 @@ sub modelfit_setup
 																	 $model_number,
 																	 "$filestem-$j.lst" );
 				my $est_alternative = model ->
-					new( directory   => $model_dir,
+					new( %{common_options::restore_options(@common_options::model_options)},
+						 directory   => $model_dir,
 						 filename    => $alt_name,
 						 outputfile  => $alt_out,
 						 extra_files => $alternative -> extra_files,
