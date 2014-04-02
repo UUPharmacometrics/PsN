@@ -429,8 +429,15 @@ sub sanity_checks {
   }
 
   if (defined $options->{'nmfe_options'}) {
- 		if ($options{'nmfe_options'} =~ /\w+,\w+/) {
+ 		if ($options->{'nmfe_options'} =~ /\w+,\w+/) {
 			carp("Note that PsN will no longer take a comma separated list for nmfe_options. The argument is now added as it is to the nmfe call.");
+		} else {
+			my @options_list = qw(background prsame prdefault prcompile trskip xmloff);
+			foreach $opt (@options_list) {
+				if ($options->{'nmfe_options'} =~ /\A$opt\Z/) {
+					carp("Note that PsN will no longer take a comma separated list for nmfe_options. The argument is now added as it is to the nmfe call.");
+				}
+			}
 		}
 	}
 
