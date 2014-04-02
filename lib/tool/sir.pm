@@ -269,6 +269,8 @@ sub mvnpdf{
 
 
 sub compute_weights{
+
+	#weight is same as importance_ratio
 	my %parm = validated_hash(\@_,
 		pdf_array => { isa => 'ArrayRef[Num]', optional => 0 },
 		dofv_array => { isa => 'ArrayRef[Num]', optional => 0 }
@@ -303,6 +305,8 @@ sub compute_weights{
 		$cumsum = $cumsum+$wgt;
 		push(@{$hash{'cdf'}},$cumsum);
 	}
+	$hash{'sum_weights'}=$cumsum;
+	croak("total weights is 0 in compute_weights") unless ($hash{'sum_weights'}>0);
 	return \%hash;
 }
 
@@ -360,6 +364,7 @@ sub empirical_statistics{
 
 	my @all_labels=();
 	my @all_params=();
+	my $n_resamples=0;
 
 	for (my $i=0; $i<$dim; $i++){
 		#order is theta omega sigma
@@ -383,6 +388,7 @@ sub empirical_statistics{
 		}
 
 		for (my $k=0; $k<$sampled_params_arr->[$i]->{'resamples'} ; $k++){
+			$n_resamples++;
 			push(@Amatrix,\@vector);
 			for (my $j=0; $j< $dim; $j++){
 				push(@{$parameter_vectors[$j]},$vector[$j]);
@@ -390,6 +396,7 @@ sub empirical_statistics{
 			}
 		}
 	}
+	croak("Number of resamples is 0 in empirical_statistics") if ($n_resamples < 1);
 
 	my %resulthash;
 	$resulthash{'covar'}=[];
@@ -399,8 +406,6 @@ sub empirical_statistics{
 	}elsif ($err1 == 2){
 		croak ("input error to linear_algebra rowcov");
 	}
-
-	my @indices=();
 
 	my @pred_int = sort {$a <=> $b} 0,40,80,90,95;
 	my @temp =();
@@ -424,7 +429,7 @@ sub empirical_statistics{
 	$resulthash{'percentiles_labels'}=\@perc_limit;
 	$resulthash{'percentiles_values'}=[];
  	for (my $j=0; $j< $dim; $j++){
-		push(@{$resulthash{'mean'}},($sums[$j]/$len));
+		push(@{$resulthash{'mean'}},($sums[$j]/$n_resamples));
 	}
  	for (my $j=0; $j< scalar(@probs); $j++){
 		push(@{$resulthash{'percentiles_values'}},[(0) x $dim]);
@@ -634,8 +639,9 @@ sub get_nonmem_parameters
 							#do not check off-diagonal zeros
 							next;
 						}else{
-							push(@{$hash{'lower_bounds'}},-1);
-							push(@{$hash{'upper_bounds'}},1);
+							#we handle these with Cholesky
+							push(@{$hash{'lower_bounds'}},-1000000);
+							push(@{$hash{'upper_bounds'}},1000000);
 						}
 		  			}
 				}
@@ -1106,6 +1112,7 @@ sub _modelfit_raw_results_callback
 												dofv_array => \@delta_ofv);
 
 		my @original_weights = @{$wghash->{'weights'}};
+		my $total_weights = $wghash->{'sum_weights'};
 		my @times_sampled = (0) x $samples;
 
 		for (my $i=0; $i<$resamples; $i++){
@@ -1117,11 +1124,18 @@ sub _modelfit_raw_results_callback
 			}
 		}
 
+		my @extra_headers = ('deltaofv','likelihood_ratio','PDF','importance_ratio','probability_resample','resamples');
 		$index=0;
 		foreach my $row ( @{$modelfit -> raw_results()} ) {
 			my @oldrow =@{$row};
-			$row = [@oldrow[0 .. $ofvindex],$delta_ofv[$index],$pdf_vector->[$index],
-					$original_weights[$index],$times_sampled[$index],@oldrow[$ofvindex+1 .. $#oldrow]]; 
+			$row = [@oldrow[0 .. $ofvindex],
+					$delta_ofv[$index],
+					((defined $delta_ofv[$index]) ? exp(-0.5*$delta_ofv[$index]): undef), #likelihood_ratio
+					$pdf_vector->[$index],
+					$original_weights[$index], #importance_ratio
+					$original_weights[$index]/$total_weights, #probability_resample
+					$times_sampled[$index],
+					@oldrow[$ofvindex+1 .. $#oldrow]]; 
 			$index++;
 		}
 
@@ -1136,7 +1150,7 @@ sub _modelfit_raw_results_callback
 		$orig_mod -> outputs -> [0] -> flush;
 		$raw_results_row->[0]->[0] = 'input';
 		my @oldrow =@{$raw_results_row->[0]};
-		my $row = [@oldrow[0 .. $ofvindex],0,undef,undef,undef,@oldrow[$ofvindex+1 .. $#oldrow]]; 
+		my $row = [@oldrow[0 .. $ofvindex],0,undef,undef,undef,undef,undef,@oldrow[$ofvindex+1 .. $#oldrow]]; 
 		
 		unshift( @{$modelfit -> raw_results()}, @{[$row]} );
 
@@ -1148,7 +1162,8 @@ sub _modelfit_raw_results_callback
 			$headerindex = $k if ($old_header[$k] eq 'ofv');
 		}
 		$modelfit -> raw_results_header(
-			[@old_header[0 .. $headerindex],'deltaofv','PDF','weight','resamples',@old_header[$headerindex+1 .. $#old_header]]);
+			[@old_header[0 .. $headerindex],@extra_headers,@old_header[$headerindex+1 .. $#old_header]]);
+
 		
 		foreach my $mod (sort({$a <=> $b} keys %{$self->raw_line_structure()})){
 			foreach my $category (keys %{$self->raw_line_structure() -> {$mod}}){
@@ -1157,10 +1172,12 @@ sub _modelfit_raw_results_callback
 				$self->raw_line_structure() -> {$mod}->{$category} = ($start+4).','.$len
 					if ($start > $ofvindex); #+4 for deltaofv PDF weight resamples
 			}
-			$self->raw_line_structure() -> {$mod}->{'deltaofv'} = ($ofvindex+1).',1';
-			$self->raw_line_structure() -> {$mod}->{'PDF'} = ($ofvindex+2).',1';
-			$self->raw_line_structure() -> {$mod}->{'weight'} = ($ofvindex+3).',1';
-			$self->raw_line_structure() -> {$mod}->{'resamples'} = ($ofvindex+4).',1';
+			my $hc = 0;
+			foreach my $head (@extra_headers){
+				$hc++;
+				$self->raw_line_structure() -> {$mod}->{$head} = ($ofvindex+$hc).',1';
+				#			$self->raw_line_structure() -> {$mod}->{'deltaofv'} = ($ofvindex+1).',1';
+			}
 		}
 		
 		$self->raw_line_structure() -> write( $dir.'raw_results_structure' );
@@ -1242,6 +1259,12 @@ sub prepare_results
 	$perc_section{'labels'}=[\@perc_labels,$parameter_hash->{'filtered_labels'}];
 	$perc_section{'values'}=$resulthash->{'percentiles_values'};
 	push( @{$self -> results->[0]{'own'}},\%perc_section );
+
+	my %space_section;
+	$space_section{'name'}= ' ';
+	$space_section{'labels'}= [' '];
+	$space_section{'values'}= [[]];
+	push( @{$self -> results->[0]{'own'}},\%space_section );
 
 	my %covar_section;
 	$covar_section{'name'}='Empirical covariance matrix';
