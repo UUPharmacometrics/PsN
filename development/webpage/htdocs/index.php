@@ -19,7 +19,7 @@
       }
     ?></div>
     <div id="footer" style="padding-top:2px;padding-right:2px;">
-       <a href="http://www.sourceforge.net/" target="_blank" ><img src="graphics/sflogo.png" alt="SourceForge" border="0"></a>
+			<a href="http://sourceforge.net/projects/psn" target="_blank"><img src="http://sflogo.sourceforge.net/sflogo.php?group_id=212691&type=13" border="0" /></a>
     </div>
   </div>
 </body>
