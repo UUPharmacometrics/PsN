@@ -16,6 +16,7 @@ use Math::Random;
 use output;
 use array qw(:all);
 use linear_algebra;
+use POSIX 'floor';
 
 extends 'tool';
 
@@ -405,24 +406,19 @@ sub empirical_statistics{
 	my @temp =();
 	foreach my $pi (@pred_int){
 		if ($pi == 0){
-			push (@temp,50); #need to have median last of these three for order in diagnostics output
+			push (@temp,50);
 		}else {
 			push (@temp,(100-$pi)/2);
 			push (@temp,(100-(100-$pi)/2));
 		}
 	}
 	my @perc_limit = sort {$a <=> $b} @temp;
-	my $no_perc_limits = scalar(@perc_limit);
-	my @limit_index = (0) x $no_perc_limits;
-
- 	for (my $j=0; $j< $no_perc_limits; $j++){
-		if ($perc_limit[$j] == 50){
-			$limit_index[$j] = -1; #signal to use median
-		}else{
-			$limit_index[$j] = round(number=>$perc_limit[$j]*($len-1)/100);
-		}
+	my @probs;
+	foreach my $lim (@perc_limit){
+		push(@probs,$lim/100);
 	}
 
+	my $no_perc_limits = scalar(@perc_limit);
 
 	$resulthash{'mean'}=[];
 	$resulthash{'percentiles_labels'}=\@perc_limit;
@@ -430,23 +426,56 @@ sub empirical_statistics{
  	for (my $j=0; $j< $dim; $j++){
 		push(@{$resulthash{'mean'}},($sums[$j]/$len));
 	}
- 	for (my $j=0; $j< scalar(@limit_index); $j++){
+ 	for (my $j=0; $j< scalar(@probs); $j++){
 		push(@{$resulthash{'percentiles_values'}},[(0) x $dim]);
 	}
 
  	for (my $j=0; $j< $dim; $j++){
 		my @sorted = (sort {$a <=> $b} @{$parameter_vectors[$j]}); #sort ascending
-		for (my $k=0; $k< scalar(@limit_index); $k++){
-			if ($limit_index[$k] > 0){
-				$resulthash{'percentiles_values'}->[$k]->[$j] = $sorted[$limit_index[$k]];
-			}else{
-				#median
-				$resulthash{'percentiles_values'}->[$k]->[$j] = median(sorted_array => \@sorted);
-			}
+		my $quantref = quantile(probs => \@probs, numbers=> \@sorted);
+		for (my $k=0; $k< scalar(@probs); $k++){
+			$resulthash{'percentiles_values'}->[$k]->[$j] = $quantref->[$k];
 		}
 	}
 
 	return \%resulthash;
+}
+
+sub quantile{
+	#mimic R quantile(nubmers,type=2, probs= probs)
+
+	my %parm = validated_hash(\@_,
+							  probs => { isa => 'ArrayRef[Num]', optional => 0 },
+							  numbers => { isa => 'ArrayRef[Num]', optional => 0 }
+		);
+	my $probs = $parm{'probs'};
+	my $numbers = $parm{'numbers'};
+
+	my $n=scalar(@{$numbers});
+	croak("Empty set of numbers to quantile") if ($n<1);
+	croak("Empty set of probs to quantile") if (scalar(@{$probs})<1);
+
+	my $m = 0; #R quantile type 2 m value
+	
+	my @ans =();
+	foreach my $perc (@{$probs}){
+		my $j = floor($n*$perc +$m); 
+
+		my $g = $n*$perc +$m - $j, 
+		my $gamma = 1;
+		$gamma = 0.5 if ($g==0);
+
+		my $index = $j-1;
+		my $quant= (1-$gamma)*$numbers->[$index] + $gamma*$numbers->[$index+1];
+		#handle out of range
+		if (($index+1)>= $n){
+			$quant= $numbers->[$index];
+		}elsif ($index< 0 and $gamma == 0.5){
+			$quant= $numbers->[$index+1];
+		}
+		push (@ans,$quant);
+	}
+	return \@ans;
 }
 
 sub median
@@ -1209,7 +1238,7 @@ sub prepare_results
 		push(@perc_labels,$lab.'%');
 	}
 
-	$perc_section{'name'}='Percentiles';
+	$perc_section{'name'}='Quantiles (R type=2)';
 	$perc_section{'labels'}=[\@perc_labels,$parameter_hash->{'filtered_labels'}];
 	$perc_section{'values'}=$resulthash->{'percentiles_values'};
 	push( @{$self -> results->[0]{'own'}},\%perc_section );

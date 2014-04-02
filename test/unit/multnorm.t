@@ -2,7 +2,8 @@
 
 use strict;
 use warnings;
-use Test::More tests => 134;
+use Test::More tests => 167;
+#use Test::More;
 use Test::Exception;
 use FindBin qw($Bin);
 use lib "$Bin/.."; #location of includes.pm
@@ -12,6 +13,29 @@ use Math::Trig;	# For pi
 use Math::Random;
 use output;
 use tool::sir;
+
+
+my @numbers = (1..200);
+my @perc = (0,0.025,0.05,0.1,0.3,0.5,0.7,0.9,0.95,0.975,1);
+my @qua=@{tool::sir::quantile(numbers => \@numbers,probs => \@perc)};
+my @facit = (1,5.5,10.5,20.5,60.5,100.5,140.5,180.5,190.5,195.5,200);
+for (my $i=0; $i< scalar(@perc); $i++){
+	cmp_ok($qua[$i],'==',$facit[$i],"quantile index $i vec 200");
+}
+
+@numbers = (1..100);
+@qua=@{tool::sir::quantile(numbers => \@numbers,probs => \@perc)};
+@facit = (1,3,5.5,10.5,30.5,50.5,70.5,90.5,95.5,98,100);
+for (my $i=0; $i< scalar(@perc); $i++){
+	cmp_ok($qua[$i],'==',$facit[$i],"quantile index $i vec 100");
+}
+
+@numbers = (1..10);
+@qua=@{tool::sir::quantile(numbers => \@numbers,probs => \@perc)};
+@facit=(1,1,1,1.5,3.5,5.5,7.5,9.5,10,10,10);
+for (my $i=0; $i< scalar(@perc); $i++){
+	cmp_ok($qua[$i],'==',$facit[$i],"quantile index $i vec 10");
+}
 
 
 #Tests needed for SIR
