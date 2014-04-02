@@ -10,126 +10,126 @@ what a PsN tool run can produce. Click on the highlighted direcories
 and files to display a summary of their function. </p>
   <table class="directory-structure">
     <tr>
-      <td colspan="4"><tt><img src="graphics/folder.open.gif" width="27" height="22" hspace="5" align="absbottom">scm_dir1</tt></td>
+      <td colspan="4"><tt><img src="graphics/folder_open.png" width="27" height="22" hspace="5" align="absbottom">scm_dir1</tt></td>
     </tr>
     <tr>
       <td width="4%"><tt></tt></td>
-      <td colspan="3"><tt onClick="MM_showHideLayers('origmodelfitdir','','show','nmrun','','hide')"><img src="graphics/folder.open.gif" width="27" height="22" hspace="5" align="absbottom"><a name="origmodelfitdir"></a><a href="#origmodelfitdir" onClick="MM_showHideLayers('origmodelfitdir','','show','nmrun','','hide','m11','','hide','m12','','hide','modelfit','','hide','logs','','hide','scm','','hide')">orig_modelfit_dir1</a></tt></td>
+      <td colspan="3"><tt onClick="MM_showHideLayers('origmodelfitdir','','show','nmrun','','hide')"><img src="graphics/folder_open.png" width="27" height="22" hspace="5" align="absbottom"><a name="origmodelfitdir"></a><a href="#origmodelfitdir" onClick="MM_showHideLayers('origmodelfitdir','','show','nmrun','','hide','m11','','hide','m12','','hide','modelfit','','hide','logs','','hide','scm','','hide')">orig_modelfit_dir1</a></tt></td>
     </tr>
     <tr>
       <td><tt></tt></td>
       <td width="4%"><tt></tt></td>
-      <td colspan="2"><tt onClick="MM_showHideLayers('origmodelfitdir','','hide','nmrun','','show')"><img src="graphics/folder.open.gif" width="27" height="22" hspace="5" align="absbottom"><a name="nmrun"></a><a href="#nmrun" onClick="MM_showHideLayers('origmodelfitdir','','hide','nmrun','','show','m11','','hide','m12','','hide','modelfit','','hide','logs','','hide','scm','','hide')">NM_run1</a></tt></td>
+      <td colspan="2"><tt onClick="MM_showHideLayers('origmodelfitdir','','hide','nmrun','','show')"><img src="graphics/folder_open.png" width="27" height="22" hspace="5" align="absbottom"><a name="nmrun"></a><a href="#nmrun" onClick="MM_showHideLayers('origmodelfitdir','','hide','nmrun','','show','m11','','hide','m12','','hide','modelfit','','hide','logs','','hide','scm','','hide')">NM_run1</a></tt></td>
     </tr>
     <tr>
       <td>&nbsp;</td>
       <td>&nbsp;</td>
       <td width="4%">&nbsp;</td>
       <td width="88%"><dl>
-          <dt><code><img src="graphics/file.gif" width="20" height="21" hspace="5" vspace="2" align="absbottom">FCON</code></dt>
-          <dt><code><img src="graphics/file.gif" width="20" height="21" hspace="5" vspace="2" align="absbottom">FCON.0</code></dt>
-          <dt><code><img src="graphics/file.gif" width="20" height="21" hspace="5" vspace="2" align="absbottom">FCON.1</code></dt>
-          <dt><code><img src="graphics/file.gif" width="20" height="21" hspace="5" vspace="2" align="absbottom">FCON.orig</code></dt>
-          <dt><code><img src="graphics/file.gif" width="20" height="21" hspace="5" vspace="2" align="absbottom">FDATA</code></dt>
-          <dt><code><img src="graphics/file.gif" width="20" height="21" hspace="5" vspace="2" align="absbottom">FREPORT</code></dt>
-          <dt><code><img src="graphics/file.gif" width="20" height="21" hspace="5" vspace="2" align="absbottom">FSTREAM</code></dt>
-          <dt><code><img src="graphics/file.gif" width="20" height="21" hspace="5" vspace="2" align="absbottom">FSUBS</code></dt>
-          <dt><code><img src="graphics/file.gif" width="20" height="21" hspace="5" vspace="2" align="absbottom">FSUBS.f</code></dt>
-          <dt><code><img src="graphics/file.gif" width="20" height="21" hspace="5" vspace="2" align="absbottom">LINK.LNK</code></dt>
-          <dt><code><img src="graphics/file.gif" width="20" height="21" hspace="5" vspace="2" align="absbottom">PRDERR</code></dt>
-          <dt><code><img src="graphics/file.gif" width="20" height="21" hspace="5" vspace="2" align="absbottom">compilation_output.txt</code></dt>
-          <dt><code><img src="graphics/file.gif" width="20" height="21" hspace="5" vspace="2" align="absbottom">data6_multi.dta</code></dt>
-          <dt><code><img src="graphics/file.gif" width="20" height="21" hspace="5" vspace="2" align="absbottom">data6_single.dta</code></dt>
-          <dt><code><img src="graphics/file.gif" width="20" height="21" hspace="5" vspace="2" align="absbottom">done</code></dt>
-          <dt><code><img src="graphics/file.gif" width="20" height="21" hspace="5" vspace="2" align="absbottom">get_sub0.f</code></dt>
-          <dt><code><img src="graphics/file.gif" width="20" height="21" hspace="5" vspace="2" align="absbottom">msf5</code></dt>
-          <dt><code><img src="graphics/file.gif" width="20" height="21" hspace="5" vspace="2" align="absbottom">psn.lst</code></dt>
-          <dt><code><img src="graphics/file.gif" width="20" height="21" hspace="5" vspace="2" align="absbottom">psn.lst.0</code></dt>
-          <dt><code><img src="graphics/file.gif" width="20" height="21" hspace="5" vspace="2" align="absbottom">psn.lst.1</code></dt>
-          <dt><code><img src="graphics/file.gif" width="20" height="21" hspace="5" vspace="2" align="absbottom">psn.mod</code></dt>
-          <dt><code><img src="graphics/file.gif" width="20" height="21" hspace="5" vspace="2" align="absbottom">reader0.f</code></dt>
+          <dt><code><img src="graphics/file.png" width="20" height="21" hspace="5" vspace="2" align="absbottom">FCON</code></dt>
+          <dt><code><img src="graphics/file.png" width="20" height="21" hspace="5" vspace="2" align="absbottom">FCON.0</code></dt>
+          <dt><code><img src="graphics/file.png" width="20" height="21" hspace="5" vspace="2" align="absbottom">FCON.1</code></dt>
+          <dt><code><img src="graphics/file.png" width="20" height="21" hspace="5" vspace="2" align="absbottom">FCON.orig</code></dt>
+          <dt><code><img src="graphics/file.png" width="20" height="21" hspace="5" vspace="2" align="absbottom">FDATA</code></dt>
+          <dt><code><img src="graphics/file.png" width="20" height="21" hspace="5" vspace="2" align="absbottom">FREPORT</code></dt>
+          <dt><code><img src="graphics/file.png" width="20" height="21" hspace="5" vspace="2" align="absbottom">FSTREAM</code></dt>
+          <dt><code><img src="graphics/file.png" width="20" height="21" hspace="5" vspace="2" align="absbottom">FSUBS</code></dt>
+          <dt><code><img src="graphics/file.png" width="20" height="21" hspace="5" vspace="2" align="absbottom">FSUBS.f</code></dt>
+          <dt><code><img src="graphics/file.png" width="20" height="21" hspace="5" vspace="2" align="absbottom">LINK.LNK</code></dt>
+          <dt><code><img src="graphics/file.png" width="20" height="21" hspace="5" vspace="2" align="absbottom">PRDERR</code></dt>
+          <dt><code><img src="graphics/file.png" width="20" height="21" hspace="5" vspace="2" align="absbottom">compilation_output.txt</code></dt>
+          <dt><code><img src="graphics/file.png" width="20" height="21" hspace="5" vspace="2" align="absbottom">data6_multi.dta</code></dt>
+          <dt><code><img src="graphics/file.png" width="20" height="21" hspace="5" vspace="2" align="absbottom">data6_single.dta</code></dt>
+          <dt><code><img src="graphics/file.png" width="20" height="21" hspace="5" vspace="2" align="absbottom">done</code></dt>
+          <dt><code><img src="graphics/file.png" width="20" height="21" hspace="5" vspace="2" align="absbottom">get_sub0.f</code></dt>
+          <dt><code><img src="graphics/file.png" width="20" height="21" hspace="5" vspace="2" align="absbottom">msf5</code></dt>
+          <dt><code><img src="graphics/file.png" width="20" height="21" hspace="5" vspace="2" align="absbottom">psn.lst</code></dt>
+          <dt><code><img src="graphics/file.png" width="20" height="21" hspace="5" vspace="2" align="absbottom">psn.lst.0</code></dt>
+          <dt><code><img src="graphics/file.png" width="20" height="21" hspace="5" vspace="2" align="absbottom">psn.lst.1</code></dt>
+          <dt><code><img src="graphics/file.png" width="20" height="21" hspace="5" vspace="2" align="absbottom">psn.mod</code></dt>
+          <dt><code><img src="graphics/file.png" width="20" height="21" hspace="5" vspace="2" align="absbottom">reader0.f</code></dt>
       </dl></td>
     </tr>
     <tr>
       <td>&nbsp;</td>
       <td>&nbsp;</td>
-      <td colspan="2"><tt><img src="graphics/folder.open.gif" width="27" height="22" hspace="5" align="absbottom"><a name="m11"></a><a href="#m11" onClick="MM_showHideLayers('origmodelfitdir','','hide','nmrun','','hide','m11','','show','m12','','hide','modelfit','','hide','logs','','hide','scm','','hide')">m1</a></tt></td>
+      <td colspan="2"><tt><img src="graphics/folder_open.png" width="27" height="22" hspace="5" align="absbottom"><a name="m11"></a><a href="#m11" onClick="MM_showHideLayers('origmodelfitdir','','hide','nmrun','','hide','m11','','show','m12','','hide','modelfit','','hide','logs','','hide','scm','','hide')">m1</a></tt></td>
     </tr>
     <tr>
       <td>&nbsp;</td>
       <td>&nbsp;</td>
       <td>&nbsp;</td>
-      <td><code><img src="graphics/file.gif" width="20" height="21" hspace="5" vspace="2" align="absbottom">prepared_models.log</code></td>
+      <td><code><img src="graphics/file.png" width="20" height="21" hspace="5" vspace="2" align="absbottom">prepared_models.log</code></td>
     </tr>
     <tr>
       <td>&nbsp;</td>
       <td>&nbsp;</td>
       <td colspan="2"><dl>
-          <dt><code><img src="graphics/file.gif" width="20" height="21" hspace="5" vspace="2" align="absbottom">model_NMrun_translation.txt</code></dt>
-          <dt><code><img src="graphics/file.gif" width="20" height="21" hspace="5" vspace="2" align="absbottom">modelfit.log</code></dt>
-          <dt><code><img src="graphics/file.gif" width="20" height="21" hspace="5" vspace="2" align="absbottom">resume.file</code></dt>
+          <dt><code><img src="graphics/file.png" width="20" height="21" hspace="5" vspace="2" align="absbottom">model_NMrun_translation.txt</code></dt>
+          <dt><code><img src="graphics/file.png" width="20" height="21" hspace="5" vspace="2" align="absbottom">modelfit.log</code></dt>
+          <dt><code><img src="graphics/file.png" width="20" height="21" hspace="5" vspace="2" align="absbottom">resume.file</code></dt>
       </dl></td>
     </tr>
     <tr>
       <td>&nbsp;</td>
-      <td colspan="3"><tt onClick="MM_showHideLayers('origmodelfitdir','','hide','nmrun','','hide','m11','','hide','m12','','show')"><img src="graphics/folder.open.gif" width="27" height="22" hspace="5" align="absbottom"><a name="m12"></a><a href="#m12" onClick="MM_showHideLayers('origmodelfitdir','','hide','nmrun','','hide','m11','','hide','m12','','show','modelfit','','hide','logs','','hide','scm','','hide')">m1</a></tt></td>
+      <td colspan="3"><tt onClick="MM_showHideLayers('origmodelfitdir','','hide','nmrun','','hide','m11','','hide','m12','','show')"><img src="graphics/folder_open.png" width="27" height="22" hspace="5" align="absbottom"><a name="m12"></a><a href="#m12" onClick="MM_showHideLayers('origmodelfitdir','','hide','nmrun','','hide','m11','','hide','m12','','show','modelfit','','hide','logs','','hide','scm','','hide')">m1</a></tt></td>
     </tr>
     <tr>
       <td>&nbsp;</td>
       <td>&nbsp;</td>
       <td colspan="2"><dl>
-          <dt><code><img src="graphics/file.gif" width="20" height="21" hspace="5" vspace="2" align="absbottom">BAAGE2.mod</code></dt>
-          <dt><code><img src="graphics/file.gif" width="20" height="21" hspace="5" vspace="2" align="absbottom">BAALKO2.mod</code></dt>
-          <dt><code><img src="graphics/file.gif" width="20" height="21" hspace="5" vspace="2" align="absbottom">BASEX2.mod</code></dt>
-          <dt><code><img src="graphics/file.gif" width="20" height="21" hspace="5" vspace="2" align="absbottom">BASMOK2.mod</code></dt>
-          <dt><code><img src="graphics/file.gif" width="20" height="21" hspace="5" vspace="1" align="absbottom">BAWT2.mod</code></dt>
-          <dt><code><img src="graphics/file.gif" width="20" height="21" hspace="5" vspace="2" align="absbottom">BAAGE2.lst</code></dt>
-          <dt><code><img src="graphics/file.gif" width="20" height="21" hspace="5" vspace="2" align="absbottom">BAALKO2.lst</code></dt>
-          <dt><code><img src="graphics/file.gif" width="20" height="21" hspace="5" vspace="2" align="absbottom">BASEX2.lst</code></dt>
-          <dt><code><img src="graphics/file.gif" width="20" height="21" hspace="5" vspace="2" align="absbottom">BASMOK2.lst</code></dt>
-          <dt><code><img src="graphics/file.gif" width="20" height="21" hspace="5" vspace="2" align="absbottom">BAWT2.lst</code></dt>
-          <dt><code><img src="graphics/file.gif" width="20" height="21" hspace="5" vspace="2" align="absbottom">done</code></dt>
-          <dt><code><img src="graphics/file.gif" width="20" height="21" hspace="5" vspace="2" align="absbottom">done.log</code></dt>
-          <dt><code><img src="graphics/file.gif" width="20" height="21" hspace="5" vspace="2" align="absbottom">prepared_models.log</code></dt>
+          <dt><code><img src="graphics/file.png" width="20" height="21" hspace="5" vspace="2" align="absbottom">BAAGE2.mod</code></dt>
+          <dt><code><img src="graphics/file.png" width="20" height="21" hspace="5" vspace="2" align="absbottom">BAALKO2.mod</code></dt>
+          <dt><code><img src="graphics/file.png" width="20" height="21" hspace="5" vspace="2" align="absbottom">BASEX2.mod</code></dt>
+          <dt><code><img src="graphics/file.png" width="20" height="21" hspace="5" vspace="2" align="absbottom">BASMOK2.mod</code></dt>
+          <dt><code><img src="graphics/file.png" width="20" height="21" hspace="5" vspace="1" align="absbottom">BAWT2.mod</code></dt>
+          <dt><code><img src="graphics/file.png" width="20" height="21" hspace="5" vspace="2" align="absbottom">BAAGE2.lst</code></dt>
+          <dt><code><img src="graphics/file.png" width="20" height="21" hspace="5" vspace="2" align="absbottom">BAALKO2.lst</code></dt>
+          <dt><code><img src="graphics/file.png" width="20" height="21" hspace="5" vspace="2" align="absbottom">BASEX2.lst</code></dt>
+          <dt><code><img src="graphics/file.png" width="20" height="21" hspace="5" vspace="2" align="absbottom">BASMOK2.lst</code></dt>
+          <dt><code><img src="graphics/file.png" width="20" height="21" hspace="5" vspace="2" align="absbottom">BAWT2.lst</code></dt>
+          <dt><code><img src="graphics/file.png" width="20" height="21" hspace="5" vspace="2" align="absbottom">done</code></dt>
+          <dt><code><img src="graphics/file.png" width="20" height="21" hspace="5" vspace="2" align="absbottom">done.log</code></dt>
+          <dt><code><img src="graphics/file.png" width="20" height="21" hspace="5" vspace="2" align="absbottom">prepared_models.log</code></dt>
       </dl></td>
     </tr>
     <tr>
       <td>&nbsp;</td>
-      <td colspan="3"><tt><img src="graphics/folder.open.gif" width="27" height="22" hspace="5" align="absbottom"><a name="modelfit"></a><a href="#modelfit" onClick="MM_showHideLayers('origmodelfitdir','','hide','nmrun','','hide','m11','','hide','m12','','hide','modelfit','','show','logs','','hide','scm','','hide')">modelfit_dir1</a></tt></td>
+      <td colspan="3"><tt><img src="graphics/folder_open.png" width="27" height="22" hspace="5" align="absbottom"><a name="modelfit"></a><a href="#modelfit" onClick="MM_showHideLayers('origmodelfitdir','','hide','nmrun','','hide','m11','','hide','m12','','hide','modelfit','','show','logs','','hide','scm','','hide')">modelfit_dir1</a></tt></td>
     </tr>
     <tr>
       <td>&nbsp;</td>
       <td>&nbsp;</td>
-      <td colspan="2"><p><tt><img src="graphics/folder.gif" width="20" height="22" hspace="5" align="absbottom">NM_run1<br>
-                <img src="graphics/folder.gif" width="20" height="22" hspace="5" align="absbottom">NM_run2<br>
-                <img src="graphics/folder.gif" width="20" height="22" hspace="5" align="absbottom">NM_run3<br>
-                <img src="graphics/folder.gif" width="20" height="22" hspace="5" align="absbottom">NM_run4<br>
-                <img src="graphics/folder.gif" width="20" height="22" hspace="5" align="absbottom">NM_run5<br>
-                <img src="graphics/folder.gif" width="20" height="22" hspace="5" align="absbottom">m1<br>
-                <img src="graphics/folder.gif" width="20" height="22" hspace="5" align="absbottom">m2<br>
-                <img src="graphics/folder.gif" width="20" height="22" hspace="5" align="absbottom">m3<br>
-                <img src="graphics/folder.gif" width="20" height="22" hspace="5" align="absbottom">m4<br>
-                <img src="graphics/folder.gif" width="20" height="22" hspace="5" align="absbottom">m5 <br>
-          </tt><code><img src="graphics/file.gif" width="20" height="21" hspace="5" vspace="2" align="absbottom">model_NMrun_translation.txt<br>
-      </code><code><img src="graphics/file.gif" width="20" height="21" hspace="5" vspace="2" align="absbottom">resume.file</code></p></td>
+      <td colspan="2"><p><tt><img src="graphics/folder.png" width="20" height="22" hspace="5" align="absbottom">NM_run1<br>
+                <img src="graphics/folder.png" width="20" height="22" hspace="5" align="absbottom">NM_run2<br>
+                <img src="graphics/folder.png" width="20" height="22" hspace="5" align="absbottom">NM_run3<br>
+                <img src="graphics/folder.png" width="20" height="22" hspace="5" align="absbottom">NM_run4<br>
+                <img src="graphics/folder.png" width="20" height="22" hspace="5" align="absbottom">NM_run5<br>
+                <img src="graphics/folder.png" width="20" height="22" hspace="5" align="absbottom">m1<br>
+                <img src="graphics/folder.png" width="20" height="22" hspace="5" align="absbottom">m2<br>
+                <img src="graphics/folder.png" width="20" height="22" hspace="5" align="absbottom">m3<br>
+                <img src="graphics/folder.png" width="20" height="22" hspace="5" align="absbottom">m4<br>
+                <img src="graphics/folder.png" width="20" height="22" hspace="5" align="absbottom">m5 <br>
+          </tt><code><img src="graphics/file.png" width="20" height="21" hspace="5" vspace="2" align="absbottom">model_NMrun_translation.txt<br>
+      </code><code><img src="graphics/file.png" width="20" height="21" hspace="5" vspace="2" align="absbottom">resume.file</code></p></td>
     </tr>
     <tr>
       <td>&nbsp;</td>
-      <td colspan="3"><tt><img src="graphics/folder.open.gif" width="27" height="22" hspace="5" align="absbottom"><a name="scm"></a><a href="#scm" onClick="MM_showHideLayers('origmodelfitdir','','hide','nmrun','','hide','m11','','hide','m12','','hide','modelfit','','hide','logs','','hide','scm','','show')">scm_dir1</a></tt></td>
+      <td colspan="3"><tt><img src="graphics/folder_open.png" width="27" height="22" hspace="5" align="absbottom"><a name="scm"></a><a href="#scm" onClick="MM_showHideLayers('origmodelfitdir','','hide','nmrun','','hide','m11','','hide','m12','','hide','modelfit','','hide','logs','','hide','scm','','show')">scm_dir1</a></tt></td>
     </tr>
     <tr>
       <td>&nbsp;</td>
       <td>&nbsp;</td>
-      <td colspan="2"><tt><img src="graphics/folder.gif" width="20" height="22" hspace="5" align="absbottom">m1<br>
-            <img src="graphics/folder.gif" width="20" height="22" hspace="5" align="absbottom">modelfit_dir1 <br>
-            <code><img src="graphics/file.gif" width="20" height="21" hspace="5" vspace="2" align="absbottom">modelfit1.log</code></tt></td>
+      <td colspan="2"><tt><img src="graphics/folder.png" width="20" height="22" hspace="5" align="absbottom">m1<br>
+            <img src="graphics/folder.png" width="20" height="22" hspace="5" align="absbottom">modelfit_dir1 <br>
+            <code><img src="graphics/file.png" width="20" height="21" hspace="5" vspace="2" align="absbottom">modelfit1.log</code></tt></td>
     </tr>
     <tr>
       <td>&nbsp;</td>
       <td colspan="3"><dl>
-          <dt><code><img src="graphics/file.gif" width="20" height="21" hspace="5" vspace="2" align="absbottom"><a name="logs"></a><a href="#logs" onClick="MM_showHideLayers('origmodelfitdir','','hide','nmrun','','hide','m11','','hide','m12','','hide','modelfit','','hide','logs','','show','scm','','hide')">modelfit1.log</a></code></dt>
-          <dt><code><img src="graphics/file.gif" width="20" height="21" hspace="5" vspace="2" align="absbottom"><a href="#logs" onClick="MM_showHideLayers('origmodelfitdir','','hide','nmrun','','hide','m11','','hide','m12','','hide','modelfit','','hide','logs','','show','scm','','hide')">psn_results.csv</a></code></dt>
-          <dt><code><img src="graphics/file.gif" width="20" height="21" hspace="5" vspace="2" align="absbottom"><a href="#logs" onClick="MM_showHideLayers('origmodelfitdir','','hide','nmrun','','hide','m11','','hide','m12','','hide','modelfit','','hide','logs','','show','scm','','hide')">scmlog_parallel1.txt</a></code></dt>
+          <dt><code><img src="graphics/file.png" width="20" height="21" hspace="5" vspace="2" align="absbottom"><a name="logs"></a><a href="#logs" onClick="MM_showHideLayers('origmodelfitdir','','hide','nmrun','','hide','m11','','hide','m12','','hide','modelfit','','hide','logs','','show','scm','','hide')">modelfit1.log</a></code></dt>
+          <dt><code><img src="graphics/file.png" width="20" height="21" hspace="5" vspace="2" align="absbottom"><a href="#logs" onClick="MM_showHideLayers('origmodelfitdir','','hide','nmrun','','hide','m11','','hide','m12','','hide','modelfit','','hide','logs','','show','scm','','hide')">psn_results.csv</a></code></dt>
+          <dt><code><img src="graphics/file.png" width="20" height="21" hspace="5" vspace="2" align="absbottom"><a href="#logs" onClick="MM_showHideLayers('origmodelfitdir','','hide','nmrun','','hide','m11','','hide','m12','','hide','modelfit','','hide','logs','','show','scm','','hide')">scmlog_parallel1.txt</a></code></dt>
           <dd><code></code></dd>
       </dl></td>
     </tr>
