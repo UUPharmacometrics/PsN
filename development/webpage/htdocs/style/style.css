@@ -1,0 +1,103 @@
+body,
+html {
+    margin:0;
+    padding:0;
+    color: #000;
+    font:100%/1.3 Palatino,Georgia,serif;
+}
+#header {
+    height: 110px;
+    background-image: url(../graphics/header.png);
+}
+#footer {
+    height: 50px;
+    background-image:url(../graphics/menubar.png);
+    background-repeat: no-repeat;
+    height: 37px;
+    text-align:right;
+}
+
+#footer div{
+	padding: 7px;
+	text-align: right;
+}
+
+#main {
+    padding: 20px;
+}
+
+#wrap {
+    width: 850px;
+    margin: 0 auto;
+    background: #FFFFFF;
+    border-left: 1px solid gray;
+    border-right: 1px solid gray;
+}
+
+#nav {
+    color: white;
+    font-family: sans-serif;
+    background-image:url(../graphics/menubar.png);
+    height: 37px;
+    
+}
+
+#nav a{
+    text-decoration: none;
+    color: white;
+}
+
+
+#nav a:hover{
+    text-decoration: underline;
+}
+
+#nav ul {
+    margin:0px;
+    padding-top:7px;
+    padding-left: 20px;
+    list-style: none;
+}
+
+#nav li {
+    display: inline;
+    margin:0;
+    padding: 0;
+}
+p {
+    text-align:justify;
+}
+
+table {
+    margin-top: 10px;
+    border-collapse: collapse;
+    margin-left:auto;
+   margin-right:auto;
+}
+
+td,th {
+    padding: 2px;
+    border: 1px solid black;
+}
+
+table.downloads {
+    width: 100%;
+    border: none;
+}
+
+table.downloads td {
+    border: none;
+}
+
+
+table.downloads th {
+    border: none;
+}
+
+table.directory-structure td {
+    border: none;
+}
+
+a{
+color: #990000;
+}
