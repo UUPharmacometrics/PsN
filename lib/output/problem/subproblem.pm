@@ -2924,6 +2924,7 @@ sub _read_matrixoestimates
 	  }
 
 	  next if ( /^1/ );			  # Those annoying 1's
+	  next if ( /\s*#/ );			  # NONMEM tag
 
 	  chomp;				# Get rid of line-feed
 	  my @row = split;

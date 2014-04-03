@@ -5,7 +5,6 @@ use strict;
 use Cwd;
 use File::Copy 'cp';
 use OSspecific;
-use Storable;
 use Math::Random;
 use ui;
 use Data::Dumper;
@@ -853,74 +852,53 @@ sub run
 	$self->stop_motion_call(tool=> 'tool', message => "Changed directory to " . $self->directory)
 	    if ($self->stop_motion());
 
+
+	#even if there is never any forking over tools, there is code in pre_fork_setup that we keep.
 	$self->pre_fork_setup;
-	$self->threads(1);
 
-	my @models = @{$self->models}; #should be only 1
-
-
-	my $aborting = 0;
+	if (scalar(@{$self->models})>1){
+		croak("Cannot have more than one input model in tools other than modelfit");
+	}
       
-	# Store some globals for single-thread mode to make each loop
-	# over the models see the same (fresh) prepared attributes as
-	# in the parallel mode.
- 	my @pre_fork_tools;
+	$self -> model_number(1);
+	# This is only for backwards compatibility, otherwise we should not need to reset the seed.
+	random_set_seed_from_phrase(random_uniform_integer(1,0,10000));
 
-	# Loop over the models
-	#this should only be 1 model always
-	for ( my $i = 1; $i <= scalar @models; $i++ ) {
-	    # model_number is a member that tells the tool which model
-	    # it is currently working on.
-	    $self -> model_number( $i );
-	    
-	    # Make sure that each process gets a unique random sequence:
-	    random_set_seed_from_phrase(random_uniform_integer(1,0,10000*$i));
+	# First, run setup
+	$self -> setup( model_number => 1 );
 
-	    # First, run setup
-	    $self -> setup( model_number => $i );
-
-	    # Run the subtools
-	    my @tool_results = ();
-	    my @tool_models = ();
-	    if ( defined $self->tools ) {
-				foreach my $tool (@{$self->tools}) {
-					# There is to date (2004-01-27 no tool that creates more than one internal
-					# tool. Hence this is a loop of one cycle. But to be general, again...
-					# Run the tool:
-					my( $returns, $prep_models ) = $tool -> run;
-					# push the sub tool's return values
-					push ( @tool_results, $returns );
-					if ( defined $prep_models ) {
-						push ( @tool_models, $prep_models );
-					} else {
-						carp("inside " . ref($self) . " but no prep_models defined from $tool $i");
-					}
-					$self -> post_subtool_analyze;
-				}
-
-	    } else {
-				carp("No tool object to run from tool object." );
-	    }
-
-	    $self->results->[$i-1]{'subtools'} = \@tool_results;
-	    $self->prepared_models->[$i - 1]{'subtools'} = \@tool_models;
-
-	    # Analyze the results
-	    $self -> analyze( model_number => $i );
-
-	    Storable::store( $self->prepared_models, $self->directory . "/m$i/prepared_models.log" );
+	# Run the subtools
+	my @tool_results = ();
+	my @tool_models = ();
+	if ( defined $self->tools ) {
+		foreach my $tool (@{$self->tools}) {
+			# There is to date (2004-01-27 no tool that creates more than one internal
+			# tool. Hence this is a loop of one cycle. But to be general, again...
+			# Run the tool:
+			my( $returns, $prep_models ) = $tool -> run;
+			# push the sub tool's return values
+			push ( @tool_results, $returns );
+			if ( defined $prep_models ) {
+				push ( @tool_models, $prep_models );
+			} else {
+				carp("inside " . ref($self) . " but no prep_models defined from $tool 1");
+			}
+			$self -> post_subtool_analyze;
+		}
+		
+	} else {
+		carp("No tool object to run from tool object." );
 	}
-
-	for( my $i = 1; $i <= scalar @{$self->models}; $i++ ) {
-	  my @prepared_models = @{Storable::retrieve( $self->directory . "/m$i/prepared_models.log" )};
-	  unless ($self->clean == 0) {
-	    unlink( $self->directory . "/m$i/prepared_models.log" );
-	  }
-	  $self->prepared_models->[$i-1] = $prepared_models[$i-1];
-	}
-
 	
-	# Perform analyses that need to be done after all models have
+	$self->results->[0]{'subtools'} = \@tool_results;
+	$self->prepared_models->[0]{'subtools'} = \@tool_models;
+
+	# Analyze the results
+	$self -> analyze( model_number => 1 );
+
+	$self->prepared_models->[0] = $self->prepared_models;
+	
+	# Perform analyses that need to be done after model has
 	# been run and processed. Also write a result file if one is
 	# defined.
 	$self -> post_fork_analyze;
