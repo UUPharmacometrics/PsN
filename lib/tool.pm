@@ -1,7 +1,6 @@
 package tool;
 
 use include_modules;
-use ext::Parallel::ForkManager;
 use strict;
 use Cwd;
 use File::Copy 'cp';
@@ -855,25 +854,12 @@ sub run
 	    if ($self->stop_motion());
 
 	$self->pre_fork_setup;
+	$self->threads(1);
 
-	my @models = @{$self->models};
-	# Use the thread number of this tool level:
-	my $threads = ref( $self->threads ) eq 'ARRAY' ?  $self->threads->[0] : $self->threads;
+	my @models = @{$self->models}; #should be only 1
 
-	# No point in using more threads than models
-	$threads = $#models + 1 if ( $threads > $#models + 1);
 
-	# Currently parallel execution is not supported on windows platforms
-	$threads = 1 if( $Config{osname} eq 'MSWin32' );
-
-	# Create new forkmanager
-	my $pm = ext::Parallel::ForkManager -> new($threads) if ( $threads > 1 );
 	my $aborting = 0;
-	$pm -> run_on_finish( sub { my ( $pid, $exit_code, $ident ) = @_;
-				    if( $exit_code ){
-				      croak("Subtool died, exiting." );
-				    }
-				  } ) if ( $threads > 1 );
       
 	# Store some globals for single-thread mode to make each loop
 	# over the models see the same (fresh) prepared attributes as
@@ -881,10 +867,8 @@ sub run
  	my @pre_fork_tools;
 
 	# Loop over the models
+	#this should only be 1 model always
 	for ( my $i = 1; $i <= scalar @models; $i++ ) {
-	    # Spawn new processes
-	    $pm -> start and next if ( $threads > 1 );
-
 	    # model_number is a member that tells the tool which model
 	    # it is currently working on.
 	    $self -> model_number( $i );
@@ -925,17 +909,7 @@ sub run
 	    $self -> analyze( model_number => $i );
 
 	    Storable::store( $self->prepared_models, $self->directory . "/m$i/prepared_models.log" );
-	    if ( $threads > 1 ) {
-		Storable::store( $self->results, $self->directory . "/m$i/results.log" );
-		  # Maybe redundant to transfer back both prepared_models as well as tools
-
-	          # Actually, by principle everything interesting for
-	          # a parent should be placed in "results" or possibly
-	          # "prepared_models".
-		}
-	    $pm -> finish if ( $threads > 1 );
 	}
-	$pm -> wait_all_children if ( $threads > 1 );
 
 	for( my $i = 1; $i <= scalar @{$self->models}; $i++ ) {
 	  my @prepared_models = @{Storable::retrieve( $self->directory . "/m$i/prepared_models.log" )};
@@ -944,17 +918,6 @@ sub run
 	  }
 	  $self->prepared_models->[$i-1] = $prepared_models[$i-1];
 	}
-
-	if ( $threads > 1 ) {
-	    for( my $i = 1; $i <= scalar @{$self->models}; $i++ ) {
-		my @model_results = @{Storable::retrieve( $self->directory .  "/m$i/results.log" )};
-# It is important to keep the number of dimensions: push the first value, not the
-# whole array!
-		$self->results->[$i - 1] = $model_results[$i - 1];
-
-		# Read comment aboud tools.log near storable above.
-	    }
-	  }
 
 	
 	# Perform analyses that need to be done after all models have

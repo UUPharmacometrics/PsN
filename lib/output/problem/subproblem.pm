@@ -61,6 +61,7 @@ has 'raw_seomegas' => ( is => 'rw', isa => 'ArrayRef[Num]' );
 has 'raw_sesigmas' => ( is => 'rw', isa => 'ArrayRef[Num]' );
 has 'raw_sigmas' => ( is => 'rw', isa => 'ArrayRef[Num]' );
 has 'raw_tmatrix' => ( is => 'rw', isa => 'ArrayRef' );
+has 'tmatrix' => ( is => 'rw', isa => 'ArrayRef' );
 has 'significant_digits' => ( is => 'rw', isa => 'Num' );
 has 'sigmacoordval' => ( is => 'rw', isa => 'HashRef' );
 has 'sesigmacoordval' => ( is => 'rw', isa => 'HashRef' );
@@ -300,7 +301,7 @@ sub _read_covmatrix
 					my $temp_matrix;
 					( $start_pos, $temp_matrix, $t_success, $dummyheaders )  = $self ->
 						_read_matrixoestimates( pos => $start_pos-1 );# and last;
-					$self->tmatrix($temp_matrix);
+					$self->raw_tmatrix($temp_matrix);
 					last;
 				}
 			}
