@@ -860,6 +860,8 @@ sub run
 		croak("Cannot have more than one input model in tools other than modelfit");
 	}
       
+
+	#this tells the tool which model it is working on. In practice this is always the same
 	$self -> model_number(1);
 	# This is only for backwards compatibility, otherwise we should not need to reset the seed.
 	random_set_seed_from_phrase(random_uniform_integer(1,0,10000));
@@ -896,7 +898,7 @@ sub run
 	# Analyze the results
 	$self -> analyze( model_number => 1 );
 
-	$self->prepared_models->[0] = $self->prepared_models;
+	$self->prepared_models->[0] = $self->prepared_models; #does this overwrite \@tool_models? Should it not be ->[]{'own'} = ...?
 	
 	# Perform analyses that need to be done after model has
 	# been run and processed. Also write a result file if one is
