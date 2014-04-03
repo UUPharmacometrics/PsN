@@ -13,17 +13,7 @@ has 'queue' => ( is => 'rw', isa => 'Maybe[Str]' );
 sub submit
 {
 	my $self = shift;
-	my %parm = validated_hash(\@_,
-		 model => { isa => 'model', optional => 1 },
-		 nm_version => { isa => 'Str', optional => 1 },
-		 nodes => { isa => 'Int', default => 0, optional => 1 },
-		 queue_info => { isa => 'Ref', optional => 1 }
-	);
 	my $jobId = -1;
-	my $model = $parm{'model'};
-	my $nm_version = $parm{'nm_version'};
-	my $nodes = $parm{'nodes'};
-	my $queue_info = $parm{'queue_info'};
 
 	$self->pre_compile_cleanup;
 
