@@ -111,7 +111,6 @@ RELFILES=$(addprefix PsN-Source/lib/,$(LIBFILES)) \
 	lib/ext/Math/SigFigs.pm \
 	lib/ext/Math/MatrixReal.pm \
 	lib/ext/Statistics/Distributions.pm \
-	lib/ext/Parallel/ForkManager.pm \
 	lib/ext/Config/Tiny.pm \
 	lib/ext/File/HomeDir.pm \
 	lib/ext/Carp.pm \
