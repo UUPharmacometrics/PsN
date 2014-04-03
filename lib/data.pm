@@ -795,36 +795,36 @@ sub factors
 
 	my $key = 0;
 	foreach my $individual ( @{$self->individuals()} ) {
-	  #get a hash: key:data value value: array of order numbers in individual
-	  my @ifactors = keys %{$individual->factors( column => $column )};
-	  if ( scalar @ifactors > 1 and $unique_in_individual ) {
-	      #do not set non-unique if only two and one of them is missing data
-	      unless (scalar @ifactors == 2 and $ignore_missing and 
-		      ($ifactors[0] == $self->missing_data_token ||
-		       $ifactors[1] == $self->missing_data_token)){ 
-		  %factors = ( 'Non-unique values found' => 1 );
-	      }
-	  }
-	  croak("No value found in column $column in individual ".
-			$individual->idnumber ) if ( scalar @ifactors == 0 );
+		#get a hash: key:data value value: array of order numbers in individual
+		my @ifactors = keys %{$individual->factors( column => $column )};
+		if ( scalar @ifactors > 1 and $unique_in_individual ) {
+			#do not set non-unique if only two and one of them is missing data
+			unless (scalar @ifactors == 2 and $ignore_missing and 
+					($ifactors[0] == $self->missing_data_token ||
+					 $ifactors[1] == $self->missing_data_token)){ 
+				%factors = ( 'Non-unique values found' => 1 );
+			}
+		}
+		croak("No value found in column $column in individual ".
+			  $individual->idnumber ) if ( scalar @ifactors == 0 );
 
 	  # Return occurences will calculate the occurence of each
 	  # factor value. Several occurences in one individual counts as
 	  # one occurence.
 
-	  if ( $return_occurences ) {
-	    #how many individuals have this factor
-	    #one count per individual, not counting how many per individual
-	    foreach my $ifactor ( @ifactors ) {
-	      $factors{$ifactor}++;
-	    }
-	  } else {
-	    foreach my $ifactor ( @ifactors ) {
-	      #push order number of individual with this factor. Once per individual
-	      #even if many per individual
-	      push( @{$factors{$ifactor}}, $key );
-	    }
-	  }
+		if ( $return_occurences ) {
+			#how many individuals have this factor
+			#one count per individual, not counting how many per individual
+			foreach my $ifactor ( @ifactors ) {
+				$factors{$ifactor}++;
+			}
+		} else {
+			foreach my $ifactor ( @ifactors ) {
+				#push order number of individual with this factor. Once per individual
+				#even if many per individual
+				push( @{$factors{$ifactor}}, $key );
+			}
+		}
 	  $key++;
 	}
 
@@ -1472,13 +1472,13 @@ sub resample
 	  if( $stratify_on =~ /\D/ ) {
 	    %strata = %{$self->factors( column_head => $stratify_on )};
 	    if ( $strata{'Non-unique values found'} eq '1' ) {
-	      croak("Individuals were found to have multiple values in the $stratify_on column. ".
+	      croak("At least one individual was found to have multiple values in the $stratify_on column. ".
 			    "The column $stratify_on cannot be used for stratification of the resampling." );
 	    }
 	  } else {
 	    %strata = %{$self->factors( column => $stratify_on )};
 	    if ( $strata{'Non-unique values found'} eq '1' ) {
-	      croak("Individuals were found to have multiple values in column number $stratify_on. ".
+	      croak("At least one individual was found to have multiple values in column number $stratify_on. ".
 			    "Column $stratify_on cannot be used for stratification of the resampling." );
 	    }
 	  }

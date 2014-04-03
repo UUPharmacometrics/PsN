@@ -29,6 +29,11 @@ The number of subjects in each bootstrap data set. The default       value is se
 \nextopt
 \optdefault{stratify\_on}{column name}
 It may be necessary to use stratification in the resampling procedure. For example, if the original data consists of two groups of patients - say 10 patients with full pharmacokinetic profiles and 90 patients with sparse steady state concentration measurements - it may be wise to restrict the resampling procedure to resample within the two groups, producing bootstrap data sets that all contain 10 rich + 90 sparse data patients but with different compositions. The default is not to use stratification. Set -stratify\_on to the column (the name in \$INPUT) that defines the two groups. Note that the option sample\_size has a different behaviour when stratified resampling is used. 
+
+Bootstrapping is always done on entire individuals, so for each ID the data records are either all included or all excluded from a particular bootstrapped data set.
+The algorithm requires that an individual can unambigously be categorized according to the stratification variable. 
+In data file terms, it means that the variable used for stratification must have one and only one value for each individual, otherwise the program will stop with an error message saying that at least one individual has multiple values
+in the stratification column, and therefore this column cannot be used for stratification of the resampling.
 \nextopt
 \optname{keep\_tables}
 By default, all \$TABLE will be deleted from the bootstrap models, to save disk space. If option -keep\_tables is set, 
