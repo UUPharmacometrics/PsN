@@ -89,6 +89,7 @@ our $update_inits = $path.'update_inits'.$version;
 our $vpc = $path.'vpc'.$version;
 our $xv_scm = $path.'xv_scm'.$version;
 our $sir = $path.'sir'.$version;
+our $pvar = $path.'pvar'.$version;
 
 
 sub cmp_float
