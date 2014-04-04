@@ -13,6 +13,7 @@ use includes; #file with paths to PsN packages and $path variable definition
 
 use File::Copy 'cp';
 use File::Copy::Recursive 'dircopy';
+use File::Spec;
 
 #in psn.conf must set output_style = SPLUS, otherwise tests will fail. fix by setting here.
 
@@ -20,6 +21,7 @@ use File::Copy::Recursive 'dircopy';
 PsN::set_nonmem_info('default');
 our $nm_version = $PsN::nm_major_version * 100 + $PsN::nm_minor_version * 10;
 
+open STDERR, '>', File::Spec->devnull();	# Silence STDERR
 
 sub is_array{
     my $facit=shift;

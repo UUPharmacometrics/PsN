@@ -20,6 +20,9 @@ our $dir = "$tempdir/scm_test";
 our $scm_file_dir = $includes::testfiledir . '/scm';
 our $file_dir = $includes::testfiledir;
 
+use File::Spec;
+open STDERR, '>', File::Spec->devnull();		# Silence STDERR
+
 sub is_array
 {
 	my $func=shift;
