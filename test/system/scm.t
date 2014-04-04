@@ -2,7 +2,7 @@
 
 use strict;
 use warnings;
-use Test::More tests=>23;
+use Test::More tests=>22;
 use Test::Exception;
 use File::Path 'rmtree';
 use FindBin qw($Bin);
@@ -31,11 +31,11 @@ sub is_array{
     my $min = scalar(@{$func});
     $min = scalar(@{$facit}) if (scalar(@{$facit})< $min);
     for (my $i=0; $i<$min; $i++){
-	if ($facit->[$i] eq 'NA'){
-	    cmp_ok($func->[$i],'eq',$facit->[$i],"$label, index $i");
-	}else{
-	    cmp_ok($func->[$i],'==',$facit->[$i],"$label, index $i");
-	}
+		if ($facit->[$i] eq 'NA'){
+			cmp_ok($func->[$i],'eq',$facit->[$i],"$label, index $i");
+		}else{
+			cmp_ok($func->[$i],'==',$facit->[$i],"$label, index $i");
+		}
     }		
 	
 }
@@ -45,7 +45,6 @@ config_ignore.scm
 config_included.scm
 config_logit.scm
 config_nohead.scm
-config_normal.scm
 config_normal_sum.scm
 config_only_categorical.scm
 config_state5.scm
