@@ -2797,14 +2797,14 @@ sub _normalize_record_name
 
 
 	if ($unsupported_records{uc($record_name)} > 0){
-		debug->die(message => "\nPsN does not yet support record \$".$record_name." in the control stream, but adding support is on the todo-list.\n");
+		croak("\nPsN does not yet support record \$".$record_name." in the control stream, but adding support is on the todo-list.\n");
 	}
 	my $uc_short_type = _get_uc_short_type($record_name);
 
 	$normalized_name = $abbreviations{$uc_short_type};
 
 	unless (length($normalized_name)>0){
-		debug->die(message => "\nPsN does not support record \$".$record_name." in the control stream\n");
+		croak("\nPsN does not support record \$".$record_name." in the control stream\n");
 	}
 
 	return $normalized_name;

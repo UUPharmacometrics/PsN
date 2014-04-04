@@ -14,14 +14,12 @@ use Getopt::Long;
 my ($opt_help,
     $opt_long_help,
     $opt_columns,
-    $opt_ignore_columns,
-    $opt_debug);
+    $opt_ignore_columns);
 
 my $opts = { "h|?"                => \$opt_help,
 	     "help"               => \$opt_long_help,
 	     "columns:s"          => \$opt_columns,
 	     "ignore_columns:s"   => \$opt_ignore_columns,
-	     "debug:0"		  => \$opt_debug,
 };
 
 my $res = GetOptions( %{$opts} );
@@ -44,7 +42,6 @@ if($opt_help or $opt_long_help) {
   data_stats [ -h | -? ] [ -help ]
              [ -columns='string' ]
 	     [ -ignore_columns='string' ]
-             [ -debug='integer' ] 
 	     outputfile(s)
 
 ENDHELP
@@ -104,19 +101,12 @@ ENDHELP
     Print this, longer, help message.
 
 
-    -debug='integer'
-
-    Default value is: 0
-
-    This is mainly for developers who whish to debug PsN. By default
-    'integer' is zero but you can enabler warnings by setting it to '1'
 
 ENDHELP
   }
   exit;
 }
 
-#debug -> level( $opt_debug );
 
 my $datafile = $ARGV[0];
 my $dataobj = data -> new ('filename'=> $datafile);

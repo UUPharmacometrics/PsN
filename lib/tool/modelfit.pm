@@ -783,7 +783,7 @@ sub run
 							
 							#leave if error message,
 							unlink( <$work_dir/*> )  ; 
-							unless( rmdir( $work_dir ) ){debug -> warn( message => "Unable to remove $work_dir directory: $! ." )};
+							unless( rmdir( $work_dir ) ){ carp("Unable to remove $work_dir directory: $! ." )};
 							$self->stop_motion_call(tool=>'modelfit',message => "clean level is >=3, removed $work_dir")
 								if ($self->stop_motion()> 1);
 						}
