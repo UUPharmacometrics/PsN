@@ -14,7 +14,7 @@ use model;
 
 my $nonmemrun = nonmemrun->new(nm_version => 'default');
 
-my $cmd = $nonmemrun->create_nmfe_command;
+my $cmd = $nonmemrun->create_command;
 
 like($cmd, qr/nmfe/, "nmfe name");
 like($cmd, qr/\s+psn.mod\s+psn.lst\s+/, "psn files");
@@ -25,7 +25,7 @@ my $nonmemrun = nonmemrun->new(
 	nmfe_options => 'my opts',
 );
 
-my $cmd = $nonmemrun->create_nmfe_command;
+my $cmd = $nonmemrun->create_command;
 
 like($cmd, qr/\s+my opts/, "nmfe_options");
 

@@ -19,7 +19,7 @@ sub submit
 
 	#only support nmfe here, not nmqual
 
-	my $nmfe_command = $self->create_nmfe_command;
+	my $command = $self->create_command;
 
 	my $jobname = $self->model->filename;
 	$jobname = 'psn_' . $jobname if ($jobname =~ /^[0-9]/);
@@ -31,7 +31,7 @@ sub submit
 	
 	my $submitstring = $flags . 
 		($self->resource ? ' -l ' . $self->resource . ' ' : ' ') .
-		($self->queue ? '-q ' . $self->queue . ' ' : ' ') . $nmfe_command;
+		($self->queue ? '-q ' . $self->queue . ' ' : ' ') . $command;
 
 	system('echo qsub '.$submitstring.' > qsubcommand');
 

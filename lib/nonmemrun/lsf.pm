@@ -27,7 +27,7 @@ sub submit
   $jobname = 'psn_' . $jobname if ($jobname =~ /^[0-9]/);
   $jobname = $self->lsf_job_name if (defined $self->lsf_job_name);
 
-	my $nmfe_command = $self->create_nmfe_command;
+	my $command = $self->create_command;
 
   open(SUB, '>lsf_jobscript');
   print SUB ("#BSUB -J $jobname\n");
@@ -42,7 +42,7 @@ sub submit
   print SUB ("#BSUB -R " . $self->lsf_resources . "\n")
       if (defined $self->lsf_resources);
 
-  print SUB ("$nmfe_command\n");
+  print SUB ("$command\n");
   close(SUB);
 
   my $submitstring = 'bsub ' . $self->lsf_options . ' < lsf_jobscript 2>&1'; 

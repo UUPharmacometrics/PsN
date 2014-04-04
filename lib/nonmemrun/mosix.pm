@@ -17,25 +17,25 @@ sub submit
 
 	$self->pre_compile_cleanup;
 
-	my $nmfe_command = $self->create_nmfe_command;
+	my $command = $self->create_command;
 
 	if ($self->nice) {
-		$nmfe_command = 'nice -n '. $self->nice . " $nmfe_command";
+		$command = 'nice -n '. $self->nice . " $command";
 	}
 
 	if (not $self->display_iterations) {
-		$nmfe_command .= ' >' . $self->nmfe_output_file;
+		$command .= ' >' . $self->nmfe_output_file;
 	}
 
 	my $pid = fork();
 	if ($pid == 0) {
-		$nmfe_command = 'mosenv -e ' . $nmfe_command;
+		$command = 'mosenv -e ' . $command;
 		if (-e "/proc/self/lock") {
 			open(my $fh, ">", "/proc/self/lock") || die "Could not unlock myself!\n";
 			print $fh "0";
 			close($fh);
 		}
-		system($nmfe_command);
+		system($command);
 		if (-e "/proc/self/lock") {
 			open(my $fh, ">", "/proc/self/lock") || die "Could not lock myself!\n";
 			print $fh "1";

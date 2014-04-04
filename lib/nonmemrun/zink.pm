@@ -12,7 +12,7 @@ sub submit
 	my $jobId = -1;
 
 	$self->pre_compile_cleanup;
-	my $command = $self->create_nmfe_command;
+	my $command = $self->create_command;
 
   require File::Temp;# qw/tempfile tempdir/;
   require Sys::Hostname;

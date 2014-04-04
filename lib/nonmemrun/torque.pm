@@ -23,10 +23,10 @@ sub submit
 
 	$self->pre_compile_cleanup;
 
-	my $nmfe_command = $self->create_nmfe_command;
+	my $command = $self->create_command;
 
   open(JOBSCRIPT, ">JobScript") or croak("Couldn't open Torque JobScript file for writing: $!");
-  print JOBSCRIPT $nmfe_command;
+  print JOBSCRIPT $command;
   close(JOBSCRIPT);
 
   my $jobname= "psn:" . $self->model->filename;

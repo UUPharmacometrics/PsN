@@ -17,20 +17,20 @@ sub submit
 
 	$self->pre_compile_cleanup;
 
-	my $nmfe_command = $self->create_nmfe_command;
+	my $command = $self->create_command;
 
 	if ($self->nice) {
-		$nmfe_command = 'nice -n '. $self->nice . " $nmfe_command";
+		$command = 'nice -n '. $self->nice . " $command";
 	}
 
 	if (not $self->display_iterations) {
-		$nmfe_command .= ' >' . $self->nmfe_output_file;
+		$command .= ' >' . $self->nmfe_output_file;
 	}
 
 	my $pid = fork();
 	if ($pid == 0) {
-		exec($nmfe_command);
-		exit; # Die Here if exec failed. Probably happens very rarely.
+		system($command);
+		exit;
 	}
 
 	$self->job_id($pid);

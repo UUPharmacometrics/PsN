@@ -673,7 +673,10 @@ sub run
 				my $nonmemrun = $queue_info{$queue_map{$check_pid}}{'nonmemrun'};
 				$pid = $nonmemrun->monitor;
 
-				last if $pid; #we found a finished run, do not loop over more running pid
+				if ($pid) {
+					$nonmemrun->postprocessing;
+					last; #we found a finished run, do not loop over more running pid
+				}
 			}
 
 			if (not $pid) {
@@ -1706,36 +1709,15 @@ sub run_nonmem
 
 		if ($self->run_local) {
 			if ($Config{osname} eq 'MSWin32') {
-				$nonmem_run = nonmemrun::localwindows->new(
-					nm_version => $nm_version,
-					parafile => $self->parafile ne 'none' ? $self->parafile : undef,
-					nmfe_options => $self->nmfe_options,
-					nodes => $self->nodes,
-					display_iterations => $self->display_iterations,
-				);
+				$nonmem_run = nonmemrun::localwindows->new(nm_version => $nm_version);
 			} elsif ($self->run_on_mosix) {
-				$nonmem_run = nonmemrun::mosix->new(
-					nm_version => $nm_version,
-					parafile => $self->parafile ne 'none' ? $self->parafile : undef,
-					nmfe_options => $self->nmfe_options,
-					nodes => $self->nodes,
-					display_iterations => $self->display_iterations,
-				);
+				$nonmem_run = nonmemrun::mosix->new(nm_version => $nm_version);
 			} else {
-				$nonmem_run = nonmemrun::localunix->new(
-					nm_version => $nm_version,
-					parafile => $self->parafile ne 'none' ? $self->parafile : undef,
-					nmfe_options => $self->nmfe_options,
-					nodes => $self->nodes,
-					display_iterations => $self->display_iterations,
-				);
+				$nonmem_run = nonmemrun::localunix->new(nm_version => $nm_version);
 			}
+			$nonmem_run->display_iterations($self->display_iterations);
 		} elsif ($self->run_on_lsf or $self->run_on_lsf_nmfe) {
 			$nonmem_run = nonmemrun::lsf->new(
-				parafile => $self->parafile ne 'none' ? $self->parafile : undef,
-				nmfe_options => $self->nmfe_options,
-				nodes => $self->nodes,
-				model => $queue_info->{'model'},
 				nm_version => $nm_version,
 				lsf_job_name => $self->lsf_job_name,
 				lsf_project_name => $self->lsf_project_name,
@@ -1747,21 +1729,13 @@ sub run_nonmem
 			);
 		} elsif ($self->run_on_ud) {
 			$nonmem_run = nonmemrun::ud->new(
-				parafile => $self->parafile ne 'none' ? $self->parafile : undef,
-				nmfe_options => $self->nmfe_options,
-				nodes => $self->nodes,
-				model => $queue_info->{'model'},
 				nm_version => $nm_version,
 				directory => $self->directory,
 				run_no => $run_no,
 			);
 		} elsif ($self->run_on_sge or $self->run_on_sge_nmfe) {
 			$nonmem_run = nonmemrun::sge->new(
-				parafile => $self->parafile ne 'none' ? $self->parafile : undef,
-				nmfe_options => $self->nmfe_options,
 				prepend_flags => $self->sge_prepend_flags,
-				nodes => $self->nodes,
-				model => $queue_info->{'model'},
 				nm_version => $nm_version,
 				resource => $self->sge_resource,
 				queue => $self->sge_queue,
@@ -1769,36 +1743,31 @@ sub run_nonmem
 		} elsif ($self->run_on_slurm) {
 			$nonmem_run = nonmemrun::slurm->new(
 				nm_version => $nm_version,
-				parafile => $self->parafile ne 'none' ? $self->parafile : undef,
 				email_address => $self->email_address,
 				send_email => $queue_info->{'send_email'},
-				nmfe_options => $self->nmfe_options,
 				prepend_flags => $self->slurm_prepend_flags,
 				max_runtime => $self->max_runtime,
 				partition => $self->slurm_partition,
-				nodes => $self->nodes,
-				model => $queue_info->{'model'},
 				account => $self->slurm_account,
 			);
 		} elsif ($self->run_on_torque) {
 			$nonmem_run = nonmemrun::torque->new(
 				prepend_flags => $self->torque_prepend_flags,
-				model => $queue_info->{'model'},
 				nm_version => $nm_version,
 				torque_queue => $self->torque_queue,
-				nmfe_options => $self->nmfe_options,
-				nodes => $self->nodes,
-				parafile => $self->parafile ne 'none' ? $self->parafile : undef,
 			);
 		} elsif ($self->run_on_zink) {
 			$nonmem_run = nonmemrun::zink->new(
 				nm_version => $nm_version,
-				model => $queue_info->{'model'},
-				parafile => $self->parafile ne 'none' ? $self->parafile : undef,
-				nmfe_options => $self->nmfe_options,
-				nodes => $self->nodes,
 			);
 		}
+
+		$nonmem_run->model($queue_info->{'model'});
+		$nonmem_run->nodes($self->nodes);
+		$nonmem_run->parafile($self->parafile ne 'none' ? $self->parafile : undef);
+		$nonmem_run->nmfe_options($self->nmfe_options);
+		$nonmem_run->nmqual($self->nmqual);
+		$nonmem_run->nmqual_xml($self->nmqual_xml);
 
 		$queue_info->{'nonmemrun'} = $nonmem_run;
 		my $jobId = $nonmem_run->submit;

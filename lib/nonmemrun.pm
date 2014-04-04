@@ -18,6 +18,8 @@ has 'parafile' => (is => 'rw', isa => 'Maybe[Str]' );
 has 'nodes' => ( is => 'rw', isa => 'Int', default => 0 );
 has 'model' => ( is => 'rw', isa => 'model' );
 has 'nmfe_output_file' => ( is => 'rw', isa => 'Str', default => 'nmfe_output.txt' );
+has 'nmqual' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'nmqual_xml' => ( is => 'rw', isa => 'Maybe[Str]' );
 
 sub BUILD
 {
@@ -26,7 +28,21 @@ sub BUILD
 	$self->nmfe_setup_paths(nm_version => $self->nm_version);
 }
 
-sub create_nmfe_command
+sub create_command
+{
+	my $self = shift;
+	my $cmd;
+
+	if (not $self->nmqual) {
+		$cmd = $self->_create_nmfe_command;
+	} else {
+		$cmd = $self->_create_nmqual_command;
+	}
+
+	return $cmd;
+}
+
+sub _create_nmfe_options
 {
 	my $self = shift;
 
@@ -35,7 +51,7 @@ sub create_nmfe_command
 		$parastring .= '-background ';
 	}
 	if (defined $self->parafile) {
-		if ($PsN::nm_major_version >= 7 and $PsN::nm_minor_version >= 2) {
+		if ($PsN::nm_major_version > 7 or ($PsN::nm_major_version == 7 and $PsN::nm_minor_version >= 2)) {
 			$parastring .= '"-parafile=' . $self->parafile . '"';
 		} else {
 			croak("Cannot use parafile with NM7.1 or earlier");
@@ -48,9 +64,50 @@ sub create_nmfe_command
 		$parastring .= " " . $self->nmfe_options;
 	}
 
-	my $command = $self->full_path_nmfe . " psn.mod psn.lst " . $parastring;
+	return $parastring;
+}
+
+sub _create_nmfe_command
+{
+	my $self = shift;
+
+	my $options = $self->_create_nmfe_options;
+	my $command = $self->full_path_nmfe . " psn.mod psn.lst " . $options;
 
 	return $command;
+}
+
+sub _create_nmqual_command
+{
+	my $self = shift;
+
+	my $command_string;
+
+	if ($PsN::nm_major_version > 7 or ($PsN::nm_major_version == 7 and $PsN::nm_minor_version >= 2)) {
+		my $options = $self->_create_nmfe_options;
+		my $work_dir = cwd();
+		my $xml_file = $self->nmqual_xml;
+		$command_string = " $xml_file run ce $work_dir psn $options ";
+	} else {
+		$command_string = " psn.mod psn.nmqual_out ";
+	}
+
+	my $nmqual;
+	if (-x $PsN::nmdir) {
+		if (-d $PsN::nmdir) {
+			croak("Error in PsN configuration, " . $PsN::nmdir . "\n" . "which should be used with option -nm_version=" . $self->nm_version .
+				" according to psn.conf\n" . "is a directory, not a file, and thus cannot be an NMQual-generated perl-script.");
+		} else {
+			$nmqual = $PsN::nmdir;
+		}
+	} else {
+		croak("Unable to find the NMQual script ". $PsN::nmdir . "\n" .
+			"which should be used with option -nm_version=" . $self->nm_version . " according to psn.conf.");
+	}
+
+	$command_string = "perl $nmqual $command_string";
+
+	return $command_string;
 }
 
 sub pre_compile_cleanup
@@ -63,7 +120,7 @@ sub pre_compile_cleanup
 		unlink('nonmem5', 'nonmem6', 'nonmem7', 'nonmem5_adaptive', 'nonmem6_adaptive', 'nonmem7_adaptive');
 		unlink('ifort.txt', 'g95.txt', 'gfortran.txt', 'gfcompile.bat', 'g95compile.bat');
 	}
-	unlink('psn.lst', 'nmfe_error', 'OUTPUT', 'output', 'job_submission_error');
+	unlink('psn.lst', 'nmfe_error', 'psn.nmqual_out', 'OUTPUT', 'output', 'job_submission_error');
   unlink('lsf_stderr_stdout', 'lsf_jobscript');
 }
 
@@ -74,10 +131,6 @@ sub nmfe_setup_paths
 		 nm_version => { isa => 'Str', optional => 1 }
 	);
 	my $nm_version = $parm{'nm_version'};
-
-  #in $nm_version
-  # set $self->full_path_nmfe();
-  # set $self->full_path_nmtran();
 
   PsN::set_nonmem_info($nm_version);
   my $nmdir = $PsN::nmdir;
@@ -173,6 +226,46 @@ sub nmfe_setup_paths
     croak($mess);
   }
 }
+
+sub postprocessing
+{
+	my $self = shift;
+
+	if ($self->nmqual) {
+		my $outputfile = 'psn.lst';
+		my $modelfile = 'psn.mod';
+		if (not -e $outputfile) {
+			# not NMQual8
+			cp($modelfile, $outputfile); #always prepend model to output, as nmfe
+			open(OUT, '>>', $outputfile);
+			
+			print OUT "\n\n";
+			if ($PsN::nm_major_version >= 7) {
+				open(FH, "<", "FMSG");
+				while (<FH>) {
+					chomp;
+					print(OUT $_ . "\n");
+				}
+				close(FH);
+				print OUT "\n\n";
+			}
+			my $nmout = "OUTPUT";
+			$nmout = "output" unless (-e $nmout);
+			if (-e $nmout) {
+				open (FH, "<", $nmout);
+				while (<FH>) {
+					chomp;
+					print OUT $_ . "\n";
+				}
+				close(FH);
+				unlink($nmout);
+			} else {
+				carp("Warning: no file OUTPUT was produced by NMQual script\n");
+			}
+		}
+	}
+}
+
 
 no Moose;
 __PACKAGE__->meta->make_immutable;

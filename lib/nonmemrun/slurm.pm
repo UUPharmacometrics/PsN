@@ -68,9 +68,9 @@ sub submit
 	if (defined $self->prepend_flags) {
 		$flags = ' ' . $self->prepend_flags . $flags;
 	}
-	my $nmfe_command = $self->create_nmfe_command;
+	my $command = $self->create_command;
 
-	my $submitstring = $flags . ' ' . $nmfe_command;
+	my $submitstring = $flags . ' ' . $command;
 
 	system('echo sbatch ' . $submitstring . ' "2>&1" > sbatchcommand');
 

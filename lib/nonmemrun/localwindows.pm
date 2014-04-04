@@ -14,7 +14,7 @@ sub submit
 	my $self = shift;
 
 	$self->pre_compile_cleanup;
-	my $nmfe_command = $self->create_nmfe_command;
+	my $command = $self->create_command;
 
 	require Win32::Process;
 	require Win32;
@@ -22,10 +22,10 @@ sub submit
 	my $proc;
 
 	if (not $self->display_iterations) {
-		$nmfe_command .= ' >' . $self->nmfe_output_file;
+		$command .= ' >' . $self->nmfe_output_file;
 	}
 
-	Win32::Process::Create($proc, $self->full_path_nmfe, $nmfe_command, 0, $Win32::Process::NORMAL_PRIORITY_CLASS, '.') || die ErrorReport();
+	Win32::Process::Create($proc, $self->full_path_nmfe, $command, 0, $Win32::Process::NORMAL_PRIORITY_CLASS, '.') || die ErrorReport();
 	$self->windows_process($proc);
 
 	my $pid = $proc->GetProcessID();
