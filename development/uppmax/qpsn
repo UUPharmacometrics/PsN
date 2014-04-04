@@ -1,19 +1,20 @@
 #!/bin/bash
-# Submit script for PsN jobs..
+# Submit script for PsN jobs.
 
-# Submits a psn job with suitable batch system parameters
+# Submits a PsN job with suitable batch system parameters
 
 
 NAME=qpsn
 #submitargs="-b y -S /bin/bash -cwd -j y"
 submitargs="-p core -n 1"
 
-#should look for $HOME/psn.conf and set email address and project/account id
+#should look for $HOME/psn.conf and set email address and project id
 #if do not find psn.conf then exit with error
-#slurm_account /project
+#slurm_project
 #email_address
-account=`sed -n 's/^slurm_account=//p' $HOME/psn.conf`
+project=`sed -n 's/^slurm_project=//p' $HOME/psn.conf`
 email=`sed -n 's/^email_address=//p' $HOME/psn.conf`
+nmver='default'
 mail="--mail-user=$email --mail-type=ALL"
 if [ -z "$email" ] && [ "${email+xxx}" = "xxx" ]; then $mail=''; fi
 
@@ -21,24 +22,88 @@ if [ -z "$email" ] && [ "${email+xxx}" = "xxx" ]; then $mail=''; fi
 while true;do
     case "$1" in
         --help|-h)
+	    echo ""
             echo "qpsn <PsN command>"
             echo "Example:"
             echo "qpsn execute run12.mod -nm_version=7_12_big -shrinkage"
+	    echo ""
+	    echo "Before the PsN command you can add -t=<time> to set the"
+	    echo "time for the main process to something smaller than 7 days. "
+	    echo "-t must have the same format at PsN option -max_runtime, ".
+	    echo "i.e. format minutes or hours:minutes:seconds or days-hours."
+            echo "Example:"
+            echo "qpsn -t=2:0:0 execute run12.mod -nm_version=7_12_big -shrinkage"
+	    echo ""
+	    echo "OR you can add -local to prevent qpsn from sending the main PsN"
+	    echo "process to the slurm queue. This will save you the queueing"
+	    echo "time of the main process, but the main process will be killed".
+	    echo "automatically after 30 CPU minutes or when you log out."
+            echo "Example:"
+            echo "qpsn -local execute run12.mod -nm_version=7_12_big -shrinkage"
+	    echo ""
             exit 0;;
         *) break;;
     esac
 done
 
 model=''
+prog=''
+local_run=0
 if [[ `echo $@|wc -w` -gt 1 ]];then
+    argument=$1
+    if test `expr match "$argument" '\-t'` -gt 0; then 
+	maintime=${argument##-*=}
+	submitargs="$submitargs"" -t ""$maintime"
+	shift
+	#shift to get rid of option and make tool the first
+    else
+	#if -t was not set then perhaps -local was (incompatible with -t)
+	if test `expr match "$argument" '\-local'` -gt 0; then 
+	    local_run=1
+	    shift
+	    #shift to get rid of option and make tool the first
+	fi
+    fi
+
     tool=$1
     prog=`type -p $tool`;shift
-    #loop over $@ to see if slurm_account is set
+    #check that prog is not empty, die if it is
+    if [ -z "$prog" ]; then 
+	 echo "Failed to find the path to PsN program $tool"
+	 echo "";
+	 exit 1;
+    fi
+
+
+    #loop over $@ to see if slurm_project is set
     for option in $@
     do  
 #    	echo $option
-	if test `expr match "$option" '\-slurm_acc'` -gt 0; then 
-	account=${option##-*=}
+	if test `expr match "$option" '\-slurm_pro'` -gt 0; then 
+	project=${option##-*=}
+	fi
+	if test `expr match "$option" '\-nm_v'` -gt 0; then 
+	nmver=${option##-*=}
+	fi
+	if test `expr match "$option" '\-th'` -gt 0; then 
+	    threads=${option##-*=}
+	    #test that not more than 499 threads
+	    if [ $local_run -eq 0 ]
+		then
+		if [ $threads -gt 499 ]
+		then
+		    echo "You must not set -threads greater than 499 if not setting -local"
+		    echo "";
+		    exit 1;
+		fi
+	    else
+		if [ $threads -gt 500 ]
+		then
+		    echo "You must not set -threads greater than 500"
+		    echo "";
+		    exit 1;
+		fi
+	    fi
 	fi
 	if test `expr match "$option" '\-no\-sen'` -gt 0; then 
 	mail=''
@@ -47,20 +112,56 @@ if [[ `echo $@|wc -w` -gt 1 ]];then
 	      model=${option%.mod}
 	fi
     done
-    if [ -z "$model" ] && [ "${model+xxx}" = "xxx" ]; then 
-       	 jobname="$tool"
-    else
-	jobname="$tool"_"$model"
+
+    nm_version=`grep "$nmver=" $HOME/psn.conf | sed -n 's/[^=]*=\/sw\/apps\///p'  | sed -n 's/,.*//p'`
+    #test that not empty version
+    if [ -z "$nm_version" ]; then 
+	 psn -nm_versions
+	 echo "Failed to find NONMEM version $nmver in the above list. Job submission failed."
+	 exit 1;
     fi
-    #direct stderr and stdout to file with suitable name, jobname plus date_time
-    datestring=`date +%b%d-%k:%M:%S`
-    file="$jobname"_"$datestring"
-    echo ""
-    echo "$tool run messages will be printed to file $file"
-    echo ""
-    echo "sbatch -e $file -o $file -A $account $mail $submitargs -J $jobname $prog $@"
-#    qsub $submitargs -N $jobname $prog $@
+
+    if test $local_run -eq 1; then
+	#need stuff for this shell to understand module
+	if [ -f /etc/profile.modules ]
+	then
+	    . /etc/profile.modules
+	    module unload gcc
+	    module unload intel
+	    module load $nm_version
+	fi
+	$prog $@
+    else
+	if [ -z "$model" ] && [ "${model+xxx}" = "xxx" ]; then 
+       	    jobname="$tool"
+	else
+	    jobname="$tool"_"$model"
+	fi
+	#direct stderr and stdout to file with suitable name, jobname plus date_time
+	datestring=`date +'%b%d-%H:%M:%S'`
+	file="$jobname"_"$datestring"
+	touch $file
+	echo ""
+#    echo "submitargs $submitargs"
+#    echo "batch script $prog $@"
+#    exit
+# --qos=short
+	sbatch -e $file -o $file -A $project $mail $submitargs -J $jobname <<EOF
+#!/bin/bash  -l
+module unload gcc
+module unload intel
+module load $nm_version
+$prog $@
+EOF
+	if test $? -ne 0; then
+	    echo ''
+	    echo "**** Submission of PsN run failed, check $file for messages"
+	else
+	    echo "The file $file contains all $tool run messages"
+	fi
+    fi
 else
-    echo "$0 requires number at least one PsN command as argument"
+    echo "$0 requires a PsN command with at least one input argument"
 fi
+echo ''
 
