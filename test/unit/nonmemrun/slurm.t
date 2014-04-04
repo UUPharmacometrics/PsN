@@ -44,11 +44,11 @@ like($cmd, qr/2>&1/, "redirection");
 like($cmd, qr/\s+-o\s+nmfe_output\.txt\s+/, "stdout redirection");
 like($cmd, qr/\s+-e\s+nmfe_output\.txt\s+/, "stderr redirection");
 like($cmd, qr/\s+-J\s+pheno5.mod\s+/, "jobname");
-unlike($cmd, $re_account, "no account");
-unlike($cmd, $re_maxruntime, "no maxruntime");
-unlike($cmd, $re_partition, "no partition");
-unlike($cmd, $re_mailuser, "no mailuser");
-unlike($cmd, $re_mailtype, "no mailtype");
+unlike($cmd, qr/\s+-A\s+/, "no account");
+unlike($cmd, qr/\s+-t\s+/, "no maxruntime");
+unlike($cmd, qr/\s+-p\s+/, "no partition");
+unlike($cmd, qr/\s+--mail-user\s+/, "no mailuser");
+unlike($cmd, qr/\s+--mail-type\s+/, "no mailtype");
 unlike($cmd, $re_prependflags, "no prepended flags");
 
 @readpipe_list = ();

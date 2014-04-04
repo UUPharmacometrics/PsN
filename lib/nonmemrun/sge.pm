@@ -35,13 +35,13 @@ sub submit
 
 	system('echo qsub '.$submitstring.' > qsubcommand');
 
-	my $outp = `qsub $submitstring 2>&1`;
+	my $outp = readpipe("qsub $submitstring 2>&1");
 	chomp($outp);
 
 	if ($outp =~ /^Your job (\d+)/) {
 		$jobId = $1;
 	} else {
-		print "SGE submit failed.\nSystem error message: $outp\nConsidering this model failed.";
+		print "SGE submit failed.\nSystem error message: $outp\nConsidering this model failed.\n";
 		system('echo ' . $outp . ' > job_submission_error');
 		$jobId = -1;
 	}

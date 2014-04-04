@@ -47,7 +47,7 @@ sub submit
 
   my $submitstring = 'bsub ' . $self->lsf_options . ' < lsf_jobscript 2>&1'; 
 
-  my $lsf_out = `$submitstring`;
+  my $lsf_out = readpipe("$submitstring");
   if ($lsf_out =~ /Job \<(\d+)\> is submitted/) {
     $jobId = $1;
   } else {

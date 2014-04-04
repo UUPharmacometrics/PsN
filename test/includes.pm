@@ -9,7 +9,7 @@ use File::Copy 'cp';
 
 require Exporter;
 our @ISA = qw(Exporter);
-our @EXPORT = qw(cmp_float create_test_dir remove_test_dir copy_test_files);
+our @EXPORT = qw(cmp_float create_test_dir remove_test_dir copy_test_files like_file_row unlike_file_row);
 
 
 # Setup an include path to the lib directory
@@ -102,6 +102,52 @@ sub cmp_float
 	$y = sprintf("%.13e", $y);
 
 	cmp_ok($x, '==', $y, $text);
+}
+
+# Test if a regular expression can match any line in a file
+sub like_file_row
+{
+	my $filename = shift;
+	my $re = shift;
+	my $text = shift;
+
+	if (open my $fh, '<', $filename) {
+		while (<$fh>) {
+			chomp;
+			if (/$re/) {
+				close $fh;
+				pass($text);
+				return;
+			}
+		}
+		fail($text);
+		close $fh;
+	} else {
+		fail($text);
+	}
+}
+
+# Test if a regular expression cannot match any line in a file
+sub unlike_file_row
+{
+	my $filename = shift;
+	my $re = shift;
+	my $text = shift;
+
+	if (open my $fh, '<', $filename) {
+		while (<$fh>) {
+			chomp;
+			if (/$re/) {
+				close $fh;
+				fail($text);
+				return;
+			}
+		}
+		pass($text);
+		close $fh;
+	} else {
+		fail($text);
+	}
 }
 
 sub _test_dir_name
