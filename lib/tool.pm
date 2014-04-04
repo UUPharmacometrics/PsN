@@ -1646,9 +1646,12 @@ sub print_options
 	print CMD "version_and_option_info.txt is overwitten if the run is restarted later using option -directory.\n";
 	print CMD "The original file from the first call is saved as original_version_and_option_info.txt.\n\n";
 
-	if ($cmd_line){
-		print CMD "Command:\n".$cmd_line. "\n\n";
+	if ($cmd_line) {
+		print CMD "Command:\n" . $cmd_line . "\n\n";
 	}
+
+	my $nonmemrun = nonmemrun->new(nm_version => $self->nm_version);
+	print CMD "nmfe:\n" . $nonmemrun->full_path_nmfe . "\n\n";
 
 	print CMD "Actual values optional $toolname options (undefined values not listed):\n";
 	foreach my $opt (sort(@{$local_options})){
