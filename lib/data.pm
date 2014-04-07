@@ -470,6 +470,7 @@ sub copy
 
 	# Clone self into new data object. Why don't the individuals get cloned too?
 	# strange. need to set synced to 0 AND set the individuals() to undef.
+#	print "\ndata copying ".$self->full_name." to $directory.$filename\n";
 	cp($self->full_name, $directory.$filename );
 
 	$new_data = Storable::dclone( $self );
@@ -1430,7 +1431,29 @@ sub renumber_ascending
 	# method is not to order the individuals after their identifiers but to
 	# ensure that all individuals have unique identifiers.
 
-	$self->synchronize;
+
+	unless( $self->synced() ){
+		#make sure we have data in memory.
+		# do not call synchronize, since that might write data ito disk just before we change the data, waste
+		unless ( defined $self->individuals() and
+			scalar @{$self->individuals()} > 0 ){
+			if( -e $self->full_name ){
+				unless( defined $self->header() and scalar @{$self->header()} > 0 ){
+					$self->_read_header;
+				}
+				$self->_read_individuals;
+			} else {
+				croak("Fatal error: datafile: " . $self->full_name . " does not exist." );
+				return;
+			}
+		}
+		my $i = 1;
+		foreach my $head ( @{$self->header()} ) {
+			$self->column_head_indices->{$head} = $i;
+			$i++;
+		}
+	}
+
 	foreach my $individual ( @{$self->individuals()} ) {
 		$individual->idnumber ( $start_at++ );
 	}
@@ -1516,6 +1539,7 @@ sub resample
 			  }
 		  }
 
+#		  print "\nresample new data object \n";
 		  $boot = data->new( header      => \@header,
 							 idcolumn    => $self->idcolumn,
 							 ignoresign  => $self->ignoresign,
@@ -1525,7 +1549,7 @@ sub resample
 							 ignore_missing_files => 1,
 							 target      => 'mem' );
 		  $boot->renumber_ascending;
-		  $boot->_write;
+#		  $boot->_write; #the flush does _write, skip this _write so not done twice
 		  $boot->flush;
  	  } else {
 	    # If we are resuming, we still need to generate the
@@ -1552,7 +1576,7 @@ sub resample
 				 ignore_missing_files => 1,
 				 target      => $target );
 
-	    $boot->_write;
+#		  $boot->_write; #the flush does _write, skip this _write so not done twice
 	    $boot->flush;
 	  }
 	} else {
@@ -1577,6 +1601,7 @@ sub resample
 	    # MUST FIX: If a file already exists with the same name,
 	    # the created bs data set will be appended to this. IT
 	    # MUST BE OVERWRITTEN!
+#		  print "\nresample new data object \n";
 	    $boot = data->new( header      => \@header,
 				 idcolumn    => $self->idcolumn,
 				 ignoresign  => $self->ignoresign,
@@ -1585,9 +1610,10 @@ sub resample
 				 filename    => $new_name,
 				 ignore_missing_files => 1,
 				 target      => 'mem' );
-	    $boot->renumber_ascending;
-	    $boot->_write;
-	    $boot->target( $target );
+
+	    $boot->renumber_ascending; #turned off writing to disk before renumbering
+	    $boot->_write unless ($target eq 'disk'); #if $target is disk we write anyway in the flush below
+	    $boot->target( $target ); #nothing happens if $target is mem. if 'disk' then this is a flush
 	  } else {
 	    # If we are resuming, we still need to generate the
 	    # pseudo-random sequence and initiate a data object
@@ -1601,10 +1627,11 @@ sub resample
 				 ignore_missing_files => 1,
 				 target      => $target );
 
-	    $boot->_write;
+#		  $boot->_write; #the flush does _write, skip this _write so not done twice
 	    $boot->flush;
 	  }	
 	  if( $target eq 'disk'){
+	#	  print "\nresample flush \n";
 	    $boot->flush;
 	  }
 	}
@@ -2413,7 +2440,7 @@ sub _write
 			$self->synchronize;
 		} 
 	}
-
+#	print "\n data writing to $filename\n";
 	open(FILE,">$filename") || 
 	die "Could not create $filename\n";
 	my $data_ref = $self->format_data;
