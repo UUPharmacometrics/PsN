@@ -3,6 +3,7 @@ package nonmemrun::slurm;
 use include_modules;
 use Moose;
 use MooseX::Params::Validate;
+use OSspecific;
 
 extends 'nonmemrun';
 
@@ -68,15 +69,45 @@ sub submit
 	if (defined $self->prepend_flags) {
 		$flags = ' ' . $self->prepend_flags . $flags;
 	}
+
 	my $command = $self->create_command;
+	(my $directory, my $filename) = OSspecific::absolute_path('.', 'psn.mod' );
+	my $modfile = $directory.$filename;
+	my $lstfile = $directory.'psn.lst';
 
-	my $submitstring = $flags . ' ' . $command;
-
-	system('echo sbatch ' . $submitstring . ' "2>&1" > sbatchcommand');
+	system('echo sbatch $flags $command "2>&1" > sbatchcommand');
 
 	for (my $i = 0; $i < 10; $i++) {
-		sleep(1); #wait to let other nodes sync files here?
-		my $outp = readpipe("sbatch $submitstring 2>&1");
+		#make sure input file psn.mod is visible, i.e. files are synced, before calling nmfe
+		#also make sure psn.lst is NOT here, i.e. moving of old output is finished
+		my $outp = readpipe("sbatch $flags 2>&1 <<EOF
+#!/bin/bash  -l
+for J in 1 2 3 4 5 6 7 8 9 10
+do
+if test -f $lstfile 
+then
+echo \"found $lstfile, wait\"
+sleep 1
+else
+echo \"did not find $lstfile, ok\"
+break
+fi
+done
+
+for J in 1 2 3 4 5 6 7 8 9 10
+do
+if test -f $modfile -a -r $modfile
+then
+echo \"found $modfile, ok\"
+break
+else
+echo \"did not find $modfile, wait\"
+sleep 1
+fi
+done
+$command
+EOF
+");
 		chomp($outp);
 		#write error to job_submission_error instead, set jobid to -1, and continue?
 		if ($outp =~ /Submitted batch job (\d+)/) {
