@@ -397,10 +397,12 @@ sub run
 		message  => "Run number\tModel name\tOFV\tCovariance step successful.",
 		newline => 1)  if $self->verbose;
 
-	# Print model-NM_run translation file
+	# Create NM_run subdirs. Print model-NM_run translation file
 
 	open( MNT, ">model_NMrun_translation.txt");
 	for ( my $run = 0; $run <= $#models; $run ++ ) {
+		$self -> create_sub_dir( subDir => '/NM_run'.($run+1),
+								 modelname => $models[$run]->filename);
 		print MNT sprintf("%-40s", $models[$run]->filename), "NM_run", ($run + 1), "\n";
 	}
 	close(MNT);
@@ -447,7 +449,7 @@ sub run
 					# "done" files. (Usually this case occurs if we want to
 					# use execute to create a summary or run table).
 					
-					mkdir("./NM_run" . ($run + 1));
+					mkdir("./NM_run" . ($run + 1)) unless (-d "./NM_run" . ($run + 1));
 					open(DONE, ">./NM_run". ($run+1) . "/done.1");
 					print DONE "This is faked\nseed: 1 1\n";
 					close(DONE);
@@ -538,12 +540,8 @@ sub run
 
 			ui -> category('modelfit');
 
-			my $stoptmp = '';
-			$stoptmp = "Created NM_run".($run+1)."." unless (-d 'NM_run'.($run+1));
-			$self -> create_sub_dir( subDir => '/NM_run'.($run+1),
-									 modelname => $models[$run]->filename);
 			chdir( 'NM_run'.($run+1) );
-			$self->stop_motion_call(tool => 'modelfit',message => $stoptmp." Moved to NM_run".($run+1).".")
+			$self->stop_motion_call(tool => 'modelfit',message => " Moved to NM_run".($run+1).".")
 				if ($self->stop_motion() > 1);
 
 			## Start tail of output if requested. Only works for Win32.
@@ -3078,7 +3076,7 @@ sub copy_model_and_output
 	for (my $i=0; $i<12; $i++){
 		#an ls might make files sync and become visible
 		$dirt = `ls -la 2>&1` unless ($Config{osname} eq 'MSWin32');
-		last if((-e $checkname) or (-e $self->general_error_file) or (-e $self->nmtran_error_file));#psn.lst exists or will never appear
+		last if((-e 'job_submission_error') or (-e $checkname) or (-e $self->general_error_file) or (-e $self->nmtran_error_file));#psn.lst exists or will never appear
 		sleep(6);
 	}
 
