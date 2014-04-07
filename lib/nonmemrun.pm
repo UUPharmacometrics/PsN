@@ -112,16 +112,20 @@ sub _create_nmqual_command
 
 sub pre_compile_cleanup
 {
-	# leave cleaning to nmfe
+	# leave cleaning to nmfe if NM7
 	unless ($PsN::nm_major_version == 7 and defined $PsN::nm_minor_version and $PsN::nm_minor_version > 1) {
+		print "\npre_compile_cleanup\n";
 		unlink('FMSG', 'FLIB', 'FCON', 'FDATA', 'FREPORT', 'FSUBS', 'FSUBS.f', 'FSUBS.f90', 'FSUBS2', 'nmprd4p.mod');
 		unlink('fsubs', 'fsubs.f90');
 		unlink('LINK.LNK', 'FSTREAM', 'PRDERR', 'nonmem.exe', 'nonmem', 'FSUBS.for');
 		unlink('nonmem5', 'nonmem6', 'nonmem7', 'nonmem5_adaptive', 'nonmem6_adaptive', 'nonmem7_adaptive');
 		unlink('ifort.txt', 'g95.txt', 'gfortran.txt', 'gfcompile.bat', 'g95compile.bat');
+		unlink('psn.lst', 'OUTPUT', 'output');
 	}
-	unlink('psn.lst', 'nmfe_error', 'psn.nmqual_out', 'OUTPUT', 'output', 'job_submission_error');
-  unlink('lsf_stderr_stdout', 'lsf_jobscript');
+	unlink('psn.nmqual_out') if (-e 'psn.nmqual_out');
+	unlink('nmfe_error') if (-e 'nmfe_error');
+	unlink('job_submission_error') if (-e 'job_submission_error');
+	unlink('lsf_stderr_stdout', 'lsf_jobscript');
 }
 
 sub nmfe_setup_paths
