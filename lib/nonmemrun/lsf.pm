@@ -42,11 +42,14 @@ sub submit
   print SUB ("#BSUB -R " . $self->lsf_resources . "\n")
       if (defined $self->lsf_resources);
 
+	#TODO add loop here to wait for input files???
   print SUB ("$command\n");
+
   close(SUB);
 
   my $submitstring = 'bsub ' . $self->lsf_options . ' < lsf_jobscript 2>&1'; 
 
+	#TODO add loop here to handle transient user id errors etc by retrying a few times
   my $lsf_out = readpipe("$submitstring");
   if ($lsf_out =~ /Job \<(\d+)\> is submitted/) {
     $jobId = $1;
