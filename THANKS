@@ -4,5 +4,9 @@ Perl speaks NONMEM THANKS
 A number of people have contributed to PsN by reporting problems,
 suggesting improvements or submitting changes. Some of these people are:
 
+Darren Ehrlich (for help with debugging of windows installation in PsN4)
+Jeroen Elassaiss (bugfixes in the SGE submission code)
 Stephanie Hennig
 Elin Svensson
+Stefan Verhoeven (bugfixes in the SGE submission code)
+Sebastian Ueckert
