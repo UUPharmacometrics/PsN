@@ -43,6 +43,10 @@ use PsN;
 
 our $version = '';
 
+unless ($PsN::version eq 'dev'){
+	$version = '-'.$PsN::version;
+}
+
 #n41 cluster 
 #use lib "/opt/local64/PsN/PsN_3_7_6";
 #use lib "/opt/local64/PsN";
