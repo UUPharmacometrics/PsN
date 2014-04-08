@@ -19,6 +19,8 @@ use includes; #file with paths to PsN packages and $path variable definition
 our $tempdir = create_test_dir;
 our $dir = "$tempdir/execute_test";
 my $model_dir = $includes::testfiledir;
+#put pheno.mod in testdir so that .ext etc in testfiledir are not modified
+copy_test_files($tempdir,["pheno.mod", "pheno.dta"]);
 
 my @a;
 
@@ -26,7 +28,7 @@ my @a;
 my @shrinking_results = (40.5600924453085, -0.185810314125491, 89.4892871889343);		# Calculated with PsN-3.6.2 on Doris
 my @shrinking_headings = ('shrinkage_eta1(%)', 'shrinkage_eta2(%)', 'shrinkage_iwres(%)');
 
-my @command_line = ($includes::execute." $model_dir/pheno.mod -shrinkage -directory=$dir",
+my @command_line = ($includes::execute." $tempdir/pheno.mod -shrinkage -directory=$dir",
 	$includes::execute." $model_dir/tbs1.mod -tbs  -directory=$dir", #prop
 	$includes::execute." $model_dir/tbs1.mod -dtbs  -directory=$dir", #prop
 	$includes::execute." $model_dir/tbs1a.mod -tbs  -directory=$dir", #add
