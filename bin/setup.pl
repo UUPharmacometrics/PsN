@@ -309,13 +309,13 @@ sub copy_and_modify_bin_files
 	while (<INST>) {
 		if (/\# Everything above this line will be replaced \#/) {
 			print UTIL "\#!", $perl_binary, "\n";
-			print UTIL "use lib '$library_dir';\n\n";
+			print UTIL "use lib '$library_dir/PsN_$name_safe_version';\n\n";
 			print UTIL "\# Everything above this line was entered by the setup script \#\n";
 			$replace_line_found = 1;
-		} elsif (/use PsN/) {
-			print UTIL "use PsN_$name_safe_version;\n";
-		} elsif (/require PsN/) {
-			print UTIL "require PsN_$name_safe_version;\n";
+#		} elsif (/use PsN/) {
+#			print UTIL "use PsN_$name_safe_version;\n";
+#		} elsif (/require PsN/) {
+#			print UTIL "require PsN_$name_safe_version;\n";
 		} elsif ($replace_line_found) {
 			print UTIL $_;
 		}
@@ -892,12 +892,17 @@ foreach my $file (@utilities) {
 			my $link = open(IN, "$binary_dir/execute");
 			if ($old_version eq 'X_X_X' and $link) {
 				while (<IN>) {
-					if (/^use PsN/) {
+					if (/^use lib '.*PsN_(.*)';/) {
+						$old_version = $1;
+						$old_version =~ tr/_/./;
+						last;
+					} elsif (/^use PsN_\d+_\d+_\d+/) {		# The old system
 						s/^use PsN\_//;
 						s/\s.*//;
 						s/\_/\./g;
 						s/\;//;
 						$old_version = $_;
+						last;
 					}
 				}
 				close(IN);
@@ -962,11 +967,11 @@ foreach my $file (@utilities) {
 	}
 }
 
-unless (open(TEMPLATE, "lib/PsN_template.pm")) {
-	abort("Unable to open PsN_template.pm in lib: $!\n");
+unless (open(TEMPLATE, "lib/PsN.pm")) {
+	abort("Unable to open PsN.pm in lib: $!\n");
 }
-unless (open(PSN, '>', "$library_dir" . "/PsN_$name_safe_version.pm")) {
-	abort("Unable to install PsN_$name_safe_version.pm in $library_dir: $!\n");
+unless (open(PSN, '>', "$library_dir/PsN_$name_safe_version/PsN.pm")) {
+	abort("Unable to install PsN.pm in $library_dir/PsN_$name_safe_version: $!\n");
 }
 
 if (running_on_windows()) {
@@ -974,35 +979,18 @@ if (running_on_windows()) {
 	$library_dir = Win32::GetShortPathName($library_dir);
 }
 
-print(PSN "package PsN;\n");
-print(PSN "use lib '$library_dir/PsN_$name_safe_version';\n");
-print(PSN "\$lib_dir = '$library_dir/PsN_$name_safe_version';\n");
-print(PSN "\$config_file = '$library_dir/PsN_$name_safe_version/psn.conf';\n");
-print(PSN "\$version = '$version';\n");
-
-for (<TEMPLATE>) {
-	print PSN $_;
+foreach my $line (<TEMPLATE>) {
+	if ($line =~ /^\$version\s*=/) {
+		my $v = $name_safe_version;
+		$v =~ tr/_/./;
+		print PSN "\$version = '$v';";
+	} else {
+		print PSN $line;
+	}
 }
+
 close(PSN);
 close(TEMPLATE);
-
-my $copy_PsNpm = 0;
-
-if (-e "$library_dir/PsN.pm") {
-	if ($overwrite) {
-		unlink("$library_dir/PsN.pm");
-		$copy_PsNpm = 1;
-	}
-}else{
-	$copy_PsNpm = 1;
-}
-if ($copy_PsNpm) {
-	if (running_on_windows()) {
-		copy_file("$library_dir\\PsN_$name_safe_version.pm", "$library_dir\\PsN.pm");
-	} else {
-		symlink("$library_dir/PsN_$name_safe_version.pm", "$library_dir/PsN.pm");
-	}
-}
 
 print "\nWould you like to copy the PsN documentation to a file system location of your choice?  [y/n] ";
 if (confirm()) {

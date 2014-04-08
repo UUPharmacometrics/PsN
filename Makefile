@@ -98,7 +98,7 @@ BINFILES=$(wildcard bin/*)
 RELFILES=$(addprefix PsN-Source/lib/,$(LIBFILES)) \
 	$(addprefix PsN-Source/, \
 	$(BINFILES) \
-	lib/PsN_template.pm \
+	lib/PsN.pm \
 	lib/common_options.pm \
 	lib/linear_algebra.pm \
 	lib/npde_util.pm \
