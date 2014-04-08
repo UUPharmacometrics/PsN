@@ -116,7 +116,7 @@ sub get_stats
 
 my $model_dir = $includes::testfiledir;
 
-copy_test_files("pheno5.mod", "pheno5.dta");
+copy_test_files($tempdir,["pheno5.mod", "pheno5.dta"]);
 
 my $command = $includes::vpc." -samples=20 $tempdir/pheno5.mod -auto_bin=2 -directory=$dir -seed=12345 -min_point=5";
 system $command;
@@ -150,6 +150,6 @@ for (my $i=0; $i< $num; $i++) {
 	is_array ($newmatrix->[$i],$truematrix2->[$i],"DV matrix n_sim=2 row index $i");
 }
 
-remove_test_dir;
+remove_test_dir($tempdir);
 
 done_testing();

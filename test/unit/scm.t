@@ -194,6 +194,6 @@ foreach my $key1 (keys %{$hash1_answer}) {
 	}
 }
 
-remove_test_dir;
+remove_test_dir($tempdir);
 
 done_testing();

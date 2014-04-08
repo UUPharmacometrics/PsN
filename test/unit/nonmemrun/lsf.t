@@ -70,4 +70,6 @@ like_file_row($jobscript, qr/\A#BSUB\s+-P\s+myproject\Z/, "project name");
 like_file_row($jobscript, qr/\A#BSUB\s+-c\s+myttl\Z/, "ttl");
 like_file_row($jobscript, qr/\A#BSUB\s+-R\s+myresource\Z/, "resource");
 
+remove_test_dir($temp_dir);
+
 done_testing();

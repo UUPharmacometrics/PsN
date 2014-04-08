@@ -178,6 +178,6 @@ foreach my $key (keys %hashmox_answer){
 }
 unlink($resultsfile);
 
-remove_test_dir;
+remove_test_dir($dir);
 
 done_testing();

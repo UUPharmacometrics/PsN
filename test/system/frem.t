@@ -45,6 +45,6 @@ foreach my $command (@commands) {
 	}
 }
 
-remove_test_dir;
+remove_test_dir($tempdir);
 
 done_testing();

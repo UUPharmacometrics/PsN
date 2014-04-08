@@ -79,6 +79,6 @@ foreach my $i (0..$#command_line) {
   rmtree([$dir]);
 }
 
-remove_test_dir;
+remove_test_dir($tempdir);
 
 done_testing();

@@ -54,6 +54,6 @@ $rc = system($command);
 $rc = $rc >> 8;
 ok ($rc == 0, "$command, sse with prior nwpri should run ok");
 
-remove_test_dir;
+remove_test_dir($tempdir);
 
 done_testing();

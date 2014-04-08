@@ -28,4 +28,4 @@ $rc = $rc >> 8;
 
 ok ($rc == 0, "Pvar crash test");
 
-remove_test_dir;
+remove_test_dir($tempdir);

@@ -24,6 +24,6 @@ $rc = $rc >> 8;
 
 ok ($rc == 0, "lasso that should run ok");
 
-remove_test_dir;
+remove_test_dir($tempdir);
 
 done_testing();

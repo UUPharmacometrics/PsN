@@ -38,6 +38,7 @@ if ($path eq '') {
 
 our $testfiledir = Cwd::abs_path($volume . $directory . 'test_files');
 
+use OSspecific;
 use PsN;
 
 our $version = '';
@@ -161,7 +162,7 @@ sub unlike_file_row
 
 sub _test_dir_name
 {
-	return File::Spec->tmpdir() . "/PsN-test";
+	return OSspecific::unique_path('PsN-test_dir', File::Spec->tmpdir());
 }
 
 sub create_test_dir
@@ -174,14 +175,17 @@ sub create_test_dir
 
 sub remove_test_dir
 {
+	my $dir=shift;
 	chdir;		# Move to home in case we are cd:ed into the directory to remove.
-	rmtree([_test_dir_name]);
+	rmtree([$dir]);
 }
 
 sub copy_test_files
 {
-	foreach $file (@_) {
-		cp("$testfiledir/$file", _test_dir_name);
+	my $testdir=shift;
+	my $array=shift;
+	foreach $file (@{$array}) {
+		cp("$testfiledir/$file", $testdir);
 	}
 }
 

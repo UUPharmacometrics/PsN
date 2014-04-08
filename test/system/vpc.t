@@ -25,6 +25,6 @@ foreach my $command (@commands){
 	rmtree([$dir]);
 }
 
-remove_test_dir;
+remove_test_dir($tempdir);
 
 done_testing();

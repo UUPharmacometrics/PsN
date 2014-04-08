@@ -1,6 +1,5 @@
 #!/etc/bin/perl
 
-# Blackbox testing of crossval, not crash
 
 use strict;
 use warnings;
@@ -21,6 +20,7 @@ $rc = $rc >> 8;
 
 ok ($rc == 0, "gls that should run ok");
 
-rmtree(["$tempdir"]);
+remove_test_dir($tempdir);
+
 
 done_testing();

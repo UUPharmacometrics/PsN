@@ -170,6 +170,6 @@ if ($^O =~ /Win/) {
 	is($data->full_name, '/usr/bin/perl', "Test UNIX path with trailing slash");
 }
 
-remove_test_dir;
+remove_test_dir($tempdir);
 
 done_testing;

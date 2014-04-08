@@ -94,6 +94,6 @@ foreach my $cfile (@config_files) {
 	rmtree([$dir]);
 }
 
-remove_test_dir;
+remove_test_dir($tempdir);
 
 done_testing();

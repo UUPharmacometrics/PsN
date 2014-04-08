@@ -12,7 +12,7 @@ our $tempdir = create_test_dir;
 our $dir = "$tempdir/cdd_test";
 my $model_dir = $includes::testfiledir;
 
-copy_test_files("pheno5.mod", "pheno5.dta", "mox1.mod", "mox_simulated.csv");
+copy_test_files($tempdir,["pheno5.mod", "pheno5.dta", "mox1.mod", "mox_simulated.csv"]);
 
 my @commands = 
 	($includes::cdd." -case_column=ID $tempdir/pheno5.mod -xv  -dir=$dir",
@@ -27,5 +27,6 @@ foreach my $command (@commands) {
 	rmtree(["$dir"]);
 }
 rmtree(["$dir"]);
+remove_test_dir($tempdir);
 
 done_testing();

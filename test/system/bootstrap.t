@@ -13,7 +13,7 @@ our $tempdir = create_test_dir;
 our $dir = "$tempdir/bootstrap_test";
 my $model_dir = $includes::testfiledir;
 
-copy_test_files("pheno5.mod", "pheno5.dta", "mox1.mod", "mox_simulated.csv");
+copy_test_files($tempdir,["pheno5.mod", "pheno5.dta", "mox1.mod", "mox_simulated.csv"]);
 
 my $command = $includes::execute." $tempdir/pheno5.mod -dir=$dir";
 my $rc = system($command);
@@ -34,6 +34,6 @@ $rc = $rc >> 8;
 
 ok ($rc == 0, "bootstrap 2 that should run ok");
 
-remove_test_dir;
+remove_test_dir($tempdir);
 
 done_testing();
