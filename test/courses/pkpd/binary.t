@@ -34,6 +34,6 @@ foreach my $ref (@command_list) {
 	ok ($rc == 0, "$comment ");
 }
 
-remove_test_dir;
+remove_test_dir($tempdir);
 
 done_testing();

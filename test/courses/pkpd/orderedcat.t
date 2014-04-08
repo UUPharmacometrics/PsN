@@ -8,7 +8,6 @@ use FindBin qw($Bin);
 use lib "$Bin/../.."; #location of includes.pm
 use includes; #file with paths to PsN packages and $path variable definition
 
-
 our $tempdir = create_test_dir;
 our $dir = "$tempdir/OrderedCat_test";
 my $model_dir = "$Bin/OrderedCat";
@@ -34,6 +33,6 @@ foreach my $ref (@command_list) {
 	ok ($rc == 0, "$comment ");
 }
 
-remove_test_dir;
+remove_test_dir($tempdir);
 
 done_testing();
