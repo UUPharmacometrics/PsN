@@ -897,7 +897,7 @@ sub modelfit_setup
 						}
 					}
 				}
-				$sim_model -> _write( write_data => $sim_no == 1 ? 1 : 0 );
+				$sim_model -> _write( write_data => 0 );
 				push( @sim_models, $sim_model );
 			} #end if add_models
 			if( defined $est_original ){
