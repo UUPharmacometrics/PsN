@@ -312,10 +312,6 @@ sub copy_and_modify_bin_files
 			print UTIL "use lib '$library_dir/PsN_$name_safe_version';\n\n";
 			print UTIL "\# Everything above this line was entered by the setup script \#\n";
 			$replace_line_found = 1;
-#		} elsif (/use PsN/) {
-#			print UTIL "use PsN_$name_safe_version;\n";
-#		} elsif (/require PsN/) {
-#			print UTIL "require PsN_$name_safe_version;\n";
 		} elsif ($replace_line_found) {
 			print UTIL $_;
 		}
@@ -456,15 +452,15 @@ sub get_input
 {
 	my $default = shift;
 	my $input = <STDIN>;
-	chomp( $input );
-	if( $input =~ /^\s*$/ ) {
+	chomp($input);
+	if ($input =~ /^\s*$/) {
 		if (defined $default) {
-			return( $default );
+			return($default);
 		} else {
 			abort("No input given and no default available, must exit.\n");
 		}
 	} else {
-		return( $input );
+		return($input);
 	}
 }
 
@@ -786,7 +782,7 @@ $perl_binary = get_input($default_perlpath);
 my $runperl_name = "runperl.bat";
 my $runperl_binary = File::Spec->catpath( $volume, $directory, $runperl_name);
 
-if(running_on_windows() and ($perl_binary ne 'C:\Perl\bin\perl.exe')) {
+if (running_on_windows() and ($perl_binary ne 'C:\Perl\bin\perl.exe')) {
 	print "Warning: If you are running on Windows and the path to the perl binary \n".
 		"set in the previous question was something other than ".'C:\Perl\bin\perl.exe'.
 		"\n".
@@ -830,7 +826,7 @@ unless (mkpath("$library_dir/PsN_$name_safe_version")) {
 	abort() unless (confirm());
 }
 
-if (-e "$library_dir/PsN_$name_safe_version/psn.conf"){
+if (-e "$library_dir/PsN_$name_safe_version/psn.conf") {
 	print "An older version of psn.conf exists in $library_dir/PsN_$name_safe_version.\n";
 	print "Keep the old version [y/n] ?";
 	$keep_conf = confirm();
@@ -840,7 +836,7 @@ my $newconf = File::Spec->catfile( $library_dir, "PsN_$name_safe_version", "psn.
 my $thelibdir = File::Spec->catdir($library_dir,"PsN_$name_safe_version");
 if ($have_file_copy) {
 	if ($keep_conf) {
-		unless (fcopy($newconf,"old.conf")) {
+		unless (fcopy($newconf, "old.conf")) {
 			abort("Could not copy $newconf to old.conf : $!\n");
 		}
 	}
@@ -864,7 +860,7 @@ if ($have_file_copy) {
 			" failed, the following command did not work\n$full_command\n";
 		if (running_on_windows()) {
 			abort("It is recommended to run the command\n".
-				"ppm install file-copy-recursive\n".
+				"cpan install File::Copy::Recursive (Strawberry Perl) or ppm install file-copy-recursive (ActiveState Perl)\n".
 				"in a command window, and then try to install PsN again, using the same setup script.\n");
 		} else {
 			abort("It is recommended to install File::Copy::Recursive".
@@ -997,6 +993,59 @@ if (confirm()) {
 	copy_documentation();
 }
 
+my $default_test = $library_dir;
+my $test_library_dir;
+print "\nWould you like to install the PsN test library? [y/n] ";
+if (confirm()) {
+	print "PsN test library installation directory [$default_test]:";
+	$test_library_dir = get_input($default_test);
+	$test_library_dir .= "/PsN_test_$name_safe_version";
+
+	if ($have_file_copy) {
+		unless (dircopy("test", $test_library_dir)) {
+			abort("Could not copy contents of test directory to $test_library_dir : $!\n");
+		}
+	} else {
+		my $full_command = $copy_recursive_cmd . " " . File::Spec->catfile("test", "*") . " \"" . $test_library_dir . "\""; 
+		system($full_command);
+
+		unless (-e "$test_library_dir/includes.pm" ) {
+			print "Copying of files to $test_library_dir/ failed, the following command did not work\n$full_command\n";
+			if (running_on_windows()) {
+				abort("It is recommended to run the command\n".
+					"cpan install File::Copy::Recursive (Strawberry Perl) or ppm install file-copy-recursive (ActiveState Perl)\n".
+					"in a command window, and then try to install PsN again, using the same setup script.\n");
+			} else {
+				abort("It is recommended to install File::Copy::Recursive and then try to install PsN again, using the same setup script.\n");
+			}
+		}
+	
+		system($copy_cmd . " old.conf \"" . $newconf . "\"") if $keep_conf;
+	}
+
+	# Put library and bin paths into includes.pm
+	my $includes_file = "$test_library_dir/includes.pm";
+	rename($includes_file, "$includes_file.temp");
+	open(my $sh, "<", "$test_library_dir/includes.pm.temp") or abort("Error when copying includes.pm: $!");
+	open(my $dh, ">", "$test_library_dir/includes.pm") or abort("Error when copying includes.pm: $!");
+
+	while (<$sh>) {
+		if (/^(\s*my \$libpath\s*=\s*)'';/) {
+			print $dh "$1'$library_dir/PsN_$name_safe_version';\n";
+		} elsif (/^(\s*our \$path\s*=\s*)'';/) {
+			print $dh "$1'$binary_dir/';\n";
+		} else {
+			print $dh $_;
+		}
+	}
+
+	close $sh;
+	close $dh;
+	unlink("$includes_file.temp");
+
+	print "PsN test library installed successfully in [$test_library_dir].\n";
+	print "Please read the 'testing' chapter of the developers_guide.pdf for information on how to run the tests\n\n";
+}
 
 
 my $configuration_done = 0;

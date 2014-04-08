@@ -1,4 +1,26 @@
 LIBFILES= ui.pm \
+	PsN.pm \
+	common_options.pm \
+	linear_algebra.pm \
+	npde_util.pm \
+	psn.conf_template \
+	psn.conf \
+	OSspecific.pm \
+	binning.pm \
+	array.pm \
+	include_modules.pm \
+	ext/Math/SigFigs.pm \
+	ext/Math/MatrixReal.pm \
+	ext/Statistics/Distributions.pm \
+	ext/Config/Tiny.pm \
+	ext/File/HomeDir.pm \
+	ext/Carp.pm \
+	matlab/bca.m \
+	matlab/histograms.m \
+	matlab/profiles.m \
+	R-scripts/llp.R \
+	R-scripts/cdd.R \
+	R-scripts/bootstrap.R \
 	status_bar.pm \
 	nonmemrun.pm \
 	nonmemrun/localunix.pm \
@@ -98,29 +120,10 @@ BINFILES=$(wildcard bin/*)
 RELFILES=$(addprefix PsN-Source/lib/,$(LIBFILES)) \
 	$(addprefix PsN-Source/, \
 	$(BINFILES) \
-	lib/PsN.pm \
-	lib/common_options.pm \
-	lib/linear_algebra.pm \
-	lib/npde_util.pm \
-	lib/psn.conf_template \
-	lib/psn.conf \
-	lib/OSspecific.pm \
-	lib/binning.pm \
-	lib/array.pm \
-	lib/include_modules.pm \
-	lib/ext/Math/SigFigs.pm \
-	lib/ext/Math/MatrixReal.pm \
-	lib/ext/Statistics/Distributions.pm \
-	lib/ext/Config/Tiny.pm \
-	lib/ext/File/HomeDir.pm \
-	lib/ext/Carp.pm \
-	lib/matlab/bca.m \
-	lib/matlab/histograms.m \
-	lib/matlab/profiles.m \
-	lib/R-scripts/llp.R \
-	lib/R-scripts/cdd.R \
-	lib/R-scripts/bootstrap.R \
 	setup.pl \
+	AUTHORS \
+	COPYING \
+	THANKS \
 	README.txt )
 
 TEXFILES=$(wildcard doc/*.tex)
@@ -140,6 +143,7 @@ release: completion rel_dir $(RELFILES) $(PDFFILES)
 	@ mkdir PsN-Source/development
 	@ mkdir PsN-Source/development/completion_files
 	@ cp development/completion_files/* PsN-Source/development/completion_files
+	@ cp -r test PsN-Source/test
 	@ mkdir PsN-Source/doc
 	@ cp doc/*.pdf PsN-Source/doc
 	@ cp doc/*.scm PsN-Source/doc

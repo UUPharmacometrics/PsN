@@ -17,15 +17,24 @@ our @EXPORT = qw(cmp_float create_test_dir remove_test_dir copy_test_files like_
 # Then make it into an absolute path
 BEGIN
 {
-	my ($volume, $directory, $file) = File::Spec->splitpath(__FILE__);
-	my $libpath = Cwd::abs_path($volume . $directory . '../lib');
+	# The following row will be edited by setup.pl
+	my $libpath = '';
+	if ($libpath eq '') {
+		my ($volume, $directory, $file) = File::Spec->splitpath(__FILE__);
+		$libpath = Cwd::abs_path($volume . $directory . '../lib');
+	}
 	unshift @INC, $libpath;
 }
 
 # Get an absolute path to the scripts
 my ($volume, $directory, $file) = File::Spec->splitpath(__FILE__);
-our $path = Cwd::abs_path($volume . $directory . '../bin');
-$path .= '/';
+
+# The following row will be edited by setup.pl
+our $path = '';
+if ($path eq '') {
+	$path = Cwd::abs_path($volume . $directory . '../bin');
+	$path .= '/';
+}
 
 our $testfiledir = Cwd::abs_path($volume . $directory . 'test_files');
 
