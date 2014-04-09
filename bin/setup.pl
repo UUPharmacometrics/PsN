@@ -703,7 +703,7 @@ sub create_bat_file
 		abort("Could not open $name: $!\n");
 	}
 
-	print $bat_file '@echo off' . "\n" .'perl %~dp0%0.pl %*' . "\n";
+	print $bat_file '@echo off' . "\n" .'perl %~dp0%~n0.pl %*' . "\n";
 
 	close $bat_file;
 }
