@@ -143,7 +143,11 @@ release: completion rel_dir $(RELFILES) $(PDFFILES)
 	@ mkdir PsN-Source/development
 	@ mkdir PsN-Source/development/completion_files
 	@ cp development/completion_files/* PsN-Source/development/completion_files
-	@ cp -r test PsN-Source/test
+	@ mkdir PsN-Source/test
+	@ cp -r test/unit PsN-Source/test
+	@ cp -r test/system PsN-Source/test
+	@ cp -r test/test_files PsN-Source/test
+	@ cp test/includes.pm PsN-Source/test
 	@ mkdir PsN-Source/doc
 	@ cp doc/*.pdf PsN-Source/doc
 	@ cp doc/*.scm PsN-Source/doc
