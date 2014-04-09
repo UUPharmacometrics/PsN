@@ -24,7 +24,6 @@ Getopt::Long::config("auto_abbrev");
 		  "crash_restarts:i",
 		  "directory:s",
 		  "display_iterations!",
-		  "drop_dropped!",
 		  "email_address:s",
 		  "handle_msfo",
 		  "handle_crashes!",
@@ -459,9 +458,6 @@ sub sanity_checks {
 	"are incompatible. Please unset one of them.\n";
     croak($mes);
   }
-  if ($options -> {'skip_data_parsing'}){
-    $options -> {'skip_data_parsing'}=0 if $options -> {'drop_dropped'};
-  }
 
   if (defined $options -> {'parafile'}){
     unless ($PsN::nm_major_version == 7 
@@ -735,15 +731,6 @@ EOF
     finished before the crash, thereby saving some time. Notice that
     is important that you give exactly the same options that you gave
     the first time (exception npc and vpc tools, see npc manual).
-EOF
-
-    $help_hash{-drop_dropped} = <<'EOF';
-    <p class="style2">-drop_dropped</p>
-    If there are drop columns in your control file and <span class="style2">-drop_dropped</span> 
-    is used, PsN will remove those columns from the data set used
-    internally. It saves both diskspace and conserves memory
-    usage. Note that PsN does NOT alter your original data set, only
-    those used internally in PsN.
 EOF
 
 

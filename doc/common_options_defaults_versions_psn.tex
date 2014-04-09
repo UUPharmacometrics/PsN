@@ -81,9 +81,6 @@ Default not used. Compute the conditional weighted residuals (CWRES) for a model
 \optdefault{directory}{'string'}
 Default 'modelfit\_dirX' for execute, and 'scriptname\_dirX' for other scripts (e.g. bootstrap\_dir1) where X will be increased by one each time you run the script. The directory option sets the directory in which PsN will run  NONMEM. You do not have to create the directory,  it will be done for you. If you abort the run or if your system crashes you can use the '-directory' option set to the directory of the run that crashed. PsN will then not run the model-files that had finished before the crash, thereby saving time. Notice that is important that you give exactly the same options that you gave the first time (exception npc and vpc tools, see npc/vpc manual). 
 \nextopt
-\optname{drop\_dropped}
-Default not used. If there are drop columns in your control file and -drop\_dropped is set, PsN will remove those columns from the data set used internally. It saves both disk-space and conserves memory usage. Note that PsN does NOT alter your original data set, only those used internally in PsN. 
-\nextopt
 \optname{display\_iterations}
 Default not used.  This option turns on display the iterations output from NONMEM during the model run. If the option is not set, the iterations output will be redirected to a file. As with any option the user can choose to change the default by editing psn.conf, see the document psn\_configuration.pdf. The template psn.conf distributed with the PsN installation package has this option set as the default for execute, but no other scripts. The option can be disabled with -no-display\_iterations. 
 \nextopt
@@ -185,7 +182,7 @@ seeds does not guarantee two different random sequences, that must be verified.
 Default not used. Calculate the shrinkage for the model run.  Shrinkage is calculated as 1-(sd(eta(x))/omega(x)) and measures the shrinkage of the empirical Bayes estimates (EBEs) towards the mean of the expected distribution.  A 'large' shrinkage means that diagnostics using EBEs cannot be trusted. The shrinkage values appear in the file raw\_results.csv. Warning: PsN-3.2.4 and earlier versions assumes that all parameters are estimated for all subjects. Therefore incorrectly high shrinkage values can be presented in the raw\_results file for parameters not estimable for certain individuals, e.g. drug effect parameters in the presence of subjects receiving only placebo treatment. In NONMEM7 eta shrinkage values are output in the lst-file, and PsN will present these instead. PsN-3.2.5 and later assumes that ETAs which are exactly 0 have not been estimated, and excludes these from the computations. PsN-3.2.5 and later never uses the NONMEM7 shrinkage values. When shrinkage is requested, PsN adds two \$TABLE to the modelfile so that NONMEM will output data needed for the shrinkage computation. For eta shrinkage the table requests items ID ETA1 ETA2... and for iwres shrinkage it requests items ID IWRES EVID. 
 \nextopt
 \optname{skip\_data\_parsing}
-Default set. Automatically unset if -drop\_dropped, -extra\_data\_files or -wrap\_data is used, and with bootstrap and cdd scripts. If option is set, data files will not be parsed, only dummy data objects will be created. Saves much time. 
+Default set. Automatically unset if -extra\_data\_files or -wrap\_data is used, and with bootstrap and cdd scripts. If option is set, data files will not be parsed, only dummy data objects will be created. Saves much time. 
 \nextopt
 \optname{tbs}
 Default not set. Invokes Transform Both Sides method, by default using the Box-Cox transformation. For details on the theory read Oberg and Davidian: http://onlinelibrary.wiley.com/doi/10.1111/j.0006-341X.2000.00065.x/abstract

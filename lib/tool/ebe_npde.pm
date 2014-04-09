@@ -127,8 +127,6 @@ sub modelfit_setup
 		copy_data   => 1,
 		copy_output => 0);
 
-	$orig_model -> drop_dropped unless $orig_model->skip_data_parsing();
-
 	#create sim record if not present
 	$sim_record = $orig_model -> record( problem_number => $self->probnum(),
 		record_name => 'simulation' );

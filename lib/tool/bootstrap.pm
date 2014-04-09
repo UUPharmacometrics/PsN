@@ -905,20 +905,6 @@ sub general_setup
 	for ( my $i = 1; $i <= scalar @orig_datas; $i++ ) {
 		my $orig_data = $orig_datas[$i-1];
 		my $dataname = $orig_data -> filename; 
-		if ( $self -> drop_dropped() ) {
-			#this can never work if multiple datas
-			my $model_copy = $model -> copy( copy_data => 1,
-				filename => "drop_copy_$i.mod",
-				directory => $self ->directory());
-
-			$model_copy -> drop_dropped;
-			$model_copy -> _write( write_data => 1 );
-			$model -> datas -> [0] -> flush();
-			$orig_data = $model_copy -> datas -> [0];
-			$model = $model_copy;
-			@problems   = @{$model -> problems};
-
-		}
 
 		my $stratify_on;
 		if (defined $self->stratify_on ) {

@@ -1052,9 +1052,7 @@ sub general_setup
 				my ($data_dir, $data_file) = OSspecific::absolute_path( $self -> directory.'/m'.$model_number,
 					$names[$i].'.dta' );
 				my $skip_data_parsing = 1;
-				if ($self->drop_dropped) {
-					$skip_data_parsing = 0 ;
-				}
+
 				$dataset->skip_parsing($skip_data_parsing);
 				my $newmodel = $model -> copy( filename => $data_dir.$names[$i].'.mod',
 					copy_data   => 0,

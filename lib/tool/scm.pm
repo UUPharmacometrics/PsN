@@ -3921,9 +3921,6 @@ sub _create_models
 						'/m'.$model_number.'/',
 						$parameter.$covariate.$state.".lst" );
 					my $skip_data_parsing = 1;
-					if ($self->drop_dropped ){
-						$skip_data_parsing = 0 ;
-					}
 
 					my $applicant_model;
 					$applicant_model = $orig_model ->

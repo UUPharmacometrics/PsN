@@ -265,9 +265,6 @@ sub modelfit_setup
 						copy_data   => 1,
 						copy_output => 0);
 
-					$sim_model->drop_dropped unless $sim_model->skip_data_parsing;
-					
-
 					if ($sim_model-> is_option_set(record=>'input',name=>'TIME')) {
 						#this assumes no synonym, and TIME is always option, not value.
 						$time_in_input = 1;
@@ -549,8 +546,6 @@ sub modelfit_setup
 								}
 							}
 						}
-					}else{
-						$est_original -> drop_dropped;
 					}
 
 
@@ -1077,8 +1072,6 @@ sub modelfit_setup
 								}
 							}
 						}
-					}else{
-						$est_alternative -> drop_dropped;
 					}
 
 
@@ -1108,7 +1101,7 @@ sub modelfit_setup
 					
 
 
-					#remove any DATX in $INPUT (drop_dropped does not)
+					#remove any DATX in $INPUT
 					foreach my $col ('DATE','DAT1','DAT2','DAT3'){
 						$est_alternative -> remove_option(record_name => 'input',
 														  problem_numbers => [(1)],

@@ -66,7 +66,6 @@ has 'valid_hash_options' => ( is => 'rw', isa => 'HashRef' );
 has 'valid_scalar_options' => ( is => 'rw', isa => 'HashRef' );
 has 'valid_states' => ( is => 'rw', isa => 'HashRef', default => sub { { 'ARRAY' => undef } } );
 has 'inits' => ( is => 'rw', isa => 'HashRef', default => sub { { 'ARRAY' => undef } } );
-has 'drop_dropped' => ( is => 'rw', isa => 'Bool|Ref', default => sub { \'1,0' } );
 has 'grid_poll_interval' => ( is => 'rw', isa => 'Int|Ref', default => sub { \'' } );
 has 'run_on_lsf' => ( is => 'rw', isa => 'Bool|Ref', default => sub { \'' } );
 has 'lsf_resources' => ( is => 'rw', isa => 'Str|Ref', default => sub { \'' } );

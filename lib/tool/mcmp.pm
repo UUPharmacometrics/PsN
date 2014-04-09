@@ -227,7 +227,6 @@ sub modelfit_setup
 				  target      => 'disk',
 				  copy_data   => 1,
 				  copy_output => 0);
-		$sim_model -> drop_dropped unless $sim_model->skip_data_parsing();
 
 		if ($sim_model-> is_option_set(record=>'input',name=>'TIME')){
 			#this assumes no synonym, and TIME is always option, not value.
@@ -445,7 +444,7 @@ sub modelfit_setup
 
 	foreach my $mod (@estimate_models){
 		if (defined $simulated_file or defined $self->simdata()){
-			#remove any DATX in $INPUT (drop_dropped does not)
+			#remove any DATX in $INPUT 
 			foreach my $col ('DATE','DAT1','DAT2','DAT3'){
 				$mod -> remove_option(record_name => 'input',
 									  problem_numbers => [(1)],

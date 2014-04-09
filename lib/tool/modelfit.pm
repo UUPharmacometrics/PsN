@@ -2962,7 +2962,6 @@ sub copy_model_and_input
 		
 		$candidate_model -> table_names( new_names            => \@new_table_names,
 										 ignore_missing_files => 1 );
-		$candidate_model -> drop_dropped if ( $self->drop_dropped );
 		$candidate_model -> _write( filename   => 'psn.mod' );# write_data => 1 );  #Kolla denna, den funkar inte utan wrap!!
 		$candidate_model -> flush_data;
 		$candidate_model -> store_inits;

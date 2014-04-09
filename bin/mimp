@@ -148,7 +148,7 @@ unless (-e $newdir){
   mkdir( $newdir );
 }
 
-unless ( defined $options{'skip_data_parsing'} or $options{'drop_dropped'}) {
+unless ( defined $options{'skip_data_parsing'} ) {
   $options{'skip_data_parsing'} = 1;
 }
 

@@ -216,7 +216,6 @@ sub modelfit_setup
 			copy_output => 0);
 		$gls_model -> outputs -> [0] -> directory($self -> directory.'m'.$model_number);
 
-		$gls_model -> drop_dropped unless $gls_model->skip_data_parsing();
 		$gls_model -> remove_option( record_name  => 'estimation',
 			option_name  => 'MSFO',
 			fuzzy_match => 1,
@@ -246,10 +245,6 @@ sub modelfit_setup
 				problem_number => $self->probnum());
 		}
 
-		unless ($gls_model->skip_data_parsing()){
-			$gls_model -> drop_dropped;
-		}
-
 	}else{
 		#no gls_model
 		$orig_model = $model ->
@@ -258,9 +253,6 @@ sub modelfit_setup
 			copy_data   => 1,
 			copy_output => 0);
 		$orig_model -> outputs -> [0] -> directory($self -> directory.'m'.$model_number);
-
-		$orig_model -> drop_dropped unless $orig_model->skip_data_parsing();
-
 
 		if ($self->ind_shrinkage()){
 

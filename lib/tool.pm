@@ -36,7 +36,6 @@ has 'diagnostic_parameters' => ( is => 'rw', isa => 'ArrayRef[Str]', default =>
 			'estimate_near_boundary','rounding_errors','zero_gradients','final_zero_gradients','hessian_reset','s_matrix_singular',
 			'significant_digits','condition_number','est_methods','model_run_time','subprob_est_time','subprob_cov_time'] }  );
 has 'directory' => ( is => 'rw' );
-has 'drop_dropped' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'stop_motion' => ( is => 'rw', isa => 'Int', default => 0 );
 has 'grid_batch_size' => ( is => 'rw', isa => 'Int', default => 1 );
 has 'logfile' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub {  ['psn_logfile.csv'] }  );
