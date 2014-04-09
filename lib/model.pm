@@ -544,22 +544,6 @@ sub _target_set
 	}
 }
 
-sub drop_dropped
-{
-	my $self = shift;
-	my $parm = shift;
-
-	for( my $i = 0; $i < scalar @{$self->problems}; $i++ ) {
-	  $self -> {'datas'}[$i] -> drop_dropped( model_header => $self->problems->[$i] -> header );
-	  $self->problems->[$i] -> drop_dropped( );
-	}
-
-	if( defined($parm) ){
-		$self -> {'drop_dropped'} = $parm;
-	} else {
-		return $self -> {'drop_dropped'};
-	}
-}
 
 sub add_iofv_module
 {

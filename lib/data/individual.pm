@@ -307,26 +307,6 @@ sub recalc_column
 	}
 }
 
-sub drop_columns
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		 drop => { isa => 'ArrayRef[Bool]', optional => 1 }
-	);
-	my @drop = $parm{'drop'};
-
-	my @new_data;
-	my @data = @{$self->subject_data};
-	for( my $i = 0; $i <= $#data; $i++ ) {
-	  my @new_row;
-	  my @data_row = split( /,/, $data[$i] );
-	  for( my $j = 0; $j < scalar @data_row; $j++ ) {
-	    push( @new_row, $data_row[$j] ) if ( not $drop[$j] );
-	  }
-	  push( @new_data, join( ',', @new_row ) );
-	}
-	$self->subject_data(\@new_data);
-}
 
 sub append_column
 {

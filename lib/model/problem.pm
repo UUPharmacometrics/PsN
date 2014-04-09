@@ -1398,50 +1398,7 @@ sub header
 	return \@header;
 }
 
-sub dropped_columns
-{
-	my $self = shift;
-	my @dropped_columns;
 
-	my $inp_ref = $self -> inputs;
-	if ( defined $inp_ref and defined $inp_ref -> [0] ) {
-		my $input = $inp_ref -> [0];
-		my $opt_ref = $input -> options;
-		if ( defined $opt_ref ) {
-			my @options = @{$opt_ref};
-			foreach my $option ( @options ) {
-				my $dropped = ( $option -> value eq 'DROP' or
-					$option -> value eq 'SKIP' ) ? 1 : 0;
-				push ( @dropped_columns, $dropped );
-			}
-		}
-	}
-
-	return \@dropped_columns;
-}
-
-sub drop_dropped
-{
-	my $self = shift;
-
-	my $inp_ref = $self -> inputs;
-	# Important that the drop_dropped method of the data class is
-	# in sync with this method.
-	if ( defined $inp_ref and defined $inp_ref -> [0] ) {
-		my $input = $inp_ref -> [0];
-		my $opt_ref = $input -> options;
-		if ( defined $opt_ref ) {
-			my @options = @{$opt_ref};
-			my @keep;
-			foreach my $option ( @options ) {
-				push ( @keep, $option ) if ( not ($option -> value eq 'DROP' or $option -> value eq 'SKIP'
-							or $option -> name eq 'DROP' or $option -> name eq 'SKIP') or
-					$option -> name =~ /DAT(E|1|2|3)/ );
-			}
-			$input -> options( \@keep );
-		}
-	}
-}
 
 sub remove_option
 {

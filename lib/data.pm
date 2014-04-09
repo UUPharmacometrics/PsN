@@ -2273,55 +2273,6 @@ sub single_valued_data
 	return $single_value_data_set ,$remainder ,\@column_indexes;
 }
 
-sub drop_dropped
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		 model_header => { isa => 'ArrayRef', optional => 1 }
-	);
-	my @model_header = defined $parm{'model_header'} ? @{$parm{'model_header'}} : ();
-
-	# This method removes columns that has '=DROP' value in the
-	# model header as given by $INPUT. The model header must be
-	# transfered to this method through the model_header
-	# argument. The model_header argument should be a
-	# two-dimensional array where each position in the first
-	# dimension should be a reference to a 1*2 array holding the
-	# column name and value. Any ignore-sign must be removed.
-
-	$self->individuals([]) unless defined $self->individuals;
-
-	croak('model header must be defined' )
-	  if ( $#model_header < 0 );
-	# Important that the drop_dropped method of the model::problem
-	# class is in sync with this method.
-	$self->synchronize;
-
-	$self->header([]);
-	my @drop;
-	my $counter = 1;
-	for( my $i = 0; $i <= $#model_header; $i++ ) {
-	  $self->{'idcolumn'} = $counter if ( $model_header[$i][0] eq 'ID' );
-	  if( ( $model_header[$i][0] eq 'DROP' or
-		$model_header[$i][0] eq 'SKIP' or
-		$model_header[$i][1] eq 'DROP' or 
-		$model_header[$i][1] eq 'SKIP' ) and
-	      not $model_header[$i][0] =~ /DAT(E|1|2|3)/ ) {
-	    push( @drop, 1 );
-	  } else {
-	    $counter++;
-	    push( @drop, 0 );
-			$self->header([]) unless defined $self->header;
-	    push( @{$self->header()}, $model_header[$i][0] );
-	  }
-	}
-
-	foreach my $individual ( @{$self->individuals()} ) {
-	  $individual->drop_columns( drop => \@drop );
-	}
-	
-	$self->synced(0);
-}
 
 sub get_eta_matrix
 {
