@@ -438,9 +438,9 @@ sub case_deletion
 			ignore_missing_files => 1 );
 		push( @subsets, $newdata );
 		push( @remainders, $deldata );
-		$newdata->_write;
+#		$newdata->_write; # flush does _write anyway
 		$newdata->flush;
-		$deldata->_write;
+#		$deldata->_write; #flush does _write
 		$deldata->flush;
 	}
 
