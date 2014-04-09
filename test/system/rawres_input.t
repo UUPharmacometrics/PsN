@@ -11,7 +11,7 @@ use includes; #file with paths to PsN packages and $path variable definition
 
 #black box testing of rawres_input functionality
 
-our $tempdir = create_test_dir;
+our $tempdir = create_test_dir('system_rawresinput');
 our $dir = "$tempdir/rawres_test";
 our $bootdir = "$tempdir/boot_test";
 our $ssedir = "$tempdir/sse_test";

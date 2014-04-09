@@ -9,7 +9,7 @@ use FindBin qw($Bin);
 use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages and $path variable definition
 
-our $tempdir = create_test_dir;
+our $tempdir = create_test_dir('system_bootscm');
 our $dir = "boot_scm_test";
 my $model_dir = $includes::testfiledir;
 
@@ -20,7 +20,7 @@ my @needed=("$model_dir/scm/pheno_with_cov.mod",
 			"$model_dir/scm_config.scm",
 			"$model_dir/mox_simulated.csv"			
 	);
-my $bootdir = "$tempdir/boot_xv_scm_test";
+my $bootdir = "$tempdir/boot_scm_test";
 
 mkdir($bootdir);
 foreach my $file (@needed) {

@@ -21,7 +21,7 @@ our $nm_version = $PsN::nm_major_version * 100 + $PsN::nm_minor_version * 10;
 my $model_dir = $includes::testfiledir;
 
 
-our $tempdir = create_test_dir;
+our $tempdir = create_test_dir('system_sse');
 our $dir = "$tempdir/sse_test";
 
 my $tndir = "$tempdir/tndir";

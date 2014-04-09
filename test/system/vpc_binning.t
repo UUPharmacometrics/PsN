@@ -10,7 +10,7 @@ use FindBin qw($Bin);
 use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages and $path variable definition
 
-our $tempdir = create_test_dir;
+our $tempdir = create_test_dir('system_vpcbinning');
 our $dir = "$tempdir/vpc_test";
 
 sub get_bins

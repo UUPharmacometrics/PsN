@@ -15,7 +15,7 @@ use tool::scm::config_file;
 use tool::scm;
 use common_options;
 
-our $tempdir = create_test_dir;
+our $tempdir = create_test_dir('system_scm');
 our $dir = "$tempdir/scm_test";
 our $scm_file_dir = $includes::testfiledir . '/scm';
 our $file_dir = $includes::testfiledir;

@@ -11,7 +11,7 @@ use includes; #file with paths to PsN packages and $path variable definition
 
 #black box testing of data class and progs that are not covered by other test files
 
-our $tempdir = create_test_dir;
+our $tempdir = create_test_dir('system_npc');
 our $dir = "$tempdir/npc_test";
 my $model_dir = $includes::testfiledir;
 

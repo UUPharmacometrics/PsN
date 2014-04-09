@@ -135,7 +135,7 @@ $hashmox_answer{'relative_absolute_bias'}=[9.711418,38.58046,16.495,-60.217,7.17
 
 my $model_dir = $includes::testfiledir . "/";
 
-my $dir = create_test_dir;
+my $dir = create_test_dir('unit_sse');
 
 dircopy($model_dir . 'sse_pheno', $dir);
 chdir($dir);

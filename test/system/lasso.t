@@ -11,7 +11,7 @@ use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages and $path variable definition
 
 
-our $tempdir = create_test_dir;
+our $tempdir = create_test_dir('system_lasso');
 our $dir = "$tempdir/lasso_test";
 my $model_dir = $includes::testfiledir;
 

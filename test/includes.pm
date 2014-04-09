@@ -166,12 +166,13 @@ sub unlike_file_row
 
 sub _test_dir_name
 {
-	return OSspecific::unique_path('PsN-test_dir', File::Spec->tmpdir());
+	return 
 }
 
 sub create_test_dir
 {
-	my $dir = _test_dir_name;
+	my $testname = shift;
+	my $dir = OSspecific::unique_path('PsN-test_'.$testname.'_', File::Spec->tmpdir());;
 	rmtree([$dir]);
 	mkdir($dir);
 	return $dir;

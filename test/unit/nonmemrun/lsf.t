@@ -21,7 +21,7 @@ use model;
 
 open STDERR, '>', File::Spec->devnull();	# Silence STDERR
 
-my $temp_dir = create_test_dir;
+my $temp_dir = create_test_dir('unit_nonmemrun_lsf');
 chdir $temp_dir;
 
 my $model = model->new(filename => $includes::testfiledir . "/pheno5.mod");

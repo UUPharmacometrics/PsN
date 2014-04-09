@@ -8,7 +8,7 @@ use FindBin qw($Bin);
 use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages and $path variable definition
 
-our $tempdir = create_test_dir;
+our $tempdir = create_test_dir('system_cdd');
 our $dir = "$tempdir/cdd_test";
 my $model_dir = $includes::testfiledir;
 
