@@ -11,6 +11,8 @@ require Exporter;
 our @ISA = qw(Exporter);
 our @EXPORT = qw(cmp_float create_test_dir remove_test_dir copy_test_files like_file_row unlike_file_row);
 
+# Set this variable to something else if you are testing on a cluster
+my $tempdir = File::Spec->tmpdir;
 
 # Setup an include path to the lib directory
 # First get the path of this module and split out the directory part
@@ -164,15 +166,10 @@ sub unlike_file_row
 	}
 }
 
-sub _test_dir_name
-{
-	return 
-}
-
 sub create_test_dir
 {
 	my $testname = shift;
-	my $dir = OSspecific::unique_path('PsN-test_'.$testname.'_', File::Spec->tmpdir());;
+	my $dir = OSspecific::unique_path('PsN-test_'.$testname.'_', $tempdir);
 	rmtree([$dir]);
 	mkdir($dir);
 	return $dir;
@@ -180,15 +177,15 @@ sub create_test_dir
 
 sub remove_test_dir
 {
-	my $dir=shift;
-	chdir File::Spec->tmpdir;		# Move out of test directories
+	my $dir = shift;
+	chdir $tempdir;		# Move out of test directories
 	rmtree([$dir]);
 }
 
 sub copy_test_files
 {
-	my $testdir=shift;
-	my $array=shift;
+	my $testdir = shift;
+	my $array = shift;
 	foreach $file (@{$array}) {
 		cp("$testfiledir/$file", $testdir);
 	}

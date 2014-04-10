@@ -73,7 +73,7 @@ Stay on the NLP branch so that git pull and git push will be on that branch.
 
 \section{Testing}
 The PsN4/test directory contains the tests. Unit tests are in PsN4/test/unit and system tests in PsN4/test/system. When installing PsN the user has the option to install the test suite. The default directory is in the lib directory. 
-Unit tests are defined as tests that do not involve \emph{running} NONMEM, while system tests are all the rest. 
+Unit tests are defined as tests that do not involve \emph{running} NONMEM, while system tests are tests involving running NONMEM. 
 Tests can be run by using the command \verb|prove| (which is bundled with perl). The unit tests can be run by issuing the command
 \begin{verbatim}
 prove -r unit
@@ -93,6 +93,12 @@ Individual test scripts can be run with e.g.
 prove bootstrap.t
 \end{verbatim}
 
+It is possible to run multiple tests in parallel to speed up the testing. This can be done with the option -j n to prove, where n is the number of parallel jobs e.g.
+\begin{verbatim}
+prove -j 4 -r system
+\end{verbatim}
+
+If the tests are to be run on a cluster a setup of a temporary directory that is reachable from all nodes is needed in includes.pm. Edit test/includes.pm and change the row that sets the \$tempdir to \$tempdir = <my path to an already created temporary directory that is reachable from all nodes>;
 
 \section{Build environment}
 The documentation is made in \LaTeX and pdfs can be generated with \verb|make doc|. The
