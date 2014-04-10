@@ -181,7 +181,7 @@ sub create_test_dir
 sub remove_test_dir
 {
 	my $dir=shift;
-	chdir;		# Move to home in case we are cd:ed into the directory to remove.
+	chdir File::Spec->tmpdir;		# Move out of test directories
 	rmtree([$dir]);
 }
 
