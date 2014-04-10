@@ -43,14 +43,9 @@ sub monitor
 
 	my $exit_code;
 
-	# GetExitCode is supposed to return a value indicating
-	# if the process is still running, however it seems to
-	# allways return 0. $exit_code however is update and
-	# seems to be nonzero if the process is running.
-
 	$self->windows_process->GetExitCode($exit_code);
 
-	if ($exit_code == 0) {
+	if ($exit_code != 259) {			# 259 is STILL_RUNNING. Could not import it from Win32::Process
 		return $jobId;
 	} else {
 		return 0;
