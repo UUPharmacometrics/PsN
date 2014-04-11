@@ -332,17 +332,15 @@ sub BUILD
 		unless (defined $this->nmqual_xml) {
 			croak("No nmqual_xml defined. Required for nmqual. Exiting\n");
 		}
-		$this->nonmem_options($this->nmqual_xml . ',' . $this->nmfe_options);
-	} elsif ($this->nmfe or $this->run_on_sge_nmfe) {
-		$this->nonmem_options($this->nmfe_options);
-		unless (defined $this->full_path_nmtran) {
+	} else {
+		unless (defined $this->full_path_nmfe) {
 			$this->nmfe_setup(nm_version => $this->nm_version);
 		}
 	}
 
 	if ($this->run_on_lsf or $this->run_on_ud or $this->run_on_zink or
-		$this->run_on_torque or $this->run_on_slurm or $this->run_on_lsf_nmfe or
-		$this->run_on_sge_nmfe or $this->run_on_sge) {
+		$this->run_on_torque or $this->run_on_slurm or
+		$this->run_on_sge) {
 		$this->run_local(0);
 	} else {
 		$this->run_local(1);
@@ -1020,6 +1018,13 @@ sub select_best_model
 			push( @{$self->raw_nonp_results}, @raw_row ) if (defined $self->raw_nonp_results);
 
 			#partial cleaning
+			foreach my $filename ('psn.mod','psn.lst' ){
+				my $use_name = $self -> get_retry_name( filename => $filename,
+														retry => $selected-1 );
+
+				# Copy files to final files in NM_run, to be clear about which one was selected
+				cp( $use_name, $filename ) if (-e $use_name);
+			}
 
 			if ( $self->clean >= 1 and $PsN::warnings_enabled == 0 ) {
 				unlink 'nonmem', 'nonmem5','nonmem6','nonmem7',
@@ -1714,7 +1719,7 @@ sub run_nonmem
 				$nonmem_run = nonmemrun::localunix->new(nm_version => $nm_version);
 			}
 			$nonmem_run->display_iterations($self->display_iterations);
-		} elsif ($self->run_on_lsf or $self->run_on_lsf_nmfe) {
+		} elsif ($self->run_on_lsf ) {
 			$nonmem_run = nonmemrun::lsf->new(
 				nm_version => $nm_version,
 				lsf_job_name => $self->lsf_job_name,
@@ -1731,7 +1736,7 @@ sub run_nonmem
 				directory => $self->directory,
 				run_no => $run_no,
 			);
-		} elsif ($self->run_on_sge or $self->run_on_sge_nmfe) {
+		} elsif ($self->run_on_sge ) {
 			$nonmem_run = nonmemrun::sge->new(
 				prepend_flags => $self->sge_prepend_flags,
 				nm_version => $nm_version,
@@ -1802,6 +1807,102 @@ sub run_nonmem
 	} # end of "not -e psn-$tries.lst or rerun"
 }
 
+sub diagnose_lst_errors{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+							  missing => { isa => 'Bool', optional => 0 },
+							  have_stats_runs => { isa => 'Bool', optional => 0 },
+							  parsed_successfully => { isa => 'Bool', optional => 1 },
+							  interrupted => { isa => 'Maybe[Bool]', optional => 1 },
+							  run_no  => { isa => 'Int', optional => 0 }
+		);
+	my $missing = $parm{'missing'};
+	my $have_stats_runs = $parm{'have_stats_runs'};
+	my $parsed_successfully  = $parm{'parsed_successfully'};
+	my $interrupted  = $parm{'interrupted'};
+	my $run_no  = $parm{'run_no'};
+
+	my $failure;
+	my $failure_mess;
+	my $restart_possible=0;
+
+	if (not (-e 'FDATA')) {
+		if (-e 'locfile.set' or -e 'maxlim.set' or -e 'background.set' or -e 'licfile.set' or -e 'nmexec.set' or -e 'rundir.set' or -e 'runpdir.set' or -e 'worker.set'){
+			$failure = 'There was an error when running nmfe, NMtran could not be initiated (the NMtran output file FDATA is missing)';
+			$failure_mess = "\nThere was an error when running nmfe, NMtran could not be initiated for model ".($run_no+1).' ';
+			$failure_mess .= ' - check that nmfe-related options are correct, if used (-nmfe_options, -parafile...)';
+			
+		} else{
+			$failure = 'NMtran could not be initiated (the NMtran output file FDATA is missing)';
+			$failure_mess = "\nNMtran could not be initiated (the NMtran output file FDATA is missing). There is no output for model ".($run_no+1).'.';
+			if ($self->run_local) {
+				$failure .= ' - check that the nmfe script can be run independent of PsN';
+				$failure_mess .= ' - check that the nmfe script can be run independent of PsN';
+			}elsif (-e 'job_submission_error'){
+				open( MESS, '<job_submission_error' );
+				$failure = '';
+				$failure_mess = "Job submission error:\n";
+				while(<MESS>) {
+					chomp;
+					$failure .= $_.' ';
+					$failure_mess .= $_."\n";
+				}
+				close( MESS );
+			}else{
+				$failure .= ' - check cluster status and cluster settings in psn.conf';
+			}
+		}
+		$self->general_error(message => $failure_mess) unless ($have_stats_runs);
+	} elsif (not(-e 'FREPORT')) {
+		$failure = 'NMtran failed';
+		$failure_mess="NMtran failed. There is no output for model ".($run_no+1) ;
+		$self->general_error(message => $failure_mess) unless ($missing);
+	} elsif (not(-e 'nonmem.exe' or -e 'NONMEM_MPI.exe' or -e 'nonmem_mpi.exe' or -e 'nonmem_mpi' or -e 'nonmem' or -e 'nonmem5' or -e 'nonmem6' or -e 'nonmem7' )){
+		$failure = 'It seems like the compilation failed';
+		$failure_mess="It seems like the compilation failed." ;
+
+		unless ($have_stats_runs){
+			if ($self->nmqual){
+				$failure_mess = "It seems like Fortran compilation by NMQual failed. Cannot start NONMEM.\n".
+					"Go to the NM_run".($run_no+1)." subdirectory and run psn.mod with NMQual to diagnose the problem.";
+			}else{
+				$failure_mess = "It seems like Fortran compilation by the NONMEM's nmfe script failed. Cannot start NONMEM.\n".
+					"Go to the NM_run".($run_no+1)." subdirectory and run psn.mod with NONMEM's nmfe script to diagnose the problem.";
+			}
+		}
+		$self->general_error(message => $failure_mess) unless ($have_stats_runs);
+	} elsif (not $missing and (defined $interrupted and not $interrupted)) {
+		$failure = 'NONMEM run failed';
+		$failure_mess = "NONMEM run failed. Check the lst-file in NM_run" . ($run_no+1) . " for errors";
+		$self->general_error(message => $failure_mess) unless ($have_stats_runs);
+
+	}elsif ($have_stats_runs and (-e 'OUTPUT' or -e 'output')){
+		$failure = 'NONMEM run interrupted';
+	} else{
+		if ($missing){
+			$failure = 'the lst-file does not exist in NM_run'.($run_no+1);
+			$failure_mess = 'NONMEM run failed: the lst-file does not exist in NM_run'.($run_no+1);
+			$self->general_error(message => $failure_mess) unless ($have_stats_runs);
+		}else{
+			$restart_possible = 1;
+		}
+	}
+
+	return [$failure,$failure_mess,$restart_possible];
+}
+
+sub general_error
+{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+							  message => { isa => 'Str', optional => 1 }
+		);
+	my $message = $parm{'message'};
+	open( FILE, '>>' . $self->general_error_file );
+	print FILE "\n" . $message . "\n";
+	close(FILE);
+}
+
 sub restart_needed
 {
 	my $self = shift;
@@ -1859,13 +1960,6 @@ sub restart_needed
   # (see copy_model_and_output)
 
 
-	sub general_error
-	{
-		my $message = shift;
-		open( FILE, '>>' . $self->general_error_file );
-		print FILE "\n" . $message . "\n";
-		close(FILE);
-	}
 
   
 	unless (defined $parm{'queue_info'}) {
@@ -1898,7 +1992,8 @@ sub restart_needed
 		$dirt = `ls -la 2>&1` unless ($Config{osname} eq 'MSWin32');
 		last if((-e 'stats-runs.csv') or (-e 'psn.lst') or (-e 'job_submission_error')
 				or (-e $self->general_error_file)
-				or (-e $self->nmtran_error_file));#psn.lst exists or will never appear
+				or (-e $self->nmtran_error_file)
+				or $self->run_local);#psn.lst exists or will never appear
 		sleep(6);
 	}
 
@@ -1963,7 +2058,7 @@ sub restart_needed
 			if( $output_file->parsed_successfully() and not defined $output_file->problems ) {
 				# This should not happen if we are able to parse the output file correctly
 				$run_results -> [${$tries}] -> {'failed'} = 'lst-file file exists but could not be parsed correctly';
-				general_error('lst-file file exists but could not be parsed correctly');
+				$self->general_error(message => 'lst-file file exists but could not be parsed correctly');
 				return(0);
 			}
 
@@ -1997,40 +2092,12 @@ sub restart_needed
 			$self->stop_motion_call(tool=>'modelfit',message => "psn.lst does not exist. Previous run must have failed")	    if ($self->stop_motion()> 1);
 			#we do not have any psn.lst. Cannot happen if nmfe 
 			#and overtime kill by system, at least model and NMtran mess
-			if (not (-e 'FDATA')){
-				$failure = 'File system problem or NMtran could not be initiated (the NMtran output file FDATA is missing)';
-				if ($self->run_local) {
-					$failure .= ' - check perl settings in psn.conf and perl installation';
-				}elsif (-e 'job_submission_error'){
-					open( MESS, '<job_submission_error' );
-					$failure = '';
-					$failure_mess = "Job submission error:\n";
-					while(<MESS>) {
-						chomp;
-						$failure .= $_.' ';
-						$failure_mess .= $_."\n";
-					}
-					close( MESS );
-#				general_error($failure_mess);
-				} elsif ($self->run_on_sge_nmfe) {
-					$failure .= ' - check cluster status and cluster settings in psn.conf';
-				} elsif ($self->run_on_lsf_nmfe) {
-					
-					$failure .= ' - check cluster status and cluster settings in psn.conf';
-					
-				}else{
-					$failure .= ' - check cluster status and cluster settings and remote_perl in psn.conf';
-				}
-			}elsif (not(-e 'FREPORT')){
-				$failure = 'NMtran failed';
-			}elsif (not(-e 'nonmem.exe' or -e 'nonmem' or -e 'nonmem_mpi.exe' or -e 'NONMEM_MPI.exe' or -e 'nonmem_mpi' or -e 'nonmem5' or -e 'nonmem6' or -e 'nonmem7' )){
-				$failure = 'Compilation failed';
-			}elsif (-e 'OUTPUT' or -e 'output'){
-				$failure = 'NONMEM run interrupted';
-			}else{
-				$failure = 'the lst-file does not exist';
-			}
-
+			my $ref = $self->diagnose_lst_errors(missing => 1, 
+												 run_no => $run_no,
+												 have_stats_runs => 1);
+			$failure = $ref->[0];
+			$failure_mess = $ref->[1];
+			
 			$run_results -> [${$tries}] -> {'failed'} = $failure; #different texts for different causes
 		}
 		return(0); #no restart needed when stats-runs exist
@@ -2134,55 +2201,16 @@ sub restart_needed
 			#here we do have a lst-file, but perhaps is completely empty
 			#check for signs of NMtran error, compilation error. Do not handle that as crash
 
-			if (not (-e 'FDATA')) {
-				$failure = 'File system problem or NMtran could not be initiated (the NMtran output file FDATA is missing)';
-				$failure_mess="\nFile system problem or NMtran could not be initiated (the NMtran output file FDATA is missing). There is no output for model ".($run_no+1);
-				if ($self->run_local) {
-					$failure_mess .= " It is recommended to check the perl installation, and perl settings in psn.conf." ;
-					$failure .= ' - check perl settings in psn.conf and perl installation';
-				} elsif (-e 'job_submission_error') {
-					open( MESS, '<job_submission_error' );
-					$failure = '';
-					$failure_mess = "Job submission error:\n";
-					while(<MESS>) {
-						chomp;
-						$failure .= $_.' ';
-						$failure_mess .= $_."\n";
-					}
-					close( MESS );
-					#general_error($failure_mess);
-				} elsif ($self->run_on_sge_nmfe) {
-					$failure_mess .= " It is recommended to check cluster status, and cluster settings in psn.conf." ;
-					$failure .= ' - check cluster status and cluster settings in psn.conf';
-				} elsif ($self->run_on_lsf_nmfe) {
-					$failure .= ' - check cluster status and cluster settings in psn.conf';
-				} else {
-					$failure_mess .= " It is recommended to check cluster status, and cluster settings and remote_perl in psn.conf." ;
-					$failure .= ' - check cluster status, and cluster settings and remote_perl in psn.conf';
-				}
-				ui -> print( category => 'all', message  => $failure_mess,newline => 1 );
-				$run_results -> [${$tries}] -> {'failed'} = $failure;
-				$output_file -> flush;
-				return(0);
-			} elsif (not(-e 'FREPORT')) {
-				$failure = 'NMtran failed';
-				$failure_mess="NMtran failed. There is no output for model ".($run_no+1) ;
-				general_error($failure_mess);
-				ui -> print( category => 'all', message  => $failure_mess,newline => 1 );
-				$run_results -> [${$tries}] -> {'failed'} = $failure;
-				$output_file -> flush;
-				return(0);
-			} elsif (not(-e 'nonmem.exe' or -e 'nonmem' or -e 'nonmem_mpi.exe' or -e 'NONMEM_MPI.exe' or -e 'nonmem_mpi' or -e 'nonmem5' or -e 'nonmem6' or -e 'nonmem7' )) {
-				$failure = 'Compilation failed';
-				$failure_mess="Compilation failed. There is no output for model ".($run_no+1) ;
-				ui -> print( category => 'all', message  => $failure_mess,newline => 1 );
-				$run_results -> [${$tries}] -> {'failed'} = $failure;
-				$output_file -> flush;
-				return(0);
-			} elsif (not $output_file -> lst_interrupted()) {
-				$failure = 'NONMEM run failed';
-				$failure_mess = "NONMEM run failed. Check the lst-file in NM_run" . ($run_no+1) . " for errors";
-				general_error($failure_mess);
+			my $ref = $self->diagnose_lst_errors(missing => 0,
+												 have_stats_runs => 0,
+												 parsed_successfully => 0,
+												 interrupted => $output_file -> lst_interrupted(),
+												 run_no => $run_no);
+			$failure = $ref->[0];
+			$failure_mess = $ref->[1];
+			my $restart_possible = $ref->[2];
+			
+			if (not $restart_possible){
 				ui -> print( category => 'all', message  => $failure_mess,newline => 1 );
 				$run_results -> [${$tries}] -> {'failed'} = $failure;
 				$output_file -> flush;
@@ -2444,7 +2472,7 @@ sub restart_needed
 								 newline => 0);
 				}
 				
-				my $degree = 0.1*${$tries};
+				my $do_tweak=1;
 				if ( ($round_error && $cut_thetas_rounding_errors) or ($hessian_error && $handle_hessian_npd) 
 					 or ($maxeval_error && $cut_thetas_maxevals)) {
 					#If got rid of theta omega sigma as part of handle maxevals then reset msfo fixes that
@@ -2458,10 +2486,8 @@ sub restart_needed
 					$self->stop_motion_call(tool=>'modelfit',message => "done cut_thetas")
 						if ($self->stop_motion());
 
-					if ($tweak_inits and ${$tries}>0){ #do not perturb first time, since we cut first thetas then
-						$degree = 0.1;
-					}else{
-						$degree = 0;
+					unless ($tweak_inits and ${$tries}>0){ #do not perturb first time, since we cut first thetas then
+						$do_tweak = 0;
 					}
 				}elsif( $self->handle_msfo or ($maxevals > 0)) {
 					# This code must be adjusted for multiple problems??
@@ -2472,9 +2498,11 @@ sub restart_needed
 					
 				}
 
-				if ($degree > 0){
+				if ($do_tweak){
 					foreach my $prob ( @reruns ) {
-						$problems[$prob-1] -> set_random_inits ( degree => $degree );
+						$problems[$prob-1] -> set_random_inits ( degree => $self->degree ,
+																 basic_model => $model,
+																 problem_index => ($prob-1));
 					}
 				}
 				$candidate_model->_write;
@@ -2502,13 +2530,16 @@ sub restart_needed
 			$marked_for_rerun = 1; 	
 			$queue_info_ref -> {'have_accepted_run'}=1;#would have been content now if were not for min_retries
 
-			my $degree = 0.1 * ${$tries};
 			if ($maxevals > 0) {
 				$self -> reset_msfo( basic_model => $model,
 									 candidate_model => $candidate_model );
 				
+				my $problem_index=0;
 				foreach my $prob ( @{$candidate_model -> problems} ) {
-					$prob -> set_random_inits ( degree => $degree );
+					$prob -> set_random_inits ( degree => $self->degree,
+												basic_model => $model,
+												problem_index => $problem_index);
+					$problem_index++;
 				}
 				
 				$candidate_model->_write;
@@ -2518,8 +2549,12 @@ sub restart_needed
 					if ($self->stop_motion()> 1);
 				
 			} else {
+				my $problem_index=0;
 				foreach my $prob ( @{$candidate_model -> problems} ) {
-					$prob -> set_random_inits ( degree => $degree );
+					$prob -> set_random_inits ( degree => $self->degree,
+												basic_model => $model,
+												problem_index => $problem_index);
+					$problem_index++;
 				}
 				
 				$candidate_model->_write;
@@ -2537,67 +2572,12 @@ sub restart_needed
 	} else {
 		$self->stop_motion_call(tool=>'modelfit',message => "no psn.lst at all, try to diagnose")
 			if ($self->stop_motion()> 1);
-		#we do not have any psn.lst. Cannot happen if nmfe 
-		#and overtime kill by system, at least model and NMtran mess
-		my $nmrundir = 'the model in NM_run'.($run_no+1);
-		if (not (-e 'FDATA')){
-			$failure = 'File system problem or NMtran could not be initiated (the NMtran output file FDATA is missing)';
-			$failure_mess="\nFile system problem or NMtran could not be initiated (the NMtran output file FDATA is missing). There is no lst-file for $nmrundir.";
-			if ($self->run_local) {
-				$failure_mess .= " It is recommended to check the perl installation, and perl settings in psn.conf." ;
-				$failure .= ' - check perl settings in psn.conf and perl installation';
-			}elsif (-e 'job_submission_error'){
-				open( MESS, '<job_submission_error' );
-				$failure = 'Job submission error: ';
-				$failure_mess = "Job submission error:\n";
-				while(<MESS>) {
-					chomp;
-					$failure .= $_.' ';
-					$failure_mess .= $_."\n";
-				}
-				close( MESS );
-				general_error($failure_mess);
-				
-			} elsif ($self->run_on_sge_nmfe) {
-				$failure_mess .= " It is recommended to check cluster status, and cluster settings in psn.conf." ;
-				$failure .= ' - check cluster status and cluster settings in psn.conf';
-			} elsif ($self->run_on_lsf_nmfe) {
-				$failure .= ' - check cluster status and cluster settings in psn.conf';
-			}else{
-				$failure_mess .= " It is recommended to check cluster status, and cluster settings and remote_perl in psn.conf." ;
-				$failure .= ' - check cluster status, and cluster settings and remote_perl in psn.conf';
-			}
-		}elsif (not(-e 'FREPORT')){
-			$failure = 'NMtran failed';
-			if (-e $self->nmtran_error_file){
-				$failure_mess="NMtran failed. NMtran output:\n";
-				open( MESS, '<'.$self->nmtran_error_file);
-				while(<MESS>) {
-					chomp;
-					$failure_mess .= $_."\n";
-				}
-				$failure_mess .= "Due to the NMtran errors there is no output for $nmrundir";
-			}else{
-				$failure_mess = "NMtran failed. There is no output for $nmrundir";
-				general_error($failure_mess);
-			}
-		}elsif (not(-e 'nonmem.exe' or -e 'NONMEM_MPI.exe' or -e 'nonmem_mpi.exe' or -e 'nonmem_mpi' or -e 'nonmem' or -e 'nonmem5' or -e 'nonmem6' or -e 'nonmem7' )){
-			$failure = 'Compilation failed';
-			if ($self->nmqual){
-				$failure_mess = "Fortran compilation by NMQual failed. Cannot start NONMEM.\n".
-					"Go to the NM_run".($run_no+1)." subdirectory and run psn.mod with NMQual to diagnose the problem.";
-			}else{
-				$failure_mess = "Fortran compilation by the NONMEM's nmfe script failed. Cannot start NONMEM.\n".
-					"Go to the NM_run".($run_no+1)." subdirectory and run psn.mod with NONMEM's nmfe script to diagnose the problem.";
-			}
-			general_error($failure_mess);
-		}elsif (-e 'OUTPUT' or -e 'output'){
-			$failure = 'NONMEM run interrupted';
-			$failure_mess="NONMEM run interrupted. There is no lst-file for $nmrundir";
-		}else{
-			$failure = 'the lst-file does not exist';
-			$failure_mess="There is no lst-file for $nmrundir" ;
-		}
+
+		my $ref = $self->diagnose_lst_errors(missing => 1, 
+											 have_stats_runs => 0,
+											 run_no => $run_no);
+		$failure = $ref->[0];
+		$failure_mess = $ref->[1];
 
 		ui -> print( category => 'all', message  => $failure_mess,newline => 1 );
 	} # Did the lst file exist?
