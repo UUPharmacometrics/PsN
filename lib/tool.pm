@@ -949,44 +949,6 @@ sub setup
 	}
 }
 
-sub log_object
-{
-	my $self = shift;
-
-  open( OLOG, '>',$self->directory . 'object.txt' );
-  $Data::Dumper::Maxdepth = 1;
-  print OLOG Dumper $self;
-  $Data::Dumper::Maxdepth = 0;
-  close( OLOG );
-}
-
-sub read_log
-{
-	my $self = shift;
-	my $found_log = 0;
-	my $found_tool_id = 0;
-
-  if( -e $self->directory . 'object.txt' ) {
-    $found_log = 1;
-    open( OLOG, '<'.$self->directory . 'object.txt' );
-    my @olog = <OLOG>;
-    my $str = "(";
-    for ( my $i = 1; $i < $#olog; $i++ ) {
-      $str = $str.$olog[$i];
-    }
-    $str = $str.")";
-    my %tmp = eval( $str );
-    
-    if( exists $tmp{'tool_id'} ) {
-      $self->tool_id($tmp{'tool_id'});
-      $found_tool_id = 1;
-    }
-    close( OLOG );
-  }
-
-	return $found_log ,$found_tool_id;
-}
-
 sub harvest_output
 {
 	my $self = shift;
