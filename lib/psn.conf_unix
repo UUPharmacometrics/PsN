@@ -78,9 +78,6 @@ job_polling_interval=1
 ; less often.
 polls_per_moshog_request=5
 
-; The following line is LSF/SGE/ZINK/TORQUE options.
-;remote_perl=some_path_to_a_perl_binary_working_on_remote_hosts
-
 ; The following lines are TORQUE options.
 ;run_on_torque=1
 ;torque_queue=<string>  ; Torque queue name

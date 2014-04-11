@@ -290,9 +290,8 @@ if (defined $options{'rawres_input'}){
 													  directory => $main_directory,
 													  target => 'mem');
 		my @problems = @{$retry_mod -> problems};
-		my $degree = 0.1;
 		foreach my $prob ( @problems ) {
-			$prob -> set_random_inits ( degree => $degree );
+			$prob -> set_random_inits ( degree => $options{'degree'} );
 		}
 		$retry_mod -> _write();
 		push(@{$mod_array},$retry_mod);

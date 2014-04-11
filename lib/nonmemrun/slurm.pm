@@ -109,7 +109,7 @@ $command
 EOF
 ");
 		chomp($outp);
-		#write error to job_submission_error instead, set jobid to -1, and continue?
+
 		if ($outp =~ /Submitted batch job (\d+)/) {
 			$jobId = $1;
 			last;
