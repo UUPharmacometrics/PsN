@@ -831,6 +831,10 @@ sub sample_multivariate_normal
 				}elsif($xvec->[$i] >= $upper_bound->[$i]){
 					$accept=0;
 					last;
+				}elsif($xvec->[$i] == 0){
+					#unlikely, but must handle 
+					$accept=0;
+					last;
 				}
 			}
 			next unless $accept;
