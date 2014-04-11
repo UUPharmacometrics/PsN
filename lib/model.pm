@@ -1,7 +1,6 @@
 package model;
 
 use include_modules;
-use Digest::MD5 'md5_hex';
 use Cwd;
 use File::Copy 'cp';
 use Config;
@@ -106,7 +105,6 @@ on, they are read and parsed and the appropriate attributes
 of the data and output objects are set.
 
 =cut
-#use Carp qw(longmess);
 
 has 'problems' => ( is => 'rw', isa => 'ArrayRef[model::problem]' );
 has 'datas' => ( is => 'rw', isa => 'Maybe[ArrayRef[data]]', clearer => 'clear_datas', trigger => \&_datas_set );
@@ -284,7 +282,6 @@ sub BUILD
 		push( @{$this->iofv_modules}, $iofv_module );
 	}
 }
-
 
 sub create_maxeval_zero_models_array
 {
@@ -543,7 +540,6 @@ sub _target_set
 	  $self->synchronize;
 	}
 }
-
 
 sub add_iofv_module
 {
@@ -3106,7 +3102,6 @@ sub add_randomized_columns
 	return \@xcolumn_names;
 }
 
-
 sub update_inits
 {
 	my $self = shift;
@@ -4864,7 +4859,6 @@ sub flush
 	$self->synced(0);
 }
 
-
 sub update_prior_information
 {
 	my $self = shift;
@@ -5275,7 +5269,6 @@ sub _init_attr
 
 	return \@parameter_values;
 }
-
 
 sub create_dummy_model
 {

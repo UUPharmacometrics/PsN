@@ -1,9 +1,7 @@
 package output;
 
 # A Perl module for parsing NONMEM output files
-#use Carp;
 use include_modules;
-use Digest::MD5 'md5_hex';
 use OSspecific;
 use Storable;
 use Config;
@@ -1162,8 +1160,6 @@ sub initthetas
 	return \@initthetas;
 }
 
-
-
 sub omega_indexes
 {
 	my $self = shift;
@@ -1799,7 +1795,6 @@ sub inverse_covariance_matrix
     # Level:  Sub problem
 	return \@inverse_covariance_matrix;
 }
-
 
 sub raw_cormatrix
 {
