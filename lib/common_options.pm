@@ -22,6 +22,7 @@ Getopt::Long::config("auto_abbrev");
 		  "condition_number_limit:f",
 		  "correlation_limit:f",
 		  "crash_restarts:i",
+				  "degree:f",
 		  "directory:s",
 		  "display_iterations!",
 		  "email_address:s",
@@ -60,10 +61,8 @@ Getopt::Long::config("auto_abbrev");
 		  "retries:i",
 		  "run_on_lsf!",
 		  "run_on_mosix!",
-		  "run_on_lsf_nmfe!",
 		  "run_on_ud!",
 		  "run_on_sge!",
-		  "run_on_sge_nmfe!",
 		  "run_on_slurm!",
 		  "run_on_torque!",
 		  "run_on_zink!",
@@ -252,30 +251,17 @@ sub sanity_checks {
   my $tool = shift;
 
 
-  if($options -> {'run_on_lsf_nmfe'}){
-    if($options -> {'run_on_lsf'}){
-      my $mes = "options -run_on_lsf_nmfe and -run_on_lsf cannot both be set.\n";
-      croak($mes);
-    }
-    $options -> {'nmfe'}=1;
-  }
-  if(($options -> {'run_on_sge_nmfe'})){
-    $options -> {'nmfe'}=1;
-  }
-  if(($options -> {'run_on_slurm'})){
-    $options -> {'nmfe'}=1;
+  if (defined $options->{'degree'}){
+	  if ($options->{'degree'} <=0 or $options->{'degree'}>=1){
+		  my $mes = "option degree must be larger than 0 and smaller than 1.\n";
+		  croak($mes);
+	  }
   }
 
-  if(($options -> {'nmfe'}) and ($options -> {'nmqual'})){
-    my $mes = "options -nmqual and -nmfe cannot both be set. Note that -nmfe is set automatically\n".
-	"if run_on_sge_nmfe/run_on_slurm/run_on_lsf_nmfe is set, meaning that these options are\n".
-	"also incompatible with -nmqual.\n";
-    croak($mes);
-  }
 
   unless ($options -> {'nmfe'} or $options -> {'nmqual'}){
-      my $mes = "PsN requires that either -nmfe or -nmqual is set.\n";
-      croak($mes);
+	  #assume user wants nmfe
+	  $options -> {'nmfe'} = 1;
   }
 
 
@@ -305,11 +291,7 @@ sub sanity_checks {
   if( defined $options -> {'tbs_lambda'} and (not defined $options-> {'dtbs'} or (not $options->{'dtbs'}))){
     $options -> {'tbs'}=1;
   }
-  if( $options -> {'run_on_sge_nmfe'} ){
-    if( $options -> {'run_on_sge'} ){
-      die "You cannot set both run_on_sge and run_on_sge_nmfe";
-    }
-  }
+
   if( $options -> {'run_on_slurm'} ){
     if( $options -> {'run_on_sge'} ){
       die "You cannot set both run_on_sge and -run_on_slurm";
@@ -387,7 +369,7 @@ sub sanity_checks {
 	  "execution is likely to fail.\n\n";
       print "$mes";
   }
-  if($options -> {'run_on_lsf_nmfe'} or $options -> {'run_on_lsf'}){
+  if($options -> {'run_on_lsf'}){
     #check set options contain characters, no space only commands
     if (defined $options -> {'lsf_job_name'}){
       $options -> {'lsf_job_name'} = undef 
@@ -429,12 +411,16 @@ sub sanity_checks {
 
   if (defined $options->{'nmfe_options'}) {
  		if ($options->{'nmfe_options'} =~ /\w+,\w+/) {
-			carp("Note that PsN will no longer take a comma separated list for nmfe_options. The argument is now added as it is to the nmfe call.");
+			print "\nWarning: You have set -nmfe_options=".$options->{'nmfe_options'}." on the commandline or in psn.conf\n";
+			print "This does not look like valid options to the nmfe script.\n";
+			print "Note that PsN4 will pass them on unchanged to the nmfe script, for help use\nexecute -help nmfe_options\n\n";
 		} else {
 			my @options_list = qw(background prsame prdefault prcompile trskip xmloff);
 			foreach $opt (@options_list) {
 				if ($options->{'nmfe_options'} =~ /\A$opt\Z/) {
-					carp("Note that PsN will no longer take a comma separated list for nmfe_options. The argument is now added as it is to the nmfe call.");
+					print "\nWarning: You have set -nmfe_options=".$options->{'nmfe_options'}." on the commandline or in psn.conf\n";
+					print "This does not look a valid option to the nmfe script (the - sign is missing).\n";
+					print "Note that PsN4 will pass this on unchanged to the nmfe script, for help use\nexecute -help nmfe_options\n\n";
 				}
 			}
 		}
@@ -477,17 +463,17 @@ sub sanity_checks {
       }
       
       unless ($options -> {'nmfe'} or $options->{'nmqual'}){
-	print "If option parafile is set then option nmfe or nmqual".
-	    " must also be set.\n";
-	exit;
+		  print "If option parafile is set then option nmfe or nmqual".
+			  " must also be set.\n";
+		  exit;
       }
       #   #check that nodes is not greater than number of names defined in parafile.
       #   #Then reset nodes and print warning
       #   open( FILE,  $options -> {'parafile'}) ||
-
+	  
     }else{
-      print "Parafile ".$options -> {'parafile'}." does not exist.\n";
-      exit;
+		print "Parafile ".$options -> {'parafile'}." does not exist.\n";
+		exit;
     }
     
   }
@@ -646,23 +632,24 @@ EOF
     <p class="style2">-nmfe</p>
     Invoke NONMEM via the nmfe script (or a custom wrapper) from within PsN. 
     Unless option -nmqual is set, option -nmfe is required, however -nmfe is 
-	set automatically if the user sets e.g. run_on_sge_nmfe, 
-    run_on_lsf_nmfe or run_on_slurm. Also, -nmfe is set in the default configuration file.
+	set automatically if the user sets e.g.
+    run_on_slurm. Also, -nmfe is set in the default configuration file.
 
 EOF
     $help_hash{-nmfe_options} = <<'EOF';
     <p class="style2">-nmfe_options='options for nmfe'</p>
     Only relevant if NONMEM7.2 or later is used.
-    A comma-separated list of options that will be passed on to nmfe.
-    The options must be given without the - (PsN will add them), i.e.
-    PsN option -nmfe_options=prsame,xmloff will append
-    -prsame -xmloff
-    to the nmfe call.
-    PsN will not check that the options are appropriate given existing 
-    compiled files and properties of the model and data, nor check that
-    the option is one that will be recognized by nmfe.
-    It is possible to set -nmfe_options=licfile=somenewlicfile.lic but 
-    then the user must also set -extra_files=somenewlicfile.lic. Same for nmexec. 
+    The text set with this option will be copied verbatim to the nmfe script call. 
+    PsN will not check that the options are appropriate. When set on the PsN commandline 
+    the string must be enclosed by quotes if it contains any spaces, but when set in 
+    psn.conf it must never be enclosed by quotes even if it contains spaces. 
+    Note that before PsN4 this option was given as a comma-separated list of options 
+    that PsN would reformat. What would for PsN3 be specified as 
+    -nmfe_options=xmloff,prdefault
+    must now for PsN4 be specified on the commandline as 
+    -nmfe_options='-xmloff -prdefault'
+    or in psn.conf 
+    nmfe_options=-xmloff -prdefault
 EOF
 
     $help_hash{-nmqual_xml} = <<'EOF';
@@ -811,7 +798,7 @@ EOF
     $help_hash{-lsf_queue} = <<'EOF';
     <p class="style2">-lsf_queue='string'</p>
     <span class="style2">lsf_queue</span> specifies which LSF queue PsN should submit NONMEM runs 
-    to and is used in conjuction with -run_on_lsf/-run_on_lsf_nmfe
+    to and is used in conjuction with -run_on_lsf
 EOF
 
     $help_hash{-min_retries} = <<'EOF';
@@ -920,12 +907,6 @@ EOF
     PsN connects with Platform Load Sharing Facility (LsF). With 
     <span class="style2">-run_on_lsf</span>. PsN will submit to the queue defined in "psn.conf" 
     unless specified with <span class="style2">-lsf_queue</span>.
-EOF
-    $help_hash{-run_on_lsf_nmfe} = <<'EOF';
-    <p class="style2">-run_on_lsf_nmfe</p>
-    PsN connects with Platform Load Sharing Facility (LsF).
-    Unlike when run_on_lsf is set, with this option PsN will submit nmfe directly with bsub,
-    instead of calling nonmem.pm.
 EOF
 
     $help_hash{-run_on_mosix} = <<'EOF';
@@ -1124,16 +1105,6 @@ EOF
     Use Sun Grid Engine queueing system.
 EOF
 
-    $help_hash{-run_on_sge_nmfe} = <<'EOF';
-    <p class="style2">-run_on_sge_nmfe</p>
-    Default not used. A slimmed down alternative to setting -run_on_sge and 
-    -nmfe in combination. With this option set, the qsub command will be on 
-    nmfe directly, instead of on 'perl nonmem.pm' which in turns calls nmfe. 
-    This removes much overhead (no perl process submitted with qsub) at the 
-    cost of some of PsN:s error handling implemented in the nonmem.pm module. 
-    Setting this option bypasses nonmem.pm completely. The options -sge_queue, 
-    -sge_resource and -sge_prepend_flags work the same way as with run_on_sge.
-EOF
 
     $help_hash{-run_on_torque} = <<'EOF';
     <p class="style2">-run_on_torque</p>
@@ -1159,17 +1130,17 @@ EOF
 
     $help_hash{-sge_resource} = <<'EOF';
     <p class="style2">-sge_resource='string'</p>
-    Only valid with -run_on_sge or -run_on_sge_nmfe. Maps to qsub option -l
+    Only valid with -run_on_sge. Maps to qsub option -l
 EOF
 
     $help_hash{-sge_queue} = <<'EOF';
     <p class="style2">-sge_queue='string'</p>
-    Only valid with -run_on_sge or -run_on_sge_nmfe. Maps to qsub option -q
+    Only valid with -run_on_sge. Maps to qsub option -q
 EOF
 
     $help_hash{-sge_prepend_flags} = <<'EOF';
     <p class="style2">-sge_prepend_flags='string'</p>
-    Only valid with -run_on_sge or -run_on_sge_nmfe. The - signs must be included in the 
+    Only valid with -run_on_sge. The - signs must be included in the 
     string. The extra flags will be prepended to standard set in qsub call.
 
 EOF
