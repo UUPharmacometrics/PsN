@@ -120,6 +120,15 @@ EOF
 
 common_options::online_help('parallel_retries', \%options,\%help_text, \%required_options, \%optional_options);
 
+unless (defined $options{'degree'}){
+	my %hash = %{common_options::restore_options(@common_options::tool_options)};
+	if (defined $hash{'degree'}){
+		$options{'degree'} = $hash{'degree'};
+	}else{
+		$options{'degree'} = 0.1;
+	}
+}
+
 ## Set the automatic renaming of modelfit directory
 if ( !$options{'directory'} && $options{'model_dir_name'} ) {
  

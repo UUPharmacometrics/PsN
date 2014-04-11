@@ -1191,6 +1191,13 @@ EOF
     <p class="style2">-precision='integer'</p>
     Precision in sumo output.
 EOF
+    $help_hash{-degree} = <<'EOF';
+    <p class="style2">-degree=number</p>
+	When tweaking initial estimates in retries/parallel_retries, this number decides the range for the 
+    new estimates. The new number will be within 'degree'*oldinitial from the old initial estimate,
+	unless restricted by upper or lower boundaries.
+    A number larger than 0 and smaller than 1. Default 0.1.
+EOF
 
     $help_hash{-extra_output} = <<'EOF';
     <p class="style2">-extra_output='file1,file2'</p>

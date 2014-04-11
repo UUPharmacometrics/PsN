@@ -324,7 +324,14 @@ After all retries have finished, PsN will select the best. If picky option was s
 
 \begin{optionlist}
 \optname{tweak\_inits}
-Default used, can be disabled with -no-tweak\_inits. If NONMEM terminates nonsuccessfully, PsN can perturb the initial estimates and run NONMEM again. The generation of new initial estimates init\_i for the i:th retry are performed according to init\_i = init\_0 + rand\_uniform(+-0.1*i*init\_0)where init\_0 are the initial estimates of the original run. The updating procedure makes sure that boundary conditions on the parameters are still valid. For this option to have effect, the -retries option must be set to a number larger than zero. 
+Default used, can be disabled with -no-tweak\_inits. If NONMEM terminates nonsuccessfully, PsN can perturb the initial estimates and run NONMEM again. The generation of new initial estimates init\_i for the i:th retry are performed according to init\_i = init\_0 + rand\_uniform(+-degree*i*init\_0)where init\_0 are the initial estimates of the original run
+and degree is set with option -degree, see below. 
+The updating procedure makes sure that boundary conditions on the parameters are respected. 
+For this option to have effect, the -retries option must be set to a number larger than zero. 
+\nextopt
+\optdefault{degree}{'number'}
+Default 0.1. A number larger than 0 and smaller than 1. This number decides how big the perturbation will
+be in tweak\_inits.
 \nextopt
 \optdefault{retries}{'integer'}
 Default 0. The -retries option tells PsN how many times it shall try to rerun a NONMEM job if it fails according to given criterias. The -retries option is only valid together with -tweak\_inits. 
