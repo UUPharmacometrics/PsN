@@ -8,7 +8,7 @@
 use strict;
 use warnings;
 use File::Path 'rmtree';
-use Test::More tests=>12;
+use Test::More tests=>13;
 use List::Util qw(first);
 use Config;
 use FindBin qw($Bin);
@@ -28,7 +28,9 @@ my @a;
 my @shrinking_results = (40.5600924453085, -0.185810314125491, 89.4892871889343);		# Calculated with PsN-3.6.2 on Doris
 my @shrinking_headings = ('shrinkage_eta1(%)', 'shrinkage_eta2(%)', 'shrinkage_iwres(%)');
 
-my @command_line = ($includes::execute." $tempdir/pheno.mod -shrinkage -directory=$dir",
+my @command_line = (
+	$includes::execute." $tempdir/pheno.mod -shrinkage -directory=$dir",
+	$includes::execute." $tempdir/pheno.mod -min_retries=2 -directory=$dir",
 	$includes::execute." $model_dir/tbs1.mod -tbs  -directory=$dir", #prop
 	$includes::execute." $model_dir/tbs1.mod -dtbs  -directory=$dir", #prop
 	$includes::execute." $model_dir/tbs1a.mod -tbs  -directory=$dir", #add
