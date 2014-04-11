@@ -788,28 +788,59 @@ sub set_random_inits
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 degree => { isa => 'Num', default => 0.1, optional => 1 }
+		 degree => { isa => 'Num', default => 0.1, optional => 1 },
+		 basic_model => { isa => 'model', optional => 1 },
+		 problem_index => { isa => 'Int', default => 0, optional => 1 }
 	);
 	my $degree = $parm{'degree'};
+	my $basic_model = $parm{'basic_model'};
+	my $problem_index = $parm{'problem_index'};
 
-	if ( defined $self->thetas ) {
-	  foreach my $theta ( @{$self->thetas} ) {
-	    $theta -> set_random_inits( degree => $degree );
-	  }
-	}
-	if ( defined $self->omegas ) {
-	  foreach my $omega ( @{$self->omegas} ) {
-	    $omega -> set_random_inits( degree => $degree );
-	  }
-	}
-	if ( defined $self->sigmas ) {
-	  foreach my $sigma ( @{$self->sigmas} ) {
-	    $sigma -> set_random_inits( degree => $degree );
-	  }
+	if (($degree >= 1) or ($degree <= 0)){
+		croak("Illegal input to set_random_inits, degree $degree is not between 0 and 1");
 	}
 
-	$self->ensure_diagonal_dominance();
+	my $bound_problem;
+	if (defined $basic_model){
+		if (defined $basic_model->problems and defined $basic_model->problems->[$problem_index]){
+			$bound_problem = $basic_model->problems->[$problem_index];
+		}else{
+			croak("bug in problem->set_random_inits: basic_model does not match update model");
+		}
+	}
+
+	foreach my $param ('theta','omega','sigma'){
+		my $accessor=$param.'s';
+		my $nrec = 0;
+		if (defined $self -> $accessor) {
+			$nrec = scalar(@{$self -> $accessor});
+		}
+
+		next unless ( $nrec > 0); #no parameter in this problem
+		if (defined $bound_problem){
+			unless (defined $bound_problem->$accessor and scalar(@{$bound_problem->$accessor})==$nrec){
+				croak("bug in problem->set_random_inits: basic_model does not match update model $param");
+			}
+		}
+		for (my $i=0; $i< $nrec; $i++){
+			my $record = $self->$accessor->[$i];
+			if  ($record->same() or $record->fix() or $record->prior()) {
+				next;
+			}
+			unless (defined $record -> options()) {
+				croak("$param record has no values in set_random_inits");
+			}
+
+			if (defined $bound_problem){
+				$record -> set_random_inits(degree => $degree,
+											bound_record => $bound_problem->$accessor->[$i]);
+			}else{
+				$record -> set_random_inits(degree => $degree);
+			}
+		}
+	}
 }
+
 
 sub record_count
 {

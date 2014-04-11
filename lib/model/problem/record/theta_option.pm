@@ -8,6 +8,36 @@ extends 'model::problem::record::init_option';
 has 'upbnd' => ( is => 'rw', isa => 'Maybe[Str]' );
 has 'lobnd' => ( is => 'rw', isa => 'Maybe[Str]', default => '-1000000' );
 
+
+sub get_range
+{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+		 degree => { isa => 'Num', optional => 0 },
+	);
+	#helper routine to set_random_inits
+	my $degree = $parm{'degree'};
+	if (($degree >= 1) or ($degree <= 0)){
+		croak("Illegal input to theta_option->get_range, degree $degree is not between 0 and 1");
+	}
+	my $low = $self->init - abs($degree *$self->init) ;
+	if (defined $self->lobnd and $low <= $self->lobnd){
+		$low = $self->lobnd + (1e-10);
+	}elsif($low <= -1000000){
+		$low = -1000000+1;
+	}
+	my $high = $self->init + abs($degree *$self->init) ;
+	if (defined $self->upbnd
+		and $high >= $self->upbnd){
+		$high = $self->upbnd - (1e-10);
+	}elsif ($high >= 1000000){
+		$high = 1000000-1;
+	}
+	return [$low,$high];
+
+}
+
+
 sub _format_option
 {
 	my $self = shift;

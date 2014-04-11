@@ -35,66 +35,32 @@ sub restore_init
 		if ( defined $self->stored_init );
 }
 
-sub set_random_init
+sub get_range
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 degree => { isa => 'Num', default => 0.1, optional => 1 }
+		 degree => { isa => 'Num', optional => 0 },
 	);
+	#helper routine to set_random_inits
 	my $degree = $parm{'degree'};
+	if (($degree >= 1) or ($degree <= 0)){
+		croak("Illegal input to theta_option->get_range, degree $degree is not between 0 and 1");
+	}
 
-	# Degree is 0.1*n where n is the retry number.
+	my $low = $self->init - abs($degree *$self->init) ;
+	if($self->on_diagonal and $low <= 0){
+		$low = 1e-10; #should not end up here if init>0 and sensible degree
+	}elsif ((not $self->on_diagonal) and $low < -0.01){
+		$low = -0.01;
+	}
+	my $high = $self->init + abs($degree *$self->init) ;
+	if($self->on_diagonal and $high >= 1000000){
+		$high = 1000000  - 1;
+	}elsif ((not $self->on_diagonal) and $high > 0.01){
+		$high = 0.01;
+	}
 
-	my ( $sign, $est, $form );
-	unless ( $self->fix or ($self->init == 0) ) {
-
-
-		my $lobnd;
-		if ($self->can('lobnd')) {
-			# This is a theta
-			$lobnd = $self->lobnd;
-		} elsif (defined $self->on_diagonal and $self->on_diagonal) {		# This is an omega or a sigma off diagonal
-			$lobnd = 0;
-		}
-
-		my $upbnd;
-		if ($self->can('upbnd')) {
-			$upbnd = $self->upbnd;
-		}
-
-
-		my $init  = $self->init;
-	  my $change = abs($degree*$init);
-
-	  if ( defined $lobnd ) {
-	    $lobnd = $init-$change < $lobnd ? $lobnd : $init-$change;
-	  } else {
-	    $lobnd = $init-$change;
-	  }
-	  if ( defined $upbnd ) {
-	    $upbnd = $init+$change > $upbnd ? $upbnd : $init+$change;
-	  } else {
-	    $upbnd = $init+$change;
-	  }
-	  $lobnd = 0.01 if ( ( $lobnd < 0.01 and $lobnd > -0.01) and $upbnd >= 0.01001 );
-	  $upbnd = -0.01 if ( ( $upbnd < 0.01 and $upbnd > -0.01) and $lobnd <= -0.01001 );
-	  
-	  
-	  if ( $lobnd <= -0.01 and $upbnd >= 0.01 ) {
-	    $est = random_uniform(1, $lobnd + 0.02, $upbnd);
-	    $est = $est - 0.02 if ( $est <0.01 );
-	  } else {
-	    $est = random_uniform(1, $lobnd, $upbnd ); #bug
-	  }
-	  $form  = "%6.4f" if $est < 1000 and $est > -999;
-	  $form  = "%6.1f" if $est >= 1000 or $est <=-999;
-	  $self->init(sprintf $form, $est);
-	  if ($self->init == 0) { 
-	    $self->init('0.0001');
-	  }
-	} else {
-	  carp("Init is FIXED or zero, leaving it unchanged" );
-	}                                                                         
+	return [$low,$high];
 }
 
 sub check_and_set_init

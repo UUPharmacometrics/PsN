@@ -2,7 +2,8 @@ package model::problem::init_record;
 #use Carp;
 use include_modules;
 use model::problem::record::init_option;
-
+use linear_algebra;
+use Math::Random;
 use Moose;
 use MooseX::Params::Validate;
 
@@ -46,16 +47,81 @@ sub set_random_inits
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 degree => { isa => 'Num', default => 0.1, optional => 1 }
+		 degree => { isa => 'Num', default => 0.1, optional => 1 },
+		 bound_record => { isa => 'model::problem::init_record', optional => 1 }
 	);
+	#theta.pm has overloaded set_random_inits. This one is only for omega sigma
 	my $degree = $parm{'degree'};
+	my $bound_record = $parm{'bound_record'};
 
-	if ( defined $self -> options and not $self->same and not $self->fix and not $self->prior) {
-	  foreach my $option ( @{$self -> options} ){
-	    $option -> set_random_init( degree => $degree )
-		unless ($option->prior());
-	  }
+	if (($degree >= 1) or ($degree <= 0)){
+		croak("Illegal input to init_record->set_random_inits, degree $degree is not between 0 and 1");
 	}
+
+	return if ($self->fix or $self->prior or $self->same);
+
+	unless (defined $bound_record){
+		$bound_record = $self;
+	}
+	my $do_cholesky=0;
+	if ($self->type eq 'BLOCK' and (defined $self->size) and $self->size > 1){
+		$do_cholesky=1;
+	}
+	my $nopt = scalar(@{$bound_record->options});
+	unless (defined $self->options and scalar(@{$self->options})==$nopt){
+		croak("bug in init_record->set_random_inits: bound_record does not match self" );
+	}
+	for (my $attempt=0; $attempt=100; $attempt++){
+		my $matrix=[];
+		if ($do_cholesky){
+			for (my $k=0; $k< $self->size; $k++){
+				push(@{$matrix},[(0) x $self->size]);
+			}
+		}
+		my $row=0;
+		my $col=0;
+		for (my $j=0; $j< $nopt; $j++){
+			my $option = $bound_record->options->[$j];
+			if ($option->fix or $option->prior){
+				croak("bug in init_record, fix/prior option in not fix record");
+			}
+			if ($option->init == 0){
+				$col++;
+				if ($col>$row){
+					$row++;
+					$col=0;
+				}
+				next;
+			}
+			my $range = $option->get_range(degree => $degree);
+
+			my $val;
+			for (my $k=0; $k<1000; $k++){
+				$val = random_uniform(1, $range->[0], $range->[1] );
+				last unless ($val == 0);
+			}
+			if ($do_cholesky){
+				$matrix->[$row]->[$col]=$val;
+				$matrix->[$col]->[$row]=$val;
+				$col++;
+				if ($col>$row){
+					$row++;
+					$col=0;
+				}
+			}
+			$self->options->[$j]->check_and_set_init(new_value=>$val);
+		}#end loop over options
+		my $accept=1;
+		if ($do_cholesky){
+			#if get numerical error on cholesky then do not accept
+			my $err = linear_algebra::cholesky($matrix );
+			if ($err == 1){
+				$accept = 0;
+			}
+		}
+		last if $accept;
+	} #end loop attempts
+
 }
 
 sub _read_options
