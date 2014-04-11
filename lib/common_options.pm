@@ -845,9 +845,10 @@ EOF
     estimates and run NONMEM again. The generation of new initial
     estimates init_i for the i:th retry are performed according to
 
-    init_i = init_0 + rand_uniform(+-0.1*i*init_0)
+    init_i = init_0 + rand_uniform(+-degree*init_0)
 
-    where init_0 are the initial estimates of the original run. The
+    where init_0 are the initial estimates of the original run and
+	degree is set with option degree. The
     updating procedure makes sure that boundary conditions on the
     parameters are still valid. For this option to have effect, the
     -retries option must be set to number larger than zero. The
