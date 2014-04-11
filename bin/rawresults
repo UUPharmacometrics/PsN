@@ -27,10 +27,12 @@ use File::Path 'rmtree';
 
 my %options;
 
-my %required_options = ( "path:s" => undef);
-my %optional_options = ("outfile:s" => undef,
-						"help" => undef,
-						"h" => undef
+my %required_options = ();
+my %optional_options = (
+	"path:s" => undef,
+	"outfile:s" => undef,
+	"help" => undef,
+	"h" => undef
 	);
 
 my $res = GetOptions( \%options,
@@ -78,7 +80,7 @@ EOF
 
 $help_text{-path} = <<'EOF';
     <p class="style2">-path='string'</p>
-    The directory that holds the model files and lst-files
+    The directory that holds the model files and lst-files. Default current directory.
 EOF
 
 
@@ -100,8 +102,7 @@ my @models_array;
 
 my $path = $options{'path'};
 unless (defined $path){
-	print "please specify path to .mod-files\n" ;
-	exit;
+	$path = '.';
 }
 if (defined $options{'outfile'} and -e $options{'outfile'}){
 	print "outfile ".$options{'outfile'}." already exists. Please rename, remove, or choose another outfile name\n";
@@ -109,7 +110,7 @@ if (defined $options{'outfile'} and -e $options{'outfile'}){
 }
 
 my $sse = 0;
-if ((-e $path.'/mc-orig-1.mod') or (-e $path.'mc-alt_1-1.mod')){
+if ((-e $path.'/mc-orig-1.mod') or (-e $path.'/mc-alt_1-1.mod')){
 	$sse =1;
 } 
 
