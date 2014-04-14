@@ -82,8 +82,17 @@ sub set_random_inits
 		my $col=0;
 		for (my $j=0; $j< $nopt; $j++){
 			my $option = $bound_record->options->[$j];
-			if ($option->fix or $option->prior){
-				croak("bug in init_record, fix/prior option in not fix record");
+			if ($option->fix ){
+				#this can happen if diagonal omega/sigma, there options are fix/unfix individually
+				if ($self->type eq 'BLOCK'){
+					print "";
+				}
+				$col++;
+				if ($col>$row){
+					$row++;
+					$col=0;
+				}
+				next;
 			}
 			if ($option->init == 0){
 				$col++;
