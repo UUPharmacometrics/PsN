@@ -29,7 +29,7 @@ foreach my $file (@needed) {
 chdir($bootdir);
 my @scmcommands = 
 	(
-	 $includes::boot_scm." -samples=2 scm_config.scm -dummy_cov=WGT -dir=$dir",
+	 $includes::boot_scm." -samples=2 scm_config.scm -dummy_cov=WGT -stratify_on=CVD1 -dir=$dir",
 	);
 foreach my $command (@scmcommands){
 	print "Running $command\n";

@@ -95,7 +95,7 @@ EOF
 EOF
 
     $help_text{-stratify_on} = <<'EOF';
-      <p class="option">-stratify_on=integer|string</p>
+      <p class="option">-stratify_on=string</p>
 
       It may be necessary to use stratification in the resampling
       procedure. For example, if the original data consists of two
@@ -105,12 +105,8 @@ EOF
       procedure to resample within the two groups, producing bootstrap
       data sets that all contain 10 rich + 90 sparse data patients but
       with different compositions. The default is not to use
-      stratification. Set -stratify_on to
-      the column that defines the two groups, either the column number
-	  (numbering starts with 1) or the name of the column.
-      Important: Make sure that the headers found in the 
-	  dataset match the headers in $INPUT of the model, otherwise boot_scm
-	  might use the wrong column for stratification.
+      stratification.  Set -stratify_on to
+      the column (the name in INPUT in the model) that defines the two groups.
 EOF
 
 $help_text{-samples} = <<'EOF';
@@ -706,11 +702,31 @@ if ((not $config_file->linearize) or $options{'methodA'}){
 }
 
 
+my $stratify_on;
+if (defined $options{'stratify_on'} ) {
+	my $found=0;
+	# must be string
+	my $counter = 1;
+	foreach my $opt (@{$model->problems->[0]->inputs->[0]->options()}){
+		if ($opt->name() eq $options{'stratify_on'}){
+			$stratify_on = $counter;
+			$found=1;
+			last;
+		}
+		$counter++;
+	}
+	unless ($found){
+		die("Could not find any column with name ".$options{'stratify_on'}." in \$INPUT of the model, ".
+			  "set with option -stratify_on");
+	}
+}
+
+
 chdir($main_directory);
 my ( $new_datas, $incl_ids, $incl_keys )
     = $the_data -> bootstrap( directory   => $modeldir,
 							  name_stub   => 'bsdata',
-							  stratify_on => $options{'stratify_on'}, 
+							  stratify_on => $stratify_on, 
 							  samples     => $options{'samples'},
 							  target	     => 'disk',
 							  subjects =>{'default'=>($the_data -> count_ind)});
