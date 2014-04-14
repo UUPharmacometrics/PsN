@@ -35,7 +35,7 @@ foreach my $command (@scmcommands){
 	print "Running $command\n";
 	my $rc = system($command);
 	$rc = $rc >> 8;
-	print "L\n"; #Something is fishy when test harness runs this test. To print something extra here fixes it.	
+	print "\n"; #Something is fishy when test harness runs this test. To print something extra here fixes it.	
 	ok ($rc == 0, "$command, should run ok");
 	rmtree(["./$dir"]);
 }
