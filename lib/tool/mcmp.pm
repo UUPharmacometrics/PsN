@@ -365,6 +365,7 @@ sub modelfit_setup
 												  ' NOPRINT NOAPPEND ONEHEADER FILE='.
 												  $simulated_file ] );
 		$sim_model -> _write( write_data => 1 );
+
 		my $mod_sim = tool::modelfit -> new( %{common_options::restore_options(@common_options::tool_options)},
 											 top_tool         => 0,
 											 models           => [$sim_model],
@@ -511,6 +512,13 @@ sub modelfit_setup
 
 	#set filename/dir to m1, set extra_output iotab eller phi
 	#_write
+	my %hash = %{common_options::restore_options(@common_options::tool_options)};
+	my $nmoutopt = $hash{'nm_output'};
+	if (defined $nmoutopt and length($nmoutopt)>0){
+		$nmoutopt .= ',phi'; #ok to append even if there already
+	}else{
+		$nmoutopt .= 'phi';
+	}
 
 	$self->tools([]) unless (defined $self->tools);
 	push( @{$self -> tools},
@@ -524,6 +532,7 @@ sub modelfit_setup
 			   raw_results           => undef,
 			   prepared_models       => undef,
 			   top_tool              => 0,
+			   nm_output => $nmoutopt,
 			   prepend_model_file_name => 1,
 			   data_path =>'../../m'.$model_number.'/',
 		  ) );
@@ -564,6 +573,27 @@ sub modelfit_analyze
 	}
 
 	my $n_critical = scalar(@{$self->critical_array});
+
+
+	if (-e $self->results_file()){
+		my $fname = $self->results_file();
+		$fname =~ s/\.csv$// ;
+
+		my $addnum=1;
+		while (-e $self->directory."/$fname"."-old$addnum".'.csv'){
+			$addnum++;
+		}
+
+		my $newname = "$fname"."-old$addnum".'.csv';
+		mv( $fname.'.csv', $newname);
+
+		ui -> print (category=>'mcmp', 
+					 message=>"Renamed old $fname".
+					 ".csv to $newname to protect old output. New output is $fname".".csv.");
+	}
+
+
+
 	open( RES, ">".$self->results_file()) or die "could not open ".$self->results_file();
 	print RES "total_X,";
 	if ($n_critical == 1){
