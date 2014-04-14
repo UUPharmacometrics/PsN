@@ -29,7 +29,8 @@ use MooseX::Params::Validate;
 
 extends 'tool';
 
-my @nm7_extensions = ('.ext','.cov','.cor','.coi','.phi','.phm', '.shk','.grd','.xml','.smt','.rmt');
+my @nm7_extensions = ('.ext','.cov','.cor','.coi','.phi','.phm', '.shk','.grd','.xml','.cnv','.smt','.rmt',
+	'.imp','.npd','.npe','.npi','.fgh');
 
 has 'data_path' => ( is => 'rw', isa => 'Str' );
 has 'tail_output' => ( is => 'rw', isa => 'Bool', default => 0 );
