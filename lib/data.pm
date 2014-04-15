@@ -2391,7 +2391,7 @@ sub _write
 			$self->synchronize;
 		} 
 	}
-#	print "\n data writing to $filename\n";
+#	print "\n data writing to $filename\n" if (-e $filename);
 	open(FILE,">$filename") || 
 	die "Could not create $filename\n";
 	my $data_ref = $self->format_data;

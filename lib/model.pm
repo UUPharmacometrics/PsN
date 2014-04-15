@@ -418,7 +418,7 @@ sub create_maxeval_zero_models_array
 
 		$samples_done++;
 		my $probnum=2;
-		for (my $i=1; $i<200; $i++){
+		for (my $i=1; $i<100; $i++){
 			last if ($samples_done == scalar(@{$sampled_params_arr}));
 			#add one $PROB per $i, update inits from hash
 			my $sh_mod = model::shrinkage_module -> new ( nomegas => $run_model -> nomegas -> [0],
@@ -440,7 +440,6 @@ sub create_maxeval_zero_models_array
 				);
 			push(@{$run_model->active_problems()},1);
 			push(@{$run_model->datas()},$run_model->datas()->[0]);
-			$run_model -> _write();
 			$run_model->update_inits(from_hash => $sampled_params_arr->[$samples_done],
 									 problem_number=> $probnum,
 									 ignore_missing_parameters => $ignore_missing_parameters);

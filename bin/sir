@@ -183,6 +183,9 @@ if( scalar(@ARGV) > 1 ){
   print "sir can only handle one modelfile. Use 'sir -h' for help.\n";
   exit;
 }
+unless ( defined $options{'skip_data_parsing'} ) {
+  $options{'skip_data_parsing'} = 1;
+}
 
 if ( defined $options{'covmat_input'} ){
 	unless (defined $options{'rawres_input'}){
