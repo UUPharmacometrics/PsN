@@ -173,6 +173,36 @@ sub BUILD
 		$this->synced(1);
 	}
 
+	#ensure unique labels per param
+	foreach my $prob (@{$this->problems}){
+		next unless (defined $prob);
+		foreach my $param ('theta','omega','sigma'){
+			my $accessor = $param.'s';
+			my $ref =  $prob -> $accessor;
+			next unless (defined $ref);
+			my  @records = @{$ref};
+			my %hash;
+			foreach my $record ( @records ) {
+				next if ($record->prior() or $record->same);
+				if ( defined $record -> options ) {
+					foreach my $option ( @{$record -> options} ) {
+						next if ($option->prior());
+						if (defined $option -> label()){
+							my $label = $option -> label();
+							if (defined $hash{$label}){
+								my $newlabel = $label.'_';
+								#print "changing non-unique label $label to $newlabel\n";
+								$option->label($newlabel);
+								$label = $option -> label();
+							}
+							$hash{$label}=1;
+						}
+					}
+				}
+			}
+		}
+	}
+
 	if ($this->maxevals > 0){
 		if ( defined $this->problems ) {
 			my $n_prob = scalar(@{$this->problems});
@@ -250,7 +280,12 @@ sub BUILD
 			if( $this -> filename() =~ /\.mod$/ ) {
 				($this -> {'outputfile'} = $this -> {'filename'}) =~ s/\.mod$/.lst/;
 			} else {
-				$this -> outputfile( $this -> filename().'.lst' );
+				if( $this -> filename() =~ /^([^.]+)\./ ) {
+					#contains a dot
+					$this -> outputfile( $1.'.lst' );
+				}else{
+					$this -> outputfile( $this -> filename().'.lst' );
+				}
 			}
 		}
 		$this->outputs([]);

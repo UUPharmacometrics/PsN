@@ -99,8 +99,16 @@ sub _read_option
 	## Split and store labels and units
 	if ( defined $comment ) {
 	  my ($label,$unit) = split( ";",$comment,2 );
-	  chomp $label if $label;
-	  chomp $unit if $unit;
+	  if ($label) {
+		  chomp $label ;
+		  $label =~ s/^\s*//;
+		  $label =~ s/\s*$//;
+	  }
+	  if ($unit){
+		  chomp $unit;
+		  $unit =~ s/^\s*//;
+		  $unit =~ s/\s*$//;
+	  }
 	  $self->label($label);
 	  $self->unit($unit);
 	}
