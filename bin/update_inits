@@ -168,7 +168,7 @@ my $run_number;
 if ($ARGV[0]){
   #lstfile
   my $tmp = $ARGV[0];
-  if ($tmp =~ /(run|Run|RUN)([0-9]+)\./){
+  if ($tmp =~ /(run|Run|RUN)([0-9]+[^0-9]*)\./){
     $run_number = $2;
   }  
 }
@@ -184,7 +184,7 @@ if (defined $options{'renumber'}) {
   $tablenum=$options{'renumber'} if ($options{'renumber'} != 0);
 }elsif( $options{'output_model'} ){
   my $tmp = $options{'output_model'};
-  if ($tmp =~ /(run|Run|RUN)([0-9]+)\./){
+  if ($tmp =~ /(run|Run|RUN)([0-9]+)[^0-9]*\./){
     $tablenum = $2;
     $options{'renumber'}=$tablenum;
     $auto_renumber=1;
