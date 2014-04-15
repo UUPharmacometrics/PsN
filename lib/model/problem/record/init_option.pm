@@ -50,14 +50,16 @@ sub get_range
 	my $low = $self->init - abs($degree *$self->init) ;
 	if($self->on_diagonal and $low <= 0){
 		$low = 1e-10; #should not end up here if init>0 and sensible degree
-	}elsif ((not $self->on_diagonal) and $low < -0.01){
-		$low = -0.01;
+	}elsif ((not $self->on_diagonal) and $low <= -1000000){
+		$low = -1000000 + 1;
 	}
 	my $high = $self->init + abs($degree *$self->init) ;
-	if($self->on_diagonal and $high >= 1000000){
+	if($high >= 1000000){
 		$high = 1000000  - 1;
-	}elsif ((not $self->on_diagonal) and $high > 0.01){
-		$high = 0.01;
+	}
+
+	if ($low >= $high){
+		croak("bug in init_option get range: init ".$self->init." degree $degree low $low high $high\nPlease report this\n");
 	}
 
 	return [$low,$high];
