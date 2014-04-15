@@ -4714,7 +4714,7 @@ sub add_code_gfunc
 			$applicant_model -> filename . "\n" );
 	}
 
-	push(@code,';;;SCM-LINEARIZE_CONSTANTS'."\n");
+	push(@code,';;;SCM-LINEARIZE_CONSTANTS'."\n") unless ($self->directory_name_prefix eq 'linearize');
 	foreach my $parameter (keys %parameter_G){
 		push(@code,'OGZ_'.$parameter.'='.$parameter_G{$parameter}."\n");
 		if ($parameter_relation{$parameter} eq 'exponential'){
