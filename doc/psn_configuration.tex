@@ -6,9 +6,11 @@
 \maketitle
 
 \section{The quick and easy way}
-Let the installation script create psn.conf for you. If you have already installed PsN and did not let the script create psn.conf but have changed your mind now, redo the PsN installation and have psn.conf automatically generated this time. If you will run PsN locally on your computer with a standard NONMEM install you are then done.
-If you have a previous PsN 3 installation then you can copy psn.conf from the old installation to the new one, and that will work.
-If you have a NMQual installation of NONMEM you need to read the section  “Running  NMQual-generated perl scripts from within PsN”, change one or a few lines in the [nm\_versions] section of psn.conf, and possibly redo the NMQual installation of NONMEM. 
+Let the installation script create psn.conf for you. If you have already installed PsN and did not let the script create psn.conf but have changed your mind now, redo the PsN installation and have psn.conf automatically generated this time. If you will run PsN locally on your computer with a standard NONMEM installation you are then done.
+If you have a previous working PsN3 installation then you can copy psn.conf from the old installation to the new one, but you need to edit 
+default settings of nmfe\_options, if present in the old psn.conf.
+If you have a previous working PsN4 installation then you can copy psn.conf from the old installation to the new one, and that should work.
+If you have a NMQual8 installation of NONMEM and want to always run NONMEM via the autolog script then you need to replace nmfe=1 with nmqual=1 in psn.conf.
 If you have other needs then you need to read the rest of this document.
 
 \section{Introduction}
@@ -71,9 +73,6 @@ Settings on the commandline have precedence over settings in
 \section{Warning}
 If running PsN on unix but editing psn.conf on Windows, make sure to save psn.conf in unix format or to convert after editing.
 
-
-
-
 \section{Essential NONMEM information}
 It is necessary to specify NONMEM installation information in psn.conf. This is done in the section
 \begin{verbatim}
@@ -83,10 +82,10 @@ in psn.conf. The format is
 \begin{verbatim}
 name=installation_directory,version_number
 \end{verbatim}
-The NONMEM version number must only be 5, 6 or 7 for older PsN versions, but must include subversion number, e.g. as in 7.2. 
+The NONMEM version number should be major.minor, as in 7.2 for example.
 The major version number and the subversion number should be entered with a dot in between, no spaces.  
 
-Some examples for PsN 3.4.2 and later:
+Some examples:
 \begin{verbatim}
 [nm_versions]
 ;with NONMEM7.2 
@@ -98,76 +97,50 @@ Some examples for PsN 3.4.2 and later:
 By default, PsN will use the NONMEM installation identified by the name 'default'. To use other installations with PsN, use the "-nm\_version" command line option, for example -nm\_version=vi\_big
 To check which versions are defined in psn.conf without opening the file, use the command 
 psn -nm\_versions
-If the user wants to invoke nmfe using a wrapper, the name of the wrapper including the full path can be set under [nm\_versions] instead of the installation directory. PsN will check that the file exists and is executable. Using a wrapper is useful e.g. when environment variable changes are needed prior to nmfe execution.
+If the user wants to invoke nmfe using a wrapper, or use a modifed nmfe script with a different name, the name of the alternative script 
+including the full path can be set under [nm\_versions] instead of the installation directory. PsN will check that the file exists and is executable. 
+Using a wrapper is useful e.g. when environment variable changes are needed prior to nmfe execution.
 
-For NMQual installations where the user want to invoke NONMEM using an NMQual generated Perl script (instead of using nmfeX) the information needed under [nm\_versions] is slightly different, see section Running NMQual-generated Perl scripts from within PsN.
+For NMQual8 installations where the user want to invoke NONMEM using autolog.pl (instead of using nmfeX) 
+the NONMEM installation directory should be set to exactly the same path as the 'target' alias set in the xml file used for installation. 
+For example, if the xml file used at installation defines   
+\begin{verbatim}
+<alias id='target'>C:\nm73</alias>
+\end{verbatim}
+then psn.conf should read
+\begin{verbatim}
+[nm_versions]
+73=C:\nm73,7.3
+\end{verbatim}
+The PsN installation script can handle setting [nm\_versions] automatically.
 
+Note that -nmqual must be set on the command-line for PsN to run NONMEM using the autolog script.
 
 \section{Running nmfe from within PsN}
 
-PsN will only run NONMEM via nmfe script or an NMQual script. Option nmfe is set as default in the template psn.conf and in the source code. PsN will look for nmfeX, where X is the NONMEM version number specified in the nm\_versions section (X is 72 if NONMEM7.2 is used),  in first the /run then the  /util and last the /. subdirectory of the installation directory specified in psn.conf, and call the first instance found. Note that it is possible to use nmfeX scripts located in any directory specified in the [nm\_versions] section, not just a standard NONMEM installation directory, and that a wrapper can also be used, see section Essential NONMEM information.
+PsN will only run NONMEM via the nmfe script, an alternative script set by the user, or an NMQual autolog.pl script. 
+If option nmfe is set (the default), PsN will look for nmfeX, where X is the NONMEM version number specified in the nm\_versions section (X is 72 if NONMEM7.2 is used),  in first the /run then the  /util and last the /. subdirectory of the installation directory specified in psn.conf, and call the first instance found. Note that it is possible to use nmfeX scripts located in any directory specified in the [nm\_versions] section, not just a standard NONMEM installation directory, and that a wrapper can also be used, see section Essential NONMEM information.
 
-\section{Running  NMQual-generated perl scripts from within PsN}
+\section{NMQual and PsN}
 
-A feature of PsN is to invoke an NMQual generated perl script $\langle$nmqualscript.pl$\rangle$ from within PsN instead of doing stepwise compiling and execution or running nmfeX. To try the feature use the option -nmqual (no value). PsN will look for $\langle$nmqualscript.pl$\rangle$, where $\langle$nmqualscript.pl$\rangle$ must include a full path and must be specified in the [nm\_versions] section of psn.conf. Note that the script name itself must also be included in the path in psn.conf, not only a directory as when -nmfe is set. It is possible to both specify standard NONMEM installation directories and NMQual scripts in psn.conf. The value of the command line option nm\_version will decide which information is used. Example:
-\begin{verbatim}
-[nm_versions]
-; Unix examples
-default=/opt/NONMEM/test/nmvi.pl,6
-6nmqual=/opt/NONMEM/test/nmvi.pl,6
-72nmqual=/opt/NONMEM/nm72/test/autolog.pl,7.2
+PsN4 supports NMQual8 (no older NMQual versions). The user must set option -nmqual, either in psn.conf or on the command-line, and
+the NONMEM installation directory must be properly defined in psn.conf (see section Essential NONMEM information above). PsN will look for autolog.pl in the nmqual subdirectory
+of the NONMEM installation directory, and return an error if not found.
+If PsN option -nmqual\_xml is set on the command-line or in psn.conf, then PsN will use that as input to autolog.pl. Otherwise PsN will
+use the log.xml file in the nmqual subdirectory of the NONMEM installation directory.
 
-execute run1.mod -nmqual -nm_version=6nmqual (NONMEM is run via nmvi.pl)
-\end{verbatim}
-To use option -nmqual it is necessary to set system paths and/or aliases so that no path to the perl executable is needed, it must be possible to use only 'perl'. It is currently not possible to set a path to the Perl executable for NMQual.
+\noindent The full command used by PsN is\\
+perl autolog.pl log.xml run ce workdir psn (extra NM options)
 
-\subsection{NMQual8 and NM7.2}
-The user must set any NM7.2-specific options via -parafile and -nodes and/or -nmfe\_options (NMQual 8 invokes a modified version of nmfe72). With NMQual8 (necessary for NM7.2) the option -nmqual\_xml is needed, the default is log.xml.  Also, the installation of NONMEM must have been performed using a slightly modified nm72.xml. PsN users should
+Note: The user does not have modify log.xml in any way when running with PsN4.
+When running PsN3 with NMQual the user had to modify the xml-file so that file extension .mod was used instead of .ctl in the 'run' section of log.xml, but PsN4 will instead
+rename the local model file to use .ctl as extension when option -nmqual is set.
 
-\begin{enumerate}
-	\item change aliases in nm72.xml just as for any NMQual8 installation, see NMQual8 documentation.
-	\item Also change this
-\verb|<do on='run' in='$_2'>target/util/nmfe72 $_1 $_3.ctl $_3.lst</do>|
-to this:
-\verb|<do on='run' in='$_2'>target/util/nmfe72 $_1 $_3.mod $_3.lst</do>|
-in nm72.xml (i.e. change the expected suffix of control streams from .ctl to .mod) and then perform a standard install, per NMQual8 documentation.
-\end{enumerate}
-
-PsN itself will then invoke the installation like this:
-perl full\_path\_to\_autolog.pl full\_path\_to\_log.xml run ce path\_to\_workdir psn (extra nmfe72 options)
-where the full path to autolog.pl, including the filename itself, must be set in psn.conf (see above) and full\_path\_to\_log.xml is set via the command-line, default log.xml in the directory from which PsN is called.
-
-\section{Perl executable}
-For users with Windows7 and 64bit, and for Windows users in general, this is an important section to read unless you let the installation script create psn.conf.
-
-In psn.conf, in the top section that does not have a header, it is sometimes necessary to set
-
-\begin{enumerate}
-\item remote\_perl=some\_path\_to\_perl
-where the default is simply 'perl'. It is not used with run\_lsf\_nmfe, run\_on\_sge\_nmfe or run\_on\_slurm, but it is used together with run\_on\_lsf, run\_on\_torque, run\_on\_zink and run\_on\_sge. It is the path to the Perl version for running nonmem.pm (where the nonmem runs are started but no setup or analysis is done) on the remote system.
-
-\item perl=some\_path\_to\_perl
-where the default is \verb|C:\Perl\bin\perl.exe| on Windows and perl on Unix. This is the Perl version used to run nonmem.pm when using local execution. If you are using Windows, the Perl version should be the same as the one chosen during the installation using the setup script (the choice for "Path to perl binary used to run Utilities” in the setup).
-For users with Windows7 and 64bit, the default setting in psn.conf is likely to not work, most likely the correct setting is 
-\verb|C:\Perl64\bin\perl.exe|. 
-The installation script will probably find the correct version, pay attention to what it suggests for "Path to perl binary used to run Utilities” and copy to psn.conf. 
-\end{enumerate}
-
-All other parts of PsN (setting up runs, bootstrapping datasets, extracting results, performing analyses...) is done using the perl version set during installation. This version is hard 
-coded into the programs. Obviously this perl version can be different for different versions of PsN.
-
-If there are spaces in the Windows file paths, e.g. \\
-\verb|C:\Program files\ACTIVEPERL.588.EN\bin\perl.exe| 
-then the following trick must be used: Take the first 6 characters of the path level containing a space (e.g. Progra), append a tilde, then a number representing the instance of the replaced pattern, i.e. 1, 
-giving\\
-\verb|C:\Progra~1\ACTIVEPERL.588.EN\bin\perl.exe|. 
-If you have more spaces in the same path, e.g.\\ 
-\verb|C:\Program Files\ACTIVE PERL\version xxx\|) 
-the replacement would be \\
-\verb|C:\Progra~1\ACTIVE~1\versio~1\|
+If the user does not set option -nmqual, but sets -nm\_version to an NMQual installation of NONMEM, then PsN will look for an nmfe script in the installation directory
+as described in section Running nmfe from within PsN.
 
 \section{Compiler configuration}
 
-From PsN 3.6 and on it is not possible to set compiler instructions in PsN.
+In PsN4 no compiler instructions can be set.
 
 \end{document}

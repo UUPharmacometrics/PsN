@@ -57,10 +57,8 @@ Getopt::Long::config("auto_abbrev");
 		  "picky!",
 		  "prepend_model_file_name!",
 		  "quick_summarize|quick_summary",
-		  "rerun:i",
 		  "retries:i",
 		  "run_on_lsf!",
-		  "run_on_mosix!",
 		  "run_on_ud!",
 		  "run_on_sge!",
 		  "run_on_slurm!",
@@ -247,169 +245,154 @@ sub get_defaults {
 }
 
 sub sanity_checks {
-  my $options = shift;
-  my $tool = shift;
+	my $options = shift;
+	my $tool = shift;
 
 
-  if (defined $options->{'degree'}){
-	  if ($options->{'degree'} <=0 or $options->{'degree'}>=1){
-		  my $mes = "option degree must be larger than 0 and smaller than 1.\n";
-		  croak($mes);
-	  }
-  }
-
-
-  unless ($options -> {'nmfe'} or $options -> {'nmqual'}){
-	  #assume user wants nmfe
-	  $options -> {'nmfe'} = 1;
-  }
-
-
-  if( $options -> {'max_runtime'} ){
-    die "--max_runtime is only allowed with -run_on_slurm"
-	unless ( $options -> {'run_on_slurm'} );
-  }
-  if( $options -> {'email_address'} and $options -> {'send_email'}){
-    unless ($options -> {'email_address'} =~ /@/){
-        die "ERROR: ".$options -> {'email_address'}." does not look like an email address.\n";
-    }
-  }
-  if( $options -> {'sde'} ){
-    if( $options -> {'omega_before_pk'} ){
-      die "You cannot set both sde and omega_before_pk";
-    }
-  }
-  if(defined $options-> {'tbs_zeta'} or defined $options-> {'tbs_delta'}){
-	  if ($options->{'tbs'}){
-		  die ("You cannot set -tbs with -tbs_zeta or -tbs_delta, you should use -dtbs");
-	  }
-	  $options -> {'dtbs'}=1;
-  }
-  if( defined $options-> {'tbs_zeta'} and defined $options-> {'tbs_delta'}){
-	  die "You cannot set both tbs_zeta and tbs_delta";
-  }
-  if( defined $options -> {'tbs_lambda'} and (not defined $options-> {'dtbs'} or (not $options->{'dtbs'}))){
-    $options -> {'tbs'}=1;
-  }
-
-  if( $options -> {'run_on_slurm'} ){
-    if( $options -> {'run_on_sge'} ){
-      die "You cannot set both run_on_sge and -run_on_slurm";
-    }
-    if (defined $options ->{'max_runtime'}){
-      if ($options ->{'max_runtime'} =~ /^[0-9]+$/){
-	print "You have set the maximal runtime to ".$options ->{'max_runtime'}.
-	    " minutes.\n\n";
-      }elsif ($options ->{'max_runtime'} =~ /^([0-9]+)\:([0-9]+)\:([0-9]+)$/){
-	print "You have set the maximal runtime to $1 h $2 min $3 sec.\n\n";
-      }elsif ($options ->{'max_runtime'} =~ /^([0-9]+)-([0-9]+)$/){
-	print "You have set the maximal runtime to $1 day(s) and $2 h.\n\n";
-      }else{
-        die "ERROR: max_runtime must have format minutes, ".
-		   "hours:minutes:seconds, or days-hours.\n";
-      }
-    }else{
-    }
-  }
-  if( $options -> {'stop_motion'} ){
-    if( $options -> {'run_on_sge'} ){
-      die "-stop_motion is not allowed together with -run_on_sge";
-    }
-    if( $options -> {'run_on_slurm'} ){
-      die "-stop_motion is not allowed together with -run_on_slurm";
-    }
-  }
-
-  if( $options -> {'run_on_mosix'} ){
-    if( $Config{osname} eq 'MSWin32' ){
-      die "--run_on_mosix has no effect when running on Windows";
-    }
-    if( $options -> {'run_on_sge'} ){
-      die "--run_on_sge is not allowed together with --run_on_mosix";
-    }
-  }
-
-  if( $options -> {'accepted_ofv_difference'} &&
-      $options -> {'accepted_ofv_difference'}<0){
-    die "accepted_ofv_difference must not be negative\n";
-  }
-
-  if( $options -> {'min_retries'} && $options -> {'retries'}){
-    if( $options -> {'min_retries'}> $options -> {'retries'}){
-      die "min_retries must not be larger than retries\n";
-    }
-  }
-
-
-  if( $PsN::nm_major_version == '7' ){
-    if ($options -> {'iofv'}){
-      my $mes = "\nWarning:\n"."option -iofv is not supported for NONMEM7,\n".
-	  "iotab file will not be produced. Individual ofv values\n".
-	  "can, for classical estimation methods, be found the additional output phi-file.\n\n";
-      print $mes;
-      $options -> {'iofv'}=0;
-    }
-    if ($options -> {'cwres'}){
-      my $mes = "option -cwres is not supported by PsN for NONMEM7.\n".
-	  "It is possible to request CWRES directly in \$TABLE instead.\n\n";
-      croak($mes);
-    }
-    if(defined $PsN::nm_minor_version and $PsN::nm_minor_version >1){
-      if ($options -> {'nmqual'} ){
-	unless (defined $options -> {'nmqual_xml'}){
-	  $options -> {'nmqual_xml'} = 'log.xml';
+	if (defined $options->{'degree'}){
+		if ($options->{'degree'} <=0 or $options->{'degree'}>=1){
+			my $mes = "option degree must be larger than 0 and smaller than 1.\n";
+			croak($mes);
+		}
 	}
-	my ( $dir, $file ) = OSspecific::absolute_path(cwd(), $options->{'nmqual_xml'});
-	$options -> {'nmqual_xml'} = $dir . $file;
-      }
-    }
-  }
-  if(( $PsN::nm_major_version == '5' ) and ($options -> {'nmfe'})){
-      my $mes = "\n\n*****Warning:******\n"."option nmfe is not tested for NONMEM5,\n".
-	  "execution is likely to fail.\n\n";
-      print "$mes";
-  }
-  if($options -> {'run_on_lsf'}){
-    #check set options contain characters, no space only commands
-    if (defined $options -> {'lsf_job_name'}){
-      $options -> {'lsf_job_name'} = undef 
-	  if ($options -> {'lsf_job_name'} =~ /^\s*$/);
-    }
-    if (defined $options -> {'lsf_options'}){
-      $options -> {'lsf_options'} = undef 
-	  if ($options -> {'lsf_options'} =~ /^\s*$/);
-    }
-    if (defined $options -> {'lsf_pre_exec_command'}){
-      $options -> {'lsf_pre_exec_command'} = undef 
-	  if ($options -> {'lsf_pre_exec_command'} =~ /^\s*$/);
-    }
-    if (defined $options -> {'lsf_post_exec_command'}){
-      $options -> {'lsf_post_exec_command'} = undef 
-	  if ($options -> {'lsf_post_exec_command'} =~ /^\s*$/);
-    }
-    if (defined $options -> {'lsf_project_name'}){
-      $options -> {'lsf_project_name'} = undef 
-	  if ($options -> {'lsf_project_name'} =~ /^\s*$/);
-    }
-    if (defined $options -> {'lsf_queue'}){
-      $options -> {'lsf_queue'} = undef 
-	  if ($options -> {'lsf_queue'} =~ /^\s*$/);
-    }
-    if (defined $options -> {'lsf_resources'}){
-      $options -> {'lsf_resources'} = undef 
-	  if ($options -> {'lsf_resources'} =~ /^\s*$/);
-    }
-    if (defined $options -> {'lsf_sleep'}){
-      $options -> {'lsf_sleep'} = undef 
-	  if ($options -> {'lsf_sleep'} =~ /^\s*$/);
-    }
-    if (defined $options -> {'lsf_ttl'}){
-      $options -> {'lsf_ttl'} = undef 
-	  if ($options -> {'lsf_ttl'} =~ /^\s*$/);
-    }
-  }
 
-  if (defined $options->{'nmfe_options'}) {
+
+	unless ($options -> {'nmfe'} or $options -> {'nmqual'}){
+		#assume user wants nmfe if none set
+		$options -> {'nmfe'} = 1;
+	}
+	if ($options -> {'nmfe'} and $options -> {'nmqual'}){
+		#assume user wants nmqual if both set
+		$options -> {'nmfe'} = 0;
+	}
+
+	if( $options -> {'max_runtime'} ){
+		die "--max_runtime is only allowed with -run_on_slurm"
+			unless ( $options -> {'run_on_slurm'} );
+	}
+	if( $options -> {'email_address'} and $options -> {'send_email'}){
+		unless ($options -> {'email_address'} =~ /@/){
+			die "ERROR: ".$options -> {'email_address'}." does not look like an email address.\n";
+		}
+	}
+	if( $options -> {'sde'} ){
+		if( $options -> {'omega_before_pk'} ){
+			die "You cannot set both sde and omega_before_pk";
+		}
+	}
+	if(defined $options-> {'tbs_zeta'} or defined $options-> {'tbs_delta'}){
+		if ($options->{'tbs'}){
+			die ("You cannot set -tbs with -tbs_zeta or -tbs_delta, you should use -dtbs");
+		}
+		$options -> {'dtbs'}=1;
+	}
+	if( defined $options-> {'tbs_zeta'} and defined $options-> {'tbs_delta'}){
+		die "You cannot set both tbs_zeta and tbs_delta";
+	}
+	if( defined $options -> {'tbs_lambda'} and (not defined $options-> {'dtbs'} or (not $options->{'dtbs'}))){
+		$options -> {'tbs'}=1;
+	}
+
+	if( $options -> {'run_on_slurm'} ){
+		if( $options -> {'run_on_sge'} ){
+			die "You cannot set both run_on_sge and -run_on_slurm";
+		}
+		if (defined $options ->{'max_runtime'}){
+			if ($options ->{'max_runtime'} =~ /^[0-9]+$/){
+				print "You have set the maximal runtime to ".$options ->{'max_runtime'}.
+					" minutes.\n\n";
+			}elsif ($options ->{'max_runtime'} =~ /^([0-9]+)\:([0-9]+)\:([0-9]+)$/){
+				print "You have set the maximal runtime to $1 h $2 min $3 sec.\n\n";
+			}elsif ($options ->{'max_runtime'} =~ /^([0-9]+)-([0-9]+)$/){
+				print "You have set the maximal runtime to $1 day(s) and $2 h.\n\n";
+			}else{
+				die "ERROR: max_runtime must have format minutes, ".
+					"hours:minutes:seconds, or days-hours.\n";
+			}
+		}else{
+		}
+	}
+	if( $options -> {'stop_motion'} ){
+		if( $options -> {'run_on_sge'} ){
+			die "-stop_motion is not allowed together with -run_on_sge";
+		}
+		if( $options -> {'run_on_slurm'} ){
+			die "-stop_motion is not allowed together with -run_on_slurm";
+		}
+	}
+
+	if( $options -> {'accepted_ofv_difference'} &&
+		$options -> {'accepted_ofv_difference'}<0){
+		die "accepted_ofv_difference must not be negative\n";
+	}
+
+	if( $options -> {'min_retries'} && $options -> {'retries'}){
+		if( $options -> {'min_retries'}> $options -> {'retries'}){
+			die "min_retries must not be larger than retries\n";
+		}
+	}
+
+
+	if( $PsN::nm_major_version == '7' ){
+		if ($options -> {'iofv'}){
+			my $mes = "\nWarning:\n"."option -iofv is not supported for NONMEM7,\n".
+				"iotab file will not be produced. Individual ofv values\n".
+				"can, for classical estimation methods, be found the additional output phi-file.\n\n";
+			print $mes;
+			$options -> {'iofv'}=0;
+		}
+		if ($options -> {'cwres'}){
+			my $mes = "option -cwres is not supported by PsN for NONMEM7.\n".
+				"It is possible to request CWRES directly in \$TABLE instead.\n\n";
+			croak($mes);
+		}
+	}
+	if(( $PsN::nm_major_version == '5' ) and ($options -> {'nmfe'})){
+		my $mes = "\n\n*****Warning:******\n"."option nmfe is not tested for NONMEM5,\n".
+			"execution is likely to fail.\n\n";
+		print "$mes";
+	}
+	if($options -> {'run_on_lsf'}){
+		#check set options contain characters, no space only commands
+		if (defined $options -> {'lsf_job_name'}){
+			$options -> {'lsf_job_name'} = undef 
+				if ($options -> {'lsf_job_name'} =~ /^\s*$/);
+		}
+		if (defined $options -> {'lsf_options'}){
+			$options -> {'lsf_options'} = undef 
+				if ($options -> {'lsf_options'} =~ /^\s*$/);
+		}
+		if (defined $options -> {'lsf_pre_exec_command'}){
+			$options -> {'lsf_pre_exec_command'} = undef 
+				if ($options -> {'lsf_pre_exec_command'} =~ /^\s*$/);
+		}
+		if (defined $options -> {'lsf_post_exec_command'}){
+			$options -> {'lsf_post_exec_command'} = undef 
+				if ($options -> {'lsf_post_exec_command'} =~ /^\s*$/);
+		}
+		if (defined $options -> {'lsf_project_name'}){
+			$options -> {'lsf_project_name'} = undef 
+				if ($options -> {'lsf_project_name'} =~ /^\s*$/);
+		}
+		if (defined $options -> {'lsf_queue'}){
+			$options -> {'lsf_queue'} = undef 
+				if ($options -> {'lsf_queue'} =~ /^\s*$/);
+		}
+		if (defined $options -> {'lsf_resources'}){
+			$options -> {'lsf_resources'} = undef 
+				if ($options -> {'lsf_resources'} =~ /^\s*$/);
+		}
+		if (defined $options -> {'lsf_sleep'}){
+			$options -> {'lsf_sleep'} = undef 
+				if ($options -> {'lsf_sleep'} =~ /^\s*$/);
+		}
+		if (defined $options -> {'lsf_ttl'}){
+			$options -> {'lsf_ttl'} = undef 
+				if ($options -> {'lsf_ttl'} =~ /^\s*$/);
+		}
+	}
+
+	if (defined $options->{'nmfe_options'}) {
  		if ($options->{'nmfe_options'} =~ /\w+,\w+/) {
 			print "\nWarning: You have set -nmfe_options=".$options->{'nmfe_options'}." on the commandline or in psn.conf\n";
 			print "This does not look like valid options to the nmfe script.\n";
@@ -426,57 +409,52 @@ sub sanity_checks {
 		}
 	}
 
-  if(defined $options -> {'nm_output'}) {
-    my @nmout = split( /,/ ,$options -> {'nm_output'});
-    foreach my $out (@nmout) {
-      $out =~ s/^\.//;
-      if ($out =~ /^lst$/) {
+	if(defined $options -> {'nm_output'}) {
+		my @nmout = split( /,/ ,$options -> {'nm_output'});
+		foreach my $out (@nmout) {
+			$out =~ s/^\.//;
+			if ($out =~ /^lst$/) {
 				print "\nInformation: The lst-file will always be copied back, no need to set it with option -nm_output.\n";
-      }
-      unless ($out =~ /^(lst|ext|cov|cor|coi|phi|phm|shk|grd|xml|smt|rmt)$/) {
+			}
+			unless ($out =~ /^(lst|ext|cov|cor|coi|phi|phm|shk|grd|xml|smt|rmt)$/) {
 				print "\nWarning: NM output file extension $out not recognized, but PsN will copy back such files if found.\n";
-      }
-      
-    }
-  }
-  if ($options -> {'shrinkage'} && $options -> {'mirror_plots'}>0 ){
-    my $mes = "Options -shrinkage and -mirror_plots ".
-	"are incompatible. Please unset one of them.\n";
-    croak($mes);
-  }
+			}
+			
+		}
+	}
+	if ($options -> {'shrinkage'} && $options -> {'mirror_plots'}>0 ){
+		my $mes = "Options -shrinkage and -mirror_plots ".
+			"are incompatible. Please unset one of them.\n";
+		croak($mes);
+	}
 
-  if (defined $options -> {'parafile'}){
-    unless ($PsN::nm_major_version == 7 
-	    and defined $PsN::nm_minor_version and $PsN::nm_minor_version >1){
-      my $ver='default';
-      $ver = $options -> {'nm_version'} if (defined $options -> {'nm_version'});
-      print "Option parafile can only be used with NONMEM version 7.2 or later.\n".
-	  "Make sure the version number for NM version '$ver' is correctly\n".
-	  "defined in psn.conf if you get this message even if you are using 7.2\n";
-      exit;
-    }
-    if (-e $options -> {'parafile'}){
-      if( defined $options -> {'extra_files'} ){
-	$options -> {'extra_files'} = $options -> {'extra_files'}.','.$options -> {'parafile'};
-      }else{
-	$options -> {'extra_files'} = $options -> {'parafile'};
-      }
-      
-      unless ($options -> {'nmfe'} or $options->{'nmqual'}){
-		  print "If option parafile is set then option nmfe or nmqual".
-			  " must also be set.\n";
-		  exit;
-      }
-      #   #check that nodes is not greater than number of names defined in parafile.
-      #   #Then reset nodes and print warning
-      #   open( FILE,  $options -> {'parafile'}) ||
-	  
-    }else{
-		print "Parafile ".$options -> {'parafile'}." does not exist.\n";
-		exit;
-    }
-    
-  }
+	if (defined $options -> {'parafile'}){
+		unless ($PsN::nm_major_version == 7 
+				and defined $PsN::nm_minor_version and $PsN::nm_minor_version >1){
+			my $ver='default';
+			$ver = $options -> {'nm_version'} if (defined $options -> {'nm_version'});
+			print "Option parafile can only be used with NONMEM version 7.2 or later.\n".
+				"Make sure the version number for NM version '$ver' is correctly\n".
+				"defined in psn.conf if you get this message even if you are using 7.2\n";
+			exit;
+		}
+		if (-e $options -> {'parafile'}){
+			if( defined $options -> {'extra_files'} ){
+				$options -> {'extra_files'} = $options -> {'extra_files'}.','.$options -> {'parafile'};
+			}else{
+				$options -> {'extra_files'} = $options -> {'parafile'};
+			}
+			
+			#   #check that nodes is not greater than number of names defined in parafile.
+			#   #Then reset nodes and print warning
+			#   open( FILE,  $options -> {'parafile'}) ||
+			
+		}else{
+			print "Parafile ".$options -> {'parafile'}." does not exist.\n";
+			exit;
+		}
+		
+	}
 
 }
 
@@ -898,23 +876,11 @@ EOF
     the ofv value and minimization message for each NONMEM run.
 EOF
 
-    $help_hash{-rerun} = <<'EOF';
-    <p class="style2">-rerun='integer'</p>
-    Do not use this option. It is to be removed.
-EOF
-
     $help_hash{-run_on_lsf} = <<'EOF';
     <p class="style2">-run_on_lsf</p>
     PsN connects with Platform Load Sharing Facility (LsF). With 
     <span class="style2">-run_on_lsf</span>. PsN will submit to the queue defined in "psn.conf" 
     unless specified with <span class="style2">-lsf_queue</span>.
-EOF
-
-    $help_hash{-run_on_mosix} = <<'EOF';
-    <p class="style2">-run_on_mosix</p>
-    Only implemented and tested for Unix type systems. PsN will start the perl 
-    processes running NONMEM with 'mosenv -e perl...' instead of the default 'perl...'.
-    (The name of the perl binary is configurable in psn.conf.)
 EOF
 
     $help_hash{-run_on_ud} = <<'EOF';

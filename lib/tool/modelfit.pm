@@ -7,6 +7,7 @@ use Data::Dumper;
 use File::Copy qw/cp mv/;
 use File::Path;
 use File::Glob;
+use File::Spec;
 use FindBin qw($Bin);
 use Storable;
 use Math::Random;
@@ -40,7 +41,8 @@ has 'nmtran_error_file' => ( is => 'rw', isa => 'Str', default => 'nmtran_error.
 has 'general_error_file' => ( is => 'rw', isa => 'Str', default => 'psn_nonmem_error_messages.txt' );
 has 'base_msfo_name' => ( is => 'rw', isa => 'Str' );
 has 'max_hash' => ( is => 'rw', isa => 'HashRef', default => sub { {} } );
-has 'full_path_nmfe' => ( is => 'rw', isa => 'Str' );
+has 'full_path_runscript' => ( is => 'rw', isa => 'Str' );
+has 'modext' => ( is => 'rw', isa => 'Str', default => 'mod' );
 has 'wintail_exe' => ( is => 'rw', isa => 'Maybe[Str]' );
 has 'wintail_command' => ( is => 'rw', isa => 'Maybe[Str]' );
 has 'cutoff' => ( is => 'rw', isa => 'Num' );
@@ -329,15 +331,20 @@ sub BUILD
 		$this->logfile([join('', OSspecific::absolute_path( $this->directory, $this->logfile->[0]) ) ]);
 	}
 
+
+	my $ref = nonmemrun::setup_paths(nm_version => $this->nm_version,
+									 nmqual => $this->nmqual,
+									 nmqual_xml => $this->nmqual_xml);
+
+	$this->full_path_runscript($ref->{'full_path_runscript'});
+	$this->full_path_nmtran($ref->{'full_path_nmtran'}) if (defined $ref->{'full_path_nmtran'});
+
+
 	if ($this->nmqual) {
-		unless (defined $this->nmqual_xml) {
-			croak("No nmqual_xml defined. Required for nmqual. Exiting\n");
-		}
-	} else {
-		unless (defined $this->full_path_nmfe) {
-			$this->nmfe_setup(nm_version => $this->nm_version);
-		}
+		$this->modext('ctl');
+		$this->nmqual_xml($ref->{'nmqual_xml'});
 	}
+
 
 	if ($this->run_on_lsf or $this->run_on_ud or $this->run_on_zink or
 		$this->run_on_torque or $this->run_on_slurm or
@@ -359,6 +366,9 @@ sub BUILD
 
 	$this->raw_line_structure(ext::Config::Tiny->new());
 }
+
+
+
 
 sub run
 {
@@ -484,7 +494,7 @@ sub run
 				}
 
 				$queue_info{$run}{'candidate_model'} = model->new(
-						filename => "./NM_run" . ($run + 1) . "/psn.mod",
+						filename => "./NM_run" . ($run + 1) . "/psn.".$self->modext,
 						target               => 'disk',
 						ignore_missing_files => 1,
 						quick_reload         => 1,
@@ -671,7 +681,6 @@ sub run
 				$pid = $nonmemrun->monitor;
 
 				if ($pid) {
-					$nonmemrun->postprocessing;
 					last; #we found a finished run, do not loop over more running pid
 				}
 			}
@@ -896,7 +905,7 @@ sub select_best_model
 	my $model = $queue_info_ref -> {'model'};
 	my $candidate_model = $queue_info_ref -> {'candidate_model'};
 	if (-e 'stats-runs.csv'){
-		$self->stop_motion_call(tool=>'modelfit',message => "Have previously copied best model to psn.mod.")
+		$self->stop_motion_call(tool=>'modelfit',message => "Have previously copied best model to psn.".$self->modext)
 		if ($self->stop_motion()> 1);
 		if ( $run_results -> [0] -> {'failed'} ){
 			my @raw_row = [($run_no+1,'1','1','run failed: '.($run_results -> [0] -> {'failed'}))];
@@ -1019,7 +1028,7 @@ sub select_best_model
 			push( @{$self->raw_nonp_results}, @raw_row ) if (defined $self->raw_nonp_results);
 
 			#partial cleaning
-			foreach my $filename ('psn.mod','psn.lst' ){
+			foreach my $filename ('psn.'.$self->modext,'psn.lst' ){
 				my $use_name = $self -> get_retry_name( filename => $filename,
 														retry => $selected-1 );
 
@@ -1246,11 +1255,8 @@ sub prepare_raw_results
 
 	unless (defined $self->raw_results) {
 		croak("Failed to collect raw results from lst-file(s).\n".
-			"Check lst-file(s) and ".$self->general_error_file." or ".$self->nmtran_error_file." in ".
-			"NM_run directory/-ies for errors.\n".
-			"If lst-file and error file are missing\n".
-			"check perl installation and perl settings in psn.conf. ".
-			"If applicable, also check cluster settings.\n");
+			"Check lst-file or ".$self->general_error_file." or ".$self->nmtran_error_file." in ".
+			  "NM_run directory/-ies for errors.\n");
 	}
 
 	#need to sort on $PROB also? this is only by modelnum. sse requires sort by prob
@@ -1488,113 +1494,6 @@ sub _get_run_options
 	return \%options_hash;
 }
 
-# FIXME: nmfe_setup is now moved to nonmemrun. Some methods here still uses this old version. It will be removed when the refactoring is done.
-sub nmfe_setup
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		 nm_version => { isa => 'Str', optional => 1 }
-	);
-	my $nm_version = $parm{'nm_version'};
-
-  #in $nm_version
-  # set $self->full_path_nmfe();
-  # set $self->full_path_nmtran();
-
-  PsN::set_nonmem_info($nm_version);
-  my $nmdir = $PsN::nmdir;
-  unless (defined $nmdir) {
-    my $mess = "Unknown NONMEM version $nm_version specified.\n";
-    croak($mess);
-  }
-  my $minor = $PsN::nm_minor_version;
-  my $major = $PsN::nm_major_version;
-  
-  unless (defined $major) {
-    croak("No nonmem major version, error config.\n");
-  }
-
-  my $nmtr = "$nmdir/tr/nmtran.exe"; 
-  if (-x $nmtr) {
-	  $self->full_path_nmtran($nmtr);
-  }
-  my $found_nonmem = 0;
-
-  my $suffix = '';
-  if ($Config{osname} eq 'MSWin32') {
-		$suffix = '.bat';
-	}
-
-	my @check_paths = ('/run/', '/util/', '/');
-	if ($major == 7) {
-		if (not defined $minor) {
-			#Try to figure out the subversion
-			my $found = 0;
-			foreach my $subv (('1','2','3','4','5','6','7','8','9')){
-				last if $found;
-				foreach my $path (@check_paths){
-					if( -x "$nmdir$path"."nmfe7$subv$suffix" ){
-						$minor = $subv;
-						$found_nonmem = 1;
-						$self->full_path_nmfe("$nmdir$path" . "nmfe7$subv$suffix");
-						$found = 1;
-						last;
-					} 
-				}
-			}
-		}
-		if (defined $minor) {
-			#PsN.pm makes sure this is only one character, no dots
-			#only want subversion number if subversion >1
-			$minor = '' unless ($minor > 1);
-		} else {
-			$minor = '';
-		}
-	}
-  
-	unless ($found_nonmem) {
-		foreach my $path (@check_paths) {
-			if( -x "$nmdir$path"."nmfe$major$minor$suffix") {
-				$self->full_path_nmfe("$nmdir$path"."nmfe$major$minor$suffix");
-				$found_nonmem = 1;
-				last;
-			} 
-		}
-	}
-
-  #check if $nmdir is in fact name of executable script, then take that as nmfe (wrapper)
-	unless ($found_nonmem){
-		if( (-x "$nmdir") and (not -d "$nmdir") ){
-			$self->full_path_nmfe("$nmdir");
-			$found_nonmem = 1;
-
-			croak("NONMEM major version (5,6 or 7) is not defined in psn.conf ".
-				"for $nm_version") unless (defined $major);
-			if ($major == 7){
-				if (defined $minor) {
-					#PsN.pm makes sure this is only one character, no dots
-					#only want subversion number if subversion >1
-					$minor='' unless ($minor > 1);
-				} else {
-					$minor = '';
-				}
-			} else {
-				$minor = '';
-			}
-		}
-	}
-
-  if (not $found_nonmem) {
-    my $looked_in = join ' or ', @check_paths;
-    my $err_version = ( defined $nmdir and $nmdir ne '' ) ? $nmdir : '[not configured]';
-    my $mess = "Unable to find executable nmfe$major$minor$suffix ".
-			"in any of the subdirectories\n".
-			"$looked_in of the NONMEM installation directory.\n".
-			"The NONMEM installation directory is $err_version for version [".
-			$nm_version."] according to psn.conf.";
-    croak($mess);
-  }
-}
 
 sub run_nonmem
 {
@@ -1658,7 +1557,7 @@ sub run_nonmem
 		# Create a fake pid and return, do not copy or move files.
 		
 		if( -e 'psn-' . ( $tries + 1 ) . '.lst'){
-			foreach my $filename ( @{$candidate_model -> output_files},'psn.mod','compilation_output.txt',
+			foreach my $filename ( @{$candidate_model -> output_files},'psn.'.$self->modext,'compilation_output.txt',
 								   $self->base_msfo_name){
 				next unless (defined $filename);
 				my $new_name = $filename;
@@ -1671,7 +1570,7 @@ sub run_nonmem
 			$queue_map->{'rerun_'.$run_no} = $run_no; #Fake pid
 			$self->stop_motion_call(tool=>'modelfit',
 									message => "psn.lst exists and not retry. Give fake pid of ".'rerun_'.$run_no.
-									' to make it look like psn.mod is run, '.
+									' to make it look like psn.'.$self->modext.' is run, '.
 									'so that output will be checked the usual way.')
 				if ($self->stop_motion());
 			return;
@@ -1684,7 +1583,7 @@ sub run_nonmem
 		# Then let restart_needed move files to numbered retry files.
 		# Create a fake pid and return, do not copy or move any more files.
 		unless( -e 'psn-' . ( $tries + 1 ) . '.lst'){
-			foreach my $filename ( @{$candidate_model -> output_files},'psn.mod','compilation_output.txt',
+			foreach my $filename ( @{$candidate_model -> output_files},'psn.'.$self->modext,'compilation_output.txt',
 								   $self->base_msfo_name){
 				next unless (defined $filename);
 				my $new_name = $filename;
@@ -1697,7 +1596,7 @@ sub run_nonmem
 			$self->stop_motion_call(tool => 'modelfit',
 									message => "psn-prevrun.lst exists and not retry or psn.lst. ".
 									"Move to psn.lst and give fake pid of ".'rerun_'.$run_no.
-									' to make it look like psn.mod is run, '.
+									' to make it look like psn.'.$self->modext.' is run, '.
 									'so that output will be checked the usual way.')
 				if ($self->stop_motion);
 			return;
@@ -1713,16 +1612,16 @@ sub run_nonmem
 
 		if ($self->run_local) {
 			if ($Config{osname} eq 'MSWin32') {
-				$nonmem_run = nonmemrun::localwindows->new(nm_version => $nm_version);
+				$nonmem_run = nonmemrun::localwindows->new(full_path_runscript => $self->full_path_runscript);
 			} elsif ($self->run_on_mosix) {
-				$nonmem_run = nonmemrun::mosix->new(nm_version => $nm_version);
+				$nonmem_run = nonmemrun::mosix->new(full_path_runscript => $self->full_path_runscript);
 			} else {
-				$nonmem_run = nonmemrun::localunix->new(nm_version => $nm_version);
+				$nonmem_run = nonmemrun::localunix->new(full_path_runscript => $self->full_path_runscript);
 			}
 			$nonmem_run->display_iterations($self->display_iterations);
 		} elsif ($self->run_on_lsf ) {
 			$nonmem_run = nonmemrun::lsf->new(
-				nm_version => $nm_version,
+				full_path_runscript => $self->full_path_runscript,
 				lsf_job_name => $self->lsf_job_name,
 				lsf_project_name => $self->lsf_project_name,
 				lsf_queue => $self->lsf_queue,
@@ -1733,20 +1632,20 @@ sub run_nonmem
 			);
 		} elsif ($self->run_on_ud) {
 			$nonmem_run = nonmemrun::ud->new(
-				nm_version => $nm_version,
+				full_path_runscript => $self->full_path_runscript,
 				directory => $self->directory,
 				run_no => $run_no,
 			);
 		} elsif ($self->run_on_sge ) {
 			$nonmem_run = nonmemrun::sge->new(
 				prepend_flags => $self->sge_prepend_flags,
-				nm_version => $nm_version,
+				full_path_runscript => $self->full_path_runscript,
 				resource => $self->sge_resource,
 				queue => $self->sge_queue,
 			);
 		} elsif ($self->run_on_slurm) {
 			$nonmem_run = nonmemrun::slurm->new(
-				nm_version => $nm_version,
+				full_path_runscript => $self->full_path_runscript,
 				email_address => $self->email_address,
 				send_email => $queue_info->{'send_email'},
 				prepend_flags => $self->slurm_prepend_flags,
@@ -1757,12 +1656,12 @@ sub run_nonmem
 		} elsif ($self->run_on_torque) {
 			$nonmem_run = nonmemrun::torque->new(
 				prepend_flags => $self->torque_prepend_flags,
-				nm_version => $nm_version,
+				full_path_runscript => $self->full_path_runscript,
 				torque_queue => $self->torque_queue,
 			);
 		} elsif ($self->run_on_zink) {
 			$nonmem_run = nonmemrun::zink->new(
-				nm_version => $nm_version,
+				full_path_runscript => $self->full_path_runscript,
 			);
 		}
 
@@ -1791,7 +1690,7 @@ sub run_nonmem
 		#Make it look like the retry has just been run, and not yet 
 		#moved to numbered retry files in restart_needed
 
-		foreach my $filename ( @{$candidate_model -> output_files},'psn.mod','compilation_output.txt', $self->base_msfo_name) {
+		foreach my $filename ( @{$candidate_model -> output_files},'psn.'.$self->modext,'compilation_output.txt', $self->base_msfo_name) {
 			next unless (defined $filename);
 
 			my $retry_name = $self->get_retry_name(filename => $filename, retry => $tries);
@@ -1802,7 +1701,7 @@ sub run_nonmem
 		$queue_map->{'rerun_' . $run_no} = $run_no; #Fake pid
 		$self->stop_motion_call(tool=>'modelfit',
 								message => "Moved $fname to psn.lst in run_nonmem and ".
-								"give fake pid of ".'rerun_'.$run_no. 'to make it look like psn.mod is run '.
+								"give fake pid of ".'rerun_'.$run_no. 'to make it look like psn.'.$self->modext.' is run '.
 								'so that output will be checked the usual way.')
 			if ($self->stop_motion());
 	} # end of "not -e psn-$tries.lst or rerun"
@@ -1865,10 +1764,10 @@ sub diagnose_lst_errors{
 		unless ($have_stats_runs){
 			if ($self->nmqual){
 				$failure_mess = "It seems like Fortran compilation by NMQual failed. Cannot start NONMEM.\n".
-					"Go to the NM_run".($run_no+1)." subdirectory and run psn.mod with NMQual to diagnose the problem.";
+					"Go to the NM_run".($run_no+1)." subdirectory and run psn.".$self->modext." with NMQual to diagnose the problem.";
 			}else{
 				$failure_mess = "It seems like Fortran compilation by the NONMEM's nmfe script failed. Cannot start NONMEM.\n".
-					"Go to the NM_run".($run_no+1)." subdirectory and run psn.mod with NONMEM's nmfe script to diagnose the problem.";
+					"Go to the NM_run".($run_no+1)." subdirectory and run psn.".$self->modext." with NONMEM's nmfe script to diagnose the problem.";
 			}
 		}
 		$self->general_error(message => $failure_mess) unless ($have_stats_runs);
@@ -1981,8 +1880,8 @@ sub restart_needed
 	#to see if $self->general_error_file appears. Then check quickly for psn.lst again and then
 	#exit with failure message
 
-	#neither psn_nonmem_error_messages.txt nor psn.lst will appear if run killed or
-	#it is a perl settings problem. No hurry in those cases. Can always wait for a long
+	#neither psn_nonmem_error_messages.txt nor psn.lst will appear if run killed
+	#No hurry in those cases. Can always wait for a long
 	#time if neither file has appeared.
 
 	#according to NFS documentaion max cache (delay) time is 60 sec.
@@ -2116,7 +2015,7 @@ sub restart_needed
 
 			my $stopmess ='moved ';
 			my $extramess;
-			foreach my $filename ( @{$candidate_model -> output_files},'psn.mod','compilation_output.txt',
+			foreach my $filename ( @{$candidate_model -> output_files},'psn.'.$self->modext,'compilation_output.txt',
 								   $self->base_msfo_name) {
 
 				next unless (defined $filename);
@@ -2132,7 +2031,7 @@ sub restart_needed
 				$stopmess .= "$filename to $new_name, ";
 				
 			}
-			$self->stop_motion_call(tool=>'modelfit',message => $stopmess. "so that new retry with psn.mod will not overwrite this runs results.")
+			$self->stop_motion_call(tool=>'modelfit',message => $stopmess. "so that new retry with psn.".$self->modext." will not overwrite this runs results.")
 				if ($self->stop_motion()> 1);
 			if (-e $nmqual){
 				my $new_name = $self -> get_retry_name( filename => $nmqual, retry => ${$tries} );
@@ -2233,7 +2132,7 @@ sub restart_needed
 				#previous crashes
 
 				my $crash_no = $queue_info_ref -> {'crashes'};
-				while (-e $self -> get_retry_name( filename => 'psn.mod',
+				while (-e $self -> get_retry_name( filename => 'psn.'.$self->modext,
 												   retry => ${$tries},
 												   crash => $crash_no)){
 					$crash_no++;
@@ -2244,7 +2143,7 @@ sub restart_needed
 				ui -> print( category => 'all',  message  => $message,
 							 newline => 1);
 
-				foreach my $filename ( @{$candidate_model -> output_files},'psn.mod','compilation_output.txt',
+				foreach my $filename ( @{$candidate_model -> output_files},'psn.'.$self->modext,'compilation_output.txt',
 									   $self->base_msfo_name) {
 					next unless (defined $filename);
 					my $old_name = $self -> get_retry_name( filename => $filename,
@@ -2260,10 +2159,10 @@ sub restart_needed
 											   retry => ${$tries},
 											   queue_info => $queue_info_ref);
 				} else {
-					my $new_name = $self -> get_retry_name( filename => 'psn.mod',
+					my $new_name = $self -> get_retry_name( filename => 'psn.'.$self->modext,
 															retry => ${$tries},
 															crash => $queue_info_ref -> {'crashes'});
-					cp( $new_name, 'psn.mod' );
+					cp( $new_name, 'psn.'.$self->modext );
 				}
 
 				$output_file -> flush;
@@ -2297,7 +2196,7 @@ sub restart_needed
 					if ($maxevals > $queue_info_ref->{'evals'}) {
 						$queue_info_ref->{'crashes'}++;
 						my $stopmess ='moved ';
-						foreach my $filename (@{$candidate_model->output_files}, 'psn.mod', 'compilation_output.txt', $self->base_msfo_name) {
+						foreach my $filename (@{$candidate_model->output_files}, 'psn.'.$self->modext, 'compilation_output.txt', $self->base_msfo_name) {
 							next unless (defined $filename);
 							my $old_name = $self->get_retry_name(filename => $filename, retry => ${$tries});
 							my $new_name = $self->get_retry_name(filename => $filename, retry => ${$tries},
@@ -2617,7 +2516,7 @@ sub run_nmtran
 
 	$ok = 1;
 	if ($self->check_nmtran and defined $self->full_path_nmtran and (length($self->full_path_nmtran)>0)){
-		my $command = $self->full_path_nmtran.'  < psn.mod > FMSG';
+		my $command = $self->full_path_nmtran.'  < psn.'.$self->modext.' > FMSG';
 		system($command);
 		unlink('FCON','FSIZES','FSTREAM','prsizes.f90','FSUBS','FSUBS2','FSUBS.f90');
 		unlink('FSUBS_MU.F90','FLIB','LINK.LNK','FWARN');
@@ -2694,7 +2593,7 @@ sub copy_model_and_input
 			if ($self->stop_motion > 1);
 		
 		unlink 'stats-runs.csv';
-		if (-e 'psn-1.mod') {
+		if (-e 'psn-1.'.$self->modext) {
 			$self->stop_motion_call(tool=>'modelfit',
 									message => "old clean<2")
 				if ($self->stop_motion > 1);
@@ -2703,16 +2602,16 @@ sub copy_model_and_input
 			#use last retry as candidate model. move last retry to psn.mod and
 			# .lst, as if had just been run.
 			unlink 'psn.lst';
-			unlink 'psn.mod';
+			unlink 'psn.'.$self->modext;
 			unlink 'psn.cov';
 			unlink 'psn.coi';
 			unlink 'psn.cor';
 			
 			my $last_retry = 1;
-			while (-e 'psn-'.($last_retry+1).'.mod') {
+			while (-e 'psn-'.($last_retry+1).'.'.$self->modext) {
 				$last_retry++;
 			}
-			mv('psn-'.($last_retry).'.mod','psn.mod');
+			mv('psn-'.($last_retry).'.'.$self->modext,'psn.'.$self->modext);
 			mv('psn-'.($last_retry).'.lst','psn.lst') if (-e 'psn-'.($last_retry).'.lst');
 			mv('psn-'.($last_retry).'.cov','psn.cov') if (-e 'psn-'.($last_retry).'.cov');
 			mv('psn-'.($last_retry).'.cor','psn.cor') if (-e 'psn-'.($last_retry).'.cor');
@@ -2720,7 +2619,7 @@ sub copy_model_and_input
 			
 			$candidate_model = model->new(
 				outputfile                  => 'psn.lst',
-				filename                    => 'psn.mod',
+				filename                    => 'psn.'.$self->modext,
 				ignore_missing_output_files	=> 1,
 				ignore_missing_data					=> 0
 			);
@@ -2793,7 +2692,7 @@ sub copy_model_and_input
 			#TODO mark the model as failed even before NMrun if data is missing, so do not waste nm call
 
 			$candidate_model =  model -> new (outputfile                  => 'psn.lst',
-											  filename                    => 'psn.mod',
+											  filename                    => 'psn.'.$self->modext,
 											  ignore_missing_output_files => 1,
 											  ignore_missing_data => 1);
 			
@@ -2810,7 +2709,7 @@ sub copy_model_and_input
 			if ($self->stop_motion()> 1);
 		
 		$candidate_model =  model -> new (outputfile                  => 'psn.lst',
-										  filename                    => 'psn.mod',
+										  filename                    => 'psn.'.$self->modext,
 										  ignore_missing_output_files => 1,
 										  ignore_missing_data => 1);
 		
@@ -2875,7 +2774,7 @@ sub copy_model_and_input
 		#nonmem crash due to missing data, will be handled better that way than having croak in data.pm
 		#TODO mark the model as failed even before NMrun if data is missing, so do not waste nm call
 
-		$candidate_model = $model -> copy( filename              => 'psn.mod',
+		$candidate_model = $model -> copy( filename              => 'psn.'.$self->modext,
 										   data_file_names       => \@new_data_names,
 										   copy_data             => $copy_data );
 		
@@ -2943,13 +2842,13 @@ sub copy_model_and_input
 		
 		$candidate_model -> table_names( new_names            => \@new_table_names,
 										 ignore_missing_files => 1 );
-		$candidate_model -> _write( filename   => 'psn.mod' );# write_data => 1 );  #Kolla denna, den funkar inte utan wrap!!
+		$candidate_model -> _write( filename   => 'psn.'.$self->modext );# write_data => 1 );  #Kolla denna, den funkar inte utan wrap!!
 		$candidate_model -> flush_data;
 		$candidate_model -> store_inits;
 		$self->run_nmtran if ($run_nmtran);
 		
 		$self->stop_motion_call(tool=>'modelfit',message => "Copied ".$model->filename().
-								" to psn.mod in current directory. Modified table names.")
+								" to psn.".$self->modext." in current directory. Modified table names.")
 			if ($self->stop_motion()> 1);
 		
 	}
@@ -3083,7 +2982,7 @@ sub copy_model_and_output
 
 		if ($self->prepend_model_to_lst) {
 			#read final modelfile to memory
-			$fname = $self -> get_retry_name( filename => 'psn.mod',
+			$fname = $self -> get_retry_name( filename => 'psn.'.$self->modext,
 				retry => $use_run-1 );
 			open (MODFILE,$fname);
 			while (my $inline = <MODFILE>){
@@ -3112,14 +3011,14 @@ sub copy_model_and_output
 	my @nmout;
 	@nmout = split( /,/ ,$self->nm_output()) if (defined $self->nm_output());
 
-	foreach my $filename ( @output_files, 'compilation_output.txt','psn.mod','nmqual_messages.txt' ){
+	foreach my $filename ( @output_files, 'compilation_output.txt','psn.'.$self->modext,'nmqual_messages.txt' ){
 
 		my $use_name = $self -> get_retry_name( filename => $filename,
 			retry => $use_run-1 );
 
 		# Copy $use_run files to final files in NM_run, to be clear about which one was selected
 		cp( $use_name, $filename ) if (-e $use_name);
-		next if( $filename eq 'psn.mod' );
+		next if( $filename eq 'psn.'.$self->modext );
 		next if( $filename eq 'nmqual_messages.txt' );
 
 		# Don't prepend the model file name to psn.lst, but use the name
@@ -3153,7 +3052,7 @@ sub copy_model_and_output
 	}
 
 	$self->stop_motion_call(tool=>'modelfit',message => "Best retry is $use_run.\nCopied psn-".
-		$use_run.".mod to psn.mod, psn-$use_run".".lst to psn.lst etc.\n".
+		$use_run.".".$self->modext." to psn.".$self->modext.", psn-$use_run".".lst to psn.lst etc.\n".
 		"Copied psn.lst and other output to this models 'home directory' $dir ".
 		"using filestems for $model_filename")
 	if ($self->stop_motion());
@@ -3205,7 +3104,7 @@ sub copy_model_and_output
 		$max_retry = $self->min_retries if ($self->min_retries > $max_retry);
 		$max_retry++; #first run with number 1 is not a retry
 		for ( my $i = 1; $i <= $max_retry; $i++ ) {
-			foreach my $filename ( @output_files,'psn.mod','compilation_output.txt','nmqual_messages.txt'){
+			foreach my $filename ( @output_files,'psn.'.$self->modext,'compilation_output.txt','nmqual_messages.txt'){
 
 				my $use_name = $self -> get_retry_name( filename => $filename,
 					retry => $i-1 );

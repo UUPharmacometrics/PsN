@@ -771,6 +771,9 @@ sub copy
 	  my $new_out = $filename;
 	  if( $new_out =~ /\.mod$/ ) {
 	    $new_out =~ s/\.mod$/\.lst/;
+	  }elsif( $new_out =~ /^([^.]+)\./ ) {
+		  #contains a dot
+		  $new_out = $1.'.lst';
 	  } else {
 	    $new_out = $new_out.'.lst';
 	  }
