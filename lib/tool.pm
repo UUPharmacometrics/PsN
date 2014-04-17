@@ -1609,8 +1609,8 @@ sub print_options
 		print CMD "Command:\n" . $cmd_line . "\n\n";
 	}
 
-	my $nonmemrun = nonmemrun->new(nm_version => $self->nm_version);
-	print CMD "nmfe:\n" . $nonmemrun->full_path_nmfe . "\n\n";
+	PsN::set_nonmem_info($self->nm_version);
+	print CMD "NONMEM: " . $PsN::nmdir . "\n\n";
 
 	print CMD "Actual values optional $toolname options (undefined values not listed):\n";
 	foreach my $opt (sort(@{$local_options})){
