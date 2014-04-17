@@ -334,8 +334,7 @@ sub create_conf
 		return 0;
 	}
 	my $config = ext::Config::Tiny -> read( $template );
-	#fix perl
-	$config -> {'_'} -> {'perl'} = $perlbin;
+	## this is not used anywhere $config -> {'_'} -> {'perl'} = $perlbin;
 
 
 	#fix R
@@ -782,13 +781,6 @@ $perl_binary = get_input($default_perlpath);
 my $runperl_name = "runperl.bat";
 my $runperl_binary = File::Spec->catpath( $volume, $directory, $runperl_name);
 
-if (running_on_windows() and ($perl_binary ne 'C:\Perl\bin\perl.exe')) {
-	print "Warning: If you are running on Windows and the path to the perl binary \n".
-		"set in the previous question was something other than ".'C:\Perl\bin\perl.exe'.
-		"\n".
-		"the same path must be set in psn.conf. This will be done for you if you create ".
-		"the configuration file interactively.\n\n"
-}
 
 print "PsN Core and Toolkit installation directory [$default_sitelib]:";
 $library_dir = get_input($default_sitelib);
