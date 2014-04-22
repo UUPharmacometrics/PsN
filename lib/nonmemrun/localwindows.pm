@@ -25,7 +25,7 @@ sub submit
 		$command .= ' >' . $self->nmfe_output_file;
 	}
 
-	Win32::Process::Create($proc, $self->full_path_nmfe, $command, 0, $Win32::Process::NORMAL_PRIORITY_CLASS, '.') || die ErrorReport();
+	Win32::Process::Create($proc, $self->full_path_runscript, $command, 0, $Win32::Process::NORMAL_PRIORITY_CLASS, '.') || die ErrorReport();
 	$self->windows_process($proc);
 
 	my $pid = $proc->GetProcessID();
