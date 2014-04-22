@@ -1,6 +1,5 @@
 \input{inputs/format_header.tex}
 \guidetitle{PsN configuration}
-%review Kajsa 2013-11-18 
 \begin{document}
 
 \maketitle
@@ -114,7 +113,7 @@ then psn.conf should read
 \end{verbatim}
 The PsN installation script can handle setting [nm\_versions] automatically.
 
-Note that -nmqual must be set on the command-line for PsN to run NONMEM using the autolog script.
+Note that -nmqual must be set on the command-line or in psn.conf for PsN to run NONMEM using the autolog script.
 
 \section{Running nmfe from within PsN}
 
@@ -126,15 +125,13 @@ If option nmfe is set (the default), PsN will look for nmfeX, where X is the NON
 PsN4 supports NMQual8 (no older NMQual versions). The user must set option -nmqual, either in psn.conf or on the command-line, and
 the NONMEM installation directory must be properly defined in psn.conf (see section Essential NONMEM information above). PsN will look for autolog.pl in the nmqual subdirectory
 of the NONMEM installation directory, and return an error if not found.
-If PsN option -nmqual\_xml is set on the command-line or in psn.conf, then PsN will use that as input to autolog.pl. Otherwise PsN will
-use the log.xml file in the nmqual subdirectory of the NONMEM installation directory.
+PsN will use the log.xml file in the nmqual subdirectory of the NONMEM installation directory as input to autolog.pl, so it is important that nmqual/log.xml exists and that the containing NONMEM installation information has not been changed after the original NONMEM installation via NMQual.
 
 \noindent The full command used by PsN is\\
 perl autolog.pl log.xml run ce workdir psn (extra NM options)
 
 Note: The user does not have modify log.xml in any way when running with PsN4.
-When running PsN3 with NMQual the user had to modify the xml-file so that file extension .mod was used instead of .ctl in the 'run' section of log.xml, but PsN4 will instead
-rename the local model file to use .ctl as extension when option -nmqual is set.
+When running PsN3 with NMQual the user had to modify the 'run' section of log.xml, but with PsN4 log.xml should be left as is.
 
 If the user does not set option -nmqual, but sets -nm\_version to an NMQual installation of NONMEM, then PsN will look for an nmfe script in the installation directory
 as described in section Running nmfe from within PsN.

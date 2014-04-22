@@ -27,8 +27,7 @@ sub BUILD
 	my $self = shift;
 	unless (defined $self->full_path_runscript){
 		my $ref = setup_paths(nm_version => $self->nm_version,
-							  nmqual => $self->nmqual,
-							  nmqual_xml => $self->nmqual_xml);
+							  nmqual => $self->nmqual);
 		$self->full_path_runscript($ref->{'full_path_runscript'});
 		$self->nmqual_xml($ref->{'nmqual_xml'}) if ($self->nmqual);
 	}
@@ -39,13 +38,12 @@ sub setup_paths
 {
 	my %parm = validated_hash(\@_,
 							  nm_version => { isa => 'Str', optional => 0 },
-							  nmqual => { isa => 'Bool', optional => 0 },
-							  nmqual_xml => { isa => 'Maybe[Str]', optional => 1 }
+							  nmqual => { isa => 'Bool', optional => 0 }
 		);
 	my $nm_version = $parm{'nm_version'};
 	my $nmqual = $parm{'nmqual'};
-	my $nmqual_xml = $parm{'nmqual_xml'};
 
+	my $nmqual_xml = undef;
 	my $full_path_runscript = undef;
 	my $full_path_nmtran = undef;
 
@@ -124,11 +122,12 @@ sub setup_paths
 			}
 			$full_path_runscript=$nmdir;
 		}
-		unless (defined $nmqual_xml) {
-			if (-e $xmlpath){
-				$nmqual_xml=$xmlpath;
-			}
+		if (-e $xmlpath){
+			$nmqual_xml=$xmlpath;
+		}else{
+			croak("Option nmqual is set and $nmdir is ok for -nm_version=$nm_version but PsN cannot find log.xml at the expected location\n"."$xmlpath\n");
 		}
+
 	}else{
 		#not nmqual
 		if (-d $nmdir){
@@ -260,17 +259,16 @@ sub _create_nmqual_command
 
 	my $command_string;
 
-	if ($PsN::nm_major_version > 7 or ($PsN::nm_major_version == 7 and $PsN::nm_minor_version >= 2)) {
-		my $options = $self->_create_nmfe_options;
-		my $work_dir = cwd();
-		my $xml_file = $self->nmqual_xml;
-		$command_string = " $xml_file run ce $work_dir psn $options ";
-	} else {
-		$command_string = " psn.ctl psn.nmqual_out ";
+	my $options = $self->_create_nmfe_options;
+	my $work_dir = cwd();
+	my $xml_file = $self->nmqual_xml;
+	unless (defined $xml_file){
+		croak("xml_file undefined in _create_nmqual_command, this is a bug");
 	}
+	$command_string = " $xml_file run ce $work_dir psn $options ";
 
 	$command_string = "perl ".$self->full_path_runscript." $command_string";
-
+	print "\n$command_string\n";
 	return $command_string;
 }
 

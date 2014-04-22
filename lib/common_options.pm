@@ -49,7 +49,6 @@ Getopt::Long::config("auto_abbrev");
 		  "nmfe!",
 		  "nmfe_options:s",
 		  "nmqual!",
-		  "nmqual_xml:s",
 		  "nodes:i",
 		  "nonparametric_etas",
 		  "nonparametric_marginals",
@@ -608,11 +607,10 @@ EOF
 
     $help_hash{-nmfe} = <<'EOF';
     <p class="style2">-nmfe</p>
+    Default set.
     Invoke NONMEM via the nmfe script (or a custom wrapper) from within PsN. 
-    Unless option -nmqual is set, option -nmfe is required, however -nmfe is 
-	set automatically if the user sets e.g.
-    run_on_slurm. Also, -nmfe is set in the default configuration file.
-
+    Unless option -nmqual is set, option -nmfe is 
+    set automatically. Also, -nmfe is set in the default configuration file.
 EOF
     $help_hash{-nmfe_options} = <<'EOF';
     <p class="style2">-nmfe_options='options for nmfe'</p>
@@ -630,27 +628,11 @@ EOF
     nmfe_options=-xmloff -prdefault
 EOF
 
-    $help_hash{-nmqual_xml} = <<'EOF';
-    <p class="style2">-nmqual_xml='options for nmqual'</p>
-    Only relevant if option -nmqual is set. Default log.xml.
-    The name, including path, of the xml file to use in the call to 
-    autolog.pl, e.g. as in
-    perl autolog.pl log.xml run ce (...)
-
-EOF
-
     $help_hash{-nmqual} = <<'EOF';
     <p class="style2">-nmqual</p>
-    New feature in PsN-3.1.2. Invoke an NMQual generated perl script <nmqualscript.pl> 
-    from within PsN instead of doing stepwise compiling and execution. 
-    PsN will look for <nmqualscript.pl>, 
-    where <nmqualscript.pl> must include a full path and must be specified in the [nm_versions]
-    section of psn.conf. Note that the scriptname itself must also be included in the path in
-    psn.conf, not only the directory. The compiler settings in psn.conf are not needed. 
-    On some computer architechtures it  may still be necessary to perform stepwise 
-    compiling and execution, i.e. nmqual cannot be used.
-    Option prepend_model_to_lst should not be used with nmqual option, then
-    the model would be prepended twice to the lst-file.
+    Default not used. Run an NMQual-installed NONMEM via autolog.pl. Only NMQual8 is supported. 
+    When set, PsN will locate the autolog.pl file and log.xml in the nmqual subdirectory of the NONMEM installation directory, and then run
+    perl autolog.pl log.xml run ce workdir psn (extra NM options)
 EOF
 
     $help_hash{-threads} = <<'EOF';

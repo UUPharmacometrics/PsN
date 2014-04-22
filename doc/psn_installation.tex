@@ -10,25 +10,28 @@ Before you install PsN, you should make sure that the following programs are ins
 \begin{itemize}
 \item NONMEM 
 
-Please note that if you intend to run PsN with NMQual8 the nm72.xml file must be slightly modified (to expect .mod instead of .ctl as the control stream suffix) before NONMEM installation, see document psn\_configuration.pdf, otherwise PsN's NMQual8 support will not work.
+If you intend to run PsN4 with NMQual8 you should leave the xml file as is. No changes at all should be made.
+This is new compared to PsN3, where some changes were necessary.
 	\item Perl5
-	\item Perl modules Math::Random, Statistics::Distributions, Archive::Zip and File::Copy::Recursive (installation instructions below). PsN can be run without Statistics::Distributions, Archive::Zip and File::Copy::Recursive but some scm and vpc features and a scm bugfix will not be available.
+	\item Perl modules Math::Random, Statistics::Distributions, Moose, MooseX::Params::Validate, Archive::Zip and File::Copy::Recursive (installation instructions below). PsN can be run without Statistics::Distributions, Archive::Zip and File::Copy::Recursive but some scm and vpc features and a scm bugfix will not be available.
 \end{itemize}
 
 \section{Verify that you NONMEM installation works properly}
 \begin{enumerate}
 \item Make sure that you can run NONMEM directly via the nmfe script (or with NMQual). If this does not work then it will not work via PsN either.
-\item If you intent to run NONMEM in parallel then you must make sure you can do it directly via the nmfe script. If this does not work then it will not work via PsN either.
+\item If you intend to run NONMEM in parallel then you must make sure you can do it directly via the nmfe script. If this does not work then it will not work via PsN either.
 \end{enumerate}
 
 \section{Install required Perl modules}
-PsN requires the Perl module Math::Random to be installed on your computer. Some other modules are very useful, but not absolutely required. The following paragraphs describe the setup procedure for different operating systems. 
+PsN requires the Perl modules Math::Random, Moose and MooseX::Params::Validate to be installed on your computer. Some other modules are very useful, but not absolutely required. The following paragraphs describe the setup procedure for different operating systems. 
 \subsection{Windows (ActivePerl)}
 For this procedure to work you must be connected to the internet, because the package is downloaded from the web. Pay attention to any warning messages from Windows that talk about internet connection problems, such problems must be solved before doing the installations.
 
 Open a DOS window and run the commands (press Enter after each command):
 \begin{verbatim}
 ppm install math-random
+ppm install moose
+ppm install moosex-params-validate
 ppm install statistics-distributions
 ppm install archive-zip
 ppm install file-copy-recursive
@@ -40,6 +43,8 @@ ppm install file-copy-recursive
 Start a command window and run the following commands (hit Enter after each command), prepend sudo if necessary:
 \begin{verbatim}
 cpan -i Math::Random
+cpan -i Moose
+cpan -i MooseX::Params::Validate
 cpan -i Statistics::Distributions
 cpan -i Archive::Zip
 cpan -i File::Copy::Recursive
@@ -60,7 +65,7 @@ perl setup.pl
 \end{verbatim}
 \item Answer the questions on screen. The default is probably the best for most users. It is really, really recommended to let the script generate psn.conf for you, unless you are experienced in installing and configuring PsN.
 If you cannot install PsN where the install script suggests and you wish to use PsN in your own perl scripts, you must make sure that the directory where you installed the PsN core and toolkit is in Perl's include path. For convenience you should also check that the directory where the utilities are installed is in your search path. 
-\item If you did not let the installation script create a configuration file psn.conf for you, or if you are running NONMEM via NMQual or on a cluster, you need to edit psn.conf in the PsN installation directory. The document psn\_configuration.pdf in PsN-Source/doc describes how to make correct settings in the psn.conf file. The help document is also found on the PsN website under Documentation.
+\item If you did not let the installation script create a configuration file psn.conf for you, or if you are running NONMEM via NMQual or on a cluster, you need to edit psn.conf in the PsN installation directory (only a very minor change for NMQual). The document psn\_configuration.pdf in PsN-Source/doc describes how to make correct settings in the psn.conf file. The help document is also found on the PsN website under Documentation.
 \item When the installation is done you can safely remove the PsN-Source directory if you like. 
 \end{enumerate}
 

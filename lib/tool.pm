@@ -79,7 +79,6 @@ has 'parafile' => ( is => 'rw', isa => 'Str', default => 'none' );
 has 'nodes' => ( is => 'rw', isa => 'Int', default => 0 );
 has 'nmfe_options' => ( is => 'rw', isa => 'Maybe[Str]' );
 has 'nm_output' => ( is => 'rw', isa => 'Str' );
-has 'nmqual_xml' => ( is => 'rw', isa => 'Str' );
 has 'tool_id' => ( is => 'rw', isa => 'Int' );
 has 'tweak_inits' => ( is => 'rw', isa => 'Bool', default => 1 );
 has 'degree' => ( is => 'rw', isa => 'Num', default => 0.1 );

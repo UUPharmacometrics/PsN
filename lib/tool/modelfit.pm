@@ -43,6 +43,7 @@ has 'base_msfo_name' => ( is => 'rw', isa => 'Str' );
 has 'max_hash' => ( is => 'rw', isa => 'HashRef', default => sub { {} } );
 has 'full_path_runscript' => ( is => 'rw', isa => 'Str' );
 has 'modext' => ( is => 'rw', isa => 'Str', default => 'mod' );
+has 'nmqual_xml' => ( is => 'rw', isa => 'Str' );
 has 'wintail_exe' => ( is => 'rw', isa => 'Maybe[Str]' );
 has 'wintail_command' => ( is => 'rw', isa => 'Maybe[Str]' );
 has 'cutoff' => ( is => 'rw', isa => 'Num' );
@@ -333,8 +334,7 @@ sub BUILD
 
 
 	my $ref = nonmemrun::setup_paths(nm_version => $this->nm_version,
-									 nmqual => $this->nmqual,
-									 nmqual_xml => $this->nmqual_xml);
+									 nmqual => $this->nmqual);
 
 	$this->full_path_runscript($ref->{'full_path_runscript'});
 	$this->full_path_nmtran($ref->{'full_path_nmtran'}) if (defined $ref->{'full_path_nmtran'});
