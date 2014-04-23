@@ -73,7 +73,7 @@ sub BUILD
 
 
 	croak("Number of samples must be larger than 0") unless ($this->samples()>0);
-	croak("Number of resamples must be larger than 0") unless ($this->resamples()>0);
+	croak("Number of resamples must be larger than 1") unless ($this->resamples()>1);
 	croak("Number of resamples cannot be larger than samples unless with_replacement is set") unless 
 		(($this->resamples() <= $this->samples) or ($this->with_replacement));
 	
