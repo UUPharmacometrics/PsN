@@ -12,7 +12,7 @@ has 'full_path_runscript' => ( is => 'rw', isa => 'Maybe[Str]' );
 has 'nm_version' => ( is => 'rw', isa => 'Maybe[Str]' );
 has 'email_address' => ( is => 'rw', isa => 'Maybe[Str]' );
 has 'send_email' => ( is => 'rw', isa => 'Maybe[Str]' );
-has 'nmfe_options' => ( is => 'rw', isa => 'Str' );
+has 'nmfe_options' => ( is => 'rw', isa => 'Maybe[Str]' );
 has 'prepend_flags' => ( is => 'rw', isa => 'Maybe[Str]' );
 has 'max_runtime' => ( is => 'rw', isa => 'Maybe[Str]' );
 has 'parafile' => (is => 'rw', isa => 'Maybe[Str]' );
