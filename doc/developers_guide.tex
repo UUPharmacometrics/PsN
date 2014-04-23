@@ -72,7 +72,7 @@ Stay on the NLP branch so that git pull and git push will be on that branch.
 
 
 \section{Testing}
-The PsN4/test directory contains the tests. Unit tests are in PsN4/test/unit and system tests in PsN4/test/system. When installing PsN the user has the option to install the test suite. The default directory is in the lib directory. 
+The PsN4/test directory contains the tests. Unit tests are in PsN4/test/unit and system tests in PsN4/test/system. When installing PsN the user has the option to install the test suite in a specified directory. The default directory is in the lib directory. To be able to run the tests the package Test::Exception has to be installed on some systems. 
 Unit tests are defined as tests that do not involve \emph{running} NONMEM, while system tests are tests involving running NONMEM. 
 Tests can be run by using the command \verb|prove| (which is bundled with perl). The unit tests can be run by issuing the command
 \begin{verbatim}
