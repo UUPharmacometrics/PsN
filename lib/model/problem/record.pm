@@ -301,11 +301,17 @@ sub _format_record
 			my $foption = $option -> _format_option;
 
 			# Check and add linebreak if necesary.
-			if ( length( $formatted[$line].' '.$foption ) > 70 ) {
+			#do not add linebreak before first option in $DATA (file path data file)
+			if (( length( $formatted[$line].' '.$foption ) > 70 ) and (not ($i==0 and $fname eq 'DATA'))){
 				$formatted[$line] .= "\n";
 				$line++;
 				# Indent for next option
-				push( @formatted, ' ' x 11 );
+				# if this is $PROBLEM then add comment ; since options are actually comments
+				if ($fname eq 'PROBLEM'){
+					push( @formatted, ';          '); #10 spaces
+				}else{
+					push( @formatted, ' ' x 11 );
+				}
 			}
 
 			$formatted[$line] .= ' '.$foption;

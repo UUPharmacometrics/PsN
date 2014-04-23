@@ -184,6 +184,7 @@ has 'nonparametric_code' => ( is => 'rw', isa => 'Bool', default => 1 );
 has 'shrinkage_code' => ( is => 'rw', isa => 'Bool', default => 1 );
 has 'iwres_shrinkage_table' => ( is => 'rw', isa => 'Str' );
 has 'eta_shrinkage_table' => ( is => 'rw', isa => 'Str' );
+has 'own_print_order' => ( is => 'rw', isa => 'Maybe[ArrayRef]' );
 
 sub BUILD
 {
@@ -630,6 +631,23 @@ sub add_prior_distribution
 	my $record_string=" NWPRI NTHETA=$ntheta NETA=$neta NTHP=$nthp NETP=$netp $plev";
 	$self -> set_records( 'type' => 'prior',
 		'record_strings' => [$record_string] );
+
+	#update own_print_order
+	if (defined $self->own_print_order and scalar(@{$self->own_print_order})>0){
+		my %leading_order = {'sizes' => 1,'problem'=> 1,'input'=> 1,'bind'=> 1,'data'=> 1,'abbreviated'=> 1,'msfi'=> 1,'contr'=> 1,'subroutine'=> 1};
+		my @new_order =();
+		my $added=0;
+		foreach my $rec (@{$self->own_print_order}){
+			if (not $added and (not $leading_order{$rec}==1)){
+				push (@new_order,'prior');
+				$added = 1;
+			}
+			push (@new_order,$rec);
+		}
+		$self->own_print_order(\@new_order);
+	}else{
+		print "\nError add_prior_distribution, no own_print_order\n";
+	}
 
 
 	#Add ntheta new $THETA FIX. Initial estimates are final THETA estimates from lst-file.
@@ -1800,6 +1818,9 @@ sub _read_records
 	my $end_index;
 	my $first = 1;
 
+	my @local_print_order=();
+	my %found_records;
+
 	# It may look like the loop takes one step to much, but its a
 	# trick that helps parsing the last record.
 	$self->prob_arr([]) unless defined $self->prob_arr;
@@ -1838,6 +1859,11 @@ sub _read_records
 					croak("Record $record_name is not valid" );
 				}
 
+				unless ($found_records{$record_type} == 1){
+					push(@local_print_order,$record_type);
+					$found_records{$record_type}=1;
+				}
+
 				# reset the search for records by moving the record start
 				# forwards:
 				$start_index = $i;
@@ -1874,6 +1900,8 @@ sub _read_records
 			$record_index = $i;
 		}  
 	}
+	$self->own_print_order(\@local_print_order);
+
 }
 
 sub check_start_eta
@@ -2201,12 +2229,14 @@ sub _format_problem
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 filename => { isa => 'Str', optional => 1 },
-		 problem_number => { isa => 'Int', optional => 1 },
-		 number_format => { isa => 'Maybe[Int]', optional => 1 }
-	);
+							  filename => { isa => 'Str', optional => 1 },
+							  problem_number => { isa => 'Int', optional => 1 },
+							  local_print_order => { isa => 'Bool', default => 0, optional => 1 },
+							  number_format => { isa => 'Maybe[Int]', optional => 1 }
+		);
 	my $filename = $parm{'filename'};
 	my $problem_number = $parm{'problem_number'};
+	my $local_print_order = $parm{'local_print_order'};
 	my $number_format = $parm{'number_format'};
 	my @formatted;
 
@@ -2223,10 +2253,12 @@ sub _format_problem
 	# print_order, the file will still be valid, but will look
 	# different from what it used to.
 	my $record_order = \@print_order;
-	if ($self->sde){
-	  $record_order = \@sde_print_order;
+	if ($local_print_order and defined $self->own_print_order and scalar(@{$self->own_print_order})>0){
+		$record_order = $self->own_print_order;
+	}elsif ($self->sde){
+		$record_order = \@sde_print_order;
 	}elsif ($self->omega_before_pk){
-	  $record_order = \@print_order_omega_before_pk;
+		$record_order = \@print_order_omega_before_pk;
 	}
 	foreach my $type ( @${record_order} ) {
 	  # Create an accessor string for the record being formatted

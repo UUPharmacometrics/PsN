@@ -51,7 +51,7 @@ OR (assume there exists an lst-file with name myModel.lst ):
     update_inits myModel.mod -output_model=new.mod
 
 OR (copy estimates from modelfile instead of lst-file, modify old.mod):
-    update_inits old.mod -from_model=other.mod -extra_records=PK,DATA
+    update_inits old.mod -from_model=other.mod
 
 Required input: The name of a modelfile.
 
@@ -59,15 +59,12 @@ Optional input:
 <lst-filename>              The name of the lst-file to read final estimates from.
                             Cannot be used together with option -from_model.
 
--from_model=<filename>      The name of the modelfile to copy records from. 
+-from_model=<filename>      The name of the modelfile to copy initials from. 
                             Cannot be used together with lst-file input.
 
 -output_model=<filename>    The name of the modelfile to create. If omitted, a copy of
                             the original modelfile with extension .org is created, and 
                             the original file is modified.
-
--extra_records=rec1,rec2    A comma-separated list of record names without $. Additional
-                            records to replace, e.g. DATA.
 
 -ignore_missing_parameters  Do not require 1-1 matching of parameter names and indexes.
 
@@ -86,40 +83,40 @@ Optional input:
 
 -comment=<comment>          If the option is used, a new line with <comment> will be inserted 
                             directly following the $PROBLEM row.
-			    The comment must be enclosed with quotes if it contains spaces.
+							The comment must be enclosed with quotes if it contains spaces.
 
 -add_tags                   Add all runrecord tags. update_inits will not check if any tags 
                             are already present.
 
 -degree=X                   After updating the initial estimates in the output file, randomly
                             perturb them by degree=X, i.e. change estimate to a value
-			    randomly chosen in the range estimate +/- estimate*X while
-			    respecting upper and lower boundaries, if set.
-			    Degree is set to 0.1 when tweak_inits is set in execute.
+							randomly chosen in the range estimate +/- estimate*X while
+							respecting upper and lower boundaries, if set.
+							Degree is set to 0.1 when tweak_inits is set in execute.
 
 -based_on=<run_number>      If the Based on tag is present in the modelfile, or if option 
                             -add_tags is used, update_inits will by default try to extract 
-			    a run number from the original modelfile name and set the 
-			    Based on tag for runrecord to that number. If a number cannot 
-			    be extracted then nothing will be set. If the -based_on option 
-			    is used, update_inits will set the tag to that number.
+							a run number from the original modelfile name and set the 
+							Based on tag for runrecord to that number. If a number cannot 
+							be extracted then nothing will be set. If the -based_on option 
+							is used, update_inits will set the tag to that number.
 
 -add_prior=df               Add $PRIOR NWPRI based on output object. Will automatically read
                             estimates and covariances from output and use them to define the 
-			    prior. df should be the degrees of freedom, a comma-separated list
-			    with one integer per omega block.
-			    This feature is highly experimental, and you must check $PRIOR 
-			    in the new model file manually before using it.
-			    Option -add_prior cannot be used together with option -from_model. 
+							prior. df should be the degrees of freedom, a comma-separated list
+							with one integer per omega block.
+							This feature is highly experimental, and you must check $PRIOR 
+							in the new model file manually before using it.
+							Option -add_prior cannot be used together with option -from_model. 
 
 -diagonal_dominance         By default not set. If option is set then PsN will ensure that OMEGA
                             and SIGMA are strictly diagonally dominant by decreasing off-diagonal
-			    elements if necessary. This in turn guarantees that OMEGA and SIGMA 
-			    are positive definite. NONMEM sometimes prints OMEGA or SIGMA matrices
-			    in the lst-file which are not positive definite, and the 
-			    diagonal_dominance option offers a convenient way to fix this. However, 
-			    the perturbation made my PsN is most likely not the smallest perturbation 
-			    required to make OMEGA/SIGMA positive definite.
+							elements if necessary. This in turn guarantees that OMEGA and SIGMA 
+							are positive definite. NONMEM sometimes prints OMEGA or SIGMA matrices
+							in the lst-file which are not positive definite, and the 
+							diagonal_dominance option offers a convenient way to fix this. However, 
+							the perturbation made my PsN is most likely not the smallest perturbation 
+							required to make OMEGA/SIGMA positive definite.
 
 ENDHELP
 exit;
@@ -129,92 +126,72 @@ exit;
 my %options;
 
 my %optional_options = ( "output_model:s" => undef,
-			 "from_model:s" => undef,
-			 "extra_records:s" => undef,
-			 "nm_version:s" => undef,
-			 "ignore_missing_parameters" => undef,
-			 "comment:s" => undef,
-			 "degree:f" => undef,
-			 "add_tags" => undef,
-			 "diagonal_dominance" => undef,
-			 "add_prior:s" => undef,
-			 "seed:s" => undef,
-			 "based_on:i" => undef,
-			 "renumber:i" => undef,
-			 "sigdig:i" => undef);
+						 "from_model:s" => undef,
+						 "ignore_missing_parameters" => undef,
+						 "comment:s" => undef,
+						 "degree:f" => undef,
+						 "add_tags" => undef,
+						 "diagonal_dominance" => undef,
+						 "add_prior:s" => undef,
+						 "seed:s" => undef,
+						 "based_on:i" => undef,
+						 "renumber:i" => undef,
+						 "sigdig:i" => undef);
 
 my $res = GetOptions( \%options,
-		      keys(%optional_options) );
+					  keys(%optional_options) );
 common_options::setup( \%options, 'update_inits' ); 
 
 exit unless $res;
 
-#double ;;, may have space and number. 'Based on'is handled separately below
-my @tags=('2. Description:','3. Label:','4. Structural model:','5. Covariate model:');
-push (@tags,('6. Inter-individual variability:','7. Inter-occasion variability:','8. Residual variability:'));
-push (@tags,'9. Estimation:');
 
 my $ignore_missing_parameters=0;
 if ( defined $options{'ignore_missing_parameters'} ){
-  $ignore_missing_parameters=1;
+	$ignore_missing_parameters=1;
 }
 
 
 unless( $ARGV[0] ){
-  die "You must at least enter a model file name\n";
+	die "You must at least enter a model file name\n";
 }
 my $run_number;
 #extract run number
 if ($ARGV[0]){
-  #lstfile
-  my $tmp = $ARGV[0];
-  if ($tmp =~ /(run|Run|RUN)([0-9]+[^0-9]*)\./){
-    $run_number = $2;
-  }  
+	my $tmp = $ARGV[0];
+	if ($tmp =~ /(run|Run|RUN)([0-9]+[^0-9]*)\./){
+		$run_number = $2;
+	}  
 }
 
 unless( -e $ARGV[0] ){
-  die "No such file: $ARGV[0]\n";
+	die "No such file: $ARGV[0]\n";
 }
 
 
-my $tablenum='';
+my $tablenum;
 my $auto_renumber=0;
 if (defined $options{'renumber'}) {
-  $tablenum=$options{'renumber'} if ($options{'renumber'} != 0);
+	$tablenum=$options{'renumber'} if ($options{'renumber'} != 0);
 }elsif( $options{'output_model'} ){
-  my $tmp = $options{'output_model'};
-  if ($tmp =~ /(run|Run|RUN)([0-9]+)[^0-9]*\./){
-    $tablenum = $2;
-    $options{'renumber'}=$tablenum;
-    $auto_renumber=1;
-  }  
+	my $tmp = $options{'output_model'};
+	if ($tmp =~ /(run|Run|RUN)([0-9]+)[^0-9]*\./){
+		$tablenum = $2;
+		$options{'renumber'}=$tablenum;
+		$auto_renumber=1;
+	}  
 }
 
-my @record_list=('THE','OME','SIG');
-if ( defined $options{'extra_records'} ){
-  #split string, assume comma separated
-  foreach my $extra (split(/,/,$options{'extra_records'})){
-    if (length($extra)>0){
-      my $match = search_record($extra,\@record_list); 
-      if ($match){
-	die "$extra is already in (default) record list\n";
-      }else {
-	push(@record_list,$extra);
-      }
-    }
-  }
-}
+my @record_list=('THETA','OMEGA','SIGMA');
 print "Updating records ".join(' ',@record_list)."\n";
 print "and renumbering table and msfo files (set -renumber=0 to avoid this)\n" if ($auto_renumber);
 
 if( $ARGV[1] && $options{'from_model'}){
-  die "Ambiguous input: Cannot specify both lst-file and from_model.\n";
+	die "Ambiguous input: Cannot specify both lst-file and from_model.\n";
 }
 
 if( $options{'add_prior'})  {
-  push(@record_list,'PRI');
-  die "Cannot specify both -add_prior and -from_model.\n" if($options{'from_model'});
+	push(@record_list,'PRI');
+	die "Cannot specify both -add_prior and -from_model.\n" if($options{'from_model'});
 }
 
 
@@ -222,260 +199,125 @@ if( $options{'add_prior'})  {
 my $ignore_missing_files=1;
 $ignore_missing_files = 0 unless ( $ARGV[1] );
 my $model = model -> new ( filename => $ARGV[0],
-			   ignore_missing_files => $ignore_missing_files,
-			   skip_data_parsing => 1,
-			   ignore_missing_data =>1);
+						   ignore_missing_files => $ignore_missing_files,
+						   skip_data_parsing => 1,
+						   ignore_missing_data =>1);
 my $model_copy = model -> new ( filename => $ARGV[0],
-				ignore_missing_files => 1,
-				skip_data_parsing => 1,
-				ignore_missing_data=>1);
+								ignore_missing_files => 1,
+								skip_data_parsing => 1,
+								ignore_missing_data=>1);
 
 if ( scalar (@{$model-> problems}) != 1 ){
-  die 'Script can only handle modelfiles with exactly one problem.\n';
+	die 'Script can only handle modelfiles with exactly one problem.\n';
 }
 
 
-my $tempfile=$ARGV[0].'.temporary';
 my $outfile;
-my $infile;
-my $fromfile;
 
 if ( $options{'output_model'} ){
-  $outfile = $options{'output_model'};
-  $infile= $ARGV[0];
+	$outfile = $options{'output_model'};
 }  else {
-  #original file will be overwritten, copy to .org
-  cp( $ARGV[0], $ARGV[0].'.org' );
-  $outfile = $ARGV[0];
-  $infile = $ARGV[0].'.org';
+	#original file will be overwritten, copy to .org
+	cp( $ARGV[0], $ARGV[0].'.org' );
+	$outfile = $ARGV[0];
 }
 
-
-
-my $inits_from;
 if (defined $options{'from_model'}) {
-  $fromfile = $options{'from_model'};
-  $inits_from = $fromfile;
-  die "No such file: $fromfile\n" unless (-e $fromfile);
-} else { 
-  my $output;
-  $inits_from = $ARGV[1];
-  if( $ARGV[1] ){
-    $output = output -> new( filename => $ARGV[1],
-			     ignore_missing_files => 0);
+	die "No such file: ".$options{'from_model'}."\n" unless (-e $options{'from_model'});
+	my $params_model = model -> new ( filename => $options{'from_model'},
+									  ignore_missing_files => 1,
+									  skip_data_parsing => 1,
+									  ignore_missing_data=>1);
 
-    unless( $output ){
-      die "No such file: $ARGV[1]\n";
-    }
-    unless ($output->parsed_successfully()){
-      die "Failed to parse $ARGV[1]: ".$output -> parsing_error_message();
-    }
-  }elsif( defined $model->outputs and -e $model ->outputs -> [0] -> filename ){
-    $output = $model -> outputs -> [0];
-    $inits_from = $model ->outputs -> [0] -> filename();
-    unless ($output->parsed_successfully()){
-      die "Failed to parse ".$model ->outputs -> [0] -> filename.": ".
-	  $output -> parsing_error_message();
-    }
-  } else {
-    die "No file to read parameter values from\n";
-  }
-  $model_copy -> filename( $tempfile );
+	my $array = $params_model->get_hash_values_to_labels();
+
+	my $check = 0;
+	$check = $options{'diagonal_dominance'} if (defined $options{'diagonal_dominance'});
+	for (my $i=0; $i< scalar(@{$model_copy->problems}); $i++){
+		last if ($i >= scalar(@{$array}));
+		$model_copy -> update_inits( from_hash => $array->[$i],
+									 problem_number => ($i+1),
+									 ensure_diagonal_dominance => $check,
+									 ignore_missing_parameters => $ignore_missing_parameters );
+	}
+
+} else { 
+	my $output;
+	if( $ARGV[1] ){
+		$output = output -> new( filename => $ARGV[1],
+								 ignore_missing_files => 0);
+
+		unless( $output ){
+			die "No such file: $ARGV[1]\n";
+		}
+		unless ($output->parsed_successfully()){
+			die "Failed to parse $ARGV[1]: ".$output -> parsing_error_message();
+		}
+	}elsif( defined $model->outputs and -e $model ->outputs -> [0] -> filename ){
+		$output = $model -> outputs -> [0];
+		unless ($output->parsed_successfully()){
+			die "Failed to parse ".$model ->outputs -> [0] -> filename.": ".
+				$output -> parsing_error_message();
+		}
+	} else {
+		die "No file to read parameter values from\n";
+	}
 #copy does not copy ignore_missing_files
 #  my $model_copy = $model -> copy( filename => $tempfile,
 #				   copy_data => 1);
-  my $check = 0;
-  $check = $options{'diagonal_dominance'} if (defined $options{'diagonal_dominance'});
-  $model_copy -> update_inits( from_output => $output,
-			       ensure_diagonal_dominance => $check,
-			       ignore_missing_parameters => $ignore_missing_parameters );
+	my $check = 0;
+	$check = $options{'diagonal_dominance'} if (defined $options{'diagonal_dominance'});
+	$model_copy -> update_inits( from_output => $output,
+								 ensure_diagonal_dominance => $check,
+								 ignore_missing_parameters => $ignore_missing_parameters );
 
-  if (defined $options{'degree'}){
-    foreach my $prob ( @{$model_copy->problems()}) {
-      $prob -> set_random_inits ( degree => $options{'degree'} );
-    }
-  }
-
-  $model_copy -> problems()->[0]->add_prior_distribution(from_output => $output,
-							 problem_number => 1,
-							 df_string => $options{'add_prior'}) 
-      if $options{'add_prior'};
-  
-  $model_copy -> _write(number_format => $options{'sigdig'});
-  $fromfile= $tempfile;
 }
+$model_copy -> filename( $outfile );
 
-#copy everything except initial estimates from ORIG to NEW
-#so that original formatting is kept
-#initial estimates are instead copied from MODIF to NEW
-
-my %newrecords;
-my %oldrecords;
-my @print_order;
-my %printed_key;
-
-my @record_lines=();
-my $record='none';
-open(MODIF, $fromfile) or die "Could not open file $fromfile for reading.\n";
-while (my $row = <MODIF>){
-  if (($row =~ /^[ ]*\$([A-Z]*)/) and (index($record,$1) != 0)){
-    my $new_record = $1;
-    unless ($record eq 'none'){
-      #new record, take care of stored old one
-      if (search_record($record,\@record_list)){
-	#always use three-letter key
-	my $key = substr($record,0,3);
-	push(@{$newrecords{$key}},@record_lines); 
-	$printed_key{$key}=0; 
-      }
-      @record_lines =();
-    }
-    $record = $new_record;
-  }
-  #store line
-  push (@record_lines,$row);
+if (defined $options{'degree'}){
+	foreach my $prob ( @{$model_copy->problems()}) {
+		$prob -> set_random_inits ( degree => $options{'degree'} );
+	}
 }
-if (search_record($record,\@record_list)){
-  #always use three-letter key
-  my $key = substr($record,0,3);
-  push(@{$newrecords{$key}},@record_lines); 
-}
-close(MODIF);
-
-
-@record_lines=();
-$record='none';
-open(ORIG, $infile) or die "Could not open file $infile for reading.\n";
-while (my $row = <ORIG>){
-  if (($row =~ /^[ ]*\$([A-Z]*)/) and (index($record,$1) != 0)){
-    my $new_record = $1;
-    unless ($record eq 'none'){
-      #new record, take care of stored old one
-      unless (defined $oldrecords{$record}){
-	push(@print_order,$record);
-      }
-      push(@{$oldrecords{$record}},@record_lines); 
-      @record_lines =();
-    }
-    $record = $new_record;
-  }
-  #store line, continue
-  push (@record_lines,$row);
-}
-unless (defined $newrecords{$record}){
-  push(@print_order,$record);
-}
-push(@{$oldrecords{$record}},@record_lines); 
-close(ORIG);
-
 
 if ($options{'add_prior'}){
-  my @new_print_order;
-  my @full_print_order = 
-      ('SIZ','PRO','ABB','INP','DAT','MSF','CON','SUB');
-  my $added=0;
-  foreach my $rec (@print_order){
-    unless ($added){
-      unless (search_record($rec,\@full_print_order)){
-#	print "PRI\n";
-	push(@new_print_order,'PRI');
-	$added=1;
-      }
-    }
-    push(@new_print_order,$rec);
-#    print "$rec\n";
-  }
-  @print_order = @new_print_order;
+	$model_copy -> problems()->[0]->add_prior_distribution(from_output => $output,
+														   problem_number => 1,
+														   df_string => $options{'add_prior'});
+}	
+
+
+if (defined $options{'renumber'} and $options{'renumber'} != 0){
+	for (my $j=0; $j< scalar(@{$model_copy->problems}); $j++){
+		#handle table
+		if (defined $model_copy->problems->[$j]->tables){
+			foreach my $tab (@{$model_copy->problems->[$j]->tables}){
+				$tab->renumber_file (numberstring => $tablenum);
+			}
+		}
+		#handle estimation
+		if (defined $model_copy->problems->[$j]->estimations){
+			foreach my $est (@{$model_copy->problems->[$j]->estimations}){
+				$est->renumber_msfo (numberstring => $tablenum);
+			}
+		}
+	}
+}	
+#handle PROBLEM update_tags add_tags add_comment
+my $based_on = $run_number;
+$based_on = $options{'based_on'} if (defined $options{'based_on'});
+
+if (defined $based_on or defined $options{'comment'} or defined $options{'add_tags'}){
+	$model_copy->problems ->[0]->problems->[0]->update_runrecord_tags(based_on =>$based_on,
+																	  new_comment =>$options{'comment'},
+																	  add_tags => (defined $options{'add_tags'}));
 }
+$model_copy -> _write(number_format => $options{'sigdig'},
+					  local_print_order => 1);
 
 
 
-my $found_problem=0;
-open(NEW, "> ", $outfile) or die "Could not open $outfile for writing.\n";
-foreach my $record (@print_order) {
-  my $record_ref = $oldrecords{$record};
-  if (search_record($record,\@record_list)){
-    #always use three-letter key
-    my $key = substr($record,0,3);
-    if (defined $newrecords{$key}){
-      if ($printed_key{$key}){
-	next;
-      }else{
-	$record_ref = $newrecords{$key};
-	$printed_key{$key}=1;
-      }
-    }else{
-      print "\nError: Could not find $record in input model/lst-file\n";
-    }
-  } 
-  if (index('PROBLEM',$record) == 0){
-    my $printed_comment=0;
-    foreach my $line (@{$record_ref}){
-      if ($line =~ /Based on:/){
-	#runrecord does not check for number or spaces or number of ;, so neither does 
-	#update_inits
-	unless (defined $options{'add_tags'}){
-	  #just skip line if add_tags
-	  if (defined $options{'based_on'}){
-	    $line = ';; 1. Based on: '.$options{'based_on'}."\n";
-	  }else{
-	    $line = ';; 1. Based on: '."$run_number\n";
-	  }
-	  print NEW $line;
-	}
-      }elsif ($line =~ /^[ ]*\$PRO/){
-	print NEW $line;
-	unless ($printed_comment){
-	  if (defined $options{'comment'}){
-	    print NEW ";".$options{'comment'}."\n";
-	  }
-	  $printed_comment=1;
-	}
-      }else{
-	print NEW $line;
-      }
-    }
-    #add tags unless already done
-    unless ($found_problem){
-      if (defined $options{'add_tags'}){
-	#add all, set based on
-	#start with Based on
-	if (defined $options{'based_on'}){
-	  print NEW ';; 1. Based on: '.$options{'based_on'}."\n";
-	}else{
-	  print NEW ';; 1. Based on: '."$run_number\n";
-	}
-	foreach my $tag (@tags){
-	  print NEW ";; $tag\n";
-	}
-      }
-    }
-    $found_problem=1;
-    
-  }elsif ( (index('TABLE',$record) == 0) and defined $options{'renumber'} 
-	   and $options{'renumber'} != 0){
-    foreach my $line (@{$record_ref}){
-      $line =~ s/tab[0-9]*\b/tab$tablenum/g ;
-      $line =~ s/tab[0-9]*\.csv\b/tab$tablenum.csv/g ;
-      print NEW $line;
-    } 
-  }elsif ((index('ESTIMATION',$record) == 0) and defined $options{'renumber'} 
-	  and $options{'renumber'} != 0){
-    foreach my $line (@{$record_ref}){
-      $line =~ s/(MSFO?=[^0-9\s]*)[0-9]*(\s)/$1$tablenum$2/g ;
-      print NEW $line;
-    } 
-  }else {
-    foreach my $line (@{$record_ref}){
-      print NEW $line;
-    } 
-  }
-}
 
 
-close(NEW);
-unlink $tempfile;
-
-exit;
 
 

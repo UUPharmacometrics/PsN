@@ -1304,6 +1304,41 @@ sub labels
 	return \@labels;
 }
 
+sub get_hash_values_to_labels
+{
+	my $self = shift;
+
+	
+	my @allparams=();
+
+	foreach my $prob (@{$self->problems}){
+		my %allpar;
+		foreach my $param ('theta','omega','sigma'){
+			my $access = $param.'s';
+			my %hash;
+			
+			if (defined $prob->$access){
+				foreach my $rec (@{$prob->$access}){
+					next unless (defined $rec->options);
+					next if ($rec->same or $rec->prior);
+					foreach my $opt (@{$rec->options}){
+						my $label = $opt->label;
+						unless (defined $label and length($label)>0){
+							$label = $opt->coordinate_string;
+						}
+						my $val = $opt->init;
+						$hash{$label} = $val;
+					}
+				}
+			}
+			$allpar{$param}=\%hash;
+		}
+		push(@allparams,\%allpar);
+	}
+	return \@allparams;
+
+}
+
 sub get_values_to_labels
 {
 	my $self = shift;
@@ -3489,11 +3524,13 @@ sub _write
 		filename => { isa => 'Str', default => $self->full_name, optional => 1 },
 		number_format => { isa => 'Maybe[Int]', optional => 1 },
 		write_data => { isa => 'Bool', default => 0, optional => 1 },
+		local_print_order => { isa => 'Bool', default => 0, optional => 1 },
 		MX_PARAMS_VALIDATE_NO_CACHE => 1,
 	);
 	my $filename = $parm{'filename'};
 	my $number_format = $parm{'number_format'};
 	my $write_data = $parm{'write_data'};
+	my $local_print_order = $parm{'local_print_order'};
 
 	my @formatted;
 
@@ -3512,7 +3549,9 @@ sub _write
 		my @preformatted = @{$self->problems -> [$i] -> _format_problem(
 			filename => $self -> filename,
 			problem_number => ($i + 1),
-			number_format => $number_format) };
+			number_format => $number_format,
+			local_print_order => $local_print_order ) 
+			};
 		# Check if the problem is NOT active, if so comment it out.
 		unless ( $active[$i] ) {
 			for ( my $j = 0; $j <= $#preformatted; $j++ ) {

@@ -12,7 +12,7 @@ extends 'model::problem::record';
 has 'type' => ( is => 'rw', isa => 'Str' );
 has 'prior' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'size' => ( is => 'rw', isa => 'Str' );
-has 'same' => ( is => 'rw', isa => 'Str', default => '0' );
+has 'same' => ( is => 'rw', isa => 'Bool', default => '0' );
 has 'fix' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'sd' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'chol' => ( is => 'rw', isa => 'Bool', default => 0 );
