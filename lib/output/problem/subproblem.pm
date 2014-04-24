@@ -124,12 +124,6 @@ sub BUILD
 	$this->have_omegas(1) if (defined $this->input_problem()->omegas() and scalar(@{$this->input_problem()->omegas()}) > 0);
 	$this->final_gradients([]);
 
-	$this -> parse_NM7_raw() if (defined $this->nm_output_files->{'raw'});
-	$this -> parse_NM7_additional() if (defined $this->nm_output_files->{'cov'} and
-		defined $this->nm_output_files->{'cor'} and
-		defined $this->nm_output_files->{'coi'} and 
-		$this -> covariance_step_run() and
-		$this -> NM7_parsed_raw());
 
 	while (1) {
 		#we will always break out of this loop, use as simple way of finishing parsing early. Cannot return because of dia code
@@ -163,6 +157,8 @@ sub BUILD
 
 		if( $this -> estimation_step_initiated() ) {
 			#this is often true even if do not have $EST. Sometimes there will be a #METH, sometimes not.
+			$this -> parse_NM7_raw() if (defined $this->nm_output_files->{'raw'});
+
 			$this -> _read_ofv()                  unless ($this -> NM7_parsed_raw());
 			last unless ($this -> parsed_successfully() and not $this -> finished_parsing());
 
@@ -189,6 +185,10 @@ sub BUILD
 		last unless ($this -> parsed_successfully() and not $this -> finished_parsing());
 
 		if ($this -> covariance_step_run()) {
+			$this -> parse_NM7_additional() if (defined $this->nm_output_files->{'cov'} and
+												defined $this->nm_output_files->{'cor'} and
+												defined $this->nm_output_files->{'coi'} and 
+												$this -> NM7_parsed_raw());
 			$this -> _read_covmatrix()          if ( not $this -> NM7_parsed_additional());
 			last unless ($this -> parsed_successfully() and not $this -> finished_parsing());
 

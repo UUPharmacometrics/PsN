@@ -8,13 +8,13 @@ categorical_covariates=CVD1,CVD2,CVD3
 logit=LG1
 
 [test_relations]
-CL=WGT,APGR,CV1,CV2,CV3
-LG1=CVD1
+CL=WGT,CV1,CV2,CV3,CVD1
+LG1=APGR
 
 [valid_states]
 continuous = 1,2,3,4,5
 categorical = 1,2
 
 [included_relations]
-CL=WGT-1,APGR-2,CV1-3,CV2-4,CV3-5
-LG1=CVD1-2
+CL=WGT-2,CV1-3,CV2-4,CV3-5,CVD1-2
+LG1=APGR-1
