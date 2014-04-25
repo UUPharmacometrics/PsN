@@ -29,7 +29,7 @@ has 'cont_column' => ( is => 'rw', isa => 'Int' );
 has 'header' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { [] } );
 has 'idcolumn' => ( is => 'rw', isa => 'Int', default => 1 );
 has 'ignore_missing_files' => ( is => 'rw', isa => 'Bool', default => 0 );
-has 'ignoresign' => ( is => 'rw', isa => 'Maybe[Str]', default => '' );
+has 'ignoresign' => ( is => 'rw', isa => 'Maybe[Str]');
 has 'missing_data_token' => ( is => 'rw', isa => 'Maybe[Int]', default => -99 );
 has 'synced' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'target' => ( is => 'rw', isa => 'Str', default => 'mem', trigger => \&_target_set );
@@ -110,6 +110,10 @@ sub BUILD
 	(my $directory, my $filename) = OSspecific::absolute_path( $this->directory, $this->filename );
 	$this->directory($directory);
 	$this->filename($filename);
+
+	unless (defined $this->ignoresign and length($this->ignoresign)>0){
+		print("\nWarning: ignoresign undefined in data->new\nThis should be fixed\n");
+	}
 
 	unless ( not_empty($this->header) or not_empty($this->individuals) ) { 
 	  if ( -e $this->full_name ) {
@@ -447,6 +451,7 @@ sub copy
 	my $ignore_missing_files = $parm{'ignore_missing_files'};
 	my $target = $parm{'target'};
 
+
 	# filename: new data file name.
 	# 
 	# target: keep the copy in memory ('mem') or write it to disk and flush the memory ('disk').
@@ -458,8 +463,10 @@ sub copy
 
 	cp($self->full_name, $directory.$filename );
 
-	$new_data = Storable::dclone($self);
-	$new_data->skip_parsing ($self->skip_parsing());
+	$new_data = Storable::dclone( $self );
+	$new_data->skip_parsing ( $self->skip_parsing());
+	$new_data->ignoresign ( $self->ignoresign());
+
 	$new_data->missing_data_token($self->missing_data_token());
 	$new_data->synced(0);
 	$new_data->individuals([]);
@@ -704,14 +711,8 @@ sub format_data
 		}
 	}
 
-	if ($have_header and defined $self->ignoresign) {
-		my $istr;
-		if ($self->ignoresign ne '@') {
-			$istr = $self->ignoresign;
-		}
-
-		push(@form_data, $istr.join(',', @{$self->header()}) . "\n");
-
+	if ( $have_header) {
+		push( @form_data, join(',',@{$self->header()})."\n" );
 	}
 	foreach my $individual ( @{$self->individuals()} ) {
 		foreach my $row ( @{$individual->subject_data} ) {
@@ -2364,17 +2365,37 @@ sub _read_header
 	$row=0;
 	open(DATAFILE,"$filename") || 
 	die "Could not open $filename for reading";
-	my $columns;
 	my $found_data=0;
 	while (<DATAFILE>) {
-		s/\s*\,\s*/\,/g;
+		s/^\s*//; #skip leading spaces
+		#skip spaces after commas
+		s/\,\s*/\,/g;
 		$tmp_row    = $_;
-		if ( ! (/^\s*\d+|^\s*\./) ) {
+		
+		my $is_header=0;
+
+		if (defined $ignoresign and length($ignoresign)>0){
+			if ($ignoresign eq '@'){
+				#A-Z a-z and #
+				if (/^[A-Za-z#]/){
+					$is_header=1;
+				}
+			}else{
+				#literal ignoresign
+				if (/^$ignoresign/){
+					$is_header=1;
+				}
+			}
+		}else{
+			if (/^[A-Za-z#;]/){
+				$is_header=1;
+			}
+		}
+		if ( $is_header){
 			$data[$row] = $tmp_row;
 			$row++;
 		} else {
 			# We have reached the first data-row, break
-			$columns = scalar split(/\,\s*|\s+/);
 			$found_data=1;
 			last;
 		}
@@ -2386,11 +2407,7 @@ sub _read_header
 	
 	chomp($hdrstring = pop(@data)); #last value of array
 	@header = split(/\,\s*|\s+/,$hdrstring);
-	# the \Q and \E here are to escape wierd ignoresigns
-	$header[0] =~ s/\Q$ignoresign\E//
-	if (defined $self->ignoresign);
-	shift(@header) if ($header[0] eq "");
-	if ($self->table_file) {
+	if( $self->table_file ) {
 		my @new_header;
 		for (my $i = 1; $i <= scalar @header; $i++) {
 			if ($header[$i-1] eq 'CONT') {
@@ -2433,6 +2450,7 @@ sub _read_individuals
 
 	my $idcol	= $self->idcolumn;
 	my $filename = $self->full_name;
+	my $ignoresign = $self->ignoresign;
 
 	open(DATAFILE,"$filename") || die "Could not open $filename for reading";
 
@@ -2456,12 +2474,31 @@ sub _read_individuals
 			next ROW;
 		}
 
-		s/^ *//; #leading space
-		s/\s*\,\s*/\,/g; #leading empty col
-		#s/^,//; #remove leading commas
+		s/^\s*//; #skip leading spaces
+		s/\,\s*/\,/g; #spaces after commas
+
 		my @new_row	= split(/\,\s*|\s+/);
-		# This regexp check is not time consuming.
-		if ( /^\s*\d+|^\s*\./ ) {
+		my $is_data=1;
+
+		if (defined $ignoresign and length($ignoresign)>0){
+			if ($ignoresign eq '@'){
+				#A-Z a-z and #
+				if (/^[A-Za-z#]/){
+					$is_data=0;
+				}
+			}else{
+				#literal ignoresign
+				if (/^$ignoresign/){
+					$is_data=0;
+				}
+			}
+		}else{
+			if (/^[A-Za-z#;]/){
+				$is_data=0;
+			}
+		}
+
+		if ( $is_data ) {
 			if ( defined $self->cont_column ) {
 				if ( $new_row[$self->cont_column - 1] == 1 ) {
 					if ( not $self->table_file ) { # Skip the CONT=1 rows if this is a table file
