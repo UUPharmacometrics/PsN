@@ -85,40 +85,6 @@ sub copy
 	return $individual_copy;
 }
 
-sub evaluate_expression
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		column => { isa => 'Int', default => 1, optional => 1 },
-		expression => { isa => 'Str', optional => 1 },
-		all_rows => { isa => 'Bool', default => 0, optional => 1 }
-	);
-	my $column = $parm{'column'};
-	my $expression = $parm{'expression'};
-	my $all_rows = $parm{'all_rows'};
-	my $result = 0;
-
-	#not used anywhere, build on this for randtest?
-	my $new_expr;
-	my $data = $self->subject_data;
-	if ( defined $expression ) {
-		if ( $all_rows ) {
-			$result = 1;
-			foreach my $row ( @{$data} ) {
-				my @row = split( /,/ , $row );
-				( $new_expr = $expression ) =~ s/{}/\$row[ \$column-1 ]/g;
-				$result = $result * eval( $new_expr );
-			}
-		} else {
-			my @row = split( /,/, $data -> [0] );
-			( $new_expr = $expression ) =~ s/{}/\$row[ \$column-1 ]/g;
-			$result = eval( $new_expr );
-		}
-	}
-
-	return $result;
-}
-
 sub add_frem_lines
 {
 	my $self = shift;
