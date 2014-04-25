@@ -2391,21 +2391,21 @@ sub _read_header
 	close(DATAFILE);
 	print "\nWarning: Found no data lines in ".$self->filename().
 		". This can happen e.g.\nif you have a data file in old MacOSX format and run on unix/linux,\n".
-		"in which case the workaround is to run mac2unix on ".$self->filename()."\n"  unless $found_data ;
+		"in which case the workaround is to run mac2unix on " . $self->filename . "\n" unless $found_data;
 	
-	chomp( $hdrstring = pop(@data)); #last value of array
+	chomp($hdrstring = pop(@data)); #last value of array
 	@header = split(/\,\s*|\s+/,$hdrstring);
 	# the \Q and \E here are to escape wierd ignoresigns
 	$header[0] =~ s/\Q$ignoresign\E//
-	if ( defined $self->ignoresign );
-	shift( @header ) if ( $header[0] eq "" );
-	if( $self->table_file ) {
+	if (defined $self->ignoresign);
+	shift(@header) if ($header[0] eq "");
+	if ($self->table_file) {
 		my @new_header;
-		for( my $i = 1; $i <= scalar @header; $i++ ) {
-			if( $header[$i-1] eq 'CONT' ) {
-				if ( defined $self->cont_column() and not $i == $self->cont_column() ) {
+		for (my $i = 1; $i <= scalar @header; $i++) {
+			if ($header[$i-1] eq 'CONT') {
+				if (defined $self->cont_column and not $i == $self->cont_column) {
 					carp("The supplied columns for the CONT data item (".
-						$self->cont_column().") does not match the column where the CONT ".
+						$self->cont_column . ") does not match the column where the CONT ".
 						"header was found ($i), using $i" );
 				}
 				$self->cont_column($i);
@@ -2414,12 +2414,12 @@ sub _read_header
 			}
 		}
 		@header = @new_header;
-		for( my $i = 1; $i <= scalar @header; $i++ ) {
-			if( $header[$i-1] eq 'ID' ) {
+		for (my $i = 1; $i <= scalar @header; $i++) {
+			if( $header[$i - 1] eq 'ID' ) {
 				if ( defined $self->idcolumn and not $i == $self->idcolumn ) {
-					carp("The supplied columns for the ID data item (".
-						$self->{'idcolumn'}.") does not match the column where the ID ".
-						"header was found ($i), using $i" );
+					carp("The supplied columns for the ID data item (" .
+						$self->idcolumn . ") does not match the column where the ID ".
+						"header was found ($i), using $i");
 				}
 				$self->idcolumn($i);
 			}
