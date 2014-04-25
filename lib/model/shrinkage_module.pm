@@ -114,10 +114,11 @@ sub eta_shrinkage
 			if( scalar @{$omegas -> [$probnum-1]} == 1 ) { # One subprob
 				if( $defined_indexes and (-e $directory.$eta_filename) ) {
 					my $sh_table = data -> new( directory            => $model -> directory,
-							filename             => $eta_filename,
-							ignore_missing_files => 1,
-							target               => 'mem',
-							table_file           => 1 );
+												filename             => $eta_filename,
+												ignoresign => '@',
+												ignore_missing_files => 1,
+												target               => 'mem',
+												table_file           => 1 );
 					my $next_diag_idx=1;
 					for( my $j = 0; $j < scalar @{$omegas -> [$probnum-1][0]}; $j++ ) {
 	  				# next unless diagonal
@@ -196,10 +197,11 @@ sub iwres_shrinkage
 				my $sh_table;
 				if( defined $ofv -> [$probnum-1][0] and (-e $directory.$iwres_filename) ) {
 					$sh_table = data -> new( directory            => $model -> directory,
-							filename             => $iwres_filename,
-							ignore_missing_files => 1,
-							target               => 'mem',
-							table_file           => 1 );
+											 filename             => $iwres_filename,
+											 ignore_missing_files => 1,
+											 ignoresign =>'@',
+											 target               => 'mem',
+											 table_file           => 1 );
 				}
 				if( defined $sh_table ) {
 					my $iwres_sd = $sh_table -> sd( column        => 2,
