@@ -254,6 +254,7 @@ sub BUILD
 			}
 			my $idcolumn = $idcolumns[$i];
 			my $ignoresign = defined $this -> ignoresigns ? $this -> ignoresigns -> [$i] : undef;
+#			print "ignoresign $ignoresign\n";
 			my @model_header = @{$this->problems->[$i]->header};
 			#should the model header not be used here?
 			if ( defined $idcolumn ) {
@@ -1127,15 +1128,21 @@ sub ignoresigns
 	# ignoresigns returns the ignore signs in the datafile for the
 	# specified problems
 
+	# default is # in NONMEM, but here we have @ instead since includes # but covers more that can never be data lines
+
 	foreach my $prob ( @{$self->problems} ) {
 	  my @datarecs = @{$prob -> datas};
 	  if ( defined $datarecs[0] ) {
-	    push( @ignore, $datarecs[0] -> ignoresign );
+		  if (defined $datarecs[0] -> ignoresign and length($datarecs[0] -> ignoresign)>0){
+			  push( @ignore, $datarecs[0] -> ignoresign );
+		  }else{
+			  push( @ignore, '@' );
+		  }
 	  } else {
-	    push( @ignore, '#' );
+		  push( @ignore, '@' );
 	  }
 	}
-
+	
 	return \@ignore;
 }
 
@@ -3092,9 +3099,10 @@ sub table_names
 			$self->problems([]) unless defined $self->problems;
 	    @problem_numbers = (1 .. $#{$self->problems}+1);
 	  }
-	  foreach my $i ( @problem_numbers ) {
-	    $problems[$i-1] -> _read_table_files( ignore_missing_files => $ignore_missing_files || $self->ignore_missing_output_files);
-	  }
+	  #Kajsa 2014-04-25 skip this
+#	  foreach my $i ( @problem_numbers ) {
+#	    $problems[$i-1] -> _read_table_files( ignore_missing_files => $ignore_missing_files || $self->ignore_missing_output_files);
+#	  }
 	}
 	@names = @{$name_ref};
 
@@ -4425,7 +4433,8 @@ sub table_files
 	my @problems = @{$self->problems};
         foreach my $i ( @problem_numbers ) {
 	  if ( defined $problems[ $i-1 ] ) {
-	    push( @table_files, $problems[$i-1] -> table_files );
+		  $problems[$i-1] -> _read_table_files(ignore_missing_files => 1);
+		  push( @table_files, $problems[$i-1] -> table_files );
 	  } else {
 	    croak("Problem number $i does not exist!" );
 	  }
