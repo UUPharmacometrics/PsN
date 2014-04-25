@@ -262,7 +262,8 @@ sub BUILD
 		}
 	}
 	# Initialize table file objects (if any)
-	$this -> _read_table_files( ignore_missing_files => $this->ignore_missing_output_files );
+# Kajsa 2014-04-25 skip this, assume a big waste
+#	$this -> _read_table_files( ignore_missing_files => $this->ignore_missing_output_files );
 
 	if ( $this->cwres ) {
 		$this -> add_cwres_module( 'init_data' => { problem => $this,
@@ -1418,10 +1419,11 @@ sub _read_table_files
 		foreach my $table_name ( @{$table_name_ref} ) {
 			carp("Creating new table_file object from $table_name" );
 			my $new_table = data -> new( directory            => $self->directory,
-				filename             => $table_name,
-				ignore_missing_files => $ignore_missing_files,
-				target               => 'disk',
-				table_file           => 1 );
+										 filename             => $table_name,
+										 ignoresign => '@',
+										 ignore_missing_files => $ignore_missing_files,
+										 target               => 'disk',
+										 table_file           => 1 );
 			push( @{$self->table_files}, $new_table );
 		}
 	}
