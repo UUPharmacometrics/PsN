@@ -1,6 +1,5 @@
 package data;
 
-#use Carp;
 use include_modules;
 use OSspecific;
 use File::Copy "cp";
@@ -16,7 +15,6 @@ use Scalar::Util qw(looks_like_number);
 use Moose;
 use MooseX::Params::Validate;
 use data::individual;
-
 
 my @primary_column_names = ('ID', 'DATE', 'DAT1', 'DAT2', 'DAT3' ,'L1', 'L2', 'DV', 'MDV', 'RAW_', 'MRG_', 'RPT_', 'TIME', 'DROP', 'SKIP', 'EVID', 'AMT', 'RATE', 'SS', 'II', 'ADDL', 'CMT', 'PCMT', 'CALL');
 
@@ -41,7 +39,6 @@ has 'table_file' => ( is => 'rw', isa => 'Bool', default => 0 );
 has '_median' => ( is => 'rw', isa => 'ArrayRef[numbers]', default => sub { [] } );
 has '_range' => ( is => 'rw', isa => 'ArrayRef[numbers]', default => sub { [] } );
 has 'individual_ids' => ( is => 'rw', isa => 'ArrayRef[Int]' );
-#has 'have_missing_data' => ( is => 'rw', isa => 'HashRef[Bool]' );
 
 # {{{ description
 
@@ -156,7 +153,6 @@ sub BUILD
 	  }
 	}
 }
-
 
 sub _target_set
 {
@@ -438,9 +434,7 @@ sub case_deletion
 			ignore_missing_files => 1 );
 		push( @subsets, $newdata );
 		push( @remainders, $deldata );
-#		$newdata->_write; # flush does _write anyway
 		$newdata->flush;
-#		$deldata->_write; #flush does _write
 		$deldata->flush;
 	}
 
@@ -466,15 +460,15 @@ sub copy
 	# 
 	# target: keep the copy in memory ('mem') or write it to disk and flush the memory ('disk').
 
-	($directory, $filename) = OSspecific::absolute_path( $directory, $filename );
+	($directory, $filename) = OSspecific::absolute_path($directory, $filename);
 
 	# Clone self into new data object. Why don't the individuals get cloned too?
 	# strange. need to set synced to 0 AND set the individuals() to undef.
-#	print "\ndata copying ".$self->full_name." to $directory.$filename\n";
+
 	cp($self->full_name, $directory.$filename );
 
-	$new_data = Storable::dclone( $self );
-	$new_data->skip_parsing ( $self->skip_parsing());
+	$new_data = Storable::dclone($self);
+	$new_data->skip_parsing ($self->skip_parsing());
 	$new_data->missing_data_token($self->missing_data_token());
 	$new_data->synced(0);
 	$new_data->individuals([]);
@@ -482,8 +476,8 @@ sub copy
 	    $new_data->synchronize ; 
 	}
 	# Set the new file name for the copy
-	$new_data->directory( $directory );
-	$new_data->filename( $filename );
+	$new_data->directory($directory);
+	$new_data->filename($filename);
 
 	return $new_data;
 }
@@ -508,9 +502,9 @@ sub add_randomized_columns
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 column_headers => { isa => 'ArrayRef[Str]', optional => 1 },
-		 filename => { isa => 'Str', optional => 0 },
-		 directory => { isa => 'Str', optional => 0 }
+		column_headers => { isa => 'ArrayRef[Str]', optional => 1 },
+		filename => { isa => 'Str', optional => 0 },
+		directory => { isa => 'Str', optional => 0 }
 	);
 	my @column_headers = defined $parm{'column_headers'} ? @{$parm{'column_headers'}} : ();
 	my $filename = $parm{'filename'};
@@ -529,55 +523,55 @@ sub add_randomized_columns
 	my @xcovvalues;
 
 	foreach my $cov (@column_headers){
-	  push(@xcolumn_names,'X'.$cov);
-	  my %strata = %{$self->factors( column_head => $cov, return_occurences => 1 )};
-	  my @values;
-	  if ( $strata{'Non-unique values found'} eq '1' ) {
-	    ui->print( category => 'all',
-			 message => "Warning: Individuals were found to have multiple values ".
-			 "in the $cov column. When randomizing this column to create X$cov ".
-			 "the arithmetic mean for each individual is used, ".
-			 "which may lead to an incorrect assessment of type I error." );
+		push(@xcolumn_names,'X'.$cov);
+		my %strata = %{$self->factors( column_head => $cov, return_occurences => 1 )};
+		my @values;
+		if ( $strata{'Non-unique values found'} eq '1' ) {
+			ui->print( category => 'all',
+				message => "Warning: Individuals were found to have multiple values ".
+				"in the $cov column. When randomizing this column to create X$cov ".
+				"the arithmetic mean for each individual is used, ".
+				"which may lead to an incorrect assessment of type I error." );
 
-	    my $first_id = $self->individuals()->[0];
-	    die "data->add_randomized columns: No individuals defined in data object based on ",
-	    $self->full_name,"\n" unless defined $first_id;
-	    my @data_row = split( /,/ , $first_id->subject_data ->[0] );
-	    my $column;
-	    unless (defined($self->column_head_indices->{$cov})) {
-	      die "Error in data->mean: unknown column: \"$cov\" \n";
-	    } else {
-	      $column = $self->column_head_indices->{$cov};
-	    }
-	    foreach my $individual ( @{$self ->individuals()} ) {
-	      my $ifactors = $individual->subject_data;
-	      my $individual_sum = 0;
-	      my $data_rows = 0;
-	      for(my $i = 0; $i <= $#{$ifactors}; $i++ ) {
-		# data is stored in strings. We need to split them into an array.
-		my @data_row = split( /,/, $ifactors->[$i] );
-		if ( $data_row[$column - 1] == $self->missing_data_token ) {
-		  next;
-		}
-		$individual_sum += $data_row[$column - 1];
-		$data_rows++;
-	      }
-	      if( $data_rows != 0 ) {
+			my $first_id = $self->individuals()->[0];
+			die "data->add_randomized columns: No individuals defined in data object based on ",
+			$self->full_name,"\n" unless defined $first_id;
+			my @data_row = split( /,/ , $first_id->subject_data ->[0] );
+			my $column;
+			unless (defined($self->column_head_indices->{$cov})) {
+				die "Error in data->mean: unknown column: \"$cov\" \n";
+			} else {
+				$column = $self->column_head_indices->{$cov};
+			}
+			foreach my $individual ( @{$self ->individuals()} ) {
+				my $ifactors = $individual->subject_data;
+				my $individual_sum = 0;
+				my $data_rows = 0;
+				for(my $i = 0; $i <= $#{$ifactors}; $i++ ) {
+					# data is stored in strings. We need to split them into an array.
+					my @data_row = split( /,/, $ifactors->[$i] );
+					if ( $data_row[$column - 1] == $self->missing_data_token ) {
+						next;
+					}
+					$individual_sum += $data_row[$column - 1];
+					$data_rows++;
+				}
+				if( $data_rows != 0 ) {
 					push(@values, $individual_sum / $data_rows);
-	      } else {
+				} else {
 					push(@values, undef);
-	      }
-	    }
-	  } else {
-	    foreach my $key (keys %strata) {
-	      push(@values, (($key) x $strata{$key}));
-	    }
-	  }
-	  $self->_fisher_yates_shuffle( array => \@values );
-	  croak("number of values for $cov is " . scalar(@values) . " but individuals is $n_individuals" )
-	      unless (scalar(@values) == $n_individuals);
+				}
+			}
+		} else {
+			foreach my $key (keys %strata) {
+				push(@values, (($key) x $strata{$key}));
+			}
+		}
+		$self->_fisher_yates_shuffle( array => \@values );
+		croak("number of values for $cov is " . scalar(@values) . " but individuals is $n_individuals" )
+		unless (scalar(@values) == $n_individuals);
 
-	  push(@xcovvalues,\@values);
+		push(@xcovvalues,\@values);
 	}
 
 	my @new_header = @{$self->header()};
@@ -587,17 +581,17 @@ sub add_randomized_columns
 	my $counter = 0;
 	$self->individuals([]) unless defined $self->individuals; # FIXME
 	foreach my $individual (@{$self->individuals()}) {
-	  my @rowvalues;
-	  foreach my $arr (@xcovvalues) {
-	    push(@rowvalues,$arr->[$counter]);
-	  }
-	  my $newstring = ',' . join(',',@rowvalues);
-	  #create arr of extra values, append to each row of subject data
+		my @rowvalues;
+		foreach my $arr (@xcovvalues) {
+			push(@rowvalues,$arr->[$counter]);
+		}
+		my $newstring = ',' . join(',',@rowvalues);
+		#create arr of extra values, append to each row of subject data
 		$individual->subject_data([]) unless defined $individual->subject_data; # FIXME
-	  for( my $i = 0 ; $i < scalar(@{$individual->subject_data}); $i++ ) {
-	    $individual->subject_data->[$i] .= $newstring;
-	  }
-	  $counter++;
+		for( my $i = 0 ; $i < scalar(@{$individual->subject_data}); $i++ ) {
+			$individual->subject_data->[$i] .= $newstring;
+		}
+		$counter++;
 	}
 	$self->_write();
 
@@ -608,15 +602,15 @@ sub diff
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 against_data => { ' data', optional => 0 },
-		 column_heads => { isa => 'ArrayRef[Str]', optional => 1 },
-		 columns => { isa => 'ArrayRef[Int]', optional => 1 },
-		 absolute_diff => { isa => 'Bool', default => 1, optional => 1 },
-		 diff_as_fraction => { isa => 'Bool', default => 1, optional => 1 },
-		 global_largest => { isa => 'Bool', default => 1, optional => 1 },
-		 global_smallest => { isa => 'Bool', default => 0, optional => 1 },
-		 largest_per_individual => { isa => 'Bool', default => 0, optional => 1 },
-		 smallest_per_individual => { isa => 'Bool', default => 0, optional => 1 }
+		against_data => { ' data', optional => 0 },
+		column_heads => { isa => 'ArrayRef[Str]', optional => 1 },
+		columns => { isa => 'ArrayRef[Int]', optional => 1 },
+		absolute_diff => { isa => 'Bool', default => 1, optional => 1 },
+		diff_as_fraction => { isa => 'Bool', default => 1, optional => 1 },
+		global_largest => { isa => 'Bool', default => 1, optional => 1 },
+		global_smallest => { isa => 'Bool', default => 0, optional => 1 },
+		largest_per_individual => { isa => 'Bool', default => 0, optional => 1 },
+		smallest_per_individual => { isa => 'Bool', default => 0, optional => 1 }
 	);
 	my $against_data = $parm{'against_data'};
 	my @column_heads = defined $parm{'column_heads'} ? @{$parm{'column_heads'}} : ();
@@ -629,71 +623,71 @@ sub diff
 	my $smallest_per_individual = $parm{'smallest_per_individual'};
 	my %diff_results;
 
-  $self->synchronize;
-  
-  my $first_id = $self->individuals()->[0];
-  
-  croak("No individuals defined in data object based on ".
-		$self->full_name ) unless ( defined $first_id );
-  
-  # Check if $column(-index) is defined and valid, else try to find index
-  # using column_head
+	$self->synchronize;
 
-  my @data_row = split( /,/, $first_id->subject_data->[0] );
-  if( $#columns >= 0 ) {
-    foreach my $column ( @columns ) {
-      unless ( defined $column && defined( $data_row[$column-1] ) ) {
+	my $first_id = $self->individuals()->[0];
+
+	croak("No individuals defined in data object based on " . $self->full_name)
+		unless ( defined $first_id );
+
+	# Check if $column(-index) is defined and valid, else try to find index
+	# using column_head
+
+	my @data_row = split( /,/, $first_id->subject_data->[0] );
+	if( $#columns >= 0 ) {
+		foreach my $column ( @columns ) {
+			unless ( defined $column && defined( $data_row[$column-1] ) ) {
 				croak("Error in data->factors: ".
-		      "invalid column number: \"$column\"\n".
-		      "Valid column numbers are 1 to ".
-		      scalar @{$first_id->subject_data ->[0]}."\n" );
-      }
-    }
-  } elsif ( $#column_heads >= 0 ) {
-    foreach my $column_head ( @column_heads ) {
-      unless (defined($column_head) && defined($self->column_head_indices->{$column_head})) {
-	croak("Error in data->factors: unknown column: \"$column_head\" ".
-		      "Valid column headers are (in no particular order):\n".
-		      join(', ',keys(%{$self->column_head_indices})) );
-      } else {
-	my $column = $self->column_head_indices->{$column_head};
-	push( @columns, $column );
-	carp("$column_head is in column number $column" );
-      }
-    }
-  } else {
-    croak("No column or column_head defined" );
-  }
-
-  if( $global_largest or $global_smallest or
-      $largest_per_individual or $smallest_per_individual ) {
-    if( not scalar @{$self->individuals()} == scalar @{$against_data->individuals} ) {
-      croak("Both data object must hold the same number of individuals ".
-		    "and observations when calling data->diff" );
-    }
-    for( my $i = 0; $i < scalar @{$self->individuals()}; $i++ ) {
-      my %id_diffs = %{$self->individuals()->[$i] ->
-			   diff( against_individual => $against_data->individuals->[$i],
-				 columns            => \@columns,
-				 absolute_diff      => $absolute_diff,
-				 diff_as_fraction   => $diff_as_fraction,
-				 largest            => ( $global_largest or $largest_per_individual ),
-				 smallest           => ( $global_smallest or $smallest_per_individual ) )};
-      if( $global_largest ) {
-	for( my $j = 0; $j <= $#columns; $j++ ) {
-	  my $label = defined $column_heads[$j] ? $column_heads[$j] : $columns[$j];
-	  if( not defined $diff_results{$label} or not defined $diff_results{$label}{'diff'} or
-	      $id_diffs{$columns[$j]}{'diff'} > $diff_results{$label}{'diff'} ) {
-	    $diff_results{$label}{'diff'} = $id_diffs{$columns[$j]}{'diff'};
-	    $diff_results{$label}{'self'} = $id_diffs{$columns[$j]}{'self'};
-	    $diff_results{$label}{'test'} = $id_diffs{$columns[$j]}{'test'};
-	  }
+					"invalid column number: \"$column\"\n".
+					"Valid column numbers are 1 to ".
+					scalar @{$first_id->subject_data ->[0]}."\n" );
+			}
+		}
+	} elsif ( $#column_heads >= 0 ) {
+		foreach my $column_head ( @column_heads ) {
+			unless (defined($column_head) && defined($self->column_head_indices->{$column_head})) {
+				croak("Error in data->factors: unknown column: \"$column_head\" ".
+					"Valid column headers are (in no particular order):\n".
+					join(', ',keys(%{$self->column_head_indices})) );
+			} else {
+				my $column = $self->column_head_indices->{$column_head};
+				push( @columns, $column );
+				carp("$column_head is in column number $column" );
+			}
+		}
+	} else {
+		croak("No column or column_head defined" );
 	}
-      }
-    }
-  } else {
-    die "data->diff is only implemented for finding the largest difference at any observation at this point\n";
-  }
+
+	if( $global_largest or $global_smallest or
+		$largest_per_individual or $smallest_per_individual ) {
+		if( not scalar @{$self->individuals()} == scalar @{$against_data->individuals} ) {
+			croak("Both data object must hold the same number of individuals ".
+				"and observations when calling data->diff" );
+		}
+		for( my $i = 0; $i < scalar @{$self->individuals()}; $i++ ) {
+			my %id_diffs = %{$self->individuals()->[$i] ->
+			diff( against_individual => $against_data->individuals->[$i],
+			columns            => \@columns,
+			absolute_diff      => $absolute_diff,
+			diff_as_fraction   => $diff_as_fraction,
+			largest            => ( $global_largest or $largest_per_individual ),
+			smallest           => ( $global_smallest or $smallest_per_individual ) )};
+			if( $global_largest ) {
+				for( my $j = 0; $j <= $#columns; $j++ ) {
+					my $label = defined $column_heads[$j] ? $column_heads[$j] : $columns[$j];
+					if( not defined $diff_results{$label} or not defined $diff_results{$label}{'diff'} or
+						$id_diffs{$columns[$j]}{'diff'} > $diff_results{$label}{'diff'} ) {
+						$diff_results{$label}{'diff'} = $id_diffs{$columns[$j]}{'diff'};
+						$diff_results{$label}{'self'} = $id_diffs{$columns[$j]}{'self'};
+						$diff_results{$label}{'test'} = $id_diffs{$columns[$j]}{'test'};
+					}
+				}
+			}
+		}
+	} else {
+		die "data->diff is only implemented for finding the largest difference at any observation at this point\n";
+	}
 
 	return \%diff_results;
 }
@@ -708,29 +702,29 @@ sub format_data
 	my $header = $self->header();
 	my $have_header=0;
 	if (defined $header) {
-		$have_header = 1 if (scalar(@{$header})>0);
+		$have_header = 1 if (scalar(@{$header}) > 0);
 	}
 
 	# format the data for NONMEM (simple comma-separated layout)
-	if ( defined $self->comment() ) {
+	if (defined $self->comment()) {
 		my @comment   = @{$self->comment()};
-		for ( @comment ) {
+		for (@comment) {
 			1;
 		}
 	}
 
-	if ( $have_header and defined $self->ignoresign ) {
+	if ($have_header and defined $self->ignoresign) {
 		my $istr;
-		if ( $self->ignoresign ne '@' ) {
+		if ($self->ignoresign ne '@') {
 			$istr = $self->ignoresign;
 		}
 
-		push( @form_data, $istr.join(',',@{$self->header()})."\n" );
+		push(@form_data, $istr.join(',', @{$self->header()}) . "\n");
 
 	}
 	foreach my $individual ( @{$self->individuals()} ) {
 		foreach my $row ( @{$individual->subject_data} ) {
-			push( @form_data, $row ."\n" );
+			push(@form_data, $row ."\n");
 		}
 	}
 
@@ -1005,11 +999,6 @@ sub median
 	  }
 	}
 
-	#these lines do not distinguish between unique_in_individual and not! remove them
-	#if ( defined $self->_median->[$column] ) {
-	#  return $self->_median->[$column];
-	#}
-
 	my @median_array;
 
 	foreach my $individual ( @{$self->individuals()} ) {
@@ -1073,11 +1062,11 @@ sub mean
 	# e.g. Hockey-stick covariates. If both hi_cutoff and low_cutoff
 	# are defined only the hi_cutoff will be used.  See L</max>.
 	$self->synchronize;
-	my $first_id = $self->individuals()->[0];
+	my $first_id = $self->individuals->[0];
 	die "data->median: No individuals defined in data object based on ",
 	$self->full_name,"\n" unless defined $first_id;
 
-	my @data_row = split( /,/ , $first_id->subject_data ->[0] );
+	my @data_row = split(/,/, $first_id->subject_data ->[0]);
 
 	unless ( defined $column  && defined( $data_row[$column-1] ) ) {
 		unless (defined($column_head) && defined($self->column_head_indices->{$column_head})) {
@@ -1092,7 +1081,7 @@ sub mean
 	my $sum = 0;
 
 	my $all_data_rows = 0;
-	foreach my $individual ( @{$self->individuals()} ) {
+	foreach my $individual (@{$self->individuals}) {
 
 		my $ifactors = $individual->subject_data;
 		my $individual_sum = 0;
@@ -1114,31 +1103,28 @@ sub mean
 				if ($data_row[$column - 1] > $hi_cutoff) {
 					$individual_sum += $data_row[$column - 1] - $hi_cutoff;
 				}
-			}
-			else {
-				if (defined $low_cutoff) {
-					if ($data_row[$column - 1]<$low_cutoff) {
-						$individual_sum += $low_cutoff - $data_row[$column - 1];
-					}
-				} else {
-					$individual_sum += $data_row[$column-1];
+			} elsif (defined $low_cutoff) {
+				if ($data_row[$column - 1]<$low_cutoff) {
+					$individual_sum += $low_cutoff - $data_row[$column - 1];
 				}
+			} else {
+				$individual_sum += $data_row[$column-1];
 			}
 			$data_rows++;
 		}
-		if( $global_mean ) {
+		if ($global_mean) {
 			$sum += $individual_sum;
 			$num_individuals += $data_rows;
 		} else {
-			if( $data_rows != 0 ) {
-				$sum += $individual_sum/$data_rows;
-				$num_individuals ++
+			if ($data_rows != 0) {
+				$sum += $individual_sum / $data_rows;
+				$num_individuals++
 			}
 			#in denominator. Put individual count inside if statement to check there were any observations
 		}
 		$all_data_rows += $data_rows;
 	}
-	if( $num_individuals != 0 ) {
+	if ($num_individuals != 0) {
 		$return_value = $sum / $num_individuals;
 	}
 
@@ -1298,30 +1284,30 @@ sub min
 	# recalculate the min. Maybe we can include this optimization in the
 	# future, if it turns out to be a bottleneck
 	my $first_id = $self->individuals()->[0];
-	die "data->min: No individuals defined in data object based on ",
-	$self->full_name,"\n" unless defined $first_id;
+	die "data->min: No individuals defined in data object based on ", $self->full_name, "\n"
+		unless defined $first_id;
 
-	my @data_row = split( /,/ , $first_id->subject_data ->[0] );
+	my @data_row = split(/,/, $first_id->subject_data->[0]);
 
-	unless ( defined $column  && defined( $data_row[$column-1] ) ) {
+	unless (defined $column && defined($data_row[$column-1])) {
 		unless (defined($column_head) && defined($self->column_head_indices->{$column_head})) {
 			die "Error in data->min: unknown column: \"$column_head\" or invalid column number: \"$column\"\n";
 		} else {
 			$column = $self->column_head_indices->{$column_head};
 		}
 	}
-	foreach my $individual ( @{$self->individuals()} ) {
-		my $ifactors = $individual->factors( 'column' => $column );
-		foreach ( keys %{$ifactors} ) {
-			next if ( $_ == $self->missing_data_token );
-			if ( defined ($return_value) ) {
+	foreach my $individual (@{$self->individuals}) {
+		my $ifactors = $individual->factors('column' => $column);
+		foreach (keys %{$ifactors}) {
+			next if ($_ == $self->missing_data_token);
+			if (defined ($return_value)) {
 				$return_value = $_ < $return_value ? $_ : $return_value;
 			} else {
 				$return_value = $_;
 			}
 		}
 	}
-	$self->flush if ( $self->target eq 'disk' );
+	$self->flush if ($self->target eq 'disk');
 
 	return $return_value;
 }
@@ -1334,23 +1320,21 @@ sub merge
 	);
 	my $mergeobj = $parm{'mergeobj'};
 
-	$self->synchronize if ($self->skip_parsing());
+	$self->synchronize if ($self->skip_parsing);
 
-	unless (defined $self->individuals()){
-		$self->individuals([]);
+	$self->individuals([]) if (not defined $self->individuals);
+
+	if (defined $mergeobj->individuals) {
+		push(@{$self->individuals}, @{$mergeobj->individuals});
 	}
-	unless (defined $mergeobj->individuals()){
-		$mergeobj->individuals([]);
-	}
-	push( @{$self->individuals()}, @{$mergeobj->individuals} );
 }
 
 sub range
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 column => { isa => 'Int', optional => 1 },
-		 column_head => { isa => 'Str', optional => 1 }
+		column => { isa => 'Int', optional => 1 },
+		column_head => { isa => 'Str', optional => 1 }
 	);
 	my $column = $parm{'column'};
 	my $column_head = $parm{'column_head'};
@@ -1358,23 +1342,24 @@ sub range
 
 	my $tmp_column;
 	if (defined $self->column_head_indices and defined $self->column_head_indices->{$column_head}) {
-	  $tmp_column = $self->column_head_indices->{$column_head};
+		$tmp_column = $self->column_head_indices->{$column_head};
 	}
-	if ( defined $tmp_column and defined $self->_range->[$tmp_column] ) {
-	  $return_value = $self->_range->[$tmp_column];
+	if (defined $tmp_column and defined $self->_range->[$tmp_column]) {
+		$return_value = $self->_range->[$tmp_column];
 	} else {
-	  my $old_target = $self->target;
-	  $self->{'target'} = 'mem';
-	  $self->synchronize;
-	  $return_value = $self->max( column      => $column,
-					column_head => $column_head ) -
-					  $self->min( column      => $column,
-							column_head => $column_head );
-		$self->{'range'}[$column] = $return_value;
-	  if ( $old_target eq 'disk' ) {
-	    $self->flush if ( $self->target eq 'disk' );
-	    $self->{'target'} = 'disk';
-	  }
+		my $old_target = $self->target;
+		$self->{'target'} = 'mem';
+		$self->synchronize;
+		if (defined $column) {
+			$return_value = $self->max(column => $column) - $self->min(column => $column);
+		} else {
+			$return_value = $self->max(column_head => $column_head) - $self->min(column_head => $column_head);
+		}
+		$self->_range->[$column] = $return_value;
+		if ($old_target eq 'disk') {
+			$self->flush if ($self->target eq 'disk');
+			$self->{'target'} = 'disk';
+		}
 	}
 
 	return $return_value;
@@ -1412,8 +1397,7 @@ sub recalc_column
 	}
 	
 	for my $individual ( @{$self->individuals()} ) {
-	  $individual->recalc_column( column     => $column,
-					expression => $expression );
+	  $individual->recalc_column(column => $column, expression => $expression);
 	}
 }
 
@@ -1539,7 +1523,6 @@ sub resample
 			  }
 		  }
 
-#		  print "\nresample new data object \n";
 		  $boot = data->new( header      => \@header,
 							 idcolumn    => $self->idcolumn,
 							 ignoresign  => $self->ignoresign,
@@ -1549,7 +1532,6 @@ sub resample
 							 ignore_missing_files => 1,
 							 target      => 'mem' );
 		  $boot->renumber_ascending;
-#		  $boot->_write; #the flush does _write, skip this _write so not done twice
 		  $boot->flush;
  	  } else {
 	    # If we are resuming, we still need to generate the
@@ -1576,7 +1558,6 @@ sub resample
 				 ignore_missing_files => 1,
 				 target      => $target );
 
-#		  $boot->_write; #the flush does _write, skip this _write so not done twice
 	    $boot->flush;
 	  }
 	} else {
@@ -1601,7 +1582,7 @@ sub resample
 	    # MUST FIX: If a file already exists with the same name,
 	    # the created bs data set will be appended to this. IT
 	    # MUST BE OVERWRITTEN!
-#		  print "\nresample new data object \n";
+
 	    $boot = data->new( header      => \@header,
 				 idcolumn    => $self->idcolumn,
 				 ignoresign  => $self->ignoresign,
@@ -1627,16 +1608,14 @@ sub resample
 				 ignore_missing_files => 1,
 				 target      => $target );
 
-#		  $boot->_write; #the flush does _write, skip this _write so not done twice
 	    $boot->flush;
 	  }	
-	  if( $target eq 'disk'){
-	#	  print "\nresample flush \n";
+	  if ($target eq 'disk') {
 	    $boot->flush;
 	  }
 	}
 
-	return $boot ,\@incl_individuals ,\@included_keys;
+	return $boot, \@incl_individuals, \@included_keys;
 }
 
 sub resample_from_keys
@@ -1654,29 +1633,31 @@ sub resample_from_keys
 
 	$self->individuals([]) unless defined $self->individuals; #FIXME
 	$self->synchronize;
-	my ( @header, $individuals, @bs_inds);
-	@header = @{$self->header()};
-	$individuals = $self->individuals();
-	for ( my $i = 0; $i <scalar(@key_arr); $i++ ) {
-	  push( @bs_inds, $individuals->[ $key_arr[$i] ]->copy );
+	my (@header, $individuals, @bs_inds);
+	@header = @{$self->header};
+	$individuals = $self->individuals;
+	for (my $i = 0; $i < scalar(@key_arr); $i++) {
+	  push(@bs_inds, $individuals->[$key_arr[$i]]->copy);
 	}
 
 	# MUST FIX: If a file already exists with the same name,
 	# the created bs data set will be appended to this. IT
 	# MUST BE OVERWRITTEN!
-	$boot = data->new( header      => \@header,
-			     idcolumn    => $self->idcolumn,
-			     ignoresign  => $self->ignoresign,
-					   missing_data_token => $self->missing_data_token,
-			     individuals => \@bs_inds,
-			     filename    => $new_name,
-			     ignore_missing_files => 1,
-			     target      => 'mem' );
+	$boot = data->new(
+		header      => \@header,
+		idcolumn    => $self->idcolumn,
+		ignoresign  => $self->ignoresign,
+		missing_data_token => $self->missing_data_token,
+		individuals => \@bs_inds,
+		filename    => $new_name,
+		ignore_missing_files => 1,
+		target      => 'mem'
+	);
 	$boot->renumber_ascending;
 	$boot->_write;
-	$boot->target( $target );
+	$boot->target($target);
 
-	if( $target eq 'disk'){
+	if ($target eq 'disk') {
 	  $boot->flush;
 	}
 
@@ -1897,73 +1878,72 @@ sub split_vertically
 	#without changing $self object. split values returned as array of array over individuals
 	#used in randomization data generation
 
-	$self->synchronize();
-	unless (defined $self->individuals() and scalar(@{$self->individuals()})>0){
+	$self->synchronize;
+	unless (defined $self->individuals and scalar(@{$self->individuals}) > 0) {
 		croak("cannot do split_vertically on empty data object");
 	}
-	my @individuals = @{$self->individuals()};
+	my @individuals = @{$self->individuals};
 	unless (defined $individuals[0] ) {
 		croak("first individual not defined in split_vertically");
 	}
 
 	my @ind_data = @{$individuals[0]->subject_data};
-	my $ncol = scalar(split(/,/,$ind_data[0]));
-	if (($split_index < 0) || ($split_index >= $ncol)){
+	my $ncol = scalar(split(/,/, $ind_data[0]));
+	if (($split_index < 0) || ($split_index >= $ncol)) {
 		croak("illegal split_index $split_index in data->split_vertically, have $ncol columns");
 	}
-	if (defined $stratify_index and (($stratify_index < 0) || ($stratify_index >= $ncol) || ($stratify_index == $split_index))  ){
-		croak("illegal stratify_index $stratify_index in data->split_vertically, ".
-			"have $ncol columns and slit index $split_index");
+	if (defined $stratify_index and (($stratify_index < 0) || ($stratify_index >= $ncol) || ($stratify_index == $split_index))) {
+		croak("illegal stratify_index $stratify_index in data->split_vertically, have $ncol columns and slit index $split_index");
 	}
-	my $left_start=0;
-	my $left_end=$split_index-1;
-	my $right_start=$split_index+1;
-	my $right_end=$ncol-1;
-	my $warned_stratify_error=0;
+	my $left_start = 0;
+	my $left_end = $split_index - 1;
+	my $right_start = $split_index + 1;
+	my $right_end = $ncol - 1;
+	my $warned_stratify_error = 0;
 
-	for ( my $id = 0; $id <= $#individuals; $id++ ) {
+	for (my $id = 0; $id <= $#individuals; $id++) {
 		my $idnumber = $individuals[$id]->idnumber;
 		my $idcolumn = $individuals[$id]->idcolumn;
 		my @data = @{$individuals[$id]->subject_data};
-		my @left_data=();
-		my @right_data=();
-		my @values=();
-		for ( my $i = 0; $i < scalar(@data); $i++ ) {
-			my @data_row = split( /,/, $data[$i] );
+		my @left_data = ();
+		my @right_data = ();
+		my @values = ();
+		for (my $i = 0; $i < scalar(@data); $i++) {
+			my @data_row = split(/,/, $data[$i]);
 			push(@values,$data_row[$split_index]);
-			if (defined $stratify_index){
-				if ($i==0){
-					push(@stratify_values,$data_row[$stratify_index]);
-				}else{
-					if (not $warned_stratify_error and ($data_row[$stratify_index] != $stratify_values[-1])){
+			if (defined $stratify_index) {
+				if ($i == 0) {
+					push(@stratify_values, $data_row[$stratify_index]);
+				} else {
+					if (not $warned_stratify_error and ($data_row[$stratify_index] != $stratify_values[-1])) {
 						print "ERROR in randomization test preparation: non-unique values for stratification variable\n".
 						"found for individual index $i, using first value and ignoring the rest.\n";
-						$warned_stratify_error=1;
+						$warned_stratify_error = 1;
 					}
 				}
 			}
-			if ($left_end >= $left_start){
-				push( @left_data, join( ',', @data_row[$left_start .. $left_end] ) );
+			if ($left_end >= $left_start) {
+				push(@left_data, join(',', @data_row[$left_start .. $left_end]));
 			}else{
-				push(@left_data,'');
+				push(@left_data, '');
 			}
-			if ($right_start <= $right_end){
-				push( @right_data, join( ',', @data_row[$right_start .. $right_end] ) );
+			if ($right_start <= $right_end) {
+				push(@right_data, join( ',', @data_row[$right_start .. $right_end]));
 			}else{
-				push(@right_data,'');
+				push(@right_data, '');
 			}
 		}
 
-		push(@split_values,\@values);
-		push( @left_side_individuals, data::individual->new( idnumber     => $idnumber,
+		push(@split_values, \@values);
+		push(@left_side_individuals, data::individual->new(idnumber     => $idnumber,
 				idcolumn     => $idcolumn,
-				subject_data => \@left_data ));
-		push( @right_side_individuals, data::individual->new( idnumber     => $idnumber,
+				subject_data => \@left_data));
+		push(@right_side_individuals, data::individual->new(idnumber     => $idnumber,
 				idcolumn     => $idcolumn,
-				subject_data => \@right_data ));
+				subject_data => \@right_data));
 	}
 
-	return \@left_side_individuals ,\@right_side_individuals ,\@split_values ,\@stratify_values;
+	return \@left_side_individuals, \@right_side_individuals, \@split_values, \@stratify_values;
 }
 
 sub randomize_data
@@ -2175,16 +2155,16 @@ sub stratify_indices
 	#stratification is done on unique values of stratification values
 
 	my %values_hash;
-	my $next_index=0;
+	my $next_index = 0;
 
-	for (my $i=0; $i< scalar (@{$stratify_values}); $i++){
+	for (my $i = 0; $i < scalar (@{$stratify_values}); $i++) {
 		my $value = $stratify_values->[$i];
-		unless (defined $values_hash{$value}){
+		unless (defined $values_hash{$value}) {
 			$values_hash{$value} = $next_index;
-			push(@stratified_indices,[]);
+			push(@stratified_indices, []);
 			$next_index++;
 		}
-		push(@{$stratified_indices[$values_hash{$value}]},$i);
+		push(@{$stratified_indices[$values_hash{$value}]}, $i);
 	}
 
 	return \@stratified_indices;
@@ -2273,14 +2253,13 @@ sub single_valued_data
 	return $single_value_data_set ,$remainder ,\@column_indexes;
 }
 
-
 sub get_eta_matrix
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-							  n_eta => { isa => 'Int', optional => 0 },
-							  start_eta => { isa => 'Int', optional => 0 }
-		);
+		n_eta => { isa => 'Int', optional => 0 },
+		start_eta => { isa => 'Int', optional => 0 }
+	);
 	my $n_eta = $parm{'n_eta'};
 	my $start_eta = $parm{'start_eta'};
 	my @eta_matrix = ();
@@ -2295,10 +2274,10 @@ sub get_eta_matrix
 		if ( $index < 0 or $index > $#{$self->header()} ) {
 			print "Warning: column index out of bounds in get_eta_matrix\n";
 			return [];
- 		}
- 		push(@columns,$index);
+		}
+		push(@columns,$index);
 	}
-	
+
 	# to minimize risk of errors.
 
 	foreach my $individual ( @{$self->individuals} ){
@@ -2319,51 +2298,51 @@ sub column_to_array
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 column => { isa => 'Str', optional => 0 },
-		 filter => { isa => 'ArrayRef', optional => 1 }		# Warning: Do not use ArrayRef[Int] here. Causes Perl to crash. Bug report filed
+		column => { isa => 'Str', optional => 0 },				# Counting from zero
+		filter => { isa => 'ArrayRef', optional => 1 }		# Warning: Do not use ArrayRef[Int] here. Causes Perl to crash. Bug report filed
 	);
 	my $column = $parm{'column'};
 	my @array;
 	my @filter = defined $parm{'filter'} ? @{$parm{'filter'}} : ();
 
-  $self->synchronize;
+	$self->synchronize;
 
-  if ( not $column =~ /^\d/ ) {
-    $column = $self->column_head_indices->{$column} - 1;
-  }
-  
-  if( $column < 0 or $column > $#{$self->header()} ){
-    return [];
-  }
+	if (not $column =~ /^\d/) {
+		$column = $self->column_head_indices->{$column} - 1;
+	}
 
-  #have separate loops for case without filter and with filter,
-  #to minimize risk of errors.
+	if ($column < 0 or $column > $#{$self->header}) {
+		return [];
+	}
 
-  if (scalar(@filter)==0){
-      foreach my $individual ( @{$self->individuals} ){
-	  foreach my $individual_row( @{$individual->subject_data} ){
-	      my @row = split(/,/ , $individual_row);
-	      push( @array, $row[$column] );
-	  }
-      }  
-  } else {
-      my $index=0;
-      foreach my $individual ( @{$self->individuals} ){
-	  foreach my $individual_row( @{$individual->subject_data} ){
-	      if ($filter[$index] > 0){
-		  my @row = split(/,/ , $individual_row);
-		  push( @array, $row[$column] );
-	      }
-	      $index++;
-	      if ($index > $#filter){
-		  $index=0;
-	      }
-	  }
-      }
-      unless ($index == 0) {
-				croak("Number of rows in dataset was not a multiple of filter length.");
-      }
-  }
+	#have separate loops for case without filter and with filter,
+	#to minimize risk of errors.
+
+	if (scalar(@filter) == 0) {
+		foreach my $individual (@{$self->individuals}) {
+			foreach my $individual_row(@{$individual->subject_data}) {
+				my @row = split(/,/, $individual_row);
+				push(@array, $row[$column]);
+			}
+		}  
+	} else {
+		my $index = 0;
+		foreach my $individual (@{$self->individuals}) {
+			foreach my $individual_row(@{$individual->subject_data}) {
+				if ($filter[$index] > 0) {
+					my @row = split(/,/, $individual_row);
+					push(@array, $row[$column]);
+				}
+				$index++;
+				if ($index > $#filter) {
+					$index = 0;
+				}
+			}
+		}
+		unless ($index == 0) {
+			croak("Number of rows in dataset was not a multiple of filter length.");
+		}
+	}
 
 	return \@array;
 }
@@ -2391,7 +2370,7 @@ sub _write
 			$self->synchronize;
 		} 
 	}
-#	print "\n data writing to $filename\n" if (-e $filename);
+
 	open(FILE,">$filename") || 
 	die "Could not create $filename\n";
 	my $data_ref = $self->format_data;
@@ -2438,12 +2417,10 @@ sub _read_header
 		if ( ! (/^\s*\d+|^\s*\./) ) {
 			$data[$row] = $tmp_row;
 			$row++;
-#			print " $row ";
 		} else {
 			# We have reached the first data-row, break
 			$columns = scalar split(/\,\s*|\s+/);
 			$found_data=1;
-#			print "read_header found data row, row index is $row\n";
 			last;
 		}
 	}
@@ -2486,7 +2463,6 @@ sub _read_header
 	}
 
 	$self->header(\@header);
-#	print "read header ".join(' ',@header)."\n";
 	$self->comment(\@data);
 }
 
