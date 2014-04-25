@@ -22,7 +22,6 @@ sub BUILDARGS
 	return $this->SUPER::BUILDARGS(@_);
 }
 
-
 sub BUILD
 {
 	my $this = shift;
@@ -66,7 +65,6 @@ sub _idnumber_set
 	  }
 	}
 }
-
 
 sub copy
 {
@@ -287,26 +285,6 @@ sub add_frem_lines
 
 	return \@invariant_values ,\@timevar_values;
 }
-
-sub recalc_column
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		 column => { isa => 'Int', optional => 1 },
-		 expression => { isa => 'Str', optional => 1 }
-	);
-	my $column = $parm{'column'};
-	my $expression = $parm{'expression'};
-
-	my ( $new_expr );
-	for( my $i = 0 ; $i < scalar(@{$self->subject_data}); $i++ ) {
-	  my @row = split( /,/, $self->subject_data->[$i] );
-    ( $new_expr = $expression ) =~ s/{}/\$row[ \$column-1 ]/g;
-    $row[ $column-1 ] = eval( $new_expr );
-	  $self->subject_data->[$i] = join(',', @row);
-	}
-}
-
 
 sub append_column
 {

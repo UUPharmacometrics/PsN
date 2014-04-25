@@ -602,7 +602,7 @@ sub diff
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		against_data => { ' data', optional => 0 },
+		against_data => { isa => 'data', optional => 0 },
 		column_heads => { isa => 'ArrayRef[Str]', optional => 1 },
 		columns => { isa => 'ArrayRef[Int]', optional => 1 },
 		absolute_diff => { isa => 'Bool', default => 1, optional => 1 },
@@ -1363,42 +1363,6 @@ sub range
 	}
 
 	return $return_value;
-}
-
-sub recalc_column
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		 column => { isa => 'Int', optional => 1 },
-		 expression => { isa => 'Str', default => sub { {} }, optional => 1 },
-		 column_head => { isa => 'Str', optional => 1 }
-	);
-	my $column = $parm{'column'};
-	my $expression = $parm{'expression'};
-	my $column_head = $parm{'column_head'};
-
-	#FIXME not used anywhere. USE this to compute stratification col on the fly? need multiple column input
-	# Recalculates a column based on expression. Also, see L</max>. 
-	$self->synchronize;
-	
-	# Check if $column(-index) is defined and valid, else try to find index using column_head
-	my $first_id = $self->individuals()->[0];
-	die "data->recalc_column: No individuals defined in data object based on ",
-	  $self->full_name,"\n" unless defined $first_id;
-
-	my @data_row = split( /,/ , $first_id->subject_data ->[0] );
-
-	unless ( defined $column  && defined( $data_row[$column-1] ) ) {
-	  if(defined($column_head) && defined($self->column_head_indices->{$column_head})) {
-	    die "Error in data->recalc_column: unknown column: \"$column_head\" or column number: \"$column\"\n";
-	  } else {
-	    $column = $self->column_head_indices->{$column_head};
-	  }
-	}
-	
-	for my $individual ( @{$self->individuals()} ) {
-	  $individual->recalc_column(column => $column, expression => $expression);
-	}
 }
 
 sub renumber_ascending
