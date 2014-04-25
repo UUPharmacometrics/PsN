@@ -41,10 +41,10 @@ sub is_array{
 }
 
 my @config_files = qw (
+config_nohead.scm
 config_ignore.scm
 config_included.scm
 config_logit.scm
-config_nohead.scm
 config_normal_sum.scm
 config_only_categorical.scm
 config_state5.scm
