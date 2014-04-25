@@ -8,7 +8,7 @@
 use strict;
 use warnings;
 use File::Path 'rmtree';
-use Test::More tests=>13;
+use Test::More tests=>14;
 use List::Util qw(first);
 use Config;
 use FindBin qw($Bin);
@@ -31,6 +31,7 @@ my @shrinking_headings = ('shrinkage_eta1(%)', 'shrinkage_eta2(%)', 'shrinkage_i
 my @command_line = (
 	$includes::execute." $tempdir/pheno.mod -shrinkage -directory=$dir",
 	$includes::execute." $tempdir/pheno.mod -min_retries=2 -directory=$dir",
+	$includes::execute." $tempdir/pheno.mod -mirror_plots=2 -mirror_from_lst -directory=$dir",
 	$includes::execute." $model_dir/tbs1.mod -tbs  -directory=$dir", #prop
 	$includes::execute." $model_dir/tbs1.mod -dtbs  -directory=$dir", #prop
 	$includes::execute." $model_dir/tbs1a.mod -tbs  -directory=$dir", #add
