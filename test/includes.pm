@@ -9,7 +9,7 @@ use File::Copy 'cp';
 
 require Exporter;
 our @ISA = qw(Exporter);
-our @EXPORT = qw(cmp_float create_test_dir remove_test_dir copy_test_files like_file_row unlike_file_row);
+our @EXPORT = qw(cmp_float create_test_dir remove_test_dir copy_test_files like_file_row unlike_file_row is_array);
 
 # Set this variable to something else if you are testing on a cluster
 my $tempdir = File::Spec->tmpdir;
@@ -189,6 +189,21 @@ sub copy_test_files
 	foreach $file (@{$array}) {
 		cp("$testfiledir/$file", $testdir);
 	}
+}
+
+sub is_array
+{
+	my $func = shift;
+	my $facit = shift;
+	my $label = shift;
+
+	is (scalar(@{$func}), scalar(@{$facit}), "$label, equal length");
+
+	my $min = scalar(@{$func});
+	$min = scalar(@{$facit}) if (scalar(@{$facit}) < $min);
+	for (my $i = 0; $i < $min; $i++) {
+		is ($func->[$i], $facit->[$i], "$label, index $i");
+	}	
 }
 
 #uncomment for MAC, doris, n41, (5.10.0, 5.8.8, 5.10.1)

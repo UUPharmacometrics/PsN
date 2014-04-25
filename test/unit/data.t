@@ -5,30 +5,13 @@
 
 use strict;
 use warnings;
-use Test::More tests=>168;
+use Test::More tests=>200;
 use Test::Exception;
 use Math::Random;
 use FindBin qw($Bin);
 use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages
 use data;
-
-
-sub is_array
-{
-	my $func=shift;
-	my $facit=shift;
-	my $label=shift;
-
-	is (scalar(@{$func}),scalar(@{$facit}),"$label, equal length");
-
-	my $min = scalar(@{$func});
-	$min = scalar(@{$facit}) if (scalar(@{$facit})< $min);
-	for (my $i=0; $i<$min; $i++){
-		is ($func->[$i],$facit->[$i],"$label, index $i");
-	}		
-}
-
 
 my $data = data->new( 
    idcolumn             => 1,
@@ -169,6 +152,70 @@ if ($^O =~ /Win/) {
 	$data->directory('/usr/bin/');
 	is($data->full_name, '/usr/bin/perl', "Test UNIX path with trailing slash");
 }
+
+# New
+my $filename = "$tempdir/test.dta";
+open my $fh, '>', $filename;
+print $fh "ID SMTH TEST\n";
+print $fh "0 12.2 23.4\n";
+print $fh "0 23.56 14\n";
+print $fh "0 1.2 2.8\n";
+close $fh;
+
+my $data = data->new(filename => $filename, directory => $tempdir);
+
+# mean
+is ($data->mean(column => 2), 12.32, "data->mean of small data set column 1");
+is ($data->mean(column => 3), 13.4, "data->mean of small data set column 2");
+dies_ok { $data->mean(column => 4) } "data->mean for non existing column";
+is ($data->mean(column_head => 'TEST'), 13.4, "data->mean with column name");
+is ($data->mean(column => 2, hi_cutoff => 10), 0, "data->mean with hi_cutoff");
+
+#min
+is ($data->min(column => 2), 1.2, "data->min of small data set column 1");
+is ($data->min(column => 3), 2.8, "data->min of small data set column 2");
+dies_ok { $data->min(column => 4) } "data->min for non existing column";
+is ($data->min(column_head => 'TEST'), 2.8, "data->min with column name");
+
+#max
+is ($data->max(column => 2), 23.56, "data->max of small data set column 1");
+is ($data->max(column => 3), 23.4, "data->max of small data set column 2");
+dies_ok { $data->max(column => 4) } "data->max for non existing column";
+is ($data->max(column_head => 'TEST'), 23.4, "data->max with column name");
+
+#median
+is ($data->median(column => 2), 12.2, "data->median of small data set column 1");
+is ($data->median(column => 3), 14, "data->median of small data set column 2");
+dies_ok { $data->median(column => 4) } "data->median for non existing column";
+is ($data->median(column_head => 'TEST'), 14, "data->median with column name");
+
+#range
+is ($data->range(column => 2), 22.36, "data->range of small data set column 1");
+is ($data->range(column => 3), 20.6, "data->range of small data set column 2");
+dies_ok { $data->range(column => 4) } "data->range for non existing column";
+is ($data->range(column_head => 'TEST'), 20.6, "data->range with column name");
+
+#column_to_array
+is_array($data->column_to_array(column => 2), [23.4, 14, 2.8] , "data->column_to_array of small data set column 1");
+is_array($data->column_to_array(column => 2, filter => [0, 1, 1]), [14, 2.8], "data->column_to_array of small data set with filter 1");
+is_array($data->column_to_array(column => 1, filter => [0, 0, 0]), [], "data->column_to_array of small data set with zero filter");
+dies_ok { $data->column_to_array(column => 1, filter => [0, 0]) } "data->column_to_array of small data set with too short filter";
+
+#merge
+my $filename_merge = "$tempdir/test_merge.dta";
+open my $fh, '>', $filename_merge;
+print $fh "ID SMTH TEST\n";
+print $fh "1 19 5\n";
+print $fh "1 28.9 6\n";
+print $fh "1 33.1 7.23\n";
+close $fh;
+
+my $data_merge = data->new(filename => $filename_merge, directory => $tempdir);
+$data_merge->merge(mergeobj => $data);
+is ($data_merge->mean(column => 2), 19.66, "data->merge checking new mean");
+
+#count_ind
+is ($data_merge->count_ind, 2, "data->count_ind");
 
 remove_test_dir($tempdir);
 

@@ -10,21 +10,6 @@ use linear_algebra;
 use model;
 use model::problem;
 
-sub is_array{
-    my $func=shift;
-    my $facit=shift;
-    my $label=shift;
-
-    is (scalar(@{$func}),scalar(@{$facit}),"$label, equal length");
-
-    my $min = scalar(@{$func});
-    $min = scalar(@{$facit}) if (scalar(@{$facit})< $min);
-    for (my $i=0; $i<$min; $i++){
-    	is ($func->[$i],$facit->[$i],"$label, index $i");
-    }		
-	
-}
-
 my $modeldir = $includes::testfiledir;
 my $model = model->new(filename => "$modeldir/pheno.mod");
 my $problem = $model->problems->[0];
