@@ -894,7 +894,7 @@ sub run
 	# Analyze the results
 	$self -> analyze( model_number => 1 );
 
-	$self->prepared_models->[0] = $self->prepared_models; #does this overwrite \@tool_models? Should it not be ->[]{'own'} = ...?
+#	$self->prepared_models->[0] = $self->prepared_models; #does this overwrite \@tool_models? Should it not be ->[]{'own'} = ...?
 	
 	# Perform analyses that need to be done after model has
 	# been run and processed. Also write a result file if one is
