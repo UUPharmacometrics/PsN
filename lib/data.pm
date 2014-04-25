@@ -2607,38 +2607,6 @@ sub create_row_filter
 	return \@filter;
 }
 
-sub append_columns_to_matrix
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		matrix => { isa => 'Ref', optional => 0 },
-		columns => { isa => 'ArrayRef', optional => 0 }
-	);
-	my $matrix = $parm{'matrix'};
-	my @columns = defined $parm{'columns'} ? @{$parm{'columns'}} : ();
-
-	my $row_count = scalar(@{$matrix});
-	my ($column_count,$offset);
-
-	if ($row_count < 1){
-		croak("Matrix cannot be empty in append_columns_to matrix.");
-	}
-	if (scalar(@columns)<1){
-		croak("Column array cannot be empty in append_columns_to matrix.");
-	}
-	if (scalar(@columns)%$row_count > 0){
-		croak("Column element count must be multiple of row count in matrix.");
-	}
-
-	$column_count = scalar(@columns)/$row_count;
-
-	for (my $i=0; $i<$column_count; $i++){
-		$offset=$i*$row_count;
-		for (my $j=0; $j<$row_count; $j++){
-			${$matrix}[$j] .= ','. $columns[$offset+$j];
-		}
-	}
-}
 
 no Moose;
 __PACKAGE__->meta->make_immutable;
