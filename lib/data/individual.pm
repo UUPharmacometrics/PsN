@@ -7,8 +7,7 @@ use MooseX::Params::Validate;
 
 has 'idcolumn' => ( is => 'rw', isa => 'Int', default => 1 );
 has 'idnumber' => ( is => 'rw', isa => 'Num', trigger => \&_idnumber_set );
-has 'subject_data' => ( is => 'rw', isa => 'ArrayRef' );
-has 'init_data' => ( is => 'rw', isa => 'ArrayRef' );
+has 'subject_data' => ( is => 'rw', isa => 'ArrayRef', required => 1 );
 
 # FIXME: This is a workaround to not execute triggers at construction.
 my $in_constructor = 0;
@@ -32,15 +31,9 @@ sub BUILD
 	# is, if no number is given, instead set to the value of the first
 	# id column which is assumed only to contain one value.
 
-	die "Error in data::individual -> new: No ID column specified.\n"
-		unless (defined $this->idcolumn);
-	if (defined $this->subject_data) {
-		if (not defined $this->idnumber) {
-			my @data = split( /,/ , $this->subject_data->[0]);
-			$this -> idnumber(@data[$this->idcolumn - 1] );
-		}
-	} else {
-		croak("Error in data::individual -> new: init_data not supported.\n");
+	if (not defined $this->idnumber) {
+		my @data = split(/,/, $this->subject_data->[0]);
+		$this->idnumber(@data[$this->idcolumn - 1]);
 	}
 }
 
@@ -51,9 +44,9 @@ sub _idnumber_set
 
 	if ($in_constructor) { return; }
 
-	if ( defined $parm ) {
-	  for( my $i = 0 ; $i < scalar(@{$self->subject_data}); $i++ ) {
-	    my @row = split( /,/, $self->subject_data->[$i] );
+	if (defined $parm) {
+	  for (my $i = 0 ; $i < scalar(@{$self->subject_data}); $i++) {
+	    my @row = split(/,/, $self->subject_data->[$i]);
 	    $row[ $self->idcolumn - 1 ] = $parm;
 	    $self->subject_data->[$i] = join(',', @row);
 	  }
@@ -66,15 +59,15 @@ sub copy
 	my $individual_copy;
 
 	my @new_data = ();
-	foreach my $row ( @{$self->subject_data} ) {
+	foreach my $row (@{$self->subject_data}) {
 		my $new_row = $row;
-	  push ( @new_data, $new_row );
+	  push (@new_data, $new_row);
 	}
 
-	$individual_copy = data::individual -> new (
-						idcolumn     => $self->idcolumn,
-				    idnumber     => $self->idnumber,
-				    subject_data => \@new_data );
+	$individual_copy = data::individual -> new(
+		idcolumn     => $self->idcolumn,
+		idnumber     => $self->idnumber,
+		subject_data => \@new_data );
 
 	return $individual_copy;
 }
@@ -357,7 +350,7 @@ sub factors
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 column => { isa => 'Int', optional => 1 }
+		 column => { isa => 'Int', optional => 1 }			# Counting from one
 	);
 	my $column = $parm{'column'};
 	my %factors;
@@ -366,7 +359,7 @@ sub factors
 	#factors is hash of values to ref of array of which line indices those values occur at.
 	for (my $i = 0; $i <= $#data; $i++) {
 	  my @data_row = split(/,/, $data[$i]);
-	  push(@{$factors{$data_row[$column-1]}}, $i);
+	  push(@{$factors{$data_row[$column - 1]}}, $i);
 	}
 
 	return \%factors;
