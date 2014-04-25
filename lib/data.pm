@@ -169,15 +169,6 @@ sub _target_set
 	}
 }
 
-sub add_individual
-{
-	my ($self, %parm) = validated_hash(\@_, 
-		init_data => {isa => 'Any', optional => 0}
-	);
-	$self->individuals([]) unless defined $self->individuals;
-	push( @{$self->individuals}, data::individual->new( %{$parm{'init_data'}} ) );
-}
-
 sub bootstrap
 {
 	my $self = shift;

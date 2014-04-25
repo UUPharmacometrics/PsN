@@ -217,6 +217,7 @@ is ($data_merge->mean(column => 2), 19.66, "data->merge checking new mean");
 #count_ind
 is ($data_merge->count_ind, 2, "data->count_ind");
 
+
 remove_test_dir($tempdir);
 
 done_testing;

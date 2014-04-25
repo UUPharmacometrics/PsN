@@ -31,22 +31,16 @@ sub BUILD
 	# The idnumber attribute does not have an explicit default value but
 	# is, if no number is given, instead set to the value of the first
 	# id column which is assumed only to contain one value.
-	# 
-	# Either subject_data or init_data must be given. Subject data is
-	# a two-dimensional array holding the values of the subject. Init_data
-	# is an one-dimensional array of strings, probably extracted from a
-	# file where each row is one element in the array. This array is the
-	# parsed by the constructor and moved to subject_data.
 
 	die "Error in data::individual -> new: No ID column specified.\n"
-	unless ( defined $this->idcolumn );
-	if ( defined $this->subject_data ) {
-		if ( ! defined $this->idnumber ) {
+		unless (defined $this->idcolumn);
+	if (defined $this->subject_data) {
+		if (not defined $this->idnumber) {
 			my @data = split( /,/ , $this->subject_data->[0]);
 			$this -> idnumber(@data[$this->idcolumn - 1] );
 		}
 	} else {
-		die "Error in data::individual -> new: init_data not supported.\n";
+		croak("Error in data::individual -> new: init_data not supported.\n");
 	}
 }
 
@@ -265,12 +259,12 @@ sub append_column
 	#append values at each line. No return value
 
 	my @data = @{$self -> subject_data()};
-	unless (scalar(@data) == scalar(@{$new_values})){
-		croak("lines of subject data(".scalar(@data).") and length of new_values(".scalar(@{$new_values}).
+	unless (scalar(@data) == scalar(@{$new_values})) {
+		croak("lines of subject data(" . scalar(@data) . ") and length of new_values(" . scalar(@{$new_values}) .
 			") must be equal in individual->append_column");
 	}
-	my @newlines=();
-	for (my $i=0; $i< scalar(@data); $i++){
+	my @newlines = ();
+	for (my $i = 0; $i < scalar(@data); $i++) {
 		push(@newlines,$data[$i].','.$new_values->[$i]);
 	}
 
@@ -281,7 +275,7 @@ sub append_individual
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		new_individual => { isa => 'Ref', optional => 1 }
+		new_individual => { isa => 'data::individual', optional => 1 }
 	);
 	my $new_individual = $parm{'new_individual'};
 
@@ -289,15 +283,15 @@ sub append_individual
 	#otherwise die with error
 	#append values at each line. No return value
 
-	my @data = @{$self -> subject_data()};
-	my @append_data = @{$new_individual -> subject_data()};
-	unless (scalar(@data) == scalar(@append_data)){
-		croak("lines of subject data(".scalar(@data).") and length of new individual(".scalar(@append_data).
+	my @data = @{$self->subject_data};
+	my @append_data = @{$new_individual->subject_data};
+	unless (scalar(@data) == scalar(@append_data)) {
+		croak("lines of subject data(" . scalar(@data) . ") and length of new individual(" . scalar(@append_data) .
 			") must be equal in individual->append_individual");
 	}
-	my @newlines=();
-	for (my $i=0; $i< scalar(@data); $i++){
-		push(@newlines,$data[$i].','.$append_data[$i]);
+	my @newlines = ();
+	for (my $i = 0; $i < scalar(@data); $i++) {
+		push(@newlines, $data[$i] . ',' . $append_data[$i]);
 	}
 
 	$self->subject_data(\@newlines); #replace old data
@@ -370,9 +364,9 @@ sub factors
 
 	my @data = @{$self->subject_data};
 	#factors is hash of values to ref of array of which line indices those values occur at.
-	for ( my $i = 0; $i <= $#data; $i++ ) {
-	  my @data_row = split( /,/, $data[$i] );
-	  push( @{$factors{$data_row[$column-1]}}, $i );
+	for (my $i = 0; $i <= $#data; $i++) {
+	  my @data_row = split(/,/, $data[$i]);
+	  push(@{$factors{$data_row[$column-1]}}, $i);
 	}
 
 	return \%factors;
