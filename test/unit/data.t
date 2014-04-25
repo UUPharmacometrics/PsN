@@ -17,6 +17,7 @@ my $data = data->new(
    idcolumn             => 1,
    filename             => 'testdata_no_missing.csv',
    directory            => $includes::testfiledir,
+   ignoresign => '@',
    ignore_missing_files => 0,
    skip_parsing         => 0,
    target               => 'mem');
@@ -24,6 +25,7 @@ my $dotdata = data->new(
    idcolumn             => 1,
    filename             => 'testdata_with_dot.csv',
    directory            => $includes::testfiledir,
+   ignoresign => '@',
    ignore_missing_files => 0,
    skip_parsing         => 0,
    target               => 'mem');
@@ -86,6 +88,7 @@ my $newdata = data->new(
    idcolumn             => 1,
    filename             => $filename,
    directory            => $tempdir,
+   ignoresign => '@',
    ignore_missing_files => 0,
    skip_parsing         => 0,
    target               => 'mem'
@@ -111,6 +114,7 @@ $newdata = data ->new(
    idcolumn             => 1,
    filename             => $filename,
    directory            => $tempdir,
+   ignoresign => '@',
    ignore_missing_files => 0,
    skip_parsing         => 0,
    target               => 'mem');
@@ -130,7 +134,9 @@ unlink("$tempdir/$filename");
 
 #this is for frem helper functions
 my $phifile = $includes::testfiledir . "/mox1.phi";
-my $phi = data->new(filename => $phifile);
+my $phi = data->new(filename => $phifile,
+					ignoresign => '@'
+	);
 my $eta_matrix = $phi->get_eta_matrix(start_eta => 4, n_eta => 4);
 is_array ($eta_matrix->[0],['1.97271E-06','-2.92739E-06','1.83230E-05','5.73266E-06'],"eta matrix start_eta 4 n_eta 4 row index 0");
 is_array ($eta_matrix->[5],['1.29845E-05','-1.44714E-05','1.98524E-05','8.67448E-05'],"eta matrix start_eta 4 n_eta 4 row index 5");
@@ -138,7 +144,9 @@ is_array ($eta_matrix->[73],['8.98237E-06','-1.58557E-05','-6.15118E-05','9.9613
 
 
 # full_name
-my $data = data->new(filename => $phifile);
+my $data = data->new(filename => $phifile,
+					ignoresign => '@'
+);
 $data->filename('perl');
 
 if ($^O =~ /Win/) {
