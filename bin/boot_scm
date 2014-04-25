@@ -306,7 +306,7 @@ cp($dir.$file,$main_directory.$file);
 #need a dummy tool object to print options
 # tool class requires a model, but we do not want to give one. Use dummy
 my $dummy_prob = model::problem -> new ( ignore_missing_files=> 1,
-										 prob_arr       => ['$PROB','$INPUT ID','$DATA dummy.txt']);
+										 prob_arr       => ['$PROB','$INPUT ID','$DATA dummy.txt IGNORE=@']);
 
 my $dummy_model = model -> new (filename => 'dummy_for_mcmp',
 								problems => [$dummy_prob],
@@ -501,14 +501,14 @@ if ($do_filtering){
 	$filter_fit -> run;
 	my @idcolumns = @{$model -> idcolumns};
 	my $idcolumn = $idcolumns[0];
-	my $ignoresign = defined $model -> ignoresigns ? $model -> ignoresigns -> [0] : undef;
+	#ignoresign is @ since data is a table file
 	print "\n";
 	if ( defined $idcolumn ) {
 		$full_filtered_data = data -> new( 
 			idcolumn             => $idcolumn,
 			filename             => $datafile,
 			missing_data_token => $filtered_data_model->missing_data_token,
-			ignoresign           => $ignoresign,
+			ignoresign           => '@',
 			directory            => $filtered_data_model -> directory,
 			ignore_missing_files => 0,
 			skip_parsing         => 0,
@@ -691,11 +691,13 @@ if ((not $config_file->linearize) or $options{'methodA'}){
 	$config_file->time_varying($time_varying); #reset
 	
 	#in derivatives_covariates.dta ID is always 1, different set of columns entirely
+	#ignoresign is @ since table
 	$the_data = data -> new(directory => $deriv_dir,
 							filename =>'derivatives_covariates.dta',
 							missing_data_token => $config_file->missing_data_token,
 							target => 'mem',
 							idcolumn => 1, 
+							ignoresign => '@', 
 							ignore_missing_files => 0,
 							skip_parsing => 0);
 	print "\n";
