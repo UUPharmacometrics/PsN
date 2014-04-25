@@ -914,7 +914,8 @@ sub read_data
 			croak("File ".$self->table_strata().
 				  " \nwith stratification data does not exist.");
 		}
-		my $d = data -> new(filename=>$self->table_strata()); #läser in allt. 
+		my $d = data -> new(filename=>$self->table_strata(),
+							ignoresign => '@'); 
 		
 		$n_individuals= scalar(@{$d->individuals});
 		@strata = @{$d -> column_to_array('column'=>$self->stratify_on())};

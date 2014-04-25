@@ -681,7 +681,8 @@ sub get_jd_vector_eta_matrix
   unless ( -e  $tabfile){
     croak("File $tabfile does not exist.");
   }
-  my $table = data -> new(filename=>$tabfile); #reads everything, incl header.
+	my $table = data -> new(filename=>$tabfile,
+							ignoresign => '@');
   my $header = (defined $self->njd) ? 'NJD': 'JD';
 
   @jd_vector = @{$table -> column_to_array('column'=>$header)};

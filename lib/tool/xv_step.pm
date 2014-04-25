@@ -60,6 +60,7 @@ has 'warnings' => ( is => 'rw', isa => 'Int', default => 0 );
 has 'estimate_only' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'predict_only' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'last_est_complete' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'ignoresigns' => ( is => 'rw', isa => 'ArrayRef');
 
 
 sub BUILD
@@ -71,6 +72,7 @@ sub BUILD
 	unless( defined $model -> datas ){
 		$this -> die ( message => "No data object in modelobject\n" );
 	}
+	$this->ignoresigns($model -> ignoresigns);
 
 	if( $this -> predict_only and $this -> estimate_only ){
 		$this -> predict_only(0);
@@ -222,9 +224,10 @@ sub create_data_sets
 		{
 			if( $j == 0 ){
 				$est_data = data -> new( filename => 'est_data' . $i . '.dta', 
-					directory => $self -> directory, 
-					ignore_missing_files => 1, 
-					header => $data_obj -> header );
+										 directory => $self -> directory,
+										 ignoresign => $self->ignoresigns->[0],
+										 ignore_missing_files => 1, 
+										 header => $data_obj -> header );
 			}
 
 			# The estimation data set is a merge of the datasets

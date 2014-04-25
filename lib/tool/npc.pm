@@ -2461,7 +2461,8 @@ sub get_data_matrix
 		croak("File $orig_file \nwith table output for original data does not exist. ".
 			  "It is recommended to check lst-file $file_to_check for NONMEM error messages.");
 	}
-	my $d = data -> new(filename=>$orig_file); #läser in allt
+	my $d = data -> new(filename=>$orig_file,
+						ignoresign => '@');
 	
 	unless (defined $d->individuals()){
 		croak("File $orig_file \nexists but PsN failed to read any individuals from it.");
@@ -3315,7 +3316,8 @@ sub create_mirror_and_plot_data
     croak("Could not find file $orig_file.");
   }
 
-  my $d = data -> new(filename=>$orig_file); #läser in allt
+	my $d = data -> new(filename=>$orig_file,
+						ignoresign => '@');
 
   my $no_individuals= scalar(@{$d->individuals});
   my $filter = $d -> create_row_filter('no_individuals'=>$no_individuals);
@@ -3569,8 +3571,9 @@ sub create_stratified_data
       croak("Could not find file $orig_file.");
     }
     
-    my $d = data -> new(filename => $orig_file); #läser in allt
-
+    my $d = data -> new(filename => $orig_file,
+						ignoresign => '@');
+	
     my $no_individuals = scalar(@{$d->individuals});
     my $filt = $d -> create_row_filter('no_individuals'=>$no_individuals);
     $strat_array = $d -> column_to_array('column'=>$strat_header,'filter'=>$filt);

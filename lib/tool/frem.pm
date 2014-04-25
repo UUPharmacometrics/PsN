@@ -1437,7 +1437,8 @@ sub create_data2
 		newline => 1 );
 	$filter_fit -> run;
 
-	my $filtered_data = data -> new(filename=>$filtered_data_model->directory().$self->filtered_datafile);
+	my $filtered_data = data -> new(filename=>$filtered_data_model->directory().$self->filtered_datafile,
+									ignoresign => '@');
 
 	foreach my $covariate (@{$self->invariant()}){
 		my %strata = %{$filtered_data-> factors( column_head => $covariate,

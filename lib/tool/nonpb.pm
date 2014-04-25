@@ -21,7 +21,7 @@ has 'n_individuals' => ( is => 'rw', isa => 'Int' );
 has 'samples' => ( is => 'rw', isa => 'Int' );
 has 'nonpb_version' => ( is => 'rw', isa => 'Int', default => 1 );
 has 'etas' => ( is => 'rw', isa => 'Int' );
-has 'start_bs_models' => ( is => 'rw', isa => 'ArrayRef[model]', default => sub { [] } );
+has 'start_bs_models' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 has 'bs_directory' => ( is => 'rw', isa => 'Str' );
 has 'pind_directories' => ( is => 'rw', isa => 'ArrayRef[Str]' );
 has 'logfile' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { ['nonpb.log'] } );
@@ -584,7 +584,8 @@ sub get_sorted_original_eta_matrix
 		$filename = $self->pind_directories->[0].'m1/original.patab'; 
 	}
 
-	my $table = data -> new(filename=>$filename);
+	my $table = data -> new(filename=>$filename,
+							ignoresign => '@');
 
 	for (my $i = 1; $i <= $self->etas; $i++) {
 		my $col="ETA$i";
@@ -746,7 +747,8 @@ sub create_bootstrapped_np_probabilities_T
 		croak("Error get_bootstrapped_np_probabilities: ".
 			"Cannot find file $filename");
 	}
-	my $table = data -> new(filename=>$filename); #absolute path ok?
+	my $table = data -> new(filename=>$filename,
+							ignoresign => '@'); #absolute path ok?
 
 	my @id_vector = @{$table -> column_to_array('column'=>'ID')};
 
