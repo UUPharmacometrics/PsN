@@ -269,8 +269,9 @@ sub BUILD
 							target               => $this -> {'target'}) );		#FIXME: Nonstandard accessor. Fix with Moose
 			} else {
 				croak("New model to be created from ".$this -> full_name().
-					  ". Data file is ".$datafile.
-					  ". No id column definition found in the model file." );
+					  ". Data file is ".$datafile."\n".
+					  "No ID column definition found in \$INPUT of the model file\n".
+					  "(if you use a synonym for ID then PsN can only handle ID=synonym, not synonym=ID ).\n" );
 			}
 	    }
 	}
