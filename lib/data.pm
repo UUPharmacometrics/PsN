@@ -27,7 +27,7 @@ has 'directory' => ( is => 'rw', isa => 'Maybe[Str]' );
 has 'filename' => ( is => 'rw', isa => 'Str' );
 has 'cont_column' => ( is => 'rw', isa => 'Int' );
 has 'header' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { [] } );
-has 'idcolumn' => ( is => 'rw', isa => 'Int', default => 1 );
+has 'idcolumn' => ( is => 'rw', isa => 'Int' );
 has 'ignore_missing_files' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'ignoresign' => ( is => 'rw', isa => 'Maybe[Str]');
 has 'missing_data_token' => ( is => 'rw', isa => 'Maybe[Int]', default => -99 );
@@ -35,7 +35,7 @@ has 'synced' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'target' => ( is => 'rw', isa => 'Str', default => 'mem', trigger => \&_target_set );
 has 'mdv_column' => ( is => 'rw', isa => 'Int' );
 has 'dv_column' => ( is => 'rw', isa => 'Int' );
-has 'table_file' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'parse_header' => ( is => 'rw', isa => 'Bool', default => 0 );
 has '_median' => ( is => 'rw', isa => 'ArrayRef[numbers]', default => sub { [] } );
 has '_range' => ( is => 'rw', isa => 'ArrayRef[numbers]', default => sub { [] } );
 has 'individual_ids' => ( is => 'rw', isa => 'ArrayRef[Int]' );
@@ -2406,31 +2406,35 @@ sub _read_header
 		"in which case the workaround is to run mac2unix on " . $self->filename . "\n" unless $found_data;
 	
 	chomp($hdrstring = pop(@data)); #last value of array
-	@header = split(/\,\s*|\s+/,$hdrstring);
-	if( $self->table_file ) {
+	@header = split(/\,\s*|\s+/, $hdrstring);
+	if ($self->parse_header or not defined $self->idcolumn) {
 		my @new_header;
 		for (my $i = 1; $i <= scalar @header; $i++) {
-			if ($header[$i-1] eq 'CONT') {
+			if ($header[$i - 1] eq 'CONT') {
 				if (defined $self->cont_column and not $i == $self->cont_column) {
 					carp("The supplied columns for the CONT data item (".
 						$self->cont_column . ") does not match the column where the CONT ".
-						"header was found ($i), using $i" );
+						"header was found ($i), using $i");
 				}
 				$self->cont_column($i);
 			} else {
-				push( @new_header, $header[$i-1] );
+				push(@new_header, $header[$i - 1]);
 			}
 		}
 		@header = @new_header;
 		for (my $i = 1; $i <= scalar @header; $i++) {
-			if( $header[$i - 1] eq 'ID' ) {
-				if ( defined $self->idcolumn and not $i == $self->idcolumn ) {
+			if ($header[$i - 1] eq 'ID') {
+				if (defined $self->idcolumn and not $i == $self->idcolumn) {
 					carp("The supplied columns for the ID data item (" .
 						$self->idcolumn . ") does not match the column where the ID ".
 						"header was found ($i), using $i");
 				}
 				$self->idcolumn($i);
 			}
+		}
+
+		if (not defined $self->idcolumn) {
+			croak("Cannot find an id column\n");
 		}
 	}
 

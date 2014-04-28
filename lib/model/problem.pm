@@ -1423,7 +1423,7 @@ sub _read_table_files
 										 ignoresign => '@',
 										 ignore_missing_files => $ignore_missing_files,
 										 target               => 'disk',
-										 table_file           => 1 );
+										 parse_header           => 1 );
 			push( @{$self->table_files}, $new_table );
 		}
 	}

@@ -5,7 +5,7 @@ use ui;
 use Moose;
 use MooseX::Params::Validate;
 
-has 'idcolumn' => ( is => 'rw', isa => 'Int', default => 1 );
+has 'idcolumn' => ( is => 'rw', isa => 'Int', required => 1 );
 has 'idnumber' => ( is => 'rw', isa => 'Num', trigger => \&_idnumber_set );
 has 'subject_data' => ( is => 'rw', isa => 'ArrayRef', required => 1 );
 
@@ -47,7 +47,7 @@ sub _idnumber_set
 	if (defined $parm) {
 	  for (my $i = 0 ; $i < scalar(@{$self->subject_data}); $i++) {
 	    my @row = split(/,/, $self->subject_data->[$i]);
-	    $row[ $self->idcolumn - 1 ] = $parm;
+	    $row[$self->idcolumn - 1] = $parm;
 	    $self->subject_data->[$i] = join(',', @row);
 	  }
 	}

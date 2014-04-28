@@ -16,4 +16,5 @@ my $ind = data::individual->new(subject_data => ['1,0.0000e0,1.0000e0', '1,1.000
 my %factors = %{$ind->factors(column => 2)};
 is_array([sort keys %factors], ['0.0000e0', '1.0000e0'], "data::individual->factors");
 
+
 done_testing;
