@@ -584,8 +584,7 @@ sub get_sorted_original_eta_matrix
 		$filename = $self->pind_directories->[0].'m1/original.patab'; 
 	}
 
-	my $table = data -> new(filename=>$filename,
-							ignoresign => '@');
+	my $table = data->new(filename => $filename, ignoresign => '@', parse_header => 1);
 
 	for (my $i = 1; $i <= $self->etas; $i++) {
 		my $col="ETA$i";
@@ -743,12 +742,10 @@ sub create_bootstrapped_np_probabilities_T
 			"wrong number of values in P_values_rowsums.");
 	}
 
-	unless ( -e $filename ){
-		croak("Error get_bootstrapped_np_probabilities: ".
-			"Cannot find file $filename");
+	unless (-e $filename) {
+		croak("Error get_bootstrapped_np_probabilities: Cannot find file $filename");
 	}
-	my $table = data -> new(filename=>$filename,
-							ignoresign => '@'); #absolute path ok?
+	my $table = data->new(filename => $filename, ignoresign => '@', parse_header => 1);
 
 	my @id_vector = @{$table -> column_to_array('column'=>'ID')};
 

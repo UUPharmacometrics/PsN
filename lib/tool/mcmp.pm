@@ -909,13 +909,11 @@ sub read_data
 		croak("File $reduced_file \nwith iofv output for reduced model does not exist.");
 	}
     
-	if (defined $self->stratify_on()){
-		unless ( -e $self->table_strata() ){
-			croak("File ".$self->table_strata().
-				  " \nwith stratification data does not exist.");
+	if (defined $self->stratify_on) {
+		unless (-e $self->table_strata) {
+			croak("File " . $self->table_strata . " \nwith stratification data does not exist.");
 		}
-		my $d = data -> new(filename=>$self->table_strata(),
-							ignoresign => '@'); 
+		my $d = data->new(filename => $self->table_strata, ignoresign => '@', parse_header => 1); 
 		
 		$n_individuals= scalar(@{$d->individuals});
 		@strata = @{$d -> column_to_array('column'=>$self->stratify_on())};

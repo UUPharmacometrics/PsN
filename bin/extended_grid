@@ -329,8 +329,7 @@ my $evid_column = $model_column_numbers{'EVID'};
 my $last_id = $id_template -> idnumber();
 
 #ignoresign is @ since a table file
-my $table_data = data -> new( filename => 'simdata',
-							  ignoresign => '@');
+my $table_data = data->new( filename => 'simdata', ignoresign => '@', parse_header => 1);
 
 my $simulated_individuals = $table_data -> individuals();
 unless (scalar(@{$simulated_individuals}) == $n_id_to_simulate){
@@ -508,8 +507,7 @@ unless (-e 'extended.nptab'){
     exit;
 }
 
-my $nptab = data -> new( filename => "extended.nptab",
-						 ignoresign => '@');
+my $nptab = data->new(filename => "extended.nptab", ignoresign => '@', parse_header => 1);
 
 my $JD_column = $nptab -> column_to_array( column => 1 + $nr_of_old_etas );
 
@@ -645,9 +643,12 @@ unless ( -e "ofv_dir" ){
 chdir( "ofv_dir" );
 cp( '../iofvcont.f', './iofvcont.f' ) or print "Warning: unable to copy iofvcont.f\n";
 
-my $table = data -> new( filename => "extended.nptab",
+my $table = data->new(
+	filename => "extended.nptab",
 	ignoresign => '@',
-	directory => '../' );
+	directory => '../',
+	parse_header => 1,
+);
 
 my $nomegas = $extended_model -> nomegas -> [0];
 

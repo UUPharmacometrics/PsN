@@ -121,8 +121,7 @@ if( $opt_ignoresign ){
 }
 
 my $datafile = $ARGV[0];
-my $dataobj = data -> new ('filename'=> $datafile,
-						   ignoresign => $ignoresign);
+my $dataobj = data -> new (filename => $datafile, ignoresign => $ignoresign, parse_header => 1);
 
 my %ignore_columns;
 

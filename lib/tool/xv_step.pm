@@ -220,14 +220,17 @@ sub create_data_sets
 		push( @{$self -> prediction_data}, $subsets -> [$i] );
 
 		my $est_data;
-		for( my $j = 0; $j <= $#{$subsets} ; $j++ )
+		for (my $j = 0; $j <= $#{$subsets}; $j++)
 		{
-			if( $j == 0 ){
-				$est_data = data -> new( filename => 'est_data' . $i . '.dta', 
-										 directory => $self -> directory,
-										 ignoresign => $self->ignoresigns->[0],
-										 ignore_missing_files => 1, 
-										 header => $data_obj -> header );
+			if ($j == 0) {
+				$est_data = data->new(
+					filename => 'est_data' . $i . '.dta', 
+					directory => $self->directory,
+					ignoresign => $self->ignoresigns->[0],
+					ignore_missing_files => 1, 
+					header => $data_obj->header,
+					parse_header => 1,
+				);
 			}
 
 			# The estimation data set is a merge of the datasets

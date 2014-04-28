@@ -389,15 +389,16 @@ sub BUILD
 		if (defined $this->derivatives_data()){
 			my $ignoresign = defined $model -> ignoresigns ? $model->ignoresigns->[0]: undef;
 
-			$data = data ->
-				new( filename             => $this->derivatives_data(),
-					 ignoresign           => $ignoresign,
-					 missing_data_token => $this->missing_data_token,
-					 #directory            => $this -> directory,
-					 ignore_missing_files => 0,
-					 skip_parsing         => 0,
-					 target               => 'mem');
-			
+			$data = data->new(
+				filename             => $this->derivatives_data,
+				ignoresign           => $ignoresign,
+				missing_data_token   => $this->missing_data_token,
+				ignore_missing_files => 0,
+				skip_parsing         => 0,
+				target               => 'mem',
+				parse_header				 => 1,
+			);
+
 			#set header from this data, must have column headers otherwise die
 			if (defined $data->column_head_indices and scalar(keys %{$data->column_head_indices})>0){ 
 				%model_column_numbers=%{$data->column_head_indices};

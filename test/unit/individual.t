@@ -10,7 +10,7 @@ use includes; #file with paths to PsN packages
 use data::individual;
 
 
-my $ind = data::individual->new(subject_data => ['1,0.0000e0,1.0000e0', '1,1.0000e0,0.0000e0', '1,1.0000e0,0.0000e0']);
+my $ind = data::individual->new(idcolumn => 1, subject_data => ['1,0.0000e0,1.0000e0', '1,1.0000e0,0.0000e0', '1,1.0000e0,0.0000e0']);
 
 #factors
 my %factors = %{$ind->factors(column => 2)};

@@ -2408,6 +2408,10 @@ sub _read_header
 	chomp($hdrstring = pop(@data)); #last value of array
 	@header = split(/\,\s*|\s+/, $hdrstring);
 	if ($self->parse_header or not defined $self->idcolumn) {
+		if (not $self->parse_header and not defined $self->idcolumn) {
+			print "No id column specified for data->_read_header: trying to parse the header anyway\n";
+		}
+
 		my @new_header;
 		for (my $i = 1; $i <= scalar @header; $i++) {
 			if ($header[$i - 1] eq 'CONT') {

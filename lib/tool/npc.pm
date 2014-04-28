@@ -2453,7 +2453,7 @@ sub get_data_matrix
 		$orig_file = $self->original_model->directory().$type.'_original.'.$orig_file;
 	}
 
-	unless ( -e $orig_file ){
+	unless (-e $orig_file) {
 		my $file_to_check = $self->searchdir."/NM_run1/compute_cwres.Rout";
 		print "\nCheck installation of R and XPose, check file $file_to_check\n" 
 			if (($self->dv eq 'CWRES') and ($PaN::nm_major_version < 7));
@@ -2461,8 +2461,7 @@ sub get_data_matrix
 		croak("File $orig_file \nwith table output for original data does not exist. ".
 			  "It is recommended to check lst-file $file_to_check for NONMEM error messages.");
 	}
-	my $d = data -> new(filename=>$orig_file,
-						ignoresign => '@');
+	my $d = data -> new(filename => $orig_file, ignoresign => '@', parse_header => 1);
 	
 	unless (defined $d->individuals()){
 		croak("File $orig_file \nexists but PsN failed to read any individuals from it.");
@@ -3312,12 +3311,11 @@ sub create_mirror_and_plot_data
 						     option_name => 'FILE',
 						     problem_index => ($self->origprobnum()-1));
   }
-  unless ( -e $orig_file ){
+  unless (-e $orig_file) {
     croak("Could not find file $orig_file.");
   }
 
-	my $d = data -> new(filename=>$orig_file,
-						ignoresign => '@');
+	my $d = data->new(filename => $orig_file, ignoresign => '@', parse_header => 1);
 
   my $no_individuals= scalar(@{$d->individuals});
   my $filter = $d -> create_row_filter('no_individuals'=>$no_individuals);
@@ -3567,12 +3565,11 @@ sub create_stratified_data
 						       option_name => 'FILE',
 						       problem_index => ($self->origprobnum()-1));
     }
-    unless ( -e $orig_file ){
+    unless (-e $orig_file) {
       croak("Could not find file $orig_file.");
     }
     
-    my $d = data -> new(filename => $orig_file,
-						ignoresign => '@');
+    my $d = data->new(filename => $orig_file, ignoresign => '@', parse_header => 1);
 	
     my $no_individuals = scalar(@{$d->individuals});
     my $filt = $d -> create_row_filter('no_individuals'=>$no_individuals);
