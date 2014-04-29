@@ -4,6 +4,7 @@ use include_modules;
 use ui;
 use Moose;
 use MooseX::Params::Validate;
+use Scalar::Util qw(looks_like_number);
 
 has 'idcolumn' => ( is => 'rw', isa => 'Int', required => 1 );
 has 'idnumber' => ( is => 'rw', isa => 'Num', trigger => \&_idnumber_set );
@@ -33,7 +34,14 @@ sub BUILD
 
 	if (not defined $this->idnumber) {
 		my @data = split(/,/, $this->subject_data->[0]);
-		$this->idnumber(@data[$this->idcolumn - 1]);
+		unless (defined $data[$this->idcolumn - 1] and length($data[$this->idcolumn - 1])>0){
+			croak("The value in the id-column is empty");
+		}
+		if (looks_like_number($data[$this->idcolumn - 1])){
+			$this->idnumber($data[$this->idcolumn - 1]);
+		}else{
+			croak("The value in the data column, ".$data[$this->idcolumn - 1]." does not look like a number\n");
+		}
 	}
 }
 

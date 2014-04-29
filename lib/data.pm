@@ -2438,7 +2438,7 @@ sub _read_header
 		}
 
 		if (not defined $self->idcolumn) {
-			croak("Cannot find an id column\n");
+			croak("Cannot find an id column in the data set header\n".join(' ',@header));
 		}
 	}
 
@@ -2499,6 +2499,10 @@ sub _read_individuals
 				if (/^$ignoresign/){
 					$is_data=0;
 				}
+			}
+			if ($is_data and (/^[A-Za-c#;]/)){
+				croak("Error: We have IGNORE=".$ignoresign." so the data set line\n".$_.
+					  "is not filtered out, but it looks like a header/comment.\n");
 			}
 		}else{
 			if (/^[A-Za-z#;]/){
