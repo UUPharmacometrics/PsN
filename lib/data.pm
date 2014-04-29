@@ -2268,7 +2268,7 @@ sub column_to_array
 		$column = $self->column_head_indices->{$column} - 1;
 	}
 
-	if ($column < 0 or $column > $#{$self->header}) {
+	if ($column < 0) {  # FIXME: had upper bounds check here or $column > $#{$self->header}) {
 		return [];
 	}
 

@@ -16,8 +16,6 @@ use model::problem::data;
 use model::problem;
 use model;
 
-#my $tempdir = create_test_dir('unit_dataextra');
-
 my $datarec_at = model::problem::data->new(record_arr => ['file.csv IGNORE=(DOSE.GT.5)','IGN=@']);
 is($datarec_at->ignoresign,'@','data record ignoresign at');
 
@@ -74,74 +72,58 @@ for( my $i=0; $i<scalar(@inputs); $i++){
 
 my $datadir = $includes::testfiledir.'/data/';
 
-my @datafiles = qw(1_nohead_leading_empty.csv 2_nohead.csv 3_id_header_leading_empty.csv 4_header_ID.csv 5_hash_header_leading_empty.csv 6_header_hash.csv 7_C_lead_empty.csv 8_C_lead_dummy.csv 9_lead_posneg.csv);
+my @datafiletests = (
+	{ filename => '1_nohead_leading_empty.csv', input => 'C ID TIME AMT WGT APGR DV', data => 'IGN=C', idcolumn => 2, row => 3, col => 2, val => 24.5 },
+	{ filename => '1_nohead_leading_empty.csv', input => 'C ID TIME AMT WGT APGR DV', data => 'IGN=@', idcolumn => 2, row => 9, col => 1, val => 1 },
+	{ filename => '1_nohead_leading_empty.csv', input => 'C ID TIME AMT WGT APGR DV', data => '', idcolumn => 2, row => 0, col => 3, val => 25.0 },
+	{ filename => '2_nohead.csv', input => 'ID TIME AMT WGT APGR DV', data => 'IGN=C', idcolumn => 1, row => 7, col => 1, val => 72.5 },
+	{ filename => '3_id_header_leading_empty.csv', input => 'C ID TIME AMT WGT APGR DV', data => 'IGN=@', idcolumn => 2, row => 1, col => 1, val => 1 },
+	{ filename => '3_id_header_leading_empty.csv', input => 'C ID TIME AMT WGT APGR DV', data => 'IGN=C', crash => 1, row => 0, col => 5, val => 7 },
+	{ filename => '3_id_header_leading_empty.csv', input => 'C ID TIME AMT WGT APGR DV', data => '', crash => 1 },
+	{ filename => '4_header_ID.csv', input => 'ID TIME AMT WGT APGR DV', data => 'IGN=@', idcolumn => 1, row => 4, col => 1, val => 37 },
+	{ filename => '4_header_ID.csv', input => 'ID TIME AMT WGT APGR DV', data => 'IGN=C', crash => 1 },
+	{ filename => '4_header_ID.csv', input => 'ID TIME AMT WGT APGR DV', data => '', crash => 1 },
+	{ filename => '5_hash_header_leading_empty.csv', input => 'C ID TIME AMT WGT APGR DV', data => 'IGN=@', idcolumn => 2, row => 0, col => 2, val => 0 },
+	{ filename => '5_hash_header_leading_empty.csv', input => 'C ID TIME AMT WGT APGR DV', data => 'IGN=C', crash => 1 },
+	{ filename => '5_hash_header_leading_empty.csv', input => 'C ID TIME AMT WGT APGR DV', data => '', idcolumn => 2, row => 2, col => 3, val => 3.5 },
+	{ filename => '6_header_hash.csv', input => 'ID TIME AMT WGT APGR DV', data => 'IGN=@', idcolumn => 1, col => 0, row => 0, val => 1 },
+	{ filename => '6_header_hash.csv', input => 'ID TIME AMT WGT APGR DV', data => 'IGN=C', crash => 1 },
+	{ filename => '6_header_hash.csv', input => 'ID TIME AMT WGT APGR DV', data => '', idcolumn => 1, col => 1, row => 1, val => 2 },
+	{ filename => '7_C_lead_empty.csv', input => 'C ID TIME AMT WGT APGR DV', data => 'IGN=@', idcolumn => 2, row => 2, col => 2, val => 12.5 },
+	{ filename => '7_C_lead_empty.csv', input => 'C ID TIME AMT WGT APGR DV', data => 'IGN=C', idcolumn => 2, row => 0, col => 4, val => 1.4 },
+	{ filename => '7_C_lead_empty.csv', input => 'C ID TIME AMT WGT APGR DV', data => '', crash => 1 },
+	{ filename => '8_C_lead_dummy.csv', input => 'C ID TIME AMT WGT APGR DC', data => 'IGN=@', idcolumn => 2, row => 7, col => 3, val => 3.5 },
+	{ filename => '8_C_lead_dummy.csv', input => 'C ID TIME AMT WGT APGR DC', data => 'IGN=C', idcolumn => 2, row => 1, col => 2, val => 2.0 },
+	{ filename => '8_C_lead_dummy.csv', input => 'C ID TIME AMT WGT APGR DC', data => '', crash => 1 },
+	{ filename => '9_lead_posneg.csv', input => 'PNEG ID TIME AMT WGT APGR DV', data => 'IGN=@', idcolumn => 2, row => 0, col => 4, val => '1.4' },
+	{ filename => '9_lead_posneg.csv', input => 'PNEG ID TIME AMT WGT APGR DV', data => 'IGN=C', crash => 1 },
+	{ filename => '9_lead_posneg.csv', input => 'PNEG ID TIME AMT WGT APGR DV', data => '', crash => 1 },
+);
+my $problem;
+my $model;
 
-#file parsing
-my $index=0;
-my $dummy_prob = model::problem->new(ignore_missing_files=> 1,
-									 prob_arr       => ['$PROB','$INPUT C ID TIME AMT WGT APGR DV','$DATA '.$datadir.$datafiles[$index].' IGN=C']);
+foreach my $test_hash (@datafiletests) {
+	$problem = model::problem->new(ignore_missing_files => 1, 
+		prob_arr => ['$PROB', '$INPUT ' . $test_hash->{'input'}, '$DATA ' . $datadir . $test_hash->{'filename'} . ' ' . $test_hash->{'data'}] );
+	if (not $test_hash->{'crash'}) {
+		$model = model->new(filename => 'dummy',
+			problems => [$problem],
+			skip_data_parsing => 0,
+			ignore_missing_files => 1);
+	} else {
+		dies_ok { $model = model->new(filename => 'dummy', problems => [$dummy_prob], skip_data_parsing => 0, ignore_missing_files => 1) }
+			"bad ignore " . $test_hash->{'filename'};
+	}
 
-my $model = model->new(filename => 'dummy',
-					   problems => [$dummy_prob],
-					   skip_data_parsing=> 0,
-					   ignore_missing_files => 1);
-
-is($model->datas->[0]->count_ind,5,'n individuals '.$datafiles[$index].' ignore C');
-is($model->datas->[0]->idcolumn,2,'idcol '.$datafiles[$index]);
-
-$dummy_prob = model::problem->new(ignore_missing_files=> 1,
-									 prob_arr       => ['$PROB','$INPUT C ID TIME AMT WGT APGR DV','$DATA '.$datadir.$datafiles[$index].' IGN=@']);
-
-$model = model->new(filename => 'dummy',
-					   problems => [$dummy_prob],
-					   skip_data_parsing=> 0,
-					   ignore_missing_files => 1);
-
-is($model->datas->[0]->count_ind,5,'n individuals '.$datafiles[$index].' ignore @ ');
-is($model->datas->[0]->idcolumn,2,'idcol '.$datafiles[$index]);
-
-$dummy_prob = model::problem->new(ignore_missing_files=> 1,
-									 prob_arr       => ['$PROB','$INPUT C ID TIME AMT WGT APGR DV','$DATA '.$datadir.$datafiles[$index].' ']);
-
-$model = model->new(filename => 'dummy',
-					   problems => [$dummy_prob],
-					   skip_data_parsing=> 0,
-					   ignore_missing_files => 1);
-
-is($model->datas->[0]->count_ind,5,'n individuals '.$datafiles[$index].' default IGNORE ');
-is($model->datas->[0]->idcolumn,2,'idcol '.$datafiles[$index]);
-
-$index=1;
-$dummy_prob = model::problem->new(ignore_missing_files=> 1,
-									 prob_arr       => ['$PROB','$INPUT ID TIME AMT WGT APGR DV','$DATA '.$datadir.$datafiles[$index].' IGN=C']);
-
-$model = model->new(filename => 'dummy',
-					   problems => [$dummy_prob],
-					   skip_data_parsing=> 0,
-					   ignore_missing_files => 1);
-
-is($model->datas->[0]->count_ind,5,'n individuals '.$datafiles[$index]);
-is($model->datas->[0]->idcolumn,1,'idcol '.$datafiles[$index]);
-
-$index=2;
-$dummy_prob = model::problem->new(ignore_missing_files=> 1,
-									 prob_arr       => ['$PROB','$INPUT C ID TIME AMT WGT APGR DV','$DATA '.$datadir.$datafiles[$index].' IGN=C']);
-
-dies_ok {$model = model->new(filename => 'dummy',problems => [$dummy_prob],skip_data_parsing=> 0,ignore_missing_files => 1)} "bad ignore";
-
-$dummy_prob = model::problem->new(ignore_missing_files=> 1,
-									 prob_arr       => ['$PROB','$INPUT C ID TIME AMT WGT APGR DV','$DATA '.$datadir.$datafiles[$index].' IGN=@']);
-
-$model = model->new(filename => 'dummy',
-					   problems => [$dummy_prob],
-					   skip_data_parsing=> 0,
-					   ignore_missing_files => 1);
-
-is($model->datas->[0]->count_ind,5,'n individuals '.$datafiles[$index]);
-is($model->datas->[0]->idcolumn,2,'idcol '.$datafiles[$index]);
-
-#my $dataobj = data->new(filename => $filename, directory => $tempdir);
-
-#remove_test_dir($tempdir);
+	if (not $test_hash->{'crash'}) {
+		is($model->datas->[0]->count_ind, 5, 'n individuals ' . $test_hash->{'filename'} . ' ' . $test_hash->{'data'});
+		is($model->datas->[0]->idcolumn, $test_hash->{'idcolumn'}, 'idcol ' . $test_hash->{'filename'});
+		if (exists $test_hash->{'row'}) {
+			my $column_ref = $model->datas->[0]->column_to_array(column => $test_hash->{'col'});
+			cmp_float ($column_ref->[$test_hash->{'row'}], $test_hash->{'val'}, $test_hash->{'filename'} .
+				' value check row=' . $test_hash->{'row'} . ' col=' . $test_hash->{'col'});
+		}
+	}
+}
 
 done_testing;
