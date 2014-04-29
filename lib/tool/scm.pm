@@ -387,17 +387,14 @@ sub BUILD
 
 		my $data = $model -> datas -> [0];
 		if (defined $this->derivatives_data()){
-			my $ignoresign = defined $model -> ignoresigns ? $model->ignoresigns->[0]: undef;
-
 			$data = data->new(
 				filename             => $this->derivatives_data,
-				ignoresign           => $ignoresign,
+				ignoresign           => '@',
 				missing_data_token   => $this->missing_data_token,
 				ignore_missing_files => 0,
 				skip_parsing         => 0,
 				target               => 'mem',
-				parse_header				 => 1,
-			);
+				parse_header				 => 1	); #ok parse_header, do not know idcol
 
 			#set header from this data, must have column headers otherwise die
 			if (defined $data->column_head_indices and scalar(keys %{$data->column_head_indices})>0){ 
@@ -4815,16 +4812,16 @@ sub run_xv_pred_step
 		cp($datafilename,$newfilename);
 		unlink($datafilename);
 		my ( $dir, $file ) = OSspecific::absolute_path('',$newfilename);
-		my $ignoresign = defined $model_copy_pred -> ignoresigns ? 
-		$model_copy_pred -> ignoresigns -> [0] : undef;
+
+		#this is a table file we generated with ID first, so ignoresign is @, idcol is 1
 		my $pred_data = data ->
-		new( filename		  => $file,
-			directory		  => $dir,
-			missing_data_token => $self->missing_data_token,
-			target		  => 'mem',
-			ignoresign		  => $ignoresign,
-			skip_parsing         => 0,
-			idcolumn		  => $model_copy_pred -> {'datas'}->[0]-> idcolumn );
+			new( filename		  => $file,
+				 directory		  => $dir,
+				 missing_data_token => $self->missing_data_token,
+				 target		  => 'mem',
+				 ignoresign		  => '@',
+				 skip_parsing         => 0,
+				 idcolumn		  => 1 ); #ok, this is a table file we made
 		$self->xv_pred_data($pred_data);
 
 	}else{
@@ -6566,12 +6563,13 @@ sub preprocess_data
 
 		my @idcolumns = @{$model -> idcolumns};
 		my $idcolumn = $idcolumns[0];
-		my $ignoresign = defined $model -> ignoresigns ? $model -> ignoresigns -> [0] : undef;
+
+		#have checked that ignoresign and idcol is ok
 		if ( defined $idcolumn ) {
 			$filtered_data_model->datas([data ->
 					new( idcolumn             => $idcolumn,
 						filename             => $datafile,
-						ignoresign           => $ignoresign,
+						ignoresign           => '@',
 						directory            => $filtered_data_model -> directory,
 						missing_data_token => $self->missing_data_token,
 						ignore_missing_files => 0,

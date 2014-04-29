@@ -214,6 +214,7 @@ sub create_data_sets
 
 	for( my $i = 0; $i <= $#{$subsets}; $i++ )
 	{
+		#each subset is a data object with ignoresign and idcolumn.
 		$subsets -> [$i] -> filename( 'pred_data' . $i . '.dta' );
 		$subsets -> [$i] -> directory( $self -> directory );
 		$subsets -> [$i] -> _write();
@@ -226,11 +227,10 @@ sub create_data_sets
 				$est_data = data->new(
 					filename => 'est_data' . $i . '.dta', 
 					directory => $self->directory,
-					ignoresign => $self->ignoresigns->[0],
+					ignoresign => $subsets -> [$i]->ignoresign,
 					ignore_missing_files => 1, 
 					header => $data_obj->header,
-					parse_header => 1,
-				);
+					idcolumn => $subsets -> [$i]->idcolumn);
 			}
 
 			# The estimation data set is a merge of the datasets

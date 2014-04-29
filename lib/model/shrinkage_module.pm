@@ -119,8 +119,7 @@ sub eta_shrinkage
 						ignoresign					 => '@',
 						ignore_missing_files => 1,
 						target               => 'mem',
-						parse_header         => 1,
-					);
+						idcolumn         => 1); #table with ID first
 					my $next_diag_idx=1;
 					for( my $j = 0; $j < scalar @{$omegas -> [$probnum-1][0]}; $j++ ) {
 	  				# next unless diagonal
@@ -204,8 +203,7 @@ sub iwres_shrinkage
 						ignore_missing_files => 1,
 						ignoresign					 =>'@',
 						target               => 'mem',
-						parse_header         => 1
-					);
+						idcolumn         => 1); #table with ID first
 				}
 				if( defined $sh_table ) {
 					my $iwres_sd = $sh_table -> sd( column        => 2,

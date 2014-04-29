@@ -329,8 +329,8 @@ my $evid_column = $model_column_numbers{'EVID'};
 my $last_id = $id_template -> idnumber();
 
 #ignoresign is @ since a table file
-my $table_data = data->new( filename => 'simdata', ignoresign => '@', parse_header => 1);
-
+my $table_data = data->new( filename => 'simdata', ignoresign => '@', idcolumn => 1); #defined table, ID is 1
+#print "done reading table data\n";
 my $simulated_individuals = $table_data -> individuals();
 unless (scalar(@{$simulated_individuals}) == $n_id_to_simulate){
 	print "Number of simulated ETA sets is ".scalar(@{$simulated_individuals})." but desired number is $n_id_to_simulate.\n".
@@ -355,8 +355,8 @@ foreach my $id_num ( 1..$n_id_to_simulate ){
     $new_row[$#new_row] = $type++;
     push( @new_id_rows, join(',',@new_row ) );
   }
-  my $new_id = data::individual -> new( idcolumn => $last_id + $id_num,
-					subject_data => \@new_id_rows);
+  my $new_id = data::individual -> new( idcolumn => $id_column,
+										subject_data => \@new_id_rows);
   push( @{$data_copy -> individuals}, $new_id );
 }
 
@@ -507,7 +507,7 @@ unless (-e 'extended.nptab'){
     exit;
 }
 
-my $nptab = data->new(filename => "extended.nptab", ignoresign => '@', parse_header => 1);
+my $nptab = data->new(filename => "extended.nptab", ignoresign => '@', idcolumn => 1); #defined table, ID is 1
 
 my $JD_column = $nptab -> column_to_array( column => 1 + $nr_of_old_etas );
 
@@ -647,8 +647,7 @@ my $table = data->new(
 	filename => "extended.nptab",
 	ignoresign => '@',
 	directory => '../',
-	parse_header => 1,
-);
+	idcolumn => 1); #defined table ID is 1
 
 my $nomegas = $extended_model -> nomegas -> [0];
 

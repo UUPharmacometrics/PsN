@@ -234,7 +234,8 @@ $help_text{-table_strata} = <<'EOF';
       Optional unless both -table_full and -table_reduced is used and 
       stratify_on is set, then required. Table with stratification column. 
       Must have only one row per individual, i.e. for example generated in 
-      NONMEM with FIRSTONLY (see option -stratify_on), and must have a header 
+      NONMEM with FIRSTONLY (see option -stratify_on), must have ID as the first column
+	  and the stratification variable as the second column, and must have a header 
       with ID and stratification variable name. Option -table_strata may be 
       used even if neither of -table_full or -table_reduced are used, then the 
       stratification column in -table_strata will be used instead of a table 

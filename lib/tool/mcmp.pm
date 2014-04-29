@@ -913,7 +913,7 @@ sub read_data
 		unless (-e $self->table_strata) {
 			croak("File " . $self->table_strata . " \nwith stratification data does not exist.");
 		}
-		my $d = data->new(filename => $self->table_strata, ignoresign => '@', parse_header => 1); 
+		my $d = data->new(filename => $self->table_strata, ignoresign => '@', idcolumn => 1); #defined format table ID first
 		
 		$n_individuals= scalar(@{$d->individuals});
 		@strata = @{$d -> column_to_array('column'=>$self->stratify_on())};

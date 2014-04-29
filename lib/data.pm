@@ -466,6 +466,7 @@ sub copy
 	$new_data = Storable::dclone( $self );
 	$new_data->skip_parsing ( $self->skip_parsing());
 	$new_data->ignoresign ( $self->ignoresign());
+	$new_data->idcolumn ( $self->idcolumn());
 
 	$new_data->missing_data_token($self->missing_data_token());
 	$new_data->synced(0);
@@ -2406,6 +2407,7 @@ sub _read_header
 		"in which case the workaround is to run mac2unix on " . $self->filename . "\n" unless $found_data;
 	
 	chomp($hdrstring = pop(@data)); #last value of array
+#	print "headerstring $hdrstring\n";
 	@header = split(/\,\s*|\s+/, $hdrstring);
 	if ($self->parse_header or not defined $self->idcolumn) {
 		if (not $self->parse_header and not defined $self->idcolumn) {
@@ -2459,7 +2461,7 @@ sub _read_individuals
 	my $idcol	= $self->idcolumn;
 	my $filename = $self->full_name;
 	my $ignoresign = $self->ignoresign;
-
+#	print "idcolumn in read_individuals is $idcol\n";
 	open(DATAFILE,"$filename") || die "Could not open $filename for reading";
 
 	my ( @new_row, $new_ID, $old_ID, @init_data );
@@ -2511,6 +2513,8 @@ sub _read_individuals
 		}
 
 		if ( $is_data ) {
+
+#			print "data is ".join(';',@new_row)."\n";
 			if ( defined $self->cont_column ) {
 				if ( $new_row[$self->cont_column - 1] == 1 ) {
 					if ( not $self->table_file ) { # Skip the CONT=1 rows if this is a table file
@@ -2548,6 +2552,7 @@ sub _read_individuals
 			}
 			if ( $new_ID != $old_ID ) {
 				my @subject_data = @init_data;
+#				print "individual new, idcol is $idcol\n";
 				my $id = data::individual->new ( idcolumn     => $idcol,
 					subject_data => \@subject_data );
 				unless (defined $self->individuals) {
@@ -2575,6 +2580,7 @@ sub _read_individuals
 	# if we have ended loop because of max number individuals, init_data will be empty.
 	if ( $#init_data >= 0 ) {
 		$self->individuals([]) unless defined $self->individuals;
+#		print "individual new, idcol is $idcol\n";
 		push( @{$self->individuals()},
 			data::individual->new ( idcolumn     => $idcol,
 				subject_data => \@init_data ) );

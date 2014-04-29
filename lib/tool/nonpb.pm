@@ -126,18 +126,17 @@ sub modelfit_setup
 			ui->category('pind');
 
 			my $pind = tool::pind -> 
-			new ( %{common_options::restore_options(@common_options::tool_options)},
-				top_tool     => 0,
-				directory      => "pind_dir$id",
-
-				models	     => [$bs_model],
-				modelname      => $stem,
-				tablename      => $stem.'.patab',
-				ind_param      => 'eta',
-				lst_file       => '0',
-				clean          => 0
-			);
-
+				new ( %{common_options::restore_options(@common_options::tool_options)},
+					  top_tool     => 0,
+					  directory      => "pind_dir$id",
+					  models	     => [$bs_model],
+					  modelname      => $stem,
+					  tablename      => $stem.'.patab',
+					  ind_param      => 'eta',
+					  lst_file       => '0',
+					  clean          => 0
+				);
+			
 			push (@directories,$pind -> directory());
 			$pind -> run;
 			$self->n_individuals($pind->n_individuals) if ($id == 1);
@@ -584,7 +583,7 @@ sub get_sorted_original_eta_matrix
 		$filename = $self->pind_directories->[0].'m1/original.patab'; 
 	}
 
-	my $table = data->new(filename => $filename, ignoresign => '@', parse_header => 1);
+	my $table = data->new(filename => $filename, ignoresign => '@', idcolumn => 1); #table created by us, idcol 1
 
 	for (my $i = 1; $i <= $self->etas; $i++) {
 		my $col="ETA$i";
@@ -745,7 +744,8 @@ sub create_bootstrapped_np_probabilities_T
 	unless (-e $filename) {
 		croak("Error get_bootstrapped_np_probabilities: Cannot find file $filename");
 	}
-	my $table = data->new(filename => $filename, ignoresign => '@', parse_header => 1);
+	#here
+	my $table = data->new(filename => $filename, ignoresign => '@', idcolumn => 1); #table created by us, ID is 1
 
 	my @id_vector = @{$table -> column_to_array('column'=>'ID')};
 

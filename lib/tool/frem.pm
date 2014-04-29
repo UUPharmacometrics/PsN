@@ -1438,8 +1438,8 @@ sub create_data2
 	$filter_fit -> run;
 
 	my $filtered_data = data->new(filename => $filtered_data_model->directory . $self->filtered_datafile,
-									ignoresign => '@', parse_header => 1);
-
+								  ignoresign => '@', idcolumn => $model->idcolumns->[0]);
+	
 	foreach my $covariate (@{$self->invariant}){
 		my %strata = %{$filtered_data->factors(column_head => $covariate,
 		return_occurences => 1,

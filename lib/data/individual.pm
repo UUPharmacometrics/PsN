@@ -25,7 +25,6 @@ sub BUILDARGS
 sub BUILD
 {
 	my $this = shift;
-
 	$in_constructor = 0;
 
 	# The idnumber attribute does not have an explicit default value but
@@ -40,7 +39,9 @@ sub BUILD
 		if (looks_like_number($data[$this->idcolumn - 1])){
 			$this->idnumber($data[$this->idcolumn - 1]);
 		}else{
-			croak("The value in the data column, ".$data[$this->idcolumn - 1]." does not look like a number\n");
+			print "data is ".$this->subject_data->[0]."\n";
+			print "idcolumn is ".$this->idcolumn."\n";
+			croak("The value in the id column, ".$data[$this->idcolumn - 1].", does not look like a number\n");
 		}
 	}
 }
@@ -51,7 +52,6 @@ sub _idnumber_set
 	my $parm = shift;
 
 	if ($in_constructor) { return; }
-
 	if (defined $parm) {
 	  for (my $i = 0 ; $i < scalar(@{$self->subject_data}); $i++) {
 	    my @row = split(/,/, $self->subject_data->[$i]);

@@ -168,7 +168,7 @@ print $fh "0 23.56 14\n";
 print $fh "0 1.2 2.8\n";
 close $fh;
 
-my $data = data->new(filename => $filename, directory => $tempdir);
+my $data = data->new(filename => $filename, directory => $tempdir,ignoresign => '@');
 
 # mean
 is ($data->mean(column => 2), 12.32, "data->mean of small data set column 1");
@@ -216,7 +216,7 @@ print $fh "1 28.9 6\n";
 print $fh "1 33.1 7.23\n";
 close $fh;
 
-my $data_merge = data->new(filename => $filename_merge, directory => $tempdir);
+my $data_merge = data->new(filename => $filename_merge, directory => $tempdir, ignoresign => '@');
 $data_merge->merge(mergeobj => $data);
 is ($data_merge->mean(column => 2), 19.66, "data->merge checking new mean");
 
@@ -232,7 +232,7 @@ print $fh ", 0, 1\n";
 print $fh ",,  1\n";
 close $fh;
 
-my $data_spec = data->new(filename => $filename_spec, directory => $tempdir);
+my $data_spec = data->new(filename => $filename_spec, directory => $tempdir, ignoresign => '@');
 is_array ($data_spec->individuals->[0]->subject_data, ['1,0,1', ',0,1', ',,1'], "data->new starts with commas");
 
 remove_test_dir($tempdir);

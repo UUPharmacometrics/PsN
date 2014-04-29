@@ -1040,7 +1040,7 @@ sub _init_attr
 						$coordinate_string='OMEGA('.$index.','.$index.')';
 						$added_omegas++;
 					}else {
-						my $index = $self->sigmas('with_correlations' => 0,'with_same' => 1)+$added_sigmas;
+						my $index = $self->nsigmas('with_correlations' => 0,'with_same' => 1)+$added_sigmas;
 						$coordinate_string='SIGMA('.$index.','.$index.')';
 						$added_sigmas++;
 					}
