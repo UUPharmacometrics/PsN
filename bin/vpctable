@@ -1,5 +1,12 @@
 #!/usr/bin/perl
 
+# Only for Development
+use FindBin qw($Bin);
+use lib "$Bin/../lib";
+
+# Don't edit the line below, it must look exactly like this.
+# Everything above this line will be replaced #
+
 use strict;
 
 my $inputfile = $ARGV[0];
