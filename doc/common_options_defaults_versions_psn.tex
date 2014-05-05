@@ -141,11 +141,9 @@ set automatically. Also, -nmfe is set in the default configuration file.
 \nextopt
 \optdefault{nmfe\_options}{'string'}
 Only relevant if NONMEM7.2 or later is used. 
-The text set with this option
-will be copied verbatim to the nmfe script call. PsN will not check that the options are appropriate. When set on the PsN commandline the string must be enclosed 
-by quotes if it contains any spaces, but when set in psn.conf it must never be enclosed by quotes even if it contains spaces. 
+The text set with this option will be copied verbatim to the nmfe script call. PsN will not check that the options are allowed. When set on the PsN commandline the string must be enclosed by quotes if it contains any spaces, but when set in psn.conf it must never be enclosed by quotes even if it contains spaces. 
 Note that before PsN4 this option was given as a comma-separated list of options that PsN would reformat. What would for PsN3 be specified as 
-\verb|-nmfe_options=xmloff,prdefault| must for PsN4 be specified as \verb|-nmfe_options='-xmloff -prdefault'| on the commandline or 
+\verb|-nmfe_options=xmloff,prdefault| must for PsN4 be specified as \verb|-nmfe_options='-xmloff -prdefault'| on the commandline (use double quotes on Windows) or 
 \verb|nmfe_options=-xmloff -prdefault| in psn.conf.
 \nextopt
 \optname{nmqual}
@@ -162,7 +160,7 @@ No help available for 'nonparametric\_marginals'
 \optname{omega\_before\_pk}
 Default not set. In PsN version 3.4.4 and earlier, \$OMEGA was always printed before \$PK. The new default is to print \$OMEGA after \$THETA. To use the old print order, set option -omega\_before\_pk 
 \nextopt
-\optdefault{outputfile}{''string'}
+\optdefault{outputfile}{'string'}
 Default modelfilename with mod substituded for lst. The -outputfile option specifies the output file name for the NONMEM run. Currently this option is only valid when a single model is supplied. 
 \nextopt
 \optdefault{parafile}{'filename'}

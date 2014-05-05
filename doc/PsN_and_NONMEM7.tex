@@ -7,7 +7,7 @@
 
 
 \section{Introduction}
-This version of PsN has been tested with NONMEM 7.1.0, 7.1.2,  7.2.0 and 7.3.0 beta. Not all features of NONMEM 7 are supported. Some will simply be ignored while other may cause errors if used. See details below.
+This version of PsN has been tested with NONMEM 7.1.0, 7.1.2,  7.2.0 and 7.3.0. Not all features of NONMEM 7 are supported. Some will simply be ignored while other may cause errors if used. See details below.
 
 \section{Running with an NMQual installation of NONMEM 7.2}
 Models can be run with NMQual8 and NONMEM 7.2 if PsN version is 3.5.3 or later, option -nmqual is set and the user has installed NONMEM using a slightly modified nm72.xml (changing the expected control stream suffix from .ctl to .mod), see document psn\_configuration.pdf. The configuration file must contain the path to the autolog.pl script, see psn\_configuration.pdf. The option -nmqual\_xml is needed, the default is log.xml (located in directory from where PsN is called). Options to nmfe72, which is invoked by autolog.pl, can be passed on by PsN via options -parafile, -nodes and -nmfe\_options, see below. PsN will start NM7.2 using the call (everything on one line)
@@ -49,15 +49,15 @@ PsN does not support the new shorthand notation in NM7.3 ( xN notation, SAME(n) 
 In NONMEM 7.2 and higher it is possible to write the control stream in mixed case. PsN does not support this. It is likely that options written in lower case will not be recognized correctly, which can cause errors.
 
 \section{New output files in NONMEM 7}
-PsN will set retry numbering for NM7.2 new output files .xml .phm .shk .grd .smt .rmt just as for .lst etc. The numbered files will be cleaned if clean $>=2$.
+PsN will set retry numbering for NM7.2 new output files .xml .phm .shk .grd .smt .rmt just as for .lst etc. The numbered files will be cleaned if \mbox{clean $>=2$}.
 
 Up until version 3.4.8, PsN will copy all NM7 output files back to the calling directory. In version 3.4.9 and later, only the lst-file will be copied by default. More files will be copied if the user sets the extensions of those files via the PsN option -nm\_output. Example: -nm\_output=ext,cov,cor. Note it the user lets the installation script create a psn.conf file then nm\_output will be set to -nm\_output=ext,cov,cor,coi,phi 
 
-Cleaning of NM7.2 output files: If clean$>=1$ then the following files are removed: LINKC.LNK, compile.lnk, gfortran.txt, ifort.txt, garbage.out, newline, nmexec.set, parafile.set, prcompile.set, prdefault.set, prsame.set, psn.log, rundir.set, runpdir.set, temporaryfile.xml, temp.out, trashfile.xxx, trskip.set, worker.set, xmloff.set, prsizes.f90, licfile.set, background.set, FMSG, FSIZES
+Cleaning of NM7.2 output files: If \mbox{clean $>=1$} then the following files are removed: LINKC.LNK, compile.lnk, gfortran.txt, ifort.txt, garbage.out, newline, nmexec.set, parafile.set, prcompile.set, prdefault.set, prsame.set, psn.log, rundir.set, runpdir.set, temporaryfile.xml, temp.out, trashfile.xxx, trskip.set, worker.set, xmloff.set, prsizes.f90, licfile.set, background.set, FMSG, FSIZES
 
-If cleani$>=2$ then the temp\_dir subdirectory will be removed.
+If \mbox{clean $>=2$} then the temp\_dir subdirectory will be removed.
 
-If clean $>=3$ is set then worker* subdirectories are removed when NM\_run is removed. If the worker subdirectories are called something other than worker* then cleaning with level=3 will fail.  
+If \mbox{clean $>=3$} is set then worker* subdirectories are removed when NM\_run is removed. If the worker subdirectories are called something other than worker* then cleaning with level=3 will fail.  
 
 \section{Turning off estimation in NONMEM 7}
 

@@ -9,8 +9,9 @@
   
 \section{Introduction}
 
-This document is intended for PsN developers. It is work in progress.
-\section{Installing a non-public version of PsN for running and testing}
+This document is mainly intended for PsN developers. It describes how to install development versions of PsN, how to run the tests, how to work with source control and coding guidelines.
+
+\section{Installing the current development version of PsN for running and testing}
 \begin{itemize}
 \item Install git \cite{git}. 
 \item Do git clone in a suitable place on your computer.
@@ -35,10 +36,9 @@ cd PsN-Source
 \begin{verbatim}
 perl setup.pl
 \end{verbatim}
-\item To be able to run the tests in PsN4/test on the PsN version you just installed, you need to edit PsN4/test/includes.pm to set the right use lib statements. The includes.pm file is currently needed to run tests on non-default PsN versions on a system where multiple versions of PsN are installed. 
 \end{itemize}
 
-\section{Installing development version of PsN to make contributions to the code}
+\section{Running the development version of PsN without installation to make contributions to the code}
 \begin{itemize}
 \item Install git \cite{git}. 
 \item Do git clone in a suitable place on your computer, and checkout a suitable branch. On linux:
@@ -50,24 +50,13 @@ git checkout -b NLP origin/NLP
 \end{verbatim}
 \noindent Then do the following (assuming linux):
 \item Add the PsN4/bin directory to your \$PATH variable, so that you can call PsN scripts without including the path.
-\item Copy the file PsN4/lib/PsN\_template.pm to PsN4/lib/PsN.pm. Open PsN.pm and add the following lines at the very top, before
-use ext::Carp (of course change paths from /home/kajsa/kod-psn/ to what you have):
-\begin{verbatim}
-package PsN;
-use lib '/home/kajsa/kod-psn/PsN4/lib';
-$lib_dir = '/home/kajsa/kod-psn/PsN4/lib';
-$config_file = '/home/kajsa/psn.conf';
-$version = 'development';
-\end{verbatim} 
-Save and close PsN.pm
 \item Unless you already have a psn.conf file in the location set in PsN.pm, put one there. 
 You can use PsN4/lib/psn.conf\_template as a template and just fill in the [nm\_version] section,
 according to psn\_configuration.pdf.
 \item Make sure you have the required Perl modules listed in PsN4/README.txt installed.
-\item To be able to run the tests in PsN4/test you need to edit PsN4/test/includes.pm to set the right use statements for your user. 
 \item To be able to push your changes on the git server you need create a SourceForge account, 
 and then ask the PsN team to give you permission to push on PsN4.
-Stay on the NLP branch so that git pull and git push will be on that branch. 
+Stay on your branch so that git pull and git push will be on that branch. 
 \end{itemize}
 
 
@@ -111,11 +100,12 @@ PsN use git as revision control system. This chapter give some best practices.
 All releases of PsN should be tagged with its version number with an annotated tag. Remember
 that tags need to be pushed separately.
 \begin{verbatim}
-git tag -a 4.0.0 - m "My tag message"
+git tag -a 4.0.0 -m "My tag message"
 git push origin --tags
 \end{verbatim}
 
-\section{Style guide}
+\section{Coding style guide}
+PsN is written in Perl using the Moose object system. For a gentle introduction to Perl and Moose see for example Modern Perl \cite{modern}. This chapter will give some pointers on how to make best use of Perl and Moose in PsN. 
 
 \subsection{Object construction}
 
@@ -133,7 +123,7 @@ Remember the construction order in Moose. If we have a superclass called parent 
 \subsection{Methods}
 
 \subsubsection{Parameter validation}
-All methods should validate their parameters with validated\_hash in MooseX::Params::Validate
+All methods should validate their parameters with validated\_hash in \mbox{MooseX::Params::Validate}
 
 \begin{verbatim}
 use MooseX::Params::Validate;
@@ -183,7 +173,7 @@ sub _filename_set
   my $parm = shift;
   my $old_parm = shift;
 
-	if ($parm ne $old_parm) {
+  if ($parm ne $old_parm) {
     print "We are changing the filename!\n";
   }
 }
@@ -214,6 +204,7 @@ As a workaround for a bug in the Carp package \verb|use include_modules;| should
 
 \begin{thebibliography}{1}
 	\bibitem{git} {\em Pro Git}, \url{http://git-scm.com/book}, Apress
+	\bibitem{modern} {\em Modern Perl} \url{http://onyxneon.com/books/modern_perl/}, Onyx Neon Press
 	\bibitem{params} {\em MooseX::Params::Validate}, \url{http://search.cpan.org/\~drolsky/MooseX-Params-Validate-0.18/lib/MooseX/Params/Validate.pm}, CPAN
 	\bibitem{types} {\em Moose::Manual::Types}, \url{http://search.cpan.org/~ether/Moose-2.1005/lib/Moose/Manual/Types.pod}, CPAN
 \end{thebibliography}

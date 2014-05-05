@@ -12,7 +12,7 @@ Before you install PsN, you should make sure that the following programs are ins
 
 If you intend to run PsN4 with NMQual8 you should leave the xml file as is. No changes at all should be made.
 This is new compared to PsN3, where some changes were necessary.
-	\item Perl5
+	\item Perl5 version 5.10.1 or higher
 	\item Perl modules Math::Random, Statistics::Distributions, Moose, MooseX::Params::Validate, Archive::Zip and File::Copy::Recursive (installation instructions below). PsN can be run without Statistics::Distributions, Archive::Zip and File::Copy::Recursive but some scm and vpc features and a scm bugfix will not be available.
 \end{itemize}
 
@@ -23,14 +23,23 @@ This is new compared to PsN3, where some changes were necessary.
 \end{enumerate}
 
 \section{Install required Perl modules}
-PsN requires the Perl modules Math::Random, Moose and MooseX::Params::Validate to be installed on your computer. Some other modules are very useful, but not absolutely required. The following paragraphs describe the setup procedure for different operating systems. 
-\subsection{Windows (ActivePerl)}
-For this procedure to work you must be connected to the internet, because the package is downloaded from the web. Pay attention to any warning messages from Windows that talk about internet connection problems, such problems must be solved before doing the installations.
+PsN requires the Perl modules Math::Random, Moose and MooseX::Params::Validate to be installed on your computer. Some other modules are very useful, but not absolutely required. The following paragraphs describe the setup procedure for different operating systems. For this procedure to work you must be connected to the internet, because the package is downloaded from the web. Pay attention to any warning messages that talk about internet connection problems, such problems must be solved before doing the installations.
 
-Open a DOS window and run the commands (press Enter after each command):
+\subsection{Windows (Strawberry perl)}
+Open a command window (cmd) and run the following commands:
+
+\begin{verbatim}
+cpan Math::Random
+cpan Statistics::Distributions
+cpan MooseX::Params::Validate
+\end{verbatim}
+
+
+\subsection{Windows (ActivePerl)}
+
+Open a command window (cmd) and run the commands (press Enter after each command):
 \begin{verbatim}
 ppm install math-random
-ppm install moose
 ppm install moosex-params-validate
 ppm install statistics-distributions
 ppm install archive-zip
@@ -42,13 +51,13 @@ ppm install file-copy-recursive
 
 Start a command window and run the following commands (hit Enter after each command), prepend sudo if necessary:
 \begin{verbatim}
-cpan -i Math::Random
-cpan -i Moose
-cpan -i MooseX::Params::Validate
-cpan -i Statistics::Distributions
-cpan -i Archive::Zip
-cpan -i File::Copy::Recursive
-cpan -i Storable
+cpan Math::Random
+cpan Moose
+cpan MooseX::Params::Validate
+cpan Statistics::Distributions
+cpan Archive::Zip
+cpan File::Copy::Recursive
+cpan Storable
 \end{verbatim}
 
 \section{Run the PsN installation script}
