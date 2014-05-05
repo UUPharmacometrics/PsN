@@ -19,20 +19,21 @@ my %options;
 
 my %required_options = ();
 my %optional_options = ( 
-			 'bootstrap' => '',
 			 'boot_scm' => '',
+			 'bootstrap' => '',
 			 'cdd' => '',
-			 'create_subsets' => '',
 			 'data_stats' => '',
+			 'ebe_npde' => '',
 			 'execute' =>'',
 			 'extended_grid' => '',
 			 'frem' => '',
 			 'gls' => '',
-			 'mimp' => '',
 			 'lasso' => '',
 			 'linearize' => '',
 			 'llp' => '',
 			 'mcmp' => '',
+			 'mimp' => '',
+			 'nca' => '',
 			 'nonpb' => '',
 			 'nm_versions' => '',
 			 'npc' => '',
@@ -40,22 +41,25 @@ my %optional_options = (
 			 'pind' => '',
 			 'psn_clean' => '',
 			 'psn_options' => '',
+			 'pvar' => '',
 			 'randtest' => '',
+			 'rawresults' => '',
 			 'runrecord' => '',
 			 'scm' => '',
 			 'se_of_eta' => '',
+			 'sir' => '',
 			 'sse' => '',
 			 'sumo' => '',
 			 'update_inits' => '',
 			 'vpc' => '',
-			 'xv_scm' => ''
+			 'vpctable' => '',
+			 'xv_scm' => '',
 			 );
 
-
-my $res = GetOptions( \%options,
+my $res = GetOptions(\%options,
 		      @common_options::get_opt_strings,
 		      keys(%required_options),
-		      keys(%optional_options) );
+		      keys(%optional_options));
 exit unless $res;
 
 my %help_text;
@@ -86,15 +90,12 @@ $help_text{-cdd} = <<'EOF';
       cdd - Case Deletion Diagnostics
 EOF
 
-
-
-$help_text{-create_subsets} = <<'EOF';
-      create_subsets -  creates subsets of the individuals of
-      a dataset.
-EOF
-
 $help_text{-data_stats} = <<'EOF';
       data_stats - Print simple statistics for dataset columns.
+EOF
+
+$help_text{-ebe_npde} = <<'EOF';
+      ebe_npde - 
 EOF
 
 $help_text{-execute} = <<'EOF';
@@ -128,6 +129,10 @@ EOF
 
 $help_text{-mcmp} = <<'EOF';
       mcmp - Monte-Carlo mapped power. A fast method for power computations.
+EOF
+
+$help_text{-nca} = <<'EOF';
+      nca - Non-compartmental analysis.
 EOF
 
 $help_text{-nm_versions} = <<'EOF';
@@ -164,12 +169,20 @@ $help_text{-psn_options} = <<'EOF';
       psn_options - List options common to most PsN scripts.
 EOF
 
+$help_text{-pvar} = <<'EOF';
+      pvar - Parametric variability. Calculation of total, explained and unexplained variability for different parameters.
+EOF
+
 $help_text{-runrecord} = <<'EOF';
       runrecord - Create records of NONMEM runs
 EOF
 
 $help_text{-randtest} = <<'EOF';
       randtest - Randomization testing
+EOF
+
+$help_text{-rawresults} = <<'EOF';
+      rawresults - Create a rawresults file from a set of list files
 EOF
 
 $help_text{-scm} = <<'EOF';
@@ -180,6 +193,9 @@ $help_text{-se_of_eta} = <<'EOF';
       se_of_eta - Standard Errors of Etas
 EOF
 
+$help_text{-sir} = <<'EOF';
+      sir - Sampling importance resampling
+EOF
 
 $help_text{-sse} = <<'EOF';
       sse - Stochastic Simulation and Estimation
@@ -196,6 +212,10 @@ EOF
 
 $help_text{-vpc} = <<'EOF';
       vpc - Visual Predictive Check
+EOF
+
+$help_text{-vpctable} = <<'EOF';
+      vpctable - Utility to convert single header data files into multiple header table files.
 EOF
 
 $help_text{-gls} = <<'EOF';
@@ -222,23 +242,17 @@ $help_text{Post_help_message} = <<'EOF';
     Use 'psn_options -h' for a list of common options to PsN.
 EOF
 
-common_options::online_help( 'psn', \%options, \%help_text, \%required_options, \%optional_options);
+common_options::online_help('psn', \%options, \%help_text, \%required_options, \%optional_options);
 
-
-
-if ((defined $options{'nm_versions'}) || (defined $options{'nm_version'})){
-  print "\nValid choices for option -nm_version ".
-      "(see 'psn_options -h nm_version' for details):\n\n";
-  foreach my $ver ( keys %{$PsN::config -> {'nm_versions'}} ){
-    printf "%-25s (%s)\n",$ver,$PsN::config->{'nm_versions'}->{$ver};
+if ((defined $options{'nm_versions'}) || (defined $options{'nm_version'})) {
+  print "\nValid choices for option -nm_version (see 'psn_options -h nm_version' for details):\n\n";
+  foreach my $ver (keys %{$PsN::config->{'nm_versions'}}) {
+    printf "%-25s (%s)\n", $ver, $PsN::config->{'nm_versions'}->{$ver};
   }
   print "\n";
-  if (defined $PsN::config->{'nm_versions'}->{'default'}){
-    print "The default is ".$PsN::config->{'nm_versions'}->{'default'}."\n\n";
-  }else{
+  if (defined $PsN::config->{'nm_versions'}->{'default'}) {
+    print "The default is " . $PsN::config->{'nm_versions'}->{'default'} . "\n\n";
+  } else {
     print "No default version is defined\n\n";
   }
-
 }
-
-exit;
