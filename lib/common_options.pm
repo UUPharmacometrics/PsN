@@ -9,6 +9,7 @@ use Text::Wrap;
 use Math::Random;
 use Cwd;
 use OSspecific;
+use PsN;
 
 ## Configure the command line parsing
 Getopt::Long::config("auto_abbrev");
@@ -410,13 +411,19 @@ sub sanity_checks {
 
 	if(defined $options -> {'nm_output'}) {
 		my @nmout = split( /,/ ,$options -> {'nm_output'});
+		my %hash;
+		foreach my $ext (@PsN::nm7_extensions){
+			my $copy =$ext; #otherwise we modify the original array
+			$copy =~ s/^\.//;
+			$hash{$copy}=1;
+		}
 		foreach my $out (@nmout) {
 			$out =~ s/^\.//;
 			if ($out =~ /^lst$/) {
 				print "\nInformation: The lst-file will always be copied back, no need to set it with option -nm_output.\n";
 			}
-			unless ($out =~ /^(lst|ext|cov|cor|coi|phi|phm|shk|grd|xml|smt|rmt)$/) {
-				print "\nWarning: NM output file extension $out not recognized, but PsN will copy back such files if found.\n";
+			unless ($hash{$out}) {
+				print "\nWarning: NM output file extension $out set in -nm_output is not recognized, it will be ignored.\n";
 			}
 			
 		}
@@ -963,10 +970,9 @@ EOF
     $help_hash{-nm_output} = <<'EOF';
     <p class="style2">-nm_output='comma-separated list of file extensions'</p>
 
-    NONMEM generates many output files per run. NM7.2 can, in addition to the
-    lst-file, generate 11 files. The lst-file will always be copied back to the
-    calling directory. The option -nm_output decides which of the 11 additional 
-    files should also be copied back to the calling directory. The default is none. 
+    NONMEM generates many output files per run. The lst-file will always be 
+	copied back to the calling directory. The option -nm_output decides which of the 
+	additional files should be copied back to the calling directory. The default is none. 
     NM output files which are not copied to the calling directory can still be 
     found inside the run directory.
 

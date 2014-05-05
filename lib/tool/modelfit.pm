@@ -27,11 +27,9 @@ use ui;
 use Time::HiRes;
 use Moose;
 use MooseX::Params::Validate;
+use PsN;
 
 extends 'tool';
-
-my @nm7_extensions = ('.ext','.cov','.cor','.coi','.phi','.phm', '.shk','.grd','.xml','.cnv','.smt','.rmt',
-	'.imp','.npd','.npe','.npi','.fgh');
 
 has 'data_path' => ( is => 'rw', isa => 'Str' );
 has 'tail_output' => ( is => 'rw', isa => 'Bool', default => 0 );
@@ -3028,7 +3026,7 @@ sub copy_model_and_output
 			next;
 		}
 		my $found_ext = 0;
-		foreach my $ext (@nm7_extensions){
+		foreach my $ext (@PsN::nm7_extensions){
 			if( $filename eq 'psn'.$ext ){
 				$found_ext = 1;
 				foreach my $out (@nmout){

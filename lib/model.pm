@@ -19,8 +19,8 @@ use data;
 use model::problem;
 use Moose;
 use MooseX::Params::Validate;
+use PsN;
 
-my @nm7_extensions = ('.ext','.cov','.cor','.coi','.phi','.phm', '.shk','.grd','.xml','.smt','.rmt');
 
 =head1 Description
 
@@ -3910,9 +3910,7 @@ sub output_files
 
 
 	if (defined $self -> outputs -> [0] -> filename_root()){
-		foreach my $ext (@nm7_extensions){
-			# copy also raw in this loop
-			#      next if ($ext eq '.ext');
+		foreach my $ext (@PsN::nm7_extensions){
 			push( @file_names, $self -> outputs -> [0] -> filename_root().$ext);
 		}
 	}

@@ -2,7 +2,7 @@
 
 use strict;
 use warnings;
-use Test::More tests=>91;
+use Test::More tests=>98;
 use FindBin qw($Bin);
 use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages
@@ -28,7 +28,8 @@ for (my $i = 0; $i < @input_option_names; $i++) {
 }
 
 # ouput_files method
-my @output_files = qw(pheno.lst pheno.ext pheno.cov pheno.cor pheno.coi pheno.phi pheno.phm pheno.shk pheno.grd pheno.xml pheno.smt pheno.rmt patab1 phenomsf);
+my @output_files = qw(pheno.lst pheno.ext pheno.cov pheno.cor pheno.coi pheno.phi pheno.phm pheno.shk pheno.grd pheno.xml pheno.cnv pheno.smt pheno.rmt 
+pheno.imp pheno.npd pheno.npe pheno.npi pheno.fgh pheno.log.xml patab1 phenomsf);
 
 my $files = $model->output_files;
 
