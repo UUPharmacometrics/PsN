@@ -30,7 +30,7 @@ my %optional_options = (
 #	'rawres_input:s' => undef,
 #	'offset_rawres:i' => undef,
 #	'in_filter:s' => undef,
-	'out_filter:s' => undef,
+#	'out_filter:s' => undef, #now out_filter is used after resampling, not good, lets skip it
 	"mceta:i"=>'',
 	"inflation:f" => '',
 	"with_replacement!"=>'',
@@ -121,6 +121,12 @@ $help_text{-offset_rawres} = <<'EOF';
       before starting to read final parameter estimates. In a regular
       bootstrap raw_results file the first line of estimates refers to the
       input model with the full dataset, so therefore the default offset is 1.
+EOF
+$help_text{-out_filter} = <<'EOF';
+      -out_filter=comma-separated list of conditions
+
+      Default not used. The user may choose to only compute results based on 
+      resamples which fulfill certain conditions.
 EOF
 
 $help_text{-in_filter} = <<'EOF';
