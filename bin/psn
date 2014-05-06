@@ -95,7 +95,7 @@ $help_text{-data_stats} = <<'EOF';
 EOF
 
 $help_text{-ebe_npde} = <<'EOF';
-      ebe_npde - 
+      ebe_npde - Normalized prediction distribution errors applied on empirical bayes estimates 
 EOF
 
 $help_text{-execute} = <<'EOF';
