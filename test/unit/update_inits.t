@@ -140,7 +140,7 @@ copy_test_files($tempdir,["pheno.mod", "pheno.lst",'mox1.lst','mox1.mod']);
 chdir($tempdir);
 my @command_line = (
 	$includes::update_inits." pheno.mod -out=run1.mod",
-	$includes::update_inits." pheno.mod -out=run2.mod -comment='new comment'",
+	$includes::update_inits." pheno.mod -out=run2.mod -comment=\"new comment\"",
 	$includes::update_inits." mox1.mod -out=run3.mod",
 	$includes::update_inits." mox1.mod -out=run4.mod -add_tags"
 );
