@@ -111,9 +111,9 @@ sub BUILD
 	$this->directory($directory);
 	$this->filename($filename);
 
-	unless (defined $this->ignoresign and length($this->ignoresign)>0){
-		print("\nWarning: ignoresign undefined in data->new\nThis should be fixed\n");
-	}
+#	unless (defined $this->ignoresign and length($this->ignoresign)>0){
+#		print("\nWarning: ignoresign undefined in data->new\nThis should be fixed\n");
+#	}
 
 	unless ( not_empty($this->header) or not_empty($this->individuals) ) { 
 	  if ( -e $this->full_name ) {
