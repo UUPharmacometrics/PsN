@@ -11,7 +11,7 @@ use File::Copy 'cp';
 
 #making sure commands in HO HIV run ok, missing extra credit sse:s
 
-our $tempdir = create_test_dir;
+our $tempdir = create_test_dir('courses_decision_making_diabetes');
 our $dir = "$tempdir/Diabetes_test";
 my $model_dir = "$Bin/HO_Diabetes_files";
 my @needed = <$model_dir/*>;

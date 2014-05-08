@@ -11,7 +11,7 @@ use File::Copy 'cp';
 
 #making sure commands in HO HCV (Hepatitis C) run ok, no extra credit runs
 
-our $tempdir = create_test_dir;
+our $tempdir = create_test_dir('courses_decision_making_bootstrap_dOFV');
 our $dir = "$tempdir/Bootstrap_dOFV_test";
 my $model_dir = "$Bin/HO_Bootstrap_dOFV_files";
 my @needed = <$model_dir/*>;

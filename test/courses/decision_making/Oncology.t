@@ -11,7 +11,7 @@ use includes; #file with paths to PsN packages and $path variable definition
 
 #making sure commands in HO Oncology part 1 and part 2 run ok
 
-our $tempdir = create_test_dir;
+our $tempdir = create_test_dir('courses_decision_making_oncology');
 our $dir = "$tempdir/Oncology_test";
 my $model_dir = "$Bin/HO_Oncology_files";
 my @needed = <$model_dir/*>;

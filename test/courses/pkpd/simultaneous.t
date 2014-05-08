@@ -9,7 +9,7 @@ use lib "$Bin/../.."; #location of includes.pm
 use includes; #file with paths to PsN packages and $path variable definition
 use File::Copy 'cp';
 
-our $tempdir = create_test_dir;
+our $tempdir = create_test_dir('courses_pkpd_simultaneous');
 our $dir = "$tempdir/Simultaneous_test";
 my $model_dir = "$Bin/Simultaneous";
 my @needed = <$model_dir/*>;

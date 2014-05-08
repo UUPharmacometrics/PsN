@@ -11,7 +11,7 @@ use File::Copy 'cp';
 
 #making sure commands in HO HCV (Hepatitis C) run ok, no extra credit runs
 
-our $tempdir = create_test_dir;
+our $tempdir = create_test_dir('courses_decision_making_hepatitis_c');
 our $dir = "$tempdir/HepatitisC_test";
 my $model_dir = "$Bin/HO_HepatitisC_files";
 my @needed = <$model_dir/*>;
