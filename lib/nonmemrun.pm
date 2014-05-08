@@ -276,7 +276,6 @@ sub pre_compile_cleanup
 {
 	# leave cleaning to nmfe if NM7
 	unless ($PsN::nm_major_version == 7 and defined $PsN::nm_minor_version and $PsN::nm_minor_version > 1) {
-		print "\npre_compile_cleanup\n";
 		unlink('FMSG', 'FLIB', 'FCON', 'FDATA', 'FREPORT', 'FSUBS', 'FSUBS.f', 'FSUBS.f90', 'FSUBS2', 'nmprd4p.mod');
 		unlink('fsubs', 'fsubs.f90');
 		unlink('LINK.LNK', 'FSTREAM', 'PRDERR', 'nonmem.exe', 'nonmem', 'FSUBS.for');
