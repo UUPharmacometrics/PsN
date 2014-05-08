@@ -146,6 +146,7 @@ release: completion rel_dir $(RELFILES) $(PDFFILES)
 	@ mkdir PsN-Source/test
 	@ cp -r test/unit PsN-Source/test
 	@ cp -r test/system PsN-Source/test
+	@ rm PsN-Source/test/system/frem.t
 	@ cp -r test/test_files PsN-Source/test
 	@ cp test/includes.pm PsN-Source/test
 	@ mkdir PsN-Source/doc
