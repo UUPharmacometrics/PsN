@@ -1,5 +1,4 @@
 package output::problem;
-#use Carp;
 use include_modules;
 use Config;
 use Moose;
@@ -15,10 +14,10 @@ my $method_exp = '^ #METH:\s*(.*)';
 my $est_time_exp = '^ Elapsed estimation time in seconds:\s*(.+)';
 my $cov_time_exp = '^ Elapsed covariance time in seconds:\s*(.+)';
 my $simulation_exp = '^ SIMULATION STEP PERFORMED';
-my %table_numbers;
-my %table_strings;
 
 
+has 'table_numbers_hash' => ( is => 'rw', isa => 'HashRef' );
+has 'table_strings_hash' => ( is => 'rw', isa => 'HashRef' );
 has 'subproblems' => ( is => 'rw', isa => 'ArrayRef[output::problem::subproblem]' );
 has 'problem_id' => ( is => 'rw', isa => 'Int' );
 has 'output_id' => ( is => 'rw', isa => 'Int' );
@@ -213,8 +212,8 @@ sub store_NM7_output
 	# also store five arrays of table strings
 
 	#make sure no old data left
-	%table_numbers = {};
-	%table_strings = {};
+	$self->table_numbers_hash({});
+	$self->table_strings_hash({});
 
 	$self->nm_output_files({ 'raw' => [], 'cov' => [], 'coi' => [], 'cor' => [], 'phi' => [] });
 
@@ -263,10 +262,10 @@ sub store_NM7_output
 				  	#this is the first data/header line of new table 
 				  	#store string and number that we must have just read in previous loop iteration
 				  	if (defined $prev_string) {
-					  	push(@{$table_strings{$type}}, $prev_string);
+					  	push(@{$self->table_strings_hash->{$type}}, $prev_string);
 						}
 				    $tab_index++;
-				    push(@{$table_numbers{$type}}, $prev_num);
+				    push(@{$self->table_numbers_hash->{$type}}, $prev_num);
 				  } elsif($line_count == 0 and ($prev_num == 0)) {
 				  	#NONMEM gives some tables number 0. skip them
 				    next;
@@ -774,6 +773,7 @@ sub _read_subproblems
 			my $string = $1;
 			$string =~ s/\s*$//; #remove trailing spaces
 			$no_est = 1 if ($self->lstfile->[$self->lstfile_pos] =~ /^1$/ and (length($string) < 1));
+			$no_est = 1 unless ($self->estimation_step_initiated());
 			if ($self->lstfile->[ $self->lstfile_pos - 2] =~ /^\s*\#TBLN:\s*([0-9]+)/) {
 				#if previous line is #TBLN then this will help us find right table in extra output
 				#and also right #METH
@@ -835,10 +835,11 @@ sub _read_subproblems
 
 				$last_method_number = $self->table_number() if defined ($self->table_number());
 				my %subprob;
-				if ((defined $table_numbers{'raw'}) and (scalar(@{$table_numbers{'raw'}}) > 0) and ($no_meth < 1)) {
+				if ((defined $self->table_numbers_hash and defined $self->table_numbers_hash->{'raw'}) and 
+					(scalar(@{$self->table_numbers_hash->{'raw'}}) > 0) and ($no_meth < 1)) {
 					my $index = 0;
 					my $tab_index = -1;
-					foreach my $num (@{$table_numbers{'raw'}}) {
+					foreach my $num (@{$self->table_numbers_hash->{'raw'}}) {
 						if ($last_method_number == $num) {
 							$tab_index = $index;
 							last;
@@ -851,15 +852,15 @@ sub _read_subproblems
 					} else {
 						# retrieve table and check that strings match
 						$subprob{'raw'} = $self->nm_output_files->{'raw'}->[$tab_index];
-						unless (($last_method_string =~ $table_strings{'raw'}->[$tab_index] ) or 
-							($last_method_string eq $table_strings{'raw'}->[$tab_index]) or
-							($table_strings{'raw'}->[$tab_index] =~ $last_method_string  ) ) {
-							croak("method strings\n".$table_strings{'raw'}->[$tab_index] . " and\n"."$last_method_string do not match" );
+						unless (($last_method_string =~ $self->table_strings_hash->{'raw'}->[$tab_index] ) or 
+							($last_method_string eq $self->table_strings_hash->{'raw'}->[$tab_index]) or
+							($self->table_strings_hash->{'raw'}->[$tab_index] =~ $last_method_string  ) ) {
+							croak("method strings\n".$self->table_strings_hash->{'raw'}->[$tab_index] . " and\n"."$last_method_string do not match" );
 						}
 						for my $type ('cov','cor','coi','phi') {
-							if (defined $table_numbers{$type}) {
-								for (my $i = 0; $i < scalar(@{$table_numbers{$type}}); $i++ ) {
-									if ($last_method_number == $table_numbers{$type}->[$i]) {
+							if (defined $self->table_numbers_hash and defined $self->table_numbers_hash->{$type}) {
+								for (my $i = 0; $i < scalar(@{$self->table_numbers_hash->{$type}}); $i++ ) {
+									if ($last_method_number == $self->table_numbers_hash->{$type}->[$i]) {
 										$subprob{$type} = $self->nm_output_files->{$type}->[$i];
 										last;
 									}

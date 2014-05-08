@@ -17,7 +17,6 @@ use File::Copy 'cp';
 
 #tnpri is NM version dependent due to msfi file, 730 or 72.
 PsN::set_nonmem_info('default');
-our $nm_version = $PsN::nm_major_version * 100 + $PsN::nm_minor_version * 10;
 my $model_dir = $includes::testfiledir;
 
 
@@ -26,26 +25,22 @@ our $dir = "$tempdir/sse_test";
 
 my $tndir = "$tempdir/tndir";
 mkdir($tndir);
-my $mod;
-if ($nm_version >= 730) {
-	foreach my $file ("$model_dir/tnpri_nm730.mod","$model_dir/msf_tnpri_nm730","$model_dir/data_tnpri.csv"){
-		cp($file, "$tndir/.");
-	}
-	$mod = 'tnpri_nm730.mod';
-} else {
-	foreach my $file ("$model_dir/tnpri.mod","$model_dir/msf_tnpri","$model_dir/data_tnpri.csv"){
-		cp($file, "$tndir/.");
-	}
-	$mod = 'tnpri.mod';
+my $mod = 'tnpri.mod';
+foreach my $file ("$model_dir/tnpri.mod","$model_dir/data_tnpri.csv","$model_dir/create_tnpri_msf.mod"){
+	cp($file, "$tndir/.");
 }
 chdir($tndir);
 
+my $command = $includes::execute." create_tnpri_msf.mod -seed=630992 ";
+print "Running $command\n";
+my $rc = system($command);
 my $command = $includes::sse." -samples=3 $mod -seed=630992 -directory=$dir";
 print "Running $command\n";
 my $rc = system($command);
 $rc = $rc >> 8;
 ok ($rc == 0, "$command, sse with prior tnpri should run ok");
 chdir('..');
+
 rmtree([$tndir]);
 
 $command= $includes::sse." -samples=3 $model_dir/nwpri.mod -seed=630992 -directory=$dir";
