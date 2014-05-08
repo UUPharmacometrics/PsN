@@ -87,7 +87,16 @@ It is possible to run multiple tests in parallel to speed up the testing. This c
 prove -j 4 -r system
 \end{verbatim}
 
+\subsection{Test issues}
 If the tests are to be run on a cluster a setup of a temporary directory that is reachable from all nodes is needed in includes.pm. Edit test/includes.pm and change the row that sets the \$tempdir to \$tempdir = <my path to an already created temporary directory that is reachable from all nodes>;
+
+For NONMEM 7.1.0 and 7.1.2 the system tests will print out a lot of warnings like this:
+\begin{verbatim}
+Warning: Line truncated at (1)
+FSUBS.f90:10.132:
+\end{verbatim}
+These warnings are from NONMEM and can be ignored.
+
 
 \section{Build environment}
 The documentation is made in \LaTeX and pdfs can be generated with \verb|make doc|. The
