@@ -6,7 +6,7 @@
 \maketitle
 
 \section{Introduction}
-The PsN NCA can feed the nca R-script with simulated data. It is based on the simulation part of the vpc/npc.
+The PsN NCA can feed the nca R-script\cite{Chayan} with simulated data. It is based on the simulation part of the vpc/npc.
 
 \section{Running NCA}
 Example:
@@ -108,5 +108,9 @@ For more information about the details of the simulation see the relevant sectio
 \section{Output}
 Two modified modelfiles are created, one for generating original data table output and one for generating simulated data table output. The model parameters will never be reestimated. Unless an lst- or msfo-file is given as input or an lst-file is found by replacing .mod with .lst in the modelfile name, the initial parameter estimates from the modelfile will be used for the simulations. The two modified models are run using PsN.
 An R-script snippet called runnca.R is created. It will contain a call to the nca R-script with some parameters filled in.
+
+\begin{thebibliography}{99}
+	\bibitem{Chayan} Chayan Acharya, Andrew C. Hooker, Siv Jönsson, Mats O. Karlsson, {\em A diagnostic tool for population models using non-compartmental analysis: The nca functionality in R}, 2014, PAGE. Abstracts of the Annual Meeting of the Population Approach Group in Europe, www.page-meeting.org/?abstract=3103 
+\end{thebibliography}
 
 \end{document}

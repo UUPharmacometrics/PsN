@@ -7,7 +7,7 @@
 
 
 \section{Introduction}
-This version of PsN has been tested with NONMEM 7.1.0, 7.1.2,  7.2.0 and 7.3.0. Not all features of NONMEM 7 are supported. Some will simply be ignored while other may cause errors if used. See details below.
+This version of PsN has been tested with NONMEM 7.1.0, 7.1.2, 7.2.0 and 7.3.0. Not all features of NONMEM 7 are supported. Some will simply be ignored while other may cause errors if used. See details below.
 
 \section{Running with an NMQual installation of NONMEM 7.2}
 Models can be run with NMQual8 and NONMEM 7.2 if PsN version is 3.5.3 or later, option -nmqual is set and the user has installed NONMEM using a slightly modified nm72.xml (changing the expected control stream suffix from .ctl to .mod), see document psn\_configuration.pdf. The configuration file must contain the path to the autolog.pl script, see psn\_configuration.pdf. The option -nmqual\_xml is needed, the default is log.xml (located in directory from where PsN is called). Options to nmfe72, which is invoked by autolog.pl, can be passed on by PsN via options -parafile, -nodes and -nmfe\_options, see below. PsN will start NM7.2 using the call (everything on one line)
@@ -28,7 +28,7 @@ If running on a cluster the user must set flags necessary for parallel execution
 
 
 \section{New options to nmfe72, nmfe73}
-There is a set of new options to nmfe72, e.g. -xmloff. These options can be passed on by PsN using option -nmfe\_options, which accepts a comma-separated list of nmfe-options without the – signs. Option -nmfe\_options is further described in common\_options\_defaults\_versions\_psn.pdf. If setting option -nmfe\_options=licfile=some\_license\_file then the license file must also be set with the PsN option -extra\_files, unless an absolute path to the license file is given, in which case option -extra\_files is not needed. See common\_options\_defaults\_versions\_psn.pdf for a description of the -extra\_files option.
+There is a set of new options to nmfe72, e.g. -xmloff. These options can be passed on by PsN using option -nmfe\_options. Option -nmfe\_options is further described in common\_options\_defaults\_versions\_psn.pdf. If setting option -nmfe\_options=licfile=some\_license\_file then the license file must also be set with the PsN option -extra\_files, unless an absolute path to the license file is given, in which case option -extra\_files is not needed. See common\_options\_defaults\_versions\_psn.pdf for a description of the -extra\_files option.
 
 \section{New forms of \$SIGMA and \$OMEGA}
 In NONMEM 7.2 it is possible to define \$SIGMA and \$OMEGA in new ways, and indicating this via options STANDARD/VARIANCE COVARIANCE/CORRELATION and CHOLESKY. PsN does accept these options and will pass them on when creating new models, but the output analysis and updating new models with final estimates from a previous run have not yet been adapted to these new forms, and performing an update would introduce errors. Updating is done by all scripts except execute, sse and parallel\_retries. PsN will print a warning when the new \$OMEGA/\$SIGMA options are encountered. Updating a model with another form of \$SIGMA/\$OMEGA with output from a previous run will result in errors, and this is done as part of many PsN programs, e.g. bootstrap, vpc, scm and update\_inits. 

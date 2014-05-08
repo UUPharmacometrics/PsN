@@ -21,19 +21,6 @@ Bootstrap will crash if the first column of a csv-format datafile is empty.
 \section{Ignore with extended\_grid script}
 Use IGNORE=@ in the \$DATA record rather than IGNORE=I (where I can stand for ID). Script will crash with IGNORE=I.
 
-\section{Calling old PsN versions on a Windows system with multiple PsN versions installed}
-On unix-type systems where multiple PsN versions are installed it is possible to call any version by adding the version number to the name of the PsN-script, e.g. execute-2.3.2 or bootstrap-3.0.0. This does not work on Windows. To call an older installed PsN version, use 
-
-\begin{verbatim}
-perl <full_path_to_PsN_executable\<name_of_PsN_script>
-\end{verbatim}
-
-for example
-
-\begin{verbatim}
-perl C:\Perl\bin\execute-2.3.2
-\end{verbatim}
-
 \section{Missing estimates in raw\_results.csv when first \$PROBLEM uses \$MSFI}
 When the first \$PROBLEM in the modelfile uses \$MSFI, and \$THETA, \$OMEGA and \$SIGMA are all missing in that \$PROBLEM, then there will be no theta/omega/sigma headers in raw\_results.csv and the parameter estimates will not be printed to the file.
 
