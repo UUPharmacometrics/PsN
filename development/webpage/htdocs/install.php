@@ -20,7 +20,6 @@ Note 1: For Windows we recommend
 <a target="_blank" href="http://http://strawberryperl.com/">Strawberry Perl</a> and 
 <a target="_blank" href="http://www.activestate.com/activeperl/downloads/">ActiveState Perl</a>.
 Windows users who are installing PsN for the first time should choose one of Strawberry Perl or ActiveState Perl to install.
-The recommendation is to choose Strawberry Perl.
 If ActiveState is selected it is important to select a version which supports the extra modules needed for PsN.
 On April 3rd 2014 the recommended ActiveState Perl version was 5.16. For updated information 
 on which version provides which modules in ActiveState Perl see 
@@ -31,7 +30,8 @@ package information pages for
 <a target="_blank" href="http://code.activestate.com/ppm/MooseX-Params-Validate">MooseX::Params::Validate</a> 
 and
 <a target="_blank" href="http://code.activestate.com/ppm/Statistics-Distributions/">Statistics::Distributions</a> </br>
-Note 2: Mac users should use the Perl version that is in MacOS by default, not ActiveState.</li>
+Note 2: Mac users should check if the version of Perl that came with MacOS is 5.10.1 or above. For older versions of MacOS Perl needs to be upgraded.
+This can be done by installing ActiveState Perl (and installing the needed packages with ppm install).</li>
 <li>Perl modules Math::Random, Statistics::Distributions, Archive::Zip and File::Copy::Recursive. 
 PsN can be run without Statistics::Distributions, Archive::Zip and File::Copy::Recursive 
 but some scm/vpc features and a scm bugfix will not be available.</li>

@@ -12,13 +12,38 @@
 
 <p> 
 
-PsN is distributed  as a gzipped tar ball and zipped file.</p>
+PsN is distributed  as a gzipped tarball and zipped file.</p>
 
 <table class="downloads">
   <tbody>
     <tr>
       <th colspan="3" style="text-align:left;">Latest release</th>
     </tr>
+    <tr>
+        <td style="text-align:center;"> 
+            PsN 4.2.0
+        </td>
+	<td rowspan="2" width="70%">Please see the <a href="pdfdocs/release_notes_PsN_4_2_0.txt">change log</a> for details. </td>
+        <td rowspan="2">2014-05-09</td>
+    </tr>
+    <tr>
+        <td style="text-align:center;">
+            <a href="http://sourceforge.net/projects/psn/files/PsN-4.2.0.zip/download" target="_blank">.zip</a>
+            <a href="http://sourceforge.net/projects/psn/files/PsN-4.2.0.tar.gz/download" target="_blank">.tar.gz</a>
+        </td>
+      </tr>
+   </tbody>
+  </table>
+<div style="text-align:center;"><a style="font-size:small;color:gray;" href="#" id="show_older_releases">Click here to show older releases of PsN</a></div>
+<table class="downloads" style="display:none;">
+
+
+
+	<tbody>
+    <tr>
+      <th colspan="3" style="text-align:left;">Older releases</th>
+		</tr>
+
     <tr>
         <td style="text-align:center;"> 
             PsN 3.7.6
@@ -32,14 +57,7 @@ PsN is distributed  as a gzipped tar ball and zipped file.</p>
             <a href="http://sourceforge.net/projects/psn/files/PsN-3.7.6.tar.gz/download" target="_blank">.tar.gz</a>
         </td>
       </tr>
-   </tbody>
-  </table>
-<div style="text-align:center;"><a style="font-size:small;color:gray;" href="#" id="show_older_releases">Click here to show older releases of PsN</a></div>
-<table class="downloads" style="display:none;">
-  <tbody>
-    <tr>
-      <th colspan="3" style="text-align:left;">Latest release</th>
-    </tr>
+
     <tr>
         <td style="text-align:center;"> 
             PsN 3.6.2
@@ -53,11 +71,7 @@ PsN is distributed  as a gzipped tar ball and zipped file.</p>
             <a href="http://sourceforge.net/projects/psn/files/PsN-3.6.2.tar.gz/download" target="_blank">.tar.gz</a>
         </td>
       </tr>
-   </tbody>
-  <tbody>
-    <tr>
-      <th colspan="3" style="text-align:left;">Older releases</th>
-    </tr>
+
     <tr>
         <td style="text-align:center;"> 
             PsN 3.5.3
@@ -71,7 +85,9 @@ PsN is distributed  as a gzipped tar ball and zipped file.</p>
             <a href="http://sourceforge.net/projects/psn/files/PsN-3.5.3.tar.gz/download" target="_blank">.tar.gz</a>
         </td>
       </tr>
-    <tr>
+
+
+		<tr>
         <td style="text-align:center;"> 
             PsN 3.4.2
         </td>
@@ -262,14 +278,12 @@ PsN is distributed  as a gzipped tar ball and zipped file.</p>
 
 <p>
 
-Older PsN versions are available from the <a target="_blank"
+The development version of PsN is available from the <a target="_blank"
 href="http://sourceforge.net/projects/psn/">SourceForge project
-page</a>. (Look under the <a
-href="http://sourceforge.net/project/showfiles.php?group_id=101419">View all files</a>
-section). The project page also explains how to access the SourceForge
-CVS, the repository where the latest changes to PsN are stored. However, if you
-download PsN from the CVS the stability is not guaranteed - it might
-be broken. </p>
+page</a>. (Look under the PsN4 tab to find the git repository).
+Remember that stability is not guaranteed for the development version - it might
+be broken and it might break at any time in the future. See the <a href="pdfdocs/developers_guide.pdf" target="_blank">developer's guide</a>
+for more information on how to install from the git repository.</p>
 <h3 class="heading1">Compatibility<br> </h3>
 <p><strong>Grid/Cluster support:</strong> PsN has built-in functionality for submitting 
 the NONMEM runs to SGE, Slurm, LSF, ud, torque and zink. See documentation
@@ -286,19 +300,19 @@ the NONMEM runs to SGE, Slurm, LSF, ud, torque and zink. See documentation
   </tr>
   <tr>
     <th>Microsoft Windows</th>
-    <td>XP</td>
-    <td>ActiveState Perl 5.12.2</td>
-    <td>7.2.0</td>
+    <td>XP 32-bit</td>
+    <td>ActiveState Perl 5.16.3</td>
+    <td>7.1.0</td>
   </tr>
   <tr>
     <th>Microsoft Windows</th>
-    <td>XP</td>
-    <td>ActiveState Perl 5.12.2</td>
-    <td>7.3.0</td>
-  </tr>
+    <td>XP 32-bit</td>
+    <td>ActiveState Perl 5.16.3</td>
+    <td>7.1.2</td>
+	</tr>
   <tr>
     <th>Microsoft Windows</th>
-    <td>7 64-bit</td>
+    <td>XP 32-bit</td>
     <td>ActiveState Perl 5.16.3</td>
     <td>7.2.0</td>
   </tr>
@@ -309,28 +323,52 @@ the NONMEM runs to SGE, Slurm, LSF, ud, torque and zink. See documentation
     <td>7.3.0</td>
   </tr>
   <tr>
-    <th>Mac</th>
-    <td>OS X 10.6.6</td>
-    <td>5.10.0</td>
+    <th>Microsoft Windows</th>
+    <td>7 64-bit</td>
+    <td>Strawberry Perl 5.18.2</td>
+    <td>7.3.0</td>
+  </tr>
+  <tr>
+    <th>Microsoft Windows</th>
+    <td>7 64-bit</td>
+    <td>Strawberry Perl 5.18.2</td>
     <td>7.2.0</td>
   </tr>
   <tr>
     <th>Mac</th>
     <td>OS X 10.6.6</td>
-    <td>5.10.0</td>
+    <td>ActiveState Perl 5.16.3</td>
+    <td>7.3.0</td>
+  </tr>
+  <tr>
+    <th>Mac</th>
+    <td>OS X 10.6.6</td>
+    <td>ActiveState Perl 5.16.3</td>
+    <td>7.2.0</td>
+	</tr>
+  <tr>
+    <th >Linux</th>
+    <td >Ubuntu 13.10</td>
+    <td >5.14.2</td>
     <td>7.3.0</td>
   </tr>
   <tr>
     <th >Linux</th>
-    <td >Ubuntu 13.04</td>
-    <td >5.14.2</td>
+    <td >Ubuntu 14.04</td>
+    <td >5.18.2</td>
+    <td>7.3.0</td>
+  </tr>
+  <tr>
+    <th >Linux</th>
+    <td >Ubuntu 14.04</td>
+    <td >5.18.2</td>
     <td>7.2.0</td>
   </tr>
   <tr>
     <th >Linux</th>
-    <td >Ubuntu 13.04</td>
-    <td >5.14.2</td>
-    <td>7.3.0</td>
+    <td >Fedora 20</td>
+    <td >5.18.2</td>
+    <td>7.2.0</td>
   </tr>
   <tr>
     <th >Linux</th>
@@ -346,39 +384,14 @@ the NONMEM runs to SGE, Slurm, LSF, ud, torque and zink. See documentation
   </tr>
   <tr>
     <th >Linux</th>
-    <td >CentOS 5.9</td>
-    <td >5.8.8</td>
-    <td>6.1</td>
-  </tr>
-  <tr>
-    <th >Linux</th>
-    <td >CentOS 5.9</td>
-    <td >5.8.8</td>
-    <td>6.2</td>
-  </tr>
-  <tr>
-    <th >Linux</th>
-    <td >CentOS 5.9</td>
-    <td >5.8.8</td>
+    <td >CentOS 6.5</td>
+    <td >5.10.1</td>
     <td>7.1.0</td>
   </tr>
   <tr>
     <th >Linux</th>
-    <td >CentOS 5.9</td>
-    <td >5.8.8</td>
+    <td >CentOS 6.5</td>
+    <td >5.10.1</td>
     <td>7.1.2</td>
   </tr>
-  <tr>
-    <th >Linux</th>
-    <td >CentOS 5.9</td>
-    <td >5.8.8</td>
-    <td>7.2.0</td>
-  </tr>
-  <tr>
-    <th >Linux</th>
-    <td >CentOS 5.9</td>
-    <td >5.8.8</td>
-    <td>7.3.0</td>
-  </tr>
 </table>
-

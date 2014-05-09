@@ -88,15 +88,20 @@ prove -j 4 -r system
 \end{verbatim}
 
 \subsection{Test issues}
-If the tests are to be run on a cluster a setup of a temporary directory that is reachable from all nodes is needed in includes.pm. Edit test/includes.pm and change the row that sets the \$tempdir to \$tempdir = <my path to an already created temporary directory that is reachable from all nodes>;
+\begin{itemize}
+	\item To speed up testing it is advised to set the nmfe option -prdefault in the psn.conf (add the line nmfe\_options=-prdefault).
 
-For NONMEM 7.1.0 and 7.1.2 the system tests will print out a lot of warnings like this:
+	\item If the tests are to be run on a cluster a setup of a temporary directory that is reachable from all nodes is needed in includes.pm. Edit test/includes.pm and change the row that sets the \$tempdir to \$tempdir = <my path to an already created temporary directory that is reachable from all nodes>;
+
+	\item For NONMEM 7.1.0 and 7.1.2 the system tests will print out a lot of warnings like this:
 \begin{verbatim}
 Warning: Line truncated at (1)
 FSUBS.f90:10.132:
 \end{verbatim}
 These warnings are from NONMEM and can be ignored.
-
+	\item	The PsN developers have not run the test suite with NONMEM 6. There are serveral tests that are known to fail with NONMEM 6. If you are a user of NONMEM 6 and wish to run the test suite please give it a try and send your findings to any of the developers or the mailing list.
+	\item If any test fail using any version of NONMEM 7 this is most likely a bug. Please report this so that it can be fixed.
+\end{itemize} 
 
 \section{Build environment}
 The documentation is made in \LaTeX and pdfs can be generated with \verb|make doc|. The
