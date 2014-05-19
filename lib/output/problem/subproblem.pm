@@ -1400,6 +1400,12 @@ sub _read_minimization_message
 	  }
 
 	  push @mess, $_  unless (/^\s*\#TERE:/);
+#	  if (/^\s*\#TERE:/){
+#		  $success = 1;
+#		  last;
+#	  }else{
+#		  push @mess, $_  ;
+#	  }
 	}
 
 	push( @{$self->minimization_message}, @mess );		# minimization_message is default set to empty array.
