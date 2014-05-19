@@ -1,15 +1,15 @@
 \input{inputs/format_header.tex}
 \guidetitle{Bootstrap user guide}
 \begin{document}
-%revision 2013-11-15 Kajsa
+%revision 2014-05-16 Kajsa
 
 \maketitle
 
 
 \section{Introduction}
 
-Bootstrap is a tool for calculating bias, standard errors and confidence intervals of parameter estimates. It does so by generating a set of new datasets by sampling individuals with replacement from the original dataset, and fitting the model to each new dataset \cite{Efron}. To compute standard errors for all parameters of a model using the non-parametric bootstrap implemented here, roughly 200 model fits are necessary. To assess 95\% confidence intervals approximatly 2000 will suffice.
-Examples
+Bootstrap is a tool for calculating bias, standard errors and confidence intervals of parameter estimates. It does so by generating a set of new datasets by sampling individuals with replacement from the original dataset, and fitting the model to each new dataset \cite{Efron}. 
+Examples:
 \begin{verbatim}
 bootstrap moxonidine.mod -samples=100
 bootstrap pheno.mod -samples=500 -seed=12345 -threads=5
@@ -110,11 +110,11 @@ The row order is consistent between the files raw\_results, included\_individual
 
 \section{Known bugs and problems}
 
-If a csv-format dataset has an empty first column, i.e. there is a leading comma on each line in the datafile, bootstrap will crash. Avoid the problem by editing the datafile, removing the leading empty column.
-
 It is recommended to remove PRINT options from \$ESTIMATION, to save disk space.
 
-ACCEPT/IGNORE statements based on ID will cause errors since PsN renumbers the individuals during bootstrapping. There is an input check for this, but it is recommended to not rely on this check.
+PsN renumbers the individuals during bootstrapping. Therefore ACCEPT/IGNORE statements based on ID will cause errors. 
+There is an input check for this, but it is recommended to not rely on this check. Also, model code that relies on ID numbers will also lead to
+errors.
 
 The results of two runs will be different even if the seed is the same if the lst-file of the base model is present at the start of one run but not the other. Running the base model changes the state of the random number generator, and therefore the bootstrapped datasets will be different depending on if the base model is run or not before generating the  new datasets. 
 
@@ -142,7 +142,7 @@ If there is a computer crash in the middle of a long bootstrap, you can still us
 If some samples terminated due to e.g. rounding errors but most of the samples finish okay: 
 \begin{enumerate}
 	\item Go to the m1 subdirectory and run execute with -retries option on the model that did not finish. 
-	\item After models in m1 have run, use runrecord script (see runrecord\_userguide.pdf) to create a summary of all parameter estimates. Open output file from runrecord in Excel and do statistics manually. 
+	\item After models in m1 have run, use the rawresults script (see rawresults -help) to create a summary of all parameter estimates. Open output file from rawresults in Excel and do statistics manually. 
 \end{enumerate}
 If too many samples were discarded due to e.g. minimization terminated and you wish you had set  option -no-skip\_minimization\_terminated: Open raw\_results.csv in Excel and do statistics manually. 
 

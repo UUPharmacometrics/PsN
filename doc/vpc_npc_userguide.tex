@@ -1,6 +1,7 @@
 \input{inputs/format_header.tex}
 \guidetitle{VPC and NPC user guide}
-%review Kajsa 2013-11-19
+%review Kajsa 2014-05-19
+
 
 \begin{document}
 
@@ -37,7 +38,7 @@ Points to consider if you are to use the VPC functionality for a new problem:
 
 \begin{itemize}
 \item The default behavior is to use NONMEM output TIME as the independent variable. If you want to use anything else look into option -idv.
-\item Are your distribution independent variable such that binning is necessary? If you for example is using protocol time points as IDV this is perhaps not necessary whereas with actual observation time it is typically necessary. For binning options read the section Binning for VPC. Note that by setting -directory to the name of a previously created run directory the program can reuse the simulated data already produced, making it quite fast to test different binning alternatives.
+\item Are your distribution independent variable such that binning is necessary? If you for example is using protocol time points as IDV this is perhaps not necessary whereas with actual observation time it is typically necessary. A good starting point is to use option -auto\_bin=N, where N is the number of observation times for the typical subject. For more details on binning options read the section Binning for VPC. Note that by setting -directory to the name of a previously created run directory the program can reuse the simulated data already produced, making it quite fast to test different binning alternatives.
 \end{itemize}
 
 \subsection{Prediction/Variability correction}
@@ -151,14 +152,14 @@ optional, default TIME, the independent variable to bin on. Specific for VPC. (o
 \nextopt
 \end{optionlist}
 \noindent{\bf Either of 12 binning option combinations for independent variable}
-Optional, but it is forbidden to use more than one of these combinations. For details see section VPC binning below.
+Optional, but it is forbidden to use more than one of these combinations. For details see section Binning for VPC below.
 \begin{itemize}
 	\item -auto\_bin=auto   (default)
-	\item -auto\_bin=$<$number of bins$>$
-	\item -auto\_bin=$<$start bins$>$, $<$stop bins$>$
+	\item -auto\_bin=\emph{number of bins} (recommended)
+	\item -auto\_bin=\emph{start\_range},\emph{stop\_range}
 	\item -auto\_bin=unique
-	\item -bin\_by\_count=0 -bin\_array=boundary1,boundary2,...
-	\item -bin\_by\_count=1 -bin\_array=count1,count2,...
+	\item -bin\_by\_count=0 -bin\_array=\emph{boundary1,boundary2,...}
+	\item -bin\_by\_count=1 -bin\_array=\emph{count1,count2,...}
 	\item -bin\_by\_count=0 -no\_of\_bins=X
 	\item -bin\_by\_count=1 -no\_of\_bins=X
 	\item -bin\_by\_count=0 -single\_bin\_size=X -overlap=Y
@@ -535,13 +536,22 @@ If option -censor is used, censor variable values in observation rows are extrac
 The data is stratified if -stratify\_on is used. If the number of strata option is not used, stratification will be done on unique values of the stratification variable. If used, the unique values will be grouped into the requested number of strata so that there are approximately the same number of observations in each strata, following the requirement that all stratification column values in strata i must be smaller than all values in strata i+1. A warning is issued if there are more than 10 strata. Stratification is done before binning when running VPC. Stratification is done before censoring, options -censor/-lloq/-uloq do not affect the stratification.
 
 \section{Binning for VPC}
-Binning is done on the independent variable, which is TIME by default but can be given on the command line. Binning is done before censoring, options -censor/-lloq/-uloq do not affect the binning. Only one independent variable can be given. There is a set of options for binning, and in some the user requests binning based on the number of observations in each bin. The actual number of observations put in a bin may be different from the number requested by the user if the request cannot be met without violating the rule that all observations with the same independent variable value are put in the same bin. User input counts will be treated as target counts, but the actual counts may be greater or smaller (but always greater than 0). Rounding will be done upwards or downwards, whichever gives the smallest adjustment, provided that count is never rounded down to 0. The actual counts are reported in the results. A partial vpc command-line to manually modify and reuse automatic bin edges can be found in the file vpc\_bins.txt
+Binning is done on the independent variable, which is TIME by default but can be given on the command line. Binning is done before censoring, options -censor/-lloq/-uloq do not affect the binning. Only one independent variable can be given. There is a set of options for binning, and in some the user requests binning based on the number of observations in each bin. The actual number of observations put in a bin may be different from the number requested by the user if the request cannot be met without violating the rule that all observations with the same independent variable value are put in the same bin. User input counts will be treated as target counts, but the actual counts may be greater or smaller (but always greater than 0). Rounding will be done upwards or downwards, whichever gives the smallest adjustment, provided that count is never rounded down to 0. The actual counts are reported in the results. A partial vpc command-line to manually modify and reuse automatic bin edges can be found in the file vpc\_bins.txt.
+
+The recommendation is to use automatic placement of the bins but to restrict the number of bins to a number that is appropriate given the study protocol, for example -auto\_bin=8 if each subject has been sampled 8 times and time is the independent variable.
+
 There are several binning alternatives:
 \begin{enumerate}
-	\item Fully automatic binning. (default, option -auto\_bin = auto)
-Automatically finds the number of bins and partitions the dataset using an algorithm as proposed in a student project (see draft\_vpc\_automatic\_binning.pdf) \cite{Sonehag}. The algorithm is using ideas from \cite{Calinski} and \cite{Laveille}. This is the default binning option and it will currently assume that there will be no less than 2 and no more than 20 bins. See the vpc\_binning.pdf for a detailed description of the algorithm.
-	\item Automatic binning given a range for the number of bins. (option -auto\_bin=min, max)
-	\item Automatic binning given a fixed number of bins (option -auto\_bin=N)
+	\item Automatic binning given a fixed number of bins (option -auto\_bin=N). This option 
+will bin the observations using an algorithm proposed in a student project (see draft\_vpc\_automatic\_binning.pdf) \cite{Sonehag}. The algorithm is using ideas from \cite{Calinski} and \cite{Lavielle}. 
+See document vpc\_binning.pdf for a detailed description of the algorithm.
+This is the recommended approach, but it is not the default since the ideal N differs between data sets.
+	\item Automatic binning with a user-defined range for the number of bins (option -auto\_bin=min,max). 
+	\item Fully automatic binning, automatically decide both the number of bins and the placement of bin boundaries.
+This is the default, however it is recommended to manually restrict the number of bins to a (small range of) value(s)
+that is appropriate given the study protocol, since the automatic selection of the number of bins \cite{Sonehag} 
+is not always 
+successful.
 	\item bin based on unique values of the independent variable, no extra input needed. (option -auto\_bin=unique)
 	\item bin based on a user-defined list of values of the independent variable, where the list values are the boundaries between the bins. Option combination -bin\_by\_count=0 -bin\_array=boundary1,boundary2,...
 	\item bin based on a user-defined list of counts of observations in each bin, ordered so that the first count is for the lowest values of the independent variable. The algorithm may adjust the counts up or down (see rule on binning above). Option combination  -bin\_by\_count=1 -bin\_array=count1,count2,...
@@ -703,7 +713,7 @@ It will not work to read initial parameter estimates from a separate file using 
 \bibitem{Bergstrand} Bergstrand M, Hooker AC, Wallin JE, Karlsson MO, {\em Prediction-Corrected Visual Predictive Checks for Diagnosing Nonlinear Mixed-Effects Models}, AAPS J. 2011 Feb 8.
 \bibitem{Sonehag} Christian Sonehag, Niklas Olofsson, Rasmus Simander, {\em Automatic binning in visual predictive checks}, Undergraduate project 2012
 \bibitem{Calinski} Calinski, R. B., \& Harabasz, J. {\em A dendrite method for cluster analysis} Communications in Statistics, 3, 1-27, 1974
-\bibitem{Laveille} M. Laveille, K. Bleakley, {\em Automatic data binning for improved visual diagnosis of pharmacometric models}, June 9, 2011
+\bibitem{Lavielle} M. Lavielle, K. Bleakley, {\em Automatic data binning for improved visual diagnosis of pharmacometric models}, June 9, 2011
 \end{thebibliography}
 
 

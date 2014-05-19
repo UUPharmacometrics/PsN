@@ -1,6 +1,6 @@
 \input{inputs/format_header.tex}
 \guidetitle{BOOT\_SCM user guide}
-%revision 2013-11-15 Kajsa
+%revision 2014-05-16 Kajsa
 
 \begin{document}
 
@@ -9,7 +9,10 @@
 
 \section{Overview}
 
-Bootstrap scm, boot\_scm, depends heavily on the scm program, and all scm options apply also to boot\_scm. Please refer to scm\_userguide.pdf for help on scm options.
+The boot\_scm program is an implementation of the method presented in
+\emph{The bootstrap of Stepwise Covariate Modeling using linear approximations},
+PAGE 20 (2011) Abstr 2161, R Keizer.
+The program depends heavily on the scm program, and all scm options apply also to boot\_scm. Please refer to scm\_userguide.pdf for help on scm options.
 Example
 \begin{verbatim}
 boot_scm config_run1.scm -samples=10 -seed=12345

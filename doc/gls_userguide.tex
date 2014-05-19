@@ -1,6 +1,6 @@
 \input{inputs/format_header.tex}
 \guidetitle{GLS user guide}
-%Kajsa review 2013-11-15
+%Kajsa review 2014-05-16
 
 \begin{document}
 
@@ -8,7 +8,8 @@
 
 
 \section{Overview}
-During the modelling process one may encounter scenarios where first-order conditional estimation with $\epsilon - \eta$ interaction (FOCEI) is indicated but may be prohibitively time consuming or unstable. Also, it may be a concern that a misspecification of the residual error model may translate to bias in structural or inter-individual variability parameters. These two problems may be overcome by using a generalised least squares (GLS) type approach where dependent variable predictions are obtained from a previous model fit and then used in the residual error model. The gls program automates this procedure.
+During the modelling process one may encounter scenarios where first-order conditional estimation with $\epsilon - \eta$ interaction (FOCEI) is indicated but may be prohibitively time consuming or unstable. Also, it may be a concern that a misspecification of the residual error model may translate to bias in structural or inter-individual variability parameters. These two problems may be overcome by using a generalised least squares (GLS) type approach where dependent variable predictions are obtained from a previous model fit and then used in the residual error model. The gls program automates this procedure, which is further described in \emph{Individual Observation-Shrinkage Scaling of Residuals in a Generalized Least Square Type of Estimation in NONMEM},
+PAGE 21 (2012) Abstr 2586, V Ivaturi.
 
 In summary the GLS method amounts to the following: Run the original model. In a second step IPRED is replaced with GLSP in the definition of W where GLSP is computed as 
 

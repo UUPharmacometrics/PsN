@@ -1,6 +1,6 @@
 \input{inputs/format_header.tex}
 \guidetitle{RANDTEST user guide}
-%review Kajsa 2013-11-18
+%review Kajsa 2014-05-19
 \begin{document}
 
 \maketitle
@@ -8,7 +8,10 @@
 
 \section{Introduction}
 
-Randtest is a tool for randomization tests. The program will shuffle the values in the randomization 
+Randtest is a tool for computing actual significance levels. The method is described in
+\emph{Assessment of Actual Significance levels for Covariate Effects in NONMEM}, 
+J PKPD 28(3):231-252, Wählby U., Jonsson EN, Karlsson MO. 
+The program will shuffle the values in the randomization 
 column 'samples' times and run the model with each of the new datasets. The results will be summarized in the csv-format raw\_results-file. 
 Example
 \begin{verbatim}
