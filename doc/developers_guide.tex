@@ -9,7 +9,7 @@
   
 \section{Introduction}
 
-This document is mainly intended for PsN developers. It describes how to install development versions of PsN, how to run the tests, how to work with source control and coding guidelines.
+This document is mainly intended for PsN developers and testers. It describes how to install development versions of PsN, how to run the tests, how to work with source control and coding guidelines.
 
 \section{Installing the current development version of PsN for running and testing}
 \begin{itemize}
@@ -119,7 +119,7 @@ git push origin --tags
 \end{verbatim}
 
 \section{Coding style guide}
-PsN is written in Perl using the Moose object system. For a gentle introduction to Perl and Moose see for example Modern Perl \cite{modern}. This chapter will give some pointers on how to make best use of Perl and Moose in PsN. 
+PsN is written in Perl using the Moose object system \cite{Moose}. For a gentle introduction to Perl and Moose see for example Modern Perl \cite{modern}. This chapter will give some pointers on how to make best use of Perl and Moose in PsN. 
 
 \subsection{Object construction}
 
@@ -219,6 +219,7 @@ As a workaround for a bug in the Carp package \verb|use include_modules;| should
 \begin{thebibliography}{1}
 	\bibitem{git} {\em Pro Git}, \url{http://git-scm.com/book}, Apress
 	\bibitem{modern} {\em Modern Perl} \url{http://onyxneon.com/books/modern_perl/}, Onyx Neon Press
+	\bibitem{Moose} {\em Moose}, \url{https://metacpan.org/pod/Moose::Manual}, CPAN
 	\bibitem{params} {\em MooseX::Params::Validate}, \url{http://search.cpan.org/\~drolsky/MooseX-Params-Validate-0.18/lib/MooseX/Params/Validate.pm}, CPAN
 	\bibitem{types} {\em Moose::Manual::Types}, \url{http://search.cpan.org/~ether/Moose-2.1005/lib/Moose/Manual/Types.pod}, CPAN
 \end{thebibliography}
