@@ -1,6 +1,5 @@
 
-<h2>Installation instructions
-  </h2>
+<h2>Installation instructions</h2>
 <p>
 Before you install PsN, you should make sure that the following programs/modules are installed on your computer. 
 
@@ -112,4 +111,3 @@ The document is also found on <a href="http://psn.sourceforge.net/docs.php" targ
 </li>
 </ol>
 <br>
-

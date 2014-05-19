@@ -33,43 +33,44 @@
     as well as development libraries for method developers. You can read more about the different parts of PsN under <a href="docs.php">Documentation</a>.</p>
 <h3>Latest news</h3>
  <p>
-Version 3.7.6 was released December 4th 2013, and is available <a href="download.php">here</a>. 
+Version 4.2.0 was released May 26th 2014, and is available <a href="download.php">here</a>.
 </p>
  <p>
-New features include automatic binning and 10 times faster DV processing in vpc, a new program randtest for
-randomization testing, and more alternatives for simulation with uncertainty. 
+New features include new scripts nca, pvar, sir, frem and rawresults and a new test library for verification of PsN. Under the hood there have been big changes. PsN has been completely rewritten using the Moose object system. This rewrite will make development faster and collaboration around new tools and debugging much easier.
 </p>
  <p>
 This version of PsN has been more tested on Windows, Linux and Mac than any previous
 PsN release.
 Go to the <a href="download.php">Download page</a> 
-to see which systems and NONMEM versions PsN 3.7.6 has been tested with.
+to see which systems and NONMEM versions PsN 4.2.0 has been tested with.
 </p>
 <p>
-The complete list of new features and bugfixes in 3.7.6 is found  
-<a href="pdfdocs/release_notes_PsN_3_7_6.txt" target="_blank">here</a></dt>.
+The complete list of new features and bugfixes in 4.2.0 is found  
+<a href="pdfdocs/release_notes_PsN_4_2_0.txt" target="_blank">here</a></dt>.
 </p>
-<h3>Known issues with version 3.7.6</h3>
- <li>
-Mac users should use the Perl version that is in MacOS by default, because there are problems running PsN with ActiveState Perl on MacOS. Only Windows users should run PsN with ActiveState Perl.
-</li>
- <li>
+<h3>Known issues with version 4.2.0</h3>
+<li>
 Installation on Windows: Users who install PsN for the first time need to make sure they install a Perl version where
 the needed extra modules are available, see instructions on
 <a href="install.php">installation page</a>.
 </li>
-<li>
-Windows users are recommended to use ActiveState Perl, see <a href="install.php">installation page</a>. 
-Attempts to use Strawberry Perl on Windows have failed so far, due to difficulties
-to install the Math::Random module.
-</li>
- <li> Click <a href="http://sourceforge.net/p/psn/wiki/Bug_list_current_release" target="_blank">here</a> to open the known bugs wiki with the most recent information
-regarding known bugs in the latest release.
+ <li> Click <a href="http://sourceforge.net/p/psn/wiki/Bug_list_current_release" target="_blank">here</a> to open the known bugs wiki with the most recent information regarding known bugs in the latest release.
 </li>
 </p>
 
 <div style="text-align:left;"><a style="font-size:small;color:gray;" href="#" id="show_older_changes">Click here to show change notes for older versions</a></div>
 <div id="older_changes" style="display:none;">  
+<h3>PsN 3.7.6</h3>
+<p>
+Version 3.7.6 was released December 4th 2013.
+</p>
+<p>
+New features include automatic binning and 10 times faster DV processing in vpc, a new program randtest for randomization testing, and more alternatives for simulation with uncertainty.
+</p>
+<p>
+The list of new features and bugfixes in 3.7.6 is found
+<a href="pdfdocs/release_notes_PsN_3_7_6.txt" target="_blank">here</a></p>
+
 <h3>PsN 3.6.2</h3>
  <p>
 Version 3.6.2 was released June 4th 2013. 
@@ -1552,16 +1553,15 @@ encountered unfixed bugs and how to work around them.</li>
 <h3>More information</h3>
 <p>
 Perl-speaks-NONMEM is copyright <br>
-&copy;2013 by Mats Karlsson, Andrew Hooker, Rikard Nordgren and Kajsa Harling.<br>
-&copy;2008-2012 by Mats Karlsson, Niclas 
-Jonsson, Andrew Hooker and Kajsa Harling.<br>
+&copy;2013-2014 by Mats Karlsson, Andrew Hooker, Rikard Nordgren and Kajsa Harling.<br>
+&copy;2008-2012 by Mats Karlsson, Niclas Jonsson, Andrew Hooker and Kajsa Harling.<br>
 &copy;2006-2007 by Lars Lindbom.<br>
 &copy;2000-2005 by Lars Lindbom and Niclas Jonsson.<br>
 All rights reserved.</p>
 <p>Perl-speaks-NONMEM is licensed under <a href="http://www.gnu.org/licenses/old-licenses/gpl-2.0.html">version 2 of the GNU General
-Public License</a> as published by the Free Software Foundation. </p>
+Public License</a> as published by the Free Software Foundation.</p>
 <p>
-PsN is developed and maintained by <a href="mailto:kajsa.harling@farmbio.uu.se">Kajsa Harling</a> and  <a href="mailto:rikard.nordgren@farmbio.uu.se">Rikard Nordgren</a>
+PsN is developed and maintained by <a href="mailto:kajsa.harling@farmbio.uu.se">Kajsa Harling</a> and <a href="mailto:rikard.nordgren@farmbio.uu.se">Rikard Nordgren</a>
 .</p>
 
 <p>PsN was originally developed by Niclas Jonsson and continued by Lars 
@@ -1584,12 +1584,8 @@ MEM. <br>
 
 <h4>Acknowledgments</h4>
 <p>
-NONMEM&reg; is a registered trademark of GloboMax. The Perl camel
+NONMEM&reg; is a registered trademark of ICON plc. The Perl camel
 logo is a registered trademark of O'Reilly Media, Inc. and is used with
 permission. All logos and trademarks in this site are property of
 their respective owners.
-</p>
-
-<p>
-Thanks to Jeroen Elassaiss and Stefan Verhoeven for fixing bugs in SGE submission code.
 </p>

@@ -1,4 +1,3 @@
-  <dt><a href="developers_guide.php">Developer documentation</a></dt>
 <h2>User Documentation</h2>
 
   All pdf documents listed below as a <a href="pdfdocs/PsN_pdf_documentation.tar.gz" target="_blank"><strong>tar.gz</strong></a> or
@@ -33,6 +32,9 @@
     <dt><a href="pdfdocs/randtest_userguide.pdf" target="_blank"><strong>randtest</strong></a></dt>
     <dd>Randomization testing.</dd>
 
+    <dt><strong>rawresults</strong></dt>
+    <dd>Create a rawresults file from a set of list files.</dd>
+
     <dt> <a href="pdfdocs/sse_userguide.pdf" target="_blank"><strong>sse</strong></a> </dt>
     <dd>Stochastic Simulation and Estimation</dd>
 
@@ -45,10 +47,16 @@ Two-page poster on <a href="pdfdocs/PAGE_CAT_VPC_100602_two_page.pdf" target="_b
 Separate description of <a href="pdfdocs/vpc_binning.pdf" target="_blank"><strong>automatic binning in vpc</strong></a>
 </dd>
     
-    <dt>  <a href="pdfdocs/cdd_userguide.pdf" target="_blank"><strong>cdd</strong></a></dt>
-    <dd> Case Deletion Diagnostics</dd>
+    <dt><a href="pdfdocs/cdd_userguide.pdf" target="_blank"><strong>cdd</strong></a></dt>
+    <dd>Case Deletion Diagnostics</dd>
 
-    <dt><a href="pdfdocs/llp_userguide.pdf" target="_blank"><strong>llp</strong></a></dt>
+    <dt><a href="pdfdocs/ebe_npde_userguide.pdf" target="_blank"><strong>ebe_npde</strong></a></dt>
+    <dd>Normalized prediction distribution errors applied on empirical bayes estimates</dd>
+
+    <dt><a href="pdfdocs/frem_userguide.pdf" target="_blank"><strong>frem</strong></a></dt>
+    <dd>Full random effects modeling</dd>
+
+		<dt><a href="pdfdocs/llp_userguide.pdf" target="_blank"><strong>llp</strong></a></dt>
     <dd>Log-Likelihood Profiling around maximum-likelihood parameter estimates.</dd>
     
     <dt><a href="pdfdocs/scm_userguide.pdf" target="_blank"><strong>scm</strong></a></dt>
@@ -83,16 +91,22 @@ Some extensively commented example/template configuration files for scm:<br>
     <dt><a href="pdfdocs/mimp_userguide.pdf" target="_blank"><strong>mimp</strong></a></dt>
     <dd>Multiple imputation</dd>
     
-    <dt><a href="pdfdocs/gls_userguide.pdf" target="_blank"><strong>gls</strong></a></dt>
+    <dt><a href="pdfdocs/nca_userguide.pdf" target="_blank"><strong>nca</strong></a></dt>
+    <dd>Non-compartmental analysis</dd>
+    
+    <dt><a href="pdfdocs/pvar_userguide.pdf" target="_blank"><strong>pvar</strong></a></dt>
+    <dd>Parametric variability</dd>
+
+		<dt><a href="pdfdocs/gls_userguide.pdf" target="_blank"><strong>gls</strong></a></dt>
     <dd>Generalized Least Squares approximations of the residual error model</dd>
     
-    <dt><a href="pdfdocs/sumo_userguide.pdf" target="_blank"><strong>sumo</strong></a></dt>
+    <dt><a href="pdfdsumo_userguide.pdf" target="_blank"><strong>sumo</strong></a></dt>
     <dd>Summary of Output from NONMEM</dd>
     
     <dt><a href="pdfdocs/linearize_userguide.pdf" target="_blank"><strong>linearize</strong></a></dt>
     <dd>Linearize a model.</dd>
     
-    <dt> <a href="data_stats_docs.php"><strong>data_stats</strong></a><dt>
+    <dt> <strong>data_stats</strong><dt>
     <dd>Print simple statistics for dataset columns.</dd>
     
     <dt><a href="pdfdocs/extended_grid_userguide.pdf" target="_blank"><strong>extended_grid</strong></a></dt>
@@ -107,6 +121,8 @@ Some extensively commented example/template configuration files for scm:<br>
     <dt> <strong>se_of_eta</strong></dt>
     <dd>Standard Errors of Etas</dd>
     
+    <dt><a href="pdfdocs/sir_userguide.pdf" target="_blank"><strong>sir</strong></a></dt>
+    <dd>Sampling importance resampling</dd>
     
   </dl>
 
@@ -126,9 +142,7 @@ Some extensively commented example/template configuration files for scm:<br>
   for each time you run <tt>"execute"</tt>. This makes it possible  to do multiple runs at 
   the same time in one directory. After the run you will find the  output from NONMEM in the file named <tt>"file.lst"</tt>, and any table files specified in the model file. </p>
 <h4>Getting help</h4>
-<p>User-guide documents for <a href="pdfdocs/common_options_defaults_versions_psn.pdf">common PsN options</a>, <a href="pdfdocs/bootstrap_userguide.pdf">bootstrap</a>,<a href="pdfdocs/execute_userguide.pdf"> execute</a>, <a href="pdfdocs/sse_userguide.pdf">sse</a>, <a href="pdfdocs/npc_vpc_userguide.pdf">vpc, npc</a>,<a href="pdfdocs/llp_userguide.pdf"> llp</a> and <a href="pdfdocs/cdd_userguide.pdf">cdd</a> are now available in the folder &quot;doc&quot;
-under the PsN Core and Toolkit installation directory, which is
-chosen during the installation (e.g. C:\Perl\site\lib\doc). </p>
+<p>All user-guide documents are available in the folder &quot;doc&quot; in the PsN installation package. It can be copied to a directory of choice during the PsN installation.</p>
 <p>PsN also has an extensive command line help system. To get a list of available scripts enter the following command on the command line (e.g. a DOS comand prompt):</p>
 <p> <b><tt>$ psn -h</tt></b></p>
 <p>To get a  list of available scripts with a one-line description of each (i.e. the list at the top of this page) enter the following command on the command line:</p>
@@ -138,7 +152,7 @@ chosen during the installation (e.g. C:\Perl\site\lib\doc). </p>
 <p>For more details on a spcific script, for example &quot;vpc&quot;, use the command:</p>
 <p> <b><tt>$ vpc -help</tt></b></p>
 <h4>Input options to PsN scripts</h4>
-<p><strong>Specific options: </strong>All PsN scripts accept a set of options which allow you to modify the behaviour of the script. Please see For example, the <a href="pdfdocs/bootstrap_userguide.pdf">bootstrap</a> creates 200 new data sets from the original data by default. However    the number of data sets can be limited to for example 50, by changing the number in the <span class="style2">-sample</span> option in the bootstrap script.</p>
+<p><strong>Specific options: </strong>All PsN scripts accept a set of options which allow you to modify the behaviour of the script. Please see for example, the <a href="pdfdocs/bootstrap_userguide.pdf">bootstrap</a> creates 200 new data sets from the original data by default. However    the number of data sets can be limited to for example 50, by changing the number in the <span class="style2">-sample</span> option in the bootstrap script.</p>
 <p> <b><tt>$ bootstrap -samples=50 file.mod</tt></b> </p>
 <p> The <tt>'-samples'</tt> option is unique to the bootstrap script. To get a list of the unique options available for a specific script you can use the command (e.g. for the bootstrap script):</p>
 <p> <b><tt>$ bootstrap -h</tt></b> </p>
@@ -182,3 +196,6 @@ chosen during the installation (e.g. C:\Perl\site\lib\doc). </p>
 <p>You can use a special NONMEM version from this list  via the option -nm_version, for example</p>
 <p> <tt><b>$ execute -nm_version=vi_big file.mod</b></tt><br>
 </p>
+<h2>Documentation for developers and testers</h2>
+The <a href="pdfdocs/developers_guide.pdf" target="_blank">developers guide</a>contain information for developers and for those in need of information
+about how to run the PsN test suite.
