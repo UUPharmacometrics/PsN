@@ -10,22 +10,29 @@
 \section{Introduction}
 Work to fix bugs in PsN is ongoing, but often feature addition is prioritized over bug fixing, especially if there is a known workaround for the bug. This document list the most important known bugs, including workarounds when possible.   
 
-\section{NONMEM hard crash during \$COV step causes PsN to fail to read any output}
+\section{Bugs}
+
+\subsection{Sensitive format for raw results input file in sse, vpc, npc}
+Any column header that contains a comma, e.g. OMEGA(2,1), must be enclosed in double quotes. This is done automatically when PsN creates a raw results file but may be changed if the file is saved in e.g. Excel.
+
+\subsection{NONMEM hard crash during \$COV step causes PsN to fail to read any output}
 If the estimation step is successful but NONMEM crashes entirely during the covariance step, causing the
 lst-file to be truncated (for example missing the objective function value of the successful estimation),
 PsN will fail to read final estimates even though they are available in the .ext-file, 
 and will treat the entire run as crashed. A workaround is to manually add a line with tag \verb|#OBJT:| after the 
 \verb|#TERE:| tag in the lst-file.
 
-\section{Sensitive format for raw results input file in sse, vpc, npc}
-Any column header that contains a comma, e.g. OMEGA(2,1), must be enclosed in double quotes. This is done automatically when PsN creates a raw results file but may be changed if the file is saved in e.g. Excel.
-
-\section{Missing estimates in raw\_results.csv when first \$PROBLEM uses \$MSFI}
+\subsection{Missing estimates in raw\_results.csv when first \$PROBLEM uses \$MSFI}
 When the first \$PROBLEM in the modelfile uses \$MSFI, and \$THETA, \$OMEGA and \$SIGMA are all missing in that \$PROBLEM, then there will be no theta/omega/sigma headers in raw\_results.csv and the parameter estimates will not be printed to the file.
 
-\section{Data values with more than five significant digits in sse}
+\subsection{Data values with more than five significant digits in sse}
 The simulated datasets used in sse are \$TABLE output from NONMEM, and NONMEM rounds off values when printing tables. In NONMEM 6 1013201 is rounded to 1013200 (five significant digits), and if this makes a significant change to the model estimation, for example if the value is a covariate, then the sse results will be wrong. In NONMEM7 it is possible to set the FORMAT option in \$TABLE to make sure no important information is lost. With NONMEM 6 the user must make sure the rounding to five significant digits does not harm the results.
 
+\subsection{Lower case user defined and reserved words}
+Starting with NONMEM 7.2 lower case user defined and reserved words are supported. This is not supported
+by PsN. For example in \$INPUT all reserved words have to be upper case.
 
+\section{Bugs on wiki}
+If any new bugs have been found after the release of this document it can be found on the PsN homepage (http://psn.sourceforge.net/buglist.php).
 
 \end{document}
