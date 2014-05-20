@@ -290,7 +290,7 @@ the NONMEM runs to SGE, Slurm, LSF, ud, torque and zink. See documentation
 <a href="pdfdocs/common_options_defaults_versions_psn.pdf" target="_blank">here</a>.
 </p>
 
-<p><strong>Platforms:</strong> PsN-3.7.6 is tested on the systems listed below. NONMEM is always run via an nmfe or NMQual script, making compiler version irrelevant.</p>
+<p><strong>Platforms:</strong> PsN-4.2.0 is tested on the systems listed below. NONMEM is always run via an nmfe or NMQual script, making compiler version irrelevant.</p>
 <table>
   <tr>
     <th>Platform</th>
