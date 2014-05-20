@@ -7,7 +7,7 @@
 
 
 \section{Introduction}
-Parameter variability
+Parametric variability is a tool that calculates how much of parameter variabilty that a model explains.
 
 Examples
 \begin{verbatim}
@@ -18,7 +18,7 @@ pvar -models run1.mod run2.mod -parameters=CL,V
 \section{Input and options}
 
 \subsection{Required input}
-Required arguments are either an scm log file or a list of model files and a list of parameters. If an scm log file is used remember to set -clean=1
+Required arguments are either an scm log file or a list of model files and a list of parameters. If an scm log file is to be used the scm run must have been made with -clean=1 or -clean=0 otherwise files needed for pvar will be deleted.
 
 \begin{optionlist}
 
@@ -40,6 +40,9 @@ If this option is present on the command line a list of model files can be passe
 \section{Description}
 
 Parametric variability can calculate how much of the variability of a parameter that is explained by the model. For every parameter listed on the command line PsN will calculate the total variance, the explained variance and the unexplained variance. The resulting table can be found in the result.csv. The input models to pvar must have final parameter estimates.
+
+\subsection{Run pvar from an scm}
+The pvar script can be run for all the intermediate models of an scm run. For this to work the scm must have been run with a clean option less than or equal to one (i.e. -clean=0 or -clean=1). The scm log file of the scm run must be specified as an argument to the pvar run. From the log file pvar will find which models to use. Note that they will be numbered in the results file in the order they appeared in the log file. 
 
 \section{Result}
 
@@ -75,7 +78,7 @@ Simulate each model in one original version to get the total variability and one
 		\item Set \$OMEGA 0 FIX for the EPV model
 	\end{enumerate}
 	\item Run models
-	\item Loop through table-files
+	\item Loop through table-files to calculate the variances
 \end{enumerate}
 
 \end{document}

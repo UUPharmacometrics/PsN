@@ -31,10 +31,10 @@ is optional, but forbidden together with -msfo. Use final parameter estimates fr
 is optional. The columns option is a comma-separated list of variable names. All listed variables will be added to the nca table output.
 \nextopt
 \optdefault{sim\_model}{file}
-is optional. Cannot be used together with -flip\_comments, -keep\_estimation or -noprediction. By default PsN will create a simulation model based on the  required input model, but by using option -sim\_model it is possible to use a separate input model for the simulations. PsN will remove \$COV and \$TABLE, change SEED and NSUBS in \$SIM, add a new \$TABLE and  update initial estimates if option -lst is set or add \$MSFI if option -msfo is used, but otherwise no changes will be made to the user defined simulation model. See section Modified models. Note that -lst will be set automatically if a file with the same name as the regular input model but with suffix lst intead of mod is found. 
+is optional. Cannot be used together with -flip\_comments, -keep\_estimation or -noprediction. By default PsN will create a simulation model based on the required input model, but by using option -sim\_model it is possible to use a separate input model for the simulations. PsN will remove \$COV and \$TABLE, change SEED and NSUBS in \$SIM, add a new \$TABLE and  update initial estimates if option -lst is set or add \$MSFI if option -msfo is used, but otherwise no changes will be made to the user defined simulation model. See section Modified models. Note that -lst will be set automatically if a file with the same name as the regular input model but with suffix lst intead of mod is found. 
 \nextopt
 \optname{flip\_comments}
-is optional. Cannot be used together with -sim\_model, -keep\_estimation or -noprediction. By default PsN will create a simulation model based on the  required input model, but option -flip\_comments invokes a method for handling user-defined simulation code in the required input model. If option is set, PsN will create the simulation model by flipping comments (commented lines will be uncommented and vice versa) between the tags
+is optional. Cannot be used together with -sim\_model, -keep\_estimation or -noprediction. By default PsN will create a simulation model based on the required input model, but option -flip\_comments invokes a method for handling user-defined simulation code in the required input model. If option is set, PsN will create the simulation model by flipping comments (commented lines will be uncommented and vice versa) between the tags
 
 
 \begin{verbatim}
@@ -77,7 +77,9 @@ A simple way to simulate with uncertainty. Instead of using identical parameter 
 Only relevant in combination with -rawres\_input. Default 1. The number of result lines to skip in the input raw results file before starting to read final parameter estimates. In a regular bootstrap raw\_results file the first line of estimates refers to the input model with the full dataset, so therefore the default offset is 1. 
 \nextopt
 \optname{nca\_options}
-This option takes a string that will be copied verbatim to the R script created to invoke nca.R. Strings containing spaces or double quotes can be enclosed within single quotes. Example: \verb|nca run1.mod -nca_options='blq = "yes", blqNm = "BLQ"'|
+This option takes a string that will be copied verbatim to the R script created to invoke nca.R. Strings containing spaces or double quotes can be enclosed within single quotes on Linux or MacOS. Example: \verb|nca run1.mod -nca_options='blq = "yes", blqNm = "BLQ"'|
+On Windows strings containing spaces must be enclosed within double quotes and to have a double quote in the string this must be preceeded with a backslash.
+Example: \verb|nca run1.mod -nca_options="blq = \"yes\", blqNm = \"BLQ\""|
 \nextopt
 \optname{include\_all\_columns}
 If set all columns in \$INPUT, that are not marked as skipped or dropped, will be included in the tables.
@@ -97,7 +99,7 @@ The option -samples is required. The scripts does not allow -samples to be small
 	\item parameter estimates drawn from a prior distribution defined using \$PRIOR in the input/simulation model.
 \end{enumerate}
 
-Alternatives 4) and 5) result in simulation with uncertainty. Note that this is normally not appropriate for a vpc or npc. 
+Alternatives 4) and 5) result in simulation with uncertainty.
 
 The user may either skip the \$SIMULATION record entirely and let the program produce it according to the rules specified in section Modified models – model for simulated data. Or the user can include a complete \$SIMULATION record, for example when using special random distributions. Inclusion of a \$SIMULATION record is needed when simulating categorical data is intended (vpc with -levels option). In this case the model file must be equipped with IF(ICALL.EQ.4) coding to separate the simulation model from the estimation model, and the \$SIMULATION record must contain both a normal seed and a uniform seed (1234 UNIFORM). If there is a user-defined \$SIMULATION record, the program will replace the random seeds, set NSUBPROBLEMS to the number of samples requested on the input line, check that TRUE=FINAL is set in the case when the option -msfo is used, and set/unset ONLYSIMULATION to be compatible with the option keep\_estimation. If option rawres\_input is used, the program will create one simulation model per sample.
 
