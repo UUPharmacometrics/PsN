@@ -1,4 +1,12 @@
 ************************
+Perl-speaks-NONMEM
+************************
+
+Perl-speaks-NONMEM (PsN) is a collection of Perl modules and programs aiding in the development of non-linear mixed effect models using NONMEM. The functionality ranges from solutions to simpler tasks such as parameter estimate extraction from output files, data file sub setting and resampling, to advanced computer-intensive statistical methods. PsN includes stand-alone tools for the end-user as well as development libraries for method developers.
+
+Please find more information on the webpage: http://psn.sourceforge.net/
+
+************************
 Installation
 ************************
 
@@ -56,6 +64,7 @@ needed, see psn_configuration.pdf
 ************************
 Documentation
 ************************
+
 All documentation is found in the doc subdirectory of the PsN 
 installation directory. During installation it is also possible 
 to have all documentation copied to a user-specified directory.
@@ -63,6 +72,23 @@ to have all documentation copied to a user-specified directory.
 All documentation can also be downloaded from
 the PsN website http://psn.sourceforge.net/
 
+************************
+Testing 
+************************
+
+To install and run the PsN test suite see the developers_guide.pdf on the homepage
+
+************************
+Licensing 
+************************
+
+Please see the file called COPYING
+
+************************
+Authors 
+************************
+
+Please see the file called AUTHORS
 
 ************************
 Dependencies 
@@ -86,6 +112,3 @@ Math::Random installed even though the installation script complains
 then just go ahead with the installation and test running execute with 
 option -min_retries=1 . If it works then you do have Math::Random and all 
 is well.
-
-
-
