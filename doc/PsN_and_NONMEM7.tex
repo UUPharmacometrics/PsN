@@ -1,6 +1,6 @@
 \input{inputs/format_header.tex}
 \guidetitle{PsN and NONMEM7}
-%Kajsa review 2013-11-18
+%Kajsa review 2014-05-20
 \begin{document}
 
 \maketitle
@@ -9,24 +9,23 @@
 \section{Introduction}
 This version of PsN has been tested with NONMEM 7.1.0, 7.1.2, 7.2.0 and 7.3.0. Not all features of NONMEM 7 are supported. Some will simply be ignored while other may cause errors if used. See details below.
 
-\section{Running with an NMQual installation of NONMEM 7.2}
-Models can be run with NMQual8 and NONMEM 7.2 if PsN version is 3.5.3 or later, option -nmqual is set and the user has installed NONMEM using a slightly modified nm72.xml (changing the expected control stream suffix from .ctl to .mod), see document psn\_configuration.pdf. The configuration file must contain the path to the autolog.pl script, see psn\_configuration.pdf. The option -nmqual\_xml is needed, the default is log.xml (located in directory from where PsN is called). Options to nmfe72, which is invoked by autolog.pl, can be passed on by PsN via options -parafile, -nodes and -nmfe\_options, see below. PsN will start NM7.2 using the call (everything on one line)
-perl    full\_path\_to\_autolog\_set\_in\_psn.conf    xml\_file\_from\_option\_nmqual\_xml    run    ce path\_to\_psn\_generated\_run\_directory    psn (extra nmfe72 options)
-
+\section{Running with an NMQual8 installation of NONMEM}
+PsN4 supports NMQual8. See psn\_configuration.pdf regarding minor recommended changes in psn.conf, and also see
+the help text for option -nmqual in common\_options\_defaults\_versions\_psn.pdf.
+Running parallel NONMEM with NMQual through PsN will not work unless the do-on-run block of log.xml is modified
+(not tested).
 
 \section{Parallel execution of single models in NONMEM 7.2 and higher}
-PsN-3.4.2 and later supports the parallel execution feature of NONMEM 7.2 and higher with nmfe. It is required that the NONMEM version number 7.2 or later is properly set in psn.conf. 
-The feature is invoked by using PsN option -parafile=$\langle$file$\rangle$, and optionally -nodes=N, where $\langle$file$\rangle$ is the name of a NONMEM parafile. PsN will copy the parafile down to the run directory and pass on the name and the nodes option as input to nmfe72. PsN can currently only handle one parafile at a time. The parafile option is common to all PsN scripts, and is further described in common\_options\_defaults\_versions\_psn.pdf.
+PsN4 supports the parallel execution feature of NONMEM. PsN will not check that an mpi daemon is running, or that any other necessary parallelization preparations have been done. Therefore the user must make sure it is possible to run parallel NONMEM with the nmfe script before trying to do it through PsN.
 
-PsN will not check that an mpi daemon is running, or that any other necessary parallelization preparations have been done. Therefore the user must make sure it is possible to run parallel NONMEM with the nmfe script before trying to do it through PsN.
+It is required that the NONMEM version number 7.2 or later is properly set in psn.conf. 
+The parallelization feature is invoked by using PsN option -parafile=$\langle$file$\rangle$, and optionally -nodes=N, where $\langle$file$\rangle$ is the name of a NONMEM parafile. PsN will copy the parafile down to the run directory and pass on the name and the nodes option as input to nmfe72. PsN can currently only handle one parafile at a time. The parafile option is further described in common\_options\_defaults\_versions\_psn.pdf.
 
 A defaults.pnm file can be copied down to the NM run directory by setting PsN option -extra\_files, see common\_options\_defaults\_versions\_psn.pdf.
 
 The -threads option does not affect and is not affected by any parallel execution of a single model. The -threads option governs how many models PsN will submit for execution (by e.g. nmfe72) at a time. The user must ensure that the number of threads multiplied by the number of nodes used for a single model does not exceed what is desired. 
 
-If running on a cluster the user must set flags necessary for parallel execution, e.g. -pe for SGE, using the existing PsN options, e.g. -sge\_prepend\_flags, -lsf\_options or -slurm\_prepend\_flags. PsN does not do this automatically. Two new option have been added for the torque system, -torque\_queue and -torque\_prepend\_flags, which enables flexible settings through PsN.
-
-
+If running on a cluster the user must set flags necessary for parallel execution, e.g. -pe for SGE, using the existing PsN options, e.g. -sge\_prepend\_flags, -lsf\_options or -slurm\_prepend\_flags. PsN does not do this automatically. 
 \section{New options to nmfe72, nmfe73}
 There is a set of new options to nmfe72, e.g. -xmloff. These options can be passed on by PsN using option -nmfe\_options. Option -nmfe\_options is further described in common\_options\_defaults\_versions\_psn.pdf. If setting option -nmfe\_options=licfile=some\_license\_file then the license file must also be set with the PsN option -extra\_files, unless an absolute path to the license file is given, in which case option -extra\_files is not needed. See common\_options\_defaults\_versions\_psn.pdf for a description of the -extra\_files option.
 
@@ -51,7 +50,8 @@ In NONMEM 7.2 and higher it is possible to write the control stream in mixed cas
 \section{New output files in NONMEM 7}
 PsN will set retry numbering for NM7.2 new output files .xml .phm .shk .grd .smt .rmt just as for .lst etc. The numbered files will be cleaned if \mbox{clean $>=2$}.
 
-Up until version 3.4.8, PsN will copy all NM7 output files back to the calling directory. In version 3.4.9 and later, only the lst-file will be copied by default. More files will be copied if the user sets the extensions of those files via the PsN option -nm\_output. Example: -nm\_output=ext,cov,cor. Note it the user lets the installation script create a psn.conf file then nm\_output will be set to -nm\_output=ext,cov,cor,coi,phi 
+Only the lst-file will by default be copied back to the calling directory. 
+More files will be copied if the user sets the extensions of those files via the PsN option -nm\_output. Example: -nm\_output=ext,cov,cor. Note it the user lets the installation script create a psn.conf file then nm\_output will be set to -nm\_output=ext,cov,cor,coi,phi 
 
 Cleaning of NM7.2 output files: If \mbox{clean $>=1$} then the following files are removed: LINKC.LNK, compile.lnk, gfortran.txt, ifort.txt, garbage.out, newline, nmexec.set, parafile.set, prcompile.set, prdefault.set, prsame.set, psn.log, rundir.set, runpdir.set, temporaryfile.xml, temp.out, trashfile.xxx, trskip.set, worker.set, xmloff.set, prsizes.f90, licfile.set, background.set, FMSG, FSIZES
 
@@ -139,7 +139,8 @@ The CHAIN method (reading initial estimates from a rectangular file) will not wo
 
 \section{Shrinkage}
 
-Starting with PsN-3.1.0 shrinkage values are reported as percentages instead of fractions. If option -shrinkage is used, PsN will compute iwres shrinkage and eta shrinkage. From PsN-3.2.12 and on, shrinkage is never read from NONMEM output. PsN will compute shrinkage if option -shrinkage is set on the command-line.
+Shrinkage values are reported as percentages. If option -shrinkage is used, PsN will compute iwres shrinkage and eta shrinkage. 
+Shrinkage is never read from NONMEM output. PsN will compute shrinkage if option -shrinkage is set on the command-line.
 
 \section{CWRES and iofv}
 

@@ -1,6 +1,6 @@
 \input{inputs/format_header.tex}
 \guidetitle{SSE user guide}
-%review Kajsa 2013-11-19
+%review Kajsa 2014-05-20
 
 \begin{document}
 
@@ -10,15 +10,15 @@
 \section{Introduction}
 
 
-SSE – Stochastic Simulation and Estimation – is a tool for model comparison and hypothesis testing. First, using a given model, henceforth called the input model, a number of simulated datasets are generated. Then the input model and a set of alternative models are fitted to the simulated data. Finally, a set of statistical measures are computed for the parameter estimates and objective function values of the various models. Examples:
-\begin{verbatim}
-sse moxonidine.mod -samples=1000 -alternative_models=alt1.mod,alt2.mod
+SSE – Stochastic Simulation and Estimation – is a tool for model comparison and hypothesis testing. First, using the input model, a number of simulated datasets are generated. Then the input model and a set of alternative models are fitted to the simulated data. Finally, a set of statistical measures are computed for the parameter estimates and objective function values of the various models. 
 
-sse pheno.mod -samples=500 -seed=12345 -threads=5
+Example calls:
+\begin{verbatim}
+sse run1.mod -samples=1000 -alternative_models=alt1.mod,alt2.mod
 \end{verbatim}
 
 \section{Input and options}
-A model file is required on the command-line.
+A model file, the simulation model, is required on the command-line.
 \begin{optionlist}
 \optdefault{samples}{N}
 The number of simulated datasets to generate is a required option. N must be greater than or equal to 2. 
@@ -61,7 +61,7 @@ significant_digits.gt.3.5
 This option can only be used in combination with -rawres\_input. It turns off 
 simulation with uncertainty and instead uses the parameter values from the 
 rawres\_input file as initial values for the estimation step. When this 
-option is not used, the estimation initial values will be the values
+option is not used, the estimation initial values will be the same as the values
 used for simulating data.
 \nextopt
 \optdefault{out\_filter}{comma-separated list of conditions}
@@ -85,7 +85,7 @@ Example:
 \end{optionlist}
 
 \subsection{Some general PsN-options which are useful in combination with sse }
-For a complete list of common options see common\_options\_defaults\_versions.pdf, or psn\_options -h on the commandline. The option -abort\_on\_fail (see common\_options\_..) will only affect the estimations of the simulated datasets. PsN always aborts if a simulation in sse fails.
+For a complete list of common options see common\_options\_defaults\_versions.pdf, or psn\_options -h on the commandline. 
 
 \begin{optionlist}
 \optdefault{clean}{X}
@@ -169,9 +169,21 @@ The simulated datasets are \$TABLE output from NONMEM, and NONMEM formats and ro
 \end{enumerate}
 
 \section{Recovering a crashed/stopped sse}
-If the sse run is halted before the simulations are finished, it is possible to reuse the already finished runs. Run the same command as before, set option -directory if it was not set in the original call. Please note that PsN will print a message “Starting NNN NONMEM executions” that indicates that all simulations are rerun, but the check for reusable results is done after this message is printed. Some copying of results is done, and some existing result files will be overwritten with identical copies. 
+If the sse run is halted before the simulations are finished and option -clean is <=2, 
+it is possible to reuse the already finished runs. Run the same command as before, set option -directory if it was not set in the original call. Please note that PsN will print a message “Starting NNN NONMEM executions” that indicates that all simulations are rerun, but the check for reusable results is done after this message is printed. Some copying of results is done, and some existing result files will be overwritten with identical copies. 
 
-If the sse run is halted after the simulations are finished, PsN can reuse the results from both simulations and finished estimations. Run the same command again with -directory set. Do not set the rerun option. PsN will print that all NONMEM executions are started even if results are reused, see above. 
+If the sse run is halted after the simulations are finished and option -clean is <=2, 
+PsN can reuse the results from both simulations and finished estimations. Run the same command again with -directory set. Do not set the rerun option. PsN will print that all NONMEM executions are started even if results are reused, see above. 
+
+If the sse run is stopped during the estimation phase when -clean=3, 
+partial results can still be recoved but it requires a number of steps.
+\begin{enumerate}
+\item Change directory to the m1 subdirectory of the sse run directory
+\item Run execute on all .mod-files in the m1-subdirectory that do not already have a .lst-file. Note that execute accepts multiple .mod-files in a single run.
+\item Run the rawresults script (no options) in the m1 directory after all execute runs have finished.
+This creates a raw\_results file based on the output in the m1 subdirectory.
+\item Change directory to outside the main sse directory and run sse with option -recompute (see help text for this option) to compute the final results.
+\end{enumerate}
 
 \section{Technical overview of algorithm}
 The program creates N (N= number of samples) simulation model files that are modified copies of the input model file given on the command line. Then the program creates N*M (M=number of alternative model files + 1 (for the input model file)) estimation model files. Each model file has one estimation copy per simulated dataset. N simulated datasets are generated by running NONMEM once for each simulation model file, and then each simulated dataset is used for parameter estimation M times, once with each model (simulation + alternatives). The estimated parameters and OFV values from the M*N runs are collected in raw\_results.csv together with other NONMEM outputs, and statistical measures are written to sse\_results.csv. 
@@ -202,7 +214,9 @@ The program creates N (N= number of samples) simulation model files that are mod
 
 \subsection{Principles of statistical analyses}
 
-All estimated parameters values; thetas, omegas and sigmas, are compared with the initial parameter values in the input model file, i.e. the values used for generating the simulated datasets. The matching is based on numbering, so the value of theta 3 used for simulation will be compared with all estimated theta 3. It is up to the user to ensure that the matching is correct, i.e. that the simulation value of CL is always compared with the estimated values of CL. If for example OMEGA(1,1), OMEGA(2,2), OMEGA(3,2) and OMEGA(3,3) are defined in the modelfile, they will in the sse output be numbered OM\_1, OM2, OM\_3 and OM\_4, i.e. values are numbered naively without considering if they are on the diagonal or not. Same for SIGMA.  If OMEGA/SIGMA is diagonal in the original model but of block form in an alternative model, the matching will be incorrect. To avoid that error, use block form also in the original model, setting off-diagonal elements to 0 (NONMEM will keep these fixed). If there are more parameters in an alternative model than in the simulation or vice versa, no matching can be done and the spaces for the comparison statistics will be empty. If parameters are different from a model to another one, numbering should be done considering that, or if not comparisons should not be interpreted. 
+All estimated parameters values; thetas, omegas and sigmas, are compared with the values used for generating the simulated datasets. The matching is based on numbering, so the value of theta 3 used for simulation will be compared with all estimated theta 3. It is up to the user to ensure that the matching is correct, i.e. that the simulation value of CL is always compared with the estimated values of CL. 
+If for example OMEGA(1,1), OMEGA(2,2), OMEGA(3,2) and OMEGA(3,3) are defined in the modelfile, they will in the sse output be numbered OM\_1, OM2, OM\_3 and OM\_4, i.e. values are numbered naively without considering if they are on the diagonal or not. Same for SIGMA. 
+If OMEGA/SIGMA is diagonal in the original model but of block form in an alternative model, the matching will be incorrect. To avoid that error, use block form also in the original model, setting off-diagonal elements to 0 (NONMEM will keep these fixed). If there are more parameters in an alternative model than in the simulation or vice versa, no matching can be done and the spaces for the comparison statistics will be empty. If parameters are different from a model to another one, numbering should be done considering that, or if not comparisons should not be interpreted. 
 
 SSE does not check whether minimization was successful or not. Statistical computations include also parameter estimates from NONMEM runs terminated with e.g. rounding errors, unless the option -out\_filter is used, see above. SSE will skip all runs where the ofv cannot be read from the lst-file  or is equal to 0. This means that e.g. the mean may be based on different number of runs (samples) for different alternative models. If the ofv is available but a parameter value is missing, then SSE will print a warning and compute the statistics without that value. 
 

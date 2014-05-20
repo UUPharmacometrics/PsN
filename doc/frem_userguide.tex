@@ -1,6 +1,6 @@
 \input{inputs/format_header.tex}
-\guidetitle{FREM tecnical description}
-%Kajsa review 2013-11-15
+\guidetitle{FREM technical description}
+%Kajsa review 2014-05-20
 
 \begin{document}
 
@@ -8,11 +8,13 @@
 
 
 \section{Introduction}
-The frem, Full Random Effects Modelling, script creates a set of models to gradually include random effects on “everything”.
-[TODO Description of frem methodology should be added. Reference ?] 
-
+The frem program is an aid to the method described in
+\emph{A full model approach based on the covariance matrix of parameters and covariates},
+PAGE 21 (2012) Abstr 2455, M Karlsson. 
+The program step by step builds the model with full random effects.
 If option -vpc is set then script will prepare model that can be run with vpc.
-Example
+
+Example call
 \begin{verbatim}
 frem run1.mod -time_varying=WT -occasion=VISI -parameters=PHI,LAG 
   -invariant=SEX,DGRP -vpc -no-check -estimate=3
@@ -414,6 +416,8 @@ parameters that have BSV ETA and/or BOV ETA on them.
 \subsection{Step 4: Prepare to run  vpc}
 Now a regular vpc can be run on frem\_vpc2.mod found in the frem run directory.
 
+\end{document} 
+
 \section{Appendix: Compute conditional omega block}
 frem\_vpc\_cond\_om.R
 Input is omega block from lst-file (or csv file om\_block.csv) 
@@ -425,4 +429,3 @@ Ok to run on block from BOV omega?
 
 
 
-\end{document} 

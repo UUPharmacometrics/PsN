@@ -1,18 +1,23 @@
 \input{inputs/format_header.tex}
 \guidetitle{PsN configuration}
 \begin{document}
-
+%review Kajsa 2014-05-20
 \maketitle
 
 \section{The quick and easy way}
 Let the installation script create psn.conf for you. If you have already installed PsN and did not let the script create psn.conf but have changed your mind now, redo the PsN installation and have psn.conf automatically generated this time. If you will run PsN locally on your computer with a standard NONMEM installation you are then done.
-If you have a previous working PsN3 installation then you can copy psn.conf from the old installation to the new one, but you need to edit 
-default settings of nmfe\_options, if present in the old psn.conf.
-If you have a previous working PsN4 installation then you can copy psn.conf from the old installation to the new one, and that should work.
-If you have a NMQual8 installation of NONMEM and want to always run NONMEM via the autolog script then you need to replace nmfe=1 with nmqual=1 in psn.conf.
+
+An alternative to letting the installation script create a new psn.conf is to copy 
+psn.conf from a previous working PsN installation to the new installation directory.
+If the old psn.conf was from PsN3 you need to edit 
+default settings of nmfe\_options, if set in the old psn.conf, because the syntax of this option has
+changed between PsN3 and PsN4.
+
+If you have a NMQual8 installation of NONMEM and want to always run NONMEM via the autolog script then you need to replace nmfe=1 with nmqual=1 in the \verb|[default_options]| section in psn.conf. 
+
 If you have other needs then you need to read the rest of this document.
 
-\section{Introduction}
+\section{Overview}
 The configuration file psn.conf is required to make PsN run correctly. In the configuration file the NONMEM installation directory is specified, together with essential version information. In psn.conf it is also possible to specify personal default values, see more information below. Comment lines in psn.conf start with a semicolon (;). Throughout the default psn.conf distributed with PsN there are examples of settings for Unix and Windows. The user must review the settings, add and remove semicolons, and change selected paths.
 
 \section{Configuration file location}
@@ -32,7 +37,7 @@ or the end of the file.
 \section{Setting defaults for command line options in psn.conf}
 The user can override source code defaults by setting options in the appropriate section in psn.conf. Settings on the command line will override settings in psn.conf. 
 
-The option names used in psn.conf are the same as would be used on the command line, and documentation can be found in common\_options\_defaults\_versions\_psn.pdf. Some options do not take any value on the commandline, for example -run\_on\_sge, but if set in psn.conf those options must also have a value (1 or 0). If such an option is set in psn.conf, for example
+The option names used in psn.conf are the same as would be used on the command line, and documentation can be found in the document common\_options\_defaults\_versions\_psn.pdf. Some options do not take any value on the commandline, for example -run\_on\_sge, but if set in psn.conf those options must also have a value (1 or 0). If such an option is set in psn.conf, for example
 -run\_on\_sge = 1, the option can be disabled on the commandline by using -no, for example 
 -no-run\_on\_sge. The -no prefix cannot be used in psn.conf, instead set the option to 0.
 
@@ -128,10 +133,16 @@ of the NONMEM installation directory, and return an error if not found.
 PsN will use the log.xml file in the nmqual subdirectory of the NONMEM installation directory as input to autolog.pl, so it is important that nmqual/log.xml exists and that the containing NONMEM installation information has not been changed after the original NONMEM installation via NMQual.
 
 \noindent The full command used by PsN is\\
-perl autolog.pl log.xml run ce workdir psn (extra NM options)
+\verb|perl /path/autolog.pl /path/log.xml run ce /full/path/workdir psn| (extra NM options)
 
-Note: The user does not have modify log.xml in any way when running with PsN4.
-When running PsN3 with NMQual the user had to modify the 'run' section of log.xml, but with PsN4 log.xml should be left as is.
+The user is not required to modify log.xml in any way when running with PsN4.
+When running PsN3 with NMQual the user needed to modify the 'run' section of log.xml, but with PsN4 
+log.xml can be left as is.
+
+Important note: The extra NM options above are options set with e.g. -nmfe\_options or -nodes, but unless the
+do-on-run block of the log.xml file uses these extra options, 
+\emph{they will be ignored}. 
+PsN will append them to the autolog.pl call but it is up to log.xml to decide what to do with them.
 
 If the user does not set option -nmqual, but sets -nm\_version to an NMQual installation of NONMEM, then PsN will look for an nmfe script in the installation directory
 as described in section Running nmfe from within PsN.

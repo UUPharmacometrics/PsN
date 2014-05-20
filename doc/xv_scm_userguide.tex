@@ -1,6 +1,6 @@
 \input{inputs/format_header.tex}
 \guidetitle{XV\_SCM user guide}
-%review Kajsa 2013-11-19
+%review Kajsa 2014-05-19
 
 \begin{document}
 
@@ -8,9 +8,18 @@
 
 
 \section{Overview}
-Cross-validated scm, xv\_scm, depends heavily on the scm program, and all scm options apply also to xv\_scm except that options search\_direction, gof, p\_value, p\_forward, p\_backward and update\_derivatives are ignored. Please refer to scm\_userguide.pdf for help on scm options.
+The xv\_scm program is an implementation of the method described in 
+\emph{Evaluation of Stepwise Covariate Model Building Combined with Cross-Validation},
+PAGE 20 (2011) Abstr 2111, T Katsube, and 
+\emph{Characterization of Stepwise Covariate Model Building Combined with Cross-Validation},
+PAGE 21 (2012) Abstr 2482, T Katsube. 
+
+
+The xv\_scm program
+depends heavily on the scm program, and all scm options apply also to xv\_scm except that options search\_direction, gof, p\_value, p\_forward, p\_backward and update\_derivatives are ignored. Please refer to scm\_userguide.pdf for help on scm options.
 A word of caution: xv\_scm produces many files and takes up much disk space. It is wise to delete all the split\_X subdirectories once the results are collected.
-Example
+
+Example xv\_scm call:
 \begin{verbatim}
 xv_scm -config_file=config_xv.scm -groups=5 -splits=3 -seed=12345
 \end{verbatim}
@@ -26,13 +35,16 @@ These options are specific to xv\_scm, and they can only be given on the command
 
 \begin{optionlist}
 \optdefault{groups}{N}
-Default 5. The number of cross-validation groups to make an N-fold cross-validation. 
+Default 5. The number of cross-validation groups for an N-fold cross-validation. 
 \nextopt
 \optdefault{splits}{N}
 Default 1. The number times to perform a complete cross-validation with a new data split. 
 \nextopt
 \optdefault{stratify\_on}{variable}
-Default not used. PsN will try to preserve the relative proportions of individuals with different values of the stratification variable when dividing the data into 'groups' groups during cross-validation. The stratification variable must be found in the original dataset. 
+Default not used. If set, PsN will try to preserve the relative proportions of individuals with different values of the stratification variable when dividing the data into groups during cross-validation. The stratification variable must be found in \$INPUT of the input model file. Headers in the data file will be ignored.
+If the desired stratification variable is continuous it is recommended to first group the values,
+add a group number column to the data set,
+and then stratify on group number instead of the continuous variable. 
 \nextopt
 \end{optionlist}
 

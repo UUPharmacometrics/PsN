@@ -1,13 +1,16 @@
 \input{inputs/format_header.tex}
 \guidetitle{Common options PsN}
-%revision 2013-11-15 Kajsa
+%revision 2014-05-20 Kajsa
 
 \begin{document}
 
 \maketitle
 
 \section{Introduction}
-The various PsN scripts share many building blocks, and many command-line options are common to all PsN scripts. The command psn -h list all available scripts, and the psn\_options -h lists all common PsN options. By using -help instead of -h more details are printed. 
+This document lists all PsN options that concern how NONMEM is run (plus a few other options). Since
+most PsN programs involve running NONMEM, these options are common to all those scripts.
+The execute program does almost nothing except running NONMEM, hence this document lists the most important options
+to execute.
 
 \section{Default values from source code or configuration file}
 PsN options can be defined in three places: in the PsN source code, in the configuration file psn.conf or on the command-line. The options given on the command-line always have precedence over any other values given for the same option. If an option is not given on the command-line, PsN will take values from the configuration file named psn.conf, see the document psn\_configuration.pdf. Last, if the option was defined neither on the command-line nor in the psn.conf file, PsN will use the default value in the source code. 
@@ -15,35 +18,36 @@ PsN options can be defined in three places: in the PsN source code, in the confi
 Please note: The default listed in this document are from the source code, but it is important to be aware that these defaults will be overridden by values given in a psn.conf file. For example, crash\_restarts is set to 0 in the psn.conf included in the PsN release package while the PsN source code default is 4. 
 
 \section{Choosing PsN version}
-It is possible to have several installations of PsN and use them in parallel. The default version of PsN may be changed every time a new installation is made. 
-
-To check which version is the default use command
+It is possible to have several installations of PsN and use them in parallel. The default version of PsN may be changed every time a new installation is made. To check which version is the default use command
 \begin{verbatim}
 psn -version
 \end{verbatim}
 
-A specific version may be called with its version number, for example
+\noindent A specific version may be called with its version number, for example
 
 \begin{verbatim}
 execute-2.3.2  -help 
 \end{verbatim}
 
-Note: This did not work for previous versions of PsN on Windows. When installing PsN4 on Windows all previously installed versions (installed with the same bin directory) are fixed automatically so that they are callable with a specific version as explained above.
+\noindent Note: When installing PsN4 on Windows all previously installed versions (installed with the same bin directory,
+including PsN3-versions) are fixed automatically so that they are callable with a specific version as 
+explained above. This is a new feature of PsN4 when installing on Windows.
 
 \section{Choosing NONMEM version}
-You can use the PsN-option -nm\_version to use different versions of NONMEM. To use a NONMEM version it must be defined in the [nm\_versions] section in psn.conf, see psn\_configuration.pdf for details. You can check which versions are defined, without opening psn.conf, using the command
+If you have more than one NONMEM version installed you can use the PsN-option 
+-nm\_version to choose which one to use, as long as it is 
+defined in the [nm\_versions] section in psn.conf, see psn\_configuration.pdf for details. 
+You can check which versions are defined, without opening psn.conf, using the command
 
 \begin{verbatim}
 psn -nm_versions
 \end{verbatim}
 
-You can use a special nonmem version listed in psn.conf via the option -nm\_version, for example
+\noindent To pick a special nonmem version use option -nm\_version, for example
 
-\begin{verbatim}
-execute -nm_version=vi_big (more options...)
-\end{verbatim}
+\verb|execute -nm_version=vi_big| (more options...)
 
-\section{Options}
+\section{Common options}
 The following options will be accepted by most PsN-tools. Depending on the tool, an option may have little effect. For example, the option -threads will not change the execution time of execute unless you run more than one model. The listed default values are the default in the PsN-code. If the option is set in psn.conf that value will override the code default. Choices on the command-line have highest priority.
 \begin{optionlist}
 \optname{abort\_on\_fail}
@@ -63,9 +67,10 @@ The nmtran check requires that it is the installation directory to NONMEM that i
 \optdefault{clean}{'integer'}
 Default 1. The clean option can take four different values:  0: means that nothing is removed, 1: NONMEM binary and intermediate files except INTER are removed, and files specified with option -extra\_files. 2: model and output files generated by PsN restarts are removed, and data files in the NM\_run directory, and (if option -nmqual is used) the xml-formatted NONMEM output. 3: the whole NM\_run directory is removed and if it is not an "execute" command, all modelfit\_dir:s will be removed. Setting -clean=3 will in most cases prevent resuming an interrupted run using the -directory option.
 \nextopt
-\optname{compress }
-Default not used. PsN will compress the contents of 'NM\_runX' to the file 'nonmem\_files.tgz' if the -compress option is used and if you have the archive and compress programs tar and gzip installed. If you use the -clean options, run files will be removed before the compression.  
-\nextopt
+%not sure if this option works, needs to be verified
+%\optname{compress }
+%Default not used. PsN will compress the contents of 'NM\_runX' to the file 'nonmem\_files.tgz' if the -compress option is used and if you have the archive and compress programs tar and gzip installed. If you use the -clean options, run files will be removed before the compression.  
+%\nextopt
 \optdefault{crash\_restarts}{'integer'}
 Default 4. If a NONMEM output-file is produced but PsN is unable to read it properly it is assumed that NONMEM crashed, probably due to something in the operating system, and PsN will start the run again. But PsN will not consider it a retry and will not change initial estimates. 
 \nextopt
@@ -77,9 +82,6 @@ Default 'modelfit\_dirX' for execute, and 'scriptname\_dirX' for other scripts (
 \nextopt
 \optname{display\_iterations}
 Default not used.  This option turns on display the iterations output from NONMEM during the model run. If the option is not set, the iterations output will be redirected to a file. As with any option the user can choose to change the default by editing psn.conf, see the document psn\_configuration.pdf. The template psn.conf distributed with the PsN installation package has this option set as the default for execute, but no other scripts. The option can be disabled with -no-display\_iterations. 
-\nextopt
-\optdefault{extra\_data\_files}{'extra\_data1.dta, COLUMN1, COLUMN2'}
-Default not used. NONMEM only allows 20 column datasets, but PsN can add code to control files that reads extra data columns from a separate file. To use this feature you must divide the original file into two using the script single\_valued\_columns (distributed together with PsN). Provided that each of the two new files contain at most 20 columns, you write the name of the file with multiple valued columns as the data file in the NONMEM modelfile. On the command line you then specify a comma separated list with -extra\_data\_files. The first element in the list is the name of the file with single valued columns, and the rest of the list is the column headers of the extra data file. If any of the two new files generated by single\_valued\_columns contains more than 20 columns, this feature cannot be used. 
 \nextopt
 \optdefault{extra\_files}{comma-separated list of filenames}
 Default not used. If you need extra files in the directory where NONMEM is run you specify them in the comma separated -extra\_files list. It could for example be fortran subroutines you need compiled with NONMEM, or a file with initial estimates for the NONMEM7 CHAIN command, or a defaults.pnm file (NONMEM 7.2 or later). 
@@ -121,7 +123,10 @@ Default 19. This option only has effect on Unix like operating systems. It  sets
 Only relevant together with option -parafile. Appends “[nodes]=option\_value” to the nmfe call. This option acts independently of -threads. There is no adjustment of -nodes based on -threads or vice versa, and if -threads=1 it is still possible to use -nodes=10. 
 \nextopt
 \optdefault{nm\_output}{comma-separated list of file extensions}
-Default not used.  NONMEM generates many output files per run. NM7.2 can, in addition to the lst-file, generate 11 files. PsN will always copy the lst-file back to the calling directory. The option -nm\_output decides which of the 11 additional files should also be copied back. The default is none, but the template psn.conf distributed with PsN has ext,cov,coi,cor,phi set. Note that NM output files which are not copied to the calling directory can still be found inside the run directory. 
+Default not used.  NONMEM generates many output files per run. 
+PsN will always copy the lst-file back to the calling directory. The option -nm\_output decides which of the more than 10 additional files should also be copied back. The default in the auto-generated psn.conf is ext,cov,cor,coi,phi. 
+Note that NM output files which are not copied to the calling directory can still be found inside the run directory
+unless -clean is set larger than 2. If the user runs NMQual8 (option -nmqual is set) and wants the log.xml file copied back then the log.xml extension should be included in the -nm\_output list.
 \nextopt
 \optdefault{nm\_version}{'string'}
 Default is 'default'. If you have more than one installation of NONMEM you can choose between them using the -nm\_version option. The installations must be specified in the psn.conf file. 
@@ -136,13 +141,20 @@ set automatically. Also, -nmfe is set in the default configuration file.
 Only relevant if NONMEM7.2 or later is used. 
 The text set with this option will be copied verbatim to the nmfe script call. PsN will not check that the options are allowed. When set on the PsN commandline the string must be enclosed by quotes if it contains any spaces, but when set in psn.conf it must never be enclosed by quotes even if it contains spaces. 
 Note that before PsN4 this option was given as a comma-separated list of options that PsN would reformat. What would for PsN3 be specified as 
-\verb|-nmfe_options=xmloff,prdefault| must for PsN4 be specified as \verb|-nmfe_options='-xmloff -prdefault'| on the commandline (use double quotes on Windows) or 
+\verb|-nmfe_options=xmloff,prdefault| must for PsN4 be specified as \verb|-nmfe_options='-xmloff -prdefault'| on the commandline (must use double quotes on Windows) or 
 \verb|nmfe_options=-xmloff -prdefault| in psn.conf.
 \nextopt
 \optname{nmqual}
 Default not used. Run an NMQual-installed NONMEM via autolog.pl. Only NMQual8 is supported. 
 When set, PsN will locate the autolog.pl file and log.xml in the nmqual subdirectory of the NONMEM installation directory, and then run \\
-perl autolog.pl log.xml run ce workdir psn (extra NM options)
+\verb|perl /path/autolog.pl /path/log.xml run ce /full/path/workdir psn| (extra NM options)
+
+Important note: The extra NM options are options set with e.g. -nmfe\_options or -nodes, but unless the
+do-on-run block of the log.xml file is edited to use these extra options, 
+\emph{they will be ignored}. PsN will append them to the autolog.pl call but it is up to log.xml to decide what to do with them.
+
+If the user wants by default to run PsN with the autolog script it is recommended to set nmqual=1 in the
+\verb|[default_options]| section in psn.conf and remove nmfe=1 from the same section. The user should also consider to add log.xml to the -nm\_output list in psn.conf (see help text for -nm\_output).
 \nextopt
 \optname{nonparametric\_etas}
 No help available for 'nonparametric\_etas' 
@@ -172,13 +184,14 @@ Setting the same seed guarantees the same sequence, but setting two slightly dif
 seeds does not guarantee two different random sequences, that must be verified.
 \nextopt
 \optname{shrinkage}
-Default not used. Calculate the shrinkage for the model run.  Shrinkage is calculated as 1-(sd(eta(x))/omega(x)) and measures the shrinkage of the empirical Bayes estimates (EBEs) towards the mean of the expected distribution.  A 'large' shrinkage means that diagnostics using EBEs cannot be trusted. The shrinkage values appear in the file raw\_results.csv. Warning: PsN-3.2.4 and earlier versions assumes that all parameters are estimated for all subjects. Therefore incorrectly high shrinkage values can be presented in the raw\_results file for parameters not estimable for certain individuals, e.g. drug effect parameters in the presence of subjects receiving only placebo treatment. In NONMEM7 eta shrinkage values are output in the lst-file, and PsN will present these instead. PsN-3.2.5 and later assumes that ETAs which are exactly 0 have not been estimated, and excludes these from the computations. PsN-3.2.5 and later never uses the NONMEM7 shrinkage values. When shrinkage is requested, PsN adds two \$TABLE to the modelfile so that NONMEM will output data needed for the shrinkage computation. For eta shrinkage the table requests items ID ETA1 ETA2... and for iwres shrinkage it requests items ID IWRES EVID. 
+Default not used. Calculate the shrinkage for the model run.  Shrinkage is calculated as 1-(sd(eta(x))/omega(x)) and measures the shrinkage of the empirical Bayes estimates (EBEs) towards the mean of the expected distribution.  A 'large' shrinkage means that diagnostics using EBEs cannot be trusted. The shrinkage values appear in the file raw\_results.csv. 
+PsN does not use the NONMEM7 shrinkage values. When shrinkage is requested, PsN adds two \$TABLE to the modelfile so that NONMEM will output data needed for the shrinkage computation. For eta shrinkage the table requests items ID ETA1 ETA2... and for iwres shrinkage it requests items ID IWRES EVID. 
 \nextopt
 \optname{skip\_data\_parsing}
-Default set. Automatically unset if -extra\_data\_files or -wrap\_data is used, and with bootstrap and cdd scripts. If option is set, data files will not be parsed, only dummy data objects will be created. Saves much time. 
+Default set. If option is set, data files will not be parsed unless some data processing is explicitly required, for example during bootstrapping. Saves time. 
 \nextopt
 \optname{tbs}
-Default not set. Invokes Transform Both Sides method, by default using the Box-Cox transformation. For details on the theory read Oberg and Davidian: http://onlinelibrary.wiley.com/doi/10.1111/j.0006-341X.2000.00065.x/abstract
+Default not set. Invokes Transform Both Sides method, by default using the Box-Cox transformation. For details on the theory read Oberg and Davidian: http://onlinelibrary.wiley.com/doi/10.1111/ j.0006-341X.2000.00065.x/abstract
 
 Bill Frame: http://www.ncbi.nlm.nih.gov/pubmed/19904583
  http://www.thtxinfo.com/
@@ -200,7 +213,12 @@ Also, the user must use untransformed data (e.g. no log-transformation or simila
 \end{enumerate}
 \nextopt
 \optname{dtbs}
-Default not set. Invokes Dynamic Transform Both Sides method. The model code is modified the same way as with -tbs, see above, except that the W definition is changed using a new ZETA parameter:
+Default not set. Invokes Dynamic Transform Both Sides method, see 
+ 
+Dosne AG, Keizer RJ, Bergstrand M, Karlsson MO. \emph{A strategy for residual error modeling incorporating both scedasticity of variance and distribution shape}. 
+PAGE 21 (2012) Abstr 2527.
+
+The model code is modified the same way as with -tbs, see above, except that the W definition is changed using a new ZETA parameter:
 \begin{enumerate}
 \item A new parameter ZETA will be defined, to be used in the error model. The THETA for this parameter will be automatically added.
 \item Any IPRED term in the W definition will be replaced with IPRED**ZETA.
@@ -242,19 +260,13 @@ The string must be enclosed in quotes, double quotes on Windows and either doubl
 If tbs\_delta is set then option -dtbs will be set automatically. See option -dtbs for more details. Options tbs\_zeta and tbs\_delta cannot be used in combination.  
 \nextopt
 \optdefault{threads}{'integer'}
-Default 1. Use the threads option to enable parallel execution of multiple NONMEM runs. On a desktop computer it is recommended to set -threads to the number of CPUs in the system plus one. You can specify more threads, but it will probably not increase the performance. If you are running on a computer cluster, you should consult your system administrator to find out how many threads you can specify. The -threads option will be ignored if you run on a grid system, since grids have their own scheduling algorithms. 
-\nextopt
-\optname{unwrap\_table\_files}
-Default not used. Ensures that all table rows are on a single line in the table file. 
+Default 1. Use the threads option to enable parallel execution of multiple NONMEM runs. On a desktop computer it is recommended to not set -threads higher the number of CPUs in the system plus one. You can specify more threads, but it will probably not increase the performance. If you are running on a computer cluster, you should consult your system administrator to find out how many threads you can specify. 
 \nextopt
 \optname{verbose}
 Default not used. With verbose used, PsN will print more details about NONMEM runs. More precisely PsN will print the minimization message for each successfull run and a R:X for each retry PsN makes of a failed run, where X is the run number. 
 \nextopt
 \optname{version}
 Default not used. Print PsN version of the script being called and exit. 
-\nextopt
-\optname{wrap\_data}
-Option wrap data has been disabled. Use \$SIZES in NONMEM to handle more than 50 items in \$INPUT. 
 \nextopt
 \optdefault{warn\_with\_trace}{'integer'}
 Default not used. If -warn\_with\_trace is set, PsN will print a stack trace for all error and warning messages. This is only for developers. 
@@ -406,7 +418,7 @@ Default empty. Only valid with -run\_on\_sge. The - signs must be included in th
 Default not used. PsN connects with United Devices Grid MP. With -run\_on\_ud PsN will submit to the UD grid with parameters defined in the "uduserconf" file. 
 \nextopt
 \optname{run\_on\_zink}
-Default not used. Experimental clustering on Windows machine. Non-functional 2008-08-01. 
+Default not used. Experimental.
 \nextopt
 \optname{run\_on\_slurm}
 Default not used. Use slurm queueing system.
@@ -427,7 +439,8 @@ Default not set. Only used with -run\_on\_slurm and -email\_address in combinati
 Default not set. Only used with -run\_on\_slurm and -send\_email in combination, otherwise ignored. Used for sbatch options --mail\_user=$\langle$email\_address$\rangle$ --mail\_type=ALL or END.  
 \nextopt
 \optdefault{slurm\_prepend\_flags}{'string'}
-Default empty. Only valid with -run\_on\_slurm. The - signs must be included in the string. The flags will be prepended to standard flag set in sbatch call. If multiple flags are given using the option on the commandline, they must be separeted by spaces (as in sbatch) and the whole list enclosed by quotes. If the option is set in psn.conf, there should be no quotes. 
+Default empty. Only valid with -run\_on\_slurm. The - signs must be included in the string. The flags will be prepended to standard flag set in sbatch call. If multiple flags are given using the option on the commandline, they must be separeted by spaces (as in sbatch) and the whole list enclosed by quotes. If the option is set in psn.conf, 
+there must be no quotes. 
 \nextopt
 \end{optionlist}
 

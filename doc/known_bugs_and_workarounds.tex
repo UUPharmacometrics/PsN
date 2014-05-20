@@ -1,6 +1,6 @@
 \input{inputs/format_header.tex}
 \guidetitle{Known bugs and workarounds}
-%review Kajsa 2013-11-18
+%review Kajsa 2014-05-20
 
 \begin{document}
 
@@ -10,16 +10,15 @@
 \section{Introduction}
 Work to fix bugs in PsN is ongoing, but often feature addition is prioritized over bug fixing, especially if there is a known workaround for the bug. This document list the most important known bugs, including workarounds when possible.   
 
+\section{NONMEM hard crash during \$COV step causes PsN to fail to read any output}
+If the estimation step is successful but NONMEM crashes entirely during the covariance step, causing the
+lst-file to be truncated (for example missing the objective function value of the successful estimation),
+PsN will fail to read final estimates even though they are available in the .ext-file, 
+and will treat the entire run as crashed. A workaround is to manually add a line with tag \verb|#OBJT:| after the 
+\verb|#TERE:| tag in the lst-file.
+
 \section{Sensitive format for raw results input file in sse, vpc, npc}
-
 Any column header that contains a comma, e.g. OMEGA(2,1), must be enclosed in double quotes. This is done automatically when PsN creates a raw results file but may be changed if the file is saved in e.g. Excel.
-
-\section{Remove leading empty column of csv-format data file}
-
-Bootstrap will crash if the first column of a csv-format datafile is empty.
-
-\section{Ignore with extended\_grid script}
-Use IGNORE=@ in the \$DATA record rather than IGNORE=I (where I can stand for ID). Script will crash with IGNORE=I.
 
 \section{Missing estimates in raw\_results.csv when first \$PROBLEM uses \$MSFI}
 When the first \$PROBLEM in the modelfile uses \$MSFI, and \$THETA, \$OMEGA and \$SIGMA are all missing in that \$PROBLEM, then there will be no theta/omega/sigma headers in raw\_results.csv and the parameter estimates will not be printed to the file.
@@ -27,12 +26,6 @@ When the first \$PROBLEM in the modelfile uses \$MSFI, and \$THETA, \$OMEGA and 
 \section{Data values with more than five significant digits in sse}
 The simulated datasets used in sse are \$TABLE output from NONMEM, and NONMEM rounds off values when printing tables. In NONMEM 6 1013201 is rounded to 1013200 (five significant digits), and if this makes a significant change to the model estimation, for example if the value is a covariate, then the sse results will be wrong. In NONMEM7 it is possible to set the FORMAT option in \$TABLE to make sure no important information is lost. With NONMEM 6 the user must make sure the rounding to five significant digits does not harm the results.
 
-\section{boot\_scm -stratify\_on is sensitive to header in the data file}
-If the option -stratify\_on is used in boot\_scm, then it the the column number/name in the
-data file that PsN will use when finding the stratification column \emph{unless} the model has 
-an IGNORE/ACCEPT=list statement in \$DATA. If IGNORE/ACCEPT=list is found 
-PsN performs a filtering step where the \$INPUT headers are copied
-to the filtered data file, and then the column number/name in
-\$INPUT will be used to find the stratification column. 
+
 
 \end{document}

@@ -1,6 +1,6 @@
 \input{inputs/format_header.tex}
 \guidetitle{LASSO user guide}
-%review Kajsa 2013-11-18
+%review Kajsa 2014-05-19
 
 \begin{document}
 
@@ -10,16 +10,16 @@
 \section{Introduction}
 Covariate models for population pharmacokinetics and pharmacodynamics are often built with a stepwise covariate modelling procedure (SCM, available in PsN). When analysing a small dataset this method may produce a covariate model that suffers from selection bias and poor predictive performance. The lasso \cite{Ribbing} is a method suggested to remedy these problems. It may also be faster than SCM and provide a validation of the covariate model. In the lasso all covariates must be standardised to have zero mean and standard deviation one. Subsequently, the model containing all potential covariate–parameter relations is fitted with a restriction: the sum of the absolute covariate coefficients must be smaller than a value, t. The restriction will force some coefficients towards zero while the others are estimated with shrinkage. This means in practice that when fitting the model the covariate relations are tested for inclusion at the same time as the included relations are estimated. For a given SCM analysis, the model size depends on the P-value required for selection. In the lasso the model size instead depends on the value of t which can be estimated using cross-validation.
 
-The lasso program does not support \$PRIOR in the input model.
-Examples
+Example lasso program call:
 \begin{verbatim}
 lasso run2.mod -relations=CL:CLCR-2,WT-3,,V:WT-2 -seed=2011
 \end{verbatim}
 
 \section{Input and options}
 
-\subsection{Lasso-specific input}
+\subsection{lasso-specific input}
 A model file is required on the command-line.
+The lasso program does not support \$PRIOR in the input model.
 
 \begin{optionlist}
 \optdefault{relations}{list}

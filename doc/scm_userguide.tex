@@ -1,6 +1,6 @@
 \input{inputs/format_header.tex}
 \guidetitle{SCM user guide}
-%review Kajsa 2013-11-19
+%review Kajsa 2014-05-20
 
 \begin{document}
 
@@ -15,7 +15,13 @@ The Stepwise Covariate Model (SCM) building tool of PsN implements Forward Selec
 If the data file has a header it will be ignored. Only the names set in \$INPUT of the input model will be used.
 
 \section{Model file}
-Each parameter that is to have covariates added must be encoded using TV\emph{par}, for example TVCL=THETA(1) and CL=TVCL*EXP(ETA(5)). All covariate relationships will be added to TV\emph{par}, and the scm program will stop if TV\emph{par} is not found in \$PK or \$PRED. It will not work to define TV\emph{par} in \$ERROR.
+Each parameter \emph{par} that is to have covariates added must be encoded using TV\emph{par}, for example TVCL=THETA(1) that is later used in CL=TVCL*EXP(ETA(5)). 
+All covariate relationships will be added to TV\emph{par}, and the scm program will stop if TV\emph{par} is not found in \$PK or \$PRED. It will not work to define TV\emph{par} in \$ERROR.
+
+The input control stream should always be the ``clean'' base model without any 
+candidate relations added, even if section 
+\verb|[included_relations]|
+is used in the scm config file (see below). 
 
 \section{Valid states for the parameter-covariate relations}
 There is a fixed set of parameter-covariate relations defined in scm, but the user can redefine one or more of the states using the code option, see below. This gives very high flexibility. The predefined shapes for the parameter-covariate relations for \emph{continuous} covariates are: none/not included, included as a linear relation, included as a piece-wise linear relation with two slopes (“hockey-stick”), included as an exponential relation and included as a power relation. The pre-defined parameterizations are shown in the section Default parameterizations. By default these parameterizations are assigned to numbers or \emph{states} according to 1:none,  2:linear, 3:hockey-stick, 4:exponential and 5:power, but any relation can be assigned to any number. The exception is the number 1, which must always correspond to none/not included. Further information is given in the help text on \verb|[valid_states]| and \verb|[code]|. 
@@ -289,7 +295,13 @@ section:
 CL=WGT-2,AGE-3
 \end{verbatim}
 
-Here WGT will be included linearly and AGE with the hockey-stick relation (assuming default relations for states 2 and 3) on CL already from the start. Following states in the list of valid\_states will be tried by the SCM, and the combination can be removed as part of the backwards elimination. If option search\_direction is set to backward, the section 
+Here WGT will be included linearly and AGE with the hockey-stick relation (assuming default relations for states 2 and 3) on CL already from the start. The following states in the list of valid\_states will be tried by the SCM, and the combination can be removed as part of the backwards elimination. 
+
+It is important to \emph{not} have relations from 
+\verb|[included_relations]| 
+encoded from the start in the input model file/control stream, because that would interfere with the scm program's automatic adding and removal of relations. The input model file should always be a ``clean'' model without any candidate relations added.
+
+If option search\_direction is set to backward, the section 
 \verb|[included_relations]|
 is required (otherwise there will be no relations that PsN can remove during the backward search).
 
@@ -337,7 +349,16 @@ The left hand side is of the form “PARAMETER:COVARIATE-STATE”. Both PARAMETE
 
 It is possible to use the variables maximum, minimum, mean and median in the inits and bounds sections. See more details in the \verb|[code]| help. 
 
-
+\section{Resuming a crashed/interrupted scm}
+\begin{enumerate}
+\item Make a copy of the original scm configuration file from the interrupted run, give it a new name and save it in the same folder as the original scm config file
+\item open the original scm log file in the top level of the orginal scm run folder and locate the \emph{last} place where it says "Relations included after this step", and copy those log-file-relations to the new configuration file under a new \verb|[included_relations]| section at the end of the new configuration file, or add relations to an already existing \verb|[included_relations]| section. 
+\item \emph{If} option directory is set in the new config file then make sure it is 
+set/changed to the name of a folder that does not yet exist
+\item start a new scm with the same command as for the original scm, except that the new config file is used instead of the old, 
+and either set option -directory to the name of a folder that does not yet exist 
+or omit the -directory option completely (in which case the program will select a unique name). 
+\end{enumerate}
 \section{The ANCHOR functionality}
 SCM by default adds the covariate relationship functions first in \$PK/\$PRED, before any existing user-written code. Sometimes this is unpractical, for example if there are constants that the user needs in a custom 
 \verb|[code]| section. In this case the user can add the line
