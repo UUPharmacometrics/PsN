@@ -1,0 +1,62 @@
+This PsN version has been tested on the following systems:
+
+Windows XP 32-bit with ActivePerl 5.16.3 and NONMEM 7.1.0, 7.1.2 and 7.2.0
+Windows 7 64-bit with ActivePerl 5.16.3 and NONMEM 7.3.0
+Windows 7 64-bit with Strawberry Perl 5.18.2 and NONMEM 7.2.0 and 7.3.0
+MacOS X 10.6.6 with ActiveState Perl 5.16.3 and NONMEM 7.2.0 and 7.3.0
+Ubuntu Linux 13.10 with Perl 5.14.2 and NONMEM 7.3.0
+Ubuntu Linux 14.04 with Perl 5.18.2 and NONMEM 7.2.0 and 7.3.0
+Fedora 20 with Perl 5.18.2 and NONMEM 7.2.0
+Scientific Linux 6.3 with Perl 5.10.1 and NONMEM 7.2.0 and 7.3.0
+CentOS 6.5 with Perl 5.10.1 and NONMEM 7.1.0 and 7.1.2
+
+************************
+Installation
+************************
+
+Follow the installation instructions on
+http://psn.sourceforge.net/install.php
+
+************************
+Documentation
+************************
+All documentation is found in the doc subdirectory of the PsN 
+installation directory. During installation it is also possible 
+to have all documentation copied to a user-specified directory.
+
+All documentation can also be downloaded from
+the PsN website http://psn.sourceforge.net/
+
+************************
+Dependencies 
+************************
+
+- Xpose must, if used, be version 4.2.1 or later to handle PsN-3.5.3 or later 
+  output format. It is recommended to use the latest Xpose release
+  from http://xpose.sf.net
+
+************************
+Known issues 
+************************
+
+- Windows users need to be careful to choose 
+  a Perl version where the extra modules needed for PsN are available. See the 
+  instructions on http://psn.sourceforge.net/install.php
+
+- Installation problem on some Windows systems where 
+  perl 'system' command does not work. Make sure perl module File::Copy::Recursive
+  is installed *before* (re)running the installation script setup.pl
+
+*********************************************
+Changes and bug fixes from PsN 4.2.0 to x.y.z
+*********************************************
+
+   ___General___
+
+   ___Cluster/grid interaction___
+
+   ___NONMEM interaction___
+
+   ___sse___
+
+   ___bootstrap___
