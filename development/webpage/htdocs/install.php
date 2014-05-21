@@ -20,7 +20,7 @@ Note 1: For Windows we recommend
 <a target="_blank" href="http://www.activestate.com/activeperl/downloads/">ActiveState Perl</a>.
 Windows users who are installing PsN for the first time should choose one of Strawberry Perl or ActiveState Perl to install.
 If ActiveState is selected it is important to select a version which supports the extra modules needed for PsN.
-On April 3rd 2014 the recommended ActiveState Perl version was 5.16. For updated information 
+On May 21st 2014 the recommended ActiveState Perl version was 5.16. For updated information 
 on which version provides which modules in ActiveState Perl see 
 package information pages for 
 <a target="_blank" href="http://code.activestate.com/ppm/Math-Random/">Math::Random</a>, 

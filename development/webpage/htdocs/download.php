@@ -24,7 +24,7 @@ PsN is distributed  as a gzipped tarball and zipped file.</p>
             PsN 4.2.0
         </td>
 	<td rowspan="2" width="70%">Please see the <a href="pdfdocs/release_notes_PsN_4_2_0.txt">change log</a> for details. </td>
-        <td rowspan="2">2014-05-09</td>
+        <td rowspan="2">2014-05-21</td>
     </tr>
     <tr>
         <td style="text-align:center;">
