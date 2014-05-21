@@ -55,79 +55,81 @@ Changes and bug fixes from PsN 3.7.6 to 4.2.0
 
 - All modules have been converted from the old dia class system to Moose. All _subs.pm files
   have been converted into .pm files that can be used directly by Perl without the need for
-	dia2code or fill_diacode.pl
+  dia2code or fill_diacode.pl
 
 - All internal parameter checking is now done with MooseX::Params::Validate
 
-- PsN now comes bundled with a test suite used for verification
+- PsN now comes bundled with a test suite used for verification. See the Testing section of 
+  developers_guide.pdf for instructions.
 
-- PsN now supports Strawberry perl on Windows and ActivePerl on Mac
+- PsN now supports Strawberry Perl on Windows and ActivePerl on Mac
 
 - New common option -degree to all scripts, coupled to tweak_inits. Before, degree was hard-coded
   to 0.1, i.e. a perturbation of 10%, but now the user can choose the perturbation.
-	Must be a number between 0 and 1. 
+  Must be a number between 0 and 1. 
 
 - tweak_inits will now perturb initial estimates by 'degree' relative to the original initial estimates,
   regardless of how many retries have been done. Before the perturbation would be larger and larger
-	for every retry. 
+  for every retry. 
 
-- For runs with clean=0 a file called 'modelfile' is created in all NM_run directories. This
-  files contains the original name of the modelfile and can e.g. be used to set job name in
-	wrapper scripts.
+- For runs with clean=0 a file called 'modelname' is created in each NM_run directory. This
+  file contains the original name of the modelfile and can e.g. be used to set job name in
+  wrapper scripts. The modelname file is removed if -clean is larger than 0.
 
 - NMQual8 support. Complete redesign, removed nmqual_xml option, handle .log.xml as standard
   output file from NONMEM that can be requested with -nm_output option. 
  
 - PsN.pm is now treated as any PsN module and resides in the lib directory after installation
 
-- Redesign of tbs. New options -tbs_lambda, -tbs_delta -tbs_zeta and -dtbs
+- Redesign of tbs functionality, see common_options_defaults_version_psn.pdf. New options -tbs_lambda, 
+  -tbs_delta -tbs_zeta and -dtbs related to the tbs functionality. Bugfix: divide by zero in 
+  ccontra file for -tbs option
 
-- Bugfix: divide by zero in ccontra file for -tbs option
-
-- Versioned executables (for example "execute-4.2.0") now works in Windows
+- Versioned executables (for example "execute-4.2.0") now works on Windows. The setup script
+  will automatically fix this also for older PsN versions installed in the same bin folder.
 
 - Handle Windows line breaks in model files and rawres_input files even if running on linux
-
-- Changed format of nnn_results.csv, e.g. sse_results.csv, to use 7 significant digits and either
-  scientific or decimal notation. Before it was always 5 decimals in decimal notation.
-
-- Bugfix in reading of matrices (covariance matrix, inv cov matrix) from lst-file, make sure matrices are
-  stored even if files .cov and .coi are missing.
-
-- Bugfix in reading matrices from lst-file, remove NM7-tag before converting to MatrixReal
 
 - Options -drop_dropped, -unwrap_table_files, -extra_data_files, -nmqual_xml, -run_on_sge_nmfe
   -run_on_lsf_nmfe and -wrap_data have been removed
 
-- Bugfix data renumber_ascending and resamle, turn off redundant writes to data file.
+- Changed format of nnn_results.csv, e.g. sse_results.csv, to use 7 significant digits and either
+  scientific or decimal notation. Before it was always 5 decimals in decimal notation.
 
-- Cleaning in tool.pm, remove unused ForkManager
-
-- Make modelfit->run create all NM_run subdirectories before copying any input or starting any runs.
-  All NM_run subdirectories will be created simultaneously before any nonmem run is started.
+- All NM_run subdirectories will be created simultaneously before input is copied or any nonmem 
+  run is started.
 
 - More careful pre_compile_cleanup, leave cleaning of psn.lst and OUTPUT to nmfe.
 
-- Bufix in handling of labels, sometimes PsN would crash because labels in model were not unique during
-  updating of initial estimates. Now PsN will append a _ (underscore) to the label if necessary to make
-	it unique.
+- Print a warning if old Mac text file (with only 0x0D as newline) format is used.
+
+- New document developers_guide.pdf with information for developers and testers
+
+- Cleaning in tool.pm, remove unused ForkManager
+
+- Bugfix in reading of matrices (covariance matrix, inverse cov matrix) from lst-file, make 
+  sure matrices are read and stored from the lst-file if files .cov and .coi are missing.
+
+- Bugfix in reading matrices from lst-file, remove NM7-tag before converting to MatrixReal
+
+- Bugfix data renumber_ascending and resamle, turn off redundant writes to data file.
+
+- Bugfix in handling of THETA/OMEGA/SIGMA labels. Sometimes PsN would crash because labels in 
+  model were not unique during updating of initial estimates. Now PsN will append a _ (underscore) 
+  to the label if necessary to make	it unique.
 
 - Bugfix: Solved data bug where lines that did not start with a digit or a dot would be filtered out
-  before bootstrapping/case deletion/statistics computations. Make sure data class uses NONMEM's IGNORE
-	sign, if set, make sure ID column number, if known, sent to data->new, more careful parsing of data set lines
+  before bootstrapping/case deletion/statistics computations. PsN will instead use NONMEM's IGNORE
+  sign, if set, to filter data files. 
 
 - Bugfix: do not read final estimates from .ext if lst-file shows that NONMEM aborted the run
-
-- Give a warning if old Mac text file (with only 0x0D as newline) format is used.
 
 - Bugfix in modelfit in verbose after cleaning > 2
 
 - Bugfix in seed reset in modelfit based on NM_run number, could handle very large numbers
 
-- Corrected logic and run number dependence in delay code to avoid new process overload, max_fork_delay section
+- Bugfix: Corrected logic and run number dependence in delay code to avoid new process overload, max_fork_delay section
  
-- New document developers_guide.pdf with information for developers and testers
-
 - Bugfix: Fix regular expression in TBLN tag search to pick up a number and nothing else
  
 - Bugfix: Sometimes PsN runs on Windows got stuck in an infinite loop
@@ -149,10 +151,11 @@ Changes and bug fixes from PsN 3.7.6 to 4.2.0
 
 - More robust slurm squeue commands to handle squeue error messages (e.g. Socket timed out)
   PsN will ask for completed, cancelled etc jobs using squeue options instead of checking for
-	running jobs. This requires that the slurm option MinJobAge is not too small.
+  running jobs. This requires that the slurm option MinJobAge is not too small.
 
-- changes in slurm submit, submit entire bash script that first loops until psn.lst not visible, psn.mod
-  is visible, and only then submit nmfe call. If invalid user id then try again a few times.
+- changes in slurm submit, submit entire bash script that first loops until psn.lst not visible
+  (if retries are used), psn.mod is visible, and only then submit nmfe call. 
+  If invalid user id then try again a few times.
 
 - All output redirections will now be to nmfe_output.txt
 
@@ -164,29 +167,33 @@ Changes and bug fixes from PsN 3.7.6 to 4.2.0
 - Support for new NONMEM 7.3 records $THETAI, $THETAR, $THETAP, $THETAPV, $OMEGAP, $OMEGAPD, $SIGMAP,
   $SIGMAPD
 
-- Order in which PsN prints records changed. $ABBREIVATED now comes after $DATA
+- Order in which PsN prints records changed. $ABBREVIATED now comes after $DATA
 
 - Handle **** instead of subproblem number 10000 etc in lst-file when $SIM NSUBS>9999 in NONMEM 7.3
 
-- Different default values for different NONMEM versions can be set in configuration file psn.conf.
+- Different default values for different NONMEM versions can be set in configuration file psn.conf. See
+  psn_configuration.pdf
 
 - PsN will look for nonmem_mpi.exe and similar when checking compiler success when diagnosing missing lst-file
 
-- Changed common option nmfe_options to verbatim string instead of comma separated list
+- Changed syntax of option -nmfe_options to verbatim string instead of a comma separated list. See
+  common_options_defaults_versions.pdf
 
 
    ___sse___
 
-- New feature random_estimation_inits 
+- New option -random_estimation_inits, see sse_userguide.pdf 
 
 - New option -keep_tables, default is to remove tables.
 
 - NSUBS from pre-existing $SIMULATION will be deleted.
 
-- More robust to transient job errors in file sync etc. If individual simulations or estimations have problems
-  that run will be marked as failed, but sse will continue.
+- Better handling of failed simulations. If individual simulations fail then all 
+  estimations based on the corresponding simulated data set will be marked as failed,
+  but sse will continue and compute results based on the remaining estimations.
 
-- Changed definition of skewness and kurtosis to standard definitions, see updated userguide
+- Changed definition of skewness and kurtosis to standard definitions, 
+  see updated sse_userguide.pdf
 
 - Turn off redundant write to original data file copy in m1
 
@@ -194,21 +201,21 @@ Changes and bug fixes from PsN 3.7.6 to 4.2.0
 
 - Bugfix: in rawres input: allow third column to be model to handle new headers in sse.
 
-- Bugfix: in sse when simulating with prior, setting inits output file in control streams.
-
+- Bugfix: in sse when simulating with prior, set the name of the file in which to write actual 
+  parameter values used for simulations
 
    ___scm___
 
 - scm config file is copied to scm run directory (also for boot_scm and xv_scm)
 
-- Bugfix: handling more than 50 input cols in filter_data.mod, set SIZES PD
+- Bugfix: handling more than 50 input columns in filter_data.mod, set SIZES PD
 
-- boot_scm will only use $INPUT for stratify_on, will ignore headers in datafile
+- Bugfix: boot_scm will only use $INPUT for stratify_on, will ignore headers in datafile
 
 
    ___npc/vpc___
 
-- Default name of rundirectory is now vpc_dir
+- Default name of rundirectory for a vpc is now vpc_dir
 
 - Around 40% faster autobinning
 
@@ -218,18 +225,18 @@ Changes and bug fixes from PsN 3.7.6 to 4.2.0
 
 - Bugfix: Make sure new model objects (e.g. after flip_comments) get copy of common_options::model_options
 
-- Bugfix: npc printing name of sim model in output
+- Bugfix: npc printing name of simulation model in output
 
 
    ___bootstrap___
 
 - New option -keep_tables, default is to remove tables. 
 
-
    ___mcmp___
 
-- More clear error message when NM7.3 bug TABLE FIRSTONLY occurs
+- More clear error message when incorrectly defined model is incompatible with TABLE FIRSTONLY 
 
+- Copying of old output to protect it when rerunning in existing run directory.
 
    ___cdd___
 
@@ -238,23 +245,18 @@ Changes and bug fixes from PsN 3.7.6 to 4.2.0
 
    ___parallel_retries___
 
-- New options -rawres_input, -offset_rawres, -in_filter and -samples to be used as alternatives to -min_retries.
-  Function of options as in sse, except that inits are for estimation instead.
-
-
-   ___ebe_npde___
-
-- Script rewritten. Now iofv data from phi will be processed and npde:s computed
-
+- New options -rawres_input, -offset_rawres, -in_filter and -samples to be used as alternatives 
+  to -min_retries. Function of options as in sse, except that inits are for estimation instead.
+  See execute_userguide.pdf which also contains parallel_retries documentation.
 
    ___frem___
 
-- Changes to handle start_eta option
+- Support for -start_eta option. See frem_userguide.pdf
 
 
    ___pvar___
 
-- First release of new tool "parametric variability"
+- First release of new tool "parametric variability". See pvar_userguide.pdf
 
 
    ___linearize___
@@ -268,22 +270,23 @@ Changes and bug fixes from PsN 3.7.6 to 4.2.0
 
    ___nca___
 
-- First release of new tool "noncompartmental analysis"
+- First release of new tool "noncompartmental analysis". See nca_userguide.pdf
 
 
    ___sir___
 
-- First release of new tool "sampling importance resampling
+- First release of new tool "sampling importance resampling". See sir_userguide.pdf
 
 
    ___rawresults___
 
-- First release of new tool "rawresults" that will create a raw results file from .mod and .lst files in a directory
+- First release of new tool "rawresults" that will create a raw results file 
+from pairs of .mod and .lst files in the current directory. No userguide.
 
 
    ___update_inits___
 
-- update_inits now has a userguide
+- New userguide update_inits_userguide.pdf
 
 - can handle any file extension of the modelfile, not only .mod
 

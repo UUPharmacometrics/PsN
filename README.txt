@@ -2,7 +2,12 @@
 Perl-speaks-NONMEM
 ************************
 
-Perl-speaks-NONMEM (PsN) is a collection of Perl modules and programs aiding in the development of non-linear mixed effect models using NONMEM. The functionality ranges from solutions to simpler tasks such as parameter estimate extraction from output files, data file sub setting and resampling, to advanced computer-intensive statistical methods. PsN includes stand-alone tools for the end-user as well as development libraries for method developers.
+Perl-speaks-NONMEM (PsN) is a collection of Perl modules and programs aiding 
+in the development of non-linear mixed effect models using NONMEM. The 
+functionality ranges from solutions to simpler tasks such as parameter 
+estimate extraction from output files, data file sub setting and resampling, 
+to advanced computer-intensive statistical methods. PsN includes stand-alone 
+tools for the end-user as well as development libraries for method developers.
 
 Please find more information on the webpage: http://psn.sourceforge.net/
 
@@ -32,21 +37,14 @@ All available from CPAN ( www.cpan.org )
 
 - Before installing PsN, verify that all NONMEM installations you intend to
 use can be run directly via the nmfe (or NMQual) scripts and that they 
-produce complete output files. 
-
-Please note that with NMQual8 the nm72.xml file must be slightly modified 
-(to expect .mod instead of .ctl as the control stream suffix) before NONMEM 
-installation, see document psn_configuration.pdf, otherwise PsN's NMQual8 
-support will not work.
-
-This version of PsN has not been tested with NMQual, but is believed to work
-with NMQual version 8.2.4 and on. However the PsN reference output that comes
-with NMQual may be out of date.
+produce complete output files. If running NONMEM with nmfe (or NMQual) does 
+not work then PsN will not work.
 
 If you plan to use the parallelization features of NONMEM7.2 you must first
 verify that you can run NONMEM in parallel directly with nmfe72.
 
-If running NONMEM with nmfe (or NMQual) does not work then PsN will not work. 
+This version of PsN supports NMQual8. Please read psn_configuration.pdf
+regarding how to configure PsN to run with NMQual8.
 
 - Unpack the installation package downloaded from psn.sf.net. It will 
 create a directory called PsN-Source. Run the installation script 
@@ -76,7 +74,8 @@ the PsN website http://psn.sourceforge.net/
 Testing 
 ************************
 
-To install and run the PsN test suite see the developers_guide.pdf on the homepage
+To install and run the PsN test suite see the developers_guide.pdf 
+on the homepage
 
 ************************
 Licensing 
@@ -102,13 +101,11 @@ Dependencies
 Known issues 
 ************************
 
+- Windows users need to be careful to choose 
+  a Perl version where the extra modules needed for PsN are available. See the 
+  instructions on http://psn.sourceforge.net/install.php
+
 - Installation problem on some Windows systems where 
 perl 'system' command does not work. Make sure perl module File::Copy::Recursive
 is installed *before* (re)running the installation script setup.pl
 
-- On Windows 7 with ActiveState Perl 5.16.3 the installation script failed
-to detect a correctly installed Math::Random module. If you think you have 
-Math::Random installed even though the installation script complains
-then just go ahead with the installation and test running execute with 
-option -min_retries=1 . If it works then you do have Math::Random and all 
-is well.
