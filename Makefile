@@ -123,7 +123,6 @@ RELFILES=$(addprefix PsN-Source/lib/,$(LIBFILES)) \
 	setup.pl \
 	AUTHORS \
 	COPYING \
-	THANKS \
 	README.txt )
 
 TEXFILES=$(wildcard doc/*.tex)
