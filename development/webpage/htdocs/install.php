@@ -16,7 +16,7 @@ If running NONMEM with nmfe/autolog.pl does not work then PsN will not work.
 <li>Perl5<p>
 PsN4 requires at least Perl5 version 5.10.1. Please note that users of the free version of ActiveState Perl need an even higher version to be able to download the needed Perl packages (see note below). Users who are already running an older version of PsN should check if they need to upgrade Perl before installing PsN4. The Perl version can be checked with the command <pre>perl --version</pre>
 Note 1: For Windows we recommend
-<a target="_blank" href="http://http://strawberryperl.com/">Strawberry Perl</a> and 
+<a target="_blank" href="http://strawberryperl.com/">Strawberry Perl</a> and 
 <a target="_blank" href="http://www.activestate.com/activeperl/downloads/">ActiveState Perl</a>.
 Windows users who are installing PsN for the first time should choose one of Strawberry Perl or ActiveState Perl to install.
 If ActiveState is selected it is important to select a version which supports the extra modules needed for PsN.
