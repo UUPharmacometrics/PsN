@@ -23,7 +23,7 @@
     <dt><a href="pdfdocs/execute_userguide.pdf" target="_blank"><strong>parallel_retries</strong></a></dt>
     <dd>Run multiple copies of a single model with tweaked initial estimates in parallel.</dd>
 
-    <dt> <strong>update_inits</strong></dt>
+    <dt><a href="pdfdocs/update_inits_userguide.pdf" target="_blank"><strong>update_inits</strong></a></dt>
     <dd> read final THETA, OMEGA and SIGMA estimates from a NONMEM output file and put into a given model file.</dd>
 
     <dt><a href="pdfdocs/bootstrap_userguide.pdf" target="_blank"><strong>bootstrap</strong></a></dt>
@@ -100,7 +100,7 @@ Some extensively commented example/template configuration files for scm:<br>
 		<dt><a href="pdfdocs/gls_userguide.pdf" target="_blank"><strong>gls</strong></a></dt>
     <dd>Generalized Least Squares approximations of the residual error model</dd>
     
-    <dt><a href="pdfdsumo_userguide.pdf" target="_blank"><strong>sumo</strong></a></dt>
+    <dt><a href="pdfdocs/sumo_userguide.pdf" target="_blank"><strong>sumo</strong></a></dt>
     <dd>Summary of Output from NONMEM</dd>
     
     <dt><a href="pdfdocs/linearize_userguide.pdf" target="_blank"><strong>linearize</strong></a></dt>
