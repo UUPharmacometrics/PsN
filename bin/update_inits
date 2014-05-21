@@ -13,6 +13,7 @@ use output;
 use Getopt::Long;
 use File::Copy qw/cp mv/;
 use common_options;
+use Math::Random;
 
 sub search_record {
   #input is string $row and array ref $list
@@ -31,119 +32,184 @@ sub search_record {
 
 }
 
-
-
-if ($ARGV[0] && (($ARGV[0] eq '-h') || ($ARGV[0] eq '-help'))){
-  print <<'ENDHELP';
-
-update_inits
-    Update NONMEM modelfile initial estimates of theta, omega and sigma
-    using final estimates from lst-file or initial estimates from other modelfile.
-    Only works when single problem in modelfile.
-
-Example: (modify file old.mod and copy original to old.mod.org):    
-    update_inits old.mod old.lst
-
-OR (create new file new.mod):
-    update_inits old.mod old_output.lst -output_model=new.mod
-
-OR (assume there exists an lst-file with name myModel.lst ):
-    update_inits myModel.mod -output_model=new.mod
-
-OR (copy estimates from modelfile instead of lst-file, modify old.mod):
-    update_inits old.mod -from_model=other.mod
-
-Required input: The name of a modelfile.
-
-Optional input: 
-<lst-filename>              The name of the lst-file to read final estimates from.
-                            Cannot be used together with option -from_model.
-
--from_model=<filename>      The name of the modelfile to copy initials from. 
-                            Cannot be used together with lst-file input.
-
--output_model=<filename>    The name of the modelfile to create. If omitted, a copy of
-                            the original modelfile with extension .org is created, and 
-                            the original file is modified.
-
--ignore_missing_parameters  Do not require 1-1 matching of parameter names and indexes.
-
--sigdig=N                   Only has effect with NONMEM7 and later and if N<15. Print parameter
-                            estimates with this many significant digits in the new model file.
-
--renumber=<new number>      All words in $TABLE records that end with tab<any number> 
-                            or tab<any number>.csv will get <any number> replaced 
-							by <new number>, provided that <new number> is not 0.
-							If <filename> in MSFO=<filename> in the  $ESTIMATION record
-							ends with a number, that number will be replaced by <new number>.
-							MSFO may not be abbreviated.
-							If the input modelfile name is runX.mod and -output_model is runY.mod
-							where both X and Y are numbers then -renumber=Y will be set automatically.
-							Set option -renumber=0 to prevent renumbering in such a case.
-
--comment=<comment>          If the option is used, a new line with <comment> will be inserted 
-                            directly following the $PROBLEM row.
-							The comment must be enclosed with quotes if it contains spaces.
-
--add_tags                   Add all runrecord tags. update_inits will not check if any tags 
-                            are already present.
-
--degree=X                   After updating the initial estimates in the output file, randomly
-                            perturb them by degree=X, i.e. change estimate to a value
-							randomly chosen in the range estimate +/- estimate*X while
-							respecting upper and lower boundaries, if set.
-							Degree is set to 0.1 when tweak_inits is set in execute.
-
--based_on=<run_number>      If the Based on tag is present in the modelfile, or if option 
-                            -add_tags is used, update_inits will by default try to extract 
-							a run number from the original modelfile name and set the 
-							Based on tag for runrecord to that number. If a number cannot 
-							be extracted then nothing will be set. If the -based_on option 
-							is used, update_inits will set the tag to that number.
-
--add_prior=df               Add $PRIOR NWPRI based on output object. Will automatically read
-                            estimates and covariances from output and use them to define the 
-							prior. df should be the degrees of freedom, a comma-separated list
-							with one integer per omega block.
-							This feature is highly experimental, and you must check $PRIOR 
-							in the new model file manually before using it.
-							Option -add_prior cannot be used together with option -from_model. 
-
--diagonal_dominance         By default not set. If option is set then PsN will ensure that OMEGA
-                            and SIGMA are strictly diagonally dominant by decreasing off-diagonal
-							elements if necessary. This in turn guarantees that OMEGA and SIGMA 
-							are positive definite. NONMEM sometimes prints OMEGA or SIGMA matrices
-							in the lst-file which are not positive definite, and the 
-							diagonal_dominance option offers a convenient way to fix this. However, 
-							the perturbation made my PsN is most likely not the smallest perturbation 
-							required to make OMEGA/SIGMA positive definite.
-
-ENDHELP
-exit;
-} 
-
-
 my %options;
-
-my %optional_options = ( "output_model:s" => undef,
-						 "from_model:s" => undef,
-						 "ignore_missing_parameters" => undef,
-						 "comment:s" => undef,
-						 "degree:f" => undef,
-						 "add_tags" => undef,
-						 "diagonal_dominance" => undef,
-						 "add_prior:s" => undef,
-						 "seed:s" => undef,
-						 "based_on:i" => undef,
-						 "renumber:i" => undef,
-						 "sigdig:i" => undef);
+my %required_options =();
+my %optional_options = (
+    'h|?'                       => undef,
+    'help'                      => undef,
+	"output_model:s" => undef,
+	"from_model:s" => undef,
+	"ignore_missing_parameters" => undef,
+	"comment:s" => undef,
+	"degree:f" => undef,
+	"add_tags" => undef,
+	"diagonal_dominance" => undef,
+	"add_prior:s" => undef,
+	"seed:s" => undef,
+	"based_on:i" => undef,
+	"renumber:i" => undef,
+	);
 
 my $res = GetOptions( \%options,
 					  keys(%optional_options) );
-common_options::setup( \%options, 'update_inits' ); 
+
+
+unless (defined $options{'seed'}){
+	$options{'seed'} = random_uniform_integer( 1, 100000, 999999 );
+}
+random_set_seed_from_phrase( $options{'seed'} ) if ( defined $options{'seed'} );
+#setup would set degree and initiate tweaking
 
 exit unless $res;
 
+my %help_text;
+
+$help_text{Pre_help_message} = <<'EOF';
+    update_inits
+
+    Update a model file with final estimates from NONMEM output.
+EOF
+    1;
+$help_text{Options} = <<'EOF';      
+Options:
+
+    The options are given here in their long form. Any option may be
+    abbreviated to any nonconflicting prefix. 
+    
+    The following options are valid:
+EOF
+    1;
+$help_text{-h} = <<'EOF';
+-h | -?
+      
+    With -h or -? update_inits will print a list of options and exit.
+EOF
+    1;
+$help_text{-help} = <<'EOF';      
+-help
+      
+    With -help update_inits will print this, longer, help message.
+EOF
+    1;
+$help_text{-output_model} = <<'EOF';
+-output_model=file
+
+    The name of the model file to create. If this options is omitted, a copy of
+	the original model file with extension .org is created, and the original 
+	file is modified.
+EOF
+    1;
+$help_text{-ignore_missing_parameters} = <<'EOF';
+-ignore_missing_parameters
+	Default not set
+	
+	If set, update_inits will not require a 1-to-1 matching of parameter names 
+	and indexes between the model to update and the source 	of new estimates 
+	(lst-file or other model file).
+EOF
+    1;
+$help_text{-from_model} = <<'EOF';
+-from_model=filename
+	Default not used
+
+    The name of a model file to copy initial estimates from, instead of a lst-file. 
+	Cannot be used together with a named lst-file on the command-line.
+EOF
+    1;
+$help_text{-comment} = <<'EOF';
+-comment=text
+    Default not used.
+
+	If the option is used, a new line with <text> will be inserted 
+	directly following the $PROBLEM row.
+	The comment text must be enclosed with quotes (double quotes on Windows) 
+	if it contains spaces.
+EOF
+    1;
+$help_text{-degree} = <<'EOF';
+-degree=fraction
+    Default not set
+
+	After updating the initial estimates in the output file, randomly
+	perturb them by degree=fraction, i.e. change estimate to a value
+	randomly chosen in the range estimate +/- estimate*fraction while
+	respecting upper and lower boundaries, if set in the model file.
+	Degree is set to 0.1, a 10% perturbation, when option tweak_inits is set in execute.
+EOF
+1;    
+$help_text{-add_tags} = <<'EOF';
+-add_tags
+    Default not set
+
+	Add all runrecord tags, see runrecord user guide. update_inits will not check if any tags 
+	are already present.
+EOF
+1;    
+$help_text{-diagonal_dominance} = <<'EOF';
+-diagonal_dominance
+    Default not set
+
+	NONMEM sometimes prints OMEGA or SIGMA matrices
+	in the lst-file which are not positive definite, and the 
+	diagonal_dominance option offers a way to fix this.
+	If option is set then PsN will ensure that OMEGA
+	and SIGMA are strictly diagonally dominant by decreasing off-diagonal
+	elements if necessary. This in turn guarantees that OMEGA and SIGMA 
+	are positive definite.  However, the perturbation made by PsN is 
+	most likely not the smallest perturbation 
+	required to make OMEGA/SIGMA positive definite.
+EOF
+1;    
+$help_text{-add_prior} = <<'EOF';
+-add_prior=df
+    Default not set
+
+	Add $PRIOR NWPRI based on the NONMEM output. Will automatically read
+	estimates and covariances from output and use them to define the 
+	prior. df should be the degrees of freedom, a comma-separated list
+	with one integer per omega block.
+	This feature is highly experimental, and you must check $PRIOR 
+	in the new model file manually before using it.
+	Option -add_prior cannot be used together with option -from_model. 
+EOF
+1;    
+$help_text{-seed} = <<'EOF';
+-seed=some string
+
+    The random seed for perturbation if option -degree is set. 
+EOF
+1;    
+$help_text{-based_on} = <<'EOF';
+ -based_on=number
+
+    If the -based_on option is used, update_inits will set 
+	the runrecord 'Based on' tag (if present, or if option -add_tags is used) 
+	to that number. If option -based_on is not used, update_inits will by default try to extract 
+	a run number from the original model file name and use that instead.
+	If a number cannot be extracted then nothing will be set. 
+EOF
+1;    
+$help_text{-renumber} = <<'EOF';
+-renumber='new number'
+
+    Default extracted from the -output_model file name.	If -output_model=runY.mod 
+	is set where Y is a number then -renumber=Y will be set automatically.
+	All FILE names in $TABLE records that end with tab'any number' 
+	or tab'any number'.csv will get 'any number' replaced with
+	'new number', provided that 'new number' is not 0.
+	If 'filename' in MSFO='filename' in the  $ESTIMATION record
+	ends with a number, that number will be replaced by 'new number'.
+
+	Set option -renumber=0 to prevent renumbering in $TABLE and $EST.
+EOF
+1;    
+
+common_options::online_help( 'update_inits', \%options, \%help_text, \%required_options, \%optional_options);
+
+if ( scalar( @ARGV ) < 1 ){
+  print "A model file must be specified. Use 'update_inits -h' for help.\n";
+  exit;
+}
 
 my $ignore_missing_parameters=0;
 if ( defined $options{'ignore_missing_parameters'} ){

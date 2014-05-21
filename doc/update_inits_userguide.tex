@@ -1,0 +1,191 @@
+\input{inputs/format_header.tex}
+\setlength{\evensidemargin}{0pt}
+\setlength{\oddsidemargin}{0pt}
+
+\guidetitle{update\_inits user guide}
+%review Kajsa 2014-05-20
+
+\begin{document}
+
+\maketitle
+
+
+\section{Overview}
+The update\_inits script is used to 
+update inital estimates in a model file with final estimates from NONMEM output.
+
+The program will automatically search for a lst-file with the same file stem as the model file,
+for example if the model file is called run1.mod then the program will try to read output from
+run1.lst. If run1.ext also exists then final estimates will be read from there, 
+but run1.lst must still be present.
+
+In addition to updating initial estimates the program will try to rename table files and
+msfo files that follow certain naming rules. It is also possible to for example
+add/update runrecord tags,
+randomly perturb initial estimates and add comments to the new model file.
+
+\noindent Examples:
+\begin{itemize}
+\item Modify file run33.mod and copy original to run33.mod.org. This requires that run33.lst exists.
+\begin{verbatim}
+update_inits run33.mod
+\end{verbatim}
+\item Update a copy of run22.mod and call the new file run23.mod. This requires that run22.lst exists.
+\begin{verbatim}
+update_inits run22.mod -output_model=run23.mod
+\end{verbatim}
+Note: -output\_model can be abbreviated to -out.
+\item Update a copy of run1.mod with estimates from run1abc.lst:
+\begin{verbatim}
+update_inits run1.mod run1abc.lst -out=run2.mod
+\end{verbatim}
+
+\item Use parameters estimates from a model file instead of a lst-file:
+\begin{verbatim}
+update_inits run3.mod -from_model=run4.mod -out=run6.mod
+\end{verbatim}
+\end{itemize}
+
+\section{Renumbering}
+\subsubsection*{Input number for 'Based on' tag}
+The program will try to extract an input run number as follows: If the input model file name
+starts with run, Run or RUN followed by a number and contains a dot 
+somewhere after the number, then that number will be used as the input run number. Examples:
+\begin{itemize}
+\item run1.mod gives number 1
+\item Run54a.ctl gives number 54
+\item pheno.mod gives no number 
+\end{itemize}
+\noindent The input number will be used for the 'Based on' tag, if present, unless option
+-based\_on is set.
+\subsubsection*{Output number for \$TABLE and \$ESTIMATION}
+If option -renumber is manually set to a number other than 0, the output run number will
+be set to this number. If -renumber is not set but option -output\_model is set,
+the program will try to extract an output run number using the same pattern
+as for the input number: If the output model file name
+starts with run, Run or RUN followed by a number and contains a dot 
+somewhere after the number, then that number will be used as the output run number. Examples:
+\begin{itemize}
+\item RUN55.mod gives number 55
+\item Run54abc.ctl gives number 54
+\item run55 gives no number (since there is no dot anywhere after the number)
+\end{itemize}
+
+\noindent The output number will be used for the FILE option in \$TABLE and the MSFO option in
+\$ESTIMATION. If no output number is defined, either automatically or via option -renumber, 
+then those options will not be changed.
+
+The FILE option of all \$TABLE will get tab<any number> replaced with tab<output number>. 
+Examples if the output number is 9:
+\begin{itemize}
+\item FILE=patab6 will be changed to FILE=patab9
+\item FILE=mytab8.csv to FILE=mytab9.csv
+\item FILE=cotab5abc.csv to FILE=cotab9abc.csv
+\end{itemize}
+
+\noindent The MSFO option of all \$ESTIMATION will get <any number> replaced with <output number>. 
+Examples if the output number is 9:
+\begin{itemize}
+\item MSFO=msf62 will be changed to MSFO=msf9
+\item MSFO=run8.msf to MSFO=run9.msf
+\item MSFO=msf5abc to MSFO=msf9abc
+\end{itemize}
+\section{Input and options}
+
+\subsection{Required input}
+The name of a model file (control stream file) is required on the command-line.
+
+\subsection{Optional input}
+\begin{itemize}
+\item The name of the lst-file to read final estimates from. It is given directly on 
+the command-line \emph{after the model file} without an option name.
+Cannot be used together with option -from\_model. 
+If neither a lst-file or -from\_model is given, 
+update\_inits will search for a lst-file with the same file stem as the model file, 
+but with extension lst.
+\end{itemize}
+\begin{optionlist}
+\optdefault{output\_model}{filename}
+The name of the model file to create. If this options is omitted, a copy of
+the original model file with extension .org is created, and 
+the original file is modified.
+\nextopt
+\optname{ignore\_missing\_parameters}
+Default not set. If set, update\_inits will not require 
+a 1-to-1 matching of parameter names and indexes between the model to update and the source
+of new estimates (lst-file or other model file).
+\nextopt
+\optdefault{from\_model}{filename}
+The name of a model file to copy initial estimates from. 
+Cannot be used together with a named lst-file on the command-line.
+\nextopt
+\optdefault{comment}{text}
+If the option is used, a new line with <comment> will be inserted 
+directly following the \$PROBLEM row.
+The comment text must be enclosed with quotes (double quotes on Windows) 
+if it contains spaces.
+\nextopt
+\optdefault{degree}{fraction}
+Default not set. 
+After updating the initial estimates in the output file, randomly
+perturb them by degree=X, i.e. change estimate to a value
+randomly chosen in the range estimate +/- estimate*X while
+respecting upper and lower boundaries, if set.
+Degree is set to 0.1 when tweak\_inits is set in execute.
+\nextopt
+\optname{add\_tags}
+Add all runrecord tags. update\_inits will not check if any tags 
+are already present.
+\nextopt
+\optname{diagonal\_dominance}
+By default not set. 
+NONMEM sometimes prints OMEGA or SIGMA matrices
+in the lst-file which are not positive definite, and the 
+diagonal\_dominance option offers a way to fix this.
+If option is set then PsN will ensure that OMEGA
+and SIGMA are strictly diagonally dominant by decreasing off-diagonal
+elements if necessary. This in turn guarantees that OMEGA and SIGMA 
+are positive definite.  However, the perturbation made by PsN is 
+most likely not the smallest perturbation 
+required to make OMEGA/SIGMA positive definite.
+\nextopt
+\optdefault{add\_prior}{df}
+Default not used. Add \$PRIOR NWPRI based on output object. Will automatically read
+estimates and covariances from output and use them to define the 
+prior. df should be the degrees of freedom, a comma-separated list
+with one integer per omega block.
+This feature is highly experimental, and you must check \$PRIOR 
+in the new model file manually before using it.
+Option -add\_prior cannot be used together with option -from\_model. 
+\nextopt
+\optdefault{seed}{string}
+The random seed for pertubation if option -degree is set.
+\nextopt
+\optdefault{based\_on}{integer}
+If the -based\_on option is used, update\_inits will set 
+the runrecord 'Based on' tag (if present, or if option -add\_tags is used) 
+to that number. 
+If -based\_on is not used, update\_inits will by default try to extract 
+a run number from the original model file name and use that instead.
+If a number cannot be extracted then nothing will be set. 
+\nextopt
+\optdefault{renumber}{new number}
+All words in \$TABLE records that end with tab<any number> 
+or tab<any number>.csv will get <any number> replaced 
+<new number>, provided that <new number> is not 0.
+If <filename> in MSFO=<filename> in the  \$ESTIMATION record
+ends with a number, that number will be replaced by <new number>.
+MSFO may not be abbreviated.
+If the input modelfile name is runX.mod and -output\_model is runY.mod
+where both X and Y are numbers then -renumber=Y will be set automatically.
+Set option -renumber=0 to prevent renumbering in such a case.
+\nextopt
+%\optdefault{sigdig}{integer}
+%Default 15.
+%Only has effect with NONMEM7 and later and if set to a number <15. 
+%Print parameter
+%estimates with this many digits in the new model file.
+%\nextopt
+\end{optionlist}
+
+\end{document}
