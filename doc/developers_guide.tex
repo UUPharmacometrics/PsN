@@ -61,9 +61,9 @@ Stay on your branch so that git pull and git push will be on that branch.
 
 
 \section{Testing}
-The PsN4/test directory contains the tests. Unit tests are in PsN4/test/unit and system tests in PsN4/test/system. When installing PsN the user has the option to install the test suite in a specified directory. The default directory is in the lib directory. To be able to run the tests the package Test::Exception has to be installed on some systems. 
+When installing PsN the user has the option to install the test suite in a specified directory. The default directory is in the lib directory. If working from a cloned git repository all tests are in the PsN4/test directory. Unit tests are in unit subdirectory and system tests in the system subdirectory. To be able to run the tests the package Test::Exception has to be installed on some systems. 
 Unit tests are defined as tests that do not involve \emph{running} NONMEM, while system tests are tests involving running NONMEM. 
-Tests can be run by using the command \verb|prove| (which is bundled with perl). The unit tests can be run by issuing the command
+Tests can be run by using the command \verb|prove| (which is bundled with perl). The unit tests can be run by issuing the command (if the current directory is the test directory.
 \begin{verbatim}
 prove -r unit
 \end{verbatim}
@@ -72,7 +72,7 @@ and the system tests can be run with
 prove -r system
 \end{verbatim}
 
-Test can be run from any directory given a path to prove:
+Tests can be run from any directory by specifying a path:
 \begin{verbatim}
 prove -r PsN4/test/unit
 \end{verbatim}
