@@ -197,5 +197,5 @@ Some extensively commented example/template configuration files for scm:<br>
 <p> <tt><b>$ execute -nm_version=vi_big file.mod</b></tt><br>
 </p>
 <h2>Documentation for developers and testers</h2>
-The <a href="pdfdocs/developers_guide.pdf" target="_blank">developers guide</a>contain information for developers and for those in need of information
+The <a href="pdfdocs/developers_guide.pdf" target="_blank">developers guide</a> contain information for developers and for those in need of information
 about how to run the PsN test suite.
