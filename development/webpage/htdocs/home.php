@@ -39,8 +39,7 @@ Version 4.2.0 was released May 21th 2014, and is available <a href="download.php
 New features include new scripts nca, pvar, sir, frem and rawresults and a new test library for verification of PsN. Under the hood there have been big changes. PsN has been completely rewritten using the Moose object system. This rewrite will make development faster and collaboration around new tools and debugging much easier.
 </p>
  <p>
-This version of PsN has been more tested on Windows, Linux and Mac than any previous
-PsN release.
+This version of PsN has been extensively tested on Windows, Linux and MacOS X.
 Go to the <a href="download.php">Download page</a> 
 to see which systems and NONMEM versions PsN 4.2.0 has been tested with.
 </p>

@@ -24,7 +24,7 @@
     <dd>Run multiple copies of a single model with tweaked initial estimates in parallel.</dd>
 
     <dt><a href="pdfdocs/update_inits_userguide.pdf" target="_blank"><strong>update_inits</strong></a></dt>
-    <dd> read final THETA, OMEGA and SIGMA estimates from a NONMEM output file and put into a given model file.</dd>
+    <dd> Update a model file with parameter estimates from NONMEM output.</dd>
 
     <dt><a href="pdfdocs/bootstrap_userguide.pdf" target="_blank"><strong>bootstrap</strong></a></dt>
     <dd>Bootstrap using the percentile or BCa method.</dd>

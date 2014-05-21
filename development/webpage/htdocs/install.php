@@ -5,13 +5,13 @@ Before you install PsN, you should make sure that the following programs/modules
 
 <ul>
 <li>NONMEM<p>
-Please note that with NMQual8 the nm72.xml file must be slightly modified (to expect .mod instead of .ctl as the control stream suffix) before NONMEM installation, see document psn_configuration.pdf, otherwise PsN's NMQual8 support will not work.<p>
+PsN4 supports standard and NMQual8 installations of NONMEM. 
 You must verify that all NONMEM installations you intend to
-use can be run directly via the nmfe/NMQual scripts and that they 
+use can be run directly via the nmfe/autolog scripts and that they 
 produce complete output files. If you plan to use the parallelization features 
 of NONMEM7.2 or later you must also verify that you can run NONMEM in parallel directly 
 with nmfe72. <p>
-If running NONMEM with nmfe/NMQual does not work then PsN will not work.
+If running NONMEM with nmfe/autolog.pl does not work then PsN will not work.
 </li>
 <li>Perl5<p>
 PsN4 requires at least Perl5 version 5.10.1. Please note that users of the free version of ActiveState Perl need an even higher version to be able to download the needed Perl packages (see note below). Users who are already running an older version of PsN should check if they need to upgrade Perl before installing PsN4. The Perl version can be checked with the command <pre>perl --version</pre>

@@ -286,7 +286,7 @@ be broken and it might break at any time in the future. See the <a href="pdfdocs
 for more information on how to install from the git repository.</p>
 <h3 class="heading1">Compatibility<br> </h3>
 <p><strong>Grid/Cluster support:</strong> PsN has built-in functionality for submitting 
-the NONMEM runs to SGE, Slurm, LSF, ud, torque and zink. See documentation
+the NONMEM runs to SGE, Slurm, LSF, ud and torque. See documentation
 <a href="pdfdocs/common_options_defaults_versions_psn.pdf" target="_blank">here</a>.
 </p>
 
