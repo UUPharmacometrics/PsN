@@ -43,7 +43,7 @@
     
     <dt> <a href="pdfdocs/vpc_npc_userguide.pdf" target="_blank"><strong>vpc</strong></a></dt>
     <dd>Visual Predictive Check<br>
-Two-page poster on <a href="pdfdocs/PAGE_CAT_VPC_100602_two_page.pdf" target="_blank"><strong>Visual Predictive Checks for censored and categorical data</strong></a><br>
+Two-page poster on <a href="http://www.page-meeting.org/?abstract=1604" target="_blank"><strong>Visual Predictive Checks for censored and categorical data</strong></a><br>
 Separate description of <a href="pdfdocs/vpc_binning.pdf" target="_blank"><strong>automatic binning in vpc</strong></a>
 </dd>
     
@@ -152,7 +152,7 @@ Some extensively commented example/template configuration files for scm:<br>
 <p>For more details on a spcific script, for example &quot;vpc&quot;, use the command:</p>
 <p> <b><tt>$ vpc -help</tt></b></p>
 <h4>Input options to PsN scripts</h4>
-<p><strong>Specific options: </strong>All PsN scripts accept a set of options which allow you to modify the behaviour of the script. Please see for example, the <a href="pdfdocs/bootstrap_userguide.pdf">bootstrap</a> creates 200 new data sets from the original data by default. However    the number of data sets can be limited to for example 50, by changing the number in the <span class="style2">-sample</span> option in the bootstrap script.</p>
+<p><strong>Specific options: </strong>All PsN scripts accept a set of options which allow you to modify the behaviour of the script. Please see for example, the <a href="pdfdocs/bootstrap_userguide.pdf" target="_blank">bootstrap</a> creates 200 new data sets from the original data by default. However    the number of data sets can be limited to for example 50, by changing the number in the <span class="style2">-sample</span> option in the bootstrap script.</p>
 <p> <b><tt>$ bootstrap -samples=50 file.mod</tt></b> </p>
 <p> The <tt>'-samples'</tt> option is unique to the bootstrap script. To get a list of the unique options available for a specific script you can use the command (e.g. for the bootstrap script):</p>
 <p> <b><tt>$ bootstrap -h</tt></b> </p>
@@ -163,7 +163,7 @@ Some extensively commented example/template configuration files for scm:<br>
 <p> In this example the threads option makes the bootstrap utility run six NONMEM runs
   in parallel (on a cluster of computers or on multiple processors). To list all common PsN  options enter:</p>
 <p> <b><tt>$ psn_options -h</tt></b> </p>
-<p>These common options are described in much more detail in the <a href="pdfdocs/common_options_defaults_versions_psn.pdf">common options userguide</a>.</p>
+<p>These common options are described in much more detail in the <a href="pdfdocs/common_options_defaults_versions_psn.pdf" target="_blank">common options userguide</a>.</p>
 
 <h3>PsN Directory structure</h3>
 <p> PsN needs to create quite a few files to keep track of its executions as well as to enable resuming. During the execution the scripts also create many
@@ -190,7 +190,7 @@ Some extensively commented example/template configuration files for scm:<br>
 <h4>Versions</h4>
 <p> To print the version of PsN that you are using enter:</p>
 <p> <tt><b>$ psn -version</b></tt> </p>
-<p>If you want to use other installed versions of PsN <a href="pdfdocs/common_options_defaults_versions_psn.pdf">this document </a>describes how to do that. </p>
+<p>If you want to use other installed versions of PsN <a href="pdfdocs/common_options_defaults_versions_psn.pdf" target="_blank">this document </a>describes how to do that. </p>
 <p>To print the versions of NONMEM that PsN has access to, as defined in psn.conf, enter:</p>
 <p> <tt><b>$ psn -nm_version</b></tt> </p>
 <p>You can use a special NONMEM version from this list  via the option -nm_version, for example</p>

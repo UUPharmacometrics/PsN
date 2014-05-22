@@ -1,7 +1,7 @@
 
 <h2 class="heading1">Bugs</h2>
-<p>The most common source of errors are problems with psn.conf. Instructions about how to make correct settings can be found in <a href='pdfdocs/psn_configuration.pdf'>psn_configuration.pdf</a>.</p>
-<p> Like all software, PsN has bugs. Some unfixed bugs and known workarounds can be found in the document <a href='pdfdocs/known_bugs_and_workarounds.pdf'>known_bugs_and_workarounds.pdf</a>. 
+<p>The most common source of errors are problems with psn.conf. Instructions about how to make correct settings can be found in <a href='pdfdocs/psn_configuration.pdf' target="_blank">psn_configuration.pdf</a>.</p>
+<p> Like all software, PsN has bugs. Some unfixed bugs and known workarounds can be found in the document <a href='pdfdocs/known_bugs_and_workarounds.pdf' target="_blank">known_bugs_and_workarounds.pdf</a>. 
 Please help us to get better by letting us know about undocumented errors or problems.</p>
 <p>
 The best way to submit a bug is to <a
@@ -19,4 +19,3 @@ list. Do not send model files and data files unless we ask you to.</p>
 
 <h3>Known bugs in current release </h3>
  <p>Click <a href="http://sourceforge.net/p/psn/wiki/Bug_list_current_release" target="_blank">here</a> to see the bug list wiki.</p>
-

@@ -101,9 +101,9 @@ cpan MooseX::Params::Validate<br>
   <li> If you did not let the installation script create a configuration file <tt>psn.conf</tt> for you, 
 or if you are running NONMEM via NMQual or on a cluster, you need to edit <tt>psn.conf</tt> 
 in the PsN installation directory. 
-The document <a href='pdfdocs/psn_configuration.pdf'>psn_configuration.pdf</a> in 
+The document <a href='pdfdocs/psn_configuration.pdf' target="_blank">psn_configuration.pdf</a> in 
 PsN-Source/doc describes how to make correct settings in the psn.conf file. 
-The document is also found on <a href="http://psn.sourceforge.net/docs.php" target="_blank">the PsN website</a> under Documentation.
+The document is also found on <a href="http://psn.sourceforge.net/docs.php">the PsN website</a> under Documentation.
   </li>
   <li>When the installation is
     done you can safely remove the <tt>PsN-Source</tt>
