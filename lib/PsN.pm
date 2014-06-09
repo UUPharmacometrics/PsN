@@ -13,6 +13,7 @@ $config_file = $lib_dir . '/psn.conf';
 use ext::Config::Tiny;
 use ext::File::HomeDir;
 
+our $nm_version;
 our $nmdir;
 our $nm_major_version;
 our $nm_minor_version;
@@ -69,11 +70,14 @@ if ( $config -> {'_'} -> {'output_style'} eq 'SPLUS' ) {
   $factorize_strings = 0;
 }
 
-sub set_nonmem_info {
+sub set_nonmem_info
+{
   my $version_label = shift;
   unless (defined $version_label){
     croak("No version label input to set_nonmem_info");
   }
+	$nm_version = $version_label;
+
   #reset values if set earlier
   $nmdir = undef;
   $nm_major_version = undef;

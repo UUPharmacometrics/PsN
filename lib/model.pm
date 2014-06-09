@@ -20,6 +20,7 @@ use model::problem;
 use Moose;
 use MooseX::Params::Validate;
 use PsN;
+use pharmml;
 
 
 =head1 Description
@@ -167,8 +168,33 @@ sub BUILD
 	    $this->problems($parm{'problems'});
 	} else {
 		my $dir;
-		($dir, $this -> {'filename'}) = OSspecific::absolute_path( $this->directory, $this -> {'filename'} );    #FIXME: Nonstandard accessor. Fix with Moose
+		($dir, $this->{'filename'}) = OSspecific::absolute_path($this->directory, $this->{'filename'});    #FIXME: Nonstandard accessor. Fix with Moose
 		$this->directory($dir);
+
+		# Convert if in PharmML format
+		my $file = $this->full_name;
+		if (-e $file) {
+			if (pharmml::is_pharmml($file)) {
+				print "*** Input file is in PharmML format. Starting conversion to NMTRAN. ***\n";
+				if (not pharmml::is_java_installed) {
+					croak("Error: To be able use a PharmML file as input to PsN the java run time environment has to be installed");
+				}
+				my $return_code = pharmml::convert_file($file);
+				if ($return_code != 0) {
+					croak("Error: Conversion of $file failed");
+				}
+				print "*** Conversion done ***\n";
+				my $filename = $this->filename;
+				$filename =~ s/\.xml/\.ctl/;		# FIXME: This is not always correct
+				$this->filename($filename);
+				print "*** Running nmtran on converted model ***\n";
+				if (not pharmml::check_converted_model($filename)) {
+					croak("Error when running nmtran on converted file.");
+				}
+				print "*** Converted model checked successfully ***\n";
+			}
+		}
+
 		$this->_read_problems;
 		$this->synced(1);
 	}

@@ -47,7 +47,7 @@ sub setup_paths
 	my $full_path_runscript = undef;
 	my $full_path_nmtran = undef;
 
-	PsN::set_nonmem_info($nm_version);
+	#PsN::set_nonmem_info($nm_version);
 	my $nmdir = $PsN::nmdir;
 	if (not defined $nmdir) {
 		croak("Unknown NONMEM version $nm_version specified.\n");
@@ -59,9 +59,9 @@ sub setup_paths
 		croak("No nonmem major version, error config.\n");
 	}
 	
-	if ( defined $nmdir and $nmdir ne '' ){
+	if ( defined $nmdir and $nmdir ne '' ) {
 		unless (-e $nmdir) {
-			if ($nmqual){
+			if ($nmqual) {
 				my $mess = "The NMQual installation directory/script $nmdir set for -nm_version=$nm_version does not exist\n";
 				croak($mess);
 			}else{
@@ -71,43 +71,42 @@ sub setup_paths
 		}
 	}else{
 		#not configured
-		if ($nmqual){
+		if ($nmqual) {
 			my $mess = "The NMQual installation is not configured for -nm_version=$nm_version. You must correct this in psn.conf\n";
 			croak($mess);
-		}else{
+		} else {
 			my $mess = "The NONMEM installation directory is not configured for -nm_version=$nm_version. You must correct this in psn.conf\n";
 			croak($mess);
 		}
 	}
 
 	my $found_nonmem = 0;
-	my $nmtr = "$nmdir/tr/nmtran.exe"; 
-	if (-x $nmtr) {
-		$full_path_nmtran=$nmtr;
-	}else {
-		$nmtr = "$nmdir/../tr/nmtran.exe"; 
-		if (-x $nmtr) {
-			$full_path_nmtran=$nmtr;
+
+	my @nmtran_candidates = ("$nmdir/tr/NMTRAN.exe", "$nmdir/tr/nmtran.exe", "$nmdir/../tr/NMTRAN.exe", "$nmdir/../tr/nmtran.exe");
+	for my $i (0 .. $#nmtran_candidates) {
+		if (-x $nmtran_candidates[$i]) {
+			$full_path_nmtran = $nmtran_candidates[$i];
+			last;
 		}
 	}
 
-	if ($nmqual){
+	if ($nmqual) {
 		my $xmlpath;
-		my $xmlname='log.xml';
-		if (-d $nmdir){
+		my $xmlname = 'log.xml';
+		if (-d $nmdir) {
 			#look for autolog.pl in nmqual subdir
-			my $file1 = $nmdir.'/autolog.pl';
-			my $file2 = $nmdir.'/nmqual/autolog.pl';		
-			if (-e $file1){
-				$full_path_runscript=$file1;
-				$xmlpath=$nmdir.'/'.$xmlname;
-			}elsif (-e $file2){
-				$full_path_runscript=$file2;
-				$xmlpath=$nmdir.'/nmqual/'.$xmlname;
-			}else{
+			my $file1 = $nmdir . '/autolog.pl';
+			my $file2 = $nmdir . '/nmqual/autolog.pl';		
+			if (-e $file1) {
+				$full_path_runscript = $file1;
+				$xmlpath=$nmdir . '/' . $xmlname;
+			} elsif (-e $file2) {
+				$full_path_runscript = $file2;
+				$xmlpath = $nmdir.'/nmqual/'.$xmlname;
+			} else {
 				croak("Option nmqual is set and $nmdir is set for -nm_version=$nm_version but PsN cannot find autolog.pl in $nmdir or in $nmdir/nmqual\n");
 			}
-		}else{
+		} else {
 			#nmdir is not a directory
 			#we have already checked that $nmdir exists, so it is a file.
 			#Warn if not called autolog.pl, error if called nmfe something
