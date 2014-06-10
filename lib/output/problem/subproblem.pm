@@ -391,26 +391,27 @@ sub _read_eigen
 	my $start_pos = $self->lstfile_pos;
 	my $eig_area = 0;
 	while ( $_ = @{$self->lstfile}[ $start_pos++ ] ) {
-	  chomp;
-	  if ( /EIGENVALUES OF COR MATRIX OF ESTIMATE/ ) {
-	    $eig_area = 1;
-	    $start_pos = $start_pos + 4 ; # Jump forward to the index numbers
-	    carp("Found the eigenvalue area" );
-	  INNER: while ( $_ = @{$self->lstfile}[ $start_pos++ ] ) { # Get rid of indexes
-	      last INNER if ( not /^\s+\d/ );
-			 }
+		chomp;
+		if ( /EIGENVALUES OF COR MATRIX OF ESTIMATE/ ) {
+			$eig_area = 1;
+			$start_pos = $start_pos + 4 ; # Jump forward to the index numbers
+			carp("Found the eigenvalue area" );
+		  INNER: while ( $_ = @{$self->lstfile}[ $start_pos++ ] ) { # Get rid of indexes
+			  last INNER if ( not /^\s+\d/ );
+		  }
 		}
-	  if ( $eig_area ) {
-	    $start_pos-- and last if (/^[a-df-zA-DF-Z]/); #Rewind one step
-	    last if ( /^\s*\*/ or /^1/ );
-	    push( @eigens, split );
-	  }
-	  $start_pos-- and last if ( /^ PROBLEM.*SUBPROBLEM/ or /^ PROBLEM NO\.:\s+\d/ );
-	  $start_pos-- and last if (/^[a-df-zA-DF-Z]/); #Rewind one step
+		if ( $eig_area ) {
+			$start_pos-- and last if (/^[a-df-zA-DF-Z]/); #Rewind one step
+			last if ( /^\s*\*/ or /^1/ or /^\s*#/);
+			push( @eigens, split );
+		}
+		$start_pos-- and last if ( /^ PROBLEM.*SUBPROBLEM/ or /^ PROBLEM NO\.:\s+\d/ );
+		$start_pos-- and last if (/^[a-df-zA-DF-Z]/); #Rewind one step
+		$start_pos-- and last if (/^\s*#/); #For example #CPUT tag
 	}
 	if ( scalar @eigens > 0 ) {
-	  my @list = sort { $a <=> $b } @eigens;
-	  $self->condition_number( abs($list[$#list] / $list[0]) ) if ( $list[0] != 0 );
+		my @list = sort { $a <=> $b } @eigens;
+		$self->condition_number( abs($list[$#list] / $list[0]) ) if ( $list[0] != 0 );
 	}
 	$self->eigens(\@eigens);
 }
@@ -1399,13 +1400,12 @@ sub _read_minimization_message
 	    last;
 	  }
 
-	  push @mess, $_  unless (/^\s*\#TERE:/);
-#	  if (/^\s*\#TERE:/){
-#		  $success = 1;
-#		  last;
-#	  }else{
-#		  push @mess, $_  ;
-#	  }
+	  if (/^\s*\#TERE:/){
+		  $success = 1;
+		  last;
+	  }else{
+		  push @mess, $_  ;
+	  }
 	}
 
 	push( @{$self->minimization_message}, @mess );		# minimization_message is default set to empty array.
