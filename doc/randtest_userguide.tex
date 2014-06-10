@@ -20,7 +20,7 @@ randtest run1.mod -samples=1000 -randomization_col=DGRP -base_model=run0.mod
 
 \section{Input and options}
 \subsection{Input specific to randtest}
-A model file is required on the command-line.
+A model file for the full model is required on the command-line.
 \begin{optionlist}
 \optdefault{samples}{N}
 The number of randomized datasets to generate, required. 
@@ -109,7 +109,8 @@ The results of two runs will be different even if the seed is the same if the ls
 
 \section{Technical overview of algorithm}
 
-PsN will rerun the base model if the lst-file of the input model (run1.lst if the input model file is called run1.mod) is not present in the same directory as the model file OR if the model file has a different extension than .mod, for example .ctl. If the model file has the extension .mod and the lst-file is present then PsN will simply read the estimates from that file. Similar for the base model.
+PsN will rerun the input (full) model if the lst-file of the input model (run1.lst if the input model file is called run1.mod) is not present in the same directory as the model file. 
+If the model file has the extension .mod and the lst-file is present then PsN will simply read the estimates from that file. Similar for the base model.
 The program creates N (N=number of samples), datasets of size M (M=sample\_size) by shuffling the values in the randomization column between individuals. The program creates N new NONMEM modelfiles which are identical to the original modelfile with the exception that each uses a different randomized dataset and that the initial parameter estimates are the final estimates from the original run. The model parameters are estimated with each dataset.
 
 \end{document}

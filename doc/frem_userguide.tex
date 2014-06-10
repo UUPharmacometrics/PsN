@@ -416,16 +416,44 @@ parameters that have BSV ETA and/or BOV ETA on them.
 \subsection{Step 4: Prepare to run  vpc}
 Now a regular vpc can be run on frem\_vpc2.mod found in the frem run directory.
 
-\end{document} 
 
 \section{Appendix: Compute conditional omega block}
-frem\_vpc\_cond\_om.R
-Input is omega block from lst-file (or csv file om\_block.csv) 
+To calculate the conditional covariance matrix, 
+one inverts the overall covariance matrix, 
+drops the rows and columns corresponding to the variables being conditioned upon, and then inverts back to get the conditional covariance matrix.
+% Should use generalized inverse, but we skip that for now
+\begin{math}
+\Omega^{-1}\Omega = I
+\end{math}
+
+To avoid inverting a full matrix, which is numerically wasteful in terms of time and precision, we instead want to perform a sequence of numerically more stable steps.
+We have a symmetric $n\times n$ variance-covariance matrix $\Omega$, and want to obtain the leading upper $k\times k$ submatrix $\Omega^{-1}_{11}$
+of $\Omega^{-1}$, where
+\[
+\Omega^{-1} = \left( \begin{array}{cc}
+\Omega^{-1}_{11} & \Omega^{-1}_{12}\\
+\Omega^{-1}_{21} & \Omega^{-1}_{22} 
+\end{array} \right)
+\] with sizes \[
+\left(
+\begin{array}{cc}
+k\times k & k\times (n-k)\\
+(n-k)\times k & (n-k)\times (n-k) 
+\end{array}
+\right)
+\] 
 \begin{enumerate}
 \item Make a Cholesky decomposition of omega, $\Omega=GG^T$
-\item
+\item Obtain the inverse of $\Omega$ by solving the triangular system $G^{T}G^{-T}=I$ for just the $k$ first cols and using $\Omega^{-1}=G^{-T}G^{-1}$
+\item We want the upper $k\times k$ submatrix of $\Omega^{-1}=G^{-T}G^{-1}$.
 \end{enumerate}
-Ok to run on block from BOV omega?
+%Ok to run on block from BOV omega?
+
+\end{document} 
 
 
-
+  cholFullA=chol(FullA);
+invGT=  inv(cholFullA'); %compute only leading k block
+[q,R]=qr(invGT(:,1:k));
+invR=inv(R(1:k,1:k));
+result2=invR*invR' 
