@@ -227,7 +227,12 @@ sub _create_nmfe_options
 	}
 	if (defined $self->parafile) {
 		if ($PsN::nm_major_version > 7 or ($PsN::nm_major_version == 7 and $PsN::nm_minor_version >= 2)) {
-			$parastring .= '"-parafile=' . $self->parafile . '"';
+			if ($self->nmqual) {
+				#if nmqual is set then copy file to psn.pnm in cwd instead of putting in options
+				cp( $self->parafile, 'psn.pnm' );
+			}else{
+				$parastring .= '"-parafile=' . $self->parafile . '"';
+			}
 		} else {
 			croak("Cannot use parafile with NM7.1 or earlier");
 		}
@@ -261,13 +266,15 @@ sub _create_nmqual_command
 	my $options = $self->_create_nmfe_options;
 	my $work_dir = cwd();
 	my $xml_file = $self->nmqual_xml;
+	my $interface = 'run';
+	$interface = 'para' if (defined $self->parafile);
 	unless (defined $xml_file){
 		croak("xml_file undefined in _create_nmqual_command, this is a bug");
 	}
-	$command_string = " $xml_file run ce $work_dir psn $options ";
+	$command_string = " $xml_file $interface ce $work_dir psn $options ";
 
 	$command_string = "perl ".$self->full_path_runscript." $command_string";
-	print "\n$command_string\n";
+	#print "\n$command_string\n";
 	return $command_string;
 }
 
