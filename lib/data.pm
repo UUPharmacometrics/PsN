@@ -9,7 +9,6 @@ use Storable;
 use ui;
 use status_bar;
 use Data::Dumper;
-use Time::HiRes qw(gettimeofday);
 use array qw(not_empty);
 use Scalar::Util qw(looks_like_number);
 use Moose;
