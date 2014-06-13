@@ -47,7 +47,7 @@ sub setup_paths
 	my $full_path_runscript = undef;
 	my $full_path_nmtran = undef;
 
-	#PsN::set_nonmem_info($nm_version);
+	PsN::set_nonmem_info($nm_version);
 	my $nmdir = $PsN::nmdir;
 	if (not defined $nmdir) {
 		croak("Unknown NONMEM version $nm_version specified.\n");
