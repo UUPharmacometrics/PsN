@@ -9,14 +9,25 @@
 
 \section{Introduction}
 
-The Stepwise Covariate Model (SCM) building tool of PsN implements Forward Selection and Backward Elimination of covariates to a model. In short, one model for each relevant parameter-covariate relationship is prepared and tested in a univariate manner. In the first step the model that gives the best fit of the data according to some criteria is retained and taken forward to the next step. In the following steps all remaining parameter-covariate combinations are tested until no more covariates meet the criteria for being included into the model. The Forward Selection can be followed by Backward Elimination, which proceeds as the Forward Selection but reversely, using stricter criteria for model improvement. The Stepwise Covariate Model building procedure is run by the PsN tool scm. 
+The Stepwise Covariate Model (SCM) building tool of PsN implements Forward Selection and Backward Elimination of 
+covariates to a model. 
+In short, one model for each relevant parameter-covariate relationship is prepared and tested in a univariate 
+manner. 
+In the first step the model that gives the best fit of the data according to some criteria is retained and taken 
+forward to the next step. 
+In the following steps all remaining parameter-covariate combinations are tested until no more covariates meet 
+the criteria for being included into the model. The Forward Selection can be followed by Backward Elimination, 
+which proceeds as the Forward Selection but reversely, using stricter criteria for model improvement. 
+The Stepwise Covariate Model building procedure is run by the PsN tool scm. 
 
 \section{Data file}
 If the data file has a header it will be ignored. Only the names set in \$INPUT of the input model will be used.
 
 \section{Model file}
-Each parameter \emph{par} that is to have covariates added must be encoded using TV\emph{par}, for example TVCL=THETA(1) that is later used in CL=TVCL*EXP(ETA(5)). 
-All covariate relationships will be added to TV\emph{par}, and the scm program will stop if TV\emph{par} is not found in \$PK or \$PRED. It will not work to define TV\emph{par} in \$ERROR.
+Each parameter \emph{par} that is to have covariates added must be encoded using TV\emph{par}, 
+for example TVCL=THETA(1) that is later used in CL=TVCL*EXP(ETA(5)). 
+All covariate relationships will be added to TV\emph{par}, and the scm program will stop if TV\emph{par} 
+is not found in \$PK or \$PRED. It will not work to define TV\emph{par} in \$ERROR.
 
 The input control stream should always be the ``clean'' base model without any 
 candidate relations added, even if section 
@@ -24,20 +35,48 @@ candidate relations added, even if section
 is used in the scm config file (see below). 
 
 \section{Valid states for the parameter-covariate relations}
-There is a fixed set of parameter-covariate relations defined in scm, but the user can redefine one or more of the states using the code option, see below. This gives very high flexibility. The predefined shapes for the parameter-covariate relations for \emph{continuous} covariates are: none/not included, included as a linear relation, included as a piece-wise linear relation with two slopes (“hockey-stick”), included as an exponential relation and included as a power relation. The pre-defined parameterizations are shown in the section Default parameterizations. By default these parameterizations are assigned to numbers or \emph{states} according to 1:none,  2:linear, 3:hockey-stick, 4:exponential and 5:power, but any relation can be assigned to any number. The exception is the number 1, which must always correspond to none/not included. Further information is given in the help text on \verb|[valid_states]| and \verb|[code]|. 
+There is a fixed set of parameter-covariate parameterizations, \emph{states}, 
+defined in scm, but the user can redefine one or more of 
+the states using the code option, see below. This gives very high flexibility. The predefined shapes for the 
+parameter-covariate relations for \emph{continuous} covariates are: none/not included, included as a linear 
+relation, included as a piece-wise linear relation with two slopes (“hockey-stick”), included as an exponential 
+relation and included as a power relation. 
+The pre-defined parameterizations are shown in the section Default parameterizations. 
+By default these parameterizations are assigned to numbers (\emph{states}) 
+according to 1:none,  2:linear, 3:hockey-stick, 4:exponential and 5:power, but any relation can be assigned 
+to any number. 
+The exception is the number 1, which must always correspond to none/not included. Further information is given in 
+the help text on \verb|[valid_states]| and \verb|[code]|. 
 
 \emph{Categorical} covariates are by default either not included or linearly included with an extra parameter added for each but the most common category. The default numbers are 1 and 2.
 
-The numbers 1-5, and higher numbers if the user has defined new relations using the \verb|[code]| section, are used when specifying included parameter-covariate relations. Relationships are tried in the order the corresponding state numbers are listed in \verb|[valid_states]|, see details below. The default is to try a later relationship in the list only if the preceding creates an significant change in the criteria for selection. Per default the relationships are not tried simultaneously, which means they are not compared with each other. The user can choose to have all later relations tried simultaneously by setting the option -parallel\_states, see details in the list of options below.
+The numbers 1-5, and higher numbers if the user has defined new relations using the \verb|[code]| section, are 
+used when specifying included parameter-covariate relations. Relationships are tried in the order the 
+corresponding 
+state numbers are listed in \verb|[valid_states]|, see details below. The default is to try a later 
+relationship in the list only if the preceding creates an significant change in the criteria for selection. 
+Per default the relationships are not tried simultaneously, which means they are not compared with each other. 
+The user can choose to have all later relations tried simultaneously by setting the option -parallel\_states, see 
+details in the list of options below.
 
 \section{Inclusion and elimination criteria}
-A combination of a parameter and covariate is included if the change of OFV is significant according to the input p-value. The limit where the change is considered significant depends on the complexity of the relationship and is expressed in degrees of freedom. The linear relation adds one degree of freedom, the hockey-stick relation adds two, exponential only adds one. Categorical covariates adds as many degrees of freedom as there are categories minus 1. In forward search, for each covariate addition the program computes the lowest p-value for which this addition would still be significant. The covariate addition with the lowest p-value is selected, provided that this p-value is lower than the input forward p-value. In backward search the program computes which p-value would be required to accept going from each candidate reduced model to the current model. The candidate reduced model which would require the highest p-value to be replaced with the current model is selected, provided that this p-value is higher than the input backward p-value. 
+A combination of a parameter and covariate is included if the change of OFV is significant according to the input 
+p-value. The limit where the change is considered significant depends on the complexity of the relationship and 
+is expressed in degrees of freedom. The linear relation adds one degree of freedom, the hockey-stick relation adds two, exponential only adds one. Categorical covariates adds as many degrees of freedom as there are categories minus 1. In forward search, for each covariate addition the program computes the lowest p-value for which this addition would still be significant. The covariate addition with the lowest p-value is selected, provided that this p-value is lower than the input forward p-value. In backward search the program computes which p-value would be required to accept going from each candidate reduced model to the current model. The candidate reduced model which would require the highest p-value to be replaced with the current model is selected, provided that this p-value is higher than the input backward p-value. 
 
 \section{Input}
-There are so many options to SCM that it is unpractical to specify them all on the command-line. Therefore the only option required on the command-line is the name of a configuration file, where other options are specified. Additional options are required, but may be specified either on the command-line or in the configuration file. If an option is specified both on the command-line and in the configuration file, the choice on the command-line has precedence. There are also options, of which some are required, that can only be specified in the configuration file. On the command-line options always begin with -, but in the configuration file the '-' must always be omitted. 
+There are so many options to SCM that it is unpractical to specify them all on the command-line. Therefore 
+the only option required on the command-line is the name of a configuration file, where other options are 
+specified. 
+Additional options are required, but may be specified either on the command-line or in the configuration file. 
+If an option is specified both on the command-line and in the configuration file, the choice on the command-line 
+has precedence. There are also options, of which some are required, that can only be specified in the 
+configuration file. 
+On the command-line options always begin with -, but in the configuration file the '-' must always be omitted. 
 
 \section{Configuration file}
-A set of example and template configuration files are found in the documentation directory, together will all userguides.
+A set of example and template configuration files are found in the documentation directory, together will all 
+userguides.
 
 The configuration file consists of a list of input options, followed by a set of sections with headers in square brackets. It lists the parameters and covariates, their types and which combinations that should be tested. The header of all sections must be enclosed by square brackets, see examples below. 
 
@@ -65,7 +104,8 @@ scm -config_file=config.scm
 
 \subsection{Required input which can be given on the command-line or in the configuration file}
 When set in the configuration file, all these options must be set \emph{before} the 
-first \verb|[|\emph{section}\verb|]|.
+first \verb|[|\emph{section}\verb|]|. Note also that the leading '-' must be omitted if the option is set
+in the configuration file.
 
 \begin{optionlist}
 \optdefault{search\_direction}{direction}
@@ -84,11 +124,13 @@ A comma separated list of the continuous covariates to be tested. The listed cov
 
 \subsection{Optional input which can be given on the command-line or in the configuration file}
 When set in the configuration file, all these options must be set before the first 
-\verb|[|\emph{section}\verb|]|.
+\verb|[|\emph{section}\verb|]|. Note also that the leading '-' must be omitted if the option is set
+in the configuration file, and that an option that does not take any argument on the commandline must be
+set with '=1' in the configuration file to be turned on, for example parallel\_states=1.
 
 \begin{optionlist}
-\optdefault{gof}{}
-Default is 'p\_value', other alternative is 'ofv'. Option decides which goodness-of-fit criteria should be used for deciding which model is better when comparing. 
+\optdefault{gof}{goodness-of-fit criterium}
+Default is 'p\_value', other alternative is 'ofv'. Option decides which goodness-of-fit criterium should be used for deciding which model is better when comparing. 
 \nextopt
 \optdefault{global\_init}{x}
 Default is 0.001. With global\_init option the initial estimates of parameters in covariate function parameterizations are set to global\_init. If using inits section in configuration file individual initial values are used instead of one global. 
@@ -125,18 +167,17 @@ When set, all these options must be set \emph{before} the first
 \verb|[|\emph{section}\verb|]|.
 
 \begin{optionlist}
-\optdefault{base\_criteria\_values}{perl code}
+\optconfig{base\_criteria\_values}{perl code}
 The argument to this option is some perl code (a hash). The base\_criteria\_values overrides default criteria for the goodness of fit function used. The default goodness of fit function takes its base\_criteria\_value to be the ofv of the initial model. The ofv of the initial model  can be set by
-
 
 base\_criteria\_values={ofv =$>$ 670}
 
  where the number 670 should be be replaced by the ofv value of the model evaluated with all included relations. If base\_criteria\_values is set, then PsN does not have to evaluate the original model with included\_relations to get a ofv to use for comparisons.\\
 \nextopt
-\optdefault{logit}{comma-separated list of parameters}
+\optconfig{logit}{comma-separated list of parameters}
 By default the value of the covariate function for a parameter is a  product of individual functions of the included covariates, and the typical value (TV) of the parameter is multiplied with the product. With option -logit the user can specify a list of parameters which should be treated as logit transformations, i.e. the value of the covariate function is a sum of individual functions, the sum should be added to the typical value of the parameter, and the value of each individual covariate function should be 0, not 1, when the corresponding THETA is 0. The thetas in a linear or hockey-stick relation on a logit parameter will be given lower and upper boundaries -20 and 20 by default. Important note: When a parameter is a logit transformation, the power and exponential covariate relations are not appropriate to add on this parameter. 
 \nextopt
-\optdefault{time\_varying}{list of covariates}
+\optconfig{time\_varying}{list of covariates}
 Handle time-varying covariates when computing median and mean of covariates. Requires that W is defined in \$ERROR/\$PRED. PsN does not check that W is defined. There will be an NMtran error if W is missing. Assume an ID has the following observations: a,b,c,d
 
 . 
@@ -173,7 +214,8 @@ The name of the run directory. The default is scm\_dirN, which N either 1 or the
 
 Add covariates to a linearized version of the  original model. All these options must be set before the first 
 \verb|[|\emph{section}\verb|]|
-of the configuration file. The linearization method can only be used with models where the eta on each parameter (CL, V,...) to be tested is unique to that parameter, i.e. if  CL is listed in test\_relations and CL=TVCL*EXP(ETA(5)) then ETA(5) must not appear anywhere else in the model. Also, the linearization method is restricted to a certain set of models for the inter-individual variation, see below. Different parameters may have different ETA relations as long as each one is found in the list below.
+of the configuration file. 
+The linearization method can only be used with models where the eta on each parameter (CL, V,...) to be tested is unique to that parameter, i.e. if  CL is listed in test\_relations and CL=TVCL*EXP(ETA(5)) then ETA(5) must not appear anywhere else in the model. Also, the linearization method is restricted to a certain set of models for the inter-individual variation, see below. Different parameters may have different ETA relations as long as each one is found in the list below.
 The recognized forms of inter-individual variation models are (using parameter PAR and ETA(1) as  examples):
 \begin{verbatim}
 PAR=TVPAR*EXP(ETA(1))	   	; exponential
@@ -197,26 +239,29 @@ and set logit=PHI.
 
 The covariate function will always be multiplied with (or added to if the parameter is a logit) TVPAR, so TVPAR must be used in the model.
 
+The options below are listed using the syntax that should be used when setting the option in the scm configuration
+file.
 \begin{optionlist}
-\optname{linearize}
+\optconfig{linearize}{1}
 Turn on the linearization method. By default not set. 
 \nextopt
-\optname{foce}
-Linearize around empirical Bayes estimates. Default set. If unset  linearize around etas equal to 0. 
+\optconfig{foce}{0}
+Linearize around empirical Bayes estimates. Default set. If unset (foce=0 is set in the configuration file) 
+linearize around etas equal to 0. 
 \nextopt
-\optname{second\_order}
+\optconfig{second\_order}{1}
 This option is not fully implemented yet. Default not set. Use a second order Taylor expansion instead of a first order. 
 \nextopt
-\optdefault{lst\_file}{filename}
+\optconfig{lst\_file}{filename}
 Default not used. Update original model with final estimates from this file before running model to obtain derivatives. 
 \nextopt
-\optname{update\_derivatives}
+\optconfig{update\_derivatives}{1}
 Default not set. In each step, after selecting the covariate to add, rerun non-linear model to get updated derivatives for linearization. 
 \nextopt
-\optname{epsilon}
+\optconfig{epsilon}{0}
 Default set. Linearize with respect to epsilons in addition to etas. Disable with epsilon=0 in the configuration file or -no-epsilon on the command-line, then no linearization with respect to epsilon is performed. 
 \nextopt
-\optdefault{error}{add,prop,propadd or user}
+\optconfig{error}{add,prop,propadd or user}
 No default. Only allowed to set when -no-epsilon is set. Use an approximate linearization of the error model instead of exact linearization with respect to epsilons. Alternatives are add for additive, prop for proportional, propadd for proportional plus additive and user for user defined. 
 
 For additive and proportional error (add and prop) it is required that the original model defines a variable W for weighting of EPS(1), for add
@@ -239,17 +284,20 @@ For proportional plus additive error (propadd) it is required that two variables
 \end{verbatim}
 If -error=user then the option -error\_code must be defined in the configuration file, and probably also do\_not\_drop (see below).The code can only use IPRED, EPS(x) and parameters listed with do\_not\_drop. IPRED must be used. F cannot be used. The code must have a \ (backslash) at the end of each line, except the last which cannot have a backslash. The code must not contain blank lines or comments.  \\
 \nextopt
-\optdefault{error\_code}{nonmem code}
+\optconfig{error\_code}{nonmem code}
 Only if error=user. Can only be set in the configuration file. Define Y, possibly on several lines, with NONMEM code using IPRED, EPS(x), and any parameters listed in do\_not\_drop. IPRED must be used for Y and F must not be used. When the NONMEM code spans several lines, each line must end with \ (a backslash) except the last one. It is important not to have \ at the end of the last line. There must be no empty lines and no comments in the error\_code. THETA(x) cannot be used. It will not work to have etas on the epsilons. 
 \nextopt
-\optdefault{do\_not\_drop}{list of parameters}
-When option -linearize is set, option -do\_not\_drop has a different functionality than otherwise. In combination with -linearize, this option must list all parameters except IPRED and EPS(x) that are used in -error\_code. It must also list parameters that are needed for IGNORE or ACCEPT statements. No other parameters should be listed here, for example do not list covariates that are in \$PK/\$PRED but not in error\_code. 
+\optconfig{do\_not\_drop}{list of parameters}
+When option linearize is set, option do\_not\_drop has a different functionality than otherwise. 
+In combination with linearize, this option must list all parameters except IPRED and EPS(x) that are used in 
+error\_code. It must also list parameters that are needed for IGNORE or ACCEPT statements. No other parameters 
+should be listed here, for example do not list covariates that are in \$PK/\$PRED but not in error\_code. 
 \nextopt
-\optdefault{derivatives\_data}{filename}
+\optconfig{derivatives\_data}{filename}
 Can only be set in the configuration file. It is possible to reuse the derivatives data from a previous run, the file derivatives\_covariates.dta, provided that the nonlinear model, the included\_relations, the list of covariates and the do\_not\_drop list is the same. The program does not check that these conditions are fulfilled, so if they are violated NMtran will fail or the program output will be incorrect. 
 \nextopt
-\optname{noabort}
-Default not set. Only relevant if -linearize is set. With this option set, scm will add NOABORT in \$EST of the linearized models. 
+\optconfig{noabort}{1}
+Default not set. Only relevant if linearize is set. With this option set, scm will add NOABORT in \$EST of the linearized models. 
 \nextopt
 \end{optionlist}
 
