@@ -115,11 +115,12 @@ EOF
 $help_text{-methodA} = <<'EOF';
       -methodA
 
-    Default not set. If the scm option -linearize is not set, the bootstrap 
-    scm non-linear method will be used. If option -linearize is set, by 
+    Default not set. If the scm option linearize is not set in the scm configuration
+	file, the bootstrap scm non-linear method will be used. If option linearize is set, by 
     default the bootstrap scm linear method B will be used. If option 
-    -linearize is set  together with option -methodA then the bootstrap 
-    scm linear method A will be used. If -linearize is not set and option 
+    linearize is set in the scm configuration file together with option -methodA on the
+    boot_scm command line then the bootstrap 
+    scm linear method A will be used. If linearize is not set and option 
     -methodA is set this will result in an error message.
 EOF
 
