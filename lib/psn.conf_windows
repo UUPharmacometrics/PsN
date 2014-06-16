@@ -1,4 +1,4 @@
-; This is the PsN configuration file for PsN3. 
+; This is the PsN configuration file. 
 ; The most important section to change is [nm_versions]
 ; PsN will look for this file
 ; (psn.conf) at two different locations, in PsN installation directory
