@@ -684,8 +684,9 @@ if ((not $config_file->linearize) or $options{'methodA'}){
 									   config_file => $config_file,
 									   models	=> [$linBmodel],
 									   both_directions => 0,
-									   skip_filtering => 1);
-	$deriv_scm -> return_after_derivatives_done(1); #end scm prematurely
+									   skip_filtering => 1,
+									   return_after_derivatives_done => 1); #end scm prematurely
+
 	$deriv_scm -> run;
 	$config_file->time_varying($time_varying); #reset
 	

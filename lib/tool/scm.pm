@@ -3703,16 +3703,15 @@ sub calculate_categorical_statistics
 	}
 
 	my %strata = %{$data-> factors( column => $column_number,
-	return_occurences =>1,
-	unique_in_individual => 1,
-	ignore_missing => 1)};
-
+									return_occurences =>1,
+									unique_in_individual => 1,
+									ignore_missing => 1)};
+	
 	if ( $strata{'Non-unique values found'} eq '1' ) {
 		if ($self->linearize()){
 			ui -> print( category => 'all',
 				message => "\nWarning: Individuals were found to have multiple values ".
-				"in the $covariate column, which renders the linearization of the base model ".
-				"incorrect. ".
+				"in the $covariate column, this renders the linearization inappropriate for this covariate. ".
 				"Consider terminating this run and setting ".
 				"covariate $covariate as continuous and time-varying in the configuration file.\n" );
 		}
@@ -3780,15 +3779,15 @@ sub calculate_continuous_statistics
 			if ($self->linearize()){
 				ui -> print( category => 'all',
 					message => "\nWarning: Individuals were found to have multiple ".
-					"values in the $covariate column, which renders the linearization ".
-					"of the base model incorrect. Consider terminating this run and ".
+					"values in the $covariate column, this renders the linearization ".
+					"inappropriate for this covariate. Consider terminating this run and ".
 					"setting covariate $covariate as time-varying in the configuration ".
-					"file.\n" );
+					"file.\n" ) unless $self->return_after_derivatives_done();
 			}else{
 				ui -> print( category => 'all',
 					message => "\nWarning: Individuals were found to have multiple values ".
 					"in the $covariate column, but $covariate was not set as time_varying in the ".
-					"configuration file. Results may not be as expected. ");
+					"configuration file. Mean and median may not be computed correctly for $covariate. ") unless $self->return_after_derivatives_done();
 			}	
 		}
 	}
