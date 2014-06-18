@@ -71,7 +71,7 @@ sub set_random_inits
 	unless (defined $self->options and scalar(@{$self->options})==$nopt){
 		croak("bug in init_record->set_random_inits: bound_record does not match self" );
 	}
-	for (my $attempt=0; $attempt=100; $attempt++){
+	for (my $attempt=0; $attempt<100; $attempt++){
 		my $matrix=[];
 		if ($do_cholesky){
 			for (my $k=0; $k< $self->size; $k++){
