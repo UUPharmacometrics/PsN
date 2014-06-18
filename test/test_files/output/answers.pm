@@ -654,6 +654,19 @@ sub read_answers{
 	$answer_hashes[$index]->{answers}->{0}->{0}->{'seomegas'}=[1.21766E-01,0.00000E+00,4.69149E-02];
 	$answer_hashes[$index]->{answers}->{0}->{0}->{'sesigmas'}=[3.18393E-03];
 
+	$index++;
+	$answer_hashes[$index]={};
+	$answer_hashes[$index]->{file}='special_mod/objv_infinity.lst';
+	$answer_hashes[$index]->{answers}={};
+	$answer_hashes[$index]->{parsed_successfully}=1;
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'ofv'}=undef;
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'covariance_step_run'}=0;
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'rounding_errors'}=0;
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'minimization_successful'}=0;
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'estimate_near_boundary'}=0;
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'thetas'}=[1.86950E+01,6.82496E+02,1.97082E-12,9.99990E+05];
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'omegas'}=[9.44170E-01,0.00000E+00,1.43831E+00];
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'sigmas'}=[2.60706E-02];
 
 	return \@answer_hashes;
 }

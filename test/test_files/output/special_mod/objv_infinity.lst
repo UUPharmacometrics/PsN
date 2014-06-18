@@ -1,0 +1,1223 @@
+Wed Mar 26 00:22:28 CET 2014
+$PROBLEM    TDM type censoring
+; Estimation model, all data
+
+; 2-comp model IV bolus
+$INPUT      ID TIME AMT DV TCENS RCENS BCENS
+$DATA       ../../m1/mc-sim-96.dat IGNORE=@
+$SUBROUTINE ADVAN3 TRANS4
+$PK 
+   MU_1  = LOG(THETA(1))
+
+$ERROR 
+   IPRD  = A(1)/V1
+
+$THETA  (1E-16,9.9) ; CL
+$THETA  (1E-16,50) ; V1
+$THETA  (1E-16,0.1) ; Q
+$THETA  (1E-16,10) ; V2
+$OMEGA  0.09  ;     BSV_CL
+$OMEGA  0.09  ;      BSV_V
+$SIGMA  0.0225  ;   Res_prop
+$ESTIMATION METHOD=SAEM INTER CINTERVAL=10 CTYPE=3 POSTHOC SIGDIG=3
+            PRINT=1
+
+NM-TRAN MESSAGES
+  
+ WARNINGS AND ERRORS (IF ANY) FOR PROBLEM    1
+             
+ (WARNING  2) NM-TRAN INFERS THAT THE DATA ARE POPULATION.
+             
+ (WARNING  23) $PK DOES NOT DEFINE A SCALE PARAMETER FOR THE CENTRAL
+ COMPARTMENT.  WITH THIS TRANS, IT MAY NOT BE POSSIBLE TO SEPARATELY
+ OBTAIN ESTIMATES OF PARAMETERS AFFECTING CLEARANCE AND VOLUME.
+
+License Registered to: Uppsala University
+Expiration Date:    14 APR 2014
+Current Date:       26 MAR 2014
+  **** WARNING!!! Days until program expires :  18 ****
+  **** CONTACT idssoftware@iconplc.com FOR RENEWAL ****
+1NONLINEAR MIXED EFFECTS MODEL PROGRAM (NONMEM) VERSION 7.3.0
+ ORIGINALLY DEVELOPED BY STUART BEAL, LEWIS SHEINER, AND ALISON BOECKMANN
+ CURRENT DEVELOPERS ARE ROBERT BAUER, ICON DEVELOPMENT SOLUTIONS,
+ AND ALISON BOECKMANN. IMPLEMENTATION, EFFICIENCY, AND STANDARDIZATION
+ PERFORMED BY NOUS INFOSYSTEMS.
+ 
+ PROBLEM NO.:         1
+ TDM type censoring                                                      
+0DATA CHECKOUT RUN:              NO 
+ DATA SET LOCATED ON UNIT NO.:    2
+ THIS UNIT TO BE REWOUND:        NO 
+ NO. OF DATA RECS IN DATA SET:     2800
+ NO. OF DATA ITEMS IN DATA SET:   9
+ ID DATA ITEM IS DATA ITEM NO.:   1
+ DEP VARIABLE IS DATA ITEM NO.:   4
+ MDV DATA ITEM IS DATA ITEM NO.:  9
+0INDICES PASSED TO SUBROUTINE PRED:
+   8   2   3   0   0   0   0   0   0   0   0
+0LABELS FOR DATA ITEMS:
+ ID TIME AMT DV TCENS RCENS BCENS EVID MDV
+0FORMAT FOR DATA:
+ (3E10.0,E11.0,3E10.0,2F2.0)                                                     
+ 
+ TOT. NO. OF OBS RECS:     2400
+ TOT. NO. OF INDIVIDUALS:    400
+0LENGTH OF THETA:   4
+0DEFAULT THETA BOUNDARY TEST OMITTED:    NO 
+0OMEGA HAS SIMPLE DIAGONAL FORM WITH DIMENSION:   2
+0DEFAULT OMEGA BOUNDARY TEST OMITTED:    NO 
+0SIGMA HAS SIMPLE DIAGONAL FORM WITH DIMENSION:   1
+0DEFAULT SIGMA BOUNDARY TEST OMITTED:    NO 
+0INITIAL ESTIMATE OF THETA:
+ LOWER BOUND    INITIAL EST    UPPER BOUND
+  0.1000E-15     0.9900E+01     0.1000E+07
+  0.1000E-15     0.5000E+02     0.1000E+07
+  0.1000E-15     0.1000E+00     0.1000E+07
+  0.1000E-15     0.1000E+02     0.1000E+07
+0INITIAL ESTIMATE OF OMEGA:
+ 0.9000E-01
+ 0.0000E+00   0.9000E-01
+0INITIAL ESTIMATE OF SIGMA:
+ 0.2250E-01
+1DOUBLE PRECISION PREDPP VERSION 7.3.0
+ 
+ TWO COMPARTMENT MODEL (ADVAN3)
+0MAXIMUM NO. OF BASIC PK PARAMETERS:   4
+0BASIC PK PARAMETERS (AFTER TRANSLATION):
+   BASIC PK PARAMETER NO.  1: ELIMINATION RATE (K)
+   BASIC PK PARAMETER NO.  2: CENTRAL-TO-PERIPH. RATE (K12)
+   BASIC PK PARAMETER NO.  3: PERIPH.-TO-CENTRAL RATE (K21)
+ TRANSLATOR WILL CONVERT PARAMETERS 
+ CL, V1, Q, V2 TO K, K12, K21 (TRANS4)
+0COMPARTMENT ATTRIBUTES 
+ COMPT. NO.   FUNCTION   INITIAL    ON/OFF      DOSE      DEFAULT    DEFAULT
+                         STATUS     ALLOWED    ALLOWED    FOR DOSE   FOR OBS.
+    1         CENTRAL      ON         NO         YES        YES        YES
+    2         PERIPH.      ON         NO         YES        NO         NO 
+    3         OUTPUT       OFF        YES        NO         NO         NO 
+1
+ ADDITIONAL PK PARAMETERS - ASSIGNMENT OF ROWS IN GG
+ COMPT. NO.                             INDICES
+              SCALE      BIOAVAIL.   ZERO-ORDER  ZERO-ORDER  ABSORB
+                         FRACTION    RATE        DURATION    LAG  
+    1            *           *           *           *           *
+    2            *           *           *           *           *
+    3            *           -           -           -           -
+             - PARAMETER IS NOT ALLOWED FOR THIS MODEL
+             * PARAMETER IS NOT SUPPLIED BY PK SUBROUTINE;
+               WILL DEFAULT TO ONE IF APPLICABLE
+0DATA ITEM INDICES USED BY PRED ARE:
+   EVENT ID DATA ITEM IS DATA ITEM NO.:      8
+   TIME DATA ITEM IS DATA ITEM NO.:          2
+   DOSE AMOUNT DATA ITEM IS DATA ITEM NO.:   3
+ 
+0PK SUBROUTINE CALLED WITH EVERY EVENT RECORD.
+ PK SUBROUTINE NOT CALLED AT NONEVENT (ADDITIONAL OR LAGGED) DOSE TIMES.
+0ERROR SUBROUTINE CALLED WITH EVERY EVENT RECORD.
+0ERROR SUBROUTINE INDICATES THAT DERIVATIVES OF COMPARTMENT AMOUNTS ARE USED.
+1
+
+
+ #TBLN:      1
+ #METH: Stochastic Approximation Expectation-Maximization
+
+ ESTIMATION STEP OMITTED:                 NO  
+ ANALYSIS TYPE:                           POPULATION
+ CONDITIONAL ESTIMATES USED:              YES 
+ CENTERED ETA:                            NO  
+ EPS-ETA INTERACTION:                     YES 
+ LAPLACIAN OBJ. FUNC.:                    NO  
+ NO. OF FUNCT. EVALS. ALLOWED:            360
+ NO. OF SIG. FIGURES REQUIRED:            3
+ INTERMEDIATE PRINTOUT:                   YES 
+ ESTIMATE OUTPUT TO MSF:                  NO  
+ IND. OBJ. FUNC. VALUES SORTED:           NO  
+ NUMERICAL DERIVATIVE 
+       FILE REQUEST (NUMDER):             NONE
+ MAP (ETAHAT) ESTIMATION METHOD (OPTMAP): 0           
+ ETA HESSIAN EVALUATION METHOD (ETADER):  0           
+ INITIAL ETA FOR MAP ESTIMATION (MCETA):  0           
+ SIGDIGITS FOR MAP ESTIMATION (SIGLO):    100         
+ GRADIENT SIGDIGITS OF 
+       FIXED EFFECTS PARAMETERS (SIGL):   100         
+ EXCLUDE TITLE (NOTITLE):                 NO 
+ EXCLUDE COLUMN LABELS (NOLABEL):         NO 
+ NOPRIOR SETTING (NOPRIOR):               OFF
+ NOCOV SETTING (NOCOV):                   OFF
+ DERCONT SETTING (DERCONT):               OFF
+ ABSOLUTE TOLERANCE-ADVAN 9,13 ONLY(ATOL):-100        
+ FINAL ETA RE-EVALUATION (FNLETA):        ON 
+ EXCLUDE NON-INFLUENTIAL (NON-INFL.) ETAS 
+       IN SHRINKAGE (ETASTYPE):           NO 
+ NON-INFL. ETA CORRECTION (NONINFETA):    OFF
+ FORMAT FOR ADDITIONAL FILES (FORMAT):    S1PE12.5
+ PARAMETER ORDER FOR OUTPUTS (ORDER):     TSOL
+ EM OR BAYESIAN METHOD USED:              STOCHASTIC APPROXIMATION EXPECTATION MAXIMIZATION (SAEM)
+ MU MODELING PATTERN (MUM):               
+ GRADIENT/GIBBS PATTERN (GRD):            
+ AUTOMATIC SETTING FEATURE (AUTO):        OFF
+ CONVERGENCE TYPE (CTYPE):                3           
+ CONVERGENCE INTERVAL (CINTERVAL):        10          
+ CONVERGENCE ITERATIONS (CITER):          10          
+ CONVERGENCE ALPHA ERROR (CALPHA):        5.000000000000000E-02   
+ BURN-IN ITERATIONS (NBURN):              1000        
+ ITERATIONS (NITER):                      1000        
+ ANEAL SETTING (CONSTRAIN):               1           
+ STARTING SEED FOR MC METHODS (SEED):     11456       
+ MC SAMPLES PER SUBJECT (ISAMPLE):        2           
+ RANDOM SAMPLING METHOD (RANMETHOD):      
+ EXPECTATION ONLY (EONLY):                NO 
+ PROPOSAL DENSITY SCALING RANGE 
+              (ISCALE_MIN, ISCALE_MAX):   1.000000000000000E-06   ,1000000.00000000        
+ SAMPLE ACCEPTANCE RATE (IACCEPT):        0.400000000000000       
+ METROPOLIS HASTINGS SAMPLING FOR INDIVIDUAL ETAS:
+ SAMPLES FOR GLOBAL SEARCH KERNEL (ISAMPLE_M1):          2           
+ SAMPLES FOR NEIGHBOR SEARCH KERNEL (ISAMPLE_M1A):       0           
+ SAMPLES FOR LOCAL SEARCH KERNEL (ISAMPLE_M2):           2           
+ SAMPLES FOR LOCAL UNIVARIATE KERNEL (ISAMPLE_M3):       2           
+
+
+ THE FOLLOWING LABELS ARE EQUIVALENT
+ PRED=PREDI
+ RES=RESI
+ WRES=WRESI
+ IWRS=IWRESI
+ IPRD=IPREDI
+ IRS=IRESI
+
+ EM/BAYES SETUP:
+ THETAS THAT ARE MU MODELED:
+   1   2
+ THETAS THAT ARE SIGMA-LIKE:
+ 
+
+ MONITORING OF SEARCH:
+
+ Stochastic/Burn-in Mode
+ iteration        -1000  SAEMOBJ=   19395.437419154394
+ iteration         -999  SAEMOBJ=   12791.058370225883
+ iteration         -998  SAEMOBJ=   5523.9395828723664
+ iteration         -997  SAEMOBJ=   2133.4641949198053
+ iteration         -996  SAEMOBJ=   667.89626930055135
+ iteration         -995  SAEMOBJ=  -242.54902645939558
+ iteration         -994  SAEMOBJ=  -797.57522765885983
+ iteration         -993  SAEMOBJ=  -1230.4862955492219
+ iteration         -992  SAEMOBJ=  -1486.3771979172589
+ iteration         -991  SAEMOBJ=  -1726.5455204341913
+ iteration         -990  SAEMOBJ=  -1816.6002292434036
+ iteration         -989  SAEMOBJ=  -1992.5570971285576
+ iteration         -988  SAEMOBJ=  -2079.7531447527526
+ iteration         -987  SAEMOBJ=  -2116.0721042988980
+ iteration         -986  SAEMOBJ=  -2221.7153700191120
+ iteration         -985  SAEMOBJ=  -2269.2749630155986
+ iteration         -984  SAEMOBJ=  -2359.1204302513188
+ iteration         -983  SAEMOBJ=  -2457.6623307421587
+ iteration         -982  SAEMOBJ=  -2528.6912303062672
+ iteration         -981  SAEMOBJ=  -2580.1372403101282
+ iteration         -980  SAEMOBJ=  -2717.8550270472706
+ iteration         -979  SAEMOBJ=  -2677.8936011547848
+ iteration         -978  SAEMOBJ=  -2635.2441989896242
+ iteration         -977  SAEMOBJ=  -2764.7774033377500
+ iteration         -976  SAEMOBJ=  -2807.6382532032826
+ iteration         -975  SAEMOBJ=  -2935.4347815635192
+ iteration         -974  SAEMOBJ=  -2957.0841253234571
+ iteration         -973  SAEMOBJ=  -2878.2621231313751
+ iteration         -972  SAEMOBJ=  -2850.3093372886901
+ iteration         -971  SAEMOBJ=  -2800.6700832551542
+ iteration         -970  SAEMOBJ=  -2858.7738502232810
+ iteration         -969  SAEMOBJ=  -2849.4474990976496
+ iteration         -968  SAEMOBJ=  -2918.5096732886750
+ iteration         -967  SAEMOBJ=  -2935.7428776458828
+ iteration         -966  SAEMOBJ=  -2942.9236725936321
+ iteration         -965  SAEMOBJ=  -2979.1910290737796
+ iteration         -964  SAEMOBJ=  -3018.2749292026010
+ iteration         -963  SAEMOBJ=  -3027.3131425110164
+ iteration         -962  SAEMOBJ=  -3067.8357706519519
+ iteration         -961  SAEMOBJ=  -3148.2772917272882
+ iteration         -960  SAEMOBJ=  -3181.1386696684276
+ iteration         -959  SAEMOBJ=  -3158.0340589377788
+ iteration         -958  SAEMOBJ=  -3217.6140774097521
+ iteration         -957  SAEMOBJ=  -3218.7445133355122
+ iteration         -956  SAEMOBJ=  -3233.9466602957882
+ iteration         -955  SAEMOBJ=  -3256.1657847085407
+ iteration         -954  SAEMOBJ=  -3249.8408840960738
+ iteration         -953  SAEMOBJ=  -3226.0940284181934
+ iteration         -952  SAEMOBJ=  -3245.9870634907111
+ iteration         -951  SAEMOBJ=  -3290.5251795947643
+ iteration         -950  SAEMOBJ=  -3324.9978564409766
+ iteration         -949  SAEMOBJ=  -3332.5581534650291
+ iteration         -948  SAEMOBJ=  -3363.4560847238063
+ iteration         -947  SAEMOBJ=  -3379.0862616836275
+ iteration         -946  SAEMOBJ=  -3385.9346813525190
+ iteration         -945  SAEMOBJ=  -3422.0309452618785
+ iteration         -944  SAEMOBJ=  -3439.8606236818614
+ iteration         -943  SAEMOBJ=  -3481.8131469530726
+ iteration         -942  SAEMOBJ=  -3505.0682994893696
+ iteration         -941  SAEMOBJ=  -3496.7930408027669
+ iteration         -940  SAEMOBJ=  -3509.8567980598555
+ iteration         -939  SAEMOBJ=  -3471.4400689952527
+ iteration         -938  SAEMOBJ=  -3483.4427514114736
+ iteration         -937  SAEMOBJ=  -3479.6498229304543
+ iteration         -936  SAEMOBJ=  -3482.7493045109059
+ iteration         -935  SAEMOBJ=  -3515.7546766103778
+ iteration         -934  SAEMOBJ=  -3532.3729087994179
+ iteration         -933  SAEMOBJ=  -3559.9769809189006
+ iteration         -932  SAEMOBJ=  -3558.4901079617530
+ iteration         -931  SAEMOBJ=  -3592.5780718622368
+ iteration         -930  SAEMOBJ=  -3631.5515009306637
+ iteration         -929  SAEMOBJ=  -3636.9779346398245
+ iteration         -928  SAEMOBJ=  -3666.6230893535349
+ iteration         -927  SAEMOBJ=  -3670.5839818443392
+ iteration         -926  SAEMOBJ=  -3678.6755816982313
+ iteration         -925  SAEMOBJ=  -3704.3861530515073
+ iteration         -924  SAEMOBJ=  -3690.3845846553645
+ iteration         -923  SAEMOBJ=  -3692.4379787878456
+ iteration         -922  SAEMOBJ=  -3712.6132936235590
+ iteration         -921  SAEMOBJ=  -3726.2392155070970
+ iteration         -920  SAEMOBJ=  -3739.4428624466555
+ iteration         -919  SAEMOBJ=  -3736.7696709188640
+ iteration         -918  SAEMOBJ=  -3793.3820669351435
+ iteration         -917  SAEMOBJ=  -3788.6577877146738
+ iteration         -916  SAEMOBJ=  -3797.4740330080244
+ iteration         -915  SAEMOBJ=  -3815.6107299695364
+ iteration         -914  SAEMOBJ=  -3816.0981247639975
+ iteration         -913  SAEMOBJ=  -3801.2348522230081
+ iteration         -912  SAEMOBJ=  -3792.7764600251339
+ iteration         -911  SAEMOBJ=  -3785.5600560906669
+ iteration         -910  SAEMOBJ=  -3810.7410190136447
+ iteration         -909  SAEMOBJ=  -3786.4541964703794
+ iteration         -908  SAEMOBJ=  -3835.3621356252579
+ iteration         -907  SAEMOBJ=  -3837.0087845212224
+ iteration         -906  SAEMOBJ=  -3845.4306699737926
+ iteration         -905  SAEMOBJ=  -3875.5314773796154
+ iteration         -904  SAEMOBJ=  -3863.2399229923512
+ iteration         -903  SAEMOBJ=  -3890.9409289791893
+ iteration         -902  SAEMOBJ=  -3905.6490636485214
+ iteration         -901  SAEMOBJ=  -3912.3699026284999
+ iteration         -900  SAEMOBJ=  -3901.6595597262744
+ iteration         -899  SAEMOBJ=  -3945.7882782582601
+ iteration         -898  SAEMOBJ=  -3947.4774248681560
+ iteration         -897  SAEMOBJ=  -3935.9103193651099
+ iteration         -896  SAEMOBJ=  -3928.1107960219565
+ iteration         -895  SAEMOBJ=  -3950.8258547168034
+ iteration         -894  SAEMOBJ=  -3954.5944675848727
+ iteration         -893  SAEMOBJ=  -3993.1661188968860
+ iteration         -892  SAEMOBJ=  -3902.7106616412680
+ iteration         -891  SAEMOBJ=  -3937.0493661274650
+ iteration         -890  SAEMOBJ=  -3949.0409217790411
+ iteration         -889  SAEMOBJ=  -3930.5562779769284
+ iteration         -888  SAEMOBJ=  -3946.2619381892578
+ iteration         -887  SAEMOBJ=  -3938.4030900282828
+ iteration         -886  SAEMOBJ=  -3920.0759161164879
+ iteration         -885  SAEMOBJ=  -3941.6135512593319
+ iteration         -884  SAEMOBJ=  -3961.2210849596950
+ iteration         -883  SAEMOBJ=  -3962.4900523863712
+ iteration         -882  SAEMOBJ=  -3949.4716825321111
+ iteration         -881  SAEMOBJ=  -3948.6796371660917
+ iteration         -880  SAEMOBJ=  -3964.4243160387164
+ iteration         -879  SAEMOBJ=  -3979.1204096784040
+ iteration         -878  SAEMOBJ=  -3914.5429192279880
+ iteration         -877  SAEMOBJ=  -3908.1596937953627
+ iteration         -876  SAEMOBJ=  -3961.5217770064519
+ iteration         -875  SAEMOBJ=  -3925.2848354500188
+ iteration         -874  SAEMOBJ=  -3920.0013457901468
+ iteration         -873  SAEMOBJ=  -3950.8293451545601
+ iteration         -872  SAEMOBJ=  -3956.0949362863030
+ iteration         -871  SAEMOBJ=  -3948.6879052940385
+ iteration         -870  SAEMOBJ=  -3952.1042035282776
+ iteration         -869  SAEMOBJ=  -3997.4678060467613
+ iteration         -868  SAEMOBJ=  -3996.0923727963986
+ iteration         -867  SAEMOBJ=  -4021.9158111590923
+ iteration         -866  SAEMOBJ=  -4037.8711126869202
+ iteration         -865  SAEMOBJ=  -4024.4277721801468
+ iteration         -864  SAEMOBJ=  -4045.0948692456377
+ iteration         -863  SAEMOBJ=  -4083.1613941046908
+ iteration         -862  SAEMOBJ=  -4087.9677386991443
+ iteration         -861  SAEMOBJ=  -4104.3181656846746
+ iteration         -860  SAEMOBJ=  -4131.7761886392655
+ iteration         -859  SAEMOBJ=  -4156.0164104569903
+ iteration         -858  SAEMOBJ=  -4201.9601232277000
+ iteration         -857  SAEMOBJ=  -4201.8320898110778
+ iteration         -856  SAEMOBJ=  -4220.0961865231566
+ iteration         -855  SAEMOBJ=  -4237.0019097666245
+ iteration         -854  SAEMOBJ=  -4247.4598169769242
+ iteration         -853  SAEMOBJ=  -4248.8655211986179
+ iteration         -852  SAEMOBJ=  -4288.0124967060192
+ iteration         -851  SAEMOBJ=  -4287.0268774952983
+ iteration         -850  SAEMOBJ=  -4282.6685100316772
+ iteration         -849  SAEMOBJ=  -4315.1771765153881
+ iteration         -848  SAEMOBJ=  -4324.5428562621146
+ iteration         -847  SAEMOBJ=  -4321.8437968233065
+ iteration         -846  SAEMOBJ=  -4357.3872692069181
+ iteration         -845  SAEMOBJ=  -4361.9800151690715
+ iteration         -844  SAEMOBJ=  -4410.3639444434139
+ iteration         -843  SAEMOBJ=  -4382.2476151852243
+ iteration         -842  SAEMOBJ=  -4419.1340588349394
+ iteration         -841  SAEMOBJ=  -4435.8320972226911
+ iteration         -840  SAEMOBJ=  -4422.0706497883566
+ iteration         -839  SAEMOBJ=  -4467.9031582561056
+ iteration         -838  SAEMOBJ=  -4488.3920068171828
+ iteration         -837  SAEMOBJ=  -4483.6510636464955
+ iteration         -836  SAEMOBJ=  -4500.5413247812658
+ iteration         -835  SAEMOBJ=  -4515.8528002300018
+ iteration         -834  SAEMOBJ=  -4488.0389637755561
+ iteration         -833  SAEMOBJ=  -4531.3183634002044
+ iteration         -832  SAEMOBJ=  -4556.2159349327103
+ iteration         -831  SAEMOBJ=  -4579.5323035680422
+ iteration         -830  SAEMOBJ=  -4622.3903647613788
+ iteration         -829  SAEMOBJ=  -4624.0472311872545
+ iteration         -828  SAEMOBJ=  -4654.4311983714651
+ iteration         -827  SAEMOBJ=  -4655.1752797004792
+ iteration         -826  SAEMOBJ=  -4676.1088183756028
+ iteration         -825  SAEMOBJ=  -4658.6279925928420
+ iteration         -824  SAEMOBJ=  -4699.7621247092493
+ iteration         -823  SAEMOBJ=  -4692.0331452655992
+ iteration         -822  SAEMOBJ=  -4695.2512360395485
+ iteration         -821  SAEMOBJ=  -4695.8459140737432
+ iteration         -820  SAEMOBJ=  -4740.7583615027188
+ iteration         -819  SAEMOBJ=  -4730.5092178435361
+ iteration         -818  SAEMOBJ=  -4765.2044891522910
+ iteration         -817  SAEMOBJ=  -4764.0654301911245
+ iteration         -816  SAEMOBJ=  -4826.1320446508407
+ iteration         -815  SAEMOBJ=  -4829.5719613353567
+ iteration         -814  SAEMOBJ=  -4822.8527755085433
+ iteration         -813  SAEMOBJ=  -4822.0284253534328
+ iteration         -812  SAEMOBJ=  -4887.9424221583913
+ iteration         -811  SAEMOBJ=  -4873.0186018090353
+ iteration         -810  SAEMOBJ=  -4890.9033862090209
+ iteration         -809  SAEMOBJ=  -4861.7531259801790
+ iteration         -808  SAEMOBJ=  -4912.2080602193691
+ iteration         -807  SAEMOBJ=  -4931.2905750549098
+ iteration         -806  SAEMOBJ=  -4934.5799499910418
+ iteration         -805  SAEMOBJ=  -4944.1595298905067
+ iteration         -804  SAEMOBJ=  -4968.3866297982895
+ iteration         -803  SAEMOBJ=  -4933.3528848616643
+ iteration         -802  SAEMOBJ=  -4973.6013178399035
+ iteration         -801  SAEMOBJ=  -4976.3438901529234
+ iteration         -800  SAEMOBJ=  -4994.3854325933426
+ iteration         -799  SAEMOBJ=  -5014.6432236746259
+ iteration         -798  SAEMOBJ=  -5042.8050741286170
+ iteration         -797  SAEMOBJ=  -5056.3223066580413
+ iteration         -796  SAEMOBJ=  -5074.1299693626106
+ iteration         -795  SAEMOBJ=  -5091.6963847194556
+ iteration         -794  SAEMOBJ=  -5071.3966923453354
+ iteration         -793  SAEMOBJ=  -5119.5030152393974
+ iteration         -792  SAEMOBJ=  -5093.9281802584428
+ iteration         -791  SAEMOBJ=  -5132.7554190277669
+ iteration         -790  SAEMOBJ=  -5125.4224634359471
+ iteration         -789  SAEMOBJ=  -5150.0091397408114
+ iteration         -788  SAEMOBJ=  -5163.2025064491736
+ iteration         -787  SAEMOBJ=  -5180.9167761674935
+ iteration         -786  SAEMOBJ=  -5174.7865724854273
+ iteration         -785  SAEMOBJ=  -5212.7298061637548
+ iteration         -784  SAEMOBJ=  -5197.5447074259209
+ iteration         -783  SAEMOBJ=  -5227.4804378522258
+ iteration         -782  SAEMOBJ=  -5246.0728647991236
+ iteration         -781  SAEMOBJ=  -5244.7950604744901
+ iteration         -780  SAEMOBJ=  -5269.2824513470396
+ iteration         -779  SAEMOBJ=  -5306.3249110723791
+ iteration         -778  SAEMOBJ=  -5312.9863101243882
+ iteration         -777  SAEMOBJ=  -5323.8758710695874
+ iteration         -776  SAEMOBJ=  -5340.4275105820589
+ iteration         -775  SAEMOBJ=  -5346.8550468466910
+ iteration         -774  SAEMOBJ=  -5377.1195264561175
+ iteration         -773  SAEMOBJ=  -5359.4955841312221
+ iteration         -772  SAEMOBJ=  -5367.5771381081713
+ iteration         -771  SAEMOBJ=  -5372.8885666485967
+ iteration         -770  SAEMOBJ=  -5389.6389397193498
+ iteration         -769  SAEMOBJ=  -5426.9645402430324
+ iteration         -768  SAEMOBJ=  -5455.5188831627729
+ iteration         -767  SAEMOBJ=  -5486.7487049112915
+ iteration         -766  SAEMOBJ=  -5482.7686460889954
+ iteration         -765  SAEMOBJ=  -5508.2126822209084
+ iteration         -764  SAEMOBJ=  -5492.1686615639501
+ iteration         -763  SAEMOBJ=  -5519.7026959518898
+ iteration         -762  SAEMOBJ=  -5518.2731124992224
+ iteration         -761  SAEMOBJ=  -5559.2309241068351
+ iteration         -760  SAEMOBJ=  -5563.0598699640832
+ iteration         -759  SAEMOBJ=  -5604.2205880431775
+ iteration         -758  SAEMOBJ=  -5628.5375000578169
+ iteration         -757  SAEMOBJ=  -5628.0416074006353
+ iteration         -756  SAEMOBJ=  -5624.4452450314684
+ iteration         -755  SAEMOBJ=  -5636.9649609701146
+ iteration         -754  SAEMOBJ=  -5680.3057567495171
+ iteration         -753  SAEMOBJ=  -5649.5374510145666
+ iteration         -752  SAEMOBJ=  -5682.0335183653415
+ iteration         -751  SAEMOBJ=  -5671.4503493597713
+ iteration         -750  SAEMOBJ=  -5701.9567955820412
+ iteration         -749  SAEMOBJ=  -5716.3156566342996
+ iteration         -748  SAEMOBJ=  -5737.4130871500547
+ iteration         -747  SAEMOBJ=  -5740.9473391926222
+ iteration         -746  SAEMOBJ=  -5771.4606433001691
+ iteration         -745  SAEMOBJ=  -5784.2735413257351
+ iteration         -744  SAEMOBJ=  -5798.8088133024967
+ iteration         -743  SAEMOBJ=  -5799.5839839581822
+ iteration         -742  SAEMOBJ=  -5801.3935710651185
+ iteration         -741  SAEMOBJ=  -5865.3552009487321
+ iteration         -740  SAEMOBJ=  -5847.4550266378901
+ iteration         -739  SAEMOBJ=  -5850.5325173409065
+ iteration         -738  SAEMOBJ=  -5887.4627407724383
+ iteration         -737  SAEMOBJ=  -5860.9280906197228
+ iteration         -736  SAEMOBJ=  -5850.4944385788085
+ iteration         -735  SAEMOBJ=  -5883.9758144579791
+ iteration         -734  SAEMOBJ=  -5920.5646751441118
+ iteration         -733  SAEMOBJ=  -5943.2918642446439
+ iteration         -732  SAEMOBJ=  -5954.1689959717351
+ iteration         -731  SAEMOBJ=  -5957.8604311946974
+ iteration         -730  SAEMOBJ=  -5960.6776294925357
+ iteration         -729  SAEMOBJ=  -5988.2869298149490
+ iteration         -728  SAEMOBJ=  -6004.1765505547228
+ iteration         -727  SAEMOBJ=  -6008.6646581014329
+ iteration         -726  SAEMOBJ=  -6043.9379936237219
+ iteration         -725  SAEMOBJ=  -6030.4212699670170
+ iteration         -724  SAEMOBJ=  -6023.4814371214561
+ iteration         -723  SAEMOBJ=  -6033.1955496345226
+ iteration         -722  SAEMOBJ=  -6086.5550744435332
+ iteration         -721  SAEMOBJ=  -6109.3148672741390
+ iteration         -720  SAEMOBJ=  -6113.5920110358320
+ iteration         -719  SAEMOBJ=  -6125.1598704681001
+ iteration         -718  SAEMOBJ=  -6115.8898167163579
+ iteration         -717  SAEMOBJ=  -6128.1019649391928
+ iteration         -716  SAEMOBJ=  -6147.2915367814385
+ iteration         -715  SAEMOBJ=  -6168.4972764932245
+ iteration         -714  SAEMOBJ=  -6182.1089752792413
+ iteration         -713  SAEMOBJ=  -6208.0543616544064
+ iteration         -712  SAEMOBJ=  -6181.2346447658874
+ iteration         -711  SAEMOBJ=  -6218.7994334211626
+ iteration         -710  SAEMOBJ=  -6194.7265763791102
+ iteration         -709  SAEMOBJ=  -6230.9647599921182
+ iteration         -708  SAEMOBJ=  -6247.7721630862297
+ iteration         -707  SAEMOBJ=  -6284.7107512826124
+ iteration         -706  SAEMOBJ=  -6297.7780829083185
+ iteration         -705  SAEMOBJ=  -6332.0901865394162
+ iteration         -704  SAEMOBJ=  -6313.5337161238185
+ iteration         -703  SAEMOBJ=  -6320.3984879522368
+ iteration         -702  SAEMOBJ=  -6333.8529328872501
+ iteration         -701  SAEMOBJ=  -6338.6665532277329
+ iteration         -700  SAEMOBJ=  -6344.2233396037391
+ iteration         -699  SAEMOBJ=  -6394.5388302047650
+ iteration         -698  SAEMOBJ=  -6349.0313227434699
+ iteration         -697  SAEMOBJ=  -6374.5676901716906
+ iteration         -696  SAEMOBJ=  -6373.6563106926906
+ iteration         -695  SAEMOBJ=  -6397.5007766010176
+ iteration         -694  SAEMOBJ=  -6368.2026998696929
+ iteration         -693  SAEMOBJ=  -6381.9883833343729
+ iteration         -692  SAEMOBJ=  -6417.1259426565530
+ iteration         -691  SAEMOBJ=  -6452.1019357954146
+ iteration         -690  SAEMOBJ=  -6423.3069878340430
+ iteration         -689  SAEMOBJ=  -6454.1515721770847
+ iteration         -688  SAEMOBJ=  -6441.0651832496769
+ iteration         -687  SAEMOBJ=  -6477.2599315876869
+ iteration         -686  SAEMOBJ=  -6490.3931775783876
+ iteration         -685  SAEMOBJ=  -6525.5310348006387
+ iteration         -684  SAEMOBJ=  -6514.7142361395699
+ iteration         -683  SAEMOBJ=  -6535.6822288299545
+ iteration         -682  SAEMOBJ=  -6547.5901545334846
+ iteration         -681  SAEMOBJ=  -6536.2520900070976
+ iteration         -680  SAEMOBJ=  -6566.0343749957965
+ iteration         -679  SAEMOBJ=  -6562.5545340382532
+ iteration         -678  SAEMOBJ=  -6586.1541377510785
+ iteration         -677  SAEMOBJ=  -6610.6289204578588
+ iteration         -676  SAEMOBJ=  -6596.5015191753409
+ iteration         -675  SAEMOBJ=  -6611.6574705663070
+ iteration         -674  SAEMOBJ=  -6605.5963955810830
+ iteration         -673  SAEMOBJ=  -6616.7306532164021
+ iteration         -672  SAEMOBJ=  -6625.1509370033918
+ iteration         -671  SAEMOBJ=  -6663.3793612148884
+ iteration         -670  SAEMOBJ=  -6709.9415563889743
+ iteration         -669  SAEMOBJ=  -6680.9645447883395
+ iteration         -668  SAEMOBJ=  -6657.8870958456027
+ iteration         -667  SAEMOBJ=  -6697.5377695923235
+ iteration         -666  SAEMOBJ=  -6693.1429684257037
+ iteration         -665  SAEMOBJ=  -6713.7218808504922
+ iteration         -664  SAEMOBJ=  -6763.3163132037989
+ iteration         -663  SAEMOBJ=  -6757.7819125984597
+ iteration         -662  SAEMOBJ=  -6738.7515311274865
+ iteration         -661  SAEMOBJ=  -6757.0033750646589
+ iteration         -660  SAEMOBJ=  -6821.8049152144895
+ iteration         -659  SAEMOBJ=  -6843.5927949122588
+ iteration         -658  SAEMOBJ=  -6818.9651007081811
+ iteration         -657  SAEMOBJ=  -6801.2980415650682
+ iteration         -656  SAEMOBJ=  -6852.1735164196180
+ iteration         -655  SAEMOBJ=  -6846.6097179043791
+ iteration         -654  SAEMOBJ=  -6870.5181423617460
+ iteration         -653  SAEMOBJ=  -6889.8044139159920
+ iteration         -652  SAEMOBJ=  -6903.5030576858062
+ iteration         -651  SAEMOBJ=  -6915.3777810839820
+ iteration         -650  SAEMOBJ=  -6924.9011959651853
+ iteration         -649  SAEMOBJ=  -6952.6689819865232
+ iteration         -648  SAEMOBJ=  -6952.5983294738744
+ iteration         -647  SAEMOBJ=  -6974.8460190013848
+ iteration         -646  SAEMOBJ=  -6977.0930138000422
+ iteration         -645  SAEMOBJ=  -6958.4283644126772
+ iteration         -644  SAEMOBJ=  -6978.9516824759767
+ iteration         -643  SAEMOBJ=  -7008.8509347989566
+ iteration         -642  SAEMOBJ=  -6967.9642387888334
+ iteration         -641  SAEMOBJ=  -7032.5484267681950
+ iteration         -640  SAEMOBJ=  -7031.2127874560356
+ iteration         -639  SAEMOBJ=  -7026.4890743960987
+ iteration         -638  SAEMOBJ=  -7060.5174019314554
+ iteration         -637  SAEMOBJ=  -7084.8302832018780
+ iteration         -636  SAEMOBJ=  -7076.7779630045598
+ iteration         -635  SAEMOBJ=  -7072.3066999809162
+ iteration         -634  SAEMOBJ=  -7065.2925081391450
+ iteration         -633  SAEMOBJ=  -7099.2433051142807
+ iteration         -632  SAEMOBJ=  -7093.6348245658655
+ iteration         -631  SAEMOBJ=  -7089.4415082035175
+ iteration         -630  SAEMOBJ=  -7117.6307913673472
+ iteration         -629  SAEMOBJ=  -7113.4538814146517
+ iteration         -628  SAEMOBJ=  -7136.9551957292324
+ iteration         -627  SAEMOBJ=  -7152.4305193003456
+ iteration         -626  SAEMOBJ=  -7154.4718854462608
+ iteration         -625  SAEMOBJ=  -7194.0274488712375
+ iteration         -624  SAEMOBJ=  -7181.0549678245388
+ iteration         -623  SAEMOBJ=  -7184.8082850914416
+ iteration         -622  SAEMOBJ=  -7197.2403457958362
+ iteration         -621  SAEMOBJ=  -7162.4012245777812
+ iteration         -620  SAEMOBJ=  -7199.3188020618636
+ iteration         -619  SAEMOBJ=  -7153.2667723682280
+ iteration         -618  SAEMOBJ=  -7218.2186487847357
+ iteration         -617  SAEMOBJ=  -7213.7502866842260
+ iteration         -616  SAEMOBJ=  -7241.9171468879922
+ iteration         -615  SAEMOBJ=  -7246.7225881410532
+ iteration         -614  SAEMOBJ=  -7254.2385775071134
+ iteration         -613  SAEMOBJ=  -7242.9858726611637
+ iteration         -612  SAEMOBJ=  -7234.5061422213639
+ iteration         -611  SAEMOBJ=  -7231.5731172713513
+ iteration         -610  SAEMOBJ=  -7239.8839260675504
+ iteration         -609  SAEMOBJ=  -7286.5856895789275
+ iteration         -608  SAEMOBJ=  -7294.6774139689078
+ iteration         -607  SAEMOBJ=  -7307.0344867169260
+ iteration         -606  SAEMOBJ=  -7304.1127746613438
+ iteration         -605  SAEMOBJ=  -7295.4326707084201
+ iteration         -604  SAEMOBJ=  -7332.4151547607125
+ iteration         -603  SAEMOBJ=  -7341.8415706866153
+ iteration         -602  SAEMOBJ=  -7347.7501745148238
+ iteration         -601  SAEMOBJ=  -7343.3784426254888
+ iteration         -600  SAEMOBJ=  -7318.5675530204298
+ iteration         -599  SAEMOBJ=  -7315.5687771175753
+ iteration         -598  SAEMOBJ=  -7360.8555706489606
+ iteration         -597  SAEMOBJ=  -7368.1641048045003
+ iteration         -596  SAEMOBJ=  -7358.6727907618542
+ iteration         -595  SAEMOBJ=  -7402.2367372242325
+ iteration         -594  SAEMOBJ=  -7394.1219691430551
+ iteration         -593  SAEMOBJ=  -7407.6412990300751
+ iteration         -592  SAEMOBJ=  -7370.9424171817309
+ iteration         -591  SAEMOBJ=  -7348.3583654976574
+ iteration         -590  SAEMOBJ=  -7372.6214394065610
+ iteration         -589  SAEMOBJ=  -7392.6101016944494
+ iteration         -588  SAEMOBJ=  -7406.2390455647137
+ iteration         -587  SAEMOBJ=  -7423.5606410163919
+ iteration         -586  SAEMOBJ=  -7436.1382066155329
+ iteration         -585  SAEMOBJ=  -7405.0335329297668
+ iteration         -584  SAEMOBJ=  -7377.2105699293888
+ iteration         -583  SAEMOBJ=  -7413.0664097184044
+ iteration         -582  SAEMOBJ=  -7394.7594661691837
+ iteration         -581  SAEMOBJ=  -7434.2118835539359
+ iteration         -580  SAEMOBJ=  -7440.5924186512566
+ iteration         -579  SAEMOBJ=  -7419.1944332969624
+ iteration         -578  SAEMOBJ=  -7414.5124721857319
+ iteration         -577  SAEMOBJ=  -7457.3661666983144
+ iteration         -576  SAEMOBJ=  -7490.8666492743660
+ iteration         -575  SAEMOBJ=  -7506.4210510060257
+ iteration         -574  SAEMOBJ=  -7477.6823247488810
+ iteration         -573  SAEMOBJ=  -7511.7475942783803
+ iteration         -572  SAEMOBJ=  -7489.8465388927534
+ iteration         -571  SAEMOBJ=  -7530.6649373588934
+ iteration         -570  SAEMOBJ=  -7538.2979486477270
+ iteration         -569  SAEMOBJ=  -7520.9903781649691
+ iteration         -568  SAEMOBJ=  -7530.8097094323348
+ iteration         -567  SAEMOBJ=  -7486.4034113975831
+ iteration         -566  SAEMOBJ=  -7506.0018745224779
+ iteration         -565  SAEMOBJ=  -7493.2009575345865
+ iteration         -564  SAEMOBJ=  -7545.4426287966035
+ iteration         -563  SAEMOBJ=  -7513.1468425836374
+ iteration         -562  SAEMOBJ=  -7541.7880020203183
+ iteration         -561  SAEMOBJ=  -7497.9379512856613
+ iteration         -560  SAEMOBJ=  -7495.9596220417043
+ iteration         -559  SAEMOBJ=  -7511.6323019390738
+ iteration         -558  SAEMOBJ=  -7504.1280263576391
+ iteration         -557  SAEMOBJ=  -7500.2702804930750
+ iteration         -556  SAEMOBJ=  -7534.1570068669789
+ iteration         -555  SAEMOBJ=  -7518.5546494577939
+ iteration         -554  SAEMOBJ=  -7521.7329766573130
+ iteration         -553  SAEMOBJ=  -7473.8531837595765
+ iteration         -552  SAEMOBJ=  -7522.5562484472139
+ iteration         -551  SAEMOBJ=  -7495.7682274985727
+ iteration         -550  SAEMOBJ=  -7513.7432762371964
+ iteration         -549  SAEMOBJ=  -7486.9207188743812
+ iteration         -548  SAEMOBJ=  -7510.5025384163628
+ iteration         -547  SAEMOBJ=  -7509.0832828853672
+ iteration         -546  SAEMOBJ=  -7513.9024661327467
+ iteration         -545  SAEMOBJ=  -7487.3247065100713
+ iteration         -544  SAEMOBJ=  -7523.4229521971502
+ iteration         -543  SAEMOBJ=  -7530.6828860426531
+ iteration         -542  SAEMOBJ=  -7531.7345017236476
+ iteration         -541  SAEMOBJ=  -7523.3663722199426
+ iteration         -540  SAEMOBJ=  -7546.2762250720825
+ iteration         -539  SAEMOBJ=  -7528.9261432153680
+ iteration         -538  SAEMOBJ=  -7515.8756330548931
+ iteration         -537  SAEMOBJ=  -7543.5738065064706
+ iteration         -536  SAEMOBJ=  -7547.8636291936791
+ iteration         -535  SAEMOBJ=  -7532.6666958563674
+ iteration         -534  SAEMOBJ=  -7546.9496772571983
+ iteration         -533  SAEMOBJ=  -7576.9960133107452
+ iteration         -532  SAEMOBJ=  -7508.4073475912392
+ iteration         -531  SAEMOBJ=  -7540.1334696470876
+ iteration         -530  SAEMOBJ=  -7574.4109683871457
+ iteration         -529  SAEMOBJ=  -7578.0464085010935
+ iteration         -528  SAEMOBJ=  -7572.3580321621348
+ iteration         -527  SAEMOBJ=  -7570.9650153965913
+ iteration         -526  SAEMOBJ=  -7570.9024351982662
+ iteration         -525  SAEMOBJ=  -7579.0474305791540
+ iteration         -524  SAEMOBJ=  -7588.1037712459793
+ iteration         -523  SAEMOBJ=  -7578.8345953903754
+ iteration         -522  SAEMOBJ=  -7594.0749657333126
+ iteration         -521  SAEMOBJ=  -7582.4916521157829
+ iteration         -520  SAEMOBJ=  -7582.9466971975571
+ iteration         -519  SAEMOBJ=  -7610.1614833166668
+ iteration         -518  SAEMOBJ=  -7564.2369920170677
+ iteration         -517  SAEMOBJ=  -7549.0708298479785
+ iteration         -516  SAEMOBJ=  -7563.0818772078910
+ iteration         -515  SAEMOBJ=  -7569.2929400902649
+ iteration         -514  SAEMOBJ=  -7569.6652317815979
+ iteration         -513  SAEMOBJ=  -7570.4658794184706
+ iteration         -512  SAEMOBJ=  -7572.1349316245532
+ iteration         -511  SAEMOBJ=  -7584.2366481151994
+ iteration         -510  SAEMOBJ=  -7585.7633617031934
+ iteration         -509  SAEMOBJ=  -7573.1243468020393
+ iteration         -508  SAEMOBJ=  -7577.7632900403423
+ iteration         -507  SAEMOBJ=  -7583.8317803065001
+ iteration         -506  SAEMOBJ=  -7594.8867695441268
+ iteration         -505  SAEMOBJ=  -7572.9003885956545
+ iteration         -504  SAEMOBJ=  -7579.7845413923669
+ iteration         -503  SAEMOBJ=  -7593.4794273124990
+ iteration         -502  SAEMOBJ=  -7596.8923830541171
+ iteration         -501  SAEMOBJ=  -7597.8689666568762
+ iteration         -500  SAEMOBJ=  -7616.0480018875296
+ iteration         -499  SAEMOBJ=  -7615.7745300789757
+ iteration         -498  SAEMOBJ=  -7604.1743016403561
+ iteration         -497  SAEMOBJ=  -7609.1722807204096
+ iteration         -496  SAEMOBJ=  -7607.3952709779378
+ iteration         -495  SAEMOBJ=  -7614.6078818729284
+ iteration         -494  SAEMOBJ=  -7607.2960007790107
+ iteration         -493  SAEMOBJ=  -7630.4487765850190
+ iteration         -492  SAEMOBJ=  -7637.4422209374243
+ iteration         -491  SAEMOBJ=  -7625.7922542745309
+ iteration         -490  SAEMOBJ=  -7641.8780402609782
+ iteration         -489  SAEMOBJ=  -7627.2133465612878
+ iteration         -488  SAEMOBJ=  -7628.4668052510324
+ iteration         -487  SAEMOBJ=  -7650.0603723353343
+ iteration         -486  SAEMOBJ=  -7648.5832830309409
+ iteration         -485  SAEMOBJ=  -7646.4899309156317
+ iteration         -484  SAEMOBJ=  -7614.5900010273817
+ iteration         -483  SAEMOBJ=  -7613.6492440980255
+ iteration         -482  SAEMOBJ=  -7662.9739597969092
+ iteration         -481  SAEMOBJ=  -7667.6554621673295
+ iteration         -480  SAEMOBJ=  -7678.8326716600623
+ iteration         -479  SAEMOBJ=  -7704.9520605601383
+ iteration         -478  SAEMOBJ=  -7682.0614521214766
+ iteration         -477  SAEMOBJ=  -7729.4718373195683
+ iteration         -476  SAEMOBJ=  -7724.4933435582616
+ iteration         -475  SAEMOBJ=  -7726.1383783364472
+ iteration         -474  SAEMOBJ=  -7717.8960587398133
+ iteration         -473  SAEMOBJ=  -7698.3291119640480
+ iteration         -472  SAEMOBJ=  -7703.4458155390867
+ iteration         -471  SAEMOBJ=  -7693.9076422317694
+ iteration         -470  SAEMOBJ=  -7684.4095937759685
+ iteration         -469  SAEMOBJ=  -7679.6349845041132
+ iteration         -468  SAEMOBJ=  -7750.3001754411307
+ iteration         -467  SAEMOBJ=  -7745.2561451893998
+ iteration         -466  SAEMOBJ=  -7736.1985279763212
+ iteration         -465  SAEMOBJ=  -7750.4652121606841
+ iteration         -464  SAEMOBJ=  -7761.9261549739167
+ iteration         -463  SAEMOBJ=  -7758.4932211565101
+ iteration         -462  SAEMOBJ=  -7759.3128135692905
+ iteration         -461  SAEMOBJ=  -7756.8120075395254
+ iteration         -460  SAEMOBJ=  -7771.7881335133734
+ iteration         -459  SAEMOBJ=  -7758.6517752525378
+ iteration         -458  SAEMOBJ=  -7778.5595940821695
+ iteration         -457  SAEMOBJ=  -7756.6485336258747
+ iteration         -456  SAEMOBJ=  -7778.4435258937265
+ iteration         -455  SAEMOBJ=  -7752.5326939712168
+ iteration         -454  SAEMOBJ=  -7738.0721543700438
+ iteration         -453  SAEMOBJ=  -7730.7546682202465
+ iteration         -452  SAEMOBJ=  -7761.7929955480458
+ iteration         -451  SAEMOBJ=  -7796.7630570659348
+ iteration         -450  SAEMOBJ=  -7801.4244526049306
+ iteration         -449  SAEMOBJ=  -7796.0045379104422
+ iteration         -448  SAEMOBJ=  -7774.6822193285352
+ iteration         -447  SAEMOBJ=  -7792.9813499679913
+ iteration         -446  SAEMOBJ=  -7798.5713631528051
+ iteration         -445  SAEMOBJ=  -7804.8484654033218
+ iteration         -444  SAEMOBJ=  -7781.8215932113462
+ iteration         -443  SAEMOBJ=  -7803.7838538945671
+ iteration         -442  SAEMOBJ=  -7819.7987192244782
+ iteration         -441  SAEMOBJ=  -7816.8019203582244
+ iteration         -440  SAEMOBJ=  -7828.2098045941093
+ iteration         -439  SAEMOBJ=  -7816.3787710154947
+ iteration         -438  SAEMOBJ=  -7813.6905141373727
+ iteration         -437  SAEMOBJ=  -7829.4883298560817
+ iteration         -436  SAEMOBJ=  -7837.4592007877527
+ iteration         -435  SAEMOBJ=  -7844.7352605167353
+ iteration         -434  SAEMOBJ=  -7842.7203863568084
+ iteration         -433  SAEMOBJ=  -7850.2200257147206
+ iteration         -432  SAEMOBJ=  -7846.1467899779018
+ iteration         -431  SAEMOBJ=  -7837.0302524222716
+ iteration         -430  SAEMOBJ=  -7831.4591384148925
+ iteration         -429  SAEMOBJ=  -7839.9125867248840
+ iteration         -428  SAEMOBJ=  -7832.6806033081593
+ iteration         -427  SAEMOBJ=  -7807.8303819509019
+ iteration         -426  SAEMOBJ=  -7839.1354906810857
+ iteration         -425  SAEMOBJ=  -7839.6992188996792
+ iteration         -424  SAEMOBJ=  -7851.3454646820537
+ iteration         -423  SAEMOBJ=  -7858.7580811446596
+ iteration         -422  SAEMOBJ=  -7820.3803923942596
+ iteration         -421  SAEMOBJ=  -7840.9359753101480
+ iteration         -420  SAEMOBJ=  -7846.1076251059794
+ iteration         -419  SAEMOBJ=  -7832.9620559290388
+ iteration         -418  SAEMOBJ=  -7831.9291635411628
+ iteration         -417  SAEMOBJ=  -7818.8361751580196
+ iteration         -416  SAEMOBJ=  -7813.3428371725040
+ iteration         -415  SAEMOBJ=  -7843.1681301536919
+ iteration         -414  SAEMOBJ=  -7845.4964557281828
+ iteration         -413  SAEMOBJ=  -7835.2477064217474
+ iteration         -412  SAEMOBJ=  -7845.9924264478022
+ iteration         -411  SAEMOBJ=  -7856.1829343081181
+ iteration         -410  SAEMOBJ=  -7822.5353582761109
+ iteration         -409  SAEMOBJ=  -7832.9546223059815
+ iteration         -408  SAEMOBJ=  -7860.9624458001417
+ iteration         -407  SAEMOBJ=  -7824.0701917078495
+ iteration         -406  SAEMOBJ=  -7813.1356704323880
+ iteration         -405  SAEMOBJ=  -7839.3501379532581
+ iteration         -404  SAEMOBJ=  -7849.1622286772981
+ iteration         -403  SAEMOBJ=  -7857.1787513166637
+ iteration         -402  SAEMOBJ=  -7857.6420029486635
+ iteration         -401  SAEMOBJ=  -7846.2550918419010
+ iteration         -400  SAEMOBJ=  -7860.6256826769250
+ iteration         -399  SAEMOBJ=  -7853.3615539925167
+ iteration         -398  SAEMOBJ=  -7846.5255889791706
+ iteration         -397  SAEMOBJ=  -7864.8695326579464
+ iteration         -396  SAEMOBJ=  -7818.7701963773507
+ iteration         -395  SAEMOBJ=  -7829.7617206900013
+ iteration         -394  SAEMOBJ=  -7841.7297405106283
+ iteration         -393  SAEMOBJ=  -7845.4131097202389
+ iteration         -392  SAEMOBJ=  -7851.8831651804194
+ iteration         -391  SAEMOBJ=  -7839.2060478211197
+ iteration         -390  SAEMOBJ=  -7846.9744151393234
+ iteration         -389  SAEMOBJ=  -7877.8738982372106
+ iteration         -388  SAEMOBJ=  -7876.0746129993622
+ iteration         -387  SAEMOBJ=  -7838.9344757074732
+ iteration         -386  SAEMOBJ=  -7835.8484675234167
+ iteration         -385  SAEMOBJ=  -7837.8111723995326
+ iteration         -384  SAEMOBJ=  -7808.9740487756817
+ iteration         -383  SAEMOBJ=  -7811.5625172021091
+ iteration         -382  SAEMOBJ=  -7800.8871265526386
+ iteration         -381  SAEMOBJ=  -7823.3386317388595
+ iteration         -380  SAEMOBJ=  -7838.5444201107975
+ iteration         -379  SAEMOBJ=  -7837.3116038747421
+ iteration         -378  SAEMOBJ=  -7861.9848348227433
+ iteration         -377  SAEMOBJ=  -7831.3666082383816
+ iteration         -376  SAEMOBJ=   0.0000000000000000
+ iteration         -375  SAEMOBJ=   0.0000000000000000
+ iteration         -374  SAEMOBJ=   0.0000000000000000
+ iteration         -373  SAEMOBJ=   0.0000000000000000
+ iteration         -372  SAEMOBJ=   0.0000000000000000
+ iteration         -371  SAEMOBJ=   0.0000000000000000
+ iteration         -370  SAEMOBJ=   438.91390128114904
+ iteration         -369  SAEMOBJ=   515.53005414507277
+ iteration         -368  SAEMOBJ=   8781.6651881820690
+ iteration         -367  SAEMOBJ=   12663.035524648043
+ iteration         -366  SAEMOBJ=   26698.008774800201
+ iteration         -365  SAEMOBJ=   42090.806685902462
+ iteration         -364  SAEMOBJ=   37974.567987123613
+ iteration         -363  SAEMOBJ=   48088.892701006509
+ iteration         -362  SAEMOBJ=   67248.052576827060
+ iteration         -361  SAEMOBJ=   70781.271214768451
+ iteration         -360  SAEMOBJ=   79959.358200852890
+ iteration         -359  SAEMOBJ=   95292.075603370118
+ iteration         -358  SAEMOBJ=   120991.04104154986
+ iteration         -357  SAEMOBJ=   153176.38546360607
+ iteration         -356  SAEMOBJ=   175373.49050619808
+ iteration         -355  SAEMOBJ=   216787.08621062947
+ iteration         -354  SAEMOBJ=   295187.87876024906
+ iteration         -353  SAEMOBJ=   363809.06015869306
+ iteration         -352  SAEMOBJ=   455834.72440784995
+ iteration         -351  SAEMOBJ=   571238.32053041633
+ iteration         -350  SAEMOBJ=   661974.92912240047
+ iteration         -349  SAEMOBJ=   724180.69874352834
+ iteration         -348  SAEMOBJ=   714239.81721109641
+ iteration         -347  SAEMOBJ=   695539.66098282975
+ iteration         -346  SAEMOBJ=   667942.18287296616
+ iteration         -345  SAEMOBJ=   636424.02950813528
+ iteration         -344  SAEMOBJ=   612259.25676774676
+ iteration         -343  SAEMOBJ=   572167.23902117205
+ iteration         -342  SAEMOBJ=   543558.49630953651
+ iteration         -341  SAEMOBJ=   507805.61642374762
+ iteration         -340  SAEMOBJ=   481457.37253453431
+ iteration         -339  SAEMOBJ=   459808.28040520841
+ iteration         -338  SAEMOBJ=   439259.94372446899
+ iteration         -337  SAEMOBJ=   417016.32496627403
+ iteration         -336  SAEMOBJ=   395219.77319730719
+ iteration         -335  SAEMOBJ=   375224.51816938852
+ iteration         -334  SAEMOBJ=   355146.94372468197
+ iteration         -333  SAEMOBJ=   341427.07155592344
+ iteration         -332  SAEMOBJ=   324117.58509787079
+ iteration         -331  SAEMOBJ=   318936.21216923202
+ iteration         -330  SAEMOBJ=   302910.81687912752
+ iteration         -329  SAEMOBJ=   298427.21283776558
+ iteration         -328  SAEMOBJ=   291660.63758024544
+ iteration         -327  SAEMOBJ=   280805.09443300607
+ iteration         -326  SAEMOBJ=   283262.06977623847
+ iteration         -325  SAEMOBJ=   280486.38926296658
+ iteration         -324  SAEMOBJ=   277395.98809014977
+ iteration         -323  SAEMOBJ=   274596.61754115135
+ iteration         -322  SAEMOBJ=   276232.98911780352
+ iteration         -321  SAEMOBJ=   281404.30406861473
+ iteration         -320  SAEMOBJ=   267371.73965708108
+ iteration         -319  SAEMOBJ=   275276.42413905403
+ iteration         -318  SAEMOBJ=   280258.46925986861
+ iteration         -317  SAEMOBJ=   290934.22947915399
+ iteration         -316  SAEMOBJ=   284286.68411478034
+ iteration         -315  SAEMOBJ=   278852.04668283608
+ iteration         -314  SAEMOBJ=   281732.05537119944
+ iteration         -313  SAEMOBJ=   284461.89984516863
+ iteration         -312  SAEMOBJ=   277199.66217055556
+ iteration         -311  SAEMOBJ=   278583.37301308144
+ iteration         -310  SAEMOBJ=   282671.30362559424
+ iteration         -309  SAEMOBJ=   286355.29071813688
+ iteration         -308  SAEMOBJ=   283752.75099954609
+ iteration         -307  SAEMOBJ=   282427.36980461422
+ iteration         -306  SAEMOBJ=   287298.04226910044
+ iteration         -305  SAEMOBJ=   283301.04042605584
+ iteration         -304  SAEMOBJ=   279135.48416067584
+ iteration         -303  SAEMOBJ=   275739.10907882993
+ iteration         -302  SAEMOBJ=   276858.48702862806
+ iteration         -301  SAEMOBJ=   275564.42142927524
+ iteration         -300  SAEMOBJ=   277471.51078731340
+ iteration         -299  SAEMOBJ=   277389.05899857916
+ iteration         -298  SAEMOBJ=   273537.71810436610
+ iteration         -297  SAEMOBJ=   270059.84828487301
+ iteration         -296  SAEMOBJ=   275936.72064281348
+ iteration         -295  SAEMOBJ=   273442.89271814888
+ iteration         -294  SAEMOBJ=   269106.21239206597
+ iteration         -293  SAEMOBJ=   269210.96237349405
+ iteration         -292  SAEMOBJ=   264440.74012197467
+ iteration         -291  SAEMOBJ=   272973.97972628230
+ iteration         -290  SAEMOBJ=   269849.84437233338
+ iteration         -289  SAEMOBJ=   271620.44645307743
+ iteration         -288  SAEMOBJ=   273602.22270063218
+ iteration         -287  SAEMOBJ=   271422.41614050820
+ iteration         -286  SAEMOBJ=   264347.13666628808
+ iteration         -285  SAEMOBJ=   274043.03611359722
+ iteration         -284  SAEMOBJ=   273170.27990968188
+ iteration         -283  SAEMOBJ=   272140.25517835119
+ iteration         -282  SAEMOBJ=   275478.14103715145
+ iteration         -281  SAEMOBJ=   277955.75002992147
+ iteration         -280  SAEMOBJ=   277363.83553737187
+ iteration         -279  SAEMOBJ=   279519.56876298931
+ iteration         -278  SAEMOBJ=   269787.88014534069
+ iteration         -277  SAEMOBJ=   268660.88741150871
+ iteration         -276  SAEMOBJ=   254916.77606500147
+ iteration         -275  SAEMOBJ=   262469.92074179323
+ iteration         -274  SAEMOBJ=   264901.96966561314
+ iteration         -273  SAEMOBJ=   264528.95674782805
+ iteration         -272  SAEMOBJ=   271149.47203273722
+ iteration         -271  SAEMOBJ=   277564.63773942064
+ iteration         -270  SAEMOBJ=   274185.41200136283
+ iteration         -269  SAEMOBJ=   271266.06082178222
+ iteration         -268  SAEMOBJ=   267220.47068125749
+ iteration         -267  SAEMOBJ=   273933.71607896214
+ iteration         -266  SAEMOBJ=   267718.19171044882
+ iteration         -265  SAEMOBJ=   259388.52713460682
+ iteration         -264  SAEMOBJ=   261306.72435802565
+ iteration         -263  SAEMOBJ=   264123.08011174359
+ iteration         -262  SAEMOBJ=   261791.80624017242
+ iteration         -261  SAEMOBJ=   267719.29575168120
+ iteration         -260  SAEMOBJ=   264309.06616018439
+ iteration         -259  SAEMOBJ=   261012.95094460380
+ iteration         -258  SAEMOBJ=   259964.33982095623
+ iteration         -257  SAEMOBJ=   267192.87212820741
+ iteration         -256  SAEMOBJ=   262620.22308792401
+ iteration         -255  SAEMOBJ=   260745.93581716547
+ iteration         -254  SAEMOBJ=   257552.49614894710
+ iteration         -253  SAEMOBJ=   252853.26493362850
+ iteration         -252  SAEMOBJ=   255855.65631352979
+ iteration         -251  SAEMOBJ=   251047.73128632741
+ iteration         -250  SAEMOBJ=   260153.13990274130
+ iteration         -249  SAEMOBJ=   262742.48759629601
+ iteration         -248  SAEMOBJ=   256428.48601499488
+ iteration         -247  SAEMOBJ=   254206.30972329943
+ iteration         -246  SAEMOBJ=   258630.96523392826
+ iteration         -245  SAEMOBJ=   258293.85869187268
+ iteration         -244  SAEMOBJ=   262760.71027526510
+ iteration         -243  SAEMOBJ=   262738.23920465773
+ iteration         -242  SAEMOBJ=   260273.72109868165
+ iteration         -241  SAEMOBJ=   259478.39320741143
+ iteration         -240  SAEMOBJ=   252672.85084902059
+ iteration         -239  SAEMOBJ=   253753.54509369429
+ iteration         -238  SAEMOBJ=   264110.54940559197
+ iteration         -237  SAEMOBJ=   263575.14244663378
+ iteration         -236  SAEMOBJ=   264381.90249025571
+ iteration         -235  SAEMOBJ=   258133.08811363747
+ iteration         -234  SAEMOBJ=   253573.14394673158
+ iteration         -233  SAEMOBJ=   258482.23404217901
+ iteration         -232  SAEMOBJ=   256854.79262953144
+ iteration         -231  SAEMOBJ=   258965.76475260092
+ iteration         -230  SAEMOBJ=   256168.03624504450
+ iteration         -229  SAEMOBJ=   255942.56395952168
+ iteration         -228  SAEMOBJ=   256416.37805427730
+ iteration         -227  SAEMOBJ=   253797.02537397997
+ iteration         -226  SAEMOBJ=   240622.19737401963
+ iteration         -225  SAEMOBJ=   244205.02347799184
+ iteration         -224  SAEMOBJ=   232264.01353389077
+ iteration         -223  SAEMOBJ=   241888.50180387750
+ iteration         -222  SAEMOBJ=   248569.47591924359
+ iteration         -221  SAEMOBJ=   254476.67459477703
+ iteration         -220  SAEMOBJ=   253294.87741227626
+ iteration         -219  SAEMOBJ=   252231.59758319054
+ iteration         -218  SAEMOBJ=   257240.30423076643
+ iteration         -217  SAEMOBJ=   257780.62957594325
+ iteration         -216  SAEMOBJ=   249766.29347427201
+ iteration         -215  SAEMOBJ=   253834.26903915705
+ iteration         -214  SAEMOBJ=   249368.83606534579
+ iteration         -213  SAEMOBJ=   249845.04204361438
+ iteration         -212  SAEMOBJ=   250264.86251782725
+ iteration         -211  SAEMOBJ=   249313.94796409601
+ iteration         -210  SAEMOBJ=   256639.09272634660
+ iteration         -209  SAEMOBJ=   259078.87088636632
+ iteration         -208  SAEMOBJ=   257304.42209646539
+ iteration         -207  SAEMOBJ=   255291.00501562376
+ iteration         -206  SAEMOBJ=   253658.67361341958
+ iteration         -205  SAEMOBJ=   253459.66223758427
+ iteration         -204  SAEMOBJ=   251062.39590213972
+ iteration         -203  SAEMOBJ=   248983.00839082277
+ iteration         -202  SAEMOBJ=   233339.76336601688
+ iteration         -201  SAEMOBJ=   236969.33831490052
+ iteration         -200  SAEMOBJ=   245538.97978492946
+ iteration         -199  SAEMOBJ=   249284.01768611281
+ iteration         -198  SAEMOBJ=   251539.90653697238
+ iteration         -197  SAEMOBJ=   252132.49588340867
+ iteration         -196  SAEMOBJ=   247286.73192103178
+ iteration         -195  SAEMOBJ=   236963.67814981085
+ iteration         -194  SAEMOBJ=   234813.71142154781
+ iteration         -193  SAEMOBJ=   233721.22059475534
+ iteration         -192  SAEMOBJ=   229896.06037582006
+ iteration         -191  SAEMOBJ=   235766.75320821392
+ iteration         -190  SAEMOBJ=   242230.91330755141
+ iteration         -189  SAEMOBJ=   237906.65801901152
+ iteration         -188  SAEMOBJ=   236551.12928165816
+ iteration         -187  SAEMOBJ=   242252.34457168134
+ iteration         -186  SAEMOBJ=   236110.46808348413
+ iteration         -185  SAEMOBJ=   236355.96460153963
+ iteration         -184  SAEMOBJ=   240825.07345659673
+ iteration         -183  SAEMOBJ=   235405.22321519404
+ iteration         -182  SAEMOBJ=   235977.23970671918
+ iteration         -181  SAEMOBJ=   238893.64100017669
+ iteration         -180  SAEMOBJ=   243822.79248433304
+ iteration         -179  SAEMOBJ=   243174.74192700029
+ iteration         -178  SAEMOBJ=   238586.88390712798
+ iteration         -177  SAEMOBJ=   240391.55848400263
+ iteration         -176  SAEMOBJ=   246213.41528526146
+ iteration         -175  SAEMOBJ=   243090.28032490826
+ iteration         -174  SAEMOBJ=   245497.92081792344
+ iteration         -173  SAEMOBJ=   245337.17169192835
+ iteration         -172  SAEMOBJ=   247261.79928784890
+ iteration         -171  SAEMOBJ=   240543.37867587199
+ iteration         -170  SAEMOBJ=   236621.86600947333
+ iteration         -169  SAEMOBJ=   240468.92349376416
+ iteration         -168  SAEMOBJ=   240364.93406776796
+ iteration         -167  SAEMOBJ=   238934.58186294144
+ iteration         -166  SAEMOBJ=   236486.51152141637
+ iteration         -165  SAEMOBJ=   238268.42880244509
+ iteration         -164  SAEMOBJ=   237928.97678820929
+ iteration         -163  SAEMOBJ=   237637.72169596885
+ iteration         -162  SAEMOBJ=   241180.34487624466
+ iteration         -161  SAEMOBJ=   238207.59344425038
+ iteration         -160  SAEMOBJ=   239357.39648688291
+ iteration         -159  SAEMOBJ=   238201.78411573631
+ iteration         -158  SAEMOBJ=   239532.23815463795
+ iteration         -157  SAEMOBJ=   237283.44937611566
+ iteration         -156  SAEMOBJ=   237271.44669472944
+ iteration         -155  SAEMOBJ=   228675.25834778658
+ iteration         -154  SAEMOBJ=   227544.78645494167
+ iteration         -153  SAEMOBJ=   229492.63244397519
+ iteration         -152  SAEMOBJ=   235619.47769188113
+ iteration         -151  SAEMOBJ=   232612.11665688781
+ iteration         -150  SAEMOBJ=   235724.56939389347
+ iteration         -149  SAEMOBJ=   236603.46038464404
+ iteration         -148  SAEMOBJ=   231580.29501556209
+ iteration         -147  SAEMOBJ=   233534.65379159758
+ iteration         -146  SAEMOBJ=   236464.83153490181
+ iteration         -145  SAEMOBJ=   236003.77262547700
+ iteration         -144  SAEMOBJ=   234860.51044542872
+ iteration         -143  SAEMOBJ=   233717.34065273902
+ iteration         -142  SAEMOBJ=   238856.83085883374
+ iteration         -141  SAEMOBJ=   234925.24710317940
+ iteration         -140  SAEMOBJ=   236395.15618274052
+ iteration         -139  SAEMOBJ=   231248.93817021060
+ iteration         -138  SAEMOBJ=   227612.54432835372
+ iteration         -137  SAEMOBJ=   222517.59706454416
+ iteration         -136  SAEMOBJ=   209755.04061974422
+ iteration         -135  SAEMOBJ=   225623.91288683680
+ iteration         -134  SAEMOBJ=   224564.75099512166
+ iteration         -133  SAEMOBJ=   227843.82203051230
+ iteration         -132  SAEMOBJ=   226431.72756247179
+ iteration         -131  SAEMOBJ=   231108.60231187774
+ iteration         -130  SAEMOBJ=   233045.40449762941
+ iteration         -129  SAEMOBJ=   230284.71431032513
+ iteration         -128  SAEMOBJ=   230956.32411755645
+ iteration         -127  SAEMOBJ=   227587.47235788332
+ iteration         -126  SAEMOBJ=   225987.70970288257
+ iteration         -125  SAEMOBJ=   213597.33676508613
+ iteration         -124  SAEMOBJ=   222181.16633473651
+ iteration         -123  SAEMOBJ=   220818.80247590574
+ iteration         -122  SAEMOBJ=   221670.58408410658
+ iteration         -121  SAEMOBJ=   229219.96813002278
+ iteration         -120  SAEMOBJ=   229905.14624156497
+ iteration         -119  SAEMOBJ=   226402.68164609425
+ iteration         -118  SAEMOBJ=   229777.84713452405
+ iteration         -117  SAEMOBJ=   226782.21725338118
+ iteration         -116  SAEMOBJ=   225409.48259931526
+ iteration         -115  SAEMOBJ=   225297.99884824923
+ iteration         -114  SAEMOBJ=   225053.78767666128
+ iteration         -113  SAEMOBJ=   225554.25069754643
+ iteration         -112  SAEMOBJ=   220753.90891968654
+ iteration         -111  SAEMOBJ=   219441.21728640143
+ iteration         -110  SAEMOBJ=   216679.32822323529
+ iteration         -109  SAEMOBJ=   222825.26159447376
+ iteration         -108  SAEMOBJ=   223116.55474590341
+ iteration         -107  SAEMOBJ=   220781.96473716132
+ iteration         -106  SAEMOBJ=   225398.81107347758
+ iteration         -105  SAEMOBJ=   223843.50884385884
+ iteration         -104  SAEMOBJ=   217485.69646160002
+ iteration         -103  SAEMOBJ=   209759.10877276130
+ iteration         -102  SAEMOBJ=   206632.90253169576
+ iteration         -101  SAEMOBJ=   212899.60696379442
+ iteration         -100  SAEMOBJ=   219618.83951342347
+ iteration          -99  SAEMOBJ=   220749.62948641824
+ iteration          -98  SAEMOBJ=   219743.07676872879
+ iteration          -97  SAEMOBJ=   225870.42619439602
+ iteration          -96  SAEMOBJ=   229875.74919783475
+ iteration          -95  SAEMOBJ=   225629.23024449812
+ iteration          -94  SAEMOBJ=   222875.31095121446
+ iteration          -93  SAEMOBJ=   218711.27845885290
+ iteration          -92  SAEMOBJ=   214981.29644771363
+ iteration          -91  SAEMOBJ=   216834.26801813024
+ iteration          -90  SAEMOBJ=   217377.45564356260
+ iteration          -89  SAEMOBJ=   215132.03584241544
+ iteration          -88  SAEMOBJ=   209759.32899876923
+ iteration          -87  SAEMOBJ=   212149.95354642969
+ iteration          -86  SAEMOBJ=   203069.17803876652
+ iteration          -85  SAEMOBJ=   204996.47172926890
+ iteration          -84  SAEMOBJ=   206217.62015049043
+ iteration          -83  SAEMOBJ=   205489.33218474599
+ iteration          -82  SAEMOBJ=   191576.59321903164
+ iteration          -81  SAEMOBJ=   211831.54991552135
+ iteration          -80  SAEMOBJ=   211136.72046176123
+ iteration          -79  SAEMOBJ=   212270.27837918705
+ iteration          -78  SAEMOBJ=   213856.24106676661
+ iteration          -77  SAEMOBJ=   216804.12616112930
+ iteration          -76  SAEMOBJ=   214402.94568330367
+ iteration          -75  SAEMOBJ=   213528.31448488517
+ iteration          -74  SAEMOBJ=   207912.25641009773
+ iteration          -73  SAEMOBJ=   209171.92181566168
+ iteration          -72  SAEMOBJ=   208774.72549233428
+ iteration          -71  SAEMOBJ=   210779.56476971929
+ iteration          -70  SAEMOBJ=   209543.52132417785
+ iteration          -69  SAEMOBJ=   206586.37554832193
+ iteration          -68  SAEMOBJ=   210076.15864597057
+ iteration          -67  SAEMOBJ=   209886.22660042945
+ iteration          -66  SAEMOBJ=   203957.85710159907
+ iteration          -65  SAEMOBJ=   204670.38470165696
+ iteration          -64  SAEMOBJ=   202147.39403519675
+ iteration          -63  SAEMOBJ=   202384.10370588853
+ iteration          -62  SAEMOBJ=   201145.13263683094
+ iteration          -61  SAEMOBJ=   205397.40443833524
+ iteration          -60  SAEMOBJ=   204594.45681573430
+ iteration          -59  SAEMOBJ=   207031.40154875477
+ iteration          -58  SAEMOBJ=   206092.19091278646
+ iteration          -57  SAEMOBJ=   206591.29185632264
+ iteration          -56  SAEMOBJ=   200976.36287034149
+ iteration          -55  SAEMOBJ=   200130.69334486095
+ iteration          -54  SAEMOBJ=   199587.32578235739
+ iteration          -53  SAEMOBJ=   200100.87489345882
+ iteration          -52  SAEMOBJ=   196502.96710057830
+ iteration          -51  SAEMOBJ=   193583.62991576921
+ iteration          -50  SAEMOBJ=   199266.66299950425
+ iteration          -49  SAEMOBJ=   200640.22815829419
+ iteration          -48  SAEMOBJ=   196860.71672047878
+ iteration          -47  SAEMOBJ=   197411.27700868313
+ iteration          -46  SAEMOBJ=   201898.70127939104
+ iteration          -45  SAEMOBJ=   201246.11417931100
+ iteration          -44  SAEMOBJ=   200436.60021783298
+ iteration          -43  SAEMOBJ=   205734.68943177332
+ iteration          -42  SAEMOBJ=   197688.16714204277
+ iteration          -41  SAEMOBJ=   198383.86281528737
+ iteration          -40  SAEMOBJ=   199895.71616931359
+ iteration          -39  SAEMOBJ=   194068.45850697532
+ iteration          -38  SAEMOBJ=   195764.59083673602
+ iteration          -37  SAEMOBJ=   196589.65893938212
+ iteration          -36  SAEMOBJ=   194594.32897475798
+ iteration          -35  SAEMOBJ=   193701.38560310361
+ iteration          -34  SAEMOBJ=   185312.38243721725
+ iteration          -33  SAEMOBJ=   194332.80234958741
+ iteration          -32  SAEMOBJ=   195366.90004064149
+ iteration          -31  SAEMOBJ=   195173.36602441265
+ iteration          -30  SAEMOBJ=   194921.41960903356
+ iteration          -29  SAEMOBJ=   193105.07290490740
+ iteration          -28  SAEMOBJ=   194880.06940467627
+ iteration          -27  SAEMOBJ=   190205.26875920448
+ iteration          -26  SAEMOBJ=   188101.20119845183
+ iteration          -25  SAEMOBJ=   190508.31090545023
+ iteration          -24  SAEMOBJ=   193389.59327998504
+ iteration          -23  SAEMOBJ=   190650.39180074804
+ iteration          -22  SAEMOBJ=   189832.65706670686
+ iteration          -21  SAEMOBJ=   185213.89591223234
+ iteration          -20  SAEMOBJ=   183679.24704834234
+ iteration          -19  SAEMOBJ=   189873.43939774556
+ iteration          -18  SAEMOBJ=   193821.51982507933
+ iteration          -17  SAEMOBJ=   192310.66241578342
+ iteration          -16  SAEMOBJ=   188244.27488201612
+ iteration          -15  SAEMOBJ=   190565.90733573859
+ iteration          -14  SAEMOBJ=   186664.40485603036
+ iteration          -13  SAEMOBJ=   175993.43808888964
+ iteration          -12  SAEMOBJ=   178098.93839970502
+ iteration          -11  SAEMOBJ=   179930.98659713610
+ iteration          -10  SAEMOBJ=   177502.28846299733
+ iteration           -9  SAEMOBJ=   181255.38604737420
+ iteration           -8  SAEMOBJ=   174523.53943127824
+ iteration           -7  SAEMOBJ=   181008.84079112374
+ iteration           -6  SAEMOBJ=   184604.36047350461
+ iteration           -5  SAEMOBJ=   185131.74238786884
+ iteration           -4  SAEMOBJ=   182952.43938443795
+ iteration           -3  SAEMOBJ=   177503.49624365728
+ iteration           -2  SAEMOBJ=   179469.61217783991
+ iteration           -1  SAEMOBJ=   170804.12475957803
+ Reduced Stochastic/Accumulation Mode
+
+ #TERM:
+ OBJECTIVE FUNCTION IS INFINITE. PROBLEM ENDED
+ REDUCED STOCHASTIC PORTION WAS NOT COMPLETED
+
+ ETABAR IS THE ARITHMETIC MEAN OF THE ETA-ESTIMATES,
+ AND THE P-VALUE IS GIVEN FOR THE NULL HYPOTHESIS THAT THE TRUE MEAN IS 0.
+
+ ETABAR:        -2.3036E-02 -1.9398E-02
+ SE:             4.0730E-02  5.6773E-02
+ N:                     400         400
+
+ P VAL.:         5.7167E-01  7.3259E-01
+
+ ETAshrink(%):   1.6062E+01  5.2045E+00
+ EBVshrink(%):   1.5465E+01  7.4966E+00
+ EPSshrink(%):   1.0000E-10
+
+ #TERE:
+ Elapsed estimation time in seconds:   158.58
+1
+
+
+ #CPUT: Total CPU Time in Seconds,      158.695
+Stop Time:
+Wed Mar 26 00:25:09 CET 2014

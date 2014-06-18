@@ -7,6 +7,7 @@ use ui;
 use array;
 use Moose;
 use MooseX::Params::Validate;
+use Scalar::Util qw(looks_like_number);
 
 has 'subproblem_id' => ( is => 'rw', isa => 'Int' );
 has 'skip_labels_matrix' => ( is => 'rw', isa => 'Str' );
@@ -2532,51 +2533,67 @@ sub get_NM7_tables_all_types
 	return \@raw_table ,\@cov_table ,\@cor_table ,\@coi_table ,\@phi_table;
 }
 
+sub _get_value{
+	my %parm = validated_hash(\@_,
+							  val => { isa => 'Any', optional => 0 }
+		);
+	my $val = $parm{'val'};
+	my $no_value = 10000000000;
+	my $answer=undef;
+	if(looks_like_number($val)){
+		$answer = eval($val);
+		#check if +-infinity
+		if ( ($answer == $no_value) or ($answer == -(10**10**10)) or ($answer == (10**10**10))){
+			$answer = undef;
+		}
+	}
+	return $answer;
+}
+
 sub parse_NM7_raw
 {
 	my $self = shift;
 
-  #Assume that we have only one table now, in $self->nm_output_files->{'raw'}
-  #Assume whitespace as field separator
-  #add error checking of separator
+	#Assume that we have only one table now, in $self->nm_output_files->{'raw'}
+	#Assume whitespace as field separator
+	#add error checking of separator
 
-  my $skip_labels_matrix = '';
-  my $found_table = 0; #for error checking
-  my @header_labels = ();
-  my %final_values;
-  my %standard_errors;
-  my %correlation_matrix_data;
-  my $n_eigenvalues = 0;
-  my (@theta,@standard_errors_theta);
-  my @omega;
-  my @sigma;
-  my @eigenvalues;
-  my $no_value = 10000000000;
-  my $read_standard_errors = 0;
-  my $given_header_warning = 0;
-  my (%thetacoordval, %omegacoordval, %sigmacoordval);
-  my (%sethetacoordval, %seomegacoordval, %sesigmacoordval);
-  my $header_ok = 0;
-  my $val;
-  my $found_ofv_line = 0;
+	my $skip_labels_matrix = '';
+	my $found_table = 0; #for error checking
+	my @header_labels = ();
+	my %final_values;
+	my %standard_errors;
+	my %correlation_matrix_data;
+	my $n_eigenvalues = 0;
+	my (@theta,@standard_errors_theta);
+	my @omega;
+	my @sigma;
+	my @eigenvalues;
+	my $read_standard_errors = 0;
+	my $given_header_warning = 0;
+	my (%thetacoordval, %omegacoordval, %sigmacoordval);
+	my (%sethetacoordval, %seomegacoordval, %sesigmacoordval);
+	my $header_ok = 0;
+	my $found_ofv_line = 0;
 
-  foreach my $line (@{$self->nm_output_files->{'raw'}}) {
-    if ($line =~ /^\s*TABLE NO.\s+(\d+):/ ) {
-      croak("two tables found where 1 expected" ) if $found_table;
-      $found_table = 1;
-    } elsif ($line =~ /^\s*ITERATION/ ) {
-      $line =~ s/^\s*//; #get rid of leading spaces
-      @header_labels = split /\s+/,$line;
-      $header_ok = 1 if ($header_labels[0] eq 'ITERATION');
-    }
 
-    next unless ($line =~ /^\s*(-100000000\d)/ ); #only want neg iteration numbers = special values
-    
-    if ($1 == -1000000000 ) {
-      $found_ofv_line = 1;
-      #final values
-      #check that we have labels in array. Otherwise missing label row or wrong delimiter
-      unless ((scalar(@header_labels > 2)) or $given_header_warning or $header_ok){
+	foreach my $line (@{$self->nm_output_files->{'raw'}}) {
+		if ($line =~ /^\s*TABLE NO.\s+(\d+):/ ) {
+			croak("two tables found where 1 expected" ) if $found_table;
+			$found_table = 1;
+		} elsif ($line =~ /^\s*ITERATION/ ) {
+			$line =~ s/^\s*//; #get rid of leading spaces
+			@header_labels = split /\s+/,$line;
+			$header_ok = 1 if ($header_labels[0] eq 'ITERATION');
+		}
+
+		next unless ($line =~ /^\s*(-100000000\d)/ ); #only want neg iteration numbers = special values
+		
+		if ($1 == -1000000000 ) {
+			$found_ofv_line = 1;
+			#final values
+			#check that we have labels in array. Otherwise missing label row or wrong delimiter
+			unless ((scalar(@header_labels > 2)) or $given_header_warning or $header_ok){
 				my $mes = "\n\n\***Warning***\n".
 					"Too few elements in parameter label array in raw output file. ".
 					"Is label row missing, or is the ".
@@ -2585,123 +2602,117 @@ sub parse_NM7_raw
 					"\n*************\n";
 				print $mes;
 				$given_header_warning = 1;
-      }
+			}
 			$line =~ s/^\s*//; #get rid of leading spaces
 			my @values = split /\s+/, $line;
-      for (my $i = 1; $i < scalar(@values); $i++) {
-				if ($values[$i] eq 'NaN' or eval($values[$i]) == $no_value){
-					$val = 'NA';
-				} else {
-					$val = eval($values[$i]); # can get zeros here
+			for (my $i = 1; $i < scalar(@values); $i++) {
+				my $val = _get_value(val => $values[$i]);
+				if (defined $val){
+					if ($header_labels[$i] =~ /THETA/){
+						$thetacoordval{$header_labels[$i]} = $val; 
+					} elsif ($header_labels[$i] =~ /OMEGA/) {
+						$omegacoordval{$header_labels[$i]} = $val;
+					} elsif ($header_labels[$i] =~ /SIGMA/) {
+						$sigmacoordval{$header_labels[$i]} = $val;
+					} elsif ($header_labels[$i] =~ /OBJ/) {
+						$self->ofv($val);
+					} else { 
+						my $mes = "Unknown header label ".$header_labels[$i]." in raw output.";
+						croak($mes);
+					}
+				}else{
+					$skip_labels_matrix .= $header_labels[$i]." ";
 				}
-				$skip_labels_matrix .= $header_labels[$i]." " if ($val eq 'NA');
-				if ($header_labels[$i] =~ /THETA/){
-					$thetacoordval{$header_labels[$i]} = $val unless ($val eq 'NA'); 
-				} elsif ($header_labels[$i] =~ /OMEGA/) {
-					$omegacoordval{$header_labels[$i]} = $val unless ($val eq 'NA');
-				} elsif ($header_labels[$i] =~ /SIGMA/) {
-					$sigmacoordval{$header_labels[$i]} = $val unless ($val eq 'NA' );
-				} elsif ($header_labels[$i] =~ /OBJ/) {
-					$self->ofv($val);
-				} else { 
-					my $mes = "Unknown header label ".$header_labels[$i]." in raw output.";
-					croak($mes);
-				}
-      }
-    } elsif ($1 == -1000000001) {
-      #standard errors
-      $line =~ s/^\s*//; #get rid of leading spaces
-      my @values = split /\s+/,$line;
-      for (my $i = 1; $i < scalar(@values); $i++) {
-				if ($values[$i] eq 'NaN' or eval($values[$i]) == $no_value){
-					$val='NA';
-				} else {
-					$val = eval($values[$i]);
-				}
-				$skip_labels_matrix .= $header_labels[$i]." "  if ($val eq 'NA');
-				if ($header_labels[$i] =~ /THETA/) {
-					$sethetacoordval{$header_labels[$i]} = $val unless ($val eq 'NA');
-				} elsif ($header_labels[$i] =~ /OMEGA/) {
-					$seomegacoordval{$header_labels[$i]} = $val unless ($val eq 'NA');
-				} elsif ($header_labels[$i] =~ /SIGMA/) {
-					$sesigmacoordval{$header_labels[$i]} = $val unless ($val eq 'NA');
-				} elsif ($header_labels[$i] =~ /OBJ/) {
-				} else { 
-					my $mes = "Unknown header label ".$header_labels[$i]." in raw output.";
-					croak($mes);
+			}
+		} elsif ($1 == -1000000001) {
+			#standard errors
+			$line =~ s/^\s*//; #get rid of leading spaces
+			my @values = split /\s+/,$line;
+			for (my $i = 1; $i < scalar(@values); $i++) {
+				my $val = _get_value(val => $values[$i]);
+				if (defined $val){
+					if ($header_labels[$i] =~ /THETA/) {
+						$sethetacoordval{$header_labels[$i]} = $val;
+					} elsif ($header_labels[$i] =~ /OMEGA/) {
+						$seomegacoordval{$header_labels[$i]} = $val;
+					} elsif ($header_labels[$i] =~ /SIGMA/) {
+						$sesigmacoordval{$header_labels[$i]} = $val;
+					} elsif ($header_labels[$i] =~ /OBJ/) {
+					} else { 
+						my $mes = "Unknown header label ".$header_labels[$i]." in raw output.";
+						croak($mes);
+					}
+				}else{
+					$skip_labels_matrix .= $header_labels[$i]." ";
 				}
 			}
 			$read_standard_errors = 1;
 		} elsif ($1 == -1000000002) {
-      #eigenvalues
-      $line =~ s/^\s*//; #get rid of leading spaces
-      my @values = split /\s+/,$line;
-      for (my $i=1; $i < scalar(@values); $i++) {
+			#eigenvalues
+			$line =~ s/^\s*//; #get rid of leading spaces
+			my @values = split /\s+/,$line;
+			for (my $i = 1; $i < scalar(@values); $i++) {
 				last if ($values[$i] == 0); #array is padded with zeros
-					$n_eigenvalues++;
-				if ($values[$i] eq 'NaN' or eval($values[$i]) == $no_value) {
-					$val = undef;
-				} else {
-					$val = eval($values[$i]);
-				}
-				push (@eigenvalues, $val);
+				$n_eigenvalues++;
+				my $val = _get_value(val => $values[$i]);
+				push (@eigenvalues, $val); #push also undefs
 			}
 			$self->eigens([]) unless defined $self->eigens;
 			@{$self->eigens} = @eigenvalues;
-    } elsif ($1 == -1000000003) {
-      #matrix properties
-      $line =~ s/^\s*//; #get rid of leading spaces
-      my @values = split /\s+/,$line;
-      $correlation_matrix_data{'condition_number'} = eval($values[1]);
-      $correlation_matrix_data{'lowest_eigenvalue'} = eval($values[2]);
-      $correlation_matrix_data{'highest_eigenvalue'} = eval($values[3]);
-      $self->condition_number($correlation_matrix_data{'condition_number'});
-    }
-  }
+		} elsif ($1 == -1000000003) {
+			#matrix properties
+			$line =~ s/^\s*//; #get rid of leading spaces
+			my @values = split /\s+/,$line;
+			$correlation_matrix_data{'condition_number'} = eval($values[1]);
+			$correlation_matrix_data{'lowest_eigenvalue'} = eval($values[2]);
+			$correlation_matrix_data{'highest_eigenvalue'} = eval($values[3]);
+			$self->condition_number($correlation_matrix_data{'condition_number'});
+		}
+	}
 
-  return unless ($found_ofv_line);
+	return unless ($found_ofv_line);
 
-  #store rest of values in $self
-  $self->thetacoordval(\%thetacoordval); 
-  $self->omegacoordval(\%omegacoordval);
-  $self->sigmacoordval(\%sigmacoordval);
-  $self->sethetacoordval(\%sethetacoordval);
-  $self->seomegacoordval(\%seomegacoordval);
-  $self->sesigmacoordval(\%sesigmacoordval);
-  
-  if (%sethetacoordval) { #at least one value
-    $self->covariance_step_successful(1);
-  }
-  
-  $self->skip_labels_matrix($skip_labels_matrix);
-  delete $self->nm_output_files->{'raw'};
-  $self->NM7_parsed_raw(1);
-  
-  #verify that not have_omegas/sigmas is correct
-  unless ($self->have_sigmas()) {
-    my $count = 0;
-    foreach my $lab(@header_labels) {
-      $count++ if ($lab =~ /SIGMA/);
-    }
-    if ($count > 1) {
-      $self->have_sigmas(1); #never more than one dummy column
-    } elsif (defined $sesigmacoordval{'SIGMA(1,1)'}) {
-      $self->have_sigmas(1) if (defined $sesigmacoordval{'SIGMA(1,1)'} and 
-				$sesigmacoordval{'SIGMA(1,1)'} != 0);
-    }
-  }
-  unless ($self->have_omegas()) {
-    my $count = 0;
-    foreach my $lab(@header_labels){
-      $count++ if ($lab =~ /OMEGA/);
-    }
-    if ($count > 1) {
-      $self->have_omegas(1); #never more than one dummy column
-    } elsif (defined $seomegacoordval{'OMEGA(1,1)'}) {
-      $self->have_omegas(1) if (defined $seomegacoordval{'OMEGA(1,1)'} and
-				$seomegacoordval{'OMEGA(1,1)'} != 0);
-    }
-  }
+	#store rest of values in $self
+	$self->thetacoordval(\%thetacoordval); 
+	$self->omegacoordval(\%omegacoordval);
+	$self->sigmacoordval(\%sigmacoordval);
+	$self->sethetacoordval(\%sethetacoordval);
+	$self->seomegacoordval(\%seomegacoordval);
+	$self->sesigmacoordval(\%sesigmacoordval);
+	
+	if (%sethetacoordval) { #at least one value
+		$self->covariance_step_successful(1);
+	}
+	
+	$self->skip_labels_matrix($skip_labels_matrix);
+	delete $self->nm_output_files->{'raw'};
+	$self->NM7_parsed_raw(1);
+	
+	#verify that not have_omegas/sigmas is correct
+	unless ($self->have_sigmas()) {
+		my $count = 0;
+		foreach my $lab(@header_labels) {
+			$count++ if ($lab =~ /SIGMA/);
+		}
+		if ($count > 1) {
+			$self->have_sigmas(1); #never more than one dummy column
+		} elsif (defined $sesigmacoordval{'SIGMA(1,1)'}) {
+			$self->have_sigmas(1) if (defined $sesigmacoordval{'SIGMA(1,1)'} and 
+									  $sesigmacoordval{'SIGMA(1,1)'} != 0);
+		}
+	}
+	unless ($self->have_omegas()) {
+		my $count = 0;
+		foreach my $lab(@header_labels){
+			$count++ if ($lab =~ /OMEGA/);
+		}
+		if ($count > 1) {
+			$self->have_omegas(1); #never more than one dummy column
+		} elsif (defined $seomegacoordval{'OMEGA(1,1)'}) {
+			$self->have_omegas(1) if (defined $seomegacoordval{'OMEGA(1,1)'} and
+									  $seomegacoordval{'OMEGA(1,1)'} != 0);
+		}
+	}
 }
 
 sub parse_NM7_additional
