@@ -2199,21 +2199,23 @@ sub get_NM7_table_numbers
 
 sub get_column_index_order
 {
-	my $self = shift;
+	#static method
+	# create array of column indices in the order that columns should appear in the final formatted matrix
 	my %parm = validated_hash(\@_,
-		 header_label => { isa => 'Ref', optional => 0 }
+		 header_label => { isa => 'Ref', optional => 0 },
+		 have_sigmas => { isa => 'Bool', optional => 0 },
+		 have_omegas => { isa => 'Bool', optional => 0 },
+		 skip_labels_matrix => { isa => 'Str', optional => 0 }
 	);
 	my $header_label = $parm{'header_label'};
+	my $have_sigmas = $parm{'have_sigmas'};
+	my $have_omegas = $parm{'have_omegas'};
+	my $skip_labels_matrix = $parm{'skip_labels_matrix'};
 	my @index_order;
-
-	#must be done after raw
-	unless ($self->NM7_parsed_raw) {
-	  croak('get_column_index_order must be called *after* parse_NM7_raw');
-	}
 
 	#input @header_label
 	#output \@index_order
-	my $skip_labels_matrix = $self->skip_labels_matrix;
+
 	@index_order = ();
 	my @sigma_order = ();
 	for (my $i = 1; $i < scalar(@{$header_label}); $i++) {
@@ -2222,67 +2224,63 @@ sub get_column_index_order
 	  } elsif ($header_label->[$i] =~ /THETA/ ) {
 	    push (@index_order, $i);
 	  } elsif  ($header_label->[$i] =~ /SIGMA/ ) {
-	    push (@sigma_order, $i) if $self->have_sigmas();
+	    push (@sigma_order, $i) if $have_sigmas;
 	  } elsif  ($header_label->[$i] =~ /OMEGA/ ) {
-	    push (@index_order, $i) if $self->have_omegas();
+	    push (@index_order, $i) if $have_omegas;
 	  }
 	}
 	push (@index_order,@sigma_order);
 	return \@index_order;
 
-	return \@index_order;
 }
 
 sub permute_and_clean_rows
 {
-	my $self = shift;
+	#static method
+	#returns modifed version of input tableref, rearranges rows so that sigma comes last,
+	# also skips rows for omega/sigma that were not estimated as indicated by skip_labels_matrix 
 	my %parm = validated_hash(\@_,
-		 type => { isa => 'Str', optional => 0 }
+		 tableref => { isa => 'Maybe[ArrayRef]', optional => 0 },
+		 skip_labels_matrix => { isa => 'Str', optional => 0 },
+		 have_sigmas => { isa => 'Bool', optional => 0 },
+		 have_omegas => { isa => 'Bool', optional => 0 },
 	);
-	my $type = $parm{'type'};
+	my $tableref = $parm{'tableref'};
+	my $skip_labels_matrix = $parm{'skip_labels_matrix'};
+	my $have_sigmas = $parm{'have_sigmas'};
+	my $have_omegas = $parm{'have_omegas'};
 
-	#input  type, no output
-	#must be done after raw
-	unless ($self->NM7_parsed_raw()) {
-	  croak('permute_and_clean_rows must be called *after* parse_NM7_raw');
-	}
-
-	my $skip_labels_matrix = $self->skip_labels_matrix;
-	my $found_table = 0;
-	return if ($type eq 'phi'); #can't do this with phi
-	if (defined $self->nm_output_files->{$type}) {
-	  if (scalar (@{$self->nm_output_files->{$type}}) > 1) {
-	    my @temp_array = ();
-	    my @sigma_array = ();
-	    foreach my $line (@{$self->nm_output_files->{$type}}) {
-	      if ($line =~ /^\s*TABLE NO.\s+(\d+):/ ) {
-					croak("two tables found where 1 expected for $type" ) 
-		    if $found_table;
-					$found_table = 1;
-					push (@temp_array,$line);
-	      } elsif ($line =~ /^\s*NAME\s+/ ) {
-					push (@temp_array,$line);
-	      } else {
-					my $templine = $line;
-					$templine =~ s/^\s*//; #get rid of leading spaces
-						my ($label,$rest) = split (/\s+/,$templine,2);
-
-					unless (index($skip_labels_matrix,$label) >= 0) {
-						if ($label =~ /SIGMA/ ) {
-							push (@sigma_array,$line) if $self->have_sigmas();
-						} elsif ($label =~ /OMEGA/ ) {
-							push (@temp_array,$line) if $self->have_omegas();
-						} else {
-							push (@temp_array,$line);
-						}
+	my $found_table=0;
+	my @temp_array = ();
+	my @sigma_array = ();
+	if (defined $tableref and scalar (@{$tableref}) > 1) {
+	    foreach my $line (@{$tableref}) {
+			if ($line =~ /^\s*TABLE NO.\s+(\d+):/ ) {
+				croak("two tables found where 1 expected in permute_and_clean_rows" ) if $found_table;
+				$found_table = 1;
+				push (@temp_array,$line);
+			} elsif ($line =~ /^\s*NAME\s+/ ) {
+				push (@temp_array,$line);
+			} else {
+				my $templine = $line;
+				$templine =~ s/^\s*//; #get rid of leading spaces
+				my ($label,$rest) = split (/\s+/,$templine,2);
+				
+				unless (index($skip_labels_matrix,$label) >= 0) {
+					if ($label =~ /SIGMA/ ) {
+						push (@sigma_array,$line) if $have_sigmas;
+					} elsif ($label =~ /OMEGA/ ) {
+						push (@temp_array,$line) if $have_omegas;
+					} else { #assume THETA
+						push (@temp_array,$line);
 					}
 				}
+			}
 	    }
-			push(@temp_array, @sigma_array);
-			@{$self->nm_output_files->{$type}} = ();
-			push (@{$self->nm_output_files->{$type}}, @temp_array);
-		}
+		push(@temp_array, @sigma_array); #add the sigma rows at the end
 	}
+	return \@temp_array;
+
 }
 
 sub get_NM7_table_method
@@ -2534,6 +2532,7 @@ sub get_NM7_tables_all_types
 }
 
 sub _get_value{
+	#static method, translate text in NM7 ext,cov, coi etc to either number or undef
 	my %parm = validated_hash(\@_,
 							  val => { isa => 'Any', optional => 0 }
 		);
@@ -2558,7 +2557,7 @@ sub parse_NM7_raw
 	#Assume whitespace as field separator
 	#add error checking of separator
 
-	my $skip_labels_matrix = '';
+	my $skip_labels_matrix = ' ';
 	my $found_table = 0; #for error checking
 	my @header_labels = ();
 	my %final_values;
@@ -2715,133 +2714,167 @@ sub parse_NM7_raw
 	}
 }
 
+sub parse_additional_table
+{
+	#static method, parse line array of single table from either cov, cor, coi
+	my %parm = validated_hash(\@_,
+							  covariance_step_run => { isa => 'Bool', optional => 0 },
+							  have_omegas => { isa => 'Bool', optional => 0 },
+							  have_sigmas => { isa => 'Bool', optional => 0 },
+							  method_string => { isa => 'Str', optional => 0 },
+							  skip_labels_matrix => { isa => 'Str', optional => 0 },
+							  type => { isa => 'Str', optional => 0 },
+							  tableref => { isa => 'Maybe[ArrayRef]', optional => 0 }
+		);
+	my $covariance_step_run = $parm{'covariance_step_run'};
+	my $have_omegas = $parm{'have_omegas'};
+	my $have_sigmas = $parm{'have_sigmas'};
+	my $method_string = $parm{'method_string'};
+	my $skip_labels_matrix = $parm{'skip_labels_matrix'};
+	my $type = $parm{'type'};
+	my $tableref = $parm{'tableref'};
+	my $success = 0;
+	#must be done after raw
+	unless ($type eq 'cov' or $type eq 'coi' or $type eq 'cor'){
+		croak("unknown type $type in parse_NM7_additional");
+	}
+
+	#Assume that we have only one table now in $tableref
+	#Assume whitespace as field separator
+	#add error checking of separator
+
+	my $given_header_warning = 0;
+
+	my $expect_cov = $covariance_step_run;
+	$expect_cov = 0 if ($method_string =~ /Stochastic Approximation/ );
+
+	my @header_labels = ();
+	my @matrix_array =();
+	my @inverse;
+	my $found_table = 0;
+	my $cleaned_table_ref=[];
+	if ($expect_cov and defined $tableref and scalar(@{$tableref})>1) {
+		$cleaned_table_ref = permute_and_clean_rows(tableref => $tableref,
+													skip_labels_matrix => $skip_labels_matrix,
+													have_sigmas => $have_sigmas,
+													have_omegas => $have_omegas);
+	}
+
+	$tableref = undef;
+	my $row_index = 0;
+	my @index_order=();
+	my $header_ok = 0;
+	foreach my $line (@{$cleaned_table_ref}) {
+	    if ($line =~ /^\s*TABLE NO.\s+(\d+):/ ) {
+			croak("two tables found where 1 expected for $type" ) if $found_table;
+			$found_table = 1;
+	    } elsif ($line =~ /^\s*NAME/ ) {
+			$line =~ s/^\s*//; #get rid of leading spaces
+			@header_labels = split /\s+/, $line;
+			$header_ok = 1 if ($header_labels[0] eq 'NAME');
+			@index_order = @{get_column_index_order(header_label=>\@header_labels,
+													have_sigmas => $have_sigmas,
+													have_omegas => $have_omegas,
+													skip_labels_matrix => $skip_labels_matrix)};
+		  
+	    } else {
+			unless ((scalar(@header_labels > 2)) or $given_header_warning or $header_ok) {
+				my $mes = "\n\n\***Warning***\n".
+					"Too few elements in parameter label array in additional output file. ".
+					"Is label row missing, or is the ".
+					"delimiter something other than spaces (default)? ".
+					"Parsing is likely to fail".
+					"\n*************\n";
+				print $mes;
+				$given_header_warning = 1;
+			}
+			$row_index++;
+			$line =~ s/^\s*//; #get rid of leading spaces
+			my @line_values = split /\s+/,$line;
+			my $max_column;
+			my @new_line;
+			if ($type eq 'coi') {
+				$max_column = scalar(@index_order) ; #store full matrix
+			} else {
+				$max_column = $row_index; #store lower triangular matrix
+			}
+			for (my $j = 0; $j < $max_column; $j++) {
+				my $i = $index_order[$j]; #must permute omega-sigma
+				if ($line_values[$i] eq 'NaN') {
+					push(@new_line, undef);
+				} else {
+					push(@new_line, eval($line_values[$i]));
+				}
+			}
+			if ($type eq 'coi')  {
+				push(@matrix_array, \@new_line); #square matrix
+			} else {
+				push(@matrix_array, @new_line); #linear array
+			}
+			$success = 1;
+	    }
+	}
+
+	return ($success,\@matrix_array,\@index_order,\@header_labels);
+}
+
 sub parse_NM7_additional
 {
 	my $self = shift;
-	#must be done after raw
-	unless ($self->NM7_parsed_raw()){
-	  croak('parse_NM7_additional must be called *after* parse_NM7_raw');
+
+	my $success;
+	my $matrix_array_ref;
+	my $index_order_ref;
+	my $header_labels_ref;
+	unless ($self->NM7_parsed_raw){
+		croak('parse_NM7_additional must be called *after* parse_NM7_raw');
+		#because need skip_labels_matrix and have_sigmas and have_omegas and cov_step_run
 	}
+	
+	foreach my $type ('cov','coi','cor'){
 
-	#Assume that we have only one table now in each $self->nm_output_files->{$type}
-	#Assume whitespace as field separator
-	#add error checking of separator
-	#success is all or nothing, except phi which is optional, break if failure
-
-	my $success = 1;
-	my $skip_labels_matrix = $self->skip_labels_matrix;
-	my $given_header_warning = 0;
-
-	my $expect_cov = $self->covariance_step_run();
-	$expect_cov = 0 if ($self->method_string() =~ /Stochastic Approximation/ );
-	return unless ($expect_cov);
-
-	foreach my $type ('cov', 'coi', 'cor') {
-	  my @header_labels = ();
-	  my @matrix_array;
-	  my @inverse;
-	  my $found_table = 0;
-	  unless (defined $self->nm_output_files->{$type}) {
-	    if ($type eq 'phi') {
-	      next;
-	    } else {
-	      $success = 0;
-	      last;
-	    }
-	  }
-	  unless (scalar (@{$self->nm_output_files->{$type}}) > 1) {
-	    if ($type eq 'phi') {
-	      next;
-	    } else {
-	      $success = 0;
-	      last;
-	    }
-	  }
-	  $self->permute_and_clean_rows(type => $type);
-	  my $row_index = 0;
-	  my @index_order;
-	  my $header_ok = 0;
-	  foreach my $line (@{$self->nm_output_files->{$type}}) {
-	    if ($line =~ /^\s*TABLE NO.\s+(\d+):/ ) {
-	      croak("two tables found where 1 expected for $type" ) if $found_table;
-	      $found_table = 1;
-	    } elsif ($line =~ /^\s*NAME/ ) {
-	      $line =~ s/^\s*//; #get rid of leading spaces
-	      @header_labels = split /\s+/, $line;
-	      $header_ok = 1 if ($header_labels[0] eq 'NAME');
-	      @index_order = @{$self->get_column_index_order(header_label=>\@header_labels)};
-	    } else {
-	      unless ((scalar(@header_labels > 2)) or $given_header_warning or $header_ok) {
-					my $mes = "\n\n\***Warning***\n".
-						"Too few elements in parameter label array in additional output file. ".
-						"Is label row missing, or is the ".
-						"delimiter something other than spaces (default)? ".
-						"Parsing is likely to fail".
-						"\n*************\n";
-					print $mes;
-					$given_header_warning = 1;
-				}
-				$row_index++;
-				$line =~ s/^\s*//; #get rid of leading spaces
-				my @line_values = split /\s+/,$line;
-	      my $max_column;
-	      my @new_line;
-	      if (($type eq 'coi') || ($type eq 'phi')) {
-					$max_column = scalar(@index_order) ; #store full matrix
-				} else {
-					$max_column = $row_index; #store lower triangular matrix
-				}
-				for (my $j = 0; $j < $max_column; $j++) {
-					my $i = $index_order[$j]; #must permute omega-sigma
-					if ($line_values[$i] eq 'NaN') {
-						push(@new_line, undef);
-					} else {
-						push(@new_line, eval($line_values[$i]));
-					}
-				}
-	      if (($type eq 'coi') || ($type eq 'phi')) {
-					push(@matrix_array, \@new_line); #square matrix
-	      } else {
-					push(@matrix_array, @new_line); #linear array
-	      }
-	    }
-	  }
-
-
-	  if ($type eq 'cov') {
+		($success,$matrix_array_ref,$index_order_ref,$header_labels_ref) = 
+			parse_additional_table (covariance_step_run => $self->covariance_step_run,
+									have_omegas => $self->have_omegas,
+									have_sigmas => $self->have_sigmas,
+									method_string => $self->method_string,
+									skip_labels_matrix => $self->skip_labels_matrix,
+									type => $type,
+									tableref => $self->nm_output_files->{$type}
+			);
+		unless ($success and defined $matrix_array_ref) {
+			#erase, read everything from lst
+			carp("Failed to read all matrices cov, cor and coi. Will try reading matrices from lst instead. Note: This is not an error unless all three" .
+				 " additional output files cov, cor and coi are expected given the model input.") unless $self -> ignore_missing_files;
+			$self->raw_covmatrix([]);
+			$self->correlation_matrix([]);
+			$self->output_matrix_headers([]);
+			$self->clear_inverse_covariance_matrix;
+			last;
+		}
+	
+		if ($type eq 'cov') {
 			$self->raw_covmatrix([]) unless defined $self->raw_covmatrix;
-	    push( @{$self->raw_covmatrix}, @matrix_array);
+			push( @{$self->raw_covmatrix}, @{$matrix_array_ref}) if (defined $matrix_array_ref);
 			$self->covariance_matrix([]) unless defined $self->covariance_matrix;
-	    foreach my $element ( @{$self->raw_covmatrix} ) {
-	      push( @{$self->covariance_matrix}, eval($element) ) 
+			foreach my $element ( @{$self->raw_covmatrix} ) {
+				push( @{$self->covariance_matrix}, eval($element) ) 
 					unless ( $element eq '.........' );
 			}
 		} elsif ($type eq 'cor') {
 			$self->correlation_matrix([]) unless defined $self->correlation_matrix;
-	    push( @{$self->correlation_matrix}, @matrix_array);
-	    my @column_headers = ();
-	    foreach my $ind (@index_order) {
-	      push (@column_headers, $header_labels[$ind]);
-	    }
-			$self->output_matrix_headers([]) unless defined $self->output_matrix_headers;
-	    push( @{$self->output_matrix_headers}, @column_headers );
-		} elsif ($type eq 'coi') {
-			if (scalar(@matrix_array) > 0) {
-				$self->inverse_covariance_matrix(Math::MatrixReal -> new_from_cols(\@matrix_array));
+			push( @{$self->correlation_matrix}, @{$matrix_array_ref}) if (defined $matrix_array_ref);
+			my @column_headers = ();
+			foreach my $ind (@{$index_order_ref}) {
+				push (@column_headers, $header_labels_ref->[$ind]);
 			}
-		} elsif ($type eq 'phi') {
-			1; #nothing yet
-		}
-	}
-
-	unless ($success) {
-	  #erase, read everything from lst
-	  carp("Failed to read all matrices cov, cor and coi. Will try reading matrices from lst instead. Note: This is not an error unless all three" .
-									" additional output files cov, cor and coi are expected given the model input.") unless $self -> ignore_missing_files;
-	  $self->raw_covmatrix([]);
-	  $self->correlation_matrix([]);
-		$self->output_matrix_headers([]);
-	  $self->clear_inverse_covariance_matrix;
+			$self->output_matrix_headers([]) unless defined $self->output_matrix_headers;
+			push( @{$self->output_matrix_headers}, @column_headers );
+		} elsif ($type eq 'coi') {
+			if (defined $matrix_array_ref and scalar(@{$matrix_array_ref}) > 0) {
+				$self->inverse_covariance_matrix(Math::MatrixReal -> new_from_cols($matrix_array_ref));
+			}
+		} 
 	}
 
 	delete $self->nm_output_files->{'cov'};
