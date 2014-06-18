@@ -1,0 +1,15 @@
+Dear PsN users,
+
+PsN 4.2.0 is now available for download from http://psn.sourceforge.net.
+
+The most important changes are a complete rewrite of PsN to use the Moose object system, a new program sir for calculating uncertainty on model parameters, support for NMQual8 and a test suite for verification of PsN. 
+
+This release also includes some very important bug fixes which in themselves are worth the effort of upgrading to 4.2.0.
+
+Note that PsN 4.2.0 has a new minimum Perl version requirement and depends on new Perl packages. Please read the installation guide http://psn.sourceforge.net/install.php before installing.
+
+The complete list of new features and bug fixes is found on http://psn.sourceforge.net/pdfdocs/release_notes_PsN_4_2_0.txt
+
+The PsN developers will be at PAGE to present PsN4. We look forward to seeing you there! 
+
+Best regards,
