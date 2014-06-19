@@ -1804,6 +1804,33 @@ sub get_rawres_params
 	return \@allparams;
 }
 
+sub create_vectorsamples {
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+							  sampled_params_arr => { isa => 'ArrayRef[HashRef]', optional => 0 }
+		);
+	my $sampled_params_arr = $parm{'sampled_params_arr'};
+	my @vectorsamples=();
+	
+	my %labels;
+	foreach my $param ('theta','omega','sigma'){
+		$labels{$param} = $self -> labels(parameter_type => $param,problem_numbers => [1])->[0];
+	}
+	
+	for (my $k=0; $k < scalar(@{$sampled_params_arr}); $k++){
+		my @line =();
+		foreach my $param ('theta','omega','sigma'){
+			#loop labels in right order...
+			foreach my $label (@{$labels{$param}}){
+				push(@line,$sampled_params_arr->[$k]->{$param}->{$label});
+			}
+		}
+		push(@vectorsamples,\@line);
+	}
+	
+	return \@vectorsamples;
+}
+
 sub setup_filter
 {
 	my $self = shift;

@@ -2747,7 +2747,6 @@ sub parse_additional_table
 
 	my $expect_cov = $covariance_step_run;
 	$expect_cov = 0 if ($method_string =~ /Stochastic Approximation/ );
-
 	my @header_labels = ();
 	my @matrix_array =();
 	my @inverse;

@@ -2,7 +2,7 @@
 
 use strict;
 use warnings;
-use Test::More tests=>98;
+use Test::More tests=>113;
 use FindBin qw($Bin);
 use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages
@@ -105,6 +105,24 @@ is($arr->[2]->{'ofv'},674.1097668967,'method get_rawres_params, ofv 2');
 is($arr->[0]->{'model'},1,'method get_rawres_params, model 0');
 is($arr->[1]->{'model'},2,'method get_rawres_params, model 1');
 is($arr->[2]->{'model'},5,'method get_rawres_params, model 2');
+
+my $vectorsamples = $model->create_vectorsamples(sampled_params_arr => $arr);
+is($vectorsamples->[0]->[0],1.1,'create vectorsamples 0,0');
+is($vectorsamples->[0]->[1],1.2,'create vectorsamples 0,1');
+is($vectorsamples->[0]->[2],1.3,'create vectorsamples 0,2');
+is($vectorsamples->[0]->[3],1.4,'create vectorsamples 0,3');
+is($vectorsamples->[0]->[4],1.5,'create vectorsamples 0,4');
+is($vectorsamples->[1]->[0],2.1,'create vectorsamples 1,0');
+is($vectorsamples->[1]->[1],2.2,'create vectorsamples 1,1');
+is($vectorsamples->[1]->[2],2.3,'create vectorsamples 1,2');
+is($vectorsamples->[1]->[3],2.4,'create vectorsamples 1,3');
+is($vectorsamples->[1]->[4],2.5,'create vectorsamples 1,4');
+is($vectorsamples->[2]->[0],3.1,'create vectorsamples 2,0');
+is($vectorsamples->[2]->[1],3.2,'create vectorsamples 2,1');
+is($vectorsamples->[2]->[2],3.3,'create vectorsamples 2,2');
+is($vectorsamples->[2]->[3],3.4,'create vectorsamples 2,3');
+is($vectorsamples->[2]->[4],3.5,'create vectorsamples 2,4');
+
 
 # set_maxeval_zero
 

@@ -14,6 +14,7 @@ use ui;
 use Getopt::Long;
 use common_options;
 use Data::Dumper;
+use Cwd;
 
 my $cmd_line = $0 . " " . join( " ", @ARGV );
 
@@ -26,11 +27,10 @@ my %options;
 my %required_options = ("samples:i"=>'',
 			"resamples:i"=> '');
 my %optional_options = (
-#	"covmat_input:s"=>'',
-#	'rawres_input:s' => undef,
-#	'offset_rawres:i' => undef,
-#	'in_filter:s' => undef,
-#	'out_filter:s' => undef, #now out_filter is used after resampling, not good, lets skip it
+	"covmat_input:s"=>'',
+	'rawres_input:s' => undef,
+	'offset_rawres:i' => undef,
+	'in_filter:s' => undef,
 	"mceta:i"=>'',
 	"inflation:f" => '',
 	"with_replacement!"=>'',
@@ -104,6 +104,7 @@ $help_text{-rawres_input} = <<'EOF';
       drawing samples from a truncated multivariate normal distribution 
 	  based on the input model parameter estimates and 
 	  covariance matrix.
+	  Not allowed in combination with covmat_input.
       The raw results file must contain at least as many 
       samples as the input -samples to sir, the labels for  THETA/OMEGA/SIGMA 
       in the file must match the labels in the model given as input 
@@ -121,12 +122,6 @@ $help_text{-offset_rawres} = <<'EOF';
       before starting to read final parameter estimates. In a regular
       bootstrap raw_results file the first line of estimates refers to the
       input model with the full dataset, so therefore the default offset is 1.
-EOF
-$help_text{-out_filter} = <<'EOF';
-      -out_filter=comma-separated list of conditions
-
-      Default not used. The user may choose to only compute results based on 
-      resamples which fulfill certain conditions.
 EOF
 
 $help_text{-in_filter} = <<'EOF';
@@ -161,8 +156,8 @@ EOF
 EOF
     $help_text{-covmat_input} = <<'EOF';
       <p class="option">-covmat_input=filename</p>
-    Only allowed together with rawres_input. If given, this matrix is
-	used for computing the weights.
+    Not allowed together with rawres_input. If given, this matrix is
+	used for computing the weights and performing the sampling.
 EOF
     $help_text{-inflation} = <<'EOF';
       <p class="option">-inflation=X</p>
@@ -194,10 +189,26 @@ unless ( defined $options{'skip_data_parsing'} ) {
 }
 
 if ( defined $options{'covmat_input'} ){
-	unless (defined $options{'rawres_input'}){
-		print "Cannot use option -covmat_input without option -rawres_input.\n";
-		exit;
+	if (defined $options{'rawres_input'}){
+		print "Cannot use option -covmat_input together with option -rawres_input.\n";
+		die;
 	}
+	#set to global filepath here
+	unless (-e $options{'covmat_input'}){
+		print "The covmat_input file ".$options{'covmat_input'}." does not exist.\n"; 
+		die;
+	}
+	my ( $dir, $file ) = OSspecific::absolute_path(cwd(), $options{'covmat_input'});
+	$options{'covmat_input'} = $dir . $file;
+}
+
+if ( defined $options{'rawres_input'} ){
+	unless (-e $options{'rawres_input'}){
+		print "The rawres_input file ".$options{'rawres_input'}." does not exist.\n"; 
+		die;
+	}
+	my ( $dir, $file ) = OSspecific::absolute_path(cwd(), $options{'rawres_input'});
+	$options{'rawres_input'} = $dir . $file;
 }
 my @in_filter=();
 
@@ -216,20 +227,6 @@ if ( defined $options{'in_filter'} ){
 	}
 	if (scalar(@in_filter)<1){
 		die "Error: Option in_filter used, but list of conditions could not be parsed.\n";
-	}	
-}
-my @out_filter=();
-if ( defined $options{'out_filter'} ){
-	#split string, assume comma separated
-	foreach my $filt (split(/,/,$options{'out_filter'})){
-		if ($filt =~ /.\.(gt|lt|eq)\.\d+\.?\d*/){
-			push(@out_filter,$filt);
-		}else{
-			die "Output filter $filt does not fulfill the format rules.\n";
-		}
-	}
-	if (scalar(@out_filter)<1){
-		die "Error: Option out_filter used, but list of conditions could not be parsed.\n";
 	}	
 }
 
@@ -254,7 +251,6 @@ my $sir = tool::sir ->
 	rawres_input        	=> $options{'rawres_input'},
 	offset_rawres       	=> $options{'offset_rawres'},
 	in_filter             => \@in_filter,
-	out_filter             => \@out_filter,
 	copy_data                            => $options{'copy_data'}
 	);
 

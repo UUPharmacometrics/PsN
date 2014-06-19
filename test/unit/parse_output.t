@@ -27,7 +27,7 @@ $hash{'1E+00'}=1;
 $hash{'1.01E+01'}=10.1;
 $hash{'12345'}=12345;
 
-plan tests => scalar(keys %hash)+7+6+8;
+plan tests => scalar(keys %hash)+7+6+8+9;
 
 foreach my $key (keys %hash){
 	is (output::problem::subproblem::_get_value(val => $key),$hash{$key},"_get_value $key");
@@ -86,5 +86,29 @@ is ($matrix_array_ref->[39],eval(1.41960E-01),'anneal2_V7_30_beta.cor element (9
 is ($matrix_array_ref->[40],eval(1.01668E-02),'anneal2_V7_30_beta.cor element (9,5)');
 is ($matrix_array_ref->[44],eval(6.99733E-01),'anneal2_V7_30_beta.cor element (9,9)'); #sigma
 is ($index_order_ref->[8],5,'anneal2_V7_30_beta.cor index order 8');
+
+$file = $includes::testfiledir.'/mox_sir.cov';
+my @lines = OSspecific::slurp_file($file);
+my ($success,$matrix_array_ref,$index_order_ref,$header_labels_ref) = 
+	output::problem::subproblem::parse_additional_table (covariance_step_run => 1,
+														 have_omegas => 1,
+														 have_sigmas => 1,
+														 method_string => ' ',
+														 skip_labels_matrix => ' ',
+														 type => 'cov',
+														 tableref => \@lines);
+is ($success,1,'mox_sir.cov userclean success');
+#matrix_array_ref is single arr of lower triangular uncleaned (since skip labels matrix is empty and have_sigmas and have_omegas) and sorted matrix
+is ($matrix_array_ref->[0],eval(6.10693E+00),'mox_sir.cov uncleaned element (1,1)');
+is ($matrix_array_ref->[21],eval(0.00E+00),'mox_sir.cov uncleaned element (7,1)');
+is ($matrix_array_ref->[28],eval(5.97477E-02),'mox_sir.cov uncleaned element (8,1)');
+is ($matrix_array_ref->[66],eval(0.00E+00),'mox_sir.cov uncleaned element (12,1)');
+is ($matrix_array_ref->[65],eval(1.69362E-03),'mox_sir.cov uncleaned element (11,11)');
+
+is ($index_order_ref->[0],1,'mox_sir.cov uncleaned index order 0');
+is ($index_order_ref->[5],7,'mox_sir.cov uncleaned index order 5');
+is ($index_order_ref->[11],6,'mox_sir.cov uncleaned index order 11');
+
+
 
 done_testing();

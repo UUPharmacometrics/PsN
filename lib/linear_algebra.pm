@@ -583,7 +583,93 @@ sub row_cov_median{
 	
     return 0;
 }
+sub get_identity_matrix{
+	my $dimension = shift;
 
+	croak("dimension must be larger than 0 in get_identity_matrix") unless ($dimension > 0);
+	my @result=();
+	for (my $i=0; $i< $dimension; $i++){
+		my @line = (0) x $dimension;
+		$line[$i] = 1;
+		push(@result,\@line);
+	}
+	return \@result;
+}
+
+sub invert_symmetric{
+    #input is full symmetric positive definite matrix 
+    #this matrix will be overwritten
+	#and reference to empty result matrix
+    #verified with matlab
+
+    my $matrixref = shift;
+	my $result = shift;
+
+    my $err=cholesky($matrixref);
+    if ($err > 0){
+		print "cholesky error $err in invert_symmetric\n";
+		return $err ;
+    }
+    my $refInv = [];
+	my $ncol =scalar(@{$matrixref});
+    $err = lower_triangular_identity_solve($matrixref,$ncol,$refInv);
+    if ($err > 0){
+		print "lower triang error $err in invert_symmetric\n";
+		return $err ;
+    }
+
+#	for (my $i=0 ; $i< scalar(@{$refInv}); $i++){
+#		for (my $j = 0; $j < scalar(@{$refInv->[$i]}); $j++){
+#			print $refInv->[$i]->[$j].' ';
+#		}
+#		print "\n";
+#	}
+
+    $err = lower_triangular_UTU_multiply($refInv,$result);
+    if ($err > 0){
+		print "multiply error in invert_symmetric\n";
+		return $err ;
+    }
+
+    return 0;
+
+}
+sub lower_triangular_UTU_multiply{
+    #input is lower triangular matrix
+    #in *column format*, R->[col][row]
+    #and reference to empty solution matrix
+    #multiply from the left with transpose, output is full symmetric square matrix
+    #verified in matlab
+
+    my $Rref=shift;
+    my $solution = shift;
+    my $input_error = 2;
+    my $numerical_error = 1;
+    my $ncol= scalar(@{$Rref});
+
+    for (my $j=0;$j< $ncol;$j++){
+		my $nrow = scalar(@{$Rref->[$j]});
+#	print "nrow $nrow ncol $ncol\n";
+		return $input_error unless ($nrow > $j);
+    }
+
+    #create zeros matrix as placeholder for solution
+    for (my $i=0; $i<$ncol; $i++){
+		push(@{$solution},[(0) x $ncol]);
+    }
+
+    for (my $i=0; $i< $ncol; $i++){
+		for (my $j=0; $j<=$i; $j++){
+			my $sum=0;
+			for (my $k=$i; $k< $ncol; $k++){
+				$sum=$sum+$Rref->[$i][$k]*$Rref->[$j][$k];
+			}
+			$solution->[$j][$i]=$sum;
+			$solution->[$i][$j]=$sum;
+		}
+    }
+    return 0;
+}
 
 
 sub frem_conditional_omega_block{

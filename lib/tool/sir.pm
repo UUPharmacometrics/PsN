@@ -33,7 +33,6 @@ has 'covmat_input' => ( is => 'rw', isa => 'Str' );
 has 'rawres_input' => ( is => 'rw', isa => 'Str' );
 has 'offset_rawres' => ( is => 'rw', isa => 'Int', default => 1 );
 has 'in_filter' => ( is => 'rw', isa => 'ArrayRef[Str]' );
-has 'out_filter' => ( is => 'rw', isa => 'ArrayRef[Str]' );
 has 'inflation' => ( is => 'rw', isa => 'Num', default => 1 );
 has 'mceta' => ( is => 'rw', isa => 'Int', default => 0 );
 
@@ -138,42 +137,108 @@ sub modelfit_setup
 		croak("No ofv from input model result files");
 	}
 
-	my $icm = get_nonmem_inverse_covmatrix(output => $output);
-	my $covmatrix = get_nonmem_covmatrix(output => $output);
+	my $parameter_hash = get_nonmem_parameters(output => $output);
+
+	my $icm;
+	my $covmatrix;
+	my @covmat_column_headers = ();
+
+	if (defined $self->covmat_input){
+		#read user matrix and invert here
+		my @lines = OSspecific::slurp_file($self->covmat_input);
+		my ($success,$lower_covar,$index_order_ref,$header_labels_ref) = 
+			output::problem::subproblem::parse_additional_table (covariance_step_run => 1,
+																 have_omegas => 1,
+																 have_sigmas => 1,
+																 method_string => ' ',
+																 skip_labels_matrix => ' ',
+																 type => 'cov',
+																 tableref => \@lines);
+		@lines=undef;
+		unless ($success){
+			croak("failed to parse covmat_input file ".$self->covmat_input);
+		}
+
+		#error check that column headers match parameters in nonmem output
+		unless ( scalar(@{$index_order_ref}) == scalar(@{$parameter_hash->{'param'}})){
+			croak("Number of parameters ".scalar(@{$index_order_ref})." in covmat_input does not match number ".
+				  scalar(@{$parameter_hash->{'param'}})." of estimated parameters in input model." );
+		}
+		for (my $j=0; $j < scalar(@{$index_order_ref}); $j++){
+			my $covheader = $header_labels_ref->[($index_order_ref->[$j])];
+			my $outheader;
+			my $par = uc($parameter_hash->{'param'}->[$j]);
+			if ($par eq 'THETA'){
+				$outheader = $par.$parameter_hash->{'filtered_coords'}->[$j];
+			}else{
+				$outheader = $par.'('.$parameter_hash->{'filtered_coords'}->[$j].')';
+			}
+			unless ($covheader eq $outheader){
+				croak("headers $covheader from covmat_input and $outheader from input model does not match\n");
+			}
+		}
+
+		$covmatrix = make_square($lower_covar);
+
+		my $tmp = make_square($lower_covar); #just initial values that will be overwritten
+		my $arricm = [];
+		my $err = linear_algebra::invert_symmetric($tmp,$arricm);
+		$tmp = undef;
+		if ($err == 1){
+			croak ("covmat_input file could not be inverted, numerical error in linear_algebra invert_symmetric");
+		}elsif ($err == 2){
+			croak ("input error to linear_algebra invert_symmetric");
+		}
+		$icm = Math::MatrixReal -> new_from_cols($arricm);
+	}elsif (defined $self->rawres_input){
+		#set identity matrix for both
+		my $dim = scalar(@{$parameter_hash->{'param'}});
+		my @diag = (1) x $dim;
+		$icm = Math::MatrixReal -> new_diag(\@diag);
+		$covmatrix = linear_algebra::get_identity_matrix($dim);
+	}else{
+		$icm = get_nonmem_inverse_covmatrix(output => $output); #MatrixReal
+		$covmatrix = get_nonmem_covmatrix(output => $output);
+	}
 
 	if ($self->inflation() != 1){
 		inflate_covmatrix(matrix => $covmatrix,
 						  inflation => $self->inflation());
 	}
 
-	my $parameter_hash = get_nonmem_parameters(output => $output);
 
-	#$model-> get_values_to_labels(category => $param);
-#			$paramnames = $model -> labels(parameter_type => $param);
 
 	my $values = $parameter_hash->{'filtered_values'};
 	my $mat = new Math::MatrixReal(1,1);
 	my $muvector = $mat->new_from_rows( [$values] );
-
-	ui -> print( category => 'sir',
-				 message => "Sampling from the truncated multivariate normal distribution");
-
-	my $vectorsamples = sample_multivariate_normal(samples=>$self->samples,
-												   covmatrix => $covmatrix,
-												   lower_bound => $parameter_hash->{'lower_bounds'},
-												   upper_bound => $parameter_hash->{'upper_bounds'},
-												   param => $parameter_hash->{'param'},
-												   coords => $parameter_hash->{'filtered_coords'},
-												   block_number => $parameter_hash->{'block_number'},
-												   mu => $muvector);
+	my $sampled_params_arr;
+	if (defined $self->rawres_input){
+		$sampled_params_arr = 
+			$model->get_rawres_params(filename => $self->rawres_input,
+									  filter => $self->in_filter,
+									  offset => $self->offset_rawres);
+		my @arr= (1) x scalar(@{$sampled_params_arr});
+		$self->pdf_vector(\@arr);
+	}else{
+		ui -> print( category => 'sir',
+					 message => "Sampling from the truncated multivariate normal distribution");
+		
+		my $vectorsamples = sample_multivariate_normal(samples=>$self->samples,
+													covmatrix => $covmatrix,
+													lower_bound => $parameter_hash->{'lower_bounds'},
+													upper_bound => $parameter_hash->{'upper_bounds'},
+													param => $parameter_hash->{'param'},
+													coords => $parameter_hash->{'filtered_coords'},
+													block_number => $parameter_hash->{'block_number'},
+													mu => $muvector);
+		
+		$sampled_params_arr = create_sampled_params_arr(samples_array => $vectorsamples,
+														labels_hash => $parameter_hash);
+		$self->pdf_vector(mvnpdf(inverse_covmatrix => $icm,
+								 mu => $muvector,
+								 xvec_array => $vectorsamples));
+	}
 	
-	my $sampled_params_arr = create_sampled_params_arr(samples_array => $vectorsamples,
-													   labels_hash => $parameter_hash);
-	
-	
-	$self->pdf_vector(mvnpdf(inverse_covmatrix => $icm,
-							 mu => $muvector,
-							 xvec_array => $vectorsamples));
 
 	ui -> print( category => 'sir',
 				 message => "Creating parameter vector evaluation models...");
@@ -219,6 +284,7 @@ sub modelfit_setup
 							$self ->directory().'m'.$model_number)
 		if ($self->stop_motion());
 }
+
 
 
 sub mvnpdf{
@@ -1216,7 +1282,6 @@ sub prepare_results
 	my $model = $self -> models -> [0];
 	my $sampled_params_arr = 
 		$model -> get_rawres_params(filename => $self->raw_results_file()->[0],
-									filter => $self->out_filter,
 									require_numeric_ofv => 0,
 									extra_columns => ['resamples'],
 									offset => 1); 
