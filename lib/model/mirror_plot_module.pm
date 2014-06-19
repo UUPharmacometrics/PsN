@@ -27,25 +27,25 @@ has 'niter_eonly' => ( is => 'rw', isa => 'Maybe[Int]' );
 
 sub BUILD
 {
-	my $this  = shift;
+	my $self  = shift;
 
-  my $base_model = $this->base_model;
+  my $base_model = $self->base_model;
   
   my $prob_num;
 
-  if( $this -> cwres and not $base_model->is_run ){
+  if( $self -> cwres and not $base_model->is_run ){
     croak('To create mirror plots for cwres tables, you must have run the model with cwres separately' );
   }
 
-  if( $this->cwres and not $this->mirror_from_lst ) {
+  if( $self->cwres and not $self->mirror_from_lst ) {
     carp('MSFO computation method cannot be used with cwres. mirror_from_lst enabled' );
-    $this->mirror_from_lst(1);
+    $self->mirror_from_lst(1);
   }
 
   my $msfo_names = $base_model -> msfo_names( problem_numbers => [1] );
   my $msfi_names = $base_model -> msfi_names( );
 
-  if( $base_model -> is_run and $this->mirror_from_lst ) {
+  if( $base_model -> is_run and $self->mirror_from_lst ) {
 
     # 1. Update initial estimates from file.
 
@@ -216,13 +216,13 @@ sub BUILD
   # controls where modification is done.
   
   my $seed = random_uniform_integer(1,1,99999999);
-  my $nr_of_mirrors = $this->nr_of_mirrors;
+  my $nr_of_mirrors = $self->nr_of_mirrors;
   
   if( $nr_of_mirrors < 2 ){
     ui->print( category => 'all',
 	       message => 'Number of mirrorplots must be at least two, will run with two.' );
 		$nr_of_mirrors = 2;
-    $this->nr_of_mirrors($nr_of_mirrors);
+    $self->nr_of_mirrors($nr_of_mirrors);
   }
   
   $base_model -> set_records( type => 'simulation',
@@ -232,8 +232,8 @@ sub BUILD
   my $ok = $base_model -> set_maxeval_zero(problem_number => $prob_num,
 					   need_ofv => 0,
 					   print_warning => 1,
-					   niter_eonly => $this->niter_eonly,
-					   last_est_complete => $this->last_est_complete);
+					   niter_eonly => $self->niter_eonly,
+					   last_est_complete => $self->last_est_complete);
 }
 
 

@@ -32,20 +32,19 @@ has 'outside_n_sd_check' => ( is => 'rw', isa => 'Num', default => 2 );
 
 sub BUILD
 {
-	my $this  = shift;
+	my $self = shift;
 
 	for my $accessor ('logfile','raw_results_file','raw_nonp_file'){
-		my @new_files=();
+		my @new_files = ();
 		my @old_files = ();
-		@old_files = @{$this->$accessor} if (defined $this->$accessor);
-		for (my $i=0; $i < scalar(@old_files); $i++){
+		@old_files = @{$self->$accessor} if (defined $self->$accessor);
+		for (my $i = 0; $i < scalar(@old_files); $i++){
 			my $name;
 			my $ldir;
-			( $ldir, $name ) =
-			OSspecific::absolute_path( $this ->directory(), $old_files[$i] );
+			($ldir, $name) = OSspecific::absolute_path($self->directory, $old_files[$i]);
 			push(@new_files,$ldir.$name) ;
 		}
-		$this->$accessor(\@new_files);
+		$self->$accessor(\@new_files);
 	}	
 }
 

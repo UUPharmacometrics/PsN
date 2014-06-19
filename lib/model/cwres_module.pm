@@ -13,9 +13,9 @@ has 'problem' => ( is => 'rw', required => 1, isa => 'model::problem' );
 
 sub BUILD
 {
-	my $this = shift;
+	my $self = shift;
 
-  my $mirror_name = $this->mirror_plots ? 'sim' : '';
+  my $mirror_name = $self->mirror_plots ? 'sim' : '';
 
   if( $PsN::nm_major_version == '7' ){
     croak("option -cwres is not supported for NONMEM7, ".
@@ -24,7 +24,7 @@ sub BUILD
 
   # Problem is the modelfile problem we are modifing to compute CWRES.
 
-  my $prob = $this->problem;
+  my $prob = $self->problem;
 
   # Get number of etas and eps;
   my $nthetas = $prob -> record_count( record_name => 'theta' );
@@ -54,7 +54,7 @@ sub BUILD
   }
 
   # get the table names. They are needed below and further down
-  my @cwtab_names = @{$this -> cwtab_names};
+  my @cwtab_names = @{$self -> cwtab_names};
 
   # Figure out if we have an sdtab and what number it has
   my ( $sd_ref ) = $prob ->
@@ -68,7 +68,7 @@ sub BUILD
 	if( $sdno eq '' ){
 	  $sdno = 1;
 	}
-	$this -> sdno($sdno);
+	$self -> sdno($sdno);
 	for( my $i = 0; $i <= $#cwtab_names; $i++ ) {
 
 	  # This regular expression is probably quite unneccessary. It
@@ -82,7 +82,7 @@ sub BUILD
 	    $cwtab_names[$i] = $1.$sdno.$mirror_name.$2.$3;
 	  }
 	}
-	$this -> cwtab_names( \@cwtab_names);
+	$self -> cwtab_names( \@cwtab_names);
 	last;
       }
     }
@@ -129,7 +129,7 @@ sub BUILD
       push( @{$code},
 	    ('"      IF (ICALL.EQ.0) THEN',
 	     '"C     open files here, if necessary',
-	     '"         OPEN(50,FILE=\'cwtab'.$this -> sdno().$mirror_name.'.est\')') );
+	     '"         OPEN(50,FILE=\'cwtab'.$self -> sdno().$mirror_name.'.est\')') );
 
       push( @{$code},
 	      # fortan code
@@ -182,7 +182,7 @@ sub BUILD
     
     push( @{$code}, 
 	  'IF (ICALL.EQ.3) THEN',
-	  '  OPEN(50,FILE=\'cwtab'.$this -> sdno().$mirror_name.'.est\')',
+	  '  OPEN(50,FILE=\'cwtab'.$self -> sdno().$mirror_name.'.est\')',
 	  '  WRITE (50,*) \'ETAS\'',
 	  '  DO WHILE(DATA)',
 	  '    IF (NEWIND.LE.1) WRITE (50,*) ETA',
@@ -256,7 +256,7 @@ sub BUILD
 			record_strings => ['ID ',
 			join(' ',@table_row),
 			"IPRED DV $mdv NOPRINT ".
-			"ONEHEADER FILE=cwtab".$this -> sdno().'.deriv'] );
+			"ONEHEADER FILE=cwtab".$self -> sdno().'.deriv'] );
 }
 
 sub post_process

@@ -117,22 +117,22 @@ has 'burn_in_iterations' => ( is => 'rw', isa => 'Int' );
 	
 sub BUILD
 {
-	my $this  = shift;
+	my $self  = shift;
 
-	$this->have_sigmas(1) if (defined $this->input_problem()->sigmas() and scalar(@{$this->input_problem()->sigmas()}) > 0);
+	$self->have_sigmas(1) if (defined $self->input_problem()->sigmas() and scalar(@{$self->input_problem()->sigmas()}) > 0);
 
-	$this->have_omegas(1) if (defined $this->input_problem()->omegas() and scalar(@{$this->input_problem()->omegas()}) > 0);
-	$this->final_gradients([]);
+	$self->have_omegas(1) if (defined $self->input_problem()->omegas() and scalar(@{$self->input_problem()->omegas()}) > 0);
+	$self->final_gradients([]);
 
 
 	while (1) {
 		#we will always break out of this loop, use as simple way of finishing parsing early. Cannot return because of dia code
-		$this -> _read_simulation;
-		if ($this->nm_major_version < 7) {
-			if( $this -> estimation_step_run()) {
-				$this -> _read_iteration_path;
-				last unless ($this -> parsed_successfully() and not $this -> finished_parsing());
-				$this -> _read_term();
+		$self -> _read_simulation;
+		if ($self->nm_major_version < 7) {
+			if( $self -> estimation_step_run()) {
+				$self -> _read_iteration_path;
+				last unless ($self -> parsed_successfully() and not $self -> finished_parsing());
+				$self -> _read_term();
 			}
 		} else {
 			#NM7
@@ -141,67 +141,67 @@ sub BUILD
 			#Regardless, we still need to scan to the right method
 			#have separate method for NM7 find right #METH
 			#But sometimes #METH not printed if simulation!
-			if ($this->estimation_step_run() ){ #this is true if we have $EST
-				$this -> _scan_to_meth(); #inside routine set estimation_step_run to false if (Evaluation) on #METH line
+			if ($self->estimation_step_run() ){ #this is true if we have $EST
+				$self -> _scan_to_meth(); #inside routine set estimation_step_run to false if (Evaluation) on #METH line
 			}
-			last unless ($this -> parsed_successfully() and not $this -> finished_parsing());
-			if( $this -> estimation_step_run()) { #this might be false now even if true above
-				$this -> _read_iteration_path;
-				last unless ($this -> parsed_successfully() and not $this -> finished_parsing());
-				$this -> _read_term();
+			last unless ($self -> parsed_successfully() and not $self -> finished_parsing());
+			if( $self -> estimation_step_run()) { #this might be false now even if true above
+				$self -> _read_iteration_path;
+				last unless ($self -> parsed_successfully() and not $self -> finished_parsing());
+				$self -> _read_term();
 			}
 
 
 		}
-		last unless ($this -> parsed_successfully() and not $this -> finished_parsing());
+		last unless ($self -> parsed_successfully() and not $self -> finished_parsing());
 
-		if( $this -> estimation_step_initiated() ) {
+		if( $self -> estimation_step_initiated() ) {
 			#this is often true even if do not have $EST. Sometimes there will be a #METH, sometimes not.
-			$this -> parse_NM7_raw() if (defined $this->nm_output_files->{'raw'});
+			$self -> parse_NM7_raw() if (defined $self->nm_output_files->{'raw'});
 
-			$this -> _read_ofv()                  unless ($this -> NM7_parsed_raw());
-			last unless ($this -> parsed_successfully() and not $this -> finished_parsing());
+			$self -> _read_ofv()                  unless ($self -> NM7_parsed_raw());
+			last unless ($self -> parsed_successfully() and not $self -> finished_parsing());
 
-			$this -> _read_thomsi()               unless ( $this -> NM7_parsed_raw());
-			if ($this -> parsed_successfully() and defined $this -> omegas() ) {
-				$this -> _compute_comegas();
+			$self -> _read_thomsi()               unless ( $self -> NM7_parsed_raw());
+			if ($self -> parsed_successfully() and defined $self -> omegas() ) {
+				$self -> _compute_comegas();
 			}
-			if ($this -> parsed_successfully() and defined $this -> sigmas() ) {
-				$this -> _compute_csigmas();
+			if ($self -> parsed_successfully() and defined $self -> sigmas() ) {
+				$self -> _compute_csigmas();
 			}
 
-			last unless ($this -> parsed_successfully() and not $this -> finished_parsing());
+			last unless ($self -> parsed_successfully() and not $self -> finished_parsing());
 
-			if ($this -> covariance_step_run() ) {
-				$this -> _read_sethomsi()             unless ($this -> NM7_parsed_raw() );
-				if ($this -> parsed_successfully()) {
-					$this -> _compute_cvsetheta();
-					$this -> _compute_cvseomega();
-					$this -> _compute_cvsesigma();
+			if ($self -> covariance_step_run() ) {
+				$self -> _read_sethomsi()             unless ($self -> NM7_parsed_raw() );
+				if ($self -> parsed_successfully()) {
+					$self -> _compute_cvsetheta();
+					$self -> _compute_cvseomega();
+					$self -> _compute_cvsesigma();
 				}
 			}
 		}
 
-		last unless ($this -> parsed_successfully() and not $this -> finished_parsing());
+		last unless ($self -> parsed_successfully() and not $self -> finished_parsing());
 
-		if ($this -> covariance_step_run()) {
-			$this -> parse_NM7_additional() if (defined $this->nm_output_files->{'cov'} and
-												defined $this->nm_output_files->{'cor'} and
-												defined $this->nm_output_files->{'coi'} and 
-												$this -> NM7_parsed_raw());
-			$this -> _read_covmatrix()          if ( not $this -> NM7_parsed_additional());
-			last unless ($this -> parsed_successfully() and not $this -> finished_parsing());
+		if ($self -> covariance_step_run()) {
+			$self -> parse_NM7_additional() if (defined $self->nm_output_files->{'cov'} and
+												defined $self->nm_output_files->{'cor'} and
+												defined $self->nm_output_files->{'coi'} and 
+												$self -> NM7_parsed_raw());
+			$self -> _read_covmatrix()          if ( not $self -> NM7_parsed_additional());
+			last unless ($self -> parsed_successfully() and not $self -> finished_parsing());
 
-			$this -> _read_eigen()              if (not $this -> NM7_parsed_raw());
+			$self -> _read_eigen()              if (not $self -> NM7_parsed_raw());
 		}
-		last unless ($this -> parsed_successfully() and not $this -> finished_parsing());
+		last unless ($self -> parsed_successfully() and not $self -> finished_parsing());
 
-		if( $this -> nonparametric_step_run() ) {
-			$this -> _read_npomegas();
+		if( $self -> nonparametric_step_run() ) {
+			$self -> _read_npomegas();
 		}
 		last; #always break loop here if not done already
 	}
-	delete $this -> {'lstfile'};
+	delete $self -> {'lstfile'};
 }
 
 

@@ -188,24 +188,24 @@ has 'own_print_order' => ( is => 'rw', isa => 'Maybe[ArrayRef]' );
 
 sub BUILD
 {
-	my $this  = shift;
+	my $self  = shift;
 
-	unless ( defined $this->problems ) {
+	unless ( defined $self->problems ) {
 		# Parse given problem lines.
-		$this -> _read_records();
+		$self -> _read_records();
 
-		$this->prob_arr(undef);
+		$self->prob_arr(undef);
 
-		$this->update_prior_information();
+		$self->update_prior_information();
 
-		if (defined $this -> estimations() and ($PsN::nm_major_version > 6)){
+		if (defined $self -> estimations() and ($PsN::nm_major_version > 6)){
 			my $default_format='s1PE12.5';
 			my $reset_file = 0;
 			my $reset_nolabel = 0;
 			my $reset_notitle = 0;
 			my $reset_format = 0;
 			my $found_order = 0;
-			my @estims = @{$this -> estimations()};
+			my @estims = @{$self -> estimations()};
 			for (my $i=0; $i <= $#estims; $i++){
 				my $est = $estims[$i];
 				my $opt_ref = $est -> options();
@@ -251,7 +251,7 @@ sub BUILD
 				}
 			}
 			if ($found_order){
-				$this -> remove_option( record_name => 'estimation',
+				$self -> remove_option( record_name => 'estimation',
 						record_number => 0,
 						option_name => 'ORDER',
 						fuzzy_match => 1 );
@@ -263,21 +263,21 @@ sub BUILD
 	}
 	# Initialize table file objects (if any)
 # Kajsa 2014-04-25 skip this, assume a big waste
-#	$this -> _read_table_files( ignore_missing_files => $this->ignore_missing_output_files );
+#	$self -> _read_table_files( ignore_missing_files => $self->ignore_missing_output_files );
 
-	if ( $this->cwres ) {
-		$this -> add_cwres_module( 'init_data' => { problem => $this,
-				mirror_plots => $this->mirror_plots } );
+	if ( $self->cwres ) {
+		$self -> add_cwres_module( 'init_data' => { problem => $self,
+				mirror_plots => $self->mirror_plots } );
 	}
 
-	if( $this->tbs or $this->dtbs){
-		if (defined $this->nwpri_ntheta()){
+	if( $self->tbs or $self->dtbs){
+		if (defined $self->nwpri_ntheta()){
 			ui -> print( category => 'all',
 					message => "Warning: \$PRIOR NWPRI is not supported in combination with -tbs or -dtbs.",
 					newline => 1);
 		}
 
-		$this -> tbs_transform();
+		$self -> tbs_transform();
 	}
 }
 

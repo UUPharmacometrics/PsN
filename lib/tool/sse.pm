@@ -39,31 +39,31 @@ has 'results_file' => ( is => 'rw', isa => 'Str', default => 'sse_results.csv' )
 
 sub BUILD
 {
-	my $this  = shift;
+	my $self  = shift;
 
-	if ($this->random_estimation_inits and not defined $this->rawres_input) {
+	if ($self->random_estimation_inits and not defined $self->rawres_input) {
 		croak('Need rawres_input when using random_estimation_inits');
 	}
 	
 	for my $accessor ('logfile', 'raw_results_file', 'raw_nonp_file'){
 		my @new_files = ();
-		my @old_files = @{$this->$accessor};
+		my @old_files = @{$self->$accessor};
 		for (my $i=0; $i < scalar(@old_files); $i++){
 			my $name;
 			my $ldir;
-			( $ldir, $name ) = OSspecific::absolute_path( $this->directory(), $old_files[$i] );
+			( $ldir, $name ) = OSspecific::absolute_path( $self->directory(), $old_files[$i] );
 			push(@new_files, $ldir . $name) ;
 		}
-		$this->$accessor(\@new_files);
+		$self->$accessor(\@new_files);
 	}	
 
-	if ( scalar (@{$this -> models->[0]-> problems}) > 2 ) {
+	if ( scalar (@{$self -> models->[0]-> problems}) > 2 ) {
 		croak('Cannot have more than two $PROB in the simulation model.');
-	} elsif (scalar (@{$this -> models->[0]-> problems}) == 2 ) {
-		if ((defined $this -> models->[0]-> problems->[0]->priors()) and 
-			scalar(@{$this -> models->[0]-> problems->[0] -> priors()})>0 ){
+	} elsif (scalar (@{$self -> models->[0]-> problems}) == 2 ) {
+		if ((defined $self -> models->[0]-> problems->[0]->priors()) and 
+			scalar(@{$self -> models->[0]-> problems->[0] -> priors()})>0 ){
 			my $tnpri=0;
-			foreach my $rec (@{$this -> models->[0]-> problems->[0] -> priors()}){
+			foreach my $rec (@{$self -> models->[0]-> problems->[0] -> priors()}){
 				unless ((defined $rec) &&( defined $rec -> options )){
 					carp("No options for rec \$PRIOR");
 				}
@@ -75,13 +75,13 @@ sub BUILD
 				}
 			}
 
-			$this->have_tnpri(1) if ($tnpri);
+			$self->have_tnpri(1) if ($tnpri);
 		}
-		if ($this->have_tnpri()){
-			if (defined $this->rawres_input){
+		if ($self->have_tnpri()){
+			if (defined $self->rawres_input){
 				croak('Cannot use option rawres_input if the simulation model has $PRIOR.');
 			}
-			unless( defined $this -> models->[0]-> extra_files ){
+			unless( defined $self -> models->[0]-> extra_files ){
 				croak('When using $PRIOR TNPRI you must set option -extra_files to '.
 					  'the msf-file, otherwise the msf-file will not be copied to the NONMEM '.
 					  'run directory.');
@@ -92,30 +92,30 @@ sub BUILD
 				  ' first $PROB has $PRIOR TNPRI');
 		}
 	}
-	if ((not $this->have_tnpri()) and
-		(defined $this->models->[0]->problems->[0]->priors()) and 
-		scalar(@{$this->models->[0]->problems->[0]->priors()})>0 ) {
-		$this->have_nwpri(1);
-		if (defined $this->rawres_input) {
+	if ((not $self->have_tnpri()) and
+		(defined $self->models->[0]->problems->[0]->priors()) and 
+		scalar(@{$self->models->[0]->problems->[0]->priors()})>0 ) {
+		$self->have_nwpri(1);
+		if (defined $self->rawres_input) {
 			croak('Cannot use option rawres_input if the simulation model has $PRIOR.');
 		}
 	}
-	if ($this->estimate_simulation && (defined $this->ref_ofv)) {
+	if ($self->estimate_simulation && (defined $self->ref_ofv)) {
 		croak("Not allowed to use a reference ofv-value when estimating the simulation model.");
 	}
 
-	unless (defined $this->recompute) {
-		foreach my $alt (@{$this -> alternative_models}){
+	unless (defined $self->recompute) {
+		foreach my $alt (@{$self -> alternative_models}){
 			if ( (scalar (@{$alt -> problems}) < 1 )|| ( scalar (@{$alt -> problems}) > 2 )) {
 				croak('The alternative models must each contain either one or two problems.');
 			}
 		}
 
-		if ((scalar(@{$this -> alternative_models}) < 1) && (not $this->estimate_simulation)) {
+		if ((scalar(@{$self -> alternative_models}) < 1) && (not $self->estimate_simulation)) {
 			print "\nWarning: No model to estimate. Will only simulate.\n";
 		}
 
-		if ($this->samples < 2) {
+		if ($self->samples < 2) {
 			croak("Must set -samples to at least 2.");
 		}
 	}

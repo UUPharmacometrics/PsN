@@ -10,17 +10,17 @@ has 'results_file' => ( is => 'rw', isa => 'Str', default => 'jackknife_results.
 
 sub BUILD
 {
-	my $this  = shift;
+	my $self  = shift;
 
 	my @mo_bins = ();
-	foreach my $model ( @{$this->models} ) {
+	foreach my $model (@{$self->models}) {
 	  my @pr_bins = ();
-	  foreach my $data ( @{$model->datas}  ) {
-	    push( @pr_bins, $data -> count_ind );
+	  foreach my $data (@{$model->datas}) {
+	    push(@pr_bins, $data -> count_ind);
 	  }
-	  push( @mo_bins, \@pr_bins );
+	  push(@mo_bins, \@pr_bins);
 	}
-	$this->bins(\@mo_bins);
+	$self->bins(\@mo_bins);
 }
 
 sub model_analyze

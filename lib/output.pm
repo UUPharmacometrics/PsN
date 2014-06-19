@@ -78,7 +78,7 @@ has 'parsing_error_message' => ( is => 'rw', isa => 'Str' );
 		
 sub BUILD
 {
-	my $this  = shift;
+	my $self  = shift;
 
 	# Usage:
 	# 
@@ -94,34 +94,34 @@ sub BUILD
 	# be left on disk in an effort to preserve memory. The file
 	# will be read if needed.
 
-	carp("Initiating new\tNM::output object from file " . $this->filename );
+	carp("Initiating new\tNM::output object from file " . $self->filename );
 
-	if ( defined $this->filename and $this->filename ne '' ) {
+	if ( defined $self->filename and $self->filename ne '' ) {
 		my $name;
 		my $directory;
-		( $directory, $name ) = OSspecific::absolute_path( $this->directory, $this->filename );
-		$this->directory($directory);
-		$this->filename($name);
+		( $directory, $name ) = OSspecific::absolute_path( $self->directory, $self->filename );
+		$self->directory($directory);
+		$self->filename($name);
 
 		if ( $name =~ /\.lst$/ ) {
 			$name =~ s/\.lst$//;
-			$this->filename_root($name);
+			$self->filename_root($name);
 		} elsif(  $name =~ /\.res$/ ) {
 			$name =~ s/\.res$//;
-			$this->filename_root($name);
+			$self->filename_root($name);
 		}
 
-		if ( -e $this->full_name ) { 
-			if ($this->target eq 'mem') {
-				$this->_read_problems;
+		if ( -e $self->full_name ) { 
+			if ($self->target eq 'mem') {
+				$self->_read_problems;
 			}
 		} else {
-			croak("The NONMEM output file " . $this -> full_name . " does not exist" )
-				unless $this->ignore_missing_files;
+			croak("The NONMEM output file " . $self -> full_name . " does not exist" )
+				unless $self->ignore_missing_files;
 		}
 	} else {
 		croak("No filename specified or filename equals empty string!" );
-		$this->filename('tempfile');
+		$self->filename('tempfile');
 	}
 }
 

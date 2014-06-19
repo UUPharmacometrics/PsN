@@ -39,56 +39,56 @@ has 'results_file' => ( is => 'rw', isa => 'Str', default => 'lasso_results.csv'
 
 sub BUILD
 {
-	my $this  = shift;
+	my $self  = shift;
 
-	if ( scalar (@{$this -> models->[0]-> problems}) != 1 ){
+	if ( scalar (@{$self -> models->[0]-> problems}) != 1 ){
 		croak('The input model must contain exactly one problem.');
 	}
 
-	if (defined $this->lst_file()){
+	if (defined $self->lst_file()){
 		#create output object to check that can be parsed correctly, and to 
 		#extract data for error checking
-		my $outputObject= output -> new(filename => '../'.$this -> lst_file);
+		my $outputObject= output -> new(filename => '../'.$self -> lst_file);
 		unless ($outputObject->parsed_successfully()){
-			croak("lst file ".$this->lst_file." could not be parsed.");
+			croak("lst file ".$self->lst_file." could not be parsed.");
 		}
-	}elsif (defined $this-> models->[0] ->outputs() and 
-		defined $this-> models->[0] ->outputs()->[0] and
-		$this-> models->[0] ->outputs()->[0]-> have_output()){
+	}elsif (defined $self-> models->[0] ->outputs() and 
+		defined $self-> models->[0] ->outputs()->[0] and
+		$self-> models->[0] ->outputs()->[0]-> have_output()){
 		1;
 	}else{
 		croak("No output found for model. Set option -lst_file.");
 	}
 
-	if ($this->groups()<2){
+	if ($self->groups()<2){
 		croak("groups must be at least 2");
 	}
-	if ($this->step_t()==0) {
+	if ($self->step_t()==0) {
 		croak("step_t cannot be 0");
 	}
-	unless ($this->start_t()>=0) {
+	unless ($self->start_t()>=0) {
 		croak("start_t must not be smaller than 0");
 	}
-	unless ($this->stop_t()>=0) {
+	unless ($self->stop_t()>=0) {
 		croak("stop_t must not be smaller than 0");
 	}
 
-	if ($this->step_t()>0) {
-		if ($this->stop_t()< $this->start_t()) {
+	if ($self->step_t()>0) {
+		if ($self->stop_t()< $self->start_t()) {
 			croak("stop_t cannot be smaller than start_t when step_t is positive");
 		}
 	}else{
-		if ($this->stop_t()> $this->start_t()) {
+		if ($self->stop_t()> $self->start_t()) {
 			croak("stop_t cannot be larger than start_t when step_t is negative");
 		}
 	}
 
-	unless ($this->convergence() =~ /^(REACHMAX|FIRSTMIN|HALT)$/){
+	unless ($self->convergence() =~ /^(REACHMAX|FIRSTMIN|HALT)$/){
 		croak("convergence criterion must be either REACHMAX,".
 			" FIRSTMIN or HALT.");
 	}
 
-	foreach my $model ( @{$this -> models} ) {
+	foreach my $model ( @{$self -> models} ) {
 		foreach my $problem (@{$model->problems()}){
 			if (defined $problem->nwpri_ntheta()){
 				ui -> print( category => 'all',
@@ -103,17 +103,17 @@ sub BUILD
 		my $ldir;
 		my $name;
 
-		($ldir, $name) = OSspecific::absolute_path($this->directory, $this->logfile->[0]);
-		$this->logfile->[0] = $ldir.$name;
-		($ldir, $name) = OSspecific::absolute_path($this->directory, $this->raw_results_file->[0]);
-		$this->raw_results_file->[0] = $ldir.$name;
+		($ldir, $name) = OSspecific::absolute_path($self->directory, $self->logfile->[0]);
+		$self->logfile->[0] = $ldir.$name;
+		($ldir, $name) = OSspecific::absolute_path($self->directory, $self->raw_results_file->[0]);
+		$self->raw_results_file->[0] = $ldir.$name;
 	}
 
 	foreach my $attribute ( 'covariate_statistics_file', 'lasso_model_file') {
-		my $name = $this -> {$attribute};
+		my $name = $self -> {$attribute};
 		my $ldir;
-		( $ldir, $name ) = OSspecific::absolute_path( $this -> directory, $name );
-		$this -> {$attribute} = $ldir.$name;
+		( $ldir, $name ) = OSspecific::absolute_path( $self -> directory, $name );
+		$self -> {$attribute} = $ldir.$name;
 	}
 }
 

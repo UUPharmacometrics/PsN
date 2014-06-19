@@ -57,22 +57,22 @@ has 'results_file' => ( is => 'rw', isa => 'Str', default => 'frem_results.csv' 
 
 sub BUILD
 {
-	my $this  = shift;
+	my $self  = shift;
 
 	for my $accessor ('logfile','raw_results_file','raw_nonp_file'){
 		my @new_files=();
-		my @old_files = @{$this->$accessor};
+		my @old_files = @{$self->$accessor};
 		for (my $i=0; $i < scalar(@old_files); $i++){
 			my $name;
 			my $ldir;
 			( $ldir, $name ) =
-			OSspecific::absolute_path( $this ->directory(), $old_files[$i] );
+			OSspecific::absolute_path( $self ->directory(), $old_files[$i] );
 			push(@new_files,$ldir.$name) ;
 		}
-		$this->$accessor(\@new_files);
+		$self->$accessor(\@new_files);
 	}	
 
-	foreach my $model ( @{$this -> models} ) {
+	foreach my $model ( @{$self -> models} ) {
 		foreach my $problem (@{$model->problems()}){
 			if (defined $problem->nwpri_ntheta()){
 				ui -> print( category => 'all',
@@ -83,10 +83,10 @@ sub BUILD
 		}
 	}
 
-	if (defined $this->start_eta() and (scalar(@{$this->invariant})<1)){
+	if (defined $self->start_eta() and (scalar(@{$self->invariant})<1)){
 		croak('No allowed to set option -start_eta when option -invariant is not set');
 	}
-	if ( scalar (@{$this -> models->[0]-> problems}) > 1 ){
+	if ( scalar (@{$self -> models->[0]-> problems}) > 1 ){
 		croak('Cannot have more than one $PROB in the input model.');
 	}
 
@@ -98,11 +98,11 @@ sub BUILD
 	my $occ_ok=1;
 	my $dv_ok=0;
 
-	if (scalar(@{$this->parameters()})>0){
+	if (scalar(@{$self->parameters()})>0){
 		$occ_ok=0;
 	}
 
-	my $prob = $this -> models->[0]-> problems -> [0];
+	my $prob = $self -> models->[0]-> problems -> [0];
 	if (defined $prob->priors()){
 		croak("frem does not support \$PRIOR");
 	}
@@ -111,14 +111,14 @@ sub BUILD
 		foreach my $option ( @{$prob -> inputs -> [0] -> options} ) {
 			unless (($option -> value eq 'DROP' or $option -> value eq 'SKIP'
 						or $option -> name eq 'DROP' or $option -> name eq 'SKIP')){
-				$dv_ok = 1 if ($option -> name() eq $this->dv()); 
-#				$type_ok = 1 if ($option -> name() eq $this->type()); 
-				$occ_ok = 1 if ($option -> name() eq $this->occasion()); 
+				$dv_ok = 1 if ($option -> name() eq $self->dv()); 
+#				$type_ok = 1 if ($option -> name() eq $self->type()); 
+				$occ_ok = 1 if ($option -> name() eq $self->occasion()); 
 			}
 		}
-#		croak("type column ".$this->type()." not found in \$INPUT" ) unless $type_ok;
-		croak("dependent column ".$this->dv()." not found in \$INPUT" ) unless $dv_ok;
-		croak("occasion column ".$this->occasion()." not found in \$INPUT" ) unless $occ_ok;
+#		croak("type column ".$self->type()." not found in \$INPUT" ) unless $type_ok;
+		croak("dependent column ".$self->dv()." not found in \$INPUT" ) unless $dv_ok;
+		croak("occasion column ".$self->occasion()." not found in \$INPUT" ) unless $occ_ok;
 	} else {
 		croak("Trying to check parameters in input model".
 			" but no headers were found in \$INPUT" );

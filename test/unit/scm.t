@@ -45,17 +45,15 @@ sub is_array
 
 sub get_stats
 {
-    open( STAT, '<'."$dir/covariate_statistics.txt" );
-    my $tmp;
-    for ( <STAT> ) {
-	$tmp = $tmp.$_;
-    }
-    close( STAT );
-    my $VAR1;
-    eval( $tmp );
-    return $VAR1;
-#    $this -> covariate_statistics($VAR1);
-
+	open( STAT, '<'."$dir/covariate_statistics.txt" );
+	my $tmp;
+	for ( <STAT> ) {
+		$tmp = $tmp.$_;
+	}
+	close( STAT );
+	my $VAR1;
+	eval( $tmp );
+	return $VAR1;
 }
 
 my $hash1_answer = {

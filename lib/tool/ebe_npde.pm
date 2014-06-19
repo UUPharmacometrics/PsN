@@ -27,31 +27,30 @@ has 'results_file' => ( is => 'rw', isa => 'Str', default => 'ebe_npde_results.c
 
 sub BUILD
 {
-	my $this  = shift;
+	my $self = shift;
 
-	$this->have_CDF(1) if eval('require Statistics::Distributions'); #enough, now loaded
+	$self->have_CDF(1) if eval('require Statistics::Distributions'); #enough, now loaded
 
-	for my $accessor ('logfile','raw_results_file','raw_nonp_file'){
-		my @new_files=();
-		my @old_files = @{$this->$accessor};
-		for (my $i=0; $i < scalar(@old_files); $i++){
+	for my $accessor ('logfile','raw_results_file','raw_nonp_file') {
+		my @new_files = ();
+		my @old_files = @{$self->$accessor};
+		for (my $i = 0; $i < scalar(@old_files); $i++){
 			my $name;
 			my $ldir;
-			( $ldir, $name ) =
-			OSspecific::absolute_path( $this ->directory(), $old_files[$i] );
-			push(@new_files,$ldir.$name) ;
+			($ldir, $name) = OSspecific::absolute_path($self->directory, $old_files[$i]);
+			push(@new_files, $ldir.$name) ;
 		}
-		$this->$accessor(\@new_files);
+		$self->$accessor(\@new_files);
 	}	
 
 
-	if ( scalar (@{$this->models->[0]->problems}) > 2 ){
+	if ( scalar (@{$self->models->[0]->problems}) > 2 ){
 		croak('Cannot have more than two $PROB in the input model.');
-	}elsif  (scalar (@{$this->models->[0]->problems}) == 2 ){
-		if ((defined $this->models->[0]->problems->[0]->priors()) and 
-			scalar(@{$this->models->[0]->problems->[0]->priors()})>0 ){
+	}elsif  (scalar (@{$self->models->[0]->problems}) == 2 ){
+		if ((defined $self->models->[0]->problems->[0]->priors()) and 
+			scalar(@{$self->models->[0]->problems->[0]->priors()})>0 ){
 			my $tnpri=0;
-			foreach my $rec (@{$this->models->[0]->problems->[0] -> priors()}){
+			foreach my $rec (@{$self->models->[0]->problems->[0] -> priors()}){
 				unless ((defined $rec) &&( defined $rec -> options )){
 					carp("No options for rec \$PRIOR" );
 				}
@@ -63,10 +62,10 @@ sub BUILD
 				}
 			}
 
-			$this->have_tnpri(1) if ($tnpri);
+			$self->have_tnpri(1) if ($tnpri);
 		}
-		if ($this->have_tnpri()){
-			unless( defined $this->models->[0]->extra_files ){
+		if ($self->have_tnpri()){
+			unless( defined $self->models->[0]->extra_files ){
 				croak('When using $PRIOR TNPRI you must set option -extra_files to '.
 					'the msf-file, otherwise the msf-file will not be copied to the NONMEM '.
 					'run directory.');
@@ -76,7 +75,7 @@ sub BUILD
 			croak('The input model must contain exactly one problem, unless'.
 				' first $PROB has $PRIOR TNPRI');
 		}
-		my $est_record = $this->models->[0]->record( problem_number => (1+$this->have_tnpri()),
+		my $est_record = $self->models->[0]->record( problem_number => (1+$self->have_tnpri()),
 			record_name => 'estimation' );
 		unless (defined $est_record and scalar(@{$est_record})>0){
 			croak('Input model must have an estimation record');
@@ -84,8 +83,8 @@ sub BUILD
 
 	}
 
-	my $meth = $this->models->[0]->get_option_value( record_name  => 'estimation',
-		problem_index => (0+$this->have_tnpri()),
+	my $meth = $self->models->[0]->get_option_value( record_name  => 'estimation',
+		problem_index => (0+$self->have_tnpri()),
 		option_name  => 'METHOD',
 		option_index => 0);
 	if (not (defined $meth) or ($meth eq '0') or ($meth =~ /^ZE/)){

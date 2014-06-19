@@ -61,35 +61,35 @@ has 'large_bias_limit' => ( is => 'rw', isa => 'Num', default => 0.05 );
 
 sub BUILD
 {
-	my $this  = shift;
+	my $self  = shift;
 
 	for my $accessor ('logfile','raw_results_file','raw_nonp_file'){
 		my @new_files = ();
-		my @old_files = @{$this->$accessor};
+		my @old_files = @{$self->$accessor};
 		for (my $i=0; $i < scalar(@old_files); $i++){
 			my $name;
 			my $ldir;
 			( $ldir, $name ) =
-			OSspecific::absolute_path( $this->directory(), $old_files[$i] );
+			OSspecific::absolute_path( $self->directory(), $old_files[$i] );
 			push(@new_files,$ldir.$name) ;
 		}
-		$this->$accessor(\@new_files);
+		$self->$accessor(\@new_files);
 	}	
 
 	# If certain ID:s are ignored, this will interfere with bootstrap. Warn user, exit
 	#look for synonym
 	my $id_synonym;
-	$id_synonym = $this ->models()->[0]-> get_option_value(record_name=>'input',
+	$id_synonym = $self ->models()->[0]-> get_option_value(record_name=>'input',
 		option_name=>'ID');
 	#we do not look for <synonym>=ID since PsN won't accept it anyway
 	#look for ignore/accept of ID/synonym
 
 	my @check_list=();
-	my $ignore_list = $this ->models()->[0]-> get_option_value(record_name=>'data',
+	my $ignore_list = $self ->models()->[0]-> get_option_value(record_name=>'data',
 		option_name=>'IGNORE',
 		option_index => 'all');
 	push (@check_list,@{$ignore_list});
-	my $accept_list = $this ->models()->[0]-> get_option_value(record_name=>'data',
+	my $accept_list = $self ->models()->[0]-> get_option_value(record_name=>'data',
 		option_name=>'ACCEPT',
 		option_index => 'all');
 	push (@check_list,@{$accept_list});
@@ -100,7 +100,7 @@ sub BUILD
 	foreach my $igval (@check_list){
 		if (($igval =~ /[^a-zA-Z0-9_]+(ID)[^a-zA-Z0-9_]+/ ) ||
 			($id_synonym && ($igval =~ /[^a-zA-Z0-9_]+($id_synonym)[^a-zA-Z0-9_]+/ ) )){
-			if ($this->allow_ignore_id()){
+			if ($self->allow_ignore_id()){
 				print "\nWarning:\n".
 				$warning."It is recommended to edit the datafile\n".
 				"manually instead, before running the bootstrap.\n\n";
@@ -113,17 +113,17 @@ sub BUILD
 
 	#warn if code records with ID/synonym detected
 	@check_list=();
-	my $record_ref = $this ->models()->[0]-> record(record_name => 'pk' );	
-	push (@check_list, @{$this ->models()->[0]-> pk})
-	if ( scalar(@{$record_ref}) > 0 );
+	my $record_ref = $self->models->[0]->record(record_name => 'pk' );	
+	push (@check_list, @{$self->models()->[0]->pk})
+	if (scalar(@{$record_ref}) > 0);
 
-	$record_ref = $this ->models()->[0]-> record(record_name => 'pred' );
-	push (@check_list,@{$this ->models()->[0]-> pred})
-	if ( scalar(@{$record_ref}) > 0 );
+	$record_ref = $self->models->[0]->record(record_name => 'pred' );
+	push (@check_list,@{$self ->models()->[0]-> pred})
+	if (scalar(@{$record_ref}) > 0);
 
-	$record_ref = $this ->models()->[0] -> record(record_name => 'error' );
-	push (@check_list,@{$this ->models()->[0]-> problems->[0]->errors->[0]->code})
-	if ( scalar(@{$record_ref}) > 0 );
+	$record_ref = $self->models->[0]->record(record_name => 'error' );
+	push (@check_list,@{$self->models->[0]->problems->[0]->errors->[0]->code})
+	if (scalar(@{$record_ref}) > 0);
 
 	foreach my $line (@check_list){
 		next if ($line =~ /^\s*;/); #skip comments

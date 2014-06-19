@@ -92,7 +92,7 @@ has 'short_logfile' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { ['
 
 sub BUILD
 {
-	my $this = shift;
+	my $self = shift;
 	my %parm = %{$_[0]};
 
 	# <I>test_relations and p_value</I> can be specified
@@ -100,27 +100,27 @@ sub BUILD
 	# array (for different settings for each model).
 
 	my $do_filtering=0;
-	if( defined $this -> config_file_name or defined $this -> config_file ){
+	if( defined $self -> config_file_name or defined $self -> config_file ){
 		#only true when scm is started
-		$this -> read_config_file;
+		$self -> read_config_file;
 
 		croak("You need to specify \'models'\ either as argument or in the config file.")
-		unless ( defined $this -> models and scalar @{$this -> models} > 0 );
+		unless ( defined $self -> models and scalar @{$self -> models} > 0 );
 
-		if (scalar(@{$this -> models->[0]->problems()})>1){
+		if (scalar(@{$self -> models->[0]->problems()})>1){
 			ui -> print( category => 'all',
 				message  => "\nWarning:\n".
 				"The scm program has not been tested with models with more than one\$PROBLEM.\n".
 				"Check results carefully.",
 				newline => 1);
 		}
-		unless (defined $this->derivatives_data or $this->skip_filtering){
+		unless (defined $self->derivatives_data or $self->skip_filtering){
 			my @check_list;
-			my $ignorelist = $this -> models->[0]-> get_option_value(record_name=>'data',
+			my $ignorelist = $self -> models->[0]-> get_option_value(record_name=>'data',
 				option_name=>'IGNORE',
 				option_index => 'all');
 			push (@check_list,@{$ignorelist}) if (defined $ignorelist);
-			my $accept_list = $this -> models->[0]-> get_option_value(record_name=>'data',
+			my $accept_list = $self -> models->[0]-> get_option_value(record_name=>'data',
 				option_name=>'ACCEPT',
 				option_index => 'all');
 			push (@check_list,@{$accept_list}) if (defined $accept_list);
@@ -147,66 +147,66 @@ sub BUILD
 		my $dummy;
 		my $dir;
 		( $dir, $dummy ) = OSspecific::absolute_path( $parm{'directory'}, '');
-		$this -> directory($dir);
+		$self -> directory($dir);
 	}
 
-	if ($this->epsilon == 1) {
+	if ($self->epsilon == 1) {
 		croak("The option -error cannot be used when option -epsilon is set. ")  if
-		(defined $this->error);
+		(defined $self->error);
 	}else{
 		croak("The option -error must be used when option -epsilon is not set. ")  unless
-		(defined $this->error);
+		(defined $self->error);
 	}
 
-	if (defined $this->error) {
-		croak("Unknown error form ".$this->error)  unless 
-		( $this->error eq 'add' or 
-			$this->error eq 'prop' or
-			$this->error eq 'propadd' or
-			$this->error eq 'exp' or
-			$this->error eq 'user');
+	if (defined $self->error) {
+		croak("Unknown error form ".$self->error)  unless 
+		( $self->error eq 'add' or 
+			$self->error eq 'prop' or
+			$self->error eq 'propadd' or
+			$self->error eq 'exp' or
+			$self->error eq 'user');
 	}
 
-	if ($this->error eq 'user') {
-		unless ( defined $this -> error_code() )  {
+	if ($self->error eq 'user') {
+		unless ( defined $self -> error_code() )  {
 			croak("You need to specify \'error_code'\ either as argument or in the config file ".
 				"when option -error=user is set." );
 		}
 	}
 
-	if ($this->step_number == 1 and defined $this->derivatives_data) {
+	if ($self->step_number == 1 and defined $self->derivatives_data) {
 		ui -> print( category => 'scm',
 			message  => "Warning: the program will not check the contents of the ".
-			"derivatives data file ".$this->derivatives_data.". If columns are ".
+			"derivatives data file ".$self->derivatives_data.". If columns are ".
 			"missing NMtran will fail, and if values are incorrect the scm results ".
 			"will be incorrect.",newline => 1);
 	}
 
-	$this->have_Math_CDF(1) if eval('require Statistics::Distributions'); #enough, now loaded
-	if ( lc($this -> gof()) eq 'p_value' and (not $this->have_Math_CDF())) {
-		$this -> gof('ofv');
+	$self->have_Math_CDF(1) if eval('require Statistics::Distributions'); #enough, now loaded
+	if ( lc($self -> gof()) eq 'p_value' and (not $self->have_Math_CDF())) {
+		$self -> gof('ofv');
 		ui -> print( category => 'scm',
 			message  => "Warning: gof = p_value (the default) cannot be used when ".
 			"Perl module Statistics::Distributions is not installed. Changed to gof = ofv",newline => 1);
 	}
 
 
-	if ( not defined $this -> p_value() or
-		$this -> p_value() eq '' ) {
-		$this -> p_value(0.05);
+	if ( not defined $self -> p_value() or
+		$self -> p_value() eq '' ) {
+		$self -> p_value(0.05);
 	}
 	croak("Option p_value (p_forward/p_backward) must be either ".
 		"0.05 (default), 0.01, 0.005 or 0.001 when Perl module Statistics::Distributions is ".
 		"not installed")
-	unless ($this->p_value() == 0.05 or $this->p_value() == 0.01 or
-		$this->p_value() == 0.005 or $this->p_value() == 0.001
-			or $this->have_Math_CDF() );
+	unless ($self->p_value() == 0.05 or $self->p_value() == 0.01 or
+		$self->p_value() == 0.005 or $self->p_value() == 0.001
+			or $self->have_Math_CDF() );
 
 	croak("Option p_value (p_forward/p_backward) must be in the range 0-1")
-	unless ($this->p_value >= 0 and $this->p_value <=1);
+	unless ($self->p_value >= 0 and $self->p_value <=1);
 
-	if (scalar(@{$this -> models}) > 1){
-		if ($this->linearize){
+	if (scalar(@{$self -> models}) > 1){
+		if ($self->linearize){
 			croak("scm object with option linearize can only be generated with a single model");
 		}else{
 			ui -> print( category => 'scm',
@@ -214,7 +214,7 @@ sub BUILD
 				newline => 1);
 		}
 	}
-	foreach my $model ( @{$this -> models} ) {
+	foreach my $model ( @{$self -> models} ) {
 		foreach my $problem (@{$model->problems()}){
 			if (defined $problem->nwpri_ntheta()){
 				ui -> print( category => 'scm',
@@ -224,62 +224,62 @@ sub BUILD
 			}
 		}
 	}
-	foreach my $par ( sort keys %{$this -> test_relations} ){
-		$this->sum_covariates_hash->{$par}=0;
+	foreach my $par ( sort keys %{$self -> test_relations} ){
+		$self->sum_covariates_hash->{$par}=0;
 	}
-	if (defined $this->logit and scalar(@{$this->logit()})>0){
-		foreach my $par (@{$this->logit()}){
+	if (defined $self->logit and scalar(@{$self->logit()})>0){
+		foreach my $par (@{$self->logit()}){
 			croak("Cannot set logit for $par unless it is defined in test_relations")
-			unless (defined $this->sum_covariates_hash->{$par});
-			$this->sum_covariates_hash->{$par}=1;
+			unless (defined $self->sum_covariates_hash->{$par});
+			$self->sum_covariates_hash->{$par}=1;
 		}
 	}
 
 	#skipped numbering when more than one this->models
 	for my $accessor ( 'logfile', 'short_logfile', 'raw_results_file'){
 		my @new_files=();
-		my @old_files = @{$this->$accessor};
+		my @old_files = @{$self->$accessor};
 		for (my $i=0; $i < scalar(@old_files); $i++){
 			my $name;
 			my $ldir;
 			#will this move files that already have global path???
 			( $ldir, $name ) =
-			OSspecific::absolute_path( $this ->directory(), $old_files[$i] );
+			OSspecific::absolute_path( $self ->directory(), $old_files[$i] );
 			push(@new_files,$ldir.$name) ;
 		}
-		$this->$accessor(\@new_files);
+		$self->$accessor(\@new_files);
 	}	
 	for my $accessor ( 'covariate_statistics_file','relations_file'){
 		#will this move files that already have global path???
-		my ( $ldir, $name )= OSspecific::absolute_path( $this ->directory(), $this->$accessor);
-		$this->$accessor($ldir.$name);
+		my ( $ldir, $name )= OSspecific::absolute_path( $self ->directory(), $self->$accessor);
+		$self->$accessor($ldir.$name);
 	}	
 
-	unless ( defined $this -> test_relations ) {
+	unless ( defined $self -> test_relations ) {
 		croak("You need to specify \'test_relations'\ either as argument or in the config file." );
 	}
-	unless ( defined( $this -> categorical_covariates() ) 
-			or defined( $this -> continuous_covariates() )) {
+	unless ( defined( $self -> categorical_covariates() ) 
+			or defined( $self -> continuous_covariates() )) {
 		croak("You must specify either " .
 			"categorical and/or continuous covariates either as argument or in the config file" );
 	}
 
-	if (defined $this->time_varying() and scalar(@{$this->time_varying()})>0){
+	if (defined $self->time_varying() and scalar(@{$self->time_varying()})>0){
 		my %tmphash;
-		foreach my $par ( sort keys %{$this -> test_relations()} ){
-			foreach my $cov ( @{$this -> test_relations()->{$par}} ){
+		foreach my $par ( sort keys %{$self -> test_relations()} ){
+			foreach my $cov ( @{$self -> test_relations()->{$par}} ){
 				$tmphash{$cov}=0;
 			}
 		}
 
-		my @continuous = defined $this -> continuous_covariates() ? @{$this -> continuous_covariates()} : ();
+		my @continuous = defined $self -> continuous_covariates() ? @{$self -> continuous_covariates()} : ();
 		foreach my $cov ( @continuous) {
 			$tmphash{$cov}=1;
 		}
 
-		foreach my $cov (@{$this->time_varying()}){
+		foreach my $cov (@{$self->time_varying()}){
 			unless (defined $tmphash{$cov} and ($tmphash{$cov}==1)){
-				if ($this->linearize()){
+				if ($self->linearize()){
 					croak("Cannot set time_varying for $cov unless it is defined in test_relations and continuous. With -linearize bivariate time-varying categorical covariates must be ".
 						"defined as continuous");
 				}else{
@@ -292,19 +292,19 @@ sub BUILD
 	}
 
 	# Check Errors and init
-	unless ( $this -> search_direction eq 'forward' or
-		$this -> search_direction eq 'backward' or
-		$this -> search_direction eq 'both' ) {
+	unless ( $self -> search_direction eq 'forward' or
+		$self -> search_direction eq 'backward' or
+		$self -> search_direction eq 'both' ) {
 		croak("You must specify the search direction ".
 			"either as \"forward\" or \"backward\". Default is \"forward\"." );
 	}
 
 	# check the validity of the covariates and the relations to be tested
 
-	if ( defined $this -> continuous_covariates() or defined $this -> categorical_covariates() ) {
+	if ( defined $self -> continuous_covariates() or defined $self -> categorical_covariates() ) {
 
-		my @continuous = defined $this -> continuous_covariates() ? @{$this -> continuous_covariates()} : ();
-		my @categorical = defined $this -> categorical_covariates() ? @{$this -> categorical_covariates()} : ();
+		my @continuous = defined $self -> continuous_covariates() ? @{$self -> continuous_covariates()} : ();
+		my @categorical = defined $self -> categorical_covariates() ? @{$self -> categorical_covariates()} : ();
 
 		my @not_found = ();
 		foreach my $cov ( @continuous, @categorical ) {
@@ -314,17 +314,17 @@ sub BUILD
 					"used as name for a covariate.");
 			}
 			push( @not_found, $cov )
-			unless ( $this -> models->[0] -> is_option_set( record => 'input',
+			unless ( $self -> models->[0] -> is_option_set( record => 'input',
 					name => $cov ) );
 		}
 		if ( scalar @not_found ){
 			croak("Covariate(s) [ ". join(',', @not_found). " ] specified is not defined in " . 
-				$this ->  models->[0] -> filename );
+				$self ->  models->[0] -> filename );
 		}
 	}
 
-	if ( defined $this -> test_relations() ) {
-		foreach my $par ( sort keys %{$this -> test_relations()} ){
+	if ( defined $self -> test_relations() ) {
+		foreach my $par ( sort keys %{$self -> test_relations()} ){
 			#check if reserved words
 			if (($par eq 'PAR') or ($par eq 'COV')){
 				croak("PAR and COV are reserved words in scm ".
@@ -332,9 +332,9 @@ sub BUILD
 			}
 
 			my @not_found = ();
-			foreach my $cov ( @{$this -> test_relations()->{$par}} ){
-				my @continuous = defined $this -> continuous_covariates() ? @{$this -> continuous_covariates()} : ();
-				my @categorical = defined $this -> categorical_covariates() ? @{$this -> categorical_covariates()} : ();
+			foreach my $cov ( @{$self -> test_relations()->{$par}} ){
+				my @continuous = defined $self -> continuous_covariates() ? @{$self -> continuous_covariates()} : ();
+				my @categorical = defined $self -> categorical_covariates() ? @{$self -> categorical_covariates()} : ();
 
 				my $covariate_test = 0;
 				foreach my $specified_cov ( @continuous, @categorical ) {
@@ -343,8 +343,8 @@ sub BUILD
 				push( @not_found, $cov ) unless ( $covariate_test );
 			}
 			if ( scalar @not_found and
-				( not defined $this -> models->[0] -> extra_files or 
-					scalar @{$this -> models->[0] -> extra_files} == 0 ) ) {
+				( not defined $self -> models->[0] -> extra_files or 
+					scalar @{$self -> models->[0] -> extra_files} == 0 ) ) {
 				croak("Covariate(s) [ " . join( ',', @not_found ). " ] specified for parameter $par " . 
 					"in test_relations is not defined as a covariate" );
 			}
@@ -355,8 +355,8 @@ sub BUILD
 	# covariates is available, initiate this.
 	# First; the continuous covariates:
 
-	if (-e $this->covariate_statistics_file) {
-		open(STAT, '<' . $this->covariate_statistics_file);
+	if (-e $self->covariate_statistics_file) {
+		open(STAT, '<' . $self->covariate_statistics_file);
 		my $tmp;
 		for (<STAT>) {
 			$tmp = $tmp . $_;
@@ -364,30 +364,30 @@ sub BUILD
 		close(STAT);
 		my $VAR1;
 		eval($tmp);
-		$this->covariate_statistics($VAR1);
+		$self->covariate_statistics($VAR1);
 
 	} else {
 
 		my $model;
-		if ($do_filtering or (defined $this->time_varying and scalar(@{$this->time_varying}) > 0)) {
-			$model = $this->preprocess_data(model => $this->models->[0],
-				directory => $this->directory,
-				test_relations => $this->test_relations,
-				time_varying => $this->time_varying,
+		if ($do_filtering or (defined $self->time_varying and scalar(@{$self->time_varying}) > 0)) {
+			$model = $self->preprocess_data(model => $self->models->[0],
+				directory => $self->directory,
+				test_relations => $self->test_relations,
+				time_varying => $self->time_varying,
 				filter => $do_filtering);
 			croak('preprocessing data failed to return a model') unless (defined $model);
 		} else {
-			$model = $this->models->[0];
+			$model = $self->models->[0];
 		}
 		# Assume one $PROBLEM
 		my %model_column_numbers; 
 
 		my $data = $model->datas->[0];
-		if (defined $this->derivatives_data) {
+		if (defined $self->derivatives_data) {
 			$data = data->new(
-				filename             => $this->derivatives_data,
+				filename             => $self->derivatives_data,
 				ignoresign           => '@',
-				missing_data_token   => $this->missing_data_token,
+				missing_data_token   => $self->missing_data_token,
 				ignore_missing_files => 0,
 				skip_parsing         => 0,
 				target               => 'mem',
@@ -415,8 +415,8 @@ sub BUILD
 			}
 		}
 
-		unless (defined $this->covariate_statistics and scalar(keys %{$this->covariate_statistics}) > 0) {
-			$this->covariate_statistics({});
+		unless (defined $self->covariate_statistics and scalar(keys %{$self->covariate_statistics}) > 0) {
+			$self->covariate_statistics({});
 			$data->target('mem');
 			unless( defined $data->individuals()  and (scalar(@{$data->individuals}) > 0)) {
 				if ($data->synced) {
@@ -428,50 +428,50 @@ sub BUILD
 			}
 			$data->synced(1); #we do not want to write to disk later
 
-			if (defined $this->continuous_covariates) {
+			if (defined $self->continuous_covariates) {
 				ui -> print( category => 'scm',
 					message  => "Calculating continuous covariate statistics",
 					newline => 1);
 
-				my $ncov = scalar @{$this -> continuous_covariates()};
+				my $ncov = scalar @{$self -> continuous_covariates()};
 				my $status_bar = status_bar -> new( steps => $ncov );
 				ui -> print( category => 'scm',
 					message  => $status_bar -> print_step(),
 					newline  => 0);
 
 				for ( my $j = 1; $j <= $ncov; $j++ ) {
-					my $cov = $this -> continuous_covariates() -> [$j-1];
+					my $cov = $self -> continuous_covariates() -> [$j-1];
 					# Factors
 					unless (defined $model_column_numbers{$cov}){
 						croak("Could not find continuous covariate $cov in \$INPUT of model:\n".
 							join(' ',(keys %model_column_numbers)));
 
 					}
-					$this -> covariate_statistics->{$cov}{'factors'} =
+					$self -> covariate_statistics->{$cov}{'factors'} =
 					$data -> factors( column => $model_column_numbers{$cov},
 						unique_in_individual => 0,
 						return_occurences => 1 );
 					# Statistics
-					$this -> covariate_statistics->{$cov}{'have_missing_data'} =
+					$self -> covariate_statistics->{$cov}{'have_missing_data'} =
 					$data -> have_missing_data( column => $model_column_numbers{$cov} );
 
-					( $this -> covariate_statistics->{$cov}{'median'},
-						$this -> covariate_statistics->{$cov}{'min'},
-						$this -> covariate_statistics->{$cov}{'max'},
-						$this -> covariate_statistics->{$cov}{'mean'} ) =
-					$this -> calculate_continuous_statistics( data => $data,
+					( $self -> covariate_statistics->{$cov}{'median'},
+						$self -> covariate_statistics->{$cov}{'min'},
+						$self -> covariate_statistics->{$cov}{'max'},
+						$self -> covariate_statistics->{$cov}{'mean'} ) =
+					$self -> calculate_continuous_statistics( data => $data,
 						covariate => $cov,
 						column_number => $model_column_numbers{$cov} );
 
 					#this is necessary for xv_scm
-					if (defined $this -> global_covariate_statistics and 
-						scalar(keys %{$this -> global_covariate_statistics})>0){
-						$this -> covariate_statistics->{$cov}{'have_missing_data'} = 
-						$this -> global_covariate_statistics->{$cov}{'have_missing_data'};
-						$this -> covariate_statistics->{$cov}{'min'} = 
-						$this -> global_covariate_statistics->{$cov}{'min'};
-						$this -> covariate_statistics->{$cov}{'max'} = 
-						$this -> global_covariate_statistics->{$cov}{'max'};
+					if (defined $self -> global_covariate_statistics and 
+						scalar(keys %{$self -> global_covariate_statistics})>0){
+						$self -> covariate_statistics->{$cov}{'have_missing_data'} = 
+						$self -> global_covariate_statistics->{$cov}{'have_missing_data'};
+						$self -> covariate_statistics->{$cov}{'min'} = 
+						$self -> global_covariate_statistics->{$cov}{'min'};
+						$self -> covariate_statistics->{$cov}{'max'} = 
+						$self -> global_covariate_statistics->{$cov}{'max'};
 					}
 
 					#my $nl = $j == $ncov ? "" : "\r"; 
@@ -485,11 +485,11 @@ sub BUILD
 				ui -> print( category => 'scm',
 					message  => " ... done",newline => 1 );
 			}
-			if ( defined $this -> categorical_covariates() and scalar(@{$this -> categorical_covariates()})>0) {
+			if ( defined $self -> categorical_covariates() and scalar(@{$self -> categorical_covariates()})>0) {
 				ui -> print( category => 'scm',
 					message  => "Calculating categorical covariate statistics",
 					newline => 1);
-				my $ncov = scalar @{$this -> categorical_covariates()};
+				my $ncov = scalar @{$self -> categorical_covariates()};
 
 				my $status_bar = status_bar -> new( steps => $ncov );
 				ui -> print( category => 'scm',
@@ -497,39 +497,39 @@ sub BUILD
 					newline  => 0);
 
 				for ( my $j = 1; $j <= $ncov; $j++ ) {
-					my $cov = $this -> categorical_covariates() -> [$j-1];
+					my $cov = $self -> categorical_covariates() -> [$j-1];
 					unless (defined $model_column_numbers{$cov}){
 						croak("Could not find categorical covariate $cov in \$INPUT of model:\n".
 							join(' ',(keys %model_column_numbers)));
 
 					}
 					# Factors
-					$this -> covariate_statistics->{$cov}{'factors'} =
+					$self -> covariate_statistics->{$cov}{'factors'} =
 					$data -> factors( column => $model_column_numbers{$cov},,
 						unique_in_individual => 0,
 						return_occurences => 1 );
 					# Statistics
-					$this -> covariate_statistics->{$cov}{'have_missing_data'} =
+					$self -> covariate_statistics->{$cov}{'have_missing_data'} =
 					$data -> have_missing_data( column => $model_column_numbers{$cov} );
 
-					( $this -> covariate_statistics->{$cov}{'median'},
-						$this -> covariate_statistics->{$cov}{'min'},
-						$this -> covariate_statistics->{$cov}{'max'} ) =
-					$this -> calculate_categorical_statistics
-					( factors => $this -> covariate_statistics->{$cov}{'factors'},
-						have_missing_data => $this -> covariate_statistics->{$cov}{'have_missing_data'},
+					( $self -> covariate_statistics->{$cov}{'median'},
+						$self -> covariate_statistics->{$cov}{'min'},
+						$self -> covariate_statistics->{$cov}{'max'} ) =
+					$self -> calculate_categorical_statistics
+					( factors => $self -> covariate_statistics->{$cov}{'factors'},
+						have_missing_data => $self -> covariate_statistics->{$cov}{'have_missing_data'},
 						data => $data,
 						covariate => $cov,
 						column_number => $model_column_numbers{$cov} );
 
 					#this is necessary for xv_scm
-					if (defined $this -> global_covariate_statistics and scalar(keys %{$this ->global_covariate_statistics })>0){
-						$this -> covariate_statistics->{$cov}{'have_missing_data'} = 
-						$this -> global_covariate_statistics->{$cov}{'have_missing_data'};
-						$this -> covariate_statistics->{$cov}{'min'} = 
-						$this -> global_covariate_statistics->{$cov}{'min'};
-						$this -> covariate_statistics->{$cov}{'max'} = 
-						$this -> global_covariate_statistics->{$cov}{'max'};
+					if (defined $self -> global_covariate_statistics and scalar(keys %{$self ->global_covariate_statistics })>0){
+						$self -> covariate_statistics->{$cov}{'have_missing_data'} = 
+						$self -> global_covariate_statistics->{$cov}{'have_missing_data'};
+						$self -> covariate_statistics->{$cov}{'min'} = 
+						$self -> global_covariate_statistics->{$cov}{'min'};
+						$self -> covariate_statistics->{$cov}{'max'} = 
+						$self -> global_covariate_statistics->{$cov}{'max'};
 					}
 
 					if( $status_bar -> tick () ){
@@ -545,13 +545,13 @@ sub BUILD
 			}
 			$data -> target('disk');
 		}
-		if (defined $this->filtered_data_model){
-			$this->filtered_data_model -> flush_data();
-			$this->filtered_data_model -> flush();
+		if (defined $self->filtered_data_model){
+			$self->filtered_data_model -> flush_data();
+			$self->filtered_data_model -> flush();
 		}
-		open( STAT, '>'.$this -> covariate_statistics_file );
+		open( STAT, '>'.$self -> covariate_statistics_file );
 		$Data::Dumper::Purity = 1;
-		print STAT Dumper $this -> covariate_statistics;
+		print STAT Dumper $self -> covariate_statistics;
 		$Data::Dumper::Purity = 0;
 		close( STAT );
 	}
@@ -615,20 +615,20 @@ sub BUILD
 		9=>27.88,
 		10=>29.59};
 
-	unless ($this -> p_value()== 0.05 or $this -> p_value() == 0.01 or
-		$this -> p_value() == 0.005 or $this -> p_value() == 0.001){
+	unless ($self -> p_value()== 0.05 or $self -> p_value() == 0.01 or
+		$self -> p_value() == 0.005 or $self -> p_value() == 0.001){
 		#create new table for this value using CDF
 		my %phash;
 		for (my $i=1; $i<11; $i++){
-			if ($this -> p_value() <= 0){
+			if ($self -> p_value() <= 0){
 				$phash{$i} = 1000000;
-			}elsif ($this -> p_value() >= 1){
+			}elsif ($self -> p_value() >= 1){
 				$phash{$i} = 0;
 			}else{
-				$phash{$i} = Statistics::Distributions::chisqrdistr($i,($this -> p_value()));
+				$phash{$i} = Statistics::Distributions::chisqrdistr($i,($self -> p_value()));
 			}
 		}
-		$p_values{$this -> p_value()}=\%phash;
+		$p_values{$self -> p_value()}=\%phash;
 	}
 
 	# If no previous information on the relations is available,
@@ -636,21 +636,21 @@ sub BUILD
 	# including the information about states (1=not included,
 	# 2=linear relation, 3=hockey-stick relation).
 
-	for ( my $i = 0; $i < scalar @{$this -> models}; $i++ ) {
+	for ( my $i = 0; $i < scalar @{$self -> models}; $i++ ) {
 		my $first = 1;
 		#no existing relations files
-		foreach my $par ( sort keys %{$this -> test_relations()} ) {
-			foreach my $cov ( @{$this -> test_relations()->{$par}} ){
+		foreach my $par ( sort keys %{$self -> test_relations()} ) {
+			foreach my $cov ( @{$self -> test_relations()->{$par}} ){
 				# Here the ofv-drops should be defined
 				# I've started 2004-11-09
-				my $ofv_changes = $p_values{$this -> p_value()};
-				if ( defined $this -> ofv_change ) {
+				my $ofv_changes = $p_values{$self -> p_value()};
+				if ( defined $self -> ofv_change ) {
 					# If only one ofv_drop given for all models and all relations
-					while ( my ( $df, $ofv ) = each %{$this -> ofv_change} ) {
+					while ( my ( $df, $ofv ) = each %{$self -> ofv_change} ) {
 						$ofv_changes -> {$df} = $ofv;
 					}
 					if ( $first ) {
-						open( LOG, ">>".$this -> logfile -> [0] );
+						open( LOG, ">>".$self -> logfile -> [0] );
 						print LOG "Using user-defined ofv change criteria\n";
 						print LOG "Degree of freedom  |  Required ofv change\n";
 						my @dfs = sort {$a <=> $b} keys %{$ofv_changes};
@@ -661,21 +661,21 @@ sub BUILD
 						close( LOG );
 					}
 				} 
-				$this -> relations->{$par}{$cov}{'ofv_changes'} = $ofv_changes;
+				$self -> relations->{$par}{$cov}{'ofv_changes'} = $ofv_changes;
 				# Is this covariate continuous or not?
 				my $continuous = 1;
-				if (defined $this -> categorical_covariates()){
-					foreach my $cat ( @{$this -> categorical_covariates()} ) {
+				if (defined $self -> categorical_covariates()){
+					foreach my $cat ( @{$self -> categorical_covariates()} ) {
 						$continuous = 0 if ( $cov eq $cat );
 					}
 				}
-				$this -> relations->{$par}{$cov}{'continuous'} = $continuous;
+				$self -> relations->{$par}{$cov}{'continuous'} = $continuous;
 				my @valid_states;
 				if ( $continuous ) {
-					@valid_states = @{$this -> valid_states->{'continuous'}};
+					@valid_states = @{$self -> valid_states->{'continuous'}};
 				} else {
 					#categorical
-					@valid_states = @{$this -> valid_states->{'categorical'}};
+					@valid_states = @{$self -> valid_states->{'categorical'}};
 				}
 				croak("No valid states defined for ".
 					(($continuous)? 'continuous':'categorical'))
@@ -683,14 +683,14 @@ sub BUILD
 				croak("The first valid state must always be 1")
 				unless ($valid_states[0] == 1); #unless have included relations with this state at least
 
-				$this -> relations->{$par}{$cov}{'state'} = 1;
+				$self -> relations->{$par}{$cov}{'state'} = 1;
 				foreach my $state ( @valid_states ) {
-					if ( defined $this -> relations->{$par}{$cov}{'code'}{$state} ) {
-						if ( not ref $this -> relations->{$par}{$cov}{'code'}{$state} eq 'ARRAY' ) {
+					if ( defined $self -> relations->{$par}{$cov}{'code'}{$state} ) {
+						if ( not ref $self -> relations->{$par}{$cov}{'code'}{$state} eq 'ARRAY' ) {
 							croak("The code specified for $par $cov $state is not ".
 								"an array\n" );
 						} else {
-							for ( @{$this -> relations->{$par}{$cov}{'code'}{$state}} ) {
+							for ( @{$self -> relations->{$par}{$cov}{'code'}{$state}} ) {
 								s/PARCOV/$par$cov/g;
 								s/PAR/$par/g;
 								s/COV/$cov/g;
@@ -699,15 +699,15 @@ sub BUILD
 					} else {
 						croak("No code defined for relation $par-$cov state $state\n") 
 						if ($state > 5);
-						$this -> relations->{$par}{$cov}{'code'}{$state} = [];
+						$self -> relations->{$par}{$cov}{'code'}{$state} = [];
 					}
-					$this -> relations->{$par}{$cov}{'inits'}{$state} = [] unless
-					( defined $this -> relations->{$par}{$cov}{'inits'}{$state} );
-					$this -> relations->{$par}{$cov}{'bounds'}{$state} = {} unless
-					( defined $this -> relations->{$par}{$cov}{'bounds'}{$state} );
-					my %local_statistics = %{$this -> covariate_statistics->{$cov}};
-					if (defined $this->medians->{$par.'_'.$cov}){
-						$local_statistics{'median'} = $this->medians->{$par.'_'.$cov};
+					$self -> relations->{$par}{$cov}{'inits'}{$state} = [] unless
+					( defined $self -> relations->{$par}{$cov}{'inits'}{$state} );
+					$self -> relations->{$par}{$cov}{'bounds'}{$state} = {} unless
+					( defined $self -> relations->{$par}{$cov}{'bounds'}{$state} );
+					my %local_statistics = %{$self -> covariate_statistics->{$cov}};
+					if (defined $self->medians->{$par.'_'.$cov}){
+						$local_statistics{'median'} = $self->medians->{$par.'_'.$cov};
 						if ($local_statistics{'median'}< $local_statistics{'min'}){
 							croak("computed median ".$local_statistics{'median'}.
 								" of time-varying $cov on $par is smaller than min $cov ".
@@ -719,8 +719,8 @@ sub BUILD
 								$local_statistics{'max'});
 						}
 					}
-					if (defined $this->means->{$par.'_'.$cov}){
-						$local_statistics{'mean'} = $this->means->{$par.'_'.$cov};
+					if (defined $self->means->{$par.'_'.$cov}){
+						$local_statistics{'mean'} = $self->means->{$par.'_'.$cov};
 						if ($local_statistics{'mean'}< $local_statistics{'min'}){
 							croak("computed mean ".$local_statistics{'mean'}.
 								" of time-varying $cov on $par is smaller than min $cov ".
@@ -732,41 +732,41 @@ sub BUILD
 								$local_statistics{'max'});
 						}
 					}
-					( $this -> relations->{$par}{$cov}{'code'}{$state},
-						$this -> relations->{$par}{$cov}{'nthetas'}{$state},
-						$this -> relations->{$par}{$cov}{'inits'}{$state},
-						$this -> relations->{$par}{$cov}{'bounds'}{$state} ) =
-					$this -> create_code( start_theta => 1,
+					( $self -> relations->{$par}{$cov}{'code'}{$state},
+						$self -> relations->{$par}{$cov}{'nthetas'}{$state},
+						$self -> relations->{$par}{$cov}{'inits'}{$state},
+						$self -> relations->{$par}{$cov}{'bounds'}{$state} ) =
+					$self -> create_code( start_theta => 1,
 						parameter   => $par,
 						covariate   => $cov,
 						continuous  => $continuous,
 						state       => $state,
-						code        => $this -> relations->{$par}{$cov}{'code'}{$state},
-						inits       => $this -> relations->{$par}{$cov}{'inits'}{$state},
-						bounds      => $this -> relations->{$par}{$cov}{'bounds'}{$state},
+						code        => $self -> relations->{$par}{$cov}{'code'}{$state},
+						inits       => $self -> relations->{$par}{$cov}{'inits'}{$state},
+						bounds      => $self -> relations->{$par}{$cov}{'bounds'}{$state},
 						statistics  => \%local_statistics,
-						sum_covariates  => $this->sum_covariates_hash->{$par},
-						missing_data_token => $this -> missing_data_token);
-					if ( defined $this->included_relations() and 
-						exists $this -> included_relations->{$par} and
-						exists $this -> included_relations->{$par}{$cov} and
-						$this -> included_relations->{$par}{$cov}{'state'} == $state ) {
-						$this -> included_relations->{$par}{$cov}{'code'} =
-						$this -> relations->{$par}{$cov}{'code'}{$state};
-						$this -> included_relations->{$par}{$cov}{'nthetas'} =
-						$this -> relations->{$par}{$cov}{'nthetas'}{$state};
-						$this -> included_relations->{$par}{$cov}{'inits'} =
-						$this -> relations->{$par}{$cov}{'inits'}{$state};
-						$this -> included_relations->{$par}{$cov}{'bounds'} =
-						$this -> relations->{$par}{$cov}{'bounds'}{$state};
+						sum_covariates  => $self->sum_covariates_hash->{$par},
+						missing_data_token => $self -> missing_data_token);
+					if ( defined $self->included_relations() and 
+						exists $self -> included_relations->{$par} and
+						exists $self -> included_relations->{$par}{$cov} and
+						$self -> included_relations->{$par}{$cov}{'state'} == $state ) {
+						$self -> included_relations->{$par}{$cov}{'code'} =
+						$self -> relations->{$par}{$cov}{'code'}{$state};
+						$self -> included_relations->{$par}{$cov}{'nthetas'} =
+						$self -> relations->{$par}{$cov}{'nthetas'}{$state};
+						$self -> included_relations->{$par}{$cov}{'inits'} =
+						$self -> relations->{$par}{$cov}{'inits'}{$state};
+						$self -> included_relations->{$par}{$cov}{'bounds'} =
+						$self -> relations->{$par}{$cov}{'bounds'}{$state};
 					}
 				} #end loop over valid states
 				$first = 0;
 				#check that no included relations for invalid states
-				if ( defined $this->included_relations() and
-					exists $this -> included_relations->{$par} and
-					exists $this -> included_relations->{$par}{$cov}){
-					my $included_state =$this -> included_relations->{$par}{$cov}{'state'};
+				if ( defined $self->included_relations() and
+					exists $self -> included_relations->{$par} and
+					exists $self -> included_relations->{$par}{$cov}){
+					my $included_state =$self -> included_relations->{$par}{$cov}{'state'};
 					my $found = 0;
 					foreach my $state (@valid_states){
 						$found = 1 if ($state == $included_state);
@@ -780,13 +780,13 @@ sub BUILD
 		} # end loop over par
 
 		#check that no included relations for covariates not in test_relations
-		foreach my $par ( sort keys %{$this -> included_relations} ) {
-			foreach my $cov (sort keys %{$this -> included_relations->{$par}} ){
+		foreach my $par ( sort keys %{$self -> included_relations} ) {
+			foreach my $cov (sort keys %{$self -> included_relations->{$par}} ){
 				my $found=0;
-				if ( defined $this -> test_relations() ) {
-					foreach my $testpar ( sort keys %{$this -> test_relations()} ){
+				if ( defined $self -> test_relations() ) {
+					foreach my $testpar ( sort keys %{$self -> test_relations()} ){
 						next unless ($testpar eq $par);
-						foreach my $testcov ( @{$this -> test_relations()->{$par}} ){
+						foreach my $testcov ( @{$self -> test_relations()->{$par}} ){
 							$found = 1 if ($testcov eq $cov);
 						}
 					}
@@ -796,9 +796,9 @@ sub BUILD
 				unless ($found);
 			}
 		}
-		open( RELATIONS, '>'.$this -> relations_file );
+		open( RELATIONS, '>'.$self -> relations_file );
 		$Data::Dumper::Purity = 1;
-		print RELATIONS Dumper $this -> relations;
+		print RELATIONS Dumper $self -> relations;
 		$Data::Dumper::Purity = 0;
 		close( RELATIONS );
 

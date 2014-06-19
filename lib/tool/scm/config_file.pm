@@ -80,9 +80,9 @@ has 'run_on_torque' => ( is => 'rw', isa => 'Bool|Ref', default => sub { \'1,0' 
 
 sub BUILD
 {
-	my $this  = shift;
+	my $self  = shift;
 
-	unless( defined $this -> file ){
+	unless( defined $self -> file ){
 		croak('You must give a "file" argument to config_file -> new' );
 	}
 	my %valid_scalar_options;
@@ -90,20 +90,20 @@ sub BUILD
 	my %valid_hash_options;
 	my %valid_code_options;
 	# Get the types of the possible options.
-	foreach my $key ( keys %{$this} ){
-		if( ref( $this -> $key ) eq 'SCALAR' ) {
-			if( ${$this -> $key} ne '' ){
-				$valid_scalar_options{$key} = $this -> $key;
+	foreach my $key ( keys %{$self} ){
+		if( ref( $self -> $key ) eq 'SCALAR' ) {
+			if( ${$self -> $key} ne '' ){
+				$valid_scalar_options{$key} = $self -> $key;
 			} else {
 				$valid_scalar_options{$key} = 1;
 			}
-			$this -> {$key} = undef; #FIXME
-		} elsif( ref( $this -> $key ) eq 'ARRAY' ) {
+			$self -> {$key} = undef; #FIXME
+		} elsif( ref( $self -> $key ) eq 'ARRAY' ) {
 			$valid_array_options{$key} = 1;
-			$this -> {$key} = undef; #FIXME
-		} elsif( ref( $this -> $key ) eq 'HASH' ) {
-			if( keys %{ $this -> $key } > 0 ){
-				my @list = keys %{ $this -> $key };
+			$self -> {$key} = undef; #FIXME
+		} elsif( ref( $self -> $key ) eq 'HASH' ) {
+			if( keys %{ $self -> $key } > 0 ){
+				my @list = keys %{ $self -> $key };
 				if( $list[0] eq 'ARRAY' ){
 					$valid_hash_options{$key} = 'ARRAY';
 				} else {
@@ -112,19 +112,19 @@ sub BUILD
 			} else {
 				$valid_hash_options{$key} = 'SCALAR';
 			}
-			$this -> {$key} = undef; #FIXME
-		} elsif( ref( $this -> $key ) eq 'CODE' ){
+			$self -> {$key} = undef; #FIXME
+		} elsif( ref( $self -> $key ) eq 'CODE' ){
 			$valid_code_options{$key} = 1;
-			$this -> {$key} = undef; #FIXME
+			$self -> {$key} = undef; #FIXME
 		}
 	}
-	$this -> valid_scalar_options(\%valid_scalar_options);
-	$this -> valid_array_options(\%valid_array_options);
-	$this -> valid_hash_options(\%valid_hash_options);
-	$this -> valid_code_options(\%valid_code_options);
+	$self -> valid_scalar_options(\%valid_scalar_options);
+	$self -> valid_array_options(\%valid_array_options);
+	$self -> valid_hash_options(\%valid_hash_options);
+	$self -> valid_code_options(\%valid_code_options);
 
 	my $string;
-	open( FILE, $this -> file -> full_name );
+	open( FILE, $self -> file -> full_name );
 	while( <FILE> ){
 		s/\s*\\\s*$/\\/;
 		s/[\t\r\f]*//g;
@@ -136,7 +136,7 @@ sub BUILD
 	my $config_tiny = ext::Config::Tiny -> read_string( $string );
 
 	unless( defined $config_tiny ){
-		croak("In configuration file [ " . $this -> file -> name . " ]: " . $ext::Config::Tiny::errstr );
+		croak("In configuration file [ " . $self -> file -> name . " ]: " . $ext::Config::Tiny::errstr );
 	}
 
 	# Force config_tiny to lowercase
@@ -163,7 +163,7 @@ sub BUILD
 		}
 	}
 
-	$this -> parse_config( config_tiny => $config_tiny );
+	$self -> parse_config( config_tiny => $config_tiny );
 }
 
 sub add_file

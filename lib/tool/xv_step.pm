@@ -65,18 +65,18 @@ has 'ignoresigns' => ( is => 'rw', isa => 'ArrayRef');
 
 sub BUILD
 {
-	my $this  = shift;
+	my $self  = shift;
 
 	my $model;
-	$model = $this -> models -> [0];
+	$model = $self -> models -> [0];
 	unless( defined $model -> datas ){
-		$this -> die ( message => "No data object in modelobject\n" );
+		$self -> die ( message => "No data object in modelobject\n" );
 	}
-	$this->ignoresigns($model -> ignoresigns);
+	$self->ignoresigns($model -> ignoresigns);
 
-	if( $this -> predict_only and $this -> estimate_only ){
-		$this -> predict_only(0);
-		$this -> estimate_only(0);
+	if( $self -> predict_only and $self -> estimate_only ){
+		$self -> predict_only(0);
+		$self -> estimate_only(0);
 	}
 }
 

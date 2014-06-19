@@ -15,29 +15,29 @@ my $in_constructor = 0;
 
 sub BUILDARGS
 {
-	my $this = shift;
+	my $self = shift;
 
 	$in_constructor = 1;
 
-	return $this->SUPER::BUILDARGS(@_);
+	return $self->SUPER::BUILDARGS(@_);
 }
 
 sub BUILD
 {
-	my $this  = shift;
+	my $self  = shift;
 
 	$in_constructor = 0;
 
-	my $path = $this->path;
-	my $name = $this->name;
+	my $path = $self->path;
+	my $name = $self->name;
 
-	$path = $this -> merge_path_and_name( path => $path, name => $name );
+	$path = $self -> merge_path_and_name( path => $path, name => $name );
 
 	$path =~ s!([^\/]*)$!!;
 	$name = $1;
 
-	$this->{'path'} = $path;
-	$this->{'name'} = $name;
+	$self->{'path'} = $path;
+	$self->{'name'} = $name;
 }
 
 sub _path_set

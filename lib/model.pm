@@ -149,30 +149,30 @@ my $in_constructor = 0;
 
 sub BUILDARGS
 {
-	my $this = shift;
+	my $self = shift;
 
 	$in_constructor = 1;
 
-	return $this->SUPER::BUILDARGS(@_);
+	return $self->SUPER::BUILDARGS(@_);
 }
 
 sub BUILD
 {
-	my $this  = shift;
+	my $self  = shift;
 	my $parmref = shift;
 	my %parm = %{$parmref};
 
 	$in_constructor = 0;
 
 	if ( defined $parm{'problems'} ) {
-	    $this->problems($parm{'problems'});
+	    $self->problems($parm{'problems'});
 	} else {
 		my $dir;
-		($dir, $this->{'filename'}) = OSspecific::absolute_path($this->directory, $this->{'filename'});    #FIXME: Nonstandard accessor. Fix with Moose
-		$this->directory($dir);
+		($dir, $self->{'filename'}) = OSspecific::absolute_path($self->directory, $self->{'filename'});    #FIXME: Nonstandard accessor. Fix with Moose
+		$self->directory($dir);
 
 		# Convert if in PharmML format
-		my $file = $this->full_name;
+		my $file = $self->full_name;
 		if (-e $file) {
 			if (pharmml::is_pharmml($file)) {
 				print "*** Input file is in PharmML format. Starting conversion to NMTRAN. ***\n";
@@ -184,9 +184,9 @@ sub BUILD
 					croak("Error: Conversion of $file failed");
 				}
 				print "*** Conversion done ***\n";
-				my $filename = $this->filename;
+				my $filename = $self->filename;
 				$filename =~ s/\.xml/\.ctl/;		# FIXME: This is not always correct
-				$this->filename($filename);
+				$self->filename($filename);
 				print "*** Running nmtran on converted model ***\n";
 				if (not pharmml::check_converted_model($filename)) {
 					croak("Error when running nmtran on converted file.");
@@ -195,12 +195,12 @@ sub BUILD
 			}
 		}
 
-		$this->_read_problems;
-		$this->synced(1);
+		$self->_read_problems;
+		$self->synced(1);
 	}
 
 	#ensure unique labels per param
-	foreach my $prob (@{$this->problems}){
+	foreach my $prob (@{$self->problems}){
 		next unless (defined $prob);
 		foreach my $param ('theta','omega','sigma'){
 			my $accessor = $param.'s';
@@ -229,15 +229,15 @@ sub BUILD
 		}
 	}
 
-	if ($this->maxevals > 0){
-		if ( defined $this->problems ) {
-			my $n_prob = scalar(@{$this->problems});
+	if ($self->maxevals > 0){
+		if ( defined $self->problems ) {
+			my $n_prob = scalar(@{$self->problems});
 			for (my $probnum=1; $probnum<= $n_prob; $probnum++){
-				unless ($this->is_option_set(record=>'estimation',
+				unless ($self->is_option_set(record=>'estimation',
 											 name=>'MSFO',
 											 problem_number => $probnum,
 											 fuzzy_match => 1)){
-					$this->add_option(record_name=>'estimation',
+					$self->add_option(record_name=>'estimation',
 									  option_name=>'MSFO',
 									  problem_numbers=> [$probnum],
 									  option_value => ( $probnum == 1 ? 'psn_msf':('psn_msf_pr'.$probnum)), 
@@ -248,29 +248,29 @@ sub BUILD
 	}
 
 	if ( defined $parm{'active_problems'} ) {
-	    $this->active_problems($parm{'active_problems'});
-	} elsif ( defined $this->problems ) {
+	    $self->active_problems($parm{'active_problems'});
+	} elsif ( defined $self->problems ) {
 	    my @active = ();
-	    for ( @{$this->problems} ) {
+	    for ( @{$self->problems} ) {
 				push( @active, 1 );
 	    }
-	    $this->active_problems(\@active);
+	    $self->active_problems(\@active);
 	}
 
-	if ( defined $this->extra_files ) {
-		for( my $i; $i < scalar @{$this->extra_files}; $i++ ) {
-			my ( $dir, $file ) = OSspecific::absolute_path( $this->directory, $this->extra_files->[$i]);
-			$this->extra_files->[$i] = $dir . $file;
+	if ( defined $self->extra_files ) {
+		for( my $i; $i < scalar @{$self->extra_files}; $i++ ) {
+			my ( $dir, $file ) = OSspecific::absolute_path( $self->directory, $self->extra_files->[$i]);
+			$self->extra_files->[$i] = $dir . $file;
 		}
 	}
 	
 	# Read datafiles, if any.
-	unless( defined $this -> {'datas'} and not $this->quick_reload ) {		# FIXME: Nonstandard accessor. Fix with Moose.
-	    my @idcolumns = @{$this->idcolumns};
-	    my @datafiles = @{$this -> datafiles('absolute_path' => 1)};
+	unless( defined $self -> {'datas'} and not $self->quick_reload ) {		# FIXME: Nonstandard accessor. Fix with Moose.
+	    my @idcolumns = @{$self->idcolumns};
+	    my @datafiles = @{$self -> datafiles('absolute_path' => 1)};
 	    for ( my $i = 0; $i <= $#datafiles; $i++ ) {
 			my $datafile = $datafiles[$i];
-			if ($this->d2u() and -e $datafile) {
+			if ($self->d2u() and -e $datafile) {
 				my $doit= `od -c $datafile | grep -c '\\r'`;
 				chomp ($doit);
 				if ($doit > 0) {
@@ -279,22 +279,22 @@ sub BUILD
 				}
 			}
 			my $idcolumn = $idcolumns[$i];
-			my $ignoresign = defined $this -> ignoresigns ? $this -> ignoresigns -> [$i] : undef;
+			my $ignoresign = defined $self -> ignoresigns ? $self -> ignoresigns -> [$i] : undef;
 #			print "ignoresign $ignoresign\n";
-			my @model_header = @{$this->problems->[$i]->header};
+			my @model_header = @{$self->problems->[$i]->header};
 			#should the model header not be used here?
 			if ( defined $idcolumn ) {
-				push ( @{$this -> {'datas'}}, data ->
+				push ( @{$self -> {'datas'}}, data ->
 					   new( idcolumn             => $idcolumn,
 							filename             => $datafile,
 							ignoresign           => $ignoresign,
-							missing_data_token   => $this->missing_data_token,
-							directory            => $this->directory,
-							ignore_missing_files => $this->ignore_missing_files || $this->ignore_missing_data,
-							skip_parsing         => $this->skip_data_parsing,
-							target               => $this -> {'target'}) );		#FIXME: Nonstandard accessor. Fix with Moose
+							missing_data_token   => $self->missing_data_token,
+							directory            => $self->directory,
+							ignore_missing_files => $self->ignore_missing_files || $self->ignore_missing_data,
+							skip_parsing         => $self->skip_data_parsing,
+							target               => $self -> {'target'}) );		#FIXME: Nonstandard accessor. Fix with Moose
 			} else {
-				croak("New model to be created from ".$this -> full_name().
+				croak("New model to be created from ".$self -> full_name().
 					  ". Data file is ".$datafile."\n".
 					  "No ID column definition found in \$INPUT of the model file\n".
 					  "(if you use a synonym for ID then PsN can only handle ID=synonym, not synonym=ID ).\n" );
@@ -303,46 +303,46 @@ sub BUILD
 	}
 
 	# Read outputfile, if any.
-	if ( !defined $this->outputs ) {
-		unless( defined $this -> {'outputfile'} ){		# FIXME: Nonstandard accessor. Fix with Moose.
-			if( $this -> filename() =~ /\.mod$/ ) {
-				($this -> {'outputfile'} = $this -> {'filename'}) =~ s/\.mod$/.lst/;
+	if ( !defined $self->outputs ) {
+		unless( defined $self -> {'outputfile'} ){		# FIXME: Nonstandard accessor. Fix with Moose.
+			if( $self -> filename() =~ /\.mod$/ ) {
+				($self -> {'outputfile'} = $self -> {'filename'}) =~ s/\.mod$/.lst/;
 			} else {
-				if( $this -> filename() =~ /^([^.]+)\./ ) {
+				if( $self -> filename() =~ /^([^.]+)\./ ) {
 					#contains a dot
-					$this -> outputfile( $1.'.lst' );
+					$self -> outputfile( $1.'.lst' );
 				}else{
-					$this -> outputfile( $this -> filename().'.lst' );
+					$self -> outputfile( $self -> filename().'.lst' );
 				}
 			}
 		}
-		$this->outputs([]);
-		push ( @{$this->outputs}, output ->
-			   new( filename             => $this -> {'outputfile'},
-					directory            => $this->directory,
+		$self->outputs([]);
+		push ( @{$self->outputs}, output ->
+			   new( filename             => $self -> {'outputfile'},
+					directory            => $self->directory,
 					ignore_missing_files =>
-					$this->ignore_missing_files || $this->ignore_missing_output_files,
-					target               => $this -> {'target'}));
+					$self->ignore_missing_files || $self->ignore_missing_output_files,
+					target               => $self -> {'target'}));
 	}
 
 	# Adding mirror_plots module here, since it can add
 	# $PROBLEMS. Also it needs to know wheter an lst file exists
 	# or not.
 
-	if( $this->mirror_plots > 0 ){
-		my $mirror_plot_module = model::mirror_plot_module -> new( base_model => $this, 
-																   nr_of_mirrors => $this->mirror_plots,
-																   cwres => $this->cwres,
-																   mirror_from_lst => $this->mirror_from_lst,
-																   niter_eonly => $this->niter_eonly,
-																   last_est_complete => $this->last_est_complete);
-		push( @{$this -> {'mirror_plot_modules'}}, $mirror_plot_module );    #FIXME: Should have had an accessor. Fix with Moose
+	if( $self->mirror_plots > 0 ){
+		my $mirror_plot_module = model::mirror_plot_module -> new( base_model => $self, 
+																   nr_of_mirrors => $self->mirror_plots,
+																   cwres => $self->cwres,
+																   mirror_from_lst => $self->mirror_from_lst,
+																   niter_eonly => $self->niter_eonly,
+																   last_est_complete => $self->last_est_complete);
+		push( @{$self -> {'mirror_plot_modules'}}, $mirror_plot_module );    #FIXME: Should have had an accessor. Fix with Moose
 	}
 
-	if ( $this->iofv > 0 ) {
-		my $iofv_module = model::iofv_module -> new( base_model => $this);
-		$this->iofv_modules([]) unless defined $this->iofv_modules;
-		push( @{$this->iofv_modules}, $iofv_module );
+	if ( $self->iofv > 0 ) {
+		my $iofv_module = model::iofv_module -> new( base_model => $self);
+		$self->iofv_modules([]) unless defined $self->iofv_modules;
+		push( @{$self->iofv_modules}, $iofv_module );
 	}
 }
 

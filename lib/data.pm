@@ -87,16 +87,16 @@ my $in_constructor = 0;
 
 sub BUILDARGS
 {
-	my $this = shift;
+	my $self = shift;
 
 	$in_constructor = 1;
 
-	return $this->SUPER::BUILDARGS(@_);
+	return $self->SUPER::BUILDARGS(@_);
 }
 
 sub BUILD
 {
-	my $this = shift;
+	my $self = shift;
 
 	$in_constructor = 0;
 
@@ -107,52 +107,52 @@ sub BUILD
 	# comments. Corresponds to the IGNORE= option in the $DATA
 	# record in a NONMEM model file.
 
-	(my $directory, my $filename) = OSspecific::absolute_path( $this->directory, $this->filename );
-	$this->directory($directory);
-	$this->filename($filename);
+	(my $directory, my $filename) = OSspecific::absolute_path( $self->directory, $self->filename );
+	$self->directory($directory);
+	$self->filename($filename);
 
-#	unless (defined $this->ignoresign and length($this->ignoresign)>0){
+#	unless (defined $self->ignoresign and length($self->ignoresign)>0){
 #		print("\nWarning: ignoresign undefined in data->new\nThis should be fixed\n");
 #	}
 
-	unless ( not_empty($this->header) or not_empty($this->individuals) ) { 
-	  if ( -e $this->full_name ) {
-	    if ( $this->target eq 'mem' and (not $this->skip_parsing) ) {
-	      $this->_read_header;
-	      $this->_read_individuals;
-	      $this->synced(1);
+	unless ( not_empty($self->header) or not_empty($self->individuals) ) { 
+	  if ( -e $self->full_name ) {
+	    if ( $self->target eq 'mem' and (not $self->skip_parsing) ) {
+	      $self->_read_header;
+	      $self->_read_individuals;
+	      $self->synced(1);
 	    } else {
-	      $this->synced(0);
+	      $self->synced(0);
 	    }
 	  } else {
-	    croak("No file " . $this->full_name . " on disk.")
-	      unless ($this->ignore_missing_files);
-			$this-> synced(0);
+	    croak("No file " . $self->full_name . " on disk.")
+	      unless ($self->ignore_missing_files);
+			$self-> synced(0);
 	  }
 	} else { #have header or individuals as input or stored in memory
-	  if ( $this->target eq 'mem') {
-	    if ( -e $this->filename ) {
-	      if ( $this->skip_parsing) {
-					$this->synced(0);
+	  if ( $self->target eq 'mem') {
+	    if ( -e $self->filename ) {
+	      if ( $self->skip_parsing) {
+					$self->synced(0);
 	      } else {
-					$this->_read_header;
-					$this->_read_individuals;
-					$this->synced(1);
+					$self->_read_header;
+					$self->_read_individuals;
+					$self->synced(1);
 	      }
 	    } else {
-	      croak("No file ".$this->filename." on disk" )
-					unless ($this->{'ignore_missing_files'});
-	      $this->synced(0);
+	      croak("No file ".$self->filename." on disk" )
+					unless ($self->{'ignore_missing_files'});
+	      $self->synced(0);
 	    }
 	  } else { #target disk
-	    $this->flush;
+	    $self->flush;
 	  }
 	}
 
-	if ( $this->synced() ) {
+	if ( $self->synced() ) {
 	  my $i = 1;
-	  foreach my $head ( @{$this->header} ) {
-	    $this->column_head_indices->{$head} = $i;
+	  foreach my $head ( @{$self->header} ) {
+	    $self->column_head_indices->{$head} = $i;
 	    $i++;
 	  }
 	}

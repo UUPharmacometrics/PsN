@@ -77,34 +77,34 @@ has 'estimation_step_initiated' => ( is => 'rw', isa => 'Bool', default => 0 );
 
 sub BUILD
 {
-	my $this  = shift;
+	my $self = shift;
 
 	# Read Global data
-	$this->_read_nrecs;
-	$this->_read_nobs if ( $this -> parsed_successfully and not $this -> finished_parsing );
-	$this->_read_nind if ( $this -> parsed_successfully and not $this -> finished_parsing );
-	$this->_read_msfo_status if ( $this -> parsed_successfully and not $this -> finished_parsing );
+	$self->_read_nrecs;
+	$self->_read_nobs if ( $self -> parsed_successfully and not $self -> finished_parsing );
+	$self->_read_nind if ( $self -> parsed_successfully and not $self -> finished_parsing );
+	$self->_read_msfo_status if ( $self -> parsed_successfully and not $self -> finished_parsing );
 
-	$this -> _scan_to_subproblems() if ( $this -> parsed_successfully() and not $this -> finished_parsing() );
+	$self -> _scan_to_subproblems() if ( $self -> parsed_successfully() and not $self -> finished_parsing() );
 	
-	if ($this->nm_major_version() >= 7 and ($this -> estimation_step_initiated() or $this->covariance_step_run())) {
+	if ($self->nm_major_version() >= 7 and ($self -> estimation_step_initiated() or $self->covariance_step_run())) {
 		#we have output to read
-	  $this->store_NM7_output(max_table_number => $this->table_number()); 
+	  $self->store_NM7_output(max_table_number => $self->table_number()); 
 	}
 
-	$this -> _read_subproblems() if ( $this -> parsed_successfully() and not $this -> finished_parsing() );
+	$self -> _read_subproblems() if ( $self -> parsed_successfully() and not $self -> finished_parsing() );
 
-	my $mes = $this -> parsing_error_message();
-	if( defined $this -> subproblems() ) {
-	  foreach my $subp ( @{$this -> subproblems()} ) {
+	my $mes = $self -> parsing_error_message();
+	if( defined $self -> subproblems() ) {
+	  foreach my $subp ( @{$self -> subproblems()} ) {
 	    $mes .= $subp -> parsing_error_message();
-	    $this -> parsed_successfully($this -> parsed_successfully() * $subp -> parsed_successfully());
+	    $self->parsed_successfully($self -> parsed_successfully() * $subp -> parsed_successfully());
 	  }
 	}
 
-	$this -> parsing_error_message( $mes );
+	$self->parsing_error_message($mes);
 
-	$this->lstfile([]);
+	$self->lstfile([]);
 }
 
 sub add_subproblem

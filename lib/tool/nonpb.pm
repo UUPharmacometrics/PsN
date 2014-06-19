@@ -30,40 +30,40 @@ has 'results_file' => ( is => 'rw', isa => 'Str', default => 'nonpb_results.csv'
 
 sub BUILD
 {
-	my $this  = shift;
+	my $self  = shift;
 
-	unless ($this->nonpb_version == 1 || $this->nonpb_version == 2) {
+	unless ($self->nonpb_version == 1 || $self->nonpb_version == 2) {
 		croak('nonpb version must be either 1 or 2 (2 is default).');
 	}
 
-	if ( scalar (@{$this->models->[0]->problems}) != 1 ){
+	if ( scalar (@{$self->models->[0]->problems}) != 1 ){
 		croak('The input model must contain exactly one problem.');
 	}
 
 	#check at least one omega -> eta
-	my $record_ref = $this->models->[0]->record(record_name => 'omega' );
+	my $record_ref = $self->models->[0]->record(record_name => 'omega' );
 	unless ( scalar(@{$record_ref}) > 0 ){ 
 		croak('The input model must contain at least one $OMEGA record.');
 	}
-	my $model_n_etas = $this->models->[0]->nomegas->[0];
-	if (defined $this->etas) {
-		if ($this->etas > $model_n_etas) {
+	my $model_n_etas = $self->models->[0]->nomegas->[0];
+	if (defined $self->etas) {
+		if ($self->etas > $model_n_etas) {
 			croak("Too many etas requested, model ".
 				"contains only $model_n_etas.");
 		}
-		if ($this->etas < 1) {
+		if ($self->etas < 1) {
 			croak("Option -etas must be larger than 0. ");
 		}
 	}
 
-	unless ( -e $this->lst_file ) {
-		croak("Cannot find lst-file " . $this->lst_file);
+	unless ( -e $self->lst_file ) {
+		croak("Cannot find lst-file " . $self->lst_file);
 	}
 
-	unless (defined $this->samples) {
+	unless (defined $self->samples) {
 		croak("The option -samples is required.");
 	}
-	unless ( $this->samples > 0 ) {
+	unless ( $self->samples > 0 ) {
 		croak("Number of samples must be larger than 0.");
 	}
 }

@@ -212,7 +212,7 @@ sub BUILDARGS
 
 sub BUILD
 {
-	my $this  = shift;
+	my $self  = shift;
 
 	# Usage:
 	# 
@@ -326,43 +326,43 @@ sub BUILD
 	# I<grid_adress> is the URL of the grid submission server,
 	# e.g. hagrid.it.uu.se.
 
-	if (defined $this->logfile) {
-		$this->logfile([join('', OSspecific::absolute_path( $this->directory, $this->logfile->[0]) ) ]);
+	if (defined $self->logfile) {
+		$self->logfile([join('', OSspecific::absolute_path( $self->directory, $self->logfile->[0]) ) ]);
 	}
 
 
-	my $ref = nonmemrun::setup_paths(nm_version => $this->nm_version,
-									 nmqual => $this->nmqual);
+	my $ref = nonmemrun::setup_paths(nm_version => $self->nm_version,
+									 nmqual => $self->nmqual);
 
-	$this->full_path_runscript($ref->{'full_path_runscript'});
-	$this->full_path_nmtran($ref->{'full_path_nmtran'}) if (defined $ref->{'full_path_nmtran'});
+	$self->full_path_runscript($ref->{'full_path_runscript'});
+	$self->full_path_nmtran($ref->{'full_path_nmtran'}) if (defined $ref->{'full_path_nmtran'});
 
 
-	if ($this->nmqual) {
-		$this->modext('ctl');
-		$this->nmqual_xml($ref->{'nmqual_xml'});
+	if ($self->nmqual) {
+		$self->modext('ctl');
+		$self->nmqual_xml($ref->{'nmqual_xml'});
 	}
 
 
-	if ($this->run_on_lsf or $this->run_on_ud or $this->run_on_zink or
-		$this->run_on_torque or $this->run_on_slurm or
-		$this->run_on_sge) {
-		$this->run_local(0);
+	if ($self->run_on_lsf or $self->run_on_ud or $self->run_on_zink or
+		$self->run_on_torque or $self->run_on_slurm or
+		$self->run_on_sge) {
+		$self->run_local(0);
 	} else {
-		$this->run_local(1);
+		$self->run_local(1);
 	}
 
-	if ($this->handle_msfo) {
-		$this->handle_crashes(1);
+	if ($self->handle_msfo) {
+		$self->handle_crashes(1);
 	}
 
-	if ($this->handle_crashes and $this->crash_restarts > 0) {
-		$this->crash_restarts($this->crash_restarts + 1);
+	if ($self->handle_crashes and $self->crash_restarts > 0) {
+		$self->crash_restarts($self->crash_restarts + 1);
 	}
 
-	$this->calculate_raw_results_width();
+	$self->calculate_raw_results_width();
 
-	$this->raw_line_structure(ext::Config::Tiny->new());
+	$self->raw_line_structure(ext::Config::Tiny->new());
 }
 
 

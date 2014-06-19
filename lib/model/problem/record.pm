@@ -13,13 +13,13 @@ has 'print_order' => ( is => 'rw', isa => 'ArrayRef[Int]' );
 
 sub BUILD
 {
-	my $this  = shift;
+	my $self = shift;
 
 	# To construct an option you only need to supply an array of
   # strings containg the record block. _read_option then parses
   # those strings.
-  $this->_read_options;
-  $this->record_arr(undef);
+  $self->_read_options;
+  $self->record_arr(undef);
 }
 
 sub add_option

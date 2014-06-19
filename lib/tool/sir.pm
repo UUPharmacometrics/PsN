@@ -43,39 +43,39 @@ has 'pdf_vector' => ( is => 'rw', isa => 'ArrayRef[Num]' );
 
 sub BUILD
 {
-	my $this  = shift;
+	my $self  = shift;
 
 	for my $accessor ('logfile','raw_results_file','raw_nonp_file'){
 		my @new_files=();
-		my @old_files = @{$this->$accessor};
+		my @old_files = @{$self->$accessor};
 		for (my $i=0; $i < scalar(@old_files); $i++){
 			my $name;
 			my $ldir;
 			( $ldir, $name ) =
-				OSspecific::absolute_path( $this ->directory(), $old_files[$i] );
+				OSspecific::absolute_path( $self ->directory(), $old_files[$i] );
 			push(@new_files,$ldir.$name) ;
 		}
-		$this->$accessor(\@new_files);
+		$self->$accessor(\@new_files);
 	}	
 
 	croak("No \$PROBLEM in input model") unless 
-		(defined $this ->models()->[0]->problems and scalar(@{$this ->models()->[0]->problems})>0);
+		(defined $self ->models()->[0]->problems and scalar(@{$self ->models()->[0]->problems})>0);
 
 	croak("No \$INPUT found") unless 
-		(defined $this ->models()->[0]->problems->[0]->inputs and 
-		 scalar(@{$this ->models()->[0]->problems->[0]->inputs})>0);
+		(defined $self ->models()->[0]->problems->[0]->inputs and 
+		 scalar(@{$self ->models()->[0]->problems->[0]->inputs})>0);
 	croak("No \$DATA found") unless 
-		(defined $this ->models()->[0]->problems->[0]->datas and 
-		 scalar(@{$this ->models()->[0]->problems->[0]->datas})>0);
+		(defined $self ->models()->[0]->problems->[0]->datas and 
+		 scalar(@{$self ->models()->[0]->problems->[0]->datas})>0);
 
 	#TODO support multiple $PROB
-	croak("sir does not yet support more than 1 \$PROB in model ") if (scalar(@{$this ->models()->[0]->problems})>1);
+	croak("sir does not yet support more than 1 \$PROB in model ") if (scalar(@{$self ->models()->[0]->problems})>1);
 
 
-	croak("Number of samples must be larger than 0") unless ($this->samples()>0);
-	croak("Number of resamples must be larger than 1") unless ($this->resamples()>1);
+	croak("Number of samples must be larger than 0") unless ($self->samples()>0);
+	croak("Number of resamples must be larger than 1") unless ($self->resamples()>1);
 	croak("Number of resamples cannot be larger than samples unless with_replacement is set") unless 
-		(($this->resamples() <= $this->samples) or ($this->with_replacement));
+		(($self->resamples() <= $self->samples) or ($self->with_replacement));
 	
 
 }

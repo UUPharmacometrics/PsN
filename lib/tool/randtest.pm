@@ -29,33 +29,33 @@ has 'reference_column' => ( is => 'rw', isa => 'Str' );
 
 sub BUILD
 {
-	my $this  = shift;
+	my $self  = shift;
 
 	for my $accessor ('logfile','raw_results_file','raw_nonp_file'){
 		my @new_files=();
-		my @old_files = @{$this->$accessor};
+		my @old_files = @{$self->$accessor};
 		for (my $i=0; $i < scalar(@old_files); $i++){
 			my $name;
 			my $ldir;
 			( $ldir, $name ) =
-			OSspecific::absolute_path( $this ->directory(), $old_files[$i] );
+			OSspecific::absolute_path( $self ->directory(), $old_files[$i] );
 			push(@new_files,$ldir.$name) ;
 		}
-		$this->$accessor(\@new_files);
+		$self->$accessor(\@new_files);
 	}	
 
 	croak("No \$PROBLEM in input model") unless 
-	(defined $this ->models()->[0]->problems and scalar(@{$this ->models()->[0]->problems})>0);
+	(defined $self ->models()->[0]->problems and scalar(@{$self ->models()->[0]->problems})>0);
 
 	croak("No \$INPUT found") unless 
-	(defined $this ->models()->[0]->problems->[0]->inputs and 
-		scalar(@{$this ->models()->[0]->problems->[0]->inputs})>0);
+	(defined $self ->models()->[0]->problems->[0]->inputs and 
+		scalar(@{$self ->models()->[0]->problems->[0]->inputs})>0);
 	croak("No \$DATA found") unless 
-	(defined $this ->models()->[0]->problems->[0]->datas and 
-		scalar(@{$this ->models()->[0]->problems->[0]->datas})>0);
+	(defined $self ->models()->[0]->problems->[0]->datas and 
+		scalar(@{$self ->models()->[0]->problems->[0]->datas})>0);
 
 	#make sure IGNORE=C is not used
-	my @ignores = $this->models->[0]->get_option_value(record_name=>'data', 
+	my @ignores = $self->models->[0]->get_option_value(record_name=>'data', 
 		option_name=>'IGNORE',
 		problem_index=>0, 
 		record_index=>0,
@@ -69,17 +69,17 @@ sub BUILD
 	#Find column index of rand column
 	#Find column index of strat column
 	my $counter = 0;
-	foreach my $opt (@{$this->models->[0]->problems->[0]->inputs->[0]->options()}){
-		$this->rand_index($counter) if ($opt->name() eq $this->randomization_column());
-		$this->strat_index($counter) if ((defined $this->stratify_on()) and ($opt->name() eq $this->stratify_on()));
+	foreach my $opt (@{$self->models->[0]->problems->[0]->inputs->[0]->options()}){
+		$self->rand_index($counter) if ($opt->name() eq $self->randomization_column());
+		$self->strat_index($counter) if ((defined $self->stratify_on()) and ($opt->name() eq $self->stratify_on()));
 		$counter++;
 	}
-	croak("Could not find randomization column ".$this->randomization_column()." in \$INPUT")
-	unless (defined $this->rand_index);
-	croak("Could not find stratification column ".$this->stratify_on()." in \$INPUT")
-	unless ((not defined $this->stratify_on) or (defined $this->strat_index));
+	croak("Could not find randomization column ".$self->randomization_column()." in \$INPUT")
+	unless (defined $self->rand_index);
+	croak("Could not find stratification column ".$self->stratify_on()." in \$INPUT")
+	unless ((not defined $self->stratify_on) or (defined $self->strat_index));
 
-	croak("Number of samples must be larger than 0") unless ($this->samples()>0);
+	croak("Number of samples must be larger than 0") unless ($self->samples()>0);
 }
 
 sub _sampleTools

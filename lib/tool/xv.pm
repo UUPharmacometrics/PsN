@@ -14,10 +14,10 @@ has 'warnings' => ( is => 'rw', isa => 'Int', default => 0 );
 
 sub BUILD
 {
-	my $this  = shift;
+	my $self  = shift;
 
 	my $model;
-	$model = $this->models->[0];
+	$model = $self->models->[0];
 	unless (defined $model->datas) {
 	    croak("No data object in modelobject\n");
 	}

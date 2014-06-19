@@ -45,96 +45,96 @@ has 'results_file' => ( is => 'rw', isa => 'Str', default => 'mcmp_results.csv' 
 
 sub BUILD
 {
-	my $this  = shift;
+	my $self  = shift;
 
-	if (defined $this->table_full){
-		unless ( -e $this->table_full ){
-			croak("Full model table file ".$this->table_full." could not be found.");
+	if (defined $self->table_full){
+		unless ( -e $self->table_full ){
+			croak("Full model table file ".$self->table_full." could not be found.");
 		}
-		if (defined $this -> full_model){
+		if (defined $self -> full_model){
 			croak("Ambigous input. Cannot define both -table_full and -full_model");
 		}
-	}elsif (not (defined $this -> full_model)){
+	}elsif (not (defined $self -> full_model)){
 		croak("Either -table_full or -full_model must be defined");
 	}
 
 	croak("target_power cannot exceed 100%") if
-		($this->target_power > 100);
+		($self->target_power > 100);
 
-	if (defined $this->simdata){
-		croak("Option simdata set to ".$this->simdata.
-			  " but file does not exist.\n") unless (-e $this->simdata);
+	if (defined $self->simdata){
+		croak("Option simdata set to ".$self->simdata.
+			  " but file does not exist.\n") unless (-e $self->simdata);
 		croak("Cannot set both option -simulation_model and ".
 			  "option -simdata in the same run")
-			unless ($this -> models -> [0]->filename() eq 'dummy');
+			unless ($self -> models -> [0]->filename() eq 'dummy');
 	}
 
-	if (defined $this->table_reduced){
-		unless ( -e $this->table_reduced ){
-			croak("Reduced model table file ".$this->table_reduced." could not be found.");
+	if (defined $self->table_reduced){
+		unless ( -e $self->table_reduced ){
+			croak("Reduced model table file ".$self->table_reduced." could not be found.");
 		}
-		if (defined $this -> reduced_model){
+		if (defined $self -> reduced_model){
 			croak("Ambigous input. Cannot define both -table_reduced and -reduced_model");
 		}
-	}elsif (not (defined $this -> reduced_model)){
+	}elsif (not (defined $self -> reduced_model)){
 		croak("Either -table_reduced or -reduced_model must be defined");
 	}
 
-	if (defined $this->table_strata){
-		unless ( -e $this->table_strata ){
-			croak("Strata table file ".$this->table_strata." could not be found.");
+	if (defined $self->table_strata){
+		unless ( -e $self->table_strata ){
+			croak("Strata table file ".$self->table_strata." could not be found.");
 		}
-	}elsif (not (defined $this -> reduced_model or defined $this->full_model)){
-		croak("When -table_strata is not defined, either -full_model or -reduced_model must be defined") if (defined $this->stratify_on);
+	}elsif (not (defined $self -> reduced_model or defined $self->full_model)){
+		croak("When -table_strata is not defined, either -full_model or -reduced_model must be defined") if (defined $self->stratify_on);
 	}
 
-	if ($this->df < 1){
+	if ($self->df < 1){
 		croak("option -df, degrees of freedom, cannot be less than 1");
 	}
 
-	unless ($this->algorithm > 0 and $this->algorithm < 3){
+	unless ($self->algorithm > 0 and $self->algorithm < 3){
 		croak("option -algorithm must be 1 or 2");
 	}
 
-	if (defined $this->critical_ofv){
-		if  ($this->df >1){
+	if (defined $self->critical_ofv){
+		if  ($self->df >1){
 			ui -> print (category=>'mcmp', 
 						 message=>"Warning: When option -critical_ofv is used, option -df is ignored");
 		}
-		if  ($this->significance_level != 5){
+		if  ($self->significance_level != 5){
 			ui -> print (category=>'mcmp', 
 						 message=>"Warning: When option -critical_ofv is used, option -significance_level is ignored");
 		}
 	}else{
-		if  (not ($this->significance_level == 5
-				  or $this->significance_level == 1
-				  or $this->significance_level == 0.1)){
+		if  (not ($self->significance_level == 5
+				  or $self->significance_level == 1
+				  or $self->significance_level == 0.1)){
 			croak("option -significance_level must be either 5, 1 or 0.1");
 		}
 	}
 
-	if ($this->n_bootstrap < 1){
+	if ($self->n_bootstrap < 1){
 		croak("option -n_bootstrap cannot be less than 1");
 	}
 
-	if ((defined $this->increment) and  $this->increment < 1){
+	if ((defined $self->increment) and  $self->increment < 1){
 		croak("option -increment cannot be smaller than 1.");
 	}
-	if ((defined $this->start_size) and  $this->start_size < 1){
+	if ((defined $self->start_size) and  $self->start_size < 1){
 		croak("option -start_size cannot be smaller than 1.");
 	}
 
-	if (defined $this->max_size){
-		if (defined $this->start_size){
+	if (defined $self->max_size){
+		if (defined $self->start_size){
 			croak("option -start_size cannot be larger than -max_size") if
-				($this->start_size > $this->max_size);
-		}elsif ((defined $this->increment) and  $this->increment > $this->max_size){ 
+				($self->start_size > $self->max_size);
+		}elsif ((defined $self->increment) and  $self->increment > $self->max_size){ 
 			croak("option -increment cannot be larger than -max_size");
 		}
 	}
-	if (defined $this->stratify_on and ($PsN::nm_major_version < 7)){
+	if (defined $self->stratify_on and ($PsN::nm_major_version < 7)){
 		croak("Unless NONMEM7 is used, -stratify_on must be at most 4 characters")
-			if (length($this->stratify_on)>4);
+			if (length($self->stratify_on)>4);
 	}
 }
 

@@ -152,7 +152,7 @@ sub BUILDARGS
 
 sub BUILD
 {
-	my $this  = shift;
+	my $self  = shift;
 	my $parmref = shift;
 	my %parm  = %{$parmref};
 
@@ -261,20 +261,20 @@ sub BUILD
 		}else {
 			$default_jobname = 'PsN-'.time();
 		}
-		$this->lsf_job_name(defined $parm{'lsf_job_name'} ? $parm{'lsf_job_name'} : $default_jobname) unless defined $this->lsf_job_name;
+		$self->lsf_job_name(defined $parm{'lsf_job_name'} ? $parm{'lsf_job_name'} : $default_jobname) unless defined $self->lsf_job_name;
 	}
-	$this->seed(defined $parm{'seed'} ? $parm{'seed'} : random_uniform_integer(1,0,10000000));
+	$self->seed(defined $parm{'seed'} ? $parm{'seed'} : random_uniform_integer(1,0,10000000));
 
 	#Initiate the random generator if a seed is given (which it is, see above)
-	random_set_seed_from_phrase( $this->seed );
+	random_set_seed_from_phrase( $self->seed );
 
 	# The base_directory refers to the directory where the tool should place its own
 	# directory
 	if ( defined $parm{'base_directory'} ) {
-		$this->base_directory($parm{'base_directory'});
+		$self->base_directory($parm{'base_directory'});
 	} else {
 		my ($uniquePath, $file) = OSspecific::absolute_path('', '');
-		$this->base_directory($uniquePath);
+		$self->base_directory($uniquePath);
 	}
 
 	# The directory is the folder where the tools stores temporary data and 
@@ -283,33 +283,33 @@ sub BUILD
 		my $dummy;
 		my $dir;
 		( $dir, $dummy ) = OSspecific::absolute_path( $parm{'directory'}, '');
-		$this->directory($dir);
+		$self->directory($dir);
 	} else {
 		my $tool_name;
-		if (defined $this->directory_name_prefix) {
-			$tool_name = $this->directory_name_prefix;
+		if (defined $self->directory_name_prefix) {
+			$tool_name = $self->directory_name_prefix;
 		} else {
-			my @tool_name_full = split('::', ref $this);
+			my @tool_name_full = split('::', ref $self);
 			$tool_name = $tool_name_full[$#tool_name_full];
 		}
-		$this->directory(OSspecific::unique_path($tool_name . '_dir', $this->base_directory));
+		$self->directory(OSspecific::unique_path($tool_name . '_dir', $self->base_directory));
 	}
 	if (ui->silent() and not defined ui->logfile()){
-		ui->logfile($this->directory . 'run_messages.txt');
+		ui->logfile($self->directory . 'run_messages.txt');
 	}
 
 	# Create my temporary directory
-	$this -> _make_dir;
+	$self -> _make_dir;
 
 	croak("No model specified!" )
-	unless ( defined $this->models and scalar @{$this->models} > 0 );
-	foreach my $mod ( @{$this->models} ) {
+	unless ( defined $self->models and scalar @{$self->models} > 0 );
+	foreach my $mod ( @{$self->models} ) {
 		croak("Supplied argument model is not defined" )
 		unless defined $mod;
 	}
 	# Make sure that the filenames are absolute and collect model_ids
 	my $first =1;
-	foreach my $model ( @{$this->models} ) {
+	foreach my $model ( @{$self->models} ) {
 		my $datas = $model->datas;
 
 		my ($directory, $filename) = OSspecific::absolute_path( $model->directory, $model->filename );
@@ -318,16 +318,16 @@ sub BUILD
 		$filename =~ s/(\.ctl|\.mod)$//;
 
 		foreach my $attribute ( 'raw_results_file','raw_nonp_file' ) {
-			if ( $this->top_tool() and $first  ) {
+			if ( $self->top_tool() and $first  ) {
 				$first =0;
-				my $name = $this->$attribute->[0];
+				my $name = $self->$attribute->[0];
 				unless ($name =~ /$filename/){
 					if ( $name =~ /\./ ) {
 						$name =~ s/\./_$filename\./;
 					} else {
 						$name = $name.'_'.$filename;
 					}
-					$this -> $attribute->[0] = $name;
+					$self -> $attribute->[0] = $name;
 				}
 			}
 		}

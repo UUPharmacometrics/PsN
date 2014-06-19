@@ -102,9 +102,9 @@ has 'base_model' => ( is => 'rw', required => 1, isa => 'model', default => 0 );
 
 sub BUILD
 {
-	my $this  = shift;
+	my $self  = shift;
 
-  my $base_model = $this->base_model;
+  my $base_model = $self->base_model;
   
   if( $base_model -> is_option_set( record => 'subroutine', name => 'CONTR' ) ) {
     croak('CONTR in $SUBROUTINE is already set, iofv cannot be computed' );

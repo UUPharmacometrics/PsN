@@ -15,33 +15,33 @@ my $in_constructor = 0;
 
 sub BUILDARGS
 {
-	my $this = shift;
+	my $self = shift;
 
 	$in_constructor = 1;
 
-	return $this->SUPER::BUILDARGS(@_);
+	return $self->SUPER::BUILDARGS(@_);
 }
 
 sub BUILD
 {
-	my $this = shift;
+	my $self = shift;
 	$in_constructor = 0;
 
 	# The idnumber attribute does not have an explicit default value but
 	# is, if no number is given, instead set to the value of the first
 	# id column which is assumed only to contain one value.
 
-	if (not defined $this->idnumber) {
-		my @data = split(/,/, $this->subject_data->[0]);
-		unless (defined $data[$this->idcolumn - 1] and length($data[$this->idcolumn - 1])>0){
+	if (not defined $self->idnumber) {
+		my @data = split(/,/, $self->subject_data->[0]);
+		unless (defined $data[$self->idcolumn - 1] and length($data[$self->idcolumn - 1])>0){
 			croak("The value in the id-column is empty");
 		}
-		if (looks_like_number($data[$this->idcolumn - 1])){
-			$this->idnumber($data[$this->idcolumn - 1]);
+		if (looks_like_number($data[$self->idcolumn - 1])){
+			$self->idnumber($data[$self->idcolumn - 1]);
 		}else{
-			print "data is ".$this->subject_data->[0]."\n";
-			print "idcolumn is ".$this->idcolumn."\n";
-			croak("The value in the id column, ".$data[$this->idcolumn - 1].", does not look like a number\n");
+			print "data is ".$self->subject_data->[0]."\n";
+			print "idcolumn is ".$self->idcolumn."\n";
+			croak("The value in the id column, ".$data[$self->idcolumn - 1].", does not look like a number\n");
 		}
 	}
 }

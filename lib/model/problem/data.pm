@@ -11,9 +11,9 @@ has 'ignore_list' => ( is => 'rw', isa => 'ArrayRef[Str]' );
 
 sub BUILD
 {
-	my $this  = shift;
+	my $self  = shift;
 
-	foreach my $option ( @{$this->options} ) {
+	foreach my $option ( @{$self->options} ) {
 		if ( defined $option and ($option->name eq 'IGNORE' or index('IGNORE',$option ->name ) == 0)) {
 			my $value = $option->value;
 			chomp( $value );
@@ -22,13 +22,13 @@ sub BUILD
 					$value =~ s/\(//g;
 					$value =~ s/\)//g;
 					my @raw_list = split(',',$value);
-					$this->ignore_list([]) unless defined $this->ignore_list;		# In case the reference is undef
-					push( @{$this->ignore_list}, @raw_list );
+					$self->ignore_list([]) unless defined $self->ignore_list;		# In case the reference is undef
+					push( @{$self->ignore_list}, @raw_list );
 				} else {
 					if (($value =~ /^'/) or ($value =~ /^"/)){
 						croak("PsN does not support quoted IGNORE signs in \$DATA");
 					}
-					$this->ignoresign($value);
+					$self->ignoresign($value);
 				}
 			}else{
 				print "\nWarning: empty value of IGNORE option in \$DATA\n";

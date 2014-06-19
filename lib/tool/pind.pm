@@ -26,19 +26,19 @@ has 'results_file' => ( is => 'rw', isa => 'Str', default => 'pind_results.csv' 
 
 sub BUILD
 {
-	my $this  = shift;
+	my $self  = shift;
 
-	if ( scalar (@{$this->models->[0]->problems}) != 1 ) {
+	if ( scalar (@{$self->models->[0]->problems}) != 1 ) {
 		croak('The input model must contain exactly one problem.');
 	}
 
-	if ($this->ind_param eq 'eta') {
-		my $record_ref = $this->models->[0]->record(record_name => 'omega' );
+	if ($self->ind_param eq 'eta') {
+		my $record_ref = $self->models->[0]->record(record_name => 'omega' );
 		unless ( scalar(@{$record_ref}) > 0 ){ 
 			croak('The input model must contain at least one $OMEGA record.');
 		}
-	} elsif ($this->ind_param eq 'theta') {
-		my $record_ref = $this->models->[0]->record(record_name => 'theta' );
+	} elsif ($self->ind_param eq 'theta') {
+		my $record_ref = $self->models->[0]->record(record_name => 'theta' );
 		unless ( scalar(@{$record_ref}) > 0 ){ 
 			croak('The input model must contain at least one $THETA record.');
 		}
@@ -46,20 +46,20 @@ sub BUILD
 		croak('Illegal choice for option -ind_param.');
 	}
 
-	unless ($this->lst_file eq '0') {
+	unless ($self->lst_file eq '0') {
 		#allow setting file string to 0. In this case no updating of initial estimates will be done
 		#used when calling pind from nonp_bootstrap
-		unless ( -e $this->lst_file ) {
-			croak("Cannot find lst-file " . $this->lst_file);
+		unless ( -e $self->lst_file ) {
+			croak("Cannot find lst-file " . $self->lst_file);
 		}
 	}
 
-	unless (length($this->tablename) > 0) {
+	unless (length($self->tablename) > 0) {
 		croak("Length of string tablename is 0.");
 	}
 
-	if (defined $this->ignore_individuals_above) {
-		unless (defined $this->njd) {
+	if (defined $self->ignore_individuals_above) {
+		unless (defined $self->njd) {
 			croak("Option -ignore_individuals_above only allowed toghether with -njd");
 		}
 	}

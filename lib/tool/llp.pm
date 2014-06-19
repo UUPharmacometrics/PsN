@@ -37,14 +37,14 @@ has 'unstacked_logfile' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub 
 
 sub BUILD
 {
-	my $this  = shift;
+	my $self  = shift;
 
 	my @various_input_formats = ( 'run_thetas', 'run_omegas', 'run_sigmas',
 				      'rse_thetas', 'rse_omegas', 'rse_sigmas' );
 	foreach my $var ( @various_input_formats ) {
-	  if ( defined $this -> $var ) {
-	    if ( ref( $this -> $var ) eq 'ARRAY' and ref( $this -> $var -> [0] ) eq 'ARRAY' ) {
-	      if ( scalar @{$this -> $var} != scalar @{$this -> models} ) {
+	  if ( defined $self -> $var ) {
+	    if ( ref( $self -> $var ) eq 'ARRAY' and ref( $self -> $var -> [0] ) eq 'ARRAY' ) {
+	      if ( scalar @{$self -> $var} != scalar @{$self -> models} ) {
 		croak('If you define the thetas per model, the first '.
 			      'dimension of $var must match the number of models' );
 	      }
@@ -56,15 +56,15 @@ sub BUILD
 	for my $accessor ( 'logfile', 'unstacked_logfile', 'raw_results_file','no_header_logfile',
 			   'raw_nonp_file'){
 	    my @new_files=();
-	    my @old_files = @{$this->$accessor};
+	    my @old_files = @{$self->$accessor};
 	    for (my $i=0; $i < scalar(@old_files); $i++){
 		my $name;
 		my $ldir;
 		( $ldir, $name ) =
-		    OSspecific::absolute_path( $this ->directory(), $old_files[$i] );
+		    OSspecific::absolute_path( $self ->directory(), $old_files[$i] );
 		push(@new_files,$ldir.$name) ;
 	    }
-	    $this->$accessor(\@new_files);
+	    $self->$accessor(\@new_files);
 	}	
 
 }
