@@ -18,7 +18,7 @@ pvar -models run1.mod run2.mod -parameters=CL,V
 \section{Input and options}
 
 \subsection{Required input}
-Required arguments are either an scm log file or a list of model files and a list of parameters. If an scm log file is to be used the scm run must have been made with -clean=1 or -clean=0 otherwise files needed for pvar will be deleted.
+Required arguments are either an scm log file or a list of model files and a list of parameters. If an scm log file is to be used the scm run cannot have been made with -clean=3 otherwise files needed for pvar will be deleted.
 
 \begin{optionlist}
 
@@ -42,23 +42,23 @@ If this option is present on the command line a list of model files can be passe
 Parametric variability can calculate how much of the variability of a parameter that is explained by the model. For every parameter listed on the command line PsN will calculate the total variance, the explained variance and the unexplained variance. The resulting table can be found in the result.csv. The input models to pvar must have final parameter estimates.
 
 \subsection{Run pvar from an scm}
-The pvar script can be run for all the intermediate models of an scm run. For this to work the scm must have been run with a clean option less than or equal to one (i.e. -clean=0 or -clean=1). The scm log file of the scm run must be specified as an argument to the pvar run. From the log file pvar will find which models to use. Note that they will be numbered in the results file in the order they appeared in the log file. 
+The pvar script can be run for all the intermediate models of an scm run. For this to work the scm must have been run with a clean option less than or equal to two (i.e. -clean=0, -clean=1 or -clean=2). The scm log file of the scm run must be specified as an argument to the pvar run. From the log file pvar will find which models to use. Note that they will be numbered in the results file in the order they appeared in the log file. The base model of the scm will always be run as the first model (number 0). 
 
 \section{Result}
 
 The result.csv is formatted as follows:
 
 The first row is the header explaining the columns.
-The first column is the type of variability (EPV for explained, UPV for unexplained and PV for total). The second column is the number of the model starting with zero. They will come in the order of the scmlog or in the order specified on the command line when using the models option. The following columns are the variances for the parameters.
+The first column is the type of variability (EPV for explained, UPV for unexplained and PV for total). The second column is the number of the model starting with zero. They will come in the order of the scmlog or in the order specified on the command line when using the models option. The third column is the name of the model. The following columns are the variances for the parameters.
 
 \begin{verbatim}
-Type,Model,CL,V
-EPV,0,1.64942442067797e-06,0.0620681720338984
-UPV,0,7.1337349188431e-06,0.538948190857009
-PV,0,8.78315933952107e-06,0.601016362890907
-EPV,1,1.5230948760263e-05,0.0468773796610169
-UPV,1,1.75795164007126e-06,0.387259333476643
-PV,1,1.69889004003343e-05,0.43413671313766
+Type,Model number,Model name,CL,V
+EPV,0,run101.mod,1.64942442067797e-06,0.0620681720338984
+UPV,0,run101.mod,7.1337349188431e-06,0.538948190857009
+PV,0,run101.mod,8.78315933952107e-06,0.601016362890907
+EPV,1,run103.mod,1.5230948760263e-05,0.0468773796610169
+UPV,1,run103.mod,1.75795164007126e-06,0.387259333476643
+PV,1,run103.mod,1.69889004003343e-05,0.43413671313766
 \end{verbatim}
 
 \section{Algorithm}

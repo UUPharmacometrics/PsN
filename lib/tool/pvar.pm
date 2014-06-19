@@ -26,7 +26,6 @@ sub BUILD
 	}
 }
 
-
 sub modelfit_setup
 {
 	my $self = shift;
@@ -92,7 +91,6 @@ sub modelfit_setup
 	push(@{$self->tools}, $modelfit);
 }
 
-
 sub modelfit_analyze
 {
 	my $self = shift;
@@ -103,7 +101,7 @@ sub modelfit_analyze
 
 	open my $output_file, '>', "result.csv";
 
-	print $output_file "Type,Model,", join(',', @{$self->parameters}), "\n";; 
+	print $output_file "Type,Model number,Model name,", join(',', @{$self->parameters}), "\n";; 
 
 	for my $model_number (0 .. scalar(@{$self->pvar_models} - 1)) {
 		$epv_array = $self->_get_epv($model_number);
@@ -111,9 +109,10 @@ sub modelfit_analyze
 		foreach my $i (0 .. scalar(@$epv_array) - 1) {
 			$upv_array[$i] = $pv_array->[$i] - $epv_array->[$i];
 		}
-		print $output_file "EPV,", "$model_number,", join(',', @$epv_array), "\n";
-		print $output_file "UPV,", "$model_number,", join(',', @upv_array), "\n";
-		print $output_file "PV,", "$model_number,", join(',', @$pv_array), "\n";
+		my $model_name = $self->pvar_models->[$model_number]->filename;
+		print $output_file "EPV,", "$model_number,$model_name,", join(',', @$epv_array), "\n";
+		print $output_file "UPV,", "$model_number,$model_name,", join(',', @upv_array), "\n";
+		print $output_file "PV,", "$model_number,$model_name,", join(',', @$pv_array), "\n";
 	}
 
 	close $output_file;
@@ -137,7 +136,6 @@ sub _get_pv
 	return \@pv_array;
 }
 
-
 sub _get_epv
 {
 	my $self = shift;
@@ -155,7 +153,6 @@ sub _get_epv
 
 	return \@epv_array;
 }
-
 
 sub _get_data
 {
@@ -192,7 +189,6 @@ sub _get_data
 
 	return \@matrix;
 }
-
 
 sub _read_next_path
 {
@@ -233,6 +229,14 @@ sub get_models_from_scm_directory
 
 	my @model_files;
 
+	# First add the base model
+	my $base_model_name = 'base_model_with_included_relations.mod';
+	(my $volume, my $directories, my $filename) = File::Spec->splitpath($logfile_name);
+	my $base_model_full_path = "$volume$directories$base_model_name";
+	if (-e $base_model_full_path) {
+		push @model_files, "$base_model_full_path";
+	}
+
 	open my $logfile, '<', $logfile_name;
 
 	my $path = _read_next_path($logfile);
@@ -251,51 +255,21 @@ sub get_models_from_scm_directory
 	return @model_files;
 }
 
-sub set_data_files_from_scmdir
+sub set_data_files
 {
 	my $self = shift;
+	my $base_model = shift;
 	my @models = @_;
 
-	my $top_base_dir;
-	my $top_filename;
+	my $data_filename_with_path = $base_model->datas->[0]->full_name;
+	(my $volume, my $directories, my $data_filename) = File::Spec->splitpath($data_filename_with_path);
 
-	for (my $i = 0; $i < scalar(@models); $i++) {
-		my $model = $models[$i];
-		my $data_filename_with_path = $model->outputs->[0]->problems->[0]->input_problem->datas->[0]->options->[0]->name;
-
-		(undef, undef, my $data_filename) = File::Spec->splitpath($data_filename_with_path);
-		my @directories = File::Spec->splitdir($model->directory);
-		pop @directories;
-		pop @directories;
-		my $fullname_base = File::Spec->catfile(@directories, $data_filename);
-		my $directory_name_base = File::Spec->catdir(@directories);
-		push @directories, "modelfit_dir1";
-		push @directories, "NM_run1";
-		my $fullname_alt = File::Spec->catfile(@directories, $data_filename);
-		my $directory_name_alt = File::Spec->catdir(@directories);
-
+	for my $model (@models) {
 		my $data = $model->datas->[0];
-
-		if (-e $fullname_base) {
-			if (not defined $top_base_dir) {
-				$top_base_dir = $directory_name_base;
-				$top_filename = $data_filename;
-			}
-			$data->filename($data_filename);
-			$data->directory($directory_name_base);
-		} elsif (defined $top_base_dir) {
-			$data->filename($top_filename);
-			$data->directory($top_base_dir);
-		} elsif (-e $fullname_alt) {
-			$data->filename($data_filename);
-			$data->directory($directory_name_alt);
-		} else {
-			carp("The data file $data_filename could not be found. Please copy it to $directory_name_base and rerun pvar");
-		}
-
+		$data->directory("$volume$directories");
+		$data->filename($data_filename);
 	}
 }
-
 
 no Moose;
 __PACKAGE__->meta->make_immutable;

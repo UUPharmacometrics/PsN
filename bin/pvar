@@ -101,7 +101,7 @@ foreach my $model_name (@model_files) {
 }
 
 if (not $options{'models'}) {
-	tool::pvar->set_data_files_from_scmdir(@models);
+	tool::pvar->set_data_files(@models);
 }
 
 my $dummy_model = model->create_dummy_model;

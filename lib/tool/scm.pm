@@ -150,32 +150,31 @@ sub BUILD
 		$this -> directory($dir);
 	}
 
-	if ($this->epsilon() == 1){
+	if ($this->epsilon == 1) {
 		croak("The option -error cannot be used when option -epsilon is set. ")  if
-		( defined $this -> error);
+		(defined $this->error);
 	}else{
 		croak("The option -error must be used when option -epsilon is not set. ")  unless
-		( defined $this -> error);
+		(defined $this->error);
 	}
 
-	if (defined $this->error){
+	if (defined $this->error) {
 		croak("Unknown error form ".$this->error)  unless 
-		( $this -> error eq 'add' or 
-			$this -> error eq 'prop' or
-			$this -> error eq 'propadd' or
-			$this -> error eq 'exp' or
-			$this -> error eq 'user');
+		( $this->error eq 'add' or 
+			$this->error eq 'prop' or
+			$this->error eq 'propadd' or
+			$this->error eq 'exp' or
+			$this->error eq 'user');
 	}
 
-	if ($this -> error eq 'user'){
+	if ($this->error eq 'user') {
 		unless ( defined $this -> error_code() )  {
 			croak("You need to specify \'error_code'\ either as argument or in the config file ".
 				"when option -error=user is set." );
 		}
 	}
 
-	if ($this -> step_number() == 1 and 
-		defined $this->derivatives_data){
+	if ($this->step_number == 1 and defined $this->derivatives_data) {
 		ui -> print( category => 'scm',
 			message  => "Warning: the program will not check the contents of the ".
 			"derivatives data file ".$this->derivatives_data.". If columns are ".
@@ -356,37 +355,35 @@ sub BUILD
 	# covariates is available, initiate this.
 	# First; the continuous covariates:
 
-	if( -e $this -> covariate_statistics_file ) {
-		open( STAT, '<'.$this -> covariate_statistics_file );
+	if (-e $this->covariate_statistics_file) {
+		open(STAT, '<' . $this->covariate_statistics_file);
 		my $tmp;
-		for ( <STAT> ) {
-			$tmp = $tmp.$_;
+		for (<STAT>) {
+			$tmp = $tmp . $_;
 		}
-		close( STAT );
+		close(STAT);
 		my $VAR1;
-		eval( $tmp );
-		$this -> covariate_statistics($VAR1);
+		eval($tmp);
+		$this->covariate_statistics($VAR1);
 
 	} else {
 
 		my $model;
-		if ($do_filtering or 
-			(defined $this->time_varying() and 
-				scalar(@{$this->time_varying()})>0)){
-			$model = $this->preprocess_data(model=>$this -> models->[0],
-				directory => $this ->directory,
-				test_relations => $this->test_relations(),
-				time_varying => $this->time_varying(),
+		if ($do_filtering or (defined $this->time_varying and scalar(@{$this->time_varying}) > 0)) {
+			$model = $this->preprocess_data(model => $this->models->[0],
+				directory => $this->directory,
+				test_relations => $this->test_relations,
+				time_varying => $this->time_varying,
 				filter => $do_filtering);
 			croak('preprocessing data failed to return a model') unless (defined $model);
-		}else{
-			$model = $this -> models -> [0];
+		} else {
+			$model = $this->models->[0];
 		}
 		# Assume one $PROBLEM
 		my %model_column_numbers; 
 
-		my $data = $model -> datas -> [0];
-		if (defined $this->derivatives_data()){
+		my $data = $model->datas->[0];
+		if (defined $this->derivatives_data) {
 			$data = data->new(
 				filename             => $this->derivatives_data,
 				ignoresign           => '@',
@@ -397,42 +394,41 @@ sub BUILD
 				parse_header				 => 1	); #ok parse_header, do not know idcol
 
 			#set header from this data, must have column headers otherwise die
-			if (defined $data->column_head_indices and scalar(keys %{$data->column_head_indices})>0){ 
-				%model_column_numbers=%{$data->column_head_indices};
-			}else{
+			if (defined $data->column_head_indices and scalar(keys %{$data->column_head_indices}) > 0) { 
+				%model_column_numbers = %{$data->column_head_indices};
+			} else {
 				croak("When using option derivatives_data (done implicitly in boot_scm) the given file must have a header.");
 			}
 
-		}else{
+		} else {
 			#use the model header when computing statistics
 			my $model_col_num = 1;
-			if( defined $model->problems()->[0] -> inputs and 
-				defined $model->problems()->[0] -> inputs -> [0] -> options ) {
-				foreach my $option ( @{$model->problems()->[0] -> inputs -> [0] -> options} ) {
-					if (($option->name eq 'DROP' or $option->name eq 'SKIP') and (defined $option->value)){
-						$model_column_numbers{$option -> value}= $model_col_num;
-					}else{
-						$model_column_numbers{$option -> name}= $model_col_num;
+			if (defined $model->problems->[0]->inputs and defined $model->problems->[0]->inputs->[0]->options) {
+				foreach my $option (@{$model->problems->[0]->inputs->[0]->options}) {
+					if (($option->name eq 'DROP' or $option->name eq 'SKIP') and (defined $option->value)) {
+						$model_column_numbers{$option->value}= $model_col_num;
+					} else {
+						$model_column_numbers{$option->name}= $model_col_num;
 					}
 					$model_col_num++;
 				}
 			}
 		}
 
-		unless ( defined $this -> covariate_statistics and scalar(keys %{$this -> covariate_statistics})>0) {
-			$this -> covariate_statistics({});
-			$data -> target('mem');
-			unless( defined $data->individuals()  and (scalar(@{$data->individuals()})>0)){
-				if ($data->synced()){
+		unless (defined $this->covariate_statistics and scalar(keys %{$this->covariate_statistics}) > 0) {
+			$this->covariate_statistics({});
+			$data->target('mem');
+			unless( defined $data->individuals()  and (scalar(@{$data->individuals}) > 0)) {
+				if ($data->synced) {
 					#should not happen!
 					print "\nError: Resetting sync in data object for scm\n";
 					$data->synced(0);
 				}
-				$data -> synchronize();
+				$data->synchronize;
 			}
 			$data->synced(1); #we do not want to write to disk later
 
-			if ( defined $this -> continuous_covariates() ) {
+			if (defined $this->continuous_covariates) {
 				ui -> print( category => 'scm',
 					message  => "Calculating continuous covariate statistics",
 					newline => 1);
@@ -818,11 +814,6 @@ sub add_config_file
 
 }
 
-sub _read_scm_file
-{
-	my $self = shift;
-}
-
 sub _raw_results_callback
 {
 	my $self = shift;
@@ -842,13 +833,13 @@ sub _raw_results_callback
 
 	#if we are doing linearize then none of thetas from orig_mod will be left
 	#the sigmas and omegas will be the same
-	my $labels_mod = $self -> models->[$model_number-1];
+	my $labels_mod = $self->models->[$model_number - 1];
 	my $orig_mod;
 
-	if (defined $self -> initial_estimates_model){
-		$orig_mod = $self -> initial_estimates_model;
-	}else{
-		$orig_mod= $self -> models->[$model_number-1];
+	if (defined $self->initial_estimates_model) {
+		$orig_mod = $self->initial_estimates_model;
+	} else {
+		$orig_mod = $self->models->[$model_number - 1];
 	}
 	my ( %param_names, %npar_orig );
 	my @params = ( 'theta', 'omega', 'sigma' );
@@ -1410,27 +1401,27 @@ sub modelfit_setup
 	);
 	my $model_number = $parm{'model_number'};
 
-	my $model = $self -> models -> [$model_number-1];
+	my $model = $self->models->[$model_number - 1];
 
-	if ($self->step_number() == 1){
+	if ($self->step_number == 1) {
 		#set directory for final model
-		my ( $dir, $dummy ) = 
-		OSspecific::absolute_path( $self->directory().'/final_models', '');
-		$self -> final_model_directory($dir);
-		unless (-d $self->final_model_directory()){
-			mkdir ($self->final_model_directory());
+		my ($dir, $dummy) = OSspecific::absolute_path($self->directory . '/final_models', '');
+		$self->final_model_directory($dir);
+		unless (-d $self->final_model_directory) {
+			mkdir ($self->final_model_directory);
 		}
-		if (defined $self->xv_pred_data){
-			$self -> xv_results_file($self->directory().'/xv_results.txt');
+		if (defined $self->xv_pred_data) {
+			$self->xv_results_file($self->directory . '/xv_results.txt');
 		}
 		#if linearize then copy original model here (only allow one model)
-		if ($self->linearize){
-			my $tmp_orig = $model -> copy ( filename => 'original.mod',
+		if ($self->linearize) {
+			my $tmp_orig = $model->copy(
+				filename           => 'original.mod',
 				copy_data          => 0,
 				copy_output        => 1,
 				skip_data_parsing  => 1);
-			$tmp_orig->directory($self->final_model_directory());
-			$tmp_orig ->_write();
+			$tmp_orig->directory($self->final_model_directory);
+			$tmp_orig->_write;
 			$tmp_orig = undef;
 		}
 	}
@@ -1486,41 +1477,52 @@ sub modelfit_setup
 
 		#according to Jakob's wish, run model here with included relations
 		#will make base_criteria_values ofv redundant
-		my $stepname='';
-		if ($self->step_number()>1){
-			$stepname = '_'.($self->step_number()-1);
-			if ($self->search_direction() eq 'forward'){
+		my $stepname = '';
+		if ($self->step_number > 1) {
+			$stepname = '_' . ($self->step_number - 1);
+			if ($self->search_direction eq 'forward') {
 				$stepname .= 'f';
-			}else{
+			} else {
 				$stepname .= 'b';
 			}
 		}
-		my $fname = 'base_model_with_included_relations'.$stepname.'.mod';
-		if (($self->max_steps() == 0) and ($self->step_number()==1) and 
-			scalar(keys %{$self->test_relations}) == 0
-				and $self->linearize){
-
-			$fname = $self->basename.'.mod';
+		my $fname = 'base_model_with_included_relations' . $stepname . '.mod';
+		if (($self->max_steps == 0) and ($self->step_number == 1) and scalar(keys %{$self->test_relations}) == 0 and $self->linearize) {
+			$fname = $self->basename . '.mod';
 		}
-		my $start_model = $model -> copy ( filename => $fname,
+		my $start_model = $model->copy(filename => $fname,
 			copy_data          => 0,
 			copy_output        => 0,
-			skip_data_parsing => 1);
+			skip_data_parsing  => 1);
 
-		$start_model -> directory($self->directory());
-		if (scalar(keys %included_relations)>0){
+		my $datafile_name = 'filtered.dta';
+
+		# Set the data file for the base model
+		if ($self->step_number == 1) {
+			if (-e $self->directory . "/$datafile_name") {
+				# If data is filtered update the main base model to use the filtered data set
+				$start_model->datas->[0]->directory($self->directory);
+				$start_model->datas->[0]->filename($datafile_name);
+	    	$start_model->_option_name(position => 0, record => 'data', problem_number => 1, new_name	=> $datafile_name);
+			} else {
+				# If no filtered data is present copy the original data set to the top level of the rundir
+				cp($start_model->datas->[0]->full_name, $self->directory);
+			}
+		}
+		
+		$start_model->directory($self->directory);
+		if (scalar(keys %included_relations) > 0) {
 			$self->have_run_included(1);
 			#must not permanently modify bare base model, would cause errors when adding relations later
 			#make copy and try to change reference base values etc,
 			#add included relations
 			#if not model run and no included relations, there will be no change here.
 			# if linearize may or may not be a change
-			my @used_covariates=();
-			foreach my $incl_par ( sort keys %included_relations ) {
-				foreach my $incl_cov ( sort keys %{$included_relations{$incl_par}} ) {
-					if ($self->linearize()){
-						$self -> 
-						add_code_linearize( definition_code => $included_relations{$incl_par}{$incl_cov}{'code'},
+			my @used_covariates = ();
+			foreach my $incl_par (sort keys %included_relations) {
+				foreach my $incl_cov (sort keys %{$included_relations{$incl_par}}) {
+					if ($self->linearize) {
+						$self->add_code_linearize( definition_code => $included_relations{$incl_par}{$incl_cov}{'code'},
 							nthetas         => $included_relations{$incl_par}{$incl_cov}{'nthetas'},
 							inits           => $included_relations{$incl_par}{$incl_cov}{'inits'},
 							bounds          => $included_relations{$incl_par}{$incl_cov}{'bounds'},
@@ -1528,9 +1530,8 @@ sub modelfit_setup
 							sum_covariates  => $self->sum_covariates_hash->{$incl_par},
 							parameter       => $incl_par,
 							covariate       => $incl_cov );
-					}else{
-						$self -> 
-						add_code( definition_code => $included_relations{$incl_par}{$incl_cov}{'code'},
+					} else {
+						$self->add_code( definition_code => $included_relations{$incl_par}{$incl_cov}{'code'},
 							nthetas         => $included_relations{$incl_par}{$incl_cov}{'nthetas'},
 							inits           => $included_relations{$incl_par}{$incl_cov}{'inits'},
 							bounds          => $included_relations{$incl_par}{$incl_cov}{'bounds'},
@@ -1539,53 +1540,51 @@ sub modelfit_setup
 							parameter       => $incl_par,
 							covariate       => $incl_cov );
 					}
-					push( @used_covariates, $incl_cov );
+					push(@used_covariates, $incl_cov);
 				}
 			}
 			my @all_covariates;
-			if ( defined $self -> categorical_covariates() ) {
-				push( @all_covariates, @{$self -> categorical_covariates()});
+			if (defined $self->categorical_covariates) {
+				push(@all_covariates, @{$self->categorical_covariates});
 			}
-			if ( defined $self -> continuous_covariates() ) {
-				push( @all_covariates, @{$self -> continuous_covariates()});
+			if (defined $self->continuous_covariates) {
+				push(@all_covariates, @{$self->continuous_covariates});
 			}
-			$self -> drop_undrop_covariates( applicant_model => $start_model,
+			$self->drop_undrop_covariates(applicant_model => $start_model,
 				used_covariates => \@used_covariates,
 				all_covariates  => \@all_covariates,
-				do_not_drop     => $self -> do_not_drop);
+				do_not_drop     => $self->do_not_drop);
 		}
-		$start_model -> _write();
+		$start_model->_write;
 
-		my $orig_fit = tool::modelfit -> new
+		my $orig_fit = tool::modelfit->new
 		( %{common_options::restore_options(@common_options::tool_options)},
-			base_directory => $self -> directory,
-			directory      => $self -> directory.'/base_modelfit_dir'.$model_number.'/',
+			base_directory => $self->directory,
+			directory      => $self->directory . '/base_modelfit_dir' . $model_number . '/',
 			models         => [$start_model],
 			top_tool       => 0,
-			parent_tool_id   => $self -> tool_id,
+			parent_tool_id => $self->tool_id,
 			threads        => $mfit_threads,
 			parent_threads => $own_threads,
 			%subargs);
 
 		my $mess = "Estimating base model";
 		$mess .= " with included_relations to get base ofv" if ($self->have_run_included);
-		if ($self->linearize()){
+		if ($self->linearize) {
 			$mess = "Estimating linearized base model";
-			if ($self->step_number()>1){
+			if ($self->step_number > 1) {
 				$mess .= " with updated derivatives and predictions";
 			}
 		}
-		ui -> print( category => 'scm',
-			message  => $mess ) unless ( $self -> parent_threads > 1 );
-		$orig_fit -> run;
+		ui -> print(category => 'scm', message  => $mess) unless ($self->parent_threads > 1);
+		$orig_fit->run;
 
-		if ( defined $start_model->outputs() and 
-			defined $start_model->outputs()->[0] and
+		if (defined $start_model->outputs and defined $start_model->outputs->[0] and
 			$start_model->outputs()->[0]-> have_output() and
-			defined $start_model-> outputs -> [0] -> get_single_value(attribute=> 'ofv') ) {
+			defined $start_model-> outputs -> [0] -> get_single_value(attribute=> 'ofv')) {
 			my $start_ofv = $start_model -> outputs -> [0] -> get_single_value(attribute=> 'ofv');
 			my $ofvname = 'ofv';
-			my $start_name = $start_model ->filename();
+			my $start_name = $start_model->filename;
 			#change base criteria values unless it is defined already (to override start value)
 			if (($self->linearize() and $self->step_number() > 1) 
 					or not ( defined $self -> base_criteria_values and 
@@ -1656,32 +1655,31 @@ sub modelfit_setup
 		}
 	}
 
-	if ((defined $self -> prepared_models) and (defined $self -> prepared_models->[$model_number-1]{'own'})
-			and scalar(@{$self -> prepared_models->[$model_number-1]{'own'}})>0){
+	if ((defined $self->prepared_models) and (defined $self->prepared_models->[$model_number-1]{'own'})
+			and scalar(@{$self->prepared_models->[$model_number-1]{'own'}}) > 0) {
 		$self->tools([]) unless (defined $self->tools);
-		push( @{$self -> tools},
-			tool::modelfit -> new
+		push(@{$self->tools},
+			tool::modelfit->new
 			( %{common_options::restore_options(@common_options::tool_options)},
-				_raw_results_callback => $self ->
-				_raw_results_callback( model_number => $model_number ),
-				models         => $self -> prepared_models->[$model_number-1]{'own'},
+				_raw_results_callback => $self->_raw_results_callback(model_number => $model_number),
+				models         => $self->prepared_models->[$model_number-1]{'own'},
 				threads        => $mfit_threads,
-				logfile        => [$self -> directory."/modelfit".$model_number.".log"],
-				base_directory => $self -> directory,
-				directory      => $self -> directory.'/modelfit_dir'.$model_number,
+				logfile        => [$self->directory."/modelfit".$model_number.".log"],
+				base_directory => $self->directory,
+				directory      => $self->directory.'/modelfit_dir'.$model_number,
 				parent_threads => $own_threads,
-				parent_tool_id   => $self -> tool_id,
+				parent_tool_id => $self->tool_id,
 				top_tool       => 0,
 				%subargs ) );
 		ui -> print( category => 'scm',
 			message  => "Estimating the candidate models." ) if ($self->linearize());
-	}else{
+	} else {
 		my $mess;
-		if ($self -> search_direction() eq 'forward'){
+		if ($self->search_direction eq 'forward') {
 			$mess="No models to test, there are no relations to add.";
-		}else{
+		} else {
 			$mess="No models to test, there are no included relations to remove.";
-			$self -> base_criteria_values -> {'ofv'}=0;	  #to avoid crash later
+			$self->base_criteria_values->{'ofv'} = 0;	  #to avoid crash later
 		}
 		ui -> print( category => 'scm',
 			message  => $mess ) unless ( $self -> parent_threads > 1 );
