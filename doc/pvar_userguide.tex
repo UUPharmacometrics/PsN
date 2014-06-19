@@ -42,7 +42,7 @@ If this option is present on the command line a list of model files can be passe
 Parametric variability can calculate how much of the variability of a parameter that is explained by the model. For every parameter listed on the command line PsN will calculate the total variance, the explained variance and the unexplained variance. The resulting table can be found in the result.csv. The input models to pvar must have final parameter estimates.
 
 \subsection{Run pvar from an scm}
-The pvar script can be run for all the intermediate models of an scm run. For this to work the scm must have been run with a clean option less than or equal to two (i.e. -clean=0, -clean=1 or -clean=2). The scm log file of the scm run must be specified as an argument to the pvar run. From the log file pvar will find which models to use. Note that they will be numbered in the results file in the order they appeared in the log file. The base model of the scm will always be run as the first model (number 0). 
+The pvar script can be run for all the intermediate models of an scm run. For this to work the scm must have been run with a clean option less than or equal to two (i.e. -clean=0, -clean=1 or -clean=2). The scm log file of the scm run must be specified as an argument to the pvar run. From the log file pvar will find which models to use. Note that they will be numbered in the results file in the order they appeared in the log file. The base model of the scm will always be run as the first model (number 0). Pvar can not be run on a linearized scm. 
 
 \section{Result}
 
