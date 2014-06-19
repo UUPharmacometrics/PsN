@@ -860,71 +860,71 @@ sub setup_ind_ofv_models
       # look for ETA(N) in $PK, $PRED, $ERROR and replace ETA(N) with correct number
 
       unless (scalar(@{$eta_matrix->[$id]}) == $number_of_etas){
-	croak("Error create_and_run_ind_ofv_models: wrong number of etas ind ($id+1)");
+				croak("Error create_and_run_ind_ofv_models: wrong number of etas ind ($id+1)");
       }
 
       #the regular expression here cannot handle case where line starts with ETA(X) 
       #without even a leading space. Think that case can never occur, since
       #no assignment done to ETAs in PK/PRED/ERROR
-      if ($self->ind_param eq 'eta') {
-	my $record_ref = $copy -> record(record_name => 'pk' );
-	if ( scalar(@{$record_ref}) > 0 ){ 
-	  my $code_block;
-	  foreach my $line (@{$copy -> pk}){
-	    my $new_line;
-	    while( $line =~ /(.*[^A-Z]+)ETA\((\d+)\)(.*)/g ){
-	      my $eta_index = $2-1; #does conversion work here??
-	      $line = $3;
-	      my $etastring = sprintf "(%12.6E)",$eta_matrix->[$id]->[$eta_index];
-	      $new_line .= $1.$etastring; 
-	    }
-	    push(@{$code_block},$new_line.$line );
-	  }
-	  $copy -> pk( new_pk => $code_block );
-	}
-	
-	$record_ref = $copy -> record(record_name => 'pred' );
-	if ( scalar(@{$record_ref}) > 0 ){ 
-	  my $code_block;
-	  foreach my $line (@{$copy -> pred}){
-	    my $new_line;
-	    #ok empty set []???
-	    while( $line =~ /(.*[^A-Z]+)ETA\((\d+)\)(.*)/g ){
-	      my $eta_index = $2-1; #does conversion work here??
-	      $line = $3;
-	      $new_line .= $1. "$eta_matrix->[$id]->[$eta_index]";
-	    }
-	    push(@{$code_block},$new_line.$line );
-	  }
-	  $copy -> pred( new_pred => $code_block );
-	}
-	$record_ref = $copy -> record(record_name => 'error' );
-	if ( scalar(@{$record_ref}) > 0 ){ 
-	  my $code_block;
-	  foreach my $line (@{$copy -> problems->[0]->errors->[0]->code}){
-	    my $new_line;
-	    while( $line =~ /(.*[^A-Z]+)ETA\((\d+)\)(.*)/g ){
-	      my $eta_index = $2-1; #does conversion work here??
-	      $line = $3;
-	      $new_line .= $1. "$eta_matrix->[$id]->[$eta_index]";
-	    }
-	    push(@{$code_block},$new_line.$line );
-	  }
-	  $copy -> set_records(type => 'error',
-			       record_strings => $code_block);
-	}
-      } else {
-	#fix thetas to new values
+			if ($self->ind_param eq 'eta') {
+				my $record_ref = $copy -> record(record_name => 'pk' );
+				if ( scalar(@{$record_ref}) > 0 ){ 
+					my $code_block;
+					foreach my $line (@{$copy -> pk}){
+						my $new_line;
+						while( $line =~ /(.*[^A-Z]+)ETA\((\d+)\)(.*)/g ){
+							my $eta_index = $2-1; #does conversion work here??
+							$line = $3;
+							my $etastring = sprintf "(%12.6E)",$eta_matrix->[$id]->[$eta_index];
+							$new_line .= $1.$etastring; 
+						}
+						push(@{$code_block},$new_line.$line );
+					}
+					$copy -> pk( new_pk => $code_block );
+				}
 
-	my @theta_inits;
-	for (my $j; $j<$number_of_etas; $j++){
-	  push(@theta_inits,$eta_matrix->[$id]->[$j]);
-	}
-	$copy -> initial_values( parameter_type => 'theta',
-				 parameter_numbers => [[1..$number_of_etas]], 
-				 new_values => [\@theta_inits]) ;
-	
-      }
+				$record_ref = $copy -> record(record_name => 'pred' );
+				if ( scalar(@{$record_ref}) > 0 ){ 
+					my $code_block;
+					foreach my $line (@{$copy -> pred}){
+						my $new_line;
+						#ok empty set []???
+						while( $line =~ /(.*[^A-Z]+)ETA\((\d+)\)(.*)/g ){
+							my $eta_index = $2-1; #does conversion work here??
+							$line = $3;
+							$new_line .= $1. "$eta_matrix->[$id]->[$eta_index]";
+						}
+						push(@{$code_block},$new_line.$line );
+					}
+					$copy -> pred( new_pred => $code_block );
+				}
+				$record_ref = $copy -> record(record_name => 'error' );
+				if ( scalar(@{$record_ref}) > 0 ){ 
+					my $code_block;
+					foreach my $line (@{$copy -> problems->[0]->errors->[0]->code}){
+						my $new_line;
+						while( $line =~ /(.*[^A-Z]+)ETA\((\d+)\)(.*)/g ){
+							my $eta_index = $2-1; #does conversion work here??
+							$line = $3;
+							$new_line .= $1. "$eta_matrix->[$id]->[$eta_index]";
+						}
+						push(@{$code_block},$new_line.$line );
+					}
+					$copy -> set_records(type => 'error',
+						record_strings => $code_block);
+				}
+			} else {
+				#fix thetas to new values
+
+				my @theta_inits;
+				for (my $j; $j<$number_of_etas; $j++){
+					push(@theta_inits,$eta_matrix->[$id]->[$j]);
+				}
+				$copy -> initial_values( parameter_type => 'theta',
+					parameter_numbers => [[1..$number_of_etas]], 
+					new_values => [\@theta_inits]) ;
+
+			}
 
       #Temporary for Paul 2008-09-26
       #Add IGNORE(ID.GT.X) to $DATA
@@ -942,13 +942,13 @@ sub setup_ind_ofv_models
       #2.2.3 Add custom CONTR routine, that prints individual ofv-values to fort.80, to $SUBROUTINE
       #first check if have $SUBROUTINE
       my $record_ref = $copy -> record(record_name => 'subroutine' );
-      if ( scalar(@{$record_ref}) > 0 ){ 
-	$copy -> add_option( record_name => 'subroutine',
-			     option_name => 'CONTR',
-			     option_value => 'iofvcont.f' );
-      } else {
-	$copy -> add_records( type => 'subroutine',
-			      record_strings => ['CONTR=iofvcont.f'] );
+			if ( scalar(@{$record_ref}) > 0 ){ 
+				$copy -> add_option( record_name => 'subroutine',
+					option_name => 'CONTR',
+					option_value => 'iofvcont.f' );
+			} else {
+				$copy -> add_records( type => 'subroutine',
+					record_strings => ['CONTR=iofvcont.f'] );
       }
       
       $copy -> extra_output( ['fort.80'] );

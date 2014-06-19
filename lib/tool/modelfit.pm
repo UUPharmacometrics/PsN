@@ -365,9 +365,6 @@ sub BUILD
 	$self->raw_line_structure(ext::Config::Tiny->new());
 }
 
-
-
-
 sub run
 {
 	my $self = shift;
@@ -1705,7 +1702,8 @@ sub run_nonmem
 	} # end of "not -e psn-$tries.lst or rerun"
 }
 
-sub diagnose_lst_errors{
+sub diagnose_lst_errors
+{
 	my $self = shift;
 	my %parm = validated_hash(\@_,
 							  missing => { isa => 'Bool', optional => 0 },

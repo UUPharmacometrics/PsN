@@ -27,10 +27,9 @@ has 'pind_directories' => ( is => 'rw', isa => 'ArrayRef[Str]' );
 has 'logfile' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { ['nonpb.log'] } );
 has 'results_file' => ( is => 'rw', isa => 'Str', default => 'nonpb_results.csv' );
 
-
 sub BUILD
 {
-	my $self  = shift;
+	my $self = shift;
 
 	unless ($self->nonpb_version == 1 || $self->nonpb_version == 2) {
 		croak('nonpb version must be either 1 or 2 (2 is default).');

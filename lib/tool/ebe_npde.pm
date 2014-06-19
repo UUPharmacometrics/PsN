@@ -24,7 +24,6 @@ has 'probnum' => ( is => 'rw', isa => 'Int', default => 1 );
 has 'logfile' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { ['ebe_npde.log'] } );
 has 'results_file' => ( is => 'rw', isa => 'Str', default => 'ebe_npde_results.csv' );
 
-
 sub BUILD
 {
 	my $self = shift;
@@ -42,7 +41,6 @@ sub BUILD
 		}
 		$self->$accessor(\@new_files);
 	}	
-
 
 	if ( scalar (@{$self->models->[0]->problems}) > 2 ){
 		croak('Cannot have more than two $PROB in the input model.');
@@ -90,7 +88,6 @@ sub BUILD
 	if (not (defined $meth) or ($meth eq '0') or ($meth =~ /^ZE/)){
 		croak('Cannot run ebe_npde if METHOD=0, all ETAs will be 0');
 	}
-
 }
 
 sub modelfit_setup
@@ -904,19 +901,10 @@ sub _modelfit_raw_results_callback
 	return $subroutine;
 }
 
-sub modelfit_analyze
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		 model_number => { isa => 'Int', optional => 1 }
-	);
-	my $model_number = $parm{'model_number'};
-}
-
 sub prepare_results
 {
 	my $self = shift;
-  $self->cleanup();
+  $self->cleanup;
 }
 
 sub max_and_min
@@ -956,7 +944,7 @@ sub max_and_min
     }
   }
 
-	return $maximum ,$minimum;
+	return $maximum, $minimum;
 }
 
 sub cleanup

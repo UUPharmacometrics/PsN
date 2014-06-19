@@ -15,7 +15,6 @@ use MooseX::Params::Validate;
 
 extends 'tool';
 
-
 has 'bca_print_order' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { ['diagnostic_means','means','bias','bca_confidence_intervals','standard_error_confidence_intervals','standard_errors','medians','jackknife_means','percentile_confidence_intervals'] } );
 has 'result_parameters' => ( is => 'rw', isa => 'HashRef', default => sub { {} } );
 has 'bca_calculation_order' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { ['diagnostic_means','means','medians','percentile_confidence_intervals','standard_errors','standard_error_confidence_intervals','jackknife_means','bca_confidence_intervals'] } );
@@ -58,20 +57,18 @@ has 'bca_confidence_intervals_check' => ( is => 'rw', isa => 'Num', default => 0
 has 'bca_confidence_intervals_level' => ( is => 'rw', isa => 'Num', default => 5 );
 has 'large_bias_limit' => ( is => 'rw', isa => 'Num', default => 0.05 );
 
-
 sub BUILD
 {
-	my $self  = shift;
+	my $self = shift;
 
-	for my $accessor ('logfile','raw_results_file','raw_nonp_file'){
+	for my $accessor ('logfile','raw_results_file','raw_nonp_file') {
 		my @new_files = ();
 		my @old_files = @{$self->$accessor};
-		for (my $i=0; $i < scalar(@old_files); $i++){
+		for (my $i = 0; $i < scalar(@old_files); $i++) {
 			my $name;
 			my $ldir;
-			( $ldir, $name ) =
-			OSspecific::absolute_path( $self->directory(), $old_files[$i] );
-			push(@new_files,$ldir.$name) ;
+			($ldir, $name) = OSspecific::absolute_path($self->directory, $old_files[$i]);
+			push(@new_files, $ldir . $name);
 		}
 		$self->$accessor(\@new_files);
 	}	
@@ -249,15 +246,6 @@ sub resample
 	}
 
 	return \@resample_models;
-}
-
-sub within_se_confidence_limits
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		original_models => { isa => 'ArrayRef', optional => 1 }
-	);
-	my @original_models = defined $parm{'original_models'} ? @{$parm{'original_models'}} : ();
 }
 
 sub calculate_diagnostic_means
@@ -790,7 +778,6 @@ sub general_setup
 			$model -> add_nonparametric_code;
 		}
 
-
 		my $orig_fit = tool::modelfit ->
 		new( %{common_options::restore_options(@common_options::tool_options)},
 			base_directory	 => $self ->directory(),
@@ -810,7 +797,6 @@ sub general_setup
 			message => 'Executing base model.' );
 
 		$orig_fit -> run;
-
 	}
 
 	my $output = $model -> outputs -> [0];
@@ -1374,15 +1360,6 @@ sub modelfit_analyze
 	}
 }
 
-sub modelfit_post_fork_analyze
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		model_number => { isa => 'Int', optional => 1 }
-	);
-	my $model_number = $parm{'model_number'};
-}
-
 sub _modelfit_raw_results_callback
 {
 	my $self = shift;
@@ -1468,7 +1445,6 @@ sub _dofv_raw_results_callback
 	}
 	my @dofv_samples = @{$self->dofv_samples()};
 	unshift (@dofv_samples,'original'); #for original model
-
 
 	$subroutine = sub {
 		my $modelfit = shift;
@@ -2033,7 +2009,7 @@ sub create_R_scripts
 	# Execute the script
 
 	if( defined $PsN::config -> {'_'} -> {'R'} ) {
-		chdir( $self ->directory() );
+		chdir($self->directory);
 		system( $PsN::config -> {'_'} -> {'R'}." CMD BATCH bootstrap.R" );
 	}
 }

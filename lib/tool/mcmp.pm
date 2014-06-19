@@ -812,18 +812,6 @@ sub ceil
 	return $integer_out;
 }
 
-sub median
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-							  sorted_array => { isa => 'Ref', optional => 1 }
-		);
-	my $sorted_array = $parm{'sorted_array'};
-	my $result;
-
-	return $result;
-}
-
 sub get_total_samples
 {
 	my $self = shift;
@@ -1024,11 +1012,6 @@ sub create_unique_values_hash
 	}
 
 	return \%value_hash;
-}
-
-sub mcmp_analyze
-{
-	my $self = shift;
 }
 
 no Moose;

@@ -471,45 +471,45 @@ sub print_results
 {
 	my $self = shift;
 
-  # Print results created by 'prepare_results' methods specific to the
-  # tools. prepare_results and print_results are usually called from
-  # the tool scripts (e.g. bin/bootstrap)
+	# Print results created by 'prepare_results' methods specific to the
+	# tools. prepare_results and print_results are usually called from
+	# the tool scripts (e.g. bin/bootstrap)
 
-  my $sub_print_results;
+	my $sub_print_results;
 
-  if ( defined $self->subtools and defined $self->subtools->[0] ) {
+	if ( defined $self->subtools and defined $self->subtools->[0] ) {
 		$sub_print_results = $self->subtools->[0];
-    # Only if we have a subtool, which we allways do, 'modelfit' is as
-    # usual the inner tool in the basic case.
+		# Only if we have a subtool, which we allways do, 'modelfit' is as
+		# usual the inner tool in the basic case.
 
-    
-    ### get_dim subroutine recurses through arrays of arrays and
-    ### returns the number of levels (assumes the same number of
-    ### levels in alls subarrays). 
-    ###
-    ### 1st argument is the reference to the toplevel array.
-    ### 2nd argument is a starting level.
-    ### 3rd argument is an array giving the size of the arrays at each
-    ### level (assuming same size arrays at each level)
 
-    sub get_dim {
-      my $arr      = shift;
-      my $dim      = shift;
-      my $size_ref = shift;
-      $dim++;
-      if ( defined $arr and ref($arr) eq 'ARRAY' ) {
+		### get_dim subroutine recurses through arrays of arrays and
+		### returns the number of levels (assumes the same number of
+		### levels in alls subarrays). 
+		###
+		### 1st argument is the reference to the toplevel array.
+		### 2nd argument is a starting level.
+		### 3rd argument is an array giving the size of the arrays at each
+		### level (assuming same size arrays at each level)
+
+		sub get_dim {
+			my $arr      = shift;
+			my $dim      = shift;
+			my $size_ref = shift;
+			$dim++;
+			if ( defined $arr and ref($arr) eq 'ARRAY' ) {
 				push( @{$size_ref}, scalar @{$arr} );
 				( $dim, $size_ref ) = get_dim( $arr->[0], $dim, $size_ref );
-      }
-      return ( $dim, $size_ref );
-    }
+			}
+			return ( $dim, $size_ref );
+		}
 
 		### format_value returns a string for a given number. If the value
 		### is not defined it is returned as NaN or NA, depending on the
 		### output_style configured. Numbers without decimals get 10
 		### digits, Numbers with decimals get 10 digis and 5 decimal
 		### values.
-		
+
 		sub format_value {
 			my $val = shift;
 			if ( not defined $val or $val eq '' ) {
@@ -521,26 +521,24 @@ sub print_results
 				if ( /.*\D+.*/ or $nodot) { #non-digit or no decimal point
 					return sprintf("%14s", $val) . ',';
 				} else {
-#					return sprintf("%14.5f", $val) . ','; #gives only 5 decimals, may round too much
 					return sprintf("%14.7g", $val) . ','; #7 value digits
 				}
 			}
 		}
 
+		### format_label does the same thing as format value, but does not
+		### print out "NA" or "NaN" in case of missing data.
 
-    ### format_label does the same thing as format value, but does not
-    ### print out "NA" or "NaN" in case of missing data.
-
-    sub format_label {
-      my $val = shift;
-      if ( not defined $val or $val eq '' ) {
+		sub format_label {
+			my $val = shift;
+			if ( not defined $val or $val eq '' ) {
 				return '"",'; #added
-      } else {
+			} else {
 				$_ = $val;
 				my $nodot = /.*\..*/ ? 0 : 1;
 				#protect cells with commas
 				$val =~ s/\"/\"\"/g; 
-					$_ =~ s/\.//g;
+				$_ =~ s/\.//g;
 				if ( /.*\D+.*/ or $nodot) {
 					return '"'.sprintf("%14s",$val).'",';
 				} else {
@@ -549,105 +547,105 @@ sub print_results
 			}
 		}
 
-    ### The main part of the method will loop through the 'own'
-    ### results, each element of the 'own' array is a hash with three
-    ### keys: 
-    ###
-    ### 'name' of the result, will be used as header (only if
-    ### values are defined). 
-    ### 
-    ### 'values' either a single value, a list of values or a table of
-    ### values.
-    ###
-    ### 'lables' either a single value(?), a list of values used as
-    ### header for the 'values' list or table. It can be a table, Then
-    ### the first row will be printed before each row in the values
-    ### table, and the second row will be the header.
+		### The main part of the method will loop through the 'own'
+		### results, each element of the 'own' array is a hash with three
+		### keys: 
+		###
+		### 'name' of the result, will be used as header (only if
+		### values are defined). 
+		### 
+		### 'values' either a single value, a list of values or a table of
+		### values.
+		###
+		### 'lables' either a single value(?), a list of values used as
+		### header for the 'values' list or table. It can be a table, Then
+		### the first row will be printed before each row in the values
+		### table, and the second row will be the header.
 
-    croak("No results_file defined" )
-			unless ( defined $self->results_file );
+		croak("No results_file defined" )
+		unless ( defined $self->results_file );
 
-    unless ( defined $self->results and scalar(@{$self->results}) == 1
-	     and not defined $self->results->[0]{'own'}) {
+		unless ( defined $self->results and scalar(@{$self->results}) == 1
+				and not defined $self->results->[0]{'own'}) {
 			open ( RES, ">" . $self->directory . $self->results_file );
 			$self->stop_motion_call(tool => 'tool', message => "prepare to print ".
 				$self->directory . $self->results_file)
-	    if ($self->stop_motion());
-    }
-
-    #the unless is here to prevent empty file from being produced, especially for mcmp
-
-    if ( defined $self->results ) {
-      my @all_results = @{$self->results};
-
-      for ( my $i = 0; $i <= $#all_results; $i++ ) {
-	if ( defined $all_results[$i]{'own'} ) {
-	  my @my_results = @{$all_results[$i]{'own'}};
-
-	  for ( my $j = 0; $j <= $#my_results; $j++ ) {
-	    # These size estimates include the problem and sub_problem dimensions:
-	    my ( $ldim, $lsize_ref ) = get_dim( $my_results[$j]{'labels'}, -1, [] );
-	    my ( $vdim, $vsize_ref ) = get_dim( $my_results[$j]{'values'}, -1, [] );
-	    print RES $my_results[$j]{'name'},"\n" if ( $vdim > 1 );
-	    if ( defined $my_results[$j]{'values'} and
-		 scalar @{$my_results[$j]{'values'}} >= 0 ) {
-	      my @values  = @{$my_results[$j]{'values'}};
-	      my @labels;
-	      if ( defined $my_results[$j]{'labels'} and
-		   scalar @{$my_results[$j]{'labels'}} >= 0 ) {
-		@labels = @{$my_results[$j]{'labels'}};
-	      }
-	      
-	      # Print Header Labels
-	      if ( $ldim == 0 ) {
-					my $label = \@labels;
-					print RES '"",'.format_label($label),"\n"; #added
-	      } elsif ( $ldim == 2 ) {
-					print RES '"",'; #added
-					for ( my $n = 0; $n < scalar @{$labels[1]}; $n++ ) {
-						my $label = $labels[1][$n];
-						print RES format_label($label);
-					}
-					print RES "\n";
-	      }
-
-	      # Print the values (with labels on each row if ldim == 2:
-	      if ( $vdim == 0 ) {
-				print RES ','.format_value(\@values),"\n";
-	      } elsif ( $vdim == 1 ) {
-					for ( my $m = 0; $m < scalar @values; $m++ ) {
-						my $label = $labels[$m];
-						print RES ','.format_label($label);
-						my $val = $values[$m];
-						print RES ','.format_value($val),"\n";
-					}
-				} elsif ( $vdim == 2 ) {
-		for ( my $m = 0; $m < scalar @values; $m++ ) {
-		  my $label;
-		  if ( $ldim == 1 ) {
-		    $label = $labels[$m];
-		  } elsif ( $ldim == 2 ) {
-		    $label = $labels[0][$m];
-		  }
-		  print RES format_label($label);
-		  if( defined $values[$m] ){
-		    for ( my $n = 0; $n < scalar @{$values[$m]}; $n++ ) {
-		      print RES format_value($values[$m][$n]);
-		    }
-		  }
-		  print RES "\n";
+			if ($self->stop_motion());
 		}
-	      }
-	    }
-	  }
+
+		#the unless is here to prevent empty file from being produced, especially for mcmp
+
+		if ( defined $self->results ) {
+			my @all_results = @{$self->results};
+
+			for ( my $i = 0; $i <= $#all_results; $i++ ) {
+				if ( defined $all_results[$i]{'own'} ) {
+					my @my_results = @{$all_results[$i]{'own'}};
+
+					for ( my $j = 0; $j <= $#my_results; $j++ ) {
+						# These size estimates include the problem and sub_problem dimensions:
+						my ( $ldim, $lsize_ref ) = get_dim( $my_results[$j]{'labels'}, -1, [] );
+						my ( $vdim, $vsize_ref ) = get_dim( $my_results[$j]{'values'}, -1, [] );
+						print RES $my_results[$j]{'name'},"\n" if ( $vdim > 1 );
+						if ( defined $my_results[$j]{'values'} and
+							scalar @{$my_results[$j]{'values'}} >= 0 ) {
+							my @values  = @{$my_results[$j]{'values'}};
+							my @labels;
+							if ( defined $my_results[$j]{'labels'} and
+								scalar @{$my_results[$j]{'labels'}} >= 0 ) {
+								@labels = @{$my_results[$j]{'labels'}};
+							}
+
+							# Print Header Labels
+							if ( $ldim == 0 ) {
+								my $label = \@labels;
+								print RES '"",'.format_label($label),"\n"; #added
+							} elsif ( $ldim == 2 ) {
+								print RES '"",'; #added
+								for ( my $n = 0; $n < scalar @{$labels[1]}; $n++ ) {
+									my $label = $labels[1][$n];
+									print RES format_label($label);
+								}
+								print RES "\n";
+							}
+
+							# Print the values (with labels on each row if ldim == 2:
+							if ( $vdim == 0 ) {
+								print RES ','.format_value(\@values),"\n";
+							} elsif ( $vdim == 1 ) {
+								for ( my $m = 0; $m < scalar @values; $m++ ) {
+									my $label = $labels[$m];
+									print RES ','.format_label($label);
+									my $val = $values[$m];
+									print RES ','.format_value($val),"\n";
+								}
+							} elsif ( $vdim == 2 ) {
+								for ( my $m = 0; $m < scalar @values; $m++ ) {
+									my $label;
+									if ( $ldim == 1 ) {
+										$label = $labels[$m];
+									} elsif ( $ldim == 2 ) {
+										$label = $labels[0][$m];
+									}
+									print RES format_label($label);
+									if( defined $values[$m] ){
+										for ( my $n = 0; $n < scalar @{$values[$m]}; $n++ ) {
+											print RES format_value($values[$m][$n]);
+										}
+									}
+									print RES "\n";
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		close( RES );
+	} else {
+		carp("No subtools defined".
+			", using default printing routine" );
 	}
-      }
-    }
-    close( RES );
-  } else {
-    carp("No subtools defined".
-		   ", using default printing routine" );
-  }
 }
 
 sub read_raw_results

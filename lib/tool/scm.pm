@@ -88,8 +88,6 @@ has 'covariate_statistics_file' => ( is => 'rw', isa => 'Str', default => 'covar
 has 'relations_file' => ( is => 'rw', isa => 'Str', default => 'relations.txt' );
 has 'short_logfile' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { ['short_scmlog.txt'] } );
 
-
-
 sub BUILD
 {
 	my $self = shift;
@@ -811,7 +809,6 @@ sub add_config_file
 		init_data => {isa => 'Any', optional => 0}
 	);
 	push( @{$self->config_files}, config_file->new( %{$parm{'init_data'}} ) );
-
 }
 
 sub _raw_results_callback
@@ -6124,17 +6121,6 @@ sub create_state1_code
 	$end_theta = --$theta_number;
 
 	return \@code ,$end_theta ,\@inits ,\%bounds;
-}
-
-sub prepare_raw_results
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		model_number => { isa => 'Int', optional => 1 }
-	);
-	my $model_number = $parm{'model_number'};
-
-
 }
 
 sub preprocess_data

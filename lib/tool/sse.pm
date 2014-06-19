@@ -36,10 +36,9 @@ has 'probnum' => ( is => 'rw', isa => 'Int', default => 1 );
 has 'logfile' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { ['sse.log'] } );
 has 'results_file' => ( is => 'rw', isa => 'Str', default => 'sse_results.csv' );
 
-
 sub BUILD
 {
-	my $self  = shift;
+	my $self = shift;
 
 	if ($self->random_estimation_inits and not defined $self->rawres_input) {
 		croak('Need rawres_input when using random_estimation_inits');
@@ -1464,7 +1463,7 @@ sub _modelfit_raw_results_callback
 	my $model_number = $parm{'model_number'};
 	my $subroutine;
 
-# Use the mc's raw_results file.
+	# Use the mc's raw_results file.
 	my ($dir,$file) = 
 		OSspecific::absolute_path( $self -> directory,
 								   $self -> raw_results_file ->[$model_number-1] );

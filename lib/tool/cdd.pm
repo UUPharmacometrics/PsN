@@ -38,7 +38,7 @@ sub BUILD
 		my @new_files = ();
 		my @old_files = ();
 		@old_files = @{$self->$accessor} if (defined $self->$accessor);
-		for (my $i = 0; $i < scalar(@old_files); $i++){
+		for (my $i = 0; $i < scalar(@old_files); $i++) {
 			my $name;
 			my $ldir;
 			($ldir, $name) = OSspecific::absolute_path($self->directory, $old_files[$i]);
@@ -46,11 +46,6 @@ sub BUILD
 		}
 		$self->$accessor(\@new_files);
 	}	
-}
-
-sub identify
-{
-	my $self = shift;
 }
 
 sub modelfit_setup
@@ -61,7 +56,7 @@ sub modelfit_setup
 	);
 	my $model_number = $parm{'model_number'};
 
-	$self -> general_setup( model_number => $model_number,
+	$self->general_setup( model_number => $model_number,
 		class        => 'tool::modelfit',
 		subm_threads => $self->threads );
 }
@@ -75,13 +70,13 @@ sub llp_setup
 	my $model_number = $parm{'model_number'};
 
 	my @subm_threads;
-	if (ref( $self -> threads ) eq 'ARRAY') {
-		@subm_threads = @{$self -> threads};
+	if (ref($self->threads) eq 'ARRAY') {
+		@subm_threads = @{$self->threads};
 		unshift(@subm_threads);
 	} else {
-		@subm_threads = ($self -> threads);
+		@subm_threads = ($self->threads);
 	}
-	$self -> general_setup( model_number => $model_number,
+	$self->general_setup( model_number => $model_number,
 		class        => 'tool::llp',
 		subm_threads => \@subm_threads );
 }
@@ -96,7 +91,7 @@ sub modelfit_analyze
 
 	# Only valid for one problem and one sub problem.
 
-	if ( $self -> cross_validate ) {
+	if ($self->cross_validate) {
 
 		# ---  Evaluate the models on the remainder data sets  ----
 
@@ -578,7 +573,6 @@ sub modelfit_analyze
 
 	# }}} Relative change of the parameter estimates
 
-
 	$self -> update_raw_results(model_number => $model_number);
 
 	# experimental: to save memory
@@ -715,19 +709,13 @@ sub llp_analyze
 	push( @{$self -> results -> {'own'}}, \%proc_results );
 }
 
-sub llp_post_fork_analyze
-{
-	my $self = shift;
-}
-
 sub modelfit_post_fork_analyze
 {
 	my $self = shift;
 
-	my @modelfit_results = @{ $self -> results };
+	my @modelfit_results = @{$self->results};
 
-	ui -> print( category => 'cdd',
-		message => "Soon done" );
+	ui -> print(category => 'cdd', message => "Soon done");
 }
 
 sub modelfit_results
@@ -876,7 +864,7 @@ sub general_setup
 	# the directory attribute is given explicitly below.
 
 
-	unless ( $model -> is_run ) {
+	unless ($model->is_run) {
 
 		# -----------------------  Run original run  ------------------------------
 
@@ -905,10 +893,8 @@ sub general_setup
 			top_tool              => 0,
 			%subargs );
 
-
 		ui -> print( category => 'cdd',
 			message => 'Executing base model.' );
-
 
 		$orig_fit -> run;
 
@@ -924,8 +910,6 @@ sub general_setup
 	my $ui_text = sprintf("%-5s",'RUN').','.sprintf("%20s",'FILENAME  ').',';
 	print LOG sprintf("%-5s",'RUN'),',',sprintf("%20s",'FILENAME  '),',';
 	foreach my $param ( 'ofv', 'theta', 'omega', 'sigma' ) {
-#	  my $accessor    = $param eq 'ofv' ? $param : $param.'s';
-#	  my $orig_ests   = $model -> outputs -> [0] -> $accessor;
 		my $orig_ests;
 		my $name = $param;
 		if ($param eq 'ofv'){
@@ -969,8 +953,6 @@ sub general_setup
 	$ui_text = sprintf("%5s",'0').','.sprintf("%20s",$model -> filename).',';
 	print LOG sprintf("%5s",'0'),',',sprintf("%20s",$model -> filename),',';
 	foreach my $param ( 'ofv', 'theta', 'omega', 'sigma' ) {
-#	  my $accessor    = $param eq 'ofv' ? $param : $param.'s';
-#	  my $orig_ests   = $model -> outputs -> [0] -> $accessor;
 		my $orig_ests;
 		if ($param eq 'ofv'){
 			$orig_ests   = $model -> outputs -> [0] -> ofv();
@@ -1147,17 +1129,6 @@ sub general_setup
 		$skip_values = \@stored_values;
 		shift( @seed ); # get rid of 'seed'-word
 
-		# Reinitiate the model objects
-#	  my @model_ids;
-#	  my $reg_relations = 0;
-#	  if ( -e $self -> directory."m$model_number/done.database.models" ) {
-#	    open( DB, $self -> directory."m$model_number/done.database.models" );
-#	    @model_ids = <DB>;
-#	    chomp( @model_ids );
-#	  } else {
-#	    open( DB, ">".$self -> directory."m$model_number/done.database.models" );
-#	    $reg_relations = 1;
-#	  }
 		for ( my $j = 1; $j <= $stored_bins; $j++ ) {
 			my @names = ( 'cdd_'.$j, 'rem_'.$j );
 			foreach my $i ( 0, 1 ) {
@@ -1185,12 +1156,6 @@ sub general_setup
 				wrap     => 0,
 				newline  => 0 );
 		}
-#	  close( DB );
-#	  if ( not -e $self -> directory."m$model_number/done.database.tool_models" ) {
-#	    open( DB, ">".$self -> directory."m$model_number/done.database.tool_models" );
-#	    print DB "";
-#	    close( DB );
-#	  }
 		ui -> print( category => 'cdd',
 			message  => " ... done." );
 		random_set_seed( @seed );
@@ -1245,8 +1210,6 @@ sub general_setup
 			prepared_models       => undef,
 			top_tool              => 0,
 			%subargs ) );
-
-
 
 	# }}} sub tools
 
@@ -1387,7 +1350,6 @@ sub update_raw_results
 	my $cols = scalar(@tmp);
 	print RRES $rres[1] . ",0,1,0\n";
 
-
 	foreach my $mod (sort({$a <=> $b} keys %{$self->raw_line_structure})){
 		$self->raw_line_structure -> {$mod}->{'cook.scores'} = $cols.',1';
 		$self->raw_line_structure -> {$mod}->{'cov.ratios'} = ($cols+1).',1';
@@ -1395,7 +1357,6 @@ sub update_raw_results
 	}
 
 	$self->raw_line_structure -> write( $dir.'raw_results_structure' );
-
 
 	my @new_rres;
 	for( my $i = 2 ; $i <= $#rres; $i ++ ) {
@@ -1437,32 +1398,6 @@ sub read_cdd_log
 	return $found_log ,$found_cdd_id;
 }
 
-sub register_cdd_in_database
-{
-	my $self = shift;
-}
-
-sub register_mfit_results
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		model_number => { isa => 'Int', optional => 1 },
-		cook_score => { isa => 'ArrayRef[Num]', optional => 1 },
-		covariance_ratio => { isa => 'ArrayRef[Num]', optional => 1 },
-		projections => { isa => 'ArrayRef', optional => 1 },
-		outside_n_sd => { isa => 'ArrayRef[Bool]', optional => 1 }
-	);
-	my $model_number = $parm{'model_number'};
-	my @cook_score = defined $parm{'cook_score'} ? @{$parm{'cook_score'}} : ();
-	my @covariance_ratio = defined $parm{'covariance_ratio'} ? @{$parm{'covariance_ratio'}} : ();
-	my @projections = defined $parm{'projections'} ? @{$parm{'projections'}} : ();
-	my @outside_n_sd = defined $parm{'outside_n_sd'} ? @{$parm{'outside_n_sd'}} : ();
-	my $first_res_id;
-	my $last_res_id;
-
-	return $first_res_id ,$last_res_id;
-}
-
 sub pca
 {
 	my $self = shift;
@@ -1490,25 +1425,24 @@ sub pca
 	my $M = $D*$frac_vec_n;
 	my $M_matrix = $M * ~$one_vec_n;
 
-# Calculate the mean-subtracted data
+	# Calculate the mean-subtracted data
 	my $S = $D-$M_matrix;
 
-# compue the empirical covariance matrix
+	# compue the empirical covariance matrix
 	my $C = $S * ~$S;
 
-# compute the eigenvalues and vectors
+	# compute the eigenvalues and vectors
 	my ($l, $V) = $C -> sym_diagonalize();
 
-# Project the original data on the eigenvectors
+	# Project the original data on the eigenvectors
 	my $P = ~$V * $S;
 
-
-# l, V and projections are all MatrixReal objects.
-# We need to return the normal perl equivalents.
+	# l, V and projections are all MatrixReal objects.
+	# We need to return the normal perl equivalents.
 	@eigenvalues = @{$l->[0]};
 	@eigenvectors = @{$V->[0]};
 	@std = @{$self -> std( data_matrix => $P -> [0] )};
-# Make $P a n * d matrix
+	# Make $P a n * d matrix
 	$P = ~$P;
 	@projections = @{$P->[0]};
 
@@ -1543,8 +1477,8 @@ sub prepare_results
 {
 	my $self = shift;
 
-	if ( not defined $self -> raw_results ) {
-		$self -> read_raw_results();
+	if (not defined $self->raw_results) {
+		$self->read_raw_results;
 	}
 }
 
@@ -1556,7 +1490,7 @@ sub create_R_scripts
 		croak('CDD R-script are not installed, no matlab scripts will be generated.' );
 		return;
 	}
-	cp ( $PsN::lib_dir . '/R-scripts/cdd.R', $self -> directory );
+	cp ($PsN::lib_dir . '/R-scripts/cdd.R', $self->directory);
 }
 
 no Moose;

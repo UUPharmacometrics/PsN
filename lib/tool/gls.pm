@@ -972,23 +972,6 @@ sub _modelfit_raw_results_callback
 	return $subroutine;
 }
 
-sub modelfit_analyze
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		 model_number => { isa => 'Int', optional => 1 }
-	);
-	my $model_number = $parm{'model_number'};
-}
-
-sub prepare_results
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		arg1  => { isa => 'Any', optional => 1 }
-	);
-}
-
 sub cleanup
 {
 	my $self = shift;

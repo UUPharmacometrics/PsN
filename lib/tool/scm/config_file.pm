@@ -76,11 +76,9 @@ has 'lsf_ttl' => ( is => 'rw', isa => 'Str|Ref', default => sub { \'' } );
 has 'lsf_options' => ( is => 'rw', isa => 'Str|Ref', default => sub { \'' } );
 has 'run_on_torque' => ( is => 'rw', isa => 'Bool|Ref', default => sub { \'1,0' } );
 
-
-
 sub BUILD
 {
-	my $self  = shift;
+	my $self = shift;
 
 	unless( defined $self -> file ){
 		croak('You must give a "file" argument to config_file -> new' );
@@ -281,11 +279,6 @@ sub _check_various
 			}
 		}
 	}
-}
-
-sub _check_code
-{
-	my $self = shift;
 }
 
 sub _check_included_relations
