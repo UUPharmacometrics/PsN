@@ -1,4 +1,5 @@
 LIBFILES= ui.pm \
+	pharmml.pm \
 	PsN.pm \
 	common_options.pm \
 	linear_algebra.pm \
