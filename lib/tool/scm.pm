@@ -1495,17 +1495,18 @@ sub modelfit_setup
 		my $datafile_name = 'filtered.dta';
 
 		# Set the data file for the base model
-		if ($self->step_number == 1) {
-			if (-e $self->directory . "/$datafile_name") {
-				# If data is filtered update the main base model to use the filtered data set
-				$start_model->datas->[0]->directory($self->directory);
-				$start_model->datas->[0]->filename($datafile_name);
-	    	$start_model->_option_name(position => 0, record => 'data', problem_number => 1, new_name	=> $datafile_name);
-			} else {
-				# If no filtered data is present copy the original data set to the top level of the rundir
-				cp($start_model->datas->[0]->full_name, $self->directory);
-			}
-		}
+		#Kajsa 2014-06-23 Commented this out, the code below causes several system tests to fail (in scm.t and xv_scm.t) 
+#		if ($self->step_number == 1) {
+#			if (-e $self->directory . "/$datafile_name") {
+#				# If data is filtered update the main base model to use the filtered data set
+#				$start_model->datas->[0]->directory($self->directory);
+#				$start_model->datas->[0]->filename($datafile_name);
+#	    	$start_model->_option_name(position => 0, record => 'data', problem_number => 1, new_name	=> $datafile_name);
+#			} else {
+#				# If no filtered data is present copy the original data set to the top level of the rundir
+#				cp($start_model->datas->[0]->full_name, $self->directory);
+#			}
+#		}
 		
 		$start_model->directory($self->directory);
 		if (scalar(keys %included_relations) > 0) {
