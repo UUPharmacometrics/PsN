@@ -117,142 +117,6 @@ sub BUILD
 	}
 }
 
-sub calculate_covariate_statistics
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		data => { isa => 'data', optional => 1 },
-		column_number => { isa => 'Int', optional => 1 },
-		have_missing_data => { isa => 'Bool', optional => 1 },
-		breakpoint => { isa => 'Maybe[Num]', optional => 1 },
-		function => { isa => 'Int', optional => 1 }
-	);
-	my $data = $parm{'data'};
-	my $column_number = $parm{'column_number'};
-	my $have_missing_data = $parm{'have_missing_data'};
-	my $breakpoint = $parm{'breakpoint'};
-	my $function = $parm{'function'};
-	my %statistics;
-
-#check 'Non-unique values found' => 1
-	my $n_individuals = $data->count_ind();
-	if ($function == 1){
-		#linear categorical
-		# Sort by frequency
-		my %temp_factors = %{$self->get_categories(data =>$data,
-		column_number => $column_number)};
-		#here we may have floating point categories. Redefine to integer
-		my $all_integer=1;
-		foreach my $fact (keys %temp_factors){
-			my $tmp = sprintf("%.0f",$fact);
-			$all_integer = 0 unless ($tmp == $fact);
-		}
-		my %factors;
-		if ($all_integer){
-			foreach my $fact (keys %temp_factors){
-				my $tmp = sprintf("%.0f",$fact);
-				$factors{$tmp}=$temp_factors{$fact};
-			}
-		}else{
-			croak("the lasso can currently not handle non-integer categorical values for covariates. ".
-				"You need to change your dataset so that all categorical covariates only have integer values.");
-		}
-		$statistics{'cat_hash'} = \%factors;
-		#sort most first
-		my @sorted = sort {$factors{$b}<=>$factors{$a}} keys (%factors);
-		if ($sorted[0] ne $self->missing_data_token or (scalar (@sorted)==1 )){
-			$statistics{'most_common'} = $sorted[0]; # First element of the sorted array
-			# (the factor that most subjects have)
-		}else{
-			$statistics{'most_common'} = $sorted[1];
-		} 
-		foreach my $fact (@sorted){
-			next if ($fact eq $statistics{'most_common'});
-			#mean is number of subjects with this factor divided by N ind
-			$statistics{'mean'}{$fact} = $factors{$fact}/$n_individuals;
-			my $sd_sum = 0;
-			foreach my $individual ( @{$data -> individuals} ){
-				my $ifactors = $individual -> subject_data;
-				my $value = 0;
-				for(my $i=0; $i<=$#{$ifactors}; $i++ ){
-					my @recor = split(',', $ifactors -> [$i], $column_number+1);
-					my $type = $recor[$column_number-1];
-					if ($type eq $fact){
-						$value+=1/($#{$ifactors}+1);
-					}
-				}
-				$sd_sum+=($value-$statistics{'mean'}{$fact})**2;
-			}
-			$statistics{'sd'}{$fact}=sqrt($sd_sum/($n_individuals-1));
-		}
-
-	}elsif ($function == 3){
-		#max and min ignores missing data
-		if (defined $breakpoint){
-			$statistics{'breakpoint'} = $breakpoint;
-		}else{
-			$statistics{'breakpoint'} = $data -> median( column => $column_number,
-				unique_in_individual => 1);
-		}
-		$statistics{'min'} = $data -> min(column => $column_number);
-		$statistics{'max'} = $data -> max(column => $column_number);
-		$statistics{'sd'} = $data -> sd( column => $column_number);
-
-		$statistics{'mean'} = $data -> mean( column => $column_number);
-
-		$statistics{'H-sd'} = $data -> sd( column => $column_number,
-			hi_cutoff => $statistics{'breakpoint'});
-
-		$statistics{'H-mean'} = $data -> mean( column => $column_number,
-			hi_cutoff => $statistics{'breakpoint'});
-	}else {
-		$statistics{'mean'} = $data -> mean( column => $column_number);
-		$statistics{'sd'} = $data -> sd(column => $column_number);
-		$statistics{'min'} = $data -> min(column => $column_number);
-		$statistics{'max'} = $data -> max(column => $column_number);
-	}
-
-	return \%statistics;
-}
-
-sub get_categories
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		data => { isa => 'data', optional => 1 },
-		class => { isa => 'Str', optional => 1 },
-		column_number => { isa => 'Int', optional => 1 }
-	);
-	my $data = $parm{'data'};
-	my $class = $parm{'class'};
-	my $column_number = $parm{'column_number'};
-	my %categories;
-
-	my @individuals = @{$data->individuals};
-	my $first_id = @individuals[0];
-	die "data -> factor: No individuals defined in data object based on ",
-	$data->filename,"\n" unless defined $first_id;
-
-	my $type;
-
-	foreach my $individual ( @individuals ) {
-		my $ifactors = $individual -> subject_data;
-
-		for(my $i=0; $i<=$#{$ifactors}; $i++ ) {
-			my @recor = split(',', $ifactors -> [$i], $column_number+1);
-			$type = $recor[$column_number-1];
-			#Weight the individual data
-			my $value = 1/($#{$ifactors}+1);
-			if (exists $categories{$type}){
-				$categories{$type}+=$value;
-			} else {
-				$categories{$type}=$value;
-			}
-		}
-	}
-
-	return \%categories;
-}
 
 sub parse_row
 {
@@ -958,13 +822,11 @@ sub modelfit_setup
 
 	# Assume one $PROBLEM one model
 	my $model = $self -> models -> [0];
-	my $data = $model -> datas -> [0];
 
 	foreach my $set (@sets){
 		my @parlist = split (':',$set);
 		croak("Error parsing relations: expected exactly one : in $set but found ".
-			(scalar(@parlist)-1))
-		unless (scalar(@parlist)==2);
+			  (scalar(@parlist)-1)) unless (scalar(@parlist)==2);
 		my $parameter=$parlist[0];
 		if (defined $parameter_covariate_form{$parameter}){
 			croak("Error parsing relations: $parameter found twice ");
@@ -975,14 +837,12 @@ sub modelfit_setup
 			my $breakpoint;
 			if (scalar(@pair)==3){
 				croak("Can only specify breakpoint (number after second dash) if ".
-					"parameterization is 3, but found $covform ".
-					"where parameterization is ".$pair[1])
-				unless ($pair[1] eq '3');
+					  "parameterization is 3, but found $covform ".
+					  "where parameterization is ".$pair[1])	unless ($pair[1] eq '3');
 				$breakpoint = $pair[2];
 			}else{
 				croak("Error parsing relations: expected exactly one - in $covform but found ".
-					(scalar(@pair)-1))
-				unless (scalar(@pair)==2);
+					  (scalar(@pair)-1))	unless (scalar(@pair)==2);
 			}
 			my $covariate=$pair[0];
 			my $function=$pair[1];
@@ -990,35 +850,26 @@ sub modelfit_setup
 			my $column_number;
 			# Check normal data object first
 			my ( $values_ref, $positions_ref ) = $model ->
-			_get_option_val_pos ( problem_numbers => [1], 
-				name        => $covariate,
-				record_name => 'input',
-				global_position => 1  );
+				_get_option_val_pos ( problem_numbers => [1], 
+									  name        => $covariate,
+									  record_name => 'input',
+									  global_position => 1  );
 			$column_number = $positions_ref -> [0];
 
-			croak("Cannot find $covariate in \$INPUT" )
-			unless ( defined $column_number );
-
-
+			croak("Cannot find $covariate in \$INPUT" )	unless ( defined $column_number );
 			#check if $covariate in data is done when computing statistics
 			#check if $function 1-5
 			croak("Error parsing relations: ".
-				"parameterization in $covform must be in the set [1,2,3]")
-			unless ($function =~ /^(1|2|3)$/);
-
-			unless (defined $self -> statistics->{$covariate}{'have_missing_data'}){
-				$self -> statistics->{$covariate}{'have_missing_data'} =
-				$model -> have_missing_data( column_head => $covariate );
-			}
+				  "parameterization in $covform must be in the set [1,2,3]")
+				unless ($function =~ /^(1|2|3)$/);
 
 			unless (defined $self -> statistics->{$covariate}{$function}){
 				$self -> statistics->{$covariate}{$function} =
-				$self -> calculate_covariate_statistics
-				( have_missing_data => $self -> statistics->{$covariate}{'have_missing_data'},
-					data => $data,
-					column_number => $column_number,
-					function => $function,
-					breakpoint => $breakpoint);
+					$model -> datas -> [0] -> lasso_calculate_covariate_statistics
+					( 	missing_data_token =>$self->missing_data_token,
+						column_number => $column_number,
+						function => $function,
+						breakpoint => $breakpoint);
 			}
 			$parameter_covariate_form{$parameter}{$covariate}=$function;
 
@@ -1026,7 +877,7 @@ sub modelfit_setup
 
 	}
 
-	$data -> target('disk');
+	$model -> datas -> [0] -> target('disk'); #should clear data from memory here instead
 	ui -> print( category => 'lasso',
 		message  => " ... done\n" );
 
@@ -1299,8 +1150,6 @@ sub modelfit_setup
 	my %keep_parameters;
 
 	my $rem_nthetas = $self->model_optimal->nthetas() - $added_thetas;
-	my @datas = @{$self->model_optimal->datas};
-	my $data_obj = $datas[0];
 
 	my $labels = $self->model_optimal->labels( parameter_type  => 'theta', 
 		problem_numbers => [1],

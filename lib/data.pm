@@ -15,7 +15,6 @@ use Moose;
 use MooseX::Params::Validate;
 use data::individual;
 
-my @primary_column_names = ('ID', 'DATE', 'DAT1', 'DAT2', 'DAT3' ,'L1', 'L2', 'DV', 'MDV', 'RAW_', 'MRG_', 'RPT_', 'TIME', 'DROP', 'SKIP', 'EVID', 'AMT', 'RATE', 'SS', 'II', 'ADDL', 'CMT', 'PCMT', 'CALL');
 
 has 'individuals' => ( is => 'rw', isa => 'ArrayRef[data::individual]' );
 has 'skip_parsing' => ( is => 'rw', isa => 'Bool', default => 0 );
@@ -32,12 +31,9 @@ has 'ignoresign' => ( is => 'rw', isa => 'Maybe[Str]');
 has 'missing_data_token' => ( is => 'rw', isa => 'Maybe[Int]', default => -99 );
 has 'synced' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'target' => ( is => 'rw', isa => 'Str', default => 'mem', trigger => \&_target_set );
-has 'mdv_column' => ( is => 'rw', isa => 'Int' );
-has 'dv_column' => ( is => 'rw', isa => 'Int' );
 has 'parse_header' => ( is => 'rw', isa => 'Bool', default => 0 );
 has '_median' => ( is => 'rw', isa => 'ArrayRef[numbers]', default => sub { [] } );
 has '_range' => ( is => 'rw', isa => 'ArrayRef[numbers]', default => sub { [] } );
-has 'individual_ids' => ( is => 'rw', isa => 'ArrayRef[Int]' );
 
 # {{{ description
 
@@ -596,99 +592,6 @@ sub add_randomized_columns
 	return \@xcolumn_names;
 }
 
-sub diff
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		against_data => { isa => 'data', optional => 0 },
-		column_heads => { isa => 'ArrayRef[Str]', optional => 1 },
-		columns => { isa => 'ArrayRef[Int]', optional => 1 },
-		absolute_diff => { isa => 'Bool', default => 1, optional => 1 },
-		diff_as_fraction => { isa => 'Bool', default => 1, optional => 1 },
-		global_largest => { isa => 'Bool', default => 1, optional => 1 },
-		global_smallest => { isa => 'Bool', default => 0, optional => 1 },
-		largest_per_individual => { isa => 'Bool', default => 0, optional => 1 },
-		smallest_per_individual => { isa => 'Bool', default => 0, optional => 1 }
-	);
-	my $against_data = $parm{'against_data'};
-	my @column_heads = defined $parm{'column_heads'} ? @{$parm{'column_heads'}} : ();
-	my @columns = defined $parm{'columns'} ? @{$parm{'columns'}} : ();
-	my $absolute_diff = $parm{'absolute_diff'};
-	my $diff_as_fraction = $parm{'diff_as_fraction'};
-	my $global_largest = $parm{'global_largest'};
-	my $global_smallest = $parm{'global_smallest'};
-	my $largest_per_individual = $parm{'largest_per_individual'};
-	my $smallest_per_individual = $parm{'smallest_per_individual'};
-	my %diff_results;
-
-	$self->synchronize;
-
-	my $first_id = $self->individuals()->[0];
-
-	croak("No individuals defined in data object based on " . $self->full_name)
-		unless ( defined $first_id );
-
-	# Check if $column(-index) is defined and valid, else try to find index
-	# using column_head
-
-	my @data_row = split( /,/, $first_id->subject_data->[0] );
-	if( $#columns >= 0 ) {
-		foreach my $column ( @columns ) {
-			unless ( defined $column && defined( $data_row[$column-1] ) ) {
-				croak("Error in data->factors: ".
-					"invalid column number: \"$column\"\n".
-					"Valid column numbers are 1 to ".
-					scalar @{$first_id->subject_data ->[0]}."\n" );
-			}
-		}
-	} elsif ( $#column_heads >= 0 ) {
-		foreach my $column_head ( @column_heads ) {
-			unless (defined($column_head) && defined($self->column_head_indices->{$column_head})) {
-				croak("Error in data->factors: unknown column: \"$column_head\" ".
-					"Valid column headers are (in no particular order):\n".
-					join(', ',keys(%{$self->column_head_indices})) );
-			} else {
-				my $column = $self->column_head_indices->{$column_head};
-				push( @columns, $column );
-				carp("$column_head is in column number $column" );
-			}
-		}
-	} else {
-		croak("No column or column_head defined" );
-	}
-
-	if( $global_largest or $global_smallest or
-		$largest_per_individual or $smallest_per_individual ) {
-		if( not scalar @{$self->individuals()} == scalar @{$against_data->individuals} ) {
-			croak("Both data object must hold the same number of individuals ".
-				"and observations when calling data->diff" );
-		}
-		for( my $i = 0; $i < scalar @{$self->individuals()}; $i++ ) {
-			my %id_diffs = %{$self->individuals()->[$i] ->
-			diff( against_individual => $against_data->individuals->[$i],
-			columns            => \@columns,
-			absolute_diff      => $absolute_diff,
-			diff_as_fraction   => $diff_as_fraction,
-			largest            => ( $global_largest or $largest_per_individual ),
-			smallest           => ( $global_smallest or $smallest_per_individual ) )};
-			if( $global_largest ) {
-				for( my $j = 0; $j <= $#columns; $j++ ) {
-					my $label = defined $column_heads[$j] ? $column_heads[$j] : $columns[$j];
-					if( not defined $diff_results{$label} or not defined $diff_results{$label}{'diff'} or
-						$id_diffs{$columns[$j]}{'diff'} > $diff_results{$label}{'diff'} ) {
-						$diff_results{$label}{'diff'} = $id_diffs{$columns[$j]}{'diff'};
-						$diff_results{$label}{'self'} = $id_diffs{$columns[$j]}{'self'};
-						$diff_results{$label}{'test'} = $id_diffs{$columns[$j]}{'test'};
-					}
-				}
-			}
-		}
-	} else {
-		die "data->diff is only implemented for finding the largest difference at any observation at this point\n";
-	}
-
-	return \%diff_results;
-}
 
 sub format_data
 {
@@ -1425,7 +1328,7 @@ sub resample
 	$self->individuals([]) unless defined $self->individuals;
 	$self->synchronize;
 	my ( @header, $individuals, @bs_inds, $key_ref, @id_ids, @bs_id_ids );
-	@id_ids = @{$self->individual_ids} if( defined $self->individual_ids );
+
 	my @subj_keys = keys( %subjects );
 	if ( $#subj_keys < 0 ) {
 	  croak("sample_size must be defined" );
@@ -2126,88 +2029,6 @@ sub stratify_indices
 	return \@stratified_indices;
 }
 
-sub single_valued_data
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		 do_not_test_columns => { isa => 'ArrayRef[Int]', optional => 1 },
-		 remainder_name => { isa => 'Str', optional => 1 },
-		 subset_name => { isa => 'Str', optional => 1 },
-		 target => { isa => 'Str', default => 'mem', optional => 1 }
-	);
-	my @do_not_test_columns = defined $parm{'do_not_test_columns'} ? @{$parm{'do_not_test_columns'}} : ();
-	my $remainder_name = $parm{'remainder_name'};
-	my $subset_name = $parm{'subset_name'};
-	my $target = $parm{'target'};
-	my $single_value_data_set;
-	my $remainder;
-	my @column_indexes;
-
-	# Usage:
-	#
-	# ($single_value_data_set, $remainder, $column_indexes) =
-	#      $data_object->single_valued_data( subset_name         => 'subset.dta',
-	#			                   remainder_name      => 'remainder.dta',
-	#			                   target              => 'disk',
-	#			                   do_not_test_columns => [1..18,24,26];
-	#
-	# my $single_value_column_indexes = $column_indexes->[0];
-	# my $all_other_column_indexes    = $column_indexes->[1];
-	#
-	# Analyses the content of each column, based on the
-	# ID column, and returns two new data objects: One
-	# that contains all columns that is has only one value per
-	# individual and one that contains the
-	# remainding data. This is useful for creating compact 'extra'
-	# data sets that can be read in via user-defined sub-routines
-	# when the number of columns needed exceeds the maximum that
-	# NONMEM allows (e.g. 20 in NONMEM version V).
-	#
-	# The I<do_not_test_columns> argument specifies on which columns
-	# to skip the single value test
-	croak("Cannot perform data->single_valued_data when skip_parsing is set") 
-	    if ($self->skip_parsing());
-	$self->individuals([]) unless defined $self->individuals;	
-	my @multi_value_flags;
-	my @individuals = @{$self->individuals()};
-	# Initiate the flags:
-	if ( defined $individuals[0] ) {
-	  my @data = @{$individuals[0]->subject_data};
-	  my @data_row = split( /,/ , $data[0] );
-	  for ( my $i = 0; $i < scalar @data_row; $i++ ) {
-	    my $dnt_flag = 0;
-	    foreach my $dntc ( @do_not_test_columns ) {
-	      $dnt_flag = 1 if ( $i == $dntc - 1 );
-	    }
-	    $multi_value_flags[$i] = $dnt_flag;
-	  }
-	} else {
-	  die "data->single_valued_data: No data in ID number 1\n";
-	}
-	# Collect the stats
-	for ( my $id = 0; $id <= $#individuals; $id++ ) {
-	  my @data = @{$individuals[$id]->subject_data};
-	  my @data_row = split( /,/, $data[0] );
-	  for ( my $j = 0; $j < scalar @data_row; $j++ ) {
-	    my %col_unique;
-	    for ( my $i = 0; $i <= $#data; $i++ ) {
-	      my @data_row = split( /,/ , $data[$i] );
-	      $col_unique{$data_row[$j]}++;
-	    }
-	    my $factors = scalar keys %col_unique;
-	    $multi_value_flags[$j]++ if ( $factors > 1 );
-	  }
-	}
-	for ( my $i = 0; $i <= $#multi_value_flags; $i++ ) {
-	  if ( $multi_value_flags[$i] ) {
-	    push ( @{$column_indexes[1]}, $i + 1);
-	  } else {
-	    push ( @{$column_indexes[0]}, $i + 1);
-	  }
-	}
-
-	return $single_value_data_set ,$remainder ,\@column_indexes;
-}
 
 sub get_eta_matrix
 {
@@ -2650,6 +2471,141 @@ sub create_row_filter
 	}
 
 	return \@filter;
+}
+
+sub lasso_calculate_covariate_statistics
+{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+							  column_number => { isa => 'Int', optional => 1 },
+							  breakpoint => { isa => 'Maybe[Num]', optional => 1 },
+							  function => { isa => 'Int', optional => 1 },
+							  missing_data_token => { isa => 'Str', optional => 0 }
+	);
+
+	#here parse data file unless already parsed
+
+	my $column_number = $parm{'column_number'};
+	my $breakpoint = $parm{'breakpoint'};
+	my $function = $parm{'function'};
+	my $missing_data_token = $parm{'missing_data_token'};
+	my %statistics;
+
+	my $have_missing_data = $self->have_missing_data(column => $column_number);
+
+#check 'Non-unique values found' => 1
+	my $n_individuals = $self->count_ind();
+	if ($function == 1){
+		#linear categorical
+		# Sort by frequency
+		my %temp_factors = %{$self->lasso_get_categories(column_number => $column_number)};
+		#here we may have floating point categories. Redefine to integer
+		my $all_integer=1;
+		foreach my $fact (keys %temp_factors){
+			my $tmp = sprintf("%.0f",$fact);
+			$all_integer = 0 unless ($tmp == $fact);
+		}
+		my %factors;
+		if ($all_integer){
+			foreach my $fact (keys %temp_factors){
+				my $tmp = sprintf("%.0f",$fact);
+				$factors{$tmp}=$temp_factors{$fact};
+			}
+		}else{
+			croak("the lasso can currently not handle non-integer categorical values for covariates. ".
+				"You need to change your dataset so that all categorical covariates only have integer values.");
+		}
+		$statistics{'cat_hash'} = \%factors;
+		#sort most first
+		my @sorted = sort {$factors{$b}<=>$factors{$a}} keys (%factors);
+		if ($sorted[0] ne $missing_data_token or (scalar (@sorted)==1 )){
+			$statistics{'most_common'} = $sorted[0]; # First element of the sorted array
+			# (the factor that most subjects have)
+		}else{
+			$statistics{'most_common'} = $sorted[1];
+		} 
+		foreach my $fact (@sorted){
+			next if ($fact eq $statistics{'most_common'});
+			#mean is number of subjects with this factor divided by N ind
+			$statistics{'mean'}{$fact} = $factors{$fact}/$n_individuals;
+			my $sd_sum = 0;
+			foreach my $individual ( @{$self -> individuals} ){
+				my $ifactors = $individual -> subject_data;
+				my $value = 0;
+				for(my $i=0; $i<=$#{$ifactors}; $i++ ){
+					my @recor = split(',', $ifactors -> [$i], $column_number+1);
+					my $type = $recor[$column_number-1];
+					if ($type eq $fact){
+						$value+=1/($#{$ifactors}+1);
+					}
+				}
+				$sd_sum+=($value-$statistics{'mean'}{$fact})**2;
+			}
+			$statistics{'sd'}{$fact}=sqrt($sd_sum/($n_individuals-1));
+		}
+
+	}elsif ($function == 3){
+		#max and min ignores missing data
+		if (defined $breakpoint){
+			$statistics{'breakpoint'} = $breakpoint;
+		}else{
+			$statistics{'breakpoint'} = $self -> median( column => $column_number,
+				unique_in_individual => 1);
+		}
+		$statistics{'min'} = $self -> min(column => $column_number);
+		$statistics{'max'} = $self -> max(column => $column_number);
+		$statistics{'sd'} = $self -> sd( column => $column_number);
+
+		$statistics{'mean'} = $self -> mean( column => $column_number);
+
+		$statistics{'H-sd'} = $self -> sd( column => $column_number,
+			hi_cutoff => $statistics{'breakpoint'});
+
+		$statistics{'H-mean'} = $self -> mean( column => $column_number,
+			hi_cutoff => $statistics{'breakpoint'});
+	}else {
+		$statistics{'mean'} = $self -> mean( column => $column_number);
+		$statistics{'sd'} = $self -> sd(column => $column_number);
+		$statistics{'min'} = $self -> min(column => $column_number);
+		$statistics{'max'} = $self -> max(column => $column_number);
+	}
+
+	return \%statistics;
+}
+
+sub lasso_get_categories
+{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+		column_number => { isa => 'Int', optional => 0 }
+	);
+	my $column_number = $parm{'column_number'};
+	my %categories;
+
+	my @individuals = @{$self->individuals};
+	my $first_id = @individuals[0];
+	die "data -> factor: No individuals defined in data object based on ",
+	$self->filename,"\n" unless defined $first_id;
+
+	my $type;
+
+	foreach my $individual ( @individuals ) {
+		my $ifactors = $individual -> subject_data;
+
+		for(my $i=0; $i<=$#{$ifactors}; $i++ ) {
+			my @recor = split(',', $ifactors -> [$i], $column_number+1);
+			$type = $recor[$column_number-1];
+			#Weight the individual data
+			my $value = 1/($#{$ifactors}+1);
+			if (exists $categories{$type}){
+				$categories{$type}+=$value;
+			} else {
+				$categories{$type}=$value;
+			}
+		}
+	}
+
+	return \%categories;
 }
 
 
