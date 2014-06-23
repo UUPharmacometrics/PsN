@@ -38,9 +38,6 @@ Required. The number of parameter vectors to generate. Needs to be greater than 
 Required. The number of parameter vectors to resample based on the weights
 computed from delta ofv and the pdf. Only these will be used to compute the uncertainty (confidence intervals) around the model parameters. A good strating point may be 1000 resamples.
 \nextopt
-\optdefault{mceta}{N}
-Optional. Sets option MCETA=N in \$ESTIMATION. Only allowed with NM7.3 and classical estimation methods.
-\nextopt
 \optdefault{rawres\_input}{filename}
 If rawres\_input is given, sir will take samples sets of parameter
 vectors from this file, starting on line offset\_rawres+1, instead of
@@ -68,18 +65,34 @@ Default not used. Only allowed in combination with rawres\_input.
 \optname{with\_replacement}
 Default not set. By default, resampling is performed without replacement, but setting this option gives resampling with replacement.
 \nextopt
-\optname{copy\_data}
-Default not set. If option is not set, the data file will not be copied from the m1 directory to the NM\_run directories for NONMEM execution, which saves disk space. If -copy\_data is set, the data file will be copied to each NM\_run directory.
-\nextopt
 \optdefault{covmat\_input}{filename}
-Not allowed together with rawres\_input. If given, this matrix is
-used for sampling parameter vectors and for computing the PDF. 
+Not allowed together with rawres\_input. If given, this covariance matrix is
+used for sampling parameter vectors and for computing the PDF. The format of the file is very much like a NONMEM-generated .cov-file. The only differences
+are that the 'TABLE' line must be removed and the rows and column for parameters that were not estimated must also be removed from the matrix. Details on the format:
+\begin{itemize}
+\item The file must contain only one table.
+\item The file must be either space- or tab-separated. Comma-separated is not allowed.
+\item The covariance matrix must contain only rows and columns for parameters that were estimated, for example if THETA3 was FIXED then there must be no row/column 
+for THETA3. Similarly for off-diagonal zeros in OMEGA and SIGMA, and FIXED OMEGA/SIGMA blocks.
+\item The first line must be the column header line \begin{verbatim}NAME THETA1 THETA2...\end{verbatim}
+The line is very similar to the header line in a NONMEM .cov file, 
+except that parameters that were not estimated must be filtered out.
+\item The lines following the column header must start with the parameter name, as in a NONMEM cov-file.
+\item The parameter names must be printed exactly as in a NONMEM cov-file,  for example THETA2 or OMEGA(3,2) or SIGMA(1,1).
+\item The parameter order must be either THETA-SIGMA-OMEGA or THETA-OMEGA-SIGMA.
+\end{itemize}
 \nextopt
 \optdefault{inflation}{X}
 Default is 1, which is the same as no inflation. If given, the covariance
 matrix will be multiplied with this number before the parameter vectors
 are sampled from the truncated multivariate normal distribution.
 The weights will however still be computed based the non-inflated covariance matrix. 
+\nextopt
+\optdefault{mceta}{N}
+Optional. Sets option MCETA=N in \$ESTIMATION. Only allowed with NM7.3 and classical estimation methods.
+\nextopt
+\optname{copy\_data}
+Default not set. If option is not set, the data file will not be copied from the m1 directory to the NM\_run directories for NONMEM execution, which saves disk space. If -copy\_data is set, the data file will be copied to each NM\_run directory.
 \nextopt
 \end{optionlist}
 
