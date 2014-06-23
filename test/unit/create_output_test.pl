@@ -13,11 +13,18 @@ $SIG{__WARN__} = sub {
 	my $message = shift;
 };
 
+#1.copy new outfile to relevant location with informative name
+#2. set $outfile to new outfile and run this script, generates file testcase.txt
+#3. manually check that output text in file testcase.txt matches what is in .lst and .ext etc
+#4. manually copy output text in testcase.txt to answerhash in file ???
+#5. run prove output.t to count tests, and update number of tests in plan
+#6. run prove output.t to check
+
 #our $test_files = '/home/kajsa/dev_PsN_tools/new_lst_parser/';
 our $test_files = '/home/kajsa/kod-psn/PsN4/test/test_files/output/';
 #my $outfile = 'onePROB/oneEST/withSIM/cov_nsub2_V7_30_beta.lst';
 #my $outfile = 'nm73/example6b_V7_30_beta.lst';
-my $outfile = 'special_mod/s_matrix_singular.lst';
+my $outfile = 'special_mod/objv_infinity.lst';
 
 open (OUT,">testcase.txt");
 my $outobj = output -> new ('filename'=> $test_files.$outfile);
