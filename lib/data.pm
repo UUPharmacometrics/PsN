@@ -810,7 +810,7 @@ sub have_missing_data
 	}
 	$self->flush if ( $self->target eq 'disk' );
 
-	$return_value = defined $self->found_missing_data ? $self->found_missing_data->{$column} : 0;
+	$return_value = (defined $self->found_missing_data and (defined $self->found_missing_data->{$column}))? $self->found_missing_data->{$column} : 0;
 
 	return $return_value;
 }
@@ -2608,6 +2608,252 @@ sub lasso_get_categories
 	return \%categories;
 }
 
+sub scm_calculate_covariate_statistics
+{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+							  categorical_covariates => { isa => 'Maybe[ArrayRef]', optional => 1},
+							  continuous_covariates => { isa => 'Maybe[ArrayRef]', optional => 1},
+							  model_column_numbers => { isa => 'HashRef', optional => 0},
+							  time_varying => { isa => 'Maybe[ArrayRef]', optional => 1},
+							  linearize => { isa => 'Bool', optional => 0 },
+							  return_after_derivatives_done => { isa => 'Bool', optional => 0 },
+							  gof => { isa => 'Str', optional => 0 },
+							  missing_data_token => { isa => 'Str', optional => 0 }
+		);
+	#ref of hash of cov names to column numbers
+	my %model_column_numbers = (defined $parm{'model_column_numbers'})? %{$parm{'model_column_numbers'}}: ();
+	my @categorical_covariates = (defined $parm{'categorical_covariates'})? @{$parm{'categorical_covariates'}}: ();
+	my @continuous_covariates = (defined $parm{'continuous_covariates'})? @{$parm{'continuous_covariates'}}: ();
+	my $missing_data_token = $parm{'missing_data_token'};
+	my $gof = $parm{'gof'};
+	my $linearize = $parm{'linearize'};
+	my @time_varying = (defined $parm{'time_varying'})? @{$parm{'time_varying'}}: ();;
+	my $return_after_derivatives_done = $parm{'return_after_derivatives_done'};
+	my $results={};
+
+	my $category='scm';
+
+	$self->target('mem');
+	unless( defined $self->individuals()  and (scalar(@{$self->individuals}) > 0)) {
+		if ($self->synced) {
+			#should not happen!
+			print "\nError: Resetting sync in data object for scm\n";
+			$self->synced(0);
+		}
+		$self->synchronize;
+	}
+	$self->synced(1); #we do not want to write to disk later
+
+	if (scalar(@continuous_covariates)>0) {
+		ui -> print( category => $category,
+					 message  => "Calculating continuous covariate statistics",
+					 newline => 1);
+
+		my $ncov = scalar(@continuous_covariates);
+		my $status_bar = status_bar -> new( steps => $ncov );
+		ui -> print( category => $category,
+					 message  => $status_bar -> print_step(),
+					 newline  => 0);
+
+		foreach my $cov (@continuous_covariates){
+			# Factors
+			unless (defined $model_column_numbers{$cov}){
+				croak("Could not find continuous covariate $cov in \$INPUT of model:\n".
+					  join(' ',(keys %model_column_numbers)));
+			}
+			$results->{$cov}{'factors'} = $self -> factors( column => $model_column_numbers{$cov},
+													   unique_in_individual => 0,
+													   return_occurences => 1 );
+			# Statistics
+			$results->{$cov}{'have_missing_data'} = $self -> have_missing_data( column => $model_column_numbers{$cov} );
+
+			($results->{$cov}{'median'},$results->{$cov}{'min'},$results->{$cov}{'max'},$results->{$cov}{'mean'}) =
+				$self -> scm_calculate_continuous_statistics(covariate => $cov,
+															 column_number => $model_column_numbers{$cov},
+															 time_varying => \@time_varying,
+															 linearize => $linearize,
+															 return_after_derivatives_done => $return_after_derivatives_done);
+			if( $status_bar -> tick () ){
+				ui -> print( category => $category,
+							 message  => $status_bar -> print_step(),
+							 wrap     => 0,
+							 newline  => 0 );
+			}
+		}
+		ui -> print( category => $category,
+					 message  => " ... done",newline => 1 );
+		
+		
+	}
+	if (scalar(@categorical_covariates)>0) {
+		ui -> print( category => $category,
+					 message  => "Calculating categorical covariate statistics",
+					 newline => 1);
+		my $ncov = scalar(@categorical_covariates);
+
+		my $status_bar = status_bar -> new( steps => $ncov );
+		ui -> print( category => $category,
+					 message  => $status_bar -> print_step(),
+					 newline  => 0);
+
+		foreach my $cov (@categorical_covariates){
+			unless (defined $model_column_numbers{$cov}){
+				croak("Could not find categorical covariate $cov in \$INPUT of model:\n".
+					  join(' ',(keys %model_column_numbers)));
+			}
+			# Factors
+			$results->{$cov}{'factors'} = $self -> factors( column => $model_column_numbers{$cov},
+															unique_in_individual => 0,
+															return_occurences => 1 );
+			# Statistics
+			$results->{$cov}{'have_missing_data'} = $self -> have_missing_data( column => $model_column_numbers{$cov} );
+			( $results->{$cov}{'median'},$results->{$cov}{'min'},	$results->{$cov}{'max'} ) =
+				$self -> scm_calculate_categorical_statistics(covariate => $cov,
+															  column_number => $model_column_numbers{$cov},
+															  missing_data_token => $missing_data_token,
+															  factors => $results->{$cov}{'factors'},
+															  gof => $gof,
+															  linearize => $linearize);
+			
+			if( $status_bar -> tick () ){
+				ui -> print( category => $category,
+							 message  => $status_bar -> print_step(),
+							 wrap     => 0,
+							 newline  => 0 );
+			}
+		}
+		ui -> print( category => $category,
+					 message  => " ... done",
+					 newline => 1);
+	}
+	$self -> target('disk');
+	return $results;
+}
+
+sub scm_calculate_categorical_statistics
+{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+							  covariate => { isa => 'Str', optional => 0 },
+							  column_number => { isa => 'Int', optional => 0 },
+							  missing_data_token => { isa => 'Str', optional => 0 },
+							  factors => { isa => 'HashRef', optional => 0 },
+							  gof => { isa => 'Str', optional => 0 },
+							  linearize => { isa => 'Bool', optional => 0 }
+	);
+	my $covariate = $parm{'covariate'};
+	my $column_number = $parm{'column_number'};
+	my $linearize = $parm{'linearize'};
+	my $missing_data_token = $parm{'missing_data_token'};
+	my $gof = $parm{'gof'};
+	my %factors = defined $parm{'factors'} ? %{$parm{'factors'}} : ();
+
+	my $median;
+	my $min;
+	my $max;
+
+	my %strata = %{$self-> factors( column => $column_number,
+									return_occurences =>1,
+									unique_in_individual => 1,
+									ignore_missing => 1)};
+	
+	if ( $strata{'Non-unique values found'} eq '1' ) {
+		if ($linearize){
+			ui -> print( category => 'all',
+				message => "\nWarning: Individuals were found to have multiple values ".
+				"in the $covariate column, this renders the linearization inappropriate for this covariate. ".
+				"Consider terminating this run and setting ".
+				"covariate $covariate as continuous and time-varying in the configuration file.\n" );
+		}
+	}
+
+	# Sort by frequency
+	my @sorted = sort {$factors{$b}<=>$factors{$a}} keys (%factors); #switched a b Kajsa bugfix
+	if (scalar(@sorted) > 11){
+		ui-> print (category => 'scm',
+			"\n\n***Warning:***\nMore than 11 categories found for a categorical ".
+			"covariate. The program can only handle changes by 10 degrees of freedom.".
+			"\n",newline => 1) unless ( lc($gof) eq 'p_value' );
+
+	}
+
+	# These lines will set the most common value in $medians{$cov}
+	if ($sorted[0] ne $missing_data_token or (scalar (@sorted)==1 )){
+		$median = $sorted[0]; # First element of the sorted array
+		# (the factor that most subjects have)
+	}else{
+		$median = $sorted[1];
+	} 
+	#max and min ignores missing data
+	$max = $self -> max( column => $column_number );
+	$min = $self -> min( column => $column_number );
+
+	return $median ,$min ,$max;
+}
+
+sub scm_calculate_continuous_statistics
+{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+							  covariate => { isa => 'Str', optional => 0 },
+							  column_number => { isa => 'Int', optional => 0 },
+							  time_varying => { isa => 'Maybe[ArrayRef]', optional => 1},
+							  linearize => { isa => 'Bool', optional => 0 },
+							  return_after_derivatives_done => { isa => 'Bool', optional => 0 }
+	);
+	my $covariate = $parm{'covariate'};
+	my $column_number = $parm{'column_number'};
+	my $linearize = $parm{'linearize'};
+	my @time_varying = (defined $parm{'time_varying'})? @{$parm{'time_varying'}}: ();;
+	my $return_after_derivatives_done = $parm{'return_after_derivatives_done'};
+
+	my $median;
+	my $min;
+	my $max;
+	my $mean;
+
+	my %strata = %{$self-> factors( column => $column_number,
+									return_occurences =>1,
+									unique_in_individual => 1,
+									ignore_missing => 1)};
+	
+	if ( $strata{'Non-unique values found'} eq '1' ) {
+		my $found=0;
+		foreach my $tv (@time_varying){
+			$found =1 if ($tv eq $covariate);
+		}
+		unless ($found){
+			if ($linearize){
+				ui -> print( category => 'all',
+					message => "\nWarning: Individuals were found to have multiple ".
+					"values in the $covariate column, this renders the linearization ".
+					"inappropriate for this covariate. Consider terminating this run and ".
+					"setting covariate $covariate as time-varying in the configuration ".
+					"file.\n" ) unless $return_after_derivatives_done;
+			}else{
+				ui -> print( category => 'all',
+					message => "\nWarning: Individuals were found to have multiple values ".
+					"in the $covariate column, but $covariate was not set as time_varying in the ".
+					"configuration file. Mean and median may not be computed correctly for $covariate. ") unless $return_after_derivatives_done;
+			}	
+		}
+	}
+
+	#must be unique in individual here, to do median over individuals rather than observations
+	$median = $self-> median( unique_in_individual => 1,
+							   column => $column_number);
+
+	$max = $self -> max(column => $column_number );
+	$min = $self -> min(column => $column_number );
+	$mean = $self -> mean(column => $column_number );
+
+
+	$median = sprintf("%6.2f", $median );
+	$mean = sprintf("%6.2f", $mean );
+
+	return $median ,$min ,$max ,$mean;
+}
 
 no Moose;
 __PACKAGE__->meta->make_immutable;

@@ -415,133 +415,40 @@ sub BUILD
 
 		unless (defined $self->covariate_statistics and scalar(keys %{$self->covariate_statistics}) > 0) {
 			$self->covariate_statistics({});
-			$data->target('mem');
-			unless( defined $data->individuals()  and (scalar(@{$data->individuals}) > 0)) {
-				if ($data->synced) {
-					#should not happen!
-					print "\nError: Resetting sync in data object for scm\n";
-					$data->synced(0);
-				}
-				$data->synchronize;
-			}
-			$data->synced(1); #we do not want to write to disk later
+			my $statsref = $data->scm_calculate_covariate_statistics( categorical_covariates => $self->categorical_covariates,
+																	  continuous_covariates => $self->continuous_covariates,
+																	  model_column_numbers => \%model_column_numbers,
+																	  time_varying => $self->time_varying,
+																	  linearize => $self->linearize,
+																	  return_after_derivatives_done => $self->return_after_derivatives_done,
+																	  gof => $self->gof,
+																	  missing_data_token => $self->missing_data_token);
+			$self->covariate_statistics($statsref) if (defined $statsref);
 
-			if (defined $self->continuous_covariates) {
-				ui -> print( category => 'scm',
-					message  => "Calculating continuous covariate statistics",
-					newline => 1);
-
-				my $ncov = scalar @{$self -> continuous_covariates()};
-				my $status_bar = status_bar -> new( steps => $ncov );
-				ui -> print( category => 'scm',
-					message  => $status_bar -> print_step(),
-					newline  => 0);
-
-				for ( my $j = 1; $j <= $ncov; $j++ ) {
-					my $cov = $self -> continuous_covariates() -> [$j-1];
-					# Factors
-					unless (defined $model_column_numbers{$cov}){
-						croak("Could not find continuous covariate $cov in \$INPUT of model:\n".
-							join(' ',(keys %model_column_numbers)));
-
-					}
-					$self -> covariate_statistics->{$cov}{'factors'} =
-					$data -> factors( column => $model_column_numbers{$cov},
-						unique_in_individual => 0,
-						return_occurences => 1 );
-					# Statistics
-					$self -> covariate_statistics->{$cov}{'have_missing_data'} =
-					$data -> have_missing_data( column => $model_column_numbers{$cov} );
-
-					( $self -> covariate_statistics->{$cov}{'median'},
-						$self -> covariate_statistics->{$cov}{'min'},
-						$self -> covariate_statistics->{$cov}{'max'},
-						$self -> covariate_statistics->{$cov}{'mean'} ) =
-					$self -> calculate_continuous_statistics( data => $data,
-						covariate => $cov,
-						column_number => $model_column_numbers{$cov} );
-
-					#this is necessary for xv_scm
-					if (defined $self -> global_covariate_statistics and 
-						scalar(keys %{$self -> global_covariate_statistics})>0){
+			if (defined $self -> global_covariate_statistics and scalar(keys %{$self ->global_covariate_statistics })>0){
+				#this is necessary for xv_scm
+				if (defined $self->continuous_covariates) {
+					foreach my $cov (@{$self -> continuous_covariates()}){
 						$self -> covariate_statistics->{$cov}{'have_missing_data'} = 
-						$self -> global_covariate_statistics->{$cov}{'have_missing_data'};
+							$self -> global_covariate_statistics->{$cov}{'have_missing_data'};
 						$self -> covariate_statistics->{$cov}{'min'} = 
-						$self -> global_covariate_statistics->{$cov}{'min'};
+							$self -> global_covariate_statistics->{$cov}{'min'};
 						$self -> covariate_statistics->{$cov}{'max'} = 
-						$self -> global_covariate_statistics->{$cov}{'max'};
-					}
-
-					#my $nl = $j == $ncov ? "" : "\r"; 
-					if( $status_bar -> tick () ){
-						ui -> print( category => 'scm',
-							message  => $status_bar -> print_step(),
-							wrap     => 0,
-							newline  => 0 );
+							$self -> global_covariate_statistics->{$cov}{'max'};
 					}
 				}
-				ui -> print( category => 'scm',
-					message  => " ... done",newline => 1 );
-			}
-			if ( defined $self -> categorical_covariates() and scalar(@{$self -> categorical_covariates()})>0) {
-				ui -> print( category => 'scm',
-					message  => "Calculating categorical covariate statistics",
-					newline => 1);
-				my $ncov = scalar @{$self -> categorical_covariates()};
-
-				my $status_bar = status_bar -> new( steps => $ncov );
-				ui -> print( category => 'scm',
-					message  => $status_bar -> print_step(),
-					newline  => 0);
-
-				for ( my $j = 1; $j <= $ncov; $j++ ) {
-					my $cov = $self -> categorical_covariates() -> [$j-1];
-					unless (defined $model_column_numbers{$cov}){
-						croak("Could not find categorical covariate $cov in \$INPUT of model:\n".
-							join(' ',(keys %model_column_numbers)));
-
-					}
-					# Factors
-					$self -> covariate_statistics->{$cov}{'factors'} =
-					$data -> factors( column => $model_column_numbers{$cov},,
-						unique_in_individual => 0,
-						return_occurences => 1 );
-					# Statistics
-					$self -> covariate_statistics->{$cov}{'have_missing_data'} =
-					$data -> have_missing_data( column => $model_column_numbers{$cov} );
-
-					( $self -> covariate_statistics->{$cov}{'median'},
-						$self -> covariate_statistics->{$cov}{'min'},
-						$self -> covariate_statistics->{$cov}{'max'} ) =
-					$self -> calculate_categorical_statistics
-					( factors => $self -> covariate_statistics->{$cov}{'factors'},
-						have_missing_data => $self -> covariate_statistics->{$cov}{'have_missing_data'},
-						data => $data,
-						covariate => $cov,
-						column_number => $model_column_numbers{$cov} );
-
-					#this is necessary for xv_scm
-					if (defined $self -> global_covariate_statistics and scalar(keys %{$self ->global_covariate_statistics })>0){
+				if ( defined $self -> categorical_covariates()) {
+					foreach my $cov (@{$self -> categorical_covariates()}){
+						#this is necessary for xv_scm
 						$self -> covariate_statistics->{$cov}{'have_missing_data'} = 
-						$self -> global_covariate_statistics->{$cov}{'have_missing_data'};
+							$self -> global_covariate_statistics->{$cov}{'have_missing_data'};
 						$self -> covariate_statistics->{$cov}{'min'} = 
-						$self -> global_covariate_statistics->{$cov}{'min'};
+							$self -> global_covariate_statistics->{$cov}{'min'};
 						$self -> covariate_statistics->{$cov}{'max'} = 
-						$self -> global_covariate_statistics->{$cov}{'max'};
-					}
-
-					if( $status_bar -> tick () ){
-						ui -> print( category => 'scm',
-							message  => $status_bar -> print_step(),
-							wrap     => 0,
-							newline  => 0 );
+							$self -> global_covariate_statistics->{$cov}{'max'};
 					}
 				}
-				ui -> print( category => 'scm',
-					message  => " ... done",
-					newline => 1);
 			}
-			$data -> target('disk');
 		}
 		if (defined $self->filtered_data_model){
 			$self->filtered_data_model -> flush_data();
@@ -3678,135 +3585,6 @@ sub gof_pval
 		\%l_text );
 }
 
-sub calculate_categorical_statistics
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		data => { isa => 'data', optional => 1 },
-		model => { isa => 'model', optional => 1 },
-		covariate => { isa => 'Str', optional => 0 },
-		column_number => { isa => 'Int', optional => 0 },
-		factors => { isa => 'HashRef', optional => 1 },
-		have_missing_data => { isa => 'Bool', optional => 1 }
-	);
-	my $data = $parm{'data'};
-	my $model = $parm{'model'};
-	my $covariate = $parm{'covariate'};
-	my $column_number = $parm{'column_number'};
-	my %factors = defined $parm{'factors'} ? %{$parm{'factors'}} : ();
-	my $have_missing_data = $parm{'have_missing_data'};
-	my $median;
-	my $min;
-	my $max;
-
-	if (defined $model){
-		$data=$model->datas->[0];
-	}
-
-	my %strata = %{$data-> factors( column => $column_number,
-									return_occurences =>1,
-									unique_in_individual => 1,
-									ignore_missing => 1)};
-	
-	if ( $strata{'Non-unique values found'} eq '1' ) {
-		if ($self->linearize()){
-			ui -> print( category => 'all',
-				message => "\nWarning: Individuals were found to have multiple values ".
-				"in the $covariate column, this renders the linearization inappropriate for this covariate. ".
-				"Consider terminating this run and setting ".
-				"covariate $covariate as continuous and time-varying in the configuration file.\n" );
-		}
-	}
-
-	# Sort by frequency
-	my @sorted = sort {$factors{$b}<=>$factors{$a}} keys (%factors); #switched a b Kajsa bugfix
-	if (scalar(@sorted) > 11){
-		ui-> print (category => 'scm',
-			"\n\n***Warning:***\nMore than 11 categories found for a categorical ".
-			"covariate. The program can only handle changes by 10 degrees of freedom.".
-			"\n",newline => 1) unless ( lc($self -> gof()) eq 'p_value' );
-
-	}
-
-	# These lines will set the most common value in $medians{$cov}
-	if ($sorted[0] ne $self->missing_data_token or (scalar (@sorted)==1 )){
-		$median = $sorted[0]; # First element of the sorted array
-		# (the factor that most subjects have)
-	}else{
-		$median = $sorted[1];
-	} 
-	#max and min ignores missing data
-	$max = $data -> max( column => $column_number );
-	$min = $data -> min( column => $column_number );
-
-	return $median ,$min ,$max;
-}
-
-sub calculate_continuous_statistics
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		data => { isa => 'data', optional => 1 },
-		model => { isa => 'model', optional => 1 },
-		covariate => { isa => 'Str', optional => 0 },
-		column_number => { isa => 'Int', optional => 0 }
-	);
-	my $data = $parm{'data'};
-	my $model = $parm{'model'};
-	my $covariate = $parm{'covariate'};
-	my $column_number = $parm{'column_number'};
-	my $median;
-	my $min;
-	my $max;
-	my $mean;
-
-	if (defined $model){
-		$data=$model->datas->[0];
-	}
-
-	my %strata = %{$data-> factors( column => $column_number,
-	return_occurences =>1,
-	unique_in_individual => 1,
-	ignore_missing => 1)};
-
-	if ( $strata{'Non-unique values found'} eq '1' ) {
-		my $found=0;
-		if (defined $self->time_varying()){
-			foreach my $tv (@{$self->time_varying()}){
-				$found =1 if ($tv eq $covariate);
-			}
-		}
-		unless ($found){
-			if ($self->linearize()){
-				ui -> print( category => 'all',
-					message => "\nWarning: Individuals were found to have multiple ".
-					"values in the $covariate column, this renders the linearization ".
-					"inappropriate for this covariate. Consider terminating this run and ".
-					"setting covariate $covariate as time-varying in the configuration ".
-					"file.\n" ) unless $self->return_after_derivatives_done();
-			}else{
-				ui -> print( category => 'all',
-					message => "\nWarning: Individuals were found to have multiple values ".
-					"in the $covariate column, but $covariate was not set as time_varying in the ".
-					"configuration file. Mean and median may not be computed correctly for $covariate. ") unless $self->return_after_derivatives_done();
-			}	
-		}
-	}
-
-	#must be unique in individual here, to do median over individuals rather than observations
-	$median = $data -> median( unique_in_individual => 1,
-		column => $column_number);
-
-	$max = $data -> max(column => $column_number );
-	$min = $data -> min(column => $column_number );
-	$mean = $data -> mean(column => $column_number );
-
-
-	$median = sprintf("%6.2f", $median );
-	$mean = sprintf("%6.2f", $mean );
-
-	return $median ,$min ,$max ,$mean;
-}
 
 sub _create_models
 {
