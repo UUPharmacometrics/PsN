@@ -67,8 +67,10 @@ Default not set. By default, resampling is performed without replacement, but se
 \nextopt
 \optdefault{covmat\_input}{filename}
 Not allowed together with rawres\_input. If given, this covariance matrix is
-used for sampling parameter vectors and for computing the PDF. The format of the file is very much like a NONMEM-generated .cov-file. 
-The covmat\_input file must be formatted to contain a space separated  $N\times N$ symmetric covariance matrix, 
+used for sampling parameter vectors and for computing the PDF. The format of the file is similar to a NONMEM-generated .cov-file except 
+that fixed parameters should not be included and the \verb|TABLE NO.| line
+should be omitted. 
+The covmat\_input file must be formatted to contain a space- or tab-separated  $N\times N$ symmetric covariance matrix, 
 where N is the total number of estimated parameters. Fixed parameters should not be included in the covmat\_input matrix. 
 The first line in the file must be a header with labels for THETA/OMEGA/SIGMA written as in a regular NONMEM .cov-file 
 and a leading column called NAME: 
