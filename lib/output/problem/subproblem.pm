@@ -76,7 +76,7 @@ has 'minimization_message' => ( is => 'rw', isa => 'ArrayRef', default => sub { 
 has 'thetacoordval' => ( is => 'rw', isa => 'HashRef' );
 has 'sethetacoordval' => ( is => 'rw', isa => 'HashRef' );
 has 'NM7_parsed_raw' => ( is => 'rw', isa => 'Int', default => 0 );
-has 'NM7_parsed_additional' => ( is => 'rw', isa => 'Int', default => 0 );
+has 'NM7_parsed_additional' => ( is => 'rw', isa => 'HashRef');
 has 'nm_output_files' => ( is => 'rw', isa => 'HashRef' );
 has 'ignore_missing_files' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'have_omegas' => ( is => 'rw', isa => 'Bool' );
@@ -186,11 +186,14 @@ sub BUILD
 		last unless ($self -> parsed_successfully() and not $self -> finished_parsing());
 
 		if ($self -> covariance_step_run()) {
-			$self -> parse_NM7_additional() if (defined $self->nm_output_files->{'cov'} and
-												defined $self->nm_output_files->{'cor'} and
-												defined $self->nm_output_files->{'coi'} and 
+			$self -> parse_NM7_additional() if ((defined $self->nm_output_files->{'cov'} or
+												defined $self->nm_output_files->{'cor'} or
+												defined $self->nm_output_files->{'coi'}) and 
 												$self -> NM7_parsed_raw());
-			$self -> _read_covmatrix()          if ( not $self -> NM7_parsed_additional());
+			$self -> _read_covmatrix()          unless (defined $self -> NM7_parsed_additional() and
+														$self -> NM7_parsed_additional()->{'cov'} and 
+														$self -> NM7_parsed_additional()->{'cor'} and 
+														$self -> NM7_parsed_additional()->{'coi'} );
 			last unless ($self -> parsed_successfully() and not $self -> finished_parsing());
 
 			$self -> _read_eigen()              if (not $self -> NM7_parsed_raw());
@@ -313,7 +316,10 @@ sub _read_covmatrix
 				if (/^ TH (\d)/ or /^\s+TH (\d) \| /) { # Read matrix and get out of inner while loop
 					my $temp_matrix;
 					( $start_pos, $temp_matrix, $c_success, $dummyheaders ) = $self -> _read_matrixoestimates( pos => $start_pos - 1 );# and last;
-					$self->raw_covmatrix($temp_matrix);
+					unless (defined $self->raw_covmatrix and scalar(@{$self->raw_covmatrix})>0){
+						#only store if not already read from NM7 additional output
+						$self->raw_covmatrix($temp_matrix);
+					}
 					last;
 				}
 			}
@@ -345,41 +351,53 @@ sub _read_covmatrix
 	foreach my $element ( @{$self->raw_tmatrix} ) {
 		push( @{$self->t_matrix}, eval($element) ) unless ( $element eq '.........' );
 	}
-	$self->covariance_matrix([]) unless defined $self->covariance_matrix;
-	$self->raw_covmatrix([]) unless defined $self->raw_covmatrix;
-	foreach my $element ( @{$self->raw_covmatrix} ) {
-		push( @{$self->covariance_matrix}, eval($element) ) unless ( $element eq '.........' );
-	}
-	$self->correlation_matrix([]) unless defined $self->correlation_matrix;
-	$self->raw_cormatrix([]) unless defined $self->raw_cormatrix;
-	foreach my $element ( @{$self->raw_cormatrix} ) {
-		push( @{$self->correlation_matrix}, eval($element) ) unless ( $element eq '.........' );
-	}
 
-	if ( defined $self->raw_invcovmatrix ) {
-		my $matrix_ref = make_square( clear_dots( $self->raw_invcovmatrix ));
-		if (scalar(@{$matrix_ref}) > 0) {
-			$self->inverse_covariance_matrix(Math::MatrixReal->new_from_cols($matrix_ref));
+	unless (defined $self->covariance_matrix and scalar(@{$self->covariance_matrix})>0){
+		#only store if not already read from NM7 additional output
+		$self->covariance_matrix([]);
+		$self->raw_covmatrix([]);
+		foreach my $element ( @{$self->raw_covmatrix} ) {
+			push( @{$self->covariance_matrix}, eval($element) ) unless ( $element eq '.........' );
 		}
 	}
 
-	if (defined $headers) {
-		#need to get rid of row headers for lines with only .....
-		my $row = 1;
-		my $col = 1;
-		foreach my $element ( @{$self->raw_cormatrix } ) {
-			if (($col == 1) and ($element ne '.........' )) {
-				$self->output_matrix_headers([]) unless defined $self->output_matrix_headers;
-				push( @{$self->output_matrix_headers}, $headers->[$row - 1]); 
-			}
-			$col++;
-			if ($col > $row) {
-				$col = 1;
-				$row++;
-			}
+	unless (defined $self->correlation_matrix and scalar(@{$self->correlation_matrix})>0){
+		#only store if not already read from NM7 additional output
+		$self->correlation_matrix([]);
+		$self->raw_cormatrix([]);
+		foreach my $element ( @{$self->raw_cormatrix} ) {
+			push( @{$self->correlation_matrix}, eval($element) ) unless ( $element eq '.........' );
 		}
 	}
 
+	unless (defined $self->inverse_covariance_matrix){
+		#only store if not already read from NM7 additional output
+		if ( defined $self->raw_invcovmatrix ) {
+			my $matrix_ref = make_square( clear_dots( $self->raw_invcovmatrix ));
+			if (scalar(@{$matrix_ref}) > 0) {
+				$self->inverse_covariance_matrix(Math::MatrixReal->new_from_cols($matrix_ref));
+			}
+		}
+	}
+	unless (defined $self->output_matrix_headers and scalar(@{$self->output_matrix_headers})>0){
+		#only store if not already read from NM7 additional output
+		if (defined $headers) {
+			#need to get rid of row headers for lines with only .....
+			my $row = 1;
+			my $col = 1;
+			foreach my $element ( @{$self->raw_cormatrix } ) {
+				if (($col == 1) and ($element ne '.........' )) {
+					$self->output_matrix_headers([]);
+					push( @{$self->output_matrix_headers}, $headers->[$row - 1]); 
+				}
+				$col++;
+				if ($col > $row) {
+					$col = 1;
+					$row++;
+				}
+			}
+		}
+	}
 	#If something has gone right!
 	$self->lstfile_pos($start_pos) if ( $t_success + $c_success + $corr_success + $i_success );
 }
@@ -2825,12 +2843,16 @@ sub parse_NM7_additional
 	my $matrix_array_ref;
 	my $index_order_ref;
 	my $header_labels_ref;
+	my %hash;
+
 	unless ($self->NM7_parsed_raw){
 		croak('parse_NM7_additional must be called *after* parse_NM7_raw');
 		#because need skip_labels_matrix and have_sigmas and have_omegas and cov_step_run
 	}
 	
 	foreach my $type ('cov','coi','cor'){
+		$hash{$type}=0;
+		next unless (defined $self->nm_output_files->{$type});
 
 		($success,$matrix_array_ref,$index_order_ref,$header_labels_ref) = 
 			parse_additional_table (covariance_step_run => $self->covariance_step_run,
@@ -2841,39 +2863,32 @@ sub parse_NM7_additional
 									type => $type,
 									tableref => $self->nm_output_files->{$type}
 			);
-		unless ($success and defined $matrix_array_ref) {
-			#erase, read everything from lst
-			carp("Failed to read all matrices cov, cor and coi. Will try reading matrices from lst instead. Note: This is not an error unless all three" .
-				 " additional output files cov, cor and coi are expected given the model input.") unless $self -> ignore_missing_files;
-			$self->raw_covmatrix([]);
-			$self->correlation_matrix([]);
-			$self->output_matrix_headers([]);
-			$self->clear_inverse_covariance_matrix;
-			last;
+
+		next unless ($success and defined $matrix_array_ref and scalar(@{$matrix_array_ref}) > 0);
+
+		unless (defined $self->output_matrix_headers and scalar(@{$self->output_matrix_headers})>0){
+			my @column_headers = ();
+			foreach my $ind (@{$index_order_ref}) {
+				push (@column_headers, $header_labels_ref->[$ind]);
+			}
+			$self->output_matrix_headers(\@column_headers);
 		}
 	
 		if ($type eq 'cov') {
-			$self->raw_covmatrix([]) unless defined $self->raw_covmatrix;
-			push( @{$self->raw_covmatrix}, @{$matrix_array_ref}) if (defined $matrix_array_ref);
-			$self->covariance_matrix([]) unless defined $self->covariance_matrix;
+			$self->raw_covmatrix([]);
+			push( @{$self->raw_covmatrix}, @{$matrix_array_ref});
+			$self->covariance_matrix([]);
 			foreach my $element ( @{$self->raw_covmatrix} ) {
 				push( @{$self->covariance_matrix}, eval($element) ) 
 					unless ( $element eq '.........' );
 			}
 		} elsif ($type eq 'cor') {
-			$self->correlation_matrix([]) unless defined $self->correlation_matrix;
-			push( @{$self->correlation_matrix}, @{$matrix_array_ref}) if (defined $matrix_array_ref);
-			my @column_headers = ();
-			foreach my $ind (@{$index_order_ref}) {
-				push (@column_headers, $header_labels_ref->[$ind]);
-			}
-			$self->output_matrix_headers([]) unless defined $self->output_matrix_headers;
-			push( @{$self->output_matrix_headers}, @column_headers );
+			$self->correlation_matrix([]);
+			push( @{$self->correlation_matrix}, @{$matrix_array_ref});
 		} elsif ($type eq 'coi') {
-			if (defined $matrix_array_ref and scalar(@{$matrix_array_ref}) > 0) {
-				$self->inverse_covariance_matrix(Math::MatrixReal -> new_from_cols($matrix_array_ref));
-			}
+			$self->inverse_covariance_matrix(Math::MatrixReal -> new_from_cols($matrix_array_ref));
 		} 
+		$hash{$type}=1; #success
 	}
 
 	delete $self->nm_output_files->{'cov'};
@@ -2884,7 +2899,7 @@ sub parse_NM7_additional
 	#what about t-matrix?
 	#what about  phi
 
-	$self->NM7_parsed_additional($success);
+	$self->NM7_parsed_additional(\%hash);
 }
 
 sub _isdiagonal

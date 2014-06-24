@@ -164,8 +164,12 @@ sub modelfit_setup
 			croak("Number of parameters ".scalar(@{$index_order_ref})." in covmat_input does not match number ".
 				  scalar(@{$parameter_hash->{'param'}})." of estimated parameters in input model." );
 		}
-		for (my $j=0; $j < scalar(@{$index_order_ref}); $j++){
-			my $covheader = $header_labels_ref->[($index_order_ref->[$j])];
+		foreach my $ind (@{$index_order_ref}) {
+			push (@covmat_column_headers, $header_labels_ref->[$ind]);
+		}
+
+		for (my $j=0; $j < scalar(@covmat_column_headers); $j++){
+			my $covheader = $covmat_column_headers[$j];
 			my $outheader;
 			my $par = uc($parameter_hash->{'param'}->[$j]);
 			if ($par eq 'THETA'){
@@ -191,11 +195,8 @@ sub modelfit_setup
 		}
 		$icm = Math::MatrixReal -> new_from_cols($arricm);
 	}elsif (defined $self->rawres_input){
-		#set identity matrix for both
-		my $dim = scalar(@{$parameter_hash->{'param'}});
-		my @diag = (1) x $dim;
-		$icm = Math::MatrixReal -> new_diag(\@diag);
-		$covmatrix = linear_algebra::get_identity_matrix($dim);
+		#do not need any matrices at all, will set pdfvec to ones
+		1;
 	}else{
 		$icm = get_nonmem_inverse_covmatrix(output => $output); #MatrixReal
 		$covmatrix = get_nonmem_covmatrix(output => $output);
