@@ -107,18 +107,18 @@ sub add_frem_lines
 		#return median which is middle value if uneven number of values
 		#or arithemtic mean of two middle values if even number of values
 		#if empty input array then return 0
-		#not yet verified with matlab
+		#verified manually for a number of cases
 		#does not handle undef, since have filtered out missing_data_token and assume all other numeric  
 		my $ref = shift;
 		return 0 if (scalar(@{$ref})<1);
 		my @sorted = sort ({$a <=> $b} @{$ref});
-
+		my $result;
 		if( scalar( @sorted ) % 2 ){
-			return $sorted[$#sorted/2];
+			$result= $sorted[$#sorted/2];
 		} else {
-			return ($sorted[@sorted/2]+$sorted[(@sorted-2)/2]) / 2;
+			$result= ($sorted[@sorted/2]+$sorted[(@sorted-2)/2]) / 2;
 		}
-
+		return $result;
 	}
 
 	sub format_array{

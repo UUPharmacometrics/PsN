@@ -5,7 +5,7 @@
 
 use strict;
 use warnings;
-use Test::More;# tests=>199;
+use Test::More tests=>82;
 use Test::Exception;
 use Math::Random;
 use FindBin qw($Bin);
@@ -15,6 +15,42 @@ use data;
 use model::problem::data;
 use model::problem;
 use model;
+use File::Copy 'cp';
+
+#test for data class subroutine for frem dataset generation
+#TODO add checks of contents of findme.dta (data2name file)
+# -time_var=WT -occ=VISI -param=PHI,LAG -invar=SEX,DGRP -vpc -no-check $model_dir/mox_no_bov.mod -dir=$dir",
+my $tempdir = create_test_dir('unit_data_extra');
+
+cp($includes::testfiledir.'/frem_filtered_data.dta',$tempdir);
+my $resultref = data::frem_compute_covariate_properties(directory  => $tempdir,
+														filename => 'frem_filtered_data.dta',
+														idcolumn => 1,  #number not index
+														invariant_covariates => ['SEX','DGRP'],
+														occ_index => 1,
+														data2name => 'findme.dta', #ends up in tempdir
+														evid_index => 31,
+														mdv_index => undef,
+														type_index => 33,
+														cov_indices => [30,12,3,14], #DV SEX DGRP WT
+														first_timevar_type => 3,    #index 3 in cov_indices
+														missing_data_token => '-99');
+
+if (defined $resultref){
+	is($resultref->{'occasionlist'}->[0],3,'frem occasion 1');
+	is($resultref->{'occasionlist'}->[1],8,'frem occasion 2');
+	is($resultref->{'invariant_median'}->[0],1,'frem median SEX');
+	is($resultref->{'invariant_median'}->[1],8,'frem median DGRP');
+	cmp_float($resultref->{'invariant_covmatrix'}->[0]->[0],0.163828211773417,'frem inv covmatrix 1,1');
+	cmp_float($resultref->{'invariant_covmatrix'}->[0]->[1],-0.013698630136986,'frem inv covmatrix 1,2');
+	cmp_float($resultref->{'invariant_covmatrix'}->[1]->[0],-0.013698630136986,'frem inv covmatrix 2,1');
+	cmp_float($resultref->{'invariant_covmatrix'}->[1]->[1],0.657534246575342,'frem inv covmatrix 2,2');
+	is($resultref->{'timevar_median'}->[0],77.5,'frem median WT');
+	cmp_float($resultref->{'timevar_covmatrix'}->[0]->[0],241.6312939651981,'frem var covmatrix 1,1');
+}
+remove_test_dir($tempdir);
+
+
 
 my $datarec_at = model::problem::data->new(record_arr => ['file.csv IGNORE=(DOSE.GT.5)','IGN=@']);
 is($datarec_at->ignoresign,'@','data record ignoresign at');
@@ -126,4 +162,4 @@ foreach my $test_hash (@datafiletests) {
 	}
 }
 
-done_testing;
+#done_testing;

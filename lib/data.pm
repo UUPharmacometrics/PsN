@@ -14,6 +14,7 @@ use Scalar::Util qw(looks_like_number);
 use Moose;
 use MooseX::Params::Validate;
 use data::individual;
+use linear_algebra;
 
 
 has 'individuals' => ( is => 'rw', isa => 'ArrayRef[data::individual]' );
@@ -277,6 +278,116 @@ sub bootstrap_from_keys
 	return \@boot_samples;
 }
 
+sub frem_compute_covariate_properties
+{
+	#static method, no self
+	#one unit test in data_extra.t
+	my %parm = validated_hash(\@_,
+							  directory => { isa => 'Str', optional => 0 },
+							  filename => { isa => 'Str', optional => 0 },
+							  idcolumn => { isa => 'Int', optional => 0 },
+							  invariant_covariates => { isa => 'Maybe[ArrayRef]', optional => 1},
+							  occ_index => { isa => 'Maybe[Int]', optional => 1 },
+							  data2name => { isa => 'Str', optional => 0 },
+							  evid_index => { isa => 'Maybe[Int]', optional => 1 },
+							  mdv_index => { isa => 'Maybe[Int]', optional => 1 },
+							  type_index => { isa => 'Int', optional => 0 },
+							  cov_indices => { isa => 'Maybe[ArrayRef]', optional => 1 },
+							  first_timevar_type => { isa => 'Int', optional => 0 },
+							  missing_data_token => { isa => 'Str', optional => 0 }
+		);
+	#ref of hash of cov names to column numbers
+	my $directory = $parm{'directory'};
+	my $filename = $parm{'filename'};
+	my $idcolumn = $parm{'idcolumn'};
+	my @invariant_covariates = (defined $parm{'invariant_covariates'})? @{$parm{'invariant_covariates'}}: ();
+	my $occ_index = $parm{'occ_index'};
+	my $data2name = $parm{'data2name'};
+	my $evid_index = $parm{'evid_index'};
+	my $mdv_index = $parm{'mdv_index'};
+	my $type_index = $parm{'type_index'};
+	my @cov_indices = (defined $parm{'cov_indices'})? @{$parm{'cov_indices'}}: ();
+	my $first_timevar_type = $parm{'first_timevar_type'};
+	my $missing_data_token = $parm{'missing_data_token'};
+
+	my $results={};
+
+	my $filtered_data = data->new(filename => $directory.$filename,
+								  ignoresign => '@', idcolumn => $idcolumn);
+	
+	foreach my $covariate (@invariant_covariates){
+		my %strata = %{$filtered_data->factors(column_head => $covariate,
+											   return_occurences => 1,
+											   unique_in_individual => 1,
+											   ignore_missing => 1)};
+
+		if ( $strata{'Non-unique values found'} eq '1' ) {
+			ui -> print( category => 'all',
+						 message => "\nWarning: Individuals were found to have multiple values ".
+						 "in the $covariate column, which will not be handled correctly by the frem script. ".
+						 "Consider terminating this run and setting ".
+						 "covariate $covariate as time-varying instead.\n" );
+		}
+	}
+
+	if (defined $occ_index){
+		my $factors = $filtered_data -> factors( column => ($occ_index+1),
+												 ignore_missing =>1,
+												 unique_in_individual => 0,
+												 return_occurences => 1 );
+
+		#key is the factor, e.g. occasion 1. Value is the number of occurences
+		my @temp=();
+		#sort occasions ascending 
+		foreach my $key (sort {$a <=> $b} keys (%{$factors})){
+			push(@temp,sprintf("%.12G",$key));
+		}
+		$results->{'occasionlist'}=\@temp; 
+	}
+
+	$filtered_data -> filename($data2name); #change name so that when writing to disk get new file
+	my $invariant_matrix; #array of arrays
+	my $timevar_matrix; #array of arrays of arrays
+
+	#this writes new data to disk
+	($invariant_matrix,$timevar_matrix) = $filtered_data->add_frem_lines( occ_index => $occ_index,
+																		  evid_index => $evid_index,
+																		  mdv_index => $mdv_index,
+																		  type_index => $type_index,
+																		  cov_indices => \@cov_indices,
+																		  first_timevar_type => $first_timevar_type);
+
+	$results->{'invariant_median'}= [];
+	$results->{'invariant_covmatrix'}= [];
+	$results->{'timevar_median'} = [];
+	$results->{'timevar_covmatrix'} = [];
+
+	my $err = linear_algebra::row_cov_median($invariant_matrix,
+											 $results->{'invariant_covmatrix'},
+											 $results->{'invariant_median'},
+											 $missing_data_token);
+	if ($err != 0){
+		print "failed to compute invariant covariates covariance\n";
+		$results->{'invariant_median'}= [];
+		$results->{'invariant_covmatrix'}= [];
+	}
+
+	$err = linear_algebra::row_cov_median($timevar_matrix,
+										  $results->{'timevar_covmatrix'},
+										  $results->{'timevar_median'},
+										  $missing_data_token);
+	if ($err != 0){
+		print "failed to compute time-varying covariates covariance\n";
+		$results->{'timevar_median'} = [];
+		$results->{'timevar_covmatrix'} = [];
+	}
+	$filtered_data = undef;
+	return $results;
+
+}
+
+
+
 sub add_frem_lines
 {
 	my $self = shift;
@@ -304,12 +415,12 @@ sub add_frem_lines
 
 	foreach my $individual ( @{$self->individuals()} ) {
 		my ($invariants,$timevar) =  $individual->add_frem_lines( occ_index => $occ_index,
-			evid_index => $evid_index,
-			missing_data_token => $self->missing_data_token(),
-			mdv_index => $mdv_index,
-			type_index => $type_index,
-			cov_indices => $cov_indices,
-			first_timevar_type => $first_timevar_type);
+																  evid_index => $evid_index,
+																  missing_data_token => $self->missing_data_token(),
+																  mdv_index => $mdv_index,
+																  type_index => $type_index,
+																  cov_indices => $cov_indices,
+																  first_timevar_type => $first_timevar_type);
 		push(@invariant_matrix,$invariants);
 		push(@timevar_matrix,$timevar);
 	}
@@ -2610,6 +2721,7 @@ sub lasso_get_categories
 
 sub scm_calculate_covariate_statistics
 {
+	#unit test indirectly via scm->new in unit/scm.t
 	my $self = shift;
 	my %parm = validated_hash(\@_,
 							  categorical_covariates => { isa => 'Maybe[ArrayRef]', optional => 1},

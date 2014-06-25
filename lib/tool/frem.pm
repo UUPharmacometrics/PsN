@@ -1437,75 +1437,26 @@ sub create_data2
 		newline => 1 );
 	$filter_fit -> run;
 
-	my $filtered_data = data->new(filename => $filtered_data_model->directory . $self->filtered_datafile,
-								  ignoresign => '@', idcolumn => $model->idcolumns->[0]);
+	my $resultref = data::frem_compute_covariate_properties(directory  => $filtered_data_model->directory,
+															filename => $self->filtered_datafile,
+															idcolumn => $model->idcolumns->[0],
+															invariant_covariates => $self->invariant,
+															occ_index => $occ_index,
+															data2name => $data2name,
+															evid_index => $evid_index,
+															mdv_index => $mdv_index,
+															type_index => $type_index,
+															cov_indices => \@cov_indices,
+															first_timevar_type => $first_timevar_type,
+															missing_data_token => $self->missing_data_token());
 	
-	foreach my $covariate (@{$self->invariant}){
-		my %strata = %{$filtered_data->factors(column_head => $covariate,
-		return_occurences => 1,
-		unique_in_individual => 1,
-		ignore_missing => 1)};
-
-		if ( $strata{'Non-unique values found'} eq '1' ) {
-			ui -> print( category => 'all',
-				message => "\nWarning: Individuals were found to have multiple values ".
-				"in the $covariate column, which will not be handled correctly by the frem script. ".
-				"Consider terminating this run and setting ".
-				"covariate $covariate as time-varying instead.\n" );
-		}
+	if (defined $resultref){
+		$self->occasionlist($resultref->{'occasionlist'}) if (defined $resultref->{'occasionlist'}); 
+		$self->invariant_median($resultref->{'invariant_median'}) if (defined $resultref->{'invariant_median'});
+		$self->invariant_covmatrix($resultref->{'invariant_covmatrix'}) if (defined $resultref->{'invariant_covmatrix'});
+		$self->timevar_median($resultref->{'timevar_median'}) if (defined $resultref->{'timevar_median'});
+		$self->timevar_covmatrix($resultref->{'timevar_covmatrix'}) if (defined $resultref->{'timevar_covmatrix'});
 	}
-
-	if (defined $occ_index){
-		my $factors = $filtered_data -> factors( column => ($occ_index+1),
-			ignore_missing =>1,
-			unique_in_individual => 0,
-			return_occurences => 1 );
-
-		#key is the factor, e.g. occasion 1. Value is the number of occurences
-		my @temp=();
-		#sort occasions ascending 
-		foreach my $key (sort {$a <=> $b} keys (%{$factors})){
-			push(@temp,sprintf("%.12G",$key));
-		}
-		$self->occasionlist(\@temp); 
-
-	}
-
-	$filtered_data -> filename($data2name); #change name so that when writing to disk get new file
-
-	my $invariant_matrix; #array of arrays
-	my $timevar_matrix; #array of arrays of arrays
-
-	#this writes new data to disk
-	($invariant_matrix,$timevar_matrix) = 
-	$filtered_data->add_frem_lines( occ_index => $occ_index,
-		evid_index => $evid_index,
-		mdv_index => $mdv_index,
-		type_index => $type_index,
-		cov_indices => \@cov_indices,
-		first_timevar_type => $first_timevar_type);
-
-
-
-	my $inv_covariance = [];
-	my $inv_median = [];
-	my $timev_covariance = [];
-	my $timev_median = [];
-	my $err = linear_algebra::row_cov_median($invariant_matrix,$inv_covariance,$inv_median,$self->missing_data_token());
-	if ($err != 0){
-		print "failed to compute invariant covariates covariance\n";
-	}else{
-		$self->invariant_median($inv_median);
-		$self->invariant_covmatrix($inv_covariance);
-	}
-	$err = linear_algebra::row_cov_median($timevar_matrix,$timev_covariance,$timev_median,$self->missing_data_token());
-	if ($err != 0){
-		print "failed to compute time-varying covariates covariance\n";
-	}else{
-		$self->timevar_median($timev_median);
-		$self->timevar_covmatrix($timev_covariance);
-	}
-
 }
 
 sub set_frem_records
