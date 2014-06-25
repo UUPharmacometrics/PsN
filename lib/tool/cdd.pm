@@ -110,8 +110,7 @@ sub modelfit_analyze
 		my ($dir,$file) = 
 		OSspecific::absolute_path( $self -> directory,
 			$self -> raw_results_file->[$model_number-1] );
-		my $xv_threads = ref( $self -> threads ) eq 'ARRAY' ? 
-		$self -> threads -> [1]:$self -> threads;
+		my $xv_threads = ref( $self -> threads ) eq 'ARRAY' ? $self -> threads -> [1]:$self -> threads;
 		my $mod_eval = tool::modelfit ->
 		new( %{common_options::restore_options(@common_options::tool_options)},
 			models           => $self -> prediction_models->[$model_number-1]{'own'},
@@ -988,74 +987,72 @@ sub general_setup
 	# {{{ inits
 
 	# Case-deletion Diagnostics will only work for models with one problem.
-	my $orig_data = $model -> datas -> [0];
-
-	if ( not defined $orig_data ) {
+	if ( not defined $model -> datas -> [0]) {
 		croak("No data file to resample from found in ".$model -> full_name );
 	}
+    my ( $junk, $idcol ) = $model -> _get_option_val_pos( name            => 'ID',
+														  record_name     => 'input',
+														  problem_numbers => [1] );
+    unless (defined $idcol->[0][0]){
+		croak( "Error finding column ID in \$INPUT of model\n");
+    }
+	my $ignoresign = defined $model -> ignoresigns ? $model -> ignoresigns -> [0] : undef;
 
-	my @problems   = @{$model -> problems};
 	my @new_models = ();
 
 	my ( @skipped_ids, @skipped_keys, @skipped_values );
 
-	my %orig_factors = %{$orig_data -> factors( column => $self->case_column )};
-	my $maxbins      = scalar keys %orig_factors;
-	my $pr_bins      = ( defined $self->bins and $self->bins <= $maxbins ) ? $self->bins : $maxbins;
-
 	my $done = ( -e $self -> directory."/m$model_number/done" ) ? 1 : 0;
 
-	my ( @seed, $new_datas, $skip_ids, $skip_keys, $skip_values, $remainders );
+	my ( @seed, $new_datas, $skip_ids, $skip_keys, $skip_values, $remainders, $pr_bins );
 
 	# }}} inits
 
 	if ( not $done ) {
-
 		# --------------  Create new case-deleted data sets  ----------------------
 
 		# {{{ create new
+		my $output_directory = $self -> directory.'/m'.$model_number;
+		($new_datas, $skip_ids, $skip_keys, $skip_values, $remainders) = 
+			data::cdd_create_datasets(input_directory  => $model -> datas -> [0]->directory,
+									  input_filename => $model -> datas -> [0]->filename,
+									  bins => $self->bins,
+									  case_column => $self->case_column, 
+									  selection_method => $self->selection_method,
+									  output_directory => $output_directory,
+									  ignoresign => $ignoresign,
+									  idcolumn => $idcol->[0][0],  #number not index
+									  missing_data_token => $self->missing_data_token);
 
-		# Keep the new sample data objects i memory and write them to disk later
-		# with a proper name.
 
-		( $new_datas, $skip_ids, $skip_keys, $skip_values, $remainders )
-		= $orig_data -> case_deletion( case_column => $self->case_column,
-			selection   => $self -> selection_method,
-			bins        => $pr_bins,
-			target      => 'mem',
-			directory   => $self -> directory.'/m'.$model_number );
+
+
+
 		my $ndatas = scalar @{$new_datas};
 		for ( my $j = 1; $j <= $ndatas; $j++ ) {
-			my @names = ( 'cdd_'.$j, 'rem_'.$j );
 			my @datasets = ( $new_datas -> [$j-1], $remainders -> [$j-1] );
+			my @names = ('cdd_'.$j,'rem_'.$j);
 			foreach my $i ( 0, 1 ) {
-				my $dataset = $datasets[$i];
-				my ($data_dir, $data_file) = OSspecific::absolute_path( $self -> directory.'/m'.$model_number,
-					$names[$i].'.dta' );
-				my $skip_data_parsing = 1;
-
-				$dataset->skip_parsing($skip_data_parsing);
-				my $newmodel = $model -> copy( filename => $data_dir.$names[$i].'.mod',
-					copy_data   => 0,
-					copy_output => 0);
-				$newmodel -> ignore_missing_files(1);
-				$newmodel -> datafiles( new_names => [$names[$i].'.dta'] );
-				$newmodel -> outputfile( $data_dir.$names[$i].".lst" );
-				$newmodel -> datas -> [0] = $dataset;
+				my $set = $datasets[$i];
+				my $newmodel = $model -> copy( filename => $output_directory.'/'.$names[$i].'.mod',
+											   copy_data   => 0,
+											   copy_output => 0);
+				$newmodel -> datafiles( new_names => [$set] );
+				$newmodel -> outputfile( $output_directory.'/'.$names[$i].".lst" );
 				if( $i == 1 ) {
 					# set MAXEVAL=0. Again, CDD will only work for one $PROBLEM
 					my $warn = 0;
 					$warn = 1 if ($j == 1);
 					my $ok = $newmodel -> set_maxeval_zero(need_ofv => 1,print_warning => $warn,
-						niter_eonly => $self->niter_eonly,
-						last_est_complete => $self->last_est_complete());
+														   niter_eonly => $self->niter_eonly,
+														   last_est_complete => $self->last_est_complete());
 				}
 
 				if( $self -> nonparametric_etas or
 					$self -> nonparametric_marginals ) {
 					$newmodel -> add_nonparametric_code;
 				}
-
+				
 				$newmodel -> _write;
 				push( @{$new_models[$i]}, $newmodel );
 			}
@@ -1063,7 +1060,7 @@ sub general_setup
 
 		# Create a checkpoint. Log the samples and individuals.
 		open( DONE, ">".$self -> directory."/m$model_number/done" ) ;
-		print DONE "Sampling from ",$orig_data -> filename, " performed\n";
+		print DONE "Sampling from ",$model->datas->[0]-> filename, " performed\n";
 		print DONE "$pr_bins bins\n";
 		print DONE "Skipped individuals:\n";
 		for( my $k = 0; $k < scalar @{$skip_ids}; $k++ ) {
@@ -1203,7 +1200,7 @@ sub general_setup
 			_raw_results_callback => $self ->
 			_modelfit_raw_results_callback( model_number => $model_number ),
 			subtools              => \@subtools,
-			parent_threads        => $own_threads,
+#			parent_threads        => $own_threads,
 			parent_tool_id        => $self -> tool_id,
 			logfile	         => undef,
 			raw_results           => undef,

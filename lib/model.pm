@@ -859,8 +859,7 @@ sub datafiles
 	}
 	if ( scalar @new_names > 0 ) {
 		my $i = 0;
-		my @idcolumns = @{$self ->
-							  idcolumns( problem_numbers => \@problem_numbers )};
+		my @idcolumns = @{$self ->idcolumns( problem_numbers => \@problem_numbers )};
 		foreach my $new_name ( @new_names ) {
 			if ( $absolute_path ) {
 				my $tmp;
@@ -874,14 +873,13 @@ sub datafiles
 								   new_name	  => $new_name);
 			my $ignoresign = defined $self -> ignoresigns ? $self -> ignoresigns -> [$i] : undef;
 			my @model_header = @{$self -> problems -> [$i] -> header};
-			$self->datas->[$problem_numbers[$i]-1] = data ->
-				new( idcolumn             => $idcolumns[$i],
-					 ignoresign           => $ignoresign,
-					 missing_data_token => $self->missing_data_token,
-					 filename             => $new_name,
-					 ignore_missing_files => $self->ignore_missing_files,
-					 skip_parsing         => $self -> skip_data_parsing(),
-					 target               => $self->target );
+			$self->datas->[$problem_numbers[$i]-1] = data ->new( idcolumn             => $idcolumns[$i],
+																 ignoresign           => $ignoresign,
+																 missing_data_token => $self->missing_data_token,
+																 filename             => $new_name,
+																 ignore_missing_files => $self->ignore_missing_files,
+																 skip_parsing         => $self -> skip_data_parsing(),
+																 target               => $self->target );
 			$i++;
 		}
 	} else {
@@ -1142,19 +1140,9 @@ sub idcolumns
 sub ignoresigns
 {
 	my $self = shift;
-	my %parm = validated_hash(\@_,
-		 problem_numbers => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
-	my @problem_numbers = defined $parm{'problem_numbers'} ? @{$parm{'problem_numbers'}} : ();
 	my @ignore;
 
-	# Usage:
-	#
-	#   @ignore_signs = @{$modelObject -> ignoresigns( problem_numbers => [2,4] )};
-	#
 	# ignoresigns returns the ignore signs in the datafile for the
-	# specified problems
-
 	# default is # in NONMEM, but here we have @ instead since includes # but covers more that can never be data lines
 
 	foreach my $prob ( @{$self->problems} ) {

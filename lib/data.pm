@@ -429,26 +429,72 @@ sub add_frem_lines
 	return \@invariant_matrix ,\@timevar_matrix;
 }
 
+sub cdd_create_datasets{
+	#static method no shift
+	my %parm = validated_hash(\@_,
+		input_filename => { isa => 'Str', optional => 0 },
+		input_directory => { isa => 'Maybe[Str]', optional => 0 },
+		bins => { isa => 'Maybe[Num]', optional => 1 },
+		case_column => { isa => 'Int', optional => 0 },
+		selection_method => { isa => 'Maybe[Str]', default => 'consecutive', optional => 1 },
+		output_directory => { isa => 'Str', optional => 0 },
+		ignoresign => { isa => 'Str', optional => 1 },
+		missing_data_token => { isa => 'Int', optional => 1 },
+		idcolumn => { isa => 'Int', optional => 0 }
+	);
+	my $input_filename = $parm{'input_filename'};
+	my $input_directory = $parm{'input_directory'};
+	my $bins = $parm{'bins'};
+	my $case_column = $parm{'case_column'}; #starting at 1
+	my $selection_method = $parm{'selection_method'};
+	my $output_directory = $parm{'output_directory'};
+	my $ignoresign = $parm{'ignoresign'};
+	my $missing_data_token = $parm{'missing_data_token'};
+	my $idcolumn = $parm{'idcolumn'};
+
+	unless (-d $output_directory){
+		croak("output directory $output_directory is not a directory/does not exist");
+	}
+	my ($tmp1, $tmp2) = OSspecific::absolute_path($output_directory,'hej');
+	$output_directory = $tmp1; #to get with /
+
+	#data will be parsed here
+	my $data = data->new(filename => $input_filename,
+						 directory => $input_directory,
+						 ignoresign => $ignoresign,
+						 missing_data_token => $missing_data_token,
+						 idcolumn => $idcolumn);
+
+	
+	my ($new_datas, $skip_ids, $skip_keys, $skip_values, $remainders, $pr_bins ) =
+		$data -> case_deletion( case_column => $case_column,
+								selection   => $selection_method,
+								bins        => $bins,
+								directory   => $output_directory );
+	$data =undef;
+	return $new_datas, $skip_ids, $skip_keys, $skip_values, $remainders, $pr_bins;
+
+}
+
 sub case_deletion
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		bins => { isa => 'Num', optional => 1 },
-		case_column => { isa => 'Int', optional => 1 },
+		bins => { isa => 'Maybe[Num]', optional => 1 },
+		case_column => { isa => 'Int', optional => 0 },
 		selection => { isa => 'Maybe[Str]', default => 'consecutive', optional => 1 },
-		target => { isa => 'Str', default => 'disk', optional => 1 },
-		directory => { isa => 'Str', optional => 1 }
+		directory => { isa => 'Str', optional => 0 }
 	);
 	my $bins = $parm{'bins'};
 	my $case_column = $parm{'case_column'};
 	my $selection = $parm{'selection'};
-	my $target = $parm{'target'};
+	my $directory = $parm{'directory'};
+
 	my @subsets;
 	my @skipped_ids;
 	my @skipped_keys;
 	my @skipped_values;
 	my @remainders;
-	my $directory = $parm{'directory'};
 
 	# case_deletion creates subsets of the data. The number of
 	# subsets is specified by the bins argument. The individuals
@@ -460,28 +506,18 @@ sub case_deletion
 	# (pure digits) or the name of the column in the (optional)
 	# header row.
 
-	$self->individuals([]) unless defined $self->individuals; #FIXME
-	$self->synchronize;
 	my @header    = @{$self->header()};
-	if ( not defined $case_column ) {
-		croak("case_column must be specified" );
-	} else {
-		if ( not $case_column =~ /^\d/ ) {
-			for ( my $i = 0; $i <= $#header; $i++ ) {
-				$case_column = $i+1 if ( $header[$i] eq $case_column );
-			}
-		}
-	}
-	$bins = defined $bins ? $bins :
-	scalar keys %{$self->factors( column => $case_column)};
-	my %factors   = %{$self->factors( column => $case_column )};
+
+	my %factors = %{$self -> factors( column => $case_column )};
 	if ( $factors{'Non-unique values found'} eq '1' ) {
 		croak("Individuals were found to have multiple values in column number $case_column. ".
-			"Column $case_column cannot be used for case deletion." );
+			  "Column $case_column cannot be used for case deletion." );
 	}
-
-	my $maxbins   = scalar keys %factors;
+	my $maxbins      = scalar (keys %factors);
+	my $pr_bins      = ( defined $bins and $bins <= $maxbins ) ? $bins : $maxbins;
+	$bins = $pr_bins;
 	my @ftrs      = sort { $a <=> $b } keys %factors;
+
 	my $individuals = $self->individuals();
 	my $maxkey    = scalar @{$individuals} - 1;
 
@@ -513,33 +549,32 @@ sub case_deletion
 			}
 			push( @cd_inds, $individuals->[ $key ]->copy );
 		}
-		# Set ignore_missing_files = 1 to make it possible to get the result
-		# in memory only
-		my $newdata = data ->
-		new ( header      => \@header,
-			ignoresign  => $self->ignoresign,
-			missing_data_token => $self->missing_data_token,
-			idcolumn    => $self->idcolumn,
-			individuals => \@cd_inds,
-			target      => $target,
-			filename    => $directory . '/cdd_' . ($k + 1) . '.dta',
-			ignore_missing_files => 1 );
-		my $deldata = data ->
-		new ( header      => \@header,
-			ignoresign  => $self->ignoresign,
-			missing_data_token => $self->missing_data_token,
-			idcolumn    => $self->idcolumn,
-			individuals => \@del_inds,
-			target      => $target,
-			filename    => $directory . '/rem_' . ($k + 1) . '.dta',
-			ignore_missing_files => 1 );
-		push( @subsets, $newdata );
-		push( @remainders, $deldata );
-		$newdata->flush;
-		$deldata->flush;
+		#here we simply write to file and then delete objects again
+		#we only return file names, not data objects
+		my $newname = $directory . 'cdd_' . ($k + 1) . '.dta';
+		my $newdata = data -> new ( header      => \@header,
+									ignoresign  => $self->ignoresign,
+									missing_data_token => $self->missing_data_token,
+									idcolumn    => $self->idcolumn,
+									individuals => \@cd_inds,
+									filename    => $newname,
+									ignore_missing_files => 1 );
+		$newdata->_write;
+		
+		my $delname = $directory . 'rem_' . ($k + 1) . '.dta';
+		my $deldata = data -> new ( header      => \@header,
+									ignoresign  => $self->ignoresign,
+									missing_data_token => $self->missing_data_token,
+									idcolumn    => $self->idcolumn,
+									individuals => \@del_inds,
+									filename    => $delname,
+									ignore_missing_files => 1 );
+		$deldata->_write;
+		push( @subsets,  $newname);
+		push( @remainders, $delname );
 	}
 
-	return \@subsets ,\@skipped_ids ,\@skipped_keys ,\@skipped_values ,\@remainders;
+	return \@subsets ,\@skipped_ids ,\@skipped_keys ,\@skipped_values ,\@remainders, $bins;
 }
 
 sub copy
@@ -2244,8 +2279,7 @@ sub _write
 	);
 	my $filename = $parm{'filename'};
 
-	die "ERROR: data->_write: No filename set in data object.\n"
-	if( $filename eq '' );
+	die "ERROR: data->_write: No filename set in data object.\n" if( $filename eq '' );
 
 	unless( defined $self->individuals()  and (scalar(@{$self->individuals()})>0)){
 		# If we don't have any individuals and write to a new
