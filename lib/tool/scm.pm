@@ -58,7 +58,7 @@ has 'linearize' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'basename' => ( is => 'rw', isa => 'Str' );
 has 'noabort' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'skip_filtering' => ( is => 'rw', isa => 'Bool', default => 0 );
-has 'xv_pred_data' => ( is => 'rw', isa => 'data' );
+has 'xv_pred_data' => ( is => 'rw', isa => 'Str' );
 has 'xv_results' => ( is => 'rw', isa => 'HashRef' );
 has 'xv_results_file' => ( is => 'rw', isa => 'Str' );
 has 'epsilon' => ( is => 'rw', isa => 'Bool', default => 1 );
@@ -2573,24 +2573,24 @@ sub linearize_setup
 				defined $derivatives_model->outputs()->[0] and
 				$derivatives_model->outputs()->[0]-> have_output()){
 				$self->run_xv_pred_step(estimation_model => $derivatives_model,
-					model_name => 'xv_pred_derivatives',
-					derivatives_run => 1) 
-				if (defined $self->xv_pred_data);
+										model_name => 'xv_pred_derivatives',
+										derivatives_run => 1) 
+					if (defined $self->xv_pred_data);
 				if ($self->update_derivatives()){
 					#store derivatives output if update_derivatives so that can use that in next iteration
 					$self->derivatives_output($derivatives_model -> outputs -> [0]);
 				}
 				if ( defined $derivatives_model -> outputs->[0]->  get_single_value(attribute=> 'ofv') ) {
 					$derivatives_ofv = $derivatives_model -> outputs->[0]->  
-					get_single_value(attribute=> 'ofv');
+						get_single_value(attribute=> 'ofv');
 					$derivatives_name = $derivatives_model ->filename();
 				}else{
 					print "Warning: could not retrieve OFV from derivatives model.\n";
 				}
 			}else{
 				ui->print (category => 'scm',
-					message => "Warning: No output from derivatives run. Unexpected.",
-					newline => 1);
+						   message => "Warning: No output from derivatives run. Unexpected.",
+						   newline => 1);
 			}
 		}else{
 			ui -> print( category => 'scm',
@@ -4552,7 +4552,7 @@ sub run_xv_pred_step
 		copy_output        => 0,
 		skip_data_parsing => 1);
 
-	$model_copy_pred -> datas([$self->xv_pred_data]);
+	$model_copy_pred -> datafiles(new_names =>[$self->xv_pred_data]);
 
 	$model_copy_pred -> update_inits(from_output => $estimation_model-> outputs -> [0]);
 	$model_copy_pred -> set_maxeval_zero(print_warning => 0,
@@ -4576,7 +4576,7 @@ sub run_xv_pred_step
 	$xv_base_fit -> run;
 
 	if ($derivatives_run){
-		#change $self->xv_pred_data to new object from derivatives output.
+		#change $self->xv_pred_data to new filename from derivatives output.
 		#this makes it impossible to use update_derivatives unless original pred_data is kept
 
 		my $datafilename = 'derivatives_covariates.dta';
@@ -4586,16 +4586,7 @@ sub run_xv_pred_step
 		unlink($datafilename);
 		my ( $dir, $file ) = OSspecific::absolute_path('',$newfilename);
 
-		#this is a table file we generated with ID first, so ignoresign is @, idcol is 1
-		my $pred_data = data ->
-			new( filename		  => $file,
-				 directory		  => $dir,
-				 missing_data_token => $self->missing_data_token,
-				 target		  => 'mem',
-				 ignoresign		  => '@',
-				 skip_parsing         => 0,
-				 idcolumn		  => 1 ); #ok, this is a table file we made
-		$self->xv_pred_data($pred_data);
+		$self->xv_pred_data($dir.$file);
 
 	}else{
 		#not a derivatives run

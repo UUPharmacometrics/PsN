@@ -9,6 +9,7 @@ use lib "$Bin/../lib";
 use PsN;
 use model;
 use tool::nonpb;
+use tool::bootstrap;
 use strict;
 use Getopt::Long;
 use common_options;
@@ -173,20 +174,18 @@ if ($nonpb ->nonpb_version() == 2){
   #must carry a whole hash of options here, can lump them together according to Pontus, 
 
   my $type = defined $options{'bca'} ? 'bca' : undef;
-  my $sample_size = 'default=>'.$model -> datas() -> [0] -> count_ind();
 
-  my %subj_hash = eval($sample_size);
   my $bs = tool::bootstrap -> 
       new ( eval( $common_options::parameters ),
-	    directory => 'bootstrap',
-	    subjects	=> \%subj_hash,
-	    models	=> [ $model ],
-	    samples	=> $options{'samples'}
-	    );
+			directory => 'bootstrap',
+			subjects	=> {},
+			models	=> [ $model ],
+			samples	=> $options{'samples'}
+	  );
   $bs -> run;
   $bs -> prepare_results();
   $bs -> print_results();
-
+  
 
   $nonpb->start_bs_models($bs->prepared_models->[0]{'own'});
   $bs = undef;

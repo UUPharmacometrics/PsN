@@ -82,21 +82,6 @@ sub BUILD
 	croak("Number of samples must be larger than 0") unless ($self->samples()>0);
 }
 
-sub _sampleTools
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		samples => { isa => 'Int', default => 200, optional => 1 },
-		subjects => { isa => 'Int', optional => 1 },
-		target => { isa => 'Str', default => 'disk', optional => 1 }
-	);
-	my $samples = $parm{'samples'};
-	my $subjects = $parm{'subjects'};
-	my @newModels;
-	my $target = $parm{'target'};
-
-	return \@newModels;
-}
 
 sub modelfit_setup
 {
@@ -169,20 +154,32 @@ sub modelfit_setup
 		print "\nWarning: PsN randtest only randomizes first data file, seems like model has more than one data file\n";
 	}
 
-	my $orig_data = $model -> datas->[0];
-
 	my $done = ( -e $self ->directory()."/m$model_number/done" ) ? 1 : 0;
 	my $new_datas;
 	if ( not $done ) {
+		my $orig_data_file =  $model -> datas->[0]->filename;
 		ui -> print( category => 'randtest',
-			message  => "Randomizing column ".$self->randomization_column." in ".$orig_data -> filename );
+			message  => "Randomizing column ".$self->randomization_column." in ".$orig_data_file );
+		my ( $junk, $idcol ) = $model -> _get_option_val_pos( name            => 'ID',
+															  record_name     => 'input',
+															  problem_numbers => [1]);
+		unless (defined $idcol->[0][0]){
+			croak( "Error finding column ID in \$INPUT of model\n");
+		}
+		my $ignoresign=defined $model -> ignoresigns ? $model -> ignoresigns -> [0] : '@';
 
-		$new_datas = $orig_data -> randomize_data( directory   => $self ->directory().'/m'.$model_number,
-			name_stub   => 'rand',
-			samples     => $self->samples(),
-			stratify_index => $self->strat_index(), 
-			rand_index => $self->rand_index(), 
-			equal_obs => (not $self->match_transitions()));
+		$new_datas = data::create_randomized_data( output_directory   => $self ->directory().'/m'.$model_number,
+												   input_directory => $model -> datas->[0]->directory,
+												   input_filename => $orig_data_file,
+												   idcolumn => $idcol->[0][0],
+												   ignoresign => $ignoresign,
+												   missing_data_token => $self->missing_data_token,
+												   name_stub   => 'rand',
+												   samples     => $self->samples(),
+												   stratify_index => $self->strat_index(), 
+												   rand_index => $self->rand_index(), 
+												   equal_obs => (not $self->match_transitions())
+			);
 
 		$self->stop_motion_call(tool=>'randtest',message => "Created randomized datasets in ".
 			$self ->directory().'m'.$model_number)
@@ -196,7 +193,7 @@ sub modelfit_setup
 				copy_data   => 0,
 				copy_output => 0);
 
-			$new_mod->datas(\@data_arr); #sets record and data object. Number of $PROBS and length data_arr must match
+			$new_mod->datafiles(new_names => \@data_arr); #Number of $PROBS and length data_arr must match
 
 			if( $self -> shrinkage() ) {
 				$new_mod -> shrinkage_stats( enabled => 1 );
@@ -219,7 +216,7 @@ sub modelfit_setup
 
 		# Create a checkpoint. Log the samples and individuals.
 		open( DONE, ">".$self ->directory()."/m$model_number/done" ) ;
-		print DONE "Randomization of ",$orig_data -> filename, " performed\n";
+		print DONE "Randomization of ",$orig_data_file, " performed\n";
 		print DONE $self->samples()." samples\n";
 		close( DONE );
 	} else {

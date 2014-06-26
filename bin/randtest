@@ -141,8 +141,9 @@ if ( defined $options{'dummy_data'} ){
 my $eval_string = common_options::model_parameters(\%options);
 
 my $model = model -> new ( eval( $eval_string ),
-			   filename                    => @ARGV[0],
-			   ignore_missing_output_files => 1 );
+						   filename                    => @ARGV[0],
+						   skip_data_parsing =>1,
+						   ignore_missing_output_files => 1 );
 
 if( $options{'shrinkage'} ) {
   $model -> shrinkage_stats( enabled => 1 );

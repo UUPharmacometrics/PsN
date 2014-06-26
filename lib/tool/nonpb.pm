@@ -5,7 +5,6 @@ use Data::Dumper;
 use Math::Random;
 use strict;
 use tool::modelfit;
-use tool::bootstrap;
 use tool::pind;
 use File::Copy qw/mv/;
 use File::Path;

@@ -342,7 +342,7 @@ $model->set_option( record_name => 'estimation',
 if( $options{'shrinkage'} ) {
   $model -> shrinkage_stats( enabled => 1 );
 }
-
+$model->skip_data_parsing(1);
 
 if (defined $options{'stratify_on'}){
   my $column_number;
@@ -439,12 +439,12 @@ for (my $split=1; $split<= $options{'splits'}; $split++){
 	$model -> copy(filename => $run_directory.'/model_group'.$group.'.mod',
 		       copy_data => 0, copy_output => 0,
 		       target => 'mem' );
-	  
+
     foreach my $out (@{$model_group-> outputs()}){
       $out -> directory($model_group->directory());
     }
     
-    $model_group -> datas( [$data_xv->estimation_data() -> [$group-1]] );
+    $model_group -> datafiles( new_names => [$data_xv->estimation_data() -> [$group-1]] );
 
     ui -> print( category => 'xv_scm',
 		       message => "Starting scm forward search for xv_scm ".
@@ -459,6 +459,7 @@ for (my $split=1; $split<= $options{'splits'}; $split++){
     if (defined $original_included){
         $config_file -> included_relations($original_included);
     }
+#change xv_pred_data to filenames
     $scm = tool::scm -> 
 	new ( eval( $common_options::parameters ),
 	      models	=> [$model_group],
@@ -560,7 +561,6 @@ close XV;
 
 
 #3) at each lev XX included YY% of the time
-#Taka wants this transposed
 open( XV, ">> xv_percent_inclusion_by_level.csv" );
 print XV "Relation";
 for (my $lev=1;$lev<$maxlev; $lev++){

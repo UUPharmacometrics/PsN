@@ -14,7 +14,7 @@ use MooseX::Params::Validate;
 extends 'tool';
 
 has 'case_column' => ( is => 'rw', required => 1, isa => 'Int' );
-has 'bins' => ( is => 'rw', isa => 'Any' );
+has 'bins' => ( is => 'rw', isa => 'Int' );
 has 'cook_scores' => ( is => 'rw', isa => 'ArrayRef' );
 has 'cdd_id' => ( is => 'rw', isa => 'Str' );
 has 'covariance_ratios' => ( is => 'rw', isa => 'ArrayRef' );

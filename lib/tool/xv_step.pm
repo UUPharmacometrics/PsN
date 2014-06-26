@@ -4,7 +4,7 @@ use include_modules;
 use tool::modelfit;
 use Moose;
 use MooseX::Params::Validate;
-
+use data;
 extends 'tool';
 
 #start description
@@ -86,7 +86,7 @@ sub modelfit_setup
 
 	print "\n xv_step: modelfit_setup\n" if ($self->stop_motion());
 	my $model = $self -> models -> [0];
-
+	$model->skip_data_parsing(1);
 	$self -> create_data_sets;
 
 	# Create copies of the model. This is reasonable to do every
@@ -109,10 +109,9 @@ sub modelfit_setup
 			$model_copy_pred->remove_option(record_name => 'estimation',
 				option_name => 'NOABORT');
 
+			$model_copy_pred -> datafiles( new_names => [$self -> prediction_data -> [$i]] );
 			# Make sure changes is reflected on disk.
 			$model_copy_pred -> _write();
-
-			$model_copy_pred -> datas( [$self -> prediction_data -> [$i]] );
 			push( @{$self -> prediction_models}, $model_copy_pred );
 		}
 
@@ -123,7 +122,8 @@ sub modelfit_setup
 				copy_data => 0, copy_output => 0,
 				target => 'mem' );
 
-			$model_copy_est -> datas( [$self -> estimation_data -> [$i]] );
+			$model_copy_est -> datafiles( new_names => [$self -> estimation_data -> [$i]] );
+			#do not write model here, will modify more later
 			push( @{$self -> estimation_models}, $model_copy_est );
 		}
 	}
@@ -171,10 +171,19 @@ sub create_data_sets
 	my $self = shift;
 
 	my $model = $self -> models -> [0];
-
-	my @datas = @{$model->datas};
-	my $data_obj = $datas[0];
-
+	my $ignoresign = (defined $self->ignoresigns and defined $self->ignoresigns->[0])? $self->ignoresigns->[0]:'@'; 
+	my ( $junk, $idcol ) = $model -> _get_option_val_pos( name            => 'ID',
+														  record_name     => 'input',
+														  problem_numbers => [1]);
+	unless (defined $idcol->[0][0]){
+		croak( "Error finding column ID in \$INPUT of model\n");
+	}
+	my $data_obj = data->new(filename => $model->datas->[0]->filename,
+							 directory => $model->datas->[0]->directory,
+							 idcolumn => $idcol->[0][0],
+							 ignoresign => $ignoresign,
+							 missing_data_token => $self->missing_data_token);
+	
 	my $subsets;
 	my $array;
 
@@ -189,8 +198,8 @@ sub create_data_sets
 		$have_data = 0;
 		# Create subsets of the dataobject.
 		($subsets,$array) = $data_obj->subsets(bins => $self->nr_validation_groups,
-			target => 'mem',
-			stratify_on => $self->stratify_on());
+											   target => 'mem',
+											   stratify_on => $self->stratify_on());
 
 
 		$self->stop_motion_call(tool=>'xv_step_subs',message => "create data")
@@ -212,38 +221,39 @@ sub create_data_sets
 	# The prediction dataset is one of the elements in the
 	# subsets array.
 
-	for( my $i = 0; $i <= $#{$subsets}; $i++ )
-	{
-		#each subset is a data object with ignoresign and idcolumn.
-		$subsets -> [$i] -> filename( 'pred_data' . $i . '.dta' );
-		$subsets -> [$i] -> directory( $self -> directory );
-		$subsets -> [$i] -> _write();
-		push( @{$self -> prediction_data}, $subsets -> [$i] );
+	unless ($have_data){
+		for( my $i = 0; $i <= $#{$subsets}; $i++ ) {
+			#each subset is a data object with ignoresign and idcolumn.
+			#
+			$subsets -> [$i] -> filename( 'pred_data' . $i . '.dta' );
+			$subsets -> [$i] -> directory( $self -> directory );
+			$subsets -> [$i] -> _write();
+			push( @{$self -> prediction_data}, $subsets -> [$i]->full_name );
 
-		my $est_data;
-		for (my $j = 0; $j <= $#{$subsets}; $j++)
-		{
-			if ($j == 0) {
-				$est_data = data->new(
-					filename => 'est_data' . $i . '.dta', 
-					directory => $self->directory,
-					ignoresign => $subsets -> [$i]->ignoresign,
-					ignore_missing_files => 1, 
-					header => $data_obj->header,
-					idcolumn => $subsets -> [$i]->idcolumn);
+			my $est_data;
+			for (my $j = 0; $j <= $#{$subsets}; $j++){
+				if ($j == 0) {
+					$est_data = data->new(
+						filename => 'est_data' . $i . '.dta', 
+						directory => $self->directory,
+						ignoresign => $subsets -> [$i]->ignoresign,
+						ignore_missing_files => 1, 
+						header => $data_obj->header,
+						idcolumn => $subsets -> [$i]->idcolumn);
+				}
+
+				# The estimation data set is a merge of the datasets
+				# complementing the prediction data in the subsets
+				# array.
+
+				unless( $i == $j ){
+					$est_data -> merge( mergeobj => $subsets -> [$j] );
+				}
 			}
-
-			# The estimation data set is a merge of the datasets
-			# complementing the prediction data in the subsets
-			# array.
-
-			unless( $i == $j ){
-				$est_data -> merge( mergeobj => $subsets -> [$j] );
-			}
+			# TODO Remove this write when the data object is sane.
+			$est_data -> _write();
+			push( @{$self -> estimation_data}, $est_data->full_name );
 		}
-		# TODO Remove this write when the data object is sane.
-		$est_data -> _write();
-		push( @{$self -> estimation_data}, $est_data );
 	}
 	$self->stop_motion_call(tool=>'xv_step_subs',message => "written data in ".$self->directory)
 	if ($self->stop_motion());
