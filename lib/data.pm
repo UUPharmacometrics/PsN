@@ -169,7 +169,7 @@ sub _target_set
 	}
 }
 
-sub bootstrap
+sub _bootstrap
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
@@ -195,12 +195,15 @@ sub bootstrap
 	my @incl_individuals;
 	my @included_keys;
 
+	my ($tmp1, $tmp2) = OSspecific::absolute_path($directory,'hej');
+	$directory = $tmp1; #to get with /
+
 	# The bootstrap method draws I<samples> number of boostrap
 	# samples from the data set. The I<subjects> arguments
 	# determines the size of each sample (default equals to the
 	# number of individuals in the original data set). The method
 	# returns references to three arrays: I<boot_samples_ref>,
-	# which holds the bootstrap data sets, I<incl_individuals_ref>
+	# which holds the name of bootstrap data files, I<incl_individuals_ref>
 	# which holds arrays containing the subject identifiers (ID's)
 	# for the included individuals of each bootstrap data set and
 	# I<included_keys_ref> which holds the key or index of the
@@ -208,7 +211,6 @@ sub bootstrap
 	# starting at 1 for the first individual in the original data
 	# set and increasing by one for each following.
 
-	$self->synchronize;
 	my @header      = @{$self->header()};
 	my $individuals = $self->individuals();
 	my $key_ref;
@@ -220,21 +222,21 @@ sub bootstrap
 
 	for ( my $i = 1; $i <= $samples; $i++ ) {
 	  my $new_name = defined $name_stub ? $name_stub."_$i.dta" : "bs$i.dta";
-	  $new_name = $directory.'/'.$new_name;
-	  my ( $boot, $incl_ind_ref, $incl_key_ref ) =
-	    $self->resample( subjects    => \%subjects,
-			       resume      => $resume,
-			       new_name    => $new_name,
-			       target      => $target,
-			       stratify_on => $stratify_on);
+	  $new_name = $directory.$new_name;
+	  my ( $incl_ind_ref, $incl_key_ref ) =
+		  $self->resample( subjects    => \%subjects,
+						   resume      => $resume,
+						   new_name    => $new_name,
+						   target      => $target,
+						   stratify_on => $stratify_on);
 	  push( @included_keys, $incl_key_ref );
 	  push( @incl_individuals, $incl_ind_ref );
-	  push( @boot_samples, $boot );
+	  push( @boot_samples, $new_name ); 
 	  if( $status_bar->tick() ){
-	    ui->print( category => 'bootstrap',
-			 message => $status_bar->print_step,
-			 newline => 0,
-			 wrap => 0);
+		  ui->print( category => 'bootstrap',
+					 message => $status_bar->print_step,
+					 newline => 0,
+					 wrap => 0);
 	  }
 	}
 	ui->print( category => 'bootstrap',
@@ -243,8 +245,51 @@ sub bootstrap
 	return \@boot_samples ,\@incl_individuals ,\@included_keys;
 }
 
-sub bootstrap_from_keys
+sub bootstrap_create_datasets_from_keys{
+	#static method no shift
+	my %parm = validated_hash(\@_,
+							  input_filename => { isa => 'Str', optional => 0 },
+							  input_directory => { isa => 'Maybe[Str]', optional => 0 },
+							  name_stub   => { isa => 'Str', optional => 1 },
+							  output_directory => { isa => 'Str', optional => 0 },
+							  key_references => { isa => 'ArrayRef', optional => 0 },
+							  ignoresign => { isa => 'Str', optional => 1 },
+							  missing_data_token => { isa => 'Int', optional => 1 },
+							  idcolumn => { isa => 'Int', optional => 0 }
+	);
+	my $input_filename = $parm{'input_filename'};
+	my $input_directory = $parm{'input_directory'};
+	my $name_stub = $parm{'name_stub'};
+	my $output_directory = $parm{'output_directory'};
+	my @key_references = defined $parm{'key_references'} ? @{$parm{'key_references'}} : ();
+	my $ignoresign = $parm{'ignoresign'};
+	my $missing_data_token = $parm{'missing_data_token'};
+	my $idcolumn = $parm{'idcolumn'};
+
+	unless (-d $output_directory){
+		croak("output directory $output_directory is not a directory/does not exist");
+	}
+	my ($tmp1, $tmp2) = OSspecific::absolute_path($output_directory,'hej');
+	$output_directory = $tmp1; #to get with /
+
+	#data will be parsed here
+	my $data = data->new(filename => $input_filename,
+						 directory => $input_directory,
+						 ignoresign => $ignoresign,
+						 missing_data_token => $missing_data_token,
+						 idcolumn => $idcolumn);
+
+	my $new_datas = $data -> _bootstrap_from_keys( directory   => $output_directory,
+												  name_stub   => $name_stub,
+												  key_references => \@key_references);
+
+	$data = undef;
+	return $new_datas;
+}
+
+sub _bootstrap_from_keys
 {
+	#private method, only use from bootstrap_create_datasets_from_keys
 	my $self = shift;
 	my %parm = validated_hash(\@_,
 		 directory => { isa => 'Str', optional => 0 },
@@ -262,9 +307,8 @@ sub bootstrap_from_keys
 	# samples from the data set based on input keys reference generated 
 	#by bootstrap method on same dataset (assumed).
 	# returns references to one array: I<boot_samples>,
-	# which holds the bootstrap data sets
+	# which holds the names of bootstrap data files
 
-	$self->synchronize;
 	for ( my $i = 1; $i <= scalar(@key_references); $i++ ) {
 	  my $new_name = defined $name_stub ? $name_stub."_$i.dta" : "bs$i.dta";
 	  $new_name = $directory.'/'.$new_name;
@@ -429,12 +473,64 @@ sub add_frem_lines
 	return \@invariant_matrix ,\@timevar_matrix;
 }
 
+sub bootstrap_create_datasets{
+	#static method no shift
+	my %parm = validated_hash(\@_,
+							  input_filename => { isa => 'Str', optional => 0 },
+							  input_directory => { isa => 'Maybe[Str]', optional => 0 },
+							  subjects => { isa => 'Maybe[HashRef]', optional => 1 },
+							  name_stub   => { isa => 'Str', optional => 1 },
+							  samples     => { isa => 'Int', optional => 0 },
+							  stratify_on => { isa => 'Maybe[Int]', optional => 1 },
+							  output_directory => { isa => 'Str', optional => 0 },
+							  ignoresign => { isa => 'Str', optional => 1 },
+							  missing_data_token => { isa => 'Int', optional => 1 },
+							  idcolumn => { isa => 'Int', optional => 0 }
+	);
+	my $input_filename = $parm{'input_filename'};
+	my $input_directory = $parm{'input_directory'};
+	my %subjects = (defined $parm{'subjects'})? %{$parm{'subjects'}}: ();
+	my $name_stub = $parm{'name_stub'};
+	my $samples = $parm{'samples'};
+	my $stratify_on = $parm{'stratify_on'};
+	my $output_directory = $parm{'output_directory'};
+	my $ignoresign = $parm{'ignoresign'};
+	my $missing_data_token = $parm{'missing_data_token'};
+	my $idcolumn = $parm{'idcolumn'};
+
+	unless (-d $output_directory){
+		croak("output directory $output_directory is not a directory/does not exist");
+	}
+	my ($tmp1, $tmp2) = OSspecific::absolute_path($output_directory,'hej');
+	$output_directory = $tmp1; #to get with /
+
+	#data will be parsed here
+	my $data = data->new(filename => $input_filename,
+						 directory => $input_directory,
+						 ignoresign => $ignoresign,
+						 missing_data_token => $missing_data_token,
+						 idcolumn => $idcolumn);
+
+	my $count = $data->count_ind;
+	unless (scalar(keys %subjects)>0){
+		$subjects{'default'} = $count;
+	}
+
+	my ($new_datas, $incl_ids, $incl_keys) = $data->_bootstrap( directory   => $output_directory,
+															   name_stub   => $name_stub,
+															   samples     => $samples,
+															   subjects    => \%subjects,
+															   stratify_on => $stratify_on);
+	$data = undef;
+	return ($new_datas, $incl_ids, $incl_keys,\%subjects, $count);
+}
+
 sub cdd_create_datasets{
 	#static method no shift
 	my %parm = validated_hash(\@_,
 		input_filename => { isa => 'Str', optional => 0 },
 		input_directory => { isa => 'Maybe[Str]', optional => 0 },
-		bins => { isa => 'Maybe[Num]', optional => 1 },
+		bins => { isa => 'Maybe[Int]', optional => 1 },
 		case_column => { isa => 'Int', optional => 0 },
 		selection_method => { isa => 'Maybe[Str]', default => 'consecutive', optional => 1 },
 		output_directory => { isa => 'Str', optional => 0 },
@@ -467,7 +563,7 @@ sub cdd_create_datasets{
 
 	
 	my ($new_datas, $skip_ids, $skip_keys, $skip_values, $remainders, $pr_bins ) =
-		$data -> case_deletion( case_column => $case_column,
+		$data -> _case_deletion( case_column => $case_column,
 								selection   => $selection_method,
 								bins        => $bins,
 								directory   => $output_directory );
@@ -476,7 +572,7 @@ sub cdd_create_datasets{
 
 }
 
-sub case_deletion
+sub _case_deletion
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
@@ -1453,14 +1549,14 @@ sub resample
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 new_name => { isa => 'Str', default => 'resampled.dta', optional => 1 },
-		 stratify_on => { isa => 'Maybe[Int]', optional => 1 },
-		 resume => { isa => 'Bool', default => 0, optional => 1 },
-		 subjects => { isa => 'HashRef[Int]', default => $self->count_ind, optional => 1 },
-		 target => { isa => 'Str', default => 'disk', optional => 1 },
-		 model_id => { isa => 'Int', optional => 1 },
-		 MX_PARAMS_VALIDATE_NO_CACHE => 1
-	);
+							  new_name => { isa => 'Str', optional => 0 },
+							  stratify_on => { isa => 'Maybe[Int]', optional => 1 },
+							  resume => { isa => 'Bool', default => 0, optional => 1 },
+							  subjects => { isa => 'HashRef[Int]', default => $self->count_ind, optional => 1 },
+							  target => { isa => 'Str', default => 'disk', optional => 1 },
+							  model_id => { isa => 'Int', optional => 1 },
+							  MX_PARAMS_VALIDATE_NO_CACHE => 1
+		);
 	my $new_name = $parm{'new_name'};
 	my $stratify_on = $parm{'stratify_on'};
 	my $resume = $parm{'resume'};
@@ -1471,8 +1567,6 @@ sub resample
 	my @included_keys;
 	my $model_id = $parm{'model_id'};
 
-	$self->individuals([]) unless defined $self->individuals;
-	$self->synchronize;
 	my ( @header, $individuals, @bs_inds, $key_ref, @id_ids, @bs_id_ids );
 
 	my @subj_keys = keys( %subjects );
@@ -1537,90 +1631,71 @@ sub resample
 							 ignore_missing_files => 1,
 							 target      => 'mem' );
 		  $boot->renumber_ascending;
-		  $boot->flush;
+		  $boot->_write;
  	  } else {
-	    # If we are resuming, we still need to generate the
-	    # pseudo-random sequence and initiate a data object
-	    while( my ( $factor, $key_list ) = each %strata ) {
-	      my $keys;
-	      if ( defined $subjects{$factor} ) {
-					$keys = $subjects{$factor};
-	      } elsif( defined $subjects{'default'} ) {
-					$keys = sprintf( "%.0f",($subjects{'default'}*
-			       (scalar(@{$key_list})) / ($self->count_ind())) );
-	      } else {
-					croak("A sample size for strata $factor could not be found ".
-			      "and no default sample size was set" );
-	      }
-	      for ( my $i = 0; $i < $keys; $i++ ) {
-					my $list_ref = random_uniform_integer(1,0,(scalar(@{$key_list}) - 1));
-	      }
-	    }
-	    $boot = data->new( idcolumn => $self->idcolumn,
-				 ignoresign  => $self->ignoresign,
-				 missing_data_token => $self->missing_data_token,
-				 filename    => $new_name,
-				 ignore_missing_files => 1,
-				 target      => $target );
-
-	    $boot->flush;
+		  # If we are resuming, we still need to generate the
+		  # pseudo-random sequence and initiate a data object
+		  while( my ( $factor, $key_list ) = each %strata ) {
+			  my $keys;
+			  if ( defined $subjects{$factor} ) {
+				  $keys = $subjects{$factor};
+			  } elsif( defined $subjects{'default'} ) {
+				  $keys = sprintf( "%.0f",($subjects{'default'}*
+										   (scalar(@{$key_list})) / ($self->count_ind())) );
+			  } else {
+				  croak("A sample size for strata $factor could not be found ".
+						"and no default sample size was set" );
+			  }
+			  for ( my $i = 0; $i < $keys; $i++ ) {
+				  my $list_ref = random_uniform_integer(1,0,(scalar(@{$key_list}) - 1));
+			  }
+		  }
 	  }
 	} else {
-	  my $size;
-	  if( defined $subjects{'default'} ) {
-	    $size = $subjects{'default'};
-	  } else {
-	    croak("No default sample size was set" );
-	  }
-	  unless ( $resume and -e $new_name ) {
- 	    @header = @{$self->header()};
+		my $size;
+		if( defined $subjects{'default'} ) {
+			$size = $subjects{'default'};
+		} else {
+			croak("No default sample size was set" );
+		}
+		unless ( $resume and -e $new_name ) {
+			@header = @{$self->header()};
 			$self->individuals([]) unless defined $self->individuals; # FIXME
- 	    $individuals = $self->individuals;
-	    for ( my $i = 1; $i <= $size; $i++ ) {
-	      $key_ref = random_uniform_integer(1, 0, scalar @{$individuals} - 1);
-	      push( @bs_inds, $individuals->[$key_ref]->copy );
-	      push( @included_keys, $key_ref );
-	      push( @incl_individuals, $individuals->[ $key_ref ]->idnumber );
-	      push( @bs_id_ids, $id_ids[ $key_ref ] );
-	    }
+			$individuals = $self->individuals;
+			for ( my $i = 1; $i <= $size; $i++ ) {
+				$key_ref = random_uniform_integer(1, 0, scalar @{$individuals} - 1);
+				push( @bs_inds, $individuals->[$key_ref]->copy );
+				push( @included_keys, $key_ref );
+				push( @incl_individuals, $individuals->[ $key_ref ]->idnumber );
+				push( @bs_id_ids, $id_ids[ $key_ref ] );
+			}
+			
+			# MUST FIX: If a file already exists with the same name,
+			# the created bs data set will be appended to this. IT
+			# MUST BE OVERWRITTEN!
+			
+			$boot = data->new( header      => \@header,
+							   idcolumn    => $self->idcolumn,
+							   ignoresign  => $self->ignoresign,
+							   missing_data_token => $self->missing_data_token,
+							   individuals => \@bs_inds,
+							   filename    => $new_name,
+							   ignore_missing_files => 1,
+							   target      => 'mem' );
+			
+			$boot->renumber_ascending;
+			$boot->_write;
 
-	    # MUST FIX: If a file already exists with the same name,
-	    # the created bs data set will be appended to this. IT
-	    # MUST BE OVERWRITTEN!
-
-	    $boot = data->new( header      => \@header,
-				 idcolumn    => $self->idcolumn,
-				 ignoresign  => $self->ignoresign,
-				 missing_data_token => $self->missing_data_token,
-				 individuals => \@bs_inds,
-				 filename    => $new_name,
-				 ignore_missing_files => 1,
-				 target      => 'mem' );
-
-	    $boot->renumber_ascending; #turned off writing to disk before renumbering
-	    $boot->_write unless ($target eq 'disk'); #if $target is disk we write anyway in the flush below
-	    $boot->target( $target ); #nothing happens if $target is mem. if 'disk' then this is a flush
-	  } else {
-	    # If we are resuming, we still need to generate the
-	    # pseudo-random sequence and initiate a data object
-	    for ( my $i = 1; $i <= $size; $i++ ) {
-	      random_uniform_integer(1,0,scalar @{$individuals}-1)
-	    }
-	    $boot = data->new( idcolumn    => $self->idcolumn,
-				 ignoresign  => $self->ignoresign,
-				 missing_data_token => $self->missing_data_token,
-				 filename    => $new_name,
-				 ignore_missing_files => 1,
-				 target      => $target );
-
-	    $boot->flush;
-	  }	
-	  if ($target eq 'disk') {
-	    $boot->flush;
-	  }
+		} else {
+			# If we are resuming, we still need to generate the
+			# pseudo-random sequence
+			for ( my $i = 1; $i <= $size; $i++ ) {
+				random_uniform_integer(1,0,scalar @{$individuals}-1)
+			}
+		}	
 	}
 
-	return $boot, \@incl_individuals, \@included_keys;
+	return \@incl_individuals, \@included_keys;
 }
 
 sub resample_from_keys
@@ -1636,8 +1711,6 @@ sub resample_from_keys
 	my @key_arr = defined $parm{'key_arr'} ? @{$parm{'key_arr'}} : ();
 	my $boot;
 
-	$self->individuals([]) unless defined $self->individuals; #FIXME
-	$self->synchronize;
 	my (@header, $individuals, @bs_inds);
 	@header = @{$self->header};
 	$individuals = $self->individuals;
@@ -1660,13 +1733,8 @@ sub resample_from_keys
 	);
 	$boot->renumber_ascending;
 	$boot->_write;
-	$boot->target($target);
-
-	if ($target eq 'disk') {
-	  $boot->flush;
-	}
-
-	return $boot;
+	$boot = undef;
+	return $new_name;
 }
 
 sub subsets
@@ -1951,7 +2019,57 @@ sub split_vertically
 	return \@left_side_individuals, \@right_side_individuals, \@split_values, \@stratify_values;
 }
 
-sub randomize_data
+sub create_randomized_data
+{
+	#static, no shift
+	my %parm = validated_hash(\@_,
+							  rand_index => { isa => 'Int', optional => 0 },
+							  stratify_index => { isa => 'Maybe[Int]', optional => 1 },
+							  name_stub => { isa => 'Str', optional => 1 },
+							  samples => { isa => 'Int', optional => 0 },
+							  equal_obs => { isa => 'Bool', optional => 0 },
+							  input_filename => { isa => 'Str', optional => 0 },
+							  input_directory => { isa => 'Maybe[Str]', optional => 0 },
+							  output_directory => { isa => 'Str', optional => 0 },
+							  ignoresign => { isa => 'Str', optional => 1 },
+							  missing_data_token => { isa => 'Int', optional => 1 },
+							  idcolumn => { isa => 'Int', optional => 0 }
+		);
+	my $rand_index = $parm{'rand_index'};
+	my $stratify_index = $parm{'stratify_index'};
+	my $name_stub = $parm{'name_stub'};
+	my $samples = $parm{'samples'};
+	my $equal_obs = $parm{'equal_obs'};
+	my $input_filename = $parm{'input_filename'};
+	my $input_directory = $parm{'input_directory'};
+	my $output_directory = $parm{'output_directory'};
+	my $ignoresign = $parm{'ignoresign'};
+	my $missing_data_token = $parm{'missing_data_token'};
+	my $idcolumn = $parm{'idcolumn'};
+
+	unless (-d $output_directory){
+		croak("output directory $output_directory is not a directory/does not exist");
+	}
+	my ($tmp1, $tmp2) = OSspecific::absolute_path($output_directory,'hej');
+	$output_directory = $tmp1; #to get with /
+
+	#data will be parsed here
+	my $data = data->new(filename => $input_filename,
+						 directory => $input_directory,
+						 ignoresign => $ignoresign,
+						 missing_data_token => $missing_data_token,
+						 idcolumn => $idcolumn);
+
+	my $filenames = $data->_randomize_data(name_stub   => $name_stub,
+										   samples     => $samples,
+										   stratify_index => $stratify_index, 
+										   rand_index => $rand_index, 
+										   equal_obs => $equal_obs,
+										   directory => $output_directory);
+	$data = undef;
+	return $filenames;
+}
+sub _randomize_data
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
@@ -1968,7 +2086,7 @@ sub randomize_data
 	my $samples = $parm{'samples'};
 	my $equal_obs = $parm{'equal_obs'};
 	my $directory = $parm{'directory'};
-	my @data_objects;
+	my @data_file_names;
 
 	#in is mandatory integer samples
 	#mandatory integer rand_index index of randomization column
@@ -1976,7 +2094,7 @@ sub randomize_data
 	#mandatory boolean equal_obs
 	#optional string name_stub
 	#optional directory where to write results
-	#return array of data objects
+	#return array of data file names including dir
 
 	#setup
 	my ($left_side_individuals,$right_side_individuals,$rand_values,$stratify_values) = 
@@ -2013,19 +2131,18 @@ sub randomize_data
 			}
 		}
 		my $newdata = data->new( header      => \@header,
-			idcolumn    => $self->idcolumn,
-			missing_data_token => $self->missing_data_token,			 
-			ignoresign  => $self->ignoresign,
-			individuals => \@new_individuals,
-			filename    => $new_name,
-			ignore_missing_files => 1,
-			target      => 'mem' );
+								 idcolumn    => $self->idcolumn,
+								 missing_data_token => $self->missing_data_token,			 
+								 ignoresign  => $self->ignoresign,
+								 individuals => \@new_individuals,
+								 filename    => $new_name,
+								 ignore_missing_files => 1);
 		$newdata->_write;
-		$newdata->flush;
-		push(@data_objects,$newdata);
+		push(@data_file_names,$new_name);
+		$newdata = undef;
 	}
 
-	return \@data_objects;
+	return \@data_file_names;
 }
 
 sub reconcile_column
@@ -2426,7 +2543,7 @@ sub _read_individuals
 	my $idcol	= $self->idcolumn;
 	my $filename = $self->full_name;
 	my $ignoresign = $self->ignoresign;
-#	print "idcolumn in read_individuals is $idcol\n";
+	print "idcolumn in read_individuals is $idcol\n";
 	open(DATAFILE,"$filename") || die "Could not open $filename for reading";
 
 	my ( @new_row, $new_ID, $old_ID, @init_data );

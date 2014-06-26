@@ -80,7 +80,7 @@ is_array($strat_val,[1,1,1,1,2,2,2,2,2,2],"split_vertically strat values");
 my $tempdir = create_test_dir('unit_data');
 
 random_set_seed_from_phrase('12345');
-my $arr = $data->randomize_data(samples => 1, rand_index => 1, stratify_index => 8, equal_obs => 1, directory => $tempdir);
+my $arr = $data->_randomize_data(samples => 1, rand_index => 1, stratify_index => 8, equal_obs => 1, directory => $tempdir);
 my $filename = 'rand_1.dta';
 
 my $newdata = data->new( 
@@ -105,7 +105,7 @@ is_array ($newdata->individuals()->[7]->subject_data(),['8,60,0,64.938,5,66,1,1,
 
 unlink("$tempdir/$filename");
 random_set_seed_from_phrase('12345');
-$arr = $dotdata->randomize_data(samples => 1,rand_index=> 1, equal_obs=>0, directory => $tempdir);
+$arr = $dotdata->_randomize_data(samples => 1,rand_index=> 1, equal_obs=>0, directory => $tempdir);
 
 $newdata = data ->new( 
    idcolumn             => 1,
