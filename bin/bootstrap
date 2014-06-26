@@ -281,26 +281,25 @@ if ( defined $options{'dummy_data'} ){
 my $eval_string = common_options::model_parameters(\%options);
 
 my $model = model -> new ( eval( $eval_string ),
-			   filename                    => @ARGV[0],
-			   ignore_missing_output_files => 1 );
+						   filename                    => @ARGV[0],
+						   skip_data_parsing => 1,
+						   ignore_missing_output_files => 1 );
 
 if( $options{'shrinkage'} ) {
-  $model -> shrinkage_stats( enabled => 1 );
+	$model -> shrinkage_stats( enabled => 1 );
 }
 
 
 my $type = defined $options{'bca'} ? 'bca' : undef;
 
-
+my $subj_hash ={};
 if( defined $options{'sample_size'} ) {
   $options{'sample_size'} = 'default=>'.$options{'sample_size'} if( $options{'sample_size'} =~ /^\d+$/ );
-} else {
-  $options{'sample_size'} = 'default=>'.$model -> datas() -> [0] -> count_ind();
-}
-my %subj_hash = eval($options{'sample_size'});
-if( $@ ) {
-  die $@."\nThe sample_size option must be either a single number or of the format 'strata1=>12,strata2=>34, ...' etc" ;
-}
+  %{$subj_hash} = eval($options{'sample_size'});
+  if( $@ ) {
+	  die $@."\nThe sample_size option must be either a single number or of the format 'strata1=>12,strata2=>34, ...' etc" ;
+  }
+} 
 
 ## Create new Bootstrap object:
 my $bs = tool::bootstrap -> 
@@ -309,7 +308,7 @@ my $bs = tool::bootstrap ->
 	prepend_model_file_name => 1,
 	models				     => [ $model ],
 	samples				     => $options{'samples'},
-	subjects			     => \%subj_hash,
+	subjects			     => $subj_hash,
 	type				     => $type,
 	keep_tables          	=> $options{'keep_tables'},
 	stratify_on                          => $options{'stratify_on'},

@@ -136,6 +136,7 @@ sub BUILD
 
 sub _sampleTools
 {
+	#not used. Remove or keep for ideas??
 	my $self = shift;
 	my %parm = validated_hash(\@_,
 		samples => { isa => 'Int', default => 200, optional => 1 },
@@ -220,6 +221,7 @@ sub llp_setup
 
 sub resample
 {
+	#not used, remove??
 	my $self = shift;
 	my %parm = validated_hash(\@_,
 		target => { isa => 'Str', default => 'disk', optional => 1 },
@@ -809,7 +811,6 @@ sub general_setup
 
 	# {{{ log header
 
-	my @orig_datas = @{$model -> datas};
 	my @problems   = @{$model -> problems};
 	my @new_models;
 
@@ -879,18 +880,17 @@ sub general_setup
 	# regardless of which problem the initially belonged to. Fix
 	# this.
 
-	if ( $#orig_datas < 0 ) {
-		carp("No data files to resample from" );
-	} elsif ( $#orig_datas > 1 ){
-		print "Warning: bootstrap may not support multiple datasets\n";
-	} else {
-		carp("Starting bootstrap sampling" );
-	}
 
-
-	for ( my $i = 1; $i <= scalar @orig_datas; $i++ ) {
-		my $orig_data = $orig_datas[$i-1];
-		my $dataname = $orig_data -> filename; 
+	for ( my $i = 1; $i <= scalar @problems; $i++ ) {
+		my $dataname = $model->datas->[$i-1]-> filename; 
+		my $datadir = $model->datas->[$i-1]-> directory; 
+		my $ignoresign = defined $model -> ignoresigns ? $model -> ignoresigns -> [$i-1] : undef;
+		my ( $junk, $idcol ) = $model -> _get_option_val_pos( name            => 'ID',
+															  record_name     => 'input',
+															  problem_numbers => [$i]);
+		unless (defined $idcol->[0][0]){
+			croak( "Error finding column ID in \$INPUT of model\n");
+		}
 
 		my $stratify_on;
 		if (defined $self->stratify_on ) {
@@ -911,21 +911,26 @@ sub general_setup
 			}
 		}
 
-		my ( @seed, $new_datas, $incl_ids, $incl_keys, $new_mod );
+		my ( @seed, $new_datas, $incl_ids, $incl_keys, $new_mod, $new_subjects, $orig_count_ind );
 
 		my $done = ( -e $self ->directory()."/m$model_number/done.$i" ) ? 1 : 0;
 		if ( not $done ) {
 			ui -> print( category => 'bootstrap',
 				message  => "Resampling from $dataname");
 
-			( $new_datas, $incl_ids, $incl_keys )
-			= $orig_data -> bootstrap( directory   => $self ->directory().'/m'.$model_number,
-				name_stub   => 'bs_pr'.$i,
-				samples     => $self->samples(),
-				subjects    => $self->subjects(),
-				stratify_on => $stratify_on,  #always a number
-				target	     => 'disk');
-
+			( $new_datas, $incl_ids, $incl_keys, $new_subjects, $orig_count_ind )
+				= data::bootstrap_create_datasets( output_directory   => $self ->directory().'/m'.$model_number,
+												   name_stub   => 'bs_pr'.$i,
+												   samples     => $self->samples(),
+												   subjects    => $self->subjects(),
+												   stratify_on => $stratify_on, #always a number
+												   input_filename => $dataname,
+												   input_directory => $datadir,
+												   ignoresign => $ignoresign,
+												   idcolumn => $idcol->[0][0],  #number not index
+												   missing_data_token => $self->missing_data_token
+												   	);
+			$self->subjects($new_subjects);
 			$self->stop_motion_call(tool=>'bootstrap',message => "Created bootstrapped datasets in ".
 				$self ->directory().'m'.$model_number)
 			if ($self->stop_motion());
@@ -934,22 +939,19 @@ sub general_setup
 				my ($model_dir, $filename) = OSspecific::absolute_path( $self ->directory().'/m'.$model_number, 
 					'bs_pr'.$i.'_'.($j+1).'.mod' );
 				my $prob_copy = Storable::dclone($problems[$i-1]); #bug here, is from undropped model
-
-
-				$new_mod = model ->
-				new( %{common_options::restore_options(@common_options::model_options)},
-					sde                  => 0,
-					outputs              => undef,
-					datas                => undef,
-					synced               => undef,
-					active_problems      => undef,
-					directory            => $model_dir,
-					filename             => $filename,
-					outputfile           => undef,
-					problems             => [$prob_copy],
-					extra_files          => $model -> extra_files,
-					target               => 'disk',
-					ignore_missing_files => 1 );
+				$new_mod = model -> new( %{common_options::restore_options(@common_options::model_options)},
+										 sde                  => 0,
+										 outputs              => undef,
+										 datas                => undef,
+										 synced               => undef,
+										 active_problems      => undef,
+										 directory            => $model_dir,
+										 filename             => $filename,
+										 outputfile           => undef,
+										 problems             => [$prob_copy],
+										 extra_files          => $model -> extra_files,
+										 target               => 'disk',
+										 ignore_missing_files => 1 );
 
 				unless ($self->keep_tables){
 					$new_mod -> remove_records( type => 'table' );
@@ -959,7 +961,7 @@ sub general_setup
 					$new_mod -> shrinkage_modules( $model -> shrinkage_modules );
 				}
 
-				$new_mod -> datas ( [$new_datas -> [$j]] );
+				$new_mod -> datafiles( new_names => [$new_datas -> [$j]] );
 
 				if( $self -> nonparametric_etas() or
 					$self -> nonparametric_marginals() ) {
@@ -977,7 +979,7 @@ sub general_setup
 
 			# Create a checkpoint. Log the samples and individuals.
 			open( DONE, ">".$self ->directory()."/m$model_number/done.$i" ) ;
-			print DONE "Resampling from ",$orig_data -> filename, " performed\n";
+			print DONE "Resampling from ",$dataname, " performed\n";
 			print DONE $self->samples()." samples\n";
 			while( my ( $strata, $samples ) = each %{$self->subjects()} ) {
 				print DONE "Strata $strata: $samples sample_size\n";
@@ -1000,7 +1002,7 @@ sub general_setup
 			close( INCL );
 			open( KEYS, ">".$self ->directory()."included_keys".$model_number.".csv" ) ;
 			open( SAMPLEKEYS, ">".$self ->directory()."sample_keys".$model_number.".csv" ) ;
-			my $ninds= ($orig_data -> count_ind());
+			my $ninds= $orig_count_ind;
 			for( my $k = 0; $k < scalar @{$incl_keys}; $k++ ) {
 				my %sample_keys;
 				my $sample_size = scalar @{$incl_keys -> [$k]};
@@ -1183,28 +1185,33 @@ sub modelfit_analyze
 		my $jk_threads = $self ->threads();
 		my $done = ( -e $self ->directory()."/jackknife_done.$model_number" ) ? 1 : 0;
 		if ( not $done ) {
+			my ( $junk, $idcol ) = $self->models->[$model_number-1]->_get_option_val_pos(name=> 'ID',
+																						 record_name     => 'input',
+																						 problem_numbers => [1]);
+			unless (defined $idcol->[0][0]){
+				croak( "Error finding column ID in \$INPUT of model\n");
+			}
 
 			ui -> print( category => 'bootstrap',
 				message  => "Running a Jackknife for the BCa estimates" );
 			$jackknife =tool::cdd::jackknife ->
-			new( %{common_options::restore_options(@common_options::tool_options)},
-				directory        => undef,
-				models           => [$self -> models -> [$model_number -1]],
-				case_column     => $self -> models -> [$model_number -1]
-				-> datas -> [0] -> idcolumn,
-				_raw_results_callback => $self ->
-				_jackknife_raw_results_callback( model_number => $model_number ),
-				nm_version       => $self -> nm_version(),
-				parent_tool_id   => $self -> tool_id(),
-				threads          => $jk_threads,
-				bca_mode         => 1,
-				shrinkage        => $self -> shrinkage(),
-				nonparametric_marginals => $self -> nonparametric_marginals(),
-				nonparametric_etas => $self -> nonparametric_etas(),
-				adaptive         => $self -> adaptive(),
-				rerun            => $self -> rerun(),
-				verbose          => $self -> verbose(),
-				cross_validate   => 0 );
+				new( %{common_options::restore_options(@common_options::tool_options)},
+					 directory        => undef,
+					 models           => [$self->models->[$model_number-1]],
+					 case_column     => $idcol->[0][0],
+					 _raw_results_callback => $self ->
+					 _jackknife_raw_results_callback( model_number => $model_number ),
+					 nm_version       => $self -> nm_version(),
+					 parent_tool_id   => $self -> tool_id(),
+					 threads          => $jk_threads,
+					 bca_mode         => 1,
+					 shrinkage        => $self -> shrinkage(),
+					 nonparametric_marginals => $self -> nonparametric_marginals(),
+					 nonparametric_etas => $self -> nonparametric_etas(),
+					 adaptive         => $self -> adaptive(),
+					 rerun            => $self -> rerun(),
+					 verbose          => $self -> verbose(),
+					 cross_validate   => 0 );
 
 			# Create a checkpoint. Log the samples and individuals.
 			open( DONE, ">".$self ->directory()."/jackknife_done.$model_number" ) ;
@@ -1233,25 +1240,24 @@ sub modelfit_analyze
 			}
 			my @seed = split(' ',$rows[2]);
 			shift( @seed ); # get rid of 'seed'-word
+			#set bins here to number of ids so that do not have to do it in jackknife.pm
 			$jackknife = tool::cdd::jackknife ->
-			new( %{common_options::restore_options(@common_options::tool_options)},
-				models           => [$self -> models -> [$model_number -1]],
-				case_column     => $self -> models -> [$model_number -1]
-				-> datas -> [0] -> idcolumn,
-				_raw_results_callback => $self ->
-				_jackknife_raw_results_callback( model_number => $model_number ),
-				threads          => $jk_threads,
-				parent_tool_id   => $self -> tool_id(),
-				directory        => $stored_directory,
-				bca_mode         => 1,
-				shrinkage        => $self -> shrinkage(),
-				nm_version       => $self -> nm_version(),
-				nonparametric_marginals => $self -> nonparametric_marginals(),
-				nonparametric_etas => $self -> nonparametric_etas(),
-				adaptive         => $self -> adaptive(),
-				rerun            => $self -> rerun(),
-				verbose          => $self -> verbose(),
-				cross_validate   => 0 );
+				new( %{common_options::restore_options(@common_options::tool_options)},
+					 models           => [$self -> models -> [$model_number -1]],
+					 case_column     => $self -> models -> [$model_number -1]-> datas -> [0] -> idcolumn,
+					 _raw_results_callback => $self ->	_jackknife_raw_results_callback( model_number => $model_number ),
+					 threads          => $jk_threads,
+					 parent_tool_id   => $self -> tool_id(),
+					 directory        => $stored_directory,
+					 bca_mode         => 1,
+					 shrinkage        => $self -> shrinkage(),
+					 nm_version       => $self -> nm_version(),
+					 nonparametric_marginals => $self -> nonparametric_marginals(),
+					 nonparametric_etas => $self -> nonparametric_etas(),
+					 adaptive         => $self -> adaptive(),
+					 rerun            => $self -> rerun(),
+					 verbose          => $self -> verbose(),
+					 cross_validate   => 0 );
 
 			random_set_seed( @seed );
 			ui -> print( category => 'bootstrap',
