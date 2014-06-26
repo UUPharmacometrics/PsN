@@ -333,6 +333,10 @@ my $dname = 'forward';
 my $linBmodel;
 my $need_extra_boot_data=0;
 
+my $ignoresign;
+my $missing_data_token;
+my $idcolumn;
+
 $dname = 'backward' if ($direction eq 'both' or $direction eq 'backward');
 if ($config_file->linearize){
 	$finalname='final_'.$dname.'_nonlinear.mod';
@@ -428,6 +432,10 @@ if ($do_filtering){
 
 }
 
+my @idcolumns = @{$model -> idcolumns};
+$idcolumn = $idcolumns[0];
+$missing_data_token=$model->missing_data_token;
+
 if ($do_filtering){
 	my $filtered_data_model = $model -> copy ( filename => 'filter_data.mod',
 											   directory => $preprocessdir, 
@@ -498,16 +506,15 @@ if ($do_filtering){
 		  top_tool       => 0,
 		  clean => 2  );
 	$filter_fit -> run;
-	my @idcolumns = @{$model -> idcolumns};
-	my $idcolumn = $idcolumns[0];
+	$ignoresign = '@';
 	#ignoresign is @ since data is a table file
 	print "\n";
 	if ( defined $idcolumn ) {
 		$full_filtered_data = data -> new( 
 			idcolumn             => $idcolumn,
 			filename             => $datafile,
-			missing_data_token => $filtered_data_model->missing_data_token,
-			ignoresign           => '@',
+			missing_data_token => $missing_data_token,
+			ignoresign           => $ignoresign,
 			directory            => $filtered_data_model -> directory,
 			ignore_missing_files => 0,
 			skip_parsing         => 0,
@@ -531,6 +538,8 @@ if ($do_filtering){
 		die( "No id column definition found in the model file." );
 	}
 	
+}else{
+	$ignoresign = defined $model -> ignoresigns ? $model -> ignoresigns -> [0] : '@';
 }
 
 if (defined $options{'dummy_covariates'}){
@@ -725,23 +734,26 @@ if (defined $options{'stratify_on'} ) {
 
 
 chdir($main_directory);
+#new_datas is array of file names incl directory
 my ( $new_datas, $incl_ids, $incl_keys )
-    = $the_data -> bootstrap( directory   => $modeldir,
+    = $the_data -> _bootstrap( directory   => $modeldir,
 							  name_stub   => 'bsdata',
 							  stratify_on => $stratify_on, 
 							  samples     => $options{'samples'},
-							  target	     => 'disk',
 							  subjects =>{'default'=>($the_data -> count_ind)});
 
 my $extra_boot_datas;
 if ($need_extra_boot_data){
 	#either based on filtered data from compute_derivatives_dir
 	#or original $model -> datas()->[0];
-	$extra_boot_datas = $model->datas()->[0] -> 
-		bootstrap_from_keys( directory   => $modeldir,
-							 name_stub   => 'original_bsdata',
-							 key_references => $incl_keys,
-							 target	     => 'disk');
+	$extra_boot_datas = bootstrap_create_datasets_from_keys( output_directory   => $modeldir,
+															 name_stub   => 'original_bsdata',
+															 key_references => $incl_keys,
+															 ignoresign => $ignoresign,
+															 missing_data_token => $missing_data_token,
+															 idcolumn => $idcolumn,
+															 input_filename => $model->datas()->[0] ->filename,
+															 input_directory => $model->datas()->[0] ->directory);
 }
 
 #print included individuals
@@ -808,6 +820,7 @@ for ( my $j = $start_j; $j <= $options{'samples'}; $j++ ) {
 		filename             => $filename,
 		copy_output           => 1,
 		copy_data =>0,
+		skip_data_parsing => 1,
 		target               => 'disk');
     
 	if( $options{'shrinkage'} ) {
@@ -817,15 +830,15 @@ for ( my $j = $start_j; $j <= $options{'samples'}; $j++ ) {
 
 	if ((not $config_file->linearize) or $options{'methodA'}){
 		if ($j>0){
-			$new_mod -> datas ( [$new_datas -> [$j-1]] );#might not be in memory here
+			$new_mod -> datafiles ( new_names => [$new_datas -> [$j-1]] );#might not be in memory here
 		}else{
-			$new_mod -> datas ( [$the_data] );
+			$new_mod -> datafiles ( new_names => [$the_data->full_name] );
 		}
 	}else{
 		if ($j>0){
 			$config_file->derivatives_data($main_directory.'/m1/bsdata_'.($j).'.dta');
 			if ($need_extra_boot_data){
-				$new_mod -> datas ( [$extra_boot_datas -> [$j-1]] );#might not be in memory here
+				$new_mod -> datafiles ( new_names => [$extra_boot_datas -> [$j-1]] );#might not be in memory here
 			}
 		}else{
 			#original model full filtered data
