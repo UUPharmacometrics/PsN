@@ -173,10 +173,6 @@ if( scalar(@ARGV) > 1 ){
   exit;
 }
 
-unless ( defined $options{'skip_data_parsing'}) {
-  $options{'skip_data_parsing'} = 1;
-}
-
 unless ( $options{'retries'}>0 ){
   print "\nWarning: option -retries is 0. For extreme setups with lasso you\n".
       "may need as many as 5 retries, but zero is generally sufficient if\n".

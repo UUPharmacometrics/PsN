@@ -149,10 +149,6 @@ if( $options{'outputfile'} ){
 
 my $models_array;
 
-unless ( defined $options{'skip_data_parsing'} ) {
-  $options{'skip_data_parsing'} = 1;
-}
-
 my $eval_string = common_options::model_parameters(\%options);
 
 foreach my $model_name ( @ARGV ){  
@@ -215,15 +211,10 @@ if (defined $main_directory){
 mkdir( $main_directory) unless ( -d  $main_directory);
 chdir($main_directory);
 my $main_model = $models_array -> [0] -> copy( filename    => $models_array -> [0]->filename(),
-					       copy_data   => 0,
+					       copy_datafile   => 1,
 					       copy_output => 0,
-					       directory => $main_directory,
-					       target => 'mem');
+					       directory => $main_directory);
 
-$main_model ->_write();
-$main_model->datas()->[0]->synchronize();
-$main_model->datas()->[0]->directory($main_directory);
-$main_model->datas()->[0]->_write();
 my $mod_array;
 push(@{$mod_array},$main_model);
 if (defined $options{'rawres_input'}){
@@ -279,10 +270,10 @@ if (defined $options{'rawres_input'}){
 		my $filestem = $models_array -> [0]->filename();
 		$filestem =~ s/\.mod//;
 		my $retry_mod = $models_array -> [0] -> copy( filename    => $filestem.'_init'.$retry.'.mod',
-													  copy_data   => 0,
+													  copy_datafile   => 0,
 													  copy_output => 0,
-													  directory => $main_directory,
-													  target => 'mem');
+													  write_copy => 0,
+													  directory => $main_directory);
 		$retry_mod -> update_inits(from_hash => $sampled_params_arr->[$retry-1]); 
 
 		$retry_mod -> _write();
@@ -294,10 +285,10 @@ if (defined $options{'rawres_input'}){
 		my $filestem = $models_array -> [0]->filename();
 		$filestem =~ s/\.mod//;
 		my $retry_mod = $models_array -> [0] -> copy( filename    => $filestem.'_retry'.$retry.'.mod',
-													  copy_data   => 0,
+													  copy_datafile   => 0,
 													  copy_output => 0,
-													  directory => $main_directory,
-													  target => 'mem');
+													  write_copy => 0,
+													  directory => $main_directory);
 		my @problems = @{$retry_mod -> problems};
 		foreach my $prob ( @problems ) {
 			$prob -> set_random_inits ( degree => $options{'degree'} );

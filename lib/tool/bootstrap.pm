@@ -141,12 +141,10 @@ sub _sampleTools
 	my %parm = validated_hash(\@_,
 		samples => { isa => 'Int', default => 200, optional => 1 },
 		subjects => { isa => 'Int', optional => 1 },
-		target => { isa => 'Str', default => 'disk', optional => 1 }
 	);
 	my $samples = $parm{'samples'};
 	my $subjects = $parm{'subjects'};
 	my @newModels;
-	my $target = $parm{'target'};
 
 	foreach my $tool ( @{$self -> tools} ) {
 		my @models = @{$tool -> models};
@@ -154,12 +152,12 @@ sub _sampleTools
 			my $dataObj = $model -> datas -> [0];
 			for( my $i = 1; $i <= $samples; $i++ ) {
 				my $boot_sample = $dataObj -> resample( 'subjects' => $self -> subjects,
-					'new_name' => "bs$i.dta",
-					'target' => $target );
+														'new_name' => "bs$i.dta",
+					);
 				my $newmodel;
-				$newmodel = $model -> copy( filename => "bs$i.mod" );
+				$newmodel = $model -> copy( filename => "bs$i.mod",
+											write_copy => 0);
 				$newmodel -> datafiles( new_names => ["bs$i.dta"] );
-				$newmodel -> datas -> [0] = $boot_sample ;
 				$newmodel -> write;
 				if( defined( $tool -> models ) ){
 					push( @{$tool -> models}, $newmodel );
@@ -224,10 +222,8 @@ sub resample
 	#not used, remove??
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		target => { isa => 'Str', default => 'disk', optional => 1 },
 		model => { isa => 'model', optional => 1 }
 	);
-	my $target = $parm{'target'};
 	my @resample_models;
 	my $model = $parm{'model'};
 
@@ -236,13 +232,12 @@ sub resample
 		my ($bs_dir, $bs_name) = OSspecific::absolute_path( $self ->directory(), "bs$i.dta" );
 		my $new_name = $bs_dir . $bs_name;  
 		my $boot_sample = $dataObj -> resample( subjects => $self -> subjects(),
-			new_name => $new_name,
-			target   => $target );
+												new_name => $new_name,
+			);
 		my $newmodel = $model -> copy( filename => "bs$i.mod",
-			target   => $target,
-			ignore_missing_files => 1 );
+									   write_copy => 0,
+									   ignore_missing_files => 1 );
 		$newmodel -> datafiles( new_names => ["bs$i.dta"] );
-		$newmodel -> datas -> [0] = $boot_sample ;
 		$newmodel -> write;
 		push( @resample_models, $newmodel );
 	}
@@ -880,10 +875,8 @@ sub general_setup
 	# regardless of which problem the initially belonged to. Fix
 	# this.
 
-
+	my $datafilenames = $model->datafiles(absolute_path => 1);
 	for ( my $i = 1; $i <= scalar @problems; $i++ ) {
-		my $dataname = $model->datas->[$i-1]-> filename; 
-		my $datadir = $model->datas->[$i-1]-> directory; 
 		my $ignoresign = defined $model -> ignoresigns ? $model -> ignoresigns -> [$i-1] : undef;
 		my ( $junk, $idcol ) = $model -> _get_option_val_pos( name            => 'ID',
 															  record_name     => 'input',
@@ -916,7 +909,7 @@ sub general_setup
 		my $done = ( -e $self ->directory()."/m$model_number/done.$i" ) ? 1 : 0;
 		if ( not $done ) {
 			ui -> print( category => 'bootstrap',
-				message  => "Resampling from $dataname");
+				message  => "Resampling from ".$datafilenames->[$i-1]);
 
 			( $new_datas, $incl_ids, $incl_keys, $new_subjects, $orig_count_ind )
 				= data::bootstrap_create_datasets( output_directory   => $self ->directory().'/m'.$model_number,
@@ -924,8 +917,7 @@ sub general_setup
 												   samples     => $self->samples(),
 												   subjects    => $self->subjects(),
 												   stratify_on => $stratify_on, #always a number
-												   input_filename => $dataname,
-												   input_directory => $datadir,
+												   input_filename => $datafilenames->[$i-1],
 												   ignoresign => $ignoresign,
 												   idcolumn => $idcol->[0][0],  #number not index
 												   missing_data_token => $self->missing_data_token
@@ -942,17 +934,14 @@ sub general_setup
 				$new_mod = model -> new( %{common_options::restore_options(@common_options::model_options)},
 										 sde                  => 0,
 										 outputs              => undef,
-										 datas                => undef,
-										 synced               => undef,
 										 active_problems      => undef,
 										 directory            => $model_dir,
 										 filename             => $filename,
 										 outputfile           => undef,
 										 problems             => [$prob_copy],
 										 extra_files          => $model -> extra_files,
-										 target               => 'disk',
 										 ignore_missing_files => 1 );
-
+				
 				unless ($self->keep_tables){
 					$new_mod -> remove_records( type => 'table' );
 				}
@@ -979,7 +968,7 @@ sub general_setup
 
 			# Create a checkpoint. Log the samples and individuals.
 			open( DONE, ">".$self ->directory()."/m$model_number/done.$i" ) ;
-			print DONE "Resampling from ",$dataname, " performed\n";
+			print DONE "Resampling from ",$datafilenames->[$i-1], " performed\n";
 			print DONE $self->samples()." samples\n";
 			while( my ( $strata, $samples ) = each %{$self->subjects()} ) {
 				print DONE "Strata $strata: $samples sample_size\n";
@@ -1098,18 +1087,15 @@ sub general_setup
 				my ($model_dir, $filename) = OSspecific::absolute_path( $self ->directory().'/m'.
 					$model_number,
 					'bs_pr'.$i.'_'.$j.'.mod' );
-				$new_mod = model ->
-				new( directory   => $model_dir,
-					filename    => $filename,
-					extra_files => $model -> extra_files,
-					target      => 'disk',
-					ignore_missing_files => 1,
+				$new_mod = model ->	new( directory   => $model_dir,
+										 filename    => $filename,
+										 extra_files => $model -> extra_files,
+										 ignore_missing_files => 1
 				);
 
 				unless ($self->keep_tables){
 					$new_mod -> remove_records( type => 'table' );
 				}
-
 				push( @new_models, $new_mod );
 			}
 			random_set_seed( @seed );

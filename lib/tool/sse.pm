@@ -139,7 +139,7 @@ sub modelfit_setup
 			$alternatives[$i]-> remove_records( type => 'table' );
 		}
 	}
-	my ( @seed, $new_datas, $skip_ids, $skip_keys, $skip_values );
+	my @seed;
 	my ( @orig_est_models, @alt_est_models );
 	my ( $sim_model, $est_alternative );
 	my $alternative;
@@ -260,8 +260,8 @@ sub modelfit_setup
 				} else {
 					$sim_model = $model->copy(
 						filename    => $self->directory . 'm' . $model_number . '/' . $sim_name,
-						target      => 'disk',
-						copy_data   => 1,
+						copy_datafile   => 0,
+						write_copy => 0,
 						copy_output => 0);
 
 					if ($sim_model-> is_option_set(record=>'input',name=>'TIME')) {
@@ -524,8 +524,8 @@ sub modelfit_setup
 					
 					$est_original = $model->copy(
 						filename    => $self -> directory.'m'.$model_number.'/'.$orig_name,
-						target      => 'disk',
-						copy_data   => 0,
+						copy_datafile   => 0,
+						write_copy => 0,
 						copy_output => 0);
 
 					if ($est_original->skip_data_parsing()){

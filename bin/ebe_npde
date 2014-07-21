@@ -133,10 +133,6 @@ if( scalar(@ARGV) > 1 ){
 }
 
 
-unless ( defined $options{'skip_data_parsing'} ) {
-  $options{'skip_data_parsing'} = 1;
-}
-
 unless ( defined $options{'samples'}) {
   $options{'samples'}=300;
 }

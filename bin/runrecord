@@ -158,8 +158,7 @@ for( my $run = $from; $run <= $to; $run++ ){
 	$model = model -> new(eval( $eval_string ),
 		filename=>$root.$run.".".$mod_ext,
 		ignore_missing_output_files => 1,
-		ignore_missing_data => 1,
-		skip_data_parsing => 1);
+		ignore_missing_data => 1);
 
 	my @outputs = defined $model -> outputs() ? @{$model -> outputs()} : ();
 	my $have_output = 0;

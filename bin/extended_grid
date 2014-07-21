@@ -192,9 +192,9 @@ unless ($model->is_run){
 	$modelfit -> run;
 }
 my $model_copy = $model -> copy( filename => 'simulation.mod',
-								 copy_data => 1,
+								 copy_datafile => 0,
+								 write_copy => 0,
 								 output_same_directory => 1);
-#								 data_file_names => ['simulation.dta']);
 
 $model_copy -> update_inits( from_output => $model -> outputs -> [0] );
 
@@ -232,14 +232,16 @@ $model_copy -> set_records( type => 'table',
 												" NOPRINT NOAPPEND ONEHEADER FIRSTONLY FILE=simdata" ] );
 
 $model_copy -> _write;
+my $data_set = data ->new (filename => $model_copy -> datafiles(absolute_path => 1) -> [0],
+						   idcolumn => $model_copy ->idcolumn,
+						   ignoresign => $model_copy ->ignoresigns->[0]);
 
 my $n_id_to_simulate;
-my $nr_of_individuals = scalar @{$model_copy -> datas -> [0] -> individuals};
+my $nr_of_individuals = scalar @{$data_set -> individuals};
 
 if( defined $options{'ids_to_simulate'} ){
 	$n_id_to_simulate = $options{'ids_to_simulate'};
 	
-	my $data_set = $model_copy -> datas -> [0];
 
 	if( $n_id_to_simulate < $nr_of_individuals ){
 		my $individuals = $data_set -> individuals;
@@ -263,10 +265,7 @@ if( defined $options{'ids_to_simulate'} ){
 	$data_set -> _write;
 
 } else {
-#	my $data_set = $model_copy -> datas -> [0];
-#	$data_set -> renumber_ascending;
-#	$data_set -> _write;
-	$n_id_to_simulate = scalar @{$model_copy -> datas -> [0] -> individuals};
+	$n_id_to_simulate = scalar @{$data_set -> individuals};
 }
 
 my $modelfit = tool::modelfit -> 
@@ -283,9 +282,10 @@ $modelfit -> run;
 # {{{ create Dataset
 
 my $extended_model = $model -> copy( filename => 'extended.mod',
-									 copy_data => 1,
+									 copy_datafile => 0,
 									 output_same_directory =>1,
-									 data_file_names => ['extended.dta']);
+									 write_copy => 0);
+$extended_model->datafiles(new_names => ['extended.dta']);
 
 $extended_model -> remove_option(record_name => 'estimation',
 								 option_name => 'MSFO',
@@ -361,7 +361,6 @@ foreach my $id_num ( 1..$n_id_to_simulate ){
 }
 
 push( @{$data_copy->header}, 'TYPE' );
-$data_copy -> synchronize;
 
 $data_copy -> _write;
 

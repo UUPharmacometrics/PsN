@@ -259,10 +259,6 @@ unless ( defined $options{'samples'} ){
   exit;
 }
 
-unless ( defined $options{'skip_data_parsing'} ) {
-  $options{'skip_data_parsing'} = 1;
-}
-
 if ( defined $options{'recompute'}){
   my ( $dir, $file ) = OSspecific::absolute_path(cwd(), $options{'recompute'});
   $options{'recompute'} = $file;

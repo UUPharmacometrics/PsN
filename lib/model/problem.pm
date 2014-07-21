@@ -1768,6 +1768,8 @@ sub add_records
 		$self->$accessor([]) unless defined $self->$accessor;
 		if (($type eq 'omega') or ($type eq 'sigma') or ($type eq 'theta')) {
 			$record = $rec_class->new(record_arr => \@record_strings, n_previous_rows => $n_previous_rows);
+		}elsif ($type eq 'data'){
+			$record = $rec_class->new(record_arr => \@record_strings, model_directory => $self->directory);
 		} else {
 			$record = $rec_class->new(record_arr => \@record_strings);
 		}
@@ -1895,7 +1897,7 @@ sub _read_records
 					}
 				} else {
 					$self -> add_records( record_strings => \@record_lines, 
-						type => $record_type );
+										  type => $record_type );
 				}
 			}
 			$first = 0;
@@ -2233,6 +2235,8 @@ sub _format_problem
 	my %parm = validated_hash(\@_,
 							  filename => { isa => 'Str', optional => 1 },
 							  problem_number => { isa => 'Int', optional => 1 },
+							  relative_data_path => { isa => 'Bool', optional => 0 },
+							  write_directory => { isa => 'Str', optional => 0 },
 							  local_print_order => { isa => 'Bool', default => 0, optional => 1 },
 							  number_format => { isa => 'Maybe[Int]', optional => 1 }
 		);
@@ -2240,6 +2244,8 @@ sub _format_problem
 	my $problem_number = $parm{'problem_number'};
 	my $local_print_order = $parm{'local_print_order'};
 	my $number_format = $parm{'number_format'};
+	my $write_directory = $parm{'write_directory'};
+	my $relative_data_path = $parm{'relative_data_path'};
 	my @formatted;
 
 	# problem::_format_problem()
@@ -2273,12 +2279,15 @@ sub _format_problem
 	    # to format itself.
 
 	    foreach my $record ( @{$self->$accessor} ){
-	      push( @formatted,
-		    @{$record ->
-			  _format_record( number_format => $number_format,
-					  nonparametric_code => $self->nonparametric_code,
-					  shrinkage_code     => $self->shrinkage_code,
-					  eigen_value_code   => $self->eigen_value_code ) } );
+
+			my $arr;
+			if ($type eq 'data'){
+				$arr = $record -> _format_record(write_directory => $write_directory,
+												 relative_data_path => $relative_data_path);
+			}else{
+				$arr = $record ->  _format_record( number_format => $number_format) ;
+			}
+			push( @formatted,  @{$arr} );
 	    }
 	  }
 	  if( $self->shrinkage_module -> enabled and $type eq 'table' ) {

@@ -332,8 +332,7 @@ if ($config_file->linearize){
 
 my $eval_string = common_options::model_parameters(\%options);
 my $model = model -> new ( eval $eval_string,
-			   filename           => $config_file -> model,
-			   target             => 'disk' ) ;
+			   filename           => $config_file -> model) ;
 $model->set_option( record_name => 'estimation',
 		      option_name => 'FORMAT',
 		      fuzzy_match => 1,
@@ -342,7 +341,6 @@ $model->set_option( record_name => 'estimation',
 if( $options{'shrinkage'} ) {
   $model -> shrinkage_stats( enabled => 1 );
 }
-$model->skip_data_parsing(1);
 
 if (defined $options{'stratify_on'}){
   my $column_number;
@@ -437,12 +435,11 @@ for (my $split=1; $split<= $options{'splits'}; $split++){
     #change data in model to training $step
     my $model_group = 
 	$model -> copy(filename => $run_directory.'/model_group'.$group.'.mod',
-		       copy_data => 0, copy_output => 0,
-		       target => 'mem' );
+		       copy_datafile => 0,
+               output_same_directory => 1,
+               copy_output => 0,
+               write_copy => 0);
 
-    foreach my $out (@{$model_group-> outputs()}){
-      $out -> directory($model_group->directory());
-    }
     
     $model_group -> datafiles( new_names => [$data_xv->estimation_data() -> [$group-1]] );
 
@@ -451,7 +448,7 @@ for (my $split=1; $split<= $options{'splits'}; $split++){
 		       "split $split group $group",
                        newline =>1);
     ui->category('scm');
-    #write model_group here????
+    $model_group -> _write;
 
 
 

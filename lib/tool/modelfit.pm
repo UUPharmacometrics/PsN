@@ -130,7 +130,6 @@ has '_raw_results_callback' => ( is => 'rw' );
     #   my $model = model -> new( filename => $modelfile,
     #                             ignore_missing_files => 1 );
     #   
-    #   my $data = $model -> datas -> [0];
     #   
     #   # Create the bootstrap data sets. The default name for each
     #   # new resampled data file will be bs###.dta, where ### is a
@@ -488,12 +487,10 @@ sub run
 						unless($self->parent_threads > 1 or $self->verbose);
 				}
 
-				$queue_info{$run}{'candidate_model'} = model->new(
-						filename => "./NM_run" . ($run + 1) . "/psn.".$self->modext,
-						target               => 'disk',
-						ignore_missing_files => 1,
-						quick_reload         => 1,
-						cwres                => $models[$run] -> cwres()
+				$queue_info{$run}{'candidate_model'} = 
+					model->new(	filename => "./NM_run" . ($run + 1) . "/psn.".$self->modext,
+								ignore_missing_files => 1,
+								cwres                => $models[$run] -> cwres()
 					);
 				$self->print_finish_message(candidate_model => $queue_info{$run}{'candidate_model'}, run => $run);
 
@@ -2638,50 +2635,8 @@ sub copy_model_and_input
 				
 			}
 			
-			my @problems = @{$model->problems};
-			
-			unless (defined $self->data_path) {
-				#copy data true
-				# Fix new short names (i.e. No path)
-				my @data_file_names;
-				
-				if( defined $model->datas ){
-					foreach my $data ( @{$model->datas} ) {
-						my $filename = $data -> filename;
-						$filename = $self->data_path . $filename 
-							if (defined $self->data_path);
-						push( @data_file_names, $filename );
-					}
-				} else {
-					print "\nNo data objects for model ".$model->filename()."\n";
-					carp('No datafiles set in modelfile.' );
-				}
-				# save references to own data and output objects
-				my $datas   = $model->datas;
-				my @problems = @{$model->problems};
-				
-				my ( @new_datas, @new_outputs );
-				
-				$model -> synchronize if not $model->synced;
-				
-				# Copy the data objects if so is requested
-				if ( defined $datas ) {
-					my $i = 0;
-					foreach my $data ( @{$datas} ) {
-						#this copies datafile with local name to NM_run
-						push( @new_datas, $data ->
-							  copy( filename => $data_file_names[$i]) ); #attribute skip_parsing is copied
-						
-						$i++;
-					}
-				}
-				
-				foreach my $data ( @new_datas ) {
-					$data -> _write;
-				}
-				
-			}
-			
+			my $copy_data=1;
+			$copy_data = 0 if (defined $self->data_path);
 
 			#it is an error if data is missing here, but we ignore it and let
 			#nonmem crash due to missing data, will be handled better that way than having croak in data.pm
@@ -2689,13 +2644,15 @@ sub copy_model_and_input
 
 			$candidate_model =  model -> new (outputfile                  => 'psn.lst',
 											  filename                    => 'psn.'.$self->modext,
+											  copy_datafile => $copy_data,
 											  ignore_missing_output_files => 1,
+											  write_copy => 0,
 											  ignore_missing_data => 1);
 			
-			$candidate_model -> shrinkage_modules( $model -> shrinkage_modules );
+			unlink 'psn.'.$self->modext;
 			
-			$model -> flush_data;
-
+			$candidate_model -> shrinkage_modules( $model -> shrinkage_modules );
+			$candidate_model->_write;
 
 		}
 		
@@ -2720,19 +2677,6 @@ sub copy_model_and_input
 		my $copy_data=1;
 		$copy_data = 0 if (defined $self->data_path);
 		
-		# Fix new short names (i.e. No path)
-		my @new_data_names;
-		
-		if( defined $model -> datas ){
-			foreach my $data ( @{$model -> datas} ) {
-				my $filename = $data -> filename;
-				$filename = $self->data_path . $filename if (defined $self->data_path);
-				push( @new_data_names, $filename );
-			}
-		} else {
-			print "\nNo data objects for model ".$model->filename()."\n";
-			carp('No datafiles set in modelfile.' );
-		}
 		
 		# Set the table names to a short version 
 		my @new_table_names = ();
@@ -2770,13 +2714,11 @@ sub copy_model_and_input
 		#nonmem crash due to missing data, will be handled better that way than having croak in data.pm
 		#TODO mark the model as failed even before NMrun if data is missing, so do not waste nm call
 
-		$candidate_model = $model -> copy( filename              => 'psn.'.$self->modext,
-										   data_file_names       => \@new_data_names,
-										   copy_data             => $copy_data );
+		$candidate_model = $model -> copy( filename => 'psn.'.$self->modext,
+										   copy_datafile => $copy_data,
+										   write_copy => 0);
 		
 		$candidate_model -> shrinkage_modules( $model -> shrinkage_modules );
-		
-		$model -> flush_data;
 		
 		if ( $self->handle_msfo ) {
 			
@@ -2838,8 +2780,7 @@ sub copy_model_and_input
 		
 		$candidate_model -> table_names( new_names            => \@new_table_names,
 										 ignore_missing_files => 1 );
-		$candidate_model -> _write( filename   => 'psn.'.$self->modext );# write_data => 1 );  #Kolla denna, den funkar inte utan wrap!!
-		$candidate_model -> flush_data;
+		$candidate_model -> _write();
 		$candidate_model -> store_inits;
 		$self->run_nmtran if ($run_nmtran);
 		

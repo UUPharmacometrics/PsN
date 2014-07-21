@@ -69,9 +69,6 @@ sub BUILD
 
 	my $model;
 	$model = $self -> models -> [0];
-	unless( defined $model -> datas ){
-		$self -> die ( message => "No data object in modelobject\n" );
-	}
 	$self->ignoresigns($model -> ignoresigns);
 
 	if( $self -> predict_only and $self -> estimate_only ){
@@ -86,7 +83,6 @@ sub modelfit_setup
 
 	print "\n xv_step: modelfit_setup\n" if ($self->stop_motion());
 	my $model = $self -> models -> [0];
-	$model->skip_data_parsing(1);
 	$self -> create_data_sets;
 
 	# Create copies of the model. This is reasonable to do every
@@ -99,8 +95,10 @@ sub modelfit_setup
 			my $model_copy_pred = $model -> copy(
 				filename => $self -> directory().'m1/pred_model' . $i . '.mod',
 				output_same_directory => 1,
-				copy_data => 0, copy_output => 0,
-				target => 'mem' );
+				copy_datafile => 0, 
+				write_copy => 0,
+				copy_output => 0,
+				);
 
 			#to handle NM7 methods
 			$model_copy_pred -> set_maxeval_zero(print_warning => 0,
@@ -111,16 +109,18 @@ sub modelfit_setup
 
 			$model_copy_pred -> datafiles( new_names => [$self -> prediction_data -> [$i]] );
 			# Make sure changes is reflected on disk.
-			$model_copy_pred -> _write();
+			$model_copy_pred -> _write(); #setting overwrite here does not help lasso
 			push( @{$self -> prediction_models}, $model_copy_pred );
 		}
 
 		unless( $self -> predict_only ){
 			my $model_copy_est = $model -> copy(filename => 
-				$self -> directory().'m1/est_model'.$i.'.mod',
-				output_same_directory => 1,
-				copy_data => 0, copy_output => 0,
-				target => 'mem' );
+												$self -> directory().'m1/est_model'.$i.'.mod',
+												output_same_directory => 1,
+												write_copy => 0,
+												copy_datafile => 0, 
+												copy_output => 0,
+												);
 
 			$model_copy_est -> datafiles( new_names => [$self -> estimation_data -> [$i]] );
 			#do not write model here, will modify more later
@@ -140,14 +140,14 @@ sub modelfit_setup
 				) ] );
 	} elsif( not $self -> estimate_only ) {
 		$self -> tools( [ tool::modelfit -> new ( 'models' => $self -> prediction_models,
-					%modf_args,
-					nmtran_skip_model => 2
-				) ] );
+												  %modf_args,
+												  nmtran_skip_model => 2
+						  ) ] );
 	}
-
+	
 	$self->stop_motion_call(tool=>'xv_step_subs',message => "a new modelfit object for estimation")
-	if ($self->stop_motion());
-
+		if ($self->stop_motion());
+	
 	if( defined $self -> init ){
 		&{$self -> init}($self);
 	}
@@ -178,8 +178,7 @@ sub create_data_sets
 	unless (defined $idcol->[0][0]){
 		croak( "Error finding column ID in \$INPUT of model\n");
 	}
-	my $data_obj = data->new(filename => $model->datas->[0]->filename,
-							 directory => $model->datas->[0]->directory,
+	my $data_obj = data->new(filename => $model->datafiles(absolute_path=>1)->[0],
 							 idcolumn => $idcol->[0][0],
 							 ignoresign => $ignoresign,
 							 missing_data_token => $self->missing_data_token);
@@ -198,10 +197,8 @@ sub create_data_sets
 		$have_data = 0;
 		# Create subsets of the dataobject.
 		($subsets,$array) = $data_obj->subsets(bins => $self->nr_validation_groups,
-											   target => 'mem',
 											   stratify_on => $self->stratify_on());
-
-
+		
 		$self->stop_motion_call(tool=>'xv_step_subs',message => "create data")
 		if ($self->stop_motion());
 	} else {
@@ -287,30 +284,30 @@ sub modelfit_post_subtool_analyze
 			#before we required minimization successful here
 
 			$pred_mod -> update_inits( from_output => $est_models[$i]->outputs->[0],
-				update_omegas => 1,
-				update_sigmas => 1,
-				update_thetas => 1);
+									   update_omegas => 1,
+									   update_sigmas => 1,
+									   update_thetas => 1);
 			my $init_val = $pred_mod ->
-			initial_values( parameter_type    => 'theta',
-				parameter_numbers => [[1..$pred_mod->nthetas()]])->[0];
+				initial_values( parameter_type    => 'theta',
+								parameter_numbers => [[1..$pred_mod->nthetas()]])->[0];
 			$self->stop_motion_call(tool=>'xv_step_subs',message => "cut thetas in xv_step_subs ".
-				"modelfit_post_subtool_analyze")
-			if ($self->stop_motion());
+									"modelfit_post_subtool_analyze")
+				if ($self->stop_motion());
 			for(my $j = $self->n_model_thetas(); $j<scalar(@{$init_val}); $j++){ #leave original model thetas intact
 				my $value = $init_val -> [$j];
 				if (abs($value) <= $self->cutoff())
 				{
 					$pred_mod->initial_values(parameter_type => 'theta',
-						parameter_numbers => [[$j+1]],
-						new_values => [[0]] );
+											  parameter_numbers => [[$j+1]],
+											  new_values => [[0]] );
 					$pred_mod->fixed(parameter_type => 'theta',
-						parameter_numbers => [[$j+1]],
-						new_values => [[1]] );
+									 parameter_numbers => [[$j+1]],
+									 new_values => [[1]] );
 				}
 			}
 
 			# Make sure changes are reflected on disk.
-			$pred_mod->_write();
+			$pred_mod->_write(overwrite => 1);
 			push( @models_to_run, $pred_mod );
 		}else{
 			print "est model index $i did not have defined ofv.";

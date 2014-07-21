@@ -105,8 +105,7 @@ Getopt::Long::config("auto_abbrev");
 				  "omega_before_pk!",
 				  "outputfile:s",
 				  "last_est_complete!",
-				  "niter_eonly:i",
-				  "skip_data_parsing!"
+				  "niter_eonly:i"
     );
 
 my @script_options = ( "debug:i",

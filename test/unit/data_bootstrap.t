@@ -27,8 +27,7 @@ my ( $new_datas, $incl_ids, $incl_keys, $new_subjects, $orig_count_ind )
 									   samples     => 2,
 									   subjects    => {},
 									   stratify_on => undef, 
-									   input_filename => 'pheno.dta',
-									   input_directory => $tempdir,
+									   input_filename => $tempdir.'pheno.dta',
 									   ignoresign => '@',
 									   idcolumn => 1,  #number not index
 									   missing_data_token => '-99'	);

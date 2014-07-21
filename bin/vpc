@@ -597,10 +597,6 @@ if (defined $options{'sim_model'}){
   $options{'sim_model'} = $dir.$fil;
 }
 
-unless ( defined $options{'skip_data_parsing'} ) {
-  $options{'skip_data_parsing'} = 1;
-}
-
 # Autobinning options
 my $auto_bin_mode;
 my $min_no_bins;

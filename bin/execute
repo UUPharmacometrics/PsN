@@ -242,9 +242,6 @@ if ( scalar( @ARGV ) < 1 ) {
 
 my $models_array;
 
-unless ( defined $options{'skip_data_parsing'} ) {
-  $options{'skip_data_parsing'} = 1;
-}
 
 my $eval_string = common_options::model_parameters(\%options);
 
@@ -334,7 +331,7 @@ if ( defined $options{'predict_data'} and defined $options{'predict_model'} ) {
 	    if( scalar @{$models_array} > 1 ) {
 				die( "When using -no-copy_data, not more than one model at a time may be run with execute" );
 	    }
-	    $subargs{'data_path'}=$models_array->[0]->datas->[0]->directory();
+	    $subargs{'data_path'}=$models_array->[0]->problems->[0]->datas->[0]->get_directory;
 	}
 
 	    $modelfit = tool::modelfit -> 

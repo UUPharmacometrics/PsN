@@ -18,9 +18,7 @@ sub BUILD
 
 	my $model;
 	$model = $self->models->[0];
-	unless (defined $model->datas) {
-	    croak("No data object in modelobject\n");
-	}
+
 }
 
 sub add_xv_step
@@ -50,9 +48,9 @@ sub xv_step_pre_fork_setup
 	} 
 
 	my $xv_step = tool::xv_step -> new( models => [$self -> models -> [0]], 
-		subtools => $subtools,
-		%step_args,
-		subtool_arguments => $self->subtool_arguments);
+										subtools => $subtools,
+										%step_args,
+										subtool_arguments => $self->subtool_arguments);
 
 	$xv_step -> create_data_sets;
 	$self -> xv_steps([]) unless (defined $self -> xv_steps);
@@ -119,22 +117,22 @@ sub xv_step_post_subtool_analyze
 	my $first_xv_step = $self -> xv_steps -> [0];
 	if( $self -> xv_steps -> [$model_number - 1] -> cont ){
 		$self->stop_motion_call(tool=>'xv',message => "create new xv_step, last was ok (cont ==1)")
-		if ($self->stop_motion());
-
+			if ($self->stop_motion());
+		
 		my %step_args;
 		if (defined $self -> subtool_arguments and defined $self -> subtool_arguments -> {'xv_step'}){
 			%step_args = %{$self -> subtool_arguments -> {'xv_step'}};
 		} 
-
+		
 		$self -> xv_steps -> [$model_number -1] = 
-		tool::xv_step -> new( models => [$self -> models -> [$model_number - 1]],
-			prediction_data => $first_xv_step -> prediction_data,
-			estimation_data => $first_xv_step -> estimation_data, 
-			stratify_on => $first_xv_step -> stratify_on, 
-			subtools => $subtools,
-			%step_args,
-			subtool_arguments => $self->subtool_arguments );
-
+			tool::xv_step -> new( models => [$self -> models -> [$model_number - 1]],
+								  prediction_data => $first_xv_step -> prediction_data,
+								  estimation_data => $first_xv_step -> estimation_data, 
+								  stratify_on => $first_xv_step -> stratify_on, 
+								  subtools => $subtools,
+								  %step_args,
+								  subtool_arguments => $self->subtool_arguments );
+		
 		$self->tools([]) unless (defined $self->tools);
 		push( @{$self -> tools}, $self -> xv_steps -> [$model_number-1] );
 	}

@@ -200,10 +200,6 @@ if (defined $options{'parameters'}){
     }
 }
 
-unless ( defined $options{'skip_data_parsing'} ) {
-    $options{'skip_data_parsing'} = 1;
-}
-
 my $eval_string = common_options::model_parameters(\%options);
 
 my $model = model -> new ( eval( $eval_string ),

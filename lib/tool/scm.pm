@@ -380,25 +380,29 @@ sub BUILD
 		# Assume one $PROBLEM
 		my %model_column_numbers; 
 
-		my $data = $model->datas->[0];
+		my $data_obj;
 		if (defined $self->derivatives_data) {
-			$data = data->new(
+			$data_obj = data->new(
 				filename             => $self->derivatives_data,
 				ignoresign           => '@',
 				missing_data_token   => $self->missing_data_token,
 				ignore_missing_files => 0,
-				skip_parsing         => 0,
-				target               => 'mem',
 				parse_header				 => 1	); #ok parse_header, do not know idcol
 
 			#set header from this data, must have column headers otherwise die
-			if (defined $data->column_head_indices and scalar(keys %{$data->column_head_indices}) > 0) { 
-				%model_column_numbers = %{$data->column_head_indices};
+			if (defined $data_obj->column_head_indices and scalar(keys %{$data_obj->column_head_indices}) > 0) { 
+				%model_column_numbers = %{$data_obj->column_head_indices};
 			} else {
 				croak("When using option derivatives_data (done implicitly in boot_scm) the given file must have a header.");
 			}
 
 		} else {
+			my $filename = $model->datafiles(problem_numbers => [1],
+											 absolute_path => 1)->[0];
+			$data_obj = data->new(filename =>$filename,
+								  idcolumn => $model->idcolumn(problem_number =>1),
+								  ignoresign => $model->ignoresigns->[0],
+								  missing_data_token => $self->missing_data_token);
 			#use the model header when computing statistics
 			my $model_col_num = 1;
 			if (defined $model->problems->[0]->inputs and defined $model->problems->[0]->inputs->[0]->options) {
@@ -415,7 +419,7 @@ sub BUILD
 
 		unless (defined $self->covariate_statistics and scalar(keys %{$self->covariate_statistics}) > 0) {
 			$self->covariate_statistics({});
-			my $statsref = $data->scm_calculate_covariate_statistics( categorical_covariates => $self->categorical_covariates,
+			my $statsref = $data_obj->scm_calculate_covariate_statistics( categorical_covariates => $self->categorical_covariates,
 																	  continuous_covariates => $self->continuous_covariates,
 																	  model_column_numbers => \%model_column_numbers,
 																	  time_varying => $self->time_varying,
@@ -424,7 +428,7 @@ sub BUILD
 																	  gof => $self->gof,
 																	  missing_data_token => $self->missing_data_token);
 			$self->covariate_statistics($statsref) if (defined $statsref);
-
+			$data_obj = undef;
 			if (defined $self -> global_covariate_statistics and scalar(keys %{$self ->global_covariate_statistics })>0){
 				#this is necessary for xv_scm
 				if (defined $self->continuous_covariates) {
@@ -1320,12 +1324,10 @@ sub modelfit_setup
 		#if linearize then copy original model here (only allow one model)
 		if ($self->linearize) {
 			my $tmp_orig = $model->copy(
-				filename           => 'original.mod',
-				copy_data          => 0,
-				copy_output        => 1,
-				skip_data_parsing  => 1);
-			$tmp_orig->directory($self->final_model_directory);
-			$tmp_orig->_write;
+				filename           => $self->final_model_directory.'/original.mod',
+				copy_datafile          => 0,
+				write_copy =>1,
+				copy_output        => 1);
 			$tmp_orig = undef;
 		}
 	}
@@ -1395,10 +1397,10 @@ sub modelfit_setup
 			$fname = $self->basename . '.mod';
 		}
 		my $start_model = $model->copy(filename => $fname,
-			copy_data          => 0,
-			copy_output        => 0,
-			skip_data_parsing  => 1);
-
+									   write_copy => 0,
+									   copy_datafile          => 0,
+									   copy_output        => 0);
+		
 		my $datafile_name = 'filtered.dta';
 
 		# Set the data file for the base model
@@ -1838,10 +1840,10 @@ sub linearize_setup
 
 		#create derivatives_model from original model (copy)
 		$derivatives_model = $original_model -> copy ( filename => 'derivatives.mod',
-			output_same_directory => 1,
-			copy_data          => 0,
-			copy_output        => 0,
-			skip_data_parsing => 1);
+													   output_same_directory => 1,
+													   copy_datafile          => 0,
+													   write_copy => 0,
+													   copy_output        => 0);
 		$derivatives_model->remove_records( type => 'table' );
 
 		if ($self->sizes_pd() > 0){
@@ -2069,11 +2071,11 @@ sub linearize_setup
 		if ($self->update_derivatives()){
 			#store derivatives_base_model if update_derivatives
 			$self->derivatives_base_model($derivatives_model -> 
-				copy ( filename => 'derivatives_base.mod',
-					output_same_directory => 1,
-					copy_data          => 0,
-					copy_output        => 0,
-					skip_data_parsing => 1));
+										  copy ( filename => 'derivatives_base.mod',
+												 output_same_directory => 1,
+												 copy_datafile =>0,
+												 write_copy => 0,
+												 copy_output        => 0));
 		}
 		#need to store GK and GZ funcs for covariates
 		my %parameter_G;
@@ -2478,10 +2480,11 @@ sub linearize_setup
 
 		if ($rerun_derivatives_new_direction){
 			$derivatives_model = $self->derivatives_base_model() -> 
-			copy ( filename => 'derivatives_updated'.$stepname.'.mod',
-				output_same_directory => 1,
-				copy_data          => 0,
-				copy_output        => 0);
+				copy ( filename => 'derivatives_updated'.$stepname.'.mod',
+					   output_same_directory => 1,
+					   copy_datafile          => 0,
+					   write_copy       => 0,
+					   copy_output        => 0);
 			$derivatives_model -> directory($self->directory());
 			$derivatives_model->outputs->[0]->problems([]); #remove output so will be rerun
 
@@ -3691,14 +3694,12 @@ sub _create_models
 					OSspecific::absolute_path( $self -> directory.
 						'/m'.$model_number.'/',
 						$parameter.$covariate.$state.".lst" );
-					my $skip_data_parsing = 1;
 
 					my $applicant_model;
-					$applicant_model = $orig_model ->
-					copy( filename    => $dir.$filename,
-						copy_data   => 0,
-						copy_output => 0,
-						skip_data_parsing => $skip_data_parsing);
+					$applicant_model = $orig_model -> copy( filename    => $dir.$filename,
+															copy_datafile   => 0,
+															write_copy => 0,
+															copy_output => 0);
 
 					$applicant_model -> ignore_missing_files(1);
 					$applicant_model -> outputfile( $odir.$outfilename );
@@ -3871,13 +3872,11 @@ sub _create_models
 			#orig_model reference
 			my $applicant_model = model -> new( %{common_options::restore_options(@common_options::model_options)},
 				outputs              => undef,
-				datas                => undef,
 				synced               => undef,
 				problems             => undef,
 				active_problems      => undef,
 				filename   => $dir.$filename,
 				outputfile => $odir.$outfilename,
-				target     => 'disk',
 				ignore_missing_files => 1 );
 			# Set the correct data file for the object
 			my $moddir = $orig_model -> directory;
@@ -4548,9 +4547,9 @@ sub run_xv_pred_step
 	chdir($base_directory);
 
 	my $model_copy_pred = $estimation_model -> copy ( filename => $base_directory.$model_name.'.mod',
-		copy_data          => 0,
-		copy_output        => 0,
-		skip_data_parsing => 1);
+													  copy_datafile          => 0,
+													  write_copy =>0,
+													  copy_output        => 0);
 
 	$model_copy_pred -> datafiles(new_names =>[$self->xv_pred_data]);
 
@@ -5268,9 +5267,7 @@ sub write_final_models
 	if ($self->linearize()){
 		#create final nonlinear model
 		my $final_nonlin = model -> new ( filename => $self->final_model_directory().'original.mod',
-			target             => 'disk',
-			skip_data_parsing => 1,
-			ignore_missing_files => 1);
+										  ignore_missing_files => 1);
 		$final_nonlin ->filename('final_'.$self->search_direction().'_nonlinear.mod');
 		#add all included  relations
 
@@ -5913,11 +5910,11 @@ sub preprocess_data
 	#out model
 
 	$filtered_data_model = $model -> copy ( filename => 'filter_data.mod',
-		directory => $directory, 
-		output_same_directory => 1,
-		copy_data          => 0,
-		copy_output        => 0,
-		skip_data_parsing => 1);
+											directory => $directory, 
+											output_same_directory => 1,
+											copy_datafile          => 0,
+											write_copy => 0,
+											copy_output        => 0);
 
 	die "no problems" unless defined $filtered_data_model->problems();
 	die "more than one problem" unless (scalar(@{$filtered_data_model->problems()})==1);
@@ -6319,15 +6316,8 @@ sub preprocess_data
 
 		#have checked that ignoresign and idcol is ok
 		if ( defined $idcolumn ) {
-			$filtered_data_model->datas([data ->
-					new( idcolumn             => $idcolumn,
-						filename             => $datafile,
-						ignoresign           => '@',
-						directory            => $filtered_data_model -> directory,
-						missing_data_token => $self->missing_data_token,
-						ignore_missing_files => 0,
-						skip_parsing         => 0,
-						target               => 'mem')]) ;
+			$filtered_data_model->datafiles(new_names => [$filtered_data_model -> directory.$datafile],
+											problem_numbers =>[1]);
 		} else {
 			croak("No id column definition found in the model file." );
 		}

@@ -165,7 +165,6 @@ my $eval_string = common_options::model_parameters(\%options);
 
 my $model = model -> new ( eval( $eval_string ),
 						   filename                    => $ARGV[0],
-						   skip_data_parsing => 1,
 						   ignore_missing_output_files => 1 );
 
 if ( not $options{'case_column'} =~ /^\d/ ) {

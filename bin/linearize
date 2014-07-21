@@ -120,9 +120,8 @@ die "linearize only works with NONMEM7" unless ($PsN::nm_major_version == 7);
 my $eval_string = common_options::model_parameters(\%options);
 
 my $model = model -> new ( eval( $eval_string ),
-			   filename                    => $ARGV[0],
-			   target => 'disk',
-			   ignore_missing_output_files => 1);
+						   filename                    => $ARGV[0],
+						   ignore_missing_output_files => 1);
 
 my $lstfile;
 if (-e $model->outputs->[0]->full_name()){

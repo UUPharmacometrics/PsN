@@ -13,6 +13,8 @@ my $modeldir = $includes::testfiledir;
 
 my $model = model->new(filename => "$modeldir/pheno.mod");
 
+
+
 is (scalar(@{$model->problems}), 1, "Check number of problems");
 my $problem = $model->problems->[0];
 is (scalar(@{$problem->inputs}), 1, "Check number of inputs");

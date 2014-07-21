@@ -266,11 +266,9 @@ my $ignore_missing_files=1;
 $ignore_missing_files = 0 unless ( $ARGV[1] );
 my $model = model -> new ( filename => $ARGV[0],
 						   ignore_missing_files => $ignore_missing_files,
-						   skip_data_parsing => 1,
 						   ignore_missing_data =>1);
 my $model_copy = model -> new ( filename => $ARGV[0],
 								ignore_missing_files => 1,
-								skip_data_parsing => 1,
 								ignore_missing_data=>1);
 
 if ( scalar (@{$model-> problems}) != 1 ){
@@ -292,7 +290,6 @@ if (defined $options{'from_model'}) {
 	die "No such file: ".$options{'from_model'}."\n" unless (-e $options{'from_model'});
 	my $params_model = model -> new ( filename => $options{'from_model'},
 									  ignore_missing_files => 1,
-									  skip_data_parsing => 1,
 									  ignore_missing_data=>1);
 
 	my $array = $params_model->get_hash_values_to_labels();

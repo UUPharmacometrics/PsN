@@ -222,12 +222,11 @@ sub modelfit_setup
 	my $datx_in_input=0;
 	my @table_header=();
 	unless ($self -> models -> [0]->filename() eq 'dummy'){
-		my $sim_model = $self -> models -> [0] ->
-			copy( filename    => $self -> directory.'m1/simulation.mod',
-				  target      => 'disk',
-				  copy_data   => 1,
-				  copy_output => 0);
-
+		my $sim_model = $self -> models -> [0] ->copy( filename    => $self -> directory.'m1/simulation.mod',
+													   copy_datafile   => 1,
+													   write_copy => 0,
+													   copy_output => 0);
+		
 		if ($sim_model-> is_option_set(record=>'input',name=>'TIME')){
 			#this assumes no synonym, and TIME is always option, not value.
 			$time_in_input=1;
@@ -364,7 +363,7 @@ sub modelfit_setup
 							  record_strings => [ join( ' ', @table_header ).
 												  ' NOPRINT NOAPPEND ONEHEADER FILE='.
 												  $simulated_file ] );
-		$sim_model -> _write( write_data => 1 );
+		$sim_model -> _write();
 
 		my $mod_sim = tool::modelfit -> new( %{common_options::restore_options(@common_options::tool_options)},
 											 top_tool         => 0,

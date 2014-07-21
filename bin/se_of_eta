@@ -100,7 +100,7 @@ $model = model -> new ( eval( $eval_string ),
 			filename                    => $ARGV[0],
 			ignore_missing_output_files => 1 );
 
-my $datafile_name = $model -> datas -> [0] -> full_name;
+my $datafile_name = $model -> datafiles(absolute_path => 1) -> [0];
 
 chdir( $directory );
 
@@ -128,165 +128,163 @@ my %seen_eps;
 my %seen_err;
 
 my @models;
+my ($dir,$file)= OSspecific::absolute_path(undef,'se_model.dta');
+my $newdataname = $dir.$file;
+cp ($datafile_name, $newdataname);
 
-my $data = $model -> datas -> [0];
-
-$data -> synchronize;
+my $data = data->new (filename => $newdataname,
+					  idcolum =>$model->idcolumn(problem_number => 1),
+					  ignoresign => $model->ignoresigns->[0]);
 
 my $ids = $data -> individuals;
 
 my $nrec = scalar @{$ids -> [0] -> subject_data};
-
 foreach my $id (0..$#{$ids}) {
 
-  my $model_copy = $model -> copy( filename => 'se_model_'.($id+1).'.mod',
-				   copy_data => ($id+1), # Trick to copy data once
-				   data_file_names => ['se_model.dta']);
+	my $model_copy = $model -> copy( filename => 'se_model_'.($id+1).'.mod',
+									 write_copy => 0,
+									 copy_datafile => 0); 
   
-  push(@models,$model_copy);
+	push(@models,$model_copy);
 	
-  $model_copy -> datas -> [0] -> synchronize;
-  $model_copy -> datas -> [0] -> filename('se_model.dta');
-  $model_copy -> datas -> [0] -> directory( $directory );
-  $model_copy -> datafiles(new_names => ['se_model.dta']);
-
-  $model_copy -> update_inits( from_output => $model -> outputs -> [0] );
-
-  # 1 Change all ETA(n) to THETA(n + $nr_of_old_thetas)
-
-  my $code_block;
-  my $pk = 0;
-  # Find PK or PRED block
-  if( defined $model_copy -> pk ){
-    $code_block = $model_copy -> pk;
-    $pk = 1;
-  } elsif( defined $model_copy -> pred ){
-    $code_block = $model_copy -> pred;
-  } else {
-    die "Error: No \$PK or \$PRED found... \n";
-  }
-  
-  for( my $row = 0; $row <= $#{$code_block}; $row++ ){
-
-    # High-tech RegExp to find ETA(n) and put n in $dummy. Then update
-    # $dummy and replace ETA(n) with THETA($dummy). Also register all
-    # n in ETA(n) by storing them in %seen_eta.
-
-    $code_block -> [$row] =~ s/ 
+	$model_copy -> datafiles(new_names => [$newdataname]);
+	
+	$model_copy -> update_inits( from_output => $model -> outputs -> [0] );
+	
+	# 1 Change all ETA(n) to THETA(n + $nr_of_old_thetas)
+	
+	my $code_block;
+	my $pk = 0;
+	# Find PK or PRED block
+	if( defined $model_copy -> pk ){
+		$code_block = $model_copy -> pk;
+		$pk = 1;
+	} elsif( defined $model_copy -> pred ){
+		$code_block = $model_copy -> pred;
+	} else {
+		die "Error: No \$PK or \$PRED found... \n";
+	}
+	
+	for( my $row = 0; $row <= $#{$code_block}; $row++ ){
+		
+		# High-tech RegExp to find ETA(n) and put n in $dummy. Then update
+		# $dummy and replace ETA(n) with THETA($dummy). Also register all
+		# n in ETA(n) by storing them in %seen_eta.
+		
+		$code_block -> [$row] =~ s/ 
 	                        ([^H])ETA\((\d+)
 	                        (?{$seen_eta{$2}=1;$dummy=$2+$nr_of_old_thetas;})\)
 			      /$1THETA($dummy)/gx;
-  }
+	}
 
-  my $nr_of_new_thetas = $nr_of_old_thetas + scalar keys %seen_eta;
+	my $nr_of_new_thetas = $nr_of_old_thetas + scalar keys %seen_eta;
+	
+	if( $pk ){
+		$model_copy -> pk( new_pk => $code_block );
+	} else {
+		$model_copy -> pred( new_pred => $code_block );
+	}
+	
+	# Fixate all old thetas and omegas.
+	
+	$model_copy -> fixed( parameter_type => 'theta',
+						  new_values => [[(1)x $nr_of_old_thetas]] );
 
-  if( $pk ){
-    $model_copy -> pk( new_pk => $code_block );
-  } else {
-    $model_copy -> pred( new_pred => $code_block );
-  }
+	# Set low(0.01) initial values for the new thetas.
 
-  # Fixate all old thetas and omegas.
+	$model_copy -> initial_values( parameter_type => 'theta',
+								   add_if_absent => 1,
+								   parameter_numbers => [[($nr_of_old_thetas+1)..($nr_of_new_thetas)]],
+								   new_values => [[(0.01) x (($nr_of_new_thetas) - $nr_of_old_thetas)]]);
 
-  $model_copy -> fixed( parameter_type => 'theta',
-			new_values => [[(1)x $nr_of_old_thetas]] );
+	# Change all sigmas to omegas
 
-  # Set low(0.01) initial values for the new thetas.
+	my $sigmas = $model_copy -> initial_values( parameter_type => 'sigma' );
 
-  $model_copy -> initial_values( parameter_type => 'theta',
-				 add_if_absent => 1,
-				 parameter_numbers => [[($nr_of_old_thetas+1)..($nr_of_new_thetas)]],
-				 new_values => [[(0.01) x (($nr_of_new_thetas) - $nr_of_old_thetas)]]);
+	$model_copy -> remove_records( type => 'sigma' );
+	
+	my $nr_of_old_etas_with_corr = $model_copy -> nomegas( with_correlations => 1 ) -> [0];
 
-  # Change all sigmas to omegas
+	$model_copy -> initial_values( parameter_type => 'omega',
+								   add_if_absent => 1,
+								   parameter_numbers => [[($nr_of_old_etas_with_corr+1)..($nr_of_old_etas_with_corr+$nr_of_old_sigmas)]],
+								   new_values => $sigmas );
 
-  my $sigmas = $model_copy -> initial_values( parameter_type => 'sigma' );
+	$model_copy -> fixed( parameter_type => 'omega',
+						  new_values => [[(1) x ($nr_of_old_etas_with_corr+$nr_of_old_sigmas)]] );
 
-  $model_copy -> remove_records( type => 'sigma' );
-  
-  my $nr_of_old_etas_with_corr = $model_copy -> nomegas( with_correlations => 1 ) -> [0];
+	# Add EBAY column to dataset and change ID to IID
 
-  $model_copy -> initial_values( parameter_type => 'omega',
-				 add_if_absent => 1,
-				 parameter_numbers => [[($nr_of_old_etas_with_corr+1)..($nr_of_old_etas_with_corr+$nr_of_old_sigmas)]],
-				 new_values => $sigmas );
+	my $input = $model_copy -> record( record_name => 'input' );
 
-  $model_copy -> fixed( parameter_type => 'omega',
- 			new_values => [[(1) x ($nr_of_old_etas_with_corr+$nr_of_old_sigmas)]] );
+	$input->[0]->[0] =~ s/\$INPUT//;
+	chomp( $input->[0]->[ $#{$input->[0]} ] );
+	$input->[0]->[ $#{$input->[0]} ] .= ' EBAY L2';
 
-  # Add EBAY column to dataset and change ID to IID
+	$model_copy -> set_records( type => 'input',
+								record_strings =>  $input->[0]);
 
-  my $input = $model_copy -> record( record_name => 'input' );
+	# Get error block to replace EPS(n) with ETA(n + $nr_of_old_eta) and
+	# replace ERR(n) with ERR(n+$nr_of_old_eta)
 
-  $input->[0]->[0] =~ s/\$INPUT//;
-  chomp( $input->[0]->[ $#{$input->[0]} ] );
-  $input->[0]->[ $#{$input->[0]} ] .= ' EBAY L2';
+	my $error = $model_copy -> record( record_name => 'error' );
 
-  $model_copy -> set_records( type => 'input',
-			      record_strings =>  $input->[0]);
+	for( my $row = 0 ; $row <= $#{$error->[0]}; $row ++ ){
 
-  # Get error block to replace EPS(n) with ETA(n + $nr_of_old_eta) and
-  # replace ERR(n) with ERR(n+$nr_of_old_eta)
-
-  my $error = $model_copy -> record( record_name => 'error' );
-
-  for( my $row = 0 ; $row <= $#{$error->[0]}; $row ++ ){
-
-    $error -> [0] -> [$row] =~ s/ 
+		$error -> [0] -> [$row] =~ s/ 
 	                        (.)EPS\((\d+)
 	                        (?{$seen_eps{$2}=1;$dummy=$2+$nr_of_old_etas;})\)
 			      /$1ETA($dummy)/gx;
 
-    $error -> [0] -> [$row] =~ s/ 
+		$error -> [0] -> [$row] =~ s/ 
 	                        (.)ERR\((\d+)
 	                        (?{$seen_err{$2}=1;$dummy=$2+$nr_of_old_etas;})\)
 			      /$1ETA($dummy)/gx;
 
-    
-    if( $error -> [0] -> [$row] =~ /(.*)Y(\s*)=(.*)/ ){
+		
+		if( $error -> [0] -> [$row] =~ /(.*)Y(\s*)=(.*)/ ){
 
-      @{$error -> [0]} = ( @{$error -> [0]}[0..($row-1)],
-			   'IF( EBAY.LE.0 ) ' . $error -> [0] -> [$row],
-			   @{$error -> [0]}[$row+1..$#{$error->[0]}] );
-    }
-    
-  }
+			@{$error -> [0]} = ( @{$error -> [0]}[0..($row-1)],
+								 'IF( EBAY.LE.0 ) ' . $error -> [0] -> [$row],
+								 @{$error -> [0]}[$row+1..$#{$error->[0]}] );
+		}
+		
+	}
 
-  foreach( 1..$nr_of_old_etas ){
-    push(@{$error -> [0]}, '       IF( EBAY.EQ.'.($_).' ) Y = THETA(' . 
-	                   ($nr_of_old_thetas+$_) .
-	                   ") + ETA($_)\n");
-  }
-  
-  $model_copy -> set_records( type => 'error',
-			      record_strings => $error -> [0] );
+	foreach( 1..$nr_of_old_etas ){
+		push(@{$error -> [0]}, '       IF( EBAY.EQ.'.($_).' ) Y = THETA(' . 
+			 ($nr_of_old_thetas+$_) .
+			 ") + ETA($_)\n");
+	}
+	
+	$model_copy -> set_records( type => 'error',
+								record_strings => $error -> [0] );
 
-  # Set options in $EST and $COV
+	# Set options in $EST and $COV
 
-  $model_copy -> maxeval( new_values  => [[9999]] );
+	$model_copy -> maxeval( new_values  => [[9999]] );
 
-  if( scalar @{$model_copy -> record( record_name => 'covariance' )} > 0 ){
-    $model_copy -> remove_records( type => 'covariance' );
-  }
-  
-  $model_copy -> add_records( type => 'covariance',
-			      record_strings => ['MAT=R'] );
+	if( scalar @{$model_copy -> record( record_name => 'covariance' )} > 0 ){
+		$model_copy -> remove_records( type => 'covariance' );
+	}
+	
+	$model_copy -> add_records( type => 'covariance',
+								record_strings => ['MAT=R'] );
 
-  $model_copy -> set_records( type => 'estimation' );
+	$model_copy -> set_records( type => 'estimation' );
 
-  $model_copy -> remove_records( type => 'table' );
+	$model_copy -> remove_records( type => 'table' );
 
-  $model_copy -> set_option( record_name => 'data',
-			     option_name => 'ACCEPT',
-			     option_value => '(ID.EQ.'.$ids -> [$id] -> idnumber().')' );
+	$model_copy -> set_option( record_name => 'data',
+							   option_name => 'ACCEPT',
+							   option_value => '(ID.EQ.'.$ids -> [$id] -> idnumber().')' );
 
-  $model_copy -> _write;
+	$model_copy -> _write;
   
 }
 
 my $data_copy = $models[0] -> datas -> [0];
 
-my $ids = $data_copy -> individuals;
 
 
 ####
@@ -332,7 +330,6 @@ foreach my $id( @{$ids} ){
 }
 
 push( @{$data_copy->header}, 'EBAY', 'L2' );
-$data_copy -> synchronize;
 
 $data_copy -> _write;
 

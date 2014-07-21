@@ -22,8 +22,7 @@ my $tempdir = create_test_dir('unit_data_cdd');
 
 cp($includes::testfiledir.'/pheno5.dta',$tempdir);
 my ($new_datas, $skip_ids, $skip_keys, $skip_values, $remainders, $pr_bins) = 
-	data::cdd_create_datasets(input_directory  => $tempdir,
-							  input_filename => 'pheno5.dta',
+	data::cdd_create_datasets(input_filename => $tempdir.'pheno5.dta',
 							  bins => undef,
 							  case_column => 1, #number 1 is first
 							  selection_method => undef,

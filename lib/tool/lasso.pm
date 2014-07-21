@@ -822,6 +822,10 @@ sub modelfit_setup
 
 	# Assume one $PROBLEM one model
 	my $model = $self -> models -> [0];
+	my $dataobj = data->new(filename => $model->datafiles(absolute_path=>1)->[0],
+							idcolumn => $model->idcolumn,
+							missing_data_token => $self->missing_data_token,
+							ignoresign => $model->ignoresigns->[0]);
 
 	foreach my $set (@sets){
 		my @parlist = split (':',$set);
@@ -865,7 +869,7 @@ sub modelfit_setup
 
 			unless (defined $self -> statistics->{$covariate}{$function}){
 				$self -> statistics->{$covariate}{$function} =
-					$model -> datas -> [0] -> lasso_calculate_covariate_statistics
+					$dataobj -> lasso_calculate_covariate_statistics
 					( 	missing_data_token =>$self->missing_data_token,
 						column_number => $column_number,
 						function => $function,
@@ -877,7 +881,7 @@ sub modelfit_setup
 
 	}
 
-	$model -> datas -> [0] -> target('disk'); #should clear data from memory here instead
+	$dataobj = undef;
 	ui -> print( category => 'lasso',
 		message  => " ... done\n" );
 
@@ -902,16 +906,15 @@ sub modelfit_setup
 	$model -> remove_records( type => 'covariance');
 
 	my $basic_model= $model->copy(filename => $self -> directory().'m'.$model_number.'/basic.mod',
-		copy_data => 0,
-		copy_output => 0);
-	$basic_model->_write();
-
+								  copy_datafile => 0,
+								  copy_output => 0);
 	## Create the new model object
 	#must do this in setup, not new
 	my $lasso_model= $model->copy(filename => $self -> directory().'m'.$model_number.'/lasso_initial.mod',
-		copy_data => 0,
-		copy_output => 0);
-
+								  copy_datafile => 0,
+								  copy_output => 0,
+								  write_copy => 0);
+	
 	$self->setup_lasso_model(lasso_model => $lasso_model,
 		parameter_covariate_form => \%parameter_covariate_form);
 	$lasso_model->_write();
@@ -1042,53 +1045,53 @@ sub modelfit_setup
 		#run the xv
 
 		my $cvobject = tool::xv->new(%{common_options::restore_options(@common_options::tool_options)},
-			models => [$lasso_model],
-			base_directory   => $self -> directory,
-			directory        => $self -> directory.'xv_dir'.$model_number, 
-			subtool_arguments => 
-			{xv_step => {%{common_options::restore_options(@common_options::tool_options)},
-					seed => $common_seed,
-					directory => undef,
-					cutoff => $self->cutoff(),
-					n_model_thetas => $basic_model->nthetas(),
-					nr_validation_groups => $self->groups(),
-					stratify_on      => $self -> stratify_on(), 
-					estimation_data => $data_xv_step->estimation_data(),
-					prediction_data => $data_xv_step->prediction_data(),
-					own_parameters => {logfile => $self->logfile,
-						last_t_value => $self->start_t(),
-						steplength => $self->step_t(),
-						basic_model => $basic_model,
-						last_ofv_sum => $self->pred_ofv_start_t(),
-						seed => $self->seed(),
-						stop_t =>  $self->stop_t(),
-						t_optimal => $self->start_t(),
-						converge => $self->convergence(),
-						est_filename => $est_filename,
-						pred_filename => $pred_filename,
-						coeff_table => $coeff_table },
-					init => \&xv_step_init,
-					post_analyze =>  \&xv_step_analyze},
-				modelfit => {%{common_options::restore_options(@common_options::tool_options)},
-					seed => $common_seed,
-					directory => undef,
-					prepend_model_file_name => 1,
-					cut_thetas_rounding_errors => 1,
-					handle_hessian_npd => 0,
-					data_path => '../../../../xv_data/',
-					cutoff => $self->cutoff(),
-					cutoff_thetas => [($basic_model->nthetas()+1)..($lasso_model->nthetas()-1)], #Last theta is t-value
-				}}
-		);
-
+									 models => [$lasso_model],
+									 base_directory   => $self -> directory,
+									 directory        => $self -> directory.'xv_dir'.$model_number, 
+									 subtool_arguments => 
+									 {xv_step => {%{common_options::restore_options(@common_options::tool_options)},
+												  seed => $common_seed,
+												  directory => undef,
+												  cutoff => $self->cutoff(),
+												  n_model_thetas => $basic_model->nthetas(),
+												  nr_validation_groups => $self->groups(),
+												  stratify_on      => $self -> stratify_on(), 
+												  estimation_data => $data_xv_step->estimation_data(),
+												  prediction_data => $data_xv_step->prediction_data(),
+												  own_parameters => {logfile => $self->logfile,
+																	 last_t_value => $self->start_t(),
+																	 steplength => $self->step_t(),
+																	 basic_model => $basic_model,
+																	 last_ofv_sum => $self->pred_ofv_start_t(),
+																	 seed => $self->seed(),
+																	 stop_t =>  $self->stop_t(),
+																	 t_optimal => $self->start_t(),
+																	 converge => $self->convergence(),
+																	 est_filename => $est_filename,
+																	 pred_filename => $pred_filename,
+																	 coeff_table => $coeff_table },
+												  init => \&xv_step_init,
+												  post_analyze =>  \&xv_step_analyze},
+									  modelfit => {%{common_options::restore_options(@common_options::tool_options)},
+												   seed => $common_seed,
+												   directory => undef,
+												   prepend_model_file_name => 1,
+												   cut_thetas_rounding_errors => 1,
+												   handle_hessian_npd => 0,
+												   data_path => '../../../../xv_data/',
+												   cutoff => $self->cutoff(),
+												   cutoff_thetas => [($basic_model->nthetas()+1)..($lasso_model->nthetas()-1)], #Last theta is t-value
+									  }}
+			);
+		
 		$cvobject->run();
 		$self->warnings($self->warnings() + $cvobject->warnings());
 		$t_optimal = $cvobject->subtool_arguments->{'xv_step'}->{'own_parameters'}->{'t_optimal'} if (defined $cvobject->subtool_arguments);
-	}
+}
 
 
 	$self->write_log(message=>"The final t-value is: ". $t_optimal);
-
+	
 	if ($t_optimal<=0){
 		ui -> print( category => 'lasso',
 			message =>"Of the *tested* t_values, none gave a better model than the model".
@@ -1099,14 +1102,14 @@ sub modelfit_setup
 		message  => "The optimal t-value is $t_optimal. Running lasso model with t=$t_optimal\n" );
 
 	my $lasso_optimal = $lasso_model -> copy(filename => $self->directory()."m1/lasso_optimal.mod",
-		copy_data => 1, copy_output => 0,
-		target => 'mem');
-	foreach my $out (@{$lasso_optimal-> outputs()}){
-		$out -> directory($lasso_optimal->directory());
-	}
+											 copy_datafile => 0,
+											 output_same_directory => 1,
+											 write_copy => 0,
+											 copy_output => 0);
+
 	$lasso_optimal->initial_values(parameter_type => 'theta',
-		parameter_numbers => [[$lasso_optimal->nthetas()]],
-		new_values =>[[$t_optimal]]);
+								   parameter_numbers => [[$lasso_optimal->nthetas()]],
+								   new_values =>[[$t_optimal]]);
 	$lasso_optimal->_write();
 
 	my @cutoff_thetas = ($basic_model->nthetas()+1)..($lasso_model->nthetas()-1);
@@ -1135,16 +1138,16 @@ sub modelfit_setup
 	#Create the optimal model file (not LASSO)
 
 	$self->model_optimal($lasso_optimal -> copy(filename =>$self->directory(). "m1/optimal_model.mod",
-			copy_data => 0, 
-			copy_output => 0,
-			output_same_directory => 1,
-			target => 'mem'));
-
+												copy_datafile => 0, 
+												copy_output => 0,
+												write_copy => 0,
+												output_same_directory => 1));
+	
 	$self->model_optimal -> update_inits( from_output => $lasso_optimal->outputs->[0],
-		update_omegas => 1,
-		update_sigmas => 1,
-		update_thetas => 1);
-
+										  update_omegas => 1,
+										  update_sigmas => 1,
+										  update_thetas => 1);
+	
 	my @remove_theta_num;
 	my %remove_parameters;
 	my %keep_parameters;
@@ -1152,9 +1155,9 @@ sub modelfit_setup
 	my $rem_nthetas = $self->model_optimal->nthetas() - $added_thetas;
 
 	my $labels = $self->model_optimal->labels( parameter_type  => 'theta', 
-		problem_numbers => [1],
-		parameter_numbers => [\@cutoff_thetas] )->[0];
-
+											   problem_numbers => [1],
+											   parameter_numbers => [\@cutoff_thetas] )->[0];
+	
 	#have %parameter_covariate_form here
 	my $index=0;
 	my @old_code;

@@ -36,7 +36,7 @@ sub BUILD
 			my $name;
 			my $ldir;
 			( $ldir, $name ) =
-			OSspecific::absolute_path( $self ->directory(), $old_files[$i] );
+				OSspecific::absolute_path( $self ->directory(), $old_files[$i] );
 			push(@new_files,$ldir.$name) ;
 		}
 		$self->$accessor(\@new_files);
@@ -46,8 +46,8 @@ sub BUILD
 		foreach my $problem (@{$model->problems()}){
 			if (defined $problem->nwpri_ntheta()){
 				ui -> print( category => 'all',
-					message => "Warning: gls does not support \$PRIOR NWPRI.",
-					newline => 1);
+							 message => "Warning: gls does not support \$PRIOR NWPRI.",
+							 newline => 1);
 				last;
 			}
 		}
@@ -76,16 +76,16 @@ sub BUILD
 		if ($self->have_tnpri()){
 			unless( defined $self -> models->[0]-> extra_files ){
 				croak('When using $PRIOR TNPRI you must set option -extra_files to '.
-					'the msf-file, otherwise the msf-file will not be copied to the NONMEM '.
-					'run directory.');
+					  'the msf-file, otherwise the msf-file will not be copied to the NONMEM '.
+					  'run directory.');
 			}
 
 		}else{
 			croak('The input model must contain exactly one problem, unless'.
-				' first $PROB has $PRIOR TNPRI');
+				  ' first $PROB has $PRIOR TNPRI');
 		}
 		my $est_record = $self->models->[0] -> record( problem_number => (1+$self->have_tnpri()),
-			record_name => 'estimation' );
+													   record_name => 'estimation' );
 		unless (defined $est_record and scalar(@{$est_record})>0){
 			croak('Input model must have an estimation record');
 		}
@@ -96,8 +96,8 @@ sub modelfit_setup
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		model_number => { isa => 'Int', optional => 1 }
-	);
+							  model_number => { isa => 'Int', optional => 1 }
+		);
 	my $model_number = $parm{'model_number'};
 
 	my $model = $self -> models -> [$model_number-1];
@@ -129,7 +129,7 @@ sub modelfit_setup
 		my @sim_lines;
 
 		open(MOD, $self-> models->[0]->full_name()) || 
-		die("Couldn't open ".$self-> models->[0]->full_name()." : $!");
+			die("Couldn't open ".$self-> models->[0]->full_name()." : $!");
 
 		while(<MOD>) {
 			if (s/^\s*\;+\s*(gls-|Gls-|GLS-)//){
@@ -141,7 +141,7 @@ sub modelfit_setup
 					push(@gls_lines,$_);
 				}else{
 					ui->print(message => "Warning: Tag on line ".$lead.$_." not recognized, ignored",
-						newline=> 1);
+							  newline=> 1);
 				}
 			}
 		}
@@ -150,15 +150,15 @@ sub modelfit_setup
 		if (scalar(@gls_lines)>0){
 			unless ($gls_lines[0] =~ /^\$EST[A-Z]*/){
 				croak("First line of tagged gls-final is ".$gls_lines[0]." which ".
-					"is not recognized as a \$EST record.");
+					  "is not recognized as a \$EST record.");
 			}
 			$gls_lines[0] =~ s/^\$EST[A-Z]*//;
 			foreach my $line (@gls_lines){
 				if ($line =~ /^\$/){
 					croak("Error: More than one line found starting with \n".
-						";gls-final \$<something>\n".
-						"gls program cannot handle multiple NONMEM ".
-						"records with tag ;gls-final");
+						  ";gls-final \$<something>\n".
+						  "gls program cannot handle multiple NONMEM ".
+						  "records with tag ;gls-final");
 				}
 				chomp $line;
 				$gls_estimation_string .= ' '.$line; 
@@ -167,7 +167,7 @@ sub modelfit_setup
 		if (scalar(@sim_lines)>0){
 			unless ($sim_lines[0] =~ /^\$[A-Z]+/){
 				croak("First line of tagged gls-sim is ".$sim_lines[0]." which ".
-					"is not recognized as a \$ NONMEM record.");
+					  "is not recognized as a \$ NONMEM record.");
 
 			}
 			my $is_est=0;
@@ -178,14 +178,14 @@ sub modelfit_setup
 					my $record = $1;
 					if ($record =~ /^SIM/){
 						croak("Cannot have more than one \$SIM record ".
-							"in combination with tag ;gls-sim")
-						if ($is_sim > 0);
+							  "in combination with tag ;gls-sim")
+							if ($is_sim > 0);
 						$is_sim=1;
 						$is_est = 2 if ($is_est == 1); #stop storing est if did before
 					}elsif ($record =~ /^EST/){
 						croak("Cannot have more than one \$EST record ".
-							"in combination with tag ;gls-sim")
-						if ($is_est > 0);
+							  "in combination with tag ;gls-sim")
+							if ($is_est > 0);
 						$is_est=1;
 						$is_sim = 2 if ($is_sim == 1); #stop storing sim if did before.
 					}else{
@@ -209,71 +209,69 @@ sub modelfit_setup
 
 
 	if ($self->gls_model()){
-		$gls_model = $model ->
-		copy( filename    => $self -> directory.'m'.$model_number.'/gls.mod',
-			target      => 'disk',
-			copy_data   => 1,
-			copy_output => 0);
-		$gls_model -> outputs -> [0] -> directory($self -> directory.'m'.$model_number);
+		$gls_model = $model ->copy( filename    => $self -> directory.'m'.$model_number.'/gls.mod',
+									copy_datafile   => 1,
+									write_copy => 0,
+									output_same_directory => 1,
+									copy_output => 0);
 
 		$gls_model -> remove_option( record_name  => 'estimation',
-			option_name  => 'MSFO',
-			fuzzy_match => 1,
-			problem_numbers => [($self->probnum())],
-			record_number => 0); #0 means all
+									 option_name  => 'MSFO',
+									 fuzzy_match => 1,
+									 problem_numbers => [($self->probnum())],
+									 record_number => 0); #0 means all
 
 		if (defined $self->additive_theta()){
 
 			$gls_model -> initial_values( parameter_numbers => [[$newthetanum]],
-				new_values        => [[$self->additive_theta()]],
-				add_if_absent     => 1,
-				parameter_type    => 'theta',
-				problem_numbers   => [$self->probnum()]);
+										  new_values        => [[$self->additive_theta()]],
+										  add_if_absent     => 1,
+										  parameter_type    => 'theta',
+										  problem_numbers   => [$self->probnum()]);
 			$gls_model -> labels( parameter_type    => 'theta',
-				parameter_numbers => [[$newthetanum]],
-				problem_numbers   => [$self->probnum()],
-				new_values        => [["$newthetanum add_err"]] );
+								  parameter_numbers => [[$newthetanum]],
+								  problem_numbers   => [$self->probnum()],
+								  new_values        => [["$newthetanum add_err"]] );
 			$gls_model->fixed(parameter_type => 'theta',
-				parameter_numbers => [[$newthetanum]],
-				new_values => [[1]] );
+							  parameter_numbers => [[$newthetanum]],
+							  new_values => [[1]] );
 
 		}
 		if (defined $gls_model ->outputs() and 
 			defined $gls_model->outputs()->[0] and
 			$gls_model->outputs()->[0]-> have_output()){
 			$gls_model -> update_inits ( from_output => $gls_model->outputs()->[0],
-				problem_number => $self->probnum());
+										 problem_number => $self->probnum());
 		}
 
 	}else{
 		#no gls_model
-		$orig_model = $model ->
-		copy( filename    => $self -> directory.'m'.$model_number.'/original.mod',
-			target      => 'disk',
-			copy_data   => 1,
-			copy_output => 0);
-		$orig_model -> outputs -> [0] -> directory($self -> directory.'m'.$model_number);
+		$orig_model = $model ->	copy( filename    => $self -> directory.'m'.$model_number.'/original.mod',
+									  copy_datafile   => 1,
+									  output_same_directory => 1,
+									  write_copy => 0,
+									  copy_output => 0);
 
 		if ($self->ind_shrinkage()){
 
 			#create sim record if not present
 			$sim_record = $orig_model -> record( problem_number => $self->probnum(),
-				record_name => 'simulation' );
+												 record_name => 'simulation' );
 			if( scalar(@{$sim_record}) > 0 ){
 				$sim_record = $sim_record->[0];
 				foreach my $altopt ('SUBPROBLEMS','SUBPROBS','NSUBPROBLEMS','NSUBPROBS','NSUBS'){
 					#NONMEM accepts a heck of a lot of alternatives...
 					$orig_model -> remove_option(record_name => 'simulation',
-						option_name => $altopt,
-						fuzzy_match => 1,
-						problem_numbers => [$self->probnum()]);
+												 option_name => $altopt,
+												 fuzzy_match => 1,
+												 problem_numbers => [$self->probnum()]);
 
 				}
 				if ($self->have_nwpri() or $self->have_tnpri()){
 					$orig_model -> remove_option(record_name => 'simulation',
-						option_name => 'TRUE',
-						fuzzy_match => 1,
-						problem_numbers => [$self->probnum()]);
+												 option_name => 'TRUE',
+												 fuzzy_match => 1,
+												 problem_numbers => [$self->probnum()]);
 
 				}
 			}else{
@@ -293,46 +291,45 @@ sub modelfit_setup
 		} #end if ind_shrinkage
 
 		$orig_model -> remove_option( record_name  => 'estimation',
-			option_name  => 'MSFO',
-			fuzzy_match => 1,
-			problem_numbers => [($self->probnum())],
-			record_number => 0); #0 means all
+									  option_name  => 'MSFO',
+									  fuzzy_match => 1,
+									  problem_numbers => [($self->probnum())],
+									  record_number => 0); #0 means all
 
 		if (defined $self->additive_theta()){
 			$orig_model -> initial_values( parameter_numbers => [[$newthetanum]],
-				new_values        => [[$self->additive_theta()]],
-				add_if_absent     => 1,
-				parameter_type    => 'theta',
-				problem_numbers   => [$self->probnum()]);
+										   new_values        => [[$self->additive_theta()]],
+										   add_if_absent     => 1,
+										   parameter_type    => 'theta',
+										   problem_numbers   => [$self->probnum()]);
 			$orig_model -> labels( parameter_type    => 'theta',
-				parameter_numbers => [[$newthetanum]],
-				problem_numbers   => [$self->probnum()],
-				new_values        => [['additive_error']] );
+								   parameter_numbers => [[$newthetanum]],
+								   problem_numbers   => [$self->probnum()],
+								   new_values        => [['additive_error']] );
 			$orig_model->fixed(parameter_type => 'theta',
-				parameter_numbers => [[$newthetanum]],
-				new_values => [[1]] );
+							   parameter_numbers => [[$newthetanum]],
+							   new_values => [[1]] );
 
 
 		}
 
-		$gls_model = $orig_model ->
-		copy( filename    => $self -> directory.'m'.$model_number.'/gls.mod',
-			target      => 'disk',
-			copy_data   => 0,
-			copy_output => 0);
-		$gls_model -> outputs -> [0] -> directory($self -> directory.'m'.$model_number);
+		$gls_model = $orig_model -> copy( filename    => $self -> directory.'m'.$model_number.'/gls.mod',
+										  copy_datafile   => 0,
+										  write_copy => 0,
+										  output_same_directory => 1,
+										  copy_output => 0);
 		$gls_model -> remove_records( type => 'simulation' );
 		if (length($gls_estimation_string)>1){
 			$gls_model -> set_records (type => 'estimation',
-				record_strings => [$gls_estimation_string],
-				problem_numbers => [($self->probnum())]);
+									   record_strings => [$gls_estimation_string],
+									   problem_numbers => [($self->probnum())]);
 		}
 		#only allow PLEV if simulating
 		if ($self->have_tnpri() or $self->have_nwpri()){
 			$gls_model -> remove_option( record_name  => 'prior',
-				problem_numbers => [(1)],
-				option_name  => 'PLEV',
-				fuzzy_match => 1);
+										 problem_numbers => [(1)],
+										 option_name  => 'PLEV',
+										 fuzzy_match => 1);
 		}
 
 		$orig_model -> shrinkage_stats( enabled => 1 );
@@ -345,33 +342,33 @@ sub modelfit_setup
 		if( defined $oprob -> inputs and defined $oprob -> inputs -> [0] -> options ) {
 			foreach my $option ( @{$oprob -> inputs -> [0] -> options} ) {
 				push( @table_header, $option -> name ) unless 
-				(($option -> value eq 'DROP' or $option -> value eq 'SKIP'
-							or $option -> name eq 'DROP' or $option -> name eq 'SKIP'));
+					(($option -> value eq 'DROP' or $option -> value eq 'SKIP'
+					  or $option -> name eq 'DROP' or $option -> name eq 'SKIP'));
 			}
 		} else {
 			croak("Trying to construct table for simulation".
-				" but no headers were found in \$model_number-INPUT" );
+				  " but no headers were found in \$model_number-INPUT" );
 		}
 		#never IWRES in orig model, only in sims
 		$oprob -> add_records( type           => 'table',
-			record_strings => [ join( ' ', @table_header ).
-				' IPRED PRED NOPRINT NOAPPEND ONEHEADER FILE=glsinput.dta']);
+							   record_strings => [ join( ' ', @table_header ).
+												   ' IPRED PRED NOPRINT NOAPPEND ONEHEADER FILE=glsinput.dta']);
 
 		my $orig_model_output;
 		if (defined $model ->outputs() and 
 			defined $model->outputs()->[0] and
 			$model->outputs()->[0]-> have_output()
-				and $self->ind_shrinkage()){
+			and $self->ind_shrinkage()){
 			#we do not need to run original before sims, because already have final ests
 			$orig_model_output = $model->outputs()->[0];
 			$orig_model -> update_inits ( from_output => $orig_model_output,
-				problem_number => $self->probnum(),
-				ignore_missing_parameters => 1);
-			$orig_model -> _write( write_data => 1 );
+										  problem_number => $self->probnum(),
+										  ignore_missing_parameters => 1);
+			$orig_model -> _write();
 			push( @orig_and_sim_models, $orig_model );
 			$simdirname='orig_and_simulation_dir'; 
 		}else{
-			$orig_model -> _write( write_data => 1 );
+			$orig_model -> _write( );
 			#run original here to get param estimates for sim
 			my $run_orig = tool::modelfit -> new( 
 				%{common_options::restore_options(@common_options::tool_options)},
@@ -390,7 +387,7 @@ sub modelfit_setup
 				abort_on_fail => $self->abort_on_fail);
 
 			ui -> print( category => 'gls',
-				message  => "Running original model" );
+						 message  => "Running original model" );
 
 			$run_orig -> run;
 			$self->additional_callback(1);
@@ -411,21 +408,21 @@ sub modelfit_setup
 				$orig_model->outputs()->[0]-> have_output()){
 				$orig_model_output = $orig_model->outputs()->[0];
 				$orig_model -> update_inits ( from_output => $orig_model_output,
-					problem_number => $self->probnum());
+											  problem_number => $self->probnum());
 			}
 		}
 
 		if (defined $orig_model_output){
 			$gls_model -> update_inits ( from_output => $orig_model_output,
-				problem_number => $self->probnum());
+										 problem_number => $self->probnum());
 		}
 
 		#change table FILE in gls if table present. Left original model as is.
 		my $tbl_nm_ref = 
-		$gls_model -> get_option_value( record_name  => 'table',
-			option_name  => 'FILE',
-			record_index => 'all',
-			problem_index => ($self->probnum()-1));
+			$gls_model -> get_option_value( record_name  => 'table',
+											option_name  => 'FILE',
+											record_index => 'all',
+											problem_index => ($self->probnum()-1));
 
 		if( defined $tbl_nm_ref ){
 			for (my $k=0; $k<scalar(@{$tbl_nm_ref}); $k++){
@@ -433,15 +430,15 @@ sub modelfit_setup
 					my $name = $tbl_nm_ref->[$k];
 					$name =~ s/[0-9]*$//;
 					$gls_model -> remove_option( record_name  => 'table',
-						option_name  => 'FILE',
-						fuzzy_match => 1,
-						record_number => ($k+1));
+												 option_name  => 'FILE',
+												 fuzzy_match => 1,
+												 record_number => ($k+1));
 
 					$gls_model -> add_option(record_name  => 'table',
-						record_number  => ($k+1),
-						option_name  => 'FILE',
-						problem_numbers => [($self->probnum())],
-						option_value => $name.'-gls' );   
+											 record_number  => ($k+1),
+											 option_name  => 'FILE',
+											 problem_numbers => [($self->probnum())],
+											 option_value => $name.'-gls' );   
 				}
 			}
 		}
@@ -449,9 +446,9 @@ sub modelfit_setup
 		#ignore @ since simdata contains header rows. can skip old ignores since filtered
 		#set for all $PROB
 		$gls_model -> set_option( record_name  => 'data',
-			option_name  => 'IGNORE',
-			option_value => '@',
-			fuzzy_match => 1);
+								  option_name  => 'IGNORE',
+								  option_value => '@',
+								  fuzzy_match => 1);
 
 		foreach my $modprob (@{$gls_model->problems()}){
 			my $inp_ref =  $modprob -> inputs();
@@ -463,7 +460,7 @@ sub modelfit_setup
 					my @keep;
 					foreach my $option ( @options ) {
 						push ( @keep, $option ) if ( not ($option -> value eq 'DROP' or $option -> value eq 'SKIP'
-									or $option -> name eq 'DROP' or $option -> name eq 'SKIP'));
+														  or $option -> name eq 'DROP' or $option -> name eq 'SKIP'));
 					}
 					$input -> options( \@keep );
 					$input -> _add_option( option_string => 'PIPR' );
@@ -479,9 +476,9 @@ sub modelfit_setup
 	}  #done if not gls_model    
 
 	$gls_model -> add_option( record_name  => 'data',
-		problem_numbers => [($self->probnum())],
-		option_name  => 'IGNORE',
-		option_value => '(PIPR.LE.0.000000001)');
+							  problem_numbers => [($self->probnum())],
+							  option_name  => 'IGNORE',
+							  option_value => '(PIPR.LE.0.000000001)');
 
 	my $samples=0;
 	$samples = $self -> samples() if ($self->ind_shrinkage() and not $self->gls_model());
@@ -493,10 +490,10 @@ sub modelfit_setup
 
 		if( $sim_no == 1 ) {
 			$sim_model = $orig_model->
-			copy( filename    => $self -> directory.'m'.$model_number.'/'.$sim_name,
-				target      => 'disk',
-				copy_data   => 0,
-				copy_output => 0);
+				copy( filename    => $self -> directory.'m'.$model_number.'/'.$sim_name,
+					  copy_datafile   => 0,
+					  write_copy => 0,
+					  copy_output => 0);
 			$sim_model -> remove_records( type => 'table' );
 			$sim_model -> remove_records( type => 'covariance' );
 			$sim_model -> shrinkage_stats( enabled => 1 );
@@ -504,67 +501,65 @@ sub modelfit_setup
 			#set IGNORE=@ since datafile will
 			#get a header during copying. Keep IGNORE=LIST
 			my $sim_ignorelist = $orig_model -> get_option_value( record_name  => 'data',
-				problem_index => ($self->probnum()-1),
-				option_name  => 'IGNORE',
-				option_index => 'all');
+																  problem_index => ($self->probnum()-1),
+																  option_name  => 'IGNORE',
+																  option_index => 'all');
 			$sim_model -> remove_option( record_name  => 'data',
-				problem_numbers => [($self->probnum())],
-				option_name  => 'IGNORE',
-				fuzzy_match => 1);
+										 problem_numbers => [($self->probnum())],
+										 option_name  => 'IGNORE',
+										 fuzzy_match => 1);
 
 			if ((defined $sim_ignorelist) and scalar (@{$sim_ignorelist})>0){
 				foreach my $val (@{$sim_ignorelist}){
 					unless (length($val)==1){
 						#unless single character ignore, cannot keep that since need @
 						$sim_model -> add_option( record_name  => 'data',
-							problem_numbers => [($self->probnum())],
-							option_name  => 'IGNORE',
-							option_value => $val);
+												  problem_numbers => [($self->probnum())],
+												  option_name  => 'IGNORE',
+												  option_value => $val);
 					}
 				}
 			}
 			$sim_model -> add_option( record_name  => 'data',
-				problem_numbers => [($self->probnum())],
-				option_name  => 'IGNORE',
-				option_value => '@');
+									  problem_numbers => [($self->probnum())],
+									  option_name  => 'IGNORE',
+									  option_value => '@');
 
 
 			# set $TABLE record
 
 			$sim_model -> add_records( type           => 'table',
-				problem_numbers => [($self->probnum())],
-				record_strings => ['IWRES ID NOPRINT NOAPPEND ONEHEADER FILE=dummy']);
+									   problem_numbers => [($self->probnum())],
+									   record_strings => ['IWRES ID NOPRINT NOAPPEND ONEHEADER FILE=dummy']);
 
 			if ($self->sim_table()){
 				$sim_model -> add_records( type           => 'table',
-					problem_numbers => [($self->probnum())],
-					record_strings => ['ID TIME IPRED W IWRES NOPRINT ONEHEADER FILE=dummy2']);
+										   problem_numbers => [($self->probnum())],
+										   record_strings => ['ID TIME IPRED W IWRES NOPRINT ONEHEADER FILE=dummy2']);
 			}
 
 			if (length($sim_estimation_string)>1){
 				$sim_model -> set_records (type => 'estimation',
-					record_strings => [$sim_estimation_string],
-					problem_numbers => [($self->probnum())]);
+										   record_strings => [$sim_estimation_string],
+										   problem_numbers => [($self->probnum())]);
 			}else{
 				unless ($self->reminimize()){
 					$sim_model -> set_maxeval_zero(print_warning => 1,
-						last_est_complete => $self->last_est_complete(),
-						niter_eonly => $self->niter_eonly(),
-						need_ofv => 1);
+												   last_est_complete => $self->last_est_complete(),
+												   niter_eonly => $self->niter_eonly(),
+												   need_ofv => 1);
 				}
 			}
 
 		}else{
 			$sim_model = $orig_and_sim_models[$#orig_and_sim_models]->
-			copy( filename    => $self -> directory.'m'.$model_number.'/'.$sim_name,
-				target      => 'disk',
-				copy_data   => 0,
-				copy_output => 0);
+				copy( filename    => $self -> directory.'m'.$model_number.'/'.$sim_name,
+					  copy_datafile   => 0,
+					  write_copy => 0,
+					  output_same_directory => 1,
+					  copy_output => 0);
 
 		}#end if elsesim_no==1
-		$sim_model -> ignore_missing_files( 1 );
-		$sim_model -> outputfile( $self -> directory.'m'.$model_number.'/'.$sim_out );
-		$sim_model -> ignore_missing_files( 0 );
 		my $prob = $sim_model -> problems -> [$self->probnum()-1];
 
 		my @new_record;
@@ -590,43 +585,43 @@ sub modelfit_setup
 		}
 
 		$prob -> set_records( type => 'simulation',
-			record_strings => \@new_record );
+							  record_strings => \@new_record );
 
 
 		if( $sim_model -> is_option_set( record => 'simulation', 
-				name => 'ONLYSIMULATION',
-				fuzzy_match => 1) ){
+										 name => 'ONLYSIMULATION',
+										 fuzzy_match => 1) ){
 			$sim_model -> remove_records( type => 'estimation' );
 		}
 
 		my $iwres_file = "iwres-$sim_no.dta";
 		$prob -> remove_option( record_name  => 'table',
-			option_name  => 'FILE',
-			fuzzy_match => 1,
-			record_number => 1);
+								option_name  => 'FILE',
+								fuzzy_match => 1,
+								record_number => 1);
 
 		$prob -> add_option(record_name  => 'table',
-			record_number  => 1,
-			option_name  => 'FILE',
-			option_value => $iwres_file );   
+							record_number  => 1,
+							option_name  => 'FILE',
+							option_value => $iwres_file );   
 
 		if ($self->sim_table()){
 			my $tab_file = "sdtab-sim$sim_no.dta";
 			$prob -> remove_option( record_name  => 'table',
-				option_name  => 'FILE',
-				fuzzy_match => 1,
-				record_number => 2);
+									option_name  => 'FILE',
+									fuzzy_match => 1,
+									record_number => 2);
 
 			$prob -> add_option(record_name  => 'table',
-				record_number  => 2,
-				option_name  => 'FILE',
-				option_value => $tab_file );   
+								record_number  => 2,
+								option_name  => 'FILE',
+								option_value => $tab_file );   
 		}
 
 		push( @all_iwres_files, $self -> directory.'m'.$model_number.'/'.
-			$iwres_file );
+			  $iwres_file );
 
-		$sim_model -> _write( write_data => 0 );
+		$sim_model -> _write();
 		push( @orig_and_sim_models, $sim_model );
 
 		if( $sim_no == $samples ) {
@@ -648,7 +643,7 @@ sub modelfit_setup
 				abort_on_fail => $self->abort_on_fail);
 
 			ui -> print( category => 'gls',
-				message  => "Running simulations to compute shrinkage" );
+						 message  => "Running simulations to compute shrinkage" );
 
 			$run_sim -> run;
 			$self->additional_callback(2);
@@ -707,7 +702,7 @@ sub modelfit_setup
 				my $first=1;
 				open(GLS, ">$fname") || die("Couldn't open $fname : $!");
 				open(DAT, ">ind_iwres_shrinkage.dta") || 
-				die("Couldn't open ind_iwres_shrinkage.dta : $!");
+					die("Couldn't open ind_iwres_shrinkage.dta : $!");
 				print GLS join(' ',@table_header);
 				print GLS " PIPR PPRE ISHR\n";
 				print DAT "ISHR\n";
@@ -727,8 +722,8 @@ sub modelfit_setup
 	} #end loop over number of simulations
 
 	$gls_model -> set_file( record => 'data',
-		new_name => 'm1/glsinput.dta', #add path
-		problem_number => 0) unless ($self->gls_model()); #0 means all
+							new_name => 'm1/glsinput.dta', #add path
+							problem_number => 0) unless ($self->gls_model()); #0 means all
 
 	$gls_model -> shrinkage_stats( enabled => 1 );
 
@@ -742,14 +737,14 @@ sub modelfit_setup
 		$shrinkage = 'ISHR'; 
 	}
 	my @newcode = ("SHRI=$shrinkage\n",
-		"IF(SHRI.LE.0) SHRI = 0\n");
+				   "IF(SHRI.LE.0) SHRI = 0\n");
 	push(@newcode,"GLSP = SHRI*PPRE + (1-SHRI)*PIPR\n");
 
 	#change W, set GLSP here
 	#can look for ADVAN<any number> this way
 	my ($advan,$junk) = $gls_model->problems->[0] -> _option_val_pos( record_name => 'subroutine',
-		name => 'ADVAN',
-		exact_match => 0);
+																	  name => 'ADVAN',
+																	  exact_match => 0);
 	my $have_advan = scalar(@{$advan}) > 0;
 
 	my @code;
@@ -785,19 +780,18 @@ sub modelfit_setup
 	}
 	unless ( defined $found_W ) {
 		croak("Could not determine a good place to add the GLS code,\n".
-			" i.e. no W= line was found\n" );
+			  " i.e. no W= line was found\n" );
 	}
 
 	if ( $use_pred ) {
 		$gls_model -> pred( problem_number => 1,
-			new_pred       => \@newcode );
+							new_pred       => \@newcode );
 	} else {
 		$gls_model -> pk( problem_number => 1,
-			new_error         => \@newcode );
+						  new_error         => \@newcode );
 	}
 
 	$gls_model -> _write;
-	$gls_model -> flush_data();
 
 	my $subdir = 'modelfit';
 
@@ -811,46 +805,46 @@ sub modelfit_setup
 	$subargs{'data_path'}='../../m'.$model_number.'/';
 
 	$self->stop_motion_call(tool=>'gls',message => "Preparing to run gls model ")
-	if ($self->stop_motion());
+		if ($self->stop_motion());
 	$self->tools([]) unless (defined $self->tools);
 	push( @{$self -> tools},
-		tool::modelfit -> new(
-			%{common_options::restore_options(@common_options::tool_options)},
-			top_tool         => 0,
-			logfile	         => undef,
-			raw_results_file     => [$self ->raw_results_file()->[0]],
-			prepared_models  => undef,
-			rerun => 1,
-			models         => [$gls_model],
-			base_directory => $self -> directory.'/m'.$model_number.'/',
-			directory      => $self -> directory.'/'.$subdir.'_dir'.$model_number,
-			subtools       => $#subtools >= 0 ? \@subtools : undef,
-			shrinkage      => 1,
-			data_path =>'../../m'.$model_number.'/',
-			_raw_results_callback => $self ->
-			_modelfit_raw_results_callback( model_number => $model_number ),
-			%subargs ) );
+		  tool::modelfit -> new(
+			  %{common_options::restore_options(@common_options::tool_options)},
+			  top_tool         => 0,
+			  logfile	         => undef,
+			  raw_results_file     => [$self ->raw_results_file()->[0]],
+			  prepared_models  => undef,
+			  rerun => 1,
+			  models         => [$gls_model],
+			  base_directory => $self -> directory.'/m'.$model_number.'/',
+			  directory      => $self -> directory.'/'.$subdir.'_dir'.$model_number,
+			  subtools       => $#subtools >= 0 ? \@subtools : undef,
+			  shrinkage      => 1,
+			  data_path =>'../../m'.$model_number.'/',
+			  _raw_results_callback => $self ->
+			  _modelfit_raw_results_callback( model_number => $model_number ),
+			  %subargs ) );
 
 	ui -> print( category => 'gls',
-		message  => "\nRunning gls model" );
+				 message  => "\nRunning gls model" );
 }
 
 sub _modelfit_raw_results_callback
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		model_number => { isa => 'Int', optional => 1 }
-	);
+							  model_number => { isa => 'Int', optional => 1 }
+		);
 	my $model_number = $parm{'model_number'};
 	my $subroutine;
 
 	# Use the mc's raw_results file.
 	my ($dir,$file) = 
-	OSspecific::absolute_path( $self -> directory,
-		$self -> raw_results_file->[$model_number-1] );
+		OSspecific::absolute_path( $self -> directory,
+								   $self -> raw_results_file->[$model_number-1] );
 	my ($npdir,$npfile) = 
-	OSspecific::absolute_path( $self -> directory,
-		$self -> raw_nonp_file->[$model_number-1]);
+		OSspecific::absolute_path( $self -> directory,
+								   $self -> raw_nonp_file->[$model_number-1]);
 
 	$subroutine = sub {
 		#can have 2 $PROB if tnpri and est_sim, interesting with 2nd $PROB only
@@ -872,8 +866,8 @@ sub _modelfit_raw_results_callback
 
 		if ( defined $modelfit -> raw_results() ) {
 			$self->stop_motion_call(tool=>'gls',message => "Preparing to rearrange raw_results in memory, adding ".
-				"model name information")
-			if ($self->stop_motion());
+									"model name information")
+				if ($self->stop_motion());
 
 			my $n_rows = scalar(@{$modelfit -> raw_results()});
 
@@ -901,7 +895,7 @@ sub _modelfit_raw_results_callback
 				}
 				if ($step < 0){
 					ui -> print( category => 'gls',
-						message  => "Warning: It seems the raw_results is not sorted");
+								 message  => "Warning: It seems the raw_results is not sorted");
 				}else {
 					$sample += $step; #normally +1, sometimes 0,sometimes 2 or more
 					unshift( @{$modelfit -> raw_results()->[$i]}, $type );
@@ -952,7 +946,7 @@ sub _modelfit_raw_results_callback
 				}
 				if ($step < 0){
 					ui -> print( category => 'gls',
-						message  => "Warning: It seems the raw_nonp_results is not sorted");
+								 message  => "Warning: It seems the raw_nonp_results is not sorted");
 				}else {
 					$sample += $step; #normally +1, sometimes 0,sometimes 2 or more
 					unshift( @{$modelfit -> raw_nonp_results()->[$i]}, $type );
@@ -976,12 +970,12 @@ sub cleanup
 {
 	my $self = shift;
 
-  #remove tablefiles in simulation NM_runs, they are 
-  #copied to m1 by modelfit and read from there anyway.
-  for (my $samp=1;$samp<=$self->samples(); $samp++){
-    unlink $self -> directory."/simulation_dir1/NM_run".$samp."/mc-sim-".$samp.".dat";
-    unlink $self -> directory."/simulation_dir1/NM_run".$samp."/mc-sim-".$samp."-1.dat"; #retry
-  }
+	#remove tablefiles in simulation NM_runs, they are 
+	#copied to m1 by modelfit and read from there anyway.
+	for (my $samp=1;$samp<=$self->samples(); $samp++){
+		unlink $self -> directory."/simulation_dir1/NM_run".$samp."/mc-sim-".$samp.".dat";
+		unlink $self -> directory."/simulation_dir1/NM_run".$samp."/mc-sim-".$samp."-1.dat"; #retry
+	}
 }
 
 no Moose;

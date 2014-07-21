@@ -186,8 +186,7 @@ sub create_template_models
 	#only set data record string in all models, do not mess with data object and chdir and such
 	#since we are not running any models here
 
-	my $original_data_name = '../'.$model->datas->[0]->filename();
-	cp($model->datas->[0]->full_name(),$self->directory().'/'.$model->datas->[0]->filename());
+	my $original_data_name = $model->datafiles(absolute_path=>1)->[0];
 	if ($n_invariant > 0){
 		$start_eta = 1 unless (defined $start_eta);
 		$bsv_parameters = ($total_orig_etas-$start_eta+1);
@@ -205,7 +204,8 @@ sub create_template_models
 	##########################################################################################
 	$frem_model0 = $model ->  copy( filename    => $self -> directory().'m1/'.$name_model0,
 									output_same_directory => 1,
-									copy_data   => 0,
+									write_copy => 0,
+									copy_datafile   => 1,
 									copy_output => 0);
 	#Update inits from output, if any
 	if (defined $output_0){
@@ -309,19 +309,17 @@ sub create_template_models
 	
 	$data_check_model = $frem_model0 ->  copy( filename    => $self -> directory().'m1/'.$name_check_model,
 											   output_same_directory => 1,
-											   copy_data   => 0,
+											   write_copy => 0,
+											   copy_datafile   => 0,
 											   copy_output => 0);
 	
-	#need to set data object , setting record not enough
-	#chdir so can use local data file name
-	chdir($self -> directory().'m1');
 	$data_check_model->datafiles(problem_numbers => [1],
 								 absolute_path =>1,
-								 new_names => [$data2name]);
-	chdir($self -> directory());
+								 new_names => [$self -> directory().'m1/'.$data2name]);
 
+	$data_check_model->relative_data_path(1); #use relative path when writing model to disk
 	# have filtered data so can skip old accept/ignores. Need ignore=@ since have a header
-	#change data file name to local name so that not too long.
+	#TODO fix this
 	$data_check_model-> set_records(type => 'data',
 									record_strings => [$data2name.' IGNORE=@ IGNORE=('.$fremtype.'.GT.0)']);
 	
@@ -387,7 +385,7 @@ sub create_template_models
 		print   "Data check ofv is $check_ofv\n";
 	}
 	#to be able to do model-> new later
-	$frem_model0->problems->[0]->datas->[0]->options->[0]->name($original_data_name);
+	$frem_model0->datafiles(new_names => [$original_data_name]);
 	$frem_model0 ->_write();
 
 	##########################################################################################
@@ -396,7 +394,8 @@ sub create_template_models
 	
 	$frem_model1 = $frem_model0 ->  copy( filename    => $self -> directory().'m1/'.$name_model1,
 										  output_same_directory => 1,
-										  copy_data   => 0,
+										  write_copy => 0,
+										  copy_datafile   => 0,
 										  copy_output => 0);
 	
 	#Update inits from output, if any
@@ -424,7 +423,7 @@ sub create_template_models
 														labels => \@bsv_par_labels);
 	
 	}
-	$frem_model1->problems->[0]->datas->[0]->options->[0]->name($original_data_name);
+#	$frem_model1->datafile(new_names=>[$original_data_name])); already is original data
 	$frem_model1 ->_write();
 
 	##########################################################################################
@@ -433,7 +432,8 @@ sub create_template_models
 
 	$frem_model2 = $frem_model1 ->  copy( filename    => $self -> directory().'m1/'.$name_model2_all,
 										  output_same_directory => 1,
-										  copy_data   => 0,
+										  copy_datafile   => 0,
+										  write_copy => 0,
 										  copy_output => 0);
 
 	#SETUP
@@ -444,6 +444,7 @@ sub create_template_models
 	#DATA changes
 	#skip set data object , since not running anything here 
 	#change data file name to local name so that not too long set ignore also.
+	#TODO fix this
 	$frem_model2-> set_records(type => 'data',
 							   record_strings => [$data2name.' IGNORE=@']);
 	
@@ -471,7 +472,8 @@ sub create_template_models
 	if ($n_invariant > 0){
 		$frem_model2_invar = $frem_model1 ->  copy( filename    => $self -> directory().'m1/'.$name_model2_invar,
 													output_same_directory => 1,
-													copy_data   => 0,
+													write_copy => 0,
+													copy_datafile   => 0,
 													copy_output => 0);
 
 		#DATA changes
@@ -503,13 +505,15 @@ sub create_template_models
 		#base on model 0
 		$frem_model2_timevar = $frem_model0 ->  copy( filename    => $self -> directory().'m1/'.$name_model2_timevar,
 													  output_same_directory => 1,
-													  copy_data   => 0,
+													  write_copy => 0,
+													  copy_datafile   => 0,
 													  copy_output => 0);
 		
 		#DATA changes
 		#skip set data object , since not running anything here 
 		
 		#change data file name to local name so that not too long set ignore also.
+		#TODO fix this
 		$frem_model2_timevar-> set_records(type => 'data',
 										   record_strings => [$data2name.
 															  ' IGNORE=@ ACCEPT=('.$fremtype.'.LT.1,'.$fremtype.'.GT.'.$n_invariant.')']);
@@ -535,13 +539,12 @@ sub create_template_models
 
 	$frem_model3 = $frem_model1 ->  copy( filename    => $self -> directory().'m1/'.$name_model3,
 										  output_same_directory => 1,
-										  copy_data   => 0,
+										  write_copy => 0,
+										  copy_datafile   => 0,
 										  copy_output => 0);
 
-	#DATA changes
-	#skip set data object , since not running anything here 
-
 	#change data file name to local name so that not too long set ignore also.
+	#TODO fix this
 	$frem_model3-> set_records(type => 'data',
 							   record_strings => [$data2name.' IGNORE=@']);
 	
@@ -567,11 +570,14 @@ sub create_template_models
 	
 	$frem_vpc_model1 = $frem_model3 ->  copy( filename    => $self -> directory().'m1/'.$name_modelvpc_1,
 											  output_same_directory => 1,
-											  copy_data   => 0,
+											  copy_datafile   => 0,
+											  write_copy => 0,
 											  copy_output => 0,
-											  skip_data_parsing => 1);      
+											  );      
 
 	#change data file name to local name so that not too long set ignore also.
+	#$frem_vpc_model1->relative_data_path(1); should already be set
+	#TODO fix this
 	$frem_vpc_model1-> set_records(type => 'data',
 							   record_strings => [$data2name.' IGNORE=@ IGNORE=('.$fremtype.'.GT.0)']);
 
@@ -624,7 +630,7 @@ sub create_template_models
 									 record_strings => [ join( ' ', @vpc1_table_params ).
 														 ' NOAPPEND NOPRINT ONEHEADER FORMAT=sG15.7 FILE='.$joindata]);
 	
-	$frem_vpc_model1->problems->[0]->datas->[0]->options->[0]->name($data2name);
+	$frem_vpc_model1->datafiles (new_names => [$data2name]);
 	$frem_vpc_model1->_write();
 
 	##########################################################################################
@@ -633,7 +639,8 @@ sub create_template_models
 	
 	$frem_vpc_model2 = $frem_model1 ->  copy( filename    => $self -> directory().'m1/'.$name_modelvpc_2,
 											  output_same_directory => 1,
-											  copy_data   => 0,
+											  write_copy => 0,
+											  copy_datafile   => 0,
 											  copy_output => 0);
 
 	$frem_vpc_model2->ignore_missing_files(1);
@@ -641,6 +648,7 @@ sub create_template_models
 	#DATA changes
 	#skip set data object , since not running anything here 
 	#change data file name to local name so that not too long set ignore also.
+	#TODO fix this
 	$frem_vpc_model2-> set_records(type => 'data',
 								   record_strings => [$joindata.' IGNORE=@ ']);
 
@@ -885,7 +893,7 @@ sub modelfit_setup
 										   update_fix => 1,
 										   skip_output_zeros => 1,
 										   problem_number => 1);
-			$frem_model2 ->_write();
+			$frem_model2 ->_write(overwrite => 1);
 		}
 
 		if ($self->estimate() >= 2){
@@ -914,7 +922,7 @@ sub modelfit_setup
 		$frem_model2_invar -> update_inits ( from_output => $output_1,
 											 ignore_missing_parameters => 1,
 											 problem_number => 1);
-		$frem_model2_invar->_write();
+		$frem_model2_invar->_write(overwrite => 1);
 	}
    
 
@@ -930,7 +938,7 @@ sub modelfit_setup
 											   update_fix => 1,
 											   skip_output_zeros => 1,
 											   problem_number => 1);
-		$frem_model2_timevar->_write();
+		$frem_model2_timevar->_write(overwrite => 1);
 	}
 	
 	
@@ -1029,14 +1037,14 @@ sub modelfit_setup
 
 			}
 
-			$frem_model3->_write();
+			$frem_model3->_write(overwrite => 1);
 		}elsif (defined $output_1){ 
 			$frem_model3 -> update_inits ( from_output => $output_1,
 										   ignore_missing_parameters => 1,
 										   update_fix => 1,
 										   skip_output_zeros => 1,
 										   problem_number => 1);
-			$frem_model3->_write();
+			$frem_model3->_write(overwrite => 1);
 		}
 
 
@@ -1072,7 +1080,7 @@ sub modelfit_setup
 												   ignore_missing_parameters => 1,
 												   update_fix => 1,
 												   problem_number => 1);
-				$frem_vpc_model1->_write();
+				$frem_vpc_model1->_write(overwrite => 1);
 			}
 			$rundir = $self -> directory().'/vpc1_modelfit_dir1';
 			rmtree([ "$rundir" ]) if (-e $rundir);
@@ -1189,7 +1197,7 @@ sub modelfit_setup
 				}
 			}
 
-			$frem_vpc_model2->_write();
+			$frem_vpc_model2->_write(overwrite => 1);
 			#copy model and move data to final names in run dir
 			cp($frem_vpc_model2->full_name(),$name_vpc_final);
 			mv($frem_vpc_model1->directory().$joindata,$joindata);
@@ -1274,10 +1282,10 @@ sub create_data2
 	#out name of data file $outdatafile with full path
 
 	my $filtered_data_model = $model -> copy ( filename => $filename,
-		output_same_directory => 1,
-		copy_data          => 0,
-		copy_output        => 0,
-		skip_data_parsing => 1);
+											   output_same_directory => 1,
+											   write_copy => 0,
+											   copy_datafile          => 0,
+											   copy_output        => 0);
 
 	die "no problems" unless defined $filtered_data_model->problems();
 	die "more than one problem" unless (scalar(@{$filtered_data_model->problems()})==1);
