@@ -806,7 +806,7 @@ for ( my $j = $start_j; $j <= $options{'samples'}; $j++ ) {
 	my $new_mod = $model ->copy(
 		directory            => $model_dir,
 		filename             => $filename,
-		copy_output           => 1,
+		copy_output           => 0, #important not to copy output, so that base model will be run for each boot data
 		copy_data =>0,
 		target               => 'disk');
     
