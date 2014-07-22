@@ -1,0 +1,13 @@
+#Hands on COV LASSO
+#Files attached:
+#HO_lasso.pdf, mx19.csv, run1.mod, run2.mod
+
+#task i)
+lasso run1.mod -relations=CL:AGE-2,ACE-1,DIG-1,NYHA-1,SEX-1,,V:AGE-2,ACE-1,DIG-1,SEX-1,NYHA-1 -stratify_on=SEX -seed=1 -retries=0
+
+
+#task iii)
+lasso run2.mod -relations=CL:AGE-3,ACE-1,DIG-1,NYHA-1,SEX-1,CRCL-2,,V:AGE-2,ACE-1,DIG-1,SEX-1,NYHA-1,WT-2 -stratify_on=SEX -seed=1 -retries=0 
+
+#task v)
+lasso run2.mod -relations=CL:CRCL-2,WT-3,,V:WT-2 -seed=1 -retries=0

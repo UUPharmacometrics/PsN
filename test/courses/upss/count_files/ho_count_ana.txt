@@ -1,0 +1,40 @@
+#Hands on Count data
+#Files attached:
+#run65.mod run66.mod run67.mod run68.mod run69.mod run70.mod  #run66vpc.mod run66sim.mod run67vpc.mod run67sim.mod# data.csv
+
+#task 1
+execute  run65.mod -model_dir_name
+
+#task 3a
+execute  run66.mod -model_dir_name
+
+#task 3b
+execute  run66sim.mod -model_dir_name
+
+#task 3c
+vpc run66vpc.mod –lst=run66.lst -samples=100 -dir=vpc66a -seed=123 -levels=0,1,2,3,4 –nopred –dv=HC
+
+#task 3d
+vpc run66vpc.mod –lst=run66.lst -samples=100 -dir=vpc66b -seed=123 -levels=0,1,2,3,4 –idv=DOSE –nopred –dv=HC
+
+#task 4a
+execute  run67.mod -model_dir_name
+
+#task 4b
+execute  run67sim.mod -model_dir_name
+
+#task 4c
+vpc run67vpc.mod –lst=run67.lst -samples=100 -dir=vpc67a -seed=123 -levels=0,1,2,3,4 –nopred –dv=HC
+
+#task 4d
+vpc run67vpc.mod –lst=run67.lst -samples=100 -dir=vpc67b -seed=123 -levels=0,1,2,3,4 –idv=DOSE –nopred –dv=HC
+
+#task 5
+execute  run68.mod -model_dir_name
+
+#task extra credit a
+execute  run69.mod -model_dir_name
+
+#task extra credit b
+execute  run70.mod -model_dir_name
+

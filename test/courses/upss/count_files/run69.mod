@@ -1,0 +1,45 @@
+$PROB Repeated Time To Event (RTTE) + Ordered Categorical Data
+$INPUT ID TIME ODV DOSE ICL IV IKA TYPE SMAX SMXH THR CAV CAVH CON
+       CNT=DROP CNT2=DROP CNT3=DROP DV=HC HC2=DROP HC3=DROP FE EVID
+
+$DATA data.csv IGNORE=@ ACCEPT=(THR.GT.0)
+
+$PRED
+  ;Baseline
+ BASE=THETA(1)*EXP(ETA(1))
+ C50=THETA(2)
+ ;Lambda
+ LAMB=BASE*(1-CAVH/(CAVH+C50))
+
+ OVDP=THETA(3)            ;overdispersion factor
+
+  ;Approximation of the factorial (log scale)
+ LFAC=DV*LOG(DV)-DV+LOG(DV*(1+4*DV*(1+2*DV)))/6+LOG(3.1415)/2
+ IF(DV.EQ.0) LFAC=0
+
+  ;gamma functions of the negative binomial model expression
+ LGAM1=LOG(SQRT(2*3.1415))+((DV+1/OVDP)-0.5)*LOG((DV+1/OVDP))-(DV+1/OVDP)+LOG(1+1/(12*(DV+1/OVDP)))
+ LGAM2=LOG(SQRT(2*3.1415))+((1/OVDP)-0.5)*LOG((1/OVDP))-(1/OVDP)+LOG(1+1/(12*(1/OVDP)))
+
+ LTRM1=(LOG(1/(1+OVDP*LAMB)))*(1/OVDP)
+ LTRM2=(LOG(LAMB/(LAMB+1/OVDP)))*(DV)
+
+  ;Logarithm of the Negative Binomial distribution
+ LNB = LGAM1-LFAC-LGAM2+LTRM1+LTRM2  ;Ln(negative binomial)
+  ;-2 Log Likelihood
+ Y=-2*LNB
+
+$THETA
+ (0,7)  ;BASE
+ (0,6)        ; D50
+ (0.00001,0.1)  ; OVDP
+$OMEGA
+0.09
+
+$ESTIM MAXEVAL=9999 METHOD=COND LAPLACE -2LL PRINT=1 MSFO=msf69
+$COV PRINT=E
+
+$TABLE ID TIME NOPRINT ONEHEADER FILE=sdtab69
+$TABLE ID CAV CAVH CON NOPRINT ONEHEADER FILE=cotab69
+$TABLE ID DOSE NOPRINT ONEHEADER FILE=catab69
+$TABLE ID ICL IV IKA NOPRINT ONEHEADER FILE=patab69

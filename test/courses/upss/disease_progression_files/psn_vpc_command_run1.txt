@@ -1,0 +1,1 @@
+vpc run1.mod -lst=run1.lst -samples=200 -dir=vpc1 -bin_by_count=0 -idv=TVIS -bin_array=.5,1.5,3,6,10,12.5,13.5,15,18,23,24.5,25.5,27,30 -stratify_on=STRT -seed=123
