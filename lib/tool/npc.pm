@@ -1620,7 +1620,7 @@ sub modelfit_setup
 		$model_sims[$i] -> set_records(type => 'simulation',
 									   record_strings => \@simrec_strings,
 									   problem_numbers => [$self->simprobnum()]);
-		$model_sims[$i] -> _write(relative_data_path => 0); #always use abs path here in m1 even if copy_data is set
+		$model_sims[$i] -> _write(relative_data_path => $self->copy_data); 
 	}
 	$model_orig -> remove_records(type => 'simulation');
 
@@ -1631,7 +1631,7 @@ sub modelfit_setup
 									  fuzzy_match => 1);
 	}
 
-	$model_orig -> _write(relative_data_path => 0); #always use abs path here in m1 even if copy_data is set
+	$model_orig -> _write(relative_data_path => $self->copy_data); 
 
 
 

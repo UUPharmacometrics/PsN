@@ -364,11 +364,11 @@ sub modelfit_setup
 			$orig_model -> update_inits ( from_output => $orig_model_output,
 										  problem_number => $self->probnum(),
 										  ignore_missing_parameters => 1);
-			$orig_model -> _write(relative_data_path => 0);
+			$orig_model -> _write(); 
 			push( @orig_and_sim_models, $orig_model );
 			$simdirname='orig_and_simulation_dir'; 
 		}else{
-			$orig_model -> _write( relative_data_path => 0);
+			$orig_model -> _write();
 			#run original here to get param estimates for sim
 			my $run_orig = tool::modelfit -> new( 
 				%{common_options::restore_options(@common_options::tool_options)},
@@ -598,7 +598,7 @@ sub modelfit_setup
 		push( @all_iwres_files, $self -> directory.'m'.$model_number.'/'.
 			  $iwres_file );
 
-		$sim_model -> _write(relative_data_path => 0);
+		$sim_model -> _write();
 		push( @orig_and_sim_models, $sim_model );
 
 		if( $sim_no == $samples ) {
@@ -768,7 +768,7 @@ sub modelfit_setup
 						  new_error         => \@newcode );
 	}
 
-	$gls_model -> _write(relative_data_path => 1); #data is local
+	$gls_model -> _write(); #data is local
 
 
 	my $subdir = 'modelfit';
