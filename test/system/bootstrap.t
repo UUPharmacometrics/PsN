@@ -4,7 +4,7 @@
 use strict;
 use warnings;
 use File::Path 'rmtree';
-use Test::More tests=>2;
+use Test::More tests=>3;
 use FindBin qw($Bin);
 use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages and $path variable definition
@@ -24,6 +24,13 @@ $rc = system($command);
 $rc = $rc >> 8;
 
 ok ($rc == 0, "bootstrap 1 that should run ok");
+
+$command = $includes::bootstrap." $tempdir/pheno5.mod -samples=10 -seed=12345 -dir=$dir -dofv ";
+
+$rc = system($command);
+$rc = $rc >> 8;
+
+ok ($rc == 0, "bootstrap 1b that should run ok");
 
 rmtree([$dir]);
 

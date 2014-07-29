@@ -153,7 +153,7 @@ sub add_randomized_input_data
 	my $dataname = $model->datafiles(problem_numbers => [1]);
 	my $data_obj = data->new(filename => $dataname->[0],
 							 idcolumn => $model->idcolumn(problem_number => 1),
-							 ignoresign => $model->ignoresign(problem_number => 1),
+							 ignoresign => $model->ignoresigns->[0],
 							 missing_data_token => $missing_data_token);
 	@xcolumn_names = @{$data_obj -> add_randomized_columns(
 						   filename => $filename,
@@ -168,7 +168,7 @@ sub add_randomized_input_data
 							  option_name  => $xcol);
 	}
 	$model -> datafiles(problem_numbers =>[1],
-						new_names => [$filename]);
+						new_names => [$model->directory.$filename]);
 	$model->relative_data_path(1);
 	$model->_write(); 
 	

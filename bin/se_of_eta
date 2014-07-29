@@ -271,8 +271,6 @@ foreach my $id (0..$#{$ids}) {
 	$model_copy -> add_records( type => 'covariance',
 								record_strings => ['MAT=R'] );
 
-	$model_copy -> set_records( type => 'estimation' );
-
 	$model_copy -> remove_records( type => 'table' );
 
 	$model_copy -> set_option( record_name => 'data',
@@ -283,7 +281,10 @@ foreach my $id (0..$#{$ids}) {
   
 }
 
-my $data_copy = $models[0] -> datas -> [0];
+my $datacopyname = $models[0] -> datafiles(absolute_path => 1)->[0];
+my $data_copy = data->new(filename => $datacopyname,
+						  ignoresign => '@',
+						  idcolumn => $models[0]->idcolumns->[0]); 
 
 
 

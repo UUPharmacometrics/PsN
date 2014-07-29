@@ -340,11 +340,6 @@ sub sanity_checks {
 			print $mes;
 			$options -> {'iofv'}=0;
 		}
-		if ($options -> {'cwres'}){
-			my $mes = "option -cwres is not supported by PsN for NONMEM7.\n".
-				"It is possible to request CWRES directly in \$TABLE instead.\n\n";
-			croak($mes);
-		}
 	}
 	if(( $PsN::nm_major_version == '5' ) and ($options -> {'nmfe'})){
 		my $mes = "\n\n*****Warning:******\n"."option nmfe is not tested for NONMEM5,\n".

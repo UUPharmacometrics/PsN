@@ -31,7 +31,7 @@ use PsN;
 
 extends 'tool';
 
-has 'data_path' => ( is => 'rw', isa => 'Str' );
+has 'copy_data' => ( is => 'rw', isa => 'Bool', default => 1 );
 has 'tail_output' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'nmtran_skip_model' => ( is => 'rw', isa => 'Int', default => 10000 );
 has 'full_path_nmtran' => ( is => 'rw', isa => 'Str' );
@@ -394,8 +394,8 @@ sub run
 
 	# print starting messages 
 	ui -> print( category => 'all',
-		message  => 'Starting ' . scalar(@models) . ' NONMEM executions. '. $threads .' in parallel.',newline => 1 ) 
-	unless $self->parent_threads > 1;
+				 message  => 'Starting ' . scalar(@models) . ' NONMEM executions. '. $threads .' in parallel.'."\n" ) 
+		unless ($self->parent_threads > 1);
 	ui -> print( category => 'all',
 		message  => "Run number\tModel name\tOFV\tCovariance step successful.",
 		newline => 1)  if $self->verbose;
@@ -2635,18 +2635,14 @@ sub copy_model_and_input
 				
 			}
 			
-			my $copy_data=1;
-			$copy_data = 0 if (defined $self->data_path);
-
 			#it is an error if data is missing here, but we ignore it and let
 			#nonmem crash due to missing data, will be handled better that way than having croak in data.pm
 			#TODO mark the model as failed even before NMrun if data is missing, so do not waste nm call
 
 			$candidate_model =  model -> new (outputfile                  => 'psn.lst',
 											  filename                    => 'psn.'.$self->modext,
-											  copy_datafile => $copy_data,
+											  copy_datafile => $self->copy_data,
 											  ignore_missing_output_files => 1,
-											  write_copy => 0,
 											  ignore_missing_data => 1);
 			
 			unlink 'psn.'.$self->modext;
@@ -2673,10 +2669,6 @@ sub copy_model_and_input
 		if ($model->tbs() or $model->dtbs()){
 			$self->write_tbs_files(thetanum => $model->tbs_thetanum());
 		}
-		
-		my $copy_data=1;
-		$copy_data = 0 if (defined $self->data_path);
-		
 		
 		# Set the table names to a short version 
 		my @new_table_names = ();
@@ -2715,7 +2707,8 @@ sub copy_model_and_input
 		#TODO mark the model as failed even before NMrun if data is missing, so do not waste nm call
 
 		$candidate_model = $model -> copy( filename => 'psn.'.$self->modext,
-										   copy_datafile => $copy_data,
+										   copy_datafile => $self->copy_data,
+										   copy_output => 0,
 										   write_copy => 0);
 		
 		$candidate_model -> shrinkage_modules( $model -> shrinkage_modules );

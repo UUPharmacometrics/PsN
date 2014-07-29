@@ -1046,12 +1046,9 @@ sub flush
 	# This method can be useful when many output objects are handled and
 	# the memory is limited.
 
-	# Flushes the object to save memory. There is no need to
-	# synchronize the ouptut object before this since they are read-
-	# only.
+	# Flushes the object to save memory. 
 
 	$self->problems([]);
-	#$self -> {'synced'} = 0;
 }
 
 sub funcevalpath

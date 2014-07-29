@@ -261,7 +261,7 @@ if (defined $options{'sim_model'}){
 		logfile	         => undef,
 		raw_results           => undef,
 		prepared_models       => undef,
-		data_path =>'../../m1/');
+		copy_data  => 0);
 	
 	$mod_sim-> print_options (cmd_line => $cmd_line,
 							  directory =>'../',
@@ -320,7 +320,7 @@ my $mod_base = tool::modelfit -> new(
 	logfile	         => undef,
 	raw_results           => undef,
 	prepared_models       => undef,
-	data_path =>'../../m1/');
+	copy_data => 0);
 
 print "Running ".$options{'samples'}." base models\n";    
 $mod_base -> run;
@@ -379,7 +379,7 @@ foreach my $chain_mod (@chain_models){
 		logfile	         => undef,
 		raw_results           => undef,
 		prepared_models       => undef,
-		data_path =>'../../m1/');
+		copy_data =>0);
 	
 	print "Running ".$options{'samples'}." chain model number $chain_number\n";    
 	$mod_chain -> run;
@@ -432,7 +432,7 @@ my $mod_reg = tool::modelfit -> new(
 	logfile	         => undef,
 	raw_results           => undef,
 	prepared_models       => undef,
-	data_path =>'../../m1/');
+	copy_data =>0);
 
 print "Running ".$options{'samples'}." regression models\n";    
 $mod_reg -> run;
@@ -475,7 +475,7 @@ foreach my $alt (@alternatives){
 		logfile	         => undef,
 		raw_results           => undef,
 		prepared_models       => undef,
-		data_path =>'../../m1/');
+		copy_data => 0);
     
 	print "Running ".$options{'samples'}." alt models for alternative $altindex\n";    
 	$mod_alt -> run;
@@ -508,9 +508,15 @@ for (my $j=1; $j<=$nimp; $j++){
 		my $prob = $mi_model -> problems -> [0];
 		my $sim_record = $mi_model -> record( problem_number => 1,
 											  record_name => 'simulation' );
-		
+		my @old_lines;
+		if (defined $sim_record -> [0] and scalar(@{$sim_record -> [0]})>0){
+			@old_lines = @{$sim_record -> [0]};
+		}else{
+			@old_lines =('(12345)'); #no old sim record
+		}
 		my @new_record;
-		foreach my $sim_line ( @{$sim_record -> [0]} ){
+		
+		foreach my $sim_line ( @old_lines){
 			my $new_line;
 			while( $sim_line =~ /([^()]*)(\([^()]+\))(.*)/g ){
 				my $head = $1;
@@ -545,7 +551,7 @@ for (my $j=1; $j<=$nimp; $j++){
 		raw_results           => undef,
 		prepared_models       => undef,
 		seed       => random_uniform_integer(1,1,99999999),
-		data_path =>'../../m1/');
+		copy_data => 0);
 	
 	print "Running ".$options{'samples'}." mi models copy $j\n";    
 	

@@ -408,10 +408,13 @@ sub setup_original_jd_model
 	#original model only
 	#no input, return is new model, modifed original
 
-	$new_model = $self->models->[0]->copy(filename=>'original.mod');
+	$new_model = $self->models->[0]->copy(filename=>'original.mod',
+										  write_copy => 0,
+										  copy_output => 0,
+										  copy_datafile => 0);
 
 	#3.1 update initial values in model and FIX them. Important to fix *after* updating.
-	my $outputObject= output -> new(filename => '../'.$self->lst_file);
+	my $outputObject= output -> new(filename => $self->lst_file);
 	unless ($outputObject->parsed_successfully()){
 		croak("lst file " . $self->lst_file . " could not be parsed.");
 	}
@@ -499,7 +502,7 @@ sub setup_original_jd_model
 
 	#finish
 	$new_model -> extra_output( ["$filestring"] ); #why needed??
-	$new_model -> _write; #why??
+	$new_model -> _write; 
 
 	return $new_model;
 }

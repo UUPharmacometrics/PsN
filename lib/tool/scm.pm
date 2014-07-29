@@ -19,6 +19,7 @@ has 'config_file' => ( is => 'rw', isa => 'tool::scm::config_file' );
 has 'append_log' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'base_criteria_values' => ( is => 'rw', isa => 'HashRef', default => sub { {} } );
 has 'format' => ( is => 'rw', isa => 'Str' );
+has 'main_data_file' => ( is => 'rw', isa => 'Str' );
 has 'medians' => ( is => 'rw', isa => 'HashRef', default => sub { {} } );
 has 'means' => ( is => 'rw', isa => 'HashRef', default => sub { {} } );
 has 'initial_estimates_model' => ( is => 'rw', isa => 'model' );
@@ -26,7 +27,6 @@ has 'derivatives_base_model' => ( is => 'rw', isa => 'model' );
 has 'filtered_data_model' => ( is => 'rw', isa => 'model' );
 has 'derivatives_output' => ( is => 'rw', isa => 'output' );
 has 'update_derivatives' => ( is => 'rw', isa => 'Bool', default => 0 );
-has 'copy_data' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'max_data_items' => ( is => 'rw', isa => 'Str', default => 50 );
 has 'error' => ( is => 'rw', isa => 'Str' );
 has 'best_step' => ( is => 'rw', isa => 'Any' );
@@ -453,10 +453,6 @@ sub BUILD
 					}
 				}
 			}
-		}
-		if (defined $self->filtered_data_model){
-			$self->filtered_data_model -> flush_data();
-			$self->filtered_data_model -> flush();
 		}
 		open( STAT, '>'.$self -> covariate_statistics_file );
 		$Data::Dumper::Purity = 1;
@@ -1327,7 +1323,7 @@ sub modelfit_setup
 				filename           => $self->final_model_directory.'/original.mod',
 				copy_datafile          => 0,
 				write_copy =>1,
-				copy_output        => 1);
+				copy_output        => 0);
 			$tmp_orig = undef;
 		}
 	}
@@ -1342,21 +1338,10 @@ sub modelfit_setup
 	my $num = scalar @{$self -> models};
 	$own_threads = $num if ( $own_threads > $num );
 
-	my %subargs = ();
 	#setup linearize here. 
 	if ($self->linearize()){
 		#this will modify $model if step_number > 1
 		$self->linearize_setup(original_model => $model);
-
-		unless ($self->copy_data() ){
-			#there is no option for setting copy data
-			$subargs{'data_path'}='../../';
-			unless ($self->update_derivatives()){
-				for (my $i=0; $i< ($self->step_number()-1); $i++){
-					$subargs{'data_path'} .= '../';
-				}
-			}
-		}
 		return if ($self->return_after_derivatives_done());
 	}
 	# Check which models that hasn't been run and run them
@@ -1396,26 +1381,14 @@ sub modelfit_setup
 		if (($self->max_steps == 0) and ($self->step_number == 1) and scalar(keys %{$self->test_relations}) == 0 and $self->linearize) {
 			$fname = $self->basename . '.mod';
 		}
+
+		my $copy_datafile = 0;
+		$copy_datafile = 1 if ((not $self->linearize ) and (not defined $self->xv_pred_data));
+
 		my $start_model = $model->copy(filename => $fname,
 									   write_copy => 0,
-									   copy_datafile          => 0,
+									   copy_datafile          => $copy_datafile,
 									   copy_output        => 0);
-		
-		my $datafile_name = 'filtered.dta';
-
-		# Set the data file for the base model
-		#Kajsa 2014-06-23 Commented this out, the code below causes several system tests to fail (in scm.t and xv_scm.t) 
-#		if ($self->step_number == 1) {
-#			if (-e $self->directory . "/$datafile_name") {
-#				# If data is filtered update the main base model to use the filtered data set
-#				$start_model->datas->[0]->directory($self->directory);
-#				$start_model->datas->[0]->filename($datafile_name);
-#	    	$start_model->_option_name(position => 0, record => 'data', problem_number => 1, new_name	=> $datafile_name);
-#			} else {
-#				# If no filtered data is present copy the original data set to the top level of the rundir
-#				cp($start_model->datas->[0]->full_name, $self->directory);
-#			}
-#		}
 		
 		$start_model->directory($self->directory);
 		if (scalar(keys %included_relations) > 0) {
@@ -1473,7 +1446,7 @@ sub modelfit_setup
 			parent_tool_id => $self->tool_id,
 			threads        => $mfit_threads,
 			parent_threads => $own_threads,
-			%subargs);
+			copy_data  => (not $self->linearize));
 
 		my $mess = "Estimating base model";
 		$mess .= " with included_relations to get base ofv" if ($self->have_run_included);
@@ -1527,57 +1500,33 @@ sub modelfit_setup
 
 	my $temp_step_relations;
 	( $self -> prepared_models->[$model_number-1]{'own'}, $temp_step_relations ) =
-	$self -> _create_models( model_number => $model_number,
-		orig_model   => $self -> models -> [$model_number-1],
-		initial_estimates_model   => $self ->initial_estimates_model,
-		relations    => $self -> relations(),
-		included_relations =>  $self -> included_relations,
-		parallel_states => $self -> parallel_states());
+		$self -> _create_models( model_number => $model_number,
+								 orig_model   => $self -> models -> [$model_number-1],
+								 initial_estimates_model   => $self ->initial_estimates_model,
+								 relations    => $self -> relations(),
+								 included_relations =>  $self -> included_relations,
+								 parallel_states => $self -> parallel_states());
 	$self -> step_relations($temp_step_relations);
 	# Create a modelfit tool for all the models of this step.
 	# This is the last setup part before running the step.
-	%subargs = ();
-	if ( defined $self -> subtool_arguments ) {
-		%subargs = %{$self -> subtool_arguments};
-	}
-	if ((not $self->copy_data()) and $self->linearize){
-		#there is no option for setting copy data
-		$subargs{'data_path'}='../../';
-		unless ($self->update_derivatives()){
-			my $maxlev = 9;
-			#want mod to be zero when it is time to do something
-			my $modulus = ($self->step_number()-1)%($maxlev); 
-			if ($modulus == 0 and ($self->step_number() > 1)){
-				#copy dataset to sublevel and reset number of ../
-				my $dotdot='';
-				for (my $i=0; $i< ($maxlev); $i++){
-					$dotdot .= '../';
-				}
-				cp( $dotdot.'derivatives_covariates.dta', 'derivatives_covariates.dta' );
-			}else{
-				for (my $i=0; $i<$modulus; $i++){
-					$subargs{'data_path'} .= '../';
-				}
-			}
-		}
-	}
+
 
 	if ((defined $self->prepared_models) and (defined $self->prepared_models->[$model_number-1]{'own'})
 			and scalar(@{$self->prepared_models->[$model_number-1]{'own'}}) > 0) {
 		$self->tools([]) unless (defined $self->tools);
 		push(@{$self->tools},
 			tool::modelfit->new
-			( %{common_options::restore_options(@common_options::tool_options)},
-				_raw_results_callback => $self->_raw_results_callback(model_number => $model_number),
-				models         => $self->prepared_models->[$model_number-1]{'own'},
-				threads        => $mfit_threads,
-				logfile        => [$self->directory."/modelfit".$model_number.".log"],
-				base_directory => $self->directory,
-				directory      => $self->directory.'/modelfit_dir'.$model_number,
-				parent_threads => $own_threads,
-				parent_tool_id => $self->tool_id,
-				top_tool       => 0,
-				%subargs ) );
+			 ( %{common_options::restore_options(@common_options::tool_options)},
+			   _raw_results_callback => $self->_raw_results_callback(model_number => $model_number),
+			   models         => $self->prepared_models->[$model_number-1]{'own'},
+			   threads        => $mfit_threads,
+			   logfile        => [$self->directory."/modelfit".$model_number.".log"],
+			   base_directory => $self->directory,
+			   directory      => $self->directory.'/modelfit_dir'.$model_number,
+			   parent_threads => $own_threads,
+			   parent_tool_id => $self->tool_id,
+			   top_tool       => 0,
+			   copy_data => 0) );
 		ui -> print( category => 'scm',
 			message  => "Estimating the candidate models." ) if ($self->linearize());
 	} else {
@@ -2130,30 +2079,7 @@ sub linearize_setup
 
 		#set IGNORE=@ since datafile will
 		#get a header since it is a table file. Keep IGNORE=LIST
-		my $ignorelist = $original_model -> get_option_value( record_name  => 'data',
-			problem_index => 0,
-			option_name  => 'IGNORE',
-			option_index => 'all');
-		$original_model -> remove_option( record_name  => 'data',
-			problem_numbers => [(1)],
-			option_name  => 'IGNORE',
-			fuzzy_match => 1);
-
-		if ((defined $ignorelist) and scalar (@{$ignorelist})>0){
-			foreach my $val (@{$ignorelist}){
-				unless (length($val)==1){
-					#unless single character ignore, cannot keep that since need @
-					$original_model -> add_option( record_name  => 'data',
-						problem_numbers => [(1)],
-						option_name  => 'IGNORE',
-						option_value => $val);
-				}
-			}
-		}
-		$original_model -> add_option( record_name  => 'data',
-			problem_numbers => [(1)],
-			option_name  => 'IGNORE',
-			option_value => '@');
+		$original_model->problems->[0]->datas->[0]->ignoresign('@');
 
 		my $mceta = $original_model->get_option_value(record_name => 'estimation',
 			option_name => 'MCETA',
@@ -2541,7 +2467,7 @@ sub linearize_setup
 		my $derivatives_name;
 		my $reused=0;
 		#set name of datafile before creating it so that will not read data here
-		$original_model -> ignore_missing_files(1);
+		$original_model -> ignore_missing_data(1);
 		$original_model -> datafiles(new_names => [$datafilename]);
 
 		if ($self->step_number()==1 and $self->derivatives_data()){
@@ -2674,10 +2600,9 @@ sub linearize_setup
 			}
 			#3.4
 			$original_model -> _write();
-			$original_model -> flush_data(); #need this, otherwise strange resilts
+
 		}else{
-			$original_model -> _write();
-			$original_model -> flush_data();
+			$original_model -> _write() unless ($self->return_after_derivatives_done());
 		}
 	} #end if first step or update derivatives
 
@@ -2993,6 +2918,7 @@ sub modelfit_analyze
 				test_relations         => $self -> test_relations,
 				parameters             => $self -> parameters,
 				check_nmtran            => 0,
+				main_data_file            => $self->main_data_file,
 				categorical_covariates => $self -> categorical_covariates(),
 				continuous_covariates  => $self -> continuous_covariates(),
 				do_not_drop            => $self -> do_not_drop,
@@ -3073,8 +2999,7 @@ sub modelfit_analyze
 		}
 
 		if ( defined $prep_models ) {
-			carp(" have called internal scm " .
-				scalar @{$prep_models} );
+			carp(" have called internal scm " .scalar @{$prep_models} );
 
 			# Enclose $prep_models in array ref to reflect the
 			# per-tool level, even though a modelfit does not
@@ -3157,7 +3082,6 @@ sub modelfit_analyze
 
 	# This loop tries to minimize the data written to disc.
 	for ( my $i = 0; $i < scalar @{$self -> prepared_models->[$model_number-1]{'own'}}; $i++ ) {
-		$self -> prepared_models->[$model_number-1]{'own'}[$i] -> {'datas'} = undef; #FIXME
 		$self -> prepared_models->[$model_number-1]{'own'}[$i] -> {'outputs'} = undef; #FIXME
 	}
 
@@ -3627,6 +3551,32 @@ sub _create_models
 	my $done = ( -e $self -> directory."/m$model_number/done" ) ? 1 : 0;
 
 	if ( not $done ) {
+		my $copy_datafile = 0;
+		#check if should copy datafile to new level, done every 9th iteration
+		my $maxlev = 9;
+		#want mod to be zero when it is time to do something
+		my $modulus = ($self->step_number()-1)%($maxlev); 
+		if ($self->linearize){
+			if ($modulus == 0 and ($self->step_number()>1) and (not $self->update_derivatives)) {
+				$copy_datafile = 1;
+			}
+		}elsif ($modulus == 0 or $self->step_number()==1 or ($self->search_direction eq 'backward' and $self->step_number == 2)) {
+			$copy_datafile = 1;
+		}
+		if ($copy_datafile){
+			my $fullpath = $orig_model->datafiles(absolute_path => 1)->[0];
+			my $filename = $orig_model->datafiles(absolute_path => 0)->[0];
+			my $string = File::Spec->catfile($self -> directory,$filename);
+			cp($fullpath,$string);
+			$self->main_data_file($string);		
+		}else{
+			unless (defined $self->main_data_file and length($self->main_data_file)>0){
+				if ($self->step_number > 1){
+					croak("step_number is ".$self->step_number." but main_data_file is not set. This is a bug");
+				}
+				$self->main_data_file($orig_model->datafiles(absolute_path => 1)->[0]);
+			}
+		}
 		open( DONE_LOG, '>'.$self -> directory."/m$model_number/done.log" );
 		foreach my $parameter ( sort keys %relations ) {
 			foreach my $covariate ( sort keys %{$relations{$parameter}} ) {
@@ -3700,7 +3650,6 @@ sub _create_models
 															copy_datafile   => 0,
 															write_copy => 0,
 															copy_output => 0);
-
 					$applicant_model -> ignore_missing_files(1);
 					$applicant_model -> outputfile( $odir.$outfilename );
 					my @table_names = @{$applicant_model -> table_names};
@@ -3713,7 +3662,7 @@ sub _create_models
 						}
 					}
 					$applicant_model -> table_names( new_names            => \@table_names,
-						ignore_missing_files => 1);
+													 ignore_missing_files => 1);
 					my @used_covariates = ();
 					# $included_relations is a reference to $self -> included_relations
 					# and should only be initialized for truly incorporated relations
@@ -3820,7 +3769,9 @@ sub _create_models
 						}
 					}
 
-					$applicant_model -> _write;
+					my @new_names = ($self->main_data_file) x scalar(@{$applicant_model->problems});
+					$applicant_model->datafiles(new_names => \@new_names);
+					$applicant_model -> _write();
 					push( @new_models, $applicant_model );
 
 					my %st_rel;
@@ -3871,21 +3822,20 @@ sub _create_models
 
 			#orig_model reference
 			my $applicant_model = model -> new( %{common_options::restore_options(@common_options::model_options)},
-				outputs              => undef,
-				synced               => undef,
-				problems             => undef,
-				active_problems      => undef,
-				filename   => $dir.$filename,
-				outputfile => $odir.$outfilename,
-				ignore_missing_files => 1 );
+												outputs              => undef,
+												problems             => undef,
+												active_problems      => undef,
+												filename   => $dir.$filename,
+												outputfile => $odir.$outfilename,
+												ignore_missing_files => 1 );
 			# Set the correct data file for the object
 			my $moddir = $orig_model -> directory;
 			my @datafiles = @{$orig_model -> datafiles};
 			for( my $df = 0; $df <= $#datafiles; $df++ ) {
 				$datafiles[$df] = $moddir.'/'.$datafiles[$df];
 			}
-			$applicant_model -> synchronize;
 			$applicant_model -> datafiles( new_names => \@datafiles );
+			#TODO should we write the model here??? Anyway, this code is probably never ever run
 			push( @new_models, $applicant_model );
 			my %st_rel;
 			$st_rel{'parameter'} = $parameter;
@@ -4555,20 +4505,21 @@ sub run_xv_pred_step
 
 	$model_copy_pred -> update_inits(from_output => $estimation_model-> outputs -> [0]);
 	$model_copy_pred -> set_maxeval_zero(print_warning => 0,
-		need_ofv => 1,
-		last_est_complete => $self->last_est_complete());
+										 need_ofv => 1,
+										 last_est_complete => $self->last_est_complete());
 
 	$model_copy_pred -> _write();
 
 	my $xv_base_fit = tool::modelfit -> new
-	( %{common_options::restore_options(@common_options::tool_options)},
-		base_directory => $base_directory,
-		directory      => $base_directory.$directory,
-		models         => [$model_copy_pred],
-		top_tool       => 0,
-		clean => 1,
-		parent_tool_id   => $self -> tool_id,
-		threads        => 1);
+		( %{common_options::restore_options(@common_options::tool_options)},
+		  base_directory => $base_directory,
+		  directory      => $base_directory.$directory,
+		  models         => [$model_copy_pred],
+		  top_tool       => 0,
+		  clean => 1,
+		  parent_tool_id   => $self -> tool_id,
+		  threads        => 1,
+		  copy_data => 1); 
 #clean 2 later
 	ui -> print( category => 'xv_scm',
 		message  => $mess ) unless ( $self -> parent_threads > 1 );
@@ -5256,11 +5207,15 @@ sub write_final_models
 			}
 			$datafilename = 'derivatives_covariates'.$stepname.'.dta';
 		}
-		$final_model -> set_file( record => 'data',new_name => $datafilename );
+
+		my @new_names = ($datafilename) x scalar(@{$final_model ->problems});
+		$final_model -> datafiles(new_names => \@new_names); #one for each $PROB
+
 	}else{
 		$final_model -> ignore_missing_files(1);
-		my $datafilename = $self->models()->[$model_number -1]->datas->[0]->filename();
-		$final_model -> set_file( record => 'data',new_name => $datafilename );
+		#ref to all data filenames
+		my $datafilenames = $self->models()->[$model_number -1]->datafiles(absolute_path => 1);
+		$final_model -> datafiles(new_names => $datafilenames); #one for each $PROB
 	}
 	$final_model -> _write;
 
@@ -5407,6 +5362,7 @@ sub modelfit_post_fork_analyze
 		my $backward_scm =
 		tool::scm ->
 		new( %{common_options::restore_options(@common_options::tool_options)},
+			 main_data_file            => undef,
 			gof                    => $self -> gof(),
 			test_relations         => $self -> test_relations,
 			parameters             => $self -> parameters,

@@ -135,13 +135,15 @@ sub modelfit_setup
 
 	unless( $self -> predict_only ){
 		$self -> tools( [ tool::modelfit -> new ( 'models' => $self -> estimation_models,
-					%modf_args,
-					nmtran_skip_model => 2
+												  %modf_args,
+												  nmtran_skip_model => 2,
+												  copy_data => 0
 				) ] );
 	} elsif( not $self -> estimate_only ) {
 		$self -> tools( [ tool::modelfit -> new ( 'models' => $self -> prediction_models,
 												  %modf_args,
-												  nmtran_skip_model => 2
+												  nmtran_skip_model => 2,
+												  copy_data => 0
 						  ) ] );
 	}
 	
@@ -328,8 +330,9 @@ sub modelfit_post_subtool_analyze
 	if( @models_to_run > 0 ){
 		$self -> tools([]) unless (defined $self->tools);
 		push( @{$self -> tools}, tool::modelfit -> new ( 'models' => \@models_to_run,
-				%modelfit_arg,
-				nmtran_skip_model => 2
+														 %modelfit_arg,
+														 nmtran_skip_model => 2,
+														 copy_data => 0
 			) );
 	}
 }

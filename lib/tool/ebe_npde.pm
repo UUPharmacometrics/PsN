@@ -251,8 +251,21 @@ sub modelfit_setup
 			prepared_models       => undef,
 			_raw_results_callback => $self ->
 			_modelfit_raw_results_callback( model_number => $model_number ),
-			data_path =>'../../m'.$model_number.'/',
+			copy_data => 0,
 			abort_on_fail => $self->abort_on_fail);
+
+		if (defined $run_orig->nm_output and length($run_orig->nm_output)>0){
+			my $old = $run_orig->nm_output;
+			unless ($run_orig->nm_output =~ /phi/){
+				$old .= ',phi';
+			}
+			unless ($run_orig->nm_output =~ /ext/){
+				$old .= ',ext';
+			}
+			$run_orig->nm_output($old);
+		}else{
+			$run_orig->nm_output('phi,ext');
+		}
 
 		ui -> print( category => 'ebe_npde',
 					 message  => "Running original model to get final parameter estimates for simulation" );
@@ -302,31 +315,10 @@ sub modelfit_setup
 
 			#set IGNORE=@ since datafile will
 			#get a header during copying. Keep IGNORE=LIST
-
-			my $sim_ignorelist = $orig_model -> get_option_value( record_name  => 'data',
-																  problem_index => ($self->probnum()-1),
-																  option_name  => 'IGNORE',
-																  option_index => 'all');
-			$sim_model -> remove_option( record_name  => 'data',
-										 problem_numbers => [($self->probnum())],
-										 option_name  => 'IGNORE',
-										 fuzzy_match => 1);
-
-			if ((defined $sim_ignorelist) and scalar (@{$sim_ignorelist})>0){
-				foreach my $val (@{$sim_ignorelist}){
-					unless (length($val)==1){
-						#unless single character ignore, cannot keep that since need @
-						$sim_model -> add_option( record_name  => 'data',
-												  problem_numbers => [($self->probnum())],
-												  option_name  => 'IGNORE',
-												  option_value => $val);
-					}
-				}
+			
+			for (my $k=0; $k< scalar(@{$sim_model->problems}); $k++){
+				$sim_model -> problems -> [$k]->datas->[0]->ignoresign('@');
 			}
-			$sim_model -> add_option( record_name  => 'data',
-									  problem_numbers => [($self->probnum())],
-									  option_name  => 'IGNORE',
-									  option_value => '@');
 
 			# set $TABLE record
 
@@ -413,8 +405,20 @@ sub modelfit_setup
 		prepared_models       => undef,
 		shrinkage => 0,
 		_raw_results_callback => $self -> _modelfit_raw_results_callback( model_number => $model_number ),
-		data_path =>'../../m'.$model_number.'/',
+		copy_data =>0,
 		abort_on_fail => $self->abort_on_fail);
+	if (defined $run_sim->nm_output and length($run_sim->nm_output)>0){
+		my $old = $run_sim->nm_output;
+		unless ($run_sim->nm_output =~ /phi/){
+			$old .= ',phi';
+		}
+		unless ($run_sim->nm_output =~ /ext/){
+			$old .= ',ext';
+		}
+		$run_sim->nm_output($old);
+	}else{
+		$run_sim->nm_output('phi,ext');
+	}
 
 	ui -> print( category => 'ebe_npde',
 				 message  => "Running simulations and reestimations" );

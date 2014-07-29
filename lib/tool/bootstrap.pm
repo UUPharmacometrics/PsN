@@ -27,7 +27,7 @@ has 'jackknife_estimates' => ( is => 'rw', isa => 'ArrayRef', default => sub { [
 has 'skip_minimization_terminated' => ( is => 'rw', isa => 'Bool', default => 1 );
 has 'keep_tables' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'allow_ignore_id' => ( is => 'rw', isa => 'Bool', default => 0 );
-has 'copy_data' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'copy_data' => ( is => 'rw', isa => 'Bool', default => 1 );
 has 'jackknife' => ( is => 'rw', isa => 'ArrayRef' );
 has 'skip_covariance_step_terminated' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'skip_with_covstep_warnings' => ( is => 'rw', isa => 'Bool', default => 0 );
@@ -134,42 +134,6 @@ sub BUILD
 	}
 }
 
-sub _sampleTools
-{
-	#not used. Remove or keep for ideas??
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		samples => { isa => 'Int', default => 200, optional => 1 },
-		subjects => { isa => 'Int', optional => 1 },
-	);
-	my $samples = $parm{'samples'};
-	my $subjects = $parm{'subjects'};
-	my @newModels;
-
-	foreach my $tool ( @{$self -> tools} ) {
-		my @models = @{$tool -> models};
-		foreach my $model (@models){
-			my $dataObj = $model -> datas -> [0];
-			for( my $i = 1; $i <= $samples; $i++ ) {
-				my $boot_sample = $dataObj -> resample( 'subjects' => $self -> subjects,
-														'new_name' => "bs$i.dta",
-					);
-				my $newmodel;
-				$newmodel = $model -> copy( filename => "bs$i.mod",
-											write_copy => 0);
-				$newmodel -> datafiles( new_names => ["bs$i.dta"] );
-				$newmodel -> write;
-				if( defined( $tool -> models ) ){
-					push( @{$tool -> models}, $newmodel );
-				} else {
-					$tool -> models( [ $newmodel ] );
-				}
-			}
-		}
-	}
-
-	return \@newModels;
-}
 
 sub modelfit_setup
 {
@@ -217,33 +181,6 @@ sub llp_setup
 		class        => 'tool::llp');
 }
 
-sub resample
-{
-	#not used, remove??
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		model => { isa => 'model', optional => 1 }
-	);
-	my @resample_models;
-	my $model = $parm{'model'};
-
-	my $dataObj = $model -> datas -> [0];
-	for( my $i = 1; $i <= $self ->samples(); $i++ ) {
-		my ($bs_dir, $bs_name) = OSspecific::absolute_path( $self ->directory(), "bs$i.dta" );
-		my $new_name = $bs_dir . $bs_name;  
-		my $boot_sample = $dataObj -> resample( subjects => $self -> subjects(),
-												new_name => $new_name,
-			);
-		my $newmodel = $model -> copy( filename => "bs$i.mod",
-									   write_copy => 0,
-									   ignore_missing_files => 1 );
-		$newmodel -> datafiles( new_names => ["bs$i.dta"] );
-		$newmodel -> write;
-		push( @resample_models, $newmodel );
-	}
-
-	return \@resample_models;
-}
 
 sub calculate_diagnostic_means
 {
@@ -1075,10 +1012,7 @@ sub general_setup
 			}
 			while( my ( $strata, $samples ) = each %stored_subjects ) {
 				if ( $self->subjects()->{$strata} != $samples ) {
-					croak("The number of individuals sampled i strata $strata ".
-						"in previous run (". $samples .
-						") does not match the number of individuals specified ".
-						"for this run (".$self->subjects()->{$strata}.")" );
+					$self->subjects()->{$strata} = $samples;
 				}
 			}
 
@@ -1119,15 +1053,14 @@ sub general_setup
 	if ( defined $self -> subtool_arguments() ) {
 		%subargs = %{$self -> subtool_arguments()};
 	}
-	if (($class eq 'tool::modelfit') and not $self->copy_data()){
-		$subargs{'data_path'}='../../m'.$model_number.'/';
-	}
+
 	$self->tools([]) unless (defined $self->tools());
 
 	push( @{$self -> tools()},
 		$class ->
 		new( %{common_options::restore_options(@common_options::tool_options)},
 			models		 => \@new_models,
+			 copy_data            => 0,
 			threads               => $subm_threads,
 			directory             => $self ->directory().'/'.$subdir.'_dir'.$model_number,
 			_raw_results_callback => $self ->
@@ -1230,7 +1163,7 @@ sub modelfit_analyze
 			$jackknife = tool::cdd::jackknife ->
 				new( %{common_options::restore_options(@common_options::tool_options)},
 					 models           => [$self -> models -> [$model_number -1]],
-					 case_column     => $self -> models -> [$model_number -1]-> datas -> [0] -> idcolumn,
+					 case_column     => $self -> models -> [$model_number -1]-> idcolumn,
 					 _raw_results_callback => $self ->	_jackknife_raw_results_callback( model_number => $model_number ),
 					 threads          => $jk_threads,
 					 parent_tool_id   => $self -> tool_id(),
@@ -1329,6 +1262,7 @@ sub modelfit_analyze
 			$samples_done++;
 		}
 
+		#we use original data set here, use input copy_data
 		my $modelfit = tool::modelfit -> new( 
 			%{common_options::restore_options(@common_options::tool_options)},
 			top_tool         => 0,
@@ -1340,7 +1274,7 @@ sub modelfit_analyze
 			parent_tool_id   => $self -> tool_id,
 			_raw_results_callback => $self ->_dofv_raw_results_callback( model_number => $model_number ),
 			logfile	         => undef,
-			data_path         =>'../../m'.$model_number.'/',
+			copy_data          => $self->copy_data,
 			threads          => $self->threads);
 		$modelfit->run;
 
@@ -1849,8 +1783,8 @@ sub create_matlab_scripts
 			push( @auto_code, "bs_samples = ".$self ->samples().";			% Number of bootstrap samples\n" );
 		}	  
 		if( $self -> type() eq 'bca' ){
-			my $ninds = $self -> models -> [0]
-			-> datas -> [0] -> count_ind;
+			my $ninds;
+			#$ninds = $self -> models -> [0]-> datas -> [0] -> count_ind;
 			push( @auto_code, "jk_samples = $ninds;			% Number of (BCa) jackknife samples\n\n" );
 		}
 

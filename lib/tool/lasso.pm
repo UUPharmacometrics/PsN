@@ -520,9 +520,9 @@ sub xv_step_init
 	my $new_t_value = $own_parameters->{'last_t_value'} + $own_parameters->{'steplength'};
 	foreach my $model ( @prediction_models){
 		$model->initial_values(parameter_type => 'theta',
-			parameter_numbers => [[$model->nthetas()]],
-			new_values =>[[$new_t_value]]);
-		$model->_write();
+							   parameter_numbers => [[$model->nthetas()]],
+							   new_values =>[[$new_t_value]]);
+		$model->_write(overwrite => 1);
 	}
 
 
@@ -541,7 +541,7 @@ sub xv_step_init
 			option_name => 'MSFO',
 			option_value=> $MSFO_file );
 
-		$model->_write();
+		$model->_write(overwrite => 1);
 	}
 	$self->stop_motion_call(tool=>'lasso',message => "written ".scalar(@estimation_models).
 		" new estimation models and ".scalar(@prediction_models).
@@ -979,7 +979,7 @@ sub modelfit_setup
 					%{common_options::restore_options(@common_options::tool_options)},
 					directory=> undef,
 					seed => $common_seed,
-					data_path => '../../../xv_data/',
+					copy_data => 0,
 					top_tool => 0,
 					prepend_model_file_name => 1
 				}
@@ -1078,7 +1078,7 @@ sub modelfit_setup
 												   prepend_model_file_name => 1,
 												   cut_thetas_rounding_errors => 1,
 												   handle_hessian_npd => 0,
-												   data_path => '../../../../xv_data/',
+												   copy_data => 0,
 												   cutoff => $self->cutoff(),
 												   cutoff_thetas => [($basic_model->nthetas()+1)..($lasso_model->nthetas()-1)], #Last theta is t-value
 									  }}

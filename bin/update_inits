@@ -325,9 +325,7 @@ if (defined $options{'from_model'}) {
 	} else {
 		die "No file to read parameter values from\n";
 	}
-#copy does not copy ignore_missing_files
-#  my $model_copy = $model -> copy( filename => $tempfile,
-#				   copy_data => 1);
+
 	my $check = 0;
 	$check = $options{'diagonal_dominance'} if (defined $options{'diagonal_dominance'});
 	$model_copy -> update_inits( from_output => $output,

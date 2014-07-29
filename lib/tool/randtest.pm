@@ -14,7 +14,7 @@ use MooseX::Params::Validate;
 extends 'tool';
 
 has 'randtest_raw_results' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
-has 'copy_data' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'copy_data' => ( is => 'rw', isa => 'Bool', default => 1 );
 has 'samples' => ( is => 'rw', required => 1, isa => 'Int' );
 has 'base_model' => ( is => 'rw', isa => 'model' );
 has 'stratify_on' => ( is => 'rw', isa => 'Str' );
@@ -55,16 +55,10 @@ sub BUILD
 		scalar(@{$self ->models()->[0]->problems->[0]->datas})>0);
 
 	#make sure IGNORE=C is not used
-	my @ignores = $self->models->[0]->get_option_value(record_name=>'data', 
-		option_name=>'IGNORE',
-		problem_index=>0, 
-		record_index=>0,
-		option_index=>'all');
 
-	foreach my $ig (@ignores){
-		croak("PsN randtest cannot handle IGNORE=C. Use IGNORE=@ instead\n")
-		if ($ig eq 'C');
-	}
+	croak("PsN randtest cannot handle IGNORE=C. Use IGNORE=@ instead\n")
+		if ($self->models->[0]->problems->[0]->datas->[0]->ignoresign eq 'C');
+	
 
 	#Find column index of rand column
 	#Find column index of strat column
@@ -132,8 +126,9 @@ sub modelfit_setup
 			threads               => $self->threads,
 			logfile	         => undef,
 			raw_results           => undef,
-			prepared_models       => undef,
-			top_tool              => 0,
+			 prepared_models       => undef,
+			 copy_data            => $self->copy_data,
+			 top_tool              => 0,
 			%subargs );
 
 		ui -> print( category => 'randtest',
@@ -150,28 +145,22 @@ sub modelfit_setup
 	my @problems   = @{$model -> problems};
 	my @new_models;
 
-	if (scalar(@{$model -> datas})>1){
-		print "\nWarning: PsN randtest only randomizes first data file, seems like model has more than one data file\n";
+	if (scalar(@{$model -> problems})>1){
+		print "\nWarning: PsN randtest only randomizes data file of first \$PROB, seems like model has more than one \$PROB\n";
 	}
 
 	my $done = ( -e $self ->directory()."/m$model_number/done" ) ? 1 : 0;
 	my $new_datas;
 	if ( not $done ) {
-		my $orig_data_file =  $model -> datas->[0]->filename;
+		my $orig_data_file =  $model -> datafiles(absolute_path => 1, problem_numbers => [1])->[0];
 		ui -> print( category => 'randtest',
 			message  => "Randomizing column ".$self->randomization_column." in ".$orig_data_file );
-		my ( $junk, $idcol ) = $model -> _get_option_val_pos( name            => 'ID',
-															  record_name     => 'input',
-															  problem_numbers => [1]);
-		unless (defined $idcol->[0][0]){
-			croak( "Error finding column ID in \$INPUT of model\n");
-		}
+		my $idcol= $model -> idcolumn();
 		my $ignoresign=defined $model -> ignoresigns ? $model -> ignoresigns -> [0] : '@';
 
 		$new_datas = data::create_randomized_data( output_directory   => $self ->directory().'/m'.$model_number,
-												   input_directory => $model -> datas->[0]->directory,
 												   input_filename => $orig_data_file,
-												   idcolumn => $idcol->[0][0],
+												   idcolumn => $idcol,
 												   ignoresign => $ignoresign,
 												   missing_data_token => $self->missing_data_token,
 												   name_stub   => 'rand',
@@ -189,10 +178,11 @@ sub modelfit_setup
 			my @data_arr = ($new_datas->[$j]) x scalar(@{$model->problems});
 
 			$new_mod = $model ->  copy( filename    => $self -> directory().'m'.$model_number.'/rand_'.($j+1).'.mod',
-				output_same_directory => 1,
-				copy_data   => 0,
-				copy_output => 0);
-
+										output_same_directory => 1,
+										copy_datafile   => 0,
+										copy_output => 0,
+										write_copy => 0);
+			$new_mod->relative_data_path(1); #data is in m1
 			$new_mod->datafiles(new_names => \@data_arr); #Number of $PROBS and length data_arr must match
 
 			if( $self -> shrinkage() ) {
@@ -256,13 +246,10 @@ sub modelfit_setup
 			my ($model_dir, $filename) = OSspecific::absolute_path( $self ->directory().'/m'.$model_number,
 				'rand_'.($j+1).'.mod' );
 
-			$new_mod = model ->
-			new( directory   => $model_dir,
-				filename    => $filename,
-				extra_files => $model -> extra_files,
-				target      => 'disk',
-				ignore_missing_files => 1,
-			);
+			$new_mod = model->new( directory   => $model_dir,
+								   filename    => $filename,
+								   extra_files => $model -> extra_files,
+								   ignore_missing_files => 1);
 			push( @new_models, $new_mod );
 		}
 		ui -> print( category => 'randtest',
@@ -279,9 +266,6 @@ sub modelfit_setup
 	if ( defined $self -> subtool_arguments() ) {
 		%subargs = %{$self -> subtool_arguments()};
 	}
-	if (not $self->copy_data()){
-		$subargs{'data_path'}='../../m'.$model_number.'/';
-	}
 	$self->tools([]) unless (defined $self->tools());
 
 	push( @{$self -> tools()},
@@ -297,6 +281,7 @@ sub modelfit_setup
 			logfile		 => [$self -> logfile()->[$model_number-1]],
 			raw_results           => undef,
 			prepared_models       => undef,
+			 copy_data            => 0,
 			top_tool              => 0,
 			%subargs ) );
 
@@ -327,19 +312,6 @@ sub cleanup
 	}
 }
 
-sub randomize
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		target => { isa => 'Str', default => 'disk', optional => 1 },
-		model => { isa => 'model', optional => 1 }
-	);
-	my $target = $parm{'target'};
-	my @randomized_models;
-	my $model = $parm{'model'};
-
-	return \@randomized_models;
-}
 
 sub calculate_delta_ofv
 {

@@ -364,11 +364,11 @@ sub modelfit_setup
 			$orig_model -> update_inits ( from_output => $orig_model_output,
 										  problem_number => $self->probnum(),
 										  ignore_missing_parameters => 1);
-			$orig_model -> _write();
+			$orig_model -> _write(relative_data_path => 0);
 			push( @orig_and_sim_models, $orig_model );
 			$simdirname='orig_and_simulation_dir'; 
 		}else{
-			$orig_model -> _write( );
+			$orig_model -> _write( relative_data_path => 0);
 			#run original here to get param estimates for sim
 			my $run_orig = tool::modelfit -> new( 
 				%{common_options::restore_options(@common_options::tool_options)},
@@ -383,7 +383,7 @@ sub modelfit_setup
 				shrinkage => 1,
 				_raw_results_callback => $self ->
 				_modelfit_raw_results_callback( model_number => $model_number ),
-				data_path =>'../../m'.$model_number.'/',
+				copy_data => 0,
 				abort_on_fail => $self->abort_on_fail);
 
 			ui -> print( category => 'gls',
@@ -445,10 +445,9 @@ sub modelfit_setup
 
 		#ignore @ since simdata contains header rows. can skip old ignores since filtered
 		#set for all $PROB
-		$gls_model -> set_option( record_name  => 'data',
-								  option_name  => 'IGNORE',
-								  option_value => '@',
-								  fuzzy_match => 1);
+		for (my $probi=0; $probi < scalar(@{$gls_model->problems}); $probi++){
+			$gls_model->problems->[$probi]->datas->[0]->ignoresign('@');
+		}
 
 		foreach my $modprob (@{$gls_model->problems()}){
 			my $inp_ref =  $modprob -> inputs();
@@ -500,31 +499,9 @@ sub modelfit_setup
 
 			#set IGNORE=@ since datafile will
 			#get a header during copying. Keep IGNORE=LIST
-			my $sim_ignorelist = $orig_model -> get_option_value( record_name  => 'data',
-																  problem_index => ($self->probnum()-1),
-																  option_name  => 'IGNORE',
-																  option_index => 'all');
-			$sim_model -> remove_option( record_name  => 'data',
-										 problem_numbers => [($self->probnum())],
-										 option_name  => 'IGNORE',
-										 fuzzy_match => 1);
-
-			if ((defined $sim_ignorelist) and scalar (@{$sim_ignorelist})>0){
-				foreach my $val (@{$sim_ignorelist}){
-					unless (length($val)==1){
-						#unless single character ignore, cannot keep that since need @
-						$sim_model -> add_option( record_name  => 'data',
-												  problem_numbers => [($self->probnum())],
-												  option_name  => 'IGNORE',
-												  option_value => $val);
-					}
-				}
+			for (my $probi=0; $probi < scalar(@{$sim_model->problems}); $probi++){
+				$sim_model->problems->[$probi]->datas->[0]->ignoresign('@');
 			}
-			$sim_model -> add_option( record_name  => 'data',
-									  problem_numbers => [($self->probnum())],
-									  option_name  => 'IGNORE',
-									  option_value => '@');
-
 
 			# set $TABLE record
 
@@ -621,7 +598,7 @@ sub modelfit_setup
 		push( @all_iwres_files, $self -> directory.'m'.$model_number.'/'.
 			  $iwres_file );
 
-		$sim_model -> _write();
+		$sim_model -> _write(relative_data_path => 0);
 		push( @orig_and_sim_models, $sim_model );
 
 		if( $sim_no == $samples ) {
@@ -639,7 +616,7 @@ sub modelfit_setup
 				shrinkage => 1,
 				_raw_results_callback => $self ->
 				_modelfit_raw_results_callback( model_number => $model_number ),
-				data_path =>'../../m'.$model_number.'/',
+				copy_data =>0,
 				abort_on_fail => $self->abort_on_fail);
 
 			ui -> print( category => 'gls',
@@ -721,10 +698,10 @@ sub modelfit_setup
 
 	} #end loop over number of simulations
 
-	$gls_model -> set_file( record => 'data',
-							new_name => 'm1/glsinput.dta', #add path
-							problem_number => 0) unless ($self->gls_model()); #0 means all
-
+	unless ($self->gls_model()){
+		my @new_names = ('m1/glsinput.dta') x scalar(@{$gls_model ->problems});
+		$gls_model -> datafiles(new_names => \@new_names); #one for each $PROB
+	}
 	$gls_model -> shrinkage_stats( enabled => 1 );
 
 	my $shrinkage;
@@ -791,7 +768,8 @@ sub modelfit_setup
 						  new_error         => \@newcode );
 	}
 
-	$gls_model -> _write;
+	$gls_model -> _write(relative_data_path => 1); #data is local
+
 
 	my $subdir = 'modelfit';
 
@@ -802,7 +780,6 @@ sub modelfit_setup
 	if ( defined $self -> subtool_arguments ) {
 		%subargs = %{$self -> subtool_arguments};
 	}
-	$subargs{'data_path'}='../../m'.$model_number.'/';
 
 	$self->stop_motion_call(tool=>'gls',message => "Preparing to run gls model ")
 		if ($self->stop_motion());
@@ -816,11 +793,11 @@ sub modelfit_setup
 			  prepared_models  => undef,
 			  rerun => 1,
 			  models         => [$gls_model],
+			  copy_data => 0,
 			  base_directory => $self -> directory.'/m'.$model_number.'/',
 			  directory      => $self -> directory.'/'.$subdir.'_dir'.$model_number,
 			  subtools       => $#subtools >= 0 ? \@subtools : undef,
 			  shrinkage      => 1,
-			  data_path =>'../../m'.$model_number.'/',
 			  _raw_results_callback => $self ->
 			  _modelfit_raw_results_callback( model_number => $model_number ),
 			  %subargs ) );

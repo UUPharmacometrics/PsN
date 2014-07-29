@@ -266,8 +266,9 @@ sub BUILD
 #	$self -> _read_table_files( ignore_missing_files => $self->ignore_missing_output_files );
 
 	if ( $self->cwres ) {
-		$self -> add_cwres_module( 'init_data' => { problem => $self,
-				mirror_plots => $self->mirror_plots } );
+		$self->cwres_modules([]) unless defined $self->cwres_modules;
+		push( @{$self->cwres_modules}, model::cwres_module->new( problem => $self,
+																		  mirror_plots => $self->mirror_plots) );
 	}
 
 	if( $self->tbs or $self->dtbs){
@@ -281,23 +282,6 @@ sub BUILD
 	}
 }
 
-sub add_mirror_plot_module
-{
-	my ($self, %parm) = validated_hash(@_, 
-		init_data => {isa => 'Any', optional => 0}
-	);
-	$self->mirror_plot_modules([]) unless defined $self->mirror_plot_modules;
-	push( @{$self->mirror_plot_modules}, model::problem::mirror_plot_module->new( %{$parm{'init_data'}} ) );
-}
-
-sub add_cwres_module
-{
-	my ($self, %parm) = validated_hash(@_, 
-		init_data => {isa => 'Any', optional => 0}
-	);
-	$self->cwres_modules([]) unless defined $self->cwres_modules;
-	push( @{$self->cwres_modules}, model::problem::cwres_module->new( %{$parm{'init_data'}} ) );
-}
 
 sub add_nonparametric
 {
@@ -1422,7 +1406,6 @@ sub _read_table_files
 										 filename             => $table_name,
 										 ignoresign => '@',
 										 ignore_missing_files => $ignore_missing_files,
-										 target               => 'disk',
 										 parse_header           => 1 );
 			push( @{$self->table_files}, $new_table );
 		}
@@ -1785,7 +1768,7 @@ sub set_records
 	my $self = shift;
 	my %parm = validated_hash(\@_,
 		record_strings => { isa => 'ArrayRef', default => [] },
-		type => { isa => 'Str' },
+		type => { isa => 'Str', optional => 0 },
 		MX_PARAMS_VALIDATE_NO_CACHE => 1,
 	);
 	my @record_strings = @{$parm{'record_strings'}};

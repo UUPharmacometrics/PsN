@@ -597,8 +597,6 @@ sub _create_models
 				$skip_model = 0 if ( $val );
 			}
 			foreach my $side ( 'lower', 'upper' ) {
-				# todo: Maybe not necessary to copy data file as well. This is done by
-				# default in model->copy.
 				my $filename = substr($param,0,2).$num.$side.'.mod';
 				my $model_dir = $self ->directory.'/m'.$model_number.'/';
 				my ($output_dir, $outputfilename) =
@@ -621,16 +619,15 @@ sub _create_models
 					$new_mod -> outputfile( $output_dir . $outputfilename );
 					$new_mod -> ignore_missing_files( 0 );
 					
-					$new_mod -> _write;
-
 					$new_mod -> update_inits( from_output => $model -> outputs -> [0] );
 					my $active_flag = 0;
 					# Loop over the problems:
 					for ( my $j = 1; $j <= scalar @{$par_log{$num}}; $j++ ) {
 						# Is this side of the problem finished?
-						carp("This side is finished!" )
-							if ( $self->$logfunc->{$num}->[$j-1]->[2]->{$side} );
-						next if $self->$logfunc->{$num}->[$j-1]->[2]->{$side};
+						if ( $self->$logfunc->{$num}->[$j-1]->[2]->{$side} ){
+							carp("This side is finished!" );
+							next;
+						}
 						my $sofar = scalar @{$par_log{$num}->[$j-1]->[0]};
 						my $guess;
 						if ( $side eq 'lower' ) {
@@ -657,7 +654,7 @@ sub _create_models
 						$active_flag = 1;
 					}
 					if ( $active_flag ) {
-						$new_mod -> _write;
+						$new_mod -> _write(relative_data_path => 0); #use absolute data path for original dataset when writing to m1
 						push( @new_models, $new_mod );
 						$self->{$param.'_models'}->{$num}->{$side} = $new_mod;
 					}
@@ -674,9 +671,10 @@ sub _create_models
 					# Loop over the problems:
 					for ( my $j = 1; $j <= scalar @{$par_log{$num}}; $j++ ) {
 						# Is this side of the problem finished?
-						carp("This side is finished!" )
-							if ( $self->$logfunc->{$num}->[$j-1]->[2]->{$side} );
-						next if $self->$logfunc->{$num}->[$j-1]->[2]->{$side};
+						if ( $self->$logfunc->{$num}->[$j-1]->[2]->{$side} ){
+							carp("This side is finished!" );
+							next;
+						} 
 						$active_flag = 1;
 					}
 					if ( $active_flag ) {
@@ -685,14 +683,6 @@ sub _create_models
 													outputfile  => $outputfilename,
 													extra_files => $model -> extra_files,
 													ignore_missing_files => 1 );
-						# Set the correct data file for the object
-						my $moddir = $model -> directory;
-						#TODO this is probably wrong
-						my @datafiles = @{$model -> datafiles};
-						for( my $df = 0; $df <= $#datafiles; $df++ ) {
-							$datafiles[$df] = $moddir.'/'.$datafiles[$df];
-						}
-						$new_mod -> datafiles( new_names => \@datafiles );
 						push( @new_models, $new_mod );
 						$self->{$param.'_models'}->{$num}->{$side} = $new_mod;
 					}

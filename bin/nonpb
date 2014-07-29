@@ -13,6 +13,7 @@ use tool::bootstrap;
 use strict;
 use Getopt::Long;
 use common_options;
+use Cwd;
 
 my $cmd_line = $0 . " " . join( " ", @ARGV );
 
@@ -123,6 +124,8 @@ if (defined $options{'lst'}){
     exit;
   }
 }
+my ($dir,$file)=OSspecific::absolute_path(cwd(),$lst_file);
+$lst_file = $dir . $file;
 
 if ( defined $options{'clean'} and $options{'clean'}>2){
   print "Using clean above 2 is not possible, required files would be deleted.\n";
@@ -198,7 +201,7 @@ if ($nonpb ->nonpb_version() == 2){
 	      modelname      => 'original',
 	      tablename      => 'original.patab',
 	      ind_param      => 'eta',
-	      lst_file       => '../'.$lst_file,
+	      lst_file       => $lst_file,
 	      directory      => 'pind_dir1'
 	      );
 

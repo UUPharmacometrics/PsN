@@ -137,6 +137,9 @@ if (defined $options{'lst_file'}){
     exit;
   }
 }
+my ($dir,$file)=OSspecific::absolute_path(cwd(),$lst_file);
+$lst_file = $dir . $file;
+
 
 unless ( defined $options{'clean'} ){
   # Clean may be changed by default 

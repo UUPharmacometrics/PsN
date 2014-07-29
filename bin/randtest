@@ -95,13 +95,9 @@ EOF
 EOF
     $help_text{-copy_data} = <<'EOF';
       <p class="option">-copy_data</p>
-    Default not set. By default, the randomized datasets generated in the m1 
-    subdirectory are not copied to the NM_run subdirectories 
-    of modelfit_dir1. Relative data paths, ../../m1/ , are 
-    used in $DATA in the modelfiles in NM_run. This saves much disk space. 
-    If -copy_data is set, the randomized datasets are instead copied to the 
-    NM_run directories, and $DATA has the filename without any path.
-
+    Default set, unset with -no-copy_data. By default, the base model is run
+	with a copy of the dataset in NMrun. If -no-copy_data is used, 
+	the data set is not copied to NMrun.
 EOF
 
     $help_text{-stratify_on} = <<'EOF';
@@ -143,6 +139,16 @@ my $eval_string = common_options::model_parameters(\%options);
 my $model = model -> new ( eval( $eval_string ),
 						   filename                    => @ARGV[0],
 						   ignore_missing_output_files => 1 );
+unless ( $model -> is_run){
+	#we will only run this model if not done already, path length matters only if we run
+	unless ($model->copy_data_setting_ok(copy_data => $options{'copy_data'})){
+		die("Cannot set -no-copy_data, absolute data file path is too long.");
+	} 
+	if (defined $options{'copy_data'} and (not $options{'copy_data'})){
+		$model->relative_data_path(0);
+	}
+}
+
 
 if( $options{'shrinkage'} ) {
   $model -> shrinkage_stats( enabled => 1 );
@@ -154,6 +160,14 @@ if (defined $options{'base_model'}){
 	new ( eval( $eval_string ),
 	      filename => $options{'base_model'},
 	      ignore_missing_output_files => 1);
+	unless ( $base_model -> is_run){
+		unless ($base_model->copy_data_setting_ok(copy_data => $options{'copy_data'})){
+			die("Cannot set -no-copy_data, absolute data file path is too long.");
+		} 
+		if (defined $options{'copy_data'} and (not $options{'copy_data'})){
+			$base_model->relative_data_path(0);
+		}
+	}
 }
 
 my $rand = tool::randtest -> 

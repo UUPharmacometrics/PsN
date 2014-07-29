@@ -260,7 +260,7 @@ sub modelfit_setup
 				} else {
 					$sim_model = $model->copy(
 						filename    => $self->directory . 'm' . $model_number . '/' . $sim_name,
-						copy_datafile   => 0,
+						copy_datafile   => 1,    #copy original datafile once to m1, TODO change this if commandline -no-copy_data
 						write_copy => 0,
 						copy_output => 0);
 
@@ -278,33 +278,9 @@ sub modelfit_setup
 					
 					#set IGNORE=@ since datafile will
 					#get a header during copying. Keep IGNORE=LIST
-					my $sim_ignorelist = $sim_model -> get_option_value( record_name  => 'data',
-																		 problem_index => ($self->probnum()-1),
-																		 option_name  => 'IGNORE',
-																		 option_index => 'all');
-					$sim_model -> remove_option( record_name  => 'data',
-												 problem_numbers => [($self->probnum())],
-												 option_name  => 'IGNORE',
-												 fuzzy_match => 1);
-
-
-					if ((defined $sim_ignorelist) and scalar (@{$sim_ignorelist})>0){
-						foreach my $val (@{$sim_ignorelist}){
-							unless (length($val)==1){
-								#unless single character ignore, cannot keep that since need @
-								$sim_model -> add_option( record_name  => 'data',
-														  problem_numbers => [($self->probnum())],
-														  option_name  => 'IGNORE',
-														  option_value => $val);
-							}
-						}
+					for (my $in=0; $in< $self->probnum; $in++){
+						$sim_model -> problems->[$in]->datas->[0]->ignoresign('@');
 					}
-					$sim_model -> add_option( record_name  => 'data',
-											  problem_numbers => [($self->probnum())],
-											  option_name  => 'IGNORE',
-											  option_value => '@');
-					
-					##done fixing ignore
 					$self->initial_values(ext::Config::Tiny -> new());
 
 					#get table file names from original model. Keep in simulation
@@ -528,24 +504,23 @@ sub modelfit_setup
 						write_copy => 0,
 						copy_output => 0);
 
-					if ($est_original->skip_data_parsing()){
-						foreach my $modprob (@{$est_original->problems()}){
-							my $inp_ref =  $modprob -> inputs();
-							if ( defined $inp_ref and defined $inp_ref -> [0] ) {
-								my $input = $inp_ref -> [0];
-								my $opt_ref = $input -> options;
-								if ( defined $opt_ref ) {
-									my @options = @{$opt_ref};
-									my @keep;
-									foreach my $option ( @options ) {
-										push ( @keep, $option ) if ( not ($option -> value eq 'DROP' or $option -> value eq 'SKIP'
-																		  or $option -> name eq 'DROP' or $option -> name eq 'SKIP'));
-									}
-									$input -> options( \@keep );
+					foreach my $modprob (@{$est_original->problems()}){
+						my $inp_ref =  $modprob -> inputs();
+						if ( defined $inp_ref and defined $inp_ref -> [0] ) {
+							my $input = $inp_ref -> [0];
+							my $opt_ref = $input -> options;
+							if ( defined $opt_ref ) {
+								my @options = @{$opt_ref};
+								my @keep;
+								foreach my $option ( @options ) {
+									push ( @keep, $option ) if ( not ($option -> value eq 'DROP' or $option -> value eq 'SKIP'
+																	  or $option -> name eq 'DROP' or $option -> name eq 'SKIP'));
 								}
+								$input -> options( \@keep );
 							}
 						}
 					}
+
 
 
 					$est_original -> remove_records( type => 'simulation' );
@@ -576,10 +551,12 @@ sub modelfit_setup
 
 					#ignore @ since simdata contains header rows. can skip old ignores since filtered
 					#set for all $PROB
-					$est_original -> set_option( record_name  => 'data',
-												 option_name  => 'IGNORE',
-												 option_value => '@',
-												 fuzzy_match => 1);
+					$est_original -> remove_option( record_name  => 'data',
+													option_name  => 'IGNORE',
+													fuzzy_match => 1);
+					for (my $in=0; $in< scalar(@{$est_original -> problems}); $in++){
+						$est_original -> problems->[$in]->datas->[0]->ignoresign('@');
+					}
 
 					#remove any DATX from est_original $INPUT
 					if ($datx_in_input){
@@ -606,12 +583,12 @@ sub modelfit_setup
 				} # end 	if( $self -> estimate_simulation  and not $self->simulation_rawres) {
 				
 			} else {
-				#not first sim
+				#not first sim model
 				unless ($self->add_models) {
 					$sim_model = $sim_models[0]->copy(
 						filename    => $self -> directory.'m'.$model_number.'/'.$sim_name,
-						target      => 'disk',
-						copy_data   => 0,
+						copy_datafile   => 0,
+						write_copy => 0,
 						copy_output => 0);
 					if (defined $sampled_params_arr and (not $self->random_estimation_inits)) {
 						$sim_model->update_inits(from_hash => $sampled_params_arr->[($sim_no-1)]); 
@@ -647,10 +624,10 @@ sub modelfit_setup
 				if( $self->estimate_simulation and (not defined $self->simulation_rawres)) {
 					$est_original = $orig_est_models[0]->copy(
 						filename    => $self -> directory . 'm' . $model_number . '/' . $orig_name,
-						target      => 'disk',
-						copy_data   => 0,
+						write_copy => 0,
+						copy_datafile   => 0,
 						copy_output => 0);
-
+					
 					if (defined $sampled_params_arr){
 						$est_original -> update_inits(from_hash => $sampled_params_arr->[($sim_no-1)]); 
 					}
@@ -891,7 +868,7 @@ sub modelfit_setup
 						}
 					}
 				}
-				$sim_model -> _write( write_data => 0 );
+				$sim_model -> _write(relative_data_path => 1); #we have copied original dataset to m1, so make sure use rel path here
 				push( @sim_models, $sim_model );
 			} #end if add_models
 			if( defined $est_original ){
@@ -960,7 +937,7 @@ sub modelfit_setup
 										raw_results      => undef,
 										prepared_models       => undef,
 										threads          => $threads,
-										data_path =>'../../m'.$model_number.'/',
+										copy_data        => 0,
 										abort_on_fail => $self->abort_on_fail);
 			
 			$mod_sim -> run;
@@ -1012,12 +989,9 @@ sub modelfit_setup
 			#it is an error if the data file does not exist here, but we ignore that for now
 			# and let the NM run fail instead, letting the other runs continur
 			$orig_est_models[$j] -> ignore_missing_files(1);
-			$orig_est_models[$j] -> skip_data_parsing(1);
-			$orig_est_models[$j] -> set_file( record => 'data',
-											  new_name => $sim_file,
-											  problem_number => 0); #0 means all
-			$orig_est_models[$j] -> _write;
-			$orig_est_models[$j] -> flush_data();
+			my @new_names = ($sim_file) x scalar(@{$orig_est_models[$j] ->problems});
+			$orig_est_models[$j] -> datafiles(new_names => \@new_names);
+			$orig_est_models[$j] -> _write(relative_data_path => 1); #should be default, but just to make sure
 		}
 		
 		#could reload originals here, but difficult
@@ -1039,39 +1013,38 @@ sub modelfit_setup
 				if( $sim_no == 1 ) {
 					$est_alternative = $alternative ->
 						copy( filename    => $self -> directory.'m'.$model_number.'/'.$alt_name,
-							  target      => 'disk',
-							  copy_data   => 0,
+							  write_copy      => 0,
+							  copy_datafile   => 0,
 							  copy_output => 0);
 
 					my $found_dropped=0;
-					if ($est_alternative->skip_data_parsing()){
-						foreach my $modprob (@{$est_alternative->problems()}){
-							my $inp_ref =  $modprob -> inputs();
-							if ( defined $inp_ref and defined $inp_ref -> [0] ) {
-								my $input = $inp_ref -> [0];
-								my $opt_ref = $input -> options;
-								if ( defined $opt_ref ) {
-									my @options = @{$opt_ref};
-									my @keep;
-									foreach my $option ( @options ) {
-										if ( not ($option -> value eq 'DROP' or $option -> value eq 'SKIP'
-												  or $option -> name eq 'DROP' or $option -> name eq 'SKIP')){
-											push ( @keep, $option ) ;
-										}else{
-											ui -> print( category => 'sse',
-														 message  => "\nWarning: Removing DROP/SKIP items completely ".
-														 "from \$INPUT of ".$alternative->filename().", assuming that ".
-														 "those columns had DROP/SKIP also in simulation model ".
-														 "and are not present in the simulated data.") 
-												unless $found_dropped;
-											$found_dropped =1;
-										}
+					foreach my $modprob (@{$est_alternative->problems()}){
+						my $inp_ref =  $modprob -> inputs();
+						if ( defined $inp_ref and defined $inp_ref -> [0] ) {
+							my $input = $inp_ref -> [0];
+							my $opt_ref = $input -> options;
+							if ( defined $opt_ref ) {
+								my @options = @{$opt_ref};
+								my @keep;
+								foreach my $option ( @options ) {
+									if ( not ($option -> value eq 'DROP' or $option -> value eq 'SKIP'
+											  or $option -> name eq 'DROP' or $option -> name eq 'SKIP')){
+										push ( @keep, $option ) ;
+									}else{
+										ui -> print( category => 'sse',
+													 message  => "\nWarning: Removing DROP/SKIP items completely ".
+													 "from \$INPUT of ".$alternative->filename().", assuming that ".
+													 "those columns had DROP/SKIP also in simulation model ".
+													 "and are not present in the simulated data.") 
+											unless $found_dropped;
+										$found_dropped =1;
 									}
-									$input -> options( \@keep );
 								}
+								$input -> options( \@keep );
 							}
 						}
 					}
+					
 
 
 					#handle msfo numbering. first get msfo option from all estimation records.
@@ -1121,15 +1094,14 @@ sub modelfit_setup
 					
 					#ignore @ since simdata contains header rows. 
 					#keep old ignores. It is up to the user to make sure datasets are comparable
+					for (my $in=0; $in< scalar(@{$est_alternative -> problems}); $in++){
+						$est_alternative -> problems->[$in]->datas->[0]->ignoresign('@');
+					}
 
 					my $ignorelist = $est_alternative -> get_option_value( record_name  => 'data',
 																		   problem_index => 0,
 																		   option_name  => 'IGNORE',
 																		   option_index => 'all');
-					$est_alternative -> remove_option( record_name  => 'data',
-													   problem_numbers => [(1)],
-													   option_name  => 'IGNORE',
-													   fuzzy_match => 1);
 
 					if (scalar (@{$ignorelist})>0){
 						foreach my $val (@{$ignorelist}){
@@ -1143,18 +1115,9 @@ sub modelfit_setup
 												 "Check output carefully to make sure IGNORE has the intended effect.\n");
 									print "\n";
 								}
-								#unless single character ignore, cannot keep that since need @
-								$est_alternative -> add_option( record_name  => 'data',
-																problem_numbers => [(1)],
-																option_name  => 'IGNORE',
-																option_value => $val);
 							}
 						}
 					}
-					$est_alternative -> add_option( record_name  => 'data',
-													problem_numbers => [(1)],
-													option_name  => 'IGNORE',
-													option_value => '@');
 
 					my $acceptlist = $est_alternative -> get_option_value( record_name  => 'data',
 																		   problem_index => 0,
@@ -1202,8 +1165,8 @@ sub modelfit_setup
 					#not sim_no==1
 					$est_alternative = $alt_est_models[0] ->
 						copy( filename    => $self -> directory.'m'.$model_number.'/'.$alt_name,
-							  target      => 'disk',
-							  copy_data   => 0,
+							  write_copy      => 0,
+							  copy_datafile   => 0,
 							  copy_output => 0);
 				}
 
@@ -1276,11 +1239,10 @@ sub modelfit_setup
 				#it is an error if the data file does not exist here, but we ignore that for now
 				# and let the NM run fail instead, letting the other runs continue
 				$alt_est_models[$j] -> ignore_missing_files(1);
-				$alt_est_models[$j] -> skip_data_parsing(1);
-
-				$alt_est_models[$j] -> set_file( record => 'data',new_name => $sim_file); #default all recs
+				my @new_names = ($sim_file) x scalar(@{$alt_est_models[$j] ->problems});
+				$alt_est_models[$j] -> datafiles(new_names => \@new_names);
 				$alt_est_models[$j] -> _write;
-				$alt_est_models[$j] -> flush_data();
+
 			}
 			push (@{$self -> mc_models}, @alt_est_models);
 			
@@ -1334,12 +1296,10 @@ sub modelfit_setup
 						 filename    => $orig_name,
 						 outputfile  => $orig_out,
 						 extra_files => $model -> extra_files,
-						 target      => 'disk',
 						 ignore_missing_files => 1,
 						 extra_output => $model -> extra_output(),
-						 cwres       => $model -> cwres(),
-						 skip_data_parsing  => $model->skip_data_parsing(),
-						 quick_reload => 1 );
+						 cwres       => $model -> cwres());
+
 				push( @orig_est_models, $est_original );
 				my $nl = $j == $stored_samples ? "" : "\r"; 
 				ui -> print( category => 'sse',
@@ -1371,12 +1331,9 @@ sub modelfit_setup
 						 filename    => $alt_name,
 						 outputfile  => $alt_out,
 						 extra_files => $alternative -> extra_files,
-						 target      => 'disk',
 						 ignore_missing_files => 1,
 						 extra_output => $model -> extra_output(),
-						 cwres       => $model -> cwres(),
-						 skip_data_parsing  => $model->skip_data_parsing(),
-						 quick_reload => 1 );
+						 cwres       => $model -> cwres());
 				push( @alt_est_models, $est_alternative );
 				my $nl = $j == $stored_samples ? "" : "\r"; 
 				ui -> print( category => 'sse',
@@ -1410,7 +1367,6 @@ sub modelfit_setup
 	if ( defined $self -> subtool_arguments ) {
 		%subargs = %{$self -> subtool_arguments};
 	}
-	$subargs{'data_path'}='../../m'.$model_number.'/';
 
 	for (my $i=0;$i< scalar(@{$self -> mc_models->[0]->problems()}); $i++){
 		#get ref of array of methods
@@ -1449,6 +1405,7 @@ sub modelfit_setup
 			  shrinkage      => $self -> shrinkage,
 			  _raw_results_callback => $self ->
 			  _modelfit_raw_results_callback( model_number => $model_number ),
+			  copy_data       => 0,
 			  %subargs ) );
 }
 

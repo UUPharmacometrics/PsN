@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 use File::Path 'rmtree';
-use Test::More tests=>1;
+use Test::More tests=>2;
 use File::Copy 'cp';
 use FindBin qw($Bin);
 use lib "$Bin/.."; #location of includes.pm
@@ -18,6 +18,7 @@ my $model_dir = $includes::testfiledir;
 my @commands = 
 	(
 	 $includes::npc." -samples=20 $model_dir/mox2.mod -dir=$dir",
+	 $includes::npc." -samples=20 $model_dir/pheno5.mod -dir=$dir -no-copy_data",
 	 );
 
 foreach my $command (@commands){

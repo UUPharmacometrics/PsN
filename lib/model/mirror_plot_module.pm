@@ -126,13 +126,29 @@ sub BUILD
 
     $sh_mod->disable();
 
-    $base_model->add_problem( init_data => { prob_arr => ['$PROB'], shrinkage_module => $sh_mod });
+	my @lines = ('$PROB');
+	push(@lines,@{$base_model -> record( record_name => 'data' )->[0]});
+	my $prob = model::problem -> new (
+		directory                   => $base_model->directory,
+		ignore_missing_files        => $base_model->ignore_missing_files,
+		ignore_missing_output_files => $base_model->ignore_missing_output_files,
+		sde                         => $base_model->sde,
+		omega_before_pk             => $base_model->omega_before_pk,
+		cwres                       => $base_model->cwres,
+		tbs                         => $base_model->tbs,
+		dtbs                         => $base_model->dtbs,
+		tbs_lambda                   => $base_model->tbs_lambda,
+		tbs_delta                   => $base_model->tbs_delta,
+		tbs_zeta                   => $base_model->tbs_zeta,
+		mirror_plots                => undef,
+		prob_arr                    => \@lines,
+		shrinkage_module            => $sh_mod );
+	
+	push( @{$base_model->problems}, $prob );
 
-		$base_model->active_problems([]) unless defined $base_model->active_problems;
+	$base_model->active_problems([]) unless defined $base_model->active_problems;
     push( @{$base_model->active_problems}, 1 );
 
-		$base_model->datas([]) unless defined $base_model->datas;
-    push( @{$base_model->datas}, $base_model->datas->[0] );
 
     # 1. Add msfo to $estimation
 
@@ -159,11 +175,6 @@ sub BUILD
 				problem_numbers => [2],
 				record_strings => $input -> [0] );
     
-    my $data = $base_model -> record( record_name => 'data' );
-    
-    $base_model -> set_records( type => 'data',
-				problem_numbers => [2],
-				record_strings => $data -> [0] );
     
     $base_model -> set_option( record_name => 'data',
 			       option_name => 'REWIND',

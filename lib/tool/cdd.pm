@@ -113,6 +113,7 @@ sub modelfit_analyze
 		my $xv_threads = ref( $self -> threads ) eq 'ARRAY' ? $self -> threads -> [1]:$self -> threads;
 		my $mod_eval = tool::modelfit ->
 			new( %{common_options::restore_options(@common_options::tool_options)},
+				 copy_data  => 0,  #do not copy models to NM_run, use rel path to m1
 				 models           => $self -> prediction_models->[$model_number-1]{'own'},
 				 base_directory   => $self -> directory,
 				 nmtran_skip_model => 2,
@@ -124,8 +125,7 @@ sub modelfit_analyze
 				 logfile	    => undef,
 				 raw_results      => undef,
 				 prepared_models  => undef,
-				 top_tool         => 0,
-				 retries          => 1 );
+				 top_tool         => 0);
 		$Data::Dumper::Maxdepth = 2;
 		print "Running xv runs\n";
 		$mod_eval -> run;
@@ -1189,6 +1189,7 @@ sub general_setup
 		$class ->
 		new( %{common_options::restore_options(@common_options::tool_options)},
 			models                => $new_models[0],
+			 copy_data            => 0, #use relative data path to m1
 			threads               => $subm_threads,
 			nmtran_skip_model => 2,
 			directory             => $self -> directory.'/'.$subdir.'_dir'.$model_number,

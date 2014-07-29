@@ -70,11 +70,11 @@ is($datarec ->get_filename,'file.csv','data record filename');
 is($datarec->format_filename(write_directory=>$tempdir.'subdir',
 							 relative_data_path=>1),'file.csv','format_filname relative local');
 is($datarec->format_filename(write_directory=>$tempdir,
-							 relative_data_path=>1),File::Spec->catfile('..','file.csv'),'format_filname relative up');
+							 relative_data_path=>1),File::Spec->catfile('subdir','file.csv'),'format_filname relative down');
 is($datarec->format_filename(write_directory=>$tempdir.'subdir/subdir2',
-							 relative_data_path=>1),File::Spec->catfile('subdir2','file.csv'),'format_filname relative down');
+							 relative_data_path=>1),File::Spec->catfile('..','file.csv'),'format_filname relative up');
 is($datarec->format_filename(write_directory=>$tempdir.'subdir3',
-							 relative_data_path=>1),File::Spec->catfile('..','subdir3','file.csv'),'format_filname relative up then down');
+							 relative_data_path=>1),File::Spec->catfile('..','subdir','file.csv'),'format_filname relative up then down');
 
 is($datarec->format_filename(write_directory=>$tempdir.'subdir',
 							 relative_data_path=>0),File::Spec->catfile($tempdir.'subdir','file.csv'),'format_filname abs local');

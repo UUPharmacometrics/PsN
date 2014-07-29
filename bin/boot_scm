@@ -429,8 +429,7 @@ if ($do_filtering){
 
 }
 
-my @idcolumns = @{$model -> idcolumns};
-$idcolumn = $idcolumns[0];
+$idcolumn = $model->idcolumn;
 $missing_data_token=$model->missing_data_token;
 
 if ($do_filtering){
@@ -529,7 +528,8 @@ if (defined $options{'dummy_covariates'}){
 
 	my @covs =split(',',$options{'dummy_covariates'});
 	my $newname = 'model_with_xcov.mod';
-	my $newdataname = 'xcov_'.$model->datas->[0]->filename();
+	my $newdataname = 'xcov_'.$model->datafiles(problem_numbers => [1],
+												absolute_path => 0)->[0];
 	$pathfinaldata = '../preprocess_data_dir/'.$newdataname; #local path from $finaldir
 	$config_file -> model($newname);
 	$model ->directory($preprocessdir.'/');
@@ -542,7 +542,7 @@ if (defined $options{'dummy_covariates'}){
 	my @xcovnames = @{data::add_randomized_input_data(
 						  model => $model,
 						  missing_data_token => $missing_data_token, 
-						  filename => "$newdataname",
+						  filename => $newdataname,
 						  column_headers => \@covs)};
 	my $index=-1;
 	foreach my $cov (@covs){
@@ -627,17 +627,24 @@ if (defined $options{'dummy_covariates'}){
 	print "done\n";
 
 }else{
-	#no dummy covs, must manually fix full data path
+	#no dummy covs, manually fix full data path
 	#if original data not in return dir then copy data to main_directory, otherwise
 	#set local path ../../
-	if (($model -> datas()->[0]->directory() eq $return_dir.'/') or
-		($model -> datas()->[0]->directory() eq $return_dir.'\\') or
-		($model -> datas()->[0]->directory() eq $return_dir)) {
-		$pathfinaldata = '../../'.$model -> datas()->[0]->filename(); #local path from $finaldir
+	#there is probably a much easier way to do this!
+	my $finalname = $model->datafiles(absolute_path => 0,
+									  problem_numbers => [1])->[0];
+	my $fullname = $model->datafiles(absolute_path => 1,
+									  problem_numbers => [1])->[0];
+	my $dir = $model -> problems->[0]->datas->[0]->get_directory;
+
+	if (($dir eq $return_dir.'/') or
+		($dir eq $return_dir.'\\') or
+		($dir eq $return_dir)) {
+		$pathfinaldata = '../../'.$finalname; #local path from $finaldir
 	}else{
 		#copy original data to main_directory without path
-		cp($model -> datas()->[0]->full_name(),$finaldir.'/'.$model -> datas()->[0]->filename());
-		$pathfinaldata = $model -> datas()->[0]->filename();
+		cp($fullname,$finaldir.'/'.$finalname);
+		$pathfinaldata = $finalname;
 	}
 }
 
@@ -645,7 +652,13 @@ chdir($main_directory);
 
 my $the_data;
 if ((not $config_file->linearize) or $options{'methodA'}){
-	$the_data = $model -> datas()->[0]; #is already filtered if needed
+	my $fullname = $model->datafiles(problem_numbers => [1],
+									 absolute_path => 1)->[0];
+	$the_data = data -> new(filename =>$fullname,
+							missing_data_token => $config_file->missing_data_token,
+							idcolumn => $model->idcolumn, 
+							ignoresign => '@', 
+							ignore_missing_files => 0);
 }else{
 	#** Lin_B :
 	$need_extra_boot_data=1 if (defined $config_file->time_varying() and
@@ -678,7 +691,7 @@ if ((not $config_file->linearize) or $options{'methodA'}){
 
 	$deriv_scm -> run;
 	$config_file->time_varying($time_varying); #reset
-	
+	print "scm linearize is run\n";
 	#in derivatives_covariates.dta ID is always 1, different set of columns entirely
 	#ignoresign is @ since table
 	$the_data = data -> new(directory => $deriv_dir,
@@ -686,8 +699,7 @@ if ((not $config_file->linearize) or $options{'methodA'}){
 							missing_data_token => $config_file->missing_data_token,
 							idcolumn => 1, 
 							ignoresign => '@', 
-							ignore_missing_files => 0,
-							skip_parsing => 0);
+							ignore_missing_files => 0);
 	print "\n";
 }
 
@@ -797,7 +809,7 @@ for ( my $j = $start_j; $j <= $options{'samples'}; $j++ ) {
 	my $new_mod = $model ->copy(
 		directory            => $model_dir,
 		filename             => $filename,
-		copy_output           => 1,
+		copy_output           => 0, #important to set =>0 so that base model is run for every bootstrap dataset 
 		write_copy => 0,
 		copy_datafile =>0);
     
@@ -806,6 +818,7 @@ for ( my $j = $start_j; $j <= $options{'samples'}; $j++ ) {
 		$new_mod -> shrinkage_modules( $model -> shrinkage_modules );
 	}
 
+#	print "setting datafiles in new_mod\n";
 	if ((not $config_file->linearize) or $options{'methodA'}){
 		if ($j>0){
 			$new_mod -> datafiles ( new_names => [$new_datas -> [$j-1]] );#might not be in memory here
@@ -823,6 +836,7 @@ for ( my $j = $start_j; $j <= $options{'samples'}; $j++ ) {
 			$config_file->derivatives_data($main_directory.'/compute_derivatives_dir/derivatives_covariates.dta');
 		}
 	}
+#	print "writing new_mode to ".$new_mod->full_name."\n";
 	$new_mod -> _write;
 	
 	my $scmdir = $main_directory.'/scm_dir'.$j;
@@ -838,8 +852,7 @@ for ( my $j = $start_j; $j <= $options{'samples'}; $j++ ) {
 
 		ui->category('boot_scm');
 		print ui -> print( category => 'boot_scm',
-						   message => "Starting bootstrap scm forward search $samp",
-						   newline =>1);
+						   message => "Starting bootstrap scm forward search $samp\n");
 
 		my $scm = tool::scm -> 
 			new ( eval( $common_options::parameters ),

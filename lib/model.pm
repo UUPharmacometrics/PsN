@@ -103,6 +103,7 @@ has 'nonparametric_modules' => ( is => 'rw', isa => 'ArrayRef[model::nonparametr
 has 'iofv_modules' => ( is => 'rw', isa => 'ArrayRef[model::iofv_module]' );
 has 'active_problems' => ( is => 'rw', isa => 'Maybe[ArrayRef[Bool]]' );
 has 'd2u' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'is_dummy' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'maxevals' => ( is => 'rw', isa => 'Maybe[Int]', default => 0 );
 has 'cwres' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'iofv' => ( is => 'rw', isa => 'Bool', default => 0 );
@@ -113,7 +114,7 @@ has 'extra_files' => ( is => 'rw', isa => 'Maybe[ArrayRef[Str]]' );
 has 'extra_output' => ( is => 'rw', isa => 'Maybe[ArrayRef[Str]]' );
 has 'filename' => ( is => 'rw', required => 1, isa => 'Str', trigger => \&_filename_set );
 has 'model_id' => ( is => 'rw', isa => 'Int', clearer => 'clear_model_id' );
-has 'relative_data_path' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'relative_data_path' => ( is => 'rw', isa => 'Bool', default => 1 ); #code relies on this default
 has 'ignore_missing_data' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'ignore_missing_files' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'ignore_missing_output_files' => ( is => 'rw', isa => 'Bool', default => 1 );
@@ -331,7 +332,7 @@ sub create_maxeval_zero_models_array
 		#copy the model
 		$run_model = $model ->  copy( filename    => $subdirectory.$purpose.'_'.$run_num.'.mod',
 									  output_same_directory => 1,
-									  copy_datafile =>1,
+									  copy_datafile =>0,
 									  copy_output => 0,
 									  write_copy => 0); #do not write until are done with modifications
 		$run_num++;
@@ -371,7 +372,8 @@ sub create_maxeval_zero_models_array
 											   keep_last => 0,
 											   type => $record);
 			}
-			my $linesarray = $dummymodel->problems->[0]->_format_problem;
+			my $linesarray = $dummymodel->problems->[0]->_format_problem(relative_data_path => $run_model->relative_data_path,
+																		 write_directory => $run_model->directory);
 			#we cannot use this array directly, must make sure items do not contain line breaks
 			foreach my $line (@{$linesarray}){
 				my @arr = split(/\n/,$line);
@@ -414,7 +416,7 @@ sub create_maxeval_zero_models_array
 			$samples_done++;
 			$probnum++;
 		}
-		$run_model -> _write();
+		$run_model -> _write(relative_data_path => 0); #this gets written in m1. want absolute path here even if relative in NMrun
 		push(@modelsarr,$run_model);
 	}
 
@@ -671,6 +673,30 @@ sub copy
 	return $new_model;
 }
 
+sub copy_data_setting_ok
+{
+	#check if setting of copy_data will work
+	#-no-copy_data means use absolute path for datafile, and that path must not
+	#be longer than 80 characters because of NONMEM
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+		 copy_data => { isa => 'Maybe[Bool]', optional => 1 }
+	);
+	my $copy_data = $parm{'copy_data'};
+	#undef means copy_data is true
+	my $ok = 1;
+	if (defined $copy_data and $copy_data == 0){
+		my $files = $self->datafiles(absolute_path => 1);
+		foreach my $file (@{$files}){
+			if (length($file)>80){
+				$ok = 0;
+				last;
+			}
+		}
+	}
+	return $ok;
+}
+
 sub datafiles
 {
 	my $self = shift;
@@ -719,6 +745,37 @@ sub datafiles
 	}
 
 	return \@names;
+}
+
+sub set_file
+{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+		 new_name => { isa => 'Str', optional => 1 },
+		 problem_number => { isa => 'Int', default => 0, optional => 1 },
+		 record => { isa => 'Str', optional => 1 }
+	);
+	my $new_name = $parm{'new_name'};
+	my $problem_number = $parm{'problem_number'};
+	my $record = $parm{'record'};
+	if ($record eq 'data'){
+		croak("illegal to use model->set_file on DATA record, this is a bug");
+	}
+
+	my @problem_numbers;
+	if ( $problem_number == 0 ){
+		$self->problems([]) unless defined $self->problems;
+		@problem_numbers = (1 .. $#{$self->problems}+1);
+	}else {
+		push (@problem_numbers,$problem_number);
+	}
+	foreach my $num (@problem_numbers){
+		$self -> _option_name( position	  => 0, 
+							   record	  => $record, 
+							   problem_number => $num,
+							   new_name	  => $new_name);
+
+	}
 }
 
 
@@ -1949,7 +2006,7 @@ sub maxeval
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 new_values => { isa => 'ArrayRef[Int]', optional => 1 },
+		 new_values => { isa => 'ArrayRef', optional => 1 },
 		 problem_numbers => { isa => 'ArrayRef[Int]', optional => 1 },
 		 exact_match => { isa => 'Bool', default => 0, optional => 1 }
 	);
@@ -2449,7 +2506,8 @@ sub print
 
 	my ( @formatted );
 	foreach my $problem ( @{$self->problems} ) {
-		foreach my $line (@{$problem->_format_problem}) {
+		foreach my $line (@{$problem->_format_problem(relative_data_path => $self->relative_data_path,
+													  write_directory => $self->directory)}) {
 			print $line;
 		}
 	}
@@ -2480,18 +2538,23 @@ sub record
 	 my @problems = @{$self->problems};
 	 my $records;
 	 
-	 if ( defined $problems[ $problem_number - 1 ] ) {
-	     if ( scalar(@new_data) > 0 ){
-		 my $rec_class = "model::problem::$record_name";
-		 my $record = $rec_class -> new('record_arr' => \@new_data );
-	     } else {
-		 $record_name .= 's';
-		 $records = $problems[ $problem_number - 1 ] -> {$record_name};
-		 foreach my $record( @{$records} ){
-		     push(@data, $record -> _format_record);
-		 }
-	     }
-	 }
+	if ( defined $problems[ $problem_number - 1 ] ) {
+		if ( scalar(@new_data) > 0 ){
+			my $rec_class = "model::problem::$record_name";
+			my $record = $rec_class -> new('record_arr' => \@new_data );
+		} else {
+			$record_name .= 's';
+			$records = $problems[ $problem_number - 1 ] -> {$record_name};
+			foreach my $record( @{$records} ){
+				if ($record_name eq 'datas'){
+					push(@data, $record -> _format_record(relative_data_path => $self->relative_data_path,
+														  write_directory => $self->directory));
+				}else{
+					push(@data, $record -> _format_record);
+				}
+			}
+		}
+	}
 
 	return \@data;
 }
@@ -2656,7 +2719,7 @@ sub set_records
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 type => { isa => 'Str', optional => 1 },
+		 type => { isa => 'Str', optional => 0 },
 		 record_strings => { isa => 'ArrayRef', optional => 0 },
 		 problem_numbers => { isa => 'ArrayRef[Int]', optional => 1 }
 	);
@@ -4032,9 +4095,9 @@ sub remove_option
 	my $self = shift;
 	my %parm = validated_hash(\@_,
 		 problem_numbers => { isa => 'ArrayRef[Int]', optional => 1 },
-		 record_name => { isa => 'Str', optional => 1 },
+		 record_name => { isa => 'Str', optional => 0 },
 		 record_number => { isa => 'Int', default => 0, optional => 1 },
-		 option_name => { isa => 'Str', optional => 1 },
+		 option_name => { isa => 'Str', optional => 0 },
 		 fuzzy_match => { isa => 'Bool', default => 0, optional => 1 }
 	);
 	my @problem_numbers = defined $parm{'problem_numbers'} ? @{$parm{'problem_numbers'}} : ();
@@ -4065,8 +4128,8 @@ sub add_option
 	my %parm = validated_hash(\@_,
 		 problem_numbers => { isa => 'ArrayRef[Int]', optional => 1 },
 		 record_number => { isa => 'Int', default => 0, optional => 1 },
-		 record_name => { isa => 'Str', optional => 1 },
-		 option_name => { isa => 'Str', optional => 1 },
+		 record_name => { isa => 'Str', optional => 0 },
+		 option_name => { isa => 'Str', optional => 0 },
 		 option_value => { isa => 'Str', optional => 1 },
 		 add_record => { isa => 'Bool', default => 0, optional => 1 }
 	);
@@ -4099,9 +4162,9 @@ sub set_option
 	my $self = shift;
 	my %parm = validated_hash(\@_,
 		problem_numbers => { isa => 'ArrayRef[Int]', optional => 1 },
-		record_name => { isa => 'Str', optional => 1 },
+		record_name => { isa => 'Str', optional => 0 },
 		record_number => { isa => 'Int', default => 0, optional => 1 },
-		option_name => { isa => 'Str', optional => 1 },
+		option_name => { isa => 'Str', optional => 0 },
 		option_value => { isa => 'Str', optional => 1 },
 		fuzzy_match => { isa => 'Bool', default => 0, optional => 1 }
 	);
@@ -4814,13 +4877,14 @@ sub _init_attr
 
 sub create_dummy_model
 {
-  my $dummy_prob = model::problem->new(ignore_missing_files=> 1,
-					   prob_arr       => ['$PROB','$INPUT ID','$DATA dummy.txt']);
-  
-  my $model = model->new(filename => 'dummy',
-				    problems => [$dummy_prob],
-				    ignore_missing_files => 1);
-
+	my $dummy_prob = model::problem->new(ignore_missing_files=> 1,
+										 prob_arr       => ['$PROB','$INPUT ID','$DATA dummy.txt']);
+	
+	my $model = model->new(filename => 'dummy',
+						   problems => [$dummy_prob],
+						   is_dummy => 1,
+						   ignore_missing_files => 1);
+	
 	return $model;
 }
 

@@ -221,7 +221,7 @@ sub modelfit_setup
 	my $time_in_input=0;
 	my $datx_in_input=0;
 	my @table_header=();
-	unless ($self -> models -> [0]->filename() eq 'dummy'){
+	unless ($self -> models -> [0]->is_dummy){
 		my $sim_model = $self -> models -> [0] ->copy( filename    => $self -> directory.'m1/simulation.mod',
 													   copy_datafile   => 1,
 													   write_copy => 0,
@@ -241,30 +241,9 @@ sub modelfit_setup
 
 		#set IGNORE=@ since datafile will
 		#get a header during copying. Keep IGNORE=LIST
-		my $sim_ignorelist = $sim_model -> get_option_value( record_name  => 'data',
-															 problem_index => 0,
-															 option_name  => 'IGNORE',
-															 option_index => 'all');
-		$sim_model -> remove_option( record_name  => 'data',
-									 problem_numbers => [(1)],
-									 option_name  => 'IGNORE',
-									 fuzzy_match => 1);
-
-		if ((defined $sim_ignorelist) and scalar (@{$sim_ignorelist})>0){
-			foreach my $val (@{$sim_ignorelist}){
-				unless (length($val)==1){
-					#unless single character ignore, cannot keep that since need @
-					$sim_model -> add_option( record_name  => 'data',
-											  problem_numbers => [(1)],
-											  option_name  => 'IGNORE',
-											  option_value => $val);
-				}
-			}
+		for (my $probi=0; $probi < scalar(@{$sim_model->problems}); $probi++){
+			$sim_model->problems->[$probi]->datas->[0]->ignoresign('@');
 		}
-		$sim_model -> add_option( record_name  => 'data',
-								  problem_numbers => [(1)],
-								  option_name  => 'IGNORE',
-								  option_value => '@');
 
 		my $prob = $sim_model -> problems -> [0];
 
@@ -376,7 +355,7 @@ sub modelfit_setup
 											 raw_results           => undef,
 											 prepared_models       => undef,
 											 threads          => 1,
-											 data_path =>'../../m1/');
+											 copy_data        => 0);
 		ui -> print (category=>'mcmp', message=> "Simulating data:");
 		$mod_sim -> run;
 		unless (-e $self -> directory.'m1/'."$simulated_file"){
@@ -465,32 +444,11 @@ sub modelfit_setup
 
 			#ignore @ since simdata contains header rows. 
 			#keep old ignores. It is up to the user to make sure datasets are comparable
-
-			my $ignorelist = $mod -> get_option_value( record_name  => 'data',
-													   problem_index => 0,
-													   option_name  => 'IGNORE',
-													   option_index => 'all');
-			$mod -> remove_option( record_name  => 'data',
-								   problem_numbers => [(1)],
-								   option_name  => 'IGNORE',
-								   fuzzy_match => 1);
-
-			if (scalar (@{$ignorelist})>0){
-				foreach my $val (@{$ignorelist}){
-					unless ($val =~ /^.$/){
-						#unless single character ignore, cannot keep that since need @
-						$mod -> add_option( record_name  => 'data',
-											problem_numbers => [(1)],
-											option_name  => 'IGNORE',
-											option_value => $val);
-					}
-				}
+			for (my $probi=0; $probi < scalar(@{$mod->problems}); $probi++){
+				$mod->problems->[$probi]->datas->[0]->ignoresign('@');
 			}
-			$mod -> add_option( record_name  => 'data',
-								problem_numbers => [(1)],
-								option_name  => 'IGNORE',
-								option_value => '@');
-			##done fixing ignore
+
+
 			$mod->ignore_missing_files(1);
 			my $sim_file;
 			if (defined $self->simdata()){
@@ -501,7 +459,9 @@ sub modelfit_setup
 				cp($self -> simdata(),$self -> directory.'m1/'.$simulated_file);
 			}
 			$sim_file= $self -> directory.'m1/'.$simulated_file;
-			$mod -> set_file( record => 'data',new_name => $sim_file); #default all recs
+			my @new_names = ($sim_file) x scalar(@{$mod ->problems});
+			$mod -> datafiles(new_names => \@new_names); #one for each $PROB
+
 		}else{
 			ui -> print (category=>'mcmp', message=> "\n Warning: No simulation data defined\n");
 		}
@@ -533,7 +493,7 @@ sub modelfit_setup
 			   top_tool              => 0,
 			   nm_output => $nmoutopt,
 			   prepend_model_file_name => 1,
-			   data_path =>'../../m'.$model_number.'/',
+			   copy_data => 0
 		  ) );
 	ui -> print (category=>'mcmp', message=> "\nEstimating:");
 }
