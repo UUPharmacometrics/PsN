@@ -19,6 +19,7 @@ has 'config_file' => ( is => 'rw', isa => 'tool::scm::config_file' );
 has 'append_log' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'base_criteria_values' => ( is => 'rw', isa => 'HashRef', default => sub { {} } );
 has 'format' => ( is => 'rw', isa => 'Str' );
+has 'main_data_file' => ( is => 'rw', isa => 'Str' );
 has 'medians' => ( is => 'rw', isa => 'HashRef', default => sub { {} } );
 has 'means' => ( is => 'rw', isa => 'HashRef', default => sub { {} } );
 has 'initial_estimates_model' => ( is => 'rw', isa => 'model' );
@@ -26,7 +27,6 @@ has 'derivatives_base_model' => ( is => 'rw', isa => 'model' );
 has 'filtered_data_model' => ( is => 'rw', isa => 'model' );
 has 'derivatives_output' => ( is => 'rw', isa => 'output' );
 has 'update_derivatives' => ( is => 'rw', isa => 'Bool', default => 0 );
-has 'copy_data' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'max_data_items' => ( is => 'rw', isa => 'Str', default => 50 );
 has 'error' => ( is => 'rw', isa => 'Str' );
 has 'best_step' => ( is => 'rw', isa => 'Any' );
@@ -58,7 +58,7 @@ has 'linearize' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'basename' => ( is => 'rw', isa => 'Str' );
 has 'noabort' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'skip_filtering' => ( is => 'rw', isa => 'Bool', default => 0 );
-has 'xv_pred_data' => ( is => 'rw', isa => 'data' );
+has 'xv_pred_data' => ( is => 'rw', isa => 'Str' );
 has 'xv_results' => ( is => 'rw', isa => 'HashRef' );
 has 'xv_results_file' => ( is => 'rw', isa => 'Str' );
 has 'epsilon' => ( is => 'rw', isa => 'Bool', default => 1 );
@@ -380,25 +380,29 @@ sub BUILD
 		# Assume one $PROBLEM
 		my %model_column_numbers; 
 
-		my $data = $model->datas->[0];
+		my $data_obj;
 		if (defined $self->derivatives_data) {
-			$data = data->new(
+			$data_obj = data->new(
 				filename             => $self->derivatives_data,
 				ignoresign           => '@',
 				missing_data_token   => $self->missing_data_token,
 				ignore_missing_files => 0,
-				skip_parsing         => 0,
-				target               => 'mem',
 				parse_header				 => 1	); #ok parse_header, do not know idcol
 
 			#set header from this data, must have column headers otherwise die
-			if (defined $data->column_head_indices and scalar(keys %{$data->column_head_indices}) > 0) { 
-				%model_column_numbers = %{$data->column_head_indices};
+			if (defined $data_obj->column_head_indices and scalar(keys %{$data_obj->column_head_indices}) > 0) { 
+				%model_column_numbers = %{$data_obj->column_head_indices};
 			} else {
 				croak("When using option derivatives_data (done implicitly in boot_scm) the given file must have a header.");
 			}
 
 		} else {
+			my $filename = $model->datafiles(problem_numbers => [1],
+											 absolute_path => 1)->[0];
+			$data_obj = data->new(filename =>$filename,
+								  idcolumn => $model->idcolumn(problem_number =>1),
+								  ignoresign => $model->ignoresigns->[0],
+								  missing_data_token => $self->missing_data_token);
 			#use the model header when computing statistics
 			my $model_col_num = 1;
 			if (defined $model->problems->[0]->inputs and defined $model->problems->[0]->inputs->[0]->options) {
@@ -415,137 +419,40 @@ sub BUILD
 
 		unless (defined $self->covariate_statistics and scalar(keys %{$self->covariate_statistics}) > 0) {
 			$self->covariate_statistics({});
-			$data->target('mem');
-			unless( defined $data->individuals()  and (scalar(@{$data->individuals}) > 0)) {
-				if ($data->synced) {
-					#should not happen!
-					print "\nError: Resetting sync in data object for scm\n";
-					$data->synced(0);
-				}
-				$data->synchronize;
-			}
-			$data->synced(1); #we do not want to write to disk later
-
-			if (defined $self->continuous_covariates) {
-				ui -> print( category => 'scm',
-					message  => "Calculating continuous covariate statistics",
-					newline => 1);
-
-				my $ncov = scalar @{$self -> continuous_covariates()};
-				my $status_bar = status_bar -> new( steps => $ncov );
-				ui -> print( category => 'scm',
-					message  => $status_bar -> print_step(),
-					newline  => 0);
-
-				for ( my $j = 1; $j <= $ncov; $j++ ) {
-					my $cov = $self -> continuous_covariates() -> [$j-1];
-					# Factors
-					unless (defined $model_column_numbers{$cov}){
-						croak("Could not find continuous covariate $cov in \$INPUT of model:\n".
-							join(' ',(keys %model_column_numbers)));
-
-					}
-					$self -> covariate_statistics->{$cov}{'factors'} =
-					$data -> factors( column => $model_column_numbers{$cov},
-						unique_in_individual => 0,
-						return_occurences => 1 );
-					# Statistics
-					$self -> covariate_statistics->{$cov}{'have_missing_data'} =
-					$data -> have_missing_data( column => $model_column_numbers{$cov} );
-
-					( $self -> covariate_statistics->{$cov}{'median'},
-						$self -> covariate_statistics->{$cov}{'min'},
-						$self -> covariate_statistics->{$cov}{'max'},
-						$self -> covariate_statistics->{$cov}{'mean'} ) =
-					$self -> calculate_continuous_statistics( data => $data,
-						covariate => $cov,
-						column_number => $model_column_numbers{$cov} );
-
-					#this is necessary for xv_scm
-					if (defined $self -> global_covariate_statistics and 
-						scalar(keys %{$self -> global_covariate_statistics})>0){
+			my $statsref = $data_obj->scm_calculate_covariate_statistics( categorical_covariates => $self->categorical_covariates,
+																	  continuous_covariates => $self->continuous_covariates,
+																	  model_column_numbers => \%model_column_numbers,
+																	  time_varying => $self->time_varying,
+																	  linearize => $self->linearize,
+																	  return_after_derivatives_done => $self->return_after_derivatives_done,
+																	  gof => $self->gof,
+																	  missing_data_token => $self->missing_data_token);
+			$self->covariate_statistics($statsref) if (defined $statsref);
+			$data_obj = undef;
+			if (defined $self -> global_covariate_statistics and scalar(keys %{$self ->global_covariate_statistics })>0){
+				#this is necessary for xv_scm
+				if (defined $self->continuous_covariates) {
+					foreach my $cov (@{$self -> continuous_covariates()}){
 						$self -> covariate_statistics->{$cov}{'have_missing_data'} = 
-						$self -> global_covariate_statistics->{$cov}{'have_missing_data'};
+							$self -> global_covariate_statistics->{$cov}{'have_missing_data'};
 						$self -> covariate_statistics->{$cov}{'min'} = 
-						$self -> global_covariate_statistics->{$cov}{'min'};
+							$self -> global_covariate_statistics->{$cov}{'min'};
 						$self -> covariate_statistics->{$cov}{'max'} = 
-						$self -> global_covariate_statistics->{$cov}{'max'};
-					}
-
-					#my $nl = $j == $ncov ? "" : "\r"; 
-					if( $status_bar -> tick () ){
-						ui -> print( category => 'scm',
-							message  => $status_bar -> print_step(),
-							wrap     => 0,
-							newline  => 0 );
+							$self -> global_covariate_statistics->{$cov}{'max'};
 					}
 				}
-				ui -> print( category => 'scm',
-					message  => " ... done",newline => 1 );
-			}
-			if ( defined $self -> categorical_covariates() and scalar(@{$self -> categorical_covariates()})>0) {
-				ui -> print( category => 'scm',
-					message  => "Calculating categorical covariate statistics",
-					newline => 1);
-				my $ncov = scalar @{$self -> categorical_covariates()};
-
-				my $status_bar = status_bar -> new( steps => $ncov );
-				ui -> print( category => 'scm',
-					message  => $status_bar -> print_step(),
-					newline  => 0);
-
-				for ( my $j = 1; $j <= $ncov; $j++ ) {
-					my $cov = $self -> categorical_covariates() -> [$j-1];
-					unless (defined $model_column_numbers{$cov}){
-						croak("Could not find categorical covariate $cov in \$INPUT of model:\n".
-							join(' ',(keys %model_column_numbers)));
-
-					}
-					# Factors
-					$self -> covariate_statistics->{$cov}{'factors'} =
-					$data -> factors( column => $model_column_numbers{$cov},,
-						unique_in_individual => 0,
-						return_occurences => 1 );
-					# Statistics
-					$self -> covariate_statistics->{$cov}{'have_missing_data'} =
-					$data -> have_missing_data( column => $model_column_numbers{$cov} );
-
-					( $self -> covariate_statistics->{$cov}{'median'},
-						$self -> covariate_statistics->{$cov}{'min'},
-						$self -> covariate_statistics->{$cov}{'max'} ) =
-					$self -> calculate_categorical_statistics
-					( factors => $self -> covariate_statistics->{$cov}{'factors'},
-						have_missing_data => $self -> covariate_statistics->{$cov}{'have_missing_data'},
-						data => $data,
-						covariate => $cov,
-						column_number => $model_column_numbers{$cov} );
-
-					#this is necessary for xv_scm
-					if (defined $self -> global_covariate_statistics and scalar(keys %{$self ->global_covariate_statistics })>0){
+				if ( defined $self -> categorical_covariates()) {
+					foreach my $cov (@{$self -> categorical_covariates()}){
+						#this is necessary for xv_scm
 						$self -> covariate_statistics->{$cov}{'have_missing_data'} = 
-						$self -> global_covariate_statistics->{$cov}{'have_missing_data'};
+							$self -> global_covariate_statistics->{$cov}{'have_missing_data'};
 						$self -> covariate_statistics->{$cov}{'min'} = 
-						$self -> global_covariate_statistics->{$cov}{'min'};
+							$self -> global_covariate_statistics->{$cov}{'min'};
 						$self -> covariate_statistics->{$cov}{'max'} = 
-						$self -> global_covariate_statistics->{$cov}{'max'};
-					}
-
-					if( $status_bar -> tick () ){
-						ui -> print( category => 'scm',
-							message  => $status_bar -> print_step(),
-							wrap     => 0,
-							newline  => 0 );
+							$self -> global_covariate_statistics->{$cov}{'max'};
 					}
 				}
-				ui -> print( category => 'scm',
-					message  => " ... done",
-					newline => 1);
 			}
-			$data -> target('disk');
-		}
-		if (defined $self->filtered_data_model){
-			$self->filtered_data_model -> flush_data();
-			$self->filtered_data_model -> flush();
 		}
 		open( STAT, '>'.$self -> covariate_statistics_file );
 		$Data::Dumper::Purity = 1;
@@ -1413,12 +1320,10 @@ sub modelfit_setup
 		#if linearize then copy original model here (only allow one model)
 		if ($self->linearize) {
 			my $tmp_orig = $model->copy(
-				filename           => 'original.mod',
-				copy_data          => 0,
-				copy_output        => 1,
-				skip_data_parsing  => 1);
-			$tmp_orig->directory($self->final_model_directory);
-			$tmp_orig->_write;
+				filename           => $self->final_model_directory.'/original.mod',
+				copy_datafile          => 0,
+				write_copy =>1,
+				copy_output        => 0);
 			$tmp_orig = undef;
 		}
 	}
@@ -1433,21 +1338,10 @@ sub modelfit_setup
 	my $num = scalar @{$self -> models};
 	$own_threads = $num if ( $own_threads > $num );
 
-	my %subargs = ();
 	#setup linearize here. 
 	if ($self->linearize()){
 		#this will modify $model if step_number > 1
 		$self->linearize_setup(original_model => $model);
-
-		unless ($self->copy_data() ){
-			#there is no option for setting copy data
-			$subargs{'data_path'}='../../';
-			unless ($self->update_derivatives()){
-				for (my $i=0; $i< ($self->step_number()-1); $i++){
-					$subargs{'data_path'} .= '../';
-				}
-			}
-		}
 		return if ($self->return_after_derivatives_done());
 	}
 	# Check which models that hasn't been run and run them
@@ -1487,26 +1381,14 @@ sub modelfit_setup
 		if (($self->max_steps == 0) and ($self->step_number == 1) and scalar(keys %{$self->test_relations}) == 0 and $self->linearize) {
 			$fname = $self->basename . '.mod';
 		}
+
+		my $copy_datafile = 0;
+		$copy_datafile = 1 if ((not $self->linearize ) and (not defined $self->xv_pred_data));
+
 		my $start_model = $model->copy(filename => $fname,
-			copy_data          => 0,
-			copy_output        => 0,
-			skip_data_parsing  => 1);
-
-		my $datafile_name = 'filtered.dta';
-
-		# Set the data file for the base model
-		#Kajsa 2014-06-23 Commented this out, the code below causes several system tests to fail (in scm.t and xv_scm.t) 
-#		if ($self->step_number == 1) {
-#			if (-e $self->directory . "/$datafile_name") {
-#				# If data is filtered update the main base model to use the filtered data set
-#				$start_model->datas->[0]->directory($self->directory);
-#				$start_model->datas->[0]->filename($datafile_name);
-#	    	$start_model->_option_name(position => 0, record => 'data', problem_number => 1, new_name	=> $datafile_name);
-#			} else {
-#				# If no filtered data is present copy the original data set to the top level of the rundir
-#				cp($start_model->datas->[0]->full_name, $self->directory);
-#			}
-#		}
+									   write_copy => 0,
+									   copy_datafile          => $copy_datafile,
+									   copy_output        => 0);
 		
 		$start_model->directory($self->directory);
 		if (scalar(keys %included_relations) > 0) {
@@ -1564,7 +1446,7 @@ sub modelfit_setup
 			parent_tool_id => $self->tool_id,
 			threads        => $mfit_threads,
 			parent_threads => $own_threads,
-			%subargs);
+			copy_data  => (not $self->linearize));
 
 		my $mess = "Estimating base model";
 		$mess .= " with included_relations to get base ofv" if ($self->have_run_included);
@@ -1618,57 +1500,33 @@ sub modelfit_setup
 
 	my $temp_step_relations;
 	( $self -> prepared_models->[$model_number-1]{'own'}, $temp_step_relations ) =
-	$self -> _create_models( model_number => $model_number,
-		orig_model   => $self -> models -> [$model_number-1],
-		initial_estimates_model   => $self ->initial_estimates_model,
-		relations    => $self -> relations(),
-		included_relations =>  $self -> included_relations,
-		parallel_states => $self -> parallel_states());
+		$self -> _create_models( model_number => $model_number,
+								 orig_model   => $self -> models -> [$model_number-1],
+								 initial_estimates_model   => $self ->initial_estimates_model,
+								 relations    => $self -> relations(),
+								 included_relations =>  $self -> included_relations,
+								 parallel_states => $self -> parallel_states());
 	$self -> step_relations($temp_step_relations);
 	# Create a modelfit tool for all the models of this step.
 	# This is the last setup part before running the step.
-	%subargs = ();
-	if ( defined $self -> subtool_arguments ) {
-		%subargs = %{$self -> subtool_arguments};
-	}
-	if ((not $self->copy_data()) and $self->linearize){
-		#there is no option for setting copy data
-		$subargs{'data_path'}='../../';
-		unless ($self->update_derivatives()){
-			my $maxlev = 9;
-			#want mod to be zero when it is time to do something
-			my $modulus = ($self->step_number()-1)%($maxlev); 
-			if ($modulus == 0 and ($self->step_number() > 1)){
-				#copy dataset to sublevel and reset number of ../
-				my $dotdot='';
-				for (my $i=0; $i< ($maxlev); $i++){
-					$dotdot .= '../';
-				}
-				cp( $dotdot.'derivatives_covariates.dta', 'derivatives_covariates.dta' );
-			}else{
-				for (my $i=0; $i<$modulus; $i++){
-					$subargs{'data_path'} .= '../';
-				}
-			}
-		}
-	}
+
 
 	if ((defined $self->prepared_models) and (defined $self->prepared_models->[$model_number-1]{'own'})
 			and scalar(@{$self->prepared_models->[$model_number-1]{'own'}}) > 0) {
 		$self->tools([]) unless (defined $self->tools);
 		push(@{$self->tools},
 			tool::modelfit->new
-			( %{common_options::restore_options(@common_options::tool_options)},
-				_raw_results_callback => $self->_raw_results_callback(model_number => $model_number),
-				models         => $self->prepared_models->[$model_number-1]{'own'},
-				threads        => $mfit_threads,
-				logfile        => [$self->directory."/modelfit".$model_number.".log"],
-				base_directory => $self->directory,
-				directory      => $self->directory.'/modelfit_dir'.$model_number,
-				parent_threads => $own_threads,
-				parent_tool_id => $self->tool_id,
-				top_tool       => 0,
-				%subargs ) );
+			 ( %{common_options::restore_options(@common_options::tool_options)},
+			   _raw_results_callback => $self->_raw_results_callback(model_number => $model_number),
+			   models         => $self->prepared_models->[$model_number-1]{'own'},
+			   threads        => $mfit_threads,
+			   logfile        => [$self->directory."/modelfit".$model_number.".log"],
+			   base_directory => $self->directory,
+			   directory      => $self->directory.'/modelfit_dir'.$model_number,
+			   parent_threads => $own_threads,
+			   parent_tool_id => $self->tool_id,
+			   top_tool       => 0,
+			   copy_data => 0) );
 		ui -> print( category => 'scm',
 			message  => "Estimating the candidate models." ) if ($self->linearize());
 	} else {
@@ -1931,10 +1789,10 @@ sub linearize_setup
 
 		#create derivatives_model from original model (copy)
 		$derivatives_model = $original_model -> copy ( filename => 'derivatives.mod',
-			output_same_directory => 1,
-			copy_data          => 0,
-			copy_output        => 0,
-			skip_data_parsing => 1);
+													   output_same_directory => 1,
+													   copy_datafile          => 0,
+													   write_copy => 0,
+													   copy_output        => 0);
 		$derivatives_model->remove_records( type => 'table' );
 
 		if ($self->sizes_pd() > 0){
@@ -2162,11 +2020,11 @@ sub linearize_setup
 		if ($self->update_derivatives()){
 			#store derivatives_base_model if update_derivatives
 			$self->derivatives_base_model($derivatives_model -> 
-				copy ( filename => 'derivatives_base.mod',
-					output_same_directory => 1,
-					copy_data          => 0,
-					copy_output        => 0,
-					skip_data_parsing => 1));
+										  copy ( filename => 'derivatives_base.mod',
+												 output_same_directory => 1,
+												 copy_datafile =>0,
+												 write_copy => 0,
+												 copy_output        => 0));
 		}
 		#need to store GK and GZ funcs for covariates
 		my %parameter_G;
@@ -2221,30 +2079,7 @@ sub linearize_setup
 
 		#set IGNORE=@ since datafile will
 		#get a header since it is a table file. Keep IGNORE=LIST
-		my $ignorelist = $original_model -> get_option_value( record_name  => 'data',
-			problem_index => 0,
-			option_name  => 'IGNORE',
-			option_index => 'all');
-		$original_model -> remove_option( record_name  => 'data',
-			problem_numbers => [(1)],
-			option_name  => 'IGNORE',
-			fuzzy_match => 1);
-
-		if ((defined $ignorelist) and scalar (@{$ignorelist})>0){
-			foreach my $val (@{$ignorelist}){
-				unless (length($val)==1){
-					#unless single character ignore, cannot keep that since need @
-					$original_model -> add_option( record_name  => 'data',
-						problem_numbers => [(1)],
-						option_name  => 'IGNORE',
-						option_value => $val);
-				}
-			}
-		}
-		$original_model -> add_option( record_name  => 'data',
-			problem_numbers => [(1)],
-			option_name  => 'IGNORE',
-			option_value => '@');
+		$original_model->problems->[0]->datas->[0]->ignoresign('@');
 
 		my $mceta = $original_model->get_option_value(record_name => 'estimation',
 			option_name => 'MCETA',
@@ -2571,10 +2406,11 @@ sub linearize_setup
 
 		if ($rerun_derivatives_new_direction){
 			$derivatives_model = $self->derivatives_base_model() -> 
-			copy ( filename => 'derivatives_updated'.$stepname.'.mod',
-				output_same_directory => 1,
-				copy_data          => 0,
-				copy_output        => 0);
+				copy ( filename => 'derivatives_updated'.$stepname.'.mod',
+					   output_same_directory => 1,
+					   copy_datafile          => 0,
+					   write_copy       => 0,
+					   copy_output        => 0);
 			$derivatives_model -> directory($self->directory());
 			$derivatives_model->outputs->[0]->problems([]); #remove output so will be rerun
 
@@ -2631,7 +2467,7 @@ sub linearize_setup
 		my $derivatives_name;
 		my $reused=0;
 		#set name of datafile before creating it so that will not read data here
-		$original_model -> ignore_missing_files(1);
+		$original_model -> ignore_missing_data(1);
 		$original_model -> datafiles(new_names => [$datafilename]);
 
 		if ($self->step_number()==1 and $self->derivatives_data()){
@@ -2666,24 +2502,24 @@ sub linearize_setup
 				defined $derivatives_model->outputs()->[0] and
 				$derivatives_model->outputs()->[0]-> have_output()){
 				$self->run_xv_pred_step(estimation_model => $derivatives_model,
-					model_name => 'xv_pred_derivatives',
-					derivatives_run => 1) 
-				if (defined $self->xv_pred_data);
+										model_name => 'xv_pred_derivatives',
+										derivatives_run => 1) 
+					if (defined $self->xv_pred_data);
 				if ($self->update_derivatives()){
 					#store derivatives output if update_derivatives so that can use that in next iteration
 					$self->derivatives_output($derivatives_model -> outputs -> [0]);
 				}
 				if ( defined $derivatives_model -> outputs->[0]->  get_single_value(attribute=> 'ofv') ) {
 					$derivatives_ofv = $derivatives_model -> outputs->[0]->  
-					get_single_value(attribute=> 'ofv');
+						get_single_value(attribute=> 'ofv');
 					$derivatives_name = $derivatives_model ->filename();
 				}else{
 					print "Warning: could not retrieve OFV from derivatives model.\n";
 				}
 			}else{
 				ui->print (category => 'scm',
-					message => "Warning: No output from derivatives run. Unexpected.",
-					newline => 1);
+						   message => "Warning: No output from derivatives run. Unexpected.",
+						   newline => 1);
 			}
 		}else{
 			ui -> print( category => 'scm',
@@ -2764,10 +2600,9 @@ sub linearize_setup
 			}
 			#3.4
 			$original_model -> _write();
-			$original_model -> flush_data(); #need this, otherwise strange resilts
+
 		}else{
-			$original_model -> _write();
-			$original_model -> flush_data();
+			$original_model -> _write() unless ($self->return_after_derivatives_done());
 		}
 	} #end if first step or update derivatives
 
@@ -3083,6 +2918,7 @@ sub modelfit_analyze
 				test_relations         => $self -> test_relations,
 				parameters             => $self -> parameters,
 				check_nmtran            => 0,
+				main_data_file            => $self->main_data_file,
 				categorical_covariates => $self -> categorical_covariates(),
 				continuous_covariates  => $self -> continuous_covariates(),
 				do_not_drop            => $self -> do_not_drop,
@@ -3163,8 +2999,7 @@ sub modelfit_analyze
 		}
 
 		if ( defined $prep_models ) {
-			carp(" have called internal scm " .
-				scalar @{$prep_models} );
+			carp(" have called internal scm " .scalar @{$prep_models} );
 
 			# Enclose $prep_models in array ref to reflect the
 			# per-tool level, even though a modelfit does not
@@ -3247,7 +3082,6 @@ sub modelfit_analyze
 
 	# This loop tries to minimize the data written to disc.
 	for ( my $i = 0; $i < scalar @{$self -> prepared_models->[$model_number-1]{'own'}}; $i++ ) {
-		$self -> prepared_models->[$model_number-1]{'own'}[$i] -> {'datas'} = undef; #FIXME
 		$self -> prepared_models->[$model_number-1]{'own'}[$i] -> {'outputs'} = undef; #FIXME
 	}
 
@@ -3678,135 +3512,6 @@ sub gof_pval
 		\%l_text );
 }
 
-sub calculate_categorical_statistics
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		data => { isa => 'data', optional => 1 },
-		model => { isa => 'model', optional => 1 },
-		covariate => { isa => 'Str', optional => 0 },
-		column_number => { isa => 'Int', optional => 0 },
-		factors => { isa => 'HashRef', optional => 1 },
-		have_missing_data => { isa => 'Bool', optional => 1 }
-	);
-	my $data = $parm{'data'};
-	my $model = $parm{'model'};
-	my $covariate = $parm{'covariate'};
-	my $column_number = $parm{'column_number'};
-	my %factors = defined $parm{'factors'} ? %{$parm{'factors'}} : ();
-	my $have_missing_data = $parm{'have_missing_data'};
-	my $median;
-	my $min;
-	my $max;
-
-	if (defined $model){
-		$data=$model->datas->[0];
-	}
-
-	my %strata = %{$data-> factors( column => $column_number,
-									return_occurences =>1,
-									unique_in_individual => 1,
-									ignore_missing => 1)};
-	
-	if ( $strata{'Non-unique values found'} eq '1' ) {
-		if ($self->linearize()){
-			ui -> print( category => 'all',
-				message => "\nWarning: Individuals were found to have multiple values ".
-				"in the $covariate column, this renders the linearization inappropriate for this covariate. ".
-				"Consider terminating this run and setting ".
-				"covariate $covariate as continuous and time-varying in the configuration file.\n" );
-		}
-	}
-
-	# Sort by frequency
-	my @sorted = sort {$factors{$b}<=>$factors{$a}} keys (%factors); #switched a b Kajsa bugfix
-	if (scalar(@sorted) > 11){
-		ui-> print (category => 'scm',
-			"\n\n***Warning:***\nMore than 11 categories found for a categorical ".
-			"covariate. The program can only handle changes by 10 degrees of freedom.".
-			"\n",newline => 1) unless ( lc($self -> gof()) eq 'p_value' );
-
-	}
-
-	# These lines will set the most common value in $medians{$cov}
-	if ($sorted[0] ne $self->missing_data_token or (scalar (@sorted)==1 )){
-		$median = $sorted[0]; # First element of the sorted array
-		# (the factor that most subjects have)
-	}else{
-		$median = $sorted[1];
-	} 
-	#max and min ignores missing data
-	$max = $data -> max( column => $column_number );
-	$min = $data -> min( column => $column_number );
-
-	return $median ,$min ,$max;
-}
-
-sub calculate_continuous_statistics
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		data => { isa => 'data', optional => 1 },
-		model => { isa => 'model', optional => 1 },
-		covariate => { isa => 'Str', optional => 0 },
-		column_number => { isa => 'Int', optional => 0 }
-	);
-	my $data = $parm{'data'};
-	my $model = $parm{'model'};
-	my $covariate = $parm{'covariate'};
-	my $column_number = $parm{'column_number'};
-	my $median;
-	my $min;
-	my $max;
-	my $mean;
-
-	if (defined $model){
-		$data=$model->datas->[0];
-	}
-
-	my %strata = %{$data-> factors( column => $column_number,
-	return_occurences =>1,
-	unique_in_individual => 1,
-	ignore_missing => 1)};
-
-	if ( $strata{'Non-unique values found'} eq '1' ) {
-		my $found=0;
-		if (defined $self->time_varying()){
-			foreach my $tv (@{$self->time_varying()}){
-				$found =1 if ($tv eq $covariate);
-			}
-		}
-		unless ($found){
-			if ($self->linearize()){
-				ui -> print( category => 'all',
-					message => "\nWarning: Individuals were found to have multiple ".
-					"values in the $covariate column, this renders the linearization ".
-					"inappropriate for this covariate. Consider terminating this run and ".
-					"setting covariate $covariate as time-varying in the configuration ".
-					"file.\n" ) unless $self->return_after_derivatives_done();
-			}else{
-				ui -> print( category => 'all',
-					message => "\nWarning: Individuals were found to have multiple values ".
-					"in the $covariate column, but $covariate was not set as time_varying in the ".
-					"configuration file. Mean and median may not be computed correctly for $covariate. ") unless $self->return_after_derivatives_done();
-			}	
-		}
-	}
-
-	#must be unique in individual here, to do median over individuals rather than observations
-	$median = $data -> median( unique_in_individual => 1,
-		column => $column_number);
-
-	$max = $data -> max(column => $column_number );
-	$min = $data -> min(column => $column_number );
-	$mean = $data -> mean(column => $column_number );
-
-
-	$median = sprintf("%6.2f", $median );
-	$mean = sprintf("%6.2f", $mean );
-
-	return $median ,$min ,$max ,$mean;
-}
 
 sub _create_models
 {
@@ -3846,6 +3551,32 @@ sub _create_models
 	my $done = ( -e $self -> directory."/m$model_number/done" ) ? 1 : 0;
 
 	if ( not $done ) {
+		my $copy_datafile = 0;
+		#check if should copy datafile to new level, done every 9th iteration
+		my $maxlev = 9;
+		#want mod to be zero when it is time to do something
+		my $modulus = ($self->step_number()-1)%($maxlev); 
+		if ($self->linearize){
+			if ($modulus == 0 and ($self->step_number()>1) and (not $self->update_derivatives)) {
+				$copy_datafile = 1;
+			}
+		}elsif ($modulus == 0 or $self->step_number()==1 or ($self->search_direction eq 'backward' and $self->step_number == 2)) {
+			$copy_datafile = 1;
+		}
+		if ($copy_datafile){
+			my $fullpath = $orig_model->datafiles(absolute_path => 1)->[0];
+			my $filename = $orig_model->datafiles(absolute_path => 0)->[0];
+			my $string = File::Spec->catfile($self -> directory,$filename);
+			cp($fullpath,$string);
+			$self->main_data_file($string);		
+		}else{
+			unless (defined $self->main_data_file and length($self->main_data_file)>0){
+				if ($self->step_number > 1){
+					croak("step_number is ".$self->step_number." but main_data_file is not set. This is a bug");
+				}
+				$self->main_data_file($orig_model->datafiles(absolute_path => 1)->[0]);
+			}
+		}
 		open( DONE_LOG, '>'.$self -> directory."/m$model_number/done.log" );
 		foreach my $parameter ( sort keys %relations ) {
 			foreach my $covariate ( sort keys %{$relations{$parameter}} ) {
@@ -3913,15 +3644,12 @@ sub _create_models
 					OSspecific::absolute_path( $self -> directory.
 						'/m'.$model_number.'/',
 						$parameter.$covariate.$state.".lst" );
-					my $skip_data_parsing = 1;
 
 					my $applicant_model;
-					$applicant_model = $orig_model ->
-					copy( filename    => $dir.$filename,
-						copy_data   => 0,
-						copy_output => 0,
-						skip_data_parsing => $skip_data_parsing);
-
+					$applicant_model = $orig_model -> copy( filename    => $dir.$filename,
+															copy_datafile   => 0,
+															write_copy => 0,
+															copy_output => 0);
 					$applicant_model -> ignore_missing_files(1);
 					$applicant_model -> outputfile( $odir.$outfilename );
 					my @table_names = @{$applicant_model -> table_names};
@@ -3934,7 +3662,7 @@ sub _create_models
 						}
 					}
 					$applicant_model -> table_names( new_names            => \@table_names,
-						ignore_missing_files => 1);
+													 ignore_missing_files => 1);
 					my @used_covariates = ();
 					# $included_relations is a reference to $self -> included_relations
 					# and should only be initialized for truly incorporated relations
@@ -4041,7 +3769,9 @@ sub _create_models
 						}
 					}
 
-					$applicant_model -> _write;
+					my @new_names = ($self->main_data_file) x scalar(@{$applicant_model->problems});
+					$applicant_model->datafiles(new_names => \@new_names);
+					$applicant_model -> _write();
 					push( @new_models, $applicant_model );
 
 					my %st_rel;
@@ -4092,23 +3822,20 @@ sub _create_models
 
 			#orig_model reference
 			my $applicant_model = model -> new( %{common_options::restore_options(@common_options::model_options)},
-				outputs              => undef,
-				datas                => undef,
-				synced               => undef,
-				problems             => undef,
-				active_problems      => undef,
-				filename   => $dir.$filename,
-				outputfile => $odir.$outfilename,
-				target     => 'disk',
-				ignore_missing_files => 1 );
+												outputs              => undef,
+												problems             => undef,
+												active_problems      => undef,
+												filename   => $dir.$filename,
+												outputfile => $odir.$outfilename,
+												ignore_missing_files => 1 );
 			# Set the correct data file for the object
 			my $moddir = $orig_model -> directory;
 			my @datafiles = @{$orig_model -> datafiles};
 			for( my $df = 0; $df <= $#datafiles; $df++ ) {
 				$datafiles[$df] = $moddir.'/'.$datafiles[$df];
 			}
-			$applicant_model -> synchronize;
 			$applicant_model -> datafiles( new_names => \@datafiles );
+			#TODO should we write the model here??? Anyway, this code is probably never ever run
 			push( @new_models, $applicant_model );
 			my %st_rel;
 			$st_rel{'parameter'} = $parameter;
@@ -4770,35 +4497,36 @@ sub run_xv_pred_step
 	chdir($base_directory);
 
 	my $model_copy_pred = $estimation_model -> copy ( filename => $base_directory.$model_name.'.mod',
-		copy_data          => 0,
-		copy_output        => 0,
-		skip_data_parsing => 1);
+													  copy_datafile          => 0,
+													  write_copy =>0,
+													  copy_output        => 0);
 
-	$model_copy_pred -> datas([$self->xv_pred_data]);
+	$model_copy_pred -> datafiles(new_names =>[$self->xv_pred_data]);
 
 	$model_copy_pred -> update_inits(from_output => $estimation_model-> outputs -> [0]);
 	$model_copy_pred -> set_maxeval_zero(print_warning => 0,
-		need_ofv => 1,
-		last_est_complete => $self->last_est_complete());
+										 need_ofv => 1,
+										 last_est_complete => $self->last_est_complete());
 
 	$model_copy_pred -> _write();
 
 	my $xv_base_fit = tool::modelfit -> new
-	( %{common_options::restore_options(@common_options::tool_options)},
-		base_directory => $base_directory,
-		directory      => $base_directory.$directory,
-		models         => [$model_copy_pred],
-		top_tool       => 0,
-		clean => 1,
-		parent_tool_id   => $self -> tool_id,
-		threads        => 1);
+		( %{common_options::restore_options(@common_options::tool_options)},
+		  base_directory => $base_directory,
+		  directory      => $base_directory.$directory,
+		  models         => [$model_copy_pred],
+		  top_tool       => 0,
+		  clean => 1,
+		  parent_tool_id   => $self -> tool_id,
+		  threads        => 1,
+		  copy_data => 1); 
 #clean 2 later
 	ui -> print( category => 'xv_scm',
 		message  => $mess ) unless ( $self -> parent_threads > 1 );
 	$xv_base_fit -> run;
 
 	if ($derivatives_run){
-		#change $self->xv_pred_data to new object from derivatives output.
+		#change $self->xv_pred_data to new filename from derivatives output.
 		#this makes it impossible to use update_derivatives unless original pred_data is kept
 
 		my $datafilename = 'derivatives_covariates.dta';
@@ -4808,16 +4536,7 @@ sub run_xv_pred_step
 		unlink($datafilename);
 		my ( $dir, $file ) = OSspecific::absolute_path('',$newfilename);
 
-		#this is a table file we generated with ID first, so ignoresign is @, idcol is 1
-		my $pred_data = data ->
-			new( filename		  => $file,
-				 directory		  => $dir,
-				 missing_data_token => $self->missing_data_token,
-				 target		  => 'mem',
-				 ignoresign		  => '@',
-				 skip_parsing         => 0,
-				 idcolumn		  => 1 ); #ok, this is a table file we made
-		$self->xv_pred_data($pred_data);
+		$self->xv_pred_data($dir.$file);
 
 	}else{
 		#not a derivatives run
@@ -5488,20 +5207,22 @@ sub write_final_models
 			}
 			$datafilename = 'derivatives_covariates'.$stepname.'.dta';
 		}
-		$final_model -> set_file( record => 'data',new_name => $datafilename );
+
+		my @new_names = ($datafilename) x scalar(@{$final_model ->problems});
+		$final_model -> datafiles(new_names => \@new_names); #one for each $PROB
+
 	}else{
 		$final_model -> ignore_missing_files(1);
-		my $datafilename = $self->models()->[$model_number -1]->datas->[0]->filename();
-		$final_model -> set_file( record => 'data',new_name => $datafilename );
+		#ref to all data filenames
+		my $datafilenames = $self->models()->[$model_number -1]->datafiles(absolute_path => 1);
+		$final_model -> datafiles(new_names => $datafilenames); #one for each $PROB
 	}
 	$final_model -> _write;
 
 	if ($self->linearize()){
 		#create final nonlinear model
 		my $final_nonlin = model -> new ( filename => $self->final_model_directory().'original.mod',
-			target             => 'disk',
-			skip_data_parsing => 1,
-			ignore_missing_files => 1);
+										  ignore_missing_files => 1);
 		$final_nonlin ->filename('final_'.$self->search_direction().'_nonlinear.mod');
 		#add all included  relations
 
@@ -5641,6 +5362,7 @@ sub modelfit_post_fork_analyze
 		my $backward_scm =
 		tool::scm ->
 		new( %{common_options::restore_options(@common_options::tool_options)},
+			 main_data_file            => undef,
 			gof                    => $self -> gof(),
 			test_relations         => $self -> test_relations,
 			parameters             => $self -> parameters,
@@ -6144,11 +5866,11 @@ sub preprocess_data
 	#out model
 
 	$filtered_data_model = $model -> copy ( filename => 'filter_data.mod',
-		directory => $directory, 
-		output_same_directory => 1,
-		copy_data          => 0,
-		copy_output        => 0,
-		skip_data_parsing => 1);
+											directory => $directory, 
+											output_same_directory => 1,
+											copy_datafile          => 0,
+											write_copy => 0,
+											copy_output        => 0);
 
 	die "no problems" unless defined $filtered_data_model->problems();
 	die "more than one problem" unless (scalar(@{$filtered_data_model->problems()})==1);
@@ -6550,15 +6272,8 @@ sub preprocess_data
 
 		#have checked that ignoresign and idcol is ok
 		if ( defined $idcolumn ) {
-			$filtered_data_model->datas([data ->
-					new( idcolumn             => $idcolumn,
-						filename             => $datafile,
-						ignoresign           => '@',
-						directory            => $filtered_data_model -> directory,
-						missing_data_token => $self->missing_data_token,
-						ignore_missing_files => 0,
-						skip_parsing         => 0,
-						target               => 'mem')]) ;
+			$filtered_data_model->datafiles(new_names => [$filtered_data_model -> directory.$datafile],
+											problem_numbers =>[1]);
 		} else {
 			croak("No id column definition found in the model file." );
 		}

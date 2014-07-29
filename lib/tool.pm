@@ -310,7 +310,6 @@ sub BUILD
 	# Make sure that the filenames are absolute and collect model_ids
 	my $first =1;
 	foreach my $model ( @{$self->models} ) {
-		my $datas = $model->datas;
 
 		my ($directory, $filename) = OSspecific::absolute_path( $model->directory, $model->filename );
 		$model->filename( $filename );
@@ -338,16 +337,6 @@ sub BUILD
 				my ($directory, $filename) = OSspecific::absolute_path( $outputs[0] -> directory, $outputs[0] -> filename );
 				$output -> filename( $filename );
 				$output -> directory( $directory );
-			}
-		}
-		if ( defined $model->datas ) {
-			my @datas = @{$model->datas};
-			my $counter=0;
-			foreach my $data ( @datas ) {
-				my ($directory, $filename) = OSspecific::absolute_path( $datas[$counter] -> directory, $datas[$counter] -> filename );
-				$data -> filename( $filename );
-				$data -> directory( $directory );
-				$counter++;
 			}
 		}
 	}
@@ -950,7 +939,6 @@ sub harvest_output
 	my %parm = validated_hash(\@_,
 		search_models => { isa => 'Bool', default => 0, optional => 1 },
 		search_output => { isa => 'Bool', default => 0, optional => 1 },
-		search_data => { isa => 'Bool', default => 0, optional => 1 },
 		search_subtools => { isa => 'Bool', default => 0, optional => 1 },
 		search_original_models => { isa => 'Bool', default => 0, optional => 1 },
 		accessor_parameters => { isa => 'HashRef', optional => 1 },
@@ -958,7 +946,6 @@ sub harvest_output
 	);
 	my $search_models = $parm{'search_models'};
 	my $search_output = $parm{'search_output'};
-	my $search_data = $parm{'search_data'};
 	my $search_subtools = $parm{'search_subtools'};
 	my $search_original_models = $parm{'search_original_models'};
 	my %accessor_parameters = defined $parm{'accessor_parameters'} ? %{$parm{'accessor_parameters'}} : ();
@@ -975,10 +962,9 @@ sub harvest_output
 	# "search_models", "search_subtools" that will make things more
 	# efficient if you know where to search.
 
-	unless( $search_models + $search_output + $search_data <= 1 ){
+	unless( $search_models + $search_output <= 1 ){
 		croak("This is a PsN bug: Only one of the 'search_' options can and must be specified.".
 			"\t search_models: $search_models\n".
-			"\t search_data: $search_data\n".
 			"\t search_output: $search_output");
 	}
 
@@ -992,7 +978,6 @@ sub harvest_output
 			my @models = $parameters{'models'} ? @{$parameters{'models'}} : ();
 			my $search_models = $parameters{'search_models'};
 			my $search_output = $parameters{'search_output'};
-			my $search_data   = $parameters{'search_data'};
 			my $accessor_parameters = $parameters{'accessor_parameters'};
 			my $accessors = $parameters{'accessors'};
 			my %results;
@@ -1006,14 +991,11 @@ sub harvest_output
 						if( $search_models and $model -> can( $accessor ) ) {
 							push( @{$results{$accessor}[$i]{'own'}}, $model -> $accessor( %{$accessor_parameters} ) );
 
-						} elsif( $search_data and $model -> datas -> [0] -> can( $accessor ) ) {
-							push( @{$results{$accessor}[$i]{'own'}}, $model -> datas -> [0] -> $accessor( %{$accessor_parameters} ) );
-
 						} elsif( $search_output and $model -> outputs -> [0] -> can( $accessor ) ) {
 							push( @{$results{$accessor}[$i]{'own'}}, $model -> outputs -> [0] -> $accessor( %{$accessor_parameters} ) );
 
 						} else {
-							croak("Neither model, data, output have a method for $accessor" );
+							croak("Neither model, output have a method for $accessor" );
 						}
 
 						if ( defined $models[$i]{'subtools'} ) {
@@ -1021,9 +1003,6 @@ sub harvest_output
 						}
 					}
 
-					if( $search_data ){
-						$model -> datas -> [0] -> flush();
-					}
 					if( $search_output ){
 						$model -> outputs -> [0] -> flush();
 					}
@@ -1048,7 +1027,6 @@ sub harvest_output
 	%result = %{models_traverse2( models => \@models,
 		search_models => $search_models,
 		search_output => $search_output,
-		search_data => $search_data,
 		accessor_parameters => \%accessor_parameters,
 		accessors => \@accessors )};
 

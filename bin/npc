@@ -156,8 +156,7 @@ $help_text{-copy_data} = <<'EOF';
     the data file into NM_run1 and set a local path in psn.mod, the actual
     model file run with NONMEM. If -no-copy_data is set, PsN will not copy 
     the data to NM_run1 but instead set a global path to the data file in
-    psn.mod. However, if the global path is very long there will be an NMtran
-    error caused by a line wrap in $DATA in psn.mod.
+    psn.mod. However, NONMEM does not allow more than 80 characters in the path.
 EOF
 
 $help_text{-confidence_interval} = <<'EOF';
@@ -384,16 +383,19 @@ if (defined $options{'sim_model'}){
   $options{'sim_model'} = $dir.$fil;
 }
 
-unless ( defined $options{'skip_data_parsing'} ){
-  $options{'skip_data_parsing'} = 1;
-}
-
 my $eval_string = common_options::model_parameters(\%options);
 
 my $model = model -> new ( eval( $eval_string ),
 			   filename                    => $ARGV[0],
 			   ignore_missing_output_files => 1 ,
 			   cwres                       => (($options{'dv'} eq 'CWRES')and ($PsN::nm_major_version < 7)) );
+
+unless ($model->copy_data_setting_ok(copy_data => $options{'copy_data'})){
+	die("Cannot set -no-copy_data, absolute data file path is too long.");
+} 
+if (defined $options{'copy_data'} and (not $options{'copy_data'})){
+	$model->relative_data_path(0);
+}
 
 if( defined $model -> msfi_names() ){
   my @needed_files;

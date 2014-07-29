@@ -11,16 +11,8 @@ has 'results_file' => ( is => 'rw', isa => 'Str', default => 'jackknife_results.
 sub BUILD
 {
 	my $self = shift;
+	#we do not need to set bins here, default is already number of IDs
 
-	my @mo_bins = ();
-	foreach my $model (@{$self->models}) {
-	  my @pr_bins = ();
-	  foreach my $data (@{$model->datas}) {
-	    push(@pr_bins, $data->count_ind);
-	  }
-	  push(@mo_bins, \@pr_bins);
-	}
-	$self->bins(\@mo_bins);
 }
 
 no Moose;

@@ -105,8 +105,7 @@ Getopt::Long::config("auto_abbrev");
 				  "omega_before_pk!",
 				  "outputfile:s",
 				  "last_est_complete!",
-				  "niter_eonly:i",
-				  "skip_data_parsing!"
+				  "niter_eonly:i"
     );
 
 my @script_options = ( "debug:i",
@@ -340,11 +339,6 @@ sub sanity_checks {
 				"can, for classical estimation methods, be found the additional output phi-file.\n\n";
 			print $mes;
 			$options -> {'iofv'}=0;
-		}
-		if ($options -> {'cwres'}){
-			my $mes = "option -cwres is not supported by PsN for NONMEM7.\n".
-				"It is possible to request CWRES directly in \$TABLE instead.\n\n";
-			croak($mes);
 		}
 	}
 	if(( $PsN::nm_major_version == '5' ) and ($options -> {'nmfe'})){

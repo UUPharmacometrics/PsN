@@ -186,8 +186,7 @@ sub create_template_models
 	#only set data record string in all models, do not mess with data object and chdir and such
 	#since we are not running any models here
 
-	my $original_data_name = '../'.$model->datas->[0]->filename();
-	cp($model->datas->[0]->full_name(),$self->directory().'/'.$model->datas->[0]->filename());
+	my $original_data_name = $model->datafiles(absolute_path=>1)->[0];
 	if ($n_invariant > 0){
 		$start_eta = 1 unless (defined $start_eta);
 		$bsv_parameters = ($total_orig_etas-$start_eta+1);
@@ -205,15 +204,15 @@ sub create_template_models
 	##########################################################################################
 	$frem_model0 = $model ->  copy( filename    => $self -> directory().'m1/'.$name_model0,
 									output_same_directory => 1,
-									copy_data   => 0,
+									write_copy => 0,
+									copy_datafile   => 1,
 									copy_output => 0);
 	#Update inits from output, if any
 	if (defined $output_0){
 		$frem_model0 -> update_inits ( from_output => $output_0,
 									   problem_number => 1);
 	}
-	#set the data file name without changing data object. Always first option in data record
-#	$frem_model0->problems->[0]->datas->[0]->options->[0]->name($original_data_name);
+	#since copy_datafile was set, the physical datafile will be copied to m1 and the model written with relative data path
 	$frem_model0 ->_write();
 
 	#find etas already in model and set bsv_labels
@@ -309,21 +308,23 @@ sub create_template_models
 	
 	$data_check_model = $frem_model0 ->  copy( filename    => $self -> directory().'m1/'.$name_check_model,
 											   output_same_directory => 1,
-											   copy_data   => 0,
+											   write_copy => 0,
+											   copy_datafile   => 0,
 											   copy_output => 0);
 	
-	#need to set data object , setting record not enough
-	#chdir so can use local data file name
-	chdir($self -> directory().'m1');
-	$data_check_model->datafiles(problem_numbers => [1],
-								 absolute_path =>1,
-								 new_names => [$data2name]);
-	chdir($self -> directory());
 
 	# have filtered data so can skip old accept/ignores. Need ignore=@ since have a header
-	#change data file name to local name so that not too long.
-	$data_check_model-> set_records(type => 'data',
-									record_strings => [$data2name.' IGNORE=@ IGNORE=('.$fremtype.'.GT.0)']);
+	#have only one $PROB by input check
+	$data_check_model->datafiles(problem_numbers => [1],
+								 new_names => [$self -> directory().'m1/'.$data2name]);
+	$data_check_model->problems->[0]->datas->[0]->ignoresign('@');
+	$data_check_model->remove_option( record_name => 'data',
+									  option_name => 'ACCEPT',
+									  fuzzy_match => 1);
+	$data_check_model->set_option( record_name => 'data',
+								   option_name => 'IGNORE',
+								   option_value => '('.$fremtype.'.GT.0)',
+								   fuzzy_match => 1);
 	
 	foreach my $item (@{$self->extra_input_items()}){
 		$data_check_model -> add_option(problem_numbers => [1],
@@ -358,10 +359,10 @@ sub create_template_models
 			new( %{common_options::restore_options(@common_options::tool_options)},
 				 base_directory	 => $self -> directory(),
 				 directory		 => $self -> directory().'/'.$run1_name.'_modelfit_dir1',
+				 copy_data     => 0,
 				 models		 => \@run1_models,
-#		   raw_results           => undef,
 				 top_tool              => 0);
-#		   %subargs );
+#		   raw_results           => undef,
 		
 		ui -> print( category => 'all', message =>  $run1_message);
 		$run1_fit -> run;
@@ -386,17 +387,16 @@ sub create_template_models
 		print "\nModel 0 ofv is    $mod0_ofv\n";
 		print   "Data check ofv is $check_ofv\n";
 	}
-	#to be able to do model-> new later
-	$frem_model0->problems->[0]->datas->[0]->options->[0]->name($original_data_name);
-	$frem_model0 ->_write();
 
 	##########################################################################################
 	#Create Model 1
 	##########################################################################################
-	
+
+	#here we use original data file. It has been copied before to m1
 	$frem_model1 = $frem_model0 ->  copy( filename    => $self -> directory().'m1/'.$name_model1,
 										  output_same_directory => 1,
-										  copy_data   => 0,
+										  write_copy => 0,
+										  copy_datafile   => 0,
 										  copy_output => 0);
 	
 	#Update inits from output, if any
@@ -424,7 +424,7 @@ sub create_template_models
 														labels => \@bsv_par_labels);
 	
 	}
-	$frem_model1->problems->[0]->datas->[0]->options->[0]->name($original_data_name);
+
 	$frem_model1 ->_write();
 
 	##########################################################################################
@@ -433,7 +433,8 @@ sub create_template_models
 
 	$frem_model2 = $frem_model1 ->  copy( filename    => $self -> directory().'m1/'.$name_model2_all,
 										  output_same_directory => 1,
-										  copy_data   => 0,
+										  copy_datafile   => 0,
+										  write_copy => 0,
 										  copy_output => 0);
 
 	#SETUP
@@ -442,12 +443,12 @@ sub create_template_models
 															with_same => 1);
 	
 	#DATA changes
-	#skip set data object , since not running anything here 
-	#change data file name to local name so that not too long set ignore also.
-	$frem_model2-> set_records(type => 'data',
-							   record_strings => [$data2name.' IGNORE=@']);
-	
-	
+	#we want to clear all old options from DATA
+	$frem_model2->problems->[0]->datas->[0]->options([]);
+	$frem_model2->problems->[0]->datas->[0]->ignoresign('@');
+	$frem_model2->datafiles(problem_numbers => [1],
+							new_names => [$self -> directory().'m1/'.$data2name]);
+
 	#set theta omega sigma code input
 
 	$self->set_frem_records(model => $frem_model2,
@@ -471,15 +472,19 @@ sub create_template_models
 	if ($n_invariant > 0){
 		$frem_model2_invar = $frem_model1 ->  copy( filename    => $self -> directory().'m1/'.$name_model2_invar,
 													output_same_directory => 1,
-													copy_data   => 0,
+													write_copy => 0,
+													copy_datafile   => 0,
 													copy_output => 0);
 
 		#DATA changes
-		#skip set data object , since not running anything here 
-		#change data file name to local name so that not too long set ignore also.
-		$frem_model2_invar-> set_records(type => 'data',
-										 record_strings => [$data2name.' IGNORE=@ IGNORE=('.$fremtype.'.GT.'.$n_invariant.')']);
-		
+		#we want to clear all old options from DATA
+		$frem_model2_invar->problems->[0]->datas->[0]->options([]);
+		$frem_model2_invar->datafiles(problem_numbers => [1],
+									  new_names => [$self -> directory().'m1/'.$data2name]);
+		$frem_model2_invar->problems->[0]->datas->[0]->ignoresign('@');
+		$frem_model2_invar->add_option( record_name => 'data',
+										option_name => 'IGNORE',
+										option_value => '('.$fremtype.'.GT.'.$n_invariant.')');
 		
 		#set theta omega sigma code input
 		$self->set_frem_records(model => $frem_model2_invar,
@@ -503,18 +508,20 @@ sub create_template_models
 		#base on model 0
 		$frem_model2_timevar = $frem_model0 ->  copy( filename    => $self -> directory().'m1/'.$name_model2_timevar,
 													  output_same_directory => 1,
-													  copy_data   => 0,
+													  write_copy => 0,
+													  copy_datafile   => 0,
 													  copy_output => 0);
 		
 		#DATA changes
-		#skip set data object , since not running anything here 
-		
-		#change data file name to local name so that not too long set ignore also.
-		$frem_model2_timevar-> set_records(type => 'data',
-										   record_strings => [$data2name.
-															  ' IGNORE=@ ACCEPT=('.$fremtype.'.LT.1,'.$fremtype.'.GT.'.$n_invariant.')']);
-		
-		
+		#we want to clear all old options from DATA
+		$frem_model2_timevar->problems->[0]->datas->[0]->options([]);
+		$frem_model2_timevar->datafiles(problem_numbers => [1],
+									  new_names => [$self -> directory().'m1/'.$data2name]);
+		$frem_model2_timevar->problems->[0]->datas->[0]->ignoresign('@');
+		$frem_model2_timevar->add_option( record_name => 'data',
+										option_name => 'ACCEPT',
+										option_value => '('.$fremtype.'.LT.1,'.$fremtype.'.GT.'.$n_invariant.')');
+
 		#set theta omega sigma code input
 		$self->set_frem_records(model => $frem_model2_timevar,
 								n_time_varying => $n_time_varying,
@@ -535,16 +542,14 @@ sub create_template_models
 
 	$frem_model3 = $frem_model1 ->  copy( filename    => $self -> directory().'m1/'.$name_model3,
 										  output_same_directory => 1,
-										  copy_data   => 0,
+										  write_copy => 0,
+										  copy_datafile   => 0,
 										  copy_output => 0);
 
-	#DATA changes
-	#skip set data object , since not running anything here 
-
-	#change data file name to local name so that not too long set ignore also.
-	$frem_model3-> set_records(type => 'data',
-							   record_strings => [$data2name.' IGNORE=@']);
-	
+	$frem_model3->problems->[0]->datas->[0]->options([]);
+	$frem_model3->datafiles(problem_numbers => [1],
+							new_names => [$self -> directory().'m1/'.$data2name]);
+	$frem_model3->problems->[0]->datas->[0]->ignoresign('@');
 	
 	#set theta omega sigma code input
 	$self->set_frem_records(model => $frem_model3,
@@ -567,13 +572,13 @@ sub create_template_models
 	
 	$frem_vpc_model1 = $frem_model3 ->  copy( filename    => $self -> directory().'m1/'.$name_modelvpc_1,
 											  output_same_directory => 1,
-											  copy_data   => 0,
-											  copy_output => 0,
-											  skip_data_parsing => 1);      
+											  copy_datafile   => 0,
+											  write_copy => 0,
+											  copy_output => 0);      
 
-	#change data file name to local name so that not too long set ignore also.
-	$frem_vpc_model1-> set_records(type => 'data',
-							   record_strings => [$data2name.' IGNORE=@ IGNORE=('.$fremtype.'.GT.0)']);
+	$frem_vpc_model1->add_option( record_name => 'data',
+								  option_name => 'IGNORE',
+								  option_value => '('.$fremtype.'.GT.0)');
 
 	#fix omega
 	foreach my $rec (@{$frem_vpc_model1->problems()->[0]->omegas()}){
@@ -624,7 +629,6 @@ sub create_template_models
 									 record_strings => [ join( ' ', @vpc1_table_params ).
 														 ' NOAPPEND NOPRINT ONEHEADER FORMAT=sG15.7 FILE='.$joindata]);
 	
-	$frem_vpc_model1->problems->[0]->datas->[0]->options->[0]->name($data2name);
 	$frem_vpc_model1->_write();
 
 	##########################################################################################
@@ -633,16 +637,17 @@ sub create_template_models
 	
 	$frem_vpc_model2 = $frem_model1 ->  copy( filename    => $self -> directory().'m1/'.$name_modelvpc_2,
 											  output_same_directory => 1,
-											  copy_data   => 0,
+											  write_copy => 0,
+											  copy_datafile   => 0,
 											  copy_output => 0);
 
-	$frem_vpc_model2->ignore_missing_files(1);
+	$frem_vpc_model2->ignore_missing_data(1);
 
 	#DATA changes
-	#skip set data object , since not running anything here 
-	#change data file name to local name so that not too long set ignore also.
-	$frem_vpc_model2-> set_records(type => 'data',
-								   record_strings => [$joindata.' IGNORE=@ ']);
+	$frem_vpc_model2->problems->[0]->datas->[0]->options([]);
+	$frem_vpc_model2->datafiles(problem_numbers => [1],
+								new_names => [$self -> directory().'m1/'.$joindata]);
+	$frem_vpc_model2->problems->[0]->datas->[0]->ignoresign('@');
 
 	$self->set_frem_records(model => $frem_vpc_model2,
 							n_time_varying => $n_time_varying,
@@ -833,6 +838,7 @@ sub modelfit_setup
 				 base_directory	 => $frem_model0 -> directory(),
 				 directory		 => $rundir,
 				 models		 => [$frem_model0],
+				 copy_data    => 0,
 				 top_tool              => 0);
 		
 		ui -> print( category => 'all', message => "\nExecuting FREM Model 0" );
@@ -854,6 +860,7 @@ sub modelfit_setup
 										   update_fix => 1,
 										   skip_output_zeros => 1,
 										   problem_number => 1);
+			$frem_model1->_write(overwrite => 1);
 		}
 		if ($self->estimate() >= 1){
 			#estimate model 1 if estimation is requested
@@ -863,6 +870,7 @@ sub modelfit_setup
 				new( %{common_options::restore_options(@common_options::tool_options)},
 					 base_directory	 => $frem_model1 -> directory(),
 					 directory		 => $rundir,
+					 copy_data    => 0,
 					 models		 => [$frem_model1],
 					 top_tool              => 0);
 			
@@ -885,7 +893,7 @@ sub modelfit_setup
 										   update_fix => 1,
 										   skip_output_zeros => 1,
 										   problem_number => 1);
-			$frem_model2 ->_write();
+			$frem_model2 ->_write(overwrite => 1);
 		}
 
 		if ($self->estimate() >= 2){
@@ -896,6 +904,7 @@ sub modelfit_setup
 				new( %{common_options::restore_options(@common_options::tool_options)},
 					 base_directory	 => $frem_model2 -> directory(),
 					 directory		 => $rundir,
+					 copy_data      => 0,
 					 models		 => [$frem_model2],
 					 top_tool              => 0);
 			
@@ -914,7 +923,7 @@ sub modelfit_setup
 		$frem_model2_invar -> update_inits ( from_output => $output_1,
 											 ignore_missing_parameters => 1,
 											 problem_number => 1);
-		$frem_model2_invar->_write();
+		$frem_model2_invar->_write(overwrite => 1);
 	}
    
 
@@ -930,7 +939,7 @@ sub modelfit_setup
 											   update_fix => 1,
 											   skip_output_zeros => 1,
 											   problem_number => 1);
-		$frem_model2_timevar->_write();
+		$frem_model2_timevar->_write(overwrite => 1);
 	}
 	
 	
@@ -1029,14 +1038,14 @@ sub modelfit_setup
 
 			}
 
-			$frem_model3->_write();
+			$frem_model3->_write(overwrite => 1);
 		}elsif (defined $output_1){ 
 			$frem_model3 -> update_inits ( from_output => $output_1,
 										   ignore_missing_parameters => 1,
 										   update_fix => 1,
 										   skip_output_zeros => 1,
 										   problem_number => 1);
-			$frem_model3->_write();
+			$frem_model3->_write(overwrite => 1);
 		}
 
 
@@ -1048,6 +1057,7 @@ sub modelfit_setup
 				new( %{common_options::restore_options(@common_options::tool_options)},
 					 base_directory	 => $frem_model3 -> directory(),
 					 directory		 => $rundir,
+					 copy_data		 => 0,
 					 models		 => [$frem_model3],
 					 top_tool              => 0);
 			
@@ -1072,7 +1082,7 @@ sub modelfit_setup
 												   ignore_missing_parameters => 1,
 												   update_fix => 1,
 												   problem_number => 1);
-				$frem_vpc_model1->_write();
+				$frem_vpc_model1->_write(overwrite => 1);
 			}
 			$rundir = $self -> directory().'/vpc1_modelfit_dir1';
 			rmtree([ "$rundir" ]) if (-e $rundir);
@@ -1081,6 +1091,7 @@ sub modelfit_setup
 				new( %{common_options::restore_options(@common_options::tool_options)},
 					 base_directory	 => $frem_vpc_model1 -> directory(),
 					 directory	 => $rundir,
+					 copy_data	 => 0,
 					 models		 => [$frem_vpc_model1],
 					 top_tool              => 0);
 			
@@ -1189,7 +1200,7 @@ sub modelfit_setup
 				}
 			}
 
-			$frem_vpc_model2->_write();
+			$frem_vpc_model2->_write(overwrite => 1);
 			#copy model and move data to final names in run dir
 			cp($frem_vpc_model2->full_name(),$name_vpc_final);
 			mv($frem_vpc_model1->directory().$joindata,$joindata);
@@ -1274,10 +1285,10 @@ sub create_data2
 	#out name of data file $outdatafile with full path
 
 	my $filtered_data_model = $model -> copy ( filename => $filename,
-		output_same_directory => 1,
-		copy_data          => 0,
-		copy_output        => 0,
-		skip_data_parsing => 1);
+											   output_same_directory => 1,
+											   write_copy => 0,
+											   copy_datafile          => 0,
+											   copy_output        => 0);
 
 	die "no problems" unless defined $filtered_data_model->problems();
 	die "more than one problem" unless (scalar(@{$filtered_data_model->problems()})==1);
@@ -1426,86 +1437,38 @@ sub create_data2
 	$filtered_data_model->_write();
 	# run model in data_filtering_dir clean=3
 	my $filter_fit = tool::modelfit -> new
-	( %{common_options::restore_options(@common_options::tool_options)},
-		base_directory => $self->directory(),
-		directory      => $self->directory().'/create_data2_dir/',
-		models         => [$filtered_data_model],
-		top_tool       => 0,
-		clean => 2  );
+		( %{common_options::restore_options(@common_options::tool_options)},
+		  base_directory => $self->directory(),
+		  directory      => $self->directory().'/create_data2_dir/',
+		  models         => [$filtered_data_model],
+		  top_tool       => 0,
+		  copy_data      => 0,
+		  clean => 2  );
 	ui -> print( category => 'all',
-		message  => $message,
-		newline => 1 );
+				 message  => $message,
+				 newline => 1 );
 	$filter_fit -> run;
 
-	my $filtered_data = data->new(filename => $filtered_data_model->directory . $self->filtered_datafile,
-								  ignoresign => '@', idcolumn => $model->idcolumns->[0]);
+	my $resultref = data::frem_compute_covariate_properties(directory  => $filtered_data_model->directory,
+															filename => $self->filtered_datafile,
+															idcolumn => $model->idcolumns->[0],
+															invariant_covariates => $self->invariant,
+															occ_index => $occ_index,
+															data2name => $data2name,
+															evid_index => $evid_index,
+															mdv_index => $mdv_index,
+															type_index => $type_index,
+															cov_indices => \@cov_indices,
+															first_timevar_type => $first_timevar_type,
+															missing_data_token => $self->missing_data_token());
 	
-	foreach my $covariate (@{$self->invariant}){
-		my %strata = %{$filtered_data->factors(column_head => $covariate,
-		return_occurences => 1,
-		unique_in_individual => 1,
-		ignore_missing => 1)};
-
-		if ( $strata{'Non-unique values found'} eq '1' ) {
-			ui -> print( category => 'all',
-				message => "\nWarning: Individuals were found to have multiple values ".
-				"in the $covariate column, which will not be handled correctly by the frem script. ".
-				"Consider terminating this run and setting ".
-				"covariate $covariate as time-varying instead.\n" );
-		}
+	if (defined $resultref){
+		$self->occasionlist($resultref->{'occasionlist'}) if (defined $resultref->{'occasionlist'}); 
+		$self->invariant_median($resultref->{'invariant_median'}) if (defined $resultref->{'invariant_median'});
+		$self->invariant_covmatrix($resultref->{'invariant_covmatrix'}) if (defined $resultref->{'invariant_covmatrix'});
+		$self->timevar_median($resultref->{'timevar_median'}) if (defined $resultref->{'timevar_median'});
+		$self->timevar_covmatrix($resultref->{'timevar_covmatrix'}) if (defined $resultref->{'timevar_covmatrix'});
 	}
-
-	if (defined $occ_index){
-		my $factors = $filtered_data -> factors( column => ($occ_index+1),
-			ignore_missing =>1,
-			unique_in_individual => 0,
-			return_occurences => 1 );
-
-		#key is the factor, e.g. occasion 1. Value is the number of occurences
-		my @temp=();
-		#sort occasions ascending 
-		foreach my $key (sort {$a <=> $b} keys (%{$factors})){
-			push(@temp,sprintf("%.12G",$key));
-		}
-		$self->occasionlist(\@temp); 
-
-	}
-
-	$filtered_data -> filename($data2name); #change name so that when writing to disk get new file
-
-	my $invariant_matrix; #array of arrays
-	my $timevar_matrix; #array of arrays of arrays
-
-	#this writes new data to disk
-	($invariant_matrix,$timevar_matrix) = 
-	$filtered_data->add_frem_lines( occ_index => $occ_index,
-		evid_index => $evid_index,
-		mdv_index => $mdv_index,
-		type_index => $type_index,
-		cov_indices => \@cov_indices,
-		first_timevar_type => $first_timevar_type);
-
-
-
-	my $inv_covariance = [];
-	my $inv_median = [];
-	my $timev_covariance = [];
-	my $timev_median = [];
-	my $err = linear_algebra::row_cov_median($invariant_matrix,$inv_covariance,$inv_median,$self->missing_data_token());
-	if ($err != 0){
-		print "failed to compute invariant covariates covariance\n";
-	}else{
-		$self->invariant_median($inv_median);
-		$self->invariant_covmatrix($inv_covariance);
-	}
-	$err = linear_algebra::row_cov_median($timevar_matrix,$timev_covariance,$timev_median,$self->missing_data_token());
-	if ($err != 0){
-		print "failed to compute time-varying covariates covariance\n";
-	}else{
-		$self->timevar_median($timev_median);
-		$self->timevar_covmatrix($timev_covariance);
-	}
-
 }
 
 sub set_frem_records

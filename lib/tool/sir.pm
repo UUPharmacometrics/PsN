@@ -24,7 +24,7 @@ has 'sir_raw_results' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } 
 has 'logfile' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { ['sirlog.csv'] } );
 has 'results_file' => ( is => 'rw', isa => 'Str', default => 'sir_results.csv' );
 
-has 'copy_data' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'copy_data' => ( is => 'rw', isa => 'Bool', default => 1 );
 has 'recompute' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'with_replacement' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'samples' => ( is => 'rw', required => 1, isa => 'Int' );
@@ -115,6 +115,7 @@ sub modelfit_setup
 				 logfile	         => undef,
 				 raw_results           => undef,
 				 prepared_models       => undef,
+				 copy_data             => $self->copy_data,
 				 top_tool              => 0,
 				 %subargs );
 
@@ -262,9 +263,7 @@ sub modelfit_setup
 	if ( defined $self -> subtool_arguments() ) {
 		%subargs = %{$self -> subtool_arguments()};
 	}
-	if (not $self->copy_data()){
-		$subargs{'data_path'}='../../m'.$model_number.'/';
-	}
+
 	$self->tools([]) unless (defined $self->tools());
 
 	push( @{$self -> tools()},
@@ -279,6 +278,7 @@ sub modelfit_setup
 			 raw_results           => undef,
 			 prepared_models       => undef,
 			 top_tool              => 0,
+			 copy_data             => $self->copy_data,
 			 %subargs ) );
 	
 	$self->stop_motion_call(tool=>'sir',message => "Created a modelfit object to run all the models in ".

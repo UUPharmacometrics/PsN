@@ -9,9 +9,11 @@ use lib "$Bin/../lib";
 use PsN;
 use model;
 use tool::nonpb;
+use tool::bootstrap;
 use strict;
 use Getopt::Long;
 use common_options;
+use Cwd;
 
 my $cmd_line = $0 . " " . join( " ", @ARGV );
 
@@ -122,6 +124,8 @@ if (defined $options{'lst'}){
     exit;
   }
 }
+my ($dir,$file)=OSspecific::absolute_path(cwd(),$lst_file);
+$lst_file = $dir . $file;
 
 if ( defined $options{'clean'} and $options{'clean'}>2){
   print "Using clean above 2 is not possible, required files would be deleted.\n";
@@ -173,20 +177,18 @@ if ($nonpb ->nonpb_version() == 2){
   #must carry a whole hash of options here, can lump them together according to Pontus, 
 
   my $type = defined $options{'bca'} ? 'bca' : undef;
-  my $sample_size = 'default=>'.$model -> datas() -> [0] -> count_ind();
 
-  my %subj_hash = eval($sample_size);
   my $bs = tool::bootstrap -> 
       new ( eval( $common_options::parameters ),
-	    directory => 'bootstrap',
-	    subjects	=> \%subj_hash,
-	    models	=> [ $model ],
-	    samples	=> $options{'samples'}
-	    );
+			directory => 'bootstrap',
+			subjects	=> {},
+			models	=> [ $model ],
+			samples	=> $options{'samples'}
+	  );
   $bs -> run;
   $bs -> prepare_results();
   $bs -> print_results();
-
+  
 
   $nonpb->start_bs_models($bs->prepared_models->[0]{'own'});
   $bs = undef;
@@ -199,7 +201,7 @@ if ($nonpb ->nonpb_version() == 2){
 	      modelname      => 'original',
 	      tablename      => 'original.patab',
 	      ind_param      => 'eta',
-	      lst_file       => '../'.$lst_file,
+	      lst_file       => $lst_file,
 	      directory      => 'pind_dir1'
 	      );
 

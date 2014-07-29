@@ -285,15 +285,7 @@ if (defined $options{'table_strata'}){
 	}  
 }
 
-unless ( defined $options{'skip_data_parsing'} ) {
-	$options{'skip_data_parsing'} = 1;
-}
-
 my $eval_string = common_options::model_parameters(\%options);
-
-unless ( defined $options{'skip_data_parsing'} ) {
-	$options{'skip_data_parsing'} = 1;
-}
 
 my $full_model;
 my $reduced_model;

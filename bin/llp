@@ -13,7 +13,7 @@ use strict;
 use Getopt::Long;
 use common_options;
 use ui;
-use Data::Dumper;
+#use Data::Dumper;
 
 my $cmd_line = $0 . " " . join( " ", @ARGV );
 
@@ -239,10 +239,6 @@ foreach my $param ( 'thetas', 'omegas', 'sigmas' ) {
       eval( '$checked_rse_'.$param.'{$'.$param.'['.$i.']} = $rse_'.$param."[$i]" ),"\n";
     }
   }
-}
-
-unless ( defined $options{'skip_data_parsing'} ) {
-  $options{'skip_data_parsing'} = 1;
 }
 
 

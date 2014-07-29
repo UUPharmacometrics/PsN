@@ -266,8 +266,9 @@ sub BUILD
 #	$self -> _read_table_files( ignore_missing_files => $self->ignore_missing_output_files );
 
 	if ( $self->cwres ) {
-		$self -> add_cwres_module( 'init_data' => { problem => $self,
-				mirror_plots => $self->mirror_plots } );
+		$self->cwres_modules([]) unless defined $self->cwres_modules;
+		push( @{$self->cwres_modules}, model::cwres_module->new( problem => $self,
+																		  mirror_plots => $self->mirror_plots) );
 	}
 
 	if( $self->tbs or $self->dtbs){
@@ -281,23 +282,6 @@ sub BUILD
 	}
 }
 
-sub add_mirror_plot_module
-{
-	my ($self, %parm) = validated_hash(@_, 
-		init_data => {isa => 'Any', optional => 0}
-	);
-	$self->mirror_plot_modules([]) unless defined $self->mirror_plot_modules;
-	push( @{$self->mirror_plot_modules}, model::problem::mirror_plot_module->new( %{$parm{'init_data'}} ) );
-}
-
-sub add_cwres_module
-{
-	my ($self, %parm) = validated_hash(@_, 
-		init_data => {isa => 'Any', optional => 0}
-	);
-	$self->cwres_modules([]) unless defined $self->cwres_modules;
-	push( @{$self->cwres_modules}, model::problem::cwres_module->new( %{$parm{'init_data'}} ) );
-}
 
 sub add_nonparametric
 {
@@ -1422,7 +1406,6 @@ sub _read_table_files
 										 filename             => $table_name,
 										 ignoresign => '@',
 										 ignore_missing_files => $ignore_missing_files,
-										 target               => 'disk',
 										 parse_header           => 1 );
 			push( @{$self->table_files}, $new_table );
 		}
@@ -1768,6 +1751,8 @@ sub add_records
 		$self->$accessor([]) unless defined $self->$accessor;
 		if (($type eq 'omega') or ($type eq 'sigma') or ($type eq 'theta')) {
 			$record = $rec_class->new(record_arr => \@record_strings, n_previous_rows => $n_previous_rows);
+		}elsif ($type eq 'data'){
+			$record = $rec_class->new(record_arr => \@record_strings, model_directory => $self->directory);
 		} else {
 			$record = $rec_class->new(record_arr => \@record_strings);
 		}
@@ -1783,7 +1768,7 @@ sub set_records
 	my $self = shift;
 	my %parm = validated_hash(\@_,
 		record_strings => { isa => 'ArrayRef', default => [] },
-		type => { isa => 'Str' },
+		type => { isa => 'Str', optional => 0 },
 		MX_PARAMS_VALIDATE_NO_CACHE => 1,
 	);
 	my @record_strings = @{$parm{'record_strings'}};
@@ -1895,7 +1880,7 @@ sub _read_records
 					}
 				} else {
 					$self -> add_records( record_strings => \@record_lines, 
-						type => $record_type );
+										  type => $record_type );
 				}
 			}
 			$first = 0;
@@ -2233,6 +2218,8 @@ sub _format_problem
 	my %parm = validated_hash(\@_,
 							  filename => { isa => 'Str', optional => 1 },
 							  problem_number => { isa => 'Int', optional => 1 },
+							  relative_data_path => { isa => 'Bool', optional => 0 },
+							  write_directory => { isa => 'Str', optional => 0 },
 							  local_print_order => { isa => 'Bool', default => 0, optional => 1 },
 							  number_format => { isa => 'Maybe[Int]', optional => 1 }
 		);
@@ -2240,6 +2227,8 @@ sub _format_problem
 	my $problem_number = $parm{'problem_number'};
 	my $local_print_order = $parm{'local_print_order'};
 	my $number_format = $parm{'number_format'};
+	my $write_directory = $parm{'write_directory'};
+	my $relative_data_path = $parm{'relative_data_path'};
 	my @formatted;
 
 	# problem::_format_problem()
@@ -2273,12 +2262,15 @@ sub _format_problem
 	    # to format itself.
 
 	    foreach my $record ( @{$self->$accessor} ){
-	      push( @formatted,
-		    @{$record ->
-			  _format_record( number_format => $number_format,
-					  nonparametric_code => $self->nonparametric_code,
-					  shrinkage_code     => $self->shrinkage_code,
-					  eigen_value_code   => $self->eigen_value_code ) } );
+
+			my $arr;
+			if ($type eq 'data'){
+				$arr = $record -> _format_record(write_directory => $write_directory,
+												 relative_data_path => $relative_data_path);
+			}else{
+				$arr = $record ->  _format_record( number_format => $number_format) ;
+			}
+			push( @formatted,  @{$arr} );
 	    }
 	  }
 	  if( $self->shrinkage_module -> enabled and $type eq 'table' ) {

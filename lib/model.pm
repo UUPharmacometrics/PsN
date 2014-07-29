@@ -15,7 +15,6 @@ use model::iofv_module;
 use model::nonparametric_module;
 use model::shrinkage_module;
 use output;
-use data;
 use model::problem;
 use Moose;
 use MooseX::Params::Validate;
@@ -91,30 +90,20 @@ object and it requires a file on disk.
 
 =for html <pre>
 
-    $model = model -> new( filename => 'run1.mod',
-	                   target   => 'mem' )
+    $model = model -> new( filename => 'run1.mod')
 
 =for html </pre>
 
-If the target parameter is set to anything other than I<mem>
-the output object (with file name given by the model
-attribute I<outputfile>) and the data objects (identified by
-the data file names in the $DATA NONMEM model file section)
-will be initialized but will contain no information from
-their files. If information from them are requiered later
-on, they are read and parsed and the appropriate attributes
-of the data and output objects are set.
 
 =cut
 
 has 'problems' => ( is => 'rw', isa => 'ArrayRef[model::problem]' );
-has 'datas' => ( is => 'rw', isa => 'Maybe[ArrayRef[data]]', clearer => 'clear_datas', trigger => \&_datas_set );
 has 'outputs' => ( is => 'rw', isa => 'Maybe[ArrayRef[output]]', clearer => 'clear_outputs' );
 has 'nonparametric_modules' => ( is => 'rw', isa => 'ArrayRef[model::nonparametric_module]' );
 has 'iofv_modules' => ( is => 'rw', isa => 'ArrayRef[model::iofv_module]' );
 has 'active_problems' => ( is => 'rw', isa => 'Maybe[ArrayRef[Bool]]' );
-has 'skip_data_parsing' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'd2u' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'is_dummy' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'maxevals' => ( is => 'rw', isa => 'Maybe[Int]', default => 0 );
 has 'cwres' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'iofv' => ( is => 'rw', isa => 'Bool', default => 0 );
@@ -125,6 +114,7 @@ has 'extra_files' => ( is => 'rw', isa => 'Maybe[ArrayRef[Str]]' );
 has 'extra_output' => ( is => 'rw', isa => 'Maybe[ArrayRef[Str]]' );
 has 'filename' => ( is => 'rw', required => 1, isa => 'Str', trigger => \&_filename_set );
 has 'model_id' => ( is => 'rw', isa => 'Int', clearer => 'clear_model_id' );
+has 'relative_data_path' => ( is => 'rw', isa => 'Bool', default => 1 ); #code relies on this default
 has 'ignore_missing_data' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'ignore_missing_files' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'ignore_missing_output_files' => ( is => 'rw', isa => 'Bool', default => 1 );
@@ -138,8 +128,6 @@ has 'tbs_lambda' => ( is => 'rw', isa => 'Maybe[Str]' );
 has 'tbs_zeta' => ( is => 'rw', isa => 'Maybe[Str]' );
 has 'tbs_delta' => ( is => 'rw', isa => 'Maybe[Str]' );
 has 'tbs_thetanum' => ( is => 'rw', isa => 'Int' );
-has 'synced' => ( is => 'rw', isa => 'Bool', default => 0 );
-has 'target' => ( is => 'rw', isa => 'Str', default => 'mem', trigger => \&_target_set );
 has 'missing_data_token' => ( is => 'rw', isa => 'Maybe[Int]', default => -99 );
 has 'last_est_complete' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'niter_eonly' => ( is => 'rw', isa => 'Maybe[Int]' );
@@ -196,7 +184,6 @@ sub BUILD
 		}
 
 		$self->_read_problems;
-		$self->synced(1);
 	}
 
 	#ensure unique labels per param
@@ -264,44 +251,6 @@ sub BUILD
 		}
 	}
 	
-	# Read datafiles, if any.
-	unless( defined $self -> {'datas'} and not $self->quick_reload ) {		# FIXME: Nonstandard accessor. Fix with Moose.
-	    my @idcolumns = @{$self->idcolumns};
-	    my @datafiles = @{$self -> datafiles('absolute_path' => 1)};
-	    for ( my $i = 0; $i <= $#datafiles; $i++ ) {
-			my $datafile = $datafiles[$i];
-			if ($self->d2u() and -e $datafile) {
-				my $doit= `od -c $datafile | grep -c '\\r'`;
-				chomp ($doit);
-				if ($doit > 0) {
-					print "Converting $datafile using dos2unix\n";
-					system("dos2unix -q $datafile");
-				}
-			}
-			my $idcolumn = $idcolumns[$i];
-			my $ignoresign = defined $self -> ignoresigns ? $self -> ignoresigns -> [$i] : undef;
-#			print "ignoresign $ignoresign\n";
-			my @model_header = @{$self->problems->[$i]->header};
-			#should the model header not be used here?
-			if ( defined $idcolumn ) {
-				push ( @{$self -> {'datas'}}, data ->
-					   new( idcolumn             => $idcolumn,
-							filename             => $datafile,
-							ignoresign           => $ignoresign,
-							missing_data_token   => $self->missing_data_token,
-							directory            => $self->directory,
-							ignore_missing_files => $self->ignore_missing_files || $self->ignore_missing_data,
-							skip_parsing         => $self->skip_data_parsing,
-							target               => $self -> {'target'}) );		#FIXME: Nonstandard accessor. Fix with Moose
-			} else {
-				croak("New model to be created from ".$self -> full_name().
-					  ". Data file is ".$datafile."\n".
-					  "No ID column definition found in \$INPUT of the model file\n".
-					  "(if you use a synonym for ID then PsN can only handle ID=synonym, not synonym=ID ).\n" );
-			}
-	    }
-	}
-
 	# Read outputfile, if any.
 	if ( !defined $self->outputs ) {
 		unless( defined $self -> {'outputfile'} ){		# FIXME: Nonstandard accessor. Fix with Moose.
@@ -317,12 +266,10 @@ sub BUILD
 			}
 		}
 		$self->outputs([]);
-		push ( @{$self->outputs}, output ->
-			   new( filename             => $self -> {'outputfile'},
-					directory            => $self->directory,
-					ignore_missing_files =>
-					$self->ignore_missing_files || $self->ignore_missing_output_files,
-					target               => $self -> {'target'}));
+		push ( @{$self->outputs}, output -> new( filename => $self -> {'outputfile'},
+												 directory            => $self->directory,
+												 ignore_missing_files =>
+												 ($self->ignore_missing_files || $self->ignore_missing_output_files)));
 	}
 
 	# Adding mirror_plots module here, since it can add
@@ -343,6 +290,15 @@ sub BUILD
 		my $iofv_module = model::iofv_module -> new( base_model => $self);
 		$self->iofv_modules([]) unless defined $self->iofv_modules;
 		push( @{$self->iofv_modules}, $iofv_module );
+	}
+
+	#check that data files exist
+	unless ($self->ignore_missing_data or $self->ignore_missing_files){
+		foreach my $file (@{$self->datafiles(absolute_path =>1)}){
+			unless (-e $file){
+				croak("datafile $file does not exist for model ".$self->full_name);
+			}
+		}
 	}
 }
 
@@ -373,13 +329,12 @@ sub create_maxeval_zero_models_array
 	my $dummyname='dummy.mod';
 	my @problem_lines=();
 	while ($samples_done < scalar(@{$sampled_params_arr})){
-		#copy datafile to subdirectory (run directory m1)  and later set local path to datafile in model
-		cp($model->datas->[0]->full_name(),$subdirectory.$model->datas->[0]->filename());
 		#copy the model
 		$run_model = $model ->  copy( filename    => $subdirectory.$purpose.'_'.$run_num.'.mod',
 									  output_same_directory => 1,
-									  copy_data   => 0,
-									  copy_output => 0);
+									  copy_datafile =>0,
+									  copy_output => 0,
+									  write_copy => 0); #do not write until are done with modifications
 		$run_num++;
 
 		$run_model->set_maxeval_zero(need_ofv => 1);
@@ -401,13 +356,8 @@ sub create_maxeval_zero_models_array
 			#first iteration
 			$dummymodel = $run_model ->  copy( filename    => $subdirectory.$dummyname,
 											   output_same_directory => 1,
-											   target => 'mem',
-											   copy_data   => 0,
-											   copy_output => 0);
-			chdir($subdirectory);
-			$dummymodel->datafiles(problem_numbers => [1],
-								   new_names => [$model->datas->[0]->filename()]);
-			chdir($basedirectory);
+											   copy_output => 0,
+											   write_copy =>0);
 
 			#set $DATA REWIND
 			$dummymodel->add_option(problem_numbers => [1],
@@ -422,23 +372,16 @@ sub create_maxeval_zero_models_array
 											   keep_last => 0,
 											   type => $record);
 			}
-			my $linesarray = $dummymodel->problems->[0]->_format_problem;
+			my $linesarray = $dummymodel->problems->[0]->_format_problem(relative_data_path => $run_model->relative_data_path,
+																		 write_directory => $run_model->directory);
 			#we cannot use this array directly, must make sure items do not contain line breaks
 			foreach my $line (@{$linesarray}){
 				my @arr = split(/\n/,$line);
 				push(@problem_lines,@arr);
 			}
-			unlink($subdirectory.$dummyname);
 			$dummymodel = undef;
 		}
 
-		#need to set data object , setting record not enough
-		#chdir so can use local data file name
-		chdir($subdirectory);
-		$run_model->datafiles(problem_numbers => [1],
-							  new_names => [$model->datas->[0]->filename()]);
-
-		chdir($basedirectory);
 
 		#update ests for first $PROB in real model
 		$run_model -> update_inits(from_hash => $sampled_params_arr->[$samples_done],
@@ -467,14 +410,13 @@ sub create_maxeval_zero_models_array
 					   shrinkage_module            => $sh_mod )
 				);
 			push(@{$run_model->active_problems()},1);
-			push(@{$run_model->datas()},$run_model->datas()->[0]);
 			$run_model->update_inits(from_hash => $sampled_params_arr->[$samples_done],
 									 problem_number=> $probnum,
 									 ignore_missing_parameters => $ignore_missing_parameters);
 			$samples_done++;
 			$probnum++;
 		}
-		$run_model -> _write();
+		$run_model -> _write(relative_data_path => 0); #this gets written in m1. want absolute path here even if relative in NMrun
 		push(@modelsarr,$run_model);
 	}
 
@@ -482,36 +424,6 @@ sub create_maxeval_zero_models_array
 
 }
 
-sub _datas_set
-{
-	my $self = shift;
-	my $parm = shift;
-
-	if ($in_constructor) { return; }
-
-	my $nprobs = scalar @{$self->problems};
-	if ( defined $parm ) {
-		if ( ref($parm) eq 'ARRAY' ) {
-			my @new_datas = @{$parm};
-			# Check that new_headers and problems match
-			croak("The number of problems $nprobs and".
-				" new data ". ($#new_datas+1) ." don't match in ".
-				$self -> full_name ) unless ( $#new_datas + 1 == $nprobs );
-			if ( defined $self->problems ) {
-				for( my $i = 0; $i < $nprobs; $i++ ) {
-					$self -> _option_name( position	  => 0,
-						record	  => 'data',
-						problem_number => $i+1,
-						new_name	  => $new_datas[$i] -> filename);
-				}
-			} else {
-				croak("No problems defined in " . $self->full_name );
-			}
-		} else {
-			croak("Supplied new value is not an array" );
-		}
-	}
-}
 
 sub shrinkage_modules
 {
@@ -529,7 +441,6 @@ sub shrinkage_modules
 			$new_module -> nomegas( $self -> nomegas() -> [$probnum-1] );
 			$new_module -> directory( $self -> directory() );
 			$new_module -> problem_number( $probnum );
-			my $data = $self -> datas -> [0];
 			$prob -> shrinkage_module( $new_module );
 		}
 
@@ -581,27 +492,12 @@ sub _outputfile_set
 
 	if ( defined $parm ) {
 	  $self->{'outputs'} = 
-	    [ output ->
-	      new( filename             => $parm,
-		   ignore_missing_files => ( $self -> ignore_missing_files() || $self -> ignore_missing_output_files() ),
-		   target               => $self -> target())];
+		  [ output ->  new( filename             => $parm,
+							ignore_missing_files => 
+							( $self -> ignore_missing_files() || $self -> ignore_missing_output_files() ))];
 	}
 }
 
-sub _target_set
-{
-	my $self = shift;
-	my $parm = shift;
-	my $oldparm = shift;
-
-	if ($in_constructor) { return; }
-	
-	if ( $parm eq 'disk' ) {
-	  $self->flush;
-	} elsif ( $parm eq 'mem' and $oldparm eq 'disk' ) {
-	  $self->synchronize;
-	}
-}
 
 sub add_iofv_module
 {
@@ -630,13 +526,6 @@ sub add_output
 	push( @{$self->outputs}, output->new( %{$parm{'init_data'}} ) );
 }
 
-sub add_data
-{
-	my ($self, %parm) = validated_hash(@_, 
-		init_data => {isa => 'Any', optional => 0}
-	);
-	push( @{$self->{'datas'}}, data->new( %{$parm{'init_data'}} ) );
-}
 
 sub add_problem
 {
@@ -679,98 +568,44 @@ sub copy
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		skip_data_parsing => { isa => 'Bool', default => 0, optional => 1 },
-		directory => { isa => 'Str', optional => 1 },
-		filename => { isa => 'Str', optional => 1 },
-		copy_data => { isa => 'Bool', default => 0, optional => 1 },
-		copy_output => { isa => 'Bool', default => 0, optional => 1 },
-		output_same_directory => { isa => 'Bool', default => 0, optional => 1 },
-		data_file_names => { isa => 'ArrayRef[Str]', optional => 1 },
-		target => { isa => 'Str', default => $self->target, optional => 1 },
-		update_shrinkage_tables => { isa => 'Bool', default => 1, optional => 1 },
-		MX_PARAMS_VALIDATE_NO_CACHE => 1,
+							  directory => { isa => 'Str', optional => 1 },
+							  filename => { isa => 'Str', optional => 0 },
+							  write_copy => { isa => 'Bool', default => 1, optional => 1 },
+							  copy_output => { isa => 'Bool', default => 0, optional => 1 },
+							  copy_datafile => { isa => 'Bool', default => 0, optional => 1 },
+							  output_same_directory => { isa => 'Bool', default => 0, optional => 1 },
+							  update_shrinkage_tables => { isa => 'Bool', default => 1, optional => 1 },
+							  MX_PARAMS_VALIDATE_NO_CACHE => 1,
 	);
-	my $skip_data_parsing = $parm{'skip_data_parsing'};
 	my $directory = $parm{'directory'};
 	my $filename = $parm{'filename'};
-	my $new_model;
-	my $copy_data = $parm{'copy_data'};
+	my $write_copy = $parm{'write_copy'};
 	my $copy_output = $parm{'copy_output'};
+	my $copy_datafile = $parm{'copy_datafile'};
 	my $output_same_directory = $parm{'output_same_directory'};
-	my @data_file_names = defined $parm{'data_file_names'} ? @{$parm{'data_file_names'}} : ();
-	my $target = $parm{'target'};
 	my $update_shrinkage_tables = $parm{'update_shrinkage_tables'};
 
-	# PP_TODO fix a nice copying of modelfile data
-	# preferably in memory copy. Perhaps flush data ?
-
-	# Check sanity of the length of data file names argument
-	if ( scalar @data_file_names > 0 ) {
-	  croak("model -> copy: The number of specified new data file " .
-			  "names ". scalar @data_file_names. "must\n match the number".
-			  " of data objects connected to the model object".
-			  scalar @{$self->datas} ) 
-	      unless ( scalar @data_file_names == scalar @{$self->datas} );
-	} else {
-	  my $d_filename;
-	  ($d_filename = $filename) =~ s/\.mod$//;
-	  for ( my $i = 1; $i <= scalar @{$self->datas}; $i++ ) {
-	    # Data filename is created in this directory (no directory needed).
-	    push( @data_file_names, $d_filename."_data_".$i."_copy.dta" );
-	  }
-	}
+	my $new_model;
 
 	($directory, $filename) = OSspecific::absolute_path( $directory, $filename );
+	#if copy datafile is set, the data file(s) of $self's $DATA is copied to 'directory'
+	#and relative_data_path is set to true in the copy
 
 	# New copy:
 
-	# save references to own data and output objects
-	my $datas   = $self->datas;
+	# save references to own output objects
 	my $outputs = $self->outputs;
-	my @problems = @{$self->problems};
 
-	my ( @new_datas, @new_outputs );
+	my @new_outputs;
 
-	$self -> synchronize if not $self->synced;
-	
-	# remove ref to data and output object to speed up the
+	# remove ref to output object to speed up the
 	# cloning
-	$self->clear_datas;
 	$self->clear_outputs;
 
-	# Copy the data objects if so is requested
-	if ( defined $datas ) {
-	  my $i = 0;
-	  foreach my $data ( @{$datas} ) {
-	    if ( $copy_data == 1 ) {
-	      #this copies datafile with local name to NM_run
-	      push( @new_datas, $data ->
-		    copy( filename => $data_file_names[$i]) ); #attribute skip_parsing is copied
-	    } else {
-	      # This line assumes one data per problem! May be a source of error.
-	      my $ignoresign = defined $self -> ignoresigns ? $self -> ignoresigns -> [$i] : undef;
-	      my @model_header = @{$self -> problems -> [$i] -> header};
-	      push @new_datas, data ->
-				new( filename		  => $data -> filename,
-					directory		  => $data -> directory,
-					missing_data_token   => $data -> missing_data_token,
-					target		  => 'disk',
-					ignoresign		  => $ignoresign,
-					 ignore_missing_files => $self->ignore_missing_files,
-					skip_parsing         => ($self -> skip_data_parsing() or $skip_data_parsing),
-					idcolumn		  => $data -> idcolumn );
-			}
-			$i++;
-		}
-	}
-
-	# Clone self into new model object and set synced to 0 for
-	# the copy
+	# Clone self into new model object
 	$new_model = Storable::dclone( $self );
-	$new_model->synced(0);
 
-	# Restore the data and output objects for self
-	$self->datas($datas);
+	# Restore the output objects for self
 	$self->outputs($outputs);
 
 	# Set the new file name for the copy
@@ -779,7 +614,7 @@ sub copy
 
 	# {{{ update the shrinkage modules
 
-	@problems = @{$new_model -> problems};
+	my @problems = @{$new_model -> problems};
 	for( my $i = 1; $i <= scalar @problems; $i++ ) {
 	  $problems[ $i-1 ] -> shrinkage_module -> nomegas( $new_model -> nomegas()->[$i-1] );
 	}
@@ -811,27 +646,55 @@ sub copy
 	  }
 	  $new_model -> outputfile($new_out);
 	}
-
-	# Add the copied data objects to the model copy
-	$new_model -> datas( \@new_datas );
-
-	#if relative .. or absolute path
-	if ((($data_file_names[0] =~ /^\.\.\//) or ($data_file_names[0] =~ /^\//))
-	    and (not $copy_data==1 )){
-	  #change to filename with relative path
-	  for ( my $i = 0; $i <= $#problems; $i++ ) {
-	    $new_model -> _option_name( position	  => 0,
-					record	  => 'data',
-					problem_number => $i+1,
-					new_name	  => $data_file_names[$i]);
-	  }
+	if ($copy_datafile){
+		my $datafiles = $new_model->datafiles(absolute_path => 1); #all problems
+		my @new_names =();
+		#for each problem get data file name without directory
+		for ( my $i = 0; $i < scalar @{$new_model->problems}; $i++ ) {
+			#if not exists $writedir.$datafilename then copy data full_name to that file
+			#in any case set data file name to new name and relative_data_path
+			my ($datadir,$datafile) = OSspecific::absolute_path(undef,$datafiles->[$i]);
+			my ($writedir,$modelfile) = OSspecific::absolute_path(undef,$new_model->full_name);
+			unless (-e $writedir.$datafile){
+				if (-e $datadir.$datafile){
+					cp($datadir.$datafile,$writedir.$datafile);
+				}else{
+					croak("data file $datadir$datafile does not exist in writing of ".$self->full_name.
+						  " to file $filename") unless $new_model->ignore_missing_data;
+				}
+			}
+			push(@new_names,$writedir.$datafile);
+		}
+		$new_model->datafiles(new_names => \@new_names);
+		$new_model->relative_data_path(1);
 	}
 
-	$new_model->_write;
-
-	$new_model->synchronize if $target eq 'disk';
-
+	$new_model->_write if ($write_copy);
 	return $new_model;
+}
+
+sub copy_data_setting_ok
+{
+	#check if setting of copy_data will work
+	#-no-copy_data means use absolute path for datafile, and that path must not
+	#be longer than 80 characters because of NONMEM
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+		 copy_data => { isa => 'Maybe[Bool]', optional => 1 }
+	);
+	my $copy_data = $parm{'copy_data'};
+	#undef means copy_data is true
+	my $ok = 1;
+	if (defined $copy_data and $copy_data == 0){
+		my $files = $self->datafiles(absolute_path => 1);
+		foreach my $file (@{$files}){
+			if (length($file)>80){
+				$ok = 0;
+				last;
+			}
+		}
+	}
+	return $ok;
 }
 
 sub datafiles
@@ -848,57 +711,35 @@ sub datafiles
 	my @names;
 
 	# The datafiles method retrieves or sets the names of the
-	# datafiles specified in the $DATA record of each problem. The
-	# problem_numbers argument can be used to control which
+	# datafiles specified in the $DATA record of each problem. 
+	# If filename is set then a name relative the current *working* directory is assumed unless
+	# filename is given with absolute path
+	# The problem_numbers argument can be used to control which
 	# problem that is affected. If absolute_path is set to 1, the
 	# returned file names are given with absolute paths.
 
 	unless( scalar(@problem_numbers)>0 ){
-		$self->problems([]) unless defined $self->problems;
 		@problem_numbers = (1 .. $#{$self->problems}+1);
 	}
 	if ( scalar @new_names > 0 ) {
 		my $i = 0;
-		my @idcolumns = @{$self ->
-							  idcolumns( problem_numbers => \@problem_numbers )};
 		foreach my $new_name ( @new_names ) {
-			if ( $absolute_path ) {
-				my $tmp;
-				($tmp, $new_name) = OSspecific::absolute_path('', $new_name );
-				$new_name = $tmp . $new_name;
+			#set filename also changes the directory
+			if ((-e $new_name) or $self->ignore_missing_data){
+				$self -> problems->[$i]->datas->[0]->set_filename(filename => $new_name);
+			}else{
+				croak("Setting data to $new_name in ".$self->full_name." but data file does not exist");
 			}
-
-			$self -> _option_name( position	  => 0, 
-								   record	  => 'data', 
-								   problem_number => $problem_numbers[$i],
-								   new_name	  => $new_name);
-			my $ignoresign = defined $self -> ignoresigns ? $self -> ignoresigns -> [$i] : undef;
-			my @model_header = @{$self -> problems -> [$i] -> header};
-			$self->datas->[$problem_numbers[$i]-1] = data ->
-				new( idcolumn             => $idcolumns[$i],
-					 ignoresign           => $ignoresign,
-					 missing_data_token => $self->missing_data_token,
-					 filename             => $new_name,
-					 ignore_missing_files => $self->ignore_missing_files,
-					 skip_parsing         => $self -> skip_data_parsing(),
-					 target               => $self->target );
 			$i++;
 		}
 	} else {
 		foreach my $prob_num ( @problem_numbers ) {
+			my $file = $self -> problems->[$prob_num-1]->datas->[0]->get_filename;
+			my $dir = $self -> problems->[$prob_num-1]->datas->[0]->get_directory;
 			if ( $absolute_path ) {
-				my ($d_dir, $d_name);
-				($d_dir, $d_name) =
-					OSspecific::absolute_path($self->directory, $self ->_option_name( position	 => 0,
-																					  record	 => 'data',
-																					  problem_number => $prob_num ) );
-				push( @names, $d_dir . $d_name );
+				push( @names, $dir.$file );
 			} else {
-				my $name = $self -> _option_name( position       => 0,
-												  record	       => 'data',
-												  problem_number => $prob_num );
-				$name =~ s/.*[\/\\]//;
-				push( @names, $name );
+				push( @names, $file );
 			}
 		}
 	}
@@ -917,6 +758,9 @@ sub set_file
 	my $new_name = $parm{'new_name'};
 	my $problem_number = $parm{'problem_number'};
 	my $record = $parm{'record'};
+	if ($record eq 'data'){
+		croak("illegal to use model->set_file on DATA record, this is a bug");
+	}
 
 	my @problem_numbers;
 	if ( $problem_number == 0 ){
@@ -931,23 +775,9 @@ sub set_file
 							   problem_number => $num,
 							   new_name	  => $new_name);
 
-		if ($record eq 'data'){
-			my @idcolumns = @{$self ->
-								  idcolumns( problem_numbers => \@problem_numbers )};
-			
-			my $ignoresign = defined $self -> ignoresigns ? $self -> ignoresigns -> [($num-1)] : undef;
-			my @model_header = @{$self -> problems -> [($num-1)] -> header};
-			$self->datas->[($num-1)] = data ->
-				new( idcolumn             => $idcolumns[($num-1)],
-					 ignoresign           => $ignoresign,
-					 missing_data_token => $self->missing_data_token,
-					 filename             => $new_name,
-					 ignore_missing_files => $self->ignore_missing_files,
-					 skip_parsing         => $self->skip_data_parsing(),
-					 target               => $self->target );
-		}
 	}
 }
+
 
 sub covariance
 {
@@ -1081,7 +911,7 @@ sub idcolumn
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problem_number => { isa => 'Num', default => 1, optional => 1 }
+		 problem_number => { isa => 'Num', default => 1, optional => 0 }
 	);
 	my $problem_number = $parm{'problem_number'};
 	my $col;
@@ -1090,7 +920,7 @@ sub idcolumn
 	#
 	#   @idcolumns = @{$modelObject -> idcolumns( problem_numbers => [2,3] );
 	#
-	# idcolumns returns the idcolumn index in the datafile for the
+	# idcolumn returns the idcolumn index in INPUT for the
 	# specified problem.
 
 	my $junk_ref;
@@ -1099,10 +929,8 @@ sub idcolumn
 			       record_name => 'input', 
 			       problem_numbers => [$problem_number] );
 	
-	if ( $problem_number ne 'all' ) {
-	  $col = @{$col}[0];
-	}
-
+	$col = $col->[0][0];
+	croak("ID column was not defined in problem number $problem_number") unless (defined $col);
 	return $col;
 }
 
@@ -1132,7 +960,8 @@ sub idcolumns
 
 	foreach my $prob ( @{$col_ref} ) {
 	  foreach my $inst ( @{$prob} ) {
-	    push( @column_numbers, $inst );
+		  croak("ID column was not defined in problem ").(scalar(@column_numbers)+1) unless (defined $inst);
+		  push( @column_numbers, $inst );
 	  }
 	}
 
@@ -1142,19 +971,9 @@ sub idcolumns
 sub ignoresigns
 {
 	my $self = shift;
-	my %parm = validated_hash(\@_,
-		 problem_numbers => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
-	my @problem_numbers = defined $parm{'problem_numbers'} ? @{$parm{'problem_numbers'}} : ();
 	my @ignore;
 
-	# Usage:
-	#
-	#   @ignore_signs = @{$modelObject -> ignoresigns( problem_numbers => [2,4] )};
-	#
-	# ignoresigns returns the ignore signs in the datafile for the
-	# specified problems
-
+	# ignoresigns returns the ignore sign set in DATA
 	# default is # in NONMEM, but here we have @ instead since includes # but covers more that can never be data lines
 
 	foreach my $prob ( @{$self->problems} ) {
@@ -2187,7 +2006,7 @@ sub maxeval
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 new_values => { isa => 'ArrayRef[Int]', optional => 1 },
+		 new_values => { isa => 'ArrayRef', optional => 1 },
 		 problem_numbers => { isa => 'ArrayRef[Int]', optional => 1 },
 		 exact_match => { isa => 'Bool', default => 0, optional => 1 }
 	);
@@ -2687,7 +2506,8 @@ sub print
 
 	my ( @formatted );
 	foreach my $problem ( @{$self->problems} ) {
-		foreach my $line (@{$problem->_format_problem}) {
+		foreach my $line (@{$problem->_format_problem(relative_data_path => $self->relative_data_path,
+													  write_directory => $self->directory)}) {
 			print $line;
 		}
 	}
@@ -2718,18 +2538,23 @@ sub record
 	 my @problems = @{$self->problems};
 	 my $records;
 	 
-	 if ( defined $problems[ $problem_number - 1 ] ) {
-	     if ( scalar(@new_data) > 0 ){
-		 my $rec_class = "model::problem::$record_name";
-		 my $record = $rec_class -> new('record_arr' => \@new_data );
-	     } else {
-		 $record_name .= 's';
-		 $records = $problems[ $problem_number - 1 ] -> {$record_name};
-		 foreach my $record( @{$records} ){
-		     push(@data, $record -> _format_record);
-		 }
-	     }
-	 }
+	if ( defined $problems[ $problem_number - 1 ] ) {
+		if ( scalar(@new_data) > 0 ){
+			my $rec_class = "model::problem::$record_name";
+			my $record = $rec_class -> new('record_arr' => \@new_data );
+		} else {
+			$record_name .= 's';
+			$records = $problems[ $problem_number - 1 ] -> {$record_name};
+			foreach my $record( @{$records} ){
+				if ($record_name eq 'datas'){
+					push(@data, $record -> _format_record(relative_data_path => $self->relative_data_path,
+														  write_directory => $self->directory));
+				}else{
+					push(@data, $record -> _format_record);
+				}
+			}
+		}
+	}
 
 	return \@data;
 }
@@ -2894,7 +2719,7 @@ sub set_records
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 type => { isa => 'Str', optional => 1 },
+		 type => { isa => 'Str', optional => 0 },
 		 record_strings => { isa => 'ArrayRef', optional => 0 },
 		 problem_numbers => { isa => 'ArrayRef[Int]', optional => 1 }
 	);
@@ -2932,31 +2757,6 @@ sub store_inits
 	}
 }
 
-sub synchronize
-{
-	my $self = shift;
-
-	# Synchronize checks the I<synced> object attribute to see
-	# if the model is in sync with its corresponding file, given
-	# by the object attribute I<filename>. If not, it checks if
-	# the model contains any defined problems and if it does, it
-	# writes the formatted model to disk, overwriting any
-	# existing file of name I<filename>. If no problem is
-	# defined, synchronize tries to parse the file I<filename>
-	# and set the object internals to match it.
-	unless ($self->synced) {
-		if( defined $self->problems and scalar @{$self->problems} > 0 ) {
-			$self->_write;
-		} else {
-			if ( -e $self->full_name ) {
-				$self->_read_problems;
-			} else {
-				return;
-			}
-		}
-	}
-	$self->synced(1);
-}
 
 sub msfi_names
 {
@@ -3198,43 +2998,6 @@ sub units
 	return \@units;
 }
 
-sub add_randomized_columns
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		 column_headers => { isa => 'ArrayRef[Str]', optional => 1 },
-		 filename => { isa => 'Str', optional => 0 }
-	);
-	my @column_headers = defined $parm{'column_headers'} ? @{$parm{'column_headers'}} : ();
-	my $filename = $parm{'filename'};
-	my @xcolumn_names;
-
-	#first prob only 
-	#in array column_headers
-	#in scalar datafilename, modelfilename
-	#out array xcolumn_names
-
-	@xcolumn_names = @{$self -> datas -> [0] -> add_randomized_columns(
-			     filename => $filename,
-			     directory => $self->directory(),
-			     column_headers => \@column_headers)}; #writes to own filename
-	#after changing it to directory/filename
-	
-
-	foreach my $xcol (@xcolumn_names){
-	  $self -> add_option( record_name  => 'input',
-			       problem_numbers => [1],
-			       option_name  => $xcol);
-	}
-	$self -> _option_name( position	  => 0,
-			       record	  => 'data',
-			       problem_number => 1,
-			       new_name	  => $filename);
-
-	$self->_write(write_data => 0); #data already written
-
-	return \@xcolumn_names;
-}
 
 sub update_inits
 {
@@ -3583,16 +3346,25 @@ sub _write
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		filename => { isa => 'Str', default => $self->full_name, optional => 1 },
-		number_format => { isa => 'Maybe[Int]', optional => 1 },
-		write_data => { isa => 'Bool', default => 0, optional => 1 },
-		local_print_order => { isa => 'Bool', default => 0, optional => 1 },
-		MX_PARAMS_VALIDATE_NO_CACHE => 1,
-	);
+							  filename => { isa => 'Str', default => $self->full_name, optional => 1 },
+							  number_format => { isa => 'Maybe[Int]', optional => 1 },
+							  relative_data_path => { isa => 'Bool', default => $self->relative_data_path, 
+													  optional => 1 },
+							  local_print_order => { isa => 'Bool', default => 0, optional => 1 },
+							  overwrite => { isa => 'Bool', default => 0, optional => 1 },
+							  MX_PARAMS_VALIDATE_NO_CACHE => 1,
+		);
 	my $filename = $parm{'filename'};
 	my $number_format = $parm{'number_format'};
-	my $write_data = $parm{'write_data'};
+	my $relative_data_path = $parm{'relative_data_path'};
 	my $local_print_order = $parm{'local_print_order'};
+	my $overwrite = $parm{'overwrite'};
+
+	my ($writedir,$file) = OSspecific::absolute_path('',$filename);
+	
+	if (-e $filename and not $overwrite){
+		croak("Trying to overwrite existing file $filename\n");
+	}
 
 	my @formatted;
 
@@ -3609,10 +3381,12 @@ sub _write
 		# autogenerated files (msfi, tabels etc...) unique to the
 		# model and problem
 		my @preformatted = @{$self->problems -> [$i] -> _format_problem(
-			filename => $self -> filename,
-			problem_number => ($i + 1),
-			number_format => $number_format,
-			local_print_order => $local_print_order ) 
+								 filename => $self -> filename,
+								 problem_number => ($i + 1),
+								 relative_data_path => $relative_data_path,
+								 write_directory => $writedir,
+								 number_format => $number_format,
+								 local_print_order => $local_print_order ) 
 			};
 		# Check if the problem is NOT active, if so comment it out.
 		unless ( $active[$i] ) {
@@ -3624,7 +3398,7 @@ sub _write
 		push(@preformatted, "\n");
 		push(@formatted, @preformatted);
 	}
-
+	
 	# Open a file and print the formatted problems.
 	# TODO Add some errorchecking.
 	open( FILE, '>'. $filename );
@@ -3635,11 +3409,6 @@ sub _write
 	}
 	close( FILE );
 
-	if ( $write_data ) {
-		foreach my $data ( @{$self->datas} ) {
-			$data->_write;
-		}
-	}
 
 	if ($self->iofv_modules) {
 		$self->iofv_modules->[0]->post_process;
@@ -4013,246 +3782,8 @@ sub output_files
 	return \@file_names;
 }
 
-sub factors
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		 column => { isa => 'Int', optional => 1 },
-		 column_head => { isa => 'Str', optional => 1 },
-		 problem_number => { isa => 'Int', optional => 1 },
-		 return_occurences => { isa => 'Bool', default => 0, optional => 1 },
-		 unique_in_individual => { isa => 'Bool', default => 1, optional => 1 }
-	);
-	my $column = $parm{'column'};
-	my $column_head = $parm{'column_head'};
-	my $problem_number = $parm{'problem_number'};
-	my $return_occurences = $parm{'return_occurences'};
-	my $unique_in_individual = $parm{'unique_in_individual'};
-	my %factors;
 
-	# Calls <I>factors</I> on the data object of a specified
-	# problem. See <I>data -> factors</I> for details.
-	my $column_number;
-	if ( defined $column_head ) {
-	  # Check normal data object first
-	  my ( $values_ref, $positions_ref ) = $self ->
-	    _get_option_val_pos ( problem_numbers => [$problem_number], 
-				  name        => $column_head,
-				  record_name => 'input',
-				  global_position => 1 );
-	  $column_number = $positions_ref -> [0];
 
-		croak("Unknown column \"$column_head\"" )
-	      unless ( defined $column_number );
-	} else {
-	  $column_number = $column;
-	}
-	if ( defined $column_number) {
-	  %factors = %{$self->datas -> [$problem_number-1] ->
-			 factors( column => $column_number,
-				  unique_in_individual => $unique_in_individual,
-				  return_occurences => $return_occurences )};
-	}
-
-	return \%factors;
-}
-
-sub have_missing_data
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		 problem_number => { isa => 'Int', optional => 1 },
-		 column => { isa => 'Int', optional => 1 },
-		 column_head => { isa => 'Str', optional => 1 }
-	);
-	my $problem_number = $parm{'problem_number'};
-	my $column = $parm{'column'};
-	my $column_head = $parm{'column_head'};
-	my $return_value;
-
-	# Calls <I>have_missing_data</I> on the data object of a specified
-	# problem. See <I>data -> have_missing_data</I> for details.
-	my $column_number;
-	if ( defined $column_head ) {
-	  # Check normal data object first
-	  my ( $values_ref, $positions_ref ) = $self ->
-	    _get_option_val_pos ( problem_numbers => [$problem_number], 
-				  name        => $column_head,
-				  record_name => 'input',
-				  global_position => 1  );
-	  $column_number = $positions_ref -> [0];
-
-	  croak("Unknown column \"$column_head\"" )
-	      unless ( defined $column_number );
-	} else {
-	  $column_number = $column;
-	}
-	if ( defined $column_number) {
-	  $return_value = $self->datas -> [$problem_number-1] ->
-	    have_missing_data( column => $column_number );
-	}
-
-	return $return_value;
-}
-
-sub median
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		 problem_number => { isa => 'Int', optional => 1 },
-		 column_head => { isa => 'Str', optional => 1 },
-		 column => { isa => 'Int', optional => 1 },
-		 unique_in_individual => { isa => 'Bool', optional => 1 }
-	);
-	my $problem_number = $parm{'problem_number'};
-	my $column_head = $parm{'column_head'};
-	my $column = $parm{'column'};
-	my $unique_in_individual = $parm{'unique_in_individual'};
-	my $median;
-
-	# Calls <I>median</I> on the data object of a specified
-	# problem. See <I>data -> median</I> for details.
-	my $column_number;
-	if ( defined $column_head ) {
-	  # Check normal data object first
-	  my ( $values_ref, $positions_ref ) = $self ->
-	    _get_option_val_pos ( problem_numbers => [$problem_number], 
-				  name        => $column_head,
-				  record_name => 'input',
-				  global_position => 1  );
-	  $column_number = $positions_ref -> [0];
-	  
-	  croak("Unknown column \"$column_head\"" )
-	      unless ( defined $column_number );
-	} else {
-	  $column_number = $column;
-	}
-
-	if ( defined $column_number) {
-	  $median = $self->datas -> [$problem_number-1] ->
-	    median( column => $column_number,
-		    unique_in_individual => $unique_in_individual );
-	}
-
-	return $median;
-}
-
-sub mean
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		 problem_number => { isa => 'Int', optional => 1 },
-		 column_head => { isa => 'Str', optional => 1 },
-		 column => { isa => 'Int', optional => 1 }
-	);
-	my $problem_number = $parm{'problem_number'};
-	my $column_head = $parm{'column_head'};
-	my $column = $parm{'column'};
-	my $mean;
-
-	# Calls <I>mean</I> on the data object of a specified
-	# problem. See <I>data -> mean</I> for details.
-	my $column_number;
-	if ( defined $column_head ) {
-	  # Check normal data object first
-	  my ( $values_ref, $positions_ref ) = $self ->
-	    _get_option_val_pos ( problem_numbers => [$problem_number], 
-				  name        => $column_head,
-				  record_name => 'input',
-				  global_position => 1  );
-	  $column_number = $positions_ref -> [0];
-
-	  croak("Unknown column \"$column_head\"" )
-	      unless ( defined $column_number );
-	} else {
-	  $column_number = $column;
-	}
-
-	if ( defined $column_number) {
-	  $mean = $self->datas -> [$problem_number-1] ->
-	      mean( column => $column_number);
-	}
-
-	return $mean;
-}
-
-sub max
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		 problem_number => { isa => 'Int', optional => 1 },
-		 column => { isa => 'Int', optional => 1 },
-		 column_head => { isa => 'Str', optional => 1 }
-	);
-	my $problem_number = $parm{'problem_number'};
-	my $column = $parm{'column'};
-	my $column_head = $parm{'column_head'};
-	my $max;
-
-	# Calls <I>max</I> on the data object of a specified
-	# problem. See <I>data -> max</I> for details.
-	my $column_number;
-	if ( defined $column_head ) {
-	  # Check normal data object first
-	  my ( $values_ref, $positions_ref ) = $self ->
-	    _get_option_val_pos ( problem_numbers => [$problem_number], 
-				  name        => $column_head,
-				  record_name => 'input',
-				  global_position => 1  );
-	  $column_number = $positions_ref -> [0];
-
-	  croak("Unknown column \"$column_head\"" )
-	      unless ( defined $column_number );
-	} else {
-	  $column_number = $column;
-	}
-
-	if ( defined $column_number) {
-	  $max = $self->datas -> [$problem_number-1] ->
-	    max( column => $column_number );
-	}
-
-	return $max;
-}
-
-sub min
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		 problem_number => { isa => 'Int', optional => 1 },
-		 column => { isa => 'Int', optional => 1 },
-		 column_head => { isa => 'Str', optional => 1 }
-	);
-	my $problem_number = $parm{'problem_number'};
-	my $column = $parm{'column'};
-	my $column_head = $parm{'column_head'};
-	my $min;
-
-	# Calls <I>min</I> on the data object of a specified
-	# problem. See <I>data -> min</I> for details.
-	my $column_number;
-	if ( defined $column_head ) {
-	  # Check normal data object first
-	  my ( $values_ref, $positions_ref ) = $self ->
-	    _get_option_val_pos ( problem_numbers => [$problem_number], 
-				  name        => $column_head,
-				  record_name => 'input',
-				  global_position => 1  );
-	  $column_number = $positions_ref -> [0];
-
-	  croak("Unknown column \"$column_head\"" )
-	      unless ( defined $column_number );
-	} else {
-	  $column_number = $column;
-	}
-
-	if ( defined $column_number) {
-	  $min = $self->datas -> [$problem_number-1] ->
-	    min( column => $column_number );
-	}
-
-	return $min;
-}
 
 sub remove_inits
 {
@@ -4375,49 +3906,6 @@ sub remove_inits
       }
 }
 
-sub fractions
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		 column => { isa => 'Int', optional => 1 },
-		 column_head => { isa => 'Str', optional => 1 },
-		 problem_number => { isa => 'Int', optional => 1 },
-		 unique_in_individual => { isa => 'Bool', default => 1, optional => 1 },
-		 ignore_missing => { isa => 'Bool', optional => 1 }
-	);
-	my $column = $parm{'column'};
-	my $column_head = $parm{'column_head'};
-	my $problem_number = $parm{'problem_number'};
-	my $unique_in_individual = $parm{'unique_in_individual'};
-	my %fractions;
-	my $ignore_missing = $parm{'ignore_missing'};
-
-	# Calls <I>fractions</I> on the data object of a specified
-	# problem. See <I>data -> fractions</I> for details.
-	my $column_number;
-	if ( defined $column_head ) {
-	  # Check normal data object first
-	  my ( $values_ref, $positions_ref ) = $self ->
-	    _get_option_val_pos ( problem_numbers => [$problem_number], 
-				  name        => $column_head,
-				  record_name => 'input',
-				  global_position => 1 );
-	  $column_number = $positions_ref -> [0];
-
-	  croak("Unknown column \"$column_head\"")
-	      unless ( defined $column_number );
-	} else {
-	  $column_number = $column;
-	}
-	if ( defined $column_number) {
-	  %fractions = %{$self->datas -> [$problem_number-1] ->
-			   fractions( column => $column_number,
-				      unique_in_individual => $unique_in_individual,
-				      ignore_missing       => $ignore_missing )};
-	}
-
-	return \%fractions;
-}
 
 sub remove_records
 {
@@ -4601,25 +4089,15 @@ sub randomize_inits
 	}
 }
 
-sub flush_data
-{
-	my $self = shift;
-
-	if ( defined $self->datas ) {
-	  foreach my $data ( @{$self->datas} ) {
-	    $data -> flush;
-	  }
-	}
-}
 
 sub remove_option
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
 		 problem_numbers => { isa => 'ArrayRef[Int]', optional => 1 },
-		 record_name => { isa => 'Str', optional => 1 },
+		 record_name => { isa => 'Str', optional => 0 },
 		 record_number => { isa => 'Int', default => 0, optional => 1 },
-		 option_name => { isa => 'Str', optional => 1 },
+		 option_name => { isa => 'Str', optional => 0 },
 		 fuzzy_match => { isa => 'Bool', default => 0, optional => 1 }
 	);
 	my @problem_numbers = defined $parm{'problem_numbers'} ? @{$parm{'problem_numbers'}} : ();
@@ -4650,8 +4128,8 @@ sub add_option
 	my %parm = validated_hash(\@_,
 		 problem_numbers => { isa => 'ArrayRef[Int]', optional => 1 },
 		 record_number => { isa => 'Int', default => 0, optional => 1 },
-		 record_name => { isa => 'Str', optional => 1 },
-		 option_name => { isa => 'Str', optional => 1 },
+		 record_name => { isa => 'Str', optional => 0 },
+		 option_name => { isa => 'Str', optional => 0 },
 		 option_value => { isa => 'Str', optional => 1 },
 		 add_record => { isa => 'Bool', default => 0, optional => 1 }
 	);
@@ -4684,9 +4162,9 @@ sub set_option
 	my $self = shift;
 	my %parm = validated_hash(\@_,
 		problem_numbers => { isa => 'ArrayRef[Int]', optional => 1 },
-		record_name => { isa => 'Str', optional => 1 },
+		record_name => { isa => 'Str', optional => 0 },
 		record_number => { isa => 'Int', default => 0, optional => 1 },
-		option_name => { isa => 'Str', optional => 1 },
+		option_name => { isa => 'Str', optional => 0 },
 		option_value => { isa => 'Str', optional => 1 },
 		fuzzy_match => { isa => 'Bool', default => 0, optional => 1 }
 	);
@@ -4978,23 +4456,6 @@ sub iwres_shrinkage
 	return \@iwres_shrinkage;
 }
 
-sub flush
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		force => { isa => 'Bool', default => 0, optional => 1 }
-	);
-	my $force = $parm{'force'};
-
-	#FIXME: Remove this method
-	# synchronizes the object with the file on disk and empties
-	# most of the objects attributes to save memory.
-	if( defined $self->problems and ( !$self->synced or $force ) ) {
-		$self -> _write;
-	}
-	$self->{'problems'} = undef;	#FIXME: Change for Moose
-	$self->synced(0);
-}
 
 sub update_prior_information
 {
@@ -5273,6 +4734,13 @@ sub _option_name
 	my $new_name = $parm{'new_name'};
 	my $name;
 
+	if ($record eq 'data' and ($position == 0)){
+		if (defined $new_name){
+			croak("use setter in data record to change data file name");
+		}else{
+			croak("use getter in data record for data file name");
+		}
+	}
 	my ( @problems, @records, @options, $i );
 	my $accessor = $record.'s';
 	if ( defined $self->problems ) {
@@ -5409,14 +4877,14 @@ sub _init_attr
 
 sub create_dummy_model
 {
-  my $dummy_prob = model::problem->new(ignore_missing_files=> 1,
-					   prob_arr       => ['$PROB','$INPUT ID','$DATA dummy.txt']);
-  
-  my $model = model->new(filename => 'dummy',
-				    problems => [$dummy_prob],
-				    skip_data_parsing=> 1,
-				    ignore_missing_files => 1);
-
+	my $dummy_prob = model::problem->new(ignore_missing_files=> 1,
+										 prob_arr       => ['$PROB','$INPUT ID','$DATA dummy.txt']);
+	
+	my $model = model->new(filename => 'dummy',
+						   problems => [$dummy_prob],
+						   is_dummy => 1,
+						   ignore_missing_files => 1);
+	
 	return $model;
 }
 

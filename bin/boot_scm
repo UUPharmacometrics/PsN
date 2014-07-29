@@ -309,7 +309,6 @@ my $dummy_prob = model::problem -> new ( ignore_missing_files=> 1,
 
 my $dummy_model = model -> new (filename => 'dummy_for_mcmp',
 								problems => [$dummy_prob],
-								skip_data_parsing=> 1,
 								ignore_missing_files => 1);
 my $dummy_tool = tool -> new(models => [$dummy_model],
 							 directory => $main_directory);
@@ -333,6 +332,10 @@ my $dname = 'forward';
 my $linBmodel;
 my $need_extra_boot_data=0;
 
+my $ignoresign;
+my $missing_data_token;
+my $idcolumn;
+
 $dname = 'backward' if ($direction eq 'both' or $direction eq 'backward');
 if ($config_file->linearize){
 	$finalname='final_'.$dname.'_nonlinear.mod';
@@ -352,8 +355,7 @@ die("File " . $config_file->model() . "does not exist")
 
 my $eval_string = common_options::model_parameters(\%options);
 my $model = model -> new ( eval $eval_string,
-						   filename           => $config_file -> model,
-						   target             => 'disk' ) ;
+						   filename           => $config_file -> model) ;
 if( $options{'shrinkage'} ) {
 	$model -> shrinkage_stats( enabled => 1 );
 }
@@ -362,7 +364,6 @@ if( $options{'shrinkage'} ) {
 #must do filtering on IGNORE/ACCEPT here if in model
 #Do not edit input model to remove that statement,
 #want final models to be correct for original data
-my $full_filtered_data;
 my $do_filtering=0;
 my @check_list;
 my $ignorelist = $model-> get_option_value(record_name=>'data',
@@ -428,15 +429,16 @@ if ($do_filtering){
 
 }
 
+$idcolumn = $model->idcolumn;
+$missing_data_token=$model->missing_data_token;
+
 if ($do_filtering){
 	my $filtered_data_model = $model -> copy ( filename => 'filter_data.mod',
 											   directory => $preprocessdir, 
-											   copy_data          => 0,
+											   copy_datafile          => 0,
 											   copy_output        => 0,
-											   skip_data_parsing => 1);
-	foreach my $out (@{$filtered_data_model-> outputs()}){
-		$out -> directory($filtered_data_model->directory());
-	}
+											   write_copy =>0,
+											   output_same_directory => 1);
 	my @filter_table_header;
 	my $datafile = 'filtered.dta';
 	my $dummycounter=0;
@@ -498,39 +500,26 @@ if ($do_filtering){
 		  top_tool       => 0,
 		  clean => 2  );
 	$filter_fit -> run;
-	my @idcolumns = @{$model -> idcolumns};
-	my $idcolumn = $idcolumns[0];
+	$ignoresign = '@';
 	#ignoresign is @ since data is a table file
 	print "\n";
 	if ( defined $idcolumn ) {
-		$full_filtered_data = data -> new( 
-			idcolumn             => $idcolumn,
-			filename             => $datafile,
-			missing_data_token => $filtered_data_model->missing_data_token,
-			ignoresign           => '@',
-			directory            => $filtered_data_model -> directory,
-			ignore_missing_files => 0,
-			skip_parsing         => 0,
-			target               => 'mem');
 		#must copy model here and set $model to copy
 		my $newmodel = $model -> copy(filename => $preprocessdir.'/orig_model_filtered_data.mod',
-									  copy_data => 0, copy_output => 0,
-									  target => 'mem' );
+									  copy_datafile => 0,
+									  write_copy => 0,
+									  output_same_directory => 1,
+									  copy_output => 0);
 
-		foreach my $out (@{$newmodel-> outputs()}){
-			$out -> directory($newmodel->directory());
-		}
-		$newmodel -> _option_name( position	  => 0,
-								   record	  => 'data',
-								   problem_number => 1,
-								   new_name	  => $filtered_data_model -> directory.$datafile);
-		$newmodel -> datas()->[0] = $full_filtered_data;
-		$newmodel->_write(write_data => 0);
+		$newmodel -> datafiles (new_names =>[$filtered_data_model -> directory.$datafile]);
+		$newmodel->_write;
 		$model = $newmodel;
 	} else {
 		die( "No id column definition found in the model file." );
 	}
 	
+}else{
+	$ignoresign = defined $model -> ignoresigns ? $model -> ignoresigns -> [0] : '@';
 }
 
 if (defined $options{'dummy_covariates'}){
@@ -539,19 +528,21 @@ if (defined $options{'dummy_covariates'}){
 
 	my @covs =split(',',$options{'dummy_covariates'});
 	my $newname = 'model_with_xcov.mod';
-	my $newdataname = 'xcov_'.$model->datas->[0]->filename();
+	my $newdataname = 'xcov_'.$model->datafiles(problem_numbers => [1],
+												absolute_path => 0)->[0];
 	$pathfinaldata = '../preprocess_data_dir/'.$newdataname; #local path from $finaldir
 	$config_file -> model($newname);
 	$model ->directory($preprocessdir.'/');
 	$model ->filename($newname);
 	my @newout =(output -> new( filename             => 'model_with_xcov.lst',
 								directory            => $preprocessdir.'/',
-								ignore_missing_files => 1,
-								target               => 'disk'));
+								ignore_missing_files => 1));
 	$model->outputs(\@newout);
 
-	my @xcovnames = @{$model -> add_randomized_columns(
-						  filename => "$newdataname",
+	my @xcovnames = @{data::add_randomized_input_data(
+						  model => $model,
+						  missing_data_token => $missing_data_token, 
+						  filename => $newdataname,
 						  column_headers => \@covs)};
 	my $index=-1;
 	foreach my $cov (@covs){
@@ -636,17 +627,24 @@ if (defined $options{'dummy_covariates'}){
 	print "done\n";
 
 }else{
-	#no dummy covs, must manually fix full data path
+	#no dummy covs, manually fix full data path
 	#if original data not in return dir then copy data to main_directory, otherwise
 	#set local path ../../
-	if (($model -> datas()->[0]->directory() eq $return_dir.'/') or
-		($model -> datas()->[0]->directory() eq $return_dir.'\\') or
-		($model -> datas()->[0]->directory() eq $return_dir)) {
-		$pathfinaldata = '../../'.$model -> datas()->[0]->filename(); #local path from $finaldir
+	#there is probably a much easier way to do this!
+	my $finalname = $model->datafiles(absolute_path => 0,
+									  problem_numbers => [1])->[0];
+	my $fullname = $model->datafiles(absolute_path => 1,
+									  problem_numbers => [1])->[0];
+	my $dir = $model -> problems->[0]->datas->[0]->get_directory;
+
+	if (($dir eq $return_dir.'/') or
+		($dir eq $return_dir.'\\') or
+		($dir eq $return_dir)) {
+		$pathfinaldata = '../../'.$finalname; #local path from $finaldir
 	}else{
 		#copy original data to main_directory without path
-		cp($model -> datas()->[0]->full_name(),$finaldir.'/'.$model -> datas()->[0]->filename());
-		$pathfinaldata = $model -> datas()->[0]->filename();
+		cp($fullname,$finaldir.'/'.$finalname);
+		$pathfinaldata = $finalname;
 	}
 }
 
@@ -654,7 +652,13 @@ chdir($main_directory);
 
 my $the_data;
 if ((not $config_file->linearize) or $options{'methodA'}){
-	$the_data = $model -> datas()->[0]; #is already filtered if needed
+	my $fullname = $model->datafiles(problem_numbers => [1],
+									 absolute_path => 1)->[0];
+	$the_data = data -> new(filename =>$fullname,
+							missing_data_token => $config_file->missing_data_token,
+							idcolumn => $model->idcolumn, 
+							ignoresign => '@', 
+							ignore_missing_files => 0);
 }else{
 	#** Lin_B :
 	$need_extra_boot_data=1 if (defined $config_file->time_varying() and
@@ -668,12 +672,10 @@ if ((not $config_file->linearize) or $options{'methodA'}){
 	#copy original model to local directory
 	$linBmodel = 
 		$model -> copy(filename => $preprocessdir.'/orig_model_for_derivatives.mod',
-					   copy_data => 0, copy_output => 0,
-					   target => 'mem' );
+					   copy_datafile => 0, 
+					   output_same_directory => 1,
+					   copy_output => 0	);
 	
-	foreach my $out (@{$linBmodel-> outputs()}){
-		$out -> directory($linBmodel->directory());
-	}
 	#  - Run non-linear model once + linearize. Filtering already done if needed
 	my $deriv_dir = $main_directory.'/compute_derivatives_dir';
 	ui -> print( category => 'boot_scm',
@@ -689,17 +691,15 @@ if ((not $config_file->linearize) or $options{'methodA'}){
 
 	$deriv_scm -> run;
 	$config_file->time_varying($time_varying); #reset
-	
+	print "scm linearize is run\n";
 	#in derivatives_covariates.dta ID is always 1, different set of columns entirely
 	#ignoresign is @ since table
 	$the_data = data -> new(directory => $deriv_dir,
 							filename =>'derivatives_covariates.dta',
 							missing_data_token => $config_file->missing_data_token,
-							target => 'mem',
 							idcolumn => 1, 
 							ignoresign => '@', 
-							ignore_missing_files => 0,
-							skip_parsing => 0);
+							ignore_missing_files => 0);
 	print "\n";
 }
 
@@ -725,23 +725,26 @@ if (defined $options{'stratify_on'} ) {
 
 
 chdir($main_directory);
+#new_datas is array of file names incl directory
 my ( $new_datas, $incl_ids, $incl_keys )
-    = $the_data -> bootstrap( directory   => $modeldir,
+    = $the_data -> _bootstrap( directory   => $modeldir,
 							  name_stub   => 'bsdata',
 							  stratify_on => $stratify_on, 
 							  samples     => $options{'samples'},
-							  target	     => 'disk',
 							  subjects =>{'default'=>($the_data -> count_ind)});
 
 my $extra_boot_datas;
 if ($need_extra_boot_data){
 	#either based on filtered data from compute_derivatives_dir
 	#or original $model -> datas()->[0];
-	$extra_boot_datas = $model->datas()->[0] -> 
-		bootstrap_from_keys( directory   => $modeldir,
-							 name_stub   => 'original_bsdata',
-							 key_references => $incl_keys,
-							 target	     => 'disk');
+	$extra_boot_datas = bootstrap_create_datasets_from_keys( output_directory   => $modeldir,
+															 name_stub   => 'original_bsdata',
+															 key_references => $incl_keys,
+															 ignoresign => $ignoresign,
+															 missing_data_token => $missing_data_token,
+															 idcolumn => $idcolumn,
+															 input_filename => $model->datas()->[0] ->filename,
+															 input_directory => $model->datas()->[0] ->directory);
 }
 
 #print included individuals
@@ -806,32 +809,34 @@ for ( my $j = $start_j; $j <= $options{'samples'}; $j++ ) {
 	my $new_mod = $model ->copy(
 		directory            => $model_dir,
 		filename             => $filename,
-		copy_output           => 0, #important not to copy output, so that base model will be run for each boot data
-		copy_data =>0,
-		target               => 'disk');
+		copy_output           => 0, #important to set =>0 so that base model is run for every bootstrap dataset 
+		write_copy => 0,
+		copy_datafile =>0);
     
 	if( $options{'shrinkage'} ) {
 		$new_mod -> shrinkage_stats( enabled => 1 );
 		$new_mod -> shrinkage_modules( $model -> shrinkage_modules );
 	}
 
+#	print "setting datafiles in new_mod\n";
 	if ((not $config_file->linearize) or $options{'methodA'}){
 		if ($j>0){
-			$new_mod -> datas ( [$new_datas -> [$j-1]] );#might not be in memory here
+			$new_mod -> datafiles ( new_names => [$new_datas -> [$j-1]] );#might not be in memory here
 		}else{
-			$new_mod -> datas ( [$the_data] );
+			$new_mod -> datafiles ( new_names => [$the_data->full_name] );
 		}
 	}else{
 		if ($j>0){
 			$config_file->derivatives_data($main_directory.'/m1/bsdata_'.($j).'.dta');
 			if ($need_extra_boot_data){
-				$new_mod -> datas ( [$extra_boot_datas -> [$j-1]] );#might not be in memory here
+				$new_mod -> datafiles ( new_names => [$extra_boot_datas -> [$j-1]] );#might not be in memory here
 			}
 		}else{
 			#original model full filtered data
 			$config_file->derivatives_data($main_directory.'/compute_derivatives_dir/derivatives_covariates.dta');
 		}
 	}
+#	print "writing new_mode to ".$new_mod->full_name."\n";
 	$new_mod -> _write;
 	
 	my $scmdir = $main_directory.'/scm_dir'.$j;
@@ -847,8 +852,7 @@ for ( my $j = $start_j; $j <= $options{'samples'}; $j++ ) {
 
 		ui->category('boot_scm');
 		print ui -> print( category => 'boot_scm',
-						   message => "Starting bootstrap scm forward search $samp",
-						   newline =>1);
+						   message => "Starting bootstrap scm forward search $samp\n");
 
 		my $scm = tool::scm -> 
 			new ( eval( $common_options::parameters ),
@@ -984,8 +988,7 @@ if ($options{'run_final_models'}){
 	my @modelarr;
 	foreach my $fname (@finalmodelnames){
 		my $mod = model -> new ( eval $eval_string,
-								 filename           => $fname,
-								 target             => 'disk' ) ;
+								 filename           => $fname) ;
 		if( $options{'shrinkage'} ) {
 			$mod -> shrinkage_stats( enabled => 1 );
 		}

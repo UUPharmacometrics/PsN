@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 use File::Path 'rmtree';
-use Test::More tests=>1;
+use Test::More tests=>3;
 use File::Copy 'cp';
 use FindBin qw($Bin);
 use lib "$Bin/.."; #location of includes.pm
@@ -15,10 +15,8 @@ my $model_dir = $includes::testfiledir;
 
 my @needed=("$model_dir/scm/pheno_with_cov.mod",
 			"$model_dir/scm/pheno_ch.csv",
-			"$model_dir/config_xv_scm.scm",
-			"$model_dir/mox1.mod",
+			"$model_dir/scm/config_foce.scm",
 			"$model_dir/scm_config.scm",
-			"$model_dir/mox_simulated.csv"			
 	);
 my $bootdir = "$tempdir/boot_scm_test";
 
@@ -30,6 +28,8 @@ chdir($bootdir);
 my @scmcommands = 
 	(
 	 $includes::boot_scm." -samples=2 scm_config.scm -dummy_cov=WGT -stratify_on=CVD1 -dir=$dir",
+	 $includes::boot_scm." -samples=2 config_foce.scm -stratify_on=CVD2 -dir=$dir ",
+	 $includes::boot_scm." -samples=2 config_foce.scm -stratify_on=CVD2 -dir=$dir -methodA",
 	);
 foreach my $command (@scmcommands){
 	print "Running $command\n";

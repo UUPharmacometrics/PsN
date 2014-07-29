@@ -205,15 +205,9 @@ sub _format_record
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		nonparametric_code => { isa => 'Bool', optional => 1 },
 		number_format => { isa => 'Maybe[Int]', optional => 1 },
-		shrinkage_code => { isa => 'Bool', optional => 1 },
-		eigen_value_code => { isa => 'Bool', optional => 1 }
 	);
-	my $nonparametric_code = $parm{'nonparametric_code'};
 	my $number_format = $parm{'number_format'};
-	my $shrinkage_code = $parm{'shrinkage_code'};
-	my $eigen_value_code = $parm{'eigen_value_code'};
 	my @formatted;
 
 	# record::format_record
@@ -301,8 +295,7 @@ sub _format_record
 			my $foption = $option -> _format_option;
 
 			# Check and add linebreak if necesary.
-			#do not add linebreak before first option in $DATA (file path data file)
-			if (( length( $formatted[$line].' '.$foption ) > 70 ) and (not ($i==0 and $fname eq 'DATA'))){
+			if ( length( $formatted[$line].' '.$foption ) > 70 ){
 				$formatted[$line] .= "\n";
 				$line++;
 				# Indent for next option

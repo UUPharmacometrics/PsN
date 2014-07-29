@@ -108,15 +108,14 @@ my $hash1_answer = {
 my $file = file -> new( name => 'config_nostep.scm', path => $scm_file_dir );
 my $config_file = 'tool::scm::config_file' -> new ( file => $file );
 
-my $models_array = [ model -> new ( filename           => $scm_file_dir.'/pheno_with_cov.mod',
-				    target             => 'disk' ) ] ;
+my $models_array = [ model -> new ( filename => $scm_file_dir.'/pheno_with_cov.mod')] ;
 
 my  $scm = tool::scm->new(nmfe => 1,
-			       models	=> $models_array,
-			       directory => $dir,
-			       lst_file => $scm_file_dir.'/pheno_with_cov.lst',
-			       config_file => $config_file,
-			       both_directions => 0);
+						  models	=> $models_array,
+						  directory => $dir,
+						  lst_file => $scm_file_dir.'/pheno_with_cov.lst',
+						  config_file => $config_file,
+						  both_directions => 0);
 
 
 my $h1 = get_stats();
@@ -134,8 +133,7 @@ rmtree([$dir]);
 $file = file->new( name => 'config_nostep.scm', path => $scm_file_dir );
 $config_file = 'tool::scm::config_file' -> new ( file => $file );
 
-$models_array = [ model -> new ( filename           => $scm_file_dir.'/pheno_missing.mod',
-				    target             => 'disk' ) ] ;
+$models_array = [ model -> new ( filename  => $scm_file_dir.'/pheno_missing.mod') ] ;
 
 my %options;
 $options{'nmfe'}=1;
@@ -168,8 +166,7 @@ $file = file -> new( name => 'config_nostep.scm', path => $scm_file_dir );
 $config_file = 'tool::scm::config_file' -> new ( file => $file );
 
 $models_array = [ model -> new ( filename           => $scm_file_dir.'/pheno_missing_9999.mod',
-								 missing_data_token => 9999,
-								 target             => 'disk' ) ] ;
+								 missing_data_token => 9999) ] ;
 
 $scm = tool::scm->new(nmfe => 1,
 						   models	=> $models_array,

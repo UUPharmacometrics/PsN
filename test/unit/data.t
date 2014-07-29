@@ -5,7 +5,7 @@
 
 use strict;
 use warnings;
-use Test::More tests=>203;
+use Test::More tests=>206;
 use Test::Exception;
 use Math::Random;
 use FindBin qw($Bin);
@@ -13,22 +13,23 @@ use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages
 use data;
 
+#TODO check data copy with write_copy => 0, check that individuals and header are copied, and idcolumn attributes
+
 my $data = data->new( 
-   idcolumn             => 1,
-   filename             => 'testdata_no_missing.csv',
-   directory            => $includes::testfiledir,
-   ignoresign => '@',
-   ignore_missing_files => 0,
-   skip_parsing         => 0,
-   target               => 'mem');
+	idcolumn             => 1,
+	filename             => 'testdata_no_missing.csv',
+	directory            => $includes::testfiledir,
+	ignoresign => '@',
+	ignore_missing_files => 0);
+
 my $dotdata = data->new( 
-   idcolumn             => 1,
-   filename             => 'testdata_with_dot.csv',
-   directory            => $includes::testfiledir,
-   ignoresign => '@',
-   ignore_missing_files => 0,
-   skip_parsing         => 0,
-   target               => 'mem');
+	idcolumn             => 1,
+	filename             => 'testdata_with_dot.csv',
+	directory            => $includes::testfiledir,
+	ignoresign => '@',
+	ignore_missing_files => 0);
+
+
 
 # Test of reconcile_column
 is_array ($data->reconcile_column(template_values=>[1,2,3,4], old_values=> [1,1,1], equal_obs =>1), [1,2,3], 
@@ -80,7 +81,7 @@ is_array($strat_val,[1,1,1,1,2,2,2,2,2,2],"split_vertically strat values");
 my $tempdir = create_test_dir('unit_data');
 
 random_set_seed_from_phrase('12345');
-my $arr = $data->randomize_data(samples => 1, rand_index => 1, stratify_index => 8, equal_obs => 1, directory => $tempdir);
+my $arr = $data->_randomize_data(samples => 1, rand_index => 1, stratify_index => 8, equal_obs => 1, directory => $tempdir);
 my $filename = 'rand_1.dta';
 
 my $newdata = data->new( 
@@ -88,9 +89,7 @@ my $newdata = data->new(
    filename             => $filename,
    directory            => $tempdir,
    ignoresign => '@',
-   ignore_missing_files => 0,
-   skip_parsing         => 0,
-   target               => 'mem'
+   ignore_missing_files => 0
 );
 
 is_array ($newdata->individuals()->[3]->subject_data(), ['4,30,0,110.44,0,84,1,1,1',
@@ -105,16 +104,14 @@ is_array ($newdata->individuals()->[7]->subject_data(),['8,60,0,64.938,5,66,1,1,
 
 unlink("$tempdir/$filename");
 random_set_seed_from_phrase('12345');
-$arr = $dotdata->randomize_data(samples => 1,rand_index=> 1, equal_obs=>0, directory => $tempdir);
+$arr = $dotdata->_randomize_data(samples => 1,rand_index=> 1, equal_obs=>0, directory => $tempdir);
 
 $newdata = data ->new( 
-   idcolumn             => 1,
-   filename             => $filename,
-   directory            => $tempdir,
-   ignoresign => '@',
-   ignore_missing_files => 0,
-   skip_parsing         => 0,
-   target               => 'mem');
+	idcolumn             => 1,
+	filename             => $filename,
+	directory            => $tempdir,
+	ignoresign => '@',
+	ignore_missing_files => 0);
 
 is_array ($newdata->individuals()->[0]->subject_data(),['1,0,0,207.53,0,57,1,1,1',
 							'1,70,1,227.64,0,57,1,1,1',
@@ -133,7 +130,7 @@ my $phifile = $includes::testfiledir . "/mox1.phi";
 my $phi = data->new(
 	filename => $phifile,
 	ignoresign => '@',
-	parse_header => 1,
+	parse_header => 1
 );
 my $eta_matrix = $phi->get_eta_matrix(start_eta => 4, n_eta => 4);
 is_array ($eta_matrix->[0],['1.97271E-06','-2.92739E-06','1.83230E-05','5.73266E-06'],"eta matrix start_eta 4 n_eta 4 row index 0");
@@ -168,7 +165,7 @@ print $fh "0 23.56 14\n";
 print $fh "0 1.2 2.8\n";
 close $fh;
 
-my $data = data->new(filename => $filename, directory => $tempdir,ignoresign => '@');
+my $data = data->new(filename => $filename, directory => $tempdir,ignoresign => '@', parse_header => 1);
 
 # mean
 is ($data->mean(column => 2), 12.32, "data->mean of small data set column 1");
@@ -216,12 +213,19 @@ print $fh "1 28.9 6\n";
 print $fh "1 33.1 7.23\n";
 close $fh;
 
-my $data_merge = data->new(filename => $filename_merge, directory => $tempdir, ignoresign => '@');
+my $data_merge = data->new(filename => $filename_merge, directory => $tempdir, ignoresign => '@',parse_header =>1);
 $data_merge->merge(mergeobj => $data);
 is ($data_merge->mean(column => 2), 19.66, "data->merge checking new mean");
 
 #count_ind
 is ($data_merge->count_ind, 2, "data->count_ind");
+is ($data_merge->idcolumn, 1, "data->idcolumn");
+
+my $copy = $data_merge->copy(filename => 'dirt',
+							 write_copy => 0);
+is ($copy->count_ind, 2, "copied data count_ind");
+is ($copy->idcolumn, 1, "copied data idcol");
+
 
 #data set parsing
 my $filename_spec = "$tempdir/test_spec.dta";
@@ -232,7 +236,7 @@ print $fh ", 0, 1\n";
 print $fh ",,  1\n";
 close $fh;
 
-my $data_spec = data->new(filename => $filename_spec, directory => $tempdir, ignoresign => '@');
+my $data_spec = data->new(filename => $filename_spec, directory => $tempdir, ignoresign => '@',parse_header =>1);
 is_array ($data_spec->individuals->[0]->subject_data, ['1,0,1', ',0,1', ',,1'], "data->new starts with commas");
 
 remove_test_dir($tempdir);

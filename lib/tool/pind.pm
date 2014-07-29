@@ -73,16 +73,20 @@ sub modelfit_setup
 	);
 	my $model_number = $parm{'model_number'};
 
-  if (defined $self->njd) {
-    unless (defined $self->ignore_individuals_above) {
-      $self->ignore_individuals_above(100);
-    }
-  }
-  #this is sec 1 with 1.1-1.8 in URS individual probability script
-  #1.0
-  my $filename = $self->modelname . '.mod';
-  my $copy = $self->models->[0]->copy(filename => $filename, directory => 'm1');
-
+	if (defined $self->njd) {
+		unless (defined $self->ignore_individuals_above) {
+			$self->ignore_individuals_above(100);
+		}
+	}
+	#this is sec 1 with 1.1-1.8 in URS individual probability script
+	#1.0
+	my $filename = $self->modelname . '.mod';
+	my $copy = $self->models->[0]->copy(filename => $filename, 
+										directory => 'm1',
+										write_copy => 0,
+										copy_output => 0,
+										copy_datafile =>0);
+	
   if (defined $self->models->[0]->extra_files()) {
     my @extra_files;
     foreach my $extra (@{$self->models->[0]->extra_files()}) {
@@ -105,7 +109,7 @@ sub modelfit_setup
     #possibility to set to 0 can be used when calling pind from nonp_bootstrap
     #then inits are updated from output object instead of lst-file 
     #create output object to check that can be parsed correctly
-    my $outputObject = output -> new(filename => '../' . $self->lst_file);
+    my $outputObject = output -> new(filename => $self->lst_file);
     unless ($outputObject->parsed_successfully()){
       croak("lst file " . $self->lst_file . " could not be parsed.");
     }
@@ -254,7 +258,7 @@ sub modelfit_setup
   $copy -> add_records( type => 'table',
 			record_strings=>["ID JD $table_string NOPRINT ONEHEADER NOAPPEND FIRSTONLY $filestring"]);
 
-  $copy -> _write; #why??
+  $copy -> _write;
       
   #1.8
 
@@ -850,9 +854,12 @@ sub setup_ind_ofv_models
 
   foreach my $id( 0..($number_of_individuals-1) ){
       
-		my $copy = $self->jd_model->copy( filename => 'ofv_model_'.($id+1).'.mod',
-				directory => 'm2');
-
+	  my $copy = $self->jd_model->copy( filename => 'ofv_model_'.($id+1).'.mod',
+										directory => 'm2',
+										copy_datafile => 0,
+										copy_output => 0,
+										write_copy => 0);
+	  
       my $number_of_omegas = $copy -> nomegas -> [0];
 
       #2.2.1 replace each ETAX with the value for that ETAX from nptab-file

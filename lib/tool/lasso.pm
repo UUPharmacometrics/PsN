@@ -117,142 +117,6 @@ sub BUILD
 	}
 }
 
-sub calculate_covariate_statistics
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		data => { isa => 'data', optional => 1 },
-		column_number => { isa => 'Int', optional => 1 },
-		have_missing_data => { isa => 'Bool', optional => 1 },
-		breakpoint => { isa => 'Maybe[Num]', optional => 1 },
-		function => { isa => 'Int', optional => 1 }
-	);
-	my $data = $parm{'data'};
-	my $column_number = $parm{'column_number'};
-	my $have_missing_data = $parm{'have_missing_data'};
-	my $breakpoint = $parm{'breakpoint'};
-	my $function = $parm{'function'};
-	my %statistics;
-
-#check 'Non-unique values found' => 1
-	my $n_individuals = $data->count_ind();
-	if ($function == 1){
-		#linear categorical
-		# Sort by frequency
-		my %temp_factors = %{$self->get_categories(data =>$data,
-		column_number => $column_number)};
-		#here we may have floating point categories. Redefine to integer
-		my $all_integer=1;
-		foreach my $fact (keys %temp_factors){
-			my $tmp = sprintf("%.0f",$fact);
-			$all_integer = 0 unless ($tmp == $fact);
-		}
-		my %factors;
-		if ($all_integer){
-			foreach my $fact (keys %temp_factors){
-				my $tmp = sprintf("%.0f",$fact);
-				$factors{$tmp}=$temp_factors{$fact};
-			}
-		}else{
-			croak("the lasso can currently not handle non-integer categorical values for covariates. ".
-				"You need to change your dataset so that all categorical covariates only have integer values.");
-		}
-		$statistics{'cat_hash'} = \%factors;
-		#sort most first
-		my @sorted = sort {$factors{$b}<=>$factors{$a}} keys (%factors);
-		if ($sorted[0] ne $self->missing_data_token or (scalar (@sorted)==1 )){
-			$statistics{'most_common'} = $sorted[0]; # First element of the sorted array
-			# (the factor that most subjects have)
-		}else{
-			$statistics{'most_common'} = $sorted[1];
-		} 
-		foreach my $fact (@sorted){
-			next if ($fact eq $statistics{'most_common'});
-			#mean is number of subjects with this factor divided by N ind
-			$statistics{'mean'}{$fact} = $factors{$fact}/$n_individuals;
-			my $sd_sum = 0;
-			foreach my $individual ( @{$data -> individuals} ){
-				my $ifactors = $individual -> subject_data;
-				my $value = 0;
-				for(my $i=0; $i<=$#{$ifactors}; $i++ ){
-					my @recor = split(',', $ifactors -> [$i], $column_number+1);
-					my $type = $recor[$column_number-1];
-					if ($type eq $fact){
-						$value+=1/($#{$ifactors}+1);
-					}
-				}
-				$sd_sum+=($value-$statistics{'mean'}{$fact})**2;
-			}
-			$statistics{'sd'}{$fact}=sqrt($sd_sum/($n_individuals-1));
-		}
-
-	}elsif ($function == 3){
-		#max and min ignores missing data
-		if (defined $breakpoint){
-			$statistics{'breakpoint'} = $breakpoint;
-		}else{
-			$statistics{'breakpoint'} = $data -> median( column => $column_number,
-				unique_in_individual => 1);
-		}
-		$statistics{'min'} = $data -> min(column => $column_number);
-		$statistics{'max'} = $data -> max(column => $column_number);
-		$statistics{'sd'} = $data -> sd( column => $column_number);
-
-		$statistics{'mean'} = $data -> mean( column => $column_number);
-
-		$statistics{'H-sd'} = $data -> sd( column => $column_number,
-			hi_cutoff => $statistics{'breakpoint'});
-
-		$statistics{'H-mean'} = $data -> mean( column => $column_number,
-			hi_cutoff => $statistics{'breakpoint'});
-	}else {
-		$statistics{'mean'} = $data -> mean( column => $column_number);
-		$statistics{'sd'} = $data -> sd(column => $column_number);
-		$statistics{'min'} = $data -> min(column => $column_number);
-		$statistics{'max'} = $data -> max(column => $column_number);
-	}
-
-	return \%statistics;
-}
-
-sub get_categories
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		data => { isa => 'data', optional => 1 },
-		class => { isa => 'Str', optional => 1 },
-		column_number => { isa => 'Int', optional => 1 }
-	);
-	my $data = $parm{'data'};
-	my $class = $parm{'class'};
-	my $column_number = $parm{'column_number'};
-	my %categories;
-
-	my @individuals = @{$data->individuals};
-	my $first_id = @individuals[0];
-	die "data -> factor: No individuals defined in data object based on ",
-	$data->filename,"\n" unless defined $first_id;
-
-	my $type;
-
-	foreach my $individual ( @individuals ) {
-		my $ifactors = $individual -> subject_data;
-
-		for(my $i=0; $i<=$#{$ifactors}; $i++ ) {
-			my @recor = split(',', $ifactors -> [$i], $column_number+1);
-			$type = $recor[$column_number-1];
-			#Weight the individual data
-			my $value = 1/($#{$ifactors}+1);
-			if (exists $categories{$type}){
-				$categories{$type}+=$value;
-			} else {
-				$categories{$type}=$value;
-			}
-		}
-	}
-
-	return \%categories;
-}
 
 sub parse_row
 {
@@ -656,9 +520,9 @@ sub xv_step_init
 	my $new_t_value = $own_parameters->{'last_t_value'} + $own_parameters->{'steplength'};
 	foreach my $model ( @prediction_models){
 		$model->initial_values(parameter_type => 'theta',
-			parameter_numbers => [[$model->nthetas()]],
-			new_values =>[[$new_t_value]]);
-		$model->_write();
+							   parameter_numbers => [[$model->nthetas()]],
+							   new_values =>[[$new_t_value]]);
+		$model->_write(overwrite => 1);
 	}
 
 
@@ -677,7 +541,7 @@ sub xv_step_init
 			option_name => 'MSFO',
 			option_value=> $MSFO_file );
 
-		$model->_write();
+		$model->_write(overwrite => 1);
 	}
 	$self->stop_motion_call(tool=>'lasso',message => "written ".scalar(@estimation_models).
 		" new estimation models and ".scalar(@prediction_models).
@@ -958,13 +822,15 @@ sub modelfit_setup
 
 	# Assume one $PROBLEM one model
 	my $model = $self -> models -> [0];
-	my $data = $model -> datas -> [0];
+	my $dataobj = data->new(filename => $model->datafiles(absolute_path=>1)->[0],
+							idcolumn => $model->idcolumn,
+							missing_data_token => $self->missing_data_token,
+							ignoresign => $model->ignoresigns->[0]);
 
 	foreach my $set (@sets){
 		my @parlist = split (':',$set);
 		croak("Error parsing relations: expected exactly one : in $set but found ".
-			(scalar(@parlist)-1))
-		unless (scalar(@parlist)==2);
+			  (scalar(@parlist)-1)) unless (scalar(@parlist)==2);
 		my $parameter=$parlist[0];
 		if (defined $parameter_covariate_form{$parameter}){
 			croak("Error parsing relations: $parameter found twice ");
@@ -975,14 +841,12 @@ sub modelfit_setup
 			my $breakpoint;
 			if (scalar(@pair)==3){
 				croak("Can only specify breakpoint (number after second dash) if ".
-					"parameterization is 3, but found $covform ".
-					"where parameterization is ".$pair[1])
-				unless ($pair[1] eq '3');
+					  "parameterization is 3, but found $covform ".
+					  "where parameterization is ".$pair[1])	unless ($pair[1] eq '3');
 				$breakpoint = $pair[2];
 			}else{
 				croak("Error parsing relations: expected exactly one - in $covform but found ".
-					(scalar(@pair)-1))
-				unless (scalar(@pair)==2);
+					  (scalar(@pair)-1))	unless (scalar(@pair)==2);
 			}
 			my $covariate=$pair[0];
 			my $function=$pair[1];
@@ -990,35 +854,26 @@ sub modelfit_setup
 			my $column_number;
 			# Check normal data object first
 			my ( $values_ref, $positions_ref ) = $model ->
-			_get_option_val_pos ( problem_numbers => [1], 
-				name        => $covariate,
-				record_name => 'input',
-				global_position => 1  );
+				_get_option_val_pos ( problem_numbers => [1], 
+									  name        => $covariate,
+									  record_name => 'input',
+									  global_position => 1  );
 			$column_number = $positions_ref -> [0];
 
-			croak("Cannot find $covariate in \$INPUT" )
-			unless ( defined $column_number );
-
-
+			croak("Cannot find $covariate in \$INPUT" )	unless ( defined $column_number );
 			#check if $covariate in data is done when computing statistics
 			#check if $function 1-5
 			croak("Error parsing relations: ".
-				"parameterization in $covform must be in the set [1,2,3]")
-			unless ($function =~ /^(1|2|3)$/);
-
-			unless (defined $self -> statistics->{$covariate}{'have_missing_data'}){
-				$self -> statistics->{$covariate}{'have_missing_data'} =
-				$model -> have_missing_data( column_head => $covariate );
-			}
+				  "parameterization in $covform must be in the set [1,2,3]")
+				unless ($function =~ /^(1|2|3)$/);
 
 			unless (defined $self -> statistics->{$covariate}{$function}){
 				$self -> statistics->{$covariate}{$function} =
-				$self -> calculate_covariate_statistics
-				( have_missing_data => $self -> statistics->{$covariate}{'have_missing_data'},
-					data => $data,
-					column_number => $column_number,
-					function => $function,
-					breakpoint => $breakpoint);
+					$dataobj -> lasso_calculate_covariate_statistics
+					( 	missing_data_token =>$self->missing_data_token,
+						column_number => $column_number,
+						function => $function,
+						breakpoint => $breakpoint);
 			}
 			$parameter_covariate_form{$parameter}{$covariate}=$function;
 
@@ -1026,7 +881,7 @@ sub modelfit_setup
 
 	}
 
-	$data -> target('disk');
+	$dataobj = undef;
 	ui -> print( category => 'lasso',
 		message  => " ... done\n" );
 
@@ -1051,16 +906,15 @@ sub modelfit_setup
 	$model -> remove_records( type => 'covariance');
 
 	my $basic_model= $model->copy(filename => $self -> directory().'m'.$model_number.'/basic.mod',
-		copy_data => 0,
-		copy_output => 0);
-	$basic_model->_write();
-
+								  copy_datafile => 0,
+								  copy_output => 0);
 	## Create the new model object
 	#must do this in setup, not new
 	my $lasso_model= $model->copy(filename => $self -> directory().'m'.$model_number.'/lasso_initial.mod',
-		copy_data => 0,
-		copy_output => 0);
-
+								  copy_datafile => 0,
+								  copy_output => 0,
+								  write_copy => 0);
+	
 	$self->setup_lasso_model(lasso_model => $lasso_model,
 		parameter_covariate_form => \%parameter_covariate_form);
 	$lasso_model->_write();
@@ -1125,7 +979,7 @@ sub modelfit_setup
 					%{common_options::restore_options(@common_options::tool_options)},
 					directory=> undef,
 					seed => $common_seed,
-					data_path => '../../../xv_data/',
+					copy_data => 0,
 					top_tool => 0,
 					prepend_model_file_name => 1
 				}
@@ -1191,53 +1045,53 @@ sub modelfit_setup
 		#run the xv
 
 		my $cvobject = tool::xv->new(%{common_options::restore_options(@common_options::tool_options)},
-			models => [$lasso_model],
-			base_directory   => $self -> directory,
-			directory        => $self -> directory.'xv_dir'.$model_number, 
-			subtool_arguments => 
-			{xv_step => {%{common_options::restore_options(@common_options::tool_options)},
-					seed => $common_seed,
-					directory => undef,
-					cutoff => $self->cutoff(),
-					n_model_thetas => $basic_model->nthetas(),
-					nr_validation_groups => $self->groups(),
-					stratify_on      => $self -> stratify_on(), 
-					estimation_data => $data_xv_step->estimation_data(),
-					prediction_data => $data_xv_step->prediction_data(),
-					own_parameters => {logfile => $self->logfile,
-						last_t_value => $self->start_t(),
-						steplength => $self->step_t(),
-						basic_model => $basic_model,
-						last_ofv_sum => $self->pred_ofv_start_t(),
-						seed => $self->seed(),
-						stop_t =>  $self->stop_t(),
-						t_optimal => $self->start_t(),
-						converge => $self->convergence(),
-						est_filename => $est_filename,
-						pred_filename => $pred_filename,
-						coeff_table => $coeff_table },
-					init => \&xv_step_init,
-					post_analyze =>  \&xv_step_analyze},
-				modelfit => {%{common_options::restore_options(@common_options::tool_options)},
-					seed => $common_seed,
-					directory => undef,
-					prepend_model_file_name => 1,
-					cut_thetas_rounding_errors => 1,
-					handle_hessian_npd => 0,
-					data_path => '../../../../xv_data/',
-					cutoff => $self->cutoff(),
-					cutoff_thetas => [($basic_model->nthetas()+1)..($lasso_model->nthetas()-1)], #Last theta is t-value
-				}}
-		);
-
+									 models => [$lasso_model],
+									 base_directory   => $self -> directory,
+									 directory        => $self -> directory.'xv_dir'.$model_number, 
+									 subtool_arguments => 
+									 {xv_step => {%{common_options::restore_options(@common_options::tool_options)},
+												  seed => $common_seed,
+												  directory => undef,
+												  cutoff => $self->cutoff(),
+												  n_model_thetas => $basic_model->nthetas(),
+												  nr_validation_groups => $self->groups(),
+												  stratify_on      => $self -> stratify_on(), 
+												  estimation_data => $data_xv_step->estimation_data(),
+												  prediction_data => $data_xv_step->prediction_data(),
+												  own_parameters => {logfile => $self->logfile,
+																	 last_t_value => $self->start_t(),
+																	 steplength => $self->step_t(),
+																	 basic_model => $basic_model,
+																	 last_ofv_sum => $self->pred_ofv_start_t(),
+																	 seed => $self->seed(),
+																	 stop_t =>  $self->stop_t(),
+																	 t_optimal => $self->start_t(),
+																	 converge => $self->convergence(),
+																	 est_filename => $est_filename,
+																	 pred_filename => $pred_filename,
+																	 coeff_table => $coeff_table },
+												  init => \&xv_step_init,
+												  post_analyze =>  \&xv_step_analyze},
+									  modelfit => {%{common_options::restore_options(@common_options::tool_options)},
+												   seed => $common_seed,
+												   directory => undef,
+												   prepend_model_file_name => 1,
+												   cut_thetas_rounding_errors => 1,
+												   handle_hessian_npd => 0,
+												   copy_data => 0,
+												   cutoff => $self->cutoff(),
+												   cutoff_thetas => [($basic_model->nthetas()+1)..($lasso_model->nthetas()-1)], #Last theta is t-value
+									  }}
+			);
+		
 		$cvobject->run();
 		$self->warnings($self->warnings() + $cvobject->warnings());
 		$t_optimal = $cvobject->subtool_arguments->{'xv_step'}->{'own_parameters'}->{'t_optimal'} if (defined $cvobject->subtool_arguments);
-	}
+}
 
 
 	$self->write_log(message=>"The final t-value is: ". $t_optimal);
-
+	
 	if ($t_optimal<=0){
 		ui -> print( category => 'lasso',
 			message =>"Of the *tested* t_values, none gave a better model than the model".
@@ -1248,14 +1102,14 @@ sub modelfit_setup
 		message  => "The optimal t-value is $t_optimal. Running lasso model with t=$t_optimal\n" );
 
 	my $lasso_optimal = $lasso_model -> copy(filename => $self->directory()."m1/lasso_optimal.mod",
-		copy_data => 1, copy_output => 0,
-		target => 'mem');
-	foreach my $out (@{$lasso_optimal-> outputs()}){
-		$out -> directory($lasso_optimal->directory());
-	}
+											 copy_datafile => 0,
+											 output_same_directory => 1,
+											 write_copy => 0,
+											 copy_output => 0);
+
 	$lasso_optimal->initial_values(parameter_type => 'theta',
-		parameter_numbers => [[$lasso_optimal->nthetas()]],
-		new_values =>[[$t_optimal]]);
+								   parameter_numbers => [[$lasso_optimal->nthetas()]],
+								   new_values =>[[$t_optimal]]);
 	$lasso_optimal->_write();
 
 	my @cutoff_thetas = ($basic_model->nthetas()+1)..($lasso_model->nthetas()-1);
@@ -1284,28 +1138,26 @@ sub modelfit_setup
 	#Create the optimal model file (not LASSO)
 
 	$self->model_optimal($lasso_optimal -> copy(filename =>$self->directory(). "m1/optimal_model.mod",
-			copy_data => 0, 
-			copy_output => 0,
-			output_same_directory => 1,
-			target => 'mem'));
-
+												copy_datafile => 0, 
+												copy_output => 0,
+												write_copy => 0,
+												output_same_directory => 1));
+	
 	$self->model_optimal -> update_inits( from_output => $lasso_optimal->outputs->[0],
-		update_omegas => 1,
-		update_sigmas => 1,
-		update_thetas => 1);
-
+										  update_omegas => 1,
+										  update_sigmas => 1,
+										  update_thetas => 1);
+	
 	my @remove_theta_num;
 	my %remove_parameters;
 	my %keep_parameters;
 
 	my $rem_nthetas = $self->model_optimal->nthetas() - $added_thetas;
-	my @datas = @{$self->model_optimal->datas};
-	my $data_obj = $datas[0];
 
 	my $labels = $self->model_optimal->labels( parameter_type  => 'theta', 
-		problem_numbers => [1],
-		parameter_numbers => [\@cutoff_thetas] )->[0];
-
+											   problem_numbers => [1],
+											   parameter_numbers => [\@cutoff_thetas] )->[0];
+	
 	#have %parameter_covariate_form here
 	my $index=0;
 	my @old_code;

@@ -5,7 +5,7 @@
 
 use strict;
 use warnings;
-use Test::More;# tests=>199;
+use Test::More tests=>105;
 use Test::Exception;
 use Math::Random;
 use FindBin qw($Bin);
@@ -15,6 +15,89 @@ use data;
 use model::problem::data;
 use model::problem;
 use model;
+use File::Copy 'cp';
+use Cwd;
+use OSspecific;
+use File::Spec qw(catfile);
+
+#test for data class subroutine for frem dataset generation
+#TODO add checks of contents of findme.dta (data2name file)
+# -time_var=WT -occ=VISI -param=PHI,LAG -invar=SEX,DGRP -vpc -no-check $model_dir/mox_no_bov.mod -dir=$dir",
+my $tempdir = create_test_dir('unit_data_extra');
+
+cp($includes::testfiledir.'/frem_filtered_data.dta',$tempdir);
+my $resultref = data::frem_compute_covariate_properties(filename => $tempdir.'frem_filtered_data.dta',
+														idcolumn => 1,  #number not index
+														invariant_covariates => ['SEX','DGRP'],
+														occ_index => 1,
+														data2name => 'findme.dta', #ends up in tempdir
+														evid_index => 31,
+														mdv_index => undef,
+														type_index => 33,
+														cov_indices => [30,12,3,14], #DV SEX DGRP WT
+														first_timevar_type => 3,    #index 3 in cov_indices
+														missing_data_token => '-99');
+
+if (defined $resultref){
+	is($resultref->{'occasionlist'}->[0],3,'frem occasion 1');
+	is($resultref->{'occasionlist'}->[1],8,'frem occasion 2');
+	is($resultref->{'invariant_median'}->[0],1,'frem median SEX');
+	is($resultref->{'invariant_median'}->[1],8,'frem median DGRP');
+	cmp_float($resultref->{'invariant_covmatrix'}->[0]->[0],0.163828211773417,'frem inv covmatrix 1,1');
+	cmp_float($resultref->{'invariant_covmatrix'}->[0]->[1],-0.013698630136986,'frem inv covmatrix 1,2');
+	cmp_float($resultref->{'invariant_covmatrix'}->[1]->[0],-0.013698630136986,'frem inv covmatrix 2,1');
+	cmp_float($resultref->{'invariant_covmatrix'}->[1]->[1],0.657534246575342,'frem inv covmatrix 2,2');
+	is($resultref->{'timevar_median'}->[0],77.5,'frem median WT');
+	cmp_float($resultref->{'timevar_covmatrix'}->[0]->[0],241.6312939651981,'frem var covmatrix 1,1');
+}
+remove_test_dir($tempdir);
+
+#TODO datarec new must use base directory model file directory, not cwd, when not absolute input name
+#require model directory as input to new
+
+
+my $model = model->new(filename => $includes::testfiledir.'/pheno.mod'); 
+my ($dir,$file)=OSspecific::absolute_path($includes::testfiledir,'pheno.dta');
+is($model->datafiles(absolute_path => 1)->[0],$dir.$file,' datafilename abspath');
+is($model->datafiles(absolute_path => 0)->[0],'pheno.dta',' datafilename bare');
+
+#need OSspecific to make tests platform independend
+my $datarec = model::problem::data->new(record_arr => [$tempdir.'subdir/file.csv ']);
+my ($dir,$file)=OSspecific::absolute_path($tempdir.'subdir','file');
+is($datarec ->get_directory,$dir,'data record dir');
+is($datarec ->get_filename,'file.csv','data record filename');
+
+is($datarec->format_filename(write_directory=>$tempdir.'subdir',
+							 relative_data_path=>1),'file.csv','format_filname relative local');
+is($datarec->format_filename(write_directory=>$tempdir,
+							 relative_data_path=>1),File::Spec->catfile('subdir','file.csv'),'format_filname relative down');
+is($datarec->format_filename(write_directory=>$tempdir.'subdir/subdir2',
+							 relative_data_path=>1),File::Spec->catfile('..','file.csv'),'format_filname relative up');
+is($datarec->format_filename(write_directory=>$tempdir.'subdir3',
+							 relative_data_path=>1),File::Spec->catfile('..','subdir','file.csv'),'format_filname relative up then down');
+
+is($datarec->format_filename(write_directory=>$tempdir.'subdir',
+							 relative_data_path=>0),File::Spec->catfile($tempdir.'subdir','file.csv'),'format_filname abs local');
+is($datarec->format_filename(write_directory=>$tempdir,
+							 relative_data_path=>0),File::Spec->catfile($tempdir.'subdir','file.csv'),'format_filname abs up');
+is($datarec->format_filename(write_directory=>$tempdir.'subdir/subdir2',
+							 relative_data_path=>0),File::Spec->catfile($tempdir.'subdir','file.csv'),'format_filname abs down');
+is($datarec->format_filename(write_directory=>$tempdir.'subdir3',
+							 relative_data_path=>0),File::Spec->catfile($tempdir.'subdir','file.csv'),'format_filname abs up-down');
+
+
+my ($homedir,$dirt) = OSspecific::absolute_path(getcwd(),'file');
+$datarec->set_filename(filename=> 'new.csv');
+is($datarec ->get_directory,$homedir,'data record dir after change');
+is($datarec ->get_filename,'new.csv','data record filename after change');
+my ($dir,$dirt) = OSspecific::absolute_path($homedir.'sub','file');
+$datarec->set_filename(filename=> $homedir.'sub/new2.csv');
+is($datarec ->get_directory,$dir,'data record dir after change 2');
+is($datarec ->get_filename,'new2.csv','data record filename after change 2');
+my ($dir,$dirt) = OSspecific::absolute_path($homedir.'other','file');
+$datarec->set_filename(filename=> $homedir.'sub/../other/new3.csv');
+is($datarec ->get_directory,$dir,'data record dir after change 3');
+is($datarec ->get_filename,'new3.csv','data record filename after change 3');
 
 my $datarec_at = model::problem::data->new(record_arr => ['file.csv IGNORE=(DOSE.GT.5)','IGN=@']);
 is($datarec_at->ignoresign,'@','data record ignoresign at');
@@ -47,13 +130,13 @@ for( my $i=0; $i<scalar(@inputs); $i++){
 						   problems => [$dummy_prob],
 						   skip_data_parsing=> 1,
 						   ignore_missing_files => 1);
-	is($model->idcolumn->[0],$idcolnum[$i],'model idcolumn test '.$inputs[$i]);
+	is($model->idcolumn,$idcolnum[$i],'model idcolumn test '.$inputs[$i]);
 }
 
 my $dummy_prob = model::problem->new(ignore_missing_files=> 1,
 									 prob_arr       => ['$PROB','$INPUT C PAT=ID','$DATA dummy.txt']);
-
-dies_ok {my $model = model->new(filename => 'dummy', problems => [$dummy_prob], skip_data_parsing=> 1, ignore_missing_files => 1)} "PAT=ID in \$INPUT";
+my $model = model->new(filename => 'dummy', problems => [$dummy_prob], ignore_missing_files => 1);
+dies_ok {$model->idcolumn(problem_number=>1)} "PAT=ID in \$INPUT";
 
 
 #model->idcolumns
@@ -64,7 +147,6 @@ for( my $i=0; $i<scalar(@inputs); $i++){
 	
 	my $model = model->new(filename => 'dummy',
 						   problems => [$dummy_prob],
-						   skip_data_parsing=> 1,
 						   ignore_missing_files => 1);
 	is($model->idcolumns->[0],$idcolnum[$i],'model idcolumns test '.$inputs[$i]);
 }
@@ -79,10 +161,10 @@ my @datafiletests = (
 	{ filename => '2_nohead.csv', input => 'ID TIME AMT WGT APGR DV', data => 'IGN=C', idcolumn => 1, row => 7, col => 1, val => 72.5 },
 	{ filename => '3_id_header_leading_empty.csv', input => 'C ID TIME AMT WGT APGR DV', data => 'IGN=@', idcolumn => 2, row => 1, col => 1, val => 1 },
 	{ filename => '3_id_header_leading_empty.csv', input => 'C ID TIME AMT WGT APGR DV', data => 'IGN=C', crash => 1, row => 0, col => 5, val => 7 },
-	{ filename => '3_id_header_leading_empty.csv', input => 'C ID TIME AMT WGT APGR DV', data => '', crash => 1 },
+	{ filename => '3_id_header_leading_empty.csv', input => 'C ID TIME AMT WGT APGR DV', idcolumn => 2,data => ''},
 	{ filename => '4_header_ID.csv', input => 'ID TIME AMT WGT APGR DV', data => 'IGN=@', idcolumn => 1, row => 4, col => 1, val => 37 },
 	{ filename => '4_header_ID.csv', input => 'ID TIME AMT WGT APGR DV', data => 'IGN=C', crash => 1 },
-	{ filename => '4_header_ID.csv', input => 'ID TIME AMT WGT APGR DV', data => '', crash => 1 },
+	{ filename => '4_header_ID.csv', input => 'ID TIME AMT WGT APGR DV', idcolumn => 1,data => ''},
 	{ filename => '5_hash_header_leading_empty.csv', input => 'C ID TIME AMT WGT APGR DV', data => 'IGN=@', idcolumn => 2, row => 0, col => 2, val => 0 },
 	{ filename => '5_hash_header_leading_empty.csv', input => 'C ID TIME AMT WGT APGR DV', data => 'IGN=C', crash => 1 },
 	{ filename => '5_hash_header_leading_empty.csv', input => 'C ID TIME AMT WGT APGR DV', data => '', idcolumn => 2, row => 2, col => 3, val => 3.5 },
@@ -91,39 +173,47 @@ my @datafiletests = (
 	{ filename => '6_header_hash.csv', input => 'ID TIME AMT WGT APGR DV', data => '', idcolumn => 1, col => 1, row => 1, val => 2 },
 	{ filename => '7_C_lead_empty.csv', input => 'C ID TIME AMT WGT APGR DV', data => 'IGN=@', idcolumn => 2, row => 2, col => 2, val => 12.5 },
 	{ filename => '7_C_lead_empty.csv', input => 'C ID TIME AMT WGT APGR DV', data => 'IGN=C', idcolumn => 2, row => 0, col => 4, val => 1.4 },
-	{ filename => '7_C_lead_empty.csv', input => 'C ID TIME AMT WGT APGR DV', data => '', crash => 1 },
+	{ filename => '7_C_lead_empty.csv', input => 'C ID TIME AMT WGT APGR DV', idcolumn => 2,data => ''},
 	{ filename => '8_C_lead_dummy.csv', input => 'C ID TIME AMT WGT APGR DC', data => 'IGN=@', idcolumn => 2, row => 7, col => 3, val => 3.5 },
 	{ filename => '8_C_lead_dummy.csv', input => 'C ID TIME AMT WGT APGR DC', data => 'IGN=C', idcolumn => 2, row => 1, col => 2, val => 2.0 },
-	{ filename => '8_C_lead_dummy.csv', input => 'C ID TIME AMT WGT APGR DC', data => '', crash => 1 },
+	{ filename => '8_C_lead_dummy.csv', input => 'C ID TIME AMT WGT APGR DC', idcolumn => 2,data => ''},
 	{ filename => '9_lead_posneg.csv', input => 'PNEG ID TIME AMT WGT APGR DV', data => 'IGN=@', idcolumn => 2, row => 0, col => 4, val => '1.4' },
 	{ filename => '9_lead_posneg.csv', input => 'PNEG ID TIME AMT WGT APGR DV', data => 'IGN=C', crash => 1 },
-	{ filename => '9_lead_posneg.csv', input => 'PNEG ID TIME AMT WGT APGR DV', data => '', crash => 1 },
+	{ filename => '9_lead_posneg.csv', input => 'PNEG ID TIME AMT WGT APGR DV', idcolumn => 2,data => ''},
 );
 my $problem;
 my $model;
 
 foreach my $test_hash (@datafiletests) {
 	$problem = model::problem->new(ignore_missing_files => 1, 
-		prob_arr => ['$PROB', '$INPUT ' . $test_hash->{'input'}, '$DATA ' . $datadir . $test_hash->{'filename'} . ' ' . $test_hash->{'data'}] );
+								   prob_arr => ['$PROB', '$INPUT ' . $test_hash->{'input'}, 
+												'$DATA ' . $datadir . $test_hash->{'filename'} . ' ' . $test_hash->{'data'}] );
+	$model = model->new(filename => 'dummy',
+						problems => [$problem],
+						ignore_missing_files => 1);
+	my $ignoresign = $problem->datas->[0]->ignoresign;
+	my $idcol = $model->idcolumn(problem_number=>1);
+	my $dataname = $model->datafiles(problem_numbers => [1],
+									 absolute_path =>1)->[0]; 
+	my $data;
 	if (not $test_hash->{'crash'}) {
-		$model = model->new(filename => 'dummy',
-			problems => [$problem],
-			skip_data_parsing => 0,
-			ignore_missing_files => 1);
+		$data = data->new(filename => $dataname,
+						  idcolumn => $idcol,
+						  ignoresign => $ignoresign);
 	} else {
-		dies_ok { $model = model->new(filename => 'dummy', problems => [$dummy_prob], skip_data_parsing => 0, ignore_missing_files => 1) }
-			"bad ignore " . $test_hash->{'filename'};
+		dies_ok { data->new(filename => $dataname, idcolumn => $idcol, ignoresign => $ignoresign) }
+		"bad ignore " . $test_hash->{'filename'};
 	}
 
 	if (not $test_hash->{'crash'}) {
-		is($model->datas->[0]->count_ind, 5, 'n individuals ' . $test_hash->{'filename'} . ' ' . $test_hash->{'data'});
-		is($model->datas->[0]->idcolumn, $test_hash->{'idcolumn'}, 'idcol ' . $test_hash->{'filename'});
+		is($data->count_ind, 5, 'n individuals ' . $test_hash->{'filename'} . ' ' . $test_hash->{'data'});
+		is($data->idcolumn, $test_hash->{'idcolumn'}, 'idcol ' . $test_hash->{'filename'});
 		if (exists $test_hash->{'row'}) {
-			my $column_ref = $model->datas->[0]->column_to_array(column => $test_hash->{'col'});
+			my $column_ref = $data->column_to_array(column => $test_hash->{'col'});
 			cmp_float ($column_ref->[$test_hash->{'row'}], $test_hash->{'val'}, $test_hash->{'filename'} .
-				' value check row=' . $test_hash->{'row'} . ' col=' . $test_hash->{'col'});
+					   ' value check row=' . $test_hash->{'row'} . ' col=' . $test_hash->{'col'});
 		}
 	}
 }
 
-done_testing;
+#done_testing;

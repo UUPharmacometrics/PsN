@@ -242,124 +242,118 @@ if ( scalar( @ARGV ) < 1 ) {
 
 my $models_array;
 
-unless ( defined $options{'skip_data_parsing'} ) {
-  $options{'skip_data_parsing'} = 1;
-}
 
 my $eval_string = common_options::model_parameters(\%options);
 
 foreach my $model_name ( @ARGV ){  
-  my $outputfile = shift @outputfiles;
-  my $model;
-  unless( $fake ){
-    $model = model -> new ( eval( $eval_string ),
-			    outputfile                  => $outputfile,
-			    filename                    => $model_name,
-			    ignore_missing_output_files => 1 );
+	my $outputfile = shift @outputfiles;
+	my $model;
+	unless( $fake ){
+		$model = model -> new ( eval( $eval_string ),
+								outputfile                  => $outputfile,
+								filename                    => $model_name,
+								ignore_missing_output_files => 1 );
 
-    if( $options{'nonparametric_etas'} or
-	$options{'nonparametric_marginals'} ) {
-      $model -> add_nonparametric_code;
-    }
-  
-    if( $options{'shrinkage'} ) {
-      $model -> shrinkage_stats( enabled => 1 );
-    }
-  } else {
-    unless( -e $outputfile ){
-      print "The output file: $outputfile doesn't exist.\n";
-      exit;
-    }
-    $model = model -> new( eval( $eval_string ),
-			   outputfile => $outputfile,
-			   filename   => 'dummy.mod',
-			   ignore_missing_files => 1 );
-  }
+		unless ($model->copy_data_setting_ok(copy_data => $options{'copy_data'})){
+			die("Cannot set -no-copy_data, absolute data file path is too long.");
+		} 
+		if (defined $options{'copy_data'} and (not $options{'copy_data'})){
+			$model->relative_data_path(0);
+		}
+		if( $options{'nonparametric_etas'} or
+			$options{'nonparametric_marginals'} ) {
+			$model -> add_nonparametric_code;
+		}
+		
+		if( $options{'shrinkage'} ) {
+			$model -> shrinkage_stats( enabled => 1 );
+		}
+	} else {
+		unless( -e $outputfile ){
+			print "The output file: $outputfile doesn't exist.\n";
+			exit;
+		}
+		$model = model -> new( eval( $eval_string ),
+							   outputfile => $outputfile,
+							   filename   => 'dummy.mod',
+							   ignore_missing_files => 1 );
+	}
 
-  push( @{$models_array}, $model );
+	push( @{$models_array}, $model );
 
 }
 
 if($options{'tail_output'} ) {
-  if($Config{osname} ne 'MSWin32'){
-    print "Warning: option -tail_output only works on Windows.\n";
-    $options{'tail_output'}=0;
-  }
-  unless (defined $options{'wintail_exe'} ) {
-    print "Warning: option -wintail_exe is not set, -tail_output will not work\n";
-    $options{'tail_output'}=0;
-  }
-  unless (defined $options{'wintail_command'} ) {
-    print "Warning: option -wintail_command is not set, -tail_output will not work\n";
-    $options{'tail_output'}=0;
-  }
+	if($Config{osname} ne 'MSWin32'){
+		print "Warning: option -tail_output only works on Windows.\n";
+		$options{'tail_output'}=0;
+	}
+	unless (defined $options{'wintail_exe'} ) {
+		print "Warning: option -wintail_exe is not set, -tail_output will not work\n";
+		$options{'tail_output'}=0;
+	}
+	unless (defined $options{'wintail_command'} ) {
+		print "Warning: option -wintail_command is not set, -tail_output will not work\n";
+		$options{'tail_output'}=0;
+	}
 }
 
 my $modelfit;
 if ( defined $options{'predict_data'} and defined $options{'predict_model'} ) {
-  if( scalar @{$models_array} > 1 ) {
-    die( "When using predict_data and predict_model, no "
-		  ."more than one model at a time may be run with execute" );
-  }
-  my $outfile = $options{'predict_model'};
-  $outfile =~ s/\.mod//;
-  $outfile = $outfile.'.lst';
-  my $pred_mod = $models_array -> [0] -> copy( filename    => $options{'predict_model'},
-					   copy_data   => 0,
-					   copy_output => 0 );
-  $pred_mod -> datafiles( new_names => [$options{'predict_data'}] );
-  $pred_mod -> ignore_missing_files(1);
-  $pred_mod -> outputfile( $outfile );
-  $pred_mod -> maxeval( new_values => [[0]] );
-  $pred_mod -> remove_records( type => 'covariance' );
-  $pred_mod -> update_inits( from_model => $models_array -> [0] );
-  my @new_tables;
-  foreach my $file ( @{$pred_mod -> table_names -> [0]} ) {
-    push( @new_tables, $options{'predict_model'}.'.'.$file );
-  }
-  $pred_mod -> table_names( new_names => [\@new_tables] );
-  $modelfit = tool::modelfit -> 
-      new ( eval( $common_options::parameters ),
-	    prepend_model_to_lst => $options{'prepend_model_to_lst'},
-	    prepend_options_to_lst => $options{'prepend_options_to_lst'},
-	    tail_output => $options{'tail_output'},
-	    wintail_exe => $options{'wintail_exe'},
-	    wintail_command => $options{'wintail_command'},
-	    models => [$pred_mod] );  
+	if( scalar @{$models_array} > 1 ) {
+		die( "When using predict_data and predict_model, no "
+			 ."more than one model at a time may be run with execute" );
+	}
+	my $outfile = $options{'predict_model'};
+	$outfile =~ s/\.mod//;
+	$outfile = $outfile.'.lst';
+	my $pred_mod = $models_array -> [0] -> copy( filename    => $options{'predict_model'},
+												 copy_datafile   => 0,
+												 copy_output => 0 );
+	$pred_mod -> datafiles( new_names => [$options{'predict_data'}] );
+	$pred_mod -> ignore_missing_files(1);
+	$pred_mod -> outputfile( $outfile );
+	$pred_mod -> maxeval( new_values => [[0]] );
+	$pred_mod -> remove_records( type => 'covariance' );
+	$pred_mod -> update_inits( from_model => $models_array -> [0] );
+	my @new_tables;
+	foreach my $file ( @{$pred_mod -> table_names -> [0]} ) {
+		push( @new_tables, $options{'predict_model'}.'.'.$file );
+	}
+	$pred_mod -> table_names( new_names => [\@new_tables] );
+	$modelfit = tool::modelfit -> 
+		new ( eval( $common_options::parameters ),
+			  prepend_model_to_lst => $options{'prepend_model_to_lst'},
+			  prepend_options_to_lst => $options{'prepend_options_to_lst'},
+			  tail_output => $options{'tail_output'},
+			  wintail_exe => $options{'wintail_exe'},
+			  wintail_command => $options{'wintail_command'},
+			  models => [$pred_mod] );  
 } else {
 
- 	my %subargs = ();
-
-	if (defined $options{'copy_data'} and (not $options{'copy_data'})){
-	    if( scalar @{$models_array} > 1 ) {
-				die( "When using -no-copy_data, not more than one model at a time may be run with execute" );
-	    }
-	    $subargs{'data_path'}=$models_array->[0]->datas->[0]->directory();
-	}
-
-	    $modelfit = tool::modelfit -> 
-      new ( eval( $common_options::parameters ),
-	    prepend_model_to_lst => $options{'prepend_model_to_lst'},
-	    prepend_options_to_lst => $options{'prepend_options_to_lst'},
-	    tail_output => $options{'tail_output'},
-	    wintail_exe => $options{'wintail_exe'},
-	    wintail_command => $options{'wintail_command'},
-	    models => $models_array,
-	    %subargs );  
+	$modelfit = tool::modelfit -> 
+		new ( eval( $common_options::parameters ),
+			  prepend_model_to_lst => $options{'prepend_model_to_lst'},
+			  prepend_options_to_lst => $options{'prepend_options_to_lst'},
+			  tail_output => $options{'tail_output'},
+			  wintail_exe => $options{'wintail_exe'},
+			  wintail_command => $options{'wintail_command'},
+			  models => $models_array,
+			  copy_data => $options{'copy_data'} );  
 }
 
 
 $modelfit-> print_options (cmd_line => $cmd_line,
-			   toolname => 'execute',
-			   local_options => [keys %optional_options],
-			   common_options => \@common_options::tool_options);
+						   toolname => 'execute',
+						   local_options => [keys %optional_options],
+						   common_options => \@common_options::tool_options);
 
 
 $modelfit -> run;
 
 if( $options{'summarize'} ){
-  $modelfit -> summarize;
+	$modelfit -> summarize;
 }
 ui -> print( category => 'execute',
-	     message => "\nexecute done",
-	     newline => 1);
+			 message => "\nexecute done",
+			 newline => 1);

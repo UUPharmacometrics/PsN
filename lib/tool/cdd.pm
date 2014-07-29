@@ -14,7 +14,7 @@ use MooseX::Params::Validate;
 extends 'tool';
 
 has 'case_column' => ( is => 'rw', required => 1, isa => 'Int' );
-has 'bins' => ( is => 'rw', isa => 'Any' );
+has 'bins' => ( is => 'rw', isa => 'Int' );
 has 'cook_scores' => ( is => 'rw', isa => 'ArrayRef' );
 has 'cdd_id' => ( is => 'rw', isa => 'Str' );
 has 'covariance_ratios' => ( is => 'rw', isa => 'ArrayRef' );
@@ -101,32 +101,31 @@ sub modelfit_analyze
 			$i < scalar @{$self -> prediction_models->[$model_number-1]{'own'}};
 			$i++ ) {
 			$self -> prediction_models->[$model_number-1]{'own'}[$i] ->
-			update_inits( from_model => $self ->
-				prepared_models->[$model_number-1]{'own'}[$i]);
+				update_inits( from_model => $self ->
+							  prepared_models->[$model_number-1]{'own'}[$i]);
 			$self -> prediction_models->[$model_number-1]{'own'}[$i] ->
-			remove_records( type => 'covariance' );
-			$self -> prediction_models->[$model_number-1]{'own'}[$i] -> _write;
+				remove_records( type => 'covariance' );
+			$self -> prediction_models->[$model_number-1]{'own'}[$i] -> _write(overwrite => 1);
 		}
 		my ($dir,$file) = 
-		OSspecific::absolute_path( $self -> directory,
-			$self -> raw_results_file->[$model_number-1] );
-		my $xv_threads = ref( $self -> threads ) eq 'ARRAY' ? 
-		$self -> threads -> [1]:$self -> threads;
+			OSspecific::absolute_path( $self -> directory,
+									   $self -> raw_results_file->[$model_number-1] );
+		my $xv_threads = ref( $self -> threads ) eq 'ARRAY' ? $self -> threads -> [1]:$self -> threads;
 		my $mod_eval = tool::modelfit ->
-		new( %{common_options::restore_options(@common_options::tool_options)},
-			models           => $self -> prediction_models->[$model_number-1]{'own'},
-			base_directory   => $self -> directory,
-			nmtran_skip_model => 2,
-			directory        => $self -> directory.'evaluation_dir'.$model_number, 
-			threads          => $xv_threads,
-			_raw_results_callback => $self -> _modelfit_raw_results_callback( model_number => $model_number,
-				cross_validation_set => 1 ),
-			parent_tool_id   => $self -> tool_id,
-			logfile	    => undef,
-			raw_results      => undef,
-			prepared_models  => undef,
-			top_tool         => 0,
-			retries          => 1 );
+			new( %{common_options::restore_options(@common_options::tool_options)},
+				 copy_data  => 0,  #do not copy models to NM_run, use rel path to m1
+				 models           => $self -> prediction_models->[$model_number-1]{'own'},
+				 base_directory   => $self -> directory,
+				 nmtran_skip_model => 2,
+				 directory        => $self -> directory.'evaluation_dir'.$model_number, 
+				 threads          => $xv_threads,
+				 _raw_results_callback => $self -> _modelfit_raw_results_callback( model_number => $model_number,
+																				   cross_validation_set => 1 ),
+				 parent_tool_id   => $self -> tool_id,
+				 logfile	    => undef,
+				 raw_results      => undef,
+				 prepared_models  => undef,
+				 top_tool         => 0);
 		$Data::Dumper::Maxdepth = 2;
 		print "Running xv runs\n";
 		$mod_eval -> run;
@@ -988,74 +987,70 @@ sub general_setup
 	# {{{ inits
 
 	# Case-deletion Diagnostics will only work for models with one problem.
-	my $orig_data = $model -> datas -> [0];
+	my $datafiles = $model->datafiles(absolute_path => 1);
+    my ( $junk, $idcol ) = $model -> _get_option_val_pos( name            => 'ID',
+														  record_name     => 'input',
+														  problem_numbers => [1] );
+    unless (defined $idcol->[0][0]){
+		croak( "Error finding column ID in \$INPUT of model\n");
+    }
+	my $ignoresign = defined $model -> ignoresigns ? $model -> ignoresigns -> [0] : undef;
 
-	if ( not defined $orig_data ) {
-		croak("No data file to resample from found in ".$model -> full_name );
-	}
-
-	my @problems   = @{$model -> problems};
 	my @new_models = ();
 
 	my ( @skipped_ids, @skipped_keys, @skipped_values );
 
-	my %orig_factors = %{$orig_data -> factors( column => $self->case_column )};
-	my $maxbins      = scalar keys %orig_factors;
-	my $pr_bins      = ( defined $self->bins and $self->bins <= $maxbins ) ? $self->bins : $maxbins;
-
 	my $done = ( -e $self -> directory."/m$model_number/done" ) ? 1 : 0;
 
-	my ( @seed, $new_datas, $skip_ids, $skip_keys, $skip_values, $remainders );
+	my ( @seed, $new_datas, $skip_ids, $skip_keys, $skip_values, $remainders, $pr_bins );
 
 	# }}} inits
 
 	if ( not $done ) {
-
 		# --------------  Create new case-deleted data sets  ----------------------
 
 		# {{{ create new
+		my $output_directory = $self -> directory.'/m'.$model_number;
+		($new_datas, $skip_ids, $skip_keys, $skip_values, $remainders) = 
+			data::cdd_create_datasets(input_filename => $datafiles->[0],
+									  bins => $self->bins,
+									  case_column => $self->case_column, 
+									  selection_method => $self->selection_method,
+									  output_directory => $output_directory,
+									  ignoresign => $ignoresign,
+									  idcolumn => $idcol->[0][0],  #number not index
+									  missing_data_token => $self->missing_data_token);
 
-		# Keep the new sample data objects i memory and write them to disk later
-		# with a proper name.
 
-		( $new_datas, $skip_ids, $skip_keys, $skip_values, $remainders )
-		= $orig_data -> case_deletion( case_column => $self->case_column,
-			selection   => $self -> selection_method,
-			bins        => $pr_bins,
-			target      => 'mem',
-			directory   => $self -> directory.'/m'.$model_number );
+
+
+
 		my $ndatas = scalar @{$new_datas};
 		for ( my $j = 1; $j <= $ndatas; $j++ ) {
-			my @names = ( 'cdd_'.$j, 'rem_'.$j );
 			my @datasets = ( $new_datas -> [$j-1], $remainders -> [$j-1] );
+			my @names = ('cdd_'.$j,'rem_'.$j);
 			foreach my $i ( 0, 1 ) {
-				my $dataset = $datasets[$i];
-				my ($data_dir, $data_file) = OSspecific::absolute_path( $self -> directory.'/m'.$model_number,
-					$names[$i].'.dta' );
-				my $skip_data_parsing = 1;
-
-				$dataset->skip_parsing($skip_data_parsing);
-				my $newmodel = $model -> copy( filename => $data_dir.$names[$i].'.mod',
-					copy_data   => 0,
-					copy_output => 0);
-				$newmodel -> ignore_missing_files(1);
-				$newmodel -> datafiles( new_names => [$names[$i].'.dta'] );
-				$newmodel -> outputfile( $data_dir.$names[$i].".lst" );
-				$newmodel -> datas -> [0] = $dataset;
+				my $set = $datasets[$i];
+				my $newmodel = $model -> copy( filename => $output_directory.'/'.$names[$i].'.mod',
+											   copy_datafile   => 0,
+											   write_copy => 0,
+											   copy_output => 0);
+				$newmodel -> datafiles( new_names => [$set] );
+				$newmodel -> outputfile( $output_directory.'/'.$names[$i].".lst" );
 				if( $i == 1 ) {
 					# set MAXEVAL=0. Again, CDD will only work for one $PROBLEM
 					my $warn = 0;
 					$warn = 1 if ($j == 1);
 					my $ok = $newmodel -> set_maxeval_zero(need_ofv => 1,print_warning => $warn,
-						niter_eonly => $self->niter_eonly,
-						last_est_complete => $self->last_est_complete());
+														   niter_eonly => $self->niter_eonly,
+														   last_est_complete => $self->last_est_complete());
 				}
 
 				if( $self -> nonparametric_etas or
 					$self -> nonparametric_marginals ) {
 					$newmodel -> add_nonparametric_code;
 				}
-
+				
 				$newmodel -> _write;
 				push( @{$new_models[$i]}, $newmodel );
 			}
@@ -1063,7 +1058,7 @@ sub general_setup
 
 		# Create a checkpoint. Log the samples and individuals.
 		open( DONE, ">".$self -> directory."/m$model_number/done" ) ;
-		print DONE "Sampling from ",$orig_data -> filename, " performed\n";
+		print DONE "Sampling from ",$model->datafiles()->[0], " performed\n";
 		print DONE "$pr_bins bins\n";
 		print DONE "Skipped individuals:\n";
 		for( my $k = 0; $k < scalar @{$skip_ids}; $k++ ) {
@@ -1138,14 +1133,11 @@ sub general_setup
 				my ($out_dir, $outfilename) = OSspecific::absolute_path( $self -> directory.'/m'.
 					$model_number,
 					$names[$i].'.lst' );
-				my $new_mod = model ->
-				new( directory   => $model_dir,
-					filename    => $filename,
-					outputfile  => $outfilename,
-					extra_files => $model -> extra_files,
-					target      => 'disk',
-					ignore_missing_files => 1,
-					quick_reload => 1);
+				my $new_mod = model -> 	new( directory   => $model_dir,
+											 filename    => $filename,
+											 outputfile  => $outfilename,
+											 extra_files => $model -> extra_files,
+											 ignore_missing_files => 1);
 				push( @{$new_models[$i]}, $new_mod );
 			}
 
@@ -1197,13 +1189,14 @@ sub general_setup
 		$class ->
 		new( %{common_options::restore_options(@common_options::tool_options)},
 			models                => $new_models[0],
+			 copy_data            => 0, #use relative data path to m1
 			threads               => $subm_threads,
 			nmtran_skip_model => 2,
 			directory             => $self -> directory.'/'.$subdir.'_dir'.$model_number,
 			_raw_results_callback => $self ->
 			_modelfit_raw_results_callback( model_number => $model_number ),
 			subtools              => \@subtools,
-			parent_threads        => $own_threads,
+#			parent_threads        => $own_threads,
 			parent_tool_id        => $self -> tool_id,
 			logfile	         => undef,
 			raw_results           => undef,
@@ -1220,18 +1213,6 @@ sub general_setup
 	close( SKIP );
 }
 
-sub modelfit_pre_fork_setup
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		model_number => { isa => 'Int', optional => 1 }
-	);
-	my $model_number = $parm{'model_number'};
-
-	unless ( defined $self->bins ) {
-		$self->bins($self->models->[0]->datas->[0]->count_ind);
-	}
-}
 
 sub llp_pre_fork_setup
 {

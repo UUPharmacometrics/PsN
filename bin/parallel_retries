@@ -149,11 +149,20 @@ if( $options{'outputfile'} ){
 
 my $models_array;
 
-unless ( defined $options{'skip_data_parsing'} ) {
-  $options{'skip_data_parsing'} = 1;
+my $eval_string = common_options::model_parameters(\%options);
+
+if( scalar @ARGV > 1 ) {
+  die "When using parallel_retries, no "
+      ."more than one model at a time may be run\n";
+}
+if( (not (defined $options{'min_retries'}) or ($options{'min_retries'}<1)) and (not defined $options{'rawres_input'}) ) {
+  die "No point using parallel_retries unless -min_retries>0 or -rawres_input is defined\n";
 }
 
-my $eval_string = common_options::model_parameters(\%options);
+if( ((defined $options{'min_retries'}) and ($options{'min_retries'}>0)) and (defined $options{'rawres_input'}) ) {
+  die "Cannot use both -min_retries>0 and -rawres_input\n";
+}
+
 
 foreach my $model_name ( @ARGV ){  
   my $outputfile = shift @outputfiles;
@@ -193,39 +202,18 @@ if($options{'tail_output'} ) {
 
 my $modelfit;
 
-if( scalar @{$models_array} > 1 ) {
-  die "When using parallel_retries, no "
-      ."more than one model at a time may be run\n";
-}
-if( (not (defined $options{'min_retries'}) or ($options{'min_retries'}<1)) and (not defined $options{'rawres_input'}) ) {
-  die "No point using parallel_retries unless -min_retries>0 or -rawres_input is defined\n";
-}
-
-if( ((defined $options{'min_retries'}) and ($options{'min_retries'}>0)) and (defined $options{'rawres_input'}) ) {
-  die "Cannot use both -min_retries>0 and -rawres_input\n";
-}
 
 my $return_dir = getcwd();
 my $main_directory = $options{'directory'};
+my $dirt;
 if (defined $main_directory){
-  $main_directory =$return_dir.'/'.$main_directory.'/';
+  ($main_directory,$dirt) =OSspecific::absolute_path(undef,$main_directory);
 }else{
   $main_directory= OSspecific::unique_path( 'parallel_retries_dir' ,$return_dir);
 }
-mkdir( $main_directory) unless ( -d  $main_directory);
-chdir($main_directory);
-my $main_model = $models_array -> [0] -> copy( filename    => $models_array -> [0]->filename(),
-					       copy_data   => 0,
-					       copy_output => 0,
-					       directory => $main_directory,
-					       target => 'mem');
 
-$main_model ->_write();
-$main_model->datas()->[0]->synchronize();
-$main_model->datas()->[0]->directory($main_directory);
-$main_model->datas()->[0]->_write();
-my $mod_array;
-push(@{$mod_array},$main_model);
+my $sampled_params_arr;
+my $samples;
 if (defined $options{'rawres_input'}){
 	my $offset=1;
 	$offset= $options{'offset_rawres'} if (defined $options{'offset_rawres'});
@@ -244,11 +232,10 @@ if (defined $options{'rawres_input'}){
 		}	
 	}
 
-	my $sampled_params_arr = $main_model->get_rawres_params(filename => '../'.$options{'rawres_input'},
-															filter => \@in_filter,
-															offset => $offset);
+	$sampled_params_arr = $models_array -> [0]->get_rawres_params(filename => $options{'rawres_input'},
+																  filter => \@in_filter,
+																  offset => $offset);
 
-	my $samples;
 	if (defined $sampled_params_arr) {
 		if (defined $options{'samples'}){
 			$samples=$options{'samples'};
@@ -275,16 +262,28 @@ if (defined $options{'rawres_input'}){
 	} else {
 		croak("get_rawres_params returned undef");
 	}
+
+
+}
+mkdir( $main_directory) unless ( -d  $main_directory);
+chdir($main_directory);
+my $main_model = $models_array -> [0] -> copy( filename    => $models_array -> [0]->filename(),
+											   copy_datafile   => 1,
+											   copy_output => 0,
+											   directory => $main_directory);
+
+my $mod_array;
+push(@{$mod_array},$main_model);
+if (defined $options{'rawres_input'}){
 	foreach (my $retry=1;$retry<=$samples;$retry++){
 		my $filestem = $models_array -> [0]->filename();
 		$filestem =~ s/\.mod//;
-		my $retry_mod = $models_array -> [0] -> copy( filename    => $filestem.'_init'.$retry.'.mod',
-													  copy_data   => 0,
-													  copy_output => 0,
-													  directory => $main_directory,
-													  target => 'mem');
+		my $retry_mod = $main_model -> copy( filename    => $filestem.'_init'.$retry.'.mod',
+											 copy_datafile   => 0,
+											 copy_output => 0,
+											 write_copy => 0,
+											 directory => $main_directory);
 		$retry_mod -> update_inits(from_hash => $sampled_params_arr->[$retry-1]); 
-
 		$retry_mod -> _write();
 		push(@{$mod_array},$retry_mod);
 	}
@@ -293,15 +292,16 @@ if (defined $options{'rawres_input'}){
 	foreach (my $retry=1;$retry<=$options{'min_retries'};$retry++){
 		my $filestem = $models_array -> [0]->filename();
 		$filestem =~ s/\.mod//;
-		my $retry_mod = $models_array -> [0] -> copy( filename    => $filestem.'_retry'.$retry.'.mod',
-													  copy_data   => 0,
-													  copy_output => 0,
-													  directory => $main_directory,
-													  target => 'mem');
+		my $retry_mod = $main_model -> copy( filename    => $filestem.'_retry'.$retry.'.mod',
+											 copy_datafile   => 0,
+											 copy_output => 0,
+											 write_copy => 0,
+											 directory => $main_directory);
 		my @problems = @{$retry_mod -> problems};
 		foreach my $prob ( @problems ) {
 			$prob -> set_random_inits ( degree => $options{'degree'} );
 		}
+		$retry_mod -> datafiles(new_names => $main_model->datafiles(absolute_path => 1)); #use local data file
 		$retry_mod -> _write();
 		push(@{$mod_array},$retry_mod);
 	}
@@ -318,7 +318,7 @@ $modelfit = tool::modelfit ->
 	  directory => 'modelfit_dir1',
 	  min_retries => 0,
 	  retries =>0,
-	  data_path =>'../../',
+	  copy_data =>0,
 	  models => $mod_array );  
 
 

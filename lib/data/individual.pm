@@ -107,18 +107,18 @@ sub add_frem_lines
 		#return median which is middle value if uneven number of values
 		#or arithemtic mean of two middle values if even number of values
 		#if empty input array then return 0
-		#not yet verified with matlab
+		#verified manually for a number of cases
 		#does not handle undef, since have filtered out missing_data_token and assume all other numeric  
 		my $ref = shift;
 		return 0 if (scalar(@{$ref})<1);
 		my @sorted = sort ({$a <=> $b} @{$ref});
-
+		my $result;
 		if( scalar( @sorted ) % 2 ){
-			return $sorted[$#sorted/2];
+			$result= $sorted[$#sorted/2];
 		} else {
-			return ($sorted[@sorted/2]+$sorted[(@sorted-2)/2]) / 2;
+			$result= ($sorted[@sorted/2]+$sorted[(@sorted-2)/2]) / 2;
 		}
-
+		return $result;
 	}
 
 	sub format_array{
@@ -298,61 +298,6 @@ sub append_individual
 	$self->subject_data(\@newlines); #replace old data
 }
 
-sub diff
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		 against_individual => { isa => 'data::individual', optional => 0 },
-		 columns => { isa => 'ArrayRef[Int]', optional => 0 },
-		 absolute_diff => { isa => 'Bool', default => 1, optional => 1 },
-		 largest => { isa => 'Bool', default => 1, optional => 1 },
-		 smallest => { isa => 'Bool', default => 0, optional => 1 },
-		 diff_as_fraction => { isa => 'Bool', default => 1, optional => 1 }
-	);
-	my $against_individual = $parm{'against_individual'};
-	my @columns = $parm{'columns'};
-	my $absolute_diff = $parm{'absolute_diff'};
-	my $largest = $parm{'largest'};
-	my $smallest = $parm{'smallest'};
-	my %diff_results;
-	my $diff_as_fraction = $parm{'diff_as_fraction'};
-
-  my @data      = @{$self->subject_data};
-  my @diff_data = @{$against_individual -> subject_data};
-  for ( my $i = 0; $i <= $#data; $i++ ) {
-    my @data_row = split( /,/ , $data[$i] );
-    my @diff_data_row = split( /,/ , $diff_data[$i] );
-    if( $largest ) {
-      for( my $j = 0; $j <= $#columns; $j++ ) {
-				my $diff = $data_row[$columns[$j] - 1] - $diff_data_row[$columns[$j] - 1];
-		  	$diff = abs($diff) if( $absolute_diff );
-				if( $diff_as_fraction ) {
-	  			if ( defined $diff_data_row[$columns[$j] - 1] and not $diff_data_row[$columns[$j] - 1] == 0 ) {
-	    			$diff = $diff / $diff_data_row[$columns[$j] - 1];
-	  			} elsif ( not $diff == 0 ) { # If $diff == 0 we can leave it as it is even if we formally
-	    			print "ID: ",$self->idcolumn," ID2: ",$against_individual->idcolumn,"\n";
-	    			print "DATA1: ", join("\n", @data), "\n";
-	    			print "DATA2: ", join("\n", @diff_data), "\n";
-	    			# would require a division by the original value
-	    			croak("The difference of column ".$columns[$j].
-			  			" was requested as a fraction but the original value was ".
-			  			"found to be zero: a division is impossible." );
-	  			}
-				}
-
-				if ( not defined $diff_results{$columns[$j]} or not defined $diff_results{$columns[$j]}{'diff'} or $diff > $diff_results{$columns[$j]}{'diff'} ) {
-	  			$diff_results{$columns[$j]}{'diff'} = $diff;
-	  			$diff_results{$columns[$j]}{'self'} = $data_row[$columns[$j]-1];
-	  			$diff_results{$columns[$j]}{'test'} = $diff_data_row[$columns[$j]-1];
-				}
-			}
-    } else {
-      die "individual -> diff is only implemented for finding the largest difference at any observation at this point\n";
-    }
-  }
-
-	return \%diff_results;
-}
 
 sub factors
 {

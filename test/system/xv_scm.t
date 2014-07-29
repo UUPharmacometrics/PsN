@@ -13,11 +13,8 @@ our $tempdir = create_test_dir('system_xvscm');
 our $dir = 'xv_scm_test';
 my $model_dir = $includes::testfiledir;
 
-my @needed=("$model_dir/scm/pheno_with_cov.mod",
-			"$model_dir/scm/pheno_ch.csv",
-			"$model_dir/config_xv_scm.scm",
+my @needed=("$model_dir/config_xv_scm.scm",
 			"$model_dir/mox1.mod",
-			"$model_dir/scm_config.scm",
 			"$model_dir/mox_simulated.csv"			
 	);
 my $bootdir = "$tempdir/boot_xv_scm_test";

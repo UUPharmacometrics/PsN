@@ -817,20 +817,20 @@ sub modelfit_setup
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 model_number => { isa => 'Int', optional => 1 }
-	);
+							  model_number => { isa => 'Int', optional => 1 }
+		);
 	my $model_number = $parm{'model_number'};
 
-  #m1 directory exists here
+	#m1 directory exists here
 
-  my $type = 'npc';
-  if ($self->is_vpc) {
-    $type = 'vpc';
-    $self->logfile(['vpc.log']);
-    $self->results_file('vpc_results.csv');
+	my $type = 'npc';
+	if ($self->is_vpc) {
+		$type = 'vpc';
+		$self->logfile(['vpc.log']);
+		$self->results_file('vpc_results.csv');
 
-    if (defined $self->lower_bound) {
-      if ($self->lower_bound =~ /^[A-Z]/) {
+		if (defined $self->lower_bound) {
+			if ($self->lower_bound =~ /^[A-Z]/) {
 				#must start with a letter if variable name
 				$self->bound_variable($self->lower_bound);
 			}
@@ -839,58 +839,74 @@ sub modelfit_setup
 		$type = 'nca';
 	}
 
-  $self->npc_alert_written(1); #initiate to 1 so that won't be written.
+	$self->npc_alert_written(1); #initiate to 1 so that won't be written.
 
-  if ((defined $self->lloq) || (defined $self->uloq)) {
-    $self->detection_censored(1);
-  }else{
-    $self->detection_censored(0);
-  }
+	if ((defined $self->lloq) || (defined $self->uloq)) {
+		$self->detection_censored(1);
+	}else{
+		$self->detection_censored(0);
+	}
 
-  return if (defined $self->orig_table);
+	return if (defined $self->orig_table);
 
-  my $user_sim_model = 0;
-  my $model_orig = $self->models->[0]->copy(filename => $type . '_original.mod', directory => 'm1');
-  my $model_simulation;
-  my $model_simulation_output;
-  if (defined $self->sim_model()) {
-    $user_sim_model = 1;
-    my $temp_model = model -> new ( 
-		%{common_options::restore_options(@common_options::model_options)},
-		filename                    => $self->sim_model(),
-		ignore_missing_output_files => 1,
-		cwres                       => (($self->dv eq 'CWRES') and ($PsN::nm_major_version < 7))  );
+	my $user_sim_model = 0;
+	if (-e 'm1/'.$type.'_original.mod'){
+		unlink('m1/'.$type.'_original.mod');
+	}
+	my $model_orig = $self->models->[0]->copy(filename => $type . '_original.mod', 
+											  directory => 'm1',
+											  copy_output => 0,
+											  write_copy => 0,
+											  copy_datafile => 0);
+	my $model_simulation;
+	my $model_simulation_output;
+	if (defined $self->sim_model()) {
+		$user_sim_model = 1;
+		my $temp_model = model -> new ( 
+			%{common_options::restore_options(@common_options::model_options)},
+			filename                    => $self->sim_model(),
+			ignore_missing_output_files => 1,
+			cwres                       => (($self->dv eq 'CWRES') and ($PsN::nm_major_version < 7))  );
 
 
-    if (defined $temp_model->outputs() and 
-				defined $temp_model->outputs()->[0] and $temp_model->outputs()->[0]->have_output()) {
-      $model_simulation_output = $temp_model->outputs()->[0];
-    }
-    $model_simulation = $temp_model->copy(filename=>$type.'_user_sim_model.mod',
-					  directory => 'm1');
+		if (defined $temp_model->outputs() and 
+			defined $temp_model->outputs()->[0] and $temp_model->outputs()->[0]->have_output()) {
+			$model_simulation_output = $temp_model->outputs()->[0];
+		}
+		if (-e 'm1/'.$type.'_user_sim_model.mod'){
+			unlink('m1/'.$type.'_user_sim_model.mod');
+		}
+		$model_simulation = $temp_model->copy(filename=>$type.'_user_sim_model.mod',
+											  directory => 'm1',
+											  copy_datafile => 0,
+											  write_copy => 0,
+											  copy_output => 0);
 
-  } elsif ($self->flip_comments()) {
-    $user_sim_model = 1;
+	} elsif ($self->flip_comments()) {
+		$user_sim_model = 1;
 
-    my $simname = "m1/$type"."_user_sim_model.mod";
-    open(MOD, $self->models->[0]->full_name()) || 
+		my $simname = "m1/$type"."_user_sim_model.mod";
+		if (-e $simname){
+			unlink($simname);
+		}
+		open(MOD, $self->models->[0]->full_name()) || 
 			die("Couldn't open " . $self->models->[0]->full_name()." : $!");
-    open(SIM, ">$simname") || die("Couldn't open $simname : $!");
-    my $sim_tag = 0;
-    while(<MOD>) {
-      my $remove_line = 0;
-	
-      # find Sim_end
-      if (/^\s*\;+\s*[Ss]im\_end/) {
+		open(SIM, ">$simname") || die("Couldn't open $simname : $!");
+		my $sim_tag = 0;
+		while(<MOD>) {
+			my $remove_line = 0;
+			
+			# find Sim_end
+			if (/^\s*\;+\s*[Ss]im\_end/) {
 				$sim_tag = 0;
 				$remove_line = 1;
 			}
-      # find Sim_start
-      if (/^\s*\;+\s*[Ss]im\_start/) {
+			# find Sim_start
+			if (/^\s*\;+\s*[Ss]im\_start/) {
 				$sim_tag = 1;
 				$remove_line=1;
-      }
-      if($remove_line==1) {
+			}
+			if($remove_line==1) {
 				next;
 			} elsif($sim_tag==1) {
 				if(/^\s*\;+/) {
@@ -901,7 +917,7 @@ sub modelfit_setup
 			}
 
 			#change data path unless absolute. do this after flip, might change dataset even
-      if (s/^\s*\$DAT[A]?\s*//) {
+			if (s/^\s*\$DAT[A]?\s*//) {
 				#remove $DATA, put it back afterwards
 				#now first string is filename
 				my $head = '$DATA ';
@@ -923,24 +939,32 @@ sub modelfit_setup
 			}
 
 		}
-    
-    close(SIM);
-    close(MOD);
+		
+		close(SIM);
+		close(MOD);
 
-    $model_simulation = model -> new ( 
-		%{common_options::restore_options(@common_options::model_options)},
-		filename                    => $simname,
-		ignore_missing_output_files => 1,
-		cwres                       => (($self->dv eq 'CWRES') and ($PsN::nm_major_version < 7))  );
-  }
+		$model_simulation = model -> new ( 
+			%{common_options::restore_options(@common_options::model_options)},
+			filename                    => $simname,
+			ignore_missing_output_files => 1,
+			cwres                       => (($self->dv eq 'CWRES') and ($PsN::nm_major_version < 7))  );
+	}
 
-  if (defined $model_simulation) {
-    my $tnpri = 0;
-    if (scalar (@{$model_simulation->problems}) > 2 ) {
-      croak('Cannot have more than two $PROB in the simulation model.');
-    } elsif (scalar (@{$model_simulation->problems}) == 2 ) {
-      if ((defined $model_simulation->problems->[0]->priors()) and 
-					scalar(@{$model_simulation->problems->[0]->priors()})>0 ){
+	if (defined $model_simulation) {
+		unless ($model_simulation->copy_data_setting_ok(copy_data => $self->copy_data)){
+			croak("Cannot set -no-copy_data, absolute data file path in simulation model is too long.");
+		} 
+		unless ($self->copy_data){
+			$model_simulation->relative_data_path(0);
+		}
+
+
+		my $tnpri = 0;
+		if (scalar (@{$model_simulation->problems}) > 2 ) {
+			croak('Cannot have more than two $PROB in the simulation model.');
+		} elsif (scalar (@{$model_simulation->problems}) == 2 ) {
+			if ((defined $model_simulation->problems->[0]->priors()) and 
+				scalar(@{$model_simulation->problems->[0]->priors()})>0 ){
 				my $tnpri = 0;
 				foreach my $rec (@{$model_simulation->problems->[0]->priors()}){
 					unless ((defined $rec) &&( defined $rec -> options )) {
@@ -948,182 +972,182 @@ sub modelfit_setup
 					}
 					foreach my $option ( @{$rec -> options} ) {
 						if ((defined $option) and 
-								(($option->name eq 'TNPRI') || (index('TNPRI',$option ->name ) == 0))){
+							(($option->name eq 'TNPRI') || (index('TNPRI',$option ->name ) == 0))){
 							$tnpri = 1;
 						}
 					}
 				}
-	
+				
 				$self->have_tnpri(1) if ($tnpri);
-      }
+			}
 			if ($self->have_tnpri()) {
 				if (defined $self->rawres_input) {
 					croak('Cannot use option rawres_input if the simulation model has $PRIOR.');
 				}
 				unless( defined $model_simulation->extra_files ) {
 					croak('When using $PRIOR TNPRI you must set option -extra_files to '.
-							'the msf-file, otherwise the msf-file will not be copied to the NONMEM '.
-							'run directory.');
+						  'the msf-file, otherwise the msf-file will not be copied to the NONMEM '.
+						  'run directory.');
 				}
-	
+				
 			} else {
 				croak('The simulation model must contain exactly one problem, unless'.
-						' first $PROB has $PRIOR TNPRI');
+					  ' first $PROB has $PRIOR TNPRI');
 			}
 		}
-    if ((not $self->have_tnpri()) and
-				(defined $model_simulation->problems->[0]->priors()) and 
-				scalar(@{$model_simulation->problems->[0]->priors()}) > 0 ) {
+		if ((not $self->have_tnpri()) and
+			(defined $model_simulation->problems->[0]->priors()) and 
+			scalar(@{$model_simulation->problems->[0]->priors()}) > 0 ) {
 			$self->have_nwpri(1);
-      if (defined $self->rawres_input) {
+			if (defined $self->rawres_input) {
 				croak('Cannot use option rawres_input if the simulation model has $PRIOR.');
-      }
-    }
+			}
+		}
 
-    $self->simprobnum(2) if ($self->have_tnpri());
-  }
+		$self->simprobnum(2) if ($self->have_tnpri());
+	}
 
-  my $vpctab = $self->directory . "m1/vpctab";
+	my $vpctab = $self->directory . "m1/vpctab";
 
-  #force rerun of original model if stratifying on something new by 
-  #removing lst file of original model
+	#force rerun of original model if stratifying on something new by 
+	#removing lst file of original model
 
-  $self->run_the_original(1);
-  $self->run_the_sim(1);
-  if ( -d $self->directory . "m1" ) {
-    my $oldlst = $self->directory . "m1/" . $type . "_original.lst";
-    my $file = $self->directory . "m1/" . $type . "_original.npctab.dta";
-    my $file2 = $self->directory . "m1/" . $type . "_simulation.1.npctab.dta";
-    if (-e $file) {
-      #this is a rerun.
-      if (-e $file2) {
-	  $self->run_the_sim(0);
-      } 
-      print "Trying to reuse existing $type table output.\n";
-      open( TAB,$file  ) or croak("Could not open ".$file);
-      my $row = <TAB>;
-      $row = <TAB>; #get second line
-      my $remove = 0;
-      close(TAB);
-      #check have stratify
-      if (defined $self->stratify_on) {
-	  my $str = $self->stratify_on;
-	  unless ($row =~ /($str)/) {
-	      print "Did not find $str in\n$file,\nwill rerun original model to create new table.\n";
-	      $remove = 1;
-	  }
-      }
-      #check have censor
-      if (defined $self->censor()) {
-	  my $str = $self->censor();
-	  unless ($row =~ /($str)/) {
-	      print "Did not find $str in\n$file,\nwill rerun original model to create new table.\n";
-	      $remove = 1;
-	  }
-      }
-      if ($self->is_vpc) {
-	  my $str = $self->idv;
-	  unless ($row =~ /($str)/) {
-	      print "Did not find $str in\n$file,\nwill rerun original model to create new table.\n";
-	      $remove = 1;
-	  }
-      }
-      my $str = $self->dv;
-      unless ($row =~ /($str)/) {
-	  #check that at least present in simfile
-	  my $row2 = '';
-	  if (-e $file2) {
-	      open( TAB, $file2 ) or croak("Could not open " . $file2);
-	      $row2 = <TAB>;
-	      $row2 = <TAB>; #get second line
-	      close(TAB);
-	  }
-	  unless ($row2 =~ /($str)/) {
-	      croak("The dependent variable $str was not found in ".
-		    "the existing table\n$file2\nIt is necessary to start a new $type from scratch.");
-	  }
-	  print "Did not find $str in $file, will rerun original model to create new table.\n";
-	  $remove = 1;
-      }
-      if (defined $self->censor()) {
-	  my $str = $self->censor();
-	  unless ($row =~ /($str)/) {
-	      #check that at least present in simfile
-	      my $row2 = '';
-	      if (-e $file2) {
-		  open( TAB,$file2 ) or croak("Could not open " . $file2);
-		  $row2 = <TAB>;
-		  $row2 = <TAB>; #get second line
-		  close(TAB);
-	      }
-	      unless ($row2 =~ /($str)/){
-		  croak("The censor variable $str was not found in ".
-			"the existing table\n$file2\nIt is necessary to start a new $type from scratch.");
-	      }
-	      print "Did not find $str in $file, will rerun original model to create new table.\n";
-	      $remove = 1;
-	  }
-      }
-      if ($remove) {
-	  unlink $oldlst;
-	  $self->run_the_original(1);
-      } else {
-	  if ($self->run_the_sim) {
-	      print "Did not find $file2,\nwill rerun simulations.\n";
-	  } else {
-	      print "Creating output $type"."_results.csv based on existing tablefiles in\n".
-		  $self->directory . "m1/\n";
-	  }
-	  $self->run_the_original(0);
-      }
-    }
-  }
+	$self->run_the_original(1);
+	$self->run_the_sim(1);
+	if ( -d $self->directory . "m1" ) {
+		my $oldlst = $self->directory . "m1/" . $type . "_original.lst";
+		my $file = $self->directory . "m1/" . $type . "_original.npctab.dta";
+		my $file2 = $self->directory . "m1/" . $type . "_simulation.1.npctab.dta";
+		if (-e $file) {
+			#this is a rerun.
+			if (-e $file2) {
+				$self->run_the_sim(0);
+			} 
+			print "Trying to reuse existing $type table output.\n";
+			open( TAB,$file  ) or croak("Could not open ".$file);
+			my $row = <TAB>;
+			$row = <TAB>; #get second line
+			my $remove = 0;
+			close(TAB);
+			#check have stratify
+			if (defined $self->stratify_on) {
+				my $str = $self->stratify_on;
+				unless ($row =~ /($str)/) {
+					print "Did not find $str in\n$file,\nwill rerun original model to create new table.\n";
+					$remove = 1;
+				}
+			}
+			#check have censor
+			if (defined $self->censor()) {
+				my $str = $self->censor();
+				unless ($row =~ /($str)/) {
+					print "Did not find $str in\n$file,\nwill rerun original model to create new table.\n";
+					$remove = 1;
+				}
+			}
+			if ($self->is_vpc) {
+				my $str = $self->idv;
+				unless ($row =~ /($str)/) {
+					print "Did not find $str in\n$file,\nwill rerun original model to create new table.\n";
+					$remove = 1;
+				}
+			}
+			my $str = $self->dv;
+			unless ($row =~ /($str)/) {
+				#check that at least present in simfile
+				my $row2 = '';
+				if (-e $file2) {
+					open( TAB, $file2 ) or croak("Could not open " . $file2);
+					$row2 = <TAB>;
+					$row2 = <TAB>; #get second line
+					close(TAB);
+				}
+				unless ($row2 =~ /($str)/) {
+					croak("The dependent variable $str was not found in ".
+						  "the existing table\n$file2\nIt is necessary to start a new $type from scratch.");
+				}
+				print "Did not find $str in $file, will rerun original model to create new table.\n";
+				$remove = 1;
+			}
+			if (defined $self->censor()) {
+				my $str = $self->censor();
+				unless ($row =~ /($str)/) {
+					#check that at least present in simfile
+					my $row2 = '';
+					if (-e $file2) {
+						open( TAB,$file2 ) or croak("Could not open " . $file2);
+						$row2 = <TAB>;
+						$row2 = <TAB>; #get second line
+						close(TAB);
+					}
+					unless ($row2 =~ /($str)/){
+						croak("The censor variable $str was not found in ".
+							  "the existing table\n$file2\nIt is necessary to start a new $type from scratch.");
+					}
+					print "Did not find $str in $file, will rerun original model to create new table.\n";
+					$remove = 1;
+				}
+			}
+			if ($remove) {
+				unlink $oldlst;
+				$self->run_the_original(1);
+			} else {
+				if ($self->run_the_sim) {
+					print "Did not find $file2,\nwill rerun simulations.\n";
+				} else {
+					print "Creating output $type"."_results.csv based on existing tablefiles in\n".
+						$self->directory . "m1/\n";
+				}
+				$self->run_the_original(0);
+			}
+		}
+	}
 
 	#get rid of $SCAT records, if any
-  $model_orig -> remove_records(type => 'scatter');
+	$model_orig -> remove_records(type => 'scatter');
 
 	#logic for use of MDV column as basis for finding which rows are observations
 	#request MDV in $TABLE if no $PRED record or if there is a $PRED record and 
 	#MDV is in the input
 	#if there is a $PRED but no MDV in input then all rows will be observations
 
-  my $MDV = '';
-  if (defined $self->tte()) {
-    if ($self->models->[0]->is_option_set(record => 'input', name => 'EVID')) {
-      $MDV = 'EVID';
-    } else {
-      ui->print(category => 'all',
-					message => "\nWarning: No EVID column found in \$INPUT. To use kaplan.plot in Xpose\n".
-					"an Xpose table containing EVID is needed for the original data, but PsN cannot ".
-					"create this table.\n");
+	my $MDV = '';
+	if (defined $self->tte()) {
+		if ($self->models->[0]->is_option_set(record => 'input', name => 'EVID')) {
+			$MDV = 'EVID';
+		} else {
+			ui->print(category => 'all',
+					  message => "\nWarning: No EVID column found in \$INPUT. To use kaplan.plot in Xpose\n".
+					  "an Xpose table containing EVID is needed for the original data, but PsN cannot ".
+					  "create this table.\n");
 			$MDV = 'MDV';
-    }
-  } elsif (scalar @{$model_orig->record( record_name => 'pred' )} < 1) {
-    $MDV = 'MDV';
-  } else {
-    if ($model_orig->is_option_set(record => 'input', name => 'MDV')) {
-      my $mdv_val = $model_orig -> get_option_value(record_name => 'input',
-						    option_name => 'MDV',
-						    problem_index => 0);
-      #have already checked no synonym. If value defined then SKIP/DROP ->don't include
-      unless (defined $mdv_val) {
+		}
+	} elsif (scalar @{$model_orig->record( record_name => 'pred' )} < 1) {
+		$MDV = 'MDV';
+	} else {
+		if ($model_orig->is_option_set(record => 'input', name => 'MDV')) {
+			my $mdv_val = $model_orig -> get_option_value(record_name => 'input',
+														  option_name => 'MDV',
+														  problem_index => 0);
+			#have already checked no synonym. If value defined then SKIP/DROP ->don't include
+			unless (defined $mdv_val) {
 				$MDV='MDV'; #MDV in input, no synynom
-      }
-    }
-    #have already checked no synonym. If value defined then SKIP/DROP ->don't include
-  }
+			}
+		}
+		#have already checked no synonym. If value defined then SKIP/DROP ->don't include
+	}
 
 	######## fix $TABLE record: remove any existing. create a new correct one.
 
-  #store $TABLE if FILE=cwtab<>.deriv, i.e. dv is CWRES, add it back to models later
-  my @extra_table_record;
-  if (($self->dv eq 'CWRES') and ($PsN::nm_major_version < 7)){
-    my $table_record = $model_orig -> record(record_name => 'table',
-					     problem_number => $self->origprobnum());
-    
-    my $rec_count = scalar(@{$table_record});
-    if( $rec_count > 0 ){
-      for (my $i=0; $i<$rec_count; $i++){
+	#store $TABLE if FILE=cwtab<>.deriv, i.e. dv is CWRES, add it back to models later
+	my @extra_table_record;
+	if (($self->dv eq 'CWRES') and ($PsN::nm_major_version < 7)){
+		my $table_record = $model_orig -> record(record_name => 'table',
+												 problem_number => $self->origprobnum());
+		
+		my $rec_count = scalar(@{$table_record});
+		if( $rec_count > 0 ){
+			for (my $i=0; $i<$rec_count; $i++){
 				@extra_table_record=();
 				my $keep=0;
 				foreach my $table_line ( @{$table_record -> [$i]} ){
@@ -1138,44 +1162,44 @@ sub modelfit_setup
 		}
 	}
 
-  $model_orig -> remove_records(type => 'table');
-  $model_simulation -> remove_records(type => 'table') if (defined $model_simulation);
+	$model_orig -> remove_records(type => 'table');
+	$model_simulation -> remove_records(type => 'table') if (defined $model_simulation);
 
-  my @rec_strings = ('ID',$MDV);
-  if (defined $self->stratify_on) {
-    push (@rec_strings, $self->stratify_on) unless ($self->stratify_on eq 'PRED');
-  }
-  push (@rec_strings,@{$self->extra_table_parameters()}) if (defined $self->extra_table_parameters());
+	my @rec_strings = ('ID',$MDV);
+	if (defined $self->stratify_on) {
+		push (@rec_strings, $self->stratify_on) unless ($self->stratify_on eq 'PRED');
+	}
+	push (@rec_strings,@{$self->extra_table_parameters()}) if (defined $self->extra_table_parameters());
 
-  if (defined $self->censor()){
-    push (@rec_strings,$self->censor());
-  }
-  if ($self->is_vpc or $self->nca) {
-    push (@rec_strings, $self->idv) unless ($self->idv eq 'PRED');
-    push (@rec_strings, $self->bound_variable) if (defined $self->bound_variable);
-  }
+	if (defined $self->censor()){
+		push (@rec_strings,$self->censor());
+	}
+	if ($self->is_vpc or $self->nca) {
+		push (@rec_strings, $self->idv) unless ($self->idv eq 'PRED');
+		push (@rec_strings, $self->bound_variable) if (defined $self->bound_variable);
+	}
 
-  if ($PsN::nm_major_version >=  7){
-    #in NM7 CWRES can be requested in $TABLE
-    push (@rec_strings, $self->dv) unless ($self->dv =~ /^(RES|WRES)$/ ); 
-  }else {
-    push (@rec_strings, $self->dv) unless ($self->dv =~ /^(RES|WRES|CWRES)$/ ); #PRED forbidden dv
-  }
+	if ($PsN::nm_major_version >=  7){
+		#in NM7 CWRES can be requested in $TABLE
+		push (@rec_strings, $self->dv) unless ($self->dv =~ /^(RES|WRES)$/ ); 
+	}else {
+		push (@rec_strings, $self->dv) unless ($self->dv =~ /^(RES|WRES|CWRES)$/ ); #PRED forbidden dv
+	}
 
 
-  my @tte_strings;
-  push(@tte_strings, @rec_strings) if (defined $self->tte());
-  if (defined $model_simulation){
-    push (@tte_strings, $self->tte()) 
-	if (defined $self->tte() and ($self->tte() ne $self->dv));
-  } else {
-    #if we do not have model_simulation then it is ok to request 
-    #tte variable in $TAB of both sim and orig, since
-    #must be available in both when models are so similar
-    push (@rec_strings, $self->tte()) 
-	if (defined $self->tte() and ($self->tte() ne $self->dv));
-  }
- 
+	my @tte_strings;
+	push(@tte_strings, @rec_strings) if (defined $self->tte());
+	if (defined $model_simulation){
+		push (@tte_strings, $self->tte()) 
+			if (defined $self->tte() and ($self->tte() ne $self->dv));
+	} else {
+		#if we do not have model_simulation then it is ok to request 
+		#tte variable in $TAB of both sim and orig, since
+		#must be available in both when models are so similar
+		push (@rec_strings, $self->tte()) 
+			if (defined $self->tte() and ($self->tte() ne $self->dv));
+	}
+	
 	# Remove duplicate columns
 	my @rec_strings2;
 	my %column_seen;
@@ -1187,425 +1211,427 @@ sub modelfit_setup
 	}
 	@rec_strings = @rec_strings2;
 
-  push (@rec_strings,('ONEHEADER','NOPRINT'));
-  push (@tte_strings,('ONEHEADER','NOPRINT'));
+	push (@rec_strings,('ONEHEADER','NOPRINT'));
+	push (@tte_strings,('ONEHEADER','NOPRINT'));
 
-  push (@rec_strings,('FILE=npctab.dta'));
-  push (@tte_strings,('FILE=npctab.dta'));
-  $model_orig -> set_records(type => 'table',
-			     record_strings => \@rec_strings,
-			     problem_numbers => [($self->origprobnum())]);
+	push (@rec_strings,('FILE=npctab.dta'));
+	push (@tte_strings,('FILE=npctab.dta'));
+	$model_orig -> set_records(type => 'table',
+							   record_strings => \@rec_strings,
+							   problem_numbers => [($self->origprobnum())]);
 
-  $model_orig -> add_records(type => 'table',
-			     record_strings => \@extra_table_record,
-			     problem_numbers => [($self->origprobnum())]) 
-      if (scalar(@extra_table_record)>0);
+	$model_orig -> add_records(type => 'table',
+							   record_strings => \@extra_table_record,
+							   problem_numbers => [($self->origprobnum())]) 
+		if (scalar(@extra_table_record)>0);
 
-  if (defined $model_simulation){
-    if (defined $self->tte()){
-      $model_simulation -> set_records(type => 'table',
-				       record_strings => \@tte_strings,
-				       problem_numbers => [($self->simprobnum())]) ;
-    }else{
-      $model_simulation -> set_records(type => 'table',
-				       record_strings => \@rec_strings,
-				       problem_numbers => [($self->simprobnum())]) ;
-    }
-    $model_simulation -> add_records(type => 'table',
-				     record_strings => \@extra_table_record,
-				     problem_numbers => [($self->simprobnum())]) 
-	if (scalar(@extra_table_record)>0);
-  }
-
-  #check if synonyms used for DV/strat/bin. If so, replace reserved variable with synonym.
-  #why not DV here? because set on commandline?
-  my @reserved_labels=('ID','L1','L2','MDV','RAW_','MRG_','RPT_','TIME','DATE');
-  push (@reserved_labels,('DAT1','DAT2','DAT3','EVID','AMT','RATE','SS','II','ADDL'));
-  push (@reserved_labels,('CMT','PCMT','CALL','CONT','SKIP','DROP'));
-
-  my @check_var;
-
-  #collect variables to check
-  my @cvar;
-  push (@cvar, $self->stratify_on) if ((defined $self->stratify_on)
-					  && !($self->stratify_on =~ /(STRT|PRED)/));
-  push (@cvar,$self->idv) if ((defined $self->idv) 
-				     && ($self->idv ne 'PRED'));
-  #check if strat/bin reserved
-  foreach my $var (@cvar){
-    foreach my $lab (@reserved_labels){
-      if ($var eq $lab){
-	push (@check_var,$var) ;
-	last;
-      }
-    }
-  }
-
-  foreach my $reserved_name (@check_var){
-    my $synonym=$reserved_name;
-    if ($model_orig-> is_option_set(record=>'input',name=>$reserved_name)){
-      my $value = $model_orig -> get_option_value(record_name => 'input',
-						  option_name => $reserved_name);
-      if (defined $value){
-	unless ($value =~ /(SKIP|DROP)/ ){
-	  $synonym=$value;
+	if (defined $model_simulation){
+		if (defined $self->tte()){
+			$model_simulation -> set_records(type => 'table',
+											 record_strings => \@tte_strings,
+											 problem_numbers => [($self->simprobnum())]) ;
+		}else{
+			$model_simulation -> set_records(type => 'table',
+											 record_strings => \@rec_strings,
+											 problem_numbers => [($self->simprobnum())]) ;
+		}
+		$model_simulation -> add_records(type => 'table',
+										 record_strings => \@extra_table_record,
+										 problem_numbers => [($self->simprobnum())]) 
+			if (scalar(@extra_table_record)>0);
 	}
-      } 
-    } else {
-      my $input_record = $model_orig -> record(record_name => 'input' ); #default prob is 1
-      if( scalar(@{$input_record}) > 0 ){ #always true
-	foreach my $line ( @{$input_record -> [0]} ){
-	  if ( $line =~ /([\w]+)=([\w]+)[^\w]/ ){
-	    unless ($1 =~ /(SKIP|DROP)/ ){ #synonym
-	      $synonym=$1 if ($2 eq $reserved_name);
-	    }
-	    last;
-	  }
+
+	#check if synonyms used for DV/strat/bin. If so, replace reserved variable with synonym.
+	#why not DV here? because set on commandline?
+	my @reserved_labels=('ID','L1','L2','MDV','RAW_','MRG_','RPT_','TIME','DATE');
+	push (@reserved_labels,('DAT1','DAT2','DAT3','EVID','AMT','RATE','SS','II','ADDL'));
+	push (@reserved_labels,('CMT','PCMT','CALL','CONT','SKIP','DROP'));
+
+	my @check_var;
+
+	#collect variables to check
+	my @cvar;
+	push (@cvar, $self->stratify_on) if ((defined $self->stratify_on)
+										 && !($self->stratify_on =~ /(STRT|PRED)/));
+	push (@cvar,$self->idv) if ((defined $self->idv) 
+								&& ($self->idv ne 'PRED'));
+	#check if strat/bin reserved
+	foreach my $var (@cvar){
+		foreach my $lab (@reserved_labels){
+			if ($var eq $lab){
+				push (@check_var,$var) ;
+				last;
+			}
+		}
 	}
-      }
-    }
-    if ($synonym ne $reserved_name){
-      #found synonym
-      if ('DV' eq $reserved_name){
+
+	foreach my $reserved_name (@check_var){
+		my $synonym=$reserved_name;
+		if ($model_orig-> is_option_set(record=>'input',name=>$reserved_name)){
+			my $value = $model_orig -> get_option_value(record_name => 'input',
+														option_name => $reserved_name);
+			if (defined $value){
+				unless ($value =~ /(SKIP|DROP)/ ){
+					$synonym=$value;
+				}
+			} 
+		} else {
+			my $input_record = $model_orig -> record(record_name => 'input' ); #default prob is 1
+			if( scalar(@{$input_record}) > 0 ){ #always true
+				foreach my $line ( @{$input_record -> [0]} ){
+					if ( $line =~ /([\w]+)=([\w]+)[^\w]/ ){
+						unless ($1 =~ /(SKIP|DROP)/ ){ #synonym
+							$synonym=$1 if ($2 eq $reserved_name);
+						}
+						last;
+					}
+				}
+			}
+		}
+		if ($synonym ne $reserved_name){
+			#found synonym
+			if ('DV' eq $reserved_name){
 				$self->dv($synonym);
-      } elsif ($reserved_name eq $self->idv){
+			} elsif ($reserved_name eq $self->idv){
 				$self->idv($synonym);
-      } elsif ($reserved_name eq $self->stratify_on){
+			} elsif ($reserved_name eq $self->stratify_on){
 				$self->stratify_on($synonym);
-      }
-    }
-  }
+			}
+		}
+	}
 
 ##### fix $ESTIMATION for original model
-  
- 
-  #if multiple $EST with NM7, the following will remove all but the last
+	
+	
+	#if multiple $EST with NM7, the following will remove all but the last
 
-  #default is set 0  all probs
-  print "Run may take extremely long time. Consider interrupting and changing last \$EST.\n" 
-      unless ($model_orig -> set_maxeval_zero(print_warning => 1,
-					      last_est_complete => $self->last_est_complete,
-					      niter_eonly => $self->niter_eonly,
-					      need_ofv => 0));
-  
+	#default is set 0  all probs
+	print "Run may take extremely long time. Consider interrupting and changing last \$EST.\n" 
+		unless ($model_orig -> set_maxeval_zero(print_warning => 1,
+												last_est_complete => $self->last_est_complete,
+												niter_eonly => $self->niter_eonly,
+												need_ofv => 0));
+	
 
-  if (defined $model_simulation){
-    $model_simulation -> set_maxeval_zero(print_warning => 1,
-					  last_est_complete => $self->last_est_complete,
-					  niter_eonly => $self->niter_eonly,
-					  need_ofv => 0);
-  }
+	if (defined $model_simulation){
+		$model_simulation -> set_maxeval_zero(print_warning => 1,
+											  last_est_complete => $self->last_est_complete,
+											  niter_eonly => $self->niter_eonly,
+											  need_ofv => 0);
+	}
 
-  $model_orig -> remove_option(record_name => 'estimation',
-			       option_name => 'MSFO',
-			       fuzzy_match => 1);
-  $model_orig -> remove_option(record_name => 'nonparametric',
-			       option_name => 'MSFO',
-			       fuzzy_match => 1);
+	$model_orig -> remove_option(record_name => 'estimation',
+								 option_name => 'MSFO',
+								 fuzzy_match => 1);
+	$model_orig -> remove_option(record_name => 'nonparametric',
+								 option_name => 'MSFO',
+								 fuzzy_match => 1);
 
-  if ($self->keep_estimation){
-    $model_orig -> set_option(record_name => 'estimation',
-			      option_name => 'POSTHOC',
-			      fuzzy_match => 1,
-			      problem_numbers => [($self->origprobnum())]);
-  }
+	if ($self->keep_estimation){
+		$model_orig -> set_option(record_name => 'estimation',
+								  option_name => 'POSTHOC',
+								  fuzzy_match => 1,
+								  problem_numbers => [($self->origprobnum())]);
+	}
 
 
 ##### remove $COVARIANCE
-  $model_orig -> remove_records(type => 'covariance');
-  $model_simulation -> remove_records(type => 'covariance') if (defined $model_simulation);
+	$model_orig -> remove_records(type => 'covariance');
+	$model_simulation -> remove_records(type => 'covariance') if (defined $model_simulation);
 
 ###update initial estimates/input data, if given###
 
 
-  if (defined $self->lst_file){
-    #create output object to check that can be parsed correctly, and to 
-    #extract data for error checking
-    my $outputObject= output -> new(filename => '../' . $self->lst_file);
-    unless ($outputObject->parsed_successfully()){
-      croak("lst file ${\$self->lst_file} could not be parsed.");
-    }
-    #update initial values in model
-    # sim_model defined then only update this one
-    $model_orig -> update_inits ( from_output => $outputObject,
-				  problem_number => $self->origprobnum())
-	unless (defined $self->sim_model());
-    if (defined $model_simulation){
-      $model_simulation -> update_inits ( from_output => $outputObject,
-					  problem_number => $self->simprobnum());
-    }
+	if (defined $self->lst_file){
+		#create output object to check that can be parsed correctly, and to 
+		#extract data for error checking
+		my $outputObject= output -> new(filename => '../' . $self->lst_file);
+		unless ($outputObject->parsed_successfully()){
+			croak("lst file ${\$self->lst_file} could not be parsed.");
+		}
+		#update initial values in model
+		# sim_model defined then only update this one
+		$model_orig -> update_inits ( from_output => $outputObject,
+									  problem_number => $self->origprobnum())
+			unless (defined $self->sim_model());
+		if (defined $model_simulation){
+			$model_simulation -> update_inits ( from_output => $outputObject,
+												problem_number => $self->simprobnum());
+		}
 
-  } elsif (defined $self->msfo_file) {
-    #add msfi record, and remove $THETA, $OMEGA, $SIGMA
-    #must make sure there is no path here first
-    my ($dirt, $fname) =
-	OSspecific::absolute_path('', $self->msfo_file );
-    unless (defined $self->sim_model()) {
-      $model_orig -> set_records(type => 'msfi',
-				 record_strings => [$fname],
-				 problem_numbers => [1]);
-      $model_orig -> remove_records(type => 'theta',problem_numbers => [1]);
-      $model_orig -> remove_records(type => 'omega',problem_numbers => [1]);
-      $model_orig -> remove_records(type => 'sigma',problem_numbers => [1]);
-    }
-    if (defined $model_simulation){
-      $model_simulation -> set_records(type => 'msfi',
-				       record_strings => [$fname],
-				       problem_numbers => [1]);
-      $model_simulation -> remove_records(type => 'theta',problem_numbers => [1]);
-      $model_simulation -> remove_records(type => 'omega',problem_numbers => [1]);
-      $model_simulation -> remove_records(type => 'sigma',problem_numbers => [1]);
-    }
-  }elsif ( (not defined $self->sim_model()) and
-	   defined $self->models->[0]->outputs() and 
-	   defined $self->models->[0]->outputs()->[0] and
-	   $self->models->[0]->outputs->[0]->have_output() and
-		   $self->models->[0]->outputs->[0]->get_single_value(attribute => 'estimation_step_initiated',
-															  problem_index => ($self->origprobnum()-1))) {
-	  $model_orig -> update_inits ( from_output => $self->models->[0]->outputs->[0],
-									problem_number => $self->origprobnum());
-	  if (defined $model_simulation){
-		  $model_simulation -> update_inits ( from_output => $self->models->[0]->outputs->[0],
-											  problem_number => $self->simprobnum());
-	  }
-  }elsif ( defined $self->sim_model() and
-		   defined $model_simulation_output){
-	  $model_simulation -> update_inits ( from_output => $model_simulation_output,
-										  problem_number => $self->simprobnum());
-	  
-  }
+	} elsif (defined $self->msfo_file) {
+		#add msfi record, and remove $THETA, $OMEGA, $SIGMA
+		#must make sure there is no path here first
+		my ($dirt, $fname) =
+			OSspecific::absolute_path('', $self->msfo_file );
+		unless (defined $self->sim_model()) {
+			$model_orig -> set_records(type => 'msfi',
+									   record_strings => [$fname],
+									   problem_numbers => [1]);
+			$model_orig -> remove_records(type => 'theta',problem_numbers => [1]);
+			$model_orig -> remove_records(type => 'omega',problem_numbers => [1]);
+			$model_orig -> remove_records(type => 'sigma',problem_numbers => [1]);
+		}
+		if (defined $model_simulation){
+			$model_simulation -> set_records(type => 'msfi',
+											 record_strings => [$fname],
+											 problem_numbers => [1]);
+			$model_simulation -> remove_records(type => 'theta',problem_numbers => [1]);
+			$model_simulation -> remove_records(type => 'omega',problem_numbers => [1]);
+			$model_simulation -> remove_records(type => 'sigma',problem_numbers => [1]);
+		}
+	}elsif ( (not defined $self->sim_model()) and
+			 defined $self->models->[0]->outputs() and 
+			 defined $self->models->[0]->outputs()->[0] and
+			 $self->models->[0]->outputs->[0]->have_output() and
+			 $self->models->[0]->outputs->[0]->get_single_value(attribute => 'estimation_step_initiated',
+																problem_index => ($self->origprobnum()-1))) {
+		$model_orig -> update_inits ( from_output => $self->models->[0]->outputs->[0],
+									  problem_number => $self->origprobnum());
+		if (defined $model_simulation){
+			$model_simulation -> update_inits ( from_output => $self->models->[0]->outputs->[0],
+												problem_number => $self->simprobnum());
+		}
+	}elsif ( defined $self->sim_model() and
+			 defined $model_simulation_output){
+		$model_simulation -> update_inits ( from_output => $model_simulation_output,
+											problem_number => $self->simprobnum());
+		
+	}
 
 ####end update initial estimates############
 
 
 #####Copy to simulation model
 
-  #if user has $TABLE with certain FILE names in model, then shrinkage will be turned on
-  # automatically. Make sure this does not happen.
-  $model_orig->shrinkage_stats(enabled => 0);
-  $model_simulation->shrinkage_stats(enabled => 0) if (defined $model_simulation);
+	#if user has $TABLE with certain FILE names in model, then shrinkage will be turned on
+	# automatically. Make sure this does not happen.
+	$model_orig->shrinkage_stats(enabled => 0);
+	$model_simulation->shrinkage_stats(enabled => 0) if (defined $model_simulation);
 
-  my $rem = $self -> samples % $self -> n_simulation_models();
-  my $base = ($self -> samples - $rem)/$self -> n_simulation_models();
-  my @model_sims = ();
-  my $ignore_char=undef;
-  my $nopred_is_set=0;
-  unless (defined $model_simulation){
-    $nopred_is_set = $model_orig -> is_option_set( record => 'simulation',
-						   name => 'noprediction',
-						   fuzzy_match => 1,
-						   problem_number => $self->origprobnum());
-    
-  }
-  if ($self->keep_estimation && $nopred_is_set){
-    ui->print(category=>'all',
-	      message=>"\nWarning: NOPRED found in \$SIMULATION and option -keep_estimation is set.\n".
-	      "This is likely to cause a NONMEM error. Consider either removing NOPRED or not using ".
-	      "option -keep_estimation\n");
-  }
-
-  my $sampled_params_arr;
-  if (defined $self->rawres_input()){
-    if (defined $model_simulation){
-      $sampled_params_arr = 
-	  $model_simulation -> get_rawres_params(filename => $self->rawres_input(),
-						 offset => $self->offset_rawres());
-    }else{
-      $sampled_params_arr = 
-	  $model_orig -> get_rawres_params(filename => $self->rawres_input(),
-					   offset => $self->offset_rawres());
-    }
-    if (defined $sampled_params_arr){
-      unless (scalar(@{$sampled_params_arr}) >= ($self->samples())){
-				croak("Too few sets (lines) of parameter values in\n".
-		    $self->rawres_input()."\nNeed at least ".
-		    ($self->samples()+$self->offset_rawres())."\n");
-      }
-    }else{
-      croak("get_rawres_params returned undef");
-    }
-    
-  }
-
-  for( my $i = 0; $i < $self -> n_simulation_models(); $i++ ) {
-    my $samples = $base;
-    if( $rem > 0 ) {
-      $samples += 1;
-      $rem--;
-    }
-    
-    if (defined $model_simulation){
-      push( @model_sims, $model_simulation -> copy(filename  => $type.'_simulation.'.($i+1).'.mod',
-						   output_same_directory => 1,
-						   directory => 'm1'));
-    }else{
-      push( @model_sims, $model_orig -> copy(filename  => $type.'_simulation.'.($i+1).'.mod',
-					     output_same_directory => 1,
-					     directory => 'm1'));
-      unless ($self->keep_estimation) {
-				$model_sims[$i] -> remove_records(type => 'estimation');
-      }
-
-      if (defined $self->tte()){
-	if ($i == 0){
-	  #Keep IGNORE=char but remove all other IGNORE plus ACCEPT 
-	  my $sim_ignorelist = $model_sims[$i] -> get_option_value( record_name  => 'data',
-								    problem_index => 0,
-								    option_name  => 'IGNORE',
-								    option_index => 'all');
-	  if ((defined $sim_ignorelist) and scalar (@{$sim_ignorelist})>0){
-	    my $printed = 0;
-	    foreach my $val (@{$sim_ignorelist}){
-	      if ((defined $val) and length($val)==1){
-		$ignore_char = $val;
-	      }else{
+	my $rem = $self -> samples % $self -> n_simulation_models();
+	my $base = ($self -> samples - $rem)/$self -> n_simulation_models();
+	my @model_sims = ();
+	my $ignore_char=undef;
+	my $nopred_is_set=0;
+	unless (defined $model_simulation){
+		$nopred_is_set = $model_orig -> is_option_set( record => 'simulation',
+													   name => 'noprediction',
+													   fuzzy_match => 1,
+													   problem_number => $self->origprobnum());
+		
+	}
+	if ($self->keep_estimation && $nopred_is_set){
 		ui->print(category=>'all',
-			  message=>"\nInformation: Since option -tte is set ".
-			  "all IGNORE/ACCEPT statements,\n".
-			  "except IGNORE=@ or similar, will be removed ".
-			  "from \$DATA in the simulation model\n") unless ($printed);
-		$printed = 1;
-	      }
-	    }
-	  }
+				  message=>"\nWarning: NOPRED found in \$SIMULATION and option -keep_estimation is set.\n".
+				  "This is likely to cause a NONMEM error. Consider either removing NOPRED or not using ".
+				  "option -keep_estimation\n");
 	}
-	#all probs
-	$model_sims[$i] -> remove_option( record_name  => 'data',
-				     option_name  => 'IGNORE',
-				     fuzzy_match => 1);
-	$model_sims[$i] -> remove_option( record_name  => 'data',
-				     option_name  => 'ACCEPT',
-				     fuzzy_match => 1);
-	
-	if (defined $ignore_char){
-	  $model_sims[$i] -> add_option( record_name  => 'data',
-					 option_name  => 'IGNORE',
-					 option_value => $ignore_char);
-	}
-      }
-    }
 
-    if (defined $sampled_params_arr){
-      $model_sims[$i] -> update_inits(from_hash => $sampled_params_arr->[$i]); 
-    }
+	my $sampled_params_arr;
+	if (defined $self->rawres_input()){
+		if (defined $model_simulation){
+			$sampled_params_arr = 
+				$model_simulation -> get_rawres_params(filename => $self->rawres_input(),
+													   offset => $self->offset_rawres());
+		}else{
+			$sampled_params_arr = 
+				$model_orig -> get_rawres_params(filename => $self->rawres_input(),
+												 offset => $self->offset_rawres());
+		}
+		if (defined $sampled_params_arr){
+			unless (scalar(@{$sampled_params_arr}) >= ($self->samples())){
+				croak("Too few sets (lines) of parameter values in\n".
+					  $self->rawres_input()."\nNeed at least ".
+					  ($self->samples()+$self->offset_rawres())."\n");
+			}
+		}else{
+			croak("get_rawres_params returned undef");
+		}
+		
+	}
+
+	for( my $i = 0; $i < $self -> n_simulation_models(); $i++ ) {
+		my $samples = $base;
+		if( $rem > 0 ) {
+			$samples += 1;
+			$rem--;
+		}
+		if (-e 'm1/'.$type.'_simulation.'.($i+1).'.mod'){
+			unlink('m1/'.$type.'_simulation.'.($i+1).'.mod');
+		}
+		if (defined $model_simulation){
+			push( @model_sims, $model_simulation -> copy(filename  => $type.'_simulation.'.($i+1).'.mod',
+														 output_same_directory => 1,
+														 copy_datafile => 0,
+														 write_copy => 0,
+														 copy_output => 0,
+														 directory => 'm1'));
+		}else{
+			push( @model_sims, $model_orig -> copy(filename  => $type.'_simulation.'.($i+1).'.mod',
+												   copy_datafile => 0,
+												   write_copy => 0,
+												   copy_output => 0,
+												   output_same_directory => 1,
+												   directory => 'm1'));
+			unless ($self->keep_estimation) {
+				$model_sims[$i] -> remove_records(type => 'estimation');
+			}
+
+			if (defined $self->tte()){
+				if ($i == 0){
+					#Keep IGNORE=char but remove all other IGNORE plus ACCEPT 
+					my $sim_ignorelist = $model_sims[$i] -> get_option_value( record_name  => 'data',
+																			  problem_index => 0,
+																			  option_name  => 'IGNORE',
+																			  option_index => 'all');
+					if ((defined $sim_ignorelist) and scalar (@{$sim_ignorelist})>0){
+						my $printed = 0;
+						foreach my $val (@{$sim_ignorelist}){
+							if ((defined $val) and length($val)==1){
+								$ignore_char = $val;
+							}else{
+								ui->print(category=>'all',
+										  message=>"\nInformation: Since option -tte is set ".
+										  "all IGNORE/ACCEPT statements,\n".
+										  "except IGNORE=@ or similar, will be removed ".
+										  "from \$DATA in the simulation model\n") unless ($printed);
+								$printed = 1;
+							}
+						}
+					}
+				}
+				#all probs
+				$model_sims[$i] -> remove_option( record_name  => 'data',
+												  option_name  => 'IGNORE',
+												  fuzzy_match => 1);
+				$model_sims[$i] -> remove_option( record_name  => 'data',
+												  option_name  => 'ACCEPT',
+												  fuzzy_match => 1);
+			}
+		}
+
+		if (defined $sampled_params_arr){
+			$model_sims[$i] -> update_inits(from_hash => $sampled_params_arr->[$i]); 
+		}
 
 
 ###Create simulation record######
 
-  
-  #Check if existing simulation record
-    my $sim_record = $model_sims[$i]-> record(record_name => 'simulation',
-					      problem_number => $self->simprobnum());
+		
+		#Check if existing simulation record
+		my $sim_record = $model_sims[$i]-> record(record_name => 'simulation',
+												  problem_number => $self->simprobnum());
 
-    my @simrec_strings;
-    if (scalar (@{$sim_record}) > 0){
-    #this option will be set below
-      foreach my $altopt ('SUBPROBLEMS','SUBPROBS','NSUBPROBLEMS','NSUBPROBS','NSUBS'){
-	#NONMEM accepts a heck of a lot of alternatives...
-	$model_sims[$i] -> remove_option(record_name => 'simulation',
-					 option_name => $altopt,
-					 fuzzy_match => 1,
-					 problem_numbers => [$self->simprobnum()]);
-      }
+		my @simrec_strings;
+		if (scalar (@{$sim_record}) > 0){
+			#this option will be set below
+			foreach my $altopt ('SUBPROBLEMS','SUBPROBS','NSUBPROBLEMS','NSUBPROBS','NSUBS'){
+				#NONMEM accepts a heck of a lot of alternatives...
+				$model_sims[$i] -> remove_option(record_name => 'simulation',
+												 option_name => $altopt,
+												 fuzzy_match => 1,
+												 problem_numbers => [$self->simprobnum()]);
+			}
 
-    #this option will be set below if noprediction
-      $model_sims[$i] -> remove_option(record_name => 'simulation',
-				       option_name => 'NOPREDICTION',
-				       fuzzy_match => 1,
-				       problem_numbers => [$self->simprobnum()]) 
-	  unless ($user_sim_model);
-      
-      #unless $keep_estimation this option will be set below
-      $model_sims[$i] -> remove_option(record_name => 'simulation',
-				       option_name => 'ONLYSIMULATION',
-				       problem_numbers => [$self->simprobnum()],
-				       fuzzy_match => 1) unless ($user_sim_model);
-      
-      if ($self->have_nwpri() or $self->have_tnpri()){
-	my $val= $model_sims[$i] -> get_option_value(record_name => 'simulation',
-						     option_name => 'TRUE',
-						     problem_index => ($self->simprobnum()-1));
-	unless ((defined $val)&& ($val eq 'PRIOR')){
-	  croak("Error in \$SIMULATION record in modelfile: when using \$PRIOR\n".
-		       "the option TRUE=PRIOR must be set.");
-	  
+			#this option will be set below if noprediction
+			$model_sims[$i] -> remove_option(record_name => 'simulation',
+											 option_name => 'NOPREDICTION',
+											 fuzzy_match => 1,
+											 problem_numbers => [$self->simprobnum()]) 
+				unless ($user_sim_model);
+			
+			#unless $keep_estimation this option will be set below
+			$model_sims[$i] -> remove_option(record_name => 'simulation',
+											 option_name => 'ONLYSIMULATION',
+											 problem_numbers => [$self->simprobnum()],
+											 fuzzy_match => 1) unless ($user_sim_model);
+			
+			if ($self->have_nwpri() or $self->have_tnpri()){
+				my $val= $model_sims[$i] -> get_option_value(record_name => 'simulation',
+															 option_name => 'TRUE',
+															 problem_index => ($self->simprobnum()-1));
+				unless ((defined $val)&& ($val eq 'PRIOR')){
+					croak("Error in \$SIMULATION record in modelfile: when using \$PRIOR\n".
+						  "the option TRUE=PRIOR must be set.");
+					
+				}
+			}elsif (defined $self->msfo_file){ #always if $nonp, but even if not $nonp
+				my $val= $model_sims[$i] -> get_option_value(record_name => 'simulation',
+															 option_name => 'TRUE',
+															 problem_index => ($self->simprobnum()-1));
+				unless ((defined $val)&& ($val eq 'FINAL')){
+					croak("Error in \$SIMULATION record in modelfile: when using an msfo-file\n".
+						  "the option TRUE=FINAL must be set.");
+					
+				}
+			}
+
+			#find and replace seeds
+			my $short_record = $model_sims[$i]-> record(record_name => 'simulation',
+														problem_number => $self->simprobnum());
+			my $set_seeds=0;
+			#Simply look for numbers. Since got rid of NSUBPROBS this is ok.
+			foreach my $sim_line ( @{$short_record -> [0]} ){
+				my $new_line;
+				while ( $sim_line =~ /(\D*)(\d+)(\D.*)/g ){
+					my $seed = random_uniform_integer(1,0,2147483560 );
+					$new_line .= "$1$seed";
+					$sim_line = $3;
+					$set_seeds += 1;
+				}
+				push (@simrec_strings,$new_line.$sim_line);
+			}
+			if ($set_seeds < 1){
+				ui->print(category=>'all',
+						  message=>"***\nError in \$SIMULATION record in modelfile: did not find any seed.\n***\n");
+			}
+			
+
+		} elsif (not defined $model_simulation) {
+			#no $sim, never if own sim-file
+			my $seed1 = random_uniform_integer(1,0,2147483560 );
+			my $seed2 = random_uniform_integer(1,0,2147483560 );
+			@simrec_strings = ('('.$seed1.')');
+			my $np_record = $model_sims[$i] -> record(record_name => 'nonparametric' ,
+													  problem_number => $self-> simprobnum());
+			if( scalar(@{$np_record}) > 0 ){
+				push (@simrec_strings ,'('.$seed2.' NONPARAMETRIC)');
+				$model_sims[$i] -> remove_records(type => 'nonparametric');
+			}
+
+			if ($self->have_nwpri() or $self->have_tnpri()){
+				push (@simrec_strings ,'TRUE=PRIOR');
+			}elsif (defined $self->msfo_file){ #always if $nonp, but even if not $nonp
+				push (@simrec_strings ,'TRUE=FINAL');
+			}
+		}else{
+			croak("When -sim_model or -flip_comments is used, \$SIM must be defined ".
+				  "by the user, PsN will not add \$SIM.");
+			
+		}
+		unless ($self->keep_estimation or $user_sim_model){
+			push (@simrec_strings,('ONLYSIMULATION'));
+		}
+		if (($self->noprediction or $nopred_is_set )and (not $user_sim_model)){
+			push (@simrec_strings,('NOPREDICTION'));
+		}
+		push (@simrec_strings,('NSUBPROBLEMS='.$samples));
+		$model_sims[$i] -> set_records(type => 'simulation',
+									   record_strings => \@simrec_strings,
+									   problem_numbers => [$self->simprobnum()]);
+		$model_sims[$i] -> _write(relative_data_path => 0); #always use abs path here in m1 even if copy_data is set
 	}
-      }elsif (defined $self->msfo_file){ #always if $nonp, but even if not $nonp
-	my $val= $model_sims[$i] -> get_option_value(record_name => 'simulation',
-						     option_name => 'TRUE',
-						     problem_index => ($self->simprobnum()-1));
-	unless ((defined $val)&& ($val eq 'FINAL')){
-	  croak("Error in \$SIMULATION record in modelfile: when using an msfo-file\n".
-		       "the option TRUE=FINAL must be set.");
-	  
+	$model_orig -> remove_records(type => 'simulation');
+
+	if ($self-have_tnpri() or $self->have_nwpri()){
+		$model_orig -> remove_option( record_name  => 'prior',
+									  problem_numbers => [(1)],
+									  option_name  => 'PLEV',
+									  fuzzy_match => 1);
 	}
-      }
 
-      #find and replace seeds
-      my $short_record = $model_sims[$i]-> record(record_name => 'simulation',
-						  problem_number => $self->simprobnum());
-      my $set_seeds=0;
-      #Simply look for numbers. Since got rid of NSUBPROBS this is ok.
-      foreach my $sim_line ( @{$short_record -> [0]} ){
-	my $new_line;
-	while ( $sim_line =~ /(\D*)(\d+)(\D.*)/g ){
-	  my $seed = random_uniform_integer(1,0,2147483560 );
-	  $new_line .= "$1$seed";
-	  $sim_line = $3;
-	  $set_seeds += 1;
-	}
-	push (@simrec_strings,$new_line.$sim_line);
-      }
-      if ($set_seeds < 1){
-	ui->print(category=>'all',
-		  message=>"***\nError in \$SIMULATION record in modelfile: did not find any seed.\n***\n");
-      }
-      
-
-    } elsif (not defined $model_simulation) {
-      #no $sim, never if own sim-file
-      my $seed1 = random_uniform_integer(1,0,2147483560 );
-      my $seed2 = random_uniform_integer(1,0,2147483560 );
-      @simrec_strings = ('('.$seed1.')');
-      my $np_record = $model_sims[$i] -> record(record_name => 'nonparametric' ,
-						problem_number => $self-> simprobnum());
-      if( scalar(@{$np_record}) > 0 ){
-	push (@simrec_strings ,'('.$seed2.' NONPARAMETRIC)');
-	$model_sims[$i] -> remove_records(type => 'nonparametric');
-      }
-
-      if ($self->have_nwpri() or $self->have_tnpri()){
-	push (@simrec_strings ,'TRUE=PRIOR');
-      }elsif (defined $self->msfo_file){ #always if $nonp, but even if not $nonp
-	push (@simrec_strings ,'TRUE=FINAL');
-      }
-    }else{
-      croak("When -sim_model or -flip_comments is used, \$SIM must be defined ".
-		 "by the user, PsN will not add \$SIM.");
-      
-    }
-    unless ($self->keep_estimation or $user_sim_model){
-      push (@simrec_strings,('ONLYSIMULATION'));
-    }
-    if (($self->noprediction or $nopred_is_set )and (not $user_sim_model)){
-      push (@simrec_strings,('NOPREDICTION'));
-    }
-    push (@simrec_strings,('NSUBPROBLEMS='.$samples));
-    $model_sims[$i] -> set_records(type => 'simulation',
-				   record_strings => \@simrec_strings,
-				   problem_numbers => [$self->simprobnum()]);
-    $model_sims[$i] -> _write();
-  }
-  $model_orig -> remove_records(type => 'simulation');
-
-  if ($self-have_tnpri() or $self->have_nwpri()){
-    $model_orig -> remove_option( record_name  => 'prior',
-				  problem_numbers => [(1)],
-				  option_name  => 'PLEV',
-				  fuzzy_match => 1);
-  }
-
-  $model_orig -> _write();
+	$model_orig -> _write(relative_data_path => 0); #always use abs path here in m1 even if copy_data is set
 
 
 
@@ -1613,39 +1639,37 @@ sub modelfit_setup
 
 #det som koer modellerna aer ett modelfit-objekt. Detta maoste skapas explicit.
 
-  $self->original_model($model_orig);
-  $self->simulation_models(\@model_sims);
+	$self->original_model($model_orig);
+	$self->simulation_models(\@model_sims);
 
-  $self->stop_motion_call(tool=>'npc/vpc',
-			  message =>"Preparing to create modelfit object to run models.")
-      if ($self->stop_motion());
+	$self->stop_motion_call(tool=>'npc/vpc',
+							message =>"Preparing to create modelfit object to run models.")
+		if ($self->stop_motion());
 
-  my @runmodels=();
-  push (@runmodels,$model_orig) if ($self->run_the_original);
-  push (@runmodels,@model_sims) if ($self->run_the_sim);
+	my @runmodels=();
+	push (@runmodels,$model_orig) if ($self->run_the_original);
+	push (@runmodels,@model_sims) if ($self->run_the_sim);
 
-  if ($self->run_the_sim or $self->run_the_original){
-      my %subargs = ();
-      if (not $self->copy_data()){
-	  $subargs{'data_path'}=$model_orig->datas->[0]->directory();
-      }
-      #Kajsa 2013-10-04 changed top tool to 0, to get better raw_result_file name
-      my $modfit = tool::modelfit ->
-		  new( %{common_options::restore_options(@common_options::tool_options)},
-			   models		 => \@runmodels,
-			   base_directory      => $self->directory, 
-			   directory => undef,
-			   nmtran_skip_model => 3,
-			   parent_threads        => 1,
-			   raw_results           => undef,
-			   prepared_models       => undef,
-			   top_tool              => 0,
-			   prepend_model_file_name => 1,
-			   %subargs );
-      $self->searchdir($modfit->directory);
-      $self->tools([]) unless defined $self->tools;
-      push( @{$self->tools}, $modfit);
-  }
+	if ($self->run_the_sim or $self->run_the_original){
+		my %subargs = ();
+		#Kajsa 2013-10-04 changed top tool to 0, to get better raw_result_file name
+		my $modfit = tool::modelfit ->
+			new( %{common_options::restore_options(@common_options::tool_options)},
+				 models		 => \@runmodels,
+				 base_directory      => $self->directory, 
+				 directory => undef,
+				 nmtran_skip_model => 3,
+				 parent_threads        => 1,
+				 raw_results           => undef,
+				 prepared_models       => undef,
+				 top_tool              => 0,
+				 copy_data             => $self->copy_data,
+				 prepend_model_file_name => 1,
+				 %subargs );
+		$self->searchdir($modfit->directory);
+		$self->tools([]) unless defined $self->tools;
+		push( @{$self->tools}, $modfit);
+	}
 }
 
 sub _modelfit_raw_results_callback
@@ -1664,8 +1688,8 @@ sub modelfit_analyze
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		model_number => { isa => 'Num', optional => 1 }
-	);
+							  model_number => { isa => 'Num', optional => 1 }
+		);
 	my $model_number = $parm{'model_number'};
 
 	# If we ran an nca move data files and return
@@ -1678,7 +1702,7 @@ sub modelfit_analyze
 	}
 
 	$self->stop_motion_call(tool=>'npc/vpc',message => "done running the models. Do analysis.")
-	if ($self->stop_motion);
+		if ($self->stop_motion);
 
 	if (defined $self->tte) {
 		$self->get_tte_data;
@@ -1690,7 +1714,7 @@ sub modelfit_analyze
 	my $no_sim= (split(/,/,$self->data_matrix->[0])) - 1;
 	unless ($no_sim == $self->samples) {
 		croak("Number of simulated datasets in matrix file $no_sim is\n".
-			"different from number ${\$self->samples} in input (option -samples).");
+			  "different from number ${\$self->samples} in input (option -samples).");
 	}
 	print "$no_sim simulations \n" if ($self->verbose);
 
@@ -1711,9 +1735,9 @@ sub modelfit_analyze
 	if ($self->compress) {
 		chdir( $self->directory."/m1" );
 		system('tar cz --remove-files -f nonmem_files.tgz *')
-		if ( $Config{osname} ne 'MSWin32' );
+			if ( $Config{osname} ne 'MSWin32' );
 		system('compact /c /s /q > NUL')
-		if ( $Config{osname} eq 'MSWin32' );
+			if ( $Config{osname} eq 'MSWin32' );
 		chdir( $self->directory );
 	}
 }
@@ -1722,9 +1746,9 @@ sub create_unique_values_hash
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		data_column => { isa => 'ArrayRef[Num]', optional => 0 },
-		reference => { isa => 'Maybe[Num]', optional => 1 }
-	);
+							  data_column => { isa => 'ArrayRef[Num]', optional => 0 },
+							  reference => { isa => 'Maybe[Num]', optional => 1 }
+		);
 	my %value_hash;
 	my @data_column = defined $parm{'data_column'} ? @{$parm{'data_column'}} : ();
 	my $reference = $parm{'reference'};
@@ -1755,7 +1779,7 @@ sub create_unique_values_hash
 		}
 		unless ($found_reference){
 			print "\n\nERROR: The reference stratum value refstrat was set to ".$self->stratify_on()."=".$reference." but no observations were found where ".
-			$self->stratify_on()."=".$reference.". Continuing analysis with refstrat undefined.\n\n";
+				$self->stratify_on()."=".$reference.". Continuing analysis with refstrat undefined.\n\n";
 			$self->clear_refstrat;
 		}
 	}
@@ -1767,12 +1791,12 @@ sub get_bin_boundaries_overlap_count
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 value_hash => { isa => 'HashRef', optional => 1 },
-		 overlap_percent => { isa => 'Num', optional => 0 },
-		 count => { isa => 'Int', optional => 0 },
-		 data_column => { isa => 'ArrayRef[Num]', optional => 0 },
-		 data_indices => { isa => 'ArrayRef[Num]', optional => 0 }
-	);
+							  value_hash => { isa => 'HashRef', optional => 1 },
+							  overlap_percent => { isa => 'Num', optional => 0 },
+							  count => { isa => 'Int', optional => 0 },
+							  data_column => { isa => 'ArrayRef[Num]', optional => 0 },
+							  data_indices => { isa => 'ArrayRef[Num]', optional => 0 }
+		);
 	my %value_hash = defined $parm{'value_hash'} ? %{$parm{'value_hash'}} : ();
 	my $overlap_percent = $parm{'overlap_percent'};
 	my $count = $parm{'count'};
@@ -1781,69 +1805,69 @@ sub get_bin_boundaries_overlap_count
 	my @bin_floors = ();
 	my @bin_ceilings = ();
 
-  # input value_hash
-  # overlap_percent and scalar count
-  # data_column, and data_indices
-  # return bin_floors, lower boundary not part of upper bin
-  # and bin_ceilings, list of upperlimits, upperlimit is part of lower bin!!!
+	# input value_hash
+	# overlap_percent and scalar count
+	# data_column, and data_indices
+	# return bin_floors, lower boundary not part of upper bin
+	# and bin_ceilings, list of upperlimits, upperlimit is part of lower bin!!!
 
-  my $value_index;
-  my $n_values = scalar(keys %value_hash);
-  my @obs_count=(0) x $n_values;
-  my $check_count=0;
+	my $value_index;
+	my $n_values = scalar(keys %value_hash);
+	my @obs_count=(0) x $n_values;
+	my $check_count=0;
 
-  #Count how many values we have in input for each unique value
-  for ($value_index=0; $value_index < $n_values;$value_index++){
-    foreach my $index (@data_indices){
-      if ($data_column[$index] == $value_hash{$value_index}){
-	$obs_count[$value_index] +=1;
-	$check_count+=1;
-      }
-    }
-  }
+	#Count how many values we have in input for each unique value
+	for ($value_index=0; $value_index < $n_values;$value_index++){
+		foreach my $index (@data_indices){
+			if ($data_column[$index] == $value_hash{$value_index}){
+				$obs_count[$value_index] +=1;
+				$check_count+=1;
+			}
+		}
+	}
 
-  unless ($check_count == scalar(@data_indices)){
-    croak("Did not find all data values in hash.");
-  }
+	unless ($check_count == scalar(@data_indices)){
+		croak("Did not find all data values in hash.");
+	}
 
-  my $local_error=-$count;
-  my $overlap=$count*$overlap_percent/100; 
-  my $overlap_error;
-  push(@bin_floors,($value_hash{0}));
-  $value_index = 0;
-  my $prev_start_index=0;
+	my $local_error=-$count;
+	my $overlap=$count*$overlap_percent/100; 
+	my $overlap_error;
+	push(@bin_floors,($value_hash{0}));
+	$value_index = 0;
+	my $prev_start_index=0;
 
-  while ($value_index < $n_values ) {
-    if ($obs_count[$value_index] == 0){
-      $value_index++; #no observations for this value, skip to next	    
-    } elsif ($local_error == -$count){
-      #bin empty since error equals initial error, must add observations
-      $local_error += $obs_count[$value_index];
-      $prev_start_index=$value_index; 
-      $value_index++;
-    }elsif (abs($local_error)>abs($local_error+$obs_count[$value_index])){
-      #bin not empty and adding observations will reduce error
-      $local_error += $obs_count[$value_index];
-      $value_index++;
-    } else {
-      #bin not empty and best to switch to new bin
-      push(@bin_ceilings,$value_hash{$value_index-1}); #last index was previous index
-      $local_error=-$count;
-      $overlap_error=-$overlap;
-      #compute overlap error if starting at $prev_start_index+1
-      for (my $k=($value_index-1);$k>$prev_start_index;$k--){
-	$overlap_error += $obs_count[$k]; 
-      }	    
-      $value_index= $prev_start_index+1; #must have nonzero overlap
-      #check if increasing value_index, i.e. moving start of next bin, will reduce overlap errror
-      while (abs($overlap_error)>abs($overlap_error-$obs_count[$value_index])){
-	$overlap_error -= $obs_count[$value_index];
-	$value_index++;
-      }
-      push(@bin_floors,$value_hash{$value_index-1});
-    }
-  }
-  push(@bin_ceilings,$value_hash{$n_values-1});
+	while ($value_index < $n_values ) {
+		if ($obs_count[$value_index] == 0){
+			$value_index++; #no observations for this value, skip to next	    
+		} elsif ($local_error == -$count){
+			#bin empty since error equals initial error, must add observations
+			$local_error += $obs_count[$value_index];
+			$prev_start_index=$value_index; 
+			$value_index++;
+		}elsif (abs($local_error)>abs($local_error+$obs_count[$value_index])){
+			#bin not empty and adding observations will reduce error
+			$local_error += $obs_count[$value_index];
+			$value_index++;
+		} else {
+			#bin not empty and best to switch to new bin
+			push(@bin_ceilings,$value_hash{$value_index-1}); #last index was previous index
+			$local_error=-$count;
+			$overlap_error=-$overlap;
+			#compute overlap error if starting at $prev_start_index+1
+			for (my $k=($value_index-1);$k>$prev_start_index;$k--){
+				$overlap_error += $obs_count[$k]; 
+			}	    
+			$value_index= $prev_start_index+1; #must have nonzero overlap
+			#check if increasing value_index, i.e. moving start of next bin, will reduce overlap errror
+			while (abs($overlap_error)>abs($overlap_error-$obs_count[$value_index])){
+				$overlap_error -= $obs_count[$value_index];
+				$value_index++;
+			}
+			push(@bin_floors,$value_hash{$value_index-1});
+		}
+	}
+	push(@bin_ceilings,$value_hash{$n_values-1});
 
 	return \@bin_floors ,\@bin_ceilings;
 }
@@ -1852,13 +1876,13 @@ sub get_bin_ceilings_from_count
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 value_hash => { isa => 'HashRef', optional => 1 },
-		 n_bins => { isa => 'Maybe[Int]', optional => 1 },
-		 single_bin_size => { isa => 'Maybe[Int]', optional => 1 },
-		 list_counts => { isa => 'ArrayRef[Num]', optional => 1 },
-		 data_column => { isa => 'ArrayRef[Num]', optional => 0 },
-		 data_indices => { isa => 'ArrayRef[Num]', optional => 0 }
-	);
+							  value_hash => { isa => 'HashRef', optional => 1 },
+							  n_bins => { isa => 'Maybe[Int]', optional => 1 },
+							  single_bin_size => { isa => 'Maybe[Int]', optional => 1 },
+							  list_counts => { isa => 'ArrayRef[Num]', optional => 1 },
+							  data_column => { isa => 'ArrayRef[Num]', optional => 0 },
+							  data_indices => { isa => 'ArrayRef[Num]', optional => 0 }
+		);
 	my %value_hash = defined $parm{'value_hash'} ? %{$parm{'value_hash'}} : ();
 	my $n_bins = $parm{'n_bins'};
 	my $single_bin_size = $parm{'single_bin_size'};
@@ -1867,104 +1891,104 @@ sub get_bin_ceilings_from_count
 	my @data_indices = defined $parm{'data_indices'} ? @{$parm{'data_indices'}} : ();
 	my @bin_ceilings = ();
 
-  # input value_hash
-  # n_bins or list_counts or single_bin_size
-  # data_column, and data_indices
-  # return bin_ceilings, list of upperlimits, upperlimit is part of lower bin!!!
+	# input value_hash
+	# n_bins or list_counts or single_bin_size
+	# data_column, and data_indices
+	# return bin_ceilings, list of upperlimits, upperlimit is part of lower bin!!!
 
-  my @ideal_count=();
-  my $value_index;
-  my $n_values = scalar(keys %value_hash);
-  my @obs_count=(0) x $n_values;
-  my $nonzero_counts=0;
+	my @ideal_count=();
+	my $value_index;
+	my $n_values = scalar(keys %value_hash);
+	my @obs_count=(0) x $n_values;
+	my $nonzero_counts=0;
 
-  #Count how many values we have in input for each unique value
-  #and how many of the unique values have nonzero count
-  for ($value_index=0; $value_index < $n_values;$value_index++){
-    foreach my $index (@data_indices){
-      if ($data_column[$index] == $value_hash{$value_index}){
-	$obs_count[$value_index] +=1;
-      }
-    }
-  }
-  foreach my $c (@obs_count){
-    if ($c > 0){
-      $nonzero_counts++;
-    }
-  }
+	#Count how many values we have in input for each unique value
+	#and how many of the unique values have nonzero count
+	for ($value_index=0; $value_index < $n_values;$value_index++){
+		foreach my $index (@data_indices){
+			if ($data_column[$index] == $value_hash{$value_index}){
+				$obs_count[$value_index] +=1;
+			}
+		}
+	}
+	foreach my $c (@obs_count){
+		if ($c > 0){
+			$nonzero_counts++;
+		}
+	}
 
-  if (defined $n_bins){
-    if ($n_bins < 1){
-      croak("Number of bins must be at least 1.");
-    }
-    if (scalar(@list_counts)>0){
-      croak("Cannot input both number of bins and set of bin counts.");
-    }
+	if (defined $n_bins){
+		if ($n_bins < 1){
+			croak("Number of bins must be at least 1.");
+		}
+		if (scalar(@list_counts)>0){
+			croak("Cannot input both number of bins and set of bin counts.");
+		}
 
-    if ($n_bins >= $nonzero_counts){#one bin per unique value with nonzero obs => no binning
-					return;
-				      }
-    my $count = scalar(@data_indices)/$n_bins;
-    @ideal_count = ($count) x $n_bins;
-    
-  } elsif (defined $single_bin_size){
-    #translate to $n_bins
-    my $nb = int (scalar(@data_indices)/$single_bin_size); #round down
-    $nb++ if ((scalar(@data_indices)/$single_bin_size)-$nb >= 0.5);
-    if ($nb >= $nonzero_counts){#one bin per unique value with nonzero obs => no binning
-				    return;
-				  }
-    my $count = scalar(@data_indices)/$nb;
-    @ideal_count = ($count) x $nb;	
-  } elsif (scalar(@list_counts)>0 && scalar(@list_counts)<$nonzero_counts ){
-    #check that requested counts matches total number of observations
-    my $checksum=0;
-    foreach my $c (@list_counts){
-      $checksum += $c;
-    }
-    my $data_index_count=scalar(@data_indices);
-    unless ($checksum == $data_index_count){
-      croak("Sum of observations requested in each bin $checksum must equal ".
-		   "total number of observations (in strata) $data_index_count.");
-    }
+		if ($n_bins >= $nonzero_counts){#one bin per unique value with nonzero obs => no binning
+			return;
+		}
+		my $count = scalar(@data_indices)/$n_bins;
+		@ideal_count = ($count) x $n_bins;
+		
+	} elsif (defined $single_bin_size){
+		#translate to $n_bins
+		my $nb = int (scalar(@data_indices)/$single_bin_size); #round down
+		$nb++ if ((scalar(@data_indices)/$single_bin_size)-$nb >= 0.5);
+		if ($nb >= $nonzero_counts){#one bin per unique value with nonzero obs => no binning
+			return;
+		}
+		my $count = scalar(@data_indices)/$nb;
+		@ideal_count = ($count) x $nb;	
+	} elsif (scalar(@list_counts)>0 && scalar(@list_counts)<$nonzero_counts ){
+		#check that requested counts matches total number of observations
+		my $checksum=0;
+		foreach my $c (@list_counts){
+			$checksum += $c;
+		}
+		my $data_index_count=scalar(@data_indices);
+		unless ($checksum == $data_index_count){
+			croak("Sum of observations requested in each bin $checksum must equal ".
+				  "total number of observations (in strata) $data_index_count.");
+		}
 
-    push (@ideal_count,@list_counts);
-  }  else {
-    return;
-  }
+		push (@ideal_count,@list_counts);
+	}  else {
+		return;
+	}
 
-  my $global_error=0;
-  my $bin_index=0;
-  my $local_error=-$ideal_count[$bin_index];
+	my $global_error=0;
+	my $bin_index=0;
+	my $local_error=-$ideal_count[$bin_index];
 
-  for ($value_index = 0; $value_index < $n_values; $value_index++) {
-    if ($bin_index == $#ideal_count){
-      #have reached last bin
-      #last upper limit is largest unique value, include all remaining observations
-      push(@bin_ceilings,$value_hash{($n_values-1)});
-      last;
-    }elsif ($local_error == -$ideal_count[$bin_index]){
-      #bin empty since error equals initial error
-      $local_error += $obs_count[$value_index];
-    }elsif ($obs_count[$value_index] == 0){
-      next;
-    }elsif (abs($global_error+$local_error)>
-	    abs($global_error+$local_error+$obs_count[$value_index])
-	    && (($n_values-$value_index-1)> ($#ideal_count - $bin_index))){
-      #adding observations will reduce global error
-      #and more than one unique value remaining per remaining bin.
-      $local_error += $obs_count[$value_index];
+	for ($value_index = 0; $value_index < $n_values; $value_index++) {
+		if ($bin_index == $#ideal_count){
+			#have reached last bin
+			#last upper limit is largest unique value, include all remaining observations
+			push(@bin_ceilings,$value_hash{($n_values-1)});
+			last;
+		}elsif ($local_error == -$ideal_count[$bin_index]){
+			#bin empty since error equals initial error
+			$local_error += $obs_count[$value_index];
+		}elsif ($obs_count[$value_index] == 0){
+			next;
+		}elsif (abs($global_error+$local_error)>
+				abs($global_error+$local_error+$obs_count[$value_index])
+				&& (($n_values-$value_index-1)> ($#ideal_count - $bin_index))){
+			#adding observations will reduce global error
+			#and more than one unique value remaining per remaining bin.
+			$local_error += $obs_count[$value_index];
 
-    } else {
-      #bin not empty and best add observations to new bin
-      push(@bin_ceilings,$value_hash{$value_index-1});
-      $global_error += $local_error;
-      $bin_index++;
-      $local_error=-$ideal_count[$bin_index]+$obs_count[$value_index];
-    }
+		} else {
+			#bin not empty and best add observations to new bin
+			push(@bin_ceilings,$value_hash{$value_index-1});
+			$global_error += $local_error;
+			$bin_index++;
+			$local_error=-$ideal_count[$bin_index]+$obs_count[$value_index];
+		}
 
 
-  }
+	}
 
 	return \@bin_ceilings;
 }
@@ -1973,11 +1997,11 @@ sub get_bin_boundaries_overlap_value
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 data_column => { isa => 'ArrayRef[Num]', optional => 0 },
-		 data_indices => { isa => 'ArrayRef[Num]', optional => 0 },
-		 width => { isa => 'Num', optional => 0 },
-		 overlap_percent => { isa => 'Num', optional => 0 }
-	);
+							  data_column => { isa => 'ArrayRef[Num]', optional => 0 },
+							  data_indices => { isa => 'ArrayRef[Num]', optional => 0 },
+							  width => { isa => 'Num', optional => 0 },
+							  overlap_percent => { isa => 'Num', optional => 0 }
+		);
 	my @data_column = defined $parm{'data_column'} ? @{$parm{'data_column'}} : ();
 	my @data_indices = defined $parm{'data_indices'} ? @{$parm{'data_indices'}} : ();
 	my $width = $parm{'width'};
@@ -1985,30 +2009,30 @@ sub get_bin_boundaries_overlap_value
 	my @bin_floors = ();
 	my @bin_ceilings = ();
 
-  # @data_column, @data_indices
-  # width, overlap_percent
-  #return bin_floors, bin_ceilings
+	# @data_column, @data_indices
+	# width, overlap_percent
+	#return bin_floors, bin_ceilings
 
-  my @local_values=();
-  for (my $i=0; $i< scalar(@data_indices); $i++){
-    push(@local_values,$data_column[$data_indices[$i]]);
-  }
-  
-  my @temp = sort {$a <=> $b} @local_values;
-  my $minval = $temp[0];
-  my $maxval = $temp[$#temp];
-  my $non_overlap_width=$width*(100-$overlap_percent)/100;
+	my @local_values=();
+	for (my $i=0; $i< scalar(@data_indices); $i++){
+		push(@local_values,$data_column[$data_indices[$i]]);
+	}
+	
+	my @temp = sort {$a <=> $b} @local_values;
+	my $minval = $temp[0];
+	my $maxval = $temp[$#temp];
+	my $non_overlap_width=$width*(100-$overlap_percent)/100;
 
-  my $next_ceiling=$minval+$width;
-  my $next_floor=$minval;
-  while ($next_ceiling < $maxval){
-    push(@bin_floors,$next_floor);
-    push(@bin_ceilings,$next_ceiling);
-    $next_ceiling += $non_overlap_width;
-    $next_floor = $next_ceiling - $width;
-  }
-  push(@bin_floors,$next_floor);
-  push(@bin_ceilings,$maxval);
+	my $next_ceiling=$minval+$width;
+	my $next_floor=$minval;
+	while ($next_ceiling < $maxval){
+		push(@bin_floors,$next_floor);
+		push(@bin_ceilings,$next_ceiling);
+		$next_ceiling += $non_overlap_width;
+		$next_floor = $next_ceiling - $width;
+	}
+	push(@bin_floors,$next_floor);
+	push(@bin_ceilings,$maxval);
 
 	return \@bin_floors ,\@bin_ceilings;
 }
@@ -2017,12 +2041,12 @@ sub get_bin_ceilings_from_value
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 data_column => { isa => 'ArrayRef[Num]', optional => 0 },
-		 data_indices => { isa => 'ArrayRef[Num]', optional => 0 },
-		 n_bins => { isa => 'Maybe[Int]', optional => 1 },
-		 single_bin_size => { isa => 'Maybe[Int]', optional => 1 },
-		 list_boundaries => { isa => 'ArrayRef[Num]', optional => 1 }
-	);
+							  data_column => { isa => 'ArrayRef[Num]', optional => 0 },
+							  data_indices => { isa => 'ArrayRef[Num]', optional => 0 },
+							  n_bins => { isa => 'Maybe[Int]', optional => 1 },
+							  single_bin_size => { isa => 'Maybe[Int]', optional => 1 },
+							  list_boundaries => { isa => 'ArrayRef[Num]', optional => 1 }
+		);
 	my @data_column = defined $parm{'data_column'} ? @{$parm{'data_column'}} : ();
 	my @data_indices = defined $parm{'data_indices'} ? @{$parm{'data_indices'}} : ();
 	my $n_bins = $parm{'n_bins'};
@@ -2030,43 +2054,43 @@ sub get_bin_ceilings_from_value
 	my @list_boundaries = defined $parm{'list_boundaries'} ? @{$parm{'list_boundaries'}} : ();
 	my @bin_ceilings = ();
 
-  # @data_column, @data_indices
-  # n_bins or list_boundaries or single_bin_size
-  #return bin_ceilings, upper limits of intervals, upperlimit part of lower bin
+	# @data_column, @data_indices
+	# n_bins or list_boundaries or single_bin_size
+	#return bin_ceilings, upper limits of intervals, upperlimit part of lower bin
 
-  my @local_values=();
-  for (my $i=0; $i< scalar(@data_indices); $i++){
-    push(@local_values,$data_column[$data_indices[$i]]);
-  }
-  
-  my @temp = sort {$a <=> $b} @local_values;
-  my $minval = $temp[0];
-  my $maxval = $temp[$#temp];
-  
-  if (defined $n_bins){
-    if (scalar(@list_boundaries)>0){
-      croak("Cannot input both number of intervals and set of boundaries");
-    }
-    my $width = ($maxval-$minval)/$n_bins;
-    for (my $i=1; $i<=$n_bins; $i++){
-      push (@bin_ceilings,($width*$i+$minval));
-    }
-  } elsif (defined $single_bin_size){
-    #translate to $n_bins
-    my $nb = int(($maxval-$minval)/$single_bin_size); #round down
-    $nb++ if ((($maxval-$minval)/$single_bin_size)-$nb >= 0.5);
-    $nb++ if ($nb <= 0);
-    my $width = ($maxval-$minval)/$nb;
-    for (my $i=1; $i<=$nb; $i++){
-      push (@bin_ceilings,($width*$i+$minval));
-    }
+	my @local_values=();
+	for (my $i=0; $i< scalar(@data_indices); $i++){
+		push(@local_values,$data_column[$data_indices[$i]]);
+	}
+	
+	my @temp = sort {$a <=> $b} @local_values;
+	my $minval = $temp[0];
+	my $maxval = $temp[$#temp];
+	
+	if (defined $n_bins){
+		if (scalar(@list_boundaries)>0){
+			croak("Cannot input both number of intervals and set of boundaries");
+		}
+		my $width = ($maxval-$minval)/$n_bins;
+		for (my $i=1; $i<=$n_bins; $i++){
+			push (@bin_ceilings,($width*$i+$minval));
+		}
+	} elsif (defined $single_bin_size){
+		#translate to $n_bins
+		my $nb = int(($maxval-$minval)/$single_bin_size); #round down
+		$nb++ if ((($maxval-$minval)/$single_bin_size)-$nb >= 0.5);
+		$nb++ if ($nb <= 0);
+		my $width = ($maxval-$minval)/$nb;
+		for (my $i=1; $i<=$nb; $i++){
+			push (@bin_ceilings,($width*$i+$minval));
+		}
 
-  } elsif (scalar(@list_boundaries)>0){
-    push (@bin_ceilings,@list_boundaries);
-    if ($maxval > $list_boundaries[$#list_boundaries]){
-      push (@bin_ceilings,$maxval);
-    }
-  }
+	} elsif (scalar(@list_boundaries)>0){
+		push (@bin_ceilings,@list_boundaries);
+		if ($maxval > $list_boundaries[$#list_boundaries]){
+			push (@bin_ceilings,$maxval);
+		}
+	}
 
 	return \@bin_ceilings;
 }
@@ -2075,13 +2099,13 @@ sub index_matrix_binned_values
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 value_hash => { isa => 'HashRef[Num]', optional => 0 },
-		 reference_index => { isa => 'Maybe[Int]', optional => 1 },
-		 data_column => { isa => 'ArrayRef[Num]', optional => 0 },
-		 data_indices => { isa => 'ArrayRef[Num]', optional => 0 },
-		 bin_ceilings => { isa => 'Maybe[ArrayRef[Num]]', optional => 1 },			# default => ()?
-		 bin_floors => { isa => 'Maybe[ArrayRef[Num]]', optional => 1 }					# default => ()?
-	);
+							  value_hash => { isa => 'HashRef[Num]', optional => 0 },
+							  reference_index => { isa => 'Maybe[Int]', optional => 1 },
+							  data_column => { isa => 'ArrayRef[Num]', optional => 0 },
+							  data_indices => { isa => 'ArrayRef[Num]', optional => 0 },
+							  bin_ceilings => { isa => 'Maybe[ArrayRef[Num]]', optional => 1 },			# default => ()?
+							  bin_floors => { isa => 'Maybe[ArrayRef[Num]]', optional => 1 }					# default => ()?
+		);
 	my %value_hash = defined $parm{'value_hash'} ? %{$parm{'value_hash'}} : ();
 	my $reference_index = $parm{'reference_index'};
 	my @data_column = defined $parm{'data_column'} ? @{$parm{'data_column'}} : ();
@@ -2090,15 +2114,15 @@ sub index_matrix_binned_values
 	my @bin_floors = defined $parm{'bin_floors'} ? @{$parm{'bin_floors'}} : ();
 	my @index_matrix;
 
-  #based on either unique values hash or bin_ceilings, 
-  #create array of arrays of data matrix row indices
-  #one index array for each unique value
-  #input %value_hash, @data_column, @data_indices, 
-  #optional input @bin_ceilings, if empty then unique values
-  #optional input @bin_floors, only allowed if ceilings given. 
-  #If floors empty then ceilings are floors , if given then first value is inclusive, the rest exclusive
-  #output index_matrix
-  
+	#based on either unique values hash or bin_ceilings, 
+	#create array of arrays of data matrix row indices
+	#one index array for each unique value
+	#input %value_hash, @data_column, @data_indices, 
+	#optional input @bin_ceilings, if empty then unique values
+	#optional input @bin_floors, only allowed if ceilings given. 
+	#If floors empty then ceilings are floors , if given then first value is inclusive, the rest exclusive
+	#output index_matrix
+	
 
 
     #optional input reference_index put reference stratum first *after created strata*
@@ -2107,64 +2131,64 @@ sub index_matrix_binned_values
 
 
 
-  my @ceilings=();
-  my @floors=();
-  if (scalar(@bin_ceilings)>0){
-    push(@ceilings,@bin_ceilings);
-    if (scalar(@bin_floors)>0){
-      push(@floors,@bin_floors);
-    }else {
-      push(@floors,$value_hash{0}); #no floors, only ceilings given
-      for (my $i=0; $i<$#ceilings; $i++){
-	push(@floors,$ceilings[$i]);
-      }
-    }
-  }else {
-    #check that floors not given as input
-    if (scalar(@bin_floors)>0){
-      croak("Cannot give bin floor input to index_matrix_binned_values ".
-		   "unless ceilings given.");
-    }
-    #no_binning, base on unique values
-    my $no_of_values = scalar (keys %value_hash);
-    for (my $value_index=0; $value_index<$no_of_values; $value_index++){
-      push(@ceilings,$value_hash{$value_index});
-    }
-    push(@floors,$value_hash{0} - 0.2);
-    for (my $i=0; $i<$#ceilings; $i++){
-      push(@floors,$ceilings[$i]);
-    }
-  }
-
-  @index_matrix = (undef) x scalar(@ceilings); #create empty matrix to sort stuff into
-  my $found_ref=0;
-  for (my $bin_index=0; $bin_index<scalar(@ceilings); $bin_index++){
-    my @index_row=();
-    my $this_floor=$floors[$bin_index];
-    $this_floor -= 0.2 if ($bin_index==0); #first floor is inclusive
-    foreach my $row_index (@data_indices){
-      if ($data_column[$row_index]>$this_floor && 
-	  $data_column[$row_index]<=$ceilings[$bin_index] ){
-	push (@index_row,$row_index);
-      }
-    }
-    if (defined $reference_index){
-	if ($bin_index > $reference_index){
-	    $index_matrix[$bin_index] = \@index_row; #all with higher index have the same place
-	}elsif ($bin_index < $reference_index){
-	    $index_matrix[$bin_index+1] = \@index_row; #all with a lower index is moved one step to the right
-	}else{ #actual reference is put first
-	    # == 
-	    $index_matrix[0] = \@index_row;
-	    $found_ref=1;
+	my @ceilings=();
+	my @floors=();
+	if (scalar(@bin_ceilings)>0){
+		push(@ceilings,@bin_ceilings);
+		if (scalar(@bin_floors)>0){
+			push(@floors,@bin_floors);
+		}else {
+			push(@floors,$value_hash{0}); #no floors, only ceilings given
+			for (my $i=0; $i<$#ceilings; $i++){
+				push(@floors,$ceilings[$i]);
+			}
+		}
+	}else {
+		#check that floors not given as input
+		if (scalar(@bin_floors)>0){
+			croak("Cannot give bin floor input to index_matrix_binned_values ".
+				  "unless ceilings given.");
+		}
+		#no_binning, base on unique values
+		my $no_of_values = scalar (keys %value_hash);
+		for (my $value_index=0; $value_index<$no_of_values; $value_index++){
+			push(@ceilings,$value_hash{$value_index});
+		}
+		push(@floors,$value_hash{0} - 0.2);
+		for (my $i=0; $i<$#ceilings; $i++){
+			push(@floors,$ceilings[$i]);
+		}
 	}
-    }else{
-	$index_matrix[$bin_index] = \@index_row;
-    }
-  }
-  if (defined $reference_index and (not $found_ref)){
-      croak("reference index defined: $reference_index but not found in list 0 to ".$#ceilings);
-  }
+
+	@index_matrix = (undef) x scalar(@ceilings); #create empty matrix to sort stuff into
+	my $found_ref=0;
+	for (my $bin_index=0; $bin_index<scalar(@ceilings); $bin_index++){
+		my @index_row=();
+		my $this_floor=$floors[$bin_index];
+		$this_floor -= 0.2 if ($bin_index==0); #first floor is inclusive
+		foreach my $row_index (@data_indices){
+			if ($data_column[$row_index]>$this_floor && 
+				$data_column[$row_index]<=$ceilings[$bin_index] ){
+				push (@index_row,$row_index);
+			}
+		}
+		if (defined $reference_index){
+			if ($bin_index > $reference_index){
+				$index_matrix[$bin_index] = \@index_row; #all with higher index have the same place
+			}elsif ($bin_index < $reference_index){
+				$index_matrix[$bin_index+1] = \@index_row; #all with a lower index is moved one step to the right
+			}else{ #actual reference is put first
+				# == 
+				$index_matrix[0] = \@index_row;
+				$found_ref=1;
+			}
+		}else{
+			$index_matrix[$bin_index] = \@index_row;
+		}
+	}
+	if (defined $reference_index and (not $found_ref)){
+		croak("reference index defined: $reference_index but not found in list 0 to ".$#ceilings);
+	}
 
 	return \@index_matrix;
 }
@@ -2173,18 +2197,18 @@ sub round
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 number => { isa => 'Num', optional => 0 }
-	);
+							  number => { isa => 'Num', optional => 0 }
+		);
 	my $number = $parm{'number'};
 	my $integer_out;
 
-  my $floor=int($number);
-  my $rem=$number-$floor;
-  if ($rem >= 0){
-    $integer_out = ($rem >= 0.5)? $floor+1 : $floor;
-  } else {
-    $integer_out = (abs($rem) >= 0.5)? $floor-1 : $floor;
-  }
+	my $floor=int($number);
+	my $rem=$number-$floor;
+	if ($rem >= 0){
+		$integer_out = ($rem >= 0.5)? $floor+1 : $floor;
+	} else {
+		$integer_out = (abs($rem) >= 0.5)? $floor-1 : $floor;
+	}
 
 	return $integer_out;
 }
@@ -2193,19 +2217,19 @@ sub ceil
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 number => { isa => 'Num', optional => 0 }
-	);
+							  number => { isa => 'Num', optional => 0 }
+		);
 	my $number = $parm{'number'};
 	my $integer_out;
 
-  my $floor=int($number);
-  my $rem=$number-$floor;
-  if ($rem > 0){
-    $integer_out = $floor+1;
-  } else {
-    #equal or  neg
-    $integer_out = $floor;
-  } 
+	my $floor=int($number);
+	my $rem=$number-$floor;
+	if ($rem > 0){
+		$integer_out = $floor+1;
+	} else {
+		#equal or  neg
+		$integer_out = $floor;
+	} 
 
 	return $integer_out;
 }
@@ -2214,18 +2238,18 @@ sub median
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 sorted_array => { isa => 'Ref', optional => 1 }
-	);
+							  sorted_array => { isa => 'Ref', optional => 1 }
+		);
 	my $sorted_array = $parm{'sorted_array'};
 	my $result;
 
-  my $len = scalar( @{$sorted_array} );
-  
-  if( $len  % 2 ){
-    $result = $sorted_array->[($len-1)/2];
-  } else {
-    $result = ($sorted_array->[$len/2]+$sorted_array->[($len-2)/2])/ 2;
-  }
+	my $len = scalar( @{$sorted_array} );
+	
+	if( $len  % 2 ){
+		$result = $sorted_array->[($len-1)/2];
+	} else {
+		$result = ($sorted_array->[$len/2]+$sorted_array->[($len-2)/2])/ 2;
+	}
 
 	return $result;
 }
@@ -2234,8 +2258,8 @@ sub mean
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		array => { isa => 'Ref', optional => 1 }
-	);
+							  array => { isa => 'Ref', optional => 1 }
+		);
 	my $array = $parm{'array'};
 	my $mean;
 
@@ -2253,33 +2277,33 @@ sub standard_deviation
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 array => { isa => 'Ref', optional => 1 }
-	);
+							  array => { isa => 'Ref', optional => 1 }
+		);
 	my $array = $parm{'array'};
 	my $result;
 
-  $result = 0;
-  my $val_count = scalar(@{$array});
-  return if (($val_count == 0) or ($val_count == 1));
-  my @sorted = (sort {$a <=> $b} @{$array}); #sort ascending
-  my $sum_values=0;
-  foreach my $val (@sorted){
-    $sum_values += $val;
-  }
-  
-  my $mean = $sum_values / $val_count;
-  my @squared_errors;
-  foreach my $val (@sorted) {
-    push(@squared_errors, ($val - $mean) ** 2);
-  }
+	$result = 0;
+	my $val_count = scalar(@{$array});
+	return if (($val_count == 0) or ($val_count == 1));
+	my @sorted = (sort {$a <=> $b} @{$array}); #sort ascending
+	my $sum_values=0;
+	foreach my $val (@sorted){
+		$sum_values += $val;
+	}
+	
+	my $mean = $sum_values / $val_count;
+	my @squared_errors;
+	foreach my $val (@sorted) {
+		push(@squared_errors, ($val - $mean) ** 2);
+	}
 
-  @sorted = (sort {$a <=> $b} @squared_errors); #sort ascending
-  my $sum_errors_pow2=0;
-  foreach my $val (@sorted){
-    $sum_errors_pow2 += $val;
-  }
-  
-  $result= sqrt ($sum_errors_pow2/($val_count-1));
+	@sorted = (sort {$a <=> $b} @squared_errors); #sort ascending
+	my $sum_errors_pow2=0;
+	foreach my $val (@sorted){
+		$sum_errors_pow2 += $val;
+	}
+	
+	$result= sqrt ($sum_errors_pow2/($val_count-1));
 	return $result;
 }
 
@@ -2608,7 +2632,7 @@ sub get_data_matrix
 				$tables_read++;
 
 				my $modulus = (($no_sim+1) <= 50) ? 1 : (($no_sim+1) / 50);
-	    
+				
 				if ( $tables_read % $modulus == 0 or $tables_read == 1 or $tables_read == $no_sim ) {
 					ui -> print (category=>'npc', 
 								 message=>$tables_read.' ',
@@ -2746,531 +2770,531 @@ sub get_tte_data
 {
 	my $self = shift;
 
-  #make sure we are in $self->directory(), zipping cannot handle absolute paths
+	#make sure we are in $self->directory(), zipping cannot handle absolute paths
 
-  my $return_directory = getcwd();
-  chdir( $self->directory );
+	my $return_directory = getcwd();
+	chdir( $self->directory );
 
-  my $type = ($self->is_vpc) ? 'vpc' : 'npc';
-  my $orig_file;
-  $orig_file = (defined $self->dv_table_name) ? $self->dv_table_name:
-      $self->original_model->get_option_value(record_name => 'table',
-						   option_name => 'FILE',
-						   problem_index => ($self->origprobnum()-1));
-  $orig_file = $self->original_model->directory().$type.'_original.'.$orig_file;
-  my @model_sims = @{$self->simulation_models()};
-  my $n_model_sims=scalar(@model_sims);
+	my $type = ($self->is_vpc) ? 'vpc' : 'npc';
+	my $orig_file;
+	$orig_file = (defined $self->dv_table_name) ? $self->dv_table_name:
+	$self->original_model->get_option_value(record_name => 'table',
+											option_name => 'FILE',
+											problem_index => ($self->origprobnum()-1));
+	$orig_file = $self->original_model->directory().$type.'_original.'.$orig_file;
+	my @model_sims = @{$self->simulation_models()};
+	my $n_model_sims=scalar(@model_sims);
 
-  unless ( -e $orig_file ){
-    my $file_to_check = $self->searchdir."/NM_run1/psn-1.lst";
-    croak("File $orig_file \nwith table output for original data does not exist. ".
-		 "It is recommended to check lst-file $file_to_check for NONMEM error messages.");
-  }
-  my $tabno='';
-  if (($self->models->[0]->filename() =~ /^run/) and
-      ($self->models->[0]->filename() =~ /\.mod$/)){
-    $tabno=$self->models->[0]->filename();
-    $tabno =~ s/^run// ;
-    $tabno =~ s/\.mod$// ;
-  }
-  if (length($tabno)>0){
-    mv ($orig_file,'mytab'.$tabno);
-    #check that mytab does not already exists in above directory before copying
-    #if it exists then probably kaplan.plot will work anyway
-    if (-e $self->models->[0]->directory().'mytab'.$tabno and
-	not -e $self->models->[0]->directory().'mytab'.$tabno.'_original'){
-      mv ($self->models->[0]->directory().'mytab'.$tabno,
-	  $self->models->[0]->directory().'mytab'.$tabno.'_original');
-      ui -> print (category=>'vpc', message=>"\nRenamed original mytab$tabno, new name ".
-		   "mytab$tabno"."_original. New mytab$tabno can be used for kaplan.plot in Xpose.");
-    }
-    cp('mytab'.$tabno, $self->models->[0]->directory().'mytab'.$tabno);
-  }else{
-    mv ($orig_file,'mytab1');
-  }
-  print "\nReading and formatting ".$self->tte()." data. This can take a while...\n";
-
-  my $sim_data_full='fullsimtab'.$tabno; #must have local names
-  my $sim_data='simtab'.$tabno; #local names
-  unless ($self->clean() > 2){
-    open(FULL, ">$sim_data_full") || die("Couldn't open $sim_data_full : $!");
-  }
-  open(DATA, ">$sim_data") || die("Couldn't open $sim_data : $!");
-  my $header_seen = 0;
-  my @names;
-  my $counter = 0;
-  my %values;
-  my $sim_num = 0;
-  my $did_print = 0;
-  for( my $sim_i = 0; $sim_i < $n_model_sims; $sim_i++ ) {
-    my $sim_file = (defined $self->dv_table_name) ? $self->dv_table_name:
-	$model_sims[$sim_i]-> get_option_value(record_name => 'table',
-					       option_name => 'FILE',
-					       problem_index => ($self->simprobnum()-1));
-    $sim_file = $model_sims[$sim_i]->directory().$type.'_simulation.'.($sim_i+1).'.'.$sim_file;
-
-    unless ( -e $sim_file ){
-      my $file_to_check = $self->searchdir."/NM_run".($sim_i+1+$self->run_the_original)."/psn-1.lst";
-      croak("File $sim_file \nwith table output for simulated data does not exist. ".
-		   "It is recommended to check lst-file\n$file_to_check \nfor NONMEM error messages.");
-    }
-    
-    my $old_id =  0;
-    my $sim_id = 0;
- 
-    open(RAW, "$sim_file") || die("Couldn't open $sim_file : $!");
-    while(<RAW>) {
-      print FULL $_ unless ($self->clean() > 2);
-      chomp;
-      next if /^\s*TABLE NO/i; # remove "TABLE NO" header lines
-      my @row = split(" ",$_);
-      # read the names of the rows if it is the first header line
-      if (/ID/) {
-	$sim_num++;
-	if($header_seen==0){ # keep first header
-	  @names=@row;
-	  $header_seen = 1;
-	  # add a count of events per individual
-	  @names = (@names,"counter","simID","simNumber");
-	  
-	  my $out_line=join(" ",@names);
-	  print DATA "$out_line\n";
-	} 
-	next;
-      } else {
-	@values{@names}=@row;
-	if(@values{"ID"} != $old_id){
-	  $counter = 0;
-	  $sim_id++;
+	unless ( -e $orig_file ){
+		my $file_to_check = $self->searchdir."/NM_run1/psn-1.lst";
+		croak("File $orig_file \nwith table output for original data does not exist. ".
+			  "It is recommended to check lst-file $file_to_check for NONMEM error messages.");
 	}
-	$old_id = @values{"ID"};
-	if(@values{$self->tte()}==0){ # non-events
-	  next;
-	  #print "zero\n"
-	} else { # events
-	  $counter++;
-	  @values{"counter"} = $counter;
-	  @values{"simID"} = $sim_id;
-	  @values{"simNumber"} = $sim_num;
+	my $tabno='';
+	if (($self->models->[0]->filename() =~ /^run/) and
+		($self->models->[0]->filename() =~ /\.mod$/)){
+		$tabno=$self->models->[0]->filename();
+		$tabno =~ s/^run// ;
+		$tabno =~ s/\.mod$// ;
 	}
-      }
+	if (length($tabno)>0){
+		mv ($orig_file,'mytab'.$tabno);
+		#check that mytab does not already exists in above directory before copying
+		#if it exists then probably kaplan.plot will work anyway
+		if (-e $self->models->[0]->directory().'mytab'.$tabno and
+			not -e $self->models->[0]->directory().'mytab'.$tabno.'_original'){
+			mv ($self->models->[0]->directory().'mytab'.$tabno,
+				$self->models->[0]->directory().'mytab'.$tabno.'_original');
+			ui -> print (category=>'vpc', message=>"\nRenamed original mytab$tabno, new name ".
+						 "mytab$tabno"."_original. New mytab$tabno can be used for kaplan.plot in Xpose.");
+		}
+		cp('mytab'.$tabno, $self->models->[0]->directory().'mytab'.$tabno);
+	}else{
+		mv ($orig_file,'mytab1');
+	}
+	print "\nReading and formatting ".$self->tte()." data. This can take a while...\n";
 
-      my $out_line=join(" ",@values{@names});
-      print DATA "$out_line\n";
-      $did_print=1;
+	my $sim_data_full='fullsimtab'.$tabno; #must have local names
+	my $sim_data='simtab'.$tabno; #local names
+	unless ($self->clean() > 2){
+		open(FULL, ">$sim_data_full") || die("Couldn't open $sim_data_full : $!");
+	}
+	open(DATA, ">$sim_data") || die("Couldn't open $sim_data : $!");
+	my $header_seen = 0;
+	my @names;
+	my $counter = 0;
+	my %values;
+	my $sim_num = 0;
+	my $did_print = 0;
+	for( my $sim_i = 0; $sim_i < $n_model_sims; $sim_i++ ) {
+		my $sim_file = (defined $self->dv_table_name) ? $self->dv_table_name:
+		$model_sims[$sim_i]-> get_option_value(record_name => 'table',
+											   option_name => 'FILE',
+											   problem_index => ($self->simprobnum()-1));
+		$sim_file = $model_sims[$sim_i]->directory().$type.'_simulation.'.($sim_i+1).'.'.$sim_file;
 
-    }
-    close(RAW);
+		unless ( -e $sim_file ){
+			my $file_to_check = $self->searchdir."/NM_run".($sim_i+1+$self->run_the_original)."/psn-1.lst";
+			croak("File $sim_file \nwith table output for simulated data does not exist. ".
+				  "It is recommended to check lst-file\n$file_to_check \nfor NONMEM error messages.");
+		}
+		
+		my $old_id =  0;
+		my $sim_id = 0;
+		
+		open(RAW, "$sim_file") || die("Couldn't open $sim_file : $!");
+		while(<RAW>) {
+			print FULL $_ unless ($self->clean() > 2);
+			chomp;
+			next if /^\s*TABLE NO/i; # remove "TABLE NO" header lines
+			my @row = split(" ",$_);
+			# read the names of the rows if it is the first header line
+			if (/ID/) {
+				$sim_num++;
+				if($header_seen==0){ # keep first header
+					@names=@row;
+					$header_seen = 1;
+					# add a count of events per individual
+					@names = (@names,"counter","simID","simNumber");
+					
+					my $out_line=join(" ",@names);
+					print DATA "$out_line\n";
+				} 
+				next;
+			} else {
+				@values{@names}=@row;
+				if(@values{"ID"} != $old_id){
+					$counter = 0;
+					$sim_id++;
+				}
+				$old_id = @values{"ID"};
+				if(@values{$self->tte()}==0){ # non-events
+					next;
+					#print "zero\n"
+				} else { # events
+					$counter++;
+					@values{"counter"} = $counter;
+					@values{"simID"} = $sim_id;
+					@values{"simNumber"} = $sim_num;
+				}
+			}
 
-  }
-  close(FULL) unless ($self->clean() > 2);
-  close(DATA);
+			my $out_line=join(" ",@values{@names});
+			print DATA "$out_line\n";
+			$did_print=1;
 
-  unless ($did_print){
-    ui -> print (category=>'vpc', message=>"\nError: Did not find any events. Something went ".
-		 "wrong with the simulations. Expect errors if trying to plot results.\n");
-  }
+		}
+		close(RAW);
 
-  my $zip_files=1;
-  my $remove_after_zip=1;
-  my $done_zip=0;
-  if($zip_files == 1 and eval("require Archive::Zip")){
+	}
+	close(FULL) unless ($self->clean() > 2);
+	close(DATA);
 
-    unless ($self->clean() > 2){
-      my $zip = Archive::Zip->new();
-      my $file_member = $zip->addFile($sim_data_full);
-      if ( $zip->writeToFileNamed($sim_data_full.'.zip') == 'AZ_OK' ) {
-	unlink($sim_data_full) if ($remove_after_zip==1);
-      }
-    }
-    my $zip = Archive::Zip->new();
-    my $file_member = $zip->addFile($sim_data);
-    if ( $zip->writeToFileNamed($sim_data.'.zip') == 'AZ_OK' ) {
-      unlink($sim_data) if ($remove_after_zip==1);
-      $done_zip=1;
-      if (length($tabno)>0){
-	mv($sim_data.'.zip',$self->models->[0]->directory().$sim_data.'.zip');
-      }else{
-	mv($sim_data.'.zip',$sim_data.'1.zip');
-      }
-    }
-  }
-  unless ($done_zip){
-    ui -> print (category=>'vpc', message=>"\nCould not zip file $sim_data. ".
-		 "It must be zipped manually before creating Kaplan-Meier plots with Xpose.\n");
-    if (length($tabno)>0){
-      mv($sim_data, $self->models->[0]->directory().$sim_data);
-    }else{
-      mv($sim_data,$sim_data.'1');
-    }
-  }
-  chdir( $return_directory );
-  $self -> cleanup();
+	unless ($did_print){
+		ui -> print (category=>'vpc', message=>"\nError: Did not find any events. Something went ".
+					 "wrong with the simulations. Expect errors if trying to plot results.\n");
+	}
+
+	my $zip_files=1;
+	my $remove_after_zip=1;
+	my $done_zip=0;
+	if($zip_files == 1 and eval("require Archive::Zip")){
+
+		unless ($self->clean() > 2){
+			my $zip = Archive::Zip->new();
+			my $file_member = $zip->addFile($sim_data_full);
+			if ( $zip->writeToFileNamed($sim_data_full.'.zip') == 'AZ_OK' ) {
+				unlink($sim_data_full) if ($remove_after_zip==1);
+			}
+		}
+		my $zip = Archive::Zip->new();
+		my $file_member = $zip->addFile($sim_data);
+		if ( $zip->writeToFileNamed($sim_data.'.zip') == 'AZ_OK' ) {
+			unlink($sim_data) if ($remove_after_zip==1);
+			$done_zip=1;
+			if (length($tabno)>0){
+				mv($sim_data.'.zip',$self->models->[0]->directory().$sim_data.'.zip');
+			}else{
+				mv($sim_data.'.zip',$sim_data.'1.zip');
+			}
+		}
+	}
+	unless ($done_zip){
+		ui -> print (category=>'vpc', message=>"\nCould not zip file $sim_data. ".
+					 "It must be zipped manually before creating Kaplan-Meier plots with Xpose.\n");
+		if (length($tabno)>0){
+			mv($sim_data, $self->models->[0]->directory().$sim_data);
+		}else{
+			mv($sim_data,$sim_data.'1');
+		}
+	}
+	chdir( $return_directory );
+	$self -> cleanup();
 }
 
 sub cleanup
 {
 	my $self = shift;
 
-  #remove tablefiles in NM_run1 and NM_run2, they are 
-  #copied to m1 by modelfit and read from there anyway.
+	#remove tablefiles in NM_run1 and NM_run2, they are 
+	#copied to m1 by modelfit and read from there anyway.
 
-  #npctab.dta npctab-1.dta
-  #globbing does not work on windows
-  my $modf = $self->directory; 
+	#npctab.dta npctab-1.dta
+	#globbing does not work on windows
+	my $modf = $self->directory; 
 
-  my $index = 1;
-  while (-d $self->searchdir."/NM_run$index"){
-      unlink $self->searchdir."/NM_run$index"."/npctab-1.dta";
-      unlink $self->searchdir."/NM_run$index"."/npctab.dta";
-      $index++;
-  }
-  if (defined $self->tte()){
-    my $index = 1;
-    while (-e "$modf/m1/vpc_simulation.$index.npctab.dta"){
-      unlink "$modf/m1/vpc_simulation.$index.npctab.dta";
-      $index++;
-    }
-  }
+	my $index = 1;
+	while (-d $self->searchdir."/NM_run$index"){
+		unlink $self->searchdir."/NM_run$index"."/npctab-1.dta";
+		unlink $self->searchdir."/NM_run$index"."/npctab.dta";
+		$index++;
+	}
+	if (defined $self->tte()){
+		my $index = 1;
+		while (-e "$modf/m1/vpc_simulation.$index.npctab.dta"){
+			unlink "$modf/m1/vpc_simulation.$index.npctab.dta";
+			$index++;
+		}
+	}
 }
 
 sub create_binned_data
 {
 	my $self = shift;
 
-  #get rid of stratified_data, replace with array or arrays of arrays row strings
-  # binned_data
-  #do the same with censor variable. Use censor variable in pred/varcorr
+	#get rid of stratified_data, replace with array or arrays of arrays row strings
+	# binned_data
+	#do the same with censor variable. Use censor variable in pred/varcorr
 
-  #make hash for binning
+	#make hash for binning
 
-  open my $bin_file, ">", "vpc_bins.txt";    # For binning results
+	open my $bin_file, ">", "vpc_bins.txt";    # For binning results
 
-  my $no_of_strata = scalar(@{$self->strata_matrix});
-  for (my $strat_ind=0; $strat_ind<$no_of_strata; $strat_ind++) {
-    my @bin_array;
-    my @pred_array;
-    my @bound_array;
-    my @id_array;
-    my @strt_array;
-    foreach my $index (@{$self->strata_matrix->[$strat_ind]}) {
-      push (@bin_array, $self->idv_array->[$index]);
-      push (@pred_array, $self->pred_array->[$index]) if ($self->predcorr || $self->varcorr);
-      push (@bound_array, $self->bound_array->[$index]) if ($self->predcorr and 
-							       (defined $self->bound_variable) );
-      push (@id_array,$self->id_array->[$index]);
-      push (@strt_array,$self->strata_variable_vector->[$index]) if (defined $self->stratify_on);
-    }
-    my @data_indices = (0..$#bin_array);
+	my $no_of_strata = scalar(@{$self->strata_matrix});
+	for (my $strat_ind=0; $strat_ind<$no_of_strata; $strat_ind++) {
+		my @bin_array;
+		my @pred_array;
+		my @bound_array;
+		my @id_array;
+		my @strt_array;
+		foreach my $index (@{$self->strata_matrix->[$strat_ind]}) {
+			push (@bin_array, $self->idv_array->[$index]);
+			push (@pred_array, $self->pred_array->[$index]) if ($self->predcorr || $self->varcorr);
+			push (@bound_array, $self->bound_array->[$index]) if ($self->predcorr and 
+																  (defined $self->bound_variable) );
+			push (@id_array,$self->id_array->[$index]);
+			push (@strt_array,$self->strata_variable_vector->[$index]) if (defined $self->stratify_on);
+		}
+		my @data_indices = (0..$#bin_array);
 
-    my $bin_hash = $self->create_unique_values_hash('data_column' => \@bin_array);
+		my $bin_hash = $self->create_unique_values_hash('data_column' => \@bin_array);
 
-    my ($bin_floors, $bin_ceilings);
+		my ($bin_floors, $bin_ceilings);
 
-    if ($self->bin_by_count eq '1') {
-      if (defined $self->overlap_percent) {
-		    ($bin_floors, $bin_ceilings) = $self -> get_bin_boundaries_overlap_count(
-						 'data_column'		 => \@bin_array,
-						 'value_hash'		 => $bin_hash,
-						 'data_indices'	 => \@data_indices,
-						 'count'				 => $self->single_bin_size,
-						 'overlap_percent' => $self->overlap_percent);
-      } else {
-		  # add input param single_bin_size
-		    $bin_ceilings = $self -> get_bin_ceilings_from_count(
-						 'data_column'			=> \@bin_array,
-						 'value_hash'			=> $bin_hash,
-						 'data_indices'		=> \@data_indices,
-						 'n_bins'				=> $self->no_of_bins,
-						 'single_bin_size'	=> $self->single_bin_size,
-						 'list_counts' 		=> $self->bin_array);
-      }
-    } elsif ($self->bin_by_count eq '0') {
-      if (defined $self->overlap_percent) {
-	      ($bin_floors, $bin_ceilings) = $self -> get_bin_boundaries_overlap_value(
-						 'data_column'		 => \@bin_array,
-						 'data_indices'	 => \@data_indices,
-						 'width'				 => $self->single_bin_size,
-						 'overlap_percent' => $self->overlap_percent);
-      } else {
-	      # add input param single_bin_size
-	      $bin_ceilings = $self -> get_bin_ceilings_from_value(
-						 'data_column'			=> \@bin_array,
-						 'data_indices'		=> \@data_indices,
-						 'n_bins'				=> $self->no_of_bins,
-						 'single_bin_size'	=> $self->single_bin_size,
-						 'list_boundaries'	=> $self->bin_array);
-      }
-    } elsif ($self->auto_bin_mode eq 'auto') {
-      $bin_ceilings = binning::bin_auto(\@bin_array, $self->min_points_in_bin, $self->strata_labels->[$strat_ind]);
-    } elsif ($self->auto_bin_mode eq 'minmax') {
-      $bin_ceilings = binning::bin_range(\@bin_array, $self->min_no_bins, $self->max_no_bins, $self->min_points_in_bin, $self->strata_labels->[$strat_ind]);
-    }
+		if ($self->bin_by_count eq '1') {
+			if (defined $self->overlap_percent) {
+				($bin_floors, $bin_ceilings) = $self -> get_bin_boundaries_overlap_count(
+					'data_column'		 => \@bin_array,
+					'value_hash'		 => $bin_hash,
+					'data_indices'	 => \@data_indices,
+					'count'				 => $self->single_bin_size,
+					'overlap_percent' => $self->overlap_percent);
+			} else {
+				# add input param single_bin_size
+				$bin_ceilings = $self -> get_bin_ceilings_from_count(
+					'data_column'			=> \@bin_array,
+					'value_hash'			=> $bin_hash,
+					'data_indices'		=> \@data_indices,
+					'n_bins'				=> $self->no_of_bins,
+					'single_bin_size'	=> $self->single_bin_size,
+					'list_counts' 		=> $self->bin_array);
+			}
+		} elsif ($self->bin_by_count eq '0') {
+			if (defined $self->overlap_percent) {
+				($bin_floors, $bin_ceilings) = $self -> get_bin_boundaries_overlap_value(
+					'data_column'		 => \@bin_array,
+					'data_indices'	 => \@data_indices,
+					'width'				 => $self->single_bin_size,
+					'overlap_percent' => $self->overlap_percent);
+			} else {
+				# add input param single_bin_size
+				$bin_ceilings = $self -> get_bin_ceilings_from_value(
+					'data_column'			=> \@bin_array,
+					'data_indices'		=> \@data_indices,
+					'n_bins'				=> $self->no_of_bins,
+					'single_bin_size'	=> $self->single_bin_size,
+					'list_boundaries'	=> $self->bin_array);
+			}
+		} elsif ($self->auto_bin_mode eq 'auto') {
+			$bin_ceilings = binning::bin_auto(\@bin_array, $self->min_points_in_bin, $self->strata_labels->[$strat_ind]);
+		} elsif ($self->auto_bin_mode eq 'minmax') {
+			$bin_ceilings = binning::bin_range(\@bin_array, $self->min_no_bins, $self->max_no_bins, $self->min_points_in_bin, $self->strata_labels->[$strat_ind]);
+		}
 
-    my $bin_matrix = $self -> index_matrix_binned_values(
-					 'data_column'		=> \@bin_array,
-					 'value_hash'		=> $bin_hash,
-					 'data_indices'	=> \@data_indices,
-					 'bin_floors'		=> $bin_floors,
-					 'bin_ceilings'	=> $bin_ceilings);
-    my $no_bins = scalar(@{$bin_matrix});
-    if (defined $bin_ceilings) {
-      unless (defined $bin_floors) {
-	      $bin_floors->[0] = ${$bin_hash}{0};
-	      for (my $bi = 1; $bi < $no_bins; $bi++) {
-	        $bin_floors->[$bi] = $bin_ceilings->[$bi - 1];
-	      }
-      }
-    } else { # unique value binning
-      for (my $bi = 0; $bi < $no_bins; $bi++) {
-        $bin_ceilings->[$bi] = ${$bin_hash}{$bi};
-      }
-    }
+		my $bin_matrix = $self -> index_matrix_binned_values(
+			'data_column'		=> \@bin_array,
+			'value_hash'		=> $bin_hash,
+			'data_indices'	=> \@data_indices,
+			'bin_floors'		=> $bin_floors,
+			'bin_ceilings'	=> $bin_ceilings);
+		my $no_bins = scalar(@{$bin_matrix});
+		if (defined $bin_ceilings) {
+			unless (defined $bin_floors) {
+				$bin_floors->[0] = ${$bin_hash}{0};
+				for (my $bi = 1; $bi < $no_bins; $bi++) {
+					$bin_floors->[$bi] = $bin_ceilings->[$bi - 1];
+				}
+			}
+		} else { # unique value binning
+			for (my $bi = 0; $bi < $no_bins; $bi++) {
+				$bin_ceilings->[$bi] = ${$bin_hash}{$bi};
+			}
+		}
 
-    my @all_bins;
-    my @all_bins_censor;
-    my @binned_id;
-    my @binned_idv;
-    my @binned_strt;
-    my $lambda = $self->boxcox_lambda();
+		my @all_bins;
+		my @all_bins_censor;
+		my @binned_id;
+		my @binned_idv;
+		my @binned_strt;
+		my $lambda = $self->boxcox_lambda();
 
-    for (my $bin_ind=0; $bin_ind<$no_bins; $bin_ind++){
-      my @bin_data;
-      my @bin_data_censor;
-      my @pred_values;
-      my @bound_values;
-      my @id_values;
-      my @idv_values;
-      my @strt_values;
-      foreach my $index (@{$bin_matrix->[$bin_ind]}){
-	my $valuestring = $self->stratified_data->[$strat_ind]->[$index];
-	if ($self->lnDV == 3){ #do log transform
-	  chomp $valuestring;
-	  my @tmp = split(/,/,$valuestring); 
-	  croak("cannot log non-positive observation value ".$tmp[0]) unless ($tmp[0]>0);
-	  $valuestring = log($tmp[0]);
-	  for (my $i=1; $i<scalar(@tmp); $i++){
-	    croak("cannot log non-positive simulated value ".$tmp[$i]) unless ($tmp[$i]>0);
-	    $valuestring .= ','.log($tmp[$i]);
-	  }
-	}elsif (( $lambda > 0) and ($self->predcorr)){
-	  #transform from Box-Cox to normal scale
-	  chomp $valuestring;
-	  my @tmp = split(/,/,$valuestring); 
-	  $valuestring= ($tmp[0]*$lambda+1)**(1/$lambda);
-	  for (my $i=1; $i<scalar(@tmp); $i++){
-	    $valuestring .= ','.(($tmp[$i]*$lambda+1)**(1/$lambda));
-	  }
-	}
-	push (@bin_data,$valuestring);
-	if (defined $self->censor_stratified_data){
-	  my $censorstring = $self->censor_stratified_data->[$strat_ind]->[$index];
-	  push (@bin_data_censor,$censorstring);
-	}
-	if ($self->predcorr || $self->varcorr){
-	  my $val = $pred_array[$index];
-	  if ($self->lnDV == 3){
-	    croak("cannot log non-positive PRED value ".$val) unless ($val>0);
-	    $val = log($val) ;
-	  }elsif ( $lambda > 0){
-	    #transform from Box-Cox to normal scale
-	    $val = ($val*$lambda+1)**(1/$lambda);
-	  }
-	  push (@pred_values,$val);
-	  if (defined $self->bound_variable){
-	    push (@bound_values,$bound_array[$index]) ;
-	  }elsif (defined $self->lower_bound){
-	    push (@bound_values,$self->lower_bound) ;
-	  }else {
-	    push (@bound_values,0) ;
-	  }
-	}
-	push (@id_values,$id_array[$index]);
-	push (@idv_values,$bin_array[$index]);
-	push (@strt_values,$strt_array[$index]) if (defined $self->stratify_on);
-      }
+		for (my $bin_ind=0; $bin_ind<$no_bins; $bin_ind++){
+			my @bin_data;
+			my @bin_data_censor;
+			my @pred_values;
+			my @bound_values;
+			my @id_values;
+			my @idv_values;
+			my @strt_values;
+			foreach my $index (@{$bin_matrix->[$bin_ind]}){
+				my $valuestring = $self->stratified_data->[$strat_ind]->[$index];
+				if ($self->lnDV == 3){ #do log transform
+					chomp $valuestring;
+					my @tmp = split(/,/,$valuestring); 
+					croak("cannot log non-positive observation value ".$tmp[0]) unless ($tmp[0]>0);
+					$valuestring = log($tmp[0]);
+					for (my $i=1; $i<scalar(@tmp); $i++){
+						croak("cannot log non-positive simulated value ".$tmp[$i]) unless ($tmp[$i]>0);
+						$valuestring .= ','.log($tmp[$i]);
+					}
+				}elsif (( $lambda > 0) and ($self->predcorr)){
+					#transform from Box-Cox to normal scale
+					chomp $valuestring;
+					my @tmp = split(/,/,$valuestring); 
+					$valuestring= ($tmp[0]*$lambda+1)**(1/$lambda);
+					for (my $i=1; $i<scalar(@tmp); $i++){
+						$valuestring .= ','.(($tmp[$i]*$lambda+1)**(1/$lambda));
+					}
+				}
+				push (@bin_data,$valuestring);
+				if (defined $self->censor_stratified_data){
+					my $censorstring = $self->censor_stratified_data->[$strat_ind]->[$index];
+					push (@bin_data_censor,$censorstring);
+				}
+				if ($self->predcorr || $self->varcorr){
+					my $val = $pred_array[$index];
+					if ($self->lnDV == 3){
+						croak("cannot log non-positive PRED value ".$val) unless ($val>0);
+						$val = log($val) ;
+					}elsif ( $lambda > 0){
+						#transform from Box-Cox to normal scale
+						$val = ($val*$lambda+1)**(1/$lambda);
+					}
+					push (@pred_values,$val);
+					if (defined $self->bound_variable){
+						push (@bound_values,$bound_array[$index]) ;
+					}elsif (defined $self->lower_bound){
+						push (@bound_values,$self->lower_bound) ;
+					}else {
+						push (@bound_values,0) ;
+					}
+				}
+				push (@id_values,$id_array[$index]);
+				push (@idv_values,$bin_array[$index]);
+				push (@strt_values,$strt_array[$index]) if (defined $self->stratify_on);
+			}
 
-      if ($self->predcorr and (scalar(@pred_values) > 0)){
-	my $new_data = $self->do_predcorr_and_varcorr(pred_array=>\@pred_values, 
-						      data_array => \@bin_data,
-						      bound_array=>\@bound_values) ;
-	@bin_data = @{$new_data};
-      }
+			if ($self->predcorr and (scalar(@pred_values) > 0)){
+				my $new_data = $self->do_predcorr_and_varcorr(pred_array=>\@pred_values, 
+															  data_array => \@bin_data,
+															  bound_array=>\@bound_values) ;
+				@bin_data = @{$new_data};
+			}
 
-      if ($self->lnDV == 1){ #do exponentiation
-	my @old_data = @bin_data;
-	@bin_data=();
-	foreach my $valuestring (@old_data){
-	  chomp $valuestring;
-	  my @tmp = split(/,/,$valuestring); 
-	  $valuestring = exp($tmp[0]);
-	  for (my $i=1; $i<scalar(@tmp); $i++){
-	    $valuestring .= ','.exp($tmp[$i]);
-	  }
-	  push(@bin_data,$valuestring);
-	}
-      }elsif (( $lambda > 0) and ($self->predcorr)){
-	#transform from normal to Box-Cox
-	my @old_data = @bin_data;
-	@bin_data=();
-	foreach my $valuestring (@old_data){
-	  chomp $valuestring;
-	  my @tmp = split(/,/,$valuestring); 
-	  $valuestring = (($tmp[0]**$lambda)-1)/$lambda;  
-	  for (my $i=1; $i<scalar(@tmp); $i++){
-	    $valuestring .= ','.(($tmp[$i]**$lambda)-1)/$lambda;
-	  }
-	  push(@bin_data,$valuestring);
-	}
+			if ($self->lnDV == 1){ #do exponentiation
+				my @old_data = @bin_data;
+				@bin_data=();
+				foreach my $valuestring (@old_data){
+					chomp $valuestring;
+					my @tmp = split(/,/,$valuestring); 
+					$valuestring = exp($tmp[0]);
+					for (my $i=1; $i<scalar(@tmp); $i++){
+						$valuestring .= ','.exp($tmp[$i]);
+					}
+					push(@bin_data,$valuestring);
+				}
+			}elsif (( $lambda > 0) and ($self->predcorr)){
+				#transform from normal to Box-Cox
+				my @old_data = @bin_data;
+				@bin_data=();
+				foreach my $valuestring (@old_data){
+					chomp $valuestring;
+					my @tmp = split(/,/,$valuestring); 
+					$valuestring = (($tmp[0]**$lambda)-1)/$lambda;  
+					for (my $i=1; $i<scalar(@tmp); $i++){
+						$valuestring .= ','.(($tmp[$i]**$lambda)-1)/$lambda;
+					}
+					push(@bin_data,$valuestring);
+				}
 
-      }
+			}
 
-      push(@all_bins,\@bin_data);
-      push(@all_bins_censor,\@bin_data_censor);
-      push(@binned_id,\@id_values);
-      push(@binned_idv,\@idv_values);
-      push(@binned_strt,\@strt_values);
-    }
-    $self->stratified_data->[$strat_ind] = undef;
-    $self->binned_data->[$strat_ind]=\@all_bins;
-    if (defined $self->censor_stratified_data){
-      $self->censor_stratified_data->[$strat_ind] = undef;
+			push(@all_bins,\@bin_data);
+			push(@all_bins_censor,\@bin_data_censor);
+			push(@binned_id,\@id_values);
+			push(@binned_idv,\@idv_values);
+			push(@binned_strt,\@strt_values);
+		}
+		$self->stratified_data->[$strat_ind] = undef;
+		$self->binned_data->[$strat_ind]=\@all_bins;
+		if (defined $self->censor_stratified_data){
+			$self->censor_stratified_data->[$strat_ind] = undef;
 			$self->censor_binned_data([]) unless defined $self->censor_binned_data;
-      $self->censor_binned_data->[$strat_ind]=\@all_bins_censor;
-    }
-    $self->bin_ceilings->[$strat_ind] = $bin_ceilings;
-    $self->bin_floors->[$strat_ind]=$bin_floors; #may be undef
-    $self->binned_id->[$strat_ind] = \@binned_id;
-    $self->binned_idv->[$strat_ind] = \@binned_idv;
-    $self->binned_strt->[$strat_ind] = \@binned_strt;
+			$self->censor_binned_data->[$strat_ind]=\@all_bins_censor;
+		}
+		$self->bin_ceilings->[$strat_ind] = $bin_ceilings;
+		$self->bin_floors->[$strat_ind]=$bin_floors; #may be undef
+		$self->binned_id->[$strat_ind] = \@binned_id;
+		$self->binned_idv->[$strat_ind] = \@binned_idv;
+		$self->binned_strt->[$strat_ind] = \@binned_strt;
 
-    # Write bin edges to disk
-    print $bin_file '-bin_array=', join(',', @$bin_ceilings), "\n";
+		# Write bin edges to disk
+		print $bin_file '-bin_array=', join(',', @$bin_ceilings), "\n";
 
-  } #endof loop over strata
+	} #endof loop over strata
 
-  close $bin_file;
+	close $bin_file;
 
-  $self->clear_idv_array;
-  $self->clear_id_array;
-  $self->clear_strata_variable_vector;
+	$self->clear_idv_array;
+	$self->clear_id_array;
+	$self->clear_strata_variable_vector;
 
-  $self->reprint_mirror_and_plot_data() if ($self->varcorr 
-					    or $self->predcorr
-					    or $self->lnDV == 1
-					    or $self->lnDV == 3);
+	$self->reprint_mirror_and_plot_data() if ($self->varcorr 
+											  or $self->predcorr
+											  or $self->lnDV == 1
+											  or $self->lnDV == 3);
 }
 
 sub do_predcorr_and_varcorr
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 pred_array => { isa => 'Ref', optional => 1 },
-		 bound_array => { isa => 'Ref', optional => 1 },
-		 data_array => { isa => 'Ref', optional => 1 }
-	);
+							  pred_array => { isa => 'Ref', optional => 1 },
+							  bound_array => { isa => 'Ref', optional => 1 },
+							  data_array => { isa => 'Ref', optional => 1 }
+		);
 	my $pred_array = $parm{'pred_array'};
 	my $bound_array = $parm{'bound_array'};
 	my $data_array = $parm{'data_array'};
 	my @corrected_data_array;
 
-  #this is for one bin
-  my $n_pred = scalar(@{$pred_array}); #number of observations in bin = number of PRED values
-  my @pc_data_array; #will hold pred corrected values after pc step
+	#this is for one bin
+	my $n_pred = scalar(@{$pred_array}); #number of observations in bin = number of PRED values
+	my @pc_data_array; #will hold pred corrected values after pc step
 
-  #data_array has one element for each observation, each element is
-  # a comma-separated string of values, first the real value and then the simulations 
+	#data_array has one element for each observation, each element is
+	# a comma-separated string of values, first the real value and then the simulations 
 
-  unless ( $n_pred == scalar(@{$data_array})){
-    croak("number of pred values and observations not equal in do_predcorr");
-  }
+	unless ( $n_pred == scalar(@{$data_array})){
+		croak("number of pred values and observations not equal in do_predcorr");
+	}
 
-  unless ( $n_pred == scalar(@{$bound_array})){
-    croak("number of pred values and bound values not equal in do_predcorr");
-  }
+	unless ( $n_pred == scalar(@{$bound_array})){
+		croak("number of pred values and bound values not equal in do_predcorr");
+	}
 
 
-  #After discussion with Martin: use all pred even if some observations
-  #have all datasets censored
+	#After discussion with Martin: use all pred even if some observations
+	#have all datasets censored
 
-  my $median_pred = $self->median(sorted_array => [(sort {$a <=> $b} @{$pred_array})]); # PREDnm
-  for (my $i=0; $i< $n_pred; $i++){
-    my $pcorr;
-    my @newrow;
+	my $median_pred = $self->median(sorted_array => [(sort {$a <=> $b} @{$pred_array})]); # PREDnm
+	for (my $i=0; $i< $n_pred; $i++){
+		my $pcorr;
+		my @newrow;
 
-    if (($self->lnDV == 2) or ($self->lnDV == 1) or ($self->lnDV == 3)){
-      #log-transformed data
-      $pcorr=$median_pred-($pred_array->[$i]);
-      my $row = $data_array->[$i]; 
-      chomp $row;
-      my @tmp = split(/,/,$row); 
-      foreach my $val (@tmp){ #first $val is real observation, the rest are simulated
-	push(@newrow,($val+$pcorr));
-      }
-    }else {
+		if (($self->lnDV == 2) or ($self->lnDV == 1) or ($self->lnDV == 3)){
+			#log-transformed data
+			$pcorr=$median_pred-($pred_array->[$i]);
+			my $row = $data_array->[$i]; 
+			chomp $row;
+			my @tmp = split(/,/,$row); 
+			foreach my $val (@tmp){ #first $val is real observation, the rest are simulated
+				push(@newrow,($val+$pcorr));
+			}
+		}else {
 
-      my $diff = $pred_array->[$i] - $bound_array->[$i]; #PREDi-LBi
-      if ($diff > 0){
-	$pcorr=($median_pred-$bound_array->[$i])/$diff; #(PREDbin-LBi)/PREDi-LBi
-	#can be numerical problems here, cancellation, if median_pred and bound very close. 
-	#ignore for now, get worse problems if multiply denominator with median+bound which could be 0
-      }else {
-	  my $message="Found PRED value (".$pred_array->[$i].") lower than the lower bound (".$bound_array->[$i]."). ".
-	      "Solve this by setting option -lower_bound and rerunning in the same directory, ".
-	      "reusing the already formatted ${\$self->dv} data.";
-	croak($message);
-      }
-      my $row = $data_array->[$i]; 
-      chomp $row;
-      my @tmp = split(/,/,$row); 
-      foreach my $val (@tmp){
-	push(@newrow,($bound_array->[$i]*(1-$pcorr)+$val*$pcorr));
-      }
-    }
-    push (@pc_data_array,\@newrow);
-  }
+			my $diff = $pred_array->[$i] - $bound_array->[$i]; #PREDi-LBi
+			if ($diff > 0){
+				$pcorr=($median_pred-$bound_array->[$i])/$diff; #(PREDbin-LBi)/PREDi-LBi
+				#can be numerical problems here, cancellation, if median_pred and bound very close. 
+				#ignore for now, get worse problems if multiply denominator with median+bound which could be 0
+			}else {
+				my $message="Found PRED value (".$pred_array->[$i].") lower than the lower bound (".$bound_array->[$i]."). ".
+					"Solve this by setting option -lower_bound and rerunning in the same directory, ".
+					"reusing the already formatted ${\$self->dv} data.";
+				croak($message);
+			}
+			my $row = $data_array->[$i]; 
+			chomp $row;
+			my @tmp = split(/,/,$row); 
+			foreach my $val (@tmp){
+				push(@newrow,($bound_array->[$i]*(1-$pcorr)+$val*$pcorr));
+			}
+		}
+		push (@pc_data_array,\@newrow);
+	}
 
-  if ($self->varcorr){
-    my $warn=0;
-    my @stdevs;
-    my $obs_index = 0;
-    foreach my $row (@pc_data_array){ #for each observation=row in pc_data_array
-      my @values = @{$row}; #make copy of values so we do not destroy anything
-      my $orig_value = shift(@values); #remove first value from this row
-      push(@stdevs,($self->standard_deviation(array => \@values))); #store stdev from simulated values only
-      #standard_deviation handles zero lenght array
-    }
-    my $median_stdev = $self->median(sorted_array => [(sort {$a <=> $b} @stdevs)]);
- 
-    for (my $i=0; $i < $n_pred; $i++){ #for each observation
-      my $vcorr;
-      if ($stdevs[$i] != 0){
+	if ($self->varcorr){
+		my $warn=0;
+		my @stdevs;
+		my $obs_index = 0;
+		foreach my $row (@pc_data_array){ #for each observation=row in pc_data_array
+			my @values = @{$row}; #make copy of values so we do not destroy anything
+			my $orig_value = shift(@values); #remove first value from this row
+			push(@stdevs,($self->standard_deviation(array => \@values))); #store stdev from simulated values only
+			#standard_deviation handles zero lenght array
+		}
+		my $median_stdev = $self->median(sorted_array => [(sort {$a <=> $b} @stdevs)]);
+		
+		for (my $i=0; $i < $n_pred; $i++){ #for each observation
+			my $vcorr;
+			if ($stdevs[$i] != 0){
 				$vcorr=$median_stdev/$stdevs[$i];
-      }else {
+			}else {
 				$warn =1;
 				$vcorr =100000;
-      }
-      my @newrow;
-      foreach my $val (@{$pc_data_array[$i]}){ #for each value (real and sim) for observation i
-	push(@newrow,($vcorr*$val+$median_pred*(1-$vcorr)));
+			}
+			my @newrow;
+			foreach my $val (@{$pc_data_array[$i]}){ #for each value (real and sim) for observation i
+				push(@newrow,($vcorr*$val+$median_pred*(1-$vcorr)));
 
-      }
-      push (@corrected_data_array,(join ',',@newrow));
-    }
+			}
+			push (@corrected_data_array,(join ',',@newrow));
+		}
 
-    if ($warn == 1){
-      ui -> print (category=>'vpc', 
-		   message=>"\nWARNING\nFor one or more observations, the standard deviation for ".
-		   "simulated data values was equal to 0. Setting VCORR ".
-		   "to 100000 for those observations.\n\n");
-    }
+		if ($warn == 1){
+			ui -> print (category=>'vpc', 
+						 message=>"\nWARNING\nFor one or more observations, the standard deviation for ".
+						 "simulated data values was equal to 0. Setting VCORR ".
+						 "to 100000 for those observations.\n\n");
+		}
 
-  }else {
-    #no varcorr, just arrange pc data in correct output form
-    foreach my $arr (@pc_data_array){
-      push (@corrected_data_array,(join ',',@{$arr}));
-    }
-  }
+	}else {
+		#no varcorr, just arrange pc data in correct output form
+		foreach my $arr (@pc_data_array){
+			push (@corrected_data_array,(join ',',@{$arr}));
+		}
+	}
 
 	return \@corrected_data_array;
 }
@@ -3279,415 +3303,415 @@ sub create_mirror_and_plot_data
 {
 	my $self = shift;
 
-  #after stratification, but before removing data_matrix
-  #before binning
-  #this also collects PRED column for predcorr
+	#after stratification, but before removing data_matrix
+	#before binning
+	#this also collects PRED column for predcorr
 
-  #print header to file
-  #if npc or vpc without predcorr or varcorr also print the rest
-  #else store array (over strata) of arrays (of values) for
-  #identity_data (id)
-  #idv_data (eg TIME)
-  #strt_data (eg DOSE)
-  #and print in separate function after varcorr
+	#print header to file
+	#if npc or vpc without predcorr or varcorr also print the rest
+	#else store array (over strata) of arrays (of values) for
+	#identity_data (id)
+	#idv_data (eg TIME)
+	#strt_data (eg DOSE)
+	#and print in separate function after varcorr
 
-  my $no_observations = $self->n_observations;
-  my $bin_header = $self->idv;
-  if ($PsN::nm_major_version < 7){
-    #NONMEM only prints first 4 letters of variable name as header
-    #no exception for CWRES since not allowed to bin on CWRES
-    $bin_header = substr($self->idv,0,4);
-  }
-  #add new: If ((defined $self->{dv_table_name }) && (not $self->{'dv} eq 'CWRES'))
-  #use dv_table_name instead
-  #OR require that stratification and binning variables are in vpc-generated table
+	my $no_observations = $self->n_observations;
+	my $bin_header = $self->idv;
+	if ($PsN::nm_major_version < 7){
+		#NONMEM only prints first 4 letters of variable name as header
+		#no exception for CWRES since not allowed to bin on CWRES
+		$bin_header = substr($self->idv,0,4);
+	}
+	#add new: If ((defined $self->{dv_table_name }) && (not $self->{'dv} eq 'CWRES'))
+	#use dv_table_name instead
+	#OR require that stratification and binning variables are in vpc-generated table
 
-  my $orig_file;
-  if (defined $self->orig_table){
-    $orig_file = $self->orig_table;
-  } else {
-    $orig_file =  $self->original_model->directory().'vpc_original.'.
-	$self->original_model->get_option_value(record_name => 'table',
-						     option_name => 'FILE',
-						     problem_index => ($self->origprobnum()-1));
-  }
-  unless (-e $orig_file) {
-    croak("Could not find file $orig_file.");
-  }
+	my $orig_file;
+	if (defined $self->orig_table){
+		$orig_file = $self->orig_table;
+	} else {
+		$orig_file =  $self->original_model->directory().'vpc_original.'.
+			$self->original_model->get_option_value(record_name => 'table',
+													option_name => 'FILE',
+													problem_index => ($self->origprobnum()-1));
+	}
+	unless (-e $orig_file) {
+		croak("Could not find file $orig_file.");
+	}
 
 	my $d = data->new(filename => $orig_file, ignoresign => '@', idcolumn => 1); #table that we made, ID is 1
 
-  my $no_individuals= scalar(@{$d->individuals});
-  my $filter = $d -> create_row_filter('no_individuals'=>$no_individuals);
+	my $no_individuals= scalar(@{$d->individuals});
+	my $filter = $d -> create_row_filter('no_individuals'=>$no_individuals);
 
-  my $idv_array = $d -> column_to_array('column'=>$bin_header,'filter'=>$filter);
-  unless (scalar @{$idv_array} > 0){
-    croak("Could not find independent variable column $bin_header in original data file.");
-  }
-  unless (scalar @{$idv_array} == $no_observations){
-    croak("Number of observations in binning column after filtering ".
-		  "does not match number of observations in matrix file.");
-  }
-  $self->idv_array($idv_array);
-
-
-  my $id_array = $d -> column_to_array('column'=>'ID','filter'=>$filter);
-  unless (scalar @{$id_array} > 0){
-    croak("Could not find ID column in original data file.");
-  }
-  unless (scalar @{$id_array} == $no_observations){
-    croak("Number of observations in ID column after filtering ".
-		  "does not match number of observations in matrix file.");
-  }
-  $self->id_array($id_array);
-
-  if ($self->predcorr || $self->varcorr){
-    my $pred_array = $d -> column_to_array('column'=>'PRED','filter'=>$filter);
-    unless (scalar @{$pred_array} > 0){
-      croak("Could not find PRED column in original data file.");
-    }
-    unless (scalar @{$pred_array} == $no_observations){
-      croak("Number of observations in PRED column after filtering ".
-		    "does not match number of observations in matrix file.");
-    }
-    $self->pred_array($pred_array);
-    if (defined $self->bound_variable){
-      #NONMEM only prints first 4 letters of variable name as header
-      my $col = ($PsN::nm_major_version < 7) ? substr($self->bound_variable,0,4) : $self->bound_variable;
-      my $bound_array = $d -> column_to_array('column'=>$col,'filter'=>$filter);
-      unless (scalar @{$bound_array} > 0){
-	croak("Could not find $col column in original data file.");
-      }
-      unless (scalar @{$bound_array} == $no_observations){
-	croak("Number of observations in $col column after filtering ".
-		      "does not match number of observations in matrix file.");
-      }
-      $self->bound_array($bound_array);
-    }
-  }
-
-  #add translated stratacol
-  my $no_of_strata = scalar(@{$self->strata_matrix});
-  my @translated_strata = (0) x $no_observations;
-  for (my $strat_ind=0; $strat_ind<$no_of_strata; $strat_ind++){
-    foreach my $j (@{$self->strata_matrix->[$strat_ind]}){
-      $translated_strata[$j] = ($strat_ind +1);
-    }
-  }
-
-  #filename vpctabN - find number N
-  my $tabno='';
-  if (($self->models->[0]->filename() =~ /^run/) and
-      ($self->models->[0]->filename() =~ /\.mod$/)){
-    $tabno=$self->models->[0]->filename();
-    $tabno =~ s/^run// ;
-    $tabno =~ s/\.mod$// ;
-  }
-  my $vpctabname = "vpctab".$tabno;
-  if (-e $self->directory."/".$self->results_file()){
-    my $fname = $self->results_file();
-    $fname =~ s/\.csv$// ;
-
-    my $addnum=1;
-    while (-e $self->directory."/$fname"."-old$addnum".'.csv'){
-      $addnum++;
-    }
-    my $newnametab = $vpctabname."-old$addnum";
-    while (-e $self->directory."$newnametab"){
-      $addnum++;
-      $newnametab = $vpctabname."-old$addnum";
-    }
-
-    mv( $self->directory.$vpctabname, $self->directory.$newnametab);
-
-    my $newname = "$fname"."-old$addnum".'.csv';
-    mv( $self->directory.$fname.'.csv', $self->directory.$newname);
-
-    ui -> print (category=>'vpc', 
-		 message=>"Renamed old $vpctabname to $newnametab, and old $fname".
-		 ".csv to $newname to protect old output. New output is $vpctabname and $fname".".csv.");
-  }
-  $self->vpctab_filename($self->directory.$vpctabname);
-
-
-  #mirrors
-  my @mirror_set=();
-  my @mirror_labels=();
-  if (defined $self->mirrors){
-    my @rand_indices=random_permuted_index($self->n_simulations);
-    @mirror_set = @rand_indices[0 .. ($self->mirrors-1)];
-    for my $j (1 .. $self->mirrors){
-      push (@mirror_labels,"mirror_$j");
-    }
-  }
-
-  $self->mirror_labels(\@mirror_labels);
-  $self->mirror_set(\@mirror_set);
-
-  $self->vpctab_header("ID,".$self->dv.",".$self->idv);
-  $self->vpctab_header($self->vpctab_header . ",strata_no,".$self->stratify_on) if (defined $self->stratify_on);
-  foreach my $j (@mirror_labels){
-    $self->vpctab_header($self->vpctab_header . ",$j");
-  }
-  $self->vpctab_header($self->vpctab_header . "\n");
-
-  open( ST, ">".$self->vpctab_filename);
-  print ST $self->vpctab_header;
-
-
-  for (my $i=0;$i<$no_observations;$i++){ 
-    my $idno = sprintf "%d",$self->id_array->[$i] ;
-    my $row = $self->data_matrix->[$i];
-    my $idvar=$self->idv_array->[$i];
-    my ($orig_value,@tmp) = split(/,/,$row); 
-    if (defined $self->censor_data_matrix){
-      my ($orig_cens,@censor) = split(/,/,$self->censor_data_matrix->[$i]); 
-      if ($orig_cens == 1){
-	next;
-      }elsif ($orig_cens == 2){
-	next;
-      }elsif ($orig_cens == 3){
-	next;
-      }
-      foreach my $j (@mirror_set){
-	if ($censor[$j] == 1){
-	  $tmp[$j] = -99;
-	}elsif ($censor[$j] == 2){
-	  $tmp[$j] = -99;
-	}elsif ($censor[$j] == 3){
-	  $tmp[$j] = -99;
+	my $idv_array = $d -> column_to_array('column'=>$bin_header,'filter'=>$filter);
+	unless (scalar @{$idv_array} > 0){
+		croak("Could not find independent variable column $bin_header in original data file.");
 	}
-      }
-    }
-    print ST "$idno,$orig_value,$idvar";
-    print ST ",$translated_strata[$i],".$self->strata_variable_vector->[$i] if (defined $self->stratify_on);
-    foreach my $j (@mirror_set){
-      print ST ",$tmp[$j]";
-    }
-    print ST "\n";
-  }
-  close (ST);
+	unless (scalar @{$idv_array} == $no_observations){
+		croak("Number of observations in binning column after filtering ".
+			  "does not match number of observations in matrix file.");
+	}
+	$self->idv_array($idv_array);
+
+
+	my $id_array = $d -> column_to_array('column'=>'ID','filter'=>$filter);
+	unless (scalar @{$id_array} > 0){
+		croak("Could not find ID column in original data file.");
+	}
+	unless (scalar @{$id_array} == $no_observations){
+		croak("Number of observations in ID column after filtering ".
+			  "does not match number of observations in matrix file.");
+	}
+	$self->id_array($id_array);
+
+	if ($self->predcorr || $self->varcorr){
+		my $pred_array = $d -> column_to_array('column'=>'PRED','filter'=>$filter);
+		unless (scalar @{$pred_array} > 0){
+			croak("Could not find PRED column in original data file.");
+		}
+		unless (scalar @{$pred_array} == $no_observations){
+			croak("Number of observations in PRED column after filtering ".
+				  "does not match number of observations in matrix file.");
+		}
+		$self->pred_array($pred_array);
+		if (defined $self->bound_variable){
+			#NONMEM only prints first 4 letters of variable name as header
+			my $col = ($PsN::nm_major_version < 7) ? substr($self->bound_variable,0,4) : $self->bound_variable;
+			my $bound_array = $d -> column_to_array('column'=>$col,'filter'=>$filter);
+			unless (scalar @{$bound_array} > 0){
+				croak("Could not find $col column in original data file.");
+			}
+			unless (scalar @{$bound_array} == $no_observations){
+				croak("Number of observations in $col column after filtering ".
+					  "does not match number of observations in matrix file.");
+			}
+			$self->bound_array($bound_array);
+		}
+	}
+
+	#add translated stratacol
+	my $no_of_strata = scalar(@{$self->strata_matrix});
+	my @translated_strata = (0) x $no_observations;
+	for (my $strat_ind=0; $strat_ind<$no_of_strata; $strat_ind++){
+		foreach my $j (@{$self->strata_matrix->[$strat_ind]}){
+			$translated_strata[$j] = ($strat_ind +1);
+		}
+	}
+
+	#filename vpctabN - find number N
+	my $tabno='';
+	if (($self->models->[0]->filename() =~ /^run/) and
+		($self->models->[0]->filename() =~ /\.mod$/)){
+		$tabno=$self->models->[0]->filename();
+		$tabno =~ s/^run// ;
+		$tabno =~ s/\.mod$// ;
+	}
+	my $vpctabname = "vpctab".$tabno;
+	if (-e $self->directory."/".$self->results_file()){
+		my $fname = $self->results_file();
+		$fname =~ s/\.csv$// ;
+
+		my $addnum=1;
+		while (-e $self->directory."/$fname"."-old$addnum".'.csv'){
+			$addnum++;
+		}
+		my $newnametab = $vpctabname."-old$addnum";
+		while (-e $self->directory."$newnametab"){
+			$addnum++;
+			$newnametab = $vpctabname."-old$addnum";
+		}
+
+		mv( $self->directory.$vpctabname, $self->directory.$newnametab);
+
+		my $newname = "$fname"."-old$addnum".'.csv';
+		mv( $self->directory.$fname.'.csv', $self->directory.$newname);
+
+		ui -> print (category=>'vpc', 
+					 message=>"Renamed old $vpctabname to $newnametab, and old $fname".
+					 ".csv to $newname to protect old output. New output is $vpctabname and $fname".".csv.");
+	}
+	$self->vpctab_filename($self->directory.$vpctabname);
+
+
+	#mirrors
+	my @mirror_set=();
+	my @mirror_labels=();
+	if (defined $self->mirrors){
+		my @rand_indices=random_permuted_index($self->n_simulations);
+		@mirror_set = @rand_indices[0 .. ($self->mirrors-1)];
+		for my $j (1 .. $self->mirrors){
+			push (@mirror_labels,"mirror_$j");
+		}
+	}
+
+	$self->mirror_labels(\@mirror_labels);
+	$self->mirror_set(\@mirror_set);
+
+	$self->vpctab_header("ID,".$self->dv.",".$self->idv);
+	$self->vpctab_header($self->vpctab_header . ",strata_no,".$self->stratify_on) if (defined $self->stratify_on);
+	foreach my $j (@mirror_labels){
+		$self->vpctab_header($self->vpctab_header . ",$j");
+	}
+	$self->vpctab_header($self->vpctab_header . "\n");
+
+	open( ST, ">".$self->vpctab_filename);
+	print ST $self->vpctab_header;
+
+
+	for (my $i=0;$i<$no_observations;$i++){ 
+		my $idno = sprintf "%d",$self->id_array->[$i] ;
+		my $row = $self->data_matrix->[$i];
+		my $idvar=$self->idv_array->[$i];
+		my ($orig_value,@tmp) = split(/,/,$row); 
+		if (defined $self->censor_data_matrix){
+			my ($orig_cens,@censor) = split(/,/,$self->censor_data_matrix->[$i]); 
+			if ($orig_cens == 1){
+				next;
+			}elsif ($orig_cens == 2){
+				next;
+			}elsif ($orig_cens == 3){
+				next;
+			}
+			foreach my $j (@mirror_set){
+				if ($censor[$j] == 1){
+					$tmp[$j] = -99;
+				}elsif ($censor[$j] == 2){
+					$tmp[$j] = -99;
+				}elsif ($censor[$j] == 3){
+					$tmp[$j] = -99;
+				}
+			}
+		}
+		print ST "$idno,$orig_value,$idvar";
+		print ST ",$translated_strata[$i],".$self->strata_variable_vector->[$i] if (defined $self->stratify_on);
+		foreach my $j (@mirror_set){
+			print ST ",$tmp[$j]";
+		}
+		print ST "\n";
+	}
+	close (ST);
 }
 
 sub reprint_mirror_and_plot_data
 {
 	my $self = shift;
 
-  #if we have done predcorr and/or varcorr and/or transformation
-  #must recreate vpctab with corrected DV
+	#if we have done predcorr and/or varcorr and/or transformation
+	#must recreate vpctab with corrected DV
 
-  open( ST, ">".$self->vpctab_filename);
-  print ST $self->vpctab_header;
-  my $no_of_strata = scalar(@{$self->strata_labels});
-  for (my $strat_ind=0;$strat_ind<$no_of_strata;$strat_ind++){ 
-    my $stratanum = $strat_ind+1; 
-    my $no_bins = scalar(@{$self->binned_data->[$strat_ind]});
-    for (my $bin=0;$bin<$no_bins;$bin++){ 
-      for (my $i=0;$i< scalar(@{$self->binned_data->[$strat_ind]->[$bin]});$i++){ 
-	my $row = $self->binned_data->[$strat_ind]->[$bin]->[$i];
-	my $idno = sprintf "%d",$self->binned_id->[$strat_ind]->[$bin]->[$i];
-	my $idvar=$self->binned_idv->[$strat_ind]->[$bin]->[$i];
-	my $strt=$self->binned_strt->[$strat_ind]->[$bin]->[$i] 
-	    if (defined $self->stratify_on);
-	my ($orig_value,@tmp) = split(/,/,$row); 
-	if (defined $self->censor_binned_data){
-	  my ($orig_cens,@censor) = 
-	      split(/,/,$self->censor_binned_data->[$strat_ind]->[$bin]->[$i]); 
-	  if ($orig_cens == 1){
-	    next;
-	  }elsif ($orig_cens == 2){
-	    next;
-	  }elsif ($orig_cens == 3){
-	    next;
-	  }
-	  foreach my $j (@{$self->mirror_set}){
-	    if ($censor[$j] == 1){
-	      $tmp[$j] = -99;
-	    }elsif ($censor[$j] == 2){
-	      $tmp[$j] = -99;
-	    }elsif ($censor[$j] == 3){
-	      $tmp[$j] = -99;
-	    }
-	  }
+	open( ST, ">".$self->vpctab_filename);
+	print ST $self->vpctab_header;
+	my $no_of_strata = scalar(@{$self->strata_labels});
+	for (my $strat_ind=0;$strat_ind<$no_of_strata;$strat_ind++){ 
+		my $stratanum = $strat_ind+1; 
+		my $no_bins = scalar(@{$self->binned_data->[$strat_ind]});
+		for (my $bin=0;$bin<$no_bins;$bin++){ 
+			for (my $i=0;$i< scalar(@{$self->binned_data->[$strat_ind]->[$bin]});$i++){ 
+				my $row = $self->binned_data->[$strat_ind]->[$bin]->[$i];
+				my $idno = sprintf "%d",$self->binned_id->[$strat_ind]->[$bin]->[$i];
+				my $idvar=$self->binned_idv->[$strat_ind]->[$bin]->[$i];
+				my $strt=$self->binned_strt->[$strat_ind]->[$bin]->[$i] 
+					if (defined $self->stratify_on);
+				my ($orig_value,@tmp) = split(/,/,$row); 
+				if (defined $self->censor_binned_data){
+					my ($orig_cens,@censor) = 
+						split(/,/,$self->censor_binned_data->[$strat_ind]->[$bin]->[$i]); 
+					if ($orig_cens == 1){
+						next;
+					}elsif ($orig_cens == 2){
+						next;
+					}elsif ($orig_cens == 3){
+						next;
+					}
+					foreach my $j (@{$self->mirror_set}){
+						if ($censor[$j] == 1){
+							$tmp[$j] = -99;
+						}elsif ($censor[$j] == 2){
+							$tmp[$j] = -99;
+						}elsif ($censor[$j] == 3){
+							$tmp[$j] = -99;
+						}
+					}
+				}
+				print ST "$idno,$orig_value,$idvar";
+				print ST ",$stratanum,".$strt if (defined $self->stratify_on);
+				foreach my $j (@{$self->mirror_set}){
+					print ST ",$tmp[$j]";
+				}
+				print ST "\n";
+			}
+		}
 	}
-	print ST "$idno,$orig_value,$idvar";
-	print ST ",$stratanum,".$strt if (defined $self->stratify_on);
-	foreach my $j (@{$self->mirror_set}){
-	  print ST ",$tmp[$j]";
-	}
-	print ST "\n";
-      }
-    }
-  }
-  close (ST);
+	close (ST);
 }
 
 sub create_stratified_data
 {
 	my $self = shift;
 
-  #get rid of data_matrix, replace with array or arrays of row strings
-  #stratified_data_matrix, stratified_censor_data_matrix
-  my $type='npc';
-  if ($self->is_vpc){
-    $type='vpc';
-  }
-
-  my $no_of_strata = 1;
-  my $strat_hash;
-  my $strat_array;
-  my $strata_matrix;
-  my @strata_labels=();
-  my $no_observations = $self->n_observations;
-  my @all_indices= 0 .. ($no_observations-1);
-
-  if (defined $self->stratify_on){
-
-    my $col = $self->stratify_on;
-
-    my $strat_header = $self->stratify_on;
-    if ($PsN::nm_major_version < 7){
-      #NONMEM only prints first 4 letters of variable name as header
-      #no CWRES exception since not allowed stratify on CWRES
-      $strat_header = substr($self->stratify_on, 0, 4);
-    }
-    #add new: If ((defined $self->{dv_table_name }) && (not $self->{'dv} eq 'CWRES'))
-    #use dv_table_name instead
-    #OR require that stratification and binning variables are in vpc-generated table
-
-    my $orig_file;
-
-    if (defined $self->orig_table){
-      $orig_file = $self->orig_table;
-    } else {
-      $orig_file = $self->original_model->directory().$type.'_original.'.
-	  $self->original_model-> get_option_value(record_name => 'table',
-						       option_name => 'FILE',
-						       problem_index => ($self->origprobnum()-1));
-    }
-    unless (-e $orig_file) {
-      croak("Could not find file $orig_file.");
-    }
-    
-    my $d = data->new(filename => $orig_file, ignoresign => '@', idcolumn => 1); #table we made, idcol is 1
-	
-    my $no_individuals = scalar(@{$d->individuals});
-    my $filt = $d -> create_row_filter('no_individuals'=>$no_individuals);
-    $strat_array = $d -> column_to_array('column'=>$strat_header,'filter'=>$filt);
-    unless (scalar @{$strat_array} > 0){
-      croak("Could not find column $strat_header to stratify on in file $orig_file.");
-    }
-    unless (scalar @{$strat_array} == $no_observations){
-      croak("Number of observations in stratification column $strat_header after filtering ".
-		    "does not match number of observations in matrix file.");
-    }
-
-    $strat_hash = $self -> create_unique_values_hash(data_column=>$strat_array,
-						     reference => $self->refstrat());
-
-    my $reference_index=undef;
-    if (defined $self->refstrat()){
-	for (my $index=0;$index< scalar(keys %{$strat_hash});$index++){
-	    if ($self->refstrat() == $strat_hash->{$index}){
-		$reference_index = $index;
-		last;
-	    }
+	#get rid of data_matrix, replace with array or arrays of row strings
+	#stratified_data_matrix, stratified_censor_data_matrix
+	my $type='npc';
+	if ($self->is_vpc){
+		$type='vpc';
 	}
-    }
-    #compute strata limits. Currently only no_of_strata based on counts allowed.
-    #ok with undefined no_of_strata, will return empty array strata_ceilings, which 
-    #index_matrix_binned_values interprets as stratify on unique values.
-    #input check ensures that if refstrat is defined then no_of_strata is undefined
 
-    my $strata_ceilings = $self -> get_bin_ceilings_from_count('data_column'=>$strat_array,
-							       'value_hash'=>$strat_hash,
-							       'data_indices'=>\@all_indices,
-							       'n_bins'=>$self->no_of_strata);
-    $strata_matrix = $self -> index_matrix_binned_values(data_column=>$strat_array,
-							 value_hash=>$strat_hash,
-							 reference_index => $reference_index,
-							 data_indices=>\@all_indices,
-							 bin_ceilings=>$strata_ceilings);
+	my $no_of_strata = 1;
+	my $strat_hash;
+	my $strat_array;
+	my $strata_matrix;
+	my @strata_labels=();
+	my $no_observations = $self->n_observations;
+	my @all_indices= 0 .. ($no_observations-1);
 
-    #create label array for printed report.
-    if (defined $self->no_of_strata && $self->no_of_strata < scalar(keys %{$strat_hash})) {
-      $no_of_strata = $self->no_of_strata;
-      my $low= sprintf "[%g;",${$strat_hash}{0};
-      foreach my $high (@{$strata_ceilings}){
-	my $lab = sprintf "strata $col %s %g]",$low,$high;
-	push (@strata_labels,$lab);
-	$low=sprintf "(%g;",$high;
-      }
-    } else{
-      $no_of_strata = scalar (keys %{$strat_hash});
-      @strata_labels = ('') x $no_of_strata;
-      for (my $strat_ind=0; $strat_ind<$no_of_strata; $strat_ind++){
+	if (defined $self->stratify_on){
+
+		my $col = $self->stratify_on;
+
+		my $strat_header = $self->stratify_on;
+		if ($PsN::nm_major_version < 7){
+			#NONMEM only prints first 4 letters of variable name as header
+			#no CWRES exception since not allowed stratify on CWRES
+			$strat_header = substr($self->stratify_on, 0, 4);
+		}
+		#add new: If ((defined $self->{dv_table_name }) && (not $self->{'dv} eq 'CWRES'))
+		#use dv_table_name instead
+		#OR require that stratification and binning variables are in vpc-generated table
+
+		my $orig_file;
+
+		if (defined $self->orig_table){
+			$orig_file = $self->orig_table;
+		} else {
+			$orig_file = $self->original_model->directory().$type.'_original.'.
+				$self->original_model-> get_option_value(record_name => 'table',
+														 option_name => 'FILE',
+														 problem_index => ($self->origprobnum()-1));
+		}
+		unless (-e $orig_file) {
+			croak("Could not find file $orig_file.");
+		}
+		
+		my $d = data->new(filename => $orig_file, ignoresign => '@', idcolumn => 1); #table we made, idcol is 1
+		
+		my $no_individuals = scalar(@{$d->individuals});
+		my $filt = $d -> create_row_filter('no_individuals'=>$no_individuals);
+		$strat_array = $d -> column_to_array('column'=>$strat_header,'filter'=>$filt);
+		unless (scalar @{$strat_array} > 0){
+			croak("Could not find column $strat_header to stratify on in file $orig_file.");
+		}
+		unless (scalar @{$strat_array} == $no_observations){
+			croak("Number of observations in stratification column $strat_header after filtering ".
+				  "does not match number of observations in matrix file.");
+		}
+
+		$strat_hash = $self -> create_unique_values_hash(data_column=>$strat_array,
+														 reference => $self->refstrat());
+
+		my $reference_index=undef;
+		if (defined $self->refstrat()){
+			for (my $index=0;$index< scalar(keys %{$strat_hash});$index++){
+				if ($self->refstrat() == $strat_hash->{$index}){
+					$reference_index = $index;
+					last;
+				}
+			}
+		}
+		#compute strata limits. Currently only no_of_strata based on counts allowed.
+		#ok with undefined no_of_strata, will return empty array strata_ceilings, which 
+		#index_matrix_binned_values interprets as stratify on unique values.
+		#input check ensures that if refstrat is defined then no_of_strata is undefined
+
+		my $strata_ceilings = $self -> get_bin_ceilings_from_count('data_column'=>$strat_array,
+																   'value_hash'=>$strat_hash,
+																   'data_indices'=>\@all_indices,
+																   'n_bins'=>$self->no_of_strata);
+		$strata_matrix = $self -> index_matrix_binned_values(data_column=>$strat_array,
+															 value_hash=>$strat_hash,
+															 reference_index => $reference_index,
+															 data_indices=>\@all_indices,
+															 bin_ceilings=>$strata_ceilings);
+
+		#create label array for printed report.
+		if (defined $self->no_of_strata && $self->no_of_strata < scalar(keys %{$strat_hash})) {
+			$no_of_strata = $self->no_of_strata;
+			my $low= sprintf "[%g;",${$strat_hash}{0};
+			foreach my $high (@{$strata_ceilings}){
+				my $lab = sprintf "strata $col %s %g]",$low,$high;
+				push (@strata_labels,$lab);
+				$low=sprintf "(%g;",$high;
+			}
+		} else{
+			$no_of_strata = scalar (keys %{$strat_hash});
+			@strata_labels = ('') x $no_of_strata;
+			for (my $strat_ind=0; $strat_ind<$no_of_strata; $strat_ind++){
 				my $lab = sprintf "strata $col = %g",${$strat_hash}{$strat_ind};
 				if (defined $reference_index){
-	    if ($strat_ind > $reference_index){
-				$strata_labels[$strat_ind]=$lab; #if higher index than ref then keep same place 
-	    }elsif ($strat_ind < $reference_index){
-				$strata_labels[$strat_ind+1]=$lab; #if lower index than ref then move one step to the right
-	    }else{
-		# == ref
-		$strata_labels[0]=$lab; #if reference index then put first
-	    }
-	}else{
-	    $strata_labels[$strat_ind]=$lab;
-	}
-      }
-    }
+					if ($strat_ind > $reference_index){
+						$strata_labels[$strat_ind]=$lab; #if higher index than ref then keep same place 
+					}elsif ($strat_ind < $reference_index){
+						$strata_labels[$strat_ind+1]=$lab; #if lower index than ref then move one step to the right
+					}else{
+						# == ref
+						$strata_labels[0]=$lab; #if reference index then put first
+					}
+				}else{
+					$strata_labels[$strat_ind]=$lab;
+				}
+			}
+		}
 
 
 
-    if ($self->verbose){
-      print "\n strata $no_of_strata\n";
-      foreach my $k (keys %{$strat_hash}){
+		if ($self->verbose){
+			print "\n strata $no_of_strata\n";
+			foreach my $k (keys %{$strat_hash}){
 				print "key $k and value ${$strat_hash}{$k}\n";
-      }
-    }
-    $d-> flush();
-  } else {
-    $strata_matrix = [\@all_indices];
-    push (@strata_labels," ");
+			}
+		}
+		$d = undef; #get rid of data object
+	} else {
+		$strata_matrix = [\@all_indices];
+		push (@strata_labels," ");
 
-  }
+	}
 
-  
-  if ($no_of_strata > 10){
-    ui -> print (category=>'npc', message=>"Warning: The number of stratification levels is $no_of_strata");
-    ui -> print (category=>'vpc', message=>"Warning: The number of stratification levels is $no_of_strata");
-  }
+	
+	if ($no_of_strata > 10){
+		ui -> print (category=>'npc', message=>"Warning: The number of stratification levels is $no_of_strata");
+		ui -> print (category=>'vpc', message=>"Warning: The number of stratification levels is $no_of_strata");
+	}
 
-  $self->strata_matrix($strata_matrix);
-  $self->strata_labels(\@strata_labels);
-  $self->strata_variable_vector($strat_array);
+	$self->strata_matrix($strata_matrix);
+	$self->strata_labels(\@strata_labels);
+	$self->strata_variable_vector($strat_array);
 
-  $self->create_mirror_and_plot_data() if $self->is_vpc; #still have data_matrix
+	$self->create_mirror_and_plot_data() if $self->is_vpc; #still have data_matrix
 
-  my @all_strata;
-  for (my $strat_ind=0; $strat_ind<$no_of_strata; $strat_ind++){
-    my @strata_data;
-    foreach my $index (@{$strata_matrix->[$strat_ind]}){
-      push (@strata_data,$self->data_matrix->[$index]);
-    }
-    push(@all_strata,\@strata_data);
-  }
-  $self->clear_data_matrix;
-  $self->stratified_data(\@all_strata);
+	my @all_strata;
+	for (my $strat_ind=0; $strat_ind<$no_of_strata; $strat_ind++){
+		my @strata_data;
+		foreach my $index (@{$strata_matrix->[$strat_ind]}){
+			push (@strata_data,$self->data_matrix->[$index]);
+		}
+		push(@all_strata,\@strata_data);
+	}
+	$self->clear_data_matrix;
+	$self->stratified_data(\@all_strata);
 
-  if (defined $self->censor_data_matrix){
-    my @cens_all_strata;
-    for (my $strat_ind=0; $strat_ind<$no_of_strata; $strat_ind++){
-      my @strata_data;
-      foreach my $index (@{$strata_matrix->[$strat_ind]}){
-	push (@strata_data,$self->censor_data_matrix->[$index]);
-      }
-      push(@cens_all_strata,\@strata_data);
-    }
-    $self->clear_censor_data_matrix;
-    $self->censor_stratified_data(\@cens_all_strata);
-  }
+	if (defined $self->censor_data_matrix){
+		my @cens_all_strata;
+		for (my $strat_ind=0; $strat_ind<$no_of_strata; $strat_ind++){
+			my @strata_data;
+			foreach my $index (@{$strata_matrix->[$strat_ind]}){
+				push (@strata_data,$self->censor_data_matrix->[$index]);
+			}
+			push(@cens_all_strata,\@strata_data);
+		}
+		$self->clear_censor_data_matrix;
+		$self->censor_stratified_data(\@cens_all_strata);
+	}
 
 }
 
@@ -4817,129 +4841,129 @@ sub npc_analyze
 {
 	my $self = shift;
 
-  my $c_i = $self->confidence_interval(); 
-  my @pred_int = sort {$a <=> $b} 0,20,40,50,60,80,90,95;
-  my $no_sim= $self->n_simulations;
-  my $no_observations = $self->n_observations;
-  my $no_of_strata = scalar(@{$self->strata_labels});
-  
-  my $no_pred_ints = scalar(@pred_int);
-  my ($lower_index,$upper_index,$low_ind,$high_ind);
-  my ($result_column_labels,$result_row_labels);
+	my $c_i = $self->confidence_interval(); 
+	my @pred_int = sort {$a <=> $b} 0,20,40,50,60,80,90,95;
+	my $no_sim= $self->n_simulations;
+	my $no_observations = $self->n_observations;
+	my $no_of_strata = scalar(@{$self->strata_labels});
+	
+	my $no_pred_ints = scalar(@pred_int);
+	my ($lower_index,$upper_index,$low_ind,$high_ind);
+	my ($result_column_labels,$result_row_labels);
 
 
-  if (-e $self->directory."/".$self->results_file()){
-    my $fname = $self->results_file();
-    $fname =~ s/\.csv$// ;
+	if (-e $self->directory."/".$self->results_file()){
+		my $fname = $self->results_file();
+		$fname =~ s/\.csv$// ;
 
-    my $addnum=1;
-    while (-e $self->directory."/$fname"."-old$addnum".'.csv'){
-      $addnum++;
-    }
-    my $newname = "$fname"."-old$addnum".'.csv';
-    mv( $self->directory.$fname.'.csv', $self->directory.$newname);
+		my $addnum=1;
+		while (-e $self->directory."/$fname"."-old$addnum".'.csv'){
+			$addnum++;
+		}
+		my $newname = "$fname"."-old$addnum".'.csv';
+		mv( $self->directory.$fname.'.csv', $self->directory.$newname);
 
-    ui -> print (category=>'npc', 
-		 message=>"Renamed old $fname".
-		 ".csv to $newname to protect old output. New output is $fname".".csv.");
-  }
+		ui -> print (category=>'npc', 
+					 message=>"Renamed old $fname".
+					 ".csv to $newname to protect old output. New output is $fname".".csv.");
+	}
 
 
-  
-  ## Prepare general run info for output file
-  my %return_sec;
-  $return_sec{'name'} = 'NPC run info';
-  my $modelname= (defined $self->orig_table)?'unknown' : $self->models->[0]->filename();
-  my $extra_value='auto-generated';
-  if (defined $self->sim_model()){
-    my $fil = $self->sim_model();
-    if ( $fil =~ /\/$/ ){
-      $fil =~ s/\/$//;
-    }elsif ( $fil =~ /\\$/ ){ 
-      $fil =~ s/\\$//;
-    }
-    my ($file_volume,$file_directory, $file_file) = File::Spec -> splitpath( $fil);
+	
+	## Prepare general run info for output file
+	my %return_sec;
+	$return_sec{'name'} = 'NPC run info';
+	my $modelname= (defined $self->orig_table)?'unknown' : $self->models->[0]->filename();
+	my $extra_value='auto-generated';
+	if (defined $self->sim_model()){
+		my $fil = $self->sim_model();
+		if ( $fil =~ /\/$/ ){
+			$fil =~ s/\/$//;
+		}elsif ( $fil =~ /\\$/ ){ 
+			$fil =~ s/\\$//;
+		}
+		my ($file_volume,$file_directory, $file_file) = File::Spec -> splitpath( $fil);
 #    print "$file_volume : $file_directory : $file_file\n";
-    $extra_value=$file_file;
-  } elsif ($self->flip_comments()){
-    $extra_value="flip comments $modelname";
-  }
+		$extra_value=$file_file;
+	} elsif ($self->flip_comments()){
+		$extra_value="flip comments $modelname";
+	}
 
-  $return_sec{'labels'} = [[],['Date','observations','simulations','Modelfile',
-			       'Simulation model','Dependent variable','PsN version','NONMEM version']];
-  
-  my @datearr=localtime;
-  my $the_date=($datearr[5]+1900).'-'.($datearr[4]+1).'-'.($datearr[3]);
-  
-  $return_sec{'values'} = [[$the_date,$no_observations,$no_sim,$modelname,$extra_value,
-			    $self->dv,$PsN::version,$self->nm_version]];
-  
-  push( @{$self->results->[0]{'own'}},\%return_sec );
-  
-  ##done general run info
-  
-  ($result_column_labels,$result_row_labels) = $self->get_npc_result_labels('ci' => $c_i,
-									    'pred_intervals' => \@pred_int);
-  my @result_labels = ($result_row_labels,$result_column_labels);
+	$return_sec{'labels'} = [[],['Date','observations','simulations','Modelfile',
+								 'Simulation model','Dependent variable','PsN version','NONMEM version']];
+	
+	my @datearr=localtime;
+	my $the_date=($datearr[5]+1900).'-'.($datearr[4]+1).'-'.($datearr[3]);
+	
+	$return_sec{'values'} = [[$the_date,$no_observations,$no_sim,$modelname,$extra_value,
+							  $self->dv,$PsN::version,$self->nm_version]];
+	
+	push( @{$self->results->[0]{'own'}},\%return_sec );
+	
+	##done general run info
+	
+	($result_column_labels,$result_row_labels) = $self->get_npc_result_labels('ci' => $c_i,
+																			  'pred_intervals' => \@pred_int);
+	my @result_labels = ($result_row_labels,$result_column_labels);
 
 
-  ($lower_index,$upper_index,$low_ind,$high_ind)= $self->get_npc_indices('ci' => $c_i,
-									 'no_sim' => $no_sim,
-									 'pred_intervals' => \@pred_int);
+	($lower_index,$upper_index,$low_ind,$high_ind)= $self->get_npc_indices('ci' => $c_i,
+																		   'no_sim' => $no_sim,
+																		   'pred_intervals' => \@pred_int);
 
-  if ($self->verbose){
-    for (my $i=0; $i<$no_pred_ints; $i++){
-      print "$pred_int[$i] $lower_index->[$i] $upper_index->[$i]\n";
-    }
-    print "\n" ;
-  }
-  
-  my $analyzed_points=0;
-  my $realpos; #dirt
-  for (my $strat_ind=0; $strat_ind<$no_of_strata; $strat_ind++){
-    my %return_section;
-    my ($result_values,$stats_warnings);
-    ($result_values,$realpos,$stats_warnings)=$self->subset_npc_analyze('strata_index' => $strat_ind,
-									'low_ind' => $low_ind,
-									'high_ind' => $high_ind,
-									'lower_index' => $lower_index,
-									'upper_index' => $upper_index, 
-									'pred_intervals' => \@pred_int);
-    
-    my $point_counter=scalar(@{$self->strata_matrix->[$strat_ind]});
-    my $result_name = "\nNPC results ".$self->strata_labels->[$strat_ind].
-	"\n$point_counter observations out of $no_observations";
-    $return_section{'name'} = $result_name;
-    
-    $return_section{'labels'} = \@result_labels;
-    $return_section{'values'} = $result_values;
-    push( @{$self->results->[0]{'own'}},\%return_section );
-    
-    my %diag_section;
-    $diag_section{'name'} = "\nNPC * (warning) statistics";
-    $diag_section{'labels'} = [[],['Real data * count','Sim. data * count mean','Theoretical mean','Sim. data * count median',
-				   'Sim. data * count '.$self->confidence_interval().'% CI from','to']];
-    $diag_section{'values'} = [$stats_warnings];
-    push( @{$self->results->[0]{'own'}},\%diag_section );
-    
-    $analyzed_points+=$point_counter;
-  }
-  
-  #check that all individuals were grouped to a strata
-  unless ($analyzed_points == $no_observations){
-    croak("Sum of observations $analyzed_points in each strata does not\n".
-		   "equal total number of observations $no_observations. Something went wrong.");
-  }
+	if ($self->verbose){
+		for (my $i=0; $i<$no_pred_ints; $i++){
+			print "$pred_int[$i] $lower_index->[$i] $upper_index->[$i]\n";
+		}
+		print "\n" ;
+	}
+	
+	my $analyzed_points=0;
+	my $realpos; #dirt
+	for (my $strat_ind=0; $strat_ind<$no_of_strata; $strat_ind++){
+		my %return_section;
+		my ($result_values,$stats_warnings);
+		($result_values,$realpos,$stats_warnings)=$self->subset_npc_analyze('strata_index' => $strat_ind,
+																			'low_ind' => $low_ind,
+																			'high_ind' => $high_ind,
+																			'lower_index' => $lower_index,
+																			'upper_index' => $upper_index, 
+																			'pred_intervals' => \@pred_int);
+		
+		my $point_counter=scalar(@{$self->strata_matrix->[$strat_ind]});
+		my $result_name = "\nNPC results ".$self->strata_labels->[$strat_ind].
+			"\n$point_counter observations out of $no_observations";
+		$return_section{'name'} = $result_name;
+		
+		$return_section{'labels'} = \@result_labels;
+		$return_section{'values'} = $result_values;
+		push( @{$self->results->[0]{'own'}},\%return_section );
+		
+		my %diag_section;
+		$diag_section{'name'} = "\nNPC * (warning) statistics";
+		$diag_section{'labels'} = [[],['Real data * count','Sim. data * count mean','Theoretical mean','Sim. data * count median',
+									   'Sim. data * count '.$self->confidence_interval().'% CI from','to']];
+		$diag_section{'values'} = [$stats_warnings];
+		push( @{$self->results->[0]{'own'}},\%diag_section );
+		
+		$analyzed_points+=$point_counter;
+	}
+	
+	#check that all individuals were grouped to a strata
+	unless ($analyzed_points == $no_observations){
+		croak("Sum of observations $analyzed_points in each strata does not\n".
+			  "equal total number of observations $no_observations. Something went wrong.");
+	}
 }
 
 sub get_npc_indices
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 pred_intervals => { isa => 'Ref', optional => 1 },
-		 ci => { isa => 'Num', optional => 1 },
-		 no_sim => { isa => 'Int', optional => 1 }
-	);
+							  pred_intervals => { isa => 'Ref', optional => 1 },
+							  ci => { isa => 'Num', optional => 1 },
+							  no_sim => { isa => 'Int', optional => 1 }
+		);
 	my $pred_intervals = $parm{'pred_intervals'};
 	my $ci = $parm{'ci'};
 	my $no_sim = $parm{'no_sim'};
@@ -4948,23 +4972,23 @@ sub get_npc_indices
 	my $low_ind;
 	my $high_ind;
 
-  #in pred_intervals ci no_sim
-  #out lower_index upper_index low_ind high_ind
-  
-  #For each prediction interval pred_int: Compute lower_index, i.e. index 
-  #of first value in sorted array which is inside this interval. 
-  #Compute upper index, index of last value inside interval
+	#in pred_intervals ci no_sim
+	#out lower_index upper_index low_ind high_ind
+	
+	#For each prediction interval pred_int: Compute lower_index, i.e. index 
+	#of first value in sorted array which is inside this interval. 
+	#Compute upper index, index of last value inside interval
 
-  my @pred_int = sort {$a <=> $b} @{$pred_intervals};
-  my $no_pred_ints = scalar(@pred_int);
+	my @pred_int = sort {$a <=> $b} @{$pred_intervals};
+	my $no_pred_ints = scalar(@pred_int);
 
-  $low_ind = $self->round('number'=>((100-$ci)*($no_sim-1)/200)); #index of start of ci % interval
-  $high_ind = $no_sim - $low_ind - 1; #index of end  of  c_i% interval
+	$low_ind = $self->round('number'=>((100-$ci)*($no_sim-1)/200)); #index of start of ci % interval
+	$high_ind = $no_sim - $low_ind - 1; #index of end  of  c_i% interval
 
-  for (my $i=0; $i<$no_pred_ints; $i++){
-    push (@lower_index, $self->round('number'=>((100-$pred_int[$i])*($no_sim-1)/200))); 
-    push (@upper_index, $no_sim - $lower_index[$i] -1);
-  }
+	for (my $i=0; $i<$no_pred_ints; $i++){
+		push (@lower_index, $self->round('number'=>((100-$pred_int[$i])*($no_sim-1)/200))); 
+		push (@upper_index, $no_sim - $lower_index[$i] -1);
+	}
 
 	return \@lower_index ,\@upper_index ,$low_ind ,$high_ind;
 }
@@ -4973,28 +4997,28 @@ sub get_npc_result_labels
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 pred_intervals => { isa => 'Ref', optional => 1 },
-		 ci => { isa => 'Num', optional => 1 }
-	);
+							  pred_intervals => { isa => 'Ref', optional => 1 },
+							  ci => { isa => 'Num', optional => 1 }
+		);
 	my $pred_intervals = $parm{'pred_intervals'};
 	my $ci = $parm{'ci'};
 	my @result_column_labels;
 	my @result_row_labels;
 
-  #in pred_intervals ci
-  #out result_column_labels result_row_labels
-  
-  my @pred_int = sort {$a <=> $b} @{$pred_intervals};
-  my $no_pred_ints = scalar(@pred_int);
-  
-  @result_column_labels=('points below PI (count)','points below PI (%)','outside CI for below PI',
-			 "$ci\% CI below: from (\%)","$ci\% CI below: to (\%)" ); 
-  push (@result_column_labels,('points above PI (count)','points above PI (%)','outside CI for above PI',
-			       "$ci\% CI above: from (\%)","$ci\% CI above: to (\%)"));
-  
-  for (my $i=0; $i<$no_pred_ints; $i++){
-    push (@result_row_labels,"$pred_int[$i]% PI");
-  }
+	#in pred_intervals ci
+	#out result_column_labels result_row_labels
+	
+	my @pred_int = sort {$a <=> $b} @{$pred_intervals};
+	my $no_pred_ints = scalar(@pred_int);
+	
+	@result_column_labels=('points below PI (count)','points below PI (%)','outside CI for below PI',
+						   "$ci\% CI below: from (\%)","$ci\% CI below: to (\%)" ); 
+	push (@result_column_labels,('points above PI (count)','points above PI (%)','outside CI for above PI',
+								 "$ci\% CI above: from (\%)","$ci\% CI above: to (\%)"));
+	
+	for (my $i=0; $i<$no_pred_ints; $i++){
+		push (@result_row_labels,"$pred_int[$i]% PI");
+	}
 
 	return \@result_column_labels ,\@result_row_labels;
 }
@@ -5003,14 +5027,14 @@ sub subset_npc_analyze
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 bin_index => { isa => 'Int', optional => 1 },
-		 strata_index => { isa => 'Int', optional => 1 },
-		 pred_intervals => { isa => 'Ref', optional => 1 },
-		 lower_index => { isa => 'Ref', optional => 1 },
-		 upper_index => { isa => 'Ref', optional => 1 },
-		 low_ind => { isa => 'Int', optional => 1 },
-		 high_ind => { isa => 'Int', optional => 1 }
-	);
+							  bin_index => { isa => 'Int', optional => 1 },
+							  strata_index => { isa => 'Int', optional => 1 },
+							  pred_intervals => { isa => 'Ref', optional => 1 },
+							  lower_index => { isa => 'Ref', optional => 1 },
+							  upper_index => { isa => 'Ref', optional => 1 },
+							  low_ind => { isa => 'Int', optional => 1 },
+							  high_ind => { isa => 'Int', optional => 1 }
+		);
 	my $bin_index = $parm{'bin_index'};
 	my $strata_index = $parm{'strata_index'};
 	my $pred_intervals = $parm{'pred_intervals'};
@@ -5022,341 +5046,341 @@ sub subset_npc_analyze
 	my @real_positions;
 	my @stats_warnings;
 
-  $self->verbose(0);
+	$self->verbose(0);
 
-  #start function, in is bin_index,strata_index,lower_index,upper_index,
-  #pred_intervals,$high_ind,$low_ind
-  # if  bin_index undefined then assume all
-  #out is ref to result_values and real_positions and stats_warnings
-  #npoints not needed, length of input @row_indices
+	#start function, in is bin_index,strata_index,lower_index,upper_index,
+	#pred_intervals,$high_ind,$low_ind
+	# if  bin_index undefined then assume all
+	#out is ref to result_values and real_positions and stats_warnings
+	#npoints not needed, length of input @row_indices
 
-  #must handle censored!!!
-  #realpos should have one value per possible observation,
-  #but if real observation is missing or predcorr and lloq/uloq
-  #then set -99
-  #other result_values should be '' if cannot be computed
-  #if censored must recompute all indices, cannot use $high_ind, $low_ind, $lower_index, $upper_index
-  
-  my $censored = 0;
-  $censored = 1 if (defined $self->censor() or ($self->detection_censored and $self->predcorr));
+	#must handle censored!!!
+	#realpos should have one value per possible observation,
+	#but if real observation is missing or predcorr and lloq/uloq
+	#then set -99
+	#other result_values should be '' if cannot be computed
+	#if censored must recompute all indices, cannot use $high_ind, $low_ind, $lower_index, $upper_index
+	
+	my $censored = 0;
+	$censored = 1 if (defined $self->censor() or ($self->detection_censored and $self->predcorr));
 
-  my $ci = $self->confidence_interval();
-  my $no_sim= $self->n_simulations;
-  my $point_counter=0;
-  if (defined $bin_index){
-    $point_counter = scalar(@{$self->binned_data->[$strata_index]->[$bin_index]});
-  } else {
-    $point_counter = scalar(@{$self->stratified_data->[$strata_index]});
-  }
-  if ($point_counter < 1){ #empty set of observations
-    return;
-  }
-  
-  #need to guarantee sorted pred_ints
-  my @pred_int = sort {$a <=> $b} @{$pred_intervals};
-  my $no_pred_ints = scalar(@pred_int);
-  my @upper_limit = (0) x $no_pred_ints;
-  my @lower_limit = (0) x $no_pred_ints;
-  my (@values,@sorted_sim_values);
-  my $orig_value;
-  my @sum_warnings = (0) x ($no_sim+1);
-  my (@upper_count, @lower_count);
-  my @count_max = (0) x ($no_sim+1);
+	my $ci = $self->confidence_interval();
+	my $no_sim= $self->n_simulations;
+	my $point_counter=0;
+	if (defined $bin_index){
+		$point_counter = scalar(@{$self->binned_data->[$strata_index]->[$bin_index]});
+	} else {
+		$point_counter = scalar(@{$self->stratified_data->[$strata_index]});
+	}
+	if ($point_counter < 1){ #empty set of observations
+		return;
+	}
+	
+	#need to guarantee sorted pred_ints
+	my @pred_int = sort {$a <=> $b} @{$pred_intervals};
+	my $no_pred_ints = scalar(@pred_int);
+	my @upper_limit = (0) x $no_pred_ints;
+	my @lower_limit = (0) x $no_pred_ints;
+	my (@values,@sorted_sim_values);
+	my $orig_value;
+	my @sum_warnings = (0) x ($no_sim+1);
+	my (@upper_count, @lower_count);
+	my @count_max = (0) x ($no_sim+1);
 
-  for (my $i=0; $i<$no_pred_ints; $i++){
-    @{$upper_count[$i]} = (0) x ($no_sim+1);
-    @{$lower_count[$i]} = (0) x ($no_sim+1);    
-    @{$real_positions[$i]} = (0) x ($point_counter);    
-  }
+	for (my $i=0; $i<$no_pred_ints; $i++){
+		@{$upper_count[$i]} = (0) x ($no_sim+1);
+		@{$lower_count[$i]} = (0) x ($no_sim+1);    
+		@{$real_positions[$i]} = (0) x ($point_counter);    
+	}
 
-  my $obs_counter=0;
-  
+	my $obs_counter=0;
+	
 #    print "\n\n\n";
-  my $alert_string="\n\nWarning: NPC results may be misleading. There may be too many\n".
-      "identical values to make it possible to report correct counts above and below the PI.\n\n";
-  
-  for (my $point_index=0; $point_index < $point_counter; $point_index++){
-    my @lowers=();
-    my @uppers=();
-    my $row;
-    if (defined $bin_index){
-      $row = $self->binned_data->[$strata_index]->[$bin_index]->[$point_index];
-    } else {
-      $row = $self->stratified_data->[$strata_index]->[$point_index];
-    }
+	my $alert_string="\n\nWarning: NPC results may be misleading. There may be too many\n".
+		"identical values to make it possible to report correct counts above and below the PI.\n\n";
+	
+	for (my $point_index=0; $point_index < $point_counter; $point_index++){
+		my @lowers=();
+		my @uppers=();
+		my $row;
+		if (defined $bin_index){
+			$row = $self->binned_data->[$strata_index]->[$bin_index]->[$point_index];
+		} else {
+			$row = $self->stratified_data->[$strata_index]->[$point_index];
+		}
 
-    ($orig_value,@values) = split(/,/,$row); 
+		($orig_value,@values) = split(/,/,$row); 
 
-    my @sorted_sim_values=();
-    my ($orig_cens,@censor);
+		my @sorted_sim_values=();
+		my ($orig_cens,@censor);
 
-    if ($censored){
-      my @remaining = ();
-      my $cens;
-      if (defined $bin_index){
+		if ($censored){
+			my @remaining = ();
+			my $cens;
+			if (defined $bin_index){
 				$cens = $self->censor_binned_data->[$strata_index]->[$bin_index]->[$point_index];
-      }else{
+			}else{
 				$cens = $self->censor_stratified_data->[$strata_index]->[$point_index];
-      }
-      ($orig_cens,@censor) = split(/,/,$cens); 
-      for (my $j=0; $j< $no_sim; $j++){
-	if ($self->predcorr){
-	  push(@remaining,$values[$j]) if ($censor[$j] == 0); #fully known
-	}else{
-	  push(@remaining,$values[$j]) if ($censor[$j] != 1); #not missing
-	}
-      }
-      @sorted_sim_values = sort {$a <=> $b} @remaining; #sort numerically ascending
-    }else{
-      @sorted_sim_values = sort {$a <=> $b} @values; #sort numerically ascending
-    }
+			}
+			($orig_cens,@censor) = split(/,/,$cens); 
+			for (my $j=0; $j< $no_sim; $j++){
+				if ($self->predcorr){
+					push(@remaining,$values[$j]) if ($censor[$j] == 0); #fully known
+				}else{
+					push(@remaining,$values[$j]) if ($censor[$j] != 1); #not missing
+				}
+			}
+			@sorted_sim_values = sort {$a <=> $b} @remaining; #sort numerically ascending
+		}else{
+			@sorted_sim_values = sort {$a <=> $b} @values; #sort numerically ascending
+		}
 
-    if (scalar(@sorted_sim_values) == 0){
-      for (my $i=0; $i<$no_pred_ints; $i++){
-	$lower_limit[$i] = '';
-	$upper_limit[$i] = '';
-      }
-      $obs_counter++;
-    }else{
-      for (my $i=0; $i<$no_pred_ints; $i++){
-	#need to recompute index if censored
-	my $lower = $lower_index->[$i];
-	my $upper = ($upper_index->[$i]);
-	if ($censored){
-	  $lower = $self->round('number'=>((100-$pred_int[$i])*(scalar(@sorted_sim_values)-1)/200)); 
-	  $upper = (scalar(@sorted_sim_values) - $lower -1);
-	}
-	$lower_limit[$i] = $sorted_sim_values[$lower];
-	$upper_limit[$i] = $sorted_sim_values[$upper];	
-	unless ($self->npc_alert_written){
-	  if (($lower > 1) && 
-	      (($lower_limit[$i] == $sorted_sim_values[$lower -1]) ||
-	       ($lower_limit[$i] == $sorted_sim_values[$lower +1]))) {
-	    print $alert_string;
-	    $self->npc_alert_written(1);
-	  } elsif (($upper < scalar(@sorted_sim_values)) && 
-		   (($upper_limit[$i] == $sorted_sim_values[$upper -1]) ||
-		    ($upper_limit[$i] == $sorted_sim_values[$upper +1]))) {
-	    print $alert_string;
-	    $self->npc_alert_written(1);
-	  }
-	}
-      }
-    
-      unshift @values,($orig_value); #put original value back at the beginning
-      unshift @censor,($orig_cens) if ($censored);
-    
-      #Since the pred_ints are sorted in ascending order (e.g 80, 90, 95),
-      #if value is below limit of first prediction interval, cannot be above
-      #limit of any interval. Then if value is not below limit of 2nd, 3rd... 
-      #interval it cannot be below limit of any of the remaining.
-      
-      for (my $j=0; $j<= $no_sim; $j++){
-	next if ($censored and (($self->predcorr and $censor[$j] != 0) or
-				$censor[$j]==1) );
-	$count_max[$j] += 1;
-	if ($values[$j] < $lower_limit[0]){
-	  $lower_count[0]->[$j] +=1;
-	  for (my $i=1; $i<$no_pred_ints; $i++){
-	    if ($values[$j] < $lower_limit[$i]){
-	      $lower_count[$i]->[$j] +=1;
-	    } else {
-	      last; #goto next column (next value in @values)
-	    }
-	  }
-	} elsif ($values[$j] > $upper_limit[0]){
-	  $upper_count[0]->[$j] +=1;
-	  for (my $i=1; $i<$no_pred_ints; $i++){
-	    if ($values[$j] > $upper_limit[$i]){
-	      $upper_count[$i]->[$j] +=1;
-	    } else {
-	      last; #goto next $value
-	    }
-	  }
-	}
+		if (scalar(@sorted_sim_values) == 0){
+			for (my $i=0; $i<$no_pred_ints; $i++){
+				$lower_limit[$i] = '';
+				$upper_limit[$i] = '';
+			}
+			$obs_counter++;
+		}else{
+			for (my $i=0; $i<$no_pred_ints; $i++){
+				#need to recompute index if censored
+				my $lower = $lower_index->[$i];
+				my $upper = ($upper_index->[$i]);
+				if ($censored){
+					$lower = $self->round('number'=>((100-$pred_int[$i])*(scalar(@sorted_sim_values)-1)/200)); 
+					$upper = (scalar(@sorted_sim_values) - $lower -1);
+				}
+				$lower_limit[$i] = $sorted_sim_values[$lower];
+				$upper_limit[$i] = $sorted_sim_values[$upper];	
+				unless ($self->npc_alert_written){
+					if (($lower > 1) && 
+						(($lower_limit[$i] == $sorted_sim_values[$lower -1]) ||
+						 ($lower_limit[$i] == $sorted_sim_values[$lower +1]))) {
+						print $alert_string;
+						$self->npc_alert_written(1);
+					} elsif (($upper < scalar(@sorted_sim_values)) && 
+							 (($upper_limit[$i] == $sorted_sim_values[$upper -1]) ||
+							  ($upper_limit[$i] == $sorted_sim_values[$upper +1]))) {
+						print $alert_string;
+						$self->npc_alert_written(1);
+					}
+				}
+			}
+			
+			unshift @values,($orig_value); #put original value back at the beginning
+			unshift @censor,($orig_cens) if ($censored);
+			
+			#Since the pred_ints are sorted in ascending order (e.g 80, 90, 95),
+			#if value is below limit of first prediction interval, cannot be above
+			#limit of any interval. Then if value is not below limit of 2nd, 3rd... 
+			#interval it cannot be below limit of any of the remaining.
+			
+			for (my $j=0; $j<= $no_sim; $j++){
+				next if ($censored and (($self->predcorr and $censor[$j] != 0) or
+										$censor[$j]==1) );
+				$count_max[$j] += 1;
+				if ($values[$j] < $lower_limit[0]){
+					$lower_count[0]->[$j] +=1;
+					for (my $i=1; $i<$no_pred_ints; $i++){
+						if ($values[$j] < $lower_limit[$i]){
+							$lower_count[$i]->[$j] +=1;
+						} else {
+							last; #goto next column (next value in @values)
+						}
+					}
+				} elsif ($values[$j] > $upper_limit[0]){
+					$upper_count[0]->[$j] +=1;
+					for (my $i=1; $i<$no_pred_ints; $i++){
+						if ($values[$j] > $upper_limit[$i]){
+							$upper_count[$i]->[$j] +=1;
+						} else {
+							last; #goto next $value
+						}
+					}
+				}
 
-      }
+			}
 
 
-      ##For VPC diagnostics: build integer matrix w/ under/above/in info for real data only
-      # 0 means inside.
+			##For VPC diagnostics: build integer matrix w/ under/above/in info for real data only
+			# 0 means inside.
 
-      if ($censored and (($self->predcorr and $censor[0] != 0) or
-				$censor[0]==1) ){
-	$real_positions[0]->[$obs_counter]=-99;
-	for (my $i=1; $i<$no_pred_ints; $i++){ #is 1 here for skipping 50-50?
-	  $real_positions[$i]->[$obs_counter]=-99;
-	}
-      }elsif ($values[0] < $lower_limit[0]){
-	$real_positions[0]->[$obs_counter]=-1;
-	for (my $i=1; $i<$no_pred_ints; $i++){
-	  if ($values[0] < $lower_limit[$i]){
-	    $real_positions[$i]->[$obs_counter]=-1;
-	  } else {
-	    last;
-	  }
-	}
-      } elsif ($values[0] > $upper_limit[0]){
-	$real_positions[0]->[$obs_counter]= 1;
-	for (my $i=1; $i<$no_pred_ints; $i++){
-	  if ($values[0] > $upper_limit[$i]){
-	    $real_positions[$i]->[$obs_counter]= 1;
-	  } else {
-	    last;
-	  }
-	}
-      }
+			if ($censored and (($self->predcorr and $censor[0] != 0) or
+							   $censor[0]==1) ){
+				$real_positions[0]->[$obs_counter]=-99;
+				for (my $i=1; $i<$no_pred_ints; $i++){ #is 1 here for skipping 50-50?
+					$real_positions[$i]->[$obs_counter]=-99;
+				}
+			}elsif ($values[0] < $lower_limit[0]){
+				$real_positions[0]->[$obs_counter]=-1;
+				for (my $i=1; $i<$no_pred_ints; $i++){
+					if ($values[0] < $lower_limit[$i]){
+						$real_positions[$i]->[$obs_counter]=-1;
+					} else {
+						last;
+					}
+				}
+			} elsif ($values[0] > $upper_limit[0]){
+				$real_positions[0]->[$obs_counter]= 1;
+				for (my $i=1; $i<$no_pred_ints; $i++){
+					if ($values[0] > $upper_limit[$i]){
+						$real_positions[$i]->[$obs_counter]= 1;
+					} else {
+						last;
+					}
+				}
+			}
 
-      $obs_counter++;
-      ### end VPC diagnostics
-    
-    } #endof if at least 1 uncensored sim
+			$obs_counter++;
+			### end VPC diagnostics
+			
+		} #endof if at least 1 uncensored sim
 
-  } #endof foreach row
+	} #endof foreach row
 
 #  my $const=100/$point_counter; #conversion from count to percent
-  if ($self->verbose){
-    for (my $i=0; $i<$no_pred_ints; $i++){
-      printf "%.0f %.3f %.3f\n",$pred_int[$i],$lower_limit[$i],$upper_limit[$i];
-      for (my $j=0; $j<= $no_sim; $j++){
-        printf "%.3f ",$lower_count[$i]->[$j];
-      }
-      print "\n";
-      for (my $j=0; $j<= $no_sim; $j++){
-        printf "%.3f ",$upper_count[$i]->[$j];
-      }
-      print "\n\n";
-    }
-    print "\n";
-  }  
+	if ($self->verbose){
+		for (my $i=0; $i<$no_pred_ints; $i++){
+			printf "%.0f %.3f %.3f\n",$pred_int[$i],$lower_limit[$i],$upper_limit[$i];
+			for (my $j=0; $j<= $no_sim; $j++){
+				printf "%.3f ",$lower_count[$i]->[$j];
+			}
+			print "\n";
+			for (my $j=0; $j<= $no_sim; $j++){
+				printf "%.3f ",$upper_count[$i]->[$j];
+			}
+			print "\n\n";
+		}
+		print "\n";
+	}  
 
-  #high_ind and lowind should be based on nonzero_obs
-  my $non_zeros = 0;
-  $sum_warnings[0] = -99 if ($count_max[0] == 0);
-  for (my $j=1; $j<= $no_sim; $j++){
-    $non_zeros++ if ($count_max[$j] > 0);
-    $sum_warnings[$j] = -99 if ($count_max[$j] == 0);
-  }
-  $low_ind = $self->round('number'=>((100-$ci)*($non_zeros-1)/200)); #index of start of ci % interval
-  $high_ind = $non_zeros - $low_ind - 1; #index of end  of  c_i% interval
-
-  #loop over prediction intervals, compute results for each interval
-  for (my $i=0; $i<$no_pred_ints; $i++){
-    my $warn=' '; 
-    my $realperc = undef;
-    if ($count_max[0] > 0){
-      $realperc = 100*$lower_count[$i]->[0]/$count_max[0] ;
-    }
-    my @perc_arr =();
-    for (my $j=1; $j<= $no_sim; $j++){
-      if ($count_max[$j] > 0){
-	push(@perc_arr, 100*$lower_count[$i]->[$j]/$count_max[$j]) ;
-      }
-    }
-    my @sorted_arr = sort {$a <=> $b} @perc_arr;
-    
-    if ($non_zeros> 0){
-      if ((defined $realperc) and (( $realperc<$sorted_arr[$low_ind]) ||($realperc>$sorted_arr[$high_ind]))){
-	$warn='*';
-	$sum_warnings[0] += 1; #NPC diagnostics
-      }
-    }
-
-    #For NPC diagnostics:
-    for (my $si=1; $si<= $no_sim; $si++){
-      if ($count_max[$si] > 0){
-	if (( (100*$lower_count[$i]->[$si]/$count_max[$si]) < $sorted_arr[$low_ind]) 
-	    ||((100*$lower_count[$i]->[$si]/$count_max[$si]) > $sorted_arr[$high_ind])){
-	  $sum_warnings[$si] += 1;
+	#high_ind and lowind should be based on nonzero_obs
+	my $non_zeros = 0;
+	$sum_warnings[0] = -99 if ($count_max[0] == 0);
+	for (my $j=1; $j<= $no_sim; $j++){
+		$non_zeros++ if ($count_max[$j] > 0);
+		$sum_warnings[$j] = -99 if ($count_max[$j] == 0);
 	}
-      }
-    }
-    #endof NPC diagnostics
-    
-    if ($self->verbose){
-      print "\n $high_ind $low_ind\n";
-      print $lower_count[$i]->[0]." $realperc $warn ".$sorted_arr[$low_ind].
-	  " ".$sorted_arr[$high_ind]."\n";
-    }
+	$low_ind = $self->round('number'=>((100-$ci)*($non_zeros-1)/200)); #index of start of ci % interval
+	$high_ind = $non_zeros - $low_ind - 1; #index of end  of  c_i% interval
 
-    my @result_row_values =($lower_count[$i]->[0],$realperc,$warn,$sorted_arr[$low_ind],
-			    $sorted_arr[$high_ind]);
-
-    $warn=' ';
-    $realperc = undef;
-    if ($count_max[0] > 0){
-      $realperc = 100*$upper_count[$i]->[0]/$count_max[0] ;
-    }
-    my @perc_arr =();
-    for (my $j=1; $j<= $no_sim; $j++){
-      if ($count_max[$j] > 0){
-	push(@perc_arr, 100*$upper_count[$i]->[$j]/$count_max[$j]);
-      }
-    }
-    my @sorted_arr = sort {$a <=> $b} @perc_arr;
-    
-    if ($non_zeros> 0){
-      #high_ind and lowind based on nonzero_obs, computed above
-      if ((defined $realperc) and (( $realperc<$sorted_arr[$low_ind]) ||($realperc>$sorted_arr[$high_ind]))){
-	$warn='*';
-	$sum_warnings[0] += 1; #NPC diagnostics
-      }
-    }
-    
-    #For NPC diagnostics:
-    for (my $si=1; $si<= $no_sim; $si++){
-      if ($count_max[$si] > 0){
-	if (( (100*$upper_count[$i]->[$si]/$count_max[$si]) < $sorted_arr[$low_ind]) 
-	    ||((100*$upper_count[$i]->[$si]/$count_max[$si]) > $sorted_arr[$high_ind])){
-	  $sum_warnings[$si] += 1;
-	}
-      }
-    }
-    #endof NPC diagnostics
-    
-    if ($self->verbose){
-      print $upper_count[$i]->[0]." $realperc $warn ".$sorted_arr[$low_ind].
-	  " ".$sorted_arr[$high_ind]."\n";
-    }
-    push (@result_row_values,($upper_count[$i]->[0], $realperc,$warn,$sorted_arr[$low_ind],
-			      $sorted_arr[$high_ind]));
-    
-    push (@result_values,\@result_row_values);
-
-  } #endof loop over prediction intervals
-
-  #warning statistics
-  my $i = shift @sum_warnings; #real count
-  push(@stats_warnings,$i); 
-  my $sum_sums=0;
-  my @detected_sum_warnings = ();
-  foreach my $i (@sum_warnings){
-    if ($i != -99){
-      $sum_sums += $i;
-      push ( @detected_sum_warnings,$i);
-    }
-  } 
-  unless ($non_zeros == scalar(@detected_sum_warnings)){
-    print "\n\nWarning:error in npc_subsection, counting nonzero bins  \n ";
-  }
-  if ($non_zeros == 0){
-    push(@stats_warnings,'','','','','');
-  }else{
-    push(@stats_warnings,$sum_sums/$non_zeros);
-  #theoretical mean, 
-  #number of PI times times 2*2 for above and below lower and upper PI limit
-  #number absolute number outside a limit ($low_ind) div by total number of values
-    push(@stats_warnings,($no_pred_ints*2*2*$low_ind/$non_zeros)); #ok
-
-    my @sorted_sums = sort {$a <=> $b} @detected_sum_warnings;
+	#loop over prediction intervals, compute results for each interval
+	for (my $i=0; $i<$no_pred_ints; $i++){
+		my $warn=' '; 
+		my $realperc = undef;
+		if ($count_max[0] > 0){
+			$realperc = 100*$lower_count[$i]->[0]/$count_max[0] ;
+		}
+		my @perc_arr =();
+		for (my $j=1; $j<= $no_sim; $j++){
+			if ($count_max[$j] > 0){
+				push(@perc_arr, 100*$lower_count[$i]->[$j]/$count_max[$j]) ;
+			}
+		}
+		my @sorted_arr = sort {$a <=> $b} @perc_arr;
 		
-    #median
-    push(@stats_warnings,$self->median('sorted_array'=>\@sorted_sums)); 
+		if ($non_zeros> 0){
+			if ((defined $realperc) and (( $realperc<$sorted_arr[$low_ind]) ||($realperc>$sorted_arr[$high_ind]))){
+				$warn='*';
+				$sum_warnings[0] += 1; #NPC diagnostics
+			}
+		}
 
-    push(@stats_warnings,$sorted_sums[$low_ind]); #start CI 
-    push(@stats_warnings,$sorted_sums[$high_ind]); #end CI 
-  }
-  $self->verbose(0);
+		#For NPC diagnostics:
+		for (my $si=1; $si<= $no_sim; $si++){
+			if ($count_max[$si] > 0){
+				if (( (100*$lower_count[$i]->[$si]/$count_max[$si]) < $sorted_arr[$low_ind]) 
+					||((100*$lower_count[$i]->[$si]/$count_max[$si]) > $sorted_arr[$high_ind])){
+					$sum_warnings[$si] += 1;
+				}
+			}
+		}
+		#endof NPC diagnostics
+		
+		if ($self->verbose){
+			print "\n $high_ind $low_ind\n";
+			print $lower_count[$i]->[0]." $realperc $warn ".$sorted_arr[$low_ind].
+				" ".$sorted_arr[$high_ind]."\n";
+		}
+
+		my @result_row_values =($lower_count[$i]->[0],$realperc,$warn,$sorted_arr[$low_ind],
+								$sorted_arr[$high_ind]);
+
+		$warn=' ';
+		$realperc = undef;
+		if ($count_max[0] > 0){
+			$realperc = 100*$upper_count[$i]->[0]/$count_max[0] ;
+		}
+		my @perc_arr =();
+		for (my $j=1; $j<= $no_sim; $j++){
+			if ($count_max[$j] > 0){
+				push(@perc_arr, 100*$upper_count[$i]->[$j]/$count_max[$j]);
+			}
+		}
+		my @sorted_arr = sort {$a <=> $b} @perc_arr;
+		
+		if ($non_zeros> 0){
+			#high_ind and lowind based on nonzero_obs, computed above
+			if ((defined $realperc) and (( $realperc<$sorted_arr[$low_ind]) ||($realperc>$sorted_arr[$high_ind]))){
+				$warn='*';
+				$sum_warnings[0] += 1; #NPC diagnostics
+			}
+		}
+		
+		#For NPC diagnostics:
+		for (my $si=1; $si<= $no_sim; $si++){
+			if ($count_max[$si] > 0){
+				if (( (100*$upper_count[$i]->[$si]/$count_max[$si]) < $sorted_arr[$low_ind]) 
+					||((100*$upper_count[$i]->[$si]/$count_max[$si]) > $sorted_arr[$high_ind])){
+					$sum_warnings[$si] += 1;
+				}
+			}
+		}
+		#endof NPC diagnostics
+		
+		if ($self->verbose){
+			print $upper_count[$i]->[0]." $realperc $warn ".$sorted_arr[$low_ind].
+				" ".$sorted_arr[$high_ind]."\n";
+		}
+		push (@result_row_values,($upper_count[$i]->[0], $realperc,$warn,$sorted_arr[$low_ind],
+								  $sorted_arr[$high_ind]));
+		
+		push (@result_values,\@result_row_values);
+
+	} #endof loop over prediction intervals
+
+	#warning statistics
+	my $i = shift @sum_warnings; #real count
+	push(@stats_warnings,$i); 
+	my $sum_sums=0;
+	my @detected_sum_warnings = ();
+	foreach my $i (@sum_warnings){
+		if ($i != -99){
+			$sum_sums += $i;
+			push ( @detected_sum_warnings,$i);
+		}
+	} 
+	unless ($non_zeros == scalar(@detected_sum_warnings)){
+		print "\n\nWarning:error in npc_subsection, counting nonzero bins  \n ";
+	}
+	if ($non_zeros == 0){
+		push(@stats_warnings,'','','','','');
+	}else{
+		push(@stats_warnings,$sum_sums/$non_zeros);
+		#theoretical mean, 
+		#number of PI times times 2*2 for above and below lower and upper PI limit
+		#number absolute number outside a limit ($low_ind) div by total number of values
+		push(@stats_warnings,($no_pred_ints*2*2*$low_ind/$non_zeros)); #ok
+
+		my @sorted_sums = sort {$a <=> $b} @detected_sum_warnings;
+		
+		#median
+		push(@stats_warnings,$self->median('sorted_array'=>\@sorted_sums)); 
+
+		push(@stats_warnings,$sorted_sums[$low_ind]); #start CI 
+		push(@stats_warnings,$sorted_sums[$high_ind]); #end CI 
+	}
+	$self->verbose(0);
 
 	return \@result_values ,\@real_positions ,\@stats_warnings;
 }

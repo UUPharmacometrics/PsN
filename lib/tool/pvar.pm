@@ -39,8 +39,9 @@ sub modelfit_setup
 			my $new_model = $model->copy(
 				output_same_directory => 1,
 				filename => File::Spec->catfile(($self->directory, "m1"), "$variant$i.mod"),
-				copy_data => 0,
-				data_file_names => [ 'anyname?' ],
+				copy_datafile => 0,
+				write_copy => 0,
+				copy_output => 0
 			);
 
 			if ($model->is_run) {
@@ -261,13 +262,13 @@ sub set_data_files
 	my $base_model = shift;
 	my @models = @_;
 
-	my $data_filename_with_path = $base_model->datas->[0]->full_name;
-	(my $volume, my $directories, my $data_filename) = File::Spec->splitpath($data_filename_with_path);
+	#datafiles returns an arrayref even if file for single $PROB is requested
+	my $ref_data_filename_with_path = $base_model->datafiles(problem_numbers => [1], absolute_path => 1);
 
 	for my $model (@models) {
-		my $data = $model->datas->[0];
-		$data->directory("$volume$directories");
-		$data->filename($data_filename);
+		#new_names must be an arrayref
+		$model->datafiles(problem_numbers => [1],
+						  new_names => $ref_data_filename_with_path);
 	}
 }
 

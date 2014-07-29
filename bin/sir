@@ -147,7 +147,10 @@ $help_text{-in_filter} = <<'EOF';
 EOF
     $help_text{-copy_data} = <<'EOF';
       <p class="option">-copy_data</p>
-    Default not set. 
+    Default set, can be unset with -no-copy_data. By default, the original
+	dataset will be copied to the sir run directory to be used for relevant runs.
+	If -no-copy_data is set, the absolute path to the original dataset will be 
+	used instead.
 EOF
     $help_text{-with_replacement} = <<'EOF';
       <p class="option">-with_replacement</p>
@@ -183,9 +186,6 @@ if ( scalar(@ARGV) < 1 ) {
 if( scalar(@ARGV) > 1 ){
   print "sir can only handle one modelfile. Use 'sir -h' for help.\n";
   exit;
-}
-unless ( defined $options{'skip_data_parsing'} ) {
-  $options{'skip_data_parsing'} = 1;
 }
 
 if ( defined $options{'covmat_input'} ){
@@ -237,6 +237,14 @@ my $eval_string = common_options::model_parameters(\%options);
 my $model = model -> new ( eval( $eval_string ),
 			   filename                    => @ARGV[0],
 			   ignore_missing_output_files => 1 );
+
+unless ($model->copy_data_setting_ok(copy_data => $options{'copy_data'})){
+	die("Cannot set -no-copy_data, absolute data file path is too long.");
+} 
+if (defined $options{'copy_data'} and (not $options{'copy_data'})){
+	$model->relative_data_path(0);
+}
+
 
 my $sir = tool::sir -> 
   new ( eval( $common_options::parameters ),

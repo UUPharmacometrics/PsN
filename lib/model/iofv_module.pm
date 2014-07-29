@@ -191,7 +191,10 @@ sub post_run_process
     }
   }
 
-  my $data = $base_model -> datas -> [0];
+	my $datafilename = $base_model->datafiles(absolute_path => 1, problem_numbers => [1])->[0];
+  my $data = data->new(filename => $datafilename,
+					   ignoresign => '@',
+					   idcolumn => $base_model->idcolumns->[0]);
   
   my $ids = $data -> column_to_array( column => $data -> idcolumn -1 );
 
