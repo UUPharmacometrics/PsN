@@ -58,7 +58,10 @@ Default not used. When used, the bootstrap will skip all samples where the NONME
 Default not used. When not used, i.e. by default, bootstrap will print a message and terminate if an IGNORE or ACCEPT statement based on the ID column is found in the \$DATA record. This is done because it would interfere with the internal renumbering of individuals that the script does, producing errors. If -allow\_ignore\_id is used (not recommended), a warning is printed but the program continues execution. Note: The IGNORE statement can safely be used in conjunction with any other column than ID. 
 \nextopt
 \optname{copy\_data}
-Default not set. By default, the bootstrapped datasets bs\_pr1\_$\langle$sample\_no$\rangle$.dta generated in the m1 subdirectory are not copied to the NM\_run subdirectories of modelfit\_dir1. Relative data paths, ../../m1/bs\_pr1\_$\langle$sample\_no$\rangle$.dta , are used in \$DATA in the modelfiles in NM\_run. This saves much disk space. If -copy\_data is set, the bootstrapped datasets are instead copied to the NM\_run directories, and \$DATA has  bs\_pr1\_$\langle$sample\_no$\rangle$.dta without any path. 
+Default set. If option is set, the original data file
+will be copied to the run directory if the input model is to be run.
+If option is unset using -no-copy\_data, the absolute path to the original data file will be used in
+\$DATA when the input model is run, and the data file will not be copied. This saves disk space.
 \nextopt
 \optname{dofv}
 Optional, default not used. Evaluate original data with bootstrap parameter estimates and compute delta-ofv. See section Computing delta-ofv. 

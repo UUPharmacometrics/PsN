@@ -90,7 +90,10 @@ The weights will however still be computed based the non-inflated covariance mat
 Optional. Sets option MCETA=N in \$ESTIMATION. Only allowed with NM7.3 and classical estimation methods.
 \nextopt
 \optname{copy\_data}
-Default not set. If option is not set, the data file will not be copied from the m1 directory to the NM\_run directories for NONMEM execution, which saves disk space. If -copy\_data is set, the data file will be copied to each NM\_run directory.
+Default set. If option is set, the original data file
+will be copied to the run directory.
+If option is unset using -no-copy\_data, the absolute path to the original data file will be used in
+\$DATA, and the data file will not be copied. This saves disk space.
 \nextopt
 \end{optionlist}
 

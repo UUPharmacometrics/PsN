@@ -280,6 +280,9 @@ my $eval_string = common_options::model_parameters(\%options);
 my $model = model -> new ( eval( $eval_string ),
 						   filename                    => @ARGV[0],
 						   ignore_missing_output_files => 1 );
+unless (defined $options{'copy_data'} and (not $options{'copy_data'})) {
+    $options{'copy_data'} = 1;
+}
 
 unless ($model->copy_data_setting_ok(copy_data => $options{'copy_data'})){
 	die("Cannot set -no-copy_data, absolute data file path is too long.");

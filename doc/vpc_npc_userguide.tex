@@ -209,7 +209,8 @@ A simple way to simulate with uncertainty. Instead of using identical parameter 
 Only relevant in combination with -rawres\_input. Default 1. The number of result lines to skip in the input raw results file before starting to read final parameter estimates. In a regular bootstrap raw\_results file the first line of estimates refers to the input model with the full dataset, so therefore the default offset is 1. 
 \nextopt
 \optname{copy\_data}
-Default set. Disable with -no-copy\_data. By default, PsN will copy the datafile into NM\_run1 and set a local path in psn.mod, the actual modelfile run with NONMEM. If -no-copy\_data is set, PsN will not copy the data to NM\_run1 and instead set a global path to the datafile in psn.mod. However, if the global path is very long then there will be an NMtran error  caused by a line wrap in \$DATA in psn.mod.  
+Default set. Disable with -no-copy\_data. By default, PsN will copy the datafile into NM\_run1 and set a local path in psn.mod, the actual modelfile run with NONMEM. If -no-copy\_data is set, PsN will not copy the data to NM\_run1 and instead set the absolute path in \$DATA in psn.mod. However, 
+the absolute path must not be too long, since NONMEM will not accept more than 80 characters for the filename in \$DATA.  
 \end{optionlist}
 
 

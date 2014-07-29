@@ -97,7 +97,7 @@ EOF
       <p class="option">-copy_data</p>
     Default set, unset with -no-copy_data. By default, the base model is run
 	with a copy of the dataset in NMrun. If -no-copy_data is used, 
-	the data set is not copied to NMrun.
+	the data set is not copied to NMrun and an absolute path is used in $DATA.
 EOF
 
     $help_text{-stratify_on} = <<'EOF';
@@ -139,6 +139,10 @@ my $eval_string = common_options::model_parameters(\%options);
 my $model = model -> new ( eval( $eval_string ),
 						   filename                    => @ARGV[0],
 						   ignore_missing_output_files => 1 );
+unless (defined $options{'copy_data'} and (not $options{'copy_data'})) {
+    $options{'copy_data'} = 1;
+}
+
 unless ( $model -> is_run){
 	#we will only run this model if not done already, path length matters only if we run
 	unless ($model->copy_data_setting_ok(copy_data => $options{'copy_data'})){

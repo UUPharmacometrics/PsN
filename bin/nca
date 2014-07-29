@@ -132,8 +132,8 @@ $help_text{-copy_data} = <<'EOF';
     the data file into NM_run1 and set a local path in psn.mod, the actual
     model file run with NONMEM. If -no-copy_data is set, PsN will not copy 
     the data to NM_run1 but instead set a global path to the data file in
-    psn.mod. However, if the global path is very long there will be an NMtran
-    error caused by a line wrap in $DATA in psn.mod.
+    psn.mod. However, NONMEM does not accept a path with more than 80
+	characters.
 EOF
 
 $help_text{-lst_file} = <<'EOF';

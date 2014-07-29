@@ -38,7 +38,10 @@ Optional. Name of model to estimate with original data and use as reference when
 Not used by default. Method for copying randomization column values from one individual to another during shuffling. See details in section Shuffling the randomization column.     
 \nextopt
 \optname{copy\_data}
-Default not set. By default, the randomized datasets rand\_$\langle$sample\_no$\rangle$.dta generated in the m1 subdirectory are not copied to the NM\_run subdirectories of modelfit\_dir1. Relative data paths, ../../m1/rand\_ $\langle$sample\_no$\rangle$.dta , are used in \$DATA in the modelfiles in NM\_run. This saves much disk space. If \mbox{-copy\_data} is set, the randomized datasets are instead copied to the NM\_run directories, and \$DATA has  rand\_$\langle$sample\_no$\rangle$.dta without any path. 
+Default set. If option is set, the data file
+will be copied to the run directory if the input and/or base model is run.
+If option is unset using -no-copy\_data, the absolute path to the original data file(s) will be used in
+\$DATA, and the data file will not be copied. This saves disk space.
 \nextopt
 \end{optionlist}
 
