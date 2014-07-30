@@ -416,7 +416,7 @@ sub create_maxeval_zero_models_array
 			$samples_done++;
 			$probnum++;
 		}
-		$run_model -> _write(relative_data_path => 0); #this gets written in m1. want absolute path here even if relative in NMrun
+		$run_model -> _write(); 
 		push(@modelsarr,$run_model);
 	}
 
