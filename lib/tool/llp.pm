@@ -654,7 +654,7 @@ sub _create_models
 						$active_flag = 1;
 					}
 					if ( $active_flag ) {
-						$new_mod -> _write(relative_data_path => 0); #use absolute data path for original dataset when writing to m1
+						$new_mod -> _write(); #use absolute data path for original dataset when writing to m1
 						push( @new_models, $new_mod );
 						$self->{$param.'_models'}->{$num}->{$side} = $new_mod;
 					}

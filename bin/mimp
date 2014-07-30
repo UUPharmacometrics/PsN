@@ -199,14 +199,19 @@ chdir($newdir);
 my @simdatanames;
 if (defined $options{'sim_model'}){
 	my $simulation_models;
-
+	my $datafilesref;
 	for(my $sample=1; $sample<= $options{'samples'}; $sample++){
 		my $sim_name='sim_'.$sample.'.mod';
 		my $sim_model = $sim -> copy( filename    => $sim_name,
-									  copy_datafile   => 0,
+									  copy_datafile   => ($sample == 1), #if first sample then copy, otherwise not
 									  write_copy => 0,
 									  copy_output => 0);
-		
+		if ($sample == 1){
+			$datafilesref = $sim_model->datafiles(absolute_path => 1);
+		}else{
+			$sim_model->datafiles(new_names => $datafilesref);
+		}
+
 		#set seed
 		my $prob = $sim_model -> problems -> [0];
 		my $sim_record = $sim_model -> record( problem_number => 1,
@@ -282,11 +287,11 @@ if (defined $options{'sim_model'}){
 
 my $base_models;
 my @basedatanames;
-
+my $datafilesref;
 for(my $sample=1; $sample<= $options{'samples'}; $sample++){
 	my $base_name='base_'.$sample.'.mod';
 	my $base_model = $base -> copy( filename    => $base_name,
-									copy_datafile   => 0,
+									copy_datafile   => ((not defined $options{'sim_model'}) and ($sample == 1)), #copy if first sample and no sim_model
 									write_copy => 0,
 									copy_output => 0);
 
@@ -295,6 +300,12 @@ for(my $sample=1; $sample<= $options{'samples'}; $sample++){
 		#set $DATA
 		$fname = $simdatanames[($sample-1)];
 		$base_model -> datafiles(new_names => [$fname] );
+	}else{
+		if ($sample == 1){
+			$datafilesref = $base_model->datafiles(absolute_path => 1); #this datafile is in mimp dir
+		}else{
+			$base_model->datafiles(new_names => $datafilesref);
+		}
 	}
 	#set $TABLE FILE
 	$fname='base_'.$sample.'_out.dta';

@@ -3557,7 +3557,8 @@ sub _create_models
 		#want mod to be zero when it is time to do something
 		my $modulus = ($self->step_number()-1)%($maxlev); 
 		if ($self->linearize){
-			if ($modulus == 0 and ($self->step_number()>1) and (not $self->update_derivatives)) {
+			if (($modulus == 0 and ($self->step_number()>1) or ($self->search_direction eq 'backward' and $self->step_number == 2)) 
+				and (not $self->update_derivatives)) {
 				$copy_datafile = 1;
 			}
 		}elsif ($modulus == 0 or $self->step_number()==1 or ($self->search_direction eq 'backward' and $self->step_number == 2)) {
