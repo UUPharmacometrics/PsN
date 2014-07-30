@@ -300,6 +300,8 @@ sub modelfit_setup
 				       number_of_etas => $n_parameters,
 				       eta_matrix => $eta_matrix);
 
+	my $clean= $self->clean;
+	$clean = 2 if ($clean > 2); #clean cannot be more than 2, then important intermediate results are deleted
 		$self->tools([]) unless defined $self->tools;
     push( @{$self->tools}, tool::modelfit ->
 		  new( %{common_options::restore_options(@common_options::tool_options)},
@@ -311,6 +313,7 @@ sub modelfit_setup
 			   raw_results           => undef,
 			   prepared_models       => undef,
 			   top_tool              => 0,
+			   clean                => $clean,
 			   prepend_model_file_name => 1
 		  ) );
   }

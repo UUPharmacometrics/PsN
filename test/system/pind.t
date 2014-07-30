@@ -14,7 +14,7 @@ our $dir = "pind_test";
 my $model_dir = $includes::testfiledir;
 
 my @commands = 
-	($includes::pind." $model_dir/pheno5.mod  -dir=$dir",
+	($includes::pind." $model_dir/pheno5.mod  -dir=$dir -clean=3",
 	);
 chdir($tempdir);
 foreach my $command (@commands){
