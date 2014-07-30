@@ -219,6 +219,191 @@ if ($self->has_filename) {
 As a workaround for a bug in the Carp package \verb|use include_modules;| should be used instead of \verb|use Carp;|. All the ordinary Carp methods will be exported.
 
 
+\section{Data class}
+As of PsN version 4.3, no data object is created automatically when a model object is created.
+The model object has no (list of) data object(s) attribute, nor does any other object.
+When a data object is needed it must be created explicitly. If a data object is created, the contents of the
+data file is always parsed. A number of new methods, many of them
+static, have been written for creation of new data sets for e.g. cdd, bootstrap, randtest. 
+These methods handle writing of the new data sets to disk, and return a list of file names to the
+new data files. Data objects are not returned, they are cleared from memory. A number of unit tests have been written for
+the data generation methods.
+
+The programmer should never overwrite 
+an existing data file.
+The data->\_write method will croak if the file to write to already exists. If built-in Perl sub cp(old,new) is
+used, the programmer must ensure a data file is not overwritten. A possible improvement is to write a special subroutine
+for copying data files, that does checking that the new file does not exist.
+
+All data class attributes and methods relating to flush, sync, synchronize and target have been removed. 
+
+The following attributes have been removed: skip\_parsing, synced, target, mdv\_column, dv\_column, individual\_ids.
+
+The following methods of the data class have been removed: target\_set, diff, flush, single\_valued\_data.
+The following methods have been made private ( underscore added in sub name): 
+\_bootstrap, \_bootstrap\_from\_keys, \_case\_deletion, \_renumber\_ascending, \_randomize\_data.
+
+The following new methods have been added:
+\begin{description} 
+\item[add\_randomized\_input\_data] For boot\_scm if option -dummy\_covariates set
+\item[bootstrap\_create\_datasets] standard bootstrap data generation, uses private \_bootstrap, \_renumber\_ascending methods
+\item[bootstrap\_create\_datasets\_from\_keys] special bootstrap data generation, uses private \_bootstrap\_from\_keys, \_renumber\_ascending
+\item[frem\_compute\_covariate\_properties]
+\item[cdd\_create\_datasets] uses private \_case\_deletion
+\item[create\_randomized\_data] for randtest, uses private \_randomize\_data
+\item[lasso\_calculate\_covariate\_statistics]
+\item[lasso\_get\_categories]
+\item[scm\_calculate\_covariate\_statistics] main covariate statistics method
+\item[scm\_calculate\_categorical\_statistics] helper method to scm\_calculate\_covariate\_statistics
+\item[scm\_calculate\_continuous\_statistics] helper method to scm\_calculate\_covariate\_statistics
+\end{description}
+\section{model::problem::data record class}
+In PsN 4.3 the data record class has been extended. It handles the data file of the model, in the sense that it keeps track
+of where the data file is located and makes sure a correct path is written in \$DATA when a model file
+is written to disk. The data record class has no data object.
+
+The class has the following attributes, in addition to the inherited record attributes:
+\begin{description}
+\item[filename] This is the filename, without path, of the physical data file on disk. It has a public reader and a private writer. To change the
+value of the attribute, a
+separate public set method must be used, that in turn calls the private writer.  
+\item[directory] This is the absolute path to the physical data file on disk. It has a public reader and a private writer. 
+To change the value of the attribute, a
+separate public set method must be used, that in turn calls the private writer.  
+\item[model\_directory] The absolute path to the original model file when a new model object is created. 
+This attribute is only used in BUILD, to figure
+out the absolute path to the data file when the file name in \$DATA is relative, which it very often is.
+\item[ignoresign] A single character used to ignore header lines in data files, for example @. Set with IGNORE=character
+in \$DATA. To be distinguished from ignore lists, set with IGNORE=(some logical expression), in \$DATA. This attribute
+is used when writing \$DATA to disk, see the overloaded \_format\_record method, 
+which means that it is important to use the ignoresign setter/getter and 
+not the data record options when changing the ignorecharacter.
+\item[ignore\_list] A helper attribute, a parsed version of the ignorelist. Not used when writing \$DATA to disk.
+\end{description}
+
+It is \emph{not} possible to access the data file name via the options of the data record class. After parsing of
+the input \$DATA record lines from the original model file, the data file info is stored in the special attributes
+(see the BUILD code). The stored filename and directory are used when writing a model to disk, see
+the overloaded \_format\_record method.
+
+The programmer must not set the ignoresign via the data record options. The ignoresign accessor must be used instead. However,
+for ignore lists (logical expressions enclosed by parentheses) the record options must be used.
+The typical case when ignoresign should be set is when a NONMEM \$TABLE file is used as a data file for 
+a new model. Then the programmer can for example set \verb|$model->problems->[0]->datas->[0]->ignoresign('@')|
+
+The \_format\_record method, and the helper method format\_filename, take mandatory input options Bool relative\_data\_path and
+string write\_directory. 
+The write\_directory option is the path to the directory where the model file needing \$DATA is being written.
+If relative\_data\_path is true, the filename written in \$DATA will use the relative path from the write\_directory to the
+directory holding the data file. If relative\_data\_path is false, the filename written in \$DATA will use the absolute
+path to the data file, and the write\_directory will not matter.
+
+NONMEM will crash if the filename set in \$DATA is longer than 80 characters. The \_format\_record method can
+be set to croak if the filename is too long, this helps during code development. It is a good idea to run system tests in
+a temporary directory with a path longer than 80 characters, to make sure PsN handles this correctly without
+writing too long paths that would make nmfe crash. Also, try putting the test directory containing test\_files
+etc in a very long path, this can also reveal bugs.
+However, not all model files written to disk are actually run by nmfe, so in some cases
+a check in modelfit.pm that the path is not too long would be enough. 
+If filename is too long then attribute copy\_datafile (see section below) can be set to true when creating psn.mod in NM\_run
+subfolders.
+
+\section{Model class}
+
+All attributes and methods relating to flush, sync, synchronize and target have been removed. (The output class still hash a flush method.)
+
+The model object has no data objects. 
+The following attributes have been removed: datas (the array of data objects), skip\_data\_parsing, synced, target.
+
+Getting or changing the data file in \$DATA shall always be done using the datafiles method.
+
+Getting data file names: datafiles method returns an arrayref with filenames given for the problem numbers specified in option arrayref problem\_numbers,
+default all problems of the model. Optional Bool absolute\_path, default 0. If absolute\_path is true, then the data file names
+are given with absolute path, otherwise just the filename is given. 
+
+Changing data file names: datafiles method takes an arrayref new\_names with data file name strings. If problem\_numbers is
+given then new\_names must have the same length as problem\_numbers, otherwise new\_names must have one string
+per problem in the model.
+
+The following attributes have been added: 
+\begin{description}
+\item[relative\_data\_path] Bool, default 1, decides the default value for this model object when
+deciding whether absolute path to data file or relative path should be used when the model file is written to disk.
+\item[is\_dummy] Bool, false always except when sub create\_dummy\_model is used to create dummy model object. This attribute
+gives a safe way to determine whether a model object is a dummy, better than checking the model file name.
+\end{description}
+
+Method copy has been rewritten. The following options are new/especially important:
+\begin{description}
+\item[write\_copy] A boolean, by default option write\_copy is true, meaning that the new model will be written to disk 
+directly, before the copy method returns. But if the new model object is to be modified directly after the copy,
+which is very often the case, option write\_copy should be set to 0 and a 'manual' \_write should be done
+after all modification is done.
+\item[copy\_datafile] Boolean, default is false. If set to true, then the data file of the original model object (filename 
+retrieved using datafiles method) will be copied to the directory of the new copied model, and attribute 
+relative\_data\_path will be set to true for the copy even if the original model object had
+relative\_data\_path set to false.
+Whenever a model object is created this way with copy\_datafile true, an absolute data path must never
+be used when writing the model object to disk later.
+Setting copy\_datafile to true increases the number of files on disk, so it should be used restrictively.
+\item[copy\_output] Boolean, normally this should be false, which is the default. Copy the output object or not.
+\end{description}
+
+Method \_write has been rewritten. 
+It can be set to croak if overwrite option is not set and a file with the name to write to already exists. This
+helps in cleaning up the code during development
+to remove redundant writes to disk.
+Option relative\_data\_path to \_write method can be used to override the model attribute with same name,
+deciding whether relative or absolute data file path should be used in \$DATA.
+Normally the default, decided by the model attribute, should be used for relative\_data\_path.
+
+\section{copy\_data command-line option and modelfit attribute}
+A few scripts has copy\_data as a command-line option (execute, bootstrap, vpc, npc, nca, sir, randtest). 
+By default copy\_data is always true. On the
+command-line copy\_data shall mean, to be consistent across scripts: 
+use a copy of the \emph{original} data when models needing the \emph{original}
+data file are run. If command-line option copy\_data is unset with -no-copy\_data, this means: always use the 
+original data file with absolute path in \$DATA when running models that use the original data set. Setting -no-copy\_data
+is popular for studies with a high traceability standard, it is easier to show that the data is not corrupted 
+if the same file is always used, rather than copies.
+
+The copy\_data option set on the commandline shall always be passed on to the 
+main tool-type object created in the bin script, but inside the various tool-type objects (bootstrap, npc, randtest... objects),
+the command\_line setting of copy\_data (\$self->copy\_data) is not always passed on again to modelfit or other tool objects
+that are created. See bootstrap example below.
+
+The command-line meaning of copy\_data was for bootstrap, sir and randtest in PsN 4.2, then it was related to using a relative path 
+to data in m1 or not, but this option was not widely known or used. In PsN 4.3 the meaning is changed, for consistency.
+
+Attribute copy\_data to the modelfit class is used in the following way:
+If attribute copy\_data is true, modelfit will copy the data file
+to NM\_run directories (by setting option copy\_datafile => 1 when doing model->copy to create psn.mod),
+and then psn.mod will have the datafile name without any path in \$DATA (model attribute relative\_data\_path is true, with
+the path being . ). If attribute copy\_data is not true, 
+modelfit will set option copy\_datafile => 0 when doing model->copy to create psn.mod.
+In the later case, it will be the model objects own setting of relative\_data\_path that decides
+whether an absolute or relative path will be used in \$DATA in psn.mod.
+
+If command-line copy\_data was unset, 
+then the bin script should ensure that using an absolute path is ok (there is a subroutine for this, see example in bin/bootstrap)
+and then that the input model objects have attribute relative\_data\_path set to false (see bin/bootstrap).
+Also the modelfit object used to run these models (or copies of these models using the same data) 
+should have copy\_data set to the same as the user gave on the commandline, otherwise it is a programming error. See bootstrap.pm, 
+modelfit that runs the base model and the dofv-models: 
+\begin{verbatim}
+copy_data => $self->copy_data
+\end{verbatim}
+
+Model objects using data files that were generated inside the run directory (normally in the m1 subdirectory), 
+for example bootstrap samples, should have attribute relative\_data\_path set to true.
+When a modelfit object is created for running models that all use a newly created data file, e.g. bootstrap samples,
+the copy\_data attribute of the new modelfit object should always be false, otherwise you get a serious waste of disk space.
+See bootstrap.pm, modelfit object that runs the bootstrap models:
+\begin{verbatim}
+copy_data => 0
+\end{verbatim}
+
+
 \begin{thebibliography}{1}
 	\bibitem{git} {\em Pro Git}, \url{http://git-scm.com/book}, Apress
 	\bibitem{modern} {\em Modern Perl} \url{http://onyxneon.com/books/modern_perl/}, Onyx Neon Press
