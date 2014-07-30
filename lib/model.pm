@@ -3363,7 +3363,8 @@ sub _write
 	my ($writedir,$file) = OSspecific::absolute_path('',$filename);
 	
 	if (-e $filename and not $overwrite){
-		croak("Trying to overwrite existing file $filename\n");
+#		croak("Trying to overwrite existing file $filename\n"); #croak useful during development
+		carp("Trying to overwrite existing file $filename\n");
 	}
 
 	my @formatted;

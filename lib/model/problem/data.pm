@@ -138,7 +138,8 @@ sub _format_record
 		#we should not end up here, should have been picked up by model
 		#that should copy data if too long
 		#TODO fix not implemented yet
-		croak("This is a bug: datafile string too long, more than 80,\n $filestring");
+#		croak("This is a bug: datafile string too long, more than 80,\n $filestring"); #croak useful during development 
+		carp("datafile string too long, more than 80,\n $filestring");
 	}
 
 	my $line =0;
