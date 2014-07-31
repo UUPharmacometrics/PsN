@@ -107,6 +107,11 @@ sub format_filename
 		$string = File::Spec->catfile($self->get_directory,$self->get_filename);
 	}
 
+	#check if contains spaces, then add quotes
+	if ($string =~ /\s/){
+		$string = '"'.$string.'"';
+	}
+
 	if (length($string)> 80){
 		carp("datafile string too long, more than 80,\n $string");
 	}
