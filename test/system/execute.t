@@ -8,12 +8,13 @@
 use strict;
 use warnings;
 use File::Path 'rmtree';
-use Test::More tests=>14;
+use Test::More tests=>15;
 use List::Util qw(first);
 use Config;
 use FindBin qw($Bin);
 use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages and $path variable definition
+use File::Copy 'cp';
 
 
 our $tempdir = create_test_dir('system_execute');
@@ -22,9 +23,25 @@ my $model_dir = $includes::testfiledir;
 #put pheno.mod in testdir so that .ext etc in testfiledir are not modified
 copy_test_files($tempdir,["pheno.mod", "pheno.dta"]);
 
+
+#test spaces in file path
+#TODO make sure path to pheno.dta not so long that execute will die because of path too long, 
+#then test will fail although PsN does what it should
+chdir($tempdir);
+my $spacedir = 'a b';
+mkdir($spacedir);
+cp('pheno.mod',$spacedir);
+cp('pheno.dta',$spacedir);
+chdir($spacedir);
+my $command = $includes::execute." pheno.mod -no-copy_data";
+print "Running $command\n";
+my $rc = system($command);
+$rc = $rc >> 8;
+ok ($rc == 0, "$command, spaces in data path");
+
 my @a;
 
-# Test option shrinking
+# Test option shrinkage
 my @shrinking_results = (40.5600924453085, -0.185810314125491, 89.4892871889343);		# Calculated with PsN-3.6.2 on Doris
 my @shrinking_headings = ('shrinkage_eta1(%)', 'shrinkage_eta2(%)', 'shrinkage_iwres(%)');
 
@@ -83,6 +100,8 @@ foreach my $i (0..$#command_line) {
   }
   rmtree([$dir]);
 }
+
+
 
 remove_test_dir($tempdir);
 
