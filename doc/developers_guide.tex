@@ -237,13 +237,16 @@ for copying data files, that does checking that the new file does not exist.
 
 All data class attributes and methods relating to flush, sync, synchronize and target have been removed. 
 
-The following attributes have been removed: skip\_parsing, synced, target, mdv\_column, dv\_column, individual\_ids.
+\subsection{Data class attributes and methods removed}
+skip\_parsing, synced, target, mdv\_column, dv\_column, individual\_ids.
 
-The following methods of the data class have been removed: target\_set, diff, flush, single\_valued\_data.
+target\_set, diff, flush, single\_valued\_data.
+
+\subsubsection{Old methods renamed}
 The following methods have been made private ( underscore added in sub name): 
 \_bootstrap, \_bootstrap\_from\_keys, \_case\_deletion, \_renumber\_ascending, \_randomize\_data.
 
-The following new methods have been added:
+\subsection{New data class methods}
 \begin{description} 
 \item[add\_randomized\_input\_data] For boot\_scm if option -dummy\_covariates set
 \item[bootstrap\_create\_datasets] standard bootstrap data generation, uses private \_bootstrap, \_renumber\_ascending methods
@@ -318,86 +321,91 @@ The following attributes have been removed: datas (the array of data objects), s
 Getting or changing the data file in \$DATA shall always be done using the datafiles method.
 
 Getting data file names: datafiles method returns an arrayref with filenames given for the problem numbers specified in option arrayref problem\_numbers,
-default all problems of the model. Optional Bool absolute\_path, default 0. If absolute\_path is true, then the data file names
+default all problems of the model. Optional Bool absolute\_path, default false. If absolute\_path is true, then the data file names
 are given with absolute path, otherwise just the filename is given. 
 
 Changing data file names: datafiles method takes an arrayref new\_names with data file name strings. If problem\_numbers is
 given then new\_names must have the same length as problem\_numbers, otherwise new\_names must have one string
 per problem in the model.
 
-The following attributes have been added: 
+\subsection{New model class attributes}
 \begin{description}
-\item[relative\_data\_path] Bool, default 1, decides the default value for this model object when
+\item[relative\_data\_path] Bool, default true, decides the default value for this model object when
 deciding whether absolute path to data file or relative path should be used when the model file is written to disk.
 \item[is\_dummy] Bool, false always except when sub create\_dummy\_model is used to create dummy model object. This attribute
 gives a safe way to determine whether a model object is a dummy, better than checking the model file name.
 \end{description}
 
-Method copy has been rewritten. The following options are new/especially important:
+\subsection{model->copy method}
+Method copy has been rewritten. The following options are new and/or especially important:
 \begin{description}
 \item[write\_copy] A boolean, by default option write\_copy is true, meaning that the new model will be written to disk 
 directly, before the copy method returns. But if the new model object is to be modified directly after the copy,
-which is very often the case, option write\_copy should be set to 0 and a 'manual' \_write should be done
+which is very often the case, option write\_copy should be set to false and a 'manual' \_write should be done
 after all modification is done.
 \item[copy\_datafile] Boolean, default is false. If set to true, then the data file of the original model object (filename 
-retrieved using datafiles method) will be copied to the directory of the new copied model, and attribute 
+retrieved using datafiles method) will be copied to the directory of the new model copy, and attribute 
 relative\_data\_path will be set to true for the copy even if the original model object had
 relative\_data\_path set to false.
 Whenever a model object is created this way with copy\_datafile true, an absolute data path must never
 be used when writing the model object to disk later.
 Setting copy\_datafile to true increases the number of files on disk, so it should be used restrictively.
 \item[copy\_output] Boolean, normally this should be false, which is the default. Copy the output object or not.
+If set to true then running the copy can affect the pre-existing output on disk of the original model. 
 \end{description}
 
+\subsection{model->\_write method}
 Method \_write has been rewritten. 
-It can be set to croak if overwrite option is not set and a file with the name to write to already exists. This
+It can be set to croak if a file with the name to write to already exists and the overwrite option is not set. This
 helps in cleaning up the code during development
 to remove redundant writes to disk.
+The data file is never written as part of model->\_write.
 Option relative\_data\_path to \_write method can be used to override the model attribute with same name,
 deciding whether relative or absolute data file path should be used in \$DATA.
 Normally the default, decided by the model attribute, should be used for relative\_data\_path.
 
-\section{copy\_data command-line option and modelfit attribute}
+\section{copy\_data command-line option and modelfit/tool subclass attribute}
 A few scripts has copy\_data as a command-line option (execute, bootstrap, vpc, npc, nca, sir, randtest). 
 By default copy\_data is always true. On the
 command-line copy\_data shall mean, to be consistent across scripts: 
 use a copy of the \emph{original} data when models needing the \emph{original}
 data file are run. If command-line option copy\_data is unset with -no-copy\_data, this means: always use the 
 original data file with absolute path in \$DATA when running models that use the original data set. Setting -no-copy\_data
-is popular for studies with a high traceability standard, it is easier to show that the data is not corrupted 
+is popular for studies with high requirements on traceability, it is easier to show that the data is not corrupted 
 if the same file is always used, rather than copies.
 
-The copy\_data option set on the commandline shall always be passed on to the 
-main tool-type object created in the bin script, but inside the various tool-type objects (bootstrap, npc, randtest... objects),
-the command\_line setting of copy\_data (\$self->copy\_data) is not always passed on again to modelfit or other tool objects
-that are created. See bootstrap example below.
-
 The command-line meaning of copy\_data was for bootstrap, sir and randtest in PsN 4.2, then it was related to using a relative path 
-to data in m1 or not, but this option was not widely known or used. In PsN 4.3 the meaning is changed, for consistency.
+to data in m1 or not, but this option was not widely known or used. In PsN 4.3 the meaning is changed, for consistency across scripts.
 
-Attribute copy\_data to the modelfit class is used in the following way:
-If attribute copy\_data is true, modelfit will copy the data file
-to NM\_run directories (by setting option copy\_datafile => 1 when doing model->copy to create psn.mod),
-and then psn.mod will have the datafile name without any path in \$DATA (model attribute relative\_data\_path is true, with
-the path being . ). If attribute copy\_data is not true, 
-modelfit will set option copy\_datafile => 0 when doing model->copy to create psn.mod.
-In the later case, it will be the model objects own setting of relative\_data\_path that decides
-whether an absolute or relative path will be used in \$DATA in psn.mod.
-
-If command-line copy\_data was unset, 
-then the bin script should ensure that using an absolute path is ok (there is a subroutine for this, see example in bin/bootstrap)
+If command-line copy\_data was unset using -no-copy\_data, 
+then the bin script should ensure that using an absolute path is not too long for NONMEM (there is a subroutine for this, see example in bin/bootstrap)
 and then that the input model objects have attribute relative\_data\_path set to false (see bin/bootstrap).
-Also the modelfit object used to run these models (or copies of these models using the same data) 
+Also the modelfit object(s) used to run these models (or copies of these models using the same data) 
 should have copy\_data set to the same as the user gave on the commandline, otherwise it is a programming error. See bootstrap.pm, 
 modelfit that runs the base model and the dofv-models: 
 \begin{verbatim}
 copy_data => $self->copy_data
 \end{verbatim}
 
+The copy\_data option set on the commandline shall always be passed on to the 
+tool subclass object created in the bin script, but inside the various tool subclass objects (bootstrap, npc, randtest... objects),
+the command\_line setting of copy\_data (\$self->copy\_data) is not always passed on again to modelfit or other tool objects
+that are created. See bootstrap example.
+
+Attribute copy\_data to the modelfit class is used in the following way:
+If attribute copy\_data is true, modelfit will copy the data file
+to NM\_run directories (by setting option copy\_datafile => 1 when doing model->copy to create psn.mod),
+and then psn.mod will have the datafile name without any path in \$DATA (model attribute relative\_data\_path is true, with
+the path being . ). If modelfit attribute copy\_data is not true, 
+modelfit will set option copy\_datafile => 0 when doing model->copy to create psn.mod.
+In the later case, it will be the model objects own setting of relative\_data\_path that decides
+whether an absolute or relative path will be used in \$DATA in psn.mod.
+
 Model objects using data files that were generated inside the run directory (normally in the m1 subdirectory), 
 for example bootstrap samples, should have attribute relative\_data\_path set to true.
-When a modelfit object is created for running models that all use a newly created data file, e.g. bootstrap samples,
-the copy\_data attribute of the new modelfit object should always be false, otherwise you get a serious waste of disk space.
+When a modelfit object is created for running such models, e.g. bootstrap samples,
+the copy\_data attribute of the new modelfit object should always be false, otherwise you get a serious waste of disk space
+when data files are copied from m1 to NM\_run subdirectories.
 See bootstrap.pm, modelfit object that runs the bootstrap models:
 \begin{verbatim}
 copy_data => 0
