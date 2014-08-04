@@ -60,3 +60,7 @@ Changes and bug fixes from PsN 4.2.0 to x.y.z
    ___sse___
 
    ___bootstrap___
+
+	 ___update_inits___
+	 
+- update is now always created as an alias for update_inits on all platforms

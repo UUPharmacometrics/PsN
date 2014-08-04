@@ -933,12 +933,6 @@ foreach my $file (@utilities) {
 		} else {
 			symlink("$binary_dir/$file-$version", "$binary_dir/$file");
 		}
-		if ($file eq 'update_inits') {
-			if (running_on_windows()) {
-				copy_file("$binary_dir\\$file-$version", "$binary_dir\\update");
-				copy_file($runperl_binary, "$binary_dir\\update.bat");
-			}
-		}
 	}
 
 	# Make the versioned script directly executable
@@ -953,6 +947,15 @@ foreach my $file (@utilities) {
 			create_bat_file("$name.bat");
 		}
 	}
+}
+
+# Create update as an alias for update_inits
+if (running_on_windows()) {
+	open my $fh, ">", "$binary_dir\\update.bat";
+	print $fh "\@echo off\nperl %~dp0update_inits %*\n";
+	close $fh;
+} else {
+	symlink("$binary_dir/update_inits", "$binary_dir/update");
 }
 
 unless (open(TEMPLATE, "lib/PsN.pm")) {
