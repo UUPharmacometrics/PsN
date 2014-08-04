@@ -57,41 +57,9 @@ has '_range' => ( is => 'rw', isa => 'ArrayRef[numbers]', default => sub { [] } 
 
 # }}} synopsis
 
-# {{{ see_also
-
-    # =begin html
-    #
-    # <a HREF="model.html">model</a>, <a HREF="output.html">output</a>,
-    # <a HREF="tool/modelfit.html">tool::modelfit</a>,
-    # <a HREF="tool.html">tool</a>
-    #
-    # =end html
-    #
-    # =begin man
-    #
-    # model, output, tool::modelfit, tool
-    #
-    # =end man
-
-# }}} see_also
-
-# FIXME: This is a workaround to not execute triggers at construction.
-my $in_constructor = 0;
-
-sub BUILDARGS
-{
-	my $self = shift;
-
-	$in_constructor = 1;
-
-	return $self->SUPER::BUILDARGS(@_);
-}
-
 sub BUILD
 {
 	my $self = shift;
-
-	$in_constructor = 0;
 
 	# If the column holding the subject identifier is not the
 	# first, it can be specified using the I<idcolumn> attribute
@@ -103,10 +71,6 @@ sub BUILD
 	(my $directory, my $filename) = OSspecific::absolute_path( $self->directory, $self->filename );
 	$self->directory($directory);
 	$self->filename($filename);
-
-#	unless (defined $self->ignoresign and length($self->ignoresign)>0){
-#		print("\nWarning: ignoresign undefined in data->new\nThis should be fixed\n");
-#	}
 
 	unless ( not_empty($self->header) or not_empty($self->individuals) ) { 
 		#if empty
@@ -126,9 +90,8 @@ sub BUILD
 	    $self->column_head_indices->{$head} = $i;
 	    $i++;
 	}
-	
-}
 
+}
 
 sub add_randomized_input_data
 {
@@ -430,8 +393,6 @@ sub frem_compute_covariate_properties
 	return $results;
 
 }
-
-
 
 sub add_frem_lines
 {
@@ -825,7 +786,6 @@ sub add_randomized_columns
 	return \@xcolumn_names;
 }
 
-
 sub format_data
 {
 	my $self = shift;
@@ -949,7 +909,6 @@ sub factors
 
 	return \%factors;
 }
-
 
 sub fractions
 {
@@ -1798,7 +1757,6 @@ sub subsets
 	return \@subsets ,\@incl_ids;
 }
 
-
 sub full_name
 {
 	my $self = shift;
@@ -1945,6 +1903,7 @@ sub create_randomized_data
 	$data = undef;
 	return $filenames;
 }
+
 sub _randomize_data
 {
 	my $self = shift;
@@ -2167,7 +2126,6 @@ sub stratify_indices
 
 	return \@stratified_indices;
 }
-
 
 sub get_eta_matrix
 {
