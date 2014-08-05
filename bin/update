@@ -1,0 +1,22 @@
+#!/usr/bin/perl
+
+# Only for Development
+use FindBin qw($Bin);
+use lib "$Bin/../lib";
+
+# Don't edit the line below, it must look exactly like this.
+# Everything above this line will be replaced #
+
+# This script is just an alias for update_inits. 
+# It makes it possible to call versioned update scripts
+# For example: update-4.2.0 will call update_inits-4.2.0
+
+my $version;
+my @name_and_version = split '-', $0;
+if ($name_and_version[1]) {
+	$version = '-' . $name_and_version[1];
+}
+
+my $command = "update_inits$version @ARGV";
+
+system $command;

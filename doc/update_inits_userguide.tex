@@ -11,8 +11,8 @@
 
 
 \section{Overview}
-The update\_inits script is used to 
-update inital estimates in a model file with final estimates from NONMEM output.
+The update\_inits script is used to update inital estimates in a model file with final
+estimates from NONMEM output.
 
 The program will automatically search for a lst-file with the same file stem as the model file,
 for example if the model file is called run1.mod then the program will try to read output from
@@ -23,6 +23,8 @@ In addition to updating initial estimates the program will try to rename table f
 msfo files that follow certain naming rules. It is also possible to for example
 add/update runrecord tags,
 randomly perturb initial estimates and add comments to the new model file.
+
+The command \verb|update| can be used as a synonym to \verb|update_inits|.
 
 \noindent Examples:
 \begin{itemize}
@@ -42,7 +44,7 @@ update_inits run1.mod run1abc.lst -out=run2.mod
 
 \item Use parameters estimates from a model file instead of a lst-file:
 \begin{verbatim}
-update_inits run3.mod -from_model=run4.mod -out=run6.mod
+update run3.mod -from_model=run4.mod -out=run6.mod
 \end{verbatim}
 \end{itemize}
 

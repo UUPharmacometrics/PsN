@@ -93,7 +93,7 @@ my $name_safe_version = $version;
 $name_safe_version =~ s/\./_/g;
 my @utilities = (
 	'bootstrap', 'cdd', 'execute', 'llp', 'scm', 'sumo', 'sse',
-	'data_stats', 'se_of_eta', 'update_inits', 'npc', 'vpc',
+	'data_stats', 'se_of_eta', 'update_inits', 'update', 'npc', 'vpc',
 	'pind','nonpb','extended_grid','psn','psn_options','psn_clean',
 	'runrecord','mcmp','lasso','mimp','xv_scm','parallel_retries',
 	'boot_scm','gls','ebe_npde','frem','randtest','linearize', 'crossval', 'pvar', 'nca', 'vpctable','sir','rawresults'
@@ -947,15 +947,6 @@ foreach my $file (@utilities) {
 			create_bat_file("$name.bat");
 		}
 	}
-}
-
-# Create update as an alias for update_inits
-if (running_on_windows()) {
-	open my $fh, ">", "$binary_dir\\update.bat";
-	print $fh "\@echo off\nperl %~dp0update_inits %*\n";
-	close $fh;
-} else {
-	symlink("$binary_dir/update_inits", "$binary_dir/update");
 }
 
 unless (open(TEMPLATE, "lib/PsN.pm")) {
