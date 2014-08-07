@@ -9,7 +9,7 @@ use File::Copy 'cp';
 
 require Exporter;
 our @ISA = qw(Exporter);
-our @EXPORT = qw(cmp_float create_test_dir remove_test_dir copy_test_files like_file_row unlike_file_row is_array);
+our @EXPORT = qw(cmp_float create_test_dir remove_test_dir copy_test_files like_file_row unlike_file_row is_array do_course_tests);
 
 # Set this variable to something else if you are testing on a cluster
 my $tempdir = File::Spec->tmpdir;
@@ -49,34 +49,6 @@ unless ($PsN::version eq 'dev'){
 	$version = '-'.$PsN::version;
 }
 
-#n41 cluster 
-#use lib "/opt/local64/PsN/PsN_3_7_6";
-#use lib "/opt/local64/PsN";
-#use PsN_3_7_6;
-#our $path = "/opt/local64/PsN/bin/";
-#our $version = '-3.7.6';
-
-#doris
-#use lib "/opt/PsN/PsN_3_7_6";
-#use lib "/opt/PsN";
-#use PsN_3_7_6;
-#our $path = "/opt/PsN/bin/";
-#our $version = '-3.7.6';
-
-#MAC
-#use lib "/opt/PsN/PsN_3_7_6";
-#use lib "/opt/PsN";
-#use PsN_3_7_6;
-#our $path = "/opt/PsN/bin/";
-#our $version = '-3.7.6';
-
-#XP under MAC
-#use lib "C:\Perl\site\lib\PsN_3_7_6";
-#use lib "C:\Perl\site\lib";
-#use PsN_3_7_6;
-#our $path = "C:\Perl\bin";
-#our $version = ''; #can't have numbers on windows
-
 our $boot_scm = $path.'boot_scm'.$version;
 our $bootstrap = $path.'bootstrap'.$version;
 our $cdd = $path.'cdd'.$version;
@@ -106,7 +78,6 @@ our $vpc = $path.'vpc'.$version;
 our $xv_scm = $path.'xv_scm'.$version;
 our $sir = $path.'sir'.$version;
 our $pvar = $path.'pvar'.$version;
-
 
 sub cmp_float
 {
@@ -206,9 +177,65 @@ sub is_array
 	}	
 }
 
-#uncomment for MAC, doris, n41, (5.10.0, 5.8.8, 5.10.1)
-#sub done_testing{
-#	1;
-#}
+
+sub _parse_course_file
+{
+	my $file = shift;
+
+	my @commands;
+	my @comments;
+
+	open my $fh, '<', $file;
+
+	my $line;
+	while ($line = <$fh>) {
+		chomp $line;
+		next if $line =~ /^\s*$/;
+		$line =~ s/^#\s*//;
+		push @comments, $line;
+		$line = <$fh>;
+		chomp $line;
+		$line =~ /^\s*(\w+)(\s+.*)$/;
+		$line = $path . $1 . $version . $2;
+		push @commands, $line;
+	}
+
+	close $fh;
+
+	return (\@commands, \@comments);
+}
+
+sub do_course_tests
+{
+	my $dir = shift;
+	my $course_name = shift;
+
+	(my $commands, my $comments) = _parse_course_file($course_name . '.txt');
+
+	my $tempdir = create_test_dir("courses_$course_name");
+
+	my $model_dir = "$dir/$course_name";
+	my @needed = <$model_dir/*>;
+	foreach my $file (@needed) {
+		cp($file, $tempdir . '/.');
+	}
+	chdir($tempdir);
+
+	plan tests => scalar(@$commands);
+
+	foreach my $i (0 .. @$commands - 1) {
+		my $command = $$commands[$i];
+		my $comment = $$comments[$i];
+		print "Running $comment:\n$command\n";
+		my $rc = system($command);
+		$rc = $rc >> 8;
+		ok ($rc == 0, "$comment ");
+	}
+
+	chdir($dir);
+	remove_test_dir($tempdir);
+
+	done_testing();
+}
 
 1;

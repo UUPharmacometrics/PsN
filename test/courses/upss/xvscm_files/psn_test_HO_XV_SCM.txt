@@ -1,8 +1,0 @@
-#Hands on XV_SCM
-#Files attached: HO_XV_linearized_SCM.pdf, mx19.csv, run.mod, run_lin.scm
-#
-
-#task 1
-xv_scm -config_file=run_lin.scm -dir=run_lin -groups=5 -splits=3 -max_steps=3
-
-

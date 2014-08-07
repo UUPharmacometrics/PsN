@@ -1,0 +1,4 @@
+#task 1 1
+execute  run1.mod -model_dir_name
+#task 2
+execute  run2.mod -model_dir_name

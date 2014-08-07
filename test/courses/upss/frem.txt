@@ -1,0 +1,6 @@
+#task 3a
+execute  run8.mod -model_dir_name
+#task 3c 1
+execute  run9.mod -model_dir_name
+#task 3c 2
+update_inits run9.mod run9.lst

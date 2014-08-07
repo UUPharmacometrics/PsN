@@ -1,0 +1,2 @@
+#HO XV_SCM task 1
+xv_scm -config_file=run_lin.scm -dir=run_lin -groups=5 -splits=3 -max_steps=3

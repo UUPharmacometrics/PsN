@@ -1,0 +1,4 @@
+#HO bootstrap scm task 1
+execute run4.mod -model_dir_name
+#HO bootstrap scm task 2
+boot_scm linear.scm -samples=2 -run_final_models -dir=boot_scm1 -dummy_covariates=SEX,WT

@@ -1,0 +1,24 @@
+#HO SCM linearized SCM task A i nonlin
+scm run100.scm -dir=run100_nl
+#HO SCM linearized SCM task A i linear
+scm run101.scm -dir=run101_lin
+#HO SCM linearized SCM task B i nonlin
+scm run1.scm -dir=run1_nl
+#HO SCM linearized SCM task B i linear
+scm run1_lin.scm -dir=run1_lin
+#HO SCM lin SCM extra credit task 1 i nonlin
+scm run2_1.scm -dir=run2_1_nl
+#HO SCM lin SCM extra credit task 1 i linear
+scm run2_1_lin.scm -dir=run2_1_lin
+#HO SCM lin SCM extra credit task 2 i nonlin
+scm run2_2.scm -dir=run2_2_nl
+#HO SCM lin SCM extra credit task 2 i linear
+scm run2_2_lin.scm -dir=run2_2_lin
+#HO SCM lin SCM extra credit task 3 i nonlin
+scm run2_3.scm -dir=run2_3_nl
+#HO SCM lin SCM extra credit task 3 i linear
+scm run2_3_lin.scm -dir=run2_3_lin
+#HO SCM lin SCM extra credit task 4 i nonlin
+scm run2_4.scm -dir=run2_4_nl
+#HO SCM lin SCM extra credit task 4 i linear
+scm run2_4_lin.scm -dir=run2_4_lin

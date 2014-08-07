@@ -1,0 +1,24 @@
+#HO Count task 1
+execute run65.mod -model_dir_name
+#HO Count task 3a
+execute run66.mod -model_dir_name
+#HO Count task 3b
+execute run66sim.mod -model_dir_name
+#HO Count task 3c
+vpc run66vpc.mod -lst=run66.lst -samples=100 -dir=vpc66a -seed=123 -levels=0,1,2,3,4 -nopred -dv=HC
+#HO Count task 3d
+vpc run66vpc.mod -lst=run66.lst -samples=100 -dir=vpc66b -seed=123 -levels=0,1,2,3,4 -idv=DOSE -nopred -dv=HC
+#HO Count task 4a
+execute run67.mod -model_dir_name
+#HO Count task 4b
+execute run67sim.mod -model_dir_name
+#HO Count task 4c
+vpc run67vpc.mod -lst=run67.lst -samples=100 -dir=vpc67a -seed=123 -levels=0,1,2,3,4 -nopred -dv=HC
+#HO Count task 4d
+vpc run67vpc.mod -lst=run67.lst -samples=100 -dir=vpc67b -seed=123 -levels=0,1,2,3,4 -idv=DOSE -nopred -dv=HC
+#HO Count task 5
+execute run68.mod -model_dir_name
+#HO Count task extra credit a
+execute run69.mod -model_dir_name
+#HO Count task extra credit b
+execute run70.mod -model_dir_name

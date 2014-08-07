@@ -1,0 +1,22 @@
+#HO Simultaneous task 1 a
+execute run81.mod -model_dir_name
+#HO Simultaneous task 1 b
+execute run83.mod -model_dir_name
+#HO Simultaneous task 2 a
+execute run84.mod -model_dir_name
+#HO Simultaneous task 2 b
+execute run85.mod -model_dir_name
+#HO Simultaneous task 2 c
+execute run86.mod -model_dir_name
+#HO Simultaneous task 2 d
+execute run87.mod -model_dir_name
+#HO Simultaneous task 2 e
+execute run88.mod -model_dir_name
+#HO Simultaneous task 2 f
+execute run89.mod -model_dir_name
+#HO Simultaneous task 2 g
+execute run810.mod -model_dir_name
+#HO Simultaneous task 2 h
+execute run811.mod -model_dir_name
+#HO Simultaneous task 4
+vpc run811.mod -tte=RTTE -flip_comments -samples=30 -compress -clean=3 -stratify_on=FLG,DV1,TRET,HR,CONC,CE,AGE,SEX,WT,CRCL

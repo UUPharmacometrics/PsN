@@ -1,0 +1,6 @@
+#HO LASSO task i. Note: this run will not find any significant covariates
+lasso run1.mod -relations=CL:AGE-2,ACE-1,DIG-1,NYHA-1,SEX-1,,V:AGE-2,ACE-1,DIG-1,SEX-1,NYHA-1 -stratify_on=SEX -seed=1 -retries=0
+#HO LASSO task iii
+lasso run2.mod -relations=CL:AGE-3,ACE-1,DIG-1,NYHA-1,SEX-1,CRCL-2,,V:AGE-2,ACE-1,DIG-1,SEX-1,NYHA-1,WT-2 -stratify_on=SEX -seed=1 -retries=0
+#HO LASSO task v
+lasso run2.mod -relations=CL:CRCL-2,WT-3,,V:WT-2 -seed=1 -retries=0

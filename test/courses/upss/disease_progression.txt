@@ -1,0 +1,28 @@
+#HO Disease Progression task 1a 1
+execute run1.mod -dir=run1
+#HO Disease Progression task 1a 2
+sumo run1.lst
+#HO Disease Progression task 1b
+vpc run1.mod -samples=200 -dir=vpc1 -idv=TVIS -auto_bin=15 -stratify_on=STRT -seed=123
+#HO Disease Progression task 1c 1
+execute run2.mod -dir=run2
+#HO Disease Progression task 1c 2
+execute run3.mod -dir=run3
+#HO Disease Progression task 1c 3
+update_inits run4.mod run2.lst
+#HO Disease Progression task 1c 4
+execute run4.mod -dir=run4
+#HO Disease Progression task 2a
+execute run5.mod -dir=run5
+#HO Disease Progression task 2b
+execute run6.mod -dir=run6
+#HO Disease Progression task 2c
+execute run7.mod -dir=run7
+#HO Disease Progression task 2d
+execute run8.mod -dir=run8
+#HO Disease Progression task 3a
+execute run9.mod -dir=run9
+#HO Disease Progression task 3b
+execute run10.mod -dir=run10
+#HO Disease Progression task 3c
+vpc run9.mod -samples=200 -dir=vpc9 -idv=TVIS -auto_bin=15 -stratify_on=STRT -seed=123
