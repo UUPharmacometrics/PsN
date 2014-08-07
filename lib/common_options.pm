@@ -1,6 +1,5 @@
 package common_options;
 
-#use Carp;
 use FindBin qw($Bin);
 use lib "$Bin/../lib";
 use include_modules;
@@ -23,7 +22,7 @@ Getopt::Long::config("auto_abbrev");
 		  "condition_number_limit:f",
 		  "correlation_limit:f",
 		  "crash_restarts:i",
-				  "degree:f",
+			"degree:f",
 		  "directory:s",
 		  "display_iterations!",
 		  "email_address:s",
@@ -114,7 +113,7 @@ my @script_options = ( "debug:i",
 		       "html_help",
 		       "silent",
 		       "version",
-		       "warn_with_trace:i"
+		       "warn_with_trace!"
 		       );
 
 @get_opt_strings = (sort(@tool_options), sort(@model_options), sort(@script_options));
@@ -126,8 +125,8 @@ $parameters = options_to_parameters([@tool_options,'top_tool']);
 my $options_ref;
 
 
-
-sub options_to_parameters {
+sub options_to_parameters
+{
   #inparameter is ref to array of option names
   my $opts = shift;
   my @options = @{$opts};
@@ -142,8 +141,8 @@ sub options_to_parameters {
   return $parameter_string;
 }
 
-
-sub setup {
+sub setup
+{
   my $opts = shift;
   my $command = shift;
 
@@ -158,12 +157,14 @@ sub setup {
 
 }
 
-sub store_common_options {
+sub store_common_options
+{
   $options_ref = shift;
   #global variable options_ref was declared above
 }
 
-sub restore_options {
+sub restore_options
+{
   my @relevant_options = @_;
   my %options = %{$options_ref}; #store_common_options must have been called
   #in bin/<utility> (e.g. nonpb) for this to work
@@ -176,9 +177,8 @@ sub restore_options {
   return \%stored_opts; #return reference to stored_opts
 }
   
-
-
-sub set_globals {
+sub set_globals
+{
   my $opts = shift;
   my $command = shift;
   my %options = %{$opts};
@@ -195,10 +195,11 @@ sub set_globals {
   PsN::set_nonmem_info($version);
 
 	$PsN::warnings_enabled = $options{'debug'};
-	$Carp::Verbose = $options{'warn_with_trace'};
+	$ext::Carp::Verbose = $options{'warn_with_trace'};
 }
 
-sub get_defaults {
+sub get_defaults
+{
   my $options = shift;
   my $tool    = shift;
 
@@ -243,10 +244,10 @@ sub get_defaults {
   $options -> {'top_tool'} = 1;
 }
 
-sub sanity_checks {
+sub sanity_checks
+{
 	my $options = shift;
 	my $tool = shift;
-
 
 	if (defined $options->{'degree'}){
 		if ($options->{'degree'} <=0 or $options->{'degree'}>=1){
@@ -254,7 +255,6 @@ sub sanity_checks {
 			croak($mes);
 		}
 	}
-
 
 	unless ($options -> {'nmfe'} or $options -> {'nmqual'}){
 		#assume user wants nmfe if none set
@@ -458,7 +458,8 @@ sub sanity_checks {
 
 }
 
-sub print_help {
+sub print_help
+{
   my( $command, $required, $optional ) = @_;
   my %is_required;
   my %all_options = (%{$required},%{$optional});
@@ -510,7 +511,8 @@ sub print_help {
   return $option_help;
 }
 
-sub model_parameters {
+sub model_parameters
+{
   my $options = shift;
 
   if( defined $options -> {'extra_files'} ){
@@ -527,8 +529,8 @@ sub model_parameters {
 
 }
 
-
-sub online_help {
+sub online_help
+{
 
   my $command = shift;
   my $opts = shift;
@@ -935,7 +937,7 @@ EOF
 EOF
 
     $help_hash{-warn_with_trace} = <<'EOF';
-    <p class="style2">-warn_with_trace='integer'</p>
+    <p class="style2">-warn_with_trace</p>
     If <span class="style2">-warn_with_trace</span> is set, PsN will print a stack 
     trace for all warning and error messages.
     This is only for developers.
