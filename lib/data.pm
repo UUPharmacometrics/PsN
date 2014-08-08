@@ -435,8 +435,9 @@ sub add_frem_lines
 	return \@invariant_matrix ,\@timevar_matrix;
 }
 
-sub bootstrap_create_datasets{
-	#static method no shift
+sub bootstrap_create_datasets
+{
+	#static method no self
 	my %parm = validated_hash(\@_,
 							  input_filename => { isa => 'Str', optional => 0 },
 							  input_directory => { isa => 'Maybe[Str]', optional => 1 },
@@ -460,10 +461,10 @@ sub bootstrap_create_datasets{
 	my $missing_data_token = $parm{'missing_data_token'};
 	my $idcolumn = $parm{'idcolumn'};
 
-	unless (-d $output_directory){
+	unless (-d $output_directory) {
 		croak("output directory $output_directory is not a directory/does not exist");
 	}
-	my ($tmp1, $tmp2) = OSspecific::absolute_path($output_directory,'hej');
+	my ($tmp1, $tmp2) = OSspecific::absolute_path($output_directory, 'hej');
 	$output_directory = $tmp1; #to get with /
 
 	#data will be parsed here
@@ -474,7 +475,7 @@ sub bootstrap_create_datasets{
 						 idcolumn => $idcolumn);
 
 	my $count = $data->count_ind;
-	unless (scalar(keys %subjects)>0){
+	unless (scalar(keys %subjects) > 0) {
 		$subjects{'default'} = $count;
 	}
 
@@ -852,28 +853,34 @@ sub factors
 
 	# Check if $column(-index) is defined and valid, else try to find index
 	# using column_head
-	croak("No individuals stored from ".$self->full_name ) unless ( defined $self->individuals() );
-	my $first_id = $self->individuals()->[0];
+	croak("No individuals stored from " . $self->full_name) unless (defined $self->individuals);
+	my $first_id = $self->individuals->[0];
 
 	croak("No individuals defined in data object based on ".
-		      $self->full_name ) unless ( defined $first_id );
+		      $self->full_name) unless (defined $first_id);
 
-	my @data_row = split( /,/, $first_id->subject_data->[0] );
-	unless ( defined $column && defined( $data_row[$column-1] ) ) {
+	my @data_row = split(/,/, $first_id->subject_data->[0]);
+
+	if (defined $column and $column > scalar(@data_row)) {
+		croak("Error: The column number to get factors for ($column) is greater than the number of" .
+			"data columns in the data file (" . scalar(@data_row) . '). Please check your $INPUT and your data file');
+	}
+
+	unless (defined $column && defined($data_row[$column - 1])) {
 	  unless (defined($column_head) && defined($self->column_head_indices->{$column_head})) {
 	    croak("Error in data->factors: unknown column: \"$column_head\" ".
 			  "or invalid column number: \"$column\".\n".
-			  "Valid column numbers are 1 to ".scalar @data_row ."\n".
+			  "Valid column numbers are 1 to " . scalar @data_row . "\n".
 			  "Valid column headers are (in no particular order):\n".
-			  join(', ', keys(%{$self->column_head_indices})) );
+			  join(', ', keys(%{$self->column_head_indices})));
 	  } else {
 	    $column = $self->column_head_indices->{$column_head};
-	    carp("$column_head is in column number $column" );
+	    carp("$column_head is in column number $column");
 	  }
 	}
 
 	my $key = 0;
-	foreach my $individual ( @{$self->individuals()} ) {
+	foreach my $individual (@{$self->individuals}) {
 		#get a hash: key:data value value: array of order numbers in individual
 		my @ifactors = keys %{$individual->factors( column => $column )};
 		if ( scalar @ifactors > 1 and $unique_in_individual ) {
