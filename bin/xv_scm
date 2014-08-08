@@ -388,7 +388,7 @@ my $maxlev=0;
 
 chdir($main_directory);
 my $global_scm;
-my $temp_scm_dir='full_data_statictics';
+my $temp_scm_dir='full_data_statistics';
 
 $global_scm = tool::scm -> 
     new ( eval( $common_options::parameters ),
