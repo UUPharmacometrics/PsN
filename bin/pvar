@@ -40,7 +40,7 @@ my $res = GetOptions( \%options,
 
 exit unless $res;
 
-common_options::setup( \%options, 'pval' ); #calls set_globals etc, initiates random sequence
+common_options::setup( \%options, 'pvar' ); #calls set_globals etc, initiates random sequence
 
 my %help_text;
 
