@@ -1,0 +1,225 @@
+#!/usr/bin/perl
+
+# Only for Development
+use FindBin qw($Bin);
+use lib "$Bin/../lib";
+
+# Don't edit the line below, it must look exactly like this.
+# Everything above this line will be replaced #
+
+# Perl includes #
+use Config;
+use strict;
+use Getopt::Long;
+# External modules #
+use Math::Random;
+# PsN includes #
+use PsN;
+use ui;
+use common_options;
+use Cwd;
+use model;
+use linear_algebra;
+
+
+my $cmd_line = $0 . " " . join( " ", @ARGV );
+my %options;
+
+my %required_options = (
+	"pre:s" => undef,
+);
+
+my %optional_options = (
+	"cholesky!" => undef,
+	"nodec!" => undef,
+	"output:s" => undef,
+);
+
+my $res = GetOptions( \%options,
+					  @common_options::get_opt_strings,
+						keys(%required_options),
+					  keys(%optional_options) );
+
+exit unless $res;
+
+common_options::setup( \%options, 'precond' ); #calls set_globals etc, initiates random sequence
+
+my %help_text;
+
+$help_text{-pre} = <<'EOF';
+      A .csv-file containing the preconditioning matrix 
+EOF
+
+$help_text{-cholesky} = <<'EOF';
+      Use cholesky decomposition instead of LU
+EOF
+
+$help_text{-nodec} = <<'EOF';
+      Turn off decomposition of preconditioning matrix
+EOF
+
+$help_text{-output} = <<'EOF';
+      Set the name of the output model
+EOF
+
+common_options::online_help('precond', \%options, \%help_text, \%required_options, \%optional_options);
+
+my $model_filename = $ARGV[0];
+my $model_filename_no_suffix = $model_filename;
+$model_filename_no_suffix =~ s/(\.ctl|\.mod)$//;
+
+if (@ARGV < 1) {
+	die "A model file must be specified. See precond -h for help";
+}
+
+if (not defined $options{'pre'}) {
+	die "Option -pre is required";
+}
+
+if (not -e $model_filename) {
+	die "Model file $model_filename could not be found\n";
+}
+
+
+
+my $eval_string = common_options::model_parameters(\%options);
+
+my $model = model->new(
+	eval($eval_string),
+	filename => $model_filename,
+	ignore_missing_files => 1,
+	skip_data_parsing => 1,
+	ignore_missing_data => 1,
+);
+
+if (scalar(@{$model->problems}) != 1) {
+    die "Script can only handle modelfiles with exactly one problem.\n";
+}
+
+my @code;
+@code = @{$model->pk(problem_number => 1)};
+my $use_pred = 0;
+if (not scalar(@code) > 0) {
+	@code = @{$model->pred(problem_number => 1)};
+	$use_pred = 1;
+}
+if (not scalar(@code) > 0) {
+	croak("Neither PK nor PRED defined in " . $model->filename . "\n");
+}
+
+for (my $i = 0; $i < scalar(@code); $i++) {
+	for (my $j = 0; $j < $model->nthetas + 1; $j++) {
+		my $find = "THETA($j)";
+		my $replace = "THE_$j";
+		$find = quotemeta $find;
+		@code[$i] =~ s/$find/$replace/g;
+	}
+}
+
+my $file = $options{'pre'};
+my @precMatrix;
+open(my $fh, '<', $file) or die "Cannot find the preconditioning matrix '$file' [$!]\n";
+
+# Read either a nonmem .cov file or an ordinary csv file without header
+my $line = <$fh>;
+if ($line =~ /^TABLE NO./) {
+	<$fh>;
+	while (my $line = <$fh>) {
+		chomp $line;
+		my @fields = split(/\s+/, $line);
+		shift @fields;
+		shift @fields;
+		push @precMatrix, \@fields;
+	}
+} else {
+	seek $fh, 0, 0;
+	while (my $line = <$fh>) {
+		chomp $line;
+		my @fields = split(/,/, $line);
+		push @precMatrix, \@fields;
+	}
+}
+
+# Pad the preconditioning matrix if it is too small
+if (scalar(@precMatrix) < $model->nthetas) {
+	linear_algebra::pad_matrix(\@precMatrix, $model->nthetas);
+} elsif (scalar(@precMatrix) > $model->nthetas) {
+	linear_algebra::reduce_matrix(\@precMatrix, $model->nthetas);
+}
+
+my $tempString;
+my $tempTempSt;
+
+for (my $i = 0; $i < $model->nthetas; $i++) {
+	$tempString = 'THE_' . ($i + 1) . '=';
+	my @temp=@{$precMatrix[$i]};
+	for (my $j = 0; $j < scalar(@temp); $j++) {
+		if ($j == 0 or $precMatrix[$i][$j] < 0) {
+			if (length($tempString) + length($precMatrix[$i][$j] . '*THETA(' . ($j + 1) . ')') > 70) {
+				$tempString = $tempString . "\n";
+				$tempTempSt = $tempTempSt . $tempString;
+				$tempString = 'THE_'.($i + 1) . '=THE_' . ($i + 1) . $precMatrix[$i][$j] . '*THETA(' . ($j + 1) . ')';
+			} else {
+				$tempString = $tempString . $precMatrix[$i][$j] . '*THETA(' . ($j + 1) . ')';
+			}
+		} elsif ($precMatrix[$i][$j] > 0) {
+			if (length($tempString) + length($precMatrix[$i][$j] . '*THETA(' . ($j + 1) . ')') > 70) {
+				$tempString = $tempString . "\n";
+				$tempTempSt = $tempTempSt . $tempString;
+				$tempString = 'THE_' . ($i + 1) . '=THE_' . ($i + 1) . '+' . $precMatrix[$i][$j] . '*THETA(' . ($j + 1) . ')';
+			} else {
+				$tempString = $tempString . '+' . $precMatrix[$i][$j] . '*THETA(' . ($j + 1) . ')';
+			}
+		}
+	}
+	$tempString = $tempString . "\n";
+	$tempTempSt = $tempTempSt . $tempString;
+}
+
+unshift @code, $tempTempSt;
+
+
+
+if ($use_pred) {
+    $model->pred(problem_number => 1, new_pred => \@code);
+} else {
+    $model->pk(problem_number => 1, new_pk => \@code);
+}
+
+
+my @parameter_initial = @{$model->initial_values(parameter_type => 'theta')->[0]};
+
+if (not $options{'nodec'}) {
+	if (not $options{'cholesky'}) {
+		my $dummy = linear_algebra::LU_factorization(\@precMatrix);
+	} else {
+		my $error = linear_algebra::cholesky(\@precMatrix);
+		if ($error) {
+			die "Unable to perform cholesky decomposition";
+		}
+	}
+}
+
+for (my $i = 1; $i < scalar(@precMatrix); $i++) {
+	for (my $j = 0; $j < $i; $j++) {
+		$parameter_initial[$i] = $parameter_initial[$i] - $parameter_initial[$j] * $precMatrix[$i][$j];
+	}
+}
+
+for (my $i = $#precMatrix; $i >= 0; $i--) {
+	for (my $j = $#precMatrix; $j > $i; $j--) {
+		$parameter_initial[$i] = $parameter_initial[$i] - $parameter_initial[$j] * $precMatrix[$i][$j];
+	}
+	$parameter_initial[$i] = $parameter_initial[$i] / $precMatrix[$i][$i];
+}
+
+$model->initial_values(parameter_type => 'theta', new_values => [[@parameter_initial]]);
+
+my $output_filename;
+if ($options{'output'}) {
+	$output_filename = $options{'output'};
+} else {
+	$output_filename = $model_filename_no_suffix . '_repara.mod';
+}
+
+$model->_write(filename => $output_filename);

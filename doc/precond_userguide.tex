@@ -1,0 +1,52 @@
+\input{inputs/format_header.tex}
+\guidetitle{PRECOND user guide}
+
+\begin{document}
+
+\maketitle
+
+
+\section{Introduction}
+The precond script creates a reparametrized modelfile given a matrix to use for preconditioning.
+
+Examples
+\begin{verbatim}
+precond run1.mod -pre=pmatrix.csv
+precond run2.mod -pre=psn.cov -cholesky 
+\end{verbatim}
+
+\section{Input and options}
+
+\subsection{Required input}
+Required argument is a model file and a preconditioning matrix.
+
+\begin{optionlist}
+
+\optdefault{pre}{psn.cov}
+The name of the matrix used for preconditioning. It can be either a comma separated file without header or a NONMEM output covariance matrix.
+\nextopt
+\end{optionlist}
+
+\subsection{Optional input}
+
+\begin{optionlist}
+\optname{cholesky}
+Use cholesky decomposition of the preconditioning matrix instead of LU decomposition.
+\optname{nodec}
+Turn off decomposition of preconditioning matrix.
+\optdefault{output}{run1\_repara.mod}
+Set name of output model. Default is to add \_repara.mod
+\end{optionlist}
+
+\section{Output}
+
+The output is a reparametrized model file with the suffix \_repara.mod or with the specified filename given by -output option.
+
+
+\section{Description}
+
+
+
+
+
+\end{document}
