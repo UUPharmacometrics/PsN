@@ -131,6 +131,25 @@ if (scalar(@precMatrix) < $model->nthetas) {
 	linear_algebra::reduce_matrix(\@precMatrix, $model->nthetas);
 }
 
+linear_algebra::put_ones_on_diagonal_of_zero_lines(\@precMatrix);
+
+# Decompose (or not) the matrix
+if (not $options{'nodec'}) {
+	if (not $options{'cholesky'}) {
+		my $dummy = linear_algebra::LU_factorization(\@precMatrix);
+		for (my $row = 0; $row < @precMatrix; $row++) {		# Quick hack to get the L matrix
+			@precMatrix[$row]->[$row] = 1;
+			for (my $col = $row + 1; $col < @precMatrix; $col++) {
+				@precMatrix[$row]->[$col] = 0;
+			}
+		}
+	} else {
+		my $error = linear_algebra::cholesky(\@precMatrix);
+		if ($error) {
+			die "Unable to perform cholesky decomposition";
+		}
+	}
+}
 
 my $only_do_pre_step;
 if ($options{'output_model'}) {
@@ -142,7 +161,11 @@ if ($options{'cov'}) {
 }
 
 if ($only_do_pre_step) {
-	tool::precond::create_reparametrized_model(filename => $options{'output_model'}, model => $model, precond_matrix => \@precMatrix);
+	tool::precond::create_reparametrized_model(
+		filename => $options{'output_model'},
+		model => $model,
+		precond_matrix => \@precMatrix,
+	);
 
 } elsif ($only_do_post_step) {
 	tool::precond::convert_reparametrized_cov(
@@ -159,7 +182,8 @@ if ($only_do_pre_step) {
 	my $precond = tool::precond->new(eval($common_options::parameters),
 		precond_matrix => \@precMatrix,
 		models => [ $dummy_model ],
-		precond_model => $model);
+		precond_model => $model,
+	);
 
 	$precond->print_options (cmd_line => $cmd_line,
 		toolname => 'PRECOND',

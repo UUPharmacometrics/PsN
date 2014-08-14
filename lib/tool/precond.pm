@@ -14,6 +14,8 @@ extends 'tool';
 
 has 'precond_matrix' => (is => 'rw', isa => 'ArrayRef[ArrayRef]');
 has 'precond_model' => (is => 'rw', isa => 'model');
+has 'nodec' => (is => 'rw', isa => 'Bool', default => 0);
+has 'cholesky' => (is => 'rw', isa => 'Bool', default => 0);
 
 sub BUILD
 {
@@ -31,7 +33,11 @@ sub modelfit_setup
 	$model_filename .= '_repara.mod';
 	$model_filename = File::Spec->catfile(($self->directory, "m1"), $model_filename);
 
-	my $model = create_reparametrized_model(filename => $model_filename, model => $self->precond_model, precond_matrix => $self->precond_matrix);
+	my $model = create_reparametrized_model(
+		filename => $model_filename,
+		model => $self->precond_model,
+		precond_matrix => $self->precond_matrix,
+	);
 
 	my $modelfit = tool::modelfit->new(
 		%{common_options::restore_options(@common_options::tool_options)},

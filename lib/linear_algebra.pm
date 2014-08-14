@@ -34,6 +34,26 @@ sub reduce_matrix
 	splice @$A, $new_size, $cur_size - $new_size;
 }
 
+# Replace all lines containing only zeros in matrix with ones on the diagonal
+sub put_ones_on_diagonal_of_zero_lines
+{
+	my $A = shift;
+
+	for (my $row = 0; $row < @$A; $row++) {
+		my $all_zero = 1;
+		for (my $col = 0; $col < @{$A->[$row]}; $col++) {
+			if ($A->[$row]->[$col]) {
+				$all_zero = 0;
+				last;
+			}
+		}
+		if ($all_zero) {
+			$A->[$row]->[$row] = 1;
+		}
+	}
+}
+
+
 sub house { 
     my $xvec = shift;
     #add checking for 0 div here

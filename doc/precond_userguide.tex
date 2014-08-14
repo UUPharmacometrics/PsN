@@ -49,6 +49,12 @@ If none of -output\_model or -cov are used the model will be reparametrized, run
 backconverted and stored as result.cov.
 
 
+\section{Preconditioning matrix}
+
+The preconditioning matrix can be either a csv file or a NONMEM .cov file. It will be either truncated or padded to the number of thetas in the model.
+When padded all new rows will be all zero except for the diagonal element which will be set to one. If any rows in the preconditioning matrix is found
+to be all zeros a one will be placed as the diagonal element.
+
 \section{Description}
 
 
