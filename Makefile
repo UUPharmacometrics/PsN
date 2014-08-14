@@ -114,6 +114,7 @@ LIBFILES= ui.pm \
 	tool/nonpb.pm \
 	tool/scm/config_file.pm \
 	tool/scm.pm \
+	tool/precond.pm \
 	tool/pvar.pm \
 
 BINFILES=$(wildcard bin/*)

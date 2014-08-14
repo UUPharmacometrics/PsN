@@ -34,13 +34,19 @@ The name of the matrix used for preconditioning. It can be either a comma separa
 Use cholesky decomposition of the preconditioning matrix instead of LU decomposition.
 \optname{nodec}
 Turn off decomposition of preconditioning matrix.
-\optdefault{output}{run1\_repara.mod}
-Set name of output model. Default is to add \_repara.mod
+\optdefault{output\_model}{run1\_repara.mod}
+Set name of output model. Setting this option will only create the reparametrized model without running it.
+\optdefault{cov}{result.cov}
+Only perform a conversion of a reparametrized covariance matrix. If this option is set no model will be run.
 \end{optionlist}
 
 \section{Output}
 
-The output is a reparametrized model file with the suffix \_repara.mod or with the specified filename given by -output option.
+If the option -output\_model is set the script will create the reparametrized model file without running it.
+If the option -cov is set the script will convert back a reparametrized covariance matrix.
+
+If none of -output\_model or -cov are used the model will be reparametrized, run and the resulting covariance matrix will be
+backconverted and stored as result.cov.
 
 
 \section{Description}

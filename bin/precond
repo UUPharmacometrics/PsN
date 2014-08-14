@@ -20,7 +20,7 @@ use common_options;
 use Cwd;
 use model;
 use linear_algebra;
-
+use tool::precond;
 
 my $cmd_line = $0 . " " . join( " ", @ARGV );
 my %options;
@@ -32,7 +32,8 @@ my %required_options = (
 my %optional_options = (
 	"cholesky!" => undef,
 	"nodec!" => undef,
-	"output:s" => undef,
+	"output_model:s" => undef,
+	"cov:s" => undef,
 );
 
 my $res = GetOptions( \%options,
@@ -58,15 +59,18 @@ $help_text{-nodec} = <<'EOF';
       Turn off decomposition of preconditioning matrix
 EOF
 
-$help_text{-output} = <<'EOF';
-      Set the name of the output model
+$help_text{-output_model} = <<'EOF';
+      Set the name of the output model. If this option is set the model will be created but not run
+EOF
+
+$help_text{-cov} = <<'EOF';
+      Explicitly set the covariance matrix to use. If this option is used only the post processing step will be done.
 EOF
 
 common_options::online_help('precond', \%options, \%help_text, \%required_options, \%optional_options);
 
 my $model_filename = $ARGV[0];
-my $model_filename_no_suffix = $model_filename;
-$model_filename_no_suffix =~ s/(\.ctl|\.mod)$//;
+
 
 if (@ARGV < 1) {
 	die "A model file must be specified. See precond -h for help";
@@ -93,27 +97,7 @@ my $model = model->new(
 );
 
 if (scalar(@{$model->problems}) != 1) {
-    die "Script can only handle modelfiles with exactly one problem.\n";
-}
-
-my @code;
-@code = @{$model->pk(problem_number => 1)};
-my $use_pred = 0;
-if (not scalar(@code) > 0) {
-	@code = @{$model->pred(problem_number => 1)};
-	$use_pred = 1;
-}
-if (not scalar(@code) > 0) {
-	croak("Neither PK nor PRED defined in " . $model->filename . "\n");
-}
-
-for (my $i = 0; $i < scalar(@code); $i++) {
-	for (my $j = 0; $j < $model->nthetas + 1; $j++) {
-		my $find = "THETA($j)";
-		my $replace = "THE_$j";
-		$find = quotemeta $find;
-		@code[$i] =~ s/$find/$replace/g;
-	}
+	die("Precond can only handle modelfiles with exactly one problem");
 }
 
 my $file = $options{'pre'};
@@ -147,79 +131,42 @@ if (scalar(@precMatrix) < $model->nthetas) {
 	linear_algebra::reduce_matrix(\@precMatrix, $model->nthetas);
 }
 
-my $tempString;
-my $tempTempSt;
 
-for (my $i = 0; $i < $model->nthetas; $i++) {
-	$tempString = 'THE_' . ($i + 1) . '=';
-	my @temp=@{$precMatrix[$i]};
-	for (my $j = 0; $j < scalar(@temp); $j++) {
-		if ($j == 0 or $precMatrix[$i][$j] < 0) {
-			if (length($tempString) + length($precMatrix[$i][$j] . '*THETA(' . ($j + 1) . ')') > 70) {
-				$tempString = $tempString . "\n";
-				$tempTempSt = $tempTempSt . $tempString;
-				$tempString = 'THE_'.($i + 1) . '=THE_' . ($i + 1) . $precMatrix[$i][$j] . '*THETA(' . ($j + 1) . ')';
-			} else {
-				$tempString = $tempString . $precMatrix[$i][$j] . '*THETA(' . ($j + 1) . ')';
-			}
-		} elsif ($precMatrix[$i][$j] > 0) {
-			if (length($tempString) + length($precMatrix[$i][$j] . '*THETA(' . ($j + 1) . ')') > 70) {
-				$tempString = $tempString . "\n";
-				$tempTempSt = $tempTempSt . $tempString;
-				$tempString = 'THE_' . ($i + 1) . '=THE_' . ($i + 1) . '+' . $precMatrix[$i][$j] . '*THETA(' . ($j + 1) . ')';
-			} else {
-				$tempString = $tempString . '+' . $precMatrix[$i][$j] . '*THETA(' . ($j + 1) . ')';
-			}
-		}
-	}
-	$tempString = $tempString . "\n";
-	$tempTempSt = $tempTempSt . $tempString;
+my $only_do_pre_step;
+if ($options{'output_model'}) {
+	$only_do_pre_step = 1;
+}
+my $only_do_post_step;
+if ($options{'cov'}) {
+	$only_do_post_step = 1;
 }
 
-unshift @code, $tempTempSt;
+if ($only_do_pre_step) {
+	tool::precond::create_reparametrized_model(filename => $options{'output_model'}, model => $model, precond_matrix => \@precMatrix);
 
+} elsif ($only_do_post_step) {
+	tool::precond::convert_reparametrized_cov(
+		cov_filename => $options{'cov'},
+		model => $model,
+		precond_matrix => \@precMatrix,
+		output_filename => 'output.cov',
+	);
 
-
-if ($use_pred) {
-    $model->pred(problem_number => 1, new_pred => \@code);
 } else {
-    $model->pk(problem_number => 1, new_pk => \@code);
+
+	my $dummy_model = model->create_dummy_model;
+
+	my $precond = tool::precond->new(eval($common_options::parameters),
+		precond_matrix => \@precMatrix,
+		models => [ $dummy_model ],
+		precond_model => $model);
+
+	$precond->print_options (cmd_line => $cmd_line,
+		toolname => 'PRECOND',
+		local_options => [keys %optional_options],
+		common_options => \@common_options::tool_options);
+
+	$precond->run;
+
+	print "\nprecond done\n";
 }
-
-
-my @parameter_initial = @{$model->initial_values(parameter_type => 'theta')->[0]};
-
-if (not $options{'nodec'}) {
-	if (not $options{'cholesky'}) {
-		my $dummy = linear_algebra::LU_factorization(\@precMatrix);
-	} else {
-		my $error = linear_algebra::cholesky(\@precMatrix);
-		if ($error) {
-			die "Unable to perform cholesky decomposition";
-		}
-	}
-}
-
-for (my $i = 1; $i < scalar(@precMatrix); $i++) {
-	for (my $j = 0; $j < $i; $j++) {
-		$parameter_initial[$i] = $parameter_initial[$i] - $parameter_initial[$j] * $precMatrix[$i][$j];
-	}
-}
-
-for (my $i = $#precMatrix; $i >= 0; $i--) {
-	for (my $j = $#precMatrix; $j > $i; $j--) {
-		$parameter_initial[$i] = $parameter_initial[$i] - $parameter_initial[$j] * $precMatrix[$i][$j];
-	}
-	$parameter_initial[$i] = $parameter_initial[$i] / $precMatrix[$i][$i];
-}
-
-$model->initial_values(parameter_type => 'theta', new_values => [[@parameter_initial]]);
-
-my $output_filename;
-if ($options{'output'}) {
-	$output_filename = $options{'output'};
-} else {
-	$output_filename = $model_filename_no_suffix . '_repara.mod';
-}
-
-$model->_write(filename => $output_filename);
