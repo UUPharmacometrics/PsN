@@ -7,7 +7,7 @@ use lib 'lib';
 use ext::Config::Tiny;
 use ext::File::HomeDir;
 
-my $version = '4.3.0';
+my $version = '4.3.1';
 
 my $default_user_name;
 my $default_sitelib;
@@ -96,7 +96,8 @@ my @utilities = (
 	'data_stats', 'se_of_eta', 'update_inits', 'update', 'npc', 'vpc',
 	'pind','nonpb','extended_grid','psn','psn_options','psn_clean',
 	'runrecord','mcmp','lasso','mimp','xv_scm','parallel_retries',
-	'boot_scm','gls','ebe_npde','frem','randtest','linearize', 'crossval', 'pvar', 'nca', 'vpctable','sir','rawresults'
+	'boot_scm','gls','ebe_npde','frem','randtest','linearize', 'crossval', 'pvar', 'nca', 'vpctable','sir','rawresults',
+	'precond',
 	);
 
 my @win_modules = ('Moose', 'MooseX::Params::Validate', 'Math::Random');

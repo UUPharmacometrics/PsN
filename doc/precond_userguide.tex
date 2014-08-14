@@ -1,0 +1,58 @@
+\input{inputs/format_header.tex}
+\guidetitle{PRECOND user guide}
+
+\begin{document}
+
+\maketitle
+
+
+\section{Introduction}
+The precond script creates a reparametrized modelfile given a matrix to use for preconditioning.
+
+Examples
+\begin{verbatim}
+precond run1.mod -pre=pmatrix.csv
+precond run2.mod -pre=psn.cov -cholesky 
+\end{verbatim}
+
+\section{Input and options}
+
+\subsection{Required input}
+Required argument is a model file and a preconditioning matrix.
+
+\begin{optionlist}
+
+\optdefault{pre}{psn.cov}
+The name of the matrix used for preconditioning. It can be either a comma separated file without header or a NONMEM output covariance matrix.
+\nextopt
+\end{optionlist}
+
+\subsection{Optional input}
+
+\begin{optionlist}
+\optname{cholesky}
+Use cholesky decomposition of the preconditioning matrix instead of LU decomposition.
+\optname{nodec}
+Turn off decomposition of preconditioning matrix.
+\optdefault{output\_model}{run1\_repara.mod}
+Set name of output model. Setting this option will only create the reparametrized model without running it.
+\optdefault{cov}{result.cov}
+Only perform a conversion of a reparametrized covariance matrix. If this option is set no model will be run.
+\end{optionlist}
+
+\section{Output}
+
+If the option -output\_model is set the script will create the reparametrized model file without running it.
+If the option -cov is set the script will convert back a reparametrized covariance matrix.
+
+If none of -output\_model or -cov are used the model will be reparametrized, run and the resulting covariance matrix will be
+backconverted and stored as result.cov.
+
+
+\section{Description}
+
+
+
+
+
+\end{document}

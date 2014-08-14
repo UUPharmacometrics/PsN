@@ -4,6 +4,35 @@ use FindBin qw($Bin);
 use lib "$Bin/../lib";
 use strict;
 
+# Augment a square matrix with unit matrix to new_size
+sub pad_matrix
+{
+	my $A = shift;
+	my $new_size = shift;
+	my $cur_size = scalar(@$A);
+
+	for (my $row = 0; $row < $cur_size; $row++) {
+		push @{$A->[$row]}, (0) x ($new_size - $cur_size);
+	}
+	for (my $i = scalar(@$A); $i < $new_size; $i++) {
+		my @add = (0) x $new_size;
+		$add[$i] = 1;
+		push @$A, \@add;
+	}
+}
+
+# Reduce a square matrix to new size
+sub reduce_matrix
+{
+	my $A = shift;
+	my $new_size = shift;
+	my $cur_size = scalar(@$A);
+	
+	for (my $row = 0; $row < $new_size; $row++) {
+		splice @{$A->[$row]}, $new_size, $cur_size - $new_size;
+	}
+	splice @$A, $new_size, $cur_size - $new_size;
+}
 
 sub house { 
     my $xvec = shift;
@@ -37,9 +66,6 @@ sub house {
     $answer{'vvec'}=\@vvec;
     return \%answer;
 } 
-
-
-
 
 sub QR_factorize { 
     
@@ -151,6 +177,36 @@ sub cholesky {
     return 0;
 }
 
+sub LU_factorization
+{
+	my $A_matrix = shift;
+	my @A_temp = @{$A_matrix};
+	
+	#in *row format*, A->[row][col]
+	#this matrix is overwritten with L(without the identity diagonal elements) and U
+	#Golub p92 Algorithm 3.2.2
+
+	my $i = 0;
+	while($A_temp[$i][$i] != 0 && $i < $#A_temp + 1) {
+		for(my $j = 0; $j < $#A_temp + 1; $j++) {
+			for(my $k = 0; $k < $#A_temp + 1; $k++) {
+			}
+		}
+		
+		for (my $j = $i + 1; $j < $#A_temp + 1; $j++) {
+			my $tau = $A_temp[$j][$i] / $A_temp[$i][$i];
+			for (my $k = $j - 1; $k < $#A_temp + 1; $k++) {
+				$A_temp[$j][$k] = $A_temp[$j][$k] - $tau * $A_temp[$i][$k];
+			}
+			$A_temp[$j][$i] = $tau;
+		}
+		$i++;
+	}
+	if ($i != ($#A_temp)) {
+		die "LU factorization failed. \n";
+	}
+	return 0;
+}
 
 sub lower_triangular_identity_solve{
     #input is lower triangular matrix
@@ -583,6 +639,7 @@ sub row_cov_median{
 	
     return 0;
 }
+
 sub get_identity_matrix{
 	my $dimension = shift;
 
@@ -634,6 +691,7 @@ sub invert_symmetric{
     return 0;
 
 }
+
 sub lower_triangular_UTU_multiply{
     #input is lower triangular matrix
     #in *column format*, R->[col][row]
@@ -670,7 +728,6 @@ sub lower_triangular_UTU_multiply{
     }
     return 0;
 }
-
 
 sub frem_conditional_omega_block{
     #input is lower triangle, including diagonal, of symmetric positive definite matrix 

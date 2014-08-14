@@ -1,0 +1,172 @@
+#!/usr/bin/perl
+
+# Only for Development
+use FindBin qw($Bin);
+use lib "$Bin/../lib";
+
+# Don't edit the line below, it must look exactly like this.
+# Everything above this line will be replaced #
+
+# Perl includes #
+use Config;
+use strict;
+use Getopt::Long;
+# External modules #
+use Math::Random;
+# PsN includes #
+use PsN;
+use ui;
+use common_options;
+use Cwd;
+use model;
+use linear_algebra;
+use tool::precond;
+
+my $cmd_line = $0 . " " . join( " ", @ARGV );
+my %options;
+
+my %required_options = (
+	"pre:s" => undef,
+);
+
+my %optional_options = (
+	"cholesky!" => undef,
+	"nodec!" => undef,
+	"output_model:s" => undef,
+	"cov:s" => undef,
+);
+
+my $res = GetOptions( \%options,
+					  @common_options::get_opt_strings,
+						keys(%required_options),
+					  keys(%optional_options) );
+
+exit unless $res;
+
+common_options::setup( \%options, 'precond' ); #calls set_globals etc, initiates random sequence
+
+my %help_text;
+
+$help_text{-pre} = <<'EOF';
+      A .csv-file containing the preconditioning matrix 
+EOF
+
+$help_text{-cholesky} = <<'EOF';
+      Use cholesky decomposition instead of LU
+EOF
+
+$help_text{-nodec} = <<'EOF';
+      Turn off decomposition of preconditioning matrix
+EOF
+
+$help_text{-output_model} = <<'EOF';
+      Set the name of the output model. If this option is set the model will be created but not run
+EOF
+
+$help_text{-cov} = <<'EOF';
+      Explicitly set the covariance matrix to use. If this option is used only the post processing step will be done.
+EOF
+
+common_options::online_help('precond', \%options, \%help_text, \%required_options, \%optional_options);
+
+my $model_filename = $ARGV[0];
+
+
+if (@ARGV < 1) {
+	die "A model file must be specified. See precond -h for help";
+}
+
+if (not defined $options{'pre'}) {
+	die "Option -pre is required";
+}
+
+if (not -e $model_filename) {
+	die "Model file $model_filename could not be found\n";
+}
+
+
+
+my $eval_string = common_options::model_parameters(\%options);
+
+my $model = model->new(
+	eval($eval_string),
+	filename => $model_filename,
+	ignore_missing_files => 1,
+	skip_data_parsing => 1,
+	ignore_missing_data => 1,
+);
+
+if (scalar(@{$model->problems}) != 1) {
+	die("Precond can only handle modelfiles with exactly one problem");
+}
+
+my $file = $options{'pre'};
+my @precMatrix;
+open(my $fh, '<', $file) or die "Cannot find the preconditioning matrix '$file' [$!]\n";
+
+# Read either a nonmem .cov file or an ordinary csv file without header
+my $line = <$fh>;
+if ($line =~ /^TABLE NO./) {
+	<$fh>;
+	while (my $line = <$fh>) {
+		chomp $line;
+		my @fields = split(/\s+/, $line);
+		shift @fields;
+		shift @fields;
+		push @precMatrix, \@fields;
+	}
+} else {
+	seek $fh, 0, 0;
+	while (my $line = <$fh>) {
+		chomp $line;
+		my @fields = split(/,/, $line);
+		push @precMatrix, \@fields;
+	}
+}
+
+# Pad the preconditioning matrix if it is too small
+if (scalar(@precMatrix) < $model->nthetas) {
+	linear_algebra::pad_matrix(\@precMatrix, $model->nthetas);
+} elsif (scalar(@precMatrix) > $model->nthetas) {
+	linear_algebra::reduce_matrix(\@precMatrix, $model->nthetas);
+}
+
+
+my $only_do_pre_step;
+if ($options{'output_model'}) {
+	$only_do_pre_step = 1;
+}
+my $only_do_post_step;
+if ($options{'cov'}) {
+	$only_do_post_step = 1;
+}
+
+if ($only_do_pre_step) {
+	tool::precond::create_reparametrized_model(filename => $options{'output_model'}, model => $model, precond_matrix => \@precMatrix);
+
+} elsif ($only_do_post_step) {
+	tool::precond::convert_reparametrized_cov(
+		cov_filename => $options{'cov'},
+		model => $model,
+		precond_matrix => \@precMatrix,
+		output_filename => 'output.cov',
+	);
+
+} else {
+
+	my $dummy_model = model->create_dummy_model;
+
+	my $precond = tool::precond->new(eval($common_options::parameters),
+		precond_matrix => \@precMatrix,
+		models => [ $dummy_model ],
+		precond_model => $model);
+
+	$precond->print_options (cmd_line => $cmd_line,
+		toolname => 'PRECOND',
+		local_options => [keys %optional_options],
+		common_options => \@common_options::tool_options);
+
+	$precond->run;
+
+	print "\nprecond done\n";
+}
