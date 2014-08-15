@@ -67,6 +67,23 @@ sub modelfit_analyze
 	);
 }
 
+sub _reparametrize
+{
+	my $code = shift;
+	my $nthetas = shift;
+
+	for (my $i = 0; $i < scalar(@$code); $i++) {
+		for (my $j = 0; $j < $nthetas + 1; $j++) {
+			my $find = "THETA($j)";
+			my $replace = "THE_$j";
+			$find = quotemeta $find;
+			$code->[$i] =~ s/$find/$replace/g;
+		}
+	}
+}
+
+
+
 sub create_reparametrized_model
 {	
 	my %parm = validated_hash(\@_,
@@ -99,14 +116,7 @@ sub create_reparametrized_model
 		croak("Neither PK nor PRED defined in " . $model->filename . "\n");
 	}
 
-	for (my $i = 0; $i < scalar(@code); $i++) {
-		for (my $j = 0; $j < $model->nthetas + 1; $j++) {
-			my $find = "THETA($j)";
-			my $replace = "THE_$j";
-			$find = quotemeta $find;
-			@code[$i] =~ s/$find/$replace/g;
-		}
-	}
+	_reparametrize(\@code, $model->nthetas);
 
 	my $tempString;
 	my $tempTempSt;
@@ -144,6 +154,11 @@ sub create_reparametrized_model
 	} else {
 		$model->pk(problem_number => 1, new_pk => \@code);
 	}
+
+	# Reparametrize other blocks of abbreviated code
+	my $code = $model->error(problem_number => 1);
+	_reparametrize($code, $model->nthetas);
+	$model->error(problem_number => 1, new_error => $code);
 
 
 	# Set new initial values for thetas
