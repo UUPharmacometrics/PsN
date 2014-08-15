@@ -55,6 +55,10 @@ sub modelfit_analyze
 
 	my $cov_filename = $self->tools->[0]->directory . 'NM_run1/psn.cov';
 
+	if (not -e $cov_filename) {
+		croak("Unable to find covariance matrix file. NONMEM run probably failed.");
+	}
+
 	convert_reparametrized_cov(
 		cov_filename => $cov_filename,
 		model => $self->precond_model,
