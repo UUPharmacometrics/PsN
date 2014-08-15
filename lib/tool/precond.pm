@@ -14,8 +14,6 @@ extends 'tool';
 
 has 'precond_matrix' => (is => 'rw', isa => 'ArrayRef[ArrayRef]');
 has 'precond_model' => (is => 'rw', isa => 'model');
-has 'nodec' => (is => 'rw', isa => 'Bool', default => 0);
-has 'cholesky' => (is => 'rw', isa => 'Bool', default => 0);
 
 sub BUILD
 {
@@ -71,14 +69,10 @@ sub create_reparametrized_model
 		filename => { isa => 'Str', optional => 0 },
 		model => { isa => 'model' },
 	  precond_matrix => { isa => 'ArrayRef[ArrayRef]' },
-		nodec => { isa => 'Bool', default => 0 },
-		cholesky => { isa => 'Bool', default => 0 },
 	);
 	my $filename = $parm{'filename'};
 	my $model = $parm{'model'};
 	my @precond_matrix = @{$parm{'precond_matrix'}};
-	my $nodec = $parm{'nodec'};
-	my $cholesky = $parm{'cholesky'};
 
 	my @precMatrix = @{$parm{'precond_matrix'}};		# FIXME 
 
@@ -147,18 +141,11 @@ sub create_reparametrized_model
 		$model->pk(problem_number => 1, new_pk => \@code);
 	}
 
+
+	# Set new initial values for thetas
 	my @parameter_initial = @{$model->initial_values(parameter_type => 'theta')->[0]};
 
-	if (not $nodec) {
-		if (not $cholesky) {
-			my $dummy = linear_algebra::LU_factorization(\@precMatrix);
-		} else {
-			my $error = linear_algebra::cholesky(\@precMatrix);
-			if ($error) {
-				die "Unable to perform cholesky decomposition";
-			}
-		}
-	}
+	my $dummy = linear_algebra::LU_factorization(\@precMatrix);
 
 	for (my $i = 1; $i < scalar(@precMatrix); $i++) {
 		for (my $j = 0; $j < $i; $j++) {
@@ -174,6 +161,15 @@ sub create_reparametrized_model
 	}
 
 	$model->initial_values(parameter_type => 'theta', new_values => [[@parameter_initial]]);
+
+
+	# Remove limits for thetas
+	foreach my $theta (@{$model->problems->[0]->thetas}) {
+		foreach my $option (@{$theta->options}) {
+			$option->clear_upbnd;
+			$option->clear_lobnd
+		}
+	}
 
 	$model->_write;
 

@@ -5,8 +5,8 @@ use MooseX::Params::Validate;
 
 extends 'model::problem::record::init_option';
 
-has 'upbnd' => ( is => 'rw', isa => 'Maybe[Str]' );
-has 'lobnd' => ( is => 'rw', isa => 'Maybe[Str]', default => '-1000000' );
+has 'upbnd' => ( is => 'rw', isa => 'Maybe[Str]', clearer => 'clear_upbnd' );
+has 'lobnd' => ( is => 'rw', isa => 'Maybe[Str]', default => '-1000000', clearer => 'clear_lobnd' );
 
 
 sub get_range
