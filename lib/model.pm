@@ -424,7 +424,6 @@ sub create_maxeval_zero_models_array
 
 }
 
-
 sub shrinkage_modules
 {
 	my $self = shift;
@@ -498,7 +497,6 @@ sub _outputfile_set
 	}
 }
 
-
 sub add_iofv_module
 {
 	my ($self, %parm) = validated_hash(@_, 
@@ -525,7 +523,6 @@ sub add_output
 	$self->outputs([]) unless defined $self->outputs;
 	push( @{$self->outputs}, output->new( %{$parm{'init_data'}} ) );
 }
-
 
 sub add_problem
 {
@@ -778,7 +775,6 @@ sub set_file
 	}
 }
 
-
 sub covariance
 {
 	my $self = shift;
@@ -833,43 +829,6 @@ sub eigen
 	$self->problems->[0]->eigen;
 
 	return \@indicators;
-}
-
-sub error
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		 new_error => { isa => 'ArrayRef[Str]', optional => 1 },
-		 problem_number => { isa => 'Num', default => 1, optional => 1 }
-	);
-	my @new_error = defined $parm{'new_error'} ? @{$parm{'new_error'}} : ();
-	my $problem_number = $parm{'problem_number'};
-	my @error;
-
-	# sets or gets the error code for a given problem in the
-	# model object. The new_pk argument should be an array where
-	# each element contains a row of a valid NONMEM $PK block,
-
-	my @prob = @{$self -> problems};
-	
-	unless( defined $prob[$problem_number - 1] ){
-	  croak("Problem number $problem_number does not exist" );
-	}
-	
-	my $errors = $prob[$problem_number - 1] -> errors;
-	if( scalar @new_error > 0 ) {
-	  if( defined $errors and scalar @{$errors} > 0 ){
-	    $prob[$problem_number - 1] -> errors -> [0] -> code(\@new_error);
-	  } else {
-	    croak("No \$ERROR record" );
-	  }
-	} else {
-	  if ( defined $errors and scalar @{$errors} > 0 ) {
-	    @error = @{$prob[$problem_number - 1] -> errors -> [0] -> code};
-	  }
-	}
-
-	return \@error;
 }
 
 sub fixed
@@ -2425,6 +2384,7 @@ sub nthetas
 	return $nthetas;
 }
 
+#FIXME: replace pk, pred and error with set_code and get_code
 sub pk
 {
 	my $self = shift;
@@ -2496,6 +2456,100 @@ sub pred
 	}
 
 	return \@pred;
+}
+
+sub error
+{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+		 new_error => { isa => 'ArrayRef[Str]', optional => 1 },
+		 problem_number => { isa => 'Num', default => 1, optional => 1 }
+	);
+	my @new_error = defined $parm{'new_error'} ? @{$parm{'new_error'}} : ();
+	my $problem_number = $parm{'problem_number'};
+	my @error;
+
+	# sets or gets the error code for a given problem in the
+	# model object. The new_pk argument should be an array where
+	# each element contains a row of a valid NONMEM $PK block,
+
+	my @prob = @{$self -> problems};
+	
+	unless( defined $prob[$problem_number - 1] ){
+	  croak("Problem number $problem_number does not exist" );
+	}
+	
+	my $errors = $prob[$problem_number - 1] -> errors;
+	if( scalar @new_error > 0 ) {
+	  if( defined $errors and scalar @{$errors} > 0 ){
+	    $prob[$problem_number - 1] -> errors -> [0] -> code(\@new_error);
+	  } else {
+	    croak("No \$ERROR record" );
+	  }
+	} else {
+	  if ( defined $errors and scalar @{$errors} > 0 ) {
+	    @error = @{$prob[$problem_number - 1] -> errors -> [0] -> code};
+	  }
+	}
+
+	return \@error;
+}
+
+sub set_code
+{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+		 record => { isa => 'Str' },
+		 code => { isa => 'ArrayRef[Str]' },
+		 problem_number => { isa => 'Num', default => 1 }
+	);
+	my $record = $parm{'record'};
+	my $code = $parm{'code'};
+	my $problem_number = $parm{'problem_number'};
+
+	# Sets the code for a given problem
+	
+	my @prob = @{$self->problems};
+	
+	if (not defined $prob[$problem_number - 1]) {
+	  croak("problem number $problem_number does not exist" );
+	}
+
+	my $precord = $record . 's';
+	my $record_array = $prob[$problem_number - 1]->$precord;
+	if (defined $record_array and scalar @{$record_array} > 0) {
+		$record_array->[0]->code($code);
+	} else {
+		$record = uc($record);
+		croak("The \$$record record does not exist");
+	}
+}
+
+sub get_code
+{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+		 record => { isa => 'Str' },
+		 problem_number => { isa => 'Num', default => 1, optional => 1 }
+	);
+	my $record = $parm{'record'};
+	my $problem_number = $parm{'problem_number'};
+
+	# Gets the code for a given problem
+	my @prob = @{$self->problems};
+	
+	if (not defined $prob[$problem_number - 1]) {
+	  croak("problem number $problem_number does not exist");
+	}
+
+	my @code;
+	my $precord = $record . 's';
+	my $record_array = $prob[$problem_number - 1]->$precord;
+	if (defined $record_array and scalar @{$record_array} > 0) {
+		@code = @{$record_array->[0]->code};
+	}
+
+	return \@code;
 }
 
 sub print
@@ -2757,7 +2811,6 @@ sub store_inits
 	}
 }
 
-
 sub msfi_names
 {
 	my $self = shift;
@@ -2997,7 +3050,6 @@ sub units
 
 	return \@units;
 }
-
 
 sub update_inits
 {
@@ -3783,9 +3835,6 @@ sub output_files
 	return \@file_names;
 }
 
-
-
-
 sub remove_inits
 {
 	my $self = shift;
@@ -3906,7 +3955,6 @@ sub remove_inits
 	croak("No init of type $type defined" );
       }
 }
-
 
 sub remove_records
 {
@@ -4089,7 +4137,6 @@ sub randomize_inits
 	  $prob -> set_random_inits ( degree => $degree );
 	}
 }
-
 
 sub remove_option
 {
@@ -4456,7 +4503,6 @@ sub iwres_shrinkage
 
 	return \@iwres_shrinkage;
 }
-
 
 sub update_prior_information
 {

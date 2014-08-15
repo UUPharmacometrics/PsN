@@ -55,10 +55,6 @@ sub modelfit_analyze
 
 	my $cov_filename = $self->tools->[0]->directory . 'NM_run1/psn.cov';
 
-	if (not -e $cov_filename) {
-		croak("Unable to find covariance matrix file. NONMEM run probably failed.");
-	}
-
 	convert_reparametrized_cov(
 		cov_filename => $cov_filename,
 		model => $self->precond_model,
@@ -82,8 +78,6 @@ sub _reparametrize
 	}
 }
 
-
-
 sub create_reparametrized_model
 {	
 	my %parm = validated_hash(\@_,
@@ -106,10 +100,10 @@ sub create_reparametrized_model
 	);
 
 	my @code;
-	@code = @{$model->pk(problem_number => 1)};
+	@code = @{$model->get_code(record => 'pk')};
 	my $use_pred = 0;
 	if (not scalar(@code) > 0) {
-		@code = @{$model->pred(problem_number => 1)};
+		@code = @{$model->get_code(record => 'pred')};
 		$use_pred = 1;
 	}
 	if (not scalar(@code) > 0) {
@@ -150,15 +144,22 @@ sub create_reparametrized_model
 	unshift @code, $tempTempSt;
 
 	if ($use_pred) {
-		$model->pred(problem_number => 1, new_pred => \@code);
+		$model->set_code(record => 'pred', code => \@code);
 	} else {
-		$model->pk(problem_number => 1, new_pk => \@code);
+		$model->set_code(record => 'pk', code => \@code);
 	}
 
 	# Reparametrize other blocks of abbreviated code
-	my $code = $model->error(problem_number => 1);
-	_reparametrize($code, $model->nthetas);
-	$model->error(problem_number => 1, new_error => $code);
+	for my $record (('error', 'des', 'aes', 'aesinitial', 'mix', 'infn')) {
+		my $code = $model->get_code(record => $record);
+		if (scalar(@$code) > 0) {  
+			_reparametrize($code, $model->nthetas);
+			$model->set_code(record => $record, code => $code);
+		}
+	}
+	#my $code = $model->error(problem_number => 1);
+	#_reparametrize($code, $model->nthetas);
+	#$model->error(problem_number => 1, new_error => $code);
 
 
 	# Set new initial values for thetas
