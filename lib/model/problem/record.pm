@@ -7,7 +7,7 @@ use MooseX::Params::Validate;
 use model::problem::record::option;
 
 has 'options' => ( is => 'rw', isa => 'ArrayRef[model::problem::record::option]', default => sub { [] } );
-has 'record_arr' => ( is => 'rw', isa => 'Maybe[ArrayRef]' );
+has 'record_arr' => ( is => 'rw', isa => 'Maybe[ArrayRef]', clearer => 'clear_record_arr' );
 has 'comment' => ( is => 'rw', isa => 'ArrayRef' );
 has 'print_order' => ( is => 'rw', isa => 'ArrayRef[Int]' );
 
@@ -19,7 +19,7 @@ sub BUILD
   # strings containg the record block. _read_option then parses
   # those strings.
   $self->_read_options;
-  $self->record_arr(undef);
+  $self->clear_record_arr;
 }
 
 sub add_option

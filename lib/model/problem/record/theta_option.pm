@@ -82,14 +82,6 @@ sub _format_option
 	return $formatted;
 }
 
-sub option_count
-{
-	my $self = shift;
-	my $return_value = 0;
-
-	return $return_value;
-}
-
 sub _read_option
 {
 	my $self = shift;
