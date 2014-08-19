@@ -10,6 +10,7 @@ use File::Copy 'cp';
 use status_bar;
 use Moose;
 use MooseX::Params::Validate;
+use Scalar::Util qw(looks_like_number);
 
 extends 'tool';
 
@@ -6081,7 +6082,26 @@ sub preprocess_data
 					' NOAPPEND NOPRINT ONEHEADER FILE='.$par.$timevarfile]);
 		}
 
-	}else{
+		my $code_record;
+		if ($have_advan) {
+			$code_record = 'error';
+		} else {
+			$code_record = 'pred';
+		}
+
+		if ($filtered_data_model->has_code(record => $code_record)) {
+			my $found_W = 0;
+			for my $row (@{$filtered_data_model->get_code(record => $code_record)}) {
+				if ($row =~ /^\s*W\s*=/) {
+					$found_W = 1;
+				}
+			}
+			if (not $found_W) {
+				croak("Could not find assignment to W in \$" . uc($code_record) . " needed for time_varying");
+			}
+		}
+
+	} else {
 		#only $filter is true
 		$only_filter = 1;	
 
@@ -6161,6 +6181,8 @@ sub preprocess_data
 	$filtered_data_model -> add_records(
 		type => 'input',
 		record_strings => [join(' ',@filter_table_header)]);
+
+
 
 	$filtered_data_model->_write();
 	# run model in data_filtering_dir clean=3
@@ -6252,6 +6274,9 @@ sub preprocess_data
 				$self->means->{$par.'_'.$cov}=$sum/$len if ($len>0);
 				$median = sprintf("%6.2f", $median );
 				my $mean = sprintf("%6.2f", $sum/$len ) if ($len>0);
+				if (not (looks_like_number($median) and looks_like_number($mean))) {
+					croak("Error in calculation of median and mean. They are not numbers");
+				}
 				print LOG "Time-varying $cov on $par (ETA".$parmetahash{$par}.
 				") has median $median and mean $mean\n";
 			}
