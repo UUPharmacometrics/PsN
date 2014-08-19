@@ -403,18 +403,18 @@ if ($do_filtering){
 		}
 	}
 	#warn if code records with ID/synonym detected
-	my @check_code=();
-	my $record_ref = $model-> record(record_name => 'pk' );	
-	push (@check_code, @{$model-> pk})
-		if ( scalar(@{$record_ref}) > 0 );
+	my @check_code = ();
+	my $record_ref = $model->record(record_name => 'pk');	
+	push (@check_code, @{$model->get_code(record => 'pk')})
+		if (scalar(@{$record_ref}) > 0);
 	
-	$record_ref = $model-> record(record_name => 'pred' );
-	push (@check_code,@{$model-> pred})
-		if ( scalar(@{$record_ref}) > 0 );
+	$record_ref = $model->record(record_name => 'pred');
+	push (@check_code, @{$model->get_code(record => 'pred')})
+		if (scalar(@{$record_ref}) > 0);
 	
-	$record_ref = $model-> record(record_name => 'error' );
-	push (@check_code,@{$model-> problems->[0]->errors->[0]->code})
-		if ( scalar(@{$record_ref}) > 0 );
+	$record_ref = $model->record(record_name => 'error');
+	push (@check_code, @{$model->get_code(record => 'error')})
+		if (scalar(@{$record_ref}) > 0);
 	
 	foreach my $line (@check_code){
 		if (($line =~ /(^|[^a-zA-Z0-9_]+)ID([^a-zA-Z0-9_]+|$)/ ) ||

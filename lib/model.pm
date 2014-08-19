@@ -2384,117 +2384,6 @@ sub nthetas
 	return $nthetas;
 }
 
-#FIXME: replace pk, pred and error with set_code and get_code
-sub pk
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		 new_pk => { isa => 'ArrayRef[Str]', optional => 1 },
-		 problem_number => { isa => 'Num', default => 1, optional => 1 }
-	);
-	my @new_pk = defined $parm{'new_pk'} ? @{$parm{'new_pk'}} : ();
-	my $problem_number = $parm{'problem_number'};
-	my @pk;
-
-	# sets or gets the pk code for a given problem in the
-	# model object. The new_pk argument should be an array where
-	# each element contains a row of a valid NONMEM $PK block,
-
-	my @prob = @{$self -> problems};
-	
-	unless( defined $prob[$problem_number - 1] ){
-	  croak("Problem number $problem_number does not exist" );
-	}
-	
-	my $pks = $prob[$problem_number - 1] -> pks;
-	if( scalar @new_pk > 0 ) {
-	  if( defined $pks and scalar @{$pks} > 0 ){
-	    $prob[$problem_number - 1] -> pks -> [0] -> code(\@new_pk);
-	  } else {
-	    croak("No \$PK record" );
-	  }
-	} else {
-	  if ( defined $pks and scalar @{$pks} > 0 ) {
-	    @pk = @{$prob[$problem_number - 1] -> pks -> [0] -> code};
-	  }
-	}
-
-	return \@pk;
-}
-
-sub pred
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		 new_pred => { isa => 'ArrayRef[Str]', optional => 1 },
-		 problem_number => { isa => 'Num', default => 1, optional => 1 }
-	);
-	my @new_pred = defined $parm{'new_pred'} ? @{$parm{'new_pred'}} : ();
-	my $problem_number = $parm{'problem_number'};
-	my @pred;
-
-	# Sets or gets the pred code for a given problem in the model
-	# object. See L</pk> for details.
-	my @prob = @{$self -> problems};
-	
-	unless( defined $prob[$problem_number - 1] ){
-	  croak("problem number $problem_number does not exist" );
-	}
-	
-	if( scalar @new_pred > 0 ) {
-	  if( defined $prob[$problem_number - 1] -> preds ){
-	    $prob[$problem_number - 1] -> preds -> [0] -> code(\@new_pred);
-	  } else {
-	    croak("No \$PRED record" );
-	  }
-	} else {
-	  if ( defined $prob[$problem_number - 1] -> preds ) {
-	    @pred = @{$prob[$problem_number - 1] -> preds -> [0] -> code};
-	  } else {
-	    croak("No \$PRED record" );
-	  }
-	}
-
-	return \@pred;
-}
-
-sub error
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		 new_error => { isa => 'ArrayRef[Str]', optional => 1 },
-		 problem_number => { isa => 'Num', default => 1, optional => 1 }
-	);
-	my @new_error = defined $parm{'new_error'} ? @{$parm{'new_error'}} : ();
-	my $problem_number = $parm{'problem_number'};
-	my @error;
-
-	# sets or gets the error code for a given problem in the
-	# model object. The new_pk argument should be an array where
-	# each element contains a row of a valid NONMEM $PK block,
-
-	my @prob = @{$self -> problems};
-	
-	unless( defined $prob[$problem_number - 1] ){
-	  croak("Problem number $problem_number does not exist" );
-	}
-	
-	my $errors = $prob[$problem_number - 1] -> errors;
-	if( scalar @new_error > 0 ) {
-	  if( defined $errors and scalar @{$errors} > 0 ){
-	    $prob[$problem_number - 1] -> errors -> [0] -> code(\@new_error);
-	  } else {
-	    croak("No \$ERROR record" );
-	  }
-	} else {
-	  if ( defined $errors and scalar @{$errors} > 0 ) {
-	    @error = @{$prob[$problem_number - 1] -> errors -> [0] -> code};
-	  }
-	}
-
-	return \@error;
-}
-
 sub set_code
 {
 	my $self = shift;
@@ -2550,6 +2439,25 @@ sub get_code
 	}
 
 	return \@code;
+}
+
+sub has_code
+{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+		 record => { isa => 'Str' },
+		 problem_number => { isa => 'Num', default => 1, optional => 1 }
+	);
+	my $record = $parm{'record'};
+	my $problem_number = $parm{'problem_number'};
+
+	my $code = $self->get_code(record => $record, problem_number => $problem_number);
+
+	if (scalar(@$code) > 0) {
+		return 1;
+	} else {
+		return 0;
+	}
 }
 
 sub print

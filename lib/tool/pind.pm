@@ -148,16 +148,17 @@ sub modelfit_setup
   }
 
   my $code_block;
-  my $use_pk = 0;
+  my $code_record;
   
-  $record_ref = $copy -> record(record_name => 'pk' );
-  if ( scalar(@{$record_ref}) > 0 ){ 
-    $code_block = $copy -> pk;
-    $use_pk = 1;
+  $record_ref = $copy -> record(record_name => 'pk');
+  if (scalar(@{$record_ref}) > 0) { 
+    $code_block = $copy->get_code(record => 'pk');
+    $code_record = 'pk';
   } else {
-    $record_ref = $copy -> record(record_name => 'pred' );
-    if ( scalar(@{$record_ref}) > 0 ){ 
-      $code_block = $copy -> pred;
+    $record_ref = $copy -> record(record_name => 'pred');
+    if (scalar(@{$record_ref}) > 0) { 
+      $code_block = $copy->get_code(record => 'pred');
+			$code_record = 'pred';
     } else {
       croak("Error: Neither \$PK nor \$PRED found in modelfile.");
     }
@@ -170,11 +171,7 @@ sub modelfit_setup
     push(@{$code_block},"   DN$_=CDEN_($_)" );
   }
   
-  if( $use_pk ){
-    $copy -> pk( new_pk => $code_block );
-  } else {
-    $copy -> pred( new_pred => $code_block );
-  }
+	$copy->set_code(record => $code_record, code => $code_block);
 
   #1.6
   $copy -> remove_records( type => 'covariance' );
@@ -880,7 +877,7 @@ sub setup_ind_ofv_models
 				my $record_ref = $copy -> record(record_name => 'pk' );
 				if ( scalar(@{$record_ref}) > 0 ){ 
 					my $code_block;
-					foreach my $line (@{$copy -> pk}){
+					foreach my $line (@{$copy->get_code(record => 'pk')}) {
 						my $new_line;
 						while( $line =~ /(.*[^A-Z]+)ETA\((\d+)\)(.*)/g ){
 							my $eta_index = $2-1; #does conversion work here??
@@ -890,13 +887,13 @@ sub setup_ind_ofv_models
 						}
 						push(@{$code_block},$new_line.$line );
 					}
-					$copy -> pk( new_pk => $code_block );
+					$copy->set_code(record => 'pk', code => $code_block);
 				}
 
 				$record_ref = $copy -> record(record_name => 'pred' );
 				if ( scalar(@{$record_ref}) > 0 ){ 
 					my $code_block;
-					foreach my $line (@{$copy -> pred}){
+					foreach my $line (@{$copy->get_code(record => 'pred')}) {
 						my $new_line;
 						#ok empty set []???
 						while( $line =~ /(.*[^A-Z]+)ETA\((\d+)\)(.*)/g ){
@@ -906,22 +903,21 @@ sub setup_ind_ofv_models
 						}
 						push(@{$code_block},$new_line.$line );
 					}
-					$copy -> pred( new_pred => $code_block );
+					$copy->set_code(record => 'pred', code => $code_block );
 				}
 				$record_ref = $copy -> record(record_name => 'error' );
 				if ( scalar(@{$record_ref}) > 0 ){ 
 					my $code_block;
-					foreach my $line (@{$copy -> problems->[0]->errors->[0]->code}){
+					foreach my $line (@{$copy->get_code(record => 'error')}) {
 						my $new_line;
 						while( $line =~ /(.*[^A-Z]+)ETA\((\d+)\)(.*)/g ){
 							my $eta_index = $2-1; #does conversion work here??
 							$line = $3;
 							$new_line .= $1. "$eta_matrix->[$id]->[$eta_index]";
 						}
-						push(@{$code_block},$new_line.$line );
+						push(@{$code_block}, $new_line.$line);
 					}
-					$copy -> set_records(type => 'error',
-						record_strings => $code_block);
+					$copy->set_records(type => 'error', record_strings => $code_block);
 				}
 			} else {
 				#fix thetas to new values

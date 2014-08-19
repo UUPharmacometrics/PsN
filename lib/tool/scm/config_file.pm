@@ -36,7 +36,7 @@ has 'p_backward' => ( is => 'rw', isa => 'Num|Ref', default => sub { \'' } );
 has 'p_forward' => ( is => 'rw', isa => 'Num|Ref', default => sub { \'' } );
 has 'p_value' => ( is => 'rw', isa => 'Num|Ref', default => sub { \'' } );
 has 'picky' => ( is => 'rw', isa => 'Bool|Ref', default => sub { \'1,0' });
-has 'relations' => ( is => 'rw', isa => 'HashRef' );
+has 'relations' => ( is => 'rw', isa => 'HashRef' );		# FIXME Should be named relation_definitions
 has 'retries' => ( is => 'rw', isa => 'Int|Ref', default => sub { \'' } );
 has 'linearize' => ( is => 'rw', isa => 'Bool|Ref', default => sub { \'1,0' } );
 has 'noabort' => ( is => 'rw', isa => 'Bool|Ref', default => sub { \'1,0' } );

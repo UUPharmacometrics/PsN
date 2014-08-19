@@ -198,10 +198,10 @@ sub setup_lasso_model
 	$self->dec_str("%.$decimal_points". "f");
 	$self->sign_dec_str("%+.$decimal_points". "f");
 	my @old_code;
-	@old_code = @{$lasso_model -> pk( problem_number => 1 )};
+	@old_code = @{$lasso_model->get_code(record => 'pk')};
 	$self->use_pred(0);
-	unless ( $#old_code > 0 ) {
-		@old_code = @{$lasso_model -> pred( problem_number => 1 )};
+	unless ($#old_code > 0) {
+		@old_code = @{$lasso_model->get_code(record => 'pred')};
 		$self->use_pred(1);
 	}
 	if ( $#old_code <= 0 ) {
@@ -488,10 +488,10 @@ sub setup_lasso_model
 
 	## Set the new code to the new model
 
-	if ($self->use_pred){
-		$lasso_model->pred(new_pred => \@new_code);
-	}else{
-		$lasso_model->pk(new_pk => \@new_code);
+	if ($self->use_pred) {
+		$lasso_model->set_code(record => 'pred', code => \@new_code);
+	} else {
+		$lasso_model->set_code(record => 'pk', code => \@new_code);
 	}
 }
 
@@ -1161,10 +1161,10 @@ sub modelfit_setup
 	#have %parameter_covariate_form here
 	my $index=0;
 	my @old_code;
-	if ($self->use_pred){
-		@old_code= @{$self->model_optimal->pred()};
-	}else{
-		@old_code= @{$self->model_optimal->pk()};
+	if ($self->use_pred) {
+		@old_code = @{$self->model_optimal->get_code(record => 'pred')};
+	} else {
+		@old_code = @{$self->model_optimal->get_code(record => 'pk')};
 	}
 	my $abssum = 0;
 	foreach my $th_num (@cutoff_thetas) {
@@ -1354,9 +1354,9 @@ sub modelfit_setup
 	}
 	push @new_code,@code;
 	if ($self->use_pred){
-		$self->model_optimal->pred(new_pred => \@new_code);
+		$self->model_optimal->set_code(record => 'pred', code => \@new_code);
 	}else{
-		$self->model_optimal->pk(new_pk => \@new_code);
+		$self->model_optimal->set_code(record => 'pk', code => \@new_code);
 	}
 
 	if ($self->NOABORT_added){

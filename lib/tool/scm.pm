@@ -1591,9 +1591,9 @@ sub linearize_setup
 		my %parameter_eta;
 		my %parameter_relation;
 		my @code;
-		@code = @{$original_model -> pk( problem_number => 1 )};
+		@code = @{$original_model->get_code(record => 'pk')};
 		unless ( $#code > 0 ) {
-			@code = @{$original_model -> pred( problem_number => 1 )};
+			@code = @{$original_model->get_code(record => 'pred')};
 		}
 		if ( $#code <= 0 ) {
 			croak("Neither PK or PRED defined in " .
@@ -2059,9 +2059,9 @@ sub linearize_setup
 
 		#3.2, 3.3
 		my @code; 
-		@code = @{$original_model -> pk( problem_number => 1 )};
+		@code = @{$original_model->get_code(record => 'pk')};
 		unless ( $#code > 0 ) {
-			@code = @{$original_model -> pred( problem_number => 1 )};
+			@code = @{$original_model->get_code(record => 'pred')};
 		}
 		if ( $#code <= 0 ) {
 			croak("Neither PK or PRED defined in " .
@@ -4077,10 +4077,10 @@ sub add_code
 
 	# Add the definition_code to the PK or PRED block
 	my @code;
-	@code = @{$applicant_model -> pk( problem_number => 1 )};
+	@code = @{$applicant_model->get_code(record => 'pk')};
 	my $use_pred = 0;
-	unless ( $#code > 0 ) {
-		@code = @{$applicant_model -> pred( problem_number => 1 )};
+	unless ($#code > 0) {
+		@code = @{$applicant_model->get_code(record => 'pred')};
 		$use_pred = 1;
 	}
 	if ( $#code <= 0 ) {
@@ -4178,12 +4178,10 @@ sub add_code
 				" i.e. No TV$parameter was found\n" );
 		}
 	}
-	if ( $use_pred ) {
-		$applicant_model -> pred( problem_number => 1,
-			new_pred       => \@code );
+	if ($use_pred) {
+		$applicant_model->set_code(record => 'pred', code => \@code);
 	} else {
-		$applicant_model -> pk( problem_number => 1,
-			new_pk         => \@code );
+		$applicant_model->set_code(record => 'pk', code => \@code);
 	}
 
 	#initial values must be set first, since we need to add if absent
@@ -4262,9 +4260,9 @@ sub add_code_linearize
 	# Add the definition_code to the PK or PRED block
 	my @code;
 	my $use_pred = 0;
-	@code = @{$applicant_model -> pred( problem_number => 1 )};
+	@code = @{$applicant_model->get_code(record => 'pred')};
 	$use_pred = 1;
-	if ( $#code <= 0 ) {
+	if ($#code <= 0) {
 		croak("PRED not defined in " .
 			$applicant_model -> filename . "\n" );
 	}
@@ -4379,12 +4377,10 @@ sub add_code_linearize
 				" i.e. No IPRED= was found\n" );
 		}
 	}
-	if ( $use_pred ) {
-		$applicant_model -> pred( problem_number => 1,
-			new_pred       => \@code );
+	if ($use_pred) {
+		$applicant_model->set_code(record => 'pred', code => \@code);
 	} else {
-		$applicant_model -> pk( problem_number => 1,
-			new_pk         => \@code );
+		$applicant_model->set_code(record => 'pk', code => \@code);
 	}
 
 	#must have initial_values first with add_if_absent
@@ -4424,13 +4420,13 @@ sub add_code_gfunc
 	#parameter_G contains all parameters,
 	#for some the value is 1, for others it is parCOV.
 	#parameter_relation is either additive, proportional or exponential
-	my @code = @{$applicant_model -> pk( problem_number => 1 )};
+	my @code = @{$applicant_model->get_code(record => 'pk')};
 	my $use_pred = 0;
-	unless ( $#code > 0 ) {
-		@code = @{$applicant_model -> pred( problem_number => 1 )};
+	unless ($#code > 0) {
+		@code = @{$applicant_model->get_code(record => 'pred')};
 		$use_pred = 1;
 	}
-	if ( $#code <= 0 ) {
+	if ($#code <= 0) {
 		croak("Neither PK or PRED defined in " .
 			$applicant_model -> filename . "\n" );
 	}
@@ -4455,12 +4451,10 @@ sub add_code_gfunc
 				"for ETA on $parameter");
 		}
 	}
-	if ( $use_pred ) {
-		$applicant_model -> pred( problem_number => 1,
-			new_pred       => \@code );
+	if ($use_pred) {
+		$applicant_model->set_code(record => 'pred', code => \@code);
 	} else {
-		$applicant_model -> pk( problem_number => 1,
-			new_pk         => \@code );
+		$applicant_model->set_code(record => 'pk', code => \@code);
 	}
 
 	return $applicant_model;
@@ -6003,9 +5997,9 @@ sub preprocess_data
 		}
 
 		my @code;
-		@code = @{$filtered_data_model -> pk( problem_number => 1 )};
+		@code = @{$filtered_data_model->get_code(record => 'pk')};
 		unless ( $#code > 0 ) {
-			@code = @{$filtered_data_model -> pred( problem_number => 1 )};
+			@code = @{$filtered_data_model->get_code(record => 'pred')};
 		}
 		if ( $#code <= 0 ) {
 			croak("Neither PK or PRED defined in " .

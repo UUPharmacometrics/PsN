@@ -745,13 +745,13 @@ sub modelfit_setup
 									'  CLOSE (50)',
 									'ENDIF');
 						my @code; 
-						@code = @{$sim_model -> pk( problem_number => 1 )};
-						unless ( $#code > 0 ) {
-							@code = @{$sim_model -> pred( problem_number => 1 )};
+						@code = @{$sim_model->get_code(record => 'pk')};
+						unless ($#code > 0) {
+							@code = @{$sim_model->get_code(record => 'pred')};
 						}
-						if ( $#code <= 0 ) {
+						if ($#code <= 0) {
 							croak("Neither PK or PRED defined in " .
-								  $sim_model -> filename . "\n" );
+								  $sim_model->filename . "\n");
 						}
 						my $coderef;
 						$coderef = $sim_model->problems->[0]-> pks -> [0] -> code if (defined $sim_model->problems->[0]-> pks);

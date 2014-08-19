@@ -109,17 +109,17 @@ sub BUILD
 	}
 
 	#warn if code records with ID/synonym detected
-	@check_list=();
-	my $record_ref = $self->models->[0]->record(record_name => 'pk' );	
-	push (@check_list, @{$self->models()->[0]->pk})
+	@check_list = ();
+	my $record_ref = $self->models->[0]->record(record_name => 'pk');	
+	push (@check_list, @{$self->models->[0]->get_code(record => 'pk')})
 	if (scalar(@{$record_ref}) > 0);
 
-	$record_ref = $self->models->[0]->record(record_name => 'pred' );
-	push (@check_list,@{$self ->models()->[0]-> pred})
+	$record_ref = $self->models->[0]->record(record_name => 'pred');
+	push (@check_list, @{$self->models->[0]->get_code(record => 'pred')})
 	if (scalar(@{$record_ref}) > 0);
 
-	$record_ref = $self->models->[0]->record(record_name => 'error' );
-	push (@check_list,@{$self->models->[0]->problems->[0]->errors->[0]->code})
+	$record_ref = $self->models->[0]->record(record_name => 'error');
+	push (@check_list, @{$self->models->[0]->get_code(record => 'error')})
 	if (scalar(@{$record_ref}) > 0);
 
 	foreach my $line (@check_list){

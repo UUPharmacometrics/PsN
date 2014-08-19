@@ -725,14 +725,15 @@ sub modelfit_setup
 	my $have_advan = scalar(@{$advan}) > 0;
 
 	my @code;
-	my $use_pred=0;
-	if( $have_advan ){
+	my $code_record;
+	if ($have_advan) {
 		# We have an ADVAN option in $SUBROUTINE, get $ERROR code
-		@code = @{$gls_model -> error( problem_number => 1 )};
+		@code = @{$gls_model->get_code(record => 'error')};
+		$code_record = 'error';
 	}
 	unless ($have_advan and ( $#code > 0 )) {
-		@code = @{$gls_model -> pred( problem_number => 1 )};
-		$use_pred = 1;
+		@code = @{$gls_model->get_code(record => 'pred')};
+		$code_record = 'pred';
 	}
 
 	my $found_W;
@@ -760,13 +761,7 @@ sub modelfit_setup
 			  " i.e. no W= line was found\n" );
 	}
 
-	if ( $use_pred ) {
-		$gls_model -> pred( problem_number => 1,
-							new_pred       => \@newcode );
-	} else {
-		$gls_model -> pk( problem_number => 1,
-						  new_error         => \@newcode );
-	}
+	$gls_model->set_code(record => $code_record, code => \@newcode);
 
 	$gls_model -> _write(); #data is local
 

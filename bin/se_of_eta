@@ -154,13 +154,14 @@ foreach my $id (0..$#{$ids}) {
 	# 1 Change all ETA(n) to THETA(n + $nr_of_old_thetas)
 	
 	my $code_block;
-	my $pk = 0;
+	my $code_record;
 	# Find PK or PRED block
-	if( defined $model_copy -> pk ){
-		$code_block = $model_copy -> pk;
-		$pk = 1;
-	} elsif( defined $model_copy -> pred ){
-		$code_block = $model_copy -> pred;
+	if ($model_copy->has_code(record => 'pk') {
+		$code_block = $model_copy->get_code(record => 'pk');
+		$code_record = 'pk';
+	} elsif ($model_copy->has_code(record => 'pred') {
+		$code_block = $model_copy->get_code(record => 'pred');
+		$code_record = 'pred';
 	} else {
 		die "Error: No \$PK or \$PRED found... \n";
 	}
@@ -179,11 +180,7 @@ foreach my $id (0..$#{$ids}) {
 
 	my $nr_of_new_thetas = $nr_of_old_thetas + scalar keys %seen_eta;
 	
-	if( $pk ){
-		$model_copy -> pk( new_pk => $code_block );
-	} else {
-		$model_copy -> pred( new_pred => $code_block );
-	}
+	$model_copy->set_code(record => $code_record, code => $code_block);
 	
 	# Fixate all old thetas and omegas.
 	

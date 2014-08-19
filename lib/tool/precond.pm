@@ -100,13 +100,14 @@ sub create_reparametrized_model
 	);
 
 	my @code;
-	@code = @{$model->get_code(record => 'pk')};
-	my $use_pred = 0;
-	if (not scalar(@code) > 0) {
+	my $code_record;
+	if ($model->has_code(record => 'pk')) {
+		@code = @{$model->get_code(record => 'pk')};
+		$code_record = 'pk';
+	} elsif ($model->has_code(record => 'pred')) {
 		@code = @{$model->get_code(record => 'pred')};
-		$use_pred = 1;
-	}
-	if (not scalar(@code) > 0) {
+		$code_record = 'pred';
+	} else {
 		croak("Neither PK nor PRED defined in " . $model->filename . "\n");
 	}
 
@@ -143,24 +144,16 @@ sub create_reparametrized_model
 
 	unshift @code, $tempTempSt;
 
-	if ($use_pred) {
-		$model->set_code(record => 'pred', code => \@code);
-	} else {
-		$model->set_code(record => 'pk', code => \@code);
-	}
+	$model->set_code(record => $code_record, code => \@code);
 
 	# Reparametrize other blocks of abbreviated code
 	for my $record (('error', 'des', 'aes', 'aesinitial', 'mix', 'infn')) {
-		my $code = $model->get_code(record => $record);
-		if (scalar(@$code) > 0) {  
+		if ($model->has_code(record => $record)) {  
+			my $code = $model->get_code(record => $record);
 			_reparametrize($code, $model->nthetas);
 			$model->set_code(record => $record, code => $code);
 		}
 	}
-	#my $code = $model->error(problem_number => 1);
-	#_reparametrize($code, $model->nthetas);
-	#$model->error(problem_number => 1, new_error => $code);
-
 
 	# Set new initial values for thetas
 	my @parameter_initial = @{$model->initial_values(parameter_type => 'theta')->[0]};

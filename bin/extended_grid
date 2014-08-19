@@ -460,18 +460,19 @@ $extended_model -> set_records( type => 'nonparametric',
 $extended_model -> remove_records( type => 'covariance' );
 
 my $code_block;
-my $use_pk = 0;
+my $code_record;
 # Find PK or PRED block
-if( defined $extended_model -> pk ){
-  $code_block = $extended_model -> pk;
-  $use_pk = 1;
-} elsif( defined $extended_model -> pred ){
-  $code_block = $extended_model -> pred;
+if ($extended_model->has_code(record => 'pk')) {
+  $code_block = $extended_model->get_code(record => 'pk');
+	$code_record = 'pk';
+} elsif ($extended_model->has_code(record => 'pred')) {
+  $code_block = $extended_model->get_code(record => 'pred');
+	$code_record = 'pred';
 } else {
   die "Error: No \$PK or \$PRED found... \n";
 }
 
-push( @{$code_block},'   JD = DEN_');
+push(@{$code_block}, '   JD = DEN_');
 
 my @JD_string;
 
@@ -480,11 +481,7 @@ for( 1..$nr_of_old_etas ){
   push( @JD_string, "DN$_" );
 }
 
-if( $use_pk ){
-  $extended_model -> pk( new_pk => $code_block );
-} else {
-  $extended_model -> pred( new_pred => $code_block );
-}
+$extended_model->set_code(record => $code_record, code => $code_block);
 
 $extended_model -> set_records( type => 'table',
 				record_strings => ['ID '.join( ' ', @table_string, 'JD', @JD_string,'NOPRINT NOAPPEND FIRSTONLY FILE=nptab' ) ] );

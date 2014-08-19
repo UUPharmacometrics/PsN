@@ -2,7 +2,7 @@
 
 use strict;
 use warnings;
-use Test::More tests=>113;
+use Test::More tests=>117;
 use FindBin qw($Bin);
 use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages
@@ -156,5 +156,24 @@ is ($model->problems->[0]->thetas->[0]->options->[0]->lobnd, 0, "update_inits: n
 is ($model->problems->[0]->thetas->[0]->options->[0]->init, 0.00555, "update_inits: new theta init");
 is ($model->problems->[0]->thetas->[1]->options->[0]->lobnd, 0, "update_inits: new theta lobnd");
 is ($model->problems->[0]->thetas->[1]->options->[0]->init, 1.34, "update_inits: new theta init");
+
+# has_code
+$model = model->new(filename => "$modeldir/pheno.mod");
+
+ok ($model->has_code(record => 'pk'), "has_code pk record");
+ok (not ($model->has_code(record => 'pred')), "has_code pred record");
+
+# set_code / get_code
+$model = model->new(filename => "$modeldir/pheno.mod");
+
+my $code = [ "TSTCDE", "ROW2" ];
+
+$model->set_code(record => 'pk', code => $code);
+
+my $new_code = $model->get_code(record => 'pk');
+
+is ($new_code->[0], $code->[0], "set_code row 0");
+is ($new_code->[1], $code->[1], "set_code row 1");
+
 
 done_testing();

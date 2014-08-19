@@ -454,28 +454,25 @@ sub setup_original_jd_model
 	#3.4 Add JD code
 
 	my $code_block;
-	my $use_pk = 0;
+	my $code_record;
 
-	if( defined $new_model -> pk ){
-		$code_block = $new_model -> pk;
-		$use_pk = 1;
-	} elsif( defined $new_model -> pred ){
-		$code_block = $new_model -> pred;
+	if ($new_model->has_code(record => 'pk')) {
+		$code_block = $new_model->get_code(record => 'pk');
+		$code_record = 'pk';
+	} elsif ($new_model->has_code(record => 'pred')) {
+		$code_block = $new_model->get_code(record => 'pred');
+		$code_record = 'pred';
 	} else {
 		croak("Error: Neither \$PK nor \$PRED found in modelfile.");
 	}
 
-	push( @{$code_block},'   JD = DEN_');
+	push (@{$code_block}, '   JD = DEN_');
 
-	for( 1..$new_model -> nomegas -> [0] ){
-		push(@{$code_block},"   DN$_=CDEN_($_)" );
+	for (1..$new_model->nomegas->[0]) {
+		push(@{$code_block}, "   DN$_=CDEN_($_)");
 	}
 
-	if( $use_pk ){
-		$new_model -> pk( new_pk => $code_block );
-	} else {
-		$new_model -> pred( new_pred => $code_block );
-	}
+	$new_model->set_code(record => $code_record, code => $code_block);
 
 	#3.7
 	$new_model -> remove_records( type => 'table' );

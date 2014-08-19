@@ -219,10 +219,10 @@ sub create_template_models
 	#find parameters that have ETAs on them already
 	#search in Model 0 because there we have not added BOV ETAS
 	my @code;
-	@code = @{$frem_model0 -> pk( problem_number => 1 )};
+	@code = @{$frem_model0->get_code(record => 'pk')};
 	$use_pred = 0;
-	unless ( $#code > 0 ) {
-		@code = @{$frem_model0 -> pred( problem_number => 1 )};
+	unless ($#code > 0) {
+		@code = @{$frem_model0->get_code(record => 'pred')};
 		$use_pred = 1;
 	}
 	if ( $#code <= 0 ) {
@@ -683,10 +683,10 @@ sub create_template_models
 	
 	#replace TVpar with CTVpar
 	my @code;
-	@code = @{$frem_vpc_model2 -> pk( problem_number => 1 )};
+	@code = @{$frem_vpc_model2->get_code(record => 'pk')};
 	my $use_pred = 0;
 	unless ( $#code > 0 ) {
-		@code = @{$frem_vpc_model2 -> pred( problem_number => 1 )};
+		@code = @{$frem_vpc_model2->get_code(record => 'pred')};
 		$use_pred = 1;
 	}
 	if ( $#code <= 0 ) {
@@ -707,12 +707,10 @@ sub create_template_models
 		}
 		croak("could not find where to set\n".$tv.'='.$ctv) unless $found;
 	}
-	if ( $use_pred ) {
-		$frem_vpc_model2 -> pred( problem_number => 1,
-								  new_pred       => \@code );
+	if ($use_pred) {
+		$frem_vpc_model2->set_code(record => 'pred', code => \@code);
 	} else {
-		$frem_vpc_model2 -> pk( problem_number => 1,
-								new_pk         => \@code );
+		$frem_vpc_model2->set_code(record => 'pk', code => \@code);
 	}
 	
 	$frem_vpc_model2->_write();
@@ -1390,22 +1388,20 @@ sub create_data2
 			$filtered_data_model -> remove_records(type => $remove_rec);
 		}
 		my @code;
-		@code = @{$filtered_data_model -> pk( problem_number => 1 )};
+		@code = @{$filtered_data_model->get_code(record => 'pk')};
 		my $use_pred = 0;
 		unless ( $#code > 0 ) {
-			@code = @{$filtered_data_model -> pred( problem_number => 1 )};
+			@code = @{$filtered_data_model->get_code(record => 'pred')};
 			$use_pred = 1;
 		}
 		if ( $#code <= 0 ) {
 			croak("Neither PK or PRED defined in model 0");
 		}
 		push(@code,$fremtype.'=0');
-		if ( $use_pred ) {
-			$filtered_data_model -> pred( problem_number => 1,
-										  new_pred       => \@code );
+		if ($use_pred ) {
+			$filtered_data_model->set_code(record => 'pred', code => \@code);
 		} else {
-			$filtered_data_model -> pk( problem_number => 1,
-										new_pk         => \@code );
+			$filtered_data_model->set_code(record => 'pk', code => \@code);
 		}
 		
 		$message = "Running with MAXEVAL=0 to filter data and add MDV ".$fremtype." for Data set 2";
@@ -1647,14 +1643,14 @@ sub set_frem_records
 
 	
     my @code;
-    @code = @{$model -> pk( problem_number => 1 )};
+    @code = @{$model->get_code(record => 'pk')};
     my $use_pred = 0;
-    unless ( $#code > 0 ) {
-		@code = @{$model -> pred( problem_number => 1 )};
-		$use_pred = 1;
+    unless ($#code > 0) {
+			@code = @{$model->get_code(record => 'pred')};
+			$use_pred = 1;
     }
-    if ( $#code <= 0 ) {
-		croak("Neither PK or PRED defined in input model");
+    if ($#code <= 0) {
+			croak("Neither PK or PRED defined in input model");
     }
 
 
@@ -1804,18 +1800,15 @@ sub set_frem_records
 		unshift(@code,@begin_code);
     }
     
-    if ( $use_pred ) {
-		push(@code,@end_code);
-		$model -> pred( problem_number => 1,
-						new_pred       => \@code );
-    } else {
-		$model -> pk( problem_number => 1,
-					  new_pk         => \@code );
-		my @error = @{$model -> error( problem_number => 1 )};
-		push(@error,@end_code);
-		$model -> error( problem_number => 1,
-						 new_error         => \@error );
-    }
+		if ( $use_pred ) {
+			push(@code,@end_code);
+			$model->set_code(record => 'pred', code => \@code);
+		} else {
+			$model->set_code(record => 'pk', code => \@code);
+			my @error = @{$model->get_code(record => 'error')};
+			push(@error,@end_code);
+			$model->set_code(record => 'error', code => \@error);
+		}
 }
 
 sub cleanup
