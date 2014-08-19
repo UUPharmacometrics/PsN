@@ -221,16 +221,21 @@ sub _check_various
 					$parmcov{$parm}=[];
 				}
 
-				if( $cov eq '*' ){
-					foreach my $parameter( keys %parmcov ){
-						if( defined $self -> test_relations -> {$parameter} ){
-							my @covs = @{$self -> test_relations -> {$parameter}};
+				if ($cov eq '*') {
+					foreach my $parameter (keys %parmcov) {
+						if (defined $self->test_relations->{$parameter}) {
+							my @covs = @{$self->test_relations->{$parameter}};
 							$parmcov{$parameter} = \@covs;
 						}
 					}
 				} else {
 					my @covs = ($cov);
-					foreach my $parameter (keys %parmcov){
+					foreach my $parameter (keys %parmcov) {
+						if (defined $self->test_relations->{$parameter}) {
+							if (not scalar(grep { $_ eq $cov } @{$self->test_relations->{$parameter}})) {
+								croak("The covariate $cov in the $header section does not exist as a test relation for $parameter");
+							}
+						}
 						$parmcov{$parameter} = \@covs;
 					}
 				}

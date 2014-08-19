@@ -60,6 +60,11 @@ Changes and bug fixes from PsN 4.2.0 to x.y.z
 
    ___NONMEM interaction___
 
+   ___scm___
+
+- scm now checks that all covariates in the code section are listed as test_relations
+  and gives an error otherwise.
+
    ___sse___
 
    ___bootstrap___
