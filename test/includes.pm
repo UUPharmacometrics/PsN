@@ -9,7 +9,7 @@ use File::Copy 'cp';
 
 require Exporter;
 our @ISA = qw(Exporter);
-our @EXPORT = qw(cmp_float create_test_dir remove_test_dir copy_test_files like_file_row unlike_file_row is_array do_course_tests);
+our @EXPORT = qw(get_command cmp_float create_test_dir remove_test_dir copy_test_files like_file_row unlike_file_row is_array do_course_tests);
 
 # Set this variable to something else if you are testing on a cluster
 my $tempdir = File::Spec->tmpdir;
@@ -49,35 +49,12 @@ unless ($PsN::version eq 'dev'){
 	$version = '-'.$PsN::version;
 }
 
-our $boot_scm = $path.'boot_scm'.$version;
-our $bootstrap = $path.'bootstrap'.$version;
-our $cdd = $path.'cdd'.$version;
-our $crossval = $path.'crossval'.$version;
-our $data_stats = $path.'data_stats'.$version;
-our $ebe_npde = $path.'ebe_npde'.$version;
-our $execute = $path.'execute'.$version;
-our $extended_grid = $path.'extended_grid'.$version;
-our $frem = $path.'frem'.$version;
-our $gls = $path.'gls'.$version;
-our $lasso = $path.'lasso'.$version;
-our $linearize = $path.'linearize'.$version;
-our $llp = $path.'llp'.$version;
-our $mcmp = $path.'mcmp'.$version;
-our $mimp = $path.'mimp'.$version;
-our $nonpb = $path.'nonpb'.$version;
-our $npc = $path.'npc'.$version;
-our $parallel_retries = $path.'parallel_retries'.$version;
-our $pind = $path.'pind'.$version;
-our $randtest = $path.'randtest'.$version;
-our $runrecord = $path.'runrecord'.$version;
-our $scm = $path.'scm'.$version;
-our $sse = $path.'sse'.$version;
-our $sumo = $path.'sumo'.$version;
-our $update_inits = $path.'update_inits'.$version;
-our $vpc = $path.'vpc'.$version;
-our $xv_scm = $path.'xv_scm'.$version;
-our $sir = $path.'sir'.$version;
-our $pvar = $path.'pvar'.$version;
+sub get_command
+{
+	my $command_name = shift;
+
+	return $path . $command_name . $version;
+}
 
 sub cmp_float
 {
@@ -176,7 +153,6 @@ sub is_array
 		is ($func->[$i], $facit->[$i], "$label, index $i");
 	}	
 }
-
 
 sub _parse_course_file
 {

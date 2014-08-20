@@ -31,10 +31,10 @@ foreach my $file ("$model_dir/tnpri.mod","$model_dir/data_tnpri.csv","$model_dir
 }
 chdir($tndir);
 
-my $command = $includes::execute." create_tnpri_msf.mod -seed=630992 ";
+my $command = get_command('execute') . " create_tnpri_msf.mod -seed=630992 ";
 print "Running $command\n";
 my $rc = system($command);
-my $command = $includes::sse." -samples=3 $mod -seed=630992 -directory=$dir";
+my $command = get_command('sse') . " -samples=3 $mod -seed=630992 -directory=$dir";
 print "Running $command\n";
 my $rc = system($command);
 $rc = $rc >> 8;
@@ -43,7 +43,7 @@ chdir('..');
 
 rmtree([$tndir]);
 
-$command= $includes::sse." -samples=3 $model_dir/nwpri.mod -seed=630992 -directory=$dir";
+$command = get_command('sse') . " -samples=3 $model_dir/nwpri.mod -seed=630992 -directory=$dir";
 print "Running $command\n";
 $rc = system($command);
 $rc = $rc >> 8;

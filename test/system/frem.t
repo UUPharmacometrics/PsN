@@ -17,13 +17,13 @@ our $dir = "$tempdir/frem_test";
 my $model_dir = $includes::testfiledir;
 
 my @commands = (
-	$includes::frem." -time_var=WT -occ=VISI -param=PHI,LAG -invar=SEX,DGRP -vpc -no-check $model_dir/mox_no_bov.mod -dir=$dir",
-	$includes::frem." -invar=SEX -no-check -vpc $model_dir/mox_no_bov.mod -dir=$dir",
-	$includes::frem." -invar=SEX -start_eta=3 -no-check -vpc $model_dir/mox_no_bov.mod -dir=$dir",
-	$includes::frem." -time_var=WT,NYHA -occ=VISI -param=PHI -invar=SEX -vpc -start_eta=3 $model_dir/mox_no_bov.mod  -dir=$dir",
-	$includes::frem." -time_var=WT,NYHA -occ=VISI -param=CL -invar=SEX -vpc -no-check $model_dir/mox_no_bov.mod -dir=$dir",
-	$includes::frem." -time_var=WT,NYHA -occ=VISI -param=V -invar=SEX -no-check $model_dir/mox_no_bov.mod -est=0  -dir=$dir",
-	$includes::frem." -time_var=WT,NYHA -occ=VISI -param=KA,LAG -no-check  -vpc $model_dir/mox_no_bov.mod -dir=$dir",
+	get_command('frem') . " -time_var=WT -occ=VISI -param=PHI,LAG -invar=SEX,DGRP -vpc -no-check $model_dir/mox_no_bov.mod -dir=$dir",
+	get_command('frem') . " -invar=SEX -no-check -vpc $model_dir/mox_no_bov.mod -dir=$dir",
+	get_command('frem') . " -invar=SEX -start_eta=3 -no-check -vpc $model_dir/mox_no_bov.mod -dir=$dir",
+	get_command('frem') . " -time_var=WT,NYHA -occ=VISI -param=PHI -invar=SEX -vpc -start_eta=3 $model_dir/mox_no_bov.mod  -dir=$dir",
+	get_command('frem') . " -time_var=WT,NYHA -occ=VISI -param=CL -invar=SEX -vpc -no-check $model_dir/mox_no_bov.mod -dir=$dir",
+	get_command('frem') . " -time_var=WT,NYHA -occ=VISI -param=V -invar=SEX -no-check $model_dir/mox_no_bov.mod -est=0  -dir=$dir",
+	get_command('frem') . " -time_var=WT,NYHA -occ=VISI -param=KA,LAG -no-check  -vpc $model_dir/mox_no_bov.mod -dir=$dir",
 	);
 
 plan tests => scalar(@commands);

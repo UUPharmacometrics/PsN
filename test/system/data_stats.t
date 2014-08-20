@@ -15,8 +15,8 @@ my $model_dir = $includes::testfiledir;
 
 my @commands = 
 	(
-	 $includes::data_stats." $model_dir/mox_simulated.csv",
-	 $includes::data_stats." $model_dir/pheno.dta",
+	 get_command('data_stats') . " $model_dir/mox_simulated.csv",
+	 get_command('data_stats') . " $model_dir/pheno.dta",
 	 );
 
 foreach my $command (@commands) {

@@ -16,7 +16,7 @@ our $dir = "$tempdir/mcmp_test";
 my $model_dir = $includes::testfiledir;
 
 my @commands = 
-	($includes::mcmp." -n_bootstrap=5 -full=$model_dir/pheno.mod -reduced=$model_dir/pheno.mod  -dir=$dir",
+	(get_command('mcmp') . " -n_bootstrap=5 -full=$model_dir/pheno.mod -reduced=$model_dir/pheno.mod  -dir=$dir",
 	 );
 
 foreach my $command (@commands) {

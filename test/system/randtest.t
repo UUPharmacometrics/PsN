@@ -14,7 +14,7 @@ our $dir = "$tempdir/randtest_test";
 my $model_dir = $includes::testfiledir;
 
 my @commands = 
-	($includes::randtest . " $model_dir/mox1.mod -samples=5 -randomization_column=DOSE -dir=$dir",
+	(get_command('randtest') . " $model_dir/mox1.mod -samples=5 -randomization_column=DOSE -dir=$dir",
 	 );
 
 foreach my $command (@commands) {

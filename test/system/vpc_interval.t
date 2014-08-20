@@ -118,7 +118,7 @@ my $model_dir = $includes::testfiledir;
 
 copy_test_files($tempdir,["pheno5.mod", "pheno5.dta"]);
 
-my $command = $includes::vpc." -samples=20 $tempdir/pheno5.mod -auto_bin=2 -directory=$dir -seed=12345 -min_point=5";
+my $command = get_command('vpc') . " -samples=20 $tempdir/pheno5.mod -auto_bin=2 -directory=$dir -seed=12345 -min_point=5";
 system $command;
 
 my $newmatrix = get_dv_matrix();
@@ -138,7 +138,7 @@ for (my $i = 0; $i < 2; $i++){
 rmtree([$dir]);
 
 #split simulation over multiple tabs
-$command = $includes::vpc." -samples=20 $tempdir/pheno5.mod -auto_bin=2 -directory=$dir -seed=12345 -min_point=5 -n_sim=2";
+$command = get_command('vpc') . " -samples=20 $tempdir/pheno5.mod -auto_bin=2 -directory=$dir -seed=12345 -min_point=5 -n_sim=2";
 system $command;
 
 $newmatrix = get_dv_matrix();

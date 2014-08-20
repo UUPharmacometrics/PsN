@@ -19,8 +19,8 @@ copy_test_files($tempdir,["pheno5.mod", "pheno5.dta","pheno5.lst"]);
 chdir($tempdir);
 my @a;
 
-my $command2 = $includes::nonpb." pheno5.mod -lst=pheno5.lst -seed=123 -samples=5 -nonpb_v=1 -clean=2";
-my $command1 = $includes::nonpb." pheno5.mod -lst=pheno5.lst -seed=123 -samples=5 -nonpb_v=2 -clean=2";
+my $command2 = get_command('nonpb') . " pheno5.mod -lst=pheno5.lst -seed=123 -samples=5 -nonpb_v=1 -clean=2";
+my $command1 = get_command('nonpb') . " pheno5.mod -lst=pheno5.lst -seed=123 -samples=5 -nonpb_v=2 -clean=2";
 
 my  $rc = system($command1);
 $rc = $rc >> 8;

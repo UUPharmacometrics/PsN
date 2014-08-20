@@ -15,8 +15,8 @@ my $model_dir = $includes::testfiledir;
 copy_test_files($tempdir,["pheno5.mod", "pheno5.dta", "mox1.mod", "mox_simulated.csv"]);
 
 my @commands = 
-	($includes::cdd." -case_column=ID $tempdir/pheno5.mod -xv  -dir=$dir",
-	 $includes::cdd." $tempdir/mox1.mod -case_column=DGRP  -dir=$dir",
+	(get_command('cdd') . " -case_column=ID $tempdir/pheno5.mod -xv  -dir=$dir",
+	 get_command('cdd') . " $tempdir/mox1.mod -case_column=DGRP  -dir=$dir",
 	);
 
 foreach my $command (@commands) {

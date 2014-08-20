@@ -15,10 +15,10 @@ my $model_dir = $includes::testfiledir;
 
 my @commands = 
 	(
-	 $includes::sir." $model_dir/pheno.mod -samples=100 -resamples=50 -covmat_input=$model_dir/pheno_fake.cov -dir=$dir",
-	 $includes::sir." $model_dir/pheno.mod -samples=10 -resamples=5 -covmat_input=$model_dir/pheno_fake.cov -no-copy_data -dir=$dir",
-	 $includes::sir." $model_dir/mox_sir_block2.mod -samples=100 -resamples=50 -dir=$dir",
-	 $includes::sir." $model_dir/mox_sir.mod -samples=50 -resamples=100 -with_replacement -dir=$dir"
+	 get_command('sir') . " $model_dir/pheno.mod -samples=100 -resamples=50 -covmat_input=$model_dir/pheno_fake.cov -dir=$dir",
+	 get_command('sir') . " $model_dir/pheno.mod -samples=10 -resamples=5 -covmat_input=$model_dir/pheno_fake.cov -no-copy_data -dir=$dir",
+	 get_command('sir') . " $model_dir/mox_sir_block2.mod -samples=100 -resamples=50 -dir=$dir",
+	 get_command('sir') . " $model_dir/mox_sir.mod -samples=50 -resamples=100 -with_replacement -dir=$dir"
 	);
 
 foreach my $command (@commands){

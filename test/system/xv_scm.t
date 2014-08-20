@@ -25,7 +25,7 @@ foreach my $file (@needed){
 }
 chdir($bootdir);
 my @scmcommands = 
-	( $includes::xv_scm." -groups=3 -splits=2 -seed=12345 -max_step=2 -config=config_xv_scm.scm -dir=$dir");
+	( get_command('xv_scm') . " -groups=3 -splits=2 -seed=12345 -max_step=2 -config=config_xv_scm.scm -dir=$dir");
 foreach my $command (@scmcommands){
 	print "Running $command\n";
 	my $rc = system($command);

@@ -33,7 +33,7 @@ mkdir($spacedir);
 cp('pheno.mod',$spacedir);
 cp('pheno.dta',$spacedir);
 chdir($spacedir);
-my $command = $includes::execute." pheno.mod -no-copy_data";
+my $command = get_command('execute') . " pheno.mod -no-copy_data";
 print "Running $command\n";
 my $rc = system($command);
 $rc = $rc >> 8;
@@ -46,18 +46,18 @@ my @shrinking_results = (40.5600924453085, -0.185810314125491, 89.4892871889343)
 my @shrinking_headings = ('shrinkage_eta1(%)', 'shrinkage_eta2(%)', 'shrinkage_iwres(%)');
 
 my @command_line = (
-	$includes::execute." $tempdir/pheno.mod -shrinkage -directory=$dir",
-	$includes::execute." $tempdir/pheno.mod -min_retries=2 -directory=$dir",
-	$includes::execute." $tempdir/pheno.mod -mirror_plots=2 -mirror_from_lst -directory=$dir",
-	$includes::execute." $model_dir/tbs1.mod -tbs  -directory=$dir", #prop
-	$includes::execute." $model_dir/tbs1.mod -dtbs  -directory=$dir", #prop
-	$includes::execute." $model_dir/tbs1a.mod -tbs  -directory=$dir", #add
-	$includes::execute." $model_dir/tbs1a.mod -dtbs  -directory=$dir", #add
-	$includes::execute." $model_dir/tbs1.mod -tbs_delta='(-1,0.01,1)'  -directory=$dir",
-	$includes::execute." $model_dir/tbs1a.mod -tbs_delta='(-1,0.01,1)'  -directory=$dir",
-	$includes::execute." $model_dir/tbs1a.mod -tbs_zeta='(-1,0.01,1)'  -directory=$dir",
-	$includes::execute." $model_dir/tbs1.mod -tbs_lambda='(-2,1,2)'  -directory=$dir",
-	$includes::execute." $model_dir/tbs1.mod -tbs_lambda='(-2,1,2)' -dtbs  -directory=$dir",
+	get_command('execute') . " $tempdir/pheno.mod -shrinkage -directory=$dir",
+	get_command('execute') . " $tempdir/pheno.mod -min_retries=2 -directory=$dir",
+	get_command('execute') . " $tempdir/pheno.mod -mirror_plots=2 -mirror_from_lst -directory=$dir",
+	get_command('execute') . " $model_dir/tbs1.mod -tbs  -directory=$dir", #prop
+	get_command('execute') . " $model_dir/tbs1.mod -dtbs  -directory=$dir", #prop
+	get_command('execute') . " $model_dir/tbs1a.mod -tbs  -directory=$dir", #add
+	get_command('execute') . " $model_dir/tbs1a.mod -dtbs  -directory=$dir", #add
+	get_command('execute') . " $model_dir/tbs1.mod -tbs_delta='(-1,0.01,1)'  -directory=$dir",
+	get_command('execute') . " $model_dir/tbs1a.mod -tbs_delta='(-1,0.01,1)'  -directory=$dir",
+	get_command('execute') . " $model_dir/tbs1a.mod -tbs_zeta='(-1,0.01,1)'  -directory=$dir",
+	get_command('execute') . " $model_dir/tbs1.mod -tbs_lambda='(-2,1,2)'  -directory=$dir",
+	get_command('execute') . " $model_dir/tbs1.mod -tbs_lambda='(-2,1,2)' -dtbs  -directory=$dir",
 );
 
 # If we are running on Windows remove ' in command line
@@ -100,8 +100,6 @@ foreach my $i (0..$#command_line) {
   }
   rmtree([$dir]);
 }
-
-
 
 remove_test_dir($tempdir);
 

@@ -14,7 +14,7 @@ our $dir = "$tempdir/llp_test";
 my $model_dir = $includes::testfiledir;
 
 my @commands = 
-	($includes::llp." $model_dir/pheno.mod -thetas=2 -omegas=1,2 -dir=$dir",
+	(get_command('llp') . " $model_dir/pheno.mod -thetas=2 -omegas=1,2 -dir=$dir",
 	);
 
 foreach my $command (@commands){

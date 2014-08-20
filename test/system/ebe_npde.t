@@ -15,7 +15,7 @@ my $model_dir = $includes::testfiledir;
 
 my @commands = 
 	(
-	 $includes::ebe_npde." -samples=20 $model_dir/pheno_cond.mod -dir=$dir"
+	 get_command('ebe_npde') . " -samples=20 $model_dir/pheno_cond.mod -dir=$dir"
   );
 
 foreach my $command (@commands){

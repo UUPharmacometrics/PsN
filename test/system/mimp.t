@@ -14,7 +14,7 @@ our $dir = "mimp_test";
 my $model_dir = $includes::testfiledir;
 
 my @commands = 
-	($includes::mimp." -reg=$model_dir/pheno.mod -base=$model_dir/pheno.mod -mi_model=$model_dir/pheno.mod -imputations=2 -dir=$dir",
+	(get_command('mimp') . " -reg=$model_dir/pheno.mod -base=$model_dir/pheno.mod -mi_model=$model_dir/pheno.mod -imputations=2 -dir=$dir",
 	);
 chdir($tempdir);
 foreach my $command (@commands){

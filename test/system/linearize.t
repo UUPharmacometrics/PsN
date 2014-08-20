@@ -14,7 +14,7 @@ our $dir = "linearize_test";
 my $model_dir = $includes::testfiledir;
 
 my @commands = 
-	($includes::linearize." $model_dir/mox1.mod -dir=$dir",
+	(get_command('linearize') . " $model_dir/mox1.mod -dir=$dir",
 	);
 chdir($tempdir);
 foreach my $command (@commands){

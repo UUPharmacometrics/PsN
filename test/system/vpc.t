@@ -14,7 +14,7 @@ our $dir = "$tempdir/vpc_test";
 my $model_dir = $includes::testfiledir;
 
 my @commands = 
-	($includes::vpc." -samples=20 $model_dir/mox1.mod -stratif=AGE -no_of_strata=3 -auto_bin=12 -dir=$dir",
+	(get_command('vpc') . " -samples=20 $model_dir/mox1.mod -stratif=AGE -no_of_strata=3 -auto_bin=12 -dir=$dir",
 	 );
 
 foreach my $command (@commands){

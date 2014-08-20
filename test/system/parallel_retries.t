@@ -14,7 +14,7 @@ our $dir = "parallel_retries_test";
 my $model_dir = $includes::testfiledir;
 
 my @commands = 
-	($includes::parallel_retries." $model_dir/pheno.mod -dir=$dir -min_retries=2 -no-display",
+	(get_command('parallel_retries') . " $model_dir/pheno.mod -dir=$dir -min_retries=2 -no-display",
 	);
 chdir($tempdir);
 foreach my $command (@commands){
