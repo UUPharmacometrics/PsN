@@ -89,8 +89,6 @@ sub create_reparametrized_model
 	my $model = $parm{'model'};
 	my @precond_matrix = @{$parm{'precond_matrix'}};
 
-	my @precMatrix = @{$parm{'precond_matrix'}};		# FIXME 
-
 	my $model = $model->copy(
 		output_same_directory => 1,
 		filename => $filename,
@@ -118,23 +116,23 @@ sub create_reparametrized_model
 
 	for (my $i = 0; $i < $model->nthetas; $i++) {
 		$tempString = 'THE_' . ($i + 1) . '=';
-		my @temp=@{$precMatrix[$i]};
+		my @temp=@{$precond_matrix[$i]};
 		for (my $j = 0; $j < scalar(@temp); $j++) {
-			if ($j == 0 or $precMatrix[$i][$j] < 0) {
-				if (length($tempString) + length($precMatrix[$i][$j] . '*THETA(' . ($j + 1) . ')') > 70) {
+			if ($j == 0 or $precond_matrix[$i][$j] < 0) {
+				if (length($tempString) + length($precond_matrix[$i][$j] . '*THETA(' . ($j + 1) . ')') > 70) {
 					$tempString = $tempString . "\n";
 					$tempTempSt = $tempTempSt . $tempString;
-					$tempString = 'THE_'.($i + 1) . '=THE_' . ($i + 1) . $precMatrix[$i][$j] . '*THETA(' . ($j + 1) . ')';
+					$tempString = 'THE_'.($i + 1) . '=THE_' . ($i + 1) . $precond_matrix[$i][$j] . '*THETA(' . ($j + 1) . ')';
 				} else {
-					$tempString = $tempString . $precMatrix[$i][$j] . '*THETA(' . ($j + 1) . ')';
+					$tempString = $tempString . $precond_matrix[$i][$j] . '*THETA(' . ($j + 1) . ')';
 				}
-			} elsif ($precMatrix[$i][$j] > 0) {
-				if (length($tempString) + length($precMatrix[$i][$j] . '*THETA(' . ($j + 1) . ')') > 70) {
+			} elsif ($precond_matrix[$i][$j] > 0) {
+				if (length($tempString) + length($precond_matrix[$i][$j] . '*THETA(' . ($j + 1) . ')') > 70) {
 					$tempString = $tempString . "\n";
 					$tempTempSt = $tempTempSt . $tempString;
-					$tempString = 'THE_' . ($i + 1) . '=THE_' . ($i + 1) . '+' . $precMatrix[$i][$j] . '*THETA(' . ($j + 1) . ')';
+					$tempString = 'THE_' . ($i + 1) . '=THE_' . ($i + 1) . '+' . $precond_matrix[$i][$j] . '*THETA(' . ($j + 1) . ')';
 				} else {
-					$tempString = $tempString . '+' . $precMatrix[$i][$j] . '*THETA(' . ($j + 1) . ')';
+					$tempString = $tempString . '+' . $precond_matrix[$i][$j] . '*THETA(' . ($j + 1) . ')';
 				}
 			}
 		}
@@ -158,19 +156,19 @@ sub create_reparametrized_model
 	# Set new initial values for thetas
 	my @parameter_initial = @{$model->initial_values(parameter_type => 'theta')->[0]};
 
-	my $dummy = linear_algebra::LU_factorization(\@precMatrix);
+	my $dummy = linear_algebra::LU_factorization(\@precond_matrix);
 
-	for (my $i = 1; $i < scalar(@precMatrix); $i++) {
+	for (my $i = 1; $i < scalar(@precond_matrix); $i++) {
 		for (my $j = 0; $j < $i; $j++) {
-			$parameter_initial[$i] = $parameter_initial[$i] - $parameter_initial[$j] * $precMatrix[$i][$j];
+			$parameter_initial[$i] = $parameter_initial[$i] - $parameter_initial[$j] * $precond_matrix[$i][$j];
 		}
 	}
 
-	for (my $i = $#precMatrix; $i >= 0; $i--) {
-		for (my $j = $#precMatrix; $j > $i; $j--) {
-			$parameter_initial[$i] = $parameter_initial[$i] - $parameter_initial[$j] * $precMatrix[$i][$j];
+	for (my $i = $#precond_matrix; $i >= 0; $i--) {
+		for (my $j = $#precond_matrix; $j > $i; $j--) {
+			$parameter_initial[$i] = $parameter_initial[$i] - $parameter_initial[$j] * $precond_matrix[$i][$j];
 		}
-		$parameter_initial[$i] = $parameter_initial[$i] / $precMatrix[$i][$i];
+		$parameter_initial[$i] = $parameter_initial[$i] / $precond_matrix[$i][$i];
 	}
 
 	$model->initial_values(parameter_type => 'theta', new_values => [[@parameter_initial]]);
@@ -202,8 +200,6 @@ sub convert_reparametrized_cov
 	my @precond_matrix = @{$parm{'precond_matrix'}};
 	my $output_filename = $parm{'output_filename'};
 
-	my @precMatrix = @{$parm{'precond_matrix'}};		# FIXME
-
 	my @cov_lines;
 	open(my $fh, '<', $cov_filename) or croak("Cannot find the .cov file '$cov_filename' [$!]\n");
 	while (my $tline = <$fh>) {
@@ -212,6 +208,7 @@ sub convert_reparametrized_cov
 	}
 
 	my @reparaCov;
+
 	my $rowCount = 0;
 	my $found_table;
 	my @header_labels;
@@ -259,14 +256,13 @@ sub convert_reparametrized_cov
 		}
 	}
 
-
 	my @temp_varcovMatrix;
 
 	for (my $i = 0; $i < $model->nthetas; $i++) {
 		for (my $j = 0; $j < $model->nthetas; $j++) {
 			$temp_varcovMatrix[$i][$j] = 0;
 			for (my $k = 0; $k < $model->nthetas; $k++) {
-				$temp_varcovMatrix[$i][$j] = $temp_varcovMatrix[$i][$j] + $precMatrix[$i][$k] * $reparaCov[$k][$j];
+				$temp_varcovMatrix[$i][$j] = $temp_varcovMatrix[$i][$j] + $precond_matrix[$i][$k] * $reparaCov[$k][$j];
 			}
 		}
 	}
@@ -277,7 +273,7 @@ sub convert_reparametrized_cov
 		for (my $j = 0; $j < $model->nthetas; $j++) {
 			$varcovMatrix[$i][$j] = 0;
 			for (my $k = 0; $k < $model->nthetas; $k++) {
-				$varcovMatrix[$i][$j] = $varcovMatrix[$i][$j] + $temp_varcovMatrix[$i][$k] * $precMatrix[$j][$k];
+				$varcovMatrix[$i][$j] = $varcovMatrix[$i][$j] + $temp_varcovMatrix[$i][$k] * $precond_matrix[$j][$k];
 			}
 		}
 	}
