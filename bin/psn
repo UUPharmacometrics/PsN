@@ -39,6 +39,7 @@ my %optional_options = (
 			 'npc' => '',
 			 'parallel_retries' => '',
 			 'pind' => '',
+			 'precond' => '',
 			 'psn_clean' => '',
 			 'psn_options' => '',
 			 'pvar' => '',
@@ -159,6 +160,10 @@ EOF
 
 $help_text{-pind} = <<'EOF';
       pind - Individual Probabilities
+EOF
+
+$help_text{-precond} = <<'EOF';
+      precond - Preconditioning
 EOF
 
 $help_text{-psn_clean} = <<'EOF';
