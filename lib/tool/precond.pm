@@ -19,7 +19,10 @@ sub BUILD
 {
 	my $self = shift;
 
-
+	my $records = $self->precond_model->problems->[0]->covariances;
+	unless (defined $records and defined $records->[0]) {
+		croak("No \$COVARIANCE defined in " . $self->precond_model->full_name . "\nPlease add it to the model and run again.");
+	}
 }
 
 sub modelfit_setup
