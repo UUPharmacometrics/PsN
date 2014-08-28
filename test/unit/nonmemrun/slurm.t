@@ -9,6 +9,7 @@ use includes; #file with paths to PsN packages
 
 my @readpipe_list;
 
+
 BEGIN
 {
 	*CORE::GLOBAL::readpipe = sub { push @readpipe_list, $_[0] };
@@ -19,9 +20,16 @@ use nonmemrun::slurm;
 use model;
 
 my $model = model->new(filename => $includes::testfiledir . "/pheno5.mod");
-my $nonmemrun = nonmemrun::slurm->new(nm_version => 'default', model => $model);
 
+#temporarily unset uppmax if set
+my $old_uppmax = $PsN::config -> {'default_options'} -> {'uppmax'};
+$PsN::config -> {'default_options'} -> {'uppmax'} = 0;
+
+my $nonmemrun = nonmemrun::slurm->new(nm_version => 'default', model => $model);
 $nonmemrun->submit;
+
+#reset uppmax
+$PsN::config -> {'default_options'} -> {'uppmax'} = $old_uppmax;
 
 foreach my $line (@readpipe_list) {
 	print "$line\n";
