@@ -42,7 +42,8 @@ sub put_ones_on_diagonal_of_zero_lines
 	for (my $row = 0; $row < @$A; $row++) {
 		my $all_zero = 1;
 		for (my $col = 0; $col < @{$A->[$row]}; $col++) {
-			if ($A->[$row]->[$col]) {
+            print $row, " ", $col, " ",  $A->[$row]->[$col], "\n";
+			if ($A->[$row]->[$col] != 0) {
 				$all_zero = 0;
 				last;
 			}

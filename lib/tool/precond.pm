@@ -107,7 +107,16 @@ sub modelfit_analyze
 
         for my $theta (@{$copy->problems->[0]->thetas}) {
             for (my $i = 0; $i < scalar(@{$theta->options}); $i++) {
-                $theta->options->[$i]->init($new_theta->[$i]);
+                my $option = $theta->options->[$i];
+                $option->init($new_theta->[$i]);
+                if (defined $option->lobnd and $new_theta->[$i] < $option->lobnd) {
+                    $option->clear_lobnd;
+                    print "Warning: updated THETA(", $i + 1, ") estimate is below original lower bound. The bound will be removed in updated model.\n";
+                }
+                if (defined $option->upbnd and $new_theta->[$i] > $option->upbnd) {
+                    $option->clear_upbnd;
+                    print "Warning: updated THETA(", $i + 1, ") estimate is above original upper bound. The bound will be removed in updated model.\n";
+                }
             }
         }
 
