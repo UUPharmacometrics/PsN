@@ -34,6 +34,7 @@ my %optional_options = (
 	"nodec!" => undef,
 	"output_model:s" => undef,
 	"cov:s" => undef,
+	"update_model" => undef,
 );
 
 my $res = GetOptions( \%options,
@@ -65,6 +66,10 @@ EOF
 
 $help_text{-cov} = <<'EOF';
       Explicitly set the covariance matrix to use. If this option is used only the post processing step will be done.
+EOF
+
+$help_text{-update_model} = <<'EOF';
+      Set a filename to store the original model with updated inital values for the parameters.
 EOF
 
 common_options::online_help('precond', \%options, \%help_text, \%required_options, \%optional_options);
@@ -183,6 +188,7 @@ if ($only_do_pre_step) {
 		precond_matrix => \@precMatrix,
 		models => [ $dummy_model ],
 		precond_model => $model,
+		update_model => $options{'update_model'},
 	);
 
 	$precond->print_options (cmd_line => $cmd_line,

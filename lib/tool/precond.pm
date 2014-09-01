@@ -5,15 +5,19 @@ use Math::Random;
 use File::Spec;
 use Moose;
 use MooseX::Params::Validate;
+use File::Copy qw(copy);
 
 use array qw(:all);
 use tool::modelfit;
 use linear_algebra;
+use output;
 
 extends 'tool';
 
 has 'precond_matrix' => (is => 'rw', isa => 'ArrayRef[ArrayRef]');
 has 'precond_model' => (is => 'rw', isa => 'model');
+has 'update_model' => (is => 'rw', isa => 'Maybe[Str]');
+has '_repara_model' => (is => 'rw', isa => 'model');
 
 sub BUILD
 {
@@ -48,22 +52,60 @@ sub modelfit_setup
 		top_tool => 0,
 	);
 
+	$self->_repara_model($model);
+
 	$self->tools([]) unless defined $self->tools;
 	push(@{$self->tools}, $modelfit);
 }
 
 sub modelfit_analyze
 {
-	my $self = shift;
+    my $self = shift;
 
-	my $cov_filename = $self->tools->[0]->directory . 'NM_run1/psn.cov';
+    my $cov_filename = $self->tools->[0]->directory . 'NM_run1/psn.cov';
 
-	convert_reparametrized_cov(
-		cov_filename => $cov_filename,
-		model => $self->precond_model,
-		precond_matrix => $self->precond_matrix,
-		output_filename => "result.cov",
-	);
+    convert_reparametrized_cov(
+        cov_filename => $cov_filename,
+        model => $self->precond_model,
+        precond_matrix => $self->precond_matrix,
+        output_filename => "result.cov",
+    );
+
+    if ($self->_repara_model->is_run) {
+        my $output = $self->_repara_model->outputs->[0];
+
+        my $copy = $self->precond_model->copy(
+            filename => 'updated_model.mod',
+            copy_datafile => 0,
+            write_copy => 0,
+            copy_output => 0
+        );
+
+        my $theta = $output->get_single_value(attribute => 'thetas');
+        my $new_theta = [];
+
+        # Multiply precond_matrix with theta to obtain original theta
+        for (my $row = 0; $row < scalar(@$theta); $row++) {
+            my $sum = 0;
+            for (my $col = 0; $col < scalar(@$theta); $col++) {
+                $sum += $self->precond_matrix->[$row]->[$col] * $theta->[$col];
+            }
+            $new_theta->[$row] = $sum;
+        }
+
+        for my $theta (@{$copy->problems->[0]->thetas}) {
+            for (my $i = 0; $i < scalar(@{$theta->options}); $i++) {
+                $theta->options->[$i]->init($new_theta->[$i]);
+            }
+        }
+
+        $copy->_write;
+        if (defined $self->update_model) {
+            copy $copy->full_name, '../' . $self->update_model;
+        }
+    } else {
+        print "Unable to update model: model was not run";
+    }
 }
 
 sub _reparametrize
