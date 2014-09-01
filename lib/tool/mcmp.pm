@@ -476,7 +476,7 @@ sub modelfit_setup
 	if (defined $nmoutopt and length($nmoutopt)>0){
 		$nmoutopt .= ',phi'; #ok to append even if there already
 	}else{
-		$nmoutopt .= 'phi';
+		$nmoutopt = 'phi';
 	}
 
 	$self->tools([]) unless (defined $self->tools);
