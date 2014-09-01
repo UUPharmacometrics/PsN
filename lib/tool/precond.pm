@@ -44,12 +44,22 @@ sub modelfit_setup
 		precond_matrix => $self->precond_matrix,
 	);
 
+    # FIXME: Use cov matrix already in memory
+    my %hash = %{common_options::restore_options(@common_options::tool_options)};
+	my $nmoutopt = $hash{'nm_output'};
+	if (defined $nmoutopt and length($nmoutopt) > 0) {
+		$nmoutopt .= ',cov'; #ok to append even if there already
+	} else {
+		$nmoutopt = 'cov';
+	}
+
 	my $modelfit = tool::modelfit->new(
 		%{common_options::restore_options(@common_options::tool_options)},
 		models => [ $model ], 
 		base_dir => $self->directory,
 		directory => undef,
 		top_tool => 0,
+        nm_output => $nmoutopt,
 	);
 
 	$self->_repara_model($model);
@@ -62,7 +72,9 @@ sub modelfit_analyze
 {
     my $self = shift;
 
-    my $cov_filename = $self->tools->[0]->directory . 'NM_run1/psn.cov';
+    my $filename = $self->_repara_model->filename;
+    $filename =~ s/\.mod$/.cov/;
+    my $cov_filename = 'm1/' . $filename;
 
     convert_reparametrized_cov(
         cov_filename => $cov_filename,
@@ -124,7 +136,7 @@ sub _reparametrize
 }
 
 sub create_reparametrized_model
-{	
+{
 	my %parm = validated_hash(\@_,
 		filename => { isa => 'Str', optional => 0 },
 		model => { isa => 'model' },
