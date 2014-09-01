@@ -34,7 +34,7 @@ my %optional_options = (
 	"nodec!" => undef,
 	"output_model:s" => undef,
 	"cov:s" => undef,
-	"update_model" => undef,
+	"update_model:s" => undef,
 );
 
 my $res = GetOptions( \%options,
