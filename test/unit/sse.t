@@ -143,7 +143,7 @@ chdir($dir);
 my $resultsfile = 'sse_test/sse_results_recompute1.csv';
 
 unlink($resultsfile);
-my $command = $includes::sse." -samples=5 pheno.mod  -recompute=sse_test/raw_results_pheno.csv";
+my $command = get_command("sse") . " -samples=5 pheno.mod  -recompute=sse_test/raw_results_pheno.csv";
 
 system $command;
 
@@ -163,7 +163,7 @@ dircopy($model_dir . 'sse_mox', $dir);
 chdir($dir);
 
 unlink($resultsfile);
-$command= $includes::sse." -samples=5 moxonidine.mod -recompute=sse_test/raw_results_moxonidine.csv";
+$command= get_command("sse") . " -samples=5 moxonidine.mod -recompute=sse_test/raw_results_moxonidine.csv";
 
 system $command;
 

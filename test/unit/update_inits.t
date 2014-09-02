@@ -139,10 +139,10 @@ copy_test_files($tempdir,["pheno.mod", "pheno.lst",'mox1.lst','mox1.mod']);
 
 chdir($tempdir);
 my @command_line = (
-	$includes::update_inits." pheno.mod -out=run1.mod",
-	$includes::update_inits." pheno.mod -out=run2.mod -comment=\"new comment\"",
-	$includes::update_inits." mox1.mod -out=run3.mod",
-	$includes::update_inits." mox1.mod -out=run4.mod -add_tags"
+	get_command("update_inits") . " pheno.mod -out=run1.mod",
+	get_command("update_inits") . " pheno.mod -out=run2.mod -comment=\"new comment\"",
+	get_command("update_inits") . " mox1.mod -out=run3.mod",
+	get_command("update") . " mox1.mod -out=run4.mod -add_tags"
 );
 foreach my $i (0..$#command_line) {
 	my $command= $command_line[$i];
