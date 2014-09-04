@@ -22,6 +22,7 @@ use common_options;
 use ui;
 use OSspecific;
 use File::Copy qw/cp mv/;
+use File::Path qw(mkpath);
 
 my $cmd_line = $0 . " " . join( " ", @ARGV );
 
@@ -362,7 +363,7 @@ if (defined $main_directory){
 }else{
   $main_directory= OSspecific::unique_path( 'xv_scm_dir' ,$return_dir);
 }
-mkdir( $main_directory) unless ( -d  $main_directory);
+mkpath( $main_directory) unless ( -d  $main_directory);
 #copy config file to rundir
 my ( $dir, $file ) = OSspecific::absolute_path('',$options{'config_file'});
 cp($dir.$file,$main_directory.$file);

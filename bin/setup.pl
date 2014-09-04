@@ -993,7 +993,7 @@ if (confirm()) {
 			abort("Could not copy contents of test directory to $test_library_dir : $!\n");
 		}
 	} else {
-		mkdir $test_library_dir;
+		mkpath($test_library_dir);
 		my $full_command = $copy_recursive_cmd . " " . File::Spec->catfile("test", "*") . " \"" . $test_library_dir . "\""; 
 		system($full_command);
 

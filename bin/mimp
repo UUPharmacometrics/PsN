@@ -20,6 +20,7 @@ use model;
 use common_options;
 use ui;
 use Cwd;
+use File::Path qw(mkpath);
 
 my $cmd_line = $0 . " " . join( " ", @ARGV );
 
@@ -141,7 +142,7 @@ if ( !$options{'directory'}) {
 
 my ($newdir, $newfile) = OSspecific::absolute_path( $options{'directory'}, '' );
 unless (-e $newdir){
-	mkdir( $newdir );
+	mkpath( $newdir );
 }
 ($newdir, $newfile) = OSspecific::absolute_path( $options{'directory'} .  '/m1', '' );
 unless (-e $newdir){

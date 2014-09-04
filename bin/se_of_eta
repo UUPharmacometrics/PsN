@@ -20,6 +20,7 @@ use common_options;
 use ui;
 use File::Copy 'cp';
 use Data::Dumper;
+use File::Path qw(mkpath);
 
 my $cmd_line = $0 . " " . join( " ", @ARGV );
 
@@ -88,7 +89,7 @@ if ( defined $options{'directory'} ) {
 }
 
 unless( -d $directory ){
-  mkdir( $directory );
+  mkpath( $directory );
   
 }
 

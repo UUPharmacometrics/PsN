@@ -21,6 +21,7 @@ use common_options;
 use ui;
 use Cwd;
 use File::Copy qw/cp mv/;
+use File::Path qw(mkpath);
 
 my $cmd_line = $0 . " " . join( " ", @ARGV );
 
@@ -265,7 +266,7 @@ if (defined $options{'rawres_input'}){
 
 
 }
-mkdir( $main_directory) unless ( -d  $main_directory);
+mkpath( $main_directory) unless ( -d  $main_directory);
 chdir($main_directory);
 my $main_model = $models_array -> [0] -> copy( filename    => $models_array -> [0]->filename(),
 											   copy_datafile   => 1,

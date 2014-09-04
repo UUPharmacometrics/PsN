@@ -4,6 +4,7 @@ use include_modules;
 use strict;
 use Cwd;
 use File::Copy 'cp';
+use File::Path qw(mkpath);
 use OSspecific;
 use Math::Random;
 use ui;
@@ -399,7 +400,9 @@ sub _make_dir
 	my $self = shift;
 
 	unless ( -e $self->directory ) {
-		mkdir( $self->directory ) ;
+		unless (mkpath($self->directory)) {
+			croak "Unable to create directory ".$self->directory.". Aborting\n";
+		}
 		$self->stop_motion_call(tool => 'tool',message => "created ".$self->directory)
 		if ($self->stop_motion() > 1);
 	}

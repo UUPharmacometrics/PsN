@@ -22,6 +22,7 @@ use ui;
 use File::Copy 'cp';
 use Data::Dumper;
 use data;
+use File::Path qw(mkpath);
 
 ################################################################################
 #
@@ -138,7 +139,7 @@ if ( defined $options{'directory'} ) {
 my $eval_string = common_options::model_parameters(\%options);
 
 unless( -d $directory ){
-  mkdir( $directory );
+  mkpath( $directory );
   
 }
 
