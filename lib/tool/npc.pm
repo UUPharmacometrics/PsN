@@ -3745,7 +3745,7 @@ sub vpc_analyze
 	}
 	my @pred_int = sort {$a <=> $b} 0,40,80,90,95;
 	if ($self->fine_pi()){
-		@pred_int = sort {$a <=> $b} 0,10,20,30,40,50,60,70,80,90,95;
+		@pred_int = sort {$a <=> $b} 0,10,20,25,30,40,50,60,70,75,80,90,95;
 	}
 	my $meantext = 'mean';
 	my $deltameantext = 'delta-mean';
