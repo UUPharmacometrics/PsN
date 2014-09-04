@@ -1749,6 +1749,20 @@ sub diagnose_lst_errors
 	} elsif (not(-e 'FREPORT')) {
 		$failure = 'NMtran failed';
 		$failure_mess="NMtran failed. There is no output for model ".($run_no+1) ;
+		if (($run_no < 2) and (-e 'FMSG' or -e $self->nmtran_error_file)){
+			#if low run number then add nmtran messages to failure_mess, which will be printed to screen later
+			#do not do this for high run numbers (we do not want 100 prints for e.g. a bootstrap)
+			my $fname = 'FMSG'; 
+			$fname = $self->nmtran_error_file if (-e $self->nmtran_error_file);
+			open( FILE, "$fname" ) ||	carp(" Could not open $fname for reading" );
+			my @lines = <FILE>;
+			close( FILE );
+			$failure_mess .= ". Contents of FMSG:\n";
+			foreach my $string (@lines){
+				chomp($string);
+				$failure_mess .= $string."\n";
+			}
+		}
 		$self->general_error(message => $failure_mess) unless ($missing);
 	} elsif (not(-e 'nonmem.exe' or -e 'NONMEM_MPI.exe' or -e 'nonmem_mpi.exe' or -e 'nonmem_mpi' or -e 'nonmem' or -e 'nonmem5' or -e 'nonmem6' or -e 'nonmem7' )){
 		$failure = 'It seems like the compilation failed';
