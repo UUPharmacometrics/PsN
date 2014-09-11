@@ -1231,16 +1231,8 @@ sub cut_thetas
 sub prepare_raw_results
 {
 	my $self = shift;
-	my %parm = validated_hash(\@_,
-		model_number => { isa => 'Int', optional => 1 },
-		header => { isa => 'ArrayRef[Str]', optional => 1 },
-		models => { isa => 'ArrayRef', optional => 1 }
-	);
-	my $model_number = $parm{'model_number'};
-	my @header = defined $parm{'header'} ? @{$parm{'header'}} : ();
-	my @models = defined $parm{'models'} ? @{$parm{'models'}} : ();
-	my @new_header;
-	my @raw_results;
+
+    my @new_header;
 
 	# As of PsN version 2.1.8, we don't handle problems and
 	# subproblems in any of the tools but modelfit.
@@ -1299,14 +1291,6 @@ sub prepare_raw_results
 							push( @new_header, uc(substr($name,0,2)).$i );
 						}
 					}
-#dangerous to turn this on, some models really do not have omega/sigma/theta
-#		if (($max_hash{ $name } == 0) and defined $param_names{$name}
-#		    and scalar(@{$param_names{$name}})>0){
-#		  #probably msfi, labels from output instead
-#		  foreach my $label (@{$param_names{$name}}){
-#		    push( @new_header, $label );
-#		  }
-#		}
 				}
 				$success = 1;
 				last;
@@ -1323,14 +1307,6 @@ sub prepare_raw_results
 						push( @new_header, 'se' . uc(substr($name,2,2)).$i );
 					}
 				}
-#dangerous to turn this on, some models really do not have omega/sigma/theta
-#	      if (($max_hash{ $name } == 0) and defined $param_names{$param}
-#		  and scalar(@{$param_names{$param}})>0){
-#		#probably msfi, labels from output instead
-#		foreach my $label (@{$param_names{$param}}){
-#		  push( @new_header, 'se'.$label );
-#		}
-#	      }
 				$success = 1;
 				last;
 			} 
@@ -1376,8 +1352,6 @@ sub prepare_raw_results
 	}
 
 	$self->raw_nonp_results_header(\@new_nonp_header);
-
-	return \@new_header ,\@raw_results;
 }
 
 sub print_raw_results
