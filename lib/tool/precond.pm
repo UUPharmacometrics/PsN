@@ -76,11 +76,15 @@ sub modelfit_analyze
     $filename =~ s/\.mod$/.cov/;
     my $cov_filename = 'm1/' . $filename;
 
+	my $model_filename = $self->precond_model->filename;
+	$model_filename =~ s/(\.ctl|\.mod)$//;
+    my $result_cov = $model_filename . '.cov';
+
     convert_reparametrized_cov(
         cov_filename => $cov_filename,
         model => $self->precond_model,
         precond_matrix => $self->precond_matrix,
-        output_filename => "result.cov",
+        output_filename => $result_cov,
     );
 
     if ($self->_repara_model->is_run) {
@@ -219,6 +223,14 @@ sub create_reparametrized_model
 		}
 	}
 
+	# Remove limits for thetas
+    foreach my $theta (@{$model->problems->[0]->thetas}) {
+       	foreach my $option (@{$theta->options}) {
+    		$option->clear_upbnd;
+    		$option->clear_lobnd
+    	}
+    }
+
 	# Set new initial values for thetas
 	my @parameter_initial = @{$model->initial_values(parameter_type => 'theta')->[0]};
 
@@ -238,15 +250,6 @@ sub create_reparametrized_model
 	}
 
 	$model->initial_values(parameter_type => 'theta', new_values => [[@parameter_initial]]);
-
-
-	# Remove limits for thetas
-	foreach my $theta (@{$model->problems->[0]->thetas}) {
-		foreach my $option (@{$theta->options}) {
-			$option->clear_upbnd;
-			$option->clear_lobnd
-		}
-	}
 
 	$model->_write;
 
@@ -352,7 +355,15 @@ sub convert_reparametrized_cov
 		for (my $j = 0; $j < $model->nthetas; $j++) {
 			@line_values[$j + 1] = $varcovMatrix[$i][$j];
 		}
-		$cov_lines[$i + 2] = join "   ", @line_values;
+        $line_values[0] = $line_values[0] . (" " x (12 - length($line_values[0]) ) ); 
+        for my $i (1..@line_values - 1) {
+            if ($line_values[$i] < 0) {
+                $line_values[$i] = sprintf(" %.5E", $line_values[$i]);
+            } else {
+                $line_values[$i] = sprintf("  %.5E", $line_values[$i]);
+            }
+        }
+		$cov_lines[$i + 2] = join "", @line_values;
 		$cov_lines[$i + 2] = " ".$cov_lines[$i + 2];
 	}
 
