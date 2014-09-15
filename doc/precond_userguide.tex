@@ -1,14 +1,16 @@
 \input{inputs/format_header.tex}
-\guidetitle{PRECOND user guide}
+\guidetitle{PRECOND\footnote{Idea developed by Yasunori Aoki under the supervision of Andrew C. Hooker.}  user guide}
+\usepackage{color}
+\usepackage{amsmath}
 
 \begin{document}
 
 \maketitle
 
-
 \section{Introduction}
-The precond script creates and runs a reparametrized modelfile given a matrix to use for preconditioning.
-Preconditioning could make it possible to run the covariance step for models that would otherwise fail.
+The precond script creates and runs a preconditioned modelfile given a preconditioning matrix.
+Preconditioning could make it possible to run the covariance step for models that would otherwise fail due to rounding error (e.g., the covriance step fail with the error messages "MATRIX ALGORITHMICALLY SINGULAR" or "MATRIX ALGORITHMICALLY NON-POSITIVESEMIDEFINITE"). It is also observed that preconditioning can help avoid failure of the minimization due to rounding error.
+
 
 Examples
 \begin{verbatim}
@@ -24,7 +26,7 @@ Required argument is a model file and a preconditioning matrix.
 \begin{optionlist}
 
 \optdefault{pre}{psn.cov}
-A file in which to find the matrix for preconditioning. This matrix will be modified before use (see the preconditioning matrix section below) It can be either a comma separated file without header or a NONMEM output covariance matrix.
+A file in which to find the matrix for preconditioning. This matrix will be modified before use (see the preconditioning matrix section below) It can be either a comma separated file without header or a NONMEM output covariance matrix. It is recommended to use a symmetric matrix as preconditioning matrix.
 \nextopt
 \end{optionlist}
 
@@ -36,10 +38,10 @@ Use cholesky decomposition of the preconditioning matrix instead of LU decomposi
 \optname{nodec}
 Turn off decomposition of preconditioning matrix.
 \optdefault{output\_model}{run1\_repara.mod}
-This option will break the normal execution flow and have precond only create the reparametrized model without running it.
+This option will break the normal execution flow and have precond only create the preconditioned model without running it.
 The model will be created with the specified name.
 \optdefault{cov}{result.cov}
-This option will break the normal execution flow and only perform a conversion of a reparametrized covariance matrix.
+This option will break the normal execution flow and only perform a conversion of a covariance matrix of the preconditioned model to the covariance matrix of the original model.
 If this option is set no model will be run.
 \optdefault{update\_model}{filename}
 Copy the model with updated inital thetas to your work directory
@@ -47,41 +49,68 @@ Copy the model with updated inital thetas to your work directory
 
 \section{Output}
 
-Using the normal execution flow (if none of -output\_model or -cov are specified) the model will be reparametrized, run and the resulting covariance matrix will be
-backconverted and stored as result.cov.
+Using the normal execution flow (if none of -output\_model or -cov are specified) the model will be preconditioned, run and if the covariance step of the preconditioned model is successful then the resulting covariance matrix will appear in result.cov.
 
 The file update\_model.mod will always be created in the run directory. It is the original model with updated initial thetas after
-running the reparametrized model and backconverting the theta estimates.
+running the preconditioned model and calculating the theta estimates of the original model based on the theta estimates of the preconditioned model.
 
+A raw\_results file will be created with thetas and standard errors of thetas updated. 
 
 \section{Preconditioning matrix}
 
-The input preconditioning matrix can be either a .csv file or a NONMEM .cov file. If it is a .csv file it should just have the matrix
-rows one on each line and no header.
-The input matrix will be modified in the following ways to create
-a square lower triangular matrix that will be used for preconditioning of the THETAs:
+The input preconditioning matrix can be either a .csv file or a NONMEM .cov file. The input matrix will be modified in the following ways so that it can be used for preconditioning of the THETAs:
 First it will be either truncated or padded to become a square matrix with same size as the number of thetas in the model.
 When padded all new rows will be set to zero except for the diagonal element which will be set to one. If any rows in the preconditioning matrix is found
-to be all zeros a one will be placed on the diagonal. To obtain a lower triangular matrix a decomposition of the matrix will be performed. The default is to
-use the LU factorization. The -cholesky option changes this to use cholesky decomposition instead. It is also possible to skip the decomposition by
-setting the option -nodec in which case the user is responsible for the input matrix.
+to be all zeros a one will be placed on the diagonal.
+
+The preconditioning matrix can be thought as the "initial guess" of the covariance matrix and similarly to the initial guess of the parameters, it can be obtained from a similar model whose covariance step was successful.
+
 
 \section{Description}
 
-This section describes in more detail how the reparametrization is done
+This section describes in more detail how the preconditioning is done. For the purpose of this section we assume that the \verb;-nodec; option was not chosen.
 
 \begin{itemize}
-    \item The inputs are a model file and a lower triangular square matrix, L (see the section on the Preconditioning matrix above)
-    \item Thetas are reparametrized as $\theta_{original} = L \cdot \theta_{estimated}$ For example:
+    \item The inputs are a model file (we refer it as the "original model") and a matrix (we denote this matrix by $P$).
+    \item We first pad or truncate the matrix $P$ so that it will be a full rank $n \times n$ matrix, where $n$ is the number of fixed effect parameters (read the section on Preconditioning matrix for more detail on the padding and truncation of the matrix).  We denote this padded/truncated matrix to be $\tilde{P}$.
+    \item If the matrix $\tilde{P}$ is non-singular and symmetric, then it is decomposed either by LU decomposition or Cholesky decomposition so that it can be wrriten as 
+    \begin{eqnarray*}
+    \tilde{P}=LDL^\textrm{T}
+    \end{eqnarray*}
+    where $D$ is a diagonal matrix, if Cholesky decomposition is chosen then $D$ is an identity matrix.\\
+    If $\tilde{P}$ is not a symmetrix matrix or is a singular matrix then the script exits with an error message.
+
+    
+    \item Fixed effect parameters are reparametrized as $\boldsymbol{\theta} = L \,\hat{\boldsymbol{\theta}}$, where $\boldsymbol{\theta}$ is the vector of fixed effect parameters of the original model and $\hat{\boldsymbol{\theta}}$ is the vector of the fixed effect parameters of the preconditioned model.
+     For example considering an original model with two fixed effect parameters, this reparameterization can be found in the preconditioned model as follows:
         \begin{verbatim}
         $PK
         THE_1 = L_11 * THETA(1)
         THE_2 = L_21 * THETA(1) + L_22 * THETA(2)
         \end{verbatim}
-    \item Use the original parameters in the place of THETAs in all relevant code blocks (currently pk, pred, error, des, aes, aesinitial, mix and infn)
-        For example: \verb|CL = THETA(1)| will be replaced with \verb|CL = THE_1|
-	\item Initial values of thetas will be transformed
-	\item All bounds for thetas in the original model are removed
+      In this case the vectors  ${\boldsymbol{\theta}}$ and $\hat{\boldsymbol{\theta}}$ are
+        \begin{eqnarray*}
+        \boldsymbol{\theta}&=&[\verb;THE_1, THE_2;]^\textrm{T}\\
+        \hat{\boldsymbol{\theta}}&=&[\verb;THETA(1), THETA(2);]^\textrm{T}
+        \end{eqnarray*}
+    \item \verb;THETA(x); in the original model file are replaced with \verb;THE_x; in all relevant code blocks (currently pk, pred, error, des, aes, aesinitial, mix and infn)
+        For example: \verb|CL = THETA(1)| in the original model will be replaced with \verb|CL = THE_1| in the preconditioned model.
+	\item All bounds for thetas in the preconditioned model are removed and the initial estimate of of the parameters are updated by $\hat{\boldsymbol{\theta}}_\textrm{init}$ where
+	\begin{eqnarray*}
+	    \hat{\boldsymbol{\theta}}_\textrm{init}= L^{-1} \,{\boldsymbol{\theta}}_\textrm{init}.
+	\end{eqnarray*}
+	The preconditioned model can be found in m1/<modelname>\_repara.mod in the precond run directory.
+	\item Estimate the parameters and covariance matrix of the preconditioned model using NONMEM, we denote the estimated parameter vector by $\hat{\boldsymbol{\theta}}$ and the variance covariance matrix by $\hat{M}$.
+	\item If the estimated parameter vector of the preconditioned model $\hat{\boldsymbol{\theta}}$ was obtained, then the estimated parameter vector matrix of the original model $\boldsymbol{\theta}$ can be obtained as follows:
+	\begin{eqnarray*}
+        \boldsymbol{\theta}=L\hat{\boldsymbol{\theta}}.
+	\end{eqnarray*}
+	The estimated parameter vector of the original model $\boldsymbol{\theta}$ can be found in the file updated\_model.mod
+	\item Similarly, if the covariance matrix of the preconditioned model $\hat{M}$ was obtained, then the covariance matrix of the original model $M$ is calculated as follows:
+	\begin{eqnarray*}
+        M=L\hat{M}L^\textrm{T}.
+	\end{eqnarray*}
+	The covariance matrix of the original model $M$ can be found in the file result.cov
 \end{itemize}
 
 
