@@ -80,7 +80,7 @@ sub modelfit_analyze
 	$model_filename =~ s/(\.ctl|\.mod)$//;
     my $result_cov = $model_filename . '.cov';
 
-    convert_reparametrized_cov(
+    my $cov_matrix = convert_reparametrized_cov(
         cov_filename => $cov_filename,
         model => $self->precond_model,
         precond_matrix => $self->precond_matrix,
@@ -128,6 +128,29 @@ sub modelfit_analyze
         if (defined $self->update_model) {
             copy $copy->full_name, '../' . $self->update_model;
         }
+
+
+        # Print raw results
+        my $modelfit = $self->tools->[0];
+        my $filename = $self->precond_model->filename;
+        $filename =~ s/.mod$/.csv/;
+        $filename = "raw_results_" . $filename;
+        $modelfit->directory(".");
+        $modelfit->raw_results_file->[0] = $filename;
+
+        my $theta_pos = $modelfit->raw_line_structure->{1}->{theta};
+        $theta_pos =~ s/(.*),.*/$1/;
+        for (my $i = 0; $i < @$new_theta; $i++) {
+            $modelfit->raw_results->[0]->[$theta_pos + $i] = $new_theta->[$i];
+        }
+        my $se_pos = $modelfit->raw_line_structure->{1}->{setheta};
+        $se_pos =~ s/(.*),.*/$1/;
+        for (my $i = 0; $i < @$new_theta; $i++) {
+            $modelfit->raw_results->[0]->[$se_pos + $i] = sqrt($cov_matrix->[$i]->[$i]);
+        }
+
+        $modelfit->print_raw_results;
+
     } else {
         print "Unable to update model: model was not run";
     }
@@ -373,7 +396,10 @@ sub convert_reparametrized_cov
 	}
 
 	close $MYFILE; 
+
+    return \@varcovMatrix;
 }
+
 
 no Moose;
 __PACKAGE__->meta->make_immutable;
