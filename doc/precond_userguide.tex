@@ -7,12 +7,13 @@
 
 
 \section{Introduction}
-The precond script creates a reparametrized modelfile given a matrix to use for preconditioning.
+The precond script creates and runs a reparametrized modelfile given a matrix to use for preconditioning.
+Preconditioning could make it possible to run the covariance step for models that would otherwise fail.
 
 Examples
 \begin{verbatim}
 precond run1.mod -pre=pmatrix.csv
-precond run2.mod -pre=psn.cov -cholesky 
+precond run2.mod -pre=psn.cov -cholesky
 \end{verbatim}
 
 \section{Input and options}
@@ -23,7 +24,7 @@ Required argument is a model file and a preconditioning matrix.
 \begin{optionlist}
 
 \optdefault{pre}{psn.cov}
-The name of the matrix used for preconditioning. It can be either a comma separated file without header or a NONMEM output covariance matrix.
+A file in which to find the matrix for preconditioning. This matrix will be modified before use (see the preconditioning matrix section below) It can be either a comma separated file without header or a NONMEM output covariance matrix.
 \nextopt
 \end{optionlist}
 
@@ -35,32 +36,52 @@ Use cholesky decomposition of the preconditioning matrix instead of LU decomposi
 \optname{nodec}
 Turn off decomposition of preconditioning matrix.
 \optdefault{output\_model}{run1\_repara.mod}
-Set name of output model. Setting this option will only create the reparametrized model without running it.
+This option will break the normal execution flow and have precond only create the reparametrized model without running it.
+The model will be created with the specified name.
 \optdefault{cov}{result.cov}
-Only perform a conversion of a reparametrized covariance matrix. If this option is set no model will be run.
+This option will break the normal execution flow and only perform a conversion of a reparametrized covariance matrix.
+If this option is set no model will be run.
+\optdefault{update\_model}{filename}
+Copy the model with updated inital thetas to your work directory
 \end{optionlist}
 
 \section{Output}
 
-If the option -output\_model is set the script will create the reparametrized model file without running it.
-If the option -cov is set the script will convert back a reparametrized covariance matrix.
-
-If none of -output\_model or -cov are used the model will be reparametrized, run and the resulting covariance matrix will be
+Using the normal execution flow (if none of -output\_model or -cov are specified) the model will be reparametrized, run and the resulting covariance matrix will be
 backconverted and stored as result.cov.
+
+The file update\_model.mod will always be created in the run directory. It is the original model with updated initial thetas after
+running the reparametrized model and backconverting the theta estimates.
 
 
 \section{Preconditioning matrix}
 
-The preconditioning matrix can be either a csv file or a NONMEM .cov file. It will be either truncated or padded to the number of thetas in the model.
-When padded all new rows will be all zero except for the diagonal element which will be set to one. If any rows in the preconditioning matrix is found
-to be all zeros a one will be placed as the diagonal element.
+The input preconditioning matrix can be either a .csv file or a NONMEM .cov file. If it is a .csv file it should just have the matrix
+rows one on each line and no header.
+The input matrix will be modified in the following ways to create
+a square lower triangular matrix that will be used for preconditioning of the THETAs:
+First it will be either truncated or padded to become a square matrix with same size as the number of thetas in the model.
+When padded all new rows will be set to zero except for the diagonal element which will be set to one. If any rows in the preconditioning matrix is found
+to be all zeros a one will be placed on the diagonal. To obtain a lower triangular matrix a decomposition of the matrix will be performed. The default is to
+use the LU factorization. The -cholesky option changes this to use cholesky decomposition instead. It is also possible to skip the decomposition by
+setting the option -nodec in which case the user is responsible for the input matrix.
 
 \section{Description}
 
+This section describes in more detail how the reparametrization is done
+
 \begin{itemize}
-	\item Thetas are reparametrized
+    \item The inputs are a model file and a lower triangular square matrix, L (see the section on the Preconditioning matrix above)
+    \item Thetas are reparametrized as $\theta_{original} = L \cdot \theta_{estimated}$ For example:
+        \begin{verbatim}
+        $PK
+        THE_1 = L_11 * THETA(1)
+        THE_2 = L_21 * THETA(1) + L_22 * THETA(2)
+        \end{verbatim}
+    \item Use the original parameters in the place of THETAs in all relevant code blocks (currently pk, pred, error, des, aes, aesinitial, mix and infn)
+        For example: \verb|CL = THETA(1)| will be replaced with \verb|CL = THE_1|
 	\item Initial values of thetas will be transformed
-	\item All bounds for thetas in the original model are removed.
+	\item All bounds for thetas in the original model are removed
 \end{itemize}
 
 
