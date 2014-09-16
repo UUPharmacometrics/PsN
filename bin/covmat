@@ -1,0 +1,214 @@
+#!/usr/bin/perl
+
+use FindBin qw($Bin);
+use lib "$Bin/../lib";
+
+# Don't edit the line below, it must look exactly like this.
+# Everything above this line will be replaced #
+
+use PsN;
+use model;
+use tool::sir;
+use strict;
+use Getopt::Long;
+use common_options;
+use Cwd;
+use OSspecific;
+
+my $cmd_line = $0 . " " . join( " ", @ARGV );
+
+## Configure the command line parsing
+Getopt::Long::config("auto_abbrev");
+
+my %options;
+## Declare the options
+
+my %required_options = ('rawres_input:s' => undef
+);
+my %optional_options = (
+	'offset_rawres:i' => undef,
+	'in_filter:s' => undef
+);
+
+my $min_samples=2;
+
+my $res = GetOptions( \%options,
+		      keys(%required_options),
+		      keys(%optional_options) );
+exit unless $res;
+
+common_options::setup( \%options, 'covmat' ); #calls set_globals etc, initiates random sequence
+
+
+my %help_text;
+
+$help_text{Pre_help_message} = <<'EOF';
+  <h3 class="heading1">covmat</h3>
+
+    Empirical covariance matrix from raw_results
+EOF
+
+$help_text{Options} = <<'EOF';      
+    Options:
+
+      The options are given here in their long form. Any option may be
+      abbreviated to any nonconflicting prefix. The -threads option
+      may be abbreviated to -thr.
+
+      The following options are valid:
+EOF
+
+$help_text{-h} = <<'EOF';
+      -h | -?
+      
+      With -h or -? covmat will print a list of options and exit.
+EOF
+      
+$help_text{-help} = <<'EOF';      
+      -help
+      
+      With -help covmat will print this, longer, help message.
+EOF
+
+$help_text{-rawres_input} = <<'EOF';
+      -rawres_input=filename
+
+      A raw_results file. After filtering and skipping offset it must contain at least 2 samples.
+      The labels for  THETA/OMEGA/SIGMA 
+      in the file must match the labels in the model given as input, and
+      the theta columns must be directly followed by the omega columns 
+      which must be directly followed by the sigma columns. Note that is is 
+      possible to generate a file with initial parameter estimates outside of PsN, 
+      as long as the file follows the format rules.
+EOF
+$help_text{-offset_rawres} = <<'EOF';
+      -offset_rawres=N
+
+      Default 0.
+      The number of result lines to skip in the input raw results file
+      before starting to read final parameter estimates. 
+EOF
+
+$help_text{-in_filter} = <<'EOF';
+      -in_filter=comma-separated list of conditions
+
+      Only relevant in combination with rawres_input. Default not used.
+      The parameter estimates lines in the file can be filtered on values 
+      in the different columns. When specifying which column(s) the filtering 
+      should be based on, the exact column name must be used, 
+      e.g. minimization_successful. Filtering can only be based on columns 
+      with numeric values. The allowed relations are .gt. (greater than), 
+      .lt. (less than) and .eq. (equal to). Conditions are separated with commas. 
+      If the remaining number of lines after filtering is smaller than 2, 
+      covmat will stop with an error message. 
+      If the user has created a file with 
+      parameter estimates outside of PsN, filtering can be done on any numeric 
+      column in that file. Do not set column headers containing .eq. or .lt. 
+      or .gt.in the user-generated file as this would interfere with the in_filter 
+      option syntax.
+    
+      Example: -in_filter=minimization_successful.eq.1,significant_digits.gt.3.5
+
+EOF
+
+common_options::online_help( 'covmat', \%options, \%help_text, \%required_options, \%optional_options);
+
+## Check that we do have a model file
+if ( scalar(@ARGV) < 1 ) {
+  print "A model file must be specified. Use 'covmat -h' for help.\n";
+  exit;
+}
+
+if( scalar(@ARGV) > 1 ){
+  print "covmat can only handle one modelfile, you listed: ",join(',',@ARGV),". Use 'covmat -h' for help.\n";die;
+  exit;
+}
+
+unless ( defined $options{'rawres_input'} ){
+  print "rawres_input must be given\n" ;
+  exit;
+}
+unless ( defined $options{'offset_rawres'}){
+  $options{'offset_rawres'} = 0;
+}
+
+my ( $dir, $file ) = OSspecific::absolute_path(cwd(), $options{'rawres_input'});
+$options{'rawres_input'} = $dir . $file;
+unless (-e $options{'rawres_input'}){
+    print "File ".$options{'rawres_input'}." does not exist";
+    exit;
+}
+
+my $eval_string = common_options::model_parameters(\%options);
+
+my $model = model -> new ( eval( $eval_string ),
+			   filename                    => $ARGV[0],
+			   ignore_missing_output_files => 1);
+
+
+my @in_filter=();
+if ( defined $options{'in_filter'} ){
+  #split string, assume comma separated
+  foreach my $filt (split(/,/,$options{'in_filter'})){
+    if ($filt =~ /.\.(gt|lt|eq)\.\d+\.?\d*/){
+      push(@in_filter,$filt);
+    }else{
+      die "Input filter $filt does not fulfill the format rules.\n";
+    }
+  }
+  if (scalar(@in_filter)<1){
+    die "Error: Option in_filter used, but list of conditions could not be parsed.\n";
+  }	
+}
+
+my $sampled_params_arr = $model->get_rawres_params(filename => $options{'rawres_input'},
+												   filter => \@in_filter,
+												   offset => $options{'offset_rawres'});
+if (defined $sampled_params_arr) {
+	unless (scalar(@{$sampled_params_arr}) >= $min_samples) {
+		if (scalar(@in_filter)>0) {
+			croak("Too few sets (lines) of parameter values in\n".
+				  $options{'rawres_input'}."\nafter filtering. Have ".scalar(@{$sampled_params_arr}).
+				  " but need at least $min_samples.\n");
+		} else {
+			croak("Too few sets (lines) of parameter values in\n".
+				  $options{'rawres_input'}.". Have ".scalar(@{$sampled_params_arr}).
+				  " but need at least ".
+				  ($min_samples + $options{'offset_rawres'}).".\n");
+		}
+	}
+} else {
+	croak("get_rawres_params returned undef");
+}
+
+my $len = scalar(@{$sampled_params_arr});
+for (my $i=0; $i< $len; $i++){
+	$sampled_params_arr->[$i]->{'resamples'}=1;
+}
+#
+#my $labels_hash = get_nonmem_parameters(output => $output);
+#param is just theta omega sigma
+#here we just care about thetas
+#what about fixed?
+my @labels= @{$model -> labels( parameter_type => 'theta' )};
+
+#print join(' ',@{$labels[0]})."\n";
+my @params=('theta') x scalar(@{$labels[0]});
+#print join(' ',@params)."\n";
+my %labels_hash;
+$labels_hash{'filtered_labels'}=$labels[0]; #first $PROBLEM
+$labels_hash{'param'}=\@params;
+
+
+my $resulthash = tool::sir::empirical_statistics( sampled_params_arr => $sampled_params_arr,
+												  labels_hash => \%labels_hash);
+
+my $header='NAME';
+for (my $i=0; $i< scalar(@{$resulthash->{'covar'}}); $i++){
+	$header .= ',THETA'.($i+1);
+}
+print $header."\n";
+for (my $i=0; $i< scalar(@{$resulthash->{'covar'}}); $i++){
+	print 'THETA'.($i+1).','.join(',',@{$resulthash->{'covar'}->[$i]})."\n";
+}
+
