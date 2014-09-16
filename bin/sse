@@ -134,11 +134,10 @@ $help_text{-rawres_input} = <<'EOF';
       estimates from a raw_results.csv file, e.g. from a bootstrap run or the 
       initial_estimates.csv file from a previous sse run with $PRIOR in the 
       simulation model. The raw results file must contain at least as many 
-      samples as the input -samples to sse, the labels for  THETA/OMEGA/SIGMA 
+      samples as the input -samples to sse, the labels for THETA/OMEGA/SIGMA 
       in the file must match the labels in the simulation model given as input 
-      to sse, the theta columns must be directly followed by the omega columns 
-      which must be directly followed by the sigma columns, and the first column 
-      must have header model just as a bootstrap raw_results file. Note that is is 
+      to sse, and the theta columns must be directly followed by the omega columns 
+      which must be directly followed by the sigma column. Note that is is 
       possible to generate a file with initial parameter estimates outside of PsN, 
       as long as the file follows the format rules.
 EOF
