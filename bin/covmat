@@ -27,7 +27,8 @@ my %required_options = ('rawres_input:s' => undef
 );
 my %optional_options = (
 	'offset_rawres:i' => undef,
-	'in_filter:s' => undef
+	'in_filter:s' => undef,
+	'parameters:s' => undef
 );
 
 my $min_samples=2;
@@ -89,6 +90,16 @@ $help_text{-offset_rawres} = <<'EOF';
       before starting to read final parameter estimates. 
 EOF
 
+$help_text{-parameters} = <<'EOF';
+      -parameters=comma-separated list of parameters
+
+      Default is -parameters=theta,omega,sigma
+      A comma-separated list of the sets of parameters to include in the computations, and their order.
+	  Only theta, omega and sigma may be included, all lower case and without indices.
+      Examples: -parameters=theta,sigma,omega   
+	            -parameters=theta
+EOF
+
 $help_text{-in_filter} = <<'EOF';
       -in_filter=comma-separated list of conditions
 
@@ -115,9 +126,14 @@ common_options::online_help( 'covmat', \%options, \%help_text, \%required_option
 
 ## Check that we do have a model file
 if ( scalar(@ARGV) < 1 ) {
-  print "A model file must be specified. Use 'covmat -h' for help.\n";
+  print "The model file coupled to the raw_results file must be specified.\n";
   exit;
 }
+
+#TODO if model not given then check if file raw_results_structure present in same directory as rawres file
+#read it and pick up theta omega and sigma labels
+#create dummy model object with theta omega and sigma set with those labels
+#then continue using get_rawres_params using that model object
 
 if( scalar(@ARGV) > 1 ){
   print "covmat can only handle one modelfile, you listed: ",join(',',@ARGV),". Use 'covmat -h' for help.\n";die;
@@ -137,6 +153,21 @@ $options{'rawres_input'} = $dir . $file;
 unless (-e $options{'rawres_input'}){
     print "File ".$options{'rawres_input'}." does not exist";
     exit;
+}
+
+my @list_parameters=('theta','omega','sigma');
+if (defined $options{'parameters'}){
+	@list_parameters=split(/,/,$options{'parameters'});
+	my $num = scalar(@list_parameters);
+	if ($num < 1 or $num > 3){
+		die "Error option parameters, $num items found after splitting ".$options{'parameters'}." on comma\n";
+	}
+	for (my $i=0; $i< $num; $i++){
+		unless ($list_parameters[$i] =~ /^(theta|omega|sigma)$/){
+			die "Unrecognized item ".$list_parameters[$i]." in option -parameters\n";
+		}
+	}
+
 }
 
 my $eval_string = common_options::model_parameters(\%options);
@@ -185,30 +216,32 @@ my $len = scalar(@{$sampled_params_arr});
 for (my $i=0; $i< $len; $i++){
 	$sampled_params_arr->[$i]->{'resamples'}=1;
 }
-#
-#my $labels_hash = get_nonmem_parameters(output => $output);
-#param is just theta omega sigma
-#here we just care about thetas
-#what about fixed?
-my @labels= @{$model -> labels( parameter_type => 'theta' )};
 
-#print join(' ',@{$labels[0]})."\n";
-my @params=('theta') x scalar(@{$labels[0]});
-#print join(' ',@params)."\n";
+my @labels =();
+my @parameters =();
+my @headers=();
+
+foreach my $param (@list_parameters){
+	my @temp= @{$model -> labels( parameter_type => $param,
+								  generic => 0)};
+	push(@labels,@{$temp[0]}); #first $PROBLEM
+	push(@parameters,($param) x scalar(@{$temp[0]}));
+	@temp= @{$model -> labels( parameter_type => $param,
+							   generic => 1)};
+	push(@headers,@{$temp[0]}); #first $PROBLEM
+}
+
 my %labels_hash;
-$labels_hash{'filtered_labels'}=$labels[0]; #first $PROBLEM
-$labels_hash{'param'}=\@params;
+$labels_hash{'filtered_labels'}=\@labels;
+$labels_hash{'param'}=\@parameters;
 
 
 my $resulthash = tool::sir::empirical_statistics( sampled_params_arr => $sampled_params_arr,
 												  labels_hash => \%labels_hash);
 
-my $header='NAME';
+#header items must be enclosed with double quotes since some contain comma, e.g. OMEGA(1,1)
+print '"NAME","'.join('","',@headers).'"'."\n";
 for (my $i=0; $i< scalar(@{$resulthash->{'covar'}}); $i++){
-	$header .= ',THETA'.($i+1);
-}
-print $header."\n";
-for (my $i=0; $i< scalar(@{$resulthash->{'covar'}}); $i++){
-	print 'THETA'.($i+1).','.join(',',@{$resulthash->{'covar'}->[$i]})."\n";
+	print '"'.$headers[$i].'",'.join(',',@{$resulthash->{'covar'}->[$i]})."\n";
 }
 
