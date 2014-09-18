@@ -49,7 +49,8 @@ Copy the model with updated inital thetas to your work directory
 
 \section{Output}
 
-Using the normal execution flow (if none of -output\_model or -cov are specified) the model will be preconditioned, run and if the covariance step of the preconditioned model is successful then the resulting covariance matrix will appear in result.cov.
+Using the normal execution flow (if none of -output\_model or -cov are specified) the model will be preconditioned, run and if the covariance step of the preconditioned model is successful then the resulting covariance matrix will appear in <inputmodel>.cov. This file will also be copied to the calling
+directory if cov is specified in -nm\_ouput.
 
 The file update\_model.mod will always be created in the run directory. It is the original model with updated initial thetas after
 running the preconditioned model and calculating the theta estimates of the original model based on the theta estimates of the preconditioned model.
@@ -110,7 +111,7 @@ This section describes in more detail how the preconditioning is done. For the p
 	\begin{eqnarray*}
         M=L\hat{M}L^\textrm{T}.
 	\end{eqnarray*}
-	The covariance matrix of the original model $M$ can be found in the file result.cov
+	The covariance matrix of the original model $M$ can be found in the file <inputmodel>.cov
 \end{itemize}
 
 
