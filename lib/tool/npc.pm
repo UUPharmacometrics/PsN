@@ -7,6 +7,7 @@ use strict;
 use tool::modelfit;
 use model;
 use ui;
+use log;
 use Config;
 use OSspecific;
 use File::Copy qw/cp mv/;
@@ -1643,9 +1644,7 @@ sub modelfit_setup
 	$self->original_model($model_orig);
 	$self->simulation_models(\@model_sims);
 
-	$self->stop_motion_call(tool=>'npc/vpc',
-							message =>"Preparing to create modelfit object to run models.")
-		if ($self->stop_motion());
+	trace(tool => 'npc/vpc', message =>"Preparing to create modelfit object to run models.", level => 1);
 
 	my @runmodels=();
 	push (@runmodels,$model_orig) if ($self->run_the_original);
@@ -1702,8 +1701,7 @@ sub modelfit_analyze
 		return;
 	}
 
-	$self->stop_motion_call(tool=>'npc/vpc',message => "done running the models. Do analysis.")
-		if ($self->stop_motion);
+	trace(tool => 'npc/vpc', message => "done running the models. Do analysis.", level => 1);
 
 	if (defined $self->tte) {
 		$self->get_tte_data;

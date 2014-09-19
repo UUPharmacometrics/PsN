@@ -4,6 +4,7 @@ use include_modules;
 use strict;
 use File::Copy 'cp';
 use data;
+use log;
 use OSspecific;
 use tool::modelfit;
 use Math::Random;
@@ -170,9 +171,8 @@ sub modelfit_setup
 												   equal_obs => (not $self->match_transitions())
 			);
 
-		$self->stop_motion_call(tool=>'randtest',message => "Created randomized datasets in ".
-			$self ->directory().'m'.$model_number)
-		if ($self->stop_motion());
+		trace(tool => 'randtest', message => "Created randomized datasets in ".
+			$self ->directory().'m'.$model_number, level => 1);
 
 		for ( my $j = 0; $j < $self->samples(); $j++ ) {
 			my @data_arr = ($new_datas->[$j]) x scalar(@{$model->problems});
@@ -200,9 +200,8 @@ sub modelfit_setup
 
 			push( @new_models, $new_mod );
 		}
-		$self->stop_motion_call(tool=>'randtest',message => "Created one modelfile per dataset in ".
-			$self ->directory().'m'.$model_number)
-		if ($self->stop_motion());
+		trace(tool => 'randtest', message => "Created one modelfile per dataset in ".
+			$self ->directory().'m'.$model_number, level => 1);
 
 		# Create a checkpoint. Log the samples and individuals.
 		open( DONE, ">".$self ->directory()."/m$model_number/done" ) ;
@@ -285,9 +284,8 @@ sub modelfit_setup
 			top_tool              => 0,
 			%subargs ) );
 
-	$self->stop_motion_call(tool=>'randtest',message => "Created a modelfit object to run all the models in ".
-		$self ->directory().'m'.$model_number)
-	if ($self->stop_motion());
+	trace(tool => 'randtest', message => "Created a modelfit object to run all the models in ".
+		$self ->directory().'m'.$model_number, level => 1);
 }
 
 sub cleanup

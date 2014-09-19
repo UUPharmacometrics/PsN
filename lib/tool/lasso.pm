@@ -3,6 +3,7 @@ package tool::lasso;
 use include_modules;
 use tool::xv;
 use tool::modelfit;
+use log;
 use Math::Random;
 use Data::Dumper;
 use Cwd;
@@ -499,10 +500,8 @@ sub xv_step_init
 {
 	my $self = shift;
 
-	print "\nlasso: xv_step_init\n" if ($self->stop_motion());
 	#self here will be xv_step object, shift gets single parameter given in xv_step_subs
-	$self->stop_motion_call(tool=>'lasso',message => "starting xv_step_init")
-	if ($self->stop_motion());
+	trace(tool => 'lasso', message => "starting xv_step_init", level => 1);
 	sub print_log {
 		my $filename = shift;
 		my $message  = shift;
@@ -543,10 +542,9 @@ sub xv_step_init
 
 		$model->_write(overwrite => 1);
 	}
-	$self->stop_motion_call(tool=>'lasso',message => "written ".scalar(@estimation_models).
+	trace(tool => 'lasso', message => "written ".scalar(@estimation_models).
 		" new estimation models and ".scalar(@prediction_models).
-		" new prediction models")
-	if ($self->stop_motion());
+		" new prediction models", level => 1);
 
 	print_log ($own_parameters->{'logfile'}->[0],  "Last OFV sum: " . $own_parameters->{'last_ofv_sum'} ."\n");
 	$own_parameters -> {'last_t_value'}+=$own_parameters->{'steplength'};
@@ -557,7 +555,7 @@ sub xv_step_analyze
 	my $self = shift;
 	my $retur;
 
-	print "\nlasso: xv_step_analyze\n" if ($self->stop_motion());
+	trace(tool => "lasso", message => "xv_step_analyze\n", level => 1);
 	#self here will be xv_step object
 	sub print_log {
 		my $filename = shift;
@@ -598,9 +596,8 @@ sub xv_step_analyze
 			die "No defined output from the pred model!\n";
 		}
 	}
-	$self->stop_motion_call(tool=>'lasso',message => "computed sum ofv from ".scalar(@prediction_models).
-		" prediction models")
-	if ($self->stop_motion());
+	trace(tool => 'lasso', message => "computed sum ofv from ".scalar(@prediction_models).
+		" prediction models", level => 1);
 	printf $fh1 "%-12.4f %-6.3f %-5s %-10d\n", $sum_ofv, $own_parameters -> {'last_t_value'}, "All", $own_parameters->{'seed'};
 
 	close($fh1);
@@ -646,13 +643,11 @@ sub xv_step_analyze
 				$i++;
 
 			}else { 
-				$self->stop_motion_call(tool=>'lasso',message => "estimation model did not have defined ofv, return 0")
-				if ($self->stop_motion());
+				trace(tool => 'lasso', message => "estimation model did not have defined ofv, return 0", level => 1);
 				$retur = 0; 
 			}
 		} else { 
-			$self->stop_motion_call(tool=>'lasso',message => "estimation model did not have defined output, return 0")
-			if ($self->stop_motion());
+			trace(tool => 'lasso', message => "estimation model did not have defined output, return 0", level => 1);
 			$retur = 0;
 		}
 	}
@@ -987,10 +982,9 @@ sub modelfit_setup
 		my $return_val = $basic_step->run();
 		my @basic_pred_models = @{$basic_step->prediction_models()};
 		my @basic_est_models = @{$basic_step->estimation_models()};
-		$self->stop_motion_call(tool=>'lasso',message => "have run ".scalar(@basic_est_models).
+		trace(tool => 'lasso', message => "have run ".scalar(@basic_est_models).
 			" basic est models and ".scalar(@basic_pred_models).
-			" basic pred models")
-		if ($self->stop_motion());
+			" basic pred models", level => 1);
 
 		my $sum_ofv = 0;
 		my $j=1;

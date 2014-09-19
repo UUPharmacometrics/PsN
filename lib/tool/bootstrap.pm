@@ -4,6 +4,7 @@ use include_modules;
 use strict;
 use File::Copy 'cp';
 use data;
+use log;
 use OSspecific;
 use tool::llp;
 use tool::cdd::jackknife;
@@ -860,9 +861,8 @@ sub general_setup
 												   missing_data_token => $self->missing_data_token
 												   	);
 			$self->subjects($new_subjects);
-			$self->stop_motion_call(tool=>'bootstrap',message => "Created bootstrapped datasets in ".
-				$self ->directory().'m'.$model_number)
-			if ($self->stop_motion());
+			trace(tool => 'bootstrap', message => "Created bootstrapped datasets in ".
+				$self ->directory().'m'.$model_number, level => 1);
 
 			for ( my $j = 0; $j < $self->samples(); $j++ ) {
 				my ($model_dir, $filename) = OSspecific::absolute_path( $self ->directory().'/m'.$model_number, 
@@ -899,9 +899,8 @@ sub general_setup
 
 				push( @new_models, $new_mod );
 			}
-			$self->stop_motion_call(tool=>'bootstrap',message => "Created one modelfile per dataset in ".
-				$self ->directory().'m'.$model_number)
-			if ($self->stop_motion());
+			trace(tool => 'bootstrap', message => "Created one modelfile per dataset in ".
+				$self ->directory().'m'.$model_number, level => 1);
 
 			# Create a checkpoint. Log the samples and individuals.
 			open( DONE, ">".$self ->directory()."/m$model_number/done.$i" ) ;
@@ -1075,9 +1074,8 @@ sub general_setup
 			top_tool              => 0,
 			%subargs ) );
 
-	$self->stop_motion_call(tool=>'bootstrap',message => "Created a modelfit object to run all the models in ".
-		$self ->directory().'m'.$model_number)
-	if ($self->stop_motion());
+	trace(tool => 'bootstrap', message => "Created a modelfit object to run all the models in ".
+		$self ->directory().'m'.$model_number, level => 1);
 }
 
 sub modelfit_analyze
@@ -1540,8 +1538,7 @@ sub prepare_results
 		$self -> bca_read_raw_results();
 	} else {
 		$self -> read_raw_results();
-		$self->stop_motion_call(tool=>'bootstrap',message => "Read raw results from file")
-		if ($self->stop_motion());
+		trace(tool => 'bootstrap', message => "Read raw results from file", level => 1);
 		$self -> bootstrap_raw_results ($self -> raw_results());
 	}
 
@@ -1732,8 +1729,7 @@ sub prepare_results
 	}
 
 	# }}} Result calculations
-	$self->stop_motion_call(tool=>'bootstrap',message => "Computed bootstrap results based on raw_results data in memory ")
-	if ($self->stop_motion());
+	trace(tool => 'bootstrap', message => "Computed bootstrap results based on raw_results data in memory", level => 1);
 }
 
 sub create_matlab_scripts

@@ -2,6 +2,7 @@ package tool::ebe_npde;
 
 use include_modules;
 use tool::modelfit;
+use log;
 use Math::Random;
 use Data::Dumper;
 use Config;
@@ -808,9 +809,8 @@ sub _modelfit_raw_results_callback
 		#it happens to be from second $PROB
 
 		if ( defined $modelfit -> raw_results() ) {
-			$self->stop_motion_call(tool=>'ebe_npde',message => "Preparing to rearrange raw_results in memory, adding ".
-									"model name information")
-				if ($self->stop_motion());
+			trace(tool => 'ebe_npde', message => "Preparing to rearrange raw_results in memory, adding ".
+									"model name information", level => 1);
 
 			my $n_rows = scalar(@{$modelfit -> raw_results()});
 

@@ -4,6 +4,7 @@ use include_modules;
 use model;
 use tool::cdd;
 use tool::modelfit;
+use log;
 use Math::Random;
 use Data::Dumper;
 use Config;
@@ -879,9 +880,8 @@ sub modelfit_setup
 			
 		} #end loop over number of simulations
 
-		$self->stop_motion_call(tool=>'sse',message => "created simulation models in directory ".
-								$self -> directory.'m'.$model_number)
-			if ($self->stop_motion());
+		trace(tool => 'sse', message => "created simulation models in directory ".
+								$self -> directory.'m'.$model_number, level => 1);
 
 		if( $self -> estimate_simulation and (not defined $self->simulation_rawres)){
 			#take care of msfo numbering
@@ -922,9 +922,8 @@ sub modelfit_setup
 			}
 			my $threads = $self -> parallel_simulations ? $self -> parallel_simulations : $self->threads;
 
-			$self->stop_motion_call(tool=>'sse',message => "Getting ready to run all the simulation models in ".
-									$self -> directory.'m'.$model_number)
-				if ($self->stop_motion());
+			trace(tool => 'sse', message => "Getting ready to run all the simulation models in ".
+									$self -> directory.'m'.$model_number, level => 1);
 
 			my $mod_sim = 
 				tool::modelfit -> new(  %{common_options::restore_options(@common_options::tool_options)},
@@ -1251,12 +1250,11 @@ sub modelfit_setup
 			# }}}
 			
 		} #end loop over alternatives
-		$self->stop_motion_call(tool=>'sse',message => "Created estimation models in ".
+		trace(tool => 'sse', message => "Created estimation models in ".
 								$self -> directory.'m'.$model_number.
 								"\nfor all alternative ".
-								"models and simulated datasets ")
-			if ($self->stop_motion());
-		
+								"models and simulated datasets ", level => 1);
+
 		# Create a checkpoint.
 		unless ($done){
 			open( DONE, ">".$self -> directory."/m$model_number/done" ) ;
@@ -1386,8 +1384,7 @@ sub modelfit_setup
 	}
 
 	my $rerun=1;
-	$self->stop_motion_call(tool=>'sse',message => "Preparing to run all estimation models ")
-		if ($self->stop_motion());
+	trace(tool => 'sse', message => "Preparing to run all estimation models ", level => 1);
 	$self->tools([]) unless (defined $self->tools());
 	push( @{$self -> tools},
 		  tool::modelfit -> new(
@@ -1449,10 +1446,9 @@ sub _modelfit_raw_results_callback
 		#that should be used
 
 		if ( defined $modelfit -> raw_results() ) {
-			$self->stop_motion_call(tool=>'sse',message => "Preparing to rearrange raw_results in memory, adding ".
-									"model name information")
-				if ($self->stop_motion());
-			
+			trace(tool => 'sse', message => "Preparing to rearrange raw_results in memory, adding ".
+									"model name information", level => 1);
+
 			my @rows = @{$modelfit -> raw_results()};
 			my $n_rows = scalar(@rows);
 			my @firsts;
@@ -1685,9 +1681,8 @@ sub prepare_results
 		$self -> raw_results($self -> tools->[0] -> raw_results) if (defined $self->tools);
 		$n_alternatives = scalar(@{$self -> alternative_models});
 	}
-	$self->stop_motion_call(tool=>'sse',message => "Computing statistics based on raw_results ")
-		if ($self->stop_motion());
-	
+	trace(tool => 'sse', message => "Computing statistics based on raw_results ", level => 1);
+
 	my $model = $self -> models -> [0];
 	
 	my %orig_results_section;

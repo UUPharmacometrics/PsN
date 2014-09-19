@@ -5,6 +5,8 @@ use tool::modelfit;
 use Moose;
 use MooseX::Params::Validate;
 use data;
+use log;
+
 extends 'tool';
 
 #start description
@@ -81,7 +83,7 @@ sub modelfit_setup
 {
 	my $self = shift;
 
-	print "\n xv_step: modelfit_setup\n" if ($self->stop_motion());
+	trace(tool => "xv_step", message => "modelfit_setup\n", level => 1);
 	my $model = $self -> models -> [0];
 	$self -> create_data_sets;
 
@@ -147,10 +149,9 @@ sub modelfit_setup
 						  ) ] );
 	}
 	
-	$self->stop_motion_call(tool=>'xv_step_subs',message => "a new modelfit object for estimation")
-		if ($self->stop_motion());
-	
-	if( defined $self -> init ){
+	trace(tool => 'xv_step_subs', message => "a new modelfit object for estimation", level => 1);
+
+	if (defined $self->init) {
 		&{$self -> init}($self);
 	}
 }
@@ -159,7 +160,7 @@ sub modelfit_analyze
 {
 	my $self = shift;
 
-	print "\n xv_step: modelfit_analyze\n" if ($self->stop_motion());
+	trace(tool => 'xv_step', message => "modelfit_analyze\n", level => 1);
 	if( defined $self -> post_analyze ){
 		my $temp = &{$self -> post_analyze}($self);
 		$self -> cont($temp); #is this really a boolean???
@@ -201,8 +202,7 @@ sub create_data_sets
 		($subsets,$array) = $data_obj->subsets(bins => $self->nr_validation_groups,
 											   stratify_on => $self->stratify_on());
 		
-		$self->stop_motion_call(tool=>'xv_step_subs',message => "create data")
-		if ($self->stop_motion());
+		trace(tool => 'xv_step_subs', message => "create data", level => 1);
 	} else {
 		$have_data = 1;
 		if( scalar( @{$self -> estimation_data} ) != $self -> nr_validation_groups ){
@@ -254,8 +254,7 @@ sub create_data_sets
 			push( @{$self -> estimation_data}, $est_data->full_name );
 		}
 	}
-	$self->stop_motion_call(tool=>'xv_step_subs',message => "written data in ".$self->directory)
-	if ($self->stop_motion());
+	trace(tool => 'xv_step_subs', message => "written data in ".$self->directory, level => 1);
 }
 
 sub modelfit_post_subtool_analyze
@@ -266,7 +265,7 @@ sub modelfit_post_subtool_analyze
 	);
 	my $model_number = $parm{'model_number'};
 
-	print "\n xv_step: modelfit_post_subtool_analyze\n"  if ($self->stop_motion());
+	trace(tool => "xv_step", message => "modelfit_post_subtool_analyze\n", level => 1);
 	if( $self -> prediction_is_run or $self -> estimate_only or $self -> predict_only){
 		return;
 	} else {
@@ -292,9 +291,8 @@ sub modelfit_post_subtool_analyze
 			my $init_val = $pred_mod ->
 				initial_values( parameter_type    => 'theta',
 								parameter_numbers => [[1..$pred_mod->nthetas()]])->[0];
-			$self->stop_motion_call(tool=>'xv_step_subs',message => "cut thetas in xv_step_subs ".
-									"modelfit_post_subtool_analyze")
-				if ($self->stop_motion());
+			trace(tool => 'xv_step_subs',message => "cut thetas in xv_step_subs ".
+									"modelfit_post_subtool_analyze", level => 1);
 			for(my $j = $self->n_model_thetas(); $j<scalar(@{$init_val}); $j++){ #leave original model thetas intact
 				my $value = $init_val -> [$j];
 				if (abs($value) <= $self->cutoff())
@@ -323,9 +321,8 @@ sub modelfit_post_subtool_analyze
 	$modelfit_arg{'cut_thetas_rounding_errors'} = 0;
 	$modelfit_arg{'cut_thetas_maxevals'} = 0;
 	$modelfit_arg{'handle_hessian_npd'} = 0;
-	$self->stop_motion_call(tool=>'xv_step_subs',message => "set no cut_thetas_rounding errors in xv_step_subs ".
-		"modelfit_post_subtool_analyze, push modelfit object with pred models only")
-	if ($self->stop_motion());
+	trace(tool => 'xv_step_subs',message => "set no cut_thetas_rounding errors in xv_step_subs ".
+		"modelfit_post_subtool_analyze, push modelfit object with pred models only", level => 1);
 
 	if( @models_to_run > 0 ){
 		$self -> tools([]) unless (defined $self->tools);

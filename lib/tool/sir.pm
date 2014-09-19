@@ -4,6 +4,7 @@ use include_modules;
 use strict;
 use File::Copy 'cp';
 use data;
+use log;
 use OSspecific;
 use tool::modelfit;
 use Math::Random;
@@ -282,9 +283,8 @@ sub modelfit_setup
 			 copy_data             => $self->copy_data,
 			 %subargs ) );
 	
-	$self->stop_motion_call(tool=>'sir',message => "Created a modelfit object to run all the models in ".
-							$self ->directory().'m'.$model_number)
-		if ($self->stop_motion());
+	trace(tool => 'sir', message => "Created a modelfit object to run all the models in ".
+							$self ->directory().'m'.$model_number, level => 1);
 }
 
 

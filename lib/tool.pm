@@ -11,6 +11,7 @@ use ui;
 use Data::Dumper;
 use Config;
 our $AUTOLOAD;
+use log;
 
 use Moose;
 use MooseX::Params::Validate;
@@ -37,7 +38,6 @@ has 'diagnostic_parameters' => ( is => 'rw', isa => 'ArrayRef[Str]', default =>
 			'estimate_near_boundary','rounding_errors','zero_gradients','final_zero_gradients','hessian_reset','s_matrix_singular',
 			'significant_digits','condition_number','est_methods','model_run_time','subprob_est_time','subprob_cov_time'] }  );
 has 'directory' => ( is => 'rw' );
-has 'stop_motion' => ( is => 'rw', isa => 'Int', default => 0 );
 has 'grid_batch_size' => ( is => 'rw', isa => 'Int', default => 1 );
 has 'logfile' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub {  ['psn_logfile.csv'] }  );
 has 'max_runtime' => ( is => 'rw', isa => 'Str' );
@@ -381,20 +381,6 @@ sub analyze
 	}
 }
 
-sub stop_motion_call
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		 message => { isa => 'Str', optional => 1 },
-		 tool => { isa => 'Str', optional => 1 }
-	);
-	my $message = $parm{'message'};
-	my $tool = $parm{'tool'};
-
-	print "\nPsN stop-motion: $tool\n".$message."\n(hit return to continue)";
-	my $dirt = getc;
-}
-
 sub _make_dir
 {
 	my $self = shift;
@@ -403,8 +389,7 @@ sub _make_dir
 		unless (mkpath($self->directory)) {
 			croak "Unable to create directory ".$self->directory.". Aborting\n";
 		}
-		$self->stop_motion_call(tool => 'tool',message => "created ".$self->directory)
-		if ($self->stop_motion() > 1);
+		trace(tool => 'tool',message => "created ".$self->directory, level => 2);
 	}
 }
 
@@ -560,9 +545,8 @@ sub print_results
 		unless ( defined $self->results and scalar(@{$self->results}) == 1
 				and not defined $self->results->[0]{'own'}) {
 			open ( RES, ">" . $self->directory . $self->results_file );
-			$self->stop_motion_call(tool => 'tool', message => "prepare to print ".
-				$self->directory . $self->results_file)
-			if ($self->stop_motion());
+			trace(tool => 'tool', message => "prepare to print ".
+				$self->directory . $self->results_file, level => 1);
 		}
 
 		#the unless is here to prevent empty file from being produced, especially for mcmp
@@ -835,9 +819,7 @@ sub run
 
 	my $return_dir = getcwd();
 	chdir( $self->directory );
-	$self->stop_motion_call(tool=> 'tool', message => "Changed directory to " . $self->directory)
-	    if ($self->stop_motion());
-
+	trace(tool=> 'tool', message => "Changed directory to " . $self->directory, level => 1);
 
 	#even if there is never any forking over tools, there is code in pre_fork_setup that we keep.
 	$self->pre_fork_setup;
@@ -892,11 +874,9 @@ sub run
 	$self -> post_fork_analyze;
 
 	chdir($return_dir);
-	$self->stop_motion_call(tool=>'tool',message => "Changed directory to ".$return_dir)
-	    if ($self->stop_motion());
-	
+	trace(tool => 'tool',message => "Changed directory to ".$return_dir, level => 1);
+
 	if( $self->clean >= 3 and not $self->top_tool ) {
-	#	print "\nhej\n";
 		my $top_dir = $self->directory;
 		foreach my $dir ( <$top_dir/m*> ){
 			if( $dir =~ /m[0123456789]+$/ ){
@@ -1093,11 +1073,10 @@ sub create_raw_results_rows
 
 
 		# ---------------------  Loop all result categories  ----------------------
-		$self->stop_motion_call(tool => 'tool', message => "prepare to collect raw results from output object ")
-		if ($self->stop_motion() > 1);
+		trace(tool => 'tool', message => "prepare to collect raw results from output object ", level => 2);
 
-		my $saem=0;
-		my $bayes=0;
+		my $saem = 0;
+		my $bayes = 0;
 		$self->raw_results_header([]) unless defined $self->raw_results_header;
 		foreach my $category ( @{$self->raw_results_header} ){
 			next if( $category eq 'model' or $category eq 'problem' or $category eq 'subproblem' or $category eq 'method' );
@@ -1492,9 +1471,8 @@ sub _prepare_model
 	my ($newdir, $newfile) = OSspecific::absolute_path( $self->directory .  '/m'.$model_number, '' );
 	carp("Making directory\t\t" . $newdir );
 	mkdir( $newdir );
-	$self->stop_motion_call(tool=>'tool',message => "Created directory $newdir ")
-	if ($self->stop_motion());
-	if ( defined $self -> models() ) {
+	trace(tool => 'tool',message => "Created directory $newdir ", level => 1);
+	if (defined $self -> models()) {
 		my @models = @{$self -> models()};
 		if ( defined $models[$model_number - 1] ) {
 			my $model = $models[$model_number - 1];

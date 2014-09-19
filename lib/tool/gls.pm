@@ -2,6 +2,7 @@ package tool::gls;
 
 use include_modules;
 use tool::modelfit;
+use log;
 use Math::Random;
 use Data::Dumper;
 use Config;
@@ -776,8 +777,7 @@ sub modelfit_setup
 		%subargs = %{$self -> subtool_arguments};
 	}
 
-	$self->stop_motion_call(tool=>'gls',message => "Preparing to run gls model ")
-		if ($self->stop_motion());
+	trace(tool => 'gls', message => "Preparing to run gls model ", level => 1);
 	$self->tools([]) unless (defined $self->tools);
 	push( @{$self -> tools},
 		  tool::modelfit -> new(
@@ -837,9 +837,8 @@ sub _modelfit_raw_results_callback
 		#it happens to be from second $PROB
 
 		if ( defined $modelfit -> raw_results() ) {
-			$self->stop_motion_call(tool=>'gls',message => "Preparing to rearrange raw_results in memory, adding ".
-									"model name information")
-				if ($self->stop_motion());
+			trace(tool => 'gls', message => "Preparing to rearrange raw_results in memory, adding ".
+									"model name information", level => 1);
 
 			my $n_rows = scalar(@{$modelfit -> raw_results()});
 

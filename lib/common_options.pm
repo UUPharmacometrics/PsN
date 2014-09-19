@@ -9,6 +9,7 @@ use Math::Random;
 use Cwd;
 use OSspecific;
 use PsN;
+use log;
 
 ## Configure the command line parsing
 Getopt::Long::config("auto_abbrev");
@@ -74,7 +75,6 @@ Getopt::Long::config("auto_abbrev");
 		  "slurm_prepend_flags:s",
 		  "slurm_account:s",
 		  "slurm_partition:s",
-		  "stop_motion:i",
 		  "threads:i",
 		  "torque_queue:s",
 		  "torque_prepend_flags:s",
@@ -107,14 +107,16 @@ Getopt::Long::config("auto_abbrev");
 				  "niter_eonly:i"
     );
 
-my @script_options = ( "debug:i",
-		       "h|?",
-		       "help",
-		       "html_help",
-		       "silent",
-		       "version",
-		       "warn_with_trace!"
-		       );
+my @script_options = (
+    "debug:i",
+    "h|?",
+    "help",
+    "html_help",
+    "silent",
+    "version",
+    "warn_with_trace!",
+    "stop_motion:i",
+);
 
 @get_opt_strings = (sort(@tool_options), sort(@model_options), sort(@script_options));
 
@@ -196,6 +198,7 @@ sub set_globals
 
 	$PsN::warnings_enabled = $options{'debug'};
 	$ext::Carp::Verbose = $options{'warn_with_trace'};
+    $log::stop_motion = $options{'stop_motion'};
 }
 
 sub get_defaults
