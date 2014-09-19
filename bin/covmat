@@ -12,7 +12,6 @@ use tool::sir;
 use strict;
 use Getopt::Long;
 use common_options;
-use Cwd;
 use OSspecific;
 
 my $cmd_line = $0 . " " . join( " ", @ARGV );
@@ -29,7 +28,8 @@ my %optional_options = (
 	'offset_rawres:i' => undef,
 	'in_filter:s' => undef,
 	'parameters:s' => undef,
-	'raw_results_structure:s' => undef
+	'raw_results_structure:s' => undef,
+	'header!' => undef
 );
 
 my $min_samples=2;
@@ -96,6 +96,12 @@ $help_text{-offset_rawres} = <<'EOF';
       The number of result lines to skip in the input raw results file
       before starting to read final parameter estimates. 
 EOF
+$help_text{-header} = <<'EOF';
+      -header
+
+      Default set.
+      By default the covariance matrix is printed with headers. Setting -no-header skips the headers in the output.
+EOF
 
 $help_text{-parameters} = <<'EOF';
       -parameters=comma-separated list of parameters
@@ -144,8 +150,6 @@ unless ( defined $options{'offset_rawres'}){
   $options{'offset_rawres'} = 0;
 }
 
-my ( $dir, $file ) = OSspecific::absolute_path(cwd(), $options{'rawres_input'});
-$options{'rawres_input'} = $dir . $file;
 unless (-e $options{'rawres_input'}){
     print "File ".$options{'rawres_input'}." does not exist";
     exit;
@@ -241,8 +245,14 @@ my $resulthash = tool::sir::empirical_statistics( sampled_params_arr => $sampled
 												  labels_hash => $labels_hash);
 
 #header items must be enclosed with double quotes since some contain comma, e.g. OMEGA(1,1)
-print '"NAME","'.join('","',@headers).'"'."\n";
+
+unless (defined $options{'header'} and (not $options{'header'})){
+	print '"NAME","'.join('","',@headers).'"'."\n";
+}
 for (my $i=0; $i< scalar(@{$resulthash->{'covar'}}); $i++){
-	print '"'.$headers[$i].'",'.join(',',@{$resulthash->{'covar'}->[$i]})."\n";
+	unless (defined $options{'header'} and (not $options{'header'})){
+		print '"'.$headers[$i].'",'
+	}
+	print join(',',@{$resulthash->{'covar'}->[$i]})."\n";
 }
 
