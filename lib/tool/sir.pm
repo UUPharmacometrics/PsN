@@ -214,11 +214,12 @@ sub modelfit_setup
 	my $mat = new Math::MatrixReal(1,1);
 	my $muvector = $mat->new_from_rows( [$values] );
 	my $sampled_params_arr;
+	my $href;
 	if (defined $self->rawres_input){
-		$sampled_params_arr = 
-			$model->get_rawres_params(filename => $self->rawres_input,
-									  filter => $self->in_filter,
-									  offset => $self->offset_rawres);
+		($sampled_params_arr,$href) = model::get_rawres_params(filename => $self->rawres_input,
+															   filter => $self->in_filter,
+															   offset => $self->offset_rawres,
+															   model => $model);
 		my @arr= (1) x scalar(@{$sampled_params_arr});
 		$self->pdf_vector(\@arr);
 	}else{
@@ -1281,11 +1282,11 @@ sub prepare_results
 
 #	print "prepare results model name ".$self -> models -> [0]->full_name."\n";
 	my $model = $self -> models -> [0];
-	my $sampled_params_arr = 
-		$model -> get_rawres_params(filename => $self->raw_results_file()->[0],
-									require_numeric_ofv => 0,
-									extra_columns => ['resamples'],
-									offset => 1); 
+	my ($sampled_params_arr,$href) = model::get_rawres_params(filename => $self->raw_results_file()->[0],
+															  require_numeric_ofv => 0,
+															  extra_columns => ['resamples'],
+															  offset => 1,
+															  model => $model); 
 
 	## Prepare general run info for output file
 	my %return_section;

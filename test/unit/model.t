@@ -2,7 +2,7 @@
 
 use strict;
 use warnings;
-use Test::More tests=>117;
+use Test::More tests=>138;
 use FindBin qw($Bin);
 use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages
@@ -65,26 +65,37 @@ ok (!$model->is_option_set(record => 'input', name => 'OPEL'), "is_option_set \$
 #setup_filter method
 my @header = ('method','model','problem','significant_digits','minimization_successful','covariance_step_successful','ofv');
 my @filter = ('minimization_successful.eq.1','significant_digits.gt.4','problem.lt.2','covariance_step_successful.ne.0');
-my ($indices,$relations,$value) = $model->setup_filter(filter => \@filter, header => \@header);
+my ($indices,$relations,$value) = model::setup_filter(filter => \@filter, header => \@header);
 is_array($indices,[4,3,2,5], "setup_filter method, finding columns");
 is_array($relations,['==','>','<','!='], "setup_filter method, finding relations");
 is_array($value,[1,4,2,0], "setup_filter method, finding values");
 
 @filter = ('method.eq.bootstrap');
-($indices,$relations,$value) = $model->setup_filter(filter => \@filter, header => \@header, string_filter => 1);
+($indices,$relations,$value) = model::setup_filter(filter => \@filter, header => \@header, string_filter => 1);
 is ($indices->[0],0,"setup_filter method, method index");
 is ($relations->[0],'eq',"setup_filter method, method relation");
 is ($value->[0],'bootstrap',"setup_filter method, method value");
 
+#method get_rawres_parameter_indices
+my $hashref = model::get_rawres_parameter_indices(filename => $modeldir.'/raw_results_structure_for_model_test');
+is_array($hashref->{'theta'},[20,21],'method get_rawres_parameter_indices 1, theta');
+is_array($hashref->{'omega'},[22,23],'method get_rawres_parameter_indices 1, omega');
+is_array($hashref->{'sigma'},[24],'method get_rawres_parameter_indices 1, sigma');
+$hashref = model::get_rawres_parameter_indices(filename => 'raw_results_structure_for_model_test',
+											   directory => $modeldir);
+is_array($hashref->{'theta'},[20,21],'method get_rawres_parameter_indices 2, theta');
+is_array($hashref->{'omega'},[22,23],'method get_rawres_parameter_indices 2, omega');
+is_array($hashref->{'sigma'},[24],'method get_rawres_parameter_indices 2, sigma');
 
 #get_rawres_params method
 #here $model must still refer to pheno.mod, otherwise test will fail
 
-my $arr = $model -> get_rawres_params(filename => $modeldir.'/rawres_for_get_rawres_params.csv',
-				      string_filter => ['method.eq.bootstrap'],
-				      filter => ['significant_digits.gt.4'],
-				      require_numeric_ofv => 1,
-				      offset => 1);
+my ($arr,$hashref) = model::get_rawres_params(filename => $modeldir.'/rawres_for_get_rawres_params.csv',
+											  string_filter => ['method.eq.bootstrap'],
+											  filter => ['significant_digits.gt.4'],
+											  require_numeric_ofv => 1,
+											  offset => 1,
+											  model => $model);
 is (scalar(@{$arr}),3,'method get_rawres_params, number of lines returned ');
 is($arr->[0]->{'theta'}->{'CL'},1.1,'method get_rawres_params, theta 0');
 is($arr->[0]->{'theta'}->{'V'},1.2,'method get_rawres_params, theta 0');
@@ -108,6 +119,8 @@ is($arr->[0]->{'model'},1,'method get_rawres_params, model 0');
 is($arr->[1]->{'model'},2,'method get_rawres_params, model 1');
 is($arr->[2]->{'model'},5,'method get_rawres_params, model 2');
 
+
+
 my $vectorsamples = $model->create_vectorsamples(sampled_params_arr => $arr);
 is($vectorsamples->[0]->[0],1.1,'create vectorsamples 0,0');
 is($vectorsamples->[0]->[1],1.2,'create vectorsamples 0,1');
@@ -125,6 +138,16 @@ is($vectorsamples->[2]->[2],3.3,'create vectorsamples 2,2');
 is($vectorsamples->[2]->[3],3.4,'create vectorsamples 2,3');
 is($vectorsamples->[2]->[4],3.5,'create vectorsamples 2,4');
 
+($arr,$hashref) = model::get_rawres_params(filename => $modeldir.'/rawres_for_get_rawres_params.csv',
+										   string_filter => ['method.eq.bootstrap'],
+										   require_numeric_ofv => 1,
+										   offset => 1,
+										   rawres_structure_filename => $modeldir.'/rawres_for_get_rawres_params_structure');
+is($arr->[0]->{'theta'}->{'CL'},1.1,'method get_rawres_params, theta 0 b');
+is($arr->[0]->{'theta'}->{'V'},1.2,'method get_rawres_params, theta 0 b');
+is($arr->[1]->{'omega'}->{'IVCL'},2.3,'method get_rawres_params, omega 1 b');
+is($arr->[2]->{'sigma'}->{"SIGMA(1,1)"},0.05,'method get_rawres_params, sigma 2 b');
+is($arr->[3]->{'omega'}->{'IVV'},3.4,'method get_rawres_params, omega 1 b');
 
 # set_maxeval_zero
 

@@ -214,6 +214,7 @@ if (defined $main_directory){
 }
 
 my $sampled_params_arr;
+my $href;
 my $samples;
 if (defined $options{'rawres_input'}){
 	my $offset=1;
@@ -233,9 +234,10 @@ if (defined $options{'rawres_input'}){
 		}	
 	}
 
-	$sampled_params_arr = $models_array -> [0]->get_rawres_params(filename => $options{'rawres_input'},
-																  filter => \@in_filter,
-																  offset => $offset);
+	($sampled_params_arr,$href) = model::get_rawres_params(filename => $options{'rawres_input'},
+														   filter => \@in_filter,
+														   offset => $offset,
+														   model => $models_array -> [0]);
 
 	if (defined $sampled_params_arr) {
 		if (defined $options{'samples'}){

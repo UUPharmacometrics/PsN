@@ -3,6 +3,7 @@ package model;
 use include_modules;
 use Cwd;
 use File::Copy 'cp';
+use File::Spec qw(splitpath catfile);
 use Config;
 use OSspecific;
 use Storable;
@@ -1317,23 +1318,80 @@ sub get_coordslabels
 	return \@coordslabels;
 }
 
+
+sub get_rawres_parameter_indices
+{
+	#this is a static method, no shift
+	my %parm = validated_hash(\@_,
+							  filename => { isa => 'Maybe[Str]', optional => 1 },
+							  rawres_filename => { isa => 'Maybe[Str]', optional => 1 },
+							  directory => { isa => 'Maybe[Str]', optional => 1 },
+							  model_number => { isa => 'Int', optional => 1, default => 1 }
+		);
+	my $filename = $parm{'filename'};
+	my $rawres_filename = $parm{'rawres_filename'};
+	my $directory = $parm{'directory'};
+	my $model_number = $parm{'model_number'};
+
+	my $structure;
+	my $full_name;
+	if (defined $filename){
+		if (defined $directory){
+			$full_name = File::Spec->catfile($directory,$filename);
+		}else{
+			$full_name = $filename;
+		}
+	}elsif (defined $directory){
+		$full_name = $directory.'/raw_results_structure';
+	}elsif (defined $rawres_filename){
+		my ($volume,$dir,$file) = File::Spec->splitpath($rawres_filename );
+#		print "vol $volume dir $dir file $file\n";
+		$full_name = File::Spec->catpath($volume,$dir,'raw_results_structure');
+	}else{
+		croak ("neither filename, rawres_filename or directory defined as input to model::get_rawres_structure");
+	}
+	unless (-e $full_name){
+		carp("$full_name in get_rawres_structure does not exist");
+		return undef;
+	}
+#	print "full name is $full_name\n";
+	my $structure = ext::Config::Tiny -> read($full_name);
+	my %indices;
+	foreach my $param ('theta','omega','sigma'){
+		my ($start,$len) = split(/,/,$structure -> {$model_number}->{$param});
+		$indices{$param} = [];
+		for (my $i=0; $i< $len; $i++){
+			push(@{$indices{$param}},($i+$start));
+		}
+	}
+	return \%indices;
+
+}
+
 sub get_rawres_params
 {
-	my $self = shift;
+	#static method, no shift
 	my %parm = validated_hash(\@_,
+							  model => { isa => 'Maybe[model]', optional => 1 },
 							  filename => { isa => 'Str', optional => 0 },
 							  filter => { isa => 'ArrayRef[Str]', optional => 1 },
 							  string_filter => { isa => 'Maybe[ArrayRef[Str]]', optional => 1 },
 							  extra_columns => { isa => 'Maybe[ArrayRef[Str]]', optional => 1 },
 							  require_numeric_ofv => { isa => 'Bool', default => 0, optional => 1 },
-							  offset => { isa => 'Int', optional => 0 }
+							  offset => { isa => 'Int', optional => 0 },
+							  rawres_structure_filename => { isa => 'Maybe[Str]', optional => 1 },
+							  rawres_model_number => { isa => 'Maybe[Int]', optional => 1, default => 1 }
 		);
+	my $model = $parm{'model'};
 	my $filename = $parm{'filename'};
 	my @filter = defined $parm{'filter'} ? @{$parm{'filter'}}: ();
 	my @string_filter = defined $parm{'string_filter'} ? @{$parm{'string_filter'}} : ();
 	my @extra_columns = defined $parm{'extra_columns'} ? @{$parm{'extra_columns'}} : ();
 	my $require_numeric_ofv = $parm{'require_numeric_ofv'};
 	my $offset = $parm{'offset'};
+	my $rawres_structure_filename = $parm{'rawres_structure_filename'};
+	my $rawres_model_number = $parm{'rawres_model_number'};
+
 	my @allparams;
 	my $extra_count = scalar(@extra_columns);
 
@@ -1341,17 +1399,6 @@ sub get_rawres_params
 	#input require_numeric_ofv is special filter, default false, if true then check that looks_like_number(ofv)
 	#input 
 	#output is hash of arrays of hashes allparams
-
-	my @thetalabels = @{$self -> labels( parameter_type => 'theta', generic => 0)};
-	my @omegalabels = @{$self -> labels( parameter_type => 'omega', generic => 0)};
-	my @sigmalabels = @{$self -> labels( parameter_type => 'sigma', generic => 0)};
-
-	if (scalar(@thetalabels) != 1 or scalar(@omegalabels) != 1 or scalar(@sigmalabels) != 1){
-		croak("get_rawres_params can only be done if exactly one \$PROB");
-	}
-	unless (defined $thetalabels[0] and defined $omegalabels[0] and defined $sigmalabels[0]){
-		croak("all labels references are not defined in get_rawres_params");
-	}
 
 	my %thetapos;
 	my %omegapos;
@@ -1401,6 +1448,42 @@ sub get_rawres_params
 
 	my $ref = shift @file;
 	my @header = @{$ref};
+
+	my @thetalabels;
+	my @omegalabels;
+	my @sigmalabels;
+	if (defined $model){
+		@thetalabels = @{$model -> labels( parameter_type => 'theta', generic => 0)};
+		@omegalabels = @{$model -> labels( parameter_type => 'omega', generic => 0)};
+		@sigmalabels = @{$model -> labels( parameter_type => 'sigma', generic => 0)};
+	}else{
+		my $indices = get_rawres_parameter_indices(filename =>$rawres_structure_filename,
+												   model_number => $rawres_model_number,
+												   rawres_filename => $filename);
+		$thetalabels[0]=[];
+		$omegalabels[0]=[];
+		$sigmalabels[0]=[];
+		foreach my $j (@{$indices->{'theta'}}){
+			push(@{$thetalabels[0]},$header[$j]);
+		}
+		foreach my $j (@{$indices->{'omega'}}){
+			push(@{$omegalabels[0]},$header[$j]);
+		}
+		foreach my $j (@{$indices->{'sigma'}}){
+			push(@{$sigmalabels[0]},$header[$j]);
+		}
+	}
+#	print "theta ".join(' ',@{$thetalabels[0]})."\n";
+#	print "omega ".join(' ',@{$omegalabels[0]})."\n";
+#	print "sigma ".join(' ',@{$sigmalabels[0]})."\n";
+
+	if (scalar(@thetalabels) != 1 or scalar(@omegalabels) != 1 or scalar(@sigmalabels) != 1){
+		croak("get_rawres_params can only be done if exactly one \$PROB");
+	}
+	unless (defined $thetalabels[0] and defined $omegalabels[0] and defined $sigmalabels[0]){
+		croak("all labels references are not defined in get_rawres_params");
+	}
+
 	my $sum = scalar(@{$thetalabels[0]})+scalar(@{$omegalabels[0]})+scalar(@{$sigmalabels[0]});
 	$sum += scalar(@filter); #@filter is always defined, but may be empty - bug, may count some cols twice here
 	
@@ -1420,13 +1503,13 @@ sub get_rawres_params
 
 	#parse filter
 	my ($ref1,$ref2,$ref3);
-	($ref1,$ref2,$ref3) = $self->setup_filter(filter => \@filter, header => \@header)
+	($ref1,$ref2,$ref3) = setup_filter(filter => \@filter, header => \@header)
 	    if (scalar(@filter)>0);
 	my @filter_column_index = @{$ref1} if (defined $ref1);
 	my @filter_relation = @{$ref2} if (defined $ref2);
 	my @filter_value = @{$ref3} if (defined $ref3);
 	if (scalar(@string_filter)>0){
-	    my ($r1,$r2,$r3) = $self->setup_filter(filter => \@string_filter, header => \@header, string_filter =>1);
+	    my ($r1,$r2,$r3) = setup_filter(filter => \@string_filter, header => \@header, string_filter =>1);
 	    push(@filter_column_index,@{$r1}) if (defined $r1);
 	    push(@filter_relation,@{$r2}) if (defined $r3);
 	    push(@filter_value,@{$r3}) if (defined $r3);
@@ -1470,17 +1553,27 @@ sub get_rawres_params
 		}
 	}
 	
+	my %labels_hash;
+	$labels_hash{'filtered_labels'}=[];
+	$labels_hash{'param'}=[];;
+
 	foreach my $lab (@{$thetalabels[0]}){
 		$thetapos{$lab} = $pos;
 		$pos++;
+		push(@{$labels_hash{'filtered_labels'}},$lab);
+		push(@{$labels_hash{'param'}},'theta');
 	}
 	foreach my $lab (@{$omegalabels[0]}){
 		$omegapos{$lab} = $pos;
 		$pos++;
+		push(@{$labels_hash{'filtered_labels'}},$lab);
+		push(@{$labels_hash{'param'}},'omega');
 	}
 	foreach my $lab (@{$sigmalabels[0]}){
 		$sigmapos{$lab} = $pos;
 		$pos++;
+		push(@{$labels_hash{'filtered_labels'}},$lab);
+		push(@{$labels_hash{'param'}},'sigma');
 	}
 
 	if ($pos > scalar(@header)){
@@ -1579,7 +1672,7 @@ sub get_rawres_params
 		push (@allparams,\%allpar);
 	}  
 
-	return \@allparams;
+	return (\@allparams,\%labels_hash);
 }
 
 sub create_vectorsamples {
@@ -1611,7 +1704,7 @@ sub create_vectorsamples {
 
 sub setup_filter
 {
-	my $self = shift;
+	#this is a static method, no shift
 	my %parm = validated_hash(\@_,
 		 filter => { isa => 'ArrayRef[Str]', optional => 1 },
 		 string_filter => { isa => 'Bool', default => 0, optional => 1 },

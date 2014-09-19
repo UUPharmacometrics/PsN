@@ -1429,15 +1429,16 @@ sub modelfit_setup
 	}
 
 	my $sampled_params_arr;
+	my $href;
 	if (defined $self->rawres_input()){
 		if (defined $model_simulation){
-			$sampled_params_arr = 
-				$model_simulation -> get_rawres_params(filename => $self->rawres_input(),
-													   offset => $self->offset_rawres());
+			($sampled_params_arr,$href) = model::get_rawres_params(filename => $self->rawres_input(),
+																   offset => $self->offset_rawres(),
+																   model => $model_simulation);
 		}else{
-			$sampled_params_arr = 
-				$model_orig -> get_rawres_params(filename => $self->rawres_input(),
-												 offset => $self->offset_rawres());
+			($sampled_params_arr,$href) = model::get_rawres_params(filename => $self->rawres_input(),
+																   offset => $self->offset_rawres(),
+																   model => $model_orig);
 		}
 		if (defined $sampled_params_arr){
 			unless (scalar(@{$sampled_params_arr}) >= ($self->samples())){

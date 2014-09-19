@@ -1233,11 +1233,11 @@ sub modelfit_analyze
 		if ( $self -> type() eq 'bca' ) {
 			$filter = ['method.eq.bootstrap'];
 		}
-		my $sampled_params_arr = 
-		$model -> get_rawres_params(filename => $self->raw_results_file()->[$model_number-1],
-			string_filter => $filter,
-			require_numeric_ofv => 1,
-			offset => 1); 
+		my ($sampled_params_arr,$href) = model::get_rawres_params(filename => $self->raw_results_file()->[$model_number-1],
+																  string_filter => $filter,
+																  require_numeric_ofv => 1,
+																  offset => 1,
+																  model => $model); 
 
 		if (scalar(@{$sampled_params_arr})<1){
 			print "\nNo bootstrap samples gave ofv value, nothing to do for -dofv.\n";

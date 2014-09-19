@@ -1,6 +1,7 @@
 package tool::sse;
 
 use include_modules;
+use model;
 use tool::cdd;
 use tool::modelfit;
 use Math::Random;
@@ -312,10 +313,11 @@ sub modelfit_setup
 						unless (defined $thetalabels[0] and defined $omegalabels[0] and defined $sigmalabels[0]){
 							croak("all labels references are not defined in setup sse");
 						}
-						$sampled_params_arr = 
-							$sim_model->get_rawres_params(filename => $self->rawres_input,
-														  filter => $self->in_filter,
-														  offset => $self->offset_rawres);
+						my $href;
+						($sampled_params_arr,$href) = model::get_rawres_params(filename => $self->rawres_input,
+																			   filter => $self->in_filter,
+																			   offset => $self->offset_rawres,
+																			   model => $sim_model);
 						if (defined $sampled_params_arr) {
 							unless (scalar(@{$sampled_params_arr}) >= ($self->samples)) {
 								if (defined $self->in_filter) {
@@ -1707,7 +1709,7 @@ sub prepare_results
 
 	#parse filter
 	my ($ref1,$ref2,$ref3);
-	($ref1,$ref2,$ref3) = $model->setup_filter(filter => $self->out_filter())
+	($ref1,$ref2,$ref3) = model::setup_filter(filter => $self->out_filter())
 		if (defined $self->out_filter());
 	my @filter_column = @{$ref1} if (defined $ref1);
 	my @filter_relation = @{$ref2} if (defined $ref2);
