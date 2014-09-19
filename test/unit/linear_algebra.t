@@ -9,7 +9,7 @@ use includes; #file with paths to PsN packages
 use linear_algebra;
 
 
-plan tests => 85;
+plan tests => 96;
 
 #pad_matrix
 my @A = ([1, 2, 4], [3, 5 ,7], [8, 4, 1]);
@@ -24,10 +24,16 @@ is_array(@A[4], [0, 0, 0, 0, 1], "pad_matrix row 5");
 
 #reduce_matrix
 my @A = ([1, 3, 5, 7], [8, 6, 4, 2], [1, 2, 3, 4], [6, 7, 9, 1]);
+
+linear_algebra::reduce_matrix(\@A, 4);
+is(scalar(@A), 4, "reduce_matrix don't reduce");
+is_array(@A[0], [1, 3, 5, 7], "reduce_matrix don't reduce row 0");
+is_array(@A[3], [6, 7, 9, 1], "reduce_matrix don't reduce row 3");
+
 linear_algebra::reduce_matrix(\@A, 2);
 
 is(scalar(@A), 2, "reduce_matrix num rows");
-is_array(@A[0], [1, 3], "reduce_matrix row 1");
+is_array(@A[0], [1, 3], "reduce_matrix row 0");
 is_array(@A[1], [8, 6], "reduce_matrix row 1");
 
 #put_ones_on_diagonal_of_zero_lines

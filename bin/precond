@@ -113,17 +113,18 @@ open(my $fh, '<', $file) or die "Cannot find the preconditioning matrix '$file' 
 my $line = <$fh>;
 if ($line =~ /^TABLE NO./) {
 	<$fh>;
+    my $numtheta = 0;
 	while (my $line = <$fh>) {
 		chomp $line;
 		my @fields = split(/\s+/, $line);
 		shift @fields;
 		my $a = shift @fields;
         if ($a =~ /^THETA/) {
-            push @precMatrix, \@fields;
+            $numtheta++;
         }
+        push @precMatrix, \@fields;
 	}
-    use Data::Dumper;
-    print Dumper(\@precMatrix);
+    linear_algebra::reduce_matrix(\@precMatrix, $numtheta);
 } else {
 	seek $fh, 0, 0;
 	while (my $line = <$fh>) {
