@@ -28,7 +28,8 @@ my %required_options = ('rawres_input:s' => undef
 my %optional_options = (
 	'offset_rawres:i' => undef,
 	'in_filter:s' => undef,
-	'parameters:s' => undef
+	'parameters:s' => undef,
+	'raw_results_structure:s' => undef
 );
 
 my $min_samples=2;
@@ -71,6 +72,12 @@ $help_text{-help} = <<'EOF';
       With -help covmat will print this, longer, help message.
 EOF
 
+$help_text{-raw_results_structure} = <<'EOF';
+      -raw_results_structure=filename
+
+      Instead of giving the model file coupled to the rawres file as input, it is possible
+	  to use the raw_results_structure file for finding the parameter columns.
+EOF
 $help_text{-rawres_input} = <<'EOF';
       -rawres_input=filename
 
@@ -124,17 +131,6 @@ EOF
 
 common_options::online_help( 'covmat', \%options, \%help_text, \%required_options, \%optional_options);
 
-## Check that we do have a model file
-if ( scalar(@ARGV) < 1 ) {
-  print "The model file coupled to the raw_results file must be specified.\n";
-  exit;
-}
-
-#TODO if model not given then check if file raw_results_structure present in same directory as rawres file
-#read it and pick up theta omega and sigma labels
-#create dummy model object with theta omega and sigma set with those labels
-#then continue using get_rawres_params using that model object
-
 if( scalar(@ARGV) > 1 ){
   print "covmat can only handle one modelfile, you listed: ",join(',',@ARGV),". Use 'covmat -h' for help.\n";die;
   exit;
@@ -172,10 +168,12 @@ if (defined $options{'parameters'}){
 
 my $eval_string = common_options::model_parameters(\%options);
 
-my $model = model -> new ( eval( $eval_string ),
-			   filename                    => $ARGV[0],
-			   ignore_missing_output_files => 1);
-
+my $model;
+if( scalar(@ARGV) == 1 ){
+	$model = model -> new ( eval( $eval_string ),
+							filename                    => $ARGV[0],
+							ignore_missing_output_files => 1);
+}
 
 my @in_filter=();
 if ( defined $options{'in_filter'} ){
@@ -192,9 +190,11 @@ if ( defined $options{'in_filter'} ){
   }	
 }
 
-my $sampled_params_arr = $model->get_rawres_params(filename => $options{'rawres_input'},
-												   filter => \@in_filter,
-												   offset => $options{'offset_rawres'});
+my ($sampled_params_arr,$labels_hash) = model::get_rawres_params(filename => $options{'rawres_input'},
+																 filter => \@in_filter,
+																 offset => $options{'offset_rawres'},
+																 model => $model,
+																 rawres_structure_filename => $options{'raw_results_structure'});
 if (defined $sampled_params_arr) {
 	unless (scalar(@{$sampled_params_arr}) >= $min_samples) {
 		if (scalar(@in_filter)>0) {
@@ -217,27 +217,28 @@ for (my $i=0; $i< $len; $i++){
 	$sampled_params_arr->[$i]->{'resamples'}=1;
 }
 
-my @labels =();
-my @parameters =();
 my @headers=();
 
+#TODO handle model undef
 foreach my $param (@list_parameters){
-	my @temp= @{$model -> labels( parameter_type => $param,
-								  generic => 0)};
-	push(@labels,@{$temp[0]}); #first $PROBLEM
-	push(@parameters,($param) x scalar(@{$temp[0]}));
-	@temp= @{$model -> labels( parameter_type => $param,
-							   generic => 1)};
-	push(@headers,@{$temp[0]}); #first $PROBLEM
+	if (defined $model){
+		my @temp= @{$model -> labels( parameter_type => $param,
+									  generic => 1)};
+		push(@headers,@{$temp[0]}); #first $PROBLEM
+	}else{
+		for (my $j=0; $j<scalar(@{$labels_hash->{'param'}}); $j++){
+			if ($labels_hash->{'param'}->[$j] eq $param){
+				push(@headers,$labels_hash->{'filtered_labels'}->[$j]);
+				#print $labels_hash->{'filtered_labels'}->[$j]."\n";
+			}
+		} 
+	}
 }
 
-my %labels_hash;
-$labels_hash{'filtered_labels'}=\@labels;
-$labels_hash{'param'}=\@parameters;
 
 
 my $resulthash = tool::sir::empirical_statistics( sampled_params_arr => $sampled_params_arr,
-												  labels_hash => \%labels_hash);
+												  labels_hash => $labels_hash);
 
 #header items must be enclosed with double quotes since some contain comma, e.g. OMEGA(1,1)
 print '"NAME","'.join('","',@headers).'"'."\n";
