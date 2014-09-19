@@ -117,9 +117,13 @@ if ($line =~ /^TABLE NO./) {
 		chomp $line;
 		my @fields = split(/\s+/, $line);
 		shift @fields;
-		shift @fields;
-		push @precMatrix, \@fields;
+		my $a = shift @fields;
+        if ($a =~ /^THETA/) {
+            push @precMatrix, \@fields;
+        }
 	}
+    use Data::Dumper;
+    print Dumper(\@precMatrix);
 } else {
 	seek $fh, 0, 0;
 	while (my $line = <$fh>) {

@@ -60,7 +60,8 @@ A raw\_results file will be created with thetas of the original model and their 
 \section{Preconditioning matrix}
 
 The input preconditioning matrix can be either a .csv file or a NONMEM .cov file. The input matrix will be modified in the following ways so that it can be used for preconditioning of the THETAs:
-First it will be either truncated or padded to become a square matrix with same size as the number of thetas in the model.
+If a .cov file is used only the THETAs will be extracted.
+Then it will be either truncated or padded to become a square matrix with same size as the number of thetas in the model.
 When padded all new rows will be set to zero except for the diagonal element which will be set to one. If any rows in the preconditioning matrix is found
 to be all zeros a one will be placed on the diagonal.
 
