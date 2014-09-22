@@ -53,6 +53,34 @@ sub put_ones_on_diagonal_of_zero_lines
 	}
 }
 
+sub transpose
+{
+    # Calculate the transpose of a matrix
+    my $A = shift;
+    for (my $row = 0; $row < @$A; $row++) {
+        for (my $col = 0; $col < $row; $col++) {
+            my $temp = $A->[$row]->[$col];
+            $A->[$row]->[$col] = $A->[$col]->[$row];
+            $A->[$col]->[$row] = $temp;
+        }
+    }
+}
+
+sub is_symmetric
+{
+    # Check if matrix is symmetric (A^T = A)
+    my $A = shift;
+
+    for (my $row = 0; $row < @$A; $row++) {
+        for (my $col = 0; $col < $row; $col++) {
+            if ($A->[$row]->[$col] != $A->[$col]->[$row]) {
+                return 0;
+            }
+        }
+    }
+
+    return 1;
+}
 
 sub house { 
     my $xvec = shift;

@@ -9,7 +9,7 @@ use includes; #file with paths to PsN packages
 use linear_algebra;
 
 
-plan tests => 96;
+plan tests => 108;
 
 #pad_matrix
 my @A = ([1, 2, 4], [3, 5 ,7], [8, 4, 1]);
@@ -44,6 +44,20 @@ is_array(@A[0], [1, 2, 3, 4], "put_ones_on... row 1");
 is_array(@A[1], [0, 1, 0, 0], "put_ones_on... row 2");
 is_array(@A[2], [9, 8, 7, 6], "put_ones_on... row 3");
 is_array(@A[3], [0, 0, 0, 1], "put_ones_on... row 4");
+
+#Transpose
+my @A = ([1, 2, 3], [4, 5, 6], [7, 8, 9]);
+linear_algebra::transpose(\@A);
+
+is_array(@A[0], [1, 4, 7], "transpose row 1");
+is_array(@A[1], [2, 5, 8], "transpose row 2");
+is_array(@A[2], [3, 6, 9], "transpose row 3");
+
+# is_symmetric
+my @A = ([1, 2], [2, 3]);
+ok(linear_algebra::is_symmetric(\@A), "is_symmetric matrix 1");
+@A = ([1, 2], [3, 2]);
+ok(!linear_algebra::is_symmetric(\@A), "is_symmetric matrix 2");
 
 #LU_factorization
 my @B = ([8, 4, 1], [5, 5, 2], [4, 2, 2]);

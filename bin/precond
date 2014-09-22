@@ -154,10 +154,23 @@ if (not $options{'nodec'}) {
 			}
 		}
 	} else {
+        if (not linear_algebra::is_symmetric(\@precMatrix)) {
+            die "Matrix must be symmetric for cholesky decomposition";
+        }
+        # Swap to column order
+        linear_algebra::transpose(\@precMatrix);
 		my $error = linear_algebra::cholesky(\@precMatrix);
 		if ($error) {
 			die "Unable to perform cholesky decomposition";
 		}
+        # Swap back to row order
+        linear_algebra::transpose(\@precMatrix);
+        # Create L matrix
+        for (my $row = 0; $row < @precMatrix; $row++) {
+            for (my $col = $row + 1; $col < @precMatrix; $col++) {
+                $precMatrix[$row]->[$col] = 0;
+            }
+        }
 	}
 }
 
