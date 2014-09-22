@@ -53,7 +53,7 @@ sub modelfit_setup
 		$nmoutopt = 'cov';
 	}
 
-	my $modelfit = tool::modelfit->new(
+    my $modelfit = tool::modelfit->new(
 		%{common_options::restore_options(@common_options::tool_options)},
 		models => [ $model ], 
 		base_dir => $self->directory,
@@ -277,6 +277,10 @@ sub create_reparametrized_model
 	}
 
 	$model->initial_values(parameter_type => 'theta', new_values => [[@parameter_initial]]);
+
+
+    # Increase NMTRAN limits on the number of intermediate variables and total number of constants
+    $model->problems->[0]->add_records(type => 'sizes', record_strings => [ "DIMCNS=100000", "DIMNEW=100000", "DIMTMP=100000" ]);
 
 	$model->_write;
 
