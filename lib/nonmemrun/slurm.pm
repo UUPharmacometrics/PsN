@@ -47,11 +47,15 @@ sub submit
 		$flags .= ' -t ' . $self->max_runtime ;
 	}
 	if (defined $self->partition) {
-		$flags .= ' -p ' . $self->partition;
+		$flags .= ' -p '.$self->partition;
 	}
 	#at most 3GB RAM 
 	if ($PsN::config->{'default_options'}->{'uppmax'}) {
-		$flags .= ' -p core -n 1 '; #single core
+		my $ntasks = 1;
+		if ($self->nodes > 0) {
+			$ntasks = $self->nodes;
+		}
+		$flags .= ' -n '.$ntasks;
 	}
 
 	if (defined $self->send_email and defined $self->email_address) {
