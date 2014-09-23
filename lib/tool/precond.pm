@@ -237,6 +237,9 @@ sub create_reparametrized_model
 		$tempTempSt = $tempTempSt . $tempString;
 	}
 
+    # Make sure reparametrization is only done when THETAs have changed
+    $tempTempSt = "IF (NEWIND == 0) THEN\n" . $tempTempSt . "END IF\n";
+
 	unshift @code, $tempTempSt;
 
 	$model->set_code(record => $code_record, code => \@code);
@@ -280,9 +283,33 @@ sub create_reparametrized_model
 
 
     # Increase NMTRAN limits on the number of intermediate variables and total number of constants
-    $model->problems->[0]->add_records(type => 'sizes', record_strings => [ "DIMCNS=100000", "DIMNEW=100000", "DIMTMP=100000" ]);
+    my $size_value = 100000;
+    my %changed_sizes = (DIMCNS => 0, DIMNEW => 0, DIMTMP => 0);
+    if (defined $model->problems->[0]->sizess) {
+        for my $sizes (@{$model->problems->[0]->sizess}) {
+            for my $option (@{$sizes->options}) {
+                for my $relevant (keys %changed_sizes) {
+                    if ($option->name eq $relevant) {
+                        $option->name($relevant);
+                        $option->value($size_value);
+                        $changed_sizes{$relevant} = 1;
+                    }
+                }
+            }
+        }
+    }
+    my @record_strings = ();
+    for my $name (keys %changed_sizes) {
+        if (not $changed_sizes{$name}) {
+            push @record_strings, "$name=$size_value";
+        }
+    }
 
-	$model->_write;
+    if (@record_strings) {
+        $model->problems->[0]->add_records(type => 'sizes', record_strings => \@record_strings );
+    }
+
+    $model->_write;
 
 	return $model;
 }
