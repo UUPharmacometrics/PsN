@@ -186,7 +186,6 @@ sub BUILD
 
 		$self->_read_problems;
 	}
-
 	#ensure unique labels per param
 	foreach my $prob (@{$self->problems}){
 		next unless (defined $prob);
@@ -292,8 +291,8 @@ sub BUILD
 		$self->iofv_modules([]) unless defined $self->iofv_modules;
 		push( @{$self->iofv_modules}, $iofv_module );
 	}
-
-	#check that data files exist
+	
+    #check that data files exist
 	unless ($self->ignore_missing_data or $self->ignore_missing_files){
 		foreach my $file (@{$self->datafiles(absolute_path =>1)}){
 			unless (-e $file){
@@ -4600,7 +4599,7 @@ sub _read_problems
 		# a line to search. Which is all cases but the very last loop
 		# iteration.
 
-		if ( $i > $#modelfile or (( /^\s*\$PROB/ and $prev_was_not_sizes) or (/^\s*\$SIZ/ ) ) ) {
+		if ( $i > $#modelfile or (( /^\s*\$PROB/ and $prev_was_not_sizes) or (/^\s*\$SIZ/ and $prev_was_not_sizes) ) ) {
 			$end_index = $i;
 
 			# The if statement here is only necessary in the first loop
