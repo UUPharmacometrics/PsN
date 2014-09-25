@@ -152,12 +152,14 @@ sub BUILD
 
 	$in_constructor = 0;
 
-	if ( defined $parm{'problems'} ) {
+	if (defined $parm{'problems'}) {
 	    $self->problems($parm{'problems'});
 	} else {
 		my $dir;
-		($dir, $self->{'filename'}) = OSspecific::absolute_path($self->directory, $self->{'filename'});    #FIXME: Nonstandard accessor. Fix with Moose
-		$self->directory($dir);
+        my $filename;
+		($dir, $filename) = OSspecific::absolute_path($self->directory, $self->filename);
+        $self->filename($filename);
+        $self->directory($dir);
 
 		# Convert if in PharmML format
 		my $file = $self->full_name;
@@ -173,7 +175,12 @@ sub BUILD
 				}
 				print "*** Conversion done ***\n";
 				my $filename = $self->filename;
-				$filename =~ s/\.xml/\.ctl/;		# FIXME: This is not always correct
+                # Currently the only way to get the converted filename
+                if ($filename =~ /\.xml$/) {
+				    $filename =~ s/\.xml$/.ctl/;
+                } else {
+                    $filename .= '.ctl';
+                }
 				$self->filename($filename);
 				print "*** Running nmtran on converted model ***\n";
 				if (not pharmml::check_converted_model($filename)) {
@@ -186,28 +193,28 @@ sub BUILD
 		$self->_read_problems;
 	}
 	#ensure unique labels per param
-	foreach my $prob (@{$self->problems}){
+	foreach my $prob (@{$self->problems}) {
 		next unless (defined $prob);
-		foreach my $param ('theta','omega','sigma'){
-			my $accessor = $param.'s';
-			my $ref =  $prob -> $accessor;
+		foreach my $param ('theta', 'omega', 'sigma') {
+			my $accessor = $param . 's';
+			my $ref =  $prob->$accessor;
 			next unless (defined $ref);
-			my  @records = @{$ref};
+			my @records = @{$ref};
 			my %hash;
-			foreach my $record ( @records ) {
+			foreach my $record (@records) {
 				next if ($record->prior() or $record->same);
-				if ( defined $record -> options ) {
-					foreach my $option ( @{$record -> options} ) {
+				if (defined $record->options) {
+					foreach my $option (@{$record->options}) {
 						next if ($option->prior());
-						if (defined $option -> label()){
-							my $label = $option -> label();
-							if (defined $hash{$label}){
-								my $newlabel = $label.'_';
+						if (defined $option->label()) {
+							my $label = $option->label();
+							if (defined $hash{$label}) {
+								my $newlabel = $label . '_';
 								#print "changing non-unique label $label to $newlabel\n";
 								$option->label($newlabel);
-								$label = $option -> label();
+								$label = $option->label();
 							}
-							$hash{$label}=1;
+							$hash{$label} = 1;
 						}
 					}
 				}
@@ -215,14 +222,14 @@ sub BUILD
 		}
 	}
 
-	if ($self->maxevals > 0){
+	if ($self->maxevals > 0) {
 		if ( defined $self->problems ) {
 			my $n_prob = scalar(@{$self->problems});
-			for (my $probnum=1; $probnum<= $n_prob; $probnum++){
-				unless ($self->is_option_set(record=>'estimation',
-											 name=>'MSFO',
+			for (my $probnum = 1; $probnum <= $n_prob; $probnum++) {
+				unless ($self->is_option_set(record => 'estimation',
+											 name => 'MSFO',
 											 problem_number => $probnum,
-											 fuzzy_match => 1)){
+											 fuzzy_match => 1)) {
 					$self->add_option(record_name=>'estimation',
 									  option_name=>'MSFO',
 									  problem_numbers=> [$probnum],
@@ -258,9 +265,9 @@ sub BUILD
         }
         $self->outputs([]);     # FIXME: output objects created multiple times. See trigger on outputfile
         push(@{$self->outputs}, output->new(
-                filename => $self->outputfile,
-                directory => $self->directory,
-                ignore_missing_files => ($self->ignore_missing_files || $self->ignore_missing_output_files))
+            filename => $self->outputfile,
+            directory => $self->directory,
+            ignore_missing_files => ($self->ignore_missing_files || $self->ignore_missing_output_files))
         );
     }
 
@@ -278,7 +285,7 @@ sub BUILD
 		push( @{$self -> {'mirror_plot_modules'}}, $mirror_plot_module );    #FIXME: Should have had an accessor. Fix with Moose
 	}
 
-	if ( $self->iofv > 0 ) {
+	if ($self->iofv > 0) {
 		my $iofv_module = model::iofv_module -> new( base_model => $self);
 		$self->iofv_modules([]) unless defined $self->iofv_modules;
 		push( @{$self->iofv_modules}, $iofv_module );
@@ -297,13 +304,13 @@ sub BUILD
 sub create_maxeval_zero_models_array
 {
 	my %parm = validated_hash(\@_,
-							  subdirectory => { isa => 'Str', optional => 0 },
-							  basedirectory => { isa => 'Str', optional => 0 },
-							  ignore_missing_parameters => { isa => 'Bool', default => 0, optional => 1 },
-							  sampled_params_arr => { isa => 'ArrayRef', optional => 0 },
-							  model => { isa => 'model', optional => 0 },
-							  mceta => { isa => 'Int', optional => 1 },
-							  purpose => { isa => 'Str', optional => 0 }
+        subdirectory => { isa => 'Str', optional => 0 },
+        basedirectory => { isa => 'Str', optional => 0 },
+        ignore_missing_parameters => { isa => 'Bool', default => 0, optional => 1 },
+        sampled_params_arr => { isa => 'ArrayRef', optional => 0 },
+        model => { isa => 'model', optional => 0 },
+        mceta => { isa => 'Int', optional => 1 },
+        purpose => { isa => 'Str', optional => 0 }
 	);
 	my $model = $parm{'model'};
 	my $subdirectory = $parm{'subdirectory'};
@@ -313,14 +320,14 @@ sub create_maxeval_zero_models_array
 	my $purpose = $parm{'purpose'};
 	my $ignore_missing_parameters = $parm{'ignore_missing_parameters'};
 
-	my $samples_done=0;
-	my $run_num=1;
-	my @modelsarr=();
+	my $samples_done = 0;
+	my $run_num = 1;
+	my @modelsarr = ();
 	my $run_model;
 	my $dummymodel;
-	my $dummyname='dummy.mod';
-	my @problem_lines=();
-	while ($samples_done < scalar(@{$sampled_params_arr})){
+	my $dummyname = 'dummy.mod';
+	my @problem_lines = ();
+	while ($samples_done < scalar(@{$sampled_params_arr})) {
 		#copy the model
 		$run_model = $model ->  copy( filename    => $subdirectory.$purpose.'_'.$run_num.'.mod',
 									  output_same_directory => 1,
@@ -330,8 +337,8 @@ sub create_maxeval_zero_models_array
 		$run_num++;
 
 		$run_model->set_maxeval_zero(need_ofv => 1);
-		if (($PsN::nm_major_version >= 7) and ($PsN::nm_minor_version >= 3)){
-			if ($mceta > 0){
+		if (($PsN::nm_major_version >= 7) and ($PsN::nm_minor_version >= 3)) {
+			if ($mceta > 0) {
 				$run_model->set_option(problem_numbers => [1],
 									   record_name => 'estimation',
 									   option_name => 'MCETA',
@@ -3378,27 +3385,21 @@ sub upper_bounds
 	return \@upper_bounds;
 }
 
-=item _write
-
-$model -> _write( filename => 'model.mod' );
-
-Writes the content of the modelobject to disk. Either to the
-filename given, or to the string returned by model::full_name.
-
-=cut
-
 sub _write
 {
+    # $model->_write(filename => 'model.mod');
+    #Writes the content of the modelobject to disk. Either to the
+    #filename given, or to the string returned by model::full_name.
+
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-							  filename => { isa => 'Str', default => $self->full_name, optional => 1 },
-							  number_format => { isa => 'Maybe[Int]', optional => 1 },
-							  relative_data_path => { isa => 'Bool', default => $self->relative_data_path, 
-													  optional => 1 },
-							  local_print_order => { isa => 'Bool', default => 0, optional => 1 },
-							  overwrite => { isa => 'Bool', default => 0, optional => 1 },
-							  MX_PARAMS_VALIDATE_NO_CACHE => 1,
-		);
+        filename => { isa => 'Str', default => $self->full_name, optional => 1 },
+        number_format => { isa => 'Maybe[Int]', optional => 1 },
+        relative_data_path => { isa => 'Bool', default => $self->relative_data_path, optional => 1 },
+        local_print_order => { isa => 'Bool', default => 0, optional => 1 },
+        overwrite => { isa => 'Bool', default => 0, optional => 1 },
+        MX_PARAMS_VALIDATE_NO_CACHE => 1,
+    );
 	my $filename = $parm{'filename'};
 	my $number_format = $parm{'number_format'};
 	my $relative_data_path = $parm{'relative_data_path'};
@@ -3407,8 +3408,7 @@ sub _write
 
 	my ($writedir,$file) = OSspecific::absolute_path('',$filename);
 	
-	if (-e $filename and not $overwrite){
-#		croak("Trying to overwrite existing file $filename\n"); #croak useful during development
+	if (-e $filename and not $overwrite) {
 		carp("Trying to overwrite existing file $filename\n");
 	}
 
