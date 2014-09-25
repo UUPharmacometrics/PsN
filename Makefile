@@ -1,4 +1,5 @@
 LIBFILES= ui.pm \
+	log.pm \
 	pharmml.pm \
 	PsN.pm \
 	common_options.pm \
