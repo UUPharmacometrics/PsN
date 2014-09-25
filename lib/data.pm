@@ -148,7 +148,6 @@ sub _bootstrap
 		 resume => { isa => 'Bool', default => 0, optional => 1 },
 		 samples => { isa => 'Int', default => 200, optional => 1 },
 		 subjects => { isa => 'HashRef[Num]', default => $self->count_ind, optional => 1 },
-		 model_ids => { isa => 'ArrayRef[Int]', optional => 1 },
 		 MX_PARAMS_VALIDATE_NO_CACHE => 1
 	);
 	my $directory = $parm{'directory'};
@@ -157,7 +156,6 @@ sub _bootstrap
 	my $resume = $parm{'resume'};
 	my $samples = $parm{'samples'};
 	my %subjects = defined $parm{'subjects'} ? %{$parm{'subjects'}} : ();
-	my @model_ids = defined $parm{'model_ids'} ? @{$parm{'model_ids'}} : ();
 	my @boot_samples;
 	my @incl_individuals;
 	my @included_keys;
@@ -1445,13 +1443,12 @@ sub resample
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-							  new_name => { isa => 'Str', optional => 0 },
-							  stratify_on => { isa => 'Maybe[Int]', optional => 1 },
-							  resume => { isa => 'Bool', default => 0, optional => 1 },
-							  subjects => { isa => 'HashRef[Int]', default => $self->count_ind, optional => 1 },
-							  model_id => { isa => 'Int', optional => 1 },
-							  MX_PARAMS_VALIDATE_NO_CACHE => 1
-		);
+        new_name => { isa => 'Str', optional => 0 },
+        stratify_on => { isa => 'Maybe[Int]', optional => 1 },
+        resume => { isa => 'Bool', default => 0, optional => 1 },
+        subjects => { isa => 'HashRef[Int]', default => $self->count_ind, optional => 1 },
+        MX_PARAMS_VALIDATE_NO_CACHE => 1
+    );
 	my $new_name = $parm{'new_name'};
 	my $stratify_on = $parm{'stratify_on'};
 	my $resume = $parm{'resume'};
@@ -1459,7 +1456,6 @@ sub resample
 	my $boot;
 	my @incl_individuals;
 	my @included_keys;
-	my $model_id = $parm{'model_id'};
 
 	my ( @header, $individuals, @bs_inds, $key_ref, @id_ids, @bs_id_ids );
 
