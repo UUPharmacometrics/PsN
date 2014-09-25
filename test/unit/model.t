@@ -2,7 +2,7 @@
 
 use strict;
 use warnings;
-use Test::More tests=>138;
+use Test::More tests=>142;
 use FindBin qw($Bin);
 use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages
@@ -197,6 +197,18 @@ my $new_code = $model->get_code(record => 'pk');
 
 is ($new_code->[0], $code->[0], "set_code row 0");
 is ($new_code->[1], $code->[1], "set_code row 1");
+
+# create_output_filename
+my $dummy = model->create_dummy_model;
+
+$dummy->filename('test.mod');
+is($dummy->create_output_filename, 'test.lst', "create_output_filename .mod name");
+$dummy->filename('test.mod.mod');
+is($dummy->create_output_filename, 'test.mod.lst', "create_output_filename multiple .mod extensions");
+$dummy->filename('test.ctl');
+is($dummy->create_output_filename, 'test.lst', "create_output_filename .ctl name");
+$dummy->filename('model');
+is($dummy->create_output_filename, 'model.lst', "create_output_filename no extension");
 
 
 done_testing();

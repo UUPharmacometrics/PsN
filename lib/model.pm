@@ -113,8 +113,7 @@ has 'mirror_from_lst' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'directory' => ( is => 'rw', isa => 'Str' );
 has 'extra_files' => ( is => 'rw', isa => 'Maybe[ArrayRef[Str]]' );
 has 'extra_output' => ( is => 'rw', isa => 'Maybe[ArrayRef[Str]]' );
-has 'filename' => ( is => 'rw', required => 1, isa => 'Str', trigger => \&_filename_set );
-has 'model_id' => ( is => 'rw', isa => 'Int', clearer => 'clear_model_id' );
+has 'filename' => ( is => 'rw', required => 1, isa => 'Str' );
 has 'relative_data_path' => ( is => 'rw', isa => 'Bool', default => 1 ); #code relies on this default
 has 'ignore_missing_data' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'ignore_missing_files' => ( is => 'rw', isa => 'Bool', default => 0 );
@@ -250,27 +249,20 @@ sub BUILD
 			$self->extra_files->[$i] = $dir . $file;
 		}
 	}
-	
+
 	# Read outputfile, if any.
-	if ( !defined $self->outputs ) {
-		unless( defined $self -> {'outputfile'} ){		# FIXME: Nonstandard accessor. Fix with Moose.
-			if( $self -> filename() =~ /\.mod$/ ) {
-				($self -> {'outputfile'} = $self -> {'filename'}) =~ s/\.mod$/.lst/;
-			} else {
-				if( $self -> filename() =~ /^([^.]+)\./ ) {
-					#contains a dot
-					$self -> outputfile( $1.'.lst' );
-				}else{
-					$self -> outputfile( $self -> filename().'.lst' );
-				}
-			}
-		}
-		$self->outputs([]);
-		push ( @{$self->outputs}, output -> new( filename => $self -> {'outputfile'},
-												 directory            => $self->directory,
-												 ignore_missing_files =>
-												 ($self->ignore_missing_files || $self->ignore_missing_output_files)));
-	}
+    if (not defined $self->outputs) {
+        if (not defined $self->outputfile) {
+            my $filename = $self->create_output_filename();
+            $self->outputfile($filename);
+        }
+        $self->outputs([]);     # FIXME: output objects created multiple times. See trigger on outputfile
+        push(@{$self->outputs}, output->new(
+                filename => $self->outputfile,
+                directory => $self->directory,
+                ignore_missing_files => ($self->ignore_missing_files || $self->ignore_missing_output_files))
+        );
+    }
 
 	# Adding mirror_plots module here, since it can add
 	# $PROBLEMS. Also it needs to know wheter an lst file exists
@@ -452,19 +444,6 @@ sub shrinkage_modules
 	}
 }
 
-sub _filename_set
-{
-	my $self = shift;
-	my $parm = shift;
-	my $oldparm = shift;
-
-	if ($in_constructor) { return; }
-
-	if ( defined $parm and $parm ne $oldparm ) {
-	  $self->clear_model_id;
-	}
-}
-
 sub _outputfile_set
 {
 	my $self = shift;
@@ -489,12 +468,35 @@ sub _outputfile_set
 	# if a new name is given, the accessor tries to create a new output object
 	# based on this.
 
-	if ( defined $parm ) {
-	  $self->{'outputs'} = 
-		  [ output ->  new( filename             => $parm,
-							ignore_missing_files => 
-							( $self -> ignore_missing_files() || $self -> ignore_missing_output_files() ))];
+	if (defined $parm) {
+	  $self->outputs( 
+		  [ output->new(filename => $parm, ignore_missing_files => ($self->ignore_missing_files || $self->ignore_missing_output_files)) ]
+      );
 	}
+}
+
+sub create_output_filename
+{
+    # Create the name of the output file given the model filename
+    my $self = shift;
+	my %parm = validated_hash(\@_,
+		 model_name => { isa => 'Str', default => $self->filename },
+         MX_PARAMS_VALIDATE_NO_CACHE => 1,
+	);
+    my $model_name = $parm{'model_name'};
+
+    my $filename = $model_name;
+
+    if ($filename =~ /\.mod$/) {
+        $filename =~ s/\.mod$/.lst/;
+    } elsif ($filename =~ /^([^.]+)\./) {
+        #contains a dot
+        $filename = $1 . '.lst';
+    } else {
+        $filename = $filename . '.lst';
+    }
+
+    return $filename;
 }
 
 sub add_iofv_module
@@ -620,28 +622,20 @@ sub copy
 
 	# Copy the output object if so is requested (only one output
 	# object defined per model object)
-	if ( $copy_output == 1 ) {
-	  if ( defined $outputs ) {
-	    foreach my $output ( @{$outputs} ) {
-	      push( @new_outputs, $output -> copy );
+	if ($copy_output == 1) {
+	  if (defined $outputs) {
+	    foreach my $output (@{$outputs}) {
+	      push(@new_outputs, $output->copy);
 	    }
 	  }
 	  $new_model->outputs(\@new_outputs);
 	} else {
-	  my $new_out = $filename;
-	  if( $new_out =~ /\.mod$/ ) {
-	    $new_out =~ s/\.mod$/\.lst/;
-	  }elsif( $new_out =~ /^([^.]+)\./ ) {
-		  #contains a dot
-		  $new_out = $1.'.lst';
-	  } else {
-	    $new_out = $new_out.'.lst';
-	  }
-	  $new_model ->ignore_missing_output_files(1);
-	  if ($output_same_directory){
-	      $new_out = $new_model->directory().$new_out;
-	  }
-	  $new_model -> outputfile($new_out);
+        my $new_out = $self->create_output_filename(model_name => $filename);
+	    $new_model->ignore_missing_output_files(1);
+	    if ($output_same_directory) {
+	        $new_out = $new_model->directory().$new_out;
+	    }
+	    $new_model->outputfile($new_out);
 	}
 	if ($copy_datafile){
 		my $datafiles = $new_model->datafiles(absolute_path => 1); #all problems
@@ -1316,7 +1310,6 @@ sub get_coordslabels
 
 	return \@coordslabels;
 }
-
 
 sub get_rawres_parameter_indices
 {
@@ -2405,9 +2398,9 @@ sub nomegas
 	return \@nomegas;
 }
 
-# nproblems returns the number of problems in the modelobject.
 sub nproblems
 {
+    # nproblems returns the number of problems in the modelobject.
 	my $self = shift;
 
 	return scalar @{$self->problems};

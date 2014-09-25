@@ -9,7 +9,7 @@ use includes; #file with paths to PsN packages
 use linear_algebra;
 
 
-plan tests => 108;
+plan tests => 110;
 
 #pad_matrix
 my @A = ([1, 2, 4], [3, 5 ,7], [8, 4, 1]);
