@@ -9,12 +9,8 @@ use Moose;
 use MooseX::Params::Validate;
 use Scalar::Util qw(looks_like_number);
 
-has 'subproblem_id' => ( is => 'rw', isa => 'Int' );
 has 'skip_labels_matrix' => ( is => 'rw', isa => 'Str' );
 has 'next_to_last_step_successful' => ( is => 'rw', isa => 'Bool' );
-has 'problem_id' => ( is => 'rw', isa => 'Int' );
-has 'output_id' => ( is => 'rw', isa => 'Int' );
-has 'model_id' => ( is => 'rw', isa => 'Int' );
 has 'comegas' => ( is => 'rw', isa => 'ArrayRef' );
 has 'condition_number' => ( is => 'rw', isa => 'Num' );
 has 'covariance_step_successful' => ( is => 'rw', isa => 'Bool', default => 0 );

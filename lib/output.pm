@@ -20,8 +20,6 @@ has 'control_stream_problems' => ( is => 'rw', isa => 'ArrayRef' );
 has 'filename_root' => ( is => 'rw', isa => 'Str' );
 has 'filename' => ( is => 'rw', isa => 'Str' );
 has 'nonmem_version' => ( is => 'rw', isa => 'Num' );
-has 'output_id' => ( is => 'rw', isa => 'Int' );
-has 'model_id' => ( is => 'rw', isa => 'Int' );
 has 'ignore_missing_files' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'tablenames' => ( is => 'rw', isa => 'ArrayRef[Str]' );
 has 'target' => ( is => 'rw', isa => 'Str', default => 'mem' );
