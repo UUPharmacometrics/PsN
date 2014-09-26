@@ -21,19 +21,23 @@ use Cwd;
 use model;
 use linear_algebra;
 use tool::precond;
+use tool::sir;
 
 my $cmd_line = $0 . " " . join( " ", @ARGV );
 my %options;
 
 my %required_options = (
-	"pre:s" => undef,
 );
 
 my %optional_options = (
-	"cholesky!" => undef,
-	"nodec!" => undef,
-	"output_model:s" => undef,
 	"cov:s" => undef,
+	"cholesky!" => undef,
+    "in_filter:s" => undef,
+	"nodec!" => undef,
+    "offset_rawres:i" => undef,
+	"output_model:s" => undef,
+    "pre:s" => undef,
+    "rawres_input:s" => undef,
 	"update_model:s" => undef,
 );
 
@@ -48,12 +52,34 @@ common_options::setup( \%options, 'precond' ); #calls set_globals etc, initiates
 
 my %help_text;
 
-$help_text{-pre} = <<'EOF';
-      A .csv-file containing the preconditioning matrix 
+$help_text{-cov} = <<'EOF';
+      Explicitly set the covariance matrix to use. If this option is used only the post processing step will be done.
 EOF
 
 $help_text{-cholesky} = <<'EOF';
       Use cholesky decomposition instead of LU
+EOF
+
+$help_text{-in_filter} = <<'EOF';
+      -in_filter=comma-separated list of conditions
+
+      Only relevant in combination with rawres_input. Default not used.
+      The parameter estimates lines in the file can be filtered on values 
+      in the different columns. When specifying which column(s) the filtering 
+      should be based on, the exact column name must be used, 
+      e.g. minimization_successful. Filtering can only be based on columns 
+      with numeric values. The allowed relations are .gt. (greater than), 
+      .lt. (less than) and .eq. (equal to). Conditions are separated with commas. 
+      If the remaining number of lines after filtering is smaller than 2, 
+      covmat will stop with an error message. 
+      If the user has created a file with 
+      parameter estimates outside of PsN, filtering can be done on any numeric 
+      column in that file. Do not set column headers containing .eq. or .lt. 
+      or .gt.in the user-generated file as this would interfere with the in_filter 
+      option syntax.
+    
+      Example: -in_filter=minimization_successful.eq.1,significant_digits.gt.3.5
+
 EOF
 
 $help_text{-nodec} = <<'EOF';
@@ -64,8 +90,20 @@ $help_text{-output_model} = <<'EOF';
       Set the name of the output model. If this option is set the model will be created but not run
 EOF
 
-$help_text{-cov} = <<'EOF';
-      Explicitly set the covariance matrix to use. If this option is used only the post processing step will be done.
+$help_text{-offset_rawres} = <<'EOF';
+      -offset_rawres=N
+
+      Default 0.
+      The number of result lines to skip in the input raw results file
+      before starting to read final parameter estimates. 
+EOF
+
+$help_text{-pre} = <<'EOF';
+      A .csv-file containing the preconditioning matrix 
+EOF
+
+$help_text{-rawres_input} = <<'EOF';
+      Use a rawresults file to create the preconditioning matrix
 EOF
 
 $help_text{-update_model} = <<'EOF';
@@ -76,19 +114,25 @@ common_options::online_help('precond', \%options, \%help_text, \%required_option
 
 my $model_filename = $ARGV[0];
 
-
 if (@ARGV < 1) {
 	die "A model file must be specified. See precond -h for help";
 }
 
-if (not defined $options{'pre'}) {
-	die "Option -pre is required";
+if (not (defined $options{'pre'} or defined $options{'rawres_input'})) {
+	die "One of options -pre or -rawres_input must be specified";
+}
+
+if (defined $options{'pre'} and defined $options{'rawres_input'}) {
+    die "Only one of options -pre and -rawres_input is allowed";
 }
 
 if (not -e $model_filename) {
 	die "Model file $model_filename could not be found\n";
 }
 
+if (not defined $options{'offset_rawres'}) {
+  $options{'offset_rawres'} = 0;
+}
 
 
 my $eval_string = common_options::model_parameters(\%options);
@@ -105,33 +149,70 @@ if (scalar(@{$model->problems}) != 1) {
 	die("Precond can only handle modelfiles with exactly one problem");
 }
 
-my $file = $options{'pre'};
 my @precMatrix;
-open(my $fh, '<', $file) or die "Cannot find the preconditioning matrix '$file' [$!]\n";
 
-# Read either a nonmem .cov file or an ordinary csv file without header
-my $line = <$fh>;
-if ($line =~ /^TABLE NO./) {
-	<$fh>;
-    my $numtheta = 0;
-	while (my $line = <$fh>) {
-		chomp $line;
-		my @fields = split(/\s+/, $line);
-		shift @fields;
-		my $a = shift @fields;
-        if ($a =~ /^THETA/) {
-            $numtheta++;
+if (defined $options{'rawres_input'}) {
+    my @in_filter = ();
+    if (defined $options{'in_filter'}) {
+        #split string, assume comma separated
+        foreach my $filt (split(/,/, $options{'in_filter'})) {
+            if ($filt =~ /.\.(gt|lt|eq)\.\d+\.?\d*/) {
+                push(@in_filter, $filt);
+            } else {
+                die "Input filter $filt does not fulfill the format rules.\n";
+            }
         }
-        push @precMatrix, \@fields;
-	}
-    linear_algebra::reduce_matrix(\@precMatrix, $numtheta);
+        if (scalar(@in_filter) < 1) {
+            die "Error: Option in_filter used, but list of conditions could not be parsed.\n";
+        }
+    }
+    my ($sampled_params_arr, $labels_hash) = model::get_rawres_params(
+        filename => $options{'rawres_input'},
+        filter => \@in_filter,
+        offset => $options{'offset_rawres'},
+        model => $model,
+    );
+
+    foreach my $sample (@$sampled_params_arr) {
+        $sample->{'resamples'} = 1;
+    }
+
+    my $resulthash = tool::sir::empirical_statistics(
+        sampled_params_arr => $sampled_params_arr,
+        labels_hash => $labels_hash
+    );
+
+    @precMatrix = @{$resulthash->{'covar'}};
+
 } else {
-	seek $fh, 0, 0;
-	while (my $line = <$fh>) {
-		chomp $line;
-		my @fields = split(/,/, $line);
-		push @precMatrix, \@fields;
-	}
+
+    my $file = $options{'pre'};
+    open(my $fh, '<', $file) or die "Cannot find the preconditioning matrix '$file' [$!]\n";
+
+    # Read either a nonmem .cov file or an ordinary csv file without header
+    my $line = <$fh>;
+    if ($line =~ /^TABLE NO./) {
+        <$fh>;
+        my $numtheta = 0;
+        while (my $line = <$fh>) {
+            chomp $line;
+            my @fields = split(/\s+/, $line);
+            shift @fields;
+            my $a = shift @fields;
+            if ($a =~ /^THETA/) {
+                $numtheta++;
+            }
+            push @precMatrix, \@fields;
+        }
+        linear_algebra::reduce_matrix(\@precMatrix, $numtheta);
+    } else {
+	    seek $fh, 0, 0;
+    	while (my $line = <$fh>) {
+		    chomp $line;
+		    my @fields = split(/,/, $line);
+		    push @precMatrix, \@fields;
+	    }
+    }
 }
 
 # Pad the preconditioning matrix if it is too small
