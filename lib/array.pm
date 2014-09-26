@@ -1,28 +1,9 @@
 #!/usr/bin/perl
 
-=head1 array.pm
-
-=head2 NAME
-
-array.pm - A module to collect routines that operates on arrays (using references to arrays)
-
-=head2 LICENSE
-
-This is released under the GNU General Public License v2 (or any later version)
-
-=head2 AUTHOR
-
-Rikard Nordgren, <rikard.nordgren@farmbio.uu.se>
-
-=head2 METHODS
-
-=over 4
-
-=cut
+# This module collects routines that operates on arrays (using references to arrays)
 
 package array;
 
-#use Carp;
 use include_modules;
 
 require Exporter;
@@ -30,57 +11,33 @@ our @ISA = qw(Exporter);
 our %EXPORT_TAGS = ('all' => [ qw(not_empty is_empty diff cumsum max min linspace unique add sum mean variance) ]);
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 
-
-=item not_empty
-
-not_empty - Check if an array is not empty.
-
-$boolean = not_empty($array_ref);
-
-Returns true of the array referred to by $array_ref is not empty and false otherwise. Also returns
-false if $array_ref is undef.
-
-=cut
-
 sub not_empty
 {
+    # Check if an array is not empty.
+    # Returns true if the array is not empty and false otherwise. Also returns false if the array ref is undef.
+
 	my $x = shift;
 
 	return defined $x ? scalar @$x : 0;
 }
 
-=item is_empty
-
-is_empty - Check if an array is empty.
-
-$boolean = is_empty($array_ref);
-
-Returns true of the array referred to by $array_ref is empty and false otherwise. Also returns
-true if $array_ref is undef.
-
-=cut
-
 sub is_empty
 {
+    # Check if an array is empty
+    # Returns true if the array is empty and false otherwise. Also returns true if the array ref is undef.
+
 	my $x = shift;
 
 	return defined $x ? !scalar @$x : 1;
 }
 
-=item diff
-
-diff - Difference between consecutive array elements
-
-$result = diff($array_ref);
-
-Returns a reference to an array which is the difference between consecutive array elements in the original array.
-That is: $result[i] = array[i + 1] - array[i]
-
-=cut
-
 sub diff
 {
-	my $a = shift;		# Array reference
+    # Calculate the difference between consecutive array elements
+    # Returns a new array which is the difference between consecutive array elements in the original array.
+    # That is: $result[i] = array[i + 1] - array[i]
+
+    my $a = shift;		# Array reference
 	my @d;
 
 	for (my $i = 0; $i < @$a - 1; $i++) {
@@ -90,19 +47,12 @@ sub diff
 	return \@d;
 }
 
-=item cumsum
-
-cumsum - Array cumulative sum
-
-$result = cumsum($array_ref);
-
-Returns a new array which is the cumulative sum of the elements of the input array.
-That is: result[i] = sum(array[0] .. array[i])
-
-=cut
-
 sub cumsum
 {
+    # Array cumulative sum
+    # Returns a new array which is the cumulative sum of the elements of the input array.
+    # That is: result[i] = sum(array[0] .. array[i])
+
 	my $a = shift;		# Array reference
 
 	my @result;
@@ -116,23 +66,18 @@ sub cumsum
 	return \@result;
 }
 
-=item max
-
-max - Maximum value in an array or list
-
-$max = max($array_ref);
-$max = max(@array);
-($max, $index) = max($array_ref);
-($max, $index) = max(@array);
-
-Returns the maximum value of an array by reference or list.
-If in list context the index of the maximum value is also returned.
-
-=cut
-
-
 sub max
 {
+    # Maximum value in an array or list
+    # Examples:
+    # $max = max($array_ref);
+    # $max = max(@array);
+    # ($max, $index) = max($array_ref);
+    # ($max, $index) = max(@array);
+
+    # Returns the maximum value of an array by reference or list.
+    # If in list context the index of the maximum value is also returned.
+
 	my $a = $_[0];
 	my $max;
 	my $index;
@@ -172,23 +117,19 @@ sub max
 	}
 }
 
-=item min
-
-min - Maximum value in an array or list
-
-$min = min($array_ref);
-$min = min(@array);
-($min, $index) = min($array_ref);
-($min, $index) = min(@array);
-
-Returns the minimum value of an array by reference or list.
-If in list context the index of the minimum value is also returned.
-
-=cut
-
 sub min
 {
-	my $a = $_[0];
+    # min - Maximum value in an array or list
+    # Examples:
+    # $min = min($array_ref);
+    # $min = min(@array);
+    # ($min, $index) = min($array_ref);
+    # ($min, $index) = min(@array);
+
+    # Returns the minimum value of an array by reference or list.
+    # If in list context the index of the minimum value is also returned.
+
+    my $a = $_[0];
 	my $min;
 	my $index;
 
@@ -227,19 +168,14 @@ sub min
 	}
 }
 
-=item linspace
-
-linspace - Create an array of linearly spaced numbers
-
-$array_ref = linspace($start, $end, $n);
-
-Returns a reference to an array with $n linearly spaced numbers in the range $start .. $end
-
-=cut
-
-
 sub linspace
 {
+    # Create an array of linearly spaced numbers
+    # Example:
+    # $array_ref = linspace($start, $end, $n);
+
+    # Returns a reference to an array with $n linearly spaced numbers in the range $start .. $end
+
 	my $start = shift;
 	my $end = shift;
 	my $n = shift;
@@ -258,19 +194,11 @@ sub linspace
 	return \@a;
 }
 
-=item unique
-
-unique - Get the unique values of an array
-
-$array = unique($array_ref);
-
-Returns an array which contents are the unique values of the array referenced by $array_ref. The resulting array is sorted.
-
-=cut
-
-
 sub unique
 {
+    # Get the unique values of an array
+    # Returns an array which contents are the unique values of the input array. The resulting array is sorted.
+
 	my $ref = shift;
 	croak("input reference to unique sub-routine not defined") unless defined($ref);
 
@@ -298,18 +226,14 @@ sub unique
 	}
 }
 
-=item add
-
-add - Add one array to another
-
-add($dest, $source);
-
-Elementwise add the $source array to the $dest array.
-
-=cut
-
 sub add
 {
+    # Add one array to another
+    # Example:
+    # add($dest, $source);
+
+    # Elementwise add the $source array to the $dest array.
+
 	my $dest = shift;
 	my $source = shift;
 
@@ -318,18 +242,13 @@ sub add
 	}
 }
 
-=item sum
-
-sum - Calculate the sum of an array
-
-$the_sum = sum($array_ref);
-
-Calculates the sum of all the elements in the array referenced by $array_ref
-
-=cut
-
 sub sum
 {
+    # Calculate the sum of an array
+    # Example:
+    # $the_sum = sum($array_ref);
+
+    # Calculates the sum of all the elements in the array referenced by $array_ref
 	my $ref = shift;
 	croak("input reference to sum sub-routine not defined") unless defined($ref);
 	my $theSum = 0;
@@ -341,9 +260,9 @@ sub sum
 	return $theSum;
 }
 
-
 sub mean
 {
+    # Calculate the mean of an array
 	my $ref = shift;
 	
 	croak("Input reference to mean() not defined") unless defined($ref);
@@ -354,6 +273,7 @@ sub mean
 
 sub variance
 {
+    # Calculate the variance of an array
 	my $ref = shift;
 	my $mean = mean($ref);
 
@@ -364,5 +284,3 @@ sub variance
 
 	return (1 / (scalar(@$ref) - 1)) * $sum;
 }
-
-=back
