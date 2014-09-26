@@ -637,7 +637,7 @@ sub BUILD
 		my $found = 0;
 		foreach my $line (@line_array) {
 			next if ( $line =~ /^\s*;/); #skip comments
-			if ($line =~ /ICALL\s?\.EQ\.\s?4/) {
+			if ($line =~ /ICALL\s*(\.EQ\.|==)\s*4/) {
 				$found = 1;
 				last;
 			} 

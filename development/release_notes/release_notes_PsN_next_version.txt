@@ -60,6 +60,12 @@ Changes and bug fixes from PsN 4.2.0 to x.y.z
 
    ___NONMEM interaction___
 
+- FIXED and FIXE are allowed as synonyms to FIX in $OMEGA and $SIGMA
+
+   ___vpc/npc___
+
+- When F_FLAG=0 PsN now also allow ICALL == 4
+
    ___scm___
 
 - scm now checks that all covariates in the code section are listed as test_relations
@@ -69,7 +75,7 @@ Changes and bug fixes from PsN 4.2.0 to x.y.z
 
    ___bootstrap___
 
-	 ___update_inits___
+   ___update_inits___
 	 
 - update is now always an alias for update_inits on all platforms.
   update is versioned like all other scripts.
