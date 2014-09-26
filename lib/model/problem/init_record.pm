@@ -169,7 +169,7 @@ sub _read_options
 	      s/\(\s*/\(/g;
 	      my ( $line, $line_comment ) = split( ";", $_, 2 );
 	      $_ = $line;
-	      $any_fixed++ if /FIX/;
+	      $any_fixed++ if /FIXED|FIXE|FIX/;
 	      $any_sd++    if /SD/;
 	      $warn_standar_chol = 1 if /SD/;
 	      $any_sd++    if /STANDARD/;
@@ -204,7 +204,7 @@ sub _read_options
 				#if block then remove all FIX etc here, will be set since any_fixed etc
 				( s/STANDARD// );
 				( s/SD// );
-				( s/FIX// );
+				( s/FIXED|FIXE|FIX// );
 				( s/CHOLESKY// );
 				( s/CORRELATION// );
 				( s/COVARIANCE// );
@@ -226,7 +226,7 @@ sub _read_options
 						print $opt[$i]."," if ($print_debug);
 						if ( $opt[$i] =~ /\d+/ ) {
 							$digit = $opt[$i];
-						} elsif ( $opt[$i] =~ /FIX/ ) {
+						} elsif ( $opt[$i] =~ /FIXED|FIXE|FIX/ ) {
 							$fixed = 1;
 						} elsif ( $opt[$i] =~ /SD/ or $opt[$i] =~ /STANDARD/ ) {
 							$sd = 1;
@@ -278,7 +278,7 @@ sub _read_options
 		}
 		( $fixed, $sd, $corr, $chol ) = ( 0, 0, 0, 0 );
 		$digit = $row[$i]; #read the new one
-		} elsif ( $row[$i] =~ /FIX/ and not $fixed ) {
+		} elsif ( $row[$i] =~ /FIXED|FIXE|FIX/ and not $fixed ) {
 			$fixed = 1;
 		} elsif ( $row[$i] =~ /STANDARD/ ) {
 			$sd = 1;
