@@ -416,12 +416,12 @@ sub convert_reparametrized_cov
         $line_values[0] = $line_values[0] . (" " x (12 - length($line_values[0]) ) ); 
         for my $i (1..@line_values - 1) {
             if ($line_values[$i] < 0) {
-                $line_values[$i] = sprintf(" %.5E", $line_values[$i]);
+                $line_values[$i] = sprintf(" %.17E", $line_values[$i]);
             } else {
-                $line_values[$i] = sprintf("  %.5E", $line_values[$i]);
+                $line_values[$i] = sprintf("  %.17E", $line_values[$i]);
             }
         }
-		$cov_lines[$i + 2] = join "", @line_values;
+		$cov_lines[$i + 2] = join " ", @line_values;
 		$cov_lines[$i + 2] = " ".$cov_lines[$i + 2];
 	}
 
