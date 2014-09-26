@@ -2,12 +2,11 @@
 
 use strict;
 use warnings;
-use Test::More tests => 57;
+use Test::More tests => 61;
 use Test::Exception;
 use FindBin qw($Bin);
 use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages
-
 
 use array qw(:all);
 
@@ -117,6 +116,16 @@ dies_ok ( sub { sum(undef) }, "Sum of an undef array");
 
 # Test of mean
 is (array::mean(\@a), 2.5, "A simple mean");
+
+# Median
+@a = qw(5 2 3);
+is (array::median(\@a), 3, "Median 1");
+@a = qw(5 4 3 2);
+is (array::median(\@a), 3.5, "Median 2");
+@a = ();
+is (array::median(\@a), 0, "Median 3");
+@a = qw(1 2 3 4 5);
+is (array::median(\@a), 3, "Median 4");
 
 # Test of variance
 @a = qw(1 2 4 4);

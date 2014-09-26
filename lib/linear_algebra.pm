@@ -3,6 +3,7 @@ package linear_algebra;
 use FindBin qw($Bin);
 use lib "$Bin/../lib";
 use strict;
+use array qw(:all);
 
 # Augment a square matrix with unit matrix to new_size
 sub pad_matrix
@@ -574,24 +575,6 @@ sub row_cov{
     }
 
     return 0;
-}
-
-sub median{
-    #input reference to array
-    #return median which is middle value if uneven number of values
-    #or arithemtic mean of two middle values if even number of values
-    #if empty input array then return 0
-    #not yet verified with matlab
-    my $ref = shift;
-    return 0 if (scalar(@{$ref})<1);
-    my @sorted = sort ({$a <=> $b} @{$ref});
-
-    if( scalar( @sorted ) % 2 ){
-	return $sorted[$#sorted/2];
-    } else {
-	return ($sorted[@sorted/2]+$sorted[(@sorted-2)/2]) / 2;
-    }
-
 }
 
 sub row_cov_median{

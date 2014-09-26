@@ -8,7 +8,7 @@ use include_modules;
 
 require Exporter;
 our @ISA = qw(Exporter);
-our %EXPORT_TAGS = ('all' => [ qw(not_empty is_empty diff cumsum max min linspace unique add sum mean variance) ]);
+our %EXPORT_TAGS = ('all' => [ qw(not_empty is_empty diff cumsum max min linspace unique add sum mean median variance) ]);
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 
 sub not_empty
@@ -269,6 +269,24 @@ sub mean
 	croak("Input array to mean() is empty") unless (@$ref > 0);
 
 	return sum($ref) / scalar(@$ref);
+}
+
+sub median
+{
+    # Calculate the median of an array
+    # return median which is middle value if uneven number of values
+    # or arithemtic mean of two middle values if even number of values
+    # if empty input array then return 0
+
+    my $ref = shift;
+    return 0 if (scalar(@{$ref}) < 1);
+    my @sorted = sort ({$a <=> $b} @{$ref});
+
+    if (scalar(@sorted) % 2) {
+	    return $sorted[$#sorted / 2];
+    } else {
+	    return ($sorted[@sorted / 2] + $sorted[(@sorted - 2) / 2]) / 2;
+    }
 }
 
 sub variance
