@@ -242,7 +242,7 @@ if (not $options{'nodec'}) {
         linear_algebra::transpose(\@precMatrix);
 		my $error = linear_algebra::cholesky(\@precMatrix);
 		if ($error) {
-			die "Unable to perform cholesky decomposition";
+			die "Unable to perform cholesky decomposition: matrix is not positive-definite";
 		}
         # Swap back to row order
         linear_algebra::transpose(\@precMatrix);
