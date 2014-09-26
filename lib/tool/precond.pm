@@ -405,6 +405,13 @@ sub convert_reparametrized_cov
 		}
 	}
 
+    #make symmetric to avoid almost symmetry
+    for (my $row = 0; $row < @varcovMatrix; $row++) {
+        for (my $col = $row + 1; $col < @varcovMatrix; $col++) {
+            $varcovMatrix[$row][$col] = $varcovMatrix[$col][$row];
+        }
+    }
+
 	my $line;
 	for (my $i = 0; $i < $model->nthetas; $i++) {
 		$line = $cov_lines[$i + 2]; 

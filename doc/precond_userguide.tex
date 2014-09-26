@@ -21,12 +21,15 @@ precond run2.mod -pre=psn.cov -cholesky
 \section{Input and options}
 
 \subsection{Required input}
-Required argument is a model file and a preconditioning matrix.
+Required argument is a model file and a preconditioning matrix. The preconditioning matrix can either be specified directly through the option -pre or be created from a raw results file with the option -rawres\_input.
 
 \begin{optionlist}
 
 \optdefault{pre}{psn.cov}
 A file in which to find the matrix for preconditioning. This matrix will be modified before use (see the preconditioning matrix section below) It can be either a comma separated file without header or a NONMEM output covariance matrix. It is recommended to use a symmetric matrix as preconditioning matrix.
+\nextopt
+\optdefault{rawres\_input}{filename}
+Create the preconditioning matrix from the supplied raw\_results file.
 \nextopt
 \end{optionlist}
 
@@ -35,16 +38,27 @@ A file in which to find the matrix for preconditioning. This matrix will be modi
 \begin{optionlist}
 \optname{cholesky}
 Use cholesky decomposition of the preconditioning matrix instead of LU decomposition.
+\nextopt
 \optname{nodec}
 Turn off decomposition of preconditioning matrix.
+\nextopt
 \optdefault{output\_model}{run1\_repara.mod}
 This option will break the normal execution flow and have precond only create the preconditioned model without running it.
 The model will be created with the specified name.
+\nextopt
 \optdefault{cov}{result.cov}
 This option will break the normal execution flow and only perform a conversion of a covariance matrix of the preconditioned model to the covariance matrix of the original model.
 If this option is set no model will be run.
+\nextopt
 \optdefault{update\_model}{filename}
-Copy the model with updated inital thetas to your work directory
+Copy the model with updated inital thetas to your work directory	
+\nextopt
+\optdefault{offset\_rawres}{N}
+Only relevant in combination with -rawres\_input. Default 1. The number of result lines to skip in the input raw results file before starting to read final parameter estimates. In a regular bootstrap raw\_results file, and also in an initial\_estimates.csv file from an sse run, the first line of estimates refers to the input model with the full dataset, so therefore the default offset is 1.
+\nextopt
+\optdefault{in\_filter}{comma separated list of conditions}
+Only relevant in combination with -rawres\_input. Default not used. The parameter estimates lines in the file can be filtered on values in the different columns. When specifying which column(s) the filtering should be based on, the exact column name must be used, e.g. minimization\_successful. Filtering can only be based on columns with numeric values. The allowed relations are .gt. (greater than), .lt. (less than) and .eq. (equal to). If the value in the filter column is 'NA' then that parameter set will be skipped, regardless of the defined filter relation. Conditions are separated with commas. If the remaining number of lines after filtering is smaller than -samples, sse will stop with an error message. Then the user must either change the filtering rules or change -samples. If the user has created a file with parameter estimates outside of PsN, filtering can be done on any numeric column in that file. Do not set column headers containing .eq. or .lt. or .gt. in the user-generated file as this would interfere with the in\_filter option syntax.
+\nextopt
 \end{optionlist}
 
 \section{Output}
