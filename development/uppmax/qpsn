@@ -8,11 +8,11 @@ NAME=qpsn
 #submitargs="-b y -S /bin/bash -cwd -j y"
 submitargs="-p core -n 1"
 
-#should look for $HOME/psn.conf and set email address and project id
+#should look for $HOME/psn.conf and set email address and account id
 #if do not find psn.conf then exit with error
-#slurm_project
+#slurm_account
 #email_address
-project=`sed -n 's/^slurm_project=//p' $HOME/psn.conf`
+project=`sed -n 's/^slurm_account=//p' $HOME/psn.conf`
 email=`sed -n 's/^email_address=//p' $HOME/psn.conf`
 nmver='default'
 mail="--mail-user=$email --mail-type=ALL"
@@ -75,12 +75,20 @@ if [[ `echo $@|wc -w` -gt 1 ]];then
     fi
 
 
-    #loop over $@ to see if slurm_project is set
+    parafile_set=0
+    numnodes=0
+    #loop over $@ to see if certain options set
     for option in $@
     do  
 #    	echo $option
-	if test `expr match "$option" '\-slurm_pro'` -gt 0; then 
+	if test `expr match "$option" '\-slurm_a'` -gt 0; then 
 	project=${option##-*=}
+	fi
+	if test `expr match "$option" '\-parafile'` -gt 0; then 
+	parafile_set=1
+	fi
+	if test `expr match "$option" '\-node'` -gt 0; then 
+	numnodes=${option##-*=}
 	fi
 	if test `expr match "$option" '\-nm_v'` -gt 0; then 
 	nmver=${option##-*=}
@@ -90,16 +98,16 @@ if [[ `echo $@|wc -w` -gt 1 ]];then
 	    #test that not more than 499 threads
 	    if [ $local_run -eq 0 ]
 		then
-		if [ $threads -gt 499 ]
+		if [ $threads -gt 4999 ]
 		then
-		    echo "You must not set -threads greater than 499 if not setting -local"
+		    echo "You must not set -threads greater than 4999 if not setting -local"
 		    echo "";
 		    exit 1;
 		fi
 	    else
-		if [ $threads -gt 500 ]
+		if [ $threads -gt 5000 ]
 		then
-		    echo "You must not set -threads greater than 500"
+		    echo "You must not set -threads greater than 5000"
 		    echo "";
 		    exit 1;
 		fi
@@ -121,6 +129,14 @@ if [[ `echo $@|wc -w` -gt 1 ]];then
 	 exit 1;
     fi
 
+    parafile_option=' '
+    #set parafile if unset and nodes > 1
+    if test $numnodes -gt 1; then
+	if test $parafile_set -eq 0; then
+	    parafile_option=' -parafile=/home/kajsa/PsN/mpilinux8.pnm '
+	fi
+    fi
+
     if test $local_run -eq 1; then
 	#need stuff for this shell to understand module
 	if [ -f /etc/profile.modules ]
@@ -128,9 +144,10 @@ if [[ `echo $@|wc -w` -gt 1 ]];then
 	    . /etc/profile.modules
 	    module unload gcc
 	    module unload intel
+	    module unload nonmem
 	    module load $nm_version
 	fi
-	$prog $@
+	$prog $@ $parafile_option
     else
 	if [ -z "$model" ] && [ "${model+xxx}" = "xxx" ]; then 
        	    jobname="$tool"
@@ -150,8 +167,9 @@ if [[ `echo $@|wc -w` -gt 1 ]];then
 #!/bin/bash  -l
 module unload gcc
 module unload intel
+module unload nonmem
 module load $nm_version
-$prog $@
+$prog $@ $parafile_option
 EOF
 	if test $? -ne 0; then
 	    echo ''
