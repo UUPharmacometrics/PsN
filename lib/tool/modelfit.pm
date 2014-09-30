@@ -2822,6 +2822,7 @@ sub copy_model_and_output
 		$model -> filename );
 
 	# This is used with 'prepend_model_file_name'
+	#this regex must be the same as used when finding lst-file name in model.pm, for consistency
 	my $dotless_model_filename = $model_filename;
 	$dotless_model_filename =~ s/\.[^.]+$//;
 

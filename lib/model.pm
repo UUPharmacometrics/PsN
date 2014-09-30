@@ -496,11 +496,11 @@ sub create_output_filename
 
     if ($filename =~ /\.mod$/) {
         $filename =~ s/\.mod$/.lst/;
-    } elsif ($filename =~ /^([^.]+)\./) {
-        #contains a dot
-        $filename = $1 . '.lst';
     } else {
-        $filename = $filename . '.lst';
+		my $dotless_model_filename = $filename;
+		#this regex must be the same as used in modelfit.pm, for consistency
+		$dotless_model_filename =~ s/\.[^.]+$//; #last dot and extension
+		$filename = $dotless_model_filename.'.lst';
     }
 
     return $filename;
