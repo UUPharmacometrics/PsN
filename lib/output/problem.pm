@@ -5,9 +5,10 @@ use Moose;
 use MooseX::Params::Validate;
 use output::problem::subproblem;
 
-my $nrec_exp = '^\s*NO. OF DATA RECS IN DATA SET:\s*(\d*)|^\s*TOT. NO. OF DATA RECS:\s*(\d*)';
-my $nobs_exp = ' TOT. NO. OF OBS RECS:\s*(\d*)';
-my $nind_exp = ' TOT. NO. OF INDIVIDUALS:\s*(\d*)';
+my $nrec_exp1 = '^\s*NO. OF DATA RECS IN DATA SET:\s*(\d+)';
+my $nrec_exp2 = '^\s*TOT. NO. OF DATA RECS:\s*(\d+)';
+my $nobs_exp = ' TOT. NO. OF OBS RECS:\s*(\d+)';
+my $nind_exp = ' TOT. NO. OF INDIVIDUALS:\s*(\d+)';
 my $subprob_exp = '^ PROBLEM NO\.:\s*(\d+)\s*SUBPROBLEM NO\.:\s*(\d+|\*\*\*\*)';
 my $star_subprob_number=9999;
 my $method_exp = '^ #METH:\s*(.*)';
@@ -308,11 +309,16 @@ sub _read_nrecs
 			$self -> parsing_error( message => $errmess."$!" );
 			return;
 		}
-		if ( /$nrec_exp/ ) {
+		if ( /$nrec_exp1/ ) {
+			$self -> nrecs($1);
+			$success = 1;
+			last;
+		}elsif ( /$nrec_exp2/ ) {
 			$self -> nrecs($1);
 			$success = 1;
 			last;
 		}
+
 	}
 
 	if ( $success ) {
