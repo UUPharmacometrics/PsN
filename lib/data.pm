@@ -2671,9 +2671,9 @@ sub lasso_get_categories
 	my %categories;
 
 	my @individuals = @{$self->individuals};
-	my $first_id = @individuals[0];
-	die "data -> factor: No individuals defined in data object based on ",
-	$self->filename,"\n" unless defined $first_id;
+	my $first_id = $individuals[0];
+	croak("data -> factor: No individuals defined in data object based on ",
+		  $self->filename,"\n") unless defined $first_id;
 
 	my $type;
 
