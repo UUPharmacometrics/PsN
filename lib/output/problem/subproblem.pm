@@ -1259,7 +1259,8 @@ sub _read_term
 	    next;
 	  }
 	  if ( /0COVARIANCE STEP ABORTED/ ) {
-	    $self -> covariance_step_run(0);
+	    $self -> covariance_step_run(0); #this reset of covariance_step_run will not be visible to access_any in output.pm,
+		#since covariance_step_run also defined on problem level. This reset only used for parsing purposes locally in subproblem.pm
 	    next;
 	  }
 
