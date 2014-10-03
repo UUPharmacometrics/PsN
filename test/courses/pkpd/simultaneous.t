@@ -20,8 +20,8 @@ foreach my $file (@needed){
 chdir($dir);
 
 my @command_list=(
-	[$includes::execute." run81.mod  -model_dir_name","task 1 of 2"],
-	[$includes::vpc." run81.mod -tte=RTTE -flip_comments -samples=20 -compress -clean=3 -stratify_on=FLG,DV1,TRET,HR,CONC,CE,AGE,SEX,WT,CRCL"
+	[get_command('execute')." run81.mod  -model_dir_name","task 1 of 2"],
+	[get_command('vpc')." run81.mod -tte=RTTE -flip_comments -samples=20 -compress -clean=3 -stratify_on=FLG,DV1,TRET,HR,CONC,CE,AGE,SEX,WT,CRCL"
  ,"task 2 of 2"]
 	);
 plan tests => scalar(@command_list);

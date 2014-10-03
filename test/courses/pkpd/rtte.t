@@ -20,11 +20,11 @@ foreach my $file (@needed) {
 chdir($dir);
 #change back samp to 50 if running for real
 my @command_list=(
-	[$includes::execute." run51.mod","task 1 of 4"],
-	[$includes::vpc." run51.mod -tte=RTTE -flip_comments -samples=20 -compress -clean=3 -stratify_on=DOSE,CON,SMAX,SMXH,THR,CAV,CAVH,CONC",
+	[get_command('execute')." run51.mod","task 1 of 4"],
+	[get_command('vpc')." run51.mod -tte=RTTE -flip_comments -samples=20 -compress -clean=3 -stratify_on=DOSE,CON,SMAX,SMXH,THR,CAV,CAVH,CONC",
 	 "task 2 of 4"],
-	[$includes::execute." run57.mod","task 3 of 4"],
-	[$includes::vpc." run57.mod -tte=RTTE -flip_comments -samples=20 -compress -clean=3 -stratify_on=DOSE,CON,SMAX,SMXH,THR,CAV,CAVH,CONC",
+	[get_command('execute')." run57.mod","task 3 of 4"],
+	[get_command('vpc')." run57.mod -tte=RTTE -flip_comments -samples=20 -compress -clean=3 -stratify_on=DOSE,CON,SMAX,SMXH,THR,CAV,CAVH,CONC",
 	 "task 4 of 4"]
 	);
 plan tests => scalar(@command_list);
