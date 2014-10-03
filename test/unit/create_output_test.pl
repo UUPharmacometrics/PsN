@@ -24,7 +24,7 @@ $SIG{__WARN__} = sub {
 our $test_files = '/home/kajsa/kod-psn/PsN4/test/test_files/output/';
 #my $outfile = 'onePROB/oneEST/withSIM/cov_nsub2_V7_30_beta.lst';
 #my $outfile = 'nm73/example6b_V7_30_beta.lst';
-my $outfile = 'nm6/nm61_1.lst';
+my $outfile = 'nm74/icon_examples/control3boot.res';
 
 
 open (OUT,">testcase.txt");

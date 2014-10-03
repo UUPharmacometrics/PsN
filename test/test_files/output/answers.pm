@@ -687,7 +687,64 @@ sub read_answers{
 	$answer_hashes[$index]->{answers}->{0}->{0}->{'seomegas'}=[1.68000E-02,1.66000E-02,2.04000E-02,0.00000E+00,0.00000E+00,0.00000E+00,0.00000E+00,0.00000E+00,0.00000E+00,0.00000E+00,0.00000E+00,0.00000E+00,0.00000E+00,0.00000E+00,1.78000E-02,0.00000E+00,0.00000E+00,0.00000E+00,0.00000E+00,0.00000E+00,0.00000E+00];
 	$answer_hashes[$index]->{answers}->{0}->{0}->{'sesigmas'}=[1.65000E-03,0.00000E+00,1.31000E-03,0.00000E+00,0.00000E+00,8.49000E-03,0.00000E+00,0.00000E+00,0.00000E+00,2.55000E-03,0.00000E+00,0.00000E+00,0.00000E+00,0.00000E+00,1.73000E-03];
 
-	
+	$index++;
+	$answer_hashes[$index]={};
+	$answer_hashes[$index]->{file}='nm74/icon_examples/delayed.res';
+	$answer_hashes[$index]->{answers}={};
+	$answer_hashes[$index]->{parsed_successfully}=1;
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'ofv'}=-85.0795013007985;
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'covariance_step_successful'}=1;
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'thetas'}=[2.34316E+01,2.50000E-01,2.41679E-01,5.04213E-02,1.07754E+00,9.13190E+01,1.00000E+00,5.00000E-02];
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'omegas'}=[1.22387E-02];
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'sethetas'}=[3.37642E-01,0.00000E+00,2.50121E-02,2.56658E-03,5.44639E-01,1.41546E+01,0.00000E+00,0.00000E+00];
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'seomegas'}=[3.46169E-03];
+
+	$index++;
+	$answer_hashes[$index]={};
+	$answer_hashes[$index]->{file}='nm74/icon_examples/control3boot.res';
+	$answer_hashes[$index]->{answers}={};
+	$answer_hashes[$index]->{parsed_successfully}=1;
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'ofv'}=39.4268320987164;
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'covariance_step_successful'}=1;
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'covariance_step_run'}=1;
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'covariance_step_warnings'}=0;
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'rounding_errors'}=0;
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'minimization_successful'}=1;
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'estimate_near_boundary'}=0;
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'thetas'}=[9.84184E-01,1.05444E-01,3.30321E+01];
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'omegas'}=[2.01423E-01];
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'sethetas'}=[1.60086E-01,9.07980E-03,1.64052E+00];
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'seomegas'}=[1.01252E-01];
+	$answer_hashes[$index]->{answers}->{0}->{44}->{'ofv'}=20.0445708743240;
+	$answer_hashes[$index]->{answers}->{0}->{44}->{'covariance_step_successful'}=0;
+	$answer_hashes[$index]->{answers}->{0}->{44}->{'covariance_step_run'}=1;
+	$answer_hashes[$index]->{answers}->{0}->{44}->{'covariance_step_warnings'}=1;
+	$answer_hashes[$index]->{answers}->{0}->{44}->{'rounding_errors'}=0;
+	$answer_hashes[$index]->{answers}->{0}->{44}->{'minimization_successful'}=1;
+	$answer_hashes[$index]->{answers}->{0}->{44}->{'estimate_near_boundary'}=0;
+	$answer_hashes[$index]->{answers}->{0}->{44}->{'thetas'}=[1.04705E+01,8.47473E-02,3.37695E+01];
+	$answer_hashes[$index]->{answers}->{0}->{44}->{'omegas'}=[3.45876E-02];
+	$answer_hashes[$index]->{answers}->{0}->{69}->{'ofv'}=-72.8267401581814;
+	$answer_hashes[$index]->{answers}->{0}->{69}->{'covariance_step_successful'}=0;
+	$answer_hashes[$index]->{answers}->{0}->{69}->{'covariance_step_run'}=1;
+	$answer_hashes[$index]->{answers}->{0}->{69}->{'covariance_step_warnings'}=0;
+	$answer_hashes[$index]->{answers}->{0}->{69}->{'rounding_errors'}=0;
+	$answer_hashes[$index]->{answers}->{0}->{69}->{'minimization_successful'}=1;
+	$answer_hashes[$index]->{answers}->{0}->{69}->{'estimate_near_boundary'}=1;
+	$answer_hashes[$index]->{answers}->{0}->{69}->{'thetas'}=[2.52330E+00,8.66996E-02,3.33685E+01];
+	$answer_hashes[$index]->{answers}->{0}->{69}->{'omegas'}=[2.00000E-05];
+	$answer_hashes[$index]->{answers}->{0}->{99}->{'ofv'}=47.0800325822182;
+	$answer_hashes[$index]->{answers}->{0}->{99}->{'covariance_step_successful'}=1;
+	$answer_hashes[$index]->{answers}->{0}->{99}->{'covariance_step_run'}=1;
+	$answer_hashes[$index]->{answers}->{0}->{99}->{'covariance_step_warnings'}=0;
+	$answer_hashes[$index]->{answers}->{0}->{99}->{'rounding_errors'}=0;
+	$answer_hashes[$index]->{answers}->{0}->{99}->{'minimization_successful'}=1;
+	$answer_hashes[$index]->{answers}->{0}->{99}->{'estimate_near_boundary'}=0;
+	$answer_hashes[$index]->{answers}->{0}->{99}->{'thetas'}=[1.51417E+00,9.99757E-02,3.26092E+01];
+	$answer_hashes[$index]->{answers}->{0}->{99}->{'omegas'}=[4.03929E-01];
+	$answer_hashes[$index]->{answers}->{0}->{99}->{'sethetas'}=[3.71889E-01,8.02271E-03,1.28137E+00];
+	$answer_hashes[$index]->{answers}->{0}->{99}->{'seomegas'}=[2.12480E-01];
+
 	return \@answer_hashes;
 }
 1;
