@@ -1,0 +1,4 @@
+#Task 1 of 2
+execute run36.mod -model_dir_name
+#Task 2 of 2
+vpc run36vpc.mod -samples=20 -seed=1234 -levels=1.5 -dir=vpc_36 -lst=run36.lst -stratify_on=DOSE -nopred -dv=SMXH
