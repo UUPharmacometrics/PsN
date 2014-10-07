@@ -1,0 +1,12 @@
+#Task 1c:1
+sse sse_1u.mod -samples=5 -seed=12345 -rawres_input=uncertainty_sse_1.csv -offset=1 -no-estimate_simulation -dir=sim1u
+#Task 1c:2
+sse sse_2u.mod -samples=5 -seed=12345 -rawres_input=uncertainty_sse_2.csv -offset=1 -no-estimate_simulation -dir=sim2u
+#Task 1c:3
+sse sse_3u.mod -samples=5 -seed=12345 -rawres_input=uncertainty_sse_3.csv -offset=1 -no-estimate_simulation -dir=sim3u
+#Task 1e:1
+sse sse_CI_1u.mod -samples=5 -seed=12345 -rawres_input=uncertainty_sse_CI_1.csv -offset=1 -no-estimate_simulation -dir=sim_CI_1u
+#Task 1e:2
+sse sse_CI_2u.mod -samples=5 -seed=12345 -rawres_input=uncertainty_sse_CI_2.csv -offset=1 -no-estimate_simulation -dir=sim_CI_2u
+# Task 1e:3
+sse sse_CI_3u.mod -samples=5 -seed=12345 -rawres_input=uncertainty_sse_CI_3.csv -offset=1 -no-estimate_simulation -dir=sim_CI_3u

@@ -1,0 +1,26 @@
+#Task 1a 1
+execute run10.mod -model_dir_name
+#Task 1a 2
+sumo run10.lst
+#Task 1b
+llp run10.mod -thetas=5 -dir=llp10
+#Task 1c
+bootstrap -samples=10 run10.mod -dir=boot10
+#Task 2a
+sse run11.mod -samples=10 -dir=sseMEM -seed=1234 -alt=run12.mod,run13.mod -rawres=boot10/raw_results_run10.csv
+#Task 2c
+sse run11.mod -samples=3 -dir=sseMEM_lowED50 -seed=1234 -alt=run12.mod -rawres=boot10/raw_results_run10.csv -in_filter=5_ED50.lt.60
+#Task 2e
+sse run11.mod -samples=10 -dir=sseCFB -seed=1234 -alt=run14.mod,run15.mod,run16.mod -rawres=boot10/raw_results_run10.csv -no-est
+#Task 3a
+update_inits run17.template run10.lst -out=run17.mod
+#Task 3b
+mcmp -full_model=run17.mod -reduced_model=run13.mod -stratify_on=ARM -dir=mcmpMEM
+#Task 3c
+mcmp -simulation_model=run17.mod -full_model=run14.mod -reduced_model=run16.mod -stratify_on=ARM -dir=mcmpCFB
+#Task 3a
+update_inits run18.template run10.lst -out=run18.mod
+#Task 4a
+sse run18.mod -samples=20 -dir=sse18
+#Task 4b
+vpc run19.mod -samples=20 -idv=DOSE -flip_comments -rawres_input=sse18/raw_results_run18.csv -offset_rawres=0 -dir=vpcMEM300 -auto_bin=unique

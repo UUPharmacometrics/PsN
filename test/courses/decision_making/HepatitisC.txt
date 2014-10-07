@@ -1,0 +1,4 @@
+#Task 1a
+execute run53.mod -model_dir_name
+#Task 2b
+sse run53.mod -no-estimate -samples=5 -rawres_input=sim_raw_res53_3.csv -dir=sse53

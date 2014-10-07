@@ -1,0 +1,18 @@
+#Task 1:1
+execute run1sim.mod -model_dir_name
+#Task 1:5 a
+execute run2.mod -model_dir_name
+#Task 1:5 b
+sumo run2.lst
+#Task 1:5 c
+execute run3.mod -model_dir_name
+#Task 1:5 b
+sumo run3.lst
+#Task 1:6 a
+execute run5.mod -model_dir_name
+#Task 1:6 b
+sumo run5.lst
+#Task 7
+vpc run2.mod -tte=RTTE -flip_comments -samples=20 -clean=2 -dir=vpc1 -stratify_on=ECOG,META,TSR6,BASET
+#Task 8c with only 3 samples due to runtime
+sse -samples=3 run2sim.mod -no-estimate_simulation -alternative_models=1_alt1.mod,2_alt1.mod,3_alt1.mod,4_alt1.mod

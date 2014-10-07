@@ -1,0 +1,12 @@
+#Task 1a
+execute run1.mod -model_dir_name
+#Task 1b
+sumo run1.lst
+#Task 2
+bootstrap run1.mod -samples=10 -dofv -dir=boot1a -seed=1234567
+#Task 4
+bootstrap run1.mod -samples=10 -dofv -dir=boot1b -seed=7654321
+#Task 5a
+execute run2.mod -model_dir_name
+#Task 5b
+bootstrap run2.mod -samples=10 -dofv -dir=boot2 -seed=1234567

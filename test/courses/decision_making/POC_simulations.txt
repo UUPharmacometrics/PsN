@@ -1,0 +1,28 @@
+#Task 1a 1
+execute run0.mod -model_dir_name
+#Task 1a 2
+execute run1.mod -model_dir_name
+#Task 1b 1
+sumo run0.lst
+#Task 1b 2
+sumo run1.lst
+#Task 1d
+randtest run1.mod -samples=10 -base_model=run0.mod -random=DOSE -dir=randtest1
+#Task 2a
+vpc run1.mod -stratify_on=ARM -auto_bin=unique -samples=20 -dir=vpc1
+#Task 2b
+vpc run1.mod -stratify_on=ARM  -auto_bin=unique -samples=20 -dir=vpc1CFB -dv=CFB
+#Task 2c
+bootstrap run1.mod -samples=20 -dir=boot1 -stratify_on=ARM
+#Task 2e
+vpc run1.mod  -auto_bin=unique -stratify_on=ARM -samples=20 -dir=vpc1boot -rawres_in=boot1/raw_results_run1.csv
+#Task 3a
+vpc run5.mod  -auto_bin=unique -stratify_on=ARM -samples=20 -dir=vpc5 -rawres_in=boot1/raw_results_run1.csv
+#Task 3b
+vpc run5.mod -samples=20 -auto_bin=unique -stratify=ARM -dir=vpc5_NO_PU
+#Task 3d
+vpc run5.mod -samples=20 -auto_bin=unique -stratify=ARM -dir=vpc5DD -refstrat=0 -dv=CFB -rawres=boot1/raw_results_run1.csv
+#Task 4b
+execute run9.mod -extra_output=fort.50,fort.60 -model_dir_name
+#Task 4a
+vpc run9.mod -samples=20 -stratify=ARM -dir=vpc9 -auto_bin=unique

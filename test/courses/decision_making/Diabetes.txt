@@ -1,0 +1,28 @@
+#Task 3a: run51
+execute run51.mod -dir=run51
+#Task 3b:run52
+execute run52.mod -dir=run52
+#Task 3c: run53
+execute run53.mod -dir=run53
+#Task 3d: run54
+execute run54.mod -dir=run54
+#Task 3e: run61
+execute run61.mod -dir=run61
+#Task 3f: run62
+execute run62.mod -dir=run62
+#Task 3g: run63
+execute run63.mod -dir=run63
+#Task 3h: run64
+execute run64.mod -dir=run64
+#Task 3i: run71
+execute run71.mod -dir=run71
+#Task 3j: run72
+execute run72.mod -dir=run72
+#Task 3k: run73
+execute run73.mod -dir=run73
+#Task 3l: run74
+execute run74.mod -dir=run74
+#Task 61: run51 vpc
+vpc run51.mod -dir=run51vpc -dv=CFB -stratify=TRT -samples=20 -rawres_inp=raw_results_run51.csv
+#Task 6b: run52 vpc
+vpc run52.mod -dir=run52vpc -dv=CFB -stratify=TRT -samples=20 -rawres_inp=raw_results_run52.csv
