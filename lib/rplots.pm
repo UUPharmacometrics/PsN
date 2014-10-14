@@ -41,6 +41,10 @@ sub set_R_executable
 sub get_preamble()
 {
 	my $self=shift;
+
+	my $pdfname = $self->filename();
+	$pdfname =~ s/\.[^.]*$//;
+	$pdfname .= '.pdf';
 	my @datearr=localtime;
 	my $theDate=sprintf "%4.4d-%2.2d-%2.2d",($datearr[5]+1900),($datearr[4]+1),($datearr[3]);
 	my $theTime=sprintf "%2.2d:%2.2d",($datearr[2]),($datearr[1]);
@@ -53,7 +57,11 @@ sub get_preamble()
 	}
 	push(@arr,
 		 "setwd('".$self->directory."')",
-		 'level <- '.$self->level());
+		 'level <- '.$self->level(),
+		 'if (level > 0){',
+		 $self->indent().'pdf(file="'.$pdfname.'")',
+		 '}'."\n"
+		);
 	
 	push(@arr,@{$self->extra_preamble});
 
@@ -82,12 +90,16 @@ sub print_R_script
 	open ( SCRIPT, ">" . $self->filename ); #local filename
 	print SCRIPT join("\n",@{$self->get_preamble})."\n";
 	foreach my $level (sort {$a <=> $b} keys(%{$self->level_code})){
+		print SCRIPT "\n";
 		print SCRIPT 'if (level > '.($level-1).'){'."\n";
 		print SCRIPT $self->indent().join("\n".$self->indent(),@{$self->level_code->{$level}})."\n";
 		print SCRIPT "}\n";
 	}
 
-	my @final =('dev.off()'); #enclose with if??
+	print SCRIPT "\n";
+	my @final =('if (level > 0){',
+				$self->indent().'dev.off()',
+				'}');
 	print SCRIPT join("\n",@final)."\n";
 	close SCRIPT;
 }

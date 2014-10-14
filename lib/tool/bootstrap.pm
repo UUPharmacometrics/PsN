@@ -1936,6 +1936,43 @@ sub create_R_scripts
 	}
 }
 
+sub create_R_plots_code{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+							  rplot => { isa => 'rplots', optional => 0 }
+		);
+	my $rplot = $parm{'rplot'};
+
+	my ( $ldir, $rawname ) = OSspecific::absolute_path('', $self->raw_results_file->[0]);
+	my $inclIdFile = "included_individuals1.csv";
+	my $samples = $self->samples;
+	#TODO check that these options are not inverted!!
+	my $minFailed = $self->skip_minimization_terminated() ? 'TRUE' : 'FALSE';
+	my $covFailed = $self->skip_covariance_step_terminated() ? 'TRUE' : 'FALSE';
+	my $covWarnings = $self->skip_with_covstep_warnings() ? 'TRUE' : 'FALSE';
+	my $boundary = $self->skip_estimate_near_boundary() ? 'TRUE' : 'FALSE';
+
+	$rplot->libraries(['xpose4']);
+	$rplot->add_preamble(code => [
+							 "rawresfile <- '".$rawname."'",
+							 "inclIdFile <- '".$inclIdFile."'",
+							 "min.failed=$minFailed #PsN option skip_minimization_terminated",
+							 "cov.failed=$covFailed #PsN option skip_covariance_step_terminated",
+							 "cov.warnings=$covWarnings #PsN option skip_with_covstep_warnings",
+							 "boundary=$boundary #PsN option skip_estimate_near_boundary"
+						 ]);
+	$rplot->add_plot(level=>1, code =>[		
+						 'if(packageVersion("xpose4")>="4.5.0"){',
+						 $rplot->indent().'boot.hist(results.file=rawresfile,incl.ids.file=incl_id_file,',
+						 $rplot->indent().$rplot->indent().
+						 'min.failed=min.failed,cov.failed=cov.failed,cov.warnings=cov.warnings,boundary=boundary)',
+						 '} else {',
+						 $rplot->indent().'cat("xpose4 version must be 4.5.0 or later for basic bootstrap plot")',
+						 '}'
+					 ]);
+
+}
+
 no Moose;
 __PACKAGE__->meta->make_immutable;
 1;
