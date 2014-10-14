@@ -17,6 +17,7 @@ use Moose;
 use MooseX::Params::Validate;
 
 use model;
+use rplots;
 
 has 'models' => ( is => 'rw', isa => 'ArrayRef[model]' );
 has 'tools' => ( is => 'rw', isa => 'ArrayRef[tool]' );
@@ -136,6 +137,7 @@ has 'torque_prepend_flags' => ( is => 'rw', isa => 'Str' );
 has 'torque_queue' => ( is => 'rw', isa => 'Str' );
 has 'run_on_torque' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'directory_name_prefix' => ( is => 'rw', isa => 'Str' );
+has 'rplots_level' => ( is => 'rw', isa => 'Int', default => 0 );
 
 
 sub BUILDARGS
@@ -447,6 +449,8 @@ sub pre_fork_setup
 sub print_results
 {
 	my $self = shift;
+
+	$self->create_R_script();
 
 	# Print results created by 'prepare_results' methods specific to the
 	# tools. prepare_results and print_results are usually called from
@@ -1608,6 +1612,35 @@ sub print_options
 				cp($option_file,$dir."/original_version_and_option_info.txt");
 			}
 		}
+	}
+}
+
+sub create_R_script
+{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+							  filename => { isa => 'Str', optional => 1 }
+		);
+
+	my $filename = $parm{'filename'};
+
+	if ($self->can("create_R_plots_code")){
+		unless (defined $filename){
+			my $tool_name;
+			if (defined $self->directory_name_prefix) {
+				$tool_name = $self->directory_name_prefix;
+			} else {
+				my @tool_name_full = split('::', ref $self);
+				$tool_name = $tool_name_full[$#tool_name_full];
+			}
+			$filename = 'PsN_'.$tool_name.'_plots.R';
+		}
+
+		my $rplot = rplots->new(filename => $filename, 
+								directory => $self->directory,
+								level => $self->rplots_level);
+		$self->create_R_plots_code(rplot => $rplot);
+		$rplot->make_plots;
 	}
 }
 

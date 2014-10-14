@@ -58,6 +58,7 @@ Getopt::Long::config("auto_abbrev");
 		  "prepend_model_file_name!",
 		  "quick_summarize|quick_summary",
 		  "retries:i",
+		  "rplots_level:i",
 		  "run_on_lsf!",
 		  "run_on_ud!",
 		  "run_on_sge!",
@@ -652,6 +653,14 @@ EOF
     you can specify. The <span class="style2">-threads</span> option will be ignored if you run on
     a grid system, since grids have their own scheduling algoritms. The
     default value for the <span class="style2">-threads</span> option is 1.
+EOF
+    $help_hash{-rplots_level} = <<'EOF';
+    <p class="style2">-rplots_level='integer'</p>
+    Automatically create R plots to visualize results, *only* for tools for which feature is implemented.
+	0 means no plots are generated
+	1 means basic plots are generated													  
+	2 means basic and extended plots are generated													  
+														  
 EOF
 
     $help_hash{-nice} = <<'EOF';

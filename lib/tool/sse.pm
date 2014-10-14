@@ -2495,6 +2495,36 @@ sub cleanup
 	}
 }
 
+sub temp_create_R_plots_code{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+							  rplot => { isa => 'rplots', optional => 0 }
+		);
+	my $rplot = $parm{'rplot'};
+
+	my ( $ldir, $rawname ) = OSspecific::absolute_path('', $self->raw_results_file->[0]);
+	my $samples = $self->samples;
+
+	$rplot->add_preamble(code => [
+							 "rawresfile <- '".$rawname."'",
+							 'rawres <- data.frame()',
+							 'oind <- 0',
+							 'sind <- 0'
+						 ]);
+	$rplot->add_plot(level=>1, code =>[		
+						 'rawres <- read.csv(file=rawresfile,as.is=T)',
+						 "oind <- which(names(rawres)== 'ofv')",
+						 "sind <- which(names(rawres)== 'SIGMA.1.1.')",
+						 "mean1 <- apply(X=rawres[1:".$samples.",oind:sind], MARGIN=2, FUN=mean)",
+						 "cat(mean1,sep=' ')"
+					 ]);
+	$rplot->add_plot(level=>2, code =>[		
+						 "sd1 <- apply(X=rawres[1:".$samples.",oind:sind], MARGIN=2, FUN=sd)",
+						 "cat(sd1,sep=' ')"
+					 ]);
+
+}
+
 no Moose;
 __PACKAGE__->meta->make_immutable;
 1;
