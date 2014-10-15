@@ -563,10 +563,17 @@ sub run
 				#if stats-runs.csv exists then copy_model_and_input does not do anything
 				#but read psn.mod into candidate_model object
 				my $run_nmtran = 0;
+				my $check_verbatim = 0;
 				if ($self->check_nmtran and (($run + 1) < $self->nmtran_skip_model)) {
 					$run_nmtran = 1;
+					if (scalar(@models) == 1){
+						$check_verbatim = 1;
+					}
 				}
-				$queue_info{$run}{'candidate_model'} = $self -> copy_model_and_input(model => $models[$run], source => '../', run_nmtran => $run_nmtran);
+				$queue_info{$run}{'candidate_model'} = $self -> copy_model_and_input(model => $models[$run], 
+																					 source => '../', 
+																					 run_nmtran => $run_nmtran,
+																					 check_verbatim => $check_verbatim);
 				$queue_info{$run}{'model'} = $models[$run];
 				$queue_info{$run}{'modelfile_tainted'} = 1;
 				$queue_info{$run}{'have_accepted_run'} = 0;
@@ -2459,6 +2466,12 @@ sub compute_iofv
 sub run_nmtran
 {
 	my $self = shift;
+	my %parm = validated_hash(\@_,
+							  check_verbatim => { isa => 'Bool', optional => 1 , default => 0},
+							  model => { isa => 'model', optional => 1}
+		);
+	my $check_verbatim = $parm{'check_verbatim'};
+	my $model = $parm{'model'};
 	my $ok;
 
 	$ok = 1;
@@ -2474,6 +2487,57 @@ sub run_nmtran
 		}else{
 			#everything ok, cleanup
 			unlink('FDATA','FREPORT','FMSG');
+			if ($check_verbatim){
+				my @code_records = ('aesinitial','aes','des','error','infn','mix','pk','pred','thetai','thetar');
+				#check if have verbatim
+				my $testmodel = $model -> copy( filename => 'dummy.'.$self->modext,
+												copy_datafile => 0,
+												copy_output => 0,
+												write_copy => 0);
+				my $have_verb = 0;
+				foreach my $prob (@{$testmodel->problems()}){
+					$prob -> shrinkage_module -> disable;
+					$prob -> cwres(0);
+					$prob -> mirror_plots(0);
+					$prob -> {'cwres_modules'}=undef;
+					$prob -> {'mirror_plot_modules'}=undef;
+					foreach my $coderec (@code_records){
+						my $accessor = $coderec.'s';
+						if ( defined $prob->$accessor ) {
+							foreach my $record ( @{$prob->$accessor} ){
+								if ((defined $record->verbatim_first ) or (defined $record->verbatim_last)){
+									$have_verb=1;
+									$record->{'verbatim_first'}=undef;
+									$record->{'verbatim_last'}=undef;
+								}
+							}
+						}
+					}
+				}
+				if ($have_verb){
+					$testmodel->remove_records(type => 'table');
+					$testmodel->_write();
+					my $command = $self->full_path_nmtran.'  < dummy.'.$self->modext.' > FMSG';
+					system($command);
+					if (not -e 'FREPORT'){
+						open( ERR, 'FMSG');
+						my @read_file = <ERR>;
+						close( ERR );
+						for(my $i=0; $i<scalar(@read_file); $i++){
+							if ($read_file[$i] =~/UNDEFINED VARIABLE/){
+								if ($read_file[$i-1] =~/:\s+(.+)$/){
+									print "\nWarning: Double check that variable $1 is defined in the model\n";
+									print "         (if you defined it in verbatim code then everything is ok)\n";
+								}
+							}
+						}
+						mv('FMSG','nmtran_error_without_verbatim_code.txt');
+					}
+					unlink('FCON','FSIZES','FSTREAM','prsizes.f90','FSUBS','FSUBS2','FSUBS.f90');
+					unlink('FSUBS_MU.F90','FLIB','LINK.LNK','FWARN');
+					unlink('FDATA','FREPORT','FMSG');
+				}
+			}
 		}
 	}
 
@@ -2521,11 +2585,13 @@ sub copy_model_and_input
 	my %parm = validated_hash(\@_,
 		 model => { isa => 'model', optional => 0 },
 		 source => { isa => 'Str', optional => 1 },
-		 run_nmtran => { isa => 'Bool', default => 0, optional => 1 }
+		 run_nmtran => { isa => 'Bool', default => 0, optional => 1 },
+		 check_verbatim => { isa => 'Bool', default => 0, optional => 1 }
 	);
 	my $model = $parm{'model'};
 	my $source = $parm{'source'};
 	my $run_nmtran = $parm{'run_nmtran'};
+	my $check_verbatim = $parm{'check_verbatim'};
 	my $candidate_model;
 
 	if (-e 'stats-runs.csv' and $self->add_retries) {
@@ -2724,7 +2790,8 @@ sub copy_model_and_input
 										 ignore_missing_files => 1 );
 		$candidate_model -> _write();
 		$candidate_model -> store_inits;
-		$self->run_nmtran if ($run_nmtran);
+		$self->run_nmtran(check_verbatim => $check_verbatim,
+						  model => $candidate_model) if ($run_nmtran);
 		
 		trace(tool => 'modelfit', message => "Copied ".$model->filename().
             " to psn.".$self->modext." in current directory. Modified table names.", level => 2)
