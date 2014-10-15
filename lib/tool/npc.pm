@@ -16,6 +16,7 @@ use Cwd;
 use binning;
 use Moose;
 use MooseX::Params::Validate;
+use math qw(round);
 
 extends 'tool';
 
@@ -2192,26 +2193,6 @@ sub index_matrix_binned_values
 	return \@index_matrix;
 }
 
-sub round
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-							  number => { isa => 'Num', optional => 0 }
-		);
-	my $number = $parm{'number'};
-	my $integer_out;
-
-	my $floor=int($number);
-	my $rem=$number-$floor;
-	if ($rem >= 0){
-		$integer_out = ($rem >= 0.5)? $floor+1 : $floor;
-	} else {
-		$integer_out = (abs($rem) >= 0.5)? $floor-1 : $floor;
-	}
-
-	return $integer_out;
-}
-
 sub ceil
 {
 	my $self = shift;
@@ -3970,7 +3951,6 @@ sub vpc_analyze
 	($npc_result_column_labels,$npc_result_row_labels) = 
 		$self->get_npc_result_labels('ci' => $c_i,'pred_intervals' => \@pred_int);
 	my @npc_result_labels = ($npc_result_row_labels,$npc_result_column_labels);
-#    my @npc_section_array; have insdie strata loop
 
 	#call get_npc_indices
 	#with dropout npc indices will be different for each bin,
@@ -4224,8 +4204,7 @@ sub vpc_analyze
 				}
 			}
 			next if (($nonzero_count == 0) and ($n_non_missing_real == 0));
-			my $low_ci_ind = $self->round('number'=>((100-$c_i)*($nonzero_count-1)/200));
-#    my $low_ci_ind = int(((100-$c_i)*($no_sim-1)/200)+0.5); #index of start of ci % interval
+			my $low_ci_ind = round((100-$c_i)*($nonzero_count-1)/200);
 			my $high_ci_ind = $nonzero_count - $low_ci_ind - 1; #index of end  of  c_i% interval
 			
 			#if defined $self->censor()
@@ -4276,10 +4255,8 @@ sub vpc_analyze
 						 $lloq_ci_from,$lloq_ci_to);
 				}
 			}else{
-#	push(@censored_result_row_values,'NA','NA','NA','NA');
 				push(@censored_result_row_values,'','','','');
 				foreach my $ii (1..($self->mirrors)){
-#	  push(@censored_result_row_values,'NA');
 					push(@censored_result_row_values,'');
 				}
 			}
@@ -4425,7 +4402,7 @@ sub vpc_analyze
 						#take median
 						$limit[$i]= $self->median('sorted_array' => \@sorted_sim_values);
 					}else{
-						$limit_index[$i] = $self->round('number'=>$perc_limit[$i]*($n_merged_censored_sim-1)/100);
+						$limit_index[$i] = round($perc_limit[$i]*($n_merged_censored_sim-1)/100);
 						$limit[$i]=$sorted_sim_values[$limit_index[$i]];
 					}
 				}	   
@@ -4547,7 +4524,7 @@ sub vpc_analyze
 					}elsif ($perc_limit[$i]==50){
 						$limit_real[$i] = $self->median('sorted_array' => \@sorted_singleset);
 					}else{
-						my $index = $self->round('number'=>($perc_limit[$i]*(scalar(@censored_real)-1)/100));
+						my $index = round($perc_limit[$i]*(scalar(@censored_real)-1)/100);
 						$limit_real[$i] = $sorted_singleset[$index];
 					}
 				}
@@ -4594,7 +4571,7 @@ sub vpc_analyze
 						}elsif ($perc_limit[$i]==50){
 							$limit_singlesim[$i]->[$col]  = $self->median('sorted_array' => \@sorted_singleset);
 						}else{
-							my $index = $self->round('number'=>($perc_limit[$i]*(scalar(@singleset)-1)/100));
+							my $index = round($perc_limit[$i]*(scalar(@singleset)-1)/100);
 							$limit_singlesim[$i]->[$col] = $sorted_singleset[$index];
 						}
 					}
@@ -4611,7 +4588,7 @@ sub vpc_analyze
 					$mi++;
 				}
 			}
-			my $low_ci_ind = $self->round('number'=>((100-$c_i)*($uncensored_count-1)/200));
+			my $low_ci_ind = round((100-$c_i)*($uncensored_count-1)/200);
 			my $high_ci_ind = $uncensored_count - $low_ci_ind - 1; #index of end  of  c_i% interval
 
 			for (my $i=0; $i<$no_perc_limits; $i++){
@@ -4882,7 +4859,6 @@ sub npc_analyze
 			$fil =~ s/\\$//;
 		}
 		my ($file_volume,$file_directory, $file_file) = File::Spec -> splitpath( $fil);
-#    print "$file_volume : $file_directory : $file_file\n";
 		$extra_value=$file_file;
 	} elsif ($self->flip_comments()){
 		$extra_value="flip comments $modelname";
@@ -4981,11 +4957,11 @@ sub get_npc_indices
 	my @pred_int = sort {$a <=> $b} @{$pred_intervals};
 	my $no_pred_ints = scalar(@pred_int);
 
-	$low_ind = $self->round('number'=>((100-$ci)*($no_sim-1)/200)); #index of start of ci % interval
+	$low_ind = round((100-$ci)*($no_sim-1)/200); #index of start of ci % interval
 	$high_ind = $no_sim - $low_ind - 1; #index of end  of  c_i% interval
 
 	for (my $i=0; $i<$no_pred_ints; $i++){
-		push (@lower_index, $self->round('number'=>((100-$pred_int[$i])*($no_sim-1)/200))); 
+		push (@lower_index, round((100-$pred_int[$i])*($no_sim-1)/200)); 
 		push (@upper_index, $no_sim - $lower_index[$i] -1);
 	}
 
@@ -5094,7 +5070,6 @@ sub subset_npc_analyze
 
 	my $obs_counter=0;
 	
-#    print "\n\n\n";
 	my $alert_string="\n\nWarning: NPC results may be misleading. There may be too many\n".
 		"identical values to make it possible to report correct counts above and below the PI.\n\n";
 	
@@ -5146,7 +5121,7 @@ sub subset_npc_analyze
 				my $lower = $lower_index->[$i];
 				my $upper = ($upper_index->[$i]);
 				if ($censored){
-					$lower = $self->round('number'=>((100-$pred_int[$i])*(scalar(@sorted_sim_values)-1)/200)); 
+					$lower = round((100-$pred_int[$i])*(scalar(@sorted_sim_values)-1)/200);
 					$upper = (scalar(@sorted_sim_values) - $lower -1);
 				}
 				$lower_limit[$i] = $sorted_sim_values[$lower];
@@ -5237,7 +5212,6 @@ sub subset_npc_analyze
 
 	} #endof foreach row
 
-#  my $const=100/$point_counter; #conversion from count to percent
 	if ($self->verbose){
 		for (my $i=0; $i<$no_pred_ints; $i++){
 			printf "%.0f %.3f %.3f\n",$pred_int[$i],$lower_limit[$i],$upper_limit[$i];
@@ -5260,7 +5234,7 @@ sub subset_npc_analyze
 		$non_zeros++ if ($count_max[$j] > 0);
 		$sum_warnings[$j] = -99 if ($count_max[$j] == 0);
 	}
-	$low_ind = $self->round('number'=>((100-$ci)*($non_zeros-1)/200)); #index of start of ci % interval
+	$low_ind = round((100-$ci)*($non_zeros-1)/200); #index of start of ci % interval
 	$high_ind = $non_zeros - $low_ind - 1; #index of end  of  c_i% interval
 
 	#loop over prediction intervals, compute results for each interval
