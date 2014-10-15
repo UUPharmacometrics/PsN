@@ -2533,6 +2533,7 @@ sub run_nmtran
 						}
 						mv('FMSG','nmtran_error_without_verbatim_code.txt');
 					}
+					unlink('dummy.'.$self->modext);
 					unlink('FCON','FSIZES','FSTREAM','prsizes.f90','FSUBS','FSUBS2','FSUBS.f90');
 					unlink('FSUBS_MU.F90','FLIB','LINK.LNK','FWARN');
 					unlink('FDATA','FREPORT','FMSG');
