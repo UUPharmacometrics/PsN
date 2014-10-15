@@ -5,7 +5,7 @@
 
 use strict;
 use warnings;
-use Test::More tests=>53;
+use Test::More tests => 50;
 use Test::Exception;
 use FindBin qw($Bin);
 use lib "$Bin/.."; #location of includes.pm
@@ -14,11 +14,6 @@ use includes; #file with paths to PsN packages
 use binning;
 
 my (@a, @b, $a, $b);
-
-# Test of mean()
-is (binning::mean([1, 2, 3, 4]), 2.5, "A simple mean value");
-dies_ok { binning::mean(undef) } "Mean of an undef array";
-dies_ok { binning::mean([]) } "Mean of an empty array";
 
 # Test of variability
 is (binning::variability([8, 8, 8, 8]), 0, "No variability");

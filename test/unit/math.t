@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 13;
+use Test::More tests => 14;
 use Test::Exception;
 use FindBin qw($Bin);
 use lib "$Bin/.."; #location of includes.pm
@@ -29,5 +29,8 @@ is (eps(1), 2.220446049250313e-16, "eps(1)");
 is (eps(-1), 2.220446049250313e-16, "eps(-1)");
 is (eps(0.00073), 1.084202172485504e-19, "eps(0.00073)");
 is (eps(400000000000000), 0.0625, "eps(400000000000000)");
+
+# inf
+is (inf(), 'inf', "inf()");
 
 done_testing();

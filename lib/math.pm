@@ -9,7 +9,7 @@ use include_modules;
 
 require Exporter;
 our @ISA = qw(Exporter);
-our %EXPORT_TAGS = ('all' => [ qw(round eps) ]);
+our %EXPORT_TAGS = ('all' => [ qw(round eps inf) ]);
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 
 sub round
@@ -49,4 +49,10 @@ sub eps
 	$e *= 2;
 
 	return($e);
+}
+
+sub inf
+{
+    # A portable infinity.
+	return 9**9**9;
 }

@@ -12,7 +12,7 @@ use strict;
 use include_modules;
 use Math::Trig;	# For pi
 use array qw(:all);
-use math qw(round eps);
+use math qw(round eps inf);
 use POSIX qw(ceil);
 
 sub bin_range
@@ -50,13 +50,6 @@ sub bin_auto
   $| = $temp_flush;
 
 	return $bin_edges;
-}
-
-
-# A portable infinity.
-sub inf
-{
-	return 9**9**9;
 }
 
 # Algorithm parameters
