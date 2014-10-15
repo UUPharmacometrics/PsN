@@ -250,7 +250,7 @@ sub sum
     # $the_sum = sum($array_ref);
 
     my ($ref) = pos_validated_list(\@_,
-        { isa => 'ArrayRef[Num]' },
+        { isa => 'ArrayRef' },
     );
 
 	my $theSum = 0;
@@ -266,7 +266,7 @@ sub mean
 {
     # Calculate the mean of an array
     my ($ref) = pos_validated_list(\@_,
-        { isa => 'ArrayRef[Num]' },
+        { isa => 'ArrayRef' },
     );
 
     if (scalar(@$ref) == 0) {

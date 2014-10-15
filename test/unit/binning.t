@@ -5,30 +5,15 @@
 
 use strict;
 use warnings;
-use Test::More tests=>63;
+use Test::More tests=>53;
 use Test::Exception;
 use FindBin qw($Bin);
 use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages
 
-
 use binning;
 
 my (@a, @b, $a, $b);
-
-# Test of round
-is (binning::round(0.5), 1, "round(0.5)");
-is (binning::round(0), 0, "round(0)");
-is (binning::round(-1.2), -1, "round(-1.2)");
-is (binning::round(-1.7), -2, "round(-1.7)");
-is (binning::round(1.2), 1, "round(1.2)");
-is (binning::round(1.7), 2, "round(1.7)");
-
-# Test of eps
-is (binning::eps(1), 2.220446049250313e-16, "eps(1)");
-is (binning::eps(-1), 2.220446049250313e-16, "eps(-1)");
-is (binning::eps(0.00073), 1.084202172485504e-19, "eps(0.00073)");
-is (binning::eps(400000000000000), 0.0625, "eps(400000000000000)");
 
 # Test of mean()
 is (binning::mean([1, 2, 3, 4]), 2.5, "A simple mean value");
@@ -92,7 +77,5 @@ my $negB = binning::calcNegB(\@N, \@meanIdv, $totMeanIdv);
 foreach my $i (0..@$negB - 1) {
 	is ($$negB[$i], $negB_result[$i], "negB $i");
 }
-
-
 
 done_testing();

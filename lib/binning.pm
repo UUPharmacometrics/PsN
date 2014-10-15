@@ -12,6 +12,7 @@ use strict;
 use include_modules;
 use Math::Trig;	# For pi
 use array qw(:all);
+use math qw(round eps);
 use POSIX qw(ceil);
 
 sub bin_range
@@ -1542,37 +1543,6 @@ sub calcAD
 	}
 
 	return ($addDecrease, $newPOF, $negBLeft_result, $negBRight_result, $edgeIndex);
-}
-
-# Scalar round
-sub round
-{
-	my $a = shift;
-
-	if ($a == 0) {
-		return 0;
-	}
-
-	return int($a + $a / abs($a * 2));
-}
-
-# Machine epsilon for different magnitudes.
-# Gives the correct answer for eps(x) <= 1 otherwise returns 1
-sub eps
-{
-	my $x = shift;
-	$x = abs($x);		# eps is same for negatives 
-
-	my $e = 1;
-
-	while ($e + $x > $x)
-	{
-		$e /= 2;
-	}
-
-	$e *= 2;
-
-	return($e);
 }
 
 sub variability
