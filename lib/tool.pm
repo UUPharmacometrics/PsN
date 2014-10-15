@@ -543,17 +543,21 @@ sub print_results
 		### the first row will be printed before each row in the values
 		### table, and the second row will be the header.
 
-		croak("No results_file defined" )
-		unless ( defined $self->results_file );
+		croak("No results_file defined" ) unless ( defined $self->results_file );
 
-		unless ( defined $self->results and scalar(@{$self->results}) == 1
-				and not defined $self->results->[0]{'own'}) {
+		my $skip_print = 0;
+		$skip_print = 1 if ( defined $self->results and scalar(@{$self->results}) == 1
+							 and not defined $self->results->[0]{'own'});
+
+		$skip_print = 1 if ( defined $self->results and scalar(@{$self->results}) == 0);
+
+		#the unless is here to prevent empty file from being produced, especially for mcmp
+		unless  ($skip_print ){
 			open ( RES, ">" . $self->directory . $self->results_file );
 			trace(tool => 'tool', message => "prepare to print ".
 				$self->directory . $self->results_file, level => 1);
 		}
 
-		#the unless is here to prevent empty file from being produced, especially for mcmp
 
 		if ( defined $self->results ) {
 			my @all_results = @{$self->results};
