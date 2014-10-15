@@ -4,6 +4,7 @@
 
 package array;
 
+use MooseX::Params::Validate;
 use include_modules;
 
 require Exporter;
@@ -248,9 +249,10 @@ sub sum
     # Example:
     # $the_sum = sum($array_ref);
 
-    # Calculates the sum of all the elements in the array referenced by $array_ref
-	my $ref = shift;
-	croak("input reference to sum sub-routine not defined") unless defined($ref);
+    my ($ref) = pos_validated_list(\@_,
+        { isa => 'ArrayRef[Num]' },
+    );
+
 	my $theSum = 0;
 
 	foreach my $val (@$ref) {
@@ -263,10 +265,13 @@ sub sum
 sub mean
 {
     # Calculate the mean of an array
-	my $ref = shift;
-	
-	croak("Input reference to mean() not defined") unless defined($ref);
-	croak("Input array to mean() is empty") unless (@$ref > 0);
+    my ($ref) = pos_validated_list(\@_,
+        { isa => 'ArrayRef[Num]' },
+    );
+
+    if (scalar(@$ref) == 0) {
+        croak("Input array to mean() is empty");
+    }
 
 	return sum($ref) / scalar(@$ref);
 }

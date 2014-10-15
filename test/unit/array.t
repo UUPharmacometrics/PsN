@@ -2,7 +2,7 @@
 
 use strict;
 use warnings;
-use Test::More tests => 61;
+use Test::More tests => 63;
 use Test::Exception;
 use FindBin qw($Bin);
 use lib "$Bin/.."; #location of includes.pm
@@ -116,6 +116,8 @@ dies_ok ( sub { sum(undef) }, "Sum of an undef array");
 
 # Test of mean
 is (array::mean(\@a), 2.5, "A simple mean");
+dies_ok ( sub { mean([]) }, "Mean of an empty array");
+dies_ok ( sub { mean(undef) }, "Mean of undef array");
 
 # Median
 @a = qw(5 2 3);
