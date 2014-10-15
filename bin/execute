@@ -354,6 +354,10 @@ $modelfit-> print_options (cmd_line => $cmd_line,
 
 $modelfit -> run;
 
+if (scalar(@{$models_array})==1){
+	#for rplots
+	$modelfit -> print_results();
+}
 if( $options{'summarize'} ){
 	$modelfit -> summarize;
 }
