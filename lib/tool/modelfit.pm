@@ -3312,6 +3312,67 @@ sub create_sub_dir
 	return $tmp_dir;
 }
 
+sub create_R_plots_code{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+							  rplot => { isa => 'rplots', optional => 0 }
+		);
+	my $rplot = $parm{'rplot'};
+	#only to be used from execute, single model
+	my ($directory, $model_filename) = OSspecific::absolute_path($self->models->[0]-> directory,
+														   $self->models->[0] -> filename );
+
+	my $modSuffix='.mod'; 
+	my $modPrefix='run'; 
+	if ($model_filename =~ s/(\.[^.]+)$//){
+		$modSuffix=$1; 
+		$model_filename =~ s/[0-9]+$//;
+		$modPrefix=$model_filename; 
+	}
+	my @xpose_names=("sdtab","mutab","patab","catab","cotab","mytab","extra","xptab","cwtab");
+
+	my @tables = @{$self->models->[0]->table_names}; #array of arrays without path
+	my $runno;
+	my $tabSuffix='';
+	for (my $i=0; $i<scalar(@tables); $i++){
+		if (defined $tables[$i]){
+			foreach my $name (@{$tables[$i]}){
+				foreach my $tab (@xpose_names){
+					if (index( $name, $tab) == 0){
+						#table file names starts like an xpose table
+						#figure out number and suffix
+						if ($name =~ /[a-z]+([0-9]+)(.*)/){
+							$runno=$1;
+							if (length($2)>0){
+								$tabSuffix = $2;
+							}
+							last;
+						} 
+					}
+				}
+				last if (defined $runno);
+			}
+		}
+		last if (defined $runno);
+	}
+	if (defined $runno){
+		$rplot->filename($modPrefix.$runno.'_plots.R');
+
+		$rplot->libraries(['xpose4']);
+		$rplot->add_preamble(code => [
+								 "directory <- '".$directory."'",
+								 "runno <- ".$runno,
+								 "mod.suffix <- '".$modSuffix."'",
+								 "mod.prefix <- '".$modPrefix."'",
+								 "tab.suffix <- '".$tabSuffix."'",
+							 ]);
+		$rplot->add_plot(level=>1, code =>[		
+							 'xpdb'.$runno.'<-xpose.data(runno,directory=directory,tab.suffix=tab.suffix,mod.prefix=mod.prefix,mod.suffix=mod.suffix)',
+							 'basic.gof(xpdb'.$runno.')'
+						 ]);
+	}
+}
+
 no Moose;
 __PACKAGE__->meta->make_immutable;
 1;
