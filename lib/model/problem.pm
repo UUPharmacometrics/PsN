@@ -2274,6 +2274,8 @@ sub _format_problem
 	    }
 	  }
 	  if( $self->shrinkage_module -> enabled and $type eq 'table' ) {
+		  #FIXME if own_print_order might not have a 'table' beforehand, must add it in that case so that 
+		  #shrinkage is added
 	    push( @formatted,
 		  @{$self->shrinkage_module -> format_shrinkage_tables } );
 	  }	
