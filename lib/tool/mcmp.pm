@@ -12,6 +12,7 @@ use File::Copy qw/cp mv/;
 use OSspecific;
 use Moose;
 use MooseX::Params::Validate;
+use math qw(round);
 
 extends 'tool';
 
@@ -211,9 +212,7 @@ sub modelfit_setup
 
 	}
 
-
-
-	$self->target_power($self->round(number=> $self->target_power()));
+	$self->target_power(round($self->target_power));
 
 	return if (defined $self->table_full() and defined $self->table_reduced());
 
@@ -612,8 +611,7 @@ sub modelfit_analyze
 			my @bootstrap_ofv = (0) x $self->n_bootstrap();
 
 			foreach my $strata (0 .. ($n_strata-1)){
-				my $strata_samples= 
-					$self->round(number=>($goal_total_samples*$strata_size{$strata}/$self->n_individuals));
+				my $strata_samples = round($goal_total_samples*$strata_size{$strata}/$self->n_individuals);
 				$strata_N[$strata] = $strata_samples;
 				$total_samples +=$strata_samples;
 				foreach (1 .. $strata_samples){
@@ -641,8 +639,7 @@ sub modelfit_analyze
 		} else {
 			#algorithm 2
 			foreach my $str (0 .. ($n_strata-1)){
-				my $strata_samples= 
-					$self->round(number=>($goal_total_samples*$strata_size{$str}/$self->n_individuals));
+				my $strata_samples = round($goal_total_samples*$strata_size{$str}/$self->n_individuals);
 				$strata_N[$str] = $strata_samples;
 				$total_samples +=$strata_samples;
 			}
@@ -728,26 +725,6 @@ sub modelfit_analyze
 	print "See mcmp_results.csv for more detailed results.\n";
 	close(RES);
 	$self->cleanup();
-}
-
-sub round
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-							  number => { isa => 'Num', optional => 0 }
-		);
-	my $number = $parm{'number'};
-	my $integer_out;
-
-	my $floor=int($number);
-	my $rem=$number-$floor;
-	if ($rem >= 0){
-		$integer_out = ($rem >= 0.5)? $floor+1 : $floor;
-	} else {
-		$integer_out = (abs($rem) >= 0.5)? $floor-1 : $floor;
-	}
-
-	return $integer_out;
 }
 
 sub ceil
