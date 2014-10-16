@@ -9,7 +9,7 @@ use include_modules;
 
 require Exporter;
 our @ISA = qw(Exporter);
-our %EXPORT_TAGS = ('all' => [ qw(not_empty is_empty diff cumsum max min linspace unique add sum mean median variance) ]);
+our %EXPORT_TAGS = ('all' => [ qw(not_empty is_empty diff cumsum max min linspace unique add sum mean median variance stdev) ]);
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 
 sub not_empty
@@ -306,4 +306,40 @@ sub variance
 	}
 
 	return (1 / (scalar(@$ref) - 1)) * $sum;
+}
+
+sub stdev
+{
+    # Calculate the standard deviation of an array.
+    # Uses sorting before summation to be more numerically stable
+
+    my ($array) = pos_validated_list(\@_,
+        { isa => 'ArrayRef' },
+    );
+
+	my $result;
+
+	$result = 0;
+	my $val_count = scalar(@{$array});
+	return if (($val_count == 0) or ($val_count == 1));     # Must handle zero length array
+	my @sorted = (sort {$a <=> $b} @{$array}); #sort ascending
+	my $sum_values = 0;
+	foreach my $val (@sorted) {
+		$sum_values += $val;
+	}
+	
+	my $mean = $sum_values / $val_count;
+	my @squared_errors;
+	foreach my $val (@sorted) {
+		push(@squared_errors, ($val - $mean) ** 2);
+	}
+
+	@sorted = (sort {$a <=> $b} @squared_errors); #sort ascending
+	my $sum_errors_pow2 = 0;
+	foreach my $val (@sorted) {
+		$sum_errors_pow2 += $val;
+	}
+	
+	$result= sqrt ($sum_errors_pow2 / ($val_count - 1));
+	return $result;
 }

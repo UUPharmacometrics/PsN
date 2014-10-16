@@ -17,6 +17,7 @@ use binning;
 use Moose;
 use MooseX::Params::Validate;
 use math qw(round);
+use array qw(mean stdev);
 
 extends 'tool';
 
@@ -2213,59 +2214,6 @@ sub median
 	return $result;
 }
 
-sub mean
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-							  array => { isa => 'Ref', optional => 1 }
-		);
-	my $array = $parm{'array'};
-	my $mean;
-
-	my $val_count= scalar( @{$array} );
-	my $sum_values=0;
-	foreach my $val (@{$array}){
-		$sum_values += $val;
-	}
-	$mean=$sum_values/$val_count;
-
-	return $mean;
-}
-
-sub standard_deviation
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-							  array => { isa => 'Ref', optional => 1 }
-		);
-	my $array = $parm{'array'};
-	my $result;
-
-	$result = 0;
-	my $val_count = scalar(@{$array});
-	return if (($val_count == 0) or ($val_count == 1));
-	my @sorted = (sort {$a <=> $b} @{$array}); #sort ascending
-	my $sum_values=0;
-	foreach my $val (@sorted){
-		$sum_values += $val;
-	}
-	
-	my $mean = $sum_values / $val_count;
-	my @squared_errors;
-	foreach my $val (@sorted) {
-		push(@squared_errors, ($val - $mean) ** 2);
-	}
-
-	@sorted = (sort {$a <=> $b} @squared_errors); #sort ascending
-	my $sum_errors_pow2=0;
-	foreach my $val (@sorted){
-		$sum_errors_pow2 += $val;
-	}
-	
-	$result= sqrt ($sum_errors_pow2/($val_count-1));
-	return $result;
-}
-
 sub get_data_matrix
 {
 	my $self = shift;
@@ -3220,8 +3168,8 @@ sub do_predcorr_and_varcorr
 		foreach my $row (@pc_data_array){ #for each observation=row in pc_data_array
 			my @values = @{$row}; #make copy of values so we do not destroy anything
 			my $orig_value = shift(@values); #remove first value from this row
-			push(@stdevs,($self->standard_deviation(array => \@values))); #store stdev from simulated values only
-			#standard_deviation handles zero lenght array
+			push(@stdevs, (array::stdev(\@values))); #store stdev from simulated values only
+			#stdev handles zero lenght array
 		}
 		my $median_stdev = $self->median(sorted_array => [(sort {$a <=> $b} @stdevs)]);
 		
@@ -4368,14 +4316,14 @@ sub vpc_analyze
 				my @sorted_sim_values = sort {$a <=> $b} @merged_censored_sim;
 				for (my $i=0; $i<$no_perc_limits; $i++){
 					if ($perc_limit[$i] eq $meantext){
-						$limit[$i]= $self->mean(array => \@sorted_sim_values);
+						$limit[$i] = array::mean(\@sorted_sim_values);
 					}elsif ($perc_limit[$i] eq $deltameantext){
 						if ($strat_ind == 0){
 							#reference stratum
-							$limit[$i]= 0;
-							$reference_mean_limit[$bin_index] = $self->mean(array => \@sorted_sim_values); 
+							$limit[$i] = 0;
+							$reference_mean_limit[$bin_index] = array::mean(\@sorted_sim_values); 
 						}else{
-							$limit[$i]= $self->mean(array => \@sorted_sim_values) - $reference_mean_limit[$bin_index];
+							$limit[$i] = array::mean(\@sorted_sim_values) - $reference_mean_limit[$bin_index];
 						}
 					}elsif ($perc_limit[$i]==50){
 						#take median
@@ -4491,16 +4439,16 @@ sub vpc_analyze
 				my @sorted_singleset = sort {$a <=> $b} @censored_real;
 
 				for (my $i=0; $i<$no_perc_limits; $i++){
-					if ($perc_limit[$i] eq $meantext){
-						$limit_real[$i] = $self->mean(array => \@sorted_singleset);
+					if ($perc_limit[$i] eq $meantext) {
+						$limit_real[$i] = array::mean(\@sorted_singleset);
 					}elsif ($perc_limit[$i] eq $deltameantext){
 						if ($strat_ind == 0){
-							$reference_mean_limit_real[$bin_index] = $self->mean(array => \@sorted_singleset);
+							$reference_mean_limit_real[$bin_index] = array::mean(\@sorted_singleset);
 							$limit_real[$i] = 0;
 						}else{
-							$limit_real[$i] = $self->mean(array => \@sorted_singleset) - $reference_mean_limit_real[$bin_index]; 
+							$limit_real[$i] = array::mean(\@sorted_singleset) - $reference_mean_limit_real[$bin_index]; 
 						}
-					}elsif ($perc_limit[$i]==50){
+					}elsif ($perc_limit[$i] == 50) {
 						$limit_real[$i] = $self->median('sorted_array' => \@sorted_singleset);
 					}else{
 						my $index = round($perc_limit[$i]*(scalar(@censored_real)-1)/100);
@@ -4539,13 +4487,13 @@ sub vpc_analyze
 					my @sorted_singleset = sort {$a <=> $b} @singleset;
 					for (my $i=0; $i<$no_perc_limits; $i++){
 						if ($perc_limit[$i] eq $meantext){
-							$limit_singlesim[$i]->[$col]  = $self->mean(array => \@sorted_singleset);
+							$limit_singlesim[$i]->[$col]  = array::mean(\@sorted_singleset);
 						}elsif ($perc_limit[$i] eq $deltameantext){
 							if ($strat_ind == 0){
-								$reference_mean_limit_singlesim[$bin_index]->[$col]  = $self->mean(array => \@sorted_singleset);
-								$limit_singlesim[$i]->[$col]  = 0;
+								$reference_mean_limit_singlesim[$bin_index]->[$col]  = array::mean(\@sorted_singleset);
+								$limit_singlesim[$i]->[$col] = 0;
 							}else{
-								$limit_singlesim[$i]->[$col]  = $self->mean(array => \@sorted_singleset) - $reference_mean_limit_singlesim[$bin_index]->[$col] ;
+								$limit_singlesim[$i]->[$col] = array::mean(\@sorted_singleset) - $reference_mean_limit_singlesim[$bin_index]->[$col] ;
 							}
 						}elsif ($perc_limit[$i]==50){
 							$limit_singlesim[$i]->[$col]  = $self->median('sorted_array' => \@sorted_singleset);

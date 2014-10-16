@@ -2,7 +2,7 @@
 
 use strict;
 use warnings;
-use Test::More tests => 63;
+use Test::More tests => 64;
 use Test::Exception;
 use FindBin qw($Bin);
 use lib "$Bin/.."; #location of includes.pm
@@ -133,5 +133,8 @@ is (array::median(\@a), 3, "Median 4");
 @a = qw(1 2 4 4);
 is (array::variance(\@a), 2.25, "A simple variance"); 
 
+# Test of stdev
+@a = qw(3 5 9 8);
+cmp_float (array::stdev(\@a), 2.753785273643051, "A simple stdev");
 
 done_testing();
