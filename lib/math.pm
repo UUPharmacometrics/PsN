@@ -9,7 +9,7 @@ use include_modules;
 
 require Exporter;
 our @ISA = qw(Exporter);
-our %EXPORT_TAGS = ('all' => [ qw(round eps inf) ]);
+our %EXPORT_TAGS = ('all' => [ qw(round eps inf ceil) ]);
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 
 sub round
@@ -27,6 +27,26 @@ sub round
     } else {
         $integer_out = (abs($rem) >= 0.5) ? $floor - 1 : $floor;
     }
+
+    return $integer_out;
+}
+
+sub ceil
+{
+    my ($number) = pos_validated_list(\@_,
+        { isa => 'Num' },
+    );
+
+    my $integer_out;
+
+    my $floor = int($number);
+    my $rem = $number - $floor;
+    if ($rem > 0) {
+        $integer_out = $floor + 1;
+    } else {
+        #equal or negative
+        $integer_out = $floor;
+    } 
 
     return $integer_out;
 }

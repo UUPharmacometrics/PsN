@@ -12,7 +12,7 @@ use File::Copy qw/cp mv/;
 use OSspecific;
 use Moose;
 use MooseX::Params::Validate;
-use math qw(round);
+use math qw(round ceil);
 
 extends 'tool';
 
@@ -727,27 +727,6 @@ sub modelfit_analyze
 	$self->cleanup();
 }
 
-sub ceil
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-							  number => { isa => 'Num', optional => 0 }
-		);
-	my $number = $parm{'number'};
-	my $integer_out;
-
-	my $floor=int($number);
-	my $rem=$number-$floor;
-	if ($rem > 0){
-		$integer_out = $floor+1;
-	} else {
-		#equal or  neg
-		$integer_out = $floor;
-	} 
-
-	return $integer_out;
-}
-
 sub get_total_samples
 {
 	my $self = shift;
@@ -761,7 +740,7 @@ sub get_total_samples
 
 	if ($last_N->[0] == 0){ #most recent step
 		#this is the first iteration
-		$total_samples = $self->ceil(number=> (10/$self->increment()))*$self->increment();
+		$total_samples = ceil(10 / $self->increment) * $self->increment;
 		$self->rounding(1);
 	}elsif ($last_N->[1] == 0){ #step before most recent
 		#this is the second iteration
@@ -780,7 +759,7 @@ sub get_total_samples
 		return -1 unless ($last_Y->[1] > 0 and $last_Y->[1]<=1);
 		return -1 if ($last_Y->[0] == $last_Y->[1]);
 		my $N=$last_N->[0]+(($self->target_power()/100)-$last_Y->[0])*($last_N->[0]-$last_N->[1])/($last_Y->[0]-$last_Y->[1]);
-		$total_samples = $self->ceil(number=> ($N/$self->increment()))*$self->increment();
+		$total_samples = ceil($N / $self->increment) * $self->increment;
 		$self->rounding(-1*$self->rounding);      
 	}
 	$self->rounding(1) if($total_samples <= $self->increment());

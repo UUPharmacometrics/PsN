@@ -12,6 +12,7 @@ use model;
 use ui;
 use Moose;
 use MooseX::Params::Validate;
+use math qw(ceil);
 
 extends 'tool';
 
@@ -334,27 +335,6 @@ sub sum_vector_entries
 	return $sum_entries;
 }
 
-sub ceil
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		number => { isa => 'Num', optional => 1 }
-	);
-	my $number = $parm{'number'};
-	my $integer_out;
-
-	my $floor=int($number);
-	my $rem=$number-$floor;
-	if ($rem > 0){
-		$integer_out = $floor+1;
-	} else {
-		#equal or  neg
-		$integer_out = $floor;
-	} 
-
-	return $integer_out;
-}
-
 sub get_statistics_array
 {
 	my $self = shift;
@@ -390,7 +370,7 @@ sub get_statistics_array
 	}
 
 	foreach my $ci (95,90,50,25){
-		my $lower_index = $self->ceil(number => ($nval*(100-$ci)/200))-1;
+		my $lower_index = ceil($nval * (100 - $ci) / 200) - 1;
 		my $upper_index = $nval - ($lower_index+1);
 		push (@statistics,($sorted_array[$upper_index]));
 		push (@statistics,($sorted_array[$lower_index]));

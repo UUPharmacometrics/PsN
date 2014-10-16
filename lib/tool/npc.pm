@@ -2193,27 +2193,6 @@ sub index_matrix_binned_values
 	return \@index_matrix;
 }
 
-sub ceil
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-							  number => { isa => 'Num', optional => 0 }
-		);
-	my $number = $parm{'number'};
-	my $integer_out;
-
-	my $floor=int($number);
-	my $rem=$number-$floor;
-	if ($rem > 0){
-		$integer_out = $floor+1;
-	} else {
-		#equal or  neg
-		$integer_out = $floor;
-	} 
-
-	return $integer_out;
-}
-
 sub median
 {
 	my $self = shift;

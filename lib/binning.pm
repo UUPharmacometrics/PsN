@@ -12,8 +12,7 @@ use strict;
 use include_modules;
 use Math::Trig;	# For pi
 use array qw(:all);
-use math qw(round eps inf);
-use POSIX qw(ceil);
+use math qw(round eps inf ceil);
 
 sub bin_range
 {
