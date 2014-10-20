@@ -9,7 +9,7 @@ use include_modules;
 
 require Exporter;
 our @ISA = qw(Exporter);
-our %EXPORT_TAGS = ('all' => [ qw(not_empty is_empty diff cumsum max min linspace unique add sum mean median variance stdev) ]);
+our %EXPORT_TAGS = ('all' => [ qw(not_empty is_empty diff cumsum max min linspace unique add sum mean median variance stdev is_int) ]);
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 
 sub not_empty
@@ -342,4 +342,25 @@ sub stdev
 	
 	$result= sqrt ($sum_errors_pow2 / ($val_count - 1));
 	return $result;
+}
+
+sub is_int
+{
+    # Test if a (possibly two dimensional) array is all integers
+    my $a = shift;
+
+    foreach my $val (@$a) {
+        if (ref($val) eq 'ARRAY') {
+            foreach my $subval (@$val) {
+                if ($subval !~ /^\d+$/) {
+                    return 0;
+                }
+            }
+        } else {
+            if ($val !~ /^\d+$/) {
+                return 0;
+            }
+        }
+    }
+    return 1;
 }

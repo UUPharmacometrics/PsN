@@ -36,8 +36,8 @@ has 'simprobnum' => ( is => 'rw', isa => 'Int', default => 1 );
 has 'origprobnum' => ( is => 'rw', isa => 'Int', default => 1 );
 has 'boxcox_lambda' => ( is => 'rw', isa => 'Num', default => 0 );
 has 'auto_bin_mode' => ( is => 'rw', isa => 'Str' );
-has 'min_no_bins' => ( is => 'rw', isa => 'Num' );
-has 'max_no_bins' => ( is => 'rw', isa => 'Num' );
+has 'min_no_bins' => ( is => 'rw', isa => 'ArrayRef[Int]' );
+has 'max_no_bins' => ( is => 'rw', isa => 'ArrayRef[Int]' );
 has 'min_points_in_bin' => ( is => 'rw', isa => 'Num' );
 has 'predcorr' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'lnDV' => ( is => 'rw', isa => 'Int', default => 0 );
@@ -115,9 +115,16 @@ sub BUILD
 			croak("There are only two possible auto_bin modes: auto and minmax\n");
 		}
 
-		if ($self->min_no_bins > $self->max_no_bins) {
-			croak("min_no_bins cannot be bigger than max_no_bins\n");
-		}
+        if ($self->auto_bin_mode eq 'minmax') {
+            if (not (defined $self->min_no_bins and defined $self->max_no_bins)) {
+                croak("Must specify min_no_bins and max_no_bins when auto_bin_mode = 'minmax'");
+            }
+            for (my $i = 0; $i < scalar(@{$self->min_no_bins}); $i++) {
+                if ($self->min_no_bins->[$i] > $self->max_no_bins->[$i]) {
+                    croak("min_no_bins cannot be bigger than max_no_bins\n");
+                }
+            }
+        }
 	}
 
 	if ((defined $self->sim_table) || (defined $self->orig_table)) {
@@ -180,7 +187,6 @@ sub BUILD
 		ui -> print (category=>'all', 
 					 message=>"Warning: option -boxcox_lambda has no effect unless option -predcorr is set.")	unless ($self->predcorr);
 	}
-
 
 	if (defined $self->samples) {
 		if ( $self->samples < 20 ) {
@@ -2878,7 +2884,8 @@ sub create_binned_data
 	open my $bin_file, ">", "vpc_bins.txt";    # For binning results
 
 	my $no_of_strata = scalar(@{$self->strata_matrix});
-	for (my $strat_ind=0; $strat_ind<$no_of_strata; $strat_ind++) {
+
+	for (my $strat_ind = 0; $strat_ind < $no_of_strata; $strat_ind++) {
 		my @bin_array;
 		my @pred_array;
 		my @bound_array;
@@ -2935,7 +2942,22 @@ sub create_binned_data
 		} elsif ($self->auto_bin_mode eq 'auto') {
 			$bin_ceilings = binning::bin_auto(\@bin_array, $self->min_points_in_bin, $self->strata_labels->[$strat_ind]);
 		} elsif ($self->auto_bin_mode eq 'minmax') {
-			$bin_ceilings = binning::bin_range(\@bin_array, $self->min_no_bins, $self->max_no_bins, $self->min_points_in_bin, $self->strata_labels->[$strat_ind]);
+            my $min;
+            my $max;
+            # If only one min_no_bins and max_no_bins use that value for all stratas
+            if (scalar(@{$self->min_no_bins}) == 1) {
+                $min = $self->min_no_bins->[0];
+                $max = $self->max_no_bins->[0];
+            } elsif ($no_of_strata == scalar(@{$self->min_no_bins})) {
+                # FIXME Give error if outside bounds or possiby give error before this loop
+                $min = $self->min_no_bins->[$strat_ind];
+                $max = $self->max_no_bins->[$strat_ind];
+            } else {
+                croak("The number of bin ranges requested (" . scalar(@{$self->min_no_bins}) .
+                    ") is not equal to 1 or the number of strata ($no_of_strata)\n" .
+                    "Remember that you do not need to rerun the simulations to redo the binning.");
+            }
+			$bin_ceilings = binning::bin_range(\@bin_array, $min, $max, $self->min_points_in_bin, $self->strata_labels->[$strat_ind]);
 		}
 
 		my $bin_matrix = $self -> index_matrix_binned_values(

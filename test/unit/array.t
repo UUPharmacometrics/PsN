@@ -2,7 +2,7 @@
 
 use strict;
 use warnings;
-use Test::More tests => 64;
+use Test::More;
 use Test::Exception;
 use FindBin qw($Bin);
 use lib "$Bin/.."; #location of includes.pm
@@ -136,5 +136,11 @@ is (array::variance(\@a), 2.25, "A simple variance");
 # Test of stdev
 @a = qw(3 5 9 8);
 cmp_float (array::stdev(\@a), 2.753785273643051, "A simple stdev");
+
+# Test of is_int
+ok (array::is_int([1, 2, 3, 4]), "is_int integer array");
+ok (!array::is_int([1, 2, 3, 3.3]), "is_int array with float");
+ok (array::is_int([[1,2,3],[4,5]]), "is_int two dimensional int array");
+ok (!array::is_int([[1,2,3], ['opel', 34]]), "is_int two dim nonint array");
 
 done_testing();

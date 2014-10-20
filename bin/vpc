@@ -26,43 +26,43 @@ my %options;
 
 my %required_options = ('samples:i' => undef);
 my %optional_options = ( 'idv:s' => undef,
-			 'rawres_input:s' => undef,
-			 'offset_rawres:i' => undef,
-       "stratify_on:s" => undef,
-			 'no_of_strata:i' => undef,
-			 'refstrat:f' => undef,
-			 'lst_file:s' => undef,
-			 'msfo_file:s' => undef,
-			 'bin_by_count:i' => undef,
-			 'no_of_bins:i' => undef,
-			 'single_bin_size:s' => undef,
-			 'overlap_percent:i' => undef,
-			 'bin_array:s' => undef,
-			 'mirrors:i' => undef,
-			 'dv:s' => undef,
-			 'sim_table:s'=>undef,
-			 'orig_table:s'=>undef,
-			 'lloq:f'=>undef,
-			 'uloq:f'=>undef,
-			 'levels:s'=>undef,
-			 'keep_estimation!'=>undef,
-			 'noprediction'=>undef,
-			 'predcorr'=>undef,
-			 'lnDV:i'=>undef,
-			 'lower_bound:s'=>undef,
-			 'tte:s'=>undef,
-			 'sim_model:s'=>undef,
-			 'flip_comments!'=>undef,
-			 'fine_pi!'=>undef,
-			 'varcorr'=>undef,
-			 'n_simulation_models:i' => undef,
-			 'boxcox_lambda:f' => undef,
-			 'confidence_interval:i' => undef,
-          'censor:s' => undef,
-			 "copy_data!"=>undef,
-			 'auto_bin:s' => undef,
-			 'min_points_in_bin:i' => undef,
-			 );
+    'rawres_input:s' => undef,
+    'offset_rawres:i' => undef,
+    "stratify_on:s" => undef,
+    'no_of_strata:i' => undef,
+    'refstrat:f' => undef,
+    'lst_file:s' => undef,
+    'msfo_file:s' => undef,
+    'bin_by_count:i' => undef,
+    'no_of_bins:i' => undef,
+    'single_bin_size:s' => undef,
+    'overlap_percent:i' => undef,
+    'bin_array:s' => undef,
+    'mirrors:i' => undef,
+    'dv:s' => undef,
+    'sim_table:s'=>undef,
+    'orig_table:s'=>undef,
+    'lloq:f'=>undef,
+    'uloq:f'=>undef,
+    'levels:s'=>undef,
+    'keep_estimation!'=>undef,
+    'noprediction'=>undef,
+    'predcorr'=>undef,
+    'lnDV:i'=>undef,
+    'lower_bound:s'=>undef,
+    'tte:s'=>undef,
+    'sim_model:s'=>undef,
+    'flip_comments!'=>undef,
+    'fine_pi!'=>undef,
+    'varcorr'=>undef,
+    'n_simulation_models:i' => undef,
+    'boxcox_lambda:f' => undef,
+    'confidence_interval:i' => undef,
+    'censor:s' => undef,
+    "copy_data!"=>undef,
+    'auto_bin:s' => undef,
+    'min_points_in_bin:i' => undef,
+);
 
 my $res = GetOptions( \%options,
 		      @common_options::get_opt_strings,
@@ -120,7 +120,6 @@ $help_text{-samples} = <<'EOF';
       Number of simulated datasets to generate, required.
       Must be at least 20.
 EOF
-
 
 $help_text{-idv} = <<'EOF';
       -idv=VARIABLE
@@ -221,6 +220,7 @@ $help_text{-no_of_strata} = <<'EOF';
       observations will be grouped so that the number of observations in
       each group/strata is approximately equal.
 EOF
+
 $help_text{-refstrat} = <<'EOF';
       -refstrat=number
 
@@ -229,6 +229,7 @@ $help_text{-refstrat} = <<'EOF';
       A number indicating the value of the stratification variable in the 
       reference stratum used when computing delta-means.
 EOF
+
 $help_text{-fine_pi} = <<'EOF';
       -fine_pi
 
@@ -296,7 +297,6 @@ $help_text{-sim_table} = <<'EOF';
       A modelfile must still be given as program argument, but it will not be run.
 EOF
 
-
 $help_text{-tte} = <<'EOF';
       -tte=VARIABLE
 
@@ -313,6 +313,7 @@ $help_text{-sim_model} = <<'EOF';
       Use a separate input model for the simulations. 
       See the userguide for details.
 EOF
+
 $help_text{-flip_comments} = <<'EOF';
       -flip_comments
 
@@ -458,7 +459,13 @@ $help_text{-auto_bin} = <<'EOF';
       Automatic binning. The parameter gives how to search for the number of bins.
       * "auto" means to try to estimate the number of bins needed automatically.
       * min,max means to search for the number of bins between min and max, e.g. -auto_bin=5,15
+        If stratification is used it is possible to use different min and max values for the
+        different stratas by specifying an array here, e.g. -auto_bin=5,15:10,15
+        If only one pair is specified this will be used for all stratas.
       * A single number forces binning into N bins, e.g. -auto_bin=7
+        If stratification is used it is possible to use a different bin count for different
+        stratas by specifying an array here, e.g. -auto_bin=5:10:3
+        If only one value is specified this will be used for all stratas.
       * unique bins on unique values of the indpendent variable.
       Default is auto.
       This option can be used in conjunction with the min_points_in_bin option but not
@@ -481,46 +488,46 @@ EOF
 common_options::online_help( 'vpc', \%options, \%help_text, \%required_options, \%optional_options);
 
 ## Check that we do have a model file
-if ( scalar(@ARGV) < 1 ) {
+if (scalar(@ARGV) < 1) {
   print "A model file must be specified (even when -sim_table and -orig_table are used).\n".
       "Use 'vpc -h' for help.\n";
   exit;
 }
 
-if( scalar(@ARGV) > 1 ){
+if (scalar(@ARGV) > 1) {
   print "VPC can only handle one modelfile. Check that all options begin with".
       " -.\nUse 'vpc -h' for help.\n";die;
   exit;
 }
 
 
-if (defined $options{'rawres_input'}){
+if (defined $options{'rawres_input'}) {
   my ( $dir, $file ) = OSspecific::absolute_path(cwd(), $options{'rawres_input'});
   $options{'rawres_input'} = $dir . $file;
-  unless (-e $options{'rawres_input'}){
+  unless (-e $options{'rawres_input'}) {
     print "File ".$options{'rawres_input'}." does not exist";
     exit;
   }
   $options{'n_simulation_models'} = $options{'samples'};
-  if (defined $options{'msfo_file'}){
+  if (defined $options{'msfo_file'}) {
     print "Cannot use options rawres_input and msfo_file together.";
     exit;
   }
 }
-if (defined $options{'covariance_file'}){
+if (defined $options{'covariance_file'}) {
     print "Cannot use option covariance_file, removed.";
     exit;
-  if (defined $options{'rawres_input'}){
+  if (defined $options{'rawres_input'}) {
     print "Cannot use options covariance_file and rawres_input together.";
     exit;
   }
-  if (defined $options{'msfo_file'}){
+  if (defined $options{'msfo_file'}) {
     print "Cannot use options covariance_file and msfo_file together.";
     exit;
   }
   my ( $dir, $file ) = OSspecific::absolute_path(cwd(), $options{'covariance_file'});
   $options{'covariance_file'} = $dir . $file;
-  unless (-e $options{'covariance_file'}){
+  unless (-e $options{'covariance_file'}) {
     print "File ".$options{'covariance_file'}." does not exist";
     exit;
   }
@@ -528,48 +535,40 @@ if (defined $options{'covariance_file'}){
 }
 
 
-my @bin_array=();
+my $bin_array;
 
-if ( defined $options{'bin_array'} ){
-  foreach my $v (split(/,/,$options{'bin_array'})){
-    if (length($v)>0){
-      push(@bin_array,$v);
+if (defined $options{'bin_array'}) {
+    $bin_array = common_options::get_option_array($options{'bin_array'});
+    if (not defined $bin_array) {
+        die "Error: Could not parse list bin_array.\n";
     }
-  }
-  unless (scalar(@bin_array)>0){
-    die "Error: Could not parse list bin_array.\n";
-  }	
 }
 
-my @levels=();
+my $levels = [];
 
-if ( defined $options{'levels'} ){
-  foreach my $v (split(/,/,$options{'levels'})){
-    if (length($v)>0){
-      push(@levels,$v);
+if (defined $options{'levels'}) {
+    $levels = common_options::get_option_array($options{'levels'});
+    if (not defined $levels) {
+        die "Error: Could not parse list levels.\n";
     }
-  }
-  unless (scalar(@levels)>0){
-    die "Error: Could not parse list levels.\n";
-  }	
 }
 
-if ( defined $options{'no_of_strata'} ){
-  unless (defined $options{'stratify_on'}){
+if (defined $options{'no_of_strata'}) {
+  if (not defined $options{'stratify_on'}) {
     die "Error: The VPC does not allow option no_of_strata unless a ".
 	"stratification column has been specified.\n";
   }	
-  if (defined $options{'refstrat'}){
+  if (defined $options{'refstrat'}) {
     die "Error: The VPC does not allow option no_of_strata together ".
 	"with option refstrat.\n";
   }
 }
-if (defined $options{'refstrat'} and (not defined $options{'stratify_on'})){
+if (defined $options{'refstrat'} and (not defined $options{'stratify_on'})) {
     die "Error: The VPC does not allow option refstrat unless option stratify_on is ".
 	"also defined.\n";
 }
 
-if ((defined $options{'sim_table'}) && (defined $options{'orig_table'})){
+if ((defined $options{'sim_table'}) && (defined $options{'orig_table'})) {
   #case when only one is defined will be caught in new
   if ($options{'sim_table'} =~ /^~/){
     die "Table filename must not start with ~.\n";
@@ -580,15 +579,14 @@ if ((defined $options{'sim_table'}) && (defined $options{'orig_table'})){
 
   my $dir= getcwd();
   #make paths global if only filename was given
-  unless ($options{'sim_table'} =~ /^\//  ){
+  unless ($options{'sim_table'} =~ /^\//) {
     $options{'sim_table'} = $dir.'/'.$options{'sim_table'};
   }  
-  unless ($options{'orig_table'} =~ /^\//){
+  unless ($options{'orig_table'} =~ /^\//) {
     $options{'orig_table'} = $dir.'/'.$options{'orig_table'};
   }  
-  #$recommend_estimation = 0;
 }
-if (defined $options{'sim_model'}){
+if (defined $options{'sim_model'}) {
   my ($dir, $fil) = OSspecific::absolute_path($options{'sim_model'});
 
   $options{'sim_model'} = $dir.$fil;
@@ -596,8 +594,8 @@ if (defined $options{'sim_model'}){
 
 # Autobinning options
 my $auto_bin_mode;
-my $min_no_bins;
-my $max_no_bins;
+my @min_no_bins;
+my @max_no_bins;
 
 if (defined $options{'auto_bin'}) {
 	# Check forbidden options
@@ -610,16 +608,23 @@ if (defined $options{'auto_bin'}) {
 		# Fall back to other options
 	} elsif ($options{'auto_bin'} =~ /\Aauto\Z|\Aa\Z/i) {
 		$auto_bin_mode = 'auto';
-	} elsif ($options{'auto_bin'} =~ /\A(\d+)\Z/) {
-		$auto_bin_mode = 'minmax';
-		$min_no_bins = $1;
-		$max_no_bins = $1;
-	} elsif ($options{'auto_bin'} =~ /\A(\d+),(\d+)\Z/) {
-		$auto_bin_mode = 'minmax';
-		$min_no_bins = $1;
-		$max_no_bins = $2;
-	} else {
-		die "Bad -auto_bin option\n";
+    } else {
+        $auto_bin_mode = 'minmax';
+        my $matrix = common_options::get_option_matrix($options{'auto_bin'});
+        if (not defined $matrix or not array::is_int($matrix)) {
+            die "Bad -auto_bin option\n";
+        }
+        foreach my $row (@$matrix) {
+            if (scalar(@$row) == 1) {
+                push(@min_no_bins, $row->[0]);
+                push(@max_no_bins, $row->[0]);
+            } elsif (scalar(@$row) == 2) {
+                push(@min_no_bins, $row->[0]);
+                push(@max_no_bins, $row->[1]);
+            } else {
+                die "Bad -auto_bin option. Can only have either one fixed bin count or a min and max value\n";
+            }
+        }
 	}
 } else {
 	unless (defined $options{'bin_by_count'} or defined $options{'no_of_bins'} or defined $options{'bin_array'} or defined $options{'single_bin_size'} or defined $options{'overlap'}) {
@@ -686,13 +691,13 @@ my $vpc = tool::npc ->
 	  no_of_bins         => $options{'no_of_bins'},
 	  single_bin_size    => $options{'single_bin_size'},
 	  overlap_percent    => $options{'overlap_percent'},
-	  bin_array          => \@bin_array,
+	  bin_array          => $bin_array,
 	  mirrors            => $options{'mirrors'},
 	  dv                 => $options{'dv'},
 	  orig_table         => $options{'orig_table'},
 	  sim_table          => $options{'sim_table'},
-	  categorized        => ((scalar(@levels)>0)? 1:0),
-	  levels             => \@levels,
+	  categorized        => ((scalar(@{$levels}) > 0) ? 1 : 0),
+	  levels             => $levels,
 	  lloq               => $options{'lloq'},
 	  uloq               => $options{'uloq'},
 	  keep_estimation    => $options{'keep_estimation'},
@@ -713,8 +718,8 @@ my $vpc = tool::npc ->
 	  flip_comments      => $options{'flip_comments'},
 	  confidence_interval => $options{'confidence_interval'},
 	  auto_bin_mode		=> $auto_bin_mode,
-	  min_no_bins			=> $min_no_bins,
-    max_no_bins			=> $max_no_bins,
+	  min_no_bins			=> \@min_no_bins,
+    max_no_bins			=> \@max_no_bins,
 	  min_points_in_bin	=> $options{'min_points_in_bin'},
 		directory_name_prefix => 'vpc',
 	  );

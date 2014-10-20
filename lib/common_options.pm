@@ -1391,4 +1391,45 @@ EOF
   }
 }
 
+sub get_option_array
+{
+    # Convert option string to array
+    # Input: String to convert
+    # Result: Array or undef if unsuccessful
+
+    my $option_string = shift;
+    my @array;
+
+    foreach my $v (split(/,/, $option_string)) {
+        if (length($v) > 0) {
+            push(@array, $v);
+        }
+    }
+    if (scalar(@array) == 0) {
+        return undef;
+    }
+
+    return \@array;
+}
+
+sub get_option_matrix
+{
+    # Convert option string to matrix
+    # Input: String to convert
+    # Output: Matrix (ref to array of refs to arrays) or undef is unsuccessful
+
+    my $option_string = shift;
+    my @matrix;
+
+    foreach my $row (split(/:/, $option_string)) {
+        my $array = get_option_array($row);
+        if (not defined $array) {
+            return undef;
+        }
+        push(@matrix, $array);
+    }
+
+    return \@matrix;
+}
+
 1;
