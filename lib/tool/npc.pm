@@ -2886,6 +2886,8 @@ sub create_binned_data
 	#make hash for binning
 
 	open my $bin_file, ">", "vpc_bins.txt";    # For binning results
+    print $bin_file "-bin_array=";
+    my $written_to_bin_file = 0;
 
 	my $no_of_strata = scalar(@{$self->strata_matrix});
 
@@ -3123,10 +3125,17 @@ sub create_binned_data
 		$self->binned_strt->[$strat_ind] = \@binned_strt;
 
 		# Write bin edges to disk
-		print $bin_file '-bin_array=', join(',', @$bin_ceilings), "\n";
+        unless ($no_of_strata == 1 and $written_to_bin_file) {
+            if ($strat_ind > 0) {
+                print $bin_file ':';
+            }
+		    print $bin_file join(',', @$bin_ceilings);
+            $written_to_bin_file = 1;
+        }
 
 	} #endof loop over strata
 
+    print $bin_file "\n";
 	close $bin_file;
 
 	$self->clear_idv_array;
