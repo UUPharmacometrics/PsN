@@ -546,15 +546,15 @@ There are several binning alternatives:
 	\item Automatic binning given a fixed number of bins (option -auto\_bin=N). This option 
 will bin the observations using an algorithm proposed in a student project (see draft\_vpc\_automatic\_binning.pdf) \cite{Sonehag}. The algorithm is using ideas from \cite{Calinski} and \cite{Lavielle}. 
 See document vpc\_binning.pdf for a detailed description of the algorithm.
-This is the recommended approach, but it is not the default since the ideal N differs between data sets.
-	\item Automatic binning with a user-defined range for the number of bins (option -auto\_bin=min,max). 
+This is the recommended approach, but it is not the default since the ideal N differs between data sets. If stratification is used it is possible to specify a number of bins for each stratum. This is done by putting a colon between numbers.
+	\item Automatic binning with a user-defined range for the number of bins (option -auto\_bin=min,max). If stratification is used it is possible to specify different bin ranges for each stratum. This is done by putting colons between the pairs of min and max e.g. -auto\_bin=5,10:10,15. 
 	\item Fully automatic binning, automatically decide both the number of bins and the placement of bin boundaries.
 This is the default, however it is recommended to manually restrict the number of bins to a (small range of) value(s)
 that is appropriate given the study protocol, since the automatic selection of the number of bins \cite{Sonehag} 
 is not always 
 successful.
 	\item bin based on unique values of the independent variable, no extra input needed. (option -auto\_bin=unique)
-	\item bin based on a user-defined list of values of the independent variable, where the list values are the boundaries between the bins. Option combination -bin\_by\_count=0 -bin\_array=boundary1,boundary2,...
+	\item bin based on a user-defined list of values of the independent variable, where the list values are the boundaries between the bins. Option combination -bin\_by\_count=0 -bin\_array=boundary1,boundary2,... If stratification is used differend bin boundary arrays can be used for each stratum. This is done by placing a colon between each list of boundaries.
 	\item bin based on a user-defined list of counts of observations in each bin, ordered so that the first count is for the lowest values of the independent variable. The algorithm may adjust the counts up or down (see rule on binning above). Option combination  -bin\_by\_count=1 -bin\_array=count1,count2,...
 	\item bin into X bins, X defined by user, of equal width based on independent variable. Option combination -bin\_by\_count=0 -no\_of\_bins=X
 	\item bin into X bins, X defined by user, containing equal counts of observations. The counts will in general not be exactly equal because of binning rule. Option combination -bin\_by\_count=1 -no\_of\_bins=X

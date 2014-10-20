@@ -64,6 +64,7 @@ Changes and bug fixes from PsN 4.2.0 to x.y.z
 
    ___vpc/npc___
 
+- vpc binning can now take multiple arrays for -bin_array or -auto_bin to use for different strata
 - When F_FLAG=0 PsN now also allow ICALL == 4
 
    ___scm___
