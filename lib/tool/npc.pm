@@ -86,7 +86,7 @@ has 'bin_by_count' => ( is => 'rw', isa => 'Bool' );
 has 'no_of_bins' => ( is => 'rw', isa => 'Int' );
 has 'single_bin_size' => ( is => 'rw', isa => 'Int' );
 has 'overlap_percent' => ( is => 'rw', isa => 'Num' );
-has 'bin_array' => ( is => 'rw', isa => 'ArrayRef[Num]', default => sub { [] } );
+has 'bin_array' => ( is => 'rw', isa => 'ArrayRef[ArrayRef[Num]]', default => sub { [] } );
 has 'categorized' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'levels' => ( is => 'rw', isa => 'ArrayRef[Num]' );
 has 'lloq' => ( is => 'rw', isa => 'Num' );
@@ -467,24 +467,28 @@ sub BUILD
 			}
 			if ($self->bin_by_count == 1) {
 				#check at least two values and all counts larger than 0
-				unless (scalar(@{$self->bin_array}) > 1) {
-					croak("Must define at least two counts in bin_array when binning by count.");
-				}
-				foreach my $c ($self->bin_array) {
-					if ($c < 1) {
-						croak("Number of observations in each bin must be at least 1.");
-					}
-				}
+                foreach my $array (@{$self->bin_array}) {
+				    unless (scalar(@{$array}) > 1) {
+					    croak("Must define at least two counts (for each stratum) in bin_array when binning by count.");
+				    }
+				    foreach my $c ($array) {
+					    if ($c < 1) {
+						    croak("Number of observations in each bin must be at least 1.");
+					    }
+				    }
+                }
 			} else {
-				#check at least one value and sorted in ascending order and increasing
-				unless (scalar(@{$self->bin_array}) > 0) {
-					croak("Must define at least one boundary in bin_array when binning by width.");
-				}
-				for (my $i = 1; $i < scalar(@{$self->bin_array}); $i++) {
-					unless ($self->bin_array->[$i] > $self->bin_array->[$i - 1]) {
-						croak("List of bin boundaries must be sorted and increasing.");
-					}
-				}
+                foreach my $array (@{$self->bin_array}) {   
+                    #check at least one value and sorted in ascending order and increasing
+                    unless (scalar(@{$array}) > 0) {
+                        croak("Must define at least one boundary in bin_array when binning by width.");
+                    }
+                    for (my $i = 1; $i < scalar(@{$array}); $i++) {
+                        unless ($array->[$i] > $array->[$i - 1]) {
+                            croak("List of bin boundaries must be sorted and increasing.");
+                        }
+                    }
+                }
 			}
 			
 		}
@@ -2885,6 +2889,15 @@ sub create_binned_data
 
 	my $no_of_strata = scalar(@{$self->strata_matrix});
 
+    if ($self->bin_by_count eq '0' or $self->bin_by_count eq '1') {
+        my $no_arrays = scalar(@{$self->bin_array});
+        if ($no_arrays != 1 and $no_arrays != $no_of_strata) {
+            croak("The number of bin arrays requested (" . $no_arrays .
+                ") is not equal to 1 or the number of strata ($no_of_strata)\n" .
+                "Remember that you do not need to rerun the simulations to redo the binning.");
+        }
+    }
+
 	for (my $strat_ind = 0; $strat_ind < $no_of_strata; $strat_ind++) {
 		my @bin_array;
 		my @pred_array;
@@ -2914,6 +2927,13 @@ sub create_binned_data
 					'count'				 => $self->single_bin_size,
 					'overlap_percent' => $self->overlap_percent);
 			} else {
+                my $bin_stratum_index;
+                if (scalar(@{$self->bin_array}) == 1) {
+                    $bin_stratum_index = 0;
+                } else {
+                    $bin_stratum_index = $strat_ind;
+                }
+
 				# add input param single_bin_size
 				$bin_ceilings = $self -> get_bin_ceilings_from_count(
 					'data_column'			=> \@bin_array,
@@ -2921,7 +2941,7 @@ sub create_binned_data
 					'data_indices'		=> \@data_indices,
 					'n_bins'				=> $self->no_of_bins,
 					'single_bin_size'	=> $self->single_bin_size,
-					'list_counts' 		=> $self->bin_array);
+					'list_counts' 		=> $self->bin_array->[$bin_stratum_index]);
 			}
 		} elsif ($self->bin_by_count eq '0') {
 			if (defined $self->overlap_percent) {
@@ -2931,13 +2951,19 @@ sub create_binned_data
 					'width'				 => $self->single_bin_size,
 					'overlap_percent' => $self->overlap_percent);
 			} else {
+                my $bin_stratum_index;
+                if (scalar(@{$self->bin_array}) == 1) {
+                    $bin_stratum_index = 0;
+                } else {
+                    $bin_stratum_index = $strat_ind;
+                }
 				# add input param single_bin_size
 				$bin_ceilings = $self -> get_bin_ceilings_from_value(
 					'data_column'			=> \@bin_array,
 					'data_indices'		=> \@data_indices,
 					'n_bins'				=> $self->no_of_bins,
 					'single_bin_size'	=> $self->single_bin_size,
-					'list_boundaries'	=> $self->bin_array);
+					'list_boundaries'	=> $self->bin_array->[$bin_stratum_index]);
 			}
 		} elsif ($self->auto_bin_mode eq 'auto') {
 			$bin_ceilings = binning::bin_auto(\@bin_array, $self->min_points_in_bin, $self->strata_labels->[$strat_ind]);
@@ -2949,7 +2975,6 @@ sub create_binned_data
                 $min = $self->min_no_bins->[0];
                 $max = $self->max_no_bins->[0];
             } elsif ($no_of_strata == scalar(@{$self->min_no_bins})) {
-                # FIXME Give error if outside bounds or possiby give error before this loop
                 $min = $self->min_no_bins->[$strat_ind];
                 $max = $self->max_no_bins->[$strat_ind];
             } else {

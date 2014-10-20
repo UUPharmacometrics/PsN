@@ -538,7 +538,7 @@ if (defined $options{'covariance_file'}) {
 my $bin_array;
 
 if (defined $options{'bin_array'}) {
-    $bin_array = common_options::get_option_array($options{'bin_array'});
+    $bin_array = common_options::get_option_matrix($options{'bin_array'});
     if (not defined $bin_array) {
         die "Error: Could not parse list bin_array.\n";
     }
