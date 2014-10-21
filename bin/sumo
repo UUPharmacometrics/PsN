@@ -318,7 +318,7 @@ my %c_levels = ( '90'   => 1.6449,
 		 '99'   => 2.5758,
 		 '99.9' => 3.2905 );
 
-$options{'confidcence_interval'} = $options{'ci'} if (defined $options{'ci'});
+$options{'confidence_interval'} = $options{'ci'} if (defined $options{'ci'});
 if( $options{'confidence_interval'} ) {
     
     if( not defined $c_levels{$options{'c_level'}} ) {
