@@ -3319,58 +3319,29 @@ sub create_R_plots_code{
 		);
 	my $rplot = $parm{'rplot'};
 	#only to be used from execute, single model
-	my ($directory, $model_filename) = OSspecific::absolute_path($self->models->[0]-> directory,
-														   $self->models->[0] -> filename );
+	#TODO update inits add xpose tables, partially interactive
 
-	my $modSuffix='.mod'; 
-	my $modPrefix='run'; 
-	if ($model_filename =~ s/(\.[^.]+)$//){
-		$modSuffix=$1; 
-		$model_filename =~ s/[0-9]+$//;
-		$modPrefix=$model_filename; 
-	}
-	my @xpose_names=("sdtab","mutab","patab","catab","cotab","mytab","extra","xptab","cwtab");
-
-	my @tables = @{$self->models->[0]->table_names}; #array of arrays without path
-	my $runno;
-	my $tabSuffix='';
-	for (my $i=0; $i<scalar(@tables); $i++){
-		if (defined $tables[$i]){
-			foreach my $name (@{$tables[$i]}){
-				foreach my $tab (@xpose_names){
-					if (index( $name, $tab) == 0){
-						#table file names starts like an xpose table
-						#figure out number and suffix
-						if ($name =~ /[a-z]+([0-9]+)(.*)/){
-							$runno=$1;
-							if (length($2)>0){
-								$tabSuffix = $2;
-							}
-							last;
-						} 
-					}
-				}
-				last if (defined $runno);
-			}
-		}
-		last if (defined $runno);
-	}
-	if (defined $runno){
-		$rplot->filename($modPrefix.$runno.'_plots.R');
-
-		$rplot->libraries(['xpose4']);
-		$rplot->add_preamble(code => [
-								 "directory <- '".$directory."'",
-								 "runno <- ".$runno,
-								 "mod.suffix <- '".$modSuffix."'",
-								 "mod.prefix <- '".$modPrefix."'",
-								 "tab.suffix <- '".$tabSuffix."'",
-							 ]);
-		$rplot->add_plot(level=>1, code =>[		
-							 'xpdb'.$runno.'<-xpose.data(runno,directory=directory,tab.suffix=tab.suffix,mod.prefix=mod.prefix,mod.suffix=mod.suffix)',
-							 'basic.gof(xpdb'.$runno.')'
+	$rplot->libraries(['xpose4']);
+	$rplot->add_preamble(code => [
+							 "pdf.filename <- paste0(mod.prefix,xpose.runno,'_plots.pdf')",
 						 ]);
-	}
+	$rplot->add_plot(level=>1, code =>[		
+						 'xpdb<-xpose.data(xpose.runno,directory=model.directory,tab.suffix=tab.suffix,mod.prefix=mod.prefix,mod.suffix=mod.suffix)',
+						 'runsum(xpdb,show.plots=FALSE,dir=model.directory)', #requires ext in nm_output TODO set this in execute if rplots >0
+						 'print(basic.gof(xpdb))',
+						 'print(ranpar.hist(xpdb))',
+						 'print(ranpar.qq(xpdb))',
+						 'print(ipred.vs.idv(xpdb))',
+						 'print(dv.vs.idv(xpdb))',
+						 'print(pred.vs.idv(xpdb))'
+					 ]);
+	$rplot->add_plot(level=>2, code =>[
+						 '#individual plots of ten random IDs',
+						 'ten.random.ids<-sort(sample(as.integer(unlist(xpdb@Data.firstonly[2])),10,replace=FALSE))',
+						 'idvar <- xvardef("id",xpdb)',
+						 "subset.string <- paste0(idvar,'==',paste(ten.random.ids,collapse=paste0(' | ',idvar,'==')))",
+						 'print(ind.plots(xpdb,subset=subset.string))' 
+					 ]);
 }
 
 no Moose;

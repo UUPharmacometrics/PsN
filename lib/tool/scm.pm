@@ -6301,6 +6301,60 @@ sub preprocess_data
 
 	return $filtered_data_model;
 }
+sub create_R_plots_code{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+							  rplot => { isa => 'rplots', optional => 0 }
+		);
+	my $rplot = $parm{'rplot'};
+
+	$rplot->libraries(['ggplot2']);
+
+	my $cont='';
+	if (defined $self->continuous_covariates and scalar(@{$self->continuous_covariates})>0){
+		$cont = "'".join("','",@{$self->continuous_covariates})."'";
+	}
+	my $cat='';
+	if (defined $self->categorical_covariates and scalar(@{$self->categorical_covariates})>0){
+		$cat = "'".join("','",@{$self->categorical_covariates})."'";
+	}
+
+	my %parcov;
+   
+	foreach my $par ( sort keys %{$self -> test_relations()} ){
+		$parcov{$par}=[];
+		foreach my $cov ( @{$self -> test_relations()->{$par}} ){
+			push(@{$parcov{$par}},$cov);
+		}
+	}
+	my $parameters = "'".join("','",sort(keys %parcov))."'";
+	my $parcovstring = '';
+	foreach my $par (sort(keys %parcov)){
+		$parcovstring .= ',' if(length($parcovstring)>0); #not first
+		$parcovstring .= "'".$par."'=c('".join("','",@{$parcov{$par}})."')";
+	}
+	$rplot->add_preamble(code => [
+							 "scm.log.file <-'".$self -> logfile -> [0]."'",
+							 "scm.short.log   <- '".$self -> short_logfile -> [0]."'",
+							 'continuous.covariates <- c('.$cont.')',
+							 'categorical.covariates <- c('.$cat.')',
+							 'parameters <- c('.$parameters.')',
+							 'parameters.covariates <- list('.$parcovstring.')'
+						 ]);
+	my $file = $self->rtemplate_directory."scm_default.R";
+	open( FILE, $file ) ||
+		croak("Could not open $file for reading" );
+	
+	my @code = ();
+	foreach my $line (<FILE>){
+		chomp($line);
+		push(@code,$line);
+	}
+	close( FILE );
+
+	$rplot->add_plot(level=>1, code =>\@code);
+
+}
 
 no Moose;
 __PACKAGE__->meta->make_immutable;

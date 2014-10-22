@@ -1943,9 +1943,7 @@ sub create_R_plots_code{
 		);
 	my $rplot = $parm{'rplot'};
 
-	my ( $ldir, $rawname ) = OSspecific::absolute_path('', $self->raw_results_file->[0]);
 	my $inclIdFile = "included_individuals1.csv";
-	my $samples = $self->samples;
 	#TODO check that these options are not inverted!!
 	my $minFailed = $self->skip_minimization_terminated() ? 'TRUE' : 'FALSE';
 	my $covFailed = $self->skip_covariance_step_terminated() ? 'TRUE' : 'FALSE';
@@ -1954,22 +1952,27 @@ sub create_R_plots_code{
 
 	$rplot->libraries(['xpose4']);
 	$rplot->add_preamble(code => [
-							 "rawresfile <- '".$rawname."'",
-							 "inclIdFile <- '".$inclIdFile."'",
-							 "min.failed=$minFailed #PsN option skip_minimization_terminated",
-							 "cov.failed=$covFailed #PsN option skip_covariance_step_terminated",
-							 "cov.warnings=$covWarnings #PsN option skip_with_covstep_warnings",
-							 "boundary=$boundary #PsN option skip_estimate_near_boundary"
+							 "included.ids.file <- '".$inclIdFile."'",
+							 "skip.minimization.terminated=$minFailed",
+							 "skip.covariance.step.terminated=$covFailed",
+							 "skip.with.covstep.warnings=$covWarnings",
+							 "skip.estimate.near.boundary=$boundary",
+							 'if(packageVersion("xpose4")<"4.5.0"){',
+							 $rplot->indent().'cat("xpose4 version must be 4.5.0 or later for bootstrap plot")',
+							 '}'
+							 
 						 ]);
 	$rplot->add_plot(level=>1, code =>[		
-						 'if(packageVersion("xpose4")>="4.5.0"){',
-						 $rplot->indent().'boot.hist(results.file=rawresfile,incl.ids.file=incl_id_file,',
-						 $rplot->indent().$rplot->indent().
-						 'min.failed=min.failed,cov.failed=cov.failed,cov.warnings=cov.warnings,boundary=boundary)',
-						 '} else {',
-						 $rplot->indent().'cat("xpose4 version must be 4.5.0 or later for basic bootstrap plot")',
-						 '}'
-					 ]);
+						 'bootplots<-boot.hist(results.file=raw.results.file,incl.ids.file=included.ids.file,',
+						 $rplot->indent().$rplot->indent().'min.failed=skip.minimization.terminated,',
+						 $rplot->indent().$rplot->indent().'cov.failed=skip.covariance.step.terminated,',
+						 $rplot->indent().$rplot->indent().'cov.warnings=skip.with.covstep.warnings,',
+						 $rplot->indent().$rplot->indent().'boundary=skip.estimate.near.boundary)',
+						 'print(bootplots[1]) #parameters' 
+					 ]);#5 is null, parameters 1 is basic
+	$rplot->add_plot(level=>2, code =>[		
+						 'print(bootplots[2:4]) #SEs ofv eigenvalues'						 
+					 ]);#stderr 2 and ofv 3 is extra, 4 eigenvalues
 
 }
 

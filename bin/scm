@@ -454,6 +454,8 @@ if( $direction eq 'forward' or $direction eq 'both' ){
 	cp($dir.$file,$scm->directory().$file);
 
 	$scm -> run;
+	#for rplots
+	$scm -> print_results(skip_print => 1);
 	
 	if( -e $options{'config_file'} ){
 		if( defined $orig_ofv ){
@@ -510,6 +512,8 @@ if( $direction eq 'backward' ){
 
 
 	$scm_back -> run;
+	#for rplots
+	$scm_back -> print_results(skip_print => 1);
 
 }
 

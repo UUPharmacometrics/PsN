@@ -475,6 +475,33 @@ sub prepare_results
 
 	1;
 }
+sub create_R_plots_code{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+							  rplot => { isa => 'rplots', optional => 0 }
+		);
+	my $rplot = $parm{'rplot'};
+
+	$rplot->libraries(['ggplot2','reshape2','plyr']);
+
+	#TODO script only works if $self->base_model is defined 
+	$rplot->add_preamble(code => [
+							 'samples   <-'.$self->samples,
+						 ]);
+	my $file = $self->rtemplate_directory."randtest_default.R";
+	open( FILE, $file ) ||
+		croak("Could not open $file for reading" );
+	
+	my @code = ();
+	foreach my $line (<FILE>){
+		chomp($line);
+		push(@code,$line);
+	}
+	close( FILE );
+
+	$rplot->add_plot(level=>1, code =>\@code);
+
+}
 
 no Moose;
 __PACKAGE__->meta->make_immutable;

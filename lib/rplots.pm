@@ -7,12 +7,18 @@ use File::Copy 'cp';
 use Moose;
 use MooseX::Params::Validate;
 use PsN;
+use model;
+use OSspecific;
 
 has 'directory' => (is => 'rw', isa => 'Str', required => 1 );
 has 'level' => ( is => 'rw', isa => 'Int', required => 1 );
-has 'filename' => (is => 'rw', isa => 'Str', default => 'PsNplots.R' );
+has 'toolname' => (is => 'rw', isa => 'Str', required => 1);
+has 'raw_results_file' => (is => 'rw', isa => 'Str', required => 1);
+has 'tool_results_file' => (is => 'rw', isa => 'Str');
+has 'filename' => (is => 'rw', isa => 'Str');
 has '_R_executable' => (is => 'rw', isa => 'Str' );
 has 'indent' => (is => 'rw', isa => 'Str', default => "    " ); #4spaces
+has 'standard_preamble' => ( is => 'rw', isa => 'ArrayRef[Str]',default => sub{ [] } );
 has 'extra_preamble' => ( is => 'rw', isa => 'ArrayRef[Str]',default => sub{ [] } );
 has 'level_code' => ( is => 'rw', isa => 'HashRef', default => sub{ {} });
 has 'libraries' => ( is => 'rw', isa => 'ArrayRef[Str]',default => sub{ [] } );
@@ -20,7 +26,128 @@ has 'libraries' => ( is => 'rw', isa => 'ArrayRef[Str]',default => sub{ [] } );
 sub BUILD
 {
 	my $self = shift;
+	my $params = shift; #model argument used in tool rplots->new
 	$self->set_R_executable();
+	$self->setup(model => $params->{'model'});
+}
+
+sub setup
+{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+							  model => { isa => 'model', optional => 0 }
+		);
+	my $model = $parm{'model'};
+
+	unless (defined $self->filename){
+		$self->filename('PsN_'.$self->toolname.'_plots.R');
+	}
+
+	my ( $ldir, $rawname ) = OSspecific::absolute_path('', $self->raw_results_file);
+	$self->raw_results_file($rawname);
+
+	my ($dir, $modelfile) = OSspecific::absolute_path($model-> directory,
+												 $model-> filename );
+
+	#figure out table suffix and xpose runno
+	my @xpose_names=("sdtab","mutab","patab","catab","cotab","mytab","xptab","cwtab");
+	my @tables = @{$model->table_names}; #array of arrays without path
+	my $runno;
+	my $tabSuffix='';
+	for (my $i=0; $i<scalar(@tables); $i++){
+		if (defined $tables[$i]){
+			foreach my $name (@{$tables[$i]}){
+				foreach my $tab (@xpose_names){
+					if (index( $name, $tab) == 0){
+						#table file names starts like an xpose table
+						#figure out number and suffix
+						if ($name =~ /^..tab([^.]+)(.*)/){
+							$runno=$1;
+							if (length($2)>0){
+								$tabSuffix = $2;
+							}
+							last;
+						} 
+					}
+				}
+				last if (defined $runno);
+			}
+		}
+		last if (defined $runno);
+	}
+
+
+	#model prefix and suffix
+	my $modSuffix='.mod'; 
+	my $modPrefix='run'; 
+	if (defined $runno and ($modelfile =~ /$runno/)){
+		($modPrefix,$modSuffix)=split(/$runno/,$modelfile);
+	}else{
+		my $tmp = $modelfile; 
+		if(	$tmp =~ s/(\.[^.]+)$//){
+			$modSuffix = $1;
+		}
+		if ($tmp =~ s/^([^0-9]+)//){
+			$modPrefix = $1;
+			$runno = $tmp;
+		}
+	}
+
+	$runno = '' unless (defined $runno and length($runno)>0);
+
+	my @arr =(
+		 'rplots.level <- '.$self->level(),
+		 "xpose.runno <- '".$runno."'",
+		 "toolname <- '".$self->toolname()."'",
+		 "pdf.filename <- paste0('PsN_',toolname,'_plots.pdf')",
+		 "working.directory<-'".$self->directory."'",
+		 "raw.results.file <- '".$self->raw_results_file."'",
+		 "model.directory<-'".$dir."'",
+		 "model.filename<-'".$modelfile."'",
+		 "mod.suffix <- '".$modSuffix."'",
+		 "mod.prefix <- '".$modPrefix."'",
+		 "tab.suffix <- '".$tabSuffix."'"
+		);
+	if (-e $self->directory.$self->tool_results_file){
+		push(@arr,
+			 "tool.results.file <- '".$self->tool_results_file."'");
+	}
+
+	#parameter names and numbers, fixed
+	unless ($model->is_dummy){
+		foreach my $param ('theta','omega','sigma'){
+			my $labels = $model->labels(parameter_type => $param,
+										problem_numbers => [1],
+										generic => 0);
+			my $fixed = $model->fixed(parameter_type => $param,
+									  problem_numbers => [1]);
+			my $labelstring = '';
+			my $fixstring = '';
+			if (scalar(@{$labels->[0]})>0){
+				$labelstring = "'".join("','",@{$labels->[0]})."'";
+				my @temp= ('FALSE') x scalar(@{$fixed->[0]}) ;
+				for (my$i=0; $i< scalar(@{$fixed->[0]}); $i++){
+					$temp[$i] = 'TRUE' if ($fixed->[0]->[$i] >0);
+				}
+				$fixstring = join(',',@temp);
+			}
+			push(@arr,
+				 $param.'.labels <- c('.$labelstring.')',
+				 $param.'.fixed <- c('.$fixstring.')'
+				);
+		}
+		my $nomegas = $model->nomegas(problem_numbers=>[1], with_same => 1, with_correlations => 0);
+		my $nsigmas = $model->nsigmas(problem_numbers=>[1], with_same => 1, with_correlations => 0);
+		push(@arr,
+			 'n.eta <- '.$nomegas->[0],
+			 'n.eps <- '.$nsigmas->[0]
+			);
+	}
+
+
+	$self->standard_preamble(\@arr);
+
+
 }
 
 sub set_R_executable
@@ -45,26 +172,33 @@ sub get_preamble()
 	my $pdfname = $self->filename();
 	$pdfname =~ s/\.[^.]*$//;
 	$pdfname .= '.pdf';
+
 	my @datearr=localtime;
 	my $theDate=sprintf "%4.4d-%2.2d-%2.2d",($datearr[5]+1900),($datearr[4]+1),($datearr[3]);
 	my $theTime=sprintf "%2.2d:%2.2d",($datearr[2]),($datearr[1]);
 	my @arr=();
 	push(@arr,
-		 "#Created $theDate at $theTime",
-		 '#Change the variable level to make the script create more/less output');
+		 "#START OF AUTO-GENERATED PREAMBLE, WILL BE OVERWRITTEN WHEN THIS FILE IS USED AS A TEMPLATE",
+		 "#Created $theDate at $theTime");
+	
 	foreach my $lib (@{$self->libraries}){
-		push(@arr,'library('.$lib.')');
+		push(@arr,'require('.$lib.')');
 	}
+	push(@arr,'');
+	push(@arr,@{$self->standard_preamble});
+	push(@arr,'');
+	push(@arr,@{$self->extra_preamble}); #generic per tool
+	push(@arr,"\n"."setwd(working.directory)",
+		 "\n############################################################################",
+		 "#END OF AUTO-GENERATED PREAMBLE",
+		 "#WHEN THIS FILE IS USED AS A TEMPLATE THIS LINE MUST LOOK EXACTLY LIKE THIS\n");
+	
 	push(@arr,
-		 "setwd('".$self->directory."')",
-		 'level <- '.$self->level(),
-		 'if (level > 0){',
-		 $self->indent().'pdf(file="'.$pdfname.'")',
+		 "\n".'if (rplots.level > 0){',
+		 $self->indent().'pdf(file=pdf.filename,width=12)',
 		 '}'."\n"
 		);
 	
-	push(@arr,@{$self->extra_preamble});
-
 	return \@arr;
 }
 
@@ -91,13 +225,13 @@ sub print_R_script
 	print SCRIPT join("\n",@{$self->get_preamble})."\n";
 	foreach my $level (sort {$a <=> $b} keys(%{$self->level_code})){
 		print SCRIPT "\n";
-		print SCRIPT 'if (level > '.($level-1).'){'."\n";
+		print SCRIPT 'if (rplots.level > '.($level-1).'){'."\n";
 		print SCRIPT $self->indent().join("\n".$self->indent(),@{$self->level_code->{$level}})."\n";
 		print SCRIPT "}\n";
 	}
 
 	print SCRIPT "\n";
-	my @final =('if (level > 0){',
+	my @final =('if (rplots.level > 0){',
 				$self->indent().'dev.off()',
 				'}');
 	print SCRIPT join("\n",@final)."\n";

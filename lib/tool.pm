@@ -138,6 +138,7 @@ has 'torque_queue' => ( is => 'rw', isa => 'Str' );
 has 'run_on_torque' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'directory_name_prefix' => ( is => 'rw', isa => 'Str' );
 has 'rplots_level' => ( is => 'rw', isa => 'Int', default => 0 );
+has 'rtemplate_directory' => ( is => 'rw', isa => 'Str', default => '/home/kajsa/kod-psn/PsN4/R-scripts/' );
 
 
 sub BUILDARGS
@@ -449,8 +450,11 @@ sub pre_fork_setup
 sub print_results
 {
 	my $self = shift;
+	my %parm = validated_hash(\@_,
+		 skip_print => { isa => 'Bool', optional => 1, default => 0 }
+	);
+	my $skip_print = $parm{'skip_print'};
 
-	$self->create_R_script();
 
 	# Print results created by 'prepare_results' methods specific to the
 	# tools. prepare_results and print_results are usually called from
@@ -545,7 +549,6 @@ sub print_results
 
 		croak("No results_file defined" ) unless ( defined $self->results_file );
 
-		my $skip_print = 0;
 		$skip_print = 1 if ( defined $self->results and scalar(@{$self->results}) == 1
 							 and not defined $self->results->[0]{'own'});
 
@@ -559,7 +562,7 @@ sub print_results
 		}
 
 
-		if ( defined $self->results ) {
+		if ( defined $self->results and (not $skip_print)) {
 			my @all_results = @{$self->results};
 
 			for ( my $i = 0; $i <= $#all_results; $i++ ) {
@@ -630,6 +633,9 @@ sub print_results
 		carp("No subtools defined".
 			", using default printing routine" );
 	}
+
+	$self->create_R_script();
+
 }
 
 sub read_raw_results
@@ -1622,27 +1628,26 @@ sub print_options
 sub create_R_script
 {
 	my $self = shift;
-	my %parm = validated_hash(\@_,
-							  filename => { isa => 'Str', optional => 1 }
-		);
-
-	my $filename = $parm{'filename'};
 
 	if ($self->can("create_R_plots_code")){
-		unless (defined $filename){
-			my $tool_name;
-			if (defined $self->directory_name_prefix) {
-				$tool_name = $self->directory_name_prefix;
-			} else {
-				my @tool_name_full = split('::', ref $self);
-				$tool_name = $tool_name_full[$#tool_name_full];
+		my $tool_name;
+		if (defined $self->directory_name_prefix) {
+			$tool_name = $self->directory_name_prefix;
+		} else {
+			my @tool_name_full = split('::', ref $self);
+			$tool_name = $tool_name_full[$#tool_name_full];
+			if ($tool_name eq 'modelfit'){
+				$tool_name = 'execute';
 			}
-			$filename = 'PsN_'.$tool_name.'_plots.R';
 		}
 
-		my $rplot = rplots->new(filename => $filename, 
+		my $rplot = rplots->new(toolname => $tool_name, 
 								directory => $self->directory,
-								level => $self->rplots_level);
+								level => $self->rplots_level,
+								raw_results_file => $self->raw_results_file->[0],
+								tool_results_file => $self->results_file,
+								model => $self->models->[0]);
+
 		$self->create_R_plots_code(rplot => $rplot);
 		$rplot->make_plots;
 	}
