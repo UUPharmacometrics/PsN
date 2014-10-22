@@ -7,6 +7,7 @@ use tool::modelfit;
 use Data::Dumper;
 use Moose;
 use MooseX::Params::Validate;
+use Scalar::Util qw(looks_like_number);
 
 extends 'tool';
 
@@ -920,17 +921,15 @@ sub _make_new_guess
 						# Collect the model outputs
 						carp("Making new guess for $param number $num on the $side side" );
 						my $bound = $bounds{$side}->[$j][$num-1];
-						my $guess =
-							$self -> _guess( param_log => $self->$logfunc->{$num}->[$j],
-											 side => $side );
-						if ( defined $bounds{$side}->[$j][$num-1] ) {
+						my $guess = _guess( param_log => $self->$logfunc->{$num}->[$j],
+											side => $side,
+											ofv_increase => $self->ofv_increase);
+						if ( (defined $guess) and defined $bounds{$side}->[$j][$num-1] ) {
 							$guess =
 								$self -> _try_bounds( guess     => $guess,
 													  side      => $side,
 													  bound     => $bounds{$side}->[$j][$num-1],
-													  param_log => $self->$logfunc->
-													  {
-														  $num}->[$j]->[0]);
+													  param_log => $self->$logfunc->{$num}->[$j]->[0]);
 						}
 						$guesses{$side} = $guess;
 						if ( not defined $guess ) {
@@ -1128,22 +1127,22 @@ sub _try_bounds
 
 sub _aag
 {
-	my $self = shift;
+	#static method, no shift
 	my %parm = validated_hash(\@_,
-							  x => { isa => 'ArrayRef[Num]', optional => 1 },
-							  y => { isa => 'ArrayRef[Num]', optional => 1 },
-);
-my @x = defined $parm{'x'} ? @{$parm{'x'}} : ();
-my @y = defined $parm{'y'} ? @{$parm{'y'}} : ();
+							  xarr => { isa => 'ArrayRef[Num]', optional => 1 },
+							  yarr => { isa => 'ArrayRef[Num]', optional => 1 }
+		);
+	my @x = defined $parm{'xarr'} ? @{$parm{'xarr'}} : ();
+	my @y = defined $parm{'yarr'} ? @{$parm{'yarr'}} : ();
 	my @polynomial;
-
+	
 	my $total = scalar(@x);
 	croak("No data supplied to the polynomial approximation".
-		      " algorithm in the log-likelihood profiling tool" ) if ( $total < 1 );
-
+		  " algorithm in the log-likelihood profiling tool" ) if ( $total < 1 );
+	
 	my $y=0;    my $y2=0;    my $x1=0;    my $x2=0;
 	my $x3=0;   my $x4=0;    my $x1y=0;   my $x2y=0;
-
+	
 	my $count=0;
 	while ($count<$total){
 	  $y+=$y[$count];
@@ -1165,7 +1164,9 @@ my @y = defined $parm{'y'} ? @{$parm{'y'}} : ();
 	# Try to avoid division by zero
 	$c = $c == 0 ? 0.00001 : $c;
 	my $tmp = ($b**2/$c - $e);
-	$tmp = $tmp == 0 ? 0.00001 : $tmp;
+	if (($tmp+0 ne $tmp) or ($tmp == 0)){
+		$tmp = 0.00001;
+	}
 
 	my $apr1 = ($a*$b/$c - $d) / $tmp;
 	my $apr2 = $a/$c - $b*$apr1/$c;
@@ -1178,13 +1179,14 @@ my @y = defined $parm{'y'} ? @{$parm{'y'}} : ();
 
 sub _guess
 {
-	my $self = shift;
+	#static method no shift
 	my %parm = validated_hash(\@_,
-		 param_log => { isa => 'ArrayRef', optional => 1 },
-		 side => { isa => 'Str', optional => 1 },
-		 param => { isa => 'Str', optional => 1 },
-		 num => { isa => 'Int', optional => 1 },
-		 probnum => { isa => 'Int', optional => 1 }
+							  param_log => { isa => 'ArrayRef', optional => 1 },
+							  side => { isa => 'Str', optional => 1 },
+							  param => { isa => 'Str', optional => 1 },
+							  num => { isa => 'Int', optional => 1 },
+							  probnum => { isa => 'Int', optional => 1 },
+							  ofv_increase => { isa => 'Num', optional => 0 }
 	);
 	my @param_log = defined $parm{'param_log'} ? @{$parm{'param_log'}} : ();
 	my $guess;
@@ -1192,6 +1194,7 @@ sub _guess
 	my $param = $parm{'param'};
 	my $num = $parm{'num'};
 	my $probnum = $parm{'probnum'};
+	my $ofv_increase = $parm{'ofv_increase'};
 	
 	my @x = @{$param_log[0]};
 	my @y = @{$param_log[1]};
@@ -1220,10 +1223,9 @@ sub _guess
 	  @y1 = @y[$points-3..$points-1];
 	}
 
-	my $goal = $y[$zero]+ $self -> ofv_increase;
+	my $goal = $y[$zero]+ $ofv_increase;
 	
-	my @pol = @{$self -> _aag( x => \@x1,
-				   y => \@y1 ) };
+	my @pol = @{_aag( xarr => \@x1, yarr => \@y1 ) };
 
 	if( $pol[0] == 0 ) {
 	  print "The log-likelihood profile could not be approximated by a second order polynomial\n".
@@ -1250,7 +1252,7 @@ sub _guess
 	  }
 	}
 	
-	if ($guess eq '-nan' or $guess eq 'nan' or $guess eq '-1.#IND' ){ #'-1.#IND' - is that a compiler spec. signal?
+	unless (usable_number(number=> $guess)){
 	  if ( ($y[0] - $y[1]) == 0 or ($x[0] - $x[1]) == 0 or
 	       ($y[$points-1] - $y[$points-2]) == 0 or ($x[$points-1] - $x[$points-2]) == 0 ) {
 	    $guess = undef;
@@ -1260,11 +1262,37 @@ sub _guess
 	    } else {
 	      $guess = $x[$points-1] + ($goal - $y[$points-1]) / ( ($y[$points-1] - $y[$points-2])/($x[$points-1] - $x[$points-2]));
 	    }
+		unless (usable_number(number=> $guess)){
+			$guess = undef;
+		}
 	  }
 	}
 
 	return $guess;
 }
+
+sub usable_number
+{
+	#TODO move this to Math.pm
+	#static method
+	my %parm = validated_hash(\@_,
+		 number => { isa => 'Any', optional => 0 }
+	);
+	my $number = $parm{'number'};
+	my $ok = 1;
+	if (not looks_like_number($number)){
+		#find stupid strings etc
+		$ok=0;
+	}elsif ($number != $number){
+		#find not a number
+		$ok=0;
+	}elsif ($number+1 == $number){
+		#find infinity
+		$ok=0;
+	}
+	return $ok;
+}
+
 
 sub prepare_results
 {
@@ -1388,6 +1416,35 @@ sub _test_sigdig
 
 	return $test;
 }
+
+sub create_R_plots_code{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+							  rplot => { isa => 'rplots', optional => 0 }
+		);
+	my $rplot = $parm{'rplot'};
+
+	$rplot->libraries(['ggplot2','reshape','plyr']);
+
+	$rplot->add_preamble(code => [
+							 'refofv   <-'.$self->ofv_increase.'   #option -ofv_increase',
+							 'NORMQ    <- '.$self->normq.'   #option -normq'
+						 ]);
+	my $file = $self->rtemplate_directory."llp_default.R";
+	open( FILE, $file ) ||
+		croak("Could not open $file for reading" );
+	
+	my @code = ();
+	foreach my $line (<FILE>){
+		chomp($line);
+		push(@code,$line);
+	}
+	close( FILE );
+
+	$rplot->add_plot(level=>1, code =>\@code);
+
+}
+
 
 no Moose;
 __PACKAGE__->meta->make_immutable;
