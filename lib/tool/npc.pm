@@ -2891,7 +2891,7 @@ sub create_binned_data
 
 	my $no_of_strata = scalar(@{$self->strata_matrix});
 
-    if ($self->bin_by_count eq '0' or $self->bin_by_count eq '1') {
+    if (($self->bin_by_count eq '0' or $self->bin_by_count eq '1') and scalar(@{$self->bin_array}) > 0) {
         my $no_arrays = scalar(@{$self->bin_array});
         if ($no_arrays != 1 and $no_arrays != $no_of_strata) {
             croak("The number of bin arrays requested (" . $no_arrays .
@@ -2929,11 +2929,13 @@ sub create_binned_data
 					'count'				 => $self->single_bin_size,
 					'overlap_percent' => $self->overlap_percent);
 			} else {
-                my $bin_stratum_index;
+                my $list_boundaries;
                 if (scalar(@{$self->bin_array}) == 1) {
-                    $bin_stratum_index = 0;
+                    $list_boundaries = $self->bin_array->[0];
+                } elsif (scalar(@{$self->bin_array}) > 1) {
+                    $list_boundaries = $self->bin_array->[$strat_ind];
                 } else {
-                    $bin_stratum_index = $strat_ind;
+                    $list_boundaries = [];
                 }
 
 				# add input param single_bin_size
@@ -2943,7 +2945,7 @@ sub create_binned_data
 					'data_indices'		=> \@data_indices,
 					'n_bins'				=> $self->no_of_bins,
 					'single_bin_size'	=> $self->single_bin_size,
-					'list_counts' 		=> $self->bin_array->[$bin_stratum_index]);
+					'list_counts' 		=> $list_boundaries);
 			}
 		} elsif ($self->bin_by_count eq '0') {
 			if (defined $self->overlap_percent) {
@@ -2953,11 +2955,13 @@ sub create_binned_data
 					'width'				 => $self->single_bin_size,
 					'overlap_percent' => $self->overlap_percent);
 			} else {
-                my $bin_stratum_index;
+                my $list_boundaries;
                 if (scalar(@{$self->bin_array}) == 1) {
-                    $bin_stratum_index = 0;
+                    $list_boundaries = $self->bin_array->[0];
+                } elsif (scalar(@{$self->bin_array}) > 1) {
+                    $list_boundaries = $self->bin_array->[$strat_ind];
                 } else {
-                    $bin_stratum_index = $strat_ind;
+                    $list_boundaries = [];
                 }
 				# add input param single_bin_size
 				$bin_ceilings = $self -> get_bin_ceilings_from_value(
@@ -2965,7 +2969,7 @@ sub create_binned_data
 					'data_indices'		=> \@data_indices,
 					'n_bins'				=> $self->no_of_bins,
 					'single_bin_size'	=> $self->single_bin_size,
-					'list_boundaries'	=> $self->bin_array->[$bin_stratum_index]);
+					'list_boundaries'	=> $list_boundaries);
 			}
 		} elsif ($self->auto_bin_mode eq 'auto') {
 			$bin_ceilings = binning::bin_auto(\@bin_array, $self->min_points_in_bin, $self->strata_labels->[$strat_ind]);
