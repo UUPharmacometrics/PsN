@@ -6,10 +6,11 @@ use strict;
 use warnings;
 use MooseX::Params::Validate;
 use include_modules;
+use Scalar::Util qw(looks_like_number);
 
 require Exporter;
 our @ISA = qw(Exporter);
-our %EXPORT_TAGS = ('all' => [ qw(round eps inf ceil) ]);
+our %EXPORT_TAGS = ('all' => [ qw(round eps inf ceil usable_number) ]);
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 
 sub round
@@ -75,6 +76,26 @@ sub inf
 {
     # A portable infinity.
 	return 9**9**9;
+}
+
+sub usable_number
+{
+    my ($number) = pos_validated_list(\@_,
+        { isa => 'Any' },
+    );
+
+	my $ok = 1;
+	if (not looks_like_number($number)){
+		#find stupid strings etc
+		$ok=0;
+	}elsif ($number != $number){
+		#find not a number
+		$ok=0;
+	}elsif ($number+1 == $number){
+		#find infinity
+		$ok=0;
+	}
+	return $ok;
 }
 
 1;

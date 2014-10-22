@@ -7,7 +7,7 @@ use tool::modelfit;
 use Data::Dumper;
 use Moose;
 use MooseX::Params::Validate;
-use Scalar::Util qw(looks_like_number);
+use math qw(usable_number);
 
 extends 'tool';
 
@@ -1252,7 +1252,7 @@ sub _guess
 	  }
 	}
 	
-	unless (usable_number(number=> $guess)){
+	unless (usable_number($guess)){
 	  if ( ($y[0] - $y[1]) == 0 or ($x[0] - $x[1]) == 0 or
 	       ($y[$points-1] - $y[$points-2]) == 0 or ($x[$points-1] - $x[$points-2]) == 0 ) {
 	    $guess = undef;
@@ -1262,7 +1262,7 @@ sub _guess
 	    } else {
 	      $guess = $x[$points-1] + ($goal - $y[$points-1]) / ( ($y[$points-1] - $y[$points-2])/($x[$points-1] - $x[$points-2]));
 	    }
-		unless (usable_number(number=> $guess)){
+		unless (usable_number($guess)){
 			$guess = undef;
 		}
 	  }
@@ -1271,27 +1271,6 @@ sub _guess
 	return $guess;
 }
 
-sub usable_number
-{
-	#TODO move this to Math.pm
-	#static method
-	my %parm = validated_hash(\@_,
-		 number => { isa => 'Any', optional => 0 }
-	);
-	my $number = $parm{'number'};
-	my $ok = 1;
-	if (not looks_like_number($number)){
-		#find stupid strings etc
-		$ok=0;
-	}elsif ($number != $number){
-		#find not a number
-		$ok=0;
-	}elsif ($number+1 == $number){
-		#find infinity
-		$ok=0;
-	}
-	return $ok;
-}
 
 
 sub prepare_results
