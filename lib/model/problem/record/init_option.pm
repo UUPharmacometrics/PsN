@@ -72,7 +72,7 @@ sub check_and_set_init
 		 new_value => { isa => 'Maybe[Num]', optional => 1 }
 	);
 	my $success = 0;
-	my @error_code = [0,0,0];
+	my @error_code = (0,0,0);
 	my $new_value = $parm{'new_value'};
 
 	# Error codes:
