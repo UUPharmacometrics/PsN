@@ -11,6 +11,7 @@ use array qw(:all);
 use tool::modelfit;
 use linear_algebra;
 use output;
+use Storable qw(dclone);
 
 extends 'tool';
 
@@ -37,8 +38,8 @@ sub modelfit_setup
 	$model_filename =~ s/(\.ctl|\.mod)$//;
 	$model_filename .= '_repara.mod';
 	$model_filename = File::Spec->catfile(($self->directory, "m1"), $model_filename);
-
-	my $model = create_reparametrized_model(
+	
+    my $model = create_reparametrized_model(
 		filename => $model_filename,
 		model => $self->precond_model,
 		precond_matrix => $self->precond_matrix,
@@ -180,7 +181,7 @@ sub create_reparametrized_model
 	my %parm = validated_hash(\@_,
 		filename => { isa => 'Str', optional => 0 },
 		model => { isa => 'model' },
-	  precond_matrix => { isa => 'ArrayRef[ArrayRef]' },
+        precond_matrix => { isa => 'ArrayRef[ArrayRef]' },
 	);
 	my $filename = $parm{'filename'};
 	my $model = $parm{'model'};
@@ -263,6 +264,10 @@ sub create_reparametrized_model
 
 	# Set new initial values for thetas
 	my @parameter_initial = @{$model->initial_values(parameter_type => 'theta')->[0]};
+
+    # Clone to be not overwrite precond_matrix
+    my $ref = dclone(\@precond_matrix);
+    @precond_matrix = (@$ref);
 
 	my $dummy = linear_algebra::LU_factorization(\@precond_matrix);
 
@@ -384,7 +389,6 @@ sub convert_reparametrized_cov
 	}
 
 	my @temp_varcovMatrix;
-
 	for (my $i = 0; $i < $model->nthetas; $i++) {
 		for (my $j = 0; $j < $model->nthetas; $j++) {
 			$temp_varcovMatrix[$i][$j] = 0;
