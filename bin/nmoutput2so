@@ -13,6 +13,7 @@ use Getopt::Long;
 use Data::Dumper;
 use common_options;
 use standardised_output;
+use model;
 
 $| = 1; # Make sure autoflush is on
 
@@ -86,7 +87,7 @@ $help_text{Pre_help_message} = <<'EOF';
     It gathers some useful information from NONMEM output files and prints
     a summary to screen.
 EOF
-    1;
+
 $help_text{Options} = <<'EOF';      
  Options:
 
@@ -95,19 +96,19 @@ $help_text{Options} = <<'EOF';
     
     The following options are valid:
 EOF
-    1;
+
 $help_text{-h} = <<'EOF';
     -h | -?
       
     With -h or -? sumo will print a list of options and exit.
 EOF
-    1;
+
 $help_text{-help} = <<'EOF';      
     -help
       
     With -help sumo will print this, longer, help message.
 EOF
-    1;
+
 $help_text{-debug} = <<'EOF';
     -debug='integer'
     Default 0
@@ -115,7 +116,7 @@ $help_text{-debug} = <<'EOF';
     This is mainly for developers who wish to debug PsN. By default
     'integer' is zero but you can set it to '1' to enable warnings.
 EOF
-    1;
+
 $help_text{-csv} = <<'EOF';
     -csv
     Default not set
@@ -127,14 +128,14 @@ $help_text{-csv} = <<'EOF';
     want to do in that case: sumo -csv run1.lst > sumooutput.csv)
 
 EOF
-    1;
+
 $help_text{-precision} = <<'EOF';
     -precision='integer'
     Default 4
 
     Output precision.
 EOF
-    1;
+
 $help_text{-c_level} = <<'EOF';
     -c_level='integer'
     Default 95
@@ -143,7 +144,7 @@ $help_text{-c_level} = <<'EOF';
     computed by the -ci option (see below). Allowed values are 90, 95,
     99 and 99.5
 EOF
-    1;
+
 $help_text{-confidence_interval} = <<'EOF';
     -confidence_interval
     -ci
@@ -180,7 +181,7 @@ $help_text{-confidence_interval} = <<'EOF';
     i.e. no transformation to CVs or correlations is performed.
 
 EOF
-1;    
+
 $help_text{-ci} = $help_text{-confidence_interval};
 
 $help_text{-sd_rse} = <<'EOF';
@@ -194,7 +195,7 @@ $help_text{-sd_rse} = <<'EOF';
     estimate)/2.
 
 EOF
-1;    
+
 $help_text{-max_problem_num} = <<'EOF';
     -max_problem_num='integer'
     Default 1
@@ -204,7 +205,7 @@ $help_text{-max_problem_num} = <<'EOF';
     $PROBLEM only.
 
 EOF
-1;    
+
 $help_text{-max_subproblem_num} = <<'EOF';
     -max_subproblem_num='integer'
     Default 1
@@ -214,7 +215,7 @@ $help_text{-max_subproblem_num} = <<'EOF';
     subproblem only.
 
 EOF
-1;    
+
 $help_text{-check_run} = <<'EOF';
     -check_run
     Default set
@@ -223,7 +224,7 @@ $help_text{-check_run} = <<'EOF';
     will be suppressed.
 
 EOF
-1;    
+
 $help_text{-correlation_limit} = <<'EOF';
     -correlation_limit='number'
     Default 0.9
@@ -233,7 +234,7 @@ $help_text{-correlation_limit} = <<'EOF';
     step has been requested in the NMtran control stream.
 
 EOF
-1;    
+
 $help_text{-condition_number_limit} = <<'EOF';
     -condition_number_limit='number'
     Default 1000
@@ -244,7 +245,7 @@ $help_text{-condition_number_limit} = <<'EOF';
     eigenvalues ($COV PRINT=E).
 
 EOF
-1;    
+
 $help_text{-near_bound_sign_digits} = <<'EOF';
     -near_bound_sign_digits='integer'
     Default 2
@@ -257,7 +258,7 @@ $help_text{-near_bound_sign_digits} = <<'EOF';
     types of issues in output from NONMEM.
 
 EOF
-1;    
+
 $help_text{-near_zero_boundary_limit} = <<'EOF';
     -near_zero_boundary_limit='number'
     Default 0.001
@@ -266,7 +267,7 @@ $help_text{-near_zero_boundary_limit} = <<'EOF';
     estimate is this close to zero.
 
 EOF
-1;    
+
 $help_text{-sign_digits_off_diagonals} = <<'EOF';
     -sign_digits_off_diagonals='integer' 
     Default 2
@@ -277,7 +278,7 @@ $help_text{-sign_digits_off_diagonals} = <<'EOF';
     significant digits.
 
 EOF
-1;    
+
 $help_text{-large_theta_cv_limit} = <<'EOF';
     -large_theta_cv_limit='number'
     Default 0.30
@@ -285,7 +286,7 @@ $help_text{-large_theta_cv_limit} = <<'EOF';
     When the CV (SE/estimate) for a parameter estimates is greater
     than this a warning will be issued.
 EOF
-1;    
+
 $help_text{-large_sigma_cv_limit} = <<'EOF';
     -large_sigma_cv_limit='number'
     Default 0.30
@@ -294,7 +295,7 @@ $help_text{-large_sigma_cv_limit} = <<'EOF';
     than this a warning will be issued.
 
 EOF
-1;    
+
 $help_text{-large_omega_cv_limit} = <<'EOF';
     -large_omega_cv_limit='number'
     Default 0.50
@@ -303,7 +304,7 @@ $help_text{-large_omega_cv_limit} = <<'EOF';
     than this a warning will be issued.
 
 EOF
-1;    
+
 
 common_options::online_help('sumo', \%options, \%help_text, \%required_options, \%optional_options);
 
@@ -341,64 +342,15 @@ unless (-e $outfile) {
     die "The file: $outfile does not exist.\n\n";
 }
 
-my $outobj = output->new('filename' => $outfile);
+my $output = output->new('filename' => $outfile);
 
-unless ($outobj->parsed_successfully) {
-    die "Unable to read everything from outputfile, parser error message:\n" . $outobj->parsing_error_message;
+if (not $output->parsed_successfully) {
+    die "Unable to read everything from outputfile, parser error message:\n" . $output->parsing_error_message;
 }
 
 
-# HERE
-use model;
 my $model = model->new(filename => $ARGV[1], ignore_missing_data => 1);
 
-my $so = standardised_output->new(output => $outobj, model => $model);
+my $so = standardised_output->new(output => $output, model => $model);
 
 $so->parse;
-
-#Experiment below
-=cut
-# Correlation Matrix
-sub create_matrix
-{
-    my $writer = shift;
-    my $rownames = shift;
-    my $colnames = shift;
-
-    $writer->startTag("ct:Matrix", matrixType => "Any");
-    $writer->startTag("ct:RowNames");
-    foreach my $name (@$rownames) {
-        $writer->startTag("ct:String");
-        $writer->characters($name);
-        $writer->endTag("ct:String");
-    }
-    $writer->endTag("ct:RowNames");
-    $writer->startTag("ct:ColumnNames");
-    foreach my $name (@$colnames) {
-        $writer->startTag("ct:String");
-        $writer->characters($name);
-        $writer->endTag("ct:String");
-    }
-    $writer->endTag("ct:ColumnNames");
-    $writer->endTag("ct:Matrix");
-}
-# FIXME: Check status of covariance step first
-
-$writer->startTag("CorrelationMatrix");
-create_matrix($writer, \@all_labels, \@all_labels);
-
-my @lines = OSspecific::slurp_file("pheno.cor");    #FIXME: hardcoded filename
-my ($success, $lower, $index_order_ref, $header_labels_ref) = 
-output::problem::subproblem::parse_additional_table(
-    covariance_step_run => 1,
-    have_omegas => 1,
-    have_sigmas => 1,
-    method_string => ' ',
-    skip_labels_matrix => ' ',
-    type => 'cor',
-    tableref => \@lines,
-);
-
-print Dumper $lower;
-
-$writer->endTag("CorrelationMatrix");

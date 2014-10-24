@@ -61,7 +61,6 @@ sub add_single_row_table
     $writer->endTag("Table"); 
 }
 
-
 sub add_parameter_table
 {
     my $self = shift;
@@ -94,6 +93,36 @@ sub add_parameter_table
     }
 
     $writer->endTag("ds:Table");
+}
+
+sub add_matrix
+{
+    my $self = shift;
+    my %parm = validated_hash(\@_,
+        rownames => { isa => 'ArrayRef' },
+        colnames => { isa => 'ArrayRef' },
+    );
+    my $rownames = $parm{'rownames'};
+    my $colnames = $parm{'colnames'};
+
+    my $writer = $self->_writer;
+
+    $writer->startTag("ct:Matrix", matrixType => "Any");
+    $writer->startTag("ct:RowNames");
+    foreach my $name (@$rownames) {
+        $writer->startTag("ct:String");
+        $writer->characters($name);
+        $writer->endTag("ct:String");
+    }
+    $writer->endTag("ct:RowNames");
+    $writer->startTag("ct:ColumnNames");
+    foreach my $name (@$colnames) {
+        $writer->startTag("ct:String");
+        $writer->characters($name);
+        $writer->endTag("ct:String");
+    }
+    $writer->endTag("ct:ColumnNames");
+    $writer->endTag("ct:Matrix");
 }
 
 # End of XML helper methods
@@ -264,10 +293,14 @@ sub _add_precision_population_estimates
     $self->add_parameter_table(name => 'RSE', labels => \@labels, values => \@relative_standard_errors);
     $writer->endTag("RelativeStandardError");
 
+    # FIXME: Check status of covariance step first
+    $writer->startTag("CorrelationMatrix");
+    $self->add_matrix(rownames => \@labels, colnames => \@labels);  #FIXME: No content added here
+    $writer->endTag("CorrelationMatrix");
+
     $writer->endTag("MLE");
     $writer->endTag("PrecisionPopulationEstimates");
 }
-
 
 sub _add_target_tool_messages
 {
