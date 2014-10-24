@@ -76,3 +76,5 @@ sub inf
     # A portable infinity.
 	return 9**9**9;
 }
+
+1;
