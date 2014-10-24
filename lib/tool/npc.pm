@@ -4500,13 +4500,23 @@ sub vpc_analyze
 
 				for (my $i=0; $i<$no_perc_limits; $i++){
 					if ($perc_limit[$i] eq $meantext) {
-						$limit_real[$i] = array::mean(\@sorted_singleset);
-					}elsif ($perc_limit[$i] eq $deltameantext){
-						if ($strat_ind == 0){
-							$reference_mean_limit_real[$bin_index] = array::mean(\@sorted_singleset);
-							$limit_real[$i] = 0;
+						if ((defined $self->lloq or defined $self->uloq) and 
+							(($real_count_below_lloq+$real_count_above_uloq)>0)){
+							$limit_real[$i] = undef;
 						}else{
-							$limit_real[$i] = array::mean(\@sorted_singleset) - $reference_mean_limit_real[$bin_index]; 
+							$limit_real[$i] = array::mean(\@sorted_singleset);
+						}
+					}elsif ($perc_limit[$i] eq $deltameantext){
+						if ((defined $self->lloq or defined $self->uloq) and 
+							(($real_count_below_lloq+$real_count_above_uloq)>0)){
+							$limit_real[$i] = undef;
+						}else{
+							if ($strat_ind == 0){
+								$reference_mean_limit_real[$bin_index] = array::mean(\@sorted_singleset);
+								$limit_real[$i] = 0;
+							}else{
+								$limit_real[$i] = array::mean(\@sorted_singleset) - $reference_mean_limit_real[$bin_index]; 
+							}
 						}
 					}elsif ($perc_limit[$i] == 50) {
 						$limit_real[$i] = $self->median('sorted_array' => \@sorted_singleset);
