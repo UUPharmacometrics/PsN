@@ -81,6 +81,10 @@ sub _read_options
 	      #if there is no space between ) and ( then add one
 	      s/\)\(/\) \(/g;
 
+		  #if there is a comma as separator between two closed parentheses, then 
+		  #replace that comma with a space
+	      s/\),\(/\) \(/g;
+
 	      # Split thetas and labels/units
 	      my ( $line, $comment ) = split( ";", $_, 2 );
 	      
@@ -96,6 +100,7 @@ sub _read_options
 	      $line =~ s/(\([0-9.\-+eE]+)\s+/$1,/g; #first space
 	      $line =~ s/(\([0-9.\-+eE,]+)\s+/$1,/g; #second
 	      # Split the theta string to see if we have more than one theta.
+		  #this form of split will correctly treat consecutive spaces as a single separator
 	      @row = split( " ",$line );
 	      if ( $#row <=0 ) {
 		# If we only have one theta, send the whole row to option
