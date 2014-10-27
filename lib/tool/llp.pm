@@ -540,14 +540,6 @@ sub modelfit_analyze
 		$self -> raw_results->[$model_number-1] =
 			$self -> tools -> [0] -> raw_results if( defined $self -> tools -> [0] );
 	}
-	if( $self -> iteration() < 2 and
-	    defined $PsN::config -> {'_'} -> {'R'} and
-	    -e $PsN::lib_dir . '/R-scripts/llp.R' ) {
-		# copy the llp R-script
-		cp ( $PsN::lib_dir . '/R-scripts/llp.R', $self ->directory );
-		# Execute the script
-		system( $PsN::config -> {'_'} -> {'R'}." CMD BATCH llp.R" );
-	}
 }
 
 sub _create_models
@@ -1081,16 +1073,6 @@ sub create_matlab_scripts
 	}
 }
 
-sub create_R_scripts
-{
-	my $self = shift;
-
-	unless( -e $PsN::lib_dir . '/R-scripts/llp.R' ){
-		croak('LLP R-script are not installed, no R scripts will be generated.' );
-		return;
-	}
-	cp ( $PsN::lib_dir . '/R-scripts/llp.R', $self ->directory );
-}
 
 sub _try_bounds
 {
@@ -1404,12 +1386,13 @@ sub create_R_plots_code{
 	my $rplot = $parm{'rplot'};
 
 	$rplot->libraries(['ggplot2','reshape','plyr']);
+	$rplot->pdf_title('Log-likelihood profiling');
 
 	$rplot->add_preamble(code => [
 							 'refofv   <-'.$self->ofv_increase.'   #option -ofv_increase',
 							 'NORMQ    <- '.$self->normq.'   #option -normq'
 						 ]);
-	my $file = $self->rtemplate_directory."llp_default.R";
+	my $file = $self->template_directory_rplots."llp_default.R"; #FIXME
 	open( FILE, $file ) ||
 		croak("Could not open $file for reading" );
 	

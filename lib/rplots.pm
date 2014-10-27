@@ -17,6 +17,7 @@ has 'raw_results_file' => (is => 'rw', isa => 'Str', required => 1);
 has 'tool_results_file' => (is => 'rw', isa => 'Str');
 has 'filename' => (is => 'rw', isa => 'Str');
 has '_R_executable' => (is => 'rw', isa => 'Str' );
+has 'pdf_title' => (is => 'rw', isa => 'Str' );
 has 'indent' => (is => 'rw', isa => 'Str', default => "    " ); #4spaces
 has 'standard_preamble' => ( is => 'rw', isa => 'ArrayRef[Str]',default => sub{ [] } );
 has 'extra_preamble' => ( is => 'rw', isa => 'ArrayRef[Str]',default => sub{ [] } );
@@ -94,12 +95,20 @@ sub setup
 	}
 
 	$runno = '' unless (defined $runno and length($runno)>0);
+	unless (defined $self->pdf_title){
+		my $runstr = '';
+		if (defined $runno and length($runno)>0){
+			$runstr = " run $runno";
+		}
+		$self->pdf_title($self->toolname().' diagnostic plots'.$runstr);
+	}
 
 	my @arr =(
 		 'rplots.level <- '.$self->level(),
 		 "xpose.runno <- '".$runno."'",
 		 "toolname <- '".$self->toolname()."'",
 		 "pdf.filename <- paste0('PsN_',toolname,'_plots.pdf')",
+		 "pdf.title <- '".$self->pdf_title."'",
 		 "working.directory<-'".$self->directory."'",
 		 "raw.results.file <- '".$self->raw_results_file."'",
 		 "model.directory<-'".$dir."'",
@@ -195,7 +204,7 @@ sub get_preamble()
 	
 	push(@arr,
 		 "\n".'if (rplots.level > 0){',
-		 $self->indent().'pdf(file=pdf.filename,width=12)',
+		 $self->indent().'pdf(file=pdf.filename,width=10,height=7,title=pdf.title)',
 		 '}'."\n"
 		);
 	

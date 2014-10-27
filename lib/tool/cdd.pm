@@ -576,13 +576,6 @@ sub modelfit_analyze
 
 	# experimental: to save memory
 	$self -> prepared_models->[$model_number-1]{'own'} = undef;
-	if( defined $PsN::config -> {'_'} -> {'R'} and
-		-e $PsN::lib_dir . '/R-scripts/cdd.R' ) {
-		# copy the cdd R-script
-		cp ( $PsN::lib_dir . '/R-scripts/cdd.R', $self -> directory );
-		# Execute the script
-		system( $PsN::config -> {'_'} -> {'R'}." CMD BATCH cdd.R" );
-	}
 }
 
 sub relative_estimates
@@ -1463,15 +1456,31 @@ sub prepare_results
 	}
 }
 
-sub create_R_scripts
-{
+sub create_R_plots_code{
 	my $self = shift;
+	my %parm = validated_hash(\@_,
+							  rplot => { isa => 'rplots', optional => 0 }
+		);
+	my $rplot = $parm{'rplot'};
 
-	unless( -e $PsN::lib_dir . '/R-scripts/cdd.R' ){
-		croak('CDD R-script are not installed, no matlab scripts will be generated.' );
-		return;
+	my $case_column_name = $self->models->[0]->problems->[0]->inputs->[0]->options->[($self->case_column)-1]->name;
+	$rplot->pdf_title('Case-deletion diagnostics');
+	$rplot->add_preamble(code => [
+							 "case.column.name   <-'".$case_column_name."'"
+						 ]);
+	my $file = $self->template_directory_rplots."cdd_default.R"; #FIXME
+	open( FILE, $file ) ||
+		croak("Could not open $file for reading" );
+	
+	my @code = ();
+	foreach my $line (<FILE>){
+		chomp($line);
+		push(@code,$line);
 	}
-	cp ($PsN::lib_dir . '/R-scripts/cdd.R', $self->directory);
+	close( FILE );
+
+	$rplot->add_plot(level=>1, code =>\@code);
+
 }
 
 no Moose;

@@ -137,8 +137,9 @@ has 'torque_prepend_flags' => ( is => 'rw', isa => 'Str' );
 has 'torque_queue' => ( is => 'rw', isa => 'Str' );
 has 'run_on_torque' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'directory_name_prefix' => ( is => 'rw', isa => 'Str' );
-has 'rplots_level' => ( is => 'rw', isa => 'Int', default => 0 );
-has 'rtemplate_directory' => ( is => 'rw', isa => 'Str', default => '/home/kajsa/kod-psn/PsN4/R-scripts/' );
+has 'rplots' => ( is => 'rw', isa => 'Int', default => 0 );
+has 'template_directory_rplots' => ( is => 'rw', isa => 'Str');
+has 'template_file_rplots' => ( is => 'rw', isa => 'Str');
 
 
 sub BUILDARGS
@@ -1629,6 +1630,10 @@ sub create_R_script
 {
 	my $self = shift;
 
+	unless (defined $self->template_directory_rplots){
+		$self->template_directory_rplots($PsN::lib_dir . '/R-scripts/');
+	}
+
 	if ($self->can("create_R_plots_code")){
 		my $tool_name;
 		if (defined $self->directory_name_prefix) {
@@ -1643,7 +1648,7 @@ sub create_R_script
 
 		my $rplot = rplots->new(toolname => $tool_name, 
 								directory => $self->directory,
-								level => $self->rplots_level,
+								level => $self->rplots,
 								raw_results_file => $self->raw_results_file->[0],
 								tool_results_file => $self->results_file,
 								model => $self->models->[0]);

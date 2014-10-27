@@ -483,12 +483,16 @@ sub create_R_plots_code{
 	my $rplot = $parm{'rplot'};
 
 	$rplot->libraries(['ggplot2','reshape2','plyr']);
-
+	my $have_base_model = 'FALSE';
+	$have_base_model = 'TRUE' if (defined $self->base_model);
 	#TODO script only works if $self->base_model is defined 
 	$rplot->add_preamble(code => [
 							 'samples   <-'.$self->samples,
+							 "randomization.column   <-'".$self->randomization_column."'",
+							 "data.diff.table   <-'m1/count_randcol_diff.txt'",
+							 "have.base.model <- $have_base_model"
 						 ]);
-	my $file = $self->rtemplate_directory."randtest_default.R";
+	my $file = $self->template_directory_rplots."randtest_default.R"; #FIXME
 	open( FILE, $file ) ||
 		croak("Could not open $file for reading" );
 	

@@ -6341,7 +6341,7 @@ sub create_R_plots_code{
 							 'parameters <- c('.$parameters.')',
 							 'parameters.covariates <- list('.$parcovstring.')'
 						 ]);
-	my $file = $self->rtemplate_directory."scm_default.R";
+	my $file = $self->template_directory_rplots."scm_default.R";
 	open( FILE, $file ) ||
 		croak("Could not open $file for reading" );
 	
