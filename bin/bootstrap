@@ -31,7 +31,6 @@ my %optional_options = ("samples:i"=>'',
 						"bca"=>'',
 						"dofv!"=>'',
 						"mceta:i"=>'',
-						"rplots"=>'',
 						"skip_minimization_terminated!"=>'',
 						"skip_covariance_step_terminated!"=>'',
 						"skip_with_covstep_warnings!"=>'',
@@ -241,17 +240,6 @@ EOF
       may be erroneous, since the script renumbers individuals before sampling.
 EOF
 
-    $help_text{-rplots} = <<'EOF';
-      <p class="option">-rplots</p>
-
-      Generate R script for making various plots of the result.
-      The script will be called bootstrap.R and be saved in the main
-      run directory. If R is configured in psn.conf the script will
-      also be run and a number of pdf-format plots be created.
-      Warning: The script may contain errors and should preferably 
-      only be used as a starting point by someone who knows R programming.
-EOF
-
     $help_text{Post_help_message} = <<'EOF';
       Also see 'psn_options -h' for a description of common options.
 EOF
@@ -350,9 +338,6 @@ if ( $options{'summarize'} ) {
   $bs -> print_results();
 }
 
-if( $options{'rplots'} ){
-  $bs -> create_R_scripts();
-}
 
 ui -> print( category => 'bootstrap',
 	     message  => "\nBootstrap done.\n");
