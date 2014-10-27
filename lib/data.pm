@@ -1948,7 +1948,9 @@ sub _randomize_data
 		push(@stratified_data,[0 .. ($n_individuals-1)]);
 	}
 
+	my @count_changed_individual_data = (0) x $samples;
 	for (my $i=0; $i<$samples; $i++){
+		my $changed_count = 0;
 		my $new_name = defined $name_stub ? $name_stub."_".($i+1).".dta" : "rand_".($i+1).".dta";
 		$new_name = $directory.'/'.$new_name if (defined $directory);
 		my @new_individuals=();
@@ -1959,15 +1961,30 @@ sub _randomize_data
 			my @shuffled_indices = @{$stratified_data[$j]};
 			$self-> _fisher_yates_shuffle(array => \@shuffled_indices);
 			for (my $k=0; $k< scalar(@shuffled_indices); $k++){
+				my $individual_is_changed = 1;
 				my $base_index = $stratified_data[$j]->[$k];
 				my $rand_index = $shuffled_indices[$k];
 				my $new_values = $self->reconcile_column(old_values => $rand_values->[$base_index],
 					template_values => $rand_values->[$rand_index],
 					equal_obs => $equal_obs);
+				if ($base_index == $rand_index){
+					$individual_is_changed = 0;
+				}elsif (scalar(@{$rand_values->[$base_index]}) == scalar(@{$rand_values->[$rand_index]})){
+					my $found_diff=0;
+					for (my $tmp=0; $tmp < scalar(@{$rand_values->[$base_index]}); $tmp++){
+						if ($rand_values->[$base_index]->[$tmp] != $rand_values->[$rand_index]->[$tmp]){
+							$found_diff=1;
+							last;
+						}
+					}
+					$individual_is_changed = $found_diff;
+				}
+				$changed_count = $changed_count+$individual_is_changed;
 				$new_individuals[$base_index]->append_column(new_values => $new_values);
 				$new_individuals[$base_index]->append_individual(new_individual => $right_side_individuals->[$base_index]);
 			}
 		}
+		$count_changed_individual_data[$i] = $changed_count;
 		my $newdata = data->new( header      => \@header,
 								 idcolumn    => $self->idcolumn,
 								 missing_data_token => $self->missing_data_token,			 
@@ -1979,6 +1996,13 @@ sub _randomize_data
 		push(@data_file_names,$new_name);
 		$newdata = undef;
 	}
+
+	my $filename = 'count_randcol_diff.txt';
+	$filename = $directory.'/'.$filename if (defined $directory);
+	open(FILE,">$filename") || 
+	die "Could not create $filename\n";
+	print FILE join("\n",@count_changed_individual_data )."\n";
+	close(FILE);
 
 	return \@data_file_names;
 }
