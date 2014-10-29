@@ -1424,89 +1424,84 @@ sub _read_minimization_message
 	  }
 	}
 
-	push( @{$self->minimization_message}, @mess );		# minimization_message is default set to empty array.
 
 	my @temp;
-	my $etabar_found = 0;
+
+	my %reading;
+	$reading{'etabar'} = 0;
+	$reading{'pval'} = 0;
+	$reading{'etashrink'} = 0;
+	$reading{'epsshrink'} = 0;
+	
+	my %values;
+	$values{'etabar'} = [];
+	$values{'pval'} = [];
+	$values{'etashrink'} = [];
+	$values{'epsshrink'} = [];
+
+	my @storemess = ();
 	for( my $i = 0; $i <= $#mess; $i++ ) {
 	  my $line = $mess[$i];
-
-	  if ( $etabar_found or ($line =~ /\s+ETABAR:\s+/) ) {
-	    $etabar_found = 1;
-	    $line =~ s/ETABAR://;
-
-	    last unless ( $line =~ s/^\s+//);
-	    last unless ( $line =~ /\d/);
-	    last if( $line =~ /^1/);
-	    last if( $line =~ /[a-zA-DF-Z]/);
-
-	    @temp = split(/\s+/,$line);
-	    push @etabar, @temp;
+	  my $param = '';
+	  if ($line =~ s/ETABAR://) {
+		  $param = 'etabar';
+	  }elsif ($line =~ s/P VAL\.:// ) {
+		  $param = 'pval';
+	  }elsif ($line =~ s/ETAshrink\(\%\)://) {
+		  $param = 'etashrink';
+	  }elsif ($line =~ s/EPSshrink\(\%\)://){
+		  $param = 'epsshrink';
+	  }
+	  if (length($param)>0){
+		  #found startline
+		  foreach my $par (keys %reading){
+			  if ($param eq $par){
+				  $reading{$par}=1;
+			  }else{
+				  $reading{$par}=0;
+			  }
+		  }
+	  }else{
+		  #check if reading something already
+		  foreach my $par (keys %reading){
+			  if ($reading{$par}==1){
+				  $param = $par;
+				  last;
+			  }
+		  }
+	  }
+	  if (length($param)>0){
+		  #we are reading something, parse it
+		  unless ( $line =~ s/^\s+//){
+			  $reading{$param} = 0;
+			  next;
+		  }
+		  if(($line =~ /^1/) or ($line =~ /[a-zA-DF-Z]/) or (not ( $line =~ /\d/)) ){
+			  $reading{$param} = 0;
+			  next;
+		  }
+		  @temp = split(/\s+/,$line);
+		  push (@{$values{$param}},@temp);
+	  }else{
+		  #put in general message
+		  push(@storemess,$line);
 	  }
 	}
-	# Initialize the attribute only if we have found any data
-	$self->etabar(\@etabar) if ( scalar(@etabar) > 0 );
-    
-	my $pval_found;
-	for( my $i = 0; $i <= $#mess; $i++ ) {
-		my $line = $mess[$i];
-		if ( $pval_found or ($line =~ /\s+P VAL\.:\s+/ ) ) {
-			$pval_found = 1;
-			$line =~ s/P VAL\.://;
 
-			last unless ( $line =~ s/^\s+//);
-			last unless ( $line =~ /\d/);
-			last if( $line =~ /^1/);
-			last if( $line =~ /[a-zA-DF-Z]/);
-			@temp = split(/\s+/,$line);
-			push @pval, @temp;	
-		}
+	if (scalar(@{$values{'etabar'}})>0){
+		$self->etabar($values{'etabar'});
 	}
-	$self->pval(\@pval);
-
-	my $etashrink_found = 0;
-	for( my $i = 0; $i <= $#mess; $i++ ) {
-		my $line = $mess[$i];
-
-		if ( $etashrink_found or ($line =~ /\s+ETAshrink\(\%\):\s+/) ) {
-			$etashrink_found = 1;
-			$line =~ s/ETAshrink\(\%\)://;
-
-	    last unless ( $line =~ s/^\s+//);
-	    last unless ( $line =~ /\d/);
-	    last if( $line =~ /^1/);
-	    last if( $line =~ /[a-zA-DF-Z]/);
-
-	    @temp = split(/\s+/,$line);
-	    foreach my $tmp (@temp){
-	      push (@etashrink, $tmp); #percent	
-	    }
-	  }
+	if (scalar(@{$values{'pval'}})>0){
+		$self->pval($values{'pval'});
 	}
-	# Initialize the attribute only if we have found any data
-	$self -> shrinkage_eta(\@etashrink) if (scalar(@etashrink) > 0);
-
-	my $epsshrink_found = 0;
-	for( my $i = 0; $i <= $#mess; $i++ ) {
-	  my $line = $mess[$i];
-
-	  if ( $epsshrink_found or ($line =~ /\s+EPSshrink\(\%\):\s+/) ) {
-	    $epsshrink_found = 1;
-	    $line =~ s/EPSshrink\(\%\)://;
-
-	    last unless ( $line =~ s/^\s+//);
-	    last unless ( $line =~ /\d/);
-	    last if( $line =~ /^1/);
-	    last if( $line =~ /[a-zA-DF-Z]/);
-
-	    @temp = split(/\s+/,$line);
-	    foreach my $tmp (@temp){
-	      push (@epsshrink, $tmp); #percent
-	    }
-	  }
+	if (scalar(@{$values{'etashrink'}})>0){
+		$self->shrinkage_eta($values{'etashrink'});
 	}
-	# Initialize the attribute only if we have found any data
-	$self -> shrinkage_eps(\@epsshrink) if ( scalar(@epsshrink) > 0 );
+	if (scalar(@{$values{'epsshrink'}})>0){
+		$self->shrinkage_eps($values{'epsshrink'});
+	}
+
+	push( @{$self->minimization_message}, @storemess );		# minimization_message is default set to empty array.
 
 	unless ( $success ) {
 	  carp("No minimization message found" );
