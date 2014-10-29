@@ -872,7 +872,7 @@ sub _init_attr
 	my $self = shift;
 	my %test = @_;
 	my %parm = validated_hash(\@_,
-		 parameter_type => { isa => 'Str', optional => 1 },
+		 parameter_type => { isa => 'Str', optional => 0 },
 		 get_same => { isa => 'Bool', default => 0, optional => 1 },
 		 with_priors => { isa => 'Bool', default => 0, optional => 1 },
 		 parameter_numbers => { isa => 'Maybe[ArrayRef[Int]]', optional => 1 },

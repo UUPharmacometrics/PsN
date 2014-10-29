@@ -836,7 +836,7 @@ sub fixed
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 parameter_type => { isa => 'Str', optional => 1 },
+		 parameter_type => { isa => 'Str', optional => 0 },
 		 parameter_numbers => { isa => 'ArrayRef', optional => 1 },
 		 problem_numbers => { isa => 'ArrayRef[Int]', optional => 1 },
 		 new_values => { isa => 'ArrayRef', optional => 1 },
@@ -865,6 +865,112 @@ sub fixed
 			attribute         => 'fix')};
 
 	return \@fixed;
+}
+
+sub near_bounds
+{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+							  output_object =>  { isa => 'output', optional => 0 },
+							  zero_limit => { isa => 'Num', default => 0.01, optional => 1 },
+							  significant_digits => { isa => 'Int', default => 2, optional => 1 },
+							  off_diagonal_sign_digits => { isa => 'Int', default => 2, optional => 1 }
+		);
+	my $zero_limit = $parm{'zero_limit'};
+	my $significant_digits = $parm{'significant_digits'};
+	my $off_diagonal_sign_digits = $parm{'off_diagonal_sign_digits'};
+	my $output_object = $parm{'output_object'};
+	my @near_boundsnames =();
+	my @found_bounds =();
+	my @found_estimates =();
+
+
+
+	my %fixed_or_same;
+
+	#first get near_bounds from output object, then clean out params that are fixed or same
+
+	my ( $n_b, $f_b, $f_e ) =
+		$output_object -> near_bounds( zero_limit         => $zero_limit,
+									   significant_digits => $significant_digits,
+									   off_diagonal_sign_digits => $off_diagonal_sign_digits);
+
+	#near bounds names is the generic labels. 
+	for (my $problem=0; $problem < scalar(@{$self->problems}); $problem++){
+		if ( defined $n_b -> [$problem]){
+			my %fixed_or_same_hash;
+			my %labels_hash;
+			for (my $subprob=0; $subprob < scalar(@{$n_b -> [$problem]}); $subprob++){
+				if (defined $n_b -> [$problem][$subprob]){
+					for (my $item=0; $item < scalar(@{$n_b -> [$problem][$subprob]}); $item++){
+						#arrays (over problems) of arrays of names. 
+						unless (scalar(keys %fixed_or_same_hash)> 0){
+							foreach my $param ('theta','omega','sigma'){
+								my $namesref = $self->labels(parameter_type =>$param, generic => 1, problem_numbers => [$problem+1]);
+								my $labelsref = $self->labels(parameter_type =>$param, generic => 0, problem_numbers => [$problem+1]);
+								my $fixedref = $self->fixed_or_same(parameter_type =>$param, problem_numbers => [$problem+1]);
+								if (defined $namesref->[0]){
+									for (my $j=0; $j< scalar(@{$namesref->[0]}); $j++){
+										$fixed_or_same_hash{$namesref->[0]->[$j]}=$fixedref->[0]->[$j];
+										$labels_hash{$namesref->[0]->[$j]}=$labelsref->[0]->[$j];
+									}
+								}
+							}
+						}
+
+						#check if this param is fixed or same, then set undef
+						my $fixed_or_same=0;
+						my $generic_label=$n_b -> [$problem][$subprob][$item];
+						unless (defined $fixed_or_same_hash{$generic_label}){
+							print "bug in model->near_bounds, please report this. generic label is $generic_label and keys is ".
+								join(' ',(keys %fixed_or_same_hash))."\n";
+						}
+						if ($fixed_or_same_hash{$generic_label}){
+							$n_b -> [$problem][$subprob][$item] = undef;
+							$f_b -> [$problem][$subprob][$item] = undef;
+							$f_e -> [$problem][$subprob][$item] = undef;
+						}else{
+							$n_b -> [$problem][$subprob][$item] = $labels_hash{$generic_label};
+						}
+					}
+				}
+			}
+		}
+	}
+	return ($n_b, $f_b, $f_e ); #cleaned results
+}
+sub fixed_or_same
+{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+		 parameter_type => { isa => 'Str', optional => 0 },
+		 problem_numbers => { isa => 'ArrayRef[Int]', optional => 1 },
+	);
+	my $parameter_type = $parm{'parameter_type'};
+	my @problem_numbers = defined $parm{'problem_numbers'} ? @{$parm{'problem_numbers'}} : ();
+	my @fixed_or_same;
+
+
+	@fixed_or_same = @{ $self -> _init_attr
+					( parameter_type    => $parameter_type,
+					  parameter_numbers => [],
+					  problem_numbers   => \@problem_numbers,
+					  new_values        => [],
+					  with_priors       => 0,
+					  get_same => 0,
+					  attribute         => 'fix')};
+	#when get_same is false then the values for SAME options will be undef
+	if ($parameter_type eq 'sigma' or $parameter_type eq 'omega'){
+		#check if same also, i.e. look for undef in @fixed and replace with 1
+		#loop problems
+		for (my $pi=0; $pi< scalar(@fixed_or_same); $pi++){
+			for (my $i=0; $i< scalar(@{$fixed_or_same[$pi]}); $i++){
+				$fixed_or_same[$pi]->[$i] = 1 unless (defined $fixed_or_same[$pi]->[$i]); 
+			}
+		}
+	}
+
+	return \@fixed_or_same;
 }
 
 sub idcolumn
@@ -1157,10 +1263,12 @@ sub get_values_to_labels
 	my $self = shift;
 	my %parm = validated_hash(\@_,
 		 category => { isa => 'Str', optional => 0 },
-		 label_model => { isa => 'Maybe[model]', optional => 1 }
+		 label_model => { isa => 'Maybe[model]', optional => 1 },
+		 output_object => { isa => 'Maybe[output]', optional => 1 }
 	);
 	my $category = $parm{'category'};
 	my $label_model = $parm{'label_model'};
+	my $output_object = $parm{'output_object'};
 	my @out_values;
 
 	# Usage:$modobj -> get_values_to_labels ( category => $categ);
@@ -1169,10 +1277,13 @@ sub get_values_to_labels
 	# works for theta, omega, sigma, setheta, seomega, sesigma,
 	# cvsetheta, cvseomega, cvsesigma, comega, csigma
 
-	unless (defined $self -> outputs -> [0]){
+	unless (defined $output_object){
+		$output_object = $self -> outputs -> [0];
+	}
+	unless (defined $output_object){
 	 croak("get_values_to_labels can only be called where output object exists"); 
 	}
-	unless ( $self -> outputs -> [0] -> parsed_successfully() ){
+	unless ( $output_object -> parsed_successfully() ){
 	  croak("get_values_to_labels can only be called where output object parsed successfully" ); 
 	}
 
@@ -1194,7 +1305,7 @@ sub get_values_to_labels
 	}
 	my $access = $category.'coordval'; #with se, if it is there
 	#array over problems of array over subproblems of arrays of values
-	my $valref = $self -> outputs -> [0] -> $access ();
+	my $valref = $output_object -> $access ();
 	croak("No accessor $access for output object") unless (defined $valref);
 	my @from_coordval = @{$valref};
 
@@ -4840,7 +4951,7 @@ sub _init_attr
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 parameter_type => { isa => 'Str', optional => 1 },
+		 parameter_type => { isa => 'Str', optional => 0 },
 		 with_priors => { isa => 'Bool', default => 0, optional => 1 },
 		 get_same => { isa => 'Bool', default => 0, optional => 1 },
 		 parameter_numbers => { isa => 'ArrayRef', optional => 1 },
