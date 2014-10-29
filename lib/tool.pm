@@ -1634,7 +1634,7 @@ sub create_R_script
 		$self->template_directory_rplots($PsN::lib_dir . '/R-scripts/');
 	}
 
-	if ($self->can("create_R_plots_code")){
+	if ($self->can("create_R_plots_code") and (-d $self->template_directory_rplots)){
 		my $tool_name;
 		if (defined $self->directory_name_prefix) {
 			$tool_name = $self->directory_name_prefix;
