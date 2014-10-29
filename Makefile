@@ -1,6 +1,9 @@
 LIBFILES= ui.pm \
 	log.pm \
 	pharmml.pm \
+	standardised_output.pm \
+	rplots.pm \
+	math.pm \
 	PsN.pm \
 	common_options.pm \
 	linear_algebra.pm \
