@@ -308,8 +308,8 @@ EOF
 
 common_options::online_help('sumo', \%options, \%help_text, \%required_options, \%optional_options);
 
-if (scalar(@ARGV) != 2) {
-  print "A lst file and a control stream must be specified. Use 'stdoutput -h' for help.\n";
+if (scalar(@ARGV) != 1) {
+  print "A lst file must be specified. Use 'stdoutput -h' for help.\n";
   exit;
 }
 
@@ -349,7 +349,13 @@ if (not $output->parsed_successfully) {
 }
 
 
-my $model = model->new(filename => $ARGV[1], ignore_missing_data => 1);
+my $model = model->new(problems => $output->control_stream_problems,
+					   filename => 'dummy',
+					   is_dummy => 1,
+					   ignore_missing_data => 1,
+					   ignore_missing_files =>1,
+					   ignore_missing_output =>1);
+
 
 my $so = standardised_output->new(output => $output, model => $model);
 

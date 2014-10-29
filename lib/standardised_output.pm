@@ -132,93 +132,104 @@ sub parse
     my $self = shift;
     my $writer = $self->_writer;
     my $outobj = $self->output;
+	my $model = $self->model;
 
-    my $theta_labels = @{$self->model->labels(parameter_type => 'theta')}[0];
-    my $omega_labels = @{$self->model->labels(parameter_type => 'omega')}[0];
-    my $sigma_labels = @{$self->model->labels(parameter_type => 'sigma')}[0];
-    my @all_labels = (@$theta_labels, @$omega_labels, @$sigma_labels);
+	my $eta_shrinkage = $outobj->shrinkage_eta();
+	my $eps_shrinkage = $outobj->shrinkage_eps();
+	my $observation_records = $outobj->nobs();
+	my $individuals = $outobj->nind();
 
-    #Use accessors to retrieve data
-    my $problems = 0;
-    my $sub_problems = 0;
+	#arrays (over problems) of arrays (over subproblems) of arrays of values. Only non-zero are stored
+	my $thetaref = $model -> get_values_to_labels(category => 'theta',
+												  output_object => $outobj);
+	my $omegaref = $model -> get_values_to_labels(category => 'omega',
+												  output_object => $outobj);
+	my $sigmaref = $model -> get_values_to_labels(category => 'sigma',
+												  output_object => $outobj);
 
-    #arrays (over problems) of arrays (over subproblems) of arrays of values. Only non-zero are stored
-    my $thetaref = $outobj -> thetas();
-    my $omegaref = $outobj -> omegas();
-    my $sigmaref = $outobj -> sigmas();
+	#arrays (over problems) of arrays of names. 
+	my $thetanamesref = $model->labels(parameter_type =>'theta', generic => 0);
+	my $omeganamesref = $model->labels(parameter_type =>'omega', generic => 0);
+	my $sigmanamesref = $model->labels(parameter_type =>'sigma', generic => 0);
 
-    #arrays (over problems) of arrays (over subproblems) of arrays of names. 
-    #One name per non-zero value theta/omega/sigma 
-    my $thetanamesref = $outobj -> thetanames();
-    my $omeganamesref = $outobj -> omeganames();
-    my $sigmanamesref = $outobj -> sigmanames();
+	my $omegasameref = $model->same(parameter_type =>'omega');
+	my $sigmasameref = $model->same(parameter_type =>'sigma');
 
-    #arrays (over problems) of arrays (over subproblems) of arrays of values, one per name. Values may be undef
-    my $sethetaref = $outobj -> sethetas();
-    my $cvsethetaref = $outobj -> cvsethetas();
-    my $seomegaref = $outobj -> seomegas();
-    my $cvseomegaref = $outobj -> cvseomegas();
-    my $sesigmaref = $outobj -> sesigmas();
-    my $cvsesigmaref = $outobj -> cvsesigmas();
-    my $comegasref = $outobj -> comegas();
-    my $csigmasref = $outobj -> csigmas();
-    my $nmversion = $outobj -> nonmem_version();
+	#arrays (over problems) of arrays (over subproblems) of arrays of values, one per name. Values may be undef
+	my $sethetaref = $model -> get_values_to_labels(category => 'setheta',
+													output_object => $outobj);
+	my $seomegaref = $model -> get_values_to_labels(category => 'seomega',
+													output_object => $outobj);
+	my $sesigmaref = $model -> get_values_to_labels(category => 'sesigma',
+													output_object => $outobj);
 
+    my $problems = 0; #TODO check if first $PROB is prior, then should be =1 here, as in e.g. sse script
+    my $sub_problems = 0;  #always 0 since we do not have workflow simulation + estimation?
 
-    my ( %nam, %est, %cest, %ses );
-    if (defined $thetaref-> [$problems][$sub_problems]){
-    }else{
-    }
-    my @thetas = defined $thetaref-> [$problems][$sub_problems] ? @{$thetaref -> [$problems][$sub_problems]} : ();
-    my @thnam  = defined $thetanamesref -> [$problems][$sub_problems] ? @{$thetanamesref -> [$problems][$sub_problems]} : ();
-    my @sethet = defined $sethetaref -> [$problems][$sub_problems] ? @{$sethetaref -> [$problems][$sub_problems]} : ();
+	## Thetas
 
-    $nam{'theta'} = \@thnam;
-    $est{'theta'} = \@thetas;
-    $ses{'theta'} = \@sethet;
+	my @thetas = defined $thetaref-> [$problems][$sub_problems] ? @{$thetaref -> [$problems][$sub_problems]} : ();
+	my @thnam  = defined $thetanamesref -> [$problems] ? @{$thetanamesref -> [$problems]}  : ();
+	my @sethet = defined $sethetaref -> [$problems][$sub_problems] ? @{$sethetaref -> [$problems][$sub_problems]} : ();
 
-    ## Omegas
-    my @omegas    = defined $omegaref -> [$problems][$sub_problems] ? @{$omegaref -> [$problems][$sub_problems]} : ();
-    my @comegas   = defined $comegasref -> [$problems][$sub_problems] ? @{$comegasref -> [$problems][$sub_problems]} : ();
-    my @omnam     = defined $omeganamesref -> [$problems][$sub_problems]? @{$omeganamesref -> [$problems][$sub_problems]}                : ();
-    my @seomeg    = defined $seomegaref -> [$problems][$sub_problems] ? @{$seomegaref -> [$problems][$sub_problems]} : ();
+	my @etashrinkage = defined $eta_shrinkage -> [$problems][$sub_problems] ? @{$eta_shrinkage -> [$problems][$sub_problems]} : ();
+	my @epsshrinkage = defined $eps_shrinkage -> [$problems][$sub_problems] ? @{$eps_shrinkage -> [$problems][$sub_problems]} : ();
 
-    $nam{'omega'}  = \@omnam;
-    $est{'omega'}  = \@omegas;
-    $cest{'omega'} = \@comegas;
-    $ses{'omega'}  = \@seomeg;
+	## Omegas
+	my @omegas    = defined $omegaref -> [$problems][$sub_problems] ? @{$omegaref -> [$problems][$sub_problems]} : ();
+	my @omnam     = defined $omeganamesref -> [$problems]? @{$omeganamesref -> [$problems]}  : ();
+	my @seomeg    = defined $seomegaref -> [$problems][$sub_problems] ? @{$seomegaref -> [$problems][$sub_problems]} : ();
+	my @omegasame = defined $omegasameref->[$problems] ? @{$omegasameref->[$problems]} : ();
 
-    ## Sigmas
-    my @sigmas  = defined $sigmaref -> [$problems][$sub_problems] ? @{$sigmaref -> [$problems][$sub_problems]} : ();
-    my @csigmas = defined $csigmasref -> [$problems][$sub_problems] ? @{$csigmasref -> [$problems][$sub_problems]} : ();
-    my @signam  = defined $sigmanamesref -> [$problems][$sub_problems] ? @{$sigmanamesref -> [$problems][$sub_problems]}                : ();
-    my @sesigm  = defined $sesigmaref -> [$problems][$sub_problems] ? @{$sesigmaref -> [$problems][$sub_problems]} : ();
+	## Sigmas
+	my @sigmas  = defined $sigmaref -> [$problems][$sub_problems] ? @{$sigmaref -> [$problems][$sub_problems]} : ();
+	my @signam  = defined $sigmanamesref -> [$problems] ? @{$sigmanamesref -> [$problems]}                : ();
+	my @sesigm  = defined $sesigmaref -> [$problems][$sub_problems] ? @{$sesigmaref -> [$problems][$sub_problems]} : ();
+	my @sigmasame = defined $sigmasameref->[$problems] ? @{$sigmasameref->[$problems]} : ();
 
-    $nam{'sigma'}  = \@signam;
-    $est{'sigma'}  = \@sigmas;
-    $cest{'sigma'} = \@csigmas;
-    $ses{'sigma'}  = \@sesigm;
+	## Termination
+	my $ofv    = $outobj -> get_single_value(attribute => 'ofv',
+											 problem_index =>$problems,
+											 subproblem_index => $sub_problems);
 
-    my @allparams = (@thetas);
-    my @allses = (@sethet);
+	my $have_ses = 0;
+	if ( $outobj -> covariance_step_run -> [$problems] ) {
+		if (  $outobj -> covariance_step_successful -> [$problems][$sub_problems] ne '0' ) {
+			$have_ses = 1;
+		}
+	}
 
-    for (my $i = 0; $i < scalar(@omegas); $i++) {
-        next if (not defined $seomeg[$i]);      # This paramater was not estimated
-        push @allparams, $omegas[$i];
-        push @allses, $seomeg[$i];
-    }
+    my @all_labels = (@thnam);
+	my @est_values = (@thetas);
 
-    for (my $i = 0; $i < scalar(@sigmas); $i++) {
-        next if (not defined $sesigm[$i]);      # This paramater was not estimated
-        push @allparams, $sigmas[$i];
-        push @allses, $sesigm[$i];
-    }
+	my @se_values =();
+	my @rel_se=();
 
-    #Calculate relative standard errors
-    my @relses = ();
-    for (my $i = 0; $i < scalar(@allparams); $i++) {
-        push @relses, $allses[$i] / $allparams[$i];
-    }
+	@se_values = (@sethet) if $have_ses;
+
+	for (my $i=0; $i<scalar(@omnam); $i++){
+		unless ($omegasame[$i]){
+			push(@all_labels,$omnam[$i]);
+			push(@est_values,$omegas[$i]);
+			push(@se_values,$seomeg[$i]) if $have_ses;
+		}
+	}
+	for (my $i=0; $i<scalar(@signam); $i++){
+		unless ($sigmasame[$i]){
+			push(@all_labels,$signam[$i]);
+			push(@est_values,$sigmas[$i]);
+			push(@se_values,$sesigm[$i]) if $have_ses;
+		}
+	}
+
+	#Calculate relative standard errors, only if have se values
+	for (my $i = 0; $i < scalar(@se_values); $i++) {
+		if ($est_values[$i] == 0){
+			push (@rel_se,undef);
+		}else{
+			push @rel_se, $se_values[$i] / $est_values[$i];
+		}
+	}
 
     $writer->startTag("SO",
         'xmlns' => "http://www.pharmml.org/2013/03/StandardisedOutput",
@@ -236,8 +247,10 @@ sub parse
 
     $writer->startTag("Estimation");
 
-    $self->_add_population_estimates(labels => \@all_labels, values => \@allparams);
-    $self->_add_precision_population_estimates(labels => \@all_labels, standard_errors => \@allses, relative_standard_errors => \@relses);
+    $self->_add_population_estimates(labels => \@all_labels, values => \@est_values);
+	if (scalar(@se_values)>0){
+		$self->_add_precision_population_estimates(labels => \@all_labels, standard_errors => \@se_values, relative_standard_errors => \@rel_se);
+	}
     $self->_add_target_tool_messages;
 
     $writer->endTag("Estimation");

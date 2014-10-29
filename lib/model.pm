@@ -939,6 +939,7 @@ sub near_bounds
 	}
 	return ($n_b, $f_b, $f_e ); #cleaned results
 }
+
 sub fixed_or_same
 {
 	my $self = shift;
@@ -972,6 +973,55 @@ sub fixed_or_same
 
 	return \@fixed_or_same;
 }
+
+
+sub same
+{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+		 parameter_type => { isa => 'Str', optional => 0 },
+		 problem_numbers => { isa => 'ArrayRef[Int]', optional => 1 },
+	);
+	my $parameter_type = $parm{'parameter_type'};
+	my @problem_numbers = defined $parm{'problem_numbers'} ? @{$parm{'problem_numbers'}} : ();
+	my @same;
+
+	#use attribute fix to find which options are defined at all
+	@same = @{ $self -> _init_attr
+				   ( parameter_type    => $parameter_type,
+					 parameter_numbers => [],
+					 problem_numbers   => \@problem_numbers,
+					 new_values        => [],
+					 with_priors       => 0,
+					 get_same => 0,
+					 attribute         => 'fix')};
+	#when option get_same is false above then the values for SAME options will be undef
+	if ($parameter_type eq 'sigma' or $parameter_type eq 'omega'){
+		#check if same, i.e. look for undef in fixed and replace with 1, set 0 for all that are defined
+		#loop problems
+		for (my $pi=0; $pi< scalar(@same); $pi++){
+			for (my $i=0; $i< scalar(@{$same[$pi]}); $i++){
+				if (defined $same[$pi]->[$i]){
+					$same[$pi]->[$i] = 0;
+				}else{
+					$same[$pi]->[$i] = 1;
+				} 
+			}
+		}
+	}else{
+		#does not make sense to call same for theta, but if it happens...
+		#loop problems
+		for (my $pi=0; $pi< scalar(@same); $pi++){
+			for (my $i=0; $i< scalar(@{$same[$pi]}); $i++){
+				$same[$pi]->[$i] = 0;
+			}
+		}
+
+	}
+
+	return \@same;
+}
+
 
 sub idcolumn
 {
@@ -1178,6 +1228,8 @@ sub labels
 	}
 
 	#add attribute prior default 0 to init_record
+	#label will be undef both if have no label and if record is SAME. Distinguish between them by
+	#checking other property also, e.g. init or fix?
 
 	my ( @index, $idx );
 	@labels = @{ $self -> _init_attr
@@ -1273,7 +1325,6 @@ sub get_values_to_labels
 
 	# Usage:$modobj -> get_values_to_labels ( category => $categ);
 	# return array of arrays of arrays of values that belong to the strings returned from labels
-	# assume model has $self->{'outputs'}->[0]
 	# works for theta, omega, sigma, setheta, seomega, sesigma,
 	# cvsetheta, cvseomega, cvsesigma, comega, csigma
 
