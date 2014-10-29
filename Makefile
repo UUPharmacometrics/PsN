@@ -20,9 +20,11 @@ LIBFILES= ui.pm \
 	matlab/bca.m \
 	matlab/histograms.m \
 	matlab/profiles.m \
-	R-scripts/llp.R \
-	R-scripts/cdd.R \
-	R-scripts/bootstrap.R \
+	R-scripts/llp_default.R \
+	R-scripts/cdd_default.R \
+	R-scripts/mcmp_default.R \
+	R-scripts/randtest_default.R \
+	R-scripts/scm_default.R \
 	status_bar.pm \
 	nonmemrun.pm \
 	nonmemrun/localunix.pm \
