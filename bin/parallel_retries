@@ -131,15 +131,19 @@ unless (defined $options{'degree'}){
 }
 
 ## Set the automatic renaming of modelfit directory
-if ( !$options{'directory'} && $options{'model_dir_name'} ) {
- 
-    my $dirnamebase = $ARGV[0].".dir";
-    my $i = 1;
-    while(-e $dirnamebase.".$i") {$i++};
-    my $dirname = $dirnamebase.".$i";
-    $options{'directory'} = $dirname;
+my $return_dir = getcwd();
+my $main_directory;
+if ( !$options{'directory'}){ 	
+	if ($options{'model_dir_name'} ) {
+		my $dirnamebase = $ARGV[0].".dir.";
+		$main_directory= OSspecific::unique_path( $dirnamebase ,$return_dir);
+	}else{
+		$main_directory= OSspecific::unique_path( 'parallel_retries_dir' ,$return_dir);
+	}
+}else{
+	my $dirt;
+	($main_directory,$dirt) = OSspecific::absolute_path($options{'directory'},'file');
 }
-
 
 my @outputfiles;
 my $fake;
@@ -204,14 +208,6 @@ if($options{'tail_output'} ) {
 my $modelfit;
 
 
-my $return_dir = getcwd();
-my $main_directory = $options{'directory'};
-my $dirt;
-if (defined $main_directory){
-  ($main_directory,$dirt) =OSspecific::absolute_path(undef,$main_directory);
-}else{
-  $main_directory= OSspecific::unique_path( 'parallel_retries_dir' ,$return_dir);
-}
 
 my $sampled_params_arr;
 my $href;

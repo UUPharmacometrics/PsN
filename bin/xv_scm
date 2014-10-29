@@ -359,7 +359,8 @@ if (defined $options{'stratify_on'}){
 my $return_dir = getcwd();
 my $main_directory = $options{'directory'};
 if (defined $main_directory){
-  $main_directory =$return_dir.'/'.$main_directory.'/';
+	my $dirt;
+	($main_directory,$dirt) = OSspecific::absolute_path($options{'directory'},'file');
 }else{
   $main_directory= OSspecific::unique_path( 'xv_scm_dir' ,$return_dir);
 }

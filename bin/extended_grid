@@ -130,7 +130,7 @@ my $directory;
 
 if ( defined $options{'directory'} ) {
   my $dummy;
-  ( $directory, $dummy ) = OSspecific::absolute_path( $options{'directory'} );
+  ( $directory, $dummy ) = OSspecific::absolute_path( $options{'directory'},'file' );
 } else {
   $directory = OSspecific::unique_path( 'extended_grid_dir' ,
 					$base_dir );

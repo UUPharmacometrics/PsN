@@ -82,7 +82,7 @@ my $directory;
 
 if ( defined $options{'directory'} ) {
   my $dummy;
-  ( $directory, $dummy ) = OSspecific::absolute_path( $options{'directory'} );
+  ( $directory, $dummy ) = OSspecific::absolute_path( $options{'directory'},'fiole' );
 } else {
   $directory = OSspecific::unique_path( 'se_of_eta_dir' ,
 					$base_dir );
