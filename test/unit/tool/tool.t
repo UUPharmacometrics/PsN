@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 use File::Path 'rmtree';
-use Test::More tests=>5;
+use Test::More tests=>6;
 use FindBin qw($Bin);
 use lib "$Bin/../.."; #location of includes.pm
 use includes; #file with paths to PsN packages and $path variable definition
@@ -48,6 +48,14 @@ $dir = tool::get_rundir(create => 0,
 
 is(substr($dir,0,-1),$tempdir.'run123.dir1','tool get_rundir 4');
 
+$dir = tool::get_rundir(create => 0,
+						basename => 'parallel_retries_dir',
+						model_dir_name => 1,
+						modelname => 'path/run123.mod',
+						directory_option => '');
+
+is(substr($dir,0,-1),$tempdir.'run123.dir1','tool get_rundir 5');
+
 my $newdir=$tempdir.'parallel_retries_dir1'; #created above
 chdir($tempdir.'parallel_retries_dir1');
 
@@ -56,4 +64,4 @@ $dir = tool::get_rundir(create => 0,
 						model_dir_name => 0,
 						modelname => 'run123.mod',
 						directory_option => '../updir');
-is(substr($dir,0,-1),$tempdir.'updir','tool get_rundir 5');
+is(substr($dir,0,-1),$tempdir.'updir','tool get_rundir 6');

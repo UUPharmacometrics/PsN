@@ -1626,6 +1626,52 @@ sub print_options
 	}
 }
 
+
+sub get_rundir
+{
+	#static no shift
+	#assume we are in main directory
+	my %parm = validated_hash(\@_,
+							  basename => { isa => 'Str', optional => 0 },
+							  directory_option => { isa => 'Maybe[Str]', optional => 1 },
+							  model_dir_name => { isa => 'Bool', optional => 1, default => 0 },
+							  modelname => { isa => 'Maybe[Str]', optional => 1 },
+							  create => { isa => 'Bool', optional => 1, default => 1 }
+	);
+	my $basename = $parm{'basename'};
+	my $directory_option = $parm{'directory_option'};
+	my $model_dir_name = $parm{'model_dir_name'};
+	my $modelname = $parm{'modelname'};
+	my $create = $parm{'create'};
+
+	my $rundir;
+
+	if (defined $directory_option and length($directory_option)>0){
+		my $dirt;
+		($rundir,$dirt) = OSspecific::absolute_path($directory_option,'file');
+	}elsif($model_dir_name and (defined $modelname) and length($modelname)> 0){
+		my $return_dir = getcwd();
+		my $dotless_model_filename;
+		my $dirt;
+		#shave off any path from modelname
+		($dirt,$dotless_model_filename) = OSspecific::absolute_path(undef,$modelname);
+		$dotless_model_filename =~ s/\.[^.]+$//; #last dot and extension
+		my $dirnamebase = $dotless_model_filename.'.dir';
+		$rundir = OSspecific::unique_path( $dirnamebase ,$return_dir);
+	}else{
+		my $return_dir = getcwd();
+		$rundir = OSspecific::unique_path($basename,$return_dir);
+	}
+
+	if ($create){
+		mkpath( $rundir) unless ( -d $rundir);
+	}
+
+	return $rundir;
+
+}
+
+
 sub create_R_script
 {
 	my $self = shift;

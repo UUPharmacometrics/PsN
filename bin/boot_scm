@@ -20,7 +20,6 @@ use common_options;
 use ui;
 use OSspecific;
 use File::Copy qw/cp mv/;
-use File::Path qw(mkpath);
 
 my $cmd_line = $0 . " " . join( " ", @ARGV );
 
@@ -290,15 +289,11 @@ if( defined $config_file -> p_backward ){
 
 
 my $return_dir = getcwd();
-my $main_directory = $options{'directory'};
-if (defined $main_directory){
-	my $dirt;
-	($main_directory,$dirt) = OSspecific::absolute_path($options{'directory'},'file');
-}else{
-	$main_directory= OSspecific::unique_path( 'boot_scm_dir' ,$return_dir);
-}
+my $main_directory = tool::get_rundir(create => 1,
+									  basename => 'boot_scm_dir',
+									  model_dir_name => 0,
+									  directory_option => $options{'directory'});
 
-mkpath( $main_directory) unless ( -d  $main_directory);
 #copy config file to rundir
 my ( $dir, $file ) = OSspecific::absolute_path('',$options{'config_file'});
 cp($dir.$file,$main_directory.$file);

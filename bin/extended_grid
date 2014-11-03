@@ -22,7 +22,6 @@ use ui;
 use File::Copy 'cp';
 use Data::Dumper;
 use data;
-use File::Path qw(mkpath);
 
 ################################################################################
 #
@@ -126,22 +125,14 @@ unless( defined $options{'id_column'} ){
 
 my( $base_dir, $dummy) = OSspecific::absolute_path( '', '' );
 
-my $directory;
+my $directory = tool::get_rundir(create => 1,
+								 basename => 'extended_grid_dir',
+								 model_dir_name => 0,
+								 directory_option => $options{'directory'});
 
-if ( defined $options{'directory'} ) {
-  my $dummy;
-  ( $directory, $dummy ) = OSspecific::absolute_path( $options{'directory'},'file' );
-} else {
-  $directory = OSspecific::unique_path( 'extended_grid_dir' ,
-					$base_dir );
-}
 
 my $eval_string = common_options::model_parameters(\%options);
 
-unless( -d $directory ){
-  mkpath( $directory );
-  
-}
 
 # }}}
 
@@ -263,6 +254,7 @@ if( defined $options{'ids_to_simulate'} ){
 	}
 
 	$data_set -> renumber_ascending;
+	unlink($data_set->full_name);
 	$data_set -> _write;
 
 } else {
@@ -296,7 +288,6 @@ my $data_copy = data->new(filename => $datacopyname,
 						  ignoresign => '@',
 						  idcolumn => $model->idcolumns->[0]); 
 $data_copy->filename('extended.dta');
-$data_copy->directory($model->directory);
 $extended_model -> update_inits( from_output => $model -> outputs -> [0] );
 
 if( $options{'omega_multiplier'} ){
@@ -366,6 +357,8 @@ foreach my $id_num ( 1..$n_id_to_simulate ){
 
 push( @{$data_copy->header}, 'TYPE' );
 
+unlink($data_copy->full_name);
+$data_copy->directory($extended_model->directory);
 $data_copy -> _write;
 $extended_model->datafiles(new_names => [$data_copy->full_name]);
 

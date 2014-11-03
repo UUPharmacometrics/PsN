@@ -20,7 +20,6 @@ use common_options;
 use ui;
 use File::Copy 'cp';
 use Data::Dumper;
-use File::Path qw(mkpath);
 
 my $cmd_line = $0 . " " . join( " ", @ARGV );
 
@@ -78,20 +77,10 @@ unless( defined $options{'dv_column'} ) {
 
 my( $base_dir, $dummy) = OSspecific::absolute_path( '', '' );
 
-my $directory;
-
-if ( defined $options{'directory'} ) {
-  my $dummy;
-  ( $directory, $dummy ) = OSspecific::absolute_path( $options{'directory'},'fiole' );
-} else {
-  $directory = OSspecific::unique_path( 'se_of_eta_dir' ,
-					$base_dir );
-}
-
-unless( -d $directory ){
-  mkpath( $directory );
-  
-}
+my $directory = tool::get_rundir(create => 1,
+								 basename => 'se_of_eta_dir',
+								 model_dir_name => 0,
+								 directory_option => $options{'directory'});
 
 my $eval_string = common_options::model_parameters(\%options);
 
@@ -134,7 +123,7 @@ my $newdataname = $dir.$file;
 cp ($datafile_name, $newdataname);
 
 my $data = data->new (filename => $newdataname,
-					  idcolum =>$model->idcolumn(problem_number => 1),
+					  idcolumn =>$model->idcolumn(problem_number => 1),
 					  ignoresign => $model->ignoresigns->[0]);
 
 my $ids = $data -> individuals;
@@ -157,10 +146,10 @@ foreach my $id (0..$#{$ids}) {
 	my $code_block;
 	my $code_record;
 	# Find PK or PRED block
-	if ($model_copy->has_code(record => 'pk') {
+	if ($model_copy->has_code(record => 'pk')) {
 		$code_block = $model_copy->get_code(record => 'pk');
 		$code_record = 'pk';
-	} elsif ($model_copy->has_code(record => 'pred') {
+	} elsif ($model_copy->has_code(record => 'pred')) {
 		$code_block = $model_copy->get_code(record => 'pred');
 		$code_record = 'pred';
 	} else {
@@ -330,6 +319,7 @@ foreach my $id( @{$ids} ){
 
 push( @{$data_copy->header}, 'EBAY', 'L2' );
 
+unlink($data_copy ->full_name);
 $data_copy -> _write;
 
 $modelfit = tool::modelfit -> 

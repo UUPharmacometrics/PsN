@@ -20,7 +20,6 @@ use model;
 use common_options;
 use ui;
 use Cwd;
-use File::Path qw(mkpath);
 
 my $cmd_line = $0 . " " . join( " ", @ARGV );
 
@@ -131,20 +130,13 @@ if ( defined $options{'sim_model'}){
 	$options{'samples'}=1;
 }
 
-## Set the automatic renaming of modelfit directory
-if ( !$options{'directory'}) {
-	my $dirnamebase = 'mimp_dir';
-	my $i = 1;
-	while(-e $dirnamebase."$i") {$i++};
-	my $dirname = $dirnamebase."$i";
-	$options{'directory'} = $dirname;
-}
+my $main_directory = tool::get_rundir(create => 1,
+									  basename => 'mimp_dir',
+									  model_dir_name => 0,
+									  directory_option => $options{'directory'});
+$options{'directory'} = $main_directory;
 
-my ($newdir, $newfile) = OSspecific::absolute_path( $options{'directory'}, '' );
-unless (-e $newdir){
-	mkpath( $newdir );
-}
-($newdir, $newfile) = OSspecific::absolute_path( $options{'directory'} .  '/m1', '' );
+my ($newdir, $newfile) = OSspecific::absolute_path( $options{'directory'} .  '/m1', '' );
 unless (-e $newdir){
 	mkdir( $newdir );
 }

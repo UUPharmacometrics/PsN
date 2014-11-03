@@ -215,15 +215,12 @@ if ( 0 and $options{'directory'} and (scalar(@ARGV)==1) and (-d $options{'direct
 }
 
 ## Set the automatic renaming of modelfit directory
-if ( !$options{'directory'} && $options{'model_dir_name'} ) {
- 
-    my $dirnamebase = $ARGV[0].".dir";
-    my $i = 1;
-    while(-e $dirnamebase.".$i") {$i++};
-    my $dirname = $dirnamebase.".$i";
-    $options{'directory'} = $dirname;
-}
-
+my $main_directory = tool::get_rundir(create => 0,
+									  basename => 'modelfit_dir',
+									  model_dir_name => $options{'model_dir_name'},
+									  modelname => $ARGV[0],
+									  directory_option => $options{'directory'});
+$options{'directory'} = $main_directory;
 
 my @outputfiles;
 my $fake;

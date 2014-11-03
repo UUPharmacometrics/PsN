@@ -21,7 +21,6 @@ use common_options;
 use ui;
 use Cwd;
 use File::Copy qw/cp mv/;
-use File::Path qw(mkpath);
 
 my $cmd_line = $0 . " " . join( " ", @ARGV );
 
@@ -131,19 +130,11 @@ unless (defined $options{'degree'}){
 }
 
 ## Set the automatic renaming of modelfit directory
-my $return_dir = getcwd();
-my $main_directory;
-if ( !$options{'directory'}){ 	
-	if ($options{'model_dir_name'} ) {
-		my $dirnamebase = $ARGV[0].".dir.";
-		$main_directory= OSspecific::unique_path( $dirnamebase ,$return_dir);
-	}else{
-		$main_directory= OSspecific::unique_path( 'parallel_retries_dir' ,$return_dir);
-	}
-}else{
-	my $dirt;
-	($main_directory,$dirt) = OSspecific::absolute_path($options{'directory'},'file');
-}
+my $main_directory = tool::get_rundir(create => 1,
+									  basename => 'parallel_retries_dir',
+									  model_dir_name => $options{'model_dir_name'},
+									  modelname => $ARGV[0],
+									  directory_option => $options{'directory'});
 
 my @outputfiles;
 my $fake;
@@ -264,8 +255,8 @@ if (defined $options{'rawres_input'}){
 
 
 }
-mkpath( $main_directory) unless ( -d  $main_directory);
-chdir($main_directory);
+
+chdir($main_directory); #created by tool::get_rundir
 my $main_model = $models_array -> [0] -> copy( filename    => $models_array -> [0]->filename(),
 											   copy_datafile   => 1,
 											   copy_output => 0,
