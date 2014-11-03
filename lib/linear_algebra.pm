@@ -5,9 +5,9 @@ use lib "$Bin/../lib";
 use strict;
 use array qw(:all);
 
-# Augment a square matrix with unit matrix to new_size
 sub pad_matrix
 {
+    # Augment a square matrix with unit matrix to new_size
 	my $A = shift;
 	my $new_size = shift;
 	my $cur_size = scalar(@$A);
@@ -22,9 +22,9 @@ sub pad_matrix
 	}
 }
 
-# Reduce a square matrix to new size
 sub reduce_matrix
 {
+    # Reduce a square matrix to new size
 	my $A = shift;
 	my $new_size = shift;
 	my $cur_size = scalar(@$A);
@@ -35,9 +35,9 @@ sub reduce_matrix
 	splice @$A, $new_size, $cur_size - $new_size;
 }
 
-# Replace all lines containing only zeros in matrix with ones on the diagonal
 sub put_ones_on_diagonal_of_zero_lines
 {
+    # Replace all lines containing only zeros in matrix with ones on the diagonal
 	my $A = shift;
 
 	for (my $row = 0; $row < @$A; $row++) {
@@ -52,6 +52,28 @@ sub put_ones_on_diagonal_of_zero_lines
 			$A->[$row]->[$row] = 1;
 		}
 	}
+}
+
+sub triangular_symmetric_to_full
+{
+    # Convert a matrix in triangular vector form to full form assuming symmetry
+
+    my $triangular = shift;
+    my $A = [];
+
+    my $row = 0;
+    my $col = 0;
+    foreach my $element (@$triangular) {
+        $A->[$row]->[$col] = $element;
+        $A->[$col]->[$row] = $element;
+        $col++;
+        if ($col > $row) {
+            $col = 0;
+            $row++;
+        }
+    }
+
+    return $A;
 }
 
 sub transpose
@@ -684,7 +706,8 @@ sub get_identity_matrix{
 	return \@result;
 }
 
-sub invert_symmetric{
+sub invert_symmetric
+{
     #input is full symmetric positive definite matrix 
     #this matrix will be overwritten
 	#and reference to empty result matrix
@@ -706,13 +729,6 @@ sub invert_symmetric{
 		return $err ;
     }
 
-#	for (my $i=0 ; $i< scalar(@{$refInv}); $i++){
-#		for (my $j = 0; $j < scalar(@{$refInv->[$i]}); $j++){
-#			print $refInv->[$i]->[$j].' ';
-#		}
-#		print "\n";
-#	}
-
     $err = lower_triangular_UTU_multiply($refInv,$result);
     if ($err > 0){
 		print "multiply error in invert_symmetric\n";
@@ -720,7 +736,6 @@ sub invert_symmetric{
     }
 
     return 0;
-
 }
 
 sub lower_triangular_UTU_multiply{

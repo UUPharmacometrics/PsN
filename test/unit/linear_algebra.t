@@ -9,8 +9,6 @@ use includes; #file with paths to PsN packages
 use linear_algebra;
 
 
-plan tests => 110;
-
 #pad_matrix
 my @A = ([1, 2, 4], [3, 5 ,7], [8, 4, 1]);
 linear_algebra::pad_matrix(\@A, 5);
@@ -44,6 +42,14 @@ is_array(@A[0], [1, 2, 3, 4], "put_ones_on... row 1");
 is_array(@A[1], [0, 1, 0, 0], "put_ones_on... row 2");
 is_array(@A[2], [9, 8, 7, 6], "put_ones_on... row 3");
 is_array(@A[3], [0, 0, 0, 1], "put_ones_on... row 4");
+
+#triangular_symmetric_to_full
+my @A = (1, 5, 3, 7, 8, 2);
+my $res = linear_algebra::triangular_symmetric_to_full(\@A);
+
+is_array($res->[0], [1, 5, 7], "triangular_symmetric_to_full row 1");
+is_array($res->[1], [5, 3, 8], "triangular_symmetric_to_full row 2");
+is_array($res->[2], [7, 8, 2], "triangular_symmetric_to_full row 3");
 
 #Transpose
 my @A = ([1, 2, 3], [4, 5, 6], [7, 8, 9]);

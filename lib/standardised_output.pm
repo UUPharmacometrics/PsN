@@ -101,13 +101,16 @@ sub add_matrix
     my %parm = validated_hash(\@_,
         rownames => { isa => 'ArrayRef' },
         colnames => { isa => 'ArrayRef' },
+        matrix => { isa => 'ArrayRef[ArrayRef]' },
     );
     my $rownames = $parm{'rownames'};
     my $colnames = $parm{'colnames'};
+    my $matrix = $parm{'matrix'};
 
     my $writer = $self->_writer;
 
     $writer->startTag("ct:Matrix", matrixType => "Any");
+
     $writer->startTag("ct:RowNames");
     foreach my $name (@$rownames) {
         $writer->startTag("ct:String");
@@ -115,6 +118,7 @@ sub add_matrix
         $writer->endTag("ct:String");
     }
     $writer->endTag("ct:RowNames");
+
     $writer->startTag("ct:ColumnNames");
     foreach my $name (@$colnames) {
         $writer->startTag("ct:String");
@@ -122,6 +126,14 @@ sub add_matrix
         $writer->endTag("ct:String");
     }
     $writer->endTag("ct:ColumnNames");
+
+    for my $row (@$matrix) {
+        $writer->startTag("ct:MatrixRow");
+        for my $element (@$row) {
+            $writer->dataElement("ct:Real", $element);
+        }
+        $writer->endTag("ct:MatrixRow");
+    }
     $writer->endTag("ct:Matrix");
 }
 
@@ -193,8 +205,8 @@ sub parse
 											 subproblem_index => $sub_problems);
 
 	my $have_ses = 0;
-	if ( $outobj -> covariance_step_run -> [$problems] ) {
-		if (  $outobj -> covariance_step_successful -> [$problems][$sub_problems] ne '0' ) {
+	if ($outobj->covariance_step_run->[$problems]) {
+		if ($outobj->covariance_step_successful->[$problems][$sub_problems] ne '0') {
 			$have_ses = 1;
 		}
 	}
@@ -202,8 +214,8 @@ sub parse
     my @all_labels = (@thnam);
 	my @est_values = (@thetas);
 
-	my @se_values =();
-	my @rel_se=();
+	my @se_values = ();
+	my @rel_se = ();
 
 	@se_values = (@sethet) if $have_ses;
 
@@ -224,9 +236,9 @@ sub parse
 
 	#Calculate relative standard errors, only if have se values
 	for (my $i = 0; $i < scalar(@se_values); $i++) {
-		if ($est_values[$i] == 0){
-			push (@rel_se,undef);
-		}else{
+		if ($est_values[$i] == 0) {
+			push @rel_se, undef;
+		} else {
 			push @rel_se, $se_values[$i] / $est_values[$i];
 		}
 	}
@@ -248,8 +260,15 @@ sub parse
     $writer->startTag("Estimation");
 
     $self->_add_population_estimates(labels => \@all_labels, values => \@est_values);
-	if (scalar(@se_values)>0){
-		$self->_add_precision_population_estimates(labels => \@all_labels, standard_errors => \@se_values, relative_standard_errors => \@rel_se);
+
+	if (scalar(@se_values) > 0) {
+        my $correlation_matrix = linear_algebra::triangular_symmetric_to_full($outobj->correlation_matrix->[$problems]->[$sub_problems]);
+		$self->_add_precision_population_estimates(
+            labels => \@all_labels,
+            standard_errors => \@se_values,
+            relative_standard_errors => \@rel_se,
+            correlation_matrix => $correlation_matrix,
+        );
 	}
     $self->_add_target_tool_messages;
 
@@ -288,10 +307,12 @@ sub _add_precision_population_estimates
         labels => { isa => 'ArrayRef' },
         standard_errors => { isa => 'ArrayRef' },
         relative_standard_errors => { isa => 'ArrayRef' },
+        correlation_matrix => { isa => 'ArrayRef[ArrayRef]' },
     );
     my @labels = @{$parm{'labels'}};
     my @standard_errors = @{$parm{'standard_errors'}};
     my @relative_standard_errors = @{$parm{'relative_standard_errors'}};
+    my $correlation_matrix = $parm{'correlation_matrix'};
 
     my $writer = $self->_writer;
 
@@ -306,9 +327,8 @@ sub _add_precision_population_estimates
     $self->add_parameter_table(name => 'RSE', labels => \@labels, values => \@relative_standard_errors);
     $writer->endTag("RelativeStandardError");
 
-    # FIXME: Check status of covariance step first
     $writer->startTag("CorrelationMatrix");
-    $self->add_matrix(rownames => \@labels, colnames => \@labels);  #FIXME: No content added here
+    $self->add_matrix(rownames => \@labels, colnames => \@labels, matrix => $correlation_matrix);
     $writer->endTag("CorrelationMatrix");
 
     $writer->endTag("MLE");
