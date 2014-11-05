@@ -492,18 +492,6 @@ sub create_R_plots_code{
 							 "data.diff.table   <-'m1/count_randcol_diff.txt'",
 							 "have.base.model <- $have_base_model"
 						 ]);
-	my $file = $self->template_directory_rplots."randtest_default.R"; #FIXME
-	open( FILE, $file ) ||
-		croak("Could not open $file for reading" );
-	
-	my @code = ();
-	foreach my $line (<FILE>){
-		chomp($line);
-		push(@code,$line);
-	}
-	close( FILE );
-
-	$rplot->add_plot(level=>1, code =>\@code);
 
 }
 

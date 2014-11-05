@@ -1959,20 +1959,8 @@ sub create_R_plots_code{
 							 "skip.estimate.near.boundary=$boundary",
 							 'if(packageVersion("xpose4")<"4.5.0"){',
 							 $rplot->indent().'cat("xpose4 version must be 4.5.0 or later for bootstrap plot")',
-							 '}'
-							 
+							 '}'							 
 						 ]);
-	$rplot->add_plot(level=>1, code =>[		
-						 'bootplots<-boot.hist(results.file=raw.results.file,incl.ids.file=included.ids.file,',
-						 $rplot->indent().$rplot->indent().'min.failed=skip.minimization.terminated,',
-						 $rplot->indent().$rplot->indent().'cov.failed=skip.covariance.step.terminated,',
-						 $rplot->indent().$rplot->indent().'cov.warnings=skip.with.covstep.warnings,',
-						 $rplot->indent().$rplot->indent().'boundary=skip.estimate.near.boundary)',
-						 'print(bootplots[1]) #parameters' 
-					 ]);#5 is null, parameters 1 is basic
-	$rplot->add_plot(level=>2, code =>[		
-						 'print(bootplots[2:4]) #SEs ofv eigenvalues'						 
-					 ]);#stderr 2 and ofv 3 is extra, 4 eigenvalues
 
 }
 

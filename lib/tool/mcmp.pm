@@ -942,18 +942,6 @@ sub create_R_plots_code{
 	$rplot->add_preamble(code => [
 							 'sig.level <- '.$self->significance_level.' #option -significance_level'
 						 ]);
-	my $file = $self->template_directory_rplots."mcmp_default.R"; #FIXME
-	open( FILE, $file ) ||
-		croak("Could not open $file for reading" );
-	
-	my @code = ();
-	foreach my $line (<FILE>){
-		chomp($line);
-		push(@code,$line);
-	}
-	close( FILE );
-
-	$rplot->add_plot(level=>1, code =>\@code);
 
 }
 

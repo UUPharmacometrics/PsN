@@ -21,8 +21,10 @@ has 'pdf_title' => (is => 'rw', isa => 'Str' );
 has 'indent' => (is => 'rw', isa => 'Str', default => "    " ); #4spaces
 has 'standard_preamble' => ( is => 'rw', isa => 'ArrayRef[Str]',default => sub{ [] } );
 has 'extra_preamble' => ( is => 'rw', isa => 'ArrayRef[Str]',default => sub{ [] } );
-has 'level_code' => ( is => 'rw', isa => 'HashRef', default => sub{ {} });
+has 'plotcode' => ( is => 'rw', isa => 'ArrayRef[Str]', required => 1);
 has 'libraries' => ( is => 'rw', isa => 'ArrayRef[Str]',default => sub{ [] } );
+
+our $preambleline = '#WHEN THIS FILE IS USED AS A TEMPLATE THIS LINE MUST LOOK EXACTLY LIKE THIS';
 
 sub BUILD
 {
@@ -166,7 +168,11 @@ sub set_R_executable
 	if ( defined $PsN::config -> {'_'} -> {'R'} ) {
 		$self->_R_executable($PsN::config -> {'_'} -> {'R'});
 	}else{
-		my $rc = system('R --version');
+		my $null = '/dev/null';
+		if ($Config{osname} eq 'MSWin32'){
+			$null = 'NUL';
+		}
+		my $rc = system('R --version >'.$null.' 2>&1');
 		$rc = $rc >> 8;
 		if ($rc == 0){
 			$self->_R_executable('R');
@@ -200,13 +206,8 @@ sub get_preamble()
 	push(@arr,"\n"."setwd(working.directory)",
 		 "\n############################################################################",
 		 "#END OF AUTO-GENERATED PREAMBLE",
-		 "#WHEN THIS FILE IS USED AS A TEMPLATE THIS LINE MUST LOOK EXACTLY LIKE THIS\n");
+		 "$preambleline\n");
 	
-	push(@arr,
-		 "\n".'if (rplots.level > 0){',
-		 $self->indent().'pdf(file=pdf.filename,width=10,height=7,title=pdf.title)',
-		 '}'."\n"
-		);
 	
 	return \@arr;
 }
@@ -232,14 +233,12 @@ sub print_R_script
 
 	open ( SCRIPT, ">" . $self->filename ); #local filename
 	print SCRIPT join("\n",@{$self->get_preamble})."\n";
-	foreach my $level (sort {$a <=> $b} keys(%{$self->level_code})){
-		print SCRIPT "\n";
-		print SCRIPT 'if (rplots.level > '.($level-1).'){'."\n";
-		print SCRIPT $self->indent().join("\n".$self->indent(),@{$self->level_code->{$level}})."\n";
-		print SCRIPT "}\n";
-	}
+
 
 	print SCRIPT "\n";
+	print SCRIPT join("\n",@{$self->plotcode})."\n";
+	print SCRIPT "\n";
+
 	my @final =('if (rplots.level > 0){',
 				$self->indent().'dev.off()',
 				'}');
@@ -259,27 +258,6 @@ sub add_preamble
 
 }
 
-sub add_plot
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-							  level => { isa => 'Int', optional => 0 },
-							  code => { isa => 'ArrayRef[Str]', optional => 0 }
-		);
-	my $level = $parm{'level'};
-	my $code  = $parm{'code'};
-
-	if ($level <1){
-		croak("Illegal level $level to add_plot");
-	}
-
-	unless (defined $self->level_code->{$level}){
-		$self->level_code->{$level} = [];
-	}
-
-	push(@{$self->level_code->{$level}},@{$code});
-
-}
 
 no Moose;
 __PACKAGE__->meta->make_immutable;

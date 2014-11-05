@@ -1468,18 +1468,6 @@ sub create_R_plots_code{
 	$rplot->add_preamble(code => [
 							 "case.column.name   <-'".$case_column_name."'"
 						 ]);
-	my $file = $self->template_directory_rplots."cdd_default.R"; #FIXME
-	open( FILE, $file ) ||
-		croak("Could not open $file for reading" );
-	
-	my @code = ();
-	foreach my $line (<FILE>){
-		chomp($line);
-		push(@code,$line);
-	}
-	close( FILE );
-
-	$rplot->add_plot(level=>1, code =>\@code);
 
 }
 

@@ -1665,26 +1665,50 @@ sub create_R_script
 	my $self = shift;
 
 	unless (defined $self->template_directory_rplots){
-		$self->template_directory_rplots($PsN::lib_dir . '/R-scripts/');
+		$self->template_directory_rplots($PsN::lib_dir . '/R-scripts');
 	}
 
-	if ($self->can("create_R_plots_code") and (-d $self->template_directory_rplots)){
-		my $tool_name;
-		if (defined $self->directory_name_prefix) {
-			$tool_name = $self->directory_name_prefix;
-		} else {
-			my @tool_name_full = split('::', ref $self);
-			$tool_name = $tool_name_full[$#tool_name_full];
-			if ($tool_name eq 'modelfit'){
-				$tool_name = 'execute';
-			}
+	my $tool_name;
+	if (defined $self->directory_name_prefix) {
+		$tool_name = $self->directory_name_prefix;
+	} else {
+		my @tool_name_full = split('::', ref $self);
+		$tool_name = $tool_name_full[$#tool_name_full];
+		if ($tool_name eq 'modelfit'){
+			$tool_name = 'execute';
 		}
+	}
 
+	my $template_file = $self->template_file_rplots;
+	unless (defined $template_file and length($template_file)>0){
+		$template_file = $tool_name.'_default.R';
+	}
+
+	if (-e $template_file){
+		#local or relative path
+		my ($dir, $file) = OSspecific::absolute_path('',$template_file);
+		$template_file = $file;
+	}else{
+		my ($dir, $file) = OSspecific::absolute_path($self->template_directory_rplots,$template_file);
+		$template_file = $dir.$file;
+	}
+
+	if ($self->can("create_R_plots_code") and (-e $template_file)){
+		open( FILE, $template_file ) ||
+			croak("Could not open $template_file for reading" );
+		
+		my @code = ();
+		foreach my $line (<FILE>){
+			chomp($line);
+			push(@code,$line);
+		}
+		close( FILE );
 		my $rplot = rplots->new(toolname => $tool_name, 
 								directory => $self->directory,
 								level => $self->rplots,
 								raw_results_file => $self->raw_results_file->[0],
 								tool_results_file => $self->results_file,
+								plotcode => \@code,
 								model => $self->models->[0]);
 
 		$self->create_R_plots_code(rplot => $rplot);

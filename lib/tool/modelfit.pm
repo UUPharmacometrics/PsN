@@ -3333,23 +3333,25 @@ sub create_R_plots_code{
 	$rplot->add_preamble(code => [
 							 "pdf.filename <- paste0(mod.prefix,xpose.runno,'_plots.pdf')",
 						 ]);
-	$rplot->add_plot(level=>1, code =>[		
-						 'xpdb<-xpose.data(xpose.runno,directory=model.directory,tab.suffix=tab.suffix,mod.prefix=mod.prefix,mod.suffix=mod.suffix)',
-						 'runsum(xpdb,show.plots=FALSE,dir=model.directory)', #requires ext in nm_output TODO set this in execute if rplots >0
-						 'print(basic.gof(xpdb))',
-						 'print(ranpar.hist(xpdb))',
-						 'print(ranpar.qq(xpdb))',
-						 'print(ipred.vs.idv(xpdb))',
-						 'print(dv.vs.idv(xpdb))',
-						 'print(pred.vs.idv(xpdb))'
-					 ]);
-	$rplot->add_plot(level=>2, code =>[
-						 '#individual plots of ten random IDs',
-						 'ten.random.ids<-sort(sample(as.integer(unlist(xpdb@Data.firstonly[2])),10,replace=FALSE))',
-						 'idvar <- xvardef("id",xpdb)',
-						 "subset.string <- paste0(idvar,'==',paste(ten.random.ids,collapse=paste0(' | ',idvar,'==')))",
-						 'print(ind.plots(xpdb,subset=subset.string))' 
-					 ]);
+	if (0){
+		$rplot->add_plot(level=>1, code =>[		
+							 'xpdb<-xpose.data(xpose.runno,directory=model.directory,tab.suffix=tab.suffix,mod.prefix=mod.prefix,mod.suffix=mod.suffix)',
+							 'runsum(xpdb,show.plots=FALSE,dir=model.directory)', #requires ext in nm_output TODO set this in execute if rplots >0
+							 'print(basic.gof(xpdb))',
+							 'print(ranpar.hist(xpdb))',
+							 'print(ranpar.qq(xpdb))',
+							 'print(ipred.vs.idv(xpdb))',
+							 'print(dv.vs.idv(xpdb))',
+							 'print(pred.vs.idv(xpdb))'
+						 ]);
+		$rplot->add_plot(level=>2, code =>[
+							 '#individual plots of ten random IDs',
+							 'ten.random.ids<-sort(sample(as.integer(unlist(xpdb@Data.firstonly[2])),10,replace=FALSE))',
+							 'idvar <- xvardef("id",xpdb)',
+							 "subset.string <- paste0(idvar,'==',paste(ten.random.ids,collapse=paste0(' | ',idvar,'==')))",
+							 'print(ind.plots(xpdb,subset=subset.string))' 
+						 ]);
+	}
 }
 
 no Moose;
