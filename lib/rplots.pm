@@ -231,12 +231,22 @@ sub print_R_script
 {
 	my $self = shift;
 
+	#filter preamble from plotcode, if any
+	my @printcode=();
+	foreach my $line (@{$self->plotcode}){
+		if ($line =~ /$preambleline/){
+			#reset
+			#print "\nfound preline\n";
+			@printcode=();
+		}else{
+			push(@printcode,$line);
+		}
+	}
+
 	open ( SCRIPT, ">" . $self->filename ); #local filename
 	print SCRIPT join("\n",@{$self->get_preamble})."\n";
-
-
 	print SCRIPT "\n";
-	print SCRIPT join("\n",@{$self->plotcode})."\n";
+	print SCRIPT join("\n",@printcode)."\n";
 	print SCRIPT "\n";
 
 	my @final =('if (rplots.level > 0){',

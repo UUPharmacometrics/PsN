@@ -1687,7 +1687,7 @@ sub create_R_script
 	if (-e $template_file){
 		#local or relative path
 		my ($dir, $file) = OSspecific::absolute_path('',$template_file);
-		$template_file = $file;
+		$template_file = $dir.$file;
 	}else{
 		my ($dir, $file) = OSspecific::absolute_path($self->template_directory_rplots,$template_file);
 		$template_file = $dir.$file;
