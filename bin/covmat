@@ -22,24 +22,24 @@ Getopt::Long::config("auto_abbrev");
 my %options;
 ## Declare the options
 
-my %required_options = ('rawres_input:s' => undef
-);
+my %required_options = ('rawres_input:s' => '');
+
 my %optional_options = (
-	'offset_rawres:i' => undef,
-	'in_filter:s' => undef,
-	'parameters:s' => undef,
-	'raw_results_structure:s' => undef,
-	'header!' => undef
+	'offset_rawres:i' => '',
+	'in_filter:s' => '',
+	'parameters:s' => '',
+	'raw_results_structure:s' => '',
+	'header!' => ''
 );
 
 my $min_samples=2;
 
 my $res = GetOptions( \%options,
+					  ('h','help'),
 		      keys(%required_options),
 		      keys(%optional_options) );
 exit unless $res;
 
-common_options::setup( \%options, 'covmat' ); #calls set_globals etc, initiates random sequence
 
 
 my %help_text;
@@ -48,6 +48,20 @@ $help_text{Pre_help_message} = <<'EOF';
   <h3 class="heading1">covmat</h3>
 
     Empirical covariance matrix from raw_results
+EOF
+
+$help_text{Examples} = <<'EOF';    
+    covmat needs to read the names and counts of parameters from somewhere.
+    By default covmat will look for a raw_results_structure file in the same
+	directory as the rawres_input file. Alternatively the user can
+	give a model file name on the command-line, or set option raw_results_structure
+
+    Examples:
+    
+    covmat -rawres_input=bootstrap_dir33/raw_results_run33.csv
+
+	covmat -rawres_input=raw_results_run5.csv run5.mod
+
 EOF
 
 $help_text{Options} = <<'EOF';      
@@ -134,8 +148,13 @@ $help_text{-in_filter} = <<'EOF';
       Example: -in_filter=minimization_successful.eq.1,significant_digits.gt.3.5
 
 EOF
+	$help_text{Post_help_message} = <<'EOF';
 
-common_options::online_help( 'covmat', \%options, \%help_text, \%required_options, \%optional_options);
+EOF
+
+#common_options::setup( \%options, 'covmat' ); #calls set_globals etc, initiates random sequence
+
+common_options::online_help('covmat',\%options, \%help_text, \%required_options, \%optional_options);
 
 if( scalar(@ARGV) > 1 ){
   print "covmat can only handle one modelfile, you listed: ",join(',',@ARGV),". Use 'covmat -h' for help.\n";die;
