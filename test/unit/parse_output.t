@@ -6,7 +6,6 @@ use Test::More;# tests=>8;
 use FindBin qw($Bin);
 use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages
-use Scalar::Util qw(looks_like_number);
 use output::problem::subproblem;
 
 my %hash;

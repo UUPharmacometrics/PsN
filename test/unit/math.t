@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 50;
+use Test::More tests => 59;
 use Test::Exception;
 use FindBin qw($Bin);
 use lib "$Bin/.."; #location of includes.pm
@@ -38,13 +38,14 @@ is (eps(0.00073), 1.084202172485504e-19, "eps(0.00073)");
 is (eps(400000000000000), 0.0625, "eps(400000000000000)");
 
 # inf
-is (inf(), 'inf', "inf()");
+is (inf(), inf()+1, "inf()");
 
 #usable_number
-my @not_ok = ('hej','Inf','Infinity','NaN','nan','NAN','NA',
+my @not_ok = ('hej','Inf','Infinity','NaN','nan','NAN','NA','.',
 			  '-nan','-1.#IND','-1.#INF','1.#IND','1.#INF','undef',undef,inf());
 my @is_ok = ('6','1.000','0','0.000','+10e+03','1.0E+01','-1.0E+01','0.000E-00',
-6,1.000,0,0.000,+10e+03,1.0E+01,-1.0E+01,0.000E-00
+			 ' 6','1.000 ',' 0 ','0.000  ',' +10e+03  ',
+6,1.000,0,0.000,+10e+03,1.0E+01,-1.0E+01,0.000E-00,.123,-.2,.1e4
 );
 
 foreach my $number (@not_ok) {
