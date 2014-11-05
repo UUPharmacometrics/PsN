@@ -11,7 +11,6 @@ use Data::Dumper;
 use POSIX qw(ceil floor);
 use model::shrinkage_module;
 use Math::Random qw(random_multivariate_normal);
-use Scalar::Util qw(looks_like_number);
 use model::iofv_module;
 use model::nonparametric_module;
 use model::shrinkage_module;
@@ -1557,7 +1556,7 @@ sub get_rawres_params
 	my $extra_count = scalar(@extra_columns);
 
 	#input is filename + offset and possibly array filter and possibly array string_filter
-	#input require_numeric_ofv is special filter, default false, if true then check that looks_like_number(ofv)
+	#input require_numeric_ofv is special filter, default false, if true then check that usable_number(ofv)
 	#input 
 	#output is hash of arrays of hashes allparams
 
@@ -1749,7 +1748,7 @@ sub get_rawres_params
 	#loop through remaining lines, check if should be filtered out or saved to result hash
 	foreach my $line (@file){
 		my $skip = 0;
-		if ($require_numeric_ofv and (not looks_like_number($line->[$ofvindex]))){
+		if ($require_numeric_ofv and (not math::usable_number($line->[$ofvindex]))){
 			$skip=1;
 		}else {
 			for (my $i=0; $i< scalar(@filter_column_index);$i++){
@@ -1759,7 +1758,7 @@ sub get_rawres_params
 					if (($val eq 'NA') or ($val eq '')){
 						$skip=1;
 						last;
-					}elsif(not looks_like_number($val)){
+					}elsif(not math::usable_number($val)){
 						print "\nError: value $val in input filter column ".
 							$header[$filter_column_index[$i]]." does not look numeric. All input ".
 							"filter columns must be numeric, skipping this line\n";
@@ -1789,7 +1788,7 @@ sub get_rawres_params
 		my %sigma;
 		foreach my $label (keys %thetapos){
 			my $val = $line->[$thetapos{$label}];
-			unless (looks_like_number($val) ){
+			unless (math::usable_number($val) ){
 				$skip =1;
 				print "\nWarning rawres input: $val in column $label does not look like a parameter value\n";
 			}
@@ -1797,7 +1796,7 @@ sub get_rawres_params
 		}
 		foreach my $label (keys %omegapos){
 			my $val = $line->[$omegapos{$label}];
-			unless (looks_like_number($val) ){
+			unless (math::usable_number($val) ){
 				$skip =1;
 				print "\nWarning rawres input: $val in column $label does not look like a parameter value\n";
 			}
@@ -1805,7 +1804,7 @@ sub get_rawres_params
 		}
 		foreach my $label (keys %sigmapos){
 			my $val = $line->[$sigmapos{$label}];
-			unless (looks_like_number($val) ){
+			unless (math::usable_number($val) ){
 				$skip =1;
 				print "\nWarning rawres input: $val in column $label does not look like a parameter value\n";
 			}
@@ -1914,7 +1913,7 @@ sub setup_filter
 	    next;
 	  }
 	  my $val = $2;
-	  if ((not looks_like_number($val)) and (not $string_filter)){
+	  if ((not math::usable_number($val)) and (not $string_filter)){
 	      print "Error in filter analysis, value $val does not look like a number. Ignoring filter $filt\n";
 	      next;
 	  }

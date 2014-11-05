@@ -10,7 +10,7 @@ use File::Copy 'cp';
 use status_bar;
 use Moose;
 use MooseX::Params::Validate;
-use Scalar::Util qw(looks_like_number);
+use math;
 
 extends 'tool';
 
@@ -6274,8 +6274,8 @@ sub preprocess_data
 				$self->means->{$par.'_'.$cov}=$sum/$len if ($len>0);
 				$median = sprintf("%6.2f", $median );
 				my $mean = sprintf("%6.2f", $sum/$len ) if ($len>0);
-				if (not (looks_like_number($median) and looks_like_number($mean))) {
-					croak("Error in calculation of median and mean. They are not numbers");
+			    unless (math::usable_number($median) and math::usable_number($mean)) {
+					croak("Error in calculation of median: $median and mean $mean not usable numbers");
 				}
 				print LOG "Time-varying $cov on $par (ETA".$parmetahash{$par}.
 				") has median $median and mean $mean\n";

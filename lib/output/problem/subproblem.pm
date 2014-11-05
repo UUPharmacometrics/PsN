@@ -7,7 +7,7 @@ use ui;
 use array;
 use Moose;
 use MooseX::Params::Validate;
-use Scalar::Util qw(looks_like_number);
+use math;
 
 has 'skip_labels_matrix' => ( is => 'rw', isa => 'Str' );
 has 'next_to_last_step_successful' => ( is => 'rw', isa => 'Bool' );
@@ -2548,13 +2548,9 @@ sub _get_value{
 		);
 	my $val = $parm{'val'};
 	my $no_value = 10000000000;
-	my $answer=undef;
-	if(looks_like_number($val)){
-		$answer = eval($val);
-		#check if +-infinity
-		if ( ($answer == $no_value) or ($answer == -(10**10**10)) or ($answer == (10**10**10))){
-			$answer = undef;
-		}
+	my $answer= eval($val);
+	if(($answer == $no_value) or (not math::usable_number($val))){
+		$answer = undef;
 	}
 	return $answer;
 }

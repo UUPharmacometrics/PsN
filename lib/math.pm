@@ -6,7 +6,6 @@ use strict;
 use warnings;
 use MooseX::Params::Validate;
 use include_modules;
-use Scalar::Util qw(looks_like_number);
 
 require Exporter;
 our @ISA = qw(Exporter);
@@ -84,16 +83,9 @@ sub usable_number
         { isa => 'Any' },
     );
 
-	my $ok = 1;
-	if (not looks_like_number($number)){
-		#find stupid strings etc
-		$ok=0;
-	}elsif ($number != $number){
-		#find not a number
-		$ok=0;
-	}elsif ($number+1 == $number){
-		#find infinity
-		$ok=0;
+	my $ok = 0;
+	if ($number =~ /^\s*([+-]?)(?=\d|\.\d)\d*(\.\d*)?([Ee]([+-]?\d+))?\s*$/ ){
+		$ok=1;
 	}
 	return $ok;
 }

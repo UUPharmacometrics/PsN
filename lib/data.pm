@@ -10,7 +10,6 @@ use ui;
 use status_bar;
 use Data::Dumper;
 use array qw(not_empty);
-use Scalar::Util qw(looks_like_number);
 use Moose;
 use MooseX::Params::Validate;
 use data::individual;
@@ -2060,7 +2059,7 @@ sub reconcile_column
 		#find first non-missing in template and old
 		my $first_non_miss_template = $self->missing_data_token();
 		foreach my $val (@{$template_values}){
-			if (looks_like_number($val)){
+			if (math::usable_number($val)){
 				if ($val != $self->missing_data_token()){
 					$first_non_miss_template = $val;
 					last;
@@ -2073,7 +2072,7 @@ sub reconcile_column
 		}
 		my $first_non_miss_index=0;
 		foreach my $val (@{$old_values}){
-			if (looks_like_number($val)){
+			if (math::usable_number($val)){
 				if ($val != $self->missing_data_token()){
 					last;
 				}
@@ -2088,14 +2087,14 @@ sub reconcile_column
 		my @value_sequence=($first_non_miss_template);
 		my $index=0;
 		for (my $i=1; $i< scalar(@$template_values); $i++){
-			if (looks_like_number($template_values->[$i]) and looks_like_number($value_sequence[$index])){
+			if (math::usable_number($template_values->[$i]) and math::usable_number($value_sequence[$index])){
 				#both numeric
 				if (($template_values->[$i] != $value_sequence[$index]) and
 					($template_values->[$i] != $self->missing_data_token())){
 					push(@value_sequence,$template_values->[$i]);
 					$index++;
 				} 
-			}elsif(looks_like_number($template_values->[$i]) or looks_like_number($value_sequence[$index])){
+			}elsif(math::usable_number($template_values->[$i]) or math::usable_number($value_sequence[$index])){
 				#one is numeric, then must be different
 				push(@value_sequence,$template_values->[$i]);
 				$index++;
@@ -2106,13 +2105,13 @@ sub reconcile_column
 
 		for (my $i=1; $i< scalar(@new_values); $i++){
 			next unless ($i> $first_non_miss_index);
-			if (looks_like_number($old_values->[$i]) and looks_like_number($old_values->[$i-1])){
+			if (math::usable_number($old_values->[$i]) and math::usable_number($old_values->[$i-1])){
 				if (($old_values->[$i] !=$old_values->[$i-1]) and
 					($old_values->[$i] != $self->missing_data_token())){
 					#switch in old values
 					$index++ unless ($index == $#value_sequence); #do not change index if no values left
 				}
-			}elsif(looks_like_number($old_values->[$i]) or looks_like_number($old_values->[$i-1])){
+			}elsif(math::usable_number($old_values->[$i]) or math::usable_number($old_values->[$i-1])){
 				#only one is numeric, then must be different
 				#switch in old values
 				$index++ unless ($index == $#value_sequence); #do not change index if no values left

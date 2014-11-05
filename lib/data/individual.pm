@@ -4,7 +4,7 @@ use include_modules;
 use ui;
 use Moose;
 use MooseX::Params::Validate;
-use Scalar::Util qw(looks_like_number);
+use math;
 
 has 'idcolumn' => ( is => 'rw', isa => 'Int', required => 1 );
 has 'idnumber' => ( is => 'rw', isa => 'Num', trigger => \&_idnumber_set );
@@ -36,7 +36,7 @@ sub BUILD
 		unless (defined $data[$self->idcolumn - 1] and length($data[$self->idcolumn - 1])>0){
 			croak("The value in the id-column is empty");
 		}
-		if (looks_like_number($data[$self->idcolumn - 1])){
+		if (math::usable_number($data[$self->idcolumn - 1])){
 			$self->idnumber($data[$self->idcolumn - 1]);
 		}else{
 			print "data is ".$self->subject_data->[0]."\n";
