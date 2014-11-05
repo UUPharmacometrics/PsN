@@ -95,7 +95,11 @@ sub absolute_path
 
   #Append trailing slash if missing
   unless(( $path =~ /\/$/ ) || ( $path =~ /\\$/ )){ 
-    $path .= '/';  
+	  if ( $Config{osname} eq 'MSWin32' ) {
+		  $path .= "\\";
+	  }else{
+		  $path .= '/';
+	  }  
   }
   
   return ($path, $file_file);
