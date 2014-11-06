@@ -10,15 +10,11 @@ use PsN;
 use output;
 use strict;
 use Getopt::Long;
-use Data::Dumper;
 use common_options;
 use standardised_output;
 use model;
 
 $| = 1; # Make sure autoflush is on
-
-# $PsN::config -> {'_'} -> {'job_polling_interval'}
-## Define the defaults. Should go into psn.conf eventually.
 
 my %options;
 
@@ -26,23 +22,8 @@ my %required_options = ();
 my %optional_options = ( 
     'h|?'                       => undef,
     'help'                      => undef,
-    'debug:i'                   => undef,
-    'csv!'                       => undef,
     'precision:f'               => undef,
-    'confidence_interval|ci'    => undef,
-    'c_level:f'                 => undef,
-    'sd_rse!'                    => undef,
-    'max_problem_num:i'         => undef,
-    'max_subproblem_num:i'      => undef,
-    'check_run!'              => undef,
-    'correlation_limit:f'         => undef,
-    'condition_number_limit:f'    => undef,
-    'near_bound_sign_digits:i'    => undef,
-    'near_zero_boundary_limit:f'  => undef,
-    'sign_digits_off_diagonals:i' => undef,
-    'large_theta_cv_limit:f'      => undef,
-    'large_omega_cv_limit:f'      => undef,
-  'large_sigma_cv_limit:f'      => undef);
+);
 
 
 my $res = GetOptions( \%options,
@@ -51,28 +32,15 @@ my $res = GetOptions( \%options,
 
 exit unless $res;
 
-common_options::get_defaults( \%options, 'sumo' );
+common_options::get_defaults(\%options, 'nmoutput2so');
 
 my %defaults;
 
 $defaults{'precision'}                 = 4;
-$defaults{'c_level'}                   = 95;
-$defaults{'check_run'}                   = 1;
-$defaults{'sd_rse'}                    = 1;
-$defaults{'max_problem_num'}           = 1;
-$defaults{'max_subproblem_num'}        = 1;
-$defaults{'correlation_limit'}         = 0.9;
-$defaults{'condition_number_limit'}    = 1000;
-$defaults{'near_bound_sign_digits'}    = 2;
-$defaults{'near_zero_boundary_limit'}  = 0.001;
-$defaults{'sign_digits_off_diagonals'} = 2;
-$defaults{'large_theta_cv_limit'}      = 0.30;
-$defaults{'large_omega_cv_limit'}      = 0.50;
-$defaults{'large_sigma_cv_limit'}      = 0.30;
 
-foreach my $opt ( keys(%optional_options) ){
+foreach my $opt (keys(%optional_options)) {
   $opt =~ s/[!:|].*//g; #get rid of :s |? :i etcetera
-  unless (defined $options{$opt}){
+  unless (defined $options{$opt}) {
     $options{$opt} = $defaults{$opt};
   }
 }
@@ -80,15 +48,13 @@ foreach my $opt ( keys(%optional_options) ){
 my %help_text;
 
 $help_text{Pre_help_message} = <<'EOF';
-  <h3 class="heading1">sumo</h3>
-    sumo
+  <h3 class="heading1">nmoutput2so</h3>
+    nmoutput2so
 
-    Perl script for summarizing output data. 
-    It gathers some useful information from NONMEM output files and prints
-    a summary to screen.
+    Perl script for creation of a standard output xml file from the nonmem output. 
 EOF
 
-$help_text{Options} = <<'EOF';      
+$help_text{Options} = <<'EOF';
  Options:
 
     The options are given here in their long form. Any option may be
@@ -100,33 +66,13 @@ EOF
 $help_text{-h} = <<'EOF';
     -h | -?
       
-    With -h or -? sumo will print a list of options and exit.
+    With -h or -? nmoutput2so will print a list of options and exit.
 EOF
 
-$help_text{-help} = <<'EOF';      
+$help_text{-help} = <<'EOF';
     -help
       
-    With -help sumo will print this, longer, help message.
-EOF
-
-$help_text{-debug} = <<'EOF';
-    -debug='integer'
-    Default 0
-
-    This is mainly for developers who wish to debug PsN. By default
-    'integer' is zero but you can set it to '1' to enable warnings.
-EOF
-
-$help_text{-csv} = <<'EOF';
-    -csv
-    Default not set
-
-    Produce output in which the columns of the parameters estimates
-    and standard errors are comma separated. This option can be used
-    if you wish to import the sumo output into a spreadsheet programs,
-    such as MS Excel. (Something like this is probably what you would
-    want to do in that case: sumo -csv run1.lst > sumooutput.csv)
-
+    With -help nmoutput2so will print this, longer, help message.
 EOF
 
 $help_text{-precision} = <<'EOF';
@@ -136,209 +82,21 @@ $help_text{-precision} = <<'EOF';
     Output precision.
 EOF
 
-$help_text{-c_level} = <<'EOF';
-    -c_level='integer'
-    Default 95
 
-    This option specifies the coverage of the confidence interval
-    computed by the -ci option (see below). Allowed values are 90, 95,
-    99 and 99.5
-EOF
-
-$help_text{-confidence_interval} = <<'EOF';
-    -confidence_interval
-    -ci
-    Default not set
-
-    This option computes and reports the traditional confidence
-    intervals for the parameter estimates instead of the relative
-    standard errors: CI = estimate +/- c_level*SE.
-
-    0MINIMIZATION SUCCESSFUL
-    NO. OF FUNCTION EVALUATIONS USED:  172
-    NO. OF SIG. DIGITS IN FINAL EST.:  3.4
-
-    ETABAR IS THE ARITHMETIC MEAN OF THE ETA-ESTIMATES,
-    AND THE P-VALUE IS GIVEN FOR THE NULL HYPOTHESIS THAT THE TRUE MEAN IS 0.
-
-    ETABAR:  -0.41E-01  0.59E-03  0.30E-01
-    SE:       0.35E+00  0.25E-02  0.18E+00
-
-    P VAL.:   0.91E+00  0.82E+00  0.87E+00
-
-    Objective function value: 116.966
-
-    Condition number: 1.215e+004
-
-           THETA                                 OMEGA                                 SIGMA                     
-    TH1    1.87     (0.9527 - 2.787)    OM1      1.63          (-1.839 - 5.099)  SI1  0.478  (0.2193 - 0.7367)  
-    TH2  0.0862  (0.07752 - 0.09488)    OM2  0.000112  (-0.0001114 - 0.0003354)                                 
-    TH3  0.0398  (0.03335 - 0.04625)  OM3_2   0.00658     (-0.004357 - 0.01752)                                 
-                                        OM3     0.458         (-0.03396 - 0.95)                                 
-
-    With this option the parameter estimates reported in the OMEGA and
-    SIGMA columns are the numbers given in the NONMEM output file,
-    i.e. no transformation to CVs or correlations is performed.
-
-EOF
-
-$help_text{-ci} = $help_text{-confidence_interval};
-
-$help_text{-sd_rse} = <<'EOF';
-    -sd_rse
-    Default set
-
-    If sd_rse is not set sumo will report the relative standard errors for the
-    random effects parameters (omega and sigma) on the variance scale
-    (SE/variance estimate). If sd_rse is set, sumo will report these
-    on the (approximate) standard deviation scale: (SE/variance
-    estimate)/2.
-
-EOF
-
-$help_text{-max_problem_num} = <<'EOF';
-    -max_problem_num='integer'
-    Default 1
-
-    PsN divides NONMEM output into problems and sub-problems. 
-    The default is for sumo to report the results for the first
-    $PROBLEM only.
-
-EOF
-
-$help_text{-max_subproblem_num} = <<'EOF';
-    -max_subproblem_num='integer'
-    Default 1
-
-    PsN divides NONMEM output into problems and sub-problems. 
-    The default is for sumo to report the results for the first
-    subproblem only.
-
-EOF
-
-$help_text{-check_run} = <<'EOF';
-    -check_run
-    Default set
-
-    If this option is unset with -no-check_run the initial run diagnostic output of sumo
-    will be suppressed.
-
-EOF
-
-$help_text{-correlation_limit} = <<'EOF';
-    -correlation_limit='number'
-    Default 0.9
-
-    The cut-off for issuing a warning for high correlations between
-    the parameter estimates. This test will only be made if the $COV
-    step has been requested in the NMtran control stream.
-
-EOF
-
-$help_text{-condition_number_limit} = <<'EOF';
-    -condition_number_limit='number'
-    Default 1000
-
-    The cut-off for issuing a warning for a high condition number. The
-    test will only be made if the $COV step has been requested in the
-    NMtran control stream and NONMEM has been asked to report
-    eigenvalues ($COV PRINT=E).
-
-EOF
-
-$help_text{-near_bound_sign_digits} = <<'EOF';
-    -near_bound_sign_digits='integer'
-    Default 2
-
-    When a parameter estimates is equal to a boundary with these many
-    significant digits, a warning will be issued. The default is for
-    NONMEM VI to report if parameter estimates are close to a boundary
-    value but this can be turned off. The boundary test in sumo is
-    independent of the way NONMEM is configured and will report these
-    types of issues in output from NONMEM.
-
-EOF
-
-$help_text{-near_zero_boundary_limit} = <<'EOF';
-    -near_zero_boundary_limit='number'
-    Default 0.001
-
-    If the bound is 0, the boundary test will issue a warning if the
-    estimate is this close to zero.
-
-EOF
-
-$help_text{-sign_digits_off_diagonals} = <<'EOF';
-    -sign_digits_off_diagonals='integer' 
-    Default 2
-
-    The boundary test for off-diagonal omega elements are performed by
-    first converting the covariances to the corresponding correlations
-    and then check if they are close to +/-1 with this many
-    significant digits.
-
-EOF
-
-$help_text{-large_theta_cv_limit} = <<'EOF';
-    -large_theta_cv_limit='number'
-    Default 0.30
-
-    When the CV (SE/estimate) for a parameter estimates is greater
-    than this a warning will be issued.
-EOF
-
-$help_text{-large_sigma_cv_limit} = <<'EOF';
-    -large_sigma_cv_limit='number'
-    Default 0.30
-
-    When the CV (SE/estimate) for a parameter estimates is greater
-    than this a warning will be issued.
-
-EOF
-
-$help_text{-large_omega_cv_limit} = <<'EOF';
-    -large_omega_cv_limit='number'
-    Default 0.50
-
-    When the CV (SE/estimate) for a parameter estimates is greater
-    than this a warning will be issued.
-
-EOF
-
-
-common_options::online_help('sumo', \%options, \%help_text, \%required_options, \%optional_options);
+common_options::online_help('nmoutput2so', \%options, \%help_text, \%required_options, \%optional_options);
 
 if (scalar(@ARGV) != 1) {
   print "A lst file must be specified. Use 'stdoutput -h' for help.\n";
   exit;
 }
 
-## Sort out some general settings that are common to all files, problems and sub-problems.
-
-my %c_levels = ( '90'   => 1.6449,
-		 '95'   => 1.96,
-		 '99'   => 2.5758,
-		 '99.9' => 3.2905 );
-
-$options{'confidence_interval'} = $options{'ci'} if (defined $options{'ci'});
-if( $options{'confidence_interval'} ) {
-    
-    if( not defined $c_levels{$options{'c_level'}} ) {
-	die "Sorry, confidence intervals for level ".$options{'c_level'}.
-	    " can not be output. Valid levels are: ".join(',', keys %c_levels).
-	    "\n";
-    }
-}
-
-
-my $form = '%.' . $options{'precision'} . 'g';
 
 ## Start processing the files
 my $outfile = $ARGV[0];
 
 ## Check that the output file exist before trying to read it. (To
 ## avoid displaying the usual cryptic PsN error message).
-unless (-e $outfile) {
+if (not -e $outfile) {
     die "The file: $outfile does not exist.\n\n";
 }
 
@@ -348,7 +106,6 @@ if (not $output->parsed_successfully) {
     die "Unable to read everything from outputfile, parser error message:\n" . $output->parsing_error_message;
 }
 
-
 my $model = model->new(problems => $output->control_stream_problems,
 					   filename => 'dummy',
 					   is_dummy => 1,
@@ -357,6 +114,10 @@ my $model = model->new(problems => $output->control_stream_problems,
 					   ignore_missing_output =>1);
 
 
-my $so = standardised_output->new(output => $output, model => $model);
+my $so = standardised_output->new(
+    output => $output,
+    model => $model,
+    precision => $options{'precision'},
+);
 
 $so->parse;
