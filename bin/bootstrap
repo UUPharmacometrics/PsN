@@ -29,7 +29,9 @@ my %optional_options = ("samples:i"=>'',
 						"stratify_on:s"=>'',
 						'keep_tables!' => undef,
 						"bca"=>'',
-						"dofv!"=>'',
+						"dofv!"=>'',	
+						"run_base_model!"=>'',
+						"update_inits!"=>'',
 						"mceta:i"=>'',
 						"skip_minimization_terminated!"=>'',
 						"skip_covariance_step_terminated!"=>'',
@@ -114,6 +116,17 @@ EOF
 
       Compute delta-ofv by doing a MAXEVAL=0 run on orginal dataset with the 
       bootstrap parameter estimates.
+EOF
+    $help_text{-run_base_model} = <<'EOF';      
+      <p class="option">-run_base_model</p>
+
+      Default true. Run the base model unless the lst-file already exists in the same directory.
+EOF
+    $help_text{-update_inits} = <<'EOF';      
+      <p class="option">-update_inits</p>
+
+      Default true. Update the initial estimates of the bootstrap models to the final estimates from
+	  the estimation (lst-file) of the base model.
 EOF
     $help_text{-mceta} = <<'EOF';      
       <p class="option">-mceta</p>
@@ -306,6 +319,8 @@ my $bs = tool::bootstrap ->
 	subjects			     => $subj_hash,
 	type				     => $type,
 	keep_tables          	=> $options{'keep_tables'},
+	run_base_model          	=> $options{'run_base_model'},
+	update_inits          	=> $options{'update_inits'},
 	stratify_on                          => $options{'stratify_on'},
 	dofv                                  => $options{'dofv'},
 	mceta                                 => $options{'mceta'},

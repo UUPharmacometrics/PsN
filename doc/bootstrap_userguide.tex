@@ -35,6 +35,13 @@ The algorithm requires that an individual can unambigously be categorized accord
 In data file terms, it means that the variable used for stratification must have one and only one value for each individual, otherwise the program will stop with an error message saying that at least one individual has multiple values
 in the stratification column, and therefore this column cannot be used for stratification of the resampling.
 \nextopt
+\optname{run\_base\_model}
+By default, the input model will be run unless the lst-file for the input model is found in the same directory as the input model.
+If the user sets -no-run\_base\_model, the input model will not be run even if the lst-file is missing.
+\optname{update\_inits}
+By default, the initial estimates of the bootstrap models will be set to the final estimates of the input model if final
+estimates are available. If the user sets -no-update\_inits, the initial estimates of the bootstrap models will be
+the same as the initial estimates set in the input model, even if final estimates from the input model are available.
 \optname{keep\_tables}
 By default, all \$TABLE will be deleted from the bootstrap models, to save disk space. If option -keep\_tables is set, 
 PsN will instead keep \$TABLE, which can require much disk space.
@@ -77,6 +84,9 @@ Optional, default not used. If option -dofv is set and NM version 7.3 or later i
 For a complete list of common options see common\_options\_defaults\_versions.pdf, or psn\_options -h on the commandline.
 
 \begin{optionlist}
+\optdefault{rplots}{level}
+Auto-generation of R-plots for visualization of results. See also -template\_directory\_rplots and -template\_file\_rplots in the common\_options guide.
+\nextopt
 \optdefault{directory}{bootstrap\_dirN}
 The directory in which the script will run NONMEM can be named. The default name is “bootstrap\_dirN” where N is increased by 1 each time you run the script. If the run is aborted or crashes, setting the directory to the one from which the script was running earlier can be done. PsN will then not run the model files that had finished, saving time. 
 \nextopt
@@ -123,9 +133,13 @@ The results of two runs will be different even if the seed is the same if the ls
 
 \section{Technical overview of algorithm}
 
-PsN will rerun the base model if the lst-file of the input model (run1.lst if the input model file is called run1.mod) is not present in the same directory as the model file OR if the model file has a different extension than .mod, for example .ctl. If the model file has the extension .mod and the lst-file is present then PsN will simply read the estimates from that file.
+PsN will rerun the base model if the lst-file of the input model (run1.lst if the input model file is called run1.mod) is not present in the same directory as the model file 
+and the user has not set -no-run\_base\_model. If the lst-file is present then PsN will simply read the estimates from that file.
 
-The program creates N (N=number of samples), datasets of size M (M=sample\_size) by randomly drawing individuals with replacement from the original dataset. The program creates N new NONMEM modelfiles which are identical to the original modelfile with the exception that each uses a different  bootstrapped dataset and that the initial parameter estimates are the final estimates from the original run. The model parameters are estimated with each dataset, including the original, resulting in N+1 estimates for each parameter.
+The program creates N (N=number of samples), datasets of size M (M=sample\_size) by randomly drawing individuals with replacement from the original dataset. The program creates N new NONMEM modelfiles which are identical to the original modelfile with the exception that each uses a different  bootstrapped dataset and, 
+unless the user has set -no-update\_inits,
+that the initial parameter estimates are the final estimates from the original run. 
+The model parameters are estimated with each dataset, including the original, resulting in N+1 estimates for each parameter.
 
 \section{Computing delta-ofv}
 
