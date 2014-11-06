@@ -36,6 +36,8 @@ has 'skip_estimate_near_boundary' => ( is => 'rw', isa => 'Bool', default => 0 )
 has 'calculation_order' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { ['diagnostic_means','means','medians','percentile_confidence_intervals','standard_errors','standard_error_confidence_intervals'] } );
 has 'print_order' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { ['diagnostic_means','means','bias','standard_error_confidence_intervals','standard_errors','medians','percentile_confidence_intervals'] } );
 has 'samples' => ( is => 'rw', isa => 'Int', default => 200 );
+has 'run_base_model' => ( is => 'rw', isa => 'Bool', default => 1 );
+has 'update_inits' => ( is => 'rw', isa => 'Bool', default => 1 );
 has 'dofv' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'dofv_samples' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 has 'mceta' => ( is => 'rw', isa => 'Int', default => 0 );
@@ -702,7 +704,7 @@ sub general_setup
 
 	# {{{ orig run
 
-	unless ( $model -> is_run ) {
+	unless ( $model -> is_run or (not $self->run_base_model)) {
 		my %subargs = ();
 		if ( defined $self -> subtool_arguments() ) {
 			%subargs = %{$self -> subtool_arguments()};
@@ -736,77 +738,17 @@ sub general_setup
 
 	my $output = $model -> outputs -> [0];
 	unless ( $output -> have_output ) {
-		croak("\nThere is no output from the base model, terminating bootstrap.\n");
+		if ($self->update_inits){
+			ui -> print( category => 'bootstrap',
+						 message => 'There is no output from the base model, will use base model initial values for bootstrap models.' );
+		}
 	}
 	# }}} orig run
 
-	# ------------------------  Print a log-header  -----------------------------
-
-	# {{{ log header
 
 	my @problems   = @{$model -> problems};
 	my @new_models;
 
-	# Print a log-header
-	# Lasse 2005-04-21: The minimization_message print will probably not work anymore
-	open( LOG, ">>".$self -> logfile()->[$model_number-1] );
-	my $ui_text = sprintf("%-5s",'RUN').','.sprintf("%20s",'FILENAME  ').',';
-	print LOG sprintf("%-5s",'RUN'),',',sprintf("%20s",'FILENAME  '),',';
-	foreach my $param ( 'ofv', 'minimization_message', 'covariance_step_successful' ) {
-		my $orig_ests   = $model -> outputs -> [0] -> $param;
-		# Loop the problems
-		for ( my $j = 0; $j < scalar @{$orig_ests}; $j++ ) {
-			my $name = $param;
-			$name = 'DIC' 
-			if (($name eq 'ofv') and 
-				(defined $model -> outputs -> [0]->get_single_value(attribute => 'dic',
-						problem_index => $j)));
-			if ( ref( $orig_ests -> [$j][0] ) ne 'ARRAY' ) {
-				my $label = uc($name)."_".($j+1);
-				$ui_text = $ui_text.sprintf("%12s",$label).',';
-				print LOG sprintf("%12s",$label),',';
-			} else {
-				# Loop the parameter numbers (skip sub problem level)
-				for ( my $num = 1; $num <= scalar @{$orig_ests -> [$j][0]}; $num++ ) {
-					my $label = uc($name).$num."_".($j+1);
-					$ui_text = $ui_text.sprintf("%12s",$label).',';
-					print LOG sprintf("%12s",$label),',';
-				}
-			}
-		}
-	}
-	print LOG "\n";
-
-	# }}} log header
-
-	# ------------------------  Log original run  -------------------------------
-
-	# {{{ Log original run
-
-	# Lasse 2005-04-21: The minimization_message print will probably not work anymore
-	open( LOG, ">>".$self -> logfile()->[$model_number-1] );
-	$ui_text = sprintf("%5s",'0').','.sprintf("%20s",$model -> filename).',';
-	print LOG sprintf("%5s",'0'),',',sprintf("%20s",$model -> filename),',';
-	foreach my $param ( 'ofv', 'minimization_message', 'covariance_step_successful' ) {
-		my $orig_ests   = $model -> outputs -> [0] -> $param;
-		# Loop the problems
-		for ( my $j = 0; $j < scalar @{$orig_ests}; $j++ ) {
-			if ( ref( $orig_ests -> [$j][0] ) ne 'ARRAY' ) {
-				$orig_ests -> [$j][0] =~ s/\n//g;
-				$ui_text = $ui_text.sprintf("%12s",$orig_ests -> [$j][0]).',';
-				print LOG sprintf("%12s",$orig_ests -> [$j][0]),',';
-			} else {
-				# Loop the parameter numbers (skip sub problem level)
-				for ( my $num = 0; $num < scalar @{$orig_ests -> [$j][0]}; $num++ ) {
-					$ui_text = $ui_text.sprintf("%12f",$orig_ests -> [$j][0][$num]).',';
-					print LOG sprintf("%12f",$orig_ests -> [$j][0][$num]),',';
-				}
-			}
-		}
-	}
-	print LOG "\n";
-
-	# }}} Log original run
 
 	# TODO: In this loop we loose one dimension (problem) in that
 	# all new models with new data sets are put in the same array,
@@ -894,7 +836,9 @@ sub general_setup
 					$new_mod -> add_nonparametric_code;
 				}
 
-				$new_mod -> update_inits( from_output => $output );
+				if ($output -> have_output and $self->update_inits){
+					$new_mod -> update_inits( from_output => $output );
+				}
 				$new_mod -> _write;
 
 				push( @new_models, $new_mod );
@@ -1201,16 +1145,17 @@ sub modelfit_analyze
 		$self -> tools() -> [0] -> raw_results;
 	}
 
-	my @param_names = @{$self -> models -> [$model_number -1] -> outputs -> [0] -> labels};
+
+	my $problem_count= scalar(@{$self -> models -> [$model_number -1] -> problems});
 	my ( @diagnostic_names, @tmp_names );
 	foreach my $param ( @diagnostic_params ) {
 		push( @tmp_names, $param );
 		$tmp_names[$#tmp_names] =~ s/_/\./g;
 	}
-	for ( my $i = 0; $i <= $#param_names; $i++ ) {
+
+	for ( my $i = 0; $i < $problem_count; $i++ ) {
 		push( @{$diagnostic_names[$i]}, @tmp_names );
 	}
-
 
 	if ($self->dofv()){
 		my $model = $self -> models -> [$model_number -1];
@@ -1314,11 +1259,22 @@ sub _modelfit_raw_results_callback
 		# the result for the original model.
 
 		my %dummy;
-
-		my ($raw_results_row, $nonp_rows) = $self -> create_raw_results_rows( max_hash => $mh_ref,
-			model => $orig_mod,
-			raw_line_structure => \%dummy );
-
+		my ($raw_results_row, $nonp_rows);
+		if ($orig_mod -> is_run){
+			($raw_results_row, $nonp_rows) = $self -> create_raw_results_rows( max_hash => $mh_ref,
+																			   model => $orig_mod,
+																			   raw_line_structure => \%dummy );
+		}else{
+			#copy first existing row and put NA everywhere
+			my @row = ();
+			push(@row, @{$modelfit -> raw_results()->[0]});
+			$row[0] = '0'; #model number
+			for (my $i=3; $i<scalar(@row); $i++){
+				$row[$i]=undef;
+			}
+			$raw_results_row = [];
+			push(@{$raw_results_row},\@row);
+		}
 		unshift( @{$modelfit -> raw_results()}, @{$raw_results_row} );
 
 		$self->raw_line_structure($modelfit -> raw_line_structure());
