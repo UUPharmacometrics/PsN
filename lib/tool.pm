@@ -1455,7 +1455,7 @@ sub create_raw_results_rows
 		# not $model->outputs->[0]->parsed_successfully.
 		# or not data_stored (0 problems or 0 subproblems in all problems)
 
-		my $mes = "run failed - Could not parse the output file: ".
+		my $mes = "Could not parse the output file: ".
 		$model->outputs->[0]->filename;
 		push( @{$return_rows[0]}, ($model_number,(1),(1),($mes)) );
 		push( @{$nonp_return_rows[0]}, ($model_number,(1),(1),($mes)) );
@@ -1693,7 +1693,7 @@ sub create_R_script
 		$template_file = $dir.$file;
 	}
 
-	if ($self->can("create_R_plots_code") and (-e $template_file)){
+	if (-e $template_file){
 		open( FILE, $template_file ) ||
 			croak("Could not open $template_file for reading" );
 		
@@ -1711,9 +1711,13 @@ sub create_R_script
 								plotcode => \@code,
 								model => $self->models->[0]);
 
-		$self->create_R_plots_code(rplot => $rplot);
+		$self->create_R_plots_code(rplot => $rplot) if ($self->can("create_R_plots_code"));
 		$rplot->make_plots;
+	}elsif (defined $self->template_file_rplots and length($self->template_file_rplots)>0){
+		print "\nWarning: template_file_rplots ".$self->template_file_rplots." does not exist, no R script will be produced\n";
 	}
+
+
 }
 
 no Moose;
