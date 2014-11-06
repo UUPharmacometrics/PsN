@@ -660,28 +660,29 @@ EOF
 EOF
     $help_hash{-rplots} = <<'EOF';
     <p class="style2">-rplots='integer'</p>
-    Automatically create R plots to visualize results, *only* for tools for which this feature is implemented.
-	For tools with rplots feature implemented, the R script will always be generated and saved in the main
+    Automatically create R plots to visualize results when a template file is available,
+	either provided by the user via option -template_file_rplots or in the default set of template files
+    for a subset of the PsN tools.
+    When a template file is available, the R script will always be generated and saved in the main
 	run directory. If R is configured in psn.conf or command 'R' is available and rplots is set > 0 the script will
     also be run and a number of pdf-format plots be created.
-	-rplots=0 means script is generated but not run 
+	-rplots=0 (default) means script is generated but not run 
 	-rplots=1 means basic plots are generated													  
 	-rplots=2 means basic and extended plots are generated													  
 EOF
     $help_hash{-template_directory_rplots} = <<'EOF';
     <p class="style2">-template_directory_rplots=path</p>
-    Default is R-script subdirectory of PsN installation directory. The directory where PsN will look
-	for default templates for the rplots feature.
+    PsN will first look for the rplots template file in the current working directory,
+	and then in the directory set with option -template_directory_rplots. 
+    The default value of this option is the R-script subdirectory of the PsN installation directory.
 EOF
     $help_hash{-template_file_rplots} = <<'EOF';
     <p class="style2">-template_file_rplots=file</p>
     When the rplots feature is used, the default template PsN will use is <toolname>_default.R,
 	for example scm_default.R. The user can choose a different template file
 	by setting option -template_file_rplots to a different file. 
-    If the filename is given without a path, or with a relative path,
-	PsN will first look for the file relative to the directory from which PsN was started, and after that relative
-	to the directory <template_directory_rplots> (see this option).
-
+	PsN will first look for the file relative to the current working directory, 
+	and after that in the -template_directory_rplots directory.
 EOF
 
     $help_hash{-nice} = <<'EOF';

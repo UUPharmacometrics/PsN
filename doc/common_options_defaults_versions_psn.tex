@@ -298,6 +298,40 @@ Default not used. The silent option redirects all messages that are normally pri
 \end{optionlist}
 
 
+\subsection{Auto-generated R-plots from PsN}
+PsN can automatically generate R plots to visualize results, if a template file is available.
+Some tools have default templates provided in the PsN installation package, but the
+user can also provide the template.
+PsN will create a preamble with some run specific information, and then append the template file.
+If the template file contains an old preamble, then that preamble will be replaced with the new one. This means
+the user can modify an old PsN-generated R script and then use this script as a new template,
+without having to remove the preamble.
+When a template file is available for the tool, the R script will always be generated and saved in the main
+run directory. If R is configured in psn.conf or command 'R' is available and option -rplots is set > 0 the script will
+also be run and a number of pdf-format plots be created.
+
+Most default templates depend on a couple of R libraries, often Xpose and/or ggplot. If required R libraries are not installed then
+no pdf will be generated. Check the .Rout file in the main run directory for error messages.
+\begin{optionlist}
+\optdefault{rplots}{level}
+-rplots=0 (default) means R script is generated but not run\\ 
+-rplots=1 means basic plots are generated\\													  
+-rplots=2 means basic and extended plots are generated\\													  
+\nextopt
+\optdefault{template\_file\_rplots}{file}
+When the rplots feature is used, the default template file PsN will use is <toolname>\_default.R,
+for example scm\_default.R. The user can choose a different template file
+by setting option -template\_file\_rplots to a different file. 
+PsN will first look for the file relative to the current working directory, 
+and after that in the -template\_directory\_rplots directory.
+\nextopt
+\optdefault{template\_directory\_rplots}{path}
+PsN will first look for the rplots template file in the current working directory,
+and then in the directory set with option -template\_directory\_rplots. 
+The default value of this option is the R-script subdirectory of the PsN installation directory.
+\nextopt
+\end{optionlist}
+
 \subsection{Retries in PsN}
 
 A NONMEM run is not always successful and sometimes it is possible to improve the results of the run. A simple procedure is to tweak the initial estimates of the parameters and see if changed starting condition gives better results. The -tweak\_inits option turns on this feature in PsN, and it is on by default. Then, if the minimization is terminated PsN will pick a random value within 10\% above or below each initial value, and run the model again with these new initial estimates. This is called a retry. PsN can do several retries, and each time the bounds is increased by 10\%. Note that PsN always respects the upper and lower bound set in the model file. 
