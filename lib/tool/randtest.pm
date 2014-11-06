@@ -195,7 +195,9 @@ sub modelfit_setup
 				$new_mod -> add_nonparametric_code;
 			}
 
-			$new_mod -> update_inits( from_output => $output );
+			if ($output -> have_output){
+				$new_mod -> update_inits( from_output => $output );
+			}
 			$new_mod -> _write;
 
 			push( @new_models, $new_mod );
