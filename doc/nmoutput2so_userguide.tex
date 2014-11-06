@@ -1,0 +1,119 @@
+\input{inputs/format_header.tex}
+\guidetitle{nmoutput2so user guide}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+The nmoutput2so script creates and populates a DDMoRe standardized output xml file given the output from a NONMEM run. It is necessary that the format of the model file and other files follow a set of requirements (see below) for this to work. 
+
+
+Examples
+\begin{verbatim}
+nmoutput2so model.lst
+\end{verbatim}
+
+\section{Input and options}
+
+\subsection{Required input}
+Required argument is a nonmem result file (.lst).
+
+
+\subsection{Optional input}
+
+\begin{optionlist}
+\optdefault{precision}{4}
+The number of significant digits to use for all numerical data in the standard output file.
+\nextopt
+\end{optionlist}
+
+\section{Requirements on the model file and other files}
+
+\subsection{Requirements on the model file}
+\begin{itemize}
+    \item All NONMEM parameters (THETAs, OMEGAs and SIGMAs) must have labels. A label is a one word (and only one word) comment on the same line as the definition of the initial estimate of the parameter. This means that all block definitions must be written on different rows. Example:
+        \begin{verbatim}
+            $OMEGA BLOCK(2)
+                1.2     ; PPV_CL
+                0.01    ; CORR_CL_V
+                0.1     ; PPV_V
+        \end{verbatim}
+    \item To be able to populate the Residuals and the Predictions entries an sdtab table must be specified. The name but not the orders of the columns is important. ID and TIME must be in the table. Other columns are optional. It is also important NOT to add NOAPPEND. The name of the file must start with "sdtab" Example:
+        \begin{verbatim}
+            $TABLE ID TIME IPRED IRES IWRES FILE=sdtab2
+        \end{verbatim}
+    \item To be able to populate the IndividualEstimates entry a patab table must be specified. NOAPPEND must be used and the order of the columns is important. The first column must be ID, then comes all individual parameters followed by the ETAs (see below). Example:
+        \begin{verbatim}
+            $TABLE ID CL V ETA_CL ETA_V NOAPPEND FILE=patab
+        \end{verbatim}
+    \item To be able to populate the RandomEffects entry all ETAs must be defined in the main code block (\$PK or \$PRED). One ETA should be defined per row with nothing more on the row (except for spaces) than one assignment. Example:
+        \begin{verbatim}
+            ETA_CL = ETA(1)
+            ETA_V = ETA(2)
+        \end{verbatim}
+\end{itemize}
+
+
+\subsection{Requirements on other files}
+\begin{itemize}
+    \item All nonmem result files must have the same filename (excluding extension) as the .lst file. If not it is impossible to pick up the results from the .ext, .cov, .cor files etc.
+\end{itemize}
+
+
+
+\section{Output}
+
+The resulting standardized output object xml will be written to the file called <name of .lst file>.so\_xml.
+
+The following entries will be populated:
+
+\begin{itemize}
+    \item Estimation
+        \begin{itemize}
+            \item PopulationEstimates
+            \begin{itemize}
+                \item MLE - Results will be taken from the .ext file if present otherwise the .lst file
+            \end{itemize}
+            \item PrecisionPopulationEstimates
+            \begin{itemize}
+                \item MLE
+                \begin{itemize}
+                    \item CovarianceMatrix - If the covariance step was successful. Results will be taken from the .cov file if present otherwise from the .lst file.
+                    \item CorrelationMatrix - If the covariance step was successful. Results will be taken from the .cor file if present otherwise from the .lst file.
+                    \item StandardError - Results will be taken from the .ext file if present otherwise the .lst file
+                    \item RelativeStandardError - Results will be taken from the .ext file if present otherwise the .lst file. The RSE is calculated has the ratio between the standard error and the estimated value of the parameter.
+                \end{itemize}
+            \end{itemize}
+            \item IndividualEstimates
+            \begin{itemize}
+                \item Estimates
+                \begin{itemize}
+                    \item Median - Calculated from the patab if created
+                \end{itemize}
+                \item RandomEffects
+                \begin{itemize}
+                    \item EffectMedian - Calculated from the patab if ETAs are named correctly
+                \end{itemize}
+            \end{itemize}
+            \item Residuals
+                \begin{itemize}
+                    \item RES - Taken from sdtab if present
+                    \item IRES - Taken from the sdtab if present
+                    \item WRES - Taken from the sdtab i f present
+                    \item IWRES - Taken from the sdtab if present
+                \end{itemize}
+            \item Predictions - Taken from the sdtab if present
+            \item Likelihood
+                \begin{itemize}
+                    \item Deviance - This is the NONMEM ofv value taken from the .lst file
+                \end{itemize}
+            \item TargetToolMessages
+                \begin{itemize}
+                    \item ElapsedTime - In seconds. Taken from the .lst file
+                \end{itemize}
+        \end{itemize}
+\end{itemize}
+
+
+\end{document}

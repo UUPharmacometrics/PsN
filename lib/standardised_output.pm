@@ -11,6 +11,7 @@ use XML::Writer;
 use output;
 use data;
 use array;
+use IO::File;
 
 has 'output' => ( is => 'rw', isa => 'output' );
 has 'model' => ( is => 'rw', isa => 'model' );
@@ -21,7 +22,15 @@ sub BUILD
 {
     my $self = shift;
 
-    my $writer = new XML::Writer(DATA_MODE => 1, DATA_INDENT => 2);  # will write to stdout
+    my $filename = $self->output->filename;
+    if ($filename =~ /(.*)\..*/) {
+        $filename = $1 . '.so_xml';
+    } else {
+        $filename .= '.so_xml';
+    }
+    my $output_file = IO::File->new(">" . $filename);
+
+    my $writer = new XML::Writer(OUTPUT => $output_file, DATA_MODE => 1, DATA_INDENT => 2);
     $writer->xmlDecl("UTF-8");
 
     $self->_writer($writer);
