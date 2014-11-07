@@ -366,7 +366,6 @@ sub parse
                     ignoresign => '@',
                     parse_header => 1,
                 );
-                # FIXME: Check that columns exists
                 $self->_add_predictions(sdtab => $sdtab);
                 $self->_add_residuals(sdtab => $sdtab);
             }
@@ -529,6 +528,12 @@ sub _add_predictions
     my $sdtab = $parm{'sdtab'};
 
     my $writer = $self->_writer;
+
+    if (not (exists $sdtab->column_head_indices->{'ID'} and exists $sdtab->column_head_indices->{'TIME'}
+        and exists $sdtab->column_head_indices->{'PRED'} and exists $sdtab->column_head_indices->{'IPRED'})) {
+        return;
+    }
+
     my $id = $sdtab->column_to_array(column => "ID");
     my $time = $sdtab->column_to_array(column => "TIME");
     my $pred = $sdtab->column_to_array(column => "PRED");
@@ -555,55 +560,68 @@ sub _add_residuals
     my $sdtab = $parm{'sdtab'};
 
     my $writer = $self->_writer;
+
+    if (not (exists $sdtab->column_head_indices->{'ID'} and exists $sdtab->column_head_indices->{'TIME'})) {
+        return;
+    }
+
     my $id = $sdtab->column_to_array(column => "ID");
     my $time = $sdtab->column_to_array(column => "TIME");
-    my $res = $sdtab->column_to_array(column => "RES");
-    my $ires = $sdtab->column_to_array(column => "IRES");
-    my $wres = $sdtab->column_to_array(column => "WRES");
-    my $iwres = $sdtab->column_to_array(column => "IWRES");
 
     $writer->startTag("Residuals");
 
-    $writer->startTag("RES");
-    $self->add_table(
-        column_ids => [ "ID", "TIME", "RES" ],
-        column_types => [ "id", "undefined", "undefined" ],
-        column_valuetypes =>  [ "id", "real", "real" ],
-        values => [ $id, $time, $res ],
-    );
-    $writer->endTag("RES");
+    if (exists $sdtab->column_head_indices->{'RES'}) {
+        my $res = $sdtab->column_to_array(column => "RES");
+        $writer->startTag("RES");
+        $self->add_table(
+            column_ids => [ "ID", "TIME", "RES" ],
+            column_types => [ "id", "undefined", "undefined" ],
+            column_valuetypes =>  [ "id", "real", "real" ],
+            values => [ $id, $time, $res ],
+        );
+        $writer->endTag("RES");
+    }
 
-    $writer->startTag("IRES");
-    $self->add_table(
-        column_ids => [ "ID", "TIME", "IRES" ],
-        column_types => [ "id", "undefined", "undefined" ],
-        column_valuetypes =>  [ "id", "real", "real" ],
-        values => [ $id, $time, $ires ],
-    );
-    $writer->endTag("IRES");
+    if (exists $sdtab->column_head_indices->{'IRES'}) {
+        my $ires = $sdtab->column_to_array(column => "IRES");
+        $writer->startTag("IRES");
+        $self->add_table(
+            column_ids => [ "ID", "TIME", "IRES" ],
+            column_types => [ "id", "undefined", "undefined" ],
+            column_valuetypes =>  [ "id", "real", "real" ],
+            values => [ $id, $time, $ires ],
+        );
+        $writer->endTag("IRES");
+    }
 
-    $writer->startTag("WRES");
-    $self->add_table(
-        column_ids => [ "ID", "TIME", "WRES" ],
-        column_types => [ "id", "undefined", "undefined" ],
-        column_valuetypes =>  [ "id", "real", "real" ],
-        values => [ $id, $time, $wres ],
-    );
-    $writer->endTag("WRES");
+    if (exists $sdtab->column_head_indices->{'WRES'}) {
+        my $wres = $sdtab->column_to_array(column => "WRES");
+        $writer->startTag("WRES");
+        $self->add_table(
+            column_ids => [ "ID", "TIME", "WRES" ],
+            column_types => [ "id", "undefined", "undefined" ],
+            column_valuetypes =>  [ "id", "real", "real" ],
+            values => [ $id, $time, $wres ],
+        );
+        $writer->endTag("WRES");
+    }
 
-    $writer->startTag("IWRES");
-    $self->add_table(
-        column_ids => [ "ID", "TIME", "IWRES" ],
-        column_types => [ "id", "undefined", "undefined" ],
-        column_valuetypes =>  [ "id", "real", "real" ],
-        values => [ $id, $time, $iwres ],
-    );
-    $writer->endTag("IWRES");
+    if (exists $sdtab->column_head_indices->{'IWRES'}) {
+        my $iwres = $sdtab->column_to_array(column => "IWRES");
+        $writer->startTag("IWRES");
+        $self->add_table(
+            column_ids => [ "ID", "TIME", "IWRES" ],
+            column_types => [ "id", "undefined", "undefined" ],
+            column_valuetypes =>  [ "id", "real", "real" ],
+            values => [ $id, $time, $iwres ],
+        );
+        $writer->endTag("IWRES");
+    }
 
     $writer->endTag("Residuals");
 }
 
-sub _individual_medians
+sub _individual_statistics
 {
     # Calculate the median of each individual and return in individual order 
 
@@ -615,6 +633,7 @@ sub _individual_medians
     my $parameter = $parm{'parameter'};
 
     my @medians = ();
+    my @means = ();
 
     my $current_id = $id->[0];
     my $row = 0;
@@ -626,12 +645,14 @@ sub _individual_medians
             $row++;
         }
         my $median = array::median(\@a);
+        my $mean = array::mean(\@a);
         push @medians, $median;
+        push @means, $mean;
         $current_id = $id->[$row];
         @a = ();
     }
 
-    return \@medians;
+    return (\@medians, \@means);
 }
 
 sub _add_individual_estimates
@@ -644,6 +665,9 @@ sub _add_individual_estimates
 
     my $writer = $self->_writer;
     my $eta_names = $self->_get_eta_names;
+    if (not exists $patab->column_head_indices->{'ID'}) {
+        return;
+    }
     my $id = $patab->column_to_array(column => "ID");
 
     my @labels = ();
@@ -656,9 +680,10 @@ sub _add_individual_estimates
 
     my @parameters;
     my @medians;
+    my @means;
     for (my $i = 0; $i < scalar(@labels); $i++) {
         $parameters[$i] = $patab->column_to_array(column => $labels[$i]);
-        $medians[$i] = _individual_medians(id => $id, parameter => $parameters[$i]);
+        ($medians[$i], $means[$i]) = _individual_statistics(id => $id, parameter => $parameters[$i]);
     }
     my $unique_ids = array::unique($id);
 
@@ -666,7 +691,6 @@ sub _add_individual_estimates
     $writer->startTag("Estimates");
 
     $writer->startTag("Median");
-
     $self->add_table(
         column_ids => [ "ID", @labels ],
         column_types => [ "id", ("undefined") x scalar(@labels) ],
@@ -675,27 +699,56 @@ sub _add_individual_estimates
     );
     $writer->endTag("Median");
 
+    $writer->startTag("Mean");
+    $self->add_table(
+        column_ids => [ "ID", @labels ],
+        column_types => [ "id", ("undefined") x scalar(@labels) ],
+        column_valuetypes => [ "id", ("real") x scalar(@labels) ],
+        values => [ $unique_ids, @means ],
+    );
+    $writer->endTag("Mean");
+
     $writer->endTag("Estimates");
 
-    if (scalar(@$eta_names) > 0) {      # FIXME: Also check that they are in the table
-        my @etas;
-        my @eta_medians;
-        for (my $i = 0; $i < scalar(@$eta_names); $i++) {
-            $etas[$i] = $patab->column_to_array(column => $eta_names->[$i]);
-            $eta_medians[$i] = _individual_medians(id => $id, parameter => $etas[$i]);
+    if (scalar(@$eta_names) > 0) {
+        # Filter out etas that does not exist in the patab
+        my $temp_etas = [];
+        foreach my $eta (@$eta_names) {
+            if (exists $patab->column_head_indices->{$eta}) {
+                push @$temp_etas, $eta;
+            }
+        }
+        $eta_names = $temp_etas;
+
+        my @eta_medians = ();
+        my @eta_means = ();
+        foreach my $eta (@$eta_names) {
+            my $column = $patab->column_to_array(column => $eta);
+            (my $median, my $mean) = _individual_statistics(id => $id, parameter => $column);
+            push @eta_medians, $median;
+            push @eta_means, $mean;
         }
 
         $writer->startTag("RandomEffects");
-        $writer->startTag("EffectMedian");
 
+        $writer->startTag("EffectMedian");
         $self->add_table(
             column_ids => [ "ID", @$eta_names ],
             column_types => [ "id", ("undefined") x scalar(@$eta_names) ],
             column_valuetypes => [ "id", ("real") x scalar(@$eta_names) ],
             values => [ $unique_ids, @eta_medians ],
         );
-
         $writer->endTag("EffectMedian");
+
+        $writer->startTag("EffectMean");
+        $self->add_table(
+            column_ids => [ "ID", @$eta_names ],
+            column_types => [ "id", ("undefined") x scalar(@$eta_names) ],
+            column_valuetypes => [ "id", ("real") x scalar(@$eta_names) ],
+            values => [ $unique_ids, @eta_means ],
+        );
+        $writer->endTag("EffectMean");
+
         $writer->endTag("RandomEffects");
     }
     $writer->endTag("IndividualEstimates");
