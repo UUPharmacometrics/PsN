@@ -472,7 +472,7 @@ Model for original data:
 	\item Any \$SIMULATION record is removed.
 	\item any \$COVARIANCE record is removed
 	\item If an lst-file was given on command-line, the initial estimates are changed to the values in the lst-file. 
-	\item If neither an lst-file nor an MSFO-file was specified on the command-line, but an lst-file is found when replacing .mod with .lst in the model file name, the initial estimates are changed to the values in that lst-file.
+	\item If neither an lst-file nor an MSFO-file was specified on the command-line, but an lst-file is found when replacing the extension with .lst in the model file name, the initial estimates are changed to the values in that lst-file.
 	\item If an MSFO-file was specified on command-line, a \$MSFI record is added and records \$THETA, \$OMEGA, \$SIGMA are removed.  
 	\item Any \$SCATTERPLOT record is removed.
 	\item In \$ESTIMATION record, if it exists, MAXEVAL is set to 0 or corresponding for  NONMEM7 (see section NPC and VPC with NONMEM7, and PsN\_and\_NONMEM7.pdf). 
@@ -500,7 +500,7 @@ Model for original data:
 	\item Any \$SIMULATION record is removed.
 	\item Any \$COVARIANCE record is removed
 	\item If an lst-file was given on command-line, the initial estimates are changed to the values in the lst-file. 
-	\item If neither an lst-file nor an MSFO-file was specified on the command-line, but an lst-file is found when replacing .mod with .lst in the model file name, the initial estimates are changed to the values in that lst-file.
+	\item If neither an lst-file nor an MSFO-file was specified on the command-line, but an lst-file is found when replacing the model file name extension with .lst, the initial estimates are changed to the values in that lst-file.
 	\item If an MSFO-file was specified on command-line, a \$MSFI record is added and records \$THETA, \$OMEGA, \$SIGMA are removed.  
 	\item Any \$SCATTERPLOT record is removed.
 	\item In \$ESTIMATION record, if it exists, MAXEVAL is set to 0 or corresponding for  NONMEM7 (see section NPC and VPC with NONMEM7, and PsN\_and\_NONMEM7.pdf).
@@ -514,9 +514,17 @@ Model for simulated data:
 	\item In \$ESTIMATION record, if it exists, option MSFO is removed.
 	\item Any \$TABLE record is removed, and a new one is added.
 	\item Any \$COVARIANCE record is removed
-	\item If an lst-file was given on command-line, the initial estimates are changed to the values in the lst-file. 
-	\item If neither an lst-file nor an MSFO-file was specified on the command-line, but an lst-file is found when replacing .mod with .lst in the model file name, the initial estimates are changed to the values in that lst-file.
+	\item If an lst-file was given on command-line with option -lst\_file, 
+the initial estimates are changed to the values in the lst-file. This is done even when a separate simulation model is given with option -sim\_model.
 	\item If an MSFO-file was specified on command-line, a \$MSFI record is added and records \$THETA, \$OMEGA, \$SIGMA are removed.  
+	\item If -flip\_comments is used and neither an lst-file nor an MSFO-file was specified on the command-line, 
+but an lst-file is found for the input model (when replacing the model file extension 
+with .lst in the model file name), 
+the initial estimates are changed to the values in that lst-file.
+	\item If -sim\_model is used and neither an lst-file nor an MSFO-file was specified on the command-line, 
+but an lst-file is found for -sim\_model 
+(when replacing the model file extension with .lst in the -sim\_model file name), 
+the initial estimates are changed to the values in that lst-file.
 	\item Any \$SCATTERPLOT record is removed.
 	\item In \$SIMULATION all random seeds are replaced.      
 	\item In \$SIMULATION, option NSUBPROBLEMS is set to number of samples.
