@@ -342,11 +342,12 @@ if ( defined $options{'alternative_models'} ){
   #split string, assume comma separated
   foreach my $altfile (split(/,/,$options{'alternative_models'})){
     if (length($altfile)>0){
-      my $alternative_model = model ->
-	  new ( eval( $eval_string ),
-		filename => $altfile,
-		ignore_missing_output_files => 1);
-      push(@alternatives,$alternative_model);
+		my $alternative_model = model ->
+			new ( eval( $eval_string ),
+				  filename => $altfile,
+				  ignore_missing_output_files => 1,
+				  ignore_missing_data => 1);
+		push(@alternatives,$alternative_model);
     }
   }
   if (scalar(@alternatives)<1){
