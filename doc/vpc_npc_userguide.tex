@@ -2,7 +2,6 @@
 \guidetitle{VPC and NPC user guide}
 %review Kajsa 2014-05-19
 
-
 \begin{document}
 
 \maketitle
@@ -87,10 +86,10 @@ is optional, only allowed when -stratify\_on is used. See subsection Stratificat
 is optional, only allowed when stratify\_on is used, not allowed in combination with -no\_of\_strata. See subsection Stratification options.  
 \nextopt
 \optdefault{tte}{variable}
-is an optional argument, but it is required to assume (repeated) time-to-event type models. Cannot be used together with option -mirror, -censor, -predcorr, -varcorr,  -lnDV, -uloq, -lloq or -boxcox\_lambda. The tte-variable needs to be defined in the simulation model and must take the value 0 if the observation is not an event and non-zero if it is an event (including events and censored events). PsN will add the tte-variable to \$TABLE of the simulation model (not the original data model). PsN will format the output differently compared to a regular vpc, to specifically suit the kaplan.plot functionality in Xpose (e.g. filtering of simulation output based on tte-variable). See section VPC for Time-to-event models below.   
+is an optional argument, but it is required to assume (repeated) time-to-event type models. Cannot be used together with option -mirror, -censor, -predcorr, -varcorr,  -lnDV, -uloq, -lloq or -boxcox\_lambda. The tte-variable needs to be defined in the simulation model and must take the value 0 if the observation is not an event and non-zero if it is an event (including events and censored events). PsN will add the tte-variable to \mbox{\$TABLE} of the simulation model (not the original data model). PsN will format the output differently compared to a regular vpc, to specifically suit the kaplan.plot functionality in Xpose (e.g. filtering of simulation output based on tte-variable). See section VPC for Time-to-event models below.   
 \nextopt
 \optdefault{sim\_model}{file}
-is optional. Cannot be used together with -flip\_comments, -keep\_estimation or -noprediction. By default PsN will create a simulation model based on the  required input model, but by using option -sim\_model it is possible to use a separate input model for the simulations. PsN will remove \$COV and \$TABLE, change SEED and NSUBS in \$SIM, add a new \$TABLE and  update initial estimates if option -lst\_file is set or add \$MSFI if option -msfo\_file is used, but otherwise no changes will be made to the user defined simulation model. See section Modified models. Note that -lst\_file will be set automatically if a file with the same name as the regular input model but with suffix lst intead of mod is found. 
+is optional. Cannot be used together with -flip\_comments, \mbox{-keep\_estimation} or -noprediction. By default PsN will create a simulation model based on the  required input model, but by using option -sim\_model it is possible to use a separate input model for the simulations. PsN will remove \$COV and \mbox{\$TABLE}, change SEED and NSUBS in \$SIM, add a new \mbox{\$TABLE} and  update initial estimates if option -lst\_file is set or add \$MSFI if option -msfo\_file is used, but otherwise no changes will be made to the user defined simulation model. See section Modified models. Note that -lst\_file will be set automatically if a file with the same name as the regular input model but with suffix lst intead of mod is found. 
 \nextopt
 \optname{flip\_comments}
 is optional. Cannot be used together with -sim\_model, -keep\_estimation or -noprediction. By default PsN will create a simulation model based on the  required input model, but option -flip\_comments invokes a method for handling user-defined simulation code in the required input model. If option is set, PsN will create the simulation model by flipping comments (commented lines will be uncommented and vice versa) between the tags
@@ -118,10 +117,10 @@ ACCEPT(TYPE.EQ.1)
 The tags may appear multiple times. Note that the tags must look exactly  as above or the editing will fail. When creating the simulation model PsN will remove \$COV and \$TABLE, change SEED and NSUBS in \$SIM, add a new \$TABLE and  update initial estimates if option -lst\_file is set or add \$MSFI if option -msfo\_file is used, but otherwise no changes will be made to the code. See section Modified models.\\
 \nextopt
 \optdefault{dv}{variable}
-is optional, default is DV. If a synonym for DV is set in \$INPUT, the synonym must be set as the dependent variable on the commandline, -dv=$<$synonym$>$. 
+is optional, default is DV. If a synonym for DV is set in \mbox{\$INPUT}, the synonym must be set as the dependent variable on the commandline, -dv=$<$synonym$>$. 
 \nextopt
 \optname{keep\_estimation}
-is optional, by default not set. If this option is set, a post-hoc evaluation step is performed for each simulated dataset (\$ESTIMATION is kept and MAXEVALS is set to 0). Note that in this case variables such as IPRED(F) are based on the re-estimated post-hoc parameters. Also note that in earlier program versions keep\_estimation was set or unset automatically, see section Additional rules and logic 3). 
+is optional, by default not set. If this option is set, a post-hoc evaluation step is performed for each simulated dataset (\mbox{\$ESTIMATION} is kept and MAXEVALS is set to 0). Note that in this case variables such as IPRED(F) are based on the re-estimated post-hoc parameters. Also note that in earlier program versions keep\_estimation was set or unset automatically, see section Additional rules and logic 3). 
 \nextopt
 \optname{noprediction}
 is optional, by default not set. If set, NOPREDICTION will be added to the \$SIMULATION record of the simulation model, in addition to ONLYSIMULATION. This option is generally recommended with likelihood models for odd type data (i.e. -2LOGLIKELIHOOD or LIKELIHOOD in \$ESTIMATION). It is not allowed to use -noprediction in combination with the option \mbox{-keep\_estimation}. 
@@ -133,10 +132,10 @@ is optional, only allowed when -sim\_table is also used. Give tablefile with ori
 is optional, only allowed when -orig\_table is also used. Give tablefile with simulated data as input directly instead of letting the program generate them.  The header must be exactly as if generated by PsN, for example the first column must be ID, and the TABLE NO lines as expected from NONMEM simulation table files must be present.
 \nextopt
 \optdefault{n\_simulation\_models}{N}
-is optional, default is 1. The default 1 means all simulations are run in the same modelfile. By setting this option to a number N greater than 1, the 'samples' simulations will be split equally between N model files, which can be run in parallel. This option cannot be used together with option -sim\_table or, if the NONMEM version $<$ 7, together with -dv=CWRES. Important: Two runs will give different results if -n\_simulation\_models are set to different numbers even if the -seed option is the same. This is because the random number generator of NONMEM will change state when reading the seed from the \$SIM record from a new simulation modelfile. This state change does not occur when NONMEM simply continues simulating from the same modelfile. 
+is optional, default is 1. The default 1 means all simulations are run in the same modelfile. By setting this option to a number N greater than 1, the 'samples' simulations will be split equally between N model files, which can be run in parallel. This option cannot be used together with option \mbox{-sim\_table} or, if the NONMEM version $<$ 7, together with -dv=CWRES. Important: Two runs will give different results if -n\_simulation\_models are set to different numbers even if the -seed option is the same. This is because the random number generator of NONMEM will change state when reading the seed from the \$SIM record from a new simulation modelfile. This state change does not occur when NONMEM simply continues simulating from the same modelfile. 
 \nextopt
 \optdefault{censor}{variable}
-is optional, default not used. Name of variable which defines whether the observation of the dependent variable is missing, e.g. due to drop-out. 1 means the observation is censored, 0 means the observation is not censored. The variable must be requestable in \$TABLE. This option is not applicable for time-to-event data, please read the section 'VPC for time-to-event models'. This option should not be used for observations that are above or below the level of quantification, then options -lloq and -uloq should be used in combination with a special simulation model and, possibly, a modified input data set, see section Handling BQL data.  
+is optional, default not used. Name of variable which defines whether the observation of the dependent variable is missing, e.g. due to drop-out. 1 means the observation is censored, 0 means the observation is not censored. The variable must be requestable in \$TABLE. This option is not applicable for time-to-event data, please read the section 'VPC for time-to-event models'. This option should not be used for observations that are above or below the level of quantification, then options \mbox{-lloq} and -uloq should be used in combination with a special simulation model and, possibly, a modified input data set, see section Handling BQL data.  
 \nextopt
 \optdefault{confidence\_interval}{CC}
 is optional, default is 95. The confidence interval in percent. 
@@ -178,7 +177,7 @@ optional, the lower limit of quantification for left censored data. Specific for
 optional, the upper limit of quantification for right censored data. Specific for VPC. 
 \nextopt
 \optdefault{levels}{number1,number2}
-optional, the boundaries for a categorization. Category 1$<$=number1 $<$ category 2 $<$= number2, etc. Specific for VPC. 
+optional, the boundaries for a categorization. Category 1 $\leq$ number1 $<$ category 2 $\leq$ number2, etc. Specific for VPC. 
 \nextopt
 \optname{predcorr}
 optional. Perform prediction correction of dependent variable values. Specific for VPC. For details see section VPC predcorr and varcorr below. If the dependent variable is log transformed or has a lower bound not equal to 0 it can be important to specify the optional variables -lnDV and lower\_bound (see below). The predcorr feature will not work well if there is an upper bound, e.g. when the dependent variable is logit transformed. 
@@ -217,12 +216,12 @@ the absolute path must not be too long, since NONMEM will not accept more than 8
 
 
 \subsection{Simulation input details}
-The option -samples is required. The scripts does not allow -samples to be smaller than 20, but in order for the analysis to produce meaningful results samples needs to be much larger. No model estimation is performed for the simulated datasets, except for a post-hoc estimation step in case -keep\_estimation is set (then MAXEVALS=0 in \$ESTIMATION). There are five ways of choosing which parameter values are to be used in the simulations: 
+The option -samples is required. The scripts does not allow -samples to be smaller than 20, but in order for the analysis to produce meaningful results samples needs to be much larger. No model estimation is performed for the simulated datasets, except for a post-hoc estimation step in case \mbox{-keep\_estimation} is set (then MAXEVALS=0 in \$ESTIMATION). There are five ways of choosing which parameter values are to be used in the simulations: 
 
 \begin{enumerate}
 	\item Default: the initial estimates from the lst-file with the same name as the modelfile but with .mod replaced with .lst, e.g. run123.lst if the modelfile is run123.mod. If no such lst-file exists the estimates from the modelfile are used.
-	\item the final estimates from a lst-file whose name is not the modelfile name with .mod replaced with .lst: use command-line option -lst\_file=$\langle$filename$\rangle$
-	\item the final estimates from an msfo-file: use command-line option -msfo\_file=$<$filename$>$
+    \item the final estimates from a lst-file whose name is not the modelfile name with .mod replaced with .lst: use command-line option \mbox{-lst\_file}
+    \item the final estimates from an msfo-file: use command-line option \mbox{-msfo\_file}
 	\item final estimates from a raw\_results file, e.g. from a bootstrap. This method implies using a different set of estimates for each sample. 
 	\item parameter estimates drawn from a prior distribution defined using \$PRIOR in the input/simulation model.
 \end{enumerate}
