@@ -86,37 +86,12 @@ EOF
 common_options::online_help('nmoutput2so', \%options, \%help_text, \%required_options, \%optional_options);
 
 if (scalar(@ARGV) != 1) {
-  print "A lst file must be specified. Use 'stdoutput -h' for help.\n";
+  print "An lst file must be specified. Use 'nmoutput2so -h' for help.\n";
   exit;
 }
 
-
-## Start processing the files
-my $outfile = $ARGV[0];
-
-## Check that the output file exist before trying to read it. (To
-## avoid displaying the usual cryptic PsN error message).
-if (not -e $outfile) {
-    die "The file: $outfile does not exist.\n\n";
-}
-
-my $output = output->new('filename' => $outfile);
-
-if (not $output->parsed_successfully) {
-    die "Unable to read everything from outputfile, parser error message:\n" . $output->parsing_error_message;
-}
-
-my $model = model->new(problems => $output->control_stream_problems,
-					   filename => 'dummy',
-					   is_dummy => 1,
-					   ignore_missing_data => 1,
-					   ignore_missing_files =>1,
-					   ignore_missing_output =>1);
-
-
 my $so = standardised_output->new(
-    output => $output,
-    model => $model,
+    output_filename => $ARGV[0],
     precision => $options{'precision'},
 );
 

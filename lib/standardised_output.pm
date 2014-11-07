@@ -13,22 +13,26 @@ use data;
 use array;
 use IO::File;
 
-has 'output' => ( is => 'rw', isa => 'output' );
-has 'model' => ( is => 'rw', isa => 'model' );
+has 'output_filename' => ( is => 'rw', isa => 'Str' );
 has 'precision' => (is => 'rw', isa => 'Int' );
+has '_output' => ( is => 'rw', isa => 'output' );
+has '_model' => ( is => 'rw', isa => 'model' );
 has '_writer' => ( is => 'rw', isa => 'Ref' ); 
 
 sub BUILD
 {
     my $self = shift;
 
-    my $filename = $self->output->filename;
-    if ($filename =~ /(.*)\..*/) {
-        $filename = $1 . '.so_xml';
+
+
+    my $so_filename = $self->output_filename;
+
+    if ($so_filename =~ /(.*)\..*/) {
+        $so_filename = $1 . '.so_xml';
     } else {
-        $filename .= '.so_xml';
+        $so_filename .= '.so_xml';
     }
-    my $output_file = IO::File->new(">" . $filename);
+    my $output_file = IO::File->new(">" . $so_filename);
 
     my $writer = new XML::Writer(OUTPUT => $output_file, DATA_MODE => 1, DATA_INDENT => 2);
     $writer->xmlDecl("UTF-8");
@@ -191,9 +195,54 @@ sub add_matrix
 sub parse
 {
     my $self = shift;
+
     my $writer = $self->_writer;
-    my $outobj = $self->output;
-	my $model = $self->model;
+
+    $writer->startTag("SO",
+        'xmlns' => "http://www.pharmml.org/2013/03/StandardisedOutput",
+        'xmlns:xsi' => "http://www.w3.org/2001/XMLSchema-instance",
+        'xmlns:ds' => "http://www.pharmml.org/2013/08/Dataset",
+        'xmlns:ct' => "http://www.pharmml.org/2013/03/CommonTypes",
+        'xsi:schemaLocation' => "http://www.pharmml.org/2013/03/StandardisedOutput",
+        'implementedBy' => "MJS",
+        'writtenVersion' => "0.1",
+        'id' => "i1",
+    );
+    $writer->startTag("SOBlock", "blkId" => "SO1");
+    $writer->startTag("Estimation");
+
+
+    # Check that the output file exist before trying to read it.
+    if (not -e $self->output_filename) {
+        $self->_add_target_tool_messages(error => "The file: " . $self->output_filename . " does not exist");
+        $writer->endTag("Estimation");
+        $writer->endTag("SOBlock");
+        $writer->endTag("SO");
+        $writer->end();
+        return;
+    }
+
+    my $outobj = output->new(filename => $self->output_filename);
+    $self->_output($outobj);
+    if (not $self->_output->parsed_successfully) {
+        $self->_add_target_tool_messages(error => "Unable to read everything from outputfile, parser error message: " . $outobj->parsing_error_message);
+        $writer->endTag("Estimation");
+        $writer->endTag("SOBlock");
+        $writer->endTag("SO");
+        $writer->end();
+        return;
+    }
+
+    my $model = model->new(
+        problems => $outobj->control_stream_problems,
+        filename => 'dummy',
+        is_dummy => 1,
+        ignore_missing_data => 1,
+        ignore_missing_files => 1,
+        ignore_missing_output => 1
+    );
+    $self->_model($model);
+
 
 	my $eta_shrinkage = $outobj->shrinkage_eta();
 	my $eps_shrinkage = $outobj->shrinkage_eps();
@@ -292,23 +341,6 @@ sub parse
 		}
 	}
 
-
-    $writer->startTag("SO",
-        'xmlns' => "http://www.pharmml.org/2013/03/StandardisedOutput",
-        'xmlns:xsi' => "http://www.w3.org/2001/XMLSchema-instance",
-        'xmlns:ds' => "http://www.pharmml.org/2013/08/Dataset",
-        'xmlns:ct' => "http://www.pharmml.org/2013/03/CommonTypes",
-        'xsi:schemaLocation' => "http://www.pharmml.org/2013/03/StandardisedOutput",
-        'implementedBy' => "MJS",
-        'writtenVersion' => "0.1",
-        'id' => "i1",
-    );
-
-
-    $writer->startTag("SOBlock", "blkId" => "SO1");
-
-    $writer->startTag("Estimation");
-
     $self->_add_population_estimates(labels => \@all_labels, values => \@est_values);
 
 	if (scalar(@se_values) > 0) {
@@ -324,12 +356,12 @@ sub parse
 	}
 
     # Loop through the different tables
-	my ($table_name_ref, $dummy) = $self->model->problems->[$problems]->_option_val_pos(record_name => 'table', name => 'FILE');
+	my ($table_name_ref, $dummy) = $self->_model->problems->[$problems]->_option_val_pos(record_name => 'table', name => 'FILE');
 	if (defined $table_name_ref and scalar @{$table_name_ref} >= 0) {
         foreach my $table (@$table_name_ref) {
             if ($table =~ /^sdtab/) {
                 my $sdtab = data->new(
-                    directory => $self->model->directory,
+                    directory => $self->_model->directory,
                     filename => $table,
                     ignoresign => '@',
                     parse_header => 1,
@@ -340,7 +372,7 @@ sub parse
             }
             if ($table =~ /^patab/) {
                 my $patab = data->new(
-                    directory => $self->model->directory,
+                    directory => $self->_model->directory,
                     filename => $table,
                     ignoresign => '@',
                     parse_header => 1,
@@ -369,10 +401,10 @@ sub _get_eta_names
     my @names;
 
    	my @code;
-	if ($self->model->has_code(record => 'pk')) {
-		@code = @{$self->model->get_code(record => 'pk')};
+	if ($self->_model->has_code(record => 'pk')) {
+		@code = @{$self->_model->get_code(record => 'pk')};
 	} else {
-		@code = @{$self->model->get_code(record => 'pred')};
+		@code = @{$self->_model->get_code(record => 'pred')};
 	}
 
     foreach my $line (@code) {
@@ -449,18 +481,26 @@ sub _add_precision_population_estimates
 sub _add_target_tool_messages
 {
     my $self = shift;
+    my %parm = validated_hash(\@_,
+        error => { isa => 'Str', optional => 1 },
+    );
+    my $error = $parm{'error'};
 
     my $writer = $self->_writer;
 
     $writer->startTag("TargetToolMessages");
 
-    $writer->dataElement("Termination", '');
-    $writer->dataElement("Warnings", '');
-    $writer->dataElement("Errors", '');
+    if (defined $error) {
+        $writer->dataElement("Errors", $error);
+    } else {
+        #$writer->dataElement("Termination", '');
+        #$writer->dataElement("Warnings", '');
+        #$writer->dataElement("Errors", '');
 
-    $self->output->runtime =~ m/(\d+):(\d+):(\d+)/;
-    my $seconds = $1 * 3600 + $2 * 60 + $3;
-    $writer->dataElement("ElapsedTime", $seconds);
+        $self->_output->runtime =~ m/(\d+):(\d+):(\d+)/;
+        my $seconds = $1 * 3600 + $2 * 60 + $3;
+        $writer->dataElement("ElapsedTime", $seconds);
+    }
 
     $writer->endTag("TargetToolMessages");
 }
