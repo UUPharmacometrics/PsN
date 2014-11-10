@@ -306,14 +306,16 @@ PsN will create a preamble with some run specific information, and then append t
 If the template file contains an old preamble, then that preamble will be replaced with the new one. This means
 the user can modify an old PsN-generated R script and then use this script as a new template,
 without having to remove the preamble.
-When a template file is available for the tool, the R script will always be generated and saved in the main
-run directory. If R is configured in psn.conf or command 'R' is available and option -rplots is set > 0 the script will
+When a template file is available for the tool and option -rplots is 0 or positive, 
+the R script will be generated and saved in the main
+run directory. If R is configured in psn.conf or command 'R' is available and option -rplots is positive the script will
 also be run and a number of pdf-format plots be created.
 
 Most default templates depend on a couple of R libraries, often Xpose and/or ggplot. If required R libraries are not installed then
 no pdf will be generated. Check the .Rout file in the main run directory for error messages.
 \begin{optionlist}
 \optdefault{rplots}{level}
+-rplots<0 means R script is not generated\\ 
 -rplots=0 (default) means R script is generated but not run\\ 
 -rplots=1 means basic plots are generated\\													  
 -rplots=2 means basic and extended plots are generated\\													  

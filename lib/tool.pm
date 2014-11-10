@@ -1664,6 +1664,8 @@ sub create_R_script
 {
 	my $self = shift;
 
+	return if ($self->rplots < 0);
+
 	unless (defined $self->template_directory_rplots){
 		$self->template_directory_rplots($PsN::lib_dir . '/R-scripts');
 	}

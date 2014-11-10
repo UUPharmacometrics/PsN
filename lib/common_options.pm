@@ -666,6 +666,7 @@ EOF
     When a template file is available, the R script will always be generated and saved in the main
 	run directory. If R is configured in psn.conf or command 'R' is available and rplots is set > 0 the script will
     also be run and a number of pdf-format plots be created.
+	-rplots<0 means no script is generated
 	-rplots=0 (default) means script is generated but not run 
 	-rplots=1 means basic plots are generated													  
 	-rplots=2 means basic and extended plots are generated													  
