@@ -1,5 +1,5 @@
 package model::problem;
-#use Carp;
+
 use include_modules;
 use Data::Dumper;
 my @print_order_omega_before_pk = ('sizes','problem','input','bind','data','abbreviated','msfi','contr','subroutine','prior','thetap','thetapv','omegap','omegapd','sigmap','sigmapd','model','tol','infn','omega','anneal','pk','level','aesinitial','aes','des','error','pred','mix','theta','thetai','thetar','sigma','etas','phis','simulation','estimation','covariance','nonparametric','table','scatter');
@@ -18,12 +18,9 @@ foreach my $record_name( @print_order,'warnings','finedata' ){
 	my $uc_short_type = _get_uc_short_type($record_name);
 	$abbreviations{$uc_short_type} = $record_name;
 }
-#foreach my $rec (){
-#    $unsupported_records{$rec}=1;
-#}
 
-
-sub _get_uc_short_type{
+sub _get_uc_short_type
+{
 	my $record_name = shift;
 
 	# As of NM7.3 there are many THETA variants, and the default handling
@@ -280,304 +277,6 @@ sub BUILD
 
 		$self -> tbs_transform();
 	}
-}
-
-
-sub add_nonparametric
-{
-	my ($self, %parm) = validated_hash(@_, 
-		init_data => {isa => 'Any', optional => 0}
-	);
-	$self->nonparametrics([]) unless defined $self->nonparametrics;
-	push( @{$self->nonparametrics}, model::problem::nonparametric->new( %{$parm{'init_data'}} ) );
-}
-
-sub add_theta
-{
-	my ($self, %parm) = validated_hash(@_, 
-		init_data => {isa => 'Any', optional => 0}
-	);
-	$self->thetas([]) unless defined $self->thetas;
-	push( @{$self->thetas}, model::problem::theta->new( %{$parm{'init_data'}} ) );
-}
-
-sub add_sigma
-{
-	my ($self, %parm) = validated_hash(@_, 
-		init_data => {isa => 'Any', optional => 0}
-	);
-	$self->sigmas([]) unless defined $self->sigmas;
-	push( @{$self->sigmas}, model::problem::sigma->new( %{$parm{'init_data'}} ) );
-}
-
-sub add_omega
-{
-	my ($self, %parm) = validated_hash(@_, 
-		init_data => {isa => 'Any', optional => 0}
-	);
-	$self->omegas([]) unless defined $self->omegas;
-	push( @{$self->omegas}, model::problem::omega->new( %{$parm{'init_data'}} ) );
-}
-
-sub add_tol
-{
-	my ($self, %parm) = validated_hash(@_, 
-		init_data => {isa => 'Any', optional => 0}
-	);
-	$self->tols([]) unless defined $self->tols;
-	push( @{$self->tols}, model::problem::tol->new( %{$parm{'init_data'}} ) );
-}
-
-sub add_estimation
-{
-	my ($self, %parm) = validated_hash(@_, 
-		init_data => {isa => 'Any', optional => 0}
-	);
-	$self->estimations([]) unless defined $self->estimations;
-	push( @{$self->estimations}, model::problem::estimation->new( %{$parm{'init_data'}} ) );
-}
-
-sub add_pred
-{
-	my ($self, %parm) = validated_hash(@_, 
-		init_data => {isa => 'Any', optional => 0}
-	);
-	$self->preds([]) unless defined $self->preds;
-	push( @{$self->preds}, model::problem::pred->new( %{$parm{'init_data'}} ) );
-}
-
-sub add_mix
-{
-	my ($self, %parm) = validated_hash(@_, 
-		init_data => {isa => 'Any', optional => 0}
-	);
-	$self->mixs([]) unless defined $self->mixs;
-	push( @{$self->mixs}, model::problem::mix->new( %{$parm{'init_data'}} ) );
-}
-
-sub add_aesinitial
-{
-	my ($self, %parm) = validated_hash(@_, 
-		init_data => {isa => 'Any', optional => 0}
-	);
-	$self->aesinitials([]) unless defined $self->aesinitials;
-	push( @{$self->aesinitials}, model::problem::aesinitial->new( %{$parm{'init_data'}} ) );
-}
-
-sub add_prior
-{
-	my ($self, %parm) = validated_hash(@_, 
-		init_data => {isa => 'Any', optional => 0}
-	);
-	$self->priors([]) unless defined $self->priors;
-	push( @{$self->priors}, model::problem::prior->new( %{$parm{'init_data'}} ) );
-}
-
-sub add_table
-{
-	my ($self, %parm) = validated_hash(@_, 
-		init_data => {isa => 'Any', optional => 0}
-	);
-	$self->tables([]) unless defined $self->tables;
-	push( @{$self->tables}, model::problem::table -> new ( %{$parm{'init_data'}} ) );
-}
-
-sub add_simulation
-{
-	my ($self, %parm) = validated_hash(@_, 
-		init_data => {isa => 'Any', optional => 0}
-	);
-	$self->simulations([]) unless defined $self->simulations;
-	push( @{$self->simulations}, model::problem::simulation -> new ( %{$parm{'init_data'}} ) );
-}
-
-sub add_bind
-{
-	my ($self, %parm) = validated_hash(@_, 
-		init_data => {isa => 'Any', optional => 0}
-	);
-	$self->binds([]) unless defined $self->binds;
-	push( @{$self->binds}, model::problem::bind->new( %{$parm{'init_data'}} ) );
-}
-
-sub add_etas
-{
-	my ($self, %parm) = validated_hash(@_, 
-		init_data => {isa => 'Any', optional => 0}
-	);
-	$self->etass([]) unless defined $self->etass;
-	push( @{$self->etass}, model::problem::etas -> new ( %{$parm{'init_data'}} ) );
-}
-
-sub add_level
-{
-	my ($self, %parm) = validated_hash(@_, 
-		init_data => {isa => 'Any', optional => 0}
-	);
-	$self->levels([]) unless defined $self->levels;
-	push( @{$self->levels}, model::problem::level -> new ( %{$parm{'init_data'}} ) );
-}
-
-sub add_phis
-{
-	my ($self, %parm) = validated_hash(@_, 
-		init_data => {isa => 'Any', optional => 0}
-	);
-	$self->phiss([]) unless defined $self->phiss;
-	push( @{$self->phiss}, model::problem::phis -> new ( %{$parm{'init_data'}} ) );
-}
-
-sub add_anneal
-{
-	my ($self, %parm) = validated_hash(@_, 
-		init_data => {isa => 'Any', optional => 0}
-	);
-	$self->anneals([]) unless defined $self->anneals;
-	push( @{$self->anneals}, model::problem::anneal -> new ( %{$parm{'init_data'}} ) );
-}
-
-sub add_scatter
-{
-	my ($self, %parm) = validated_hash(@_, 
-		init_data => {isa => 'Any', optional => 0}
-	);
-	$self->scatters([]) unless defined $self->scatters;
-	push( @{$self->scatters}, model::problem::scatter -> new ( %{$parm{'init_data'}} ) );
-}
-
-sub add_sizes
-{
-	my ($self, %parm) = validated_hash(@_, 
-		init_data => {isa => 'Any', optional => 0}
-	);
-	$self->sizess([]) unless defined $self->sizess;
-	push( @{$self->sizess}, model::problem::sizes -> new ( %{$parm{'init_data'}} ) );
-}
-
-sub add_msfi
-{
-	my ($self, %parm) = validated_hash(@_, 
-		init_data => {isa => 'Any', optional => 0}
-	);
-	$self->msfis([]) unless defined $self->msfis;
-	push( @{$self->msfis}, model::problem::msfi -> new ( %{$parm{'init_data'}} ) );
-}
-
-sub add_model
-{
-	my ($self, %parm) = validated_hash(@_, 
-		init_data => {isa => 'Any', optional => 0}
-	);
-	$self->models([]) unless defined $self->models;
-	push( @{$self->models}, model::problem::model -> new ( %{$parm{'init_data'}} ) );
-}
-
-sub add_contr
-{
-	my ($self, %parm) = validated_hash(@_, 
-		init_data => {isa => 'Any', optional => 0}
-	);
-	$self->contrs([]) unless defined $self->contrs;
-	push( @{$self->contrs}, model::problem::contr -> new ( %{$parm{'init_data'}} ) );
-}
-
-sub add_abbreviated
-{
-	my ($self, %parm) = validated_hash(@_, 
-		init_data => {isa => 'Any', optional => 0}
-	);
-	$self->abbreviateds([]) unless defined $self->abbreviateds;
-	push( @{$self->abbreviateds}, model::problem::abbreviated -> new ( %{$parm{'init_data'}} ) );
-}
-
-sub add_aes
-{
-	my ($self, %parm) = validated_hash(@_, 
-		init_data => {isa => 'Any', optional => 0}
-	);
-	$self->aess([]) unless defined $self->aess;
-	push( @{$self->aess}, model::problem::aes -> new ( %{$parm{'init_data'}} ) );
-}
-
-sub add_pk
-{
-	my ($self, %parm) = validated_hash(@_, 
-		init_data => {isa => 'Any', optional => 0}
-	);
-	$self->pks([]) unless defined $self->pks;
-	push( @{$self->pks}, model::problem::pk -> new ( %{$parm{'init_data'}} ) );
-}
-
-sub add_des
-{
-	my ($self, %parm) = validated_hash(@_, 
-		init_data => {isa => 'Any', optional => 0}
-	);
-	$self->dess([]) unless defined $self->dess;
-	push( @{$self->dess}, model::problem::des -> new ( %{$parm{'init_data'}} ) );
-}
-
-sub add_error
-{
-	my ($self, %parm) = validated_hash(@_, 
-		init_data => {isa => 'Any', optional => 0}
-	);
-	$self->errors([]) unless defined $self->errors;
-	push( @{$self->errors}, model::problem::error -> new ( %{$parm{'init_data'}} ) );
-}
-
-sub add_covariance
-{
-	my ($self, %parm) = validated_hash(@_, 
-		init_data => {isa => 'Any', optional => 0}
-	);
-	$self->covariances([]) unless defined $self->covariances;
-	push( @{$self->covariances}, model::problem::covariance -> new ( %{$parm{'init_data'}} ) );
-}
-
-sub add_infn
-{
-	my ($self, %parm) = validated_hash(@_, 
-		init_data => {isa => 'Any', optional => 0}
-	);
-	$self->infns([]) unless defined $self->infns;
-	push( @{$self->infns}, model::problem::infn -> new ( %{$parm{'init_data'}} ) );
-}
-
-sub add_subroutine
-{
-	my ($self, %parm) = validated_hash(@_, 
-		init_data => {isa => 'Any', optional => 0}
-	);
-	$self->subroutines([]) unless defined $self->subroutines;
-	push( @{$self->subroutines}, model::problem::subroutine -> new ( %{$parm{'init_data'}} ) );
-}
-
-sub add_data
-{
-	my ($self, %parm) = validated_hash(@_, 
-		init_data => {isa => 'Any', optional => 0}
-	);
-	$self->datas([]) unless defined $self->datas;
-	push( @{$self->datas}, model::problem::data -> new ( %{$parm{'init_data'}} ) );
-}
-
-sub add_input
-{
-	my ($self, %parm) = validated_hash(@_, 
-		init_data => {isa => 'Any', optional => 0}
-	);
-	$self->inputs([]) unless defined $self->inputs;
-	push( @{$self->inputs}, model::problem::input -> new ( %{$parm{'init_data'}} ) );
-}
-
-sub add_problem
-{
-	my ($self, %parm) = validated_hash(@_, 
-		init_data => {isa => 'Any', optional => 0}
-	);
-	$self->problems([]) unless defined $self->problems;
-	push( @{$self->problems}, model::problem::problem -> new ( %{$parm{'init_data'}} ) );
 }
 
 sub add_prior_distribution
@@ -843,7 +542,6 @@ sub set_random_inits
 		}
 	}
 }
-
 
 sub record_count
 {
@@ -1431,8 +1129,6 @@ sub header
 
 	return \@header;
 }
-
-
 
 sub remove_option
 {
@@ -2106,7 +1802,6 @@ sub get_matrix
 	return \@new_matrix;
 
 }
-
 
 sub get_filled_omega_matrix
 {
