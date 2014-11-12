@@ -3,6 +3,7 @@
 *.zip
 *.swp
 PsN-Source/*
+nmoutput2so/*
 doc/*.aux
 doc/*.log
 doc/*.pdf

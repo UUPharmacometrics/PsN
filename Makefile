@@ -139,7 +139,7 @@ PDFFILES=$(TEXFILES:.tex=.pdf)
 .PHONY : clean
 
 clean:
-	@-rm -rf $(DOCUMENTS) PsN-Source psn_test_package.zip development/completion_files doc/*.aux doc/*.log doc/*.pdf doc/inputs/*eps-converted-to.pdf PsN-Source.tar.gz PsN-Source.zip
+	@-rm -rf $(DOCUMENTS) nmoutput2so nmoutput2so.zip PsN-Source psn_test_package.zip development/completion_files doc/*.aux doc/*.log doc/*.pdf doc/inputs/*eps-converted-to.pdf PsN-Source.tar.gz PsN-Source.zip
 
 doc/%.pdf: doc/%.tex
 	cd doc; pdflatex $*.tex >/dev/null; pdflatex $*.tex >/dev/null
@@ -165,6 +165,14 @@ release: completion rel_dir $(RELFILES) $(PDFFILES)
 	@ chmod -R a+r PsN-Source/test/test_files
 	@ zip -r PsN-Source PsN-Source/
 	@ tar czf PsN-Source.tar.gz PsN-Source/
+
+# Release the nmoutput2so separately
+nmoutput2so:
+	@ mkdir nmoutput2so
+	@ mkdir nmoutput2so/bin
+	@ cp bin/nmoutput2so nmoutput2so/bin
+	@ cp -r lib/ nmoutput2so
+	@ zip -r nmoutput2so nmoutput2so/
 
 documentation: doc/*.pdf $(PDFFILES)
 	@ cd PsN-Source/doc/; zip PsN_pdf_documentation *.pdf *.xls *.scm
