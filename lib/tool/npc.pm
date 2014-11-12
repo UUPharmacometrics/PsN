@@ -5361,6 +5361,40 @@ sub subset_npc_analyze
 	return \@result_values ,\@real_positions ,\@stats_warnings;
 }
 
+sub create_R_plots_code{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+							  rplot => { isa => 'rplots', optional => 0 }
+		);
+	my $rplot = $parm{'rplot'};
+
+
+	my ($dirt, $vpctab) = OSspecific::absolute_path('',$self->vpctab_filename);
+
+	my $loqstring = 'FALSE';
+	if (defined $self->lloq or defined $self->uloq){
+		$loqstring = 'TRUE';
+	}
+	my $censorstring = 'FALSE';
+	if (defined $self->censor){
+		$censorstring = 'TRUE';
+	}
+	my $categorical = 'FALSE';
+	if ($self->categorized){
+		$categorical = 'TRUE';
+	}
+
+	$rplot->libraries(['xpose4']);
+	$rplot->add_preamble(code => [
+							 "vpctab <- '".$vpctab."'",
+							 'have.loq.data <- '.$loqstring,							 
+							 'have.censored <- '.$censorstring,							 
+							 'is.categorical <- '.$categorical,							 
+						 ]);
+
+}
+
+
 no Moose;
 __PACKAGE__->meta->make_immutable;
 1;
