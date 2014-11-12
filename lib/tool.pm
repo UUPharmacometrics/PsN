@@ -141,6 +141,7 @@ has 'rplots' => ( is => 'rw', isa => 'Int', default => 0 );
 has 'template_directory_rplots' => ( is => 'rw', isa => 'Str');
 has 'template_file_rplots' => ( is => 'rw', isa => 'Str');
 has 'standardised_output' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'subset_variable_rplots' => ( is => 'rw', isa => 'Str');
 
 
 sub BUILDARGS
@@ -1711,6 +1712,7 @@ sub create_R_script
 								raw_results_file => $self->raw_results_file->[0],
 								tool_results_file => $self->results_file,
 								plotcode => \@code,
+								subset_variable => $self->subset_variable_rplots,
 								model => $self->models->[0]);
 
 		$self->create_R_plots_code(rplot => $rplot) if ($self->can("create_R_plots_code"));

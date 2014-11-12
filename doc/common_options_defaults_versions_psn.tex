@@ -313,6 +313,8 @@ also be run and a number of pdf-format plots be created.
 
 Most default templates depend on a couple of R libraries, often Xpose and/or ggplot. If required R libraries are not installed then
 no pdf will be generated. Check the .Rout file in the main run directory for error messages.
+The default execute template relies on Xpose-type tables being created via \$TABLE, such as sdtab, patab and cotab with
+the correct run number. See the Xpose documentation for setting up such table files.
 \begin{optionlist}
 \optdefault{rplots}{level}
 -rplots<0 means R script is not generated\\ 
@@ -331,6 +333,12 @@ and after that in the -template\_directory\_rplots directory.
 PsN will first look for the rplots template file in the current working directory,
 and then in the directory set with option -template\_directory\_rplots. 
 The default value of this option is the R-script subdirectory of the PsN installation directory.
+\nextopt
+\optdefault{subset\_variable\_rplots}{variable name}
+Default not set. The user can specify a subset variable to be used with the rplots feature. This variable
+will, if set, be used in for example the execute default R template to create separate plots for
+subsets of the data, via xpose options 'subset' and 'by'. The user must ensure that the variable
+is printed to one of the xpose tables, for example sdtab.
 \nextopt
 \end{optionlist}
 

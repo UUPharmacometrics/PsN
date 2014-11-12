@@ -114,3 +114,7 @@ if (rplots.level > 0){
     }
     
 }
+
+if (rplots.level > 0){
+    dev.off()
+}

@@ -120,3 +120,7 @@ if (rplots.level > 0){
     
     print(p)
 }
+
+if (rplots.level > 0){
+    dev.off()
+}

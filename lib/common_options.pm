@@ -78,6 +78,7 @@ Getopt::Long::config("auto_abbrev");
 		  "slurm_partition:s",
 		  "template_file_rplots:s",
 		  "template_directory_rplots:s",
+		  "subset_variable_rplots:s",
 		  "threads:i",
 		  "torque_queue:s",
 		  "torque_prepend_flags:s",
@@ -684,6 +685,13 @@ EOF
 	by setting option -template_file_rplots to a different file. 
 	PsN will first look for the file relative to the current working directory, 
 	and after that in the -template_directory_rplots directory.
+EOF
+    $help_hash{-subset_variable_rplots} = <<'EOF';
+    <p class="style2">-subset_variable_rplots=name</p>
+    Default not set. The user can specify a subset variable to be used with the rplots feature. This variable
+	will, if set, be used in for example the execute default R template to create separate plots for
+	subsets of the data, via xpose options 'subset' and 'by'. The user must ensure that the variable
+	is printed to one of the xpose tables, for example sdtab.
 EOF
 
     $help_hash{-nice} = <<'EOF';

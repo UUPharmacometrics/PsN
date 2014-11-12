@@ -23,6 +23,7 @@ has 'standard_preamble' => ( is => 'rw', isa => 'ArrayRef[Str]',default => sub{ 
 has 'extra_preamble' => ( is => 'rw', isa => 'ArrayRef[Str]',default => sub{ [] } );
 has 'plotcode' => ( is => 'rw', isa => 'ArrayRef[Str]', required => 1);
 has 'libraries' => ( is => 'rw', isa => 'ArrayRef[Str]',default => sub{ [] } );
+has 'subset_variable' => (is => 'rw', isa => 'Str' );
 
 our $preambleline = '#WHEN THIS FILE IS USED AS A TEMPLATE THIS LINE MUST LOOK EXACTLY LIKE THIS';
 
@@ -105,6 +106,9 @@ sub setup
 		$self->pdf_title($self->toolname().' diagnostic plots'.$runstr);
 	}
 
+	my $subsetstring = 'NULL';
+	$subsetstring = $self->subset_variable if (defined $self->subset_variable and length($self->subset_variable)>0);
+
 	my @arr =(
 		 'rplots.level <- '.$self->level(),
 		 "xpose.runno <- '".$runno."'",
@@ -115,6 +119,7 @@ sub setup
 		 "raw.results.file <- '".$self->raw_results_file."'",
 		 "model.directory<-'".$dir."'",
 		 "model.filename<-'".$modelfile."'",
+		 "subset.variable<-'".$subsetstring."'",
 		 "mod.suffix <- '".$modSuffix."'",
 		 "mod.prefix <- '".$modPrefix."'",
 		 "tab.suffix <- '".$tabSuffix."'"
@@ -249,10 +254,6 @@ sub print_R_script
 	print SCRIPT join("\n",@printcode)."\n";
 	print SCRIPT "\n";
 
-	my @final =('if (rplots.level > 0){',
-				$self->indent().'dev.off()',
-				'}');
-	print SCRIPT join("\n",@final)."\n";
 	close SCRIPT;
 }
 

@@ -17,4 +17,7 @@ if (rplots.level > 1){
     print(bootplots[2:4]) #SEs ofv eigenvalues
 }
 
+if (rplots.level > 0){
+    dev.off()
+}
 
