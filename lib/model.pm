@@ -4753,7 +4753,11 @@ sub _read_problems
 		# a line to search. Which is all cases but the very last loop
 		# iteration.
 
-		if ( $i > $#modelfile or (( /^\s*\$PROB/ and $prev_was_not_sizes) or (/^\s*\$SIZ/ and $prev_was_not_sizes) ) ) {
+        if (/^\s*\$SIZ/ and not $first) {
+            croak("\$SIZES must be the first record in a model file");
+        }
+
+		if ($i > $#modelfile or ((/^\s*\$PROB/ and $prev_was_not_sizes) or (/^\s*\$SIZ/ and $prev_was_not_sizes))) {
 			$end_index = $i;
 
 			# The if statement here is only necessary in the first loop
