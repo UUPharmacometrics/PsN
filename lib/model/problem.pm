@@ -2551,8 +2551,10 @@ sub create_print_order
         if (defined $self->$attribute and scalar(@{$self->$attribute}) > 0) {
             my $in_order = find(\@order, $record);
             if (not defined $in_order) {
+                # $SIZES first
                 if ($record eq 'sizes') {
                     unshift @order, $record;
+                # $SIMULATION before $ESTIMATION else at the end
                 } elsif ($record eq 'simulation') {
                     my $est_pos = find(\@order, 'estimation');
                     if (defined $est_pos) {
@@ -2560,23 +2562,43 @@ sub create_print_order
                     } else {
                         push @order, $record;
                     }
-                } elsif ($record eq 'msfi') {
+                # $PRIOR and $MSFI directly after $DATA and $INPUT
+                } elsif ($record eq 'prior' or $record eq 'msfi') {
                     my $data_pos = find(\@order, 'data');
                     my $input_pos = find(\@order, 'input');
+                    my $bind_pos = find(\@order, 'bind');
                     if (not defined $data_pos) {
                         if (not defined $input_pos) {
                             push @order, $record;
                         } else {
-                            splice @order, $input_pos, 0, $record;
+                            if (defined $bind_pos) {
+                                splice @order, $bind_pos, 0, $record;
+                            } else {
+                                splice @order, $input_pos, 0, $record;
+                            }
                         }
                     } else {
                         if (not defined $input_pos) {
                             splice @order, $data_pos, 0, $record;
                         } else {
-                           my $at = $data_pos > $input_pos ? $data_pos : $input_pos;
-                           splice @order, $at, 0, $record; 
+                            if (defined $bind_pos) {
+                                my $at = $data_pos > $bind_pos ? $data_pos : $input_pos;
+                                splice @order, $at + 1, 0, $record; 
+                            } else {
+                                my $at = $data_pos > $input_pos ? $data_pos : $input_pos;
+                                splice @order, $at + 1, 0, $record; 
+                            }
                         }
                     }
+                # $BIND directly after $INPUT else at the end
+                } elsif ($record eq 'bind') {
+                    my $input_pos = find(\@order, 'input');
+                    if (defined $input_pos) {
+                        splice @order, $input_pos + 1, 0, $record;
+                    } else {
+                        push @order, $record;
+                    }
+                # Default rule. Put record at the end
                 } else {
                     push @order, $record;
                 }
