@@ -2,7 +2,7 @@
 
 use strict;
 use warnings;
-use Test::More tests=>69;
+use Test::More;
 use FindBin qw($Bin);
 use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages
@@ -174,5 +174,11 @@ $omega_mat = $problem->get_record_matrix(type => 'omega',
 										 row_format => 0);
 
 cmp_ok($omega_mat->[0]->[0],'==',0.506, "get_record_matrix col 0,0");
+
+# own_print_order and create_print_order
+my $model = model->new(filename => "$modeldir/pheno.mod");
+my $problem = $model->problems->[0];
+
+is_deeply ($problem->own_print_order, [ 'problem', 'input', 'data', 'subroutine', 'pk', 'error', 'theta', 'omega', 'sigma', 'estimation', 'covariance', 'table' ], "own_print_order");
 
 done_testing();

@@ -185,9 +185,9 @@ has 'own_print_order' => ( is => 'rw', isa => 'Maybe[ArrayRef]' );
 
 sub BUILD
 {
-	my $self  = shift;
+	my $self = shift;
 
-	unless ( defined $self->problems ) {
+	unless (defined $self->problems) {
 		# Parse given problem lines.
 		$self -> _read_records();
 
@@ -1583,8 +1583,8 @@ sub _read_records
 			$record_index = $i;
 		}  
 	}
-	$self->own_print_order(\@local_print_order);
 
+    $self->own_print_order(\@local_print_order);
 }
 
 sub check_start_eta
@@ -2520,6 +2520,73 @@ sub _normalize_record_name
 
 	return $normalized_name;
 }
+
+sub create_print_order
+{
+    my $self = shift;
+    my %parm = validated_hash(\@_,
+        own_print_order => { isa => 'ArrayRef', optional => 0 }
+    );
+    my $own_print_order = $parm{'own_print_order'};   
+
+    sub find
+    {
+        my $a = shift;
+        my $record = shift;
+
+        my $i = 0;
+        foreach my $e (@$a) {
+            if ($e eq $record) {
+                return $i;
+            }
+            $i++;
+        }
+        return undef;
+    }
+
+    my @order = @$own_print_order;
+
+    foreach my $record (@print_order) {
+        my $attribute = $record . 's';
+        if (defined $self->$attribute and scalar(@{$self->$attribute}) > 0) {
+            my $in_order = find(\@order, $record);
+            if (not defined $in_order) {
+                if ($record eq 'sizes') {
+                    unshift @order, $record;
+                } elsif ($record eq 'simulation') {
+                    my $est_pos = find(\@order, 'estimation');
+                    if (defined $est_pos) {
+                        splice @order, $est_pos, 0, $record;
+                    } else {
+                        push @order, $record;
+                    }
+                } elsif ($record eq 'msfi') {
+                    my $data_pos = find(\@order, 'data');
+                    my $input_pos = find(\@order, 'input');
+                    if (not defined $data_pos) {
+                        if (not defined $input_pos) {
+                            push @order, $record;
+                        } else {
+                            splice @order, $input_pos, 0, $record;
+                        }
+                    } else {
+                        if (not defined $input_pos) {
+                            splice @order, $data_pos, 0, $record;
+                        } else {
+                           my $at = $data_pos > $input_pos ? $data_pos : $input_pos;
+                           splice @order, $at, 0, $record; 
+                        }
+                    }
+                } else {
+                    push @order, $record;
+                }
+            }
+        }
+    }
+
+    return \@order;
+}
+
 
 no Moose;
 __PACKAGE__->meta->make_immutable;
