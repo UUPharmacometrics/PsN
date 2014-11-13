@@ -139,21 +139,6 @@ sub copy_test_files
 	}
 }
 
-sub is_array
-{
-	my $func = shift;
-	my $facit = shift;
-	my $label = shift;
-
-	is (scalar(@{$func}), scalar(@{$facit}), "$label, equal length");
-
-	my $min = scalar(@{$func});
-	$min = scalar(@{$facit}) if (scalar(@{$facit}) < $min);
-	for (my $i = 0; $i < $min; $i++) {
-		is ($func->[$i], $facit->[$i], "$label, index $i");
-	}	
-}
-
 sub _parse_course_file
 {
 	my $file = shift;

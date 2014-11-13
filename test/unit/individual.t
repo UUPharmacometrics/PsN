@@ -2,7 +2,7 @@
 
 use strict;
 use warnings;
-use Test::More tests=>3;
+use Test::More;
 use Test::Exception;
 use FindBin qw($Bin);
 use lib "$Bin/.."; #location of includes.pm
@@ -14,7 +14,6 @@ my $ind = data::individual->new(idcolumn => 1, subject_data => ['1,0.0000e0,1.00
 
 #factors
 my %factors = %{$ind->factors(column => 2)};
-is_array([sort keys %factors], ['0.0000e0', '1.0000e0'], "data::individual->factors");
-
+is_deeply([sort keys %factors], ['0.0000e0', '1.0000e0'], "data::individual->factors");
 
 done_testing;

@@ -23,26 +23,6 @@ our $file_dir = $includes::testfiledir;
 use File::Spec;
 open STDERR, '>', File::Spec->devnull();		# Silence STDERR
 
-sub is_array
-{
-	my $func=shift;
-	my $facit=shift;
-	my $label=shift;
-
-	is (scalar(@{$func}),scalar(@{$facit}),"$label, equal length");
-
-	my $min = scalar(@{$func});
-	$min = scalar(@{$facit}) if (scalar(@{$facit})< $min);
-	for (my $i = 0; $i < $min; $i++) {
-		if ($facit->[$i] eq 'NA') {
-			cmp_ok($func->[$i], 'eq', $facit->[$i], "$label, index $i");
-		} else {
-			cmp_ok($func->[$i], '==', $facit->[$i], "$label, index $i");
-		}
-	}		
-
-}
-
 sub get_stats
 {
 	open( STAT, '<'."$dir/covariate_statistics.txt" );

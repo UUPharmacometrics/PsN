@@ -4,7 +4,7 @@
 
 use strict;
 use warnings;
-use Test::More tests=> 484;
+use Test::More;
 use Test::Exception;
 use File::Path 'rmtree';
 use FindBin qw($Bin);

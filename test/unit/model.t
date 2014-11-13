@@ -2,7 +2,7 @@
 
 use strict;
 use warnings;
-use Test::More tests=>184;
+use Test::More;
 use FindBin qw($Bin);
 use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages
@@ -66,9 +66,9 @@ ok (!$model->is_option_set(record => 'input', name => 'OPEL'), "is_option_set \$
 my @header = ('method','model','problem','significant_digits','minimization_successful','covariance_step_successful','ofv');
 my @filter = ('minimization_successful.eq.1','significant_digits.gt.4','problem.lt.2','covariance_step_successful.ne.0');
 my ($indices,$relations,$value) = model::setup_filter(filter => \@filter, header => \@header);
-is_array($indices,[4,3,2,5], "setup_filter method, finding columns");
-is_array($relations,['==','>','<','!='], "setup_filter method, finding relations");
-is_array($value,[1,4,2,0], "setup_filter method, finding values");
+is_deeply($indices,[4,3,2,5], "setup_filter method, finding columns");
+is_deeply($relations,['==','>','<','!='], "setup_filter method, finding relations");
+is_deeply($value,[1,4,2,0], "setup_filter method, finding values");
 
 @filter = ('method.eq.bootstrap');
 ($indices,$relations,$value) = model::setup_filter(filter => \@filter, header => \@header, string_filter => 1);
@@ -78,14 +78,14 @@ is ($value->[0],'bootstrap',"setup_filter method, method value");
 
 #method get_rawres_parameter_indices
 my $hashref = model::get_rawres_parameter_indices(filename => $modeldir.'/raw_results_structure_for_model_test');
-is_array($hashref->{'theta'},[20,21],'method get_rawres_parameter_indices 1, theta');
-is_array($hashref->{'omega'},[22,23],'method get_rawres_parameter_indices 1, omega');
-is_array($hashref->{'sigma'},[24],'method get_rawres_parameter_indices 1, sigma');
+is_deeply($hashref->{'theta'},[20,21],'method get_rawres_parameter_indices 1, theta');
+is_deeply($hashref->{'omega'},[22,23],'method get_rawres_parameter_indices 1, omega');
+is_deeply($hashref->{'sigma'},[24],'method get_rawres_parameter_indices 1, sigma');
 $hashref = model::get_rawres_parameter_indices(filename => 'raw_results_structure_for_model_test',
 											   directory => $modeldir);
-is_array($hashref->{'theta'},[20,21],'method get_rawres_parameter_indices 2, theta');
-is_array($hashref->{'omega'},[22,23],'method get_rawres_parameter_indices 2, omega');
-is_array($hashref->{'sigma'},[24],'method get_rawres_parameter_indices 2, sigma');
+is_deeply($hashref->{'theta'},[20,21],'method get_rawres_parameter_indices 2, theta');
+is_deeply($hashref->{'omega'},[22,23],'method get_rawres_parameter_indices 2, omega');
+is_deeply($hashref->{'sigma'},[24],'method get_rawres_parameter_indices 2, sigma');
 
 #get_rawres_params method
 #here $model must still refer to pheno.mod, otherwise test will fail
@@ -211,16 +211,16 @@ $dummy->filename('model');
 is($dummy->create_output_filename, 'model.lst', "create_output_filename no extension");
 
 $model = model->new(filename => "$modeldir/mox_sir_block2.mod");
-is_array($model->fixed_or_same(parameter_type => 'theta')->[0],[0,0,0,0,0],'fixed or same theta ');
-is_array($model->fixed_or_same(parameter_type => 'omega')->[0],[0,0,0,0],'fixed or same omega ');
-is_array($model->same(parameter_type => 'omega')->[0],[0,0,0,0],'same omega 1');
-is_array($model->fixed_or_same(parameter_type => 'sigma')->[0],[1],'fixed or same sigma ');
-is_array($model->same(parameter_type => 'sigma')->[0],[0],'same sigma 1');
+is_deeply($model->fixed_or_same(parameter_type => 'theta')->[0],[0,0,0,0,0],'fixed or same theta ');
+is_deeply($model->fixed_or_same(parameter_type => 'omega')->[0],[0,0,0,0],'fixed or same omega ');
+is_deeply($model->same(parameter_type => 'omega')->[0],[0,0,0,0],'same omega 1');
+is_deeply($model->fixed_or_same(parameter_type => 'sigma')->[0],[1],'fixed or same sigma ');
+is_deeply($model->same(parameter_type => 'sigma')->[0],[0],'same sigma 1');
 
 $model = model->new(filename => "$modeldir/tbs1.mod");
-is_array($model->fixed_or_same(parameter_type => 'omega')->[0],[0,0,0,0,0,1,0,1],'fixed or same omega 2');
-is_array($model->fixed_or_same(parameter_type => 'sigma')->[0],[1],'fixed or same sigma 2');
-is_array($model->same(parameter_type => 'omega')->[0],[0,0,0,0,0,1,0,1],'same omega 2');
-is_array($model->same(parameter_type => 'sigma')->[0],[0],'same sigma 2');
+is_deeply($model->fixed_or_same(parameter_type => 'omega')->[0],[0,0,0,0,0,1,0,1],'fixed or same omega 2');
+is_deeply($model->fixed_or_same(parameter_type => 'sigma')->[0],[1],'fixed or same sigma 2');
+is_deeply($model->same(parameter_type => 'omega')->[0],[0,0,0,0,0,1,0,1],'same omega 2');
+is_deeply($model->same(parameter_type => 'sigma')->[0],[0],'same sigma 2');
 
 done_testing();

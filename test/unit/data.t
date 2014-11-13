@@ -5,7 +5,7 @@
 
 use strict;
 use warnings;
-use Test::More tests=>206;
+use Test::More;
 use Test::Exception;
 use Math::Random;
 use FindBin qw($Bin);
@@ -32,38 +32,38 @@ my $dotdata = data->new(
 
 
 # Test of reconcile_column
-is_array ($data->reconcile_column(template_values=>[1,2,3,4], old_values=> [1,1,1], equal_obs =>1), [1,2,3], 
+is_deeply ($data->reconcile_column(template_values=>[1,2,3,4], old_values=> [1,1,1], equal_obs =>1), [1,2,3], 
    "reconcile_column equal_obs template longer");
-is_array ($data->reconcile_column(template_values=>[1,2,3], old_values=> [1,1,1,1], equal_obs =>1), [1,2,3,3], 
+is_deeply ($data->reconcile_column(template_values=>[1,2,3], old_values=> [1,1,1,1], equal_obs =>1), [1,2,3,3], 
    "reconcile_column equal_obs template shorter");
-is_array ($data->reconcile_column(template_values=>[1,2,3], old_values=> [1,1,1], equal_obs =>1), [1,2,3], 
+is_deeply ($data->reconcile_column(template_values=>[1,2,3], old_values=> [1,1,1], equal_obs =>1), [1,2,3], 
    "reconcile_column equal_obs template equal");
-is_array ($data->reconcile_column(template_values=>[1,'.',3], old_values=> [1,1,1], equal_obs =>1), [1,'.',3], 
+is_deeply ($data->reconcile_column(template_values=>[1,'.',3], old_values=> [1,1,1], equal_obs =>1), [1,'.',3], 
    "reconcile_column equal_obs template equal with dots");
-is_array ($data->reconcile_column(template_values=>[0,2,2], old_values=> [5,5,1], equal_obs =>0), [0,0,2], 
+is_deeply ($data->reconcile_column(template_values=>[0,2,2], old_values=> [5,5,1], equal_obs =>0), [0,0,2], 
    "reconcile_column not equal_obs template equal");
-is_array ($data->reconcile_column(template_values=>[0,0,0], old_values=> [8,8,1], equal_obs =>0), [0,0,0], 
+is_deeply ($data->reconcile_column(template_values=>[0,0,0], old_values=> [8,8,1], equal_obs =>0), [0,0,0], 
    "reconcile_column not equal_obs template shorter");
-is_array ($data->reconcile_column(template_values=>[0,1,1,2], old_values=> [3,3,4], equal_obs =>0), [0,0,1], 
+is_deeply ($data->reconcile_column(template_values=>[0,1,1,2], old_values=> [3,3,4], equal_obs =>0), [0,0,1], 
    "reconcile_column not equal_obs template longer");
 
-is_array ($data->reconcile_column(template_values=>[0,1,1], old_values=> [0,0,2,2], equal_obs =>1), [0,1,1,1], 
+is_deeply ($data->reconcile_column(template_values=>[0,1,1], old_values=> [0,0,2,2], equal_obs =>1), [0,1,1,1], 
 	  "reconcile_column equal_obs template shorter userguide");
-is_array ($data->reconcile_column(template_values=>[0,1,-99,2], old_values=> [3,3,4], equal_obs =>1), [0,1,-99], 
+is_deeply ($data->reconcile_column(template_values=>[0,1,-99,2], old_values=> [3,3,4], equal_obs =>1), [0,1,-99], 
 	  "reconcile_column equal_obs missing value");
-is_array ($data->reconcile_column(template_values=>[0,1,1], old_values=> [0,0,2,2], equal_obs =>0), [0,0,1,1], 
+is_deeply ($data->reconcile_column(template_values=>[0,1,1], old_values=> [0,0,2,2], equal_obs =>0), [0,0,1,1], 
 	  "reconcile_column not equal_obs userguide ");
 
-is_array ($data->reconcile_column(template_values=>[0,1,1,1], old_values=> [0,0,2,3], equal_obs =>0), [0,0,1,1], 
+is_deeply ($data->reconcile_column(template_values=>[0,1,1,1], old_values=> [0,0,2,3], equal_obs =>0), [0,0,1,1], 
 	  "reconcile_column not equal_obs userguide ");
 
-is_array ($data->reconcile_column(template_values=>[1,-99,1,0], old_values=> [0,0,2,2], equal_obs =>0), [1,1,0,0], 
+is_deeply ($data->reconcile_column(template_values=>[1,-99,1,0], old_values=> [0,0,2,2], equal_obs =>0), [1,1,0,0], 
 	  "reconcile_column not equal_obs missing userguide 1");
-is_array ($data->reconcile_column(template_values=>[1,1,1,0], old_values=> [0,-99,2,2], equal_obs =>0), [1,1,0,0], 
+is_deeply ($data->reconcile_column(template_values=>[1,1,1,0], old_values=> [0,-99,2,2], equal_obs =>0), [1,1,0,0], 
 	  "reconcile_column not equal_obs missing userguide 2");
-is_array ($data->reconcile_column(template_values=>[-99,1,1,0], old_values=> [0,0,2,2], equal_obs =>0), [1,1,0,0], 
+is_deeply ($data->reconcile_column(template_values=>[-99,1,1,0], old_values=> [0,0,2,2], equal_obs =>0), [1,1,0,0], 
 	  "reconcile_column not equal_obs missing userguide 3");
-is_array ($data->reconcile_column(template_values=>[0,0,1,1], old_values=> ['.',0,0,0], equal_obs =>0), [0,1,1,1], 
+is_deeply ($data->reconcile_column(template_values=>[0,0,1,1], old_values=> ['.',0,0,0], equal_obs =>0), [0,1,1,1], 
 	  "reconcile_column not equal_obs missing userguide 4");
 
 dies_ok {$data->reconcile_column(template_values=>[0,1,1,2], old_values=> [3,3,4], equal_obs =>undef)  } "undef param equal_obs";
@@ -72,9 +72,9 @@ dies_ok {$data->reconcile_column(template_values=>[], old_values=> [3,3,4], equa
 #split_vertically
 my ($left, $right, $split_val, $strat_val)=$data->split_vertically(split_index => 1, stratify_index =>8);
 for (my $i = 0; $i < 10; $i++) {
-	is_array ($split_val->[$i],[$i*10,$i*10,$i*10,$i*10],"split vertically split_val indiv $i");
+	is_deeply ($split_val->[$i],[$i*10,$i*10,$i*10,$i*10],"split vertically split_val indiv $i");
 }
-is_array($strat_val,[1,1,1,1,2,2,2,2,2,2],"split_vertically strat values");
+is_deeply($strat_val,[1,1,1,1,2,2,2,2,2,2],"split_vertically strat values");
 #append_column
 #$data->individuals
 
@@ -92,12 +92,12 @@ my $newdata = data->new(
    ignore_missing_files => 0
 );
 
-is_array ($newdata->individuals()->[3]->subject_data(), ['4,30,0,110.44,0,84,1,1,1',
+is_deeply ($newdata->individuals()->[3]->subject_data(), ['4,30,0,110.44,0,84,1,1,1',
 							'4,30,1,96.554,0,84,1,1,1',
 							'4,30,2,104.34,0,84,1,1,1',
 							'4,30,3,123.64,0,84,1,1,1'], "randomized data indiv 3");
 
-is_array ($newdata->individuals()->[7]->subject_data(),['8,60,0,64.938,5,66,1,1,2',
+is_deeply ($newdata->individuals()->[7]->subject_data(),['8,60,0,64.938,5,66,1,1,2',
 							'8,60,1,91.229,5,66,1,1,2',
 							'8,60,2,100.24,5,66,1,1,2',
 							'8,60,3,87.51,5,66,1,1,2'],"randomized data indiv 7");
@@ -113,12 +113,12 @@ $newdata = data ->new(
 	ignoresign => '@',
 	ignore_missing_files => 0);
 
-is_array ($newdata->individuals()->[0]->subject_data(),['1,0,0,207.53,0,57,1,1,1',
+is_deeply ($newdata->individuals()->[0]->subject_data(),['1,0,0,207.53,0,57,1,1,1',
 							'1,70,1,227.64,0,57,1,1,1',
 							'1,70,2,256.08,0,57,1,1,1',
 							'1,70,3,262.82,0,57,1,1,1'],"randomized dot data indiv 0");
 
-is_array ($newdata->individuals()->[3]->subject_data(),['4,.,0,110.44,0,84,1,1,1',
+is_deeply ($newdata->individuals()->[3]->subject_data(),['4,.,0,110.44,0,84,1,1,1',
 							'4,0,1,96.554,0,84,1,1,1',
 							'4,0,2,104.34,0,84,1,1,1',
 							'4,0,3,123.64,0,84,1,1,1'],"randomized dot data indiv 3");
@@ -133,9 +133,9 @@ my $phi = data->new(
 	parse_header => 1
 );
 my $eta_matrix = $phi->get_eta_matrix(start_eta => 4, n_eta => 4);
-is_array ($eta_matrix->[0],['1.97271E-06','-2.92739E-06','1.83230E-05','5.73266E-06'],"eta matrix start_eta 4 n_eta 4 row index 0");
-is_array ($eta_matrix->[5],['1.29845E-05','-1.44714E-05','1.98524E-05','8.67448E-05'],"eta matrix start_eta 4 n_eta 4 row index 5");
-is_array ($eta_matrix->[73],['8.98237E-06','-1.58557E-05','-6.15118E-05','9.96136E-05'],"eta matrix start_eta 4 n_eta 4 row index 73");
+is_deeply ($eta_matrix->[0],['1.97271E-06','-2.92739E-06','1.83230E-05','5.73266E-06'],"eta matrix start_eta 4 n_eta 4 row index 0");
+is_deeply ($eta_matrix->[5],['1.29845E-05','-1.44714E-05','1.98524E-05','8.67448E-05'],"eta matrix start_eta 4 n_eta 4 row index 5");
+is_deeply ($eta_matrix->[73],['8.98237E-06','-1.58557E-05','-6.15118E-05','9.96136E-05'],"eta matrix start_eta 4 n_eta 4 row index 73");
 
 # full_name
 my $data = data->new(filename => $phifile,
@@ -199,9 +199,9 @@ dies_ok { $data->range(column => 4) } "data->range for non existing column";
 is ($data->range(column_head => 'TEST'), 20.6, "data->range with column name");
 
 #column_to_array
-is_array($data->column_to_array(column => 2), [23.4, 14, 2.8] , "data->column_to_array of small data set column 1");
-is_array($data->column_to_array(column => 2, filter => [0, 1, 1]), [14, 2.8], "data->column_to_array of small data set with filter 1");
-is_array($data->column_to_array(column => 1, filter => [0, 0, 0]), [], "data->column_to_array of small data set with zero filter");
+is_deeply($data->column_to_array(column => 2), [23.4, 14, 2.8] , "data->column_to_array of small data set column 1");
+is_deeply($data->column_to_array(column => 2, filter => [0, 1, 1]), [14, 2.8], "data->column_to_array of small data set with filter 1");
+is_deeply($data->column_to_array(column => 1, filter => [0, 0, 0]), [], "data->column_to_array of small data set with zero filter");
 dies_ok { $data->column_to_array(column => 1, filter => [0, 0]) } "data->column_to_array of small data set with too short filter";
 
 #merge
@@ -237,7 +237,7 @@ print $fh ",,  1\n";
 close $fh;
 
 my $data_spec = data->new(filename => $filename_spec, directory => $tempdir, ignoresign => '@',parse_header =>1);
-is_array ($data_spec->individuals->[0]->subject_data, ['1,0,1', ',0,1', ',,1'], "data->new starts with commas");
+is_deeply ($data_spec->individuals->[0]->subject_data, ['1,0,1', ',0,1', ',,1'], "data->new starts with commas");
 
 remove_test_dir($tempdir);
 
