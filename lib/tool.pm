@@ -1627,7 +1627,7 @@ sub get_rundir
 							  model_dir_name => { isa => 'Bool', optional => 1, default => 0 },
 							  modelname => { isa => 'Maybe[Str]', optional => 1 },
 							  create => { isa => 'Bool', optional => 1, default => 1 }
-	);
+		);
 	my $basename = $parm{'basename'};
 	my $directory_option = $parm{'directory_option'};
 	my $model_dir_name = $parm{'model_dir_name'};
@@ -1664,38 +1664,30 @@ sub get_rundir
 sub create_R_script
 {
 	my $self = shift;
+	my %parm = validated_hash(\@_,
+							  tool_name => { isa => 'Str', optional => 1 }
+		);
+	my $tool_name = $parm{'tool_name'};
 
 	return if ($self->rplots < 0);
 
-	unless (defined $self->template_directory_rplots){
-		$self->template_directory_rplots($PsN::lib_dir . '/R-scripts');
-	}
-
-	my $tool_name;
-	if (defined $self->directory_name_prefix) {
-		$tool_name = $self->directory_name_prefix;
-	} else {
-		my @tool_name_full = split('::', ref $self);
-		$tool_name = $tool_name_full[$#tool_name_full];
-		if ($tool_name eq 'modelfit'){
-			$tool_name = 'execute';
+	unless (defined $tool_name){
+		if (defined $self->directory_name_prefix) {
+			$tool_name = $self->directory_name_prefix;
+		} else {
+			my @tool_name_full = split('::', ref $self);
+			$tool_name = $tool_name_full[$#tool_name_full];
+			if ($tool_name eq 'modelfit'){
+				$tool_name = 'execute';
+			}
 		}
 	}
 
-	my $template_file = $self->template_file_rplots;
-	unless (defined $template_file and length($template_file)>0){
-		$template_file = $tool_name.'_default.R';
-	}
+	#these are set in common_options, should never be undefined
+	my ($dir, $file) = OSspecific::absolute_path($self->template_directory_rplots,$self->template_file_rplots);
+	my $template_file = $dir.$file;
 
-	if (-e $template_file){
-		#local or relative path
-		my ($dir, $file) = OSspecific::absolute_path('',$template_file);
-		$template_file = $dir.$file;
-	}else{
-		my ($dir, $file) = OSspecific::absolute_path($self->template_directory_rplots,$template_file);
-		$template_file = $dir.$file;
-	}
-
+#	print "template $template_file\n";
 	if (-e $template_file){
 		open( FILE, $template_file ) ||
 			croak("Could not open $template_file for reading" );
@@ -1717,7 +1709,8 @@ sub create_R_script
 
 		$self->create_R_plots_code(rplot => $rplot) if ($self->can("create_R_plots_code"));
 		$rplot->make_plots;
-	}elsif (defined $self->template_file_rplots and length($self->template_file_rplots)>0){
+	}elsif (defined $self->template_file_rplots and length($self->template_file_rplots)>0
+			and ($self->template_file_rplots ne $tool_name.'_default.R')){
 		print "\nWarning: template_file_rplots ".$self->template_file_rplots." does not exist, no R script will be produced\n";
 	}
 

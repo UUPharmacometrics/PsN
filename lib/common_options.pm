@@ -214,9 +214,15 @@ sub get_defaults
 
   my $nm_string='';
   if (exists $options -> {'nm_version'}){
-	  #if nm_version is set on the command-line, even if set explicitly to 'default'
-	  # we do nothing if nm_version is set in config file, then this feature is not invoked
+	  #if nm_version is set on the command-line, even if set explicitly to 'default'.
+	  # We do nothing if nm_version is set in config file, then this feature is not invoked
 	  $nm_string = $options -> {'nm_version'};
+  }
+
+  my $try_local_R_template_dir;
+  unless (exists $options -> {'template_directory_rplots'}){
+	  #template directory not set on commandline
+	  $try_local_R_template_dir=getcwd();
   }
 
   if (length($nm_string)>0){
@@ -251,6 +257,29 @@ sub get_defaults
     }
   }
   $options -> {'top_tool'} = 1;
+
+  unless( exists $options -> {'template_file_rplots'} ){
+	  $options -> {'template_file_rplots'} = $tool.'_default.R';
+  }
+  if (defined $try_local_R_template_dir){
+	  #check if template file exists relative local directory when template directory was not set on commandline
+	  #local should be used before anything set in psn.conf
+	  #what happens if global path template file set??? should work
+	  my ($dir,$file) = OSspecific::absolute_path($try_local_R_template_dir,$options->{'template_file_rplots'});
+	  if (-e $dir.$file){
+		  $options->{'template_directory_rplots'} = $try_local_R_template_dir;
+	  }
+  }
+  if( exists $options -> {'template_directory_rplots'} ){
+	  #make sure path is absolute if it was not already
+	  my ($dir,$file) = OSspecific::absolute_path($options -> {'template_directory_rplots'},'file');
+	  $options -> {'template_directory_rplots'} = $dir;
+  }else{
+	  $options -> {'template_directory_rplots'} = $PsN::lib_dir . '/R-scripts';
+  }
+  
+
+
 }
 
 sub sanity_checks
