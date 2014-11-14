@@ -116,8 +116,8 @@ sub BUILD
 			print "\nWarning: No model to estimate. Will only simulate.\n";
 		}
 
-		if ($self->samples < 2) {
-			croak("Must set -samples to at least 2.");
+		if ($self->samples < 1) {
+			croak("Must set -samples to at least 1.");
 		}
 	}
 
@@ -2184,7 +2184,7 @@ sub compute_rmse
 							  use_runs => { isa => 'ArrayRef[Bool]', optional => 0 },
 							  column_index => { isa => 'Int', optional => 0 },
 							  start_row_index => { isa => 'Int', default => 0, optional => 1 },
-							  end_row_index => { isa => 'Int', optional => 1 },
+							  end_row_index => { isa => 'Int', optional => 0 },
 							  initial_values => { isa => 'ArrayRef', optional => 0 }
 		);
 	my @use_runs = defined $parm{'use_runs'} ? @{$parm{'use_runs'}} : ();
@@ -2198,17 +2198,13 @@ sub compute_rmse
 	#input is integers $column_index, $start_row_index, $end_row_index and ref of array floats @initial_values
 	#output is scalar $rmse_percent
 
-	unless( $end_row_index ){
-		$end_row_index = $#{$self -> raw_results};
-	}
-
 	croak("Bad row index input") if ($start_row_index > $end_row_index);
 	my $nrows = $end_row_index - $start_row_index +1;
 	if ($nrows < scalar(@initial_values)){
 		print "Warning: more reference values than samples\n";
 	}
 	if ($nrows > scalar(@initial_values)){
-		croak("the number of samples is larger than the number of set of simulation initial values\n");
+		croak("the number of samples $nrows is larger than the number of sets ".scalar(@initial_values)." of simulation initial values\n");
 	}
 	my $row_count_relative = 0;
 	my $row_count_abs = 0;
@@ -2251,7 +2247,7 @@ sub compute_bias
 							  use_runs => { isa => 'ArrayRef[Bool]', optional => 0 },
 							  column_index => { isa => 'Int', optional => 0 },
 							  start_row_index => { isa => 'Int', default => 0, optional => 1 },
-							  end_row_index => { isa => 'Int', optional => 1 },
+							  end_row_index => { isa => 'Int', optional => 0 },
 							  initial_values => { isa => 'ArrayRef', optional => 0 }
 		);
 	my @use_runs = defined $parm{'use_runs'} ? @{$parm{'use_runs'}} : ();
@@ -2266,10 +2262,6 @@ sub compute_bias
 	#input is integers $column_index, $start_row_index, $end_row_index and ref of array floata $initial_values
 	#output is scalar $relative_bias_percent
 
-	unless( $end_row_index ){
-		$end_row_index = $#{$self -> raw_results};
-	}
-	
 	croak("Bad row index input") if ($start_row_index > $end_row_index);
 	my $nrows = $end_row_index - $start_row_index +1;
 	if ($nrows < scalar(@initial_values)){
@@ -2324,7 +2316,7 @@ sub median
 							  use_runs => { isa => 'ArrayRef[Bool]', optional => 0 },
 							  column_index => { isa => 'Int', optional => 0 },
 							  start_row_index => { isa => 'Int', default => 0, optional => 1 },
-							  end_row_index => { isa => 'Int', optional => 1 }
+							  end_row_index => { isa => 'Int', optional => 0 }
 		);
 	my @use_runs = defined $parm{'use_runs'} ? @{$parm{'use_runs'}} : ();
 	my $column_index = $parm{'column_index'};
@@ -2334,11 +2326,7 @@ sub median
 
 	#input is integers $column_index, $start_row_index, $end_row_index 
 
-	unless( $end_row_index ){
-		$end_row_index = $#{$self -> raw_results};
-	}
-
-	croak("Bad row index input") if ($start_row_index >= $end_row_index);
+	croak("Bad row index input") if ($start_row_index > $end_row_index);
 
 	my @temp;
 
@@ -2368,7 +2356,7 @@ sub skewness_and_kurtosis
 							  use_runs => { isa => 'ArrayRef[Bool]', optional => 0 },
 							  column_index => { isa => 'Int', optional => 0 },
 							  start_row_index => { isa => 'Int', default => 0, optional => 1 },
-							  end_row_index => { isa => 'Int', optional => 1 }
+							  end_row_index => { isa => 'Int', optional => 0 }
 		);
 	my @use_runs = defined $parm{'use_runs'} ? @{$parm{'use_runs'}} : ();
 	my $column_index = $parm{'column_index'};
@@ -2382,11 +2370,7 @@ sub skewness_and_kurtosis
 
 	#input is integers $column_index, $start_row_index, $end_row_index 
 	
-	unless( $end_row_index ){
-		$end_row_index = $#{$self -> raw_results};
-	}
-
-	croak("Bad row index input") if ($start_row_index >= $end_row_index);
+	croak("Bad row index input") if ($start_row_index > $end_row_index);
 
 	my $row_count = 0;
 	my $sum_values=0;
@@ -2401,14 +2385,13 @@ sub skewness_and_kurtosis
 		}
 	}
 
+	if ($row_count>0){
+		$mean=$sum_values/$row_count;
+	}
 	if ($row_count < 2){
-		$stdev='NA';
-		$skewness='NA';
-		$kurtosis='NA';
-		return;
+		return $skewness ,$kurtosis ,$mean ,$stdev ,$warn;
 	}
 
-	$mean=$sum_values/$row_count;
 
 	my $error=0;
 	my $sum_errors_pow2=0;
@@ -2449,7 +2432,7 @@ sub max_and_min
 							  use_runs => { isa => 'ArrayRef[Bool]', optional => 0 },
 							  column_index => { isa => 'Int', optional => 0 },
 							  start_row_index => { isa => 'Int', default => 0, optional => 1 },
-							  end_row_index => { isa => 'Int', optional => 1 }
+							  end_row_index => { isa => 'Int', optional => 0 }
 		);
 	my @use_runs = defined $parm{'use_runs'} ? @{$parm{'use_runs'}} : ();
 	my $column_index = $parm{'column_index'};
@@ -2460,11 +2443,7 @@ sub max_and_min
 
 	#input is integers $column_index, $start_row_index, $end_row_index 
 	
-	unless( $end_row_index ){
-		$end_row_index = $#{$self -> raw_results};
-	}
-
-	croak("Bad row index input") if ($start_row_index >= $end_row_index);
+	croak("Bad row index input") if ($start_row_index > $end_row_index);
 
 	$maximum = -1000000000;
 	$minimum =  1000000000;

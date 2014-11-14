@@ -87,7 +87,7 @@ EOF
 $help_text{-samples} = <<'EOF';
       -samples=N
 
-      The number of simulated datasets to generate. Must be at least 2.
+      The number of simulated datasets to generate. Must be at least 1.
 EOF
 
 $help_text{-estimate_simulation} = <<'EOF';
