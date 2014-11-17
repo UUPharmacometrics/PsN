@@ -107,7 +107,8 @@ Getopt::Long::config("auto_abbrev");
 				  "omega_before_pk!",
 				  "outputfile:s",
 				  "last_est_complete!",
-				  "niter_eonly:i"
+				  "niter_eonly:i",
+                  "psn_record_order!",
     );
 
 my @script_options = (
@@ -980,6 +981,14 @@ EOF
     PsN will print the records of the modelfile in the wrong order, and the NONMEM runs
     will fail.
 EOF
+ 
+    $help_hash{-psn_record_order} = <<'EOF';
+    <p class="style2">-psn_record_order</p>
+    If this option is set the build in record order of PsN will be used. Default is
+    to preserve the record order of the input model. This option is mainly present
+    for backward compatibility reasons.
+EOF
+
     $help_hash{-omega_before_pk} = <<'EOF';
     <p class="style2">-omega_before_pk</p>
     For some models, NONMEM requires that $OMEGA is printed before $PK. 
@@ -1086,7 +1095,6 @@ EOF
     <p class="style2">-run_on_sge</p>
     Use Sun Grid Engine queueing system.
 EOF
-
 
     $help_hash{-run_on_torque} = <<'EOF';
     <p class="style2">-run_on_torque</p>

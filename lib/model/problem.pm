@@ -1,7 +1,7 @@
 package model::problem;
 
 use include_modules;
-use Data::Dumper;
+
 my @print_order_omega_before_pk = ('sizes','problem','input','bind','data','abbreviated','msfi','contr','subroutine','prior','thetap','thetapv','omegap','omegapd','sigmap','sigmapd','model','tol','infn','omega','anneal','pk','level','aesinitial','aes','des','error','pred','mix','theta','thetai','thetar','sigma','etas','phis','simulation','estimation','covariance','nonparametric','table','scatter');
 my @print_order = ('sizes','problem','input','bind','data','abbreviated','msfi','contr','subroutine','prior','thetap','thetapv','omegap','omegapd','sigmap','sigmapd','model','tol','infn','pk','level','aesinitial','aes','des','error','pred','mix','theta','thetai','thetar','omega','anneal','sigma','etas','phis','simulation','estimation','covariance','nonparametric','table','scatter');
 my @sde_print_order = ('sizes','problem','input','bind','data','abbreviated','msfi','contr','subroutine','prior','thetap','thetapv','omegap','omegapd','sigmap','sigmapd','model','tol','infn','theta','thetai','thetar','omega','anneal','sigma','etas','phis','pk','level','aesinitial','aes','des','error','pred','mix','simulation','estimation','covariance','nonparametric','table','scatter');
@@ -14,7 +14,7 @@ my %unsupported_records;
 # allowed record types.
 
 
-foreach my $record_name( @print_order,'warnings','finedata' ){
+foreach my $record_name (@print_order, 'warnings', 'finedata') {
 	my $uc_short_type = _get_uc_short_type($record_name);
 	$abbreviations{$uc_short_type} = $record_name;
 }
@@ -114,6 +114,7 @@ use model::problem::data;
 use model::problem::input;
 use model::problem::problem;
 use data;
+use model::problem::record_order;
 
 has 'problems' => ( is => 'rw', isa => 'Maybe[ArrayRef[model::problem::problem]]' );
 has 'inputs' => ( is => 'rw', isa => 'Maybe[ArrayRef[model::problem::input]]' );
@@ -182,6 +183,8 @@ has 'shrinkage_code' => ( is => 'rw', isa => 'Bool', default => 1 );
 has 'iwres_shrinkage_table' => ( is => 'rw', isa => 'Str' );
 has 'eta_shrinkage_table' => ( is => 'rw', isa => 'Str' );
 has 'own_print_order' => ( is => 'rw', isa => 'Maybe[ArrayRef]' );
+has 'record_order' => ( is => 'rw', isa => 'model::problem::record_order' );
+has 'psn_print_order' => ( is => 'rw', isa => 'Bool', default => 0 );               # Set to use the internal print order otherwise preserve the used order
 
 sub BUILD
 {
@@ -1938,25 +1941,33 @@ sub _format_problem
 	# initialized has records in an order different from
 	# print_order, the file will still be valid, but will look
 	# different from what it used to.
-	my $record_order = \@print_order;
-	if ($local_print_order and defined $self->own_print_order and scalar(@{$self->own_print_order})>0){
-		$record_order = $self->own_print_order;
-	}elsif ($self->sde){
-		$record_order = \@sde_print_order;
-	}elsif ($self->omega_before_pk){
-		$record_order = \@print_order_omega_before_pk;
-	}
-	foreach my $type ( @${record_order} ) {
+    my $record_order;
+    if ($self->psn_print_order) {
+        $record_order = \@print_order;
+	} elsif ($local_print_order and defined $self->own_print_order and scalar(@{$self->own_print_order}) > 0) {
+	    $record_order = $self->own_print_order;
+    } elsif ($self->sde) {
+        $record_order = \@sde_print_order;
+    } elsif ($self->omega_before_pk) {
+        $record_order = \@print_order_omega_before_pk;
+    } else {
+        $self->record_order(model::problem::record_order->new(order => $self->own_print_order));
+        $self->create_print_order;
+        $record_order = $self->record_order->order;
+    }
+
+
+	foreach my $type (@${record_order}) {
 	  # Create an accessor string for the record being formatted
-	  my $accessor = $type.'s';
+	  my $accessor = $type . 's';
 
 	  # Se if we have one or more records of the type given in
 	  # print_order
-	  if ( defined $self->$accessor ) {
+	  if (defined $self->$accessor) {
 	    # Loop over all such records and call on the record object
 	    # to format itself.
 
-	    foreach my $record ( @{$self->$accessor} ){
+	    foreach my $record (@{$self->$accessor}) {
 
 			my $arr;
 			if ($type eq 'data'){
@@ -2524,89 +2535,13 @@ sub _normalize_record_name
 sub create_print_order
 {
     my $self = shift;
-    my %parm = validated_hash(\@_,
-        own_print_order => { isa => 'ArrayRef', optional => 0 }
-    );
-    my $own_print_order = $parm{'own_print_order'};   
-
-    sub find
-    {
-        my $a = shift;
-        my $record = shift;
-
-        my $i = 0;
-        foreach my $e (@$a) {
-            if ($e eq $record) {
-                return $i;
-            }
-            $i++;
-        }
-        return undef;
-    }
-
-    my @order = @$own_print_order;
 
     foreach my $record (@print_order) {
         my $attribute = $record . 's';
         if (defined $self->$attribute and scalar(@{$self->$attribute}) > 0) {
-            my $in_order = find(\@order, $record);
-            if (not defined $in_order) {
-                # $SIZES first
-                if ($record eq 'sizes') {
-                    unshift @order, $record;
-                # $SIMULATION before $ESTIMATION else at the end
-                } elsif ($record eq 'simulation') {
-                    my $est_pos = find(\@order, 'estimation');
-                    if (defined $est_pos) {
-                        splice @order, $est_pos, 0, $record;
-                    } else {
-                        push @order, $record;
-                    }
-                # $PRIOR and $MSFI directly after $DATA and $INPUT
-                } elsif ($record eq 'prior' or $record eq 'msfi') {
-                    my $data_pos = find(\@order, 'data');
-                    my $input_pos = find(\@order, 'input');
-                    my $bind_pos = find(\@order, 'bind');
-                    if (not defined $data_pos) {
-                        if (not defined $input_pos) {
-                            push @order, $record;
-                        } else {
-                            if (defined $bind_pos) {
-                                splice @order, $bind_pos, 0, $record;
-                            } else {
-                                splice @order, $input_pos, 0, $record;
-                            }
-                        }
-                    } else {
-                        if (not defined $input_pos) {
-                            splice @order, $data_pos, 0, $record;
-                        } else {
-                            if (defined $bind_pos) {
-                                my $at = $data_pos > $bind_pos ? $data_pos : $input_pos;
-                                splice @order, $at + 1, 0, $record; 
-                            } else {
-                                my $at = $data_pos > $input_pos ? $data_pos : $input_pos;
-                                splice @order, $at + 1, 0, $record; 
-                            }
-                        }
-                    }
-                # $BIND directly after $INPUT else at the end
-                } elsif ($record eq 'bind') {
-                    my $input_pos = find(\@order, 'input');
-                    if (defined $input_pos) {
-                        splice @order, $input_pos + 1, 0, $record;
-                    } else {
-                        push @order, $record;
-                    }
-                # Default rule. Put record at the end
-                } else {
-                    push @order, $record;
-                }
-            }
+            $self->record_order->insert($record);
         }
     }
-
-    return \@order;
 }
 
 
