@@ -703,9 +703,12 @@ EOF
 EOF
     $help_hash{-template_directory_rplots} = <<'EOF';
     <p class="style2">-template_directory_rplots=path</p>
-    PsN will first look for the rplots template file in the current working directory,
-	and then in the directory set with option -template_directory_rplots. 
-    The default value of this option is the R-script subdirectory of the PsN installation directory.
+	PsN can look for the rplots template file in a number of places. The priority order is the
+	following :
+	1) template_directory_rplots set on command-line 
+	2) calling directory (where PsN is started)
+    3) template_directory_rplots set in psn.conf 
+    4) R-scripts subdirectory of the PsN installation directory
 EOF
     $help_hash{-template_file_rplots} = <<'EOF';
     <p class="style2">-template_file_rplots=file</p>

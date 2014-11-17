@@ -330,9 +330,14 @@ PsN will first look for the file relative to the current working directory,
 and after that in the -template\_directory\_rplots directory.
 \nextopt
 \optdefault{template\_directory\_rplots}{path}
-PsN will first look for the rplots template file in the current working directory,
-and then in the directory set with option -template\_directory\_rplots. 
-The default value of this option is the R-script subdirectory of the PsN installation directory.
+PsN can look for the rplots template file in a number of places. The priority order is the
+following:
+\begin{enumerate}
+\item template\_directory\_rplots set on command-line 
+\item calling directory (where PsN is started)
+\item template\_directory\_rplots set in psn.conf 
+\item R-scripts subdirectory of the PsN installation directory
+\end{enumerate}
 \nextopt
 \optdefault{subset\_variable\_rplots}{variable name}
 Default not set. The user can specify a subset variable to be used with the rplots feature. This variable
