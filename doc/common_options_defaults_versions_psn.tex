@@ -163,7 +163,10 @@ No help available for 'nonparametric\_etas'
 No help available for 'nonparametric\_marginals' 
 \nextopt
 \optname{omega\_before\_pk}
-Default not set. In PsN version 3.4.4 and earlier, \$OMEGA was always printed before \$PK. The new default is to print \$OMEGA after \$THETA. To use the old print order, set option -omega\_before\_pk 
+Default not set. In PsN version 3.4.4 and earlier, \$OMEGA was always printed before \$PK. The new default is to keep the record order of the input model file. To use the old print order, set option -omega\_before\_pk
+\nextopt
+\optname{psn\_record\_order}
+Default not set. In PsN 4.3.3 and earlier, PsN used an internal record order. The new default is to keep the record order of the input model file. Set this option to use the old order.
 \nextopt
 \optdefault{outputfile}{'string'}
 Default modelfilename with mod substituded for lst. The -outputfile option specifies the output file name for the NONMEM run. Currently this option is only valid when a single model is supplied. 

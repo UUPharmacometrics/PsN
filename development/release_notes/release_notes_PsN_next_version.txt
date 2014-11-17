@@ -53,6 +53,9 @@ Changes and bug fixes from PsN 4.2.0 to x.y.z
 
    ___General___
 
+- PsN will now preserve the record order of the input model files. A new option
+  -psn_record_order can be used for the legacy built in record order.
+
 - The common option -warn_with_trace was broken and is now working again.
   It is now just a boolean option not taking any integer argument.
 
