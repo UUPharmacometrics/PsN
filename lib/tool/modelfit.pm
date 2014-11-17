@@ -35,6 +35,7 @@ extends 'tool';
 
 has 'copy_data' => ( is => 'rw', isa => 'Bool', default => 1 );
 has 'tail_output' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'resume' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'nmtran_skip_model' => ( is => 'rw', isa => 'Int', default => 10000 );
 has 'full_path_nmtran' => ( is => 'rw', isa => 'Str' );
 has 'nmtran_error_file' => ( is => 'rw', isa => 'Str', default => 'nmtran_error.txt' );
@@ -369,10 +370,10 @@ sub BUILD
 sub run
 {
 	my $self = shift;
-	my %parm = validated_hash(\@_,
-		resuming => { isa => 'Bool', default => 0, optional => 1 }
-	);
-	my $resuming = $parm{'resuming'};
+#	my %parm = validated_hash(\@_,
+#		resuming => { isa => 'Bool', default => 0, optional => 1 }
+#	);
+#	my $resuming = $parm{'resuming'};
 	my @results;
 
 	my $cwd = getcwd();
@@ -394,8 +395,19 @@ sub run
 	$threads = $#models + 1 if ($threads > $#models + 1); 
 
 	# print starting messages 
+	my $message;
+	if ($self->resume){
+		my $count_not_done=0;
+		for (my $i=0; $i< scalar(@models); $i++){
+			$count_not_done++ unless ($self->models->[$i]->is_run);
+		}
+		$threads = $count_not_done if ($threads > $count_not_done);
+		$message = "Resuming $count_not_done out of " . scalar(@models) . ' NONMEM executions. '. $threads .' in parallel.'."\n";
+	}else{
+		$message = 'Starting ' . scalar(@models) . ' NONMEM executions. '. $threads .' in parallel.'."\n";
+	}
 	ui -> print( category => 'all',
-				 message  => 'Starting ' . scalar(@models) . ' NONMEM executions. '. $threads .' in parallel.'."\n" ) 
+				 message  => $message ) 
 		unless ($self->parent_threads > 1);
 	ui -> print( category => 'all',
 		message  => "Run number\tModel name\tOFV\tCovariance step successful.",
@@ -444,58 +456,32 @@ sub run
 			
 			# check for no run conditions. (e.g. job already run)
 			
-			if (-e $self->models->[$run]->outputs->[0]->full_name and $self->rerun < 1) {
+			if ($self->models->[$run]->is_run and $self->resume) { 
+
+				#we have output in m1 or model's home directory. Ignore NM_run
+				my ($raw_results_row, $nonp_row) = $self->create_raw_results_rows(max_hash => $self->max_hash,
+																				  model => $self->models->[$run],
+																				  model_number => $run + 1,
+																				  raw_line_structure => $self->raw_line_structure
+					);
 				
-				if (not -e './NM_run' . ($run + 1) . '/done') {
-					# here we have an .lst file, no done file and we are not
-					# rerunning NONMEM. Which means we must create fake NM_run and
-					# "done" files. (Usually this case occurs if we want to
-					# use execute to create a summary or run table).
-					
-					mkdir("./NM_run" . ($run + 1)) unless (-d "./NM_run" . ($run + 1));
-					open(DONE, ">./NM_run". ($run+1) . "/done.1");
-					print DONE "This is faked\nseed: 1 1\n";
-					close(DONE);
+				$self->raw_results([]) unless defined $self->raw_results;
+				$self->raw_nonp_results([]) unless defined $self->raw_nonp_results;
 
-					my ($raw_results_row, $nonp_row) = $self->create_raw_results_rows(
-						max_hash => $self->max_hash,
-						model => $self->models->[$run],
-						model_number => $run + 1,
-						raw_line_structure => $self->raw_line_structure
-					);
+				push(@{$self->raw_results}, @{$raw_results_row});
+				push(@{$self->raw_nonp_results}, @{$nonp_row});
 
-					$self->raw_results([]) unless defined $self->raw_results;
-					$self->raw_nonp_results([]) unless defined $self->raw_nonp_results;
 
-					push(@{$self->raw_results}, @{$raw_results_row});
-					push(@{$self->raw_nonp_results}, @{$nonp_row});
+#candidate model needed somewhere???
+#				$queue_info{$run}{'candidate_model'} = 
+#					model->new(	filename => "./NM_run" . ($run + 1) . "/psn.".$self->modext,
+#								ignore_missing_files => 1,
+#								cwres                => $models[$run] -> cwres()
+#					);
+#				$self->print_finish_message(candidate_model => $queue_info{$run}{'candidate_model'}, run => $run);
 
-					# TODO Must copy tablefiles if they exist.
-
-					# We use the existing .lst file as the final product.
-					cp($self->models->[$run]->outputs->[0]->full_name, './NM_run' . ($run+1) . '/psn.lst');
-					#copy NM7 files also...
-				}
-
-				# TODO Should check for tablefiles.
-
-				my $modulus = (($#models + 1) <= 10) ? 1 : (($#models + 1) / 10) + 1;
-
-				if ($run % $modulus == 0 or $run == 0 or $run == $#models) {
-					ui -> print(category => 'all', wrap => 0, newline => 0,
-								 message  => 'D:' . ($run + 1) . ' .. ')
-						unless($self->parent_threads > 1 or $self->verbose);
-				}
-
-				$queue_info{$run}{'candidate_model'} = 
-					model->new(	filename => "./NM_run" . ($run + 1) . "/psn.".$self->modext,
-								ignore_missing_files => 1,
-								cwres                => $models[$run] -> cwres()
-					);
-				$self->print_finish_message(candidate_model => $queue_info{$run}{'candidate_model'}, run => $run);
-
-				$self->prepared_models([]) unless defined $self->prepared_models;
-				push(@{$self->prepared_models->[$run]{'own'}}, $queue_info{$run}{'candidate_model'});
+#				$self->prepared_models([]) unless defined $self->prepared_models;
+#				push(@{$self->prepared_models->[$run]{'own'}}, $queue_info{$run}{'candidate_model'});
 
 				next; # We are done with this model. It has already been run. Go back to main while loop.
 			}
@@ -1476,10 +1462,6 @@ sub run_nonmem
 	#an ls might make files sync and become visible
 	my $dirt = `ls -la 2>&1` unless ($Config{osname} eq 'MSWin32');
 
-	if ($self->rerun >= 2) {
-		unlink ('psn.lst') if (-e 'psn.lst');
-		unlink ('psn-prevrun.lst') if (-e 'psn-prevrun.lst');
-	}
 
 	if (-e $self->nmtran_error_file) {
 		#give fake pid and go directly to restart needed. Do not copy or move anything
@@ -1507,7 +1489,6 @@ sub run_nonmem
 		#possible reason 
 		#Restart after main PsN process killed before sge/slurm NONMEM run finished. 
 		
-		# If rerun >= 2 then removed it above.
 		# Then check for ($tries+1).lst. If it exists, then *move* 
 		#psn.mod, psn.lst etc to psn-prevrun.lst etc
 		# to save it for later and continue to next if -clause.
@@ -1534,7 +1515,6 @@ sub run_nonmem
 		}
 	}elsif(-e 'psn-prevrun.lst'){
 		#did not have psn.lst but do have prevrun.lst
-		# If rerun >= 2 then removed it above.
 		# Then check for ($tries+1).lst. If it exists, do nothing.
 		# If it does not exist then make it look like this was just run: Move all files to psn.lst etc
 		# Then let restart_needed move files to numbered retry files.
@@ -1560,8 +1540,8 @@ sub run_nonmem
 	}
 	
 	# We do not expect any values of rerun lower than 1 here. (a bug otherwise...)
-	if (not -e 'psn-' . ($tries + 1) . '.lst' or $self->rerun >= 2) {
-		#missing psn-1.lst etc or force rerun
+	if (not -e 'psn-' . ($tries + 1) . '.lst' ) {
+		#missing psn-1.lst etc
 		
 		# Execution step 
 		my $nonmem_run;
@@ -1636,10 +1616,10 @@ sub run_nonmem
 			$queue_map->{$jobId} = $run_no;
 		}
 
-	} elsif ($self->rerun >= 1) {
-		#psn-(tries+1).lst exists, and rerun < 2
+	} else {
+		#psn-(tries+1).lst exists
 		
-		# We are not forcing a rerun, but we want to recheck the
+		# we want to recheck the
 		# output files for errors. Therefore we put a fake entry in
 		# queue_map to trigger "restart_needed()". 
 
@@ -1973,7 +1953,7 @@ sub restart_needed
 	if( -e 'psn.lst' ){
 
 		my ( $output_file );
-		if ( not -e 'psn-' . ( ${$tries} + 1 ) . '.lst' or $self->rerun >= 2 ) {
+		if ( not -e 'psn-' . ( ${$tries} + 1 ) . '.lst' ) {
 
 			$output_file = $candidate_model -> outputs -> [0];
 			$output_file -> abort_on_fail($self->abort_on_fail);

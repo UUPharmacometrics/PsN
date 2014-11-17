@@ -756,6 +756,7 @@ sub general_setup
 	# this.
 
 	my $datafilenames = $model->datafiles(absolute_path => 1);
+	my $done;
 	for ( my $i = 1; $i <= scalar @problems; $i++ ) {
 		my $ignoresign = defined $model -> ignoresigns ? $model -> ignoresigns -> [$i-1] : undef;
 		my ( $junk, $idcol ) = $model -> _get_option_val_pos( name            => 'ID',
@@ -786,7 +787,7 @@ sub general_setup
 
 		my ( @seed, $new_datas, $incl_ids, $incl_keys, $new_mod, $new_subjects, $orig_count_ind );
 
-		my $done = ( -e $self ->directory()."/m$model_number/done.$i" ) ? 1 : 0;
+		$done = ( -e $self ->directory()."/m$model_number/done.$i" ) ? 1 : 0;
 		if ( not $done ) {
 			ui -> print( category => 'bootstrap',
 				message  => "Resampling from ".$datafilenames->[$i-1]);
@@ -996,6 +997,9 @@ sub general_setup
 	if ( defined $self -> subtool_arguments() ) {
 		%subargs = %{$self -> subtool_arguments()};
 	}
+	if ($subdir eq 'modelfit'){
+		$subargs{'resume'}=$done; #do not rerun models that have lst-file in m1
+	}
 
 	$self->tools([]) unless (defined $self->tools());
 
@@ -1036,7 +1040,7 @@ sub modelfit_analyze
 	my $jackknife;
 
 	if ( $self -> type() eq 'bca' ) {
-
+		#TODO support resume here for modelfit, do not rerun if lst-file exists for individual jackknife models
 		# --------------------------  BCa method  ---------------------------------
 
 		# {{{ BCa
@@ -1070,7 +1074,6 @@ sub modelfit_analyze
 					 nonparametric_marginals => $self -> nonparametric_marginals(),
 					 nonparametric_etas => $self -> nonparametric_etas(),
 					 adaptive         => $self -> adaptive(),
-					 rerun            => $self -> rerun(),
 					 verbose          => $self -> verbose(),
 					 cross_validate   => 0 );
 
@@ -1116,7 +1119,6 @@ sub modelfit_analyze
 					 nonparametric_marginals => $self -> nonparametric_marginals(),
 					 nonparametric_etas => $self -> nonparametric_etas(),
 					 adaptive         => $self -> adaptive(),
-					 rerun            => $self -> rerun(),
 					 verbose          => $self -> verbose(),
 					 cross_validate   => 0 );
 
