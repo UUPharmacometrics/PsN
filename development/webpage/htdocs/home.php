@@ -1583,6 +1583,7 @@ MEM. <br>
 
 <h4>Acknowledgments</h4>
 <p>
+PsN was developed in parts with funding from the <a href="http://www.ddmore.eu">DDMoRe</a> and <a href="http://www.ideal.rwth-aachen.de">IDeAl</a> projects. 
 NONMEM&reg; is a registered trademark of ICON plc. The Perl camel
 logo is a registered trademark of O'Reilly Media, Inc. and is used with
 permission. All logos and trademarks in this site are property of
