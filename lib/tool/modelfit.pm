@@ -401,8 +401,12 @@ sub run
 		for (my $i=0; $i< scalar(@models); $i++){
 			$count_not_done++ unless ($self->models->[$i]->is_run);
 		}
-		$threads = $count_not_done if ($threads > $count_not_done);
-		$message = "Resuming $count_not_done out of " . scalar(@models) . ' NONMEM executions. '. $threads .' in parallel.'."\n";
+		if ($count_not_done > 0){
+			$threads = $count_not_done if ($threads > $count_not_done);
+			$message = "Restarting $count_not_done out of " . scalar(@models) . ' NONMEM executions. '. $threads .' in parallel.'."\n";
+		}else{
+			$message = "Restarting 0 out of " . scalar(@models) . ' NONMEM executions. ';
+		}
 	}else{
 		$message = 'Starting ' . scalar(@models) . ' NONMEM executions. '. $threads .' in parallel.'."\n";
 	}
@@ -446,7 +450,7 @@ sub run
 	# and while we have jobs running, i.e. scalar keys %queue_map > 0 (represented in the queue_info)
 
 	while ((scalar(@queue) > 0) or (scalar keys %queue_map > 0)) {
-
+#		print "queue is ".scalar(@queue)." map is ".(scalar keys %queue_map)."\n";
 		if ((scalar(@queue) > 0) and (scalar keys %queue_map < $threads)) {
 			#we may start a new job here 
 			# This is where we initiate a new job:

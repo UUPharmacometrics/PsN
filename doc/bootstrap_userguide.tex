@@ -150,19 +150,36 @@ It is possible to restart a previously run bootstrap to compute delta-ofv withou
 
 \section{Recovering a crashed bootstrap}
 
-All the modelfiles and bootstrapped dataset are in the m1 subdirectory. Models that have finished will also have a lst-file. The lst-files have been copied from the NM\_run directories in the modelfit\_dir  subdirectory.  
-If there is a computer crash in the middle of a long bootstrap, you can still use the samples that did finish. 
-\begin{enumerate}
-	\item In NM\_run directories of modelfit\_dir subdirectory, remove the lst-files (all files ending with .lst) from crashed NONMEM runs.
-	\item Rerun same command (command.txt) with same -seed (check in version\_and\_option\_info.txt) and add option -directory=$\langle$name\_of\_old\_directory$\rangle$. PsN will see that some models finish and only rerun the ones with missing lst-files. 
-\end{enumerate}
-If some samples terminated due to e.g. rounding errors but most of the samples finish okay: 
-\begin{enumerate}
-	\item Go to the m1 subdirectory and run execute with -retries option on the model that did not finish. 
-	\item After models in m1 have run, use the rawresults script (see rawresults -help) to create a summary of all parameter estimates. Open output file from rawresults in Excel and do statistics manually. 
-\end{enumerate}
-If too many samples were discarded due to e.g. minimization terminated and you wish you had set  option -no-skip\_minimization\_terminated: Open raw\_results.csv in Excel and do statistics manually. 
+All the model files and bootstrapped datasets are in the m1 subdirectory. Models that have finished will also have a 
+lst-file and other NONMEM output files. 
+If there is a computer crash, or the bootstrap is manually killed, you can still resume the bootstrap and reuse the samples that did finish. 
+\subsubsection*{The first thing to try}
+Rerun the same command (see command.txt) and set option 
+-directory=$\langle$name\_of\_old\_directory$\rangle$. 
+PsN will check in m1 to see which bootstrap samples have already finished and only restart the ones with missing output files.
 
+\subsubsection*{If only some samples crashed}
+If only some samples crashed, e.g. due to a couple of cluster nodes crashing, but the main bootstrap process finished, 
+there could be lst-files from crashed samples in m1. It is possible to restart only the crashed samples:
+\begin{enumerate}
+	\item In the m1 subdirectory of the bootstrap run directory, remove any lst- and ext-files from crashed NONMEM runs. Output from
+successful samples must be kept.
+    \item Remove the entire modelfit\_dir1 subdirectory of the bootstrap run directory.
+	\item Rerun the same bootstrap command (command.txt) and set option -directory=$\langle$name\_of\_old\_directory$\rangle$. 
+\end{enumerate}
+
+\subsubsection*{If you realize -retries would have been needed}
+If too many samples terminated due to e.g. rounding errors and you want to use -retries for only those samples:
+\begin{enumerate}
+	\item Go to the m1 subdirectory and run execute with -retries option on the terminated samples.
+	\item After execute has finished, go back to the calling directory and rerun the same bootstrap command 
+(command.txt) and set option -directory=$\langle$name\_of\_old\_directory$\rangle$. 
+\end{enumerate}
+
+\subsubsection*{If too many samples are filtered out}
+If too many samples were discarded due to e.g. minimization terminated and you wish you had set  option -no-skip\_minimization\_terminated: 
+Rerun the same bootstrap command (command.txt) and set option -directory=$\langle$name\_of\_old\_directory$\rangle$ but change the
+run selection options such as -no-skip\_minimization\_terminated. 
 
 \begin{thebibliography}{1}
 \bibitem{Efron} Efron B, {\em An Introduction to the Bootstrap}, Chap. \& Hall, London UK, 1993
