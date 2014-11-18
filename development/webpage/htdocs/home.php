@@ -49,6 +49,10 @@ The complete list of new features and bugfixes in 4.2.0 is found
 </p>
 <h3>Known issues with version 4.2.0</h3>
 <li>
+The nca script prepares input for Chayan Acharya's R package for nca analysis, but this R package will not be made publicly available until the related
+article has been submitted for publication.
+</li>
+<li>
 Installation on Windows: Users who install PsN for the first time need to make sure they install a Perl version where
 the needed extra modules are available, see instructions on
 <a href="install.php">installation page</a>.
