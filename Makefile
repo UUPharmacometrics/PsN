@@ -28,6 +28,7 @@ LIBFILES= ui.pm \
 	R-scripts/mcmp_default.R \
 	R-scripts/randtest_default.R \
 	R-scripts/scm_default.R \
+	R-scripts/vpc_default.R \
 	R-scripts/execute_default.R \
 	R-scripts/bootstrap_default.R \
 	status_bar.pm \

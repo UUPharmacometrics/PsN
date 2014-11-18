@@ -685,13 +685,12 @@ Sum the number of false positives and negatives over all bins, and divide by the
 		\item ID
 		\item EVID, only if option -tte is set and EVID is present in \$INPUT
 		\item MDV (see 2), but not if option -tte is set
-		\item DV
-		\item any other variable requested using option -dv, unless it is CWRES and -orig\_table is not used
-		\item independent variable column to bin on (given on command-line input).
-		\item column to stratify on (given on command-line input), if any.
+		\item DV or other variable requested using option -dv
+		\item independent variable column to bin on, option -idv
+		\item column(s) set with option  -stratify\_ on. Multiple variables may be requested with option -stratify\_on. All will be added to \$TABLE but only the first will be used for stratification in the vpc.
 		\item Censoring variable, if option -censor is used.
-		\item TTE variable, if option -tte is used and TTE variable is not the same as the independent variable which has already been added. The TTE variable is only added in the simulation model, not the model for original data.
-		\item options NOPRINT, ONEHEADER
+		\item TTE variable, if option -tte is used and TTE variable is not the same as the dependent variable which has already been added. The TTE variable is only added in the simulation model, not the model for original data.
+		\item options NOPRINT, ONEHEADER, NOAPPEND
 	\end{itemize}
 	\item Logic for identifying observation rows  in table-file:
 If there is no \$PRED record

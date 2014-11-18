@@ -1180,7 +1180,7 @@ sub modelfit_setup
 
 	my @rec_strings = ('ID',$MDV);
 	if (defined $self->stratify_on) {
-		push (@rec_strings, $self->stratify_on) unless ($self->stratify_on eq 'PRED');
+		push (@rec_strings, $self->stratify_on); # before would not add PRED
 	}
 	push (@rec_strings,@{$self->extra_table_parameters()}) if (defined $self->extra_table_parameters());
 
@@ -1188,16 +1188,17 @@ sub modelfit_setup
 		push (@rec_strings,$self->censor());
 	}
 	if ($self->is_vpc or $self->nca) {
-		push (@rec_strings, $self->idv) unless ($self->idv eq 'PRED');
+		push (@rec_strings, $self->idv); # before would not add PRED
 		push (@rec_strings, $self->bound_variable) if (defined $self->bound_variable);
 	}
 
 	if ($PsN::nm_major_version >=  7){
 		#in NM7 CWRES can be requested in $TABLE
-		push (@rec_strings, $self->dv) unless ($self->dv =~ /^(RES|WRES)$/ ); 
+		push (@rec_strings, $self->dv);# before would not add RES or WRES
 	}else {
-		push (@rec_strings, $self->dv) unless ($self->dv =~ /^(RES|WRES|CWRES)$/ ); #PRED forbidden dv
+		push (@rec_strings, $self->dv) unless ($self->dv =~ /^CWRES$/ );# before would not add RES or WRES 
 	}
+	push (@rec_strings,'PRED') if ($self->predcorr || $self->varcorr);
 
 
 	my @tte_strings;
@@ -1224,8 +1225,8 @@ sub modelfit_setup
 	}
 	@rec_strings = @rec_strings2;
 
-	push (@rec_strings,('ONEHEADER','NOPRINT'));
-	push (@tte_strings,('ONEHEADER','NOPRINT'));
+	push (@rec_strings,('ONEHEADER','NOPRINT','NOAPPEND'));
+	push (@tte_strings,('ONEHEADER','NOPRINT','NOAPPEND'));
 
 	push (@rec_strings,('FILE=npctab.dta'));
 	push (@tte_strings,('FILE=npctab.dta'));
@@ -2397,7 +2398,7 @@ sub get_data_matrix
 	unless (-e $orig_file) {
 		my $file_to_check = $self->searchdir."/NM_run1/compute_cwres.Rout";
 		print "\nCheck installation of R and XPose, check file $file_to_check\n" 
-			if (($self->dv eq 'CWRES') and ($PaN::nm_major_version < 7));
+			if (($self->dv eq 'CWRES') and ($PsN::nm_major_version < 7));
 		$file_to_check = $self->searchdir. "/NM_run1/psn-1.lst";
 		croak("File $orig_file \nwith table output for original data does not exist. ".
 			  "It is recommended to check lst-file $file_to_check for NONMEM error messages.");
@@ -5383,6 +5384,10 @@ sub create_R_plots_code{
 	if ($self->categorized){
 		$categorical = 'TRUE';
 	}
+	my $tte = 'FALSE';
+	if (defined $self->tte){
+		$tte = 'TRUE';
+	}
 
 	$rplot->libraries(['xpose4']);
 	$rplot->add_preamble(code => [
@@ -5390,6 +5395,7 @@ sub create_R_plots_code{
 							 'have.loq.data <- '.$loqstring,							 
 							 'have.censored <- '.$censorstring,							 
 							 'is.categorical <- '.$categorical,							 
+							 'is.tte <- '.$tte,							 
 						 ]);
 
 }
