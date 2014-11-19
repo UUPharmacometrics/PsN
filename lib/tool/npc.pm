@@ -93,6 +93,7 @@ has 'lloq' => ( is => 'rw', isa => 'Num' );
 has 'uloq' => ( is => 'rw', isa => 'Num' );
 has 'stratify_on' => ( is => 'rw', isa => 'Str' );
 has 'censor' => ( is => 'rw', isa => 'Str' );
+has 'irep' => ( is => 'rw', isa => 'Str' );
 has 'tte' => ( is => 'rw', isa => 'Str' );
 has 'sim_model' => ( is => 'rw', isa => 'Str' );
 has 'flip_comments' => ( is => 'rw', isa => 'Bool', default => 0 );
@@ -283,7 +284,7 @@ sub BUILD
 			$self->simprobnum(2) if ($self->have_tnpri());
 			$self->origprobnum(2) if ($self->have_tnpri());
 		}
-	}
+	} #end unless defined orig_table
 
 	if (defined $self->refstrat() and (defined $self->no_of_strata())){
 	    croak("It is not allowed to set refstrat together with no_of_strata");
@@ -823,7 +824,7 @@ sub BUILD
 				}
 			}
 		}
-	}
+	} #end unless defined orig_table
 }
 
 sub modelfit_setup
@@ -1201,17 +1202,20 @@ sub modelfit_setup
 	push (@rec_strings,'PRED') if ($self->predcorr || $self->varcorr);
 
 
-	my @tte_strings;
-	push(@tte_strings, @rec_strings) if (defined $self->tte());
+	my @sim_strings;
+	push(@sim_strings, @rec_strings);
+
 	if (defined $model_simulation){
-		push (@tte_strings, $self->tte()) 
+		push (@sim_strings, $self->tte()) 
 			if (defined $self->tte() and ($self->tte() ne $self->dv));
+		push(@sim_strings,$self->irep) if (defined $self->irep);
 	} else {
 		#if we do not have model_simulation then it is ok to request 
 		#tte variable in $TAB of both sim and orig, since
 		#must be available in both when models are so similar
 		push (@rec_strings, $self->tte()) 
 			if (defined $self->tte() and ($self->tte() ne $self->dv));
+		push(@rec_strings,$self->irep) if (defined $self->irep);
 	}
 	
 	# Remove duplicate columns
@@ -1225,11 +1229,10 @@ sub modelfit_setup
 	}
 	@rec_strings = @rec_strings2;
 
-	push (@rec_strings,('ONEHEADER','NOPRINT','NOAPPEND'));
-	push (@tte_strings,('ONEHEADER','NOPRINT','NOAPPEND'));
+	my @trailing = ('ONEHEADER','NOPRINT','NOAPPEND','FILE=npctab.dta');
+	push (@rec_strings,@trailing);
+	push (@sim_strings,@trailing);
 
-	push (@rec_strings,('FILE=npctab.dta'));
-	push (@tte_strings,('FILE=npctab.dta'));
 	$model_orig -> set_records(type => 'table',
 							   record_strings => \@rec_strings,
 							   problem_numbers => [($self->origprobnum())]);
@@ -1240,15 +1243,9 @@ sub modelfit_setup
 		if (scalar(@extra_table_record)>0);
 
 	if (defined $model_simulation){
-		if (defined $self->tte()){
-			$model_simulation -> set_records(type => 'table',
-											 record_strings => \@tte_strings,
-											 problem_numbers => [($self->simprobnum())]) ;
-		}else{
-			$model_simulation -> set_records(type => 'table',
-											 record_strings => \@rec_strings,
-											 problem_numbers => [($self->simprobnum())]) ;
-		}
+		$model_simulation -> set_records(type => 'table',
+										 record_strings => \@sim_strings,
+										 problem_numbers => [($self->simprobnum())]) ;
 		$model_simulation -> add_records(type => 'table',
 										 record_strings => \@extra_table_record,
 										 problem_numbers => [($self->simprobnum())]) 
@@ -2449,6 +2446,10 @@ sub get_data_matrix
 
 	my @model_sims;
 	my $n_model_sims=0;
+	my $mdv_index;
+	my $dv_index;
+	my $censor_index;
+	my $irep_index;
 	if (defined $self->sim_table){
 		$n_model_sims=1;
 	}else{
@@ -2456,9 +2457,6 @@ sub get_data_matrix
 		$n_model_sims=scalar(@model_sims);
 	}
 	my $tables_read=0;
-	my $mdv_index;
-	my $dv_index;
-	my $censor_index;
 	my $obscount=0;
 
 	for( my $sim_i = 0; $sim_i < $n_model_sims; $sim_i++ ) {
@@ -2491,12 +2489,14 @@ sub get_data_matrix
 		}
 
 		open (FILE, "$sim_file") or croak("Could not open $sim_file for reading");
-		
+		my $prev_irep;
 		while (1){
 			my $line = readline(FILE);
 			last unless (defined $line); #reached EOF
 			chomp $line;
 			next if ($line =~ /^TABLE NO/);
+			my $new_table=0;
+			my @items=();
 			if ($line =~ /^\s*ID\s/){
 				if ($tables_read==0){
 					#first table, parse header
@@ -2533,13 +2533,53 @@ sub get_data_matrix
 							croak("Could not find column with header MDV in $sim_file\n");
 						}
 					}
+					if (defined $self->sim_table and (defined $self->irep)){
+						for (my $i=0; $i<scalar(@header);$i++){
+							if ($header[$i] eq $self->irep){
+								$irep_index = $i;
+								last;
+							}
+						}
+						unless (defined $irep_index){
+							croak("Could not find column with header for irep variable ".$self->irep." in $sim_file\n");
+						}
+					}
 					ui -> print (category=>'npc', 
 								 message=>'Reading sample ',
 								 newline => 0);
 					ui -> print (category=>'vpc', 
 								 message=>'Reading sample ',
 								 newline => 0);
-				}else{
+				}elsif (defined $irep_index){
+					#header but not the first 
+					#input error, both irep and multiple headers are used.
+					#set $prev_irep undef so that first data line after header will not trigger new_table
+					$prev_irep = undef;
+				} #end if tables_read==0
+				$new_table=1;
+				
+			}elsif($line =~ /[0-9]/){
+				#assume this is data line, at least it is not empty
+				#split non-empty line. Might still be new_table but not first_table
+				$line =~ s/^\s*//;
+				@items = split (/\s+/,$line);
+				#check if new_table for irep case
+				if (defined $irep_index){
+					if (defined $prev_irep){ #FALSE at very first data line, there new_table should not be set
+						if ($items[$irep_index] != $prev_irep){
+							$new_table = 1;
+						}
+					}
+					$prev_irep = $items[$irep_index];
+				}
+
+			}else{
+				#emtpy line
+				next;
+			}
+
+			if ($new_table){
+				unless ($tables_read == 0){
 					#found new table, check if previous had right number obs
 					unless ($obscount == $no_observations){
 						croak ("Expected $no_observations observation rows after MDV filtering ".
@@ -2547,6 +2587,7 @@ sub get_data_matrix
 					}
 					$obscount=0;
 				}
+
 				$tables_read++;
 
 				my $modulus = (($no_sim+1) <= 50) ? 1 : (($no_sim+1) / 50);
@@ -2559,13 +2600,9 @@ sub get_data_matrix
 								 message=>$tables_read.' ',
 								 newline => 0);
 				}
-
-
-				
-			}elsif($line =~ /[0-9]/){
-				#assume this is data line, at least it is not empty
-				$line =~ s/^\s*//;
-				my @items = split (/\s+/,$line);
+			}
+			if (scalar(@items)>0){
+				#this is data line, already checked not empty and done split
 				if ($all_rows_observations or $items[$mdv_index]<1){
 					$matrix[$obscount] .= ','.$items[$dv_index];
 					if (defined $self->censor()){

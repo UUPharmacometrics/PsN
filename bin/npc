@@ -33,6 +33,7 @@ my %optional_options = ( 'stratify_on:s' => undef,
 			 'lst_file:s' => undef,
 			 'msfo_file:s' => undef,
 			 'dv:s' => undef,
+						 'irep:s' => undef,
 			 'sim_table:s'=>undef,
 			 'orig_table:s'=>undef,
 			 'keep_estimation!'=>undef,
@@ -148,6 +149,14 @@ $help_text{-censor} = <<'EOF';
       is missing, e.g. due to drop-out. 1 means the observation is censored, 
       0 means the observation is not censored.
       The variable must be requestable in $TABLE.
+EOF
+
+$help_text{-irep} = <<'EOF';
+      -irep=VARIABLE
+
+      Name of variable holding the number of the current replication for simulation data, 
+	  obtained via IREP in NONMEM. This option is only used together with -sim_table,
+	  otherwise ignored.
 EOF
 
 $help_text{-copy_data} = <<'EOF';
@@ -293,10 +302,15 @@ EOF
 common_options::online_help( 'npc', \%options, \%help_text, \%required_options, \%optional_options);
 
 ## Check that we do have a model file
-if ( scalar(@ARGV) < 1 ) {
-  print "A model file must be specified (even when -sim_table and -orig_table are used).\n".
-      "Use 'npc -h' for help.\n";
-  exit;
+my $dummymodel=0;
+if (scalar(@ARGV) < 1) {
+	if ((defined $options{'sim_table'}) && (defined $options{'orig_table'})) {
+		$dummymodel = 1;
+	}else{
+		print "A model file must be specified (unless -sim_table and -orig_table are both specified).\n".
+			"Use 'npc -h' for help.\n";
+		die;
+	}
 }
 
 if( scalar(@ARGV) > 1 ){
@@ -385,40 +399,46 @@ if (defined $options{'sim_model'}){
 
 my $eval_string = common_options::model_parameters(\%options);
 
-my $model = model -> new ( eval( $eval_string ),
+my $model;
+
+if ($dummymodel){
+	$model = model->create_dummy_model;
+}else{ 
+	$model = model -> new ( eval( $eval_string ),
 			   filename                    => $ARGV[0],
 			   ignore_missing_output_files => 1 ,
 			   cwres                       => (($options{'dv'} eq 'CWRES')and ($PsN::nm_major_version < 7)) );
 
-unless ($model->copy_data_setting_ok(copy_data => $options{'copy_data'})){
-	die("Cannot set -no-copy_data, absolute data file path is too long.");
-} 
-if (defined $options{'copy_data'} and (not $options{'copy_data'})){
-	$model->relative_data_path(0);
-}
-
-if( defined $model -> msfi_names() ){
-  my @needed_files;
-  foreach my $msfi_files( @{$model -> msfi_names()} ){
-    #loop $PROB
-    if (defined $msfi_files){
-      foreach my $msfi_file( @{$msfi_files} ){
-	#loop instances
-	if ( defined $msfi_file ){
-	  my ( $dir, $file ) = OSspecific::absolute_path(cwd(),$msfi_file);
-	  push (@needed_files,$dir.$file) ;
+	unless ($model->copy_data_setting_ok(copy_data => $options{'copy_data'})){
+		die("Cannot set -no-copy_data, absolute data file path is too long.");
+	} 
+	if (defined $options{'copy_data'} and (not $options{'copy_data'})){
+		$model->relative_data_path(0);
 	}
-      }
-    }
-  }
-  if (scalar(@needed_files)>0){
-    if( defined $model -> extra_files ){
-      push(@{$model -> extra_files},@needed_files);
-    }else{
-      $model -> extra_files(\@needed_files);
-    }
-  }
 
+	if( defined $model -> msfi_names() ){
+		my @needed_files;
+		foreach my $msfi_files( @{$model -> msfi_names()} ){
+			#loop $PROB
+			if (defined $msfi_files){
+				foreach my $msfi_file( @{$msfi_files} ){
+					#loop instances
+					if ( defined $msfi_file ){
+						my ( $dir, $file ) = OSspecific::absolute_path(cwd(),$msfi_file);
+						push (@needed_files,$dir.$file) ;
+					}
+				}
+			}
+		}
+		if (scalar(@needed_files)>0){
+			if( defined $model -> extra_files ){
+				push(@{$model -> extra_files},@needed_files);
+			}else{
+				$model -> extra_files(\@needed_files);
+			}
+		}
+
+	}
 }
 
 
@@ -436,6 +456,7 @@ my $npc = tool::npc ->
 	  copy_data                => $options{'copy_data'},
 	  orig_table         => $options{'orig_table'},
 	  sim_table          => $options{'sim_table'},
+	  irep          => $options{'irep'},
 	  keep_estimation    => $options{'keep_estimation'},
 	  noprediction       => $options{'noprediction'},
 	  n_simulation_models => $options{'n_simulation_models'},

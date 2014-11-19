@@ -5,7 +5,7 @@
 use strict;
 use warnings;
 use File::Path 'rmtree';
-use Test::More tests=>660;
+use Test::More tests=>1011;
 use FindBin qw($Bin);
 use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages and $path variable definition
@@ -116,9 +116,10 @@ sub get_stats
 
 my $model_dir = $includes::testfiledir;
 
-copy_test_files($tempdir,["pheno5.mod", "pheno5.dta"]);
+#do not copy lst and ext here
+copy_test_files($tempdir,["pheno5.mod", "pheno5.dta","vpc/orig.tab","vpc/sim.tab","vpc/simNID.tab"]);
 
-my $command = get_command('vpc') . " -samples=20 $tempdir/pheno5.mod -auto_bin=2 -directory=$dir -seed=12345 -min_point=5";
+my $command = get_command('vpc') . " -samples=20 $tempdir/pheno5.mod -sim_table=$tempdir/sim.tab -orig_table=$tempdir/orig.tab -auto_bin=2 -directory=$dir -seed=12345 -min_point=5";
 system $command;
 
 my $newmatrix = get_dv_matrix();
@@ -136,6 +137,28 @@ for (my $i = 0; $i < 2; $i++){
 }
 
 rmtree([$dir]);
+
+#use irep option and dummy model
+my $command = get_command('vpc') . " -samples=20 -irep=NID -sim_table=$tempdir/simNID.tab -orig_table=$tempdir/orig.tab -auto_bin=2 -directory=$dir -seed=12345 -min_point=5";
+system $command;
+
+my $newmatrix = get_dv_matrix();
+
+is (scalar(@{$newmatrix}),scalar(@{$truematrix}),"DV matrices, equal num rows");
+my $num = scalar(@{$newmatrix});
+
+for (my $i = 0; $i < $num; $i++) {
+	is_array ($newmatrix->[$i],$truematrix->[$i],"DV matrix row index $i");
+}
+
+my $stats = get_stats();
+for (my $i = 0; $i < 2; $i++){
+	is_array ($stats->[$i],$truestats->[$i],"stats row index $i");
+}
+
+rmtree([$dir]);
+
+
 
 #split simulation over multiple tabs
 $command = get_command('vpc') . " -samples=20 $tempdir/pheno5.mod -auto_bin=2 -directory=$dir -seed=12345 -min_point=5 -n_sim=2";

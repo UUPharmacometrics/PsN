@@ -59,6 +59,7 @@ my %optional_options = ( 'idv:s' => undef,
     'boxcox_lambda:f' => undef,
     'confidence_interval:i' => undef,
     'censor:s' => undef,
+    'irep:s' => undef,
     "copy_data!"=>undef,
     'auto_bin:s' => undef,
     'min_points_in_bin:i' => undef,
@@ -136,6 +137,13 @@ $help_text{-censor} = <<'EOF';
       Name of variable which defines whether DV or similar is missing, e.g. due to drop-out.
       1 means the observation is censored, 0 means the observation is not censored.
       The variable must be requestable in $TABLE.
+EOF
+$help_text{-irep} = <<'EOF';
+      -irep=VARIABLE
+
+      Name of variable holding the number of the current replication for simulation data, 
+	  obtained via IREP in NONMEM. This option is only used together with -sim_table,
+	  otherwise ignored.
 EOF
 
 $help_text{-bin_by_count} = <<'EOF';
@@ -488,16 +496,22 @@ EOF
 common_options::online_help( 'vpc', \%options, \%help_text, \%required_options, \%optional_options);
 
 ## Check that we do have a model file
+
+my $dummymodel=0;
 if (scalar(@ARGV) < 1) {
-  print "A model file must be specified (even when -sim_table and -orig_table are used).\n".
-      "Use 'vpc -h' for help.\n";
-  exit;
+	if ((defined $options{'sim_table'}) && (defined $options{'orig_table'})) {
+		$dummymodel = 1;
+	}else{
+		print "A model file must be specified (unless -sim_table and -orig_table are both specified).\n".
+			"Use 'vpc -h' for help.\n";
+		die;
+	}
 }
 
 if (scalar(@ARGV) > 1) {
   print "VPC can only handle one modelfile. Check that all options begin with".
-      " -.\nUse 'vpc -h' for help.\n";die;
-  exit;
+      " -.\nUse 'vpc -h' for help.\n";
+  die;
 }
 
 
@@ -638,42 +652,47 @@ if (defined $options{'min_points_in_bin'} and not defined $auto_bin_mode) {
 
 my $eval_string = common_options::model_parameters(\%options);
 
-my $model = model -> new ( eval( $eval_string ),
-			   filename                    => $ARGV[0],
-			   ignore_missing_output_files => 1,
-			   cwres                       => (($options{'dv'} eq 'CWRES') and ($PsN::nm_major_version < 7))  );
+my $model;
 
-unless ($model->copy_data_setting_ok(copy_data => $options{'copy_data'})){
-	die("Cannot set -no-copy_data, absolute data file path is too long.");
-} 
-if (defined $options{'copy_data'} and (not $options{'copy_data'})){
-	$model->relative_data_path(0);
-}
+if ($dummymodel){
+	$model = model->create_dummy_model;
+}else{ 
+	$model = model -> new ( eval( $eval_string ),
+							filename                    => $ARGV[0],
+							ignore_missing_output_files => 1,
+							cwres                       => (($options{'dv'} eq 'CWRES') and ($PsN::nm_major_version < 7))  );
 
-if( defined $model -> msfi_names() ){
-  my @needed_files;
-  foreach my $msfi_files( @{$model -> msfi_names()} ){
-    #loop $PROB
-    if (defined $msfi_files){
-      foreach my $msfi_file( @{$msfi_files} ){
-	#loop instances
-	if ( defined $msfi_file ){
-	  my ( $dir, $file ) = OSspecific::absolute_path(cwd(),$msfi_file);
-	  push (@needed_files,$dir.$file) ;
+	unless ($model->copy_data_setting_ok(copy_data => $options{'copy_data'})){
+		die("Cannot set -no-copy_data, absolute data file path is too long.");
+	} 
+	if (defined $options{'copy_data'} and (not $options{'copy_data'})){
+		$model->relative_data_path(0);
 	}
-      }
-    }
-  }
-  if (scalar(@needed_files)>0){
-    if( defined $model -> extra_files ){
-      push(@{$model -> extra_files},@needed_files);
-    }else{
-      $model -> extra_files(\@needed_files);
-    }
-  }
 
+	if( defined $model -> msfi_names() ){
+		my @needed_files;
+		foreach my $msfi_files( @{$model -> msfi_names()} ){
+			#loop $PROB
+			if (defined $msfi_files){
+				foreach my $msfi_file( @{$msfi_files} ){
+					#loop instances
+					if ( defined $msfi_file ){
+						my ( $dir, $file ) = OSspecific::absolute_path(cwd(),$msfi_file);
+						push (@needed_files,$dir.$file) ;
+					}
+				}
+			}
+		}
+		if (scalar(@needed_files)>0){
+			if( defined $model -> extra_files ){
+				push(@{$model -> extra_files},@needed_files);
+			}else{
+				$model -> extra_files(\@needed_files);
+			}
+		}
+
+	}
 }
-
 
 my $vpc = tool::npc -> 
     new ( eval( $common_options::parameters ),
@@ -695,6 +714,7 @@ my $vpc = tool::npc ->
 	  mirrors            => $options{'mirrors'},
 	  dv                 => $options{'dv'},
 	  orig_table         => $options{'orig_table'},
+	  irep          => $options{'irep'},
 	  sim_table          => $options{'sim_table'},
 	  categorized        => ((scalar(@{$levels}) > 0) ? 1 : 0),
 	  levels             => $levels,
