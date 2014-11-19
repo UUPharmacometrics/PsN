@@ -1,5 +1,5 @@
 package model::problem::record;
-#use Carp;
+
 use include_modules;
 use Moose;
 use MooseX::Params::Validate;
@@ -13,78 +13,59 @@ has 'print_order' => ( is => 'rw', isa => 'ArrayRef[Int]' );
 
 sub BUILD
 {
-	my $self = shift;
+    my $self = shift;
 
-	# To construct an option you only need to supply an array of
-  # strings containg the record block. _read_option then parses
-  # those strings.
-  $self->_read_options;
-  $self->clear_record_arr;
+    # To construct an option you only need to supply an array of
+    # strings containg the record block. _read_option then parses
+    # those strings.
+    $self->_read_options;
+    $self->clear_record_arr;
 }
 
 sub add_option
 {
-	my $self = shift;			# FIXME: Legacy code this should use validated_hash instead.
-	my %parm = @_;
-	my @valid_parm = ( 'init_data' );
-	my %isvalid = undef;
-	foreach my $givenp ( keys %parm ){
-		foreach my $validp ( @valid_parm ) {
-			$isvalid{ $givenp } = 1 if ( $givenp eq $validp );
-		}
-		croak("Error in add_option given paramter $givenp is not valid\n" ) unless( $isvalid{$givenp} );
-	}
-	
-	#my ($self, %parm) = validated_hash(@_, 
-	#	init_data => {isa => 'Any', optional => 0}
-	#);
-	$self->options([]) unless defined $self->options;
-	push( @{$self->options}, model::problem::record::option->new( %{$parm{'init_data'}} ) );
+    my ($self, %parm) = validated_hash(\@_, 
+		init_data => { isa => 'Any', optional => 0 }
+	);
+	push(@{$self->options}, model::problem::record::option->new(%{$parm{'init_data'}}));
 }
 
 sub remove_option
 {
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		 name => { isa => 'Str', optional => 1 },
-		 fuzzy_match => { isa => 'Bool', default => 0, optional => 1 }
-	);
-	my $name = $parm{'name'};
-	my $fuzzy_match = $parm{'fuzzy_match'};
+    my $self = shift;
+    my %parm = validated_hash(\@_,
+        name => { isa => 'Str', optional => 1 },
+        fuzzy_match => { isa => 'Bool', default => 0, optional => 1 }
+    );
+    my $name = $parm{'name'};
+    my $fuzzy_match = $parm{'fuzzy_match'};
 
+    my @options = @{$self->options};
+    my @new_options = ();
+    foreach my $option ( @options ) {
+        next if ( $option -> name eq $name );    
 
-$self->options([]) unless defined $self->options;
-my @options = @{$self->options};
-my @new_options = ();
-foreach my $option ( @options ) {
-  next if ( $option -> name eq $name );    
-  
-  next if ( $fuzzy_match and index( $name, $option -> name ) == 0 );
+        next if ( $fuzzy_match and index( $name, $option -> name ) == 0 );
 
-  push( @new_options, $option );
-}
-$self->options(\@new_options);
-
+        push( @new_options, $option );
+    }
+    $self->options(\@new_options);
 }
 
 sub _add_option
 {
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		 option_string => { isa => 'Str', optional => 1 }
-	);
-	my $option_string = $parm{'option_string'};
+    my $self = shift;
+    my %parm = validated_hash(\@_,
+        option_string => { isa => 'Str', optional => 1 }
+    );
+    my $option_string = $parm{'option_string'};
 
-{
-	# Create a new option. $option_string should be of the form
-	# "option=value". TODO catch any error from below.
-	my $opt_obj = model::problem::record::option -> new ( option_string => $option_string );
-	if( $opt_obj ) {
-		$self->options([]) unless defined $self->options;
-	  push( @{$self->options}, $opt_obj ); 
-	}
-}
-
+    # Create a new option. $option_string should be of the form
+    # "option=value". TODO catch any error from below.
+    my $opt_obj = model::problem::record::option->new(option_string => $option_string);
+    if ($opt_obj) {
+        push(@{$self->options}, $opt_obj); 
+    }
 }
 
 sub _read_options
