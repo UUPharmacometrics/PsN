@@ -505,42 +505,6 @@ sub create_output_filename
     return $filename;
 }
 
-sub add_iofv_module
-{
-	my ($self, %parm) = validated_hash(@_, 
-		init_data => {isa => 'Any', optional => 0}
-	);
-	$self->iofv_modules([]) unless defined $self->iofv_modules;
-	push( @{$self->iofv_modules}, model::iofv_module->new( %{$parm{'init_data'}} ) );
-}
-
-sub add_nonparametric_module
-{
-	my ($self, %parm) = validated_hash(@_, 
-		init_data => {isa => 'Any', optional => 0}
-	);
-	$self->nonparametric_modules([]) unless defined $self->nonparametric_modules;
-	push( @{$self->nonparametric_modules}, model::nonparametric_module->new( %{$parm{'init_data'}} ) );
-}
-
-sub add_output
-{
-	my ($self, %parm) = validated_hash(@_, 
-		init_data => {isa => 'Any', optional => 0}
-	);
-	$self->outputs([]) unless defined $self->outputs;
-	push( @{$self->outputs}, output->new( %{$parm{'init_data'}} ) );
-}
-
-sub add_problem
-{
-	my ($self, %parm) = validated_hash(@_, 
-		init_data => {isa => 'Any', optional => 0}
-	);
-	$self->problems([]) unless defined $self->problems;
-	push( @{$self->problems}, model::problem->new( %{$parm{'init_data'}} ) );
-}
-
 sub add_records
 {
 	my $self = shift;
@@ -973,7 +937,6 @@ sub fixed_or_same
 	return \@fixed_or_same;
 }
 
-
 sub same
 {
 	my $self = shift;
@@ -1020,7 +983,6 @@ sub same
 
 	return \@same;
 }
-
 
 sub idcolumn
 {
@@ -1835,7 +1797,8 @@ sub get_rawres_params
 	return (\@allparams,\%labels_hash);
 }
 
-sub create_vectorsamples {
+sub create_vectorsamples
+{
 	my $self = shift;
 	my %parm = validated_hash(\@_,
 							  sampled_params_arr => { isa => 'ArrayRef[HashRef]', optional => 0 }

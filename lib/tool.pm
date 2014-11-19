@@ -348,15 +348,6 @@ sub BUILD
 	}
 }
 
-sub add_tool
-{
-	my ($self, %parm) = validated_hash(@_, 
-		init_data => {isa => 'Any', optional => 0}
-	);
-	$self->tools([]) unless defined $self->tools;
-	push( @{$self->tools}, tool->new( %{$parm{'init_data'}} ) );
-}
-
 sub add_model
 {
 	my ($self, %parm) = validated_hash(@_, 
@@ -882,8 +873,6 @@ sub run
 	# Analyze the results
 	$self -> analyze( model_number => 1 );
 
-#	$self->prepared_models->[0] = $self->prepared_models; #does this overwrite \@tool_models? Should it not be ->[]{'own'} = ...?
-	
 	# Perform analyses that need to be done after model has
 	# been run and processed. Also write a result file if one is
 	# defined.
@@ -1627,7 +1616,6 @@ sub print_options
 	}
 }
 
-
 sub get_rundir
 {
 	#static no shift
@@ -1671,7 +1659,6 @@ sub get_rundir
 	return $rundir;
 
 }
-
 
 sub create_R_script
 {
