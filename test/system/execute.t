@@ -8,7 +8,7 @@
 use strict;
 use warnings;
 use File::Path 'rmtree';
-use Test::More tests=>15;
+use Test::More;
 use List::Util qw(first);
 use Config;
 use FindBin qw($Bin);
@@ -58,6 +58,7 @@ my @command_line = (
 	get_command('execute') . " $model_dir/tbs1a.mod -tbs_zeta='(-1,0.01,1)'  -directory=$dir",
 	get_command('execute') . " $model_dir/tbs1.mod -tbs_lambda='(-2,1,2)'  -directory=$dir",
 	get_command('execute') . " $model_dir/tbs1.mod -tbs_lambda='(-2,1,2)' -dtbs  -directory=$dir",
+    get_command('execute') . " $tempdir/pheno.mod -standardised_output -directory=$dir",
 );
 
 # If we are running on Windows remove ' in command line

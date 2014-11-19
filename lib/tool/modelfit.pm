@@ -29,6 +29,7 @@ use Moose;
 use MooseX::Params::Validate;
 use PsN;
 use log;
+use standardised_output;
 
 extends 'tool';
 
@@ -2884,6 +2885,7 @@ sub copy_model_and_output
 	my $model = $parm{'model'};
 	my $use_run = $parm{'use_run'};
 
+    my $final_lst;
 	my $outfilename = $model -> outputs -> [0] -> full_name;
 
 	my ($dir, $model_filename) = OSspecific::absolute_path($model -> directory,
@@ -2969,8 +2971,9 @@ sub copy_model_and_output
 
 		# Don't prepend the model file name to psn.lst, but use the name
 		# from the $model object.
-		if( $filename eq 'psn.lst' ){
-			cp( $use_name, $outfilename );
+		if ($filename eq 'psn.lst') {
+			cp($use_name, $outfilename);
+            $final_lst = $outfilename;
 			next;
 		}
 		my $found_ext = 0;
@@ -3082,6 +3085,11 @@ if ( $self->clean >= 3 ) {
 	system('compact /c /s /q > NUL')
 	if ( $self->compress and $Config{osname} eq 'MSWin32' );
 }
+
+    if ($self->standardised_output) {
+        my $so = standardised_output->new(output_filename => $final_lst);
+        $so->parse; 
+    }
 }
 
 sub calculate_raw_results_width

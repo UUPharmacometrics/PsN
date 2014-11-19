@@ -14,7 +14,7 @@ use array;
 use IO::File;
 
 has 'output_filename' => ( is => 'rw', isa => 'Str' );
-has 'precision' => (is => 'rw', isa => 'Int' );
+has 'precision' => (is => 'rw', isa => 'Int', default => 4 );
 has '_output' => ( is => 'rw', isa => 'output' );
 has '_model' => ( is => 'rw', isa => 'model' );
 has '_writer' => ( is => 'rw', isa => 'Ref' ); 
@@ -22,8 +22,6 @@ has '_writer' => ( is => 'rw', isa => 'Ref' );
 sub BUILD
 {
     my $self = shift;
-
-
 
     my $so_filename = $self->output_filename;
 

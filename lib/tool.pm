@@ -140,6 +140,7 @@ has 'directory_name_prefix' => ( is => 'rw', isa => 'Str' );
 has 'rplots' => ( is => 'rw', isa => 'Int', default => 0 );
 has 'template_directory_rplots' => ( is => 'rw', isa => 'Str');
 has 'template_file_rplots' => ( is => 'rw', isa => 'Str');
+has 'standardised_output' => ( is => 'rw', isa => 'Bool', default => 0 );
 
 
 sub BUILDARGS

@@ -23,7 +23,7 @@ Getopt::Long::config("auto_abbrev");
 		  "condition_number_limit:f",
 		  "correlation_limit:f",
 		  "crash_restarts:i",
-			"degree:f",
+		  "degree:f",
 		  "directory:s",
 		  "display_iterations!",
 		  "email_address:s",
@@ -86,6 +86,7 @@ Getopt::Long::config("auto_abbrev");
 		  "near_bound_sign_digits:i",
 		  "near_zero_boundary_limit:f",
 		  "precision:i",
+          "standardised_output!",
     );
 
 
@@ -1286,6 +1287,13 @@ EOF
     $help_hash{-version} = <<'EOF';
     <p class="style2">-version</p>
     Print PsN version of script called.
+EOF
+
+    $help_hash{-standardised_output} = <<'EOF';
+    <p class="style2">-standardised_output</p>
+    Create an additional DDMoRe standardised output xml file.
+    Note that the file format is still under development
+    and that this option should be considered experimental.
 EOF
 
     $help_hash{'-h'} = $help_hash{'-?'};
