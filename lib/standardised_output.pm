@@ -537,7 +537,7 @@ sub _add_predictions
     my $pred = $sdtab->column_to_array(column => "PRED");
     my $ipred = $sdtab->column_to_array(column => "IPRED");
 
-    $writer->startTag("Prediction");
+    $writer->startTag("Predictions");
 
     $self->add_table(
         column_ids => [ "ID", "TIME", "PRED", "IPRED" ],
@@ -546,7 +546,7 @@ sub _add_predictions
         values => [ $id, $time, $pred, $ipred ],
     );
 
-    $writer->endTag("Prediction");
+    $writer->endTag("Predictions");
 }
 
 sub _add_residuals
