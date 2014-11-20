@@ -26,9 +26,9 @@ sub BUILD
     my $so_filename = $self->output_filename;
 
     if ($so_filename =~ /(.*)\..*/) {
-        $so_filename = $1 . '_SO.xml';
+        $so_filename = $1 . '.SO.xml';
     } else {
-        $so_filename .= '_SO.xml';
+        $so_filename .= '.SO.xml';
     }
     my $output_file = IO::File->new(">" . $so_filename);
 
