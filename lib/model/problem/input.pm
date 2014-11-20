@@ -23,7 +23,6 @@ sub BUILD
 	}
 }
 
-
 sub get_nonskipped_columns
 {
 	my $self = shift;

@@ -8,8 +8,8 @@ use model::problem::record::option;
 
 has 'options' => ( is => 'rw', isa => 'ArrayRef[model::problem::record::option]', default => sub { [] } );
 has 'record_arr' => ( is => 'rw', isa => 'Maybe[ArrayRef]', clearer => 'clear_record_arr' );
-has 'comment' => ( is => 'rw', isa => 'ArrayRef' );
-has 'print_order' => ( is => 'rw', isa => 'ArrayRef[Int]' );
+has 'comment' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
+has 'print_order' => ( is => 'rw', isa => 'ArrayRef[Int]', default => sub { [] } );
 
 sub BUILD
 {
@@ -105,15 +105,13 @@ sub _read_options
 
 		if( /^\s*(\;.*)$/ ) {
 			# This is a comment on a line of its own.
-			$self->comment([]) unless defined $self->comment;
 			if( $order == 0 ) {
 				push(@{$self->comment}, $1 . "\n");
 			} else {
 				push(@{$self->comment},"\n" . $1 . "\n");
 			}
 			# Record after which option the comment appeared.
-			$self->print_order([]) unless defined $self->print_order;
-			push( @{$self->print_order}, $order );
+			push(@{$self->print_order}, $order);
 		} else {
 			# Get rid of $RECORD
 			s/^\s*\$(\w+)//;
@@ -173,10 +171,8 @@ sub _read_options
 
 			if( length( $comment ) > 0 ) {
 				# This is a comment at the end of a line.
-				$self->comment([]) unless defined $self->comment;
-				push( @{$self->comment},' ' . $1 . "\n" );
-				$self->print_order([]) unless defined $self->print_order;
-				push( @{$self->print_order}, $order );
+				push(@{$self->comment}, ' ' . $1 . "\n");
+				push(@{$self->print_order}, $order);
 			}
 		}
 	}
@@ -204,8 +200,8 @@ sub _format_record
 
 	# Get some members from the object.
 	my @print_order = defined $self->print_order ? @{$self->print_order} : ();	
-	my @comments = defined($self->comment) ? @{$self->comment} : ();    
-	my @options = defined($self->options) ? @{$self->options} : ();
+	my @comments = @{$self->comment};    
+	my @options = @{$self->options};
 
 	# Each element of @print_order is a number which says how many
 	# options(since the previous comment was printed) that should
@@ -229,7 +225,7 @@ sub _format_record
 
 	# Loop over all options. Actually we loop one step to long,
 	# since we might have comments after the last option.
-	for( my $i = 0; $i <= scalar @options; $i++ ){
+	for (my $i = 0; $i <= scalar(@options); $i++) {
 
 		# See if we have processed enough options to print
 		# commments. It is a loop since we might have multiple lines

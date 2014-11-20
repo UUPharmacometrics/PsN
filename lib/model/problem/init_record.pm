@@ -1,5 +1,5 @@
 package model::problem::init_record;
-#use Carp;
+
 use include_modules;
 use model::problem::record::init_option;
 use linear_algebra;
@@ -21,15 +21,13 @@ has 'n_previous_rows' => ( is => 'rw', isa => 'Maybe[Int]', default => 0 );
 
 sub store_inits
 {
-	my $self = shift;
+    my $self = shift;
 
-	if ( defined $self->options ) {
-	  foreach my $option ( @{$self->options} ){
-	    if( $option -> can( 'store_init' ) ){
-	      $option -> store_init;
-	    }
-	  }
-	}
+    foreach my $option (@{$self->options}) {
+        if ($option->can('store_init')) {
+            $option->store_init;
+        }
+    }
 }
 
 sub restore_inits
@@ -149,18 +147,17 @@ sub _read_options
 	my @class_names = split('::',ref($self));
 	my $parameter = uc(pop(@class_names));
 
-	if ( defined $self->record_arr ) {
-	  for ( @{$self->record_arr} ) {
+	if (defined $self->record_arr) {
+	  for (@{$self->record_arr}) {
 	    my $whole_row = $_;
 	    chomp;
 	    s/^\s+//; #leading spaces
 	    s/\s+$//; #trailing spaces
 	    s/^\s*\$\w+//; #the record name
-	    next unless( length($_) > 0 );
-	    if( /^\s*\;/ ) {
+	    next unless(length($_) > 0);
+	    if (/^\s*\;/) {
 	      # This is a comment row
-				$self->comment([]) unless defined $self->comment;
-	      push( @{$self->comment}, $_ . "\n" );
+	      push(@{$self->comment}, $_ . "\n");
 	    } else {
 	      # Make sure that the labels and units are in one string
 	      s/\;\s+/\;/g; #spaces after ;
@@ -491,10 +488,7 @@ sub _format_record
 	  $formatted[0] = $formatted[0]."\n";
 	}
 
-	if ( defined $self->comment ) {
-	  push( @formatted, @{$self->comment} );
-	  $formatted[$#formatted] = $formatted[$#formatted];
-	}
+    push(@formatted, @{$self->comment});
 
 	return \@formatted;
 }

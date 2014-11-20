@@ -22,8 +22,8 @@ sub update_runrecord_tags{
 	push (@tags,'9. Estimation:');
 
 
-	my @print_order = defined $self->print_order ? @{$self->print_order} : ();	
-	my @comments = defined($self->comment) ? @{$self->comment} : ();    
+	my @print_order = @{$self->print_order};
+	my @comments = @{$self->comment};    
 	my @options = defined($self->options) ? @{$self->options} : ();
 
 	my $numopts = scalar(@options);
@@ -36,17 +36,17 @@ sub update_runrecord_tags{
 
 	if (defined $new_comment){
 		push(@comments, "\n".';'.$new_comment);
-		push( @print_order, $numopts );
+		push(@print_order, $numopts);
 	}
 	if ($add_tags){
 		#add all, set based on
 		#start with Based on
 		my $line = "\n".';; 1. Based on: '.$based_on;
 		push(@comments, $line);
-		push( @print_order, $numopts );
-		foreach my $tag (@tags){
+		push(@print_order, $numopts);
+		foreach my $tag (@tags) {
 			push(@comments, ";; $tag");
-			push( @print_order, $numopts );
+			push(@print_order, $numopts);
 		}
 	}else{
 		for (my $j=0; $j< scalar(@comments); $j++){

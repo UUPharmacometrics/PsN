@@ -274,9 +274,9 @@ for( my $run = $from; $run <= $to; $run++ ){
 		}
 
 		my @documentation = ();
-		foreach my $rec ('sizess','problems','inputs'){
-			if (defined $problem->$rec and (defined $problem->$rec->[0]->comment())){
-				foreach my $line (@{$problem->$rec->[0]->comment()}){
+		foreach my $rec ('sizess', 'problems', 'inputs') {
+			if (defined $problem->$rec and (scalar($problem->$rec->[0]->comment) > 0)) {
+				foreach my $line (@{$problem->$rec->[0]->comment}) {
 					chomp $line;
 					$line =~ s/\n//g;
 					push(@documentation,$line) 

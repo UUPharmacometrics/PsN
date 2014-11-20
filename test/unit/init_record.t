@@ -2,7 +2,7 @@
 
 use strict;
 use warnings;
-use Test::More tests => 37;
+use Test::More;
 use FindBin qw($Bin);
 use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages
@@ -65,5 +65,11 @@ my $a = $record->_format_record;
 my @str = split /\s+/, $$a[0];
 is ($str[2], 'FIX', "_format_record 4");
 is ($str[3], 28, "_format record 4");
+
+
+my $record = model::problem::init_record->new(record_arr => ['2 ; Malta', '; Corse']);
+is ($record->comment->[0], "; Corse\n", "init_record full line comment");
+my $r = $record->_format_record;
+is ($r->[1], "; Corse\n", "init_record full line comment after _format_record");
 
 done_testing();

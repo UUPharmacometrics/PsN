@@ -164,8 +164,8 @@ sub _format_record
 		$formatted[$line] .= ' '.$foption;
 	}
 
-	my @comments = defined($self->comment) ? @{$self->comment} : ();    
-	my @options = defined($self->options) ? @{$self->options} : ();
+	my @comments = @{$self->comment};    
+	my @options = @{$self->options};
 
 	for( my $i = 0; $i < scalar @options; $i++ ){
 		my $foption = $options[$i] -> _format_option;

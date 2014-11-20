@@ -8,7 +8,6 @@ extends 'model::problem::record::init_option';
 has 'upbnd' => ( is => 'rw', isa => 'Maybe[Str]', clearer => 'clear_upbnd' );
 has 'lobnd' => ( is => 'rw', isa => 'Maybe[Str]', default => '-1000000', clearer => 'clear_lobnd' );
 
-
 sub get_range
 {
 	my $self = shift;
@@ -36,7 +35,6 @@ sub get_range
 	return [$low,$high];
 
 }
-
 
 sub _format_option
 {
