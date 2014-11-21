@@ -1432,10 +1432,10 @@ sub _renumber_ascending
 	# method is not to order the individuals after their identifiers but to
 	# ensure that all individuals have unique identifiers.
 
-	foreach my $individual ( @{$self->individuals()} ) {
-		$individual->idnumber ( $start_at++ );
+	foreach my $individual (@{$self->individuals}) {
+		$individual->idnumber($start_at++);
+        $individual->update_idnumber();
 	}
-
 }
 
 sub resample

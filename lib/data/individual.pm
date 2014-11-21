@@ -7,25 +7,12 @@ use MooseX::Params::Validate;
 use math;
 
 has 'idcolumn' => ( is => 'rw', isa => 'Int', required => 1 );
-has 'idnumber' => ( is => 'rw', isa => 'Num', trigger => \&_idnumber_set );
+has 'idnumber' => ( is => 'rw', isa => 'Num' );
 has 'subject_data' => ( is => 'rw', isa => 'ArrayRef', required => 1 );
-
-# FIXME: This is a workaround to not execute triggers at construction.
-my $in_constructor = 0;
-
-sub BUILDARGS
-{
-	my $self = shift;
-
-	$in_constructor = 1;
-
-	return $self->SUPER::BUILDARGS(@_);
-}
 
 sub BUILD
 {
 	my $self = shift;
-	$in_constructor = 0;
 
 	# The idnumber attribute does not have an explicit default value but
 	# is, if no number is given, instead set to the value of the first
@@ -33,51 +20,49 @@ sub BUILD
 
 	if (not defined $self->idnumber) {
 		my @data = split(/,/, $self->subject_data->[0]);
-		unless (defined $data[$self->idcolumn - 1] and length($data[$self->idcolumn - 1])>0){
+		unless (defined $data[$self->idcolumn - 1] and length($data[$self->idcolumn - 1]) > 0) {
 			croak("The value in the id-column is empty");
 		}
-		if (math::usable_number($data[$self->idcolumn - 1])){
+		if (math::usable_number($data[$self->idcolumn - 1])) {
 			$self->idnumber($data[$self->idcolumn - 1]);
-		}else{
-			print "data is ".$self->subject_data->[0]."\n";
-			print "idcolumn is ".$self->idcolumn."\n";
-			croak("The value in the id column, ".$data[$self->idcolumn - 1].", does not look like a number\n");
+            $self->update_idnumber();
+		} else {
+			print "data is " . $self->subject_data->[0] . "\n";
+			print "idcolumn is " . $self->idcolumn . "\n";
+			croak("The value in the id column, " . $data[$self->idcolumn - 1] . ", does not look like a number\n");
 		}
 	}
 }
 
-sub _idnumber_set
+sub update_idnumber
 {
-	my $self = shift;
-	my $parm = shift;
+    # updates the id_number of subject_data
+    my $self = shift;
 
-	if ($in_constructor) { return; }
-	if (defined $parm) {
-	  for (my $i = 0 ; $i < scalar(@{$self->subject_data}); $i++) {
-	    my @row = split(/,/, $self->subject_data->[$i]);
-	    $row[$self->idcolumn - 1] = $parm;
-	    $self->subject_data->[$i] = join(',', @row);
-	  }
-	}
+    for (my $i = 0 ; $i < scalar(@{$self->subject_data}); $i++) {
+        my @row = split(/,/, $self->subject_data->[$i]);
+        $row[$self->idcolumn - 1] = $self->idnumber;
+        $self->subject_data->[$i] = join(',', @row);
+    }
 }
 
 sub copy
 {
-	my $self = shift;
-	my $individual_copy;
+    my $self = shift;
+    my $individual_copy;
 
-	my @new_data = ();
-	foreach my $row (@{$self->subject_data}) {
-		my $new_row = $row;
-	  push (@new_data, $new_row);
-	}
+    my @new_data = ();
+    foreach my $row (@{$self->subject_data}) {
+        my $new_row = $row;
+        push (@new_data, $new_row);
+    }
 
-	$individual_copy = data::individual -> new(
-		idcolumn     => $self->idcolumn,
-		idnumber     => $self->idnumber,
-		subject_data => \@new_data );
+    $individual_copy = data::individual -> new(
+        idcolumn     => $self->idcolumn,
+        idnumber     => $self->idnumber,
+        subject_data => \@new_data );
 
-	return $individual_copy;
+    return $individual_copy;
 }
 
 sub add_frem_lines
@@ -259,7 +244,7 @@ sub append_column
 	#otherwise die with error
 	#append values at each line. No return value
 
-	my @data = @{$self -> subject_data()};
+	my @data = @{$self->subject_data};
 	unless (scalar(@data) == scalar(@{$new_values})) {
 		croak("lines of subject data(" . scalar(@data) . ") and length of new_values(" . scalar(@{$new_values}) .
 			") must be equal in individual->append_column");
@@ -297,7 +282,6 @@ sub append_individual
 
 	$self->subject_data(\@newlines); #replace old data
 }
-
 
 sub factors
 {
