@@ -1,79 +1,28 @@
 package file;
-#use Carp;
+
 use include_modules;
 use Config;
 use Cwd;
 use Moose;
 use MooseX::Params::Validate;
 
-has 'path' => ( is => 'rw', isa => 'Str', trigger => \&_path_set );
-has 'name' => ( is => 'rw', isa => 'Str', trigger => \&_name_set );
-
-# FIXME: This is a workaround to not execute triggers at construction.
-# Fix by making path_set and name_set into method instead of triggers
-my $in_constructor = 0;
-
-sub BUILDARGS
-{
-	my $self = shift;
-
-	$in_constructor = 1;
-
-	return $self->SUPER::BUILDARGS(@_);
-}
+has 'path' => ( is => 'rw', isa => 'Str' );
+has 'name' => ( is => 'rw', isa => 'Str' );
 
 sub BUILD
 {
 	my $self  = shift;
 
-	$in_constructor = 0;
-
 	my $path = $self->path;
 	my $name = $self->name;
 
-	$path = $self -> merge_path_and_name( path => $path, name => $name );
+	$path = $self->merge_path_and_name(path => $path, name => $name);
 
 	$path =~ s!([^\/]*)$!!;
 	$name = $1;
 
-	$self->{'path'} = $path;
-	$self->{'name'} = $name;
-}
-
-sub _path_set
-{
-	my $self = shift;
-	my $parm = shift;
-
-	if ($in_constructor) { return; }
-
-	if ( defined $parm ) {
-		my $path = $self->merge_path_and_name( path => $parm, name => $self->name );
-
-		$path =~ s!([^\/]*)$!!;
-		my $name = $1;
-	
-		$self -> {'name'} = $name;
-		$parm = $path;
-	}
-}
-
-sub _name_set
-{
-	my $self = shift;
-	my $parm = shift;
-
-	if ($in_constructor) { return; }
-
-	if ( defined $parm ) {
-		my $path = $self->merge_path_and_name( path => $self->path, name => $parm );
-
-		$path =~ s!([^\/]*)$!!;
-		my $name = $1;
-	
-		$self -> {'path'} = $path;
-		$parm = $name;
-	}
+	$self->path($path);
+	$self->name($name);
 }
 
 sub merge_path_and_name
@@ -136,7 +85,7 @@ sub merge_path_and_name
 	}
 
 	# Step 3
-	$merged_path = $self -> clean_path( path => $path );
+	$merged_path = $self->clean_path(path => $path);
 
 	return $merged_path;
 }
@@ -146,7 +95,7 @@ sub full_name
 	my $self = shift;
 	my $full_name;
 
-	$full_name = $self -> {'path'} . $self -> {'name'};
+	$full_name = $self->path . $self->name;
 
 	return $full_name;
 }
