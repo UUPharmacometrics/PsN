@@ -260,9 +260,11 @@ sub BUILD
     if (not defined $self->outputs) {
         if (not defined $self->outputfile) {
             my $filename = $self->create_output_filename();
+            $in_constructor = 1;        #FIXME: Ugly hack to not create output object here
             $self->outputfile($filename);
+            $in_constructor = 0;
         }
-        $self->outputs([]);     # FIXME: output objects created multiple times. See trigger on outputfile
+        $self->outputs([]);
         push(@{$self->outputs}, output->new(
             filename => $self->outputfile,
             directory => $self->directory,
