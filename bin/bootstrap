@@ -37,6 +37,7 @@ my %optional_options = ("samples:i"=>'',
 						"skip_covariance_step_terminated!"=>'',
 						"skip_with_covstep_warnings!"=>'',
 						"skip_estimate_near_boundary!"=>'',
+						"summarize"=>'',
 						"allow_ignore_id!"=>'',
 						"copy_data!"=>'',
 			);
@@ -134,6 +135,13 @@ EOF
       Only allowed in combination with -dofv and when NM7.3 or later and
       a classical estimation method is used. Set MCETA=N in $EST when
       computing delta-ofv.
+EOF
+    $help_text{-summarize} = <<'EOF';      
+      <p class="option">-summarize</p>
+
+      Only allowed when -directory is set to an existing bootstrap run directory and
+	  there exists a raw_results file in there. Recompute bootstrap_results based
+	  on the existing raw_results, possibly using a different set of exclusion criteria.
 EOF
 
     $help_text{-sample_size} = <<'EOF';
@@ -345,6 +353,12 @@ $bs-> print_options (cmd_line => $cmd_line,
 
 
 if ( $options{'summarize'} ) {
+	#check that raw_results file exists
+	unless (-e $bs->raw_results_file->[0]){
+		print "Option summarize can only be used when raw_results file exists, cannot find \n".$bs->raw_results_file->[0].
+			"\nTry resuming bootstrap without option -summarize\n";
+		die;
+	}
   $bs -> prepare_results();
   $bs -> print_results();
 } else {

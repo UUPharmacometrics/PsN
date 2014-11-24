@@ -245,25 +245,20 @@ sub calculate_means
 
 	my ( @sum, @diagsum );
 	# Prepared model, skip the first (the original)
-	for ( my $k = 1; $k < scalar @{$self -> bootstrap_estimates ->
-		[$model_number-1]}; $k++ ) {
+	for ( my $k = 1; $k < scalar @{$self -> bootstrap_estimates ->[$model_number-1]}; $k++ ) {
 		# Estimates
-		for ( my $l = 0; $l < scalar @{$self -> bootstrap_estimates ->
-			[$model_number-1][$k]}; $l++ ) {
-			$sum[$l] += $self -> bootstrap_estimates ->
-			[$model_number-1][$k][$l];
+		for ( my $l = 0; $l < scalar @{$self -> bootstrap_estimates ->	[$model_number-1][$k]}; $l++ ) {
+			$sum[$l] += $self -> bootstrap_estimates ->	[$model_number-1][$k][$l];
 		}
 	}
 	# divide by the number of bootstrap samples (-1 to get rid of the original
 	# model) The [0] in the index is there to indicate the 'model' level. Mostly
 	# used for printing
-	my $samples = scalar @{$self -> bootstrap_estimates ->
-	[$model_number-1]} - 1;
+	my $samples = scalar @{$self -> bootstrap_estimates ->	[$model_number-1]} - 1;
 	for ( my $l = 0; $l <= $#sum; $l++ ) {
 		my $mean = $sum[$l] / $samples;
 		$self->result_parameters->{'means'} -> [$model_number-1][0][$l] = $mean;
-		my $bias = $mean - $self ->
-		bootstrap_estimates -> [$model_number-1][0][$l];
+		my $bias = $mean - $self ->	bootstrap_estimates -> [$model_number-1][0][$l];
 		$self->result_parameters->{'bias'} -> [$model_number-1][0][$l] = $bias;
 		if ( $self->bootstrap_estimates -> [$model_number-1][0][$l] != 0 and
 			$bias/$self->bootstrap_estimates -> [$model_number-1][0][$l]
@@ -1301,7 +1296,7 @@ sub _modelfit_raw_results_callback
 				$self->raw_line_structure() -> {$mod}->{'method'} = '0,1';
 			}
 		}
-		$self->raw_line_structure() -> {'0'} = $self->raw_line_structure() -> {'1'};
+		$self->raw_line_structure() -> {'0'} = $self->raw_line_structure() -> {'1'}; #FIXME, rely on sample 1 not crash
 		$self->raw_line_structure() -> write( $dir.'raw_results_structure' );
 
 		$self -> raw_results_header($modelfit -> raw_results_header());
@@ -1466,6 +1461,7 @@ sub bca_read_raw_results
 			# Get rid of 'method' column
 			my $cols = scalar(@{$header})-1;
 			@{$self -> raw_results_header()->[$i-1]} = @{$header}[1..$cols];
+			$self->raw_results([]) unless (defined $self->raw_results);
 			$self -> raw_results() -> [$i-1] = \@file;
 			for( my $j = 0; $j <= $#file; $j++ ) {
 				if ( $file[$j][0] eq 'jackknife' ) {
@@ -1499,13 +1495,26 @@ sub prepare_results
 		trace(tool => 'bootstrap', message => "Read raw results from file", level => 1);
 		$self -> bootstrap_raw_results ($self -> raw_results());
 	}
-
-	for ( my $i = 0; $i < scalar @{$self -> diagnostic_parameters()}; $i++ ) {
-		my ($start,$length) = 
-		split(',',$self->raw_line_structure()->{'1'}->{$self -> diagnostic_parameters() -> [$i]});
-		$diag_idx{$self -> diagnostic_parameters() -> [$i]} = $start;
+	unless (defined $self->raw_line_structure){
+		#not tested for Bca...
+		$self->raw_line_structure(ext::Config::Tiny -> read($self->directory.'raw_results_structure'));
 	}
 
+	#make sure that we have valid raw_line_structure and not from crashed run here
+	my $valid_raw_line;
+	for (my $i=1;$i <= $self->samples; $i++){
+		if (defined $self->raw_line_structure()->{$i}->{$self -> diagnostic_parameters() -> [0]}){
+			$valid_raw_line = $i;
+			last;
+		}else{
+			#print "rawline $i not ok!\n";
+		}
+	}
+
+	for ( my $i = 0; $i < scalar @{$self -> diagnostic_parameters()}; $i++ ) {
+		my ($start,$length) = split(',',$self->raw_line_structure()->{$valid_raw_line}->{$self -> diagnostic_parameters() -> [$i]});
+		$diag_idx{$self -> diagnostic_parameters() -> [$i]} = $start;
+	}
 	# ---------------------  Get data from raw_results  -------------------------
 
 	# Divide the data into diagnostics and estimates. Included in estimates are
@@ -1534,8 +1543,7 @@ sub prepare_results
 					$self ->models() -> [$i] -> labels( parameter_type => $param );
 					# we can't use labels directly since different models may have different
 					# labels (still within the same modelfit)
-					my $numpar = scalar @{$labels -> [0]} if ( defined $labels and
-						defined $labels -> [0] );
+					my $numpar = scalar @{$labels -> [0]} if ( defined $labels and defined $labels -> [0] );
 					$cols_orig += ( $numpar*3 ); # est + SE + eigen values
 				}
 				# nonparametric omegas and shrinkage
@@ -1553,7 +1561,7 @@ sub prepare_results
 
 				my %return_section;
 				$return_section{'name'} = 'Warnings';
-				my ( $skip_term, $skip_cov, $skip_warn, $skip_bound );
+				my ( $skip_term, $skip_cov, $skip_warn, $skip_bound, $skip_crash );
 				my $included = 0;
 
 				for ( my $j = 0; $j < scalar @{$self->$rawres->[$i]}; $j++ ) { # orig model + prepared_models
@@ -1566,11 +1574,11 @@ sub prepare_results
 						$self->$rawres->[$i][$j][$diag_idx{$self -> diagnostic_parameters() -> [$m]}];
 					}
 					my $use_run = 1;
-					if ( $self -> skip_minimization_terminated and 
-						( not defined $self->$rawres->
-							[$i][$j][$diag_idx{'minimization_successful'}]
-								or not $self->$rawres->
-							[$i][$j][$diag_idx{'minimization_successful'}] ) ) {
+					if ( not defined $self->$rawres->[$i][$j][$diag_idx{'minimization_successful'}] ) {
+						$skip_crash++;
+						$use_run = 0;
+					}elsif ( $self -> skip_minimization_terminated and 
+							 ( not $self->$rawres->[$i][$j][$diag_idx{'minimization_successful'}] ) ) {
 						$skip_term++;
 						$use_run = 0;
 					} elsif ( $self -> skip_covariance_step_terminated and not
@@ -1594,7 +1602,7 @@ sub prepare_results
 
 					if( $use_run ) {
 
-						my ($start,$l) = split(',',$self->raw_line_structure()->{'1'}->{'ofv'});
+						my ($start,$l) = split(',',$self->raw_line_structure()->{$valid_raw_line}->{'ofv'});
 						for (my $m=0; $m< ($columns-$start);$m++){
 							my $val = $self->$rawres->[$i][$j][$start+$m];
 							$self->$estimates->[$i][$included][$m] = $val;
@@ -1605,7 +1613,7 @@ sub prepare_results
 
 				if ($included < 1){
 					croak("No runs passed the run exclusion critera. Statistics cannot be calculated by PsN. ".
-						"Open the raw results file and do statistics manually.");
+						"Run bootstrap again with option -summarize and different exclusion criteria.");
 				}
 				# }}} Loop, choose and set diagnostics and estimates
 
@@ -1618,6 +1626,10 @@ sub prepare_results
 				$run_info_return_section{'labels'} =[[],\@run_info_labels];
 				$run_info_return_section{'values'} = [\@run_info_values];
 
+				if ( defined $skip_crash ) {
+					push( @{$return_section{'values'}}, "$skip_crash crashed runs ".
+						"were skipped when calculating the $tool results" );
+				}
 				if ( defined $skip_term ) {
 					push( @{$return_section{'values'}}, "$skip_term runs with miminization ".
 						"terminated were skipped when calculating the $tool results" );
@@ -1658,7 +1670,7 @@ sub prepare_results
 		# which is one more for
 		# the method column added
 		# with a bca run.
-		my ($start,$l) = split(',',$self->raw_line_structure()->{'1'}->{'ofv'});
+		my ($start,$l) = split(',',$self->raw_line_structure()->{$valid_raw_line}->{'ofv'});
 
 		my @param_names = @{$self -> raw_results_header()->[$i]}[$start .. (scalar @{$self -> raw_results_header->[$i]} - 1)];
 		my ( @diagnostic_names, @tmp_names );
@@ -1672,8 +1684,7 @@ sub prepare_results
 			my @names = $result_type eq 'diagnostic_means' ?
 			@diagnostic_names : @param_names;
 			my $calc = 'calculate_'.$result_type;
-			$self -> $calc( model_number    => ($i+1),
-				parameter_names => \@names );
+			$self -> $calc( model_number    => ($i+1),parameter_names => \@names );
 		}
 		foreach my $result_type ( @print_order ) {
 			my $name = $result_type;
