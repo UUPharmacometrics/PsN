@@ -21,7 +21,6 @@ use MooseX::Params::Validate;
 use PsN;
 use pharmml;
 
-
 =head1 Description
 
 PsN::model is a Perl module for parsing and manipulating NONMEM model
@@ -117,7 +116,7 @@ has 'relative_data_path' => ( is => 'rw', isa => 'Bool', default => 1 ); #code r
 has 'ignore_missing_data' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'ignore_missing_files' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'ignore_missing_output_files' => ( is => 'rw', isa => 'Bool', default => 1 );
-has 'outputfile' => ( is => 'rw', isa => 'Maybe[Str]', trigger => \&_outputfile_set );
+has 'outputfile' => ( is => 'rw', isa => 'Maybe[Str]' );
 has 'run_no' => ( is => 'rw', isa => 'Int', default => 0 );
 has 'sde' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'omega_before_pk' => ( is => 'rw', isa => 'Bool', default => 0 );
@@ -131,25 +130,11 @@ has 'missing_data_token' => ( is => 'rw', isa => 'Maybe[Int]', default => -99 );
 has 'last_est_complete' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'niter_eonly' => ( is => 'rw', isa => 'Maybe[Int]' );
 
-# FIXME: This is a workaround to not execute triggers at construction.
-my $in_constructor = 0;
-
-sub BUILDARGS
-{
-	my $self = shift;
-
-	$in_constructor = 1;
-
-	return $self->SUPER::BUILDARGS(@_);
-}
-
 sub BUILD
 {
 	my $self  = shift;
 	my $parmref = shift;
 	my %parm = %{$parmref};
-
-	$in_constructor = 0;
 
 	if (defined $parm{'problems'}) {
 	    $self->problems($parm{'problems'});
@@ -260,9 +245,7 @@ sub BUILD
     if (not defined $self->outputs) {
         if (not defined $self->outputfile) {
             my $filename = $self->create_output_filename();
-            $in_constructor = 1;        #FIXME: Ugly hack to not create output object here
             $self->outputfile($filename);
-            $in_constructor = 0;
         }
         $self->outputs([]);
         push(@{$self->outputs}, output->new(
@@ -452,35 +435,13 @@ sub shrinkage_modules
 	}
 }
 
-sub _outputfile_set
+sub set_outputfile
 {
 	my $self = shift;
-	my $parm = shift;
 
-	if ($in_constructor) { return; }
-
-	# Usage:
-	#
-	# This method is a (partially) automatically generated accessor for the
-	# outputfile attribute of the model class. Since no named argument is needed
-	# for accessors, the two possible ways of calling outputfile are:
-	#
-	#   $modelObject -> outputfile( 'newfilename.lst' );
-	#
-	#   $outputfilename = $modelObject -> outputfile;
-	#
-	# The first alternative sets a new name for the output file, and the second
-	# retrieves the value.
-	#
-	# The extra feature for this accessor, compared to other accessors, is that
-	# if a new name is given, the accessor tries to create a new output object
-	# based on this.
-
-	if (defined $parm) {
 	  $self->outputs( 
-		  [ output->new(filename => $parm, ignore_missing_files => ($self->ignore_missing_files || $self->ignore_missing_output_files)) ]
+		  [ output->new(filename => $self->outputfile, ignore_missing_files => ($self->ignore_missing_files || $self->ignore_missing_output_files)) ]
       );
-	}
 }
 
 sub create_output_filename
@@ -608,6 +569,7 @@ sub copy
 	        $new_out = $new_model->directory().$new_out;
 	    }
 	    $new_model->outputfile($new_out);
+        $new_model->set_outputfile();
 	}
 	if ($copy_datafile){
 		my $datafiles = $new_model->datafiles(absolute_path => 1); #all problems

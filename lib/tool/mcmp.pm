@@ -380,6 +380,7 @@ sub modelfit_setup
 		$self->reduced_model()->filename('reduced.mod');
 		$self->reduced_model() -> ignore_missing_files( 1 );
 		$self->reduced_model() -> outputfile( $self -> reduced_model()->directory().'reduced.lst');
+        $self->reduced_model() -> set_outputfile();
 		$self->reduced_model() -> ignore_missing_files( 0 );
 		my @extra_output=();
 		if (scalar(@table_strings)>0){
@@ -402,6 +403,7 @@ sub modelfit_setup
 		$self->full_model()->filename('full.mod');
 		$self->full_model() -> ignore_missing_files( 1 );
 		$self->full_model() -> outputfile( $self -> full_model()->directory().'full.lst');
+        $self->full_model() -> set_outputfile();
 		$self->full_model() -> ignore_missing_files( 0 );
 		my @extra_output=();
 		if ((scalar(@table_strings)>0) and not (defined $self->reduced_model())){

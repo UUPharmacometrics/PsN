@@ -640,11 +640,13 @@ sub modelfit_setup
 			unless ($self->add_models()){
 				$sim_model -> ignore_missing_files( 1 );
 				$sim_model -> outputfile( $self -> directory.'m'.$model_number.'/'.$out_name );
+                $sim_model -> set_outputfile();
 				$sim_model -> ignore_missing_files( 0 );
 			}
 			if( $self -> estimate_simulation and (not defined $self->simulation_rawres)){
 				$est_original -> ignore_missing_files( 1 );
 				$est_original -> outputfile( $self -> directory.'m'.$model_number.'/'.$orig_out );
+                $est_original -> set_outputfile();
 				$est_original -> ignore_missing_files( 0 );
 			}
 
@@ -1173,6 +1175,7 @@ sub modelfit_setup
 
 				$est_alternative -> ignore_missing_files( 1 );
 				$est_alternative -> outputfile( $self -> directory.'m'.$model_number.'/'.$alt_out );
+                $est_alternative -> set_outputfile();
 				$est_alternative -> ignore_missing_files( 0 );
 
 				if( $self -> shrinkage() ) {

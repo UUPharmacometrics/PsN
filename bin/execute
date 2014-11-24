@@ -313,6 +313,7 @@ if ( defined $options{'predict_data'} and defined $options{'predict_model'} ) {
 	$pred_mod -> datafiles( new_names => [$options{'predict_data'}] );
 	$pred_mod -> ignore_missing_files(1);
 	$pred_mod -> outputfile( $outfile );
+    $pred_mod -> set_outputfile();
 	$pred_mod -> maxeval( new_values => [[0]] );
 	$pred_mod -> remove_records( type => 'covariance' );
 	$pred_mod -> update_inits( from_model => $models_array -> [0] );

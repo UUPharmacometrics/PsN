@@ -610,6 +610,7 @@ sub _create_models
 					$new_mod -> extra_files( $model -> extra_files ),
 					$new_mod -> ignore_missing_files( 1 );
 					$new_mod -> outputfile( $output_dir . $outputfilename );
+                    $new_mod -> set_outputfile();
 					$new_mod -> ignore_missing_files( 0 );
 					
 					$new_mod -> update_inits( from_output => $model -> outputs -> [0] );

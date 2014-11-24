@@ -346,6 +346,7 @@ sub modelfit_setup
 
 		$sim_model -> ignore_missing_files( 1 );
 		$sim_model -> outputfile( $self->directory . 'm' . $model_number . '/' . $sim_out );
+        $sim_model -> set_outputfile();
 		$sim_model -> ignore_missing_files( 0 );
 		my $prob = $sim_model -> problems -> [$self->probnum()-1];
 		

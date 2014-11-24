@@ -1030,6 +1030,7 @@ sub general_setup
 											   copy_output => 0);
 				$newmodel -> datafiles( new_names => [$set] );
 				$newmodel -> outputfile( $output_directory.'/'.$names[$i].".lst" );
+                $newmodel -> set_outputfile();
 				if( $i == 1 ) {
 					# set MAXEVAL=0. Again, CDD will only work for one $PROBLEM
 					my $warn = 0;

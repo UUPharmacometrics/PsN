@@ -2580,6 +2580,7 @@ sub linearize_setup
 			#transform $original_model to linearized base model
 			$original_model -> filename('base_model'.$stepname.'.mod');
 			$original_model -> outputfile('base_model'.$stepname.'.lst');
+            $original_model -> set_outputfile();
 			$original_model -> directory($self->directory());
 			#remove problem data from output object so that scm will rerun
 			$original_model->outputs->[0]->problems([]);
@@ -3654,6 +3655,7 @@ sub _create_models
 															copy_output => 0);
 					$applicant_model -> ignore_missing_files(1);
 					$applicant_model -> outputfile( $odir.$outfilename );
+                    $applicant_model -> set_outputfile();
 					my @table_names = @{$applicant_model -> table_names};
 					for ( my $i = 0; $i <= $#table_names; $i++ ) {
 						for ( my $j = 0; $j < scalar @{$table_names[$i]}; $j++ ) {
@@ -5181,12 +5183,13 @@ sub write_final_models
 	$final_model -> filename($fname);
 	$final_model -> directory( $fdir);
 	$fname =~ s/\.mod/\.lst/;
-	return unless (-e $final_model->outputfile()); #unless lst-file exists (could have crashed)
+	return unless (-e $final_model->outputfile); #unless lst-file exists (could have crashed)
 	cp( $final_model -> outputfile, "$fdir$fname" );
 	my $prob_num = undef;
 	$final_model -> update_inits(from_output => $final_model->outputs->[0],
 		problem_number => $prob_num);
-	$final_model -> outputfile( "$fdir$fname" );
+	$final_model -> outputfile("$fdir$fname");
+    $final_model -> set_outputfile();
 	if ($self->linearize()){
 		#set datafilename to something ok
 		$final_model -> ignore_missing_files(1);
