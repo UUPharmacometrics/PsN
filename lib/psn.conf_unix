@@ -91,7 +91,7 @@ polls_per_moshog_request=5
 ; The lines below are examples of how you can specify different
 ; installations of NONMEM. 
 ; The format is version_name=installation_directory,NONMEM_major_version
-; or  version_name=installation_directory,NONMEM_major_version,compiler_label
+; or  version_name=installation_directory,NONMEM_major_version
 ; The NONMEM major version number can only be 5, 6 or 7 for PsN versions older 
 ; than 3.3.2. Starting with PsN-3.3.2 the version number may also include
 ; subversion, like in 7.1 (a dot separates the numbers, no space). 

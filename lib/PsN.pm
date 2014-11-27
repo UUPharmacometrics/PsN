@@ -17,7 +17,6 @@ our $nm_version;
 our $nmdir;
 our $nm_major_version;
 our $nm_minor_version;
-our $compiler_label;
 
 our $warnings_enabled;
 our @nm7_extensions = ('.ext','.cov','.cor','.coi','.phi','.phm', '.shk','.grd','.xml','.cnv','.smt','.rmt',
@@ -82,14 +81,12 @@ sub set_nonmem_info
   $nmdir = undef;
   $nm_major_version = undef;
   $nm_minor_version = undef;
-  $compiler_label = undef;
   my $version = undef;
   my @list = split(/,/ , $config -> {'nm_versions'} -> { $version_label } );
   $nmdir = shift(@list);
   $nmdir =~ s/^\s+//g;
   $version = shift(@list);
   $version =~ s/\s+//g;
-  $compiler_label = shift(@list);
 
   unless (defined $nmdir){
     croak("No NONMEM version with name \"".$version_label.
