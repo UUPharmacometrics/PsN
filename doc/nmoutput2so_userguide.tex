@@ -6,7 +6,7 @@
 \maketitle
 
 \section{Introduction}
-The nmoutput2so script creates and populates a DDMoRe standardized output xml file given the output from a NONMEM run. It is necessary that the format of the model file and other files follow a set of requirements (see below) for this to work. 
+The nmoutput2so script creates and populates a DDMoRe standardized output xml file given the output from one or more NONMEM runs. It is necessary that the format of the model file and other files follow a set of requirements (see below) for this to work. 
 
 
 Examples
@@ -17,7 +17,7 @@ nmoutput2so model.lst
 \section{Input and options}
 
 \subsection{Required input}
-Required argument is a nonmem result file (.lst).
+Required argument is at least one nonmem result file (.lst).
 
 
 \subsection{Optional input}
@@ -26,6 +26,8 @@ Required argument is a nonmem result file (.lst).
 \optdefault{precision}{4}
 The number of significant digits to use for all numerical data in the standard output file.
 \nextopt
+\optname{bootstrap\_results}
+A PsN bootstrap\_results.csv file to use for filling the Bootstrap element.
 \end{optionlist}
 
 \section{Requirements on the model file and other files}
@@ -83,6 +85,10 @@ The following entries will be populated:
                     \item CorrelationMatrix - If the covariance step was successful. Results will be taken from the .cor file if present otherwise from the .lst file.
                     \item StandardError - Results will be taken from the .ext file if present otherwise the .lst file
                     \item RelativeStandardError - Results will be taken from the .ext file if present otherwise the .lst file. The RSE is calculated has the ratio between the standard error and the estimated value of the parameter.
+                \end{itemize}
+                \item Bootstrap
+                \begin{itemize}
+                    \item PercentilesCI - From a PsN bootstrap\_results.csv file.
                 \end{itemize}
             \end{itemize}
             \item IndividualEstimates
