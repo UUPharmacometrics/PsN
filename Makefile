@@ -175,6 +175,8 @@ nmoutput2so:
 	@ mkdir nmoutput2so/bin
 	@ cp bin/nmoutput2so nmoutput2so/bin
 	@ cp -r lib/ nmoutput2so
+	@ rm -r nmoutput2so/lib/tool
+	@ rm -r nmoutput2so/lib/nonmemrun
 	@ zip -r nmoutput2so nmoutput2so/
 
 documentation: doc/*.pdf $(PDFFILES)
