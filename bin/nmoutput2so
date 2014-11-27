@@ -20,19 +20,16 @@ my %options;
 
 my %required_options = ();
 my %optional_options = ( 
-    'h|?'                       => undef,
-    'help'                      => undef,
-    'precision:f'               => undef,
+    'h|?'         => undef,
+    'help'        => undef,
+    'precision:f' => undef,
+    'bootstrap_results:s' => undef,
+    'so_filename:s' => undef,
 );
 
 
-my $res = GetOptions( \%options,
-		      @common_options::get_opt_strings,
-		      keys(%optional_options) );
-
+my $res = GetOptions(\%options, keys(%optional_options));
 exit unless $res;
-
-common_options::get_defaults(\%options, 'nmoutput2so');
 
 my %defaults;
 
@@ -85,14 +82,16 @@ EOF
 
 common_options::online_help('nmoutput2so', \%options, \%help_text, \%required_options, \%optional_options);
 
-if (scalar(@ARGV) != 1) {
-  print "An lst file must be specified. Use 'nmoutput2so -h' for help.\n";
+if (scalar(@ARGV) < 1 and not defined $options{'bootstrap_results'}) {
+  print "No files specified. Either specify one or more .lst file or use -bootstrap_results. Use 'nmoutput2so -h' for help.\n";
   exit;
 }
 
 my $so = standardised_output->new(
-    output_filename => $ARGV[0],
+    lst_files => \@ARGV,
+    bootstrap_results => $options{'bootstrap_results'},
     precision => $options{'precision'},
+    so_filename => $options{'so_filename'},
 );
 
 $so->parse;

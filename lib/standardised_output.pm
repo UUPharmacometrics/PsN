@@ -13,23 +13,37 @@ use data;
 use array;
 use IO::File;
 
-has 'output_filename' => ( is => 'rw', isa => 'Str' );
-has 'precision' => (is => 'rw', isa => 'Int', default => 4 );
+has 'lst_files' => ( is => 'rw', isa => 'ArrayRef[Str]' );
+has 'bootstrap_results' => ( is => 'rw', isa => 'Maybe[Str]' );
+has 'so_filename' => ( is => 'rw', isa => 'Maybe[Str]' );
+has 'precision' => ( is => 'rw', isa => 'Int', default => 4 );
 has '_output' => ( is => 'rw', isa => 'output' );
 has '_model' => ( is => 'rw', isa => 'model' );
 has '_writer' => ( is => 'rw', isa => 'Ref' ); 
+has '_block_number' => ( is => 'rw', isa => 'Int', default => 1 );
 
 sub BUILD
 {
     my $self = shift;
 
-    my $so_filename = $self->output_filename;
+    my $so_filename;
 
-    if ($so_filename =~ /(.*)\..*/) {
-        $so_filename = $1 . '.SO.xml';
+    if (defined $self->so_filename) {   # User specified filename
+        $so_filename = $self->so_filename;
     } else {
-        $so_filename .= '.SO.xml';
+        if (defined $self->lst_files->[0]) {   # Infer filename from name of first .lst file
+            $so_filename = $self->lst_files->[0];
+
+            if ($so_filename =~ /(.*)\..*/) {
+                $so_filename = $1 . '.SO.xml';
+            } else {
+                $so_filename .= '.SO.xml';
+            }
+        } else {
+            $so_filename = 'bootstrap.SO.xml';
+        }
     }
+
     my $output_file = IO::File->new(">" . $so_filename);
 
     my $writer = new XML::Writer(OUTPUT => $output_file, DATA_MODE => 1, DATA_INDENT => 2);
@@ -100,7 +114,11 @@ sub add_table
             } else {
                 $element = $values->[$col]->[$row];
             }
-            $writer->dataElement("ct:" . $value_type, $self->_get_printable_number($element));
+            if ($value_type eq 'String') {
+                $writer->dataElement("ct:" . $value_type, $element);
+            } else {
+                $writer->dataElement("ct:" . $value_type, $self->_get_printable_number($element));
+            }
         }
         $writer->endTag("ds:Row");
     }
@@ -190,6 +208,24 @@ sub add_matrix
 
 # End of XML helper methods
 
+sub _start_block
+{
+    # Start a new SOBlock and set the id with a number
+    my $self = shift;
+    my $writer = $self->_writer;
+
+    $writer->startTag("SOBlock", blkId => "SO" . $self->_block_number);
+    $self->_block_number($self->_block_number + 1);
+}
+
+sub _end_block
+{
+    # End an SOBlock
+    my $self = shift;
+    my $writer = $self->_writer;
+    $writer->endTag("SOBlock");
+}
+
 sub parse
 {
     my $self = shift;
@@ -206,28 +242,51 @@ sub parse
         'writtenVersion' => "0.1",
         'id' => "i1",
     );
-    $writer->startTag("SOBlock", "blkId" => "SO1");
+
+    if (scalar(@{$self->lst_files}) > 0) {
+        foreach my $file (@{$self->lst_files}) {
+            $self->_parse_lst(filename => $file);
+        }
+    } else {
+        $self->_start_block;
+        $writer->startTag("Estimate");
+        $self->_add_precision_population_estimates();  # For bootstrap
+        $writer->endTag("Estimate");
+        $self->_end_block;
+    }
+
+    $writer->endTag("SO");
+    $writer->end();
+}
+
+sub _parse_lst
+{
+    # Parse one lst-file and put it into an SOBlock
+    my $self = shift;
+    my %parm = validated_hash(\@_,
+        filename => { isa => 'Str' },
+    );
+    my $filename = $parm{'filename'};
+
+    my $writer = $self->_writer;
+
+    $self->_start_block();
     $writer->startTag("Estimation");
 
-
     # Check that the output file exist before trying to read it.
-    if (not -e $self->output_filename) {
-        $self->_add_target_tool_messages(error => "The file: " . $self->output_filename . " does not exist");
+    if (not -e $filename) {
+        $self->_add_target_tool_messages(error => "The file: " . $filename . " does not exist");
         $writer->endTag("Estimation");
-        $writer->endTag("SOBlock");
-        $writer->endTag("SO");
-        $writer->end();
+        $self->_end_block();
         return;
     }
 
-    my $outobj = output->new(filename => $self->output_filename);
+    my $outobj = output->new(filename => $filename);
     $self->_output($outobj);
     if (not $self->_output->parsed_successfully) {
         $self->_add_target_tool_messages(error => "Unable to read everything from outputfile, parser error message: " . $outobj->parsing_error_message);
         $writer->endTag("Estimation");
-        $writer->endTag("SOBlock");
-        $writer->endTag("SO");
-        $writer->end();
+        $self->_end_block();
         return;
     }
 
@@ -240,7 +299,6 @@ sub parse
         ignore_missing_output => 1
     );
     $self->_model($model);
-
 
 	my $eta_shrinkage = $outobj->shrinkage_eta();
 	my $eps_shrinkage = $outobj->shrinkage_eps();
@@ -383,10 +441,7 @@ sub parse
     $self->_add_target_tool_messages;
 
     $writer->endTag("Estimation");
-
-    $writer->endTag("SOBlock");
-    $writer->endTag("SO");
-    $writer->end();
+    $self->_end_block;
 }
 
 sub _get_eta_names
@@ -438,41 +493,123 @@ sub _add_precision_population_estimates
 {
     my $self = shift;
     my %parm = validated_hash(\@_,
-        labels => { isa => 'ArrayRef' },
-        standard_errors => { isa => 'ArrayRef' },
-        relative_standard_errors => { isa => 'ArrayRef' },
-        correlation_matrix => { isa => 'ArrayRef[ArrayRef]' },
-        covariance_matrix => { isa => 'ArrayRef[ArrayRef]' },
+        labels => { isa => 'ArrayRef', optional => 1 },
+        standard_errors => { isa => 'ArrayRef', optional => 1 },
+        relative_standard_errors => { isa => 'ArrayRef', optional => 1 },
+        correlation_matrix => { isa => 'ArrayRef[ArrayRef]', optional => 1 },
+        covariance_matrix => { isa => 'ArrayRef[ArrayRef]', optional => 1 },
     );
-    my @labels = @{$parm{'labels'}};
-    my @standard_errors = @{$parm{'standard_errors'}};
-    my @relative_standard_errors = @{$parm{'relative_standard_errors'}};
+    my @labels = defined $parm{'labels'} ? @{$parm{'labels'}} : ();
+    my @standard_errors = defined $parm{'standard_errors'} ? @{$parm{'standard_errors'}}: ();
+    my @relative_standard_errors = defined $parm{'relative_standard_errors'} ? @{$parm{'relative_standard_errors'}} : ();
     my $correlation_matrix = $parm{'correlation_matrix'};
     my $covariance_matrix = $parm{'covariance_matrix'};
 
     my $writer = $self->_writer;
 
     $writer->startTag("PrecisionPopulationEstimates");
-    $writer->startTag("MLE");
 
-    $writer->startTag("StandardError");
-    $self->add_parameter_table(name => 'SE', labels => \@labels, values => \@standard_errors);
-    $writer->endTag("StandardError");
-   
-    $writer->startTag("RelativeStandardError");
-    $self->add_parameter_table(name => 'RSE', labels => \@labels, values => \@relative_standard_errors);
-    $writer->endTag("RelativeStandardError");
+    if (scalar(@{$self->lst_files}) > 0) {
+        $writer->startTag("MLE");
+        $writer->startTag("StandardError");
+        $self->add_parameter_table(name => 'SE', labels => \@labels, values => \@standard_errors);
+        $writer->endTag("StandardError");
 
-    $writer->startTag("CorrelationMatrix");
-    $self->add_matrix(rownames => \@labels, colnames => \@labels, matrix => $correlation_matrix);
-    $writer->endTag("CorrelationMatrix");
+        $writer->startTag("RelativeStandardError");
+        $self->add_parameter_table(name => 'RSE', labels => \@labels, values => \@relative_standard_errors);
+        $writer->endTag("RelativeStandardError");
 
-    $writer->startTag("CovarianceMatrix");
-    $self->add_matrix(rownames => \@labels, colnames => \@labels, matrix => $covariance_matrix);
-    $writer->endTag("CovarianceMatrix");
+        $writer->startTag("CorrelationMatrix");
+        $self->add_matrix(rownames => \@labels, colnames => \@labels, matrix => $correlation_matrix);
+        $writer->endTag("CorrelationMatrix");
 
-    $writer->endTag("MLE");
+        $writer->startTag("CovarianceMatrix");
+        $self->add_matrix(rownames => \@labels, colnames => \@labels, matrix => $covariance_matrix);
+        $writer->endTag("CovarianceMatrix");
+
+        $writer->endTag("MLE");
+    }
+
+    if (defined $self->bootstrap_results) {
+        $self->_add_bootstrap();
+    }
+
     $writer->endTag("PrecisionPopulationEstimates");
+}
+
+sub _add_bootstrap
+{
+    my $self = shift;
+
+    my $writer = $self->_writer;
+
+    $writer->startTag("Bootstrap");
+    $writer->startTag("PercentilesCI");
+
+    open my $fh, '<', $self->bootstrap_results;
+
+    my @parameters;
+    my @percentiles;
+    my @column;
+
+    while (<$fh>) {
+        if (/^percentile.confidence.intervals$/) {
+            my $header = <$fh>;
+            my @a = split /,/, $header;
+            shift @a;
+            shift @a;
+            foreach my $param (@a) {
+                $param =~ s/"\s*(.*)"/\1/;      # Remove "" and spaces
+                if ($param !~ /^se/) {
+                    push @parameters, $param;
+                } else {
+                    last;
+                }
+            }
+            # Add parameter names to table
+            for (my $col = 0; $col < scalar(@parameters); $col++) {
+                push @{$column[$col]}, $parameters[$col];
+            }
+            # Loop through percentiles
+            for (my $i = 0; $i < 7; $i++) {
+                my $row = <$fh>;
+                my @a = split /,/, $row;
+                my $percentile = shift @a;
+                $percentile =~ s/^"\s*(.*)%"/\1/;
+                shift @a;
+                my $value;
+                for (my $col = 0; $col < scalar(@parameters); $col++) {
+                    $value = shift @a;
+                    $value =~ s/^\s*(.*)/\1/;
+                    if ($value ne 'NA') {
+                        push @{$column[$col]}, $value;
+                    }
+                }
+                if ($value ne 'NA') {
+                    push @percentiles, $percentile;
+                }
+            }
+        }
+    }
+
+    close $fh;
+
+    # Create column Ids
+    foreach my $p (@percentiles) {
+        $p = "Pctl_${p}th";
+    }
+    unshift @percentiles, 'parameter';
+
+    $self->add_table(
+        column_ids => \@percentiles,
+        column_types => [ ('undefined') x scalar(@percentiles) ],
+        column_valuetypes => [ 'string', ('real') x (scalar(@percentiles) - 1) ],
+        values => \@column,
+        row_major => 1,
+    );
+
+    $writer->endTag("PercentilesCI");    
+    $writer->endTag("Bootstrap");
 }
 
 sub _add_target_tool_messages
