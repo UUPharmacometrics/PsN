@@ -12,6 +12,7 @@ use output;
 use data;
 use array;
 use IO::File;
+use List::Util qw(all);
 
 has 'lst_files' => ( is => 'rw', isa => 'ArrayRef[Str]' );
 has 'bootstrap_results' => ( is => 'rw', isa => 'Maybe[Str]' );
@@ -358,7 +359,11 @@ sub _parse_lst
 			       						  problem_index => $problems,
 										  subproblem_index => $sub_problems);
 
-	my $have_ses = 0;
+    my $min_success = $outobj -> get_single_value(attribute => 'minimization_successful',
+        problem_index =>$problems,
+        subproblem_index => $sub_problems);
+
+    my $have_ses = 0;
 	if ($outobj->covariance_step_run->[$problems]) {
 		if ($outobj->covariance_step_successful->[$problems][$sub_problems] ne '0') {
 			$have_ses = 1;
@@ -397,7 +402,9 @@ sub _parse_lst
 		}
 	}
 
-    $self->_add_population_estimates(labels => \@all_labels, values => \@est_values);
+    if (not all { not defined $_ } @est_values) {   # Check that not all in list are undef. Should possibly have been done earlier
+        $self->_add_population_estimates(labels => \@all_labels, values => \@est_values);
+    }
 
 	if (scalar(@se_values) > 0) {
         my $correlation_matrix = linear_algebra::triangular_symmetric_to_full($outobj->correlation_matrix->[$problems]->[$sub_problems]);
@@ -643,15 +650,17 @@ sub _add_likelihood
 {
     my $self = shift;
     my %parm = validated_hash(\@_,
-        ofv => { isa => 'Num' },
+        ofv => { isa => 'Maybe[Num]' },
     );
     my $ofv = $parm{'ofv'};
 
     my $writer = $self->_writer;
 
-    $writer->startTag("Likelihood");
-    $writer->dataElement("Deviance", $ofv);
-    $writer->endTag("Likelihood");
+    if (defined $ofv) {
+        $writer->startTag("Likelihood");
+        $writer->dataElement("Deviance", $ofv);
+        $writer->endTag("Likelihood");
+    }
 }
 
 sub _add_predictions
