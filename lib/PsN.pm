@@ -90,13 +90,11 @@ sub set_nonmem_info
 
   unless (defined $nmdir){
     croak("No NONMEM version with name \"".$version_label.
-                    "\" defined in psn.conf. Format should be: name=directory,version ".
-                    "or name=directory,version,compiler." );
+                    "\" defined in psn.conf. Format should be: name=directory,version");
   }
   unless (defined $version){
     croak("No NONMEM version with name \"".$version_label.
-                    "\" defined in psn.conf. Format should be: name=directory,version ".
-                    "or name=directory,version,compiler." );
+                    "\" defined in psn.conf. Format should be: name=directory,version");
   }
 
   my @list2 = split(/\./ , $version);
@@ -108,8 +106,7 @@ sub set_nonmem_info
   unless ($nm_major_version =~ /^(5|6|7)$/){
     croak(" NONMEM major version must be either 5,6 or 7. Could not ".
                     "extract version from \"".$version_label.
-                    "\" in psn.conf. Format should be: name=directory,version ".
-                    "or name=directory,version,compiler" );
+                    "\" in psn.conf. Format should be: name=directory,version");
   }
 
 }
