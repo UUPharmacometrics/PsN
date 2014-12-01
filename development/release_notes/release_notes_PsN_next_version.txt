@@ -67,6 +67,10 @@ Changes and bug fixes from PsN 4.2.0 to x.y.z
 
 - FIXED and FIXE are allowed as synonyms to FIX in $OMEGA and $SIGMA
 
+   ___sumo___
+
+- running sumo on file without extension .res or .lst would cause a crash
+
    ___vpc/npc___
 
 - vpc binning can now take multiple arrays for -bin_array or -auto_bin to use for different strata

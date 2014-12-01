@@ -107,7 +107,9 @@ sub BUILD
 		} elsif(  $name =~ /\.res$/ ) {
 			$name =~ s/\.res$//;
 			$self->filename_root($name);
-		}
+		} else {
+            $self->filename_root($name);
+        }
 
 		if ( -e $self->full_name ) { 
 			if ($self->target eq 'mem') {
