@@ -2579,6 +2579,8 @@ sub _read_problems
 	my $control_stream_problem_end_index;
 	my @control_stream_problems;
 	
+	my @prerun_messages=();
+	my $reading_prerun_messages=0;
 
 	my $j = $#lstfile;
 	while ( $_ = $lstfile[ $j -- ] ) {
@@ -2645,6 +2647,10 @@ sub _read_problems
 			$control_stream_problem_start_index = $lstfile_pos-1; #must be -1 here to get new $PROB
 		} elsif ((/^\s*NM\-TRAN MESSAGES/) or (/^\s*WARNINGS AND ERRORS \(IF ANY\)/) or (/^\s*License /) ) {
 
+			$reading_prerun_messages = 1;
+			#if we get as far as to license, then nmtran was ok, so discard messages so far, but keep reading
+			#so that we can store any license error messages
+			@prerun_messages=() if (/^\s*License /); 
 #		  print "Found nmtran messages or warnings or license\n";
 			if ((not $done_reading_control_stream) and $found_control_stream) {
 				#add last control stream problem
@@ -2679,7 +2685,7 @@ sub _read_problems
 				croak("could not read NONMEM version information from output file " . $self->filename);
 			}
 			$self->nonmem_version($lst_version);
-
+			$reading_prerun_messages = 0;
 			if ((not $done_reading_control_stream) and $found_control_stream) {
 		  		#add last control stream problem
 		  		$control_stream_problem_end_index = $lstfile_pos - 2; #have not verified that 2 is ok here, infer from analogy to above cases
@@ -2698,6 +2704,7 @@ sub _read_problems
 
 
 		} elsif (/^\s*\#METH:/) {
+			$reading_prerun_messages = 0;
 			#NONMEM will print #METH also when simulation without estimation, do not count
 			# these occurences: #METH line followed by line with 1 and nothing more
 			unless ($lstfile[$lstfile_pos] =~ /^1\s*$/) {
@@ -2708,6 +2715,7 @@ sub _read_problems
 				}
 			}
 		} elsif ( /^ PROBLEM NO\.:\s+\d+\s+$/ or $lstfile_pos > $#lstfile ) {
+			$reading_prerun_messages = 0;
 			if ( defined $problem_start ) {
 				my $adj = 1;
 				my @problem_lstfile =	@lstfile[$problem_start .. ($lstfile_pos - $adj)];
@@ -2767,15 +2775,33 @@ sub _read_problems
 				
 			}  #end if defined problem start
 			$problem_start = $lstfile_pos;
+		}elsif ($reading_prerun_messages and /[A-Za-z]/){
+			if (/s*Stop Time:/ or /^\s*\#CPUT:/){
+				$reading_prerun_messages = 0;
+			}else{
+				chomp;
+				push(@prerun_messages,$_);
+			}
 		}
+
 	}
 
 	$self->control_stream_problems(\@control_stream_problems);
 	unless( $success ) {
 		carp('Could not find a PROBLEM NO statement in "' .
 			 $self -> full_name . '"' . "\n" ) unless $self->ignore_missing_files;
-
-		$self->parsing_error( message => 'Could not find a PROBLEM NO statement in "' . $self->full_name . '"' . "\n" );
+		if (not defined $lst_version){
+			my $error_type = 'an NMTRAN';
+			foreach my $line (@prerun_messages){
+				if ($line =~ /(license|LICENSE|License)/){
+					$error_type = 'a NONMEM license';
+					last;
+				}
+			}
+			$self->parsing_error( message => "It seems there was $error_type error, messages are:\n".join("\n",@prerun_messages)."\n");
+		}else{
+			$self->parsing_error( message => 'Could not find a PROBLEM NO statement in "' . $self->full_name . '"' . "\n" );
+		}
 		$self->parsed_successfully(0);
 		return 0;
 	}

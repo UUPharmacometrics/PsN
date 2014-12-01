@@ -1,0 +1,45 @@
+Fri Nov 28 13:56:39 CET 2014
+$PROBLEM    PHENOBARB SIMPLE MODEL
+$INPUT      ID TIME AMT WGT APGR DV
+$DATA      pheno.dta IGNORE=@
+$SUBROUTINE ADVAN1 TRANS2
+$PK 
+    ETA_CL = ETA(1)
+    ETA_V = ETA(2)
+
+      TVCL=THETA(1)
+      TVV=THETA(2)
+      CL=TVCL*EXP(ETA_CL)
+      V=TVV*EXP(ETA_V)
+      S1=V
+
+$ERROR 
+      W=F
+      Y=F+W*EPS(1)
+      IPRED=F         ;  individual-specific prediction
+      IRES=DV-IPRED   ;  individual-specific residual
+      IWRES=IRES/W    ;  individual-specific weighted residual     
+
+$THETA  (0,0.0105) ; CL
+$THETA  (0,1.0500) ; V
+$OMEGA  .4  ;       IVCL
+ .25  ;        IVV
+$SIGMA  .04  ;    mySIGMA
+;$ESTIMATION  MAXEVALS=9997 SIGDIGITS=4 POSTHOC MSFO=phenomsf
+$ESTIMATION MAXEVALS=3 SIGDIGITS=4 POSTHOC MSFO=phenomsf
+$COVARIANCE PRINT=E
+$TABLE      ID CL V ETA_CL ETA_V NOAPPEND NOPRINT ONEHEADER FILE=patab
+;$TABLE ID TVCL TVV APGR NOPRINT ONEHEADER FILE=patab1
+$TABLE      ID TIME DV Y IPRED IRES IWRES FILE=sdtab
+
+
+NM-TRAN MESSAGES
+  
+ WARNINGS AND ERRORS (IF ANY) FOR PROBLEM    1
+             
+ (WARNING  2) NM-TRAN INFERS THAT THE DATA ARE POPULATION.
+
+ ERROR reading license file /opt/NONMEM/nm73/license/nonmem.lic
+ #CPUT: Total CPU Time in Seconds,        0.000
+Stop Time:
+Fri Nov 28 13:56:39 CET 2014

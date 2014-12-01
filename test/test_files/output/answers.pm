@@ -745,6 +745,27 @@ sub read_answers{
 	$answer_hashes[$index]->{answers}->{0}->{99}->{'sethetas'}=[3.71889E-01,8.02271E-03,1.28137E+00];
 	$answer_hashes[$index]->{answers}->{0}->{99}->{'seomegas'}=[2.12480E-01];
 
+	$index++;
+	$answer_hashes[$index]={};
+	$answer_hashes[$index]->{file}='special_mod/license_dummy.lst';
+	$answer_hashes[$index]->{parsed_successfully}=0;
+
+	$index++;
+	$answer_hashes[$index]={};
+	$answer_hashes[$index]->{file}='special_mod/license_missing.lst';
+	$answer_hashes[$index]->{parsed_successfully}=0;
+
+	$index++;
+	$answer_hashes[$index]={};
+	$answer_hashes[$index]->{file}='special_mod/license_expired.lst';
+	$answer_hashes[$index]->{parsed_successfully}=0;
+
+	$index++;
+	$answer_hashes[$index]={};
+	$answer_hashes[$index]->{file}='special_mod/data_missing.lst';
+	$answer_hashes[$index]->{parsed_successfully}=0;
+
+
 	return \@answer_hashes;
 }
 1;
