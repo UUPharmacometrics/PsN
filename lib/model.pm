@@ -176,6 +176,7 @@ sub BUILD
 
 		$self->_read_problems;
 	}
+
 	#ensure unique labels per param
 	foreach my $prob (@{$self->problems}) {
 		next unless (defined $prob);
@@ -275,6 +276,19 @@ sub BUILD
 		push( @{$self->iofv_modules}, $iofv_module );
 	}
 	
+	unless ($self->is_dummy){
+		#simple checks to detect garbage input, for example missing $DATA in first $PROB
+		unless (defined $self -> problems->[0]->datas
+				and scalar(@{$self -> problems->[0]->datas})>0){
+			croak("\nCorrupt model ".$self->filename().": no \$DATA record in first \$PROBLEM\n");
+		}
+		unless (defined $self -> problems->[0]->inputs
+				and scalar(@{$self -> problems->[0]->inputs})>0){
+			croak("\nCorrupt model ".$self->filename().": no \$INPUT record in first \$PROBLEM\n");
+		}
+
+	}
+
     #check that data files exist
 	unless ($self->ignore_missing_data or $self->ignore_missing_files){
 		foreach my $file (@{$self->datafiles(absolute_path =>1)}){
@@ -283,6 +297,7 @@ sub BUILD
 			}
 		}
 	}
+	
 }
 
 sub create_maxeval_zero_models_array
