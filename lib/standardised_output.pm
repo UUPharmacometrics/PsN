@@ -402,6 +402,10 @@ sub _parse_lst
 		}
 	}
 
+	my $minimization_message = $outobj -> get_single_value(attribute => 'minimization_message',
+			       						  problem_index => $problems,
+										  subproblem_index => $sub_problems);
+
     if (not all { not defined $_ } @est_values) {   # Check that not all in list are undef. Should possibly have been done earlier
         $self->_add_population_estimates(labels => \@all_labels, values => \@est_values);
     }
