@@ -12,7 +12,6 @@ use output;
 use data;
 use array;
 use IO::File;
-use List::Util qw(all);
 
 has 'lst_files' => ( is => 'rw', isa => 'ArrayRef[Str]' );
 has 'bootstrap_results' => ( is => 'rw', isa => 'Maybe[Str]' );
@@ -406,7 +405,8 @@ sub _parse_lst
 			       						  problem_index => $problems,
 										  subproblem_index => $sub_problems);
 
-    if (not all { not defined $_ } @est_values) {   # Check that not all in list are undef. Should possibly have been done earlier
+    my $undefs = grep { not defined $_ } @est_values;
+    if ($undefs != scalar(@est_values)) {   # Check that not all in list are undef. Should possibly have been done earlier
         $self->_add_population_estimates(labels => \@all_labels, values => \@est_values);
     }
 
