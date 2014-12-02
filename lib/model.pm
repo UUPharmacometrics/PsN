@@ -14,6 +14,7 @@ use Math::Random qw(random_multivariate_normal);
 use model::iofv_module;
 use model::nonparametric_module;
 use model::shrinkage_module;
+use model::annotation;
 use output;
 use model::problem;
 use Moose;
@@ -129,6 +130,7 @@ has 'tbs_thetanum' => ( is => 'rw', isa => 'Int' );
 has 'missing_data_token' => ( is => 'rw', isa => 'Maybe[Int]', default => -99 );
 has 'last_est_complete' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'niter_eonly' => ( is => 'rw', isa => 'Maybe[Int]' );
+has 'annotation' => ( is => 'rw', isa => 'model::annotation' );
 
 sub BUILD
 {
@@ -4670,6 +4672,27 @@ sub _read_problems
 		}
 
 	}
+
+    # Parse the annotation block
+    my $found_annotation_block = 0;
+    my $passed_annotation_block = 0;
+    my @annotation_lines;
+
+    foreach my $line (@modelfile) {
+        if ($line =~ /^;;/) {
+            $found_annotation_block = 1;
+        }
+        if ($line !~ /^;;/ and $found_annotation_block) {
+            $passed_annotation_block = 1;
+        }
+        if ($found_annotation_block and not $passed_annotation_block) {
+            push @annotation_lines, $line;
+        }
+    }
+    my $annotation = model::annotation->new();
+    $annotation->parse(annotation_rows => \@annotation_lines);
+    $self->annotation($annotation);
+use Data::Dumper; print Dumper($annotation);
 	my $start_index = 0;
 	my $end_index;
 	my $first = 1;

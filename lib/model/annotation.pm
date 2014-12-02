@@ -76,6 +76,7 @@ sub parse
     my $content;
 
     for (my $i = 0; $i < scalar(@annotation_rows); $i++) {
+        chomp($annotation_rows[$i]);
         $found = 0;
         my $attribute;
         foreach my $entry (@tags) {
