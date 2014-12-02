@@ -378,7 +378,7 @@ if (defined $based_on) {
 }
 
 if (defined $options{'comment'}) {
-	$model_copy->problems->[0]->problems->[0]->update_runrecord_tags(new_comment => $options{'comment'}, add_tags => 0);
+	$model_copy->problems->[0]->problems->[0]->add_comment(new_comment => $options{'comment'});
 }
 
-$model_copy -> _write(number_format => $options{'sigdig'}, local_print_order => 1);
+$model_copy->_write(number_format => $options{'sigdig'}, local_print_order => 1);
