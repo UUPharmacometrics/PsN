@@ -376,10 +376,3 @@ if (defined $based_on or defined $options{'comment'} or defined $options{'add_ta
 }
 $model_copy -> _write(number_format => $options{'sigdig'},
 					  local_print_order => 1);
-
-
-
-
-
-
-

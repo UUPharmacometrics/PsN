@@ -32,4 +32,9 @@ $annotation->covariate_model(['Iron']);
 is_deeply ($annotation->description, [ 'Helium' ], 'parse 3 description');
 is_deeply ($annotation->covariate_model, [ 'Iron' ], 'parse 3 covariate_model');
 
+my $annotation = model::annotation->new();
+$annotation->parse(annotation_rows => [ ';; 1. Based on: run23.mod', ';; 2. Description:', 'Claus', ';; x1. Author: Santa' ]);
+is_deeply ($annotation->description, [ 'Claus'], 'parse 4 description');
+is_deeply ($annotation->unknown_tags, [ ';; x1. Author: Santa' ], 'parse 4 unknown_tags');
+
 done_testing();

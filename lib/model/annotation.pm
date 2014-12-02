@@ -15,6 +15,7 @@ has 'interindividual_variability' => ( is => 'rw', isa => 'ArrayRef[Str]' );
 has 'interoccasion_variability' => ( is => 'rw', isa => 'ArrayRef[Str]' );
 has 'residual_variability' => ( is => 'rw', isa => 'ArrayRef[Str]' );
 has 'estimation' => ( is => 'rw', isa => 'ArrayRef[Str]' );
+has 'unknown_tags' => ( is => 'rw', isa => 'ArrayRef[Str]' );
 
 my @tags = (
     [ 'Based on', 1, 'based_on' ],
@@ -28,42 +29,6 @@ my @tags = (
     [ 'Estimation', 9, 'estimation' ],
 );
 
-sub _get_attribute_from_tag
-{
-    my $tag = shift;
-
-    foreach my $entry (@tags) {
-        if ($entry->[0] eq $tag) {
-            return $entry->[0];
-        }
-    }
-    return undef;
-}
-
-sub _get_tag_from_attribute
-{
-    my $attribute = shift;
-
-    foreach my $entry (@tags) {
-        if ($entry->[2] eq $attribute) {
-            return $entry->[2];
-        }
-    }
-    return undef;
-}
-
-sub _get_number_from_attribute
-{
-    my $attribute = shift;
-
-    foreach my $entry (@tags) {
-        if ($entry->[2] eq $attribute) {
-            return $entry->[1];
-        }
-    }
-    return undef;
-}
-
 sub parse
 {
     my $self = shift;
@@ -75,8 +40,11 @@ sub parse
     my $found;
     my $content;
 
+    foreach my $row (@annotation_rows) {
+        chomp $row;
+    }
+
     for (my $i = 0; $i < scalar(@annotation_rows); $i++) {
-        chomp($annotation_rows[$i]);
         $found = 0;
         my $attribute;
         foreach my $entry (@tags) {
@@ -102,6 +70,9 @@ sub parse
                     }
                 }
             }
+        } else {
+            $self->unknown_tags([]) unless defined $self->unknown_tags;
+            push @{$self->unknown_tags}, $annotation_rows[$i];
         }
     }
 }
@@ -126,6 +97,10 @@ sub format
                 }
             }
         }
+    }
+
+    if (defined $self->unknown_tags) {
+        push @formatted, @{$self->unknown_tags};
     }
 
     return \@formatted;

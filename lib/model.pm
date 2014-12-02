@@ -3519,6 +3519,11 @@ sub _write
 
 	my @formatted;
 
+    # Insert annotation first
+    if (defined $self->annotation) {
+        push @formatted, @{$self->annotation->format()};
+    }
+
 	# An element in the active_problems array is a boolean that
 	# corresponds to the element with the same index in the problems
 	# array.  If the boolean is true, the problem will be run. All
@@ -4677,12 +4682,17 @@ sub _read_problems
     my $found_annotation_block = 0;
     my $passed_annotation_block = 0;
     my @annotation_lines;
+    my $first_line_of_annotation;
+    my $last_line_of_annotation;
 
-    foreach my $line (@modelfile) {
-        if ($line =~ /^;;/) {
+    for (my $i = 0; $i < scalar(@modelfile); $i++) {
+        my $line = $modelfile[$i];
+        if ($line =~ /^;;/ and not $found_annotation_block) {
+            $first_line_of_annotation = $i;
             $found_annotation_block = 1;
         }
-        if ($line !~ /^;;/ and $found_annotation_block) {
+        if ($line !~ /^;;/ and $found_annotation_block and not $passed_annotation_block) {
+            $last_line_of_annotation = $i - 1;
             $passed_annotation_block = 1;
         }
         if ($found_annotation_block and not $passed_annotation_block) {
@@ -4692,7 +4702,11 @@ sub _read_problems
     my $annotation = model::annotation->new();
     $annotation->parse(annotation_rows => \@annotation_lines);
     $self->annotation($annotation);
-use Data::Dumper; print Dumper($annotation);
+    # Don't parse annotation further
+    if (defined $last_line_of_annotation) {
+        splice @modelfile, $first_line_of_annotation, $last_line_of_annotation - $first_line_of_annotation + 1;
+    }
+
 	my $start_index = 0;
 	my $end_index;
 	my $first = 1;
