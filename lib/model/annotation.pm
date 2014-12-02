@@ -106,6 +106,19 @@ sub format
     return \@formatted;
 }
 
+sub add_empty_tags
+{
+    my $self = shift;
+
+    foreach my $entry (@tags) {
+        my $attribute = $entry->[2];
+        if ($attribute eq 'based_on') {
+            $self->$attribute('') unless defined $self->$attribute;
+        } else {
+            $self->$attribute([]) unless defined $self->$attribute;
+        }
+    }
+}
 
 no Moose;
 __PACKAGE__->meta->make_immutable;
