@@ -315,13 +315,15 @@ sub copy_and_modify_bin_files
 	if ($relative_lib_path){
 		#from binary_dir to library
 		my $path = File::Spec->abs2rel($library_dir,$binary_dir);
+		#must have forward slash also on windows, otherwise slash will disappear
+		#when quoting path to get value of $Bin
 		if ($path eq '.'){
 			$includepath = "PsN_$name_safe_version";
 		}else{
-			#abs2 rel does not give / or \, catfile adds it
+
 			$includepath = File::Spec->catfile($path,"PsN_$name_safe_version");
-		}
-		@includelines=('use FindBin qw($Bin);','use lib "'.File::Spec->catfile('$Bin',$includepath).'";');
+		} 
+		@includelines=('use FindBin qw($Bin);','use lib "$Bin/".'."'$includepath';");
 	}else{
 		$includepath = File::Spec->catfile($library_dir,"PsN_$name_safe_version");
 		#need empty line to keep correct number
