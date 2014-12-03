@@ -4687,11 +4687,11 @@ sub _read_problems
 
     for (my $i = 0; $i < scalar(@modelfile); $i++) {
         my $line = $modelfile[$i];
-        if ($line =~ /^;;/ and not $found_annotation_block) {
+        if ($line =~ /^;;\s*.*\.\s*.*:/ and not $found_annotation_block) {
             $first_line_of_annotation = $i;
             $found_annotation_block = 1;
         }
-        if ($line !~ /^;;/ and $found_annotation_block and not $passed_annotation_block) {
+        if ($line !~ /^(;;|\s*$)/ and $found_annotation_block and not $passed_annotation_block) {
             $last_line_of_annotation = $i - 1;
             $passed_annotation_block = 1;
         }
