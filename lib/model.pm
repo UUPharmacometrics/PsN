@@ -4679,33 +4679,9 @@ sub _read_problems
 	}
 
     # Parse the annotation block
-    my $found_annotation_block = 0;
-    my $passed_annotation_block = 0;
-    my @annotation_lines;
-    my $first_line_of_annotation;
-    my $last_line_of_annotation;
-
-    for (my $i = 0; $i < scalar(@modelfile); $i++) {
-        my $line = $modelfile[$i];
-        if ($line =~ /^;;\s*.*\.\s*.*:/ and not $found_annotation_block) {
-            $first_line_of_annotation = $i;
-            $found_annotation_block = 1;
-        }
-        if ($line !~ /^(;;|\s*$)/ and $found_annotation_block and not $passed_annotation_block) {
-            $last_line_of_annotation = $i - 1;
-            $passed_annotation_block = 1;
-        }
-        if ($found_annotation_block and not $passed_annotation_block) {
-            push @annotation_lines, $line;
-        }
-    }
     my $annotation = model::annotation->new();
-    $annotation->parse(annotation_rows => \@annotation_lines);
+    $annotation->parse_model(model_lines => \@modelfile);
     $self->annotation($annotation);
-    # Don't parse annotation further
-    if (defined $last_line_of_annotation) {
-        splice @modelfile, $first_line_of_annotation, $last_line_of_annotation - $first_line_of_annotation + 1;
-    }
 
 	my $start_index = 0;
 	my $end_index;
