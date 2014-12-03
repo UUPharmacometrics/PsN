@@ -27,6 +27,16 @@ my $perl_binary;
 my $old_psn_config_file;
 my $copy_cmd;
 my $copy_recursive_cmd;
+my $relative_lib_path=0;
+
+if (scalar(@ARGV)>0){
+	if ($ARGV[0] eq 'relative'){
+		$relative_lib_path=1;
+		print "\nUsing relative library path, suitable for portable installations\n";
+	}else{
+		die("unknown input ".$ARGV[0]."\n");
+	}
+}
 
 setup_globals();
 
@@ -300,6 +310,24 @@ sub copy_and_modify_bin_files
 	my $file = shift;
 	my $binary_dir = shift;
 
+	my $includepath;
+	my @includelines=();
+	if ($relative_lib_path){
+		#from binary_dir to library
+		my $path = File::Spec->abs2rel($library_dir,$binary_dir);
+		if ($path eq '.'){
+			$includepath = "PsN_$name_safe_version";
+		}else{
+			#abs2 rel does not give / or \, catfile adds it
+			$includepath = File::Spec->catfile($path,"PsN_$name_safe_version");
+		}
+		@includelines=('use FindBin qw($Bin);','use lib "'.File::Spec->catfile('$Bin',$includepath).'";');
+	}else{
+		$includepath = File::Spec->catfile($library_dir,"PsN_$name_safe_version");
+		#need empty line to keep correct number
+		@includelines=("use lib '$includepath';",'');
+	}
+
 	unless (open(INST, "<", File::Spec->catfile("bin", $file))) {
 		abort("Could not open " . File::Spec->catfile("bin", $file) . " for reading, unable to install $file: $!\n");
 	}
@@ -310,7 +338,7 @@ sub copy_and_modify_bin_files
 	while (<INST>) {
 		if (/\# Everything above this line will be replaced \#/) {
 			print UTIL "\#!", $perl_binary, "\n";
-			print UTIL "use lib '$library_dir/PsN_$name_safe_version';\n\n";
+			print UTIL join("\n",@includelines)."\n";
 			print UTIL "\# Everything above this line was entered by the setup script \#\n";
 			$replace_line_found = 1;
 		} elsif ($replace_line_found) {
