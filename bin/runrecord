@@ -49,7 +49,6 @@ my %optional_options = ("h!"   => undef,
 	"res_file:s" => undef,
 	"mod_ext:s" => undef,
 	"out_ext:s"=> undef,
-	"prefer_census_style!" => undef,
 	"sep:s" => undef,
 	"rsep:s" => undef,
 	"var:s" => undef,
@@ -86,7 +85,6 @@ if(defined $options{'h'} or defined $options{'help'}) {
 						[ -sep= 'string' ]
 						[ -rsep = 'string' ]
 						[ -max_lvl = 'integer' ]
-						[ -prefer_census_style ]            
 						[ -var = 'string' ]       
 						[ -rse = 'string' ]  
 						-to='number'
@@ -109,7 +107,6 @@ my $root      = "run";
 my $mod_ext   = "mod";
 my $res_file  = "AAruninfo.txt";
 my $out_ext   = "lst";
-my $cen_sty   = 0;
 my $sep       = ";";
 my $rsep      = "";
 my $max_lvl   = 14;
@@ -123,7 +120,6 @@ $root    = $options{'root'}                if( defined $options{'root'} );
 $res_file= $options{'res_file'}            if( defined $options{'res_file'} );
 $mod_ext = $options{'mod_ext'}             if( defined $options{'mod_ext'} );
 $out_ext = $options{'out_ext'}             if( defined $options{'out_ext'} );
-$cen_sty = $options{'prefer_census_style'} if( defined $options{'prefer_census_style'} );
 $sep     = $options{'sep'}                 if( defined $options{'sep'} );
 $rsep    = $options{'rsep'}                if( defined $options{'rsep'} );
 $max_lvl = $options{'max_lvl'}             if( defined $options{'max_lvl'} );
@@ -300,7 +296,7 @@ for( my $run = $from; $run <= $to; $run++ ){
             my $name = $entry->[1];
             if (defined $model->annotation->$attribute) {
                 $info{$run}{$name} = join $rsep, @{$model->annotation->$attribute};
-                $info{$run}{$name} = s/;;\s*//g;
+                $info{$run}{$name} =~ s/;;\s*//g;
             }
         }
 
@@ -315,8 +311,7 @@ for( my $run = $from; $run <= $to; $run++ ){
             print "Found no parent for model number $run\n";
             $info{$run}{'Based on'} = 0;
         }
-use Data::Dumper;
-print Dumper(\%info);
+
 		## Extract information from the output object
 		my @outputs = defined $model -> outputs() ? @{$model -> outputs()} : ();
 		if( scalar @outputs > 0 and defined $outputs[0] ) {
