@@ -364,22 +364,21 @@ if (defined $options{'renumber'} and $options{'renumber'} != 0){
 			}
 		}
 	}
-}	
+}
+
 #handle PROBLEM update_tags add_tags add_comment
+if ($options{'add_tags'}) {
+    $model_copy->annotation->add_empty_tags();
+}
+
 my $based_on = $run_number;
 $based_on = $options{'based_on'} if (defined $options{'based_on'});
-
-if (defined $based_on or defined $options{'comment'} or defined $options{'add_tags'}){
-	$model_copy->problems ->[0]->problems->[0]->update_runrecord_tags(based_on =>$based_on,
-																	  new_comment =>$options{'comment'},
-																	  add_tags => (defined $options{'add_tags'}));
+if (defined $based_on) {
+    $model_copy->annotation->based_on($based_on);
 }
-$model_copy -> _write(number_format => $options{'sigdig'},
-					  local_print_order => 1);
 
+if (defined $options{'comment'}) {
+	$model_copy->problems->[0]->problems->[0]->add_comment(new_comment => $options{'comment'});
+}
 
-
-
-
-
-
+$model_copy->_write(number_format => $options{'sigdig'}, local_print_order => 1);

@@ -49,7 +49,6 @@ my %optional_options = ("h!"   => undef,
 	"res_file:s" => undef,
 	"mod_ext:s" => undef,
 	"out_ext:s"=> undef,
-	"prefer_census_style!" => undef,
 	"sep:s" => undef,
 	"rsep:s" => undef,
 	"var:s" => undef,
@@ -86,7 +85,6 @@ if(defined $options{'h'} or defined $options{'help'}) {
 						[ -sep= 'string' ]
 						[ -rsep = 'string' ]
 						[ -max_lvl = 'integer' ]
-						[ -prefer_census_style ]            
 						[ -var = 'string' ]       
 						[ -rse = 'string' ]  
 						-to='number'
@@ -109,7 +107,6 @@ my $root      = "run";
 my $mod_ext   = "mod";
 my $res_file  = "AAruninfo.txt";
 my $out_ext   = "lst";
-my $cen_sty   = 0;
 my $sep       = ";";
 my $rsep      = "";
 my $max_lvl   = 14;
@@ -123,7 +120,6 @@ $root    = $options{'root'}                if( defined $options{'root'} );
 $res_file= $options{'res_file'}            if( defined $options{'res_file'} );
 $mod_ext = $options{'mod_ext'}             if( defined $options{'mod_ext'} );
 $out_ext = $options{'out_ext'}             if( defined $options{'out_ext'} );
-$cen_sty = $options{'prefer_census_style'} if( defined $options{'prefer_census_style'} );
 $sep     = $options{'sep'}                 if( defined $options{'sep'} );
 $rsep    = $options{'rsep'}                if( defined $options{'rsep'} );
 $max_lvl = $options{'max_lvl'}             if( defined $options{'max_lvl'} );
@@ -284,197 +280,37 @@ for( my $run = $from; $run <= $to; $run++ ){
 			}
 		}
 
-		## Process the documentation comments (this should ideally be a property of the psn-object).
-		my $parent;
-		my $par_flag = 0;
-		my ($inDescription,$inLabel,$inStructural,$inCovariate,$inIIV,$inIOV,$inRSV,$inEstimation) = (0,0,0,0,0,0,0,0);
-		for( @documentation) {
-			if( $cen_sty ) {
-				s/\r\n?/\n/g;
-				if( /;;;C\s*[P,p]+arent\s*=\s*(\d+)/ ) {
-					$info{$run}{'Based on'} = $1;
-					$info{$run}{no_dOFV} = 1 if( $1 == 0 or $1 == "");
-					$par_flag = 1;
-				}
-			} else {
-				next unless (/^;;/); #skip lines that do not start with ;;
-				if(/Based on:/) {
-					$inDescription    = 0;
-					$inLabel      = 0;
-					$inIOV        = 0;
-					$inStructural = 0;
-					$inCovariate  = 0;
-					$inIIV        = 0;
-					$inRSV        = 0;
-					$inEstimation = 0;
-					s/\r\n?/\n/g;
-					s/\s+//g;
-					(my $tmp) = (split ":")[1];
-					if ($tmp == $run) {
-						print "Warning: run $run is said to be based on itself, forbidden. Ignoring tag for run $run.\n";
-					}else{
-						$info{$run}{'no_dOFV'} = 0;
-						if($tmp =~/\[nodOFV\]/) {
-							$info{$run}{no_dOFV} = 1;
-							$tmp =~ s/\[nodOFV\]//;
-						}
-						$info{$run}{'Based on'} = $tmp;
-					}
-					$par_flag = 1;
-				}
-			}
-			if(/Description:/) {
-				$inDescription    = 1;
-				$inLabel      = 0;
-				$inIOV        = 0;
-				$inStructural = 0;
-				$inCovariate  = 0;
-				$inIIV        = 0;
-				$inRSV        = 0;
-				$inEstimation = 0;
-				next;
-			}
+		# Process the documentation comments
+        my @tags = (
+            [ 'description', 'Description' ],
+            [ 'label', 'Label' ],
+            [ 'structural_model', 'Structural Model' ],
+            [ 'covariate_model', 'Covariate Model' ],
+            [ 'interindividual_variability', 'IIV' ],
+            [ 'interoccasion_variability', 'IOV' ],
+            [ 'residual_variability', 'RSV' ],
+            [ 'estimation', 'Estimation' ],
+        );
+        foreach my $entry (@tags) {
+            my $attribute = $entry->[0];
+            my $name = $entry->[1];
+            if (defined $model->annotation->$attribute) {
+                $info{$run}{$name} = join $rsep, @{$model->annotation->$attribute};
+                $info{$run}{$name} =~ s/;;\s*//g;
+            }
+        }
 
-			## Find the label block
-			if (/Label:/) {
-				$inDescription= 0;
-				$inLabel      = 1;
-				$inIOV        = 0;
-				$inStructural = 0;
-				$inCovariate  = 0;
-				$inIIV        = 0;
-				$inRSV        = 0;
-				$inEstimation = 0;
-				next;
-			}
-			## Find the Structural model block
-			if (/Structural model:/) {
-				$inDescription    = 0;
-				$inLabel      = 0;
-				$inIOV        = 0;
-				$inStructural = 1;
-				$inCovariate  = 0;
-				$inIIV        = 0;
-				$inRSV        = 0;
-				$inEstimation = 0;
-				next;
-			}
-
-			## Find the Covariate model block
-			if (/Covariate model:/) {
-				$inDescription    = 0;
-				$inLabel      = 0;
-				$inIOV        = 0;
-				$inStructural = 0;
-				$inCovariate  = 1;
-				$inIIV        = 0;
-				$inRSV        = 0;
-				$inEstimation = 0;
-				next;
-			}
-
-			## Find the IIV model block
-			if (/Inter-individual variability:/) {
-				$inDescription    = 0;
-				$inLabel      = 0;
-				$inIOV        = 0;
-				$inStructural = 0;
-				$inCovariate  = 0;
-				$inIIV        = 1;
-				$inRSV        = 0;
-				$inEstimation = 0;
-				next;
-			}
-
-			## Find the IOV model block
-			if (/Inter-occasion variability:/) {
-				$inDescription    = 0;
-				$inLabel      = 0;
-				$inIOV        = 1;
-				$inStructural = 0;
-				$inCovariate  = 0;
-				$inIIV        = 0;
-				$inRSV        = 0;
-				$inEstimation = 0;
-				next;
-			}
-
-			## Find the RSV model block
-			if (/Residual variability:/) {
-				$inDescription    = 0;
-				$inLabel      = 0;
-				$inIOV        = 0;
-				$inStructural = 0;
-				$inCovariate  = 0;
-				$inIIV        = 0;
-				$inRSV        = 1;
-				$inEstimation = 0;
-				next;
-			}
-
-			## Find the Estimation model block
-			if (/Estimation:/) {
-				$inDescription    = 0;
-				$inLabel      = 0;
-				$inIOV        = 0;
-				$inStructural = 0;
-				$inCovariate  = 0;
-				$inIIV        = 0;
-				$inRSV        = 0;
-				$inEstimation = 1;
-
-				next;
-			}
-
-			## Populate the result data structure with the information collected.
-			s/\n//;
-			if($inDescription) {
-				chomp;
-				s/;;\s+//;
-				$info{$run}{'Description'} = $info{$run}{'Description'}.
-				($info{$run}{'Description'} eq "" ? "" : $rsep).$_;
-			} elsif ($inLabel) {
-				chomp;
-				s/;;\s+//;
-				$info{$run}{'Label'} = $info{$run}{'Label'}.
-				($info{$run}{'Label'} eq "" ? "" : $rsep).$_;
-			}elsif ($inStructural) {
-				chomp;
-				s/;;\s+//;
-				$info{$run}{'Structural Model'} = $info{$run}{'Structural Model'}.
-				($info{$run}{'Structural Model'} eq "" ? "" : $rsep).$_;
-			} elsif ($inCovariate) {
-				chomp;
-				s/;;\s+//;
-				$info{$run}{'Covariate Model'} = $info{$run}{'Covariate Model'}.
-				($info{$run}{'Covariate Model'} eq "" ? "" : $rsep).$_;
-			} elsif ($inIIV) {
-				chomp;
-				s/;;\s+//;
-				$info{$run}{'IIV'} = $info{$run}{'IIV'}.
-				($info{$run}{'IIV'} eq "" ? "" : $rsep).$_;
-			} elsif ($inIOV) {
-				chomp;
-				s/;;\s+//;
-				$info{$run}{'IOV'} = $info{$run}{'IOV'}.
-				($info{$run}{'IOV'} eq "" ? "" : $rsep).$_;
-			} elsif ($inRSV) {
-				chomp;
-				s/;;\s+//;
-				$info{$run}{'RSV'} = $info{$run}{'RSV'}.
-				($info{$run}{'RSV'} eq "" ? "" : $rsep).$_;
-			} elsif ($inEstimation) {
-				chomp;
-				s/;;\s+//;
-				$info{$run}{'Estimation'} = $info{$run}{'Estimation'}.
-				($info{$run}{'Estimation'} eq "" ? "" : $rsep).$_;
-			}
-
-		}
-		if( not $par_flag ){
-			print "Found no parent for model number $run\n";
-			$info{$run}{'Based on'} = 0;
-		}	
+        if (defined $model->annotation->based_on) {
+            if ($model->annotation->based_on == $run) {
+                print "Warning: run $run is said to be based on itself, forbidden. Ignoring tag for run $run.\n";
+            } else {
+                $info{$run}{'Based on'} = $model->annotation->based_on;
+                $info{$run}{'no_dOFV'} = $model->annotation->nodOFV;
+            }
+        } else {
+            print "Found no parent for model number $run\n";
+            $info{$run}{'Based on'} = 0;
+        }
 
 		## Extract information from the output object
 		my @outputs = defined $model -> outputs() ? @{$model -> outputs()} : ();

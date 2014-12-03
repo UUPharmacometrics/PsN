@@ -14,6 +14,7 @@ use Math::Random qw(random_multivariate_normal);
 use model::iofv_module;
 use model::nonparametric_module;
 use model::shrinkage_module;
+use model::annotation;
 use output;
 use model::problem;
 use Moose;
@@ -129,6 +130,7 @@ has 'tbs_thetanum' => ( is => 'rw', isa => 'Int' );
 has 'missing_data_token' => ( is => 'rw', isa => 'Maybe[Int]', default => -99 );
 has 'last_est_complete' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'niter_eonly' => ( is => 'rw', isa => 'Maybe[Int]' );
+has 'annotation' => ( is => 'rw', isa => 'model::annotation' );
 
 sub BUILD
 {
@@ -3517,6 +3519,11 @@ sub _write
 
 	my @formatted;
 
+    # Insert annotation first
+    if (defined $self->annotation) {
+        push @formatted, @{$self->annotation->format()};
+    }
+
 	# An element in the active_problems array is a boolean that
 	# corresponds to the element with the same index in the problems
 	# array.  If the boolean is true, the problem will be run. All
@@ -4670,6 +4677,12 @@ sub _read_problems
 		}
 
 	}
+
+    # Parse the annotation block
+    my $annotation = model::annotation->new();
+    $annotation->parse_model(model_lines => \@modelfile);
+    $self->annotation($annotation);
+
 	my $start_index = 0;
 	my $end_index;
 	my $first = 1;

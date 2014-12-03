@@ -2,8 +2,7 @@
 
 use strict;
 use warnings;
-use Test::More tests=>39;
-#use Test::More;
+use Test::More;
 use FindBin qw($Bin);
 use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages
@@ -42,47 +41,17 @@ is ($tab->options->[4]->value, 'tab09a.csv', "tab num-letter after");
 
 my $prob = model::problem::problem->new(record_arr => ['$PROBLEM']);
 
-$prob->update_runrecord_tags(based_on =>'run3',
-							 new_comment =>'added comment',
-							 add_tags => 0);
+$prob->add_comment(new_comment => 'added comment');
 my $ref = $prob -> _format_record;
-#print $ref->[0];
 my @arr = split("\n",$ref->[0],2);
 is ($arr[1],';added comment'."\n",'problem add comment');
 
 $prob = model::problem::problem->new(record_arr => ['$PROBLEM DESCRIPTION']);
 
-$prob->update_runrecord_tags(based_on =>'run3',
-							 new_comment =>'added comment',
-							 add_tags => 0);
+$prob->add_comment(new_comment => 'added comment');
 my $ref = $prob -> _format_record;
-#print $ref->[0];
 my @arr = split("\n",$ref->[0],2);
 is ($arr[1],';added comment'."\n",'problem add comment');
-
-$prob = model::problem::problem->new(record_arr => ['$PROBLEM']);
-
-$prob->update_runrecord_tags(based_on =>'run3',
-							 add_tags => 1);
-my $ref = $prob -> _format_record;
-#print $ref->[0];
-#print $ref->[1];
-my @arr = split("\n",$ref->[0],2);
-is ($arr[1],';; 1. Based on: run3','problem add_tags');
-
-$prob = model::problem::problem->new(record_arr => ['$PROBLEM DESCRIPTION']);
-
-$prob->update_runrecord_tags(based_on =>'run3',
-							 new_comment =>'added comment',
-							 add_tags => 1);
-my $ref = $prob -> _format_record;
-#print $ref->[0];
-#print $ref->[1];
-#print $ref->[2];
-my @arr = split("\n",$ref->[0],2);
-is ($arr[1],';added comment','problem add comment and tags');
-is ($ref->[1],"\n".';; 1. Based on: run3','problem add comment and tags');
-
 
 
 my $model = model->new(filename => "$modeldir/mox1.mod");
