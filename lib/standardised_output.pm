@@ -449,7 +449,12 @@ sub _parse_lst
     }
 
     $self->_add_likelihood(ofv => $ofv);
-    $self->_add_target_tool_messages;
+
+    if (defined $ofv) {
+        $self->_add_target_tool_messages;
+    } else {
+        $self->_add_target_tool_messages(error => join('', @{$minimization_message}));
+    }
 
     $writer->endTag("Estimation");
     $self->_end_block;
