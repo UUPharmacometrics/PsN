@@ -45,6 +45,10 @@ sub parse_model
     my $first_line_of_annotation;
     my $last_line_of_annotation;
 
+    if (not defined $model_lines) {
+        return;
+    }
+
     for (my $i = 0; $i < scalar(@{$model_lines}); $i++) {
         my $line = $model_lines->[$i];
         if ($line =~ /^;;(\s*.*\.\s*.*:|;C\s*[Pp]arent\s*=)/ and not $found_annotation_block) {
