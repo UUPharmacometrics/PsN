@@ -49,7 +49,8 @@ LIBFILES= ui.pm \
 	model/problem/record/init_option.pm \
 	model/problem/record/theta_option.pm \
 	model/problem/record.pm \
-  model/problem/code_record.pm \
+	model/problem/record_order.pm \
+	model/problem/code_record.pm \
 	model/problem/init_record.pm \
 	model/problem/abbreviated.pm \
 	model/problem/aes.pm \
@@ -98,6 +99,7 @@ LIBFILES= ui.pm \
 	model/shrinkage_module.pm \
 	model/nonparametric_module.pm \
 	model/problem.pm \
+	model/annotation.pm \
 	output/problem/subproblem.pm \
 	output/problem.pm \
 	output.pm \
