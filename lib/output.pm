@@ -13,6 +13,7 @@ use array qw(:all);
 use Moose;
 use MooseX::Params::Validate;
 use output::problem;
+use model::annotation;
 
 has 'problems' => ( is => 'rw', isa => 'ArrayRef[output::problem]' );
 has 'directory' => ( is => 'rw', isa => 'Maybe[Str]' );
@@ -30,6 +31,7 @@ has 'runtime' => ( is => 'rw', isa => 'Str' );
 has 'lst_interrupted' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'parsed' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'parsing_error_message' => ( is => 'rw', isa => 'Str' );
+has 'annotation' => ( is => 'rw', isa => 'model::annotation' );
 
 # {{{ description
 
@@ -178,7 +180,6 @@ sub access_any
 			$self -> _read_problems;
 		}
 	} else {
-#	  croak("Trying to access output object, that have no data on file(" . $self->full_name . ") or in memory" );
 		print "\nTrying to access output object, that have no data on file(" . $self->full_name . ") or in memory\n" ;
 		return [];
 	}
@@ -1439,11 +1440,6 @@ sub get_single_value
 	} elsif ( ($attribute eq 'estimation_step_run') or
 			  ($attribute eq 'estimation_step_initiated')
 		) {
-# removed support ($attribute eq 'user_defined_prior') 
-#		or ($attribute eq 'omega_block_structure_type')
-#		or ($attribute eq 'sigma_block_structure_type')
-#		or ($attribute eq 'omega_block_sets')
-#		or ($attribute eq 'sigma_block_sets')
 		$arr = $self->access_any(attribute => $attribute,
 								 problems => [($problem_index + 1)],
 								 subproblems => [(1)]);
@@ -2557,7 +2553,12 @@ sub _read_problems
 	$months{'Dec'} = 11;
 
 
-	my @lstfile = OSspecific::slurp_file($self-> full_name ) ;
+	my @lstfile = OSspecific::slurp_file($self->full_name);
+
+    # Separate parsing of annotation
+    my $annotation = model::annotation->new();
+    $annotation->parse_model(model_lines => \@lstfile);
+    $self->annotation($annotation);
 
 	my $lstfile_pos = 0;
 
@@ -2634,8 +2635,6 @@ sub _read_problems
 			$found_control_stream = 1;
 			$control_stream_problem_end_index = $lstfile_pos - 2; #must be -2 here otherwise get one too many lines
 			my @control_lines = @lstfile[$control_stream_problem_start_index .. $control_stream_problem_end_index];
-#		  print "found new \$PROB\n";
-#		  print join(" \n",@control_lines)."\n";
 
 			my $prob = model::problem -> new (
 				directory										=> $self->directory,
@@ -2653,13 +2652,10 @@ sub _read_problems
 			#if we get as far as to license, then nmtran was ok, so discard messages so far, but keep reading
 			#so that we can store any license error messages
 			@prerun_messages=() if (/^\s*License /); 
-#		  print "Found nmtran messages or warnings or license\n";
 			if ((not $done_reading_control_stream) and $found_control_stream) {
 				#add last control stream problem
 				$control_stream_problem_end_index = $lstfile_pos - 2; #must have -2 so do not get message line
 				my @control_lines = @lstfile[$control_stream_problem_start_index .. $control_stream_problem_end_index];
-#			  print "add control stream\n";
-#			  print join("\n",@control_lines)."\n";
 
 				my $prob = model::problem -> new (
 					directory										=> $self->directory,
@@ -2771,7 +2767,6 @@ sub _read_problems
 					$self -> msfo_has_terminated($self -> msfo_has_terminated() + $problems[$#problems] -> msfo_has_terminated());
 				}		  
 				@problem_lstfile = undef;
-#	      $tbln = undef; leave this. Instead reread table number in problem_subs.pm
 				$success = 1;
 				$n_previous_meth = $meth_counter;
 				

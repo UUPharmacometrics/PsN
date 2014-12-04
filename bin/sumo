@@ -898,16 +898,36 @@ my $form = '%.' . $options{'precision'} . 'g';
 					print "Covariance time for subproblem, sum over \$EST (seconds):   $covtime\n";
 				}
 				print "\n";
-				if ( defined $ofv ) {
+				if (defined $ofv) {
 					if (defined $dic){
 						print "DIC (Bayesian OBJV+OBJS^2/2): ",sprintf "%."."$options{'precision'}"."f",$ofv;
 						print"\n\n";
-					}else{
+					} else {
 						if ($nmversion < 7){
 							print "Objective function value: ",$ofv,"\n\n";
-						}else{
-							print "Objective function value: ",sprintf "%."."$options{'precision'}"."f",$ofv;
-							print"\n\n";
+						} else {
+							print "Objective function value: ", sprintf("%." . "$options{'precision'}" . "f", $ofv);
+							print "\n";
+                            # try to print delta-ofv
+                            my $annotation = $outobj->annotation;
+                            if (defined $annotation) {
+                                if (defined $annotation->based_on) {
+                                    my $base_name = 'run' . $annotation->based_on . '.lst';
+                                    if (-e $base_name) {
+                                        my $base_output = output->new(filename => $base_name);
+                                        if ($base_output->parsed_successfully) {
+                                            my $base_ofv = $base_output->get_single_value(attribute => 'ofv',
+                                                problem_index => $problems,
+                                                subproblem_index => $sub_problems);
+                                            if (defined $base_ofv) {
+                                                my $dofv = $ofv - $base_ofv;
+                                                print "Delta ofv (from run" . $annotation->based_on  . "): ", sprintf("%." . "$options{'precision'}" . "f", $dofv), "\n";
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            print "\n";
 						}
 					}
 				} else {

@@ -69,6 +69,7 @@ Changes and bug fixes from PsN 4.2.0 to x.y.z
 
    ___sumo___
 
+- sumo now prints delta-ofv if the "Based on:" annotation is present in model
 - running sumo on file without extension .res or .lst would cause a crash
 
    ___vpc/npc___
