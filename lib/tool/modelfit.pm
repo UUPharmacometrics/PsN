@@ -3071,7 +3071,7 @@ if ( $self->clean >= 3 ) {
 }
 
     if ($self->standardised_output) {
-        my $so = standardised_output->new(output_filename => $final_lst);
+        my $so = standardised_output->new(lst_files => [ $final_lst ]);
         $so->parse; 
     }
 }
