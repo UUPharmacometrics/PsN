@@ -21,6 +21,7 @@ has '_output' => ( is => 'rw', isa => 'output' );
 has '_model' => ( is => 'rw', isa => 'model' );
 has '_writer' => ( is => 'rw', isa => 'Ref' ); 
 has '_block_number' => ( is => 'rw', isa => 'Int', default => 1 );
+has '_warnings' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { [] } ); 
 
 sub BUILD
 {
@@ -426,6 +427,10 @@ sub _parse_lst
 	my ($table_name_ref, $dummy) = $self->_model->problems->[$problems]->_option_val_pos(record_name => 'table', name => 'FILE');
 	if (defined $table_name_ref and scalar @{$table_name_ref} >= 0) {
         foreach my $table (@$table_name_ref) {
+            if ($table =~ /^sdtab/ or $table =~ /^patab/ and not -e $table) {
+                push @{$self->_warnings}, "Could not find table $table. Results from this table could not be added.";
+                next;
+            }
             if ($table =~ /^sdtab/) {
                 my $sdtab = data->new(
                     directory => $self->_model->directory,
@@ -639,6 +644,10 @@ sub _add_target_tool_messages
     my $writer = $self->_writer;
 
     $writer->startTag("TargetToolMessages");
+
+    if (scalar(@{$self->_warnings}) > 0) {
+        $writer->dataElement("Warnings", join("\n", @{$self->_warnings}));
+    }
 
     if (defined $error) {
         $writer->dataElement("Errors", $error);
