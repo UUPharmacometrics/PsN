@@ -427,7 +427,7 @@ sub _parse_lst
 	my ($table_name_ref, $dummy) = $self->_model->problems->[$problems]->_option_val_pos(record_name => 'table', name => 'FILE');
 	if (defined $table_name_ref and scalar @{$table_name_ref} >= 0) {
         foreach my $table (@$table_name_ref) {
-            if ($table =~ /^sdtab/ or $table =~ /^patab/ and not -e $table) {
+            if ($table =~ /^(sdtab|patab)/ and not -e $table) {
                 push @{$self->_warnings}, "Could not find table $table. Results from this table could not be added.";
                 next;
             }

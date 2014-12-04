@@ -80,8 +80,6 @@ sub BUILD
 			croak("No file " . $self->full_name . " on disk.")
 				unless ($self->ignore_missing_files);
 		}
-	} else { #have header or individuals as input or stored in memory
-		#we do NOT write to disk here
 	}
 
 	my $i = 1;
@@ -527,9 +525,8 @@ sub cdd_create_datasets{
 								selection   => $selection_method,
 								bins        => $bins,
 								directory   => $output_directory );
-	$data =undef;
+	$data = undef;
 	return $new_datas, $skip_ids, $skip_keys, $skip_values, $remainders, $pr_bins;
-
 }
 
 sub _case_deletion
@@ -562,7 +559,7 @@ sub _case_deletion
 	# (pure digits) or the name of the column in the (optional)
 	# header row.
 
-	my @header    = @{$self->header()};
+	my @header = @{$self->header()};
 
 	my %factors = %{$self -> factors( column => $case_column )};
 	if ( $factors{'Non-unique values found'} eq '1' ) {
@@ -995,16 +992,16 @@ sub max
 	);
 	my $column = $parm{'column'};
 	my $column_head = $parm{'column_head'};
-	my $return_value;
+    my $return_value;
 
 	# Either column or column_head must be specified. Column_head must be a string that
 	# identifies a column in the (optional ) data file header.
 
-# The if-statement below used to be a cache of allready calculated
-# means. But since individuals can be accessed in so many ways, we
-# don't know when this cache should be updated. Its easier to
-# recalculate the max. Maybe we can include this optimization in the
-# future, if it turns out to be a bottleneck
+    # The if-statement below used to be a cache of allready calculated
+    # means. But since individuals can be accessed in so many ways, we
+    # don't know when this cache should be updated. Its easier to
+    # recalculate the max. Maybe we can include this optimization in the
+    # future, if it turns out to be a bottleneck
 
 	  my $first_id = $self->individuals()->[0];
 	  croak("data->max: No individuals defined in data object based on " . 
@@ -2449,8 +2446,6 @@ sub _read_individuals
 		}
 
 		if ( $is_data ) {
-
-#			print "data is ".join(';',@new_row)."\n";
 			if ( defined $self->cont_column ) {
 				if ( $new_row[$self->cont_column - 1] == 1 ) {
 					if ( not $self->table_file ) { # Skip the CONT=1 rows if this is a table file
@@ -2488,7 +2483,6 @@ sub _read_individuals
 			}
 			if ( $new_ID != $old_ID ) {
 				my @subject_data = @init_data;
-#				print "individual new, idcol is $idcol\n";
 				my $id = data::individual->new ( idcolumn     => $idcol,
 					subject_data => \@subject_data );
 				unless (defined $self->individuals) {
@@ -2516,7 +2510,6 @@ sub _read_individuals
 	# if we have ended loop because of max number individuals, init_data will be empty.
 	if ( $#init_data >= 0 ) {
 		$self->individuals([]) unless defined $self->individuals;
-#		print "individual new, idcol is $idcol\n";
 		push( @{$self->individuals()},
 			data::individual->new ( idcolumn     => $idcol,
 				subject_data => \@init_data ) );
@@ -2604,7 +2597,7 @@ sub lasso_calculate_covariate_statistics
 
 	my $have_missing_data = $self->have_missing_data(column => $column_number);
 
-#check 'Non-unique values found' => 1
+    #check 'Non-unique values found' => 1
 	my $n_individuals = $self->count_ind();
 	if ($function == 1){
 		#linear categorical
