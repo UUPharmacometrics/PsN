@@ -65,3 +65,7 @@ $dir = tool::get_rundir(create => 0,
 						modelname => 'run123.mod',
 						directory_option => '../updir');
 is(substr($dir,0,-1),$tempdir.'updir','tool get_rundir 6');
+
+remove_test_dir($tempdir);
+
+done_testing();
