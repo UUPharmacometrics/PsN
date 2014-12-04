@@ -584,24 +584,15 @@ if (defined $options{'refstrat'} and (not defined $options{'stratify_on'})) {
 
 if ((defined $options{'sim_table'}) && (defined $options{'orig_table'})) {
   #case when only one is defined will be caught in new
-  if ($options{'sim_table'} =~ /^~/){
-    die "Table filename must not start with ~.\n";
-  }
-  if ($options{'orig_table'} =~ /^~/){
-    die "Table filename must not start with ~.\n";
-  }
+  #make paths global 
+  my ($dir, $fil) = OSspecific::absolute_path('',$options{'sim_table'});
+  $options{'sim_table'} = $dir.$fil;
+  my ($dir, $fil) = OSspecific::absolute_path('',$options{'orig_table'});
+  $options{'orig_table'} = $dir.$fil;
 
-  my $dir= getcwd();
-  #make paths global if only filename was given
-  unless ($options{'sim_table'} =~ /^\//) {
-    $options{'sim_table'} = $dir.'/'.$options{'sim_table'};
-  }  
-  unless ($options{'orig_table'} =~ /^\//) {
-    $options{'orig_table'} = $dir.'/'.$options{'orig_table'};
-  }  
 }
 if (defined $options{'sim_model'}) {
-  my ($dir, $fil) = OSspecific::absolute_path($options{'sim_model'});
+  my ($dir, $fil) = OSspecific::absolute_path('',$options{'sim_model'});
 
   $options{'sim_model'} = $dir.$fil;
 }

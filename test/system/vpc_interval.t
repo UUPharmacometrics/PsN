@@ -11,7 +11,7 @@ use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages and $path variable definition
 
 our $tempdir = create_test_dir('system_vpcinterval');
-our $dir = "$tempdir/vpc_test";
+our $dir = "$tempdir"."vpc_test";
 
 my $truematrix=
 [[1.7300E+01,1.5591E+01,2.0031E+01,1.3769E+01,1.7572E+01,1.3515E+01,4.1674E+01,2.6360E+01,9.6451E+00,4.4075E+01,1.1120E+01,2.2924E+01,2.9936E+01,1.4643E+01,1.5146E+01,3.2476E+01,2.2444E+01,1.7241E+01,3.6800E+01,2.0314E+01,1.3952E+01],
