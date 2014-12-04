@@ -5,7 +5,7 @@
 
 use strict;
 use warnings;
-use Test::More tests=>105;
+use Test::More tests=>115;
 use Test::Exception;
 use Math::Random;
 use FindBin qw($Bin);
@@ -62,8 +62,40 @@ is($model->datafiles(absolute_path => 1)->[0],$dir.$file,' datafilename abspath'
 is($model->datafiles(absolute_path => 0)->[0],'pheno.dta',' datafilename bare');
 
 #need OSspecific to make tests platform independend
-my $datarec = model::problem::data->new(record_arr => [$tempdir.'subdir/file.csv ']);
-my ($dir,$file)=OSspecific::absolute_path($tempdir.'subdir','file');
+my $datarec = model::problem::data->new(record_arr => ['$DATA "'.$tempdir.'subdir space/file.csv" ']);
+my ($dir,$file)=OSspecific::absolute_path($tempdir.'subdir space','file');
+is($datarec ->get_directory,$dir,'data record dir double quotes space');
+is($datarec ->get_filename,'file.csv','data record filename double quotes space');
+
+my $dirsep='/';
+if( $dir =~ /\\$/ ){ 
+	#windows
+	$dirsep="\\";
+}
+
+$datarec = model::problem::data->new(record_arr => ['$DATA "'.$tempdir.'subdir space'.$dirsep.'sub space'.$dirsep.'..'.$dirsep.'file.csv" ']);
+($dir,$file)=OSspecific::absolute_path($tempdir.'subdir space','file');
+is($datarec ->get_directory,$dir,'data record dir double quotes space up down');
+is($datarec ->get_filename,'file.csv','data record filename double quotes space');
+
+is($datarec->format_filename(write_directory=>$tempdir.'other space',
+							 relative_data_path=>1),'"..'.$dirsep.'subdir space'.$dirsep.'file.csv"','format_filname space relative up then down');
+is($datarec->format_filename(write_directory=>$tempdir,
+							 relative_data_path=>1),'"subdir space'.$dirsep.'file.csv"','format_filname relative down');
+
+
+$datarec = model::problem::data->new(record_arr => ["\$DATA '".$tempdir."subdir space".$dirsep."file.csv' "]);
+($dir,$file)=OSspecific::absolute_path($tempdir.'subdir space','file');
+is($datarec ->get_directory,$dir,'data record dir single quotes space');
+is($datarec ->get_filename,'file.csv','data record filename single quotes space');
+
+$datarec = model::problem::data->new(record_arr => [" '".$tempdir."subdir space".$dirsep."file.csv' "]);
+($dir,$file)=OSspecific::absolute_path($tempdir.'subdir space','file');
+is($datarec ->get_directory,$dir,'data record dir single quotes space no recname');
+is($datarec ->get_filename,'file.csv','data record filename single quotes space no recname');
+
+$datarec = model::problem::data->new(record_arr => [$tempdir.'subdir/file.csv ']);
+($dir,$file)=OSspecific::absolute_path($tempdir.'subdir','file');
 is($datarec ->get_directory,$dir,'data record dir');
 is($datarec ->get_filename,'file.csv','data record filename');
 

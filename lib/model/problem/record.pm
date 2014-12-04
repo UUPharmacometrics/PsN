@@ -96,6 +96,12 @@ sub _read_options
 	my @row = ();
 	my $order = 0;
 	my $input_record = 0;
+	my $first_data_record = 0;
+	# Get the recordname from the class name.
+	my @class_names = split('::',ref($self));
+	my $fname = uc(pop(@class_names));
+	$input_record = 1 if ($fname eq 'INPUT');
+	$first_data_record = 1 if ($fname eq 'DATA'); 
 
 	# Loop over all given strings.
 	my $num = defined $self->record_arr ? scalar(@{$self->record_arr}) : 0;
@@ -114,8 +120,19 @@ sub _read_options
 			push(@{$self->print_order}, $order);
 		} else {
 			# Get rid of $RECORD
-			s/^\s*\$(\w+)//;
-			$input_record = 1 if (index('INPUT',$1) == 0);
+			s/^\s*\$\w+//;
+			if ($first_data_record){
+				if (s/^\s*("|')([^"']+)\1\s//){
+					#only do this for first option of first record line
+					#remove quotes from quoted filename with possible spaces
+					$self -> _add_option( option_string => $2 );
+					$order++;
+					$first_data_record = 0;
+				}elsif (/\w/){
+					#have first option (non-empty line) but something not quoted
+					$first_data_record = 0;
+				}
+			}
 			# remove spaces near '='
 			s/\s*([\=])\s*/$1/g;
 			# remove spaces after ',' except if  '=,'
