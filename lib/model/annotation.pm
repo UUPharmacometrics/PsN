@@ -35,7 +35,7 @@ sub parse_model
 {
     my $self = shift;
     my %parm = validated_hash(\@_,
-        model_lines => { isa => 'ArrayRef[Str]' },
+        model_lines => { isa => 'ArrayRef' },
     );
     my $model_lines = $parm{'model_lines'};
 
