@@ -31,6 +31,56 @@ my $res = GetOptions( \%options,
 		      keys(%optional_options) );
 
 exit unless $res;
+
+my %help_text;
+$help_text{Pre_help_message} = <<'EOF';
+
+    Cross-validation
+EOF
+$help_text{Description} = <<'EOF';
+    The crossval tools divides the NONMEM data set into 'groups' equally sized
+	parts. For each part i, the remaining groups-1 parts are used for estimation,
+	and then part i is used for prediction.
+	A model file is required on the commandline.
+EOF
+$help_text{Examples} = <<'EOF';    
+    Example:
+    
+    crossval run1.mod -groups=5
+EOF
+
+    $help_text{Options} = <<'EOF';
+
+    The options are given here in their long form. Any option may be
+    abbreviated to any nonconflicting prefix.
+
+    The following options are valid:
+EOF
+
+    $help_text{-h} = <<'EOF';
+    <p class="style2">-h | -?</p>
+
+    With -h or -? crossval will print a list of options and exit.
+EOF
+
+    $help_text{-help} = <<'EOF';
+    <p class="style2">-help</p>
+
+    With -help crossval will print this, longer, help message.
+EOF
+$help_text{-groups} = <<'EOF';
+      -groups=N
+
+    The number of cross-validation groups in the data set.
+EOF
+
+    $help_text{Post_help_message} = <<'EOF';
+    Also see 'psn_options -h' for a description of common options.
+EOF
+
+
+common_options::online_help( 'crossval', \%options, \%help_text, \%required_options, \%optional_options);
+
 common_options::setup( \%options, 'crossval' ); #calls set_globals etc, initiates random sequence
 
 ## Check that we do have a model file
@@ -56,12 +106,13 @@ my $model = model -> new ( eval( $eval_string ),
 			   ignore_missing_output_files => 1 );
 
 my $xv =  tool::xv_step -> new( eval( $common_options::parameters ),
-				nr_validation_groups => $options{'groups'},
-				top_tool => 1,
-				models => [$model],
-				subtool_arguments => { modelfit => { eval( $common_options::parameters ),
-								     directory => undef} },
-				post_analyze => \&harvest_ofv,
+								nr_validation_groups => $options{'groups'},
+								directory_name_prefix => 'crossval',
+								top_tool => 1,
+								models => [$model],
+								subtool_arguments => { modelfit => { eval( $common_options::parameters ),
+																	 directory => undef} },
+								post_analyze => \&harvest_ofv,
     );
 
 $xv -> run;

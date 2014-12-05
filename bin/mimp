@@ -51,51 +51,79 @@ $help_text{Pre_help_message} = <<'EOF';
 
     Multiple imputation using PsN.
 
-	EOF
+EOF
 
     $help_text{Description} = <<'EOF';
 <h3 class="heading1">Description:</h3>
 
     Multiple imputation
-	EOF
+EOF
+$help_text{Examples} = <<'EOF';    
+    Example:
+    
+    mimp -base_model=run1.mod -reg_model=run2.mod -mi_model=run3.mod
+
+EOF
+
+    $help_text{Options} = <<'EOF';
+
+    The options are given here in their long form. Any option may be
+    abbreviated to any nonconflicting prefix.
+
+    The following options are valid:
+
+EOF
+
+    $help_text{-h} = <<'EOF';
+    <p class="style2">-h | -?</p>
+
+    With -h or -? mimp will print a list of options and exit.
+EOF
+
+    $help_text{-help} = <<'EOF';
+    <p class="style2">-help</p>
+
+    With -help mimp will print this, longer, help message.
+EOF
 
 	$help_text{-alt_models} = <<'EOF';
 <p class="style2">-alt_models='string'</p>
     Alternative models, comma-separated list.
-	EOF
+EOF
 
 
 	$help_text{-sim_model} = <<'EOF';
 <p class="style2">-sim_model='string'</p>
     Simulation model
-	EOF
+EOF
 
 	$help_text{-reg_model} = <<'EOF';
 <p class="style2">-reg_model='string'</p>
     Regression model
-	EOF
+EOF
 
 	$help_text{-frac_model} = <<'EOF';
 <p class="style2">-frac_model='string'</p>
     Fraction model
-	EOF
+EOF
 
 	$help_text{-base_model} = <<'EOF';
 <p class="style2">-base_model='string'</p>
     Base model
-	EOF
+EOF
 	$help_text{-mi_model} = <<'EOF';
 <p class="style2">-mi_model='string'</p>
     Multiple imputation model.
-	EOF
+EOF
 
 	$help_text{-samples} = <<'EOF';
 -samples=N
 
     Number of samples.
-	EOF
+EOF
 
 	$help_text{Post_help_message} = <<'EOF';
+    Also see 'psn_options -h' for a description of common options.
 EOF
 
 	common_options::online_help( 'mimp', \%options, \%help_text, \%required_options, \%optional_options);
