@@ -169,7 +169,7 @@ my ($self, %parm) = validated_hash(@_,
 \end{verbatim}
 
 There are cases when MooseX::Params::Validate have caused Perl to crash (see bug \#91211 at \url{https://rt.cpan.org/Public/Bug/Display.html?id=91211})
-These cases have been when isa was set to 'ArrayRef[Str]' or 'ArrayRef[Int]' and the crashes stopped when the bracketed type was removed.
+These cases have been when isa was set to 'ArrayRef[Str]' or 'ArrayRef[Int]' and the crashes stopped when the bracketed type was removed. When crashing on windows the error was either "Perl interpreter has stopped" or "Bizarre copy of ... in list assignment in MooseX/Params/Validate.pm line 63". For error messages under Linux see the bug report.
 
 
 \subsubsection{Private methods}
