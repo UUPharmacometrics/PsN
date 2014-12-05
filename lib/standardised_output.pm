@@ -21,7 +21,8 @@ has '_output' => ( is => 'rw', isa => 'output' );
 has '_model' => ( is => 'rw', isa => 'model' );
 has '_writer' => ( is => 'rw', isa => 'Ref' ); 
 has '_block_number' => ( is => 'rw', isa => 'Int', default => 1 );
-has '_warnings' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { [] } ); 
+has '_warnings' => ( is => 'rw', isa => 'ArrayRef[Str]' ); 
+has '_errors' => ( is => 'rw', isa => 'ArrayRef[Str]' ); 
 
 sub BUILD
 {
@@ -209,6 +210,22 @@ sub add_matrix
 
 # End of XML helper methods
 
+sub _add_warning
+{
+    my $self = shift;
+    my $warning = shift;
+    $self->_warnings([]) unless defined $self->_warnings;
+    push @{$self->_warnings}, $warning;
+}
+
+sub _add_error
+{
+    my $self = shift;
+    my $error = shift;
+    $self->_errors([]) unless defined $self->_errors;
+    push @{$self->_errors}, $error;
+}
+
 sub _start_block
 {
     # Start a new SOBlock and set the id with a number
@@ -245,221 +262,241 @@ sub parse
     );
 
     if (scalar(@{$self->lst_files}) > 0) {
+        my $first = 1;
         foreach my $file (@{$self->lst_files}) {
-            $self->_parse_lst(filename => $file);
+            if ($first and defined $self->bootstrap_results) {      # Include bootstrap results in same block as first lst file
+                $self->_parse_block(lst_file => $file, bootstrap_results => $self->bootstrap_results);
+                $first = 0;
+            } else {
+                $self->_parse_block(lst_file => $file);
+            }
         }
     } else {
-        $self->_start_block;
-        $writer->startTag("Estimate");
-        $self->_add_precision_population_estimates();  # For bootstrap
-        $writer->endTag("Estimate");
-        $self->_end_block;
+        $self->_parse_block(bootstrap_results => $self->bootstrap_results);
     }
 
     $writer->endTag("SO");
     $writer->end();
 }
 
-sub _parse_lst
+sub _parse_block
 {
     # Parse one lst-file and put it into an SOBlock
     my $self = shift;
     my %parm = validated_hash(\@_,
-        filename => { isa => 'Str' },
+        lst_file => { isa => 'Str', optional => 1 },
+        bootstrap_results => { isa => 'Str', optional => 1 },
     );
-    my $filename = $parm{'filename'};
+    my $lst_file = $parm{'lst_file'};
+    my $bootstrap_results = $parm{'bootstrap_results'};
 
+    my $elapsed_time = 0;
+    my $did_bootstrap = 0;
     my $writer = $self->_writer;
+
+    if (defined $bootstrap_results) {
+        if (not -e $bootstrap_results) {
+            $self->_add_error("Bootstrap results file \"" . $self->bootstrap_results . "\" does not exist");
+            $bootstrap_results = undef;
+        }
+    }
 
     $self->_start_block();
     $writer->startTag("Estimation");
 
-    # Check that the output file exist before trying to read it.
-    if (not -e $filename) {
-        $self->_add_target_tool_messages(error => "The file: " . $filename . " does not exist");
-        $writer->endTag("Estimation");
-        $self->_end_block();
-        return;
-    }
+    if (defined $lst_file) {
+        # Check that the output file exist before trying to read it.
+        if (not -e $lst_file) {
+            $self->_add_error("The file: \"" . $lst_file . "\" does not exist");
+        } else {
+            my $outobj = output->new(filename => $lst_file);
+            $self->_output($outobj);
+            if (not $self->_output->parsed_successfully) {
+                $self->_add_error("Unable to read everything from outputfile, parser error message: " . $outobj->parsing_error_message);
+            } else {
 
-    my $outobj = output->new(filename => $filename);
-    $self->_output($outobj);
-    if (not $self->_output->parsed_successfully) {
-        $self->_add_target_tool_messages(error => "Unable to read everything from outputfile, parser error message: " . $outobj->parsing_error_message);
-        $writer->endTag("Estimation");
-        $self->_end_block();
-        return;
-    }
-
-    my $model = model->new(
-        problems => $outobj->control_stream_problems,
-        filename => 'dummy',
-        is_dummy => 1,
-        ignore_missing_data => 1,
-        ignore_missing_files => 1,
-        ignore_missing_output => 1
-    );
-    $self->_model($model);
-
-	my $eta_shrinkage = $outobj->shrinkage_eta();
-	my $eps_shrinkage = $outobj->shrinkage_eps();
-	my $observation_records = $outobj->nobs();
-	my $individuals = $outobj->nind();
-
-	#arrays (over problems) of arrays (over subproblems) of arrays of values. Only non-zero are stored
-	my $thetaref = $model -> get_values_to_labels(category => 'theta',
-												  output_object => $outobj);
-	my $omegaref = $model -> get_values_to_labels(category => 'omega',
-												  output_object => $outobj);
-	my $sigmaref = $model -> get_values_to_labels(category => 'sigma',
-												  output_object => $outobj);
-
-	#arrays (over problems) of arrays of names. 
-	my $thetanamesref = $model->labels(parameter_type =>'theta', generic => 0);
-	my $omeganamesref = $model->labels(parameter_type =>'omega', generic => 0);
-	my $sigmanamesref = $model->labels(parameter_type =>'sigma', generic => 0);
-
-	my $omegasameref = $model->same(parameter_type =>'omega');
-	my $sigmasameref = $model->same(parameter_type =>'sigma');
-
-	#arrays (over problems) of arrays (over subproblems) of arrays of values, one per name. Values may be undef
-	my $sethetaref = $model -> get_values_to_labels(category => 'setheta',
-													output_object => $outobj);
-	my $seomegaref = $model -> get_values_to_labels(category => 'seomega',
-													output_object => $outobj);
-	my $sesigmaref = $model -> get_values_to_labels(category => 'sesigma',
-													output_object => $outobj);
-
-    my $problems = 0; #TODO check if first $PROB is prior, then should be =1 here, as in e.g. sse script
-    my $sub_problems = 0;  #always 0 since we do not have workflow simulation + estimation?
-
-	## Thetas
-
-	my @thetas = defined $thetaref-> [$problems][$sub_problems] ? @{$thetaref -> [$problems][$sub_problems]} : ();
-	my @thnam  = defined $thetanamesref -> [$problems] ? @{$thetanamesref -> [$problems]}  : ();
-	my @sethet = defined $sethetaref -> [$problems][$sub_problems] ? @{$sethetaref -> [$problems][$sub_problems]} : ();
-
-	my @etashrinkage = defined $eta_shrinkage -> [$problems][$sub_problems] ? @{$eta_shrinkage -> [$problems][$sub_problems]} : ();
-	my @epsshrinkage = defined $eps_shrinkage -> [$problems][$sub_problems] ? @{$eps_shrinkage -> [$problems][$sub_problems]} : ();
-
-	## Omegas
-	my @omegas    = defined $omegaref -> [$problems][$sub_problems] ? @{$omegaref -> [$problems][$sub_problems]} : ();
-	my @omnam     = defined $omeganamesref -> [$problems]? @{$omeganamesref -> [$problems]}  : ();
-	my @seomeg    = defined $seomegaref -> [$problems][$sub_problems] ? @{$seomegaref -> [$problems][$sub_problems]} : ();
-	my @omegasame = defined $omegasameref->[$problems] ? @{$omegasameref->[$problems]} : ();
-
-	## Sigmas
-	my @sigmas  = defined $sigmaref -> [$problems][$sub_problems] ? @{$sigmaref -> [$problems][$sub_problems]} : ();
-	my @signam  = defined $sigmanamesref -> [$problems] ? @{$sigmanamesref -> [$problems]}                : ();
-	my @sesigm  = defined $sesigmaref -> [$problems][$sub_problems] ? @{$sesigmaref -> [$problems][$sub_problems]} : ();
-	my @sigmasame = defined $sigmasameref->[$problems] ? @{$sigmasameref->[$problems]} : ();
-
-	## Termination
-	my $ofv = $outobj -> get_single_value(attribute => 'ofv',
-			       						  problem_index => $problems,
-										  subproblem_index => $sub_problems);
-
-    my $min_success = $outobj -> get_single_value(attribute => 'minimization_successful',
-        problem_index =>$problems,
-        subproblem_index => $sub_problems);
-
-    my $have_ses = 0;
-	if ($outobj->covariance_step_run->[$problems]) {
-		if ($outobj->covariance_step_successful->[$problems][$sub_problems] ne '0') {
-			$have_ses = 1;
-		}
-	}
-
-    my @all_labels = (@thnam);
-	my @est_values = (@thetas);
-
-	my @se_values = ();
-	my @rel_se = ();
-
-	@se_values = (@sethet) if $have_ses;
-
-	for (my $i = 0; $i < scalar(@omnam); $i++){
-		unless ($omegasame[$i]) {
-			push(@all_labels,$omnam[$i]);
-			push(@est_values,$omegas[$i]);
-			push(@se_values,$seomeg[$i]) if $have_ses;
-		}
-	}
-	for (my $i = 0; $i < scalar(@signam); $i++){
-		unless ($sigmasame[$i]) {
-			push(@all_labels,$signam[$i]);
-			push(@est_values,$sigmas[$i]);
-			push(@se_values,$sesigm[$i]) if $have_ses;
-		}
-	}
-
-	#Calculate relative standard errors, only if have se values
-	for (my $i = 0; $i < scalar(@se_values); $i++) {
-		if ($est_values[$i] == 0) {
-			push @rel_se, undef;
-		} else {
-			push @rel_se, $se_values[$i] / $est_values[$i];
-		}
-	}
-
-	my $minimization_message = $outobj -> get_single_value(attribute => 'minimization_message',
-			       						  problem_index => $problems,
-										  subproblem_index => $sub_problems);
-
-    my $undefs = grep { not defined $_ } @est_values;
-    if ($undefs != scalar(@est_values)) {   # Check that not all in list are undef. Should possibly have been done earlier
-        $self->_add_population_estimates(labels => \@all_labels, values => \@est_values);
-    }
-
-	if (scalar(@se_values) > 0) {
-        my $correlation_matrix = linear_algebra::triangular_symmetric_to_full($outobj->correlation_matrix->[$problems]->[$sub_problems]);
-        my $covariance_matrix = linear_algebra::triangular_symmetric_to_full($outobj->covariance_matrix->[$problems]->[$sub_problems]);
-		$self->_add_precision_population_estimates(
-            labels => \@all_labels,
-            standard_errors => \@se_values,
-            relative_standard_errors => \@rel_se,
-            correlation_matrix => $correlation_matrix,
-            covariance_matrix => $covariance_matrix,
-        );
-	}
-
-    # Loop through the different tables
-	my ($table_name_ref, $dummy) = $self->_model->problems->[$problems]->_option_val_pos(record_name => 'table', name => 'FILE');
-	if (defined $table_name_ref and scalar @{$table_name_ref} >= 0) {
-        foreach my $table (@$table_name_ref) {
-            if ($table =~ /^(sdtab|patab)/ and not -e $table) {
-                push @{$self->_warnings}, "Could not find table $table. Results from this table could not be added.";
-                next;
-            }
-            if ($table =~ /^sdtab/) {
-                my $sdtab = data->new(
-                    directory => $self->_model->directory,
-                    filename => $table,
-                    ignoresign => '@',
-                    parse_header => 1,
+                my $model = model->new(
+                    problems => $outobj->control_stream_problems,
+                    filename => 'dummy',
+                    is_dummy => 1,
+                    ignore_missing_data => 1,
+                    ignore_missing_files => 1,
+                    ignore_missing_output => 1
                 );
-                $self->_add_predictions(sdtab => $sdtab);
-                $self->_add_residuals(sdtab => $sdtab);
-            }
-            if ($table =~ /^patab/) {
-                my $patab = data->new(
-                    directory => $self->_model->directory,
-                    filename => $table,
-                    ignoresign => '@',
-                    parse_header => 1,
-                );
-                $self->_add_individual_estimates(patab => $patab);
+                $self->_model($model);
+
+                my $eta_shrinkage = $outobj->shrinkage_eta();
+                my $eps_shrinkage = $outobj->shrinkage_eps();
+                my $observation_records = $outobj->nobs();
+                my $individuals = $outobj->nind();
+
+                #arrays (over problems) of arrays (over subproblems) of arrays of values. Only non-zero are stored
+                my $thetaref = $model -> get_values_to_labels(category => 'theta',
+                    output_object => $outobj);
+                my $omegaref = $model -> get_values_to_labels(category => 'omega',
+                    output_object => $outobj);
+                my $sigmaref = $model -> get_values_to_labels(category => 'sigma',
+                    output_object => $outobj);
+
+                #arrays (over problems) of arrays of names. 
+                my $thetanamesref = $model->labels(parameter_type =>'theta', generic => 0);
+                my $omeganamesref = $model->labels(parameter_type =>'omega', generic => 0);
+                my $sigmanamesref = $model->labels(parameter_type =>'sigma', generic => 0);
+
+                my $omegasameref = $model->same(parameter_type =>'omega');
+                my $sigmasameref = $model->same(parameter_type =>'sigma');
+
+                #arrays (over problems) of arrays (over subproblems) of arrays of values, one per name. Values may be undef
+                my $sethetaref = $model -> get_values_to_labels(category => 'setheta',
+                    output_object => $outobj);
+                my $seomegaref = $model -> get_values_to_labels(category => 'seomega',
+                    output_object => $outobj);
+                my $sesigmaref = $model -> get_values_to_labels(category => 'sesigma',
+                    output_object => $outobj);
+
+                my $problems = 0; #TODO check if first $PROB is prior, then should be =1 here, as in e.g. sse script
+                my $sub_problems = 0;  #always 0 since we do not have workflow simulation + estimation?
+
+                ## Thetas
+
+                my @thetas = defined $thetaref-> [$problems][$sub_problems] ? @{$thetaref -> [$problems][$sub_problems]} : ();
+                my @thnam  = defined $thetanamesref -> [$problems] ? @{$thetanamesref -> [$problems]}  : ();
+                my @sethet = defined $sethetaref -> [$problems][$sub_problems] ? @{$sethetaref -> [$problems][$sub_problems]} : ();
+
+                my @etashrinkage = defined $eta_shrinkage -> [$problems][$sub_problems] ? @{$eta_shrinkage -> [$problems][$sub_problems]} : ();
+                my @epsshrinkage = defined $eps_shrinkage -> [$problems][$sub_problems] ? @{$eps_shrinkage -> [$problems][$sub_problems]} : ();
+
+                ## Omegas
+                my @omegas    = defined $omegaref -> [$problems][$sub_problems] ? @{$omegaref -> [$problems][$sub_problems]} : ();
+                my @omnam     = defined $omeganamesref -> [$problems]? @{$omeganamesref -> [$problems]}  : ();
+                my @seomeg    = defined $seomegaref -> [$problems][$sub_problems] ? @{$seomegaref -> [$problems][$sub_problems]} : ();
+                my @omegasame = defined $omegasameref->[$problems] ? @{$omegasameref->[$problems]} : ();
+
+                ## Sigmas
+                my @sigmas  = defined $sigmaref -> [$problems][$sub_problems] ? @{$sigmaref -> [$problems][$sub_problems]} : ();
+                my @signam  = defined $sigmanamesref -> [$problems] ? @{$sigmanamesref -> [$problems]}                : ();
+                my @sesigm  = defined $sesigmaref -> [$problems][$sub_problems] ? @{$sesigmaref -> [$problems][$sub_problems]} : ();
+                my @sigmasame = defined $sigmasameref->[$problems] ? @{$sigmasameref->[$problems]} : ();
+
+                ## Termination
+                my $ofv = $outobj -> get_single_value(attribute => 'ofv',
+                    problem_index => $problems,
+                    subproblem_index => $sub_problems);
+
+                my $min_success = $outobj -> get_single_value(attribute => 'minimization_successful',
+                    problem_index =>$problems,
+                    subproblem_index => $sub_problems);
+
+                my $have_ses = 0;
+                if ($outobj->covariance_step_run->[$problems]) {
+                    if ($outobj->covariance_step_successful->[$problems][$sub_problems] ne '0') {
+                        $have_ses = 1;
+                    }
+                }
+
+                my @all_labels = (@thnam);
+                my @est_values = (@thetas);
+
+                my @se_values = ();
+                my @rel_se = ();
+
+                @se_values = (@sethet) if $have_ses;
+
+                for (my $i = 0; $i < scalar(@omnam); $i++){
+                    unless ($omegasame[$i]) {
+                        push(@all_labels,$omnam[$i]);
+                        push(@est_values,$omegas[$i]);
+                        push(@se_values,$seomeg[$i]) if $have_ses;
+                    }
+                }
+                for (my $i = 0; $i < scalar(@signam); $i++){
+                    unless ($sigmasame[$i]) {
+                        push(@all_labels,$signam[$i]);
+                        push(@est_values,$sigmas[$i]);
+                        push(@se_values,$sesigm[$i]) if $have_ses;
+                    }
+                }
+
+                #Calculate relative standard errors, only if have se values
+                for (my $i = 0; $i < scalar(@se_values); $i++) {
+                    if ($est_values[$i] == 0) {
+                        push @rel_se, undef;
+                    } else {
+                        push @rel_se, $se_values[$i] / $est_values[$i];
+                    }
+                }
+
+                my $minimization_message = $outobj -> get_single_value(attribute => 'minimization_message',
+                    problem_index => $problems,
+                    subproblem_index => $sub_problems);
+
+                my $undefs = grep { not defined $_ } @est_values;
+                if ($undefs != scalar(@est_values)) {   # Check that not all in list are undef. Should possibly have been done earlier
+                    $self->_add_population_estimates(labels => \@all_labels, values => \@est_values);
+                }
+
+                if (scalar(@se_values) > 0) {
+                    my $correlation_matrix = linear_algebra::triangular_symmetric_to_full($outobj->correlation_matrix->[$problems]->[$sub_problems]);
+                    my $covariance_matrix = linear_algebra::triangular_symmetric_to_full($outobj->covariance_matrix->[$problems]->[$sub_problems]);
+                    $self->_add_precision_population_estimates(
+                        labels => \@all_labels,
+                        standard_errors => \@se_values,
+                        relative_standard_errors => \@rel_se,
+                        correlation_matrix => $correlation_matrix,
+                        covariance_matrix => $covariance_matrix,
+                        bootstrap_results => $bootstrap_results,
+                    );
+                    $did_bootstrap = 1;
+                }
+
+                # Loop through the different tables
+                my ($table_name_ref, $dummy) = $self->_model->problems->[$problems]->_option_val_pos(record_name => 'table', name => 'FILE');
+                if (defined $table_name_ref and scalar @{$table_name_ref} >= 0) {
+                    foreach my $table (@$table_name_ref) {
+                        if ($table =~ /^(sdtab|patab)/ and not -e $table) {
+                            $self->_add_warning("Could not find table $table. Results from this table could not be added.");
+                            next;
+                        }
+                        if ($table =~ /^sdtab/) {
+                            my $sdtab = data->new(
+                                directory => $self->_model->directory,
+                                filename => $table,
+                                ignoresign => '@',
+                                parse_header => 1,
+                            );
+                            $self->_add_predictions(sdtab => $sdtab);
+                            $self->_add_residuals(sdtab => $sdtab);
+                        }
+                        if ($table =~ /^patab/) {
+                            my $patab = data->new(
+                                directory => $self->_model->directory,
+                                filename => $table,
+                                ignoresign => '@',
+                                parse_header => 1,
+                            );
+                            $self->_add_individual_estimates(patab => $patab);
+                        }
+                    }
+                }
+
+                $self->_add_likelihood(ofv => $ofv);
+
+                if (not defined $ofv) {
+                    $self->_add_error(join('', @{$minimization_message}));
+                }
+                $self->_output->runtime =~ m/(\d+):(\d+):(\d+)/;
+                $elapsed_time = $1 * 3600 + $2 * 60 + $3;
             }
         }
     }
 
-    $self->_add_likelihood(ofv => $ofv);
-
-    if (defined $ofv) {
-        $self->_add_target_tool_messages;
-    } else {
-        $self->_add_target_tool_messages(error => join('', @{$minimization_message}));
+    if (not $did_bootstrap and defined $bootstrap_results) {
+        $self->_add_precision_population_estimates(
+            bootstrap_results => $bootstrap_results,
+        );
     }
+
+    $self->_add_target_tool_messages(elapsed_time => $elapsed_time);
 
     $writer->endTag("Estimation");
     $self->_end_block;
@@ -519,18 +556,20 @@ sub _add_precision_population_estimates
         relative_standard_errors => { isa => 'ArrayRef', optional => 1 },
         correlation_matrix => { isa => 'ArrayRef[ArrayRef]', optional => 1 },
         covariance_matrix => { isa => 'ArrayRef[ArrayRef]', optional => 1 },
+        bootstrap_results => { isa => 'Maybe[Str]', optional => 1 },
     );
     my @labels = defined $parm{'labels'} ? @{$parm{'labels'}} : ();
     my @standard_errors = defined $parm{'standard_errors'} ? @{$parm{'standard_errors'}}: ();
     my @relative_standard_errors = defined $parm{'relative_standard_errors'} ? @{$parm{'relative_standard_errors'}} : ();
     my $correlation_matrix = $parm{'correlation_matrix'};
     my $covariance_matrix = $parm{'covariance_matrix'};
+    my $bootstrap_results = $parm{'bootstrap_results'};
 
     my $writer = $self->_writer;
 
     $writer->startTag("PrecisionPopulationEstimates");
 
-    if (scalar(@{$self->lst_files}) > 0) {
+    if (scalar(@labels) > 0) {
         $writer->startTag("MLE");
         $writer->startTag("StandardError");
         $self->add_parameter_table(name => 'SE', labels => \@labels, values => \@standard_errors);
@@ -551,7 +590,7 @@ sub _add_precision_population_estimates
         $writer->endTag("MLE");
     }
 
-    if (defined $self->bootstrap_results) {
+    if (defined $bootstrap_results) {
         $self->_add_bootstrap();
     }
 
@@ -637,28 +676,22 @@ sub _add_target_tool_messages
 {
     my $self = shift;
     my %parm = validated_hash(\@_,
-        error => { isa => 'Str', optional => 1 },
+        elapsed_time => { isa => 'Num' },
     );
-    my $error = $parm{'error'};
+    my $elapsed_time = $parm{'elapsed_time'};
 
     my $writer = $self->_writer;
 
     $writer->startTag("TargetToolMessages");
 
-    if (scalar(@{$self->_warnings}) > 0) {
+    if (defined $self->_errors) {
+        $writer->dataElement("Errors", join("\n", @{$self->_errors}));
+    }
+    if (defined $self->_warnings) {
         $writer->dataElement("Warnings", join("\n", @{$self->_warnings}));
     }
-
-    if (defined $error) {
-        $writer->dataElement("Errors", $error);
-    } else {
-        #$writer->dataElement("Termination", '');
-        #$writer->dataElement("Warnings", '');
-        #$writer->dataElement("Errors", '');
-
-        $self->_output->runtime =~ m/(\d+):(\d+):(\d+)/;
-        my $seconds = $1 * 3600 + $2 * 60 + $3;
-        $writer->dataElement("ElapsedTime", $seconds);
+    if (defined $elapsed_time) {
+        $writer->dataElement("ElapsedTime", $elapsed_time);
     }
 
     $writer->endTag("TargetToolMessages");
