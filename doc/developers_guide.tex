@@ -168,6 +168,10 @@ my ($self, %parm) = validated_hash(@_,
 );
 \end{verbatim}
 
+There are cases when MooseX::Params::Validate have caused Perl to crash (see bug \#91211 at \url{https://rt.cpan.org/Public/Bug/Display.html?id=91211})
+These cases have been when isa was set to 'ArrayRef[Str]' or 'ArrayRef[Int]' and the crashes stopped when the bracketed type was removed.
+
+
 \subsubsection{Private methods}
 
 Names of private methods should start with an underscore.
