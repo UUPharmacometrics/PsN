@@ -33,7 +33,7 @@ exit unless $res;
 
 my %defaults;
 
-$defaults{'precision'}                 = 4;
+$defaults{'precision'}                 = 10;
 
 foreach my $opt (keys(%optional_options)) {
   $opt =~ s/[!:|].*//g; #get rid of :s |? :i etcetera
