@@ -16,7 +16,7 @@ use IO::File;
 has 'lst_files' => ( is => 'rw', isa => 'ArrayRef[Str]' );
 has 'bootstrap_results' => ( is => 'rw', isa => 'Maybe[Str]' );
 has 'so_filename' => ( is => 'rw', isa => 'Maybe[Str]' );
-has 'precision' => ( is => 'rw', isa => 'Int', default => 4 );
+has 'precision' => ( is => 'rw', isa => 'Int', default => 10 );
 has '_output' => ( is => 'rw', isa => 'output' );
 has '_model' => ( is => 'rw', isa => 'model' );
 has '_writer' => ( is => 'rw', isa => 'Ref' ); 
