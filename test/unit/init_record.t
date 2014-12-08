@@ -8,6 +8,7 @@ use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages
 use Math::Random;
 use model::problem::init_record;
+use model::problem::omega;
 
 # Test new and read_option
 my $record = model::problem::init_record->new(record_arr => ['2']);
@@ -71,5 +72,32 @@ my $record = model::problem::init_record->new(record_arr => ['2 ; Malta', '; Cor
 is ($record->comment->[0], "; Corse\n", "init_record full line comment");
 my $r = $record->_format_record;
 is ($r->[1], "; Corse\n", "init_record full line comment after _format_record");
+
+$record = model::problem::omega->new(record_arr => ['$OMEGA','(0.01642,FIXED) 0.112 FIXED  (FIXED, 1.0724 )',
+														  ' (0.45)   ;; ETA(4)',
+														  '  0.4 SD CHOLESK 0.09     ;; ETA(6)']);
+is ($record->fix, 0, 'record 5 fix');
+is ($record->options->[0]->init,0.01642, 'record 5 1 init');
+is ($record->options->[0]->fix, 1, 'record 5 1 fix');
+
+is ($record->options->[1]->init,0.112, 'record 5 2 init');
+is ($record->options->[1]->fix, 1, 'record 5 2 fix');
+
+is ($record->options->[2]->init,1.0724, 'record 5 3 init');
+is ($record->options->[2]->fix, 1, 'record 5 3 fix');
+
+is ($record->options->[3]->init,0.45, 'record 5 4 init');
+is ($record->options->[3]->fix, 0, 'record 5 4 fix');
+
+is ($record->options->[4]->init,0.4, 'record 5 5 init');
+is ($record->options->[4]->fix, 0, 'record 5 5 fix');
+is ($record->options->[4]->sd, 1, 'record 5 5 sd');
+is ($record->options->[4]->chol, 1, 'record 5 5 cholesky');
+
+is ($record->options->[5]->init,0.09, 'record 5 6 init');
+is ($record->options->[5]->fix, 0, 'record 5 6 fix');
+is ($record->options->[5]->sd, 0, 'record 5 6 sd');
+is ($record->options->[5]->chol, 0, 'record 5 6 cholesky');
+
 
 done_testing();

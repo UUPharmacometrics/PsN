@@ -92,10 +92,10 @@ sub _read_options
                 # commas are optional in ([low,] init [,up] [FIXED])
                 #if there are spaces inside parentheses, they need to be replaced
                 #by commas. Optional for NONMEM but necessary for PsN
-                #remove all spaces before closing parentheses
-                #any number then space should be replaced by match without space with,
-                $line =~ s/(\([0-9.\-+eE]+)\s+/$1,/g; #first space
-                $line =~ s/(\([0-9.\-+eE,]+)\s+/$1,/g; #second
+				#any number then space should be replaced by match without space with,
+                $line =~ s/(\([^)(\s]+)\s+/$1,/g; #first space
+                $line =~ s/(\([^)(\s]+)\s+/$1,/g; #second space
+
                 # Split the theta string to see if we have more than one theta.
                 #this form of split will correctly treat consecutive spaces as a single separator
                 @row = split( " ",$line );
