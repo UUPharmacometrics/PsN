@@ -348,75 +348,74 @@ sub _parse_lst_file
         if (not $outobj->parsed_successfully) {
             push @errors, "Unable to read everything from outputfile, parser error message: " . $outobj->parsing_error_message;
         } else {
-                my $model = $outobj->lst_model;
+            my $model = $outobj->lst_model;
 
-                my $eta_shrinkage = $outobj->shrinkage_eta();
-                my $eps_shrinkage = $outobj->shrinkage_eps();
-                my $observation_records = $outobj->nobs();
-                my $individuals = $outobj->nind();
+            my $eta_shrinkage = $outobj->shrinkage_eta();
+            my $eps_shrinkage = $outobj->shrinkage_eps();
+            my $observation_records = $outobj->nobs();
+            my $individuals = $outobj->nind();
 
-                #arrays (over problems) of arrays (over subproblems) of arrays of values. Only non-zero are stored
-                my $thetaref = $model -> get_values_to_labels(category => 'theta',
-                    output_object => $outobj);
-                my $omegaref = $model -> get_values_to_labels(category => 'omega',
-                    output_object => $outobj);
-                my $sigmaref = $model -> get_values_to_labels(category => 'sigma',
-                    output_object => $outobj);
+            #arrays (over problems) of arrays (over subproblems) of arrays of values. Only non-zero are stored
+            my $thetaref = $model -> get_values_to_labels(category => 'theta',
+                output_object => $outobj);
+            my $omegaref = $model -> get_values_to_labels(category => 'omega',
+                output_object => $outobj);
+            my $sigmaref = $model -> get_values_to_labels(category => 'sigma',
+                output_object => $outobj);
 
-                #arrays (over problems) of arrays of names. 
-                my $thetanamesref = $model->labels(parameter_type =>'theta', generic => 0);
-                my $omeganamesref = $model->labels(parameter_type =>'omega', generic => 0);
-                my $sigmanamesref = $model->labels(parameter_type =>'sigma', generic => 0);
+            #arrays (over problems) of arrays of names. 
+            my $thetanamesref = $model->labels(parameter_type =>'theta', generic => 0);
+            my $omeganamesref = $model->labels(parameter_type =>'omega', generic => 0);
+            my $sigmanamesref = $model->labels(parameter_type =>'sigma', generic => 0);
 
-                my $omegasameref = $model->same(parameter_type =>'omega');
-                my $sigmasameref = $model->same(parameter_type =>'sigma');
+            my $omegasameref = $model->same(parameter_type =>'omega');
+            my $sigmasameref = $model->same(parameter_type =>'sigma');
 
-                #arrays (over problems) of arrays (over subproblems) of arrays of values, one per name. Values may be undef
-                my $sethetaref = $model -> get_values_to_labels(category => 'setheta',
-                    output_object => $outobj);
-                my $seomegaref = $model -> get_values_to_labels(category => 'seomega',
-                    output_object => $outobj);
-                my $sesigmaref = $model -> get_values_to_labels(category => 'sesigma',
-                    output_object => $outobj);
+            #arrays (over problems) of arrays (over subproblems) of arrays of values, one per name. Values may be undef
+            my $sethetaref = $model -> get_values_to_labels(category => 'setheta',
+                output_object => $outobj);
+            my $seomegaref = $model -> get_values_to_labels(category => 'seomega',
+                output_object => $outobj);
+            my $sesigmaref = $model -> get_values_to_labels(category => 'sesigma',
+                output_object => $outobj);
 
-                my $problems = 0; #TODO check if first $PROB is prior, then should be =1 here, as in e.g. sse script
-                my $sub_problems = 0;  #always 0 since we do not have workflow simulation + estimation?
+            my $problems = 0; #TODO check if first $PROB is prior, then should be =1 here, as in e.g. sse script
+            my $sub_problems = 0;  #always 0 since we do not have workflow simulation + estimation?
 
-                ## Thetas
+            ## Thetas
 
-                my @thetas = defined $thetaref-> [$problems][$sub_problems] ? @{$thetaref -> [$problems][$sub_problems]} : ();
-                my @thnam  = defined $thetanamesref -> [$problems] ? @{$thetanamesref -> [$problems]}  : ();
-                my @sethet = defined $sethetaref -> [$problems][$sub_problems] ? @{$sethetaref -> [$problems][$sub_problems]} : ();
+            my @thetas = defined $thetaref-> [$problems][$sub_problems] ? @{$thetaref -> [$problems][$sub_problems]} : ();
+            my @thnam  = defined $thetanamesref -> [$problems] ? @{$thetanamesref -> [$problems]}  : ();
+            my @sethet = defined $sethetaref -> [$problems][$sub_problems] ? @{$sethetaref -> [$problems][$sub_problems]} : ();
 
-                my @etashrinkage = defined $eta_shrinkage -> [$problems][$sub_problems] ? @{$eta_shrinkage -> [$problems][$sub_problems]} : ();
-                my @epsshrinkage = defined $eps_shrinkage -> [$problems][$sub_problems] ? @{$eps_shrinkage -> [$problems][$sub_problems]} : ();
+            my @etashrinkage = defined $eta_shrinkage -> [$problems][$sub_problems] ? @{$eta_shrinkage -> [$problems][$sub_problems]} : ();
+            my @epsshrinkage = defined $eps_shrinkage -> [$problems][$sub_problems] ? @{$eps_shrinkage -> [$problems][$sub_problems]} : ();
 
-                ## Omegas
-                my @omegas    = defined $omegaref -> [$problems][$sub_problems] ? @{$omegaref -> [$problems][$sub_problems]} : ();
-                my @omnam     = defined $omeganamesref -> [$problems]? @{$omeganamesref -> [$problems]}  : ();
-                my @seomeg    = defined $seomegaref -> [$problems][$sub_problems] ? @{$seomegaref -> [$problems][$sub_problems]} : ();
-                my @omegasame = defined $omegasameref->[$problems] ? @{$omegasameref->[$problems]} : ();
+            ## Omegas
+            my @omegas    = defined $omegaref -> [$problems][$sub_problems] ? @{$omegaref -> [$problems][$sub_problems]} : ();
+            my @omnam     = defined $omeganamesref -> [$problems]? @{$omeganamesref -> [$problems]}  : ();
+            my @seomeg    = defined $seomegaref -> [$problems][$sub_problems] ? @{$seomegaref -> [$problems][$sub_problems]} : ();
+            my @omegasame = defined $omegasameref->[$problems] ? @{$omegasameref->[$problems]} : ();
 
-                ## Sigmas
-                my @sigmas  = defined $sigmaref -> [$problems][$sub_problems] ? @{$sigmaref -> [$problems][$sub_problems]} : ();
-                my @signam  = defined $sigmanamesref -> [$problems] ? @{$sigmanamesref -> [$problems]}                : ();
-                my @sesigm  = defined $sesigmaref -> [$problems][$sub_problems] ? @{$sesigmaref -> [$problems][$sub_problems]} : ();
-                my @sigmasame = defined $sigmasameref->[$problems] ? @{$sigmasameref->[$problems]} : ();
+            ## Sigmas
+            my @sigmas  = defined $sigmaref -> [$problems][$sub_problems] ? @{$sigmaref -> [$problems][$sub_problems]} : ();
+            my @signam  = defined $sigmanamesref -> [$problems] ? @{$sigmanamesref -> [$problems]}                : ();
+            my @sesigm  = defined $sesigmaref -> [$problems][$sub_problems] ? @{$sesigmaref -> [$problems][$sub_problems]} : ();
+            my @sigmasame = defined $sigmasameref->[$problems] ? @{$sigmasameref->[$problems]} : ();
 
-                ## Termination
-                my $ofv = $outobj -> get_single_value(attribute => 'ofv',
-                    problem_index => $problems,
-                    subproblem_index => $sub_problems);
+            ## Termination
+            my $ofv = $outobj -> get_single_value(attribute => 'ofv',
+                problem_index => $problems,
+                subproblem_index => $sub_problems);
 
-                my $min_success = $outobj -> get_single_value(attribute => 'minimization_successful',
-                    problem_index =>$problems,
-                    subproblem_index => $sub_problems);
+            my $min_success = $outobj -> get_single_value(attribute => 'minimization_successful',
+                problem_index =>$problems,
+                subproblem_index => $sub_problems);
 
-                my $have_ses = 0;
-                if ($outobj->covariance_step_run->[$problems]) {
-                    if ($outobj->covariance_step_successful->[$problems][$sub_problems] ne '0') {
-                        $have_ses = 1;
-                    }
+            my $have_ses = 0;
+            if ($outobj->covariance_step_run->[$problems]) {
+                if ($outobj->covariance_step_successful->[$problems][$sub_problems] ne '0') {
+                    $have_ses = 1;
                 }
             }
 
