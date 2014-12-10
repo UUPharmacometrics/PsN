@@ -35,7 +35,7 @@ sub test_number_of_children
 
 our $tempdir = create_test_dir('unit_standardised_output');
 copy_test_files($tempdir,
-    [ "output/special_mod/data_missing.lst", "output/special_mod/missingmodel.lst", "output/special_mod/psnmissingdata.out", "output/special_mod/psnmissingmodel.out", "SO/bootstrap_results.csv" ]);
+    [ "output/special_mod/data_missing.lst", "output/special_mod/missingmodel.lst", "output/special_mod/psnmissingdata.out", "output/special_mod/psnmissingmodel.out", "SO/bootstrap_results.csv", "SO/pheno.lst", "SO/patab", "SO/sdtab" ]);
 
 chdir $tempdir;
 
@@ -95,6 +95,73 @@ my $xpc = get_xml("bootstrap.SO.xml");
 (my $node) = $xpc->findnodes('/x:SO/x:SOBlock/x:Estimation/x:PrecisionPopulationEstimates/x:Bootstrap');
 ok (defined $node, "lone bootstrap");
 test_number_of_children($xpc, '/x:SO/x:SOBlock/x:Estimation/*', 1, "lone bootstrap nothing more than Bootstrap");
+
+# normal model pheno.lst
+my $so = standardised_output->new(lst_files => [ "pheno.lst" ]);
+$so->parse;
+my $xpc = get_xml("pheno.SO.xml");
+
+my @nodes = $xpc->findnodes('/x:SO/x:SOBlock/x:Estimation/*');
+my %hash;
+my %results_hash = (
+    PopulationEstimates => 1,
+    PrecisionPopulationEstimates => 1,
+    IndividualEstimates => 1,
+    Predictions => 1,
+    Residuals => 1,
+    Likelihood => 1,
+    TargetToolMessages => 1,
+);
+
+foreach $node (@nodes) {
+    $hash{$node->nodeName} = 1;
+}
+
+is_deeply(\%hash, \%results_hash, "pheno.lst has all elements under Estimation");
+
+# pheno.lst without sdtab
+unlink("sdtab");
+my $so = standardised_output->new(lst_files => [ "pheno.lst" ]);
+$so->parse;
+my $xpc = get_xml("pheno.SO.xml");
+
+my @nodes = $xpc->findnodes('/x:SO/x:SOBlock/x:Estimation/*');
+my %hash;
+my %results_hash = (
+    PopulationEstimates => 1,
+    PrecisionPopulationEstimates => 1,
+    IndividualEstimates => 1,
+    Likelihood => 1,
+    TargetToolMessages => 1,
+);
+
+foreach $node (@nodes) {
+    $hash{$node->nodeName} = 1;
+}
+
+is_deeply(\%hash, \%results_hash, "pheno.lst without sdtab has all elements under Estimation");
+
+# pheno.lst without sdtab and patab
+unlink("patab");
+my $so = standardised_output->new(lst_files => [ "pheno.lst" ]);
+$so->parse;
+my $xpc = get_xml("pheno.SO.xml");
+
+my @nodes = $xpc->findnodes('/x:SO/x:SOBlock/x:Estimation/*');
+my %hash;
+my %results_hash = (
+    PopulationEstimates => 1,
+    PrecisionPopulationEstimates => 1,
+    Likelihood => 1,
+    TargetToolMessages => 1,
+);
+
+foreach $node (@nodes) {
+    $hash{$node->nodeName} = 1;
+}
+
+is_deeply(\%hash, \%results_hash, "pheno.lst without sdtab and patab has all elements under Estimation");
+
 
 remove_test_dir($tempdir);
 
