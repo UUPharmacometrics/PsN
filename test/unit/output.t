@@ -4,7 +4,7 @@
 
 use strict;
 use warnings;
-use Test::More tests=>1647;
+use Test::More tests=>1661;
 use Test::Exception;
 use Math::Random;
 use FindBin qw($Bin);
@@ -54,6 +54,7 @@ for (my $i=0; $i< scalar(@answer_hashes); $i++){
 	cmp_ok($outobj->parsed_successfully,'==',$answer_hashes[$i]->{parsed_successfully}, "output file $outfile parsed successfully");
 
 	unless( $outobj -> parsed_successfully ){
+		cmp_ok(length($outobj->parsing_error_message),'>',5,'error message exists');
 	    next;
 	}
 	foreach my $prob (keys %{$answer_hashes[$i]->{answers}}){

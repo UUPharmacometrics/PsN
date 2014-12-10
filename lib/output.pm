@@ -2555,6 +2555,7 @@ sub _read_problems
 
 	my @lstfile = OSspecific::slurp_file($self->full_name);
 
+
     # Separate parsing of annotation
     my $annotation = model::annotation->new();
     $annotation->parse_model(model_lines => \@lstfile);
@@ -2583,7 +2584,7 @@ sub _read_problems
 	my @control_stream_problems;
 	
 	my @prerun_messages=();
-	my $reading_prerun_messages=0;
+	my $reading_prerun_messages=1;
 
 	my $j = $#lstfile;
 	while ( $_ = $lstfile[ $j -- ] ) {
@@ -2626,12 +2627,14 @@ sub _read_problems
 			#found first record of control stream
 			$reading_control_stream = 1;
 			$found_control_stream = 1;
+			$reading_prerun_messages=0;
 			#store index of line
 			$control_stream_problem_start_index = $lstfile_pos-1; #must have -1 here to get $PROB
 		} elsif (not $done_reading_control_stream and ($reading_control_stream) and (/^\s*\$PROB/)){
 			#we ignore $SIZES here, not relevent for what we need in output handling
 			#found first record of another $PROB
 			#add previous $PROB
+			$reading_prerun_messages=0;
 			$found_control_stream = 1;
 			$control_stream_problem_end_index = $lstfile_pos - 2; #must be -2 here otherwise get one too many lines
 			my @control_lines = @lstfile[$control_stream_problem_start_index .. $control_stream_problem_end_index];
@@ -2649,9 +2652,9 @@ sub _read_problems
 		} elsif ((/^\s*NM\-TRAN MESSAGES/) or (/^\s*WARNINGS AND ERRORS \(IF ANY\)/) or (/^\s*License /) ) {
 
 			$reading_prerun_messages = 1;
-			#if we get as far as to license, then nmtran was ok, so discard messages so far, but keep reading
-			#so that we can store any license error messages
-			@prerun_messages=() if (/^\s*License /); 
+			#if we get as far as to license, then nmtran / input file was ok, so discard messages so far, but keep reading
+			#so that we can store any new error messages
+			@prerun_messages=(); 
 			if ((not $done_reading_control_stream) and $found_control_stream) {
 				#add last control stream problem
 				$control_stream_problem_end_index = $lstfile_pos - 2; #must have -2 so do not get message line
@@ -2713,7 +2716,6 @@ sub _read_problems
 				}
 			}
 		} elsif ( /^ PROBLEM NO\.:\s+\d+\s+$/ or $lstfile_pos > $#lstfile ) {
-			$reading_prerun_messages = 0;
 			if ( defined $problem_start ) {
 				my $adj = 1;
 				my @problem_lstfile =	@lstfile[$problem_start .. ($lstfile_pos - $adj)];
@@ -2771,8 +2773,13 @@ sub _read_problems
 				$n_previous_meth = $meth_counter;
 				
 			}  #end if defined problem start
+			$reading_prerun_messages = 0 if (/^ PROBLEM NO/); #otherwise EOF
 			$problem_start = $lstfile_pos;
-		}elsif ($reading_prerun_messages and /[A-Za-z]/){
+		} elsif (/^\s* AN ERROR WAS FOUND IN THE CONTROL STATEMENTS/){
+			@prerun_messages = ();
+			$reading_prerun_messages = 1;
+		}
+		if ($reading_prerun_messages and /[A-Za-z]/){
 			if (/s*Stop Time:/ or /^\s*\#CPUT:/){
 				$reading_prerun_messages = 0;
 			}else{
@@ -2788,14 +2795,18 @@ sub _read_problems
 		carp('Could not find a PROBLEM NO statement in "' .
 			 $self -> full_name . '"' . "\n" ) unless $self->ignore_missing_files;
 		if (not defined $lst_version){
-			my $error_type = 'an NMTRAN';
+			my $error_type = 'an error before NONMEM could start';
 			foreach my $line (@prerun_messages){
 				if ($line =~ /(license|LICENSE|License)/){
-					$error_type = 'a NONMEM license';
+					$error_type = 'a NONMEM license error';
 					last;
 				}
 			}
-			$self->parsing_error( message => "It seems there was $error_type error, messages are:\n".join("\n",@prerun_messages)."\n");
+			if (scalar(@prerun_messages)>0){
+				$self->parsing_error( message => "It seems there was $error_type, messages are:\n".join("\n",@prerun_messages)."\n");
+			}else{
+				$self->parsing_error( message => "It seems NONMEM could not start, no information found in ".$self->full_name."\n");
+			}
 		}else{
 			$self->parsing_error( message => 'Could not find a PROBLEM NO statement in "' . $self->full_name . '"' . "\n" );
 		}
