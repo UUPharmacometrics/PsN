@@ -135,7 +135,7 @@ sub copy_test_files
 	my $testdir = shift;
 	my $array = shift;
 	foreach $file (@{$array}) {
-		cp("$testfiledir/$file", $testdir);
+		cp("$testfiledir/$file", $testdir) or die "copy_test_files failed: $!";
 	}
 }
 

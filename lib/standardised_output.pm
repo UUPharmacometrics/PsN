@@ -27,7 +27,7 @@ sub BUILD
     my $so_filename;
 
     if (not defined $self->so_filename) {   # User specified filename
-        if (defined $self->lst_files->[0]) {   # Infer filename from name of first .lst file
+        if (defined $self->lst_files and defined $self->lst_files->[0]) {   # Infer filename from name of first .lst file
             $so_filename = $self->lst_files->[0];
 
             if ($so_filename =~ /(.*)\..*/) {
@@ -275,15 +275,21 @@ sub parse
     $SO->setAttribute('id' => "i1");
 
     # Handle lst files
-    foreach my $file (@{$self->lst_files}) {
-        my $block = $self->_parse_lst_file(lst_file => $file);
-        $SO->appendChild($block);
+    if (defined $self->lst_files) {
+        foreach my $file (@{$self->lst_files}) {
+            my $block = $self->_parse_lst_file(lst_file => $file);
+            $SO->appendChild($block);
+        }
     }
 
     # Handle bootstrap_results
     if (defined $self->bootstrap_results) {
         # Find or create xml structure
-        my $block = $self->find_or_create_node(root_node => $SO, node_name => "SOBlock[\@blkId='SO1']");
+        (my $block) = $SO->findnodes("SOBlock[\@blkId='SO1']");
+        if (not defined $block) {
+            $block = $self->create_block;
+            $SO->appendChild($block);
+        }
         my $estimation = $self->find_or_create_node(root_node => $block, node_name => "Estimation");
 
         # Create Bootstrap element
@@ -302,7 +308,7 @@ sub parse
             if (defined $bootstrap_error) {
                 $errors = [ $bootstrap_error ];
             }
-            _create_target_tool_messages(errors => $errors, elapsed_time => 0);
+            $self->_create_target_tool_messages(errors => $errors, elapsed_time => 0);
         } else {
             if (defined $bootstrap_error) {
                 (my $ttm) = $estimation->findnodes("TargetToolMessages");
@@ -479,7 +485,7 @@ sub _parse_lst_file
                     }
                     if ($table =~ /^sdtab/) {
                         my $sdtab = data->new(
-                            directory => $model->directory,
+                            directory => $outobj->directory,
                             filename => $table,
                             ignoresign => '@',
                             parse_header => 1,
@@ -495,7 +501,7 @@ sub _parse_lst_file
                     }
                     if ($table =~ /^patab/) {
                         my $patab = data->new(
-                            directory => $model->directory,
+                            directory => $outobj->directory,
                             filename => $table,
                             ignoresign => '@',
                             parse_header => 1,
@@ -699,8 +705,8 @@ sub _create_target_tool_messages
 {
     my $self = shift;
     my %parm = validated_hash(\@_,
-        errors => { isa => 'ArrayRef', optional => 1 },
-        warnings => { isa => 'ArrayRef', optional => 1 },
+        errors => { isa => 'Maybe[ArrayRef]', optional => 1 },
+        warnings => { isa => 'Maybe[ArrayRef]', optional => 1 },
         elapsed_time => { isa => 'Num' },
     );
     my @errors = defined $parm{'errors'} ? @{$parm{'errors'}} : ();
