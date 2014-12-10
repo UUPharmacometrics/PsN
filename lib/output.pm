@@ -8,7 +8,7 @@ use Config;
 use ext::Math::SigFigs;
 use Data::Dumper;
 use Time::Local;
-use model::problem;
+use model;
 use array qw(:all);
 use Moose;
 use MooseX::Params::Validate;
@@ -16,6 +16,7 @@ use output::problem;
 use model::annotation;
 
 has 'problems' => ( is => 'rw', isa => 'ArrayRef[output::problem]' );
+has 'lst_model' => ( is => 'rw', isa => 'model' );
 has 'directory' => ( is => 'rw', isa => 'Maybe[Str]' );
 has 'control_stream_problems' => ( is => 'rw', isa => 'ArrayRef' );
 has 'filename_root' => ( is => 'rw', isa => 'Str' );
@@ -31,7 +32,6 @@ has 'runtime' => ( is => 'rw', isa => 'Str' );
 has 'lst_interrupted' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'parsed' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'parsing_error_message' => ( is => 'rw', isa => 'Str' );
-has 'annotation' => ( is => 'rw', isa => 'model::annotation' );
 
 # {{{ description
 
@@ -2556,13 +2556,8 @@ sub _read_problems
 	my @lstfile = OSspecific::slurp_file($self->full_name);
 
 
-    # Separate parsing of annotation
-    my $annotation = model::annotation->new();
-    $annotation->parse_model(model_lines => \@lstfile);
-    $self->annotation($annotation);
 
-	my $lstfile_pos = 0;
-
+	my $lstfile_pos = -1;
 	$self->parsed_successfully(1);
 
 	my $problem_start;
@@ -2579,31 +2574,153 @@ sub _read_problems
 	my $reading_control_stream = 0;
 	my $done_reading_control_stream = 0;
 	my $found_control_stream = 0;
-	my $control_stream_problem_start_index;
-	my $control_stream_problem_end_index;
-	my @control_stream_problems;
+	my $found_nmtran_message = 0;
+	my $control_stream_start_index;
+	my $control_stream_end_index;
 	
 	my @prerun_messages=();
 	my $reading_prerun_messages=1;
 
+	#first read date stamp
+	while ($lstfile_pos < $#lstfile){
+		$lstfile_pos++;
+		$_ = $lstfile[$lstfile_pos];
+		if (/^\s*(Sun|Mon|Tue|Wed|Thu|Fri|Sat)\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)/) {
+			$starttime_string = $_;
+			@prerun_messages =();
+			last;
+		}
+		if (/^\s*(;|\$)/){
+			#found control stream
+			$control_stream_start_index=$lstfile_pos;
+			#rewind one step 
+			$lstfile_pos--;
+			@prerun_messages =();
+			last;
+		}
+		if ((/^\s*NM\-TRAN MESSAGES/) or (/^\s*WARNINGS AND ERRORS \(IF ANY\)/) or (/^\s* AN ERROR WAS FOUND IN THE CONTROL STATEMENTS/)) {
+			$found_nmtran_message = 1;
+			@prerun_messages =();
+		}
+		chomp;
+		push(@prerun_messages, $_) if /\w/;
+	}
+	
+	unless (defined $starttime_string or defined $control_stream_start_index){
+		#something went wrong. Store error messages and finish
+		$self->parsing_error( message => "It seems there was an error before NONMEM started, messages are:\n".join("\n",@prerun_messages)."\n");
+		$self->parsed_successfully(0);
+		return 0;
+	}
+
+	#then read  control stream. Handle case when none exists (e.g. lst-file for missing control stream, psn stderr)
+	#model->new
+	while ($lstfile_pos < $#lstfile){
+		$lstfile_pos++;
+		$_ = $lstfile[$lstfile_pos];
+		if ((defined $control_stream_start_index) and (not $found_control_stream) and /^\s*[^;\$]/ ){
+			#false alarm, not a comment and not part of control stream
+			$control_stream_start_index=undef;
+		}
+		if ( (not defined $control_stream_start_index ) and /^\s*(;|\$)/){
+			#found control stream
+			$control_stream_start_index=$lstfile_pos;
+		}
+		if (/^\s*\$PROB/){
+			$found_control_stream=1;
+			@prerun_messages =();
+		}
+		if ((/^\s*NM\-TRAN MESSAGES/) or (/^\s*WARNINGS AND ERRORS \(IF ANY\)/) or (/^\s* AN ERROR WAS FOUND IN THE CONTROL STATEMENTS/)
+			or /^1NONLINEAR MIXED EFFECTS MODEL PROGRAM/ or (/^\s*License /) or (/^\s*doing nmtran/) ){
+
+			$found_nmtran_message=1;
+			@prerun_messages = ();
+			if ($found_control_stream){
+				$control_stream_end_index= ($lstfile_pos-1);
+				#rewind one step 
+				$lstfile_pos--;
+				last;
+			}
+			#else there is an error and we keep reading messages until end of file
+		}
+		chomp;
+		push(@prerun_messages, $_) if /\w/;
+	}
+
+	unless ($found_control_stream){
+		if ($found_nmtran_message){
+			$self->parsing_error( message => "NMtran messages without a control stream in the output file. Messages are:\n".join("\n",@prerun_messages)."\n");
+		}else{
+			$self->parsing_error( message => "It seems there was an error before NONMEM started, messages are:\n".join("\n",@prerun_messages)."\n");
+		}
+		$self->parsed_successfully(0);
+		return 0;
+	}
+	unless (defined $control_stream_end_index){
+		$self->parsing_error( message => "Could not find anything after the control stream copy in ".$self -> full_name."\n");
+		$self->parsed_successfully(0);
+		return 0;
+	}
+	my @model_lines = @lstfile[$control_stream_start_index .. $control_stream_end_index];
+
+	$self->lst_model(model->new(model_lines => \@model_lines,
+								filename => 'dummy',
+								directory => 'dummy',
+								ignore_missing_data => 1,
+								ignore_missing_files =>1,
+								ignore_missing_output =>1));
+	
+
+	#then read NMtran messages and license and nmversion
+	while ($lstfile_pos < $#lstfile){
+		$lstfile_pos++;
+		$_ = $lstfile[$lstfile_pos];
+		if ((/^\s*NM\-TRAN MESSAGES/) or (/^\s*WARNINGS AND ERRORS \(IF ANY\)/) or (/^\s* AN ERROR WAS FOUND IN THE CONTROL STATEMENTS/)
+			or (/^\s*doing nmtran/) ){
+			$found_nmtran_message=1;
+			@prerun_messages = ();
+		}elsif (/^\s*License /) {
+			@prerun_messages = (); #probably nmtran was ok, reset
+		}elsif (/^\s*ERROR reading license file /) {
+			@prerun_messages = (); #probably nmtran was ok, reset
+		}elsif (/^1NONLINEAR MIXED EFFECTS MODEL PROGRAM/) {
+			if (/VERSION 7/) {
+				$lst_version = 7;
+			} elsif (/VERSION VII /) {
+				$lst_version = 7;
+			} elsif (/VERSION 6/) {
+				$lst_version = 6;
+			} elsif (/VERSION VI /) {
+				$lst_version = 6;
+			} elsif (/VERSION V /) {
+				$lst_version = 5;
+			} else {
+				croak("could not read NONMEM version information from output file " . $self->filename);
+			}
+			$self->nonmem_version($lst_version);
+
+			@prerun_messages = ();
+			last;
+		}		
+		chomp;
+		if (/\w/){
+			push(@prerun_messages, $_) unless (/^\s*#CPUT:/ or /^\s*Stop Time/ or
+											   /^\s*(Sun|Mon|Tue|Wed|Thu|Fri|Sat)\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)/);
+		}
+	}
+
+	unless (defined $lst_version){
+		$self->parsing_error( message => "It seems there was an error before NONMEM started, messages are:\n".join("\n",@prerun_messages)."\n");
+		$self->parsed_successfully(0);
+		return 0;
+	}
+
+	#then read endtime
 	my $j = $#lstfile;
 	while ( $_ = $lstfile[ $j -- ] ) {
 		if (/^\s*(Sun|Mon|Tue|Wed|Thu|Fri|Sat)\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)/){
 			$endtime_string = $_;
-			last;
-		}elsif (/^1NONLINEAR MIXED EFFECTS MODEL PROGRAM/){
-			#if we end up here the lst-file is incomplete, was no end time printed
-			#by nmfe
-			$self->lst_interrupted(1);
-			last;
-		}
-	}
-
-
-	while ( $_ = $lstfile[ $lstfile_pos++ ] ) {
-		if ((not defined ($starttime_string) and not defined ($problem_start)) and (/^\s*(Sun|Mon|Tue|Wed|Thu|Fri|Sat)\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)/)) {
-			$starttime_string = $_;
-			if (defined $endtime_string) {
+			if (defined $starttime_string) {
 				$starttime_string =~ s/\s*$//; #remove trailing spaces
 				my ($wday, $mon, $mday, $tt, $zone, $year) = split(/\s+/, $starttime_string);
 				$mon = $months{$mon}; #convert to numeric
@@ -2622,90 +2739,19 @@ sub _read_problems
 				my $hours = ($runtime - $seconds - 60 * $minutes) / 3600;
 				$self->runtime(sprintf "%i:%02i:%02i", $hours, $minutes, $seconds);
 			}
-		} elsif (not $done_reading_control_stream and (not $reading_control_stream) and (/^\s*\$PROB/)) {
-			#we ignore $SIZES here, not relevent for what we need in output handling
-			#found first record of control stream
-			$reading_control_stream = 1;
-			$found_control_stream = 1;
-			$reading_prerun_messages=0;
-			#store index of line
-			$control_stream_problem_start_index = $lstfile_pos-1; #must have -1 here to get $PROB
-		} elsif (not $done_reading_control_stream and ($reading_control_stream) and (/^\s*\$PROB/)){
-			#we ignore $SIZES here, not relevent for what we need in output handling
-			#found first record of another $PROB
-			#add previous $PROB
-			$reading_prerun_messages=0;
-			$found_control_stream = 1;
-			$control_stream_problem_end_index = $lstfile_pos - 2; #must be -2 here otherwise get one too many lines
-			my @control_lines = @lstfile[$control_stream_problem_start_index .. $control_stream_problem_end_index];
-
-			my $prob = model::problem -> new (
-				directory										=> $self->directory,
-				ignore_missing_files        => 1,
-				ignore_missing_output_files => 1,
-				prob_arr                    => \@control_lines);
-
-			push( @control_stream_problems, $prob );
-
-			#store index of line for new $PROB
-			$control_stream_problem_start_index = $lstfile_pos-1; #must be -1 here to get new $PROB
-		} elsif ((/^\s*NM\-TRAN MESSAGES/) or (/^\s*WARNINGS AND ERRORS \(IF ANY\)/) or (/^\s*License /) ) {
-
-			$reading_prerun_messages = 1;
-			#if we get as far as to license, then nmtran / input file was ok, so discard messages so far, but keep reading
-			#so that we can store any new error messages
-			@prerun_messages=(); 
-			if ((not $done_reading_control_stream) and $found_control_stream) {
-				#add last control stream problem
-				$control_stream_problem_end_index = $lstfile_pos - 2; #must have -2 so do not get message line
-				my @control_lines = @lstfile[$control_stream_problem_start_index .. $control_stream_problem_end_index];
-
-				my $prob = model::problem -> new (
-					directory										=> $self->directory,
-					ignore_missing_files        => 1,
-					ignore_missing_output_files => 1,
-					prob_arr                    => \@control_lines);
-
-				push( @control_stream_problems, $prob );
-
-				$done_reading_control_stream = 1;
-				$reading_control_stream = 0;
-			}
-		} elsif (/^1NONLINEAR MIXED EFFECTS MODEL PROGRAM/) {
-			if (/VERSION 7/) {
-				$lst_version = 7;
-			} elsif (/VERSION VII /) {
-				$lst_version = 7;
-			} elsif (/VERSION 6/) {
-				$lst_version = 6;
-			} elsif (/VERSION VI /) {
-				$lst_version = 6;
-			} elsif (/VERSION V /) {
-				$lst_version = 5;
-			} else {
-				croak("could not read NONMEM version information from output file " . $self->filename);
-			}
-			$self->nonmem_version($lst_version);
-			$reading_prerun_messages = 0;
-			if ((not $done_reading_control_stream) and $found_control_stream) {
-		  		#add last control stream problem
-		  		$control_stream_problem_end_index = $lstfile_pos - 2; #have not verified that 2 is ok here, infer from analogy to above cases
-		  		my @control_lines = @lstfile[$control_stream_problem_start_index .. $control_stream_problem_end_index];
-
-		  		my $prob = model::problem -> new (
-		      		directory                   => $self->directory,
-					ignore_missing_files        => 1,
-					ignore_missing_output_files => 1,
-					prob_arr                    => \@control_lines);
-
-		  		push( @control_stream_problems, $prob );
-		  		$done_reading_control_stream = 1;
-		  		$reading_control_stream = 0;
-			}
+			last;
+		}elsif (/^1NONLINEAR MIXED EFFECTS MODEL PROGRAM/){
+			#if we end up here the lst-file is incomplete, was no end time printed
+			#by nmfe
+			$self->lst_interrupted(1);
+			last;
+		}
+	}
 
 
-		} elsif (/^\s*\#METH:/) {
-			$reading_prerun_messages = 0;
+	#then read NONMEM output
+	while ( $_ = $lstfile[ $lstfile_pos++ ] ) {
+		if (/^\s*\#METH:/) {
 			#NONMEM will print #METH also when simulation without estimation, do not count
 			# these occurences: #METH line followed by line with 1 and nothing more
 			unless ($lstfile[$lstfile_pos] =~ /^1\s*$/) {
@@ -2728,19 +2774,10 @@ sub _read_problems
 				#those numbers will be taken from lst-file instead, good enough since rare case
 				#if nm_major_version<=6 undefined arrays, okay
 
-				if (not defined $lst_version){
-					print "\nProblems reading the lst-file (NONMEM output file).".
-						" The line\n".
-						"1NONLINEAR MIXED EFFECTS MODEL PROGRAM VERSION...\n".
-						"was not found.\n";
-					$self -> parsed_successfully(0);
-					my $mes = $self->parsing_error_message();
-					$mes .= ' lst-file corrupted, could not find line 1NONLINEAR MIXED EFFECTS MODEL PROGRAM VERSION... ';
-					$self -> parsing_error_message( $mes );
-					return 0;
-				}
 
-				if (not defined $control_stream_problems[$problem_index]){
+				if (not (defined $self->lst_model and defined $self->lst_model->problems 
+						 and (scalar(@{$self->lst_model->problems}) >$problem_index)
+						 and defined $self->lst_model->problems->[$problem_index])){
 					print "\nCould not find a model file copy (control stream) at top of lst-file for problem number ".
 						($problem_index + 1) . " in lst-file\n".$self->full_name.
 						"\nThe nmfe script normally copies the model file but PsN cannot find it.\n";
@@ -2757,7 +2794,7 @@ sub _read_problems
 											 directory	    			=> $self -> directory(),
 											 n_previous_meth      => $n_previous_meth,
 											 table_number         => $tbln,
-											 input_problem        => $control_stream_problems[$problem_index]});
+											 input_problem        => $self->lst_model->problems->[$problem_index]});
 					$problem_index++;
 					my @problems = @{$self->problems};
 					
@@ -2773,43 +2810,15 @@ sub _read_problems
 				$n_previous_meth = $meth_counter;
 				
 			}  #end if defined problem start
-			$reading_prerun_messages = 0 if (/^ PROBLEM NO/); #otherwise EOF
 			$problem_start = $lstfile_pos;
-		} elsif (/^\s* AN ERROR WAS FOUND IN THE CONTROL STATEMENTS/){
-			@prerun_messages = ();
-			$reading_prerun_messages = 1;
-		}
-		if ($reading_prerun_messages and /[A-Za-z]/){
-			if (/s*Stop Time:/ or /^\s*\#CPUT:/){
-				$reading_prerun_messages = 0;
-			}else{
-				chomp;
-				push(@prerun_messages,$_);
-			}
 		}
 
 	}
 
-	$self->control_stream_problems(\@control_stream_problems);
 	unless( $success ) {
 		carp('Could not find a PROBLEM NO statement in "' .
 			 $self -> full_name . '"' . "\n" ) unless $self->ignore_missing_files;
-		if (not defined $lst_version){
-			my $error_type = 'an error before NONMEM could start';
-			foreach my $line (@prerun_messages){
-				if ($line =~ /(license|LICENSE|License)/){
-					$error_type = 'a NONMEM license error';
-					last;
-				}
-			}
-			if (scalar(@prerun_messages)>0){
-				$self->parsing_error( message => "It seems there was $error_type, messages are:\n".join("\n",@prerun_messages)."\n");
-			}else{
-				$self->parsing_error( message => "It seems NONMEM could not start, no information found in ".$self->full_name."\n");
-			}
-		}else{
-			$self->parsing_error( message => 'Could not find a PROBLEM NO statement in "' . $self->full_name . '"' . "\n" );
-		}
+		$self->parsing_error( message => 'Output file seems interrupted, could not find a PROBLEM NO statement in "' . $self->full_name . '"' . "\n" );
 		$self->parsed_successfully(0);
 		return 0;
 	}

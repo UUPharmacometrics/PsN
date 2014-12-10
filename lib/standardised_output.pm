@@ -315,14 +315,8 @@ sub _parse_block
                 $self->_add_error("Unable to read everything from outputfile, parser error message: " . $outobj->parsing_error_message);
             } else {
 
-                my $model = model->new(
-                    problems => $outobj->control_stream_problems,
-                    filename => 'dummy',
-                    is_dummy => 1,
-                    ignore_missing_data => 1,
-                    ignore_missing_files => 1,
-                    ignore_missing_output => 1
-                );
+                my $model = $outobj->lst_model;
+
                 $self->_model($model);
 
                 my $eta_shrinkage = $outobj->shrinkage_eta();

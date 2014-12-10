@@ -140,6 +140,8 @@ sub BUILD
 
 	if (defined $parm{'problems'}) {
 	    $self->problems($parm{'problems'});
+	} elsif (defined $parm{'model_lines'}) {
+		$self->_read_problems(model_lines => $parm{'model_lines'});
 	} else {
 		my $dir;
         my $filename;
@@ -4641,6 +4643,10 @@ sub set_all_omegas_to_zero
 sub _read_problems
 {
 	my $self = shift;
+	my %parm = validated_hash(\@_,
+		model_lines => { isa => 'ArrayRef', optional => 1 }
+	);
+	my $model_lines = $parm{'model_lines'};
 
 	# To read problems from a modelfile we need its full name
 	# (meaning filename and path). And we need an array for the
@@ -4654,11 +4660,13 @@ sub _read_problems
 	# Check if the file is missing, and if that is ok.
 	# TODO Check accessor what happens if the file is missing.
 
-	return if( not (-e $file) && $self->ignore_missing_files );
+	return if( not (-e $file) && $self->ignore_missing_files && (not defined $model_lines));
 
 	# Open the file, slurp it and close it
 
-	if( not (-e $file)) {
+	if (defined $model_lines){
+		@modelfile = @{$model_lines};
+	}elsif( not (-e $file)) {
 		croak("The model file " . $self->filename . " in ".
 			$self->directory()." does not exist.");
 	} else {
@@ -4671,11 +4679,11 @@ sub _read_problems
 
 		@modelfile = <FILE>;
 		close( FILE );
-		foreach (@modelfile){
-			#remove any windows line feed if we are running a dos format file on unix 
-			s/\r//g;
-		}
 
+	}
+	foreach (@modelfile){
+		#remove any windows line feed if we are running a dos format file on unix 
+		s/\r//g;
 	}
 
     # Parse the annotation block

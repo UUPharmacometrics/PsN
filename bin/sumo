@@ -355,12 +355,7 @@ my $form = '%.' . $options{'precision'} . 'g';
 
 
 		#Use accessors to retrieve data
-		my $model = model->new(problems => $outobj->control_stream_problems,
-							   filename => 'dummy',
-							   is_dummy => 1,
-							   ignore_missing_data => 1,
-							   ignore_missing_files =>1,
-							   ignore_missing_output =>1);
+		my $model = $outobj->lst_model;
 
 		my $eta_shrinkage = $outobj->shrinkage_eta();
 		my $eps_shrinkage = $outobj->shrinkage_eps();
@@ -909,7 +904,7 @@ my $form = '%.' . $options{'precision'} . 'g';
 							print "Objective function value: ", sprintf("%." . "$options{'precision'}" . "f", $ofv);
 							print "\n";
                             # try to print delta-ofv
-                            my $annotation = $outobj->annotation;
+                            my $annotation = $model->annotation;
                             if (defined $annotation) {
                                 if (defined $annotation->based_on) {
                                     my $base_name = 'run' . $annotation->based_on . '.lst';
