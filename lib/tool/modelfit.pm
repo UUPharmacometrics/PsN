@@ -3071,7 +3071,7 @@ if ( $self->clean >= 3 ) {
 
     if ($self->standardised_output) {
         if (not eval("require standardised_output;")) {
-            croak("Unable to create the standardised output: the option -standardised_output needs to have the XML::Writer module installed");
+            croak("Unable to create the standardised output: the option -standardised_output needs to have the XML::LibXML module installed");
         }
         my $so = standardised_output->new(lst_files => [ $final_lst ]);
         $so->parse; 

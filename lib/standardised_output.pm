@@ -7,7 +7,7 @@ use warnings;
 use Moose;
 use MooseX::Params::Validate;
 use include_modules;
-use XML::Writer;
+use XML::LibXML;
 use output;
 use data;
 use array;
@@ -17,12 +17,8 @@ has 'lst_files' => ( is => 'rw', isa => 'ArrayRef[Str]' );
 has 'bootstrap_results' => ( is => 'rw', isa => 'Maybe[Str]' );
 has 'so_filename' => ( is => 'rw', isa => 'Maybe[Str]' );
 has 'precision' => ( is => 'rw', isa => 'Int', default => 10 );
-has '_output' => ( is => 'rw', isa => 'output' );
-has '_model' => ( is => 'rw', isa => 'model' );
-has '_writer' => ( is => 'rw', isa => 'Ref' ); 
+has '_document' => ( is => 'rw', isa => 'Ref' );    # The XML document 
 has '_block_number' => ( is => 'rw', isa => 'Int', default => 1 );
-has '_warnings' => ( is => 'rw', isa => 'ArrayRef[Str]' ); 
-has '_errors' => ( is => 'rw', isa => 'ArrayRef[Str]' ); 
 
 sub BUILD
 {
@@ -30,9 +26,7 @@ sub BUILD
 
     my $so_filename;
 
-    if (defined $self->so_filename) {   # User specified filename
-        $so_filename = $self->so_filename;
-    } else {
+    if (not defined $self->so_filename) {   # User specified filename
         if (defined $self->lst_files->[0]) {   # Infer filename from name of first .lst file
             $so_filename = $self->lst_files->[0];
 
@@ -44,14 +38,11 @@ sub BUILD
         } else {
             $so_filename = 'bootstrap.SO.xml';
         }
+        $self->so_filename($so_filename);
     }
 
-    my $output_file = IO::File->new(">" . $so_filename);
-
-    my $writer = new XML::Writer(OUTPUT => $output_file, DATA_MODE => 1, DATA_INDENT => 2);
-    $writer->xmlDecl("UTF-8");
-
-    $self->_writer($writer);
+    my $doc = XML::LibXML::Document->new('1.0', 'utf-8');
+    $self->_document($doc);
 }
 
 # Plain XML helper methods
@@ -69,36 +60,41 @@ sub _get_printable_number
     return $str;
 }
 
-sub add_table
+sub create_table
 {
     my $self = shift;
     my %parm = validated_hash(\@_,
+        table_name => { isa => 'Str' },
         column_ids => { isa => 'ArrayRef' },
         column_types => { isa => 'ArrayRef' },
         column_valuetypes => { isa => 'ArrayRef' },
         values => { isa => 'ArrayRef' },
         row_major => { isa => 'Bool', default => 0 },
     );
+    my $table_name = $parm{'table_name'};
     my $column_ids = $parm{'column_ids'};
     my $column_types = $parm{'column_types'};
     my $column_valuetypes = $parm{'column_valuetypes'};
     my $values = $parm{'values'};
     my $row_major = $parm{'row_major'};
 
-    my $writer = $self->_writer;
+    my $doc = $self->_document;
 
-    $writer->startTag("ds:Definition");
+    my $table = $doc->createElement($table_name);
+
+    my $def = $doc->createElement("ds:Definition");
+    $table->appendChild($def);
     for (my $col = 0; $col < scalar(@$column_ids); $col++) {
-        $writer->emptyTag("ds:Column",
-            columnId => $column_ids->[$col],
-            columnType => $column_types->[$col],
-            valueType => $column_valuetypes->[$col],
-            columnNum => $col + 1,
-        );
+        my $column = $doc->createElement("ds:Column");
+        $column->setAttribute(columnId => $column_ids->[$col]);
+        $column->setAttribute(columnType => $column_types->[$col]);
+        $column->setAttribute(valueType => $column_valuetypes->[$col]);
+        $column->setAttribute(columnNum => $col + 1);
+        $def->appendChild($column);
     }
-    $writer->endTag("ds:Definition");
 
-    $writer->startTag("ds:Table");
+    my $tab = $doc->createElement("ds:Table");
+    $table->appendChild($tab);
     my $numcols = scalar(@$column_ids);
     my $numrows;
     if ($row_major) {
@@ -107,7 +103,8 @@ sub add_table
         $numrows = scalar(@{$values->[0]});
     }
     for (my $row = 0; $row < $numrows; $row++) {
-        $writer->startTag("ds:Row");
+        my $row_xml = $doc->createElement("ds:Row");
+        $tab->appendChild($row_xml);
         for (my $col = 0; $col < $numcols; $col++) {
             my $value_type = uc(substr($column_valuetypes->[$col], 0, 1)) . substr($column_valuetypes->[$col], 1);
             my $element;
@@ -116,57 +113,69 @@ sub add_table
             } else {
                 $element = $values->[$col]->[$row];
             }
+            my $value = $doc->createElement("ct:" . $value_type);
             if ($value_type eq 'String') {
-                $writer->dataElement("ct:" . $value_type, $element);
+                $value->appendTextNode($element);
             } else {
-                $writer->dataElement("ct:" . $value_type, $self->_get_printable_number($element));
+                $value->appendTextNode($self->_get_printable_number($element));
             }
+            $row_xml->appendChild($value);
         }
-        $writer->endTag("ds:Row");
     }
-    $writer->endTag("ds:Table");
+
+    return $table;
 }
 
-sub add_single_row_table
+sub create_single_row_table
 {
     my $self = shift;
     my %parm = validated_hash(\@_,
+        table_name => { isa => 'Str' },
         labels => { isa => 'ArrayRef' },
         values => { isa => 'ArrayRef' },
     );
+    my $table_name = $parm{'table_name'};
     my @labels = @{$parm{'labels'}};
     my @values = @{$parm{'values'}};
 
-    $self->add_table(
+    my $table = $self->create_table(
+        table_name => $table_name,
         column_ids => \@labels,
         column_types => [ ("undefined") x scalar(@labels) ],
         column_valuetypes => [ ("real") x scalar(@labels) ],
         values => [ \@values ],
         row_major => 1,
     );
+
+    return $table;
 }
 
-sub add_parameter_table
+sub create_parameter_table
 {
     my $self = shift;
     my %parm = validated_hash(\@_,
+        table_name => { isa => 'Str' },
         name => { isa => 'Str' },
         labels => { isa => 'ArrayRef' },
         values => { isa => 'ArrayRef' },
     );
+    my $table_name = $parm{'table_name'};
     my $name = $parm{'name'};
     my $labels = $parm{'labels'};
     my $values = $parm{'values'};
 
-    $self->add_table(
+    my $table = $self->create_table(
+        table_name => $table_name,
         column_ids => [ "parameter", $name ],
         column_types => [ ("undefined") x 2 ],
         column_valuetypes => [ "string", "real" ],
         values => [ $labels, $values ], 
     );
+
+    return $table;
 }
 
-sub add_matrix
+sub create_matrix
 {
     my $self = shift;
     my %parm = validated_hash(\@_,
@@ -178,146 +187,162 @@ sub add_matrix
     my $colnames = $parm{'colnames'};
     my $matrix = $parm{'matrix'};
 
-    my $writer = $self->_writer;
+    my $doc = $self->_document;
 
-    $writer->startTag("ct:Matrix", matrixType => "Any");
+    my $matrix_xml = $doc->createElement("ct:Matrix");
+    $matrix_xml->setAttribute(matrixType => "Any");
 
-    $writer->startTag("ct:RowNames");
+    my $rownames_xml = $doc->createElement("ct:RowNames");
+    $matrix_xml->appendChild($rownames_xml);
     foreach my $name (@$rownames) {
-        $writer->startTag("ct:String");
-        $writer->characters($name);
-        $writer->endTag("ct:String");
+        my $string = $doc->createElement("ct:String");
+        $string->appendTextNode($name);
+        $rownames_xml->appendChild($string);
     }
-    $writer->endTag("ct:RowNames");
 
-    $writer->startTag("ct:ColumnNames");
+    my $colnames_xml = $doc->createElement("ct:ColumnNames");
+    $matrix_xml->appendChild($colnames_xml);
     foreach my $name (@$colnames) {
-        $writer->startTag("ct:String");
-        $writer->characters($name);
-        $writer->endTag("ct:String");
+        my $string = $doc->createElement("ct:String");
+        $string->appendTextNode($name);
+        $colnames_xml->appendChild($string);
     }
-    $writer->endTag("ct:ColumnNames");
 
     for my $row (@$matrix) {
-        $writer->startTag("ct:MatrixRow");
+        my $matrix_row = $doc->createElement("ct:MatrixRow");
+        $matrix_xml->appendChild($matrix_row);
         for my $element (@$row) {
-            $writer->dataElement("ct:Real", $self->_get_printable_number($element));
+            my $real = $doc->createElement("ct:Real");
+            $real->appendTextNode($self->_get_printable_number($element));
+            $matrix_row->appendChild($real);
         }
-        $writer->endTag("ct:MatrixRow");
     }
-    $writer->endTag("ct:Matrix");
+
+    return $matrix_xml;
+}
+
+sub find_or_create_node
+{
+    my $self = shift;
+    my %parm = validated_hash(\@_,
+        root_node => { isa => 'Ref' },
+        node_name => { isa => 'Str' },      # Can be a one level XPath
+    );
+    my $root_node = $parm{'root_node'};
+    my $node_name = $parm{'node_name'};
+
+    my $doc = $self->_document;
+    my $node;
+    if (not $root_node->exists($node_name)) {
+        $node = $doc->createElement($node_name);
+        $root_node->appendChild($node);
+    } else {
+        ($node) = $root_node->findnodes($node_name);
+    }
+
+    return $node;
 }
 
 # End of XML helper methods
 
-sub _add_warning
+sub create_block
 {
+    # Create a new SOBlock and set the id with a number
     my $self = shift;
-    my $warning = shift;
-    $self->_warnings([]) unless defined $self->_warnings;
-    push @{$self->_warnings}, $warning;
-}
+    my $doc = $self->_document;
 
-sub _add_error
-{
-    my $self = shift;
-    my $error = shift;
-    $self->_errors([]) unless defined $self->_errors;
-    push @{$self->_errors}, $error;
-}
-
-sub _start_block
-{
-    # Start a new SOBlock and set the id with a number
-    my $self = shift;
-    my $writer = $self->_writer;
-
-    $writer->startTag("SOBlock", blkId => "SO" . $self->_block_number);
+    my $block = $doc->createElement("SOBlock");
+    $block->setAttribute(blkId => "SO" . $self->_block_number);
     $self->_block_number($self->_block_number + 1);
-}
 
-sub _end_block
-{
-    # End an SOBlock
-    my $self = shift;
-    my $writer = $self->_writer;
-    $writer->endTag("SOBlock");
+    return $block;
 }
 
 sub parse
 {
     my $self = shift;
 
-    my $writer = $self->_writer;
+    my $doc = $self->_document;
 
-    $writer->startTag("SO",
-        'xmlns' => "http://www.pharmml.org/2013/03/StandardisedOutput",
-        'xmlns:xsi' => "http://www.w3.org/2001/XMLSchema-instance",
-        'xmlns:ds' => "http://www.pharmml.org/2013/08/Dataset",
-        'xmlns:ct' => "http://www.pharmml.org/2013/03/CommonTypes",
-        'xsi:schemaLocation' => "http://www.pharmml.org/2013/03/StandardisedOutput",
-        'implementedBy' => "MJS",
-        'writtenVersion' => "0.1",
-        'id' => "i1",
-    );
+    my $SO = $doc->createElement("SO");
+    $SO->setAttribute('xmlns' => "http://www.pharmml.org/2013/03/StandardisedOutput");
+    $SO->setAttribute('xmlns:xsi' => "http://www.w3.org/2001/XMLSchema-instance");
+    $SO->setAttribute('xmlns:ds' => "http://www.pharmml.org/2013/08/Dataset");
+    $SO->setAttribute('xmlns:ct' => "http://www.pharmml.org/2013/03/CommonTypes");
+    $SO->setAttribute('xsi:schemaLocation' => "http://www.pharmml.org/2013/03/StandardisedOutput");
+    $SO->setAttribute('implementedBy' => "MJS");
+    $SO->setAttribute('writtenVersion' => "0.1");
+    $SO->setAttribute('id' => "i1");
 
-    if (scalar(@{$self->lst_files}) > 0) {
-        my $first = 1;
-        foreach my $file (@{$self->lst_files}) {
-            if ($first and defined $self->bootstrap_results) {      # Include bootstrap results in same block as first lst file
-                $self->_parse_block(lst_file => $file, bootstrap_results => $self->bootstrap_results);
-                $first = 0;
-            } else {
-                $self->_parse_block(lst_file => $file);
-            }
-        }
-    } else {
-        $self->_parse_block(bootstrap_results => $self->bootstrap_results);
+    # Handle lst files
+    foreach my $file (@{$self->lst_files}) {
+        my $block = $self->_parse_lst_file(lst_file => $file);
+        $SO->appendChild($block);
     }
 
-    $writer->endTag("SO");
-    $writer->end();
+    # Handle bootstrap_results
+    if (defined $self->bootstrap_results) {
+        # Find or create xml structure
+        my $block = $self->find_or_create_node(root_node => $SO, node_name => "SOBlock[\@blkId='SO1']");
+        my $estimation = $self->find_or_create_node(root_node => $block, node_name => "Estimation");
+
+        # Create Bootstrap element
+        my $bootstrap_error;
+        if (-e $self->bootstrap_results) {
+            my $ppi = $self->find_or_create_node(root_node => $estimation, node_name => "PrecisionPopulationEstimates");
+            my $bootstrap = $self->_create_bootstrap();
+            $ppi->appendChild($bootstrap);
+        } else {
+            $bootstrap_error = "Bootstrap results file \"" . $self->bootstrap_results . "\" does not exist";
+        }
+        
+        # Add target tool messages
+        if (not $estimation->exists("TargetToolMessages")) {
+            my $errors;
+            if (defined $bootstrap_error) {
+                $errors = [ $bootstrap_error ];
+            }
+            _create_target_tool_messages(errors => $errors, elapsed_time => 0);
+        } else {
+            if (defined $bootstrap_error) {
+                (my $ttm) = $estimation->findnodes("TargetToolMessages");
+                my $errors = $self->find_or_create_node(root_node => $ttm, node_name => "Errors");
+                $errors->appendTextNode("\n$bootstrap_error");
+            }
+        }
+    }
+
+    $doc->setDocumentElement($SO);
+    $doc->toFile($self->so_filename, 1);
 }
 
-sub _parse_block
+sub _parse_lst_file
 {
     # Parse one lst-file and put it into an SOBlock
     my $self = shift;
     my %parm = validated_hash(\@_,
-        lst_file => { isa => 'Str', optional => 1 },
-        bootstrap_results => { isa => 'Str', optional => 1 },
+        lst_file => { isa => 'Str' },
     );
     my $lst_file = $parm{'lst_file'};
-    my $bootstrap_results = $parm{'bootstrap_results'};
 
     my $elapsed_time = 0;
-    my $did_bootstrap = 0;
-    my $writer = $self->_writer;
+    my @errors;
+    my @warnings;
+    my $doc = $self->_document;
 
-    if (defined $bootstrap_results) {
-        if (not -e $bootstrap_results) {
-            $self->_add_error("Bootstrap results file \"" . $self->bootstrap_results . "\" does not exist");
-            $bootstrap_results = undef;
-        }
-    }
+    my $block = $self->create_block();
+    my $estimation = $doc->createElement("Estimation");
+    $block->appendChild($estimation);
 
-    $self->_start_block();
-    $writer->startTag("Estimation");
-
-    if (defined $lst_file) {
-        # Check that the output file exist before trying to read it.
-        if (not -e $lst_file) {
-            $self->_add_error("The file: \"" . $lst_file . "\" does not exist");
+    # Check that the output file exist before trying to read it.
+    if (not -e $lst_file) {
+        push @errors, "The file: \"" . $lst_file . "\" does not exist";
+    } else {
+        my $outobj = output->new(filename => $lst_file);
+        if (not $outobj->parsed_successfully) {
+            push @errors, "Unable to read everything from outputfile, parser error message: " . $outobj->parsing_error_message;
         } else {
-            my $outobj = output->new(filename => $lst_file);
-            $self->_output($outobj);
-            if (not $self->_output->parsed_successfully) {
-                $self->_add_error("Unable to read everything from outputfile, parser error message: " . $outobj->parsing_error_message);
-            } else {
-
                 my $model = $outobj->lst_model;
-
-                $self->_model($model);
 
                 my $eta_shrinkage = $outobj->shrinkage_eta();
                 my $eps_shrinkage = $outobj->shrinkage_eps();
@@ -387,113 +412,120 @@ sub _parse_block
                         $have_ses = 1;
                     }
                 }
-
-                my @all_labels = (@thnam);
-                my @est_values = (@thetas);
-
-                my @se_values = ();
-                my @rel_se = ();
-
-                @se_values = (@sethet) if $have_ses;
-
-                for (my $i = 0; $i < scalar(@omnam); $i++){
-                    unless ($omegasame[$i]) {
-                        push(@all_labels,$omnam[$i]);
-                        push(@est_values,$omegas[$i]);
-                        push(@se_values,$seomeg[$i]) if $have_ses;
-                    }
-                }
-                for (my $i = 0; $i < scalar(@signam); $i++){
-                    unless ($sigmasame[$i]) {
-                        push(@all_labels,$signam[$i]);
-                        push(@est_values,$sigmas[$i]);
-                        push(@se_values,$sesigm[$i]) if $have_ses;
-                    }
-                }
-
-                #Calculate relative standard errors, only if have se values
-                for (my $i = 0; $i < scalar(@se_values); $i++) {
-                    if ($est_values[$i] == 0) {
-                        push @rel_se, undef;
-                    } else {
-                        push @rel_se, $se_values[$i] / $est_values[$i];
-                    }
-                }
-
-                my $minimization_message = $outobj -> get_single_value(attribute => 'minimization_message',
-                    problem_index => $problems,
-                    subproblem_index => $sub_problems);
-
-                my $undefs = grep { not defined $_ } @est_values;
-                if ($undefs != scalar(@est_values)) {   # Check that not all in list are undef. Should possibly have been done earlier
-                    $self->_add_population_estimates(labels => \@all_labels, values => \@est_values);
-                }
-
-                if (scalar(@se_values) > 0) {
-                    my $correlation_matrix = linear_algebra::triangular_symmetric_to_full($outobj->correlation_matrix->[$problems]->[$sub_problems]);
-                    my $covariance_matrix = linear_algebra::triangular_symmetric_to_full($outobj->covariance_matrix->[$problems]->[$sub_problems]);
-                    $self->_add_precision_population_estimates(
-                        labels => \@all_labels,
-                        standard_errors => \@se_values,
-                        relative_standard_errors => \@rel_se,
-                        correlation_matrix => $correlation_matrix,
-                        covariance_matrix => $covariance_matrix,
-                        bootstrap_results => $bootstrap_results,
-                    );
-                    $did_bootstrap = 1;
-                }
-
-                # Loop through the different tables
-                my ($table_name_ref, $dummy) = $self->_model->problems->[$problems]->_option_val_pos(record_name => 'table', name => 'FILE');
-                if (defined $table_name_ref and scalar @{$table_name_ref} >= 0) {
-                    foreach my $table (@$table_name_ref) {
-                        if ($table =~ /^(sdtab|patab)/ and not -e $table) {
-                            $self->_add_warning("Could not find table $table. Results from this table could not be added.");
-                            next;
-                        }
-                        if ($table =~ /^sdtab/) {
-                            my $sdtab = data->new(
-                                directory => $self->_model->directory,
-                                filename => $table,
-                                ignoresign => '@',
-                                parse_header => 1,
-                            );
-                            $self->_add_predictions(sdtab => $sdtab);
-                            $self->_add_residuals(sdtab => $sdtab);
-                        }
-                        if ($table =~ /^patab/) {
-                            my $patab = data->new(
-                                directory => $self->_model->directory,
-                                filename => $table,
-                                ignoresign => '@',
-                                parse_header => 1,
-                            );
-                            $self->_add_individual_estimates(patab => $patab);
-                        }
-                    }
-                }
-
-                $self->_add_likelihood(ofv => $ofv);
-
-                if (not defined $ofv) {
-                    $self->_add_error(join('', @{$minimization_message}));
-                }
-                $self->_output->runtime =~ m/(\d+):(\d+):(\d+)/;
-                $elapsed_time = $1 * 3600 + $2 * 60 + $3;
             }
+
+            my @all_labels = (@thnam);
+            my @est_values = (@thetas);
+
+            my @se_values = ();
+            my @rel_se = ();
+
+            @se_values = (@sethet) if $have_ses;
+
+            for (my $i = 0; $i < scalar(@omnam); $i++){
+                unless ($omegasame[$i]) {
+                    push(@all_labels,$omnam[$i]);
+                    push(@est_values,$omegas[$i]);
+                    push(@se_values,$seomeg[$i]) if $have_ses;
+                }
+            }
+            for (my $i = 0; $i < scalar(@signam); $i++){
+                unless ($sigmasame[$i]) {
+                    push(@all_labels,$signam[$i]);
+                    push(@est_values,$sigmas[$i]);
+                    push(@se_values,$sesigm[$i]) if $have_ses;
+                }
+            }
+
+            #Calculate relative standard errors, only if have se values
+            for (my $i = 0; $i < scalar(@se_values); $i++) {
+                if ($est_values[$i] == 0) {
+                    push @rel_se, undef;
+                } else {
+                    push @rel_se, $se_values[$i] / $est_values[$i];
+                }
+            }
+
+            my $minimization_message = $outobj -> get_single_value(attribute => 'minimization_message',
+                problem_index => $problems,
+                subproblem_index => $sub_problems);
+
+            my $undefs = grep { not defined $_ } @est_values;
+            if ($undefs != scalar(@est_values)) {   # Check that not all in list are undef. Should possibly have been done earlier
+                my $pe = $self->_create_population_estimates(labels => \@all_labels, values => \@est_values);
+                $estimation->appendChild($pe);
+            }
+
+            if (scalar(@se_values) > 0) {
+                my $correlation_matrix = linear_algebra::triangular_symmetric_to_full($outobj->correlation_matrix->[$problems]->[$sub_problems]);
+                my $covariance_matrix = linear_algebra::triangular_symmetric_to_full($outobj->covariance_matrix->[$problems]->[$sub_problems]);
+                my $ppe = $self->_create_precision_population_estimates(
+                    labels => \@all_labels,
+                    standard_errors => \@se_values,
+                    relative_standard_errors => \@rel_se,
+                    correlation_matrix => $correlation_matrix,
+                    covariance_matrix => $covariance_matrix,
+                );
+                $estimation->appendChild($ppe);
+            }
+
+            # Loop through the different tables
+            my ($table_name_ref, $dummy) = $model->problems->[$problems]->_option_val_pos(record_name => 'table', name => 'FILE');
+            if (defined $table_name_ref and scalar @{$table_name_ref} >= 0) {
+                foreach my $table (@$table_name_ref) {
+                    if ($table =~ /^(sdtab|patab)/ and not -e $table) {
+                        push @warnings, "Could not find table $table. Results from this table could not be added.";
+                        next;
+                    }
+                    if ($table =~ /^sdtab/) {
+                        my $sdtab = data->new(
+                            directory => $model->directory,
+                            filename => $table,
+                            ignoresign => '@',
+                            parse_header => 1,
+                        );
+                        my $predictions = $self->_create_predictions(sdtab => $sdtab);
+                        if (defined $predictions) {
+                            $estimation->appendChild($predictions);
+                        }
+                        my $residuals = $self->_create_residuals(sdtab => $sdtab);
+                        if (defined $residuals) {
+                            $estimation->appendChild($residuals);
+                        }
+                    }
+                    if ($table =~ /^patab/) {
+                        my $patab = data->new(
+                            directory => $model->directory,
+                            filename => $table,
+                            ignoresign => '@',
+                            parse_header => 1,
+                        );
+                        my $individual_estimates = $self->_create_individual_estimates(patab => $patab, model => $model);
+                        if (defined $individual_estimates) {
+                            $estimation->appendChild($individual_estimates);
+                        }
+                    }
+                }
+            }
+
+            my $likelihood = $self->_create_likelihood(ofv => $ofv);
+            if (defined $likelihood) {
+                $estimation->appendChild($likelihood);
+            }
+
+            if (not defined $ofv) {
+                push @errors, join('', @{$minimization_message});
+            }
+
+            $outobj->runtime =~ m/(\d+):(\d+):(\d+)/;
+            $elapsed_time = $1 * 3600 + $2 * 60 + $3;
         }
     }
 
-    if (not $did_bootstrap and defined $bootstrap_results) {
-        $self->_add_precision_population_estimates(
-            bootstrap_results => $bootstrap_results,
-        );
-    }
+    my $target_tool_messages = $self->_create_target_tool_messages(errors => \@errors, warnings => \@warnings, elapsed_time => $elapsed_time);
+    $estimation->appendChild($target_tool_messages);
 
-    $self->_add_target_tool_messages(elapsed_time => $elapsed_time);
-
-    $writer->endTag("Estimation");
-    $self->_end_block;
+    return $block;
 }
 
 sub _get_eta_names
@@ -502,13 +534,17 @@ sub _get_eta_names
     # ETA_CL = ETA(1)
 
     my $self = shift;
-    my @names;
+    my %parm = validated_hash(\@_,
+        model => { isa => 'model' },
+    );
+    my $model = $parm{'model'};
 
+    my @names;
    	my @code;
-	if ($self->_model->has_code(record => 'pk')) {
-		@code = @{$self->_model->get_code(record => 'pk')};
+	if ($model->has_code(record => 'pk')) {
+		@code = @{$model->get_code(record => 'pk')};
 	} else {
-		@code = @{$self->_model->get_code(record => 'pred')};
+		@code = @{$model->get_code(record => 'pred')};
 	}
 
     foreach my $line (@code) {
@@ -520,7 +556,7 @@ sub _get_eta_names
     return \@names;
 }
 
-sub _add_population_estimates
+sub _create_population_estimates
 {
     my $self = shift;
     my %parm = validated_hash(\@_,
@@ -530,18 +566,17 @@ sub _add_population_estimates
     my @labels = @{$parm{'labels'}};
     my @values = @{$parm{'values'}};
 
-    my $writer = $self->_writer;
+    my $doc = $self->_document;
 
-    $writer->startTag("PopulationEstimates");
-    $writer->startTag("MLE");
+    my $pe = $doc->createElement("PopulationEstimates");
 
-    $self->add_single_row_table(labels => \@labels, values => \@values);
+    my $table = $self->create_single_row_table(table_name => 'MLE', labels => \@labels, values => \@values);
+    $pe->appendChild($table);
 
-    $writer->endTag("MLE");
-    $writer->endTag("PopulationEstimates");
+    return $pe;
 }
 
-sub _add_precision_population_estimates
+sub _create_precision_population_estimates
 {
     my $self = shift;
     my %parm = validated_hash(\@_,
@@ -550,55 +585,48 @@ sub _add_precision_population_estimates
         relative_standard_errors => { isa => 'ArrayRef', optional => 1 },
         correlation_matrix => { isa => 'ArrayRef[ArrayRef]', optional => 1 },
         covariance_matrix => { isa => 'ArrayRef[ArrayRef]', optional => 1 },
-        bootstrap_results => { isa => 'Maybe[Str]', optional => 1 },
     );
     my @labels = defined $parm{'labels'} ? @{$parm{'labels'}} : ();
     my @standard_errors = defined $parm{'standard_errors'} ? @{$parm{'standard_errors'}}: ();
     my @relative_standard_errors = defined $parm{'relative_standard_errors'} ? @{$parm{'relative_standard_errors'}} : ();
     my $correlation_matrix = $parm{'correlation_matrix'};
     my $covariance_matrix = $parm{'covariance_matrix'};
-    my $bootstrap_results = $parm{'bootstrap_results'};
 
-    my $writer = $self->_writer;
+    my $doc = $self->_document;
 
-    $writer->startTag("PrecisionPopulationEstimates");
+    my $ppe = $doc->createElement("PrecisionPopulationEstimates");
 
     if (scalar(@labels) > 0) {
-        $writer->startTag("MLE");
-        $writer->startTag("StandardError");
-        $self->add_parameter_table(name => 'SE', labels => \@labels, values => \@standard_errors);
-        $writer->endTag("StandardError");
+        my $mle = $doc->createElement("MLE");
+        $ppe->appendChild($mle);
+        my $table = $self->create_parameter_table(table_name => 'StandardError', name => 'SE', labels => \@labels, values => \@standard_errors);
+        $mle->appendChild($table);
 
-        $writer->startTag("RelativeStandardError");
-        $self->add_parameter_table(name => 'RSE', labels => \@labels, values => \@relative_standard_errors);
-        $writer->endTag("RelativeStandardError");
+        my $table = $self->create_parameter_table(table_name => 'RelativeStandardError', name => 'RSE', labels => \@labels,
+            values => \@relative_standard_errors);
+        $mle->appendChild($table);
 
-        $writer->startTag("CorrelationMatrix");
-        $self->add_matrix(rownames => \@labels, colnames => \@labels, matrix => $correlation_matrix);
-        $writer->endTag("CorrelationMatrix");
+        my $cor = $doc->createElement("CorrelationMatrix");
+        $mle->appendChild($cor);
+        my $matrix = $self->create_matrix(rownames => \@labels, colnames => \@labels, matrix => $correlation_matrix);
+        $cor->appendChild($matrix);
 
-        $writer->startTag("CovarianceMatrix");
-        $self->add_matrix(rownames => \@labels, colnames => \@labels, matrix => $covariance_matrix);
-        $writer->endTag("CovarianceMatrix");
-
-        $writer->endTag("MLE");
+        my $cov = $doc->createElement("CovarianceMatrix");
+        $mle->appendChild($cov);
+        my $matrix = $self->create_matrix(rownames => \@labels, colnames => \@labels, matrix => $covariance_matrix);
+        $cov->appendChild($matrix);
     }
 
-    if (defined $bootstrap_results) {
-        $self->_add_bootstrap();
-    }
-
-    $writer->endTag("PrecisionPopulationEstimates");
+    return $ppe;
 }
 
-sub _add_bootstrap
+sub _create_bootstrap
 {
     my $self = shift;
 
-    my $writer = $self->_writer;
+    my $doc = $self->_document;
 
-    $writer->startTag("Bootstrap");
-    $writer->startTag("PercentilesCI");
+    my $bootstrap = $doc->createElement("Bootstrap");
 
     open my $fh, '<', $self->bootstrap_results;
 
@@ -654,44 +682,55 @@ sub _add_bootstrap
     }
     unshift @percentiles, 'parameter';
 
-    $self->add_table(
+    my $table = $self->create_table(
+        table_name => 'PercentilesCI',
         column_ids => \@percentiles,
         column_types => [ ('undefined') x scalar(@percentiles) ],
         column_valuetypes => [ 'string', ('real') x (scalar(@percentiles) - 1) ],
         values => \@column,
         row_major => 1,
     );
+    $bootstrap->appendChild($table);
 
-    $writer->endTag("PercentilesCI");    
-    $writer->endTag("Bootstrap");
+    return $bootstrap;
 }
 
-sub _add_target_tool_messages
+sub _create_target_tool_messages
 {
     my $self = shift;
     my %parm = validated_hash(\@_,
+        errors => { isa => 'ArrayRef', optional => 1 },
+        warnings => { isa => 'ArrayRef', optional => 1 },
         elapsed_time => { isa => 'Num' },
     );
+    my @errors = defined $parm{'errors'} ? @{$parm{'errors'}} : ();
+    my @warnings = defined $parm{'warnings'} ? @{$parm{'warnings'}} : ();
     my $elapsed_time = $parm{'elapsed_time'};
 
-    my $writer = $self->_writer;
+    my $doc = $self->_document;
 
-    $writer->startTag("TargetToolMessages");
+    my $target_tool_messages = $doc->createElement("TargetToolMessages");
 
-    if (defined $self->_errors) {
-        $writer->dataElement("Errors", join("\n", @{$self->_errors}));
+    if (scalar(@errors) > 0) {
+        my $errors_xml = $doc->createElement("Errors");
+        $errors_xml->appendTextNode(join("\n", @errors));
+        $target_tool_messages->appendChild($errors_xml);
     }
-    if (defined $self->_warnings) {
-        $writer->dataElement("Warnings", join("\n", @{$self->_warnings}));
+    if (scalar(@warnings) > 0) {
+        my $warnings_xml = $doc->createElement("Warnings");
+        $warnings_xml->appendTextNode(join("\n", @warnings));
+        $target_tool_messages->appendChild($warnings_xml);
     }
     if (defined $elapsed_time) {
-        $writer->dataElement("ElapsedTime", $elapsed_time);
+        my $elapsed_time_xml = $doc->createElement("ElapsedTime");
+        $elapsed_time_xml->appendTextNode($elapsed_time);
+        $target_tool_messages->appendChild($elapsed_time_xml);
     }
 
-    $writer->endTag("TargetToolMessages");
+    return $target_tool_messages
 }
 
-sub _add_likelihood
+sub _create_likelihood
 {
     my $self = shift;
     my %parm = validated_hash(\@_,
@@ -699,16 +738,20 @@ sub _add_likelihood
     );
     my $ofv = $parm{'ofv'};
 
-    my $writer = $self->_writer;
+    my $doc = $self->_document;
+    my $likelihood;
 
     if (defined $ofv) {
-        $writer->startTag("Likelihood");
-        $writer->dataElement("Deviance", $ofv);
-        $writer->endTag("Likelihood");
+        $likelihood = $doc->createElement("Likelihood");
+        my $deviance = $doc->createElement("Deviance");
+        $deviance->appendTextNode($ofv);
+        $likelihood->appendChild($deviance);
     }
+
+    return $likelihood;
 }
 
-sub _add_predictions
+sub _create_predictions
 {
      my $self = shift;
      my %parm = validated_hash(\@_,
@@ -716,31 +759,30 @@ sub _add_predictions
     );
     my $sdtab = $parm{'sdtab'};
 
-    my $writer = $self->_writer;
-
     if (not (exists $sdtab->column_head_indices->{'ID'} and exists $sdtab->column_head_indices->{'TIME'}
         and exists $sdtab->column_head_indices->{'PRED'} and exists $sdtab->column_head_indices->{'IPRED'})) {
         return;
     }
+
+    my $doc = $self->_document;
 
     my $id = $sdtab->column_to_array(column => "ID");
     my $time = $sdtab->column_to_array(column => "TIME");
     my $pred = $sdtab->column_to_array(column => "PRED");
     my $ipred = $sdtab->column_to_array(column => "IPRED");
 
-    $writer->startTag("Predictions");
-
-    $self->add_table(
+    my $predictions = $self->create_table(
+        table_name => "Predictions",
         column_ids => [ "ID", "TIME", "PRED", "IPRED" ],
         column_types => [ "id", "undefined", "undefined", "undefined" ],
         column_valuetypes =>  [ "id", "real", "real", "real" ],
         values => [ $id, $time, $pred, $ipred ],
     );
 
-    $writer->endTag("Predictions");
+    return $predictions;
 }
 
-sub _add_residuals
+sub _create_residuals
 {
     my $self = shift;
     my %parm = validated_hash(\@_,
@@ -748,66 +790,66 @@ sub _add_residuals
     );
     my $sdtab = $parm{'sdtab'};
 
-    my $writer = $self->_writer;
-
     if (not (exists $sdtab->column_head_indices->{'ID'} and exists $sdtab->column_head_indices->{'TIME'})) {
         return;
     }
 
+    my $doc = $self->_document;
+
     my $id = $sdtab->column_to_array(column => "ID");
     my $time = $sdtab->column_to_array(column => "TIME");
 
-    $writer->startTag("Residuals");
+    my $residuals = $doc->createElement("Residuals");
 
     if (exists $sdtab->column_head_indices->{'RES'}) {
         my $res = $sdtab->column_to_array(column => "RES");
-        $writer->startTag("RES");
-        $self->add_table(
+        my $table = $self->create_table(
+            table_name => "RES",
             column_ids => [ "ID", "TIME", "RES" ],
             column_types => [ "id", "undefined", "undefined" ],
             column_valuetypes =>  [ "id", "real", "real" ],
             values => [ $id, $time, $res ],
         );
-        $writer->endTag("RES");
+        $residuals->appendChild($table);
     }
 
     if (exists $sdtab->column_head_indices->{'IRES'}) {
         my $ires = $sdtab->column_to_array(column => "IRES");
-        $writer->startTag("IRES");
-        $self->add_table(
+        my $table = $self->create_table(
+            table_name => "IRES",
             column_ids => [ "ID", "TIME", "IRES" ],
             column_types => [ "id", "undefined", "undefined" ],
             column_valuetypes =>  [ "id", "real", "real" ],
             values => [ $id, $time, $ires ],
         );
-        $writer->endTag("IRES");
+        $residuals->appendChild($table);
     }
 
     if (exists $sdtab->column_head_indices->{'WRES'}) {
         my $wres = $sdtab->column_to_array(column => "WRES");
-        $writer->startTag("WRES");
-        $self->add_table(
+        my $table = $self->create_table(
+            table_name => "WRES",
             column_ids => [ "ID", "TIME", "WRES" ],
             column_types => [ "id", "undefined", "undefined" ],
             column_valuetypes =>  [ "id", "real", "real" ],
             values => [ $id, $time, $wres ],
         );
-        $writer->endTag("WRES");
+        $residuals->appendChild($table);
     }
 
     if (exists $sdtab->column_head_indices->{'IWRES'}) {
         my $iwres = $sdtab->column_to_array(column => "IWRES");
-        $writer->startTag("IWRES");
-        $self->add_table(
+        my $table = $self->create_table(
+            table_name => "IWRES",
             column_ids => [ "ID", "TIME", "IWRES" ],
             column_types => [ "id", "undefined", "undefined" ],
             column_valuetypes =>  [ "id", "real", "real" ],
             values => [ $id, $time, $iwres ],
         );
-        $writer->endTag("IWRES");
+        $residuals->appendChild($table);
     }
 
-    $writer->endTag("Residuals");
+    return $residuals;
 }
 
 sub _individual_statistics
@@ -844,19 +886,22 @@ sub _individual_statistics
     return (\@medians, \@means);
 }
 
-sub _add_individual_estimates
+sub _create_individual_estimates
 {
     my $self = shift;
     my %parm = validated_hash(\@_,
         patab => { isa => 'data' },
+        model => { isa => 'model' },
     );
     my $patab = $parm{'patab'};
+    my $model = $parm{'model'};
 
-    my $writer = $self->_writer;
-    my $eta_names = $self->_get_eta_names;
+    my $eta_names = $self->_get_eta_names(model => $model);
     if (not exists $patab->column_head_indices->{'ID'}) {
         return;
     }
+
+    my $doc = $self->_document;
     my $id = $patab->column_to_array(column => "ID");
 
     my @labels = ();
@@ -876,28 +921,26 @@ sub _add_individual_estimates
     }
     my $unique_ids = array::unique($id);
 
-    $writer->startTag("IndividualEstimates");
-    $writer->startTag("Estimates");
-
-    $writer->startTag("Median");
-    $self->add_table(
+    my $individual_estimates = $doc->createElement("IndividualEstimates");
+    my $estimates = $doc->createElement("Estimates");
+    $individual_estimates->appendChild($estimates);
+    my $table = $self->create_table(
+        table_name => "Median",
         column_ids => [ "ID", @labels ],
         column_types => [ "id", ("undefined") x scalar(@labels) ],
         column_valuetypes => [ "id", ("real") x scalar(@labels) ],
         values => [ $unique_ids, @medians ],
     );
-    $writer->endTag("Median");
+    $estimates->appendChild($table);
 
-    $writer->startTag("Mean");
-    $self->add_table(
+    my $table = $self->create_table(
+        table_name => "Mean",
         column_ids => [ "ID", @labels ],
         column_types => [ "id", ("undefined") x scalar(@labels) ],
         column_valuetypes => [ "id", ("real") x scalar(@labels) ],
         values => [ $unique_ids, @means ],
     );
-    $writer->endTag("Mean");
-
-    $writer->endTag("Estimates");
+    $estimates->appendChild($table);
 
     if (scalar(@$eta_names) > 0) {
         # Filter out etas that does not exist in the patab
@@ -918,29 +961,29 @@ sub _add_individual_estimates
             push @eta_means, $mean;
         }
 
-        $writer->startTag("RandomEffects");
+        my $random_effects = $doc->createElement("RandomEffects");
+        $individual_estimates->appendChild($random_effects);
 
-        $writer->startTag("EffectMedian");
-        $self->add_table(
+        my $table = $self->create_table(
+            table_name => "EffectMedian",
             column_ids => [ "ID", @$eta_names ],
             column_types => [ "id", ("undefined") x scalar(@$eta_names) ],
             column_valuetypes => [ "id", ("real") x scalar(@$eta_names) ],
             values => [ $unique_ids, @eta_medians ],
         );
-        $writer->endTag("EffectMedian");
+        $random_effects->appendChild($table);
 
-        $writer->startTag("EffectMean");
-        $self->add_table(
+        my $table = $self->create_table(
+            table_name => "EffectMean",
             column_ids => [ "ID", @$eta_names ],
             column_types => [ "id", ("undefined") x scalar(@$eta_names) ],
             column_valuetypes => [ "id", ("real") x scalar(@$eta_names) ],
             values => [ $unique_ids, @eta_means ],
         );
-        $writer->endTag("EffectMean");
-
-        $writer->endTag("RandomEffects");
+        $random_effects->appendChild($table);
     }
-    $writer->endTag("IndividualEstimates");
+
+    return $individual_estimates;
 }
 
 1;

@@ -36,23 +36,23 @@ A PsN bootstrap\_results.csv file to use for filling the Bootstrap element.
 \begin{itemize}
     \item All NONMEM parameters (THETAs, OMEGAs and SIGMAs) must have labels. A label is a one word (and only one word) comment on the same line as the definition of the initial estimate of the parameter. This means that all block definitions must be written on different rows. Example:
         \begin{verbatim}
-            $OMEGA BLOCK(2)
-                1.2     ; PPV_CL
-                0.01    ; CORR_CL_V
-                0.1     ; PPV_V
+$OMEGA BLOCK(2)
+ 1.2     ; PPV_CL
+ 0.01    ; CORR_CL_V
+ 0.1     ; PPV_V
         \end{verbatim}
     \item To be able to populate the Residuals and the Predictions entries an sdtab table must be specified. The name but not the orders of the columns is important. ID and TIME must be in the table. Other columns are optional. The example below shows an sdtab with all columns. The name of the file must start with "sdtab" Example:
         \begin{verbatim}
-            $TABLE ID TIME DV PRED IPRED RES IRES WRES IWRES NOAPPEND FILE=sdtab2
+$TABLE ID TIME DV PRED IPRED RES IRES WRES IWRES NOAPPEND FILE=sdtab2
         \end{verbatim}
     \item To be able to populate the IndividualEstimates entry a patab table must be specified. NOAPPEND must be used and the order of the columns is important. The first column must be ID, then comes all individual parameters followed by the ETAs (see below). Example:
         \begin{verbatim}
-            $TABLE ID CL V ETA_CL ETA_V NOAPPEND FILE=patab
+$TABLE ID CL V ETA_CL ETA_V NOAPPEND FILE=patab
         \end{verbatim}
     \item To be able to populate the RandomEffects entry all ETAs must be defined in the main code block (\$PK or \$PRED). One ETA should be defined per row with nothing more on the row (except for spaces) than one assignment. Example:
         \begin{verbatim}
-            ETA_CL = ETA(1)
-            ETA_V = ETA(2)
+ ETA_CL = ETA(1)
+ ETA_V = ETA(2)
         \end{verbatim}
 \end{itemize}
 
