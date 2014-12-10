@@ -38,7 +38,7 @@ has 'inflation' => ( is => 'rw', isa => 'Num', default => 1 );
 has 'mceta' => ( is => 'rw', isa => 'Int', default => 0 );
 
 has 'original_ofv' => ( is => 'rw', isa => 'Num');
-has 'pdf_vector' => ( is => 'rw', isa => 'ArrayRef[Num]' );
+has 'pdf_vector' => ( is => 'rw', isa => 'ArrayRef' );
 
 
 sub BUILD
@@ -293,7 +293,7 @@ sub mvnpdf{
 	my %parm = validated_hash(\@_,
 							  inverse_covmatrix => { isa => 'Math::MatrixReal', optional => 0 },
 							  mu => { isa => 'Math::MatrixReal', optional => 0 },
-							  xvec_array => { isa => 'ArrayRef[ArrayRef[Num]]', optional => 0 }
+							  xvec_array => { isa => 'ArrayRef[ArrayRef]', optional => 0 }
 	);
 	my $inverse_covmatrix = $parm{'inverse_covmatrix'};
 	my $mu = $parm{'mu'};
@@ -340,8 +340,8 @@ sub compute_weights{
 
 	#weight is same as importance_ratio
 	my %parm = validated_hash(\@_,
-		pdf_array => { isa => 'ArrayRef[Num]', optional => 0 },
-		dofv_array => { isa => 'ArrayRef[Num]', optional => 0 }
+		pdf_array => { isa => 'ArrayRef', optional => 0 },
+		dofv_array => { isa => 'ArrayRef', optional => 0 }
 	);
 	my $pdf_array = $parm{'pdf_array'};
 	my $dofv_array = $parm{'dofv_array'};
@@ -402,7 +402,7 @@ sub recompute_weights{
 
 sub weighted_sample{
 	my %parm = validated_hash(\@_,
-							  cdf => { isa => 'ArrayRef[Num]', optional => 0 }
+							  cdf => { isa => 'ArrayRef', optional => 0 }
 		);
 	my $cdf = $parm{'cdf'};
 	my $len = scalar(@{$cdf});
@@ -418,7 +418,7 @@ sub weighted_sample{
 
 sub empirical_statistics{
 	my %parm = validated_hash(\@_,
-							  sampled_params_arr => { isa => 'ArrayRef[HashRef]', optional => 0 },
+							  sampled_params_arr => { isa => 'ArrayRef', optional => 0 },
 							  labels_hash => { isa => 'HashRef', optional => 0 }
 		);
 	my $sampled_params_arr = $parm{'sampled_params_arr'};
@@ -518,8 +518,8 @@ sub quantile{
 	#mimic R quantile(nubmers,type=2, probs= probs)
 
 	my %parm = validated_hash(\@_,
-							  probs => { isa => 'ArrayRef[Num]', optional => 0 },
-							  numbers => { isa => 'ArrayRef[Num]', optional => 0 }
+							  probs => { isa => 'ArrayRef', optional => 0 },
+							  numbers => { isa => 'ArrayRef', optional => 0 }
 		);
 	my $probs = $parm{'probs'};
 	my $numbers = $parm{'numbers'};
@@ -738,9 +738,9 @@ sub sample_multivariate_normal
 {
 	my %parm = validated_hash(\@_,
 							  samples => { isa => 'Int', optional => 0 },
-							  covmatrix => { isa => 'ArrayRef[ArrayRef[Num]]', optional => 0 },
-							  lower_bound => { isa => 'ArrayRef[Num]', optional => 0 },
-							  upper_bound => { isa => 'ArrayRef[Num]', optional => 0 },
+							  covmatrix => { isa => 'ArrayRef[ArrayRef]', optional => 0 },
+							  lower_bound => { isa => 'ArrayRef', optional => 0 },
+							  upper_bound => { isa => 'ArrayRef', optional => 0 },
 							  param => { isa => 'ArrayRef', optional => 0 },
 							  block_number => { isa => 'ArrayRef', optional => 0 },
 							  coords => { isa => 'ArrayRef', optional => 0 },
@@ -984,7 +984,7 @@ sub sample_multivariate_normal
 sub create_sampled_params_arr{
 	#to be used in update_inits (from_hash=> $sampled_params_arr->[$k],ignore_missing_parameters=>1);
 	my %parm = validated_hash(\@_,
-							  samples_array => { isa => 'ArrayRef[ArrayRef[Num]]', optional => 0 },
+							  samples_array => { isa => 'ArrayRef[ArrayRef]', optional => 0 },
 							  labels_hash => { isa => 'HashRef', optional => 0 }
 		);
 	my $samples_array = $parm{'samples_array'};
@@ -1012,7 +1012,7 @@ sub create_sampled_params_arr{
 sub inflate_covmatrix
 {
 	my %parm = validated_hash(\@_,
-							  matrix => { isa => 'ArrayRef[ArrayRef[Num]]', optional => 0 },
+							  matrix => { isa => 'ArrayRef[ArrayRef]', optional => 0 },
 							  inflation => { isa => 'Num', optional => 0 }
 		);
 	my $matrix = $parm{'matrix'};
@@ -1180,6 +1180,12 @@ sub _modelfit_raw_results_callback
 			push(@delta_ofv,$delta_ofv);
 			$index++;
 		}
+
+		unless (scalar(@delta_ofv)==$samples){
+			croak("Expected $samples ofv values after running models, but found only ".scalar(@delta_ofv)."\n".
+				  "NONMEM run(s) must have failed, check lst-file(s) in m1.");
+		}
+
 		my $wghash = tool::sir::compute_weights(pdf_array => $pdf_vector,
 												dofv_array => \@delta_ofv);
 
