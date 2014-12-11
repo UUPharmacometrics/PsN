@@ -171,7 +171,7 @@ sub do_course_tests
 	my $dir = shift;
 	my $course_name = shift;
 
-	(my $commands, my $comments) = _parse_course_file($course_name . '.txt');
+	(my $commands, my $comments) = _parse_course_file("$dir/$course_name.txt");
 
 	my $tempdir = create_test_dir("courses_$course_name");
 
