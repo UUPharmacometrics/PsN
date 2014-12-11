@@ -346,7 +346,7 @@ sub _parse_lst_file
     } else {
         my $outobj = output->new(filename => $lst_file);
         if (not $outobj->parsed_successfully) {
-            push @errors, "Unable to read everything from outputfile, parser error message: " . $outobj->parsing_error_message;
+            push @errors, "Outputfile not parsed successfully, error message: " . $outobj->parsing_error_message;
         } else {
             my $model = $outobj->lst_model;
 

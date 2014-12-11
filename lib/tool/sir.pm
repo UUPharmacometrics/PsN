@@ -1181,7 +1181,7 @@ sub _modelfit_raw_results_callback
 			$index++;
 		}
 
-		unless (scalar(@delta_ofv)==$samples){
+		unless (scalar(@delta_ofv)>=$samples){
 			croak("Expected $samples ofv values after running models, but found only ".scalar(@delta_ofv)."\n".
 				  "NONMEM run(s) must have failed, check lst-file(s) in m1.");
 		}
