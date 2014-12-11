@@ -780,6 +780,16 @@ sub read_answers{
 	$answer_hashes[$index]->{file}='special_mod/psnmissingdata.out';
 	$answer_hashes[$index]->{parsed_successfully}=0;
 
+	$index++;
+	$answer_hashes[$index]={};
+	$answer_hashes[$index]->{file}='special_mod/empty.lst';
+	$answer_hashes[$index]->{parsed_successfully}=0;
+
+	$index++;
+	$answer_hashes[$index]={};
+	$answer_hashes[$index]->{file}='special_mod/empty_lines.lst';
+	$answer_hashes[$index]->{parsed_successfully}=0;
+
 	return \@answer_hashes;
 }
 1;

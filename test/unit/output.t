@@ -4,7 +4,7 @@
 
 use strict;
 use warnings;
-use Test::More tests=>1661;
+use Test::More;
 use Test::Exception;
 use Math::Random;
 use FindBin qw($Bin);
