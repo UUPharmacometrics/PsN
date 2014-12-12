@@ -25,6 +25,7 @@ my %optional_options = (
     'precision:f' => undef,
     'bootstrap_results:s' => undef,
     'so_filename:s' => undef,
+    'version' => undef,
 );
 
 
@@ -81,6 +82,11 @@ EOF
 
 
 common_options::online_help('nmoutput2so', \%options, \%help_text, \%required_options, \%optional_options);
+
+if ($options{'version'}) {  # FIXME: Should use common_options for this
+    print "PsN version: $PsN::version\n";
+    exit;
+}
 
 if (scalar(@ARGV) < 1 and not defined $options{'bootstrap_results'}) {
   print "No files specified. Either specify one or more .lst file or use -bootstrap_results. Use 'nmoutput2so -h' for help.\n";
