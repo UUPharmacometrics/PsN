@@ -94,7 +94,7 @@ $so->parse;
 my $xpc = get_xml("bootstrap.SO.xml");
 (my $node) = $xpc->findnodes('/x:SO/x:SOBlock/x:Estimation/x:PrecisionPopulationEstimates/x:Bootstrap');
 ok (defined $node, "lone bootstrap");
-test_number_of_children($xpc, '/x:SO/x:SOBlock/x:Estimation/*', 1, "lone bootstrap nothing more than Bootstrap");
+test_number_of_children($xpc, '/x:SO/x:SOBlock/x:Estimation/*', 2, "lone bootstrap nothing more than Bootstrap");
 
 # normal model pheno.lst
 my $so = standardised_output->new(lst_files => [ "pheno.lst" ]);

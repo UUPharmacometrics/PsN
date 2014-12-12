@@ -18,7 +18,8 @@ has 'bootstrap_results' => ( is => 'rw', isa => 'Maybe[Str]' );
 has 'so_filename' => ( is => 'rw', isa => 'Maybe[Str]' );
 has 'precision' => ( is => 'rw', isa => 'Int', default => 10 );
 has '_document' => ( is => 'rw', isa => 'Ref' );    # The XML document 
-has '_block_number' => ( is => 'rw', isa => 'Int', default => 1 );
+has '_duplicate_blocknames' => ( is => 'rw', isa => 'HashRef' );    # Contains those blocknames which will have duplicates with next number for block
+has '_first_block' => ( is => 'rw', isa => 'Str' );
 
 sub BUILD
 {
@@ -245,15 +246,38 @@ sub find_or_create_node
 
 # End of XML helper methods
 
+sub get_file_stem
+{
+    my $name = shift;
+
+    $name =~ s/(.*)\..*/\1/;
+
+    return $name;
+}
+
 sub create_block
 {
-    # Create a new SOBlock and set the id with a number
+    # Create a new SOBlock and set the id 
     my $self = shift;
+    my %parm = validated_hash(\@_,
+        name => { isa => 'Str' },
+    );
+    my $name = $parm{'name'};
+    
     my $doc = $self->_document;
+    my %duplicates;
+    if (defined $self->_duplicate_blocknames) {
+        %duplicates = %{$self->_duplicate_blocknames};
+    }
 
     my $block = $doc->createElement("SOBlock");
-    $block->setAttribute(blkId => "SO" . $self->_block_number);
-    $self->_block_number($self->_block_number + 1);
+    if (not exists $duplicates{$name}) {
+        $block->setAttribute(blkId => $name);
+    } else {
+        print "$duplicates{$name}";
+        $block->setAttribute(blkId => $name . $duplicates{$name});
+        $self->_duplicate_blocknames->{$name}++;
+    }
 
     return $block;
 }
@@ -274,6 +298,23 @@ sub parse
     $SO->setAttribute('writtenVersion' => "0.1");
     $SO->setAttribute('id' => "i1");
 
+    # Check for duplicate lst_file names
+    my %duplicates;
+    if (defined $self->lst_files) {
+        foreach my $file (@{$self->lst_files}) {
+            my $stem = get_file_stem($file);
+            $duplicates{$stem}++;
+        }
+        foreach my $name (keys %duplicates) {
+            if ($duplicates{$name} == 1) {
+                delete $duplicates{$name};
+            } else {
+                $duplicates{$name} = 1;
+            }
+        }
+    }
+    $self->_duplicate_blocknames(\%duplicates);
+    
     # Handle lst files
     if (defined $self->lst_files) {
         foreach my $file (@{$self->lst_files}) {
@@ -285,9 +326,10 @@ sub parse
     # Handle bootstrap_results
     if (defined $self->bootstrap_results) {
         # Find or create xml structure
-        (my $block) = $SO->findnodes("SOBlock[\@blkId='SO1']");
+        my $first_block = $self->_first_block;
+        (my $block) = $SO->findnodes("SOBlock[\@blkId='$first_block']");
         if (not defined $block) {
-            $block = $self->create_block;
+            $block = $self->create_block(name => "Bootstrap");
             $SO->appendChild($block);
         }
         my $estimation = $self->find_or_create_node(root_node => $block, node_name => "Estimation");
@@ -308,7 +350,8 @@ sub parse
             if (defined $bootstrap_error) {
                 $errors = [ $bootstrap_error ];
             }
-            $self->_create_target_tool_messages(errors => $errors, elapsed_time => 0);
+            my $ttm = $self->_create_target_tool_messages(errors => $errors, elapsed_time => 0);
+            $estimation->appendChild($ttm);
         } else {
             if (defined $bootstrap_error) {
                 (my $ttm) = $estimation->findnodes("TargetToolMessages");
@@ -336,7 +379,12 @@ sub _parse_lst_file
     my @warnings;
     my $doc = $self->_document;
 
-    my $block = $self->create_block();
+    my $file_stem = get_file_stem($lst_file);
+    if (not defined $self->_first_block) {
+        $self->_first_block($file_stem);
+    }
+
+    my $block = $self->create_block(name => $file_stem);
     my $estimation = $doc->createElement("Estimation");
     $block->appendChild($estimation);
 
