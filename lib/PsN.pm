@@ -3,8 +3,9 @@ use ext::Carp;
 use File::Spec;
 use Cwd;
 
-# The following line will be changed by the setup script
-$version = 'dev';
+$version = '4.3.5';
+# The following line will be changed by make
+$dev = 1;
 
 my ($volume, $directory, $file) = File::Spec->splitpath(__FILE__);
 $lib_dir = Cwd::abs_path($volume . $directory);

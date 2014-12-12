@@ -168,6 +168,7 @@ release: completion rel_dir $(RELFILES) $(PDFFILES)
 	@ cd PsN-Source/doc/; zip PsN_pdf_documentation *.pdf *.xls *.scm
 	@ cd PsN-Source/doc/; tar -czf PsN_pdf_documentation.tar.gz *.pdf *.xls *.scm
 	@ chmod -R a+r PsN-Source/test/test_files
+	@ sed -i 's/dev\s*=\s*1;/dev = 0;/' PsN-Source/lib/PsN.pm
 	@ zip -r PsN-Source PsN-Source/
 	@ tar czf PsN-Source.tar.gz PsN-Source/
 

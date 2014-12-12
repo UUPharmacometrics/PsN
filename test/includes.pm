@@ -45,8 +45,8 @@ use PsN;
 
 our $version = '';
 
-unless ($PsN::version eq 'dev'){
-	$version = '-'.$PsN::version;
+if (not $PsN::dev) {
+	$version = '-' . $PsN::version;
 }
 
 sub get_command

@@ -6,8 +6,9 @@ use File::Glob;
 use lib 'lib';
 use ext::Config::Tiny;
 use ext::File::HomeDir;
+use PsN;
 
-my $version = '4.3.4';
+my $version = $PsN::version;
 
 my $default_user_name;
 my $default_sitelib;
@@ -980,30 +981,10 @@ foreach my $file (@utilities) {
 	}
 }
 
-unless (open(TEMPLATE, "lib/PsN.pm")) {
-	abort("Unable to open PsN.pm in lib: $!\n");
-}
-unless (open(PSN, '>', "$library_dir/PsN_$name_safe_version/PsN.pm")) {
-	abort("Unable to install PsN.pm in $library_dir/PsN_$name_safe_version: $!\n");
-}
-
 if (running_on_windows()) {
 	require Win32;
 	$library_dir = Win32::GetShortPathName($library_dir);
 }
-
-foreach my $line (<TEMPLATE>) {
-	if ($line =~ /^\$version\s*=/) {
-		my $v = $name_safe_version;
-		$v =~ tr/_/./;
-		print PSN "\$version = '$v';";
-	} else {
-		print PSN $line;
-	}
-}
-
-close(PSN);
-close(TEMPLATE);
 
 print "\nWould you like to copy the PsN documentation to a file system location of your choice?  [y/n] ";
 if (confirm()) {
