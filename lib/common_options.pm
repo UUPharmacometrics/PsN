@@ -117,7 +117,6 @@ my @script_options = (
     "debug:i",
     "h|?",
     "help",
-    "html_help",
     "silent",
     "version",
     "warn_with_trace!",
@@ -1321,11 +1320,6 @@ EOF
     for the simulations. 
 EOF
 
-    $help_hash{-html_help} = <<'EOF';
-    <p class="style2">-html_help</p>
-    Generate help text suitable for PsN homepage.
-EOF
-
     $help_hash{-version} = <<'EOF';
     <p class="style2">-version</p>
     Print PsN version of script called.
@@ -1362,101 +1356,59 @@ EOF
 
   if($options{'h'} or $options{'?'} or $options{'help'} ) {
 
-    if( $options{'html_help'} ){
-      
-      open(EXAMPLES, '>', 'html/' . $command . '_examples.php' );
-      print EXAMPLES $help_hash{Examples};
-      close( EXAMPLES );
-
-      open(SYNOPSIS, '>', 'html/' . $command . '_synopsis.php' );
-      print SYNOPSIS $help_hash{Pre_help_message},"\n";
-      print SYNOPSIS "<h3 class=\"heading1\">Synopsis</h3>\n";
-      print SYNOPSIS "<span class=\"option\">\n";
-      print SYNOPSIS "<pre>$command " . common_options::print_help($command,$required_options, $optional_options)."\n</pre></span>\n" ;
-      close( SYNOPSIS );
-
-      open(OPTIONS, '>', 'html/' . $command . '_options.php' );
-      my $opt_help;
-
-      if( $command eq 'execute' ){
-	@loop_array = sort(@get_opt_strings,keys %{$required_options}, keys %{$optional_options});
-      } elsif ( $command eq 'psn_options' ){
-	@loop_array = sort(@get_opt_strings);
-      } else {
-	@loop_array = sort(keys %{$required_options}, keys %{$optional_options});
-      }
-      
-      foreach my $option( @loop_array ){
-	$option =~ s/[^\w]*$|:.*//;
-	if( exists $help_hash{'-'.$option}){
-	  $opt_help .= $help_hash{'-'.$option}."\n";
-	} else {
-	  $opt_help .= "      <p class=\"option\">-$option</p>     <p>No help available for '$option'</p>";
-	}
-      }
-      print OPTIONS $help_hash{Options} . $opt_help;
-      close( OPTIONS );
-      
-      open(DESC, '>', 'html/' . $command . '_description.php' );
-      print DESC $help_hash{Description};
-      close( DESC );
-
-      exit;
-    } else {
-
       if( scalar( @ARGV ) > 0 ){
-	foreach my $option ( @ARGV ){
-	  
-	  if( exists $help_hash{'-'.$option} ){
-	    $help .= "\n".$help_hash{'-'.$option}. "\n";
-	  } else {
-	    $help .= "\nNo help available for '$option'\n\n";
-	  }
-	} 
+          foreach my $option ( @ARGV ){
 
-	$help =~ s/<\?.*\?>//g;
-        $help =~ s/<[^>]*>//g;
-	print $help;
-	exit;
+              if( exists $help_hash{'-'.$option} ){
+                  $help .= "\n".$help_hash{'-'.$option}. "\n";
+              } else {
+                  $help .= "\nNo help available for '$option'\n\n";
+              }
+          } 
+
+          $help =~ s/<\?.*\?>//g;
+          $help =~ s/<[^>]*>//g;
+          print $help;
+          exit;
       }
-      
-      $help .= "\n" . $help_hash{Pre_help_message} . "\n";
-      
-      if( $options{'help'} ){
-	
-	$help .= "\n\n".$help_hash{Description}."\n";
-	$help .= $help_hash{Examples}."\n";
-	$help .= $help_hash{Options}."\n";
-	
-	my @loop_array;
-	
-	if( $command eq 'execute' ){
-	  @loop_array = sort(@get_opt_strings,keys %{$required_options}, keys %{$optional_options});
-	} elsif ( $command eq 'psn_options' ){
-	  @loop_array = sort(@get_opt_strings);
-	} else {
-	  @loop_array = sort(keys %{$required_options},keys %{$optional_options});
-	}
-	
-	foreach my $option( @loop_array ){
-	  $option =~ s/[^\w]*$|:.*//;
-	  if( exists $help_hash{'-'.$option}){
-	    $help .= $help_hash{'-'.$option}."\n";
-	  } else {
-	    $help .= "      -$option\n\n      No help available for '$option'\n\n";
-	  }
-	}
-	
-	$help .= $help_hash{Post_help_message} . "\n";
-	
-      } else { 
-	$help .= common_options::print_help($command,$required_options, $optional_options);
 
-	$help .= "\n    Options enclosed by [ ] are optional."; 
-	$help .= "\n    Exclamation mark, !, after the option name means option can be disabled".
-	         "\n    using '-no-option', for example -no-handle_crashes."; 
-	$help .= "\n    Use '$command -help' for a longer description.\n"; 
-	$help .= $help_hash{Post_help_message} . "\n";
+      $help .= "\n" . $help_hash{Pre_help_message} . "\n";
+
+      if( $options{'help'} ){
+
+          $help .= "\n\n".$help_hash{Description}."\n";
+          $help .= $help_hash{Examples}."\n";
+          $help .= $help_hash{Options}."\n";
+
+          my @loop_array;
+
+          if( $command eq 'execute' ){
+              @loop_array = sort(@get_opt_strings,keys %{$required_options}, keys %{$optional_options});
+          } elsif ( $command eq 'psn_options' ){
+              @loop_array = sort(@get_opt_strings);
+          } else {
+              @loop_array = sort(keys %{$required_options},keys %{$optional_options});
+          }
+
+          foreach my $option( @loop_array ){
+              $option =~ s/[^\w]*$|:.*//;
+              if( exists $help_hash{'-'.$option}){
+                  $help .= $help_hash{'-'.$option}."\n";
+              } else {
+                  $help .= "      -$option\n\n      No help available for '$option'\n\n";
+              }
+          }
+
+          $help .= $help_hash{Post_help_message} . "\n";
+
+      } else { 
+          $help .= common_options::print_help($command,$required_options, $optional_options);
+
+          $help .= "\n    Options enclosed by [ ] are optional."; 
+          $help .= "\n    Exclamation mark, !, after the option name means option can be disabled".
+          "\n    using '-no-option', for example -no-handle_crashes."; 
+          $help .= "\n    Use '$command -help' for a longer description.\n"; 
+          $help .= $help_hash{Post_help_message} . "\n";
       } 
 
       $help =~ s/<\?.*\?>//g;
@@ -1464,7 +1416,6 @@ EOF
       print $help;
 
       exit;
-    }
   }
 }
 
