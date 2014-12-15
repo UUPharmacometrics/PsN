@@ -12,6 +12,7 @@ use output;
 use data;
 use array;
 use IO::File;
+use OSspecific;
 
 has 'lst_files' => ( is => 'rw', isa => 'ArrayRef[Str]' );
 has 'bootstrap_results' => ( is => 'rw', isa => 'Maybe[Str]' );
@@ -250,6 +251,8 @@ sub get_file_stem
 {
     my $name = shift;
 
+    $name = OSspecific::nopath($name); 
+    print "$name\n";
     $name =~ s/(.*)\..*/\1/;
 
     return $name;
