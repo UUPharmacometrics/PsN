@@ -18,6 +18,9 @@ has 'lst_files' => ( is => 'rw', isa => 'ArrayRef[Str]' );
 has 'bootstrap_results' => ( is => 'rw', isa => 'Maybe[Str]' );
 has 'so_filename' => ( is => 'rw', isa => 'Maybe[Str]' );
 has 'precision' => ( is => 'rw', isa => 'Int', default => 10 );
+has 'use_tables' => ( is => 'rw', isa => 'Bool', default => 1 );    # Set to zero if sdtab and patab should not be used
+has 'exclude_elements' => ( is => 'rw', isa => 'Maybe[ArrayRef]' );
+has 'only_include_elements' => ( is => 'rw', isa => 'Maybe[ArrayRef]' );
 has '_document' => ( is => 'rw', isa => 'Ref' );    # The XML document 
 has '_duplicate_blocknames' => ( is => 'rw', isa => 'HashRef' );    # Contains those blocknames which will have duplicates with next number for block
 has '_first_block' => ( is => 'rw', isa => 'Str' );
@@ -252,7 +255,6 @@ sub get_file_stem
     my $name = shift;
 
     $name = OSspecific::nopath($name); 
-    print "$name\n";
     $name =~ s/(.*)\..*/\1/;
 
     return $name;
@@ -283,6 +285,52 @@ sub create_block
     }
 
     return $block;
+}
+
+sub match_elements
+{
+    my $path1 = shift;
+    my $path2 = shift;
+
+    my @elements1 = split m|/|, $path1;
+    my @elements2 = split m|/|, $path2;
+
+    my $shortest = scalar(@elements1);
+    if (scalar(@elements2) < $shortest) {
+        $shortest = scalar(@elements2);
+    }
+    for (my $i = 0; $i < $shortest; $i++) {
+        if ($elements1[$i] ne $elements2[$i]) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+sub check_include
+{
+    my $self = shift;
+    my %parm = validated_hash(\@_,
+        element => { isa => 'Str' },
+    );
+    my $element = $parm{'element'};
+
+    if (defined $self->exclude_elements) {
+        foreach my $e (@{$self->exclude_elements}) {
+            if ($e eq $element) {
+                return 0;
+            }
+        }
+        return 1;
+    } elsif (defined $self->only_include_elements) {
+        foreach my $e (@{$self->only_include_elements}) {
+            if (match_elements($e, $element)) {
+                return 1;
+            }
+        }
+        return 0;
+    }
+    return 1;
 }
 
 sub parse
@@ -508,65 +556,79 @@ sub _parse_lst_file
 
             my $undefs = grep { not defined $_ } @est_values;
             if ($undefs != scalar(@est_values)) {   # Check that not all in list are undef. Should possibly have been done earlier
-                my $pe = $self->_create_population_estimates(labels => \@all_labels, values => \@est_values);
-                $estimation->appendChild($pe);
+                if ($self->check_include(element => 'Estimation/PopulationEstimates')) {
+                    my $pe = $self->_create_population_estimates(labels => \@all_labels, values => \@est_values);
+                    $estimation->appendChild($pe);
+                }
             }
 
             if (scalar(@se_values) > 0) {
                 my $correlation_matrix = linear_algebra::triangular_symmetric_to_full($outobj->correlation_matrix->[$problems]->[$sub_problems]);
                 my $covariance_matrix = linear_algebra::triangular_symmetric_to_full($outobj->covariance_matrix->[$problems]->[$sub_problems]);
-                my $ppe = $self->_create_precision_population_estimates(
-                    labels => \@all_labels,
-                    standard_errors => \@se_values,
-                    relative_standard_errors => \@rel_se,
-                    correlation_matrix => $correlation_matrix,
-                    covariance_matrix => $covariance_matrix,
-                );
-                $estimation->appendChild($ppe);
+                if ($self->check_include(element => 'Estimation/PrecisionPopulationEstimates')) {
+                    my $ppe = $self->_create_precision_population_estimates(
+                        labels => \@all_labels,
+                        standard_errors => \@se_values,
+                        relative_standard_errors => \@rel_se,
+                        correlation_matrix => $correlation_matrix,
+                        covariance_matrix => $covariance_matrix,
+                    );
+                    $estimation->appendChild($ppe);
+                }
             }
 
             # Loop through the different tables
-            my ($table_name_ref, $dummy) = $model->problems->[$problems]->_option_val_pos(record_name => 'table', name => 'FILE');
-            if (defined $table_name_ref and scalar @{$table_name_ref} >= 0) {
-                foreach my $table (@$table_name_ref) {
-                    if ($table =~ /^(sdtab|patab)/ and not -e $table) {
-                        push @warnings, "Could not find table $table. Results from this table could not be added.";
-                        next;
-                    }
-                    if ($table =~ /^sdtab/) {
-                        my $sdtab = data->new(
-                            directory => $outobj->directory,
-                            filename => $table,
-                            ignoresign => '@',
-                            parse_header => 1,
-                        );
-                        my $predictions = $self->_create_predictions(sdtab => $sdtab);
-                        if (defined $predictions) {
-                            $estimation->appendChild($predictions);
+            if ($self->use_tables) {
+                my ($table_name_ref, $dummy) = $model->problems->[$problems]->_option_val_pos(record_name => 'table', name => 'FILE');
+                if (defined $table_name_ref and scalar @{$table_name_ref} >= 0) {
+                    foreach my $table (@$table_name_ref) {
+                        if ($table =~ /^(sdtab|patab)/ and not -e $table) {
+                            push @warnings, "Could not find table $table. Results from this table could not be added.";
+                            next;
                         }
-                        my $residuals = $self->_create_residuals(sdtab => $sdtab);
-                        if (defined $residuals) {
-                            $estimation->appendChild($residuals);
+                        if ($table =~ /^sdtab/) {
+                            my $sdtab = data->new(
+                                directory => $outobj->directory,
+                                filename => $table,
+                                ignoresign => '@',
+                                parse_header => 1,
+                            );
+                            if ($self->check_include(element => 'Estimation/Predictions')) {
+                                my $predictions = $self->_create_predictions(sdtab => $sdtab);
+                                if (defined $predictions) {
+                                    $estimation->appendChild($predictions);
+                                }
+                            }
+                            if ($self->check_include(element => 'Estimation/Residuals')) {
+                                my $residuals = $self->_create_residuals(sdtab => $sdtab);
+                                if (defined $residuals) {
+                                    $estimation->appendChild($residuals);
+                                }
+                            }
                         }
-                    }
-                    if ($table =~ /^patab/) {
-                        my $patab = data->new(
-                            directory => $outobj->directory,
-                            filename => $table,
-                            ignoresign => '@',
-                            parse_header => 1,
-                        );
-                        my $individual_estimates = $self->_create_individual_estimates(patab => $patab, model => $model);
-                        if (defined $individual_estimates) {
-                            $estimation->appendChild($individual_estimates);
+                        if ($table =~ /^patab/) {
+                            my $patab = data->new(
+                                directory => $outobj->directory,
+                                filename => $table,
+                                ignoresign => '@',
+                                parse_header => 1,
+                            );
+                            if ($self->check_include(element => 'Estimation/IndividualEstimates')) {
+                                my $individual_estimates = $self->_create_individual_estimates(patab => $patab, model => $model);
+                                if (defined $individual_estimates) {
+                                    $estimation->appendChild($individual_estimates);
+                                }
+                            }
                         }
                     }
                 }
             }
 
-            my $likelihood = $self->_create_likelihood(ofv => $ofv);
-            if (defined $likelihood) {
-                $estimation->appendChild($likelihood);
+            if ($self->check_include(element => 'Estimation/Likelihood')) {
+                my $likelihood = $self->_create_likelihood(ofv => $ofv);
+                if (defined $likelihood) {
+                    $estimation->appendChild($likelihood);
+                }
             }
 
             if (not defined $ofv) {
@@ -655,22 +717,29 @@ sub _create_precision_population_estimates
     if (scalar(@labels) > 0) {
         my $mle = $doc->createElement("MLE");
         $ppe->appendChild($mle);
-        my $table = $self->create_parameter_table(table_name => 'StandardError', name => 'SE', labels => \@labels, values => \@standard_errors);
-        $mle->appendChild($table);
+        if ($self->check_include(element => 'Estimation/PrecisionPopulationEstimates/MLE/StandardError')) {
+            my $table = $self->create_parameter_table(table_name => 'StandardError', name => 'SE', labels => \@labels, values => \@standard_errors);
+            $mle->appendChild($table);
+        }
+        if ($self->check_include(element => 'Estimation/PrecisionPopulationEstimates/MLE/RelativeStandardError')) {
+            my $table = $self->create_parameter_table(table_name => 'RelativeStandardError', name => 'RSE', labels => \@labels,
+                values => \@relative_standard_errors);
+            $mle->appendChild($table);
+        }
 
-        my $table = $self->create_parameter_table(table_name => 'RelativeStandardError', name => 'RSE', labels => \@labels,
-            values => \@relative_standard_errors);
-        $mle->appendChild($table);
+        if ($self->check_include(element => 'Estimation/PrecisionPopulationEstimates/MLE/CorrelationMatrix')) {
+            my $cor = $doc->createElement("CorrelationMatrix");
+            $mle->appendChild($cor);
+            my $matrix = $self->create_matrix(rownames => \@labels, colnames => \@labels, matrix => $correlation_matrix);
+            $cor->appendChild($matrix);
+        }
 
-        my $cor = $doc->createElement("CorrelationMatrix");
-        $mle->appendChild($cor);
-        my $matrix = $self->create_matrix(rownames => \@labels, colnames => \@labels, matrix => $correlation_matrix);
-        $cor->appendChild($matrix);
-
-        my $cov = $doc->createElement("CovarianceMatrix");
-        $mle->appendChild($cov);
-        my $matrix = $self->create_matrix(rownames => \@labels, colnames => \@labels, matrix => $covariance_matrix);
-        $cov->appendChild($matrix);
+        if ($self->check_include(element => 'Estimation/PrecisionPopulationEstimates/MLE/CovarianceMatrix')) {
+            my $cov = $doc->createElement("CovarianceMatrix");
+            $mle->appendChild($cov);
+            my $matrix = $self->create_matrix(rownames => \@labels, colnames => \@labels, matrix => $covariance_matrix);
+            $cov->appendChild($matrix);
+        }
     }
 
     return $ppe;
@@ -857,52 +926,60 @@ sub _create_residuals
 
     my $residuals = $doc->createElement("Residuals");
 
-    if (exists $sdtab->column_head_indices->{'RES'}) {
-        my $res = $sdtab->column_to_array(column => "RES");
-        my $table = $self->create_table(
-            table_name => "RES",
-            column_ids => [ "ID", "TIME", "RES" ],
-            column_types => [ "id", "undefined", "undefined" ],
-            column_valuetypes =>  [ "id", "real", "real" ],
-            values => [ $id, $time, $res ],
-        );
-        $residuals->appendChild($table);
+    if ($self->check_include(element => 'Estimation/Residuals/RES')) {
+        if (exists $sdtab->column_head_indices->{'RES'}) {
+            my $res = $sdtab->column_to_array(column => "RES");
+            my $table = $self->create_table(
+                table_name => "RES",
+                column_ids => [ "ID", "TIME", "RES" ],
+                column_types => [ "id", "undefined", "undefined" ],
+                column_valuetypes =>  [ "id", "real", "real" ],
+                values => [ $id, $time, $res ],
+            );
+            $residuals->appendChild($table);
+        }
     }
 
-    if (exists $sdtab->column_head_indices->{'IRES'}) {
-        my $ires = $sdtab->column_to_array(column => "IRES");
-        my $table = $self->create_table(
-            table_name => "IRES",
-            column_ids => [ "ID", "TIME", "IRES" ],
-            column_types => [ "id", "undefined", "undefined" ],
-            column_valuetypes =>  [ "id", "real", "real" ],
-            values => [ $id, $time, $ires ],
-        );
-        $residuals->appendChild($table);
+    if ($self->check_include(element => 'Estimation/Residuals/IRES')) {
+        if (exists $sdtab->column_head_indices->{'IRES'}) {
+            my $ires = $sdtab->column_to_array(column => "IRES");
+            my $table = $self->create_table(
+                table_name => "IRES",
+                column_ids => [ "ID", "TIME", "IRES" ],
+                column_types => [ "id", "undefined", "undefined" ],
+                column_valuetypes =>  [ "id", "real", "real" ],
+                values => [ $id, $time, $ires ],
+            );
+            $residuals->appendChild($table);
+        }
     }
 
-    if (exists $sdtab->column_head_indices->{'WRES'}) {
-        my $wres = $sdtab->column_to_array(column => "WRES");
-        my $table = $self->create_table(
-            table_name => "WRES",
-            column_ids => [ "ID", "TIME", "WRES" ],
-            column_types => [ "id", "undefined", "undefined" ],
-            column_valuetypes =>  [ "id", "real", "real" ],
-            values => [ $id, $time, $wres ],
-        );
-        $residuals->appendChild($table);
+    if ($self->check_include(element => 'Estimation/Residuals/WRES')) {
+        if (exists $sdtab->column_head_indices->{'WRES'}) {
+            my $wres = $sdtab->column_to_array(column => "WRES");
+            my $table = $self->create_table(
+                table_name => "WRES",
+                column_ids => [ "ID", "TIME", "WRES" ],
+                column_types => [ "id", "undefined", "undefined" ],
+                column_valuetypes =>  [ "id", "real", "real" ],
+                values => [ $id, $time, $wres ],
+            );
+            $residuals->appendChild($table);
+        }
     }
 
-    if (exists $sdtab->column_head_indices->{'IWRES'}) {
-        my $iwres = $sdtab->column_to_array(column => "IWRES");
-        my $table = $self->create_table(
-            table_name => "IWRES",
-            column_ids => [ "ID", "TIME", "IWRES" ],
-            column_types => [ "id", "undefined", "undefined" ],
-            column_valuetypes =>  [ "id", "real", "real" ],
-            values => [ $id, $time, $iwres ],
-        );
-        $residuals->appendChild($table);
+    if ($self->check_include(element => 'Estimation/Residuals/IWRES')) {
+        if (exists $sdtab->column_head_indices->{'IWRES'}) {
+            my $iwres = $sdtab->column_to_array(column => "IWRES");
+            my $table = $self->create_table(
+                table_name => "IWRES",
+                column_ids => [ "ID", "TIME", "IWRES" ],
+                column_types => [ "id", "undefined", "undefined" ],
+                column_valuetypes =>  [ "id", "real", "real" ],
+                values => [ $id, $time, $iwres ],
+            );
+            $residuals->appendChild($table);
+        }
     }
 
     return $residuals;
@@ -978,26 +1055,31 @@ sub _create_individual_estimates
     my $unique_ids = array::unique($id);
 
     my $individual_estimates = $doc->createElement("IndividualEstimates");
-    my $estimates = $doc->createElement("Estimates");
-    $individual_estimates->appendChild($estimates);
-    my $table = $self->create_table(
-        table_name => "Median",
-        column_ids => [ "ID", @labels ],
-        column_types => [ "id", ("undefined") x scalar(@labels) ],
-        column_valuetypes => [ "id", ("real") x scalar(@labels) ],
-        values => [ $unique_ids, @medians ],
-    );
-    $estimates->appendChild($table);
-
-    my $table = $self->create_table(
-        table_name => "Mean",
-        column_ids => [ "ID", @labels ],
-        column_types => [ "id", ("undefined") x scalar(@labels) ],
-        column_valuetypes => [ "id", ("real") x scalar(@labels) ],
-        values => [ $unique_ids, @means ],
-    );
-    $estimates->appendChild($table);
-
+    if ($self->check_include(element => 'Estimation/IndividualEstimates/Estimates')) {
+        my $estimates = $doc->createElement("Estimates");
+        $individual_estimates->appendChild($estimates);
+        if ($self->check_include(element => 'Estimation/IndividualEstimates/Estimates/Median')) {
+            my $table = $self->create_table(
+                table_name => "Median",
+                column_ids => [ "ID", @labels ],
+                column_types => [ "id", ("undefined") x scalar(@labels) ],
+                column_valuetypes => [ "id", ("real") x scalar(@labels) ],
+                values => [ $unique_ids, @medians ],
+            );
+            $estimates->appendChild($table);
+        }
+        if ($self->check_include(element => 'Estimation/IndividualEstimates/Estimates/Mean')) {
+            my $table = $self->create_table(
+                table_name => "Mean",
+                column_ids => [ "ID", @labels ],
+                column_types => [ "id", ("undefined") x scalar(@labels) ],
+                column_valuetypes => [ "id", ("real") x scalar(@labels) ],
+                values => [ $unique_ids, @means ],
+            );
+            $estimates->appendChild($table);
+        }
+    }
+ 
     if (scalar(@$eta_names) > 0) {
         # Filter out etas that does not exist in the patab
         my $temp_etas = [];
@@ -1017,26 +1099,32 @@ sub _create_individual_estimates
             push @eta_means, $mean;
         }
 
-        my $random_effects = $doc->createElement("RandomEffects");
-        $individual_estimates->appendChild($random_effects);
+        if ($self->check_include(element => 'Estimation/IndividualEstimates/RandomEffects')) {
+            my $random_effects = $doc->createElement("RandomEffects");
+            $individual_estimates->appendChild($random_effects);
 
-        my $table = $self->create_table(
-            table_name => "EffectMedian",
-            column_ids => [ "ID", @$eta_names ],
-            column_types => [ "id", ("undefined") x scalar(@$eta_names) ],
-            column_valuetypes => [ "id", ("real") x scalar(@$eta_names) ],
-            values => [ $unique_ids, @eta_medians ],
-        );
-        $random_effects->appendChild($table);
+            if ($self->check_include(element => 'Estimation/IndividualEstimates/RandomEffects/EffectMedian')) {
+                my $table = $self->create_table(
+                    table_name => "EffectMedian",
+                    column_ids => [ "ID", @$eta_names ],
+                    column_types => [ "id", ("undefined") x scalar(@$eta_names) ],
+                    column_valuetypes => [ "id", ("real") x scalar(@$eta_names) ],
+                    values => [ $unique_ids, @eta_medians ],
+                );
+                $random_effects->appendChild($table);
+            }
 
-        my $table = $self->create_table(
-            table_name => "EffectMean",
-            column_ids => [ "ID", @$eta_names ],
-            column_types => [ "id", ("undefined") x scalar(@$eta_names) ],
-            column_valuetypes => [ "id", ("real") x scalar(@$eta_names) ],
-            values => [ $unique_ids, @eta_means ],
-        );
-        $random_effects->appendChild($table);
+            if ($self->check_include(element => 'Estimation/IndividualEstimates/RandomEffects/EffectMean')) {
+                my $table = $self->create_table(
+                    table_name => "EffectMean",
+                    column_ids => [ "ID", @$eta_names ],
+                    column_types => [ "id", ("undefined") x scalar(@$eta_names) ],
+                    column_valuetypes => [ "id", ("real") x scalar(@$eta_names) ],
+                    values => [ $unique_ids, @eta_means ],
+                );
+                $random_effects->appendChild($table);
+            }
+        }
     }
 
     return $individual_estimates;

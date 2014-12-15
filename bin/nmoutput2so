@@ -26,6 +26,9 @@ my %optional_options = (
     'bootstrap_results:s' => undef,
     'so_filename:s' => undef,
     'version' => undef,
+    'use_tables!' => undef,
+    'exclude_elements:s' => undef,
+    'only_include_elements:s' => undef,
 );
 
 
@@ -34,7 +37,8 @@ exit unless $res;
 
 my %defaults;
 
-$defaults{'precision'}                 = 10;
+$defaults{'precision'} = 10;
+$defaults{'use_tables'} = 1; 
 
 foreach my $opt (keys(%optional_options)) {
   $opt =~ s/[!:|].*//g; #get rid of :s |? :i etcetera
@@ -80,6 +84,27 @@ $help_text{-precision} = <<'EOF';
     Output precision.
 EOF
 
+$help_text{-use_tables} = <<'EOF';
+    -use_tables
+    Default used
+
+    Set -no-use_tables to not use any table files (sdtab and patab)
+EOF
+
+$help_text{-exclude_elements} = <<'EOF';
+    -exclude_elements 
+
+    A comma separated list of paths to elements to exclude
+    For example Estimation/PopulationEstimates
+EOF
+
+$help_text{-only_include_elements} = <<'EOF';
+    -only_include_elements 
+
+    A comma separated list of paths to the elements to include
+    No other elements than those listed will be included.
+    For example Estimation/PopulationEstimates
+EOF
 
 common_options::online_help('nmoutput2so', \%options, \%help_text, \%required_options, \%optional_options);
 
@@ -93,11 +118,21 @@ if (scalar(@ARGV) < 1 and not defined $options{'bootstrap_results'}) {
   exit;
 }
 
+if (defined $options{'only_include_elements'} and defined $options{'exclude_elements'}) {
+    die "Can not use both -only_include_elements and -exclude_elements at the same time";
+}
+
+my $only_include_elements = common_options::get_option_array($options{'only_include_elements'});
+my $exclude_elements = common_options::get_option_array($options{'exclude_elements'});
+
 my $so = standardised_output->new(
     lst_files => \@ARGV,
     bootstrap_results => $options{'bootstrap_results'},
     precision => $options{'precision'},
     so_filename => $options{'so_filename'},
+    use_tables => $options{'use_tables'},
+    only_include_elements => $only_include_elements,
+    exclude_elements => $exclude_elements,
 );
 
 $so->parse;

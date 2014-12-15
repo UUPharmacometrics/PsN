@@ -28,6 +28,24 @@ The number of significant digits to use for all numerical data in the standard o
 \nextopt
 \optname{bootstrap\_results}
 A PsN bootstrap\_results.csv file to use for filling the Bootstrap element.
+\nextopt
+\optname{use\_tables}
+Default set. Will use table files (sdtab and patab) to populate the elements of the SO that needs these. Use -no-use\_tables to not use any table files.
+\nextopt
+\optname{exclude\_elements}
+Set a comma separated list of simple XPaths relative the SOBlock to exclude from the SO.
+For example:
+\begin{verbatim}
+-exclude_elements=Estimation/PopulationEstimates
+\end{verbatim}
+\nextopt
+\optname{only\_include\_elements}
+Set a comma separated list of simple XPaths relative the SOBlock. These elements will be the only ones used.
+For example: 
+\begin{verbatim}
+-only_include_elements=Estimation/Likelihood
+\end{verbatim}
+\nextopt
 \end{optionlist}
 
 \section{Requirements on the model file and other files}

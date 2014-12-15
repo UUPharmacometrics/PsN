@@ -119,6 +119,66 @@ foreach $node (@nodes) {
 
 is_deeply(\%hash, \%results_hash, "pheno.lst has all elements under Estimation");
 
+# exclude_elements
+my $so = standardised_output->new(lst_files => [ "pheno.lst" ], exclude_elements => [ 'Estimation/PopulationEstimates', 'Estimation/Likelihood' ] );
+$so->parse;
+my $xpc = get_xml("pheno.SO.xml");
+
+my @nodes = $xpc->findnodes('/x:SO/x:SOBlock/x:Estimation/*');
+my %hash;
+my %results_hash = (
+    PrecisionPopulationEstimates => 1,
+    IndividualEstimates => 1,
+    Predictions => 1,
+    Residuals => 1,
+    TargetToolMessages => 1,
+);
+
+foreach $node (@nodes) {
+    $hash{$node->nodeName} = 1;
+}
+
+is_deeply(\%hash, \%results_hash, "pheno.lst with exlution has all elements under Estimation");
+
+# only_include_elements
+my $so = standardised_output->new(lst_files => [ "pheno.lst" ], only_include_elements => [ 'Estimation/PopulationEstimates', 'Estimation/Likelihood' ] );
+$so->parse;
+my $xpc = get_xml("pheno.SO.xml");
+
+my @nodes = $xpc->findnodes('/x:SO/x:SOBlock/x:Estimation/*');
+my %hash;
+my %results_hash = (
+    PopulationEstimates => 1,
+    Likelihood => 1,
+    TargetToolMessages => 1,
+);
+
+foreach $node (@nodes) {
+    $hash{$node->nodeName} = 1;
+}
+
+is_deeply(\%hash, \%results_hash, "pheno.lst with only_include_elements has all elements under Estimation");
+
+# no-use_tables
+my $so = standardised_output->new(lst_files => [ "pheno.lst" ], use_tables => 0);
+$so->parse;
+my $xpc = get_xml("pheno.SO.xml");
+
+my @nodes = $xpc->findnodes('/x:SO/x:SOBlock/x:Estimation/*');
+my %hash;
+my %results_hash = (
+    PopulationEstimates => 1,
+    PrecisionPopulationEstimates => 1,
+    Likelihood => 1,
+    TargetToolMessages => 1,
+);
+
+foreach $node (@nodes) {
+    $hash{$node->nodeName} = 1;
+}
+
+is_deeply(\%hash, \%results_hash, "pheno.lst with no-use_tables has all elements under Estimation");
+
 # pheno.lst without sdtab
 unlink("sdtab");
 my $so = standardised_output->new(lst_files => [ "pheno.lst" ]);
