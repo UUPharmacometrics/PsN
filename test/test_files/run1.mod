@@ -1,0 +1,37 @@
+;; 1. Based on: 
+;; 2. Description: Orange tree test
+;; 3. Label:
+;; x1. Author: yasunori
+
+$PROBLEM ORANGE TREE
+
+$INPUT ID TIME DV
+
+$DATA data.csv ;IGNORE=@
+
+$PRED
+ETA_1=ETA(1)*THETA(4)
+EPS_1=EPS(1)*THETA(5)
+
+IPRED=(THETA(1)+ETA_1)/(1+(THETA(2))*EXP(-(THETA(3))*TIME))
+IRES = DV-IPRED
+W = IPRED
+IF(W.EQ.0) W=1
+IWRES = IRES/W
+Y=IPRED+EPS_1
+
+$THETA 	(0 1)
+	(0 1)
+	(0 1)
+    (0.5) 
+    (0 0.1)
+
+
+$OMEGA	1 FIX
+$SIGMA	1 FIX
+
+$EST METHOD=1 INTER
+$COV
+
+$TABLE ID TIME DV ETA1 IPRED FILE=orangeTree_1 NOPRINT ONEHEADER
+

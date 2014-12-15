@@ -10,6 +10,7 @@ use includes; #file with paths to PsN packages
 my @command_line = (
 	get_command("psn") . " -nm_versions",
 	get_command("psn_options") . " -nm_version",
+    get_command("psn_clean") . " -h",
 );
 foreach my $i (0..$#command_line) {
 	my $command= $command_line[$i];
