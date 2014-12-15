@@ -790,6 +790,16 @@ sub read_answers{
 	$answer_hashes[$index]->{file}='special_mod/empty_lines.lst';
 	$answer_hashes[$index]->{parsed_successfully}=0;
 
+	$index++;
+	$answer_hashes[$index]->{file}='onePROB/multEST/firstEstTerm.lst';
+	$answer_hashes[$index]->{answers}={};
+	$answer_hashes[$index]->{parsed_successfully}=1;
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'ofv'}=-2510.8137852064342;
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'minimization_successful'}=1;
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'thetas'}=[4.47434E+01,2.23257E-01,3.27935E+00,1.42116E+02,2.32998E+00,2.43090E-02,4.69452E-01,1.79948E-01,1.07469E+01,1.00000E+00,7.44648E+00,2.10000E-02,4.42944E-01,1.24226E+02,5.00000E-01,6.41308E-02,1.12344E-02,5.48695E-01,1.96984E+00,1.01710E+00];
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'omegas'}=[1.24200E-03,0.00000E+00,5.16470E-02,0.00000E+00,0.00000E+00,9.75276E-02,0.00000E+00,0.00000E+00,0.00000E+00,1.80301E-03,0.00000E+00,0.00000E+00,0.00000E+00,0.00000E+00,9.00406E-06,0.00000E+00,0.00000E+00,0.00000E+00,0.00000E+00,0.00000E+00,1.23912E-01];
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'sigmas'}=[1.00000E+00];
+
 	return \@answer_hashes;
 }
 1;

@@ -464,8 +464,8 @@ sub _read_iteration_path
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 scan_only => { isa => 'Bool', default => 0, optional => 0 }
-	);
+							  scan_only => { isa => 'Bool', default => 0, optional => 0 }
+		);
 	my $scan_only = $parm{'scan_only'};
 
 	my $start_pos = $self->lstfile_pos;
@@ -479,21 +479,26 @@ sub _read_iteration_path
 	my $burn_in_area = 0;
 	my $burn_in_start;
 	my $burn_in_end;
+	my $read_terminated_by_obj = 1;
 
 	my $method_exp = '^ #METH:\s*(.*)';
 	my $term_exp = '^ #TERM:';
 	my $tere_exp = '^ #TERE:';
 
 	my $estprint = 1;
+
+
+
+
 	if ($self->classical_method()) {
-	  #check if iteration path output is skipped by option PRINT=0
+		#check if iteration path output is skipped by option PRINT=0
 		my @options;
 		my $rec;
 		if (defined $self->input_problem() and (defined $self->input_problem()->estimations())) {
 			$rec = $self->input_problem()->estimations()->[(scalar(@{$self->input_problem()->estimations()})-1)];
 		}
 		@options = @{$rec-> options()} if (defined $rec and defined $rec->options());
-	      
+		
 		foreach my $option ( @options ) {
 			if ( defined $option and (($option -> name eq 'PRINT') or ( index( 'PRINT', $option -> name ) == 0 ))) {
 				$estprint = $option->value();
@@ -503,33 +508,40 @@ sub _read_iteration_path
 	}
 	
 	if ($self->nm_major_version >= 7) {
-	  #If NM7 we should now be directly at right #METH line, check this
+		#If NM7 we should now be directly at right #METH line, check this
 	    $_ = @{$self->lstfile}[ $start_pos ];
 	    if( /$method_exp/ ) {
-				my $string = $1;
-				$string =~ s/\s*$//; #remove trailing spaces
-					unless (($string =~ $self->method_string) or ($string eq $self->method_string)) {
-						croak("Error in read_iteration_path: METH in subprob has string\n"."$string ".
-								"instead of expected\n" . $self->method_string);
-					}
-	    } else {
-				croak("Bug in PsN read_iteration_path. Please report this, please include lst-file.");
+			my $string = $1;
+			$string =~ s/\s*$//; #remove trailing spaces
+			unless (($string =~ $self->method_string) or ($string eq $self->method_string)) {
+				croak("Error in read_iteration_path: METH in subprob has string\n"."$string ".
+					  "instead of expected\n" . $self->method_string);
 			}
+
+			if ($string eq 'Chain Method Processing') {
+				$read_terminated_by_obj = 0;
+			} else {
+				$read_terminated_by_obj = 1;
+			}
+
+	    } else {
+			croak("Bug in PsN read_iteration_path. Please report this, please include lst-file.");
+		}
 	    #next to last METH already checked, if necessary.
 	    #scan_only is not relevant.
 	    
 	}
 
 	while ( $_ = @{$self->lstfile}[ $start_pos++ ] ) { #Large reading loop
-	  if ( /MONITORING OF SEARCH/ ) {
-	    $found_monitoring = 1;
-	  } elsif( /0HESSIAN OF POSTERIOR DENSITY IS NON-POSITIVE-DEFINITE DURING SEARCH/ ) {
-	    # This is an error that stops the execution
+		if ( /MONITORING OF SEARCH/ ) {
+			$found_monitoring = 1;
+		} elsif( /0HESSIAN OF POSTERIOR DENSITY IS NON-POSITIVE-DEFINITE DURING SEARCH/ ) {
+			# This is an error that stops the execution
 			$self -> parsing_error( message => $_);
 			$success = 1;
 			$self -> finished_parsing(1);
 			last;
-	  } elsif ( /$term_exp/ ) {
+		} elsif ( /$term_exp/ ) {
 			if ($burn_in_area){
 				if (defined $burn_in_start and defined $burn_in_end){
 					$self->burn_in_iterations(($burn_in_start-$burn_in_end));
@@ -537,193 +549,193 @@ sub _read_iteration_path
 			}
 			$success = 1 unless ($self->classical_method() and $estprint);
 			last;
-	  } elsif ( $found_monitoring and $start_pos >= scalar @{$self->lstfile} ) {
-	    # This is probably (we cannot be really sure but it is
-	    # likely) a "NONMEM black hole"-situation. We stop parsing
-	    # but do not indicate that we had problems parsing the
-	    # file.
+		} elsif ( $found_monitoring and $start_pos >= scalar @{$self->lstfile} ) {
+			# This is probably (we cannot be really sure but it is
+			# likely) a "NONMEM black hole"-situation. We stop parsing
+			# but do not indicate that we had problems parsing the
+			# file.
 
-	    $self -> parsing_error_message("Found \" MONITORING OF SEARCH:\" but no".
-					   " records of the iterations before the end".
-					   " of the output file. This is a sign of a".
-					   " \"NONMEM black hole\"-situation. We cannot ".
-					   "be 100% sure of this based on this type of".
-					   " output so please take a good look at the files\n");
-	    $self -> parsed_successfully(1);
-	    $self -> finished_parsing(1);
-	    return;
+			$self -> parsing_error_message("Found \" MONITORING OF SEARCH:\" but no".
+										   " records of the iterations before the end".
+										   " of the output file. This is a sign of a".
+										   " \"NONMEM black hole\"-situation. We cannot ".
+										   "be 100% sure of this based on this type of".
+										   " output so please take a good look at the files\n");
+			$self -> parsed_successfully(1);
+			$self -> finished_parsing(1);
+			return;
 		} elsif ($found_monitoring and ( /Burn-in Mode/ )  ) {
 			$burn_in_area = 1;
-	  } elsif ($burn_in_area and ( /^\s*Convergence achieved/ )) {
-	    $self->burn_in_convergence(1);
-	    $burn_in_area = 0;
-	    if (defined $burn_in_start and defined $burn_in_end){
-	      $self->burn_in_iterations(($burn_in_start-$burn_in_end));
-	    }
-	  } elsif ($burn_in_area and (/^\s*iteration\s*-([0-9]+)/)  ) {
-	    if (defined $burn_in_start) {
-	      $burn_in_end = $1;
-	    } else {
-	      $burn_in_start = $1;
-	    }
-	  } elsif ($burn_in_area and (not (/^\s*iteration/)) ) {
-	    $burn_in_area = 0;
-	    if (defined $burn_in_start and defined $burn_in_end) {
-	      $self->burn_in_iterations(($burn_in_start-$burn_in_end));
-	    }
-	  }
+		} elsif ($burn_in_area and ( /^\s*Convergence achieved/ )) {
+			$self->burn_in_convergence(1);
+			$burn_in_area = 0;
+			if (defined $burn_in_start and defined $burn_in_end){
+				$self->burn_in_iterations(($burn_in_start-$burn_in_end));
+			}
+		} elsif ($burn_in_area and (/^\s*iteration\s*-([0-9]+)/)  ) {
+			if (defined $burn_in_start) {
+				$burn_in_end = $1;
+			} else {
+				$burn_in_start = $1;
+			}
+		} elsif ($burn_in_area and (not (/^\s*iteration/)) ) {
+			$burn_in_area = 0;
+			if (defined $burn_in_start and defined $burn_in_end) {
+				$self->burn_in_iterations(($burn_in_start-$burn_in_end));
+			}
+		}
 
 	    
-	  if ( /0PROGRAM TERMINATED BY OBJ/ ) {
-	    # This is an error message which terminates NONMEM. We
-	    # return after reading the minimization message
-	    $self -> minimization_successful(0);
-	    $self -> finished_parsing(1);
-	    $self -> _read_minimization_message();
-	    return;
-	  }	    
+		if ( $read_terminated_by_obj and /0PROGRAM TERMINATED BY OBJ/ ) {
+			# This is an error message which terminates NONMEM. We
+			# return after reading the minimization message
+			$self -> minimization_successful(0);
+			$self -> finished_parsing(1);
+			$self -> _read_minimization_message();
+			return;
+		}	    
 
-	  if (/^0ITERATION NO/) {
+		if (/^0ITERATION NO/) {
 			unless (/0ITERATION NO\.:\s+(\d+)\s+OBJECTIVE VALUE:\s+(\S+)\s+NO\. OF FUNC\. EVALS\.:\s*(.+)/) {
 				$self -> parsing_error( message => "Error in reading iteration path!\n$!" );
 				return;
 			}
-	    $success = 1;
+			$success = 1;
 			$self->iternum([]) unless defined $self->iternum;
-	    push(@{$self->iternum}, $1);
+			push(@{$self->iternum}, $1);
 
-	    my $ofvpath = $2;
-	    unless( $ofvpath eq '**' ) { # If funcion evals are more than 10000, NONMEM will print out two stars.
+			my $ofvpath = $2;
+			unless( $ofvpath eq '**' ) { # If funcion evals are more than 10000, NONMEM will print out two stars.
 				$self->ofvpath([]) unless defined $self->ofvpath;
 				push(@{$self->ofvpath}, $ofvpath );
-	    } # If, in fact, we find stars, the number of evaluations are calculated below
+			} # If, in fact, we find stars, the number of evaluations are calculated below
 
-	    my (@parameter_vector, @gradient_vector) = ((), ());
-	    my @numsigdig_vector;
-	    
-	    while ( $_ = @{$self->lstfile}[ $start_pos ] ) {
-	      if (/^ CUMULATIVE NO\. OF FUNC\. EVALS\.:\s*(\d+)/) {
+			my (@parameter_vector, @gradient_vector) = ((), ());
+			my @numsigdig_vector;
+			
+			while ( $_ = @{$self->lstfile}[ $start_pos ] ) {
+				if (/^ CUMULATIVE NO\. OF FUNC\. EVALS\.:\s*(\d+)/) {
 					my $eval_path = $1; 
-		
+					
 					if( $ofvpath eq '**' ) {
 						my $ofvpath = $eval_path - $cumulative_evals;
 						$cumulative_evals = $eval_path;
 						carp("Calculated eval_path = $ofvpath" );
 						$self->ofvpath([]) unless defined $self->ofvpath;
 						push(@{$self->ofvpath}, $ofvpath );
-		}
+					}
 
-		$self->funcevalpath([]) unless defined $self->funcevalpath;
-		push(@{$self->funcevalpath}, $eval_path);
+					$self->funcevalpath([]) unless defined $self->funcevalpath;
+					push(@{$self->funcevalpath}, $eval_path);
 
-		if (/RESET HESSIAN, TYPE (\w+)/) {
-		  $hessian_reset++;
-		}
+					if (/RESET HESSIAN, TYPE (\w+)/) {
+						$hessian_reset++;
+					}
 
-		$start_pos++;
-	      } elsif ( s/^ PARAMETER:\s*// ) {
-		do {
-		  push(@parameter_vector, split);
-		  $_ = @{$self->lstfile}[ ++$start_pos ];
-		  if( $start_pos >= scalar @{$self->lstfile} ) {
-		    $self -> parsing_error( message => "Error in reading iteration path!\nEOF found\n" );
-		    return;
-		  }
-		} while ( not /^ GRADIENT:\s*/ );
-	      } elsif (s/^ GRADIENT:\s*//) {
-		do {
-		  push(@gradient_vector, split);
-		  $_ = @{$self->lstfile}[ ++$start_pos ];
-		  if( $start_pos >= scalar @{$self->lstfile} ) {
-		    $self -> parsing_error( message => "Error in reading iteration path!\nEOF found\n" );
-		    return;
-		  }
-		} while ( not /[a-zA-DF-X]/ ); #not #TERM either
-	      } elsif (s/^ NUMSIGDIG:\s*//) {
-	        do {
-		  push(@numsigdig_vector, split);
-		  $_ = @{$self->lstfile}[ ++$start_pos ];
-		  if( $start_pos >= scalar @{$self->lstfile} ) {
-		    $self -> parsing_error( message => "Error in reading iteration path!\nEOF found\n" );
-		    return;
-		  }
-		} while ( not /[a-zA-DF-X]/ ); #not #TERM either
-	      } elsif (s/^ NPARAMETR:\s*//) {
-	        do {
-		  $_ = @{$self->lstfile}[ ++$start_pos ];
-		  if( $start_pos >= scalar @{$self->lstfile} ) {
-		    $self -> parsing_error( message => "Error in reading iteration path!\nEOF found\n" );
-		    return;
-		  }
-		} while ( not /[a-zA-DF-X]/ ); #not #TERM either
-	      } else {
-		last;
-	      }
-	    } #end of inner reading loop for ITERATION
+					$start_pos++;
+				} elsif ( s/^ PARAMETER:\s*// ) {
+					do {
+						push(@parameter_vector, split);
+						$_ = @{$self->lstfile}[ ++$start_pos ];
+						if( $start_pos >= scalar @{$self->lstfile} ) {
+							$self -> parsing_error( message => "Error in reading iteration path!\nEOF found\n" );
+							return;
+						}
+					} while ( not /^ GRADIENT:\s*/ );
+				} elsif (s/^ GRADIENT:\s*//) {
+					do {
+						push(@gradient_vector, split);
+						$_ = @{$self->lstfile}[ ++$start_pos ];
+						if( $start_pos >= scalar @{$self->lstfile} ) {
+							$self -> parsing_error( message => "Error in reading iteration path!\nEOF found\n" );
+							return;
+						}
+					} while ( not /[a-zA-DF-X]/ ); #not #TERM either
+				} elsif (s/^ NUMSIGDIG:\s*//) {
+					do {
+						push(@numsigdig_vector, split);
+						$_ = @{$self->lstfile}[ ++$start_pos ];
+						if( $start_pos >= scalar @{$self->lstfile} ) {
+							$self -> parsing_error( message => "Error in reading iteration path!\nEOF found\n" );
+							return;
+						}
+					} while ( not /[a-zA-DF-X]/ ); #not #TERM either
+				} elsif (s/^ NPARAMETR:\s*//) {
+					do {
+						$_ = @{$self->lstfile}[ ++$start_pos ];
+						if( $start_pos >= scalar @{$self->lstfile} ) {
+							$self -> parsing_error( message => "Error in reading iteration path!\nEOF found\n" );
+							return;
+						}
+					} while ( not /[a-zA-DF-X]/ ); #not #TERM either
+				} else {
+					last;
+				}
+			} #end of inner reading loop for ITERATION
 
-	    foreach my $grad ( @gradient_vector ) {
-	      $zero_gradients++ if ($grad == 0);
-	    }
-	    $self->initgrad(\@gradient_vector) unless ($self->initgrad);
-	    $self->final_gradients(\@gradient_vector);
-	    $self->finalparam(\@parameter_vector);
-	    push(@parameter_vectors, \@parameter_vector);
-	    push(@gradient_vectors, \@gradient_vector);
-	    $self->parameter_significant_digits(\@numsigdig_vector) if scalar @numsigdig_vector;
-
-	    if ( /0HESSIAN OF POSTERIOR DENSITY IS NON-POSITIVE-DEFINITE DURING SEARCH/ ) {
-	      # This is an errror that stops the execution
-	      $self -> parsing_error( message => $_);
-	      $self -> finished_parsing(1);
-	      last;
+			foreach my $grad ( @gradient_vector ) {
+				$zero_gradients++ if ($grad == 0);
 			}
-	    last unless(/^0ITERATION NO/);
-	  }			#End of if iteration no
+			$self->initgrad(\@gradient_vector) unless ($self->initgrad);
+			$self->final_gradients(\@gradient_vector);
+			$self->finalparam(\@parameter_vector);
+			push(@parameter_vectors, \@parameter_vector);
+			push(@gradient_vectors, \@gradient_vector);
+			$self->parameter_significant_digits(\@numsigdig_vector) if scalar @numsigdig_vector;
+
+			if ( /0HESSIAN OF POSTERIOR DENSITY IS NON-POSITIVE-DEFINITE DURING SEARCH/ ) {
+				# This is an errror that stops the execution
+				$self -> parsing_error( message => $_);
+				$self -> finished_parsing(1);
+				last;
+			}
+			last unless(/^0ITERATION NO/);
+		}			#End of if iteration no
 	}			#End of large reading loop
     
 
 	unless ( $self -> finished_parsing() ) {
-	  my ($kill_found, $file_end, $kill_message, $search_pos) = (0, 0, "", $start_pos);
-	  while ( $_ = @{$self->lstfile}[ $search_pos++ ] ) { #Have a look, a few lines down...
-	    if( /kill/i ) {
-	      $kill_found = 1;
-	      $kill_message = $_;
-	      last;
-	    }
-	    if( $search_pos + 1 == scalar @{$self->lstfile} ) {
-	      $file_end = 1;
-	      $search_pos = $start_pos + 4;
-	    }
-	    last if( $search_pos > $start_pos + 3 )
-	  }
-	  if (($kill_found == 1) or $file_end) { #Crash before last iteration
-	    my $errstr = $kill_found ? "NONMEM killed" : "EOF found\n";
-	    $self -> parsing_error( message => "Error in reading iteration path!\n$errstr" );
-	    return;
-	  }
+		my ($kill_found, $file_end, $kill_message, $search_pos) = (0, 0, "", $start_pos);
+		while ( $_ = @{$self->lstfile}[ $search_pos++ ] ) { #Have a look, a few lines down...
+			if( /kill/i ) {
+				$kill_found = 1;
+				$kill_message = $_;
+				last;
+			}
+			if( $search_pos + 1 == scalar @{$self->lstfile} ) {
+				$file_end = 1;
+				$search_pos = $start_pos + 4;
+			}
+			last if( $search_pos > $start_pos + 3 )
+		}
+		if (($kill_found == 1) or $file_end) { #Crash before last iteration
+			my $errstr = $kill_found ? "NONMEM killed" : "EOF found\n";
+			$self -> parsing_error( message => "Error in reading iteration path!\n$errstr" );
+			return;
+		}
 	}
     
 	unless ( $success ) {
-	  unless ($self->nm_major_version < 7) {
-	    my $mes= "Did not find expected information under METH: ".$self->method_string()." number ".$self->method_number()."\n" ;
-	    print $mes."\n" unless $self->ignore_missing_files;
-	    $self -> parsing_error( message =>$mes  );
-	    return;
-	  }
-	  carp("rewinding to first position..." );
+		unless ($self->nm_major_version < 7) {
+			my $mes= "Did not find expected information under METH: ".$self->method_string()." number ".$self->method_number()."\n" ;
+			print $mes."\n" unless $self->ignore_missing_files;
+			$self -> parsing_error( message =>$mes  );
+			return;
+		}
+		carp("rewinding to first position..." );
 	} else {
-	  $self->lstfile_pos($start_pos);
-	  if ($self->classical_method() and $estprint) {
-	    $self->parameter_path(\@parameter_vectors);
-	    $self->gradient_path(\@gradient_vectors);
-	    $self->zero_gradients($zero_gradients);
-	    my $final_zero_gradients = 0;
-	    foreach my $grad ( @{$self->final_gradients} ) {
-	      $final_zero_gradients++ if $grad == 0;
-	    }
-	    $self->final_zero_gradients($final_zero_gradients);
-	    $self->hessian_reset($hessian_reset);
-	  }
+		$self->lstfile_pos($start_pos);
+		if ($self->classical_method() and $estprint) {
+			$self->parameter_path(\@parameter_vectors);
+			$self->gradient_path(\@gradient_vectors);
+			$self->zero_gradients($zero_gradients);
+			my $final_zero_gradients = 0;
+			foreach my $grad ( @{$self->final_gradients} ) {
+				$final_zero_gradients++ if $grad == 0;
+			}
+			$self->final_zero_gradients($final_zero_gradients);
+			$self->hessian_reset($hessian_reset);
+		}
 	}
 }
 
@@ -731,8 +743,8 @@ sub _scan_to_meth
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 scan_only => { isa => 'Bool', default => 0, optional => 0 }
-	);
+							  scan_only => { isa => 'Bool', default => 0, optional => 0 }
+		);
 	my $scan_only = $parm{'scan_only'};
 
 	my $start_pos = $self->lstfile_pos;
@@ -777,12 +789,18 @@ sub _scan_to_meth
 					 and $check_next_to_last_method) {
 				$found_next_to_last_method = 1;
 			}
-	    } elsif( /0HESSIAN OF POSTERIOR DENSITY IS NON-POSITIVE-DEFINITE DURING SEARCH/ ) {
-			# This is an error that stops the execution
-			$self->finished_parsing(1);
+	    } elsif ((not $found_any_meth) and $self->simulationstep and /\(EVALUATION\)/ ) {
+			#when simulation step sometimes no meth printed, do not look for it
+			$self->estimation_step_run(0);
 			last;
-	    } elsif ( /$term_exp/ ) {
-			if ($found_next_to_last_method) {
+	    } elsif ((not $found_any_meth) and $self->simulationstep and /$objt_exp/ ) {
+			#when simulation step sometimes no meth printed, do not look for it
+			#this is fishy, but do not bail out yet
+			$start_pos = $start_pos - 2; #leave at name of est meth line
+			$self->estimation_step_run(0);
+			last;
+	    } elsif ($found_next_to_last_method and (not defined $self -> next_to_last_step_successful)) {
+			if ( /$term_exp/ ) {
 				#inner loop to find termination status of next to last step
 				while ( $_ = @{$self->lstfile}[ $start_pos ] ) {
 					if ( /$tere_exp/ ) {
@@ -833,29 +851,14 @@ sub _scan_to_meth
 					}
 
 				}
+			}elsif ( $read_terminated_by_obj and /0PROGRAM TERMINATED BY OBJ/ ) {
+				# This is an error message which terminates the step
+				$self -> next_to_last_step_successful(0);
+			}elsif( /0HESSIAN OF POSTERIOR DENSITY IS NON-POSITIVE-DEFINITE DURING SEARCH/ ) {
+				# This is an errror that stops the execution
+				$self -> next_to_last_step_successful(0);
 			}
-	    }elsif ( $read_terminated_by_obj and /0PROGRAM TERMINATED BY OBJ/ ) {
-			# This is an error message which terminates NONMEM. We
-			# return after reading the minimization message
-			$self -> minimization_successful(0);
-			$self -> finished_parsing(1);
-			$self -> _read_minimization_message();
-			last;
-	    }elsif( /0HESSIAN OF POSTERIOR DENSITY IS NON-POSITIVE-DEFINITE DURING SEARCH/ ) {
-			# This is an errror that stops the execution
-			$self -> finished_parsing(1);
-			last;
-	    } elsif ((not $found_any_meth) and $self->simulationstep and /\(EVALUATION\)/ ) {
-			#when simulation step sometimes no meth printed, do not look for it
-			$self->estimation_step_run(0);
-			last;
-	    } elsif ((not $found_any_meth) and $self->simulationstep and /$objt_exp/ ) {
-			#when simulation step sometimes no meth printed, do not look for it
-			#this is fishy, but do not bail out yet
-			$start_pos = $start_pos - 2; #leave at name of est meth line
-			$self->estimation_step_run(0);
-			last;
-	    }
+		}
 
 	    if( $start_pos > $#{$self->lstfile} ) { #we found end of file
 			#EOF This should not happen, raise error
@@ -1237,143 +1240,143 @@ sub _read_term
 	$self -> minimization_successful(0);
 
 	if (defined $self->next_to_last_step_successful) {
-	  $self -> minimization_successful($self->next_to_last_step_successful);
-	  $no_check_minim = 1;
+		$self -> minimization_successful($self->next_to_last_step_successful);
+		$no_check_minim = 1;
 	}
 	
 
 	while ( $_ = @{$self->lstfile}[ $start_pos++ ] ) {
-	  $self->s_matrix_singular(1) if ( /^0S MATRIX ALGORITHMICALLY SINGULAR/ );
-	  if ( /^0R MATRIX ALGORITHMICALLY SINGULAR/ or 
-	       /^0S MATRIX ALGORITHMICALLY SINGULAR/ ) {
-	    $self -> covariance_step_warnings(1);
-	    next;
-	  }
-	  if ( /^0ESTIMATE OF THETA IS NEAR THE BOUNDARY AND/ or
-	       /0PARAMETER ESTIMATE IS NEAR ITS BOUNDARY/ ) {
-	    $self -> estimate_near_boundary(1);
-	    next;
-	  }
-	  if ( /ROUNDING ERRORS/ ) {
-	    $self -> rounding_errors(1);
-	    next;
-	  }
-	  if ( /0COVARIANCE STEP ABORTED/ ) {
-	    $self -> covariance_step_run(0); #this reset of covariance_step_run will not be visible to access_any in output.pm,
-		#since covariance_step_run also defined on problem level. This reset only used for parsing purposes locally in subproblem.pm
-	    next;
-	  }
+		$self->s_matrix_singular(1) if ( /^0S MATRIX ALGORITHMICALLY SINGULAR/ );
+		if ( /^0R MATRIX ALGORITHMICALLY SINGULAR/ or 
+			 /^0S MATRIX ALGORITHMICALLY SINGULAR/ ) {
+			$self -> covariance_step_warnings(1);
+			next;
+		}
+		if ( /^0ESTIMATE OF THETA IS NEAR THE BOUNDARY AND/ or
+			 /0PARAMETER ESTIMATE IS NEAR ITS BOUNDARY/ ) {
+			$self -> estimate_near_boundary(1);
+			next;
+		}
+		if ( /ROUNDING ERRORS/ ) {
+			$self -> rounding_errors(1);
+			next;
+		}
+		if ( /0COVARIANCE STEP ABORTED/ ) {
+			$self -> covariance_step_run(0); #this reset of covariance_step_run will not be visible to access_any in output.pm,
+			#since covariance_step_run also defined on problem level. This reset only used for parsing purposes locally in subproblem.pm
+			next;
+		}
 
-	  if ( / THIS MUST BE ADDRESSED BEFORE THE COVARIANCE STEP CAN BE IMPLEMENTED/ ) {
-	    $self -> covariance_step_run(0);
-	  }
+		if ( / THIS MUST BE ADDRESSED BEFORE THE COVARIANCE STEP CAN BE IMPLEMENTED/ ) {
+			$self -> covariance_step_run(0);
+		}
 
-          # "0ERROR RMATX-  1" should (if it exists) occur after the minim. succ message
-          if ( /0ERROR RMATX-  1/ ) {
+		# "0ERROR RMATX-  1" should (if it exists) occur after the minim. succ message
+		if ( /0ERROR RMATX-  1/ ) {
             $self -> minimization_successful(0);
-						next;
-          }
+			next;
+		}
 
-	  if ( /^0MINIMIZATION SUCCESSFUL/ ) {
-	    $self -> minimization_successful(1);
-	    $success = 1;
-	    $self->lstfile_pos($start_pos - 1);
-	    next;
-	  }
+		if ( /^0MINIMIZATION SUCCESSFUL/ ) {
+			$self -> minimization_successful(1);
+			$success = 1;
+			$self->lstfile_pos($start_pos - 1);
+			next;
+		}
 
-	  if ( /(PORTION|OPTIMIZATION|BURN-IN|EXPECTATION ONLY PROCESS)( WAS | )NOT COMPLETED/ ) {
-	    if ( /USER INTERRUPT/ ) {
-	      $self -> minimization_successful(1) unless ($found_fail or $no_check_minim );
-	    } else {
-	      $self -> minimization_successful(0) unless ($no_check_minim);
-	      $found_fail = 1;
-	    }
-	    $self->lstfile_pos($start_pos - 1) unless ($success);
-	    $success = 1;
-	    next;
-	  }
-	  if ( /(PORTION|OPTIMIZATION|BURN-IN|EXPECTATION ONLY PROCESS)( WAS | )NOT TESTED/ ) {
-	    $self -> minimization_successful(1) unless ($found_fail or $no_check_minim );
-	    $self->lstfile_pos($start_pos - 1) unless ($success);
-	    $success = 1;
-	    next;
-	  }
-	  if ( /(PORTION|OPTIMIZATION|BURN-IN|EXPECTATION ONLY PROCESS)( WAS | )COMPLETED/ ) {
-	    $self -> minimization_successful(1) unless ($found_fail or $no_check_minim );
-	    $self->lstfile_pos($start_pos - 1) unless ($success);
-	    $success = 1;
-	    next;
-	  }
+		if ( /(PORTION|OPTIMIZATION|BURN-IN|EXPECTATION ONLY PROCESS)( WAS | )NOT COMPLETED/ ) {
+			if ( /USER INTERRUPT/ ) {
+				$self -> minimization_successful(1) unless ($found_fail or $no_check_minim );
+			} else {
+				$self -> minimization_successful(0) unless ($no_check_minim);
+				$found_fail = 1;
+			}
+			$self->lstfile_pos($start_pos - 1) unless ($success);
+			$success = 1;
+			next;
+		}
+		if ( /(PORTION|OPTIMIZATION|BURN-IN|EXPECTATION ONLY PROCESS)( WAS | )NOT TESTED/ ) {
+			$self -> minimization_successful(1) unless ($found_fail or $no_check_minim );
+			$self->lstfile_pos($start_pos - 1) unless ($success);
+			$success = 1;
+			next;
+		}
+		if ( /(PORTION|OPTIMIZATION|BURN-IN|EXPECTATION ONLY PROCESS)( WAS | )COMPLETED/ ) {
+			$self -> minimization_successful(1) unless ($found_fail or $no_check_minim );
+			$self->lstfile_pos($start_pos - 1) unless ($success);
+			$success = 1;
+			next;
+		}
 
-	  if ( /^0MINIMIZATION TERMINATED/ ) {
-	    $self -> minimization_successful(0);
-	    $self -> covariance_step_run(0);
-	    $self->lstfile_pos($start_pos - 1) unless ($success);
-	    $success = 1;
-	    next;
-	  }
+		if ( /^0MINIMIZATION TERMINATED/ ) {
+			$self -> minimization_successful(0);
+			$self -> covariance_step_run(0);
+			$self->lstfile_pos($start_pos - 1) unless ($success);
+			$success = 1;
+			next;
+		}
 
-	  if ( /^0SEARCH WITH ESTIMATION STEP WILL NOT PROCEED/ ) {
-	    $self -> minimization_successful(0);
-	    $self -> covariance_step_run(0);
-	    $success = 1;
-	    $self -> finished_parsing(1);
-	    return;
-	  }
+		if ( /^0SEARCH WITH ESTIMATION STEP WILL NOT PROCEED/ ) {
+			$self -> minimization_successful(0);
+			$self -> covariance_step_run(0);
+			$success = 1;
+			$self -> finished_parsing(1);
+			return;
+		}
 
-	  if ( /0PRED EXIT CODE = 1/ ) {
-	    # This is an error message but the severity of it depends
-	    # on the origin of it
-	    $pred_exit_code = 1;
-	    next;
-	  }
+		if ( /0PRED EXIT CODE = 1/ ) {
+			# This is an error message but the severity of it depends
+			# on the origin of it
+			$pred_exit_code = 1;
+			next;
+		}
 
-	  if ( $pred_exit_code and 
-	       /MESSAGE ISSUED FROM SIMULATION STEP/ ) {
+		if ( $pred_exit_code and 
+			 /MESSAGE ISSUED FROM SIMULATION STEP/ ) {
 
-	    # These are probably not needed if we match the sim. step string above
+			# These are probably not needed if we match the sim. step string above
 #		 /ERROR IN TRANS4 ROUTINE: (.*)  IS ZERO/ or
 #	         /ERROR IN TRANS4 ROUTINE: (.*)  IS NEGATIVE/ ) ) {
 
-	    # This is an error message which terminates NONMEM. We
-	    # return after reading the minimization message
-	    $self -> minimization_successful(0);
-	    $self -> finished_parsing(1);
-	    $self -> _read_minimization_message();
-	    return;
-	  }
+			# This is an error message which terminates NONMEM. We
+			# return after reading the minimization message
+			$self -> minimization_successful(0);
+			$self -> finished_parsing(1);
+			$self -> _read_minimization_message();
+			return;
+		}
 
-	  if ( /0PROGRAM TERMINATED BY OBJ/ ) {
-	    # This is an error message which terminates NONMEM. 
-	      #unless it was from the COVARIANCE step. If $success already true
-	      #assume it was covstep
-	      #We
-	    # return after reading the minimization message
-	      unless ($success){
-		  $self -> minimization_successful(0);
-		  $self -> finished_parsing(1);
-		  $self -> _read_minimization_message();
-		  return;
-	      }
-	  }	    
+		if ( /0PROGRAM TERMINATED BY OBJ/ ) {
+			# This is an error message which terminates NONMEM. 
+			#unless it was from the COVARIANCE step. If $success already true
+			#assume it was covstep
+			#We
+			# return after reading the minimization message
+			unless ($success){
+				$self -> minimization_successful(0);
+				$self -> finished_parsing(1);
+				$self -> _read_minimization_message();
+				return;
+			}
+		}	    
 
-	  if ( /MINIMUM VALUE OF OBJECTIVE FUNCTION/ ) {
-	    carp("Hmmm, reached the OFV area" );
-	    last;
-	  }
-	  if ( /$obj_exp/ ) {
-	    last;
-	  }
+		if ( /MINIMUM VALUE OF OBJECTIVE FUNCTION/ ) {
+			carp("Hmmm, reached the OFV area" );
+			last;
+		}
+		if ( /$obj_exp/ ) {
+			last;
+		}
 	}
 	if ($success) {
-	  carp("Found a minimization statement" );
-	  $self -> _read_minimization_message();
-	  $self -> _read_eval()                 if ($self -> parsed_successfully() and $self->classical_method());
-	  $self -> _read_significant_digits()   if ($self -> parsed_successfully() and $self->classical_method());
+		carp("Found a minimization statement" );
+		$self -> _read_minimization_message();
+		$self -> _read_eval()                 if ($self -> parsed_successfully() and $self->classical_method());
+		$self -> _read_significant_digits()   if ($self -> parsed_successfully() and $self->classical_method());
 	} else {
-	  carp("No minimization/termination statement found" ); #Back to starting line
-	  $self -> parsing_error( message => "Error in reading minim/term statement!\n$!" );
-	  return;
+		carp("No minimization/termination statement found" ); #Back to starting line
+		$self -> parsing_error( message => "Error in reading minim/term statement!\n$!" );
+		return;
 	}
 }
 
