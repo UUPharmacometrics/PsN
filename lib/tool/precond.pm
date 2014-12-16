@@ -73,6 +73,8 @@ sub modelfit_analyze
 {
     my $self = shift;
 
+    my $output = $self->_repara_model->outputs->[0];
+
     my $filename = $self->_repara_model->filename;
     $filename =~ s/\.mod$/.cov/;
     my $cov_filename = 'm1/' . $filename;
@@ -81,19 +83,23 @@ sub modelfit_analyze
 	$model_filename =~ s/(\.ctl|\.mod)$//;
     my $result_cov = $model_filename . '.cov';
 
-    my $cov_matrix = convert_reparametrized_cov(
-        cov_filename => $cov_filename,
-        model => $self->precond_model,
-        precond_matrix => $self->precond_matrix,
-        output_filename => $result_cov,
-    );
+    my $cov_matrix;
+    if ($output->covariance_step_run->[0] and $output->covariance_step_successful->[0][0]) {
+        $cov_matrix = convert_reparametrized_cov(
+            cov_filename => $cov_filename,
+            model => $self->precond_model,
+            precond_matrix => $self->precond_matrix,
+            output_filename => $result_cov,
+        );
+    } else {
+        croak("Covariance step failed or was not run");
+    }
 
     if ($self->nm_output =~ /(^|,)cov(,|$)/) {
         copy($result_cov, "..");
     }
 
     if ($self->_repara_model->is_run) {
-        my $output = $self->_repara_model->outputs->[0];
 
         my $copy = $self->precond_model->copy(
             filename => 'updated_model.mod',
