@@ -875,12 +875,13 @@ sub _read_subproblems
 					1;
 				}
 				#end for NM7
+				$self->input_problem->set_estimated_parameters_hash() if (defined $self->input_problem);
 
 				$self->add_subproblem('init_data' => {
 						lstfile      							 => \@subproblem_lstfile,
 						ignore_missing_files       => $self -> {'ignore_missing_files'},
 						input_problem              => $self->input_problem(),
-						nm_output_files						 => { 'raw' => $subprob{'raw'}, 'cov' => $subprob{'cov'}, 'cor' => $subprob{'cor'}, 'coi' => $subprob{'coi'}, 'phi' => $subprob{'phi'} },
+						nm_output_files			   => { 'raw' => $subprob{'raw'}, 'cov' => $subprob{'cov'}, 'cor' => $subprob{'cor'}, 'coi' => $subprob{'coi'}, 'phi' => $subprob{'phi'} },
 						method_string              => $last_method_string,
 						classical_method           => $classical_method,
 						nm_major_version           => $self -> nm_major_version(),

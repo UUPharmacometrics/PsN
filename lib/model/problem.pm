@@ -185,6 +185,7 @@ has 'eta_shrinkage_table' => ( is => 'rw', isa => 'Str' );
 has 'own_print_order' => ( is => 'rw', isa => 'Maybe[ArrayRef]' );
 has 'record_order' => ( is => 'rw', isa => 'model::problem::record_order' );
 has 'psn_print_order' => ( is => 'rw', isa => 'Bool', default => 0 );               # Set to use the internal print order otherwise preserve the used order
+has 'estimated_parameters_hash' => ( is => 'rw', isa => 'HashRef' );
 
 sub BUILD
 {
@@ -2544,6 +2545,124 @@ sub create_print_order
     }
 }
 
+sub set_estimated_parameters_hash
+{
+	#filter out fix and same and prior and off-diagonal zeros, return hash describing what is actually estimated
+    my $self = shift;
+	my %parm = validated_hash(\@_,
+							  coordvalhash => { isa => 'HashRef', optional => 1 },
+		);
+	my $coordvalhash=$parm{'coordvalhash'};
+
+	my %hash;
+
+	my $updating = 0;
+
+	if (defined $self->estimated_parameters_hash and 
+		defined $self->estimated_parameters_hash->{'filtered_coordinate_strings'}
+		and scalar(@{$self->estimated_parameters_hash->{'filtered_coordinate_strings'}})>0 ){
+		#we are updating existing hash
+		%hash = %{$self->estimated_parameters_hash};
+		$updating = 1;
+	}else{
+		$hash{'filtered_labels'}=[];
+		$hash{'filtered_coords'}=[];
+		$hash{'filtered_coordinate_strings'}=[];
+		$hash{'block_number'}=[];
+		$hash{'lower_bounds'}=[];
+		$hash{'upper_bounds'}=[];
+		$hash{'param'}=[];
+	}
+
+	if (defined $coordvalhash and defined $coordvalhash->{'theta'}){
+		#should be all or nothing here
+		$hash{'filtered_values'}=[];
+	}else{
+		$hash{'filtered_values'}=undef;
+	}
+
+
+
+	unless ($updating ){
+		foreach my $param ('theta','omega','sigma'){
+			my $block_number=0;
+			my $block_count=0;
+			my $accessor=$param.'s';
+			my @records;
+			if (defined $self -> $accessor) {
+				@records = @{$self -> $accessor};
+			}
+			next unless (scalar(@records) > 0); #no parameter in this problem
+
+			foreach my $record (@records){
+				if  ($record->same() or $record->fix() or $record->prior()) {
+					next;
+				}
+				unless (defined $record -> options()) {
+					croak("$param record has no values in get_estimated_parameters");
+				}
+				if (($param ne 'theta') and ($record->type eq 'BLOCK')){
+					$block_count++;
+					$block_number = $block_count;
+				}else{
+					$block_number = 0;
+				}
+				foreach my $option (@{$record -> options()}) {
+					if ($option->fix() or $option->prior()) {
+						next;
+					}
+					if ($param eq 'theta'){
+						my $lobnd = $option ->lobnd();
+						$lobnd = -1000000 unless (defined $lobnd);
+						push(@{$hash{'lower_bounds'}},$lobnd);
+						my $upbnd = $option ->upbnd();
+						$upbnd = 1000000 unless (defined $upbnd);
+						push(@{$hash{'upper_bounds'}},$upbnd);
+					}else{
+						if ($option -> on_diagonal()){
+							push(@{$hash{'lower_bounds'}},0);
+							push(@{$hash{'upper_bounds'}},1000000);
+						}else{	 
+							if ($option->init() == 0) {
+								#do not check off-diagonal zeros
+								next;
+							}else{
+								#we handle these with Cholesky
+								push(@{$hash{'lower_bounds'}},-1000000);
+								push(@{$hash{'upper_bounds'}},1000000);
+							}
+						}
+					}
+					my $coord = $option -> coordinate_string();
+					my $name = $coord;
+					if (defined $option ->label()) {
+						$name = $option ->label();
+					}
+					push(@{$hash{'filtered_labels'}},$name);
+					push(@{$hash{'filtered_coordinate_strings'}},$coord);
+					push(@{$hash{'param'}},$param);
+					push(@{$hash{'block_number'}},$block_number);
+					$coord =~ /(\d+,?\d*)/;
+					push(@{$hash{'filtered_coords'}},$1);
+
+				}
+			}
+		}
+	}
+
+	if (defined $coordvalhash and defined $coordvalhash->{'theta'}){
+		for (my $i=0; $i< scalar(@{$hash{'param'}}); $i++){
+			my $param = $hash{'param'}->[$i];
+			my $coord = $hash{'filtered_coordinate_strings'}->[$i];
+			my $value = $coordvalhash->{$param}->{$coord};
+			croak("No estimate for $param $coord") unless (defined $value);
+			push(@{$hash{'filtered_values'}},$value);
+		}
+	}
+
+
+	$self->estimated_parameters_hash(\%hash);
+}
 
 no Moose;
 __PACKAGE__->meta->make_immutable;

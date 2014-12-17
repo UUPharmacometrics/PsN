@@ -40,7 +40,8 @@ my ($success,$matrix_array_ref,$index_order_ref,$header_labels_ref) =
 														 have_omegas => 1,
 														 have_sigmas => 1,
 														 method_string => 'First Order Conditional Estimation',
-														 skip_labels_matrix => ' SIGMA(1,1)  OMEGA(2,1)  OMEGA(3,1)',
+														 keep_labels_hash => { 'THETA1'=> 1,'THETA2'=> 1,'THETA3'=> 1,'THETA4'=> 1,'THETA5'=> 1, 
+																			   'OMEGA(1,1)'=> 1,'OMEGA(2,2)'=> 1,'OMEGA(3,2)'=> 1,'OMEGA(3,3)'=> 1},
 														 type => 'cor',
 														 tableref => \@lines);
 is ($success,1,'mox_sir_block2.cor success');
@@ -73,7 +74,8 @@ my ($success,$matrix_array_ref,$index_order_ref,$header_labels_ref) =
 														 have_omegas => 1,
 														 have_sigmas => 1,
 														 method_string => 'Objective Function Evaluation by Importance Sampling',
-														 skip_labels_matrix => ' OMEGA(3,1)   OMEGA(3,2) OMEGA(4,1)   OMEGA(4,2)   OMEGA(4,3)   OMEGA(4,4)',
+														 keep_labels_hash => {'THETA1'=>1,'THETA2'=>1,'THETA3'=>1,'THETA4'=>1,'SIGMA(1,1)'=>1,
+																			  'OMEGA(1,1)'=>1,'OMEGA(2,1)'=>1,'OMEGA(2,2)'=>1,'OMEGA(3,3)'=>1},
 														 type => 'cor',
 														 tableref => \@lines);
 is ($success,1,'anneal2_V7_30_beta.cor success');
@@ -93,7 +95,6 @@ my ($success,$matrix_array_ref,$index_order_ref,$header_labels_ref) =
 														 have_omegas => 1,
 														 have_sigmas => 1,
 														 method_string => ' ',
-														 skip_labels_matrix => ' ',
 														 type => 'cov',
 														 tableref => \@lines);
 is ($success,1,'mox_sir.cov userclean success');

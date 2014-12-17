@@ -147,14 +147,20 @@ sub modelfit_setup
 
 	if (defined $self->covmat_input){
 		#read user matrix and invert here
+		#use keep_labels_hash from input model problem
+		my %keep_labels_hash;
+		foreach my $coord (@{$parameter_hash->{'filtered_coordinate_strings'}}){
+			$keep_labels_hash{$coord}=1;
+		}
+
 		my @lines = OSspecific::slurp_file($self->covmat_input);
 		my ($success,$lower_covar,$index_order_ref,$header_labels_ref) = 
 			output::problem::subproblem::parse_additional_table (covariance_step_run => 1,
 																 have_omegas => 1,
 																 have_sigmas => 1,
 																 method_string => ' ',
-																 skip_labels_matrix => ' ',
 																 type => 'cov',
+																 keep_labels_hash => \%keep_labels_hash,
 																 tableref => \@lines);
 		@lines=undef;
 		unless ($success){
@@ -652,86 +658,16 @@ sub get_nonmem_parameters
 		croak("No problems defined in output object in get_nonmem_parameters");
 	}
 
-	my %hash;
-	$hash{'filtered_labels'}=[];
-	$hash{'filtered_coords'}=[];
-	$hash{'block_number'}=[];
-	$hash{'lower_bounds'}=[];
-	$hash{'upper_bounds'}=[];
-	$hash{'filtered_values'}=[];
-	$hash{'param'}=[];
-
-	#TODO verify that this is the parameter order in invcov
+	my %coordval;
 	foreach my $param ('theta','omega','sigma'){
-		my $block_number=0;
-		my $block_count=0;
-		my $accessor=$param.'s';
-		my $coordval = $output -> get_single_value(attribute => $param.'coordval'); #ref to a hash
-		croak("No $param coordval in output object") unless (defined $coordval);
-		my @records;
-		if (defined $init_problem -> $accessor) {
-			@records = @{$init_problem -> $accessor};
-		}
-		next unless (scalar(@records) > 0); #no parameter in this problem
-
-		foreach my $record (@records){
-			if  ($record->same() or $record->fix() or $record->prior()) {
-				next;
-			}
-			unless (defined $record -> options()) {
-				croak("$param record has no values in get_nonmem_parameters in output object");
-			}
-			if (($param ne 'theta') and ($record->type eq 'BLOCK')){
-				$block_count++;
-				$block_number = $block_count;
-			}else{
-				$block_number = 0;
-			}
-			foreach my $option (@{$record -> options()}) {
-				if ($option->fix() or $option->prior()) {
-					next;
-				}
-				if ($param eq 'theta'){
-					my $lobnd = $option ->lobnd();
-					$lobnd = -1000000 unless (defined $lobnd);
-					push(@{$hash{'lower_bounds'}},$lobnd);
-					my $upbnd = $option ->upbnd();
-					$upbnd = 1000000 unless (defined $upbnd);
-					push(@{$hash{'upper_bounds'}},$upbnd);
-				}else{
-		  			if ($option -> on_diagonal()){
-						push(@{$hash{'lower_bounds'}},0);
-						push(@{$hash{'upper_bounds'}},1000000);
-					}else{	 
-						if ($option->init() == 0) {
-							#do not check off-diagonal zeros
-							next;
-						}else{
-							#we handle these with Cholesky
-							push(@{$hash{'lower_bounds'}},-1000000);
-							push(@{$hash{'upper_bounds'}},1000000);
-						}
-		  			}
-				}
-				my $coord = $option -> coordinate_string();
-				my $name = $coord;
-				if (defined $option ->label()) {
-					$name = $option ->label();
-				}
-				push(@{$hash{'filtered_labels'}},$name);
-				push(@{$hash{'param'}},$param);
-				push(@{$hash{'block_number'}},$block_number);
-				my $value = $coordval->{$coord};
-				croak("No estimate for $param $coord") unless (defined $value);
-				push(@{$hash{'filtered_values'}},$value);
-				$coord =~ /(\d+,?\d*)/;
-				push(@{$hash{'filtered_coords'}},$1);
-
-			}
-		}
+		$coordval{$param} = $output -> get_single_value(attribute => $param.'coordval'); #ref to a hash
+		croak("No $param coordval in output object") unless (defined $coordval{$param});
 	}
 
-	return \%hash;
+	$init_problem->set_estimated_parameters_hash(coordvalhash => \%coordval);
+
+	return $init_problem->estimated_parameters_hash();
+
 }
 
 sub sample_multivariate_normal

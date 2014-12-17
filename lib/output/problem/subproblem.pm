@@ -9,7 +9,7 @@ use Moose;
 use MooseX::Params::Validate;
 use math;
 
-has 'skip_labels_matrix' => ( is => 'rw', isa => 'Str' );
+has 'keep_labels_hash' => ( is => 'rw', isa => 'HashRef' );
 has 'next_to_last_step_successful' => ( is => 'rw', isa => 'Bool' );
 has 'comegas' => ( is => 'rw', isa => 'ArrayRef' );
 has 'condition_number' => ( is => 'rw', isa => 'Num' );
@@ -203,6 +203,8 @@ sub BUILD
 	}
 	delete $self -> {'lstfile'};
 }
+
+
 
 
 sub tableobject
@@ -2218,12 +2220,12 @@ sub get_column_index_order
 		 header_label => { isa => 'Ref', optional => 0 },
 		 have_sigmas => { isa => 'Bool', optional => 0 },
 		 have_omegas => { isa => 'Bool', optional => 0 },
-		 skip_labels_matrix => { isa => 'Str', optional => 0 }
+		 keep_labels_hash => { isa => 'Maybe[HashRef]', optional => 1 }
 	);
 	my $header_label = $parm{'header_label'};
 	my $have_sigmas = $parm{'have_sigmas'};
 	my $have_omegas = $parm{'have_omegas'};
-	my $skip_labels_matrix = $parm{'skip_labels_matrix'};
+	my $keep_labels_hash = $parm{'keep_labels_hash'};
 	my @index_order;
 
 	#input @header_label
@@ -2232,7 +2234,7 @@ sub get_column_index_order
 	@index_order = ();
 	my @sigma_order = ();
 	for (my $i = 1; $i < scalar(@{$header_label}); $i++) {
-	  if (index($skip_labels_matrix, $header_label->[$i]) >= 0) {
+	  if (defined $keep_labels_hash and not ($keep_labels_hash->{$header_label->[$i]} == 1) ) {
 	    next;
 	  } elsif ($header_label->[$i] =~ /THETA/ ) {
 	    push (@index_order, $i);
@@ -2251,15 +2253,15 @@ sub permute_and_clean_rows
 {
 	#static method
 	#returns modifed version of input tableref, rearranges rows so that sigma comes last,
-	# also skips rows for omega/sigma that were not estimated as indicated by skip_labels_matrix 
+	# also skips rows for omega/sigma that were not estimated as indicated by keep_labels_hash
 	my %parm = validated_hash(\@_,
 		 tableref => { isa => 'Maybe[ArrayRef]', optional => 0 },
-		 skip_labels_matrix => { isa => 'Str', optional => 0 },
+		 keep_labels_hash => { isa => 'Maybe[HashRef]', optional => 1 },
 		 have_sigmas => { isa => 'Bool', optional => 0 },
 		 have_omegas => { isa => 'Bool', optional => 0 },
 	);
 	my $tableref = $parm{'tableref'};
-	my $skip_labels_matrix = $parm{'skip_labels_matrix'};
+	my $keep_labels_hash = $parm{'keep_labels_hash'};
 	my $have_sigmas = $parm{'have_sigmas'};
 	my $have_omegas = $parm{'have_omegas'};
 
@@ -2279,7 +2281,7 @@ sub permute_and_clean_rows
 				$templine =~ s/^\s*//; #get rid of leading spaces
 				my ($label,$rest) = split (/\s+/,$templine,2);
 				
-				unless (index($skip_labels_matrix,$label) >= 0) {
+				unless (defined $keep_labels_hash and not ($keep_labels_hash->{$label} == 1)) {
 					if ($label =~ /SIGMA/ ) {
 						push (@sigma_array,$line) if $have_sigmas;
 					} elsif ($label =~ /OMEGA/ ) {
@@ -2566,7 +2568,6 @@ sub parse_NM7_raw
 	#Assume whitespace as field separator
 	#add error checking of separator
 
-	my $skip_labels_matrix = ' ';
 	my $found_table = 0; #for error checking
 	my @header_labels = ();
 	my %final_values;
@@ -2584,6 +2585,16 @@ sub parse_NM7_raw
 	my $header_ok = 0;
 	my $found_ofv_line = 0;
 
+    
+	if (defined $self->input_problem and
+		defined $self->input_problem->estimated_parameters_hash and
+		defined $self->input_problem->estimated_parameters_hash ->{'filtered_coordinate_strings'}){
+		my %keep_labels_hash;
+		foreach my $coord (@{$self->input_problem->estimated_parameters_hash->{'filtered_coordinate_strings'} }){
+			$keep_labels_hash{$coord}=1;
+		}
+		$self->keep_labels_hash(\%keep_labels_hash);
+	}
 
 	foreach my $line (@{$self->nm_output_files->{'raw'}}) {
 		if ($line =~ /^\s*TABLE NO.\s+(\d+):/ ) {
@@ -2628,8 +2639,6 @@ sub parse_NM7_raw
 						my $mes = "Unknown header label ".$header_labels[$i]." in raw output.";
 						croak($mes);
 					}
-				}else{
-					$skip_labels_matrix .= $header_labels[$i]." ";
 				}
 			}
 		} elsif ($1 == -1000000001) {
@@ -2650,8 +2659,6 @@ sub parse_NM7_raw
 						my $mes = "Unknown header label ".$header_labels[$i]." in raw output.";
 						croak($mes);
 					}
-				}else{
-					$skip_labels_matrix .= $header_labels[$i]." ";
 				}
 			}
 			$read_standard_errors = 1;
@@ -2692,7 +2699,6 @@ sub parse_NM7_raw
 		$self->covariance_step_successful(1);
 	}
 	
-	$self->skip_labels_matrix($skip_labels_matrix);
 	delete $self->nm_output_files->{'raw'};
 	$self->NM7_parsed_raw(1);
 	
@@ -2731,7 +2737,7 @@ sub parse_additional_table
 							  have_omegas => { isa => 'Bool', optional => 0 },
 							  have_sigmas => { isa => 'Bool', optional => 0 },
 							  method_string => { isa => 'Str', optional => 0 },
-							  skip_labels_matrix => { isa => 'Str', optional => 0 },
+							  keep_labels_hash => { isa => 'Maybe[HashRef]', optional => 1 },
 							  type => { isa => 'Str', optional => 0 },
 							  tableref => { isa => 'Maybe[ArrayRef]', optional => 0 }
 		);
@@ -2739,7 +2745,7 @@ sub parse_additional_table
 	my $have_omegas = $parm{'have_omegas'};
 	my $have_sigmas = $parm{'have_sigmas'};
 	my $method_string = $parm{'method_string'};
-	my $skip_labels_matrix = $parm{'skip_labels_matrix'};
+	my $keep_labels_hash = $parm{'keep_labels_hash'};
 	my $type = $parm{'type'};
 	my $tableref = $parm{'tableref'};
 	my $success = 0;
@@ -2763,7 +2769,7 @@ sub parse_additional_table
 	my $cleaned_table_ref=[];
 	if ($expect_cov and defined $tableref and scalar(@{$tableref})>1) {
 		$cleaned_table_ref = permute_and_clean_rows(tableref => $tableref,
-													skip_labels_matrix => $skip_labels_matrix,
+													keep_labels_hash => $keep_labels_hash,
 													have_sigmas => $have_sigmas,
 													have_omegas => $have_omegas);
 	}
@@ -2783,7 +2789,7 @@ sub parse_additional_table
 			@index_order = @{get_column_index_order(header_label=>\@header_labels,
 													have_sigmas => $have_sigmas,
 													have_omegas => $have_omegas,
-													skip_labels_matrix => $skip_labels_matrix)};
+													keep_labels_hash => $keep_labels_hash)};
 		  
 	    } else {
 			unless ((scalar(@header_labels > 2)) or $given_header_warning or $header_ok) {
@@ -2838,7 +2844,7 @@ sub parse_NM7_additional
 
 	unless ($self->NM7_parsed_raw){
 		croak('parse_NM7_additional must be called *after* parse_NM7_raw');
-		#because need skip_labels_matrix and have_sigmas and have_omegas and cov_step_run
+		#because need keep_labels_hash and have_sigmas and have_omegas and cov_step_run
 	}
 	
 	foreach my $type ('cov','coi','cor'){
@@ -2850,7 +2856,7 @@ sub parse_NM7_additional
 									have_omegas => $self->have_omegas,
 									have_sigmas => $self->have_sigmas,
 									method_string => $self->method_string,
-									skip_labels_matrix => $self->skip_labels_matrix,
+									keep_labels_hash => $self->keep_labels_hash,
 									type => $type,
 									tableref => $self->nm_output_files->{$type}
 			);
