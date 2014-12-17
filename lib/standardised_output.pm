@@ -112,6 +112,7 @@ sub create_table
         $tab->appendChild($row_xml);
         for (my $col = 0; $col < $numcols; $col++) {
             my $value_type = uc(substr($column_valuetypes->[$col], 0, 1)) . substr($column_valuetypes->[$col], 1);
+            my $column_type = $column_types->[$col];
             my $element;
             if ($row_major) {
                 $element = $values->[$row]->[$col];
@@ -119,7 +120,7 @@ sub create_table
                 $element = $values->[$col]->[$row];
             }
             my $value = $doc->createElement("ct:" . $value_type);
-            if ($value_type eq 'String') {
+            if ($value_type eq 'String' and $column_type ne 'id') {
                 $value->appendTextNode($element);
             } else {
                 $value->appendTextNode($self->_get_printable_number($element));
@@ -593,18 +594,19 @@ sub _parse_lst_file
                                 ignoresign => '@',
                                 parse_header => 1,
                             );
-                            if ($self->check_include(element => 'Estimation/Predictions')) {
-                                my $predictions = $self->_create_predictions(sdtab => $sdtab);
-                                if (defined $predictions) {
-                                    $estimation->appendChild($predictions);
-                                }
-                            }
                             if ($self->check_include(element => 'Estimation/Residuals')) {
                                 my $residuals = $self->_create_residuals(sdtab => $sdtab);
                                 if (defined $residuals) {
                                     $estimation->appendChild($residuals);
                                 }
                             }
+                            if ($self->check_include(element => 'Estimation/Predictions')) {
+                                my $predictions = $self->_create_predictions(sdtab => $sdtab);
+                                if (defined $predictions) {
+                                    $estimation->appendChild($predictions);
+                                }
+                            }
+
                         }
                         if ($table =~ /^patab/) {
                             my $patab = data->new(
@@ -900,7 +902,7 @@ sub _create_predictions
         table_name => "Predictions",
         column_ids => [ "ID", "TIME", "PRED", "IPRED" ],
         column_types => [ "id", "undefined", "undefined", "undefined" ],
-        column_valuetypes =>  [ "id", "real", "real", "real" ],
+        column_valuetypes =>  [ "string", "real", "real", "real" ],
         values => [ $id, $time, $pred, $ipred ],
     );
 
@@ -933,7 +935,7 @@ sub _create_residuals
                 table_name => "RES",
                 column_ids => [ "ID", "TIME", "RES" ],
                 column_types => [ "id", "undefined", "undefined" ],
-                column_valuetypes =>  [ "id", "real", "real" ],
+                column_valuetypes =>  [ "string", "real", "real" ],
                 values => [ $id, $time, $res ],
             );
             $residuals->appendChild($table);
@@ -947,7 +949,7 @@ sub _create_residuals
                 table_name => "IRES",
                 column_ids => [ "ID", "TIME", "IRES" ],
                 column_types => [ "id", "undefined", "undefined" ],
-                column_valuetypes =>  [ "id", "real", "real" ],
+                column_valuetypes =>  [ "string", "real", "real" ],
                 values => [ $id, $time, $ires ],
             );
             $residuals->appendChild($table);
@@ -961,7 +963,7 @@ sub _create_residuals
                 table_name => "WRES",
                 column_ids => [ "ID", "TIME", "WRES" ],
                 column_types => [ "id", "undefined", "undefined" ],
-                column_valuetypes =>  [ "id", "real", "real" ],
+                column_valuetypes =>  [ "string", "real", "real" ],
                 values => [ $id, $time, $wres ],
             );
             $residuals->appendChild($table);
@@ -975,7 +977,7 @@ sub _create_residuals
                 table_name => "IWRES",
                 column_ids => [ "ID", "TIME", "IWRES" ],
                 column_types => [ "id", "undefined", "undefined" ],
-                column_valuetypes =>  [ "id", "real", "real" ],
+                column_valuetypes =>  [ "string", "real", "real" ],
                 values => [ $id, $time, $iwres ],
             );
             $residuals->appendChild($table);
@@ -1063,7 +1065,7 @@ sub _create_individual_estimates
                 table_name => "Median",
                 column_ids => [ "ID", @labels ],
                 column_types => [ "id", ("undefined") x scalar(@labels) ],
-                column_valuetypes => [ "id", ("real") x scalar(@labels) ],
+                column_valuetypes => [ "string", ("real") x scalar(@labels) ],
                 values => [ $unique_ids, @medians ],
             );
             $estimates->appendChild($table);
@@ -1073,7 +1075,7 @@ sub _create_individual_estimates
                 table_name => "Mean",
                 column_ids => [ "ID", @labels ],
                 column_types => [ "id", ("undefined") x scalar(@labels) ],
-                column_valuetypes => [ "id", ("real") x scalar(@labels) ],
+                column_valuetypes => [ "string", ("real") x scalar(@labels) ],
                 values => [ $unique_ids, @means ],
             );
             $estimates->appendChild($table);
@@ -1108,7 +1110,7 @@ sub _create_individual_estimates
                     table_name => "EffectMedian",
                     column_ids => [ "ID", @$eta_names ],
                     column_types => [ "id", ("undefined") x scalar(@$eta_names) ],
-                    column_valuetypes => [ "id", ("real") x scalar(@$eta_names) ],
+                    column_valuetypes => [ "string", ("real") x scalar(@$eta_names) ],
                     values => [ $unique_ids, @eta_medians ],
                 );
                 $random_effects->appendChild($table);
@@ -1119,7 +1121,7 @@ sub _create_individual_estimates
                     table_name => "EffectMean",
                     column_ids => [ "ID", @$eta_names ],
                     column_types => [ "id", ("undefined") x scalar(@$eta_names) ],
-                    column_valuetypes => [ "id", ("real") x scalar(@$eta_names) ],
+                    column_valuetypes => [ "string", ("real") x scalar(@$eta_names) ],
                     values => [ $unique_ids, @eta_means ],
                 );
                 $random_effects->appendChild($table);
