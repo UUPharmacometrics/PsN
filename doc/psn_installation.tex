@@ -23,7 +23,7 @@ This is new compared to PsN3, where some changes were necessary.
 \end{enumerate}
 
 \section{Install required Perl modules}
-PsN requires the Perl modules Math::Random, Moose and MooseX::Params::Validate to be installed on your computer. Some other modules are very useful, but not absolutely required. The following paragraphs describe the setup procedure for different operating systems. For this procedure to work you must be connected to the internet, because the package is downloaded from the web. Pay attention to any warning messages that talk about internet connection problems, such problems must be solved before doing the installations.
+PsN requires the Perl modules Math::Random, Moose and MooseX::Params::Validate to be installed on your computer. Some other modules are very useful, but not absolutely required. The XML::LibXML module is only needed if using the nmoutput2so script or the option -standardised\_output. The following paragraphs describe the setup procedure for different operating systems. For this procedure to work you must be connected to the internet, because the package is downloaded from the web. Pay attention to any warning messages that talk about internet connection problems, such problems must be solved before doing the installations.
 
 \subsection{Windows (Strawberry perl)}
 Open a command window (cmd) and run the following commands:
@@ -32,6 +32,7 @@ Open a command window (cmd) and run the following commands:
 cpan Math::Random
 cpan Statistics::Distributions
 cpan MooseX::Params::Validate
+cpan XML::LibXML
 \end{verbatim}
 
 
@@ -44,6 +45,7 @@ ppm install moosex-params-validate
 ppm install statistics-distributions
 ppm install archive-zip
 ppm install file-copy-recursive
+ppm install XML-LibXML
 \end{verbatim}
 
 
@@ -58,6 +60,7 @@ cpan Statistics::Distributions
 cpan Archive::Zip
 cpan File::Copy::Recursive
 cpan Storable
+cpan XML::LibXML
 \end{verbatim}
 
 \section{Run the PsN installation script}
