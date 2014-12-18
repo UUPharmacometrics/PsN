@@ -249,6 +249,78 @@ sub find_or_create_node
     return $node;
 }
 
+sub IsStarting_character
+{
+    # Character class for the XML character class [\i-[:]] (first character in NCName)
+    # Adapted from http://www.regular-expressions.info/shorthand.html#xml
+    return <<END;
+0041 005A
+005F
+0061 007A
+00C0 00D6
+00D8 00F6
+00F8 02FF
+0370 037D
+037F 1FFF
+200C 200D
+2070 218F
+2C00 2FEF
+3001 D7FF
+F900 FDCF
+FDF0 FFFD
+END
+}
+
+sub IsContinuing_character
+{
+    # Character class for the XML character class [\c-[:]] (following characters in NCName)
+    # Adapted from http://www.regular-expressions.info/shorthand.html#xml
+    return <<END;
+002D
+002E
+0030 0039
+0041 005A
+005F
+0061 007A
+00B7
+00C0 00D6
+00D8 00F6
+00F8 037D
+037F 1FFF
+200C 200D
+203F
+2040
+2070 218F
+2C00 2FEF
+3001 D7FF
+F900 FDCF
+FDF0 FFFD
+END
+}
+
+sub match_symbol_idtype
+{
+    # Check if a string is a legal SymbolIdType
+    my $symbol = shift;
+    
+    if ($symbol =~ /^\p{IsStarting_character}\p{IsContinuing_character}*$/) {
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
+sub mangle_symbol_idtype
+{
+    # Mangle a SymbolIdType by replacing all illegal characters with underscore
+    my $symbol = shift;
+
+    $symbol =~ s/^\P{IsStarting_character}/_/;
+    $symbol =~ s/\P{IsContinuing_character}/_/g;
+
+    return $symbol;
+}
+
 # End of XML helper methods
 
 sub get_file_stem
@@ -468,9 +540,6 @@ sub _parse_lst_file
             my $omeganamesref = $model->labels(parameter_type =>'omega', generic => 0);
             my $sigmanamesref = $model->labels(parameter_type =>'sigma', generic => 0);
 
-            my $omegasameref = $model->same(parameter_type =>'omega');
-            my $sigmasameref = $model->same(parameter_type =>'sigma');
-
             #arrays (over problems) of arrays (over subproblems) of arrays of values, one per name. Values may be undef
             my $sethetaref = $model -> get_values_to_labels(category => 'setheta',
                 output_object => $outobj);
@@ -495,13 +564,11 @@ sub _parse_lst_file
             my @omegas    = defined $omegaref -> [$problems][$sub_problems] ? @{$omegaref -> [$problems][$sub_problems]} : ();
             my @omnam     = defined $omeganamesref -> [$problems]? @{$omeganamesref -> [$problems]}  : ();
             my @seomeg    = defined $seomegaref -> [$problems][$sub_problems] ? @{$seomegaref -> [$problems][$sub_problems]} : ();
-            my @omegasame = defined $omegasameref->[$problems] ? @{$omegasameref->[$problems]} : ();
 
             ## Sigmas
             my @sigmas  = defined $sigmaref -> [$problems][$sub_problems] ? @{$sigmaref -> [$problems][$sub_problems]} : ();
             my @signam  = defined $sigmanamesref -> [$problems] ? @{$sigmanamesref -> [$problems]}                : ();
             my @sesigm  = defined $sesigmaref -> [$problems][$sub_problems] ? @{$sesigmaref -> [$problems][$sub_problems]} : ();
-            my @sigmasame = defined $sigmasameref->[$problems] ? @{$sigmasameref->[$problems]} : ();
 
             ## Termination
             my $ofv = $outobj -> get_single_value(attribute => 'ofv',
@@ -519,6 +586,9 @@ sub _parse_lst_file
                 }
             }
 
+            $model->problems->[$problems]->set_estimated_parameters_hash();
+            my $estimated_parameters = $model->problems->[$problems]->estimated_parameters_hash->{'filtered_labels'};
+
             my @all_labels = (@thnam);
             my @est_values = (@thetas);
 
@@ -527,18 +597,25 @@ sub _parse_lst_file
 
             @se_values = (@sethet) if $have_ses;
 
-            for (my $i = 0; $i < scalar(@omnam); $i++){
-                unless ($omegasame[$i]) {
-                    push(@all_labels,$omnam[$i]);
-                    push(@est_values,$omegas[$i]);
-                    push(@se_values,$seomeg[$i]) if $have_ses;
+            for (my $i = 0; $i < scalar(@omnam); $i++) {
+                my $is_estimated = grep { $_ eq $omnam[$i] } @$estimated_parameters;
+                if ($is_estimated) {
+                    push(@all_labels, $omnam[$i]);
+                    push(@est_values, $omegas[$i]);
+                    push(@se_values, $seomeg[$i]) if $have_ses;
                 }
             }
-            for (my $i = 0; $i < scalar(@signam); $i++){
-                unless ($sigmasame[$i]) {
-                    push(@all_labels,$signam[$i]);
-                    push(@est_values,$sigmas[$i]);
-                    push(@se_values,$sesigm[$i]) if $have_ses;
+            for (my $i = 0; $i < scalar(@signam); $i++) {
+                my $is_estimated = grep { $_ eq $signam[$i] } @$estimated_parameters;
+                if (not match_symbol_idtype($signam[$i])) {
+                    my $oldname = $signam[$i];
+                    $signam[$i] = mangle_symbol_idtype($signam[$i]);
+                    push @warnings, "Parameter label \"$oldname\" not specified or not a legal symbolIdType. Setting/changing it to: $signam[$i]";
+                }
+                if ($is_estimated) {
+                    push(@all_labels, $signam[$i]);
+                    push(@est_values, $sigmas[$i]);
+                    push(@se_values, $sesigm[$i]) if $have_ses;
                 }
             }
 

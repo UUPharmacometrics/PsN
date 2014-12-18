@@ -32,6 +32,12 @@ sub test_number_of_children
     is (scalar(@nodes), $number, $text);
 }
 
+# mangle_symbol_idtype
+is (standardised_output::mangle_symbol_idtype("nomangle"), "nomangle", "mangle_symbol_idtype nomangle");
+is (standardised_output::mangle_symbol_idtype(":first"), "_first", "mangle_symbol_idtype first invalid 1");
+is (standardised_output::mangle_symbol_idtype("?first"), "_first", "mangle_symbol_idtype first invalid 2");
+is (standardised_output::mangle_symbol_idtype("SIGMA(1,1)"), "SIGMA_1_1_", "mangle_symbol_idtype SIGMA");
+
 
 our $tempdir = create_test_dir('unit_standardised_output');
 copy_test_files($tempdir,
