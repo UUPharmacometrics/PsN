@@ -68,10 +68,10 @@ Default not set. By default, resampling is performed without replacement, but se
 \optdefault{covmat\_input}{filename}
 Not allowed together with rawres\_input. If given, this covariance matrix is
 used for sampling parameter vectors and for computing the PDF. The format of the file is similar to a NONMEM-generated .cov-file except 
-that fixed parameters should not be included and the \verb|TABLE NO.| line
-should be omitted. 
+that the \verb|TABLE NO.| line should be omitted.
+Fixed parameters do not have to be omitted, sir will filter them out. 
 The covmat\_input file must be formatted to contain a space- or tab-separated  $N\times N$ symmetric covariance matrix, 
-where N is the total number of estimated parameters. Fixed parameters should not be included in the covmat\_input matrix. 
+where N is the total number of estimated parameters. 
 The first line in the file must be a header with labels for THETA/OMEGA/SIGMA written as in a regular NONMEM .cov-file 
 and a leading column called NAME: 
 \begin{verbatim}
@@ -79,6 +79,8 @@ NAME THETA1 THETA2 ... SIGMA(1,1) ... OMEGA(1,1) ...
 \end{verbatim}
 The NAME column contains the same parameter labels (to identify the rows).
 The rows and columns must be sorted with THETAs first.
+
+Please note that there is a PsN script called covmat that can be used to generate a covariance matrix from a raw\_results file.
 \nextopt
 \optdefault{inflation}{X}
 Default is 1, which is the same as no inflation. If given, the covariance
