@@ -149,7 +149,7 @@ sub modelfit_setup
 		#read user matrix and invert here
 		#use keep_labels_hash from input model problem
 		my %keep_labels_hash;
-		foreach my $coord (@{$parameter_hash->{'coordinate_strings'}}){
+		foreach my $coord (@{$output->problems->[0]->input_problem->get_estimated_attributes(attribute=>'coordinate_strings')}){
 			$keep_labels_hash{$coord}=1;
 		}
 
