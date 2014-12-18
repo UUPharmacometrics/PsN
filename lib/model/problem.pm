@@ -2547,43 +2547,22 @@ sub create_print_order
 
 sub set_estimated_parameters_hash
 {
-	#filter out fix and same and prior and off-diagonal zeros, return hash describing what is actually estimated
+	#filter out fix and same and prior and off-diagonal zeros, set hash describing what is actually estimated
     my $self = shift;
-	my %parm = validated_hash(\@_,
-							  coordvalhash => { isa => 'HashRef', optional => 1 },
-		);
-	my $coordvalhash=$parm{'coordvalhash'};
 
-	my %hash;
+	unless (defined $self->estimated_parameters_hash and 
+		defined $self->estimated_parameters_hash->{'coordinate_strings'}
+		and scalar(@{$self->estimated_parameters_hash->{'coordinate_strings'}})>0 ){
 
-	my $updating = 0;
-
-	if (defined $self->estimated_parameters_hash and 
-		defined $self->estimated_parameters_hash->{'filtered_coordinate_strings'}
-		and scalar(@{$self->estimated_parameters_hash->{'filtered_coordinate_strings'}})>0 ){
-		#we are updating existing hash
-		%hash = %{$self->estimated_parameters_hash};
-		$updating = 1;
-	}else{
-		$hash{'filtered_labels'}=[];
-		$hash{'filtered_coords'}=[];
-		$hash{'filtered_coordinate_strings'}=[];
+		my %hash;
+		$hash{'labels'}=[];
+		$hash{'coords'}=[];
+		$hash{'coordinate_strings'}=[];
 		$hash{'block_number'}=[];
 		$hash{'lower_bounds'}=[];
 		$hash{'upper_bounds'}=[];
 		$hash{'param'}=[];
-	}
 
-	if (defined $coordvalhash and defined $coordvalhash->{'theta'}){
-		#should be all or nothing here
-		$hash{'filtered_values'}=[];
-	}else{
-		$hash{'filtered_values'}=undef;
-	}
-
-
-
-	unless ($updating ){
 		foreach my $param ('theta','omega','sigma'){
 			my $block_number=0;
 			my $block_count=0;
@@ -2638,32 +2617,54 @@ sub set_estimated_parameters_hash
 					if (defined $option ->label()) {
 						$name = $option ->label();
 					}
-					push(@{$hash{'filtered_labels'}},$name);
-					push(@{$hash{'filtered_coordinate_strings'}},$coord);
+					push(@{$hash{'labels'}},$name);
+					push(@{$hash{'coordinate_strings'}},$coord);
 					push(@{$hash{'param'}},$param);
 					push(@{$hash{'block_number'}},$block_number);
 					$coord =~ /(\d+,?\d*)/;
-					push(@{$hash{'filtered_coords'}},$1);
+					push(@{$hash{'coords'}},$1);
 
 				}
 			}
 		}
+		$self->estimated_parameters_hash(\%hash);
 	}
 
-	if (defined $coordvalhash and defined $coordvalhash->{'theta'}){
-		for (my $i=0; $i< scalar(@{$hash{'param'}}); $i++){
-			my $param = $hash{'param'}->[$i];
-			my $coord = $hash{'filtered_coordinate_strings'}->[$i];
-			my $value = $coordvalhash->{$param}->{$coord};
-			croak("No estimate for $param $coord") unless (defined $value);
-			push(@{$hash{'filtered_values'}},$value);
+}
+
+sub get_estimated_attributes
+{
+    my $self = shift;
+	my %parm = validated_hash(\@_,
+							  parameter => { isa => 'Str', optional => 1, default => 'all' },
+							  attribute => { isa => 'Str', optional => 1, default => 'coordinate_strings' },
+		);
+	my $parameter=$parm{'parameter'};
+	my $attribute=$parm{'attribute'};
+
+	unless ($parameter eq 'all' or $parameter eq 'theta' or $parameter eq 'omega' or $parameter eq 'sigma'){
+		croak("Illegal value $parameter of option parameter in model::problem::get_estimated_attributes");
+	}
+
+	my @array=();
+
+	$self->set_estimated_parameters_hash(); #will not do anything if already set
+	unless (defined $self->estimated_parameters_hash->{$attribute}){
+		croak("Illegal input attribute $attribute in model::problem get_estimated_attributes, only have\n".
+			join(' ',(keys %{$self->estimated_parameters_hash}))."\n" );
+	}
+
+
+	my $count = scalar(@{$self->estimated_parameters_hash->{$attribute}});
+	for (my $i=0; $i< $count; $i++){
+		if (($parameter eq 'all') or ($parameter eq $self->estimated_parameters_hash->{'param'}->[$i])){
+			push(@array,$self->estimated_parameters_hash->{$attribute}->[$i]);
 		}
 	}
 
+	return \@array;
 
-	$self->estimated_parameters_hash(\%hash);
 }
-
 no Moose;
 __PACKAGE__->meta->make_immutable;
 1;

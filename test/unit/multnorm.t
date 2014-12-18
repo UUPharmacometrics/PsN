@@ -60,13 +60,13 @@ cmp_ok($icm->element(5,3),'==',-1.03606E+02,'inverse element 5,3');
 cmp_ok($icm->element(5,5),'==',5.96396E+03,'inverse element 5,5');
 
 my $hash = tool::sir::get_nonmem_parameters(output => $output);
-my $thetas = $hash->{'filtered_values'};
+my $thetas = $hash->{'values'};
 
-cmp_ok($hash->{'filtered_values'}->[0],'==',5.55363E-03,' theta 1');
-cmp_ok($hash->{'filtered_values'}->[1],'==',1.33638E+00,' theta 2');
-cmp_ok($hash->{'filtered_values'}->[2],'==',4.97064E-01,' theta 3');
-cmp_ok($hash->{'filtered_values'}->[3],'==',3.76272E-01,' theta 4');
-cmp_ok($hash->{'filtered_values'}->[4],'==',1.28122E-01,' theta 5');
+cmp_ok($hash->{'values'}->[0],'==',5.55363E-03,' theta 1');
+cmp_ok($hash->{'values'}->[1],'==',1.33638E+00,' theta 2');
+cmp_ok($hash->{'values'}->[2],'==',4.97064E-01,' theta 3');
+cmp_ok($hash->{'values'}->[3],'==',3.76272E-01,' theta 4');
+cmp_ok($hash->{'values'}->[4],'==',1.28122E-01,' theta 5');
 cmp_ok($hash->{'lower_bounds'}->[0],'==',0,' lower bound theta 1');
 cmp_ok($hash->{'lower_bounds'}->[1],'==',0,' lower bound theta 2');
 cmp_ok($hash->{'lower_bounds'}->[2],'==',0,' lower bound theta 3');
@@ -115,7 +115,7 @@ my $gotsamples = tool::sir::sample_multivariate_normal(samples=>$nsamples,
 													   lower_bound => $hash->{'lower_bounds'},
 													   upper_bound => $hash->{'upper_bounds'},
 													   param => $hash->{'param'},
-													   coords => $hash->{'filtered_coords'},
+													   coords => $hash->{'coords'},
 													   block_number => $hash->{'block_number'},
 													   mu => $mu
 	);
@@ -275,16 +275,16 @@ cmp_ok($icm->element(8,8),'==',6.84766E+02,'inverse element 8,8');
 
 $hash = tool::sir::get_nonmem_parameters(output => $output);
 
-my $params = $hash->{'filtered_values'};
+my $params = $hash->{'values'};
 
-cmp_ok($hash->{'filtered_values'}->[0],'==',3.28661E+01,' theta 1');
-cmp_ok($hash->{'filtered_values'}->[1],'==',2.10323E+01,' theta 2');
-cmp_ok($hash->{'filtered_values'}->[2],'==',2.92049E-01,' theta 3');
-cmp_ok($hash->{'filtered_values'}->[3],'==',9.91440E-02,' theta 4');
-cmp_ok($hash->{'filtered_values'}->[4],'==',3.34511E-01,' theta 5');
-cmp_ok($hash->{'filtered_values'}->[5],'==',4.08636E-01,' OM 1,1');
-cmp_ok($hash->{'filtered_values'}->[6],'==',1.10186E+00,' OM 2,2');
-cmp_ok($hash->{'filtered_values'}->[7],'==',2.07708E-01,' OM 3,3');
+cmp_ok($hash->{'values'}->[0],'==',3.28661E+01,' theta 1');
+cmp_ok($hash->{'values'}->[1],'==',2.10323E+01,' theta 2');
+cmp_ok($hash->{'values'}->[2],'==',2.92049E-01,' theta 3');
+cmp_ok($hash->{'values'}->[3],'==',9.91440E-02,' theta 4');
+cmp_ok($hash->{'values'}->[4],'==',3.34511E-01,' theta 5');
+cmp_ok($hash->{'values'}->[5],'==',4.08636E-01,' OM 1,1');
+cmp_ok($hash->{'values'}->[6],'==',1.10186E+00,' OM 2,2');
+cmp_ok($hash->{'values'}->[7],'==',2.07708E-01,' OM 3,3');
 cmp_ok($hash->{'lower_bounds'}->[0],'==',0,' lower bound theta 1');
 cmp_ok($hash->{'lower_bounds'}->[1],'==',0,' lower bound theta 2');
 cmp_ok($hash->{'lower_bounds'}->[2],'==',0,' lower bound theta 3');
@@ -302,11 +302,11 @@ cmp_ok($hash->{'upper_bounds'}->[5],'==',1000000,' upper bound OM 1,1');
 cmp_ok($hash->{'upper_bounds'}->[6],'==',1000000,' upper bound OM 2,2');
 cmp_ok($hash->{'upper_bounds'}->[7],'==',1000000,' upper bound OM 3,3');
 
-cmp_ok($hash->{'filtered_coords'}->[3],'eq','4',' coord theta 4');
-cmp_ok($hash->{'filtered_coords'}->[4],'eq','5',' coord theta 5');
-cmp_ok($hash->{'filtered_coords'}->[5],'eq','1,1',' coord OM 1,1');
-cmp_ok($hash->{'filtered_coords'}->[6],'eq','2,2',' coord OM 2,2');
-cmp_ok($hash->{'filtered_coords'}->[7],'eq','3,3',' coord OM 3,3');
+cmp_ok($hash->{'coords'}->[3],'eq','4',' coord theta 4');
+cmp_ok($hash->{'coords'}->[4],'eq','5',' coord theta 5');
+cmp_ok($hash->{'coords'}->[5],'eq','1,1',' coord OM 1,1');
+cmp_ok($hash->{'coords'}->[6],'eq','2,2',' coord OM 2,2');
+cmp_ok($hash->{'coords'}->[7],'eq','3,3',' coord OM 3,3');
 
 $mu = $mat->new_from_rows( [$params] );
 
@@ -351,9 +351,9 @@ $output= output->new(filename => $dir . $file);
 
 $hash = tool::sir::get_nonmem_parameters(output => $output);
 
-$params = $hash->{'filtered_values'};
+$params = $hash->{'values'};
 
-#cmp_ok($hash->{'filtered_values'}->[0],'==',3.28661E+01,' theta 1');
+#cmp_ok($hash->{'values'}->[0],'==',3.28661E+01,' theta 1');
 
 $mu = $mat->new_from_rows( [$params] );
 
@@ -372,7 +372,7 @@ my $gotsamples = tool::sir::sample_multivariate_normal(samples=>$nsamples,
 													   lower_bound => $hash->{'lower_bounds'},
 													   upper_bound => $hash->{'upper_bounds'},
 													   param => $hash->{'param'},
-													   coords => $hash->{'filtered_coords'},
+													   coords => $hash->{'coords'},
 													   block_number => $hash->{'block_number'},
 													   mu => $mu
 	);

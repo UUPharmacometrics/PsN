@@ -1659,25 +1659,25 @@ sub get_rawres_params
 	}
 	
 	my %labels_hash;
-	$labels_hash{'filtered_labels'}=[];
+	$labels_hash{'labels'}=[];
 	$labels_hash{'param'}=[];;
 
 	foreach my $lab (@{$thetalabels[0]}){
 		$thetapos{$lab} = $pos;
 		$pos++;
-		push(@{$labels_hash{'filtered_labels'}},$lab);
+		push(@{$labels_hash{'labels'}},$lab);
 		push(@{$labels_hash{'param'}},'theta');
 	}
 	foreach my $lab (@{$omegalabels[0]}){
 		$omegapos{$lab} = $pos;
 		$pos++;
-		push(@{$labels_hash{'filtered_labels'}},$lab);
+		push(@{$labels_hash{'labels'}},$lab);
 		push(@{$labels_hash{'param'}},'omega');
 	}
 	foreach my $lab (@{$sigmalabels[0]}){
 		$sigmapos{$lab} = $pos;
 		$pos++;
-		push(@{$labels_hash{'filtered_labels'}},$lab);
+		push(@{$labels_hash{'labels'}},$lab);
 		push(@{$labels_hash{'param'}},'sigma');
 	}
 

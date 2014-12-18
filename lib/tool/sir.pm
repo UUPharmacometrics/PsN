@@ -149,7 +149,7 @@ sub modelfit_setup
 		#read user matrix and invert here
 		#use keep_labels_hash from input model problem
 		my %keep_labels_hash;
-		foreach my $coord (@{$parameter_hash->{'filtered_coordinate_strings'}}){
+		foreach my $coord (@{$parameter_hash->{'coordinate_strings'}}){
 			$keep_labels_hash{$coord}=1;
 		}
 
@@ -181,9 +181,9 @@ sub modelfit_setup
 			my $outheader;
 			my $par = uc($parameter_hash->{'param'}->[$j]);
 			if ($par eq 'THETA'){
-				$outheader = $par.$parameter_hash->{'filtered_coords'}->[$j];
+				$outheader = $par.$parameter_hash->{'coords'}->[$j];
 			}else{
-				$outheader = $par.'('.$parameter_hash->{'filtered_coords'}->[$j].')';
+				$outheader = $par.'('.$parameter_hash->{'coords'}->[$j].')';
 			}
 			unless ($covheader eq $outheader){
 				croak("headers $covheader from covmat_input and $outheader from input model does not match\n");
@@ -217,7 +217,7 @@ sub modelfit_setup
 
 
 
-	my $values = $parameter_hash->{'filtered_values'};
+	my $values = $parameter_hash->{'values'};
 	my $mat = new Math::MatrixReal(1,1);
 	my $muvector = $mat->new_from_rows( [$values] );
 	my $sampled_params_arr;
@@ -238,7 +238,7 @@ sub modelfit_setup
 													lower_bound => $parameter_hash->{'lower_bounds'},
 													upper_bound => $parameter_hash->{'upper_bounds'},
 													param => $parameter_hash->{'param'},
-													coords => $parameter_hash->{'filtered_coords'},
+													coords => $parameter_hash->{'coords'},
 													block_number => $parameter_hash->{'block_number'},
 													mu => $muvector);
 		
@@ -432,7 +432,7 @@ sub empirical_statistics{
 
 	my $len = scalar(@{$sampled_params_arr});
 	croak("empty set of samples to empirical_statistics") unless ($len >0);
-	my $dim = scalar(@{$labels_hash->{'filtered_labels'}});
+	my $dim = scalar(@{$labels_hash->{'labels'}});
 	croak("empty set of labels to empirical_statistics") unless ($dim >0);
 	croak("column resamples is missing from sampled_params_arr in empirical_statistics") unless (defined $sampled_params_arr->[0]->{'resamples'});
 
@@ -442,7 +442,7 @@ sub empirical_statistics{
 
 	for (my $i=0; $i<$dim; $i++){
 		#order is theta omega sigma
-		push(@all_labels,$labels_hash->{'filtered_labels'}->[$i]);
+		push(@all_labels,$labels_hash->{'labels'}->[$i]);
 		push(@all_params,$labels_hash->{'param'}->[$i]);
 	}
 
@@ -639,7 +639,7 @@ sub get_nonmem_parameters
 		output => { isa => 'output', optional => 0 }
 	);
 	my $output = $parm{'output'};
-	
+
 	unless ($output->have_output){
 		croak("Trying get_nonmem_parameters but output object is empty, output file\n".$output->full_name."\n");
 	}
@@ -651,22 +651,19 @@ sub get_nonmem_parameters
 	    $output -> _read_problems;
 	}
 
-	my $init_problem;
-	if ( not_empty($output->problems) ) {
-		$init_problem = $output->problems->[0]->input_problem();
-	}else{
+
+	my %hash;
+	$hash{'values'} = $output->get_filtered_values(parameter => 'all',
+												   category => 'estimate');
+
+	unless ( not_empty($output->problems) ) {
 		croak("No problems defined in output object in get_nonmem_parameters");
 	}
 
-	my %coordval;
-	foreach my $param ('theta','omega','sigma'){
-		$coordval{$param} = $output -> get_single_value(attribute => $param.'coordval'); #ref to a hash
-		croak("No $param coordval in output object") unless (defined $coordval{$param});
+	foreach my $key (keys %{$output->problems->[0]->input_problem->estimated_parameters_hash}){
+		$hash{$key} = $output->problems->[0]->input_problem->estimated_parameters_hash->{$key};
 	}
-
-	$init_problem->set_estimated_parameters_hash(coordvalhash => \%coordval);
-
-	return $init_problem->estimated_parameters_hash();
+	return \%hash;
 
 }
 
@@ -934,7 +931,7 @@ sub create_sampled_params_arr{
 		$allpar{'omega'} = {};
 		$allpar{'sigma'} = {};
 		for (my $i=0; $i<scalar(@{$sample}); $i++){
-			my $label = $labels_hash->{'filtered_labels'}->[$i];
+			my $label = $labels_hash->{'labels'}->[$i];
 			my $param = $labels_hash->{'param'}->[$i];
 			my $value = $sample->[$i];
 			$allpar{$param}->{$label} = $value;
@@ -1258,7 +1255,7 @@ sub prepare_results
 
 	my %mean_section;
 	$mean_section{'name'}='Mean over resamples';
-	$mean_section{'labels'}=[[],$parameter_hash->{'filtered_labels'}];
+	$mean_section{'labels'}=[[],$parameter_hash->{'labels'}];
 	$mean_section{'values'}=[$resulthash->{'mean'}];
 	push( @{$self -> results->[0]{'own'}},\%mean_section );
 
@@ -1269,7 +1266,7 @@ sub prepare_results
 	}
 
 	$perc_section{'name'}='Quantiles (R type=2)';
-	$perc_section{'labels'}=[\@perc_labels,$parameter_hash->{'filtered_labels'}];
+	$perc_section{'labels'}=[\@perc_labels,$parameter_hash->{'labels'}];
 	$perc_section{'values'}=$resulthash->{'percentiles_values'};
 	push( @{$self -> results->[0]{'own'}},\%perc_section );
 
@@ -1281,7 +1278,7 @@ sub prepare_results
 
 	my %covar_section;
 	$covar_section{'name'}='Empirical covariance matrix';
-	$covar_section{'labels'}=[$parameter_hash->{'filtered_labels'},$parameter_hash->{'filtered_labels'}];
+	$covar_section{'labels'}=[$parameter_hash->{'labels'},$parameter_hash->{'labels'}];
 	$covar_section{'values'}=$resulthash->{'covar'};
 	push( @{$self -> results->[0]{'own'}},\%covar_section );
 

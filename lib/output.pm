@@ -1411,6 +1411,64 @@ sub ofvpath
 	return \@ofvpath;
 }
 
+sub get_filtered_values
+{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+							  problem_index => { isa => 'Int', optional => 1, default => 0 },
+							  subproblem_index => { isa => 'Int', optional => 1, default => 0 },
+							  parameter  => { isa => 'Str', optional => 1, default => 'all' },
+							  category  => { isa => 'Str', optional => 1, default => 'estimate' }
+		);
+	my $problem_index=$parm{'problem_index'};
+	my $subproblem_index=$parm{'subproblem_index'};
+	my $parameter=$parm{'parameter'};
+	my $category=$parm{'category'};
+
+	my @problems = ($problem_index+1);
+	my @subproblems = ($subproblem_index +1);
+
+	unless ($parameter eq 'all' or $parameter eq 'theta' or $parameter eq 'omega' or $parameter eq 'sigma'){
+		croak("Illegal value $parameter of option parameter in output::get_filtered_values");
+	}
+
+	unless ($category eq 'estimate' or $category eq 'se' or $category eq 'cvse' or $category eq 'c'){
+		croak("Illegal value $category of option category in output::get_values");
+	}
+
+	unless (defined $self->problems and scalar(@{$self->problems})>$problem_index){
+		croak("problem with index $problem_index does not exist in output object in get_filtered_values");
+	}
+	my $init_problem = $self->problems->[$problem_index]->input_problem;
+
+	my @coordinate_strings = @{$init_problem->get_estimated_attributes(parameter => $parameter,
+																	   attribute => 'coordinate_strings')};
+	my $attribute = $category;
+	$attribute = '' if ($category eq 'estimate');
+
+	my %values_hash;
+	my @values = ();
+
+	foreach my $param ('theta','omega','sigma'){
+		next unless ($parameter eq 'all' or ($parameter eq $param));
+		next if ($param eq 'theta' and $category eq 'c');
+		my $attr= $attribute.$param.'coordval';
+		my $ref = $self->access_any(attribute=>$attr,problems=>\@problems,subproblems=>\@subproblems);
+		if (defined $ref and defined $ref->[0] and defined $ref->[0]->[0]){
+			foreach my $key (keys %{$ref->[0]->[0]}){
+				$values_hash{$key} = $ref->[0]->[0]->{$key};
+			}
+		}
+	}
+
+	foreach my $coord (@coordinate_strings){
+		push(@values,$values_hash{$coord});
+	}
+
+	return \@values;
+}
+
+
 sub get_single_value
 {
 	my $self = shift;

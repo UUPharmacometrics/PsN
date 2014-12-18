@@ -2586,11 +2586,9 @@ sub parse_NM7_raw
 	my $found_ofv_line = 0;
 
     
-	if (defined $self->input_problem and
-		defined $self->input_problem->estimated_parameters_hash and
-		defined $self->input_problem->estimated_parameters_hash ->{'filtered_coordinate_strings'}){
+	if (defined $self->input_problem ){
 		my %keep_labels_hash;
-		foreach my $coord (@{$self->input_problem->estimated_parameters_hash->{'filtered_coordinate_strings'} }){
+		foreach my $coord (@{$self->input_problem->get_estimated_attributes(attribute=>'coordinate_strings')}){
 			$keep_labels_hash{$coord}=1;
 		}
 		$self->keep_labels_hash(\%keep_labels_hash);

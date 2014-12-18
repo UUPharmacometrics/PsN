@@ -362,41 +362,6 @@ my $form = '%.' . $options{'precision'} . 'g';
 		my $observation_records = $outobj->nobs();
 		my $individuals = $outobj->nind();
 
-		#arrays (over problems) of arrays (over subproblems) of arrays of values. Only non-zero are stored
-		my $thetaref = $model -> get_values_to_labels(category => 'theta',
-													  output_object => $outobj);
-		my $omegaref = $model -> get_values_to_labels(category => 'omega',
-													  output_object => $outobj);
-		my $sigmaref = $model -> get_values_to_labels(category => 'sigma',
-													  output_object => $outobj);
-
-		#arrays (over problems) of arrays of names. 
-		my $thetanamesref = $model->labels(parameter_type =>'theta', generic => 0);
-		my $omeganamesref = $model->labels(parameter_type =>'omega', generic => 0);
-		my $sigmanamesref = $model->labels(parameter_type =>'sigma', generic => 0);
-
-		my $thetafixedref = $model->fixed_or_same(parameter_type =>'theta');
-		my $omegafixedref = $model->fixed_or_same(parameter_type =>'omega');
-		my $sigmafixedref = $model->fixed_or_same(parameter_type =>'sigma');
-
-		#arrays (over problems) of arrays (over subproblems) of arrays of values, one per name. Values may be undef
-		my $sethetaref = $model -> get_values_to_labels(category => 'setheta',
-														output_object => $outobj);
-		my $seomegaref = $model -> get_values_to_labels(category => 'seomega',
-														output_object => $outobj);
-		my $sesigmaref = $model -> get_values_to_labels(category => 'sesigma',
-														output_object => $outobj);
-		my $cvsethetaref = $model -> get_values_to_labels(category => 'cvsetheta',
-														  output_object => $outobj);
-		my $cvseomegaref = $model -> get_values_to_labels(category => 'cvseomega',
-														  output_object => $outobj);
-		my $cvsesigmaref = $model -> get_values_to_labels(category => 'cvsesigma',
-														  output_object => $outobj);
-		my $comegasref = $model -> get_values_to_labels(category => 'comega',
-														output_object => $outobj);
-		my $csigmasref = $model -> get_values_to_labels(category => 'csigma',
-														output_object => $outobj);
-
 
 		my $nmversion = $outobj -> nonmem_version();
 
@@ -413,52 +378,81 @@ my $form = '%.' . $options{'precision'} . 'g';
 			my $row_counter = 0;
 
 			next unless (defined $outobj -> problems -> [$problems] -> subproblems());
+			my $init_problem = $outobj -> problems -> [$problems] ->input_problem;
+
+			my %nam;
+			foreach my $param ('theta','omega','sigma'){
+				my $namesref = $init_problem->get_estimated_attributes(parameter => $param,
+																	   attribute => 'labels');
+				my @names=();
+				if (defined $namesref){
+					@names = @{$namesref};
+				}
+				$nam{$param} = \@names;
+			}
 
 		  SUBPROBLEM:
 			for( my $sub_problems = 0; $sub_problems <= $#{$outobj -> problems -> [$problems] -> subproblems}; $sub_problems++){
 				last SUBPROBLEM if $sub_problems > $options{'max_subproblem_num'}-1;
 
 				## Start collecting the information to be printed
-				my $max_par = 0;
 
-				## Thetas
-				my ( %nam, %est, %cest, %ses,%fixed_or_same );
+				my ( %est, %cest, %ses, %cvse);
 
-				my @thetas = defined $thetaref-> [$problems][$sub_problems] ? @{$thetaref -> [$problems][$sub_problems]} : ();
-				my @thnam  = defined $thetanamesref -> [$problems] ? @{$thetanamesref -> [$problems]}  : ();
-				my @sethet = defined $sethetaref -> [$problems][$sub_problems] ? @{$sethetaref -> [$problems][$sub_problems]} : ();
+				foreach my $param ('theta','omega','sigma'){
+					my $ref = $outobj->get_filtered_values(problem_index => $problems,
+														   subproblem_index => $sub_problems,
+														   parameter => $param,
+														   category => 'estimate');
+					my @values=();
+					if (defined $ref){
+						@values = @{$ref};
+					}
+					$est{$param} = \@values;
+				}
+				foreach my $param ('theta','omega','sigma'){
+					my $ref = $outobj->get_filtered_values(problem_index => $problems,
+														   subproblem_index => $sub_problems,
+														   parameter => $param,
+														   category => 'se');
+					my @values=();
+					if (defined $ref){
+						@values = @{$ref};
+					}
+					$ses{$param} = \@values;
+				}
+
+				if(defined $ses{'theta'} and scalar(@{$ses{'theta'}}>0)) {
+					foreach my $param ('theta','omega','sigma'){
+						my $ref = $outobj->get_filtered_values(problem_index => $problems,
+															   subproblem_index => $sub_problems,
+															   parameter => $param,
+															   category => 'cvse');
+						my @values=();
+						if (defined $ref){
+							@values = @{$ref};
+						}
+						$cvse{$param} = \@values;
+					}
+				}
+
+				foreach my $param ('omega','sigma'){
+					my $ref = $outobj->get_filtered_values(problem_index => $problems,
+														   subproblem_index => $sub_problems,
+														   parameter => $param,
+														   category => 'c');
+					my @values=();
+					if (defined $ref){
+						@values = @{$ref};
+					}
+					$cest{$param} = \@values;
+				}
+
+
 
 				my @etashrinkage = defined $eta_shrinkage -> [$problems][$sub_problems] ? @{$eta_shrinkage -> [$problems][$sub_problems]} : ();
 				my @epsshrinkage = defined $eps_shrinkage -> [$problems][$sub_problems] ? @{$eps_shrinkage -> [$problems][$sub_problems]} : ();
 
-				$nam{'theta'} = \@thnam;
-				$est{'theta'} = \@thetas;
-				$ses{'theta'} = \@sethet;
-				$fixed_or_same{'theta'} = defined $thetafixedref->[$problems] ? $thetafixedref->[$problems] : [];
-
-				## Omegas
-				my @omegas    = defined $omegaref -> [$problems][$sub_problems] ? @{$omegaref -> [$problems][$sub_problems]} : ();
-				my @comegas   = defined $comegasref -> [$problems][$sub_problems] ? @{$comegasref -> [$problems][$sub_problems]} : ();
-				my @omnam     = defined $omeganamesref -> [$problems]? @{$omeganamesref -> [$problems]}  : ();
-				my @seomeg    = defined $seomegaref -> [$problems][$sub_problems] ? @{$seomegaref -> [$problems][$sub_problems]} : ();
-
-				$nam{'omega'}  = \@omnam;
-				$est{'omega'}  = \@omegas;
-				$fixed_or_same{'omega'} = defined $omegafixedref->[$problems] ? $omegafixedref->[$problems] : [];
-				$cest{'omega'} = \@comegas;
-				$ses{'omega'}  = \@seomeg;
-
-				## Sigmas
-				my @sigmas  = defined $sigmaref -> [$problems][$sub_problems] ? @{$sigmaref -> [$problems][$sub_problems]} : ();
-				my @csigmas = defined $csigmasref -> [$problems][$sub_problems] ? @{$csigmasref -> [$problems][$sub_problems]} : ();
-				my @signam  = defined $sigmanamesref -> [$problems] ? @{$sigmanamesref -> [$problems]}                : ();
-				my @sesigm  = defined $sesigmaref -> [$problems][$sub_problems] ? @{$sesigmaref -> [$problems][$sub_problems]} : ();
-
-				$nam{'sigma'}  = \@signam;
-				$est{'sigma'}  = \@sigmas;
-				$fixed_or_same{'sigma'} = defined $sigmafixedref->[$problems] ? $sigmafixedref->[$problems] : [];
-				$cest{'sigma'} = \@csigmas;
-				$ses{'sigma'}  = \@sesigm;
 
 				## Termination
 				my $ofv    = $outobj -> get_single_value(attribute => 'ofv',
@@ -484,26 +478,6 @@ my $form = '%.' . $options{'precision'} . 'g';
 														 problem_index =>$problems,
 														 subproblem_index => $sub_problems);
 				
-				## CVs
-				my @cvsethet;
-				my @cvseomeg;
-				my @cvsesigm;
-
-				if(@sethet) {
-					
-					if( defined $cvsethetaref -> [$problems][$sub_problems] ) {
-						@cvsethet = @{$cvsethetaref -> [$problems][$sub_problems]};
-					}
-					if( defined $cvseomegaref -> [$problems][$sub_problems] ) {
-						@cvseomeg = @{$cvseomegaref -> [$problems][$sub_problems]};
-					}
-					if( defined $cvsesigmaref -> [$problems][$sub_problems] ) {
-						@cvsesigm = @{$cvsesigmaref -> [$problems][$sub_problems]};
-					}
-					
-				}
-
-
 
 				my $minim_mess;
 				my $round_mess;
@@ -659,19 +633,21 @@ my $form = '%.' . $options{'precision'} . 'g';
 				}
 				$row_counter++;
 
-				my $max_par = $#thetas;
-				$max_par = $#omegas if ( $#omegas > $max_par );
-				$max_par = $#sigmas if ( $#sigmas > $max_par );
+				my $max_par = 0;
+				foreach my $par ('theta','omega','sigma'){
+					my $num = scalar(@{$nam{$par}});
+					$max_par = $num if ($num > $max_par);
+				}
 
 				my $i_om=0;
 				my $i_si=0;
 
-				for ( my $i = 0; $i <= $max_par; $i++ ) {
+				for ( my $i = 0; $i < $max_par; $i++ ) {
 					my $any_printed=0;
 					my ( @row, %cis );
 					if( $options{'confidence_interval'} ) {
 						my $param = 'theta';
-						if ( defined $est{$param}[$i] and (not $fixed_or_same{$param}[$i])) {
+						if ( defined $est{$param}[$i] ) {
 							my $diff = $c_levels{$options{'c_level'}}*$ses{$param}[$i];
 							my ( $lo, $up, $cis );
 							if( defined $diff and defined $ses{$param}[$i]) {
@@ -697,10 +673,8 @@ my $form = '%.' . $options{'precision'} . 'g';
 							last unless ( defined $est{$param}[$i_om] );
 							my $do_print=0;
 							my $diff = $c_levels{$options{'c_level'}}*$ses{$param}[$i_om];
-							unless ($fixed_or_same{$param}[$i_om]){
-								$do_print = 1 if ( defined $diff and defined $ses{$param}[$i_om]);
-								$do_print = 1 if ($est{$param}[$i_om] != 0);
-							}
+							$do_print = 1 if ( defined $diff and defined $ses{$param}[$i_om]);
+							$do_print = 1 if ($est{$param}[$i_om] != 0);
 							unless ($do_print){
 								$i_om++;
 								next;
@@ -732,10 +706,8 @@ my $form = '%.' . $options{'precision'} . 'g';
 							last unless ( defined $est{$param}[$i_si] );
 							my $do_print=0;
 							my $diff = $c_levels{$options{'c_level'}}*$ses{$param}[$i_si];
-							unless ($fixed_or_same{$param}[$i_si]){
-								$do_print = 1 if ( defined $diff and defined $ses{$param}[$i_si]);
-								$do_print = 1 if ($est{$param}[$i_si] != 0);
-							}
+							$do_print = 1 if ( defined $diff and defined $ses{$param}[$i_si]);
+							$do_print = 1 if ($est{$param}[$i_si] != 0);
 							unless ($do_print){
 								$i_si++;
 								next;
@@ -759,9 +731,9 @@ my $form = '%.' . $options{'precision'} . 'g';
 						push( @row, '','','' ) unless ($printed); 
 					} else {
 						#not confidence
-						if ( defined $thnam[$i] and (not $fixed_or_same{'theta'}[$i])) {
-							push( @row, $thnam[$i], defined $thetas[$i] ? sprintf( $form, $thetas[$i] ) : '........', 
-								  $cvsethet[$i] ? sprintf( "($form)", $cvsethet[$i] ) : '(........)' );
+						if ( defined $nam{'theta'}->[$i]) {
+							push( @row, $nam{'theta'}->[$i], defined $est{'theta'}->[$i] ? sprintf( $form, $est{'theta'}->[$i] ) : '........', 
+								  $cvse{'theta'}->[$i] ? sprintf( "($form)", $cvse{'theta'}->[$i] ) : '(........)' );
 							$any_printed=1;
 						} else {
 							push( @row, '','','' ); 
@@ -771,22 +743,20 @@ my $form = '%.' . $options{'precision'} . 'g';
 							last unless ($outobj -> get_single_value(attribute => 'have_omegas',
 																	 problem_index =>$problems,
 																	 subproblem_index => $sub_problems));
-							last unless ( defined $omnam[$i_om] );
+							last unless ( defined $nam{'omega'}->[$i_om] );
 							my $do_print=0;
-							unless ($fixed_or_same{'omega'}[$i_om]){
-								$do_print = 1 if ((defined $comegas[$i_om]) and ($comegas[$i_om] != 0));
-								$do_print = 1 if (($cvseomeg[$i_om]) and ($cvseomeg[$i_om] != 0));
-							}
+							$do_print = 1 if ((defined $cest{'omega'}->[$i_om]) and ($cest{'omega'}->[$i_om] != 0));
+							$do_print = 1 if (($cvse{'omega'}->[$i_om]) and ($cvse{'omega'}->[$i_om] != 0));
 							unless ($do_print){
 								$i_om++;
 								next;
 							}
 							if( !$options{'sd_rse'} ) {
-								push( @row, $omnam[$i_om], defined $comegas[$i_om] ? sprintf( $form, $comegas[$i_om] ) : '........' , 
-									  $cvseomeg[$i_om] ? sprintf( "($form)", $cvseomeg[$i_om] ) : '(........)' );
+								push( @row, $nam{'omega'}->[$i_om], defined $cest{'omega'}->[$i_om] ? sprintf( $form, $cest{'omega'}->[$i_om] ) : '........' , 
+									  $cvse{'omega'}->[$i_om] ? sprintf( "($form)", $cvse{'omega'}->[$i_om] ) : '(........)' );
 							} else {
-								push( @row, $omnam[$i_om], defined $comegas[$i_om] ? sprintf( $form, $comegas[$i_om] ) : '........' , 
-									  $cvseomeg[$i_om] ? sprintf( "($form)", $cvseomeg[$i_om]/2 ) : '(........)' );
+								push( @row, $nam{'omega'}->[$i_om], defined $cest{'omega'}->[$i_om] ? sprintf( $form, $cest{'omega'}->[$i_om] ) : '........' , 
+									  $cvse{'omega'}->[$i_om] ? sprintf( "($form)", $cvse{'omega'}->[$i_om]/2 ) : '(........)' );
 							}
 							$i_om++;
 							$printed=1;
@@ -800,22 +770,20 @@ my $form = '%.' . $options{'precision'} . 'g';
 							last unless ($outobj -> get_single_value(attribute => 'have_sigmas',
 																	 problem_index =>$problems,
 																	 subproblem_index => $sub_problems));
-							last unless ( defined $signam[$i_si] );
+							last unless ( defined $nam{'sigma'}->[$i_si] );
 							my $do_print=0;
-							unless ($fixed_or_same{'sigma'}[$i_si]){
-								$do_print = 1 if ((defined $csigmas[$i_si]) and ($csigmas[$i_si] != 0));
-								$do_print = 1 if (($cvsesigm[$i_si]) and ($cvsesigm[$i_si] != 0));
-							}
+							$do_print = 1 if ((defined $cest{'sigma'}->[$i_si]) and ($cest{'sigma'}->[$i_si] != 0));
+							$do_print = 1 if (($cvse{'sigma'}->[$i_si]) and ($cvse{'sigma'}->[$i_si] != 0));
 							unless ($do_print){
 								$i_si++;
 								next;
 							}
 							if( !$options{'sd_rse'} ) {
-								push( @row, $signam[$i_si], defined $csigmas[$i_si] ? sprintf( $form, $csigmas[$i_si] ) : '........', 
-									  $cvsesigm[$i_si] ? sprintf( "($form)", $cvsesigm[$i_si] ) : '(........)' );
+								push( @row, $nam{'sigma'}->[$i_si], defined $cest{'sigma'}->[$i_si] ? sprintf( $form, $cest{'sigma'}->[$i_si] ) : '........', 
+									  $cvse{'sigma'}->[$i_si] ? sprintf( "($form)", $cvse{'sigma'}->[$i_si] ) : '(........)' );
 							} else {
-								push( @row, $signam[$i_si], defined $csigmas[$i_si] ? sprintf( $form, $csigmas[$i_si] ) : '........', 
-									  $cvsesigm[$i_si] ? sprintf( "($form)", $cvsesigm[$i_si]/2 ) : '(........)' );
+								push( @row, $nam{'sigma'}->[$i_si], defined $cest{'sigma'}->[$i_si] ? sprintf( $form, $cest{'sigma'}->[$i_si] ) : '........', 
+									  $cvse{'sigma'}->[$i_si] ? sprintf( "($form)", $cvse{'sigma'}->[$i_si]/2 ) : '(........)' );
 							}
 							$i_si++;
 							$printed=1;

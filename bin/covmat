@@ -251,8 +251,7 @@ foreach my $param (@list_parameters){
 	}else{
 		for (my $j=0; $j<scalar(@{$labels_hash->{'param'}}); $j++){
 			if ($labels_hash->{'param'}->[$j] eq $param){
-				push(@headers,$labels_hash->{'filtered_labels'}->[$j]);
-				#print $labels_hash->{'filtered_labels'}->[$j]."\n";
+				push(@headers,$labels_hash->{'labels'}->[$j]);
 			}
 		} 
 	}
