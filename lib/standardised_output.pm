@@ -527,48 +527,11 @@ sub _parse_lst_file
             my $observation_records = $outobj->nobs();
             my $individuals = $outobj->nind();
 
-            #arrays (over problems) of arrays (over subproblems) of arrays of values. Only non-zero are stored
-            my $thetaref = $model -> get_values_to_labels(category => 'theta',
-                output_object => $outobj);
-            my $omegaref = $model -> get_values_to_labels(category => 'omega',
-                output_object => $outobj);
-            my $sigmaref = $model -> get_values_to_labels(category => 'sigma',
-                output_object => $outobj);
-
-            #arrays (over problems) of arrays of names. 
-            my $thetanamesref = $model->labels(parameter_type =>'theta', generic => 0);
-            my $omeganamesref = $model->labels(parameter_type =>'omega', generic => 0);
-            my $sigmanamesref = $model->labels(parameter_type =>'sigma', generic => 0);
-
-            #arrays (over problems) of arrays (over subproblems) of arrays of values, one per name. Values may be undef
-            my $sethetaref = $model -> get_values_to_labels(category => 'setheta',
-                output_object => $outobj);
-            my $seomegaref = $model -> get_values_to_labels(category => 'seomega',
-                output_object => $outobj);
-            my $sesigmaref = $model -> get_values_to_labels(category => 'sesigma',
-                output_object => $outobj);
-
             my $problems = 0; #TODO check if first $PROB is prior, then should be =1 here, as in e.g. sse script
             my $sub_problems = 0;  #always 0 since we do not have workflow simulation + estimation?
 
-            ## Thetas
-
-            my @thetas = defined $thetaref-> [$problems][$sub_problems] ? @{$thetaref -> [$problems][$sub_problems]} : ();
-            my @thnam  = defined $thetanamesref -> [$problems] ? @{$thetanamesref -> [$problems]}  : ();
-            my @sethet = defined $sethetaref -> [$problems][$sub_problems] ? @{$sethetaref -> [$problems][$sub_problems]} : ();
-
             my @etashrinkage = defined $eta_shrinkage -> [$problems][$sub_problems] ? @{$eta_shrinkage -> [$problems][$sub_problems]} : ();
             my @epsshrinkage = defined $eps_shrinkage -> [$problems][$sub_problems] ? @{$eps_shrinkage -> [$problems][$sub_problems]} : ();
-
-            ## Omegas
-            my @omegas    = defined $omegaref -> [$problems][$sub_problems] ? @{$omegaref -> [$problems][$sub_problems]} : ();
-            my @omnam     = defined $omeganamesref -> [$problems]? @{$omeganamesref -> [$problems]}  : ();
-            my @seomeg    = defined $seomegaref -> [$problems][$sub_problems] ? @{$seomegaref -> [$problems][$sub_problems]} : ();
-
-            ## Sigmas
-            my @sigmas  = defined $sigmaref -> [$problems][$sub_problems] ? @{$sigmaref -> [$problems][$sub_problems]} : ();
-            my @signam  = defined $sigmanamesref -> [$problems] ? @{$sigmanamesref -> [$problems]}                : ();
-            my @sesigm  = defined $sesigmaref -> [$problems][$sub_problems] ? @{$sesigmaref -> [$problems][$sub_problems]} : ();
 
             ## Termination
             my $ofv = $outobj -> get_single_value(attribute => 'ofv',
@@ -579,52 +542,46 @@ sub _parse_lst_file
                 problem_index =>$problems,
                 subproblem_index => $sub_problems);
 
-            my $have_ses = 0;
+            my $covariance_step_successful = 0;
             if ($outobj->covariance_step_run->[$problems]) {
                 if ($outobj->covariance_step_successful->[$problems][$sub_problems] ne '0') {
-                    $have_ses = 1;
+                    $covariance_step_successful = 1;
                 }
             }
 
-            $model->problems->[$problems]->set_estimated_parameters_hash();
-            my $estimated_parameters = $model->problems->[$problems]->estimated_parameters_hash->{'filtered_labels'};
+            my @est_values = @{$outobj->get_filtered_values(
+                problem_index => $problems,
+                subproblem_index => $sub_problems,
+                parameter => 'all',
+                category => 'estimate'
+            )};
 
-            my @all_labels = (@thnam);
-            my @est_values = (@thetas);
+            my @se_values = @{$outobj->get_filtered_values(
+                problem_index => $problems,
+                subproblem_index => $sub_problems,
+                parameter => 'all',
+                category => 'se'
+            )};
 
-            my @se_values = ();
-            my @rel_se = ();
+            my @all_labels = @{$model->problems->[$problems]->get_estimated_attributes(parameter => 'all', attribute => 'labels')};
 
-            @se_values = (@sethet) if $have_ses;
-
-            for (my $i = 0; $i < scalar(@omnam); $i++) {
-                my $is_estimated = grep { $_ eq $omnam[$i] } @$estimated_parameters;
-                if ($is_estimated) {
-                    push(@all_labels, $omnam[$i]);
-                    push(@est_values, $omegas[$i]);
-                    push(@se_values, $seomeg[$i]) if $have_ses;
-                }
-            }
-            for (my $i = 0; $i < scalar(@signam); $i++) {
-                my $is_estimated = grep { $_ eq $signam[$i] } @$estimated_parameters;
-                if (not match_symbol_idtype($signam[$i])) {
-                    my $oldname = $signam[$i];
-                    $signam[$i] = mangle_symbol_idtype($signam[$i]);
-                    push @warnings, "Parameter label \"$oldname\" not specified or not a legal symbolIdType. Setting/changing it to: $signam[$i]";
-                }
-                if ($is_estimated) {
-                    push(@all_labels, $signam[$i]);
-                    push(@est_values, $sigmas[$i]);
-                    push(@se_values, $sesigm[$i]) if $have_ses;
+            foreach my $label (@all_labels) {
+                if (not match_symbol_idtype($label)) {
+                    my $old_label = $label;
+                    $label = mangle_symbol_idtype($label);
+                    push @warnings, "Parameter label \"$old_label\" not specified or not a legal symbolIdType. Setting/changing it to: $label";
                 }
             }
 
             #Calculate relative standard errors, only if have se values
-            for (my $i = 0; $i < scalar(@se_values); $i++) {
-                if ($est_values[$i] == 0) {
-                    push @rel_se, undef;
-                } else {
-                    push @rel_se, $se_values[$i] / $est_values[$i];
+            my @rel_se = ();
+            if ($covariance_step_successful) {
+                for (my $i = 0; $i < scalar(@se_values); $i++) {
+                    if ($est_values[$i] == 0) {
+                        push @rel_se, undef;
+                    } else {
+                        push @rel_se, $se_values[$i] / $est_values[$i];
+                    }
                 }
             }
 
@@ -640,7 +597,7 @@ sub _parse_lst_file
                 }
             }
 
-            if (scalar(@se_values) > 0) {
+            if ($covariance_step_successful) {
                 my $correlation_matrix = linear_algebra::triangular_symmetric_to_full($outobj->correlation_matrix->[$problems]->[$sub_problems]);
                 my $covariance_matrix = linear_algebra::triangular_symmetric_to_full($outobj->covariance_matrix->[$problems]->[$sub_problems]);
                 if ($self->check_include(element => 'Estimation/PrecisionPopulationEstimates')) {
