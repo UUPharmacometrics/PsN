@@ -474,8 +474,14 @@ sub parse
         # Create Bootstrap element
         if (-e $self->bootstrap_results) {
             my $ppi = $self->find_or_create_node(root_node => $estimation, node_name => "PrecisionPopulationEstimates");
-            my $bootstrap = $self->_create_bootstrap();
-            $ppi->appendChild($bootstrap);
+            (my $bootstrap, my $message) = $self->_create_bootstrap();
+            if (defined $bootstrap) {
+                $ppi->appendChild($bootstrap);
+            }
+            if (defined $message) {
+                my $messages = $self->_create_messages(messages => [ $message ]);
+                $self->append_array($block, $messages);
+            }
         } else {
             my $bootstrap_error = {
                 type => "ERROR",
@@ -820,8 +826,6 @@ sub _create_bootstrap
 
     my $doc = $self->_document;
 
-    my $bootstrap = $doc->createElement("Bootstrap");
-
     open my $fh, '<', $self->bootstrap_results;
 
     my @parameters;
@@ -870,23 +874,37 @@ sub _create_bootstrap
 
     close $fh;
 
-    # Create column Ids
-    foreach my $p (@percentiles) {
-        $p = "Pctl_${p}th";
+    # Warning if no percentiles
+    my $message;
+    my $bootstrap;
+    if (scalar(@percentiles) == 0) {
+        $message = {
+            type => "WARNING",
+            toolname => "PsN",
+            name => "Bootstrap",
+            content => "No bootstrap percentiles in " . $self->bootstrap_results . ". No Bootstrap results added.",
+            severity => 2,
+        };
+    } else {
+        # Create column Ids
+        foreach my $p (@percentiles) {
+            $p = "Pctl_${p}th";
+        }
+        unshift @percentiles, 'parameter';
+
+        my $table = $self->create_table(
+            table_name => 'PercentilesCI',
+            column_ids => \@percentiles,
+            column_types => [ ('undefined') x scalar(@percentiles) ],
+            column_valuetypes => [ 'string', ('real') x (scalar(@percentiles) - 1) ],
+            values => \@column,
+            row_major => 1,
+        );
+        $bootstrap = $doc->createElement("Bootstrap");
+        $bootstrap->appendChild($table);
     }
-    unshift @percentiles, 'parameter';
 
-    my $table = $self->create_table(
-        table_name => 'PercentilesCI',
-        column_ids => \@percentiles,
-        column_types => [ ('undefined') x scalar(@percentiles) ],
-        column_valuetypes => [ 'string', ('real') x (scalar(@percentiles) - 1) ],
-        values => \@column,
-        row_major => 1,
-    );
-    $bootstrap->appendChild($table);
-
-    return $bootstrap;
+    return ($bootstrap, $message);
 }
 
 sub _create_messages
