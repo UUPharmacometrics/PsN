@@ -249,6 +249,19 @@ sub find_or_create_node
     return $node;
 }
 
+sub append_array
+{
+    my $self = shift;
+    my $node = shift;
+    my $array = shift;
+
+    if (defined $array) {
+        foreach my $a (@$array) {
+            $node->appendChild($a);
+        }
+    }
+}
+
 sub IsStarting_character
 {
     # Character class for the XML character class [\i-[:]] (first character in NCName)
@@ -459,29 +472,20 @@ sub parse
         my $estimation = $self->find_or_create_node(root_node => $block, node_name => "Estimation");
 
         # Create Bootstrap element
-        my $bootstrap_error;
         if (-e $self->bootstrap_results) {
             my $ppi = $self->find_or_create_node(root_node => $estimation, node_name => "PrecisionPopulationEstimates");
             my $bootstrap = $self->_create_bootstrap();
             $ppi->appendChild($bootstrap);
         } else {
-            $bootstrap_error = "Bootstrap results file \"" . $self->bootstrap_results . "\" does not exist";
-        }
-        
-        # Add target tool messages
-        if (not $estimation->exists("TargetToolMessages")) {
-            my $errors;
-            if (defined $bootstrap_error) {
-                $errors = [ $bootstrap_error ];
-            }
-            my $ttm = $self->_create_target_tool_messages(errors => $errors, elapsed_time => 0);
-            $estimation->appendChild($ttm);
-        } else {
-            if (defined $bootstrap_error) {
-                (my $ttm) = $estimation->findnodes("TargetToolMessages");
-                my $errors = $self->find_or_create_node(root_node => $ttm, node_name => "Errors");
-                $errors->appendTextNode("\n$bootstrap_error");
-            }
+            my $bootstrap_error = {
+                type => "ERROR",
+                toolname => "nmoutput2so",
+                name => "File error",
+                content => "Bootstrap results file \"" . $self->bootstrap_results . "\" does not exist",
+                severity => 10,
+            };
+            my $messages = $self->_create_messages(messages => [ $bootstrap_error ]);
+            $self->append_array($block, $messages);
         }
     }
 
@@ -499,8 +503,7 @@ sub _parse_lst_file
     my $lst_file = $parm{'lst_file'};
 
     my $elapsed_time = 0;
-    my @errors;
-    my @warnings;
+    my @messages;
     my $doc = $self->_document;
 
     my $file_stem = get_file_stem($lst_file);
@@ -514,11 +517,23 @@ sub _parse_lst_file
 
     # Check that the output file exist before trying to read it.
     if (not -e $lst_file) {
-        push @errors, "The file: \"" . $lst_file . "\" does not exist";
+        push @messages, {
+            type => "ERROR",
+            toolname => "nmoutput2so",
+            name => "File error",
+            content => "The file: \"" . $lst_file . "\" does not exist",
+            severity => 10,
+        };
     } else {
         my $outobj = output->new(filename => $lst_file);
         if (not $outobj->parsed_successfully) {
-            push @errors, "Outputfile not parsed successfully, error message: " . $outobj->parsing_error_message;
+            push @messages, {
+                type => "ERROR",
+                toolname => "NONMEM",
+                name => "Parsing error", 
+                content => "Outputfile not parsed successfully, error message: " . $outobj->parsing_error_message,
+                severity => 10,
+            };
         } else {
             my $model = $outobj->lst_model;
 
@@ -569,7 +584,13 @@ sub _parse_lst_file
                 if (not match_symbol_idtype($label)) {
                     my $old_label = $label;
                     $label = mangle_symbol_idtype($label);
-                    push @warnings, "Parameter label \"$old_label\" not specified or not a legal symbolIdType. Setting/changing it to: $label";
+                    push @messages, {
+                        type => "WARNING",
+                        toolname => "nmoutput2so",
+                        name => "Name change",
+                        content => "Parameter label \"$old_label\" not specified or not a legal symbolIdType. Setting/changing it to: $label",
+                        severity => 1,
+                    };
                 }
             }
 
@@ -618,7 +639,13 @@ sub _parse_lst_file
                 if (defined $table_name_ref and scalar @{$table_name_ref} >= 0) {
                     foreach my $table (@$table_name_ref) {
                         if ($table =~ /^(sdtab|patab)/ and not -e $table) {
-                            push @warnings, "Could not find table $table. Results from this table could not be added.";
+                            push @messages, {
+                                type => "WARNING",
+                                toolname => "nmoutput2so",
+                                name => "File error",
+                                content => "Could not find table $table. Results from this table could not be added.",
+                                severity => 1,
+                            };
                             next;
                         }
                         if ($table =~ /^sdtab/) {
@@ -668,7 +695,13 @@ sub _parse_lst_file
             }
 
             if (not defined $ofv) {
-                push @errors, join('', @{$minimization_message});
+                push @messages, {
+                    type => 'ERROR',
+                    toolname => "NONMEM",
+                    name => "Minimzation error",
+                    content => join('', @{$minimization_message}),
+                    severity => 5,
+                };
             }
 
             $outobj->runtime =~ m/(\d+):(\d+):(\d+)/;
@@ -676,8 +709,8 @@ sub _parse_lst_file
         }
     }
 
-    my $target_tool_messages = $self->_create_target_tool_messages(errors => \@errors, warnings => \@warnings, elapsed_time => $elapsed_time);
-    $estimation->appendChild($target_tool_messages);
+    my $xml_messages = $self->_create_messages(messages => \@messages);
+    $self->append_array($block, $xml_messages);
 
     return $block;
 }
@@ -856,39 +889,44 @@ sub _create_bootstrap
     return $bootstrap;
 }
 
-sub _create_target_tool_messages
+sub _create_messages
 {
+    # Create a list of xml messages from an array of hashes of the following form:
+    #   type ('ERROR', 'WARNING' etc)
+    #   toolname
+    #   name
+    #   content
+    #   severity
+
     my $self = shift;
     my %parm = validated_hash(\@_,
-        errors => { isa => 'Maybe[ArrayRef]', optional => 1 },
-        warnings => { isa => 'Maybe[ArrayRef]', optional => 1 },
-        elapsed_time => { isa => 'Num' },
+        messages => { isa => 'ArrayRef[HashRef]', optional => 1 },
     );
-    my @errors = defined $parm{'errors'} ? @{$parm{'errors'}} : ();
-    my @warnings = defined $parm{'warnings'} ? @{$parm{'warnings'}} : ();
-    my $elapsed_time = $parm{'elapsed_time'};
+    my @messages = defined $parm{'messages'} ? @{$parm{'messages'}} : ();
 
     my $doc = $self->_document;
 
-    my $target_tool_messages = $doc->createElement("TargetToolMessages");
+    my @xml_messages;
 
-    if (scalar(@errors) > 0) {
-        my $errors_xml = $doc->createElement("Errors");
-        $errors_xml->appendTextNode(join("\n", @errors));
-        $target_tool_messages->appendChild($errors_xml);
-    }
-    if (scalar(@warnings) > 0) {
-        my $warnings_xml = $doc->createElement("Warnings");
-        $warnings_xml->appendTextNode(join("\n", @warnings));
-        $target_tool_messages->appendChild($warnings_xml);
-    }
-    if (defined $elapsed_time) {
-        my $elapsed_time_xml = $doc->createElement("ElapsedTime");
-        $elapsed_time_xml->appendTextNode($elapsed_time);
-        $target_tool_messages->appendChild($elapsed_time_xml);
+    foreach my $message (@messages) {
+        my $node = $doc->createElement("Message");
+        $node->setAttribute('type', $message->{'type'});
+        my $toolname = $doc->createElement('toolname');
+        $toolname->appendTextNode($message->{'toolname'});
+        $node->appendChild($toolname);
+        my $name = $doc->createElement('name');
+        $name->appendTextNode($message->{'name'});
+        $node->appendChild($name);
+        my $content = $doc->createElement('content');
+        $content->appendTextNode($message->{'content'});
+        $node->appendChild($content);
+        my $severity = $doc->createElement('severity');
+        $severity->appendTextNode($message->{'severity'});
+        $node->appendChild($severity);
+        push @xml_messages, $node;
     }
 
-    return $target_tool_messages
+    return \@xml_messages;
 }
 
 sub _create_likelihood
