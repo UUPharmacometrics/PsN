@@ -846,10 +846,6 @@ sub _create_bootstrap
                     last;
                 }
             }
-            # Add parameter names to table
-            for (my $col = 0; $col < scalar(@parameters); $col++) {
-                push @{$column[$col]}, $parameters[$col];
-            }
             # Loop through percentiles
             for (my $i = 0; $i < 7; $i++) {
                 my $row = <$fh>;
@@ -886,19 +882,12 @@ sub _create_bootstrap
             severity => 2,
         };
     } else {
-        # Create column Ids
-        foreach my $p (@percentiles) {
-            $p = "Pctl_${p}th";
-        }
-        unshift @percentiles, 'parameter';
-
         my $table = $self->create_table(
             table_name => 'PercentilesCI',
-            column_ids => \@percentiles,
-            column_types => [ ('undefined') x scalar(@percentiles) ],
-            column_valuetypes => [ 'string', ('real') x (scalar(@percentiles) - 1) ],
-            values => \@column,
-            row_major => 1,
+            column_ids => [ "Percentile", @parameters ],
+            column_types => [ ('undefined') x (scalar(@parameters) + 1) ],
+            column_valuetypes => [ ('real') x (scalar(@parameters) + 1) ],
+            values => [ \@percentiles, @column ],
         );
         $bootstrap = $doc->createElement("Bootstrap");
         $bootstrap->appendChild($table);
