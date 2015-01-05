@@ -1005,65 +1005,46 @@ sub _create_residuals
     my $id = $sdtab->column_to_array(column => "ID");
     my $time = $sdtab->column_to_array(column => "TIME");
 
-    my $residuals = $doc->createElement("Residuals");
+    my @values = ( $id, $time );
+    my @ids = ( "ID", "TIME" );
 
-    if ($self->check_include(element => 'Estimation/Residuals/RES')) {
-        if (exists $sdtab->column_head_indices->{'RES'}) {
-            my $res = $sdtab->column_to_array(column => "RES");
-            my $table = $self->create_table(
-                table_name => "RES",
-                column_ids => [ "ID", "TIME", "RES" ],
-                column_types => [ "id", "undefined", "undefined" ],
-                column_valuetypes =>  [ "string", "real", "real" ],
-                values => [ $id, $time, $res ],
-            );
-            $residuals->appendChild($table);
-        }
+    if (exists $sdtab->column_head_indices->{'RES'}) {
+        my $res = $sdtab->column_to_array(column => "RES");
+        push @values, $res;
+        push @ids, "RES";
     }
 
-    if ($self->check_include(element => 'Estimation/Residuals/IRES')) {
-        if (exists $sdtab->column_head_indices->{'IRES'}) {
-            my $ires = $sdtab->column_to_array(column => "IRES");
-            my $table = $self->create_table(
-                table_name => "IRES",
-                column_ids => [ "ID", "TIME", "IRES" ],
-                column_types => [ "id", "undefined", "undefined" ],
-                column_valuetypes =>  [ "string", "real", "real" ],
-                values => [ $id, $time, $ires ],
-            );
-            $residuals->appendChild($table);
-        }
+    if (exists $sdtab->column_head_indices->{'IRES'}) {
+        my $ires = $sdtab->column_to_array(column => "IRES");
+        push @values, $ires;
+        push @ids, "IRES";
     }
 
-    if ($self->check_include(element => 'Estimation/Residuals/WRES')) {
-        if (exists $sdtab->column_head_indices->{'WRES'}) {
-            my $wres = $sdtab->column_to_array(column => "WRES");
-            my $table = $self->create_table(
-                table_name => "WRES",
-                column_ids => [ "ID", "TIME", "WRES" ],
-                column_types => [ "id", "undefined", "undefined" ],
-                column_valuetypes =>  [ "string", "real", "real" ],
-                values => [ $id, $time, $wres ],
-            );
-            $residuals->appendChild($table);
-        }
+    if (exists $sdtab->column_head_indices->{'WRES'}) {
+        my $wres = $sdtab->column_to_array(column => "WRES");
+        push @values, $wres;
+        push @ids, "WRES";
+    }
+    
+    if (exists $sdtab->column_head_indices->{'IWRES'}) {
+        my $wres = $sdtab->column_to_array(column => "IWRES");
+        push @values, $wres;
+        push @ids, "IWRES";
     }
 
-    if ($self->check_include(element => 'Estimation/Residuals/IWRES')) {
-        if (exists $sdtab->column_head_indices->{'IWRES'}) {
-            my $iwres = $sdtab->column_to_array(column => "IWRES");
-            my $table = $self->create_table(
-                table_name => "IWRES",
-                column_ids => [ "ID", "TIME", "IWRES" ],
-                column_types => [ "id", "undefined", "undefined" ],
-                column_valuetypes =>  [ "string", "real", "real" ],
-                values => [ $id, $time, $iwres ],
-            );
-            $residuals->appendChild($table);
-        }
+    if (scalar(@values) == 2) { # No columns were added
+        return;
     }
 
-    return $residuals;
+    my $table = $self->create_table(
+        table_name => "Residuals",
+        column_ids => \@ids,
+        column_types => [ "id", ("undefined") x (scalar(@ids) - 1) ],
+        column_valuetypes =>  [ "string", ("real") x (scalar(@ids) - 1) ],
+        values => \@values,
+    );
+
+    return $table;
 }
 
 sub _individual_statistics
