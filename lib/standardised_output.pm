@@ -65,6 +65,54 @@ sub _get_printable_number
     return $str;
 }
 
+sub create_typed_element
+{
+    # Create an element such as <ct:String>text</ct:String>
+    my $self = shift;
+    my %parm = validated_hash(\@_,
+        type => { isa => 'Str' },
+        content => { isa => 'Str' },
+    );
+    my $type = $parm{'type'};
+    my $content = $parm{'content'};
+
+    my $doc = $self->_document;
+
+    my $element = $doc->createElement('ct:' . $type);
+    $element->appendTextNode($content);
+
+    return $element;
+}
+
+sub create_message
+{
+    # Create an Message element for TaskInformation
+    my $self = shift;
+    my %parm = validated_hash(\@_,
+        message => { isa => 'HashRef' },
+    );
+    my $message = $parm{'message'};
+
+    my $doc = $self->_document;
+
+    my $node = $doc->createElement("Message");
+    $node->setAttribute('type', $message->{'type'});
+    my $toolname = $doc->createElement('Toolname');
+    $toolname->appendChild($self->create_typed_element(type => 'String', content => $message->{'toolname'}));
+    $node->appendChild($toolname);
+    my $name = $doc->createElement('Name');
+    $name->appendChild($self->create_typed_element(type => 'String', content => $message->{'name'}));
+    $node->appendChild($name);
+    my $content = $doc->createElement('Content');
+    $content->appendChild($self->create_typed_element(type => 'String', content => $message->{'content'}));
+    $node->appendChild($content);
+    my $severity = $doc->createElement('Severity');
+    $severity->appendChild($self->create_typed_element(type => 'Int', content => $message->{'severity'}));
+    $node->appendChild($severity);
+
+    return $node;
+}
+
 sub create_table
 {
     my $self = shift;
@@ -247,19 +295,6 @@ sub find_or_create_node
     }
 
     return $node;
-}
-
-sub append_array
-{
-    my $self = shift;
-    my $node = shift;
-    my $array = shift;
-
-    if (defined $array) {
-        foreach my $a (@$array) {
-            $node->appendChild($a);
-        }
-    }
 }
 
 sub IsStarting_character
@@ -471,27 +506,36 @@ sub parse
         }
         my $estimation = $self->find_or_create_node(root_node => $block, node_name => "Estimation");
 
+        my $bootstrap_message;
+
         # Create Bootstrap element
         if (-e $self->bootstrap_results) {
             my $ppi = $self->find_or_create_node(root_node => $estimation, node_name => "PrecisionPopulationEstimates");
-            (my $bootstrap, my $message) = $self->_create_bootstrap();
+            (my $bootstrap, $bootstrap_message) = $self->_create_bootstrap();
             if (defined $bootstrap) {
                 $ppi->appendChild($bootstrap);
             }
-            if (defined $message) {
-                my $messages = $self->_create_messages(messages => [ $message ]);
-                $self->append_array($block, $messages);
-            }
         } else {
-            my $bootstrap_error = {
+            $bootstrap_message = {
                 type => "ERROR",
                 toolname => "nmoutput2so",
                 name => "File error",
                 content => "Bootstrap results file \"" . $self->bootstrap_results . "\" does not exist",
                 severity => 10,
             };
-            my $messages = $self->_create_messages(messages => [ $bootstrap_error ]);
-            $self->append_array($block, $messages);
+        }
+
+        # Create Bootstrap messages
+        if (defined $bootstrap_message) {
+            if ($block->exists("TaskInformation")) {
+                (my $ti) = $block->findnodes("TaskInformation");
+                my $message = $self->create_message(message => $bootstrap_message);
+                my $first_child = $ti->firstChild();
+                $ti->insertBefore($message, $first_child);
+            } else {
+                my $ti = $self->_create_task_information(messages => [ $bootstrap_message ]);
+                $block->appendChild($ti)
+            }
         }
     }
 
@@ -711,12 +755,24 @@ sub _parse_lst_file
             }
 
             $outobj->runtime =~ m/(\d+):(\d+):(\d+)/;
-            $elapsed_time = $1 * 3600 + $2 * 60 + $3;
+            $elapsed_time = $1 + $2 / 60 + $3 / 3600;
         }
     }
 
-    my $xml_messages = $self->_create_messages(messages => \@messages);
-    $self->append_array($block, $xml_messages);
+    #if (0) {
+    #    my $simulation = $doc->createElement("Simulation");
+    #    my $simulated_profiles = $self->create_table(
+    #        table_name => "SimulatedProfiles",
+    #        column_ids => ,
+    #        column_types => ,
+    #        column_valuetypes => ,
+    #        values => ,
+    #    );
+    #    $simulation->appendChild($simulated_profiles);
+    #}
+
+    my $task_information = $self->_create_task_information(messages => \@messages, run_time => $elapsed_time);
+    $block->insertBefore($task_information, $estimation);
 
     return $block;
 }
@@ -896,7 +952,7 @@ sub _create_bootstrap
     return ($bootstrap, $message);
 }
 
-sub _create_messages
+sub _create_task_information
 {
     # Create a list of xml messages from an array of hashes of the following form:
     #   type ('ERROR', 'WARNING' etc)
@@ -908,32 +964,27 @@ sub _create_messages
     my $self = shift;
     my %parm = validated_hash(\@_,
         messages => { isa => 'ArrayRef[HashRef]', optional => 1 },
+        run_time => { isa => 'Num', optional => 1 },
     );
     my @messages = defined $parm{'messages'} ? @{$parm{'messages'}} : ();
+    my $run_time = $parm{'run_time'};
 
     my $doc = $self->_document;
 
-    my @xml_messages;
+    my $task_information = $doc->createElement("TaskInformation");
 
     foreach my $message (@messages) {
-        my $node = $doc->createElement("Message");
-        $node->setAttribute('type', $message->{'type'});
-        my $toolname = $doc->createElement('toolname');
-        $toolname->appendTextNode($message->{'toolname'});
-        $node->appendChild($toolname);
-        my $name = $doc->createElement('name');
-        $name->appendTextNode($message->{'name'});
-        $node->appendChild($name);
-        my $content = $doc->createElement('content');
-        $content->appendTextNode($message->{'content'});
-        $node->appendChild($content);
-        my $severity = $doc->createElement('severity');
-        $severity->appendTextNode($message->{'severity'});
-        $node->appendChild($severity);
-        push @xml_messages, $node;
+        my $element = $self->create_message(message => $message);
+        $task_information->appendChild($element);
     }
 
-    return \@xml_messages;
+    if (defined $run_time) {
+        my $xml_run_time = $doc->createElement("RunTime");
+        $task_information->appendChild($xml_run_time);
+        $xml_run_time->appendChild($self->create_typed_element(type => 'Real', content => $run_time));
+    }
+
+    return $task_information;
 }
 
 sub _create_likelihood
