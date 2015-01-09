@@ -3,7 +3,7 @@ use ext::Carp;
 use File::Spec;
 use Cwd;
 
-$version = '4.3.6';
+$version = '4.3.7';
 # The following line will be changed by make
 $dev = 1;
 
