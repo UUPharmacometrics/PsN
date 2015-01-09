@@ -562,8 +562,8 @@ sub _parse_lst_file
     }
 
     my $block = $self->create_block(name => $file_stem);
-    my $estimation = $doc->createElement("Estimation");
-    $block->appendChild($estimation);
+    my $estimation;
+    my $simulation;
 
     # Check that the output file exist before trying to read it.
     if (not -e $lst_file) {
@@ -614,6 +614,9 @@ sub _parse_lst_file
                 }
             }
 
+            my $simulation_step_run = $outobj->get_single_value(attribute => 'simulationstep', problem_index => $problems);
+            my $estimation_step_run = $outobj->get_single_value(attribute => 'estimation_step_run', problem_index => $problems);
+
             my @est_values = @{$outobj->get_filtered_values(
                 problem_index => $problems,
                 subproblem_index => $sub_problems,
@@ -630,149 +633,164 @@ sub _parse_lst_file
 
             my @all_labels = @{$model->problems->[$problems]->get_estimated_attributes(parameter => 'all', attribute => 'labels')};
 
-            foreach my $label (@all_labels) {
-                if (not match_symbol_idtype($label)) {
-                    my $old_label = $label;
-                    $label = mangle_symbol_idtype($label);
+            if ($estimation_step_run) {
+                $estimation = $doc->createElement("Estimation");
+
+                foreach my $label (@all_labels) {
+                    if (not match_symbol_idtype($label)) {
+                        my $old_label = $label;
+                        $label = mangle_symbol_idtype($label);
+                        push @messages, {
+                            type => "WARNING",
+                            toolname => "nmoutput2so",
+                            name => "Name change",
+                            content => "Parameter label \"$old_label\" not specified or not a legal symbolIdType. Setting/changing it to: $label",
+                            severity => 1,
+                        };
+                    }
+                }
+
+                #Calculate relative standard errors, only if have se values
+                my @rel_se = ();
+                if ($covariance_step_successful) {
+                    for (my $i = 0; $i < scalar(@se_values); $i++) {
+                        if ($est_values[$i] == 0) {
+                            push @rel_se, undef;
+                        } else {
+                            push @rel_se, $se_values[$i] / $est_values[$i];
+                        }
+                    }
+                }
+
+                my $minimization_message = $outobj -> get_single_value(attribute => 'minimization_message',
+                    problem_index => $problems,
+                    subproblem_index => $sub_problems);
+
+                my $undefs = grep { not defined $_ } @est_values;
+                if ($undefs != scalar(@est_values)) {   # Check that not all in list are undef. Should possibly have been done earlier
+                    if ($self->check_include(element => 'Estimation/PopulationEstimates')) {
+                        my $pe = $self->_create_population_estimates(labels => \@all_labels, values => \@est_values);
+                        $estimation->appendChild($pe);
+                    }
+                }
+
+                if ($covariance_step_successful) {
+                    my $correlation_matrix = linear_algebra::triangular_symmetric_to_full($outobj->correlation_matrix->[$problems]->[$sub_problems]);
+                    my $covariance_matrix = linear_algebra::triangular_symmetric_to_full($outobj->covariance_matrix->[$problems]->[$sub_problems]);
+                    if ($self->check_include(element => 'Estimation/PrecisionPopulationEstimates')) {
+                        my $ppe = $self->_create_precision_population_estimates(
+                            labels => \@all_labels,
+                            standard_errors => \@se_values,
+                            relative_standard_errors => \@rel_se,
+                            correlation_matrix => $correlation_matrix,
+                            covariance_matrix => $covariance_matrix,
+                        );
+                        $estimation->appendChild($ppe);
+                    }
+                }
+
+                # Loop through the different tables
+                if ($self->use_tables) {
+                    my ($table_name_ref, $dummy) = $model->problems->[$problems]->_option_val_pos(record_name => 'table', name => 'FILE');
+                    if (defined $table_name_ref and scalar @{$table_name_ref} >= 0) {
+                        foreach my $table (@$table_name_ref) {
+                            if ($table =~ /^(sdtab|patab)/ and not -e $table) {
+                                push @messages, {
+                                    type => "WARNING",
+                                    toolname => "nmoutput2so",
+                                    name => "File error",
+                                    content => "Could not find table $table. Results from this table could not be added.",
+                                    severity => 1,
+                                };
+                                next;
+                            }
+                            if ($table =~ /^sdtab/) {
+                                my $sdtab = data->new(
+                                    directory => $outobj->directory,
+                                    filename => $table,
+                                    ignoresign => '@',
+                                    parse_header => 1,
+                                );
+                                if ($self->check_include(element => 'Estimation/Residuals')) {
+                                    my $residuals = $self->_create_residuals(sdtab => $sdtab);
+                                    if (defined $residuals) {
+                                        $estimation->appendChild($residuals);
+                                    }
+                                }
+                                if ($self->check_include(element => 'Estimation/Predictions')) {
+                                    my $predictions = $self->_create_predictions(sdtab => $sdtab);
+                                    if (defined $predictions) {
+                                        $estimation->appendChild($predictions);
+                                    }
+                                }
+
+                            }
+                            if ($table =~ /^patab/) {
+                                my $patab = data->new(
+                                    directory => $outobj->directory,
+                                    filename => $table,
+                                    ignoresign => '@',
+                                    parse_header => 1,
+                                );
+                                if ($self->check_include(element => 'Estimation/IndividualEstimates')) {
+                                    my $individual_estimates = $self->_create_individual_estimates(patab => $patab, model => $model);
+                                    if (defined $individual_estimates) {
+                                        $estimation->appendChild($individual_estimates);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if ($self->check_include(element => 'Estimation/Likelihood')) {
+                    my $likelihood = $self->_create_likelihood(ofv => $ofv);
+                    if (defined $likelihood) {
+                        $estimation->appendChild($likelihood);
+                    }
+                }
+
+                if (not defined $ofv) {
                     push @messages, {
-                        type => "WARNING",
-                        toolname => "nmoutput2so",
-                        name => "Name change",
-                        content => "Parameter label \"$old_label\" not specified or not a legal symbolIdType. Setting/changing it to: $label",
-                        severity => 1,
+                        type => 'ERROR',
+                        toolname => "NONMEM",
+                        name => "Minimzation error",
+                        content => join('', @{$minimization_message}),
+                        severity => 5,
                     };
                 }
             }
+            $outobj->runtime =~ m/(\d+):(\d+):(\d+)/;
+            $elapsed_time = $1 + $2 / 60 + $3 / 3600;
 
-            #Calculate relative standard errors, only if have se values
-            my @rel_se = ();
-            if ($covariance_step_successful) {
-                for (my $i = 0; $i < scalar(@se_values); $i++) {
-                    if ($est_values[$i] == 0) {
-                        push @rel_se, undef;
-                    } else {
-                        push @rel_se, $se_values[$i] / $est_values[$i];
-                    }
-                }
-            }
-
-            my $minimization_message = $outobj -> get_single_value(attribute => 'minimization_message',
-                problem_index => $problems,
-                subproblem_index => $sub_problems);
-
-            my $undefs = grep { not defined $_ } @est_values;
-            if ($undefs != scalar(@est_values)) {   # Check that not all in list are undef. Should possibly have been done earlier
-                if ($self->check_include(element => 'Estimation/PopulationEstimates')) {
-                    my $pe = $self->_create_population_estimates(labels => \@all_labels, values => \@est_values);
-                    $estimation->appendChild($pe);
-                }
-            }
-
-            if ($covariance_step_successful) {
-                my $correlation_matrix = linear_algebra::triangular_symmetric_to_full($outobj->correlation_matrix->[$problems]->[$sub_problems]);
-                my $covariance_matrix = linear_algebra::triangular_symmetric_to_full($outobj->covariance_matrix->[$problems]->[$sub_problems]);
-                if ($self->check_include(element => 'Estimation/PrecisionPopulationEstimates')) {
-                    my $ppe = $self->_create_precision_population_estimates(
-                        labels => \@all_labels,
-                        standard_errors => \@se_values,
-                        relative_standard_errors => \@rel_se,
-                        correlation_matrix => $correlation_matrix,
-                        covariance_matrix => $covariance_matrix,
-                    );
-                    $estimation->appendChild($ppe);
-                }
-            }
-
-            # Loop through the different tables
-            if ($self->use_tables) {
+            if ($simulation_step_run and $self->use_tables) {
                 my ($table_name_ref, $dummy) = $model->problems->[$problems]->_option_val_pos(record_name => 'table', name => 'FILE');
                 if (defined $table_name_ref and scalar @{$table_name_ref} >= 0) {
                     foreach my $table (@$table_name_ref) {
-                        if ($table =~ /^(sdtab|patab)/ and not -e $table) {
-                            push @messages, {
-                                type => "WARNING",
-                                toolname => "nmoutput2so",
-                                name => "File error",
-                                content => "Could not find table $table. Results from this table could not be added.",
-                                severity => 1,
-                            };
-                            next;
-                        }
                         if ($table =~ /^sdtab/) {
-                            my $sdtab = data->new(
-                                directory => $outobj->directory,
-                                filename => $table,
-                                ignoresign => '@',
-                                parse_header => 1,
-                            );
-                            if ($self->check_include(element => 'Estimation/Residuals')) {
-                                my $residuals = $self->_create_residuals(sdtab => $sdtab);
-                                if (defined $residuals) {
-                                    $estimation->appendChild($residuals);
-                                }
-                            }
-                            if ($self->check_include(element => 'Estimation/Predictions')) {
-                                my $predictions = $self->_create_predictions(sdtab => $sdtab);
-                                if (defined $predictions) {
-                                    $estimation->appendChild($predictions);
-                                }
-                            }
-
-                        }
-                        if ($table =~ /^patab/) {
-                            my $patab = data->new(
-                                directory => $outobj->directory,
-                                filename => $table,
-                                ignoresign => '@',
-                                parse_header => 1,
-                            );
-                            if ($self->check_include(element => 'Estimation/IndividualEstimates')) {
-                                my $individual_estimates = $self->_create_individual_estimates(patab => $patab, model => $model);
-                                if (defined $individual_estimates) {
-                                    $estimation->appendChild($individual_estimates);
-                                }
+                            if ($self->check_include(element => 'Simulation/SimulatedProfiles')) {
+                                $simulation = $doc->createElement("Simulation");
+                                my $sp = $self->_create_simulated_profiles(table => $table);
+                                $simulation->appendChild($sp);
                             }
                         }
                     }
                 }
             }
 
-            if ($self->check_include(element => 'Estimation/Likelihood')) {
-                my $likelihood = $self->_create_likelihood(ofv => $ofv);
-                if (defined $likelihood) {
-                    $estimation->appendChild($likelihood);
-                }
-            }
-
-            if (not defined $ofv) {
-                push @messages, {
-                    type => 'ERROR',
-                    toolname => "NONMEM",
-                    name => "Minimzation error",
-                    content => join('', @{$minimization_message}),
-                    severity => 5,
-                };
-            }
-
-            $outobj->runtime =~ m/(\d+):(\d+):(\d+)/;
-            $elapsed_time = $1 + $2 / 60 + $3 / 3600;
         }
     }
 
-    #if (0) {
-    #    my $simulation = $doc->createElement("Simulation");
-    #    my $simulated_profiles = $self->create_table(
-    #        table_name => "SimulatedProfiles",
-    #        column_ids => ,
-    #        column_types => ,
-    #        column_valuetypes => ,
-    #        values => ,
-    #    );
-    #    $simulation->appendChild($simulated_profiles);
-    #}
-
     my $task_information = $self->_create_task_information(messages => \@messages, run_time => $elapsed_time);
-    $block->insertBefore($task_information, $estimation);
+    if (defined $task_information) {
+        $block->appendChild($task_information);
+    }
+    if (defined $estimation) {
+        $block->appendChild($estimation);
+    }
+    if (defined $simulation) {
+        $block->appendChild($simulation);
+    }
 
     return $block;
 }
@@ -1241,6 +1259,84 @@ sub _create_individual_estimates
     }
 
     return $individual_estimates;
+}
+
+sub _create_simulated_profiles
+{
+    my $self = shift;
+    my %parm = validated_hash(\@_,
+        table => { isa => 'Str' },
+    );
+    my $table = $parm{'table'};
+
+    open my $fh, '<', $table;
+
+    <$fh>;
+    my $header = <$fh>;
+    $header =~ s/^\s+//;
+    my @columns = split /\s+/, $header; 
+    my %colnos;
+    for (my $i = 0; $i < scalar(@columns); $i++) {
+        $colnos{$columns[$i]} = $i;
+    }
+
+    my @id;
+    my @time;
+    my @dv;
+    my @dvid;
+
+    # Read ID, TIME and first DV replicate
+    for (;;) {
+        my $row = <$fh>;
+        last if not defined $row;   # EOF
+        last if $row =~ /^TABLE NO/;
+        chomp($row);
+        $row =~ s/^\s+//;
+        my @columns = split /\s+/, $row;
+        push @id, $columns[$colnos{'ID'}];
+        push @time, $columns[$colnos{'TIME'}];
+        push @dv, $columns[$colnos{'DV'}];
+    }
+
+    @dvid = ((1) x scalar(@id));        # Don't support multiple DVs for now
+
+    my @matrix = (\@id, \@dvid, \@time, \@dv);
+    my @column_ids = ( "ID", "DVID", "TIME", "Replicate1" );
+    my @column_types = ( "id", "dvid", "time", "undefined" );
+    my @column_valuetypes = ( "string", "int", "real", "real" );
+
+    # Read replicates
+    my $dv_column = 4;
+    for (;;) {
+        my $row = <$fh>;
+        last if not defined $row;
+        push @matrix, [];
+        push @column_ids, ("Replicate" . ($dv_column - 1));
+        push @column_types, "undefined";
+        push @column_valuetypes, "real";
+        for (;;) {
+            my $row = <$fh>;
+            last if not defined $row;
+            last if $row =~ /^TABLE NO/;
+            chomp($row);
+            $row =~ s/^\s+//;
+            my @columns = split /\s+/, $row;
+            push @{$matrix[$dv_column]}, $columns[$colnos{'DV'}];
+        }
+        $dv_column++;
+    }
+
+    close $fh;
+
+    my $simulated_profiles = $self->create_table(
+        table_name => "SimulatedProfiles",
+        column_ids => \@column_ids,
+        column_types => \@column_types,
+        column_valuetypes => \@column_valuetypes,
+        values => \@matrix,
+    ); 
+
+    return $simulated_profiles;
 }
 
 1;
