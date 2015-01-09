@@ -87,8 +87,11 @@ $TABLE ID CL V ETA_CL ETA_V NOAPPEND FILE=patab
 \end{itemize}
 
 \section{Known limitations}
-The full xml file is stored in memory at once. This means that big results, for example big simulations, can potentially use a lot or all of the available memory.
-
+\begin{itemize}
+    \item The full xml file is stored in memory at once. This means that big results, for example big simulations, can potentially use a lot or all of the available memory.
+    \item Does not support multiple DVIDs in SimulatedProfiles. Sets all to 1.
+    \item Dose rows are included in Residuals, Predictions and SimulatedProfiles. They have value set to 0.
+\end{itemize}
 \section{Output}
 
 The resulting standardized output object xml will be written to the file called <name of .lst file>.so\_xml.
