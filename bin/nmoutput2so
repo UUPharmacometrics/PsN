@@ -13,6 +13,7 @@ use Getopt::Long;
 use common_options;
 use standardised_output;
 use model;
+use Config;
 
 $| = 1; # Make sure autoflush is on
 
@@ -140,8 +141,19 @@ if (defined $options{'only_include_elements'} and defined $options{'exclude_elem
 my $only_include_elements = common_options::get_option_array($options{'only_include_elements'});
 my $exclude_elements = common_options::get_option_array($options{'exclude_elements'});
 
+# Do globbing for windows wildcards
+my @files;
+if ($Config{osname} eq 'MSWin32') {
+    foreach my $arg (@ARGV) {
+        my @globfiles = glob($arg);
+        push @files, @globfiles;
+    }
+} else {
+    @files = @ARGV;
+}
+
 my $so = standardised_output->new(
-    lst_files => \@ARGV,
+    lst_files => \@files,
     bootstrap_results => $options{'bootstrap_results'},
     precision => $options{'precision'},
     so_filename => $options{'so_filename'},
