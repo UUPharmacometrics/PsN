@@ -17,7 +17,7 @@ nmoutput2so model.lst
 \section{Input and options}
 
 \subsection{Required input}
-Required argument is at least one nonmem result file (.lst).
+Required argument is a list of nonmem results files (.lst). Wildcards will work (i.e. *.lst)
 
 
 \subsection{Optional input}
@@ -86,7 +86,8 @@ $TABLE ID CL V ETA_CL ETA_V NOAPPEND FILE=patab
     \item All nonmem result files must have the same filename (excluding extension) as the .lst file. If not it is impossible to pick up the results from the .ext, .cov, .cor files etc.
 \end{itemize}
 
-
+\section{Known limitations}
+The full xml file is stored in memory at once. This means that big results, for example big simulations, can potentially use a lot or all of the available memory.
 
 \section{Output}
 
