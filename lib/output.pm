@@ -2922,6 +2922,42 @@ sub initsigmas
 	return \@initsigmas;
 }
 
+
+sub get_nonmem_parameters
+{
+	my %parm = validated_hash(\@_,
+		output => { isa => 'output', optional => 0 }
+	);
+	my $output = $parm{'output'};
+
+	unless ($output->have_output){
+		croak("Trying get_nonmem_parameters but output object is empty, output file\n".$output->full_name."\n");
+	}
+	unless( $output -> parsed_successfully ){
+		croak("Trying get_nonmem_parameters but unable to read everything from outputfile, parser error message:\n".
+			  $output -> parsing_error_message());
+	}
+	unless ( not_empty($output->problems) ) {
+	    $output -> _read_problems;
+	}
+
+
+	my %hash;
+	$hash{'values'} = $output->get_filtered_values(parameter => 'all',
+												   category => 'estimate');
+
+	unless ( not_empty($output->problems) ) {
+		croak("No problems defined in output object in get_nonmem_parameters");
+	}
+
+	foreach my $key (keys %{$output->problems->[0]->input_problem->estimated_parameters_hash}){
+		$hash{$key} = $output->problems->[0]->input_problem->estimated_parameters_hash->{$key};
+	}
+	return \%hash;
+
+}
+
+
 no Moose;
 __PACKAGE__->meta->make_immutable;
 1;

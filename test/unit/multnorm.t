@@ -59,7 +59,7 @@ cmp_ok($icm->element(4,2),'==',-1.55874E+02,'inverse element 4,2');
 cmp_ok($icm->element(5,3),'==',-1.03606E+02,'inverse element 5,3');
 cmp_ok($icm->element(5,5),'==',5.96396E+03,'inverse element 5,5');
 
-my $hash = tool::sir::get_nonmem_parameters(output => $output);
+my $hash = output::get_nonmem_parameters(output => $output);
 my $thetas = $hash->{'values'};
 
 cmp_ok($hash->{'values'}->[0],'==',5.55363E-03,' theta 1');
@@ -273,7 +273,7 @@ cmp_ok($icm->element(5,8),'==',-4.85426E+02,'inverse element 5,8');
 cmp_ok($icm->element(8,7),'==',-2.94627E+00,'inverse element 8,7');
 cmp_ok($icm->element(8,8),'==',6.84766E+02,'inverse element 8,8');
 
-$hash = tool::sir::get_nonmem_parameters(output => $output);
+$hash = output::get_nonmem_parameters(output => $output);
 
 my $params = $hash->{'values'};
 
@@ -349,7 +349,7 @@ $dir = $includes::testfiledir . "/";
 $file='mox_sir_block2.lst';
 $output= output->new(filename => $dir . $file);
 
-$hash = tool::sir::get_nonmem_parameters(output => $output);
+$hash = output::get_nonmem_parameters(output => $output);
 
 $params = $hash->{'values'};
 
