@@ -29,6 +29,8 @@ my %optional_options = (
     'use_tables!' => undef,
     'exclude_elements:s' => undef,
     'only_include_elements:s' => undef,
+    'message' => undef,
+    'toolname' => undef,
 );
 
 
@@ -39,6 +41,7 @@ my %defaults;
 
 $defaults{'precision'} = 10;
 $defaults{'use_tables'} = 1; 
+$defaults{'toolname'} = 'NONMEM';
 
 foreach my $opt (keys(%optional_options)) {
   $opt =~ s/[!:|].*//g; #get rid of :s |? :i etcetera
@@ -106,6 +109,18 @@ $help_text{-only_include_elements} = <<'EOF';
     For example Estimation/PopulationEstimates
 EOF
 
+$help_text{-message} = <<'EOF';
+    -message='string' 
+
+    Specify a string to be added as an information message in the TaskInformation of the first SOBlock
+EOF
+
+$help_text{-toolname} = <<'EOF';
+    -toolname='string' 
+
+    The toolname to use for messages. Default is 'NONMEM'
+EOF
+
 common_options::online_help('nmoutput2so', \%options, \%help_text, \%required_options, \%optional_options);
 
 if ($options{'version'}) {  # FIXME: Should use common_options for this
@@ -133,6 +148,8 @@ my $so = standardised_output->new(
     use_tables => $options{'use_tables'},
     only_include_elements => $only_include_elements,
     exclude_elements => $exclude_elements,
+    message => $options{'message'},
+    toolname => $options{'toolname'},
 );
 
 $so->parse;

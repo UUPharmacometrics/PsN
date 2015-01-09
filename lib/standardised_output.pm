@@ -21,6 +21,8 @@ has 'precision' => ( is => 'rw', isa => 'Int', default => 10 );
 has 'use_tables' => ( is => 'rw', isa => 'Bool', default => 1 );    # Set to zero if sdtab and patab should not be used
 has 'exclude_elements' => ( is => 'rw', isa => 'Maybe[ArrayRef]' );
 has 'only_include_elements' => ( is => 'rw', isa => 'Maybe[ArrayRef]' );
+has 'message' => ( is => 'rw', isa => 'Maybe[Str]' );
+has 'toolname' => ( is => 'rw', isa => 'Str', default => 'NONMEM' );
 has '_document' => ( is => 'rw', isa => 'Ref' );    # The XML document 
 has '_duplicate_blocknames' => ( is => 'rw', isa => 'HashRef' );    # Contains those blocknames which will have duplicates with next number for block
 has '_first_block' => ( is => 'rw', isa => 'Str' );
@@ -518,7 +520,7 @@ sub parse
         } else {
             $bootstrap_message = {
                 type => "ERROR",
-                toolname => "nmoutput2so",
+                toolname => $self->toolname,
                 name => "File error",
                 content => "Bootstrap results file \"" . $self->bootstrap_results . "\" does not exist",
                 severity => 10,
@@ -559,6 +561,15 @@ sub _parse_lst_file
     my $file_stem = get_file_stem($lst_file);
     if (not defined $self->_first_block) {
         $self->_first_block($file_stem);
+        if (defined $self->message) {
+            push @messages, {
+                type => "INFORMATION",
+                toolname => $self->toolname,
+                name => "User specified message",
+                content => $self->message,
+                severity => 0,
+            };
+        }
     }
 
     my $block = $self->create_block(name => $file_stem);
@@ -569,7 +580,7 @@ sub _parse_lst_file
     if (not -e $lst_file) {
         push @messages, {
             type => "ERROR",
-            toolname => "nmoutput2so",
+            toolname => $self->toolname,
             name => "File error",
             content => "The file: \"" . $lst_file . "\" does not exist",
             severity => 10,
@@ -579,7 +590,7 @@ sub _parse_lst_file
         if (not $outobj->parsed_successfully) {
             push @messages, {
                 type => "ERROR",
-                toolname => "NONMEM",
+                toolname => $self->toolname,
                 name => "Parsing error", 
                 content => "Outputfile not parsed successfully, error message: " . $outobj->parsing_error_message,
                 severity => 10,
@@ -697,7 +708,7 @@ sub _parse_lst_file
                             if ($table =~ /^(sdtab|patab)/ and not -e $table) {
                                 push @messages, {
                                     type => "WARNING",
-                                    toolname => "nmoutput2so",
+                                    toolname => $self->toolname,
                                     name => "File error",
                                     content => "Could not find table $table. Results from this table could not be added.",
                                     severity => 1,
@@ -753,7 +764,7 @@ sub _parse_lst_file
                 if (not defined $ofv) {
                     push @messages, {
                         type => 'ERROR',
-                        toolname => "NONMEM",
+                        toolname => $self->toolname,
                         name => "Minimzation error",
                         content => join('', @{$minimization_message}),
                         severity => 5,

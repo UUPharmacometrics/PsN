@@ -103,6 +103,20 @@ my $xpc = get_xml("bootstrap.SO.xml");
 ok (defined $node, "lone bootstrap");
 test_number_of_children($xpc, '/x:SO/x:SOBlock/x:Estimation/*', 1, "lone bootstrap nothing more than Bootstrap");
 
+# add info message
+my $so = standardised_output->new(lst_files => [ "missingmodel.lst" ], message => "Testing");
+$so->parse;
+my $xpc = get_xml("missingmodel.SO.xml");
+my @nodes = $xpc->findnodes('/x:SO/x:SOBlock/x:TaskInformation/x:Message[@type="INFORMATION"]');
+is (scalar(@nodes), 1, "information message");
+
+# set toolname
+my $so = standardised_output->new(lst_files => [ "missingmodel.lst" ], toolname => "MyTool");
+$so->parse;
+my $xpc = get_xml("missingmodel.SO.xml");
+(my $node) = $xpc->findnodes('/x:SO/x:SOBlock/x:TaskInformation/x:Message[@type="ERROR"]/x:Toolname/ct:String');
+is ($node->textContent, "MyTool", "Toolname");
+
 # normal model pheno.lst
 my $so = standardised_output->new(lst_files => [ "pheno.lst" ]);
 $so->parse;
