@@ -636,13 +636,6 @@ sub run
 		# Get potiential finished pid
 
 		while (not $pid) {
-			# (sleep to make polling less demanding).
-					
-			if (defined $PsN::config->{'_'}->{'job_polling_interval'} and $PsN::config->{'_'}->{'job_polling_interval'} > 0) {
-				sleep($PsN::config->{'_'}->{'job_polling_interval'});
-			} else {
-				sleep(1);
-			}
 
 			foreach my $check_pid (keys %queue_map) {
 				if ($check_pid =~ /^rerun_/) {
@@ -674,6 +667,12 @@ sub run
 
 				# No process has finished. 
 				# we cannot start another job
+				# sleep to make polling less demanding					
+				if (defined $PsN::config->{'_'}->{'job_polling_interval'} and $PsN::config->{'_'}->{'job_polling_interval'} > 0) {
+					sleep($PsN::config->{'_'}->{'job_polling_interval'});
+				} else {
+					sleep(1);
+				}
 				next; # Return to polling for finished jobs.
 			
 			} else { 
@@ -690,6 +689,31 @@ sub run
 										"has disappeared).\n".
 										"Changed to directory $work_dir of this process to check results.", level => 2);
 
+				#here we try to make sure files are synced before we start processing output
+				#if a missing psn.lst is due to NMtran or compilation failure we should see a file 
+				#$self->general_error_file or $self->nmtran_error_file in the directory. Then do not wait, continue directly with
+				#storing failure messages. On the other hand, if we do not see psn.lst due to
+				#a file sync delay, there will be no $self->general_error_file. Wait for a long time
+				#to see if $self->general_error_file appears.
+				#neither psn_nonmem_error_messages.txt nor psn.lst will appear if run killed
+				#No hurry in those cases. Can always wait for a long
+				#time if neither file has appeared.
+
+				my $dirt;
+				for (my $i = 0; $i < 20; $i++) {
+					#an ls might make files sync and become visible
+					$dirt = `ls -la 2>&1` unless ($Config{osname} eq 'MSWin32');
+					last if((-e 'psn.lst') or (-e 'stats-runs.csv') or (-e 'job_submission_error')
+							or (-e $self->general_error_file)
+							or (-e $self->nmtran_error_file)
+							or $self->run_local
+							or ($pid =~ /^rerun_/)
+							or ($pid =~ /^fail_/)
+						); #psn.lst exists or will never appear
+					sleep(6);
+				}
+
+				#we do this before restart_needed so post-processed tables are properly handled
 				$self->compute_cwres(queue_info => $queue_info{$run}, run_no => $run);
 
 				$self->compute_iofv(queue_info => $queue_info{$run}, run_no => $run);
@@ -1053,8 +1077,8 @@ sub select_best_model
 
 
 			$self -> copy_model_and_output( final_model   => $candidate_model,
-				model         => $model,
-				use_run       => $selected ? $selected : '' );
+											model         => $model,
+											use_run       => $selected ? $selected : '' );
 		}
 	}
 }
@@ -1826,29 +1850,6 @@ sub restart_needed
 	my $candidate_model = $queue_info_ref->{'candidate_model'};
 	my $modelfile_tainted = \$queue_info_ref->{'modelfile_tainted'};
 	my $nmqual = 'nmqual_messages.txt';
-	#if missing psn.lst is due to NMtran or compilation failure we should see a file 
-	#$self->general_error_file or $self->nmtran_error_file in the directory. Then do not wait, continue directly with
-	#storing failure messages. On the other hand, if we do not see psn.lst due to
-	#a file sync delay, there will be no $self->general_error_file. Wait for a long time
-	#to see if $self->general_error_file appears. Then check quickly for psn.lst again and then
-	#exit with failure message
-
-	#neither psn_nonmem_error_messages.txt nor psn.lst will appear if run killed
-	#No hurry in those cases. Can always wait for a long
-	#time if neither file has appeared.
-
-	#according to NFS documentaion max cache (delay) time is 60 sec.
-	my $dirt;
-	for (my $i = 0; $i < 20; $i++) {
-		#an ls might make files sync and become visible
-		#TODO if queue map says failed submit then do not wait here
-		$dirt = `ls -la 2>&1` unless ($Config{osname} eq 'MSWin32');
-		last if((-e 'stats-runs.csv') or (-e 'psn.lst') or (-e 'job_submission_error')
-				or (-e $self->general_error_file)
-				or (-e $self->nmtran_error_file)
-				or $self->run_local);#psn.lst exists or will never appear
-		sleep(6);
-	}
 
 	my $failure;
 	my $failure_mess;
@@ -2878,17 +2879,6 @@ sub copy_model_and_output
 	#this regex must be the same as used when finding lst-file name in model.pm, for consistency
 	my $dotless_model_filename = $model_filename;
 	$dotless_model_filename =~ s/\.[^.]+$//;
-
-	#add an ls here to try to force file sync
-	my $checkname = $self -> get_retry_name( filename => 'psn.lst',
-		retry => $use_run-1 );
-	my $dirt;
-	for (my $i=0; $i<12; $i++){
-		#an ls might make files sync and become visible
-		$dirt = `ls -la 2>&1` unless ($Config{osname} eq 'MSWin32');
-		last if((-e 'job_submission_error') or (-e $checkname) or (-e $self->general_error_file) or (-e $self->nmtran_error_file));#psn.lst exists or will never appear
-		sleep(6);
-	}
 
 	my @output_files = @{$final_model -> output_files};
 
