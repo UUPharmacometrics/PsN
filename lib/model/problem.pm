@@ -2665,6 +2665,51 @@ sub get_estimated_attributes
 	return \@array;
 
 }
+
+sub find_table
+{
+    # Find the first table containing all in a list of columns.
+    # Returns the filename if found or undef if not found
+    my $self = shift;
+    my %parm = validated_hash(\@_,
+        columns => { isa => 'ArrayRef[Str]' },
+    );
+    my $columns = $parm{'columns'};
+    
+    if (defined $self->tables) {
+        foreach my $table (@{$self->tables}) {
+            my %search;
+            foreach my $name (@$columns) {
+                $search{$name} = 1;
+            }
+            my $filename;
+            my $noappend = 0;
+            if (defined $table->options) {
+                foreach my $option (@{$table->options}) {
+                    if ($option->name eq 'FILE') {
+                        $filename = $option->value;
+                    } elsif ($option->name eq 'NOAPPEND') {
+                        $noappend = 1;
+                    } else {
+                        delete $search{$option->name};
+                    }
+                }
+            }
+            if (not $noappend) {
+                delete $search{'DV'};
+                delete $search{'PRED'};
+                delete $search{'RES'};
+                delete $search{'WRES'};
+            }
+            if (scalar(keys %search) == 0) {
+                return $filename;
+            }
+        }
+    }
+
+    return undef;
+}
+
 no Moose;
 __PACKAGE__->meta->make_immutable;
 1;

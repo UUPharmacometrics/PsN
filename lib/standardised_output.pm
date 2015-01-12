@@ -23,6 +23,7 @@ has 'exclude_elements' => ( is => 'rw', isa => 'Maybe[ArrayRef]' );
 has 'only_include_elements' => ( is => 'rw', isa => 'Maybe[ArrayRef]' );
 has 'message' => ( is => 'rw', isa => 'Maybe[Str]' );
 has 'toolname' => ( is => 'rw', isa => 'Str', default => 'NONMEM' );
+has 'max_replicates' => ( is => 'rw', isa => 'Maybe[Int]' );        # Maximum number of simulation replicates to add
 has '_document' => ( is => 'rw', isa => 'Ref' );    # The XML document 
 has '_duplicate_blocknames' => ( is => 'rw', isa => 'HashRef' );    # Contains those blocknames which will have duplicates with next number for block
 has '_first_block' => ( is => 'rw', isa => 'Str' );
@@ -30,6 +31,12 @@ has '_first_block' => ( is => 'rw', isa => 'Str' );
 sub BUILD
 {
     my $self = shift;
+
+    if (defined $self->max_replicates) {
+        if ($self->max_replicates < 1) {
+            croak("max_replicates must be a positive number");
+        }
+    }
 
     my $so_filename;
 
@@ -775,17 +782,11 @@ sub _parse_lst_file
             $elapsed_time = $1 + $2 / 60 + $3 / 3600;
 
             if ($simulation_step_run and $self->use_tables) {
-                my ($table_name_ref, $dummy) = $model->problems->[$problems]->_option_val_pos(record_name => 'table', name => 'FILE');
-                if (defined $table_name_ref and scalar @{$table_name_ref} >= 0) {
-                    foreach my $table (@$table_name_ref) {
-                        if ($table =~ /^sdtab/) {
-                            if ($self->check_include(element => 'Simulation/SimulatedProfiles')) {
-                                $simulation = $doc->createElement("Simulation");
-                                my $sp = $self->_create_simulated_profiles(table => $table);
-                                $simulation->appendChild($sp);
-                            }
-                        }
-                    }
+                my $table_file = $model->problems->[$problems]->find_table(columns => [ 'ID', 'TIME', 'DV' ]);
+                if (defined $table_file) {
+                    $simulation = $doc->createElement("Simulation");
+                    my $sp = $self->_create_simulated_profiles(table => $table_file);
+                    $simulation->appendChild($sp);
                 }
             }
 
@@ -1318,11 +1319,13 @@ sub _create_simulated_profiles
 
     # Read replicates
     my $dv_column = 4;
+    my $added_replicates = 1;
     for (;;) {
+        last if (defined $self->max_replicates and $added_replicates >= $self->max_replicates);
         my $row = <$fh>;
         last if not defined $row;
         push @matrix, [];
-        push @column_ids, ("Replicate" . ($dv_column - 1));
+        push @column_ids, ("Replicate" . ($dv_column - 2));
         push @column_types, "undefined";
         push @column_valuetypes, "real";
         for (;;) {
@@ -1335,6 +1338,7 @@ sub _create_simulated_profiles
             push @{$matrix[$dv_column]}, $columns[$colnos{'DV'}];
         }
         $dv_column++;
+        $added_replicates++;
     }
 
     close $fh;

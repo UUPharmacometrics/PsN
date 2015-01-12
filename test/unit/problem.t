@@ -175,4 +175,11 @@ $omega_mat = $problem->get_record_matrix(type => 'omega',
 
 cmp_ok($omega_mat->[0]->[0],'==',0.506, "get_record_matrix col 0,0");
 
+# find_table
+my $model = model->new(filename => "$modeldir/pheno.mod");
+my $problem = $model->problems->[0];
+
+ok ($problem->find_table(columns => [ 'ID', 'TVCL' ]), "find_table 1");
+ok (!$problem->find_table(columns => [ 'ID', 'RED' ]), "find_table 1");
+
 done_testing();

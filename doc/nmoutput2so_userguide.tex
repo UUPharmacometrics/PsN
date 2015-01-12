@@ -52,6 +52,9 @@ Specify a string to be added as an information message in the TaskInformation of
 \optname{toolname}
 The toolname to use for messages. Default is 'NONMEM'
 \nextopt
+\optname{max\_replicates}
+Set a maximum number of simulation replicates to add. Default is to add all replicates
+\nextopt
 \end{optionlist}
 
 \section{Requirements on the model file and other files}
@@ -146,7 +149,7 @@ The following entries will be populated:
         \end{itemize}
     \item Simulation
         \begin{itemize}
-            \item SimulatedProfiles - Taken from the sdtab if created
+            \item SimulatedProfiles - Taken from the first table that contains all of ID, TIME and DV
         \end{itemize}
 \end{itemize}
 

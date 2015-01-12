@@ -364,3 +364,5 @@ sub is_int
     }
     return 1;
 }
+
+1;
