@@ -106,6 +106,29 @@ is(eval($updated->[0]->{'omega'}->{'IOV KA'}),eval(0.5),'updated hash IOV KA');
 
 copy_test_files($tempdir,["pheno.mod", "pheno.lst",'mox1.lst','mox1.mod']);
 
+
+my %hash;
+$hash{'theta'}->{'THETA1'}=1;
+$hash{'theta'}->{'THETA2'}=2;
+$hash{'theta'}->{'THETA3'}=3;
+$hash{'theta'}->{'THETA4'}=4;
+$hash{'omega'}={};
+$hash{'sigma'}={};
+
+$model -> update_inits( from_hash => \%hash,
+						problem_number => 1,
+						match_labels => 0,
+						ensure_diagonal_dominance => 0,
+						ignore_missing_parameters => 1 );
+
+my $updated = $model-> get_hash_values_to_labels;
+
+is(eval($updated->[0]->{'theta'}->{'TVCL'}),eval(1),'updated hash 2 TVCL');
+is(eval($updated->[0]->{'theta'}->{'TVV'}),eval(2),'updated hash 2 TVV');
+is(eval($updated->[0]->{'theta'}->{'TVKA'}),eval(3),'updated hash 2 TVKA');
+is(eval($updated->[0]->{'theta'}->{'LAG'}),eval(4),'updated hash 2 LAG');
+
+
 chdir($tempdir);
 my @command_line = (
 	get_command("update_inits") . " pheno.mod -out=run1.mod",

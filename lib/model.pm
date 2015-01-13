@@ -3174,6 +3174,7 @@ sub update_inits
 		update_omegas => { isa => 'Bool', default => 1, optional => 1 },
 		update_sigmas => { isa => 'Bool', default => 1, optional => 1 },
 		update_thetas => { isa => 'Bool', default => 1, optional => 1 },
+		match_labels => { isa => 'Bool', default => 1, optional => 1 },
 		start_record => { isa => 'Int', optional => 1 },
 		end_record => { isa => 'Int', optional => 1 },
 	);
@@ -3191,6 +3192,7 @@ sub update_inits
 	my $skip_output_zeros = $parm{'skip_output_zeros'};
 	my $start_record = $parm{'start_record'};
 	my $end_record = $parm{'end_record'};
+	my $match_labels = $parm{'match_labels'};
 
 	# Usage:
 	#
@@ -3279,7 +3281,7 @@ sub update_inits
 			# Since initial estimates are specified on the problem level and not on
 			# the subproblem level we use the estimates from the outputs first subproblem
 			@from_coordval = @{$from_output -> $access ( subproblems => [1] )};
-			if ( defined $from_model ) {
+			if ( defined $from_model and $match_labels) {
 				@intermediate_coordslabels = @{$from_model -> get_coordslabels( parameter_type => $param )};
 				$from_string = 'from-model '.$from_model -> full_name();
 				croak("The number of problems are not the same in ".
@@ -3347,7 +3349,7 @@ sub update_inits
 					unless (defined $from_coordval[$i]->[0]){
 						croak("No $param values read from output for problem ".($i+1));
 					}
-					if ( defined $from_model and defined $intermediate_coordslabels[$i]) {
+					if ( defined $from_model and $match_labels and defined $intermediate_coordslabels[$i]) {
 						my %fromval = %{$from_coordval[$i]->[0]};
 						my %intermediate = %{$intermediate_coordslabels[$i]};
 						foreach my $coord (keys %fromval){
@@ -3390,8 +3392,9 @@ sub update_inits
 						next if ($ignore_missing_parameters or $any_same);
 					}
 					my $name = $option -> coordinate_string();
-					if (((defined $from_model) or (defined $from_hash)) and 
-						(defined $option -> label())){
+					if ($match_labels and (
+							((defined $from_model) or (defined $from_hash)) and 
+							(defined $option -> label()))){
 						$name = $option -> label();#do matching on label instead of coordinate
 					}
 					if (defined $namesvalues{$name}){

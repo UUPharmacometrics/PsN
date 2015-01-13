@@ -26,9 +26,11 @@ my %options;
 my %required_options = ("samples:i"=>'',
 			"randomization_column:s"=> '');
 my %optional_options = ("stratify_on:s"=>'',
-			"base_model:s"=>'',
-			"match_transitions!"=>'',
-			"copy_data!"=>'');
+						"base_model:s"=>'',
+						"update_inits!"=>'',
+						"full_model_inits!"=>'',
+						"match_transitions!"=>'',
+						"copy_data!"=>'');
 
 my $res = GetOptions( \%options, 
 		      @common_options::get_opt_strings,
@@ -74,6 +76,23 @@ EOF
       <p class="option">-base_model</p>
 
       Run the original data set with this model, to use as reference when computing delta-ofv.
+EOF
+    $help_text{-full_model_inits} = <<'EOF';      
+      <p class="option">-full_model_inits</p>
+
+     Default false. Only relevant when -update_inits is true. If true, use final estimates from
+	 the full model as initial estimates for the randomized data models. If false,
+	 final estimates from the base model are used instead.
+EOF
+    $help_text{-update_inits} = <<'EOF';      
+      <p class="option">-update_inits</p>
+
+      Default true. Update the initial estimates of the 
+	  full model to the final estimates from the estimation (lst-file) of either the base model,
+	  or, if option -full_model_inits is set, of the full model.
+	  If estimates from the base model is used (option -full_model_inits is not set)
+	  only update for those parameters that are estimated (non-fix) in the base model AND are found,
+	  based on THETA/OMEGA/SIGMA numbering, both in the base and full model.
 EOF
     $help_text{-samples} = <<'EOF';      
       <p class="option">-samples</p>
@@ -182,6 +201,8 @@ my $rand = tool::randtest ->
 	samples				     => $options{'samples'},
 	base_model			     => $base_model,
 	match_transitions	             => $options{'match_transitions'},
+	update_inits          	=> $options{'update_inits'},
+	full_model_inits          	=> $options{'full_model_inits'},
 	randomization_column                 => $options{'randomization_column'},
 	stratify_on                          => $options{'stratify_on'},
 	copy_data                            => $options{'copy_data'}

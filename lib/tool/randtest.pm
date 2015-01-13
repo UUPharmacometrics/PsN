@@ -11,6 +11,7 @@ use Math::Random;
 use Data::Dumper;
 use Moose;
 use MooseX::Params::Validate;
+use array qw(quantile);
 
 extends 'tool';
 
@@ -25,6 +26,8 @@ has 'randomization_column' => ( is => 'rw', required => 1, isa => 'Str' );
 has 'logfile' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { ['randtestlog.csv'] } );
 has 'results_file' => ( is => 'rw', isa => 'Str', default => 'randtest_results.csv' );
 has 'match_transitions' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'update_inits' => ( is => 'rw', isa => 'Bool', default => 1 );
+has 'full_model_inits' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'reference_column' => ( is => 'rw', isa => 'Str' );
 
 
@@ -92,7 +95,9 @@ sub modelfit_setup
 
 	# ------------------------  Run original run  -------------------------------
 
-	unless ( $model -> is_run and ((not defined $self->base_model) or $self->base_model->is_run) ) {
+	unless ($model->is_run and 
+			 ((not defined $self->base_model) or $self->base_model->is_run) 
+		) {
 		my %subargs = ();
 		if ( defined $self -> subtool_arguments() ) {
 			%subargs = %{$self -> subtool_arguments()};
@@ -105,17 +110,17 @@ sub modelfit_setup
 		}
 		my @models=();
 		my $message = "Executing ";
-		unless ($model->is_run){
+		unless ($model->is_run ){
 			push(@models,$model) ;
 			$message .= "input model";
 		}
 		if (defined $self->base_model and not $self->base_model->is_run){
-			push(@models,$self->base_model) ;
-			if ($model->is_run){
+			if (scalar(@models)<1){
 				$message .= "base model";
 			}else{
 				$message .= "and base model";
 			}
+			push(@models,$self->base_model) ;
 		}
 
 		my $orig_fit = tool::modelfit ->
@@ -139,19 +144,55 @@ sub modelfit_setup
 
 	}
 
-	my $output = $model -> outputs -> [0];
-	my $base_output;
-	$base_output = $self->base_model -> outputs ->[0] if (defined $self->base_model);
-	my $new_mod;
-	my @problems   = @{$model -> problems};
+	my $template_model = $model ->  copy( filename    => $self -> directory().'m'.$model_number.'/template.mod',
+										  output_same_directory => 1,
+										  copy_datafile   => 0,
+										  copy_output => 0,
+										  write_copy => 0);
+
+	if ($self->update_inits) {
+
+		if ($self->full_model_inits){
+			if (defined $model -> outputs and $model -> outputs->[0]-> have_output){
+				$template_model -> update_inits( from_output => $model -> outputs -> [0] );
+			}else{
+				ui -> print( category => 'randtest',
+							 message => "Warning: options update_inits and full_model_inits are set, but no output found from full model.\n".
+							 "Will not update initials of randomized data models.");
+			}
+		}else {
+			if (defined $self->base_model and defined $self->base_model -> outputs and $self->base_model -> outputs ->[0]->have_output){
+				my $hashref = output::get_nonmem_parameters(output => $self->base_model -> outputs ->[0]);
+				#hashref has values coordinate_strings labels param
+				my %update_hash;
+				$update_hash{'theta'}={};
+				$update_hash{'omega'}={};
+				$update_hash{'sigma'}={};
+				for (my $i=0; $i< scalar(@{$hashref->{'param'}}); $i++){
+					$update_hash{ $hashref->{'param'}->[$i] }->{ $hashref->{'coordinate_strings'}->[$i] } = $hashref->{'values'}->[$i];
+				}
+				$template_model ->update_inits(from_hash => \%update_hash,
+											   match_labels => 0,
+											   ignore_missing_parameters => 1);
+			}else{
+				ui -> print( category => 'randtest',
+							 message => "Warning: option update_inits is set and full_model_inits is unset (i.e. use inits from base model), ".
+							 "but have no output from base model.\n".
+							 "Will not update initials of randomized data models.");
+			}
+		}
+	}
+
 	my @new_models;
 
 	if (scalar(@{$model -> problems})>1){
-		print "\nWarning: PsN randtest only randomizes data file of first \$PROB, seems like model has more than one \$PROB\n";
+		ui -> print( category => 'randtest',
+					 message =>"\nWarning: PsN randtest only randomizes data file of first \$PROB, seems like model has more than one \$PROB\n");
 	}
 
 	my $done = ( -e $self ->directory()."/m$model_number/done" ) ? 1 : 0;
 	my $new_datas;
+	my $new_mod;
 	if ( not $done ) {
 		my $orig_data_file =  $model -> datafiles(absolute_path => 1, problem_numbers => [1])->[0];
 		ui -> print( category => 'randtest',
@@ -177,11 +218,11 @@ sub modelfit_setup
 		for ( my $j = 0; $j < $self->samples(); $j++ ) {
 			my @data_arr = ($new_datas->[$j]) x scalar(@{$model->problems});
 
-			$new_mod = $model ->  copy( filename    => $self -> directory().'m'.$model_number.'/rand_'.($j+1).'.mod',
-										output_same_directory => 1,
-										copy_datafile   => 0,
-										copy_output => 0,
-										write_copy => 0);
+			$new_mod = $template_model ->  copy( filename    => $self -> directory().'m'.$model_number.'/rand_'.($j+1).'.mod',
+												 output_same_directory => 1,
+												 copy_datafile   => 0,
+												 copy_output => 0,
+												 write_copy => 0);
 			$new_mod->relative_data_path(1); #data is in m1
 			$new_mod->datafiles(new_names => \@data_arr); #Number of $PROBS and length data_arr must match
 
@@ -195,9 +236,6 @@ sub modelfit_setup
 				$new_mod -> add_nonparametric_code;
 			}
 
-			if ($output -> have_output){
-				$new_mod -> update_inits( from_output => $output );
-			}
 			$new_mod -> _write;
 
 			push( @new_models, $new_mod );
@@ -341,7 +379,7 @@ sub modelfit_analyze
 	);
 	my $model_number = $parm{'model_number'};
 
-	1;
+
 }
 
 sub modelfit_post_fork_analyze
@@ -475,7 +513,100 @@ sub prepare_results
 {
 	my $self = shift;
 
-	1;
+	my %p_values;
+	# 1 2 3 degrees of freedom
+	$p_values{0.001} = {1 => 10.828,
+						  2 => 13.816,
+						  3 => 16.266,
+	};
+	$p_values{0.01} = {1 => 6.6349,
+						 2 => 9.2103,
+						 3 => 11.345,
+	};
+	$p_values{0.05} = {1 => 3.8415,
+						 2 => 5.9915,
+						 3 => 7.8147,
+	};
+	$p_values{0.10} = {1 => 2.7055,
+						2 => 4.6052,
+						3 => 6.2514,
+	};
+	$p_values{0.15} = {1 => 2.0723,
+						 2 => 3.7942,
+						 3 => 5.3171,
+	};
+
+	my @probs = sort (sort {$a <=> $b} keys %p_values ); #sort ascending
+
+	#read raw results if not already in memory
+	#also rawres structure
+	#do nothing if do not have dOFV column
+
+#p-value , actual dOFV at percentile, theoretical dOFV for chi2 1df, actual percentile at theoretical dOFV for chi2 1df,theoretical dOFV for chi2 2df, actual percentile at theoretical dOFV for chi2 2df , theoretical dOFV for chi2 3df, actual percentile at theoretical dOFV for chi2 3df 
+# 0.001 ,
+# 0.01 ,
+# 0.05 ,
+# 0.10 ,
+# 0.15 ,
+
+
+	$self -> read_raw_results();
+	trace(tool => 'randtest', message => "Read raw results from file", level => 1);
+	#$self -> raw_results());
+
+	unless (defined $self->raw_line_structure){
+		$self->raw_line_structure(ext::Config::Tiny -> read($self->directory.'raw_results_structure'));
+	}
+
+	#make sure that we have valid raw_line_structure and not from crashed run here
+	my ($dofv,$length,$baseofv);
+	for (my $i=1;$i <= $self->samples; $i++){
+		if (defined $self->raw_line_structure()->{$i}->{'deltaofv'}){
+			($dofv,$length) = split(',',$self->raw_line_structure()->{$i}->{'deltaofv'});
+			last;
+		}else{
+			#print "rawline $i not ok!\n";
+		}
+	}
+
+	return if (not defined $dofv);
+	if (defined $self->raw_line_structure()->{'base'}->{'ofv'}){
+		($baseofv,$length) = split(',',$self->raw_line_structure()->{'base'}->{'ofv'});
+		last;
+	}else{
+		return;
+	}
+
+	#we assume here that only have one problem and subproblem in models
+	if ( defined $self -> raw_results ) {
+		for ( my $i = 0; $i < scalar @{$self->raw_results}; $i++ ) { # All models, should be only 1
+			my @dofvarray=();
+			my $poscount=0;
+			my $undefcount=0;
+			for ( my $j = 0; $j < scalar @{$self->raw_results->[$i]}; $j++ ) { # orig model + prepared_models
+				next if ($self->$rawres->[$i][$j][0] =~ '/(base|input)/');
+				my $val = $self->$rawres->[$i][$j][$dofv];
+				if (defined $val){
+					if ($val <= 0){
+						push(@dofvarray,$val);
+					}else{
+						$poscount++;
+						push(@dofvarray,0);
+					}
+				}else{
+					$undefcount++;
+				}
+
+			}
+		}
+	}
+
+	return if (scalar(@dofvarray) < 1);
+	my @sorted = (sort {$a <=> $b} @dofvarray); #sort ascending
+	my $actual_dofv_ref = quantile(probs => \@probs, numbers=> \@sorted);
+	#is there an inverse for the prob of a value?
+
+
 }
 sub create_R_plots_code{
 	my $self = shift;

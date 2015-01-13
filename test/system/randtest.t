@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 use File::Path 'rmtree';
-use Test::More tests=>1;
+use Test::More tests=>3;
 use File::Copy 'cp';
 use FindBin qw($Bin);
 use lib "$Bin/.."; #location of includes.pm
@@ -14,7 +14,9 @@ our $dir = "$tempdir/randtest_test";
 my $model_dir = $includes::testfiledir;
 
 my @commands = 
-	(get_command('randtest') . " $model_dir/mox1.mod -samples=5 -randomization_column=DOSE -dir=$dir",
+	(get_command('randtest') . " -no-update_inits $model_dir/mox1.mod -samples=5 -randomization_column=DOSE -dir=$dir",
+	 get_command('randtest') . " $model_dir/phenofull.mod -base=$model_dir/pheno.mod -samples=5 -randomization_column=WGT -dir=$dir",
+	 get_command('randtest') . " $model_dir/phenofull.mod -base=$model_dir/pheno.mod -full_model_inits -samples=5 -randomization_column=WGT -dir=$dir",
 	 );
 
 foreach my $command (@commands) {

@@ -9,7 +9,7 @@ use include_modules;
 
 require Exporter;
 our @ISA = qw(Exporter);
-our %EXPORT_TAGS = ('all' => [ qw(not_empty is_empty diff cumsum max min linspace unique add sum mean median variance stdev is_int) ]);
+our %EXPORT_TAGS = ('all' => [ qw(not_empty is_empty diff cumsum max min linspace unique add sum mean median variance stdev is_int quantile) ]);
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 
 sub not_empty
@@ -363,6 +363,43 @@ sub is_int
         }
     }
     return 1;
+}
+
+sub quantile{
+	#mimic R quantile(nubmers,type=2, probs= probs)
+
+	my %parm = validated_hash(\@_,
+							  probs => { isa => 'ArrayRef', optional => 0 },
+							  numbers => { isa => 'ArrayRef', optional => 0 }
+		);
+	my $probs = $parm{'probs'};
+	my $numbers = $parm{'numbers'};
+
+	my $n=scalar(@{$numbers});
+	croak("Empty set of numbers to quantile") if ($n<1);
+	croak("Empty set of probs to quantile") if (scalar(@{$probs})<1);
+
+	my $m = 0; #R quantile type 2 m value
+	
+	my @ans =();
+	foreach my $perc (@{$probs}){
+		my $j = floor($n*$perc +$m); 
+
+		my $g = $n*$perc +$m - $j, 
+		my $gamma = 1;
+		$gamma = 0.5 if ($g==0);
+
+		my $index = $j-1;
+		my $quant= (1-$gamma)*$numbers->[$index] + $gamma*$numbers->[$index+1];
+		#handle out of range
+		if (($index+1)>= $n){
+			$quant= $numbers->[$index];
+		}elsif ($index< 0 and $gamma == 0.5){
+			$quant= $numbers->[$index+1];
+		}
+		push (@ans,$quant);
+	}
+	return \@ans;
 }
 
 1;
