@@ -17,7 +17,6 @@ use Math::Random;
 use output;
 use array qw(:all);
 use linear_algebra;
-use POSIX 'floor';
 
 extends 'tool';
 

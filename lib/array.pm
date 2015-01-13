@@ -6,6 +6,7 @@ package array;
 
 use MooseX::Params::Validate;
 use include_modules;
+use POSIX 'floor';
 
 require Exporter;
 our @ISA = qw(Exporter);
