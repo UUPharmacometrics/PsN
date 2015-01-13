@@ -24,6 +24,7 @@ has 'only_include_elements' => ( is => 'rw', isa => 'Maybe[ArrayRef]' );
 has 'message' => ( is => 'rw', isa => 'Maybe[Str]' );
 has 'toolname' => ( is => 'rw', isa => 'Str', default => 'NONMEM' );
 has 'max_replicates' => ( is => 'rw', isa => 'Maybe[Int]' );        # Maximum number of simulation replicates to add
+has 'pretty' => ( is => 'rw', isa => 'Bool', default => 0 );        # Should the xml be indented or not
 has '_document' => ( is => 'rw', isa => 'Ref' );    # The XML document 
 has '_duplicate_blocknames' => ( is => 'rw', isa => 'HashRef' );    # Contains those blocknames which will have duplicates with next number for block
 has '_first_block' => ( is => 'rw', isa => 'Str' );
@@ -549,7 +550,7 @@ sub parse
     }
 
     $doc->setDocumentElement($SO);
-    $doc->toFile($self->so_filename, 1);
+    $doc->toFile($self->so_filename, $self->pretty);
 }
 
 sub _parse_lst_file

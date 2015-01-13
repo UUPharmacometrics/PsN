@@ -33,6 +33,7 @@ my %optional_options = (
     'message' => undef,
     'toolname' => undef,
     'max_replicates:i' => undef,
+    'pretty!' => undef,
 );
 
 
@@ -44,6 +45,7 @@ my %defaults;
 $defaults{'precision'} = 10;
 $defaults{'use_tables'} = 1; 
 $defaults{'toolname'} = 'NONMEM';
+$defaults{'pretty'} = 0;
 
 foreach my $opt (keys(%optional_options)) {
   $opt =~ s/[!:|].*//g; #get rid of :s |? :i etcetera
@@ -130,6 +132,14 @@ $help_text{-max_replicates} = <<'EOF';
     Default is to add all replicates
 EOF
 
+$help_text{-pretty} = <<'EOF';
+    -pretty
+
+    Set if SO should be output with indentations and newlines
+    Default is to not add intentations and thus to generate
+    as compact xml files as possible.
+EOF
+
 common_options::online_help('nmoutput2so', \%options, \%help_text, \%required_options, \%optional_options);
 
 if ($options{'version'}) {  # FIXME: Should use common_options for this
@@ -171,6 +181,7 @@ my $so = standardised_output->new(
     message => $options{'message'},
     toolname => $options{'toolname'},
     max_replicates => $options{'max_replicates'},
+    pretty => $options{'pretty'},
 );
 
 $so->parse;
