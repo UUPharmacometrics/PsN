@@ -53,6 +53,7 @@ sub BUILD
         } else {
             $so_filename = 'bootstrap.SO.xml';
         }
+        $so_filename = OSspecific::nopath($so_filename);
         $self->so_filename($so_filename);
     }
 
@@ -562,6 +563,9 @@ sub _parse_lst_file
     );
     my $lst_file = $parm{'lst_file'};
 
+    my $path = OSspecific::directory($lst_file);
+    $path .= '/' if ($path eq '.');
+
     my $elapsed_time = 0;
     my @messages;
     my $doc = $self->_document;
@@ -713,19 +717,19 @@ sub _parse_lst_file
                     my ($table_name_ref, $dummy) = $model->problems->[$problems]->_option_val_pos(record_name => 'table', name => 'FILE');
                     if (defined $table_name_ref and scalar @{$table_name_ref} >= 0) {
                         foreach my $table (@$table_name_ref) {
-                            if ($table =~ /^(sdtab|patab)/ and not -e $table) {
+                            if ($table =~ /^(sdtab|patab)/ and not -e ($path . $table)) {
                                 push @messages, {
                                     type => "WARNING",
                                     toolname => $self->toolname,
                                     name => "File error",
-                                    content => "Could not find table $table. Results from this table could not be added.",
+                                    content => "Could not find table $path$table. Results from this table could not be added.",
                                     severity => 1,
                                 };
                                 next;
                             }
                             if ($table =~ /^sdtab/) {
                                 my $sdtab = data->new(
-                                    directory => $outobj->directory,
+                                    directory => $path, #$outobj->directory,
                                     filename => $table,
                                     ignoresign => '@',
                                     parse_header => 1,
@@ -746,7 +750,7 @@ sub _parse_lst_file
                             }
                             if ($table =~ /^patab/) {
                                 my $patab = data->new(
-                                    directory => $outobj->directory,
+                                    directory => $path, #$outobj->directory,
                                     filename => $table,
                                     ignoresign => '@',
                                     parse_header => 1,
@@ -786,7 +790,7 @@ sub _parse_lst_file
                 my $table_file = $model->problems->[$problems]->find_table(columns => [ 'ID', 'TIME', 'DV' ]);
                 if (defined $table_file) {
                     $simulation = $doc->createElement("Simulation");
-                    my $sp = $self->_create_simulated_profiles(table => $table_file);
+                    my $sp = $self->_create_simulated_profiles(table => $path . $table_file);
                     $simulation->appendChild($sp);
                 }
             }
