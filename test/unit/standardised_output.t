@@ -238,6 +238,19 @@ foreach $node (@nodes) {
 is_deeply(\%hash, \%results_hash, "pheno.lst without sdtab and patab has all elements under Estimation");
 
 
+# option pharmml
+my $so = standardised_output->new(pharmml => 'test.xml', lst_files => [ "pheno.lst" ]);
+$so->parse;
+my $xpc = get_xml("pheno.SO.xml");
+(my $node) = $xpc->findnodes('/x:SO/x:PharmMLRef[@name]');
+ok (defined $node, "PharmMLRef");
+
+my $so = standardised_output->new(lst_files => [ "pheno.lst" ]);
+$so->parse;
+my $xpc = get_xml("pheno.SO.xml");
+(my $node) = $xpc->findnodes('/x:SO/x:PharmMLRef[@name]');
+ok (!defined $node, "PharmMLRef");
+
 remove_test_dir($tempdir);
 
 done_testing();

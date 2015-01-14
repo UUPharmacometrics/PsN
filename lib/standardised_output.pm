@@ -25,6 +25,7 @@ has 'message' => ( is => 'rw', isa => 'Maybe[Str]' );
 has 'toolname' => ( is => 'rw', isa => 'Str', default => 'NONMEM' );
 has 'max_replicates' => ( is => 'rw', isa => 'Maybe[Int]' );        # Maximum number of simulation replicates to add
 has 'pretty' => ( is => 'rw', isa => 'Bool', default => 0 );        # Should the xml be indented or not
+has 'pharmml' => ( is => 'rw', isa => 'Str' );                      # Name of pharmml file
 has '_document' => ( is => 'rw', isa => 'Ref' );    # The XML document 
 has '_duplicate_blocknames' => ( is => 'rw', isa => 'HashRef' );    # Contains those blocknames which will have duplicates with next number for block
 has '_first_block' => ( is => 'rw', isa => 'Str' );
@@ -551,7 +552,26 @@ sub parse
     }
 
     $doc->setDocumentElement($SO);
+    $self->_add_pharmml_ref(so => $SO);
     $doc->toFile($self->so_filename, $self->pretty);
+}
+
+sub _add_pharmml_ref
+{
+    # Add the PharmMLRef element if specified
+    my $self = shift;
+    my %parm = validated_hash(\@_,
+        so => { isa => 'Ref' },
+    );
+    my $so =  $parm{'so'};
+
+    if (defined $self->pharmml) {
+        my $doc = $self->_document;
+        my $pharmmlref = $doc->createElement("PharmMLRef");
+        $pharmmlref->setAttribute("name", $self->pharmml);
+        my $first_child = $so->firstChild();
+        $so->insertBefore($pharmmlref, $first_child);
+    }
 }
 
 sub _parse_lst_file
