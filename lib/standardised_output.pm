@@ -25,7 +25,8 @@ has 'message' => ( is => 'rw', isa => 'Maybe[Str]' );
 has 'toolname' => ( is => 'rw', isa => 'Str', default => 'NONMEM' );
 has 'max_replicates' => ( is => 'rw', isa => 'Maybe[Int]' );        # Maximum number of simulation replicates to add
 has 'pretty' => ( is => 'rw', isa => 'Bool', default => 0 );        # Should the xml be indented or not
-has 'pharmml' => ( is => 'rw', isa => 'Str' );                      # Name of pharmml file
+has 'pharmml' => ( is => 'rw', isa => 'Maybe[Str]' );               # Name of pharmml file
+has 'verbose' => ( is => 'rw', isa => 'Bool', default => 0 );
 has '_document' => ( is => 'rw', isa => 'Ref' );    # The XML document 
 has '_duplicate_blocknames' => ( is => 'rw', isa => 'HashRef' );    # Contains those blocknames which will have duplicates with next number for block
 has '_first_block' => ( is => 'rw', isa => 'Str' );
@@ -121,6 +122,12 @@ sub create_message
     my $severity = $doc->createElement('Severity');
     $severity->appendChild($self->create_typed_element(type => 'Int', content => $message->{'severity'}));
     $node->appendChild($severity);
+
+    if ($self->verbose) {
+        if ($message->{'type'} eq 'ERROR' or $message->{'type'} eq 'WARNING') {
+            print $message->{'type'}, " ", $message->{'name'}, ": ", $message->{'content'}, "\n";
+        }
+    }
 
     return $node;
 }
@@ -510,11 +517,15 @@ sub parse
     # Handle bootstrap_results
     if (defined $self->bootstrap_results) {
         # Find or create xml structure
-        my $first_block = $self->_first_block;
-        (my $block) = $SO->findnodes("SOBlock[\@blkId='$first_block']");
+        my $bootstrap_block = $self->_first_block;
+        (my $block) = $SO->findnodes("SOBlock[\@blkId='$bootstrap_block']");
         if (not defined $block) {
-            $block = $self->create_block(name => "Bootstrap");
+            $bootstrap_block = "Bootstrap";
+            $block = $self->create_block(name => $bootstrap_block);
             $SO->appendChild($block);
+        }
+        if ($self->verbose) {
+            print "Adding bootstrap results from file ", $self->bootstrap_results, " to SOBlock \"$bootstrap_block\"\n";
         }
         my $estimation = $self->find_or_create_node(root_node => $block, node_name => "Estimation");
 
@@ -552,7 +563,9 @@ sub parse
     }
 
     $doc->setDocumentElement($SO);
-    $self->_add_pharmml_ref(so => $SO);
+    if (defined $self->pharmml) {
+        $self->_add_pharmml_ref(so => $SO);
+    }
     $doc->toFile($self->so_filename, $self->pretty);
 }
 
@@ -565,13 +578,11 @@ sub _add_pharmml_ref
     );
     my $so =  $parm{'so'};
 
-    if (defined $self->pharmml) {
-        my $doc = $self->_document;
-        my $pharmmlref = $doc->createElement("PharmMLRef");
-        $pharmmlref->setAttribute("name", $self->pharmml);
-        my $first_child = $so->firstChild();
-        $so->insertBefore($pharmmlref, $first_child);
-    }
+    my $doc = $self->_document;
+    my $pharmmlref = $doc->createElement("PharmMLRef");
+    $pharmmlref->setAttribute("name", $self->pharmml);
+    my $first_child = $so->firstChild();
+    $so->insertBefore($pharmmlref, $first_child);
 }
 
 sub _parse_lst_file
@@ -582,6 +593,10 @@ sub _parse_lst_file
         lst_file => { isa => 'Str' },
     );
     my $lst_file = $parm{'lst_file'};
+
+    if ($self->verbose) {
+        print "Adding $lst_file\n";
+    }
 
     my $path = OSspecific::directory($lst_file);
     $path .= '/' if ($path eq '.');
