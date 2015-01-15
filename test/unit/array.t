@@ -143,4 +143,20 @@ ok (!array::is_int([1, 2, 3, 3.3]), "is_int array with float");
 ok (array::is_int([[1,2,3],[4,5]]), "is_int two dimensional int array");
 ok (!array::is_int([[1,2,3], ['opel', 34]]), "is_int two dim nonint array");
 
+#test of pvalues
+my @sorted = (1,2,3,4,5,6,7,8,9,10);
+my @values = (0,1,1.5,5,5.5,6.5,10,11);
+
+my $pvals = percentile(sorted_numbers => \@sorted,
+					test_values => \@values);
+
+is ($pvals->[0],1/11, "pvals ".$values[0]); #1/11
+is ($pvals->[1],1/10, "pvals ".$values[1]); #1/10
+is ($pvals->[2],1/10, "pvals ".$values[2]);
+is ($pvals->[3],5/10, "pvals ".$values[3]);
+is ($pvals->[4],5/10, "pvals ".$values[4]);
+is ($pvals->[5],6/10, "pvals ".$values[5]);
+is ($pvals->[6],10/10, "pvals ".$values[6]);
+is ($pvals->[7],1, "pvals ".$values[7]);
+
 done_testing();

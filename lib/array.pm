@@ -10,7 +10,7 @@ use POSIX 'floor';
 
 require Exporter;
 our @ISA = qw(Exporter);
-our %EXPORT_TAGS = ('all' => [ qw(not_empty is_empty diff cumsum max min linspace unique add sum mean median variance stdev is_int quantile) ]);
+our %EXPORT_TAGS = ('all' => [ qw(not_empty is_empty diff cumsum max min linspace unique add sum mean median variance stdev is_int quantile percentile) ]);
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 
 sub not_empty
@@ -368,6 +368,7 @@ sub is_int
 
 sub quantile{
 	#mimic R quantile(nubmers,type=2, probs= probs)
+	#numbers must be sorted!
 
 	my %parm = validated_hash(\@_,
 							  probs => { isa => 'ArrayRef', optional => 0 },
@@ -401,6 +402,46 @@ sub quantile{
 		push (@ans,$quant);
 	}
 	return \@ans;
+}
+
+sub percentile{
+	#sort of the inverse of quantile
+	#return percentiles of input test_values
+	#the empirical cdf used is a step function that makes the step at each new value in sorted_numbers 
+
+	my %parm = validated_hash(\@_,
+							  test_values => { isa => 'ArrayRef', optional => 0 },
+							  sorted_numbers => { isa => 'ArrayRef', optional => 0 }
+		);
+	my $test_values = $parm{'test_values'};
+	my $sorted_numbers = $parm{'sorted_numbers'};
+
+	my $n=scalar(@{$sorted_numbers});
+	croak("Empty set of sorted_numbers to empirical_distribution") if ($n<1);
+	croak("Empty set of test_values to sorted_numbers") if (scalar(@{$test_values})<1);
+
+	
+	my @p_values =();
+	foreach my $value (@{$test_values}){
+		#index is pos in sorted_numbers that is larger than $value
+		my $index = 0;
+		while ($sorted_numbers->[$index] <= $value){
+			$index++;
+			last if ($index >= $n); #out of range
+		}
+
+		#handle out of range
+		if ($index == $n){
+			push(@p_values,1);
+		}elsif ($index == 0){
+			push(@p_values,1/($n+1));
+		}else{
+			push(@p_values,$index/$n);
+		}
+
+	}
+
+	return \@p_values;
 }
 
 1;
