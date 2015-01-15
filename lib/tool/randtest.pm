@@ -11,7 +11,7 @@ use Math::Random;
 use Data::Dumper;
 use Moose;
 use MooseX::Params::Validate;
-use array qw(quantile);
+use array qw(quantile percentile);
 
 extends 'tool';
 
@@ -542,16 +542,12 @@ sub prepare_results
 	#also rawres structure
 	#do nothing if do not have dOFV column
 
-#p-value , actual dOFV at percentile, theoretical dOFV for chi2 1df, actual percentile at theoretical dOFV for chi2 1df,theoretical dOFV for chi2 2df, actual percentile at theoretical dOFV for chi2 2df , theoretical dOFV for chi2 3df, actual percentile at theoretical dOFV for chi2 3df 
-# 0.001 ,
-# 0.01 ,
-# 0.05 ,
-# 0.10 ,
-# 0.15 ,
 
 
-	$self -> read_raw_results();
-	trace(tool => 'randtest', message => "Read raw results from file", level => 1);
+#	$self -> read_raw_results();
+#	$self -> raw_results($self -> raw_results -> [0]); #each line is one model
+
+#	trace(tool => 'randtest', message => "Read raw results from file", level => 1);
 	#$self -> raw_results());
 
 	unless (defined $self->raw_line_structure){
@@ -572,40 +568,60 @@ sub prepare_results
 	return if (not defined $dofv);
 	if (defined $self->raw_line_structure()->{'base'}->{'ofv'}){
 		($baseofv,$length) = split(',',$self->raw_line_structure()->{'base'}->{'ofv'});
-		last;
+		1;
 	}else{
 		return;
 	}
 
+	my @dofvarray=();
 	#we assume here that only have one problem and subproblem in models
 	if ( defined $self -> raw_results ) {
-		for ( my $i = 0; $i < scalar @{$self->raw_results}; $i++ ) { # All models, should be only 1
-			my @dofvarray=();
-			my $poscount=0;
-			my $undefcount=0;
-			for ( my $j = 0; $j < scalar @{$self->raw_results->[$i]}; $j++ ) { # orig model + prepared_models
-				next if ($self->$rawres->[$i][$j][0] =~ '/(base|input)/');
-				my $val = $self->$rawres->[$i][$j][$dofv];
-				if (defined $val){
-					if ($val <= 0){
-						push(@dofvarray,$val);
-					}else{
-						$poscount++;
-						push(@dofvarray,0);
-					}
+		my $poscount=0;
+		my $undefcount=0;
+		for ( my $j = 0; $j < scalar @{$self->raw_results}; $j++ ) { # orig model + prepared_models
+			next if ($self->raw_results->[$j][0] =~ '/(base|input)/');
+			my $val = $self->raw_results->[$j][$dofv];
+			if (defined $val){
+				if ($val <= 0){
+					push(@dofvarray,$val);
 				}else{
-					$undefcount++;
+					$poscount++;
+					push(@dofvarray,0);
 				}
-
+			}else{
+				$undefcount++;
 			}
+
 		}
+		
 	}
 
+#	print "dofvarray ".join(' ',@dofvarray)."\n";
 	return if (scalar(@dofvarray) < 1);
 	my @sorted = (sort {$a <=> $b} @dofvarray); #sort ascending
 	my $actual_dofv_ref = quantile(probs => \@probs, numbers=> \@sorted);
-	#is there an inverse for the prob of a value?
 
+#p-value , actual dOFV at percentile, theoretical dOFV for chi2 1df, actual percentile at theoretical dOFV for chi2 1df,theoretical dOFV for chi2 2df, actual percentile at theoretical dOFV for chi2 2df , theoretical dOFV for chi2 3df, actual percentile at theoretical dOFV for chi2 3df 
+# 0.001 ,
+# 0.01 ,
+# 0.05 ,
+# 0.10 ,
+# 0.15 ,
+
+	open( RES, ">".$self->directory.$self->results_file()) or die "could not open ".$self->results_file();
+	print RES "p-value,actual.dOFV.at.percentile,theoretical.dOFV.for.chi2.1df,actual.percentile.at.theoretical.dOFV.for.chi2.1df,theoretical.dOFV.for.chi2.2df,actual.percentile.at.theoretical.dOFV.for.chi2.2df.,theoretical.dOFV.for.chi2.3df,actual.percentile.at.theoretical.dOFV.for.chi2.3df\n";
+
+	for (my $i=0; $i<scalar(@probs); $i++){
+		my @line = ($probs[$i],$actual_dofv_ref->[$i]);
+		my @testdofv = (-$p_values{$probs[$i]}->{1},-$p_values{$probs[$i]}->{2},-$p_values{$probs[$i]}->{3});
+		my $perc = percentile(sorted_numbers => \@sorted,
+							  test_values => \@testdofv);
+		for (my $j=0; $j<scalar(@testdofv); $j++){
+			push(@line,$testdofv[$j],$perc->[$j]);
+		}
+		print RES join(',',@line)."\n";
+	}
+	close(RES);
 
 }
 sub create_R_plots_code{
