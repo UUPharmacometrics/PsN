@@ -18,7 +18,7 @@ chdir $tempdir;
 
 my @commands =  (
     get_command('execute') . " run1.mod",
-	get_command('precond') . " run1.mod -pre=modelfit_dir1/NM_run1/psn.cov",
+	get_command('precond') . " run1.mod -pre=modelfit_dir1/NM_run1/psn.cov -clean=2",
 );
 
 foreach my $command (@commands) {
