@@ -27,9 +27,11 @@ has 'max_replicates' => ( is => 'rw', isa => 'Maybe[Int]' );        # Maximum nu
 has 'pretty' => ( is => 'rw', isa => 'Bool', default => 0 );        # Should the xml be indented or not
 has 'pharmml' => ( is => 'rw', isa => 'Maybe[Str]' );               # Name of pharmml file
 has 'verbose' => ( is => 'rw', isa => 'Bool', default => 0 );
-has '_document' => ( is => 'rw', isa => 'Ref' );    # The XML document 
+has 'external_tables' => ( is => 'rw', isa => 'Bool', default => 0 );   # For now a bool to specify if external tables should be created
+has '_document' => ( is => 'rw', isa => 'Ref' );                    # The XML document 
 has '_duplicate_blocknames' => ( is => 'rw', isa => 'HashRef' );    # Contains those blocknames which will have duplicates with next number for block
-has '_first_block' => ( is => 'rw', isa => 'Str' );
+has '_first_block' => ( is => 'rw', isa => 'Str' );                 # Name of the first SOBlock
+has '_so_path' => ( is => 'rw', isa => 'Str' );                     # The path of the output SO file
 
 sub BUILD
 {
@@ -57,6 +59,11 @@ sub BUILD
         }
         $so_filename = OSspecific::nopath($so_filename);
         $self->so_filename($so_filename);
+        $self->_so_path('./');
+    } else {
+        my $path = OSspecific::directory($self->so_filename);
+        $path .= '/' if ($path eq '.');
+        $self->_so_path($path);
     }
 
     my $doc = XML::LibXML::Document->new('1.0', 'utf-8');
@@ -142,6 +149,7 @@ sub create_table
         column_valuetypes => { isa => 'ArrayRef' },
         values => { isa => 'ArrayRef' },
         row_major => { isa => 'Bool', default => 0 },
+        table_file => { isa => 'Maybe[Str]', optional => 1 },      # Name to use for stem of table_file
     );
     my $table_name = $parm{'table_name'};
     my $column_ids = $parm{'column_ids'};
@@ -149,6 +157,7 @@ sub create_table
     my $column_valuetypes = $parm{'column_valuetypes'};
     my $values = $parm{'values'};
     my $row_major = $parm{'row_major'};
+    my $table_file = $parm{'table_file'};
 
     my $doc = $self->_document;
 
@@ -165,8 +174,6 @@ sub create_table
         $def->appendChild($column);
     }
 
-    my $tab = $doc->createElement("ds:Table");
-    $table->appendChild($tab);
     my $numcols = scalar(@$column_ids);
     my $numrows;
     if ($row_major) {
@@ -174,26 +181,68 @@ sub create_table
     } else {
         $numrows = scalar(@{$values->[0]});
     }
-    for (my $row = 0; $row < $numrows; $row++) {
-        my $row_xml = $doc->createElement("ds:Row");
-        $tab->appendChild($row_xml);
-        for (my $col = 0; $col < $numcols; $col++) {
-            my $value_type = uc(substr($column_valuetypes->[$col], 0, 1)) . substr($column_valuetypes->[$col], 1);
-            my $column_type = $column_types->[$col];
-            my $element;
-            if ($row_major) {
-                $element = $values->[$row]->[$col];
-            } else {
-                $element = $values->[$col]->[$row];
+
+    if (not defined $table_file) {
+        my $tab = $doc->createElement("ds:Table");
+        $table->appendChild($tab);
+        for (my $row = 0; $row < $numrows; $row++) {
+            my $row_xml = $doc->createElement("ds:Row");
+            $tab->appendChild($row_xml);
+            for (my $col = 0; $col < $numcols; $col++) {
+                my $value_type = uc(substr($column_valuetypes->[$col], 0, 1)) . substr($column_valuetypes->[$col], 1);
+                my $column_type = $column_types->[$col];
+                my $element;
+                if ($row_major) {
+                    $element = $values->[$row]->[$col];
+                } else {
+                    $element = $values->[$col]->[$row];
+                }
+                my $value = $doc->createElement("ct:" . $value_type);
+                if ($value_type eq 'String' and $column_type ne 'id') {
+                    $value->appendTextNode($element);
+                } else {
+                    $value->appendTextNode($self->_get_printable_number($element));
+                }
+                $row_xml->appendChild($value);
             }
-            my $value = $doc->createElement("ct:" . $value_type);
-            if ($value_type eq 'String' and $column_type ne 'id') {
-                $value->appendTextNode($element);
-            } else {
-                $value->appendTextNode($self->_get_printable_number($element));
-            }
-            $row_xml->appendChild($value);
         }
+    } else {
+        my $filename = $table_file . '_' . $table_name . '.csv';
+        my $data = $doc->createElement("ds:ImportData");
+        $table->appendChild($data);
+        $data->setAttribute("oid", $table_name);
+        my $path = $doc->createElement("ds:path");
+        $data->appendChild($path);
+        $path->appendTextNode($filename);
+        my $format = $doc->createElement("ds:format");
+        $data->appendChild($format);
+        $format->appendTextNode("CSV");
+        my $delimiter = $doc->createElement("ds:delimiter");
+        $data->appendChild($delimiter);
+        $delimiter->appendTextNode("COMMA");
+
+        # Create the external table file
+        open my $fh, ">", $self->_so_path . $filename;
+        for (my $row = 0; $row < $numrows; $row++) {
+            for (my $col = 0; $col < $numcols; $col++) {
+                my $value_type = uc(substr($column_valuetypes->[$col], 0, 1)) . substr($column_valuetypes->[$col], 1);
+                my $column_type = $column_types->[$col];
+                my $element;
+                if ($row_major) {
+                    $element = $values->[$row]->[$col];
+                } else {
+                    $element = $values->[$col]->[$row];
+                }
+                if ($value_type eq 'String' and $column_type ne 'id') {
+                    print $fh $element;
+                } else {
+                    print $fh $self->_get_printable_number($element);
+                }
+                print $fh "," if ($col != $numcols - 1);
+            }
+            print $fh "\n";
+        }
+        close $fh;
     }
 
     return $table;
@@ -764,7 +813,7 @@ sub _parse_lst_file
                             }
                             if ($table =~ /^sdtab/) {
                                 my $sdtab = data->new(
-                                    directory => $path, #$outobj->directory,
+                                    directory => $path,
                                     filename => $table,
                                     ignoresign => '@',
                                     parse_header => 1,
@@ -785,7 +834,7 @@ sub _parse_lst_file
                             }
                             if ($table =~ /^patab/) {
                                 my $patab = data->new(
-                                    directory => $path, #$outobj->directory,
+                                    directory => $path,
                                     filename => $table,
                                     ignoresign => '@',
                                     parse_header => 1,
@@ -825,7 +874,7 @@ sub _parse_lst_file
                 my $table_file = $model->problems->[$problems]->find_table(columns => [ 'ID', 'TIME', 'DV' ]);
                 if (defined $table_file) {
                     $simulation = $doc->createElement("Simulation");
-                    my $sp = $self->_create_simulated_profiles(table => $path . $table_file);
+                    my $sp = $self->_create_simulated_profiles(table => $path . $table_file, table_file => $file_stem);
                     $simulation->appendChild($sp);
                 }
             }
@@ -1318,8 +1367,10 @@ sub _create_simulated_profiles
     my $self = shift;
     my %parm = validated_hash(\@_,
         table => { isa => 'Str' },
+        table_file => { isa => 'Str', optional => 1 },
     );
     my $table = $parm{'table'};
+    my $table_file = $parm{'table_file'};
 
     open my $fh, '<', $table;
 
@@ -1389,6 +1440,7 @@ sub _create_simulated_profiles
         column_types => \@column_types,
         column_valuetypes => \@column_valuetypes,
         values => \@matrix,
+        table_file => $self->external_tables ? $table_file : undef,
     ); 
 
     return $simulated_profiles;
