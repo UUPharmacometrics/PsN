@@ -1,0 +1,40 @@
+#!/usr/bin/perl
+use Net::SFTP::Foreign;
+use File::Glob;
+use strict;
+
+chdir('/home/kajsa/kod-psn/PsN4/doc');
+my $password = $ARGV[0];
+my $user = 'k_harling,psn';
+
+if (scalar(@ARGV)>1){
+	#assume second arg is user
+	$user=$ARGV[1];
+}
+
+unless (length($password) > 1){
+	die "That is clearly not the right password";
+}
+
+print "Trying sftp for user $user\n";
+
+my $host='web.sourceforge.net';
+my $path='htdocs/internal_release_pdfdocs';
+
+my $sftp = Net::SFTP::Foreign->new($host,
+								   user => 'k_harling,psn',
+								   password => $password
+	);
+$sftp->die_on_error("Unable to establish SFTP connection");
+
+
+$sftp->setcwd($path) or die "unable to change cwd: " . $sftp->error;
+
+my @pdfs = <*.pdf>;
+
+foreach my $file (@pdfs){
+	print "Try put $file\n";
+	$sftp->put($file,$file) or 	die "put failed: " . $sftp->error;
+}
+
+
