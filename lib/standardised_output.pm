@@ -873,9 +873,7 @@ sub _parse_lst_file
             if ($simulation_step_run and $self->use_tables) {
                 my $table_file = $model->problems->[$problems]->find_table(columns => [ 'ID', 'TIME', 'DV' ]);
                 if (defined $table_file) {
-                    $simulation = $doc->createElement("Simulation");
-                    my $sp = $self->_create_simulated_profiles(table => $path . $table_file, table_file => $file_stem);
-                    $simulation->appendChild($sp);
+                    $simulation = $self->_create_simulation(table => $path . $table_file, table_file => $file_stem);
                 }
             }
 
@@ -1362,7 +1360,7 @@ sub _create_individual_estimates
     return $individual_estimates;
 }
 
-sub _create_simulated_profiles
+sub _create_simulation
 {
     my $self = shift;
     my %parm = validated_hash(\@_,
@@ -1371,6 +1369,9 @@ sub _create_simulated_profiles
     );
     my $table = $parm{'table'};
     my $table_file = $parm{'table_file'};
+
+    my $doc = $self->_document;
+    my $simulation = $doc->createElement("Simulation");
 
     open my $fh, '<', $table;
 
@@ -1383,67 +1384,55 @@ sub _create_simulated_profiles
         $colnos{$columns[$i]} = $i;
     }
 
+    my $replicate_no = 1;
+
     my @id;
     my @time;
-    my @dv;
     my @dvid;
 
-    # Read ID, TIME and first DV replicate
-    for (;;) {
-        my $row = <$fh>;
-        last if not defined $row;   # EOF
-        last if $row =~ /^TABLE NO/;
-        chomp($row);
-        $row =~ s/^\s+//;
-        my @columns = split /\s+/, $row;
-        push @id, $columns[$colnos{'ID'}];
-        push @time, $columns[$colnos{'TIME'}];
-        push @dv, $columns[$colnos{'DV'}];
-    }
+    for (;;) {      # Loop through simulation replicates aka simulation blocks
+        my $sim_block = $doc->createElement("SimulationBlock");
+        $simulation->appendChild($sim_block);
+        $sim_block->setAttribute("replicate", $replicate_no);
+ 
+        my @dv;
 
-    @dvid = ((1) x scalar(@id));        # Don't support multiple DVs for now
-
-    my @matrix = (\@id, \@dvid, \@time, \@dv);
-    my @column_ids = ( "ID", "DVID", "TIME", "Replicate1" );
-    my @column_types = ( "id", "dvid", "time", "undefined" );
-    my @column_valuetypes = ( "string", "int", "real", "real" );
-
-    # Read replicates
-    my $dv_column = 4;
-    my $added_replicates = 1;
-    for (;;) {
-        last if (defined $self->max_replicates and $added_replicates >= $self->max_replicates);
-        my $row = <$fh>;
-        last if not defined $row;
-        push @matrix, [];
-        push @column_ids, ("Replicate" . ($dv_column - 2));
-        push @column_types, "undefined";
-        push @column_valuetypes, "real";
-        for (;;) {
+        for (;;) {  # Loop through table file
             my $row = <$fh>;
-            last if not defined $row;
+            last if not defined $row;   # EOF
             last if $row =~ /^TABLE NO/;
             chomp($row);
             $row =~ s/^\s+//;
             my @columns = split /\s+/, $row;
-            push @{$matrix[$dv_column]}, $columns[$colnos{'DV'}];
+            if ($replicate_no == 1) {
+                push @id, $columns[$colnos{'ID'}];
+                push @time, $columns[$colnos{'TIME'}];
+            }
+            push @dv, $columns[$colnos{'DV'}];
         }
-        $dv_column++;
-        $added_replicates++;
+        if ($replicate_no == 1) {
+            @dvid = ((1) x scalar(@id));        # Don't support multiple DVs for now
+        }
+
+        my $simulated_profiles = $self->create_table(
+            table_name => "SimulatedProfiles",
+            column_ids => [ "ID", "DVID", "TIME", "Observation" ],
+            column_types => [ "id", "dvid", "time", "dv" ],
+            column_valuetypes => [ "string", "int", "real", "real" ],
+            values => [ \@id, \@dvid, \@time, \@dv ],
+            table_file => $self->external_tables ? $table_file . "_$replicate_no" : undef,
+        ); 
+        $sim_block->appendChild($simulated_profiles);
+
+        my $row = <$fh>;
+        last if not defined $row;
+        $replicate_no++;
+        last if (defined $self->max_replicates and $replicate_no >= $self->max_replicates); 
     }
 
     close $fh;
 
-    my $simulated_profiles = $self->create_table(
-        table_name => "SimulatedProfiles",
-        column_ids => \@column_ids,
-        column_types => \@column_types,
-        column_valuetypes => \@column_valuetypes,
-        values => \@matrix,
-        table_file => $self->external_tables ? $table_file : undef,
-    ); 
-
-    return $simulated_profiles;
+    return $simulation;
 }
 
 1;
