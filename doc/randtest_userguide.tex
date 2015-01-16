@@ -37,6 +37,19 @@ Optional. Name of model to estimate with original data and use as reference when
 \optname{match\_transitions}
 Not used by default. Method for copying randomization column values from one individual to another during shuffling. See details in section Shuffling the randomization column.     
 \nextopt
+\optname{full\_model\_inits}
+Default false. Only relevant when -update\_inits is true. If true, use final estimates from
+the full model as initial estimates for the randomized data models. If false,
+final estimates from the base model are used instead.
+\nextopt
+\optname{update\_inits}
+Default true. Update the initial estimates of the 
+full model to the final estimates from the estimation (lst-file) of either the base model,
+or, if option -full\_model\_inits is set, of the full model.
+If estimates from the base model is used (option -full\_model\_inits is not set)
+only update for those parameters that are estimated (non-fix) in the base model AND are found,
+based on THETA/OMEGA/SIGMA numbering, both in the base and full model.
+\nextopt
 \optname{copy\_data}
 Default set. If option is set, the data file
 will be copied to the run directory if the input and/or base model is run.
@@ -103,6 +116,10 @@ If option -match\_transitions is set, PsN will match transitions instead of reco
 \section{Output}
 
 The raw\_results file is almost a standard PsN file containing raw result data for termination status, parameter estimates, uncertainty estimates etc. for all model estimations. The first row is for the base model, if any, estimated with the original dataset. The next row is the input model with the original dataset. The following are the input model with the randomized datasets. If a base model was given an extra column with header deltaofv is inserted next to the ofv-column. This column contains the ofv-value of the current model minus ofv for the base model.
+
+If a base-model was given, a file randtest\_results.csv will also be produced, 
+containing summary information about the empirical distribution of the
+delta-ofv values.
 
 \section{Known bugs and problems}
 
