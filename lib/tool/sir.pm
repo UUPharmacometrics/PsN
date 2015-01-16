@@ -748,8 +748,9 @@ sub sample_multivariate_normal
 
 	my @samples_array=();
 	my $counter=0;
+	my $max_iter=1000;
 
-	for (my $j=0; $j<10; $j++){
+	for (my $j=0; $j<$max_iter; $j++){
 		#we will probably discard some samples, generate twice needed amount to start with
 		my @candidate_samples = Math::Random::random_multivariate_normal((2*$samples), @muvec, @{$covmatrix});
 
@@ -838,7 +839,7 @@ sub sample_multivariate_normal
 	}
 	
 	unless ($counter == $samples){
-		croak("Failed to generate $samples accepted parameter vectors within the boundaries even after generating ".(20*$samples)." candidates");
+		croak("Failed to generate $samples accepted parameter vectors within the boundaries even after generating ".(2*$max_iter*$samples)." candidates");
 	}
 	return \@samples_array;
 
