@@ -144,12 +144,15 @@ PDFFILES=$(TEXFILES:.tex=.pdf)
 .PHONY : clean
 
 clean:
-	@-rm -rf $(DOCUMENTS) nmoutput2so nmoutput2so.zip PsN-Source psn_test_package.zip development/completion_files doc/*.aux doc/*.log doc/*.pdf doc/inputs/*eps-converted-to.pdf PsN-Source.tar.gz PsN-Source.zip
+	@-rm -rf $(DOCUMENTS) nmoutput2so nmoutput2so.zip PsN-Source psn_test_package.zip development/completion_files doc/*.aux doc/*.log doc/*.pdf doc/inputs/*eps-converted-to.pdf doc/inputs/version.tex doc/inputs/date.tex PsN-Source.tar.gz PsN-Source.zip
 
-doc/%.pdf: doc/%.tex
-	cd doc; pdflatex $*.tex >/dev/null; pdflatex $*.tex >/dev/null
+version:
+	@cd doc; date +'\newcommand{\thedate}{%Y-%m-%d}' >inputs/date.tex; sed -n 's/.*\$version\s*=\s*.\([0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\).;/\\newcommand\{\\psnversion\}\{\1\}/p' ../lib/PsN.pm >inputs/version.tex
 
-doc: $(PDFFILES)
+doc/%.pdf: version doc/%.tex
+	@ cd doc; pdflatex $*.tex >/dev/null; pdflatex $*.tex >/dev/null
+
+doc: $(PDFFILES) 
 
 release: completion rel_dir $(RELFILES) $(PDFFILES)
 	@ mkdir PsN-Source/development
@@ -165,12 +168,14 @@ release: completion rel_dir $(RELFILES) $(PDFFILES)
 	@ cp doc/*.pdf PsN-Source/doc
 	@ cp doc/*.scm PsN-Source/doc
 	@ cp doc/*.xls PsN-Source/doc
-	@ cd PsN-Source/doc/; zip PsN_pdf_documentation *.pdf *.xls *.scm
+	@ cd PsN-Source/doc/; zip -q PsN_pdf_documentation *.pdf *.xls *.scm
 	@ cd PsN-Source/doc/; tar -czf PsN_pdf_documentation.tar.gz *.pdf *.xls *.scm
 	@ chmod -R a+r PsN-Source/test/test_files
 	@ sed -i 's/dev\s*=\s*1;/dev = 0;/' PsN-Source/lib/PsN.pm
-	@ zip -r PsN-Source PsN-Source/
+	@ zip -rq PsN-Source PsN-Source/
 	@ tar czf PsN-Source.tar.gz PsN-Source/
+	@ echo  
+	@ echo Remember sftp putdoc for guides!
 
 # Release the nmoutput2so separately
 nmoutput2so:
@@ -183,11 +188,11 @@ nmoutput2so:
 	@ zip -r nmoutput2so nmoutput2so/
 
 documentation: doc/*.pdf $(PDFFILES)
-	@ cd PsN-Source/doc/; zip PsN_pdf_documentation *.pdf *.xls *.scm
+	@ cd PsN-Source/doc/; zip -q PsN_pdf_documentation *.pdf *.xls *.scm
 	@ cd PsN-Source/doc/; tar -czf PsN_pdf_documentation.tar.gz *.pdf *.xls *.scm 
 
 testpackage:
-	@ zip -r psn_test_package test
+	@ zip -rq psn_test_package test
 
 COMPFILES=boot_scm \
 	bootstrap \

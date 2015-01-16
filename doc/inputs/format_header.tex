@@ -16,14 +16,17 @@
 \usepackage{relsize}
 \renewcommand{\_}{\textscale{.7}{\textunderscore}}
 
+\input{inputs/version.tex}
+\input{inputs/date.tex}
+
 \newcommand{\guidetitle}[1]{
-\title{#1\\ \vspace{2 mm} {\large PsN 4.3.8}}
-\date{2015-01-16}
+\title{#1\\ \vspace{2 mm} {\large PsN \psnversion}}
+\date{\thedate}
 }
 
 \newcommand{\doctitle}[1]{
 \title{#1}
-\date{2015-01-16}
+\date{\thedate}
 }
 
 

@@ -11,6 +11,8 @@ doc/ddmore/*.aux
 doc/ddmore/*.log
 doc/ddmore/*.pdf
 doc/inputs/*eps-converted-to.pdf
+doc/inputs/version.tex
+doc/inputs/date.tex
 doc/developers_guide.out
 test/unit/testcase.txt
 test/test_files/pheno.lst
