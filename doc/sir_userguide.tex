@@ -30,6 +30,8 @@ sir -samples=5000 -resamples=1000 run0.mod
 
 \section{Input and options}
 A model file is required on the command-line. 
+If output file (lst) exists, then it is important that the control stream copy at the top of the lst-file matches the actual input model in terms
+of which parameters are estimated.
 \begin{optionlist}
 \optdefault{samples}{N}
 Required. The number of parameter vectors to generate. Needs to be greater than the number of resamples. A good starting point may be 5 times the number of resamples.
