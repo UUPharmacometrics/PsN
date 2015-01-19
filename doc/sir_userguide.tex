@@ -16,7 +16,9 @@ PAGE 22 (2013) Abstr 2907, Dosne AG, Bergstrand M, Karlsson MO.
 First, parameter vectors will be simulated from the truncated multivariate normal distribution 
 given by the covariance matrix output from NONMEM's covariance step
 (or, if NONMEM's covariance step was not successful, a faked NONMEM covariance matrix).
-Alternatively, a file with simulated parameter vectors can be given directly as input and this simulation is skipped.
+Alternatively, a file with simulated parameter vectors can be given directly as input and this simulation is skipped. The last approach is useful when it is
+difficult to obtain a (faked) covariance matrix.
+
 
 Second, each of the simulated parameter vectors will be evaluated on the original data (MAXEVAL=0).
 Third, based on these evaluations, weights will be calculated for each of the parameter vectors and the vectors 
@@ -30,15 +32,15 @@ sir -samples=5000 -resamples=1000 run0.mod
 
 \section{Input and options}
 A model file is required on the command-line. 
-If output file (lst) exists, then it is important that the control stream copy at the top of the lst-file matches the actual input model in terms
-of which parameters are estimated.
+If output file (lst) exists, then it is important that the control stream copy at the top of the lst-file matches the actual input model file
+in terms of which parameters are present and which parameters are FIXED or SAME.
 \begin{optionlist}
 \optdefault{samples}{N}
 Required. The number of parameter vectors to generate. Needs to be greater than the number of resamples. A good starting point may be 5 times the number of resamples.
 \nextopt
 \optdefault{resamples}{N}
 Required. The number of parameter vectors to resample based on the weights
-computed from delta ofv and the pdf. Only these will be used to compute the uncertainty (confidence intervals) around the model parameters. A good strating point may be 1000 resamples.
+computed from delta ofv and the pdf. Only these will be used to compute the uncertainty (confidence intervals) around the model parameters. A good starting point may be 1000 resamples.
 \nextopt
 \optdefault{rawres\_input}{filename}
 If rawres\_input is given, sir will take samples sets of parameter
@@ -104,7 +106,11 @@ If option is unset using -no-copy\_data, the absolute path to the original data 
 
 \section{sir program workflow}
 \begin{itemize}
-\item[\underline{Setup}] The sir program will run the input model unless the lst-file with results is already present.
+\item[\underline{Setup}] The sir program will run the input model unless the lst-file with results is already present. If the lst-file is present, it
+is important that the control stream copy at the top of the lst-file matches the
+actual input model file in terms of which parameters are estimated, 
+FIXED or SAME, otherwise there will be a mis-match between which parameter estimates are read from the
+lst-file and which estimates are needed for the sir procedure.
 \item[\underline{Step 1}] Simulate 'samples' parameter vectors from the covariance matrix, i.e. the .cov-file given by NONMEM or the matrix given via option covmat\_input. 
 NB: NOT performed if -rawres\_input is specified.
 \item[\underline{Step 2}] Calculate each vector’s probability given the covariance matrix based on the formula for the probability 
@@ -137,6 +143,25 @@ Compute univariate confidence intervals and store in sir\_results.csv.
 \item sir\_results.csv with percentiles and empirical covariance matrix
 \end{itemize}
 
+
+\section{Troubleshooting}
+\subsection*{Mismatch between input files}
+If you use the covmat\_input option and get an error message similar to
+\begin{verbatim}
+Number of parameters 122 in covmat_input does not match 
+number 123 of estimated parameters in input model
+\end{verbatim}
+then the most likely cause is that there is a mismatch between the input files. Make sure that the number of
+estimated parameters (the number of parameters, the FIXED and SAME settings, the DIAGONAL or BLOCK omega/sigma)
+match between the control stream copy at the beginning of the pre-existing lst-file and the input model file.
+\subsection*{Failure to invert the covariance file}
+If you use the covmat\_input option, and get the error message
+\begin{verbatim}
+covmat_input file could not be inverted, numerical error 
+in linear_algebra invert_symmetric
+\end{verbatim}
+then it is probable that the the covariance matrix is ill-conditioned and badly scaled. Consider using
+the rawres\_input option instead.
 \end{document}
 
 \section{Procedure in case of a failed \$COV step}
