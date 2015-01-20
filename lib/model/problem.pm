@@ -2636,9 +2636,9 @@ sub get_estimated_attributes
 {
     my $self = shift;
 	my %parm = validated_hash(\@_,
-							  parameter => { isa => 'Str', optional => 1, default => 'all' },
-							  attribute => { isa => 'Str', optional => 1, default => 'coordinate_strings' },
-		);
+        parameter => { isa => 'Str', optional => 1, default => 'all' },
+        attribute => { isa => 'Str', optional => 1, default => 'coordinate_strings' },
+    );
 	my $parameter=$parm{'parameter'};
 	my $attribute=$parm{'attribute'};
 
@@ -2703,6 +2703,30 @@ sub find_table
             }
             if (scalar(keys %search) == 0) {
                 return $filename;
+            }
+        }
+    }
+
+    return undef;
+}
+
+sub find_table_with_name
+{
+    # Find the first table with name matching the regexp in name.
+    # Returns the filename if found or undef if not found
+    my $self = shift;
+    my %parm = validated_hash(\@_,
+        name => { isa => 'Str' },
+        path => { isa => 'Str' },
+    );
+    my $name = $parm{'name'};
+    my $path = $parm{'path'};
+
+    my ($table_name_ref, $dummy) = $self->_option_val_pos(record_name => 'table', name => 'FILE');
+    if (defined $table_name_ref and scalar @{$table_name_ref} >= 0) {
+        foreach my $table (@$table_name_ref) {
+            if ($table =~ /$name/ and -e ($path . $table)) {
+                return $table;
             }
         }
     }

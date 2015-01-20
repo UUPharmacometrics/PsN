@@ -871,10 +871,12 @@ sub _parse_lst_file
             $elapsed_time = $1 + $2 / 60 + $3 / 3600;
 
             if ($simulation_step_run and $self->use_tables) {
-                my $table_file = $model->problems->[$problems]->find_table(columns => [ 'ID', 'TIME', 'DV' ]);
-                if (defined $table_file) {
-                    $simulation = $self->_create_simulation(table => $path . $table_file, table_file => $file_stem);
-                }
+                $simulation = $self->_create_simulation(
+                    model => $model,
+                    problem => $model->problems->[$problems],
+                    path => $path,
+                    table_file => $file_stem
+                );
             }
 
         }
@@ -1270,7 +1272,7 @@ sub _create_individual_estimates
     my @labels = ();
     foreach my $index (keys %{$patab->column_head_indices}) {
         my $is_eta = grep(/^$index$/, @$eta_names);
-        if ($index ne 'ID' and not $is_eta) {
+        if ($index ne 'ID' and $index ne 'TIME' and not $is_eta) {
             $labels[$patab->column_head_indices->{$index} - 2] = $index;
         }
     }
@@ -1364,19 +1366,75 @@ sub _create_simulation
 {
     my $self = shift;
     my %parm = validated_hash(\@_,
-        table => { isa => 'Str' },
+        path => { isa => 'Str' },
         table_file => { isa => 'Str', optional => 1 },
+        model => { isa => 'model' },
+        problem => { isa => 'model::problem' },
     );
-    my $table = $parm{'table'};
+    my $path = $parm{'path'};
     my $table_file = $parm{'table_file'};
+    my $model = $parm{'model'};
+    my $problem = $parm{'problem'};
+
+    my $profiles_table_name = $problem->find_table(columns => [ 'ID', 'TIME', 'DV' ]);
+    my $indiv_table_name = $problem->find_table_with_name(name => '^patab', path => $path);
+    my $covariates_table_name = $problem->find_table_with_name(name => '^cotab', path => $path);
+
+    unless ($profiles_table_name or $indiv_table_name) {
+        return undef;
+    }
 
     my $doc = $self->_document;
     my $simulation = $doc->createElement("Simulation");
 
-    open my $fh, '<', $table;
+    open my $profiles_table_fh, '<', $path . $profiles_table_name;
+    open my $indiv_table_fh, '<', $path . $indiv_table_name;
+    open my $covariates_table_fh, '<', $path . $covariates_table_name;
 
-    <$fh>;
-    my $header = <$fh>;
+    my $replicate_no = 1;
+
+    for (;;) {      # Loop through simulation replicates aka simulation blocks
+        my $sim_block = $doc->createElement("SimulationBlock");
+        $simulation->appendChild($sim_block);
+        $sim_block->setAttribute("replicate", $replicate_no);
+        my $external_table_name = $self->external_tables ? $table_file . "_$replicate_no" : undef;
+        my $simulated_profiles = $self->_create_simulated_profiles(file => $profiles_table_fh, table_file => $external_table_name);
+        my $indiv_parameters = $self->_create_indiv_parameters(file => $indiv_table_fh, table_file => $external_table_name, model => $model);
+        my $covariates = $self->_create_covariates(file => $covariates_table_fh, table_file => $external_table_name);
+        if (defined $simulated_profiles) {
+            $sim_block->appendChild($simulated_profiles);
+        }
+        if (defined $indiv_parameters) {
+            $sim_block->appendChild($indiv_parameters);
+        }
+        if (defined $covariates) {
+            $sim_block->appendChild($covariates);
+        }
+        last unless (defined $simulated_profiles or defined $indiv_parameters or defined $covariates);
+        $replicate_no++;
+        last if (defined $self->max_replicates and $replicate_no >= $self->max_replicates); 
+    }
+
+    close $covariates_table_fh;
+    close $indiv_table_fh;
+    close $profiles_table_fh;
+
+    return $simulation;
+}
+
+sub _read_header
+{
+    my $self = shift;
+    my %parm = validated_hash(\@_,
+        file => { isa => 'Ref' },
+    );
+    my $file = $parm{'file'};
+
+    <$file>;
+    my $header = <$file>;
+    if (not defined $header) {  #EOF
+        return;
+    }
     $header =~ s/^\s+//;
     my @columns = split /\s+/, $header; 
     my %colnos;
@@ -1384,55 +1442,198 @@ sub _create_simulation
         $colnos{$columns[$i]} = $i;
     }
 
-    my $replicate_no = 1;
+    return \%colnos;
+}
+
+sub _create_simulated_profiles
+{
+    my $self = shift;
+    my %parm = validated_hash(\@_,
+        file => { isa => 'Ref' },
+        table_file => { isa => 'Maybe[Str]' },
+    );
+    my $file = $parm{'file'};
+    my $table_file = $parm{'table_file'};
+
+    my $colnosref = $self->_read_header(file => $file);
+    return if not defined $colnosref;
+    my %colnos = %{$colnosref};
 
     my @id;
     my @time;
     my @dvid;
+    my @dv;
 
-    for (;;) {      # Loop through simulation replicates aka simulation blocks
-        my $sim_block = $doc->createElement("SimulationBlock");
-        $simulation->appendChild($sim_block);
-        $sim_block->setAttribute("replicate", $replicate_no);
- 
-        my @dv;
-
-        for (;;) {  # Loop through table file
-            my $row = <$fh>;
-            last if not defined $row;   # EOF
-            last if $row =~ /^TABLE NO/;
-            chomp($row);
-            $row =~ s/^\s+//;
-            my @columns = split /\s+/, $row;
-            if ($replicate_no == 1) {
-                push @id, $columns[$colnos{'ID'}];
-                push @time, $columns[$colnos{'TIME'}];
-            }
-            push @dv, $columns[$colnos{'DV'}];
+    for (;;) {
+        my $row = <$file>;
+        last if not defined $row;   # EOF
+        if ($row =~ /^TABLE NO/) {
+            seek($file, -length($row), 1);      # Unread the line for next iteration
+            last;
         }
-        if ($replicate_no == 1) {
-            @dvid = ((1) x scalar(@id));        # Don't support multiple DVs for now
-        }
-
-        my $simulated_profiles = $self->create_table(
-            table_name => "SimulatedProfiles",
-            column_ids => [ "ID", "DVID", "TIME", "Observation" ],
-            column_types => [ "id", "dvid", "time", "dv" ],
-            column_valuetypes => [ "string", "int", "real", "real" ],
-            values => [ \@id, \@dvid, \@time, \@dv ],
-            table_file => $self->external_tables ? $table_file . "_$replicate_no" : undef,
-        ); 
-        $sim_block->appendChild($simulated_profiles);
-
-        my $row = <$fh>;
-        last if not defined $row;
-        $replicate_no++;
-        last if (defined $self->max_replicates and $replicate_no >= $self->max_replicates); 
+        chomp($row);
+        $row =~ s/^\s+//;
+        my @columns = split /\s+/, $row;
+        push @id, $columns[$colnos{'ID'}];
+        push @time, $columns[$colnos{'TIME'}];
+        push @dv, $columns[$colnos{'DV'}];
     }
+    @dvid = ((1) x scalar(@id));        # Don't support multiple DVs for now
 
-    close $fh;
+    my $simulated_profiles = $self->create_table(
+        table_name => "SimulatedProfiles",
+        column_ids => [ "ID", "DVID", "TIME", "Observation" ],
+        column_types => [ "id", "dvid", "time", "dv" ],
+        column_valuetypes => [ "string", "int", "real", "real" ],
+        values => [ \@id, \@dvid, \@time, \@dv ],
+        table_file => $table_file,
+    ); 
 
-    return $simulation;
+    return $simulated_profiles;
 }
 
+sub _create_indiv_parameters
+{
+    my $self = shift;
+    my %parm = validated_hash(\@_,
+        file => { isa => 'Ref' },
+        table_file => { isa => 'Maybe[Str]' },
+        model => { isa => 'model' },
+    );
+    my $file = $parm{'file'};
+    my $table_file = $parm{'table_file'};
+    my $model = $parm{'model'};
+
+    my $eta_names = $self->_get_eta_names(model => $model);
+
+    my $colnosref = $self->_read_header(file => $file);
+    return if not defined $colnosref;
+    my %colnos = %{$colnosref};
+
+    my @labels;
+    for my $col (keys %colnos) {
+        my $is_eta = grep(/^$col$/, @$eta_names);
+        if ($col ne 'ID' and $col ne 'TIME' and not $is_eta) {
+            $labels[$colnos{$col} - 2] = $col;
+        }
+    }
+
+    my $indiv_parameters = $self->_create_occasion_table(
+        file => $file,
+        labels => \@labels,
+        table_file => $table_file,
+        table_name => 'IndivParameters',
+        colnos => \%colnos,
+    );
+
+    return $indiv_parameters;
+}
+
+sub _create_covariates
+{
+    my $self = shift;
+    my %parm = validated_hash(\@_,
+        file => { isa => 'Ref' },
+        table_file => { isa => 'Maybe[Str]' },
+    );
+    my $file = $parm{'file'};
+    my $table_file = $parm{'table_file'};
+
+    my $colnosref = $self->_read_header(file => $file);
+    return if not defined $colnosref;
+    my %colnos = %{$colnosref};
+
+    my @labels;
+    for my $col (keys %colnos) {
+        if ($col ne 'ID' and $col ne 'TIME') {
+            $labels[$colnos{$col} - 2] = $col;
+        }
+    }
+
+    my $covariates = $self->_create_occasion_table(
+        file => $file,
+        labels => \@labels,
+        table_file => $table_file,
+        table_name => 'Covariates',
+        colnos => \%colnos,
+    );
+
+    return $covariates;
+
+}
+
+sub _create_occasion_table
+{
+    my $self = shift;
+    my %parm = validated_hash(\@_,
+        file => { isa => 'Ref' },
+        labels => { isa => 'ArrayRef' },
+        table_file => { isa => 'Maybe[Str]' },
+        table_name => { isa => 'Str' },
+        colnos => { isa => 'HashRef' },
+    );
+    my $file = $parm{'file'};
+    my @labels = @{$parm{'labels'}};
+    my $table_file = $parm{'table_file'};
+    my $table_name = $parm{'table_name'};
+    my %colnos = %{$parm{'colnos'}};
+
+    my @rows;
+
+    my $running_id;
+    my $running_occ_start;
+    my @running_dv;
+    my $prev_time;
+
+    for (;;) {
+        my $row = <$file>;
+        if ($row =~ /^TABLE NO/) {
+            seek($file, -length($row), 1);      # Unread the line for next iteration
+            $row = undef;
+        }
+        if (not defined $row) {
+            push @rows, [ $running_id, $running_occ_start, $prev_time, @running_dv ];
+            last;
+        }
+        chomp($row);
+        $row =~ s/^\s+//;
+        my @columns = split /\s+/, $row;
+
+        my $id = $columns[$colnos{'ID'}];
+        my $time = $columns[$colnos{'TIME'}];
+        my @dv;
+        for my $col (@labels) {
+            push @dv, $columns[$colnos{$col}];
+        }
+        # Check if first id
+        if (not defined $running_id) {
+            $running_id = $id;
+            $running_occ_start = $time;
+            @running_dv = @dv;
+        }
+        # Check if something has changed
+        if ($running_id != $id or not array::is_equal(\@dv, \@running_dv)) {
+            push @rows, [ $running_id, $running_occ_start, $prev_time, @running_dv ];
+            $running_id = $id;
+            $running_occ_start = $time;
+            @running_dv = @dv;
+        }
+        $prev_time = $time;
+    }
+
+    my $table = $self->create_table(
+        table_name => $table_name,
+        column_ids => [ "ID", "OccasionStart", "OccationEnd", @labels ],
+        column_types => [ "id", "time", "time", ("undefined") x scalar(@labels) ],
+        column_valuetypes => [ "string", "real", "real", ("real") x scalar(@labels) ],
+        values => \@rows,
+        row_major => 1,
+        table_file => $table_file,
+    );
+
+    return $table;
+}
+
+no Moose;
+__PACKAGE__->meta->make_immutable;
 1;

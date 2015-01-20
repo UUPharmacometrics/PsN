@@ -159,4 +159,9 @@ is ($pvals->[5],6/10, "pvals ".$values[5]);
 is ($pvals->[6],10/10, "pvals ".$values[6]);
 is ($pvals->[7],1, "pvals ".$values[7]);
 
+# is_equal
+ok (array::is_equal([1, 2, 3, 4], [1, 2, 3, 4]), "equal arrays");
+ok (!array::is_equal([1, 2, 3, 4], [1, 2, 3, 5]), "not equal arrays");
+ok (!array::is_equal([1, 2, 3, 4], [1, 2, 3, 4, 5]), "not equal arrays 2");
+
 done_testing();
