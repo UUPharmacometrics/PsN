@@ -82,6 +82,9 @@ to be all zeros a one will be placed on the diagonal.
 The preconditioning matrix can be thought as the "initial guess" of the covariance matrix and similarly to the initial guess of the parameters, it can be obtained from a similar model whose covariance step was successful.
 
 
+\section{Known issues}
+Preconditioning fails when a \$MIX is present in the model.
+
 \section{Description}
 
 This section describes in more detail how the preconditioning is done. For the purpose of this section we assume that the \verb;-nodec; option was not chosen.
