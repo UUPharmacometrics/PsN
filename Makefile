@@ -178,7 +178,8 @@ release: completion rel_dir $(RELFILES) $(PDFFILES)
 	@ echo Remember sftp putdoc for guides!
 
 # Release the nmoutput2so separately
-nmoutput2so:
+nmoutput2so: version
+	@ cd doc; pdflatex nmoutput2so_userguide.tex >/dev/null; pdflatex nmoutput2so_userguide.tex >/dev/null
 	@ mkdir nmoutput2so
 	@ mkdir nmoutput2so/bin
 	@ cp bin/nmoutput2so nmoutput2so/bin
