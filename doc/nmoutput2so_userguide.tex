@@ -113,6 +113,7 @@ $TABLE ID CL V ETA_CL ETA_V NOAPPEND FILE=patab
     \item Does not support multiple DVIDs in SimulatedProfiles. Sets all to 1.
     \item Dose rows are included in Residuals, Predictions and SimulatedProfiles. They have value set to 0.
 \end{itemize}
+
 \section{Output}
 
 The resulting standardized output object xml will be written to the file called <name of .lst file>.so\_xml.
@@ -176,5 +177,54 @@ The following entries will be populated:
         \end{itemize}
 \end{itemize}
 
+\section{Not supported SO elements}
+
+This section lists all the elements of the SO that is not supported and that will not be added to the xml file.
+
+\begin{verbatim}
+SO/
+    SOBlock/
+        ToolSettings
+        RawResults
+        TaskInformation/
+            OutputFilePath
+            NumberChains
+            NumberIterations
+        Estimation/
+            PopulationEstimates/
+                Bayesian
+            PrecisionPopulationEstimates/
+                MLE/
+                    FIM
+                    AsymptoticCI
+                Bayesian
+                Bootstrap/
+                    PrecisionEstimates
+                LLP
+                SIR
+                MultiDimLLP
+                EtaShrinkage
+                EpsShrinkage
+            IndividualEstimates/
+                Estimates/
+                    Mode
+                    Samples
+                RandomEffects/
+                    EffectMode
+                    Samples
+            PrecisionIndividualEstimates
+            Residuals/
+                PD and NPDE columns
+            Likelihood/
+                LogLikelihood
+                IndividualContribToLL
+                InformationCriteria
+        Simulation/
+            OriginalDataset
+            SimulationBlock/
+                PopulationParameters
+                Dosing
+                RawResultsFile
+\end{verbatim}
 
 \end{document}
