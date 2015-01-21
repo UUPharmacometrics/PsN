@@ -1058,7 +1058,7 @@ sub _create_bootstrap
         };
     } else {
         my $table = $self->create_table(
-            table_name => 'PercentilesCI',
+            table_name => 'Percentiles',
             column_ids => [ "Percentile", @parameters ],
             column_types => [ ('undefined') x (scalar(@parameters) + 1) ],
             column_valuetypes => [ ('real') x (scalar(@parameters) + 1) ],
