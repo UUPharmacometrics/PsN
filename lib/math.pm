@@ -9,7 +9,7 @@ use include_modules;
 
 require Exporter;
 our @ISA = qw(Exporter);
-our %EXPORT_TAGS = ('all' => [ qw(round eps inf ceil usable_number) ]);
+our %EXPORT_TAGS = ('all' => [ qw(round eps inf ceil usable_number to_precision) ]);
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 
 sub round
@@ -68,7 +68,7 @@ sub eps
 
 	$e *= 2;
 
-	return($e);
+	return $e;
 }
 
 sub inf
@@ -84,10 +84,22 @@ sub usable_number
     );
 
 	my $ok = 0;
-	if ($number =~ /^\s*([+-]?)(?=\d|\.\d)\d*(\.\d*)?([Ee]([+-]?\d+))?\s*$/ ){
-		$ok=1;
+	if ($number =~ /^\s*([+-]?)(?=\d|\.\d)\d*(\.\d*)?([Ee]([+-]?\d+))?\s*$/) {
+		$ok = 1;
 	}
 	return $ok;
+}
+
+sub to_precision
+{
+    # Return a number with the correct precision as a string for output
+    my $number = shift;
+    my $precision = shift;
+
+    my $form = '%.' . $precision . 'g';
+    my $str = sprintf($form, $number);
+
+    return $str;
 }
 
 1;

@@ -11,6 +11,7 @@ use status_bar;
 use Moose;
 use MooseX::Params::Validate;
 use math;
+use utils::file;
 
 extends 'tool';
 
@@ -3662,7 +3663,7 @@ sub _create_models
 							$table_names[$i][$j] = $self -> directory.
 							'/m'.$model_number.'/'.
 							$filename.'.'.
-							OSspecific::nopath($table_names[$i][$j]);
+							utils::file::remove_path($table_names[$i][$j]);
 						}
 					}
 					$applicant_model -> table_names( new_names            => \@table_names,

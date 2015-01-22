@@ -8,6 +8,7 @@ use Data::Dumper;
 use Config;
 use Moose;
 use MooseX::Params::Validate;
+use utils::file;
 
 extends 'tool';
 
@@ -676,7 +677,7 @@ sub modelfit_setup
 			#append to glsinput.dta, also print to own file
 			my $fname = 'm'.$model_number.'/glsinput.dta'; 
 			if (-e $fname){
-				my @tmp = OSspecific::slurp_file($fname);
+				my @tmp = utils::file::slurp_file($fname);
 				my $first=1;
 				open(GLS, ">$fname") || die("Couldn't open $fname : $!");
 				open(DAT, ">ind_iwres_shrinkage.dta") || 

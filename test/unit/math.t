@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 59;
+use Test::More;
 use Test::Exception;
 use FindBin qw($Bin);
 use lib "$Bin/.."; #location of includes.pm
@@ -55,5 +55,8 @@ foreach my $number (@is_ok) {
 	is(usable_number($number),1,"usable number $number");
 }
 
+# to_precision
+is (to_precision(12.12345678912, 10), 12.12345679, "to_precision with 10");
+is (to_precision(12.12345678912, 2), 12, "to_precision with 2");
 
 done_testing();

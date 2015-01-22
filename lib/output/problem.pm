@@ -4,6 +4,7 @@ use Config;
 use Moose;
 use MooseX::Params::Validate;
 use output::problem::subproblem;
+use utils::file;
 
 my $nrec_exp1 = '^\s*NO. OF DATA RECS IN DATA SET:\s*(\d+)';
 my $nrec_exp2 = '^\s*TOT. NO. OF DATA RECS:\s*(\d+)';
@@ -218,7 +219,7 @@ sub store_NM7_output
 	foreach my $type ('raw','cov','coi','cor','phi') {
 		my $filename = $self -> full_name_NM7_file('file_type' => $type);
 		if (-e $filename) {
-			my @tmp = OSspecific::slurp_file($filename);
+			my @tmp = utils::file::slurp_file($filename);
 			unless (scalar (@tmp) > 0) {
 				my $mes = "Empty file ".$filename;
 				carp($mes);

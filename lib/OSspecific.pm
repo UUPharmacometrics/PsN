@@ -34,10 +34,8 @@ sub unique_path
       $max++;
     }
 
-    # find( { wanted => sub{ /^$path/ && $i++ }}, $start );
-    
-    if( -e $start . '/' . $path . $max ){
-	die "The directory ${start}${path}${max} is in the way.\n";
+    if( -e $start . '/' . $path . $max ) {
+	    die "The directory ${start}${path}${max} is in the way.\n";
     }
     my ( $dir , $file ) = absolute_path($start . '/' . $path . $max, '');
     return $dir;
@@ -103,71 +101,6 @@ sub absolute_path
   }
   
   return ($path, $file_file);
-}
-
-sub directory
-{
-  my $file = shift;
-  my @tmp;
-  my $directory;
-  if ( $Config{osname} eq 'MSWin32' ) {
-    if( $file =~ /\\/ ){
-      @tmp = split(/\\/, $file );
-      $directory = join( "\\", @tmp[0..$#tmp-1] )."\\";
-    } else {
-      $directory = '.';
-    }
-  } else { # Assume OS == unix
-    if( $file =~ /\// ){
-      @tmp = split(/\//, $file );
-      $directory = join( '/', @tmp[0..$#tmp-1] ).'/';
-    } else {
-      $directory = '.';
-    }
-  }
-  return $directory;
-}
-
-sub nopath
-{
-  my $file = shift;
-  my @tmp;
-  my $nopath;
-  if ( $Config{osname} eq 'MSWin32' ) {
-    if( $file =~ /\\/ ){
-      @tmp = split(/\\/, $file );
-      $nopath = $tmp[$#tmp];
-    } else {
-      $nopath = $file;
-    }
-  } else { # Assume OS == unix
-    if( $file =~ /\// ){
-      @tmp = split(/\//, $file );
-      $nopath = $tmp[$#tmp];
-    } else {
-      $nopath = $file;
-    }
-  }
-  return $nopath;
-}
-  
-
-sub slurp_file
-{
-  my $file = shift;
-  my @content = ();
-  open ( FILE, $file );
-  while ( <FILE> ) {
-    if ( $Config{osname} eq 'MSWin32' ) {
-      chomp;
-      $_=$_."\r\n";
-    } else {
-      s/\r//;
-    }
-    push( @content, $_ );
-  }
-  close(FILE);
-  return @content;
 }
 
 1;

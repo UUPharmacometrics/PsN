@@ -10,6 +10,7 @@ use linear_algebra;
 use npde_util;
 use Moose;
 use MooseX::Params::Validate;
+use utils::file;
 
 extends 'tool';
 
@@ -475,7 +476,7 @@ sub modelfit_setup
 		#append to datafile, also print to own file
 		my $fname = 'm'.$model_number.'/orig_pred.dta'; 
 		if (-e $fname){
-			my @tmp = OSspecific::slurp_file($fname);
+			my @tmp = utils::file::slurp_file($fname);
 			my $first=1;
 			open(EBE_NPDE, '>'.$self->gls_data_file()) || die("Couldn't open ".$self->gls_data_file()." : $!");
 			open(DAT, ">ind_iwres_shrinkage.dta") || 

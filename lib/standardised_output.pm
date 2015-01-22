@@ -12,7 +12,8 @@ use output;
 use data;
 use array;
 use IO::File;
-use OSspecific;
+use math;
+use utils::file;
 
 has 'lst_files' => ( is => 'rw', isa => 'ArrayRef[Str]' );
 has 'bootstrap_results' => ( is => 'rw', isa => 'Maybe[Str]' );
@@ -57,12 +58,11 @@ sub BUILD
         } else {
             $so_filename = 'bootstrap.SO.xml';
         }
-        $so_filename = OSspecific::nopath($so_filename);
+        $so_filename = utils::file::remove_path($so_filename);
         $self->so_filename($so_filename);
         $self->_so_path('./');
     } else {
-        my $path = OSspecific::directory($self->so_filename);
-        $path .= '/' if ($path eq '.');
+        my $path = utils::file::directory($self->so_filename);
         $self->_so_path($path);
     }
 
@@ -72,18 +72,6 @@ sub BUILD
 
 # Plain XML helper methods
 # Uses $self->_writer and $self->precision
-
-sub _get_printable_number
-{
-    # Return a number with the correct precision as a string for output
-    my $self = shift;
-    my $number = shift;
-
-    my $form = '%.' . $self->precision . 'g';
-    my $str = sprintf($form, $number);
-
-    return $str;
-}
 
 sub create_typed_element
 {
@@ -201,7 +189,7 @@ sub create_table
                 if ($value_type eq 'String' and $column_type ne 'id') {
                     $value->appendTextNode($element);
                 } else {
-                    $value->appendTextNode($self->_get_printable_number($element));
+                    $value->appendTextNode(math::to_precision($element, $self->precision));
                 }
                 $row_xml->appendChild($value);
             }
@@ -236,7 +224,7 @@ sub create_table
                 if ($value_type eq 'String' and $column_type ne 'id') {
                     print $fh $element;
                 } else {
-                    print $fh $self->_get_printable_number($element);
+                    print $fh $self->math::to_precision($element, $self->precision);
                 }
                 print $fh "," if ($col != $numcols - 1);
             }
@@ -335,7 +323,7 @@ sub create_matrix
         $matrix_xml->appendChild($matrix_row);
         for my $element (@$row) {
             my $real = $doc->createElement("ct:Real");
-            $real->appendTextNode($self->_get_printable_number($element));
+            $real->appendTextNode(math::to_precision($element, $self->precision));
             $matrix_row->appendChild($real);
         }
     }
@@ -439,16 +427,6 @@ sub mangle_symbol_idtype
 
 # End of XML helper methods
 
-sub get_file_stem
-{
-    my $name = shift;
-
-    $name = OSspecific::nopath($name); 
-    $name =~ s/(.*)\..*/\1/;
-
-    return $name;
-}
-
 sub create_block
 {
     # Create a new SOBlock and set the id 
@@ -542,7 +520,7 @@ sub parse
     my %duplicates;
     if (defined $self->lst_files) {
         foreach my $file (@{$self->lst_files}) {
-            my $stem = get_file_stem($file);
+            my $stem = utils::file::get_file_stem($file);
             $duplicates{$stem}++;
         }
         foreach my $name (keys %duplicates) {
@@ -647,14 +625,13 @@ sub _parse_lst_file
         print "Adding $lst_file\n";
     }
 
-    my $path = OSspecific::directory($lst_file);
-    $path .= '/' if ($path eq '.');
+    my $path = utils::file::directory($lst_file);
 
     my $elapsed_time = 0;
     my @messages;
     my $doc = $self->_document;
 
-    my $file_stem = get_file_stem($lst_file);
+    my $file_stem = utils::file::get_file_stem($lst_file);
     if (not defined $self->_first_block) {
         $self->_first_block($file_stem);
         if (defined $self->message) {

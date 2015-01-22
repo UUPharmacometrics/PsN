@@ -17,6 +17,7 @@ use Math::Random;
 use output;
 use array qw(:all);
 use linear_algebra;
+use utils::file;
 
 extends 'tool';
 
@@ -152,7 +153,7 @@ sub modelfit_setup
 			$keep_labels_hash{$coord}=1;
 		}
 
-		my @lines = OSspecific::slurp_file($self->covmat_input);
+		my @lines = utils::file::slurp_file($self->covmat_input);
 		my ($success,$lower_covar,$index_order_ref,$header_labels_ref) = 
 			output::problem::subproblem::parse_additional_table (covariance_step_run => 1,
 																 have_omegas => 1,

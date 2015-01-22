@@ -7,6 +7,7 @@ use FindBin qw($Bin);
 use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages
 use output::problem::subproblem;
+use utils::file;
 
 my %hash;
 $hash{'+Infinity'}=undef;
@@ -34,7 +35,7 @@ foreach my $key (keys %hash){
 
 
 my $file = $includes::testfiledir.'/mox_sir_block2.cor';
-my @lines = OSspecific::slurp_file($file);
+my @lines = utils::file::slurp_file($file);
 my ($success,$matrix_array_ref,$index_order_ref,$header_labels_ref) = 
 	output::problem::subproblem::parse_additional_table (covariance_step_run => 1,
 														 have_omegas => 1,
@@ -61,7 +62,7 @@ is ($index_order_ref->[7],11,'mox_sir_block2.cor index order 7');
 is ($index_order_ref->[8],12,'mox_sir_block2.cor index order 8');
 
 $file = $includes::testfiledir.'/output/nm73/anneal2_V7_30_beta.cor';
-my @tmp = OSspecific::slurp_file($file);
+my @tmp = utils::file::slurp_file($file);
 my @lines=();
 my $store=0;
 foreach my $line (@tmp){
@@ -89,7 +90,7 @@ is ($matrix_array_ref->[44],eval(6.99733E-01),'anneal2_V7_30_beta.cor element (9
 is ($index_order_ref->[8],5,'anneal2_V7_30_beta.cor index order 8');
 
 $file = $includes::testfiledir.'/mox_sir.cov';
-my @lines = OSspecific::slurp_file($file);
+my @lines = utils::file::slurp_file($file);
 my ($success,$matrix_array_ref,$index_order_ref,$header_labels_ref) = 
 	output::problem::subproblem::parse_additional_table (covariance_step_run => 1,
 														 have_omegas => 1,
@@ -108,7 +109,5 @@ is ($matrix_array_ref->[65],eval(1.69362E-03),'mox_sir.cov uncleaned element (11
 is ($index_order_ref->[0],1,'mox_sir.cov uncleaned index order 0');
 is ($index_order_ref->[5],7,'mox_sir.cov uncleaned index order 5');
 is ($index_order_ref->[11],6,'mox_sir.cov uncleaned index order 11');
-
-
 
 done_testing();

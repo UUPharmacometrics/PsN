@@ -38,12 +38,17 @@ is (standardised_output::mangle_symbol_idtype(":first"), "_first", "mangle_symbo
 is (standardised_output::mangle_symbol_idtype("?first"), "_first", "mangle_symbol_idtype first invalid 2");
 is (standardised_output::mangle_symbol_idtype("SIGMA(1,1)"), "SIGMA_1_1_", "mangle_symbol_idtype SIGMA");
 
-
 our $tempdir = create_test_dir('unit_standardised_output');
 copy_test_files($tempdir,
     [ "output/special_mod/data_missing.lst", "output/special_mod/missingmodel.lst", "output/special_mod/psnmissingdata.out", "output/special_mod/psnmissingmodel.out", "SO/bootstrap_results.csv", "SO/pheno.lst", "SO/patab", "SO/sdtab" ]);
 
 chdir $tempdir;
+
+# create_typed_element 
+my $so = standardised_output->new(lst_files => [ "this_file_is_missing.lst" ]);
+my $node = $so->create_typed_element(type => "MyType", content => "MyContent");
+is ($node->textContent, "MyContent", "create_typed_element content");
+is ($node->nodeName, "ct:MyType", "create_typed_element name");
 
 # non existing lst file
 my $so = standardised_output->new(lst_files => [ "this_file_is_missing.lst" ]);

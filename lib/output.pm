@@ -14,6 +14,7 @@ use Moose;
 use MooseX::Params::Validate;
 use output::problem;
 use model::annotation;
+use utils::file;
 
 has 'problems' => ( is => 'rw', isa => 'ArrayRef[output::problem]' );
 has 'lst_model' => ( is => 'rw', isa => 'model' );
@@ -2611,7 +2612,7 @@ sub _read_problems
 	$months{'Dec'} = 11;
 
 
-	my @lstfile = OSspecific::slurp_file($self->full_name);
+	my @lstfile = utils::file::slurp_file($self->full_name);
 
 
 
