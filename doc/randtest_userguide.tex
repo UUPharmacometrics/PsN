@@ -63,6 +63,16 @@ If option is unset using -no-copy\_data, the absolute path to the original data 
 For a complete list of common options see common\_options\_defaults\_versions.pdf, or psn\_options -h on the commandline.
 
 \begin{optionlist}
+\optdefault{retries}{N}
+Default 0. The number of times to try running each sample with slightly perturbed initial estimates if the first attempt is not successful.
+The randtest program will, if -base\_model is used, check that the ofv of each sample is at least as good as the ofv of
+the base model, within 'accepted\_ofv\_difference'. If not then a retry is initiated. The default value of the number of
+retries is 0, so to enable the retry feature for randtest the option -retries must be set larger than 0. 
+\nextopt
+\optdefault{accepted\_ofv\_difference}{number}
+Default 0.5. A retry will not be initiated if the ofv of the current sample is only 'accepted\_ofv\_difference' worse than
+the base model ofv.
+\nextopt
 \optdefault{directory}{randtest\_dirN}
 The directory in which the script will run NONMEM can be named. The default name is “randtest\_dirN” where N is increased by 1 each time you run the script. If the run is aborted or crashes, setting the directory to the one from which the script was running earlier can be done. PsN will then not run the model files that had finished, saving time. 
 \nextopt

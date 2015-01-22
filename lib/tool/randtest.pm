@@ -95,6 +95,11 @@ sub modelfit_setup
 
 	# ------------------------  Run original run  -------------------------------
 
+	my $base_mod_ofv;
+	if (defined $self->base_model and $self->base_model->is_run){
+		$base_mod_ofv=$self->base_model->outputs->[0]->get_single_value(attribute=> 'ofv'); 
+	}
+
 	unless ($model->is_run and 
 			 ((not defined $self->base_model) or $self->base_model->is_run) 
 		) {
@@ -130,6 +135,7 @@ sub modelfit_setup
 			'/orig_modelfit_dir'.$model_number,
 			models		 => \@models,
 			threads               => $self->threads,
+			 reduced_model_ofv => $base_mod_ofv, #can be undef
 			logfile	         => undef,
 			raw_results           => undef,
 			 prepared_models       => undef,
@@ -142,6 +148,11 @@ sub modelfit_setup
 
 		$orig_fit -> run;
 
+	}
+
+	my $base_mod_ofv;
+	if (defined $self->base_model and $self->base_model->is_run){
+		$base_mod_ofv=$self->base_model->outputs->[0]->get_single_value(attribute=> 'ofv'); 
 	}
 
 	my $template_model = $model ->  copy( filename    => $self -> directory().'m'.$model_number.'/template.mod',
@@ -317,6 +328,7 @@ sub modelfit_setup
 			_modelfit_raw_results_callback( model_number => $model_number ),
 			subtools              => \@subtools,
 			nmtran_skip_model => 2,
+			 reduced_model_ofv => $base_mod_ofv,
 			logfile		 => [$self -> logfile()->[$model_number-1]],
 			raw_results           => undef,
 			prepared_models       => undef,
