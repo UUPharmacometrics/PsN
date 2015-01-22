@@ -46,6 +46,7 @@ has 'modext' => ( is => 'rw', isa => 'Str', default => 'mod' );
 has 'nmqual_xml' => ( is => 'rw', isa => 'Str' );
 has 'wintail_exe' => ( is => 'rw', isa => 'Maybe[Str]' );
 has 'wintail_command' => ( is => 'rw', isa => 'Maybe[Str]' );
+has 'reduced_model_ofv' => ( is => 'rw', isa => 'Num' );
 has 'cutoff' => ( is => 'rw', isa => 'Num' );
 has 'cutoff_thetas' => ( is => 'rw', isa => 'ArrayRef' );
 has 'cut_thetas_rounding_errors' => ( is => 'rw', isa => 'Bool', default => 0 );
@@ -758,7 +759,8 @@ sub run
 					trace(tool => 'modelfit', message => "Had to do restart, put job in queue.\nChange directory one level up ", level => 2);
 				} else {
 					trace(tool => 'modelfit', message => "did not have to restart this model", level => 2);
-					$self->select_best_model(run_no => $run, nm_version => $options_hash{'nm_version'}, queue_info => $queue_info{$run});
+					$self->select_best_model(run_no => $run, 
+											 queue_info_ref => $queue_info{$run});
 					
 					# Print finishing messages
 					
@@ -870,39 +872,93 @@ sub run
 	return \@results;
 }
 
+
+sub select_best_retry
+{
+	#static
+	my %parm = validated_hash(\@_,
+		run_results => { isa => 'ArrayRef', optional => 0 },
+		accepted_ofv_difference => { isa => 'Num', optional => 0 },
+	);
+	my $run_results = $parm{'run_results'};
+	my $accepted_ofv_difference = $parm{'accepted_ofv_difference'};
+	my $selected_index;
+
+	if ($accepted_ofv_difference < 0){
+		croak("accepted_ofv_difference must not be negative, but is $accepted_ofv_difference");
+	}
+
+	# Rule for selecting best model: 
+	# pick global best ofv, except  except accepted_ofv_difference preference for picky if reached OR
+	# otherwise accepted_ofv_difference preference for minimization successful if found
+	# If no ofv value is produced it will be the basic model.
+
+	my $best_picky_index = -1;
+	my $best_minsucc_index = -1;
+	my $best_any_index = -1;
+
+	my $best_picky_ofv=999999999;
+	my $best_minsucc_ofv=999999999;
+	my $best_any_ofv = 999999999;
+	my $warning;
+
+	for(my $i = 0; $i < scalar @{$run_results}; $i++ ){
+		if( defined( $run_results -> [$i] -> {'ofv'} )  ) {
+			if ($run_results -> [$i] -> {'ofv'} < $best_any_ofv ){
+				$best_any_ofv = $run_results -> [$i] -> {'ofv'};
+				$best_any_index = $i;
+			}
+			if ($run_results->[$i]->{'minimization_successful'}){
+				if ($run_results -> [$i] -> {'ofv'} < $best_minsucc_ofv){
+					$best_minsucc_ofv = $run_results -> [$i] -> {'ofv'};
+					$best_minsucc_index = $i;
+				}
+				if ( $run_results -> [$i] -> {'pass_picky'}
+					 and $run_results -> [$i] -> {'ofv'} < $best_picky_ofv){
+					$best_picky_ofv = $run_results -> [$i] -> {'ofv'};
+					$best_picky_index = $i;
+				} 
+			}
+		}
+	}
+
+	if ($best_picky_index >= 0 and ($best_picky_ofv <= $best_any_ofv + $accepted_ofv_difference)){
+		#picky set and reached, not more than accepted_diff worse than best any ofv
+		$selected_index = $best_picky_index;
+	}elsif ($best_minsucc_index >= 0 and ($best_minsucc_ofv <= $best_any_ofv + $accepted_ofv_difference)){
+		#minim successful exists, not more than accepted_diff worse than best any ofv
+		$selected_index = $best_minsucc_index;
+	}elsif ($best_any_index >= 0){
+		#have any ofv
+		$selected_index = $best_any_index;
+	}else{
+		#no ofv at all, use first
+		$selected_index = 0;
+	}
+
+
+	#add 1 to get order number which is needed below
+	return ($selected_index+1);
+}
+
 sub select_best_model
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
 		run_no => { isa => 'Int', optional => 1 },
-		nm_version => { isa => 'Str', optional => 1 },
-		queue_info => { isa => 'HashRef', optional => 0 }
+		queue_info_ref => { isa => 'HashRef', optional => 0 },
 	);
 	my $run_no = $parm{'run_no'};
-	my $nm_version = $parm{'nm_version'};
-	my %queue_info = defined $parm{'queue_info'} ? %{$parm{'queue_info'}} : ();
+	my $queue_info_ref = $parm{'queue_info_ref'};
+
 
 	# -------------- Notes about Final model selection -----------------
 
 	# Since we have reruns with pertubation and now also forced (or
 	# automatic) pertubation the final model is not equal to the
-	# original model. We consider three implicit subsets. Those that pass
-	# the picky test, those that don't pass the picky test but have ofv
-	# and, finally, those that doesn't produce an ofv. 
+	# original model. 
 
 
-	#pass picky will only be defined if picky option is set in run
-	#The final model will be the one that passes picky,
-	# otherwise it will be the model that has the lowest ofv value,
-	# unless a model with minimization successful has an ofv where
-	# ofv_successful-accepted_ofv_difference is the lowest. 
-	# If two models are equal based on ofv with minimization-succcessful correction
-	# then significant digits will decide which is best.
-	# If no ofv value is produced it will be the basic model.
-
-	# Get all runs that passed the picky test (if picky is used)
-
-	my $queue_info_ref = $parm{'queue_info'};
 	my $run_results = $queue_info_ref -> {'run_results'};
 	my $model = $queue_info_ref -> {'model'};
 	my $candidate_model = $queue_info_ref -> {'candidate_model'};
@@ -928,97 +984,13 @@ sub select_best_model
 	} else {
 		trace(tool => 'modelfit', message => "check which run was the best ", level => 2);
 
-		unless( defined $parm{'queue_info'} ){
-			# The queue_info must be defined here!
-			croak("Internal run queue corrupt\n" );
-		}
 
-		my $selected;
-		my $best_significant_digits = 0;
-		my $best_passed_picky = 0;
-		my $best_successful = 0;
-
-		my $have_any_ofv=0;
-		my $best_corrected_ofv=999999999;
-		my $best_actual_picky_ofv=999999999;
-		my $accepted_ofv_diff = $self->accepted_ofv_difference;
-		my $warning;
-
-		for(my $i = 0; $i < scalar @{$run_results}; $i++ ){
-			if( defined( $run_results -> [$i] -> {'ofv'} )  ) {
-				$have_any_ofv=1;
-				if ($run_results->[$i]->{'minimization_successful'}){
-					if (($run_results -> [$i] -> {'ofv'}-$accepted_ofv_diff) < $best_corrected_ofv){
-						$best_corrected_ofv = ($run_results -> [$i] -> {'ofv'}-$accepted_ofv_diff);
-					}
-					if ( $run_results -> [$i] -> {'pass_picky'}
-							and $run_results -> [$i] -> {'ofv'} < $best_actual_picky_ofv){
-						$best_actual_picky_ofv = $run_results -> [$i] -> {'ofv'};
-					} 
-				}else{
-					if ($run_results -> [$i] -> {'ofv'} < $best_corrected_ofv){
-						$best_corrected_ofv = $run_results -> [$i] -> {'ofv'};
-					}
-				}
-			}
-		}
-
-		for(my $i = 0; $i < scalar @{$run_results}; $i++ ){
-			if (defined($run_results->[$i]->{'ofv'})){
-				my $corrected = $run_results->[$i]->{'ofv'};
-				$corrected = ($run_results->[$i]->{'ofv'} - $accepted_ofv_diff) 
-				if ($run_results->[$i]->{'minimization_successful'});
-
-				#picky always precedence, but might need to warn
-				if ( $run_results -> [$i] -> {'pass_picky'}){ 
-					if (($run_results->[$i]->{'ofv'} <= $best_actual_picky_ofv)
-							and (not $best_passed_picky)){
-						#if more than 1 has best actual picky ofv then pick 1st of them
-						$selected = ($i+1);
-						$best_passed_picky = 1 ;
-						$best_successful = 1 ;
-						$best_significant_digits = $run_results -> [$i] -> {'significant_digits'};
-						$warning = "Warning: Could be a local minimum\n" if ($corrected > $best_corrected_ofv)
-					}
-				}elsif ($corrected <= $best_corrected_ofv and (not $best_passed_picky)){
-					#never get here if pass picky
-					if (defined $selected){
-						#we have two equal corrected ofv
-						if ( $run_results -> [$i] -> {'minimization_successful'} 
-								and ((not $best_successful) or
-								($best_successful and 
-									($best_significant_digits<$run_results->[$i]->{'significant_digits'})))){
-							$selected = ($i+1);
-							$best_passed_picky = 0;
-							$best_successful = 1 ;
-							$best_significant_digits = $run_results -> [$i] -> {'significant_digits'};
-						}elsif ( (not $best_successful) and
-							($best_significant_digits<$run_results->[$i]->{'significant_digits'})){
-							$selected = ($i+1);
-							$best_passed_picky = 0 ;
-							$best_successful = 0 ;
-							$best_significant_digits = $run_results -> [$i] -> {'significant_digits'};
-						}
-					} else {
-						$selected = ($i+1);
-						$best_passed_picky = 0 ;
-						if ( $run_results -> [$i] -> {'minimization_successful'}){
-							$best_successful = 1 ;
-						} else {
-							$best_successful = 0 ;
-						}
-						$best_significant_digits = $run_results -> [$i] -> {'significant_digits'};
-					}
-				}
-			}
-		}
-
-		$selected = defined $selected ? $selected : 1; #if none has defined ofv then select 1st
+		my $selected = select_best_retry(run_results => $run_results,
+										 accepted_ofv_difference => $self->accepted_ofv_difference);
 
 		open( STAT, '>stats-runs.csv' );
 		print STAT Dumper \@{$run_results};
 		print STAT "Selected $selected\n";
-		print STAT "$warning" if (defined $warning);
 		close( STAT );
 
 		if ( $run_results -> [$selected-1] -> {'failed'} ){
@@ -1087,25 +1059,42 @@ sub get_retry_name
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 retry => { isa => 'Int', optional => 1 },
-		 crash => { isa => 'Int', optional => 1 },
-		 filename => { isa => 'Str', optional => 1 }
-	);
+							  retry => { isa => 'Int', optional => 1 },
+							  crash => { isa => 'Int', optional => 1 },
+							  filename => { isa => 'Str', optional => 1 }
+		);
 	my $retry = $parm{'retry'};
 	my $crash = $parm{'crash'};
 	my $filename = $parm{'filename'};
 
-  $retry++;
-  if (defined $crash){
-    unless( $filename =~ s/\.([^.]+)$/-$retry-step$crash.$1/ ){
-      $filename .= "-$retry-step$crash";
-    }
-  }else{
-    unless( $filename =~ s/\.([^.]+)$/-$retry.$1/ ){
-      $filename .= "-$retry";
-    }
-  }
+	$retry++;
 
+	my $ver = $PsN::nm_major_version;
+	$ver .= '.'.$PsN::nm_minor_version if (defined $PsN::nm_minor_version);
+
+	if (($ver > 7.2) and ($filename =~ /_ETAS$/)){
+		$filename =~ s/_ETAS$//;
+		if (defined $crash){
+			unless( $filename =~ s/\.([^.]+)$/-$retry-step$crash.$1/ ){
+				$filename .= "-$retry-step$crash";
+			}
+		}else{
+			unless( $filename =~ s/\.([^.]+)$/-$retry.$1/ ){
+				$filename .= "-$retry";
+			}
+		}
+		$filename .= '_ETAS';
+	}else{
+		if (defined $crash){
+			unless( $filename =~ s/\.([^.]+)$/-$retry-step$crash.$1/ ){
+				$filename .= "-$retry-step$crash";
+			}
+		}else{
+			unless( $filename =~ s/\.([^.]+)$/-$retry.$1/ ){
+				$filename .= "-$retry";
+			}
+		}
+	}
 	return $filename;
 }
 
@@ -1780,6 +1769,47 @@ sub general_error
 	close(FILE);
 }
 
+sub passed_picky
+{
+	#static, no shift
+	my %parm = validated_hash(\@_,
+							  minimization_successful => { isa => 'ArrayRef', optional => 0 },
+							  minimization_message => { isa => 'ArrayRef', optional => 0 },
+							  picky =>  { isa => 'Bool', optional => 0 },
+							  probnum  =>  { isa => 'Int', optional => 0 },
+		);
+
+	my $minimization_successful = $parm{'minimization_successful'};
+	my $minimization_message = $parm{'minimization_message'};
+	my $picky = $parm{'picky'};
+	my $probnum = $parm{'probnum'};
+
+	#probnum is from model->get_tweak_inits_problem_number,
+	my $passed_picky = 0;
+
+	if ($picky and ($probnum > 0)){
+		#if not picky set, or no probnum to check, then always return false
+		croak ("probnum is $probnum but number of problems is ".scalar(@{$minimization_successful}))
+			unless (scalar(@{$minimization_successful}) >= $probnum);
+		if ( $minimization_successful -> [$probnum-1][0] ) {
+			$passed_picky = 1;
+			for ( @{$minimization_message -> [$probnum-1][0]} ) {
+				if ( /0COVARIANCE STEP ABORTED/ or
+					 /0PROGRAM TERMINATED BY OBJ/ or
+					 /0ESTIMATE OF THETA IS NEAR THE BOUNDARY AND/ or
+					 /0PARAMETER ESTIMATE IS NEAR ITS BOUNDARY/ or
+					 /0R MATRIX ALGORITHMICALLY SINGULAR/ or
+					 /0S MATRIX ALGORITHMICALLY SINGULAR/ ) {
+					$passed_picky = 0;
+					last;
+				}
+			}
+		}
+	}
+	return $passed_picky;
+
+}
+
 sub restart_needed
 {
 	my $self = shift;
@@ -1811,23 +1841,11 @@ sub restart_needed
 	my $nm_version = $parm{'nm_version'};
 	my %queue_info = defined $parm{'queue_info'} ? %{$parm{'queue_info'}} : ();
 
-	
 
 	# -------------- Notes about automatic pertubation and retries -----------------
   
-  # Automatic pertubation of initial estimates are useful for two
-  # purposes. One reason is when nonmem failes to produce a successful
-  # minimization. In this case, we can try to direct the search by
-  # selecting other estimates. It is also possible to get a successful
-  # minimization in a local minima. In this case, we have no way of
-  # knowing that it is a local minima without trying other initial
-  # estimates. Two modelfit members govern the pertubation process;
-  # "retries" which is a number giving the maximum number of retries
-  # when nonmem fails and "min_retries" which is the number of extra runs
-  # we want to do to get a global minima. If min_retries is 2 and
-  # retries is 5 we will stop after 3 runs if we have reached a
-  # successful minimization but continue until 6 if necessary.
-  
+	# see cdocumentation in common_options
+
   # It is important to set $marked_for_rerun to 1 if $tries is
   # incremented!  Otherwise $tries can be incremented twice for
   # one run. The opposite is not true however, for instance a reset
@@ -1836,9 +1854,6 @@ sub restart_needed
   # We need the trail of files to select the most appropriate at the end
   # (see copy_model_and_output)
 
-
-
-  
 	unless (defined $parm{'queue_info'}) {
 		# The queue_info must be defined here!
 		croak("Internal run queue corrupt\n" );
@@ -1851,6 +1866,11 @@ sub restart_needed
 	my $modelfile_tainted = \$queue_info_ref->{'modelfile_tainted'};
 	my $nmqual = 'nmqual_messages.txt';
 
+	#this is 1 for regular one $PROB with estimation
+	# 2 if two $PROB with $PRIOR TNPRI in first
+	# 0 if no estimation (no $EST, or $EST MAXEVAL=0)
+	my $tweak_inits_probnum = $candidate_model->get_tweak_inits_problem_number();
+
 	my $failure;
 	my $failure_mess;
 	my $lstsuccess = 0;
@@ -1858,36 +1878,25 @@ sub restart_needed
 	my $iwres_shrinkage_name;
 	if (-e 'stats-runs.csv') {
 		#this is a rerun, we should not do anything here, no copying or anything except
+		trace(tool => 'modelfit',
+			  message => "Found stats-runs.csv, will read output psn.lst if it exists to put in raw_results.", level => 2);
+
 		#reading raw results to memory
 		#candidate model should have psn.lst as output file
 
 		my ($raw_results_row, $nonp_row);
-		if ($candidate_model->nthetas(problem_number => 1) == 0) {
+		#problem here if got rid of theta omega sigma as part of handle maxevals.
+		#candidate model has no labels in that case, send label_model along
+		($raw_results_row, $nonp_row) = 
+			$self -> create_raw_results_rows( max_hash => $self->max_hash,
+											  model => $candidate_model,
+											  label_model => $model,
+											  model_number => $run_no + 1,
+											  raw_line_structure => $self->raw_line_structure,
+											  eta_shrinkage_file => $eta_shrinkage_name,
+											  iwres_shrinkage_file => $iwres_shrinkage_name);
 
-			#problem here if got rid of theta omega sigma as part of handle maxevals.
-			#candidate model has no labels
-			($raw_results_row, $nonp_row) = 
-				$self -> create_raw_results_rows( max_hash => $self->max_hash,
-												  model => $candidate_model,
-												  label_model => $model,
-												  model_number => $run_no + 1,
-												  raw_line_structure => $self->raw_line_structure,
-												  eta_shrinkage_file => $eta_shrinkage_name,
-												  iwres_shrinkage_file => $iwres_shrinkage_name);
 
-		}else{
-			($raw_results_row, $nonp_row) = 
-				$self -> create_raw_results_rows( max_hash => $self->max_hash,
-												  model => $candidate_model,
-												  model_number => $run_no + 1,
-												  raw_line_structure => $self->raw_line_structure,
-												  eta_shrinkage_file => $eta_shrinkage_name,
-												  iwres_shrinkage_file => $iwres_shrinkage_name);
-
-		}
-
-		trace(tool => 'modelfit',
-								message => "Found stats-runs.csv, will read output psn.lst if it exists to put in raw_results.", level => 2);
 
 		if (-e 'psn.lst'){
 			my ( $output_file );
@@ -1901,8 +1910,10 @@ sub restart_needed
 			foreach my $category ( 'minimization_successful', 'covariance_step_successful',
 								   'covariance_step_warnings', 'estimate_near_boundary',
 								   'significant_digits', 'ofv' ){
-				my $res = $output_file -> $category;
-				$run_results -> [${$tries}] -> {$category} = defined $res ? $res -> [0][0] : undef;
+				my $index = ($tweak_inits_probnum-1);
+				$index = 0 if ($index < 0); #no relevant estimation to check anyway
+				$run_results -> [${$tries}] -> {$category} = $output_file -> get_single_value(attribute => $category,
+																							  problem_index => $index);
 			}
 
 			$run_results -> [${$tries}] -> {'pass_picky'} = 0;
@@ -1914,29 +1925,11 @@ sub restart_needed
 				return(0);
 			}
 
-			my $minimization_successful = $output_file -> minimization_successful();
-			my $minimization_message    = $output_file -> minimization_message();
-			my @problems = @{$candidate_model -> problems};
-			for ( my $problem = 1; $problem <= scalar @problems; $problem++ ) {
-				if ( $candidate_model -> is_estimation( problem_number => $problem ) ){
-					if ( $minimization_successful -> [$problem-1][0] ) {
-						if ( $picky ) {
-							$run_results -> [${$tries}] -> {'pass_picky'} = 1;
-							for ( @{$minimization_message -> [$problem-1][0]} ) {
-								if ( /0COVARIANCE STEP ABORTED/ or
-									 /0PROGRAM TERMINATED BY OBJ/ or
-									 /0ESTIMATE OF THETA IS NEAR THE BOUNDARY AND/ or
-									 /0PARAMETER ESTIMATE IS NEAR ITS BOUNDARY/ or
-									 /0R MATRIX ALGORITHMICALLY SINGULAR/ or
-									 /0S MATRIX ALGORITHMICALLY SINGULAR/ ) {
-									$run_results -> [${$tries}] -> {'pass_picky'} = 0;
-									last;
-								}
-							}
-						}
-					}
-				}
-			}
+
+			$run_results -> [${$tries}] -> {'pass_picky'} = passed_picky(minimization_successful => $output_file -> minimization_successful(),
+																		 minimization_message => $output_file -> minimization_message(),
+																		 probnum => $tweak_inits_probnum,
+																		 picky => $picky);
 
 			$output_file -> flush;
 
@@ -2192,120 +2185,91 @@ sub restart_needed
 		$queue_info_ref -> {'crashes'} = 0;
 		#reset number of evals
 		$queue_info_ref -> {'evals'}=0;
-
-		$minimization_successful = $output_file -> minimization_successful();
-		$minimization_message    = $output_file -> minimization_message();
-
-		unless( defined $minimization_successful ) {
-			croak("No minimization status found in " . $output_file ->filename );
-		}
 		
 		# log the stats of this run
 
 		foreach my $category ( 'minimization_successful', 'covariance_step_successful',
 							   'covariance_step_warnings', 'estimate_near_boundary',
 							   'significant_digits', 'ofv' ){
-			my $res = $output_file -> $category;
-			$run_results -> [${$tries}] -> {$category} = defined $res ? $res -> [0][0] : undef;
+			my $index = ($tweak_inits_probnum-1);
+			$index = 0 if ($index < 0); #no relevant estimation to check anyway
+			$run_results -> [${$tries}] -> {$category} = $output_file -> get_single_value(attribute => $category,
+																						  problem_index => $index);
 		}
-		$run_results -> [${$tries}] -> {'pass_picky'} = 0;
-		# Check for failed problems and possibly check for picky errors.
+
+		$minimization_message    = $output_file -> minimization_message();
+		$minimization_successful    = $output_file -> minimization_successful();
+
+		$run_results -> [${$tries}] -> {'pass_picky'} = passed_picky(minimization_successful => $minimization_successful,
+																	 minimization_message => $minimization_message,
+																	 probnum => $tweak_inits_probnum,
+																	 picky => $picky);
 
 		my $round_error = 0;
 		my $hessian_error = 0;
 		my $maxeval_error = 0;
-		if ( (not $marked_for_rerun) and ( $tweak_inits || $cut_thetas_rounding_errors || $handle_hessian_npd || $cut_thetas_maxevals)) {
-
+		
+		if ( (not $marked_for_rerun) and ($tweak_inits_probnum > 0) and 
+			 ( $tweak_inits || $cut_thetas_rounding_errors || $handle_hessian_npd || $cut_thetas_maxevals)) {
+			#we will not enter here unless $tweak_inits_probnum indicated we have regular structure $PROB and
+			# an estimation to check
 			trace(tool => 'modelfit', message => "check if run needs restart", level => 2);
+			my $need_restart = 0;
 
-			my @reruns;
-			my @problems = @{$candidate_model -> problems};
-			for ( my $problem = 1; $problem <= scalar @problems; $problem++ ) {
-				if ( $candidate_model -> is_estimation( problem_number => $problem ) ){
-					if ( $minimization_successful -> [$problem-1][0] ) {
-						my $check_local_opt=1;
-						if ( $picky ) {
-							$run_results -> [${$tries}] -> {'pass_picky'} = 1;
-							for ( @{$minimization_message -> [$problem-1][0]} ) {
-								if ( /0COVARIANCE STEP ABORTED/ or
-									 /0PROGRAM TERMINATED BY OBJ/ or
-									 /0ESTIMATE OF THETA IS NEAR THE BOUNDARY AND/ or
-									 /0PARAMETER ESTIMATE IS NEAR ITS BOUNDARY/ or
-									 /0R MATRIX ALGORITHMICALLY SINGULAR/ or
-									 /0S MATRIX ALGORITHMICALLY SINGULAR/ ) {
-									push( @reruns, $problem );
-									$run_results -> [${$tries}] -> {'pass_picky'} = 0;
-									$check_local_opt=0;
-									trace(tool => 'modelfit', message => "Run did not pass picky test, must restart.", level => 2);
-									last;
-								}
-							}
-							if ($check_local_opt){
-								if ((${$tries} > 0) and (not $queue_info_ref -> {'have_accepted_run'})){
-									for (my $tr=0; $tr < ${$tries}; $tr++){
-										if (defined $run_results -> [$tr] -> {'ofv'}
-											and not $run_results -> [$tr] -> {'pass_picky'}
-											and ($run_results -> [$tr] -> {'ofv'}<
-												 ($run_results->[${$tries}]->{'ofv'} - $self->accepted_ofv_difference))){
-											push( @reruns, $problem );
-											trace(tool => 'modelfit', message => "Run picky ok but had higher ".
-																	"corrected ofv than previous without picky ok, local min, must restart.", level => 2);
-											last;
-										}
-									}
-								}
-							}
-						}else{
-							#not picky
-							#if successful but higher ofv than any previous and previous not successful then rerun
-							if ((${$tries} > 0) and (not $queue_info_ref -> {'have_accepted_run'})){
-								for (my $tr=0; $tr < ${$tries}; $tr++){
-									if (defined $run_results -> [$tr] -> {'ofv'}
-										and defined $run_results -> [$tr] -> {'minimization_successful'}
-										and not $run_results -> [$tr] -> {'minimization_successful'}
-										and ($run_results -> [$tr] -> {'ofv'}<
-											 ($run_results->[${$tries}]->{'ofv'} - $self->accepted_ofv_difference))){
-										push( @reruns, $problem );
-										trace(tool => 'modelfit',message => "Run minim success but had higher ".
-																"corrected ofv than previous without successful, local min, must restart.", level => 2);
-										last;
-									}
-								}
-							}
-						}
-					}else{
-						#not successful
-						$round_error = 1 if ($output_file -> get_single_value(attribute => 'rounding_errors',
-																			  problem_index => ($problem-1)));
-						if ($handle_hessian_npd){
-							for ( @{$minimization_message -> [$problem-1][0]} ) {
-								if ( /\s*NUMERICAL HESSIAN OF OBJ. FUNC. FOR COMPUTING CONDITIONAL ESTIMATE IS NON POSITIVE DEFINITE\s*/){
-									$hessian_error = 1 ;
-									last;
-								}
-							}
-						} 
-						if ($cut_thetas_maxevals){
-							for ( @{$minimization_message -> [$problem-1][0]} ) {
-								if ( /\s*MAX. NO. OF FUNCTION EVALUATIONS EXCEEDED\s*/) {
-									$maxeval_error = 1 ;
-									last;
-								}
-							}
-						} 
-						unless ($significant_digits_accept and 
-								(defined $output_file -> get_single_value(attribute =>'significant_digits',
-																		  problem_index => ($problem-1))) and
-								$output_file -> get_single_value(attribute =>'significant_digits',
-																 problem_index => ($problem-1))>= $significant_digits_accept)  {
-							push( @reruns, $problem );
-							trace(tool => 'modelfit', message => "Minimization not successful, must restart.", level => 2);
+			if (not $run_results -> [${$tries}] -> {'minimization_successful'}){
+				my $sigdig = $output_file -> get_single_value(attribute =>'significant_digits',
+															  problem_index => ($tweak_inits_probnum-1));
+				unless ($significant_digits_accept and (defined $sigdig) and ($sigdig >= $significant_digits_accept))  {
+					$need_restart = 1; 
+					trace(tool => 'modelfit', message => "Minimization not successful, must restart.", level => 2);
+				}
+
+				$round_error = 1 if ($output_file -> get_single_value(attribute => 'rounding_errors',
+																	  problem_index => ($tweak_inits_probnum-1)));
+				if ($handle_hessian_npd){
+					for ( @{$minimization_message -> [$tweak_inits_probnum-1][0]} ) {
+						if ( /\s*NUMERICAL HESSIAN OF OBJ. FUNC. FOR COMPUTING CONDITIONAL ESTIMATE IS NON POSITIVE DEFINITE\s*/){
+							$hessian_error = 1 ;
+							last;
 						}
 					}
-				} # end  is_estimation
-			}		
+				} 
+				if ($cut_thetas_maxevals){
+					for ( @{$minimization_message -> [$tweak_inits_probnum-1][0]} ) {
+						if ( /\s*MAX. NO. OF FUNCTION EVALUATIONS EXCEEDED\s*/) {
+							$maxeval_error = 1 ;
+							last;
+						}
+					}
+				} 
+			}
 
-			if( ${$tries} < ($retries) and scalar @reruns > 0 
+			$need_restart = 1 if ($picky and (not $run_results -> [${$tries}] -> {'pass_picky'}));
+
+			if ((defined $self->reduced_model_ofv) and
+				($self->reduced_model_ofv < ($run_results->[${$tries}]->{'ofv'} - $self->accepted_ofv_difference))){
+				$need_restart = 1;
+				trace(tool => 'modelfit', message => "OFV not better that reduced_model_ofv, must restart.", level => 2);
+			}
+
+			unless ($need_restart){
+				#check local opt
+				if ((${$tries} > 0) and (not $queue_info_ref -> {'have_accepted_run'})){
+					for (my $tr=0; $tr < ${$tries}; $tr++){
+						if (defined $run_results -> [$tr] -> {'ofv'}
+							and ($run_results -> [$tr] -> {'ofv'}<
+								 ($run_results->[${$tries}]->{'ofv'} - $self->accepted_ofv_difference))){
+							$marked_for_rerun = 1;
+							trace(tool => 'modelfit', message => "Run picky/successful/reduced_model ok but had higher ".
+								  "corrected ofv than previous not accepted run, local min, must restart.", level => 2);
+							last;
+						}
+					}
+				}
+			}
+
+
+			if( ${$tries} < ($retries) and $need_restart 
 				and (not $queue_info_ref -> {'have_accepted_run'})) {
 				$marked_for_rerun = 1;
 				${$tries} ++;
@@ -2342,11 +2306,9 @@ sub restart_needed
 				}
 
 				if ($do_tweak){
-					foreach my $prob ( @reruns ) {
-						$problems[$prob-1] -> set_random_inits ( degree => $self->degree ,
-																 basic_model => $model,
-																 problem_index => ($prob-1));
-					}
+					$candidate_model -> problems->[$tweak_inits_probnum-1] -> set_random_inits ( degree => $self->degree ,
+																								 basic_model => $model,
+																								 problem_index => ($tweak_inits_probnum-1));
 				}
 				$candidate_model->_write;
 				trace(tool => 'modelfit',

@@ -349,15 +349,29 @@ is printed to one of the xpose tables, for example sdtab.
 
 \subsection{Retries in PsN}
 
-A NONMEM run is not always successful and sometimes it is possible to improve the results of the run. A simple procedure is to tweak the initial estimates of the parameters and see if changed starting condition gives better results. The -tweak\_inits option turns on this feature in PsN, and it is on by default. Then, if the minimization is terminated PsN will pick a random value within 10\% above or below each initial value, and run the model again with these new initial estimates. This is called a retry. PsN can do several retries, and each time the bounds is increased by 10\%. Note that PsN always respects the upper and lower bound set in the model file. 
+A NONMEM run is not always successful and sometimes it is possible to improve the results of the run. A simple procedure is to tweak the initial 
+estimates of the parameters and see if changed starting condition gives better results. The -tweak\_inits option turns on this feature in PsN, 
+and it is on by default. Then, if the minimization is terminated PsN will pick a random value within 10\% above or below each initial value, 
+and run the model again with these new initial estimates. This is called a retry. PsN can do several retries, and each time the bounds is 
+increased by 10\%. Note that PsN always respects the upper and lower bound set in the model file. 
 
-The control files and outputs for the retries are found in the NM\_run1 subdirectory. The files psn-1.mod and psn-1.lst are for the first run which is always performed and not called a retry. psn-2.mod and up are the control files with perturbed initial estimates. In the same directory as psn-1.mod, psn-2.mod etc are created, there is a file called stats-runs.csv. In there is a set of parameters+values for the set of runs, in the order given by the modelfile numbers. As the last line is written "Selected ..." where it says which model was judged as the best of all the retries.
+The control files and outputs for the retries are found in the NM\_run1 subdirectory. The files psn-1.mod and psn-1.lst are for 
+the first run which is always performed and not called a retry. psn-2.mod and up are the control files with perturbed initial 
+estimates. In the same directory as psn-1.mod, psn-2.mod etc are created, there is a file called stats-runs.csv. In there is a 
+set of parameters+values for the set of runs, in the order given by the modelfile numbers. As the last line is 
+written "Selected ..." where it says which model was judged as the best of all the retries.
 
-The lst-file for the selected model is then copied to psn.lst (no number) in the same directory, and also copied back up to the working directory. Same principle for table files. The file psn-x.mod for the selected model is copied to psn.mod (for PsN version 3.x.x and up), but psn.mod is not copied back up.   	
+The lst-file for the selected model is then copied to psn.lst (no number) in the same directory, and also copied back 
+up to the working directory. Same principle for table files. The file psn-x.mod for the selected model is copied 
+to psn.mod (for PsN version 3.x.x and up), but psn.mod is not copied back up.   	
 
-The option -prepend\_model\_to\_lst can be used with execute. Then the modelfile for the selected model with its particular initial estimates is prepended to the lst-file which is copied back up to the working directory. This makes it easier to see which initial estimates were actually used. The prepending is done automatically if -nmfe is set, so do not make the model-file be prepended twice by both setting -nmfe and -prepend\_model\_to\_lst.
+The option -prepend\_model\_to\_lst can be used with execute. Then the modelfile for the selected model with its 
+particular initial estimates is prepended to the lst-file which is copied back up to the working directory. This makes it 
+easier to see which initial estimates were actually used. The prepending is done automatically if -nmfe is set, so do not 
+make the model-file be prepended twice by both setting -nmfe and -prepend\_model\_to\_lst.
 
-The string MINIMIZATION SUCCESSFUL is important when PsN decides whether to make a retry. With new estimation methods in NONMEM7, that string will not appear. The flag for minimization\_successful is set or unset using the following logic:
+The string MINIMIZATION SUCCESSFUL is important when PsN decides whether to make a retry. With new estimation 
+methods in NONMEM7, that string will not appear. The flag for minimization\_successful is set or unset using the following logic:
 
 \begin{enumerate}
 \item Only status of last \$EST step is considered, except when last \$EST is IMP with EONLY=1
@@ -370,23 +384,50 @@ The string MINIMIZATION SUCCESSFUL is important when PsN decides whether to make
 \end{enumerate}
 
 \subsection{Controlling retries using PsN options}
-The retries option, which defaults to 0, controls the maximum number of retries before giving up. Note that it is possible to set a different default in the psn.conf, the PsN configuration file. The option -min\_retries, with default 0, controls the minimum number of retries that PsN is forced to make, and has precedence over -retries. Option -min\_retries is useful if the user suspects that there is a risk of finding local minima.
+The retries option, which defaults to 0, controls the maximum number of retries before giving up. Note that it is 
+possible to set a different default in the psn.conf, the PsN configuration file. The option -min\_retries, 
+with default 0, controls the minimum number of retries that PsN is forced to make, and has precedence over -retries. 
+Option -min\_retries is useful if the user suspects that there is a risk of finding local minima.
 
-Normally PsN will be satisfied with a run that has minimization successful, but PsN can be more picky about the quality of NONMEM results. If the -picky option is used PsN will do a retry even if the minimization is successful, given that a 'picky-message' appears in NONMEMs minimization message, see the list of picky-messages below by the picky option description.
+Normally PsN will be satisfied with a run that has minimization successful, but PsN can be more picky about the 
+quality of NONMEM results. If the -picky option is used PsN will do a retry even if the minimization is successful, 
+given that a 'picky-message' appears in NONMEMs minimization message, see the list of picky-messages below by the picky option description.
 
-It is also possible to reduce PsN's requirements of quality. If the minimization is not successful but the significant digits are high enough, PsN can skip doing a retry. The limit is set with option -significant\_digits\_accept. This option is by default not used, and it has no effect if picky is set at the same time.
+If option -reduced\_model\_ofv is set to some value (option currently only available in execute),
+PsN will do a retry if the current ofv is more than 'accepted\_ofv\_difference' worse than
+reduced\_model\_ofv.
 
-Following is the list of condititions at the end of a NONMEM run that will lead PsN to initiate a retry, provided that the maximum number of retries set with option -retries has not been reached:
+It is also possible to reduce PsN's requirements of quality. If the minimization is not successful but the significant 
+digits are high enough, PsN can skip doing a retry. The limit is set with option -significant\_digits\_accept. This option 
+is by default not used, and it has no effect if picky is set at the same time.
+
+Following is the list of condititions at the end of a NONMEM run that will lead PsN to initiate a retry, provided that 
+the maximum number of retries set with option -retries has not been reached:
 
 \begin{enumerate}
 \item The minimum number of retries set with -min\_retries have not yet been run.
-\item If -picky is set: the run has either not finished with MINIMIZATION SUCCESSFUL, or finished with one of the picky-messages listed below.
-\item If -picky is not set: the run has not finished with MINIMIZATION SUCCESSFUL and option -significant\_digits\_accept is either not set or the number of significant digits is less than -significant\_digits\_accept.
-\item (New in version 3.4.8) If -picky is set: The run has finished fulfilling the picky conditions with MINIMIZATION SUCCESSFUL and none of the picky-messages, but the ofv of this run minus 'accepted\_ofv\_difference' is larger than the ofv of a previous run that did not fulfill the picky conditions, indicating that the current run has terminated in a local minimum.
-\item (New in version 3.4.8) If -picky is not set: The run has finished with MINIMIZATION SUCCESSFUL, but the ofv of this run minus 'accepted\_ofv\_difference' is larger than the ofv of a previous run that did not finish with MINIMIZATION SUCCESSFUL, indicating that the current run has terminated in a local minimum.
+\item Option -reduced\_model\_ofv is set and the run ofv is larger than reduced\_model\_ofv+accepted\_ofv\_difference
+\item Option -picky is set and the run has either not finished with MINIMIZATION SUCCESSFUL, or finished with one of the picky-messages listed below.
+\item The run has not finished with MINIMIZATION SUCCESSFUL and option -significant\_digits\_accept is 
+either not set or the number of significant digits is less than -significant\_digits\_accept.
+\item The run has finished fulfilling conditions from MINIMIZATION SUCCESSFUL/signficicant\_digits/picky/reduced\_model\_ofv, 
+but the ofv of this run minus 'accepted\_ofv\_difference' is larger than the ofv of a previous run 
+that did not fulfill the conditions, indicating that the current run has terminated in a local minimum.
 \end{enumerate}
 
-After all retries have finished, PsN will select the best. If picky option was set and any run passed the picky test, the pass-picky run with the best ofv will be selected, regardless of whether any not-pass-picky run had a lower ofv. If picky was not set, or if no run passed the picky test, the selection will be based on 'corrected ofv'. For tries that did not have minimization successful the corrected ofv is equal to the ofv. For tries that had minimization successful the corrected ofv is the ofv minus 'accepted\_ofv\_difference'. This means that the option accepted\_ofv\_difference, default 0.5, decides how much preference should be given to runs with minimization successful. If two tries have equal corrected ofv then priority is given, in order, to a run that has minimization successful, the highest number of significant digits, or the smallest perturbation of initial estimates. If no run produces an ofv, the original model will be chosen.
+After all retries have finished, PsN will select the best try. 
+The rules for selection are significantly changed in PsN 4.3.9 and later, giving the ofv value more weight than in earlier versions.
+In most cases the run with the lowest ofv is selected, but there is a 'accepted\_ofv\_difference' preference for runs
+that pass the picky test, if option picky was set, or for minimization successful.
+The selection procedure is 
+\begin{enumerate}
+\item If option -picky was set, and the ofv of the best try that passed the picky test is not more than accepted\_ofv\_difference
+worse than the best overall ofv, then choose the best try that passed the picky test. 
+\item Otherwise, if the ofv of the best try that had minimization successful is not more than accepted\_ofv\_difference
+worse than the best overall ofv, then choose the best try that had minimization successful.
+\item Otherwise, chose the try with the best overall ofv, if any tries at all gave an ofv.
+\item Otherwise, chose the first try.
+\end{enumerate}
 
 \begin{optionlist}
 \optname{tweak\_inits}
@@ -420,7 +461,15 @@ Default not used. The -picky option is only valid together with -tweak\_inits. N
 Default not used. Has no effect in combination with -picky. The -significant\_digits\_accept option is only valid together with option -tweak\_inits. Normally PsN tries new initial estimates if 'MINIMIZATION SUCCESSFUL' is not found in the NONMEM output file. With the -significant\_digits\_accept, PsN will only rerun if the resulting significant digits is lower than the value specified with this option. 
 \nextopt
 \optdefault{accepted\_ofv\_difference}{'number'}
-Important note: The meaning of this option has changed between PsN-3.4.7 and PsN-3.4.8. Default value 0.5. This option is used by PsN when deciding if a retry should be run, and when selecting the best retry out of the whole set. This option decides how much preference should be given to runs that fulfill the picky conditions/have minimization successful but a slightly higher ofv (at most accepted\_ofv\_difference) than a run that did not fulfill the conditions.  
+Default 0.5. This option is used by PsN when deciding if a retry should be run, and when selecting the best retry out of the whole set. 
+This option decides how much preference should be given to runs that fulfill the picky conditions/have minimization successful 
+but a slightly higher ofv (at most accepted\_ofv\_difference) than a run that did not fulfill the conditions.  
+\nextopt
+\optdefault{reduced\_model\_ofv}{'number'}
+This option is used by PsN when deciding if a retry should be run. It is currently only available with the execute program,
+so it is strictly speaking not a common option.
+A retry will be initiated if the ofv of the current run is more than 'accepted\_ofv\_difference' worse than the ofv
+given with this option.
 \nextopt
 \end{optionlist}
 

@@ -3843,13 +3843,18 @@ sub input_files
 		}
 	} else {
 
-		# If we don't have $MSFI we can consider $EST MSFO as input.
+		# If we don't have $MSFI we can consider $EST MSFO as input. WHY???
 
 		foreach my $msfo_files( @{$self -> msfo_names()} ){
 			foreach my $msfo_file( @{$msfo_files} ){
 				my ( $dir, $filename ) = OSspecific::absolute_path($self -> directory,
 					$msfo_file );
 				push( @file_names, [$dir, $filename] );
+				my $ver = $PsN::nm_major_version;
+				$ver .= '.'.$PsN::nm_minor_version if (defined $PsN::nm_minor_version);
+				if ($ver > 7.2){
+					push( @file_names, [$dir, $filename.'_ETAS'] );
+				}
 			}
 		}
 	}
@@ -3912,6 +3917,11 @@ sub output_files
 			foreach my $msfo_file( @{$msfo_files} ){
 				my ( $dir, $filename ) = OSspecific::absolute_path( undef, $msfo_file );
 				push( @file_names, $filename );
+				my $ver = $PsN::nm_major_version;
+				$ver .= '.'.$PsN::nm_minor_version if (defined $PsN::nm_minor_version);
+				if ($ver > 7.2){
+					push( @file_names, $filename.'_ETAS' ); #from NM 7.3
+				}
 			}
 		}
 	}
@@ -5057,6 +5067,55 @@ sub create_dummy_model
 						   ignore_missing_files => 1);
 	
 	return $model;
+}
+
+sub get_tweak_inits_problem_number
+{
+	#get the problem number to check status of in modelfit::restart_needed
+	#standard case is 1, if that prob is estimation
+	# with two $PROB and $PRIOR TNPRI it is 2, if it is estimation
+	# if prob is not estimation, or if more $PROB, return 0, i.e. turn off tweak inits
+	my $self = shift;
+
+	my $retryprobnum;
+
+	if (scalar (@{$self->problems}) > 2 ){
+		#special case, do not handle this
+		$retryprobnum=0;
+	} elsif (scalar (@{$self->problems}) == 2 ) {
+		my $tnpri = 0;
+		if ((defined $self->problems->[0]->priors()) and 
+			scalar(@{$self->problems->[0]->priors()}) > 0 ) {
+			foreach my $rec (@{$self->problems->[0]->priors()}) {
+				unless ((defined $rec) &&( defined $rec->options )) {
+					carp("No options for rec \$PRIOR" );
+				}
+				foreach my $option ( @{$rec->options} ) {
+					if ((defined $option) and 
+						(($option->name eq 'TNPRI') || (index('TNPRI', $option->name ) == 0))) {
+						$tnpri = 1;
+					}
+				}
+			}
+		}
+		if ($tnpri) {
+			$retryprobnum=2;
+		} else {
+			#special, do not handle
+			$retryprobnum=0;
+		}
+	}else{
+		#one $PROB
+		$retryprobnum=1;
+	}
+
+	if ($retryprobnum){
+		# 1 or 2
+		unless ($self->is_estimation(problem_number=>$retryprobnum)){
+			$retryprobnum = 0;
+		}
+	}
+	return ($retryprobnum);
 }
 
 no Moose;

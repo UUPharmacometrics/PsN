@@ -28,6 +28,7 @@ my %options;
 my %required_options = ();
 my %optional_options = ( "predict_data:s" => undef,
 			 "predict_model:s" => undef,
+			 "reduced_model_ofv:f" => undef,
 			 "prepend_options_to_lst!"=> undef,
 			 "model_dir_name!" => undef,
 			 "tail_output!" => undef,
@@ -111,6 +112,14 @@ EOF
 $help_text{-predict_model} = <<'EOF';
     <p class="style2">-predict_model='string'</p>
     No help available.
+EOF
+
+$help_text{-reduced_model_ofv} = <<'EOF';
+    -reduced_model_ofv
+    Default not used. When this option is used, the behaviour of
+	the retries functionality of PsN is modified to keep adding retries
+	until either a lower ofv than -reduced_model_ofv is obtained, or
+	-max_retries is reached.
 EOF
 
 $help_text{-copy_data} = <<'EOF';
@@ -336,6 +345,7 @@ if ( defined $options{'predict_data'} and defined $options{'predict_model'} ) {
 		new ( eval( $common_options::parameters ),
 			  prepend_model_to_lst => $options{'prepend_model_to_lst'},
 			  prepend_options_to_lst => $options{'prepend_options_to_lst'},
+			  reduced_model_ofv => $options{'reduced_model_ofv'},
 			  tail_output => $options{'tail_output'},
 			  wintail_exe => $options{'wintail_exe'},
 			  wintail_command => $options{'wintail_command'},
