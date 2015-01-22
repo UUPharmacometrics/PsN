@@ -20,6 +20,7 @@ use model;
 use common_options;
 use ui;
 use Cwd;
+use include_modules;
 
 my $cmd_line = $0 . " " . join( " ", @ARGV );
 
@@ -119,7 +120,7 @@ $help_text{-reduced_model_ofv} = <<'EOF';
     Default not used. When this option is used, the behaviour of
 	the retries functionality of PsN is modified to keep adding retries
 	until either a lower ofv than -reduced_model_ofv is obtained, or
-	-max_retries is reached.
+	until the maximum number of retries (option -retries) is reached.
 EOF
 
 $help_text{-copy_data} = <<'EOF';
@@ -291,6 +292,11 @@ foreach my $model_name ( @ARGV ){
 	push( @{$models_array}, $model );
 
 }
+my %hash =(eval( $common_options::parameters ));
+if ($options{'reduced_model_ofv'} and not $hash{'retries'}){
+	croak("Illegal input: option reduced_model_ofv is set but cannot be used since -retries is not larger than 0\n");
+}
+
 
 if($options{'tail_output'} ) {
 	if($Config{osname} ne 'MSWin32'){
