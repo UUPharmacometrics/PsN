@@ -2,7 +2,9 @@
 use Net::SFTP::Foreign;
 use File::Glob;
 use strict;
-
+use FindBin qw($Bin);
+use lib "$Bin/../../lib";
+use PsN;
 chdir('/home/kajsa/kod-psn/PsN4/doc');
 my $password = $ARGV[0];
 my $user = 'k_harling,psn';
@@ -31,10 +33,25 @@ $sftp->die_on_error("Unable to establish SFTP connection");
 $sftp->setcwd($path) or die "unable to change cwd: " . $sftp->error;
 
 my @pdfs = <*.pdf>;
+#my @pdfs = ();
 
 foreach my $file (@pdfs){
 	print "Try put $file\n";
 	$sftp->put($file,$file) or 	die "put failed: " . $sftp->error;
 }
 
+$path = '../internal_release_install_packages';
+$sftp->setcwd($path) or die "unable to change cwd: " . $sftp->error;
 
+my $zip = 'PsN-'.$PsN::version.'.zip';
+my $tar = 'PsN-'.$PsN::version.'.tar.gz';
+
+foreach my $file ($zip,$tar){
+	my $localfile = '../'.$file;
+	if (-e $localfile){
+		print "Try put $localfile\n";
+		$sftp->put($localfile,$file) or 	die "put failed: " . $sftp->error;
+	}else{
+		print "$localfile does not exist, skipping\n";
+	}
+}

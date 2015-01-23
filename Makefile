@@ -140,6 +140,9 @@ RELFILES=$(addprefix PsN-Source/lib/,$(LIBFILES)) \
 
 TEXFILES=$(wildcard doc/*.tex)
 PDFFILES=$(TEXFILES:.tex=.pdf)
+ZIPFILE=`sed -n 's/.*\$version\s*=\s*.\([0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\).;/PsN-\1.zip/p' lib/PsN.pm`
+TARFILE=`sed -n 's/.*\$version\s*=\s*.\([0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\).;/PsN-\1.tar.gz/p' lib/PsN.pm`
+
 
 .PHONY : clean
 
@@ -155,6 +158,8 @@ doc/%.pdf: version doc/%.tex
 doc: $(PDFFILES) 
 
 release: completion rel_dir $(RELFILES) $(PDFFILES)
+	@ rm -f $(ZIPFILE)
+	@ rm -f $(TARFILE)
 	@ mkdir PsN-Source/development
 	@ mkdir PsN-Source/development/completion_files
 	@ cp development/completion_files/* PsN-Source/development/completion_files
@@ -172,8 +177,8 @@ release: completion rel_dir $(RELFILES) $(PDFFILES)
 	@ cd PsN-Source/doc/; tar -czf PsN_pdf_documentation.tar.gz *.pdf *.xls *.scm
 	@ chmod -R a+r PsN-Source/test/test_files
 	@ sed -i 's/dev\s*=\s*1;/dev = 0;/' PsN-Source/lib/PsN.pm
-	@ zip -rq PsN-Source PsN-Source/
-	@ tar czf PsN-Source.tar.gz PsN-Source/
+	@ zip -rq $(ZIPFILE) PsN-Source/
+	@ tar czf $(TARFILE) PsN-Source/
 	@ echo  
 	@ echo Remember sftp putdoc for guides!
 

@@ -2,6 +2,7 @@
 *.tar.gz
 *.zip
 *.swp
+old_packages/*
 PsN-Source/*
 nmoutput2so/*
 doc/*.aux
