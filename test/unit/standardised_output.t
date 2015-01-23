@@ -50,6 +50,14 @@ my $node = $so->create_typed_element(type => "MyType", content => "MyContent");
 is ($node->textContent, "MyContent", "create_typed_element content");
 is ($node->nodeName, "ct:MyType", "create_typed_element name");
 
+# _get_included_columns
+is_deeply (standardised_output::_get_included_columns(header => { ID => 1, TIME => 2, WT => 3, AMT => 4 }, columns => [ 'WT', 'TIME', 'SNOW' ]),
+    [ 'WT', 'TIME' ], "_get_included_columns");
+
+# _get_remaining_columns
+is_deeply (standardised_output::_get_remaining_columns(header => { ID => 1, TIME => 2, WT => 3, AMT => 4 }, columns => [ 'ID', 'WT' ]),
+    [ 'TIME', 'AMT' ], "_get_remaining_columns");
+
 # non existing lst file
 my $so = standardised_output->new(lst_files => [ "this_file_is_missing.lst" ]);
 $so->parse;

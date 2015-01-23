@@ -5089,6 +5089,30 @@ sub get_retries_problem_number
 	return ($retryprobnum);
 }
 
+sub get_eta_names
+{
+    # Gets the names of the ETAs from a list in the code
+    # ETA_CL = ETA(1)
+
+    my $self = shift;
+
+    my @names;
+   	my @code;
+	if ($self->has_code(record => 'pk')) {
+		@code = @{$self->get_code(record => 'pk')};
+	} else {
+		@code = @{$self->get_code(record => 'pred')};
+	}
+
+    foreach my $line (@code) {
+        if ($line =~ /^\s*(\w+)\s*=\s*ETA\(\d+\)/) {
+            push @names, $1;
+        }
+    }
+
+    return \@names;
+}
+
 no Moose;
 __PACKAGE__->meta->make_immutable;
 1;

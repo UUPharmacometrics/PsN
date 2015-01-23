@@ -71,7 +71,7 @@ sub BUILD
 }
 
 # Plain XML helper methods
-# Uses $self->_writer and $self->precision
+# Uses $self->_document and $self->precision
 
 sub create_typed_element
 {
@@ -516,6 +516,11 @@ sub parse
     $SO->setAttribute('writtenVersion' => "0.1");
     $SO->setAttribute('id' => "i1");
 
+    if (defined $self->pharmml) {
+        my $pharmmlref = $self->_create_pharmml_ref();
+        $SO->appendChild($pharmmlref);
+    }
+
     # Check for duplicate lst_file names
     my %duplicates;
     if (defined $self->lst_files) {
@@ -590,26 +595,19 @@ sub parse
     }
 
     $doc->setDocumentElement($SO);
-    if (defined $self->pharmml) {
-        $self->_add_pharmml_ref(so => $SO);
-    }
     $doc->toFile($self->so_filename, $self->pretty);
 }
 
-sub _add_pharmml_ref
+sub _create_pharmml_ref
 {
-    # Add the PharmMLRef element if specified
+    # Add the PharmMLRef element
     my $self = shift;
-    my %parm = validated_hash(\@_,
-        so => { isa => 'Ref' },
-    );
-    my $so =  $parm{'so'};
 
     my $doc = $self->_document;
     my $pharmmlref = $doc->createElement("PharmMLRef");
     $pharmmlref->setAttribute("name", $self->pharmml);
-    my $first_child = $so->firstChild();
-    $so->insertBefore($pharmmlref, $first_child);
+
+    return $pharmmlref;
 }
 
 sub _parse_lst_file
@@ -817,7 +815,11 @@ sub _parse_lst_file
                                     parse_header => 1,
                                 );
                                 if ($self->check_include(element => 'Estimation/IndividualEstimates')) {
-                                    my $individual_estimates = $self->_create_individual_estimates(patab => $patab, model => $model);
+                                    my $individual_estimates = $self->_create_individual_estimates(
+                                        patab => $patab,
+                                        model => $model,
+                                        model_labels => \@all_labels
+                                    );
                                     if (defined $individual_estimates) {
                                         $estimation->appendChild($individual_estimates);
                                     }
@@ -873,32 +875,49 @@ sub _parse_lst_file
     return $block;
 }
 
-sub _get_eta_names
+sub _get_included_columns
 {
-    # Gets the names of the ETAs from a list in the code
-    # ETA_CL = ETA(1)
+    # Get which columns from an array are included in a table header hash
 
-    my $self = shift;
+    # static no self
     my %parm = validated_hash(\@_,
-        model => { isa => 'model' },
+        header => { isa => 'HashRef' },
+        columns => { isa => 'ArrayRef' },
     );
-    my $model = $parm{'model'};
+    my %header = %{$parm{'header'}};
+    my @columns = @{$parm{'columns'}};
 
-    my @names;
-   	my @code;
-	if ($model->has_code(record => 'pk')) {
-		@code = @{$model->get_code(record => 'pk')};
-	} else {
-		@code = @{$model->get_code(record => 'pred')};
-	}
+    my @included = ();
 
-    foreach my $line (@code) {
-        if ($line =~ /^\s*(\w+)\s*=\s*ETA\(\d+\)/) {
-            push @names, $1;
+    for my $col (@columns) {
+        if (exists $header{$col}) {
+            push @included, $col;
         }
     }
 
-    return \@names;
+    return \@included;
+}
+
+sub _get_remaining_columns
+{
+    # Get the columns in a table header hash that are not included in an array
+
+    # static no self
+    my %parm = validated_hash(\@_,
+        header => { isa => 'HashRef' },
+        columns => { isa => 'ArrayRef' },
+    );
+    my %header = %{$parm{'header'}};
+    my @columns = @{$parm{'columns'}};
+
+    for my $col (@columns) {
+        delete $header{$col};
+    }
+
+    my @remaining = keys %header;
+    @remaining = sort { $header{$a} <=> $header{$b} } @remaining;
+
+    return \@remaining;
 }
 
 sub _create_population_estimates
@@ -1234,11 +1253,13 @@ sub _create_individual_estimates
     my %parm = validated_hash(\@_,
         patab => { isa => 'data' },
         model => { isa => 'model' },
+        model_labels => { isa => 'ArrayRef' },
     );
     my $patab = $parm{'patab'};
     my $model = $parm{'model'};
+    my $model_labels = $parm{'model_labels'};
 
-    my $eta_names = $self->_get_eta_names(model => $model);
+    my $eta_names = $model->get_eta_names();
     if (not exists $patab->column_head_indices->{'ID'}) {
         return;
     }
@@ -1246,13 +1267,9 @@ sub _create_individual_estimates
     my $doc = $self->_document;
     my $id = $patab->column_to_array(column => "ID");
 
-    my @labels = ();
-    foreach my $index (keys %{$patab->column_head_indices}) {
-        my $is_eta = grep(/^$index$/, @$eta_names);
-        if ($index ne 'ID' and $index ne 'TIME' and not $is_eta) {
-            $labels[$patab->column_head_indices->{$index} - 2] = $index;
-        }
-    }
+    my @labels = @{_get_remaining_columns(header => $patab->column_head_indices, columns => [ 'ID', 'TIME', @$eta_names, @$model_labels ])};
+
+    return if scalar(@labels) == 0;
 
     my @parameters;
     my @medians;
@@ -1291,13 +1308,7 @@ sub _create_individual_estimates
  
     if (scalar(@$eta_names) > 0) {
         # Filter out etas that does not exist in the patab
-        my $temp_etas = [];
-        foreach my $eta (@$eta_names) {
-            if (exists $patab->column_head_indices->{$eta}) {
-                push @$temp_etas, $eta;
-            }
-        }
-        $eta_names = $temp_etas;
+        $eta_names = _get_included_columns(header => $patab->column_head_indices, columns => $eta_names);
 
         my @eta_medians = ();
         my @eta_means = ();
@@ -1356,6 +1367,7 @@ sub _create_simulation
     my $profiles_table_name = $problem->find_table(columns => [ 'ID', 'TIME', 'DV' ]);
     my $indiv_table_name = $problem->find_table_with_name(name => '^patab', path => $path);
     my $covariates_table_name = $problem->find_table_with_name(name => '^cotab', path => $path);
+    #my $population_table_name = $indiv_table_name;
 
     unless ($profiles_table_name or $indiv_table_name) {
         return undef;
@@ -1367,6 +1379,7 @@ sub _create_simulation
     open my $profiles_table_fh, '<', $path . $profiles_table_name;
     open my $indiv_table_fh, '<', $path . $indiv_table_name;
     open my $covariates_table_fh, '<', $path . $covariates_table_name;
+    #open my $population_table_fh, '<', $path. $population_table_name;
 
     my $replicate_no = 1;
 
@@ -1375,9 +1388,25 @@ sub _create_simulation
         $simulation->appendChild($sim_block);
         $sim_block->setAttribute("replicate", $replicate_no);
         my $external_table_name = $self->external_tables ? $table_file . "_$replicate_no" : undef;
-        my $simulated_profiles = $self->_create_simulated_profiles(file => $profiles_table_fh, table_file => $external_table_name);
-        my $indiv_parameters = $self->_create_indiv_parameters(file => $indiv_table_fh, table_file => $external_table_name, model => $model);
-        my $covariates = $self->_create_covariates(file => $covariates_table_fh, table_file => $external_table_name);
+        my $simulated_profiles = $self->_create_simulated_profiles(
+            file => $profiles_table_fh,
+            table_file => $external_table_name
+        );
+        my $indiv_parameters = $self->_create_indiv_parameters(
+            file => $indiv_table_fh,
+            table_file => $external_table_name,
+            model => $model,
+            problem => $problem
+        );
+        my $covariates = $self->_create_covariates(
+            file => $covariates_table_fh,
+            table_file => $external_table_name
+        );
+        #my $population_parameters = $self->_create_population_parameters(
+        #    file => $population_table_fh,
+        #   table_file => $external_table_name,
+        #    problem => $problem,
+        #);
         if (defined $simulated_profiles) {
             $sim_block->appendChild($simulated_profiles);
         }
@@ -1387,11 +1416,15 @@ sub _create_simulation
         if (defined $covariates) {
             $sim_block->appendChild($covariates);
         }
-        last unless (defined $simulated_profiles or defined $indiv_parameters or defined $covariates);
+        #if (defined $population_parameters) {
+        #    $sim_block->appendChild($population_parameters);
+        #}
+        last unless (defined $simulated_profiles or defined $indiv_parameters or defined $covariates);# or defined $population_parameters);
         $replicate_no++;
         last if (defined $self->max_replicates and $replicate_no >= $self->max_replicates); 
     }
 
+    #close $population_table_fh;
     close $covariates_table_fh;
     close $indiv_table_fh;
     close $profiles_table_fh;
@@ -1476,28 +1509,24 @@ sub _create_indiv_parameters
         file => { isa => 'Ref' },
         table_file => { isa => 'Maybe[Str]' },
         model => { isa => 'model' },
+        problem => { isa => 'model::problem' },
     );
     my $file = $parm{'file'};
     my $table_file = $parm{'table_file'};
     my $model = $parm{'model'};
+    my $problem = $parm{'problem'};
 
-    my $eta_names = $self->_get_eta_names(model => $model);
+    my @all_labels = @{$problem->get_estimated_attributes(parameter => 'all', attribute => 'labels')};
 
     my $colnosref = $self->_read_header(file => $file);
     return if not defined $colnosref;
     my %colnos = %{$colnosref};
 
-    my @labels;
-    for my $col (keys %colnos) {
-        my $is_eta = grep(/^$col$/, @$eta_names);
-        if ($col ne 'ID' and $col ne 'TIME' and not $is_eta) {
-            $labels[$colnos{$col} - 2] = $col;
-        }
-    }
+    my $labels = _get_remaining_columns(header => \%colnos, columns => [ 'ID', 'TIME', @all_labels ]); 
 
     my $indiv_parameters = $self->_create_occasion_table(
         file => $file,
-        labels => \@labels,
+        labels => $labels,
         table_file => $table_file,
         table_name => 'IndivParameters',
         colnos => \%colnos,
@@ -1520,25 +1549,105 @@ sub _create_covariates
     return if not defined $colnosref;
     my %colnos = %{$colnosref};
 
-    my @labels;
-    for my $col (keys %colnos) {
-        if ($col ne 'ID' and $col ne 'TIME') {
-            $labels[$colnos{$col} - 2] = $col;
-        }
-    }
+    my $labels = _get_remaining_columns(header => \%colnos, columns => [ 'ID', 'TIME']);
 
     my $covariates = $self->_create_occasion_table(
         file => $file,
-        labels => \@labels,
+        labels => $labels,
         table_file => $table_file,
         table_name => 'Covariates',
         colnos => \%colnos,
     );
 
     return $covariates;
-
 }
+=cut
+sub _create_population_parameters
+{
+    my $self = shift;
+    my %parm = validated_hash(\@_,
+        file => { isa => 'Ref' },
+        table_file => { isa => 'Maybe[Str]' },
+        problem => { isa => 'model::problem' },
+    );
+    my $file = $parm{'file'};
+    my $table_file = $parm{'table_file'};
+    my $problem = $parm{'problem'};
 
+    my $theta_labels = $problem->get_estimated_attributes(parameter => 'theta', attribute => 'labels');
+
+    my $colnosref = $self->_read_header(file => $file);
+    return if not defined $colnosref;
+    my %colnos = %{$colnosref};
+
+    my $labels = _get_included_columns(header => \%colnos, columns => $theta_labels);
+    return if (scalar(@$labels) == 0);
+    
+    my $population_parameters = $self->_create_occasion_table(
+        file => $file,
+        labels => $labels,
+        colnos => \%colnos,
+    );
+
+    my @rows;
+
+    my $running_id;
+    my $running_occ_start;
+    my @running_dv;
+    my $prev_time;
+    my $max_time;
+
+    for (;;) {
+        my $row = <$file>;
+        if ($row =~ /^TABLE NO/) {
+            seek($file, -length($row), 1);      # Unread the line for next iteration
+            $row = undef;
+        }
+        if (not defined $row) {
+            push @rows, [ $running_occ_start, $prev_time, @running_dv ];
+            last;
+        }
+        chomp($row);
+        $row =~ s/^\s+//;
+        my @columns = split /\s+/, $row;
+
+        my $id = $columns[$colnos{'ID'}];
+        my $time = $columns[$colnos{'TIME'}];
+        $max_time = $time if $time > $max_time;
+        my @dv;
+        for my $col (@labels) {
+            push @dv, $columns[$colnos{$col}];
+        }
+        # Check if first id
+        if (not defined $running_id) {
+            $running_id = $id;
+            $running_occ_start = $time;
+            @running_dv = @dv;
+        }
+        # Check if something has changed
+        if ($running_id != $id or not array::is_equal(\@dv, \@running_dv)) {
+            push @rows, [ $running_id, $running_occ_start, $prev_time, @running_dv ];
+            $running_id = $id;
+            $running_occ_start = $time;
+            @running_dv = @dv;
+        }
+        $prev_time = $time;
+    }
+
+    my $table = $self->create_table(
+        table_name => "PopulationParameters",
+        column_ids => [ "ID", "OccasionStart", "OccationEnd", @labels ],
+        column_types => [ "id", "time", "time", ("undefined") x scalar(@labels) ],
+        column_valuetypes => [ "string", "real", "real", ("real") x scalar(@labels) ],
+        values => \@rows,
+        row_major => 1,
+        table_file => $table_file,
+    );
+
+
+    return $population_parameters;
+}
+=cut
 sub _create_occasion_table
 {
     my $self = shift;
