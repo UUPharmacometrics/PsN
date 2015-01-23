@@ -9,7 +9,7 @@ use Storable;
 use ui;
 use status_bar;
 use Data::Dumper;
-use array qw(not_empty);
+use array;
 use Moose;
 use MooseX::Params::Validate;
 use data::individual;
@@ -71,7 +71,7 @@ sub BUILD
 	$self->directory($directory);
 	$self->filename($filename);
 
-	unless ( not_empty($self->header) or not_empty($self->individuals) ) { 
+	unless ( array::not_empty($self->header) or array::not_empty($self->individuals) ) { 
 		#if empty
 		if ( -e $self->full_name ) {
 			$self->_read_header;
@@ -1033,15 +1033,20 @@ sub max
 
 sub median
 {
+	#first median of each individual, and then median over medians,
+	#unless global_median is true, then median over records
+
 	my $self = shift;
 	my %parm = validated_hash(\@_,
 		 column => { isa => 'Maybe[Int]', optional => 1 },
 		 column_head => { isa => 'Str', optional => 1 },
-		 unique_in_individual => { isa => 'Bool', default => 0, optional => 1 }
+		 unique_in_individual => { isa => 'Bool', default => 0, optional => 1 },
+		 global_median => { isa => 'Bool', default => 0, optional => 1 }							  
 	);
 	my $column = $parm{'column'};
 	my $column_head = $parm{'column_head'};
 	my $unique_in_individual = $parm{'unique_in_individual'};
+	my $global_median = $parm{'global_median'};
 	my $return_value;
 
 	my $first_id = $self->individuals()->[0];
@@ -1061,30 +1066,31 @@ sub median
 	my @median_array;
 
 	foreach my $individual ( @{$self->individuals()} ) {
-	  if( $unique_in_individual ) {
-	    my $ifactors = $individual->factors( 'column' => $column );
-	    
-	    foreach ( keys %{$ifactors} ) {
-	      next if ( $_ == $self->missing_data_token );
-	      push( @median_array, $_ );
-	    }
-	  } else {
-	    my $ifactors = $individual->subject_data;
-	    
-	    for (my $i = 0; $i <= $#{$ifactors}; $i++ ) {
-	      my @data_row = split( /,/ , $ifactors->[$i] );
-	      next if ( $data_row[$column-1] == $self->missing_data_token );
-	      push(@median_array, $data_row[$column-1]);
-	    }
-	  }
+		my @individual_array = ();
+		if( $unique_in_individual ) {
+			my $ifactors = $individual->factors( 'column' => $column );
+			
+			foreach ( keys %{$ifactors} ) {
+				next if ( $_ == $self->missing_data_token );
+				push( @individual_array, $_ );
+			}
+		} else {
+			my $ifactors = $individual->subject_data;
+			
+			for (my $i = 0; $i <= $#{$ifactors}; $i++ ) {
+				my @data_row = split( /,/ , $ifactors->[$i] );
+				next if ( $data_row[$column-1] == $self->missing_data_token );
+				push(@individual_array, $data_row[$column-1]);
+			}
+		}
+		if ($global_median){
+			push(@median_array,@individual_array);
+		}else{
+			push(@median_array,array::median(\@individual_array)) if (array::not_empty(\@individual_array));
+		}
 	}
-	@median_array = sort {$a <=> $b} @median_array ;
-	if( @median_array % 2 ){
-	  $return_value = $median_array[$#median_array / 2];
-	} else {
-	  $return_value = ( $median_array[@median_array / 2] + 
-			    $median_array[(@median_array - 2) / 2] ) / 2;
-	}    
+
+	$return_value = array::median(\@median_array);
 	
 	$self->_median->[$column] = $return_value;
 
@@ -2937,9 +2943,7 @@ sub scm_calculate_continuous_statistics
 		}
 	}
 
-	#must be unique in individual here, to do median over individuals rather than observations
-	$median = $self-> median( unique_in_individual => 1,
-							   column => $column_number);
+	$median = $self-> median( column => $column_number);
 
 	$max = $self -> max(column => $column_number );
 	$min = $self -> min(column => $column_number );

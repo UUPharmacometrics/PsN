@@ -159,72 +159,93 @@ if ($^O =~ /Win/) {
 # New
 my $filename = "$tempdir/test.dta";
 open my $fh, '>', $filename;
-print $fh "ID SMTH TEST\n";
-print $fh "0 12.2 23.4\n";
-print $fh "0 23.56 14\n";
-print $fh "0 1.2 2.8\n";
+print $fh "C,ID,SMTH,TEST\n";
+print $fh ",0,1,-99\n";
+print $fh ",0,2,-99\n";
+print $fh ",0,3,-99\n";
+print $fh ",1,10,5\n";
+print $fh ",1,10,-99\n";
+print $fh ",1,10,3\n";
+print $fh ",1,10,3\n";
+print $fh ",1,10,-99\n";
+print $fh ",1,10,5\n";
+print $fh ",2,3,7\n";
 close $fh;
 
-my $data = data->new(filename => $filename, directory => $tempdir,ignoresign => '@', parse_header => 1);
+my $data = data->new(filename => $filename, 
+					 directory => $tempdir,
+					 ignoresign => '@', 
+					 parse_header => 1);
 
 # mean
-is ($data->mean(column => 2), 12.32, "data->mean of small data set column 1");
-is ($data->mean(column => 3), 13.4, "data->mean of small data set column 2");
-dies_ok { $data->mean(column => 4) } "data->mean for non existing column";
-is ($data->mean(column_head => 'TEST'), 13.4, "data->mean with column name");
+is ($data->mean(column => 3),5, "data->mean of small data set column 1");
+is ($data->mean(column => 3, global_mean => 1 ),6.9, "global data->mean of small data set column 1");
+is ($data->mean(column => 4),5.5, "data->mean of small data set column 2");
+is ($data->mean(column => 4,global_mean=> 1),eval(23/5), "global data->mean of small data set column 2");
+dies_ok { $data->mean(column => 5) } "data->mean for non existing column";
+is ($data->mean(column_head => 'TEST'),5.5, "data->mean with column name");
 #is ($data->mean(column => 2, hi_cutoff => 10), 0, "data->mean with hi_cutoff");
 
+#sd
+my $sd = (((2-5)**2+(10-5)**2+(3-5)**2)/2)**0.5;
+is ($data->sd(column => 3),$sd, "data->sd of small data set column 1");
+$sd = (((1-6.9)**2+(2-6.9)**2+(3-6.9)**2+((10-6.9)**2)*6+(3-6.9)**2)/9)**0.5;
+is ($data->sd(column => 3, global_sd => 1),$sd, "data->sd of small data set column 1");
+
 #min
-is ($data->min(column => 2), 1.2, "data->min of small data set column 1");
-is ($data->min(column => 3), 2.8, "data->min of small data set column 2");
-dies_ok { $data->min(column => 4) } "data->min for non existing column";
-is ($data->min(column_head => 'TEST'), 2.8, "data->min with column name");
+is ($data->min(column => 3), 1, "data->min of small data set column 1");
+is ($data->min(column => 4), 3, "data->min of small data set column 2");
+dies_ok { $data->min(column => 8) } "data->min for non existing column";
+is ($data->min(column_head => 'TEST'),3, "data->min with column name");
 
 #max
-is ($data->max(column => 2), 23.56, "data->max of small data set column 1");
-is ($data->max(column => 3), 23.4, "data->max of small data set column 2");
-dies_ok { $data->max(column => 4) } "data->max for non existing column";
-is ($data->max(column_head => 'TEST'), 23.4, "data->max with column name");
+is ($data->max(column => 3), 10, "data->max of small data set column 1");
+is ($data->max(column => 4), 7, "data->max of small data set column 2");
+dies_ok { $data->max(column => 7) } "data->max for non existing column";
+is ($data->max(column_head => 'TEST'), 7, "data->max with column name");
 
 #median
-is ($data->median(column => 2), 12.2, "data->median of small data set column 1");
-is ($data->median(column => 3), 14, "data->median of small data set column 2");
-dies_ok { $data->median(column => 4) } "data->median for non existing column";
-is ($data->median(column_head => 'TEST'), 14, "data->median with column name");
+is ($data->median(column => 3), 3, "data->median of small data set column 1");
+is ($data->median(column => 3,global_median=>1), 10, "global data->median of small data set column 1");
+is ($data->median(column => 4), 5.5, "data->median of small data set column 2");
+is ($data->median(column => 4, global_median=>1), 5, "global data->median of small data set column 2");
+dies_ok { $data->median(column => 6) } "data->median for non existing column";
+is ($data->median(column_head => 'TEST'),5.5 , "data->median with column name");
 
 #range
-is ($data->range(column => 2), 22.36, "data->range of small data set column 1");
-is ($data->range(column => 3), 20.6, "data->range of small data set column 2");
-dies_ok { $data->range(column => 4) } "data->range for non existing column";
-is ($data->range(column_head => 'TEST'), 20.6, "data->range with column name");
+is ($data->range(column => 3), 9, "data->range of small data set column 1");
+is ($data->range(column => 4), 4, "data->range of small data set column 2");
+dies_ok { $data->range(column => 10) } "data->range for non existing column";
+is ($data->range(column_head => 'TEST'), 4, "data->range with column name");
+
 
 #column_to_array
-is_deeply($data->column_to_array(column => 2), [23.4, 14, 2.8] , "data->column_to_array of small data set column 1");
-is_deeply($data->column_to_array(column => 2, filter => [0, 1, 1]), [14, 2.8], "data->column_to_array of small data set with filter 1");
-is_deeply($data->column_to_array(column => 1, filter => [0, 0, 0]), [], "data->column_to_array of small data set with zero filter");
-dies_ok { $data->column_to_array(column => 1, filter => [0, 0]) } "data->column_to_array of small data set with too short filter";
+is_deeply($data->column_to_array(column => 2), [1,2,3,10,10,10,10,10,10,3] , "data->column_to_array of small data set column 1");
+is_deeply($data->column_to_array(column => 2, filter => [0, 1, 1, 0, 1, 0, 0, 0 ,1 ,1]), [2,3,10,10,3], "data->column_to_array of small data set with filter 1");
+is_deeply($data->column_to_array(column => 1, filter => [0, 0, 0, 0 ,0 ,0, 0 ,0 ,0 ,0]), [], "data->column_to_array of small data set with zero filter");
+dies_ok { $data->column_to_array(column => 1, filter => [0, 0, 0]) } "data->column_to_array of small data set with non-mulitple length filter";
 
 #merge
 my $filename_merge = "$tempdir/test_merge.dta";
 open my $fh, '>', $filename_merge;
-print $fh "ID SMTH TEST\n";
-print $fh "1 19 5\n";
-print $fh "1 28.9 6\n";
-print $fh "1 33.1 7.23\n";
+print $fh "C,ID,SMTH,TEST\n";
+print $fh ",1,10,5\n";
+print $fh ",1,20,6\n";
+print $fh ",1,30,7.23\n";
 close $fh;
 
 my $data_merge = data->new(filename => $filename_merge, directory => $tempdir, ignoresign => '@',parse_header =>1);
 $data_merge->merge(mergeobj => $data);
-is ($data_merge->mean(column => 2), 19.66, "data->merge checking new mean");
+is ($data_merge->mean(column => 3), eval(35/4), "data->merge checking new mean");
 
 #count_ind
-is ($data_merge->count_ind, 2, "data->count_ind");
-is ($data_merge->idcolumn, 1, "data->idcolumn");
+is ($data_merge->count_ind, 4, "data->count_ind");
+is ($data_merge->idcolumn, 2, "data->idcolumn");
 
 my $copy = $data_merge->copy(filename => 'dirt',
 							 write_copy => 0);
-is ($copy->count_ind, 2, "copied data count_ind");
-is ($copy->idcolumn, 1, "copied data idcol");
+is ($copy->count_ind, 4, "copied data count_ind");
+is ($copy->idcolumn, 2, "copied data idcol");
 
 
 #data set parsing

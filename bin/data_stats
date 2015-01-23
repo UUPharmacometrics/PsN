@@ -13,12 +13,16 @@ use Getopt::Long;
 
 my ($opt_help,
     $opt_long_help,
+    $opt_missing_data_token,
+	$opt_global,
     $opt_columns,
     $opt_ignore_columns,
 	$opt_ignoresign);
 
 my $opts = { "h|?"                => \$opt_help,
 	     "help"               => \$opt_long_help,
+	     "missing_data_token:f"          => \$opt_missing_data_token,
+	     "global!"          => \$opt_global,
 	     "columns:s"          => \$opt_columns,
 	     "ignore_columns:s"   => \$opt_ignore_columns,
 	     "ignoresign:s"   => \$opt_ignoresign,
@@ -29,7 +33,7 @@ my $res = GetOptions( %{$opts} );
 exit unless $res;
 
 if ( scalar( @ARGV ) < 1 and !($opt_help or $opt_long_help) ){
-  print "At least one list file must be specified. Use 'data_stats -h' for help.\n";
+  print "A data file must be specified. Use 'data_stats -h' for help.\n";
   exit;
 }
 
@@ -43,9 +47,11 @@ if($opt_help or $opt_long_help) {
 
   data_stats [ -h | -? ] [ -help ]
              [ -columns='string' ]
+	     [ -missing_data_token=number ]
+	     [ -global ]
 	     [ -ignore_columns='string' ]
 	     [ -ignoresign='string' ]
-	     outputfile(s)
+	     datafile
 
 ENDHELP
 
@@ -66,11 +72,11 @@ ENDHELP
 
     Calculate statistics for all columns except WGT and AGE.
     
-    $ data_stats --ignore_columns=WGT,AGE
+    $ data_stats --ignore_columns=WGT,AGE file.dta
 
     Calculate statistics for WGT and AGE only
 
-    $ data_stats --columns=WGT,AGE
+    $ data_stats --columns=WGT,AGE file.dta
 
   Options:
 
@@ -104,6 +110,18 @@ ENDHELP
     If the data file contains a header then that lines needs to be ignored by setting ignoresign.
 	Default is '@', i.e. ignore letters A-Z a-z.
 
+    -missing_data_token=number
+
+    Number denoting missing data. Default -99.
+
+    -global
+
+    Default not set. If set, compute mean, median and sd treating all
+	records equally, which means individuals with many records will have 
+	more influence. If not set, compute those metrics by first computing
+	one value per individual, and then computing over individuals, meaning
+	that all individuals will have equal influence.
+
     -help
 
     Print this, longer, help message.
@@ -119,9 +137,18 @@ my $ignoresign='@';
 if( $opt_ignoresign ){
 	$ignoresign = $opt_ignoresign;
 }
+my $missing=-99;
+if( defined $opt_missing_data_token ){
+	$missing = $opt_missing_data_token;
+}
+my $global=0;
+$global = 1 if ($opt_global);
 
 my $datafile = $ARGV[0];
-my $dataobj = data -> new (filename => $datafile, ignoresign => $ignoresign, parse_header => 1);
+my $dataobj = data -> new (filename => $datafile, 
+						   ignoresign => $ignoresign, 
+						   parse_header => 1,
+						   missing_data_token => $missing);
 
 my %ignore_columns;
 
@@ -141,23 +168,31 @@ if( $opt_columns ) {
 
 my $first = 1;
 foreach my $function ( ' 'x8, 'Min', 'Max', 'Mean', 'Median', 'Range', 'SD', ){
-  printf "%-8s", $function;
-  foreach my $head ( @columns ){
-    unless( $ignore_columns{$head} ){
-      if( $first ){
-	printf "%-8s", $head;
-      } else {
-	my $function = lc( $function );
-	if( $head =~ /[^\d]/ ){
-	  printf "%-8d", $dataobj -> $function( column_head => $head );
-	} else {
-	  printf "%-8d", $dataobj -> $function( column => $head );
+	printf "%-8s", $function;
+	foreach my $head ( @columns ){
+		unless( $ignore_columns{$head} ){
+			if( $first ){
+				printf "%-8s", $head;
+			} else {
+				my $function = lc( $function );
+				if ($global and $function =~/(mean|median|sd)/){
+					if( $head =~ /[^\d]/ ){
+						printf "%-8d", $dataobj -> $function( column_head => $head, "global_$function" => $global );
+					} else {
+						printf "%-8d", $dataobj -> $function( column => $head , "global_$function" => $global);
+					}
+				}else{
+					if( $head =~ /[^\d]/ ){
+						printf "%-8d", $dataobj -> $function( column_head => $head );
+					} else {
+						printf "%-8d", $dataobj -> $function( column => $head );
+					}
+				}
+			}
+		}
 	}
-      }
-    }
-  }
-  $first = 0;
-  print "\n";
+	$first = 0;
+	print "\n";
 }
 
 
