@@ -14,6 +14,7 @@ use array;
 use IO::File;
 use math;
 use utils::file;
+use standardised_output::xml;
 
 has 'lst_files' => ( is => 'rw', isa => 'ArrayRef[Str]' );
 has 'bootstrap_results' => ( is => 'rw', isa => 'Maybe[Str]' );
@@ -33,6 +34,7 @@ has '_document' => ( is => 'rw', isa => 'Ref' );                    # The XML do
 has '_duplicate_blocknames' => ( is => 'rw', isa => 'HashRef' );    # Contains those blocknames which will have duplicates with next number for block
 has '_first_block' => ( is => 'rw', isa => 'Str' );                 # Name of the first SOBlock
 has '_so_path' => ( is => 'rw', isa => 'Str' );                     # The path of the output SO file
+has '_xml' => ( is => 'rw', isa => 'standardised_output::xml' );    # Module to create SO xml
 
 sub BUILD
 {
@@ -68,364 +70,10 @@ sub BUILD
 
     my $doc = XML::LibXML::Document->new('1.0', 'utf-8');
     $self->_document($doc);
+
+    my $so_xml = standardised_output::xml->new(precision => $self->precision, _document => $self->_document, verbose => $self->verbose);
+    $self->_xml($so_xml);
 }
-
-# Plain XML helper methods
-# Uses $self->_document and $self->precision
-
-sub create_typed_element
-{
-    # Create an element such as <ct:String>text</ct:String>
-    my $self = shift;
-    my %parm = validated_hash(\@_,
-        type => { isa => 'Str' },
-        content => { isa => 'Str' },
-    );
-    my $type = $parm{'type'};
-    my $content = $parm{'content'};
-
-    my $doc = $self->_document;
-
-    my $element = $doc->createElement('ct:' . $type);
-    $element->appendTextNode($content);
-
-    return $element;
-}
-
-sub create_message
-{
-    # Create an Message element for TaskInformation
-    my $self = shift;
-    my %parm = validated_hash(\@_,
-        message => { isa => 'HashRef' },
-    );
-    my $message = $parm{'message'};
-
-    my $doc = $self->_document;
-
-    my $node = $doc->createElement("Message");
-    $node->setAttribute('type', $message->{'type'});
-    my $toolname = $doc->createElement('Toolname');
-    $toolname->appendChild($self->create_typed_element(type => 'String', content => $message->{'toolname'}));
-    $node->appendChild($toolname);
-    my $name = $doc->createElement('Name');
-    $name->appendChild($self->create_typed_element(type => 'String', content => $message->{'name'}));
-    $node->appendChild($name);
-    my $content = $doc->createElement('Content');
-    $content->appendChild($self->create_typed_element(type => 'String', content => $message->{'content'}));
-    $node->appendChild($content);
-    my $severity = $doc->createElement('Severity');
-    $severity->appendChild($self->create_typed_element(type => 'Int', content => $message->{'severity'}));
-    $node->appendChild($severity);
-
-    if ($self->verbose) {
-        if ($message->{'type'} eq 'ERROR' or $message->{'type'} eq 'WARNING') {
-            print $message->{'type'}, " ", $message->{'name'}, ": ", $message->{'content'}, "\n";
-        }
-    }
-
-    return $node;
-}
-
-sub create_table
-{
-    my $self = shift;
-    my %parm = validated_hash(\@_,
-        table_name => { isa => 'Str' },
-        column_ids => { isa => 'ArrayRef' },
-        column_types => { isa => 'ArrayRef' },
-        column_valuetypes => { isa => 'ArrayRef' },
-        values => { isa => 'ArrayRef' },
-        row_major => { isa => 'Bool', default => 0 },
-        table_file => { isa => 'Maybe[Str]', optional => 1 },      # Name to use for stem of table_file
-    );
-    my $table_name = $parm{'table_name'};
-    my $column_ids = $parm{'column_ids'};
-    my $column_types = $parm{'column_types'};
-    my $column_valuetypes = $parm{'column_valuetypes'};
-    my $values = $parm{'values'};
-    my $row_major = $parm{'row_major'};
-    my $table_file = $parm{'table_file'};
-
-    my $doc = $self->_document;
-
-    my $table = $doc->createElement($table_name);
-
-    my $def = $doc->createElement("ds:Definition");
-    $table->appendChild($def);
-    for (my $col = 0; $col < scalar(@$column_ids); $col++) {
-        my $column = $doc->createElement("ds:Column");
-        $column->setAttribute(columnId => $column_ids->[$col]);
-        $column->setAttribute(columnType => $column_types->[$col]);
-        $column->setAttribute(valueType => $column_valuetypes->[$col]);
-        $column->setAttribute(columnNum => $col + 1);
-        $def->appendChild($column);
-    }
-
-    my $numcols = scalar(@$column_ids);
-    my $numrows;
-    if ($row_major) {
-        $numrows = scalar(@$values);
-    } else {
-        $numrows = scalar(@{$values->[0]});
-    }
-
-    if (not defined $table_file) {
-        my $tab = $doc->createElement("ds:Table");
-        $table->appendChild($tab);
-        for (my $row = 0; $row < $numrows; $row++) {
-            my $row_xml = $doc->createElement("ds:Row");
-            $tab->appendChild($row_xml);
-            for (my $col = 0; $col < $numcols; $col++) {
-                my $value_type = uc(substr($column_valuetypes->[$col], 0, 1)) . substr($column_valuetypes->[$col], 1);
-                my $column_type = $column_types->[$col];
-                my $element;
-                if ($row_major) {
-                    $element = $values->[$row]->[$col];
-                } else {
-                    $element = $values->[$col]->[$row];
-                }
-                my $value = $doc->createElement("ct:" . $value_type);
-                if ($value_type eq 'String' and $column_type ne 'id') {
-                    $value->appendTextNode($element);
-                } else {
-                    $value->appendTextNode(math::to_precision($element, $self->precision));
-                }
-                $row_xml->appendChild($value);
-            }
-        }
-    } else {
-        my $filename = $table_file . '_' . $table_name . '.csv';
-        my $data = $doc->createElement("ds:ImportData");
-        $table->appendChild($data);
-        $data->setAttribute("oid", $table_name);
-        my $path = $doc->createElement("ds:path");
-        $data->appendChild($path);
-        $path->appendTextNode($filename);
-        my $format = $doc->createElement("ds:format");
-        $data->appendChild($format);
-        $format->appendTextNode("CSV");
-        my $delimiter = $doc->createElement("ds:delimiter");
-        $data->appendChild($delimiter);
-        $delimiter->appendTextNode("COMMA");
-
-        # Create the external table file
-        open my $fh, ">", $self->_so_path . $filename;
-        for (my $row = 0; $row < $numrows; $row++) {
-            for (my $col = 0; $col < $numcols; $col++) {
-                my $value_type = uc(substr($column_valuetypes->[$col], 0, 1)) . substr($column_valuetypes->[$col], 1);
-                my $column_type = $column_types->[$col];
-                my $element;
-                if ($row_major) {
-                    $element = $values->[$row]->[$col];
-                } else {
-                    $element = $values->[$col]->[$row];
-                }
-                if ($value_type eq 'String' and $column_type ne 'id') {
-                    print $fh $element;
-                } else {
-                    print $fh $self->math::to_precision($element, $self->precision);
-                }
-                print $fh "," if ($col != $numcols - 1);
-            }
-            print $fh "\n";
-        }
-        close $fh;
-    }
-
-    return $table;
-}
-
-sub create_single_row_table
-{
-    my $self = shift;
-    my %parm = validated_hash(\@_,
-        table_name => { isa => 'Str' },
-        labels => { isa => 'ArrayRef' },
-        values => { isa => 'ArrayRef' },
-    );
-    my $table_name = $parm{'table_name'};
-    my @labels = @{$parm{'labels'}};
-    my @values = @{$parm{'values'}};
-
-    my $table = $self->create_table(
-        table_name => $table_name,
-        column_ids => \@labels,
-        column_types => [ ("undefined") x scalar(@labels) ],
-        column_valuetypes => [ ("real") x scalar(@labels) ],
-        values => [ \@values ],
-        row_major => 1,
-    );
-
-    return $table;
-}
-
-sub create_parameter_table
-{
-    my $self = shift;
-    my %parm = validated_hash(\@_,
-        table_name => { isa => 'Str' },
-        name => { isa => 'Str' },
-        labels => { isa => 'ArrayRef' },
-        values => { isa => 'ArrayRef' },
-    );
-    my $table_name = $parm{'table_name'};
-    my $name = $parm{'name'};
-    my $labels = $parm{'labels'};
-    my $values = $parm{'values'};
-
-    my $table = $self->create_table(
-        table_name => $table_name,
-        column_ids => [ "parameter", $name ],
-        column_types => [ ("undefined") x 2 ],
-        column_valuetypes => [ "string", "real" ],
-        values => [ $labels, $values ], 
-    );
-
-    return $table;
-}
-
-sub create_matrix
-{
-    my $self = shift;
-    my %parm = validated_hash(\@_,
-        rownames => { isa => 'ArrayRef' },
-        colnames => { isa => 'ArrayRef' },
-        matrix => { isa => 'ArrayRef[ArrayRef]' },
-    );
-    my $rownames = $parm{'rownames'};
-    my $colnames = $parm{'colnames'};
-    my $matrix = $parm{'matrix'};
-
-    my $doc = $self->_document;
-
-    my $matrix_xml = $doc->createElement("ct:Matrix");
-    $matrix_xml->setAttribute(matrixType => "Any");
-
-    my $rownames_xml = $doc->createElement("ct:RowNames");
-    $matrix_xml->appendChild($rownames_xml);
-    foreach my $name (@$rownames) {
-        my $string = $doc->createElement("ct:String");
-        $string->appendTextNode($name);
-        $rownames_xml->appendChild($string);
-    }
-
-    my $colnames_xml = $doc->createElement("ct:ColumnNames");
-    $matrix_xml->appendChild($colnames_xml);
-    foreach my $name (@$colnames) {
-        my $string = $doc->createElement("ct:String");
-        $string->appendTextNode($name);
-        $colnames_xml->appendChild($string);
-    }
-
-    for my $row (@$matrix) {
-        my $matrix_row = $doc->createElement("ct:MatrixRow");
-        $matrix_xml->appendChild($matrix_row);
-        for my $element (@$row) {
-            my $real = $doc->createElement("ct:Real");
-            $real->appendTextNode(math::to_precision($element, $self->precision));
-            $matrix_row->appendChild($real);
-        }
-    }
-
-    return $matrix_xml;
-}
-
-sub find_or_create_node
-{
-    my $self = shift;
-    my %parm = validated_hash(\@_,
-        root_node => { isa => 'Ref' },
-        node_name => { isa => 'Str' },      # Can be a one level XPath
-    );
-    my $root_node = $parm{'root_node'};
-    my $node_name = $parm{'node_name'};
-
-    my $doc = $self->_document;
-    my $node;
-    if (not $root_node->exists($node_name)) {
-        $node = $doc->createElement($node_name);
-        $root_node->appendChild($node);
-    } else {
-        ($node) = $root_node->findnodes($node_name);
-    }
-
-    return $node;
-}
-
-sub IsStarting_character
-{
-    # Character class for the XML character class [\i-[:]] (first character in NCName)
-    # Adapted from http://www.regular-expressions.info/shorthand.html#xml
-    return <<END;
-0041 005A
-005F
-0061 007A
-00C0 00D6
-00D8 00F6
-00F8 02FF
-0370 037D
-037F 1FFF
-200C 200D
-2070 218F
-2C00 2FEF
-3001 D7FF
-F900 FDCF
-FDF0 FFFD
-END
-}
-
-sub IsContinuing_character
-{
-    # Character class for the XML character class [\c-[:]] (following characters in NCName)
-    # Adapted from http://www.regular-expressions.info/shorthand.html#xml
-    return <<END;
-002D
-002E
-0030 0039
-0041 005A
-005F
-0061 007A
-00B7
-00C0 00D6
-00D8 00F6
-00F8 037D
-037F 1FFF
-200C 200D
-203F
-2040
-2070 218F
-2C00 2FEF
-3001 D7FF
-F900 FDCF
-FDF0 FFFD
-END
-}
-
-sub match_symbol_idtype
-{
-    # Check if a string is a legal SymbolIdType
-    my $symbol = shift;
-    
-    if ($symbol =~ /^\p{IsStarting_character}\p{IsContinuing_character}*$/) {
-        return 1;
-    } else {
-        return 0;
-    }
-}
-
-sub mangle_symbol_idtype
-{
-    # Mangle a SymbolIdType by replacing all illegal characters with underscore
-    my $symbol = shift;
-
-    $symbol =~ s/^\P{IsStarting_character}/_/;
-    $symbol =~ s/\P{IsContinuing_character}/_/g;
-
-    return $symbol;
-}
-
-# End of XML helper methods
 
 sub create_block
 {
@@ -517,7 +165,7 @@ sub parse
     $SO->setAttribute('id' => "i1");
 
     if (defined $self->pharmml) {
-        my $pharmmlref = $self->_create_pharmml_ref();
+        my $pharmmlref = $self->_xml->create_pharmml_ref(name => $self->pharmml);
         $SO->appendChild($pharmmlref);
     }
 
@@ -559,13 +207,13 @@ sub parse
         if ($self->verbose) {
             print "Adding bootstrap results from file ", $self->bootstrap_results, " to SOBlock \"$bootstrap_block\"\n";
         }
-        my $estimation = $self->find_or_create_node(root_node => $block, node_name => "Estimation");
+        my $estimation = $self->_xml->find_or_create_node(root_node => $block, node_name => "Estimation");
 
         my $bootstrap_message;
 
         # Create Bootstrap element
         if (-e $self->bootstrap_results) {
-            my $ppi = $self->find_or_create_node(root_node => $estimation, node_name => "PrecisionPopulationEstimates");
+            my $ppi = $self->_xml->find_or_create_node(root_node => $estimation, node_name => "PrecisionPopulationEstimates");
             (my $bootstrap, $bootstrap_message) = $self->_create_bootstrap();
             if (defined $bootstrap) {
                 $ppi->appendChild($bootstrap);
@@ -584,7 +232,7 @@ sub parse
         if (defined $bootstrap_message) {
             if ($block->exists("TaskInformation")) {
                 (my $ti) = $block->findnodes("TaskInformation");
-                my $message = $self->create_message(message => $bootstrap_message);
+                my $message = $self->_xml->create_message(message => $bootstrap_message);
                 my $first_child = $ti->firstChild();
                 $ti->insertBefore($message, $first_child);
             } else {
@@ -596,18 +244,6 @@ sub parse
 
     $doc->setDocumentElement($SO);
     $doc->toFile($self->so_filename, $self->pretty);
-}
-
-sub _create_pharmml_ref
-{
-    # Add the PharmMLRef element
-    my $self = shift;
-
-    my $doc = $self->_document;
-    my $pharmmlref = $doc->createElement("PharmMLRef");
-    $pharmmlref->setAttribute("name", $self->pharmml);
-
-    return $pharmmlref;
 }
 
 sub _parse_lst_file
@@ -719,9 +355,9 @@ sub _parse_lst_file
                 $estimation = $doc->createElement("Estimation");
 
                 foreach my $label (@all_labels) {
-                    if (not match_symbol_idtype($label)) {
+                    if (not $self->_xml->match_symbol_idtype($label)) {
                         my $old_label = $label;
-                        $label = mangle_symbol_idtype($label);
+                        $label = $self->_xml->mangle_symbol_idtype($label);
                         push @messages, {
                             type => "WARNING",
                             toolname => "nmoutput2so",
@@ -934,7 +570,7 @@ sub _create_population_estimates
 
     my $pe = $doc->createElement("PopulationEstimates");
 
-    my $table = $self->create_single_row_table(table_name => 'MLE', labels => \@labels, values => \@values);
+    my $table = $self->_xml->create_single_row_table(table_name => 'MLE', labels => \@labels, values => \@values);
     $pe->appendChild($table);
 
     return $pe;
@@ -964,11 +600,11 @@ sub _create_precision_population_estimates
         my $mle = $doc->createElement("MLE");
         $ppe->appendChild($mle);
         if ($self->check_include(element => 'Estimation/PrecisionPopulationEstimates/MLE/StandardError')) {
-            my $table = $self->create_parameter_table(table_name => 'StandardError', name => 'SE', labels => \@labels, values => \@standard_errors);
+            my $table = $self->_xml->create_parameter_table(table_name => 'StandardError', name => 'SE', labels => \@labels, values => \@standard_errors);
             $mle->appendChild($table);
         }
         if ($self->check_include(element => 'Estimation/PrecisionPopulationEstimates/MLE/RelativeStandardError')) {
-            my $table = $self->create_parameter_table(table_name => 'RelativeStandardError', name => 'RSE', labels => \@labels,
+            my $table = $self->_xml->create_parameter_table(table_name => 'RelativeStandardError', name => 'RSE', labels => \@labels,
                 values => \@relative_standard_errors);
             $mle->appendChild($table);
         }
@@ -976,14 +612,14 @@ sub _create_precision_population_estimates
         if ($self->check_include(element => 'Estimation/PrecisionPopulationEstimates/MLE/CorrelationMatrix')) {
             my $cor = $doc->createElement("CorrelationMatrix");
             $mle->appendChild($cor);
-            my $matrix = $self->create_matrix(rownames => \@labels, colnames => \@labels, matrix => $correlation_matrix);
+            my $matrix = $self->_xml->create_matrix(rownames => \@labels, colnames => \@labels, matrix => $correlation_matrix);
             $cor->appendChild($matrix);
         }
 
         if ($self->check_include(element => 'Estimation/PrecisionPopulationEstimates/MLE/CovarianceMatrix')) {
             my $cov = $doc->createElement("CovarianceMatrix");
             $mle->appendChild($cov);
-            my $matrix = $self->create_matrix(rownames => \@labels, colnames => \@labels, matrix => $covariance_matrix);
+            my $matrix = $self->_xml->create_matrix(rownames => \@labels, colnames => \@labels, matrix => $covariance_matrix);
             $cov->appendChild($matrix);
         }
     }
@@ -1053,7 +689,7 @@ sub _create_bootstrap
             severity => 2,
         };
     } else {
-        my $table = $self->create_table(
+        my $table = $self->_xml->create_table(
             table_name => 'Percentiles',
             column_ids => [ "Percentile", @parameters ],
             column_types => [ ('undefined') x (scalar(@parameters) + 1) ],
@@ -1089,14 +725,14 @@ sub _create_task_information
     my $task_information = $doc->createElement("TaskInformation");
 
     foreach my $message (@messages) {
-        my $element = $self->create_message(message => $message);
+        my $element = $self->_xml->create_message(message => $message);
         $task_information->appendChild($element);
     }
 
     if (defined $run_time) {
         my $xml_run_time = $doc->createElement("RunTime");
         $task_information->appendChild($xml_run_time);
-        $xml_run_time->appendChild($self->create_typed_element(type => 'Real', content => $run_time));
+        $xml_run_time->appendChild($self->_xml->create_typed_element(type => 'Real', content => $run_time));
     }
 
     return $task_information;
@@ -1143,7 +779,7 @@ sub _create_predictions
     my $pred = $sdtab->column_to_array(column => "PRED");
     my $ipred = $sdtab->column_to_array(column => "IPRED");
 
-    my $predictions = $self->create_table(
+    my $predictions = $self->_xml->create_table(
         table_name => "Predictions",
         column_ids => [ "ID", "TIME", "PRED", "IPRED" ],
         column_types => [ "id", "undefined", "undefined", "undefined" ],
@@ -1202,7 +838,7 @@ sub _create_residuals
         return;
     }
 
-    my $table = $self->create_table(
+    my $table = $self->_xml->create_table(
         table_name => "Residuals",
         column_ids => \@ids,
         column_types => [ "id", ("undefined") x (scalar(@ids) - 1) ],
@@ -1285,7 +921,7 @@ sub _create_individual_estimates
         my $estimates = $doc->createElement("Estimates");
         $individual_estimates->appendChild($estimates);
         if ($self->check_include(element => 'Estimation/IndividualEstimates/Estimates/Median')) {
-            my $table = $self->create_table(
+            my $table = $self->_xml->create_table(
                 table_name => "Median",
                 column_ids => [ "ID", @labels ],
                 column_types => [ "id", ("undefined") x scalar(@labels) ],
@@ -1295,7 +931,7 @@ sub _create_individual_estimates
             $estimates->appendChild($table);
         }
         if ($self->check_include(element => 'Estimation/IndividualEstimates/Estimates/Mean')) {
-            my $table = $self->create_table(
+            my $table = $self->_xml->create_table(
                 table_name => "Mean",
                 column_ids => [ "ID", @labels ],
                 column_types => [ "id", ("undefined") x scalar(@labels) ],
@@ -1324,7 +960,7 @@ sub _create_individual_estimates
             $individual_estimates->appendChild($random_effects);
 
             if ($self->check_include(element => 'Estimation/IndividualEstimates/RandomEffects/EffectMedian')) {
-                my $table = $self->create_table(
+                my $table = $self->_xml->create_table(
                     table_name => "EffectMedian",
                     column_ids => [ "ID", @$eta_names ],
                     column_types => [ "id", ("undefined") x scalar(@$eta_names) ],
@@ -1335,7 +971,7 @@ sub _create_individual_estimates
             }
 
             if ($self->check_include(element => 'Estimation/IndividualEstimates/RandomEffects/EffectMean')) {
-                my $table = $self->create_table(
+                my $table = $self->_xml->create_table(
                     table_name => "EffectMean",
                     column_ids => [ "ID", @$eta_names ],
                     column_types => [ "id", ("undefined") x scalar(@$eta_names) ],
@@ -1490,7 +1126,7 @@ sub _create_simulated_profiles
     }
     @dvid = ((1) x scalar(@id));        # Don't support multiple DVs for now
 
-    my $simulated_profiles = $self->create_table(
+    my $simulated_profiles = $self->_xml->create_table(
         table_name => "SimulatedProfiles",
         column_ids => [ "ID", "DVID", "TIME", "Observation" ],
         column_types => [ "id", "dvid", "time", "dv" ],
@@ -1634,7 +1270,7 @@ sub _create_population_parameters
         $prev_time = $time;
     }
 
-    my $table = $self->create_table(
+    my $table = $self->_xml->create_table(
         table_name => "PopulationParameters",
         column_ids => [ "ID", "OccasionStart", "OccationEnd", @labels ],
         column_types => [ "id", "time", "time", ("undefined") x scalar(@labels) ],
@@ -1707,7 +1343,7 @@ sub _create_occasion_table
         $prev_time = $time;
     }
 
-    my $table = $self->create_table(
+    my $table = $self->_xml->create_table(
         table_name => $table_name,
         column_ids => [ "ID", "OccasionStart", "OccationEnd", @labels ],
         column_types => [ "id", "time", "time", ("undefined") x scalar(@labels) ],
