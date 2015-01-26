@@ -2,7 +2,7 @@
 
 use strict;
 use warnings;
-use Test::More tests => 4;
+use Test::More tests => 5;
 use FindBin qw($Bin);
 use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages
@@ -28,5 +28,9 @@ my $nonmemrun = nonmemrun->new(
 my $cmd = $nonmemrun->create_command;
 
 like($cmd, qr/\s+my opts/, "nmfe_options");
+
+$nonmemrun->job_id(10002265);
+my $id = $nonmemrun->job_id;
+is ($id,10002265,"big jobid");
 
 done_testing();

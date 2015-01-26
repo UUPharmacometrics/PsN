@@ -146,8 +146,8 @@ sub monitor
 
 	#squeue -j 12345, --jobs
 
-	#list only completed, cancelled... job with right id without header
-	my $outp = `squeue -h --states CA,CD,F,NF,TO -j $jobId 2>&1`;
+	#list only completed, cancelled... job with right id without header allowing for very wide numbers without truncation
+	my $outp = `squeue -h --states CA,CD,F,NF,TO -j $jobId -o"%.30i" 2>&1`;
 	if (defined $outp) {
 		if ($outp =~ /(i|I)nvalid/) {
 			#this is either because the job finished so long ago (MinJobAge)
@@ -156,7 +156,7 @@ sub monitor
 			#due to too early polling, and then try again. If message persists then assume job
 			#id will never be valid, i.e. finished. That definitely can happen.
 			sleep(3);
-			my $outp2 = `squeue -h --states CA,CD,F,NF,TO -j $jobId 2>&1`;
+			my $outp2 = `squeue -h --states CA,CD,F,NF,TO -j $jobId -o"%.30i" 2>&1`;
 			if (defined $outp2) {
 				if ($outp2 =~ /(i|I)nvalid/) {
 					return $jobId; # Give up. This job is finished since not in queue
