@@ -28,7 +28,6 @@ my %options;
 
 my %required_options = ();
 my %optional_options = ("prepend_options_to_lst!"=> undef,
-						"prepend_model_to_lst!"=> undef,
 						"model_dir_name!" => undef,
 						'rawres_input:s' => undef,
 						'offset_rawres:i' => undef,
@@ -299,7 +298,6 @@ if (defined $options{'rawres_input'}){
 #basedirect $main_directory
 $modelfit = tool::modelfit -> 
     new ( eval( $common_options::parameters ),
-	  prepend_model_to_lst => $options{'prepend_model_to_lst'},
 	  prepend_model_file_name => 1,
 	  prepend_options_to_lst => $options{'prepend_options_to_lst'},
 	  tail_output => $options{'tail_output'},

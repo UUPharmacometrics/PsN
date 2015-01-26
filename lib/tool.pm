@@ -47,7 +47,6 @@ has 'missing_data_token' => ( is => 'rw', isa => 'Str', default => '-99' );
 has 'model_number' => ( is => 'rw', isa => 'Int' );
 has 'nice' => ( is => 'rw', isa => 'Int', default => 19 );
 has 'nm_version' => ( is => 'rw', isa => 'Str', default => 'default' );
-has 'prepend_model_to_lst' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'prepend_options_to_lst' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'tool_id' => ( is => 'rw', isa => 'Int' );
 has 'parent_tool_id' => ( is => 'rw', isa => 'Int' );

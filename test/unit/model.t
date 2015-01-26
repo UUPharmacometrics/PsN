@@ -13,7 +13,7 @@ my $modeldir = $includes::testfiledir;
 
 my $model = model->new(filename => "$modeldir/pheno.mod");
 
-is ($model->get_tweak_inits_problem_number,1,"get_tweak_inits_problem_number");
+is ($model->get_retries_problem_number,1,"get_retries_problem_number");
 
 is (scalar(@{$model->problems}), 1, "Check number of problems");
 my $problem = $model->problems->[0];
@@ -211,7 +211,7 @@ $dummy->filename('model');
 is($dummy->create_output_filename, 'model.lst', "create_output_filename no extension");
 
 $model = model->new(filename => "$modeldir/mox_sir_block2.mod");
-is ($model->get_tweak_inits_problem_number,1,"get_tweak_inits_problem_number");
+is ($model->get_retries_problem_number,1,"get_retries_problem_number");
 is_deeply($model->fixed_or_same(parameter_type => 'theta')->[0],[0,0,0,0,0],'fixed or same theta ');
 is_deeply($model->fixed_or_same(parameter_type => 'omega')->[0],[0,0,0,0],'fixed or same omega ');
 is_deeply($model->same(parameter_type => 'omega')->[0],[0,0,0,0],'same omega 1');
@@ -225,6 +225,6 @@ is_deeply($model->same(parameter_type => 'omega')->[0],[0,0,0,0,0,1,0,1],'same o
 is_deeply($model->same(parameter_type => 'sigma')->[0],[0],'same sigma 2');
 
 $model = model->new(filename => "$modeldir/tnpri.mod");
-is ($model->get_tweak_inits_problem_number,0,"get_tweak_inits_problem_number");
+is ($model->get_retries_problem_number,0,"get_retries_problem_number");
 
 done_testing();

@@ -5069,50 +5069,21 @@ sub create_dummy_model
 	return $model;
 }
 
-sub get_tweak_inits_problem_number
+sub get_retries_problem_number
 {
 	#get the problem number to check status of in modelfit::restart_needed
+	#always the first $PROB, if any, that has $EST that is not MAXEVAL=0
 	#standard case is 1, if that prob is estimation
 	# with two $PROB and $PRIOR TNPRI it is 2, if it is estimation
-	# if prob is not estimation, or if more $PROB, return 0, i.e. turn off tweak inits
+	# if do not find $PROB with est then return 0, i.e. turn off tweak inits
 	my $self = shift;
 
-	my $retryprobnum;
+	my $retryprobnum=0;
 
-	if (scalar (@{$self->problems}) > 2 ){
-		#special case, do not handle this
-		$retryprobnum=0;
-	} elsif (scalar (@{$self->problems}) == 2 ) {
-		my $tnpri = 0;
-		if ((defined $self->problems->[0]->priors()) and 
-			scalar(@{$self->problems->[0]->priors()}) > 0 ) {
-			foreach my $rec (@{$self->problems->[0]->priors()}) {
-				unless ((defined $rec) &&( defined $rec->options )) {
-					carp("No options for rec \$PRIOR" );
-				}
-				foreach my $option ( @{$rec->options} ) {
-					if ((defined $option) and 
-						(($option->name eq 'TNPRI') || (index('TNPRI', $option->name ) == 0))) {
-						$tnpri = 1;
-					}
-				}
-			}
-		}
-		if ($tnpri) {
-			$retryprobnum=2;
-		} else {
-			#special, do not handle
-			$retryprobnum=0;
-		}
-	}else{
-		#one $PROB
-		$retryprobnum=1;
-	}
-
-	if ($retryprobnum){
-		# 1 or 2
-		unless ($self->is_estimation(problem_number=>$retryprobnum)){
-			$retryprobnum = 0;
+	for (my $i=1; $i <= scalar (@{$self->problems}); $i++ ){
+		if ($self->is_estimation(problem_number=>$i)){
+			$retryprobnum = $i;
+			last;
 		}
 	}
 	return ($retryprobnum);

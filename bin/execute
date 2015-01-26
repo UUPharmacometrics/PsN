@@ -339,7 +339,6 @@ if ( defined $options{'predict_data'} and defined $options{'predict_model'} ) {
 	$pred_mod -> table_names( new_names => [\@new_tables] );
 	$modelfit = tool::modelfit -> 
 		new ( eval( $common_options::parameters ),
-			  prepend_model_to_lst => $options{'prepend_model_to_lst'},
 			  prepend_options_to_lst => $options{'prepend_options_to_lst'},
 			  tail_output => $options{'tail_output'},
 			  wintail_exe => $options{'wintail_exe'},
@@ -349,7 +348,6 @@ if ( defined $options{'predict_data'} and defined $options{'predict_model'} ) {
 
 	$modelfit = tool::modelfit -> 
 		new ( eval( $common_options::parameters ),
-			  prepend_model_to_lst => $options{'prepend_model_to_lst'},
 			  prepend_options_to_lst => $options{'prepend_options_to_lst'},
 			  reduced_model_ofv => $options{'reduced_model_ofv'},
 			  tail_output => $options{'tail_output'},

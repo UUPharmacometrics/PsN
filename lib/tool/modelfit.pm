@@ -1784,7 +1784,7 @@ sub passed_picky
 	my $picky = $parm{'picky'};
 	my $probnum = $parm{'probnum'};
 
-	#probnum is from model->get_tweak_inits_problem_number,
+	#probnum is from model->get_retries_problem_number,
 	my $passed_picky = 0;
 
 	if ($picky and ($probnum > 0)){
@@ -1869,7 +1869,7 @@ sub restart_needed
 	#this is 1 for regular one $PROB with estimation
 	# 2 if two $PROB with $PRIOR TNPRI in first
 	# 0 if no estimation (no $EST, or $EST MAXEVAL=0)
-	my $tweak_inits_probnum = $candidate_model->get_tweak_inits_problem_number();
+	my $retries_probnum = $candidate_model->get_retries_problem_number();
 
 	my $failure;
 	my $failure_mess;
@@ -1910,7 +1910,7 @@ sub restart_needed
 			foreach my $category ( 'minimization_successful', 'covariance_step_successful',
 								   'covariance_step_warnings', 'estimate_near_boundary',
 								   'significant_digits', 'ofv' ){
-				my $index = ($tweak_inits_probnum-1);
+				my $index = ($retries_probnum-1);
 				$index = 0 if ($index < 0); #no relevant estimation to check anyway
 				$run_results -> [${$tries}] -> {$category} = $output_file -> get_single_value(attribute => $category,
 																							  problem_index => $index);
@@ -1928,7 +1928,7 @@ sub restart_needed
 
 			$run_results -> [${$tries}] -> {'pass_picky'} = passed_picky(minimization_successful => $output_file -> minimization_successful(),
 																		 minimization_message => $output_file -> minimization_message(),
-																		 probnum => $tweak_inits_probnum,
+																		 probnum => $retries_probnum,
 																		 picky => $picky);
 
 			$output_file -> flush;
@@ -2191,7 +2191,7 @@ sub restart_needed
 		foreach my $category ( 'minimization_successful', 'covariance_step_successful',
 							   'covariance_step_warnings', 'estimate_near_boundary',
 							   'significant_digits', 'ofv' ){
-			my $index = ($tweak_inits_probnum-1);
+			my $index = ($retries_probnum-1);
 			$index = 0 if ($index < 0); #no relevant estimation to check anyway
 			$run_results -> [${$tries}] -> {$category} = $output_file -> get_single_value(attribute => $category,
 																						  problem_index => $index);
@@ -2202,32 +2202,32 @@ sub restart_needed
 
 		$run_results -> [${$tries}] -> {'pass_picky'} = passed_picky(minimization_successful => $minimization_successful,
 																	 minimization_message => $minimization_message,
-																	 probnum => $tweak_inits_probnum,
+																	 probnum => $retries_probnum,
 																	 picky => $picky);
 
 		my $round_error = 0;
 		my $hessian_error = 0;
 		my $maxeval_error = 0;
 		
-		if ( (not $marked_for_rerun) and ($tweak_inits_probnum > 0) and 
+		if ( (not $marked_for_rerun) and ($retries_probnum > 0) and 
 			 ( $tweak_inits || $cut_thetas_rounding_errors || $handle_hessian_npd || $cut_thetas_maxevals)) {
-			#we will not enter here unless $tweak_inits_probnum indicated we have regular structure $PROB and
+			#we will not enter here unless $retries_probnum indicated we have regular structure $PROB and
 			# an estimation to check
 			trace(tool => 'modelfit', message => "check if run needs restart", level => 2);
 			my $need_restart = 0;
 
 			if (not $run_results -> [${$tries}] -> {'minimization_successful'}){
 				my $sigdig = $output_file -> get_single_value(attribute =>'significant_digits',
-															  problem_index => ($tweak_inits_probnum-1));
+															  problem_index => ($retries_probnum-1));
 				unless ($significant_digits_accept and (defined $sigdig) and ($sigdig >= $significant_digits_accept))  {
 					$need_restart = 1; 
 					trace(tool => 'modelfit', message => "Minimization not successful, must restart.", level => 2);
 				}
 
 				$round_error = 1 if ($output_file -> get_single_value(attribute => 'rounding_errors',
-																	  problem_index => ($tweak_inits_probnum-1)));
+																	  problem_index => ($retries_probnum-1)));
 				if ($handle_hessian_npd){
-					for ( @{$minimization_message -> [$tweak_inits_probnum-1][0]} ) {
+					for ( @{$minimization_message -> [$retries_probnum-1][0]} ) {
 						if ( /\s*NUMERICAL HESSIAN OF OBJ. FUNC. FOR COMPUTING CONDITIONAL ESTIMATE IS NON POSITIVE DEFINITE\s*/){
 							$hessian_error = 1 ;
 							last;
@@ -2235,7 +2235,7 @@ sub restart_needed
 					}
 				} 
 				if ($cut_thetas_maxevals){
-					for ( @{$minimization_message -> [$tweak_inits_probnum-1][0]} ) {
+					for ( @{$minimization_message -> [$retries_probnum-1][0]} ) {
 						if ( /\s*MAX. NO. OF FUNCTION EVALUATIONS EXCEEDED\s*/) {
 							$maxeval_error = 1 ;
 							last;
@@ -2306,9 +2306,9 @@ sub restart_needed
 				}
 
 				if ($do_tweak){
-					$candidate_model -> problems->[$tweak_inits_probnum-1] -> set_random_inits ( degree => $self->degree ,
+					$candidate_model -> problems->[$retries_probnum-1] -> set_random_inits ( degree => $self->degree ,
 																								 basic_model => $model,
-																								 problem_index => ($tweak_inits_probnum-1));
+																								 problem_index => ($retries_probnum-1));
 				}
 				$candidate_model->_write;
 				trace(tool => 'modelfit',
@@ -2846,7 +2846,7 @@ sub copy_model_and_output
 
 	#Kajsa 2008-09-16 Prepend modelfile $use_run-1 to lst-file $use_run-1
 	#prepend options file to lst
-	if ($self->prepend_model_to_lst || $self->prepend_options_to_lst ) {
+	if ( $self->prepend_options_to_lst ) {
 		my @out_array;
 		my $fname;
 
@@ -2863,17 +2863,6 @@ sub copy_model_and_output
 			}
 		}
 
-		if ($self->prepend_model_to_lst) {
-			#read final modelfile to memory
-			$fname = $self -> get_retry_name( filename => 'psn.'.$self->modext,
-				retry => $use_run-1 );
-			open (MODFILE,$fname);
-			while (my $inline = <MODFILE>){
-				chomp ($inline);
-				push (@out_array,$inline);
-			}
-			close (MODFILE);
-		}
 		#then read final lst-file to memory, append to same array
 		$fname = $self -> get_retry_name( filename => 'psn.lst',
 			retry => $use_run-1 );

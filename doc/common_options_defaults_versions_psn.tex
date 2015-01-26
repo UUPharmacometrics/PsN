@@ -350,10 +350,14 @@ is printed to one of the xpose tables, for example sdtab.
 \subsection{Retries in PsN}
 
 A NONMEM run is not always successful and sometimes it is possible to improve the results of the run. A simple procedure is to tweak the initial 
-estimates of the parameters and see if changed starting condition gives better results. The -tweak\_inits option turns on this feature in PsN, 
-and it is on by default. Then, if the minimization is terminated PsN will pick a random value within 10\% above or below each initial value, 
+estimates of the parameters and see if changed starting condition gives better results. The -tweak\_inits and -retries options turn on this feature in PsN, 
+which is off by default. When the feature is on, if the minimization is terminated PsN will pick a random value within 10\% above or below each initial value, 
 and run the model again with these new initial estimates. This is called a retry. PsN can do several retries, and each time the bounds is 
 increased by 10\%. Note that PsN always respects the upper and lower bound set in the model file. 
+
+The retries functionality is adapted to control streams with a single \$PROBLEM. If there are more than one \$PROBLEM, PsN will
+use the termination status and ofv of the \emph{first \$PROBLEM that runs estimation} (not MAXEVAL=0) for deciding if a retry should be run
+and also for selecting the best try. Subsequent \$PROBLEMs that also have \$EST will be ignored in the retries procedure.
 
 The control files and outputs for the retries are found in the NM\_run1 subdirectory. The files psn-1.mod and psn-1.lst are for 
 the first run which is always performed and not called a retry. psn-2.mod and up are the control files with perturbed initial 
@@ -364,11 +368,6 @@ written "Selected ..." where it says which model was judged as the best of all t
 The lst-file for the selected model is then copied to psn.lst (no number) in the same directory, and also copied back 
 up to the working directory. Same principle for table files. The file psn-x.mod for the selected model is copied 
 to psn.mod (for PsN version 3.x.x and up), but psn.mod is not copied back up.   	
-
-The option -prepend\_model\_to\_lst can be used with execute. Then the modelfile for the selected model with its 
-particular initial estimates is prepended to the lst-file which is copied back up to the working directory. This makes it 
-easier to see which initial estimates were actually used. The prepending is done automatically if -nmfe is set, so do not 
-make the model-file be prepended twice by both setting -nmfe and -prepend\_model\_to\_lst.
 
 The string MINIMIZATION SUCCESSFUL is important when PsN decides whether to make a retry. With new estimation 
 methods in NONMEM7, that string will not appear. The flag for minimization\_successful is set or unset using the following logic:
@@ -431,7 +430,8 @@ worse than the best overall ofv, then choose the best try that had minimization 
 
 \begin{optionlist}
 \optname{tweak\_inits}
-Default used, can be disabled with -no-tweak\_inits. If NONMEM terminates nonsuccessfully, PsN can perturb the initial estimates and run NONMEM again. The generation of new initial estimates init\_i for the i:th retry are performed according to init\_i = init\_0 + rand\_uniform(+-degree*init\_0)where init\_0 are the initial estimates of the original run
+Default set, can be disabled with -no-tweak\_inits. 
+If NONMEM terminates nonsuccessfully, PsN can perturb the initial estimates and run NONMEM again. The generation of new initial estimates init\_i for the i:th retry are performed according to init\_i = init\_0 + rand\_uniform(+-degree*init\_0)where init\_0 are the initial estimates of the original run
 and degree is set with option -degree, see below. 
 The updating procedure makes sure that boundary conditions on the parameters are respected. 
 For this option to have effect, the -retries option must be set to a number larger than zero. 
@@ -441,7 +441,8 @@ Default 0.1. A number larger than 0 and smaller than 1. This number decides how 
 be in tweak\_inits.
 \nextopt
 \optdefault{retries}{'integer'}
-Default 0. The -retries option tells PsN how many times it shall try to rerun a NONMEM job if it fails according to given criterias. The -retries option is only valid together with -tweak\_inits. 
+Default 0. The -retries option tells PsN how many times it shall try to rerun a NONMEM job if it fails according to given criterias. 
+The -retries option is only valid together with -tweak\_inits. 
 \nextopt
 \optdefault{min\_retries}{'integer'}
 Default 0. Option min\_retries forces PsN to try make extra retries even if a run has already terminated successfully. Precedence over -retries option.  
