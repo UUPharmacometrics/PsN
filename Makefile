@@ -104,6 +104,7 @@ LIBFILES= ui.pm \
 	output/problem.pm \
 	output.pm \
 	model.pm \
+	standardised_output/xml.pm \
 	tool.pm \
 	tool/modelfit.pm \
 	tool/sir.pm \
@@ -127,6 +128,7 @@ LIBFILES= ui.pm \
 	tool/scm.pm \
 	tool/precond.pm \
 	tool/pvar.pm \
+	utils/file.pm \
 
 BINFILES=$(wildcard bin/*)
 
