@@ -14,7 +14,7 @@ use OSspecific;
 
 require Exporter;
 our @ISA = qw(Exporter);
-our %EXPORT_TAGS = ('all' => [ qw(remove_path get_file_stem directory) ]);
+our %EXPORT_TAGS = ('all' => [ qw(remove_path get_file_stem directory replace_extension slurp_file) ]);
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 
 our $path_separator;
@@ -59,6 +59,21 @@ sub get_file_stem
     $name =~ s/(.*)\..*/\1/;
 
     return $name;
+}
+
+sub replace_extension
+{
+    # Replace extension if present else add it
+    my $filename = shift;
+    my $extension = shift;
+
+    if ($filename =~ /(.*)\..*/) {
+        $filename = $1 . '.' . $extension;
+    } else {
+        $filename .= '.' . $extension;
+    }
+
+    return $filename;
 }
 
 sub directory

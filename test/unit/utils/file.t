@@ -30,6 +30,10 @@ utils::file::_set_windows();
 is (get_file_stem('C:\mydir\dir2\myfile.ctl'), 'myfile', "get_file_stem 3");
 is (get_file_stem('mod.2.ctl'), 'mod.2', "get_file_stem 4");
 
+# replace_extension
+is (replace_extension("pheno.lst", "SO.xml"), "pheno.SO.xml", "replace_extension lst");
+is (replace_extension("noext", "lst"), "noext.lst", "replace_extension noext");
+
 # directory
 utils::file::_set_unix();
 is (directory('/etc/share/tjo.c'), '/etc/share/', "directory with dir on unix");
