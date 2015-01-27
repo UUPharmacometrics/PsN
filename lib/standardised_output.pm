@@ -35,6 +35,7 @@ has '_duplicate_blocknames' => ( is => 'rw', isa => 'HashRef' );    # Contains t
 has '_first_block' => ( is => 'rw', isa => 'Str' );                 # Name of the first SOBlock
 has '_so_path' => ( is => 'rw', isa => 'Str' );                     # The path of the output SO file
 has '_xml' => ( is => 'rw', isa => 'standardised_output::xml' );    # Module to create SO xml
+has '_used_files' => ( is => 'rw', isa => 'HashRef' );              # files to add as RawResults. Empty before starting a new _parse_lst_file 
 
 sub BUILD
 {
@@ -50,13 +51,7 @@ sub BUILD
 
     if (not defined $self->so_filename) {   # User specified filename
         if (defined $self->lst_files and defined $self->lst_files->[0]) {   # Infer filename from name of first .lst file
-            $so_filename = $self->lst_files->[0];
-
-            if ($so_filename =~ /(.*)\..*/) {
-                $so_filename = $1 . '.SO.xml';
-            } else {
-                $so_filename .= '.SO.xml';
-            }
+            $so_filename = utils::file::replace_extension($self->lst_files->[0], 'SO.xml');
         } else {
             $so_filename = 'bootstrap.SO.xml';
         }
@@ -254,6 +249,8 @@ sub _parse_lst_file
         lst_file => { isa => 'Str' },
     );
     my $lst_file = $parm{'lst_file'};
+
+    $self->_used_files({$lst_file => "NONMEM results file"});       # Start a new used files hash
 
     if ($self->verbose) {
         print "Adding $lst_file\n";
@@ -498,6 +495,11 @@ sub _parse_lst_file
     }
 
     my $task_information = $self->_create_task_information(messages => \@messages, run_time => $elapsed_time);
+    my $raw_results = $self->_create_raw_results();
+
+    if (defined $raw_results) {
+        $block->appendChild($raw_results);
+    }
     if (defined $task_information) {
         $block->appendChild($task_information);
     }
@@ -738,6 +740,46 @@ sub _create_task_information
     return $task_information;
 }
 
+sub _create_raw_results
+{
+    my $self = shift;
+
+    return if (not defined $self->_used_files);
+    return if (scalar(keys %{$self->_used_files}) == 0);
+
+    my $doc = $self->_document;
+
+    my $rr = $doc->createElement("RawResults");
+
+    my $no = 1;
+    foreach my $file (keys %{$self->_used_files}) {
+        my $datafile = $doc->createElement("DataFile");
+        $datafile->setAttribute('oid', "d$no");
+        my $description = $doc->createElement("ct:Description");
+        $description->appendTextNode($self->_used_files->{$file});
+        my $path = $doc->createElement("ds:path");
+        $path->appendTextNode(utils::file::remove_path($file));
+        $datafile->appendChild($description);
+        $datafile->appendChild($path);
+        $rr->appendChild($datafile);
+        $no++;
+    }
+
+    return $rr;
+}
+
+sub _add_raw_results_file
+{
+    # Add a file to the RawResults for this SOBlock
+    my $self = shift;
+    my $name = shift;
+    my $description = shift;
+
+    $self->_used_files({}) if (not defined $self->_used_files);
+
+    $self->_used_files->{$name} = $description;
+}
+
 sub _create_likelihood
 {
     my $self = shift;
@@ -771,6 +813,8 @@ sub _create_predictions
         and exists $sdtab->column_head_indices->{'PRED'} and exists $sdtab->column_head_indices->{'IPRED'})) {
         return;
     }
+
+    $self->_add_raw_results_file($sdtab->filename, "sdtab");
 
     my $doc = $self->_document;
 
@@ -837,6 +881,9 @@ sub _create_residuals
     if (scalar(@values) == 2) { # No columns were added
         return;
     }
+
+
+    $self->_add_raw_results_file($sdtab->filename, "sdtab");
 
     my $table = $self->_xml->create_table(
         table_name => "Residuals",
@@ -983,6 +1030,8 @@ sub _create_individual_estimates
         }
     }
 
+    $self->_add_raw_results_file($patab->filename, "patab");
+
     return $individual_estimates;
 }
 
@@ -1043,14 +1092,18 @@ sub _create_simulation
         #   table_file => $external_table_name,
         #    problem => $problem,
         #);
+        #
         if (defined $simulated_profiles) {
             $sim_block->appendChild($simulated_profiles);
+            $self->_add_raw_results_file($profiles_table_name, "simulated profiles");
         }
         if (defined $indiv_parameters) {
             $sim_block->appendChild($indiv_parameters);
+            $self->_add_raw_results_file($indiv_table_name, "patab");
         }
         if (defined $covariates) {
             $sim_block->appendChild($covariates);
+            $self->_add_raw_results_file($covariates_table_name, "cotab");
         }
         #if (defined $population_parameters) {
         #    $sim_block->appendChild($population_parameters);

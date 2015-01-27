@@ -11,11 +11,6 @@ has 'precision' => ( is => 'rw', isa => 'Int', default => 10 );
 has 'verbose' => ( is => 'rw', isa => 'Bool', default => 0 );
 has '_document' => ( is => 'rw', isa => 'Ref' );                    # The XML document 
 
-sub BUILD
-{
-
-}
-
 sub create_pharmml_ref
 {
     # Add the PharmMLRef element
@@ -31,7 +26,6 @@ sub create_pharmml_ref
 
     return $pharmmlref;
 }
-
 
 sub create_typed_element
 {
