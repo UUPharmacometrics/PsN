@@ -392,6 +392,15 @@ sub _parse_lst_file
                 if ($covariance_step_successful) {
                     my $correlation_matrix = linear_algebra::triangular_symmetric_to_full($outobj->correlation_matrix->[$problems]->[$sub_problems]);
                     my $covariance_matrix = linear_algebra::triangular_symmetric_to_full($outobj->covariance_matrix->[$problems]->[$sub_problems]);
+                    my $additional = $outobj->problems->[$problems]->subproblems->[$sub_problems]->NM7_parsed_additional;
+                    if (defined $additional) {
+                        if ($additional->{'cov'}) {
+                            $self->_add_raw_results_file("$file_stem.cov", "NONMEM Covariance matrix");
+                        }
+                        if ($additional->{'cor'}) {
+                            $self->_add_raw_results_file("$file_stem.cor", "NONMEM Correlation matrix");
+                        }
+                    }
                     if ($self->check_include(element => 'Estimation/PrecisionPopulationEstimates')) {
                         my $ppe = $self->_create_precision_population_estimates(
                             labels => \@all_labels,
