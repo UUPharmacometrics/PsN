@@ -164,14 +164,6 @@ sub BUILD
 	$self -> parse_config( config_tiny => $config_tiny );
 }
 
-sub add_file
-{
-	my ($self, %parm) = validated_hash(@_, 
-		init_data => {isa => 'Any', optional => 0}
-	);
-	push( @{$self->files}, file->new(%{$parm{'init_data'}}) );
-}
-
 sub _check_various
 {
 	my $self = shift;
