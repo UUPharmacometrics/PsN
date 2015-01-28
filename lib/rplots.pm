@@ -107,7 +107,7 @@ sub setup
 	}
 
 	my $subsetstring = 'NULL';
-	$subsetstring = $self->subset_variable if (defined $self->subset_variable and length($self->subset_variable)>0);
+	$subsetstring = "'".$self->subset_variable."'" if (defined $self->subset_variable and length($self->subset_variable)>0);
 	my $levelstring=1;
 	if ($self->level() > 1){
 		$levelstring = $self->level();
@@ -123,7 +123,7 @@ sub setup
 		 "raw.results.file <- '".$self->raw_results_file."'",
 		 "model.directory<-'".$dir."'",
 		 "model.filename<-'".$modelfile."'",
-		 "subset.variable<-'".$subsetstring."'",
+		 "subset.variable<-".$subsetstring,
 		 "mod.suffix <- '".$modSuffix."'",
 		 "mod.prefix <- '".$modPrefix."'",
 		 "tab.suffix <- '".$tabSuffix."'"

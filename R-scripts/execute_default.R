@@ -11,6 +11,13 @@ if (rplots.level > 0){
     runsum(xpdb,show.plots=TRUE,dir=model.directory)
 	if (is.null(subset.variable)){
        print(basic.gof(xpdb))
+       print(ranpar.hist(xpdb))
+       print(ranpar.qq(xpdb))
+       print(dv.preds.vs.idv(xpdb))
+       print(dv.vs.idv(xpdb))
+       print(ipred.vs.idv(xpdb))
+       print(pred.vs.idv(xpdb))
+	    
 	}else{
 		regexp <- paste0('^',subset.variable,'$')
 		pos <- grep(regexp,names(xpdb@Data))
@@ -19,15 +26,14 @@ if (rplots.level > 0){
 		for (flag in flagvector){
 			print(basic.gof(xpdb,subset=paste0(subset.variable,'==',flag)))
 		}
+		print(ranpar.hist(xpdb,by=subset.variable))
+		print(ranpar.qq(xpdb,by=subset.variable))
+		print(dv.preds.vs.idv(xpdb,by=subset.variable))
+		print(dv.vs.idv(xpdb,by=subset.variable))
+		print(ipred.vs.idv(xpdb,by=subset.variable))
+		print(pred.vs.idv(xpdb,by=subset.variable))
 	}
 
-	#alternatively a loop with subset= could be used instead of by=
-    print(ranpar.hist(xpdb,by=subset.variable))
-    print(ranpar.qq(xpdb,by=subset.variable))
-    print(dv.preds.vs.idv(xpdb,by=subset.variable))
-    print(dv.vs.idv(xpdb,by=subset.variable))
-    print(ipred.vs.idv(xpdb,by=subset.variable))
-    print(pred.vs.idv(xpdb,by=subset.variable))
 }
 
 if (rplots.level > 1){
