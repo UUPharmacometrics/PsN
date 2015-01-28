@@ -152,7 +152,7 @@ cmp_ok($est_matrix->[0]->[26]->[0],'==',-0.00096254,'iwres rec 27 original');
 cmp_ok($est_matrix->[0]->[69]->[0],'==',-1.0819E-01,'iwres rec 70 original');
 cmp_ok($est_matrix->[0]->[19]->[1],'==',-5.9717E-02,'iwres rec 20 sim1');
 cmp_ok($est_matrix->[0]->[55]->[1],'==',-0.071941,'iwres rec 56 sim1');
-cmp_ok($est_matrix->[0]->[11]->[2],'==',0.047954,'iwres rec 12  sim2');
+cmp_ok(abs(0.047954 - $est_matrix->[0]->[11]->[2]),'<',0.0000005,'iwres rec 12  sim2');
 cmp_ok($est_matrix->[0]->[35]->[2],'==',0.044685,'iwres rec 36 sim2');
 cmp_ok($est_matrix->[0]->[41]->[3],'==',-0.027903,'iwres rec 42 sim3');
 cmp_ok($est_matrix->[0]->[69]->[3],'==',-0.00014352,'iwres rec 70  sim3');

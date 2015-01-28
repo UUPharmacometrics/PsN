@@ -238,7 +238,7 @@ my $product=$product_left->multiply(~$diff); #~ is transpose
 my $exponent=-0.5 * $product->element(1,1);
 
 my $matlab_exponent= -2.267944479995964;
-cmp_float($exponent, $matlab_exponent, 'exponent diff to matlab');
+cmp_ok(abs($exponent-$matlab_exponent),'<',0.00000000000001,'exponent diff to matlab');
 
 #print "\nexponent $exponent\n";
 my $base=tool::sir::get_determinant_factor(inverse_covmatrix => $icm,
