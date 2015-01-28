@@ -15,6 +15,7 @@ use IO::File;
 use math;
 use utils::file;
 use standardised_output::xml;
+use PsN;
 
 has 'lst_files' => ( is => 'rw', isa => 'ArrayRef[Str]' );
 has 'bootstrap_results' => ( is => 'rw', isa => 'Maybe[Str]' );
@@ -63,11 +64,9 @@ sub BUILD
         $self->_so_path($path);
     }
 
-    my $doc = XML::LibXML::Document->new('1.0', 'utf-8');
-    $self->_document($doc);
-
-    my $so_xml = standardised_output::xml->new(precision => $self->precision, _document => $self->_document, verbose => $self->verbose);
+    my $so_xml = standardised_output::xml->new(precision => $self->precision, verbose => $self->verbose);
     $self->_xml($so_xml);
+    $self->_document($self->_xml->_document);
 }
 
 sub create_block
@@ -502,6 +501,14 @@ sub _parse_lst_file
 
         }
     }
+
+    push @messages, {
+        type => "INFORMATION",
+        toolname => "nmoutput2so",
+        name => "nmoutput2so_version",
+        content => "This SOBlock was created with nmoutput2so version " . $PsN::version,
+        severity => 0,
+    };
 
     my $task_information = $self->_create_task_information(messages => \@messages, run_time => $elapsed_time);
     my $raw_results = $self->_create_raw_results();

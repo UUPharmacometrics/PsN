@@ -11,6 +11,14 @@ has 'precision' => ( is => 'rw', isa => 'Int', default => 10 );
 has 'verbose' => ( is => 'rw', isa => 'Bool', default => 0 );
 has '_document' => ( is => 'rw', isa => 'Ref' );                    # The XML document 
 
+sub BUILD
+{
+    my $self = shift;
+    my $doc = XML::LibXML::Document->new('1.0', 'utf-8');
+    
+    $self->_document($doc);
+}
+
 sub create_pharmml_ref
 {
     # Add the PharmMLRef element
