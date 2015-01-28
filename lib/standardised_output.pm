@@ -149,11 +149,11 @@ sub parse
     my $doc = $self->_document;
 
     my $SO = $doc->createElement("SO");
-    $SO->setAttribute('xmlns' => "http://www.pharmml.org/2013/03/StandardisedOutput");
+    $SO->setAttribute('xmlns' => "http://www.pharmml.org/so/0.1/StandardisedOutput");
     $SO->setAttribute('xmlns:xsi' => "http://www.w3.org/2001/XMLSchema-instance");
-    $SO->setAttribute('xmlns:ds' => "http://www.pharmml.org/2013/08/Dataset");
-    $SO->setAttribute('xmlns:ct' => "http://www.pharmml.org/2013/03/CommonTypes");
-    $SO->setAttribute('xsi:schemaLocation' => "http://www.pharmml.org/2013/03/StandardisedOutput");
+    $SO->setAttribute('xmlns:ds' => "http://www.pharmml.org/pharmml/0.6/Dataset");
+    $SO->setAttribute('xmlns:ct' => "http://www.pharmml.org/pharmml/0.6/CommonTypes");
+    $SO->setAttribute('xsi:schemaLocation' => "http://www.pharmml.org/so/0.1/StandardisedOutput");
     $SO->setAttribute('implementedBy' => "MJS");
     $SO->setAttribute('writtenVersion' => "0.1");
     $SO->setAttribute('id' => "i1");
