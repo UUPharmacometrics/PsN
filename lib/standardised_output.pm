@@ -249,8 +249,6 @@ sub _parse_lst_file
     );
     my $lst_file = $parm{'lst_file'};
 
-    $self->_used_files({$lst_file => "NONMEM results file"});       # Start a new used files hash
-
     if ($self->verbose) {
         print "Adding $lst_file\n";
     }
@@ -289,6 +287,8 @@ sub _parse_lst_file
             severity => 10,
         };
     } else {
+        $self->_used_files({$lst_file => "NONMEM results file"});       # Start a new used files hash
+
         my $outobj = output->new(filename => $lst_file);
         if (not $outobj->parsed_successfully) {
             push @messages, {

@@ -32,23 +32,11 @@ sub test_number_of_children
     is (scalar(@nodes), $number, $text);
 }
 
-# mangle_symbol_idtype
-is (standardised_output::mangle_symbol_idtype("nomangle"), "nomangle", "mangle_symbol_idtype nomangle");
-is (standardised_output::mangle_symbol_idtype(":first"), "_first", "mangle_symbol_idtype first invalid 1");
-is (standardised_output::mangle_symbol_idtype("?first"), "_first", "mangle_symbol_idtype first invalid 2");
-is (standardised_output::mangle_symbol_idtype("SIGMA(1,1)"), "SIGMA_1_1_", "mangle_symbol_idtype SIGMA");
-
 our $tempdir = create_test_dir('unit_standardised_output');
 copy_test_files($tempdir,
     [ "output/special_mod/data_missing.lst", "output/special_mod/missingmodel.lst", "output/special_mod/psnmissingdata.out", "output/special_mod/psnmissingmodel.out", "SO/bootstrap_results.csv", "SO/pheno.lst", "SO/patab", "SO/sdtab" ]);
 
 chdir $tempdir;
-
-# create_typed_element 
-my $so = standardised_output->new(lst_files => [ "this_file_is_missing.lst" ]);
-my $node = $so->create_typed_element(type => "MyType", content => "MyContent");
-is ($node->textContent, "MyContent", "create_typed_element content");
-is ($node->nodeName, "ct:MyType", "create_typed_element name");
 
 # _get_included_columns
 is_deeply (standardised_output::_get_included_columns(header => { ID => 1, TIME => 2, WT => 3, AMT => 4 }, columns => [ 'WT', 'TIME', 'SNOW' ]),
@@ -77,12 +65,12 @@ test_number_of_children($xpc, '/x:SO/x:SOBlock', 2, "multiple non existing lst f
 test_number_of_children($xpc, '/x:SO/x:SOBlock/*', 2, "multiple non existing lst files nothing more than TaskInformation");
 
 # missingdata.lst
-my $so = standardised_output->new(lst_files => [ "missingdata.lst" ]);
+my $so = standardised_output->new(lst_files => [ "data_missing.lst" ]);
 $so->parse;
-my $xpc = get_xml("missingdata.SO.xml");
+my $xpc = get_xml("data_missing.SO.xml");
 (my $node) = $xpc->findnodes('/x:SO/x:SOBlock/x:TaskInformation/x:Message[@type="ERROR"]');
-ok (defined $node, "missingdata.lst");
-test_number_of_children($xpc, '/x:SO/x:SOBlock/*', 1, "missingdata.lst nothing more than TaskInformation"); 
+ok (defined $node, "data_missing.lst");
+test_number_of_children($xpc, '/x:SO/x:SOBlock/*', 2, "data_missing.lst nothing more than TaskInformation+RawResults"); 
 
 # missingmodel.lst
 my $so = standardised_output->new(lst_files => [ "missingmodel.lst" ]);
@@ -90,7 +78,7 @@ $so->parse;
 my $xpc = get_xml("missingmodel.SO.xml");
 (my $node) = $xpc->findnodes('/x:SO/x:SOBlock/x:TaskInformation/x:Message[@type="ERROR"]');
 ok (defined $node, "missingmodel.lst");
-test_number_of_children($xpc, '/x:SO/x:SOBlock/*', 1, "missingmodel.lst nothing more than TaskInformation"); 
+test_number_of_children($xpc, '/x:SO/x:SOBlock/*', 2, "missingmodel.lst nothing more than TaskInformation+RawResults"); 
 
 # psnmissingdata.out
 my $so = standardised_output->new(lst_files => [ "psnmissingdata.out" ]);
@@ -98,7 +86,7 @@ $so->parse;
 my $xpc = get_xml("psnmissingdata.SO.xml");
 (my $node) = $xpc->findnodes('/x:SO/x:SOBlock/x:TaskInformation/x:Message[@type="ERROR"]');
 ok (defined $node, "psnmissingdata.out");
-test_number_of_children($xpc, '/x:SO/x:SOBlock/*', 1, "psnmissingdata.out nothing more than TaskInformation");
+test_number_of_children($xpc, '/x:SO/x:SOBlock/*', 2, "psnmissingdata.out nothing more than TaskInformation");
 
 # psnmissingmodel.out
 my $so = standardised_output->new(lst_files => [ "psnmissingmodel.out" ]);
@@ -106,7 +94,7 @@ $so->parse;
 my $xpc = get_xml("psnmissingmodel.SO.xml");
 (my $node) = $xpc->findnodes('/x:SO/x:SOBlock/x:TaskInformation/x:Message[@type="ERROR"]');
 ok (defined $node, "psnmissingmodel.out");
-test_number_of_children($xpc, '/x:SO/x:SOBlock/*', 1, "psnmissingmodel.out nothing more than TaskInformation");
+test_number_of_children($xpc, '/x:SO/x:SOBlock/*', 2, "psnmissingmodel.out nothing more than TaskInformation");
 
 # bootstrap_results with no lst-files
 my $so = standardised_output->new(bootstrap_results => "bootstrap_results.csv");
@@ -121,7 +109,7 @@ my $so = standardised_output->new(lst_files => [ "missingmodel.lst" ], message =
 $so->parse;
 my $xpc = get_xml("missingmodel.SO.xml");
 my @nodes = $xpc->findnodes('/x:SO/x:SOBlock/x:TaskInformation/x:Message[@type="INFORMATION"]');
-is (scalar(@nodes), 1, "information message");
+is (scalar(@nodes), 2, "information message");  # 2 for counting the version message
 
 # set toolname
 my $so = standardised_output->new(lst_files => [ "missingmodel.lst" ], toolname => "MyTool");
