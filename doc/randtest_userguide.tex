@@ -133,14 +133,13 @@ delta-ofv values.
 
 \section{Known bugs and problems}
 
-If a csv-format dataset has an empty first column, i.e. there is a leading comma on each line in the datafile, randtest will crash. Avoid the problem by editing the datafile, removing the leading empty column.
 It is recommented to remove all \$TABLE from the modelfile, otherwise there will be much extra output produced. For the same reason it is recommended to remove PRINT options from \$ESTIMATION. 
-The results of two runs will be different even if the seed is the same if the lst-file of the input model and base modle are present at the start of one run but not the other. Running the input model changes the state of the random number generator, and therefore the datasets will be different depending on if the input model is run or not before generating the  new datasets
+The results of two runs will be different even if the seed is the same if the lst-file of the input model and base modle are present at the start of one run but not the other. Running the input model changes the state of the random number generator, and therefore the datasets will be different depending on if the input model is run or not before generating the  new datasets.
 
 \section{Technical overview of algorithm}
 
 PsN will rerun the input (full) model if the lst-file of the input model (run1.lst if the input model file is called run1.mod) is not present in the same directory as the model file. 
 If the model file has the extension .mod and the lst-file is present then PsN will simply read the estimates from that file. Similar for the base model.
-The program creates N (N=number of samples), datasets of size M (M=sample\_size) by shuffling the values in the randomization column between individuals. The program creates N new NONMEM modelfiles which are identical to the original modelfile with the exception that each uses a different randomized dataset and that the initial parameter estimates are the final estimates from the original run. The model parameters are estimated with each dataset.
+The program creates N (N=number of samples), datasets of size M (M=sample\_size) by shuffling the values in the randomization column between individuals. The program creates N new NONMEM modelfiles which are identical to the original modelfile with the exception that each uses a different randomized dataset and that the initial parameter estimates are the final estimates from the base model run. The model parameters are estimated with each dataset.
 
 \end{document}
