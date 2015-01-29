@@ -16,7 +16,7 @@ sub get_xml
 
     my $doc = XML::LibXML->load_xml(location => $filename);
     my $xpc = XML::LibXML::XPathContext->new($doc);
-    $xpc->registerNs('x' => 'http://www.pharmml.org/2013/03/StandardisedOutput');
+    $xpc->registerNs('x' => 'http://www.pharmml.org/so/0.1/StandardisedOutput');
 
     return $xpc;
 }
