@@ -1086,7 +1086,6 @@ sub _create_simulation
 
     for (;;) {      # Loop through simulation replicates aka simulation blocks
         my $sim_block = $doc->createElement("SimulationBlock");
-        $simulation->appendChild($sim_block);
         $sim_block->setAttribute("replicate", $replicate_no);
         my $external_table_name = $self->external_tables ? $table_file . "_$replicate_no" : undef;
         my $simulated_profiles = $self->_create_simulated_profiles(
@@ -1124,7 +1123,12 @@ sub _create_simulation
         #if (defined $population_parameters) {
         #    $sim_block->appendChild($population_parameters);
         #}
-        last unless (defined $simulated_profiles or defined $indiv_parameters or defined $covariates);# or defined $population_parameters);
+        if (defined $simulated_profiles or defined $indiv_parameters or defined $covariates) {
+            $simulation->appendChild($sim_block);
+        } else {
+            last;
+        }
+        #last unless (defined $simulated_profiles or defined $indiv_parameters or defined $covariates);# or defined $population_parameters);
         $replicate_no++;
         last if (defined $self->max_replicates and $replicate_no >= $self->max_replicates); 
     }
