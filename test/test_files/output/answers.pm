@@ -394,6 +394,8 @@ sub read_answers{
 	$answer_hashes[$index]->{answers}->{0}->{0}->{'thetas'}=[1.05000E-02,1.05000E+00];
 	$answer_hashes[$index]->{answers}->{0}->{0}->{'omegas'}=[4.00000E-01,0.00000E+00,2.50000E-01];
 	$answer_hashes[$index]->{answers}->{0}->{0}->{'sigmas'}=[4.00000E-02];
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'sdcorrform_omegas'}=[6.32456E-01,0.00000E+00,5.00000E-01];
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'sdcorrform_sigmas'}=[2.00000E-01];
 	$answer_hashes[$index]->{answers}->{1}->{0}->{'ofv'}=742.05104625255387;
 	$answer_hashes[$index]->{answers}->{1}->{0}->{'covariance_step_successful'}=1;
 	$answer_hashes[$index]->{answers}->{1}->{0}->{'covariance_step_run'}=1;
@@ -404,9 +406,13 @@ sub read_answers{
 	$answer_hashes[$index]->{answers}->{1}->{0}->{'thetas'}=[5.55363E-03,1.33638E+00];
 	$answer_hashes[$index]->{answers}->{1}->{0}->{'omegas'}=[2.47074E-01,0.00000E+00,1.41581E-01];
 	$answer_hashes[$index]->{answers}->{1}->{0}->{'sigmas'}=[1.64153E-02];
+	$answer_hashes[$index]->{answers}->{1}->{0}->{'sdcorrform_omegas'}=[4.97065E-01,0.00000E+00,3.76273E-01];
+	$answer_hashes[$index]->{answers}->{1}->{0}->{'sdcorrform_sigmas'}=[1.28122E-01];
 	$answer_hashes[$index]->{answers}->{1}->{0}->{'sethetas'}=[3.94763E-04,7.99018E-02];
 	$answer_hashes[$index]->{answers}->{1}->{0}->{'seomegas'}=[1.55530E-01,0.00000E+00,3.48941E-02];
 	$answer_hashes[$index]->{answers}->{1}->{0}->{'sesigmas'}=[3.39466E-03];
+	$answer_hashes[$index]->{answers}->{1}->{0}->{'sdcorrform_seomegas'}=[1.56448E-01,0.00000E+00,4.63682E-02];
+	$answer_hashes[$index]->{answers}->{1}->{0}->{'sdcorrform_sesigmas'}=[1.32477E-02];
 
 	$index++;
 	$answer_hashes[$index]={};

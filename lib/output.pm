@@ -1419,12 +1419,16 @@ sub get_filtered_values
 							  problem_index => { isa => 'Int', optional => 1, default => 0 },
 							  subproblem_index => { isa => 'Int', optional => 1, default => 0 },
 							  parameter  => { isa => 'Str', optional => 1, default => 'all' },
-							  category  => { isa => 'Str', optional => 1, default => 'estimate' }
+							  category  => { isa => 'Str', optional => 1, default => 'estimate' },
+							  allow_sdcorrform  => { isa => 'Bool', optional => 1, default => 0}
+#							  sdcorrform_ref  => { isa => 'Maybe[ArrayRef]', optional => 1} #TODO need to give this option by option
 		);
 	my $problem_index=$parm{'problem_index'};
 	my $subproblem_index=$parm{'subproblem_index'};
 	my $parameter=$parm{'parameter'};
 	my $category=$parm{'category'};
+	my $allow_sdcorrform=$parm{'allow_sdcorrform'};
+
 
 	my @problems = ($problem_index+1);
 	my @subproblems = ($subproblem_index +1);
@@ -1444,6 +1448,16 @@ sub get_filtered_values
 
 	my @coordinate_strings = @{$init_problem->get_estimated_attributes(parameter => $parameter,
 																	   attribute => 'coordinate_strings')};
+
+	my %sdcorr_hash;
+	if ($allow_sdcorrform){
+		my @sdcorr_arr = @{$init_problem->get_estimated_attributes(parameter => $parameter,
+																   attribute => 'sdcorrform')};
+		for (my $j=0; $j< scalar(@coordinate_strings); $j++){
+			$sdcorr_hash{$coordinate_strings[$j]} = $sdcorr_arr[$j];
+		}
+	}
+
 	my $attribute = $category;
 	$attribute = '' if ($category eq 'estimate');
 
@@ -1455,9 +1469,26 @@ sub get_filtered_values
 		next if ($param eq 'theta' and $category eq 'c');
 		my $attr= $attribute.$param.'coordval';
 		my $ref = $self->access_any(attribute=>$attr,problems=>\@problems,subproblems=>\@subproblems);
-		if (defined $ref and defined $ref->[0] and defined $ref->[0]->[0]){
-			foreach my $key (keys %{$ref->[0]->[0]}){
-				$values_hash{$key} = $ref->[0]->[0]->{$key};
+
+		if ($allow_sdcorrform and ($param eq 'omega' or $param eq 'sigma')){
+			$attr = 'sdcorrform_'.$attr;
+			my $sdcorrref = $self->access_any(attribute=>$attr,problems=>\@problems,subproblems=>\@subproblems);
+			if (defined $ref and defined $ref->[0] and defined $ref->[0]->[0] and
+				defined $sdcorrref and defined $sdcorrref->[0] and defined $sdcorrref->[0]->[0]){
+				foreach my $key (keys %{$ref->[0]->[0]}){
+					if ($sdcorr_hash{$key} == 1){
+						$values_hash{$key} = $sdcorrref->[0]->[0]->{$key};
+					}else{
+						$values_hash{$key} = $ref->[0]->[0]->{$key};
+					}
+				}
+			}
+
+		}else{
+			if (defined $ref and defined $ref->[0] and defined $ref->[0]->[0]){
+				foreach my $key (keys %{$ref->[0]->[0]}){
+					$values_hash{$key} = $ref->[0]->[0]->{$key};
+				}
 			}
 		}
 	}
@@ -1772,6 +1803,27 @@ sub omegas
 	return \@omegas;
 }
 
+sub sdcorrform_omegas
+{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  parameter_numbers => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
+	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
+	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
+	my @parameter_numbers = defined $parm{'parameter_numbers'} ? @{$parm{'parameter_numbers'}} : ();
+	my @omegas = @{$self->access_any(attribute=>'sdcorrform_omegas',problems=>\@problems,subproblems=>\@subproblems,parameter_numbers=>\@parameter_numbers)};
+
+
+    # omegas returns the omega parameter estimates.
+    # See L</comegas> for details of the method arguments.
+    #
+    # Level:  Sub problem
+	return \@omegas;
+}
+
 sub parameter_path
 {
 	my $self = shift;
@@ -2016,6 +2068,26 @@ sub seomegas
 	return \@seomegas;
 }
 
+sub sdcorrform_seomegas
+{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  parameter_numbers => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
+	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
+	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
+	my @parameter_numbers = defined $parm{'parameter_numbers'} ? @{$parm{'parameter_numbers'}} : ();
+	my @seomegas = @{$self->access_any(attribute=>'sdcorrform_seomegas',problems=>\@problems,subproblems=>\@subproblems)};
+
+    # seomegas returns the omega standard error estimates.
+    # See L</comegas> for details of the method arguments.
+    #
+    # Level:  Sub problem
+	return \@seomegas;
+}
+
 sub sesigmas
 {
 	my $self = shift;
@@ -2028,6 +2100,26 @@ sub sesigmas
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @parameter_numbers = defined $parm{'parameter_numbers'} ? @{$parm{'parameter_numbers'}} : ();
 	my @sesigmas = @{$self->access_any(attribute=>'sesigmas',problems=>\@problems,subproblems=>\@subproblems)};
+#    # sesigmas returns the sigma standard error estimates.
+#    # See L</comegas> for details of the method arguments.
+#    #
+#    # Level:  Sub problem
+
+	return \@sesigmas;
+}
+
+sub sdcorrform_sesigmas
+{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  parameter_numbers => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
+	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
+	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
+	my @parameter_numbers = defined $parm{'parameter_numbers'} ? @{$parm{'parameter_numbers'}} : ();
+	my @sesigmas = @{$self->access_any(attribute=>'sdcorrform_sesigmas',problems=>\@problems,subproblems=>\@subproblems)};
 #    # sesigmas returns the sigma standard error estimates.
 #    # See L</comegas> for details of the method arguments.
 #    #
@@ -2166,6 +2258,26 @@ sub sigmas
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
 	my @parameter_numbers = defined $parm{'parameter_numbers'} ? @{$parm{'parameter_numbers'}} : ();
 	my @sigmas = @{$self->access_any(attribute=>'sigmas',problems=>\@problems,subproblems=>\@subproblems,parameter_numbers=>\@parameter_numbers)};
+
+    # sigmas returns the sigma parameter estimates.
+    # See L</comegas> for details of the method arguments.
+    #
+    # Level:  Sub problem
+	return \@sigmas;
+}
+
+sub sdcorrform_sigmas
+{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  parameter_numbers => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
+	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
+	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
+	my @parameter_numbers = defined $parm{'parameter_numbers'} ? @{$parm{'parameter_numbers'}} : ();
+	my @sigmas = @{$self->access_any(attribute=>'sdcorrform_sigmas',problems=>\@problems,subproblems=>\@subproblems,parameter_numbers=>\@parameter_numbers)};
 
     # sigmas returns the sigma parameter estimates.
     # See L</comegas> for details of the method arguments.

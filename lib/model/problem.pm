@@ -2558,6 +2558,7 @@ sub set_estimated_parameters_hash
 		$hash{'labels'}=[];
 		$hash{'coords'}=[];
 		$hash{'coordinate_strings'}=[];
+		$hash{'sdcorrform'}=[]; #0 is default varcov, 1 is SDCORR
 		$hash{'block_number'}=[];
 		$hash{'lower_bounds'}=[];
 		$hash{'upper_bounds'}=[];
@@ -2574,6 +2575,8 @@ sub set_estimated_parameters_hash
 			next unless (scalar(@records) > 0); #no parameter in this problem
 
 			foreach my $record (@records){
+				my $block_sd=0;
+				my $block_corr=0;
 				if  ($record->same() or $record->fix() or $record->prior()) {
 					next;
 				}
@@ -2583,6 +2586,8 @@ sub set_estimated_parameters_hash
 				if (($param ne 'theta') and ($record->type eq 'BLOCK')){
 					$block_count++;
 					$block_number = $block_count;
+					$block_sd = 1 if ($record->sd());
+					$block_corr = 1 if ($record->corr());
 				}else{
 					$block_number = 0;
 				}
@@ -2597,10 +2602,16 @@ sub set_estimated_parameters_hash
 						my $upbnd = $option ->upbnd();
 						$upbnd = 1000000 unless (defined $upbnd);
 						push(@{$hash{'upper_bounds'}},$upbnd);
+						push(@{$hash{'sdcorrform'}},0);
 					}else{
 						if ($option -> on_diagonal()){
 							push(@{$hash{'lower_bounds'}},0);
 							push(@{$hash{'upper_bounds'}},1000000);
+							if ($option->sd() or $block_sd){
+								push(@{$hash{'sdcorrform'}},1);
+							}else{
+								push(@{$hash{'sdcorrform'}},0);
+							}
 						}else{	 
 							if ($option->init() == 0) {
 								#do not check off-diagonal zeros
@@ -2609,6 +2620,11 @@ sub set_estimated_parameters_hash
 								#we handle these with Cholesky
 								push(@{$hash{'lower_bounds'}},-1000000);
 								push(@{$hash{'upper_bounds'}},1000000);
+								if ($option->corr() or $block_corr){
+									push(@{$hash{'sdcorrform'}},1);
+								}else{
+									push(@{$hash{'sdcorrform'}},0);
+								}
 							}
 						}
 					}

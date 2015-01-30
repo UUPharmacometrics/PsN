@@ -4,7 +4,7 @@
 
 use strict;
 use warnings;
-use Test::More tests=>1716;
+use Test::More;# tests=>1716;
 use Test::Exception;
 use Math::Random;
 use FindBin qw($Bin);
@@ -60,7 +60,7 @@ for (my $i=0; $i< scalar(@answer_hashes); $i++){
 	foreach my $prob (keys %{$answer_hashes[$i]->{answers}}){
 		foreach my $subprob (keys %{$answer_hashes[$i]->{answers}->{$prob}}){
 			foreach my $attr (keys %{$answer_hashes[$i]->{answers}->{$prob}->{$subprob}}){
-				if ($attr =~ /^(sethetas|seomegas|sesigmas|thetas|omegas|sigmas)/){
+				if ($attr =~ /^(sethetas|seomegas|sesigmas|thetas|omegas|sigmas|sdcorrform_)/){
 					cmp_array($outobj->get_single_value(problem_index => $prob, 
 														subproblem_index=> $subprob, 
 														attribute=>$attr),
