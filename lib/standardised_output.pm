@@ -335,14 +335,16 @@ sub _parse_lst_file
                 problem_index => $problems,
                 subproblem_index => $sub_problems,
                 parameter => 'all',
-                category => 'estimate'
+                category => 'estimate',
+                allow_sdcorrform => 1,
             )};
 
             my @se_values = @{$outobj->get_filtered_values(
                 problem_index => $problems,
                 subproblem_index => $sub_problems,
                 parameter => 'all',
-                category => 'se'
+                category => 'se',
+                allow_sdcorrform => 1,
             )};
 
             my @all_labels = @{$model->problems->[$problems]->get_estimated_attributes(parameter => 'all', attribute => 'labels')};
