@@ -998,9 +998,13 @@ sub _read_sethomsi
 	my $thetarea = 0;
 	my $omegarea = 0;
 	my $sigmarea = 0;
+	my $sdcorrform_omegarea = 0;
+	my $sdcorrform_sigmarea = 0;
 	my ( @setheta, @T, $i, $tmp );
 	my ( @raw_seomega, @raw_sesigma );
 	my (%sethetacoordval,%seomegacoordval,%sesigmacoordval);
+	my ( @sdcorrform_raw_seomega, @sdcorrform_raw_sesigma );
+	my (%sdcorrform_seomegacoordval,%sdcorrform_sesigmacoordval);
 	my $found_estimates = 0;
 
 	# _read_thomsi should leave us right at where we should start reading
@@ -1526,11 +1530,15 @@ sub _read_thomsi
 	my $thetarea = 0;
 	my $omegarea = 0;
 	my $sigmarea = 0;
-	my ( @theta, @omega, @raw_omega, @sigma, @raw_sigma, @T, $i, $tmp );
+	my $sdcorrform_omegarea = 0;
+	my $sdcorrform_sigmarea = 0;
+	my (@theta, @raw_omega, @raw_sigma, @T, $i, $tmp );
+	my (@sdcorrform_omega,@sdcorrform_sigma,@sdcorrform_raw_omega,@sdcorrform_raw_sigma);
 	my ( @thetanames, %thetacoordval);
-	my ( @omeganames, %omegacoordval);
-	my ( @sigmanames, %sigmacoordval);
+	my ( @omeganames, %omegacoordval, %sdcorrform_omegacoordval);
+	my ( @sigmanames, %sigmacoordval, %sdcorrform_sigmacoordval);
 	my $found_estimates = 0;
+	my $sdcorrform_found_estimates = 0;
 
 	# _read_ofv should leave us right at where we should start reading
 	while ( $_ = @{$self->lstfile}[ $start_pos++ ] ) {
@@ -1544,6 +1552,8 @@ sub _read_thomsi
 	    $omegarea = 1;
 	    $thetarea = 0;
 	    $sigmarea = 0;
+		$sdcorrform_omegarea = 0;
+		$sdcorrform_sigmarea = 0;
 	    $found_estimates = 1;
 	    next;
 	  }
@@ -1551,13 +1561,27 @@ sub _read_thomsi
 	    $sigmarea = 1;
 	    $thetarea = 0;
 	    $omegarea = 0;
+		$sdcorrform_omegarea = 0;
+		$sdcorrform_sigmarea = 0;
 	    $found_estimates = 1;
 	    next;
 	  }
-	  if ( /- CORR MATRIX FOR RANDOM EFFECTS -/ ) {
+	  if ( /OMEGA - CORR MATRIX FOR RANDOM EFFECTS - ETAS/ ) {
+	    $omegarea = 0;
+	    $thetarea = 0;
+	    $sigmarea = 0;
+		$sdcorrform_omegarea = 1;
+		$sdcorrform_sigmarea = 0;
+	    $sdcorrform_found_estimates = 1;
+	    next;
+	  }
+	  if ( /SIGMA - CORR MATRIX FOR RANDOM EFFECTS - EPSILONS/ ) {
 	    $sigmarea = 0;
 	    $thetarea = 0;
 	    $omegarea = 0;
+		$sdcorrform_omegarea = 0;
+		$sdcorrform_sigmarea = 1;
+	    $sdcorrform_found_estimates = 1;
 	    next;
 	  }
 
@@ -1592,49 +1616,77 @@ sub _read_thomsi
 
 
 	  if( $thetarea and /^\s*-?\d*\.\d*/ ) {
-	    @T = split(' ',$_);
-	    for $i (0..(@T-1)) {
-	      if($T[$i] ne '.........') {
-					$tmp = eval($T[$i]);
-	      } else {
-					$tmp = 'NA';
-	      }
-	      $T[$i] = $tmp ;
-	    }
-	    push(@theta, @T);
-		} elsif($omegarea and /^(\+|\s{2,})/) {
-			next if /ET/;
-	    @T = split(' ',$_);
-	    shift @T if $T[0] eq '+';
-	    for  $i (0..(@T-1)) {
-	      if($T[$i] ne '.........') {
-					$tmp = eval($T[$i]);
-	      } else {
-					$tmp = 'NA';
-	      }
-	      $T[$i] = $tmp ;
-	    }
-	    push(@raw_omega,@T);
+		  @T = split(' ',$_);
+		  for $i (0..(@T-1)) {
+			  if($T[$i] ne '.........') {
+				  $tmp = eval($T[$i]);
+			  } else {
+				  $tmp = 'NA';
+			  }
+			  $T[$i] = $tmp ;
+		  }
+		  push(@theta, @T);
+	  } elsif($omegarea and /^(\+|\s{2,})/) {
+		  next if /ET/;
+		  @T = split(' ',$_);
+		  shift @T if $T[0] eq '+';
+		  for  $i (0..(@T-1)) {
+			  if($T[$i] ne '.........') {
+				  $tmp = eval($T[$i]);
+			  } else {
+				  $tmp = 'NA';
+			  }
+			  $T[$i] = $tmp ;
+		  }
+		  push(@raw_omega,@T);
+	  } elsif($sdcorrform_omegarea and /^(\+|\s{2,})/) {
+		  next if /ET/;
+		  @T = split(' ',$_);
+		  shift @T if $T[0] eq '+';
+		  for  $i (0..(@T-1)) {
+			  if($T[$i] ne '.........') {
+				  $tmp = eval($T[$i]);
+			  } else {
+				  $tmp = 'NA';
+			  }
+			  $T[$i] = $tmp ;
+		  }
+		  push(@sdcorrform_raw_omega,@T);
 	  } elsif($sigmarea and /^(\+|\s{2,})/) {
-	    next if /EP/;
-	    next if /^\s*$/;
-	    @T = split(' ',$_);
-	    shift @T if $T[0] eq '+';
-	    for  $i (0..(@T-1)) {
-	      if($T[$i] ne '.........') {
-					$tmp = eval($T[$i]);
-	      } else {
-					$tmp = 'NA';
-	      }
-	      $T[$i] = $tmp ;
-	    }
-	    push(@raw_sigma, @T);
-	    
+		  next if /EP/;
+		  next if /^\s*$/;
+		  @T = split(' ',$_);
+		  shift @T if $T[0] eq '+';
+		  for  $i (0..(@T-1)) {
+			  if($T[$i] ne '.........') {
+				  $tmp = eval($T[$i]);
+			  } else {
+				  $tmp = 'NA';
+			  }
+			  $T[$i] = $tmp ;
+		  }
+		  push(@raw_sigma, @T);
+		  
+	  } elsif($sdcorrform_sigmarea and /^(\+|\s{2,})/) {
+		  next if /EP/;
+		  next if /^\s*$/;
+		  @T = split(' ',$_);
+		  shift @T if $T[0] eq '+';
+		  for  $i (0..(@T-1)) {
+			  if($T[$i] ne '.........') {
+				  $tmp = eval($T[$i]);
+			  } else {
+				  $tmp = 'NA';
+			  }
+			  $T[$i] = $tmp ;
+		  }
+		  push(@sdcorrform_raw_sigma, @T);
+		  
 	  }
 	  if ( $start_pos >= scalar @{$self->lstfile} ) {
-	    # This is a valid match. Sometimes, the list file ends
-	    # with the parameter estimates
-	    $self -> finished_parsing(1);
+		  # This is a valid match. Sometimes, the list file ends
+		  # with the parameter estimates
+		  $self -> finished_parsing(1);
 	  }
 	}
 
@@ -1660,6 +1712,22 @@ sub _read_thomsi
 	    $col=1;
 	  }
 	}
+	#correlation
+	$row = 1;
+	$col = 1;
+	foreach my $val (@sdcorrform_raw_omega){
+	  if ($val ne 'NA'){
+	    my $label = 'OMEGA('.$row.','.$col.')';
+	    $sdcorrform_omegacoordval{$label} = $val;
+	  }
+	  $col++;
+	  if ($col > $row) {
+	    $row++;
+	    $col=1;
+	  }
+	}
+
+
 	#any sigma matrix form, store all defined elements
 	$row = 1;
 	$col = 1;
@@ -1676,9 +1744,26 @@ sub _read_thomsi
 	  }
 	}
 
+	#correlation
+	$row = 1;
+	$col = 1;
+	foreach my $val (@sdcorrform_raw_sigma) {
+	  if ($val ne 'NA'){
+	    my $label = 'SIGMA('.$row.','.$col.')';
+	    $sdcorrform_sigmacoordval{$label} = $val;
+	  }
+	  $col++;
+	  if ($col > $row){
+	    $row++;
+	    $col = 1;
+	  }
+	}
+
 	$self->thetacoordval(\%thetacoordval);
 	$self->omegacoordval(\%omegacoordval);
 	$self->sigmacoordval(\%sigmacoordval);
+	$self->sdcorrform_omegacoordval(\%sdcorrform_omegacoordval);
+	$self->sdcorrform_sigmacoordval(\%sdcorrform_sigmacoordval);
 
 	unless ( $success ) {
 	  carp("No thetas, omegas or sigmas found" );
