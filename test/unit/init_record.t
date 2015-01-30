@@ -77,27 +77,109 @@ $record = model::problem::omega->new(record_arr => ['$OMEGA','(0.01642,FIXED) 0.
 														  ' (0.45)   ;; ETA(4)',
 														  '  0.4 SD CHOLESK 0.09     ;; ETA(6)']);
 is ($record->fix, 0, 'record 5 fix');
-is ($record->options->[0]->init,0.01642, 'record 5 1 init');
-is ($record->options->[0]->fix, 1, 'record 5 1 fix');
+is ($record->options->[0]->init, 0.01642, 'record 5 1 init');
+ok ($record->options->[0]->fix, 'record 5 1 fix');
+ok (!$record->options->[0]->sd, 'record 5 1 sd');
+ok (!$record->options->[0]->chol, 'record 5 1 cholesky');
 
-is ($record->options->[1]->init,0.112, 'record 5 2 init');
+is ($record->options->[1]->init, 0.112, 'record 5 2 init');
 is ($record->options->[1]->fix, 1, 'record 5 2 fix');
 
-is ($record->options->[2]->init,1.0724, 'record 5 3 init');
+is ($record->options->[2]->init, 1.0724, 'record 5 3 init');
 is ($record->options->[2]->fix, 1, 'record 5 3 fix');
 
-is ($record->options->[3]->init,0.45, 'record 5 4 init');
+is ($record->options->[3]->init, 0.45, 'record 5 4 init');
 is ($record->options->[3]->fix, 0, 'record 5 4 fix');
 
-is ($record->options->[4]->init,0.4, 'record 5 5 init');
+is ($record->options->[4]->init, 0.4, 'record 5 5 init');
 is ($record->options->[4]->fix, 0, 'record 5 5 fix');
 is ($record->options->[4]->sd, 1, 'record 5 5 sd');
 is ($record->options->[4]->chol, 1, 'record 5 5 cholesky');
 
-is ($record->options->[5]->init,0.09, 'record 5 6 init');
+is ($record->options->[5]->init, 0.09, 'record 5 6 init');
 is ($record->options->[5]->fix, 0, 'record 5 6 fix');
 is ($record->options->[5]->sd, 0, 'record 5 6 sd');
 is ($record->options->[5]->chol, 0, 'record 5 6 cholesky');
 
+# DIAGONAL SD
+$record = model::problem::omega->new(record_arr => [ '$OMEGA (1 SD) (28)' ]);
+ok (!$record->sd, 'DIAGONAL SD 1 sd');
+ok ($record->options->[0]->sd, "DIAGONAL SD 1 0 sd");
+ok (!$record->options->[1]->sd, "DIAGONAL SD 1 1 sd"); 
+
+$record = model::problem::omega->new(record_arr => [ '$OMEGA (1) (STANDARD 28)' ]);
+ok (!$record->sd, 'DIAGONAL SD 2 sd');
+ok (!$record->options->[0]->sd, "DIAGONAL SD 2 0 sd");
+ok ($record->options->[1]->sd, "DIAGONAL SD 2 1 sd"); 
+
+$record = model::problem::omega->new(record_arr => [ '$OMEGA DIAGONAL(2) 1 (28 STANDARD)' ]);
+ok (!$record->sd, 'DIAGONAL SD 3 sd');
+ok (!$record->options->[0]->sd, "DIAGONAL SD 3 0 sd");
+ok ($record->options->[1]->sd, "DIAGONAL SD 3 1 sd"); 
+
+# DIAGONAL VARIANCE
+$record = model::problem::omega->new(record_arr => [ '$OMEGA (1 VARIANCE) (28)' ]);
+ok (!$record->sd, 'DIAGONAL VARIANCE 1 sd');
+ok (!$record->options->[0]->sd, "DIAGONAL VARIANCE 1 0 sd");
+ok (!$record->options->[1]->sd, "DIAGONAL VARIANCE 1 1 sd"); 
+
+$record = model::problem::omega->new(record_arr => [ '$OMEGA (SD 1) (28 VARIANCE)' ]);
+ok (!$record->sd, 'DIAGONAL VARIANCE 2 sd');
+ok ($record->options->[0]->sd, "DIAGONAL VARIANCE 2 0 sd");
+ok (!$record->options->[1]->sd, "DIAGONAL VARIANCE 2 1 sd"); 
+
+# BLOCK SD/CORR/VARIANCE/COVARIANCE
+$record = model::problem::omega->new(record_arr => [ '$OMEGA BLOCK(2) 27 SD 28 29' ]);
+ok ($record->sd, 'BLOCK SD/CORR 1 sd');
+ok (!$record->corr, 'BLOCK SD/CORR 1 corr');
+ok ($record->options->[0]->sd, "BLOCK SD/CORR 1 0 sd");
+ok (!$record->options->[1]->sd, "BLOCK SD/CORR 1 1 sd"); 
+ok ($record->options->[2]->sd, "BLOCK SD/CORR 1 2 sd"); 
+ok (!$record->options->[0]->corr, "BLOCK SD/CORR 1 0 corr");
+ok (!$record->options->[1]->corr, "BLOCK SD/CORR 1 1 corr"); 
+ok (!$record->options->[2]->corr, "BLOCK SD/CORR 1 2 corr"); 
+
+$record = model::problem::omega->new(record_arr => [ '$OMEGA BLOCK(2) 27 28 29 CORR' ]);
+ok (!$record->sd, 'BLOCK SD/CORR 2 sd');
+ok ($record->corr, 'BLOCK SD/CORR 2 corr');
+ok (!$record->options->[0]->sd, "BLOCK SD/CORR 2 0 sd");
+ok (!$record->options->[1]->sd, "BLOCK SD/CORR 2 1 sd"); 
+ok (!$record->options->[2]->sd, "BLOCK SD/CORR 2 2 sd"); 
+ok (!$record->options->[0]->corr, "BLOCK SD/CORR 2 0 corr");
+ok ($record->options->[1]->corr, "BLOCK SD/CORR 2 1 corr"); 
+ok (!$record->options->[2]->corr, "BLOCK SD/CORR 2 2 corr"); 
+
+$record = model::problem::omega->new(record_arr => [ '$OMEGA BLOCK(2) 27 28 STANDARD 29 CORR' ]);
+ok ($record->sd, 'BLOCK SD/CORR 3 sd');
+ok ($record->corr, 'BLOCK SD/CORR 3 corr');
+ok ($record->options->[0]->sd, "BLOCK SD/CORR 3 0 sd");
+ok (!$record->options->[1]->sd, "BLOCK SD/CORR 3 1 sd"); 
+ok ($record->options->[2]->sd, "BLOCK SD/CORR 3 2 sd"); 
+ok (!$record->options->[0]->corr, "BLOCK SD/CORR 3 0 corr");
+ok ($record->options->[1]->corr, "BLOCK SD/CORR 3 1 corr"); 
+ok (!$record->options->[2]->corr, "BLOCK SD/CORR 3 2 corr"); 
+
+$record = model::problem::omega->new(record_arr => [ '$OMEGA BLOCK(2) 27 28 SD 29 COVARIANCE' ]);
+ok ($record->sd, 'BLOCK SD/CORR 4 sd');
+ok (!$record->corr, 'BLOCK SD/CORR 4 corr');
+ok ($record->options->[0]->sd, "BLOCK SD/CORR 4 0 sd");
+ok (!$record->options->[1]->sd, "BLOCK SD/CORR 4 1 sd"); 
+ok ($record->options->[2]->sd, "BLOCK SD/CORR 4 2 sd"); 
+ok (!$record->options->[0]->corr, "BLOCK SD/CORR 4 0 corr");
+ok (!$record->options->[1]->corr, "BLOCK SD/CORR 4 1 corr"); 
+ok (!$record->options->[2]->corr, "BLOCK SD/CORR 4 2 corr"); 
+
+$record = model::problem::omega->new(record_arr => [ '$OMEGA BLOCK(2) 27 VARIANCE 28 29 CORR' ]);
+ok (!$record->sd, 'BLOCK SD/CORR 2 sd');
+ok ($record->corr, 'BLOCK SD/CORR 2 corr');
+ok (!$record->options->[0]->sd, "BLOCK SD/CORR 2 0 sd");
+ok (!$record->options->[1]->sd, "BLOCK SD/CORR 2 1 sd"); 
+ok (!$record->options->[2]->sd, "BLOCK SD/CORR 2 2 sd"); 
+ok (!$record->options->[0]->corr, "BLOCK SD/CORR 2 0 corr");
+ok ($record->options->[1]->corr, "BLOCK SD/CORR 2 1 corr"); 
+ok (!$record->options->[2]->corr, "BLOCK SD/CORR 2 2 corr"); 
+
+use Data::Dumper;
+print Dumper($record);
 
 done_testing();

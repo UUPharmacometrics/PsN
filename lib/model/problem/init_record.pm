@@ -355,12 +355,14 @@ sub _read_options
 			if ( $i+1 == $row*($row+1)/2 ) {
 				$self -> _add_option( option_string => $digits[$i].$com_str,
 									  on_diagonal   => 1,
+                                      sd => $any_sd,
 									  coordinate_string => $parameter.'('.$global_row.','.$global_column.')');
 				$row++;
 				$global_row++;
 				$global_column=$self->n_previous_rows()+1;
 			} else {
 				$self -> _add_option( option_string => $digits[$i].$com_str,
+                                      corr => $any_corr,
 									  on_diagonal   => 0,
 									  coordinate_string => $parameter.'('.$global_row.','.$global_column.')');
 				$global_column++;
