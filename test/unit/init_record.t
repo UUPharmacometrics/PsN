@@ -179,7 +179,4 @@ ok (!$record->options->[0]->corr, "BLOCK SD/CORR 2 0 corr");
 ok ($record->options->[1]->corr, "BLOCK SD/CORR 2 1 corr"); 
 ok (!$record->options->[2]->corr, "BLOCK SD/CORR 2 2 corr"); 
 
-use Data::Dumper;
-print Dumper($record);
-
 done_testing();
