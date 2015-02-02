@@ -349,6 +349,32 @@ sub _parse_lst_file
 
             my @all_labels = @{$model->problems->[$problems]->get_estimated_attributes(parameter => 'all', attribute => 'labels')};
 
+            # Handling parameters that are FIX but have a label
+            my @records;
+            if (defined $model->problems->[$problems]->thetas) {
+                push @records, @{$model->problems->[$problems]->thetas};
+            }
+            if (defined $model->problems->[$problems]->omegas) {
+                push @records, @{$model->problems->[$problems]->omegas};
+            }
+            if (defined $model->problems->[$problems]->sigmas) {
+                push @records, @{$model->problems->[$problems]->sigmas};
+            }
+            my @options;
+            foreach my $record (@records) {
+                if (defined $record->options) {
+                    push @options, @{$record->options};
+                }
+            }
+
+            foreach my $option (@options) {
+                if ($option->fix and defined $option->label) {
+                    push @est_values, $option->init;
+                    push @all_labels, $option->label;
+                    push @se_values, undef;
+                }
+            }
+
             if ($estimation_step_run) {
                 $estimation = $doc->createElement("Estimation");
 
@@ -403,10 +429,21 @@ sub _parse_lst_file
                         }
                     }
                     if ($self->check_include(element => 'Estimation/PrecisionPopulationEstimates')) {
+                        # Remove ses that are undef
+                        my @spliced_ses = @se_values;
+                        my @spliced_labels = @all_labels;
+                        my @spliced_rses = @rel_se;
+                        for (my $i = 0; $i < scalar(@se_values); $i++) {
+                            if (not defined $se_values[$i]) {
+                               splice @spliced_ses, $i, 1;
+                               splice @spliced_labels, $i, 1;
+                               splice @spliced_rses, $i, 1;
+                            }
+                        }
                         my $ppe = $self->_create_precision_population_estimates(
-                            labels => \@all_labels,
-                            standard_errors => \@se_values,
-                            relative_standard_errors => \@rel_se,
+                            labels => \@spliced_labels,
+                            standard_errors => \@spliced_ses,
+                            relative_standard_errors => \@spliced_rses,
                             correlation_matrix => $correlation_matrix,
                             covariance_matrix => $covariance_matrix,
                         );

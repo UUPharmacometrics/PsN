@@ -130,7 +130,8 @@ The following entries will be populated:
         \begin{itemize}
             \item PopulationEstimates
             \begin{itemize}
-                \item MLE - Results will be taken from the .ext file if present otherwise the .lst file
+                \item MLE - Results will be taken from the .ext file if present otherwise the .lst file. Parameters that are fixed and does not have a label will not be included. The estimated value
+                    will be on the standard deviation/correlation scale or variance/covariance scale depending on which scale the initial estimate was on. 
             \end{itemize}
             \item PrecisionPopulationEstimates
             \begin{itemize}
@@ -138,8 +139,8 @@ The following entries will be populated:
                 \begin{itemize}
                     \item CovarianceMatrix - If the covariance step was successful. Results will be taken from the .cov file if present otherwise from the .lst file.
                     \item CorrelationMatrix - If the covariance step was successful. Results will be taken from the .cor file if present otherwise from the .lst file.
-                    \item StandardError - Results will be taken from the .ext file if present otherwise the .lst file
-                    \item RelativeStandardError - Results will be taken from the .ext file if present otherwise the .lst file. The RSE is calculated has the ratio between the standard error and the estimated value of the parameter.
+                    \item StandardError - Results will be taken from the .ext file if present otherwise the .lst file. Parameters that are fixed will not be included
+                    \item RelativeStandardError - Results will be taken from the .ext file if present otherwise the .lst file. The RSE is calculated has the ratio between the standard error and the estimated value of the parameter. Parameters that are fixed will not be included.
                 \end{itemize}
                 \item Bootstrap
                 \begin{itemize}
@@ -185,7 +186,6 @@ This section lists all the elements of the SO that is not supported and that wil
 SO/
     SOBlock/
         ToolSettings
-        RawResults
         TaskInformation/
             OutputFilePath
             NumberChains
