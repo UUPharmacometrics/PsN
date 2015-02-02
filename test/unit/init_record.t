@@ -9,6 +9,7 @@ use includes; #file with paths to PsN packages
 use Math::Random;
 use model::problem::init_record;
 use model::problem::omega;
+use Test::Exception;
 
 # Test new and read_option
 my $record = model::problem::init_record->new(record_arr => ['2']);
@@ -178,5 +179,91 @@ ok (!$record->options->[2]->sd, "BLOCK SD/CORR 2 2 sd");
 ok (!$record->options->[0]->corr, "BLOCK SD/CORR 2 0 corr");
 ok ($record->options->[1]->corr, "BLOCK SD/CORR 2 1 corr"); 
 ok (!$record->options->[2]->corr, "BLOCK SD/CORR 2 2 corr"); 
+
+
+#case1
+$record = model::problem::omega->new(record_arr => [ '$OMEGA 0.4 0.25 FIXED' ]);
+ok (!$record->fix, 'DIAGONAL case 1 dim 2 1 FIX rec ');
+ok (!$record->options->[0]->fix, "DIAGONAL case 1 dim 2 1 FIX opt 1");
+ok ($record->options->[1]->fix, "DIAGONAL case 1 dim 2 1 FIX opt 2"); 
+
+#case2
+$record = model::problem::omega->new(record_arr => [ '$OMEGA (0.4 FIXED) 0.25 ' ]);
+ok (!$record->fix, 'DIAGONAL case 2 dim 2 1 FIX rec ');
+ok ($record->options->[0]->fix, "DIAGONAL case 2 dim 2 1 FIX opt 1");
+ok (!$record->options->[1]->fix, "DIAGONAL case 2 dim 2 1 FIX opt 2"); 
+
+#case3
+$record = model::problem::omega->new(record_arr => [ '$OMEGA 0.4 ( 0.25 FIX)' ]);
+ok (!$record->fix, 'DIAGONAL case 3 dim 2 1 FIX rec ');
+ok (!$record->options->[0]->fix, "DIAGONAL case 3 dim 2 1 FIX opt 1");
+ok ($record->options->[1]->fix, "DIAGONAL case 3 dim 2 1 FIX opt 2"); 
+
+#case4
+$record = model::problem::omega->new(record_arr => [ '$OMEGA 0.4 FIXED 0.25 ' ]);
+ok (!$record->fix, 'DIAGONAL case 4 dim 2 1 FIX rec ');
+ok ($record->options->[0]->fix, "DIAGONAL case 4 dim 2 1 FIX opt 1");
+ok (!$record->options->[1]->fix, "DIAGONAL case 4 dim 2 1 FIX opt 2"); 
+
+#5 fails
+dies_ok {model::problem::omega->new(record_arr => [ '$OMEGA FIXED 0.4  0.25 ' ])} "fix option before init";
+
+#case6
+$record = model::problem::omega->new(record_arr => [ '$OMEGA (FIX 0.4)  0.25 ' ]);
+ok (!$record->fix, 'DIAGONAL case 6 dim 2 1 FIX rec ');
+ok ($record->options->[0]->fix, "DIAGONAL case 6 dim 2 1 FIX opt 1");
+ok (!$record->options->[1]->fix, "DIAGONAL case 6 dim 2 1 FIX opt 2"); 
+
+
+#case8
+$record = model::problem::omega->new(record_arr => [ '$OMEGA 0.4 (FIX 0.25) ' ]);
+ok (!$record->fix, 'DIAGONAL case 8 dim 2 1 FIX rec ');
+ok (!$record->options->[0]->fix, "DIAGONAL case 8 dim 2 1 FIX opt 1");
+ok ($record->options->[1]->fix, "DIAGONAL case 8 dim 2 1 FIX opt 2"); 
+
+#case11
+$record = model::problem::omega->new(record_arr => [ '$OMEGA 0.4 0.25 STANDARD' ]);
+ok (!$record->sd, 'DIAGONAL case 11 dim 2 1 SD rec ');
+ok (!$record->options->[0]->sd, "DIAGONAL case 11 dim 2 1 SD opt 1");
+ok ($record->options->[1]->sd, "DIAGONAL case 11 dim 2 1 SD opt 2"); 
+
+#case12
+$record = model::problem::omega->new(record_arr => [ '$OMEGA (0.4 STANDARD) 0.25 ' ]);
+ok (!$record->sd, 'DIAGONAL case 2 dim 2 1 SD rec ');
+ok ($record->options->[0]->sd, "DIAGONAL case 12 dim 2 1 SD opt 1");
+ok (!$record->options->[1]->sd, "DIAGONAL case 12 dim 2 1 SD opt 2"); 
+
+#case13
+$record = model::problem::omega->new(record_arr => [ '$OMEGA 0.4 ( 0.25 SD)' ]);
+ok (!$record->sd, 'DIAGONAL case 13 dim 2 1 SD rec ');
+ok (!$record->options->[0]->sd, "DIAGONAL case 13 dim 2 1 SD opt 1");
+ok ($record->options->[1]->sd, "DIAGONAL case 13 dim 2 1 SD opt 2"); 
+
+#case14
+$record = model::problem::omega->new(record_arr => [ '$OMEGA 0.4 STANDARD 0.25 ' ]);
+ok (!$record->sd, 'DIAGONAL case 14 dim 2 1 SD rec ');
+ok ($record->options->[0]->sd, "DIAGONAL case 14 dim 2 1 SD opt 1");
+ok (!$record->options->[1]->sd, "DIAGONAL case 14 dim 2 1 SD opt 2"); 
+
+#15 fails
+dies_ok {model::problem::omega->new(record_arr => [ '$OMEGA STANDARD 0.4  0.25 ' ])} "fix option before init";
+
+#case16
+$record = model::problem::omega->new(record_arr => [ '$OMEGA (SD 0.4)  0.25 ' ]);
+ok (!$record->sd, 'DIAGONAL case 16 dim 2 1 SD rec ');
+ok ($record->options->[0]->sd, "DIAGONAL case 16 dim 2 1 SD opt 1");
+ok (!$record->options->[1]->sd, "DIAGONAL case 16 dim 2 1 SD opt 2"); 
+
+
+#17 fails
+dies_ok {model::problem::omega->new(record_arr => [ '$OMEGA 0.4  0.25 CORR' ])} "corr option to diag";
+
+#case18
+$record = model::problem::omega->new(record_arr => [ '$OMEGA 0.4 (SD 0.25) ' ]);
+ok (!$record->sd, 'DIAGONAL case 18 dim 2 1 SD rec ');
+ok (!$record->options->[0]->sd, "DIAGONAL case 18 dim 2 1 SD opt 1");
+ok ($record->options->[1]->sd, "DIAGONAL case 18 dim 2 1 SD opt 2"); 
+
+
 
 done_testing();

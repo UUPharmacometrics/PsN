@@ -413,6 +413,16 @@ sub _add_option
 	my $chol = $parm{'chol'};
 	my $corr = $parm{'corr'};
 
+	if (defined $on_diagonal){
+		if ($on_diagonal and $corr){
+			croak("Element $coordinate_string is on diagonal and therefore cannot be a correlation");
+		}
+		if ( (not $on_diagonal) and $sd){
+			croak("Element $coordinate_string is not on diagonal so it cannot be SD");
+		}
+
+	} 
+
 	my $opt_obj = 
 		model::problem::record::init_option ->
 		new ( option_string => $option_string,
