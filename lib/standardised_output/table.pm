@@ -50,8 +50,6 @@ sub parse
             push @{$self->columns->[$i]}, $values[$i]->textContent;
         }
     }
-    use Data::Dumper;
-    print Dumper($self);
 }
 
 no Moose;
