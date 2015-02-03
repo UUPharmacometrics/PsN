@@ -257,21 +257,10 @@ sub _parse_lst_file
 
     my $elapsed_time = 0;
     my @messages;
+    my @on_sd_scale;
     my $doc = $self->_document;
 
     my $file_stem = utils::file::get_file_stem($lst_file);
-    if (not defined $self->_first_block) {
-        $self->_first_block($file_stem);
-        if (defined $self->message) {
-            push @messages, {
-                type => "INFORMATION",
-                toolname => $self->toolname,
-                name => "User specified message",
-                content => $self->message,
-                severity => 0,
-            };
-        }
-    }
 
     my $block = $self->create_block(name => $file_stem);
     my $estimation;
@@ -372,6 +361,11 @@ sub _parse_lst_file
                     push @est_values, $option->init;
                     push @all_labels, $option->label;
                     push @se_values, undef;
+                }
+                if ($option->sd or $option->corr) {     # Save labels for parameters on sd/corr scale
+                    if (grep { $_ eq $option->label } @all_labels) {
+                        push @on_sd_scale, $option->label;
+                    }
                 }
             }
 
@@ -549,6 +543,36 @@ sub _parse_lst_file
         severity => 0,
     };
 
+    if (not defined $self->_first_block) {
+        $self->_first_block($file_stem);
+        if (defined $self->message) {
+            push @messages, {
+                type => "INFORMATION",
+                toolname => $self->toolname,
+                name => "User specified message",
+                content => $self->message,
+                severity => 0,
+            };
+        }
+        if (defined $self->bootstrap_results and scalar(@on_sd_scale) > 0) {
+            my $msg;
+            if (scalar(@on_sd_scale) == 1) {
+                $msg = "The parameter " . $on_sd_scale[0] . " is on sd/corr scale in the model but the bootstrap percentiles for this parameter will be on var/cov scale";
+            } elsif (scalar(@on_sd_scale) == 2) {
+                $msg = "The parameters " . $on_sd_scale[0] . " and " . $on_sd_scale[1] . " are on sd/corr scale in the model but the bootstrap percentiles for these parameters will be on var/cov scale";
+            } else {
+                $msg = "The parameters " . join(',', @on_sd_scale[0 .. $#on_sd_scale - 1]) . " and " . $on_sd_scale[-1] . " are on sd/corr scale in the model but the bootstrap percentiles for these parameters will be on the var/cov scale";
+            }
+            push @messages, {
+                type => "WARNING",
+                toolname => "PsN",
+                name => "Bootstrap",
+                content => $msg, 
+                severity => 8,
+            };
+        }
+    }
+
     my $task_information = $self->_create_task_information(messages => \@messages, run_time => $elapsed_time);
     my $raw_results = $self->_create_raw_results();
 
@@ -699,17 +723,18 @@ sub _create_bootstrap
     while (<$fh>) {
         if (/^percentile.confidence.intervals$/) {
             my $header = <$fh>;
-            my @a = split /,/, $header;
+            my @a = split /","/, $header;
             shift @a;
             shift @a;
             foreach my $param (@a) {
-                $param =~ s/"\s*(.*)"/\1/;      # Remove "" and spaces
+                $param =~ s/\s*//;      # Remove spaces
                 if ($param !~ /^se/) {
-                    push @parameters, $param;
+                    push @parameters, $self->_xml->mangle_symbol_idtype($param);   # FIXME: warning?
                 } else {
                     last;
                 }
             }
+
             # Loop through percentiles
             for (my $i = 0; $i < 7; $i++) {
                 my $row = <$fh>;
