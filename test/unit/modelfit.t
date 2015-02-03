@@ -29,7 +29,7 @@ my $passed = tool::modelfit::passed_picky(minimization_successful => $outobj->mi
 
 is($passed,0,'passed picky near bounds');
 
-$outobj = output -> new ('filename' => $modeldir.'/pheno.lst');
+$outobj = output -> new ('filename' => $modeldir.'/phenoMAXEV0.lst');
 $passed = tool::modelfit::passed_picky(minimization_successful => $outobj->minimization_successful,
 									   minimization_message => $outobj->minimization_message,
 									   probnum => 1,
