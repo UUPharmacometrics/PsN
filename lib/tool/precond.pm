@@ -415,6 +415,19 @@ sub convert_reparametrized_cov
 		}
 	}
 
+    # Set rows/columns of FIX thetas to zero to avoid numerical noise when reusing cov matrix
+    my $fixed = $model->fixed(parameter_type => 'theta');
+
+    for (my $i = 0; $i < scalar(@{$fixed->[0]}); $i++) {
+        if ($fixed->[0]->[$i]) {
+            # THETA $i+1 is fixed
+            for (my $j = 0; $j < scalar(@varcovMatrix); $j++) {
+                $varcovMatrix[$i][$j] = 0;
+                $varcovMatrix[$j][$i] = 0;
+            }
+        }
+    }
+
     #make symmetric to avoid almost symmetry
     for (my $row = 0; $row < @varcovMatrix; $row++) {
         for (my $col = $row + 1; $col < @varcovMatrix; $col++) {
