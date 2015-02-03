@@ -1,5 +1,7 @@
 package standardised_output::xml;
 
+# Class for writing to an so xml file
+
 use strict;
 use warnings;
 use Moose;
@@ -387,6 +389,16 @@ sub mangle_symbol_idtype
     $symbol =~ s/\P{IsContinuing_character}/_/g;
 
     return $symbol;
+}
+
+sub get_xpc
+{
+    # class (static) method
+    my $xpc = XML::LibXML::XPathContext->new();
+    $xpc->registerNs('x' => 'http://www.pharmml.org/so/0.1/StandardisedOutput');
+    $xpc->registerNs('ds' => 'http://www.pharmml.org/pharmml/0.6/Dataset');
+
+    return $xpc;
 }
 
 no Moose;

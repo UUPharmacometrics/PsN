@@ -8,6 +8,7 @@ use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages
 
 use standardised_output;
+use standardised_output::so;
 use XML::LibXML;
 
 sub get_xml
@@ -251,6 +252,14 @@ $so->parse;
 my $xpc = get_xml("pheno.SO.xml");
 (my $node) = $xpc->findnodes('/x:SO/x:PharmMLRef[@name]');
 ok (!defined $node, "PharmMLRef");
+
+# Using so.pm
+my $standardised_output = standardised_output->new(lst_files => [ "pheno.lst" ], use_tables => 0);
+$standardised_output->parse;
+my $so = standardised_output::so->new(filename => "pheno.SO.xml");
+
+is (scalar(@{$so->SOBlock}), 1, "Pheno: number of SOBlocks");
+is ($so->SOBlock->[0]->blkId, 'pheno', "Pheno: name of SOBlock");
 
 remove_test_dir($tempdir);
 
