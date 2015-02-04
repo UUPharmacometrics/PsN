@@ -285,6 +285,24 @@ SKIP: {
     is(scalar(@{$so->SOBlock->[0]->DataFile}), 1, "Pheno: Number of RawResults files");
     is($so->SOBlock->[0]->DataFile->[0]->{path}, "pheno.lst", "Pheno: Name of lst file");
 
+    is_deeply($so->SOBlock->[0]->CovarianceMatrix->RowNames,  [ 'CL', 'V', 'IVCL', 'IVV', 'SIGMA_1_1_' ], "Pheno: CovarianceMatrix RowNames");
+    is_deeply($so->SOBlock->[0]->CovarianceMatrix->ColumnNames,  [ 'CL', 'V', 'IVCL', 'IVV', 'SIGMA_1_1_' ], "Pheno: CovarianceMatrix ColumnNames");
+    is_deeply($so->SOBlock->[0]->CovarianceMatrix->MatrixRow, [
+        [ 1.56e-07, 4.58e-06, -2.72e-05, 3.56e-06, 7.25e-08 ],
+        [ 4.58e-06, 0.00638, -0.00193, 0.00128, 2.13e-05 ],
+        [ -2.72e-05, -0.00193, 0.0242, -0.000992, 7.08e-05 ],
+        [ 3.56e-06, 0.00128, -0.000992, 0.00122, -5.33e-07 ],
+        [ 7.25e-08, 2.13e-05, 7.08e-05, -5.33e-07, 1.15e-05 ] ], "Pheno: CovarianceMattrix MatrixRow");
+
+    is_deeply($so->SOBlock->[0]->CorrelationMatrix->RowNames,  [ 'CL', 'V', 'IVCL', 'IVV', 'SIGMA_1_1_' ], "Pheno: CorrelationMatrix RowNames");
+    is_deeply($so->SOBlock->[0]->CorrelationMatrix->ColumnNames,  [ 'CL', 'V', 'IVCL', 'IVV', 'SIGMA_1_1_' ], "Pheno: CorrelationMatrix ColumnNames");
+    is_deeply($so->SOBlock->[0]->CorrelationMatrix->MatrixRow, [
+          [ 0.000395, 0.145, -0.444, 0.258, 0.0541 ],
+          [ 0.145, 0.0799, -0.155, 0.46, 0.0784 ],
+          [ -0.444, -0.155, 0.156, -0.183, 0.134 ],
+          [ 0.258, 0.46, -0.183, 0.0349, -0.0045 ],
+          [ 0.0541, 0.0784, 0.134, -0.0045, 0.00339 ] ], "Pheno CorrelationMatrix MatrixRow");
+
     remove_test_dir($tempdir);
 }
 
