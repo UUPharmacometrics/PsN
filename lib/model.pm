@@ -153,7 +153,8 @@ sub BUILD
 		my $file = $self->full_name;
 		if (-e $file) {
 			if (pharmml::is_pharmml($file)) {
-				print "*** Input file is in PharmML format. Starting conversion to NMTRAN. ***\n";
+				ui -> print( category => 'all',
+							 message  => "*** Input file is in PharmML format. Starting conversion to NMTRAN. ***\n");
 				if (not pharmml::is_java_installed) {
 					croak("Error: To be able use a PharmML file as input to PsN the java run time environment has to be installed");
 				}
@@ -161,7 +162,8 @@ sub BUILD
 				if ($return_code != 0) {
 					croak("Error: Conversion of $file failed");
 				}
-				print "*** Conversion done ***\n";
+				ui -> print( category => 'all',
+							 message  => "*** Conversion done ***\n");
 				my $filename = $self->filename;
                 # Currently the only way to get the converted filename
                 if ($filename =~ /\.xml$/) {
@@ -170,11 +172,13 @@ sub BUILD
                     $filename .= '.ctl';
                 }
 				$self->filename($filename);
-				print "*** Running nmtran on converted model ***\n";
+				ui -> print( category => 'all',
+							 message  => "*** Running nmtran on converted model ***\n");
 				if (not pharmml::check_converted_model($filename)) {
 					croak("Error when running nmtran on converted file.");
 				}
-				print "*** Converted model checked successfully ***\n";
+				ui -> print( category => 'all',
+							 message  => "*** Converted model checked successfully ***\n");
 			}
 		}
 
@@ -868,8 +872,9 @@ sub near_bounds
 						my $fixed_or_same=0;
 						my $generic_label=$n_b -> [$problem][$subprob][$item];
 						unless (defined $fixed_or_same_hash{$generic_label}){
-							print "bug in model->near_bounds, please report this. generic label is $generic_label and keys is ".
-								join(' ',(keys %fixed_or_same_hash))."\n";
+							ui -> print( category => 'all',
+							 message  => "bug in model->near_bounds, please report this. generic label is $generic_label and keys is ".
+								join(' ',(keys %fixed_or_same_hash))."\n");
 						}
 						if ($fixed_or_same_hash{$generic_label}){
 							$n_b -> [$problem][$subprob][$item] = undef;
@@ -1319,7 +1324,8 @@ sub get_values_to_labels
 		    push (@values,$coordval{$coord});
 		  }else {
 		    # only not stored are undefs/NA
-		    print "undefined value from labels(), bug!\n" unless (defined $coord);
+		    ui -> print( category => 'all',
+						 message  => "undefined value from labels(), bug!\n") unless (defined $coord);
 		    push (@values,undef);
 		  }
 		}
@@ -1593,17 +1599,19 @@ sub get_rawres_params
 	$sum += scalar(@filter); #@filter is always defined, but may be empty - bug, may count some cols twice here
 	
 	unless (scalar(@header) > $sum and (($header[0] eq 'model') or ($header[1] eq 'model') or ($header[2] eq 'model')) ){
-	    print "\n\nThe found headers are\n".join("   ",@header)."\n\n";
+	    ui -> print( category => 'all',
+					 message  => "\n\nThe found headers are\n".join("   ",@header)."\n\n");
 
 	    croak("The file $filename does not follow the format rules.\n".
 			  "Either first, second or third column should be model, you have ".$header[0].", ".$header[1]." and ".$header[2].
 			  ", need $sum cols and have ".scalar(@header)."\n");
 	}
 	if (($header[0] eq 'hypothesis') and ($offset == 1)){
-	    print "\nWarning: Your rawres_input file looks like an sse raw results file,\n".
-			"but you use offset_rawres=1 which is the default suitable for bootstrap\n".
-			"raw results files. If you want to include also the first model\n".
-			"from the raw results file then rerun with offset_rawres=0.\n\n";
+	    ui -> print( category => 'all',
+					 message  => "\nWarning: Your rawres_input file looks like an sse raw results file,\n".
+					 "but you use offset_rawres=1 which is the default suitable for bootstrap\n".
+					 "raw results files. If you want to include also the first model\n".
+					 "from the raw results file then rerun with offset_rawres=0.\n\n");
 	}
 
 	#parse filter
@@ -1704,9 +1712,10 @@ sub get_rawres_params
 						$skip=1;
 						last;
 					}elsif(not math::usable_number($val)){
-						print "\nError: value $val in input filter column ".
-							$header[$filter_column_index[$i]]." does not look numeric. All input ".
-							"filter columns must be numeric, skipping this line\n";
+						ui -> print( category => 'all',
+									 message  => "\nError: value $val in input filter column ".
+									 $header[$filter_column_index[$i]]." does not look numeric. All input ".
+									 "filter columns must be numeric, skipping this line\n");
 						$skip=1;
 						last;
 					}
@@ -1735,7 +1744,8 @@ sub get_rawres_params
 			my $val = $line->[$thetapos{$label}];
 			unless (math::usable_number($val) ){
 				$skip =1;
-				print "\nWarning rawres input: $val in column $label does not look like a parameter value\n";
+				ui -> print( category => 'all',
+							 message  => "\nWarning rawres input: $val in column $label does not look like a parameter value\n");
 			}
 			$theta{$label} = $val;
 		}
@@ -1743,7 +1753,8 @@ sub get_rawres_params
 			my $val = $line->[$omegapos{$label}];
 			unless (math::usable_number($val) ){
 				$skip =1;
-				print "\nWarning rawres input: $val in column $label does not look like a parameter value\n";
+				ui -> print( category => 'all',
+							 message  => "\nWarning rawres input: $val in column $label does not look like a parameter value\n");
 			}
 			$omega{$label} = $val;
 		}
@@ -1751,7 +1762,8 @@ sub get_rawres_params
 			my $val = $line->[$sigmapos{$label}];
 			unless (math::usable_number($val) ){
 				$skip =1;
-				print "\nWarning rawres input: $val in column $label does not look like a parameter value\n";
+				ui -> print( category => 'all',
+							 message  => "\nWarning rawres input: $val in column $label does not look like a parameter value\n");
 			}
 			$sigma{$label} = $val;
 		}
@@ -1844,23 +1856,27 @@ sub setup_filter
 	      }
 	  }elsif ($1 eq '.gt.'){
 	      if ($string_filter){
-		  print "error in string filter, relation .gt. not allowed for strings. Ignoring filter $filt\n";
+		  ui -> print( category => 'all',
+					   message  => "error in string filter, relation .gt. not allowed for strings. Ignoring filter $filt\n");
 		  next;
 	      }
 	    $rel = '>';
 	  }elsif ($1 eq '.lt.'){
 	      if ($string_filter){
-		  print "error in string filter, relation .lt. not allowed for strings. Ignoring filter $filt\n";
+		  ui -> print( category => 'all',
+					   message  => "error in string filter, relation .lt. not allowed for strings. Ignoring filter $filt\n");
 		  next;
 	      }
 	    $rel = '<';
 	  }else{
-	    print "Error identifying relation $1, ignoring filter $filt\n";
+	    ui -> print( category => 'all',
+					 message  => "Error identifying relation $1, ignoring filter $filt\n");
 	    next;
 	  }
 	  my $val = $2;
 	  if ((not math::usable_number($val)) and (not $string_filter)){
-	      print "Error in filter analysis, value $val does not look like a number. Ignoring filter $filt\n";
+	      ui -> print( category => 'all',
+					   message  => "Error in filter analysis, value $val does not look like a number. Ignoring filter $filt\n");
 	      next;
 	  }
 	  my $col = $filt;
@@ -2307,7 +2323,8 @@ sub set_maxeval_zero
 	    }
 	  }
 	  my $warning = "\n\nMETHOD in last \$EST was not classical nor IMP/IMPMAP. Cannot set MAXEVAL=0 or EONLY=1.\n";
-	  print $warning if ($print_warning and not $success);
+	  ui -> print( category => 'all',
+				   message  => $warning) if ($print_warning and not $success);
 	}
 
 	return $success;
@@ -3414,7 +3431,8 @@ sub update_inits
 							unless ($option->value() == 0 and (not $option->on_diagonal())){
 								my $mes = "update_inits: No match for $param $name found in $from_string";
 								carp($mes);
-								print $mes."\n";
+								ui -> print( category => 'all',
+											 message  => $mes."\n");
 							}
 						}
 					}

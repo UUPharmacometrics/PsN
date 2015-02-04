@@ -83,7 +83,7 @@ sub set_random_inits
 			if ($option->fix ){
 				#this can happen if diagonal omega/sigma, there options are fix/unfix individually
 				if ($self->type eq 'BLOCK'){
-					print "";
+					#print "";
 				}
 				$col++;
 				if ($col>$row){
@@ -384,10 +384,11 @@ sub _read_options
 	}
 
 	if ($any_chol or $any_sd or $any_corr){
-		print "\nWarning:\n Found STANDARD/CORRELATION/CHOLESKY in \$$parameter.\n".
-			"This is not yet supported by PsN. Errors will be introduced when\n".
-			"updating initial estimates to final estimates from previous run\n".
-			"and sumo output will be wrong.\n";
+		ui -> print( category => 'all',
+					 message  => "Warning:\n Found STANDARD/CORRELATION/CHOLESKY in \$$parameter.\n".
+					 "This is not yet supported by PsN. Errors will be introduced when\n".
+					 "updating initial estimates to final estimates from previous run\n".
+					 "and sumo output will be wrong.\n");
 	}
 }
 

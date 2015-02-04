@@ -256,15 +256,13 @@ sub BUILD
 						record_number => 0,
 						option_name => 'ORDER',
 						fuzzy_match => 1 );
-				print "\n***Warning***\n".
-					"Option ORDER in \$EST is not yet supported by PsN. It has been removed from ".
-					"the control stream.\n";
+				ui -> print( category => 'all',
+							 message  => "\n***Warning***\n".
+							 "Option ORDER in \$EST is not yet supported by PsN. It has been removed from ".
+							 "the control stream.\n");
 			}
 		}
 	}
-	# Initialize table file objects (if any)
-# Kajsa 2014-04-25 skip this, assume a big waste
-#	$self -> _read_table_files( ignore_missing_files => $self->ignore_missing_output_files );
 
 	if ( $self->cwres ) {
 		$self->cwres_modules([]) unless defined $self->cwres_modules;
@@ -297,7 +295,8 @@ sub add_prior_distribution
 
 	#First check that do not already have prior
 	if ((defined $self->priors()) and scalar(@{$self -> priors()})>0 ){
-		print "Warning: Cannot add prior to \$PROB which already has a \$PRIOR\n";
+		ui -> print( category => 'all',
+					 message  => "Warning: Cannot add prior to \$PROB which already has a \$PRIOR\n");
 		return;
 	}
 	#Set ntheta=number of THETAs in input model.
@@ -334,7 +333,8 @@ sub add_prior_distribution
 		}
 		$self->own_print_order(\@new_order);
 	}else{
-		print "\nError add_prior_distribution, no own_print_order\n";
+		ui -> print( category => 'all',
+					 message  => "\nError add_prior_distribution, no own_print_order\n");
 	}
 
 
@@ -343,7 +343,8 @@ sub add_prior_distribution
 		problem_index => ($problem_number-1),
 		subproblem_index => 0);
 	unless (defined $ref){
-		print "Cannot add prior if output data lacks THETA estimates\n";
+		ui -> print( category => 'all',
+					 message  => "Cannot add prior if output data lacks THETA estimates\n");
 		return;
 	}
 	my %thetas = %{$ref};
@@ -357,7 +358,8 @@ sub add_prior_distribution
 		problem_index=>($problem_number-1),
 		subproblem_index=>0);
 	unless (defined $ref){
-		print "Cannot add prior if output data lacks covariance matrix\n";
+		ui -> print( category => 'all',
+					 message  => "Cannot add prior if output data lacks covariance matrix\n");
 		return;
 	}
 
@@ -391,7 +393,8 @@ sub add_prior_distribution
 		subproblem_index => 0);
 
 	unless (defined $ref){
-		print "Cannot add prior if output data lacks OMEGA estimates\n";
+		ui -> print( category => 'all',
+					 message  => "Cannot add prior if output data lacks OMEGA estimates\n");
 		return;
 	}
 	my %omegas = %{$ref};
@@ -433,7 +436,8 @@ sub add_prior_distribution
 			}
 		}
 		$set_prior_etas += $size;
-		print "Error too many new omegas\n" if ($set_prior_etas > $neta);
+		ui -> print( category => 'all',
+					 message  => "Error too many new omegas\n") if ($set_prior_etas > $neta);
 		$self->add_records(type=> 'omega',
 			record_strings => \@record_strings);
 	}
@@ -1558,9 +1562,11 @@ sub _read_records
 				# let add_records create the object if appropriate
 
 				if( $record_type eq 'warnings' ) {
-					print "\nWarning: Record \$WARNINGS is deleted by PsN.\n";
+					ui -> print( category => 'all',
+								 message  => "\nWarning: Record \$WARNINGS is deleted by PsN.\n");
 				}elsif( $record_type eq 'finedata' ) {
-					print "\nWarning: Record \$FINEDATA is deleted by PsN.\n";
+					ui -> print( category => 'all',
+								 message  => "\nWarning: Record \$FINEDATA is deleted by PsN.\n");
 				} elsif( $record_type eq 'table' ) {
 					my $et_found = 0;
 					my $wr_found = 0;
@@ -2102,7 +2108,8 @@ sub ensure_diagonal_dominance
 			}
 		}
 		if ($adjusted and $verbose){
-			print "Decreased off-diagonal values of $param from input to ensure strict diagonal dominance in output model.\n";
+			ui -> print( category => 'all',
+						 message  => "Decreased off-diagonal values of $param from input to ensure strict diagonal dominance in output model.\n");
 		}
 	}
 }

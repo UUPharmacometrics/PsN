@@ -1006,6 +1006,7 @@ sub _read_sethomsi
 	my ( @sdcorrform_raw_seomega, @sdcorrform_raw_sesigma );
 	my (%sdcorrform_seomegacoordval,%sdcorrform_sesigmacoordval);
 	my $found_estimates = 0;
+	my $sdcorrform_found_estimates = 1;
 
 	# _read_thomsi should leave us right at where we should start reading
 	while ( $_ = @{$self->lstfile}[ $start_pos++ ] ) {
@@ -1018,6 +1019,9 @@ sub _read_sethomsi
 		if ( /OMEGA - COV MATRIX FOR RANDOM EFFECTS - ETAS/ ) {
 			$omegarea = 1;
 			$thetarea = 0;
+			$sigmarea = 0;
+			$sdcorrform_omegarea = 0;
+			$sdcorrform_sigmarea = 0;
 			$found_estimates=1;
 			next;
 		}
@@ -1025,15 +1029,30 @@ sub _read_sethomsi
 			$sigmarea = 1;
 			$omegarea = 0;
 			$thetarea = 0;
+			$sdcorrform_omegarea = 0;
+			$sdcorrform_sigmarea = 0;
 			$found_estimates=1;
 			next;
 		}
-		if ( /CORR MATRIX FOR RANDOM EFFECTS/ ) {
-			$sigmarea = 0;
+		if ( /OMEGA - CORR MATRIX FOR RANDOM EFFECTS - ETAS/ ) {
 			$omegarea = 0;
 			$thetarea = 0;
+			$sigmarea = 0;
+			$sdcorrform_omegarea = 1;
+			$sdcorrform_sigmarea = 0;
+			$sdcorrform_found_estimates = 1;
 			next;
 		}
+		if ( /SIGMA - CORR MATRIX FOR RANDOM EFFECTS - EPSILONS/ ) {
+			$sigmarea = 0;
+			$thetarea = 0;
+			$omegarea = 0;
+			$sdcorrform_omegarea = 0;
+			$sdcorrform_sigmarea = 1;
+			$sdcorrform_found_estimates = 1;
+			next;
+		}
+
 		if ( ($found_estimates) and 
 			/COVARIANCE MATRIX OF ESTIMATE/ ) {
 			# This is fine, we should end up here after reading the
@@ -1096,6 +1115,19 @@ sub _read_sethomsi
 				$T[$i] = $tmp ;
 			}
 			push(@raw_seomega,@T);
+		}elsif($sdcorrform_omegarea and /^(\+|\s{2,})/) {
+			next if /ET/;
+			@T = split(' ',$_);
+			shift @T if $T[0] eq '+';
+			for  $i (0..(@T-1)) {
+				if($T[$i] ne '.........') {
+					$tmp = eval($T[$i]);
+				} else {
+					$tmp = 'NA';
+				}
+				$T[$i] = $tmp ;
+			}
+			push(@sdcorrform_raw_seomega,@T);
 		}elsif($sigmarea and /^(\+|\s{2,})/) {
 			next if /EP/;
 			@T = split(' ',$_);
@@ -1109,6 +1141,19 @@ sub _read_sethomsi
 				$T[$i] = $tmp ;
 			}
 			push(@raw_sesigma,@T);
+		}elsif($sdcorrform_sigmarea and /^(\+|\s{2,})/) {
+			next if /EP/;
+			@T = split(' ',$_);
+			shift @T if $T[0] eq '+';
+			for $i (0..(@T-1)) {
+				if ($T[$i] ne '.........') {
+					$tmp = eval($T[$i]);
+				} else {
+					$tmp = 'NA';
+				}
+				$T[$i] = $tmp ;
+			}
+			push(@sdcorrform_raw_sesigma,@T);
 		}
 
 		if ( $start_pos >= scalar @{$self->lstfile} ) {
@@ -1139,6 +1184,20 @@ sub _read_sethomsi
 			$col=1;
 		}
 	}
+	$row = 1;
+	$col = 1;
+
+	foreach my $val (@sdcorrform_raw_seomega){
+		my $label = 'OMEGA('.$row.','.$col.')';
+		if ($val ne 'NA'){
+			$sdcorrform_seomegacoordval{$label} = $val;
+		}
+		$col++;
+		if ($col > $row){
+			$row++;
+			$col=1;
+		}
+	}
 
 	#any sigma matrix form
 	$row = 1;
@@ -1156,9 +1215,26 @@ sub _read_sethomsi
 		}
 	}
 
+	$row = 1;
+	$col = 1;
+
+	foreach my $val (@sdcorrform_raw_sesigma){
+		my $label = 'SIGMA('.$row.','.$col.')';
+		if ($val ne 'NA') {
+			$sdcorrform_sesigmacoordval{$label} = $val;
+		}
+		$col++;
+		if ($col > $row){
+			$row++;
+			$col=1;
+		}
+	}
+
 	$self->sethetacoordval(\%sethetacoordval);
 	$self->seomegacoordval(\%seomegacoordval);
 	$self->sesigmacoordval(\%sesigmacoordval);
+	$self->sdcorrform_seomegacoordval(\%sdcorrform_seomegacoordval);
+	$self->sdcorrform_sesigmacoordval(\%sdcorrform_sesigmacoordval);
 
 
 	if ( scalar @setheta <= 0 ) {
