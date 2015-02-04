@@ -19,14 +19,17 @@
 \input{inputs/version.tex}
 \input{inputs/date.tex}
 
-\newcommand{\guidetitle}[1]{
+\newcommand{\revisiondate}[1]{
+\date{#1}
+}
+\newcommand{\guidetitle}[2]{
 \title{#1\\ \vspace{2 mm} {\large PsN \psnversion}}
-\date{\thedate}
+\date{Documentation revised #2}
 }
 
-\newcommand{\doctitle}[1]{
+\newcommand{\doctitle}[2]{
 \title{#1}
-\date{\thedate}
+\date{#2}
 }
 
 
