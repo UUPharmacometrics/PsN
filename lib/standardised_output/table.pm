@@ -16,12 +16,6 @@ has 'valueType' => ( is => 'rw', isa => 'ArrayRef' );
 has 'columns' => ( is => 'rw', isa => 'ArrayRef' );
 
 
-sub BUILD
-{
-    my $self = shift;
-
-}
-
 sub parse
 {
     my $self = shift;
