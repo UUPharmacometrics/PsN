@@ -1622,6 +1622,7 @@ sub get_rundir
 							  basename => { isa => 'Str', optional => 0 },
 							  directory_option => { isa => 'Maybe[Str]', optional => 1 },
 							  model_dir_name => { isa => 'Bool', optional => 1, default => 0 },
+							  timestamp => { isa => 'Bool', optional => 1, default => 0 },
 							  modelname => { isa => 'Maybe[Str]', optional => 1 },
 							  create => { isa => 'Bool', optional => 1, default => 1 }
 		);
@@ -1629,6 +1630,7 @@ sub get_rundir
 	my $directory_option = $parm{'directory_option'};
 	my $model_dir_name = $parm{'model_dir_name'};
 	my $modelname = $parm{'modelname'};
+	my $timestamp = $parm{'timestamp'};
 	my $create = $parm{'create'};
 
 	my $rundir;
@@ -1636,15 +1638,34 @@ sub get_rundir
 	if (defined $directory_option and length($directory_option)>0){
 		my $dirt;
 		($rundir,$dirt) = OSspecific::absolute_path($directory_option,'file');
-	}elsif($model_dir_name and (defined $modelname) and length($modelname)> 0){
+	}elsif ($timestamp or ($model_dir_name and (defined $modelname) and length($modelname)> 0)) {
+
 		my $return_dir = getcwd();
-		my $dotless_model_filename;
+		my $dotless_model_filename = '';
+		$modelname = '.mod' unless ((defined $modelname) and length($modelname)> 0);
 		my $dirt;
 		#shave off any path from modelname
 		($dirt,$dotless_model_filename) = OSspecific::absolute_path(undef,$modelname);
 		$dotless_model_filename =~ s/\.[^.]+$//; #last dot and extension
-		my $dirnamebase = $dotless_model_filename.'.dir';
-		$rundir = OSspecific::unique_path( $dirnamebase ,$return_dir);
+
+		if ($timestamp){
+			my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) =localtime(time);
+			my $timestring = sprintf("-PsN-%s-%02i-%02i-%02i%02i",($year+1900),($mon+1),$mday,$hour,$min);
+			#timestamped but not numbered folder
+			my ($path,$dir) = OSspecific::absolute_path($return_dir,$dotless_model_filename.$timestring);
+			
+			$rundir = $path.$dir;
+			if (-e $rundir){
+				#number to avoid returning existing folder name
+				ui -> print( category => 'all',
+							 message  => "$rundir exists, append number" ); 
+				$rundir = OSspecific::unique_path( $dotless_model_filename.$timestring.'.dir',$return_dir);
+			}
+		}else{
+			#numbered folder
+			my $dirnamebase = $dotless_model_filename.'.dir';
+			$rundir = OSspecific::unique_path( $dirnamebase ,$return_dir);
+		}
 	}else{
 		my $return_dir = getcwd();
 		$rundir = OSspecific::unique_path($basename,$return_dir);

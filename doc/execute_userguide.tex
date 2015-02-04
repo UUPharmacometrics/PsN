@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{EXECUTE user guide}{2015-02-01}
+\guidetitle{EXECUTE user guide}{2015-02-04}
 
 
 \begin{document}
@@ -26,8 +26,10 @@ parallel_retries run33.mod -min_retries=4 -threads=5 -seed=12345
 \end{verbatim}
 
 \section{Input and options}
-\subsection{Required execute input}
-A model file is required on the command-line.
+\subsection{Required input}
+A model file is required on the command-line. 
+For parallel\_retries option -min\_retries is also required,
+see common\_options\_defaults\_versions\_psn.pdf.
 
 \subsection{Optional input}
 All options listed in document common\_options\_defaults\_versions\_psn.pdf apply to execute and parallel\_retries. 
@@ -55,7 +57,18 @@ The number of result lines to skip in the input raw results file before starting
 bootstrap raw\_results file the first line of estimates refers to the input model with the full dataset, so therefore the default offset is 1.
 \nextopt
 \optname{model\_dir\_name}
-Default not used. This option changes the basename of the run directory from modelfit\_dir to $\langle$modelfile$\rangle$.dir. where $\langle$modelfile$\rangle$ is the name of the first model file in the list given as arguments to execute. The directories will be numbered starting from 1, increasing the number each time execute is run with a model file with the same name. If the option directory is used it will override -model\_dir\_name.
+Default not used. This option changes the basename of the run directory from modelfit\_dir (for execute) or
+parallel\_retries\_dir to $\langle$modelfile$\rangle$.dir. where $\langle$modelfile$\rangle$ 
+is the name of the (first) input model file, without the extension. 
+The directories will be numbered starting from 1, increasing the number each time execute is run with a model file with the 
+same name. If the option directory is used it will override -model\_dir\_name.
+\nextopt
+\optname{timestamp}
+Default not used. This option changes the name of the run directory to $\langle$modelfile$\rangle$-PsN-$\langle$date$\rangle$
+where $\langle$modelfile$\rangle$ is the name of the first model file in the list given as arguments, without the extension,
+and $\langle$date$\rangle$ is the time and date the run was started. 
+Example: directory name run1-PsN-2014-06-12-1525 for a run that was started at 15:25 June 12th in year 2014.
+If the option directory is used it will override -timestamp.
 \nextopt
 \optname{prepend\_options\_to\_lst}
 Default not used. This option makes PsN prepend the final lst-file (which is copied back to the directory from which execute was called) with the file version\_and\_option\_info.txt which contains run information, including     all actual values of optional PsN options. PsN can still parse the lst-file with the options prepended, so the file can still be used it as input to e.g. sumo, vpc or update\_inits. Disabled with -no-prepend\_options\_to\_lst if set in psn.conf.

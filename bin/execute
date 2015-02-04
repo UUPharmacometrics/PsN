@@ -31,6 +31,7 @@ my %optional_options = ( "predict_data:s" => undef,
 			 "predict_model:s" => undef,
 			 "reduced_model_ofv:f" => undef,
 			 "prepend_options_to_lst!"=> undef,
+			 "timestamp!" => undef,
 			 "model_dir_name!" => undef,
 			 "tail_output!" => undef,
 			 "wintail_exe:s" => undef,
@@ -113,6 +114,13 @@ EOF
 $help_text{-predict_model} = <<'EOF';
     <p class="style2">-predict_model='string'</p>
     No help available.
+EOF
+
+$help_text{-timestamp} = <<'EOF';
+    <p class="style2">-timestamp</p>
+    Default not used. Automatically set the run directory name with a time stamp and the stem of the model name.
+  Example: execute run1.mod gives run directory name run1-PsN-2014-06-12-1525 for a run 
+   that was started at 15:25 June 12th in year 2014
 EOF
 
 $help_text{-reduced_model_ofv} = <<'EOF';
@@ -228,6 +236,7 @@ if ( 0 and $options{'directory'} and (scalar(@ARGV)==1) and (-d $options{'direct
 my $main_directory = tool::get_rundir(create => 0,
 									  basename => 'modelfit_dir',
 									  model_dir_name => $options{'model_dir_name'},
+									  timestamp => $options{'timestamp'},
 									  modelname => $ARGV[0],
 									  directory_option => $options{'directory'});
 $options{'directory'} = $main_directory;
