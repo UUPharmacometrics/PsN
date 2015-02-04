@@ -357,7 +357,7 @@ sub _read_covmatrix
 	unless (defined $self->covariance_matrix and scalar(@{$self->covariance_matrix})>0){
 		#only store if not already read from NM7 additional output
 		$self->covariance_matrix([]);
-		$self->raw_covmatrix([]);
+		$self->raw_covmatrix([]) unless defined $self->raw_covmatrix;
 		foreach my $element ( @{$self->raw_covmatrix} ) {
 			push( @{$self->covariance_matrix}, eval($element) ) unless ( $element eq '.........' );
 		}
@@ -366,7 +366,7 @@ sub _read_covmatrix
 	unless (defined $self->correlation_matrix and scalar(@{$self->correlation_matrix})>0){
 		#only store if not already read from NM7 additional output
 		$self->correlation_matrix([]);
-		$self->raw_cormatrix([]);
+		$self->raw_cormatrix([]) unless defined $self->raw_cormatrix;
 		foreach my $element ( @{$self->raw_cormatrix} ) {
 			push( @{$self->correlation_matrix}, eval($element) ) unless ( $element eq '.........' );
 		}
