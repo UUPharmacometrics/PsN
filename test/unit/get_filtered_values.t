@@ -10,10 +10,13 @@ use Math::Random;
 use FindBin qw($Bin);
 use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages
+use ui;
 
 unshift @INC, $includes::testfiledir . '/output';
 require answers;
 use output;
+
+ui->silent(1);
 
 our $test_files = $includes::testfiledir . '/output/';
 

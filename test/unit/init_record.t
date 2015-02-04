@@ -10,7 +10,9 @@ use Math::Random;
 use model::problem::init_record;
 use model::problem::omega;
 use Test::Exception;
+use ui;
 
+ui -> silent(1);
 # Test new and read_option
 my $record = model::problem::init_record->new(record_arr => ['2']);
 my $r = $record->_format_record;
