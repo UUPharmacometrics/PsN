@@ -38,13 +38,11 @@ sub cmp_array
 }
 
 
-
 my $fname = 'onePROB/oneEST/noSIM/warfarin_ddmore.lst';
 my $outfile = $test_files.$fname;
 ok(-e $outfile, "output file $outfile exists");
 unless(-e $outfile) {
 	print "file $outfile does not exist\n";
-	next;
 }
 
 my $outobj = output -> new ('filename' => $outfile);
@@ -70,7 +68,6 @@ $outfile = $test_files.$fname;
 ok(-e $outfile, "output file $outfile exists");
 unless(-e $outfile) {
 	print "file $outfile does not exist\n";
-	next;
 }
 
 $outobj = output -> new ('filename' => $outfile);
@@ -93,7 +90,6 @@ $outfile = $test_files.$fname;
 ok(-e $outfile, "output file $outfile exists");
 unless(-e $outfile) {
 	print "file $outfile does not exist\n";
-	next;
 }
 
 $outobj = output -> new ('filename' => $outfile);
@@ -124,5 +120,22 @@ cmp_array($valuesref, [3.94765E-04,7.99017E-02,
 
 
 
+$fname = '../SO/pheno.lst';
+$outfile = $test_files.$fname;
+ok(-e $outfile, "output file $outfile exists");
+unless(-e $outfile) {
+	print "file $outfile does not exist\n";
+}
+
+$outobj = output -> new ('filename' => $outfile);
+cmp_ok($outobj->parsed_successfully,'==',1, "output file $outfile parsed successfully");
+
+
+# test for when only lst-file present, not ext
+$valuesref = $outobj->get_filtered_values(allow_sdcorrform => 1, category => 'se');
+is_deeply($valuesref, [ 0.000395, 0.0799, 0.156, 0.0349, 0.00339 ], 'pheno allow sdcorr no ext');
+
+$valuesref = $outobj->get_filtered_values(allow_sdcorrform => 0, category => 'se');
+is_deeply($valuesref, [ 0.000395, 0.0799, 0.156, 0.0349, 0.00339 ], 'pheno do not allow sdcorr no ext');
 
 done_testing;
