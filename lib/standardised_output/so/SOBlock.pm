@@ -12,13 +12,8 @@ use standardised_output::xml;
 use standardised_output::table;
 
 has 'blkId' => ( is => 'rw', isa => 'Str' );
-has 'PopulationEstimates' => (is => 'rw', isa => 'Ref' );
-
-sub BUILD
-{
-    my $self = shift;
-
-}
+has 'PopulationEstimates' => (is => 'rw', isa => 'standardised_output::table' );
+has 'StandardError' => (is => 'rw', isa => 'standardised_output::table' );
 
 sub parse
 {
@@ -29,11 +24,16 @@ sub parse
     $self->blkId($blk_id);
 
     my $xpc = standardised_output::xml::get_xpc();
-    (my $mle) = $xpc->findnodes('x:Estimation/x:PopulationEstimates/x:MLE', $node);
 
-    my $table = standardised_output::table->new();
-    $table->parse($mle);
-    $self->PopulationEstimates($table);
+    (my $mle) = $xpc->findnodes('x:Estimation/x:PopulationEstimates/x:MLE', $node);
+    my $popest = standardised_output::table->new();
+    $popest->parse($mle);
+    $self->PopulationEstimates($popest);
+
+    (my $se_node) = $xpc->findnodes('x:Estimation/x:PrecisionPopulationEstimates/x:MLE/x:StandardError', $node);
+    my $ses = standardised_output::table->new();
+    $ses->parse($se_node);
+    $self->StandardError($ses);
 }
 
 no Moose;

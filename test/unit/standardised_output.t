@@ -264,6 +264,16 @@ SKIP: {
 
     is (scalar(@{$so->SOBlock}), 1, "Pheno: number of SOBlocks");
     is ($so->SOBlock->[0]->blkId, 'pheno', "Pheno: name of SOBlock");
+    
+    is_deeply($so->SOBlock->[0]->PopulationEstimates->columnId, [ 'CL', 'V', 'IVCL', 'IVV', 'SIGMA_1_1_' ], "Pheno: PopulationEstimates names");
+    is_deeply($so->SOBlock->[0]->PopulationEstimates->columnType, [ ('undefined') x 5 ], "Pheno: PopulationEstimates column types");
+    is_deeply($so->SOBlock->[0]->PopulationEstimates->valueType, [ ('real') x 5 ], "Pheno: PopulationEstimates value types");
+    is_deeply($so->SOBlock->[0]->PopulationEstimates->columns, [ [0.00555], [1.34], [0.247], [0.142], [0.0164] ], "Pheno: PopulationEstimates value types");
+
+    is_deeply($so->SOBlock->[0]->StandardError->columnId, [ 'parameter', 'SE' ], "Pheno: StandardError names");
+    is_deeply($so->SOBlock->[0]->StandardError->columnType, [ ('undefined') x 2 ], "Pheno: StandardError column types");
+    is_deeply($so->SOBlock->[0]->StandardError->valueType, [ 'string', 'real' ], "Pheno: StandardError value types");
+    is_deeply($so->SOBlock->[0]->StandardError->columns, [ [ 'CL', 'V', 'IVCL', 'IVV', 'SIGMA_1_1_' ], [ 0.000395, 0.0799, 0.156, 0.0349, 0.00339 ]  ], "Pheno: StandardError value types");
 
     remove_test_dir($tempdir);
 

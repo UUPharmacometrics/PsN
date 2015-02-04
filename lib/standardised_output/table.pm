@@ -43,11 +43,12 @@ sub parse
 
     my @rows = $xpc->findnodes('ds:Table/ds:Row', $node);
 
-    $self->columns([ ([]) x scalar(@columns) ]);
-    foreach my $row (@rows) {
-        my @values = $row->getChildrenByTagName('*');
-        for (my $i = 0; $i < scalar(@values); $i++) {
-            push @{$self->columns->[$i]}, $values[$i]->textContent;
+    $self->columns([[ () x scalar(@columns)] ]);
+
+    for (my $row = 0; $row < scalar(@rows); $row++) {
+        my @values = $rows[$row]->getChildrenByTagName('*');
+        for (my $col = 0; $col < scalar(@values); $col++) {
+            push @{$self->columns->[$col]}, $values[$col]->textContent;
         }
     }
 }
