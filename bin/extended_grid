@@ -20,7 +20,6 @@ use model;
 use common_options;
 use ui;
 use File::Copy 'cp';
-use Data::Dumper;
 use data;
 
 ################################################################################

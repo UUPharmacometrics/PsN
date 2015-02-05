@@ -8,7 +8,6 @@ use File::Path qw(mkpath);
 use OSspecific;
 use Math::Random;
 use ui;
-use Data::Dumper;
 use Config;
 our $AUTOLOAD;
 use log;

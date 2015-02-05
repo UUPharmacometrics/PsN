@@ -8,7 +8,6 @@ use Math::Random;
 use Storable;
 use ui;
 use status_bar;
-use Data::Dumper;
 use array;
 use Moose;
 use MooseX::Params::Validate;

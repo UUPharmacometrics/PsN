@@ -4,7 +4,6 @@ use include_modules;
 use tool::modelfit;
 use log;
 use Math::Random;
-use Data::Dumper;
 use Config;
 use linear_algebra;
 use npde_util;

@@ -7,7 +7,6 @@ use tool::llp;
 use tool::modelfit;
 use Math::Random;
 use ext::Math::MatrixReal;
-use Data::Dumper;
 use Moose;
 use MooseX::Params::Validate;
 
@@ -126,7 +125,6 @@ sub modelfit_analyze
 				 raw_results      => undef,
 				 prepared_models  => undef,
 				 top_tool         => 0);
-		$Data::Dumper::Maxdepth = 2;
 		print "Running xv runs\n";
 		$mod_eval -> run;
 

@@ -11,7 +11,6 @@ use output;
 use model;
 use strict;
 use Getopt::Long;
-use Data::Dumper;
 use common_options;
 
 $| = 1; # Make sure autoflush is on

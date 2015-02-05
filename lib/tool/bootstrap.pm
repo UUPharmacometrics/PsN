@@ -10,7 +10,6 @@ use tool::llp;
 use tool::cdd::jackknife;
 use ext::Statistics::Distributions 'udistr', 'uprob';
 use Math::Random;
-use Data::Dumper;
 use Moose;
 use MooseX::Params::Validate;
 

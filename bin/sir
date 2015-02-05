@@ -13,7 +13,6 @@ use strict;
 use ui;
 use Getopt::Long;
 use common_options;
-use Data::Dumper;
 use Cwd;
 
 my $cmd_line = $0 . " " . join( " ", @ARGV );

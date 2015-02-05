@@ -19,7 +19,6 @@ use model;
 use common_options;
 use ui;
 use File::Copy 'cp';
-use Data::Dumper;
 
 my $cmd_line = $0 . " " . join( " ", @ARGV );
 

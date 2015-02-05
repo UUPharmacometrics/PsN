@@ -6,7 +6,6 @@ use OSspecific;
 use Storable;
 use Config;
 use ext::Math::SigFigs;
-use Data::Dumper;
 use Time::Local;
 use model;
 use array qw(:all);

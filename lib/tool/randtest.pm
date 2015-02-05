@@ -8,7 +8,6 @@ use log;
 use OSspecific;
 use tool::modelfit;
 use Math::Random;
-use Data::Dumper;
 use Moose;
 use MooseX::Params::Validate;
 use array qw(quantile percentile);

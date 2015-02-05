@@ -4,7 +4,6 @@ use include_modules;
 use File::Copy 'cp';
 use ext::Math::SigFigs;
 use tool::modelfit;
-use Data::Dumper;
 use Moose;
 use MooseX::Params::Validate;
 use math qw(usable_number);
