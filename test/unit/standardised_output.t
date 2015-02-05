@@ -6,6 +6,7 @@ use Test::More;
 use FindBin qw($Bin);
 use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages
+use data;
 
 SKIP: {
     eval { require XML::LibXML };
@@ -202,46 +203,6 @@ SKIP: {
 
     is_deeply(\%hash, \%results_hash, "pheno.lst with no-use_tables has all elements under Estimation");
 
-# pheno.lst without sdtab
-    unlink("sdtab");
-    my $so = standardised_output->new(lst_files => [ "pheno.lst" ]);
-    $so->parse;
-    my $xpc = get_xml("pheno.SO.xml");
-
-    my @nodes = $xpc->findnodes('/x:SO/x:SOBlock/x:Estimation/*');
-    my %hash;
-    my %results_hash = (
-        PopulationEstimates => 1,
-        PrecisionPopulationEstimates => 1,
-        IndividualEstimates => 1,
-        Likelihood => 1,
-    );
-
-    foreach $node (@nodes) {
-        $hash{$node->nodeName} = 1;
-    }
-
-    is_deeply(\%hash, \%results_hash, "pheno.lst without sdtab has all elements under Estimation");
-
-# pheno.lst without sdtab and patab
-    unlink("patab");
-    my $so = standardised_output->new(lst_files => [ "pheno.lst" ]);
-    $so->parse;
-    my $xpc = get_xml("pheno.SO.xml");
-
-    my @nodes = $xpc->findnodes('/x:SO/x:SOBlock/x:Estimation/*');
-    my %hash;
-    my %results_hash = (
-        PopulationEstimates => 1,
-        PrecisionPopulationEstimates => 1,
-        Likelihood => 1,
-    );
-
-    foreach $node (@nodes) {
-        $hash{$node->nodeName} = 1;
-    }
-
-    is_deeply(\%hash, \%results_hash, "pheno.lst without sdtab and patab has all elements under Estimation");
 
 
 # option pharmml
@@ -303,7 +264,74 @@ SKIP: {
           [ 0.258, 0.46, -0.183, 0.0349, -0.0045 ],
           [ 0.0541, 0.0784, 0.134, -0.0045, 0.00339 ] ], "Pheno CorrelationMatrix MatrixRow");
 
+    unlink "pheno.SO.xml";
+    my $standardised_output = standardised_output->new(lst_files => [ "pheno.lst" ], use_tables => 1);
+    $standardised_output->parse;
+    my $so = standardised_output::so->new(filename => "pheno.SO.xml");
+
+    $so->SOBlock->[0]->create_sdtab(filename => 'sdtab.out');
+
+    my $sdtab_out = data->new(
+        filename => 'sdtab.out',
+        ignoresign => '@',
+        parse_header => 1,
+    );
+
+    my $sdtab = data->new(
+        filename => 'sdtab',
+        ignoresign => '@',
+        parse_header => 1,
+    );
+
+    foreach my $colname (@{$sdtab_out->header}) {
+        my $col = $sdtab->column_to_array(column => $colname); 
+        my $col2 = $sdtab_out->column_to_array(column => $colname); 
+        is_deeply($col, $col2, "Pheno sdtab $colname");
+    }
+
+# pheno.lst without sdtab
+    unlink("sdtab");
+    my $so = standardised_output->new(lst_files => [ "pheno.lst" ]);
+    $so->parse;
+    my $xpc = get_xml("pheno.SO.xml");
+
+    my @nodes = $xpc->findnodes('/x:SO/x:SOBlock/x:Estimation/*');
+    my %hash;
+    my %results_hash = (
+        PopulationEstimates => 1,
+        PrecisionPopulationEstimates => 1,
+        IndividualEstimates => 1,
+        Likelihood => 1,
+    );
+
+    foreach $node (@nodes) {
+        $hash{$node->nodeName} = 1;
+    }
+
+    is_deeply(\%hash, \%results_hash, "pheno.lst without sdtab has all elements under Estimation");
+
+# pheno.lst without sdtab and patab
+    unlink("patab");
+    my $so = standardised_output->new(lst_files => [ "pheno.lst" ]);
+    $so->parse;
+    my $xpc = get_xml("pheno.SO.xml");
+
+    my @nodes = $xpc->findnodes('/x:SO/x:SOBlock/x:Estimation/*');
+    my %hash;
+    my %results_hash = (
+        PopulationEstimates => 1,
+        PrecisionPopulationEstimates => 1,
+        Likelihood => 1,
+    );
+
+    foreach $node (@nodes) {
+        $hash{$node->nodeName} = 1;
+    }
+
+    is_deeply(\%hash, \%results_hash, "pheno.lst without sdtab and patab has all elements under Estimation");
+
     remove_test_dir($tempdir);
+
 }
 
 done_testing();
