@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{CDD user guide}{2014-05-23}
+\guidetitle{CDD user guide}{2015-02-05}
 
 
 \begin{document}
@@ -32,7 +32,7 @@ The column on which the case-deletion is done. You can either use the name of th
 
 \begin{optionlist}
 \optdefault{bins}{N}
-Sets the number of databins, or cdd datasets, to use. If the number of unique values, or factors, in the based\_on column is higher than N then one or more factors will be deleted in each cdd dataset. Specifying N as higher than the number of factors will have no effect. N is then reset to the number of factors. Default value = Number of unique values in the based\_on column. 
+Sets the number of databins, or cdd datasets, to use. If the number of unique values, or factors, in the case column is higher than N then one or more factors will be deleted in each cdd dataset. Specifying N as higher than the number of factors will have no effect. N is then reset to the number of factors. Default value = Number of unique values in the case column. 
 \nextopt
 \optname{xv}
 Default true. Run the cross-validation step (-xv) or not (-no-xv). 

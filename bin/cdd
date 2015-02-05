@@ -94,12 +94,12 @@ $help_text{-bins} = <<'EOF';
       <p class="option">-bins=$number</p>
 
       Sets the number of databins, or cdd datasets, to use. If the
-      number of unique values, or factors, in the based_on column is
+      number of unique values, or factors, in the case column is
       higher than the number of bins then one or more factors will be
       deleted in each cdd dataset. Specifying $number as higher than
       the number of factors will have no effect. The bin number is
       then set to the number of factors.
-      Default value = Number of unique values in the based_on column.
+      Default value = Number of unique values in the case column.
 EOF
 
 $help_text{-selection_method} = <<'EOF';
