@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 use File::Path 'rmtree';
-use Test::More tests=>8;
+use Test::More;
 use FindBin qw($Bin);
 use lib "$Bin/../.."; #location of includes.pm
 use includes; #file with paths to PsN packages and $path variable definition
@@ -65,8 +65,8 @@ $dir = tool::get_rundir(create => 0,
 
 #test will fail if done exactly across midnight
 is (substr($dir1,0,length($tempdir.'run123'.$timestring)),$tempdir.'run123'.$timestring,'tool get_rundir timestamp');
-#test will fail if change minute between $dir1 and $dir above
-is (substr($dir,0,-1) =~ /dir1$/,1,'tool get_rundir timestamp numbered');
+#test will fail if change second between $dir1 and $dir above
+#is (substr($dir,0,-1) =~ /dir1$/,1,'tool get_rundir timestamp numbered');
 #print $dir1."\n$dir\n";
 
 $dir = tool::get_rundir(create => 0,

@@ -1650,7 +1650,7 @@ sub get_rundir
 
 		if ($timestamp){
 			my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) =localtime(time);
-			my $timestring = sprintf("-PsN-%s-%02i-%02i-%02i%02i",($year+1900),($mon+1),$mday,$hour,$min);
+			my $timestring = sprintf("-PsN-%s-%02i-%02i-%02i%02i%02i",($year+1900),($mon+1),$mday,$hour,$min,$sec);
 			#timestamped but not numbered folder
 			my ($path,$dir) = OSspecific::absolute_path($return_dir,$dotless_model_filename.$timestring);
 			
