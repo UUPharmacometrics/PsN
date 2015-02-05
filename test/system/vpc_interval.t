@@ -105,7 +105,8 @@ sub get_stats
 	  my @arr = split(/\s*,\s*/,$line);
 
 	  #pick up cells
-	  my @newarr = @arr[8 .. 27];
+#	  my @newarr = @arr[8 .. 27];
+	  my @newarr = @arr[9 .. 28];
 	  #print join(' ',@newarr)."\n\n";
 	  push(@ans,\@newarr);
   }

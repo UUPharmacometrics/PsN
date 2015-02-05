@@ -3886,8 +3886,13 @@ sub vpc_analyze
 	}
 
 
-
-	my @result_column_labels=("< $col",'<=','no. of obs');
+	#HERE1
+	my @result_column_labels;
+	#add median idv
+	@result_column_labels=("< $col",'<=','median.idv','no. of obs');
+	#old without median
+	#@result_column_labels=("< $col",'<=','no. of obs');
+	
 	for (my $i=0; $i<$no_perc_limits; $i++){
 		my $text = "$perc_limit[$i]\%";
 		if ($perc_limit[$i] eq $meantext){
@@ -4650,8 +4655,13 @@ sub vpc_analyze
 			my $st= ' ';
 			$st = $self->bin_floors->[$strat_ind]->[$bin_index] 
 				if (defined $self->bin_floors->[$strat_ind] );
-			my @result_row_values=($st,$self->bin_ceilings->[$strat_ind]->[$bin_index],$max_bin_observations);
-
+			#HERE1
+			my @result_row_values;
+			#new median idv
+			my $tmpmedian = array::median($self->binned_idv->[$strat_ind]->[$bin_index]);
+			@result_row_values=($st,$self->bin_ceilings->[$strat_ind]->[$bin_index],$tmpmedian,$max_bin_observations);
+			#old without median
+			#@result_row_values=($st,$self->bin_ceilings->[$strat_ind]->[$bin_index],$max_bin_observations);
 
 			#separate loop for censored data, otherwise too messy.
 
