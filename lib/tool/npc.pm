@@ -3909,8 +3909,13 @@ sub vpc_analyze
 			  "$c_i\%CI for $text to");
 	}
 
+	#HERE
 	#startof censored labels
-	my @censored_result_column_labels=("< $col",'<=','uncensored obs','Real left censored');
+	my @censored_result_column_labels;
+	#add median idv
+	@censored_result_column_labels=("< $col",'<=','median.idv','uncensored obs','Real left censored');
+	#old without median
+	#@censored_result_column_labels=("< $col",'<=','uncensored obs','Real left censored');
 	foreach my $lab (@{$self->mirror_labels}){
 		push (@censored_result_column_labels, $lab." left censored");
 	}
@@ -3934,9 +3939,13 @@ sub vpc_analyze
 		  $self->confidence_interval().'% CI for missing to');
 	#endof censored labels
 
-
+	#HERE
 	#startof categorized labels
-	my @categorized_result_column_labels=("< $col",'<=','no. of obs');
+	my @categorized_result_column_labels;
+	#add median
+	@categorized_result_column_labels=("< $col",'<=','median.idv','no. of obs');
+	#old without median
+	#@categorized_result_column_labels=("< $col",'<=','no. of obs');
 	
 	my $lower_bound='';
 	foreach my $bound (@{$self->levels}){
@@ -4244,7 +4253,9 @@ sub vpc_analyze
 			$st_cens = $self->bin_floors->[$strat_ind]->[$bin_index] 
 				if (defined $self->bin_floors->[$strat_ind] );
 
-			my @censored_result_row_values=($st_cens,$self->bin_ceilings->[$strat_ind]->[$bin_index],$max_bin_observations);
+			#HERE
+			my $tmpmedian = array::median($self->binned_idv->[$strat_ind]->[$bin_index]);
+			my @censored_result_row_values=($st_cens,$self->bin_ceilings->[$strat_ind]->[$bin_index],$tmpmedian,$max_bin_observations);
 			if (defined $self->lloq){
 				#$fraction_real_below_lloq
 				if ($n_non_missing_real == 0){
@@ -4368,8 +4379,10 @@ sub vpc_analyze
 			#endof censored data
 			
 			#categorized
+			#HERE
+			my $tmpmedian = array::median($self->binned_idv->[$strat_ind]->[$bin_index]);
 			my @categorized_result_row_values=
-				($st_cens,$self->bin_ceilings->[$strat_ind]->[$bin_index],$max_bin_observations);
+				($st_cens,$self->bin_ceilings->[$strat_ind]->[$bin_index],$tmpmedian,$max_bin_observations);
 			if ($self->categorized){
 				foreach my $categ (0..($no_categories-1)){
 					#$fraction_real
