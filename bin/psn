@@ -22,6 +22,8 @@ my %optional_options = (
 			 'boot_scm' => '',
 			 'bootstrap' => '',
 			 'cdd' => '',
+			 'covmat' => '',
+			 'crossval' => '',
 			 'data_stats' => '',
 			 'ebe_npde' => '',
 			 'execute' =>'',
@@ -34,8 +36,8 @@ my %optional_options = (
 			 'mcmp' => '',
 			 'mimp' => '',
 			 'nca' => '',
-			 'nonpb' => '',
              'nmoutput2so' => '',
+			 'nonpb' => '',
 			 'nm_versions' => '',
 			 'npc' => '',
 			 'parallel_retries' => '',
@@ -52,6 +54,7 @@ my %optional_options = (
 			 'sir' => '',
 			 'sse' => '',
 			 'sumo' => '',
+			 'update' => '',
 			 'update_inits' => '',
 			 'vpc' => '',
 			 'vpctable' => '',
@@ -85,170 +88,215 @@ $help_text{-help} = <<'EOF';
 EOF
 
 $help_text{-bootstrap} = <<'EOF';
-      bootstrap - Bootstrap using the percentile or BCa method.
+    bootstrap - Bootstrap using the percentile or BCa method.
+	See bootstrap_userguide.pdf for details.
 EOF
 
 $help_text{-cdd} = <<'EOF';
-      cdd - Case Deletion Diagnostics
+    cdd - Case Deletion Diagnostics
+	See cdd_userguide.pdf for details.
+EOF
+
+$help_text{-covmat} = <<'EOF';
+    covmat - Create an empirical variance-covariance matrix based on a raw_results file.
+	Run 'covmat -help' for details.
+EOF
+
+$help_text{-crossval} = <<'EOF';
+    crossval - Cross-validation
+	Run 'crossval -help' for details.
 EOF
 
 $help_text{-data_stats} = <<'EOF';
-      data_stats - Print simple statistics for dataset columns.
+    data_stats - Print simple statistics for dataset columns.
+	Run 'data_stats -help' for details.
 EOF
 
 $help_text{-ebe_npde} = <<'EOF';
-      ebe_npde - Normalized prediction distribution errors applied on empirical bayes estimates 
+    ebe_npde - Normalized prediction distribution errors applied on empirical bayes estimates
+	See ebe_npde_userguide.pdf for details. 
 EOF
 
 $help_text{-execute} = <<'EOF';
-      execute - NONMEM runs are started using one or multiple model files.
+    execute - NONMEM runs are started using one or multiple model files.
+	See execute_userguide.pdf for details.
 EOF
 
 $help_text{-extended_grid} = <<'EOF';
-      extended_grid - non-parametric estimation on the extended grid.
+    extended_grid - non-parametric estimation on the extended grid.
+	See extended_grid_userguide.pdf for details.
 EOF
 
 $help_text{-frem} = <<'EOF';
-      frem - Full random effects modeling.
+    frem - Full random effects modeling.
+	See frem_userguide.pdf for details.
 EOF
 
 $help_text{-mimp} = <<'EOF';
-      mimp - Multiple imputation of missing covariates.
+    mimp - Multiple imputation of missing covariates.
+	See mimp_userguide.pdf for details.
 EOF
 
 $help_text{-lasso} = <<'EOF';
-      lasso - Covariate model building using the LASSO method.
+    lasso - Covariate model building using the LASSO method.
+	See lasso_userguide.pdf for details.
 EOF
 
 $help_text{-linearize} = <<'EOF';
-      linearize - Linearize a model.
+    linearize - Linearize a model.
+	See linearize_userguide.pdf for details.
 EOF
 
 $help_text{-llp} = <<'EOF';
-      llp - Log-Likelihood Profiling around maximum-likelihood parameter
-      estimates.
+    llp - Log-Likelihood Profiling around maximum-likelihood parameter estimates.
+	See llp_userguide.pdf for details.
 EOF
 
 $help_text{-mcmp} = <<'EOF';
-      mcmp - Monte-Carlo mapped power. A fast method for power computations.
+    mcmp - Monte-Carlo mapped power. A fast method for power computations.
+	See mcmp_userguide.pdf for details.
 EOF
 
 $help_text{-nca} = <<'EOF';
-      nca - Non-compartmental analysis.
+    nca - Non-compartmental analysis.
+	See nca_userguide.pdf for details.
 EOF
 
 $help_text{-nmoutput2so} = <<'EOF';
     nmoutput2so - Convert the output from a NONMEM run to the standardised
     output format (so) specified by DDMoRe.
+	See nmoutput2so_userguide.pdf for details.
 EOF
 
 $help_text{-nm_versions} = <<'EOF';
-      -nm_versions is an option to this program psn, not a standalone script. 
-      The command 
-      psn -nm_versions 
-      will give a list of the available NONMEM versions defined in the 
-      configuration file psn.conf, i.e. the available alternatives for
-      common option -nm_version (see psn_options -h nm_version for details).
+    -nm_versions is an option to this program psn, not a standalone script. 
+    The command 
+    psn -nm_versions 
+    will give a list of the available NONMEM versions defined in the 
+    configuration file psn.conf, i.e. the available alternatives for
+    common option -nm_version (see psn_options -h nm_version for details).
 EOF
 
 $help_text{-nonpb} = <<'EOF';
-      nonpb - Non-Parametric Bootstrap
+    nonpb - Non-Parametric Bootstrap
+	See nonpb_userguide.pdf for details.
 EOF
 
 $help_text{-npc} = <<'EOF';
-      npc - Numerical Predictive Check
+    npc - Numerical Predictive Check
+	See vpc_npc_userguide.pdf for details.
 EOF
 
 $help_text{-parallel_retries} = <<'EOF';
-      parallel_retries - Running multiple copies of a single model with tweaked 
-      initial estimates in parallel.
+    parallel_retries - Running multiple copies of a single model with tweaked 
+    initial estimates in parallel.
+	See execute_userguide.pdf for details (same document as execute guide).
 EOF
 
 $help_text{-pind} = <<'EOF';
-      pind - Individual Probabilities
+    pind - Individual Probabilities
+	See nonpb_userguide.pdf for details (same document as nonpb guide).
 EOF
 
 $help_text{-precond} = <<'EOF';
-      precond - Preconditioning
+    precond - Preconditioning
+	See precond_userguide.pdf for details.
 EOF
 
 $help_text{-psn_clean} = <<'EOF';
-      psn_clean - Automatic cleaning of PsN run directories.
+    psn_clean - Automatic cleaning of PsN run directories.
+	Run 'psn_clean -help' for details.
 EOF
 
 $help_text{-psn_options} = <<'EOF';
-      psn_options - List options common to most PsN scripts.
+    psn_options - List options common to most PsN scripts.
 EOF
 
 $help_text{-pvar} = <<'EOF';
-      pvar - Parametric variability. Calculation of total, explained and unexplained variability for different parameters.
+    pvar - Parametric variability. Calculation of total, explained and unexplained variability for different parameters.
+	See pvar_userguide.pdf for details.
 EOF
 
 $help_text{-runrecord} = <<'EOF';
-      runrecord - Create records of NONMEM runs
+    runrecord - Create records of NONMEM runs
+	See runrecord_userguide.pdf for details.
 EOF
 
 $help_text{-randtest} = <<'EOF';
-      randtest - Randomization testing
+    randtest - Randomization testing
+	See randtest_userguide.pdf for details.
 EOF
 
 $help_text{-rawresults} = <<'EOF';
-      rawresults - Create a rawresults file from a set of list files
+    rawresults - Create a rawresults file from a set of lst-files
+	Run 'rawresults -help' for details.
 EOF
 
 $help_text{-scm} = <<'EOF';
-      scm - Stepwise Covariate Model-building
+    scm - Stepwise Covariate Model-building
+	See scm_userguide.pdf for details.
 EOF
 
 $help_text{-se_of_eta} = <<'EOF';
-      se_of_eta - Standard Errors of Etas
+    se_of_eta - Standard Errors of Etas
+	Run 'se_of_eta -help' for details.
 EOF
 
 $help_text{-sir} = <<'EOF';
-      sir - Sampling importance resampling
+    sir - Sampling importance resampling
+	See sir_userguide.pdf for details.
 EOF
 
 $help_text{-sse} = <<'EOF';
-      sse - Stochastic Simulation and Estimation
+    sse - Stochastic Simulation and Estimation
+	See sse_userguide.pdf for details.
 EOF
 
 $help_text{-sumo} = <<'EOF';
-      sumo - Summary of Output from NONMEM
+    sumo - Summary of Output from NONMEM
+	See sumo_userguide.pdf for details.
 EOF
 
 $help_text{-update_inits} = <<'EOF';
-      update_inits - read final THETA, OMEGA and SIGMA estimates from a 
-      NONMEM output file and put into a given model file.
+    update_inits - read final THETA, OMEGA and SIGMA estimates from a 
+    NONMEM output file and put into a given model file.
+	See update_inits_userguide.pdf for details.
+EOF
+$help_text{-update} = <<'EOF';
+    update - read final THETA, OMEGA and SIGMA estimates from a 
+    NONMEM output file and put into a given model file.
+	See update_inits_userguide.pdf for details.
 EOF
 
 $help_text{-vpc} = <<'EOF';
-      vpc - Visual Predictive Check
+    vpc - Visual Predictive Check
+	See vpc_npc_userguide.pdf for details.
 EOF
 
 $help_text{-vpctable} = <<'EOF';
-      vpctable - Utility to convert single header data files into multiple header table files.
+    vpctable - Utility to convert single header data files into multiple header table files.
+	Run 'vpctable -help' for details.
 EOF
 
 $help_text{-gls} = <<'EOF';
-      gls - Generalized Least Squares approximations of the residual error.
+    gls - Generalized Least Squares approximations of the residual error.
+	See gls_userguide.pdf for details.
 EOF
 
 $help_text{-xv_scm} = <<'EOF';
-      xv_scm - Cross-validated stepwise covariate model building.
+    xv_scm - Cross-validated stepwise covariate model building.
+	See xv_scm_userguide.pdf for details.
 EOF
 
 $help_text{-boot_scm} = <<'EOF';
-      boot_scm - Boot-strapped stepwise covariate model building.
+    boot_scm - Boot-strapped stepwise covariate model building.
+	See boot_scm_userguide.pdf for details.
 EOF
 
 $help_text{Post_help_message} = <<'EOF';
 
     Use 'psn -h "scriptname"' for a one-line description of a script,
     for example 'psn -h sse'.
-
-    Use '"scriptname" -help' for details on a particular script,
-    for example 'sse -help'. Exception is -nm_versions which is only
-    an option to this program, see 'psn -h nm_versions'.
 
     Use 'psn_options -h' for a list of common options to PsN.
 EOF
