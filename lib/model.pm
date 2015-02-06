@@ -117,7 +117,6 @@ has 'ignore_missing_data' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'ignore_missing_files' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'ignore_missing_output_files' => ( is => 'rw', isa => 'Bool', default => 1 );
 has 'outputfile' => ( is => 'rw', isa => 'Maybe[Str]' );
-has 'run_no' => ( is => 'rw', isa => 'Int', default => 0 );
 has 'sde' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'omega_before_pk' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'tbs' => ( is => 'rw', isa => 'Bool', default => 0 );
@@ -5129,6 +5128,42 @@ sub get_eta_names
 
     return \@names;
 }
+
+sub get_run_number_string{
+	#static method, no shift
+	my %parm = validated_hash(\@_,
+							  filename => { isa => 'Str', optional => 0 },
+		);
+	my $filename = $parm{'filename'};
+	#input is model file name 
+	#output is number(s) plus possible anything up to first dot, which has to be there
+	my $number = undef;
+	if ($filename =~ /^(run|Run|RUN)([0-9]+[^0-9.]*)\./){
+		$number = $2;
+	}  
+	return $number;
+}
+
+sub get_xpose_runno_and_suffix{
+	#static method, no shift
+	my %parm = validated_hash(\@_,
+							  filename => { isa => 'Str', optional => 0 },
+		);
+	my $filename = $parm{'filename'};
+	#input is table file name 
+
+	my $runno = undef;
+	my $suffix = '';
+	if ($filename =~ /^..tab([^.]+)(.*)/){
+		$runno=$1;
+		if (length($2)>0){
+			$suffix = $2;
+		}
+	}  
+	return [$runno,$suffix];
+}
+
+
 
 no Moose;
 __PACKAGE__->meta->make_immutable;

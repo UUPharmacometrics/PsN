@@ -32,6 +32,8 @@ sub search_record {
 
 }
 
+
+
 my %options;
 my %required_options =();
 my %optional_options = (
@@ -220,29 +222,21 @@ if ( defined $options{'ignore_missing_parameters'} ){
 unless( $ARGV[0] ){
 	die "You must at least enter a model file name\n";
 }
-my $run_number;
-#extract run number
-if ($ARGV[0]){
-	my $tmp = $ARGV[0];
-	if ($tmp =~ /(run|Run|RUN)([0-9]+[^0-9]*)\./){
-		$run_number = $2;
-	}  
-}
-
 unless( -e $ARGV[0] ){
 	die "No such file: $ARGV[0]\n";
 }
 
+my $input_run_number;
+$input_run_number = model::get_run_number_string(filename => $ARGV[0]) if ($ARGV[0]);
 
-my $tablenum;
+my $output_run_number;
 my $auto_renumber=0;
 if (defined $options{'renumber'}) {
-	$tablenum=$options{'renumber'} if ($options{'renumber'} != 0);
+	$output_run_number=$options{'renumber'} if ($options{'renumber'} != 0);
 }elsif( $options{'output_model'} ){
-	my $tmp = $options{'output_model'};
-	if ($tmp =~ /(run|Run|RUN)([0-9]+)[^0-9]*\./){
-		$tablenum = $2;
-		$options{'renumber'}=$tablenum;
+	$output_run_number = model::get_run_number_string(filename => $options{'output_model'});
+	if (defined $output_run_number){
+		$options{'renumber'}=$output_run_number;
 		$auto_renumber=1;
 	}  
 }
@@ -354,13 +348,13 @@ if (defined $options{'renumber'} and $options{'renumber'} != 0){
 		#handle table
 		if (defined $model_copy->problems->[$j]->tables){
 			foreach my $tab (@{$model_copy->problems->[$j]->tables}){
-				$tab->renumber_file (numberstring => $tablenum);
+				$tab->renumber_file (numberstring => $output_run_number);
 			}
 		}
 		#handle estimation
 		if (defined $model_copy->problems->[$j]->estimations){
 			foreach my $est (@{$model_copy->problems->[$j]->estimations}){
-				$est->renumber_msfo (numberstring => $tablenum);
+				$est->renumber_msfo (numberstring => $output_run_number);
 			}
 		}
 	}
@@ -371,7 +365,7 @@ if ($options{'add_tags'}) {
     $model_copy->annotation->add_empty_tags();
 }
 
-my $based_on = $run_number;
+my $based_on = $input_run_number;
 $based_on = $options{'based_on'} if (defined $options{'based_on'});
 if (defined $based_on) {
     $model_copy->annotation->based_on($based_on);

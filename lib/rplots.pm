@@ -61,20 +61,13 @@ sub setup
 	for (my $i=0; $i<scalar(@tables); $i++){
 		if (defined $tables[$i]){
 			foreach my $name (@{$tables[$i]}){
-				foreach my $tab (@xpose_names){
-					if (index( $name, $tab) == 0){
-						#table file names starts like an xpose table
-						#figure out number and suffix
-						if ($name =~ /^..tab([^.]+)(.*)/){
-							$runno=$1;
-							if (length($2)>0){
-								$tabSuffix = $2;
-							}
-							last;
-						} 
-					}
+				my $tmp = model::get_xpose_runno_and_suffix(filename => $name);
+				if (defined $tmp->[0]){
+					#have runno
+					$runno = $tmp->[0];
+					$tabSuffix = $tmp->[1];
+					last;
 				}
-				last if (defined $runno);
 			}
 		}
 		last if (defined $runno);
@@ -93,7 +86,7 @@ sub setup
 		}
 		if ($tmp =~ s/^([^0-9]+)//){
 			$modPrefix = $1;
-			$runno = $tmp;
+			$runno = $tmp unless (defined $runno);
 		}
 	}
 
@@ -102,6 +95,8 @@ sub setup
 		my $runstr = '';
 		if (defined $runno and length($runno)>0){
 			$runstr = " run $runno";
+		}else{
+			$runstr = " $modelfile";
 		}
 		$self->pdf_title($self->toolname().' diagnostic plots'.$runstr);
 	}

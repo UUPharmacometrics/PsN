@@ -15,29 +15,77 @@ use model;
 our $tempdir = create_test_dir('unit_updateinits');
 my $modeldir = $includes::testfiledir;
 
-my $est = model::problem::estimation->new(record_arr => ['MAXEV=99 MSFO=msf23', 'ANY=SOUP']);
-is ($est->options->[1]->value, 'msf23', "est msf before");
 
-$est->renumber_msfo (numberstring => '44');
-is ($est->options->[1]->value, 'msf44', "est msf after");
+is (model::get_run_number_string(filename => 'run1.mod'),'1',"get_run_number_string run1.mod");
+is (model::get_run_number_string(filename => 'Run54a.ctl'),'54a',"get_run_number_string Run54a.ctl");
+is (model::get_run_number_string(filename => 'pheno.mod'),undef,"get_run_number_string pheno.mod");
+is (model::get_run_number_string(filename => 'RUN55.mod'),'55',"get_run_number_string RUN55.mod");
+is (model::get_run_number_string(filename => 'Run54abc.ctl'),'54abc',"get_run_number_string Run54abc.ctl");
+is (model::get_run_number_string(filename => 'run55'),undef,"get_run_number_string run55");
+is (model::get_run_number_string(filename => 'run1.2.mod'),'1',"get_run_number_string run1.2.mod");
+
+my $est = model::problem::estimation->new(record_arr => ['MAXEV=99 MSFO=msf8', 'ANY=SOUP']);
+is ($est->options->[1]->value, 'msf8', "est msf before");
+
+$est->renumber_msfo (numberstring => '9');
+is ($est->options->[1]->value, 'msf9', "est msf after 1");
+
+$est->renumber_msfo (numberstring => '11abc');
+is ($est->options->[1]->value, 'msf11abc', "est msf after 2");
+
+$est->renumber_msfo (numberstring => '9');
+is ($est->options->[1]->value, 'msf9', "est msf after 3");
+
+$est = model::problem::estimation->new(record_arr => ['MAXEV=99 MSFO=run50.msf', 'ANY=SOUP']);
+is ($est->options->[1]->value, 'run50.msf', "est msf before 2");
+
+$est->renumber_msfo (numberstring => '9');
+is ($est->options->[1]->value, 'run9.msf', "est msf after 2");
+
+$est->renumber_msfo (numberstring => '33abc');
+is ($est->options->[1]->value, 'run33abc.msf', "est msf after 3");
+
+$est->renumber_msfo (numberstring => '12');
+is ($est->options->[1]->value, 'run12.msf', "est msf after 4");
+
+
+is_deeply(model::get_xpose_runno_and_suffix(filename => 'patab01'),['01',''],'get_xpose_runno_and_suffix 1');
+is_deeply(model::get_xpose_runno_and_suffix(filename => 'patab5a'),['5a',''],'get_xpose_runno_and_suffix 2');
+is_deeply(model::get_xpose_runno_and_suffix(filename => 'cotab4.dat'),['4','.dat'],'get_xpose_runno_and_suffix 3');
+is_deeply(model::get_xpose_runno_and_suffix(filename => 'catab87a.csv'),['87a','.csv'],'get_xpose_runno_and_suffix 4');
+is_deeply(model::get_xpose_runno_and_suffix(filename => 'hejtab01'),[undef,''],'get_xpose_runno_and_suffix 5');
+
 
 my $tab = model::problem::table->new(record_arr => ['ID DV MDV NOPRINT ONHEADER NOAPPEND FILE=patab01']);
 is ($tab->options->[6]->value, 'patab01', "tab before");
 
-$tab->renumber_file (numberstring => '6');
-is ($tab->options->[6]->value, 'patab6', "tab after");
 
-$tab = model::problem::table->new(record_arr => ['ID DV MDV NOPRINT ONHEADER FILE=mytab55.csv NOAPPEND']);
-is ($tab->options->[5]->value, 'mytab55.csv', "tab csv before");
+$tab->renumber_file (numberstring => '9');
+is ($tab->options->[6]->value, 'patab9', "tab after");
 
-$tab->renumber_file (numberstring => '09');
-is ($tab->options->[5]->value, 'mytab09.csv', "tab csv after");
+$tab = model::problem::table->new(record_arr => ['ID DV MDV NOPRINT ONHEADER FILE=mytab88.csv NOAPPEND']);
+is ($tab->options->[5]->value, 'mytab88.csv', "tab csv before");
+
+$tab->renumber_file (numberstring => '9');
+is ($tab->options->[5]->value, 'mytab9.csv', "tab csv after");
 
 $tab = model::problem::table->new(record_arr => ['ID DV MDV NOPRINT','FILE=tab55a.csv']);
 is ($tab->options->[4]->value, 'tab55a.csv', "tab num-letter before");
 
 $tab->renumber_file (numberstring => '09');
-is ($tab->options->[4]->value, 'tab09a.csv', "tab num-letter after");
+is ($tab->options->[4]->value, 'tab09.csv', "tab num-letter after");
+
+$tab = model::problem::table->new(record_arr => ['ID DV MDV NOPRINT','FILE=tab55.csv']);
+is ($tab->options->[4]->value, 'tab55.csv', "tab num-letter before 2");
+
+$tab->renumber_file (numberstring => '09a');
+is ($tab->options->[4]->value, 'tab09a.csv', "tab num-letter after 2");
+
+$tab = model::problem::table->new(record_arr => ['ID DV MDV NOPRINT','FILE=output55abc.csv']);
+is ($tab->options->[4]->value, 'output55abc.csv', "other num-letter before 3");
+
+$tab->renumber_file (numberstring => '9');
+is ($tab->options->[4]->value, 'output9.csv', "tab num-letter after 3");
 
 my $prob = model::problem::problem->new(record_arr => ['$PROBLEM']);
 

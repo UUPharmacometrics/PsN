@@ -16,7 +16,8 @@ sub renumber_msfo{
 	foreach my $opt (@options){
 		if ($opt->name =~ /^\s*MSF/  and (defined $opt->value and $opt->value ne '')){
 			my $line = $opt->value;
-			$line =~ s/[0-9]+/$numberstring/ ;
+			#everything up to but not including optional dot
+			$line =~ s/[0-9]+[^0-9.]*/$numberstring/ ;
 			$opt->value($line);
 		}
 	}

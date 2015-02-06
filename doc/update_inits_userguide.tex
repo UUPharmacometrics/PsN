@@ -2,7 +2,7 @@
 \setlength{\evensidemargin}{0pt}
 \setlength{\oddsidemargin}{0pt}
 
-\guidetitle{update\_inits user guide}{2014-08-18}
+\guidetitle{update\_inits user guide}{2015-02-06}
 
 \begin{document}
 
@@ -13,9 +13,11 @@
 The update\_inits script is used to update inital estimates in a model file with final
 estimates from NONMEM output.
 
-The program will automatically search for a lst-file with the same file stem as the model file,
-for example if the model file is called run1.mod then the program will try to read output from
-run1.lst. If run1.ext also exists then final estimates will be read from there, 
+The final estimates will either be taken from a lst-file given explicitly as the second 
+command-line argument after the model file name, from another model file given with option -from\_model, 
+or from the lst-file with the same file stem as the model file.
+For example, if no lst-file is given as argument and the model file is called run1.mod then the program will try to read output from
+run1.lst. If run1.ext also exists then final estimates with higher precision will be read from there, 
 but run1.lst must still be present.
 
 In addition to updating initial estimates the program will try to rename table files and
@@ -27,20 +29,19 @@ The command \verb|update| can be used as a synonym to \verb|update_inits|.
 
 \noindent Examples:
 \begin{itemize}
+\item Update a copy of run1.mod with estimates from run1abc.lst:
+\begin{verbatim}
+update_inits run1.mod run1abc.lst -output_model=run2.mod
+\end{verbatim}
+Note: Option -output\_model can be abbreviated to -out.
 \item Modify file run33.mod and copy original to run33.mod.org. This requires that run33.lst exists.
 \begin{verbatim}
 update_inits run33.mod
 \end{verbatim}
 \item Update a copy of run22.mod and call the new file run23.mod. This requires that run22.lst exists.
 \begin{verbatim}
-update_inits run22.mod -output_model=run23.mod
+update_inits run22.mod -out=run23.mod
 \end{verbatim}
-Note: -output\_model can be abbreviated to -out.
-\item Update a copy of run1.mod with estimates from run1abc.lst:
-\begin{verbatim}
-update_inits run1.mod run1abc.lst -out=run2.mod
-\end{verbatim}
-
 \item Use parameters estimates from a model file instead of a lst-file:
 \begin{verbatim}
 update run3.mod -from_model=run4.mod -out=run6.mod
@@ -49,47 +50,43 @@ update run3.mod -from_model=run4.mod -out=run6.mod
 
 \section{Renumbering}
 \subsubsection*{Input number for 'Based on' tag}
-The program will try to extract an input run number as follows: If the input model file name
-starts with run, Run or RUN followed by a number and contains a dot 
-somewhere after the number, then that number will be used as the input run number. Examples:
+The program will use the number set with option -based\_on, if that option was used.
+Otherwise PsN will try to extract an input run number as follows: If the input model file name
+starts with run, Run or RUN followed by a digit and contains a dot 
+somewhere after the number, then everthing from the first digit to the first dot will be used as the input run number. Examples:
 \begin{itemize}
-\item run1.mod gives number 1
-\item Run54a.ctl gives number 54
-\item pheno.mod gives no number 
+\item run1.mod gives 1
+\item run1.2.mod gives 1
+\item Run54a.ctl gives 54a
+\item pheno.mod gives nothing
+\item RUN55.mod gives number 55
+\item Run54abc.ctl gives number 54abc
+\item run55 gives nothing (since there is no dot anywhere after the number)
 \end{itemize}
-\noindent The input number will be used for the 'Based on' tag, if present, unless option
--based\_on is set.
 \subsubsection*{Output number for \$TABLE and \$ESTIMATION}
 If option -renumber is manually set to a number other than 0, the output run number will
 be set to this number. If -renumber is not set but option -output\_model is set,
-the program will try to extract an output run number using the same pattern
-as for the input number: If the output model file name
-starts with run, Run or RUN followed by a number and contains a dot 
-somewhere after the number, then that number will be used as the output run number. Examples:
-\begin{itemize}
-\item RUN55.mod gives number 55
-\item Run54abc.ctl gives number 54
-\item run55 gives no number (since there is no dot anywhere after the number)
-\end{itemize}
+the program will try to extract an output run number using the same rules
+as for the input number for the 'Based on' tab described above.
 
-\noindent The output number will be used for the FILE option in \$TABLE and the MSFO option in
+The output number will be used for the FILE option in \$TABLE and the MSFO option in
 \$ESTIMATION. If no output number is defined, either automatically or via option -renumber, 
 then those options will not be changed.
 
-The FILE option of all \$TABLE will get tab<any number> replaced with tab<output number>. 
+The FILE option of all \$TABLE will get <any number up to optional dot> replaced with <output number>. 
 Examples if the output number is 9:
 \begin{itemize}
-\item FILE=patab6 will be changed to FILE=patab9
-\item FILE=mytab8.csv to FILE=mytab9.csv
-\item FILE=cotab5abc.csv to FILE=cotab9abc.csv
+\item FILE=patab01 will be changed to FILE=patab9
+\item FILE=mytab88.csv to FILE=mytab9.csv
+\item FILE=output5abc.csv to FILE=output9.csv
 \end{itemize}
 
-\noindent The MSFO option of all \$ESTIMATION will get <any number> replaced with <output number>. 
+\noindent The MSFO option of all \$ESTIMATION will get <any number up to optional dot> replaced with <output number>. 
 Examples if the output number is 9:
 \begin{itemize}
-\item MSFO=msf62 will be changed to MSFO=msf9
-\item MSFO=run8.msf to MSFO=run9.msf
-\item MSFO=msf5abc to MSFO=msf9abc
+\item MSFO=msf8 will be changed to MSFO=msf9
+\item MSFO=run50.msf to MSFO=run9.msf
+\item MSFO=msf11abc to MSFO=msf9
 \end{itemize}
 \section{Input and options}
 

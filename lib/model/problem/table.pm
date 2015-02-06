@@ -16,7 +16,8 @@ sub renumber_file{
 	foreach my $opt (@options){
 		if ($opt->name =~ /^\s*FIL/  and (defined $opt->value and $opt->value ne '')){
 			my $line = $opt->value;
-			$line =~ s/tab[0-9]+/tab$numberstring/;
+			#everything up to but not including optional dot
+			$line =~ s/[0-9]+[^0-9.]*/$numberstring/ ;
 			$opt->value($line);
 		}
 	}
