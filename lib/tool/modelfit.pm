@@ -1142,8 +1142,15 @@ sub set_msfo_to_msfi
 			newline => 1);
 	}
 
-	$candidate_model->set_records(type => 'msfi', record_strings => [$msfi]);
-
+	#HERE
+	#loop probs. Add rec if not there. If there only change filename
+	foreach my $prob (@{$candidate_model->problems}){
+		if (defined $prob->msfis and scalar(@{$prob->msfis})>0){
+			$prob->msfis->[0]->options->[0]->name($msfi);
+		}else{
+			$prob->set_records(type => 'msfi', record_strings => [$msfi]);
+		}
+	}
 	$candidate_model->remove_records(type => 'theta');
 	$candidate_model->remove_records(type => 'omega');
 	$candidate_model->remove_records(type => 'sigma');
@@ -2704,13 +2711,14 @@ sub copy_model_and_input
 
 			if( -s $msfi_in ){
 				#-s returns true if file is non-empty
+				#assume original model has msfi, assume thetas already removed.
 				cp( $msfi_in, $basename.'-0' ); #move or copy... this is from calling directory
-				$candidate_model->set_records(type=>'msfi',
-											  record_strings => [$basename.'-0']);
-				$candidate_model->remove_records(type=>'theta');
-				$candidate_model->remove_records(type=>'omega');
-				$candidate_model->remove_records(type=>'sigma');
-				
+				#assume only one $MSFI per $PROB. Know file names always first opt
+				foreach my $prob (@{$candidate_model->problems}){
+					if (defined $prob->msfis){
+						$prob->msfis->[0]->options->[0]->name($basename.'-0');
+					}
+				}
 			} else {
 				# 
 				1;
