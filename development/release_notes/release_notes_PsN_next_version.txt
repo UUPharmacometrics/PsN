@@ -61,6 +61,19 @@ Changes and bug fixes from PsN 4.2.0 to x.y.z
 
 - New option -standardised_output to create DDMoRe standard output .xml
 
+- Less delay (sleep) when jobs are submitted.
+
+- rplots option
+
+- Updated rules for selecting best retry
+
+- handle spaces in the path (enclose filepath with quotes in $DATA)
+
+- enable option -cwres also for NM 7. 
+
+- major redesign of data file handling. PsN will now not parse or reformat the data file unless
+  necessary (bootstrapping, coviarate statistics computation, ...)
+
    ___Cluster/grid interaction___
 
    ___NONMEM interaction___
@@ -76,6 +89,13 @@ Changes and bug fixes from PsN 4.2.0 to x.y.z
 
 - vpc binning can now take multiple arrays for -bin_array or -auto_bin to use for different strata
 - When F_FLAG=0 PsN now also allow ICALL == 4
+- new option -irep to vpc and npc. An alternative way of marking beginning of new simulation sample
+  in -sim_table. This makes it easier to use R-processed data as input, since the NONMEM-type
+  header is not needed at the beginning of each new sample. 
+- vpc/npc can be run without an input model when option -sim_table and -orig_table are used.
+- vpc/npc will set NOAPPEND in $TABLE, and instead add items DV, PRED, WRES and/or RES explicitly if needed.
+- vpc: Added prediction intervals 25% and 75% to -fine_pi, now -fine_pi gives 
+  intervals 0,10,20,25,30,40,50,60,70,75,80,90 and 95% 
 
    ___scm___
 
@@ -84,10 +104,63 @@ Changes and bug fixes from PsN 4.2.0 to x.y.z
 
    ___sse___
 
+-  sse will accept missing data files for alternative models. This is ok since data will be replaced with 
+   simulated data anyway. 
+
+-  sse will accept running with -samples=1
+
    ___bootstrap___
+
+-  bootstrap can now be automatically resumed also when -clean=3 in original run. Just set -directory to existing 
+   directory of interrupted run, then samples that were finished will be read into memory directly and only samples 
+   that were not finished will be run with NONMEM.
+
+-  New option -no-run_base_model. By default bootstrap will run the base model if lst-file is not available, but 
+   if -no-run_base_model is set then the base model will not be run even if lst-file is missing. If no output 
+   from the base model is available, the bootstrap will still continue and produce results, although there will 
+   be no parameter of ofv for the base model in the raw_results file.
+
+-  New option -no-update_inits. By default the bootstrap models will get the final estimates of the base model 
+   as initial estimates, provided that base model lst-file is available. If option -no-update_inits is set, 
+   the bootstrap models will get the same initial estimates as the base model, even if final estimates are 
+   available from the lst-file.
+
+-  New option -summarize: recompute bootstrap_results.csv based on existing raw_results. 
 
    ___update_inits___
 	 
 - update is now always an alias for update_inits on all platforms.
   update is versioned like all other scripts.
 	For example: update-4.3.0 will be equivalent to update_inits-4.3.0
+
+   ___randtest___
+	 
+- two new options: 1) -update_inits with default true: update initial estimates before estimating 
+  with randomized data 2) -full_model_inits with default false, i.e. use final estimates from full 
+  model estimation on input data rather than base model estimates from input data as initial 
+  estimates for randomized data estimation.
+- a new csv-format output file with actual delta-ofv at different p-values, and actual p-values for 
+  theoretical dofv:s from chisquare distribution. 
+	 
+   ___execute___
+	 
+- New option -reduced_model_ofv. Initiate a retry unless ofv is at least as good as this value.
+  Option -retries must be set > 0 for it to have effect.
+
+- timestamp option for directory name
+
+   ___parallel_retries___
+	 
+- New option -timestamp for directory name
+
+   ___sir___
+	 
+- Option -covmat_input	 	 
+
+   ___covmat___
+	 
+- New script, compute variance-covariance matrix based on -rawres_input
+
+   ___precond___
+	 
+- New tool, preconditioning of model
