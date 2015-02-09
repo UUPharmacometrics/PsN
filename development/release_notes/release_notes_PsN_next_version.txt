@@ -131,8 +131,9 @@ Changes and bug fixes from PsN 4.2.0 to x.y.z
 	 
 - update is now always an alias for update_inits on all platforms.
   update is versioned like all other scripts.
-	For example: update-4.3.0 will be equivalent to update_inits-4.3.0
-
+  For example: update-4.3.0 will be equivalent to update_inits-4.3.0
+- model files with mulitple $PROB are now supported.
+- $MSFI filename of second and later $PROB will be updated
    ___randtest___
 	 
 - two new options: 1) -update_inits with default true: update initial estimates before estimating 

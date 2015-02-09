@@ -14,6 +14,7 @@ use Getopt::Long;
 use File::Copy qw/cp mv/;
 use common_options;
 use Math::Random;
+use ui;
 
 sub search_record {
   #input is string $row and array ref $list
@@ -187,7 +188,7 @@ $help_text{-based_on} = <<'EOF';
     If the -based_on option is used, update_inits will set 
 	the runrecord 'Based on' tag (if present, or if option -add_tags is used) 
 	to that number. If option -based_on is not used, update_inits will by default try to extract 
-	a run number from the original model file name and use that instead.
+	a run number from the original model file name and use that instead in the tag.
 	If a number cannot be extracted then nothing will be set. 
 EOF
 1;    
@@ -196,13 +197,15 @@ $help_text{-renumber} = <<'EOF';
 
     Default extracted from the -output_model file name.	If -output_model=runY.mod 
 	is set where Y is a number then -renumber=Y will be set automatically.
-	All FILE names in $TABLE records that end with tab'any number' 
-	or tab'any number'.csv will get 'any number' replaced with
-	'new number', provided that 'new number' is not 0.
-	If 'filename' in MSFO='filename' in the  $ESTIMATION record
-	ends with a number, that number will be replaced by 'new number'.
+	Provided that 'new number' is not 0,
+	the FILE option of all $TABLE will get <any number up to optional dot> 
+	replaced with <new number>,
+	the MSFO option of all $ESTIMATION will get <any number up to optional dot> 
+	replaced with <new number>,
+	and $MSFI filename of second and later $PROB will get 
+	<any number up to optional dot> replaced with <new number>
 
-	Set option -renumber=0 to prevent renumbering in $TABLE and $EST.
+	Set option -renumber=0 to prevent automatic renumbering in $TABLE and $EST and $MSFI.
 EOF
 1;    
 
@@ -243,7 +246,7 @@ if (defined $options{'renumber'}) {
 
 my @record_list=('THETA','OMEGA','SIGMA');
 print "Updating records ".join(' ',@record_list)."\n";
-print "and renumbering table and msfo files (set -renumber=0 to avoid this)\n" if ($auto_renumber);
+print "and renumbering table, msfo and \$MSFI files (set -renumber=0 to avoid this)\n" if ($auto_renumber);
 
 if( $ARGV[1] && $options{'from_model'}){
 	die "Ambiguous input: Cannot specify both lst-file and from_model.\n";
@@ -265,9 +268,6 @@ my $model_copy = model -> new ( filename => $ARGV[0],
 								ignore_missing_files => 1,
 								ignore_missing_data=>1);
 
-if ( scalar (@{$model-> problems}) != 1 ){
-	die 'Script can only handle modelfiles with exactly one problem.\n';
-}
 
 
 my $outfile;
@@ -288,11 +288,24 @@ if (defined $options{'from_model'}) {
 									  ignore_missing_data=>1);
 
 	my $array = $params_model->get_hash_values_to_labels();
+	if (scalar(@{$model_copy->problems}) > scalar(@{$array})){
+		ui->print(category => 'all',
+				  message => "\n".'from_model has fewer $PROBLEM than '.$ARGV[0].
+				  ". Will not update initial estimates in more than ".
+				  scalar(@{$array}).' $PROBLEM:s');
+	}elsif (scalar(@{$model_copy->problems}) < scalar(@{$array})){
+		ui->print(category => 'all',
+				  message => "\n".'from_model has more $PROBLEM than '.$ARGV[0].
+				  ". Will not update initial estimates in more than ".
+				  scalar(@{$model_copy->problems}).' $PROBLEM:s');
+	}
 
 	my $check = 0;
 	$check = $options{'diagonal_dominance'} if (defined $options{'diagonal_dominance'});
 	for (my $i=0; $i< scalar(@{$model_copy->problems}); $i++){
-		last if ($i >= scalar(@{$array}));
+		if ($i >= scalar(@{$array})){
+			last;
+		}
 		$model_copy -> update_inits( from_hash => $array->[$i],
 									 problem_number => ($i+1),
 									 ensure_diagonal_dominance => $check,
@@ -319,6 +332,13 @@ if (defined $options{'from_model'}) {
 		}
 	} else {
 		die "No file to read parameter values from\n";
+	}
+
+	if (scalar (@{$model_copy->problems})>1){
+		ui->print(category => 'all',
+				  message => $ARGV[0].
+				  ' has more than one $PROBLEM. Will update naively $PROB by $PROB from lst-file');
+
 	}
 
 	my $check = 0;
@@ -355,6 +375,15 @@ if (defined $options{'renumber'} and $options{'renumber'} != 0){
 		if (defined $model_copy->problems->[$j]->estimations){
 			foreach my $est (@{$model_copy->problems->[$j]->estimations}){
 				$est->renumber_msfo (numberstring => $output_run_number);
+			}
+		}
+		#handle msfi
+		if ($j > 0){
+			#if second or higher $PROB we assume we want msfi from previous $PROB
+			if (defined $model_copy->problems->[$j]->msfis){
+				foreach my $msfi (@{$model_copy->problems->[$j]->msfis}){
+					$msfi->renumber_msfi (numberstring => $output_run_number);
+				}
 			}
 		}
 	}

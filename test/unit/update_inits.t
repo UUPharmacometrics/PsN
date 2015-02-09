@@ -24,6 +24,12 @@ is (model::get_run_number_string(filename => 'Run54abc.ctl'),'54abc',"get_run_nu
 is (model::get_run_number_string(filename => 'run55'),undef,"get_run_number_string run55");
 is (model::get_run_number_string(filename => 'run1.2.mod'),'1',"get_run_number_string run1.2.mod");
 
+my $msfi = model::problem::msfi->new(record_arr => ['msf8']);
+is ($msfi->options->[0]->name, 'msf8', "msfi before");
+
+$msfi->renumber_msfi (numberstring => '9');
+is ($msfi->options->[0]->name, 'msf9', "msfi after 1");
+
 my $est = model::problem::estimation->new(record_arr => ['MAXEV=99 MSFO=msf8', 'ANY=SOUP']);
 is ($est->options->[1]->value, 'msf8', "est msf before");
 

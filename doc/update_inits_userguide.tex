@@ -2,7 +2,7 @@
 \setlength{\evensidemargin}{0pt}
 \setlength{\oddsidemargin}{0pt}
 
-\guidetitle{update\_inits user guide}{2015-02-06}
+\guidetitle{update\_inits user guide}{2015-02-09}
 
 \begin{document}
 
@@ -21,9 +21,11 @@ run1.lst. If run1.ext also exists then final estimates with higher precision wil
 but run1.lst must still be present.
 
 In addition to updating initial estimates the program will try to rename table files and
-msfo files that follow certain naming rules. It is also possible to for example
+msfo/msfi files that follow certain naming rules. It is also possible to for example
 add/update runrecord tags,
 randomly perturb initial estimates and add comments to the new model file.
+
+If there are multiple \$PROBLEM then update\_inits will try to update \$PROBLEM by \$PROBLEM.
 
 The command \verb|update| can be used as a synonym to \verb|update_inits|.
 
@@ -49,7 +51,7 @@ update run3.mod -from_model=run4.mod -out=run6.mod
 \end{itemize}
 
 \section{Renumbering}
-\subsubsection*{Input number for 'Based on' tag}
+\subsubsection*{Input run number for 'Based on' tag}
 The program will use the number set with option -based\_on, if that option was used.
 Otherwise PsN will try to extract an input run number as follows: If the input model file name
 starts with run, Run or RUN followed by a digit and contains a dot 
@@ -63,14 +65,15 @@ somewhere after the number, then everthing from the first digit to the first dot
 \item Run54abc.ctl gives number 54abc
 \item run55 gives nothing (since there is no dot anywhere after the number)
 \end{itemize}
-\subsubsection*{Output number for \$TABLE and \$ESTIMATION}
+\subsubsection*{Output number for \$TABLE, \$ESTIMATION, \$MSFI}
 If option -renumber is manually set to a number other than 0, the output run number will
 be set to this number. If -renumber is not set but option -output\_model is set,
 the program will try to extract an output run number using the same rules
-as for the input number for the 'Based on' tab described above.
+as for the input number for the 'Based on' tag described above.
 
-The output number will be used for the FILE option in \$TABLE and the MSFO option in
-\$ESTIMATION. If no output number is defined, either automatically or via option -renumber, 
+The output number will be used for the FILE option in \$TABLE, the MSFO option in
+\$ESTIMATION, and \$MSFI file name for \$PROBLEMS after the first. 
+If no output number is defined, either automatically or via option -renumber, 
 then those options will not be changed.
 
 The FILE option of all \$TABLE will get <any number up to optional dot> replaced with <output number>. 
@@ -88,6 +91,16 @@ Examples if the output number is 9:
 \item MSFO=run50.msf to MSFO=run9.msf
 \item MSFO=msf11abc to MSFO=msf9
 \end{itemize}
+
+\noindent The file name option of all \$MSFI \emph{after the first \$PROB} will get 
+<any number up to optional dot> replaced with <output number>. \$MSFI in the first \$PROB
+will not be changed.
+Examples if the output number is 9:
+\begin{itemize}
+\item \$MSFI msf8 will be changed to \$MSFI msf9
+\item \$MSFI run8.msf to \$MSFI run9.msf
+\end{itemize}
+
 \section{Input and options}
 
 \subsection{Required input}
@@ -168,15 +181,8 @@ a run number from the original model file name and use that instead.
 If a number cannot be extracted then nothing will be set. 
 \nextopt
 \optdefault{renumber}{new number}
-All words in \$TABLE records that end with tab<any number> 
-or tab<any number>.csv will get <any number> replaced 
-<new number>, provided that <new number> is not 0.
-If <filename> in MSFO=<filename> in the  \$ESTIMATION record
-ends with a number, that number will be replaced by <new number>.
-MSFO may not be abbreviated.
-If the input modelfile name is runX.mod and -output\_model is runY.mod
-where both X and Y are numbers then -renumber=Y will be set automatically.
-Set option -renumber=0 to prevent renumbering in such a case.
+See details in section Renumbering.
+Set option -renumber=0 to prevent automatic renumbering.
 \nextopt
 %\optdefault{sigdig}{integer}
 %Default 15.
