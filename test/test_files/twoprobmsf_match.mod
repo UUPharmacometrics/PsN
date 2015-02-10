@@ -1,0 +1,50 @@
+
+$PROB MEM Binary Data analysis, Baseline model
+
+$INPUT ID ITEM TIME DV GRP MDV
+
+$DATA drugx_poc.csv IGNORE=@ 
+IGNORE=(ITEM.LT.3)
+IGNORE=(ITEM.GT.3)
+
+$PRED
+  TVBASE = THETA(1)                      ; TVBASE is on ligit scale
+  BASE = TVBASE + ETA(1)
+  
+  LP = BASE        ; logit probability
+  
+  PROB   = EXP(LP)/(1+EXP(LP))   ; Logit transformation to probability scale
+
+  IF(ICALL.EQ.4) THEN
+    CALL RANDOM (2,R)
+    IF(R.LE.PROB) DV=1
+    IF(R.GT.PROB) DV=0
+  ENDIF
+
+  IF(DV.GT.0) Y=PROB   ; not able
+  IF(DV.EQ.0) Y=1-PROB ; able
+
+$THETA (0.8)    ; BASE
+$OMEGA 0.1      ; BSV BASE
+
+;Sim_start for VPC
+$ESTIM MAXEVAL=9999 METHOD=COND LAPLACE LIKE PRINT=1 MSFO=msfb1
+;$SIM (12345) (678910 UNI) ONLY NOP NSUB=100 ; for VPC
+;Sim_end for VPC
+
+$COV PRINT=E
+
+$TABLE ID TIME MDV NOPRINT ONEHEADER FILE=sdtab1
+$TABLE ID ITEM GRP NOPRINT ONEHEADER FILE=catab1
+$TABLE ID BASE NOPRINT ONEHEADER FILE=patab1
+
+
+$PROBLEM sim
+$INPUT ID ITEM TIME DV GRP MDV
+$DATA drugx_poc.csv IGNORE=@ REWIND 
+IGNORE=(ITEM.LT.3)
+IGNORE=(ITEM.GT.3) 
+$SIMULATION (21398012) (32131288 UNI) ONLYSIM NOPRED TRUE=FINAL NSUB=1
+$MSFI msfb1
+$TABLE ID TIME MDV ITEM GRP BASE NOPRINT ONEHEADER FILE=simtab1
+

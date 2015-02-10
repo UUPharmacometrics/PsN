@@ -386,6 +386,83 @@ $standardised_output->parse;
 
     remove_test_dir($tempdir);
 
+    our $tempdir = create_test_dir('unit_standardised_output');
+    copy_test_files($tempdir,
+        [ "SO/DelBene/DelBene_2009_oncology_in_vitro_EPS_in_OBS.lst",
+		  "SO/DelBene/DelBene_2009_oncology_in_vitro_EPS_in_OBS.ext",
+		  "SO/DelBene/DelBene_2009_oncology_in_vitro_EPS_in_OBS.cov",
+		  "SO/DelBene/DelBene_2009_oncology_in_vitro_EPS_in_OBS.cor",
+		  "SO/DelBene/sdtab",
+		  "SO/DelBene/cotab",
+		  "SO/DelBene/patab",
+		]);
+
+    chdir $tempdir;
+
+    $standardised_output = standardised_output->new(lst_files => [ "DelBene_2009_oncology_in_vitro_EPS_in_OBS.lst" ], use_tables => 1);
+$standardised_output->parse;
+
+    $so = standardised_output::so->new(filename => "DelBene_2009_oncology_in_vitro_EPS_in_OBS.SO.xml");
+
+    is (scalar(@{$so->SOBlock}), 1, "DelBene: number of SOBlocks");
+    is ($so->SOBlock->[0]->blkId, 'DelBene_2009_oncology_in_vitro_EPS_in_OBS', "DelBene: name of SOBlock");
+    
+
+    is_deeply($so->SOBlock->[0]->PopulationEstimates->columnId, ['LAMBDA0','K1','K2','N0','CV','SIGMA_RES_W'], 
+			  "DelBene: PopulationEstimates names");
+    is_deeply($so->SOBlock->[0]->PopulationEstimates->columnType, [ ('undefined') x 6 ], "DelBene: PopulationEstimates column types");
+    is_deeply($so->SOBlock->[0]->PopulationEstimates->valueType, [ ('real') x 6 ], "DelBene: PopulationEstimates value types");
+    is_deeply($so->SOBlock->[0]->PopulationEstimates->columns, 
+			  [ [2.89324E-02 ],[ 7.37283E-02],[  8.20023E-02],[  2.15178E+03 ],[ 1.09068E-01], [1] ], "DelBene: PopulationEstimates columns");
+
+    is_deeply($so->SOBlock->[0]->StandardError->columnId, [ 'parameter', 'SE' ], "DelBene: StandardError names");
+    is_deeply($so->SOBlock->[0]->StandardError->columnType, [ ('undefined') x 2 ], "DelBene: StandardError column types");
+    is_deeply($so->SOBlock->[0]->StandardError->valueType, [ 'string', 'real' ], "DelBene: StandardError value types");
+    is_deeply($so->SOBlock->[0]->StandardError->columns, [ ['LAMBDA0','K1','K2','N0','CV'], 
+														   [4.28999E-04, 6.31929E-04, 2.30774E-03, 3.73786E+01, 1.28301E-02 ]  ], 
+			  "DelBene: StandardError columns");
+
+
+    remove_test_dir($tempdir);
+
+    our $tempdir = create_test_dir('unit_standardised_output');
+    copy_test_files($tempdir,
+        ["SO/Simeoni/Simeoni_2004_oncology_TGI_ETA.lst",
+		 "SO/Simeoni/Simeoni_2004_oncology_TGI_ETA.ext",
+		 "SO/Simeoni/Simeoni_2004_oncology_TGI_ETA.cov",
+		 "SO/Simeoni/Simeoni_2004_oncology_TGI_ETA.cor",
+		 "SO/Simeoni/sdtab",
+		 "SO/Simeoni/patab",
+		]);
+
+    chdir $tempdir;
+
+    $standardised_output = standardised_output->new(lst_files => [ "Simeoni_2004_oncology_TGI_ETA.lst" ], use_tables => 1);
+$standardised_output->parse;
+
+    $so = standardised_output::so->new(filename => "Simeoni_2004_oncology_TGI_ETA.SO.xml");
+
+    is (scalar(@{$so->SOBlock}), 1, "Simeoni: number of SOBlocks");
+    is ($so->SOBlock->[0]->blkId, 'Simeoni_2004_oncology_TGI_ETA', "Simeoni: name of SOBlock");
+
+    is_deeply($so->SOBlock->[0]->PopulationEstimates->columnId, ['POP_LAMBDA0','LAMBDA1','K1','K2','W0','CV','OMEGA_LAMBDA0','SIGMA_RES_W'], 
+			  "Simeoni: PopulationEstimates names");
+    is_deeply($so->SOBlock->[0]->PopulationEstimates->columnType, [ ('undefined') x 8 ], "Simeoni: PopulationEstimates column types");
+    is_deeply($so->SOBlock->[0]->PopulationEstimates->valueType, [ ('real') x 8 ], "Simeoni: PopulationEstimates value types");
+    is_deeply($so->SOBlock->[0]->PopulationEstimates->columns, 
+			  [ [2.98716E-01],[7.74151E-01],[7.86758E-01],[7.14701E-01],[4.21873E-02],[1.00394E-01], [0], [1] ], 
+			  "Simeoni: PopulationEstimates columns");
+
+    is_deeply($so->SOBlock->[0]->StandardError->columnId, [ 'parameter', 'SE' ], "Simeoni: StandardError names");
+    is_deeply($so->SOBlock->[0]->StandardError->columnType, [ ('undefined') x 2 ], "Simeoni: StandardError column types");
+    is_deeply($so->SOBlock->[0]->StandardError->valueType, [ 'string', 'real' ], "Simeoni: StandardError value types");
+    is_deeply($so->SOBlock->[0]->StandardError->columns, [ ['POP_LAMBDA0','LAMBDA1','K1','K2','W0','CV'], 
+														   [ 1.77204E-02,2.00100E-02,1.33069E-01,4.72133E-02,8.84125E-03, 1.29423E-02 ]  ], 
+			  "Simeoni: StandardError columns");
+
+
+    remove_test_dir($tempdir);
+
 
 }
 
