@@ -49,6 +49,7 @@ sub parse
     }
 
     (my $se_node) = $xpc->findnodes('x:Estimation/x:PrecisionPopulationEstimates/x:MLE/x:StandardError', $node);
+
     if (defined $se_node) {
         my $ses = standardised_output::table->new();
         $ses->parse($se_node);
