@@ -332,6 +332,61 @@ SKIP: {
 
     remove_test_dir($tempdir);
 
+    our $tempdir = create_test_dir('unit_standardised_output');
+    copy_test_files($tempdir,
+        [ "SO/Nock/Nock_2013_Carboplatin_PK_MONOLIX.cor","SO/Nock/Nock_2013_Carboplatin_PK_MONOLIX.cov",
+		  "SO/Nock/Nock_2013_Carboplatin_PK_MONOLIX.lst","SO/Nock/Nock_2013_Carboplatin_PK_MONOLIX.ext"  ]);
+
+    chdir $tempdir;
+
+    $standardised_output = standardised_output->new(lst_files => [ "Nock_2013_Carboplatin_PK_MONOLIX.lst" ], use_tables => 0);
+$standardised_output->parse;
+
+    $so = standardised_output::so->new(filename => "Nock_2013_Carboplatin_PK_MONOLIX.SO.xml");
+
+    is (scalar(@{$so->SOBlock}), 1, "Nock: number of SOBlocks");
+    is ($so->SOBlock->[0]->blkId, 'Nock_2013_Carboplatin_PK_MONOLIX', "Nock: name of SOBlock");
+    
+    is_deeply($so->SOBlock->[0]->PopulationEstimates->columnId, [ 'THCL', 'THV1', 'THQ', 'THV2', 'SDADD','SDPROP','CLCLCR_COV','V1KG_COV','OMCL','OMV1','SIGMA' ], "Nock: PopulationEstimates names");
+    is_deeply($so->SOBlock->[0]->PopulationEstimates->columnType, [ ('undefined') x 11 ], "Nock: PopulationEstimates column types");
+    is_deeply($so->SOBlock->[0]->PopulationEstimates->valueType, [ ('real') x 11 ], "Nock: PopulationEstimates value types");
+    is_deeply($so->SOBlock->[0]->PopulationEstimates->columns, [ [6.80426E+00], [2.13669E+01], [7.02052E-01], [2.89742E+01], [1.23705E-02], [1.92477E-01], [1.38350E+00], [9.92102E-01], [1.88014E-02], [0], [1] ], "Nock: PopulationEstimates columns");
+
+    is_deeply($so->SOBlock->[0]->StandardError->columnId, [ 'parameter', 'SE' ], "Nock: StandardError names");
+    is_deeply($so->SOBlock->[0]->StandardError->columnType, [ ('undefined') x 2 ], "Nock: StandardError column types");
+    is_deeply($so->SOBlock->[0]->StandardError->valueType, [ 'string', 'real' ], "Nock: StandardError value types");
+    is_deeply($so->SOBlock->[0]->StandardError->columns, [ ['THCL', 'THV1', 'THQ', 'THV2', 'SDADD','SDPROP','CLCLCR_COV','V1KG_COV','OMCL'], 
+														   [2.18242E-01, 6.24475E-01, 3.87137E-02, 1.92971E+00, 2.10896E-03, 1.29605E-02, 2.50889E-01, 3.82189E-01,6.06153E-03 ]  ], 
+			  "Nock: StandardError columns");
+
+
+    remove_test_dir($tempdir);
+
+    our $tempdir = create_test_dir('unit_standardised_output');
+    copy_test_files($tempdir,
+        [ "output/onePROB/oneEST/noSIM/warfarin_ddmore.lst","output/onePROB/oneEST/noSIM/warfarin_ddmore.ext"  ]);
+
+    chdir $tempdir;
+
+    $standardised_output = standardised_output->new(lst_files => [ "warfarin_ddmore.lst" ], use_tables => 0);
+$standardised_output->parse;
+
+    $so = standardised_output::so->new(filename => "warfarin_ddmore.SO.xml");
+
+    is (scalar(@{$so->SOBlock}), 1, "warfarin SAEM: number of SOBlocks");
+    is ($so->SOBlock->[0]->blkId, 'warfarin_ddmore', "warfarin SAEM: name of SOBlock");
+
+    is_deeply($so->SOBlock->[0]->PopulationEstimates->columnId, [ 'POP_CL','POP_V','POP_KA','POP_TLAG','RUV_PROP','RUV_ADD','PPV_CL','CORR_PPV_CL_V','PPV_V','PPV_KA','PPV_TLAG','BETA_CL_WT','BETA_V_WT' ], "warfarin SAEM: PopulationEstimates names");
+    is_deeply($so->SOBlock->[0]->PopulationEstimates->columnType, [ ('undefined') x 13 ], "warfarin SAEM: PopulationEstimates column types");
+    is_deeply($so->SOBlock->[0]->PopulationEstimates->valueType, [ ('real') x 13 ], "warfarin SAEM: PopulationEstimates value types");
+    is_deeply($so->SOBlock->[0]->PopulationEstimates->columns, [ [1.32779E-01], [8.14751E+00], [  1.78924E+00 ], [8.74897E-01], [  1.06388E-01], 
+																 [ -1.35376E-15], [2.62728E-01],[  2.34500E-01], 
+																 [  1.36931E-01], [9.93333E-01 ], [3.13633E-01],[7.50000E-01], [1.00000E+00]], "warfarin SAEM: PopulationEstimates columns");
+
+
+    remove_test_dir($tempdir);
+
+
 }
 
 done_testing();

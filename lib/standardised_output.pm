@@ -336,7 +336,9 @@ sub _parse_lst_file
                 allow_sdcorrform => 1,
             )};
 
-            my @all_labels = @{$model->problems->[$problems]->get_estimated_attributes(parameter => 'all', attribute => 'labels')};
+            my @filtered_labels = @{$model->problems->[$problems]->get_estimated_attributes(parameter => 'all', attribute => 'labels')};
+
+            my @all_labels = @filtered_labels; #will add fix with label here
 
             # Handling parameters that are FIX but have a label
             my @records;
@@ -360,7 +362,7 @@ sub _parse_lst_file
                 if ($option->fix and defined $option->label) {
                     push @est_values, $option->init;
                     push @all_labels, $option->label;
-                    push @se_values, undef;
+#                    push @se_values, undef;
                 }
                 if ($option->sd or $option->corr) {     # Save labels for parameters on sd/corr scale
                     if (grep { $_ eq $option->label } @all_labels) {
@@ -385,14 +387,22 @@ sub _parse_lst_file
                         };
                     }
                 }
+				#repeat same procedure for filtered_labels, duplication, do not add message again
+                foreach my $label (@filtered_labels) {
+                    if (not $self->_xml->match_symbol_idtype($label)) {
+                        my $old_label = $label;
+                        $label = $self->_xml->mangle_symbol_idtype($label);
+                    }
+                }
 
-                #Calculate relative standard errors, only if have se values
+
+                #Calculate relative standard errors, only for estimated values that have se
                 my @rel_se = ();
                 if ($covariance_step_successful) {
                     for (my $i = 0; $i < scalar(@se_values); $i++) {
                         if ($est_values[$i] == 0) {
                             push @rel_se, undef;
-                        } else {
+                        } else { #here we computed undef divided by 1 and get 1. Coercion of undef se_value into 0?
                             push @rel_se, $se_values[$i] / $est_values[$i];
                         }
                     }
@@ -424,20 +434,27 @@ sub _parse_lst_file
                     }
                     if ($self->check_include(element => 'Estimation/PrecisionPopulationEstimates')) {
                         # Remove ses that are undef
-                        my @spliced_ses = @se_values;
-                        my @spliced_labels = @all_labels;
-                        my @spliced_rses = @rel_se;
-                        for (my $i = 0; $i < scalar(@se_values); $i++) {
-                            if (not defined $se_values[$i]) {
-                               splice @spliced_ses, $i, 1;
-                               splice @spliced_labels, $i, 1;
-                               splice @spliced_rses, $i, 1;
-                            }
-                        }
+#                        my @spliced_ses = @se_values;
+#                       my @spliced_labels = @all_labels;
+#                        my @spliced_rses = @rel_se;
+#                        for (my $i = 0; $i < scalar(@se_values); $i++) {
+#                            if (not defined $se_values[$i]) {
+#                               splice @spliced_ses, $i, 1;
+#                               splice @spliced_labels, $i, 1;
+#                               splice @spliced_rses, $i, 1;
+#                            }
+#                        }
+#                        my $ppe = $self->_create_precision_population_estimates(
+#                            labels => \@spliced_labels,
+#                            standard_errors => \@spliced_ses,
+#                            relative_standard_errors => \@spliced_rses,
+#                            correlation_matrix => $correlation_matrix,
+#                            covariance_matrix => $covariance_matrix,
+#                        );
                         my $ppe = $self->_create_precision_population_estimates(
-                            labels => \@spliced_labels,
-                            standard_errors => \@spliced_ses,
-                            relative_standard_errors => \@spliced_rses,
+                            labels => \@filtered_labels,
+                            standard_errors => \@se_values,
+                            relative_standard_errors => \@rel_se,
                             correlation_matrix => $correlation_matrix,
                             covariance_matrix => $covariance_matrix,
                         );
