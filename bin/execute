@@ -276,6 +276,14 @@ foreach my $model_name ( @ARGV ){
 		unless ($model->copy_data_setting_ok(copy_data => $options{'copy_data'})){
 			die("Cannot set -no-copy_data, absolute data file path is too long.");
 		} 
+		my $mismatch = $model->msfo_to_msfi_mismatch;
+		if ($mismatch){
+			ui->print(category => 'all',
+					  message => "Warning: \$MSFI of \$PROBLEM number $mismatch in ".$model_name.
+					  " does not match previous \$EST MSFO. Check results carefully.\n");
+		}
+
+
 		if (defined $options{'copy_data'} and (not $options{'copy_data'})){
 			$model->relative_data_path(0);
 		}

@@ -5163,7 +5163,30 @@ sub get_xpose_runno_and_suffix{
 	return [$runno,$suffix];
 }
 
+sub msfo_to_msfi_mismatch{
 
+    my $self = shift;
+	return 0 unless (scalar(@{$self->problems})>1);
+
+	my $msfo = $self->msfo_names(); #array of array over probs
+	my $msfi = $self->msfi_names(); #array of array over probs
+	
+	my $prev_msfo= undef;
+	for (my $i=0; $i<scalar(@{$self->problems}); $i++){
+		if (defined $prev_msfo){
+			if (defined $msfi->[$i] and defined $msfi->[$i][0]){
+				unless ($prev_msfo eq $msfi->[$i][0]){
+					return ($i+1); #mismatch at problem number $i+1
+				}
+			}
+		}
+		if (defined $msfo->[$i] and defined $msfo->[$i][0]){
+			$prev_msfo = $msfo->[$i][0];
+		}
+	}
+	return 0;
+
+}
 
 no Moose;
 __PACKAGE__->meta->make_immutable;

@@ -268,7 +268,12 @@ my $model_copy = model -> new ( filename => $ARGV[0],
 								ignore_missing_files => 1,
 								ignore_missing_data=>1);
 
-
+my $mismatch = $model_copy->msfo_to_msfi_mismatch;
+if ($mismatch){
+	ui->print(category => 'all',
+			  message => "Warning: \$MSFI of \$PROBLEM number $mismatch in ".$ARGV[0].
+			  " does not match previous \$EST MSFO. Check results carefully.\n");
+}
 
 my $outfile;
 

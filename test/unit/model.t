@@ -227,4 +227,9 @@ is_deeply($model->same(parameter_type => 'sigma')->[0],[0],'same sigma 2');
 $model = model->new(filename => "$modeldir/tnpri.mod");
 is ($model->get_retries_problem_number,0,"get_retries_problem_number");
 
+$model = model->new(filename => "$modeldir/twoprobmsf_match.mod", ignore_missing_data =>1);
+is ($model->msfo_to_msfi_mismatch,0,"msfo_to_msfi_mismatch false");
+$model = model->new(filename => "$modeldir/twoprobmsf_mismatch.mod", ignore_missing_data =>1);
+is ($model->msfo_to_msfi_mismatch,2,"msfo_to_msfi_mismatch true second prob");
+
 done_testing();
