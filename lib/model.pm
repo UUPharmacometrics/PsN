@@ -3596,8 +3596,8 @@ sub is_option_set
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		name => { isa => 'Str', optional => 1 },
-		record => { isa => 'Str', optional => 1 },
+		name => { isa => 'Str', optional => 0 },
+		record => { isa => 'Str', optional => 0 },
 		problem_number => { isa => 'Int', default => 1, optional => 1 },
 		record_number => { isa => 'Int', default => 0, optional => 1 },
 		fuzzy_match => { isa => 'Bool', default => 0, optional => 1 }
