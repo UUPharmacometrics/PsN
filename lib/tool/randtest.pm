@@ -642,15 +642,31 @@ sub create_R_plots_code{
 		);
 	my $rplot = $parm{'rplot'};
 
-	$rplot->libraries(['ggplot2','reshape2','plyr']);
+	$rplot->libraries(['ggplot2','reshape2','gridExtra','scales','MASS','plotrix']);
 	my $have_base_model = 'FALSE';
-	$have_base_model = 'TRUE' if (defined $self->base_model);
+	#we just assume first PROB here
+	my $label = '';
+	if (defined $self->base_model){
+		$have_base_model = 'TRUE' ;
+		#figure out THETA/label, assume it is the first additional theta in full model.
+		#if same number then what?
+		my $basecount = $self->base_model->nthetas();
+		if ($self->models->[0]->nthetas() > $basecount){
+			my $ref = $self->models->[0]->labels(parameter_type => 'theta');
+			if (defined $ref and defined $ref->[0] and defined $ref->[0]->[$basecount]){
+				#first new theta
+				$label = $ref->[0]->[$basecount];
+			}
+		}
+		
+	}
 	#TODO script only works if $self->base_model is defined 
 	$rplot->add_preamble(code => [
 							 'samples   <-'.$self->samples,
 							 "randomization.column   <-'".$self->randomization_column."'",
 							 "data.diff.table   <-'m1/count_randcol_diff.txt'",
-							 "have.base.model <- $have_base_model"
+							 "have.base.model <- $have_base_model",
+							 "extra.theta <- '".$label."'",
 						 ]);
 
 }
