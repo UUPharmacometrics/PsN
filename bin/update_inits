@@ -244,9 +244,6 @@ if (defined $options{'renumber'}) {
 	}  
 }
 
-my @record_list=('THETA','OMEGA','SIGMA');
-print "Updating records ".join(' ',@record_list)."\n";
-print "and renumbering table, msfo and \$MSFI files (set -renumber=0 to avoid this)\n" if ($auto_renumber);
 
 if( $ARGV[1] && $options{'from_model'}){
 	die "Ambiguous input: Cannot specify both lst-file and from_model.\n";
@@ -355,6 +352,9 @@ if (defined $options{'from_model'}) {
 }
 $model_copy -> filename( $outfile );
 
+my @record_list=('THETA','OMEGA','SIGMA');
+print "Updating records ".join(' ',@record_list)."\n";
+
 if (defined $options{'degree'}){
 	foreach my $prob ( @{$model_copy->problems()}) {
 		$prob -> set_random_inits ( degree => $options{'degree'} );
@@ -367,17 +367,24 @@ if ($options{'add_prior'}){
 														   df_string => $options{'add_prior'});
 }	
 
-
 if (defined $options{'renumber'} and $options{'renumber'} != 0){
+	my @probtab=();
+	my @probmsfo=();
+	my @probmsfi=();
 	for (my $j=0; $j< scalar(@{$model_copy->problems}); $j++){
 		#handle table
 		if (defined $model_copy->problems->[$j]->tables){
+			push (@probtab,($j+1));
 			foreach my $tab (@{$model_copy->problems->[$j]->tables}){
 				$tab->renumber_file (numberstring => $output_run_number);
 			}
 		}
 		#handle estimation
 		if (defined $model_copy->problems->[$j]->estimations){
+			push (@probmsfo,($j+1)) if $model_copy->is_option_set(problem_number => ($j+1),
+																  record => 'estimation',
+																  name => 'MSFO',
+																  fuzzy_match => 1);
 			foreach my $est (@{$model_copy->problems->[$j]->estimations}){
 				$est->renumber_msfo (numberstring => $output_run_number);
 			}
@@ -386,12 +393,27 @@ if (defined $options{'renumber'} and $options{'renumber'} != 0){
 		if ($j > 0){
 			#if second or higher $PROB we assume we want msfi from previous $PROB
 			if (defined $model_copy->problems->[$j]->msfis){
+				push (@probmsfi,($j+1));
 				foreach my $msfi (@{$model_copy->problems->[$j]->msfis}){
 					$msfi->renumber_msfi (numberstring => $output_run_number);
 				}
 			}
 		}
 	}
+	if (scalar(@probtab)+scalar(@probmsfo)+scalar(@probmsfi)){
+		$message = 'and renumbering ';
+		if(scalar(@probtab) > 0){
+			$message .= '$TABLE FILE= in $PROB '.join(',',@probtab)."\n";
+		}
+		if(scalar(@probtab) > 0){
+			$message .= '$EST MSFO= in $PROB '.join(',',@probmsfo)."\n";
+		}
+		if(scalar(@probtab) > 0){
+			$message .= '$MSFI <file> in $PROB '.join(',',@probmsfi)."\n";
+		}
+		print $message;
+	}
+
 }
 
 #handle PROBLEM update_tags add_tags add_comment
