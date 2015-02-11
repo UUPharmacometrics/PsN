@@ -362,7 +362,6 @@ sub _parse_lst_file
                 if ($option->fix and defined $option->label) {
                     push @est_values, $option->init;
                     push @all_labels, $option->label;
-#                    push @se_values, undef;
                 }
                 if ($option->sd or $option->corr) {     # Save labels for parameters on sd/corr scale
                     if (grep { $_ eq $option->label } @all_labels) {
@@ -395,15 +394,15 @@ sub _parse_lst_file
                     }
                 }
 
-
                 #Calculate relative standard errors, only for estimated values that have se
                 my @rel_se = ();
+
                 if ($covariance_step_successful) {
                     for (my $i = 0; $i < scalar(@se_values); $i++) {
                         if ($est_values[$i] == 0) {
                             push @rel_se, undef;
-                        } else { #here we computed undef divided by 1 and get 1. Coercion of undef se_value into 0?
-                            push @rel_se, $se_values[$i] / $est_values[$i];
+                        } else { 
+                            push @rel_se, $se_values[$i] / abs($est_values[$i]);
                         }
                     }
                 }
@@ -433,24 +432,6 @@ sub _parse_lst_file
                         }
                     }
                     if ($self->check_include(element => 'Estimation/PrecisionPopulationEstimates')) {
-                        # Remove ses that are undef
-#                        my @spliced_ses = @se_values;
-#                       my @spliced_labels = @all_labels;
-#                        my @spliced_rses = @rel_se;
-#                        for (my $i = 0; $i < scalar(@se_values); $i++) {
-#                            if (not defined $se_values[$i]) {
-#                               splice @spliced_ses, $i, 1;
-#                               splice @spliced_labels, $i, 1;
-#                               splice @spliced_rses, $i, 1;
-#                            }
-#                        }
-#                        my $ppe = $self->_create_precision_population_estimates(
-#                            labels => \@spliced_labels,
-#                            standard_errors => \@spliced_ses,
-#                            relative_standard_errors => \@spliced_rses,
-#                            correlation_matrix => $correlation_matrix,
-#                            covariance_matrix => $covariance_matrix,
-#                        );
                         my $ppe = $self->_create_precision_population_estimates(
                             labels => \@filtered_labels,
                             standard_errors => \@se_values,
