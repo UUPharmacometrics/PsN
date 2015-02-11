@@ -40,8 +40,10 @@ sub _format_option
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 number_format => { isa => 'Maybe[Int]', optional => 1 }
+		 number_format => { isa => 'Maybe[Int]', optional => 1 },
+		 is_block => { isa => 'Bool', optional => 1 }
 	);
+	#is_block is always ignored, only relevant for omega/sigma
 	my $formatted;
 	my $number_format = $parm{'number_format'};
 

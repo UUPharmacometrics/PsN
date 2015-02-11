@@ -188,9 +188,11 @@ sub _format_option
 	my $self = shift;
 	my %parm = validated_hash(\@_,
 		 len => { isa => 'Num', optional => 1 },
-		 number_format => { isa => 'Maybe[Int]', optional => 1 }
+		 number_format => { isa => 'Maybe[Int]', optional => 1 },
+		 is_block => { isa => 'Bool', optional => 1, default => 0 },
 	);
 	my $len = $parm{'len'};
+	my $is_block = $parm{'is_block'};
 	my $formatted;
 	my $number_format = $parm{'number_format'};
 	my $no_break = 0;
@@ -213,17 +215,19 @@ sub _format_option
 	    $formatted = sprintf("$form",$formatted);
 	  }
 
-	  if ( $self -> fix() ) {
-	    $formatted = $formatted.sprintf("%5s",'FIX');
-	  }
-	  if ( $self -> sd() ) {
-	    $formatted = $formatted.sprintf("%10s",'STANDARD');
-	  }
-	  if ( $self -> corr() ) {
-	    $formatted = $formatted.sprintf("%13s",'CORRELATION');
-	  }
-	  if ( $self -> chol() ) {
-	    $formatted = $formatted.sprintf("%10s",'CHOLESKY');
+	  unless ($is_block) {
+		  if ( $self -> fix() ) {
+			  $formatted = $formatted.sprintf("%5s",'FIX');
+		  }
+		  if ( $self -> sd() ) {
+			  $formatted = $formatted.sprintf("%10s",'STANDARD');
+		  }
+		  if ( $self -> corr() ) {
+			  $formatted = $formatted.sprintf("%13s",'CORRELATION');
+		  }
+		  if ( $self -> chol() ) {
+			  $formatted = $formatted.sprintf("%10s",'CHOLESKY');
+		  }
 	  }
 	} else {
 	  $formatted = "";

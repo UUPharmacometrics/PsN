@@ -456,6 +456,8 @@ sub _format_record
 	my $fix   = $self->fix;
 	my $size  = $self->size;
 
+	my $is_block=0;
+
 	if ( defined $otype ) {
 		$formatted[0] = $formatted[0]." $otype";
 		if ( defined $size ) {
@@ -477,12 +479,16 @@ sub _format_record
 			$formatted[0] = $formatted[0]." FIX";
 		}
 		$formatted[0] = $formatted[0]."\n";
+		$is_block = 1 if ($otype eq 'BLOCK');
 	}
 	my $i = 0;
 	$len = length $formatted[0];
 	if ( defined $self->options ) {
 		foreach my $option ( @{$self->options} ) {
-			my ($form,$no_break) = $option -> _format_option(number_format => $number_format);
+			my ($form,$no_break);
+			#nmtran error if we repeat matrix options here such as CORR, is_block true will skip those
+			($form,$no_break) = $option -> _format_option(number_format => $number_format,
+														  is_block => $is_block);
 			if (($len+length(' '.$form)) > 150){
 				#must add linebreak if very long lines. Assume NM7 if we get 
 				#this problem, allow 150 characters
