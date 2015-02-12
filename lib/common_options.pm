@@ -293,6 +293,10 @@ sub sanity_checks
 		}
 	}
 
+	if (defined $options->{'silent'} and $options->{'silent'}){
+		$options->{'display_iterations'}=0;
+	} 
+
 	unless ($options -> {'nmfe'} or $options -> {'nmqual'}){
 		#assume user wants nmfe if none set
 		$options -> {'nmfe'} = 1;
@@ -1019,9 +1023,10 @@ EOF
 
     $help_hash{-sde} = <<'EOF';
     <p class="style2">-sde</p>
-    If you are running SDE models, you may have to use this option, otherwise
-    PsN will print the records of the modelfile in the wrong order, and the NONMEM runs
-    will fail.
+    Default not set. In PsN version 3.4.4 and earlier, this option made PsN print the records
+	in a particular order suitable for SDE models.
+	The new default is to keep the record order of the input model file. To use the old 
+	SDE print order, set option -sde.
 EOF
  
     $help_hash{-psn_record_order} = <<'EOF';
@@ -1033,10 +1038,9 @@ EOF
 
     $help_hash{-omega_before_pk} = <<'EOF';
     <p class="style2">-omega_before_pk</p>
-    For some models, NONMEM requires that $OMEGA is printed before $PK. 
-    If you have such a model, this option must be set, otherwise
-    PsN will print the records of the modelfile in the wrong order, and the NONMEM runs
-    will fail.
+    Default not set. In PsN version 3.4.4 and earlier, $OMEGA was always printed before $PK. 
+	The new default is to keep the record order of the input model file. To use the old print order, 
+	set option -omega_before_pk.
 EOF
 
     $help_hash{-condition_number_limit} = <<'EOF';
