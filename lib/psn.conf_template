@@ -10,7 +10,6 @@ nm_output=ext,cov,cor,coi,phi
 
 [default_execute_options]
 display_iterations=1
-check_nmtran=1
 
 [default_gls_options]
 samples=30
