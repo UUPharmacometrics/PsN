@@ -141,7 +141,6 @@ my $model = model->new(
 	eval($eval_string),
 	filename => $model_filename,
 	ignore_missing_files => 1,
-	skip_data_parsing => 1,
 	ignore_missing_data => 1,
 );
 
