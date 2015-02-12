@@ -1,108 +1,288 @@
-if (rplots.level > 0){
-    pdf(file=pdf.filename,width=10,height=7,title=pdf.title)
+# randtest plot
+
+# required packages
+require(ggplot2)
+require(reshape2)
+require(gridExtra)
+require(scales)
+require(MASS)
+require(plotrix)
+
+# Check if runs with unseccessful minimization will be ignored
+ignore.usm <- F
+
+
+modcol <- extra.thetas
+modnm  <- extra.thetas
+
+# Height of the png files
+hth <- 4      # Optimized for 3 panels
+# Width of the png files
+wth <- 7      # Optimized for 3 panels
+
+
+# ggplot set up
+ggOpt <- list(xlab("\nValue"),ylab("Count\n"),
+              theme(plot.title = element_text(size=9, face="bold"),
+                    plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"),
+                    panel.background = element_rect(fill="grey95"),
+                    axis.title.x = element_text(size=9,face="bold"),
+                    axis.title.y = element_text(size=9,face="bold"),
+                    axis.text.x  = element_text(size=8,face="bold",color="black",angle=45,vjust=1,hjust=1),
+                    axis.text.y  = element_text(size=8,face="bold",color="black",hjust=0.5),
+                    strip.text.x  = element_text(size=9,face="bold",color="black",hjust=0.5),
+                    legend.position = "bottom", legend.direction = "horizontal",
+                    legend.key.size=unit(0.5,"cm"),
+                    legend.text = element_text(size=8,face="bold"),
+                    legend.title = element_blank()))
+
+## KS test
+KStestOFV <- function(objdf=NULL,dfRange=seq(0.0001,5,0.01),flNm=NULL,ignore.usm=T,alpha=0.95){
+  if (is.null(flNm)) flNm <- match.call(expand.dots=F)[[2]]
+  if (is.null(objdf)){stop("No input file was provided")}
+  library(ggplot2); library(reshape2); library(plyr)
+  set.seed(657652)
+  
+  # Check if only successful minimization runs will be included
+  if (ignore.usm) objdf <- subset(objdf, minimization_successful==1)
+  
+  objdf$deltaofv <- objdf$ofv-objdf[objdf$model=="base","ofv"]
+  
+  truedelofv <- objdf[objdf$model=="input","deltaofv"]
+  objdf <- na.omit(subset(objdf, select=c(deltaofv), model!="base" & model!="input"))
+  names(objdf) <- "deltaOFV"
+  
+  # Create a new column for modified deltaOFV to convert positive deltaOFV (if any) to zero
+  objdf$moddeltaOFV <- objdf$deltaOFV
+  # Store how many positive deltaOFV was found in the data set
+  nposdofv <- nrow(subset(objdf, deltaOFV>0))
+  if (nposdofv>0) objdf[objdf$moddeltaOFV>0,]$moddeltaOFV <- 0
+  
+  deltaOFV    <- data.frame(deltaOFV = -1*objdf[objdf$deltaOFV<=0,]$deltaOFV)
+  moddeltaOFV <- data.frame(moddeltaOFV = -1*objdf$moddeltaOFV)
+  ndata     <- nrow(deltaOFV)
+  nmoddata  <- nrow(moddeltaOFV)
+  dof       <- dfRange
+  
+  # Create CDF and perform K-S test to determine the correct DoF fro deltaOFV
+  for (i in 1:length(dof)){
+    if (i == 1){
+      cmdf   <- summarize(deltaOFV, value=unique(sort(deltaOFV)), "abs(deltaOFV)"=ecdf(deltaOFV)(value), CHISQ=ecdf(rchisq(ndata,df=dof[i]))(value))
+      ksDist <- ks.test(cmdf[,2], cmdf$CHISQ)[[1]]
+      pval   <- ks.test(cmdf[,2], cmdf$CHISQ)[[2]]
+      df     <- dof[i]
+    }else{
+      tcmdf    <- summarize(deltaOFV, value=unique(sort(deltaOFV)), "abs(deltaOFV)"=ecdf(deltaOFV)(value), CHISQ=ecdf(rchisq(ndata,df=dof[i]))(value))
+      tksDist <- ks.test(tcmdf[,2], tcmdf$CHISQ)[[1]]
+      tpval   <- ks.test(tcmdf[,2], tcmdf$CHISQ)[[2]]
+      if (tksDist < ksDist){
+        cmdf <- tcmdf; ksDist <- tksDist; pval <- tpval; df <- dof[i]
+      }
+    }
+  }
+  
+  # Create CDF and perform K-S test to determine the correct DoF fro moddeltaOFV
+  for (i in 1:length(dof)){
+    if (i == 1){
+      modcmdf   <- summarize(moddeltaOFV, value=unique(sort(moddeltaOFV)), "abs(moddeltaOFV)"=ecdf(moddeltaOFV)(value), CHISQ=ecdf(rchisq(nmoddata,df=dof[i]))(value))
+      modksDist <- ks.test(cmdf[,2], cmdf$CHISQ)[[1]]
+      modpval   <- ks.test(cmdf[,2], cmdf$CHISQ)[[2]]
+      moddf     <- dof[i]
+    }else{
+      tcmdf    <- summarize(moddeltaOFV, value=unique(sort(moddeltaOFV)), "abs(moddeltaOFV)"=ecdf(moddeltaOFV)(value), CHISQ=ecdf(rchisq(nmoddata,df=dof[i]))(value))
+      tksDist <- ks.test(tcmdf[,2], tcmdf$CHISQ)[[1]]
+      tpval   <- ks.test(tcmdf[,2], tcmdf$CHISQ)[[2]]
+      if (tksDist < modksDist){
+        modcmdf <- tcmdf; modksDist <- tksDist; modpval <- tpval; moddf <- dof[i]
+      }
+    }
+  }
+  rm(tcmdf)
+  
+  # Plot deltaOFV comparison
+  df       <- signif(df,3); pval <- signif(pval,2); ksDist <- signif(ksDist,2); ksCrit <- signif(1.358/sqrt(ndata), 2)
+  result   <- ifelse(ksDist > ksCrit, "Fail", "Pass")
+  dKSscore <- ksDist - ksCrit
+  dofvqn   <- unname(quantile(deltaOFV$deltaOFV, alpha))
+  chsqn    <- unname(quantile(rchisq(ndata, df), alpha))
+  vdf      <- data.frame(CHISQcritical=chsqn,deltaOFVcritical=dofvqn,deltaOFVtrue=-1*truedelofv)
+  vdf      <- melt(vdf); names(vdf) <- c("quant","val")
+  
+  cmdf  <- melt(cmdf,id=c("value"),c("abs(deltaOFV)","CHISQ"),value.name="CDF")
+  gcdf  <- ggplot(cmdf, aes(value,CDF,color=variable)) +
+    xlab("\nabs(deltaOFV), positive excluded") + ylab("CDF\n") +
+    theme(plot.title = element_text(size=8, face="bold"),
+          axis.title.x = element_text(size=8,face="bold"),
+          axis.title.y = element_text(size=8,face="bold"),
+          axis.text.x  = element_text(size=8,face="bold",color="black",angle=90),
+          axis.text.y  = element_text(size=8,face="bold",color="black",hjust=0),
+          legend.text  = element_text(size=6,face="bold"),
+          legend.position = "bottom",
+          legend.key.size = unit(0.5,"cm"),
+          legend.title = element_blank()) +
+    geom_vline(data=vdf,aes(xintercept=val, color=factor(quant), lty=factor(quant)), size=1) +
+    geom_point(size=1) + guides(col = guide_legend(nrow = 2))
+  
+  # Plot moddeltaOFV comparison
+  moddf        <- signif(moddf,3); modpval <- signif(modpval,2); modksDist <- signif(modksDist,2); modksCrit <- signif(1.358/sqrt(nmoddata), 2)
+  modresult    <- ifelse(modksDist > modksCrit, "Fail", "Pass")
+  moddKSscore  <- ksDist - ksCrit
+  moddofvqn    <- unname(quantile(moddeltaOFV$moddeltaOFV, alpha))
+  modchsqn     <- unname(quantile(rchisq(nmoddata, moddf), alpha))
+  vdf          <- data.frame(CHISQcritical=modchsqn,moddeltaOFVcritical=moddofvqn,deltaOFVtrue=-1*truedelofv)
+  vdf          <- melt(vdf); names(vdf) <- c("quant","val")
+  
+  modcmdf  <- melt(modcmdf,id=c("value"),c("abs(moddeltaOFV)","CHISQ"),value.name="CDF")
+  modgcdf  <- ggplot(modcmdf, aes(value,CDF,color=variable)) +
+    xlab("\nabs(deltaOFV), positive set to 0") + ylab("CDF\n") +
+    theme(plot.title = element_text(size=8, face="bold"),
+          axis.title.x = element_text(size=8,face="bold"),
+          axis.title.y = element_text(size=8,face="bold"),
+          axis.text.x  = element_text(size=8,face="bold",color="black",angle=90),
+          axis.text.y  = element_text(size=8,face="bold",color="black",hjust=0),
+          legend.text  = element_text(size=6,face="bold"),
+          legend.position = "bottom",
+          legend.key.size = unit(0.5,"cm"),
+          legend.title = element_blank()) +
+    geom_vline(data=vdf,aes(xintercept=val, color=factor(quant), lty=factor(quant)), size=1) +
+    geom_point(size=1) + guides(col = guide_legend(nrow = 2))
+  
+  # Compare PDF of deltaOFV with estimated chi-sq obtained from K-S test
+  bin   <- hist(deltaOFV$deltaOFV, plot=F)$breaks
+  dofv  <- hist(deltaOFV$deltaOFV, plot=F)$density/sum(hist(deltaOFV$deltaOFV, plot=F)$density)
+  imdf  <- data.frame(bin=numeric(0),deltaOFV=numeric(0))
+  for (i in 1:length(dofv)){imdf <- rbind(imdf, data.frame(bin=mean(bin[i:(i+1)]),deltaOFV=dofv[i]))}
+  pmdf  <- cbind(imdf, CHISQ=dchisq(imdf$bin,df))
+  colnames(pmdf)[2] <- "abs(deltaOFV)"
+  pmdf  <- melt(pmdf,id=c("bin"),c("abs(deltaOFV)","CHISQ"),value.name="PDF")
+  
+  gpdf <- ggplot(pmdf, aes(bin,PDF,color=variable)) +
+    geom_smooth(method="loess",se=F,size=1) +
+    xlab("\nabs(deltaOFV), positive excluded") + ylab("PDF\n") +
+    theme(plot.title = element_text(size=8, face="bold"),
+          axis.title.x = element_text(size=8,face="bold"),
+          axis.title.y = element_text(size=8,face="bold"),
+          axis.text.x  = element_text(size=8,face="bold",color="black",angle=90),
+          axis.text.y  = element_text(size=8,face="bold",color="black",hjust=0),
+          legend.text  = element_text(size=6,face="bold"),
+          legend.position = "bottom",
+          legend.key.size = unit(0.5,"cm"),
+          legend.title = element_blank()) +
+    geom_vline(xintercept=chsqn, color="skyblue", size=1, lty=2) +
+    geom_vline(xintercept=dofvqn, color="red", size=1, lty=2) + guides(col = guide_legend(nrow = 2))
+  
+  # Compare PDF of moddeltaOFV with estimated chi-sq obtained from K-S test
+  bin   <- hist(moddeltaOFV$moddeltaOFV, plot=F)$breaks
+  dofv  <- hist(moddeltaOFV$moddeltaOFV, plot=F)$density/sum(hist(moddeltaOFV$moddeltaOFV, plot=F)$density)
+  imdf  <- data.frame(bin=numeric(0),moddeltaOFV=numeric(0))
+  for (i in 1:length(dofv)){imdf <- rbind(imdf, data.frame(bin=mean(bin[i:(i+1)]),moddeltaOFV=dofv[i]))}
+  pmdf  <- cbind(imdf, CHISQ=dchisq(imdf$bin,df))
+  colnames(pmdf)[2] <- "abs(moddeltaOFV)"
+  pmdf  <- melt(pmdf,id=c("bin"),c("abs(moddeltaOFV)","CHISQ"),value.name="PDF")
+  
+  modgpdf <- ggplot(pmdf, aes(bin,PDF,color=variable)) +
+    geom_smooth(method="loess",se=F,size=1) +
+    xlab("\nabs(deltaOFV), positive set to 0") + ylab("PDF\n") +
+    theme(plot.title = element_text(size=8, face="bold"),
+          axis.title.x = element_text(size=8,face="bold"),
+          axis.title.y = element_text(size=8,face="bold"),
+          axis.text.x  = element_text(size=8,face="bold",color="black",angle=90),
+          axis.text.y  = element_text(size=8,face="bold",color="black",hjust=0),
+          legend.text  = element_text(size=6,face="bold"),
+          legend.position = "bottom",
+          legend.key.size = unit(0.5,"cm"),
+          legend.title = element_blank()) +
+    geom_vline(xintercept=chsqn, color="skyblue", size=1, lty=2) +
+    geom_vline(xintercept=dofvqn, color="red", size=1, lty=2) + guides(col = guide_legend(nrow = 2))
+  
+  myGrob <- textGrob(bquote(atop(,"df"[chi^2]~"="~.(df)~", D"[KS]~"="~.(ksDist)~", D"[critical]~"="~.(ksCrit)~", pvalue="~.(pval))),
+                             gp=gpar(cex=0.7,fontface="bold"))
+  
+  return(list(KSresult=result,ndata=ndata,KSscore=ksDist,KScritical=ksCrit,dKSscore=dKSscore,
+  df=df,EMPcritical=dofvqn,CHIcritical=chsqn,nposdofv=nposdofv,modKSresult=modresult,
+  nmoddata=nmoddata,modKSscore=modksDist,modKScritical=modksCrit,moddKSscore=moddKSscore,
+  moddf=moddf,modEMPcritical=moddofvqn,modCHIcritical=modchsqn,cutoff=alpha,
+  gcdf=gcdf,modgcdf=modgcdf,gpdf=gpdf,modgpdf=modgpdf,myGrob=myGrob))
 }
+
+sel <- c("model","ofv","deltaofv",modcol)
+pnm <- c("model","OFV","deltaOFV",modnm)
+mod <- paste0(mod.prefix,xpose.runno)
+tabout <- data.frame()
 
 
 if (rplots.level > 0){
     
     if (have.base.model){
-    dfRange <- seq(1,2.5,0.001)
-    
-      objdf <- read.csv(raw.results.file)
-      objdf <- subset(objdf, select=c(model,ofv,deltaofv))
-      names(objdf) <- c("model","OFV","dOFV")
-      bofv   <- objdf$OFV[1]    # OFV of base model
-      iofv   <- objdf$OFV[2]    # OFV of full model
-      delofv <- iofv-bofv       # True DOFV
-      objdf  <- objdf[-c(1:2),]     # Delete first two rows
-      ndata  <- length(objdf$dOFV)
-      dof    <- dfRange
-      nchi   <- 10000
-      
-      # Create CDF and perform K-S test to determine the correct DoF
-      for (i in 1:length(dof)){
-        if (i == 1){
-          cmdf   <- summarize(objdf, value=unique(sort(-1*dOFV)), "|dOFV|"=ecdf(-1*dOFV)(value), chisq=ecdf(rchisq(nchi,df=dof[i]))(value))
-          ksDist <- ks.test(cmdf[,2], cmdf$chisq)[[1]]
-          pval   <- ks.test(cmdf[,2], cmdf$chisq)[[2]]
-          df     <- dof[i]
-        }else{
-          tcmdf    <- summarize(objdf, value=unique(sort(-1*dOFV)), "|dOFV|"=ecdf(-1*dOFV)(value), chisq=ecdf(rchisq(nchi,df=dof[i]))(value))
-          tksDist <- ks.test(tcmdf[,2], tcmdf$chisq)[[1]]
-          tpval   <- ks.test(tcmdf[,2], tcmdf$chisq)[[2]]
-          if (tksDist < ksDist){
-            cmdf <- tcmdf; ksDist <- tksDist; pval <- tpval; df <- dof[i]
-          }
-        }
-      }
-      rm(tcmdf)
-      
-      df    <- signif(df,3); pval <- signif(pval,2); ksDist <- signif(ksDist,2); ksCrit <- signif(1.358/sqrt(ndata), 2)
-      ofvqn <- unname(quantile(-1*objdf$dOFV, 0.95))
-      chsqn <- unname(quantile(rchisq(nchi, df), 0.95))
-      vdf   <- data.frame(chsqn,ofvqn,delofv=-1*delofv); vdf <- melt(vdf)
-      
-      cmdf  <- melt(cmdf,id=c("value"),c("|dOFV|","chisq"),value.name="CDF")
-    # CDF
-      ggplt <- ggplot(cmdf, aes(value,CDF,color=variable)) +
-        labs(title=bquote("DOF"[chi^2]~"="~.(df)~", D"[KS]~"="~.(ksDist)~", D"[critical]~"="~.(ksCrit)~", p-value="~.(pval))) +
-        xlab("\nValue") + ylab("CDF\n") +
-        theme(plot.title = element_text(size=20, face="bold"),
-              axis.title.x = element_text(size=18,face="bold"),
-              axis.title.y = element_text(size=18,face="bold"),
-              axis.text.x  = element_text(size=16,face="bold",color="black",angle=90),
-              axis.text.y  = element_text(size=16,face="bold",color="black",hjust=0),
-              legend.text  = element_text(size=18,face="bold"),
-              legend.title = element_text(size=18,face="bold")) +
-        geom_vline(data=vdf,aes(xintercept=value, color=variable, lty=variable), size=2) +
-        geom_point(size=3)
-      print(ggplt)
-      
-      # Compare PDF based on previous K-S test
-      bin   <- hist(-1*objdf$dOFV, plot=F)$breaks
-      dofv  <- hist(-1*objdf$dOFV, plot=F)$density/sum(hist(-1*objdf$dOFV, plot=F)$density)
-      imdf  <- data.frame(bin=numeric(0),dOFV=numeric(0))
-      for (i in 1:length(dofv)){imdf <- rbind(imdf, data.frame(bin=mean(bin[i:(i+1)]),dOFV=dofv[i]))}
-      pmdf  <- cbind(imdf, chisq=dchisq(imdf$bin,df))
-      colnames(pmdf)[2] <- "|dOFV|"
-      pmdf  <- melt(pmdf,id=c("bin"),c("|dOFV|","chisq"),value.name="PDF")
-      
-      # Plot fitted PDF and CDF data
-    #PDF
-      ggplt <-ggplot(pmdf, aes(bin,PDF,color=variable)) +
-        geom_line(size=2) +
-        labs(title=bquote("DOF"[chi^2]~"="~.(df)~", K-S score (D="~.(ksDist)~"), p-value="~.(pval)~"\n")) +
-        xlab("\nValue") + ylab("PDF\n") +
-        theme(plot.title = element_text(size=20, face="bold"),
-              axis.title.x = element_text(size=18,face="bold"),
-              axis.title.y = element_text(size=18,face="bold"),
-              axis.text.x  = element_text(size=16,face="bold",color="black",angle=90),
-              axis.text.y  = element_text(size=16,face="bold",color="black",hjust=0),
-              legend.text  = element_text(size=18,face="bold"),
-              legend.title = element_blank()) +
-        geom_vline(xintercept=chsqn, color="skyblue", size=2, lty=2) +
-        geom_vline(xintercept=ofvqn, color="red", size=2, lty=2) +
-        geom_vline(xintercept=-1*delofv, color="red", size=2, lty=1)
-      print(ggplt)
-      
-      # Check true randomization frequency
-    
-      df <- read.table(data.diff.table,header = F, sep=" ")
-    #randFrq
-      ggplt <- ggplot(df, aes(V1)) + geom_histogram(fill="white",color="black") +
-        xlab("\nNo. of individuals with randomized dose") + ylab("Count\n") +
-        theme(plot.title = element_text(size=20, face="bold"),
-              axis.title.x = element_text(size=18,face="bold"),
-              axis.title.y = element_text(size=18,face="bold"),
-              axis.text.x  = element_text(size=16,face="bold",color="black",angle=90),
-              axis.text.y  = element_text(size=16,face="bold",color="black",hjust=0))
-      print(ggplt)
-    
-    
-    
-    }
+
+	# Read randtest raw result file
+	odf <- read.csv(raw.results.file)
+	# Check if only successful minimization runs will be included
+	if (ignore.usm){
+	df <- subset(odf, minimization_successful==1)
+	}else{
+	df <- odf
+	}
+
+	# Select the useful columns and rename
+	df <- subset(df, select=sel)
+	names(df) <- pnm
+
+	# Calculate deltaOFV values
+	df$deltaOFV <- df$OFV-df[df$model=="base","OFV"]
+
+	# Create a new column for modified deltaOFV to convert positive deltaOFV (if any) to zero
+	df$moddeltaOFV <- df$deltaOFV
+
+	# Store how many positive deltaOFV was found in the data set
+	nposdofv <- nrow(subset(df, deltaOFV>0 & model!="input"))
+	if (nposdofv>0) df[df$moddeltaOFV>0 & df$model!="input","moddeltaOFV"] <- 0
+
+	# Create a new data frame for vertical lines to show the reduced and full model values
+	tmp <- subset(df, model=="base" | model=="input")
+	tmp$model <- factor(tmp$model, levels=c("base","input"), labels=c("reduced model","full model"))
+	vdf <- melt(tmp, id.vars = c("model","OFV"))
+
+	# Melted data frame for plotting purpose
+	mdf <- subset(melt(na.omit(df[-c(1:2),]), id.vars = c("model","OFV")), abs(value)<10^5)
+
+	# Re-order the factor levels
+	vdf$variable <- factor(vdf$variable, levels=c("deltaOFV","moddeltaOFV",modnm), labels=c("deltaOFV, positive excluded","deltaOFV, positive set to 0",modnm))
+	mdf$variable <- factor(mdf$variable, levels=c("deltaOFV","moddeltaOFV",modnm), labels=c("deltaOFV, positive excluded","deltaOFV, positive set to 0",modnm))
+
+	# Plot the distributions using ggplot
+	#TODO 
+	p0 <- ggplot(mdf,aes(value))+geom_histogram(fill="white",color="black")+ggOpt+
+	geom_vline(data=vdf, aes(xintercept=value, color=factor(model)), show_guide=T, size=1)+
+	facet_wrap(~variable,scales="free",ncol=2)+
+	ggtitle(paste("Distribution of deltaOFV and model parameter\n",mod,"\n",
+	paste("No. of positive deltaOFV is ",nposdofv," out of ",nrow(na.omit(df[-c(1:2),])),sep=""),"\n",sep=""))
+
+	ksrecord <- KStestOFV(objdf = odf, flNm = mod)
+
+    pdf(file=pdf.filename,title=pdf.title)
+
+	print(p0)
+
+	if (rplots.level > 1){
+  	   grid.arrange(ksrecord$gcdf,ksrecord$modgcdf,ksrecord$gpdf,ksrecord$modgpdf,ncol=2,
+		        main=ksrecord$myGrob)
+ 	}
+
+
+	dev.off()
+
+	tabout <- rbind(tabout, data.frame(Model=mod,KSresult=ksrecord$KSresult,ndata=ksrecord$ndata,
+	KSscore=ksrecord$KSscore,KScritical=ksrecord$KScritical,dKSscore=ksrecord$dKSscore,df=ksrecord$df,
+	EMPcritical=ksrecord$EMPcritical,CHIcritical=ksrecord$CHIcritical,nposdofv=ksrecord$nposdofv,
+	modKSresult=ksrecord$modKSresult,nmoddata=ksrecord$nmoddata,modKSscore=ksrecord$modKSscore,
+	modKScritical=ksrecord$modKScritical,moddKSscore=ksrecord$moddKSscore,moddf=ksrecord$moddf,
+	modEMPcritical=ksrecord$modEMPcritical,modCHIcritical=ksrecord$modCHIcritical,cutoff=ksrecord$cutoff))
+
+
+	write.table(tabout, file="randtestTable.tsv", sep="\t", row.names=F, col.names=T, quote=F)
+	
+	}
 }
- 
-if (rplots.level > 0){
-    dev.off()
-}
+
+
