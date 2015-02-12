@@ -645,20 +645,24 @@ sub create_R_plots_code{
 	$rplot->libraries(['ggplot2','reshape2','gridExtra','scales','MASS','plotrix']);
 	my $have_base_model = 'FALSE';
 	#we just assume first PROB here
-	my $label = '';
+	my $labelstring = 'c()';
 	if (defined $self->base_model){
+		my @labels = ();
 		$have_base_model = 'TRUE' ;
-		#figure out THETA/label, assume it is the first additional theta in full model.
-		#if same number then what?
+		#figure out THETA/label, assume it is the additional theta(s) in full model.
+		#if same number then skip
 		my $basecount = $self->base_model->nthetas();
 		if ($self->models->[0]->nthetas() > $basecount){
 			my $ref = $self->models->[0]->labels(parameter_type => 'theta');
-			if (defined $ref and defined $ref->[0] and defined $ref->[0]->[$basecount]){
-				#first new theta
-				$label = $ref->[0]->[$basecount];
+			if (defined $ref and defined $ref->[0]){
+				for (my $i=$basecount; $i < scalar(@{$ref->[0]}); $i++){
+					push(@labels,$ref->[0]->[$i]);
+				}
 			}
 		}
-		
+		if (scalar(@labels)>0){
+			$labelstring = "c('".join("','",@labels)."')";
+		}
 	}
 	#TODO script only works if $self->base_model is defined 
 	$rplot->add_preamble(code => [
@@ -666,7 +670,7 @@ sub create_R_plots_code{
 							 "randomization.column   <-'".$self->randomization_column."'",
 							 "data.diff.table   <-'m1/count_randcol_diff.txt'",
 							 "have.base.model <- $have_base_model",
-							 "extra.theta <- '".$label."'",
+							 'extra.thetas <- '.$labelstring,
 						 ]);
 
 }
