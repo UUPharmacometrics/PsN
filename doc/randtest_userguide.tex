@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{RANDTEST user guide}{2015-01-29}
+\guidetitle{RANDTEST user guide}{2015-02-12}
 
 \begin{document}
 
@@ -73,6 +73,16 @@ retries is 0, so to enable the retry feature for randtest the option -retries mu
 Default 0.5. A retry will not be initiated if the ofv of the current sample is only 'accepted\_ofv\_difference' worse than
 the base model ofv.
 \nextopt
+\optdefault{rplots}{integer}
+Default 0. If set larger than 0, an R script will be run generating pdf-plots
+visualizing the results. Level 1 gives basic plots, level 2 extended plots.
+The result plots require that option -base\_model was used, and also 
+that R libraries
+ggplot2, reshape2, gridExtra, scales, MASS and plotrix are installed.
+Assumes that input (full) model has more THETAs than base (reduced) model,
+and that the additional THETAs are the ones relevant for the
+randomization column.
+\nextopt
 \optdefault{directory}{randtest\_dirN}
 The directory in which the script will run NONMEM can be named. The default name is “randtest\_dirN” where N is increased by 1 each time you run the script. If the run is aborted or crashes, setting the directory to the one from which the script was running earlier can be done. PsN will then not run the model files that had finished, saving time. 
 \nextopt
@@ -130,6 +140,40 @@ The raw\_results file is almost a standard PsN file containing raw result data f
 If a base-model was given, a file randtest\_results.csv will also be produced, 
 containing summary information about the empirical distribution of the
 delta-ofv values.
+
+\subsubsection*{Basic rplots}
+Basic rplots will be generated if option -rplots is set >0,
+option -base\_model is used, and the required R libraries are installed.
+If rplots are generated, the basic plots are
+histograms of delta-ofv and the extra THETAs in the input (full) model.
+Panel 1 excludes all positive valued deltaOFV (if any) 
+and then plots the distribution of deltaOFV. 
+Panel 2 converts all positive valued deltaOFV (if any) to 0, 
+hence modified deltaOFV or mod-delOFV, 
+and then plots the distribution of deltaOFV. 
+So, if there is no positive deltaOFV, these two panels are the same.
+
+\subsubsection*{Extended rplots}
+The extended plots, will be generated if -rplots>1, and are on the
+second page of the pdf-output.
+
+Top left panel --> comparison of the cumulative distribution functions (CDF) 
+of the empirical distribution (absolute values of deltaOFV after randtest) in 
+orange and the theoretical distribution (Chi-sq distribution closest to the 
+empirical distribution) in olive green. The vertical dashed blue and solid 
+green lines represent 95 percentile cutoff for the empirical and theoretical 
+distributions, respectively. The vertical dashed purple line shows the absolute
+ value of the true deltaOFV.
+
+Bottom left panel: Comparison of the probability distribution functions (PDF) 
+of the empirical distribution (absolute values of deltaOFV after randtest) in 
+red and the theoretical distribution (Chi-sq distribution closest to the 
+empirical distribution) in blue. The vertical dashed red and blue lines 
+represent 95 percentile cutoff for the empirical and theoretical distributions,
+ respectively.
+
+The top and bottom panels on the right represent the similar comparisons for 
+the modified deltaOFV.
 
 \section{Known bugs and problems}
 
