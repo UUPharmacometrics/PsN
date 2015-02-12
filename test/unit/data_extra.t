@@ -160,7 +160,6 @@ for( my $i=0; $i<scalar(@inputs); $i++){
 	
 	my $model = model->new(filename => 'dummy',
 						   problems => [$dummy_prob],
-						   skip_data_parsing=> 1,
 						   ignore_missing_files => 1);
 	is($model->idcolumn,$idcolnum[$i],'model idcolumn test '.$inputs[$i]);
 }
