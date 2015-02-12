@@ -413,8 +413,11 @@ sub run
 	ui -> print( category => 'all',
 				 message  => $message ) 
 		unless ($self->parent_threads > 1);
+	my $verbose_header = sprintf("%10s%18s%12s%30s",
+								 'Run number','Model name','OFV','Covariance step successful');
+
 	ui -> print( category => 'all',
-		message  => "Run number\tModel name\tOFV\tCovariance step successful.",
+		message  => $verbose_header,
 		newline => 1)  if $self->verbose;
 
 	# Create NM_run subdirs. Print model-NM_run translation file
@@ -3191,7 +3194,7 @@ sub print_finish_message
 	if( ($self->verbose or $self->quick_summarize) and (not $self->clean > 2)){
 		foreach my $param ( 'ofv', 'covariance_step_successful', 'minimization_message' ) {
 			if( $param eq 'minimization_message' ){
-				$ui_text .= "\n    ---------- Minimization Message ----------\n";
+				$ui_text .= "\n";
 			}
 			if( defined $candidate_model ){
 				my $ests = $candidate_model -> outputs -> [0] -> $param;
@@ -3201,22 +3204,25 @@ sub print_finish_message
 						$ests -> [$j][0] =~ s/^\s*//;
 						$ests -> [$j][0] =~ s/\s*$//;
 						$log_text .= $ests -> [$j][0] .',';
-						$ui_text .= sprintf("%10s",$ests -> [$j][0]);
+						if( $param eq 'minimization_message' ){
+							$ui_text .= sprintf("%70s",' ').$ests -> [$j][0];
+						}elsif( $param eq 'covariance_step_successful' ){
+							$ui_text .= sprintf("%12s",$ests -> [$j][0]);
+						}else{#ofv
+							$ui_text .= sprintf("%12.7g",$ests -> [$j][0]);
+						}
 					} else {
 						
 						# Loop the parameter numbers (skip sub problem level)
 						for ( my $num = 0; $num < scalar @{$ests -> [$j][0]}; $num++ ) {
 							$log_text .= $ests -> [$j][0][$num] .',';
 							if( $param eq 'minimization_message' ){
-								$ui_text .= "    ";
+								$ui_text .= sprintf("%70s",' ');
 							}
 							$ui_text .= sprintf("%12s",$ests -> [$j][0][$num]);
 						}
 					}
 				}
-			}
-			if( $param eq 'minimization_message' ){
-				$ui_text .= "    ------------------------------------------\n\n";
 			}
 		}
 		ui -> print( category => 'all',
