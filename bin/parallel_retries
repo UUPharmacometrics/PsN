@@ -33,10 +33,7 @@ my %optional_options = ("prepend_options_to_lst!"=> undef,
 						'rawres_input:s' => undef,
 						'offset_rawres:i' => undef,
 						'samples:i' => undef,
-						'in_filter:s' => undef,
-						"tail_output!" => undef,
-						"wintail_exe:s" => undef,
-						"wintail_command:s" => undef
+						'in_filter:s' => undef
 	);
 
 my $res = GetOptions( \%options,
@@ -46,7 +43,7 @@ my $res = GetOptions( \%options,
 exit unless $res;
 
 
-common_options::setup( \%options, 'execute' ); #calls set_globals etc, initiates random sequence
+common_options::setup( \%options, 'parallel_retries' ); #calls set_globals etc, initiates random sequence
 
 
 my %help_text;
@@ -188,20 +185,6 @@ foreach my $model_name ( @ARGV ){
   push( @{$models_array}, $model );
 }
 
-if($options{'tail_output'} ) {
-  if($Config{osname} ne 'MSWin32'){
-    print "Warning: option -tail_output only works on Windows.\n";
-    $options{'tail_output'}=0;
-  }
-  unless (defined $options{'wintail_exe'} ) {
-    print "Warning: option -wintail_exe is not set, -tail_output will not work\n";
-    $options{'tail_output'}=0;
-  }
-  unless (defined $options{'wintail_command'} ) {
-    print "Warning: option -wintail_command is not set, -tail_output will not work\n";
-    $options{'tail_output'}=0;
-  }
-}
 
 my $modelfit;
 
@@ -308,9 +291,6 @@ $modelfit = tool::modelfit ->
     new ( eval( $common_options::parameters ),
 	  prepend_model_file_name => 1,
 	  prepend_options_to_lst => $options{'prepend_options_to_lst'},
-	  tail_output => $options{'tail_output'},
-	  wintail_exe => $options{'wintail_exe'},
-	  wintail_command => $options{'wintail_command'},
 	  directory => 'modelfit_dir1',
 	  min_retries => 0,
 	  retries =>0,
