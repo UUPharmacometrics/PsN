@@ -5448,7 +5448,6 @@ sub create_R_plots_code{
 		$tte = 'TRUE';
 	}
 
-	$rplot->libraries(['xpose4']);
 	$rplot->add_preamble(code => [
 							 "vpctab <- '".$vpctab."'",
 							 'have.loq.data <- '.$loqstring,							 

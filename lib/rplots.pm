@@ -22,7 +22,6 @@ has 'indent' => (is => 'rw', isa => 'Str', default => "    " ); #4spaces
 has 'standard_preamble' => ( is => 'rw', isa => 'ArrayRef[Str]',default => sub{ [] } );
 has 'extra_preamble' => ( is => 'rw', isa => 'ArrayRef[Str]',default => sub{ [] } );
 has 'plotcode' => ( is => 'rw', isa => 'ArrayRef[Str]', required => 1);
-has 'libraries' => ( is => 'rw', isa => 'ArrayRef[Str]',default => sub{ [] } );
 has 'subset_variable' => (is => 'rw', isa => 'Maybe[Str]' );
 
 our $preambleline = '#WHEN THIS FILE IS USED AS A TEMPLATE THIS LINE MUST LOOK EXACTLY LIKE THIS';
@@ -200,9 +199,6 @@ sub get_preamble()
 		 "#START OF AUTO-GENERATED PREAMBLE, WILL BE OVERWRITTEN WHEN THIS FILE IS USED AS A TEMPLATE",
 		 "#Created $theDate at $theTime");
 	
-	foreach my $lib (@{$self->libraries}){
-		push(@arr,'require('.$lib.')');
-	}
 	push(@arr,'');
 	push(@arr,@{$self->standard_preamble});
 	push(@arr,'');

@@ -1,3 +1,8 @@
+require(ggplot2)
+require(reshape)
+require(plyr)
+
+
 if (rplots.level > 0){
     pdf(file=pdf.filename,width=10,height=7,title=pdf.title)
 }

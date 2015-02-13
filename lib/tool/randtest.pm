@@ -642,7 +642,6 @@ sub create_R_plots_code{
 		);
 	my $rplot = $parm{'rplot'};
 
-	$rplot->libraries(['ggplot2','reshape2','gridExtra','scales','MASS','plotrix']);
 	my $have_base_model = 'FALSE';
 	#we just assume first PROB here
 	my $labelstring = 'c()';

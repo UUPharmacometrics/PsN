@@ -1385,7 +1385,6 @@ sub create_R_plots_code{
 		);
 	my $rplot = $parm{'rplot'};
 
-	$rplot->libraries(['ggplot2','reshape','plyr']);
 	$rplot->pdf_title('Log-likelihood profiling');
 
 	$rplot->add_preamble(code => [

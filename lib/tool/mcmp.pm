@@ -937,9 +937,6 @@ sub create_R_plots_code{
 		);
 	my $rplot = $parm{'rplot'};
 
-	$rplot->libraries(['ggplot2','xpose4']);
-
-
 	$rplot->add_preamble(code => [
 							 'sig.level <- '.$self->significance_level.' #option -significance_level'
 						 ]);

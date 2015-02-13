@@ -1918,16 +1918,12 @@ sub create_R_plots_code{
 	my $covWarnings = $self->skip_with_covstep_warnings() ? 'TRUE' : 'FALSE';
 	my $boundary = $self->skip_estimate_near_boundary() ? 'TRUE' : 'FALSE';
 
-	$rplot->libraries(['xpose4']);
 	$rplot->add_preamble(code => [
 							 "included.ids.file <- '".$inclIdFile."'",
 							 "skip.minimization.terminated=$minFailed",
 							 "skip.covariance.step.terminated=$covFailed",
 							 "skip.with.covstep.warnings=$covWarnings",
 							 "skip.estimate.near.boundary=$boundary",
-							 'if(packageVersion("xpose4")<"4.5.0"){',
-							 $rplot->indent().'cat("xpose4 version must be 4.5.0 or later for bootstrap plot")',
-							 '}'							 
 						 ]);
 
 }

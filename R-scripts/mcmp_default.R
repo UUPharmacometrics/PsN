@@ -1,3 +1,7 @@
+
+require(xpose4)
+require(ggplot2)
+
 if (rplots.level > 0){
     pdf(file=pdf.filename,width=10,height=7,title=pdf.title)
 }

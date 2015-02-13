@@ -7,6 +7,7 @@ require(gridExtra)
 require(scales)
 require(MASS)
 require(plotrix)
+require(plyr)
 
 # Check if runs with unseccessful minimization will be ignored
 ignore.usm <- F

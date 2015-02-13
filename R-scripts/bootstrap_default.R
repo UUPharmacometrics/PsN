@@ -1,3 +1,7 @@
+require(xpose4)
+if(packageVersion("xpose4")<"4.5.0"){
+		warning("xpose4 version must be 4.5.0 or later for bootstrap plot")	
+}							 
 
 if (rplots.level > 0){
     pdf(file=pdf.filename,width=10,height=7,title=pdf.title)

@@ -6312,8 +6312,6 @@ sub create_R_plots_code{
 		);
 	my $rplot = $parm{'rplot'};
 
-	$rplot->libraries(['ggplot2']);
-
 	my $cont='';
 	if (defined $self->continuous_covariates and scalar(@{$self->continuous_covariates})>0){
 		$cont = "'".join("','",@{$self->continuous_covariates})."'";
