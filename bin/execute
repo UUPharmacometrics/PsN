@@ -241,19 +241,9 @@ my $main_directory = tool::get_rundir(create => 0,
 									  directory_option => $options{'directory'});
 $options{'directory'} = $main_directory;
 
-my @outputfiles;
-my $fake;
-if( $options{'outputfile'} ){
-  @outputfiles = split( /,/, $options{'outputfile'} );
-}
 
 if ( scalar( @ARGV ) < 1 ) {
-  unless( $options{'summarize'} and $options{'outputfile'} and not $options{'force'} ){
-    print "At least one model file must be specified. Use 'execute -h' for help.\n";
-    exit;
-  }
-  @ARGV = @outputfiles;
-  $fake = 1;
+   croak("At least one model file must be specified. Use 'execute -h' for help.");
 }
 
 my $models_array;
@@ -265,13 +255,10 @@ unless (defined $options{'copy_data'} and (not $options{'copy_data'})) {
 }
 
 foreach my $model_name ( @ARGV ){  
-	my $outputfile = shift @outputfiles;
 	my $model;
-	unless( $fake ){
-		$model = model -> new ( eval( $eval_string ),
-								outputfile                  => $outputfile,
-								filename                    => $model_name,
-								ignore_missing_output_files => 1 );
+	$model = model -> new ( eval( $eval_string ),
+							filename                    => $model_name,
+							ignore_missing_output_files => 1 );
 
 		unless ($model->copy_data_setting_ok(copy_data => $options{'copy_data'})){
 			die("Cannot set -no-copy_data, absolute data file path is too long.");
@@ -295,16 +282,6 @@ foreach my $model_name ( @ARGV ){
 		if( $options{'shrinkage'} ) {
 			$model -> shrinkage_stats( enabled => 1 );
 		}
-	} else {
-		unless( -e $outputfile ){
-			print "The output file: $outputfile doesn't exist.\n";
-			exit;
-		}
-		$model = model -> new( eval( $eval_string ),
-							   outputfile => $outputfile,
-							   filename   => 'dummy.mod',
-							   ignore_missing_files => 1 );
-	}
 
 	push( @{$models_array}, $model );
 
@@ -346,7 +323,7 @@ if ( defined $options{'predict_data'} and defined $options{'predict_model'} ) {
 	$pred_mod -> ignore_missing_files(1);
 	$pred_mod -> outputfile( $outfile );
     $pred_mod -> set_outputfile();
-	$pred_mod -> maxeval( new_values => [[0]] );
+	$pred_mod -> set_maxeval_zero();
 	$pred_mod -> remove_records( type => 'covariance' );
 	$pred_mod -> update_inits( from_model => $models_array -> [0] );
 	my @new_tables;
