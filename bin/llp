@@ -112,10 +112,9 @@ $help_text{-outputfile} = <<'EOF';
       <p class="style2">-outputfile=filename</p>
 
       The name of the NONMEM output file. The default value is the
-      name of the model file with a '.mod' substituted with
+      name of the model file with the extension substituted with
       '.lst'. Example: if the modelfile is run89.mod, the default name
-      of the output file is run89.lst. If the name of the modelfile is
-      cmd123 the default name of the output file is cmd123.lst. If the
+      of the output file is run89.lst. If the
       name of your output file does not follow this standard, you have
       to specify it with this option. 
 EOF
