@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{PsN installation}{2014-12-18}
+\guidetitle{PsN installation}{2015-02-13}
 \begin{document}
 
 \maketitle
@@ -79,5 +79,25 @@ If you cannot install PsN where the install script suggests and you wish to use 
 \item If you did not let the installation script create a configuration file psn.conf for you, or if you are running NONMEM via NMQual or on a cluster, you need to edit psn.conf in the PsN installation directory (only a very minor change for NMQual). The document psn\_configuration.pdf in PsN-Source/doc describes how to make correct settings in the psn.conf file. The help document is also found on the PsN website under Documentation.
 \item When the installation is done you can safely remove the PsN-Source directory if you like. 
 \end{enumerate}
+
+
+\section{Choosing PsN version}
+It is possible to have several installations of PsN and use them in parallel. 
+The default version of PsN may be changed every time a new installation is made. 
+To check which version is the default use command
+\begin{verbatim}
+psn -version
+\end{verbatim}
+
+\noindent A specific version may be called with its version number, for example
+
+\begin{verbatim}
+execute-2.3.2  -help 
+\end{verbatim}
+
+\noindent Note: When installing PsN4 on Windows all previously installed versions 
+(installed with the same bin directory,
+including PsN3-versions) are fixed automatically so that they are callable with a specific version as 
+explained above. This is a new feature of PsN4 when installing on Windows.
 
 \end{document}

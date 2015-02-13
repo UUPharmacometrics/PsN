@@ -1,10 +1,11 @@
 \input{inputs/format_header.tex}
-\guidetitle{EXECUTE user guide}{2015-02-12}
+\guidetitle{EXECUTE user guide}{2015-02-13}
 
 
 \begin{document}
 
 \maketitle
+\newcommand{\guidetoolname}{execute}
 
 
 \section{Introduction}
@@ -59,6 +60,20 @@ Default "tail OUTPUT”. Only for Windows. See -tail\_output for description.
 Default set. Disable with -no-copy\_data. By default, PsN will copy the datafile into NM\_run1 and set a local path in psn.mod, the actual modelfile run with NONMEM. If -no-copy\_data is set, PsN will not copy the data to NM\_run1 and instead set a global path to the datafile in psn.mod.
 \nextopt
 \end{optionlist}
+
+\subsection{Auto-generated R-plots from PsN}
+\newcommand{\rplotsconditions}{The default execute template 
+requires the xpose4 R library. It also relies on Xpose-type tables being 
+created, such as sdtab, patab and cotab, with the correct run number. 
+See the Xpose documentation for requirements on such table files.
+If option -subset\_variable\_rplots is used, 
+the user must ensure that the subset variable
+is printed to one of the xpose tables, for example sdtab, and then
+there will be separate plots created for
+subsets of the data, via xpose options 'subset' and 'by'. 
+If the conditions are not fulfilled then no pdf will be generated,
+see the .Rout file in the main run directory for error messages.}
+\input{inputs/rplots_section_body.tex}
 
 \section{Output}
 When the NONMEM runs are finished, output and table files will be copied to the directory where execute started in which means that you can normaly ignore the 'modelfit\_dirX' directory. If you need to access any special files you can find them inside 'modelfit\_dirX'. Inside 'modelfit\_dirX' you find a few subdirectories named 'NM\_runY'. For each model file specified on the command line there will be one 'NM\_runY' directory in which the actual NONMEM execution takes place. The order of the 'NM\_runY' directories corresponds to the order of the modelfiles given on the command line. The first run will take place inside 'NM\_run1', the second in 'NM\_run2' etc.

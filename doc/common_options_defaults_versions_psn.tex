@@ -1,555 +1,75 @@
 \input{inputs/format_header.tex}
-\guidetitle{Common options PsN}{2015-01-26}
+\guidetitle{Common options PsN}{2015-02-13}
 
 \begin{document}
 
 \maketitle
+\newcommand{\guidetoolname}{<toolname>}
 
 \section{Introduction}
-This document lists all PsN options that concern how NONMEM is run (plus a few other options). Since
-most PsN programs involve running NONMEM, these options are common to all those scripts.
-The execute program does almost nothing except running NONMEM, hence this document lists the most important options
-to execute.
+This document lists the options that 
+are accepted by all PsN tools. However, depending on the tool, a particular option may have little effect. 
+For example, the option -threads will not change the execution time unless you run more than one model. 
 
-\section{Default values from source code or configuration file}
-PsN options can be defined in three places: in the PsN source code, in the configuration file psn.conf or on the command-line. The options given on the command-line always have precedence over any other values given for the same option. If an option is not given on the command-line, PsN will take values from the configuration file named psn.conf, see the document psn\_configuration.pdf. Last, if the option was defined neither on the command-line nor in the psn.conf file, PsN will use the default value in the source code. 
+The default value for each option can be changed by setting a different default in the psn.conf file, see 
+psn\_configuration.pdf. A value set on the command-line will override the default.
 
-Please note: The default listed in this document are from the source code, but it is important to be aware that these defaults will be overridden by values given in a psn.conf file. For example, crash\_restarts is set to 0 in the psn.conf included in the PsN release package while the PsN source code default is 4. 
-
-\section{Choosing PsN version}
-It is possible to have several installations of PsN and use them in parallel. The default version of PsN may be changed every time a new installation is made. To check which version is the default use command
-\begin{verbatim}
-psn -version
-\end{verbatim}
-
-\noindent A specific version may be called with its version number, for example
-
-\begin{verbatim}
-execute-2.3.2  -help 
-\end{verbatim}
-
-\noindent Note: When installing PsN4 on Windows all previously installed versions (installed with the same bin directory,
-including PsN3-versions) are fixed automatically so that they are callable with a specific version as 
-explained above. This is a new feature of PsN4 when installing on Windows.
-
-\section{Choosing NONMEM version}
-If you have more than one NONMEM version installed you can use the PsN-option 
--nm\_version to choose which one to use, as long as it is 
-defined in the [nm\_versions] section in psn.conf, see psn\_configuration.pdf for details. 
-You can check which versions are defined, without opening psn.conf, using the command
-
-\begin{verbatim}
-psn -nm_versions
-\end{verbatim}
-
-\noindent To pick a special nonmem version use option -nm\_version, for example
-
-\verb|execute -nm_version=vi_big| (more options...)
-
-\section{Common options}
-The following options will be accepted by most PsN-tools. Depending on the tool, an option may have little effect. For example, the option -threads will not change the execution time of execute unless you run more than one model. The listed default values are the default in the PsN-code. If the option is set in psn.conf that value will override the code default. Choices on the command-line have highest priority.
-\begin{optionlist}
-\optname{abort\_on\_fail}
-Default not used. If the -abort\_on\_fail option is set and one of the NONMEM runs fails, PsN will stop scheduling more runs and try to stop those that are currently running. A run is considered failed if it fails to produce a lst file which PsN can read. This can occur if a nonmem run crashes or gets killed, or if NMtran or compilation fails. 
-In this context a run is not considered failed if e.g. the minimization is not successful.  
-\nextopt
-\optname{add\_retries}
-Default not set. By default, PsN will never do retries on a model when a run is restarted if the file stats-runs.csv is found in the NM\_run subdirectory, since the existence of this file indicates that all retries have finished and the best try has already been selected. If option -add\_retries is set, PsN will ignore that stats-runs.csv exists, and check again if retries are needed based on the existing files in the NM\_run directory. This makes it possible to restart a run using new settings for retries (e.g. -retries, -min\_retries, -picky) compared to the original run. If the original run had clean$<=1$, PsN will count the previously run tries when relating the number of tries to options -min\_retries and -retries. If clean=2, PsN will not count the previously run tries, but psn.mod which in reality is the finally selected try from the original run will be counted as the first try in the restart.  
-\nextopt
-\optname{check\_nmtran}
-Default used. Make PsN run NMtran on the model file before submitting the complete nmfe run to a cluster/grid or forking on a local computer. This adds a bit of overhead but on a cluster this still saves time in the case of syntax errors in the model file, since the user does not have to wait for a slot on the cluster/grid before the error is detected. On a local computer the error handling is improved.
-
-When running multiple copies of a model with different data sets, e.g. in a bootstrap, only the first model will be checked. 
-
-The nmtran check requires that it is the installation directory to NONMEM that is set in psn.conf, rather than the full path to an executable script. If the path to a script is given instead of an NM install directory the nmtran check will not be performed.
-\nextopt
-\optdefault{clean}{'integer'}
-Default 1. The clean option can take four different values:  0: means that nothing is removed, 1: NONMEM binary and intermediate files except INTER are removed, and files specified with option -extra\_files. 2: model and output files generated by PsN restarts are removed, and data files in the NM\_run directory, and (if option -nmqual is used) the xml-formatted NONMEM output. 3: the whole NM\_run directory is removed and if it is not an "execute" command, all modelfit\_dir:s will be removed. Setting -clean=3 will in most cases prevent resuming an interrupted run using the -directory option.
-\nextopt
-%not sure if this option works, needs to be verified
-%\optname{compress }
-%Default not used. PsN will compress the contents of 'NM\_runX' to the file 'nonmem\_files.tgz' if the -compress option is used and if you have the archive and compress programs tar and gzip installed. If you use the -clean options, run files will be removed before the compression.  
-%\nextopt
-\optdefault{crash\_restarts}{'integer'}
-Default 4. If a NONMEM output-file is produced but PsN is unable to read it properly it is assumed that NONMEM crashed, probably due to something in the operating system, and PsN will start the run again. But PsN will not consider it a retry and will not change initial estimates. 
-\nextopt
-\optname{cwres}
-Default not used. Compute the conditional weighted residuals (CWRES) for a model run. This option is disabled for NONMEM7. In NONMEM7 it is possible to request CWRES directly in \$TABLE. 
-\nextopt
-\optdefault{directory}{'string'}
-Default 'modelfit\_dirX' for execute, and 'scriptname\_dirX' for other scripts (e.g. bootstrap\_dir1) where X will be increased by one each time you run the script. The directory option sets the directory in which PsN will run  NONMEM. You do not have to create the directory,  it will be done for you. If you abort the run or if your system crashes you can use the '-directory' option set to the directory of the run that crashed. PsN will then not run the model-files that had finished before the crash, thereby saving time. Notice that is important that you give exactly the same options that you gave the first time (exception npc and vpc tools, see npc/vpc manual). However, if the original run had -clean=3 set, the information required to resume the run will in many cases have been deleted. Information on how to save information from an interrupted run in that case is found in the individual userguides.
-\nextopt
-\optname{display\_iterations}
-Default not used.  This option turns on display the iterations output from NONMEM during the model run. If the option is not set, the iterations output will be redirected to a file. As with any option the user can choose to change the default by editing psn.conf, see the document psn\_configuration.pdf. The template psn.conf distributed with the PsN installation package has this option set as the default for execute, but no other scripts. The option can be disabled with -no-display\_iterations. 
-\nextopt
-\optdefault{extra\_files}{comma-separated list of filenames}
-Default not used. If you need extra files in the directory where NONMEM is run you specify them in the comma separated -extra\_files list. It could for example be fortran subroutines you need compiled with NONMEM, or a file with initial estimates for the NONMEM7 CHAIN command, or a defaults.pnm file (NONMEM 7.2 or later). 
-\nextopt
-\optdefault{extra\_output}{comma-separated list of filenames}
-Default not used. If NONMEM generates a file which PsN normally does not copy back to the working directory, specifying a comma-separated list of such files with this options will make PsN copy the listed files. An example is output generated by verbatim code. 
-\nextopt
-\optname{handle\_crashes}
-Default used. Disable with -no-handle\_crashes. PsN tries to recognize NONMEM runs that crashed for various reasons, e.g. a computer crash or a NONMEM run deliberately killed, and restart those runs without changing initial parameter estimates. 
-\nextopt
-\optname{handle\_msfo}
-Default not used. Feature for handling resumes using msfo and msfi files. 
-\nextopt
-\optname{iofv}
-Default not used. Compute the individual contributions to the objective function (written in file iotab$<$N$>$ in NM\_run directory). This option is disabled for NONMEM7 because the additional output phi-file contains individual ofv values. 
-\nextopt
-\optname{last\_est\_complete}
-Default not set. Only applies for models with multiple \$ESTIMATION (NONMEM7 only). Only affects vpc,  cdd if option -xv is set, and execute if option -mirror\_plots or -nonparametric\_etas is set. Indicates that no options needed for the last \$EST are carried over from previous \$EST, all options are set explicitly in that record. See PsN\_and\_NONMEM7.pdf for details. 
-\nextopt
-\optname{maxevals}
-Default not used. Will only work for classical estimation methods. NONMEM only allows 9999 function evaluations. PsN can expand this limit by adding an MSFO option to \$ESTIMATION. Later when NONMEM hits the max number of function evaluations allowed by NONMEM (9999) PsN will remove initial estimates from the model-file and add \$MSFI and restart NONMEM. This will be repeated until the number of function evaluations specified with option -maxevals has been reached. Note: PsN does not change the MAXEVALS setting in the model-file, therefore the number of evaluations set on the command-line may be exceeded before PsN does the check if the run should be restarted with msfi or not. 
-\nextopt
-\optname{mirror\_from\_lst}
-Default not used. Can only be used in combination with -mirror\_plots=XX where XX is an integer representing the number of simulations to perform.  These commands create a set of simulations from a model file and output file that can then be read into Xpose 4 for mirror plotting.  The -mirror\_from\_lst option reads from the *.lst file of a NONMEM run to get final parameter estimates for the simulations. 
-\nextopt
-\optdefault{mirror\_plots}{'integer'}
-Default 0. This command creates a set of simulations from a model file that can then be read into Xpose 4 for mirror plotting. The command requires an integer value -mirror\_plots=XX where XX is an integer representing the number of simulations to perform. This command uses the MSFO file created by runN.mod to get final estimates used in the simulations. If this file is not available run1.mod is run again.  If run times are long, and you did not create an MSFO file with your initial NONMEM run, you can combine the above command with the -mirror\_from\_lst option to avoid running the model again (PsN then reads from the *.lst file to get final parameter estimates for the simulations). 
-\nextopt
-\optdefault{missing\_data\_token}{'string'}
-Default -99. missing\_data\_token sets the string that PsN accepts as missing data. 
-\nextopt
-\optdefault{niter\_eonly}{'integer'}
-Default undefined. Only applies for NONMEM7 and if last \$EST is IMP or IMPMAP. Only affects vpc,  cdd if option -xv is set, and execute if option -mirror\_plots or -nonparametric\_etas is set. User-chosen value of NITER when estimation is turned off by setting EONLY=1. See PsN\_and\_NONMEM7.pdf for details. 
-\nextopt
-\optdefault{nice}{'integer'}
-Default 19. This option only has effect on Unix like operating systems. It  sets the priority (or nice value) on a process. You can give any value that is legal for the "nice" command, likely it is between 0 and 19, where 0 is the highest priority. Execute "man nice" on the Unix system for details. 
-\nextopt
-\optdefault{nodes}{'integer'}
-Only relevant together with option -parafile. Appends “[nodes]=option\_value” to the nmfe call. This option acts independently of -threads. There is no adjustment of -nodes based on -threads or vice versa, and if -threads=1 it is still possible to use -nodes=10. 
-\nextopt
-\optdefault{nm\_output}{comma-separated list of file extensions}
-Default not used.  NONMEM generates many output files per run. 
-PsN will always copy the lst-file back to the calling directory. The option -nm\_output decides which of the more than 10 additional files should also be copied back. The default in the auto-generated psn.conf is ext,cov,cor,coi,phi. 
-Note that NM output files which are not copied to the calling directory can still be found inside the run directory
-unless -clean is set larger than 2. If the user runs NMQual8 (option -nmqual is set) and wants the log.xml file copied back then the log.xml extension should be included in the -nm\_output list.
-\nextopt
-\optdefault{nm\_version}{'string'}
-Default is 'default'. If you have more than one installation of NONMEM you can choose between them using the -nm\_version option. The installations must be specified in the psn.conf file. 
-\nextopt
-\optname{nmfe}
-Default set.
-Invoke NONMEM via the nmfe script (or a custom wrapper) from within PsN. 
-Unless option -nmqual is set, option -nmfe is 
-set automatically. Also, -nmfe is set in the default configuration file.
-\nextopt
-\optdefault{nmfe\_options}{'string'}
-Only relevant if NONMEM7.2 or later is used. 
-The text set with this option will be copied verbatim to the nmfe script call. PsN will not check that the options are allowed. When set on the PsN commandline the string must be enclosed by quotes if it contains any spaces, but when set in psn.conf it must never be enclosed by quotes even if it contains spaces. 
-Note that before PsN4 this option was given as a comma-separated list of options that PsN would reformat. What would for PsN3 be specified as 
-\verb|-nmfe_options=xmloff,prdefault| must for PsN4 be specified as \verb|-nmfe_options='-xmloff -prdefault'| on the commandline (must use double quotes on Windows) or 
-\verb|nmfe_options=-xmloff -prdefault| in psn.conf.
-\nextopt
-\optname{nmqual}
-Default not used. Run an NMQual-installed NONMEM via autolog.pl. Only NMQual8 is supported. 
-When set, PsN will locate the autolog.pl file and log.xml in the nmqual subdirectory of the NONMEM installation directory, and then run \\
-\verb|perl /path/autolog.pl /path/log.xml run ce /full/path/workdir psn| (extra NM options)
-
-Important note: The extra NM options are options set with e.g. -nmfe\_options or -nodes, but unless the
-do-on-run block of the log.xml file is edited to use these extra options, 
-\emph{they will be ignored}. PsN will append them to the autolog.pl call but it is up to log.xml to decide what to do with them.
-
-If the user wants by default to run PsN with the autolog script it is recommended to set nmqual=1 in the
-\verb|[default_options]| section in psn.conf and remove nmfe=1 from the same section. The user should also consider to add log.xml to the -nm\_output list in psn.conf (see help text for -nm\_output).
-\nextopt
-\optname{nonparametric\_etas}
-No help available for 'nonparametric\_etas' 
-\nextopt
-\optname{nonparametric\_marginals}
-No help available for 'nonparametric\_marginals' 
-\nextopt
-\optname{omega\_before\_pk}
-Default not set. In PsN version 3.4.4 and earlier, \$OMEGA was always printed before \$PK. The new default is to keep the record order of the input model file. To use the old print order, set option -omega\_before\_pk
-\nextopt
-\optname{psn\_record\_order}
-Default not set. In PsN 4.3.3 and earlier, PsN used an internal record order. The new default is to keep the record order of the input model file. Set this option to use the old order.
-\nextopt
-\optdefault{outputfile}{'string'}
-Default modelfilename with mod substituded for lst. The -outputfile option specifies the output file name for the NONMEM run. Currently this option is only valid when a single model is supplied. 
-\nextopt
-\optdefault{parafile}{'filename'}
-NONMEM 7.2 (or later version) parafile. Appends “-parafile=filename” to the nmfe call. 
-\nextopt
-\optname{prepend\_model\_file\_name}
-Default not used. Table files by default have generic names, e.g. patab. If multiple models are run, files will be overwritten when multiple files with the same name are copied back to the same directory. This options prevents this by prepending the model file name, without extension, thus making the file names unique. 
-\nextopt
-\optdefault{seed}{'string'}
-You can set your own random seed to make PsN runs reproducible.
-The random seed is a string, and may include spaces if enclosed with
-quotes as in -seed=''123 abc''. It is important to know that, because of the way the Perl pseudo-random
-number generator works, for two similar string seeds the random sequences may be identical. 
-This is the case e.g. with the two different seeds 123 and 122. 
-Setting the same seed guarantees the same sequence, but setting two slightly different 
-seeds does not guarantee two different random sequences, that must be verified.
-\nextopt
-\optname{shrinkage}
-Default not used. Calculate the shrinkage for the model run.  Shrinkage is calculated as 1-(sd(eta(x))/omega(x)) and measures the shrinkage of the empirical Bayes estimates (EBEs) towards the mean of the expected distribution.  A 'large' shrinkage means that diagnostics using EBEs cannot be trusted. The shrinkage values appear in the file raw\_results.csv. 
-PsN does not use the NONMEM7 shrinkage values. When shrinkage is requested, PsN adds two \$TABLE to the modelfile so that NONMEM will output data needed for the shrinkage computation. For eta shrinkage the table requests items ID ETA1 ETA2... and for iwres shrinkage it requests items ID IWRES EVID. 
-\nextopt
-\optname{skip\_data\_parsing}
-Default set. If option is set, data files will not be parsed unless some data processing is explicitly required, for example during bootstrapping. Saves time. 
-\nextopt
-\optname{tbs}
-Default not set. Invokes Transform Both Sides method, by default using the Box-Cox transformation. For details on the theory read Oberg and Davidian: http://onlinelibrary.wiley.com/doi/10.1111/ j.0006-341X.2000.00065.x/abstract
-
-Bill Frame: http://www.ncbi.nlm.nih.gov/pubmed/19904583
- http://www.thtxinfo.com/
- 
- Model must be coded “the Uppsala way”, i.e. with the standard deviation of the residual error expressed as a THETA and SIGMA 1 FIX. 
-Also, the user must use untransformed data (e.g. no log-transformation or similar) in the model, and the possible range of IPRED and DV must not include negative values. If IPRED or DV becomes negative there will be a NONMEM error when running the tbs-modified model. 
- When -tbs is set, PsN will make the following changes to the model file before running:
-\begin{enumerate}
-	\item add a THETA representing the Box-Cox LAMBDA parameter to be estimated. Default (can be changed with option -tbs\_lambda) is no lower boundary, initial estimate 1, no upper boundary.
-	\item A set of IF-statements will make sure log transformations are made instead of Box-Cox if the LAMBDA estimate is 0. IF statements will also handle the cases IPRED=0 and DV=0.
-	\item IPRED will be transformed as 
- IPRED\_trans=(IPRED**LAMBDA-1)/LAMBDA, 
- and the transformed  IPRED used instead of IPRED.  
-	\item The IWRES definition is changed to 
- IWRES=((DV**LAMBDA-1)/LAMBDA-IPRED\_trans)/W
-	\item Any IPRED dependence in the W definition is removed.
-	\item The error model will be changed to an additive error model.
-	\item In \$SUB two fortran routines, contra.txt and ccontra\_nm7.txt are added. These files are automatically printed to the run directory. In the file ccontra\_nm7.txt that is created, the x in theta(x) points to the lambda that was added in the model file.
-\end{enumerate}
-\nextopt
-\optname{dtbs}
-Default not set. Invokes Dynamic Transform Both Sides method, see 
- 
-Dosne AG, Keizer RJ, Bergstrand M, Karlsson MO. \emph{A strategy for residual error modeling incorporating both scedasticity of variance and distribution shape}. 
-PAGE 21 (2012) Abstr 2527.
-
-The model code is modified the same way as with -tbs, see above, except that the W definition is changed using a new ZETA parameter:
-\begin{enumerate}
-\item A new parameter ZETA will be defined, to be used in the error model. The THETA for this parameter will be automatically added.
-\item Any IPRED term in the W definition will be replaced with IPRED**ZETA.
-Any THETAs that are not multiplied with IPRED in the W definition will be set to 0 FIX.
-If W does not depend on IPRED at all in the input model, then W = old\_definition will be replaced by
-W = (IPRED**ZETA)*old\_definition.
-\item Because lambda and zeta are correlated, estimation stability can be increased 
-by reparameterizing and estimating DELTA instead of ZETA, with ZETA=LAMBDA+DELTA. 
-This reparameterization done when the user sets option -tbs\_delta, see below.
-\end{enumerate}
-Correspondence between -dtbs parameter values and common error models\\
-\begin{tabular}{|l|l|l|l|}
-\hline
-Error model & LAMBDA & ZETA & DELTA=ZETA-LAMBDA\\
-\hline
-additive & 1 & 0 & -1 \\
-\hline
-proportional & 1 & 1 & 0 \\
-\hline
-additive on log-&  &  &  \\
-transformed data & 0 & 0 & 0 \\
-\hline
-\end{tabular}
-Combined error models would need to be coded manually and are not recommended for dtbs approach.
-\nextopt
-\optdefault{tbs\_lambda}{string}
-Default 1 if option -tbs is set. Initial value string, using NM-TRAN syntax, for lambda parameter in Transform Both Sides method, e.g. ``(-1, 0.5, 1)'' or 
-``0 FIX''. The string must be enclosed in quotes, double quotes on Windows and either double or single on unix, and not include any comments. If tbs\_lambda is set then option -tbs will be set automatically, unless option -dtbs or -tbs\_zeta or -tbs\_delta is set. 
-See option -tbs for more details. 
-\nextopt
-\optdefault{tbs\_zeta}{string}
-Default 0.001 if W does not depend on IPRED, default 1 otherwise. Initial value string, using NM-TRAN syntax, for zeta parameter in Dynamic Transform Both Sides method, for example ``(-1, 0.5, 1)'' or ``0 FIX''.
-The string must be enclosed in quotes, double quotes on Windows and either double or single on unix, and not include any comments.
-If -tbs\_zeta is set then option -dtbs will be set automatically. See option -dtbs for more details. Options tbs\_zeta and tbs\_delta cannot be used in combination.  
-\nextopt
-\optdefault{tbs\_delta}{string}
-Default not set. Initial value string, using NM-TRAN syntax, for delta parameter in Dynamic Transform Both Sides method, e.g. ``(-1, 0.5, 1)'' or ``0 FIX''. 
-The string must be enclosed in quotes, double quotes on Windows and either double or single on unix, and not include any comments.
-If tbs\_delta is set then option -dtbs will be set automatically. See option -dtbs for more details. Options tbs\_zeta and tbs\_delta cannot be used in combination.  
-\nextopt
-\optdefault{threads}{'integer'}
-Default 1. Use the threads option to enable parallel execution of multiple NONMEM runs. On a desktop computer it is recommended to not set -threads higher the number of CPUs in the system plus one. You can specify more threads, but it will probably not increase the performance. If you are running on a computer cluster, you should consult your system administrator to find out how many threads you can specify. 
-\nextopt
-\optname{verbose}
-Default not used. With verbose used, PsN will print more details about NONMEM runs. More precisely PsN will print the minimization message for each successfull run and a R:X for each retry PsN makes of a failed run, where X is the run number. 
-\nextopt
-\optname{version}
-Default not used. Print PsN version of the script being called and exit. 
-\nextopt
-\optname{warn\_with\_trace}
-Default not used. If -warn\_with\_trace is set, PsN will print a stack trace for all error and warning messages. This is only for developers. 
-\nextopt
-\optname{stop\_motion}
-Default not used. Used for debugging. Will cause PsN to stop its execution at certain predefined breakpoints.
-\nextopt
-\optname{sde}
-Default not used. If you are running SDE models, you must use this option, otherwise PsN will print the records of the modelfile in the wrong order, and the NONMEM runs will fail. 
-\nextopt
-\optname{standardised\_output}
-Default not used. If this option is used a DDMoRe standardised output xml file will be created for each run. Note that the file format is still under development and that this option should be considered experimental.
-\nextopt
-\optdefault{debug}{'integer'}
-Default 0. The -debug option is mainly intended for developers who wish to debug PsN. You can set it to '1' to enable warning messages. If you run into problems that require support, you may have to set this and send the output to the developers. 
-\nextopt
-\optname{help}
-With -help execute will print a longer help message. If an option name is given as argument, help will be printed for this option. If no option is specified, help text for all options will be printed. 
-\nextopt
-\optname{h or -?}
-Print the list of available options and exit. 
-\nextopt
-\optname{silent}
-Default not used. The silent option redirects all messages that are normally printed to screen to the file run\_messages.txt. Other results and log files are written to disk as usual. Nothing is printed to screen. 
-\nextopt
-\end{optionlist}
+\section{Basic options}
+The following options are the ones most commonly used, and relevant for almost every run.
+\input{inputs/basic_options.tex}
 
 
+\section{Advanced options}
 \subsection{Auto-generated R-plots from PsN}
-PsN can automatically generate R plots to visualize results, if a template file is available.
-Some tools have default templates provided in the PsN installation package, but the
-user can also provide the template.
-PsN will create a preamble with some run specific information, and then append the template file.
-If the template file contains an old preamble, then that preamble will be replaced with the new one. This means
-the user can modify an old PsN-generated R script and then use this script as a new template,
-without having to remove the preamble.
-When a template file is available for the tool and option -rplots is 0 or positive, 
-the R script will be generated and saved in the main
-run directory. If R is configured in psn.conf or command 'R' is available and option -rplots is positive the script will
-also be run and a number of pdf-format plots be created.
-
-Most default templates depend on a couple of R libraries, often Xpose and/or ggplot. If required R libraries are not installed then
-no pdf will be generated. Check the .Rout file in the main run directory for error messages.
-The default execute template relies on Xpose-type tables being created via \$TABLE, such as sdtab, patab and cotab with
-the correct run number. See the Xpose documentation for setting up such table files.
-\begin{optionlist}
-\optdefault{rplots}{level}
--rplots<0 means R script is not generated\\ 
--rplots=0 (default) means R script is generated but not run\\ 
--rplots=1 means basic plots are generated\\													  
--rplots=2 means basic and extended plots are generated\\													  
-\nextopt
-\optdefault{template\_file\_rplots}{file}
-When the rplots feature is used, the default template file PsN will use is <toolname>\_default.R,
-for example scm\_default.R. The user can choose a different template file
-by setting option -template\_file\_rplots to a different file. 
-PsN will first look for the file relative to the current working directory, 
-and after that in the -template\_directory\_rplots directory.
-\nextopt
-\optdefault{template\_directory\_rplots}{path}
-PsN can look for the rplots template file in a number of places. The priority order is the
-following:
-\begin{enumerate}
-\item template\_directory\_rplots set on command-line 
-\item calling directory (where PsN is started)
-\item template\_directory\_rplots set in psn.conf 
-\item R-scripts subdirectory of the PsN installation directory
-\end{enumerate}
-\nextopt
-\optdefault{subset\_variable\_rplots}{variable name}
-Default not set. The user can specify a subset variable to be used with the rplots feature. This variable
-will, if set, be used in for example the execute default R template to create separate plots for
-subsets of the data, via xpose options 'subset' and 'by'. The user must ensure that the variable
-is printed to one of the xpose tables, for example sdtab.
-\nextopt
-\end{optionlist}
+\newcommand{\rplotsconditions}{
+Most default templates depend on a couple of R libraries. If required R libraries are not installed then
+no pdf will be generated. 
+Check the .Rout file in the main run directory for error messages.
+}
+\input{inputs/rplots_section_body.tex}
 
 \subsection{Retries in PsN}
+\input{inputs/retries_section_body.tex}
 
-A NONMEM run is not always successful and sometimes it is possible to improve the results of the run. A simple procedure is to tweak the initial 
-estimates of the parameters and see if changed starting condition gives better results. The -tweak\_inits and -retries options turn on this feature in PsN, 
-which is off by default. When the feature is on, if the minimization is terminated PsN will pick a random value within 10\% above or below each initial value, 
-and run the model again with these new initial estimates. This is called a retry. PsN can do several retries, and each time the bounds is 
-increased by 10\%. Note that PsN always respects the upper and lower bound set in the model file. 
+\subsection{Output handling and processing}
+\input{inputs/output_processing.tex}
 
-The retries functionality is adapted to control streams with a single \$PROBLEM. If there are more than one \$PROBLEM, PsN will
-use the termination status and ofv of the \emph{first \$PROBLEM that runs estimation} (not MAXEVAL=0) for deciding if a retry should be run
-and also for selecting the best try. Subsequent \$PROBLEMs that also have \$EST will be ignored in the retries procedure.
+\subsection{Running the nmfe script}
+PsN always runs NONMEM via the nmfe script (or NMQual). 
+The following options govern input for
+nmfe, allowing the user to set options, such as -parafile, on the PsN commandline that
+are passed on unchanged to the nmfe script.
+Please refer to the NONMEM documentation for the meaning and appropriate use
+of the nmfe script options.
+\input{inputs/nmfe_interface.tex}
 
-The control files and outputs for the retries are found in the NM\_run1 subdirectory. The files psn-1.mod and psn-1.lst are for 
-the first run which is always performed and not called a retry. psn-2.mod and up are the control files with perturbed initial 
-estimates. In the same directory as psn-1.mod, psn-2.mod etc are created, there is a file called stats-runs.csv. In there is a 
-set of parameters+values for the set of runs, in the order given by the modelfile numbers. As the last line is 
-written "Selected ..." where it says which model was judged as the best of all the retries.
+\subsection{Run progress messages}
+\input{inputs/run_info_and_monitoring.tex}
 
-The lst-file for the selected model is then copied to psn.lst (no number) in the same directory, and also copied back 
-up to the working directory. Same principle for table files. The file psn-x.mod for the selected model is copied 
-to psn.mod (for PsN version 3.x.x and up), but psn.mod is not copied back up.   	
+\subsection{Control stream manipulation}
+\input{inputs/control_stream_manipulation.tex}
+\subsubsection{Transform Both Sides}
+\input{inputs/tbs_options.tex}
 
-The string MINIMIZATION SUCCESSFUL is important when PsN decides whether to make a retry. With new estimation 
-methods in NONMEM7, that string will not appear. The flag for minimization\_successful is set or unset using the following logic:
+%these need to be tested
+%\optname{nonparametric\_etas}
+%No help available for 'nonparametric\_etas' 
+%\nextopt
+%\optname{nonparametric\_marginals}
+%No help available for 'nonparametric\_marginals' 
+%\nextopt
 
-\begin{enumerate}
-\item Only status of last \$EST step is considered, except when last \$EST is IMP with EONLY=1
-\item BURN-IN/(REDUCED) STATISTICAL PORTION/OPTIMIZATION NOT TESTED - set
-\item BURN-IN/(REDUCED) STATISTICAL PORTION/OPTIMIZATION COMPLETED -  set
-\item BURN-IN/(REDUCED) STATISTICAL PORTION/OPTIMIZATION NOT COMPLETED PRIOR TO USER INTERRUPT - set
-\item BURN-IN/(REDUCED) STATISTICAL PORTION/OPTIMIZATION NOT COMPLETED - unset
-\item If any of the two steps in SAEM failed - unset 
-\item If last \$EST is IMP with EONLY=1, the minimization status is determined by the next to last \$EST
-\end{enumerate}
+\subsection{Error handling}
+\input{inputs/error_checking_and_management.tex}
 
-\subsection{Controlling retries using PsN options}
-The retries option, which defaults to 0, controls the maximum number of retries before giving up. Note that it is 
-possible to set a different default in the psn.conf, the PsN configuration file. The option -min\_retries, 
-with default 0, controls the minimum number of retries that PsN is forced to make, and has precedence over -retries. 
-Option -min\_retries is useful if the user suspects that there is a risk of finding local minima.
-
-Normally PsN will be satisfied with a run that has minimization successful, but PsN can be more picky about the 
-quality of NONMEM results. If the -picky option is used PsN will do a retry even if the minimization is successful, 
-given that a 'picky-message' appears in NONMEMs minimization message, see the list of picky-messages below by the picky option description.
-
-If option -reduced\_model\_ofv is set to some value (option currently only available in execute),
-PsN will do a retry if the current ofv is more than 'accepted\_ofv\_difference' worse than
-reduced\_model\_ofv.
-
-It is also possible to reduce PsN's requirements of quality. If the minimization is not successful but the significant 
-digits are high enough, PsN can skip doing a retry. The limit is set with option -significant\_digits\_accept. This option 
-is by default not used, and it has no effect if picky is set at the same time.
-
-Following is the list of condititions at the end of a NONMEM run that will lead PsN to initiate a retry, provided that 
-the maximum number of retries set with option -retries has not been reached:
-
-\begin{enumerate}
-\item The minimum number of retries set with -min\_retries have not yet been run.
-\item Option -reduced\_model\_ofv is set and the run ofv is larger than reduced\_model\_ofv+accepted\_ofv\_difference
-\item Option -picky is set and the run has either not finished with MINIMIZATION SUCCESSFUL, or finished with one of the picky-messages listed below.
-\item The run has not finished with MINIMIZATION SUCCESSFUL and option -significant\_digits\_accept is 
-either not set or the number of significant digits is less than -significant\_digits\_accept.
-\item The run has finished fulfilling conditions from MINIMIZATION SUCCESSFUL/signficicant\_digits/picky/reduced\_model\_ofv, 
-but the ofv of this run minus 'accepted\_ofv\_difference' is larger than the ofv of a previous run 
-that did not fulfill the conditions, indicating that the current run has terminated in a local minimum.
-\end{enumerate}
-
-After all retries have finished, PsN will select the best try. 
-The rules for selection are significantly changed in PsN 4.3.9 and later, giving the ofv value more weight than in earlier versions.
-In most cases the run with the lowest ofv is selected, but there is a 'accepted\_ofv\_difference' preference for runs
-that pass the picky test, if option picky was set, or for minimization successful.
-The selection procedure is 
-\begin{enumerate}
-\item If option -picky was set, and the ofv of the best try that passed the picky test is not more than accepted\_ofv\_difference
-worse than the best overall ofv, then choose the best try that passed the picky test. 
-\item Otherwise, if the ofv of the best try that had minimization successful is not more than accepted\_ofv\_difference
-worse than the best overall ofv, then choose the best try that had minimization successful.
-\item Otherwise, chose the try with the best overall ofv, if any tries at all gave an ofv.
-\item Otherwise, chose the first try.
-\end{enumerate}
-
-\begin{optionlist}
-\optname{tweak\_inits}
-Default set, can be disabled with -no-tweak\_inits. 
-If NONMEM terminates nonsuccessfully, PsN can perturb the initial estimates and run NONMEM again. The generation of new initial estimates init\_i for the i:th retry are performed according to init\_i = init\_0 + rand\_uniform(+-degree*init\_0)where init\_0 are the initial estimates of the original run
-and degree is set with option -degree, see below. 
-The updating procedure makes sure that boundary conditions on the parameters are respected. 
-For this option to have effect, the -retries option must be set to a number larger than zero. 
-\nextopt
-\optdefault{degree}{'number'}
-Default 0.1. A number larger than 0 and smaller than 1. This number decides how big the perturbation will
-be in tweak\_inits.
-\nextopt
-\optdefault{retries}{'integer'}
-Default 0. The -retries option tells PsN how many times it shall try to rerun a NONMEM job if it fails according to given criterias. 
-The -retries option is only valid together with -tweak\_inits. 
-\nextopt
-\optdefault{min\_retries}{'integer'}
-Default 0. Option min\_retries forces PsN to try make extra retries even if a run has already terminated successfully. Precedence over -retries option.  
-\nextopt
-\optname{picky}
-Default not used. The -picky option is only valid together with -tweak\_inits. Normally PsN only tries new initial estimates if 'MINIMIZATION SUCCESSFUL' is not found in the NONMEM output file. With the -picky option, PsN will regard any of the following messages, the 'picky-messages',  as a signal for rerunning:
-
-
-\begin{verbatim}
-0ESTIMATE OF THETA IS NEAR THE BOUNDARY
-0PARAMETER ESTIMATE IS NEAR ITS BOUNDARY
-0R MATRIX ALGORITHMICALLY SINGULAR
-0S MATRIX ALGORITHMICALLY SINGULAR
-\end{verbatim}
-\nextopt
-\optdefault{significant\_digits\_accept}{'number'}
-Default not used. Has no effect in combination with -picky. The -significant\_digits\_accept option is only valid together with option -tweak\_inits. Normally PsN tries new initial estimates if 'MINIMIZATION SUCCESSFUL' is not found in the NONMEM output file. With the -significant\_digits\_accept, PsN will only rerun if the resulting significant digits is lower than the value specified with this option. 
-\nextopt
-\optdefault{accepted\_ofv\_difference}{'number'}
-Default 0.5. This option is used by PsN when deciding if a retry should be run, and when selecting the best retry out of the whole set. 
-This option decides how much preference should be given to runs that fulfill the picky conditions/have minimization successful 
-but a slightly higher ofv (at most accepted\_ofv\_difference) than a run that did not fulfill the conditions.  
-\nextopt
-\optdefault{reduced\_model\_ofv}{'number'}
-This option is used by PsN when deciding if a retry should be run. It is currently only available with the execute program,
-so it is strictly speaking not a common option.
-A retry will be initiated if the ofv of the current run is more than 'accepted\_ofv\_difference' worse than the ofv
-given with this option.
-\nextopt
-\end{optionlist}
 
 \subsection{Options for grid/cluster execution}
-
-\begin{optionlist}
-\optname{run\_on\_torque}
-Default not used.  
-\nextopt
-\optname{torque\_queue}
-Default empty. Maps to -q in qsub. 
-\nextopt
-\optname{torque\_prepend\_flags}
-Default empty. Only valid with -run\_on\_torque. The - signs must be included in the string. The flags/options will be prepended to standard '-N jobname -q torque\_queue' where jobname is 'psn:'$\langle$modelfile$\rangle$ and torque\_queue is read from psn.conf or set on the commandline. If multiple options are given using -torque\_prepend\_flags on the commandline, they must be separated by spaces (as in qsub) and the whole list enclosed by quotes. If torque\_prepend\_flags is set in psn.conf, there should be no quotes. 
-\nextopt
-\optname{run\_on\_lsf}
-Default not used. PsN connects with Platform Load Sharing Facility (LsF). PsN submits nmfe directly with bsub. 
-\nextopt
-\optdefault{lsf\_job\_name}{'string'}
-Maps to bsub option -J. Sets the name of the LSF job name of every NONMEM run, they all get the same name (e.g. all samples of a bootstrap get the same name, all candidate models in an scm get the same name). If not set, and option -run\_on\_lsf is set, the default job name is the model file name, meaning that each boostrap sample gets its own name, each scm candidate model gets its own name, etc. 
-\nextopt
-\optdefault{lsf\_project\_name}{'string'}
-Maps to bsub option -P. Use lsf\_project\_name to assign a project name to your LSF runs. 
-\nextopt
-\optdefault{lsf\_queue}{'string'}
-Maps to bsub option -q. lsf\_queue specifies which LSF queue PsN should submit NONMEM runs to and is used in conjuction with -run\_on\_lsf 
-\nextopt
-\optdefault{lsf\_resources}{'string'}
-Maps to bsub option -R. lsf\_resources specifies which LSF resources is required when submitting NONMEM runs. 
-\nextopt
-\optdefault{lsf\_ttl}{'string'}
-Maps to bsub option -c. lsf\_ttl sets the maximum time a NONMEM run should be allowed to run on the LSF grid. 
-\nextopt
-\optdefault{lsf\_options}{'string'}
-LSF jobs are submitted using bsub and all PsN's LSF related options are translated to corresponding bsub options. If a specific bsub option is not available through any of the other lsf-specific options, -lsf\_options can be used to pass any set of options to bsub. The string must be enclosed in quotes if it contains spaces. 
-\nextopt
-\optdefault{lsf\_sleep}{N}
-Default 3. Wait for this many seconds after bsub submission, before continuing running PsN. 
-\nextopt
-\optname{run\_on\_sge}
-Default not used. Submit NONMEM runs to Sun Grid Engine.
-\nextopt
-\optdefault{sge\_queue}{'string'}
-Default empty. Only valid with -run\_on\_sge. Maps to qsub option -q 
-\nextopt
-\optdefault{sge\_resource}{'string'}
-Default empty. Only valid with -run\_on\_sge. Maps to qsub option -l 
-\nextopt
-\optdefault{sge\_prepend\_flags}{'string'}
-Default empty. Only valid with -run\_on\_sge. The - signs must be included in the string. The flags will be prepended to standard flag set in qsub call. If multiple flags are given using the option on the commandline, they must be separated by spaces (as in qsub) and the whole list enclosed by quotes. If the option is set in psn.conf, there should be no quotes. 
-\nextopt
-\optname{run\_on\_ud}
-Default not used. PsN connects with United Devices Grid MP. With -run\_on\_ud PsN will submit to the UD grid with parameters defined in the "uduserconf" file. 
-\nextopt
-\optname{run\_on\_zink}
-Default not used. Experimental.
-\nextopt
-\optname{run\_on\_slurm}
-Default not used. Use slurm queueing system.
-\nextopt
-\optdefault{slurm\_account}{string}
-Default empty. Only valid with -run\_on\_slurm, then optional. Maps to sbatch option -A. This option was called -slurm\_project in PsN3, but it has been renamed to match the slurm system documentation where the term is 'account'.
-\nextopt
-\optdefault{slurm\_partition}{string}
-Default empty. Only valid with -run\_on\_slurm, then optional. Maps to sbatch option -p.
-\nextopt
-\optdefault{max\_runtime}{'string'}
-Default not used. Only allowed with -run\_on\_slurm. A limit on how long a slurm run may go on before being aborted (option -t to sbatch). Format is either minutes, e.g. -max\_runtime=10, or hours:minutes:seconds, e.g. -max\_runtime=4:0:0, or days-hours, e.g. -max\_runtime=3-0 
-\nextopt
-\optname{send\_email}
-Default not set. Only used with -run\_on\_slurm and -email\_address in combination, otherwise ignored. Used for sbatch options --mail\_user=$\langle$email\_address$\rangle$ --mail\_type=ALL or END.  
-\nextopt
-\optdefault{email\_address}{string}
-Default not set. Only used with -run\_on\_slurm and -send\_email in combination, otherwise ignored. Used for sbatch options --mail\_user=$\langle$email\_address$\rangle$ --mail\_type=ALL or END.  
-\nextopt
-\optdefault{slurm\_prepend\_flags}{'string'}
-Default empty. Only valid with -run\_on\_slurm. The - signs must be included in the string. The flags will be prepended to standard flag set in sbatch call. If multiple flags are given using the option on the commandline, they must be separeted by spaces (as in sbatch) and the whole list enclosed by quotes. If the option is set in psn.conf, 
-there must be no quotes. 
-\nextopt
-\end{optionlist}
+Which of these options can be used depend on the system on which PsN and NONMEM is installed.
+Usually the person installing PsN and NONMEM should set suitable defaults for a relevant set
+of these
+options in the psn.conf file, and then the users should not have to worry about them,
+except perhaps when choosing a non-default queue.
+\input{inputs/grid_options.tex}
 
 
 \end{document}

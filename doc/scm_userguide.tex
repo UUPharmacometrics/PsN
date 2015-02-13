@@ -1,9 +1,10 @@
 \input{inputs/format_header.tex}
-\guidetitle{SCM user guide}{2014-08-28}
+\guidetitle{SCM user guide}{2015-02-13}
 
 \begin{document}
 
 \maketitle
+\newcommand{\guidetoolname}{scm}
 
 
 \section{Introduction}
@@ -197,17 +198,12 @@ The derivatives needed for computing the new medians and means will be taken fro
 \nextopt
 \end{optionlist}
 
-\subsection{Some optional general PsN options which are extra important for scm}
+\subsection{Some optional general PsN options}
 
 \begin{optionlist}
-\optdefault{missing\_data\_token}{string}
-Default is -99. When some values of the covariates are missing in for some observations in the dataset it is necessary to let PsN know how missing values are coded in the dataset, otherwise the covariate function values will be very wrong. This option cannot be set in the configuration file (it will be ignored if set there). It must be set on the command-line. 
-\nextopt
-\optdefault{directory}{dirname}
-The name of the run directory. The default is scm\_dirN, which N either 1 or the next unused number if there already are scm\_dirN directories present. When set in the configuration file, this option must be set before the first 
-\verb|[|\emph{section}\verb|]|.
-\nextopt
+\input{inputs/data_options.tex}
 \end{optionlist}
+\input{inputs/basic_options.tex}
 
 \subsection{Options  for the linearization method}
 

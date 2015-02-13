@@ -1,0 +1,36 @@
+\begin{optionlist}
+\optdefault{nmfe\_options}{'string'}
+Only relevant if NONMEM7.2 or later is used. 
+The text set with this option will be copied verbatim to the nmfe script call. PsN will not check that the options are allowed. When set on the PsN commandline the string must be enclosed by quotes if it contains any spaces, but when set in psn.conf it must never be enclosed by quotes even if it contains spaces. 
+Note that before PsN4 this option was given as a comma-separated list of options that PsN would reformat. What would for PsN3 be specified as 
+\verb|-nmfe_options=xmloff,prdefault| must for PsN4 be specified as \verb|-nmfe_options='-xmloff -prdefault'| on the commandline (must use double quotes on Windows) or 
+\verb|nmfe_options=-xmloff -prdefault| in psn.conf.
+\nextopt
+\optdefault{parafile}{'filename'}
+NONMEM 7.2 (or later version) parafile. Appends “-parafile=filename” to the nmfe call. 
+\nextopt
+\optdefault{nodes}{'integer'}
+Only relevant together with option -parafile. Appends “[nodes]=option\_value” to the nmfe call. This option acts independently of -threads. There is no adjustment of -nodes based on -threads or vice versa, and if -threads=1 it is still possible to use -nodes=10. 
+\nextopt
+\optdefault{extra\_files}{comma-separated list of filenames}
+Default not used. If you need extra files in the directory where NONMEM is run you specify them in the comma separated -extra\_files list. It could for example be fortran subroutines you need compiled with NONMEM, or a file with initial estimates for the NONMEM7 CHAIN command, or a defaults.pnm file (NONMEM 7.2 or later). 
+\nextopt
+\optname{nmfe}
+Default set.
+Invoke NONMEM via the nmfe script (or a custom wrapper) from within PsN. 
+Unless option -nmqual is set, option -nmfe is 
+set automatically. Also, -nmfe is set in the default configuration file.
+\nextopt
+\optname{nmqual}
+Default not used. Run an NMQual-installed NONMEM via autolog.pl. Only NMQual8 is supported. 
+When set, PsN will locate the autolog.pl file and log.xml in the nmqual subdirectory of the NONMEM installation directory, and then run \\
+\verb|perl /path/autolog.pl /path/log.xml run ce /full/path/workdir psn| (extra NM options)
+
+Important note: The extra NM options are options set with e.g. -nmfe\_options or -nodes, but unless the
+do-on-run block of the log.xml file is edited to use these extra options, 
+\emph{they will be ignored}. PsN will append them to the autolog.pl call but it is up to log.xml to decide what to do with them.
+
+If the user wants by default to run PsN with the autolog script it is recommended to set nmqual=1 in the
+\verb|[default_options]| section in psn.conf and remove nmfe=1 from the same section. The user should also consider to add log.xml to the -nm\_output list in psn.conf (see help text for -nm\_output).
+\nextopt
+\end{optionlist}

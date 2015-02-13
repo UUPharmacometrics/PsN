@@ -1,0 +1,37 @@
+The followin options control the messages printed to screen during the run.
+They do not affect the final results in any way.
+\begin{optionlist}
+\optname{display\_iterations}
+Default not used.  This option turns on display the iterations output from NONMEM during the model run. 
+If the option is not set, the iterations output will be redirected to a file (nmfe\_output.txt). 
+As with any option the user can choose to change the default by editing psn.conf, 
+see the document psn\_configuration.pdf. 
+The template psn.conf distributed with the PsN installation package has this option set as the default for execute, 
+but no other scripts. The option can be disabled with -no-display\_iterations. 
+\nextopt
+\optname{silent}
+Default not used. The silent option redirects all messages that PsN normally prints 
+to screen to the file run\_messages.txt. Note that messages from NONMEM, such as iterations,
+will not be printed to run\_messages.txt. Those messages will be in nmfe\_output.txt in the NM\_run
+subdirectories.
+Other results and log files are written to disk as usual. Nothing is printed to screen. 
+\nextopt
+\optname{verbose}
+Default not used. With verbose used, PsN will print more details to screen
+about NONMEM runs. More precisely PsN will print the minimization message for each successful run 
+and a R:X for each retry PsN makes of a failed run, where X is the run number. 
+\nextopt
+\optname{warn\_with\_trace}
+Default not used. If -warn\_with\_trace is set, PsN will print a stack trace for all error and warning messages. 
+This is only for developers. 
+\nextopt
+\optname{stop\_motion}
+Default not used. Used for debugging. Will cause PsN to pause its execution at certain predefined breakpoints,
+and only continue after the user hits enter.
+\nextopt
+\optdefault{debug}{'integer'}
+Default 0. The -debug option is mainly intended for developers who wish to debug PsN. 
+You can set it to '1' to enable warning messages. If you run into problems that require support, 
+you may have to set this and send the output to the developers. 
+\nextopt
+\end{optionlist}

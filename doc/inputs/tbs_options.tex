@@ -1,0 +1,76 @@
+PsN can automatically transform a model according to the 
+Transform Both Sides method.
+For details on the theory read Oberg and Davidian: \\
+http://onlinelibrary.wiley.com/doi/10.1111/ j.0006-341X.2000.00065.x/abstract.
+
+Bill Frame: http://www.ncbi.nlm.nih.gov/pubmed/19904583
+ http://www.thtxinfo.com/
+ 
+ Model must be coded “the Uppsala way”, i.e. with the standard deviation of the residual error expressed as a THETA and SIGMA 1 FIX. 
+Also, the user must use untransformed data (e.g. no log-transformation or similar) in the model, and the possible range of IPRED and DV must not include negative values. If IPRED or DV becomes negative there will be a NONMEM error when running the tbs-modified model. 
+
+\begin{optionlist}
+\optname{tbs}
+Default not set. Invokes Transform Both Sides method, by default using the Box-Cox transformation. 
+When -tbs is set, PsN will make the following changes to the model file before running:
+\begin{enumerate}
+	\item add a THETA representing the Box-Cox LAMBDA parameter to be estimated. Default (can be changed with option -tbs\_lambda) is no lower boundary, initial estimate 1, no upper boundary.
+	\item A set of IF-statements will make sure log transformations are made instead of Box-Cox if the LAMBDA estimate is 0. IF statements will also handle the cases IPRED=0 and DV=0.
+	\item IPRED will be transformed as 
+ IPRED\_trans=(IPRED**LAMBDA-1)/LAMBDA, 
+ and the transformed  IPRED used instead of IPRED.  
+	\item The IWRES definition is changed to 
+ IWRES=((DV**LAMBDA-1)/LAMBDA-IPRED\_trans)/W
+	\item Any IPRED dependence in the W definition is removed.
+	\item The error model will be changed to an additive error model.
+	\item In \$SUB two fortran routines, contra.txt and ccontra\_nm7.txt are added. These files are automatically printed to the run directory. In the file ccontra\_nm7.txt that is created, the x in theta(x) points to the lambda that was added in the model file.
+\end{enumerate}
+\nextopt
+\optname{dtbs}
+Default not set. Invokes Dynamic Transform Both Sides method, see 
+ 
+Dosne AG, Keizer RJ, Bergstrand M, Karlsson MO. \emph{A strategy for residual error modeling incorporating both scedasticity of variance and distribution shape}. 
+PAGE 21 (2012) Abstr 2527.
+
+The model code is modified the same way as with -tbs, see above, except that the W definition is changed using a new ZETA parameter:
+\begin{enumerate}
+\item A new parameter ZETA will be defined, to be used in the error model. The THETA for this parameter will be automatically added.
+\item Any IPRED term in the W definition will be replaced with IPRED**ZETA.
+Any THETAs that are not multiplied with IPRED in the W definition will be set to 0 FIX.
+If W does not depend on IPRED at all in the input model, then W = old\_definition will be replaced by
+W = (IPRED**ZETA)*old\_definition.
+\item Because lambda and zeta are correlated, estimation stability can be increased 
+by reparameterizing and estimating DELTA instead of ZETA, with ZETA=LAMBDA+DELTA. 
+This reparameterization done when the user sets option -tbs\_delta, see below.
+\end{enumerate}
+Correspondence between -dtbs parameter values and common error models\\
+\begin{tabular}{|l|l|l|l|}
+\hline
+Error model & LAMBDA & ZETA & DELTA=ZETA-LAMBDA\\
+\hline
+additive & 1 & 0 & -1 \\
+\hline
+proportional & 1 & 1 & 0 \\
+\hline
+additive on log-&  &  &  \\
+transformed data & 0 & 0 & 0 \\
+\hline
+\end{tabular}
+Combined error models would need to be coded manually and are not recommended for dtbs approach.
+\nextopt
+\optdefault{tbs\_lambda}{string}
+Default 1 if option -tbs is set. Initial value string, using NM-TRAN syntax, for lambda parameter in Transform Both Sides method, e.g. ``(-1, 0.5, 1)'' or 
+``0 FIX''. The string must be enclosed in quotes, double quotes on Windows and either double or single on unix, and not include any comments. If tbs\_lambda is set then option -tbs will be set automatically, unless option -dtbs or -tbs\_zeta or -tbs\_delta is set. 
+See option -tbs for more details. 
+\nextopt
+\optdefault{tbs\_zeta}{string}
+Default 0.001 if W does not depend on IPRED, default 1 otherwise. Initial value string, using NM-TRAN syntax, for zeta parameter in Dynamic Transform Both Sides method, for example ``(-1, 0.5, 1)'' or ``0 FIX''.
+The string must be enclosed in quotes, double quotes on Windows and either double or single on unix, and not include any comments.
+If -tbs\_zeta is set then option -dtbs will be set automatically. See option -dtbs for more details. Options tbs\_zeta and tbs\_delta cannot be used in combination.  
+\nextopt
+\optdefault{tbs\_delta}{string}
+Default not set. Initial value string, using NM-TRAN syntax, for delta parameter in Dynamic Transform Both Sides method, e.g. ``(-1, 0.5, 1)'' or ``0 FIX''. 
+The string must be enclosed in quotes, double quotes on Windows and either double or single on unix, and not include any comments.
+If tbs\_delta is set then option -dtbs will be set automatically. See option -dtbs for more details. Options tbs\_zeta and tbs\_delta cannot be used in combination.  
+\nextopt
+\end{optionlist}

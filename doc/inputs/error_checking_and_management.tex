@@ -1,0 +1,32 @@
+\begin{optionlist}
+\optname{abort\_on\_fail}
+Default not used. If the -abort\_on\_fail option is set and one of the NONMEM runs fails, PsN will stop scheduling more runs and try to stop those that are currently running. A run is considered failed if it fails to produce a lst file which PsN can read. This can occur if a nonmem run crashes or gets killed, or if NMtran or compilation fails. 
+In this context a run is not considered failed if e.g. the minimization is not successful.  
+\nextopt
+\optname{check\_nmtran}
+Default used. Make PsN run NMtran on the model file before submitting the complete nmfe run to a cluster/grid or forking on a local computer. This adds a bit of overhead but on a cluster this still saves time in the case of syntax errors in the model file, since the user does not have to wait for a slot on the cluster/grid before the error is detected. On a local computer the error handling is improved.
+
+When running multiple copies of a model with different data sets, e.g. in a bootstrap, only the first model will be checked. 
+
+The nmtran check requires that it is the installation directory to NONMEM that is set in psn.conf, rather than the full path to an executable script. If the path to a script is given instead of an NM install directory the nmtran check will not be performed.
+\nextopt
+%not sure if this option works, needs to be verified
+%\optname{compress }
+%Default not used. PsN will compress the contents of 'NM\_runX' to the file 'nonmem\_files.tgz' if the -compress option is used and if you have the archive and compress programs tar and gzip installed. If you use the -clean options, run files will be removed before the compression.  
+%\nextopt
+\optname{handle\_crashes}
+Default used. Disable with -no-handle\_crashes. PsN tries to recognize NONMEM runs that crashed for various reasons, e.g. a computer crash or a NONMEM run deliberately killed, and restart those runs without changing initial parameter estimates. 
+\nextopt
+\optdefault{crash\_restarts}{'integer'}
+Default 4. If a NONMEM output-file is produced but PsN is unable to read it properly it is assumed that NONMEM crashed, probably due to something in the operating system, and PsN will start the run again. But PsN will not consider it a retry and will not change initial estimates. 
+\nextopt
+\optname{handle\_msfo}
+Default not used. Feature for handling resumes using msfo and msfi files. 
+\nextopt
+\optname{maxevals}
+Default not used. Will only work for classical estimation methods. NONMEM only allows 9999 function evaluations. PsN can expand this limit by adding an MSFO option to \$ESTIMATION. Later when NONMEM hits the max number of function evaluations allowed by NONMEM (9999) PsN will remove initial estimates from the model-file and add \$MSFI and restart NONMEM. This will be repeated until the number of function evaluations specified with option -maxevals has been reached. Note: PsN does not change the MAXEVALS setting in the model-file, therefore the number of evaluations set on the command-line may be exceeded before PsN does the check if the run should be restarted with msfi or not. 
+\nextopt
+\optdefault{nice}{'integer'}
+Default 19. This option only has effect on Unix like operating systems. It  sets the priority (or nice value) on a process. You can give any value that is legal for the "nice" command, likely it is between 0 and 19, where 0 is the highest priority. Execute "man nice" on the Unix system for details. 
+\nextopt
+\end{optionlist}

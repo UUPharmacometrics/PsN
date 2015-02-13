@@ -1,0 +1,75 @@
+\begin{optionlist}
+\optname{run\_on\_torque}
+Default not used.  
+\nextopt
+\optname{torque\_queue}
+Default empty. Maps to -q in qsub. 
+\nextopt
+\optname{torque\_prepend\_flags}
+Default empty. Only valid with -run\_on\_torque. The - signs must be included in the string. The flags/options will be prepended to standard '-N jobname -q torque\_queue' where jobname is 'psn:'$\langle$modelfile$\rangle$ and torque\_queue is read from psn.conf or set on the commandline. If multiple options are given using -torque\_prepend\_flags on the commandline, they must be separated by spaces (as in qsub) and the whole list enclosed by quotes. If torque\_prepend\_flags is set in psn.conf, there should be no quotes. 
+\nextopt
+\optname{run\_on\_lsf}
+Default not used. PsN connects with Platform Load Sharing Facility (LsF). PsN submits nmfe directly with bsub. 
+\nextopt
+\optdefault{lsf\_job\_name}{'string'}
+Maps to bsub option -J. Sets the name of the LSF job name of every NONMEM run, they all get the same name (e.g. all samples of a bootstrap get the same name, all candidate models in an scm get the same name). If not set, and option -run\_on\_lsf is set, the default job name is the model file name, meaning that each boostrap sample gets its own name, each scm candidate model gets its own name, etc. 
+\nextopt
+\optdefault{lsf\_project\_name}{'string'}
+Maps to bsub option -P. Use lsf\_project\_name to assign a project name to your LSF runs. 
+\nextopt
+\optdefault{lsf\_queue}{'string'}
+Maps to bsub option -q. lsf\_queue specifies which LSF queue PsN should submit NONMEM runs to and is used in conjuction with -run\_on\_lsf 
+\nextopt
+\optdefault{lsf\_resources}{'string'}
+Maps to bsub option -R. lsf\_resources specifies which LSF resources is required when submitting NONMEM runs. 
+\nextopt
+\optdefault{lsf\_ttl}{'string'}
+Maps to bsub option -c. lsf\_ttl sets the maximum time a NONMEM run should be allowed to run on the LSF grid. 
+\nextopt
+\optdefault{lsf\_options}{'string'}
+LSF jobs are submitted using bsub and all PsN's LSF related options are translated to corresponding bsub options. If a specific bsub option is not available through any of the other lsf-specific options, -lsf\_options can be used to pass any set of options to bsub. The string must be enclosed in quotes if it contains spaces. 
+\nextopt
+\optdefault{lsf\_sleep}{N}
+Default 3. Wait for this many seconds after bsub submission, before continuing running PsN. 
+\nextopt
+\optname{run\_on\_sge}
+Default not used. Submit NONMEM runs to Sun Grid Engine.
+\nextopt
+\optdefault{sge\_queue}{'string'}
+Default empty. Only valid with -run\_on\_sge. Maps to qsub option -q 
+\nextopt
+\optdefault{sge\_resource}{'string'}
+Default empty. Only valid with -run\_on\_sge. Maps to qsub option -l 
+\nextopt
+\optdefault{sge\_prepend\_flags}{'string'}
+Default empty. Only valid with -run\_on\_sge. The - signs must be included in the string. The flags will be prepended to standard flag set in qsub call. If multiple flags are given using the option on the commandline, they must be separated by spaces (as in qsub) and the whole list enclosed by quotes. If the option is set in psn.conf, there should be no quotes. 
+\nextopt
+\optname{run\_on\_ud}
+Default not used. PsN connects with United Devices Grid MP. With -run\_on\_ud PsN will submit to the UD grid with parameters defined in the "uduserconf" file. 
+\nextopt
+\optname{run\_on\_zink}
+Default not used. Experimental.
+\nextopt
+\optname{run\_on\_slurm}
+Default not used. Use slurm queueing system.
+\nextopt
+\optdefault{slurm\_account}{string}
+Default empty. Only valid with -run\_on\_slurm, then optional. Maps to sbatch option -A. This option was called -slurm\_project in PsN3, but it has been renamed to match the slurm system documentation where the term is 'account'.
+\nextopt
+\optdefault{slurm\_partition}{string}
+Default empty. Only valid with -run\_on\_slurm, then optional. Maps to sbatch option -p.
+\nextopt
+\optdefault{max\_runtime}{'string'}
+Default not used. Only allowed with -run\_on\_slurm. A limit on how long a slurm run may go on before being aborted (option -t to sbatch). Format is either minutes, e.g. -max\_runtime=10, or hours:minutes:seconds, e.g. -max\_runtime=4:0:0, or days-hours, e.g. -max\_runtime=3-0 
+\nextopt
+\optname{send\_email}
+Default not set. Only used with -run\_on\_slurm and -email\_address in combination, otherwise ignored. Used for sbatch options --mail\_user=$\langle$email\_address$\rangle$ --mail\_type=ALL or END.  
+\nextopt
+\optdefault{email\_address}{string}
+Default not set. Only used with -run\_on\_slurm and -send\_email in combination, otherwise ignored. Used for sbatch options --mail\_user=$\langle$email\_address$\rangle$ --mail\_type=ALL or END.  
+\nextopt
+\optdefault{slurm\_prepend\_flags}{'string'}
+Default empty. Only valid with -run\_on\_slurm. The - signs must be included in the string. The flags will be prepended to standard flag set in sbatch call. If multiple flags are given using the option on the commandline, they must be separeted by spaces (as in sbatch) and the whole list enclosed by quotes. If the option is set in psn.conf, 
+there must be no quotes. 
+\nextopt
+\end{optionlist}

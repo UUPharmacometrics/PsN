@@ -1,0 +1,53 @@
+
+PsN can automatically generate R plots to visualize results, if a template file is available.
+The PsN installation package includes default template files for a number of tools,
+but R plots can be generated for any tool if the user provides the template file.
+PsN will create a preamble with some run specific information, 
+such as the name of the raw\_results file, the parameter labels and the name of
+the tool results file,
+and then append 
+the template file.
+If the template file contains an old preamble, then that preamble will be replaced with 
+the new one. This means
+the user can modify an old PsN-generated R script and then use this script as a new template,
+without having to remove the preamble.
+When a template file is available for the tool and option -rplots is 0 or positive, 
+the R script will be generated and saved in the main
+run directory. 
+If R is configured in psn.conf or command 'R' is available and option -rplots is positive 
+the script will also be run and a number of pdf-format plots be created.
+
+\rplotsconditions
+
+\begin{optionlist}
+\optdefault{rplots}{level}
+-rplots<0 means R script is not generated\\ 
+-rplots=0 (default) means R script is generated but not run\\ 
+-rplots=1 means basic plots are generated\\													  
+-rplots=2 means basic and extended plots are generated\\													  
+\nextopt
+\optdefault{template\_file\_rplots}{file}
+When the rplots feature is used, the default template file PsN will use is 
+\guidetoolname\_default.R. 
+The user can choose a different template file
+by setting option -template\_file\_rplots to a different file. 
+PsN will first look for the file relative to the current working directory, 
+and after that in the -template\_directory\_rplots directory.
+\nextopt
+\optdefault{template\_directory\_rplots}{path}
+PsN can look for the rplots template file in a number of places. The priority order is the
+following:
+\begin{enumerate}
+\item template\_directory\_rplots set on command-line 
+\item calling directory (where PsN is started)
+\item template\_directory\_rplots set in psn.conf 
+\item R-scripts subdirectory of the PsN installation directory
+\end{enumerate}
+\nextopt
+\optdefault{subset\_variable\_rplots}{variable name}
+Default not set. The user can specify a subset variable to be used with the -rplots feature. 
+This variable
+will, if set, be set as subset.variable in the preamble,
+and can then be used in the plotting code. 
+\nextopt
+\end{optionlist}
