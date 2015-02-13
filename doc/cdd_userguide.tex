@@ -5,6 +5,7 @@
 \begin{document}
 
 \maketitle
+\newcommand{\guidetoolname}{cdd}
 
 
 \section{Introduction}
@@ -45,25 +46,23 @@ Default 2. Mark the runs with CS-CR outside X standard deviations of the PCA.
 \nextopt
 \end{optionlist}
 
-\subsection{Some common PsN-options}
-
-For a complete list of common options see common\_options\_defaults\_versions.pdf, or psn\_options -h on the commandline.
-
+\subsection{Some important common PsN options}
+For a complete list see common\_options.pdf, 
+or psn\_options -h on the commandline.
+\input{inputs/basic_options.tex}
 \begin{optionlist}
-\optdefault{directory}{cdd\_dirN}
-The directory in which the script will run NONMEM can be named. The default name is “cdd\_dirN” where N is increased by 1 each time you run the script. If the run is aborted or crashes, setting the directory to the one from which the script was running earlier can be done. PsN will then not run the model files that had finished, saving time. Note that same set of options must be given as when the run was started the first time. 
-\nextopt
-\optdefault{threads}{N}
-The number of parallel processes to start on a parallel computer. 
-\nextopt
-\optname{help}
-With -help a longer help message will be printed. 
-\nextopt
 \optname{last\_est\_complete}
-is optional and only applies with NONMEM7 and cdd option -xv. See common\_options\_defaults\_versions.pdf for details.
-
+is optional and only applies with NONMEM7 and cdd option -xv. 
+See common\_options.pdf for details.
 \nextopt
 \end{optionlist}
+
+\subsection{Auto-generated R-plots from PsN}
+\newcommand{\rplotsconditions}{The default cdd template 
+requires no special R libraries.
+If no pdf is generated,
+see the .Rout file in the main run directory for error messages.}
+\input{inputs/rplots_section_body.tex}
 
 
 \section{Known bugs/issues}
