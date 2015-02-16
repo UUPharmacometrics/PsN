@@ -13,7 +13,7 @@ Randtest is a tool for computing actual significance levels. The method is descr
 \emph{Assessment of Actual Significance levels for Covariate Effects in NONMEM}, 
 J PKPD 28(3):231-252, Wählby U., Jonsson EN, Karlsson MO. 
 The program will shuffle the values in the randomization 
-column 'samples' times and run the model with each of the new datasets. The results will be summarized in the csv-format raw\_results-file. 
+column 'samples' times and run the model with each of the new datasets. The results will be summarized in the csv-format raw\_results-file and randtest\_results.csv,
 Example
 \begin{verbatim}
 randtest run1.mod -samples=1000 -randomization_col=DGRP -base_model=run0.mod
