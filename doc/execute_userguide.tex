@@ -56,6 +56,17 @@ Default "tail OUTPUT”. Only for Windows. See -tail\_output for description.
 \optname{copy\_data}
 Default set. Disable with -no-copy\_data. By default, PsN will copy the datafile into NM\_run1 and set a local path in psn.mod, the actual modelfile run with NONMEM. If -no-copy\_data is set, PsN will not copy the data to NM\_run1 and instead set a global path to the datafile in psn.mod.
 \nextopt
+\optname{predict\_data}
+Default not used. 
+Only allowed in combination with -predict\_model.
+Create copy of model with new file named <predict\_model>, turn off estimation 
+(MAXEVAL=0 or corresponding), change data file to -predict\_data and then run.
+\optname{predict\_model}
+Default not used. 
+Only allowed in combination with -predict\_data.
+Create copy of model with new file named <predict\_model>, turn off estimation 
+(MAXEVAL=0 or corresponding), change data file to -predict\_data and then run.
+\nextopt
 \end{optionlist}
 
 In addition, all options listed in document common\_options.pdf apply to 

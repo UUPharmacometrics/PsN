@@ -107,13 +107,17 @@ EOF
 
 $help_text{-predict_data} = <<'EOF';
     <p class="style2">-predict_data='string'</p>
-    No help available.
+    Only allowed in combination with -predict_model.
+	Create copy of model with new file named <predict_model>, turn off estimation 
+	(MAXEVAL=0 or corresponding), change data file to -predict_data and then run.
 EOF
 
 
 $help_text{-predict_model} = <<'EOF';
     <p class="style2">-predict_model='string'</p>
-    No help available.
+    Only allowed in combination with -predict_data.
+	Create copy of model with new file named <predict_model>, turn off estimation 
+	(MAXEVAL=0 or corresponding), change data file to -predict_data and then run.
 EOF
 
 $help_text{-timestamp} = <<'EOF';
@@ -308,6 +312,12 @@ if($options{'tail_output'} ) {
 }
 
 my $modelfit;
+if ( defined $options{'predict_data'} and (not defined $options{'predict_model'} ) ){
+	die( "Cannot set -predict_data without -predict_model");
+}
+if ( defined $options{'predict_model'} and (not defined $options{'predict_data'} ) ){
+	die( "Cannot set -predict_model without -predict_data");
+}
 if ( defined $options{'predict_data'} and defined $options{'predict_model'} ) {
 	if( scalar @{$models_array} > 1 ) {
 		die( "When using predict_data and predict_model, no "
@@ -318,7 +328,8 @@ if ( defined $options{'predict_data'} and defined $options{'predict_model'} ) {
 	$outfile = $outfile.'.lst';
 	my $pred_mod = $models_array -> [0] -> copy( filename    => $options{'predict_model'},
 												 copy_datafile   => 0,
-												 copy_output => 0 );
+												 copy_output => 0,
+												 write_copy => 0);
 	$pred_mod -> datafiles( new_names => [$options{'predict_data'}] );
 	$pred_mod -> ignore_missing_files(1);
 	$pred_mod -> outputfile( $outfile );
@@ -331,6 +342,7 @@ if ( defined $options{'predict_data'} and defined $options{'predict_model'} ) {
 		push( @new_tables, $options{'predict_model'}.'.'.$file );
 	}
 	$pred_mod -> table_names( new_names => [\@new_tables] );
+	$pred_mod->_write();
 	$modelfit = tool::modelfit -> 
 		new ( eval( $common_options::parameters ),
 			  prepend_options_to_lst => $options{'prepend_options_to_lst'},
