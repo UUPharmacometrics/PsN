@@ -1,5 +1,4 @@
 
-require(xpose4)
 require(ggplot2)
 
 if (rplots.level > 0){
