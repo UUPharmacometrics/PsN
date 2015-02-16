@@ -4,6 +4,7 @@
 \begin{document}
 
 \maketitle
+\newcommand{\guidetoolname}{llp}
 
 
 \section{Introduction}
@@ -60,18 +61,17 @@ Default 3. Specifies the number of significant digits that is required for the t
 \nextopt
 \end{optionlist}
 
-\subsection{General PsN-options}
+\subsection{Some important common PsN options}
+For a complete list see common\_options.pdf, 
+or psn\_options -h on the commandline.
+\input{inputs/basic_options.tex}
 
-For a complete list of common options see common\_options\_defaults\_versions.pdf, or psn\_options -h on the commandline.
-
-\begin{optionlist}
-\optdefault{directory}{llp\_dirN}
-The directory in which the script will run NONMEM can be named. The default name is “llp\_dirN” where N is increased by 1 each time you run the script. If the run is aborted or crashes, setting the directory to the one from which the script was running earlier can be done. PsN will then not run the model files that had finished, saving time. Note that same set of options must be given as when the run was started the first time. 
-\nextopt
-\optname{help}
-With -help llp will print a longer help message. 
-\nextopt
-\end{optionlist}
+\subsection{Auto-generated R-plots from PsN}
+\newcommand{\rplotsconditions}{The default llp template 
+requires the R libraries ggplot2, reshape and plyr.
+If the packages are not installed then no pdf will be generated,
+see the .Rout file in the main run directory for error messages.}
+\input{inputs/rplots_section_body.tex}
 
 
 \section{Output}

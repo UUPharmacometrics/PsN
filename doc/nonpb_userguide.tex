@@ -5,6 +5,7 @@
 \begin{document}
 
 \maketitle
+\newcommand{\guidetoolname}{nonpb}
 
 
 \section{Introduction}
@@ -44,22 +45,11 @@ Optional, default eta. The parameter to set in individual ofv model files. Possi
 \nextopt
 \end{optionlist}
 
-\subsection{Some general PsN-options useful in combination with nonpb or pind}
-For a complete list of common options see common\_options\_defaults\_versions.pdf, or psn\_options -h on the commandline.
-\begin{optionlist}
-\optdefault{directory}{run1\_nonpb}
-The directory in which the script will run NONMEM can be named. The default name is “nonpb\_dirX” where X is increased by 1 each time you run the script. 
-\nextopt
-\optdefault{seed}{string}
-A seed for the random number generator can be specified. This makes the run reproducible. It acts as a starting point for the random number generator when creating the bootstrapped data sets. 
-\nextopt
-\optdefault{threads}{X}
-The number of parallel processes to start for the model runs on a parallel computer. 
-\nextopt
-\optname{help}
-With -help PsN will print a longer help message. 
-\nextopt
-\end{optionlist}
+\subsection{Some important common PsN options}
+For a complete list see common\_options.pdf, 
+or psn\_options -h on the commandline.
+\input{inputs/basic_options.tex}
+
 
 \section{Output}
 Intermediate files written during the procedure are found in the intermediate\_files subdirectory of the nonpb run directory. In the result\_files subdirectory the files CI\_results\_ETAk.csv are found, where k=1,...,(number of ETAs). CI\_results\_ETAj.csv contains the mean, median, 25th, 50th, 90th and 95th confidence intervals.

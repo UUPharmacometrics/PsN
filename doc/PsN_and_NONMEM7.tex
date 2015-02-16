@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{PsN and NONMEM7}{2014-05-20}
+\guidetitle{PsN and NONMEM7}{2015-02-16}
 
 \begin{document}
 
@@ -11,7 +11,7 @@ This version of PsN has been tested with NONMEM 7.1.0, 7.1.2, 7.2.0 and 7.3.0. N
 
 \section{Running with an NMQual8 installation of NONMEM}
 PsN4 supports NMQual8. See psn\_configuration.pdf regarding minor recommended changes in psn.conf, and also see
-the help text for option -nmqual in common\_options\_defaults\_versions\_psn.pdf.
+the help text for option -nmqual in common\_options.pdf.
 Running parallel NONMEM with NMQual through PsN will not work unless the do-on-run block of log.xml is modified
 (not tested).
 
@@ -19,15 +19,16 @@ Running parallel NONMEM with NMQual through PsN will not work unless the do-on-r
 PsN4 supports the parallel execution feature of NONMEM. PsN will not check that an mpi daemon is running, or that any other necessary parallelization preparations have been done. Therefore the user must make sure it is possible to run parallel NONMEM with the nmfe script before trying to do it through PsN.
 
 It is required that the NONMEM version number 7.2 or later is properly set in psn.conf. 
-The parallelization feature is invoked by using PsN option -parafile=$\langle$file$\rangle$, and optionally -nodes=N, where $\langle$file$\rangle$ is the name of a NONMEM parafile. PsN will copy the parafile down to the run directory and pass on the name and the nodes option as input to nmfe72. PsN can currently only handle one parafile at a time. The parafile option is further described in common\_options\_defaults\_versions\_psn.pdf.
+The parallelization feature is invoked by using PsN option -parafile=$\langle$file$\rangle$, and optionally -nodes=N, where $\langle$file$\rangle$ is the name of a NONMEM parafile. PsN will copy the parafile down to the run directory and pass on the name and the nodes option as input to nmfe72. PsN can currently only handle one parafile at a time. The parafile option is further described in common\_options.pdf.
 
-A defaults.pnm file can be copied down to the NM run directory by setting PsN option -extra\_files, see common\_options\_defaults\_versions\_psn.pdf.
+A defaults.pnm file can be copied down to the NM run directory by setting PsN option -extra\_files, see common\_options.pdf.
 
 The -threads option does not affect and is not affected by any parallel execution of a single model. The -threads option governs how many models PsN will submit for execution (by e.g. nmfe72) at a time. The user must ensure that the number of threads multiplied by the number of nodes used for a single model does not exceed what is desired. 
 
 If running on a cluster the user must set flags necessary for parallel execution, e.g. -pe for SGE, using the existing PsN options, e.g. -sge\_prepend\_flags, -lsf\_options or -slurm\_prepend\_flags. PsN does not do this automatically. 
 \section{New options to nmfe72, nmfe73}
-There is a set of new options to nmfe72, e.g. -xmloff. These options can be passed on by PsN using option -nmfe\_options. Option -nmfe\_options is further described in common\_options\_defaults\_versions\_psn.pdf. If setting option -nmfe\_options=licfile=some\_license\_file then the license file must also be set with the PsN option -extra\_files, unless an absolute path to the license file is given, in which case option -extra\_files is not needed. See common\_options\_defaults\_versions\_psn.pdf for a description of the -extra\_files option.
+There is a set of new options to nmfe72, e.g. -xmloff. These options can be passed on by PsN using option -nmfe\_options. Option -nmfe\_options is further described in common\_options.pdf. If setting option -nmfe\_options=licfile=some\_license\_file then the license file must also be set with the PsN option -extra\_files, unless an absolute path to the license file is given, in which case option -extra\_files is not needed. See common\_options.pdf 
+for a description of the -extra\_files option.
 
 \section{New forms of \$SIGMA and \$OMEGA}
 In NONMEM 7.2 it is possible to define \$SIGMA and \$OMEGA in new ways, and indicating this via options STANDARD/VARIANCE COVARIANCE/CORRELATION and CHOLESKY. PsN does accept these options and will pass them on when creating new models, but the output analysis and updating new models with final estimates from a previous run have not yet been adapted to these new forms, and performing an update would introduce errors. Updating is done by all scripts except execute, sse and parallel\_retries. PsN will print a warning when the new \$OMEGA/\$SIGMA options are encountered. Updating a model with another form of \$SIGMA/\$OMEGA with output from a previous run will result in errors, and this is done as part of many PsN programs, e.g. bootstrap, vpc, scm and update\_inits. 
@@ -107,7 +108,7 @@ In all output, only results (parameter estimates, messages...) from the last \$E
 
 \section{MINIMIZATION SUCCESSFUL}
 
-The message MINIMIZATION SUCCESSFUL is important for PsN restart behaviour (see details in common\_options\_defaults\_versions.pdf) and sumo output, but it only appears for classical estimation methods. The following logic is used for setting the flag minimization\_successful:
+The message MINIMIZATION SUCCESSFUL is important for PsN restart behaviour (see details in common\_options.pdf) and sumo output, but it only appears for classical estimation methods. The following logic is used for setting the flag minimization\_successful:
 
 \begin{enumerate}
 \item Only status of last \$EST step is considered, except when last \$EST is IMP with EONLY=1 (see item 7)

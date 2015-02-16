@@ -4,6 +4,7 @@
 \begin{document}
 
 \maketitle
+\newcommand{\guidetoolname}{sse}
 
 
 \section{Introduction}
@@ -83,26 +84,10 @@ Example:
 \nextopt
 \end{optionlist}
 
-\subsection{Some general PsN-options which are useful in combination with sse }
-For a complete list of common options see common\_options\_defaults\_versions.pdf, or psn\_options -h on the commandline. 
-
-\begin{optionlist}
-\optdefault{clean}{X}
-To be able to reuse old simulation datasets and runs do not set clean to more than 2. 
-\nextopt
-\optdefault{directory}{sse\_dirX}
-The directory in which the script will run NONMEM can be named. The default name is “sse\_dirX” where X is increased by 1 each time you run the script. If the run is aborted or crashes, setting the directory to the one from which the script was running earlier can be done. PsN will then not run the model files that had finished, saving time. Note that same set of options must be given as when the run was started the first time. 
-\nextopt
-\optdefault{seed}{string}
-A seed for the random number generator can be specified. This makes the run reproducible. It acts as a starting point for the random number generator to produce the random number that will be present in the simulation control file. 
-\nextopt
-\optdefault{threads}{X}
-The number of parallel processes to start for the estimation step (not the simulation) on a parallel computer. 
-\nextopt
-\optname{help}
-With -help sse will print a longer help message. 
-\nextopt
-\end{optionlist}
+\subsection{Some important common PsN options}
+For a complete list see common\_options.pdf, 
+or psn\_options -h on the commandline.
+\input{inputs/basic_options.tex}
 
 
 \subsection{Special cases}

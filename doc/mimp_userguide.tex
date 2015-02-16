@@ -4,6 +4,7 @@
 \begin{document}
 
 \maketitle
+\newcommand{\guidetoolname}{mimp}
 
 
 \section{Overview}
@@ -50,21 +51,10 @@ A comma-separated list of filenames of alternative models.
 \nextopt
 \end{optionlist}
 
-\subsection{Some common PsN-options useful with mimp}
-
-For a complete list of common options see common\_options\_defaults\_versions.pdf, or psn\_options -h on the commandline.
-
-\begin{optionlist}
-\optdefault{directory}{mimp\_dirN}
-The run directory can be named. 
-\nextopt
-\optdefault{seed}{string}
-Random seed.
-\nextopt
-\optname{help}
-With -help mimp will print a longer help message. 
-\nextopt
-\end{optionlist}
+\subsection{Some important common PsN options}
+For a complete list see common\_options.pdf, 
+or psn\_options -h on the commandline.
+\input{inputs/basic_options.tex}
 
 
 \section{Output}

@@ -4,6 +4,7 @@
 \begin{document}
 
 \maketitle
+\newcommand{\guidetoolname}{gls}
 
 
 \section{Overview}
@@ -64,18 +65,10 @@ will also be collected, the tag will be removed, and then PsN will check that th
 \nextopt
 \end{optionlist}
 
-\subsection{Some common PsN-options useful with gls}
-
-For a complete list of common options see common\_options\_defaults\_versions.pdf, or psn\_options -h on the commandline.
-
-\begin{optionlist}
-\optdefault{directory}{gls\_dirN}
-The run directory can be named.  
-\nextopt
-\optname{help}
-With -help gls will print a longer help message. 
-\nextopt
-\end{optionlist}
+\subsection{Some important common PsN options}
+For a complete list see common\_options.pdf, 
+or psn\_options -h on the commandline.
+\input{inputs/basic_options.tex}
 
 \section{Output}
 

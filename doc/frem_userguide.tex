@@ -3,6 +3,7 @@
 
 
 \begin{document}
+\newcommand{\guidetoolname}{frem}
 
 \maketitle
 
@@ -88,14 +89,11 @@ Optional, default 3. The number (0, 1, 2 or 3) of the last model to estimate in 
 %	\item TODO: If -vpc is set: Form of TV$<$par$>$ or THETA directly
 \end{itemize}
 
-\subsection{Some general PsN-options which are interesting in combination with frem}
-For a complete list of common options see common\_options\_defaults\_versions.pdf, or psn\_options -h on the command-line.
+\subsection{Some important common PsN options}
+For a complete list see common\_options.pdf, 
+or psn\_options -h on the commandline.
+\input{inputs/basic_options.tex}
 
-\begin{optionlist}
-\optdefault{directory}{name}
-Name of run directory 
-\nextopt
-\end{optionlist}
 
 \section{Workflow}
 The script first generates a set of template models in the m1 subdirectory, and performs the runs necessary to generate

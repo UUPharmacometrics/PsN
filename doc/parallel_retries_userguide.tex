@@ -5,6 +5,7 @@
 \begin{document}
 
 \maketitle
+\newcommand{\guidetoolname}{parallel\_retries}
 
 
 \section{Introduction}
@@ -14,7 +15,7 @@ a single model with tweaked initial estimates in parallel.
 In PsN terminology it is called a retry to (re)run a model with tweaked 
 initial estimates.
 
-The retries (see documentation in common\_options\_defaults\_versions\_psn.pdf) 
+The retries, see details below, 
 are always done serially in execute and other PsN programs. 
 The parallel\_retries script is a help script that takes a single model 
 as input, creates 'min\_retries' extra copies of this model 
@@ -23,7 +24,7 @@ the extra models in parallel in separate NM\_run subdirectories.
 Results are summarized in raw\_results.csv in the run directory. 
 The script does not select the best retry, but the user must do that manually 
 based on the raw\_results csv-file. The script parallel\_retries accept all
-options in common\_options\_defaults\_versions\_psn.pdf. 
+options in common\_options.pdf. 
 
 Example
 \begin{verbatim}
@@ -36,11 +37,6 @@ A model file is required on the command-line.
 In addition, either -min\_retries or -rawres\_input is required, see below.
 
 \subsection{Optional input}
-All options listed in document common\_options\_defaults\_versions\_psn.pdf apply to parallel\_retries. 
-Those options govern how the NONMEM runs are managed, and hence apply to all PsN scripts.
-Since parallel\_retries does not do much except running a model with NONMEM, 
-it has a very short list of additional options:
-
 \begin{optionlist}
 \optdefault{min\_retries}{integer}
 The number of model copies with tweaked initial estimates to run. 
@@ -85,6 +81,15 @@ If the option directory is used it will override -timestamp.
 Default not used. This option makes PsN prepend the final lst-file (which is copied back to the directory from which parallel\_retries was called) with the file version\_and\_option\_info.txt which contains run information, including     all actual values of optional PsN options. PsN can still parse the lst-file with the options prepended, so the file can still be used it as input to e.g. sumo, vpc or update\_inits. Disabled with -no-prepend\_options\_to\_lst if set in psn.conf.
 \nextopt
 \end{optionlist}
+
+\subsection{Retries in PsN}
+\input{inputs/retries_section_body.tex}
+
+\subsection{Some important common PsN options}
+All options listed in document common\_options.pdf apply to parallel\_retries. 
+Below is a set of basic options. For a complete list see common\_options.pdf, 
+or psn\_options -h on the commandline.
+\input{inputs/basic_options.tex}
 
 \section{Output}
 When the NONMEM runs are finished, the raw\_results file in the

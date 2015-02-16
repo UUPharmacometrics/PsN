@@ -4,6 +4,7 @@
 \begin{document}
 
 \maketitle
+\newcommand{\guidetoolname}{vpc}
 
 \section{Introduction}
 NPC – Numerical Predictive Check – is a model diagnostics tool. VPC – Visual Predictive Check – is another closely related diagnostics tool. A set of simulated datasets are generated using the model to be evaluated. Afterwards the real data observations are compared with the distribution of the simulated observations. By default no model estimation is ever performed. The input to the NPC script is the model to be evaluated, the number of samples (simulated datasets) to generate, parameter values options for the simulations, and stratification options for the evaluation. It is also possible to skip the simulation step entirely by giving two already created tablefiles as input. The input to the VPC script is the input to NPC plus an additional set of options. A large portion of the processing is identical between the scripts.
@@ -262,29 +263,33 @@ The default dependent variable to do the analysis on is DV. Other possible choic
 \subsection{Input details for NPC/VPC without simulation}
 It is possible to skip the simulation step entirely by specifying both options -orig\_table and -sim\_table.  Binning and stratification options are the same. The two tablefiles must have exactly the same format as would have been produced by NPC/VPC had the program performed the simulations. See section Additional rules and logic [1] for a list of which columns must be present in the tablefiles. It is important that the rules for including or not including MDV are followed. Also, the individuals and observations must come in the same order for both the original data and the simulated datasets. No check is performed that e.g. ID numbers match. Please note that a modelfile is still required as input, even though it will not be used.
 
-\subsection{Common options in PsN which are extra important for NPC and VPC (examples)}
-For a complete list of common options see common\_options\_defaults\_versions.pdf, or psn\_options -h on the commandline.
-
+\subsection{Some important common PsN options}
+For a complete list see common\_options.pdf, 
+or psn\_options -h on the commandline.
+\input{inputs/basic_options.tex}
 \begin{optionlist}
-\nextopt
-\optdefault{rplots}{level}
-Automatic creation of result plots using Xpose.
-\nextopt
 \optname{last\_est\_complete}
 optional and only applies with NONMEM7 and if option -keep\_estimation is set. See section NPC and VPC with NONMEM7. 
 \nextopt
-\optdefault{seed}{string}
-Using this option makes it possible to regenerate simulation results. 
-\nextopt
-\optdefault{directory}{directory name}
-name of new directory or directory to restart from 
-\nextopt
-\optdefault{nm\_version}{nonmem version }
-
-\nextopt
 \end{optionlist}
 
-Important note: you can use the -directory option e.g when you have run a simulation with a particular model earlier and you want to stratify on a new column or use a different set of binning options. You can reuse NPC simulations in a VPC analysis and vice versa, since the underlying program is essentially the same. The default directory name will be of the form npc\_dirN, regardless of whether the original run was done using NPC or VPC. This will save time since much of the processing won't have to be redone. The old npc\_results.csv or vpc\_results.csv file will be renamed so that they are not overwritten.
+Important note: you can use the -directory option e.g when you have run a 
+simulation with a particular model earlier and you want to stratify on a new 
+column or use a different set of binning options. You can reuse 
+NPC simulations in a VPC analysis and vice versa, since the underlying program 
+is essentially the same. 
+This will save time since much of the processing won't have to be redone. 
+The old npc\_results.csv or vpc\_results.csv file will be renamed so that 
+they are not overwritten.
+
+\subsection{Auto-generated R-plots from PsN}
+\newcommand{\rplotsconditions}{The default vpc template 
+requires the xpose4 R library.
+If the conditions are not fulfilled then no pdf will be generated,
+see the .Rout file in the main run directory for error messages.}
+\input{inputs/rplots_section_body.tex}
+
+
 
 \section{Running NPC}
 As stated above, the NPC and VPC have many parts in common. All NPC options are available for VPC, and the same rules for them apply.

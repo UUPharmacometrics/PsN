@@ -5,6 +5,7 @@
 \begin{document}
 
 \maketitle
+\newcommand{\guidetoolname}{lasso}
 
 
 \section{Introduction}
@@ -54,20 +55,19 @@ Default not used. If the option is set, PsN will try to preserve the relative pr
 \nextopt
 \end{optionlist}
 
-\subsection{Some general PsN-options which are interesting in combination with lasso}
-
-For a complete list of common options see common\_options\_defaults\_versions.pdf, or psn\_options -h on the command-line.
+\subsection{Some important common PsN options}
+For a complete list see common\_options.pdf, 
+or psn\_options -h on the commandline.
 
 The high dimensionality of a lasso model can make minimization more difficult. Therefore lasso has some special methods for handling minimization terminated due to rounding errors, and minimization terminated due to max number of evaluations exceeded.
 
 Retries in lasso work slightly differently from retries in other PsN scripts. Before doing a retry in lasso, if minimization is terminated due to rounding errors then PsN will set thetas below cutoff to 0. Initial estimates will not be tweaked at the first retry, when thetas are cut for the first time. Instead the initial estimates will be set to the final estimates of the first try. If repeated retries are required then thetas will be cut again and then initial estimates will be tweaked. As with any PsN script the total number of retries is governed by the -retries option. 
 
-Picking the best retry results is done as in other PsN scripts, see details in common\_options\_defaults\_versions\_psn.pdf. It does not matter if some retries have thetas that are set to zero.
+Picking the best retry results is done as in other PsN scripts, see details 
+in common\_options.pdf. It does not matter if some retries have thetas that are set to zero.
 
+\input{inputs/basic_options.tex}
 \begin{optionlist}
-\optdefault{directory}{run1\_lasso}
-The directory in which the script will run NONMEM can be named. The default name is “lasso\_dirX” where X is increased by 1 each time you run the script. 
-\nextopt
 \optdefault{significant\_digits\_accept}{'number'}
 Default not used. Normally lasso tries new initial estimates unless 'MINIMZATION SUCCESSFUL' is found in the NONMEM output file. With the -significant\_digits\_accept, lasso will only rerun if the resulting significant digits is lower than the value specified with this option. Setting this option may reduce run times considerably. It may or may not affect the final results. 
 \nextopt
@@ -80,14 +80,8 @@ If minimization is not successful, PsN can do a retry with cut thetas (only lass
 \optdefault{min\_retries}{N}
 Do not set this option with lasso; it may interfere with the handling of runs with rounding errors. 
 \nextopt
-\optdefault{seed}{string}
-A seed for the random number generator can be specified. This makes the run reproducible. It acts as a starting point for the random number generator to produce the random number that will be used for creating the cross-validation data sets. 
-\nextopt
 \optdefault{threads}{X}
 The number of parallel processes to start for the model runs on a parallel computer. Setting this value to something larger than the number of groups (cross-validation data sets) will have no effect. 
-\nextopt
-\optname{help}
-With -help lasso will print a longer help message. 
 \nextopt
 \end{optionlist}
 

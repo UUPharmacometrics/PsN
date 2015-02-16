@@ -5,6 +5,7 @@
 \begin{document}
 
 \maketitle
+\newcommand{\guidetoolname}{mcmp}
 
 
 \section{Introduction}
@@ -71,27 +72,18 @@ Optional, no default. If specified, -critical\_ofv will override the setting of 
 \nextopt
 \end{optionlist}
 
-\subsection{Some general PsN-options which are useful in combination with mcmp}
+\subsection{Some important common PsN options}
+For a complete list see common\_options.pdf, 
+or psn\_options -h on the commandline.
+\input{inputs/basic_options.tex}
 
-For a complete list of common options see common\_options\_defaults\_versions.pdf, or psn\_options -h on the commandline.
+\subsection{Auto-generated R-plots from PsN}
+\newcommand{\rplotsconditions}{The default mcmp template 
+requires the R library ggplot2.
+If the package is not installed then no pdf will be generated,
+see the .Rout file in the main run directory for error messages.}
+\input{inputs/rplots_section_body.tex}
 
-\begin{optionlist}
-\optdefault{directory}{mcmp\_dirX}
-The directory in which the script will run NONMEM can be named. The default name is “mcmp\_dirX” where X is increased by 1 each time you run the script. 
-\nextopt
-\optdefault{nm\_output}{comma-separated list of NM output file extensions}
-A comma-separated list of NONMEM output file extenstions (e.g. ext,phi,cov). By default the lst-file and the phi-file will be copied back to the calling directory.
-\nextopt
-\optdefault{seed}{string}
-A seed for the random number generator can be specified. This makes the run reproducible. It acts as a starting point for the random number generator to produce the random number that will be used for the bootstrapping of the iofv:s. 
-\nextopt
-\optdefault{threads}{X}
-The number of parallel processes to start for the model runs on a parallel computer. Setting this value to something larger than the number of models given as input (1or 2) will have no effect. The bootstrapping of the iofv:s is not parallelized. 
-\nextopt
-\optname{help}
-With -help mcmp will print a longer help message. 
-\nextopt
-\end{optionlist}
 
 \section{Output}
 The output from each mcmp is mcmp\_results.csv which contains a table with header total\_X,power at 5\%,power at 1\%,power at 0.1\%, (headers for N from each strata). One row for each total sample size (total\_X). The table can be plotted in excel. The results are also printed to screen as they are produced, and the user can terminate the run with Ctrl-C if the obtained power is deemed sufficient. The file mcmp\_results.csv will contain the values that were computed before the interruption. If mcmp is rerun the previous result file will be copied and kept.

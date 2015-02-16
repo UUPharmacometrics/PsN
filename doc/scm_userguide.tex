@@ -89,7 +89,12 @@ You can place a comment anywhere in the file by prefixing the line with a semico
 
 \begin{optionlist}
 \optdefault{config\_file}{filename}
-Name of an scm configuration file, including search path if file is not stored in current directory. The configuration file may contain all scm command-line options and some optional general PsN options: \mbox{-nm\_version}, \mbox{-nmfe\_options}, \mbox{-abort\_on\_fail}, \mbox{-compress}, \mbox{-directory}, \mbox{-extra\_data\_files}, \mbox{-extra\_files}, \mbox{-picky}, \mbox{-retries}, \mbox{-threads} and \mbox{-tweak\_inits}. The file common\_options\_defaults\_versions\_psn.pdf describes all these options. 
+Name of an scm configuration file, including search path if file is not stored in current directory. The configuration file may contain all scm command-line options and some optional PsN common options.
+If a common option that is \emph{not} 
+listed here is set in the scm configuration file then that option will be 
+ignored.
+The following common options, described in common\_options.pdf,
+can be set in the configuration file: \mbox{-nm\_version}, \mbox{-nmfe\_options}, \mbox{-abort\_on\_fail}, \mbox{-compress}, \mbox{-directory}, \mbox{-extra\_data\_files}, \mbox{-extra\_files}, \mbox{-picky}, \mbox{-retries}, \mbox{-threads} and \mbox{-tweak\_inits}. 
 \nextopt
 \end{optionlist}
 

@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{PsN configuration}{2014-05-20}
+\guidetitle{PsN configuration}{2015-02-16}
 \begin{document}
 
 \maketitle
@@ -37,7 +37,8 @@ or the end of the file.
 \section{Setting defaults for command line options in psn.conf}
 The user can override source code defaults by setting options in the appropriate section in psn.conf. Settings on the command line will override settings in psn.conf. 
 
-The option names used in psn.conf are the same as would be used on the command line, and documentation can be found in the document common\_options\_defaults\_versions\_psn.pdf. Some options do not take any value on the commandline, for example -run\_on\_sge, but if set in psn.conf those options must also have a value (1 or 0). If such an option is set in psn.conf, for example
+The option names used in psn.conf are the same as would be used on the command line, and documentation can be found in the document common\_options.pdf. 
+Some options do not take any value on the commandline, for example -run\_on\_sge, but if set in psn.conf those options must also have a value (1 or 0). If such an option is set in psn.conf, for example
 -run\_on\_sge = 1, the option can be disabled on the commandline by using -no, for example 
 -no-run\_on\_sge. The -no prefix cannot be used in psn.conf, instead set the option to 0.
 
@@ -61,7 +62,9 @@ Options for specific scripts, e.g. llp, can be set in the sections\\
 
 \noindent Defaults set in a script-specific section will override settings in \verb|[default_options]|.
 \subsection{-nm\_version dependent defaults}
-It is possible to set different defaults for different NONMEM versions. Each NONMEM version specified in psn.conf has a name
+It is possible to set different defaults for different NONMEM versions. 
+This functionality is intended for advanced users only.
+Each NONMEM version specified in psn.conf has a name
 (see section 'Essential NONMEM information') that can be used on the commandline to invoke this version, e.g. -nm\_version=nm72.
 When (for example) -nm\_version=nm72 is set on the (for example) vpc commandline, PsN will look for sections \verb|[default_options_nm72]| 
 and \verb|[default_vpc_options_nm72]| and read options from there in addition to 
@@ -134,6 +137,9 @@ PsN will use the log.xml file in the nmqual subdirectory of the NONMEM installat
 
 \noindent The full command used by PsN is\\
 \verb|perl /path/autolog.pl /path/log.xml run ce /full/path/workdir psn| (extra NM options)
+\noindent or, if option -parafile is set, PsN will copy the parafile
+to psn.pnm in the NM\_run directory and use the command\\
+\verb|perl /path/autolog.pl /path/log.xml para ce /full/path/workdir psn| (extra NM options)
 
 The user is not required to modify log.xml in any way when running with PsN4.
 When running PsN3 with NMQual the user needed to modify the 'run' section of log.xml, but with PsN4 
