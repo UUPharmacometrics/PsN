@@ -4,7 +4,7 @@ require(plyr)
 
 
 if (rplots.level > 0){
-    pdf(file=pdf.filename,width=10,height=7,title=pdf.title)
+    pdf(file=pdf.filename,title=pdf.title)
 }
 
 if (rplots.level > 0){
@@ -77,7 +77,7 @@ if (rplots.level > 0){
       #   geom_line(data=llp.pred4) +                                                       # lm predictions with 4rth order polynomial
       #   geom_smooth(se=FALSE) +                                                           # smooth
       scale_y_continuous(limits=c(-1,round(refofv*2,0))) +
-      facet_wrap(~strip.text,scales="free") +
+      facet_wrap(~strip.text,scales="free",ncol=2) +
       labs(x="Parameter value",y="dOFV",title=paste("Log-Likelihood Profiling\n(",RUN,")",sep=""))
     print(p)
     

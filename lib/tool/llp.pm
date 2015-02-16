@@ -280,14 +280,16 @@ sub _register_estimates
 						  $run{$param.'s'}->[0] ne '' );
 			my @par_nums    = @{$run{$param.'s'}};
 			my $orig_ests    = $orig_model -> get_values_to_labels ( category => $param);
+			my $orig_labels    = $orig_model -> labels ( parameter_type => $param);
 
 			# Loop the parameter numbers
 			foreach my $num ( @par_nums ) {
 				# Loop the problems
 				for ( my $j = 0; $j < scalar @{$orig_ests}; $j++ ) {
-					my $label = uc($param).$num."_".($j+1);
+#					my $label = uc($param).$num."_".($j+1);
+					my $label  = $orig_labels->[$j][$num-1]."_".($j+1);
 					$ui_text = $ui_text.sprintf("%10s",$label).','.sprintf("%10s",'OFV_DIFF').',';
-					print LOG sprintf("%10s",$label),',',sprintf("%10s",'OFV_DIFF'),',';
+					print LOG sprintf("\"%10s\"",$label),',',sprintf("%10s",'OFV_DIFF'),',';
 				}
 			}
 		}
@@ -309,6 +311,7 @@ sub _register_estimates
 			my @par_nums    = @{$run{$param.'s'}};
 			my $orig_ests    = $orig_model -> get_values_to_labels ( category => $param);
 			my $orig_se_ests    = $orig_model -> get_values_to_labels ( category => 'se'.$param);
+			my $orig_labels    = $orig_model -> labels ( parameter_type => $param);
 			# Loop over the parameter numbers of interest
 			my %all_num_est = ();
 			foreach my $num ( @par_nums ) {
@@ -319,6 +322,7 @@ sub _register_estimates
 						if ( scalar @{$orig_ests->[$j]} > 1 );
 					# For the original estimates, we need to use the estimates from the original output file.
 					my $orig  = $orig_ests->[$j][0][$num-1];
+					my $label  = $orig_labels->[$j][$num-1];
 					# Store original estimates. The [0] is there for print_results.
 					#push(@{$self -> original_estimates->[$model_number-1][$j][0]}, $orig);
 					# all_prob_est: [fixed estimates][ofv_diffs][finished_flag(lower,upper)]
@@ -328,7 +332,9 @@ sub _register_estimates
 					$active = 1; 
 					$ui_text = $ui_text.sprintf("%10f",$orig).','.sprintf("%10f",0).',';
 					print LOG sprintf("%10f",$orig),',',sprintf("%10f",0),',';
-					print LOG2 sprintf("%10s",$param.$num),',',sprintf("%10s",'orig'),
+#					print LOG2 sprintf("%10s",$param.$num),',',sprintf("%10s",'orig'),
+#					',',sprintf("%10f",$orig),',',sprintf("%10f",0),"\n";
+					print LOG2 sprintf("\"%10s\"",$label),',',sprintf("%10s",'orig'),
 					',',sprintf("%10f",$orig),',',sprintf("%10f",0),"\n";
 				}
 				$all_num_est{$num} = \@all_prob_est;
@@ -368,7 +374,7 @@ sub _register_estimates
 				$orig_ofvs = $self -> orig_ofvs;
 				# Loop over the parameter numbers of interest
 				foreach my $num ( @par_nums ) {
-					my ( $model, $output, $ofvs, $ests );
+					my ( $model, $output, $ofvs, $ests,$labels );
 					# Check if there exists any model for this side (if not, it is
 					# probably (hopefully) finished
 					if (defined $self->{$param.'_models'} -> {$num} -> {$side}) {
@@ -378,6 +384,7 @@ sub _register_estimates
 						my $accessor = $param.'s';
 						#$ests     = $output -> $accessor;
 						$ests    = $model -> get_values_to_labels ( category => $param);
+						$labels = $model->labels(parameter_type => $param);
 					}
 					# Loop over the problems:
 					for ( my $j = 0; $j < scalar @{$orig_ofvs}; $j++ ) {
@@ -390,9 +397,11 @@ sub _register_estimates
 						# Collect the model outputs
 						my $diff = $ofvs->[$j][0]-$orig_ofvs->[$j][0];
 						my $est = $model -> initial_values( parameter_type => $param ) -> [0][$num - 1];
+						my $label = $labels->[0][$num-1];
 						$ui_text = $ui_text.sprintf("%10f",$est).','.sprintf("%10f",$diff).',';
 						print LOG sprintf("%10f",$est),',',sprintf("%10f",$diff),',';
-						print LOG2 sprintf("%10s",$param.$num),',',sprintf("%10s",$side),',',
+						#print LOG2 sprintf("%10s",$param.$num),',',sprintf("%10s",$side),',',
+						print LOG2 sprintf("\"%10s\"",$label),',',sprintf("%10s",$side),',',
 						sprintf("%10f",$est),',',sprintf("%10f",$diff),"\n";
 						my $bound = $bounds{$side}->[$j][$num-1];
 						carp("Registering diff $diff" );
