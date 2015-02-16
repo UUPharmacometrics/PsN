@@ -12,9 +12,10 @@ use includes; #file with paths to PsN packages and $path variable definition
 our $tempdir = create_test_dir('system_parallel_retries');
 our $dir = "parallel_retries_test";
 my $model_dir = $includes::testfiledir;
+copy_test_files($tempdir,["pheno.mod", "pheno.dta"]);
 
 my @commands = 
-	(get_command('parallel_retries') . " $model_dir/pheno.mod -dir=$dir -min_retries=2 -no-display",
+	(get_command('parallel_retries') . " pheno.mod -dir=$dir -min_retries=2 -no-display -no-check",
 	);
 chdir($tempdir);
 foreach my $command (@commands){

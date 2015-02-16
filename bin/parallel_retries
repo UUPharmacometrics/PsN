@@ -134,6 +134,7 @@ unless (defined $options{'degree'}){
 }
 
 ## Set the automatic renaming of modelfit directory
+
 my $main_directory = tool::get_rundir(create => 1,
 									  basename => 'parallel_retries_dir',
 									  model_dir_name => $options{'model_dir_name'},
@@ -141,7 +142,7 @@ my $main_directory = tool::get_rundir(create => 1,
 									  directory_option => $options{'directory'});
 
 my @outputfiles;
-my $fake;
+
 if( $options{'outputfile'} ){
   @outputfiles = split( /,/, $options{'outputfile'} );
 }
@@ -247,7 +248,11 @@ if (defined $options{'rawres_input'}){
 }
 
 chdir($main_directory); #created by tool::get_rundir
-my $main_model = $models_array -> [0] -> copy( filename    => $models_array -> [0]->filename(),
+my $filestem = $models_array -> [0]->filename();
+#this regex must be the same as used in modelfit.pm, for consistency
+$filestem =~ s/\.[^.]+$//; #last dot and extension
+
+my $main_model = $models_array -> [0] -> copy( filename    => $filestem.'_origin.mod',
 											   copy_datafile   => 1,
 											   copy_output => 0,
 											   directory => $main_directory);
@@ -256,8 +261,7 @@ my $mod_array;
 push(@{$mod_array},$main_model);
 if (defined $options{'rawres_input'}){
 	foreach (my $retry=1;$retry<=$samples;$retry++){
-		my $filestem = $models_array -> [0]->filename();
-		$filestem =~ s/\.mod//;
+
 		my $retry_mod = $main_model -> copy( filename    => $filestem.'_init'.$retry.'.mod',
 											 copy_datafile   => 0,
 											 copy_output => 0,
@@ -270,8 +274,6 @@ if (defined $options{'rawres_input'}){
 
 }else{
 	foreach (my $retry=1;$retry<=$options{'min_retries'};$retry++){
-		my $filestem = $models_array -> [0]->filename();
-		$filestem =~ s/\.mod//;
 		my $retry_mod = $main_model -> copy( filename    => $filestem.'_retry'.$retry.'.mod',
 											 copy_datafile   => 0,
 											 copy_output => 0,
@@ -291,13 +293,11 @@ $modelfit = tool::modelfit ->
     new ( eval( $common_options::parameters ),
 	  prepend_model_file_name => 1,
 	  prepend_options_to_lst => $options{'prepend_options_to_lst'},
-	  directory => 'modelfit_dir1',
+	  directory => undef,
 	  min_retries => 0,
 	  retries =>0,
 	  copy_data =>0,
 	  models => $mod_array );  
-
-
 
 $modelfit-> print_options (cmd_line => $cmd_line,
 			   directory => $main_directory,
@@ -308,8 +308,66 @@ $modelfit-> print_options (cmd_line => $cmd_line,
 
 $modelfit -> run;
 
-mv('modelfit_dir1/raw_results.csv','raw_results.csv');
+mv($modelfit->raw_results_file->[0],'raw_results.csv');
 
+my @run_results=();
+my $probnum = $main_model->get_retries_problem_number();
+foreach my $mod (@{$mod_array}){
+	if ($mod->is_run){
+		my $pass_picky = tool::modelfit::passed_picky(minimization_successful => $mod->outputs->[0]->minimization_successful,
+													  minimization_message => $mod->outputs->[0]->minimization_message,
+													  probnum => $probnum,
+													  picky => $modelfit->picky);
+		push(@run_results,{'ofv' => $mod->outputs->[0]->get_single_value(attribute => 'ofv'), 
+						   'pass_picky'=> $pass_picky, 
+						   'name' => $mod->filename,
+						   'minimization_successful' => $mod->outputs->[0]->get_single_value(attribute => 'minimization_successful')});
+	}else{
+		push(@run_results,{'ofv' => undef,
+						   'pass_picky'=> 0, 
+						   'name' => $mod->filename,
+						   'minimization_successful' => 0});
+	}
+}
+
+my $selected = tool::modelfit::select_best_retry(run_results => \@run_results,
+												 accepted_ofv_difference => $modelfit->accepted_ofv_difference);
+my $results_file = 'parallel_retries_results.csv';
+open( RES, ">".$results_file) or die "could not open ".$results_file;
+print RES "model,ofv,minimization.successful,pass.picky,selected\n";
+for (my $i=0; $i<scalar(@run_results); $i++){
+	my $sel=0;
+	$sel = 1 if ($i == ($selected-1)); #seletec numbering starts at 1
+	my @line = ($run_results[$i]->{'name'},$run_results[$i]->{'ofv'},
+				$run_results[$i]->{'minimization_successful'},$run_results[$i]->{'pass_picky'},$sel);
+	print RES join(',',@line)."\n";
+}
+close(RES);
+
+ui -> print( category => 'parallel_retries',
+			 message => "\nSelected ".$run_results[($selected-1)]->{'name'}."\n" );
+
+#copy back output
+#copy actual from directory $main_directory files $mod_array->output_files
+my $selected_filestem = $mod_array->[$selected-1]->filename;
+$selected_filestem =~ s/\.[^.]+$//; #last dot and extension
+for (my $i=0; $i< scalar(@{$mod_array->[$selected-1]->output_files}); $i++){
+	my $from = $mod_array->[$selected-1]->directory.$mod_array->[$selected-1]->output_files->[$i];
+	my $tabfrom = $mod_array->[$selected-1]->directory.$selected_filestem.'.'.$mod_array->[$selected-1]->output_files->[$i];
+	my $to = $models_array->[0]->directory.$models_array->[0]->output_files->[$i];
+	if( $options{'prepend_model_file_name'}){
+		$to = $models_array->[0]->directory.$filestem.'.'.$models_array->[0]->output_files->[$i];
+	}
+	if (-e $from){
+		cp($from,$to);
+		ui -> print( category => 'parallel_retries',
+					 message => "copying $from to $to\n" );
+	}elsif(-e $tabfrom){
+		cp($tabfrom,$to);
+		ui -> print( category => 'parallel_retries',
+					 message => "copying $tabfrom to $to\n" );
+	}
+}
 
 ui -> print( category => 'parallel_retries',
 	     message => "\nparallel_retries done\n" );
