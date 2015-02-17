@@ -219,9 +219,15 @@ sub get_defaults
   }
 
   my $try_local_R_template_dir;
-  unless (exists $options -> {'template_directory_rplots'}){
+  my $warn_R_template = 0;
+  if (exists $options -> {'template_directory_rplots'}){
+	  $warn_R_template = 1;
+  }else{
 	  #template directory not set on commandline
 	  $try_local_R_template_dir=getcwd();
+	  if (exists $options -> {'template_file_rplots'}){
+		  $warn_R_template = 1;
+	  }
   }
 
   if (length($nm_string)>0){
@@ -277,6 +283,13 @@ sub get_defaults
 	  $options -> {'template_directory_rplots'} = $PsN::lib_dir . '/R-scripts';
   }
   
+  if ($warn_R_template ){
+	  my ($dir, $file) = OSspecific::absolute_path($options->{'template_directory_rplots'},$options->{'template_file_rplots'});
+	  my $template_file = $dir.$file;
+	  unless (-e $template_file){
+		  croak ("template_file_rplots ".$options->{'template_file_rplots'}." does not exist in ".$options->{'template_directory_rplots'})
+	  }
+  }
 
 
 }

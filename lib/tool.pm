@@ -1727,9 +1727,6 @@ sub create_R_script
 
 		$self->create_R_plots_code(rplot => $rplot) if ($self->can("create_R_plots_code"));
 		$rplot->make_plots;
-	}elsif (defined $self->template_file_rplots and length($self->template_file_rplots)>0
-			and ($self->template_file_rplots ne $tool_name.'_default.R')){
-		print "\nWarning: template_file_rplots ".$self->template_file_rplots." does not exist, no R script will be produced\n";
 	}
 
 
