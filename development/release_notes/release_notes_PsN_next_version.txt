@@ -102,6 +102,13 @@ Changes and bug fixes from PsN 4.2.0 to x.y.z
 - scm now checks that all covariates in the code section are listed as test_relations
   and gives an error otherwise.
 
+- When scm runs a dummy model to filter the data set on IGNORE/ACCEPT before
+  computing statistics for covariates, any DROP/SKIP in $INPUT will be kept.
+  The first undropped column will be copied to the dropped positions
+  in $TABLE of the filter model, so that the filtered data set still has
+  the same number of columns and the same $INPUT record with its DROPs/SKIPs
+  can be used for the scm models.
+
    ___sse___
 
 -  sse will accept missing data files for alternative models. This is ok since data will be replaced with 
@@ -153,6 +160,12 @@ Changes and bug fixes from PsN 4.2.0 to x.y.z
    ___parallel_retries___
 	 
 - New option -timestamp for directory name
+
+- parallel_retries will behave more like execute, i.e. the best try
+  will be selected and the output files of this try will be copied
+  to the directory of the input model.
+
+- new userguide
 
    ___sir___
 	 
