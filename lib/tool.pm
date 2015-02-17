@@ -625,7 +625,7 @@ sub print_results
 			", using default printing routine" );
 	}
 
-	$self->create_R_script();
+	$self->create_R_script() if ($self->top_tool);
 
 }
 

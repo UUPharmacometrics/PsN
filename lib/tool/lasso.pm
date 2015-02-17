@@ -1119,6 +1119,7 @@ sub modelfit_setup
 		base_directory => $self->directory(),
 		directory => $self->directory().'optimal_lasso_modelfit_dir',
 		top_tool =>1,
+		rplots => -1,
 		parent_threads=>1);
 
 	$mfitobj->run();
