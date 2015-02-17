@@ -405,10 +405,10 @@ if (defined $options{'renumber'} and $options{'renumber'} != 0){
 		if(scalar(@probtab) > 0){
 			$message .= '$TABLE FILE= in $PROB '.join(',',@probtab)."\n";
 		}
-		if(scalar(@probtab) > 0){
+		if(scalar(@probmsfo) > 0){
 			$message .= '$EST MSFO= in $PROB '.join(',',@probmsfo)."\n";
 		}
-		if(scalar(@probtab) > 0){
+		if(scalar(@probmsfi) > 0){
 			$message .= '$MSFI <file> in $PROB '.join(',',@probmsfi)."\n";
 		}
 		print $message;
