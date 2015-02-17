@@ -5886,18 +5886,21 @@ sub preprocess_data
 
 	#must handle DROP here without header name.
 	my $dummycounter=0;
+	my $first_undropped;
 	if( defined $filtered_data_model->problems()->[0] -> inputs and 
 		defined $filtered_data_model->problems()->[0] -> inputs -> [0] -> options ) {
 		foreach my $option ( @{$filtered_data_model->problems()->[0] -> inputs -> [0] -> options} ) {
+			unless ($option->name eq 'DROP' or $option->name eq 'SKIP'){
+				$first_undropped = $option->name;
+				last;
+			}
+		}
+		unless (defined $first_undropped){
+			croak("found no undropped columns in model");
+		}
+		foreach my $option ( @{$filtered_data_model->problems()->[0] -> inputs -> [0] -> options} ) {
 			if ($option->name eq 'DROP' or $option->name eq 'SKIP'){
-				if (defined $option->value and $option->value ne '' and not ($option->value eq 'DROP' or $option->value eq 'SKIP') ){
-					push( @filter_table_header, $option -> value );
-				}else{
-					#simple drop used in $INPUT without name. Set dummy name as placeholder here.
-					$dummycounter++;
-					$option->value('DUMMY'.$dummycounter);
-					push( @filter_table_header, $option -> value );
-				}
+				push( @filter_table_header, $first_undropped );
 			}else{
 				push( @filter_table_header, $option -> name );
 			}
@@ -5906,8 +5909,7 @@ sub preprocess_data
 		croak("Trying to construct table for filtering data".
 			" but no headers were found in \$INPUT" );
 	}
-	foreach my $remove_rec ('simulation','covariance','table','scatter','input'){
-		#will put back input without DROP below
+	foreach my $remove_rec ('simulation','covariance','table','scatter'){
 		$filtered_data_model -> remove_records(type => $remove_rec);
 	}
 
@@ -6181,22 +6183,17 @@ sub preprocess_data
 			record_strings => [ join( ' ', @filter_table_header ).
 				' NOAPPEND NOPRINT ONEHEADER FILE='.$datafile]);
 	}
-	#put back input without DROP
-	$filtered_data_model -> add_records(
-		type => 'input',
-		record_strings => [join(' ',@filter_table_header)]);
 
 
 
 	$filtered_data_model->_write();
-	# run model in data_filtering_dir clean=3
+	# run model in data_filtering_dir
 	my $filter_fit = tool::modelfit -> new
 	( %{common_options::restore_options(@common_options::tool_options)},
 		base_directory => $directory,
 		directory      => $directory.'/data_preprocessing_dir/',
 		models         => [$filtered_data_model],
-		top_tool       => 0,
-		clean => 3  );
+		top_tool       => 0);
 	ui -> print( category => 'all',
 		message  => $run_mess,newline => 1 );
 
