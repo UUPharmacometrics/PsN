@@ -255,6 +255,37 @@ if( $options{'shrinkage'} ) {
   $model -> shrinkage_stats( enabled => 1 );
 }
 
+#input check that no block sigma or omega
+
+foreach my $param ('omega','sigma'){
+	my @parnum;
+	if ($param eq 'omega'){
+		@parnum = @omegas;
+	}else{
+		@parnum = @sigmas;
+	}
+	next unless (scalar(@parnum)>0);
+
+	my $labels = $model -> labels ( parameter_type => $param,
+									generic => 1); #arr over probs
+	for (my $prob=0; $prob < scalar(@{$labels}); $prob++){ 
+		my %block_hash;
+		my $coord = $model->problems->[$prob]->get_estimated_attributes(parameter=>$param,
+																		attribute=> 'coordinate_strings');
+		my $block = $model->problems->[$prob]->get_estimated_attributes(parameter=>$param,
+																		attribute=> 'block_number');
+		for (my $i=0; $i<scalar(@{$coord}); $i++){
+			$block_hash{$coord->[$i]} = $block->[$i];
+		}
+
+		foreach my $num (@parnum){
+			my $lab = $labels->[$prob]->[$num-1];
+			if( $block_hash{$lab} > 0){
+				die "$param number $num, which is $lab, is part of a block and cannot be individually FIXed\n";
+			}
+		}
+	}
+}
 ## Create new Llp object:
 my $llp = tool::llp -> 
   new ( eval( $common_options::parameters ),
