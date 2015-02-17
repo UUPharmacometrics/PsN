@@ -21,6 +21,8 @@ use common_options;
 use ui;
 use Cwd;
 use File::Copy qw/cp mv/;
+use File::Glob;
+use File::Path 'rmtree';
 
 my $cmd_line = $0 . " " . join( " ", @ARGV );
 
@@ -308,7 +310,13 @@ $modelfit-> print_options (cmd_line => $cmd_line,
 
 $modelfit -> run;
 
-mv($modelfit->raw_results_file->[0],'raw_results.csv');
+my $dir = $modelfit->directory;
+foreach my $file (<$dir/raw_results_*>){
+	mv($file,$main_directory.'/.');
+}
+if ($modelfit->clean > 2){
+	rmtree($dir);
+}
 
 my @run_results=();
 my $probnum = $main_model->get_retries_problem_number();
@@ -369,5 +377,29 @@ for (my $i=0; $i< scalar(@{$mod_array->[$selected-1]->output_files}); $i++){
 	}
 }
 
+#cleanup?
+if ($modelfit->clean > 1){
+	#datafile
+	my $file = $mod_array->[0]->datafiles(absolute_path=>1)->[0];
+#	ui -> print( category => 'parallel_retries', message => "cleaning $file\n" );
+	unlink($file);
+}
+if ($modelfit->clean > 2){
+	foreach my $mod (@{$mod_array}){
+		my $filestem = $mod->filename;
+		$filestem =~ s/\.[^.]+$//; #last dot and extension
+		for (my $i=0; $i< scalar(@{$mod->output_files}); $i++){
+			my $from = $mod->directory.$mod->output_files->[$i];
+			my $tabfrom = $mod->directory.$filestem.'.'.$mod->output_files->[$i];
+			if (-e $from){
+				unlink($from);
+#				ui -> print( category => 'parallel_retries', message => "cleaning $from\n" );
+			}elsif(-e $tabfrom){
+				unlink($tabfrom);
+#				ui -> print( category => 'parallel_retries', message => "cleaning $tabfrom\n" );
+			}
+		}
+	}
+}
 ui -> print( category => 'parallel_retries',
 	     message => "\nparallel_retries done\n" );
