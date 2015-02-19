@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{SIR user guide}{2015-01-26}
+\guidetitle{SIR user guide}{2015-02-19}
 
 \begin{document}
 
@@ -71,11 +71,11 @@ Default not set. By default, resampling is performed without replacement, but se
 \nextopt
 \optdefault{covmat\_input}{filename}
 Not allowed together with rawres\_input. If given, this covariance matrix is
-used for sampling parameter vectors and for computing the PDF. The format of the file is similar to a NONMEM-generated .cov-file except 
+used for sampling parameter vectors and for computing the PDF. 
+The format of the file is similar to a NONMEM-generated .cov-file except 
 that the \verb|TABLE NO.| line should be omitted.
 Fixed parameters do not have to be omitted, sir will filter them out. 
-The covmat\_input file must be formatted to contain a space- or tab-separated  $N\times N$ symmetric covariance matrix, 
-where N is the total number of estimated parameters. 
+The covmat\_input file must be formatted to contain a space- or tab-separated  $N\times N$ symmetric covariance matrix.
 The first line in the file must be a header with labels for THETA/OMEGA/SIGMA written as in a regular NONMEM .cov-file 
 and a leading column called NAME: 
 \begin{verbatim}
@@ -88,9 +88,10 @@ Please note that there is a PsN script called covmat that can be used to generat
 \nextopt
 \optdefault{inflation}{X}
 Default is 1, which is the same as no inflation. If given, the covariance
-matrix will be multiplied with this number before the parameter vectors
+matrix will be multiplied with a scalar $X$ multiple of the identity matrix
+before the parameter vectors
 are sampled from the truncated multivariate normal distribution.
-The weights will however still be computed based the non-inflated covariance matrix. 
+The weights will also be computed based the inflated covariance matrix. 
 \nextopt
 \optdefault{mceta}{N}
 Optional. Sets option MCETA=N in \$ESTIMATION. Only allowed with NM7.3 and classical estimation methods.
@@ -111,10 +112,19 @@ is important that the control stream copy at the top of the lst-file matches the
 actual input model file in terms of which parameters are estimated, 
 FIXED or SAME, otherwise there will be a mis-match between which parameter estimates are read from the
 lst-file and which estimates are needed for the sir procedure.
-\item[\underline{Step 1}] Simulate 'samples' parameter vectors from the covariance matrix, i.e. the .cov-file given by NONMEM or the matrix given via option covmat\_input. 
+\item[\underline{Step 1}] Simulate 'samples' parameter vectors from the covariance matrix, i.e. the .cov-file given by NONMEM 
+or the matrix given via option covmat\_input. 
 NB: NOT performed if -rawres\_input is specified.
-\item[\underline{Step 2}] Calculate each vector’s probability given the covariance matrix based on the formula for the probability 
-density function (PDF) of a multivariate normal distribution. Store parameter values and probabilities in raw\_results.csv.
+\item[\underline{Step 2}] Calculate each vector $x$’s probability 
+given the covariance matrix based on the formula for the probability 
+density function (PDF) of a multivariate normal distribution:\\
+\begin{math}
+\frac{\left(det\left(A^{-1}\right)\right)^{1/2}}{\left(2\pi\right)^{k/2}} exp\left(-\frac{1}{2}(\left(x-\mu\right)A^{-1} \left(x-\mu\right)^T\right)
+\end{math}
+\\
+where $k$ is the number of dimensions, 
+$\mu$ is the vector of expectations and $A$ is the (possibly inflated) covariance matrix.
+Store parameter values and probabilities in raw\_results.csv.
 NB: If -rawres\_input is specified the probability of each vector will be set equal to 1.
 \item[\underline{Step 3}] evaluate the parameter vectors on the original data.
 Create model files with up to 250 \$PROBLEM based on the original model file but setting MAXEVAL=0
@@ -131,15 +141,16 @@ Compute univariate confidence intervals and store in sir\_results.csv.
 
 \section{Output}
 \begin{itemize}
-\item raw\_results.csv with added columns for
-\begin{enumerate}
-\item deltaofv = $\mathrm{ofv} - \mathrm{original}\mbox{\tt\string_}\mathrm{model}\mbox{\tt\string_}\mathrm{ofv}$
-\item likelihood\_ratio = $e^{-0.5\cdot \mathrm{deltaofv}}$
-\item PDF
-\item importance\_ratio = $\frac{\mathrm{likelihood}\mbox{\tt\string_}\mathrm{ratio}}{\mathrm{PDF}}$
-\item probability\_resample = $\frac{\mathrm{importance}\mbox{\tt\string_}\mathrm{ratio}}{\sum{\mathrm{importance}\mbox{\tt\string_}\mathrm{ratio}}}$
-\item resamples = number of actual resamples with random seed used
-\end{enumerate}
+\item raw\_results.csv with added columns for\\
+\begin{tabular}{ll}
+\bf{sample.id} & A unique number\\
+\bf{deltaofv} & $\mathrm{ofv} - \mathrm{original}\mbox{\tt\string_}\mathrm{model}\mbox{\tt\string_}\mathrm{ofv}$\\
+\bf{likelihood\_ratio} & $e^{-0.5\cdot \mathrm{deltaofv}}$ \\
+\bf{PDF} & PDF \\
+\bf{importance\_ratio} & $\mathrm{likelihood}\mbox{\tt\string_}\mathrm{ratio}/\mathrm{PDF}$\\
+\bf{probability\_resample} & $\mathrm{importance}\mbox{\tt\string_}\mathrm{ratio}/\sum{\mathrm{importance}\mbox{\tt\string_}\mathrm{ratio}}$ \\
+\bf{resamples} & number of actual resamples with random seed used\\
+\end{tabular}
 \item sir\_results.csv with percentiles and empirical covariance matrix
 \end{itemize}
 

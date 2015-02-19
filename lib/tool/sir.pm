@@ -245,7 +245,8 @@ sub modelfit_setup
 														labels_hash => $parameter_hash);
 		$self->pdf_vector(mvnpdf(inverse_covmatrix => $icm,
 								 mu => $muvector,
-								 xvec_array => $vectorsamples));
+								 xvec_array => $vectorsamples,
+								 inflation => $self->inflation));
 	}
 	
 
@@ -298,11 +299,13 @@ sub mvnpdf{
 	my %parm = validated_hash(\@_,
 							  inverse_covmatrix => { isa => 'Math::MatrixReal', optional => 0 },
 							  mu => { isa => 'Math::MatrixReal', optional => 0 },
-							  xvec_array => { isa => 'ArrayRef[ArrayRef]', optional => 0 }
+							  xvec_array => { isa => 'ArrayRef[ArrayRef]', optional => 0 },
+							  inflation => { isa => 'Num', optional => 0 }
 	);
 	my $inverse_covmatrix = $parm{'inverse_covmatrix'};
 	my $mu = $parm{'mu'};
 	my $xvec_array = $parm{'xvec_array'};
+	my $inflation = $parm{'inflation'};
 
 	my ($rows,$columns) = $inverse_covmatrix->dim();
 	unless (($rows == $columns) and ($rows > 0)){
@@ -316,23 +319,29 @@ sub mvnpdf{
 	unless (scalar(@{$xvec_array})>0){
 		croak("Input error mvnpdf: xvec_array is empty");
 	}
+	unless ($inflation>0){
+		croak("Input error mvnpdf: inflation is not > 0");
+	}
 
 	my $det_factor = get_determinant_factor(inverse_covmatrix => $inverse_covmatrix,
-											k => $k);
+											k => $k,
+											inflation => $inflation		);
 
 	my @pdf_array=();
-	my $delta = $mu->shadow(); #zeros matrix same size as $mu
+	my $delta_right = $mu->shadow(); #zeros matrix same size as $mu
+	my $delta_left = $mu->shadow(); #zeros matrix same size as $mu
 
 	foreach my $xvec (@{$xvec_array}){
 		unless (scalar(@{$xvec}) == $k){
 			croak("Input error mvnpdf: xvec should have dimension $k but has dimension ".scalar(@{$xvec}));
 		}
 		for (my $i=0; $i< $k; $i++){
-			$delta->assign(1,($i+1),($xvec->[$i] - $mu->element(1,($i+1))));
+			$delta_right->assign(1,($i+1),($xvec->[$i] - $mu->element(1,($i+1))));
+			$delta_left->assign(1,($i+1),($xvec->[$i] - $mu->element(1,($i+1)))*(1/$inflation));
 		}
 		#now $delta is $xvec - $mu
-		my $product_left = $delta->multiply($inverse_covmatrix);
-		my $product=$product_left->multiply(~$delta); # ~ is transpose
+		my $product_left = $delta_left->multiply($inverse_covmatrix);
+		my $product=$product_left->multiply(~$delta_right); # ~ is transpose
 		push(@pdf_array,$det_factor*exp(-0.5 * $product->element(1,1)));
 
 	}
@@ -562,17 +571,30 @@ sub get_determinant_factor
 {
 	my %parm = validated_hash(\@_,
 							  inverse_covmatrix => { isa => 'Math::MatrixReal', optional => 0 },
-							  k => { isa => 'Int', optional => 0 }
+							  k => { isa => 'Int', optional => 0 },
+							  inflation => { isa => 'Num', optional => 1, default => 1 },
 	);
 	my $inverse_covmatrix = $parm{'inverse_covmatrix'};
 	my $k = $parm{'k'};
+	my $inflation = $parm{'inflation'};
+
+	unless ($inflation > 0){
+		croak("Inflation less than 0 in get_determinant_factor")
+	}
 
 	my $invdeterminant = $inverse_covmatrix->det();
+
 	unless (defined $invdeterminant and $invdeterminant > 0){
 		print "\nInverse covmatrix:\n";
 		print $inverse_covmatrix;
 		croak("\nFailed to compute determinant of inverse covariance matrix");
 	}
+	#p90 Mathematics Handbook
+	# det(AB)=det(A)det(B) det I = 1,  det(xI)=x^n*det(I)=x^n
+	# derivation: det((A*xI)^(-1))=det((xI)^(-1)A^(-1))=det((xI)^(-1))*det(A^(-1))=(1/x)^n*det(A^(-1))
+	# k is n
+	$invdeterminant = $invdeterminant * ((1/$inflation)**($k));
+
 	return sqrt($invdeterminant)/((2* pi)**($k/2));
 
 }
@@ -1070,7 +1092,8 @@ sub _modelfit_raw_results_callback
 		$index=0;
 		foreach my $row ( @{$modelfit -> raw_results()} ) {
 			my @oldrow =@{$row};
-			$row = [@oldrow[0 .. $ofvindex],
+			$row = [($index+1),
+					@oldrow[0 .. $ofvindex],
 					$delta_ofv[$index],
 					((defined $delta_ofv[$index]) ? exp(-0.5*$delta_ofv[$index]): undef), #likelihood_ratio
 					$pdf_vector->[$index],
@@ -1092,7 +1115,7 @@ sub _modelfit_raw_results_callback
 		$orig_mod -> outputs -> [0] -> flush;
 		$raw_results_row->[0]->[0] = 'input';
 		my @oldrow =@{$raw_results_row->[0]};
-		my $row = [@oldrow[0 .. $ofvindex],0,undef,undef,undef,undef,undef,@oldrow[$ofvindex+1 .. $#oldrow]]; 
+		my $row = [0,@oldrow[0 .. $ofvindex],0,undef,undef,undef,undef,undef,@oldrow[$ofvindex+1 .. $#oldrow]]; 
 		
 		unshift( @{$modelfit -> raw_results()}, @{[$row]} );
 
@@ -1104,20 +1127,25 @@ sub _modelfit_raw_results_callback
 			$headerindex = $k if ($old_header[$k] eq 'ofv');
 		}
 		$modelfit -> raw_results_header(
-			[@old_header[0 .. $headerindex],@extra_headers,@old_header[$headerindex+1 .. $#old_header]]);
+			['sample.id',@old_header[0 .. $headerindex],@extra_headers,@old_header[$headerindex+1 .. $#old_header]]);
 
-		
+		my $extra_header_count = scalar(@extra_headers);
 		foreach my $mod (sort({$a <=> $b} keys %{$self->raw_line_structure()})){
 			foreach my $category (keys %{$self->raw_line_structure() -> {$mod}}){
 				next if ($category eq 'line_numbers');
 				my ($start,$len) = split(',',$self->raw_line_structure() -> {$mod}->{$category});
-				$self->raw_line_structure() -> {$mod}->{$category} = ($start+4).','.$len
-					if ($start > $ofvindex); #+4 for deltaofv PDF weight resamples
+				if ($start > $ofvindex){
+					$self->raw_line_structure() -> {$mod}->{$category} = ($start+$extra_header_count+1).','.$len;#+1 extra for sample.id
+				}else{
+					$self->raw_line_structure() -> {$mod}->{$category} = ($start+1).','.$len; #+1 for sample id
+				}
 			}
 			my $hc = 0;
+			$self->raw_line_structure() -> {$mod}->{'sample.id'} = ($hc).',1'; #sample has index 0
+			$hc++;
 			foreach my $head (@extra_headers){
-				$hc++;
-				$self->raw_line_structure() -> {$mod}->{$head} = ($ofvindex+$hc).',1';
+				$hc++; #first will be 2
+				$self->raw_line_structure() -> {$mod}->{$head} = ($ofvindex+$hc).',1'; #first has 2 extra relative old ofvindex
 				#			$self->raw_line_structure() -> {$mod}->{'deltaofv'} = ($ofvindex+1).',1';
 			}
 		}

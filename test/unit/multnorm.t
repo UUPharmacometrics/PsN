@@ -2,7 +2,7 @@
 
 use strict;
 use warnings;
-use Test::More tests => 167;
+use Test::More;
 #use Test::More;
 use Test::Exception;
 use FindBin qw($Bin);
@@ -134,7 +134,8 @@ cmp_float($sampled_params_arr->[0]->{'theta'}->{'THETA5'}, 0.118821314516974, 's
 
 my $pdf=tool::sir::mvnpdf(inverse_covmatrix => $icm,
 						  mu => $mu,
-						  xvec_array => $gotsamples);
+						  xvec_array => $gotsamples,
+						  inflation => 1);
 my $matlab_mvnpdf=4.622416072199147e+05; #mvnpdf function
 cmp_ok(abs($pdf->[0]-$matlab_mvnpdf),'<',1e-7,'pdf diff to matlab');
 #print "\npdf ".$pdf->[0]."\n";
@@ -242,7 +243,8 @@ cmp_ok(abs($exponent-$matlab_exponent),'<',0.000000000001,'exponent diff to matl
 
 #print "\nexponent $exponent\n";
 my $base=tool::sir::get_determinant_factor(inverse_covmatrix => $icm,
-										   k => $k);
+										   k => $k,
+										   inflation => 1);
 
 #print "\nbase $base\n";
 my $matlab_base = 4.465034382516543e+06;
@@ -376,5 +378,38 @@ my $gotsamples = tool::sir::sample_multivariate_normal(samples=>$nsamples,
 													   block_number => $hash->{'block_number'},
 													   mu => $mu
 	);
+
+
+$icm = Math::MatrixReal->new_from_rows([[3,1,0.1],[1,5,0.3],[0.1,0.3,3]]);
+
+my $num=tool::sir::get_determinant_factor(inverse_covmatrix => $icm,
+										  k => 3,
+										  inflation => 1);
+
+cmp_float($num,0.410210166750190, "determinant factor no inflation");
+
+$num=tool::sir::get_determinant_factor(inverse_covmatrix => $icm,
+										  k => 3,
+										  inflation => 3);
+
+cmp_float($num,0.078944983399181, "determinant factor with inflation 3");
+
+
+my $mu = Math::MatrixReal->new_from_rows([[1,2,3]]);
+
+$pdf=tool::sir::mvnpdf(inverse_covmatrix => $icm,
+						  mu => $mu,
+						  xvec_array => [[3,0,1]],
+						  inflation => 1);
+
+cmp_float($pdf->[0],2.807179347140791e-09,'mvnpdf well conditioned no inflation');
+
+$pdf=tool::sir::mvnpdf(inverse_covmatrix => $icm,
+						  mu => $mu,
+						  xvec_array => [[3,0,1]],
+						  inflation => 3);
+
+cmp_float($pdf->[0],1.498807247585522e-04,'mvnpdf well conditioned with inflation 3');
+
 
 done_testing();
