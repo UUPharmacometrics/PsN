@@ -5,34 +5,25 @@ package model::annotation;
 use include_modules;
 use Moose;
 use MooseX::Params::Validate;
+use model::annotation::tag;
 
-has 'based_on' => ( is => 'rw', isa => 'Str' );
-has 'nodOFV' => ( is => 'rw', isa => 'Bool', default => 0 );
-has 'census_style' => ( is => 'rw', isa => 'Bool', default => 0 );
-has 'description' => ( is => 'rw', isa => 'ArrayRef[Str]' );
-has 'label' => ( is => 'rw', isa => 'ArrayRef[Str]' );
-has 'structural_model' => ( is => 'rw', isa => 'ArrayRef[Str]' );
-has 'covariate_model' => ( is => 'rw', isa => 'ArrayRef[Str]' );
-has 'interindividual_variability' => ( is => 'rw', isa => 'ArrayRef[Str]' );
-has 'interoccasion_variability' => ( is => 'rw', isa => 'ArrayRef[Str]' );
-has 'residual_variability' => ( is => 'rw', isa => 'ArrayRef[Str]' );
-has 'estimation' => ( is => 'rw', isa => 'ArrayRef[Str]' );
-has 'unknown_tags' => ( is => 'rw', isa => 'ArrayRef[Str]' );
+has 'tags' => ( is => 'rw', isa => 'ArrayRef[model::annotation::tag]' );
 
-my @tags = (
-    [ 'Based on', 1, 'based_on' ],
-    [ 'Description', 2, 'description' ],
-    [ 'Label', 3, 'label' ],
-    [ 'Structural model', 4, 'structural_model' ],
-    [ 'Covariate model', 5, 'covariate_model' ],
-    [ 'Inter-individual variability', 6, 'interindividual_variability' ],
-    [ 'Inter-occasion variability', 7, 'interoccasion_variability' ],
-    [ 'Residual variability', 8, 'residual_variability' ],
-    [ 'Estimation', 9, 'estimation' ],
-);
+
+sub _is_start_of_annotation
+{
+    my %parm = validated_hash(\@_,
+        line => { isa => 'Str' },
+    );
+    my $line = $parm{'line'};
+
+    return $line =~ /^;;(\s*.*?\.\s*.*?:|;C\s*[Pp]arent\s*=)/;
+}
 
 sub parse_model
 {
+    # Find and parse the annotation block in a full model.
+    # Remove lines containing the annotation
     my $self = shift;
     my %parm = validated_hash(\@_,
         model_lines => { isa => 'ArrayRef' },
@@ -51,11 +42,11 @@ sub parse_model
 
     for (my $i = 0; $i < scalar(@{$model_lines}); $i++) {
         my $line = $model_lines->[$i];
-        if ($line =~ /^;;(\s*.*\.\s*.*:|;C\s*[Pp]arent\s*=)/ and not $found_annotation_block) {
+        if (_is_start_of_annotation(line => $line) and not $found_annotation_block) {
             $first_line_of_annotation = $i;
             $found_annotation_block = 1;
         }
-        if ($line !~ /^(;;|\s*$)/ and $found_annotation_block and not $passed_annotation_block) {
+        if ($line !~ /^;;/ and $found_annotation_block and not $passed_annotation_block) {
             $last_line_of_annotation = $i - 1;
             $passed_annotation_block = 1;
         }
@@ -63,9 +54,10 @@ sub parse_model
             push @annotation_lines, $line;
         }
     }
+
     $self->parse(annotation_rows => \@annotation_lines);
 
-    # Don't parse annotation further
+    # Remove the rows containing annotation to not parse it as normal comments
     if (defined $last_line_of_annotation) {
         splice @{$model_lines}, $first_line_of_annotation, $last_line_of_annotation - $first_line_of_annotation + 1;
     }
@@ -73,6 +65,7 @@ sub parse_model
 
 sub parse
 {
+    # Parse an array of annotation rows
     my $self = shift;
     my %parm = validated_hash(\@_,
         annotation_rows => { isa => 'ArrayRef[Str]' },
@@ -82,56 +75,117 @@ sub parse
     my $found;
     my $content;
 
+    my @tags = @{model::annotation::tag::get_defined_tags()};   # Needed?
+
     foreach my $row (@annotation_rows) {
         chomp $row;
     }
 
+    my @range;
     for (my $i = 0; $i < scalar(@annotation_rows); $i++) {
-        $found = 0;
-        my $attribute;
-        foreach my $entry (@tags) {
-            my $tag = $entry->[0];
-            if ($annotation_rows[$i] =~ /^;;\s*(\d*\.\s*)?$tag:\s*(?<text>.*)$/) {
-                $content = $+{text};
-                $found = 1;
-                $attribute = $entry->[2];
-                last;
-            }
-        }
-        if (not $found) {   # Check census style parent
-            if ($annotation_rows[$i] =~ /^;;;C\s*[Pp]arent\s*=\s*(\d*)/) {
-                $self->based_on($1);
-                if ($1 eq '' or $1 == 0) {
-                    $self->nodOFV(1);
-                }
-                $self->census_style(1);
-                next;
-            }
-        }
-        if ($found) {
-            if ($attribute eq 'based_on') { # Contents only rest of row
-                if ($content =~ /\[nodOFV\]/) {
-                    $content =~ s/\s*\[nodOFV\]\s*//;
-                    $self->nodOFV(1);
-                }
-                $self->based_on($content);
-                $self->census_style(0);
-            } else {
-                while (++$i < scalar(@annotation_rows)) {
-                    if ($annotation_rows[$i] =~ /^;;\s*.*\.\s*.*:/) {
-                        $i--;
-                        last;
-                    } else {
-                        $self->$attribute([]) unless defined $self->$attribute;
-                        push @{$self->$attribute}, $annotation_rows[$i];
-                    }
-                }
-            }
-        } else {
-            $self->unknown_tags([]) unless defined $self->unknown_tags;
-            push @{$self->unknown_tags}, $annotation_rows[$i];
+        if (_is_start_of_annotation(line => $annotation_rows[$i])) {
+            push @range, $i;
         }
     }
+    push @range, scalar(@annotation_rows);
+
+    $self->tags([]);
+    for (my $i = 0; $i < scalar(@range) - 1; $i++) {
+        my @entry = @annotation_rows[$range[$i] .. $range[$i + 1] - 1];
+        my $tag = model::annotation::tag->new();
+
+        $tag->parse(rows => \@entry);
+        push @{$self->tags}, $tag;
+    }
+}
+
+sub find_tag
+{
+    # Search for a tag by name. undef if not found
+    my $self = shift;
+    my %parm = validated_hash(\@_,
+        name => { isa => 'Str' },
+    );
+    my $name = $parm{'name'};
+
+    if (defined $self->tags) {
+        foreach my $tag (@{$self->tags}) {
+            if ($tag->name eq $name) {
+                return $tag;
+            }
+        }
+    }
+    return;
+}
+
+sub get_tag_content
+{
+    # Get the content of a tag
+    my $self = shift;
+    my %parm = validated_hash(\@_,
+        name => { isa => 'Str' },
+    );
+    my $name = $parm{'name'};
+
+    if (defined $self->tags) {
+        foreach my $tag (@{$self->tags}) {
+            if ($tag->name eq $name) {
+                return $tag->content;
+            }
+        }
+    }
+    return;
+}
+
+sub get_based_on
+{
+    my $self = shift;
+
+    my $tag = $self->find_tag(name => 'Based on');
+    if (not defined $tag) {
+        return;
+    }
+    my $content = $tag->content;
+    if (not defined $content) {
+        return;
+    }
+
+    my $str = $content->[0];
+
+    $str =~ s/^\s*//;
+    $str =~ s/\s*$//;
+
+    return $str;
+}
+
+sub set_based_on
+{
+    my $self = shift;
+    my $value = shift;
+
+    $self->set_tag(name => 'Based on', content => [ " $value" ] );
+}
+
+sub get_nodOFV
+{
+    my $self = shift;
+
+    my $tag = $self->find_tag(name => 'Based on');
+    if (not defined $tag) {
+        return;
+    }
+
+    return $tag->nodOFV;
+}
+
+sub set_nodOFV
+{
+    # Currently only workds if 'Based on' is already present
+    my $self = shift;
+    my $value = shift;
+
+    my $tag = $self->find_tag(name => 'Based on');
+    $tag->nodOFV($value);
 }
 
 sub format
@@ -140,46 +194,56 @@ sub format
 
     my @formatted;
 
-    foreach my $entry (@tags) {
-        my $attribute = $entry->[2];
-        if (defined $self->$attribute) {
-            my $line = ";; " . $entry->[1] . ". " . $entry->[0] . ":"; 
-            if ($entry->[2] eq 'based_on') {
-                if (not $self->census_style) {
-                    my $nodOFV = $self->nodOFV ? ' [nodOFV]' : '';
-                    $line .= ' ' . $self->based_on . $nodOFV;
-                } else {
-                    my $number = $self->nodOFV ? '0' : $self->based_on;
-                    $line = ";;;C parent = " . $number;
-                }
-                push @formatted, $line;
-            } else {
-                push @formatted, $line;
-                foreach my $row (@{$self->$attribute}) {
-                    push @formatted, $row;
-                }
+    if (defined $self->tags) {
+        foreach my $tag (@{$self->tags}) {
+            my $format = $tag->format();
+            push @formatted, @{$format};
+        }
+    }
+    return \@formatted;
+}
+
+sub set_tag
+{
+    my $self = shift;
+    my %parm = validated_hash(\@_,
+        name => { isa => 'Str' },
+        content => { isa => 'ArrayRef' },
+    );
+    my $name = $parm{'name'};
+    my $content = $parm{'content'};
+
+    my $found = 0;
+
+    if (defined $self->tags) {
+        foreach my $tag (@{$self->tags}) {
+            if ($tag->name eq $name) {
+                $tag->content($content);
+                $found = 1;
             }
         }
     }
 
-    if (defined $self->unknown_tags) {
-        push @formatted, @{$self->unknown_tags};
+    if (not $found) {
+        my $tag = model::annotation::tag->new();
+        $tag->set_tag(name => $name, content => $content);
+        $self->tags([]) if not defined $self->tags;
+        push @{$self->tags}, $tag;
     }
 
-    return \@formatted;
 }
 
 sub add_empty_tags
 {
     my $self = shift;
 
-    foreach my $entry (@tags) {
-        my $attribute = $entry->[2];
-        if ($attribute eq 'based_on') {
-            $self->$attribute('') unless defined $self->$attribute;
-        } else {
-            $self->$attribute([]) unless defined $self->$attribute;
-        }
+    my $tag_names = model::annotation::tag::get_defined_tags();
+    $self->tags([]);
+
+    for (my $i = 0; $i < scalar(@$tag_names); $i++) {
+        my $tag = model::annotation::tag->new();
+        $tag->set_tag(name => $tag_names->[$i], content => []);
+        push @{$self->tags}, $tag;
     }
 }
 

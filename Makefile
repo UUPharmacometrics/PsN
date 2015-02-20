@@ -99,6 +99,7 @@ LIBFILES= ui.pm \
 	model/nonparametric_module.pm \
 	model/problem.pm \
 	model/annotation.pm \
+	model/annotation/tag.pm \
 	output/problem/subproblem.pm \
 	output/problem.pm \
 	output.pm \

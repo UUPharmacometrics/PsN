@@ -12,7 +12,6 @@ use array qw(:all);
 use Moose;
 use MooseX::Params::Validate;
 use output::problem;
-use model::annotation;
 use utils::file;
 
 has 'problems' => ( is => 'rw', isa => 'ArrayRef[output::problem]' );
