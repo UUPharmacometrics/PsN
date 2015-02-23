@@ -359,6 +359,33 @@ $standardised_output->parse;
 														   [2.18242E-01, 6.24475E-01, 3.87137E-02, 1.92971E+00, 2.10896E-03, 1.29605E-02, 2.50889E-01, 3.82189E-01,6.06153E-03 ]  ], 
 			  "Nock: StandardError columns");
 
+    is_deeply($so->SOBlock->[0]->CovarianceMatrix->RowNames, [ 'THCL', 'THV1', 'THQ', 'THV2', 'SDADD','SDPROP','CLCLCR_COV','V1KG_COV','OMCL' ], "Nock Covariance matrix RowNames");
+    is_deeply($so->SOBlock->[0]->CovarianceMatrix->ColumnNames, [ 'THCL', 'THV1', 'THQ', 'THV2', 'SDADD','SDPROP','CLCLCR_COV','V1KG_COV','OMCL' ], "Nock Covariance matrix ColumnNames");
+    is_deeply($so->SOBlock->[0]->CovarianceMatrix->MatrixRow,
+[ [ 4.76297E-02, 3.42333E-02, 1.46835E-03, 2.96782E-02, -5.38607E-05, 7.11927E-04, -6.62054E-03, -6.94073E-03, 2.97933E-04 ],
+[ 3.42333E-02, 3.89969E-01, 1.31621E-02, 7.06424E-01, 2.08494E-05, 1.26525E-03, -1.29799E-02, 6.36062E-02, 8.37629E-04 ],
+[ 1.46835E-03, 1.31621E-02, 1.49875E-03, 5.48852E-02, 3.60452E-05, -6.47254E-05, 2.73967E-03, -1.20797E-03, -6.11735E-05 ],
+[ 2.96782E-02, 7.06424E-01, 5.48852E-02, 3.72379E+00, 6.46479E-04, 2.74345E-03, -1.59594E-02, 1.19457E-01, 1.56975E-04 ],
+[ -5.38607E-05, 2.08494E-05, 3.60452E-05, 6.46479E-04, 4.44772E-06, -1.25832E-05, 1.76699E-04, 1.57445E-04, -7.45912E-06 ],
+[ 7.11927E-04, 1.26525E-03, -6.47254E-05, 2.74345E-03, -1.25832E-05, 1.67974E-04, -9.30403E-04, 1.24400E-03, 1.63195E-05 ],
+[ -6.62054E-03, -1.29799E-02, 2.73967E-03, -1.59594E-02, 1.76699E-04, -9.30403E-04, 6.29452E-02, -1.97132E-02, -1.05782E-03 ],
+[ -6.94073E-03, 6.36062E-02, -1.20797E-03, 1.19457E-01, 1.57445E-04, 1.24400E-03, -1.97132E-02, 1.46069E-01, -1.02889E-04 ],
+[ 2.97933E-04, 8.37629E-04, -6.11735E-05, 1.56975E-04, -7.45912E-06, 1.63195E-05, -1.05782E-03, -1.02889E-04, 3.67421E-05 ] ]
+, "Nock: Covariance matrix MatrixRow");
+
+    is_deeply($so->SOBlock->[0]->CorrelationMatrix->RowNames, [ 'THCL', 'THV1', 'THQ', 'THV2', 'SDADD','SDPROP','CLCLCR_COV','V1KG_COV','OMCL' ], "Nock Correlation matrix RowNames");
+    is_deeply($so->SOBlock->[0]->CorrelationMatrix->ColumnNames, [ 'THCL', 'THV1', 'THQ', 'THV2', 'SDADD','SDPROP','CLCLCR_COV','V1KG_COV','OMCL' ], "Nock Correlation matrix ColumnNames");
+    is_deeply($so->SOBlock->[0]->CorrelationMatrix->MatrixRow,
+[ [ 2.18242E-01, 2.51186E-01, 1.73791E-01, 7.04704E-02, -1.17021E-01, 2.51696E-01, -1.20913E-01, -8.32123E-02, 2.25215E-01 ],
+[ 2.51186E-01, 6.24475E-01, 5.44432E-01, 5.86217E-01, 1.58311E-02, 1.56330E-01, -8.28465E-02, 2.66505E-01, 2.21286E-01 ],
+[ 1.73791E-01, 5.44432E-01, 3.87137E-02, 7.34679E-01, 4.41483E-01, -1.29000E-01, 2.82066E-01, -8.16420E-02, -2.60685E-01 ],
+[ 7.04704E-02, 5.86217E-01, 7.34679E-01, 1.92971E+00, 1.58852E-01, 1.09694E-01, -3.29642E-02, 1.61972E-01, 1.34201E-02 ],
+[ -1.17021E-01, 1.58311E-02, 4.41483E-01, 1.58852E-01, 2.10896E-03, -4.60365E-01, 3.33953E-01, 1.95336E-01, -5.83495E-01 ],
+[ 2.51696E-01, 1.56330E-01, -1.29000E-01, 1.09694E-01, -4.60365E-01, 1.29605E-02, -2.86134E-01, 2.51143E-01, 2.07733E-01 ],
+[ -1.20913E-01, -8.28465E-02, 2.82066E-01, -3.29642E-02, 3.33953E-01, -2.86134E-01, 2.50889E-01, -2.05588E-01, -6.95581E-01 ],
+[ -8.32123E-02, 2.66505E-01, -8.16420E-02, 1.61972E-01, 1.95336E-01, 2.51143E-01, -2.05588E-01, 3.82189E-01, -4.44128E-02 ],
+[ 2.25215E-01, 2.21286E-01, -2.60685E-01, 1.34201E-02, -5.83495E-01, 2.07733E-01, -6.95581E-01, -4.44128E-02, 6.06153E-03 ] ]
+, "Nock: Correlation matrix MatrixRow");
 
     remove_test_dir($tempdir);
 
@@ -400,7 +427,7 @@ $standardised_output->parse;
     chdir $tempdir;
 
     $standardised_output = standardised_output->new(lst_files => [ "DelBene_2009_oncology_in_vitro_EPS_in_OBS.lst" ], use_tables => 1);
-$standardised_output->parse;
+    $standardised_output->parse;
 
     $so = standardised_output::so->new(filename => "DelBene_2009_oncology_in_vitro_EPS_in_OBS.SO.xml");
 
@@ -422,6 +449,25 @@ $standardised_output->parse;
 														   [4.28999E-04, 6.31929E-04, 2.30774E-03, 3.73786E+01, 1.28301E-02 ]  ], 
 			  "DelBene: StandardError columns");
 
+    is_deeply($so->SOBlock->[0]->CovarianceMatrix->RowNames, [ 'LAMBDA0', 'K1', 'K2', 'N0', 'CV' ], "Delbene: Covariance matrix RowNames");
+    is_deeply($so->SOBlock->[0]->CovarianceMatrix->ColumnNames, [ 'LAMBDA0', 'K1', 'K2', 'N0', 'CV' ], "Delbene: Covariance matrix ColumnNames");
+    is_deeply($so->SOBlock->[0]->CovarianceMatrix->MatrixRow,
+[ [ 1.84040E-07, -1.24127E-07, 4.67258E-07, -5.65475E-03, 2.88256E-06 ],
+[ -1.24127E-07, 3.99334E-07, -2.30590E-07, 1.52957E-02, 2.21489E-06 ],
+[ 4.67258E-07, -2.30590E-07, 5.32568E-06, 4.31972E-02, -6.14332E-06 ],
+[ -5.65475E-03, 1.52957E-02, 4.31972E-02, 1.39716E+03, -1.42088E-01 ],
+[ 2.88256E-06, 2.21489E-06, -6.14332E-06, -1.42088E-01, 1.64611E-04 ] ], "DelBene: Covariance matrix MatrixRow");
+
+
+    is_deeply($so->SOBlock->[0]->CorrelationMatrix->RowNames, [ 'LAMBDA0', 'K1', 'K2', 'N0', 'CV' ], "Delbene: Correlation matrix RowNames");
+    is_deeply($so->SOBlock->[0]->CorrelationMatrix->ColumnNames, [ 'LAMBDA0', 'K1', 'K2', 'N0', 'CV' ], "Delbene: Correlation matrix ColumnNames");
+    is_deeply($so->SOBlock->[0]->CorrelationMatrix->MatrixRow,
+[ [ 4.28999E-04, -4.57871E-01, 4.71969E-01, -3.52642E-01, 5.23714E-01 ],
+[ -4.57871E-01, 6.31929E-04, -1.58119E-01, 6.47557E-01, 2.73184E-01 ],
+[ 4.71969E-01, -1.58119E-01, 2.30774E-03, 5.00777E-01, -2.07485E-01 ],
+[ -3.52642E-01, 6.47557E-01, 5.00777E-01, 3.73786E+01, -2.96282E-01 ],
+[ 5.23714E-01, 2.73184E-01, -2.07485E-01, -2.96282E-01, 1.28301E-02 ] ], "DelBene: Correlation matrix MatrixRow");
+
 
     remove_test_dir($tempdir);
 
@@ -438,7 +484,7 @@ $standardised_output->parse;
     chdir $tempdir;
 
     $standardised_output = standardised_output->new(lst_files => [ "Simeoni_2004_oncology_TGI_ETA.lst" ], use_tables => 1);
-$standardised_output->parse;
+    $standardised_output->parse;
 
     $so = standardised_output::so->new(filename => "Simeoni_2004_oncology_TGI_ETA.SO.xml");
 
@@ -459,6 +505,28 @@ $standardised_output->parse;
     is_deeply($so->SOBlock->[0]->StandardError->columns, [ ['POP_LAMBDA0','LAMBDA1','K1','K2','W0','CV'], 
 														   [ 1.77204E-02,2.00100E-02,1.33069E-01,4.72133E-02,8.84125E-03, 1.29423E-02 ]  ], 
 			  "Simeoni: StandardError columns");
+
+    is_deeply($so->SOBlock->[0]->CovarianceMatrix->RowNames, [ 'POP_LAMBDA0', 'LAMBDA1', 'K1', 'K2', 'W0', 'CV' ], "Simeoni Covariance matrix RowNames");
+    is_deeply($so->SOBlock->[0]->CovarianceMatrix->ColumnNames, [ 'POP_LAMBDA0', 'LAMBDA1', 'K1', 'K2', 'W0', 'CV' ], "Simeoni: Covariance matrix ColumnNames");
+    is_deeply($so->SOBlock->[0]->CovarianceMatrix->MatrixRow,
+[ [ 3.14011E-04, 3.54584E-04, -2.35803E-03, 8.36636E-04, -1.56670E-04, -2.29342E-04 ],
+[ 3.54584E-04, 4.00399E-04, -2.66271E-03, 9.44737E-04, -1.76913E-04, -2.58974E-04 ],
+[ -2.35803E-03, -2.66271E-03, 1.77074E-02, -6.28263E-03, 1.17650E-03, 1.72222E-03 ],
+[ 8.36636E-04, 9.44737E-04, -6.28263E-03, 2.22909E-03, -4.17425E-04, -6.11047E-04 ],
+[ -1.56670E-04, -1.76913E-04, 1.17650E-03, -4.17425E-04, 7.81678E-05, 1.14426E-04 ],
+[ -2.29342E-04, -2.58974E-04, 1.72222E-03, -6.11047E-04, 1.14426E-04, 1.67502E-04 ] ]
+, "Simeoni Covariance matrix MatrixRow");
+
+    is_deeply($so->SOBlock->[0]->CorrelationMatrix->RowNames, [ 'POP_LAMBDA0', 'LAMBDA1', 'K1', 'K2', 'W0', 'CV' ], "Simeoni Correlation matrix RowNames");
+    is_deeply($so->SOBlock->[0]->CorrelationMatrix->ColumnNames, [ 'POP_LAMBDA0', 'LAMBDA1', 'K1', 'K2', 'W0', 'CV' ], "Simeoni: Correlation matrix ColumnNames");
+    is_deeply($so->SOBlock->[0]->CorrelationMatrix->MatrixRow,
+[ [ 1.77204E-02, 1.00000E+00, -1.00000E+00, 1.00000E+00, -1.00000E+00, -1.00000E+00 ],
+[ 1.00000E+00, 2.00100E-02, -9.99999E-01, 9.99999E-01, -1.00000E+00, -1.00000E+00 ],
+[ -1.00000E+00, -9.99999E-01, 1.33069E-01, -1.00000E+00, 1.00000E+00, 1.00000E+00 ],
+[ 1.00000E+00, 9.99999E-01, -1.00000E+00, 4.72133E-02, -1.00000E+00, -1.00000E+00 ],
+[ -1.00000E+00, -1.00000E+00, 1.00000E+00, -1.00000E+00, 8.84125E-03, 1.00000E+00 ],
+[ -1.00000E+00, -1.00000E+00, 1.00000E+00, -1.00000E+00, 1.00000E+00, 1.29423E-02 ] ]
+, "Simeoni Correlation matrix MatrixRow");
 
 
     remove_test_dir($tempdir);
