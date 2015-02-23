@@ -82,7 +82,7 @@ sub parse
         $self->Deviance($dev->textContent());
     }
 
-    (my $res_node) = $xpc->findnodes('x:Estimation/x:Residuals', $node);
+    (my $res_node) = $xpc->findnodes('x:Estimation/x:Residuals/x:ResidualTable', $node);
     if (defined $res_node) {
         my $res = standardised_output::table->new();
         $res->parse($res_node);

@@ -964,14 +964,17 @@ sub _create_residuals
     $self->_add_raw_results_file($sdtab->filename, "sdtab");
 
     my $table = $self->_xml->create_table(
-        table_name => "Residuals",
+        table_name => "ResidualTable",
         column_ids => \@ids,
         column_types => [ "id", ("undefined") x (scalar(@ids) - 1) ],
         column_valuetypes =>  [ "string", ("real") x (scalar(@ids) - 1) ],
         values => \@values,
     );
 
-    return $table;
+    my $residuals = $doc->createElement("Residuals");
+    $residuals->appendChild($table);
+
+    return $residuals;
 }
 
 sub _individual_statistics
