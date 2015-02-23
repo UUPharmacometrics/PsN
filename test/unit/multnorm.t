@@ -135,7 +135,8 @@ cmp_float($sampled_params_arr->[0]->{'theta'}->{'THETA5'}, 0.118821314516974, 's
 my $pdf=tool::sir::mvnpdf(inverse_covmatrix => $icm,
 						  mu => $mu,
 						  xvec_array => $gotsamples,
-						  inflation => 1);
+						  inflation => 1,
+						  relative => 0);
 my $matlab_mvnpdf=4.622416072199147e+05; #mvnpdf function
 cmp_ok(abs($pdf->[0]-$matlab_mvnpdf),'<',1e-7,'pdf diff to matlab');
 #print "\npdf ".$pdf->[0]."\n";
@@ -400,14 +401,16 @@ my $mu = Math::MatrixReal->new_from_rows([[1,2,3]]);
 $pdf=tool::sir::mvnpdf(inverse_covmatrix => $icm,
 						  mu => $mu,
 						  xvec_array => [[3,0,1]],
-						  inflation => 1);
+						  inflation => 1,
+					   relative => 0);
 
 cmp_float($pdf->[0],2.807179347140791e-09,'mvnpdf well conditioned no inflation');
 
 $pdf=tool::sir::mvnpdf(inverse_covmatrix => $icm,
 						  mu => $mu,
 						  xvec_array => [[3,0,1]],
-						  inflation => 3);
+						  inflation => 3,
+					   relative => 0);
 
 cmp_float($pdf->[0],1.498807247585522e-04,'mvnpdf well conditioned with inflation 3');
 

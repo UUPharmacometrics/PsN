@@ -300,12 +300,14 @@ sub mvnpdf{
 							  inverse_covmatrix => { isa => 'Math::MatrixReal', optional => 0 },
 							  mu => { isa => 'Math::MatrixReal', optional => 0 },
 							  xvec_array => { isa => 'ArrayRef[ArrayRef]', optional => 0 },
-							  inflation => { isa => 'Num', optional => 0 }
+							  inflation => { isa => 'Num', optional => 0 },
+							  relative => { isa => 'Bool', optional => 1, default => 1 }
 	);
 	my $inverse_covmatrix = $parm{'inverse_covmatrix'};
 	my $mu = $parm{'mu'};
 	my $xvec_array = $parm{'xvec_array'};
 	my $inflation = $parm{'inflation'};
+	my $relative = $parm{'relative'};
 
 	my ($rows,$columns) = $inverse_covmatrix->dim();
 	unless (($rows == $columns) and ($rows > 0)){
@@ -342,8 +344,11 @@ sub mvnpdf{
 		#now $delta is $xvec - $mu
 		my $product_left = $delta_left->multiply($inverse_covmatrix);
 		my $product=$product_left->multiply(~$delta_right); # ~ is transpose
-		push(@pdf_array,$det_factor*exp(-0.5 * $product->element(1,1)));
-
+		if ($relative){
+			push(@pdf_array,exp(-0.5 * $product->element(1,1))); #we want relative the mu here, so divide by determinant factori which vanishes
+		}else{
+			push(@pdf_array,$det_factor*exp(-0.5 * $product->element(1,1))); #matlab absolute mvnpdf possibly change back
+		}
 	}
 
 	return \@pdf_array;

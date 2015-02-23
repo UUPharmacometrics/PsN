@@ -9,7 +9,7 @@ use File::Copy 'cp';
 
 require Exporter;
 our @ISA = qw(Exporter);
-our @EXPORT = qw(get_command cmp_float create_test_dir remove_test_dir copy_test_files like_file_row unlike_file_row is_array do_course_tests);
+our @EXPORT = qw(get_command cmp_float create_test_dir remove_test_dir copy_test_files like_file_row unlike_file_row is_array do_course_tests cmp_relative);
 
 # Set this variable to something else if you are testing on a cluster
 my $tempdir = File::Spec->tmpdir;
@@ -64,6 +64,18 @@ sub cmp_float
 
 	$x = sprintf("%.13e", $x);
 	$y = sprintf("%.13e", $y);
+
+	cmp_ok($x, '==', $y, $text);
+}
+sub cmp_relative
+{
+	my $x = shift;
+	my $y = shift;
+	my $tol = shift;
+	my $text = shift;
+
+	$x = sprintf("%.".$tol."e", $x);
+	$y = sprintf("%.".$tol."e", $y);
 
 	cmp_ok($x, '==', $y, $text);
 }
