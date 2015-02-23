@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{Bootstrap user guide}{2015-02-13}
+\guidetitle{Bootstrap user guide}{2015-02-23}
 \begin{document}
 
 
@@ -10,17 +10,17 @@
 \section{Introduction}
 
 Bootstrap is a tool for calculating bias, standard errors and confidence intervals of parameter estimates. It does so by generating a set of new datasets by sampling individuals with replacement from the original dataset, and fitting the model to each new dataset \cite{Efron}. 
-Examples:
+Example:
 \begin{verbatim}
-bootstrap moxonidine.mod -samples=100
-bootstrap pheno.mod -samples=500 -seed=12345 -threads=5
+bootstrap run12.mod -samples=500 -seed=12345 -threads=5
 \end{verbatim}
 
 \section{Input and options}
 
-\subsection{Bootstrap-specific input}
+\subsection{Required input}
 A model file is required on the command-line.
 
+\subsection{Bootstrap-specific options}
 \begin{optionlist}
 \optdefault{samples}{N}
 The number of bootstrapped datasets to generate. Default is 200. 
@@ -85,8 +85,11 @@ Optional, default not used. If option -dofv is set and NM version 7.3 or later i
 \end{optionlist}
 
 \subsection{Some important common PsN options}
-For a complete list see common\_options.pdf, 
-or psn\_options -h on the commandline.
+There are many options that govern how PsN manages NONMEM runs, and
+those options are common to all PsN programs that run NONMEM.
+For a complete list of such options see common\_options.pdf, 
+or psn\_options -h on the commandline. A selection of
+the most important common options is found here.
 \input{inputs/basic_options.tex}
 
 \subsection{Auto-generated R-plots from PsN}
