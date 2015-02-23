@@ -105,6 +105,10 @@ LIBFILES= ui.pm \
 	output.pm \
 	model.pm \
 	standardised_output/xml.pm \
+	standardised_output/matrix.pm \
+	standardised_output/so.pm \
+	standardised_output/table.pm \
+	standardised_output/so/SOBlock.pm \
 	tool.pm \
 	tool/modelfit.pm \
 	tool/sir.pm \
