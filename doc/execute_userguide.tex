@@ -89,6 +89,11 @@ see the .Rout file in the main run directory for error messages.}
 
 \subsection{Output handling and processing}
 \input{inputs/output_processing.tex}
+\begin{optionlist}
+\optname{prepend\_options\_to\_lst}
+Default not used. This option makes PsN prepend the final lst-file (which is copied back to the directory from which execute was called) with the file version\_and\_option\_info.txt which contains run information, including     all actual values of optional PsN options. PsN can still parse the lst-file with the options prepended, so the file can still be used it as input to e.g. sumo, vpc or update\_inits. Disabled with -no-prepend\_options\_to\_lst if set in psn.conf.
+\nextopt
+\end{optionlist}
 
 \subsection{Running the nmfe script}
 PsN always runs NONMEM via the nmfe script (or NMQual). 
@@ -101,6 +106,17 @@ of the nmfe script options.
 
 \subsection{Run progress messages}
 \input{inputs/run_info_and_monitoring.tex}
+\begin{optionlist}
+\optname{tail\_output}
+Default not used. This option only works for execute under Windows. Option -tail\_output specifies that execute should invoke a program (tail) that displays the output file, including the gradients, during minmization. The tail program is started automatically but it is up to the user to terminate the program. For the tail\_output option to work, a third party tail program must be installed. Tail programs that are known to work are WinTail and Tail for Win32.  The latter is recommended and can be downloaded at http://tailforwin32.sourceforge.net. It is also necessary to have correct settings of the variables wintail\_exe, which is the path to the tail program, and wintail\_command, which is the command for the tail program. The defaults, which work for the Tail for Win32 package, are seen below. These two variables can be set to other values in psn.conf.
+\nextopt
+\optdefault{wintail\_exe}{string}
+Default \verb|C:\Program Files\Tail-4.2.12\Tail.exe|. Only for Windows. See tail\_output for description.
+\nextopt
+\optdefault{wintail\_command}{string}
+Default "tail OUTPUT”. Only for Windows. See -tail\_output for description.
+\nextopt
+\end{optionlist}
 
 \subsection{Control stream manipulation}
 \input{inputs/control_stream_manipulation.tex}
@@ -111,20 +127,8 @@ of the nmfe script options.
 \input{inputs/error_checking_and_management.tex}
 
 
-\subsection{Advanced options}
+\subsection{Advanced execute options}
 \begin{optionlist}
-\optname{prepend\_options\_to\_lst}
-Default not used. This option makes PsN prepend the final lst-file (which is copied back to the directory from which execute was called) with the file version\_and\_option\_info.txt which contains run information, including     all actual values of optional PsN options. PsN can still parse the lst-file with the options prepended, so the file can still be used it as input to e.g. sumo, vpc or update\_inits. Disabled with -no-prepend\_options\_to\_lst if set in psn.conf.
-\nextopt
-\optname{tail\_output}
-Default not used. This option only works for execute under Windows. Option -tail\_output specifies that execute should invoke a program (tail) that displays the output file, including the gradients, during minmization. The tail program is started automatically but it is up to the user to terminate the program. For the tail\_output option to work, a third party tail program must be installed. Tail programs that are known to work are WinTail and Tail for Win32.  The latter is recommended and can be downloaded at http://tailforwin32.sourceforge.net. It is also necessary to have correct settings of the variables wintail\_exe, which is the path to the tail program, and wintail\_command, which is the command for the tail program. The defaults, which work for the Tail for Win32 package, are seen below. These two variables can be set to other values in psn.conf.
-\nextopt
-\optdefault{wintail\_exe}{string}
-Default \verb|C:\Program Files\Tail-4.2.12\Tail.exe|. Only for Windows. See tail\_output for description.
-\nextopt
-\optdefault{wintail\_command}{string}
-Default "tail OUTPUT”. Only for Windows. See -tail\_output for description.
-\nextopt
 \optname{predict\_data}
 Default not used. 
 Only allowed in combination with -predict\_model.

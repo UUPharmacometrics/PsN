@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{Common options PsN}{2015-02-13}
+\guidetitle{Common options PsN}{2015-02-23}
 
 \begin{document}
 
@@ -7,9 +7,12 @@
 \newcommand{\guidetoolname}{<toolname>}
 
 \section{Introduction}
-This document lists the options that 
-are accepted by all PsN tools. However, depending on the tool, a particular option may have little effect. 
-For example, the option -threads will not change the execution time unless you run more than one model. 
+This document lists the options that govern how PsN manages NONMEM runs.
+Since (almost) all PsN tools run NONMEM, these options are 
+are accepted by all PsN tools. 
+However, depending on the tool, a particular option may have little effect. 
+For example, the option -threads will not change the execution time unless 
+you more than one model is run. 
 
 The default value for each option can be changed by setting a different default in the psn.conf file, see 
 psn\_configuration.pdf. A value set on the command-line will override the default.
@@ -17,7 +20,6 @@ psn\_configuration.pdf. A value set on the command-line will override the defaul
 \section{Basic options}
 The following options are the ones most commonly used, and relevant for almost every run.
 \input{inputs/basic_options.tex}
-
 
 \section{Advanced options}
 \subsection{Auto-generated R-plots from PsN}
