@@ -8,7 +8,6 @@ use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages
 use linear_algebra;
 
-
 #pad_matrix
 my @A = ([1, 2, 4], [3, 5 ,7], [8, 4, 1]);
 linear_algebra::pad_matrix(\@A, 5);
@@ -66,11 +65,17 @@ ok(linear_algebra::is_symmetric(\@A), "is_symmetric matrix 1");
 ok(!linear_algebra::is_symmetric(\@A), "is_symmetric matrix 2");
 
 #LU_factorization
+my $A = [[2, 3], [1, 2]];
+linear_algebra::LU_factorization($A);
+is_deeply($A, [[2, 3], [0.5, 0.5]], "lu matrix A");
+
 my @B = ([8, 4, 1], [5, 5, 2], [4, 2, 2]);
 linear_algebra::LU_factorization(\@B);
-is_deeply(@B[0], [8, 4, 1], "lu matrix row 1");
-is_deeply(@B[1], [0.625, 2.5, 1.375], "lu matrix row 2");
-is_deeply(@B[2], [0.5, 0, 1.5], "lu matrix row 3");
+is_deeply(\@B, [[8, 4, 1], [0.625, 2.5, 1.375], [0.5, 0, 1.5]], "lu matrix B");
+
+my $C = [[8, 7, 6, 5], [4, 3, 2, 1], [4, 3, 3, 1], [4, 3, 2, 0]];
+linear_algebra::LU_factorization($C);
+is_deeply($C, [[8, 7, 6, 5], [0.5, -0.5, -1, -1.5], [0.5, 1, 1, 0], [0.5, 1, 0, -1]], "lu matrix C");
 
 #invert_symmetric
 my @matrix = ([3,1,0], [1,5,2], [0,2,4]);

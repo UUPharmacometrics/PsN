@@ -105,7 +105,8 @@ sub is_symmetric
     return 1;
 }
 
-sub house { 
+sub house
+{ 
     my $xvec = shift;
     #add checking for 0 div here
     my $n=scalar(@{$xvec});
@@ -138,7 +139,8 @@ sub house {
     return \%answer;
 } 
 
-sub QR_factorize { 
+sub QR_factorize
+{ 
     
     #verified against matlab for small matrices
     #householder method transform
@@ -199,7 +201,8 @@ sub QR_factorize {
     return 0;
 } 
 
-sub cholesky {
+sub cholesky
+{
     #input is lower triangle, including diagonal, of symmetric positive definite matrix 
     #in *column format*, A->[col][row]
     #this matrix is overwritten with lower triangular Cholesky factor (G^T) 
@@ -263,11 +266,12 @@ sub LU_factorization
 			for(my $k = 0; $k < $#A_temp + 1; $k++) {
 			}
 		}
+		my @A_copy = map { [@$_] } @A_temp;
 		
 		for (my $j = $i + 1; $j < $#A_temp + 1; $j++) {
 			my $tau = $A_temp[$j][$i] / $A_temp[$i][$i];
-			for (my $k = $j - 1; $k < $#A_temp + 1; $k++) {
-				$A_temp[$j][$k] = $A_temp[$j][$k] - $tau * $A_temp[$i][$k];
+			for (my $k = $i + 1; $k < $#A_temp + 1; $k++) {
+				$A_temp[$j][$k] = $A_temp[$j][$k] - $tau * $A_copy[$i][$k];
 			}
 			$A_temp[$j][$i] = $tau;
 		}
@@ -279,7 +283,8 @@ sub LU_factorization
 	return 0;
 }
 
-sub lower_triangular_identity_solve{
+sub lower_triangular_identity_solve
+{
     #input is lower triangular matrix
     #in *column format*, A->[col][row]
     #and number of columns $nsolve to solve for
@@ -332,7 +337,8 @@ sub lower_triangular_identity_solve{
 
 }
 
-sub upper_triangular_solve{
+sub upper_triangular_solve
+{
     #input is upper triangular matrix
     #in *column format*, Umat->[col][row]
     #and reference to right hand vector which will be overwritten with solution
@@ -360,7 +366,8 @@ sub upper_triangular_solve{
 
 }
 
-sub upper_triangular_transpose_solve{
+sub upper_triangular_transpose_solve
+{
     #input is upper triangular matrix
     #in *column format*, Umat->[col][row]
     #and reference to right hand vector which will be overwritten with solution
@@ -390,7 +397,8 @@ sub upper_triangular_transpose_solve{
 	
 }
 
-sub upper_triangular_identity_solve{
+sub upper_triangular_identity_solve
+{
     #input is upper triangular matrix
     #in *column format*, A->[col][row]
     #and reference to empty solution matrix
@@ -436,7 +444,8 @@ sub upper_triangular_identity_solve{
     return 0;
 }
 
-sub upper_triangular_UUT_multiply{
+sub upper_triangular_UUT_multiply
+{
     #input is upper triangular matrix
     #in *column format*, R->[col][row]
     #and reference to empty solution matrix
@@ -472,7 +481,8 @@ sub upper_triangular_UUT_multiply{
     return 0;
 }
 
-sub column_cov{
+sub column_cov
+{
     #input is reference to values matrix 
     #in *column format*, Aref->[col][row]
     #and reference to empty result matrix
@@ -533,7 +543,8 @@ sub column_cov{
     return 0;
 }
 
-sub row_cov{
+sub row_cov
+{
     #input is reference to values matrix 
     #in *row format*, Aref->[row][col]
     #and reference to empty result matrix
@@ -599,7 +610,8 @@ sub row_cov{
     return 0;
 }
 
-sub row_cov_median{
+sub row_cov_median
+{
     #input is reference to values matrix 
     #in *row format*, Aref->[row][col]
     #and reference to empty result matrix covariance
@@ -693,7 +705,8 @@ sub row_cov_median{
     return 0;
 }
 
-sub get_identity_matrix{
+sub get_identity_matrix
+{
 	my $dimension = shift;
 
 	croak("dimension must be larger than 0 in get_identity_matrix") unless ($dimension > 0);
@@ -738,7 +751,8 @@ sub invert_symmetric
     return 0;
 }
 
-sub lower_triangular_UTU_multiply{
+sub lower_triangular_UTU_multiply
+{
     #input is lower triangular matrix
     #in *column format*, R->[col][row]
     #and reference to empty solution matrix
@@ -775,7 +789,8 @@ sub lower_triangular_UTU_multiply{
     return 0;
 }
 
-sub frem_conditional_omega_block{
+sub frem_conditional_omega_block
+{
     #input is lower triangle, including diagonal, of symmetric positive definite matrix 
     #in *column format*, A->[col][row]
     #this matrix will be overwritten
