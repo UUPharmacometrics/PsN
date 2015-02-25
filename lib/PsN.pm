@@ -6,7 +6,7 @@ use Cwd;
 #the version line is extracted in Makefile using regular expression
 # /\$version\s*=\s*.[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*.;/
 # so be careful when you edit!!!
-$version = '4.3.14';
+$version = '4.3.15';
 
 # The following line will be changed by make
 $dev = 1;
