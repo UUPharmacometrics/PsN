@@ -4,6 +4,7 @@ use FindBin qw($Bin);
 use lib "$Bin/../lib";
 use strict;
 use array qw(:all);
+use Math::Trig;	# For pi
 
 sub pad_matrix
 {
@@ -74,6 +75,81 @@ sub triangular_symmetric_to_full
     }
 
     return $A;
+}
+
+
+sub mvnpdf_cholesky
+{
+    my $covar=shift;
+    my $mu=shift;
+    my $xvectors=shift;
+	my $inflation=shift;
+	my $relative=shift;
+
+    my $ncol= scalar(@{$covar});
+    my $mrow = scalar(@{$covar->[0]});
+    croak("input covariance matrix to mvnpdf_cholesky is empty") unless ($ncol > 0);
+    croak("input covariance matrix to mvnpdf_cholesky is not square, col $ncol rows $mrow") unless ($ncol == $mrow);
+    croak("input mu to mvnpdf_cholesky undefined ") unless (defined $mu );
+    croak("input mu to mvnpdf_cholesky has wrong dim ".scalar(@{$mu})) unless ($ncol == scalar(@{$mu}));
+    croak("input xvectors to mvnpdf_cholesky undefined ") unless (defined $xvectors);
+    croak("input xvectors to mvnpdf_cholesky is empty ") unless (scalar(@{$xvectors})>0);
+    croak("input xvectors to mvnpdf_cholesky has wrong dim ".scalar(@{$xvectors->[0]})) unless ($ncol == scalar(@{$xvectors->[0]}));
+    croak("input inflation to mvnpdf_cholesky is not positive: $inflation") unless ($inflation > 0);
+    croak("input relative to mvnpdf_cholesky is $relative") unless (($relative == 1) or ($relative==0));
+
+	my @covar_copy=();
+	for (my $i=0; $i<$ncol; $i++){
+		$covar_copy[$i] =[0 x $ncol];
+		for (my $j=0; $j<$ncol; $j++){
+			$covar_copy[$i][$j] = $covar->[$i][$j];
+		}
+	}
+
+	my $err=cholesky_transpose(\@covar_copy);
+
+	croak("failed cholesky in mvnpdf_cholesky") unless ($err==0);
+	my @arr=();
+	for (my $i=0; $i< $ncol; $i++){
+		push(@arr,$covar_copy[$i][$i]);
+	}
+	my @sorted = sort { $a <=> $b } @arr; #sort ascending
+
+	my $root_determinant = $sorted[0];
+	for (my $i=1; $i< $ncol; $i++){
+		$root_determinant = $root_determinant*$sorted[$i];
+	}
+	unless ($inflation == 1){
+		$root_determinant = $root_determinant*($inflation**($ncol/2));
+	}
+
+
+	my @results=();
+
+	foreach my $xvec (@{$xvectors}){
+		my @diff = 0 x $ncol;
+		for (my $j=0; $j< $ncol; $j++){
+			$diff[$j]= ($xvec->[$j] - $mu->[$j]);
+		}
+		$err = linear_algebra::upper_triangular_transpose_solve(\@covar_copy,\@diff);
+		croak("failed solve in mvnpdf_cholesky") unless ($err==0);
+
+		my @sorted = sort { $a <=> $b } @diff; #sort ascending for numerical safety
+		my $sum = 0;
+		for (my $i=0; $i< $ncol; $i++){
+			$sum = $sum + ($sorted[$i])**2;
+		}
+		unless ($inflation == 1){
+			$sum = $sum/$inflation;
+		}
+
+		if ($relative){
+			push(@results,exp(-0.5*$sum));
+		}else{
+			push(@results,(((2*pi)**(-$ncol/2))*(1/$root_determinant))*exp(-0.5*$sum));
+		}
+	}
+	return \@results;
 }
 
 sub transpose
@@ -200,6 +276,31 @@ sub QR_factorize
 
     return 0;
 } 
+
+sub cholesky_transpose
+{
+    #input is lower triangle, including diagonal, of symmetric positive definite matrix 
+    #in *column format*, A->[col][row]
+
+	my $Aref=shift;
+    my $input_error = 2;
+    my $numerical_error = 1;
+    my $ncol= scalar(@{$Aref});
+    my $mrow = scalar(@{$Aref->[0]});
+    return $input_error unless ($mrow == $ncol);
+
+	my $err = cholesky($Aref);
+	return $err unless ($err==0);
+
+	#fill up
+    for (my $j=0; $j< $ncol; $j++){
+		for (my $i=($j+1); $i<$ncol; $i++){
+			$Aref->[$i][$j] = $Aref->[$j][$i];
+			$Aref->[$j][$i]= 0;
+		}
+	}
+	return 0;
+}
 
 sub cholesky
 {

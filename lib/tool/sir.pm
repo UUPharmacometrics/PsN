@@ -140,12 +140,11 @@ sub modelfit_setup
 
 	my $parameter_hash = output::get_nonmem_parameters(output => $output);
 
-	my $icm;
 	my $covmatrix;
 	my @covmat_column_headers = ();
 
 	if (defined $self->covmat_input){
-		#read user matrix and invert here
+		#read user matrix
 		#use keep_labels_hash from input model problem
 		my %keep_labels_hash;
 		foreach my $coord (@{$output->problems->[0]->input_problem->get_estimated_attributes(attribute=>'coordinate_strings')}){
@@ -191,37 +190,22 @@ sub modelfit_setup
 
 		$covmatrix = make_square($lower_covar);
 
-		my $tmp = make_square($lower_covar); #just initial values that will be overwritten
-		my $arricm = [];
-		my $err = linear_algebra::invert_symmetric($tmp,$arricm);
-		$tmp = undef;
-		if ($err == 1){
-			croak ("covmat_input file could not be inverted, numerical error in linear_algebra invert_symmetric");
-		}elsif ($err == 2){
-			croak ("input error to linear_algebra invert_symmetric");
-		}
-		$icm = Math::MatrixReal -> new_from_cols($arricm);
 	}elsif (defined $self->rawres_input){
 		#do not need any matrices at all, will set pdfvec to ones
 		1;
 	}else{
-		$icm = get_nonmem_inverse_covmatrix(output => $output); #MatrixReal
 		$covmatrix = get_nonmem_covmatrix(output => $output);
 	}
 
-	if ($self->inflation() != 1){
-		inflate_covmatrix(matrix => $covmatrix,
-						  inflation => $self->inflation());
-	}
 
-
-
-	my $values = $parameter_hash->{'values'};
+	my $mu_values = $parameter_hash->{'values'};
 	my $mat = new Math::MatrixReal(1,1);
-	my $muvector = $mat->new_from_rows( [$values] );
+	my $muvector = $mat->new_from_rows( [$mu_values] );
 	my $sampled_params_arr;
 	my $href;
+	my $user_labels;
 	if (defined $self->rawres_input){
+		$user_labels = 1; #we do not have generic labels in rawresults
 		($sampled_params_arr,$href) = model::get_rawres_params(filename => $self->rawres_input,
 															   filter => $self->in_filter,
 															   offset => $self->offset_rawres,
@@ -232,21 +216,24 @@ sub modelfit_setup
 		ui -> print( category => 'sir',
 					 message => "Sampling from the truncated multivariate normal distribution");
 		
+		$user_labels = 0; #using generic labels is safer
 		my $vectorsamples = sample_multivariate_normal(samples=>$self->samples,
-													covmatrix => $covmatrix,
-													lower_bound => $parameter_hash->{'lower_bounds'},
-													upper_bound => $parameter_hash->{'upper_bounds'},
-													param => $parameter_hash->{'param'},
-													coords => $parameter_hash->{'coords'},
-													block_number => $parameter_hash->{'block_number'},
-													mu => $muvector);
+													   covmatrix => $covmatrix,
+													   inflation => $self->inflation,
+													   lower_bound => $parameter_hash->{'lower_bounds'},
+													   upper_bound => $parameter_hash->{'upper_bounds'},
+													   param => $parameter_hash->{'param'},
+													   coords => $parameter_hash->{'coords'},
+													   block_number => $parameter_hash->{'block_number'},
+													   mu => $muvector);
 		
 		$sampled_params_arr = create_sampled_params_arr(samples_array => $vectorsamples,
-														labels_hash => $parameter_hash);
-		$self->pdf_vector(mvnpdf(inverse_covmatrix => $icm,
-								 mu => $muvector,
-								 xvec_array => $vectorsamples,
-								 inflation => $self->inflation));
+														labels_hash => $parameter_hash,
+														user_labels => $user_labels);
+		#TODO document relative pdf
+		my $relative = 1;
+		$self->pdf_vector(linear_algebra::mvnpdf_cholesky($covmatrix,$mu_values,$vectorsamples,$self->inflation,$relative));
+
 	}
 	
 
@@ -259,7 +246,8 @@ sub modelfit_setup
 		basedirectory => $self->directory,
 		subdirectory => $self->directory().'m'.$model_number.'/',
 		model => $model,
-		purpose => 'sir'
+		purpose => 'sir',
+		match_labels => $user_labels
 		);
 	
 	$self -> prepared_models -> [$model_number-1]{'own'} = $modelsarr;
@@ -634,7 +622,8 @@ sub sample_multivariate_normal
 							  param => { isa => 'ArrayRef', optional => 0 },
 							  block_number => { isa => 'ArrayRef', optional => 0 },
 							  coords => { isa => 'ArrayRef', optional => 0 },
-							  mu => { isa => 'Math::MatrixReal', optional => 0 }							  
+							  mu => { isa => 'Math::MatrixReal', optional => 0 },							  
+							  inflation => { isa => 'Num', optional => 0 }							  
 		);
 	my $samples = $parm{'samples'};
 	my $covmatrix = $parm{'covmatrix'};
@@ -644,6 +633,7 @@ sub sample_multivariate_normal
 	my $block_number = $parm{'block_number'};
 	my $coords = $parm{'coords'};
 	my $mu = $parm{'mu'};
+	my $inflation = $parm{'inflation'};
 	
 	my ($rows,$columns) = $mu->dim();
 	unless ($rows == 1 and $columns > 0){
@@ -679,6 +669,15 @@ sub sample_multivariate_normal
 		push(@muvec,$mu->element(1,$i));
 	}
 	
+	my $use_covmatrix;
+
+	if ($inflation != 1){
+		$use_covmatrix = inflate_covmatrix(matrix => $covmatrix,
+										   inflation => $inflation);
+	}else{
+		$use_covmatrix = $covmatrix;
+	}
+
 
 	my $check_sigma_posdef=0;
 	my $check_omega_posdef=0;
@@ -779,7 +778,7 @@ sub sample_multivariate_normal
 
 	for (my $j=0; $j<$max_iter; $j++){
 		#we will probably discard some samples, generate twice needed amount to start with
-		my @candidate_samples = Math::Random::random_multivariate_normal((2*$samples), @muvec, @{$covmatrix});
+		my @candidate_samples = Math::Random::random_multivariate_normal((2*$samples), @muvec, @{$use_covmatrix});
 
 		foreach my $xvec (@candidate_samples){
 			my $accept = 1;
@@ -876,12 +875,19 @@ sub create_sampled_params_arr{
 	#to be used in update_inits (from_hash=> $sampled_params_arr->[$k],ignore_missing_parameters=>1);
 	my %parm = validated_hash(\@_,
 							  samples_array => { isa => 'ArrayRef[ArrayRef]', optional => 0 },
-							  labels_hash => { isa => 'HashRef', optional => 0 }
+							  labels_hash => { isa => 'HashRef', optional => 0 },
+							  user_labels => { isa => 'Bool', optional => 0 },
 		);
 	my $samples_array = $parm{'samples_array'};
 	my $labels_hash = $parm{'labels_hash'};
+	my $user_labels = $parm{'user_labels'};
 	
 	my @allparams=();
+
+	my $labelkey='coordinate_strings';
+	if ($user_labels){
+		$labelkey='labels';
+	}
 
 	foreach my $sample (@{$samples_array}){
 		my %allpar;
@@ -889,7 +895,7 @@ sub create_sampled_params_arr{
 		$allpar{'omega'} = {};
 		$allpar{'sigma'} = {};
 		for (my $i=0; $i<scalar(@{$sample}); $i++){
-			my $label = $labels_hash->{'labels'}->[$i];
+			my $label = $labels_hash->{$labelkey}->[$i];
 			my $param = $labels_hash->{'param'}->[$i];
 			my $value = $sample->[$i];
 			$allpar{$param}->{$label} = $value;
@@ -919,12 +925,15 @@ sub inflate_covmatrix
 	unless ($inflation > 0){
 		croak("Input error inflate_covmatrix: inflation must be larger than 0");
 	}
+
+	my @copy=();
 	for (my $i=0;$i< $dim; $i++){
+		push(@copy,[0 x $dim]);
 		for (my $j=0;$j< $dim; $j++){
-			$matrix->[$i]->[$j] = ($matrix->[$i]->[$j])*$inflation;
+			$copy[$i]->[$j] = ($matrix->[$i]->[$j])*$inflation;
 		}
 	}
-
+	return \@copy;
 }
 
 sub get_nonmem_covmatrix
@@ -949,7 +958,7 @@ sub get_nonmem_covmatrix
 	}
 	if ($output-> get_single_value(attribute => 'covariance_step_warnings')){
 		ui -> print( category => 'sir',
-					 message  => "Warning: Doing get_nonmem_inverse_covmatrix but there were covariance step warnings in the lst-file. This is ".
+					 message  => "Warning: Doing get_nonmem_covmatrix but there were covariance step warnings in the lst-file. This is ".
 					 " likely to give errors in the computation of weights");
 	}
 	
