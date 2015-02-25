@@ -39,6 +39,10 @@ is ($$b[1], 3, "Cumsum of array 1");
 is ($$b[2], 6, "Cumsum of array 2");
 is ($$b[3], 10, "Cumsum of array 3");
 
+# absolute
+@a = qw(-1 1 23 -14.5 14);
+is_deeply(array::absolute(\@a), [ 1, 1, 23, 14.5, 14 ], "absolute");
+
 # Test of max
 @a = qw (-1 -2 0 5 2);
 
