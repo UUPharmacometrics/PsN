@@ -1,6 +1,7 @@
 package model::problem;
 
 use include_modules;
+use linear_algebra;
 
 my @print_order_omega_before_pk = ('sizes','problem','input','bind','data','abbreviated','msfi','contr','subroutine','prior','thetap','thetapv','omegap','omegapd','sigmap','sigmapd','model','tol','infn','omega','anneal','pk','level','aesinitial','aes','des','error','pred','mix','theta','thetai','thetar','sigma','etas','phis','simulation','estimation','covariance','nonparametric','table','scatter');
 my @print_order = ('sizes','problem','input','bind','data','abbreviated','msfi','contr','subroutine','prior','thetap','thetapv','omegap','omegapd','sigmap','sigmapd','model','tol','infn','pk','level','aesinitial','aes','des','error','pred','mix','theta','thetai','thetar','omega','anneal','sigma','etas','phis','simulation','estimation','covariance','nonparametric','table','scatter');
@@ -1649,12 +1650,10 @@ sub get_record_matrix
 	my $self = shift;
 	my %parm = validated_hash(\@_,
 							  type => {isa => 'Str', optional => 0},
-							  row_format => {isa => 'Bool', optional => 0},
 							  record_number => {isa => 'Int', optional => 0}
 		);
 	my $type = $parm{'type'};
 	my $record_number = $parm{'record_number'};
-	my $row_format = $parm{'row_format'};
 	my $accessor;
 	if ($type eq 'omega'){
 		$accessor = 'omegas';
@@ -1702,11 +1701,9 @@ sub get_record_matrix
 		my $name = $option -> coordinate_string();
 		croak("unknown coord $name ") unless ($name =~ /A\((\d+),(\d+)\)/ );
 		my $value = $option ->init();
-		if ($row_format){
-			$new_matrix[($1-$startrow)][($2-$startrow)] = $value;
-		}else{
-			$new_matrix[($2-$startrow)][($1-$startrow)] = $value;
-		}
+		$new_matrix[($1-$startrow)][($2-$startrow)] = $value;
+		$new_matrix[($2-$startrow)][($1-$startrow)] = $value;
+
 		if ($option->on_diagonal()){
 			croak("col and row in $name not diagonal element") unless ($2 == $1 );
 		}
@@ -1813,6 +1810,60 @@ sub get_matrix
 
 }
 
+sub get_posdef_matrix
+{
+	#static no shift
+	my %parm = validated_hash(\@_,
+							  old_matrix => { isa => 'Ref', optional => 0 },
+							  covmatrix => { isa => 'Maybe[Ref]', optional => 1 }
+		);
+
+	my $covmatrix = $parm{'covmatrix'};
+	my $old_matrix = $parm{'old_matrix'};
+	my $new_size = scalar(@{$old_matrix});
+
+	my $smallnum=0.0001;
+	my $last_i = 100;
+
+	for (my $i=0 ; $i<= $last_i; $i++){
+		my @newmatrix=();
+		my @testmatrix=();
+		for (my $row=0; $row< $new_size; $row++){
+			my @line = ();
+			my @testline = ();
+			for (my $col=0; $col<$new_size; $col++){
+				my $value = $old_matrix->[$row][$col];
+				if (($i >= ($last_i-1)) and ($row == $col)) {
+					#inflate diagonal 10%
+					$value = $value*(1.1);
+				}elsif ($value == 0){
+					if ($i >= ($last_i-2)){
+						$value = $smallnum;
+					}elsif (defined $covmatrix and (abs($covmatrix->[$row][$col]) > 0.000001)  ){
+						$value = $covmatrix->[$row][$col];
+					}else{
+						$value = $smallnum;
+					}
+				}
+				push(@line,$value);
+				push(@testline,$value);
+			}
+			push(@newmatrix,\@line);
+			push(@testmatrix,\@testline);
+		}
+		#return this if cholesky check posdef, otherwise decrease smallnum
+		my $err = linear_algebra::cholesky(\@testmatrix);
+		if ($err == 1){
+			$smallnum = $smallnum/10;
+		}else{
+			return \@newmatrix;
+		}
+	}
+
+
+}
+
+
 sub get_filled_omega_matrix
 {
 	my $self = shift;
@@ -1822,64 +1873,16 @@ sub get_filled_omega_matrix
 		);
 	my $covmatrix = $parm{'covmatrix'};
 	my $start_eta = $parm{'start_eta'};
-	my $smallval = 0.0001;
 
 	#create one big full omega block (lower triangular) as new_omega->[$row][$col]
 	#input is optional covmatrix to be used for 0 off-diags
 	#if old off-diagonals not present then set small values
 
-	my $new_full_omega = $self->get_matrix( type=> 'omega',
+	my $old_full_omega = $self->get_matrix( type=> 'omega',
 											start_row => $start_eta);
 	
-	##Determine minimum difference between off-diagonal absolute sum and diagonal,
-	#needed to determine appropriate values to fill in
-	my $minimum_difference;
-	my $new_size = scalar(@{$new_full_omega});
-
-	if (defined $covmatrix and (not scalar(@{$covmatrix}) == $new_size)){
-		croak("Error input get_filled_omega_matrix, size existing is $new_size after start_eta $start_eta ".
-			"while size covmatrix is ".scalar(@{$covmatrix}));
-	}
-	my @off_diagonal_sum = 0 x $new_size; 
-	my @diagonal_value = 0 x $new_size; 
-
-	for (my $row=0; $row< $new_size; $row++){
-		my $val = abs($new_full_omega->[$row][$row]);
-		$diagonal_value[$row] = $val;
-		for (my $col=0; $col < $row; $col++){
-			my $val = abs($new_full_omega->[$row][$col]);
-			$off_diagonal_sum[$row] += $val;
-			$off_diagonal_sum[$col] += $val;
-		}
-	}
-
-	$minimum_difference = $diagonal_value[0]-$off_diagonal_sum[0];
-	for (my $i=1; $i<$new_size; $i++){
-		my $diff = $diagonal_value[$i]-$off_diagonal_sum[$i];
-		$minimum_difference = $diff if ($diff< $minimum_difference and ($diff>0));
-	}
-
-	my $max_off_diagonal = $smallval; #check Ron's hands on for typical value here
-	my $temp = $minimum_difference;
-	if ($new_size > 1){
-		$temp = ($minimum_difference/($new_size-1));
-	}
-	$max_off_diagonal = abs($temp)*(0.9) if (abs($temp) < $max_off_diagonal);
-	#print "max off diag is $max_off_diagonal\n";
-	#fill off-diagonals in new_omega
-	my $k=1;
-	for (my $row=0; $row< $new_size; $row++){
-		for (my $col=0; $col<$row; $col++){
-			if ($new_full_omega->[$row][$col] == 0){
-				if (defined $covmatrix and (abs($covmatrix->[$row][$col]) > 0.000001)  ){
-					$new_full_omega->[$row][$col] = $covmatrix->[$row][$col];
-				}else{
-					$new_full_omega->[$row][$col] = $max_off_diagonal;
-					$k++;
-				}
-			}
-		}
-	}
+	my $new_full_omega = get_posdef_matrix(covmatrix => $covmatrix,
+										   old_matrix => $old_full_omega);
 
 	return $new_full_omega;
 }

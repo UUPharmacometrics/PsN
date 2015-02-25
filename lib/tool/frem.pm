@@ -996,10 +996,8 @@ sub modelfit_setup
 				my $mod2_bov_record=$start_omega_record;
 				$mod2_bov_record=$start_omega_record+2 if ($n_invariant>0);
 				my $BOV_par_occ1 = $frem_model2->problems->[0]->get_record_matrix(type => 'omega',
-																				  row_format => 1,
 																				  record_number => $mod2_bov_record);
 				my $BOV_cov_occ1 = $frem_model2->problems->[0]->get_record_matrix(type => 'omega',
-																				  row_format => 1,
 																				  record_number => ($mod2_bov_record+$n_occasions));
 
 				#create full block to add to mod3
@@ -1152,7 +1150,6 @@ sub modelfit_setup
 			if ($n_invariant > 0){
 				$bov_record = $start_omega_record+1;
 				my $BSV_all = $frem_vpc_model1->problems->[0]->get_record_matrix(type => 'omega',
-																				 row_format => 0,
 																				 record_number => $start_omega_record);
 				my $new_BSV_par = [];
 				my $res = linear_algebra::frem_conditional_omega_block($BSV_all,$bsv_parameters,$new_BSV_par);
@@ -1172,7 +1169,6 @@ sub modelfit_setup
 			}
 			if ($n_time_varying > 0){
 				my $BOV_all_occ1 = $frem_vpc_model1->problems->[0]->get_record_matrix(type => 'omega',
-																					  row_format => 0,
 																					  record_number => $bov_record);
 
 				my $new_BOV_par_occ1 = [];

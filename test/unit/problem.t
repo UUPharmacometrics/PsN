@@ -14,21 +14,23 @@ my $modeldir = $includes::testfiledir;
 my $model = model->new(filename => "$modeldir/pheno.mod");
 my $problem = $model->problems->[0];
 
+# Test get_filled_omega method
+my $full_omega = $problem->get_filled_omega_matrix(start_eta => 1);
+
+cmp_ok($full_omega->[0]->[0],'==',0.4000, "get_filled_omega_matrix 0,0");
+cmp_ok($full_omega->[0]->[1],'==',0.0001, "get_filled_omega_matrix 0,1");
+cmp_ok($full_omega->[1]->[0],'==',0.0001, "get_filled_omega_matrix 1,0");
+cmp_ok($full_omega->[1]->[1],'==',0.2500, "get_filled_omega_matrix 1,1");
 
 #
 my $omega_mat = $problem->get_matrix(type => 'omega',
 									 start_row => 1);
 cmp_ok($omega_mat->[0]->[0],'==',0.4000, "get_matrix 0,0");
 cmp_ok($omega_mat->[1]->[1],'==',0.2500, "get_matrix 1,1");
+cmp_ok($omega_mat->[0]->[1],'==',0, "get_matrix 0,1");
+cmp_ok($omega_mat->[1]->[0],'==',0, "get_matrix 1,0");
 
 
-# Test get_filled_omega method
-my $full_omega = $problem->get_filled_omega_matrix(start_eta => 1);
-
-cmp_ok($full_omega->[0]->[0],'==',0.4000, "get_filled_omega_matrix 0,0");
-cmp_ok($full_omega->[0]->[1],'==',0.0000, "get_filled_omega_matrix 0,1");
-cmp_ok($full_omega->[1]->[0],'==',0.0001, "get_filled_omega_matrix 1,0");
-cmp_ok($full_omega->[1]->[1],'==',0.2500, "get_filled_omega_matrix 1,1");
 
 #
 $model = model->new(filename => "$modeldir/mox1.mod");
@@ -115,65 +117,46 @@ $full_omega = $problem->get_filled_omega_matrix(start_eta => 5,
 												covmatrix => $cov_mat);
 cmp_ok($full_omega->[0]->[0],'==',0.0147, "get_filled_omega_matrix 0,0");
 cmp_ok($full_omega->[1]->[0],'==',0.003, "get_filled_omega_matrix 1,0");
+cmp_ok($full_omega->[0]->[1],'==',0.003, "get_filled_omega_matrix 0,1");
 cmp_ok($full_omega->[1]->[1],'==',0.506, "get_filled_omega_matrix 1,1");
-cmp_ok($full_omega->[2]->[0],'==',0.004, "get_filled_omega matrix 0,2");
-cmp_ok($full_omega->[2]->[1],'==',0.0001, "get_filled_omega matrix 1,2");
+cmp_ok($full_omega->[2]->[0],'==',0.004, "get_filled_omega matrix 2,0");
+cmp_ok($full_omega->[0]->[2],'==',0.004, "get_filled_omega matrix 0,2");
+cmp_ok($full_omega->[2]->[1],'==',0.0001, "get_filled_omega matrix 2,1");
+cmp_ok($full_omega->[1]->[2],'==',0.0001, "get_filled_omega matrix 1,2");
 cmp_ok($full_omega->[2]->[2],'==',0.506, "get_filled_omega matrix 2,2");
 
 $omega_mat = $problem->get_record_matrix(type => 'omega',
-										 record_number => 1,
-										 row_format => 1);
+										 record_number => 1);
 cmp_ok($omega_mat->[0]->[0],'==',0.0750, "get_record_matrix row 0,0");
 cmp_ok($omega_mat->[1]->[0],'==',0.0467, "get_record_matrix row 1,0");
 cmp_ok($omega_mat->[1]->[1],'==',0.0564, "get_record_matrix row 1,1");
-cmp_ok($omega_mat->[0]->[1],'==',0, "get_record_matrix row 0,1");
+cmp_ok($omega_mat->[0]->[1],'==',0.0467, "get_record_matrix row 0,1");
 cmp_ok(scalar(@{$omega_mat}),'==',2, "get_record_matrix size");
 
-$omega_mat = $problem->get_record_matrix(type => 'omega',
-										 record_number => 1,
-										 row_format => 0);
-cmp_ok($omega_mat->[0]->[0],'==',0.0750, "get_record_matrix col 0,0");
-cmp_ok($omega_mat->[1]->[0],'==',0, "get_record_matrix col 1,0");
-cmp_ok($omega_mat->[1]->[1],'==',0.0564, "get_record_matrix col 1,1");
-cmp_ok($omega_mat->[0]->[1],'==',0.0467, "get_record_matrix col 0,1");
    
 
 
 $omega_mat = $problem->get_record_matrix(type => 'omega',
-										 record_number => 2,
-										 row_format => 1);
+										 record_number => 2);
 cmp_ok($omega_mat->[0]->[0],'==',2.82, "get_record_matrix row 0,0");
 
 $omega_mat = $problem->get_record_matrix(type => 'omega',
-										 record_number => 2,
-										 row_format => 0);
+										 record_number => 2);
 cmp_ok($omega_mat->[0]->[0],'==',2.82, "get_record_matrix col 0,0");
 
 
 
 $omega_mat = $problem->get_record_matrix(type => 'omega',
-										 record_number => 3,
-										 row_format => 1);
+										 record_number => 3);
 
 cmp_ok($omega_mat->[0]->[0],'==',0.0147, "get_record_matrix row 0,0");
 
-$omega_mat = $problem->get_record_matrix(type => 'omega',
-										 record_number => 3,
-										 row_format => 0);
-
-cmp_ok($omega_mat->[0]->[0],'==',0.0147, "get_record_matrix col 0,0");
 
 
 $omega_mat = $problem->get_record_matrix(type => 'omega',
-										 record_number => 5,
-										 row_format => 1);
+										 record_number => 5);
 
 cmp_ok($omega_mat->[0]->[0],'==',0.506, "get_record_matrix row 0,0");
-$omega_mat = $problem->get_record_matrix(type => 'omega',
-										 record_number => 5,
-										 row_format => 0);
-
-cmp_ok($omega_mat->[0]->[0],'==',0.506, "get_record_matrix col 0,0");
 
 # find_table
 my $model = model->new(filename => "$modeldir/pheno.mod");
