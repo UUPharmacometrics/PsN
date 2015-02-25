@@ -79,7 +79,7 @@ sub submit
 	my $modfile = $directory.$filename;
 	my $lstfile = $directory.'psn.lst';
 
-	system('echo sbatch $flags $command "2>&1" > sbatchcommand');
+	system("echo sbatch $flags $command \"2>&1\" > sbatchcommand");
 
 	for (my $i = 0; $i < 10; $i++) {
 		#make sure input file psn.mod is visible, i.e. files are synced, before calling nmfe

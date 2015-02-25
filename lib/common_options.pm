@@ -1122,7 +1122,7 @@ EOF
 EOF
 
     $help_hash{-max_runtime} = <<'EOF';
-    <p class="style2">-max_runtime='integer'</p>
+    <p class="style2">-max_runtime='string'</p>
     A limit on how long a slurm run may go on before being aborted
     (option -t to sbatch). Format is either minutes, e.g. -max_runtime=10, 
     or hours:minutes:seconds, e.g. -max_runtime=4:0:0, or days-hours, 
