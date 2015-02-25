@@ -121,7 +121,6 @@ my $gotsamples = tool::sir::sample_multivariate_normal(samples=>$nsamples,
 													   mu => $mu
 	);
 
-
 #print "\nxvec [".join(' ',@{$gotsamples->[2]})."]\n";
 #print "\labels ".join(' ',@{$hash->{'labels'}})."\n";
 
@@ -135,49 +134,43 @@ cmp_float($sampled_params_arr->[0]->{'theta'}->{'THETA3'}, 0.568698687977855, 's
 cmp_float($sampled_params_arr->[0]->{'theta'}->{'THETA4'}, 0.369700885223909, 'sampled THETA4');
 cmp_float($sampled_params_arr->[0]->{'theta'}->{'THETA5'}, 0.118821314516974, 'sampled THETA5');
 
-my $sampled_params_arr2 = tool::sir::create_sampled_params_arr(samples_array => $gotsamples,
-															  labels_hash => $hash,
-															  user_labels => 0);
-
-cmp_float($sampled_params_arr2->[0]->{'theta'}->{'THETA1'}, 0.00579867653819879, 'sampled CL');
-cmp_float($sampled_params_arr2->[0]->{'theta'}->{'THETA2'}, 1.20800900217457, 'sampled V');
-cmp_float($sampled_params_arr2->[0]->{'theta'}->{'THETA3'}, 0.568698687977855, 'sampled THETA3');
-cmp_float($sampled_params_arr2->[0]->{'theta'}->{'THETA4'}, 0.369700885223909, 'sampled THETA4');
-cmp_float($sampled_params_arr2->[0]->{'theta'}->{'THETA5'}, 0.118821314516974, 'sampled THETA5');
-
-
 my $pdf=tool::sir::mvnpdf(inverse_covmatrix => $icm,
 						  mu => $mu,
 						  xvec_array => $gotsamples,
 						  inflation => 1,
-						  relative => 0);
-my $matlab_mvnpdf=4.622416072199147e+05; #mvnpdf function
-cmp_ok(abs($pdf->[0]-$matlab_mvnpdf),'<',1e-7,'pdf diff to matlab');
-#print "\npdf ".$pdf->[0]."\n";
+						  relative => 1);
 
+#TODO relax numerical constraints here, very illconditioned test problem
+
+cmp_relative($pdf->[0],1.035247587409e-01,11,'pdf compare matlab 1'); #multnorm.m tag1
+cmp_relative($pdf->[1],2.982414449872e-01,11,'pdf compare matlab 2'); #multnorm.m tag2
+cmp_relative($pdf->[2],5.974361835534e-01,11,'pdf compare matlab 3'); #multnorm.m tag3
+#print "\npdf ".$pdf->[0]."\n";
+     
 
 my $wghash = tool::sir::compute_weights(pdf_array => $pdf,
 										dofv_array => [1,10,5]);
+          
+#tag3 multnorm.m
+cmp_relative($wghash->{'weights'}->[0],5.858798099018610,11,'weight 1');
+cmp_relative($wghash->{'weights'}->[1],2.259225574558877e-02,11,'weight 2');
+cmp_relative($wghash->{'weights'}->[2], 1.373954254589559e-01,11,'weight 3');
 
-cmp_ok(abs($wghash->{'weights'}->[0]-1.312150724294432e-06),'<',0.000000000001e-06,'weight 1');
-cmp_ok(abs($wghash->{'weights'}->[1]-5.059816747224142e-09),'<',0.000000000001e-09,'weight 2');
-cmp_ok(abs($wghash->{'weights'}->[2]-3.077141488472004e-08),'<',0.000000000001e-08,'weight 3');
-
-cmp_ok(abs($wghash->{'cdf'}->[0]-1.312150724294432e-06),'<',0.000000000001e-06,'cdf 1');
-cmp_ok(abs($wghash->{'cdf'}->[1]-1.317210541041656e-06),'<',0.000000000001e-06,'cdf 2');
-cmp_ok(abs($wghash->{'cdf'}->[2]-1.347981955926376e-06),'<',0.000000000001e-06,'cdf 3');
+cmp_relative($wghash->{'cdf'}->[0],5.858798099018610e+00,11,'cdf 1');
+cmp_relative($wghash->{'cdf'}->[1],5.881390354764199e+00    ,11 ,'cdf 2');
+cmp_relative($wghash->{'cdf'}->[2],6.018785780223155e+00,11,'cdf 3');
 
 
 tool::sir::recompute_weights(weight_hash => $wghash,
 							 reset_index => 1);
 
-cmp_ok(abs($wghash->{'weights'}->[0]-1.312150724294432e-06),'<',0.000000000001e-06,'weight 1 recompute');
+cmp_relative($wghash->{'weights'}->[0],5.858798099018610,11,'weight 1 recompute');
 cmp_ok($wghash->{'weights'}->[1],'==',0,'weight 2 recompute');
-cmp_ok(abs($wghash->{'weights'}->[2]-3.077141488472004e-08),'<',0.000000000001e-08,'weight 3 recompute');
+cmp_relative($wghash->{'weights'}->[2],1.373954254589559e-01,11,'weight 3 recompute');
 
-cmp_ok(abs($wghash->{'cdf'}->[0]-1.312150724294432e-06),'<',0.000000000001e-06,'cdf 1 recompute');
-cmp_ok(abs($wghash->{'cdf'}->[1]-1.312150724294432e-06),'<',0.000000000001e-06,'cdf 2 recompute');
-cmp_ok(abs($wghash->{'cdf'}->[2]-1.342922139179152e-06),'<',0.000000000001e-06,'cdf 3 recompute');
+cmp_relative($wghash->{'cdf'}->[0],5.858798099018610e+00,11,'cdf 1 recompute');
+cmp_relative($wghash->{'cdf'}->[1],5.858798099018610e+00,11,'cdf 2 recompute');
+cmp_relative($wghash->{'cdf'}->[2],5.996193524477566,11,'cdf 3 recompute');
 
 
 tool::sir::recompute_weights(weight_hash => $wghash,
@@ -185,11 +178,11 @@ tool::sir::recompute_weights(weight_hash => $wghash,
 
 cmp_ok($wghash->{'weights'}->[0],'==',0,'weight 1 recompute');
 cmp_ok($wghash->{'weights'}->[1],'==',0,'weight 2 recompute');
-cmp_ok(abs($wghash->{'weights'}->[2]-3.077141488472004e-08),'<',0.000000000001e-08,'weight 3 recompute');
+cmp_relative($wghash->{'weights'}->[2],1.373954254589559e-01,11,'weight 3 recompute');
 
 cmp_ok($wghash->{'cdf'}->[0],'==',0,'cdf 1 recompute');
 cmp_ok($wghash->{'cdf'}->[1],'==',0,'cdf 2 recompute');
-cmp_ok(abs($wghash->{'cdf'}->[2]-3.077141488472004e-08),'<',0.000000000001e-08,'cdf 3 recompute');
+cmp_relative($wghash->{'cdf'}->[2],1.373954254589559e-01,11,'cdf 3 recompute');
 
 #start over
 $wghash = tool::sir::compute_weights(pdf_array => $pdf,
@@ -347,8 +340,8 @@ cmp_ok($covar->[7]->[7],'==',1.69362E-03,'covar element 8,8');
 cmp_ok($covar->[6]->[3],'==',2.75131E-03,'covar element 7,4');
 cmp_ok($covar->[4]->[6],'==',-3.05686E-04,'covar element 5,7');
 
-my $inflated=tool::sir::inflate_covmatrix(matrix => $covar,
-										  inflation => 2);
+my $inflated = tool::sir::inflate_covmatrix(matrix => $covar,
+							 inflation => 2);
 
 cmp_ok($inflated->[0]->[0],'==',eval(2*6.10693E+00),'inflated covar element 1,1');
 cmp_ok($inflated->[1]->[5],'==',eval(2*1.18743E-02),'inflated covar element 2,6');
@@ -360,17 +353,6 @@ cmp_ok($inflated->[6]->[5],'==',eval(2*7.25938E-03),'inflated covar element 7,6'
 cmp_ok($inflated->[7]->[7],'==',eval(2*1.69362E-03),'inflated covar element 8,8');
 cmp_ok($inflated->[6]->[3],'==',eval(2*2.75131E-03),'inflated covar element 7,4');
 cmp_ok($inflated->[4]->[6],'==',eval(2*-3.05686E-04),'inflated covar element 5,7');
-
-cmp_ok($covar->[0]->[0],'==',6.10693E+00,'covar element 1,1 after inflation not changed');
-cmp_ok($covar->[1]->[5],'==',1.18743E-02,'covar element 2,6 after inflation not changed');
-cmp_ok($covar->[2]->[2],'==',3.75907E-04,'covar element 3,3 after inflation not changed');
-cmp_ok($covar->[3]->[1],'==',-4.02777E-02,'covar element 4,2 after inflation not changed');
-cmp_ok($covar->[4]->[7],'==',6.19395E-05,'covar element 5,8 after inflation not changed');
-cmp_ok($covar->[7]->[0],'==',1.53110E-02,'covar element 8,1 after inflation not changed');
-cmp_ok($covar->[6]->[5],'==',7.25938E-03,'covar element 7,6 after inflation not changed');
-cmp_ok($covar->[7]->[7],'==',1.69362E-03,'covar element 8,8 after inflation not changed');
-cmp_ok($covar->[6]->[3],'==',2.75131E-03,'covar element 7,4 after inflation not changed');
-cmp_ok($covar->[4]->[6],'==',-3.05686E-04,'covar element 5,7 after inflation not changed');
 
 
 $dir = $includes::testfiledir . "/";
@@ -428,17 +410,17 @@ $pdf=tool::sir::mvnpdf(inverse_covmatrix => $icm,
 						  mu => $mu,
 						  xvec_array => [[3,0,1]],
 						  inflation => 1,
-					   relative => 0);
+					   relative => 1);
 
-cmp_float($pdf->[0],2.807179347140791e-09,'mvnpdf well conditioned no inflation');
+cmp_float($pdf->[0],6.843271022218012e-09,'mvnpdf well conditioned no inflation');
 
 $pdf=tool::sir::mvnpdf(inverse_covmatrix => $icm,
 						  mu => $mu,
 						  xvec_array => [[3,0,1]],
 						  inflation => 3,
-					   relative => 0);
+					   relative => 1);
 
-cmp_float($pdf->[0],1.498807247585522e-04,'mvnpdf well conditioned with inflation 3');
+cmp_float($pdf->[0], 1.898546535891817e-03,'mvnpdf well conditioned with inflation 3');
 
 
 done_testing();
