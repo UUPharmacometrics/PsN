@@ -315,7 +315,8 @@ sub create_maxeval_zero_models_array
         sampled_params_arr => { isa => 'ArrayRef', optional => 0 },
         model => { isa => 'model', optional => 0 },
         mceta => { isa => 'Int', optional => 1 },
-        purpose => { isa => 'Str', optional => 0 }
+        purpose => { isa => 'Str', optional => 0 },
+        match_labels => { isa => 'Bool', default => 1, optional => 1 },
 	);
 	my $model = $parm{'model'};
 	my $subdirectory = $parm{'subdirectory'};
@@ -324,6 +325,7 @@ sub create_maxeval_zero_models_array
 	my $mceta = $parm{'mceta'};
 	my $purpose = $parm{'purpose'};
 	my $ignore_missing_parameters = $parm{'ignore_missing_parameters'};
+	my $match_labels = $parm{'match_labels'};
 
 	my $samples_done = 0;
 	my $run_num = 1;
@@ -389,7 +391,8 @@ sub create_maxeval_zero_models_array
 
 		#update ests for first $PROB in real model
 		$run_model -> update_inits(from_hash => $sampled_params_arr->[$samples_done],
-								   ignore_missing_parameters => $ignore_missing_parameters); 
+								   ignore_missing_parameters => $ignore_missing_parameters,
+								   match_labels => $match_labels); 
 
 		$samples_done++;
 		my $probnum=2;
@@ -416,6 +419,7 @@ sub create_maxeval_zero_models_array
 			push(@{$run_model->active_problems()},1);
 			$run_model->update_inits(from_hash => $sampled_params_arr->[$samples_done],
 									 problem_number=> $probnum,
+									 match_labels => $match_labels,
 									 ignore_missing_parameters => $ignore_missing_parameters);
 			$samples_done++;
 			$probnum++;
@@ -3426,7 +3430,8 @@ sub update_inits
 						$namesvalues{$name} = 'matched';
 					} else {
 						unless ($ignore_missing_parameters){
-							unless ($option->value() == 0 and (not $option->on_diagonal())){
+							unless (($option->fix) or
+									($option->value() == 0 and (not $option->on_diagonal()))){
 								my $mes = "update_inits: No match for $param $name found in $from_string";
 								carp($mes);
 								ui -> print( category => 'all',
