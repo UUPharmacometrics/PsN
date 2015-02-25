@@ -19,7 +19,6 @@ given by the covariance matrix output from NONMEM's covariance step
 Alternatively, a file with simulated parameter vectors can be given directly as input and this simulation is skipped. The last approach is useful when it is
 difficult to obtain a (faked) covariance matrix.
 
-
 Second, each of the simulated parameter vectors will be evaluated on the original data (MAXEVAL=0).
 Third, based on these evaluations, weights will be calculated for each of the parameter vectors and the vectors 
 will be resampled according to these weights. Finally, the uncertainty covariance matrix of the parameters 
@@ -112,32 +111,39 @@ is important that the control stream copy at the top of the lst-file matches the
 actual input model file in terms of which parameters are estimated, 
 FIXED or SAME, otherwise there will be a mis-match between which parameter estimates are read from the
 lst-file and which estimates are needed for the sir procedure.
-\item[\underline{Step 1}] Simulate 'samples' parameter vectors from the covariance matrix, i.e. the .cov-file given by NONMEM 
+\item[\underline{Step 1}] Simulate 'samples' parameter vectors from the 
+(possibly inflated)
+covariance matrix, i.e. the .cov-file given by NONMEM 
 or the matrix given via option covmat\_input. 
 NB: NOT performed if -rawres\_input is specified.
 \item[\underline{Step 2}] Calculate each vector $x$’s probability 
 given the covariance matrix based on the formula for the probability 
 density function (PDF) of a multivariate normal distribution:\\
 \begin{math}
-\frac{\left(det\left(A^{-1}\right)\right)^{1/2}}{\left(2\pi\right)^{k/2}} exp\left(-\frac{1}{2}(\left(x-\mu\right)A^{-1} \left(x-\mu\right)^T\right)
+\frac{1}{\left(2\pi\right)^{k/2}\left(det\left(A\right)\right)^{1/2}} exp\left(-\frac{1}{2}(\left(x-\mu\right)A^{-1} \left(x-\mu\right)^T\right)
 \end{math}
 \\
 where $k$ is the number of dimensions, 
 $\mu$ is the vector of expectations and $A$ is the (possibly inflated) covariance matrix.
-Store parameter values and probabilities in raw\_results.csv.
-NB: If -rawres\_input is specified the probability of each vector will be set equal to 1.
+The values are normalized with the PDF for the vector of expectations $\mu$, giving\\
+\begin{math}
+relPDF=exp\left(-\frac{1}{2}(\left(x-\mu\right)A^{-1} \left(x-\mu\right)^T\right)
+\end{math}
+\\
+NB 1: NONMEM covariance matrix is used as input, the inverse covariance matrix
+output by NONMEM is not used.
+NB 2: If -rawres\_input is specified the probability of each vector will be set equal to 1.
 \item[\underline{Step 3}] evaluate the parameter vectors on the original data.
 Create model files with up to 250 \$PROBLEM based on the original model file but setting MAXEVAL=0
 and replacing inits of nth \$PROBLEM with nth parameter vector, and also set MCETA if option -mceta was used. Compute dOFV 
 (delta-OFV, reference is input model ofv) and store in raw\_results.csv.
-\item[\underline{Step 4}] calculate the weights as the ratio $\frac{e^{-0.5\cdot dOFV}}{PDF}$ and store in raw\_results.csv. 
+\item[\underline{Step 4}] calculate the weights as the ratio $\frac{e^{-0.5\cdot dOFV}}{relPDF}$ and store in raw\_results.csv. 
 Resample 'resamples' parameter vectors based on these weights, with or without replacement depending on option -with\_replacement. 
 Store the number of times each vector was resampled in raw\_results.csv.
 Compute the covariance matrix for the resampled parameters (variances and covariances), 
 store in sir\_results.csv. 
 Compute univariate confidence intervals and store in sir\_results.csv.
 \end{itemize}
-
 
 \section{Output}
 \begin{itemize}
@@ -146,8 +152,8 @@ Compute univariate confidence intervals and store in sir\_results.csv.
 \bf{sample.id} & A unique number\\
 \bf{deltaofv} & $\mathrm{ofv} - \mathrm{original}\mbox{\tt\string_}\mathrm{model}\mbox{\tt\string_}\mathrm{ofv}$\\
 \bf{likelihood\_ratio} & $e^{-0.5\cdot \mathrm{deltaofv}}$ \\
-\bf{PDF} & PDF \\
-\bf{importance\_ratio} & $\mathrm{likelihood}\mbox{\tt\string_}\mathrm{ratio}/\mathrm{PDF}$\\
+\bf{relPDF} & relative PDF \\
+\bf{importance\_ratio} & $\mathrm{likelihood}\mbox{\tt\string_}\mathrm{ratio}/\mathrm{relPDF}$\\
 \bf{probability\_resample} & $\mathrm{importance}\mbox{\tt\string_}\mathrm{ratio}/\sum{\mathrm{importance}\mbox{\tt\string_}\mathrm{ratio}}$ \\
 \bf{resamples} & number of actual resamples with random seed used\\
 \end{tabular}
@@ -165,14 +171,6 @@ number 123 of estimated parameters in input model
 then the most likely cause is that there is a mismatch between the input files. Make sure that the number of
 estimated parameters (the number of parameters, the FIXED and SAME settings, the DIAGONAL or BLOCK omega/sigma)
 match between the control stream copy at the beginning of the pre-existing lst-file and the input model file.
-\subsection*{Failure to invert the covariance file}
-If you use the covmat\_input option, and get the error message
-\begin{verbatim}
-covmat_input file could not be inverted, numerical error 
-in linear_algebra invert_symmetric
-\end{verbatim}
-then it is probable that the the covariance matrix is ill-conditioned and badly scaled. Consider using
-the rawres\_input option instead.
 \end{document}
 
 \section{Procedure in case of a failed \$COV step}
