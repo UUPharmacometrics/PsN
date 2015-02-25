@@ -1102,7 +1102,7 @@ sub _modelfit_raw_results_callback
 			}
 		}
 
-		my @extra_headers = ('deltaofv','likelihood_ratio','PDF','importance_ratio','probability_resample','resamples');
+		my @extra_headers = ('deltaofv','likelihood_ratio','relPDF','importance_ratio','probability_resample','resamples');
 		$index=0;
 		foreach my $row ( @{$modelfit -> raw_results()} ) {
 			my @oldrow =@{$row};
