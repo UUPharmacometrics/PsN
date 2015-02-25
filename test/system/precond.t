@@ -17,7 +17,7 @@ copy_test_files($tempdir, ["run1.mod", "data.csv"]);
 chdir $tempdir;
 
 my @commands =  (
-    get_command('execute') . " run1.mod -dir=modelfir_dir1 -clean=2",
+    get_command('execute') . " run1.mod -dir=modelfit_dir1 -clean=2",
 	get_command('precond') . " run1.mod -pre=modelfit_dir1/NM_run1/psn.cov -clean=2",
 );
 
