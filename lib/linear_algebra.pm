@@ -4,6 +4,7 @@ use FindBin qw($Bin);
 use lib "$Bin/../lib";
 use strict;
 use array qw(:all);
+use Math::Trig;
 
 sub pad_matrix
 {
@@ -281,6 +282,83 @@ sub LU_factorization
 		die "LU factorization failed. \n";
 	}
 	return 0;
+}
+
+sub eigenvalue_decomposition
+{
+    my $A = shift;
+
+    my @eigenValMatrix = map { [@$_] } @$A;
+
+    my $maxInd1 = 0;
+    my $maxInd2 = 1;
+    my $extremeVal = 10000;
+    my $counter = 0;
+
+    my @G;
+
+    #initialise G to identity matrix
+    for (my $index1 = 0; $index1 < scalar(@eigenValMatrix); $index1++) {
+        for (my $index2 = 0; $index2 < $index1; $index2++) {
+            $G[$index1][$index2] = 0;
+            $G[$index2][$index1] = 0;
+        }
+        $G[$index1][$index1] = 1;
+    }
+
+    while (abs($extremeVal / $eigenValMatrix[0][0]) > 0.000001 and $counter < 1000000) {
+
+        for (my $index1 = 0; $index1 < scalar(@eigenValMatrix); $index1++) {
+            for (my $index2 = $index1 + 1; $index2 < scalar(@eigenValMatrix); $index2++) {
+                if ((abs($eigenValMatrix[$maxInd1][$maxInd2]) < abs($eigenValMatrix[$index1][$index2])) and ($index1 != $index2)) {
+                    $maxInd1 = $index1;
+                    $maxInd2 = $index2;
+                    $extremeVal = $eigenValMatrix[$maxInd1][$maxInd2];
+                }
+            }
+        }
+        my $theta = (atan(2 * $eigenValMatrix[$maxInd1][$maxInd2] / ($eigenValMatrix[$maxInd2][$maxInd2] - $eigenValMatrix[$maxInd1][$maxInd1]))) / 2;
+        my $c = cos($theta);
+        my $s = sin($theta);
+
+        my @G_copy = map { [@$_] } @G;
+        my @R_copy = map { [@$_] } @eigenValMatrix;
+
+        for (my $index = 0; $index < scalar(@G); $index++) {
+            $G[$maxInd1][$index] = $c * $G_copy[$maxInd1][$index] - $s * $G_copy[$maxInd2][$index];
+            $G[$maxInd2][$index] = $s * $G_copy[$maxInd1][$index] + $c * $G_copy[$maxInd2][$index];
+        }
+
+        for (my $index = 0; $index < scalar(@eigenValMatrix); $index++) {
+            $eigenValMatrix[$maxInd1][$index] = $c * $R_copy[$maxInd1][$index] - $s * $R_copy[$maxInd2][$index];
+            $eigenValMatrix[$maxInd2][$index] = $s * $R_copy[$maxInd1][$index] + $c * $R_copy[$maxInd2][$index];
+        }
+
+        my @r1;
+        my @r2;
+
+        for (my $index = 0; $index < scalar(@eigenValMatrix); $index++) {
+            $r1[$index] = $eigenValMatrix[$index][$maxInd1];
+            $r2[$index] = $eigenValMatrix[$index][$maxInd2];
+        }
+
+        my @R_copy2 = map { [@$_] } @eigenValMatrix;
+
+        for (my $index = 0; $index < scalar(@eigenValMatrix); $index++) {
+            $eigenValMatrix[$index][$maxInd1] = $c * $R_copy2[$index][$maxInd1] - $s * $R_copy2[$index][$maxInd2];
+            $eigenValMatrix[$index][$maxInd2] = $s * $R_copy2[$index][$maxInd1] + $c * $R_copy2[$index][$maxInd2];
+        }
+
+        $counter = $counter + 1;
+    }
+
+    my @eigenValues;
+
+    for (my $index = 0; $index < scalar(@eigenValMatrix); $index++) {
+        $eigenValues[$index] = $eigenValMatrix[$index][$index];
+    }
+
+    return \@eigenValues;
 }
 
 sub lower_triangular_identity_solve
@@ -710,11 +788,11 @@ sub get_identity_matrix
 	my $dimension = shift;
 
 	croak("dimension must be larger than 0 in get_identity_matrix") unless ($dimension > 0);
-	my @result=();
-	for (my $i=0; $i< $dimension; $i++){
+	my @result = ();
+	for (my $i = 0; $i < $dimension; $i++) {
 		my @line = (0) x $dimension;
 		$line[$i] = 1;
-		push(@result,\@line);
+		push(@result, \@line);
 	}
 	return \@result;
 }
