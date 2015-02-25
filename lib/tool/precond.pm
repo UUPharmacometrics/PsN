@@ -120,18 +120,20 @@ sub modelfit_analyze
             $new_theta->[$row] = $sum;
         }
 
+        my $theta_ind = 0;
         for my $theta (@{$copy->problems->[0]->thetas}) {
             for (my $i = 0; $i < scalar(@{$theta->options}); $i++) {
                 my $option = $theta->options->[$i];
-                $option->init($new_theta->[$i]);
-                if (defined $option->lobnd and $new_theta->[$i] < $option->lobnd) {
+                $option->init($new_theta->[$theta_ind]);
+                if (defined $option->lobnd and $new_theta->[$theta_ind] < $option->lobnd) {
                     $option->clear_lobnd;
                     print "Warning: updated THETA(", $i + 1, ") estimate is below original lower bound. The bound will be removed in updated model.\n";
                 }
-                if (defined $option->upbnd and $new_theta->[$i] > $option->upbnd) {
+                if (defined $option->upbnd and $new_theta->[$theta_ind] > $option->upbnd) {
                     $option->clear_upbnd;
                     print "Warning: updated THETA(", $i + 1, ") estimate is above original upper bound. The bound will be removed in updated model.\n";
                 }
+                $theta_ind++;
             }
         }
 
@@ -441,7 +443,7 @@ sub create_reparametrized_model
 		}
 		$precMatSLine[$i] = join " ", @line_values;
 	}
-					
+
 	open (my $MYFILE, '>', File::Spec->catfile($directory, "precMatrix"));
 	for (my $i = 0; $i < scalar(@precMatSLine); $i++) {
 		print $MYFILE $precMatSLine[$i] . "\n";
@@ -473,7 +475,6 @@ sub convert_reparametrized_cov
 	
 	
 	if (-e $cov_filename) {
-	
 	
 	open(my $fh, '<', $cov_filename) or croak("Cannot find the .cov file '$cov_filename' [$!]\n");
 	while (my $tline = <$fh>) {
@@ -675,7 +676,8 @@ sub convert_reparametrized_cov
 		}
 
 
-		while (abs($extremeVal/$eigenValMatrix[0][0])>0.000001&$counter<1000000){
+#while (abs($extremeVal)>0.0000000001&$counter<100000000) {
+            while (abs($extremeVal/$eigenValMatrix[0][0])>0.000001&$counter<1000000){
 									    
 		   for (my $index1=0; $index1< scalar(@eigenValMatrix) ;$index1++){
 		       for (my $index2=$index1+1; $index2< scalar(@eigenValMatrix) ;$index2++){

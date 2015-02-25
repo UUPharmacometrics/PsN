@@ -196,56 +196,64 @@ if (defined $options{'rawres_input'}) {
 	my $file;
 	my $fh;
 	
-	if (defined $options{'pre'} ){
-		$file = $options{'pre'}. "/NM_run1/psn.rmt";
-		my $file2 = $options{'pre'}. "NM_run1/psn.rmt";
-		my $file3 = $options{'pre'}. "/modelfit_dir1/NM_run1/psn.rmt";
-		my $file4 = $options{'pre'}. "modelfit_dir1/NM_run1/psn.rmt";
-		my $file5 = $options{'pre'};
+	if (defined $options{'pre'}) {
+        if (-d $options{'pre'}) {
+		    $file = $options{'pre'} . "/NM_run1/psn.rmt";
+		    my $file2 = $options{'pre'} . "NM_run1/psn.rmt";
+		    my $file3 = $options{'pre'} . "/modelfit_dir1/NM_run1/psn.rmt";
+		    my $file4 = $options{'pre'} . "modelfit_dir1/NM_run1/psn.rmt";
 		
-		if (-e $file) { 
-			print "\n Precondition using R-matrix: '$file'\n\n";
-		}elsif(-e $file2){
-			$file=$file2;
-			print "\n Precondition using R-matrix: '$file'\n\n";
-		}elsif (-e $file3){
-			$file=$file3;
-			print "\n Precondition using R-matrix: '$file'\n\n";
-		}elsif (-e $file4){
-			$file=$file4;
-			print "\n Precondition using R-matrix: '$file'\n\n";
-		}elsif (-e $file5){
-			$file=$file5;
-			print "\n Precondition using matrix: '$file'\n\n";
-		}else{
-			print "\nCannot find the preconditioning matrix '$file5'\n\n"
+            if (-e $file) { 
+            } elsif (-e $file2) {
+                $file = $file2;
+            } elsif (-e $file3) {
+                $file = $file3;
+            } elsif (-e $file4) {
+                $file = $file4;
+            }
+        } else {
+            $file = $options{'pre'};
+        }
+		
+        open($fh, '<', $file) or die "\nCannot open the preconditioning matrix: '$file'\n\n";
+
+	} else {
+        # Try to automatically find .rmt file from a previous run
+        # First try model.rmt in calling directory
+        # Second try in the model.dirN with highest N
+        # Third try in the modelfit_dirN with highest N
+
+		$file = $model_filename;
+		$file =~ s/(\.ctl|\.mod)$/.rmt/;
+
+		if (not -e $file) { 
+            my $modelfit_dir = $model_filename;
+            $modelfit_dir =~ s/(\.ctl|\.mod)$//;
+            $modelfit_dir .= ".dir";
+            my $dirnum = 1;
+            my $dir;
+            while (1) {
+                $dir = $modelfit_dir . $dirnum;
+                last if (not -e $dir);
+                $dirnum++;
+            }
+            $file = $modelfit_dir . ($dirnum - 1) . "/NM_run1/psn.rmt";
+
+            if (not -e $file) {
+                my $mfdir = "modelfit_dir1";
+                my $dirnum = 1;
+                while (-e $mfdir) {
+                    $dirnum = $dirnum + 1;
+                    $mfdir = "modelfit_dir" . $dirnum;
+                }
+                $file = "modelfit_dir" . ($dirnum - 1) . "/NM_run1/psn.rmt";
+            }
 		}
-		
-		open($fh, '<', $file) or die ;
-	}else{
-		$file=$model_filename;
-		$file =~ s/(\.ctl|\.mod)$//;
-		$file .= '.rmt';
-		
-		if (-e $file) { 
-		}else{
-			my $mfdir="modelfit_dir1";
-			my $dirnum=1;
-			while (-e $mfdir){
-				$dirnum=$dirnum+1;
-				$mfdir="modelfit_dir".$dirnum;
-			}
-			$file="modelfit_dir".($dirnum-1)."/NM_run1/psn.rmt";
-			
-			
-		}
-		open($fh, '<', $file) or die "'$file' does not exist in the same directory as the .mod/.ctl file\n specify the R-matrix or the modelfit directory using -pre= option\n";
-		print "\n Precondition using R-matrix: '$file'\n\n";
+		open($fh, '<', $file)
+            or die "Cannot automatically find the R-matrix file\n specify the R-matrix or the modelfit directory using -pre= option\n";
 	}
+    print "\n Precondition using R-matrix: '$file'\n\n";
 	
-
-	    
-
     # Read either a nonmem .cov file or an ordinary csv file without header
     my $line = <$fh>;
     if ($line =~ /^TABLE NO./) {
@@ -287,225 +295,218 @@ if ((not $options{'nodec'})) {
 	if ($options{'cholesky'}) {
 		
 		if (not linear_algebra::is_symmetric(\@precMatrix)) {
-		            die "Matrix must be symmetric for cholesky decomposition";
-		        }
-		        # Swap to column order
-		        linear_algebra::transpose(\@precMatrix);
-				my $error = linear_algebra::cholesky(\@precMatrix);
-				if ($error) {
-					die "Unable to perform cholesky decomposition: matrix is not positive-definite";
-				}
-		        # Swap back to row order
-		        linear_algebra::transpose(\@precMatrix);
-		        # Create L matrix
-		        for (my $row = 0; $row < @precMatrix; $row++) {
-		            for (my $col = $row + 1; $col < @precMatrix; $col++) {
-		                $precMatrix[$row]->[$col] = 0;
-		            }
-		        }
-
-		} elsif($options{'lu'}) {
-			
-			
-			
-			my $dummy = linear_algebra::LU_factorization(\@precMatrix);
-			for (my $row = 0; $row < @precMatrix; $row++) {		# Quick hack to get the L matrix
-				@precMatrix[$row]->[$row] = 1;
-				for (my $col = $row + 1; $col < @precMatrix; $col++) {
-					@precMatrix[$row]->[$col] = 0;
-				}
-			}
-
-				
-				
-				
-		} else {
-			
-			my @eigenValMatrix = map { [@$_] }@precMatrix;
-						
-			my $maxInd1=0;
-			my $maxInd2=1;
-			my $extremeVal=10000;
-			my $counter=0;
-							
-			my @G;
-							
-			#initialise G to identity matrix
-			for (my $index1=0; $index1< scalar(@eigenValMatrix) ;$index1++){
-				for (my $index2=0; $index2< $index1 ;$index2++){
-					$G[$index1][$index2]=0;
-					$G[$index2][$index1]=0;
-				}
-				$G[$index1][$index1]=1;
-			}
-
-
-			while (abs($extremeVal/$eigenValMatrix[0][0])>0.000001&$counter<1000000){
-							    
-			    for (my $index1=0; $index1< scalar(@eigenValMatrix) ;$index1++){
-			        for (my $index2=$index1+1; $index2< scalar(@eigenValMatrix) ;$index2++){
-			            if ((abs($eigenValMatrix[$maxInd1][$maxInd2])<abs($eigenValMatrix[$index1][$index2]))&($index1!=$index2)){
-			                $maxInd1=$index1;
-			                $maxInd2=$index2;
-			
-			                $extremeVal=$eigenValMatrix[$maxInd1][$maxInd2];
-						}
-					}
-				}
-			    my $theta=(atan(2*$eigenValMatrix[$maxInd1][$maxInd2]/($eigenValMatrix[$maxInd2][$maxInd2]-$eigenValMatrix[$maxInd1][$maxInd1])))/2;
-			    my $c=cos($theta);
-			    my $s=sin($theta);
-							    
-			    my @G_copy= map { [@$_] }@G;
-				my @R_copy= map { [@$_] }@eigenValMatrix;
-
-			    for (my $index=0; $index<scalar(@G); $index++){
-			        $G[$maxInd1][$index]=$c*$G_copy[$maxInd1][$index]-$s*$G_copy[$maxInd2][$index];
-			        $G[$maxInd2][$index]=$s*$G_copy[$maxInd1][$index]+$c*$G_copy[$maxInd2][$index];
-				}
-							    
-			    for (my $index=0; $index<scalar(@eigenValMatrix); $index++){
-			        $eigenValMatrix[$maxInd1][$index]=$c*$R_copy[$maxInd1][$index]-$s*$R_copy[$maxInd2][$index];
-			        $eigenValMatrix[$maxInd2][$index]=$s*$R_copy[$maxInd1][$index]+$c*$R_copy[$maxInd2][$index];
-				}
-								
-				my @r1;
-				my @r2;
-
-				for (my $index=0; $index<scalar(@eigenValMatrix); $index++){
-			    	$r1[$index]= $eigenValMatrix[$index][$maxInd1];
-			    	$r2[$index]= $eigenValMatrix[$index][$maxInd2];
-				}
-								
-				my @R_copy2= map { [@$_] }@eigenValMatrix;
-
-				for (my $index=0; $index<scalar(@eigenValMatrix); $index++){
-			        $eigenValMatrix[$index][$maxInd1]=$c*$R_copy2[$index][$maxInd1]-$s*$R_copy2[$index][$maxInd2];
-			        $eigenValMatrix[$index][$maxInd2]=$s*$R_copy2[$index][$maxInd1]+$c*$R_copy2[$index][$maxInd2];
-				}
-								
-			    $counter=$counter+1;
-			}
-							
-			my @eigenValues;
-							
-			my $maxEigen;
-			my $minEigen;
-			my $negaCounter=0;
-			if ($options{'print'}){
-				print "\n ===== Eigenvalues ===== \n";
-			}
-							
-			for (my $index=0; $index<scalar(@eigenValMatrix); $index++){
-				$eigenValues[$index]=$eigenValMatrix[$index][$index];
-				if ($options{'print'}){
-					print $eigenValues[$index];
-					print "\n";
-				}
-				if ($index==0){
-					$maxEigen=abs($eigenValues[$index]);
-					$minEigen=abs($eigenValues[$index]);
-				}elsif($maxEigen<abs($eigenValues[$index])){
-					$maxEigen=abs($eigenValues[$index]);
-				}elsif($minEigen>abs($eigenValues[$index])){
-					$minEigen=abs($eigenValues[$index]);
-				}
-								
-				if ($eigenValues[$index]<0){
-					if ($options{'perturb'} or $options{'perturbOnly'}){
-						$negaEigIndex[$negaCounter]=$index;
-					}
-						
-					$negaCounter++;
-				}
-				
-			}
-							
-			print("Condition Number : 10^");
-			print(int(log($maxEigen/$minEigen)/log(10)));
-							
-			print("\nNumber of negative eigenvalues : ");
-			print($negaCounter);
-							
-			if ($options{'print'}){
-				print("\n ================= \n");
-			}
-							
-			if ($options{'eigCompOnly'}){
-				die "Eigenvalue Calculation Only";
-			}
-							
-			my $fixed = $model->fixed(parameter_type => 'theta');				
-			for (my $index1=0; $index1<scalar(@precMatrix); $index1++){
-				#if (!$fixed->[0]->[$index1-1]){
-				for (my $index2=0; $index2<scalar(@precMatrix); $index2++){
-				#		if (!$fixed->[0]->[$index2-1]){
-					$precMatrix[$index2][$index1]=$G[$index1][$index2]/sqrt(abs($eigenValues[$index1]));
-				#		}
-				#	}
-				}
-			}
-
+            die "Matrix must be symmetric for cholesky decomposition";
+        }
+        # Swap to column order
+        linear_algebra::transpose(\@precMatrix);
+        my $error = linear_algebra::cholesky(\@precMatrix);
+        if ($error) {
+            die "Unable to perform cholesky decomposition: matrix is not positive-definite";
+        }
+        # Swap back to row order
+        linear_algebra::transpose(\@precMatrix);
+        # Create L matrix
+        for (my $row = 0; $row < @precMatrix; $row++) {
+            for (my $col = $row + 1; $col < @precMatrix; $col++) {
+                $precMatrix[$row]->[$col] = 0;
+            }
         }
 
-		if ($options{'perturbOnly'}){
-			for (my $index1=0; $index1< scalar(@precMatrix) ;$index1++){
-				for (my $index2=0; $index2< $index1 ;$index2++){
-					$precMatrix[$index1][$index2]=0;
-					$precMatrix[$index2][$index1]=0;
-				}
-					$precMatrix[$index1][$index1]=1;
-			}
+    } elsif($options{'lu'}) {
 
-		}
+        my $dummy = linear_algebra::LU_factorization(\@precMatrix);
+        for (my $row = 0; $row < @precMatrix; $row++) {		# Quick hack to get the L matrix
+            @precMatrix[$row]->[$row] = 1;
+            for (my $col = $row + 1; $col < @precMatrix; $col++) {
+                @precMatrix[$row]->[$col] = 0;
+            }
+        }
+
+    } else {
+        my @eigenValMatrix = map { [@$_] } @precMatrix;
+
+        my $maxInd1=0;
+        my $maxInd2=1;
+        my $extremeVal=10000;
+        my $counter=0;
+
+        my @G;
+
+        #initialise G to identity matrix
+        for (my $index1=0; $index1< scalar(@eigenValMatrix) ;$index1++){
+            for (my $index2=0; $index2< $index1 ;$index2++){
+                $G[$index1][$index2]=0;
+                $G[$index2][$index1]=0;
+            }
+            $G[$index1][$index1]=1;
+        }
 
 
+        while (abs($extremeVal)/$eigenValMatrix[0][0]>0.000001 & $counter<1000000) {
+            #while (abs($extremeVal)>0.0000000001 & $counter<100000000) {
 
-		if(defined $options{'pre'}) {
-			
-			my $file = $options{'pre'}. "/precMatrix";
-			my $file2 = $options{'pre'}. "precMatrix";
-			
-			if (-e $file) { 
-			}elsif(-e $file2){
-				$file=$file2;
-			}
-						
-			if (-e $file){
-				print "\n\n Pre-Precondition using matrix: '$file'\n";
-				
-		    	open(my $fh, '<', $file) or die "Cannot find the file".$file."precMatrix so prepre option cannot be used \n";
-		
-			
-		    	# Read either a nonmem .cov file or an ordinary csv file without header
-		    	my $line = <$fh>;
-		    	my @preprecMatrix;
-				seek $fh, 0, 0;
-		    	while (my $line = <$fh>) {
-			    	chomp $line;
-			    	my @fields = split(/\s+/, $line);
-			    	push @preprecMatrix, \@fields;
-				}
-			
-				my @precMatrix_copy= map { [@$_] }@precMatrix;
-			
-				if (scalar(@preprecMatrix)!=scalar(@precMatrix)){
-					die "Size of precMatrix and preprecMatrix not consistent"
-				}
+            for (my $index1=0; $index1< scalar(@eigenValMatrix) ;$index1++){
+                for (my $index2=$index1+1; $index2< scalar(@eigenValMatrix) ;$index2++){
+                    if ((abs($eigenValMatrix[$maxInd1][$maxInd2])<abs($eigenValMatrix[$index1][$index2]))&($index1!=$index2)){
+                        $maxInd1=$index1;
+                        $maxInd2=$index2;
 
-				my $tempSum=0;
-			
-				for (my $i=0; $i<scalar(@precMatrix_copy);$i++){
-					for (my $j=0; $j<scalar(@precMatrix_copy);$j++){
-						$tempSum=0;
-						for (my $k=0; $k<scalar(@precMatrix_copy);$k++){
-							$tempSum=$tempSum+$precMatrix_copy[$k][$j]*$preprecMatrix[$i][$k+1];
-						}
-						$precMatrix[$i][$j]=$tempSum;
-					}
-				}
-			}
-		}
+                        $extremeVal=$eigenValMatrix[$maxInd1][$maxInd2];
+                    }
+                }
+            }
+            my $theta=(atan(2*$eigenValMatrix[$maxInd1][$maxInd2]/($eigenValMatrix[$maxInd2][$maxInd2]-$eigenValMatrix[$maxInd1][$maxInd1])))/2;
+            my $c=cos($theta);
+            my $s=sin($theta);
+
+            my @G_copy= map { [@$_] }@G;
+            my @R_copy= map { [@$_] }@eigenValMatrix;
+
+            for (my $index=0; $index<scalar(@G); $index++){
+                $G[$maxInd1][$index]=$c*$G_copy[$maxInd1][$index]-$s*$G_copy[$maxInd2][$index];
+                $G[$maxInd2][$index]=$s*$G_copy[$maxInd1][$index]+$c*$G_copy[$maxInd2][$index];
+            }
+
+            for (my $index=0; $index<scalar(@eigenValMatrix); $index++){
+                $eigenValMatrix[$maxInd1][$index]=$c*$R_copy[$maxInd1][$index]-$s*$R_copy[$maxInd2][$index];
+                $eigenValMatrix[$maxInd2][$index]=$s*$R_copy[$maxInd1][$index]+$c*$R_copy[$maxInd2][$index];
+            }
+
+            my @r1;
+            my @r2;
+
+            for (my $index=0; $index<scalar(@eigenValMatrix); $index++){
+                $r1[$index]= $eigenValMatrix[$index][$maxInd1];
+                $r2[$index]= $eigenValMatrix[$index][$maxInd2];
+            }
+
+            my @R_copy2= map { [@$_] }@eigenValMatrix;
+
+            for (my $index=0; $index<scalar(@eigenValMatrix); $index++){
+                $eigenValMatrix[$index][$maxInd1]=$c*$R_copy2[$index][$maxInd1]-$s*$R_copy2[$index][$maxInd2];
+                $eigenValMatrix[$index][$maxInd2]=$s*$R_copy2[$index][$maxInd1]+$c*$R_copy2[$index][$maxInd2];
+            }
+
+            $counter=$counter+1;
+        }
+
+        my @eigenValues;
+
+        my $maxEigen;
+        my $minEigen;
+        my $negaCounter=0;
+        if ($options{'print'}){
+            print "\n ===== Eigenvalues ===== \n";
+        }
+
+        for (my $index=0; $index<scalar(@eigenValMatrix); $index++){
+            $eigenValues[$index]=$eigenValMatrix[$index][$index];
+            if ($options{'print'}){
+                print $eigenValues[$index];
+                print "\n";
+            }
+            if ($index==0){
+                $maxEigen=abs($eigenValues[$index]);
+                $minEigen=abs($eigenValues[$index]);
+            }elsif($maxEigen<abs($eigenValues[$index])){
+                $maxEigen=abs($eigenValues[$index]);
+            }elsif($minEigen>abs($eigenValues[$index])){
+                $minEigen=abs($eigenValues[$index]);
+            }
+
+            if ($eigenValues[$index]<0){
+                if ($options{'perturb'} or $options{'perturbOnly'}){
+                    $negaEigIndex[$negaCounter]=$index;
+                }
+
+                $negaCounter++;
+            }
+
+        }
+        print("Condition Number : 10^");
+        print(int(log($maxEigen/$minEigen)/log(10)));
+
+        print("\nNumber of negative eigenvalues : ");
+        print($negaCounter);
+
+        if ($options{'print'}){
+            print("\n ================= \n");
+        }
+
+        if ($options{'eigCompOnly'}){
+            die "Eigenvalue Calculation Only";
+        }
+
+        #my $fixed = $model->fixed(parameter_type => 'theta');				
+        for (my $index1=0; $index1<scalar(@precMatrix); $index1++){
+            #if (!$fixed->[0]->[$index1-1]){
+            for (my $index2=0; $index2<scalar(@precMatrix); $index2++){
+                #		if (!$fixed->[0]->[$index2-1]){
+                $precMatrix[$index2][$index1]=$G[$index1][$index2]/sqrt(abs($eigenValues[$index1]));
+                #		}
+                #	}
+            }
+        }
+    }
+
+    if ($options{'perturbOnly'}){
+        for (my $index1=0; $index1< scalar(@precMatrix) ;$index1++){
+            for (my $index2=0; $index2< $index1 ;$index2++){
+                $precMatrix[$index1][$index2]=0;
+                $precMatrix[$index2][$index1]=0;
+            }
+            $precMatrix[$index1][$index1]=1;
+        }
+
+    }
+
+
+    if(defined $options{'pre'}) {
+
+        # Check if run was the result of preconditioning
+        my $file = $options{'pre'}. "/precMatrix";
+        my $file2 = $options{'pre'}. "precMatrix";
+
+        if (-e $file) { 
+        }elsif(-e $file2){
+            $file=$file2;
+        }
+
+        if (-e $file){
+            print "\n\n Pre-Precondition using matrix: '$file'\n";
+
+            open(my $fh, '<', $file) or die "Cannot find the file".$file."precMatrix so prepre option cannot be used \n";
+
+
+            # Read either a nonmem .cov file or an ordinary csv file without header
+            my $line = <$fh>;
+            my @preprecMatrix;
+            seek $fh, 0, 0;
+            while (my $line = <$fh>) {
+                chomp $line;
+                my @fields = split(/\s+/, $line);
+                push @preprecMatrix, \@fields;
+            }
+
+            my @precMatrix_copy= map { [@$_] }@precMatrix;
+
+            if (scalar(@preprecMatrix)!=scalar(@precMatrix)){
+                die "Size of precMatrix and preprecMatrix not consistent"
+            }
+
+            my $tempSum=0;
+
+            for (my $i=0; $i<scalar(@precMatrix_copy);$i++){
+                for (my $j=0; $j<scalar(@precMatrix_copy);$j++){
+                    $tempSum=0;
+                    for (my $k=0; $k<scalar(@precMatrix_copy);$k++){
+                        $tempSum=$tempSum+$precMatrix_copy[$k][$j]*$preprecMatrix[$i][$k+1];
+                    }
+                    $precMatrix[$i][$j]=$tempSum;
+                }
+            }
+        }
+    }
 }
 
 my $only_do_pre_step;
