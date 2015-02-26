@@ -8,7 +8,7 @@ use file;
 
 has 'file' => ( is => 'rw', isa => 'file' );
 has 'abort_on_fail' => ( is => 'rw', isa => 'Bool|Ref', default => sub { \'1,0' });
-has 'base_criteria_values' => ( is => 'rw', isa => 'Any', default => sub { } );
+#has 'base_criteria_values' => ( is => 'rw', isa => 'Any', default => sub { } ); #does not work, skip
 has 'categorical_covariates' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { [] } );
 has 'error_code' => ( is => 'rw', isa => 'Str|Ref', default => sub { \'' } );
 has 'code' => ( is => 'rw', isa => 'HashRef', default => sub { { 'ARRAY' => undef } } );

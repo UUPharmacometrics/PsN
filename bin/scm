@@ -28,6 +28,7 @@ my %required_options = ( "config_file:s" => '');
 
 my %optional_options = ( "search_direction:s" => 'forward|backward|both',
 						 "gof:s" => '',
+						 "base_ofv:f" => '',
 						 "global_init:s" => '',
 						 "logfile:s" => '',
 						 "model:s" => '',
@@ -143,6 +144,13 @@ EOF
     Do not take more that max_steps forward steps,
     even if there are more covariates left to add and a significant
     inclusion was made in the last step.
+EOF
+	$help_text{-base_ofv} = <<'EOF';
+-base_ofv=x
+
+    Use this value as the ofv of the base model with included relations,
+	i.e. do not run the base model with included relations but use
+	this value instead.
 EOF
 
     $help_text{-gof} = << 'EOF';
@@ -400,6 +408,12 @@ if( $models_array->[0] -> is_option_set( record => 'abbreviated', name => 'REPLA
 }
 my $scm;
 
+my %base_criteria_values;
+if (defined $options{'base_ofv'}){
+	$base_criteria_values{'ofv'}=$options{'base_ofv'};
+}
+
+
 if( $direction eq 'forward' or $direction eq 'both' ){
 	ui -> print( category => 'scm',
 				 message => "Starting scm forward search" );
@@ -439,6 +453,7 @@ if( $direction eq 'forward' or $direction eq 'both' ){
 	$scm = tool::scm -> 
 		new ( eval( $common_options::parameters ),
 			  models	=> $models_array,
+			  base_criteria_values => \%base_criteria_values,
 			  config_file => $config_file,
 			  both_directions => ($direction eq 'both')? 1 : 0,
 			  p_backward => $p_backward,
@@ -466,9 +481,10 @@ if( $direction eq 'forward' or $direction eq 'both' ){
 			$config_file -> p_value( $orig_p_value );
 		}
 
-		if( defined $scm -> base_criteria_values ){
-			$config_file -> base_criteria_values( $scm -> base_criteria_values );
-		}
+# this does not work
+#		if( defined $scm -> base_criteria_values ){
+#			$config_file -> base_criteria_values( $scm -> base_criteria_values );
+#		}
 
 		if( defined $scm -> included_relations ){
 			$config_file -> included_relations( $scm -> included_relations );
@@ -493,6 +509,7 @@ if( $direction eq 'backward' ){
 
 	my $scm_back = tool::scm -> 
 		new ( eval( $common_options::parameters ),
+			  base_criteria_values => \%base_criteria_values,
 			  directory   => $options{'directory'},
 			  models	=> $models_array,
 			  config_file => $config_file );

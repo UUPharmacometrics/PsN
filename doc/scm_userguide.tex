@@ -127,6 +127,16 @@ A comma separated list of the continuous covariates to be tested. The listed cov
 \nextopt
 \end{optionlist}
 
+\subsection{Optional input which can only be given on the command-line}
+\begin{optionlist}
+\optdefault{base\_ofv}{number}
+By default the base model will be run with any included relations
+to get the base ofv value to use as reference when evaluating the candidate models.
+If option -base\_ofv is set on the command-line, the base model will not be run,
+and this value will be used instead.
+\nextopt
+\end{optionlist}
+
 \subsection{Optional input which can be given on the command-line or in the configuration file}
 When set in the configuration file, all these options must be set before the first 
 \verb|[|\emph{section}\verb|]|. Note also that the leading '-' must be omitted if the option is set
@@ -172,13 +182,6 @@ When set, all these options must be set \emph{before} the first
 \verb|[|\emph{section}\verb|]|.
 
 \begin{optionlist}
-\optconfig{base\_criteria\_values}{perl code}
-The argument to this option is some perl code (a hash). The base\_criteria\_values overrides default criteria for the goodness of fit function used. The default goodness of fit function takes its base\_criteria\_value to be the ofv of the initial model. The ofv of the initial model  can be set by
-
-base\_criteria\_values={ofv =$>$ 670}
-
- where the number 670 should be be replaced by the ofv value of the model evaluated with all included relations. If base\_criteria\_values is set, then PsN does not have to evaluate the original model with included\_relations to get a ofv to use for comparisons.\\
-\nextopt
 \optconfig{logit}{comma-separated list of parameters}
 By default the value of the covariate function for a parameter is a  product of individual functions of the included covariates, and the typical value (TV) of the parameter is multiplied with the product. With option -logit the user can specify a list of parameters which should be treated as logit transformations, i.e. the value of the covariate function is a sum of individual functions, the sum should be added to the typical value of the parameter, and the value of each individual covariate function should be 0, not 1, when the corresponding THETA is 0. The thetas in a linear or hockey-stick relation on a logit parameter will be given lower and upper boundaries -20 and 20 by default. Important note: When a parameter is a logit transformation, the power and exponential covariate relations are not appropriate to add on this parameter. 
 \nextopt
@@ -353,7 +356,7 @@ If option search\_direction is set to backward, the section
 \verb|[included_relations]|
 is required (otherwise there will be no relations that PsN can remove during the backward search).
 
-If included\_relations is defined, PsN will run the input model with these relations before starting the search, in order to have a reference ofv value for computing the improvements when adding covariates. If base\_criteria\_values is set with an ofv-value, then the run with included\_relations is skipped. 
+If included\_relations is defined, PsN will run the input model with these relations before starting the search, in order to have a reference ofv value for computing the improvements when adding covariates. If option -base\_ofv is set on the command-line, then the run with included\_relations is skipped. 
 
 \subsection{[code]}
 The code section allows you to define your own relation code for the different states. Never redefine state 1 (relation not included). The line \verb|[code]| must only appear once, even if there are several different definitions in the section. For the code section you can write any NONMEM code you like on the right hand side of the first equal sign and it will be inserted into the model when that combination is included. In the code PsN will replace PAR with the parameter, for example CL, and COV with the covariate, for example WGT. In addition, median, mean, maximum and minimum will be replaced with the median, mean, maximum and minimum values of the covariate. The wildcard * can be used to define for many parameters and or covariates at once. E.g.:
