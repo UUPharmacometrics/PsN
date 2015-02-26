@@ -215,35 +215,21 @@ if (defined $options{'rawres_input'}) {
 	} else {
         # Try to automatically find .rmt file from a previous run
         # First try model.rmt in calling directory
-        # Second try in the model.dirN with highest N
-        # Third try in the modelfit_dirN with highest N
+        # Second try rundirs in the order of list_candidate_latest_rundirs
 
 		$file = $model_filename;
 		$file =~ s/(\.ctl|\.mod)$/.rmt/;
 
-		if (not -e $file) { 
-            my $modelfit_dir = $model_filename;
-            $modelfit_dir =~ s/(\.ctl|\.mod)$//;
-            $modelfit_dir .= ".dir";
-            my $dirnum = 1;
-            my $dir;
-            while (1) {
-                $dir = $modelfit_dir . $dirnum;
-                last if (not -e $dir);
-                $dirnum++;
-            }
-            $file = $modelfit_dir . ($dirnum - 1) . "/NM_run1/psn.rmt";
-
-            if (not -e $file) {
-                my $mfdir = "modelfit_dir1";
-                my $dirnum = 1;
-                while (-e $mfdir) {
-                    $dirnum = $dirnum + 1;
-                    $mfdir = "modelfit_dir" . $dirnum;
+        if (not -e $file) {
+            my @candidate_dirs = tool::list_candidate_latest_rundirs($model_filename);
+            foreach my $dir (@candidate_dirs) {
+                if (-e "$dir/NM_run1/psn.rmt") {
+                    $file = "$dir/NM_run1/psn.rmt";
+                    last;
                 }
-                $file = "modelfit_dir" . ($dirnum - 1) . "/NM_run1/psn.rmt";
             }
-		}
+        }
+
 		open($fh, '<', $file)
             or die "Cannot automatically find the R-matrix file\n specify the R-matrix or the modelfit directory using -pre= option\n";
 	}
