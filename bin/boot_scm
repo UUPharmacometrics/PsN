@@ -272,9 +272,9 @@ if( defined $config_file -> included_relations() ){
 	$original_included=$config_file -> included_relations();
 }
 
-if( defined $config_file -> base_criteria_values ){
-	$original_base = $config_file -> base_criteria_values();
-}
+#if( defined $config_file -> base_criteria_values ){
+#	$original_base = $config_file -> base_criteria_values();
+#}
 
 if( defined $config_file -> p_forward ){
 	$p_forward = $config_file -> p_forward;
@@ -797,7 +797,7 @@ $start_j=0 if ($options{'run_final_models'});
 for ( my $j = $start_j; $j <= $options{'samples'}; $j++ ) {
 	chdir($main_directory);
 	$config_file -> included_relations($original_included) if (defined $original_included);
-	$config_file -> base_criteria_values($original_base) if (defined $original_base);
+#	$config_file -> base_criteria_values($original_base) if (defined $original_base);
 
 	my ($model_dir, $filename) = OSspecific::absolute_path( $modeldir, 
 															'bsmod_'.$j.'.mod' );
