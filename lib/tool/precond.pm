@@ -16,11 +16,11 @@ use Storable qw(dclone);
 
 extends 'tool';
 
-has 'precond_matrix' => (is => 'rw', isa => 'ArrayRef[ArrayRef]');
-has 'precond_model' => (is => 'rw', isa => 'model');
-has 'update_model' => (is => 'rw', isa => 'Maybe[Str]');
-has 'negaEigenIndex' =>  (is => 'rw', isa => 'ArrayRef');
-has '_repara_model' => (is => 'rw', isa => 'model');
+has 'precond_matrix' => ( is => 'rw', isa => 'ArrayRef[ArrayRef]' );
+has 'precond_model' => ( is => 'rw', isa => 'model' );
+has 'update_model' => ( is => 'rw', isa => 'Maybe[Str]' );
+has 'negaEigenIndex' =>  ( is => 'rw', isa => 'ArrayRef' );
+has '_repara_model' => ( is => 'rw', isa => 'model' );
 
 
 sub BUILD
@@ -228,7 +228,8 @@ sub create_reparametrized_model
 	);
 	my $filename = $parm{'filename'};
 	my $model = $parm{'model'};
-	my @precond_matrix = @{$parm{'precond_matrix'}};	my @negaEigenIndex = @{$parm{'negaEigenIndex'}};
+	my @precond_matrix = @{$parm{'precond_matrix'}};
+    my @negaEigenIndex = @{$parm{'negaEigenIndex'}};
 	my $directory = $parm{'directory'};
 
 	my $model = $model->copy(
@@ -457,328 +458,250 @@ sub create_reparametrized_model
 
 sub convert_reparametrized_cov
 {
-	my %parm = validated_hash(\@_,
-		cov_filename => { isa => 'Str' },
-		model => { isa => 'model' },
-		precond_matrix => { isa => 'ArrayRef[ArrayRef]' },
-		output_filename => { isa => 'Str' },
-		directory => { isa => 'Str' },
+    my %parm = validated_hash(\@_,
+        cov_filename => { isa => 'Str' },
+        model => { isa => 'model' },
+        precond_matrix => { isa => 'ArrayRef[ArrayRef]' },
+        output_filename => { isa => 'Str' },
+        directory => { isa => 'Str' },
 
-	);
-	my $cov_filename = $parm{'cov_filename'};
-	my $model = $parm{'model'};
-	my @precond_matrix = @{$parm{'precond_matrix'}};
-	my $output_filename = $parm{'output_filename'};
-	my $directory = $parm{'directory'};
+    );
+    my $cov_filename = $parm{'cov_filename'};
+    my $model = $parm{'model'};
+    my @precond_matrix = @{$parm{'precond_matrix'}};
+    my $output_filename = $parm{'output_filename'};
+    my $directory = $parm{'directory'};
 
-	my @cov_lines;
-	
-	
-	if (-e $cov_filename) {
-	
-	open(my $fh, '<', $cov_filename) or croak("Cannot find the .cov file '$cov_filename' [$!]\n");
-	while (my $tline = <$fh>) {
-		chomp $tline;
-		push @cov_lines, $tline;
-	}
+    my @cov_lines;
 
-	my @reparaCov;
 
-	my $rowCount = 0;
-	my $found_table;
-	my @header_labels;
-	my $header_ok;
-	my $given_header_warning;
+    if (-e $cov_filename) {
 
-	for (my $k = 0; $k < scalar(@cov_lines); $k++) {
-		my $line = $cov_lines[$k]; 
-		if ($line =~ /^\s*TABLE NO.\s+(\d+):/) {
-			croak("two tables found where 1 expected") if $found_table;
-			$found_table = 1;
-		} elsif ($line =~ /^\s*NAME/ ) {
-			$line =~ s/^\s*//; #get rid of leading spaces
-			@header_labels = split /\s+/, $line;
-			$header_ok = 1 if ($header_labels[0] eq 'NAME');
-		} else {
-			unless ((scalar(@header_labels > 2)) or $given_header_warning or $header_ok) {
-				my $mes = "\n\n\***Warning***\n".
-				"Too few elements in parameter label array in additional output file. ".
-				"Is label row missing, or is the ".
-				"delimiter something other than spaces (default)? ".
-				"Parsing is likely to fail".
-				"\n*************\n";
-				print $mes;
-				$given_header_warning = 1;
-			}
-			$line =~ s/^\s*//; #get rid of leading spaces
-			my @line_values = split /\s+/,$line;
-			my $max_column;
-
-			my @new_line;
-			$max_column = scalar(@header_labels) ; #store full matrix
-			for (my $j = 0; $j < $max_column; $j++) {
-				my $i = $j + 1; #must permute omega-sigma
-				if ($line_values[$i] eq 'NaN') {
-					push(@new_line, undef);
-					$reparaCov[$rowCount][$j]=undef;
-				} else {
-					push(@new_line, eval($line_values[$i]));
-					$reparaCov[$rowCount][$j]=eval($line_values[$i]);
-				}
-
-			}
-			$rowCount++;
-		}
-	}
-
-	my @temp_varcovMatrix;
-	for (my $i = 0; $i < $model->nthetas; $i++) {
-		for (my $j = 0; $j < $model->nthetas; $j++) {
-			$temp_varcovMatrix[$i][$j] = 0;
-			for (my $k = 0; $k < $model->nthetas; $k++) {
-				$temp_varcovMatrix[$i][$j] = $temp_varcovMatrix[$i][$j] + $precond_matrix[$i][$k] * $reparaCov[$k][$j];
-			}
-		}
-	}
-
-	my @varcovMatrix;
-
-	for (my $i = 0; $i < $model->nthetas; $i++) {
-		for (my $j = 0; $j < $model->nthetas; $j++) {
-			$varcovMatrix[$i][$j] = 0;
-			for (my $k = 0; $k < $model->nthetas; $k++) {
-				$varcovMatrix[$i][$j] = $varcovMatrix[$i][$j] + $temp_varcovMatrix[$i][$k] * $precond_matrix[$j][$k];
-			}
-		}
-	}
-
-    #make symmetric to avoid almost symmetry
-    for (my $row = 0; $row < @varcovMatrix; $row++) {
-        for (my $col = $row + 1; $col < @varcovMatrix; $col++) {
-            $varcovMatrix[$row][$col] = $varcovMatrix[$col][$row];
+        open(my $fh, '<', $cov_filename) or croak("Cannot find the .cov file '$cov_filename' [$!]\n");
+        while (my $tline = <$fh>) {
+            chomp $tline;
+            push @cov_lines, $tline;
         }
-    }
 
-	my $line;
-	for (my $i = 0; $i < $model->nthetas; $i++) {
-		$line = $cov_lines[$i + 2]; 
-		$line =~ s/^\s*//; #get rid of leading spaces
-		my @line_values = split /\s+/, $line;
-		for (my $j = 0; $j < $model->nthetas; $j++) {
-			@line_values[$j + 1] = $varcovMatrix[$i][$j];
-		}
-        $line_values[0] = $line_values[0] . (" " x (12 - length($line_values[0]) ) ); 
-        for my $i (1..@line_values - 1) {
-            if ($line_values[$i] < 0) {
-                $line_values[$i] = sprintf(" %.17E", $line_values[$i]);
+        my @reparaCov;
+
+        my $rowCount = 0;
+        my $found_table;
+        my @header_labels;
+        my $header_ok;
+        my $given_header_warning;
+
+        for (my $k = 0; $k < scalar(@cov_lines); $k++) {
+            my $line = $cov_lines[$k]; 
+            if ($line =~ /^\s*TABLE NO.\s+(\d+):/) {
+                croak("two tables found where 1 expected") if $found_table;
+                $found_table = 1;
+            } elsif ($line =~ /^\s*NAME/ ) {
+                $line =~ s/^\s*//; #get rid of leading spaces
+                @header_labels = split /\s+/, $line;
+                $header_ok = 1 if ($header_labels[0] eq 'NAME');
             } else {
-                $line_values[$i] = sprintf("  %.17E", $line_values[$i]);
+                unless ((scalar(@header_labels > 2)) or $given_header_warning or $header_ok) {
+                    my $mes = "\n\n\***Warning***\n".
+                    "Too few elements in parameter label array in additional output file. ".
+                    "Is label row missing, or is the ".
+                    "delimiter something other than spaces (default)? ".
+                    "Parsing is likely to fail".
+                    "\n*************\n";
+                    print $mes;
+                    $given_header_warning = 1;
+                }
+                $line =~ s/^\s*//; #get rid of leading spaces
+                my @line_values = split /\s+/,$line;
+                my $max_column;
+
+                my @new_line;
+                $max_column = scalar(@header_labels) ; #store full matrix
+                for (my $j = 0; $j < $max_column; $j++) {
+                    my $i = $j + 1; #must permute omega-sigma
+                    if ($line_values[$i] eq 'NaN') {
+                        push(@new_line, undef);
+                        $reparaCov[$rowCount][$j]=undef;
+                    } else {
+                        push(@new_line, eval($line_values[$i]));
+                        $reparaCov[$rowCount][$j]=eval($line_values[$i]);
+                    }
+
+                }
+                $rowCount++;
             }
         }
-		$cov_lines[$i + 2] = join " ", @line_values;
-		$cov_lines[$i + 2] = " ".$cov_lines[$i + 2];
-	}
 
-	open (my $MYFILE, '>', $output_filename);
-	for (my $i = 0; $i < scalar(@cov_lines); $i++) {
-		print $MYFILE $cov_lines[$i] . "\n";
-	}
+        my @temp_varcovMatrix;
+        for (my $i = 0; $i < $model->nthetas; $i++) {
+            for (my $j = 0; $j < $model->nthetas; $j++) {
+                $temp_varcovMatrix[$i][$j] = 0;
+                for (my $k = 0; $k < $model->nthetas; $k++) {
+                    $temp_varcovMatrix[$i][$j] = $temp_varcovMatrix[$i][$j] + $precond_matrix[$i][$k] * $reparaCov[$k][$j];
+                }
+            }
+        }
 
-	close $MYFILE; 
+        my @varcovMatrix;
 
-    return \@varcovMatrix;
+        for (my $i = 0; $i < $model->nthetas; $i++) {
+            for (my $j = 0; $j < $model->nthetas; $j++) {
+                $varcovMatrix[$i][$j] = 0;
+                for (my $k = 0; $k < $model->nthetas; $k++) {
+                    $varcovMatrix[$i][$j] = $varcovMatrix[$i][$j] + $temp_varcovMatrix[$i][$k] * $precond_matrix[$j][$k];
+                }
+            }
+        }
 
-	}else{
-		$cov_filename = "modelfit_dir1/NM_run1/psn.rmt";
-		
-		open(my $fh, '<', $cov_filename) or croak("\nCovariance step of the preconditioned model did not run see .lst file for the reason\n\n");
+        #make symmetric to avoid almost symmetry
+        for (my $row = 0; $row < @varcovMatrix; $row++) {
+            for (my $col = $row + 1; $col < @varcovMatrix; $col++) {
+                $varcovMatrix[$row][$col] = $varcovMatrix[$col][$row];
+            }
+        }
 
-		while (my $tline = <$fh>) {
-				chomp $tline;
-				push @cov_lines, $tline;
-			}
+        my $line;
+        for (my $i = 0; $i < $model->nthetas; $i++) {
+            $line = $cov_lines[$i + 2]; 
+            $line =~ s/^\s*//; #get rid of leading spaces
+            my @line_values = split /\s+/, $line;
+            for (my $j = 0; $j < $model->nthetas; $j++) {
+                @line_values[$j + 1] = $varcovMatrix[$i][$j];
+            }
+            $line_values[0] = $line_values[0] . (" " x (12 - length($line_values[0]) ) ); 
+            for my $i (1..@line_values - 1) {
+                if ($line_values[$i] < 0) {
+                    $line_values[$i] = sprintf(" %.17E", $line_values[$i]);
+                } else {
+                    $line_values[$i] = sprintf("  %.17E", $line_values[$i]);
+                }
+            }
+            $cov_lines[$i + 2] = join " ", @line_values;
+            $cov_lines[$i + 2] = " ".$cov_lines[$i + 2];
+        }
 
-			my @reparaCov;
+        open (my $MYFILE, '>', $output_filename);
+        for (my $i = 0; $i < scalar(@cov_lines); $i++) {
+            print $MYFILE $cov_lines[$i] . "\n";
+        }
 
-			my $rowCount = 0;
-			my $found_table;
-			my @header_labels;
-			my $header_ok;
-			my $given_header_warning;
+        close $MYFILE; 
 
-			for (my $k = 0; $k < scalar(@cov_lines); $k++) {
-				my $line = $cov_lines[$k]; 
-				if ($line =~ /^\s*TABLE NO.\s+(\d+):/) {
-					croak("two tables found where 1 expected") if $found_table;
-					$found_table = 1;
-				} elsif ($line =~ /^\s*NAME/ ) {
-					$line =~ s/^\s*//; #get rid of leading spaces
-					@header_labels = split /\s+/, $line;
-					$header_ok = 1 if ($header_labels[0] eq 'NAME');
-				} else {
-					unless ((scalar(@header_labels > 2)) or $given_header_warning or $header_ok) {
-						my $mes = "\n\n\***Warning***\n".
-						"Too few elements in parameter label array in additional output file. ".
-						"Is label row missing, or is the ".
-						"delimiter something other than spaces (default)? ".
-						"Parsing is likely to fail".
-						"\n*************\n";
-						print $mes;
-						$given_header_warning = 1;
-					}
-					$line =~ s/^\s*//; #get rid of leading spaces
-					my @line_values = split /\s+/,$line;
-					my $max_column;
+        return \@varcovMatrix;
 
-					my @new_line;
-					$max_column = scalar(@header_labels) ; #store full matrix
-					for (my $j = 0; $j < $max_column; $j++) {
-						my $i = $j + 1; #must permute omega-sigma
-						if ($line_values[$i] eq 'NaN') {
-							push(@new_line, undef);
-							$reparaCov[$rowCount][$j]=undef;
-						} else {
-							push(@new_line, eval($line_values[$i]));
-							$reparaCov[$rowCount][$j]=eval($line_values[$i]);
-						}
+    } else {
+        $cov_filename = "modelfit_dir1/NM_run1/psn.rmt";
 
-					}
-					$rowCount++;
-				}
-			}
-			
-			my $fixed = $model->fixed(parameter_type => 'theta');
-			
-			for (my $i=0; $i<scalar(@reparaCov);$i++){
-				if ($fixed->[0]->[$i]||$i>$model->nthetas-1){
-					$reparaCov[$i][$i]=1;
-				}
-			}
+        open(my $fh, '<', $cov_filename) or croak("\nCovariance step of the preconditioned model did not run. See .lst file for the reason\n\n");
 
+        while (my $tline = <$fh>) {
+            chomp $tline;
+            push @cov_lines, $tline;
+        }
 
-		
-		my @eigenValMatrix = map { [@$_] }@reparaCov;
-								
-		my $maxInd1=0;
-		my $maxInd2=1;
-		my $extremeVal=10000;
-		my $counter=0;
-									
-		my @G;
-									
-		#initialise G to identity matrix
-		for (my $index1=0; $index1< scalar(@eigenValMatrix) ;$index1++){
-			for (my $index2=0; $index2< $index1 ;$index2++){
-				$G[$index1][$index2]=0;
-				$G[$index2][$index1]=0;
-			}
-		$G[$index1][$index1]=1;
-		}
+        my @reparaCov;
 
+        my $rowCount = 0;
+        my $found_table;
+        my @header_labels;
+        my $header_ok;
+        my $given_header_warning;
 
-#while (abs($extremeVal)>0.0000000001&$counter<100000000) {
-            while (abs($extremeVal/$eigenValMatrix[0][0])>0.000001&$counter<1000000){
-									    
-		   for (my $index1=0; $index1< scalar(@eigenValMatrix) ;$index1++){
-		       for (my $index2=$index1+1; $index2< scalar(@eigenValMatrix) ;$index2++){
-		           if ((abs($eigenValMatrix[$maxInd1][$maxInd2])<abs($eigenValMatrix[$index1][$index2]))&($index1!=$index2)){
-		               $maxInd1=$index1;
-		               $maxInd2=$index2;
-		                $extremeVal=$eigenValMatrix[$maxInd1][$maxInd2];
-					}
-				}
-			}
-			my $theta=(atan(2*$eigenValMatrix[$maxInd1][$maxInd2]/($eigenValMatrix[$maxInd2][$maxInd2]-$eigenValMatrix[$maxInd1][$maxInd1])))/2;
-			my $c=cos($theta);
-			my $s=sin($theta);
-										    
-			my @G_copy= map { [@$_] }@G;
-			my @R_copy= map { [@$_] }@eigenValMatrix;
-											
+        for (my $k = 0; $k < scalar(@cov_lines); $k++) {
+            my $line = $cov_lines[$k]; 
+            if ($line =~ /^\s*TABLE NO.\s+(\d+):/) {
+                croak("two tables found where 1 expected") if $found_table;
+                $found_table = 1;
+            } elsif ($line =~ /^\s*NAME/ ) {
+                $line =~ s/^\s*//; #get rid of leading spaces
+                @header_labels = split /\s+/, $line;
+                $header_ok = 1 if ($header_labels[0] eq 'NAME');
+            } else {
+                unless ((scalar(@header_labels > 2)) or $given_header_warning or $header_ok) {
+                    my $mes = "\n\n\***Warning***\n".
+                    "Too few elements in parameter label array in additional output file. ".
+                    "Is label row missing, or is the ".
+                    "delimiter something other than spaces (default)? ".
+                    "Parsing is likely to fail".
+                    "\n*************\n";
+                    print $mes;
+                    $given_header_warning = 1;
+                }
+                $line =~ s/^\s*//; #get rid of leading spaces
+                my @line_values = split /\s+/,$line;
+                my $max_column;
 
-			for (my $index=0; $index<scalar(@G); $index++){
-				$G[$maxInd1][$index]=$c*$G_copy[$maxInd1][$index]-$s*$G_copy[$maxInd2][$index];
-				$G[$maxInd2][$index]=$s*$G_copy[$maxInd1][$index]+$c*$G_copy[$maxInd2][$index];
-			}
-										    
-			for (my $index=0; $index<scalar(@eigenValMatrix); $index++){
-				$eigenValMatrix[$maxInd1][$index]=$c*$R_copy[$maxInd1][$index]-$s*$R_copy[$maxInd2][$index];
-				$eigenValMatrix[$maxInd2][$index]=$s*$R_copy[$maxInd1][$index]+$c*$R_copy[$maxInd2][$index];
-			}
-											
-			my @r1;
-			my @r2;
+                my @new_line;
+                $max_column = scalar(@header_labels) ; #store full matrix
+                for (my $j = 0; $j < $max_column; $j++) {
+                    my $i = $j + 1; #must permute omega-sigma
+                    if ($line_values[$i] eq 'NaN') {
+                        push(@new_line, undef);
+                        $reparaCov[$rowCount][$j]=undef;
+                    } else {
+                        push(@new_line, eval($line_values[$i]));
+                        $reparaCov[$rowCount][$j]=eval($line_values[$i]);
+                    }
 
-			for (my $index=0; $index<scalar(@eigenValMatrix); $index++){
-			   	$r1[$index]= $eigenValMatrix[$index][$maxInd1];
-			   	$r2[$index]= $eigenValMatrix[$index][$maxInd2];
-			}
-											
-			my @R_copy2= map { [@$_] }@eigenValMatrix;
+                }
+                $rowCount++;
+            }
+        }
 
-			for (my $index=0; $index<scalar(@eigenValMatrix); $index++){
-				$eigenValMatrix[$index][$maxInd1]=$c*$R_copy2[$index][$maxInd1]-$s*$R_copy2[$index][$maxInd2];
-			    $eigenValMatrix[$index][$maxInd2]=$s*$R_copy2[$index][$maxInd1]+$c*$R_copy2[$index][$maxInd2];
-			}
-											
-			$counter=$counter+1;
-		}
-									
-		my @eigenValues;
-									
-		my $maxEigen;
-		my $minEigen;
-		my $negaCounter=0;
-		print "\n ===== Eigenvalues of the R-matrix of the preconditioned model ===== \n";
-														
-		for (my $index=0; $index<$model->nthetas; $index++){
-			$eigenValues[$index]=$eigenValMatrix[$index][$index];
-			print $eigenValues[$index];
-			print "\n";
-						
-			if ($index==0){
-				$maxEigen=abs($eigenValues[$index]);
-				$minEigen=abs($eigenValues[$index]);
-			}elsif($maxEigen<abs($eigenValues[$index])){
-				$maxEigen=abs($eigenValues[$index]);
-			}elsif($minEigen>abs($eigenValues[$index])){
-				$minEigen=abs($eigenValues[$index]);
-			}
-										
-			if ($eigenValues[$index]<0){
-				$negaCounter++;
-			}
-						
-		}
-									
-		print("Condition Number : 10^");
-		print(int(log($maxEigen/$minEigen)/log(10)));
-									
-		print("\nNumber of negative eigenvalues : ");
-		print($negaCounter);
-									
-		print("\n ================= \n");
-					
-		my $foldername=(split(/\//, $directory))[-1];
-			
-		if (int(log($maxEigen/$minEigen)/log(10))<1 and $negaCounter>0){
-			print "\nCovariance step of the preconditioned model failed \n\ntry -pre=$foldername -perturbOnly option\n\n";
-		}elsif($negaCounter>0){
-			print "\nCovariance step of the preconditioned model failed \n\ntry -pre=$foldername -perturb option\n\n";
-		}else{
-			print "\nCovariance step of the preconditioned model failed \n\ntry -pre=$foldername option\n\n";
-		}
-		
-		for (my $index1=0; $index1< scalar(@eigenValMatrix) ;$index1++){
-			for (my $index2=0; $index2< $index1 ;$index2++){
-				$G[$index1][$index2]=0;
-				$G[$index2][$index1]=0;
-			}
-			$G[$index1][$index1]=0;
-		}
-		
-		return \@G;
-	}
+        my $fixed = $model->fixed(parameter_type => 'theta');
+
+        for (my $i=0; $i<scalar(@reparaCov);$i++){
+            if ($fixed->[0]->[$i]||$i>$model->nthetas-1){
+                $reparaCov[$i][$i]=1;
+            }
+        }
+
+        # Do decomposition to be able to give suggestions to the user
+        my @eigenValMatrix = map { [@$_] }@reparaCov;
+
+        (my $eigen, my $Q) = linear_algebra::eigenvalue_decomposition(\@eigenValMatrix);
+
+        my $abs_eigens = array::absolute($eigen);
+        my $maxEigen = array::max($abs_eigens);
+        my $minEigen = array::min($abs_eigens);
+
+        my $negaCounter = 0;
+        foreach my $index (0 .. scalar(@$eigen) - 1) {
+            if ($eigen->[$index] < 0) {
+                $negaCounter++;
+            }
+        }
+
+        print "\n ===== Eigenvalues of the R-matrix of the preconditioned model ===== \n";
+        foreach my $e (@$eigen) {
+            print "$e\n";
+        }
+        print("================= \n");
+
+        print "Condition Number : 10^" . int(log($maxEigen/$minEigen)/log(10)) . "\n";
+        print("Number of negative eigenvalues : $negaCounter\n");
+
+        my $foldername=(split(/\//, $directory))[-1];
+
+        if (int(log($maxEigen/$minEigen) / log(10)) < 1 and $negaCounter > 0) {
+            print "\nCovariance step of the preconditioned model failed \n\ntry -pre=$foldername -perturbOnly option\n\n";
+        } elsif($negaCounter > 0) {
+            print "\nCovariance step of the preconditioned model failed \n\ntry -pre=$foldername -perturb option\n\n";
+        } else {
+            print "\nCovariance step of the preconditioned model failed \n\ntry -pre=$foldername option\n\n";
+        }
+
+        my @G;
+        for (my $index1 = 0; $index1 < scalar(@eigenValMatrix); $index1++) {
+            for (my $index2 = 0; $index2 < $index1; $index2++) {
+                $G[$index1][$index2] = 0;
+                $G[$index2][$index1] = 0;
+            }
+            $G[$index1][$index1] = 0;
+        }
+
+        return \@G;
+    }
 }
 
 

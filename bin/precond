@@ -42,10 +42,9 @@ my %optional_options = (
     "rawres_input:s" => undef,
 	"update_model:s" => undef,
 	"lu!" => undef,
-	"print!" => undef,
 	"perturb!" => undef,
-	"perturbOnly!" => undef,
-	"eigCompOnly!" => undef,
+	"perturb_only!" => undef,
+	"eigen_comp_only!" => undef,
 );
 
 my $res = GetOptions( \%options,
@@ -64,7 +63,7 @@ $help_text{-cov} = <<'EOF';
 EOF
 
 $help_text{-cholesky} = <<'EOF';
-      Use cholesky decomposition instead of LU
+      Use cholesky decomposition
 EOF
 
 $help_text{-in_filter} = <<'EOF';
@@ -124,10 +123,6 @@ my $model_filename = $ARGV[0];
 if (@ARGV < 1) {
 	die "A model file must be specified. See precond -h for help";
 }
-
-#if (not (defined $options{'pre'} or defined $options{'rawres_input'})) {
-#	die "One of options -pre or -rawres_input must be specified";
-#}
 
 if (defined $options{'pre'} and defined $options{'rawres_input'}) {
     die "Only one of options -pre and -rawres_input is allowed";
@@ -293,10 +288,16 @@ my @negaEigIndex;
 # Decompose (or not) the matrix
 if ((not $options{'nodec'})) {
 	if ($options{'cholesky'}) {
-		
-		if (not linear_algebra::is_symmetric(\@precMatrix)) {
-            die "Matrix must be symmetric for cholesky decomposition";
+
+        my @A = map { [@$_] } @precMatrix;
+        linear_algebra::transpose(\@A);
+        my $B = linear_algebra::subtract(\@A, \@precMatrix);
+        linear_algebra::absolute($B);
+        my $max_diff = linear_algebra::max($B);
+        if ($max_diff > 1e-8) {
+            print "Warning: The matrix you are using does not seem to be symmetric. The maximum difference between elements is $max_diff\n";
         }
+
         # Swap to column order
         linear_algebra::transpose(\@precMatrix);
         my $error = linear_algebra::cholesky(\@precMatrix);
@@ -325,154 +326,67 @@ if ((not $options{'nodec'})) {
     } else {
         my @eigenValMatrix = map { [@$_] } @precMatrix;
 
-        my $maxInd1=0;
-        my $maxInd2=1;
-        my $extremeVal=10000;
-        my $counter=0;
+        (my $eigen, my $Q) = linear_algebra::eigenvalue_decomposition(\@eigenValMatrix);
 
-        my @G;
+        my $abs_eigens = array::absolute($eigen);
+        my $maxEigen = array::max($abs_eigens);
+        my $minEigen = array::min($abs_eigens);
 
-        #initialise G to identity matrix
-        for (my $index1=0; $index1< scalar(@eigenValMatrix) ;$index1++){
-            for (my $index2=0; $index2< $index1 ;$index2++){
-                $G[$index1][$index2]=0;
-                $G[$index2][$index1]=0;
-            }
-            $G[$index1][$index1]=1;
-        }
-
-
-        while (abs($extremeVal)/$eigenValMatrix[0][0]>0.000001 & $counter<1000000) {
-            #while (abs($extremeVal)>0.0000000001 & $counter<100000000) {
-
-            for (my $index1=0; $index1< scalar(@eigenValMatrix) ;$index1++){
-                for (my $index2=$index1+1; $index2< scalar(@eigenValMatrix) ;$index2++){
-                    if ((abs($eigenValMatrix[$maxInd1][$maxInd2])<abs($eigenValMatrix[$index1][$index2]))&($index1!=$index2)){
-                        $maxInd1=$index1;
-                        $maxInd2=$index2;
-
-                        $extremeVal=$eigenValMatrix[$maxInd1][$maxInd2];
-                    }
+        my $negaCounter = 0;
+        foreach my $index (0 .. scalar(@$eigen) - 1) {
+            if ($eigen->[$index] < 0) {
+                if ($options{'perturb'} or $options{'perturb_only'}) {
+                    $negaEigIndex[$negaCounter] = $index;
                 }
-            }
-            my $theta=(atan(2*$eigenValMatrix[$maxInd1][$maxInd2]/($eigenValMatrix[$maxInd2][$maxInd2]-$eigenValMatrix[$maxInd1][$maxInd1])))/2;
-            my $c=cos($theta);
-            my $s=sin($theta);
-
-            my @G_copy= map { [@$_] }@G;
-            my @R_copy= map { [@$_] }@eigenValMatrix;
-
-            for (my $index=0; $index<scalar(@G); $index++){
-                $G[$maxInd1][$index]=$c*$G_copy[$maxInd1][$index]-$s*$G_copy[$maxInd2][$index];
-                $G[$maxInd2][$index]=$s*$G_copy[$maxInd1][$index]+$c*$G_copy[$maxInd2][$index];
-            }
-
-            for (my $index=0; $index<scalar(@eigenValMatrix); $index++){
-                $eigenValMatrix[$maxInd1][$index]=$c*$R_copy[$maxInd1][$index]-$s*$R_copy[$maxInd2][$index];
-                $eigenValMatrix[$maxInd2][$index]=$s*$R_copy[$maxInd1][$index]+$c*$R_copy[$maxInd2][$index];
-            }
-
-            my @r1;
-            my @r2;
-
-            for (my $index=0; $index<scalar(@eigenValMatrix); $index++){
-                $r1[$index]= $eigenValMatrix[$index][$maxInd1];
-                $r2[$index]= $eigenValMatrix[$index][$maxInd2];
-            }
-
-            my @R_copy2= map { [@$_] }@eigenValMatrix;
-
-            for (my $index=0; $index<scalar(@eigenValMatrix); $index++){
-                $eigenValMatrix[$index][$maxInd1]=$c*$R_copy2[$index][$maxInd1]-$s*$R_copy2[$index][$maxInd2];
-                $eigenValMatrix[$index][$maxInd2]=$s*$R_copy2[$index][$maxInd1]+$c*$R_copy2[$index][$maxInd2];
-            }
-
-            $counter=$counter+1;
-        }
-
-        my @eigenValues;
-
-        my $maxEigen;
-        my $minEigen;
-        my $negaCounter=0;
-        if ($options{'print'}){
-            print "\n ===== Eigenvalues ===== \n";
-        }
-
-        for (my $index=0; $index<scalar(@eigenValMatrix); $index++){
-            $eigenValues[$index]=$eigenValMatrix[$index][$index];
-            if ($options{'print'}){
-                print $eigenValues[$index];
-                print "\n";
-            }
-            if ($index==0){
-                $maxEigen=abs($eigenValues[$index]);
-                $minEigen=abs($eigenValues[$index]);
-            }elsif($maxEigen<abs($eigenValues[$index])){
-                $maxEigen=abs($eigenValues[$index]);
-            }elsif($minEigen>abs($eigenValues[$index])){
-                $minEigen=abs($eigenValues[$index]);
-            }
-
-            if ($eigenValues[$index]<0){
-                if ($options{'perturb'} or $options{'perturbOnly'}){
-                    $negaEigIndex[$negaCounter]=$index;
-                }
-
                 $negaCounter++;
             }
-
-        }
-        print("Condition Number : 10^");
-        print(int(log($maxEigen/$minEigen)/log(10)));
-
-        print("\nNumber of negative eigenvalues : ");
-        print($negaCounter);
-
-        if ($options{'print'}){
-            print("\n ================= \n");
         }
 
-        if ($options{'eigCompOnly'}){
+        print "Condition Number : 10^" . int(log($maxEigen/$minEigen)/log(10)) . "\n";
+        print "Number of negative eigenvalues : $negaCounter\n";
+
+        if ($options{'verbose'}) {
+            print "=== Eigenvalues ===\n";
+            foreach my $e (@$eigen) {
+                print "$e\n";
+            }
+            print "===================\n";
+        }
+
+        if ($options{'eigen_comp_only'}) {
             die "Eigenvalue Calculation Only";
         }
 
-        #my $fixed = $model->fixed(parameter_type => 'theta');				
-        for (my $index1=0; $index1<scalar(@precMatrix); $index1++){
-            #if (!$fixed->[0]->[$index1-1]){
-            for (my $index2=0; $index2<scalar(@precMatrix); $index2++){
-                #		if (!$fixed->[0]->[$index2-1]){
-                $precMatrix[$index2][$index1]=$G[$index1][$index2]/sqrt(abs($eigenValues[$index1]));
-                #		}
-                #	}
+        for (my $index1 = 0; $index1 < scalar(@precMatrix); $index1++) {
+            for (my $index2 = 0; $index2 < scalar(@precMatrix); $index2++) {
+                $precMatrix[$index1][$index2] = $Q->[$index1]->[$index2] / sqrt(abs($eigen->[$index2]));
             }
         }
     }
 
-    if ($options{'perturbOnly'}){
-        for (my $index1=0; $index1< scalar(@precMatrix) ;$index1++){
-            for (my $index2=0; $index2< $index1 ;$index2++){
-                $precMatrix[$index1][$index2]=0;
-                $precMatrix[$index2][$index1]=0;
+    if ($options{'perturb_only'}) {
+        for (my $index1 = 0; $index1 < scalar(@precMatrix) ;$index1++) {
+            for (my $index2 = 0; $index2 < $index1; $index2++) {
+                $precMatrix[$index1][$index2] = 0;
+                $precMatrix[$index2][$index1] = 0;
             }
-            $precMatrix[$index1][$index1]=1;
+            $precMatrix[$index1][$index1] = 1;
         }
-
     }
 
 
-    if(defined $options{'pre'}) {
+    if (defined $options{'pre'}) {
 
         # Check if run was the result of preconditioning
-        my $file = $options{'pre'}. "/precMatrix";
-        my $file2 = $options{'pre'}. "precMatrix";
+        my $file = $options{'pre'} . "/precMatrix";
+        my $file2 = $options{'pre'} . "precMatrix";
 
         if (-e $file) { 
-        }elsif(-e $file2){
-            $file=$file2;
+        } elsif(-e $file2) {
+            $file = $file2;
         }
 
-        if (-e $file){
+        if (-e $file) {
             print "\n\n Pre-Precondition using matrix: '$file'\n";
 
             open(my $fh, '<', $file) or die "Cannot find the file".$file."precMatrix so prepre option cannot be used \n";
@@ -488,21 +402,21 @@ if ((not $options{'nodec'})) {
                 push @preprecMatrix, \@fields;
             }
 
-            my @precMatrix_copy= map { [@$_] }@precMatrix;
+            my @precMatrix_copy = map { [@$_] } @precMatrix;
 
-            if (scalar(@preprecMatrix)!=scalar(@precMatrix)){
+            if (scalar(@preprecMatrix) != scalar(@precMatrix)) {
                 die "Size of precMatrix and preprecMatrix not consistent"
             }
 
-            my $tempSum=0;
+            my $tempSum = 0;
 
-            for (my $i=0; $i<scalar(@precMatrix_copy);$i++){
-                for (my $j=0; $j<scalar(@precMatrix_copy);$j++){
-                    $tempSum=0;
-                    for (my $k=0; $k<scalar(@precMatrix_copy);$k++){
-                        $tempSum=$tempSum+$precMatrix_copy[$k][$j]*$preprecMatrix[$i][$k+1];
+            for (my $i = 0; $i < scalar(@precMatrix_copy); $i++) {
+                for (my $j = 0; $j < scalar(@precMatrix_copy); $j++) {
+                    $tempSum = 0;
+                    for (my $k = 0; $k < scalar(@precMatrix_copy); $k++) {
+                        $tempSum = $tempSum + $precMatrix_copy[$k][$j] * $preprecMatrix[$i][$k + 1];
                     }
-                    $precMatrix[$i][$j]=$tempSum;
+                    $precMatrix[$i][$j] = $tempSum;
                 }
             }
         }
@@ -533,45 +447,24 @@ if ($only_do_pre_step) {
 		output_filename => 'output.cov',
 	);
 
-}elsif($options{'lu'} or $options{'cholesky'}) {
-	my $dummy_model = model->create_dummy_model;
-
-		my $precond = tool::precond->new(eval($common_options::parameters),
-			precond_matrix => \@precMatrix,
-			models => [ $dummy_model ],
-			precond_model => $model,
-			update_model => $options{'update_model'},
-		);
-
-		$precond->print_options (cmd_line => $cmd_line,
-			toolname => 'PRECOND',
-			local_options => [keys %optional_options],
-			common_options => \@common_options::tool_options);
-
-		$precond->run;
-
-		print "\nprecond done\n";
-	
 } else {
-	
-	my $dummy_model = model->create_dummy_model;
 
-		my $precond = tool::precond->new(eval($common_options::parameters),
-			precond_matrix => \@precMatrix,
-			models => [ $dummy_model ],
-			precond_model => $model,
-			update_model => $options{'update_model'},
-			negaEigenIndex => \@negaEigIndex,
-		);
+    my $dummy_model = model->create_dummy_model;
 
-		$precond->print_options (cmd_line => $cmd_line,
-			toolname => 'PRECOND',
-			local_options => [keys %optional_options],
-			common_options => \@common_options::tool_options);
+    my $precond = tool::precond->new(eval($common_options::parameters),
+        precond_matrix => \@precMatrix,
+        models => [ $dummy_model ],
+        precond_model => $model,
+        update_model => $options{'update_model'},
+        negaEigenIndex => \@negaEigIndex,
+    );
 
-		$precond->run;
+    $precond->print_options (cmd_line => $cmd_line,
+        toolname => 'PRECOND',
+        local_options => [keys %optional_options],
+        common_options => \@common_options::tool_options);
 
-		print "\nprecond done\n";
+    $precond->run;
 
-	
+    print "\nprecond done\n";
 }

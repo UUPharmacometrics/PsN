@@ -8,6 +8,15 @@ use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages
 use linear_algebra;
 
+#subtract, max and absolute
+my @A = ([1, 2, 3], [2.1, 4, 5], [3.25, 5.17, 19]);
+my @B = ([1, 2.1, 3.25], [2, 4, 5.17], [3, 5, 19]);
+my $C = linear_algebra::subtract(\@A, \@B);
+is_deeply($C, [[ 0.  , -0.1 , -0.25], [ 0.1 ,  0.  , -0.17], [ 0.25,  0.17,  0.  ]], "matrix subtraction");
+is (linear_algebra::max($C), 0.25, "matrix maximum");
+linear_algebra::absolute($C);
+is_deeply($C, [[ 0.  , 0.1 , 0.25], [ 0.1,  0., 0.17], [ 0.25,  0.17,  0. ]], "matrix absolute");
+
 #pad_matrix
 my @A = ([1, 2, 4], [3, 5 ,7], [8, 4, 1]);
 linear_algebra::pad_matrix(\@A, 5);
@@ -100,12 +109,18 @@ my @eigenValMatrix = ( [ '8.9544282663304415E+01', '-8.2566649009388087E+01', '8
         '1.1527757017894507E+02', '1.3484651750320691E+02', '5.5635413108142568E+00', '-2.9983667699545244E+01', '9.3718803441985904E+02' ]
     );
 
-my $A = [[3, 4], [1, 2]];
-my $eigen = linear_algebra::eigenvalue_decomposition(\@eigenValMatrix);
-is_deeply($eigen, 
+(my $eigen, my $vecs) = linear_algebra::eigenvalue_decomposition(\@eigenValMatrix);
+cmp_float_array($eigen, 
 [ '103.735518977137', '577.409123620258', '26.4391034036385', '8.31436812089702', '-0.0922465852143416',
   '735.406959776145', '94218.259066972', '132.962268669761', '421.085176924333', '1007.57699130853' ], "eigenvalues");
 
+
+my $A = [[9,8,7], [8, 5, 3], [7, 3, 7]];
+(my $eigen, my $vecs) = linear_algebra::eigenvalue_decomposition($A);
+cmp_float_array($eigen, [ 19.609194939332617,  -1.903857409809233,   3.294662470476631 ], "eigen simple matrix");
+cmp_float_matrix($vecs, [[ 0.706547465982442, -0.684965411383339, -0.177800628576624],
+       [ 0.491463745176441,  0.655722706583517, -0.573141447853785],
+       [ 0.509169977012525,  0.317569074815606,  0.79993488311851 ]], "eigenvectors simple matrix");
 
 #invert_symmetric
 my @matrix = ([3,1,0], [1,5,2], [0,2,4]);

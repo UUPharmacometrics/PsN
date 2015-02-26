@@ -5,6 +5,53 @@ use lib "$Bin/../lib";
 use strict;
 use array qw(:all);
 use Math::Trig;
+use math;
+
+sub subtract
+{
+    #Return difference between two matrices in new matrix
+    my $A = shift;
+    my $B = shift;
+
+    my $C;
+    for (my $row = 0; $row < scalar(@$A); $row++) {
+        for (my $col = 0; $col < scalar(@{$A->[0]}); $col++) {
+            $C->[$row]->[$col] = $A->[$row]->[$col] - $B->[$row]->[$col];
+        }
+    }
+
+    return $C;
+}
+
+sub max
+{
+    #Return the maximum element of a matrix
+    my $A = shift;
+
+    my $maximum = -math::inf();
+
+    for (my $row = 0; $row < scalar(@$A); $row++) {
+        for (my $col = 0; $col < scalar(@{$A->[0]}); $col++) {
+            if ($A->[$row]->[$col] > $maximum) {
+                $maximum = $A->[$row]->[$col];
+            }
+        }
+    }
+
+    return $maximum;
+}
+
+sub absolute
+{
+    # In place elementwise absolute value of matrix
+    my $A = shift;
+
+    for (my $row = 0; $row < scalar(@$A); $row++) {
+        for (my $col = 0; $col < scalar(@{$A->[0]}); $col++) {
+            $A->[$row]->[$col] = abs($A->[$row]->[$col]);
+        }
+    }
+}
 
 sub pad_matrix
 {
@@ -79,7 +126,7 @@ sub triangular_symmetric_to_full
 
 sub transpose
 {
-    # Calculate the transpose of a matrix
+    # Transpose a matrix in place
     my $A = shift;
     for (my $row = 0; $row < @$A; $row++) {
         for (my $col = 0; $col < $row; $col++) {
@@ -286,6 +333,8 @@ sub LU_factorization
 
 sub eigenvalue_decomposition
 {
+    # Perfor an eigenvalue decomposition of a symmetric matrix
+    # using the Jacoby algorithm
     my $A = shift;
 
     my @eigenValMatrix = map { [@$_] } @$A;
@@ -306,7 +355,7 @@ sub eigenvalue_decomposition
         $G[$index1][$index1] = 1;
     }
 
-    while (abs($extremeVal / $eigenValMatrix[0][0]) > 0.000001 and $counter < 1000000) {
+    while (abs($extremeVal) > 0.0000000001 and $counter < 100000000) {
 
         for (my $index1 = 0; $index1 < scalar(@eigenValMatrix); $index1++) {
             for (my $index2 = $index1 + 1; $index2 < scalar(@eigenValMatrix); $index2++) {
@@ -358,7 +407,9 @@ sub eigenvalue_decomposition
         $eigenValues[$index] = $eigenValMatrix[$index][$index];
     }
 
-    return \@eigenValues;
+    transpose(\@G);
+
+    return (\@eigenValues, \@G);
 }
 
 sub lower_triangular_identity_solve
