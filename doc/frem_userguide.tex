@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{FREM technical description}{2014-06-23}
+\guidetitle{FREM technical description}{2015-02-26}
 
 
 \begin{document}
@@ -116,11 +116,11 @@ Finally the frem run should be restarted setting option -directory to the existi
 options that are not allowed when restarting a run (see information in list of options). The script
 will then use the existing output files as a starting point when continuing the analysis.
 
-It can happen that final estimate OMEGA blocks in Model 3 are not positive definite due to rounding errors. Then the scripts
-will halt with an error messages. In that case the user should remove all vpc\_model\_1 output files from
-the m1 directory, open model\_3.ext and carefully add a small value to the diagonal elements of the problematic omega block,
-save the edited model\_3.ext in m1, and restart frem. The program will then read the omega block from model\_3.ext
-without running model 3 and then use that block instead.
+%It can happen that final estimate OMEGA blocks in Model 3 are not positive definite due to rounding errors. Then the scripts
+%will halt with an error messages. In that case the user should remove all vpc\_model\_1 output files from
+%the m1 directory, open model\_3.ext and carefully add a small value to the diagonal elements of the problematic omega block,
+%save the edited model\_3.ext in m1, and restart frem. The program will then read the omega block from model\_3.ext
+%without running model 3 and then use that block instead.
 
 \section{Model 0, Dataset 0}
 The input model, input dataset.

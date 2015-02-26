@@ -1,10 +1,11 @@
 \input{inputs/format_header.tex}
-\guidetitle{LINEARIZE user guide}{2014-05-20}
+\guidetitle{LINEARIZE user guide}{2015-02-26}
 
 
 \begin{document}
 
 \maketitle
+\newcommand{\guidetoolname}{linearize}
 
 
 \section{Introduction}
@@ -72,6 +73,15 @@ see the scm userguide for details.
 Set by default. Expand around conditional ETA estimates instead of around ETA=0. To expand around ETA=0 set -no-foce.
 \nextopt
 \end{optionlist}
+
+\subsection{Some important common PsN options}
+There are many options that govern how PsN manages NONMEM runs, and
+those options are common to all PsN programs that run NONMEM.
+For a complete list of such options see common\_options.pdf, 
+or psn\_options -h on the commandline. A selection of
+the most important common options is found here.
+\input{inputs/basic_options.tex}
+
 
 \section{Output}
 Linearized model file with name runX\_linbase.mod and data file with name runX\_linbase.dta.

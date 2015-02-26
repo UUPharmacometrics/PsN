@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{LLP user guide}{2014-05-20}
+\guidetitle{LLP user guide}{2015-02-26}
 
 \begin{document}
 
@@ -26,9 +26,15 @@ A comma-separated list, specifying the thetas for which the llp should try to as
 \nextopt
 \optdefault{omegas}{omega number list}
 A comma-separated list, specifying the omegas for which the llp should try to assess confidence intervals. 
+The numbers refer to the order number of the initial values in the model file. For example, if first there is 
+a block record with size 2 (3 initial values) and then there is a diagonal record with size 3, then
+numbers 4,5 and 6 refer to the diagonal elements.
 \nextopt
 \optdefault{sigmas}{sigma number list}
 A comma-separated list, specifying the sigmas for which the llp should try to assess confidence intervals. 
+The numbers refer to the order number of the initial values in the model file. For example, if first there is 
+a block record with size 2 (3 initial values) and then there is a diagonal record with size 3, then
+numbers 4,5 and 6 refer to the diagonal elements.
 \nextopt
 \end{optionlist}
 
