@@ -148,17 +148,15 @@ Degree is set to 0.1 when tweak\_inits is set in execute.
 Add all runrecord tags. update\_inits will not check if any tags 
 are already present.
 \nextopt
-\optname{diagonal\_dominance}
+\optname{ensure\_posdef}
 By default not set. 
 NONMEM sometimes prints OMEGA or SIGMA matrices
 in the lst-file which are not positive definite, and the 
-diagonal\_dominance option offers a way to fix this.
-If option is set then PsN will ensure that OMEGA
-and SIGMA are strictly diagonally dominant by decreasing off-diagonal
-elements if necessary. This in turn guarantees that OMEGA and SIGMA 
-are positive definite.  However, the perturbation made by PsN is 
-most likely not the smallest perturbation 
-required to make OMEGA/SIGMA positive definite.
+ensure\_posdef option offers a way to fix this.
+If option is set then PsN will make a cholesky decomposition of
+each OMEGA and SIGMA block to check positive definiteness, and
+inflate the diagonal elements of the block with 5\% 
+if the cholesky fails.
 \nextopt
 \optdefault{add\_prior}{df}
 Default not used. Add \$PRIOR NWPRI based on output object. Will automatically read

@@ -3189,7 +3189,7 @@ sub update_inits
 		ignore_missing_parameters => { isa => 'Bool', default => 0, optional => 1 },
 		update_fix => { isa => 'Bool', default => 0, optional => 1 },
 		skip_output_zeros => { isa => 'Bool', default => 0, optional => 1 },
-		ensure_diagonal_dominance => { isa => 'Bool', default => 0, optional => 1 },
+		ensure_posdef => { isa => 'Bool', default => 0, optional => 1 },
 		update_omegas => { isa => 'Bool', default => 1, optional => 1 },
 		update_sigmas => { isa => 'Bool', default => 1, optional => 1 },
 		update_thetas => { isa => 'Bool', default => 1, optional => 1 },
@@ -3203,7 +3203,7 @@ sub update_inits
 	my $from_hash = $parm{'from_hash'};
 	my $problem_number = $parm{'problem_number'};
 	my $ignore_missing_parameters = $parm{'ignore_missing_parameters'};
-	my $ensure_diagonal_dominance = $parm{'ensure_diagonal_dominance'};
+	my $ensure_posdef = $parm{'ensure_posdef'};
 	my $update_omegas = $parm{'update_omegas'};
 	my $update_sigmas = $parm{'update_sigmas'};
 	my $update_thetas = $parm{'update_thetas'};
@@ -3452,8 +3452,8 @@ sub update_inits
 					if (($namesvalues{$name} ne 'matched') and ($namesvalues{$name} != 0));
 				}
 			}
-			if (($param eq $params[$#params]) and ($update_omegas or $update_sigmas) and $ensure_diagonal_dominance){
-				$problem->ensure_diagonal_dominance(verbose => 1); #ensure_diagonal_dominance only set from update_inits program
+			if (($param eq $params[$#params]) and ($update_omegas or $update_sigmas) and $ensure_posdef){
+				$problem->ensure_posdef(verbose => 1); #ensure_posdef only set from update_inits program
 			}
 		} #each problem
 	} #each param

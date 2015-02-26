@@ -165,4 +165,44 @@ my $problem = $model->problems->[0];
 ok ($problem->find_table(columns => [ 'ID', 'TVCL' ]), "find_table 1");
 ok (!$problem->find_table(columns => [ 'ID', 'RED' ]), "find_table 1");
 
+my $model = model->new(filename => "$modeldir/nonposdef.mod");
+$omega_mat = $model->problems->[0]->get_record_matrix(type => 'omega',
+													  record_number => 1);
+cmp_ok($omega_mat->[0]->[0],'==',0.3, "get_record_matrix row 0,0");
+my $sigma_mat = $model->problems->[0]->get_record_matrix(type => 'sigma',
+														 record_number => 1);
+cmp_ok($sigma_mat->[0]->[0],'==',1, "get_record_matrix row 0,0");
+
+$omega_mat = $model->problems->[0]->get_record_matrix(type => 'omega',
+													  record_number => 2);
+cmp_ok($omega_mat->[0]->[0],'==',0.3, "get_record_matrix row 0,0");
+cmp_ok($omega_mat->[1]->[0],'==',0.3, "get_record_matrix row 1,0");
+cmp_ok($omega_mat->[1]->[1],'==',0.3, "get_record_matrix row 1,1");
+cmp_ok($omega_mat->[0]->[1],'==',0.3, "get_record_matrix row 0,1");
+
+$model->problems->[0]->ensure_posdef();
+
+$omega_mat = $model->problems->[0]->get_record_matrix(type => 'omega',
+													  record_number => 2);
+cmp_ok($omega_mat->[0]->[0],'==',0.315, "get_record_matrix row 0,0 after posdef");
+cmp_ok($omega_mat->[1]->[0],'==',0.3, "get_record_matrix row 1,0 after posdef");
+cmp_ok($omega_mat->[1]->[1],'==',0.315, "get_record_matrix row 1,1 after posdef");
+cmp_ok($omega_mat->[0]->[1],'==',0.3, "get_record_matrix row 0,1 after posdef");
+
+$omega_mat = $model->problems->[0]->get_record_matrix(type => 'omega',
+													  record_number => 1);
+cmp_ok($omega_mat->[0]->[0],'==',0.3, "get_record_matrix row 0,0 after posdef");
+my $sigma_mat = $model->problems->[0]->get_record_matrix(type => 'sigma',
+														 record_number => 1);
+cmp_ok($sigma_mat->[0]->[0],'==',1, "get_record_matrix row 0,0 after posdef");
+
+my $model = model->new(filename => "$modeldir/nonposdef.mod");
+$model->problems->[0]->ensure_posdef(inflate_diagonal => 0);
+$omega_mat = $model->problems->[0]->get_record_matrix(type => 'omega',
+													  record_number => 2);
+cmp_ok($omega_mat->[0]->[0],'==',0.3, "get_record_matrix row 0,0 after posdef deflate");
+cmp_ok($omega_mat->[1]->[0],'==',0.285, "get_record_matrix row 1,0 after posdef deflate");
+cmp_ok($omega_mat->[1]->[1],'==',0.3, "get_record_matrix row 1,1 after posdef deflate");
+cmp_ok($omega_mat->[0]->[1],'==',0.285, "get_record_matrix row 0,1 after posdef deflate");
+
 done_testing();

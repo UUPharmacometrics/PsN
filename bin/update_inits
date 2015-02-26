@@ -46,7 +46,7 @@ my %optional_options = (
 	"comment:s" => undef,
 	"degree:f" => undef,
 	"add_tags" => undef,
-	"diagonal_dominance" => undef,
+	"ensure_posdef" => undef,
 	"add_prior:s" => undef,
 	"seed:s" => undef,
 	"based_on:i" => undef,
@@ -148,19 +148,16 @@ $help_text{-add_tags} = <<'EOF';
 	are already present.
 EOF
 1;    
-$help_text{-diagonal_dominance} = <<'EOF';
--diagonal_dominance
+$help_text{-ensure_posdef} = <<'EOF';
+-ensure_posdef
     Default not set
 
 	NONMEM sometimes prints OMEGA or SIGMA matrices
 	in the lst-file which are not positive definite, and the 
-	diagonal_dominance option offers a way to fix this.
-	If option is set then PsN will ensure that OMEGA
-	and SIGMA are strictly diagonally dominant by decreasing off-diagonal
-	elements if necessary. This in turn guarantees that OMEGA and SIGMA 
-	are positive definite.  However, the perturbation made by PsN is 
-	most likely not the smallest perturbation 
-	required to make OMEGA/SIGMA positive definite.
+	ensure_posdef option offers a way to fix this.
+	If option is set then PsN will make a cholesky decomposition of
+	each OMEGA and SIGMA block to check positive definiteness, and
+	inflate the diagonal elements of the block with 5% in each iteration where the cholesky fails.
 EOF
 1;    
 $help_text{-add_prior} = <<'EOF';
@@ -303,14 +300,14 @@ if (defined $options{'from_model'}) {
 	}
 
 	my $check = 0;
-	$check = $options{'diagonal_dominance'} if (defined $options{'diagonal_dominance'});
+	$check = $options{'ensure_posdef'} if (defined $options{'ensure_posdef'});
 	for (my $i=0; $i< scalar(@{$model_copy->problems}); $i++){
 		if ($i >= scalar(@{$array})){
 			last;
 		}
 		$model_copy -> update_inits( from_hash => $array->[$i],
 									 problem_number => ($i+1),
-									 ensure_diagonal_dominance => $check,
+									 ensure_posdef => $check,
 									 ignore_missing_parameters => $ignore_missing_parameters );
 	}
 
@@ -344,9 +341,9 @@ if (defined $options{'from_model'}) {
 	}
 
 	my $check = 0;
-	$check = $options{'diagonal_dominance'} if (defined $options{'diagonal_dominance'});
+	$check = $options{'ensure_posdef'} if (defined $options{'ensure_posdef'});
 	$model_copy -> update_inits( from_output => $output,
-								 ensure_diagonal_dominance => $check,
+								 ensure_posdef => $check,
 								 ignore_missing_parameters => $ignore_missing_parameters );
 
 }

@@ -1837,9 +1837,7 @@ sub get_posdef_matrix
 					#inflate diagonal 10%
 					$value = $value*(1.1);
 				}elsif ($value == 0){
-					if ($i >= ($last_i-2)){
-						$value = $smallnum;
-					}elsif (defined $covmatrix and (abs($covmatrix->[$row][$col]) > 0.000001)  ){
+					if ($i < 2 and defined $covmatrix and (abs($covmatrix->[$row][$col]) > $smallnum)  ){
 						$value = $covmatrix->[$row][$col];
 					}else{
 						$value = $smallnum;
@@ -2004,42 +2002,46 @@ sub _format_problem
 	return \@formatted;
 }
 
-sub ensure_diagonal_dominance
+sub ensure_posdef
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		verbose => { isa => 'Bool', default => 0, optional => 1 }
+							  verbose => { isa => 'Bool', default => 0, optional => 1 },
+							  inflate_diagonal => { isa => 'Bool', default => 1, optional => 1 },
+							  record_number => { isa => 'Int', optional => 1 },
+							  parameter => { isa => 'Str', optional => 1 }
 	);
 	my $verbose = $parm{'verbose'};
+	my $inflate_diagonal = $parm{'inflate_diagonal'};
+	my $record_number = $parm{'record_number'};
+	my $parameter = $parm{'parameter'};
 
-	#check here that omega and sigma strictly diagonally dominant
-	#otherwise decrease magnitude of diagonal elements 
-	# by enough to achieve strict diagonal dominance
-	# do row by row
-	#check number of diagonal elements
-	#make array of zeros for off_diagonal_sums, one per diagonal value
-	#go through records
-	#check that block, and not fixed or same
-	#need only check values wihtin block, row sums not affected by anything outside
-	#go through all options, if on-diagonal then skip. get row, col indexes
-	#add value  to sum for diagonal(row) and diagonal (col)
-	#loop through options again, if not on-diagonal, skip.
-	#if on-diagonal, check that value strictly greater than sum.
-	#otherwise compute deflation factor
+	#check here that omega and sigma posdef,
+	#i.e. cholesky decomp works
+	#otherwise decrease magnitude of off-diagonal elements 
+	#or increase diagonal (default)
 
-	#dont touch priors
-	foreach my $param ('omega','sigma') {
+	my @params;
+	if (defined $parameter){
+		@params=($parameter);
+	}else{
+		@params=('omega','sigma');
+	}
+
+	#dont touch priors or fixed
+	foreach my $param (@params) {
 		my $adjusted = 0;
 		my $accessor = $param.'s';
-		my $size_accessor = 'n'.$param.'s';
 		my @records;
 		if (defined $self -> $accessor()) {
 			@records = @{$self -> $accessor()};
 		}
 		next unless (scalar(@records) > 0); #no parameter in this problem
-		my $size = $self->$size_accessor('with_correlations' => 0,'with_same' => 1);
-		my @off_diagonal_sum = 0 x $size; 
+
+		my $recno=0;
 		foreach my $record (@records){
+			$recno++;
+			next if (defined $record_number and ($recno != $record_number));
 			next unless ($record -> type() eq 'BLOCK');
 			if  ($record->same() or $record->fix() or $record->prior()){
 				next;
@@ -2048,71 +2050,46 @@ sub ensure_diagonal_dominance
 			unless (defined $record -> options()){
 				croak("$param record has no values");
 			}
-			foreach my $option (@{$record -> options()}) {
-				next if ($option->on_diagonal());
-				my $name = $option -> coordinate_string();
-				croak("unknown coord $name ") unless ($name =~ /A\((\d+),(\d+)\)/ );
-				croak("row in $name outside size $size") if ($1 > $size );
-				croak("col in $name outside size $size") if ($2 > $size );
-				my $val = abs($option ->init());
-				$off_diagonal_sum[($1-1)] += $val;
-				$off_diagonal_sum[($2-1)] += $val;
-			}
-			my %adjust_row = {};
-			foreach my $option (@{$record -> options()}) {
-				next unless ($option->on_diagonal());
-				my $name = $option -> coordinate_string();
-				croak("unknown coord $name ") unless ($name =~ /A\((\d+),(\d+)\)/ );
-				croak("row in $name outside size $size") if ($1 > $size );
-				croak("col and row in $name not diagonal element") unless ($2 == $1 );
-				my $val = $option ->init();
-				unless ($val > $off_diagonal_sum[($1-1)] ){
-					my $ratio = $val/$off_diagonal_sum[($1-1)]; # less than 1, larger than 0 (abs sum, pos diag)
-					$adjust_row{$1} = $ratio*(0.99);
-				}
-			}
-			#new loop here to decrease off-diag
-			foreach my $option (@{$record -> options()}) {
-				next if ($option->on_diagonal());
-				my $name = $option -> coordinate_string();
-				croak("unknown coord $name ") unless ($name =~ /A\((\d+),(\d+)\)/ );
-				croak("row in $name outside size $size") if ($1 > $size );
-				croak("col in $name outside size $size") if ($2 > $size );
-				my $deflate = 1;
-				foreach my $row (keys %adjust_row){
-					if ($row == $1 or $row == $2){
-						$deflate = $adjust_row{$row} if ($adjust_row{$row} < $deflate);
-					}
-				}
-				next unless ($deflate < 1);
-				my $val = $option ->init();
-				my $value = $val*$deflate;
-				if ($value < 1 and $value > 0){
-					$value = sprintf "%.5f", $value; #need to control so dont get e notation
-					$value     = '0' if eval($value) == 0;
-				}elsif ($value > -1 and $value < 0){
-					$value = sprintf "%.4f", $value; #need to control so dont get e notation
-					$value     = '0' if eval($value) == 0;
-				}else{
-					$value = sprintf "%6.2f", $value; #need to control so dont get e notation
-					my ($big,$small) = split('\.',$value);
-					$small           = substr($small,0,3);
-					if ((length($big)+ length($small)) > 7){
-						$value = $big;
+
+
+			#copy and check it
+			my $is_ok=0;
+			my $arrayref;
+			for (my $try=1; $try<5; $try++){
+				#this gives full matrix
+				$arrayref = $self->get_record_matrix(type => $param,
+													 record_number => $recno);
+				#return this if cholesky check posdef, otherwise decrease smallnum
+				my $err = linear_algebra::cholesky($arrayref);
+				if ($err == 1){
+					$adjusted=1;
+					if ($inflate_diagonal){
+						foreach my $option (@{$record->options()}){
+							next unless $option->on_diagonal();
+							$option->check_and_set_init(new_value => ($option->init())*1.05);
+						}
 					}else{
-						$value     = $big.'.'.$small;
+						#deflate offdiag
+						foreach my $option (@{$record->options()}){
+							next if $option->on_diagonal();
+							$option->check_and_set_init(new_value => ($option->init())*0.95);
+						}
 					}
-					$value     = '0' if eval($value) == 0;
+				}else{
+					$is_ok=1;
+					last;
 				}
-
-				$adjusted = 1;
-				$option -> check_and_set_init( new_value => $value );
-
 			}
-		}
-		if ($adjusted and $verbose){
-			ui -> print( category => 'all',
-						 message  => "Decreased off-diagonal values of $param from input to ensure strict diagonal dominance in output model.\n");
+			unless ($is_ok){
+				foreach my $line (@{$arrayref}){
+					print join(' ',@{$line})."\n";
+				}
+				croak("failed to make $param block posdef");
+			}
+			if($adjusted and $verbose){
+				ui -> print( category => 'all',
+							 message  => "Modified $param $recno to make posdef.\n");
+			}
 		}
 	}
 }

@@ -422,7 +422,7 @@ sub create_template_models
 	
 		$frem_model1-> problems -> [0]->add_omega_block(new_omega => $BSV_par_block,
 														labels => \@bsv_par_labels);
-	
+		$frem_model1-> problems -> [0]->ensure_posdef();
 	}
 
 	$frem_model1 ->_write();
@@ -462,6 +462,7 @@ sub create_template_models
 							bov_parameters => $bov_parameters,
 							model_type =>2);
 
+	$frem_model2-> problems -> [0]->ensure_posdef();
 	$frem_model2->_write();
 
 
@@ -498,6 +499,7 @@ sub create_template_models
 								vpc => 0,
 								model_type =>2);
 		
+		$frem_model2_invar-> problems -> [0]->ensure_posdef();
 		$frem_model2_invar->_write();
 	}
 	##########################################################################################
@@ -533,6 +535,7 @@ sub create_template_models
 								vpc => 0,
 								ntheta => $ntheta,
 								model_type =>2);
+		$frem_model2_timevar-> problems -> [0]->ensure_posdef();
 		
 		$frem_model2_timevar->_write();
 	}
@@ -563,7 +566,8 @@ sub create_template_models
 							bov_parameters => $bov_parameters,
 							model_type =>3);
 #	
-	
+	$frem_model3-> problems -> [0]->ensure_posdef();
+
 	$frem_model3->_write();
 
 	##########################################################################################
@@ -858,6 +862,7 @@ sub modelfit_setup
 										   update_fix => 1,
 										   skip_output_zeros => 1,
 										   problem_number => 1);
+			$frem_model1-> problems -> [0]->ensure_posdef();
 			$frem_model1->_write(overwrite => 1);
 		}
 		if ($self->estimate() >= 1){
@@ -891,6 +896,7 @@ sub modelfit_setup
 										   update_fix => 1,
 										   skip_output_zeros => 1,
 										   problem_number => 1);
+			$frem_model2-> problems -> [0]->ensure_posdef();
 			$frem_model2 ->_write(overwrite => 1);
 		}
 
@@ -921,6 +927,7 @@ sub modelfit_setup
 		$frem_model2_invar -> update_inits ( from_output => $output_1,
 											 ignore_missing_parameters => 1,
 											 problem_number => 1);
+		$frem_model2_invar-> problems -> [0]->ensure_posdef();
 		$frem_model2_invar->_write(overwrite => 1);
 	}
    
@@ -937,6 +944,7 @@ sub modelfit_setup
 											   update_fix => 1,
 											   skip_output_zeros => 1,
 											   problem_number => 1);
+		$frem_model2_invar-> problems -> [0]->ensure_posdef();
 		$frem_model2_timevar->_write(overwrite => 1);
 	}
 	
@@ -1034,6 +1042,7 @@ sub modelfit_setup
 
 			}
 
+			$frem_model3-> problems -> [0]->ensure_posdef();
 			$frem_model3->_write(overwrite => 1);
 		}elsif (defined $output_1){ 
 			$frem_model3 -> update_inits ( from_output => $output_1,
@@ -1041,6 +1050,7 @@ sub modelfit_setup
 										   update_fix => 1,
 										   skip_output_zeros => 1,
 										   problem_number => 1);
+			$frem_model3-> problems -> [0]->ensure_posdef();
 			$frem_model3->_write(overwrite => 1);
 		}
 
@@ -1078,6 +1088,7 @@ sub modelfit_setup
 												   ignore_missing_parameters => 1,
 												   update_fix => 1,
 												   problem_number => 1);
+				$frem_vpc_model1-> problems -> [0]->ensure_posdef();
 				$frem_vpc_model1->_write(overwrite => 1);
 			}
 			$rundir = $self -> directory().'/vpc1_modelfit_dir1';
@@ -1194,6 +1205,7 @@ sub modelfit_setup
 				}
 			}
 
+#			$frem_vpc_model2-> problems -> [0]->ensure_posdef(); we are not running this, leave as is
 			$frem_vpc_model2->_write(overwrite => 1);
 			#copy model and move data to final names in run dir
 			cp($frem_vpc_model2->full_name(),$name_vpc_final);

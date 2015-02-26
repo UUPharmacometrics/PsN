@@ -213,7 +213,8 @@ If have have time-invariant covariates:
 \noindent 
 Then, if have time-varying covariates:
 \begin{itemize}
-\item BOV\_par\_occ1: Add one full BLOCK(bov\_parameters) where initials is: diagonal 0.01 and off-diagonals small enough to make strictly diagonally dominant
+\item BOV\_par\_occ1: Add one full BLOCK(bov\_parameters) where initials is: diagonal 0.01 and off-diagonals small enough to make
+block positive definite.
 At each line, possibly add comment with BOV$<$parameter$>$ to be used as label for ETA in PsN
 %could in filtering print individual parameters and compute variance??? Use .cov from previous step??? probably not
 \item BOV\_par\_occ2-end: Then, for each occasion that is not the first occasion add BLOCK SAME.

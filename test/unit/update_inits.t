@@ -141,7 +141,7 @@ $ref->[0]->{'omega'}->{'IOV KA'}= 0.5;
 
 $model -> update_inits( from_hash => $ref->[0],
 						problem_number => 1,
-						ensure_diagonal_dominance => 0,
+						ensure_posdef => 0,
 						ignore_missing_parameters => 0 );
 
 my $updated = $model-> get_hash_values_to_labels;
@@ -172,7 +172,7 @@ $hash{'sigma'}={};
 $model -> update_inits( from_hash => \%hash,
 						problem_number => 1,
 						match_labels => 0,
-						ensure_diagonal_dominance => 0,
+						ensure_posdef => 0,
 						ignore_missing_parameters => 1 );
 
 my $updated = $model-> get_hash_values_to_labels;
