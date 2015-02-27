@@ -4745,7 +4745,7 @@ sub _read_problems
 		# a line to search. Which is all cases but the very last loop
 		# iteration.
 
-        if (/^\s*\$SIZ/ and not $first) {
+        if (/^\s*\$SIZ/ and not $first and $prev_was_not_sizes) {
             croak("\$SIZES must be the first record in a model file");
         }
 
