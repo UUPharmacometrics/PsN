@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{VPC and NPC user guide}{2014-12-04}
+\guidetitle{VPC and NPC user guide}{2015-02-27}
 
 \begin{document}
 
@@ -149,7 +149,8 @@ is optional, default not used. Name of variable which defines whether the observ
 is optional, default is 95. The confidence interval in percent. 
 \nextopt
 \optname{fine\_pi}
-is optional, default not set. If not set, the the prediction intervals computed are 0, 40, 80, 90 and 95\%. If the option is set, then the prediction intervals computed are 0, 10, 20, 25, 30, 40, 50, 60, 70, 75, 80, 90 and 95\%.  
+is optional, default not set. If not set, the the prediction intervals computed are 0, 40, 80, 90 and 95\%. 
+If the option is set, then the prediction intervals computed are 0, 10, 20, 25, 30, 40, 50, 60, 70, 75, 80, 90 and 95\%.  
 \nextopt
 \optdefault{mirrors}{N}
 optional, the number of mirror plot data sets to produce. Specific VPC. 
@@ -428,7 +429,10 @@ VPC output is found in npc\_dir$<$number$>$, unless a different directory name w
 
 The final results are in the file vpc\_results.csv. Empty bins are skipped completely and not reported. The file starts with a section with general run information: the date, the number of observations in the dataset, the number of simulations/samples, the name of the modelfile, the file from which the simulation parameters were taken, the independent variable used for binning, which dependent variable the analysis was made on, the name of the PsN version and the NONMEM version. 
 
-Following the general section in vpc\_results.csv there is one sequence of result sections per strata. The strata are analyzed independently of each other (see section Dependent variable matrix analysis for VPC). If the stratification option was not used, there is only one sequence of result sections. The header of the Continuous data section gives the stratification variable values of the observations in the strata, and how many observations out of the total number belongs to the strata. Then there is one row per bin (for binning rules see section binning for VPC). The first two columns contain the independent variable boundaries for the bin, and the third the number of observations in the bin. The following columns come in groups of four, one group per percentage boundary, where the values are the results from steps (b), (a) and (c) in Dependent variable matrix analysis for VPC. To the right of the four-column groups there are diagnostics columns with false positives and false negatives percentages according to section VPC results diagnostics, step (i). The diagnostics columns are omitted in the case of censored data. After the Continuous data section comes comes the Diagnostics section, computed as described in VPC results diagnostics, step (ii). The Diagnostics section is omitted in the case of right/left censored data. For right/left censored data or missing data there is a Censored data section. The first three columns in the Censored data results section give the bin boundaries and the number of observations in the bin. The Censored data section is described further in step (f) in Dependent variable matrix analysis for VPC. If option -levels is used, there is a Categorical data section. The first three columns give the bin boundaries and the number of observations in the bin, and the following column are described in step (g) in Dependent variable matrix analysis for VPC. Last comes a sequence of regular NPC results parts (without NPC diagnostics), one for each bin, described in section Output for NPC. 
+Following the general section in vpc\_results.csv there is one sequence of result sections per strata. The strata are analyzed independently of each other (see section Dependent variable matrix analysis for VPC). If the stratification option was not used, there is only one sequence of result sections. The header of the Continuous data section gives the stratification variable values of the observations in the strata, and how many observations out of the total number belongs to the strata. Then there is one row per bin (for binning rules see section binning for VPC). The first two columns contain the independent variable boundaries for the bin, the third the median value of the
+independent variable in the bin, 
+and the fourth the number of observations in the bin. 
+The following columns come in groups of four, one group per percentage boundary, where the values are the results from steps (b), (a) and (c) in Dependent variable matrix analysis for VPC. To the right of the four-column groups there are diagnostics columns with false positives and false negatives percentages according to section VPC results diagnostics, step (i). The diagnostics columns are omitted in the case of censored data. After the Continuous data section comes comes the Diagnostics section, computed as described in VPC results diagnostics, step (ii). The Diagnostics section is omitted in the case of right/left censored data. For right/left censored data or missing data there is a Censored data section. The first three columns in the Censored data results section give the bin boundaries and the number of observations in the bin. The Censored data section is described further in step (f) in Dependent variable matrix analysis for VPC. If option -levels is used, there is a Categorical data section. The first three columns give the bin boundaries and the number of observations in the bin, and the following column are described in step (g) in Dependent variable matrix analysis for VPC. Last comes a sequence of regular NPC results parts (without NPC diagnostics), one for each bin, described in section Output for NPC. 
 
 There is a file npc\_dir$<$number$>$/m1/$<$dv variable$>$\_matrix.csv with the extracted dependent variable values. If option -censor is used there is a file npc\_dir$<$number$>$/m1/$<$censor variable$>$\_matrix.csv with the extracted censoring variable values.
 
@@ -707,6 +711,8 @@ Sum the number of false positives and negatives over all bins, and divide by the
 		\item column(s) set with option  -stratify\_ on. Multiple variables may be requested with option -stratify\_on. All will be added to \$TABLE but only the first will be used for stratification in the vpc.
 		\item Censoring variable, if option -censor is used.
 		\item TTE variable, if option -tte is used and TTE variable is not the same as the dependent variable which has already been added. The TTE variable is only added in the simulation model, not the model for original data.
+        \item PRED if option -predcorr and/or -varcorr is set
+        \item Only in the simulation model: column set with option -irep, if used.
 		\item options NOPRINT, ONEHEADER, NOAPPEND
 	\end{itemize}
 	\item Logic for identifying observation rows  in table-file:
@@ -732,6 +738,8 @@ requested in the generated \$TABLE record) by any other method than option -cens
 
 It will not work to read initial parameter estimates from a separate file using the CHAIN command. Instead, the user can either create an msfo-file and use option -msfo\_file or use the -orig\_table and -sim\_table options.
 
+The vpc cannot automatically create a \$SIMULATION record when the input model has \$PRIOR NWPRI. The user must create a simulation model manually and then
+provide it as input either using option -sim\_model or -flip\_comments.
 
 \begin{thebibliography}{1}
 \bibitem{Bergstrand} Bergstrand M, Hooker AC, Wallin JE, Karlsson MO, {\em Prediction-Corrected Visual Predictive Checks for Diagnosing Nonlinear Mixed-Effects Models}, AAPS J. 2011 Feb 8.

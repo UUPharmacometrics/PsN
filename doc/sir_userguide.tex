@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{SIR user guide}{2015-02-19}
+\guidetitle{SIR user guide}{2015-02-27}
 
 \begin{document}
 
@@ -134,7 +134,7 @@ NB 1: NONMEM covariance matrix is used as input, the inverse covariance matrix
 output by NONMEM is not used.
 NB 2: If -rawres\_input is specified the probability of each vector will be set equal to 1.
 \item[\underline{Step 3}] evaluate the parameter vectors on the original data.
-Create model files with up to 250 \$PROBLEM based on the original model file but setting MAXEVAL=0
+Create model files with up to 100 \$PROBLEM based on the original model file but setting MAXEVAL=0
 and replacing inits of nth \$PROBLEM with nth parameter vector, and also set MCETA if option -mceta was used. Compute dOFV 
 (delta-OFV, reference is input model ofv) and store in raw\_results.csv.
 \item[\underline{Step 4}] calculate the weights as the ratio $\frac{e^{-0.5\cdot dOFV}}{relPDF}$ and store in raw\_results.csv. 

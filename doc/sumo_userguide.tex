@@ -2,7 +2,7 @@
 \setlength{\evensidemargin}{0pt}
 \setlength{\oddsidemargin}{0pt}
 
-\guidetitle{SUMO user guide}{2014-05-20}
+\guidetitle{SUMO user guide}{2015-02-26}
 
 \begin{document}
 
@@ -75,6 +75,8 @@ The numbers in parentheses after the OMEGA and SIGMA columns are the relative SE
 (but see option -ci and -sd\_rse below).
 Relative standard errors are not displayed unless NONMEM reports the standard errors in the output file, i.e. when the covariance step has been requested and has terminated successfully.
 
+If the user has set labels for the parameters in the control stream, those labels are used instead of the
+generic THETA1, OMEGA(1,1) and so on. Parameters that are FIXED or SAME are excluded from the table.
 
 \section{Input and options}
 
