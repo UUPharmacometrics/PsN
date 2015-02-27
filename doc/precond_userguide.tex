@@ -34,7 +34,7 @@ The only required argument is a model file.
 
 \begin{optionlist}
 \optname{perturb}
-After the model is preconditioned the initial estimate is perturbed to the direction of the eigenvector that is corresponding negative eigenvalue of the R-matrix.  This will increase the chance of finding the final parameter estimate that is not at the saddle point so that the R-matrix of the preconditioned model will be positive semi-definite matrix.
+After the model is preconditioned the initial estimate is perturbed to the direction of the eigenvector that is corresponding negative eigenvalue of the R-matrix.  This will increase the chance of finding the final parameter estimate that is not at the saddle point so that the R-matrix of the preconditioned model will be a positive semi-definite matrix.
 \nextopt
 \optdefault{pre}{psn.rmt}
 With this option the user can manually specify the R-matrix that will be used for preconditioning.  In addition, a modelfit directory created by the execute command of PsN can be specified and R-matrix will be extracted from the directory.  In addition, any symmetric matrix can be provided as a .csv file or NONMEM matrix file.
@@ -58,7 +58,7 @@ This option will break the normal execution flow and only perform a conversion o
 If this option is set no model will be run.
 \nextopt
 \optname{eigen\_comp\_only}
-With this option, precond will not execute any NONMEM run.  It will only compute the eigenvalues of the matrix that were to be used for the preconditioning.  Use this option with {\bf-print} option.
+With this option, precond will not execute any NONMEM run.  It will only compute the eigenvalues of the matrix that were to be used for the preconditioning.  Use this option with {\bf-verbose} option.
 \nextopt	
 \optname{lu}
 Use LU decomposition of the preconditioning matrix instead of eigendecomposition.  With this option the preconditioning matrix provided by -pre option should be similar to variance covariance matrix or the inverse of R matrix.  (i.e., R matrix should not be used with this option)

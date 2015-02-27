@@ -61,7 +61,11 @@ $help_text{-cov} = <<'EOF';
 EOF
 
 $help_text{-cholesky} = <<'EOF';
-      Use cholesky decomposition
+      Use cholesky decomposition of the preconditioning matrix instead of
+      eigendecomposition.  With this option the preconditioning matrix
+      provided by -pre option should be similar to variance covariance
+      matrix or the inverse of R matrix.
+      (i.e., R matrix should not be used with this option)
 EOF
 
 $help_text{-in_filter} = <<'EOF';
@@ -103,7 +107,19 @@ $help_text{-offset_rawres} = <<'EOF';
 EOF
 
 $help_text{-pre} = <<'EOF';
-      A .csv-file containing the preconditioning matrix 
+      With this option the user can manually specify the R-matrix that will be
+      used for preconditioning.  In addition, a modelfit directory created by
+      the execute command of PsN can be specified and R-matrix will be
+      extracted from the directory. In addition, any symmetric matrix can be
+      provided as a .csv file or NONMEM matrix file.
+
+      With this option the user can also specify a directory. If the modelfit
+      directory is specified then the R-matrix is automatically extracted.
+      If precond directory is specified then we can precondition the already
+      preconditioned model. This will allow us to iteratively precondition
+      deeply ill-conditioned model. In order for the iterative preconditioning
+      to work properly, "precMatrix" file should be unmodified and available
+      in the specified precond directory.
 EOF
 
 $help_text{-rawres_input} = <<'EOF';
@@ -112,6 +128,30 @@ EOF
 
 $help_text{-update_model} = <<'EOF';
       Set a filename to store the original model with updated inital values for the parameters.
+EOF
+
+$help_text{-lu} = <<'EOF';
+      Use LU decomposition of the preconditioning matrix instead of
+      eigendecomposition.  With this option the preconditioning matrix
+      provided by -pre option should be similar to variance covariance matrix
+      or the inverse of R matrix.
+      (i.e., R matrix should not be used with this option)
+EOF
+
+$help_text{-perturb} = <<'EOF';
+      Se
+      After the model is preconditioned the initial estimate is perturbed to
+      the direction of the eigenvector that is corresponding negative
+      eigenvalue of the R-matrix. This will increase the chance of finding
+      the final parameter estimate that is not at the saddle point so that
+      the R-matrix of the preconditioned model will be a positive semi-definite
+      matrix.
+EOF
+
+$help_text{-eigen_comp_only} = <<'EOF';
+      With this option, precond will not execute any NONMEM run.  It will only
+      compute the eigenvalues of the matrix that were to be used for the
+      preconditioning.  Use this option with {\bf-verbose} option.
 EOF
 
 common_options::online_help('precond', \%options, \%help_text, \%required_options, \%optional_options);
