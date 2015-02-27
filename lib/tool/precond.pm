@@ -681,7 +681,7 @@ sub convert_reparametrized_cov
         my $foldername=(split(/\//, $directory))[-1];
 
         if (int(log($maxEigen/$minEigen) / log(10)) < 1 and $negaCounter > 0) {
-            print "\nCovariance step of the preconditioned model failed \n\ntry -pre=$foldername -perturbOnly option\n\n";
+            print "\nCovariance step of the preconditioned model failed \n\ntry -pre=$foldername -perturb option\n\n";
         } elsif($negaCounter > 0) {
             print "\nCovariance step of the preconditioned model failed \n\ntry -pre=$foldername -perturb option\n\n";
         } else {

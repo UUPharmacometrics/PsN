@@ -42,7 +42,6 @@ my %optional_options = (
 	"update_model:s" => undef,
 	"lu!" => undef,
 	"perturb!" => undef,
-	"perturb_only!" => undef,
 	"eigen_comp_only!" => undef,
 );
 
@@ -324,7 +323,7 @@ if ((not $options{'nodec'})) {
         my $negaCounter = 0;
         foreach my $index (0 .. scalar(@$eigen) - 1) {
             if ($eigen->[$index] < 0) {
-                if ($options{'perturb'} or $options{'perturb_only'}) {
+                if ($options{'perturb'}) {
                     $negaEigIndex[$negaCounter] = $index;
                 }
                 $negaCounter++;
@@ -352,17 +351,6 @@ if ((not $options{'nodec'})) {
             }
         }
     }
-
-    if ($options{'perturb_only'}) {
-        for (my $index1 = 0; $index1 < scalar(@precMatrix) ;$index1++) {
-            for (my $index2 = 0; $index2 < $index1; $index2++) {
-                $precMatrix[$index1][$index2] = 0;
-                $precMatrix[$index2][$index1] = 0;
-            }
-            $precMatrix[$index1][$index1] = 1;
-        }
-    }
-
 
     if (defined $options{'pre'}) {
 
