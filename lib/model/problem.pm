@@ -2009,12 +2009,16 @@ sub ensure_posdef
 							  verbose => { isa => 'Bool', default => 0, optional => 1 },
 							  inflate_diagonal => { isa => 'Bool', default => 1, optional => 1 },
 							  record_number => { isa => 'Int', optional => 1 },
-							  parameter => { isa => 'Str', optional => 1 }
+							  parameter => { isa => 'Str', optional => 1 },
+							  percent => { isa => 'Num', optional => 1, default => 5},
 	);
 	my $verbose = $parm{'verbose'};
 	my $inflate_diagonal = $parm{'inflate_diagonal'};
 	my $record_number = $parm{'record_number'};
 	my $parameter = $parm{'parameter'};
+	my $percent = $parm{'percent'};
+
+	croak("percent tweak in ensure posdef must be positive") unless ($percent > 0);
 
 	#check here that omega and sigma posdef,
 	#i.e. cholesky decomp works
@@ -2055,24 +2059,24 @@ sub ensure_posdef
 			#copy and check it
 			my $is_ok=0;
 			my $arrayref;
-			for (my $try=1; $try<5; $try++){
+			for (my $try=1; $try<10; $try++){
 				#this gives full matrix
 				$arrayref = $self->get_record_matrix(type => $param,
 													 record_number => $recno);
 				#return this if cholesky check posdef, otherwise decrease smallnum
 				my $err = linear_algebra::cholesky($arrayref);
-				if ($err == 1){
+				if ($err != 0){
 					$adjusted=1;
 					if ($inflate_diagonal){
 						foreach my $option (@{$record->options()}){
 							next unless $option->on_diagonal();
-							$option->check_and_set_init(new_value => ($option->init())*1.05);
+							$option->check_and_set_init(new_value => ($option->init())*(1+$percent/100));
 						}
 					}else{
 						#deflate offdiag
 						foreach my $option (@{$record->options()}){
 							next if $option->on_diagonal();
-							$option->check_and_set_init(new_value => ($option->init())*0.95);
+							$option->check_and_set_init(new_value => ($option->init())*(1-$percent/100));
 						}
 					}
 				}else{
