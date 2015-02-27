@@ -584,10 +584,7 @@ sub create_template_models
 								  option_name => 'IGNORE',
 								  option_value => '('.$fremtype.'.GT.0)');
 
-	#fix omega
-	foreach my $rec (@{$frem_vpc_model1->problems()->[0]->omegas()}){
-		$rec->fix(1) unless $rec->same();
-	}
+	#will fix omega after updating records
 	#fix theta 
 	foreach my $rec (@{$frem_vpc_model1->problems()->[0]->thetas()}){
 		foreach my $opt (@{$rec->options()}){
@@ -633,7 +630,7 @@ sub create_template_models
 									 record_strings => [ join( ' ', @vpc1_table_params ).
 														 ' NOAPPEND NOPRINT ONEHEADER FORMAT=sG15.7 FILE='.$joindata]);
 	
-	$frem_vpc_model1->_write();
+	$frem_vpc_model1->_write(); #have not yet fixed omegas
 
 	##########################################################################################
 	#Create Model 2 vpc
@@ -1088,9 +1085,18 @@ sub modelfit_setup
 												   ignore_missing_parameters => 1,
 												   update_fix => 1,
 												   problem_number => 1);
-				$frem_vpc_model1-> problems -> [0]->ensure_posdef();
-				$frem_vpc_model1->_write(overwrite => 1);
+				$frem_vpc_model1-> problems -> [0]->ensure_posdef(percent => 1);
 			}
+
+			#fix omega
+			foreach my $rec (@{$frem_vpc_model1->problems()->[0]->omegas()}){
+				$rec->fix(1) unless $rec->same();
+				foreach my $opt (@{$rec->options()}){
+					$opt->fix(1);
+				}
+			}
+			$frem_vpc_model1->_write(overwrite => 1);
+
 			$rundir = $self -> directory().'/vpc1_modelfit_dir1';
 			rmtree([ "$rundir" ]) if (-e $rundir);
 
