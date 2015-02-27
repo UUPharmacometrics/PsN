@@ -17,6 +17,28 @@ is (linear_algebra::max($C), 0.25, "matrix maximum");
 linear_algebra::absolute($C);
 is_deeply($C, [[ 0.  , 0.1 , 0.25], [ 0.1,  0., 0.17], [ 0.25,  0.17,  0. ]], "matrix absolute");
 
+# read_from_file
+my $testdir = create_test_dir("linear_algebra_unit");
+chdir $testdir;
+open my $fh, ">", "testfile";
+print $fh "1 ,2, 3,4,5\n";
+print $fh "2,3,1,4,  99\n";
+close $fh;
+my $A = linear_algebra::read_from_file(filename => "testfile");
+is_deeply($A, [[1, 2, 3, 4, 5], [2, 3, 1, 4, 99]], "read_from_file comma separated");
+
+open my $fh, ">", "testfile_space";
+print $fh "1.23 2e14    5\n";
+print $fh "1 2  1.56789\n";
+print $fh "1   1 1";
+close $fh;
+open my $fh, "<", "testfile_space";
+my $A = linear_algebra::read_from_file(filehandle => $fh, separator => '\s+');
+is_deeply($A, [[1.23, 2e14, 5], [1, 2, 1.56789], [1, 1, 1]], "read_from_file space separated");
+close $fh;
+
+remove_test_dir($testdir);
+
 #pad_matrix
 my @A = ([1, 2, 4], [3, 5 ,7], [8, 4, 1]);
 linear_algebra::pad_matrix(\@A, 5);
@@ -86,7 +108,7 @@ my $C = [[8, 7, 6, 5], [4, 3, 2, 1], [4, 3, 3, 1], [4, 3, 2, 0]];
 linear_algebra::LU_factorization($C);
 is_deeply($C, [[8, 7, 6, 5], [0.5, -0.5, -1, -1.5], [0.5, 1, 1, 0], [0.5, 1, 0, -1]], "lu matrix C");
 
-#eigenvalue_decompositi
+#eigenvalue_decomposition
 my @eigenValMatrix = ( [ '8.9544282663304415E+01', '-8.2566649009388087E+01', '8.6967174304372286E-02', '-4.3909645699741713E+00', '-1.6476336788019591E+01',
         '1.3784822470949292E+01', '1.2074968416416303E+00', '1.5699623392919333E+00', '-1.3673882615395747E+00', '-5.8476185564888334E+00' ],
       [ '-8.2566649009388087E+01', '5.0538799354932610E+02', '7.8999591192394849E+00', '-1.1155228236154463E+02', '-9.2582185092361200E+01',

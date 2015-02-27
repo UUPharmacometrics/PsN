@@ -167,7 +167,6 @@ sub modelfit_analyze
 			}
 		}
 		
-        
 		if ($covSuccess==0){
 			for (my $i = 0; $i < @$new_theta; $i++) {
 				$modelfit->raw_results->[0]->[$se_pos + $i] = "NA";
@@ -179,8 +178,6 @@ sub modelfit_analyze
 			print "\n\n  preconditioning sucessful \n";
 		}
             
-        
-
         $modelfit->print_raw_results;
 
     } else {

@@ -13,7 +13,6 @@ use strict;
 use Getopt::Long;
 # External modules #
 use Math::Random;
-use Math::Trig;
 
 # PsN includes #
 use PsN;
@@ -377,16 +376,14 @@ if ((not $options{'nodec'})) {
 
             open(my $fh, '<', $file) or die "Cannot find the file".$file."precMatrix so prepre option cannot be used \n";
 
-
-            # Read either a nonmem .cov file or an ordinary csv file without header
-            my $line = <$fh>;
+            # Read a space separated data file
             my @preprecMatrix;
-            seek $fh, 0, 0;
             while (my $line = <$fh>) {
                 chomp $line;
                 my @fields = split(/\s+/, $line);
                 push @preprecMatrix, \@fields;
             }
+            close $fh;
 
             my @precMatrix_copy = map { [@$_] } @precMatrix;
 

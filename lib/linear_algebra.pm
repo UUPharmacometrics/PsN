@@ -1,5 +1,7 @@
 package linear_algebra;
 
+use MooseX::Params::Validate;
+
 use FindBin qw($Bin);
 use lib "$Bin/../lib";
 use strict;
@@ -21,6 +23,39 @@ sub subtract
     }
 
     return $C;
+}
+
+sub read_from_file
+{
+    # Read a matrix from file given either a filename or a filehandle.
+    my %parm = validated_hash(\@_,
+		filename => { isa => 'Str', optional => 1 },
+        filehandle => { isa => 'Ref', optional => 1 },
+        separator => { isa => 'Str', default => ',' },
+	);
+	my $filename = $parm{'filename'};
+    my $filehandle = $parm{'filehandle'};
+	my $separator = $parm{'separator'};
+
+    if (defined $filename) {
+        open $filehandle, "<", $filename;
+    }
+
+    my @A;
+    while (my $line = <$filehandle>) {
+        chomp $line;
+        my @fields = split($separator, $line);
+        foreach my $e (@fields) {       # Convert into number. simplifies faultfinding and unittesting
+            $e += 0;
+        }
+        push @A, \@fields;
+    }
+
+    if (defined $filename) {
+        close $filehandle;
+    }
+
+    return \@A;
 }
 
 sub max
