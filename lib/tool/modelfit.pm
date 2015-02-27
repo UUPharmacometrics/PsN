@@ -1993,7 +1993,8 @@ sub restart_needed
 			
 		} else {
 			#should never enter here.
-			ui -> print( category => 'all', message  => "\n\nERROR IN RESTART NEEDED\n", newline => 1);
+			#ui -> print( category => 'all', message  => "\n\nERROR IN RESTART NEEDED\n", newline => 1);
+			croak("\n\nERROR IN RESTART NEEDED, please report this bug\n");
 		}
 
 		# Create intermediate raw results
@@ -2189,7 +2190,7 @@ sub restart_needed
 					#if we passed the total number of evals, continue through to below, parse normally
 				}
 			}
-		}
+		} #end elsif maxev
 		# If the output file was parsed successfully and not handle maxevals, we (re)set the $crashes
 		# variable and continue
 		$queue_info_ref -> {'crashes'} = 0;
@@ -2269,7 +2270,7 @@ sub restart_needed
 						if (defined $run_results -> [$tr] -> {'ofv'}
 							and ($run_results -> [$tr] -> {'ofv'}<
 								 ($run_results->[${$tries}]->{'ofv'} - $self->accepted_ofv_difference))){
-							$marked_for_rerun = 1;
+							$need_restart = 1;
 							trace(tool => 'modelfit', message => "Run picky/successful/reduced_model ok but had higher ".
 								  "corrected ofv than previous not accepted run, local min, must restart.", level => 2);
 							last;
@@ -2280,7 +2281,9 @@ sub restart_needed
 
 
 			if( ${$tries} < ($retries) and $need_restart 
-				and (not $queue_info_ref -> {'have_accepted_run'})) {
+				and (not $queue_info_ref -> {'have_accepted_run'})) { 
+				#include check for have_accepted run this since might have just run min_retries, do not retry just
+				#because this try was bad if we had one good from before
 				$marked_for_rerun = 1;
 				${$tries} ++;
 				
