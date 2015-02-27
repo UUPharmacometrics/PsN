@@ -1,10 +1,92 @@
 package linear_algebra;
 
+use MooseX::Params::Validate;
+
 use FindBin qw($Bin);
 use lib "$Bin/../lib";
 use strict;
 use array qw(:all);
-use Math::Trig;	# For pi
+use Math::Trig;
+use math;
+
+sub subtract
+{
+    #Return difference between two matrices in new matrix
+    my $A = shift;
+    my $B = shift;
+
+    my $C;
+    for (my $row = 0; $row < scalar(@$A); $row++) {
+        for (my $col = 0; $col < scalar(@{$A->[0]}); $col++) {
+            $C->[$row]->[$col] = $A->[$row]->[$col] - $B->[$row]->[$col];
+        }
+    }
+
+    return $C;
+}
+
+sub read_from_file
+{
+    # Read a matrix from file given either a filename or a filehandle.
+    my %parm = validated_hash(\@_,
+		filename => { isa => 'Str', optional => 1 },
+        filehandle => { isa => 'Ref', optional => 1 },
+        separator => { isa => 'Str', default => ',' },
+	);
+	my $filename = $parm{'filename'};
+    my $filehandle = $parm{'filehandle'};
+	my $separator = $parm{'separator'};
+
+    if (defined $filename) {
+        open $filehandle, "<", $filename;
+    }
+
+    my @A;
+    while (my $line = <$filehandle>) {
+        chomp $line;
+        my @fields = split($separator, $line);
+        foreach my $e (@fields) {       # Convert into number. simplifies faultfinding and unittesting
+            $e += 0;
+        }
+        push @A, \@fields;
+    }
+
+    if (defined $filename) {
+        close $filehandle;
+    }
+
+    return \@A;
+}
+
+sub max
+{
+    #Return the maximum element of a matrix
+    my $A = shift;
+
+    my $maximum = -math::inf();
+
+    for (my $row = 0; $row < scalar(@$A); $row++) {
+        for (my $col = 0; $col < scalar(@{$A->[0]}); $col++) {
+            if ($A->[$row]->[$col] > $maximum) {
+                $maximum = $A->[$row]->[$col];
+            }
+        }
+    }
+
+    return $maximum;
+}
+
+sub absolute
+{
+    # In place elementwise absolute value of matrix
+    my $A = shift;
+
+    for (my $row = 0; $row < scalar(@$A); $row++) {
+        for (my $col = 0; $col < scalar(@{$A->[0]}); $col++) {
+            $A->[$row]->[$col] = abs($A->[$row]->[$col]);
+        }
+    }
+}
 
 sub pad_matrix
 {
@@ -154,7 +236,7 @@ sub mvnpdf_cholesky
 
 sub transpose
 {
-    # Calculate the transpose of a matrix
+    # Transpose a matrix in place
     my $A = shift;
     for (my $row = 0; $row < @$A; $row++) {
         for (my $col = 0; $col < $row; $col++) {
@@ -382,6 +464,87 @@ sub LU_factorization
 		die "LU factorization failed. \n";
 	}
 	return 0;
+}
+
+sub eigenvalue_decomposition
+{
+    # Perfor an eigenvalue decomposition of a symmetric matrix
+    # using the Jacoby algorithm
+    my $A = shift;
+
+    my @eigenValMatrix = map { [@$_] } @$A;
+
+    my $maxInd1 = 0;
+    my $maxInd2 = 1;
+    my $extremeVal = 10000;
+    my $counter = 0;
+
+    my @G;
+
+    #initialise G to identity matrix
+    for (my $index1 = 0; $index1 < scalar(@eigenValMatrix); $index1++) {
+        for (my $index2 = 0; $index2 < $index1; $index2++) {
+            $G[$index1][$index2] = 0;
+            $G[$index2][$index1] = 0;
+        }
+        $G[$index1][$index1] = 1;
+    }
+
+    while (abs($extremeVal) > 0.0000000001 and $counter < 100000000) {
+
+        for (my $index1 = 0; $index1 < scalar(@eigenValMatrix); $index1++) {
+            for (my $index2 = $index1 + 1; $index2 < scalar(@eigenValMatrix); $index2++) {
+                if ((abs($eigenValMatrix[$maxInd1][$maxInd2]) < abs($eigenValMatrix[$index1][$index2])) and ($index1 != $index2)) {
+                    $maxInd1 = $index1;
+                    $maxInd2 = $index2;
+                    $extremeVal = $eigenValMatrix[$maxInd1][$maxInd2];
+                }
+            }
+        }
+        my $theta = (atan(2 * $eigenValMatrix[$maxInd1][$maxInd2] / ($eigenValMatrix[$maxInd2][$maxInd2] - $eigenValMatrix[$maxInd1][$maxInd1]))) / 2;
+        my $c = cos($theta);
+        my $s = sin($theta);
+
+        my @G_copy = map { [@$_] } @G;
+        my @R_copy = map { [@$_] } @eigenValMatrix;
+
+        for (my $index = 0; $index < scalar(@G); $index++) {
+            $G[$maxInd1][$index] = $c * $G_copy[$maxInd1][$index] - $s * $G_copy[$maxInd2][$index];
+            $G[$maxInd2][$index] = $s * $G_copy[$maxInd1][$index] + $c * $G_copy[$maxInd2][$index];
+        }
+
+        for (my $index = 0; $index < scalar(@eigenValMatrix); $index++) {
+            $eigenValMatrix[$maxInd1][$index] = $c * $R_copy[$maxInd1][$index] - $s * $R_copy[$maxInd2][$index];
+            $eigenValMatrix[$maxInd2][$index] = $s * $R_copy[$maxInd1][$index] + $c * $R_copy[$maxInd2][$index];
+        }
+
+        my @r1;
+        my @r2;
+
+        for (my $index = 0; $index < scalar(@eigenValMatrix); $index++) {
+            $r1[$index] = $eigenValMatrix[$index][$maxInd1];
+            $r2[$index] = $eigenValMatrix[$index][$maxInd2];
+        }
+
+        my @R_copy2 = map { [@$_] } @eigenValMatrix;
+
+        for (my $index = 0; $index < scalar(@eigenValMatrix); $index++) {
+            $eigenValMatrix[$index][$maxInd1] = $c * $R_copy2[$index][$maxInd1] - $s * $R_copy2[$index][$maxInd2];
+            $eigenValMatrix[$index][$maxInd2] = $s * $R_copy2[$index][$maxInd1] + $c * $R_copy2[$index][$maxInd2];
+        }
+
+        $counter = $counter + 1;
+    }
+
+    my @eigenValues;
+
+    for (my $index = 0; $index < scalar(@eigenValMatrix); $index++) {
+        $eigenValues[$index] = $eigenValMatrix[$index][$index];
+    }
+
+    transpose(\@G);
+
+    return (\@eigenValues, \@G);
 }
 
 sub lower_triangular_identity_solve
@@ -811,11 +974,11 @@ sub get_identity_matrix
 	my $dimension = shift;
 
 	croak("dimension must be larger than 0 in get_identity_matrix") unless ($dimension > 0);
-	my @result=();
-	for (my $i=0; $i< $dimension; $i++){
+	my @result = ();
+	for (my $i = 0; $i < $dimension; $i++) {
 		my @line = (0) x $dimension;
 		$line[$i] = 1;
-		push(@result,\@line);
+		push(@result, \@line);
 	}
 	return \@result;
 }

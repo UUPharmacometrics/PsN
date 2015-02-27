@@ -13,6 +13,7 @@ use strict;
 use Getopt::Long;
 # External modules #
 use Math::Random;
+
 # PsN includes #
 use PsN;
 use ui;
@@ -39,6 +40,9 @@ my %optional_options = (
     "pre:s" => undef,
     "rawres_input:s" => undef,
 	"update_model:s" => undef,
+	"lu!" => undef,
+	"perturb!" => undef,
+	"eigen_comp_only!" => undef,
 );
 
 my $res = GetOptions( \%options,
@@ -57,7 +61,11 @@ $help_text{-cov} = <<'EOF';
 EOF
 
 $help_text{-cholesky} = <<'EOF';
-      Use cholesky decomposition instead of LU
+      Use cholesky decomposition of the preconditioning matrix instead of
+      eigendecomposition.  With this option the preconditioning matrix
+      provided by -pre option should be similar to variance covariance
+      matrix or the inverse of R matrix.
+      (i.e., R matrix should not be used with this option)
 EOF
 
 $help_text{-in_filter} = <<'EOF';
@@ -99,7 +107,19 @@ $help_text{-offset_rawres} = <<'EOF';
 EOF
 
 $help_text{-pre} = <<'EOF';
-      A .csv-file containing the preconditioning matrix 
+      With this option the user can manually specify the R-matrix that will be
+      used for preconditioning.  In addition, a modelfit directory created by
+      the execute command of PsN can be specified and R-matrix will be
+      extracted from the directory. In addition, any symmetric matrix can be
+      provided as a .csv file or NONMEM matrix file.
+
+      With this option the user can also specify a directory. If the modelfit
+      directory is specified then the R-matrix is automatically extracted.
+      If precond directory is specified then we can precondition the already
+      preconditioned model. This will allow us to iteratively precondition
+      deeply ill-conditioned model. In order for the iterative preconditioning
+      to work properly, "precMatrix" file should be unmodified and available
+      in the specified precond directory.
 EOF
 
 $help_text{-rawres_input} = <<'EOF';
@@ -110,16 +130,40 @@ $help_text{-update_model} = <<'EOF';
       Set a filename to store the original model with updated inital values for the parameters.
 EOF
 
+$help_text{-lu} = <<'EOF';
+      Use LU decomposition of the preconditioning matrix instead of
+      eigendecomposition.  With this option the preconditioning matrix
+      provided by -pre option should be similar to variance covariance matrix
+      or the inverse of R matrix.
+      (i.e., R matrix should not be used with this option)
+EOF
+
+$help_text{-perturb} = <<'EOF';
+      Se
+      After the model is preconditioned the initial estimate is perturbed to
+      the direction of the eigenvector that is corresponding negative
+      eigenvalue of the R-matrix. This will increase the chance of finding
+      the final parameter estimate that is not at the saddle point so that
+      the R-matrix of the preconditioned model will be a positive semi-definite
+      matrix.
+EOF
+
+$help_text{-eigen_comp_only} = <<'EOF';
+      With this option, precond will not execute any NONMEM run.  It will only
+      compute the eigenvalues of the matrix that were to be used for the
+      preconditioning.  Use this option with {\bf-verbose} option.
+EOF
+
 common_options::online_help('precond', \%options, \%help_text, \%required_options, \%optional_options);
+
+if ($PsN::nm_major_version < 7 or $PsN::nm_major_version == 7 and $PsN::nm_minor_version < 2) {
+    die "ERROR: precond requires NONMEM version 7.2 or higher. (You are using NONMEM version " . $PsN::nm_major_version . "." . $PsN::nm_minor_version . ")\n";
+}
 
 my $model_filename = $ARGV[0];
 
 if (@ARGV < 1) {
 	die "A model file must be specified. See precond -h for help";
-}
-
-if (not (defined $options{'pre'} or defined $options{'rawres_input'})) {
-	die "One of options -pre or -rawres_input must be specified";
 }
 
 if (defined $options{'pre'} and defined $options{'rawres_input'}) {
@@ -141,6 +185,7 @@ my $model = model->new(
 	eval($eval_string),
 	filename => $model_filename,
 	ignore_missing_files => 1,
+	skip_data_parsing => 1,
 	ignore_missing_data => 1,
 );
 
@@ -185,9 +230,53 @@ if (defined $options{'rawres_input'}) {
 
 } else {
 
-    my $file = $options{'pre'};
-    open(my $fh, '<', $file) or die "Cannot find the preconditioning matrix '$file' [$!]\n";
+	my $file;
+	my $fh;
+	
+	if (defined $options{'pre'}) {
+        if (-d $options{'pre'}) {
+		    $file = $options{'pre'} . "/NM_run1/psn.rmt";
+		    my $file2 = $options{'pre'} . "NM_run1/psn.rmt";
+		    my $file3 = $options{'pre'} . "/modelfit_dir1/NM_run1/psn.rmt";
+		    my $file4 = $options{'pre'} . "modelfit_dir1/NM_run1/psn.rmt";
+		
+            if (-e $file) { 
+            } elsif (-e $file2) {
+                $file = $file2;
+            } elsif (-e $file3) {
+                $file = $file3;
+            } elsif (-e $file4) {
+                $file = $file4;
+            }
+        } else {
+            $file = $options{'pre'};
+        }
+		
+        open($fh, '<', $file) or die "\nCannot open the preconditioning matrix: '$file'\n\n";
 
+	} else {
+        # Try to automatically find .rmt file from a previous run
+        # First try model.rmt in calling directory
+        # Second try rundirs in the order of list_candidate_latest_rundirs
+
+		$file = $model_filename;
+		$file =~ s/(\.ctl|\.mod)$/.rmt/;
+
+        if (not -e $file) {
+            my @candidate_dirs = tool::list_candidate_latest_rundirs($model_filename);
+            foreach my $dir (@candidate_dirs) {
+                if (-e "$dir/NM_run1/psn.rmt") {
+                    $file = "$dir/NM_run1/psn.rmt";
+                    last;
+                }
+            }
+        }
+
+		open($fh, '<', $file)
+            or die "Cannot automatically find the R-matrix file\n specify the R-matrix or the modelfit directory using -pre= option\n";
+	}
+    print "\n Precondition using R-matrix: '$file'\n\n";
+	
     # Read either a nonmem .cov file or an ordinary csv file without header
     my $line = <$fh>;
     if ($line =~ /^TABLE NO./) {
@@ -222,27 +311,27 @@ if (scalar(@precMatrix) < $model->nthetas) {
 }
 
 linear_algebra::put_ones_on_diagonal_of_zero_lines(\@precMatrix);
+my @negaEigIndex;
 
 # Decompose (or not) the matrix
-if (not $options{'nodec'}) {
-	if (not $options{'cholesky'}) {
-		my $dummy = linear_algebra::LU_factorization(\@precMatrix);
-		for (my $row = 0; $row < @precMatrix; $row++) {		# Quick hack to get the L matrix
-			@precMatrix[$row]->[$row] = 1;
-			for (my $col = $row + 1; $col < @precMatrix; $col++) {
-				@precMatrix[$row]->[$col] = 0;
-			}
-		}
-	} else {
-        if (not linear_algebra::is_symmetric(\@precMatrix)) {
-            die "Matrix must be symmetric for cholesky decomposition";
+if ((not $options{'nodec'})) {
+	if ($options{'cholesky'}) {
+
+        my @A = map { [@$_] } @precMatrix;
+        linear_algebra::transpose(\@A);
+        my $B = linear_algebra::subtract(\@A, \@precMatrix);
+        linear_algebra::absolute($B);
+        my $max_diff = linear_algebra::max($B);
+        if ($max_diff > 1e-8) {
+            print "Warning: The matrix you are using does not seem to be symmetric. The maximum difference between elements is $max_diff\n";
         }
+
         # Swap to column order
         linear_algebra::transpose(\@precMatrix);
-		my $error = linear_algebra::cholesky(\@precMatrix);
-		if ($error) {
-			die "Unable to perform cholesky decomposition: matrix is not positive-definite";
-		}
+        my $error = linear_algebra::cholesky(\@precMatrix);
+        if ($error) {
+            die "Unable to perform cholesky decomposition: matrix is not positive-definite";
+        }
         # Swap back to row order
         linear_algebra::transpose(\@precMatrix);
         # Create L matrix
@@ -251,7 +340,102 @@ if (not $options{'nodec'}) {
                 $precMatrix[$row]->[$col] = 0;
             }
         }
-	}
+
+    } elsif($options{'lu'}) {
+
+        my $dummy = linear_algebra::LU_factorization(\@precMatrix);
+        for (my $row = 0; $row < @precMatrix; $row++) {		# Quick hack to get the L matrix
+            @precMatrix[$row]->[$row] = 1;
+            for (my $col = $row + 1; $col < @precMatrix; $col++) {
+                @precMatrix[$row]->[$col] = 0;
+            }
+        }
+
+    } else {
+        my @eigenValMatrix = map { [@$_] } @precMatrix;
+
+        (my $eigen, my $Q) = linear_algebra::eigenvalue_decomposition(\@eigenValMatrix);
+
+        my $abs_eigens = array::absolute($eigen);
+        my $maxEigen = array::max($abs_eigens);
+        my $minEigen = array::min($abs_eigens);
+
+        my $negaCounter = 0;
+        foreach my $index (0 .. scalar(@$eigen) - 1) {
+            if ($eigen->[$index] < 0) {
+                if ($options{'perturb'}) {
+                    $negaEigIndex[$negaCounter] = $index;
+                }
+                $negaCounter++;
+            }
+        }
+
+        print "Condition Number : 10^" . int(log($maxEigen/$minEigen)/log(10)) . "\n";
+        print "Number of negative eigenvalues : $negaCounter\n";
+
+        if ($options{'verbose'}) {
+            print "=== Eigenvalues ===\n";
+            foreach my $e (@$eigen) {
+                print "$e\n";
+            }
+            print "===================\n";
+        }
+
+        if ($options{'eigen_comp_only'}) {
+            die "Eigenvalue Calculation Only";
+        }
+
+        for (my $index1 = 0; $index1 < scalar(@precMatrix); $index1++) {
+            for (my $index2 = 0; $index2 < scalar(@precMatrix); $index2++) {
+                $precMatrix[$index1][$index2] = $Q->[$index1]->[$index2] / sqrt(abs($eigen->[$index2]));
+            }
+        }
+    }
+
+    if (defined $options{'pre'}) {
+
+        # Check if run was the result of preconditioning
+        my $file = $options{'pre'} . "/precMatrix";
+        my $file2 = $options{'pre'} . "precMatrix";
+
+        if (-e $file) { 
+        } elsif(-e $file2) {
+            $file = $file2;
+        }
+
+        if (-e $file) {
+            print "\n\n Pre-Precondition using matrix: '$file'\n";
+
+            open(my $fh, '<', $file) or die "Cannot find the file".$file."precMatrix so prepre option cannot be used \n";
+
+            # Read a space separated data file
+            my @preprecMatrix;
+            while (my $line = <$fh>) {
+                chomp $line;
+                my @fields = split(/\s+/, $line);
+                push @preprecMatrix, \@fields;
+            }
+            close $fh;
+
+            my @precMatrix_copy = map { [@$_] } @precMatrix;
+
+            if (scalar(@preprecMatrix) != scalar(@precMatrix)) {
+                die "Size of precMatrix and preprecMatrix not consistent"
+            }
+
+            my $tempSum = 0;
+
+            for (my $i = 0; $i < scalar(@precMatrix_copy); $i++) {
+                for (my $j = 0; $j < scalar(@precMatrix_copy); $j++) {
+                    $tempSum = 0;
+                    for (my $k = 0; $k < scalar(@precMatrix_copy); $k++) {
+                        $tempSum = $tempSum + $precMatrix_copy[$k][$j] * $preprecMatrix[$i][$k + 1];
+                    }
+                    $precMatrix[$i][$j] = $tempSum;
+                }
+            }
+        }
+    }
 }
 
 my $only_do_pre_step;
@@ -280,21 +464,22 @@ if ($only_do_pre_step) {
 
 } else {
 
-	my $dummy_model = model->create_dummy_model;
+    my $dummy_model = model->create_dummy_model;
 
-	my $precond = tool::precond->new(eval($common_options::parameters),
-		precond_matrix => \@precMatrix,
-		models => [ $dummy_model ],
-		precond_model => $model,
-		update_model => $options{'update_model'},
-	);
+    my $precond = tool::precond->new(eval($common_options::parameters),
+        precond_matrix => \@precMatrix,
+        models => [ $dummy_model ],
+        precond_model => $model,
+        update_model => $options{'update_model'},
+        negaEigenIndex => \@negaEigIndex,
+    );
 
-	$precond->print_options (cmd_line => $cmd_line,
-		toolname => 'PRECOND',
-		local_options => [keys %optional_options],
-		common_options => \@common_options::tool_options);
+    $precond->print_options (cmd_line => $cmd_line,
+        toolname => 'PRECOND',
+        local_options => [keys %optional_options],
+        common_options => \@common_options::tool_options);
 
-	$precond->run;
+    $precond->run;
 
-	print "\nprecond done\n";
+    print "\nprecond done\n";
 }

@@ -9,7 +9,7 @@ use File::Copy 'cp';
 
 require Exporter;
 our @ISA = qw(Exporter);
-our @EXPORT = qw(get_command cmp_float create_test_dir remove_test_dir copy_test_files like_file_row unlike_file_row is_array do_course_tests cmp_relative);
+our @EXPORT = qw(get_command cmp_float cmp_float_matrix cmp_float_array create_test_dir remove_test_dir copy_test_files like_file_row unlike_file_row is_array do_course_tests cmp_relative);
 
 # Set this variable to something else if you are testing on a cluster
 my $tempdir = File::Spec->tmpdir;
@@ -67,6 +67,7 @@ sub cmp_float
 
 	cmp_ok($x, '==', $y, $text);
 }
+
 sub cmp_relative
 {
 	my $x = shift;
@@ -79,6 +80,47 @@ sub cmp_relative
 
 	cmp_ok($x, '==', $y, $text);
 }
+
+sub cmp_float_array
+{
+    my $x = shift;
+    my $y = shift;
+    my $text = shift;
+
+    foreach my $e (@$x) {
+        $e = sprintf("%.8e", $e);
+    }
+    foreach my $e (@$y) {
+        $e = sprintf("%.8e", $e);
+    }
+
+    is_deeply($x, $y, $text);
+}
+        
+sub cmp_float_matrix
+{
+    my $A = shift;
+    my $B = shift;
+    my $text = shift;
+
+    my $new_A = [ @$A ];
+    my $new_B = [ @$B ];
+
+    foreach my $row (@$new_A) {
+        foreach my $e (@$row) {
+            $e = sprintf("%.8e", $e);
+        }
+    }
+
+    foreach my $row (@$new_B) {
+        foreach my $e (@$row) {
+            $e = sprintf("%.8e", $e);
+        }
+    }
+
+    is_deeply($new_A, $new_B, $text);
+}
+
 
 # Test if a regular expression can match any line in a file
 sub like_file_row

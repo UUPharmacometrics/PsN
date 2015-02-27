@@ -3,6 +3,7 @@
 use strict;
 use warnings;
 use Test::More;
+use Test::Exception;
 use FindBin qw($Bin);
 use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages
@@ -231,5 +232,12 @@ $model = model->new(filename => "$modeldir/twoprobmsf_match.mod", ignore_missing
 is ($model->msfo_to_msfi_mismatch,0,"msfo_to_msfi_mismatch false");
 $model = model->new(filename => "$modeldir/twoprobmsf_mismatch.mod", ignore_missing_data =>1);
 is ($model->msfo_to_msfi_mismatch,2,"msfo_to_msfi_mismatch true second prob");
+
+
+# Test of different models
+
+#pheno_multiple_sizes
+lives_ok { my $model = model->new(filename => "$modeldir/model/pheno_multiple_sizes.mod") } "multiple sizes should not crash";
+dies_ok { my $model = model->new(filename => "$modeldir/model/pheno_multiple_sizes_not_in_beginning.mod") } "one sizes not in beginning";
 
 done_testing();

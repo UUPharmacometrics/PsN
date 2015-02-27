@@ -1679,12 +1679,76 @@ sub get_rundir
 
 }
 
+sub list_candidate_latest_rundirs
+{
+    # Create a list of candidate rundir
+    # 1. <model>.dirN with highest N
+    # 2. <model>-PsN-<date> with highest date
+    # 3. modelfit_dirN with highest N
+    my $model_filename = shift;
+    $model_filename =~ s/(\.ctl|\.mod)$//;
+
+    my @candidates = ( );
+
+    my @dirs = glob "$model_filename.dir*";
+    if (scalar(@dirs) > 0) {
+        my $max = -1;
+        my $maxdir;
+        foreach my $dir (@dirs) {
+            $dir =~ /^$model_filename\.dir(\d+)$/;
+            if ($1 > $max) {
+                if (-d $dir) {
+                    $max = $1;
+                    $maxdir = $dir;
+                }
+            }
+        }
+        push @candidates, $maxdir if not $max == -1;
+    }
+
+    my @dirs = glob "$model_filename-PsN-*";
+    if (scalar(@dirs) > 0) {
+        my $max = -1;
+        my $maxdir;
+        foreach my $dir (@dirs) {
+            $dir =~ /^$model_filename-PsN-(.*)$/;
+            my $date = $1;
+            $date =~ s/-//g;
+            if ($date > $max) {
+                if (-d $dir) {
+                    $max = $date;
+                    $maxdir = $dir;
+                }
+            }
+        }
+        push @candidates, $maxdir if not $max == -1;
+    }
+
+    my @dirs = glob "modelfit_dir*";
+    if (scalar(@dirs) > 0) {
+        my $max = -1;
+        my $maxdir;
+        foreach my $dir (@dirs) {
+            $dir =~ /^modelfit_dir(.*)$/;
+            if ($1 > $max) {
+                if (-d $dir) {
+                    $max = $1;
+                    $maxdir = $dir;
+                }
+            }
+        }
+        push @candidates, $maxdir if not $max == -1;
+    }
+
+    return @candidates;
+}
+
 sub create_R_script
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-							  tool_name => { isa => 'Str', optional => 1 }
-		);
+        tool_name => { isa => 'Str', optional => 1 }
+    );
 	my $tool_name = $parm{'tool_name'};
 
 	return if ($self->rplots < 0);

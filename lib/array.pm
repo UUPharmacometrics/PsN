@@ -68,6 +68,21 @@ sub cumsum
 	return \@result;
 }
 
+sub absolute
+{
+    # Calculate elementwise absolute value and return a new array
+
+    my $a = shift;
+
+    my @b;
+
+    foreach my $element (@$a) {
+        push @b, abs($element);
+    }
+
+    return \@b;
+}
+
 sub max
 {
     # Maximum value in an array or list
