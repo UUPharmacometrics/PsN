@@ -91,7 +91,11 @@ sub modelfit_setup
 
 	# ------------------------  Run original run if not already done  -------------------------------
 
-	unless ( $model -> is_run ) {
+	my $check_output_and_model_match=0;
+	if ( $model -> is_run ) {
+		#check that input model and provided lst-file with control stream copy match
+		$check_output_and_model_match=1 unless (defined $self->rawres_input);
+	}else{
 		my %subargs = ();
 		if ( defined $self -> subtool_arguments() ) {
 			%subargs = %{$self -> subtool_arguments()};
@@ -139,6 +143,35 @@ sub modelfit_setup
 	}
 
 	my $parameter_hash = output::get_nonmem_parameters(output => $output);
+
+	if ($check_output_and_model_match ){
+		#check that the same set of estimated parameter with the same labels
+		#in both input model and existing output file
+
+		my $mod_coords = $model->problems->[0]->get_estimated_attributes(parameter=> 'all',
+																		 attribute => 'coordinate_strings');
+		my $mismatch=0;
+		if (scalar(@{$mod_coords})==scalar(@{$parameter_hash->{'coordinate_strings'}})){
+			for (my $i=0; $i< scalar(@{$mod_coords}); $i++){
+				unless ($mod_coords->[$i] eq $parameter_hash->{'coordinate_strings'}->[$i]){
+					$mismatch = 1;
+					last;
+				}
+			}
+		}else{
+			$mismatch=1;
+		}
+
+		if ($mismatch){
+			my $message = "\nsir input error:\n".
+				"The input model and the control stream copy and the top of the lst-file do not match\n".
+				"Estimated parameters in the input model are\n".join(' ',@{$mod_coords})."\n".
+				"Estimated parameters in the lst-file model are\n".
+				join(' ',@{$parameter_hash->{'coordinate_strings'}})."\n";
+			croak($message);
+		}
+
+	}
 
 	my $covmatrix;
 	my @covmat_column_headers = ();
