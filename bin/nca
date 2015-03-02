@@ -342,7 +342,7 @@ if (defined $options{'columns'}) {
 }
 
 my $nca = tool::npc->new(eval($common_options::parameters),
-	  models	           => [ $model ],
+	  models	         => [ $model ],
 	  stratify_on        => $columns,
 	  samples            => $options{'samples'},
 	  lst_file           => $options{'lst_file'},
@@ -351,14 +351,14 @@ my $nca = tool::npc->new(eval($common_options::parameters),
 	  dv                 => $options{'dv'},
 	  keep_estimation    => $options{'keep_estimation'},
 	  noprediction       => $options{'noprediction'},
-	  copy_data	     		 => $options{'copy_data'},
+	  copy_data          => $options{'copy_data'},
 	  rawres_input	     => $options{'rawres_input'},
 	  offset_rawres	     => $options{'offset_rawres'},
 	  covariance_file    => $options{'covariance_file'},
 	  sim_model          => $options{'sim_model'},
 	  flip_comments      => $options{'flip_comments'},
-		directory_name_prefix => 'nca',
-		nca								 => 1,
+	  directory_name_prefix => 'nca',
+	  nca				 => 1,
 	  );
 
 $nca->print_options (cmd_line => $cmd_line,
@@ -368,23 +368,5 @@ $nca->print_options (cmd_line => $cmd_line,
 
 $nca->run;
 $nca->print_results;
-
-my $script_filename = $nca->directory . "runnca.R";
-open my $fh, ">", $script_filename;
-
-print $fh 'nca(';
-
-print_option($fh, 'origFile', '"nca_original.npctab.dta"');
-print_option($fh, 'timeNm', '"' . $nca->idv . '"');
-print_option($fh, 'concNm', '"' . $nca->dv . '"');
-print_option($fh, 'simFile', '"nca_simulation.1.npctab.dta"');
-
-if (defined $options{'nca_options'}) {
-	print $fh ", ", $options{'nca_options'};
-}
-
-print $fh ")\n";
-
-close $fh;
 
 ui->print( category => 'nca', message => "nca done\n" );
