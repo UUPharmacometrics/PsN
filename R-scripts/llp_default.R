@@ -1,6 +1,6 @@
-require(ggplot2)
-require(reshape)
-require(plyr)
+library(ggplot2)
+library(reshape)
+library(plyr)
 
 
 if (rplots.level > 0){

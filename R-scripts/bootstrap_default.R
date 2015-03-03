@@ -1,4 +1,4 @@
-require(xpose4)
+library(xpose4)
 if(packageVersion("xpose4")<"4.5.0"){
 		warning("xpose4 version must be 4.5.0 or later for bootstrap plot")	
 }							 

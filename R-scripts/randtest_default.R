@@ -1,13 +1,13 @@
 # randtest plot
 
 # required packages
-require(ggplot2)
-require(reshape2)
-require(gridExtra)
-require(scales)
-require(MASS)
-require(plotrix)
-require(plyr)
+library(ggplot2)
+library(reshape2)
+library(gridExtra)
+library(scales)
+library(MASS)
+library(plotrix)
+library(plyr)
 
 # Check if runs with unseccessful minimization will be ignored
 ignore.usm <- F
