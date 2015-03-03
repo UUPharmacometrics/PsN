@@ -118,5 +118,6 @@ $pvar->print_options (cmd_line => $cmd_line,
 		      common_options => \@common_options::tool_options);
 
 $pvar->run;
+$pvar->print_results;
 
 print "pvar done\n";
