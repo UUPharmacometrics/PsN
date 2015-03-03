@@ -23,7 +23,7 @@ has 'tools' => ( is => 'rw', isa => 'ArrayRef[tool]' );
 has 'first_callback' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'adaptive' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'raw_line_structure' => ( is => 'rw', isa => 'Ref' );
-has 'check_nmtran' => ( is => 'rw', isa => 'Bool', default => 1 );
+has 'check_nmtran' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'last_est_complete' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'add_retries' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'niter_eonly' => ( is => 'rw', isa => 'Int' );

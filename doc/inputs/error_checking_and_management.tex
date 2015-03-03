@@ -4,7 +4,8 @@ Default not used. If the -abort\_on\_fail option is set and one of the NONMEM ru
 In this context a run is not considered failed if e.g. the minimization is not successful.  
 \nextopt
 \optname{check\_nmtran}
-Default used. Make PsN run NMtran on the model file before submitting the complete nmfe run to a cluster/grid or forking on a local computer. This adds a bit of overhead but on a cluster this still saves time in the case of syntax errors in the model file, since the user does not have to wait for a slot on the cluster/grid before the error is detected. On a local computer the error handling is improved.
+Default not used. 
+Make PsN run NMtran on the model file before submitting the complete nmfe run to a cluster/grid or forking on a local computer. This adds a bit of overhead but on a cluster this still saves time in the case of syntax errors in the model file, since the user does not have to wait for a slot on the cluster/grid before the error is detected. On a local computer the error handling is improved.
 
 When running multiple copies of a model with different data sets, e.g. in a bootstrap, only the first model will be checked. 
 
