@@ -460,7 +460,7 @@ sub traverse_runs {
 	}
 	$str
 }
-use Data::Dumper; print Dumper(\%info);
+
 $body = encode('UTF-8',$body.traverse_runs(\%parents,0,$max_lvl));
 my $byte_count = length $body;
 print RC $body;
