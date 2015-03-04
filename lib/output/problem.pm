@@ -801,7 +801,9 @@ sub _read_subproblems
 			$val =~ s/\s*$//; #remove trailing spaces
 			$sum_covariance_time += $val;
 
-		} elsif( /$subprob_exp/ or $self->lstfile_pos > $#{$self->lstfile} ) {
+		}
+		#new if clause here to handle case if above line was also last in lst-file, make sure add subprob then
+		if( /$subprob_exp/ or $self->lstfile_pos > $#{$self->lstfile} ) {
 			if ( defined $subproblem_start or $self->lstfile_pos > $#{$self->lstfile}) {
 				# we should submit subprob
 				my @subproblem_lstfile;

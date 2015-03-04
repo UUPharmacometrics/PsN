@@ -806,6 +806,23 @@ sub read_answers{
 	$answer_hashes[$index]->{answers}->{0}->{0}->{'omegas'}=[1.24200E-03,0.00000E+00,5.16470E-02,0.00000E+00,0.00000E+00,9.75276E-02,0.00000E+00,0.00000E+00,0.00000E+00,1.80301E-03,0.00000E+00,0.00000E+00,0.00000E+00,0.00000E+00,9.00406E-06,0.00000E+00,0.00000E+00,0.00000E+00,0.00000E+00,0.00000E+00,1.23912E-01];
 	$answer_hashes[$index]->{answers}->{0}->{0}->{'sigmas'}=[1.00000E+00];
 
+	$index++;
+	$answer_hashes[$index]->{file}='special_mod/covcrash.lst';
+	$answer_hashes[$index]->{answers}={};
+	$answer_hashes[$index]->{parsed_successfully}=1;
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'ofv'}=742.05104506946304;
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'minimization_successful'}=1;
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'thetas'}=[5.55363E-03,1.33638E+00];
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'omegas'}=[2.47074E-01,0.00000E+00,1.41581E-01];
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'sigmas'}=[1.64153E-02];
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'covariance_step_successful'}=0;
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'covariance_step_run'}=1;
+
+	$index++;
+	$answer_hashes[$index]->{file}='special_mod/covcrash_noext.lst';
+	$answer_hashes[$index]->{answers}={};
+	$answer_hashes[$index]->{parsed_successfully}=0;
+
 	return \@answer_hashes;
 }
 1;
