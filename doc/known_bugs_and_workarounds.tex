@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{Known bugs and workarounds}{2014-05-20}
+\guidetitle{Known bugs and workarounds}{2015-03-04}
 
 
 \begin{document}
@@ -14,13 +14,6 @@ Work to fix bugs in PsN is ongoing, but often feature addition is prioritized ov
 
 \subsection{Sensitive format for raw results input file in sse, vpc, npc}
 Any column header that contains a comma, e.g. OMEGA(2,1), must be enclosed in double quotes. This is done automatically when PsN creates a raw results file but may be changed if the file is saved in e.g. Excel.
-
-\subsection{NONMEM hard crash during \$COV step causes PsN to fail to read any output}
-If the estimation step is successful but NONMEM crashes entirely during the covariance step, causing the
-lst-file to be truncated (for example missing the objective function value of the successful estimation),
-PsN will fail to read final estimates even though they are available in the .ext-file, 
-and will treat the entire run as crashed. A workaround is to manually add a line with tag \verb|#OBJT:| after the 
-\verb|#TERE:| tag in the lst-file.
 
 \subsection{Missing estimates in raw\_results.csv when first \$PROBLEM uses \$MSFI}
 When the first \$PROBLEM in the modelfile uses \$MSFI, and \$THETA, \$OMEGA and \$SIGMA are all missing in that \$PROBLEM, then there will be no theta/omega/sigma headers in raw\_results.csv and the parameter estimates will not be printed to the file.
