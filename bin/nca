@@ -41,22 +41,22 @@ Getopt::Long::config("auto_abbrev");
 my %options;
 ## Declare the options
 
-my %required_options = ('samples:i' => undef);
-my %optional_options = ('idv:s' => undef,
-			 'rawres_input:s' => undef,
-			 'offset_rawres:i' => undef,
-       "columns:s" => undef,
-			 'lst_file:s' => undef,
-			 'msfo_file:s' => undef,
-			 'dv:s' => undef,
-			 'keep_estimation!'=>undef,
-			 'noprediction'=>undef,
-			 'sim_model:s'=>undef,
-			 'flip_comments!'=>undef,
-			 "copy_data!"=>undef,
-			 "nca_options:s"=>undef,
-			 'include_all_columns' => undef,
-			 );
+my %required_options = ( 'samples:i' => undef );
+my %optional_options = (
+    'idv:s' => undef,
+    'rawres_input:s' => undef,
+    'offset_rawres:i' => undef,
+    'columns:s' => undef,
+    'lst_file:s' => undef,
+    'msfo_file:s' => undef,
+    'dv:s' => undef,
+    'keep_estimation!' => undef,
+    'noprediction' => undef,
+    'sim_model:s' => undef,
+    'flip_comments!' => undef,
+    'copy_data!' => undef,
+    'include_all_columns' => undef,
+);
 
 my $res = GetOptions( \%options,
 		      @common_options::get_opt_strings,
@@ -113,7 +113,6 @@ $help_text{-samples} = <<'EOF';
       Must be at least 20.
 EOF
 
-
 $help_text{-idv} = <<'EOF';
       -idv=VARIABLE
 
@@ -168,6 +167,7 @@ $help_text{-sim_model} = <<'EOF';
       Use a separate input model for the simulations. 
       See the userguide for details.
 EOF
+
 $help_text{-flip_comments} = <<'EOF';
       -flip_comments
 
@@ -224,14 +224,6 @@ $help_text{-noprediction} = <<'EOF';
       Add NOPREDICTION to the $SIMULATION record of the simulation model
       in addition to ONLYSIMULATION. This option is generally recommended
       with likelihood models for odd type data.
-EOF
-
-$help_text{-nca_options} = <<'EOF';
-      -nca_options=option_string
-
-			The option_string will be copied verbatim to the R script created to invok nca.R.
-			Strings containing spaces or double quotes can be encloset within single quotes.
-			Example: nca run1.mod -nca_options='blq = "yes", blqNm = "BLQ"'
 EOF
 
 $help_text{-include_all_columns} = <<'EOF';
