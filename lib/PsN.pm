@@ -2,6 +2,7 @@ package PsN;
 use ext::Carp;
 use File::Spec;
 use Cwd;
+use Config;
 
 #the version line is extracted in Makefile using regular expression
 # /\$version\s*=\s*.[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*.;/
@@ -114,6 +115,44 @@ sub set_nonmem_info
                     "\" in psn.conf. Format should be: name=directory,version");
   }
 
+  #now handle $nmdir that is just name of executable, when in path. Only for run local
+  #this is when no slashes, forward or backward, in $nmdir
+  #then use which or where to find full path and replace $nmdir with full path after checking exists
+
+  my $result = find_nmfe_from_system_path($nmdir);
+  if ($result){
+	  $nmdir = $result;
+  }
+
+}
+
+sub find_nmfe_from_system_path
+{
+	my $string = shift;
+	my $result = 0;
+	if (($string =~ /\\/) or ($string =~ /\//)){
+		#slashes, assume full path, do nothing
+		1;
+	}elsif(length($string) < 1){
+		1; #deal with error elsewhere
+	}else{
+		my $command = "which $string"; #unix
+		if ($Config{osname} eq 'MSWin32'){
+			#where does nor work on XP, use this loop
+			$command = 'for %i in ('.$string.','.$string.'.bat,'.$string.'.exe) do @echo.   %~$PATH:i';
+		}
+		my @outp = readpipe($command);
+		foreach my $line (@outp){
+			next unless (defined $line);
+			chomp($line);
+			$line =~ s/^\s*//;
+			if (-e $line){
+				$result = $line;
+				last;
+			} 
+		}
+	}
+	return $result;
 }
 
 1;
