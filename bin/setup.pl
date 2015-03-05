@@ -178,6 +178,10 @@ sub get_default_nm_versions
 					$version='7.3';
 				}elsif ((-x $dir.'\run\nmfe74.bat') or (-x $dir.'\util\nmfe74.bat')){
 					$version='7.4';
+				}elsif ((-x $dir.'\run\nmfe75.bat') or (-x $dir.'\util\nmfe75.bat')){
+					$version='7.5';
+				}elsif ((-x $dir.'\run\nmfe76.bat') or (-x $dir.'\util\nmfe76.bat')){
+					$version='7.6';
 				}elsif ((-x $dir.'\run\nmfe7.bat') or (-x $dir.'\util\nmfe7.bat')){
 					$version='7.1';
 				}
@@ -204,6 +208,10 @@ sub get_default_nm_versions
 					$version='7.3';
 				}elsif ((-x $dir.'/run/nmfe74') or (-x $dir.'/util/nmfe74')){
 					$version='7.4';
+				}elsif ((-x $dir.'/run/nmfe75') or (-x $dir.'/util/nmfe75')){
+					$version='7.5';
+				}elsif ((-x $dir.'/run/nmfe76') or (-x $dir.'/util/nmfe76')){
+					$version='7.6';
 				}elsif ((-x $dir.'/run/nmfe7') or (-x $dir.'/util/nmfe7')){
 					$version='7.1';
 				}
@@ -263,6 +271,10 @@ sub get_nm_version
 				$version='7.3';
 			}elsif ((-x $dir.'\run\nmfe74.bat') or (-x $dir.'\util\nmfe74.bat')){
 				$version='7.4';
+			}elsif ((-x $dir.'\run\nmfe75.bat') or (-x $dir.'\util\nmfe75.bat')){
+				$version='7.5';
+			}elsif ((-x $dir.'\run\nmfe76.bat') or (-x $dir.'\util\nmfe76.bat')){
+				$version='7.6';
 			}elsif ((-x $dir.'\run\nmfe7.bat') or (-x $dir.'\util\nmfe7.bat')){
 				$version='7.1';
 			}
@@ -279,6 +291,10 @@ sub get_nm_version
 				$version='7.3';
 			}elsif ((-x $dir.'/run/nmfe74') or (-x $dir.'/util/nmfe74')){
 				$version='7.4';
+			}elsif ((-x $dir.'/run/nmfe75') or (-x $dir.'/util/nmfe75')){
+				$version='7.5';
+			}elsif ((-x $dir.'/run/nmfe76') or (-x $dir.'/util/nmfe76')){
+				$version='7.6';
 			}elsif ((-x $dir.'/run/nmfe7') or (-x $dir.'/util/nmfe7')){
 				$version='7.1';
 			}
