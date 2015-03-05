@@ -16,8 +16,6 @@ sse run11.mod -samples=10 -dir=sseCFB -seed=1234 -alt=run14.mod,run15.mod,run16.
 update_inits run17.template run10.lst -out=run17.mod
 #Task 3b
 mcmp -full_model=run17.mod -reduced_model=run13.mod -stratify_on=ARM -dir=mcmpMEM
-#Task 3c
-mcmp -simulation_model=run17.mod -full_model=run14.mod -reduced_model=run16.mod -stratify_on=ARM -dir=mcmpCFB
 #Task 3a
 update_inits run18.template run10.lst -out=run18.mod
 #Task 4a
