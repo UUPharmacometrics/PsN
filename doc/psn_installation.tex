@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{PsN installation}{2015-02-13}
+\guidetitle{PsN installation}{2015-03-05}
 \begin{document}
 
 \maketitle
@@ -80,8 +80,29 @@ If you cannot install PsN where the install script suggests and you wish to use 
 \item When the installation is done you can safely remove the PsN-Source directory if you like. 
 \end{enumerate}
 
-
-\section{Choosing PsN version}
+\section{Portable PsN installations}
+This functionality is intended for advanced users only. The setup.pl script
+takes an optional argument 'relative':
+\begin{verbatim}
+setup.pl relative
+\end{verbatim}
+If this argument is given, the bin scripts (PsN Utilities) 
+will use a relative instead of 
+absolute path when
+including the lib modules (PsN Core and Toolkit). 
+This makes the PsN installation directory movable,
+as long as the relative position between the bin scripts and lib modules
+remains the same. In addition the
+\begin{verbatim}
+[nm_versions]
+\end{verbatim}
+section in psn.conf can list the name of the nmfe executables instead of
+the full path to the NONMEM installation directories 
+\emph{if at runtime}
+the nmfe executable, chosen by default or with option -nm\_version,
+is in the user \$PATH, 
+see documentation in psn\_configuration.pdf.
+\section{Multiple PsN installations}
 It is possible to have several installations of PsN and use them in parallel. 
 The default version of PsN may be changed every time a new installation is made. 
 To check which version is the default use command
@@ -92,7 +113,7 @@ psn -version
 \noindent A specific version may be called with its version number, for example
 
 \begin{verbatim}
-execute-2.3.2  -help 
+execute-3.7.6  -help 
 \end{verbatim}
 
 \noindent Note: When installing PsN4 on Windows all previously installed versions 
