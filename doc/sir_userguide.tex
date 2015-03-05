@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{SIR user guide}{2015-02-27}
+\guidetitle{SIR user guide}{2015-03-05}
 
 \begin{document}
 
@@ -114,8 +114,14 @@ lst-file and which estimates are needed for the sir procedure.
 \item[\underline{Step 1}] Simulate 'samples' parameter vectors from the 
 (possibly inflated)
 covariance matrix, i.e. the .cov-file given by NONMEM 
-or the matrix given via option covmat\_input. 
-NB: NOT performed if -rawres\_input is specified.
+or the matrix given via option -covmat\_input. PsN uses the Perl function\\ 
+Math::Random::random\_multivariate\_normal
+for sampling. If a vector does no fulfill the constraints from \$THETA boundaries
+and positive definiteness of \$OMEGA and
+\$SIGMA blocks (as judged by a PsN-implemented Cholesky decomposition) 
+then that vector is 
+discarded and a new one is drawn.
+NB: Sampling is \emph{not} performed if -rawres\_input is specified.
 \item[\underline{Step 2}] Calculate each vector $x$’s probability 
 given the covariance matrix based on the formula for the probability 
 density function (PDF) of a multivariate normal distribution:\\
