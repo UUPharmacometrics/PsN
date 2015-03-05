@@ -30,6 +30,8 @@ LIBFILES= ui.pm \
 	R-scripts/vpc_default.R \
 	R-scripts/execute_default.R \
 	R-scripts/bootstrap_default.R \
+	R-scripts/pvar_default.R \
+	R-scripts/nca_default.R \
 	status_bar.pm \
 	nonmemrun.pm \
 	nonmemrun/localunix.pm \
