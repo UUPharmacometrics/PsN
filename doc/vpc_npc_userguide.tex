@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{VPC and NPC user guide}{2015-02-27}
+\guidetitle{VPC and NPC user guide}{2015-03-06}
 
 \begin{document}
 
@@ -12,9 +12,19 @@ NPC – Numerical Predictive Check – is a model diagnostics tool. VPC – Visu
 \section{Getting started}
 If you are just starting to use VPC/NPC and only want the standard, no-frills vpc, you can skip over most parts of this guide. The document contains technical descriptions of all algorithms, which are not necessary to read before using the script. The last section, Known limitations and problems, is a recommended read for new users.
 
+A template call for a first try is (substitute as needed):
+\begin{verbatim}
+vpc  run32.mod -samples=500 -auto_bin=5 -rplots=1
+\end{verbatim}
+It is recommended to use the -rplots option for automatically creating basic 
+result plots, see section Auto-generated R-plots from PsN. This requires that
+the xpose4 R library is installed.
+
+If you cannot make your model run at all with VPC or NPC (e.g. NMtran failure), look into option -keep\_estimation or -sim\_model. 
+
 Points to consider if you are to use the VPC functionality for a new problem:
 
-\subsection{General}
+\subsubsection*{General}
 
 \begin{itemize}
 	\item How many simulations do you wish to base your VPC on? The more extreme percentiles you are interested in the more simulations are typically necessary. Specify this with option -samples.
@@ -22,7 +32,7 @@ Points to consider if you are to use the VPC functionality for a new problem:
 	\item If you are analyzing a time-to-event model then the processing done by VPC is very different from the regular case, and many options do not apply. Please read the section 'VPC for time-to-event models' before reading any other part of this guide.
 \end{itemize}
 
-\subsection{The dependent variable (DV) y-axis data}
+\subsubsection*{The dependent variable (DV) y-axis data}
 
 \begin{itemize}
 	\item The default behavior is to use NONMEM output DV as the dependent variable. If you want to use anything else look into option -dv.
@@ -33,36 +43,21 @@ Points to consider if you are to use the VPC functionality for a new problem:
 	\item Do you wish to apply any transformation on your DV data? If so look into option -lnDV.
 \end{itemize}
 
-\subsection{The independent variable (IDV) x-axis data}
+\subsubsection*{The independent variable (IDV) x-axis data}
 
 \begin{itemize}
 \item The default behavior is to use NONMEM output TIME as the independent variable. If you want to use anything else look into option -idv.
 \item Are your distribution independent variable such that binning is necessary? If you for example is using protocol time points as IDV this is perhaps not necessary whereas with actual observation time it is typically necessary. A good starting point is to use option -auto\_bin=N, where N is the number of observation times for the typical subject. For more details on binning options read the section Binning for VPC. Note that by setting -directory to the name of a previously created run directory the program can reuse the simulated data already produced, making it quite fast to test different binning alternatives.
 \end{itemize}
 
-\subsection{Prediction/Variability correction}
+\subsubsection*{Prediction/Variability correction}
 
 \begin{itemize}
 	\item If much variability can be attributed to other independent variables than the one represented on the x-axis it can be useful to perform prediction correction or prediction and variability correction. More about this subject can be read in \cite{Bergstrand} and in association to the options -predcorr and -varcorr.
 \end{itemize}
 
-A template call for a first try is (substitute as needed):
-\begin{verbatim}
-vpc  run32.mod -samples=500 -bin_by_count=1 -no_of_bins=10
-\end{verbatim}
-Results are in the file vpc\_results.csv (see details in section Output for vpc). Preferably use Xpose to visualize the results, because the file vpc\_results.csv does not contain any graphs. Please refer to the Xpose documentation for instructions on visualization.
-
-If you cannot make your model run at all with VPC or NPC (e.g. NMtran failure), look into option -keep\_estimation or -sim\_model. 
 
 \section{Running VPC}
-Example:
-
-\begin{verbatim}
-vpc moxonidine.mod -samples=1000 -seed=123 -idv=TIME -bin_by_count=1
--no_of_bins=5 -directory=npc_dir18 -stratify_on=WGT -no_of_strata=2
--mirrors=3 -dv=IPRED
-\end{verbatim}
-
 Input: a modelfile is required, unless option -sim\_table and -orig\_table are both specified.
 
 \begin{optionlist}
