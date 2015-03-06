@@ -288,6 +288,13 @@ sub _parse_lst_file
                 severity => 10,
             };
         } else {
+            my $problems = 0; #TODO check if first $PROB is prior, then should be =1 here, as in e.g. sse script
+            my $sub_problems = 0;  #always 0 since we do not have workflow simulation + estimation?
+
+            if ($outobj->problems->[$problems]->subproblems->[$sub_problems]->NM7_parsed_raw) {
+                $self->_add_raw_results_file("$file_stem.ext", "NONMEM Raw output file");
+            }
+
             my $model = $outobj->lst_model;
 
             my $eta_shrinkage = $outobj->shrinkage_eta();
@@ -295,8 +302,6 @@ sub _parse_lst_file
             my $observation_records = $outobj->nobs();
             my $individuals = $outobj->nind();
 
-            my $problems = 0; #TODO check if first $PROB is prior, then should be =1 here, as in e.g. sse script
-            my $sub_problems = 0;  #always 0 since we do not have workflow simulation + estimation?
 
             my @etashrinkage = defined $eta_shrinkage -> [$problems][$sub_problems] ? @{$eta_shrinkage -> [$problems][$sub_problems]} : ();
             my @epsshrinkage = defined $eps_shrinkage -> [$problems][$sub_problems] ? @{$eps_shrinkage -> [$problems][$sub_problems]} : ();
