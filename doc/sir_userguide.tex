@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{SIR user guide}{2015-03-05}
+\guidetitle{SIR user guide}{2015-03-06}
 
 \begin{document}
 
@@ -164,6 +164,8 @@ Compute univariate confidence intervals and store in sir\_results.csv.
 \bf{resamples} & number of actual resamples with random seed used\\
 \end{tabular}
 \item sir\_results.csv with percentiles and empirical covariance matrix
+\item <modelname>\_sir.cov with the empirical covariance matrix in NONMEM-like format, i.e. 
+      fixed width space separated with generic headers in order THETA, SIGMA, OMEGA.
 \end{itemize}
 
 

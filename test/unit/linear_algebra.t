@@ -170,4 +170,9 @@ is ($err,1,'invert_symmetric numerr');
 my $identity = linear_algebra::get_identity_matrix(2);
 is_deeply($identity, [ [ 1, 0 ], [ 0, 1 ] ], "identity matrix");
 
+my $matrix = [ [1,2,3,4],[2,2,3,4],[3,3,3,4],[4,4,4,4] ]; 
+
+is_deeply(linear_algebra::copy_and_reorder_square_matrix($matrix,[1,3,0,2]),[ [2,4,2,3],[4,4,4,4],[2,4,1,3],[3,4,3,3] ] , "copy and reorder");
+
+
 done_testing();
