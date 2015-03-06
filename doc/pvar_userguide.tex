@@ -1,6 +1,8 @@
 \input{inputs/format_header.tex}
 \guidetitle{PVAR user guide}{2014-06-23}
 
+\newcommand{\guidetoolname}{pvar}
+
 \begin{document}
 
 \maketitle
@@ -60,6 +62,19 @@ EPV,1,run103.mod,1.5230948760263e-05,0.0468773796610169
 UPV,1,run103.mod,1.75795164007126e-06,0.387259333476643
 PV,1,run103.mod,1.69889004003343e-05,0.43413671313766
 \end{verbatim}
+
+\subsection{Auto-generated R-plots from PsN}
+\newcommand{\rplotsconditions}{The default pvar template 
+requires no extra R libraries.}
+\input{inputs/rplots_section_body.tex}
+
+\subsubsection*{Basic plot}
+Basic rplots will be generated if option -rplots is set > 0,
+and the general rplots conditions fulfilled, see above.
+The generated set of plots are barplots for each parameter
+that shows the explained and unexplained variabilty for each
+model.
+
 
 \section{Algorithm}
 

@@ -1,12 +1,14 @@
 \input{inputs/format_header.tex}
 \guidetitle{NCA user guide}{2015-03-04}
 
+\newcommand{\guidetoolname}{nca}
+
 \begin{document}
 
 \maketitle
 
 \section{Introduction}
-The PsN NCA can feed the nca R-script\cite{Chayan} with simulated data. It is based on the simulation part of the vpc/npc.
+The PsN NCA can feed the ncappc R package\cite{Chayan} with simulated data. It is based on the simulation part of the vpc/npc.
 
 \section{Running NCA}
 Example:
@@ -104,6 +106,25 @@ For more information about the details of the simulation see the relevant sectio
 
 \section{Output}
 Two modified modelfiles are created, one for generating original data table output and one for generating simulated data table output. The model parameters will never be reestimated. Unless an lst- or msfo-file is given as input or an lst-file is found by replacing .mod with .lst in the modelfile name, the initial parameter estimates from the modelfile will be used for the simulations. The two modified models are run using PsN.
+
+\subsection{Auto-generated R-plots from PsN}
+\newcommand{\rplotsconditions}{The default nca template 
+requires that R libraries
+ggplot2, gridExtra and ncappc are installed.
+If the conditions are not fulfilled then no pdf will be generated,
+see the .Rout file in the main run directory for error messages.}
+\input{inputs/rplots_section_body.tex}
+
+\subsubsection*{Basic plot}
+Basic rplot will be generated if option -rplots is set > 0,
+and the general rplots conditions fulfilled, see above.
+The ncappc R package has many options and it is generally
+hard for PsN to have a good set of default plots. The current
+template will only generate a very basic dv.plot. If you are
+working with nca the recommendation is to customize the
+template to fit your specific needs.
+
+
 
 \begin{thebibliography}{99}
 	\bibitem{Chayan} Chayan Acharya, Andrew C. Hooker, Siv Jönsson, Mats O. Karlsson, {\em A diagnostic tool for population models using non-compartmental analysis: The nca functionality in R}, 2014, PAGE. Abstracts of the Annual Meeting of the Population Approach Group in Europe, www.page-meeting.org/?abstract=3103 
