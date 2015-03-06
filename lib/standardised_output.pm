@@ -295,6 +295,17 @@ sub _parse_lst_file
                 $self->_add_raw_results_file("$file_stem.ext", "NONMEM Raw output file");
             }
 
+            my $condition_number = $outobj->problems->[$problems]->subproblems->[$sub_problems]->condition_number;
+            if (defined $condition_number) {
+                push @messages, {
+                    type => "INFORMATION",
+                    toolname => "NONMEM",
+                    name => "Condition number",
+                    content => $outobj->problems->[$problems]->subproblems->[$sub_problems]->condition_number,
+                    severity => 1,
+                };
+            }
+
             my $model = $outobj->lst_model;
 
             my $eta_shrinkage = $outobj->shrinkage_eta();
