@@ -175,7 +175,7 @@ sub modelfit_analyze
 			for (my $i = 0; $i < @$new_theta; $i++) {
 				$modelfit->raw_results->[0]->[$se_pos + $i] = sqrt($cov_matrix->[$i]->[$i]);
 			}
-			print "\n\n  preconditioning sucessful \n";
+			print "\n\n  preconditioning successful \n";
 		}
             
         $modelfit->print_raw_results;
