@@ -208,7 +208,7 @@ sub parse
         # Create Bootstrap element
         if (-e $self->bootstrap_results) {
             my $ppi = $self->_xml->find_or_create_node(root_node => $estimation, node_name => "PrecisionPopulationEstimates");
-            (my $bootstrap, $bootstrap_message) = $self->_create_bootstrap();
+            my $bootstrap = $self->_create_bootstrap();
             if (defined $bootstrap) {
                 $ppi->appendChild($bootstrap);
             }
@@ -733,9 +733,10 @@ sub _create_bootstrap
     my @parameters;
     my @percentiles;
     my @column;
+    my @medians;
 
     while (<$fh>) {
-        if (/^percentile.confidence.intervals$/) {
+        if (/^medians$/) {
             my $header = <$fh>;
             my @a = split /","/, $header;
             shift @a;
@@ -743,12 +744,24 @@ sub _create_bootstrap
             foreach my $param (@a) {
                 $param =~ s/\s*//;      # Remove spaces
                 if ($param !~ /^se/) {
-                    push @parameters, $self->_xml->mangle_symbol_idtype($param);   # FIXME: warning?
+                    push @parameters, $self->_xml->mangle_symbol_idtype($param);   # FIXME: potentially missing warning?
                 } else {
                     last;
                 }
             }
 
+            my $row = <$fh>;
+            my @a = split /,/, $row;
+            shift @a;
+            shift @a;
+            for (my $col = 0; $col < scalar(@parameters); $col++) {
+                my $value = shift @a;
+                $value =~ s/^\s*//;
+                push @medians, $value;
+            }
+
+        } elsif (/^percentile.confidence.intervals$/) {
+            <$fh>;
             # Loop through percentiles
             for (my $i = 0; $i < 7; $i++) {
                 my $row = <$fh>;
@@ -773,30 +786,28 @@ sub _create_bootstrap
 
     close $fh;
 
-    # Warning if no percentiles
-    my $message;
-    my $bootstrap;
-    if (scalar(@percentiles) == 0) {
-        $message = {
-            type => "WARNING",
-            toolname => "PsN",
-            name => "Bootstrap",
-            content => "No bootstrap percentiles in " . $self->bootstrap_results . ". No Bootstrap results added.",
-            severity => 2,
-        };
-    } else {
-        my $table = $self->_xml->create_table(
-            table_name => 'Percentiles',
-            column_ids => [ "Percentile", @parameters ],
-            column_types => [ ('undefined') x (scalar(@parameters) + 1) ],
-            column_valuetypes => [ ('real') x (scalar(@parameters) + 1) ],
-            values => [ \@percentiles, @column ],
-        );
-        $bootstrap = $doc->createElement("Bootstrap");
-        $bootstrap->appendChild($table);
+    # Add median to percentiles/columns
+    my $row = 0;
+    while ($percentiles[$row] < 50 and $row < scalar(@percentiles)) {
+        $row++;
     }
 
-    return ($bootstrap, $message);
+    splice @percentiles, $row, 0, 50;
+    for (my $i = 0; $i < scalar(@parameters); $i++) {
+        splice @{$column[$i]}, $row, 0, $medians[$i];
+    }
+
+    my $table = $self->_xml->create_table(
+        table_name => 'Percentiles',
+        column_ids => [ "Percentile", @parameters ],
+        column_types => [ ('undefined') x (scalar(@parameters) + 1) ],
+        column_valuetypes => [ ('real') x (scalar(@parameters) + 1) ],
+        values => [ \@percentiles, @column ],
+    );
+    my $bootstrap = $doc->createElement("Bootstrap");
+    $bootstrap->appendChild($table);
+
+    return $bootstrap;
 }
 
 sub _create_task_information
