@@ -501,17 +501,7 @@ sub eigenvalue_decomposition
                 }
             }
         }
-        my $theta;
-        my $divisor = $eigenValMatrix[$maxInd2][$maxInd2] - $eigenValMatrix[$maxInd1][$maxInd1];
-        if ($divisor == 0) {
-            if ($eigenValMatrix[$maxInd1][$maxInd2] > 0) {
-                $theta = atan(inf()) / 2;
-            } else {
-                $theta = atan(-inf()) / 2;
-            }
-        } else {
-            $theta = (atan(2 * $eigenValMatrix[$maxInd1][$maxInd2] / ($eigenValMatrix[$maxInd2][$maxInd2] - $eigenValMatrix[$maxInd1][$maxInd1]))) / 2;
-        }
+        my $theta = (atan2(2 * $eigenValMatrix[$maxInd1][$maxInd2], $eigenValMatrix[$maxInd2][$maxInd2] - $eigenValMatrix[$maxInd1][$maxInd1])) / 2;
 
         my $c = cos($theta);
         my $s = sin($theta);
