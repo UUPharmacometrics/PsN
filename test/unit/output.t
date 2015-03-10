@@ -57,6 +57,12 @@ for (my $i=0; $i< scalar(@answer_hashes); $i++){
 		cmp_ok(length($outobj->parsing_error_message),'>',5,'error message exists');
 	    next;
 	}
+
+	if(defined $answer_hashes[$i]->{estimation_evaluation_problem_number}){
+		cmp_ok($outobj->get_estimation_evaluation_problem_number(),'==',
+			   $answer_hashes[$i]->{estimation_evaluation_problem_number},"$fname estimation_evaluation_problem_number");
+	}
+
 	foreach my $prob (keys %{$answer_hashes[$i]->{answers}}){
 		foreach my $subprob (keys %{$answer_hashes[$i]->{answers}->{$prob}}){
 			foreach my $attr (keys %{$answer_hashes[$i]->{answers}->{$prob}->{$subprob}}){
