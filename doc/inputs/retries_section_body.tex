@@ -2,13 +2,28 @@ A NONMEM run is not always successful and sometimes it is possible to improve th
 A simple procedure is to tweak the initial 
 estimates of the parameters and see if changed starting condition gives better results. 
 The -tweak\_inits and -retries options turn on this feature in PsN, 
-which is off by default. When the feature is on, if the minimization is terminated PsN will pick a random value within 10\% above or below each initial value, 
+which is off by default. When the feature is on and the minimization fails, PsN will pick a random value within 10\% above or below each initial value, 
 and run the model again with these new initial estimates. This is called a retry. PsN can do several retries, and each time the bounds is 
 increased by 10\%. Note that PsN always respects the upper and lower bound set in the model file. 
 
 The retries functionality is adapted to control streams with a single \$PROBLEM. If there are more than one \$PROBLEM, PsN will
-use the termination status and ofv of the \emph{first \$PROBLEM that runs estimation} (not MAXEVAL=0) for deciding if a retry should be run
+locate the \emph{first \$PROBLEM that runs estimation in its last \$EST},
+i.e. the NONMEM lst-file has the line 
+\begin{verbatim}
+ESTIMATION STEP OMITTED:                 NO
+\end{verbatim}
+for the last \$EST in that \$PROBLEM. PsN will use the
+termination status and ofv of
+that estimation to decide if a retry should be initiated
 and also for selecting the best try. Subsequent \$PROBLEMs that also have \$EST will be ignored in the retries procedure.
+If no \$PROBLEM runs estimation in the last \$EST, PsN will instead use
+the \emph{first \$PROBLEM that runs evaluation in its last \$EST},
+i.e. the NONMEM lst-file has the line 
+\begin{verbatim}
+ESTIMATION STEP OMITTED:                 YES
+\end{verbatim}
+for the last \$EST in that \$PROBLEM. In this case retries will only be initiated if forced using option -min\_retries, see below,
+and the ofv from the evaluation will be used to select the best retry.
 
 The control files and outputs for the retries are found in the NM\_run1 subdirectory. The files psn-1.mod and psn-1.lst are for 
 the first run which is always performed and not called a retry. psn-2.mod and up are the control files with perturbed initial 
@@ -96,7 +111,8 @@ Default 0. The -retries option tells PsN how many times it shall try to rerun a 
 The -retries option is only valid together with -tweak\_inits. 
 \nextopt
 \optdefault{min\_retries}{'integer'}
-Default 0. Option min\_retries forces PsN to try make extra retries even if a run has already terminated successfully. Precedence over -retries option.  
+Default 0. Option min\_retries forces PsN to try make extra retries even if a run has already terminated successfully,
+or if estimation is not run at all (e.g. MAXEVAL=0). Precedence over -retries option.  
 \nextopt
 \optname{picky}
 Default not used. The -picky option is only valid together with -tweak\_inits. Normally PsN only tries new initial estimates if 'MINIMIZATION SUCCESSFUL' is not found in the NONMEM output file. With the -picky option, PsN will regard any of the following messages, the 'picky-messages',  as a signal for rerunning:
