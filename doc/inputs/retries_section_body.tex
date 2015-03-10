@@ -28,6 +28,7 @@ and the ofv from the evaluation will be used to select the best retry.
 If there are multiple \$PROBLEM and PsN concludes that the initial estimates should be tweaked, PsN will first try with the
 \$PROBLEM used for decision-making, but if no parameters were found in that \$PROBLEM, e.g. if \$MSFI was used, PsN will
 try with the previous \$PROBLEM(s), one by one, until either PsN finds parameters to tweak, or there are no more \$PROBLEMs to try.
+No retry will be initiated if PsN cannot find any parameters to tweak.
 
 The control files and outputs for the retries are found in the NM\_run1 subdirectory. The files psn-1.mod and psn-1.lst are for 
 the first run which is always performed and not called a retry. psn-2.mod and up are the control files with perturbed initial 

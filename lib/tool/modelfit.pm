@@ -2600,7 +2600,7 @@ sub restart_needed
 	my $round_error = 0;
 	$round_error = 1 if (($evaluation_probnum > 0) and
 						 $output_file -> get_single_value(attribute => 'rounding_errors',
-														  problem_index => ($evaluation_probnum-1)));
+														  problem_index => (abs($evaluation_probnum)-1)));
 
 	my $sigdigs_accepted = significant_digits_accepted(run_results => $run_results,
 													   significant_digits_accept => $significant_digits_accept,
@@ -2652,14 +2652,23 @@ sub restart_needed
 		trace(tool => 'modelfit', message => "done cut_thetas", level => 1);
 	}
 	if ($do_this->{'tweak_inits'}){
+		my $did_tweak = 0;
 		#loop backwards until found params to tweak
 		for (my $index = (abs($evaluation_probnum)-1); $index >= 0; $index--){
-			my $did_tweak = $candidate_model -> problems->[$index] -> set_random_inits ( degree => $self->degree ,
-																						 basic_model => $model,
-																						 problem_index => $index);
-			last if ($did_tweak);
+			$did_tweak = $candidate_model -> problems->[$index] -> set_random_inits ( degree => $self->degree ,
+																					  basic_model => $model,
+																					  problem_index => $index);
+			if ($did_tweak){
+				trace(tool => 'modelfit', message => "done tweak_inits", level => 2);
+				last;
+			}
 		}
-		trace(tool => 'modelfit', message => "done tweak_inits", level => 2);
+		unless ($did_tweak){
+			#found no params to tweak. Unless did cut thetas or reset msfo, i.e. modified model, then turn off retry
+			unless ($do_this->{'cut_thetas'} or $do_this->{'reset_msfo'}){
+				$do_this->{'retry'} = 0;
+			}
+		}
 	}
 
 	if ($do_this->{'retry'}){
