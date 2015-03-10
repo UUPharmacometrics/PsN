@@ -150,6 +150,51 @@ sub copy
 	return $new_output;
 }
 
+sub get_estimation_evaluation_problem_number
+{
+	#get the problem number to check status of in modelfit::restart_needed
+	#always the first $PROB, if any, that has final $EST that is not MAXEVAL=0
+	#standard case is 1, if that prob is estimation
+	# with two $PROB and $PRIOR TNPRI it is 2, if it is estimation
+	# if do not find $PROB with est run then return negative of est probnum
+	my $self = shift;
+	my $evaluation_probnum= -1;
+	my $estimation_step_run = 0;
+
+	if ( $self -> have_output ) {
+		unless ( not_empty($self->problems) ) {
+			$self -> _read_problems;
+		}
+		if( defined $self->problems ) {
+			for (my $i=0; $i<scalar(@{$self->problems}); $i++){
+				if ((defined $self->problems->[$i]) and (defined $self->problems->[$i]->subproblems) and
+					(defined $self->problems->[$i]->subproblems->[0])
+					 and $self->problems->[$i]->subproblems->[0]->estimation_step_run() ){
+					$evaluation_probnum = ($i+1); #number not index
+					$estimation_step_run = 1;
+					last;
+				}
+			}
+			unless ($estimation_step_run){
+				#no hit in above loop
+				for (my $i=0; $i<scalar(@{$self->problems}); $i++){
+					if ((defined $self->problems->[$i]) and (defined $self->problems->[$i]->subproblems)
+						and (defined $self->problems->[$i]->subproblems->[0])
+						and $self->problems->[$i]->subproblems->[0]->estimation_step_initiated() ){
+						$evaluation_probnum = -($i+1); #number not index, negative since not run
+						last;
+					}
+				}
+			}
+		}
+	} 
+
+	return $evaluation_probnum;
+}
+
+
+
+
 sub access_any
 {
 	my $self = shift;

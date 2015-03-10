@@ -4182,48 +4182,73 @@ sub is_estimation
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		problem_number => { isa => 'Int', default => 0, optional => 1 }
+		problem_number => { isa => 'Int', default => 1, optional => 1 }
 	);
 	my $problem_number = $parm{'problem_number'};
 	my $is_est = 0;
 
 	#this function is used to check whether we should care about minimization status 
 	#for possible retries. We only care of we are doing a real estimation
+	#if multiple $EST in single PROB for NM7 we assume estimation
 
 	$is_est = 1;
+	my $verbose=0;
 	my $problems = $self->problems;
 	if( defined $problems -> [$problem_number - 1] ) {
 		my $problem = $problems -> [$problem_number - 1];
 		# If we don't have an ESTIMATION record we are simulating.
-		$is_est = 0 unless( defined $problem->estimations and
-			scalar( @{$problem->estimations} ) > 0 );
-
+		unless( defined $problem->estimations and
+			scalar( @{$problem->estimations} ) > 0 ){
+			print "no estimation records\n" if $verbose;
+			$is_est = 0;
+		}
 		# If we have a ONLYSIM option in the simulation record.
-		$is_est = 0 if( $self -> is_option_set ( name           => 'ONLYSIM', 
+		if( $self -> is_option_set ( name           => 'ONLYSIM', 
 				record         => 'simulation', 
-				problem_number => $problem_number ));
+				problem_number => $problem_number )){
+			print "onlysim in simulation\n" if $verbose;
+			$is_est = 0 ;
+		}
 
 		if ($PsN::nm_major_version == 7){
-			# If single estimation step and max evaluations is zero we are not estimating
-			if ( defined $problem->estimations and
-				scalar( @{$problem->estimations} ) == 1 ){
-				my $max = $self -> get_option_value(record_name => 'estimation', option_name => 'MAXEVALS',
-					problem_index => 0, record_index => 0,option_index => 0);
+			# If max evaluations is zero of last $EST we are not estimating
+			# since output discards all but last step this is all we can check
+			if ( defined $problem->estimations){
+				my $record_index = scalar( @{$problem->estimations} )-1;
+				if ($record_index >= 0) {
+					my $max = $self -> get_option_value(record_name => 'estimation', 
+														option_name => 'MAXEVALS',
+														problem_index => ($problem_number - 1), 
+														record_index => $record_index,
+														option_index => 0);
 
-				$is_est = 0 if (defined $max and $max == 0);
-				my $eonly = $self -> get_option_value(record_name => 'estimation', option_name => 'EONLY',
-					problem_index => 0, record_index => 0,option_index => 0);
-
-				$is_est = 0 if (defined $eonly and $eonly == 1);
+					if (defined $max and $max == 0){
+						$is_est = 0 ;
+						print "last est step maxeval 0\n" if $verbose;
+					}
+					my $eonly = $self -> get_option_value(record_name => 'estimation', 
+														  option_name => 'EONLY',
+														  problem_index => ($problem_number - 1), 
+														  record_index => $record_index,
+														  option_index => 0);
+					if (defined $eonly and $eonly == 1){
+						$is_est = 0 ;
+						print "last est step eonly\n" if $verbose;
+					}
+				}
 			}
+
 		} else {
-			$is_est = 0 if( defined $self -> maxeval(problem_numbers => [$problem_number]) and
+			if( defined $self -> maxeval(problem_numbers => [$problem_number]) and
 				defined $self -> maxeval(problem_numbers => [$problem_number])->[0][0] and
-				$self -> maxeval(problem_numbers => [$problem_number])->[0][0] == 0 );
+				$self -> maxeval(problem_numbers => [$problem_number])->[0][0] == 0 ){
+				print "not nm7 and maxeval 00 is zero\n" if $verbose;
+				$is_est = 0 ;
+			}
 		}
 		# Anything else?
 
-		# If non of the above is true, we are estimating.
+		# If none of the above is true, we are estimating.
 	} else {
 		carp('Problem nr. $problem_number not defined. Assuming estimation' );
 	}
@@ -5090,7 +5115,7 @@ sub create_dummy_model
 	return $model;
 }
 
-sub get_retries_problem_number
+sub get_estimation_evaluation_problem_number
 {
 	#get the problem number to check status of in modelfit::restart_needed
 	#always the first $PROB, if any, that has $EST that is not MAXEVAL=0
@@ -5099,15 +5124,19 @@ sub get_retries_problem_number
 	# if do not find $PROB with est then return 0, i.e. turn off tweak inits
 	my $self = shift;
 
-	my $retryprobnum=0;
+	my $probnum=-1;
 
-	for (my $i=1; $i <= scalar (@{$self->problems}); $i++ ){
-		if ($self->is_estimation(problem_number=>$i)){
-			$retryprobnum = $i;
-			last;
+	if (defined $self->outputs and defined $self->outputs->[0] and $self->outputs->[0]->have_output()){
+		$probnum = $self->outputs->[0]->get_estimation_evaluation_problem_number();
+	}else{
+		for (my $i=1; $i <= scalar (@{$self->problems}); $i++ ){
+			if ($self->is_estimation(problem_number=>$i)){
+				$probnum = $i;
+				last;
+			}
 		}
 	}
-	return ($retryprobnum);
+	return ($probnum);
 }
 
 sub get_eta_names
