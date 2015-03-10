@@ -502,7 +502,6 @@ sub eigenvalue_decomposition
             }
         }
         my $theta = (atan2(2 * $eigenValMatrix[$maxInd1][$maxInd2], $eigenValMatrix[$maxInd2][$maxInd2] - $eigenValMatrix[$maxInd1][$maxInd1])) / 2;
-
         my $c = cos($theta);
         my $s = sin($theta);
 

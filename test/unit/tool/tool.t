@@ -88,56 +88,6 @@ $dir = tool::get_rundir(create => 0,
 is(substr($dir,0,-1),$tempdir.'updir','tool get_rundir 6');
 
 
-#list_candidate_latest_rundirs
-my $dir = create_test_dir("unit_tool_list_candidate_latest_rundirs");
-
-chdir($dir);
-mkdir "modelfit_dir28";
-my @candidates = tool::list_candidate_latest_rundirs("jason");
-is_deeply(\@candidates, [ "modelfit_dir28" ], "list_candidate_latest_rundirs one modelfit");
-
-mkdir "modelfit_dir1";
-@candidates = tool::list_candidate_latest_rundirs("jason");
-is_deeply(\@candidates, [ "modelfit_dir28" ], "list_candidate_latest_rundirs two modelfit");
-
-mkdir "modelfit_dir29";
-@candidates = tool::list_candidate_latest_rundirs("jason");
-is_deeply(\@candidates, [ "modelfit_dir29" ], "list_candidate_latest_rundirs three modelfit");
-
-mkdir "jason-PsN-2015-02-26-134234";
-@candidates = tool::list_candidate_latest_rundirs("jason");
-is_deeply(\@candidates, [ "jason-PsN-2015-02-26-134234", "modelfit_dir29" ], "list_candidate_latest_rundirs one dated three modelfit");
-
-mkdir "jason-PsN-2015-04-26-134234";
-@candidates = tool::list_candidate_latest_rundirs("jason");
-is_deeply(\@candidates, [ "jason-PsN-2015-04-26-134234", "modelfit_dir29" ], "list_candidate_latest_rundirs two dated three modelfit");
-
-mkdir "jason-PsN-2013-04-26-134234";
-@candidates = tool::list_candidate_latest_rundirs("jason");
-is_deeply(\@candidates, [ "jason-PsN-2015-04-26-134234", "modelfit_dir29" ], "list_candidate_latest_rundirs three dated three modelfit");
-
-mkdir "jason.dir99";
-@candidates = tool::list_candidate_latest_rundirs("jason.ctl");
-is_deeply(\@candidates, [ "jason.dir99", "jason-PsN-2015-04-26-134234", "modelfit_dir29" ], "list_candidate_latest_rundirs one named three dated three modelfit");
-
-mkdir "jason.dir100";
-@candidates = tool::list_candidate_latest_rundirs("jason");
-is_deeply(\@candidates, [ "jason.dir100", "jason-PsN-2015-04-26-134234", "modelfit_dir29" ], "list_candidate_latest_rundirs two named three dated three modelfit");
-
-mkdir "jason.dir2";
-@candidates = tool::list_candidate_latest_rundirs("jason");
-is_deeply(\@candidates, [ "jason.dir100", "jason-PsN-2015-04-26-134234", "modelfit_dir29" ], "list_candidate_latest_rundirs three named three dated three modelfit");
-
-rmdir "modelfit_dir29";
-@candidates = tool::list_candidate_latest_rundirs("jason");
-is_deeply(\@candidates, [ "jason.dir100", "jason-PsN-2015-04-26-134234", "modelfit_dir28" ], "list_candidate_latest_rundirs three named three dated two modelfit");
-
-
-
-remove_test_dir($dir);
-
-
-
 remove_test_dir($tempdir);
 
 done_testing();

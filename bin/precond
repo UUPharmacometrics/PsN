@@ -43,6 +43,7 @@ my %optional_options = (
 	"lu!" => undef,
 	"perturb!" => undef,
 	"eigen_comp_only!" => undef,
+    "always!" => undef,
 );
 
 my $res = GetOptions( \%options,
@@ -194,6 +195,7 @@ if (scalar(@{$model->problems}) != 1) {
 }
 
 my @precMatrix;
+my @negaEigIndex;
 
 if (defined $options{'rawres_input'}) {
     my @in_filter = ();
@@ -228,56 +230,33 @@ if (defined $options{'rawres_input'}) {
 
     @precMatrix = @{$resulthash->{'covar'}};
 
-} else {
+} elsif (defined $options{'pre'}) {
 
     my $file;
     my $fh;
 
-    if (defined $options{'pre'}) {
-        if (-d $options{'pre'}) {
-            $file = $options{'pre'} . "/NM_run1/psn.rmt";
-            my $file2 = $options{'pre'} . "NM_run1/psn.rmt";
-            my $file3 = $options{'pre'} . "/modelfit_dir1/NM_run1/psn.rmt";
-            my $file4 = $options{'pre'} . "modelfit_dir1/NM_run1/psn.rmt";
+    if (-d $options{'pre'}) {
+        $file = $options{'pre'} . "/NM_run1/psn.rmt";
+        my $file2 = $options{'pre'} . "NM_run1/psn.rmt";
+        my $file3 = $options{'pre'} . "/modelfit_dir1/NM_run1/psn.rmt";
+        my $file4 = $options{'pre'} . "modelfit_dir1/NM_run1/psn.rmt";
 
-            if (-e $file) { 
-            } elsif (-e $file2) {
-                $file = $file2;
-            } elsif (-e $file3) {
-                $file = $file3;
-            } elsif (-e $file4) {
-                $file = $file4;
-            }
-            print "\n Precondition using R-matrix:";
-        } else {
-            $file = $options{'pre'};
-            print "\n Precondition using matrix:";
-        }
-
-        open($fh, '<', $file) or die "\nCannot open the preconditioning matrix: '$file'\n\n";
-
-    } else {
-        # Try to automatically find .rmt file from a previous run
-        # First try model.rmt in calling directory
-        # Second try rundirs in the order of list_candidate_latest_rundirs
-
-        $file = $model_filename;
-        $file =~ s/(\.ctl|\.mod)$/.rmt/;
-
-        if (not -e $file) {
-            my @candidate_dirs = tool::list_candidate_latest_rundirs($model_filename);
-            foreach my $dir (@candidate_dirs) {
-                if (-e "$dir/NM_run1/psn.rmt") {
-                    $file = "$dir/NM_run1/psn.rmt";
-                    last;
-                }
-            }
+        if (-e $file) { 
+        } elsif (-e $file2) {
+            $file = $file2;
+        } elsif (-e $file3) {
+            $file = $file3;
+        } elsif (-e $file4) {
+            $file = $file4;
         }
         print "\n Precondition using R-matrix:";
-
-        open($fh, '<', $file)
-            or die "Cannot automatically find the R-matrix file\n specify the R-matrix or the modelfit directory using -pre= option\n";
+    } else {
+        $file = $options{'pre'};
+        print "\n Precondition using matrix:";
     }
+
+    open($fh, '<', $file) or die "\nCannot open the preconditioning matrix: '$file'\n\n";
+
     print "'$file'\n\n";
 
     # Read either a nonmem .cov file or an ordinary csv file without header
@@ -306,207 +285,192 @@ if (defined $options{'rawres_input'}) {
     }
 }
 
-# Pad the preconditioning matrix if it is too small
-if (scalar(@precMatrix) < $model->nthetas) {
-	linear_algebra::pad_matrix(\@precMatrix, $model->nthetas);
-} elsif (scalar(@precMatrix) > $model->nthetas) {
-	linear_algebra::reduce_matrix(\@precMatrix, $model->nthetas);
-}
+if (defined $options{'pre'} or defined $options{'rawres_input'}) {
+    tool::precond::preprocess_precond_matrix(precond_matrix => \@precMatrix, nthetas => $model->nthetas);
 
-linear_algebra::put_ones_on_diagonal_of_zero_lines(\@precMatrix);
-my @negaEigIndex;
+    # Decompose (or not) the matrix
+    if ((not $options{'nodec'})) {
+        if ($options{'cholesky'}) {
 
-# Decompose (or not) the matrix
-if ((not $options{'nodec'})) {
-    if ($options{'cholesky'}) {
+            print "Warning: With -cholesky option, older version of the precond algorithm will be used, make sure to specify the preconditioning matrix that is similar to covariance matrix (do not use R-matrix)\n\n";
 
-        print "Warning: With -cholesky optionm, older version of the precond algorithm will be used, make sure to specify the preconditioning matrix that is similar to covariance matrix (do not use R-matrix)\n\n";
-
-        my @A = map { [@$_] } @precMatrix;
-        linear_algebra::transpose(\@A);
-        my $B = linear_algebra::subtract(\@A, \@precMatrix);
-        linear_algebra::absolute($B);
-        my $max_diff = linear_algebra::max($B);
-        if ($max_diff > 1e-8) {
-            print "Warning: The matrix you are using does not seem to be symmetric. The maximum difference between elements is $max_diff\n";
-        }
-
-        # Swap to column order
-        linear_algebra::transpose(\@precMatrix);
-        my $error = linear_algebra::cholesky(\@precMatrix);
-        if ($error) {
-            die "Unable to perform cholesky decomposition: matrix is not positive-definite";
-        }
-        # Swap back to row order
-        linear_algebra::transpose(\@precMatrix);
-        # Create L matrix
-        for (my $row = 0; $row < @precMatrix; $row++) {
-            for (my $col = $row + 1; $col < @precMatrix; $col++) {
-                $precMatrix[$row]->[$col] = 0;
+            my @A = map { [@$_] } @precMatrix;
+            linear_algebra::transpose(\@A);
+            my $B = linear_algebra::subtract(\@A, \@precMatrix);
+            linear_algebra::absolute($B);
+            my $max_diff = linear_algebra::max($B);
+            if ($max_diff > 1e-8) {
+                print "Warning: The matrix you are using does not seem to be symmetric. The maximum difference between elements is $max_diff\n";
             }
-        }
 
-    } elsif($options{'lu'}) {
-        print "Warning: With -lu option, older version of the precond algorithm will be used, make sure to specify the preconditioning matrix that is similar to covariance matrix (do not use R-matrix)\n\n";
-
-
-        my $dummy = linear_algebra::LU_factorization(\@precMatrix);
-        for (my $row = 0; $row < @precMatrix; $row++) {		# Quick hack to get the L matrix
-            @precMatrix[$row]->[$row] = 1;
-            for (my $col = $row + 1; $col < @precMatrix; $col++) {
-                @precMatrix[$row]->[$col] = 0;
+            # Swap to column order
+            linear_algebra::transpose(\@precMatrix);
+            my $error = linear_algebra::cholesky(\@precMatrix);
+            if ($error) {
+                die "Unable to perform cholesky decomposition: matrix is not positive-definite";
             }
-        }
-
-    } else {
-        my @eigenValMatrix = map { [@$_] } @precMatrix;
-        (my $eigen, my $Q) = linear_algebra::eigenvalue_decomposition(\@eigenValMatrix);
-
-        my $abs_eigens = array::absolute($eigen);
-        my $maxEigen = array::max($abs_eigens);
-        my $minEigen = array::min($abs_eigens);
-
-        my $negaCounter = 0;
-        foreach my $index (0 .. scalar(@$eigen) - 1) {
-            if ($eigen->[$index] < 0) {
-                if ($options{'perturb'}) {
-                    $negaEigIndex[$negaCounter] = $index;
+            # Swap back to row order
+            linear_algebra::transpose(\@precMatrix);
+            # Create L matrix
+            for (my $row = 0; $row < @precMatrix; $row++) {
+                for (my $col = $row + 1; $col < @precMatrix; $col++) {
+                    $precMatrix[$row]->[$col] = 0;
                 }
-                $negaCounter++;
-            }
-        }
-
-        print "Condition Number : 10^" . int(log($maxEigen/$minEigen)/log(10)) . "\n";
-        print "Number of negative eigenvalues : $negaCounter\n";
-
-        if ($options{'verbose'} or $options{'eigen_comp_only'}) {
-            print "=== Eigenvalues ===\n";
-            foreach my $e (@$eigen) {
-                print "$e\n";
-            }
-            print "===================\n";
-        }
-
-
-        if (defined $options{'pre'}) {
-
-            # Check if run was the result of preconditioning
-            my $file = $options{'pre'} . "/precMatrix";
-            my $file2 = $options{'pre'} . "precMatrix";
-
-            if (-e $file) { 
-            } elsif(-e $file2) {
-                $file = $file2;
             }
 
-            if (-e $file) {
-                print "\n\n Pre-Precondition using matrix: '$file'\n\n";
+        } elsif($options{'lu'}) {
+            print "Warning: With -lu option, older version of the precond algorithm will be used, make sure to specify the preconditioning matrix that is similar to covariance matrix (do not use R-matrix)\n\n";
 
-                open(my $fh, '<', $file) or die "Cannot find the file".$file."precMatrix so prepre option cannot be used \n";
 
-                # Read a space separated data file
-                my @preprecMatrix;
-                while (my $line = <$fh>) {
-                    chomp $line;
-                    my @fields = split(/\s+/, $line);
-                    push @preprecMatrix, \@fields;
+            my $dummy = linear_algebra::LU_factorization(\@precMatrix);
+            for (my $row = 0; $row < @precMatrix; $row++) {		# Quick hack to get the L matrix
+                @precMatrix[$row]->[$row] = 1;
+                for (my $col = $row + 1; $col < @precMatrix; $col++) {
+                    @precMatrix[$row]->[$col] = 0;
                 }
-                close $fh;
+            }
 
-                my @Lambdainv;
-                for(my $i=1; $i<scalar(@preprecMatrix)+1;$i++){
-                    $Lambdainv[$i-1]=0;
-                    for (my $j=0; $j<scalar(@preprecMatrix);$j++){
-                        $Lambdainv[$i-1]=$Lambdainv[$i-1]+$preprecMatrix[$j][$i]*$preprecMatrix[$j][$i];
+        } else {
+            my @eigenValMatrix = map { [@$_] } @precMatrix;
+            (my $eigen, my $Q) = linear_algebra::eigenvalue_decomposition(\@eigenValMatrix);
+
+            my $abs_eigens = array::absolute($eigen);
+            my $maxEigen = array::max($abs_eigens);
+            my $minEigen = array::min($abs_eigens);
+
+            my $negaCounter = 0;
+            foreach my $index (0 .. scalar(@$eigen) - 1) {
+                if ($eigen->[$index] < 0) {
+                    if ($options{'perturb'}) {
+                        $negaEigIndex[$negaCounter] = $index;
                     }
-                    $Lambdainv[$i-1]=1.00/$Lambdainv[$i-1];
-                    for (my $j=0; $j<scalar(@preprecMatrix);$j++){
-                        $preprecMatrix[$j][$i]=$Lambdainv[$i-1]*$preprecMatrix[$j][$i];
+                    $negaCounter++;
+                }
+            }
 
+            print "Condition Number : 10^" . int(log($maxEigen / $minEigen) / log(10)) . "\n";
+            print "Number of negative eigenvalues : $negaCounter\n";
+
+            if ($options{'verbose'} or $options{'eigen_comp_only'}) {
+                print "=== Eigenvalues ===\n";
+                array::print($eigen);
+                print "===================\n";
+            }
+
+            if (defined $options{'pre'}) {
+
+                # Check if run was the result of preconditioning
+                my $file = $options{'pre'} . "/precMatrix";
+                my $file2 = $options{'pre'} . "precMatrix";
+
+                if (-e $file) { 
+                } elsif(-e $file2) {
+                    $file = $file2;
+                }
+
+                if (-e $file) {
+                    print "\n\n Pre-Precondition using matrix: '$file'\n\n";
+
+                    open(my $fh, '<', $file) or die "Cannot find the file" . $file . "precMatrix so prepre option cannot be used \n";
+
+                    # Read a space separated data file
+                    my @preprecMatrix;
+                    while (my $line = <$fh>) {
+                        chomp $line;
+                        my @fields = split(/\s+/, $line);
+                        push @preprecMatrix, \@fields;
                     }
-                }
+                    close $fh;
 
-                my @precMatrix_copy = map { [@$_] } @precMatrix;
-
-                if (scalar(@preprecMatrix) != scalar(@precMatrix)) {
-                    die "Size of precMatrix and preprecMatrix not consistent"
-                }
-
-                my $tempSum = 0;
-
-                for (my $i = 0; $i < scalar(@precMatrix_copy); $i++) {
-                    for (my $j = 0; $j < scalar(@precMatrix_copy); $j++) {
-                        $tempSum = 0;
-                        for (my $k = 0; $k < scalar(@precMatrix_copy); $k++) {
-                            $tempSum = $tempSum + $precMatrix_copy[$k][$j] * $preprecMatrix[$i][$k + 1];
+                    my @Lambdainv;
+                    for(my $i = 1; $i < scalar(@preprecMatrix) + 1; $i++) {
+                        $Lambdainv[$i - 1] = 0;
+                        for (my $j = 0; $j < scalar(@preprecMatrix); $j++) {
+                            $Lambdainv[$i - 1] = $Lambdainv[$i - 1] + $preprecMatrix[$j][$i] * $preprecMatrix[$j][$i];
                         }
-                        $precMatrix[$i][$j] = $tempSum;
-                    }
-                }
-
-                @precMatrix_copy = map { [@$_] } @precMatrix;
-
-                my $tempSum = 0;
-
-                for (my $i = 0; $i < scalar(@precMatrix_copy); $i++) {
-                    for (my $j = 0; $j < scalar(@precMatrix_copy); $j++) {
-                        $tempSum = 0;
-                        for (my $k = 0; $k < scalar(@precMatrix_copy); $k++) {
-                            $tempSum = $tempSum + $precMatrix_copy[$i][$k] * $preprecMatrix[$j][$k + 1];
+                        $Lambdainv[$i - 1] = 1.00 / $Lambdainv[$i - 1];
+                        for (my $j = 0; $j < scalar(@preprecMatrix); $j++) {
+                            $preprecMatrix[$j][$i] = $Lambdainv[$i - 1] * $preprecMatrix[$j][$i];
                         }
-                        $precMatrix[$i][$j] = $tempSum;
                     }
-                }
 
-                @eigenValMatrix = map { [@$_] } @precMatrix;
+                    my @precMatrix_copy = map { [@$_] } @precMatrix;
 
-                ($eigen, $Q) = linear_algebra::eigenvalue_decomposition(\@eigenValMatrix);
+                    if (scalar(@preprecMatrix) != scalar(@precMatrix)) {
+                        die "Size of precMatrix and preprecMatrix not consistent"
+                    }
 
-                $abs_eigens = array::absolute($eigen);
-                $maxEigen = array::max($abs_eigens);
-                $minEigen = array::min($abs_eigens);
+                    my $tempSum = 0;
 
-                $negaCounter = 0;
-                foreach my $index (0 .. scalar(@$eigen) - 1) {
-                    if ($eigen->[$index] < 0) {
-                        if ($options{'perturb'}) {
-                            $negaEigIndex[$negaCounter] = $index;
+                    for (my $i = 0; $i < scalar(@precMatrix_copy); $i++) {
+                        for (my $j = 0; $j < scalar(@precMatrix_copy); $j++) {
+                            $tempSum = 0;
+                            for (my $k = 0; $k < scalar(@precMatrix_copy); $k++) {
+                                $tempSum = $tempSum + $precMatrix_copy[$k][$j] * $preprecMatrix[$i][$k + 1];
+                            }
+                            $precMatrix[$i][$j] = $tempSum;
                         }
-                        $negaCounter++;
                     }
-                }
 
-                print "===Reconstructed R-matrix of the original model===\n";
-                print "Condition Number : 10^" . int(log($maxEigen/$minEigen)/log(10)) . "\n";
-                print "Number of negative eigenvalues : $negaCounter\n";
+                    @precMatrix_copy = map { [@$_] } @precMatrix;
 
-                if ($options{'verbose'} or $options{'eigen_comp_only'}) {
-                    print "=== Eigenvalues ===\n";
-                    foreach my $e (@$eigen) {
-                        print "$e\n";
+                    my $tempSum = 0;
+
+                    for (my $i = 0; $i < scalar(@precMatrix_copy); $i++) {
+                        for (my $j = 0; $j < scalar(@precMatrix_copy); $j++) {
+                            $tempSum = 0;
+                            for (my $k = 0; $k < scalar(@precMatrix_copy); $k++) {
+                                $tempSum = $tempSum + $precMatrix_copy[$i][$k] * $preprecMatrix[$j][$k + 1];
+                            }
+                            $precMatrix[$i][$j] = $tempSum;
+                        }
                     }
-                    print "===================\n";
+
+                    @eigenValMatrix = map { [@$_] } @precMatrix;
+
+                    ($eigen, $Q) = linear_algebra::eigenvalue_decomposition(\@eigenValMatrix);
+
+                    $abs_eigens = array::absolute($eigen);
+                    $maxEigen = array::max($abs_eigens);
+                    $minEigen = array::min($abs_eigens);
+
+                    $negaCounter = 0;
+                    foreach my $index (0 .. scalar(@$eigen) - 1) {
+                        if ($eigen->[$index] < 0) {
+                            if ($options{'perturb'}) {
+                                $negaEigIndex[$negaCounter] = $index;
+                            }
+                            $negaCounter++;
+                        }
+                    }
+
+                    print "===Reconstructed R-matrix of the original model===\n";
+                    print "Condition Number : 10^" . int(log($maxEigen/$minEigen)/log(10)) . "\n";
+                    print "Number of negative eigenvalues : $negaCounter\n";
+
+                    if ($options{'verbose'} or $options{'eigen_comp_only'}) {
+                        print "=== Eigenvalues ===\n";
+                        foreach my $e (@$eigen) {
+                            print "$e\n";
+                        }
+                        print "===================\n";
+                    }
+
                 }
 
             }
 
-
-
-        }
-
-
-
-        if ($options{'eigen_comp_only'}) {
-            die "Eigenvalue Calculation Only";
-        }
-
-        for (my $index1 = 0; $index1 < scalar(@precMatrix); $index1++) {
-            for (my $index2 = 0; $index2 < scalar(@precMatrix); $index2++) {
-                $precMatrix[$index1][$index2] = $Q->[$index1]->[$index2] / sqrt(abs($eigen->[$index2]));
+            if ($options{'eigen_comp_only'}) {
+                die "Eigenvalue Calculation Only";
             }
+
+            for (my $index1 = 0; $index1 < scalar(@precMatrix); $index1++) {
+                for (my $index2 = 0; $index2 < scalar(@precMatrix); $index2++) {
+                    $precMatrix[$index1][$index2] = $Q->[$index1]->[$index2] / sqrt(abs($eigen->[$index2]));
+                }
+            }
+
         }
-
-
     }
 }
 
@@ -538,12 +502,19 @@ if ($only_do_pre_step) {
 
     my $dummy_model = model->create_dummy_model;
 
+    my $precMatrix_ref;
+    if (scalar(@precMatrix) > 0) {
+        $precMatrix_ref = \@precMatrix;
+    }
     my $precond = tool::precond->new(eval($common_options::parameters),
-        precond_matrix => \@precMatrix,
+        precond_matrix => $precMatrix_ref,
         models => [ $dummy_model ],
         precond_model => $model,
         update_model => $options{'update_model'},
         negaEigenIndex => \@negaEigIndex,
+        always => $options{'always'},
+        verbose => $options{'verbose'},
+        perturb => $options{'perturb'},
     );
 
     $precond->print_options (cmd_line => $cmd_line,
