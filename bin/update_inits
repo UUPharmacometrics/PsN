@@ -43,6 +43,7 @@ my %optional_options = (
 	"output_model:s" => undef,
 	"from_model:s" => undef,
 	"ignore_missing_parameters" => undef,
+	"update_fix" => undef,
 	"comment:s" => undef,
 	"degree:f" => undef,
 	"add_tags" => undef,
@@ -51,6 +52,8 @@ my %optional_options = (
 	"seed:s" => undef,
 	"based_on:i" => undef,
 	"renumber:i" => undef,
+	"fix_thetas" => undef,
+ 	"unfix_thetas" => undef,
 	);
 
 my $res = GetOptions( \%options,
@@ -111,6 +114,28 @@ $help_text{-ignore_missing_parameters} = <<'EOF';
 	(lst-file or other model file).
 EOF
     1;
+$help_text{-update_fix} = <<'EOF';
+-update_fix
+	Default not set
+	
+	If set, update_inits will update parameters that are FIX in the model. The
+	default is to not update parameters that are fixed.
+EOF
+    1;
+$help_text{-fix_thetas} = <<'EOF';
+-fix_thetas
+	Default not set
+ 	
+	If set, update_inits will set all THETAs that are not part of a prior to FIX.
+EOF
+     1;
+$help_text{-unfix_thetas} = <<'EOF';
+-unfix_thetas
+	Default not set
+
+	If set, update_inits will remove FIX, if present, from all THETAs that are not part of a prior.
+EOF
+1;
 $help_text{-from_model} = <<'EOF';
 -from_model=filename
 	Default not used
@@ -217,6 +242,10 @@ my $ignore_missing_parameters=0;
 if ( defined $options{'ignore_missing_parameters'} ){
 	$ignore_missing_parameters=1;
 }
+my $update_fix=0;
+if ( defined $options{'update_fix'} ){
+	$update_fix=1;
+}
 
 
 unless( $ARGV[0] ){
@@ -308,7 +337,8 @@ if (defined $options{'from_model'}) {
 		$model_copy -> update_inits( from_hash => $array->[$i],
 									 problem_number => ($i+1),
 									 ensure_posdef => $check,
-									 ignore_missing_parameters => $ignore_missing_parameters );
+									 ignore_missing_parameters => $ignore_missing_parameters,
+									 update_fix => $update_fix);
 	}
 
 } else { 
@@ -344,7 +374,8 @@ if (defined $options{'from_model'}) {
 	$check = $options{'ensure_posdef'} if (defined $options{'ensure_posdef'});
 	$model_copy -> update_inits( from_output => $output,
 								 ensure_posdef => $check,
-								 ignore_missing_parameters => $ignore_missing_parameters );
+								 ignore_missing_parameters => $ignore_missing_parameters,
+									 update_fix => $update_fix );
 
 }
 $model_copy -> filename( $outfile );
@@ -357,6 +388,31 @@ if (defined $options{'degree'}){
 		$prob -> set_random_inits ( degree => $options{'degree'} );
 	}
 }
+
+
+if ($options{'fix_thetas'}){
+	for (my $j=0; $j< scalar(@{$model_copy->problems}); $j++){
+		next unless (defined $model_copy ->problems()->[$j]->thetas());
+		foreach my $rec (@{$model_copy ->problems()->[$j]->thetas()}){
+			next if $rec->prior();
+			foreach my $opt (@{$rec->options()}){
+				$opt->fix(1);
+			}
+		}
+	}
+}
+if ($options{'unfix_thetas'}){
+	for (my $j=0; $j< scalar(@{$model_copy->problems}); $j++){
+		next unless (defined $model_copy ->problems()->[$j]->thetas());
+		foreach my $rec (@{$model_copy ->problems()->[$j]->thetas()}){
+			next if $rec->prior();
+			foreach my $opt (@{$rec->options()}){
+				$opt->fix(0);
+			}
+		}
+	}
+}
+
 
 if ($options{'add_prior'}){
 	$model_copy -> problems()->[0]->add_prior_distribution(from_output => $output,
