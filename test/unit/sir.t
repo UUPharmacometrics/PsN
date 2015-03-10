@@ -268,17 +268,21 @@ my $ref = tool::sir::format_covmatrix(matrix => [[1,2,3],[4,5,6],[7,8,9]],
 											print_labels => 1);
 
 
-is_deeply($ref,[" NAME             anna           bertil         cecilia        \n",
-				" anna             1.0000000E+00  2.0000000E+00  3.0000000E+00\n",
-				" bertil           4.0000000E+00  5.0000000E+00  6.0000000E+00\n",
-				" cecilia          7.0000000E+00  8.0000000E+00  9.0000000E+00\n"], "format covmatrix space with labels");
+
+is($ref->[0]," NAME             anna           bertil         cecilia        \n", "format covmatrix space with labels 0");
+like($ref->[1],'/^ anna    \s+1\.0000000E\+0+\s+2\.0000000E\+0+\s+3\.0000000E\+0+/', "format covmatrix space with labels 1");
+like($ref->[2],'/^ bertil  \s+4\.0000000E\+0+\s+5\.0000000E\+0+\s+6\.0000000E\+0+/', "format covmatrix space with labels 2");
+like($ref->[3],'/^ cecilia \s+7\.0000000E\+0+\s+8\.0000000E\+0+\s+9\.0000000E\+0+/', "format covmatrix space with labels 3");
+
+
 my $ref = tool::sir::format_covmatrix(matrix => [[1,2,3],[4,5,6],[7,8,9]], 
 											header => ['anna','bertil','cecilia'], 
 											comma => 0, 
 											print_labels => 0);
 
 
-is_deeply($ref,["  1.0000000E+00  2.0000000E+00  3.0000000E+00\n","  4.0000000E+00  5.0000000E+00  6.0000000E+00\n",
-				"  7.0000000E+00  8.0000000E+00  9.0000000E+00\n"], "format covmatrix space no labels");
+like($ref->[0],'/^\s+1\.0000000E\+0+\s+2.0000000E\+0+\s+3\.0000000E\+0+/', "format covmatrix space no labels 0");
+like($ref->[1],'/^\s+4\.0000000E\+0+\s+5.0000000E\+0+\s+6\.0000000E\+0+/', "format covmatrix space no labels 1");
+like($ref->[2],'/^\s+7\.0000000E\+0+\s+8.0000000E\+0+\s+9\.0000000E\+0+/', "format covmatrix space no labels 2");
 
 done_testing();
