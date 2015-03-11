@@ -238,16 +238,13 @@ if (defined $options{'rawres_input'}) {
     if (-d $options{'pre'}) {
         $file = $options{'pre'} . "/NM_run1/psn.rmt";
         my $file2 = $options{'pre'} . "NM_run1/psn.rmt";
-        my $file3 = $options{'pre'} . "/modelfit_dir1/NM_run1/psn.rmt";
-        my $file4 = $options{'pre'} . "modelfit_dir1/NM_run1/psn.rmt";
+        (my $file3) = glob $options{'pre'} . "/m1/*_repara.rmt";
 
         if (-e $file) { 
         } elsif (-e $file2) {
             $file = $file2;
         } elsif (-e $file3) {
             $file = $file3;
-        } elsif (-e $file4) {
-            $file = $file4;
         }
         print "\n Precondition using R-matrix:";
     } else {
