@@ -537,7 +537,6 @@ sub convert_reparametrized_cov
 
     my @cov_lines;
 
-
     if (-e $cov_filename) {
 
         open(my $fh, '<', $cov_filename) or croak("Cannot find the .cov file '$cov_filename' [$!]\n");
@@ -816,6 +815,11 @@ sub read_precond_matrix
 
 sub preprocess_precond_matrix
 {
+    # Preprocess the preconditioning matrix
+    # A matrix smaller than nthetas will get padded
+    # A matrix larger than nthetas will get reduced
+    # Rows that are all zeros will get ones on the diagonal
+
     my %parm = validated_hash(\@_,
         precond_matrix => { isa => 'ArrayRef[ArrayRef]' },
         nthetas => { isa => 'Int' },
