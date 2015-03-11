@@ -65,6 +65,7 @@ Changes and bug fixes from PsN 4.2.0 to x.y.z
 
 - Guide common_options_defaults_version_psn.pdf has been renamed to common_options.pdf, and
   the options have been organised according to themes instead of alphabetically.
+  All user guides have been revised.
 
 - Automatic generation of R plots, see documentation in common_options.pdf
 
@@ -75,8 +76,16 @@ Changes and bug fixes from PsN 4.2.0 to x.y.z
 
 - enable option -cwres also for NM 7. 
 
-- major redesign of data file handling. PsN will not open the data file unless
-  necessary (for bootstrapping, covariate statistics computation, ...)
+- Complete redesign of data file handling and generation. PsN will not open the data file unless
+  necessary (for bootstrapping, covariate statistics computation, ...). A large number
+  of data class tests have been added to the test suite.
+  Covariate statistics computation
+  code for scm, boot_scm, frem and lasso have been moved to the data class.
+  Data set creation for bootstrap, cdd, randtest have been moved to new data class subroutines
+  and are redesigned to return file references to the created files rather than data objects. 
+  Internally, PsN will use reference(s) to the data file(s) instead of passing around data objects.
+  These changes affect nonpb, randtest, crossval, xv_scm, scm, bootstrap, cdd, lasso, frem 
+  
 
 - Possibility to make PsN installation portable (PsN installation directory movable).
   See documentation in psn_installation.pdf and psn_configuration.pdf
@@ -93,6 +102,31 @@ Changes and bug fixes from PsN 4.2.0 to x.y.z
 
 - bugfix broken option -mirror_plots
 
+- PsN can call the converter toolbox to automatically convert a PharmML-format model
+  to nmtran format, if converter_path in psn.conf is set to the converter classpath and java is installed.
+
+- rewrite of -stop_motion functionality
+
+- centralisation of round,ceil and other basic math functions to separate module with new tests.
+
+- Removed all usage of Perl's looks_like_number since it behaves differently on windows and unix. 
+  Replaced with PsN's own math::usable_number which uses regexp to see if string interpretation 
+  is a number.
+
+- resume functionality internally in modelfit. If model->is_run read existing lst-file, do not run. Run
+  models that are not run, create raw_results. Currently accessible only from bootstrap
+
+- removed attribute rerun
+
+- removed option -prepend_model_to_lst
+
+- New runrecord annotation handling
+
+- change how data class computes median: first compute median for individual and then over individuals
+
+- Imporved formatting for -verbose output
+
+
    ___Cluster/grid interaction___
 
 - bugfix for run_on_slurm: Request specific format of jobID when using squeue to find finished jobs,
@@ -101,9 +135,16 @@ Changes and bug fixes from PsN 4.2.0 to x.y.z
 - bugfix in printing slurm sbatch command to file for easier debugging.
    ___NONMEM interaction___
 
+- bugfix handle multiple $SIZES records
+
 - FIXED and FIXE are allowed as synonyms to FIX in $OMEGA and $SIGMA
 
 - bugfix: handle comma-separated sets of parentheses in $THETA, for example $THETA (1 FIX), (2 FIX) 
+
+- bugfix: support (init,options) and (options,init) form of $OMEGA/$SIGMA in addition 
+  to form with space instead of comma. Bugfix in parsing of (low init high) with spaces 
+  instead of comma in $THETA. Bugfix pattern matching when searching for CORRELATION, CHOLESKY 
+  etc in $SIGMA, match parts of string instead of just whole string. Added tests
 
 - bug fix parsing output from run when NONMEM crashes during covariance step
 
@@ -120,7 +161,8 @@ Changes and bug fixes from PsN 4.2.0 to x.y.z
   is defined. If the variable is defined in verbatim code then the warning will be printed even 
   if all is well, but this information is included in the warning. 
 
-- parsing of NONMEM output: STANDARD/CORRELATION form of OMEGA and SIGMA is now parsed from lst or ext file.
+- parsing of NONMEM output: STANDARD/CORRELATION form estimates and se:s of OMEGA and SIGMA are 
+  now parsed from lst or ext file.
   Note: PsN still does not support STANDARD/CORRELATION form when updating a model with final estimates
   from a previous run (update_inits, vpc, frem, ...). 
 
@@ -128,14 +170,21 @@ Changes and bug fixes from PsN 4.2.0 to x.y.z
   lst saying "PROGRAM TERMINATED BY OBJ" then PsN would consider the whole run failed, even 
   though a later est-step was successful. 
 
-- Rewritten code for filtering cov, cor and coi matrices from NONMEM, to remove rows and columns
-  for parameters that are not estimated (FIXED or SAME).
+- Rewritten code for reading cov, cor and coi matrices from NONMEM. Rewritten filtering for
+  removing rows and columns for parameters that are not estimated (FIXED or SAME).
+  Now PsN will parse cov, cor, coi independently instead of requiring that all are found
+  in order to parse any.
+
+- Rewrite of code for parsing shrinkage and etabar.
 
 - Bugfix parsing of lst-files for NM 6.1.
 
 - If PsN detects an NMtran error as the cause of a missing lst-file, then add the 
   contents of FMSG (the nmtran error message file) to the message that PsN prints to screen 
   saying that there was an nmtran error. 
+
+- Improved handling of NMTRAN error messages and license error messages that appear in the lst-file. 
+  Store those pre-run messages in parsing_error_message that can be displayed by e.g. sumo
 
    ___sumo___
 
@@ -159,11 +208,14 @@ Changes and bug fixes from PsN 4.2.0 to x.y.z
 - bugfix: if lloq and/or uloq is used, only display mean and delta-mean for real values if 0 real 
   observations were below lloq or above uloq. 
 
+- bugfix: handle global paths to input files on windows (sim_table, orig_table, sim_model)
 
    ___scm___
 
 - scm now checks that all covariates in the code section are listed as test_relations
   and gives an error otherwise.
+
+- input check that W is defined in model when using option time_varying
 
 - When scm runs a dummy model to filter the data set on IGNORE/ACCEPT before
   computing statistics for covariates, any DROP/SKIP in $INPUT will be kept.
@@ -210,7 +262,12 @@ Changes and bug fixes from PsN 4.2.0 to x.y.z
 
 -  New option -summarize: recompute bootstrap_results.csv based on existing raw_results. 
 
--  new meaning of command-line option copy_data
+-  new command-line option copy_data
+
+-  Added error message for bootstrap stratify_on When there are more columns in $INPUT than in the 
+   data file and the stratify_on is set to a column with higher number than the number of columns 
+   in the data file the resulting error message is to hard to understand. Added a separate error 
+   message for this situation.
    ___update_inits___
 	 
 - New guide update_inits_userguide.pdf
@@ -238,9 +295,13 @@ Changes and bug fixes from PsN 4.2.0 to x.y.z
 - a new csv-format output file with actual delta-ofv at different p-values, and actual p-values for 
   theoretical dofv:s from chisquare distribution. 
 	 
--	 new meaning of command-line option copy_data
+-	 new command-line option copy_data
    ___execute___
 	 
+- Automatically unset display_iterations if -silent is set
+
+- removed options -summarize and fake functionality. 	 
+
 - New option -reduced_model_ofv. Initiate a retry unless ofv is at least as good as this value.
   Option -retries must be set > 0 for it to have effect. See details in execute userguide.
 
@@ -268,7 +329,7 @@ Changes and bug fixes from PsN 4.2.0 to x.y.z
 - More input checks
 - Modified algorithm, see user guide.
 - New output file with NONMEM-like format empirical covariance matrix
-- new meaning of command-line option copy_data
+- new command-line option copy_data
    ___covmat___
 	 
 - New script, compute variance-covariance matrix based on -rawres_input
@@ -280,7 +341,8 @@ Changes and bug fixes from PsN 4.2.0 to x.y.z
    ___pvar___
 
 - Added default plot
-- pvar will also run base model from scm
+- pvar will also run base model from scm, pvar can handle scm results after clean<=2.
+- Updated pvar_results.csv to include model name.
 
    ___frem___
 
@@ -297,4 +359,8 @@ Changes and bug fixes from PsN 4.2.0 to x.y.z
    ___nmoutput2so___
 
 - new script
+
+   ___pind___
+
+- bugfix handle setting of -clean=3
   
