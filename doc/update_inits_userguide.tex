@@ -2,7 +2,7 @@
 \setlength{\evensidemargin}{0pt}
 \setlength{\oddsidemargin}{0pt}
 
-\guidetitle{update\_inits user guide}{2015-02-26}
+\guidetitle{update\_inits user guide}{2015-03-11}
 
 \begin{document}
 
@@ -182,6 +182,16 @@ If a number cannot be extracted then nothing will be set.
 See details in section Renumbering.
 Set option -renumber=0 to prevent automatic renumbering.
 \nextopt
+\optname{update\_fix}
+Default false. If set, update\_inits will update parameters that are FIX in the model.
+\nextopt
+\optname{fix\_thetas}
+Default false. If set, update\_inits will set all THETAs that are not part of a prior to FIX.
+\nextopt
+\optname{unfix\_thetas}
+Default false. If set, update\_inits will remove FIX, if set, from all THETAs that are not part of a prior.
+\nextopt
+
 %\optdefault{sigdig}{integer}
 %Default 15.
 %Only has effect with NONMEM7 and later and if set to a number <15. 
