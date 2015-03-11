@@ -61,34 +61,93 @@ Changes and bug fixes from PsN 4.2.0 to x.y.z
 
 - New option -standardised_output to create DDMoRe standard output .xml
 
-- Less delay (sleep) when jobs are submitted.
+- Less delay (sleep) when jobs are submitted, thank you to Ruben Faelens.
 
-- rplots option
+- Guide common_options_defaults_version_psn.pdf has been renamed to common_options.pdf, and
+  the options have been organised according to themes instead of alphabetically.
 
-- Updated rules for selecting best retry
+- Automatic generation of R plots, see documentation in common_options.pdf
+
+- Major rewrite of retries handling code, updated rules for selecting best retry,
+  and a large number of tests for the new code.
 
 - handle spaces in the path (enclose filepath with quotes in $DATA)
 
 - enable option -cwres also for NM 7. 
 
-- major redesign of data file handling. PsN will now not parse or reformat the data file unless
-  necessary (bootstrapping, coviarate statistics computation, ...)
+- major redesign of data file handling. PsN will not open the data file unless
+  necessary (for bootstrapping, covariate statistics computation, ...)
+
+- Possibility to make PsN installation portable (PsN installation directory movable).
+  See documentation in psn_installation.pdf and psn_configuration.pdf
+
+- bugfix in automatic setting of $MSFI when option -maxevals or -handle_crashes is set. Make sure existing 
+  $MSFI and possible options are not overwritten if $MSFI already exists in model file. 
+
+- Possible to set -directory=path/to/folder where path/to does not yest exist. Before you could 
+  only specify a path with several levels in -dir if all but the last directory already existed. 
+
+- Expanded test suite
+
+- support para mode for NMQual, see NMQual section in psn_configuration.pdf.
+
+- bugfix broken option -mirror_plots
 
    ___Cluster/grid interaction___
 
+- bugfix for run_on_slurm: Request specific format of jobID when using squeue to find finished jobs,
+  so that jobID cannot be truncated.
+
+- bugfix in printing slurm sbatch command to file for easier debugging.
    ___NONMEM interaction___
 
 - FIXED and FIXE are allowed as synonyms to FIX in $OMEGA and $SIGMA
 
+- bugfix: handle comma-separated sets of parentheses in $THETA, for example $THETA (1 FIX), (2 FIX) 
+
+- bug fix parsing output from run when NONMEM crashes during covariance step
+
+- bug fix parsing of eigenvalues in NM7.3 lst-file when ext-file is missing
+
+- bug fix handle value +Infinity and similar in NM7 output files .ext cov coi cor phi 
+
+- changed default of -check_nmtran to off.
+
+- if option -check_nmtran is set and model contains verbatim code, then PsN will try to detect 
+  undefined variables in abbreviated code by creating a dummy model without the verbatim code and 
+  running nmtran on the dummy. If nmtran gives error "UNDEFINED VARIABLE" then PsN will parse nmtran 
+  output for the variable name and print a warning telling the user to double check that the variable 
+  is defined. If the variable is defined in verbatim code then the warning will be printed even 
+  if all is well, but this information is included in the warning. 
+
+- parsing of NONMEM output: STANDARD/CORRELATION form of OMEGA and SIGMA is now parsed from lst or ext file.
+  Note: PsN still does not support STANDARD/CORRELATION form when updating a model with final estimates
+  from a previous run (update_inits, vpc, frem, ...). 
+
+- bug fix in output parsing. If multiple $EST and a est-step that is not the last had text in 
+  lst saying "PROGRAM TERMINATED BY OBJ" then PsN would consider the whole run failed, even 
+  though a later est-step was successful. 
+
+- Rewritten code for filtering cov, cor and coi matrices from NONMEM, to remove rows and columns
+  for parameters that are not estimated (FIXED or SAME).
+
+- Bugfix parsing of lst-files for NM 6.1.
+
+- If PsN detects an NMtran error as the cause of a missing lst-file, then add the 
+  contents of FMSG (the nmtran error message file) to the message that PsN prints to screen 
+  saying that there was an nmtran error. 
+
    ___sumo___
 
 - sumo now prints delta-ofv if the "Based on:" annotation is present in model
-- running sumo on file without extension .res or .lst would cause a crash
+- bugfix running sumo on file without extension .res or .lst would cause a crash
+- output use labels instead of generic coordinates, skip parameter that are fixed or same
+- print shrinkage from NMoutput, print number of individuals and observation records 
 
    ___vpc/npc___
 
 - vpc binning can now take multiple arrays for -bin_array or -auto_bin to use for different strata
-- When F_FLAG=0 PsN now also allow ICALL == 4
+- When F_FLAG=0 PsN will now also allow ICALL == 4 witout complaining.
 - new option -irep to vpc and npc. An alternative way of marking beginning of new simulation sample
   in -sim_table. This makes it easier to use R-processed data as input, since the NONMEM-type
   header is not needed at the beginning of each new sample. 
@@ -96,6 +155,10 @@ Changes and bug fixes from PsN 4.2.0 to x.y.z
 - vpc/npc will set NOAPPEND in $TABLE, and instead add items DV, PRED, WRES and/or RES explicitly if needed.
 - vpc: Added prediction intervals 25% and 75% to -fine_pi, now -fine_pi gives 
   intervals 0,10,20,25,30,40,50,60,70,75,80,90 and 95% 
+- the vpc_results file will include a column with median idv value for each bin.
+- bugfix: if lloq and/or uloq is used, only display mean and delta-mean for real values if 0 real 
+  observations were below lloq or above uloq. 
+
 
    ___scm___
 
@@ -109,6 +172,19 @@ Changes and bug fixes from PsN 4.2.0 to x.y.z
   the same number of columns and the same $INPUT record with its DROPs/SKIPs
   can be used for the scm models.
 
+- Removed broken scm config file option -base_criteria_values.
+
+- new command-line option -base_ofv to replace -base_criteria_values.
+
+- updated and corrected warnings related to time-varying covariates 
+
+   ___boot_scm___
+
+- Removed broken option -base_criteria_values.
+
+- updated and corrected warnings related to time-varying covariates 
+
+- bugfix make sure base model is run for each bootstrap data set 
    ___sse___
 
 -  sse will accept missing data files for alternative models. This is ok since data will be replaced with 
@@ -118,7 +194,7 @@ Changes and bug fixes from PsN 4.2.0 to x.y.z
 
    ___bootstrap___
 
--  bootstrap can now be automatically resumed also when -clean=3 in original run. Just set -directory to existing 
+-  bootstrap can now be automatically resumed also when -clean=3 in original run. Set -directory to existing 
    directory of interrupted run, then samples that were finished will be read into memory directly and only samples 
    that were not finished will be run with NONMEM.
 
@@ -134,13 +210,20 @@ Changes and bug fixes from PsN 4.2.0 to x.y.z
 
 -  New option -summarize: recompute bootstrap_results.csv based on existing raw_results. 
 
+-  new meaning of command-line option copy_data
    ___update_inits___
 	 
-- update is now always an alias for update_inits on all platforms.
+- New guide update_inits_userguide.pdf
+- update is now an alias for update_inits on all platforms.
   update is versioned like all other scripts.
   For example: update-4.3.0 will be equivalent to update_inits-4.3.0
 - model files with mulitple $PROB are now supported.
 - $MSFI filename of second and later $PROB will be updated
+- new options -update_fix, -fix_thetas, -unfix_thetas
+- removed option -diagonal_dominance. New option -ensure_posdef with same intent (ensure that
+  OMEGA and SIGMA blocks are positive definite) but better algorithm.
+- Modified procedure for automatic renumbering, see details in userguide.
+- support any extension (.ctl, .mod, .txt) of control stream.
 
    ___randtest___
 	 
@@ -148,19 +231,29 @@ Changes and bug fixes from PsN 4.2.0 to x.y.z
   with randomized data 2) -full_model_inits with default false, i.e. use final estimates from full 
   model estimation on input data rather than base model estimates from input data as initial 
   estimates for randomized data estimation.
+
+- When a base model is given and retries functionality is turned on (-retries >0, -tweak_inits is on),
+  initiate a retry when the ofv of a sample is worse than the ofv of the base model, i.e. local minimum.
+
 - a new csv-format output file with actual delta-ofv at different p-values, and actual p-values for 
   theoretical dofv:s from chisquare distribution. 
 	 
+-	 new meaning of command-line option copy_data
    ___execute___
 	 
 - New option -reduced_model_ofv. Initiate a retry unless ofv is at least as good as this value.
-  Option -retries must be set > 0 for it to have effect.
+  Option -retries must be set > 0 for it to have effect. See details in execute userguide.
 
 - timestamp option for directory name
 
+- option -model_dir_name will skip model extension, and there will be no dot between 
+  dir and the number. For example run2.mod will give rundir name run2.dir1. 
    ___parallel_retries___
 	 
 - New option -timestamp for directory name
+
+- option -model_dir_name will skip model extension, and there will be no dot between dir 
+  and the number. For example run2.mod will give rundir name run2.dir1. 
 
 - parallel_retries will behave more like execute, i.e. the best try
   will be selected and the output files of this try will be copied
@@ -170,8 +263,12 @@ Changes and bug fixes from PsN 4.2.0 to x.y.z
 
    ___sir___
 	 
-- Option -covmat_input	 	 
-
+- New option -covmat_input	 	 
+- New option -rawres_input
+- More input checks
+- Modified algorithm, see user guide.
+- New output file with NONMEM-like format empirical covariance matrix
+- new meaning of command-line option copy_data
    ___covmat___
 	 
 - New script, compute variance-covariance matrix based on -rawres_input
@@ -183,3 +280,21 @@ Changes and bug fixes from PsN 4.2.0 to x.y.z
    ___pvar___
 
 - Added default plot
+- pvar will also run base model from scm
+
+   ___frem___
+
+- It will be checked that SIGMA and OMEGA blocks are postive definite, 
+  using Cholesky decomposition. If non-positive definite the diagonal will
+  be inflated slightly until positive definite
+
+   ___llp___
+
+- input check that omega or sigma selected is not part of a BLOCK, which of course cannot be individually FIXED.
+- Updated documentation on omega and sigma input.
+- bugfix handling of numerical issues in search for new parameter value guess 
+
+   ___nmoutput2so___
+
+- new script
+  
