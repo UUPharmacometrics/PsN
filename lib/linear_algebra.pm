@@ -159,7 +159,6 @@ sub triangular_symmetric_to_full
     return $A;
 }
 
-
 sub mvnpdf_cholesky
 {
     my $covar=shift;
@@ -501,7 +500,19 @@ sub eigenvalue_decomposition
                 }
             }
         }
-        my $theta = (atan2(2 * $eigenValMatrix[$maxInd1][$maxInd2], $eigenValMatrix[$maxInd2][$maxInd2] - $eigenValMatrix[$maxInd1][$maxInd1])) / 2;
+
+        my $theta;
+        my $divisor = $eigenValMatrix[$maxInd2][$maxInd2] - $eigenValMatrix[$maxInd1][$maxInd1];
+        if ($divisor == 0) {
+            if ($eigenValMatrix[$maxInd1][$maxInd2] > 0) {
+                $theta = pi / 4;
+            } else {
+                $theta = -pi / 4;
+            }
+        } else {
+            $theta = (atan(2 * $eigenValMatrix[$maxInd1][$maxInd2] / ($eigenValMatrix[$maxInd2][$maxInd2] - $eigenValMatrix[$maxInd1][$maxInd1]))) / 2;
+        }
+
         my $c = cos($theta);
         my $s = sin($theta);
 
