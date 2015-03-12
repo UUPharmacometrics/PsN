@@ -18,7 +18,6 @@ has 'random_estimation_inits' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'mc_models' => ( is => 'rw', isa => 'ArrayRef[model]', default => sub { [] } );
 has 'initial_values' => ( is => 'rw', isa => 'Any', clearer => 'clear_initial_values' );
 has 'first_alternative' => ( is => 'rw', isa => 'Maybe[Int]' );
-has 'bayes' => ( is => 'rw', isa => 'Bool', isa => 0 );
 has 'simulation_rawres' => ( is => 'rw', isa => 'Str' );
 has 'in_filter' => ( is => 'rw', isa => 'ArrayRef[Str]' );
 has 'out_filter' => ( is => 'rw', isa => 'ArrayRef[Str]' );
@@ -1370,20 +1369,6 @@ sub modelfit_setup
 		%subargs = %{$self -> subtool_arguments};
 	}
 
-	for (my $i=0;$i< scalar(@{$self -> mc_models->[0]->problems()}); $i++){
-		#get ref of array of methods
-		my $methref = $self -> mc_models->[0]-> get_option_value(record_name => 'estimation', 
-																 option_name => 'METHOD',
-																 problem_index => $i, 
-																 record_index => 'all'); 
-		if (defined $methref){
-			my $j= scalar(@{$methref})-1;
-			if (defined $methref->[$j]){
-				$self->bayes(1) if ($methref->[$j] eq 'BAYES' or 
-									(index('BAYES',$methref->[$j])==0));
-			}
-		}
-	}
 
 	my $rerun=1;
 	trace(tool => 'sse', message => "Preparing to run all estimation models ", level => 1);
@@ -1737,7 +1722,6 @@ sub prepare_results
 
 	### Prepare result section with ofv reference value , if used, and true parameter values for sim
 	my $ofvname='ofv';
-	$ofvname = 'DIC' if $self->bayes;
 
 	my %reference_section;
 	$reference_section{'name'} = 'Reference/True values';
@@ -1957,7 +1941,7 @@ sub prepare_results
 				  my $relative_absolute_bias_percent = ' ';
 				  my $rse = ' ';
 				  
-				  if( defined $form_initials -> {$measure} ){
+				  if( defined $form_initials -> {$measure} and (defined $form_initials -> {$measure}->[$col-$start])){
 					  #not for ofv, only for params
 					  my $init =  $form_initials -> {$measure}->[$col-$start]; #ref of array	  
 					  ($abs_rmse,$relative_rmse_percent) = $self -> compute_rmse( use_runs => \@runs_kept,
