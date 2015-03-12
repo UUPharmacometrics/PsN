@@ -44,7 +44,7 @@ sub modelfit_setup
             %{common_options::restore_options(@common_options::tool_options)},
             models => [ $base_model ],
             base_dir => $self->directory,
-            directory => undef,
+            directory => "base_modelfit",
             top_tool => 0,
             nm_output => 'ext,cov,rmt', 
         );
@@ -89,7 +89,7 @@ sub modelfit_setup
 		%{common_options::restore_options(@common_options::tool_options)},
 		models => [ $model ], 
 		base_dir => $self->directory,
-		directory => undef,
+		directory => "repara_modelfit",
 		top_tool => 0,
         nm_output => 'ext,cov,rmt',
 	);
@@ -209,7 +209,7 @@ sub modelfit_analyze
 		}
 
         $modelfit->print_raw_results;
-        copy("modelfit_dir1/raw_results.csv", "base_raw_results.csv");
+        copy("base_modelfit/raw_results.csv", "base_raw_results.csv");
 
     } else {
         print "Unable to update model: model was not run";
