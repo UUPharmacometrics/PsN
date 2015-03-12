@@ -15,6 +15,8 @@ use math;
 use output;
 
 
+open STDERR, '>', File::Spec->devnull();	# Silence STDERR
+
 our $output_files = $includes::testfiledir . '/output/';
 my $modeldir = $includes::testfiledir;
 

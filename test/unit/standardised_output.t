@@ -8,6 +8,7 @@ use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages
 use data;
 
+
 SKIP: {
     eval { require XML::LibXML };
     skip "XML::LibXML not installed" if $@;
@@ -16,6 +17,7 @@ SKIP: {
     require standardised_output::xml;
     require standardised_output::so;
 
+    open STDERR, '>', File::Spec->devnull();	# Silence STDERR
     sub get_xml
     {
         my $filename = shift;
