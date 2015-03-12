@@ -1823,24 +1823,29 @@ sub passed_picky
 	my $picky = $parm{'picky'};
 	my $probnum = $parm{'probnum'};
 
-	#probnum is from model->get_retries_problem_number,
+	#probnum is from output->get_estimation_evaluation_problem_number, can be negative
 	my $passed_picky = 0;
 
 	if ($picky and ($probnum > 0)){
 		#if not picky set, or no probnum to check, then always return false
 		croak ("probnum is $probnum but number of problems is ".scalar(@{$minimization_successful}))
 			unless (scalar(@{$minimization_successful}) >= $probnum);
-		if ( $minimization_successful -> [$probnum-1][0] ) {
+		if ((defined $minimization_successful -> [$probnum-1] ) and
+			$minimization_successful -> [$probnum-1][0] ) {
 			$passed_picky = 1;
-			for ( @{$minimization_message -> [$probnum-1][0]} ) {
-				if ( /0COVARIANCE STEP ABORTED/ or
-					 /0PROGRAM TERMINATED BY OBJ/ or
-					 /0ESTIMATE OF THETA IS NEAR THE BOUNDARY AND/ or
-					 /0PARAMETER ESTIMATE IS NEAR ITS BOUNDARY/ or
-					 /0R MATRIX ALGORITHMICALLY SINGULAR/ or
-					 /0S MATRIX ALGORITHMICALLY SINGULAR/ ) {
-					$passed_picky = 0;
-					last;
+			if ((defined $minimization_message -> [$probnum-1]) and
+				(defined $minimization_message -> [$probnum-1][0])){
+				for ( @{$minimization_message -> [$probnum-1][0]} ) {
+					if ( /0COVARIANCE STEP ABORTED/ or
+						 /0PROGRAM TERMINATED BY OBJ/ or
+						 /0ESTIMATE OF THETA IS NEAR THE BOUNDARY AND/ or
+						 /0PARAMETER ESTIMATE IS NEAR ITS BOUNDARY/ or
+						 /0R MATRIX ALGORITHMICALLY SINGULAR/ or
+						 /0S MATRIX ALGORITHMICALLY SINGULAR/ ) {
+						$passed_picky = 0;
+						last;
+						
+					}
 				}
 			}
 		}
@@ -1858,14 +1863,12 @@ sub store_results_old_run
 		 picky => { isa => 'Bool', default => 0, optional => 1 },
 		 run_no => { isa => 'Int', optional => 0 },
 		 tries => { isa => 'Int', optional => 0 },
-		 retries_probnum => { isa => 'Int', optional => 0 },
 		 queue_info_ref => { isa => 'HashRef', optional => 0 }
 	);
 	my $retries = $parm{'retries'};
 	my $picky = $parm{'picky'};
 	my $run_no = $parm{'run_no'};
 	my $tries = $parm{'tries'};
-	my $retries_probnum = $parm{'retries_probnum'};
 	my $queue_info_ref = $parm{'queue_info_ref'};
 
 	my $model = $queue_info_ref->{'model'};
@@ -1893,15 +1896,16 @@ sub store_results_old_run
 		$output_file -> _read_problems;    
 		trace(tool => 'modelfit', message => "parsed NONMEM output file ".$output_file->filename(), level => 2);
 		
+		my $evaluation_probnum = $output_file->get_estimation_evaluation_problem_number(); #if neg then no est step run
+
 		$queue_info_ref -> {'raw_results'} -> [$tries] = $raw_results_row;
 		$queue_info_ref -> {'raw_nonp_results'} -> [$tries] = $nonp_row;
 		foreach my $category ( 'minimization_successful', 'covariance_step_successful',
 							   'covariance_step_warnings', 'estimate_near_boundary',
 							   'significant_digits', 'ofv' ){
-			my $index = ($retries_probnum-1);
-			$index = 0 if ($index < 0); #no relevant estimation to check anyway
+			my $index = (abs($evaluation_probnum)-1);
 			$run_results -> [$tries] -> {$category} = $output_file -> get_single_value(attribute => $category,
-																						  problem_index => $index);
+																					   problem_index => $index);
 		}
 
 		$run_results -> [$tries] -> {'pass_picky'} = 0;
@@ -1913,7 +1917,7 @@ sub store_results_old_run
 		}else{
 			$run_results -> [$tries] -> {'pass_picky'} = passed_picky(minimization_successful => $output_file -> minimization_successful(),
 																	  minimization_message => $output_file -> minimization_message(),
-																	  probnum => $retries_probnum,
+																	  probnum => $evaluation_probnum,
 																	  picky => $picky);
 		}
 		$output_file -> flush;
@@ -1943,18 +1947,24 @@ sub maxeval_exceeded
 	#static no shift
 	my %parm = validated_hash(\@_,
 							  output => { isa => 'output', optional => 0 },
-							  retries_probnum => { isa => 'Int', optional => 0 }
+							  probnum => { isa => 'Int', optional => 0 }
 		);
 	my $output = $parm{'output'};
-	my $retries_probnum = $parm{'retries_probnum'};
+	my $probnum = $parm{'probnum'};
 
 	my $value = 0;
 
-	if ($output-> parsed_successfully() and defined $output-> problems and
-		$retries_probnum > 0){
-		for ( @{$output -> minimization_message() -> [($retries_probnum-1)][0]} ) {
+	if ($output-> parsed_successfully() and (defined $output-> problems) and
+		($probnum > 0)
+		and (defined $output -> minimization_message()) and 
+		(defined $output -> minimization_message()->[($probnum-1)]) and
+		(defined $output -> minimization_message()->[($probnum-1)][0])
+		){
+		for ( @{$output -> minimization_message() -> [($probnum-1)][0]} ) {
 			if ( /\s*MAX. NO. OF FUNCTION EVALUATIONS EXCEEDED\s*/) {
-				$value = $output -> get_single_value(attribute=> 'feval');
+				$value = $output -> get_single_value(attribute=> 'feval',
+													 problem_index => ($probnum-1),
+													 subproblem_index => 0);
 				last;
 			}
 		}
@@ -1967,22 +1977,27 @@ sub hessian_error
 	#static no shift
 	my %parm = validated_hash(\@_,
 							  output => { isa => 'output', optional => 0 },
-							  retries_probnum => { isa => 'Int', optional => 0 }
+							  probnum => { isa => 'Int', optional => 0 }
 		);
 	my $output = $parm{'output'};
-	my $retries_probnum = $parm{'retries_probnum'};
+	my $probnum = $parm{'probnum'};
 
 	my $value = 0;
 
-	if ($output-> parsed_successfully() and defined $output-> problems and
-		$retries_probnum > 0){
-		my $line = join(' ',@{$output -> minimization_message() -> [($retries_probnum-1)][0]});
+	if ($output-> parsed_successfully() and (defined $output-> problems) and
+		($probnum > 0 )
+		and (defined $output -> minimization_message()) and 
+		(defined $output -> minimization_message()->[($probnum-1)]) and
+		(defined $output -> minimization_message()->[($probnum-1)][0])
+		){
+		my $line = join(' ',@{$output -> minimization_message() -> [($probnum-1)][0]});
 		if ($line =~ /\s*NUMERICAL HESSIAN OF OBJ. FUNC. FOR COMPUTING CONDITIONAL ESTIMATE\s*IS NON POSITIVE DEFINITE\s*/){
 			$value = 1;
 		}
 	}
 	return $value;
 }
+
 
 sub significant_digits_accepted
 {
@@ -2019,29 +2034,33 @@ sub local_minimum
 							  reduced_model_ofv => { isa => 'Maybe[Num]', optional => 0 },
 							  have_accepted_run => { isa => 'Bool', optional => 0 },
 							  try => { isa => 'Int', optional => 0 },
+							  probnum=> { isa => 'Int', optional => 0 },
 	);
 	my $run_results = $parm{'run_results'};
 	my $accepted_ofv_difference = $parm{'accepted_ofv_difference'};
 	my $reduced_model_ofv = $parm{'reduced_model_ofv'};
 	my $have_accepted_run = $parm{'have_accepted_run'};
 	my $try = $parm{'try'};
+	my $probnum = $parm{'probnum'};
 
 	croak("input error local_minimum accepted_ofv_difference $accepted_ofv_difference") if ($accepted_ofv_difference < 0);
 
 	my $is_local_minimum = 0;
 
-	if ((defined $run_results->[$try]) and  (defined $run_results->[$try]->{'ofv'})){
-		if ((defined $reduced_model_ofv)  and
-			($reduced_model_ofv < ($run_results->[$try]->{'ofv'} - $accepted_ofv_difference))){
-			$is_local_minimum = 1;
-		}else {
-			if (($try > 0) and (not $have_accepted_run)){
-				for (my $tr=0; $tr < $try; $tr++){
-					if (defined $run_results -> [$tr] -> {'ofv'}
-						and ($run_results -> [$tr] -> {'ofv'}<
-							 ($run_results->[$try]->{'ofv'} - $accepted_ofv_difference))){
-						$is_local_minimum = 2;
-						last;
+	if ($probnum > 0){
+		if ((defined $run_results->[$try]) and  (defined $run_results->[$try]->{'ofv'})){
+			if ((defined $reduced_model_ofv)  and
+				($reduced_model_ofv < ($run_results->[$try]->{'ofv'} - $accepted_ofv_difference))){
+				$is_local_minimum = 1;
+			}else {
+				if (($try > 0) and (not $have_accepted_run)){
+					for (my $tr=0; $tr < $try; $tr++){
+						if (defined $run_results -> [$tr] -> {'ofv'}
+							and ($run_results -> [$tr] -> {'ofv'}<
+								 ($run_results->[$try]->{'ofv'} - $accepted_ofv_difference))){
+							$is_local_minimum = 2;
+							last;
+						}
 					}
 				}
 			}
@@ -2124,7 +2143,7 @@ sub retries_decide_what_to_do
 {
 	#static no shift
 	my %parm = validated_hash(\@_,
-							  retries_probnum => { isa => 'Int', optional => 0 },
+							  estimation_step_run => { isa => 'Bool', optional => 0 },
 							  minimization_successful => { isa => 'Bool', optional => 0 },
 							  local_minimum => { isa => 'Int', optional => 0 },
 							  hessian_error => { isa => 'Bool', optional => 0 },
@@ -2143,7 +2162,7 @@ sub retries_decide_what_to_do
 							  try => { isa => 'Int', optional => 0 },
 							  have_accepted_run => { isa => 'Bool', optional => 0 },
 		);
-	my $retries_probnum = $parm{'retries_probnum'};
+	my $estimation_step_run = $parm{'estimation_step_run'};
 	my $minimization_successful = $parm{'minimization_successful'};
 	my $local_minimum = $parm{'local_minimum'};
 	my $hessian_error = $parm{'hessian_error'};
@@ -2183,13 +2202,13 @@ sub retries_decide_what_to_do
 	for (my $i=0 ; $i<1; $i++){
 		#single round loop to be able to use last when some condition is met
 
-		unless ($retries_probnum > 0){
-			#unless retries_probnum > 0 we have no estimation to evaluate
+		unless ($estimation_step_run){
+			#unless estimation step is run we have no estimation to evaluate
 			$reason = 'no estimation to evaluate';
 			last;
 		}
-		if (($try >= $min_retries) and ($try >= $max_retries)){
-			#not allowed to do more retries
+		if (($try >= $max_retries) and ($try >=  $min_retries)){
+			#not allowed to do more retries 
 			$reason = 'reached max_retries';
 			last;
 		}
@@ -2232,15 +2251,18 @@ sub retries_decide_what_to_do
 			last;
 		}
 
-		#if we get this far then run is accepted, but may still need retry
+		#if we get this far then run is accepted, but may still need retry because of min_retries
 		$run_is_accepted = 1;
+		$reason = 'run is accepted';
+	}
+
+	#min_retries has precedence over everything, check outside loop so that is not skipped by 'last' break above
+	unless ($do_retry){
 		if ($try <  $min_retries){
 			$do_retry = 1;
 			$do_tweak_inits = 1;
-			$reason = 'min_retries not reached';
-			last;
+			$reason = 'min_retries not reached'; 
 		}
-		$reason = 'run is accepted';
 	}
 
 	if ($do_retry and (not ($do_cut_thetas or $do_tweak_inits))){
@@ -2331,7 +2353,6 @@ sub restart_needed
 	#this is 1 for regular one $PROB with estimation
 	# 2 if two $PROB with $PRIOR TNPRI in first
 	# 0 if no estimation (no $EST, or $EST MAXEVAL=0)
-	my $retries_probnum = $candidate_model->get_retries_problem_number();
 
 	my $failure;
 	my $failure_mess;
@@ -2343,8 +2364,10 @@ sub restart_needed
 		#reading raw results to memory
 		trace(tool => 'modelfit',
 			  message => "Found stats-runs.csv, will read output psn.lst if it exists to put in raw_results.", level => 2);
-		$self->store_results_old_run( retries => $retries,picky => $picky,run_no => $run_no,tries => ${$tries},
-									  retries_probnum => $retries_probnum, queue_info_ref => $queue_info_ref);
+		$self->store_results_old_run( retries => $retries,picky => $picky,
+									  run_no => $run_no,
+									  tries => ${$tries},
+									  queue_info_ref => $queue_info_ref);
 		return(0); #no restart needed when stats-runs exist
 	}
 	unless (-e 'psn.lst'){
@@ -2376,7 +2399,9 @@ sub restart_needed
 	my ( $output_file );
 	$output_file = $candidate_model -> outputs -> [0];
 	$output_file -> abort_on_fail($self->abort_on_fail);
-	$output_file -> _read_problems;    
+	$output_file -> _read_problems;
+	my $evaluation_probnum = $output_file->get_estimation_evaluation_problem_number(); #if neg then no est step run
+
 	trace(tool => 'modelfit', message => "parsed NONMEM output file ".$output_file->filename(), level => 2);
 
 	($stopmess,$eta_shrinkage_name,$iwres_shrinkage_name) = move_retry_files(filenames => \@outputfilelist,
@@ -2438,12 +2463,15 @@ sub restart_needed
 
 	my $model_crashed = 0;
 	my $restart_possible = 0;
-	$model_crashed = 1 if (( $output_file -> parsed_successfully() and
+	my $maxevals_exceeded = 0;
+	if (( $output_file -> parsed_successfully() and
 							 not defined $output_file -> problems ) or
-						   (not $output_file -> parsed_successfully()) );
-	
-	my $maxevals_exceeded = maxeval_exceeded(output => $output_file,
-											 retries_probnum => $retries_probnum); #return 0 if not, actual evals if yes
+						   (not $output_file -> parsed_successfully()) ){
+		$model_crashed = 1;
+	}
+
+	$maxevals_exceeded = maxeval_exceeded(output => $output_file,
+										  probnum => $evaluation_probnum); #return 0 if not, actual evals if yes
 
 	if (($maxevals > 0) and (not $cut_thetas_maxevals) and $maxevals_exceeded){
 		if (defined $queue_info_ref -> {'evals'}){
@@ -2551,40 +2579,43 @@ sub restart_needed
 	#reset number of evals
 	$queue_info_ref -> {'evals'}=0;
 	
+
+
+
 	# log the stats of this run
 
 	foreach my $category ( 'minimization_successful', 'covariance_step_successful',
 						   'covariance_step_warnings', 'estimate_near_boundary',
 						   'significant_digits', 'ofv' ){
-		my $index = ($retries_probnum-1);
-		$index = 0 if ($index < 0); #no relevant estimation to check anyway
+		my $index = (abs($evaluation_probnum)-1);
 		$run_results -> [${$tries}] -> {$category} = $output_file -> get_single_value(attribute => $category,
 																					  problem_index => $index);
 	}
 
 	$run_results -> [${$tries}] -> {'pass_picky'} = passed_picky(minimization_successful => $output_file -> minimization_successful(),
 																 minimization_message => $output_file -> minimization_message(),
-																 probnum => $retries_probnum,
+																 probnum => $evaluation_probnum,
 																 picky => $picky);
 
 	my $round_error = 0;
-	$round_error = 1 if (($retries_probnum > 0) and
+	$round_error = 1 if (($evaluation_probnum > 0) and
 						 $output_file -> get_single_value(attribute => 'rounding_errors',
-														  problem_index => ($retries_probnum-1)));
+														  problem_index => (abs($evaluation_probnum)-1)));
 
 	my $sigdigs_accepted = significant_digits_accepted(run_results => $run_results,
 													   significant_digits_accept => $significant_digits_accept,
 													   try => ${$tries});
 
-	my $hessian_error = hessian_error(output => $output_file,  retries_probnum => $retries_probnum);
+	my $hessian_error = hessian_error(output => $output_file,  probnum => $evaluation_probnum);
 
 	my $local_minimum = local_minimum(run_results => $run_results,
 									  reduced_model_ofv => $self->reduced_model_ofv,
 									  accepted_ofv_difference => $self->accepted_ofv_difference,
 									  have_accepted_run => $queue_info_ref -> {'have_accepted_run'},
-									  try => ${$tries});
+									  try => ${$tries},
+									  probnum => $evaluation_probnum);
 	
-	my $do_this = retries_decide_what_to_do( retries_probnum => $retries_probnum,
+	my $do_this = retries_decide_what_to_do( estimation_step_run => ($evaluation_probnum > 0),
 											 minimization_successful => $run_results -> [${$tries}] -> {'minimization_successful'},
 											 local_minimum => $local_minimum,
 											 hessian_error => $hessian_error,
@@ -2621,10 +2652,23 @@ sub restart_needed
 		trace(tool => 'modelfit', message => "done cut_thetas", level => 1);
 	}
 	if ($do_this->{'tweak_inits'}){
-		$candidate_model -> problems->[$retries_probnum-1] -> set_random_inits ( degree => $self->degree ,
-																				 basic_model => $model,
-																				 problem_index => ($retries_probnum-1));
-		trace(tool => 'modelfit', message => "done tweak_inits", level => 2);
+		my $did_tweak = 0;
+		#loop backwards until found params to tweak
+		for (my $index = (abs($evaluation_probnum)-1); $index >= 0; $index--){
+			$did_tweak = $candidate_model -> problems->[$index] -> set_random_inits ( degree => $self->degree ,
+																					  basic_model => $model,
+																					  problem_index => $index);
+			if ($did_tweak){
+				trace(tool => 'modelfit', message => "done tweak_inits", level => 2);
+				last;
+			}
+		}
+		unless ($did_tweak){
+			#found no params to tweak. Unless did cut thetas or reset msfo, i.e. modified model, then turn off retry
+			unless ($do_this->{'cut_thetas'} or $do_this->{'reset_msfo'}){
+				$do_this->{'retry'} = 0;
+			}
+		}
 	}
 
 	if ($do_this->{'retry'}){

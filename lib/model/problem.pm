@@ -507,6 +507,8 @@ sub set_random_inits
 	my $basic_model = $parm{'basic_model'};
 	my $problem_index = $parm{'problem_index'};
 
+	my $any_set = 0;
+
 	if (($degree >= 1) or ($degree <= 0)){
 		croak("Illegal input to set_random_inits, degree $degree is not between 0 and 1");
 	}
@@ -548,8 +550,10 @@ sub set_random_inits
 			}else{
 				$record -> set_random_inits(degree => $degree);
 			}
+			$any_set = 1;
 		}
 	}
+	return $any_set;
 }
 
 sub record_count

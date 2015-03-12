@@ -477,4 +477,13 @@ sub is_equal
     }
 }
 
+sub print
+{
+    my $array = shift;
+
+    foreach $e (@$array) {
+        print "$e\n";
+    }
+}
+
 1;

@@ -159,7 +159,6 @@ sub triangular_symmetric_to_full
     return $A;
 }
 
-
 sub mvnpdf_cholesky
 {
     my $covar=shift;
@@ -246,6 +245,37 @@ sub transpose
         }
     }
 }
+
+sub copy_and_reorder_square_matrix
+{
+	#copy the matrix while changing order of rows and columns according to order array
+
+    my $A = shift;
+	my $order = shift;
+
+    my $ncol= scalar(@{$A});
+    my $mrow= scalar(@{$A->[0]});
+	unless ($ncol >0 and ($ncol == $mrow) and ($ncol == scalar(@{$order}))){
+		print "\norder ".join(' ',@{$order})."\n";
+		foreach my $line (@{$A}){
+			print join(' ',@{$line})."\n";
+		}
+		croak("input error copy_and_rearrange_col_rows") ;
+	}
+	my @copy=();
+	for (my $i=0; $i<$ncol; $i++){
+		push(@copy,[0 x $ncol]);
+		my $userow = $order->[$i];
+		croak("error index $userow in order") if ($userow >= $ncol);
+		for (my $j=0; $j<$ncol; $j++){
+			my $usecol = $order->[$j];
+			croak("error index $usecol in order") if ($usecol >= $ncol);
+			$copy[$i][$j] = $A->[$userow][$usecol];
+		}
+	} 
+	return \@copy;
+}
+
 
 sub is_symmetric
 {
@@ -501,13 +531,14 @@ sub eigenvalue_decomposition
                 }
             }
         }
+
         my $theta;
         my $divisor = $eigenValMatrix[$maxInd2][$maxInd2] - $eigenValMatrix[$maxInd1][$maxInd1];
         if ($divisor == 0) {
             if ($eigenValMatrix[$maxInd1][$maxInd2] > 0) {
-                $theta = atan(inf()) / 2;
+                $theta = pi / 4;
             } else {
-                $theta = atan(-inf()) / 2;
+                $theta = -pi / 4;
             }
         } else {
             $theta = (atan(2 * $eigenValMatrix[$maxInd1][$maxInd2] / ($eigenValMatrix[$maxInd2][$maxInd2] - $eigenValMatrix[$maxInd1][$maxInd1]))) / 2;

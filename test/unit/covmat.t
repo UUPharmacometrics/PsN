@@ -27,7 +27,7 @@ sub get_cov
 	return \@lines;
 }
 
-my $command = get_command('covmat') . " -rawres_input=$file_dir/rawres_for_get_rawres_params.csv -raw_results_structure=$file_dir/rawres_for_get_rawres_params_structure -no-header > $outfile";
+my $command = get_command('covmat') . " -rawres_input=$file_dir/rawres_for_get_rawres_params.csv -raw_results_structure=$file_dir/rawres_for_get_rawres_params_structure -no-header -comma > $outfile";
 chdir($tempdir);
 print "Running $command\n";
 my $rc = system($command);

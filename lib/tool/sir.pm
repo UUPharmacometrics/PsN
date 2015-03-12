@@ -1288,8 +1288,80 @@ sub prepare_results
 	$covar_section{'values'}=$resulthash->{'covar'};
 	push( @{$self -> results->[0]{'own'}},\%covar_section );
 
+	my $basename = $model->create_output_filename();
+	$basename =~ s/\.lst$/_sir.cov/;
+	my( $ldir, $name ) = OSspecific::absolute_path( $self ->directory(),$basename);
+	my $output_covar_file = $ldir.$name;
+	my @order=();
+	my @coords=();
+	foreach my $param ('theta','sigma','omega'){
+		for (my $i=0; $i<scalar(@{$parameter_hash->{'coordinate_strings'}}); $i++){
+			if ($parameter_hash->{'param'}->[$i] eq $param){
+				push(@coords, $parameter_hash->{'coordinate_strings'}->[$i]) ;
+				push(@order, $i);
+			}
+		}
+	}
+	my $copy = linear_algebra::copy_and_reorder_square_matrix($resulthash->{'covar'},\@order);
+	my $formatted = format_covmatrix(matrix => $copy, header => \@coords, comma => 0, print_labels => 1);
+	open ( RES, ">" . $output_covar_file );
+	foreach my $line (@{$formatted}){
+		print RES $line;
+	}
+	close(RES);
+}
 
+sub format_covmatrix
+{
+	my %parm = validated_hash(\@_,
+							  matrix => { isa => 'ArrayRef', optional => 0 },
+							  header => { isa => 'ArrayRef', optional => 0 },
+							  print_labels => { isa => 'Bool', optional => 0 },
+							  comma => { isa => 'Bool', optional => 0 },
+		);
+	my $matrix = $parm{'matrix'};
+	my $header = $parm{'header'};
+	my $print_labels = $parm{'print_labels'};
+	my $comma = $parm{'comma'};
+	
+	my @output = ();
 
+	if ($print_labels){
+		my $line;
+		if ($comma){
+			$line = '"NAME"';
+		}else{
+			$line = ' NAME             ';
+		}
+		foreach my $head (@{$header}){
+			if ($comma){
+				$line .= ',"'.$head.'"';
+			}else{
+				$line .= sprintf("%-15s",$head);
+			}
+		}
+		push (@output,$line."\n");
+	}
+	for (my $row=0; $row< scalar(@{$matrix}); $row++){
+		my $line = '';
+		if ($print_labels){
+			if ($comma){
+				$line = '"'.$header->[$row].'"';
+			}else{
+				$line = sprintf(" %-15s",$header->[$row]);
+			}
+		}
+		for (my $col=0; $col< scalar(@{$matrix}); $col++){
+			if ($comma){
+				$line .= ',' if (($col > 0) or ($print_labels));
+				$line .= $matrix->[$row][$col];
+			}else{
+				$line .= sprintf(" %14.7E",$matrix->[$row][$col]);
+			}
+		}
+		push (@output,$line."\n");
+	}
+	return \@output;
 }
 
 no Moose;

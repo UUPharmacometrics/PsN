@@ -27,9 +27,10 @@ my %required_options = ('rawres_input:s' => '');
 my %optional_options = (
 	'offset_rawres:i' => '',
 	'in_filter:s' => '',
-	'parameters:s' => '',
+#	'parameters:s' => '',
 	'raw_results_structure:s' => '',
-	'header!' => ''
+	'header!' => '',
+	'comma' => '',
 );
 
 my $min_samples=2;
@@ -57,9 +58,11 @@ $help_text{Examples} = <<'EOF';
 	give a model file name on the command-line, or set option raw_results_structure
 
     Examples:
-    
+
+    Use parameter labels from the raw_results file:
     covmat -rawres_input=bootstrap_dir33/raw_results_run33.csv
 
+	Use NONMEM's generic labels:
 	covmat -rawres_input=raw_results_run5.csv run5.mod
 
 EOF
@@ -97,7 +100,7 @@ $help_text{-rawres_input} = <<'EOF';
 
       A raw_results file. After filtering and skipping offset it must contain at least 2 samples.
       The labels for  THETA/OMEGA/SIGMA 
-      in the file must match the labels in the model given as input, and
+      in the file must match the labels in the model given as input, if any, and
       the theta columns must be directly followed by the omega columns 
       which must be directly followed by the sigma columns. Note that is is 
       possible to generate a file with initial parameter estimates outside of PsN, 
@@ -117,15 +120,24 @@ $help_text{-header} = <<'EOF';
       By default the covariance matrix is printed with headers. Setting -no-header skips the headers in the output.
 EOF
 
-$help_text{-parameters} = <<'EOF';
-      -parameters=comma-separated list of parameters
+$help_text{-comma} = <<'EOF';
+      -comma
 
-      Default is -parameters=theta,omega,sigma
-      A comma-separated list of the sets of parameters to include in the computations, and their order.
-	  Only theta, omega and sigma may be included, all lower case and without indices.
-      Examples: -parameters=theta,sigma,omega   
-	            -parameters=theta
+      Default no set.
+      By default the covariance matrix is printed with space separation and fixed width of the numeric fields.
+	Setting -comma changes the format to comma-separated variable width.
 EOF
+
+#this is not yet implemented for the values, only for the headers
+#$help_text{-parameters} = <<'EOF';
+#      -parameters=comma-separated list of parameters
+#
+#      Default is -parameters=theta,omega,sigma
+#      A comma-separated list of the sets of parameters to include in the computations, and their order.
+#	  Only theta, omega and sigma may be included, all lower case and without indices.
+#      Examples: -parameters=theta,sigma,omega   
+#	            -parameters=theta
+#EOF
 
 $help_text{-in_filter} = <<'EOF';
       -in_filter=comma-separated list of conditions
@@ -175,16 +187,21 @@ unless (-e $options{'rawres_input'}){
 }
 
 my @list_parameters=('theta','omega','sigma');
-if (defined $options{'parameters'}){
-	@list_parameters=split(/,/,$options{'parameters'});
-	my $num = scalar(@list_parameters);
-	if ($num < 1 or $num > 3){
-		die "Error option parameters, $num items found after splitting ".$options{'parameters'}." on comma\n";
-	}
-	for (my $i=0; $i< $num; $i++){
-		unless ($list_parameters[$i] =~ /^(theta|omega|sigma)$/){
-			die "Unrecognized item ".$list_parameters[$i]." in option -parameters\n";
+
+if (0){
+	#this must be disabled, not implemented resorting of matrix yet
+	if (defined $options{'parameters'}){
+		@list_parameters=split(/,/,$options{'parameters'});
+		my $num = scalar(@list_parameters);
+		if ($num < 1 or $num > 3){
+			die "Error option parameters, $num items found after splitting ".$options{'parameters'}." on comma\n";
 		}
+		for (my $i=0; $i< $num; $i++){
+			unless ($list_parameters[$i] =~ /^(theta|omega|sigma)$/){
+				die "Unrecognized item ".$list_parameters[$i]." in option -parameters\n";
+			}
+		}
+
 	}
 
 }
@@ -262,15 +279,22 @@ foreach my $param (@list_parameters){
 my $resulthash = tool::sir::empirical_statistics( sampled_params_arr => $sampled_params_arr,
 												  labels_hash => $labels_hash);
 
-#header items must be enclosed with double quotes since some contain comma, e.g. OMEGA(1,1)
 
-unless (defined $options{'header'} and (not $options{'header'})){
-	print '"NAME","'.join('","',@headers).'"'."\n";
+
+my $print_header = 1;
+$print_header = 0 if (defined $options{'header'} and (not $options{'header'}));
+
+my $comma = 0;
+$comma = 1 if (defined $options{'comma'} and ($options{'comma'}));
+
+
+my $formatted = tool::sir::format_covmatrix(matrix => $resulthash->{'covar'}, 
+											header => \@headers, 
+											comma => $comma, 
+											print_labels => $print_header);
+
+foreach my $line (@{$formatted}){
+	print $line;
 }
-for (my $i=0; $i< scalar(@{$resulthash->{'covar'}}); $i++){
-	unless (defined $options{'header'} and (not $options{'header'})){
-		print '"'.$headers[$i].'",'
-	}
-	print join(',',@{$resulthash->{'covar'}->[$i]})."\n";
-}
+
 

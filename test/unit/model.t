@@ -9,12 +9,19 @@ use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages
 
 use model;
+use PsN;			# Need to set PsN version as this is a global variable
+$PsN::nm_major_version = 7;
+my $ver = $PsN::nm_major_version;
 
 my $modeldir = $includes::testfiledir;
 
-my $model = model->new(filename => "$modeldir/pheno.mod");
+my $model = model->new(filename => "$modeldir/warfarin_saem_noest.mod", ignore_missing_data => 1);
+#print "is est ".$model->is_estimation(problem_number => 1)."\n";
+is ($model->get_estimation_evaluation_problem_number,-1,"get_estimation_evaluation_problem_number saem-foci");
 
-is ($model->get_retries_problem_number,1,"get_retries_problem_number");
+$model = model->new(filename => "$modeldir/pheno.mod");
+
+is ($model->get_estimation_evaluation_problem_number,1,"get_estimation_evaluation_problem_number");
 
 is (scalar(@{$model->problems}), 1, "Check number of problems");
 my $problem = $model->problems->[0];
@@ -152,9 +159,6 @@ is($arr->[3]->{'omega'}->{'IVV'},3.4,'method get_rawres_params, omega 1 b');
 
 # set_maxeval_zero
 
-use PsN;			# Need to set PsN version as this is a global variable
-$PsN::nm_major_version = 7;
-my $ver = $PsN::nm_major_version;
 
 is ($model->get_option_value(record_name => 'estimation', option_name => 'MAXEVALS'), 9997, "before set_maxeval_zero");
 $model->set_maxeval_zero;
@@ -212,7 +216,7 @@ $dummy->filename('model');
 is($dummy->create_output_filename, 'model.lst', "create_output_filename no extension");
 
 $model = model->new(filename => "$modeldir/mox_sir_block2.mod");
-is ($model->get_retries_problem_number,1,"get_retries_problem_number");
+is ($model->get_estimation_evaluation_problem_number,1,"get_estimation_evaluation_problem_number");
 is_deeply($model->fixed_or_same(parameter_type => 'theta')->[0],[0,0,0,0,0],'fixed or same theta ');
 is_deeply($model->fixed_or_same(parameter_type => 'omega')->[0],[0,0,0,0],'fixed or same omega ');
 is_deeply($model->same(parameter_type => 'omega')->[0],[0,0,0,0],'same omega 1');
@@ -226,7 +230,7 @@ is_deeply($model->same(parameter_type => 'omega')->[0],[0,0,0,0,0,1,0,1],'same o
 is_deeply($model->same(parameter_type => 'sigma')->[0],[0],'same sigma 2');
 
 $model = model->new(filename => "$modeldir/tnpri.mod");
-is ($model->get_retries_problem_number,0,"get_retries_problem_number");
+is ($model->get_estimation_evaluation_problem_number,-1,"get_estimation_evaluation_problem_number");
 
 $model = model->new(filename => "$modeldir/twoprobmsf_match.mod", ignore_missing_data =>1);
 is ($model->msfo_to_msfi_mismatch,0,"msfo_to_msfi_mismatch false");

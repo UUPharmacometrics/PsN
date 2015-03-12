@@ -319,7 +319,8 @@ if ($modelfit->clean > 2){
 }
 
 my @run_results=();
-my $probnum = $main_model->get_retries_problem_number();
+#probnum is negative if not running estimation
+my $probnum = $mod_array->[0]->get_estimation_evaluation_problem_number(); #important to use model that is run to read from output
 foreach my $mod (@{$mod_array}){
 	if ($mod->is_run){
 		my $pass_picky = tool::modelfit::passed_picky(minimization_successful => $mod->outputs->[0]->minimization_successful,

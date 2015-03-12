@@ -8,13 +8,13 @@
 \maketitle
 
 \section{Introduction}
-In order to increase the chance of obtaining successful covariance matrix computation and parameter estimation, the precond script creates and runs a model that is mathematically equivalent to the original mode but less sensitive to the computational (rounding) error.  We refer this process as preconditioning and the created model as preconditioned model.
+In order to increase the chance of obtaining successful covariance matrix computation and parameter estimation, the precond script creates and runs a model that is mathematically equivalent to the original model but less sensitive to the computational (rounding) error.  We refer this process as preconditioning and the created model as preconditioned model.
 
 Preconditioning is designed to save the covariance step that has failed with an error message such as "R MATRIX ALGORITHMICALLY SINGULAR" or "R MATRIX ALGORITHMICALLY NON-POSITIVESEMIDEFINITE"). It is also observed that preconditioning can help avoid failure of the minimization due to rounding error.
 
-Preconditioning will automatically search through the latest modelfit run directory to find .rmt file containing R-matrix created upon the failure of the covariance step and use it as a preconditioning matrix.  Obtained R-matrix is decomposed using eigendecomposition and used to linearly re-parameterise the model in a way that the R-matrix of the preconditioned model is close to an identity matrix.  This will avoid the R-matrix appearing to be non-positive semi-definite due to the computational instability.  The precond script will initiate the modelfit of the preconditioned model and then convert back the obtained estimated parameter and covariance matrix to the parameter scale of the original model.
+Preconditioning will automatically first run the model normally and get the R-matrix from that run using that to precondition the model. Obtained R-matrix is decomposed using eigendecomposition and used to linearly re-parameterise the model in a way that the R-matrix of the preconditioned model is close to an identity matrix.  This will avoid the R-matrix appearing to be non-positive semi-definite due to the computational instability.  The precond script will initiate the modelfit of the preconditioned model and then convert back the obtained estimated parameter and covariance matrix to the parameter scale of the original model.
 
-Preconditioning can also be used for the modelfits with successful covariance step to verify that the resulting computation is not influenced by the computational error.  (In this case, PRINT=R option should be called on the \$COV line to obtain .rmt matrix.)
+Preconditioning can also be used for the modelfits with successful covariance step to verify that the resulting computation is not influenced by the computational error.
 
 Preconditioning of the model will only help to stabilise the computation so that if the model is fundamentally unidentifiable (or have other issues) then the covariance step of the preconditioned model should not be successful.
 

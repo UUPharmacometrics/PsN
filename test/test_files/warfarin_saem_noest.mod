@@ -1,0 +1,40 @@
+;; Based on: warfarin_addprop_OD.mod
+$PROBLEM    SAEM,No misspec,15%CV
+$INPUT      ID TIME NR DV MDV AMT
+$DATA      ../../m1/mc-sim-1.dat IGNORE=@
+$SUBROUTINE ADVAN4 TRANS1
+$PK 
+
+ MU_1 = LOG(THETA(1))
+ MU_2 = LOG(THETA(2))
+ MU_3 = LOG(THETA(3))
+ MU_4 = LOG(THETA(4))
+ MU_5 = LOG(THETA(5))
+ 
+ K    = EXP(MU_1+ETA(1))
+ KA   = EXP(MU_2+ETA(2))
+ K23  = EXP(MU_3+ETA(3))
+ K32  = EXP(MU_4+ETA(4))
+ V2   = EXP(MU_5+ETA(5))
+ S2   =  V2
+ 
+$ERROR 
+ 
+ IPRED = F
+ Y     = IPRED * (1+ EPS(1)) + EPS(2)
+
+$THETA  (0,0.02) ; Ke
+$THETA  (0,1) ; Ka
+$THETA  (0,0.06) ; K12
+$THETA  (0,0.06) ; K21
+$THETA  (0,8) ; V
+$OMEGA  0.1
+$OMEGA  0.0225  FIX
+$OMEGA  0.0225  FIX
+$OMEGA  0.0225  FIX
+$OMEGA  0.0225  FIX
+;PK
+$SIGMA  0.01  ; 3Prop error
+$SIGMA  0  FIX  ; 4Add error
+$ESTIMATION METHOD=SAEM AUTO=1
+$ESTIMATION METH=1 MAX=0 INTER ; FOCEI

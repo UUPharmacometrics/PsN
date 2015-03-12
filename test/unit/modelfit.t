@@ -308,15 +308,24 @@ cmp_ok($str,'eq','run1-2.msf_ETAS','get retry name 5');
 
 
 $outobj = output -> new ('filename' => $output_files.'special_mod/maxeval_exceeded.lst');
-cmp_ok(tool::modelfit::maxeval_exceeded(output => $outobj, retries_probnum => 1),'==',15,'modelfit maxeval_exceeded 1');
+cmp_ok(tool::modelfit::maxeval_exceeded(output => $outobj, probnum => 1),'==',15,'modelfit maxeval_exceeded 1');
 
-cmp_ok(tool::modelfit::hessian_error(output => $outobj, retries_probnum => 1),'==',0,'modelfit hessian_error 1');
+cmp_ok(tool::modelfit::hessian_error(output => $outobj, probnum => 1),'==',0,'modelfit hessian_error 1');
+
 
 $outobj = output -> new ('filename' => $output_files.'onePROB/oneEST/noSIM/warfarin_noext.lst');
-cmp_ok(tool::modelfit::maxeval_exceeded(output => $outobj, retries_probnum => 1),'==',0,'modelfit maxeval_exceeded 2');
+cmp_ok(tool::modelfit::maxeval_exceeded(output => $outobj, probnum => 1),'==',0,'modelfit maxeval_exceeded 2');
+is($outobj->get_estimation_evaluation_problem_number(),1,'output get_estimation_evaluation_problem_numbers 1');
+
+$outobj = output -> new ('filename' => $output_files.'special_mod/warfarin_saem_noest.lst');
+cmp_ok(tool::modelfit::maxeval_exceeded(output => $outobj, probnum => 1),'==',0,'modelfit maxeval_exceeded 3');
+
+cmp_ok(tool::modelfit::hessian_error(output => $outobj, probnum => 1),'==',0,'modelfit hessian_error 3');
+is($outobj->get_estimation_evaluation_problem_number(),-1,'output get_estimation_evaluation_problem_numbers 3');
 
 $outobj = output -> new ('filename' => $output_files.'onePROB/oneEST/noSIM/hessian_error.lst');
-cmp_ok(tool::modelfit::hessian_error(output => $outobj, retries_probnum => 1),'==',1,'modelfit hessian_error 2');
+cmp_ok(tool::modelfit::hessian_error(output => $outobj, probnum => 1),'==',1,'modelfit hessian_error 2');
+is($outobj->get_estimation_evaluation_problem_number(),1,'output get_estimation_evaluation_problem_numbers 2');
 
 #significant_digits_accept
 @run_results=();
@@ -346,7 +355,8 @@ my $local_min = tool::modelfit::local_minimum(run_results => \@run_results,
 											  accepted_ofv_difference => 0.5, 
 											  reduced_model_ofv => 12.6,
 											  have_accepted_run => 0,
-											  try => 0);
+											  try => 0,
+											  probnum => 1);
 
 cmp_ok($local_min,'==',0,'local min accepted_ofv_diff ok');
 
@@ -354,15 +364,26 @@ $local_min = tool::modelfit::local_minimum(run_results => \@run_results,
 										   accepted_ofv_difference => 0, 
 										   reduced_model_ofv => 12.6,
 										   have_accepted_run => 0,
-										   try => 0);
+										   try => 0,
+										   probnum => 1);
 
 cmp_ok($local_min,'==',1,'local min accepted_ofv_diff not ok ');
 
 $local_min = tool::modelfit::local_minimum(run_results => \@run_results,
 										   accepted_ofv_difference => 0, 
+										   reduced_model_ofv => 12.6,
+										   have_accepted_run => 0,
+										   try => 0,
+										   probnum => 0);
+
+cmp_ok($local_min,'==',0,'local min probnum is 0 ');
+
+$local_min = tool::modelfit::local_minimum(run_results => \@run_results,
+										   accepted_ofv_difference => 0, 
 										   reduced_model_ofv => 15,
 										   have_accepted_run => 0,
-										   try => 1);
+										   try => 1,
+										   probnum => 1);
 
 cmp_ok($local_min,'==',2,'local min worse than prev run '); #local type 2
 
@@ -370,13 +391,14 @@ $local_min = tool::modelfit::local_minimum(run_results => \@run_results,
 										   accepted_ofv_difference => 1, 
 										   reduced_model_ofv => 15,
 										   have_accepted_run => 0,
-										   try => 1);
+										   try => 1,
+										   probnum => 1);
 
 cmp_ok($local_min,'==',0,'local min worse than prev run but accepted ok');
 
 
-#too low probnum
-my $ref = tool::modelfit::retries_decide_what_to_do( retries_probnum => 0,
+#too estimation step not run
+my $ref = tool::modelfit::retries_decide_what_to_do( estimation_step_run => 0,
 										   minimization_successful => 0,
 										   local_minimum => 0,
 										   hessian_error => 1,
@@ -402,7 +424,7 @@ cmp_ok($ref->{'run_is_accepted'},'==',0,'retries_decide_what_to_do is accepted 1
 cmp_ok($ref->{'message'},'eq','Not doing retry because no estimation to evaluate','retries_decide message');
 
 #max retries and min retries reached
-$ref = tool::modelfit::retries_decide_what_to_do( retries_probnum => 2,
+$ref = tool::modelfit::retries_decide_what_to_do( estimation_step_run => 1,
 										   minimization_successful => 0,
 										   local_minimum => 0,
 										   hessian_error => 1,
@@ -428,7 +450,7 @@ cmp_ok($ref->{'run_is_accepted'},'==',0,'retries_decide_what_to_do is accepted 2
 cmp_ok($ref->{'message'},'eq','Not doing retry because reached max_retries','retries_decide message');
 
 #not successful but min_retries reached and have old accepted run
-$ref = tool::modelfit::retries_decide_what_to_do( retries_probnum => 1,
+$ref = tool::modelfit::retries_decide_what_to_do( estimation_step_run => 1,
 										   minimization_successful => 0,
 										   local_minimum => 0,
 										   hessian_error => 0,
@@ -457,7 +479,7 @@ cmp_ok($ref->{'message'},'eq','Not doing retry because have accepted run from be
 
 # hessian error and handle
 
-$ref = tool::modelfit::retries_decide_what_to_do( retries_probnum => 1,
+$ref = tool::modelfit::retries_decide_what_to_do( estimation_step_run => 1,
 													 minimization_successful => 0,
 													 local_minimum => 0,
 													 hessian_error => 1,
@@ -485,7 +507,7 @@ cmp_ok($ref->{'message'},'eq','Doing retry because of hessian/round/maxevals ter
 
 # round_error and handle
 
-$ref = tool::modelfit::retries_decide_what_to_do( retries_probnum => 1,
+$ref = tool::modelfit::retries_decide_what_to_do( estimation_step_run => 1,
 													 minimization_successful => 0,
 													 local_minimum => 0,
 													 hessian_error => 0,
@@ -512,7 +534,7 @@ cmp_ok($ref->{'message'},'eq','Doing retry because of hessian/round/maxevals ter
 
 # maxevals and handle
 
-$ref = tool::modelfit::retries_decide_what_to_do( retries_probnum => 1,
+$ref = tool::modelfit::retries_decide_what_to_do( estimation_step_run => 1,
 													 minimization_successful => 0,
 													 local_minimum => 0,
 													 hessian_error => 0,
@@ -539,7 +561,7 @@ cmp_ok($ref->{'message'},'eq','Doing retry because of hessian/round/maxevals ter
 
 
 #tweak_inits turned off
-$ref = tool::modelfit::retries_decide_what_to_do( retries_probnum => 1,
+$ref = tool::modelfit::retries_decide_what_to_do( estimation_step_run => 1,
 										   minimization_successful => 0,
 										   local_minimum => 0,
 										   hessian_error => 0,
@@ -565,7 +587,7 @@ cmp_ok($ref->{'run_is_accepted'},'==',0,'retries_decide_what_to_do is accepted 7
 cmp_ok($ref->{'message'},'eq','Not doing retry because tweak_inits turned off','retries_decide message');
 
 #not pass picky
-$ref = tool::modelfit::retries_decide_what_to_do( retries_probnum => 1,
+$ref = tool::modelfit::retries_decide_what_to_do( estimation_step_run => 1,
 										   minimization_successful => 1,
 										   local_minimum => 0,
 										   hessian_error => 0,
@@ -592,7 +614,7 @@ cmp_ok($ref->{'message'},'eq','Doing retry because of not pass picky','retries_d
 
 
 #minim not successful
-$ref = tool::modelfit::retries_decide_what_to_do( retries_probnum => 1,
+$ref = tool::modelfit::retries_decide_what_to_do( estimation_step_run => 1,
 										   minimization_successful => 0,
 										   local_minimum => 0,
 										   hessian_error => 0,
@@ -618,7 +640,7 @@ cmp_ok($ref->{'run_is_accepted'},'==',0,'retries_decide_what_to_do is accepted 9
 cmp_ok($ref->{'message'},'eq','Doing retry because of minimization not successful and not sigdigs accepted','retries_decide message');
 
 #minim not successful but sigdigs accepted
-$ref = tool::modelfit::retries_decide_what_to_do( retries_probnum => 1,
+$ref = tool::modelfit::retries_decide_what_to_do( estimation_step_run => 1,
 										   minimization_successful => 0,
 										   local_minimum => 0,
 										   hessian_error => 0,
@@ -644,7 +666,7 @@ cmp_ok($ref->{'run_is_accepted'},'==',1,'retries_decide_what_to_do is accepted 1
 cmp_ok($ref->{'message'},'eq','Not doing retry because run is accepted','retries_decide message');
 
 #minim successful but local min
-$ref = tool::modelfit::retries_decide_what_to_do( retries_probnum => 1,
+$ref = tool::modelfit::retries_decide_what_to_do( estimation_step_run => 1,
 										   minimization_successful => 1,
 										   local_minimum => 1,
 										   hessian_error => 0,
@@ -670,7 +692,7 @@ cmp_ok($ref->{'run_is_accepted'},'==',0,'retries_decide_what_to_do is accepted 1
 cmp_ok($ref->{'message'},'eq','Doing retry because of local minimum','retries_decide message');
 
 #accepted run but min_retries not reached
-$ref = tool::modelfit::retries_decide_what_to_do( retries_probnum => 1,
+$ref = tool::modelfit::retries_decide_what_to_do( estimation_step_run => 1,
 										   minimization_successful => 1,
 										   local_minimum => 0,
 										   hessian_error => 0,
@@ -696,7 +718,7 @@ cmp_ok($ref->{'run_is_accepted'},'==',1,'retries_decide_what_to_do is accepted 1
 cmp_ok($ref->{'message'},'eq','Doing retry because of min_retries not reached','retries_decide message');
 
 #accepted run and min_retries reached
-$ref = tool::modelfit::retries_decide_what_to_do( retries_probnum => 1,
+$ref = tool::modelfit::retries_decide_what_to_do( estimation_step_run => 1,
 										   minimization_successful => 0,
 										   local_minimum => 0,
 										   hessian_error => 0,
@@ -722,7 +744,7 @@ cmp_ok($ref->{'run_is_accepted'},'==',1,'retries_decide_what_to_do is accepted 1
 cmp_ok($ref->{'message'},'eq','Not doing retry because run is accepted','retries_decide message');
 
 
-dies_ok {tool::modelfit::retries_decide_what_to_do( retries_probnum => 1,
+dies_ok {tool::modelfit::retries_decide_what_to_do( estimation_step_run => 1,
 													minimization_successful => 0,
 													local_minimum => 0,
 													hessian_error => 0,
@@ -741,7 +763,7 @@ dies_ok {tool::modelfit::retries_decide_what_to_do( retries_probnum => 1,
 													try => 1,
 													have_accepted_run => 0)  } "pass_picky and not minimization_successful";
 
-dies_ok {tool::modelfit::retries_decide_what_to_do( retries_probnum => 1,
+dies_ok {tool::modelfit::retries_decide_what_to_do( estimation_step_run => 1,
 													minimization_successful => 1,
 													local_minimum => 0,
 													hessian_error => 0,
@@ -760,7 +782,7 @@ dies_ok {tool::modelfit::retries_decide_what_to_do( retries_probnum => 1,
 													try => 1,
 													have_accepted_run => 0)  } "retries_decide_what_to_do sigdigs_accepted and minimization_successful";
 
-dies_ok {tool::modelfit::retries_decide_what_to_do( retries_probnum => 1,
+dies_ok {tool::modelfit::retries_decide_what_to_do( estimation_step_run => 1,
 													minimization_successful => 1,
 													local_minimum => 0,
 													hessian_error => 1,
@@ -779,7 +801,7 @@ dies_ok {tool::modelfit::retries_decide_what_to_do( retries_probnum => 1,
 													try => 1,
 													have_accepted_run => 0)  } "retries_decide_what_to_do hessian_error and minimization_successful";
 
-dies_ok {tool::modelfit::retries_decide_what_to_do( retries_probnum => 1,
+dies_ok {tool::modelfit::retries_decide_what_to_do( estimation_step_run => 1,
 													minimization_successful => 1,
 													local_minimum => 0,
 													hessian_error => 0,
@@ -797,7 +819,7 @@ dies_ok {tool::modelfit::retries_decide_what_to_do( retries_probnum => 1,
 													max_retries => 3,
 													try => 1,
 													have_accepted_run => 0)  } "retries_decide_what_to_do maxevals_exceeded and minimization_successful";
-dies_ok {tool::modelfit::retries_decide_what_to_do( retries_probnum => 1,
+dies_ok {tool::modelfit::retries_decide_what_to_do( estimation_step_run => 1,
 													minimization_successful => 0,
 													local_minimum => 0,
 													hessian_error => 0,
@@ -815,7 +837,7 @@ dies_ok {tool::modelfit::retries_decide_what_to_do( retries_probnum => 1,
 													max_retries => 3,
 													try => 1,
 													have_accepted_run => 0)  } "retries_decide_what_to_do min_retries < 0";
-dies_ok {tool::modelfit::retries_decide_what_to_do( retries_probnum => 1,
+dies_ok {tool::modelfit::retries_decide_what_to_do( estimation_step_run => 1,
 													minimization_successful => 0,
 													local_minimum => 0,
 													hessian_error => 0,
@@ -833,7 +855,7 @@ dies_ok {tool::modelfit::retries_decide_what_to_do( retries_probnum => 1,
 													max_retries => -2,
 													try => 1,
 													have_accepted_run => 0)  } "retries_decide_what_to_do max_retries < 0";
-dies_ok {tool::modelfit::retries_decide_what_to_do( retries_probnum => 1,
+dies_ok {tool::modelfit::retries_decide_what_to_do( estimation_step_run => 1,
 													minimization_successful => 0,
 													local_minimum => 0,
 													hessian_error => 0,
@@ -852,7 +874,7 @@ dies_ok {tool::modelfit::retries_decide_what_to_do( retries_probnum => 1,
 													try => 2,
 													have_accepted_run => 1)  } "retries_decide_what_to_do have_accepted_run and try > min_retries";
 
-dies_ok {tool::modelfit::retries_decide_what_to_do( retries_probnum => 1,
+dies_ok {tool::modelfit::retries_decide_what_to_do( estimation_step_run => 1,
 													minimization_successful => 1,
 													local_minimum => 0,
 													hessian_error => 0,
@@ -871,7 +893,7 @@ dies_ok {tool::modelfit::retries_decide_what_to_do( retries_probnum => 1,
 													try => 1,
 													have_accepted_run => 0)  } "retries_decide_what_to_do round_error minimization_successful";
 
-dies_ok {tool::modelfit::retries_decide_what_to_do( retries_probnum => 1,
+dies_ok {tool::modelfit::retries_decide_what_to_do( estimation_step_run => 1,
 													minimization_successful => 1,
 													local_minimum => 0,
 													hessian_error => 0,

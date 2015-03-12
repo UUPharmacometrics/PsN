@@ -16,10 +16,14 @@ use Storable qw(dclone);
 
 extends 'tool';
 
-has 'precond_matrix' => ( is => 'rw', isa => 'ArrayRef[ArrayRef]' );
+has 'precond_matrix' => ( is => 'rw', isa => 'Maybe[ArrayRef[ArrayRef]]' );
 has 'precond_model' => ( is => 'rw', isa => 'model' );
 has 'update_model' => ( is => 'rw', isa => 'Maybe[Str]' );
 has 'negaEigenIndex' =>  ( is => 'rw', isa => 'ArrayRef' );
+has 'always' =>  ( is => 'rw', isa => 'Bool', default => 0 );
+has 'verbose' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'perturb' => ( is => 'rw', isa => 'Bool', default => 0 );
+has '_no_precond' => ( is => 'rw', isa => 'Bool', default => 0 );       # Did we run a preconditioned model?
 has '_repara_model' => ( is => 'rw', isa => 'model' );
 
 
@@ -27,45 +31,67 @@ sub BUILD
 {
 	my $self = shift;
 
-	my $records = $self->precond_model->problems->[0]->covariances;
-	unless (defined $records and defined $records->[0]) {
-		croak("No \$COVARIANCE defined in " . $self->precond_model->full_name . "\nPlease add it to the model and run again.");
-	}
 }
 
 sub modelfit_setup
 {
 	my $self = shift;
 
-	my $model_filename = $self->precond_model->filename;
-	$model_filename =~ s/(\.ctl|\.mod)$//;
-	$model_filename .= '_repara.mod';
-	$model_filename = File::Spec->catfile(($self->directory, "m1"), $model_filename);
-	
+    if (not defined $self->precond_matrix) {
+        my $base_model = $self->create_base_model();
+
+        my $base_modelfit = tool::modelfit->new(
+            %{common_options::restore_options(@common_options::tool_options)},
+            models => [ $base_model ],
+            base_dir => $self->directory,
+            directory => "base_modelfit",
+            top_tool => 0,
+            nm_output => 'ext,cov,rmt', 
+        );
+
+        $base_modelfit->run;
+
+        if (not $base_model->is_run) {
+            croak("model " . $self->precond_model->filename . " could not be run\n");
+        }
+        if (not $base_model->outputs->[0]->covariance_step_run->[0]) {
+            croak("Covariance step was not run\n");
+        }
+
+        if ($base_model->outputs->[0]->covariance_step_successful->[0][0] and not $self->always) {
+            $self->tools([]);
+            $self->_no_precond(1);
+            print "\nCovariance step successful. No preconditioning necessary\n";
+            return;
+        }
+
+        my $rmt_filename = $base_model->directory . utils::file::replace_extension($base_model->filename, 'rmt');
+
+        $self->read_precond_matrix($rmt_filename);
+        preprocess_precond_matrix(precond_matrix => $self->precond_matrix, nthetas => $base_model->nthetas);
+        $self->eigenvalue_decomposition();
+    }
+
+    my $repara_filename = $self->precond_model->filename;
+    $repara_filename =~ s/(\.ctl|\.mod)$//;
+    $repara_filename .= '_repara.mod';
+	$repara_filename = File::Spec->catfile(($self->directory, "m1"), $repara_filename);
+
     my $model = create_reparametrized_model(
-		filename => $model_filename,
+		filename => $repara_filename,
 		model => $self->precond_model,
 		precond_matrix => $self->precond_matrix,
 		negaEigenIndex => $self->negaEigenIndex,
 		directory => $self->directory,
 	);
 
-    # FIXME: Use cov matrix already in memory
-    my %hash = %{common_options::restore_options(@common_options::tool_options)};
-	my $nmoutopt = $hash{'nm_output'};
-	if (defined $nmoutopt and length($nmoutopt) > 0) {
-		$nmoutopt .= ',cov'; #ok to append even if there already
-	} else {
-		$nmoutopt = 'cov';
-	}
-
     my $modelfit = tool::modelfit->new(
 		%{common_options::restore_options(@common_options::tool_options)},
 		models => [ $model ], 
 		base_dir => $self->directory,
-		directory => undef,
+		directory => "repara_modelfit",
 		top_tool => 0,
-        nm_output => $nmoutopt,
+        nm_output => 'ext,cov,rmt',
 	);
 
 	$self->_repara_model($model);
@@ -77,6 +103,10 @@ sub modelfit_setup
 sub modelfit_analyze
 {
     my $self = shift;
+
+    if ($self->_no_precond) {
+        return;
+    }
 
     my $filename = $self->_repara_model->filename;
     $filename =~ s/\.mod$/.cov/;
@@ -175,10 +205,11 @@ sub modelfit_analyze
 			for (my $i = 0; $i < @$new_theta; $i++) {
 				$modelfit->raw_results->[0]->[$se_pos + $i] = sqrt($cov_matrix->[$i]->[$i]);
 			}
-			print "\n\n  preconditioning sucessful \n";
+			print "\n\n  preconditioning successful \n";
 		}
-            
+
         $modelfit->print_raw_results;
+        copy("base_modelfit/raw_results.csv", "base_raw_results.csv");
 
     } else {
         print "Unable to update model: model was not run";
@@ -212,6 +243,51 @@ sub _reparametrize
 			}
 		}
     
+}
+
+sub create_base_model
+{
+    # Create the base model that adds options for R-matrix
+    my $self = shift;
+
+    my $base_filename = $self->precond_model->filename;
+    $base_filename =~ s/(\.ctl|\.mod)$//;
+    $base_filename .= '_base.mod';
+    $base_filename = File::Spec->catfile(($self->directory, "m1"), $base_filename);
+
+    my $base_model = $self->precond_model->copy(
+        output_same_directory => 1,
+        filename => $base_filename,
+        copy_datafile => 0,
+        write_copy => 0,
+        copy_output => 0,
+    );
+
+    $base_model->problems->[0]->covariance(enabled => 1);
+
+    if (not $base_model->is_option_set(record => 'covariance', name => 'UNCONDITIONAL', fuzzy_match => 1)) {
+        $base_model->add_option(record_name => 'covariance', option_name => 'UNCONDITIONAL');
+    }
+
+    my $values = $base_model->get_option_value(record_name => 'covariance', option_name => 'PRINT', option_index => 'all');
+    my $found = 0;
+    foreach my $value (@$values) {
+        if ($value eq 'R') {
+            $found = 1;
+            last;
+        }
+    }
+    if (not $found) {
+        $base_model->add_option(record_name => 'covariance', option_name => 'PRINT', option_value => 'R'); 
+    }
+
+    if (not $base_model->is_option_set(record => 'estimation', name => 'FORMAT', fuzzy_match => 1)) {
+        $base_model->add_option(record_name => 'estimation', option_name => 'FORMAT', option_value => 's1PE23.16');
+    }
+
+    $base_model->_write;
+
+    return $base_model;
 }
 
 sub create_reparametrized_model
@@ -332,72 +408,64 @@ sub create_reparametrized_model
     @precond_matrix = (@$ref);
 
     
-    my $offDiag=0;
-    my $diagSum=0;
-    my $offDigTemp=0;
+    my $offDiag = 0;
+    my $diagSum = 0;
+    my $offDigTemp = 0;
     my @diagElement;
     
     for (my $k = 0; $k < scalar(@parameter_initial); $k++) {
-        $diagElement[$k]=0;
+        $diagElement[$k] = 0;
         
         for (my $i = 0; $i < scalar(@parameter_initial); $i++) {
-            $parameter_initial[$i]=0;
-            for (my $j = 0 ; $j < scalar(@parameter_initial); $j++) {
-                if ($k==$i){
-                    $diagSum=$diagSum+($precond_matrix[$j][$k]*$precond_matrix[$j][$i]);
-                    $diagElement[$i]=$diagElement[$i]+$precond_matrix[$j][$k]*$precond_matrix[$j][$i];
+            $parameter_initial[$i] = 0;
+            for (my $j = 0; $j < scalar(@parameter_initial); $j++) {
+                if ($k == $i) {
+                    $diagSum = $diagSum + ($precond_matrix[$j][$k] * $precond_matrix[$j][$i]);
+                    $diagElement[$i] = $diagElement[$i] + $precond_matrix[$j][$k] * $precond_matrix[$j][$i];
                 }else{
-                    $offDigTemp=$offDigTemp+($precond_matrix[$j][$k]*$precond_matrix[$j][$i]);
+                    $offDigTemp = $offDigTemp + ($precond_matrix[$j][$k] * $precond_matrix[$j][$i]);
                 }
             }
-            $offDiag=$offDiag+abs($offDigTemp);
-            $offDigTemp=0;
+            $offDiag = $offDiag + abs($offDigTemp);
+            $offDigTemp = 0;
         }
     }
 
-    
-    if ($offDiag<0.000001){  # if precond_matrix is orthogonal up to scaling
+    if ($offDiag < 0.000001) {   # if precond_matrix is orthogonal up to scaling
       for (my $i = 0; $i < scalar(@parameter_initial); $i++) {
-        $parameter_initial[$i]=0;
-        for (my $j = 0 ; $j < scalar(@parameter_initial); $j++) {
-            $parameter_initial[$i]=$parameter_initial[$i]+$dummie_parameter_initial[$j]*$precond_matrix[$j][$i];
+        $parameter_initial[$i] = 0;
+        for (my $j = 0; $j < scalar(@parameter_initial); $j++) {
+            $parameter_initial[$i] = $parameter_initial[$i] + $dummie_parameter_initial[$j] * $precond_matrix[$j][$i];
         }
-        $parameter_initial_copy[$i]=$parameter_initial[$i]/$diagElement[$i];
-		#if ($eigenValues[$i]<0){
-		#	$parameter_initial[$i]=$parameter_initial[$i]+$eigenValues[$i];
-		#}
+        $parameter_initial_copy[$i] = $parameter_initial[$i] / $diagElement[$i];
       }
-    }else{ # if precond_matrix is not orthogonal up to scaling
+    } else { # if precond_matrix is not orthogonal up to scaling
 
         linear_algebra::LU_factorization(\@precond_matrix);
         
         for (my $i = 1; $i < scalar(@precond_matrix); $i++) {
         	for (my $j = 0; $j < $i; $j++) {
                 $parameter_initial_copy[$i] = $parameter_initial_copy[$i] - $parameter_initial_copy[$j] * $precond_matrix[$i][$j];
-            }        }        
+            }
+        }        
         for (my $i = scalar(@precond_matrix)-1; $i >= 0; $i--) {
-        	for (my $j = scalar(@precond_matrix)-1; $j > $i; $j--){
+        	for (my $j = scalar(@precond_matrix)-1; $j > $i; $j--) {
                 $parameter_initial_copy[$i] = $parameter_initial_copy[$i] - $parameter_initial_copy[$j] * $precond_matrix[$i][$j];
-         		}
+         	}
         	$parameter_initial_copy[$i] = $parameter_initial_copy[$i]/$precond_matrix[$i][$i];
         }
     }
 
-	if (scalar(@negaEigenIndex)>0){
-		
-		print "\n\nPerturbed indices: ";
-			 
-			for (my $i=0; $i<scalar(@negaEigenIndex); $i++){
-				print $negaEigenIndex[$i];
-				print " ";
-				$parameter_initial_copy[$negaEigenIndex[$i]]=$parameter_initial_copy[$negaEigenIndex[$i]]+1;
-			}
-
-	}
+    if (scalar(@negaEigenIndex) > 0) {
+        print "\n\nPerturbed indices: ";
+        for (my $i = 0; $i < scalar(@negaEigenIndex); $i++) {
+            print $negaEigenIndex[$i];
+            print " ";
+            $parameter_initial_copy[$negaEigenIndex[$i]] = $parameter_initial_copy[$negaEigenIndex[$i]] + 1;
+        }
+    }
     
-	
 	$model->initial_values(parameter_type => 'theta', new_values => [[@parameter_initial_copy]]);
-
 
     # Increase NMTRAN limits on the number of intermediate variables and total number of constants
     my $size_value = 100000;
@@ -449,7 +517,6 @@ sub create_reparametrized_model
 
 	close $MYFILE; 
 
-
 	return $model;
 }
 
@@ -470,7 +537,6 @@ sub convert_reparametrized_cov
     my $directory = $parm{'directory'};
 
     my @cov_lines;
-
 
     if (-e $cov_filename) {
 
@@ -701,6 +767,116 @@ sub convert_reparametrized_cov
     }
 }
 
+sub _read_matrix
+{
+    # Read either a nonmem .cov file or an ordinary csv file without header
+    my $fh = shift;
+
+    my @precMatrix;
+
+    my $line = <$fh>;
+    if ($line =~ /^TABLE NO./) {
+        <$fh>;
+        my $numtheta = 0;
+        while (my $line = <$fh>) {
+            chomp $line;
+            my @fields = split(/\s+/, $line);
+            shift @fields;
+            my $a = shift @fields;
+            if ($a =~ /^THETA/) {
+                $numtheta++;
+            }
+            push @precMatrix, \@fields;
+        }
+        linear_algebra::reduce_matrix(\@precMatrix, $numtheta);
+    } else {
+        seek $fh, 0, 0;
+        while (my $line = <$fh>) {
+            chomp $line;
+            my @fields = split(/,/, $line);
+            push @precMatrix, \@fields;
+        }
+    }
+
+    return @precMatrix;
+}
+
+sub read_precond_matrix
+{
+    my $self = shift;
+    my $filename = shift;
+
+    open(my $fh, '<', $filename)
+        or die "Cannot find the R-matrix file.\nSpecify the R-matrix or the modelfit directory using -pre option\n";
+
+    my @precond_matrix = _read_matrix($fh);
+
+    $self->precond_matrix(\@precond_matrix);
+}
+
+sub preprocess_precond_matrix
+{
+    # Preprocess the preconditioning matrix
+    # A matrix smaller than nthetas will get padded
+    # A matrix larger than nthetas will get reduced
+    # Rows that are all zeros will get ones on the diagonal
+
+    my %parm = validated_hash(\@_,
+        precond_matrix => { isa => 'ArrayRef[ArrayRef]' },
+        nthetas => { isa => 'Int' },
+    );
+    my $precond_matrix = $parm{'precond_matrix'};
+    my $nthetas = $parm{'nthetas'};
+
+    # Pad the preconditioning matrix if it is too small
+    if (scalar(@$precond_matrix) < $nthetas) {
+        linear_algebra::pad_matrix($precond_matrix, $nthetas);
+    } elsif (scalar(@$precond_matrix) > $nthetas) {
+        linear_algebra::reduce_matrix($precond_matrix, $nthetas);
+    }
+
+    linear_algebra::put_ones_on_diagonal_of_zero_lines($precond_matrix);
+}
+
+sub eigenvalue_decomposition
+{
+    my $self = shift;
+
+    my @eigenValMatrix = map { [@$_] } @{$self->precond_matrix};
+    (my $eigen, my $Q) = linear_algebra::eigenvalue_decomposition(\@eigenValMatrix);
+
+    my $abs_eigens = array::absolute($eigen);
+    my $maxEigen = array::max($abs_eigens);
+    my $minEigen = array::min($abs_eigens);
+
+    my @negaEigIndex;
+    my $negaCounter = 0;
+    foreach my $index (0 .. scalar(@$eigen) - 1) {
+        if ($eigen->[$index] < 0) {
+            if ($self->perturb) {
+                $negaEigIndex[$negaCounter] = $index;
+            }
+            $negaCounter++;
+        }
+    }
+
+    $self->negaEigenIndex(\@negaEigIndex);
+
+    print "\nCondition Number : 10^" . int(log($maxEigen / $minEigen) / log(10)) . "\n";
+    print "Number of negative eigenvalues : $negaCounter\n";
+
+    if ($self->verbose) {
+        print "=== Eigenvalues ===\n";
+        array::print($eigen);
+        print "===================\n";
+    }
+
+    for (my $index1 = 0; $index1 < scalar(@$Q); $index1++) {
+        for (my $index2 = 0; $index2 < scalar(@$Q); $index2++) {
+            $self->precond_matrix->[$index1]->[$index2] = $Q->[$index1]->[$index2] / sqrt(abs($eigen->[$index2]));
+        }
+    }
+}
 
 no Moose;
 __PACKAGE__->meta->make_immutable;
