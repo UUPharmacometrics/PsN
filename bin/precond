@@ -238,8 +238,12 @@ if (defined $options{'rawres_input'}) {
     if (-d $options{'pre'}) {
         $file = $options{'pre'} . "/NM_run1/psn.rmt";
         my $file2 = $options{'pre'} . "NM_run1/psn.rmt";
-        (my $file3) = glob $options{'pre'} . "/m1/*_repara.rmt";
-
+        my $file3;
+        if (-e ($options{'pre'} . '/precMatrix')) {
+            ($file3) = glob $options{'pre'} . "/m1/*_repara.rmt";
+        } else {
+            ($file3) = glob $options{'pre'} . "/m1/*_base.rmt";
+        }
         if (-e $file) { 
         } elsif (-e $file2) {
             $file = $file2;

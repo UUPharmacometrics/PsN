@@ -207,8 +207,9 @@ sub modelfit_analyze
 			}
 			print "\n\n  preconditioning successful \n";
 		}
-            
+
         $modelfit->print_raw_results;
+        copy("modelfit_dir1/raw_results.csv", "base_raw_results.csv");
 
     } else {
         print "Unable to update model: model was not run";
