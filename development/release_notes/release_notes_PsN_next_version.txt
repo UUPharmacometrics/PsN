@@ -70,7 +70,7 @@ Changes and bug fixes from PsN 4.2.0 to x.y.z
 - Automatic generation of R plots, see documentation in common_options.pdf
 
 - Major rewrite of retries handling code, updated rules for selecting best retry,
-  and a large number of tests for the new code.
+  and a large number of tests for the new code. See documentation in common_options.pdf
 
 - handle spaces in the path (enclose filepath with quotes in $DATA)
 
@@ -124,8 +124,9 @@ Changes and bug fixes from PsN 4.2.0 to x.y.z
 
 - change how data class computes median: first compute median for individual and then over individuals
 
-- Imporved formatting for -verbose output
+- Nicer formatting for -verbose output
 
+- Allow empty lines (,,,,,,,,,,) in -rawres_input files.
 
    ___Cluster/grid interaction___
 
@@ -207,8 +208,10 @@ Changes and bug fixes from PsN 4.2.0 to x.y.z
 - the vpc_results file will include a column with median idv value for each bin.
 - bugfix: if lloq and/or uloq is used, only display mean and delta-mean for real values if 0 real 
   observations were below lloq or above uloq. 
-
 - bugfix: handle global paths to input files on windows (sim_table, orig_table, sim_model)
+- bugfix: binning when bin_by_count=0 and either no_of_bins or single_bin_size without overlap,
+  could sometimes get observation(s) with single highest idv in stratum excluded from 
+  last bin because of numerical error.
 
    ___scm___
 
@@ -295,7 +298,7 @@ Changes and bug fixes from PsN 4.2.0 to x.y.z
 - a new csv-format output file with actual delta-ofv at different p-values, and actual p-values for 
   theoretical dofv:s from chisquare distribution. 
 	 
--	 new command-line option copy_data
+- new command-line option copy_data
    ___execute___
 	 
 - Automatically unset display_iterations if -silent is set
@@ -309,6 +312,7 @@ Changes and bug fixes from PsN 4.2.0 to x.y.z
 
 - option -model_dir_name will skip model extension, and there will be no dot between 
   dir and the number. For example run2.mod will give rundir name run2.dir1. 
+
    ___parallel_retries___
 	 
 - New option -timestamp for directory name
