@@ -83,7 +83,7 @@ has 'n_simulation_models' => ( is => 'rw', isa => 'Int', default => 1 );
 has 'idv' => ( is => 'rw', isa => 'Str' );
 has 'bin_by_count' => ( is => 'rw', isa => 'Bool' );
 has 'no_of_bins' => ( is => 'rw', isa => 'Int' );
-has 'single_bin_size' => ( is => 'rw', isa => 'Int' );
+has 'single_bin_size' => ( is => 'rw', isa => 'Num' ); 
 has 'overlap_percent' => ( is => 'rw', isa => 'Num' );
 has 'bin_array' => ( is => 'rw', isa => 'ArrayRef[ArrayRef[Num]]', default => sub { [] } );
 has 'categorized' => ( is => 'rw', isa => 'Bool', default => 0 );
@@ -505,6 +505,12 @@ sub BUILD
 				croak("Option bin_by_count must be defined when ".
 					  "option single_bin_size is used.");
 			}
+			if ($self->bin_by_count){
+				my $rem = $self->single_bin_size() - int($self->single_bin_size);
+				croak ("When bin_by_count is true then single_bin_size must be an integer") if
+					($rem > 1E-14);
+			}
+
 			if (defined $self->overlap_percent) {
 				unless ($self->overlap_percent > 0) {
 					croak("Option overlap must be larger than 0\%.");
@@ -1882,7 +1888,7 @@ sub get_bin_boundaries_overlap_count
 
 sub get_bin_ceilings_from_count
 {
-	my $self = shift;
+	#static no shift
 	my %parm = validated_hash(\@_,
 							  value_hash => { isa => 'HashRef', optional => 1 },
 							  n_bins => { isa => 'Maybe[Int]', optional => 1 },
@@ -2047,12 +2053,12 @@ sub get_bin_boundaries_overlap_value
 
 sub get_bin_ceilings_from_value
 {
-	my $self = shift;
+	#static no shift
 	my %parm = validated_hash(\@_,
 							  data_column => { isa => 'ArrayRef[Num]', optional => 0 },
 							  data_indices => { isa => 'ArrayRef[Num]', optional => 0 },
-							  n_bins => { isa => 'Maybe[Int]', optional => 1 },
-							  single_bin_size => { isa => 'Maybe[Int]', optional => 1 },
+							  n_bins => { isa => 'Maybe[Int]', optional => 1 }, 
+							  single_bin_size => { isa => 'Maybe[Num]', optional => 1 },
 							  list_boundaries => { isa => 'ArrayRef[Num]', optional => 1 }
 		);
 	my @data_column = defined $parm{'data_column'} ? @{$parm{'data_column'}} : ();
@@ -2080,19 +2086,20 @@ sub get_bin_ceilings_from_value
 			croak("Cannot input both number of intervals and set of boundaries");
 		}
 		my $width = ($maxval-$minval)/$n_bins;
-		for (my $i=1; $i<=$n_bins; $i++){
+		for (my $i=1; $i<$n_bins; $i++){
 			push (@bin_ceilings,($width*$i+$minval));
 		}
+		push (@bin_ceilings,$maxval); #for numerical reasons must use input value as last ceil
 	} elsif (defined $single_bin_size){
 		#translate to $n_bins
 		my $nb = int(($maxval-$minval)/$single_bin_size); #round down
 		$nb++ if ((($maxval-$minval)/$single_bin_size)-$nb >= 0.5);
 		$nb++ if ($nb <= 0);
 		my $width = ($maxval-$minval)/$nb;
-		for (my $i=1; $i<=$nb; $i++){
+		for (my $i=1; $i<$nb; $i++){
 			push (@bin_ceilings,($width*$i+$minval));
 		}
-
+		push (@bin_ceilings,$maxval); #for numerical reasons must use input value as last ceil
 	} elsif (scalar(@list_boundaries)>0){
 		push (@bin_ceilings,@list_boundaries);
 		if ($maxval > $list_boundaries[$#list_boundaries]){
@@ -2175,10 +2182,15 @@ sub index_matrix_binned_values
 		my $this_floor=$floors[$bin_index];
 		$this_floor -= 0.2 if ($bin_index==0); #first floor is inclusive
 		foreach my $row_index (@data_indices){
+#			my $str = "floor $this_floor   ".$data_column[$row_index]." ceil ".$ceilings[$bin_index]." ";
 			if ($data_column[$row_index]>$this_floor && 
 				$data_column[$row_index]<=$ceilings[$bin_index] ){
 				push (@index_row,$row_index);
+#				$str .= "yes\n";
+			}else{
+#				$str .= "no\n";
 			}
+#			print $str if ($bin_index == $#ceilings);
 		}
 		if (defined $reference_index){
 			if ($bin_index > $reference_index){
@@ -2976,12 +2988,13 @@ sub create_binned_data
                 }
 
 				# add input param single_bin_size
-				$bin_ceilings = $self -> get_bin_ceilings_from_count(
+				#static
+				$bin_ceilings = get_bin_ceilings_from_count(
 					'data_column'			=> \@bin_array,
 					'value_hash'			=> $bin_hash,
 					'data_indices'		=> \@data_indices,
 					'n_bins'				=> $self->no_of_bins,
-					'single_bin_size'	=> $self->single_bin_size,
+					'single_bin_size'	=> int($self->single_bin_size),
 					'list_counts' 		=> $list_boundaries);
 			}
 		} elsif ($self->bin_by_count eq '0') {
@@ -3001,7 +3014,7 @@ sub create_binned_data
                     $list_boundaries = [];
                 }
 				# add input param single_bin_size
-				$bin_ceilings = $self -> get_bin_ceilings_from_value(
+				$bin_ceilings = get_bin_ceilings_from_value(
 					'data_column'			=> \@bin_array,
 					'data_indices'		=> \@data_indices,
 					'n_bins'				=> $self->no_of_bins,
@@ -3627,10 +3640,10 @@ sub create_stratified_data
 		#index_matrix_binned_values interprets as stratify on unique values.
 		#input check ensures that if refstrat is defined then no_of_strata is undefined
 
-		my $strata_ceilings = $self -> get_bin_ceilings_from_count('data_column'=>$strat_array,
-																   'value_hash'=>$strat_hash,
-																   'data_indices'=>\@all_indices,
-																   'n_bins'=>$self->no_of_strata);
+		my $strata_ceilings = get_bin_ceilings_from_count('data_column'=>$strat_array,
+														  'value_hash'=>$strat_hash,
+														  'data_indices'=>\@all_indices,
+														  'n_bins'=>$self->no_of_strata);
 		$strata_matrix = $self -> index_matrix_binned_values(data_column=>$strat_array,
 															 value_hash=>$strat_hash,
 															 reference_index => $reference_index,
