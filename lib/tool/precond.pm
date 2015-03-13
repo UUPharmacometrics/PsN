@@ -13,6 +13,7 @@ use tool::modelfit;
 use linear_algebra;
 use output;
 use Storable qw(dclone);
+use utils::file;
 
 extends 'tool';
 
@@ -657,7 +658,8 @@ sub convert_reparametrized_cov
         return \@varcovMatrix;
 
     } else {
-        $cov_filename = "modelfit_dir1/NM_run1/psn.rmt";
+        $cov_filename = utils::file::replace_extension($cov_filename, 'rmt');
+        #$cov_filename = "repara_modelfit/NM_run1/psn.rmt";
 
         open(my $fh, '<', $cov_filename) or croak("\nCovariance step of the preconditioned model did not run. See .lst file for the reason\n\n");
 
