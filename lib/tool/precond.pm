@@ -156,13 +156,14 @@ sub modelfit_analyze
             for (my $i = 0; $i < scalar(@{$theta->options}); $i++) {
                 my $option = $theta->options->[$i];
                 $option->init($new_theta->[$theta_ind]);
+
                 if (defined $option->lobnd and $new_theta->[$theta_ind] < $option->lobnd) {
                     $option->clear_lobnd;
-                    print "Warning: updated THETA(", $i + 1, ") estimate is below original lower bound. The bound will be removed in updated model.\n";
+                    print "Warning: updated THETA(", $theta_ind + 1, ") estimate is below original lower bound. The bound will be removed in updated model.\n";
                 }
                 if (defined $option->upbnd and $new_theta->[$theta_ind] > $option->upbnd) {
                     $option->clear_upbnd;
-                    print "Warning: updated THETA(", $i + 1, ") estimate is above original upper bound. The bound will be removed in updated model.\n";
+                    print "Warning: updated THETA(", $theta_ind + 1, ") estimate is above original upper bound. The bound will be removed in updated model.\n";
                 }
                 $theta_ind++;
             }
