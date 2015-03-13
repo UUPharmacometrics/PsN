@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{Developer's guide}{2014-12-18}
+\guidetitle{Developer's guide}{2015-03-13}
 \usepackage{hyperref}
 
 \begin{document}
@@ -104,6 +104,8 @@ FSUBS.f90:10.132:
 These warnings are from NONMEM and can be ignored.
 	\item	The PsN developers have not run the test suite with NONMEM 6. There are serveral tests that are known to fail with NONMEM 6. If you are a user of NONMEM 6 and wish to run the test suite please give it a try and send your findings to any of the developers or the mailing list.
 	\item If any test fail using any version of NONMEM 7 this is most likely a bug. Please report this so that it can be fixed.
+    \item If the PsN installation directory is moved after the initial installation of the test suite, the file includes.pm in the top level of the test directory
+    must be edited to include the new path to PsN core and toolkit. 
 \end{itemize} 
 
 \section{nmoutput2so}
