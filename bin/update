@@ -15,6 +15,7 @@ my $version;
 my @name_and_version = split '-', $0;
 if ($name_and_version[1]) {
 	$version = '-' . $name_and_version[1];
+    $version =~ s/\.pl$//;
 }
 
 my $command = "update_inits$version @ARGV";
