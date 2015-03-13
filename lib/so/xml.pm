@@ -1,6 +1,6 @@
-package standardised_output::xml;
+package so::xml;
 
-# Class for writing to an so xml file
+# Helper function Class for writing to an so xml file
 
 use strict;
 use warnings;
@@ -48,9 +48,7 @@ sub create_typed_element
     my $type = $parm{'type'};
     my $content = $parm{'content'};
 
-    my $doc = $self->_document;
-
-    my $element = $doc->createElement('ct:' . $type);
+    my $element = XML::LibXML::Element->new('ct:' . $type);
     $element->appendTextNode($content);
 
     return $element;
@@ -89,164 +87,6 @@ sub create_message
     }
 
     return $node;
-}
-
-sub create_table
-{
-    my $self = shift;
-    my %parm = validated_hash(\@_,
-        table_name => { isa => 'Str' },
-        column_ids => { isa => 'ArrayRef' },
-        column_types => { isa => 'ArrayRef' },
-        column_valuetypes => { isa => 'ArrayRef' },
-        values => { isa => 'ArrayRef' },
-        row_major => { isa => 'Bool', default => 0 },
-        table_file => { isa => 'Maybe[Str]', optional => 1 },      # Name to use for stem of table_file
-    );
-    my $table_name = $parm{'table_name'};
-    my $column_ids = $parm{'column_ids'};
-    my $column_types = $parm{'column_types'};
-    my $column_valuetypes = $parm{'column_valuetypes'};
-    my $values = $parm{'values'};
-    my $row_major = $parm{'row_major'};
-    my $table_file = $parm{'table_file'};
-
-    my $doc = $self->_document;
-
-    my $table = $doc->createElement($table_name);
-
-    my $def = $doc->createElement("ds:Definition");
-    $table->appendChild($def);
-    for (my $col = 0; $col < scalar(@$column_ids); $col++) {
-        my $column = $doc->createElement("ds:Column");
-        $column->setAttribute(columnId => $column_ids->[$col]);
-        $column->setAttribute(columnType => $column_types->[$col]);
-        $column->setAttribute(valueType => $column_valuetypes->[$col]);
-        $column->setAttribute(columnNum => $col + 1);
-        $def->appendChild($column);
-    }
-
-    my $numcols = scalar(@$column_ids);
-    my $numrows;
-    if ($row_major) {
-        $numrows = scalar(@$values);
-    } else {
-        $numrows = scalar(@{$values->[0]});
-    }
-
-    if (not defined $table_file) {
-        my $tab = $doc->createElement("ds:Table");
-        $table->appendChild($tab);
-        for (my $row = 0; $row < $numrows; $row++) {
-            my $row_xml = $doc->createElement("ds:Row");
-            $tab->appendChild($row_xml);
-            for (my $col = 0; $col < $numcols; $col++) {
-                my $value_type = uc(substr($column_valuetypes->[$col], 0, 1)) . substr($column_valuetypes->[$col], 1);
-                my $column_type = $column_types->[$col];
-                my $element;
-                if ($row_major) {
-                    $element = $values->[$row]->[$col];
-                } else {
-                    $element = $values->[$col]->[$row];
-                }
-                my $value = $doc->createElement("ct:" . $value_type);
-                if ($value_type eq 'String' and $column_type ne 'id') {
-                    $value->appendTextNode($element);
-                } else {
-                    $value->appendTextNode(math::to_precision($element, $self->precision));
-                }
-                $row_xml->appendChild($value);
-            }
-        }
-    } else {
-        my $filename = $table_file . '_' . $table_name . '.csv';
-        my $data = $doc->createElement("ds:ImportData");
-        $table->appendChild($data);
-        $data->setAttribute("oid", $table_name);
-        my $path = $doc->createElement("ds:path");
-        $data->appendChild($path);
-        $path->appendTextNode($filename);
-        my $format = $doc->createElement("ds:format");
-        $data->appendChild($format);
-        $format->appendTextNode("CSV");
-        my $delimiter = $doc->createElement("ds:delimiter");
-        $data->appendChild($delimiter);
-        $delimiter->appendTextNode("COMMA");
-
-        # Create the external table file
-        open my $fh, ">", $self->_so_path . $filename;
-        for (my $row = 0; $row < $numrows; $row++) {
-            for (my $col = 0; $col < $numcols; $col++) {
-                my $value_type = uc(substr($column_valuetypes->[$col], 0, 1)) . substr($column_valuetypes->[$col], 1);
-                my $column_type = $column_types->[$col];
-                my $element;
-                if ($row_major) {
-                    $element = $values->[$row]->[$col];
-                } else {
-                    $element = $values->[$col]->[$row];
-                }
-                if ($value_type eq 'String' and $column_type ne 'id') {
-                    print $fh $element;
-                } else {
-                    print $fh $self->math::to_precision($element, $self->precision);
-                }
-                print $fh "," if ($col != $numcols - 1);
-            }
-            print $fh "\n";
-        }
-        close $fh;
-    }
-
-    return $table;
-}
-
-sub create_single_row_table
-{
-    my $self = shift;
-    my %parm = validated_hash(\@_,
-        table_name => { isa => 'Str' },
-        labels => { isa => 'ArrayRef' },
-        values => { isa => 'ArrayRef' },
-    );
-    my $table_name = $parm{'table_name'};
-    my @labels = @{$parm{'labels'}};
-    my @values = @{$parm{'values'}};
-
-    my $table = $self->create_table(
-        table_name => $table_name,
-        column_ids => \@labels,
-        column_types => [ ("undefined") x scalar(@labels) ],
-        column_valuetypes => [ ("real") x scalar(@labels) ],
-        values => [ \@values ],
-        row_major => 1,
-    );
-
-    return $table;
-}
-
-sub create_parameter_table
-{
-    my $self = shift;
-    my %parm = validated_hash(\@_,
-        table_name => { isa => 'Str' },
-        name => { isa => 'Str' },
-        labels => { isa => 'ArrayRef' },
-        values => { isa => 'ArrayRef' },
-    );
-    my $table_name = $parm{'table_name'};
-    my $name = $parm{'name'};
-    my $labels = $parm{'labels'};
-    my $values = $parm{'values'};
-
-    my $table = $self->create_table(
-        table_name => $table_name,
-        column_ids => [ "parameter", $name ],
-        column_types => [ ("undefined") x 2 ],
-        column_valuetypes => [ "string", "real" ],
-        values => [ $labels, $values ], 
-    );
-
-    return $table;
 }
 
 sub create_matrix

@@ -1,4 +1,4 @@
-package standardised_output::so::SOBlock;
+package so::SOBlock;
 
 # Class containing an SOBlock
 
@@ -13,15 +13,10 @@ use standardised_output::table;
 use standardised_output::matrix;
 
 has 'blkId' => ( is => 'rw', isa => 'Str' );
-has 'DataFile' => ( is => 'rw', isa => 'ArrayRef[HashRef]' );     # Array of Hashes with 'Description' and 'path'
-has 'PopulationEstimates' => ( is => 'rw', isa => 'standardised_output::table' );
-has 'StandardError' => ( is => 'rw', isa => 'standardised_output::table' );
-has 'RelativeStandardError' => ( is => 'rw', isa => 'standardised_output::table' );
-has 'CovarianceMatrix' => ( is => 'rw', isa => 'standardised_output::matrix' );
-has 'CorrelationMatrix' => ( is => 'rw', isa => 'standardised_output::matrix' );
-has 'Residuals' => ( is => 'rw', isa => 'standardised_output::table' );
-has 'Predictions' => ( is => 'rw', isa => 'standardised_output::table' );
-has 'Deviance' => ( is => 'rw', isa => 'Num' );
+has 'RawResults' => ( is => 'rw', isa => 'so::SOBlock::RawResults' );
+has 'TaskInformation' => ( is => 'rw', isa => 'so::SOBlock::TaskInformation' );
+has 'Estimation' => ( is => 'rw', isa => 'so::SOBlock::Estimation' );
+has 'Simulation' => ( is => 'rw', isa => 'so::SOBlock::Simulation' );
 
 sub parse
 {
@@ -144,6 +139,23 @@ sub create_sdtab
     close $fh;
 }
 
+sub xml
+{
+    my $self = shift;
+
+    my $block = XML::LibXML::Element->new("SOBlock");
+    $block->setAttribute("blkId", $self->blkId);
+
+    my @attributes = ( "RawResults", "TaskInformation", "Estimation", "Simulation" );
+    foreach my $attr (@attributes) {
+        if (defined $self->$attr) {
+            my $xml = $self->$attr->xml();
+            $block->appendChild($xml);
+        }
+    }
+
+    return $block;
+}
 
 no Moose;
 __PACKAGE__->meta->make_immutable;

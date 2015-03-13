@@ -37,6 +37,7 @@ my %optional_options = (
     'pharmml:s' => undef,
     'verbose!' => undef,
     'external_tables!' => undef,
+    'so_version!' => undef,
 );
 
 
@@ -49,6 +50,7 @@ $defaults{'precision'} = 10;
 $defaults{'use_tables'} = 1; 
 $defaults{'toolname'} = 'NONMEM';
 $defaults{'pretty'} = 0;
+$defaults{'so_version'} = 0.1;
 
 foreach my $opt (keys(%optional_options)) {
   $opt =~ s/[!:|].*//g; #get rid of :s |? :i etcetera
@@ -171,6 +173,13 @@ $help_text{-external_tables} = <<'EOF';
     Set to use external tables for the simulations
 EOF
 
+$help_text{-so_version} = <<'EOF';
+    -so_version
+
+    Set the version of the so xml format that will
+    be used.
+EOF
+
 common_options::online_help('nmoutput2so', \%options, \%help_text, \%required_options, \%optional_options);
 
 if ($options{'version'}) {  # FIXME: Should use common_options for this
@@ -201,21 +210,31 @@ if ($Config{osname} eq 'MSWin32') {
     @files = @ARGV;
 }
 
-my $so = standardised_output->new(
-    lst_files => \@files,
-    bootstrap_results => $options{'bootstrap_results'},
-    precision => $options{'precision'},
-    so_filename => $options{'so_filename'},
-    use_tables => $options{'use_tables'},
-    only_include_elements => $only_include_elements,
-    exclude_elements => $exclude_elements,
-    message => $options{'message'},
-    toolname => $options{'toolname'},
-    max_replicates => $options{'max_replicates'},
+my $so = so->new(
+    filename => $options{'so_filename'},
     pretty => $options{'pretty'},
-    pharmml => $options{'pharmml'},
-    verbose => $options{'verbose'},
-    external_tables => $options{'external_tables'},
+    PharmMLRef => $options{'pharmml'},
 );
 
-$so->parse;
+my $nm_parser = so::parser::nmoutput->new(
+    so => $so,
+    lst_files => \@files,
+);
+
+$nm_parser->parse();
+
+$so->write();
+
+#my $so = standardised_output->new(
+#    precision => $options{'precision'},
+#    use_tables => $options{'use_tables'},
+#    only_include_elements => $only_include_elements,
+#    exclude_elements => $exclude_elements,
+#    message => $options{'message'},
+#    toolname => $options{'toolname'},
+#    max_replicates => $options{'max_replicates'},
+#    pharmml => $options{'pharmml'},
+#    verbose => $options{'verbose'},
+#    external_tables => $options{'external_tables'},
+#    so_version => $options{'so_version'},
+#);

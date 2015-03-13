@@ -1,6 +1,6 @@
-package standardised_output;
+package so::parsers::nmoutput;
 
-# Package for creation of a DDMoRe standardised output XML file
+# Package for parsing NONMEM output into an so object
 
 use strict;
 use warnings;
@@ -17,9 +17,11 @@ use utils::file;
 use standardised_output::xml;
 use PsN;
 
+has 'so' => ( is => 'rw', isa => 'ArrayRef[Str]' );
 has 'lst_files' => ( is => 'rw', isa => 'ArrayRef[Str]' );
-has 'bootstrap_results' => ( is => 'rw', isa => 'Maybe[Str]' );
+has 'so_block' => ( is => 'rw', isa => 'so::SOBlock' );
 has 'so_filename' => ( is => 'rw', isa => 'Maybe[Str]' );
+has 'so_version' => ( is => 'rw', isa => 'Num', default => 0.1 );
 has 'precision' => ( is => 'rw', isa => 'Int', default => 10 );
 has 'use_tables' => ( is => 'rw', isa => 'Bool', default => 1 );    # Set to zero if sdtab and patab should not be used
 has 'exclude_elements' => ( is => 'rw', isa => 'Maybe[ArrayRef]' );
@@ -37,6 +39,7 @@ has '_first_block' => ( is => 'rw', isa => 'Str' );                 # Name of th
 has '_so_path' => ( is => 'rw', isa => 'Str' );                     # The path of the output SO file
 has '_xml' => ( is => 'rw', isa => 'standardised_output::xml' );    # Module to create SO xml
 has '_used_files' => ( is => 'rw', isa => 'HashRef' );              # files to add as RawResults. Empty before starting a new _parse_lst_file 
+has '_messages' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 
 sub BUILD
 {
@@ -48,52 +51,11 @@ sub BUILD
         }
     }
 
-    my $so_filename;
+    my $so_block = so::SOBlock->new();
 
-    if (not defined $self->so_filename) {   # User specified filename
-        if (defined $self->lst_files and defined $self->lst_files->[0]) {   # Infer filename from name of first .lst file
-            $so_filename = utils::file::replace_extension($self->lst_files->[0], 'SO.xml');
-        } else {
-            $so_filename = 'bootstrap.SO.xml';
-        }
-        $so_filename = utils::file::remove_path($so_filename);
-        $self->so_filename($so_filename);
-        $self->_so_path('./');
-    } else {
-        my $path = utils::file::directory($self->so_filename);
-        $self->_so_path($path);
-    }
+    $self->_so_block($so_block);
 
-    my $so_xml = standardised_output::xml->new(precision => $self->precision, verbose => $self->verbose);
-    $self->_xml($so_xml);
-    $self->_document($self->_xml->_document);
-}
-
-sub create_block
-{
-    # Create a new SOBlock and set the id 
-    my $self = shift;
-    my %parm = validated_hash(\@_,
-        name => { isa => 'Str' },
-    );
-    my $name = $parm{'name'};
-    
-    my $doc = $self->_document;
-    my %duplicates;
-    if (defined $self->_duplicate_blocknames) {
-        %duplicates = %{$self->_duplicate_blocknames};
-    }
-
-    my $block = $doc->createElement("SOBlock");
-    if (not exists $duplicates{$name}) {
-        $block->setAttribute(blkId => $name);
-    } else {
-        print "$duplicates{$name}";
-        $block->setAttribute(blkId => $name . $duplicates{$name});
-        $self->_duplicate_blocknames->{$name}++;
-    }
-
-    return $block;
+    $self->_parse_lst_file(lst_file => $self->lst_file);
 }
 
 sub match_elements
@@ -146,23 +108,6 @@ sub parse
 {
     my $self = shift;
 
-    my $doc = $self->_document;
-
-    my $SO = $doc->createElement("SO");
-    $SO->setAttribute('xmlns' => "http://www.pharmml.org/so/0.1/StandardisedOutput");
-    $SO->setAttribute('xmlns:xsi' => "http://www.w3.org/2001/XMLSchema-instance");
-    $SO->setAttribute('xmlns:ds' => "http://www.pharmml.org/pharmml/0.6/Dataset");
-    $SO->setAttribute('xmlns:ct' => "http://www.pharmml.org/pharmml/0.6/CommonTypes");
-    $SO->setAttribute('xsi:schemaLocation' => "http://www.pharmml.org/so/0.1/StandardisedOutput");
-    $SO->setAttribute('implementedBy' => "MJS");
-    $SO->setAttribute('writtenVersion' => "0.1");
-    $SO->setAttribute('id' => "i1");
-
-    if (defined $self->pharmml) {
-        my $pharmmlref = $self->_xml->create_pharmml_ref(name => $self->pharmml);
-        $SO->appendChild($pharmmlref);
-    }
-
     # Check for duplicate lst_file names
     my %duplicates;
     if (defined $self->lst_files) {
@@ -187,57 +132,6 @@ sub parse
             $SO->appendChild($block);
         }
     }
-
-    # Handle bootstrap_results
-    if (defined $self->bootstrap_results) {
-        # Find or create xml structure
-        my $bootstrap_block = $self->_first_block;
-        (my $block) = $SO->findnodes("SOBlock[\@blkId='$bootstrap_block']");
-        if (not defined $block) {
-            $bootstrap_block = "Bootstrap";
-            $block = $self->create_block(name => $bootstrap_block);
-            $SO->appendChild($block);
-        }
-        if ($self->verbose) {
-            print "Adding bootstrap results from file ", $self->bootstrap_results, " to SOBlock \"$bootstrap_block\"\n";
-        }
-        my $estimation = $self->_xml->find_or_create_node(root_node => $block, node_name => "Estimation");
-
-        my $bootstrap_message;
-
-        # Create Bootstrap element
-        if (-e $self->bootstrap_results) {
-            my $ppi = $self->_xml->find_or_create_node(root_node => $estimation, node_name => "PrecisionPopulationEstimates");
-            my $bootstrap = $self->_create_bootstrap();
-            if (defined $bootstrap) {
-                $ppi->appendChild($bootstrap);
-            }
-        } else {
-            $bootstrap_message = {
-                type => "ERROR",
-                toolname => $self->toolname,
-                name => "File error",
-                content => "Bootstrap results file \"" . $self->bootstrap_results . "\" does not exist",
-                severity => 10,
-            };
-        }
-
-        # Create Bootstrap messages
-        if (defined $bootstrap_message) {
-            if ($block->exists("TaskInformation")) {
-                (my $ti) = $block->findnodes("TaskInformation");
-                my $message = $self->_xml->create_message(message => $bootstrap_message);
-                my $first_child = $ti->firstChild();
-                $ti->insertBefore($message, $first_child);
-            } else {
-                my $ti = $self->_create_task_information(messages => [ $bootstrap_message ]);
-                $block->appendChild($ti)
-            }
-        }
-    }
-
-    $doc->setDocumentElement($SO);
-    $doc->toFile($self->so_filename, $self->pretty);
 }
 
 sub _parse_lst_file
@@ -256,19 +150,19 @@ sub _parse_lst_file
     my $path = utils::file::directory($lst_file);
 
     my $elapsed_time = 0;
-    my @messages;
     my @on_sd_scale;
-    my $doc = $self->_document;
 
     my $file_stem = utils::file::get_file_stem($lst_file);
 
-    my $block = $self->create_block(name => $file_stem);
+    my $block = $self->so_block;
+    $block->blkId($file_stem);
+ 
     my $estimation;
     my $simulation;
 
     # Check that the output file exist before trying to read it.
     if (not -e $lst_file) {
-        push @messages, {
+        push @{$self->_messages}, {
             type => "ERROR",
             toolname => $self->toolname,
             name => "File error",
@@ -280,7 +174,7 @@ sub _parse_lst_file
 
         my $outobj = output->new(filename => $lst_file);
         if (not $outobj->parsed_successfully) {
-            push @messages, {
+            push @{$self->_messages}, {
                 type => "ERROR",
                 toolname => $self->toolname,
                 name => "Parsing error", 
@@ -297,7 +191,7 @@ sub _parse_lst_file
 
             my $condition_number = $outobj->problems->[$problems]->subproblems->[$sub_problems]->condition_number;
             if (defined $condition_number) {
-                push @messages, {
+                push @{$self->_messages}, {
                     type => "INFORMATION",
                     toolname => "NONMEM",
                     name => "Condition number",
@@ -387,13 +281,12 @@ sub _parse_lst_file
             }
 
             if ($estimation_step_run) {
-                $estimation = $doc->createElement("Estimation");
 
                 foreach my $label (@all_labels) {
                     if (not $self->_xml->match_symbol_idtype($label)) {
                         my $old_label = $label;
                         $label = $self->_xml->mangle_symbol_idtype($label);
-                        push @messages, {
+                        push @{$self->_messages}, {
                             type => "WARNING",
                             toolname => "nmoutput2so",
                             name => "Name change",
@@ -429,10 +322,8 @@ sub _parse_lst_file
 
                 my $undefs = grep { not defined $_ } @est_values;
                 if ($undefs != scalar(@est_values)) {   # Check that not all in list are undef. Should possibly have been done earlier
-                    if ($self->check_include(element => 'Estimation/PopulationEstimates')) {
-                        my $pe = $self->_create_population_estimates(labels => \@all_labels, values => \@est_values);
-                        $estimation->appendChild($pe);
-                    }
+                    my $pe = $self->_create_population_estimates(labels => \@all_labels, values => \@est_values);
+                    $so_block->PopulationEstimates($pe);
                 }
 
                 if ($covariance_step_successful) {
@@ -525,7 +416,7 @@ sub _parse_lst_file
                 }
 
                 if (not defined $ofv) {
-                    push @messages, {
+                    push @{$self->_messages}, {
                         type => 'ERROR',
                         toolname => $self->toolname,
                         name => "Minimzation error",
@@ -549,7 +440,7 @@ sub _parse_lst_file
         }
     }
 
-    push @messages, {
+    push @{$self->_messages}, {
         type => "INFORMATION",
         toolname => "nmoutput2so",
         name => "nmoutput2so_version",
@@ -661,14 +552,15 @@ sub _create_population_estimates
     my @labels = @{$parm{'labels'}};
     my @values = @{$parm{'values'}};
 
-    my $doc = $self->_document;
+    so::SOBlock::Estimation::PopulationEstimates->new();
+    
+    $self->so_block->PopulationEstimates
 
-    my $pe = $doc->createElement("PopulationEstimates");
-
-    my $table = $self->_xml->create_single_row_table(table_name => 'MLE', labels => \@labels, values => \@values);
-    $pe->appendChild($table);
-
-    return $pe;
+    my $table = so::table->new(name => "MLE");
+    $table->columnId(\@labels);
+    $table->single_row(values => \@values);
+    
+    return $table;
 }
 
 sub _create_precision_population_estimates
@@ -689,21 +581,23 @@ sub _create_precision_population_estimates
 
     my $doc = $self->_document;
 
-    my $ppe = $doc->createElement("PrecisionPopulationEstimates");
+    if (scalar(@labels) > 0) {
+        my $ppe = so::SOBlock::Estimation::PrecisionPopulationEstimates->new();
+        my $mle = so::SOBlock::Estimation::PrecisionPopulationEstimates::MLE->new();
+        $ppe->MLE($mle);
+
+        my $se_table = so::table->new(name => 'StandardError');
+        $table->parameter_table(name => 'SE', labels => \@labels, values => \@standard_errors);
+        $mle->StandardError($table);
+
+        my $rse_table = so::table->new(name => 'RelativeStandardError');
+        $rse_table->parameter_table(name => 'RSE', labels => \@labels, values => \@relative_standard_errors);
+        $mle->RelativeStandardError($rse_table);        
+
+
+        my $corr = so::matrix->new(name => 'CorrelationMatrix');
 
     if (scalar(@labels) > 0) {
-        my $mle = $doc->createElement("MLE");
-        $ppe->appendChild($mle);
-        if ($self->check_include(element => 'Estimation/PrecisionPopulationEstimates/MLE/StandardError')) {
-            my $table = $self->_xml->create_parameter_table(table_name => 'StandardError', name => 'SE', labels => \@labels, values => \@standard_errors);
-            $mle->appendChild($table);
-        }
-        if ($self->check_include(element => 'Estimation/PrecisionPopulationEstimates/MLE/RelativeStandardError')) {
-            my $table = $self->_xml->create_parameter_table(table_name => 'RelativeStandardError', name => 'RSE', labels => \@labels,
-                values => \@relative_standard_errors);
-            $mle->appendChild($table);
-        }
-
         if ($self->check_include(element => 'Estimation/PrecisionPopulationEstimates/MLE/CorrelationMatrix')) {
             my $cor = $doc->createElement("CorrelationMatrix");
             $mle->appendChild($cor);
@@ -720,94 +614,6 @@ sub _create_precision_population_estimates
     }
 
     return $ppe;
-}
-
-sub _create_bootstrap
-{
-    my $self = shift;
-
-    my $doc = $self->_document;
-
-    open my $fh, '<', $self->bootstrap_results;
-
-    my @parameters;
-    my @percentiles;
-    my @column;
-    my @medians;
-
-    while (<$fh>) {
-        if (/^medians$/) {
-            my $header = <$fh>;
-            my @a = split /","/, $header;
-            shift @a;
-            shift @a;
-            foreach my $param (@a) {
-                $param =~ s/\s*//;      # Remove spaces
-                if ($param !~ /^se/) {
-                    push @parameters, $self->_xml->mangle_symbol_idtype($param);   # FIXME: potentially missing warning?
-                } else {
-                    last;
-                }
-            }
-
-            my $row = <$fh>;
-            my @a = split /,/, $row;
-            shift @a;
-            shift @a;
-            for (my $col = 0; $col < scalar(@parameters); $col++) {
-                my $value = shift @a;
-                $value =~ s/^\s*//;
-                push @medians, $value;
-            }
-
-        } elsif (/^percentile.confidence.intervals$/) {
-            <$fh>;
-            # Loop through percentiles
-            for (my $i = 0; $i < 7; $i++) {
-                my $row = <$fh>;
-                my @a = split /,/, $row;
-                my $percentile = shift @a;
-                $percentile =~ s/^"\s*(.*)%"/\1/;
-                shift @a;
-                my $value;
-                for (my $col = 0; $col < scalar(@parameters); $col++) {
-                    $value = shift @a;
-                    $value =~ s/^\s*(.*)/\1/;
-                    if ($value ne 'NA') {
-                        push @{$column[$col]}, $value;
-                    }
-                }
-                if ($value ne 'NA') {
-                    push @percentiles, $percentile;
-                }
-            }
-        }
-    }
-
-    close $fh;
-
-    # Add median to percentiles/columns
-    my $row = 0;
-    while ($percentiles[$row] < 50 and $row < scalar(@percentiles)) {
-        $row++;
-    }
-
-    splice @percentiles, $row, 0, 50;
-    for (my $i = 0; $i < scalar(@parameters); $i++) {
-        splice @{$column[$i]}, $row, 0, $medians[$i];
-    }
-
-    my $table = $self->_xml->create_table(
-        table_name => 'Percentiles',
-        column_ids => [ "Percentile", @parameters ],
-        column_types => [ ('undefined') x (scalar(@parameters) + 1) ],
-        column_valuetypes => [ ('real') x (scalar(@parameters) + 1) ],
-        values => [ \@percentiles, @column ],
-    );
-    my $bootstrap = $doc->createElement("Bootstrap");
-    $bootstrap->appendChild($table);
-
-    return $bootstrap;
 }
 
 sub _create_task_information
