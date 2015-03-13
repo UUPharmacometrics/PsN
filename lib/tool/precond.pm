@@ -13,6 +13,7 @@ use tool::modelfit;
 use linear_algebra;
 use output;
 use Storable qw(dclone);
+use utils::file;
 
 extends 'tool';
 
@@ -155,13 +156,14 @@ sub modelfit_analyze
             for (my $i = 0; $i < scalar(@{$theta->options}); $i++) {
                 my $option = $theta->options->[$i];
                 $option->init($new_theta->[$theta_ind]);
+
                 if (defined $option->lobnd and $new_theta->[$theta_ind] < $option->lobnd) {
                     $option->clear_lobnd;
-                    print "Warning: updated THETA(", $i + 1, ") estimate is below original lower bound. The bound will be removed in updated model.\n";
+                    print "Warning: updated THETA(", $theta_ind + 1, ") estimate is below original lower bound. The bound will be removed in updated model.\n";
                 }
                 if (defined $option->upbnd and $new_theta->[$theta_ind] > $option->upbnd) {
                     $option->clear_upbnd;
-                    print "Warning: updated THETA(", $i + 1, ") estimate is above original upper bound. The bound will be removed in updated model.\n";
+                    print "Warning: updated THETA(", $theta_ind + 1, ") estimate is above original upper bound. The bound will be removed in updated model.\n";
                 }
                 $theta_ind++;
             }
@@ -263,13 +265,27 @@ sub create_base_model
         copy_output => 0,
     );
 
-    $base_model->problems->[0]->covariance(enabled => 1);
+    _set_model_options(model => $base_model);
 
-    if (not $base_model->is_option_set(record => 'covariance', name => 'UNCONDITIONAL', fuzzy_match => 1)) {
-        $base_model->add_option(record_name => 'covariance', option_name => 'UNCONDITIONAL');
+    $base_model->_write;
+
+    return $base_model;
+}
+
+sub _set_model_options
+{
+	my %parm = validated_hash(\@_,
+		model => { isa => 'model' },
+	);
+	my $model = $parm{'model'};
+
+    $model->problems->[0]->covariance(enabled => 1);
+
+    if (not $model->is_option_set(record => 'covariance', name => 'UNCONDITIONAL', fuzzy_match => 1)) {
+        $model->add_option(record_name => 'covariance', option_name => 'UNCONDITIONAL');
     }
 
-    my $values = $base_model->get_option_value(record_name => 'covariance', option_name => 'PRINT', option_index => 'all');
+    my $values = $model->get_option_value(record_name => 'covariance', option_name => 'PRINT', option_index => 'all');
     my $found = 0;
     foreach my $value (@$values) {
         if ($value eq 'R') {
@@ -278,16 +294,12 @@ sub create_base_model
         }
     }
     if (not $found) {
-        $base_model->add_option(record_name => 'covariance', option_name => 'PRINT', option_value => 'R'); 
+        $model->add_option(record_name => 'covariance', option_name => 'PRINT', option_value => 'R'); 
     }
 
-    if (not $base_model->is_option_set(record => 'estimation', name => 'FORMAT', fuzzy_match => 1)) {
-        $base_model->add_option(record_name => 'estimation', option_name => 'FORMAT', option_value => 's1PE23.16');
+    if (not $model->is_option_set(record => 'estimation', name => 'FORMAT', fuzzy_match => 1)) {
+        $model->add_option(record_name => 'estimation', option_name => 'FORMAT', option_value => 's1PE23.16');
     }
-
-    $base_model->_write;
-
-    return $base_model;
 }
 
 sub create_reparametrized_model
@@ -313,13 +325,7 @@ sub create_reparametrized_model
 		copy_output => 0
 	);
 
-    if (not $model->is_option_set(record => 'covariance', name => 'UNCONDITIONAL', fuzzy_match => 1)) {
-        $model->add_option(record_name => 'covariance', option_name => 'UNCONDITIONAL');
-    }
-
-    if (not $model->is_option_set(record => 'estimation', name => 'FORMAT', fuzzy_match => 1)) {
-        $model->add_option(record_name => 'estimation', option_name => 'FORMAT', option_value => 's1PE23.16');
-    }
+    _set_model_options(model => $model);
 
 	my @code;
 	my $code_record;
@@ -653,7 +659,8 @@ sub convert_reparametrized_cov
         return \@varcovMatrix;
 
     } else {
-        $cov_filename = "modelfit_dir1/NM_run1/psn.rmt";
+        $cov_filename = utils::file::replace_extension($cov_filename, 'rmt');
+        #$cov_filename = "repara_modelfit/NM_run1/psn.rmt";
 
         open(my $fh, '<', $cov_filename) or croak("\nCovariance step of the preconditioned model did not run. See .lst file for the reason\n\n");
 
