@@ -43,8 +43,10 @@ is (directory('C:\dir\dir2\file.h'), "C:\\dir\\dir2\\", "directory with dir on w
 is (directory('nodir'), ".\\", "directory nodir in windows");
 
 # slurp_file
-utils::file::_set_unix();
+my $testdir = create_test_dir("utils_file_test");
+chdir $testdir;
 
+utils::file::_set_unix();
 open my $fh, ">", "ksrfile.tmp";
 print $fh "Row1\xARow2\xA";
 close $fh;
@@ -69,5 +71,7 @@ my @a = utils::file::slurp_file("ksrfile.tmp");
 is_deeply(\@a, [ "Row1\xD\xA", "Row2\xD\xA" ], "slurp_file windows");
 
 unlink "ksrfile.tmp";
+
+remove_test_dir($testdir);
 
 done_testing();
