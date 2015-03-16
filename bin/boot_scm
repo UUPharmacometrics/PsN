@@ -48,36 +48,30 @@ exit unless $res;
 ##move this up again
 my %help_text;
 $help_text{Pre_help_message} = <<'EOF';
-
     Bootstrapped stepwise covariate model building from NONMEM models.
-        
 EOF
 
 $help_text{Description} = <<'EOF';
-
-    The Bootstrap Stepwise Covariate Model (BOOT_SCM) building tool 
+    The Bootstrap Stepwise Covariate Model (boot_scm) building tool 
     of PsN implements bootstrapped model selection for a
-    covariate model. It relies on the SCM tool of PsN.
-        
-    A configuration file must be given as input. The format of the configuration 
-    file follows the format of the scm configuration file exactly.
-    
+    covariate model, a method presented in
+The bootstrap of Stepwise Covariate Modeling using linear approximations,
+PAGE 20 (2011) Abstr 2161, R Keizer.
+
+	It relies on the SCM tool of PsN.        
 EOF
 $help_text{Examples} = <<'EOF';    
-    Example:
-    
     boot_scm config_run1.scm -samples=100
-
 EOF
 
     $help_text{Options} = <<'EOF';
-
-    The options are given here in their long form. Any option may be
-    abbreviated to any nonconflicting prefix. The -threads option may
-    be abbreviated to <span class="style2">-thr</span>.
+    A configuration file must be given as argument. The format of the configuration 
+    file follows the format of the scm configuration file exactly.
+	The -samples option is also required.
+    The model file must be specified in the configuration file, 
+	it cannot be given on the command-line.
 
     The following options are valid:
-
 EOF
 
     $help_text{-h} = <<'EOF';
@@ -125,7 +119,7 @@ $help_text{-methodA} = <<'EOF';
 EOF
 
 $help_text{-dummy_covariates} = <<'EOF';
-      -dummy_covariates=<list of existing covariates>
+      -dummy_covariates=list of existing covariates
 
     Default not used. If used, a new column for each listed covariate will 
     be added to the dataset, containing a randomly permuted copy of the 
@@ -134,6 +128,8 @@ $help_text{-dummy_covariates} = <<'EOF';
     exactly like the original covariate.
 EOF
 $help_text{-run_final_models} = <<'EOF';
+-run_final_models
+
     Default not set. If set then boot_scm will run the final models from 
     each scm on the original dataset and collect the ofv values in the output 
     file ofv_final.csv 

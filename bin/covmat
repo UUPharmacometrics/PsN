@@ -46,33 +46,24 @@ exit unless $res;
 my %help_text;
 
 $help_text{Pre_help_message} = <<'EOF';
-  <h3 class="heading1">covmat</h3>
-
-    Empirical covariance matrix from raw_results
+    Create an empirical covariance matrix from a raw_results file
 EOF
 
 $help_text{Examples} = <<'EOF';    
+    Use parameter labels from the raw_results file:
+    covmat -rawres_input=bootstrap_dir33/raw_results_run33.csv
+
+	Use generic labels:
+	covmat -rawres_input=raw_results_run5.csv run5.mod
+EOF
+
+$help_text{Options} = <<'EOF';      
+The -rawres_input option is required.
+
     covmat needs to read the names and counts of parameters from somewhere.
     By default covmat will look for a raw_results_structure file in the same
 	directory as the rawres_input file. Alternatively the user can
 	give a model file name on the command-line, or set option raw_results_structure
-
-    Examples:
-
-    Use parameter labels from the raw_results file:
-    covmat -rawres_input=bootstrap_dir33/raw_results_run33.csv
-
-	Use NONMEM's generic labels:
-	covmat -rawres_input=raw_results_run5.csv run5.mod
-
-EOF
-
-$help_text{Options} = <<'EOF';      
-    Options:
-
-      The options are given here in their long form. Any option may be
-      abbreviated to any nonconflicting prefix. The -threads option
-      may be abbreviated to -thr.
 
       The following options are valid:
 EOF
@@ -117,14 +108,16 @@ $help_text{-header} = <<'EOF';
       -header
 
       Default set.
-      By default the covariance matrix is printed with headers. Setting -no-header skips the headers in the output.
+      By default the covariance matrix is printed with headers. 
+Setting -no-header skips the headers in the output.
 EOF
 
 $help_text{-comma} = <<'EOF';
       -comma
 
       Default no set.
-      By default the covariance matrix is printed with space separation and fixed width of the numeric fields.
+      By default the covariance matrix is printed with space separation 
+and fixed width of the numeric fields.
 	Setting -comma changes the format to comma-separated variable width.
 EOF
 

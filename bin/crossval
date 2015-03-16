@@ -34,25 +34,23 @@ exit unless $res;
 
 my %help_text;
 $help_text{Pre_help_message} = <<'EOF';
-
     Cross-validation
 EOF
 $help_text{Description} = <<'EOF';
     The crossval tools divides the NONMEM data set into 'groups' equally sized
 	parts. For each part i, the remaining groups-1 parts are used for estimation,
 	and then part i is used for prediction.
-	A model file is required on the commandline.
+
+	The output is the file xv_result.txt with prediction model OFVs and
+corresponding estimation model OFVs.
 EOF
 $help_text{Examples} = <<'EOF';    
-    Example:
-    
     crossval run1.mod -groups=5
 EOF
 
     $help_text{Options} = <<'EOF';
-
-    The options are given here in their long form. Any option may be
-    abbreviated to any nonconflicting prefix.
+	A model file is required as argument, and the
+	-groups option is also required.
 
     The following options are valid:
 EOF
@@ -72,10 +70,6 @@ $help_text{-groups} = <<'EOF';
       -groups=N
 
     The number of cross-validation groups in the data set.
-EOF
-
-    $help_text{Post_help_message} = <<'EOF';
-    Also see 'psn_options -h' for a description of common options.
 EOF
 
 

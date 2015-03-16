@@ -10,6 +10,7 @@ use PsN;
 use data;
 use strict;
 use Getopt::Long;
+use common_options;
 
 my ($opt_help,
     $opt_long_help,
@@ -28,6 +29,11 @@ my $opts = { "h|?"                => \$opt_help,
 	     "ignoresign:s"   => \$opt_ignoresign,
 };
 
+#only for help text
+my %required_options = ();
+my %optional_options = %{$opts};
+
+
 my $res = GetOptions( %{$opts} );
 
 exit unless $res;
@@ -37,83 +43,64 @@ if ( scalar( @ARGV ) < 1 and !($opt_help or $opt_long_help) ){
   exit;
 }
 
+my %help_text;
+$help_text{Pre_help_message} = <<'EOF';  
+Basic statistics on a data file
+EOF
+$help_text{Post_help_message} = '';
 
-if($opt_help or $opt_long_help) {
-  print <<'ENDHELP';
-
-  data_stats
-
-  Usage:
-
-  data_stats [ -h | -? ] [ -help ]
-             [ -columns='string' ]
-	     [ -missing_data_token=number ]
-	     [ -global ]
-	     [ -ignore_columns='string' ]
-	     [ -ignoresign='string' ]
-	     datafile
-
-ENDHELP
-
-  if( $opt_long_help and !$opt_help ){ 
-
-    print <<'ENDHELP';
-  Description:
-
+    $help_text{Description} = <<'EOF';
     data_stats calculates and prints simple statistics for data
     files. Simple stastics are max, min, mean, median, range and
     standard deviation for each column.
+EOF
 
-  Examples:
-    
+$help_text{Examples} = <<'EOF';
     Calculate statistics for all columns in file.dta
     
-    $ data_stats file.dta
+    data_stats file.dta
 
     Calculate statistics for all columns except WGT and AGE.
     
-    $ data_stats --ignore_columns=WGT,AGE file.dta
+    data_stats --ignore_columns=WGT,AGE file.dta
 
     Calculate statistics for WGT and AGE only
 
-    $ data_stats --columns=WGT,AGE file.dta
+    data_stats --columns=WGT,AGE file.dta
+EOF
+    $help_text{Options} = <<'EOF';
+	A data file is required as argument.
 
-  Options:
+      The following options are valid:
+EOF
 
-    The options are given here in their long form. Any option may be
-    abbreviated to any nonconflicting prefix. The -threads option may
-    be abbreviated to -t(or even -thr).
-
-    The following options are valid:
-
-    -h | -?
-
-    Print a list of options.
-
-
+$help_text{-columns} = <<'EOF';      
     -columns='strings'
 
     By default data_stats prints statistics for all columns of the
     data set. But if you give a comma separated list of column headers
     or column numbers with the -columns option, then data_stats will
     print statistics for those columns only.
-
-    
+EOF
+$help_text{-ignore_columns} = <<'EOF';      
     -ignore_columns='strings'
 
     ignore_columns work the oposite way of -columns, it lets you
     select column headers or column numbers for which data_stats
     should not print statistcs. It also takes a comma separated list.
-
+EOF
+$help_text{-ignoresign} = <<'EOF';      
     -ignoresign='string'
 
     If the data file contains a header then that lines needs to be ignored by setting ignoresign.
 	Default is '@', i.e. ignore letters A-Z a-z.
-
+EOF
+$help_text{-missing_data_token} = <<'EOF';      
     -missing_data_token=number
 
     Number denoting missing data. Default -99.
-
+EOF
+$help_text{-global} = <<'EOF';      
     -global
 
     Default not set. If set, compute mean, median and sd treating all
@@ -121,17 +108,70 @@ ENDHELP
 	more influence. If not set, compute those metrics by first computing
 	one value per individual, and then computing over individuals, meaning
 	that all individuals will have equal influence.
-
-    -help
+EOF
+$help_text{-help} = <<'EOF';      
+-help
 
     Print this, longer, help message.
+EOF
+$help_text{-h} = <<'EOF';      
+-h
 
+    Print a list of options.
+EOF
 
+	my $help;
+my $indentation = '    ';
+if($opt_help or $opt_long_help) {
+	if( scalar( @ARGV ) > 0 ){
+		foreach my $option ( @ARGV ){
+			$option =~ s/^-//;
+			$help .= common_options::format_help_text(\%help_text,$indentation,'-'.$option);
+          } 
+		
+		$help =~ s/<\?.*\?>//g;
+		$help =~ s/<[^>]*>//g;
+		print $help;
+		exit;
+	}
 
-ENDHELP
-  }
-  exit;
+	$help .= "\ndata_stats\n";
+	$help .= common_options::format_help_text(\%help_text,$indentation,'Pre_help_message');
+
+	if( $opt_long_help ){
+
+		  $help .=common_options::format_help_text(\%help_text,$indentation,'Description');
+		  $help .=common_options::format_help_text(\%help_text,$indentation,'Examples');
+		  $help .=common_options::format_help_text(\%help_text,$indentation,'Options');
+
+          my @loop_array = sort(keys %required_options,keys %optional_options);
+
+          foreach my $option( @loop_array ){
+              $option =~ s/[^\w]*$|:.*//;
+			  $help .= common_options::format_help_text(\%help_text,$indentation,'-'.$option);
+          }
+
+          $help .= common_options::format_help_text(\%help_text,$indentation,'Post_help_message');
+
+	} else { 
+		$help .= common_options::print_help('data_stats',keys(%required_options),keys(%optional_options) );
+
+          $help .= "\n$indentation"."Options enclosed by [ ] are optional.\n"; 
+          $help .= "$indentation"."Exclamation mark, !, after the option name means option can be disabled\n".
+			  "$indentation"."using '-no-option', for example -no-handle_crashes.\n"; 
+          $help .= "$indentation"."Use 'data_stats -help' for a longer description.\n"; 
+          $help .= common_options::format_help_text(\%help_text,$indentation,'Post_help_message');
+      } 
+
+      $help =~ s/<\?.*\?>//g;
+      $help =~ s/<[^>]*>//g;
+      print $help;
+
+      exit;
 }
+
+
+
 
 my $ignoresign='@';
 if( $opt_ignoresign ){

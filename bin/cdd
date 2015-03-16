@@ -38,25 +38,18 @@ common_options::setup( \%options, 'cdd' ); #calls set_globals etc, initiates ran
 
 my %help_text;
 
-$help_text{Pre_help_message} = <<'EOF';
+$help_text{Pre_help_message} = <<'EOF';  
+       Case Deletion Diagnostics
 EOF
-
 $help_text{Description} = <<'EOF';
-<h3 class=heading1>Description</h3>
-
       The Case Deletion Diagnostics tool is run using the command from the command line
       with a few mandatory arguments. CDD is run as a diagnostic after
       a model is regarded finished or at least mature enough to run
-      validation tool on. You need to specify the NONMEM modelfile
-      with a model that have successful termination. You also have to
-      specify the number or name of the datafile column on which to
-      select for deletion. You do so with the case_column option.
+      validation tool on. 
 EOF
 
 $help_text{Examples} = <<'EOF';
-<h3 class=heading1>Examples</h3>
-      
-      cdd -model=run89.mod -case_column=10
+      cdd run89.mod -case_column=10
       
       This will perform a Case Deletion Diagnostic on the model
       specified in run89.mod based on the factors in column ten. If,
@@ -69,11 +62,8 @@ $help_text{Examples} = <<'EOF';
 EOF
 
 $help_text{Options} = <<'EOF';  
-      <h3 class=heading1>Options</h3>
-
-      The options are given here in their long form. Any option may be
-      abbreviated to any nonconflicting prefix. The -threads option
-      may be abbreviated to -t(or even -thr).
+A NONMEM model file with successful termination is required as argument.
+The -case_column option is also required.
 
       The following options are valid:
 EOF
@@ -91,7 +81,7 @@ $help_text{-help} = <<'EOF';
 EOF
 
 $help_text{-bins} = <<'EOF';
-      <p class="option">-bins=$number</p>
+      -bins=number
 
       Sets the number of databins, or cdd datasets, to use. If the
       number of unique values, or factors, in the case column is
