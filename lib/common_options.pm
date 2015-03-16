@@ -599,9 +599,7 @@ sub online_help
   <h3 class="heading1">Options:</h3>
 
     The options are given here in their long form. Any option may be
-    abbreviated to any nonconflicting prefix. The <span class="style2">-threads</span> option may
-    be abbreviated to <span class="style2">-thr</span>
-    <br><br>
+    abbreviated to any nonconflicting prefix.
     The following options are valid:
 EOF
 
@@ -1268,7 +1266,7 @@ EOF
     'the Uppsala way', i.e. with IWRES and W and SIGMA 1 FIX.
     See the userguide common_options_defaults_versions_psn for details.
 EOF
-    $help_hash{-tbs} = <<'EOF';
+    $help_hash{-dtbs} = <<'EOF';
     <p class="style2">-dtbs</p>
     Default not set. Invokes Dynamic Transform Both Sides method. Model must be coded
     'the Uppsala way', i.e. with IWRES and W and SIGMA 1 FIX.
@@ -1370,17 +1368,12 @@ EOF
 
 
   my $help;
-
+my $indentation = '    ';
   if($options{'h'} or $options{'?'} or $options{'help'} ) {
 
       if( scalar( @ARGV ) > 0 ){
           foreach my $option ( @ARGV ){
-
-              if( exists $help_hash{'-'.$option} ){
-                  $help .= "\n".$help_hash{'-'.$option}. "\n";
-              } else {
-                  $help .= "\nNo help available for '$option'\n\n";
-              }
+			  $help .= format_help_text(\%help_hash,$indentation,'-'.$option);
           } 
 
           $help =~ s/<\?.*\?>//g;
@@ -1389,13 +1382,14 @@ EOF
           exit;
       }
 
-      $help .= "\n" . $help_hash{Pre_help_message} . "\n";
+$help .= "\n".$command."\n";
+      $help .= format_help_text(\%help_hash,$indentation,'Pre_help_message');
 
       if( $options{'help'} ){
 
-          $help .= "\n\n".$help_hash{Description}."\n";
-          $help .= $help_hash{Examples}."\n";
-          $help .= $help_hash{Options}."\n";
+		  $help .=format_help_text(\%help_hash,$indentation,'Description');
+		  $help .=format_help_text(\%help_hash,$indentation,'Examples');
+		  $help .=format_help_text(\%help_hash,$indentation,'Options');
 
           my @loop_array;
 
@@ -1409,23 +1403,19 @@ EOF
 
           foreach my $option( @loop_array ){
               $option =~ s/[^\w]*$|:.*//;
-              if( exists $help_hash{'-'.$option}){
-                  $help .= $help_hash{'-'.$option}."\n";
-              } else {
-                  $help .= "      -$option\n\n      No help available for '$option'\n\n";
-              }
+			  $help .= format_help_text(\%help_hash,$indentation,'-'.$option);
           }
 
-          $help .= $help_hash{Post_help_message} . "\n";
+          $help .= format_help_text(\%help_hash,$indentation,'Post_help_message');
 
       } else { 
           $help .= common_options::print_help($command,$required_options, $optional_options);
 
-          $help .= "\n    Options enclosed by [ ] are optional."; 
-          $help .= "\n    Exclamation mark, !, after the option name means option can be disabled".
-          "\n    using '-no-option', for example -no-handle_crashes."; 
-          $help .= "\n    Use '$command -help' for a longer description.\n"; 
-          $help .= $help_hash{Post_help_message} . "\n";
+          $help .= "\n$indentation"."Options enclosed by [ ] are optional.\n"; 
+          $help .= "$indentation"."Exclamation mark, !, after the option name means option can be disabled\n".
+			  "$indentation"."using '-no-option', for example -no-handle_crashes.\n"; 
+          $help .= "$indentation"."Use '$command -help' for a longer description.\n"; 
+          $help .= format_help_text(\%help_hash,$indentation,'Post_help_message');
       } 
 
       $help =~ s/<\?.*\?>//g;
@@ -1435,6 +1425,59 @@ EOF
       exit;
   }
 }
+
+sub format_help_text
+{
+	my $hash = shift;
+	my $indentation = shift;
+	my $key= shift;
+
+	my $newtext = '';
+	return $newtext unless (defined $hash);
+
+	my $text = $hash->{$key};
+	if (defined $text and length($text)>0){
+		if (($key eq 'Description') or
+			($key eq 'Options') or
+			($key eq 'Examples')){
+			$newtext .= $key.":\n\n";
+		}
+
+		#split on newline
+		my @lines = split("\n",$text);
+
+		my $firstoptline=1;
+		$firstoptline = 0 unless ($key =~ /^-/);
+		foreach my $line (@lines){
+			chomp($line);
+			$line =~ s/^\s*//; #leading whitespace
+			$line =~ s/\s*$//; #trailing whitespace
+			if ($firstoptline){
+				$newtext .= $line."\n";
+			}else{
+				$newtext .= $indentation.$line."\n";
+			}
+			$firstoptline = 0;
+		}
+		#extra linebreak at end
+		$newtext .= "\n";
+	}elsif($key eq 'Description'){
+		1;
+	}elsif($key eq 'Pre_help_message'){
+		1;
+	}elsif($key eq 'Post_help_message'){
+		$newtext .= $indentation."Also see 'psn_options -h' for a description of common options.\n";
+	}elsif($key eq 'Options'){
+		$newtext .= $key."\n\n".$indentation."The following options are valid:\n\n";
+	}elsif($key eq 'Examples'){
+		1;
+	}elsif (defined $key){
+		my $option = $key;
+		$newtext = "$key\n\n".$indentation."No help available for '$key'\n\n";
+	}
+	return $newtext;
+}
+
 
 sub get_option_array
 {
