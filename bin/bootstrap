@@ -53,16 +53,10 @@ common_options::setup( \%options, 'bootstrap' ); #calls set_globals etc, initiat
 
 my %help_text;
 $help_text{Pre_help_message} = <<'EOF';  
-    <h3 class="heading1">bootstrap</h3>
-      
-      Bootstrap using the percentile or BCa method.
-      
-    <h3 class="heading1">Usage:</h3>
+       Bootstrap using the percentile or BCa method.
 EOF
 
     $help_text{Description} = <<'EOF';
-   <h3 class="heading1">Description:</h3>
-
       The Bootstrap can be used to calculate bias, standard errors and
       confidence intervals. It does so by resampling with replacement
       from the data, see Efron B, An Introduction to the Bootstrap,
@@ -72,15 +66,12 @@ EOF
       95% confidence intervals approximatly 2000 runs will suffice.
 EOF
     $help_text{Examples} = <<'EOF';
-   <h3 class="heading1">Example:</h3>
-
       <p class="option">bootstrap -samples=200 run89.mod</p>
 
       This will run a non-parametric bootstrap of 200 samples and give
       you good estimates of the standard errors of the parameter
       estimates. You may get some estimates for the confidence
       intervals too, but they will generally not be of high quality.
-
 
       <p class="option">bootstrap -samples=2000 -bca run89.mod</p>
 
@@ -89,7 +80,6 @@ EOF
       intended for caclulation of second-order correct confidence
       intervals.
 
-
       <p class="option">bootstrap -samples=2000 -bca -stratify_on=GRP run89.mod </p>
 
       This is the same BCa approach as above but with stratification
@@ -97,11 +87,7 @@ EOF
 EOF
 
     $help_text{Options} = <<'EOF';
-   <h3 class="heading1">Options:</h3>
-
-      The options are given here in their long form. Any option may be
-      abbreviated to any nonconflicting prefix. The -threads option
-      may be abbreviated to <span class="option">-t</span> (or even <span class="option">-thr</span>).
+	A model file is required as argument.
 
       The following options are valid:
 EOF
