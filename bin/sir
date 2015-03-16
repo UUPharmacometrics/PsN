@@ -57,13 +57,14 @@ EOF
     $help_text{Description} = <<'EOF';
    <h3 class="heading1">Description:</h3>
 
-     Sample data vectors using the covariance matrix. 
-	 Resample vectors based on weights. Compute confidence intervals from resampled vectors.
+	Sample data vectors using the covariance matrix. 
+	Resample vectors based on weights. Compute confidence intervals from resampled vectors.
+	A model file is required on the commandline.
 EOF
     $help_text{Examples} = <<'EOF';
    <h3 class="heading1">Example:</h3>
 
-      <p class="option">sir -samples=10000 -resamples=200 run89.mod</p>
+	sir -samples=10000 -resamples=200 run89.mod
 
 EOF
 
@@ -155,6 +156,7 @@ EOF
       <p class="option">-with_replacement</p>
     By default resampling is done without replacement, but if option
 	-with_replacement is set, resampling will be done with replacement.
+	It is not possible to cap replacement at e.g. 5, replacement will be unlimited.
 EOF
     $help_text{-covmat_input} = <<'EOF';
       <p class="option">-covmat_input=filename</p>

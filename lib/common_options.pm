@@ -1438,9 +1438,11 @@ sub format_help_text
 	my $text = $hash->{$key};
 	if (defined $text and length($text)>0){
 		if (($key eq 'Description') or
-			($key eq 'Options') or
 			($key eq 'Examples')){
 			$newtext .= $key.":\n\n";
+		}
+		if (($key eq 'Options')){
+			$newtext .= "Input:\n\n";
 		}
 
 		#split on newline
@@ -1461,6 +1463,8 @@ sub format_help_text
 		}
 		#extra linebreak at end
 		$newtext .= "\n";
+	}elsif(exists $hash->{$key}){
+		1;
 	}elsif($key eq 'Description'){
 		1;
 	}elsif($key eq 'Pre_help_message'){
@@ -1468,10 +1472,10 @@ sub format_help_text
 	}elsif($key eq 'Post_help_message'){
 		$newtext .= $indentation."Also see 'psn_options -h' for a description of common options.\n";
 	}elsif($key eq 'Options'){
-		$newtext .= $key."\n\n".$indentation."The following options are valid:\n\n";
+		$newtext .= $key.":\n\n".$indentation."The following options are valid:\n\n";
 	}elsif($key eq 'Examples'){
 		1;
-	}elsif (defined $key){
+	}elsif (defined $key and ($key =~ /^-/)){
 		my $option = $key;
 		$newtext = "$key\n\n".$indentation."No help available for '$key'\n\n";
 	}

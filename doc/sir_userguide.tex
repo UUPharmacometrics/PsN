@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{SIR user guide}{2015-03-06}
+\guidetitle{SIR user guide}{2015-03-15}
 
 \begin{document}
 
@@ -67,6 +67,7 @@ Default not used. Only allowed in combination with rawres\_input.
 \nextopt
 \optname{with\_replacement}
 Default not set. By default, resampling is performed without replacement, but setting this option gives resampling with replacement.
+It is not possible to cap replacement at e.g. 5, replacement will be unlimited.
 \nextopt
 \optdefault{covmat\_input}{filename}
 Not allowed together with rawres\_input. If given, this covariance matrix is
