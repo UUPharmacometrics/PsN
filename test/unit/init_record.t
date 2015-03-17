@@ -12,6 +12,8 @@ use model::problem::omega;
 use Test::Exception;
 use ui;
 
+#TODO need nonmem version for this really
+
 ui -> silent(1);
 # Test new and read_option
 my $record = model::problem::init_record->new(record_arr => ['2']);
@@ -61,6 +63,25 @@ cmp_float ($record->options->[2]->init,0.531022,'record 3 init 2');
 cmp_float ($record->options->[3]->init,0.002922,'record 3 init 3');
 cmp_float ($record->options->[4]->init,-0.00476,'record 3 init 4');
 cmp_float ($record->options->[5]->init,1.048290,'record 3 init 5');
+
+#make band
+$record = model::problem::init_record->new(record_arr => ['BLOCK(3) 0.02','-0.002 0.5','0 -0.005 1']);
+is ($record->options->[0]->init,0.02,'record 3.5 init 0');
+is ($record->options->[1]->init,-0.002,'record 3.5 init 1');
+is ($record->options->[2]->init,0.5,'record 3.5 init 2');
+is ($record->options->[3]->init,0,'record 3.5 init 3');
+is ($record->options->[4]->init,-0.005,'record 3.5 init 4');
+is ($record->options->[5]->init,1,'record 3.5 init 5');
+$record->set_random_inits(degree => 0.1);
+cmp_float ($record->options->[0]->init,0.020215,'record 3.5 init 0');
+cmp_float ($record->options->[1]->init,-0.00209,'record 3.5 init 1');
+cmp_float ($record->options->[2]->init,0.526578,'record 3.5 init 2');
+is ($record->options->[3]->init,0,'record 3.5 init 3');
+cmp_float ($record->options->[4]->init,-0.00489,'record 3.5 init 4');
+cmp_float ($record->options->[5]->init,0.922923,'record 3.5 init 5');
+
+#TODO close to nonposdef
+#TODO very high degree, to get cholesky fail...
 
 $record = model::problem::init_record->new(record_arr => ['BLOCK(1) 28 FIXED']);
 is ($record->options->[0]->init, 28, 'record 4 init');
