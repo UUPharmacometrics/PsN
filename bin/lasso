@@ -44,18 +44,38 @@ common_options::setup( \%options, 'lasso' ); #calls set_globals etc, initiates r
 my %help_text;
 
 $help_text{Pre_help_message} = <<'EOF';
-  <h3 class="heading1">lasso</h3>
-
     LASSO method for covariate model selection.
+EOF
+$help_text{Description} = <<'EOF';
+Covariate models for population pharmacokinetics and pharmacodynamics
+are often built with a stepwise covariate modelling procedure (SCM, avail-
+able in PsN). When analysing a small dataset this method may produce
+a covariate model that suffers from selection bias and poor predictive 
+performance. The lasso is a method suggested to remedy these problems.
+It may also be faster than SCM and provide a validation of the covariate
+model. In the lasso all covariates must be standardised to have zero mean
+and standard deviation one. Subsequently, the model containing all potential
+covariate–parameter relations is fitted with a restriction: the sum of the ab-
+solute covariate coefficients must be smaller than a value, t. The restriction
+will force some coefficients towards zero while the others are estimated with
+shrinkage. This means in practice that when fitting the model the covariate
+relations are tested for inclusion at the same time as the included relations
+are estimated. For a given SCM analysis, the model size depends on the
+P-value required for selection. In the lasso the model size instead depends
+on the value of t which can be estimated using cross-validation.
+
+Jakob Ribbing, Joakim Nyberg, Ola Caster, E. Niclas Jonsson, 
+The lasso—a novel method for predictive covariate model building in nonlinear
+mixed effects models, C. J Pharmacokinet Pharmacodyn (2007) 34:485–51
+EOF
+$help_text{Examples} = <<'EOF';
+ lasso run2.mod -relations=CL:CLCR-2,WT-3,,V:WT-2 
 
 EOF
 
 $help_text{Options} = <<'EOF';      
-    Options:
-
-      The options are given here in their long form. Any option may be
-      abbreviated to any nonconflicting prefix. The -threads option
-      may be abbreviated to -thr.
+	A model file is required as argument, and at least the
+	-relations option. 
 
       The following options are valid:
 EOF

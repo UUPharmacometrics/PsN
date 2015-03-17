@@ -45,18 +45,41 @@ common_options::setup( \%options, 'gls' ); #get defaults,
 my %help_text;
 
 $help_text{Pre_help_message} = <<'EOF';
-  <h3 class="heading1">gls</h3>
-
-    Generalised Least Squares approximation of residual error.
-
+    Generalised Least Squares method for
+Individual Observation-Shrinkage Scaling of Residuals
+EOF
+$help_text{Examples} = <<'EOF';
+  gls run2.mod
 EOF
 
-$help_text{Options} = <<'EOF';      
-    Options:
+$help_text{Description} = <<'EOF';
+During the modelling process one may encounter scenarios where first-order
+conditional estimation with eps−eta interaction (FOCEI) is indicated but may
+be prohibitively time consuming or unstable. Also, it may be a concern
+that a misspecification of the residual error model may translate to bias in
+structural or inter-individual variability parameters. These two problems
+may be overcome by using a generalised least squares (GLS) type approach
+where dependent variable predictions are obtained from a previous model fit
+and then used in the residual error model. The gls program automates this
+procedure, which is further described in 
 
-      The options are given here in their long form. Any option may be
-      abbreviated to any nonconflicting prefix. The -threads option
-      may be abbreviated to -thr
+Individual Observation-Shrinkage Scaling of Residuals in a 
+Generalized Least Square Type of Estimation in NONMEM, 
+PAGE 21 (2012) Abstr 2586, V Ivaturi.
+
+In summary the GLS method amounts to the following: Run the original
+model. In a second step IPRED is replaced with GLSP in the definition of
+W where GLSP is computed as
+
+PREDorig ·iwres_shrinkage + (1-iwres_shrinkage_orig )*IPREDorig ,
+
+where PREDorig and IPREDorig are obtained from running the original
+model and iwres_shrinkage is either a population shrinkage obtained from
+the original model run or a per-observation shrinkage based on simulations.
+The modified gls model is then estimated.
+EOF
+$help_text{Options} = <<'EOF';      
+	A model file is required as argument.
 
       The following options are valid:
 EOF

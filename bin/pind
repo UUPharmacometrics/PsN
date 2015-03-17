@@ -47,19 +47,22 @@ common_options::setup( \%options, 'pind' ); #calls set_globals etc, initiates ra
 my %help_text;
 
 $help_text{Pre_help_message} = <<'EOF';
-  pind
-
     Individual probabilities.
-
-  Usage:
 EOF
+$help_text{Description} = <<'EOF';      
+The pind script implements part of the procedure, the individual probabilities,
+described in
 
+	Two bootstrapping routines for obtaining imprecision estimates for 
+	nonparametric parameter distributions in nonlinear mixed effects models, 
+	Paul G. Baverel, Radojka M. Savic, Mats O. Karlsson,
+	J Pharmacokinet Pharmacodyn, 2010
+EOF
+$help_text{Examples} = <<'EOF';      
+pind run1.mod
+EOF
 $help_text{Options} = <<'EOF';      
-    Options:
-
-      The options are given here in their long form. Any option may be
-      abbreviated to any nonconflicting prefix. The -threads option
-      may be abbreviated to -t(or even -thr).
+A model must be given as argument.
 
       The following options are valid:
 EOF
@@ -116,7 +119,7 @@ common_options::online_help( 'pind', \%options, \%help_text, \%required_options,
 
 ## Check that we do have a model file
 if ( scalar(@ARGV) < 1 ) {
-  print "A simulation model file must be specified. Use 'pind -h' for help.\n";
+  print "A model file must be specified. Use 'pind -h' for help.\n";
   exit;
 }
 

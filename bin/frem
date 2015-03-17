@@ -41,24 +41,34 @@ my $res = GetOptions( \%options,
 		      keys(%optional_options) );
 exit unless $res;
 
-common_options::setup( \%options, 'gls' ); #get defaults, 
+common_options::setup( \%options, 'frem' ); #get defaults, 
 #calls set_globals etc, initiates random sequence
 
 my %help_text;
 
 $help_text{Pre_help_message} = <<'EOF';
-  <h3 class="heading1">gls</h3>
-
-    Generalised Least Squares approximation of residual error.
-
+    Full Random Effects Model
 EOF
 
-$help_text{Options} = <<'EOF';      
-    Options:
+$help_text{Description} = <<'EOF';      
+The frem program is an aid to the method described in 
+A full model approach based on the covariance matrix of parameters and covariates, 
+PAGE 21 (2012) Abstr 2455, M Karlsson. 
 
-      The options are given here in their long form. Any option may be
-      abbreviated to any nonconflicting prefix. The -threads option
-      may be abbreviated to -thr.
+The program step by step builds a model with full random effects. 
+If option -vpc is set then script will prepare model that can be run with vpc.
+
+The main run directory will contain the frem_vpc model and frem_vpc
+dataset, if option -vpc was set. The m1 subdirectory of the frem run 
+directory will contain all other generated models, lst-files for 
+the estimated models, and dataset 2 (the frem dataset).
+EOF
+
+$help_text{Examples} = <<'EOF';      
+frem run1.mod -time_varying=WT -occasion=VISI -parameters=PHI,LAG -invariant=SEX,DGRP -vpc -no-check
+EOF
+$help_text{Options} = <<'EOF';      
+	A model file is required as argument.
 
       The following options are valid:
 EOF
@@ -66,7 +76,7 @@ EOF
 $help_text{-h} = <<'EOF';
       -h | -?
       
-      With -h or -? gls will print a list of options and exit.
+      With -h or -? frem will print a list of options and exit.
 EOF
       
 $help_text{-help} = <<'EOF';      
@@ -78,49 +88,74 @@ EOF
 $help_text{-invariant} = <<'EOF';
       -invariant=list
 
+A comma-separated list of covariates that are time invariant.
+Names used in $INPUT. Optional if -time_varying is given, not
+allowed if restarting an old run, otherwise required.
 EOF
 $help_text{-time_varying} = <<'EOF';
       -time_varying=list
 
+A comma-separated list of time-varying covariates. Names
+used in $INPUT. Optional if -invariant is given, not allowed
+if restarting an old run, otherwise required.
 EOF
 
 $help_text{-occasion} = <<'EOF';
       -occasion=column
 
-
+Default OCC. The name of the column that defines occasions.
+Name used in $INPUT, not data set. Needed if -time_varying
+is set, otherwise ignored.
 EOF
 
 $help_text{-parameters} = <<'EOF';
       -parameters=list
 
+A comma-separated list of model parameters that should have
+between-occasion variability added. Required if -time_varying
+is set, otherwise not allowed.
 EOF
 
 $help_text{-dv} = <<'EOF';
       -dv=column
 
-      Default DV
+      Default is DV. The name of the dependent variable. Name
+used in $INPUT.
 EOF
 $help_text{-start_eta} = <<'EOF';
       -start_eta=x
 
-      Default 1
+      The order number of the first BSV ETA to get correlation with
+time invariant covariate ETAs. The default is 1, which means
+all BSV ETAs will be correlated to time invariant covariates.
+Not allowed if restarting an old run, not allowed if -invariant
+is not set.
 EOF
 
 $help_text{-vpc} = <<'EOF';
       -vpc
 
-      Default not set.
+      Default not set. If set then script will create a frem model that
+can be run with the vpc script (in a separate call to the vpc
+script).
 EOF
 
 $help_text{-check} = <<'EOF';
       -check
 
-      Default not set.
+      Set by default, disable with -no-check. Run safety check after
+data set 2 generation.
 EOF
 
 $help_text{-estimate} = <<'EOF';
       -estimate=N
 
+Optional, default 3. The number (0, 1, 2 or 3) of the last model
+to estimate in the frem sequence. All models with a higher
+number will still be created, but not estimated. When restart-
+ing in an existing frem run directory, estimation of models that
+have an existing lst-file will be skipped even if the 
+-estimate option is set to a higher number.
 EOF
 
 

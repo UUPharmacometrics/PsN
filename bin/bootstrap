@@ -66,21 +66,21 @@ EOF
       95% confidence intervals approximatly 2000 runs will suffice.
 EOF
     $help_text{Examples} = <<'EOF';
-      <p class="option">bootstrap -samples=200 run89.mod</p>
+      bootstrap -samples=200 run89.mod
 
       This will run a non-parametric bootstrap of 200 samples and give
       you good estimates of the standard errors of the parameter
       estimates. You may get some estimates for the confidence
       intervals too, but they will generally not be of high quality.
 
-      <p class="option">bootstrap -samples=2000 -bca run89.mod</p>
+      bootstrap -samples=2000 -bca run89.mod
 
       This will run a non-parametric bootstrap using the BCa technique
       (See An introduction to the bootstrap, Efron, 1993). The BCa is
       intended for caclulation of second-order correct confidence
       intervals.
 
-      <p class="option">bootstrap -samples=2000 -bca -stratify_on=GRP run89.mod </p>
+      bootstrap -samples=2000 -bca -stratify_on=GRP run89.mod 
 
       This is the same BCa approach as above but with stratification
       on the factors of the GRP variable.
@@ -93,36 +93,36 @@ EOF
 EOF
       
     $help_text{-samples} = <<'EOF';      
-      <p class="option">-samples</p>
+      -samples
 
       The number of bootstrapped datasets to generate.
 EOF
     $help_text{-dofv} = <<'EOF';      
-      <p class="option">-dofv</p>
+      -dofv
 
       Compute delta-ofv by doing a MAXEVAL=0 run on orginal dataset with the 
       bootstrap parameter estimates.
 EOF
     $help_text{-run_base_model} = <<'EOF';      
-      <p class="option">-run_base_model</p>
+      -run_base_model
 
       Default true. Run the base model unless the lst-file already exists in the same directory.
 EOF
     $help_text{-update_inits} = <<'EOF';      
-      <p class="option">-update_inits</p>
+      -update_inits
 
       Default true. Update the initial estimates of the bootstrap models to the final estimates from
 	  the estimation (lst-file) of the base model.
 EOF
     $help_text{-mceta} = <<'EOF';      
-      <p class="option">-mceta</p>
+      -mceta
 
       Only allowed in combination with -dofv and when NM7.3 or later and
       a classical estimation method is used. Set MCETA=N in $EST when
       computing delta-ofv.
 EOF
     $help_text{-summarize} = <<'EOF';      
-      <p class="option">-summarize</p>
+      -summarize
 
       Only allowed when -directory is set to an existing bootstrap run directory and
 	  there exists a raw_results file in there. Recompute bootstrap_results based
@@ -130,7 +130,7 @@ EOF
 EOF
 
     $help_text{-sample_size} = <<'EOF';
-      <p class="option">-sample_size</p>
+      -sample_size
 
       The number of subjects in each bootstrap data set. The default
       value is set to the number of individuals in the original data
@@ -160,9 +160,9 @@ EOF
 EOF
 
     $help_text{-bca} = <<'EOF';
-      <p class="option">-bca</p>
+      -bca
 
-      Using the <span class="option">-bca </span>option, the bootstrap
+      Using the -bca option, the bootstrap
       utility will calculate the confidence intervals through the BCa
       method. The default approach however, is not to use the BCa (see
       Efron B, An introduction to the Bootstrap, 1993). The BCa is
@@ -179,7 +179,7 @@ $help_text{-keep_tables} = <<'EOF';
 EOF
 
     $help_text{-copy_data} = <<'EOF';
-      <p class="option">-copy_data</p>
+      -copy_data
     Default set. By default, the original model is run with a copy of the 
 	original dataset in. If -no-copy_data is used, i.e. copy_data is unset, 
 	the original model will instead be run using the absolute path
@@ -187,7 +187,7 @@ EOF
 EOF
 
     $help_text{-stratify_on} = <<'EOF';
-      <p class="option">-stratify_on=integer|string</p>
+      -stratify_on=integer|string
 
       It may be necessary to use stratification in the resampling
       procedure. For example, if the original data consists of two
@@ -197,7 +197,7 @@ EOF
       procedure to resample within the two groups, producing bootstrap
       data sets that all contain 10 rich + 90 sparse data patients but
       with different compositions. The default is not to use
-      stratification. Set <span class="option">-stratify_on</span> to
+      stratification. Set -stratify_on to
       the column (the name in INPUT in the model) that defines the two groups.
 
       Note that the option sample_size has a different behavior when
@@ -205,7 +205,7 @@ EOF
 EOF
 
     $help_text{-skip_covariance_step_terminated} = <<'EOF';
-      <p class="option">-skip_covariance_step_terminated</p>
+      -skip_covariance_step_terminated
 
       With this option enabled, the bootstrap will skip all samples
       where the NONMEM run terminated the covariance step.
@@ -213,7 +213,7 @@ EOF
 EOF
 
     $help_text{-skip_with_covstep_warnings} = <<'EOF';
-      <p class="option">-skip_with_covstep_warnings</p>
+      -skip_with_covstep_warnings
 
       With this option enabled, the bootstrap will skip all samples
       where the NONMEM run had warnings from the covariance step.
@@ -221,7 +221,7 @@ EOF
 EOF
  
     $help_text{-skip_minimization_terminated} = <<'EOF';
-      <p class="option">-skip_minimization_terminated</p>
+      -skip_minimization_terminated
 
       With this option enabled, the bootstrap will skip all samples
       where the NONMEM run terminated the minimization step.
@@ -229,7 +229,7 @@ EOF
 EOF
   
     $help_text{-skip_estimate_near_boundary} = <<'EOF';
-      <p class="option">-skip_estimate_near_boundary</p>
+      -skip_estimate_near_boundary
 
       With this option enabled, the bootstrap will skip all samples
       where the NONMEM run signal that some estimates are near its
@@ -238,7 +238,7 @@ EOF
 EOF
 
    $help_text{-allow_ignore_id} = <<'EOF';
-      <p class="option">-allow_ignore_id</p>
+      -allow_ignore_id
 
       Allow IGNORE/ACCEPT statements in the $DATA record based on ID column.
       Default not used, i.e. IGNORE/ACCEPT certain ID values is not allowed. 

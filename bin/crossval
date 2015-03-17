@@ -56,13 +56,13 @@ EOF
 EOF
 
     $help_text{-h} = <<'EOF';
-    <p class="style2">-h | -?</p>
+    -h | -?
 
     With -h or -? crossval will print a list of options and exit.
 EOF
 
     $help_text{-help} = <<'EOF';
-    <p class="style2">-help</p>
+    -help
 
     With -help crossval will print this, longer, help message.
 EOF

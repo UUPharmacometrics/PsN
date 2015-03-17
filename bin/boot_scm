@@ -75,19 +75,19 @@ EOF
 EOF
 
     $help_text{-h} = <<'EOF';
-    <p class="style2">-h | -?</p>
+    -h | -?
 
     With -h or -? boot_scm will print a list of options and exit.
 EOF
 
     $help_text{-help} = <<'EOF';
-    <p class="style2">-help</p>
+    -help
 
     With -help boot_scm will print this, longer, help message.
 EOF
 
     $help_text{-stratify_on} = <<'EOF';
-      <p class="option">-stratify_on=string</p>
+      -stratify_on=string
 
       It may be necessary to use stratification in the resampling
       procedure. For example, if the original data consists of two

@@ -69,13 +69,13 @@ The -case_column option is also required.
 EOF
 
 $help_text{-h} = <<'EOF';
-      <p class="option">-h | -?</p>
+      -h | -?
       
       With -h or -? cdd will print a list of options and exit.
 EOF
       
 $help_text{-help} = <<'EOF';      
-      <p class="option">-help</p>
+      -help
       
       With -help cdd will print this, longer, help message.
 EOF
@@ -93,7 +93,7 @@ $help_text{-bins} = <<'EOF';
 EOF
 
 $help_text{-selection_method} = <<'EOF';
-      <p class="option">-selection_method='random' or 'consecutive'</p>
+      -selection_method='random' or 'consecutive'
 
       Specifies whether the factors selected for exclusion should be
       drawn randomly or consecutively from the datafile.
@@ -101,7 +101,7 @@ $help_text{-selection_method} = <<'EOF';
 EOF
 
 $help_text{-case_column} = <<'EOF';
-      <p class="option">-case_column=column_name|column_number</p>
+      -case_column=column_name|column_number
 
       This flag is mandatory. Through this flag you set the column on
       which the case-deletion is done. You can either use the name of
@@ -111,13 +111,13 @@ $help_text{-case_column} = <<'EOF';
 EOF
 
 $help_text{-outside_n_sd_check} = <<'EOF';
-      <p class="option">-outside_n_sd_check='number'</p>
+      -outside_n_sd_check='number'
 
     Mark the runs with CS-CR outside this many standard deviations of the PCA.    
 EOF
 
 $help_text{-xv} = <<'EOF';
-      <p class="option">-xv|-no-xv</p>
+      -xv|-no-xv
 
       Turns the cross-validation feature on (-xv) or off (-no-xv). The
       default behaviour is to run the cross-validation step.

@@ -596,25 +596,25 @@ sub online_help
   my %help_hash;
 
     $help_hash{'-?'} = <<'EOF';
-    <p class="style2">-h | -?</p>
+    -h | -?
 
-    With <span class="style2">-h</span> or <span class="style2">-?</span> the script prints the list of available options 
+    With -h or -? the script prints the list of available options 
     and exit.
 EOF
 
     $help_hash{-help} = <<'EOF';
-    <p class="style2">-help</p>
-    With <span class="style2">-help</span> a longer help message will be printed.
+    -help
+    With -help a longer help message will be printed.
 EOF
 
     $help_hash{-nm_version} = <<'EOF';
-    <p class="style2">-nm_version='string'</p>
+    -nm_version='string'
     If you have more than one installation of NONMEM you can choose
-    between them using the <span class="style2">-nm_version</span> option. The installations must be
+    between them using the -nm_version option. The installations must be
     specified in the psn.conf file.
 EOF
     $help_hash{-check_nmtran} = <<'EOF';
-    <p class="style2">-check_nmtran</p>
+    -check_nmtran
 	Make PsN run NMtran on the model file before submitting the complete nmfe run to a cluster/grid
 	or forking on a local computer. This adds a bit of overhead but on a cluster this still 
 	saves time in the case of syntax errors in the model file, since the user does not 
@@ -629,7 +629,7 @@ EOF
 	of an NM install directory the nmtran check will not be performed.
 EOF
     $help_hash{-niter_eonly} = <<'EOF';
-    <p class="style2">-niter_eonly</p>
+    -niter_eonly
       
       Only applies if NONMEM7 and last $EST is IMP or IMPMAP. Only for scripts
       vpc (any options), cdd (if option -xv) and execute (if option -mirror_plots 
@@ -639,7 +639,7 @@ EOF
 EOF
 
     $help_hash{-last_est_complete} = <<'EOF';
-    <p class="style2">-last_est_complete</p>
+    -last_est_complete
       
       Only applies if NONMEM7 and multiple $ESTIMATION records. Then only for scripts
       vpc (any options), cdd (if option -xv) and execute (if option -mirror_plots 
@@ -653,14 +653,20 @@ EOF
 EOF
 
     $help_hash{-nmfe} = <<'EOF';
-    <p class="style2">-nmfe</p>
+    -nmfe
     Default set.
     Invoke NONMEM via the nmfe script (or a custom wrapper) from within PsN. 
     Unless option -nmqual is set, option -nmfe is 
     set automatically. Also, -nmfe is set in the default configuration file.
 EOF
+    $help_hash{-stop_motion} = <<'EOF';
+    -stop_motion=integer
+    Default not used.
+    Make PsN stop at pre-defined breakpoints and print run information.
+	Mainly for debugging.
+EOF
     $help_hash{-nmfe_options} = <<'EOF';
-    <p class="style2">-nmfe_options='options for nmfe'</p>
+    -nmfe_options='options for nmfe'
     Only relevant if NONMEM7.2 or later is used.
     The text set with this option will be copied verbatim to the nmfe script call. 
     PsN will not check that the options are appropriate. When set on the PsN commandline 
@@ -676,26 +682,28 @@ EOF
 EOF
 
     $help_hash{-nmqual} = <<'EOF';
-    <p class="style2">-nmqual</p>
-    Default not used. Run an NMQual-installed NONMEM via autolog.pl. Only NMQual8 is supported. 
-    When set, PsN will locate the autolog.pl file and log.xml in the nmqual subdirectory of the NONMEM installation directory, and then run
+    -nmqual
+    Default not used. Run an NMQual-installed NONMEM via autolog.pl. 
+	Only NMQual8 is supported. 
+    When set, PsN will locate the autolog.pl file and log.xml in the nmqual 
+	subdirectory of the NONMEM installation directory, and then run
     perl autolog.pl log.xml run ce workdir psn (extra NM options)
 EOF
 
     $help_hash{-threads} = <<'EOF';
-    <p class="style2">-threads='integer'</p>
+    -threads='integer'
     Use the threads option to enable parallel execution of multiple
     NONMEM runs. On a desktop computer it is recommended to set
-    <span class="style2">-threads</span> to the number of CPUs in the system plus one. You can
+    -threads to the number of CPUs in the system plus one. You can
     specify more threads, but it will probably not increase the
     performance. If you are running on a computer cluster, you should
     consult your system administrator to find out how many threads
-    you can specify. The <span class="style2">-threads</span> option will be ignored if you run on
+    you can specify. The -threads option will be ignored if you run on
     a grid system, since grids have their own scheduling algoritms. The
-    default value for the <span class="style2">-threads</span> option is 1.
+    default value for the -threads option is 1.
 EOF
     $help_hash{-rplots} = <<'EOF';
-    <p class="style2">-rplots='integer'</p>
+    -rplots='integer'
     Automatically create R plots to visualize results when a template file is available,
 	either provided by the user via option -template_file_rplots or in the default set of template files
     for a subset of the PsN tools.
@@ -708,7 +716,7 @@ EOF
 	-rplots=2 means basic and extended plots are generated													  
 EOF
     $help_hash{-template_directory_rplots} = <<'EOF';
-    <p class="style2">-template_directory_rplots=path</p>
+    -template_directory_rplots=path
 	PsN can look for the rplots template file in a number of places. The priority order is the
 	following :
 	1) template_directory_rplots set on command-line 
@@ -717,7 +725,7 @@ EOF
     4) R-scripts subdirectory of the PsN installation directory
 EOF
     $help_hash{-template_file_rplots} = <<'EOF';
-    <p class="style2">-template_file_rplots=file</p>
+    -template_file_rplots=file
     When the rplots feature is used, the default template PsN will use is <toolname>_default.R,
 	for example scm_default.R. The user can choose a different template file
 	by setting option -template_file_rplots to a different file. 
@@ -725,7 +733,7 @@ EOF
 	and after that in the -template_directory_rplots directory.
 EOF
     $help_hash{-subset_variable_rplots} = <<'EOF';
-    <p class="style2">-subset_variable_rplots=name</p>
+    -subset_variable_rplots=name
     Default not set. The user can specify a subset variable to be used with the rplots feature. This variable
 	will, if set, be used in for example the execute default R template to create separate plots for
 	subsets of the data, via xpose options 'subset' and 'by'. The user must ensure that the variable
@@ -733,7 +741,7 @@ EOF
 EOF
 
     $help_hash{-nice} = <<'EOF';
-    <p class="style2">-nice='integer'</p>
+    -nice='integer'
     This option only has effect on unix like operating systems. It
     sets the priority (or nice value) on a process. You can give any
     value that is legal for the "nice" command, likely it is between 0
@@ -742,13 +750,13 @@ EOF
 EOF
 
     $help_hash{-display_iterations} = <<'EOF';
-    <p class="style2">-display_iterations</p>
+    -display_iterations
     This option turns on display the iterations output from NONMEM during
     the model run. The option can be disabled with -no-display_iterations.
 EOF
 
     $help_hash{-directory} = <<'EOF';
-    <p class="style2">-directory='string'</p>
+    -directory='string'
     The directory option sets the directory in which PsN will run
     NONMEM. The default directory name is 'modelfit_dirX' for execute,
     where X will be increased by one each time you run the script.
@@ -757,7 +765,7 @@ EOF
     it will be done for you.
 
     If you abort the run or if your system crashes you can use the
-    '<span class="style2">-directory</span>' option set to the directory of the run that
+    '-directory' option set to the directory of the run that
     crashed. PsN will then not run the modelfiles that had
     finished before the crash, thereby saving some time. Notice that
     is important that you give exactly the same options that you gave
@@ -766,14 +774,14 @@ EOF
 
 
     $help_hash{-extra_files} = <<'EOF';
-    <p class="style2">-extra_files='extra_file1.dta, extra_file2.dta'</p>
+    -extra_files='extra_file1.dta, extra_file2.dta'
     If you need extra files in the directory where NONMEM is run you
-    specify them in the comma separated <span class="style2">-extra_files</span> list. It could for 
+    specify them in the comma separated -extra_files list. It could for 
     example be fortran subroutines you need compiled with NONMEM.
 EOF
 
     $help_hash{-maxevals} = <<'EOF';
-    <p class="style2">-maxevals=100000</p>
+    -maxevals=100000
     NONMEM only allows 9999 function evaluations. PsN can expand this
     limit by adding an MSFO option to $ESTIMATION. Later when NONMEM
     hits the max number of function evaluations allowed by NONMEM (9999) 
@@ -783,7 +791,7 @@ EOF
 EOF
 
     $help_hash{-seed} = <<'EOF';
-    <p class="style2">-seed='string'</p>
+    -seed='string'
     You can set your own random seed to make PsN runs reproducible.
 	The random seed is a string, and may include spaces if the whole string 
 	is enclosed with single	quotes as in -seed='123 abc'. It is important to 
@@ -795,69 +803,69 @@ EOF
 EOF
 
     $help_hash{-verbose} = <<'EOF';
-    <p class="style2">-verbose</p>
-    With <span class="style2">verbose</span> set to 1, PsN will print
+    -verbose
+    With verbose set to 1, PsN will print
     more details about NONMEM runs. More precisely PsN will print the
     minimization message for each successfull run and a R:X for each
     retry PsN makes of a failed run, where X is the run number.
 EOF
 
     $help_hash{-lsf_job_name} = <<'EOF';
-    <p class="style2">-lsf_job_name='string'</p>
-    <span class="style2">lsf_job_name</span> sets the name of the LSF job name of every NONMEM run, 
+    -lsf_job_name='string'
+    lsf_job_name sets the name of the LSF job name of every NONMEM run, 
     they all get the same name.
 EOF
 
     $help_hash{-lsf_options} = <<'EOF';
-    <p class="style2">-lsf_options='string'</p>
+    -lsf_options='string'
     LSF jobs are submitted using bsub and all LSF related options are
     translated to corresponding bsub options. For maximum flexibility
     we allow any string to be passed as options to bsub, so if a specific 
     bsub feature not available through any ot the other -lsf_ options 
-    is needed, use <span class="style2">lsf_options</span> to pass any option to bsub.
+    is needed, use lsf_options to pass any option to bsub.
 EOF
 
     $help_hash{-lsf_project_name} = <<'EOF';
-    <p class="style2">-lsf_project_name='string'</p>
-    Use <span class="style2">lsf_project_name</span> to assign a
+    -lsf_project_name='string'
+    Use lsf_project_name to assign a
     project name to your LSF runs.
 EOF
 
     $help_hash{-lsf_resources} = <<'EOF';
-    <p class="style2">-lsf_resources='string'</p>
-    <span class="style2">lsf_resources</span> specifies which LSF resources is required when submiting
+    -lsf_resources='string'
+    lsf_resources specifies which LSF resources is required when submiting
     NONMEM runs.
 EOF
 
     $help_hash{-lsf_ttl} = <<'EOF';
-    <p class="style2">-lsf_ttl='string'</p>
-    <span class="style2">lsf_ttl</span> sets the maximum time a NONMEM run should be allowed to run on 
+    -lsf_ttl='string'
+    lsf_ttl sets the maximum time a NONMEM run should be allowed to run on 
     the LSF grid.
 EOF
     $help_hash{-lsf_sleep} = <<'EOF';
-    <p class="style2">-lsf_sleep='string'</p>
+    -lsf_sleep='string'
     Pause for this many seconds after bsub submission, before continuing running PsN.
 EOF
 
     $help_hash{-lsf_queue} = <<'EOF';
-    <p class="style2">-lsf_queue='string'</p>
-    <span class="style2">lsf_queue</span> specifies which LSF queue PsN should submit NONMEM runs 
+    -lsf_queue='string'
+    lsf_queue specifies which LSF queue PsN should submit NONMEM runs 
     to and is used in conjuction with -run_on_lsf
 EOF
 
     $help_hash{-min_retries} = <<'EOF';
-    <p class="style2">-min_retries='integer'</p>
-    <span class="style2">min_retries</span> forces PsN to try
+    -min_retries='integer'
+    min_retries forces PsN to try
     several initial values for each estimate and selecting the best
     one. The best model is the one with highest number of significant 
     digits and an ofv value no more than five units above than the 
-    lowest ofv value among all models. If <span class="style2">-picky</span>
+    lowest ofv value among all models. If -picky
     is used, only models which first pass the picky test will be considered.
 EOF
 
     $help_hash{-clean} = <<'EOF';
-    <p class="style2">-clean='integer 0-3'</p>
-    The <span class="style2">-clean</span> clean option can take four different values:
+    -clean='integer 0-3'
+    The -clean clean option can take four different values:
     0 - means that nothing is removed, 
     1 - NONMEM binary and intermediate files except INTER are removed, and files specified with 
     option -extra_files (this is the default), 
@@ -868,24 +876,24 @@ EOF
 EOF
 
     $help_hash{-missing_data_token} = <<'EOF';
-    <p class="style2">-missing_data_token='string'</p>
-    <span class="style2">missing_data_token</span> sets the number
+    -missing_data_token='string'
+    missing_data_token sets the number
     that PsN accepts as missing data, default is -99.
 EOF
 
     $help_hash{-compress} = <<'EOF';
-    <p class="style2">-compress</p>
+    -compress
     PsN will compress the contents of 'NM_runX' to the
-    file 'nonmem_files.tgz' if the <span class="style2">-compress</span> option is used and if you
-    have the archive and compress programs <strong>tar</strong> and <strong>gzip</strong> installed. If
-    you use the <span class="style2">-clean</span> options, run files will be
-    removed before the compression. The <span class="style2">-compress</span> option obviously has
-    no effect if you also use the <span class="style2">-clean</span> option.
+    file 'nonmem_files.tgz' if the -compress option is used and if you
+    have the archive and compress programs tar and gzip installed. If
+    you use the -clean options, run files will be
+    removed before the compression. The -compress option obviously has
+    no effect if you also use the -clean option.
 EOF
 
     $help_hash{-tweak_inits} = <<'EOF';
-    <p class="style2">-tweak_inits</p>
-    <!--/>If NONMEM terminates nonsuccessfully, PsN can perturb the initial
+    -tweak_inits
+    If NONMEM terminates nonsuccessfully, PsN can perturb the initial
     estimates and run NONMEM again. The generation of new initial
     estimates init_i for the i:th retry are performed according to
 
@@ -896,19 +904,18 @@ EOF
     updating procedure makes sure that boundary conditions on the
     parameters are still valid. For this option to have effect, the
     -retries option must be set to number larger than zero. The
-    default setting uses tweak_inits.<-->
-    <?php print '<p>  If NONMEM terminates nonsuccessfully, PsN can perturb the initial estimates  and run NONMEM again. The generation of new initial estimates <img src="images/init1.gif"> for the <em>i</em>:th retry are performed according to</p><p align="center"><img src="images/perturb1.gif" width="236" height="32"></p> <p>where <img src="images/init_orig1.gif" width="29" height="28"> are the initial estimates of the original run. The updating procedure makes sure that boundary conditions on the parameters are still valid. For this option to be valid, the <span class="style2">-retries</span> option must be set to a number larger than zero. The default setting uses tweak_inits. </p>'; ?>
+    default setting of tweak_inits is 'on'.
 EOF
 
     $help_hash{-outputfile} = <<'EOF';
-    <p class="style2">-outputfile='string'</p>
-    The <span class="style2">-outputfile</span> option specifies the output file name for the
+    -outputfile='string'
+    The -outputfile option specifies the output file name for the
     NONMEM run. Currently this option is only valid when a single
     model is supplied.
 EOF
 
 $help_hash{-parafile} = <<'EOF';
-    <p class="style2">-parafile='filename'</p>
+    -parafile='filename'
     NONMEM 7.2 (or later) parafile. Appends "-parafile=filename"
     to the nmfe call, and makes PsN copy 'filename' to the NM_run directory.
     Only works if option nmfe or nmqual is set. Note that -nmfe is sometimes set 
@@ -916,56 +923,56 @@ $help_hash{-parafile} = <<'EOF';
 EOF
 
 $help_hash{-nodes} = <<'EOF';
-    <p class="style2">-nodes='number'</p>
+    -nodes='number'
     Only relevant together with option -parafile. Appends "[nodes]=option_value"
     to the nmfe call. The nodes option is completely independent of the threads 
     option. It is possible to e.g. set threads to 1 and nodes to 10.
 EOF
 
     $help_hash{-picky} = <<'EOF';
-    <p class="style2">-picky</p>
-    The <span class="style2">-picky</span> option is only valid together with <span class="style2">-tweak_inits</span>. 
+    -picky
+    The -picky option is only valid together with -tweak_inits. 
     Normally PsN only tries new initial estimates if 
-    '<span class="style2">MINIMZATION SUCCESSFUL</span>' is not found in the NONMEM output
-    file. With the <span class="style2">-picky</span> option, PsN will regard any of the
+    'MINIMZATION SUCCESSFUL' is not found in the NONMEM output
+    file. With the -picky option, PsN will regard any of the
     following messages as a signal for rerunning:
-<p class="style2">
-    0ESTIMATE OF THETA IS NEAR THE BOUNDARY<br>
-    0PARAMETER ESTIMATE IS NEAR ITS BOUNDARY<br>
-    0R MATRIX ALGORITHMICALLY SINGULAR<br>
-    0S MATRIX ALGORITHMICALLY SINGULAR</p>
+
+    0ESTIMATE OF THETA IS NEAR THE BOUNDARY
+    0PARAMETER ESTIMATE IS NEAR ITS BOUNDARY
+    0R MATRIX ALGORITHMICALLY SINGULAR
+    0S MATRIX ALGORITHMICALLY SINGULAR
 EOF
 
     $help_hash{'-quick_summarize|quick_summary'} = <<'EOF';
-    <p><span class="style2">-quick_summarize</span> or <span class="style2">-quick_summary</span></p>
-    If either of <span class="style2">quick_summarize</span> and <span class="style2">quick_summary</span> is used, PsN will print 
+    -quick_summarize or -quick_summary
+    If either of quick_summarize and quick_summary is used, PsN will print 
     the ofv value and minimization message for each NONMEM run.
 EOF
 
-    $help_hash{-run_on_lsf} = <<'EOF';
-    <p class="style2">-run_on_lsf</p>
+$help_hash{-run_on_lsf} = <<'EOF';
+    -run_on_lsf
     PsN connects with Platform Load Sharing Facility (LsF). With 
-    <span class="style2">-run_on_lsf</span>. PsN will submit to the queue defined in "psn.conf" 
-    unless specified with <span class="style2">-lsf_queue</span>.
+    -run_on_lsf. PsN will submit to the queue defined in "psn.conf" 
+    unless specified with -lsf_queue.
 EOF
 
     $help_hash{-run_on_ud} = <<'EOF';
-    <p class="style2">-run_on_ud</p>
-    PsN connects with United Devices Grid MP. With <span class="style2">-run_on_ud</span> PsN will submit to the UD grid
+    -run_on_ud
+    PsN connects with United Devices Grid MP. With -run_on_ud PsN will submit to the UD grid
     with parameters defined in the "uduserconf" file.
 EOF
 
     $help_hash{-retries} = <<'EOF';
-    <p class="style2">-retries='integer'</p>
-    The <span class="style2">-retries</span> option tells PsN how many times it
+    -retries='integer'
+    The -retries option tells PsN how many times it
     shall try to rerun a NONMEM job if it fails according to given criterias. In
-    the current version of PsN (2.2), the <span class="style2">-retries</span> option is only
-    valid together with <span class="style2">-tweak_inits</span>. The default value of the
-    <span class="style2">-retries</span> option is 0.
+    the current version of PsN (2.2), the -retries option is only
+    valid together with -tweak_inits. The default value of the
+    -retries option is 0.
 EOF
 
     $help_hash{-crash_restarts} = <<'EOF';
-    <p class="style2">-crash_restarts='integer'</p>
+    -crash_restarts='integer'
     If a NONMEM outputfile is produced but PsN is unable to read it
     properly it is assumed that NONMEM crashed, probably due to
     something in the operating system, and PsN will start the run
@@ -973,25 +980,25 @@ EOF
     initial estimates. The default value is 4.
 EOF
     $help_hash{-significant_digits_accept} = <<'EOF';
-    <p class="style2">-significant_digits_accept='number'</p>
-    The <span class="style2">-significant_digits_accept</span> option is only valid together with <span class="style2">-tweak_inits</span>. 
+    -significant_digits_accept='number'
+    The -significant_digits_accept option is only valid together with -tweak_inits. 
     Normally PsN tries new initial estimates if 
-    '<span class="style2">MINIMZATION SUCCESSFUL</span>' is not found in the NONMEM output
-    file. With the <span class="style2">-significant_digits_accept</span>, PsN will only rerun if 
+    'MINIMZATION SUCCESSFUL' is not found in the NONMEM output
+    file. With the -significant_digits_accept, PsN will only rerun if 
     the resulting significant digits is lower than the value 
     specified with this option.
 EOF
 
     $help_hash{-abort_on_fail} = <<'EOF';
-    <p class="style2">-abort_on_fail</p>
-    If the <span class="style2">-abort_on_fail</span> option is set and one of the NONMEM runs
+    -abort_on_fail
+    If the -abort_on_fail option is set and one of the NONMEM runs
     fails, PsN will stop scheduling more runs and try to stop
     those that are currently running. A run is considered failed if it
     fails to produce a list file which PsN can read. This can occur
     if a nonmem run crashes or gets killed.
 EOF
     $help_hash{-add_retries} = <<'EOF';
-    <p class="style2">-add_retries</p>
+    -add_retries
 
     By default, PsN will never do retries on a model when a run is restarted if
     the file stats-runs.csv is found in the NM_run subdirectory, since the
@@ -1003,29 +1010,29 @@ EOF
 EOF
 
     $help_hash{-silent} = <<'EOF';
-    <p class="style2">-silent</p>
+    -silent
     The silent option turns off all output from PsN. Results and log
     files are still written to disk, but nothing is printed to the
     screen.
 EOF
 
     $help_hash{-debug} = <<'EOF';
-    <p class="style2">-debug='integer'</p>
-    The <span class="style2">-debug</span> option is mainly intended for developers who wish to
-    debug PsN. By default <span class="style2">-debug</span> is set to zero but you can set
+    -debug='integer'
+    The -debug option is mainly intended for developers who wish to
+    debug PsN. By default -debug is set to zero but you can set
     it to '1' to enable warning messages. If you run into problems that require support
 		set this to 1 and send the output to the developers.
 EOF
 
     $help_hash{-warn_with_trace} = <<'EOF';
-    <p class="style2">-warn_with_trace</p>
-    If <span class="style2">-warn_with_trace</span> is set, PsN will print a stack 
+    -warn_with_trace
+    If -warn_with_trace is set, PsN will print a stack 
     trace for all warning and error messages.
     This is only for developers.
 EOF
 
     $help_hash{-sde} = <<'EOF';
-    <p class="style2">-sde</p>
+    -sde
     Default not set. In PsN version 3.4.4 and earlier, this option made PsN print the records
 	in a particular order suitable for SDE models.
 	The new default is to keep the record order of the input model file. To use the old 
@@ -1033,27 +1040,27 @@ EOF
 EOF
  
     $help_hash{-psn_record_order} = <<'EOF';
-    <p class="style2">-psn_record_order</p>
+    -psn_record_order
     If this option is set the build in record order of PsN will be used. Default is
     to preserve the record order of the input model. This option is mainly present
     for backward compatibility reasons.
 EOF
 
     $help_hash{-omega_before_pk} = <<'EOF';
-    <p class="style2">-omega_before_pk</p>
+    -omega_before_pk
     Default not set. In PsN version 3.4.4 and earlier, $OMEGA was always printed before $PK. 
 	The new default is to keep the record order of the input model file. To use the old print order, 
 	set option -omega_before_pk.
 EOF
 
     $help_hash{-condition_number_limit} = <<'EOF';
-    <p class="style2">-condition_number_limit='number'</p>
+    -condition_number_limit='number'
     An error will be raised in the output from sumo
     if the condition number is greater than this number. 
 EOF
 
     $help_hash{-nm_output} = <<'EOF';
-    <p class="style2">-nm_output='comma-separated list of file extensions'</p>
+    -nm_output='comma-separated list of file extensions'
 
     NONMEM generates many output files per run. The lst-file will always be 
 	copied back to the calling directory. The option -nm_output decides which of the 
@@ -1065,12 +1072,12 @@ EOF
 
 EOF
     $help_hash{-correlation_limit} = <<'EOF';
-    <p class="style2">-correlation_limit='number'</p>
+    -correlation_limit='number'
     All correlations above this number will be listed in the output from sumo.
 EOF
 
     $help_hash{-accepted_ofv_difference} = <<'EOF';
-    <p class="style2">-accepted_ofv_difference='number'</p>
+    -accepted_ofv_difference='number'
     Default 0.1. This option is used by PsN only when selecting the best retry 
     out of the whole set, provided that -picky was not used or no try fulfilled
     the picky conditions. The selection will be based on the 'corrected ofv'. 
@@ -1082,37 +1089,37 @@ EOF
 EOF
 
     $help_hash{-handle_msfo} = <<'EOF';
-    <p class="style2">-handle_msfo</p>
+    -handle_msfo
     Experimental feature for handling resumes using msfo and msfi files.
 EOF
 
     $help_hash{-handle_crashes} = <<'EOF';
-    <p class="style2">-handle_crashes</p>
+    -handle_crashes
     PsN tries to recognize NONMEM runs that crashed for various reasons,
     e.g. a computer crash or a NONMEM run deliberaterly killed, and restart
     those runs without changing initial parameter estimates.
 EOF
 
     $help_hash{-large_theta_cv_limit} = <<'EOF';
-    <p class="style2">-large_theta_cv_limit='number'</p>
+    -large_theta_cv_limit='number'
     Coefficients of variation larger than this number will produce
     warnings in the output from sumo.
 EOF
 
     $help_hash{-large_omega_cv_limit} = <<'EOF';
-    <p class="style2">-large_omega_cv_limit='number'</p>
+    -large_omega_cv_limit='number'
     Coefficients of variation larger than this number will produce
     warnings in the output from sumo.
 EOF
 
     $help_hash{-large_sigma_cv_limit} = <<'EOF';
-    <p class="style2">-large_sigma_cv_limit='number'</p>
+    -large_sigma_cv_limit='number'
     Coefficients of variation larger than this number will produce
     warnings in the output from sumo.
 EOF
 
     $help_hash{-max_runtime} = <<'EOF';
-    <p class="style2">-max_runtime='string'</p>
+    -max_runtime='string'
     A limit on how long a slurm run may go on before being aborted
     (option -t to sbatch). Format is either minutes, e.g. -max_runtime=10, 
     or hours:minutes:seconds, e.g. -max_runtime=4:0:0, or days-hours, 
@@ -1120,19 +1127,19 @@ EOF
 EOF
 
     $help_hash{-near_bound_sign_digits} = <<'EOF';
-    <p class="style2">-near_bound_sign_digits='integer'</p>
+    -near_bound_sign_digits='integer'
     If a parameter estimate is equal to a bound with this many
     significant digits, a warning will be printed. Valid only with sumo.
 EOF
 
     $help_hash{-near_zero_boundary_limit} = <<'EOF';
-    <p class="style2">-near_zero_boundary_limit='number'</p>
+    -near_zero_boundary_limit='number'
     When the bound is zero, the check using -near_bound_sign_digits is not valid. 
     Use this limit instead. Valid only with sumo.
 EOF
 
     $help_hash{-prepend_model_file_name} = <<'EOF';
-    <p class="style2">-prepend_model_file_name</p>
+    -prepend_model_file_name
     Table files by default have generic names, e.g. patab. If multiple
     models are run, files will be overwritten when multiple files
     with the same name are copied back to the same directory.
@@ -1141,78 +1148,82 @@ EOF
 EOF
 
     $help_hash{-run_on_sge} = <<'EOF';
-    <p class="style2">-run_on_sge</p>
-    Use Sun Grid Engine queueing system.
+    -run_on_sge
+    Submit jobs using qsub and sge options
+EOF
+    $help_hash{-run_on_slurm} = <<'EOF';
+    -run_on_slurm
+    Submit jobs using sbatch and slurm options
 EOF
 
     $help_hash{-run_on_torque} = <<'EOF';
-    <p class="style2">-run_on_torque</p>
+    -run_on_torque
     Use Torque batch queueing system.
 EOF
 
     $help_hash{-torque_queue} = <<'EOF';
-    <p class="style2">-torque_queue='string'</p>
+    -torque_queue='string'
     Only valid with -run_on_torque. Maps to qsub option -q
 EOF
 
     $help_hash{-torque_prepend_flags} = <<'EOF';
-    <p class="style2">-torque_prepend_flags='string'</p>
+    -torque_prepend_flags='string'
     Only valid with -run_on_torque. The - signs must be included in the 
     string. The extra flags will be prepended to standard set in qsub call.
 
 EOF
 
     $help_hash{-run_on_zink} = <<'EOF';
-    <p class="style2">-run_on_zink</p>
+    -run_on_zink
     Experimental clustering on Windows machine.
 EOF
 
     $help_hash{-sge_resource} = <<'EOF';
-    <p class="style2">-sge_resource='string'</p>
+    -sge_resource='string'
     Only valid with -run_on_sge. Maps to qsub option -l
 EOF
 
     $help_hash{-sge_queue} = <<'EOF';
-    <p class="style2">-sge_queue='string'</p>
+    -sge_queue='string'
     Only valid with -run_on_sge. Maps to qsub option -q
 EOF
 
     $help_hash{-sge_prepend_flags} = <<'EOF';
-    <p class="style2">-sge_prepend_flags='string'</p>
+    -sge_prepend_flags='string'
     Only valid with -run_on_sge. The - signs must be included in the 
     string. The extra flags will be prepended to standard set in qsub call.
 
 EOF
     $help_hash{-slurm_prepend_flags} = <<'EOF';
-    <p class="style2">-slurm_prepend_flags='string'</p>
+    -slurm_prepend_flags='string'
     Only valid with -run_on_slurm. The - signs must be included in the 
     string. The extra flags will be prepended to standard set in sbatch call.
 
 EOF
     $help_hash{-slurm_account} = <<'EOF';
-    <p class="style2">-slurm_account='string'</p>
+    -slurm_account='string'
     Only valid with -run_on_slurm. Maps to sbatch -A option.
 
 EOF
     $help_hash{-slurm_partition} = <<'EOF';
-    <p class="style2">-slurm_partition='string'</p>
+    -slurm_partition='string'
     Only valid with -run_on_slurm. Maps to sbatch -p option.
 
 EOF
 
     $help_hash{-send_email} = <<'EOF';
-    <p class="style2">-send_email</p>
+    -send_email
     Only valid with -run_on_slurm and -email_address in combination, otherwise ignored.
     Determines if sbatch options --mail_type=ALL --mail_user=<email_address> should be set.
 EOF
 
     $help_hash{-email_address} = <<'EOF';
-    <p class="style2">-email_address='string'</p>
+    -email_address='string'
     Only valid with -run_on_slurm and -send_email in combination, otherwise ignored.
     The email address in sbatch options --mail_type=ALL --mail_user=<email_address>.
 EOF
     $help_hash{-shrinkage} = <<'EOF';
-    <p class="style2">-shrinkage</p>
+    -shrinkage
     Calculate the shrinkage for the model run.  Shrinkage is
     calculated as 1-(sd(eta(x))/omega(x)) and measures the shrinkage of the
     empirical Bayes estimates (EBEs) towards the mean of the expected
@@ -1221,17 +1232,17 @@ EOF
 EOF
 
     $help_hash{-sign_digits_off_diagonals} = <<'EOF';
-    <p class="style2">-sign_digits_off_diagonals='integer'</p>
+    -sign_digits_off_diagonals='integer'
     The off-diagonal elements are checked against +-1 with this many
     significant digits. Valid only in sumo.
 EOF
 
     $help_hash{-precision} = <<'EOF';
-    <p class="style2">-precision='integer'</p>
+    -precision='integer'
     Precision in sumo output.
 EOF
     $help_hash{-degree} = <<'EOF';
-    <p class="style2">-degree=number</p>
+    -degree=number
 	When tweaking initial estimates in retries/parallel_retries, this number decides the range for the 
     new estimates. The new number will be within 'degree'*oldinitial from the old initial estimate,
 	unless restricted by upper or lower boundaries.
@@ -1239,7 +1250,7 @@ EOF
 EOF
 
     $help_hash{-extra_output} = <<'EOF';
-    <p class="style2">-extra_output='file1,file2'</p>
+    -extra_output='file1,file2'
     If NONMEM generates a file which PsN normally does not copy back
     to the working directory, specifying a comma-separated list
     of such files with this options will make PsN copy the listed files.
@@ -1247,26 +1258,26 @@ EOF
 EOF
 
     $help_hash{-cwres} = <<'EOF';
-    <p class="style2">-cwres</p>
+    -cwres
     Compute the conditional weighted residuals (CWRES) for a model run. 
     Option is only supported for NONMEM5 and NONMEM6. In NONMEM7, CWRES can
     be requested directly from $TABLE.
 EOF
     $help_hash{-tbs} = <<'EOF';
-    <p class="style2">-tbs</p>
+    -tbs
     Default not set. Invokes Transform Both Sides method. Model must be coded
     'the Uppsala way', i.e. with IWRES and W and SIGMA 1 FIX.
     See the userguide common_options_defaults_versions_psn for details.
 EOF
     $help_hash{-dtbs} = <<'EOF';
-    <p class="style2">-dtbs</p>
+    -dtbs
     Default not set. Invokes Dynamic Transform Both Sides method. Model must be coded
     'the Uppsala way', i.e. with IWRES and W and SIGMA 1 FIX.
     See the userguide common_options_defaults_versions_psn for details.
 EOF
 
     $help_hash{-tbs_lambda} = <<'EOF';
-    <p class="style2">-tbs_lambda</p>
+    -tbs_lambda
     Default not set. Initial value string, using NM-TRAN syntax, 
     for parameter in Transform Both Sides 
     method, e.g. '(-1, 0.5, 1)' or 'O FIX'. The string must be enclosed 
@@ -1276,7 +1287,7 @@ EOF
     See the userguide common_options_defaults_versions_psn for details.
 EOF
     $help_hash{-tbs_zeta} = <<'EOF';
-    <p class="style2">-tbs_zeta</p>
+    -tbs_zeta
     Default not set. Initial value string, using NM-TRAN syntax, 
     for parameter zeta in Transform Both Sides 
     method, e.g. '(-1, 0.5, 1)' or 'O FIX'. The string must be enclosed 
@@ -1286,7 +1297,7 @@ EOF
     See the userguide common_options_defaults_versions_psn for details.
 EOF
     $help_hash{-tbs_delta} = <<'EOF';
-    <p class="style2">-tbs_delta</p>
+    -tbs_delta
     Default not set. Initial value string, using NM-TRAN syntax, 
     for parameter delta in Transform Both Sides 
     method, e.g. '(-1, 0.5, 1)' or 'O FIX'. The string must be enclosed 
@@ -1297,7 +1308,7 @@ EOF
 EOF
 
     $help_hash{-mirror_plots} = <<'EOF';
-    <p class="style2">-mirror_plots='integer'</p>
+    -mirror_plots='integer'
     This command creates a set of simulations from a model file that can then 
     be read into Xpose 4 for mirror plotting. The command requires an integer 
     value -mirror_plots=XX where XX is an integer representing the number of
@@ -1311,14 +1322,14 @@ EOF
 EOF
 
     $help_hash{-iofv} = <<'EOF';
-    <p class="style2">-iofv</p>
+    -iofv
     Compute the individual contributions to the objective function.
     Option is only supported for NONMEM5 and NONMEM6. In NONMEM7, individual ofv
     values can be found in the addtional output phi file.
 EOF
 
     $help_hash{-mirror_from_lst} = <<'EOF';
-    <p class="style2">-mirror_from_lst</p>
+    -mirror_from_lst
     Can only be used in combination with -mirror_plots=XX where XX is an 
     integer representing the number of simulations to perform. These commands 
     create a set of simulations from a model file and output file that can 
@@ -1328,12 +1339,12 @@ EOF
 EOF
 
     $help_hash{-version} = <<'EOF';
-    <p class="style2">-version</p>
+    -version
     Print PsN version of script called.
 EOF
 
     $help_hash{-standardised_output} = <<'EOF';
-    <p class="style2">-standardised_output</p>
+    -standardised_output
     Create an additional DDMoRe standardised output xml file.
     Note that the file format is still under development
     and that this option should be considered experimental.
@@ -1368,8 +1379,9 @@ my $indentation = '    ';
 			  $help .= format_help_text(\%help_hash,$indentation,'-'.$option);
           } 
 
-          $help =~ s/<\?.*\?>//g;
-          $help =~ s/<[^>]*>//g;
+#do not remove html-like
+#          $help =~ s/<\?.*\?>//g;
+#          $help =~ s/<[^>]*>//g;
           print $help;
           exit;
       }
@@ -1410,8 +1422,9 @@ $help .= "\n".$command."\n";
           $help .= format_help_text(\%help_hash,$indentation,'Post_help_message');
       } 
 
-      $help =~ s/<\?.*\?>//g;
-      $help =~ s/<[^>]*>//g;
+# do not clean html
+#      $help =~ s/<\?.*\?>//g; 
+#      $help =~ s/<[^>]*>//g;
       print $help;
 
       exit;
@@ -1440,18 +1453,23 @@ sub format_help_text
 		#split on newline
 		my @lines = split("\n",$text);
 
-		my $firstoptline=1;
-		$firstoptline = 0 unless ($key =~ /^-/);
+		my $isoption=1;
+		$isoption = 0 unless ($key =~ /^-/);
+		my $printcount=0;
 		foreach my $line (@lines){
 			chomp($line);
 			$line =~ s/^\s*//; #leading whitespace
 			$line =~ s/\s*$//; #trailing whitespace
-			if ($firstoptline){
-				$newtext .= $line."\n";
+			if ($isoption and $printcount==0){
+				$newtext .= $line."\n"; #option name
+			}elsif($isoption and $printcount==1 and ($line =~ /^\s*$/ )){
+				#we have only printed option name, and line is empty
+				#skip it
+				next;
 			}else{
 				$newtext .= $indentation.$line."\n";
 			}
-			$firstoptline = 0;
+			$printcount++;
 		}
 		#extra linebreak at end
 		$newtext .= "\n";

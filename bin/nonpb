@@ -43,23 +43,38 @@ common_options::setup( \%options, 'nonpb' ); #calls set_globals etc, initiates r
 my %help_text;
 
 $help_text{Pre_help_message} = <<'EOF';
-  nonpb
-
-    Non-Parametric Bootstrap.
-
-  Usage:
+  Non-Parametric Bootstrap
 EOF
+    
+$help_text{Description} = <<'EOF';
+	The nonpb is a resampling-based method for estimating imprecision 
+	in nonparametric distribution (NPD) estimates obtained in NONMEM.
+	Imprecision in the NPD can be estimated by means of two different 
+	resampling procedures. The full method, -nonpb_version=2, relies on 
+	bootstrap sampling from the raw data and a re-estimation of both the preceding
+	parametric (FOCE) and the nonparametric step. The simplified method, 
+	-nonpb_version=1, is the default and relies on bootstrap sampling of individual nonparametric
+	probability distributions. Nonparametric confidence intervals are computed.
+	In addition of providing information about the precision of nonparametric 
+	parameter estimates, the nonpb methods can serve as diagnostic tools for the
+	detection of misspecified parameter distributions. The P individuals method
+	is availabe as a separate PsN script pind. 
 
-$help_text{Options} = <<'EOF';      
-    Options:
-
-      The options are given here in their long form. Any option may be
-      abbreviated to any nonconflicting prefix. The -threads option
-      may be abbreviated to -t(or even -thr).
-
-      The following options are valid:
+  Reference:
+	Two bootstrapping routines for obtaining imprecision estimates for 
+	nonparametric parameter distributions in nonlinear mixed effects models, 
+	Paul G. Baverel, Radojka M. Savic, Mats O. Karlsson,
+	J Pharmacokinet Pharmacodyn, 2010
 EOF
+$help_text{Examples} = <<'EOF';
+nonpb run12.mod -samples=500
+EOF
+$help_text{Options} = <<'EOF';
+	A model file is required as argument, 
+	and option -samples is also required.
 
+	The following options are valid:
+EOF
 $help_text{-h} = <<'EOF';
       -h | -?
       
@@ -76,7 +91,6 @@ $help_text{-samples} = <<'EOF';
       -samples=N
 
       Required option. The number of samples for the bootstrap.
-
 EOF
 
 $help_text{-lst_file} = <<'EOF';
@@ -91,11 +105,6 @@ $help_text{-nonpb_version} = <<'EOF';
 
       Optional, the version of the script to run. Default is 1, the simplified version.
       Version 2 is the full version.
-EOF
-
-
-$help_text{Post_help_message} = <<'EOF';
-      Also see 'psn_options -h' for a description of common options.
 EOF
 
 common_options::online_help( 'nonpb', \%options, \%help_text, \%required_options, \%optional_options);

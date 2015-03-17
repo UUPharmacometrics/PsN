@@ -47,50 +47,59 @@ common_options::setup( \%options, 'sir' ); #calls set_globals etc, initiates ran
 
 my %help_text;
 $help_text{Pre_help_message} = <<'EOF';  
-    <h3 class="heading1">sir</h3>
-      
       Sampling Importance Resampling.
-      
-    <h3 class="heading1">Usage:</h3>
 EOF
-
     $help_text{Description} = <<'EOF';
-   <h3 class="heading1">Description:</h3>
+The sir program calculates uncertainty on model parameters for the input
+model using the Sampling Importance Resampling (SIR) procedure. The SIR
+procedure is described in 
 
-	Sample data vectors using the covariance matrix. 
-	Resample vectors based on weights. Compute confidence intervals from resampled vectors.
-	A model file is required on the commandline.
+Application of Sampling Importance Resampling to estimate parameter 
+uncertainty distributions, PAGE 22 (2013) Abstr 2907,
+Dosne AG, Bergstrand M, Karlsson MO.
+
+First, parameter vectors will be simulated from the truncated multivariate
+normal distribution given by the covariance matrix output from NONMEM’s
+covariance step (or, if NONMEM’s covariance step was not successful, a faked
+NONMEM covariance matrix). Alternatively, a file with simulated parameter
+vectors can be given directly as input and this simulation is skipped. The last
+approach is useful when it is difficult to obtain a (faked) covariance matrix.
+
+Second, each of the simulated parameter vectors will be evaluated on the
+original data (MAXEVAL=0). 
+
+Third, based on these evaluations, weights will be calculated for each 
+of the parameter vectors and the vectors will be
+resampled according to these weights. 
+
+Finally, the uncertainty covariance matrix of the parameters will be 
+computed from the resampled parameter vectors.
 EOF
     $help_text{Examples} = <<'EOF';
-   <h3 class="heading1">Example:</h3>
-
 	sir -samples=10000 -resamples=200 run89.mod
-
 EOF
 
     $help_text{Options} = <<'EOF';
-   <h3 class="heading1">Options:</h3>
-
-      The options are given here in their long form. Any option may be
-      abbreviated to any nonconflicting prefix.
+A model file is required as argument. Also, options
+-samples and -resamples are required.
 
       The following options are valid:
 EOF
 
     $help_text{-samples} = <<'EOF';      
-      <p class="option">-samples=N</p>
+      -samples=N
 
       The number of parameter vectors to generate.
 EOF
 
     $help_text{-resamples} = <<'EOF';      
-      <p class="option">-resamples=N</p>
+      -resamples=N
 
       The number of parameter vectors to resample based on the weights
 	  computed from delta ofv and the pdf.
 EOF
     $help_text{-mceta} = <<'EOF';      
-      <p class="option">-mceta=N</p>
+      -mceta=N
 
       Only allowed when NM7.3 or later and
       a classical estimation method is used. Set MCETA=N in $ESTIMATION.
@@ -143,28 +152,27 @@ $help_text{-in_filter} = <<'EOF';
       option syntax.
     
       Example: -in_filter=minimization_successful.eq.1,significant_digits.gt.3.5
-
 EOF
     $help_text{-copy_data} = <<'EOF';
-      <p class="option">-copy_data</p>
+      -copy_data
     Default set, can be unset with -no-copy_data. By default, the original
 	dataset will be copied to the sir run directory to be used for relevant runs.
 	If -no-copy_data is set, the absolute path to the original dataset will be 
 	used instead.
 EOF
     $help_text{-with_replacement} = <<'EOF';
-      <p class="option">-with_replacement</p>
+      -with_replacement
     By default resampling is done without replacement, but if option
 	-with_replacement is set, resampling will be done with replacement.
 	It is not possible to cap replacement at e.g. 5, replacement will be unlimited.
 EOF
     $help_text{-covmat_input} = <<'EOF';
-      <p class="option">-covmat_input=filename</p>
+      -covmat_input=filename
     Not allowed together with rawres_input. If given, this matrix is
 	used for computing the weights and performing the sampling.
 EOF
     $help_text{-inflation} = <<'EOF';
-      <p class="option">-inflation=X</p>
+      -inflation=X
     Default is 1, which is the same as no inflation. If given, the covariance
 	matrix will be multiplied with this number before the parameter vectors
 	are sampled from the truncated multivariate normal distribution.

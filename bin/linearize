@@ -41,54 +41,67 @@ exit unless $res;
 
 my %help_text;
 $help_text{Pre_help_message} = <<'EOF';
-  <h3 class="heading1">scm</h3>
-
-  Linearize model
-
-  <h3 class="heading1">Usage:</h3>
+  Linearization of a model
 EOF
 
     $help_text{Description} = <<'EOF';
-<style type="text/css">
-<!--
-.style5 {font-family: "Courier New", Courier, monospace; font-weight: bold; font-size: 14px; }
--->
-</style>
-  <h3 class="heading1">Description:</h3>
+    The linearize script is a PsN tool that allows you to automatically create
+	a linearized version of a model and obtain the dataset including individual
+	predictions and derivatives necessary for further estimation of extensions
+	implemented in the linearized model. 
 
-    Linearize
+The linearization was developed with the aim to facilitate the development of
+nonlinear mixed effects models by establishing a diagnostic method for evalu-
+ation of stochastic model components. A full description of the methodology
+and it’s performance is presented in 
 
+Use of a linearization approximation facilitating stochastic model building, 
+J PKPD (2014) EM Svensson and MO Karlsson. 
+
+The online supplementary material includes a comprehensive code
+example. The methodology utilizes first order Taylor expansions and sub-
+stantially shortens run times. Examples of extensions that can be evaluated
+with the linearized model are addition of inter individual or inter occasion
+variability parameters, correlation structures and more complex residual er-
+ror models.
+
+Before proceeding with implementation and evaluation of extensions, it
+is important to check that the OFV value of the nonlinear and linearized
+version of the base model agrees (printed in the command window and in
+the linlog.txt file generated in the linearization folder). If the OFV-values
+differ more than a few points, this can depend on the occurrence of local
+minima in the MAP estimation. See further details in linearize_userguide.pdf.
+EOF
+    $help_text{Examples} = <<'EOF';
+linearize run10.mod
 EOF
 
     $help_text{Options} = <<'EOF';
-  <h3 class="heading1">Options:</h3>
-
-    The options are given here in their long form. Any option may be
-    abbreviated to any nonconflicting prefix.
+	A model file is required as argument.
 
     The following options are valid:
 EOF
 
     $help_text{-h} = <<'EOF';
-    <p class="style2">-h | -?</p>
+    -h | -?
 
     With -h or -? linearize will print a list of options and exit.
 EOF
 
     $help_text{-help} = <<'EOF';
-    <p class="style2">-help</p>
+    -help
 
     With -help linearize will print this, longer, help message.
 EOF
 
     $help_text{-foce} = <<'EOF';
-    <p class="style2">-foce</p>
+    -foce
 
     Set by default. Expand around 
     conditional ETA estimates instead of around ETA=0.    
 EOF
     $help_text{-error} = <<'EOF';
-    <p class="style2">-error</p>
+    -error
 
     Only relevant if -no-epsilon is set. 
     Use an approximated linearization of the error model instead of an exact.
@@ -99,7 +112,7 @@ EOF
     see the scm userguide for details.
 EOF
     $help_text{-epsilon} = <<'EOF';
-    <p class="style2">-epsilon</p>
+    -epsilon
 
     Linearize with respect to epsilons,
     set by default. Disable with -no-epsilon.

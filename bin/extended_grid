@@ -53,13 +53,10 @@ common_options::setup( \%options, 'extended_grid' ); #calls set_globals etc, ini
 my %help_text;
 
 $help_text{Pre_help_message} = <<'EOF';  
-    <h3 class="heading1">extended_grid</h3>
-      
       Non-parametric estimation on the extended grid.
 EOF
     $help_text{Examples} = <<'EOF';
-   <h3 class="heading1">Example:</h3>
-      <p class="style2">extended_grid pheno.mod</p>
+      extended_grid pheno.mod
 
        This will create a new directory extended_grid_dirX where X is a
        number increased every time you run the program. Inside that
@@ -67,11 +64,16 @@ EOF
        file. You will be able to retrieve the results from the
        corresponding table file.
 EOF
-    $help_text{Options} = <<'EOF';
-  <h3 class="heading1">Options:</h3>
 
-    The options are given here in their long form. Any option may be
-    abbreviated to any nonconflicting prefix.
+    $help_text{Description} = <<'EOF';
+The extended_grid program implements the method presented in 
+Evaluation of an extended grid method for estimation using nonparametric distributions,
+AAPS J. 2009 Sep;11(3):615-27, RM Savic RM, MO Karlsson.
+EOF
+
+    $help_text{Options} = <<'EOF';
+	A model file is required as argument.
+
     The following options are valid:
 EOF
 

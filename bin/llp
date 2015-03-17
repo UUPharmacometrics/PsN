@@ -44,16 +44,10 @@ common_options::setup( \%options, 'llp' ); #calls set_globals etc, initiates ran
 my %help_text;
 
 $help_text{Pre_help_message} = <<'EOF';
-    <h3 class="heading1">llp</h3>
-
-      Log-likelihood profiling of NONMEM runs.
-
-    <h3 class="heading1">Usage:</h3>
+      Log-likelihood Profiling
 EOF
 
 $help_text{Description} = <<'EOF';
-    <h3 class="heading1">Description:</h3>
-
       The Log-likelihood Profiling tool can be used to assess
       confidence interval limits for parameter estimates. The
       -2*log-likelihood of hierarchical models are chi-square
@@ -70,16 +64,14 @@ $help_text{Description} = <<'EOF';
 EOF
 
 $help_text{Examples} = <<'EOF';
-    <h3 class="heading1">Example:</h3>
-      
-      <p class="style2">llp run89.mod -thetas='1,2'</p>
+llp run89.mod -thetas=1,2
 
       This will make the llp tool try to estimate the confidence
       intervals for thetas one and two of the model in run89.mod. It
       will base the first guesses on the standard error estimates from
       run89.lst.
 
-      <p class="style2">llp run89.mod -thetas='1,2' -rse_thetas='20,30'</p>
+llp run89.mod -thetas=1,2 -rse_thetas=20,30
 
       In this example, we explicitly specify the relative standard
       errors which is necessary if we do not have an output file with
@@ -87,29 +79,26 @@ $help_text{Examples} = <<'EOF';
 EOF
 
 $help_text{Options} = <<'EOF';
-    <h3 class="heading1">Options:</h3>
+A model file is required as argument, and a (set of) parameter(s)
+to evaluate.
 
-      The options are given here in their long form. Any option may be
-      abbreviated to any nonconflicting prefix. The <span class="style2">-threads</span> option
-      may be abbreviated to <span class="style2">-t</span>(or even <span class="style2">-thr</span>).
-    <br><br>
       The following options are valid:
 EOF
 
 $help_text{-h} = <<'EOF';
-      <p class="style2">-h | -?</p>
+      -h | -?
 
       With -h or -? llp will print a list of options and exit.
 EOF
 
 $help_text{-help} = <<'EOF';
-      <p class="style2">-help</p>
+      -help
       
       With -help llp will print this, longer, help message.
 EOF
 
 $help_text{-outputfile} = <<'EOF';
-      <p class="style2">-outputfile=filename</p>
+      -outputfile=filename
 
       The name of the NONMEM output file. The default value is the
       name of the model file with the extension substituted with
@@ -127,28 +116,28 @@ $help_text{-thetas} = <<'EOF';
 EOF
 
 $help_text{-rse_thetas} = <<'EOF';
-      <p class="style2">-rse_thetas=comma-separated list of relative standard errors</p>
+      -rse_thetas=comma-separated list of relative standard errors
 
       A comma-separated list of the relative standard error, specified in 
       percent (%), for each theta listed by option -thetas.
 EOF
 
 $help_text{-rse_omegas} = <<'EOF';
-      <p class="style2">-rse_omegas=comma-separated list of relative standard errors</p>
+      -rse_omegas=comma-separated list of relative standard errors
 
       A comma-separated list of the relative standard error, specified in 
       percent (%), for each omega listed by option -omegas.
 EOF
 
 $help_text{-rse_sigmas} = <<'EOF';
-      <p class="style2">-rse_sigmas=comma-separated list of relative standard errors</p>
+      -rse_sigmas=comma-separated list of relative standard errors
 
       A comma-separated list of the relative standard error, specified in 
       percent (%), for each sigma listed by option -sigmas.
 EOF
 
 $help_text{-max_iterations} = <<'EOF';
-      <p class="style2">-max_iterations=integer</p>
+      -max_iterations=integer
 
       Default value is 10. This number limits the number of search iterations 
       for each interval limit. If the llp has not found the upper limit for a 
@@ -156,7 +145,7 @@ $help_text{-max_iterations} = <<'EOF';
 EOF
 
     $help_text{-significant_digits} = <<'EOF';
-      <p class="style2">-significant_digits=integer</p>
+      -significant_digits=integer
 
       Default 3. Specifies the number of significant digits that is required 
       for the test of the increase in objective function value. The default 
@@ -165,7 +154,7 @@ EOF
       is set to 3.84 (default).
 EOF
     $help_text{-normq} = <<'EOF';
-      <p class="style2">-normq=number</p>
+      -normq=number
 
       Default value 1.96. The value is used for calculating the first guess of 
       the confidence interval limits. If the standard errors (SE) exist, the 
@@ -177,20 +166,20 @@ EOF
 EOF
 
     $help_text{-ofv_increase} = <<'EOF';
-      <p class="style2">-ofv_increase</p>
+      -ofv_increase
 
       The increase in objective function value associated with the
       desired confidence interval. The default value is 3.84.
 EOF
     $help_text{-omegas} = <<'EOF';
-      <p class="style2">-omegas=comma-separated list of parameter numbers</p>
+      -omegas=comma-separated list of parameter numbers
 
       A comma-separated list, specifying the omegas for which the llp should 
       try to assess confidence intervals.
 EOF
 
     $help_text{-sigmas} = <<'EOF';
-      <p class="style2">-sigmas=comma-separated list of parameter numbers</p>
+      -sigmas=comma-separated list of parameter numbers
 
       A comma-separated list, specifying the sigmas for which the llp should 
       try to assess confidence intervals.

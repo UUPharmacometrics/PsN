@@ -51,25 +51,20 @@ common_options::setup( \%options, 'execute' ); #calls set_globals etc, initiates
 my %help_text;
 
 $help_text{Pre_help_message} = <<'EOF';
-  <h3 class="heading1">execute</h3>
-
     Running one or more modelfiles using PsN.
-
 EOF
 
     $help_text{Description} = <<'EOF';
-  <h3 class="heading1">Description:</h3>
-
-    The execute utility is a Perl script that allows you to run multiple
+    The execute program is a Perl script that allows you to run multiple
     modelfiles either sequentially or in parallel. It is an nmfe replacement
     with advanced extra functionality.
-    <br><br>
+
     The execute program creates subdirectories where it puts NONMEMs
     input and output files, to make sure that parallel NONMEM runs do not
     interfere with each other. The top directory is by default named
     'modelfit_dirX' where 'X' is a number that starts at 1 and is
-    increased by one each time you run the execute utility.
-    <br><br>
+    increased by one each time you run the execute program.
+
     When the NONMEM runs are finished, the output and table files will be
     copied to the directory where execute started in which means that you
     can normaly ignore the 'modelfit_dirX' directory. If you need to
@@ -84,51 +79,44 @@ EOF
 EOF
 
     $help_text{Examples} = <<'EOF';    
-  <h3 class="heading1">Example:</h3>
+    Run one model file and accepts all default values:
+    execute pheno.mod
 
-    <p align="justify" class="style2">$ execute pheno.mod </p>
+Run two model files in parallel using 5 possible retries:
+    execute -threads=2  -retries=5 phenobarbital.mod pheno_alternate.mod
 
-    <p align="justify">Runs one model file and accepts all default values.</p>
-
-    <p align="justify" class="style2">$ execute -threads=2  -retries=5 phenobarbital.mod pheno_alternate.mod</p>
-
-    <p align="justify">Runs two model files in parallel using 5 possible retries.</>p
 EOF
 
     $help_text{Options} = <<'EOF';
-  <h3 class="heading1">Options:</h3>
+	A model file is required as argument.
 
-    The options are given here in their long form. Any option may be
-    abbreviated to any nonconflicting prefix. The <span class="style2">-threads</span> option may
-    be abbreviated to <span class="style2">-t</span> (or even <span class="style2">-thr</span>).
-    <br><br>
     The following options are valid:
 EOF
 
 $help_text{-predict_data} = <<'EOF';
-    <p class="style2">-predict_data='string'</p>
+    -predict_data='string'
     Only allowed in combination with -predict_model.
-	Create copy of model with new file named <predict_model>, turn off estimation 
+	Create copy of model with new file named predict_model, turn off estimation 
 	(MAXEVAL=0 or corresponding), change data file to -predict_data and then run.
 EOF
 
 
 $help_text{-predict_model} = <<'EOF';
-    <p class="style2">-predict_model='string'</p>
+    -predict_model='string'
     Only allowed in combination with -predict_data.
-	Create copy of model with new file named <predict_model>, turn off estimation 
+	Create copy of model with new file named predict_model, turn off estimation 
 	(MAXEVAL=0 or corresponding), change data file to -predict_data and then run.
 EOF
 
 $help_text{-timestamp} = <<'EOF';
-    <p class="style2">-timestamp</p>
+    -timestamp
     Default not used. Automatically set the run directory name with a time stamp and the stem of the model name.
   Example: execute run1.mod gives run directory name run1-PsN-2014-06-12-152502 for a run 
    that was started at 15:25:02 June 12th in year 2014
 EOF
 
 $help_text{-reduced_model_ofv} = <<'EOF';
-    -reduced_model_ofv
+    -reduced_model_ofv=reference_ofv
     Default not used. When this option is used, the behaviour of
 	the retries functionality of PsN is modified to keep adding retries
 	until either a lower ofv than -reduced_model_ofv is obtained, or
@@ -146,9 +134,9 @@ $help_text{-copy_data} = <<'EOF';
 EOF
 
 $help_text{-model_dir_name} = <<'EOF';
-    <p class="style2">-model_dir_name</p>
+    -model_dir_name
     Default not used. This option changes the basename of the run directory 
-    from modelfit_dir to <modelfile>.dir. where <modelfile> is the name of 
+    from modelfit_dir to modelfile.dir. where modelfile is the name of 
     the first model file in the list given as arguments to execute. The 
     directories will be numbered starting from 1, increasing the number 
     each time execute is run with a model file with the same name. If the 
@@ -156,7 +144,7 @@ $help_text{-model_dir_name} = <<'EOF';
 EOF
 
     $help_text{-prepend_options_to_lst} = <<'EOF';
-    <p class="style2">-prepend_options_to_lst</p>
+    -prepend_options_to_lst
     This option makes PsN prepend the final lst-file (which is copied 
     back to the directory from which execute was called) with the 
     file version_and_option_info.txt which contains run information, including
@@ -166,9 +154,9 @@ EOF
     -no-prepend_options_to_lst if it is set in psn.conf. 
 EOF
     $help_text{-tail_output} = <<'EOF';
-    <p class="style2">-tail_output</p>
+    -tail_output
     This option only works for execute under Windows.
-    <span class="style2">tail_output</span> specifies that execute
+    tail_output specifies that execute
     should invoke a program (tail) that displays the output file,
     including the gradients, during minmization. The tail program is started
     automatically but it is up to the user to terminate the program.
@@ -189,12 +177,12 @@ EOF
 EOF
 
 $help_text{-wintail_exe} = <<'EOF';
-    <p class="style2">-wintail_exe='string'</p>
+    -wintail_exe='string'
     Only for Windows. See execute -h tail_output for description.
 EOF
 
 $help_text{-wintail_command} = <<'EOF';
-    <p class="style2">-wintail_command='string'</p>
+    -wintail_command='string'
     Only for Windows. See execute -h tail_output for description.
 EOF
 
