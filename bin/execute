@@ -110,8 +110,10 @@ EOF
 
 $help_text{-timestamp} = <<'EOF';
     -timestamp
-    Default not used. Automatically set the run directory name with a time stamp and the stem of the model name.
-  Example: execute run1.mod gives run directory name run1-PsN-2014-06-12-152502 for a run 
+    Default not used. Automatically set the run directory name with a 
+	time stamp and the stem of the model name.
+  Example: execute run1.mod -timestamp
+	gives run directory name run1-PsN-2014-06-12-152502 for a run 
    that was started at 15:25:02 June 12th in year 2014
 EOF
 
