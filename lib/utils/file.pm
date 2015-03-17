@@ -32,7 +32,6 @@ sub _set_unix
     $newline = "\x0A";
 }
 
-our $path_separator;
 if ($Config{osname} eq 'MSWin32') {
     _set_windows();
 } else {
@@ -56,7 +55,7 @@ sub get_file_stem
     my $name = shift;
 
     $name = remove_path($name); 
-    $name =~ s/(.*)\..*/\1/;
+    $name =~ s/(.*)\..*/$1/;
 
     return $name;
 }
