@@ -31,7 +31,14 @@ my $opts = { "h|?"                => \$opt_help,
 
 #only for help text
 my %required_options = ();
-my %optional_options = %{$opts};
+my %optional_options = ("h|?"                => undef,
+	     "help"               => undef,
+	     "missing_data_token:f"          => undef,
+	     "global!"          => undef,
+	     "columns:s"          => undef,
+	     "ignore_columns:s"   => undef,
+	     "ignoresign:s"   => undef,
+);
 
 
 my $res = GetOptions( %{$opts} );
@@ -154,7 +161,23 @@ if($opt_help or $opt_long_help) {
           $help .= common_options::format_help_text(\%help_text,$indentation,'Post_help_message');
 
 	} else { 
-		$help .= common_options::print_help('data_stats',keys(%required_options),keys(%optional_options) );
+
+          my @loop_array = sort(keys %required_options);
+
+          foreach my $option( @loop_array ){
+			  $option =~ s/:s/='string'/;
+			  $option =~ s/:f/='number'/;
+			  $option =~ s/:i/='integer'/;
+			  $help .= $indentation.'  --'.$option."\n";
+          }
+          @loop_array = sort(keys %optional_options);
+
+          foreach my $option( @loop_array ){
+			  $option =~ s/:s/='string'/;
+			  $option =~ s/:f/='number'/;
+			  $option =~ s/:i/='integer'/;
+			  $help .= $indentation.'[ --'.$option." ]\n";
+          }
 
           $help .= "\n$indentation"."Options enclosed by [ ] are optional.\n"; 
           $help .= "$indentation"."Exclamation mark, !, after the option name means option can be disabled\n".

@@ -19,6 +19,7 @@ use ui;
 use OSspecific;
 use File::Path 'rmtree';
 use File::Copy qw/cp mv/;
+use include_modules;
 
 my $cmd_line = $0 . " " . join( " ", @ARGV );
 
@@ -129,6 +130,10 @@ common_options::setup( \%options, 'linearize' );
 
 
 die "linearize only works with NONMEM7" unless ($PsN::nm_major_version == 7);
+
+if ( scalar( @ARGV ) < 1 ) {
+   croak("A model file must be specified. Use linearize -help for help");
+}
 
 my $eval_string = common_options::model_parameters(\%options);
 
