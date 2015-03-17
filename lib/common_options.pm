@@ -681,6 +681,17 @@ EOF
     nmfe_options=-xmloff -prdefault
 EOF
 
+    $help_hash{-d2u} = <<'EOF';
+  -d2u
+Default not set. If set then run dos2unix on model files and regular data files.
+EOF
+    $help_hash{-nonparametric_marginals} = <<'EOF';
+  -nonparametric_marginals
+EOF
+    $help_hash{-nonparametric_etas} = <<'EOF';
+  -nonparametric_etas
+EOF
+
     $help_hash{-nmqual} = <<'EOF';
     -nmqual
     Default not used. Run an NMQual-installed NONMEM via autolog.pl. 

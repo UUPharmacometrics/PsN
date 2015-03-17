@@ -87,6 +87,28 @@ $help_text{-offset_rawres} = <<'EOF';
       bootstrap raw_results file the first line of estimates refers to the
       input model with the full dataset, so therefore the default offset is 1.
 EOF
+$help_text{-model_dir_name} = <<'EOF';
+    -model_dir_name
+    Default not used. This option changes the basename of the run directory 
+    from parallel_retries_dir to modelfile.dir. where modelfile is the name of 
+    the model file given as arguments to parallel_retries. The 
+    directories will be numbered starting from 1, increasing the number 
+    each time parallel_retries is run with a model file with the same name. If the 
+    option directory is used it will override -model_dir_name.
+EOF
+
+    $help_text{-prepend_options_to_lst} = <<'EOF';
+    -prepend_options_to_lst
+
+	Default not set.
+    This option makes PsN prepend the final lst-file (which is copied 
+    back to the directory from which parallel_retries was called) with the 
+    file version_and_option_info.txt which contains run information, including
+    all actual values of optional PsN options. PsN can still parse the  
+    lst-file with the options prepended, so the file can still be used it as 
+    input to e.g. sumo, vpc or update_inits. Option can be disabled with 
+    -no-prepend_options_to_lst. 
+EOF
 
 $help_text{-timestamp} = <<'EOF';
     -timestamp

@@ -186,6 +186,11 @@ $help_text{-epsilon} = <<'EOF';
 
     Use scm -help epsilon for information on this option.
 EOF
+$help_text{-error} = <<'EOF';
+    -error
+
+    Use scm -help error for information on this option.
+EOF
 
 $help_text{-lst_file} = <<'EOF';
     -lst_file
