@@ -30,8 +30,6 @@ exit unless $res;
 my %help_text;
 
 $help_text{Pre_help_message} = <<'EOF';
-  <h3 class="heading1">psn_options</h3>
-
     Common options for PsN, Perl speaks NONMEM.
 
     Use 'psn_options -h "option"' for help on a specific option,
@@ -69,7 +67,3 @@ if (defined $options{'nm_version'}){
 }
 
 exit;
-
-
-
-

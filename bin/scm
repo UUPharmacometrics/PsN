@@ -57,17 +57,12 @@ exit unless $res;
 #cannot run setup here, must read config file first
 
 my %help_text;
+
 $help_text{Pre_help_message} = <<'EOF';
-<h3 class="heading1">scm</h3>
-
 	Stepwise covariate model building from NONMEM models.
-
-	<h3 class="heading1">Usage:</h3>
 EOF
 
-    $help_text{Description} = <<'EOF';
-	<h3 class="heading1">Description:</h3>
-
+$help_text{Description} = <<'EOF';
     The Stepwise Covariate Model (SCM) building tool of PsN implements
     Forward Selection and Backward Elimination of covariates to a
     model. In short, one model for each relevant parameter-covariate
@@ -81,71 +76,46 @@ EOF
     Selection but reversely, using stricter criteria for model
     improvement.
 
-    <br><br> 
-
     The Stepwise Covariate Model building procedure is run by the PsN
-    tool <span class="style5">scm</span>. The options to <span
-    class="style5">scm</span> can (and should) be rather complex to
+    tool scm. The options to scm can (and should) be rather complex to
     describe all features of a covariate model building procedure.
     A configuration file should be written for each scm run. 
 EOF
 
-    $help_text{Examples} = <<'EOF';
-<h3 class="heading1">Examples:</h3>
-
+$help_text{Examples} = <<'EOF';
     Execute an SCM using parameters set in the config file
     'phenobarbital.scm'.
     
-	<p class="style2">$ scm -config_file=phenobarbital.scm</p>
+	scm -config_file=phenobarbital.scm
 
     Execute an SCM using parameters set in the config file
     'phenobarbital.scm'. But override the retries and the seed
     parameter.
 
-	<p class="style2">$ scm -config_file=phenobarbital.scm -retries=5 -seed=12345 phenobarbital.mod</p>
+	scm -config_file=phenobarbital.scm -retries=5 -seed=12345 phenobarbital.mod
 EOF
 	
-    $help_text{Options} = <<'EOF';
-<h3 class="heading1">Options:</h3>
-
-    The options are given here in their long form. Any option may be
-    abbreviated to any nonconflicting prefix. The -threads option may
-    be abbreviated to <span class="style2">-thr</span>.
-
-    The following options are valid:
-EOF
-
-    $help_text{-h} = <<'EOF';
-<p class="style2">-h | -?</p>
-
-    With -h or -? scm will print a list of options and exit.
-EOF
-
-    $help_text{-help} = <<'EOF';
-<p class="style2">-help</p>
-
-    With -help scm will print this, longer, help message.
-EOF
-
-    $help_text{-config_file} = <<'EOF';
-<p class="style2">-config_file</p>
+$help_text{-config_file} = <<'EOF';
+-config_file
 
     A file of an scm configuration file.
 EOF
 
-    $help_text{-search_direction} = <<'EOF';
-<p class="style2">-search_direction</p>
+$help_text{-search_direction} = <<'EOF';
+-search_direction
 
     Which search task to perform: backward, forward or both is allowed.
 EOF
-	$help_text{-max_steps} = <<'EOF';
+
+$help_text{-max_steps} = <<'EOF';
 -max_steps=N
 
     Do not take more that max_steps forward steps,
     even if there are more covariates left to add and a significant
     inclusion was made in the last step.
 EOF
-	$help_text{-base_ofv} = <<'EOF';
+
+$help_text{-base_ofv} = <<'EOF';
 -base_ofv=x
 
     Use this value as the ofv of the base model with included relations,
@@ -153,55 +123,55 @@ EOF
 	this value instead.
 EOF
 
-    $help_text{-gof} = << 'EOF';
-<p class="style2">-gof</p>
+$help_text{-gof} = << 'EOF';
+-gof
 
     Goodness of fit function. Either pval (default) or ofv.
 EOF
     
-    $help_text{-global_init} = << 'EOF';
-<p class="style2">-global_init</p>
+$help_text{-global_init} = << 'EOF';
+-global_init
     Default is 0.001. With global_init option the initial estimates of parameters
     in covariate parameterizations are set to global_init. If using inits section 
     in configuration file individual initial values are used instead of one global.
 EOF
 
-    $help_text{-logfile} = << 'EOF';
-<p class="style2">-logfile</p>
+$help_text{-logfile} = << 'EOF';
+-logfile
 
     Default scmlog.txt. The name of the logfile.
 EOF
 
-    $help_text{-model} = << 'EOF';
-<p class="style2">-model</p>
+$help_text{-model} = << 'EOF';
+-model
 
     The name of the basic model file, without any parameter-covariate
     relations included.
 EOF
 
-    $help_text{-p_value} = << 'EOF';
-<p class="style2">-p_value</p>
+$help_text{-p_value} = << 'EOF';
+-p_value
 
     Use this option to set the p_value for both forward and backward
     steps simultaneously.
 EOF
 
-    $help_text{-p_forward} = << 'EOF';
-<p class="style2">-p_forward</p>
+$help_text{-p_forward} = << 'EOF';
+-p_forward
 
     Using the p_forward option, you can specify the p-value to use for
     the forward selection.
 EOF
 
-    $help_text{-p_backward} = << 'EOF';
-<p class="style2">-p_backward</p>
+$help_text{-p_backward} = << 'EOF';
+-p_backward
 
     Using the p_backward option, you can specify the p-value to use
     for the backward deletion.
 EOF
     
-    $help_text{-do_not_drop} = << 'EOF';
-<p class="style2">-do_not_drop</p>
+$help_text{-do_not_drop} = << 'EOF';
+-do_not_drop
 
     To save memory it is desirable to minimize the number of undropped columns
     in the candidate models. The scm program uses the '=DROP' syntax of NONMEM 
@@ -217,48 +187,49 @@ EOF
     list parameters used in PK or PRED if -linearize is used.
 EOF
 
-    $help_text{-noabort} = <<'EOF';
-<p class="style2">-noabort</p>
+$help_text{-noabort} = <<'EOF';
+-noabort
 
     Default not set. Only relevant with the linearize method. If set,
     the program will add NOABORT to $EST of the linearized models.
-    
 EOF
-    $help_text{-linearize} = <<'EOF';
-<p class="style2">-linearize</p>
+
+$help_text{-linearize} = <<'EOF';
+-linearize
 
     Add covariate relations to a linearized version of the input model instead of
     to the original nonlinear model.
 EOF
-    $help_text{-second_order} = <<'EOF';
-<p class="style2">-second_order</p>
+
+$help_text{-second_order} = <<'EOF';
+-second_order
 
     Only relevant with linearize method. Use second order Taylor expansion around
     ETAs instead of default first order expansion.
     The user must ensure that CONDITIONAL LAPLACIAN is set in $EST.
-    
 EOF
-    $help_text{-foce} = <<'EOF';
-<p class="style2">-foce</p>
+
+$help_text{-foce} = <<'EOF';
+-foce
 
     Set by default. Only relevant with linearize method. Expand around 
     conditional ETA estimates instead of around ETA=0.    
 EOF
-    $help_text{-update_derivatives} = <<'EOF';
-<p class="style2">-update_derivatives</p>
+$help_text{-update_derivatives} = <<'EOF';
+-update_derivatives
 
     Only relevant with linearize method. Run nonlinear model with new covariate 
     added to get updated derivates after each iteration, instead of reusing 
     derivatives from model without covariates.
 EOF
-    $help_text{-derivatives_data} = <<'EOF';
-<p class="style2">-derivatives_data</p>
+$help_text{-derivatives_data} = <<'EOF';
+-derivatives_data
 
     Only relevant with linearize method. Give derivatives data as table input
     rather than letting the scm run the nonlinear model to obtain them. Saves time.
 EOF
-    $help_text{-error} = <<'EOF';
-<p class="style2">-error</p>
+$help_text{-error} = <<'EOF';
+-error
 
     Only relevant with linearize method, and only if -no-epsilon is set. 
     Use an approximated linearization of the error model instead of an exact.
@@ -268,38 +239,34 @@ EOF
     The error model must be defined in a particular way when this option is used,
     see the scm userguide for details.
 EOF
-    $help_text{-epsilon} = <<'EOF';
-<p class="style2">-epsilon</p>
+$help_text{-epsilon} = <<'EOF';
+-epsilon
 
     Only relevant with linearize method. Linearize with respect to epsilons,
     set by default. Disable with -no-epsilon.
 EOF
-    $help_text{-lst_file} = <<'EOF';
-<p class="style2">-lst_file</p>
+$help_text{-lst_file} = <<'EOF';
+-lst_file
 
     Default not used. Update original model with final estimates from this file 
     before running model to obtain derivatives.
 EOF
-    $help_text{-only_successful} = <<'EOF';
-<p class="style2">-only_successful</p>
+$help_text{-only_successful} = <<'EOF';
+-only_successful
 
     Only consider runs with MINIMIZATION SUCCESSFUL 
     (or equivalent for non-classical estimation methods) when 
     selecting the covariate to add/remove in each step.
 EOF
-    $help_text{-parallel_states} = <<'EOF';
-<p class="style2">-parallel_states</p>
+$help_text{-parallel_states} = <<'EOF';
+-parallel_states
 
     If this option is set, scm will test all valid_states simultaneously
     instead of the default method to test valid_states sequentially, only
     testing a higher state if the preceeding state has been included in the model.
 EOF
 
-    $help_text{Post_help_message} = <<'EOF';
-Also see 'psn_options -h' for a description of common options.
-EOF
-
-	common_options::online_help( 'scm', \%options, \%help_text, \%required_options, \%optional_options);
+common_options::online_help( 'scm', \%options, \%help_text, \%required_options, \%optional_options);
 
 if ( $options{'config_file'} eq '' and (scalar(@ARGV)==1)){
     $options{'config_file'} = $ARGV[0];

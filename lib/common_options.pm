@@ -595,14 +595,6 @@ sub online_help
   
   my %help_hash;
 
-    $help_hash{Options} = <<'EOF';
-  <h3 class="heading1">Options:</h3>
-
-    The options are given here in their long form. Any option may be
-    abbreviated to any nonconflicting prefix.
-    The following options are valid:
-EOF
-
     $help_hash{'-?'} = <<'EOF';
     <p class="style2">-h | -?</p>
 

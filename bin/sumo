@@ -22,8 +22,6 @@ my %options;
 
 my %required_options = ();
 my %optional_options = ( 
-    'h|?'                       => undef,
-    'help'                      => undef,
     'debug:i'                   => undef,
     'csv!'                       => undef,
     'precision:f'               => undef,
@@ -40,7 +38,7 @@ my %optional_options = (
     'sign_digits_off_diagonals:i' => undef,
     'large_theta_cv_limit:f'      => undef,
     'large_omega_cv_limit:f'      => undef,
-  'large_sigma_cv_limit:f'      => undef);
+    'large_sigma_cv_limit:f'      => undef);
 
 
 my $res = GetOptions( \%options,
@@ -78,37 +76,23 @@ foreach my $opt ( keys(%optional_options) ){
 my %help_text;
 
 $help_text{Pre_help_message} = <<'EOF';
-  <h3 class="heading1">sumo</h3>
-    sumo
+    Perl script for summarizing output data
+EOF
 
-    Perl script for summarizing output data. 
+$help_text{Description} = <<'EOF';
     It gathers some useful information from NONMEM output files and prints
     a summary to screen.
 EOF
 
-$help_text{Options} = <<'EOF';      
- Options:
+$help_text{Examples} = <<'EOF';
+    sumo run1.lst
 
-    The options are given here in their long form. Any option may be
-    abbreviated to any nonconflicting prefix. 
-    
-    The following options are valid:
-EOF
-
-$help_text{-h} = <<'EOF';
-    -h | -?
-      
-    With -h or -? sumo will print a list of options and exit.
-EOF
-
-$help_text{-help} = <<'EOF';      
-    -help
-      
-    With -help sumo will print this, longer, help message.
+    Prints information for the results of run1.
 EOF
 
 $help_text{-debug} = <<'EOF';
     -debug='integer'
+
     Default 0
 
     This is mainly for developers who wish to debug PsN. By default
@@ -117,6 +101,7 @@ EOF
 
 $help_text{-csv} = <<'EOF';
     -csv
+
     Default not set
 
     Produce output in which the columns of the parameters estimates
@@ -124,11 +109,11 @@ $help_text{-csv} = <<'EOF';
     if you wish to import the sumo output into a spreadsheet programs,
     such as MS Excel. (Something like this is probably what you would
     want to do in that case: sumo -csv run1.lst > sumooutput.csv)
-
 EOF
 
 $help_text{-precision} = <<'EOF';
     -precision='integer'
+
     Default 4
 
     Output precision.
@@ -136,6 +121,7 @@ EOF
 
 $help_text{-c_level} = <<'EOF';
     -c_level='integer'
+
     Default 95
 
     This option specifies the coverage of the confidence interval
@@ -144,8 +130,8 @@ $help_text{-c_level} = <<'EOF';
 EOF
 
 $help_text{-confidence_interval} = <<'EOF';
-    -confidence_interval
-    -ci
+    -confidence_interval, -ci
+
     Default not set
 
     This option computes and reports the traditional confidence
@@ -177,11 +163,11 @@ $help_text{-confidence_interval} = <<'EOF';
     With this option the parameter estimates reported in the OMEGA and
     SIGMA columns are the numbers given in the NONMEM output file,
     i.e. no transformation to CVs or correlations is performed.
-
 EOF
 
 $help_text{-sd_rse} = <<'EOF';
     -sd_rse
+
     Default set
 
     If sd_rse is not set sumo will report the relative standard errors for the
@@ -189,61 +175,61 @@ $help_text{-sd_rse} = <<'EOF';
     (SE/variance estimate). If sd_rse is set, sumo will report these
     on the (approximate) standard deviation scale: (SE/variance
     estimate)/2.
-
 EOF
 
 $help_text{-max_problem_num} = <<'EOF';
     -max_problem_num='integer'
+
     Default 1
 
     PsN divides NONMEM output into problems and sub-problems. 
     The default is for sumo to report the results for the first
     $PROBLEM only.
-
 EOF
 
 $help_text{-max_subproblem_num} = <<'EOF';
     -max_subproblem_num='integer'
+
     Default 1
 
     PsN divides NONMEM output into problems and sub-problems. 
     The default is for sumo to report the results for the first
     subproblem only.
-
 EOF
 
 $help_text{-check_run} = <<'EOF';
     -check_run
+
     Default set
 
     If this option is unset with -no-check_run the initial run diagnostic output of sumo
     will be suppressed.
-
 EOF
 
 $help_text{-correlation_limit} = <<'EOF';
     -correlation_limit='number'
+
     Default 0.9
 
     The cut-off for issuing a warning for high correlations between
     the parameter estimates. This test will only be made if the $COV
     step has been requested in the NMtran control stream.
-
 EOF
 
 $help_text{-condition_number_limit} = <<'EOF';
     -condition_number_limit='number'
+
     Default 1000
 
     The cut-off for issuing a warning for a high condition number. The
     test will only be made if the $COV step has been requested in the
     NMtran control stream and NONMEM has been asked to report
     eigenvalues ($COV PRINT=E).
-
 EOF
 
 $help_text{-near_bound_sign_digits} = <<'EOF';
     -near_bound_sign_digits='integer'
+
     Default 2
 
     When a parameter estimates is equal to a boundary with these many
@@ -252,31 +238,31 @@ $help_text{-near_bound_sign_digits} = <<'EOF';
     value but this can be turned off. The boundary test in sumo is
     independent of the way NONMEM is configured and will report these
     types of issues in output from NONMEM.
-
 EOF
 
 $help_text{-near_zero_boundary_limit} = <<'EOF';
     -near_zero_boundary_limit='number'
+
     Default 0.001
 
     If the bound is 0, the boundary test will issue a warning if the
     estimate is this close to zero.
-
 EOF
 
 $help_text{-sign_digits_off_diagonals} = <<'EOF';
     -sign_digits_off_diagonals='integer' 
+
     Default 2
 
     The boundary test for off-diagonal omega elements are performed by
     first converting the covariances to the corresponding correlations
     and then check if they are close to +/-1 with this many
     significant digits.
-
 EOF
 
 $help_text{-large_theta_cv_limit} = <<'EOF';
     -large_theta_cv_limit='number'
+
     Default 0.30
 
     When the CV (SE/estimate) for a parameter estimates is greater
@@ -285,20 +271,20 @@ EOF
 
 $help_text{-large_sigma_cv_limit} = <<'EOF';
     -large_sigma_cv_limit='number'
+
     Default 0.30
 
     When the CV (SE/estimate) for a parameter estimates is greater
     than this a warning will be issued.
-
 EOF
 
 $help_text{-large_omega_cv_limit} = <<'EOF';
     -large_omega_cv_limit='number'
+
     Default 0.50
 
     When the CV (SE/estimate) for a parameter estimates is greater
     than this a warning will be issued.
-
 EOF
 
 $help_text{-ci} = $help_text{-confidence_interval};

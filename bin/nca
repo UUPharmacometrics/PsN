@@ -78,32 +78,22 @@ common_options::setup( \%options, 'nca' ); #calls set_globals etc, initiates ran
 my %help_text;
 
 $help_text{Pre_help_message} = <<'EOF';
-  nca
-
-    Non-Compartmental Analysis
-
+    Run simulations for use with the ncappc R package
 EOF
 
-$help_text{Options} = <<'EOF';      
-    Options:
-
-      The options are given here in their long form. Any option may be
-      abbreviated to any nonconflicting prefix. The -threads option
-      may be abbreviated to -t(or even -thr).
-
-      The following options are valid:
+$help_text{Description} = <<'EOF';
+Two modified modelfiles are created, one for generating original data table
+output and one for generating simulated data table output. The model
+parameters will never be reestimated. Unless an lst- or msfo-file is given
+as input or an lst-file is found by replacing .mod with .lst in the
+modelfile name, the initial parameter estimates from the modelfile will be
+used for the simulations.
 EOF
 
-$help_text{-h} = <<'EOF';
-      -h | -?
-      
-      With -h or -? nca will print a list of options and exit.
-EOF
-      
-$help_text{-help} = <<'EOF';      
-      -help
-      
-      With -help nca will print this, longer, help message.
+$help_text{Examples} = <<'EOF';
+nca run1.mod -samples=1000 -columns=CL,V
+
+Simulate 1000 data sets using run1.mod with the CL and V columns added.
 EOF
 
 $help_text{-samples} = <<'EOF';
@@ -127,6 +117,7 @@ EOF
 
 $help_text{-copy_data} = <<'EOF';
     -copy_data
+
     Set by default. Disable with -no-copy_data. By default PsN will copy
     the data file into NM_run1 and set a local path in psn.mod, the actual
     model file run with NONMEM. If -no-copy_data is set, PsN will not copy 
@@ -232,12 +223,7 @@ $help_text{-include_all_columns} = <<'EOF';
 			Include all non-skipped columns in $INPUT to the tables
 EOF
 
-$help_text{Post_help_message} = <<'EOF';
-
-    Also see 'psn_options -h' for a description of PsN common options.
-EOF
-
-common_options::online_help( 'nca', \%options, \%help_text, \%required_options, \%optional_options);
+common_options::online_help('nca', \%options, \%help_text, \%required_options, \%optional_options);
 
 ## Check that we do have a model file
 if ( scalar(@ARGV) < 1 ) {

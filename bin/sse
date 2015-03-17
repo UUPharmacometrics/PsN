@@ -50,31 +50,19 @@ common_options::setup( \%options, 'sse' ); #calls set_globals etc, initiates ran
 my %help_text;
 
 $help_text{Pre_help_message} = <<'EOF';
-  <h3 class="heading1">sse</h3>
-
     Stochastic Simulation and Estimation of NONMEM models.
 EOF
 
-$help_text{Options} = <<'EOF';      
-    Options:
-
-      The options are given here in their long form. Any option may be
-      abbreviated to any nonconflicting prefix. The -threads option
-      may be abbreviated to -thr.
-
-      The following options are valid:
+$help_text{Description} = <<'EOF';
+SSE is a tool for model comparison and hypothesis testing. First, using the
+input model, a number of simulated datasets are generated. Then the input
+model and a set of alternative models are fitted to the simulated data.
+Finally, a set of statistical measures are computed for the parameter
+estimates and objective function values of the various models. 
 EOF
 
-$help_text{-h} = <<'EOF';
-      -h | -?
-      
-      With -h or -? sse will print a list of options and exit.
-EOF
-      
-$help_text{-help} = <<'EOF';      
-      -help
-      
-      With -help sse will print this, longer, help message.
+$help_text{Examples} = <<'EOF';
+sse run1.mod -samples=1000 -alternative_models=alt1.mod,alt2.mod
 EOF
 
 $help_text{-alternative_models} = <<'EOF';
@@ -118,6 +106,7 @@ $help_text{-ref_ofv} = <<'EOF';
       it is possible to set a fixed reference OFV value. If using ref_ofv,
       it is not allowed to also estimate the simulation model. 
 EOF
+
 $help_text{-parallel_simulations} = <<'EOF';
       -parallel_simulations=1
 
@@ -141,6 +130,7 @@ $help_text{-rawres_input} = <<'EOF';
       possible to generate a file with initial parameter estimates outside of PsN, 
       as long as the file follows the format rules.
 EOF
+
 $help_text{-offset_rawres} = <<'EOF';
       -offset_rawres=N
 
@@ -170,7 +160,6 @@ $help_text{-in_filter} = <<'EOF';
       option syntax.
     
       Example: -in_filter=minimization_successful.eq.1,significant_digits.gt.3.5
-
 EOF
 
 $help_text{-out_filter} = <<'EOF';
@@ -187,7 +176,6 @@ $help_text{-out_filter} = <<'EOF';
       sse will stop with an error message.
     
       Example: -out_filter=minimization_successful.eq.1,significant_digits.gt.3.5
-
 EOF
 
 $help_text{-recompute} = <<'EOF';
@@ -234,10 +222,6 @@ $help_text{-random_estimation_inits} = <<'EOF';
 	rawres_input file as initial values for the estimation step. When this 
 	option is not used, the estimation initial values will be the values
 	used for simulating data.
-EOF
-
-$help_text{Post_help_message} = <<'EOF';
-    Also see 'psn_options -h' for a description of common PsN options.
 EOF
 
 common_options::online_help( 'sse', \%options, \%help_text, \%required_options, \%optional_options);

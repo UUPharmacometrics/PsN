@@ -60,44 +60,46 @@ foreach my $opt (keys(%optional_options)) {
 my %help_text;
 
 $help_text{Pre_help_message} = <<'EOF';
-  <h3 class="heading1">nmoutput2so</h3>
-    nmoutput2so
-
     Perl script for creation of a standard output xml file from the nonmem output. 
 EOF
 
-$help_text{Options} = <<'EOF';
- Options:
+$help_text{Post_help_message} = <<'EOF';
+EOF
 
-    The options are given here in their long form. Any option may be
-    abbreviated to any nonconflicting prefix. 
+$help_text{Description} = <<'EOF';
+    The nmoutput2so script creates and populates a DDMoRe standardized output
+    xml file given the output from one or more NONMEM runs. It can
+    also add PsN specific output to the SO. The XML::LibXML perl module is
+    required so make sure it is installed. 
+EOF
+
+$help_text{Examples} = <<'EOF';
+    nmoutput2so run1.lst run2.lst
     
-    The following options are valid:
-EOF
+    This will add the NONMEM output from run1.lst in an SOBlock called run1
+    and the output from run2.lst to an SOBlock called run2. All information
+    that is possible to extract and that is supported will be added to the
+    generated SO file, which will be called run1.SO.xml 
 
-$help_text{-h} = <<'EOF';
-    -h | -?
-      
-    With -h or -? nmoutput2so will print a list of options and exit.
-EOF
+    nmoutput2so -bootstrap_results=bootstrap_results.csv
+    -so_filename=res.SO.xml
 
-$help_text{-help} = <<'EOF';
-    -help
-      
-    With -help nmoutput2so will print this, longer, help message.
+    This will add the PsN bootstrap results to a lone SOBlock in the file
+    called res.SO.xml
+
 EOF
 
 $help_text{-precision} = <<'EOF';
     -precision='integer'
-    Default 4
 
+    Default 10
     Output precision.
 EOF
 
 $help_text{-use_tables} = <<'EOF';
     -use_tables
-    Default used
 
+    Default used
     Set -no-use_tables to not use any table files (sdtab and patab)
 EOF
 
@@ -169,6 +171,25 @@ $help_text{-external_tables} = <<'EOF';
 
     This option will probably change its format.
     Set to use external tables for the simulations
+EOF
+
+$help_text{-version} = <<'EOF';
+    -version
+
+    Print out the version of PsN
+EOF
+
+$help_text{-h} = <<'EOF';
+-h | -?
+
+    With -h or -? the script prints the list of available options 
+    and exit.
+EOF
+
+$help_text{-help} = <<'EOF';
+-help
+
+    With -help a longer help message will be printed.
 EOF
 
 common_options::online_help('nmoutput2so', \%options, \%help_text, \%required_options, \%optional_options);

@@ -87,32 +87,19 @@ common_options::setup( \%options, 'vpc' ); #calls set_globals etc, initiates ran
 my %help_text;
 
 $help_text{Pre_help_message} = <<'EOF';
-  vpc
-
     Visual Predictive Check.
-
 EOF
 
-$help_text{Options} = <<'EOF';      
-    Options:
-
-      The options are given here in their long form. Any option may be
-      abbreviated to any nonconflicting prefix. The -threads option
-      may be abbreviated to -t(or even -thr).
-
-      The following options are valid:
+$help_text{Description} = <<'EOF';
+    VPC – is a diagnostics tool. A set of simulated datasets are generated
+    using the model to be evaluated. Afterwards the real data observations
+    are compared with the distribution of the simulated observations.
+    By default no model estimation is performed.
 EOF
 
-$help_text{-h} = <<'EOF';
-      -h | -?
-      
-      With -h or -? vpc will print a list of options and exit.
-EOF
-      
-$help_text{-help} = <<'EOF';      
-      -help
-      
-      With -help vpc will print this, longer, help message.
+$help_text{Examples} = <<'EOF';
+vpc  run32.mod -samples=500 -auto_bin=5 -rplots=1
+Run a vpc with 500 samples using 5 bins and output the plots.
 EOF
 
 $help_text{-samples} = <<'EOF';
@@ -138,6 +125,7 @@ $help_text{-censor} = <<'EOF';
       1 means the observation is censored, 0 means the observation is not censored.
       The variable must be requestable in $TABLE.
 EOF
+
 $help_text{-irep} = <<'EOF';
       -irep=VARIABLE
 
@@ -244,7 +232,6 @@ $help_text{-fine_pi} = <<'EOF';
       Compute a finer grid of prediction intervals. If fine_pi is not set, the set of
       prediction intervals is 0,40,80,90 and 95 percent. If fine_pi is set, the set of
       intervals is 0,10,20,30,40,50,60,70,80,90 and 95 percent.
-
 EOF
 
 $help_text{-confidence_interval} = <<'EOF';
@@ -486,11 +473,6 @@ $help_text{-min_points_in_bin} = <<'EOF';
       Sets a constraint on the minimum allowed number of points in a bin when using
       autobinning. This option cannot be used in conjunction with any other binning
 		options.
-EOF
-
-$help_text{Post_help_message} = <<'EOF';
-
-    Also see 'psn_options -h' for a description of PsN common options.
 EOF
 
 common_options::online_help( 'vpc', \%options, \%help_text, \%required_options, \%optional_options);

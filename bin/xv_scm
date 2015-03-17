@@ -9,7 +9,6 @@ use lib "$Bin/../lib";
 use PsN;
 use file;
 use model;
-#use tool;
 use tool::xv_step;
 use tool::scm;
 use tool::scm::config_file;
@@ -32,22 +31,24 @@ my %required_options = ( "config_file:s" => '');
 #remove options search_direction gof p_value p_forward p_backward
 #update_derivatives
 
-my %optional_options = ( "groups:i" => '',
-			 "splits:i" => '',
-			 "stratify_on:s" => '',
-			 "global_init:s" => '',
-			 "logfile:s" => '',
-			 "model:s" => '',
-			 "noabort!" => '',
-			 "max_steps:i" => '',
-			 "do_not_drop:s" => '',
-			 "linearize!" => '',
-			 "epsilon!" => '',
-			 "foce!" => '',
-			 "lst_file:s" => '',
-			 "only_successful!" => '',
-			 "parallel_states!" => '',
-			 "error:s"=> '');
+my %optional_options = (
+    "groups:i" => '',
+    "splits:i" => '',
+    "stratify_on:s" => '',
+    "global_init:s" => '',
+    "logfile:s" => '',
+    "model:s" => '',
+    "noabort!" => '',
+    "max_steps:i" => '',
+    "do_not_drop:s" => '',
+    "linearize!" => '',
+    "epsilon!" => '',
+    "foce!" => '',
+    "lst_file:s" => '',
+    "only_successful!" => '',
+    "parallel_states!" => '',
+    "error:s"=> ''
+);
 
 my $res = GetOptions( \%options, 
 		      @common_options::get_opt_strings,
@@ -61,14 +62,12 @@ exit unless $res;
 #below this line comes my %help_text;
 ##move this up again
 my %help_text;
-$help_text{Pre_help_message} = <<'EOF';
 
+$help_text{Pre_help_message} = <<'EOF';
     Stepwise covariate model building from NONMEM models.
-        
 EOF
 
 $help_text{Description} = <<'EOF';
-
     The Cross-validated Stepwise Covariate Model (XV_SCM) building tool 
     of PsN implements cross-validated model size selection for a
     covariate model. It relies on the SCM tool of PsN.
@@ -78,11 +77,9 @@ $help_text{Description} = <<'EOF';
     configuration file exactly, except that options 
     search_direction, gof, p_value, p_forward, p_backward and 
     update_derivatives are ignored.
-    
 EOF
 
 $help_text{Examples} = <<'EOF';
-
     Execute an XV_SCM using parameters set in the config file
     'phenobarbital.scm'.
 
@@ -92,53 +89,31 @@ $help_text{Examples} = <<'EOF';
     'phenobarbital.scm'. But override the retries and the seed
     parameter.
 
-
     xv_scm -config_file=phenobarbital.scm -retries=5 -seed=12345 phenobarbital.mod
-
 EOF
 		
-$help_text{Options} = <<'EOF';
-
-    The options are given here in their long form. Any option may be
-    abbreviated to any nonconflicting prefix. The -threads option may
-    be abbreviated to <span class="style2">-thr</span>.
-
-    The following options are valid:
-
-EOF
-
-    $help_text{-h} = <<'EOF';
-    <p class="style2">-h | -?</p>
-
-    With -h or -? xv_scm will print a list of options and exit.
-EOF
-
-    $help_text{-help} = <<'EOF';
-    <p class="style2">-help</p>
-
-    With -help xv_scm will print this, longer, help message.
-EOF
-
-    $help_text{-config_file} = <<'EOF';
-    <p class="style2">-config_file</p>
+$help_text{-config_file} = <<'EOF';
+    -config_file
 
     File name of an scm configuration file.
 EOF
 
-    $help_text{-global_init} = << 'EOF';
-    <p class="style2">-global_init</p>
+$help_text{-global_init} = << 'EOF';
+    -global_init
 
     Use scm -help global_init for information on this option.
 EOF
-    $help_text{-noabort} = <<'EOF';
-    <p class="style2">-noabort</p>
+
+$help_text{-noabort} = <<'EOF';
+    -noabort
 
     Use scm -help noabort for information on this option.
 EOF
 
-    $help_text{-logfile} = << 'EOF';
-    <p class="style2">-logfile</p>
+$help_text{-logfile} = << 'EOF';
+    -logfile
 
+    Default scmlog.txt. The name of the logfile.
 EOF
 
 $help_text{-groups} = <<'EOF';
@@ -146,12 +121,14 @@ $help_text{-groups} = <<'EOF';
 
     Default 5. The number of validation groups to make an N-fold cross-validation.  
 EOF
+
 $help_text{-splits} = <<'EOF';
       -splits=N
 
     Default 1. The number times to perform a complete cross-validation
     with a new data split. 
 EOF
+
 $help_text{-max_steps} = <<'EOF';
       -max_steps=N
 
@@ -161,7 +138,7 @@ $help_text{-max_steps} = <<'EOF';
 EOF
 
     $help_text{-model} = << 'EOF';
-    <p class="style2">-model</p>
+    -model
 
     The name of the basic model file, without any parameter-covariate
     relations included.
@@ -180,57 +157,60 @@ $help_text{-stratify_on} = <<'EOF';
     and then stratify on group number instead of the continuous variable.
 EOF
 
-    $help_text{-do_not_drop} = << 'EOF';
-    <p class="style2">-do_not_drop</p>
+$help_text{-do_not_drop} = << 'EOF';
+    -do_not_drop
 
     Use scm -help do_not_drop for information on this option.
 EOF
 
-    $help_text{-linearize} = <<'EOF';
-    <p class="style2">-linearize</p>
+$help_text{-linearize} = <<'EOF';
+    -linearize
 
     Use scm -help linearize for information on this option.
 EOF
-    $help_text{-foce} = <<'EOF';
-    <p class="style2">-foce</p>
+
+$help_text{-foce} = <<'EOF';
+    -foce
 
     Use scm -help foce for information on this option.
 EOF
-    $help_text{-derivatives_data} = <<'EOF';
-    <p class="style2">-derivatives_data</p>
+
+$help_text{-derivatives_data} = <<'EOF';
+    -derivatives_data
 
     Use scm -help derivatives_data for information on this option.
 EOF
 
-    $help_text{-epsilon} = <<'EOF';
-    <p class="style2">-epsilon</p>
+$help_text{-epsilon} = <<'EOF';
+    -epsilon
 
     Use scm -help epsilon for information on this option.
 EOF
-    $help_text{-lst_file} = <<'EOF';
-    <p class="style2">-lst_file</p>
+
+$help_text{-lst_file} = <<'EOF';
+    -lst_file
 
     Use scm -help lst_file for information on this option.
 EOF
-    $help_text{-only_successful} = <<'EOF';
-    <p class="style2">-only_successful</p>
+
+$help_text{-only_successful} = <<'EOF';
+    -only_successful
 
     Use scm -help only_successful for information on this option.
 EOF
-    $help_text{-parallel_states} = <<'EOF';
-    <p class="style2">-parallel_states</p>
+
+$help_text{-parallel_states} = <<'EOF';
+    -parallel_states
 
     Use scm -help parallel_states for information on this option.
 EOF
 
-    $help_text{Post_help_message} = <<'EOF';
+$help_text{Post_help_message} = <<'EOF';
     Also see 'scm -h' for a list of scm options,
     and 'psn_options -h' for a description of common options.
 EOF
 
-
 common_options::online_help( 'xv_scm', \%options, \%help_text, \%required_options, \%optional_options);
-
 
 if ( $options{'config_file'} eq '' ){
   print "Please specify a config file \n";

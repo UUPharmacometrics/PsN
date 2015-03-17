@@ -37,24 +37,16 @@ common_options::setup( \%options, 'se_of_eta' ); #calls set_globals etc, initiat
 
 my %help_text;
 $help_text{Pre_help_message} = <<'EOF';  
-    <h3 class="heading1">se_of_eta</h3>
-      
       Perl script for getting standard errors of etas.
-      
-    <h3 class="heading1">Usage:</h3>
 EOF
 
-    $help_text{Description} = <<'EOF';
-   <h3 class="heading1">Description:</h3>
-
+$help_text{Description} = <<'EOF';
       se_of_eta requires "MAXEVALS" to be abreviated to "MAX" if it
       exists in the model file.
-
 EOF
-    $help_text{Examples} = <<'EOF';
-   <h3 class="heading1">Example:</h3>
 
-      <p class="style2">se_of_eta pheno.mod</p>
+$help_text{Examples} = <<'EOF';
+      se_of_eta pheno.mod
 
        This will create a new directory se_of_eta_dirX where X is a
        number increased every time you run the program. Inside that
@@ -63,7 +55,13 @@ EOF
        corresponding table file.
 EOF
 
-common_options::online_help('se_of_eta',\%options, \%help_text, {}, {});
+$help_text{-dv_column} = <<'EOF';
+-dv_column
+    The name of the column with the dependent variable.
+    Default 'DV'
+EOF
+
+common_options::online_help('se_of_eta',\%options, \%help_text, {}, \%optional_options);
 
 if ( scalar( @ARGV ) < 1 ) {
   print "A model file must be specified. Use '$0 -h' for help.\n";

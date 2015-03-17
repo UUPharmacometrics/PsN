@@ -15,8 +15,10 @@ use File::Glob;
 use strict;
 use Cwd;
 use Config;
+use common_options;
 
-sub confirm {
+sub confirm
+{
  my $input = <STDIN>;
  if( $input =~ /^\s*[yY]\s*$/ ){
    return 1;
@@ -105,108 +107,155 @@ sub remove_files {
   }
 }
 
-my $h                         = '';
-my $help                      = '';
-my $interactive = 1;
-my $expand = 0;
-my $level = 2;
-my $nm_run = 0;
-my $mx = 0;
-my $restart = 0;
-my $tab = 0;
-my $lst = 0;
-my $csv = 0;
-my $dta = 0;
-my $messages = 0;
-my $all_nm = 0;
-my $all_mx = 0;
-my $modelfit = 0;
 
-my $res = GetOptions (
-		      'h|?'                       => \$h,
-		      'help'                      => \$help,
-		      "level=i" => \$level,
-		      "interactive!" => \$interactive,
-		      "nm_run" =>\$nm_run,
-		      "mx" => \$mx,
-		      "expand" => \$expand,
-		      "restart" => \$restart,
-		      "tab" => \$tab,
-		      "lst" => \$lst,
-		      "csv" => \$csv,
-		      "dta" => \$dta,
-		      "messages" => \$messages,
-		      "all_nm" => \$all_nm,
-		      "all_mx" => \$all_mx,
-		      "modelfit" => \$modelfit);
+my %options;
 
+my %optional_options = ( 
+    'h|?' => undef,
+    'help' => undef,
+    "level=i" => undef,
+    "interactive!" => undef,
+    "nm_run" => undef,
+    "mx" => undef,
+    "expand" => undef,
+    "restart" => undef,
+    "tab" => undef,
+    "lst" => undef,
+    "csv" => undef,
+    "dta" => undef,
+    "messages" => undef,
+    "all_nm" => undef,
+    "all_mx" => undef,
+    "modelfit" => undef,
+);
+
+my $res = GetOptions(\%options, keys(%optional_options));
 exit unless $res;
 
-if($h or $help) {
-  print <<'ENDHELP';
+my $interactive;
+if (not defined $options{'interactive'}) {
+    $interactive = 1;
+} else {
+    $interactive = $options{'interactive'};
+}
+my $expand = $options{'expand'};
+my $level;
+if (not defined $options{'level'}) {
+    $level = 2;
+} else {
+    $level = $options{'level'};
+}
+my $nm_run = $options{'nm_run'};
+my $mx = $options{'mx'};
+my $restart = $options{'restart'};
+my $tab = $options{'tab'};
+my $lst = $options{'lst'};
+my $csv = $options{'csv'};
+my $dta = $options{'dta'};
+my $messages = $options{'messages'};
+my $all_nm = $options{'all_nm'};
+my $all_mx = $options{'all_mx'};
+my $modelfit = $options{'modelfit'};
 
-psn_clean
+my %help_text;
+
+$help_text{Pre_help_message} = <<'EOF';
     Delete files from PsN run directories. 
-
-Example: Remove all NM_run subdirectories of all boostrap_dir directories:
-    psn_clean bootstrap_dir -nm_run
-
+EOF
+$help_text{Post_help_message} = <<'EOF';
+EOF
+$help_text{Description} = <<'EOF';
 Required input: The name of a psn run directory.
-                Option -expand can be used to make psn_clean perform the cleaning 
-		in all directories starting with the given name.
+          Option -expand can be used to make psn_clean perform the cleaning 
+	  	  in all directories starting with the given name.
 	      Example: bootstrap -expand will match bootstrap_dir1, bootstrap_dir2 and so on.
 	      bootstrap_dir2 -expand will match bootstrap_dir2, bootstrap_dir20 and so on.
 	      bootstrap_dir4 without the option expand will only match bootstrap_dir4.
 	      Multiple directory names may be given as input.
+EOF
+$help_text{Examples} = <<'EOF';
+Remove all NM_run subdirectories of all boostrap_dir directories:
+psn_clean bootstrap_dir -nm_run
+EOF
+$help_text{-interactive} = <<'EOF';
+-interactive
+                User must confirm removal of each item. Default set.
+                Can be disabled with -no-interactive.
+EOF
+$help_text{-expand} = <<'EOF';
+-expand
+Add all possible extensions to the input directory name, and do 
+cleaning in all. Default not set.
+EOF
+$help_text{-level} = <<'EOF';
+-level=N
+Default 2. Level 2-3 roughly corresponds to the -clean option to PsN. 
+Option -level sets a collection of the options below. If both level 
+and additional options are set, the individual setting is added to
+what is implied by -level. Note that level can be set also to 4.
+-level=2: -nm_run -messages -restart -dta -csv set, all other options unset
+-level=3: -all_nm -modelfit set, all other options unset
+-level=4: -all_nm -modelfit -all_mx set, all other options unset
+EOF
+$help_text{-nm_run} = <<'EOF';
+-nm_run
+Do cleaning in NM_run subdirectories.
+EOF
+$help_text{-mx} = <<'EOF';
+-mx
+Do cleaning in m1, m2... subdirectories.
+EOF
+$help_text{-restart} = <<'EOF';
+-restart
+Remove all numbered restart files (psn-1.lst, psn-3.mod, psn-4.ext...)
+EOF
+$help_text{-tab} = <<'EOF';
+-tab
+Remove all files ending with tab and a number: cotab33, patab123...
+EOF
+$help_text{-lst} = <<'EOF';
+-lst
+Remove all files ending with .lst, .ext, .cov, .coi, .cor, .phi
+EOF
+$help_text{-dta} = <<'EOF';
+-dta
+Remove all files ending with .dta or .dat
+EOF
+$help_text{-csv} = <<'EOF';
+-csv
+Remove all files ending with .csv except stats-runs.csv
+EOF
+$help_text{-messages} = <<'EOF';
+-messages
+Remove INTER, compilation_output.txt,monitoring_of_search.txt,
+psn_nonmem_error_messages.txt, nmfe_output.txt
+EOF
+$help_text{-all_nm} = <<'EOF';
+-all_nm
+Remove all NM_run subdirectories completely
+EOF
+$help_text{-all_mx} = <<'EOF';
+-all_mx
+Remove all m1, m2... subdirectories completely
+EOF
+$help_text{-modelfit} = <<'EOF';
+-modelfit
+Remove all modelfit subdirectories (directories containing a set of NM_run
+subdirectories) completely. Default not set.
+EOF
+$help_text{-h} = <<'EOF';
+-h | -?
 
-Optional input: 
+    With -h or -? the script prints the list of available options 
+    and exit.
+EOF
+$help_text{-help} = <<'EOF';
+-help
 
--interactive                User must confirm removal of each item. Default set.
-                            Can be disabled with -no-interactive.
+    With -help a longer help message will be printed.
+EOF
 
-
--expand                     Add all possible extensions to the input directory name, and do 
-                            cleaning in all. Default not set.
-
--level=N                    Default 2. Level 2-3 roughly corresponds to the -clean option to PsN. 
-                            Option -level sets a collection of the options below. If both level 
-                            and additional options are set, the individual setting is added to
-                            what is implied by -level. Note that level can be set also to 4.
-                            -level=2: -nm_run -messages -restart -dta -csv set, all other options unset
-                            -level=3: -all_nm -modelfit set, all other options unset
-                            -level=4: -all_nm -modelfit -all_mx set, all other options unset
-
-Where to clean:
--nm_run                     Do cleaning in NM_run subdirectories.
-
--mx                         Do cleaning in m1, m2... subdirectories.
-
-
-What to remove:
--restart                    Remove all numbered restart files (psn-1.lst, psn-3.mod, psn-4.ext...)
-
--tab                        Remove all files ending with tab and a number: cotab33, patab123...
-
--lst                        Remove all files ending with .lst, .ext, .cov, .coi, .cor, .phi
-
--dta                        Remove all files ending with .dta or .dat
-
--csv                        Remove all files ending with .csv except stats-runs.csv
-
--messages                   Remove INTER, compilation_output.txt,monitoring_of_search.txt,
-                            psn_nonmem_error_messages.txt, nmfe_output.txt
-
--all_nm                     Remove all NM_run subdirectories completely
-
--all_mx                     Remove all m1, m2... subdirectories completely
-
--modelfit                   Remove all modelfit subdirectories (directories containing a set of NM_run
-                            subdirectories) completely. Default not set.
-
-ENDHELP
-exit;
-} 
-
+common_options::online_help('psn_clean', \%options, \%help_text, {}, \%optional_options);
 
 unless( $ARGV[0] ){
     die "You must at least enter one directory name.\n";
@@ -308,7 +357,6 @@ foreach my $tdir ( @top_directories ) {
 						remove_files($nmdir,$restart,$tab,$lst,$csv,$dta,$messages,$interactive,$topdir);
 					}
 				}
-#				if ($modelfit and not ($stem =~ /simulation_dir/)){
 				if ($modelfit){
 					my @files =  <$modf/*>;
 					remove_list(\@files,$interactive,$topdir);
@@ -361,6 +409,5 @@ foreach my $tdir ( @top_directories ) {
 	} #end while
 	
 } #end foreach topdir
-
 
 exit;

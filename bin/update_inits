@@ -33,8 +33,6 @@ sub search_record {
 
 }
 
-
-
 my %options;
 my %required_options =();
 my %optional_options = (
@@ -71,32 +69,49 @@ exit unless $res;
 my %help_text;
 
 $help_text{Pre_help_message} = <<'EOF';
-    update_inits
-
     Update a model file with final estimates from NONMEM output.
 EOF
-    1;
-$help_text{Options} = <<'EOF';      
-Options:
 
-    The options are given here in their long form. Any option may be
-    abbreviated to any nonconflicting prefix. 
-    
-    The following options are valid:
+$help_text{Post_help_message} = <<'EOF';
 EOF
-    1;
+
+$help_text{Description} = <<'EOF';
+The final estimates will either be taken from an lst-file given explicitly as the second 
+command-line argument after the model file name, from another model file given with option -from\_model, 
+or from the lst-file with the same file stem as the model file.
+EOF
+
+$help_text{Examples} = <<'EOF';
+update_inits run1.mod run1abc.lst -output_model=run2.mod
+
+Update a copy of run1.mod with estimates from run1abc.lst.
+
+update_inits run22.mod -out=run23.mod
+
+Update a copy of run22.mod and call the new file run23.mod. This requires that run22.lst exists.
+
+update_inits run33.mod
+
+Modify file run33.mod and copy original to run33.mod.org. This requires that run33.lst exists.
+
+update run3.mod -from_model=run4.mod -out=run6.mod
+
+Use parameters estimates from a model file instead of a lst-file.
+EOF
+
 $help_text{-h} = <<'EOF';
 -h | -?
-      
-    With -h or -? update_inits will print a list of options and exit.
+
+    With -h or -? the script prints the list of available options 
+    and exit.
 EOF
-    1;
-$help_text{-help} = <<'EOF';      
+
+$help_text{-help} = <<'EOF';
 -help
-      
-    With -help update_inits will print this, longer, help message.
+
+    With -help a longer help message will be printed.
 EOF
-    1;
+
 $help_text{-output_model} = <<'EOF';
 -output_model=file
 
@@ -104,48 +119,54 @@ $help_text{-output_model} = <<'EOF';
 	the original model file with extension .org is created, and the original 
 	file is modified.
 EOF
-    1;
+
 $help_text{-ignore_missing_parameters} = <<'EOF';
 -ignore_missing_parameters
+
 	Default not set
 	
 	If set, update_inits will not require a 1-to-1 matching of parameter names 
 	and indexes between the model to update and the source 	of new estimates 
 	(lst-file or other model file).
 EOF
-    1;
+
 $help_text{-update_fix} = <<'EOF';
 -update_fix
+
 	Default not set
 	
 	If set, update_inits will update parameters that are FIX in the model. The
 	default is to not update parameters that are fixed.
 EOF
-    1;
+
 $help_text{-fix_thetas} = <<'EOF';
 -fix_thetas
+
 	Default not set
  	
 	If set, update_inits will set all THETAs that are not part of a prior to FIX.
 EOF
-     1;
+
 $help_text{-unfix_thetas} = <<'EOF';
 -unfix_thetas
+
 	Default not set
 
 	If set, update_inits will remove FIX, if present, from all THETAs that are not part of a prior.
 EOF
-1;
+
 $help_text{-from_model} = <<'EOF';
 -from_model=filename
+
 	Default not used
 
     The name of a model file to copy initial estimates from, instead of a lst-file. 
 	Cannot be used together with a named lst-file on the command-line.
 EOF
-    1;
+
 $help_text{-comment} = <<'EOF';
 -comment=text
+
     Default not used.
 
 	If the option is used, a new line with <text> will be inserted 
@@ -153,43 +174,47 @@ $help_text{-comment} = <<'EOF';
 	The comment text must be enclosed with quotes (double quotes on Windows) 
 	if it contains spaces.
 EOF
-    1;
+
 $help_text{-degree} = <<'EOF';
 -degree=fraction
+
     Default not set
 
-	After updating the initial estimates in the output file, randomly
+    After updating the initial estimates in the output file, randomly
 	perturb them by degree=fraction, i.e. change estimate to a value
 	randomly chosen in the range estimate +/- estimate*fraction while
 	respecting upper and lower boundaries, if set in the model file.
 	Degree is set to 0.1, a 10% perturbation, when option tweak_inits is set in execute.
 EOF
-1;    
+
 $help_text{-add_tags} = <<'EOF';
 -add_tags
+
     Default not set
 
-	Add all runrecord tags, see runrecord user guide. update_inits will not check if any tags 
+    Add all runrecord tags, see runrecord user guide. update_inits will not check if any tags 
 	are already present.
 EOF
-1;    
+
 $help_text{-ensure_posdef} = <<'EOF';
 -ensure_posdef
+
     Default not set
 
-	NONMEM sometimes prints OMEGA or SIGMA matrices
+    NONMEM sometimes prints OMEGA or SIGMA matrices
 	in the lst-file which are not positive definite, and the 
 	ensure_posdef option offers a way to fix this.
 	If option is set then PsN will make a cholesky decomposition of
 	each OMEGA and SIGMA block to check positive definiteness, and
 	inflate the diagonal elements of the block with 5% in each iteration where the cholesky fails.
 EOF
-1;    
+
 $help_text{-add_prior} = <<'EOF';
 -add_prior=df
+
     Default not set
 
-	Add $PRIOR NWPRI based on the NONMEM output. Will automatically read
+    Add $PRIOR NWPRI based on the NONMEM output. Will automatically read
 	estimates and covariances from output and use them to define the 
 	prior. df should be the degrees of freedom, a comma-separated list
 	with one integer per omega block.
@@ -197,13 +222,13 @@ $help_text{-add_prior} = <<'EOF';
 	in the new model file manually before using it.
 	Option -add_prior cannot be used together with option -from_model. 
 EOF
-1;    
+
 $help_text{-seed} = <<'EOF';
 -seed=some string
 
     The random seed for perturbation if option -degree is set. 
 EOF
-1;    
+
 $help_text{-based_on} = <<'EOF';
  -based_on=number
 
@@ -213,7 +238,7 @@ $help_text{-based_on} = <<'EOF';
 	a run number from the original model file name and use that instead in the tag.
 	If a number cannot be extracted then nothing will be set. 
 EOF
-1;    
+
 $help_text{-renumber} = <<'EOF';
 -renumber='new number'
 
@@ -229,7 +254,7 @@ $help_text{-renumber} = <<'EOF';
 
 	Set option -renumber=0 to prevent automatic renumbering in $TABLE and $EST and $MSFI.
 EOF
-1;    
+
 
 common_options::online_help( 'update_inits', \%options, \%help_text, \%required_options, \%optional_options);
 

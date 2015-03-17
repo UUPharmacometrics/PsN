@@ -57,11 +57,33 @@ common_options::setup( \%options, 'precond' ); #calls set_globals etc, initiates
 
 my %help_text;
 
+$help_text{Pre_help_message} = <<'EOF';
+Model preconditioning to stabilize covariance calculations.
+EOF
+
+$help_text{Description} = <<'EOF';
+In order to increase the chance of obtaining successful covariance matrix
+computation and parameter estimation, the precond script creates and runs
+a model that is mathematically equivalent to the original model but less
+sensitive to the computational (rounding) error. 
+EOF
+
+$help_text{Examples} = <<'EOF';
+precond run1.mod
+
+Runs the model normally and, if the covariance step fails, preconditions it
+and runs it again.
+EOF
+
 $help_text{-cov} = <<'EOF';
+    -cov
+
       Explicitly set the covariance matrix to use. If this option is used only the post processing step will be done.
 EOF
 
 $help_text{-cholesky} = <<'EOF';
+    -cholesky
+
       Use cholesky decomposition of the preconditioning matrix instead of
       eigendecomposition.  With this option the preconditioning matrix
       provided by -pre option should be similar to variance covariance
@@ -92,10 +114,14 @@ $help_text{-in_filter} = <<'EOF';
 EOF
 
 $help_text{-nodec} = <<'EOF';
+    -nodec
+
       Turn off decomposition of preconditioning matrix
 EOF
 
 $help_text{-output_model} = <<'EOF';
+    -output_model=filename
+
       Set the name of the output model. If this option is set the model will be created but not run
 EOF
 
@@ -108,6 +134,8 @@ $help_text{-offset_rawres} = <<'EOF';
 EOF
 
 $help_text{-pre} = <<'EOF';
+    -pre=file or directory
+
       With this option the user can manually specify the R-matrix that will be
       used for preconditioning.  In addition, a modelfit directory created by
       the execute command of PsN can be specified and R-matrix will be
@@ -124,14 +152,20 @@ $help_text{-pre} = <<'EOF';
 EOF
 
 $help_text{-rawres_input} = <<'EOF';
+    -rawres_input=rawresults file
+
       Use a rawresults file to create the preconditioning matrix
 EOF
 
 $help_text{-update_model} = <<'EOF';
+    -update_model=filename
+
       Set a filename to store the original model with updated inital values for the parameters.
 EOF
 
 $help_text{-lu} = <<'EOF';
+    -lu
+
       Use LU decomposition of the preconditioning matrix instead of
       eigendecomposition.  With this option the preconditioning matrix
       provided by -pre option should be similar to variance covariance matrix
@@ -140,7 +174,8 @@ $help_text{-lu} = <<'EOF';
 EOF
 
 $help_text{-perturb} = <<'EOF';
-      Se
+    -perturb 
+
       After the model is preconditioned the initial estimate is perturbed to
       the direction of the eigenvector that is corresponding negative
       eigenvalue of the R-matrix. This will increase the chance of finding
@@ -150,6 +185,8 @@ $help_text{-perturb} = <<'EOF';
 EOF
 
 $help_text{-eigen_comp_only} = <<'EOF';
+    -eigen_comp_only
+
       With this option, precond will not execute any NONMEM run.  It will only
       compute the eigenvalues of the matrix that were to be used for the
       preconditioning.  Use this option with {\bf-verbose} option.

@@ -44,17 +44,33 @@ common_options::setup( \%options, 'pvar' ); #calls set_globals etc, initiates ra
 
 my %help_text;
 
+$help_text{Pre_help_message} = <<'EOF';
+Parametric variability
+EOF
+$help_text{Description} = <<'EOF';
+Parametric variability is a tool that calculates how much of parameter variabilty that a model explains.
+EOF
+$help_text{Examples} = <<'EOF';
+pvar scmlog1.txt -parameters=CL,V
+
+Check parametric variability of models generated in an scm run.
+
+pvar -models run1.mod run2.mod -parameters=CL,V
+
+Use specific models
+EOF
 $help_text{-samples} = <<'EOF';
+-samples
       Number of simulated datasets to generate.
       Default 100.
 EOF
-
 $help_text{-parameters} = <<'EOF';
+-parameters
       Comma separated list of parameter to investigate.
 			Mandatory.
 EOF
-
 $help_text{-models} = <<'EOF';
+-models
       Expect a list of models as command arguments instead of an scm logfile.
 			Optional.
 EOF

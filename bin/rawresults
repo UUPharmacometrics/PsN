@@ -31,9 +31,9 @@ my %required_options = ();
 my %optional_options = (
 	"path:s" => undef,
 	"outfile:s" => undef,
-	"help" => undef,
+    "help" => undef,
 	"h" => undef
-	);
+);
 
 my $res = GetOptions( \%options,
 					  keys(%required_options),keys(%optional_options) );
@@ -42,63 +42,35 @@ exit unless $res;
 
 common_options::setup( \%options, 'rawresults' ); #calls set_globals etc, initiates random sequence
 
-
 my %help_text;
 
 $help_text{Pre_help_message} = <<'EOF';
-  <h3 class="heading1">rawresults</h3>
-
     Getting a raw results file from all model files with results in a directory path
-
-EOF
-
-    $help_text{Description} = <<'EOF';
-  <h3 class="heading1">Description:</h3>
-
-	Get a raw results file
-EOF
-
-
-    $help_text{Options} = <<'EOF';
-  <h3 class="heading1">Options:</h3>
-
-    The options are given here in their long form. Any option may be
-    abbreviated to any nonconflicting prefix.
-    The following options are valid:
 EOF
 $help_text{-h} = <<'EOF';
       -h | -?
       
       With -h or -? rawresults will print a list of options and exit.
 EOF
-      
 $help_text{-help} = <<'EOF';      
       -help
       
       With -help rawresults will print this, longer, help message.
 EOF
-
 $help_text{-path} = <<'EOF';
-    <p class="style2">-path='string'</p>
+    -path='string'
     The directory that holds the model files and lst-files. Default current directory.
 EOF
-
-
 $help_text{-outfile} = <<'EOF';
-    <p class="style2">outfile='string'</p>
+    -outfile='string'
     Name of output file.
 EOF
-
-
 $help_text{Post_help_message} = <<'EOF';
 EOF
 
-
 common_options::online_help('rawresults', \%options,\%help_text, \%required_options, \%optional_options);
 
-
 my @models_array;
-
 
 my $path = $options{'path'};
 unless (defined $path){
@@ -129,8 +101,7 @@ if (not $sse){
 		push( @models_array, $model );# if ($model -> is_run);
 	}
 	
-	
-}else{
+} else {
 	
 	my @files = <$path/mc-orig-?.mod $path/mc-orig-??.mod $path/mc-orig-???.mod $path/mc-orig-????.mod $path/mc-orig-?????.mod>;
 	#print join(' ',@files)."\n";
