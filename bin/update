@@ -4,6 +4,8 @@
 use FindBin qw($Bin);
 use lib "$Bin/../lib";
 
+use utils::file;
+
 # Don't edit the line below, it must look exactly like this.
 # Everything above this line will be replaced #
 
@@ -12,12 +14,17 @@ use lib "$Bin/../lib";
 # For example: update-4.2.0 will call update_inits-4.2.0
 
 my $version;
-my @name_and_version = split '-', $0;
+
+my $filename = utils::file::remove_path($0);
+my $path = utils::file::directory($0);
+
+my @name_and_version = split '-', $filename;
+
 if ($name_and_version[1]) {
 	$version = '-' . $name_and_version[1];
     $version =~ s/\.pl$//;
 }
 
-my $command = "update_inits$version @ARGV";
+my $command = "${path}update_inits$version @ARGV";
 
 system $command;
