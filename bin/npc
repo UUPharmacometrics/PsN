@@ -33,7 +33,7 @@ my %optional_options = ( 'stratify_on:s' => undef,
 			 'lst_file:s' => undef,
 			 'msfo_file:s' => undef,
 			 'dv:s' => undef,
-						 'irep:s' => undef,
+             'irep:s' => undef,
 			 'sim_table:s'=>undef,
 			 'orig_table:s'=>undef,
 			 'keep_estimation!'=>undef,
@@ -42,7 +42,7 @@ my %optional_options = ( 'stratify_on:s' => undef,
 			 'confidence_interval:i' => undef,
 			 'sim_model:s'=>undef,
 			 'flip_comments!'=>undef,
-                         'censor:s' => undef,
+             'censor:s' => undef,
 			 "copy_data!"=>undef
 			 );
 
@@ -65,32 +65,21 @@ common_options::setup( \%options, 'npc' ); #calls set_globals etc, initiates ran
 my %help_text;
 
 $help_text{Pre_help_message} = <<'EOF';
-  npc
-
     Numerical Predictive Check.
-
 EOF
 
-$help_text{Options} = <<'EOF';      
-    Options:
-
-      The options are given here in their long form. Any option may be
-      abbreviated to any nonconflicting prefix. The -threads option
-      may be abbreviated to -t(or even -thr).
-
-      The following options are valid:
+$help_text{Description} = <<'EOF';
+NPC – Numerical Predictive Check – is a model diagnostics tool. A set of
+simulated datasets are generated using the model to be evaluated.
+Afterwards the real data observations are compared with the distribution
+of the simulated observations. By default no model estimation is ever
+performed. The input to the NPC script is the model to be evaluated, the
+number of samples (simulated datasets) to generate, parameter values
+options for the simulations, and stratification options for the evaluation.
 EOF
 
-$help_text{-h} = <<'EOF';
-      -h | -?
-      
-      With -h or -? npc will print a list of options and exit.
-EOF
-      
-$help_text{-help} = <<'EOF';      
-      -help
-      
-      With -help npc will print this, longer, help message.
+$help_text{Examples} = <<'EOF';
+npc run1.mod -samples=20
 EOF
 
 $help_text{-samples} = <<'EOF';
@@ -291,13 +280,6 @@ $help_text{-n_simulation_models} = <<'EOF';
       This option cannot be used together with option -sim_table or, if 
       the NONMEM version < 7, together with -dv=CWRES.
 EOF
-
-$help_text{Post_help_message} = <<'EOF';
-
-    Also see 'psn_options -h' for a description of PsN common options.
-EOF
-
-
 
 common_options::online_help( 'npc', \%options, \%help_text, \%required_options, \%optional_options);
 

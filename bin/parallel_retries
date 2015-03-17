@@ -51,15 +51,18 @@ common_options::setup( \%options, 'parallel_retries' ); #calls set_globals etc, 
 my %help_text;
 
 $help_text{Pre_help_message} = <<'EOF';
-  <h3 class="heading1">parallel_retries</h3>
-
+Run multiple copies of a single model with
+tweaked initial estimates in parallel.
+EOF
+$help_text{Description} = <<'EOF';
     Running a modelfile with multiple sets of tweaked initial estimates,
 	either randomly perturbed or from rawres_input.
     The program takes the same input as execute, see execute -h, except
     that either -min_retries or -rawres_input is required and 
-	only a single input model can be used.
 EOF
-
+$help_text{Examples} = <<'EOF';
+parallel_retries run33.mod -min_retries=4 -threads=5 -seed=12345
+EOF
 $help_text{-rawres_input} = <<'EOF';
       -rawres_input=filename
 
