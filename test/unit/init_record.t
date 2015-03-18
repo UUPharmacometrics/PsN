@@ -12,7 +12,9 @@ use model::problem::omega;
 use Test::Exception;
 use ui;
 
-#TODO need nonmem version for this really
+
+use PsN;			# Need to set PsN version as this is a global variable
+$PsN::nm_major_version = 6; #affects formatting in init_option.pm
 
 ui -> silent(1);
 # Test new and read_option
@@ -80,8 +82,28 @@ is ($record->options->[3]->init,0,'record 3.5 init 3');
 cmp_float ($record->options->[4]->init,-0.00489,'record 3.5 init 4');
 cmp_float ($record->options->[5]->init,0.922923,'record 3.5 init 5');
 
-#TODO close to nonposdef
-#TODO very high degree, to get cholesky fail...
+#nonposdef, to make cholesky fail couple of times and need deflation off-diag
+$PsN::nm_major_version = 7; #affects formatting in init_option.pm
+$record = model::problem::init_record->new(record_arr => ['BLOCK(3) 2','2 2','2 2 2']);
+$record->set_random_inits(degree => 0.1);
+cmp_float ($record->options->[0]->init,2.2419228741762,'record 3.6 init 0');
+cmp_float ($record->options->[1]->init,1.2739668420972,'record 3.6 init 1');
+cmp_float ($record->options->[2]->init,1.654834337814,'record 3.6 init 2');
+cmp_float ($record->options->[3]->init,1.4124551858254,'record 3.6 init 2');
+cmp_float ($record->options->[4]->init,1.6485966774141,'record 3.6 init 4');
+cmp_float ($record->options->[5]->init,1.9604655709679,'record 3.6 init 5');
+
+
+#very high degree, to get cholesky fail a couple of times
+$PsN::nm_major_version = 6; #affects formatting in init_option.pm
+$record = model::problem::init_record->new(record_arr => ['BLOCK(3) 2','2 2','0 2 2']);
+$record->set_random_inits(degree => 0.9);
+cmp_float ($record->options->[0]->init,4.859981,'record 3.7 init 0');
+cmp_float ($record->options->[1]->init,2.316453,'record 3.7 init 1');
+cmp_float ($record->options->[2]->init,1.628881,'record 3.7 init 2');
+is($record->options->[3]->init,0,'record 3.7 init 2');
+cmp_float ($record->options->[4]->init,0.268287,'record 3.7 init 4');
+cmp_float ($record->options->[5]->init,0.434489,'record 3.7 init 5');
 
 $record = model::problem::init_record->new(record_arr => ['BLOCK(1) 28 FIXED']);
 is ($record->options->[0]->init, 28, 'record 4 init');

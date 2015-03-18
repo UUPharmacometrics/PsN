@@ -69,7 +69,8 @@ sub set_random_inits
 	unless (defined $self->options and scalar(@{$self->options})==$nopt){
 		croak("bug in init_record->set_random_inits: bound_record does not match self" );
 	}
-	for (my $attempt=0; $attempt<100; $attempt++){
+	my $accept=0;
+	for (my $attempt=0; $attempt<20; $attempt++){
 		my $matrix=[];
 		if ($do_cholesky){
 			for (my $k=0; $k< $self->size; $k++){
@@ -100,34 +101,49 @@ sub set_random_inits
 				}
 				next;
 			}
-			my $range = $option->get_range(degree => $degree);
 
-			my $val;
-			for (my $k=0; $k<1000; $k++){
-				$val = random_uniform(1, $range->[0], $range->[1] );
-				last unless ($val == 0);
+			
+			if ($attempt < 5){
+				my $val;
+				my $range = $option->get_range(degree => $degree);
+
+				for (my $k=0; $k<1000; $k++){
+					$val = random_uniform(1, $range->[0], $range->[1] );
+					last unless ($val == 0);
+				}
+				$self->options->[$j]->check_and_set_init(new_value=>$val);
+			}else{
+				#deflate off-diagonal only, 10 percent
+				unless ($option->on_diagonal){
+					my $percent=10;
+					$self->options->[$j]->check_and_set_init(new_value => ($option->init())*(1-$percent/100));
+				}
 			}
 			if ($do_cholesky){
-				$matrix->[$row]->[$col]=$val;
-				$matrix->[$col]->[$row]=$val;
+				$matrix->[$row]->[$col]=$self->options->[$j]->init; #use actual value, check_and_set could have failed
+				$matrix->[$col]->[$row]=$self->options->[$j]->init;
 				$col++;
 				if ($col>$row){
 					$row++;
 					$col=0;
 				}
 			}
-			$self->options->[$j]->check_and_set_init(new_value=>$val);
 		}#end loop over options
-		my $accept=1;
+		$accept=1;
 		if ($do_cholesky){
 			#if get numerical error on cholesky then do not accept
 			my $err = linear_algebra::cholesky($matrix );
 			if ($err == 1){
+#				print "redo $attempt\n";
 				$accept = 0;
 			}
 		}
 		last if $accept;
 	} #end loop attempts
+
+	unless ($accept){
+		croak("failed set_random_inits to get posdef");
+	}
 
 }
 
