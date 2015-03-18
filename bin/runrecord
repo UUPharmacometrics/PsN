@@ -71,6 +71,11 @@ runrecord -root=run -mod_ext=mod -out_ext=lst -from=1 -to=10
 summarizes the output from files run1.mod to run10.mod with
 output files run1.lst to run10.lst
 EOF
+$help_text{Options} = <<'EOF';
+The only required option is -to.
+
+The following options are valid:
+EOF
 $help_text{-from} = <<'EOF';
     -from
 Run number to start processing from. Default is 1.

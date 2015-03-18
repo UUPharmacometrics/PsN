@@ -79,10 +79,7 @@ if (defined $options{'msfo_file'}){
   }
 }
 
-
-
 common_options::setup( \%options, 'vpc' ); #calls set_globals etc, initiates random sequence
-
 
 my %help_text;
 
@@ -100,6 +97,12 @@ EOF
 $help_text{Examples} = <<'EOF';
 vpc  run32.mod -samples=500 -auto_bin=5 -rplots=1
 Run a vpc with 500 samples using 5 bins and output the plots.
+EOF
+
+$help_text{Options} = <<'EOF';
+A modelfile and -samples are mandatory.
+
+The following options are valid:
 EOF
 
 $help_text{-samples} = <<'EOF';

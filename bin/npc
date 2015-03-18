@@ -25,26 +25,27 @@ my %options;
 ## Declare the options
 
 my %required_options = ('samples:i' => undef );
-my %optional_options = ( 'stratify_on:s' => undef,
-			 'rawres_input:s' => undef,
-			 'offset_rawres:i' => undef,
-			 'no_of_strata:i' => undef,
-			 'refstrat:f' => undef,
-			 'lst_file:s' => undef,
-			 'msfo_file:s' => undef,
-			 'dv:s' => undef,
-             'irep:s' => undef,
-			 'sim_table:s'=>undef,
-			 'orig_table:s'=>undef,
-			 'keep_estimation!'=>undef,
-			 'noprediction'=>undef,
-			 'n_simulation_models:i' => undef,
-			 'confidence_interval:i' => undef,
-			 'sim_model:s'=>undef,
-			 'flip_comments!'=>undef,
-             'censor:s' => undef,
-			 "copy_data!"=>undef
-			 );
+my %optional_options = (
+    'stratify_on:s' => undef,
+    'rawres_input:s' => undef,
+    'offset_rawres:i' => undef,
+    'no_of_strata:i' => undef,
+    'refstrat:f' => undef,
+    'lst_file:s' => undef,
+    'msfo_file:s' => undef,
+    'dv:s' => undef,
+    'irep:s' => undef,
+    'sim_table:s'=> undef,
+    'orig_table:s'=> undef,
+    'keep_estimation!'=> undef,
+    'noprediction'=> undef,
+    'n_simulation_models:i' => undef,
+    'confidence_interval:i' => undef,
+    'sim_model:s'=> undef,
+    'flip_comments!'=> undef,
+    'censor:s' => undef,
+    "copy_data!"=> undef
+);
 
 my $res = GetOptions( \%options,
 		      @common_options::get_opt_strings,
@@ -80,6 +81,13 @@ EOF
 
 $help_text{Examples} = <<'EOF';
 npc run1.mod -samples=20
+EOF
+
+$help_text{Options} = <<'EOF';
+A model file must be specified (unless -sim_table and -orig_table are both specified).
+-samples must be specified and be at least 20.
+
+The following options are valid:
 EOF
 
 $help_text{-samples} = <<'EOF';

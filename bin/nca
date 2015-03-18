@@ -96,6 +96,14 @@ nca run1.mod -samples=1000 -columns=CL,V
 Simulate 1000 data sets using run1.mod with the CL and V columns added.
 EOF
 
+$help_text{Options} = <<'EOF';
+A modelfile must be specified
+-samples is mandatory and must be at least 20.
+-columns is probably needed to get data for the desired columns
+
+The following options are valid:
+EOF
+
 $help_text{-samples} = <<'EOF';
       -samples=number
 

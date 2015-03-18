@@ -50,6 +50,12 @@ EOF
 $help_text{Description} = <<'EOF';
 Parametric variability is a tool that calculates how much of parameter variabilty that a model explains.
 EOF
+$help_text{Options} = <<'EOF';
+Either a list of models with -models or an scmlog file is required.
+The -parameters option must also be used.
+
+The following options are valid:
+EOF
 $help_text{Examples} = <<'EOF';
 pvar scmlog1.txt -parameters=CL,V
 

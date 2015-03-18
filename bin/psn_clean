@@ -165,13 +165,17 @@ EOF
 $help_text{Post_help_message} = <<'EOF';
 EOF
 $help_text{Description} = <<'EOF';
-Required input: The name of a psn run directory.
           Option -expand can be used to make psn_clean perform the cleaning 
 	  	  in all directories starting with the given name.
 	      Example: bootstrap -expand will match bootstrap_dir1, bootstrap_dir2 and so on.
 	      bootstrap_dir2 -expand will match bootstrap_dir2, bootstrap_dir20 and so on.
 	      bootstrap_dir4 without the option expand will only match bootstrap_dir4.
 	      Multiple directory names may be given as input.
+EOF
+$help_text{Options} = <<'EOF';
+Required input: The name of a psn run directory.
+
+The following options are valid:
 EOF
 $help_text{Examples} = <<'EOF';
 Remove all NM_run subdirectories of all boostrap_dir directories:

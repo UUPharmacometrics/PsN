@@ -65,6 +65,12 @@ $help_text{Examples} = <<'EOF';
 sse run1.mod -samples=1000 -alternative_models=alt1.mod,alt2.mod
 EOF
 
+$help_text{Options} = <<'EOF';
+A simulation model and -samples are mandatory on the command-line.
+
+The following options are valid:
+EOF
+
 $help_text{-alternative_models} = <<'EOF';
       -alternative_models=alt1.mod,alt2.mod,...
 

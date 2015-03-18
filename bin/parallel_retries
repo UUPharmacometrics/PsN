@@ -57,8 +57,13 @@ EOF
 $help_text{Description} = <<'EOF';
     Running a modelfile with multiple sets of tweaked initial estimates,
 	either randomly perturbed or from rawres_input.
-    The program takes the same input as execute, see execute -h, except
-    that either -min_retries or -rawres_input is required and 
+EOF
+$help_text{Options} = <<'EOF';
+A model file is required on the command-line. In addition, either
+-min_retries or -rawres_input is required, see below.
+Otherwise the program takes the same input as execute, see execute -h.
+
+The following options are valid:
 EOF
 $help_text{Examples} = <<'EOF';
 parallel_retries run33.mod -min_retries=4 -threads=5 -seed=12345

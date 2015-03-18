@@ -91,6 +91,12 @@ $help_text{Examples} = <<'EOF';
     Prints information for the results of run1.
 EOF
 
+$help_text{Options} = <<'EOF';
+Needs at least one .lst file on the command-line.
+
+The following options are valid:
+EOF
+
 $help_text{-debug} = <<'EOF';
     -debug='integer'
 

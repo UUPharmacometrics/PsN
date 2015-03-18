@@ -73,6 +73,15 @@ $help_text{Description} = <<'EOF';
     required so make sure it is installed. 
 EOF
 
+$help_text{Options} = <<'EOF';
+    One or more NONMEM results files (.lst) and or -bootstrap_results
+    (see that option) is mandatory. One SOBlock will be created for each
+    .lst file and the bootstrap results will be added to the first SOBlock
+    or in it own block if no .lst files were specified.
+
+The following options are valid:
+EOF
+
 $help_text{Examples} = <<'EOF';
     nmoutput2so run1.lst run2.lst
     

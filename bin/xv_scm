@@ -91,7 +91,13 @@ $help_text{Examples} = <<'EOF';
 
     xv_scm -config_file=phenobarbital.scm -retries=5 -seed=12345 phenobarbital.mod
 EOF
-		
+	
+$help_text{Options} = <<'EOF';
+    -config_file is mandatory
+
+The following options are valid.
+EOF
+
 $help_text{-config_file} = <<'EOF';
     -config_file
 

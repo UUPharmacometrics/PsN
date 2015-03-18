@@ -99,6 +99,12 @@ update run3.mod -from_model=run4.mod -out=run6.mod
 Use parameters estimates from a model file instead of a lst-file.
 EOF
 
+$help_text{Options} = <<'EOF';
+A modelfile to update must be specified.
+
+The following options are valid:
+EOF
+
 $help_text{-h} = <<'EOF';
 -h | -?
 
