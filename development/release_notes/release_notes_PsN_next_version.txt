@@ -48,7 +48,7 @@ Known issues
   is installed *before* (re)running the installation script setup.pl
 
 *********************************************
-Changes and bug fixes from PsN 4.2.0 to x.y.z
+Changes and bug fixes from PsN 4.2.0 to 4.4.0
 *********************************************
 
    ___General___
@@ -86,7 +86,6 @@ Changes and bug fixes from PsN 4.2.0 to x.y.z
   Internally, PsN will use reference(s) to the data file(s) instead of passing around data objects.
   These changes affect nonpb, randtest, crossval, xv_scm, scm, bootstrap, cdd, lasso, frem 
   
-
 - Possibility to make PsN installation portable (PsN installation directory movable).
   See documentation in psn_installation.pdf and psn_configuration.pdf
 
@@ -128,12 +127,15 @@ Changes and bug fixes from PsN 4.2.0 to x.y.z
 
 - Allow empty lines (,,,,,,,,,,) in -rawres_input files.
 
+
    ___Cluster/grid interaction___
 
 - bugfix for run_on_slurm: Request specific format of jobID when using squeue to find finished jobs,
   so that jobID cannot be truncated.
 
 - bugfix in printing slurm sbatch command to file for easier debugging.
+
+
    ___NONMEM interaction___
 
 - bugfix handle multiple $SIZES records
@@ -187,31 +189,46 @@ Changes and bug fixes from PsN 4.2.0 to x.y.z
 - Improved handling of NMTRAN error messages and license error messages that appear in the lst-file. 
   Store those pre-run messages in parsing_error_message that can be displayed by e.g. sumo
 
+
    ___sumo___
 
 - sumo now prints delta-ofv if the "Based on:" annotation is present in model
+
 - bugfix running sumo on file without extension .res or .lst would cause a crash
+
 - output use labels instead of generic coordinates, skip parameter that are fixed or same
+
 - print shrinkage from NMoutput, print number of individuals and observation records 
+
 
    ___vpc/npc___
 
 - vpc binning can now take multiple arrays for -bin_array or -auto_bin to use for different strata
+
 - When F_FLAG=0 PsN will now also allow ICALL == 4 witout complaining.
+
 - new option -irep to vpc and npc. An alternative way of marking beginning of new simulation sample
   in -sim_table. This makes it easier to use R-processed data as input, since the NONMEM-type
   header is not needed at the beginning of each new sample. 
+
 - vpc/npc can be run without an input model when option -sim_table and -orig_table are used.
+
 - vpc/npc will set NOAPPEND in $TABLE, and instead add items DV, PRED, WRES and/or RES explicitly if needed.
+
 - vpc: Added prediction intervals 25% and 75% to -fine_pi, now -fine_pi gives 
   intervals 0,10,20,25,30,40,50,60,70,75,80,90 and 95% 
+
 - the vpc_results file will include a column with median idv value for each bin.
+
 - bugfix: if lloq and/or uloq is used, only display mean and delta-mean for real values if 0 real 
   observations were below lloq or above uloq. 
+
 - bugfix: handle global paths to input files on windows (sim_table, orig_table, sim_model)
+
 - bugfix: binning when bin_by_count=0 and either no_of_bins or single_bin_size without overlap,
   could sometimes get observation(s) with single highest idv in stratum excluded from 
   last bin because of numerical error.
+
 
    ___scm___
 
@@ -233,6 +250,7 @@ Changes and bug fixes from PsN 4.2.0 to x.y.z
 
 - updated and corrected warnings related to time-varying covariates 
 
+
    ___boot_scm___
 
 - Removed broken option -base_criteria_values.
@@ -240,12 +258,15 @@ Changes and bug fixes from PsN 4.2.0 to x.y.z
 - updated and corrected warnings related to time-varying covariates 
 
 - bugfix make sure base model is run for each bootstrap data set 
+
+
    ___sse___
 
 -  sse will accept missing data files for alternative models. This is ok since data will be replaced with 
    simulated data anyway. 
 
 -  sse will accept running with -samples=1
+
 
    ___bootstrap___
 
@@ -271,19 +292,29 @@ Changes and bug fixes from PsN 4.2.0 to x.y.z
    data file and the stratify_on is set to a column with higher number than the number of columns 
    in the data file the resulting error message is to hard to understand. Added a separate error 
    message for this situation.
+
+
    ___update_inits___
 	 
 - New guide update_inits_userguide.pdf
+
 - update is now an alias for update_inits on all platforms.
   update is versioned like all other scripts.
   For example: update-4.3.0 will be equivalent to update_inits-4.3.0
+
 - model files with mulitple $PROB are now supported.
+
 - $MSFI filename of second and later $PROB will be updated
+
 - new options -update_fix, -fix_thetas, -unfix_thetas
+
 - removed option -diagonal_dominance. New option -ensure_posdef with same intent (ensure that
   OMEGA and SIGMA blocks are positive definite) but better algorithm.
+
 - Modified procedure for automatic renumbering, see details in userguide.
+
 - support any extension (.ctl, .mod, .txt) of control stream.
+
 
    ___randtest___
 	 
@@ -299,6 +330,8 @@ Changes and bug fixes from PsN 4.2.0 to x.y.z
   theoretical dofv:s from chisquare distribution. 
 	 
 - new command-line option copy_data
+
+
    ___execute___
 	 
 - Automatically unset display_iterations if -silent is set
@@ -313,6 +346,7 @@ Changes and bug fixes from PsN 4.2.0 to x.y.z
 - option -model_dir_name will skip model extension, and there will be no dot between 
   dir and the number. For example run2.mod will give rundir name run2.dir1. 
 
+
    ___parallel_retries___
 	 
 - New option -timestamp for directory name
@@ -326,21 +360,31 @@ Changes and bug fixes from PsN 4.2.0 to x.y.z
 
 - new userguide
 
+
    ___sir___
 	 
 - New option -covmat_input	 	 
+
 - New option -rawres_input
+
 - More input checks
+
 - Modified algorithm, see user guide.
+
 - New output file with NONMEM-like format empirical covariance matrix
+
 - new command-line option copy_data
+
+
    ___covmat___
 	 
 - New script, compute variance-covariance matrix based on -rawres_input
 
+
    ___precond___
 	 
 - New tool, preconditioning of model
+
 
    ___pvar___
 
@@ -348,23 +392,30 @@ Changes and bug fixes from PsN 4.2.0 to x.y.z
 - pvar will also run base model from scm, pvar can handle scm results after clean<=2.
 - Updated pvar_results.csv to include model name.
 
+
    ___frem___
 
 - It will be checked that SIGMA and OMEGA blocks are postive definite, 
   using Cholesky decomposition. If non-positive definite the diagonal will
   be inflated slightly until positive definite
 
+
    ___llp___
 
 - input check that omega or sigma selected is not part of a BLOCK, which of course cannot be individually FIXED.
+
 - Updated documentation on omega and sigma input.
+
 - bugfix handling of numerical issues in search for new parameter value guess 
+
+
 
    ___nmoutput2so___
 
-- new script
+- New tool for creating a standardized output file xml summarizing the outputs of a NONMEM run.
+
 
    ___pind___
 
 - bugfix handle setting of -clean=3
-  
+ 
