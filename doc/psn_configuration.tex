@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{PsN configuration}{2015-03-05}
+\guidetitle{PsN configuration}{2015-03-18}
 \begin{document}
 
 \maketitle
@@ -13,7 +13,8 @@ If the old psn.conf was from PsN3 you need to edit
 default settings of nmfe\_options, if set in the old psn.conf, because the syntax of this option has
 changed between PsN3 and PsN4.
 
-If you have a NMQual8 installation of NONMEM and want to always run NONMEM via the autolog script then you need to replace nmfe=1 with nmqual=1 in the \verb|[default_options]| section in psn.conf. 
+If you have a NMQual8 installation of NONMEM and want to always run NONMEM via the autolog script then you need to replace nmfe=1 with nmqual=1 in the \verb|[default_options]| section in psn.conf. You should also consider adding log.xml to the
+nm\_output list of file extensions.
 
 If you have other needs then you need to read the rest of this document.
 
@@ -169,7 +170,7 @@ to psn.pnm in the NM\_run directory and use the command\\
 
 The user is not required to modify log.xml in any way when running with PsN4.
 When running PsN3 with NMQual the user needed to modify the 'run' section of log.xml, but with PsN4 
-log.xml can be left as is.
+log.xml should be left as is.
 
 Important note: The extra NM options above are options set with e.g. -nmfe\_options or -nodes, but unless the
 do-on-run block of the log.xml file uses these extra options, 
