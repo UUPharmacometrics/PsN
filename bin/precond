@@ -192,6 +192,13 @@ $help_text{-eigen_comp_only} = <<'EOF';
       preconditioning.  Use this option with {\bf-verbose} option.
 EOF
 
+$help_text{-always} = <<'EOF';
+    -always
+
+      Preconditioning will always be run regardless of the status
+      of the covariance step
+EOF
+
 common_options::online_help('precond', \%options, \%help_text, \%required_options, \%optional_options);
 
 if ($PsN::nm_major_version < 7 or $PsN::nm_major_version == 7 and $PsN::nm_minor_version < 2) {

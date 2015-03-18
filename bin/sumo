@@ -25,7 +25,8 @@ my %optional_options = (
     'debug:i'                   => undef,
     'csv!'                       => undef,
     'precision:f'               => undef,
-    'confidence_interval|ci'    => undef,
+    'confidence_interval'    => undef,
+    'ci'    => undef,
     'c_level:f'                 => undef,
     'sd_rse!'                    => undef,
     'max_problem_num:i'         => undef,
@@ -289,7 +290,7 @@ EOF
 
 $help_text{-ci} = $help_text{-confidence_interval};
 
-
+delete $optional_options{'ci'};     # Remove to get online_help right
 common_options::online_help( 'sumo', \%options, \%help_text, \%required_options, \%optional_options);
 
 if ( scalar( @ARGV ) < 1 ){

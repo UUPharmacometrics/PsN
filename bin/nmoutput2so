@@ -173,6 +173,12 @@ $help_text{-external_tables} = <<'EOF';
     Set to use external tables for the simulations
 EOF
 
+$help_text{-bootstrap_results} = <<'EOF';
+    -bootstrap_results=file
+
+    A bootstrap_results file as output from PsN to add to the SO.
+EOF
+
 $help_text{-version} = <<'EOF';
     -version
 

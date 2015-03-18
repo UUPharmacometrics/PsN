@@ -113,7 +113,7 @@ my %options;
 my %optional_options = ( 
     'h|?' => undef,
     'help' => undef,
-    "level=i" => undef,
+    "level:i" => undef,
     "interactive!" => undef,
     "nm_run" => undef,
     "mx" => undef,
