@@ -127,6 +127,8 @@ Changes and bug fixes from PsN 4.2.0 to 4.4.0
 
 - Allow empty lines (,,,,,,,,,,) in -rawres_input files.
 
+- Review of online help for all tools
+
 
    ___Cluster/grid interaction___
 
