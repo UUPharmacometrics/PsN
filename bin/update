@@ -4,14 +4,15 @@
 use FindBin qw($Bin);
 use lib "$Bin/../lib";
 
-use utils::file;
-
 # Don't edit the line below, it must look exactly like this.
 # Everything above this line will be replaced #
+
 
 # This script is just an alias for update_inits. 
 # It makes it possible to call versioned update scripts
 # For example: update-4.2.0 will call update_inits-4.2.0
+
+use utils::file;
 
 my $version;
 
