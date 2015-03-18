@@ -366,9 +366,7 @@ if (scalar(@{$models_array})==1){
 	#for rplots
 	$modelfit -> print_results();
 }
-if( $options{'summarize'} ){
-	$modelfit -> summarize;
-}
+
 ui -> print( category => 'execute',
 			 message => "\nexecute done",
 			 newline => 1);
