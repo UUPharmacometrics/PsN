@@ -327,7 +327,6 @@ unless (scalar(@top_directories) > 0){
 }
 
 my $homedir = getcwd();
-#rmtree([ "./$dir" ]);
 
 foreach my $tdir ( @top_directories ) {  
 	die unless chdir($homedir);
