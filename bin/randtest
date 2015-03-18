@@ -50,12 +50,30 @@ $help_text{Pre_help_message} = <<'EOF';
 Perform a randomization test.
 EOF
 $help_text{Description} = <<'EOF';
-     The values in the randomization column are shuffled without replacement among
-     individuals. The input model is estimates with each of the randomized data sets.
+Randtest is a tool for computing actual significance levels. The method is
+described in 
+
+Assessment of Actual Significance levels for Covariate Effects in NONMEM, 
+J PKPD 28(3):231-252, Wählby U., Jonsson EN, Karlsson MO.
+
+The program will shuffle the values in the randomization column ’samples’
+times and run the input (full) model with each of the new datasets. 
+Provided that a base (reduced) model is given as input, the delta-ofv:s will be 
+computed and the actual signficance levels will be found
+in output file randtest_results.csv.
 EOF
 $help_text{Examples} = <<'EOF';
-      randtest -samples=1000 run89.mod
+      randtest -samples=1000 -randomization_column=DOSE run89.mod -base_model=run0.mod
 EOF
+
+$help_text{Options} = <<'EOF';
+      A model file is required as argument, and options -samples and
+	-randomization_column are also required. 
+
+The following options are valid:
+EOF
+
+
 $help_text{-base_model} = <<'EOF';      
 -base_model
 
@@ -124,8 +142,12 @@ if (scalar(@ARGV) > 1) {
   exit;
 }
 
-if ( defined $options{'dummy_data'} ){
-  $options{'dummy_data'} = 0;
+foreach my $required (keys %required_options){
+	$required =~ s/:[^:]*$//;
+	$required =~ s/!$//;
+	unless (defined $options{$required}){
+		die("Option $required is required");
+	}
 }
 
 my $eval_string = common_options::model_parameters(\%options);
