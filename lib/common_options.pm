@@ -51,8 +51,8 @@ Getopt::Long::config("auto_abbrev");
 		  "nmfe_options:s",
 		  "nmqual!",
 		  "nodes:i",
-		  "nonparametric_etas",
-		  "nonparametric_marginals",
+#		  "nonparametric_etas",
+#		  "nonparametric_marginals",
 		  "parafile:s",
 		  "picky!",
 		  "prepend_model_file_name!",
@@ -632,8 +632,8 @@ EOF
     -niter_eonly
       
       Only applies if NONMEM7 and last $EST is IMP or IMPMAP. Only for scripts
-      vpc (any options), cdd (if option -xv) and execute (if option -mirror_plots 
-      and/or nonparametric_etas). Undefined by default.
+      vpc (any options), cdd (if option -xv) and execute (if option -mirror_plots). 
+	  Undefined by default.
       User-chosen value of NITER in IMP or IMPMAP when estimation is turned off
       by setting EONLY=1. See PsN_and_NONMEM7.pdf for details.
 EOF
@@ -642,8 +642,8 @@ EOF
     -last_est_complete
       
       Only applies if NONMEM7 and multiple $ESTIMATION records. Then only for scripts
-      vpc (any options), cdd (if option -xv) and execute (if option -mirror_plots 
-      and/or nonparametric_etas). Setting this option tells PsN that all 
+      vpc (any options), cdd (if option -xv) and execute (if option -mirror_plots). 
+	  Setting this option tells PsN that all 
       options needed for the last estimation step, such as LIKELIHOOD 
       (defaults can be omitted), are set explicitly in the 
       last $ESTIMATION record, i.e. no options need to carry over from previous $EST.
@@ -685,12 +685,14 @@ EOF
   -d2u
 Default not set. If set then run dos2unix on model files and regular data files.
 EOF
-    $help_hash{-nonparametric_marginals} = <<'EOF';
-  -nonparametric_marginals
-EOF
-    $help_hash{-nonparametric_etas} = <<'EOF';
-  -nonparametric_etas
-EOF
+
+# these options are turned off
+#    $help_hash{-nonparametric_marginals} = <<'EOF';
+#  -nonparametric_marginals
+#EOF
+#    $help_hash{-nonparametric_etas} = <<'EOF';
+#  -nonparametric_etas
+#EOF
 
     $help_hash{-nmqual} = <<'EOF';
     -nmqual

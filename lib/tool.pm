@@ -100,7 +100,10 @@ has 'lsf_ttl' => ( is => 'rw', isa => 'Str' );
 has 'lsf_sleep' => ( is => 'rw', isa => 'Int', default => 3 );
 has 'lsf_options' => ( is => 'rw', isa => 'Str' );
 has 'grid_poll_interval' => ( is => 'rw', isa => 'Int' );
+
+#this has been turned off in common_options, does not work
 has 'nonparametric_etas' => ( is => 'rw', isa => 'Bool', default => 0 );
+#this has been turned off in common_options, does not work
 has 'nonparametric_marginals' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'shrinkage' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'eigen_values' => ( is => 'rw', isa => 'Bool', default => 0 );

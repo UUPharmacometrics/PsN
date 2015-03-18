@@ -16,15 +16,14 @@ Default not set. If set then run dos2unix on model files and regular data files.
 \nextopt
 \optname{last\_est\_complete}
 Default not set. Only applies for models with multiple \$ESTIMATION (NONMEM7 only). 
-Only affects vpc,  cdd if option -xv is set, and execute if option -mirror\_plots,
--predict\_model or -nonparametric\_etas is set. Indicates that no options needed for the last \$EST 
+Only affects vpc,  cdd if option -xv is set, and execute if option -mirror\_plots or
+-predict\_model is set. Indicates that no options needed for the last \$EST 
 are carried over from previous \$EST, all options are set explicitly in that record. See PsN\_and\_NONMEM7.pdf 
 for details. 
 \nextopt
 \optdefault{niter\_eonly}{'integer'}
 Default undefined. Only applies for NONMEM7 and if last \$EST is IMP or IMPMAP. 
-Only affects vpc,  cdd if option -xv is set, and execute if option -mirror\_plots, -predict\_model
- or -nonparametric\_etas is set. 
+Only affects vpc,  cdd if option -xv is set, and execute if option -mirror\_plots or -predict\_model is set. 
 User-chosen value of NITER when estimation is turned off by setting EONLY=1. See PsN\_and\_NONMEM7.pdf for details. 
 \nextopt
 \end{optionlist}

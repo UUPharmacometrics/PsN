@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{PsN and NONMEM7}{2015-03-12}
+\guidetitle{PsN and NONMEM7}{2015-03-18}
 
 \begin{document}
 
@@ -71,9 +71,9 @@ If \mbox{clean $>=3$} is set then worker* subdirectories are removed when NM\_ru
 
 \section{Turning off estimation in NONMEM 7}
 
-In some scripts PsN turns off estimation in some extra PsN-generated models. It is done in npc and vpc, in cdd if option -xv is set, and in execute if option -mirror\_plots or option -nonparametric\_etas is set. With NONMEM5 and NONMEM6 the estimation is easily skipped by setting MAXEVAL=0. NONMEM7 however,  can have multiple \$ESTIMATIONs and/or estimation methods for which MAXEVAL do not apply. Settings in one \$ESTIMATION will by default carry over to the next unless a new setting for the same option is set. This makes it much more complicated to automatically edit the modelfile to skip the estimation step and get correct output of PRED, DV etc. 
+In some scripts PsN turns off estimation in some extra PsN-generated models. It is done in npc and vpc, in cdd if option -xv is set, and in execute if option -mirror\_plots is set. With NONMEM5 and NONMEM6 the estimation is easily skipped by setting MAXEVAL=0. NONMEM7 however,  can have multiple \$ESTIMATIONs and/or estimation methods for which MAXEVAL do not apply. Settings in one \$ESTIMATION will by default carry over to the next unless a new setting for the same option is set. This makes it much more complicated to automatically edit the modelfile to skip the estimation step and get correct output of PRED, DV etc. 
 
-Of the new estimation methods of NONMEM7, it is most natural to use IMP or IMPMAP with EONLY=1 for the purposes for which estimation is turned off. If PsN does not need ofv values from the run NITER=0 can be set. This is true for vpc, npc and execute with nonparametric\_etas or mirror\_plots. If ofv values are needed as in cdd, NITER=5-10 is sufficient according to NONMEM7 documentation. PsN will leave NITER unchanged in most cases (see exception below).
+Of the new estimation methods of NONMEM7, it is most natural to use IMP or IMPMAP with EONLY=1 for the purposes for which estimation is turned off. If PsN does not need ofv values from the run NITER=0 can be set. This is true for vpc, npc and execute with mirror\_plots. If ofv values are needed as in cdd, NITER=5-10 is sufficient according to NONMEM7 documentation. PsN will leave NITER unchanged in most cases (see exception below).
 
 When using NM7, there are two alternatives for the user when running a PsN script that turns off estimation. The first is to make sure 1) that the last \$ESTIMATION has METHOD set to either IMP, IMPMAP or a classical method and 2) that the last \$ESTIMATION is complete, i.e. that all options needed are explicitly set in that record so that none that are needed for that step are carried over from previous \$EST and 3) that PsN is informed of 1 and 2 by setting option -last\_est\_complete. If option -last\_est\_complete is set, PsN will do the following to turn off estimation: 
 \begin{enumerate}
@@ -81,15 +81,16 @@ When using NM7, there are two alternatives for the user when running a PsN scrip
 	\item If METHOD in last \$EST is classical: set MAXEVAL=0 
 \end{enumerate}
 or 
-If METHOD is IMP or IMPMAP: set EONLY=1. If running vpc, npc or execute with nonparametric\_etas or mirror\_plots also set NITER=0, otherwise do not change NITER.
+If METHOD is IMP or IMPMAP: set EONLY=1. If running vpc, npc or execute with 
+mirror\_plots also set NITER=0, otherwise do not change NITER.
 If METHOD is any other than classical or IMP/IMPMAP then the last \$EST is not changed and a warning is printed.
 
 The second alternative is to let PsN do everything automatically, by not setting option -last\_est\_complete. Then PsN will collect options (LAPLACIAN, METHOD, ISAMPLE...) from all \$ESTIMATION, removing $\langle$OPTION$\rangle$ if NO$\langle$OPTION$\rangle$ appears, unsetting LIKELIHOOD if PREDICTION appears, changing the value of ISAMPLE and METHOD if/when they appear again, and so on. PsN addresses the fact that options may be abbreviated in many ways. A number of options are skipped, such as FORMAT and FILE and options which only apply to the BAYES method, see list below. After scanning the options, all \$EST are removed and PsN creates a new one based on the collected options. 
 
 \begin{itemize}
 	\item If METHOD is classical (i.e. the last \$EST had a classical method), MAXEVAL=0 is set. The rest of the collected options are appended.
-	\item If METHOD=IMP or IMPMAP, then EONLY=1 is set. If running vpc, npc or execute with nonparametric\_etas or mirror\_plots also set NITER=0, otherwise do not change NITER. The rest of the collected options, including ISAMPLE if it is set, are appended. 
-	\item If METHOD is something other than classical/IMP/IMPMAP, then METHOD is changed to IMP, and EONLY=1 is set. For vpc, npc and for nonparametric\_etas and mirror\_plots NITER=0 and ISAMPLE=1 are set. For cdd NITER is not changed if it is already set in any of the \$ESTIMATION steps, otherwise NITER=10 is set. ISAMPLE is left to the default value for cdd. The rest of the collected options are appended.
+	\item If METHOD=IMP or IMPMAP, then EONLY=1 is set. If running vpc, npc or execute with mirror\_plots also set NITER=0, otherwise do not change NITER. The rest of the collected options, including ISAMPLE if it is set, are appended. 
+	\item If METHOD is something other than classical/IMP/IMPMAP, then METHOD is changed to IMP, and EONLY=1 is set. For vpc, npc and for mirror\_plots NITER=0 and ISAMPLE=1 are set. For cdd NITER is not changed if it is already set in any of the \$ESTIMATION steps, otherwise NITER=10 is set. ISAMPLE is left to the default value for cdd. The rest of the collected options are appended.
 \end{itemize}
 
 If the option niter\_eonly is set, PsN will set NITER to this value regardless of estimation method and PsN tool (cdd, npc, vpc or execute). This option is independent of last\_est\_complete.
