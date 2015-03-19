@@ -21,10 +21,11 @@ sub submit
 	sub ErrorReport{ print Win32::FormatMessage(Win32::GetLastError()); }
 	my $proc;
 
-	if (not $self->display_iterations) {
+	if (not $self->display_iterations ) {
 		$command .= ' >' . $self->nmfe_output_file;
 	}
 
+	system("echo $command > nmqualcommand") if ($self->nmqual);
 	Win32::Process::Create($proc, $self->full_path_runscript, $command, 0, $Win32::Process::NORMAL_PRIORITY_CLASS, '.') || die ErrorReport();
 	$self->windows_process($proc);
 
