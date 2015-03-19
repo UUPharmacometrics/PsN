@@ -317,6 +317,7 @@ sub create_maxeval_zero_models_array
         mceta => { isa => 'Int', optional => 1 },
         purpose => { isa => 'Str', optional => 0 },
         match_labels => { isa => 'Bool', default => 1, optional => 1 },
+        problems_per_file => { isa => 'Int', optional => 1, default => 100 },
 	);
 	my $model = $parm{'model'};
 	my $subdirectory = $parm{'subdirectory'};
@@ -326,6 +327,9 @@ sub create_maxeval_zero_models_array
 	my $purpose = $parm{'purpose'};
 	my $ignore_missing_parameters = $parm{'ignore_missing_parameters'};
 	my $match_labels = $parm{'match_labels'};
+	my $problems_per_file = $parm{'problems_per_file'};
+
+	croak("problems_per_file must be larger than 0") unless ($problems_per_file > 0);
 
 	my $samples_done = 0;
 	my $run_num = 1;
@@ -371,6 +375,8 @@ sub create_maxeval_zero_models_array
 									option_name => 'REWIND');
 
 			#remove most records, keep only $PROB, $INPUT, $DATA, $THETA, $OMEGA, $SIGMA $EST $CONTR
+
+			#TODO what about omegapd, thetap thetapv... for priors??
 			foreach my $record ('table','simulation','pk','pred','error','covariance','scatter','msfi','subroutine',
 								'abbreviated','sizes','prior','model','tol','infn','aesinitial',
 								'aes','des','mix','nonparametric'){
@@ -396,7 +402,7 @@ sub create_maxeval_zero_models_array
 
 		$samples_done++;
 		my $probnum=2;
-		for (my $i=1; $i<100; $i++){
+		for (my $i=1; $i<$problems_per_file; $i++){
 			last if ($samples_done == scalar(@{$sampled_params_arr}));
 			#add one $PROB per $i, update inits from hash
 			my $sh_mod = model::shrinkage_module -> new ( nomegas => $run_model -> nomegas -> [0],
