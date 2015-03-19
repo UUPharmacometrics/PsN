@@ -370,9 +370,9 @@ sub create_maxeval_zero_models_array
 									record_name => 'data',
 									option_name => 'REWIND');
 
-			#remove most records, keep only $PROB, $INPUT, $DATA, $THETA, $OMEGA, $SIGMA $EST
+			#remove most records, keep only $PROB, $INPUT, $DATA, $THETA, $OMEGA, $SIGMA $EST $CONTR
 			foreach my $record ('table','simulation','pk','pred','error','covariance','scatter','msfi','subroutine',
-								'abbreviated','sizes','contr','prior','model','tol','infn','aesinitial',
+								'abbreviated','sizes','prior','model','tol','infn','aesinitial',
 								'aes','des','mix','nonparametric'){
 				$dummymodel -> remove_records (problem_numbers => [1],
 											   keep_last => 0,
