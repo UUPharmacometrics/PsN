@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{Developer's guide}{2015-03-13}
+\guidetitle{Developer's guide}{2015-03-19}
 \usepackage{hyperref}
 
 \begin{document}
@@ -106,6 +106,7 @@ These warnings are from NONMEM and can be ignored.
 	\item If any test fail using any version of NONMEM 7 this is most likely a bug. Please report this so that it can be fixed.
     \item If the PsN installation directory is moved after the initial installation of the test suite, the file includes.pm in the top level of the test directory
     must be edited to include the new path to PsN core and toolkit. 
+    \item The sse unit tests will fail unless File::Copy::Recursive is available.
 \end{itemize} 
 
 \section{nmoutput2so}
