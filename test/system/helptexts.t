@@ -56,6 +56,10 @@ our $tempdir = create_test_dir('system_help');
 
 chdir($tempdir);
 foreach my $prog (sort {$a <=> $b} keys %programs){
+	if (($prog eq 'nmoutput2so') and (not eval('require XML::LibXML'))){
+		next;
+	}
+
 	my $command = get_command($prog).' -help > text.txt';
 	print "Running $command\n";
 	my $rc = system($command);
