@@ -1103,10 +1103,12 @@ sub _modelfit_raw_results_callback
 
 		my @delta_ofv=();
 		my $index = 0;
+		my $successful_count=0;
 		foreach my $row ( @{$modelfit -> raw_results()} ) {
 			my $delta_ofv;
 			if (defined $row->[$ofvindex]){
 				$delta_ofv = $row->[$ofvindex] - $original_ofv;
+				$successful_count++;
 			}else{
 				$delta_ofv = undef;
 			}
@@ -1114,6 +1116,12 @@ sub _modelfit_raw_results_callback
 			$index++;
 		}
 
+		unless ($with_replacement){
+			if ($successful_count < $resamples){
+				croak("Only $successful_count samples gave an ofv-value, but $resamples resamples were requested without replacement\n".
+					  "Many \$PROBLEMs must have terminated with error, check lst-files in\n".$self->directory."m1\n");
+			}
+		}
 		unless (scalar(@delta_ofv)>=$samples){
 			croak("Expected $samples ofv values after running models, but found only ".scalar(@delta_ofv)."\n".
 				  "NONMEM run(s) must have failed, check lst-file(s) in m1.");
@@ -1228,20 +1236,21 @@ sub prepare_results
 #	print "prepare results model name ".$self -> models -> [0]->full_name."\n";
 	my $model = $self -> models -> [0];
 	my ($sampled_params_arr,$href) = model::get_rawres_params(filename => $self->raw_results_file()->[0],
-															  require_numeric_ofv => 0,
+															  require_numeric_ofv => 1,
 															  extra_columns => ['resamples'],
 															  offset => 1,
 															  model => $model); 
-
+	my $len= 0;
+	$len = scalar(@{$sampled_params_arr}) if (defined $sampled_params_arr);
 	## Prepare general run info for output file
 	my %return_section;
 	$return_section{'name'} = 'SIR run info';
 	my $modelname=$model ->filename();
-	$return_section{'labels'} = [[],['Date','samples','resamples','model','PsN version','NONMEM version']];
+	$return_section{'labels'} = [[],['Date','samples','successful samples','resamples','model','PsN version','NONMEM version']];
 
 	my @datearr=localtime;
 	my $the_date=($datearr[5]+1900).'-'.($datearr[4]+1).'-'.($datearr[3]);
-	$return_section{'values'} = [[$the_date,$self->samples,$self->resamples(),$modelname,'v'.$PsN::version,$self->nm_version]];
+	$return_section{'values'} = [[$the_date,$self->samples,$len,$self->resamples(),$modelname,'v'.$PsN::version,$self->nm_version]];
 	#results is initialized in tool.dia
 	push( @{$self -> results->[0]{'own'}},\%return_section );
 
