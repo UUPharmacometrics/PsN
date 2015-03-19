@@ -177,6 +177,13 @@ do-on-run block of the log.xml file uses these extra options,
 \emph{they will be ignored}. 
 PsN will append them to the autolog.pl call but it is up to log.xml to decide what to do with them.
 
+To facilitate debugging, the command 
+used to invoke autolog.pl will be printed to the file 
+nmqualcommand in the NM\_runX subdirectory
+when PsN is run locally on *nix or Windows. 
+When -run\_on\_sge or -run\_on\_slurm is used, the command
+will be printed to qsubcommand/sbatchcommand (also when -nmfe is used). 
+
 If the user does not set option -nmqual, but sets -nm\_version to an NMQual installation of NONMEM, then PsN will look for an nmfe script in the installation directory
 as described in section Running nmfe from within PsN.
 
