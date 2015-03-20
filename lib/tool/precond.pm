@@ -19,6 +19,7 @@ extends 'tool';
 
 has 'precond_matrix' => ( is => 'rw', isa => 'Maybe[ArrayRef[ArrayRef]]' );
 has 'precond_model' => ( is => 'rw', isa => 'model' );
+has 'base_model' => ( is => 'rw', isa => 'model' );
 has 'update_model' => ( is => 'rw', isa => 'Maybe[Str]' );
 has 'negaEigenIndex' =>  ( is => 'rw', isa => 'ArrayRef' );
 has 'always' =>  ( is => 'rw', isa => 'Bool', default => 0 );
@@ -40,6 +41,18 @@ sub modelfit_setup
 
     if (not defined $self->precond_matrix) {
         my $base_model = $self->create_base_model();
+        $self->base_model($base_model);
+
+        my %tool_options = %{common_options::restore_options(@common_options::tool_options)};
+        my $nm_output = $tool_options{'nm_output'};
+        my $rmt_added = 0;
+        if (not defined $nm_output or $nm_output eq "") {
+            $nm_output = "rmt";
+            $rmt_added = 1;
+        } elsif (not $nm_output =~ /rmt/) {
+            $nm_output .= ',rmt';
+            $rmt_added = 1;
+        }
 
         my $base_modelfit = tool::modelfit->new(
             %{common_options::restore_options(@common_options::tool_options)},
@@ -47,10 +60,19 @@ sub modelfit_setup
             base_dir => $self->directory,
             directory => "base_modelfit",
             top_tool => 0,
-            nm_output => 'ext,cov,rmt', 
+            nm_output => $nm_output, 
         );
 
         $base_modelfit->run;
+
+        copy("base_modelfit/raw_results.csv", "base_raw_results.csv");
+
+        my @files = glob "m1/*";
+        foreach my $file (@files) {
+            next if ($file =~ /\.(mod|ctl)$/);
+            next if ($file =~ /\.rmt$/ and $rmt_added);
+            copy($file, "..");
+        }
 
         if (not $base_model->is_run) {
             croak("model " . $self->precond_model->filename . " could not be run\n");
@@ -59,11 +81,19 @@ sub modelfit_setup
             croak("Covariance step was not run\n");
         }
 
-        if ($base_model->outputs->[0]->covariance_step_successful->[0][0] and not $self->always) {
+        my $cov_successful = $base_model->outputs->[0]->covariance_step_successful->[0][0];
+
+        if ($cov_successful and not $self->always) {
             $self->tools([]);
             $self->_no_precond(1);
             print "\nCovariance step successful. No preconditioning necessary\n";
             return;
+        }
+
+        if (not $cov_successful) {
+            print "\nCovariance step failed will now run preconditioning\n";
+        } else {
+            print "\nWill now run preconditioning\n";
         }
 
         my $rmt_filename = $base_model->directory . utils::file::replace_extension($base_model->filename, 'rmt');
@@ -211,7 +241,6 @@ sub modelfit_analyze
 		}
 
         $modelfit->print_raw_results;
-        copy("base_modelfit/raw_results.csv", "base_raw_results.csv");
 
     } else {
         print "Unable to update model: model was not run";
@@ -253,8 +282,8 @@ sub create_base_model
     my $self = shift;
 
     my $base_filename = $self->precond_model->filename;
-    $base_filename =~ s/(\.ctl|\.mod)$//;
-    $base_filename .= '_base.mod';
+    #$base_filename =~ s/(\.ctl|\.mod)$//;
+    #$base_filename .= '_base.mod';
     $base_filename = File::Spec->catfile(($self->directory, "m1"), $base_filename);
 
     my $base_model = $self->precond_model->copy(
