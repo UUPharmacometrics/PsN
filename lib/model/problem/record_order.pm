@@ -23,6 +23,12 @@ my %must_come_after = (
     'pred' => [ 'subroutines', 'input' ],
     'pk' => [ 'subroutines', 'input', 'model' ],
     'error' => [ 'subroutines', 'input', 'model', 'pk' ],
+    'thetap' => [ 'theta' ],
+    'thetapv' => [ 'theta', 'thetap' ],
+    'omegap' => [ 'omega' ],
+    'omegapd' => [ 'omega', 'omegap' ],
+    'sigmap' => [ 'sigma' ],
+    'sigmapd' => [ 'sigma', 'sigmap' ],
 );
 
 sub insert
