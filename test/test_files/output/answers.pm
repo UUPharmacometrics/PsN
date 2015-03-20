@@ -860,6 +860,22 @@ sub read_answers{
 	$answer_hashes[$index]->{answers}->{1}->{0}->{'minimization_successful'}=0;
 	$answer_hashes[$index]->{answers}->{1}->{0}->{'ofv'}=850.2920;
 
+
+$index++;
+$answer_hashes[$index]={};
+$answer_hashes[$index]->{file}='special_mod/minimterm_cov_unconditional.lst';
+$answer_hashes[$index]->{answers}={};
+$answer_hashes[$index]->{parsed_successfully}=1;
+$answer_hashes[$index]->{answers}->{0}->{0}->{'ofv'}=-126.07168897227753;
+$answer_hashes[$index]->{answers}->{0}->{0}->{'covariance_step_successful'}=1;
+$answer_hashes[$index]->{answers}->{0}->{0}->{'covariance_step_run'}=1;
+$answer_hashes[$index]->{answers}->{0}->{0}->{'covariance_step_warnings'}=0;
+$answer_hashes[$index]->{answers}->{0}->{0}->{'rounding_errors'}=0;
+$answer_hashes[$index]->{answers}->{0}->{0}->{'minimization_successful'}=0;
+$answer_hashes[$index]->{answers}->{0}->{0}->{'condition_number'}=64.3499;
+$answer_hashes[$index]->{answers}->{0}->{0}->{'thetas'}=[1.07027E+00,1.01106E+00,1.62179E+00,9.94810E-01,9.91695E-01,9.99383E-01,9.66497E-01,2.96531E+02,1.00943E+00,8.55659E-01,5.80170E-01,0.00000E+00,3.93536E+00,2.94797E-01,6.75100E-03,1.23423E-01,0.00000E+00,9.74910E-02];
+$answer_hashes[$index]->{answers}->{0}->{0}->{'sethetas'}=[5.86046E-01,5.03596E-01,1.43049E-01,5.11541E-01,5.42919E-01,5.40343E-01,2.45831E-01,4.12643E+01,9.77086E-02,2.67354E-02,1.29819E-01,0.00000E+00,5.80841E-01,4.07894E-02,0.00000E+00,4.18430E-02,0.00000E+00,5.58527E-02];
+
 	return \@answer_hashes;
 }
 1;

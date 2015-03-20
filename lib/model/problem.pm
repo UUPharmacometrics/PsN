@@ -314,29 +314,11 @@ sub add_prior_distribution
 	#$PRIOR NWPRI NTHETA=ntheta,NETA=neta,NEPS=neps,NTHP=nthp,NETP=netp
 	#Need to set NPEXP?? number of prior experiments
 	my $plev='';
-	$plev= 'PLEV=0.99' 
-	if ((defined $self->simulations()) and scalar(@{$self -> simulations()})>0 );
-	my $record_string=" NWPRI NTHETA=$ntheta NETA=$neta NTHP=$nthp NETP=$netp $plev";
+	$plev= 'PLEV=0.99' if ((defined $self->simulations()) and scalar(@{$self -> simulations()})>0 );
+#	my $record_string=" NWPRI NTHETA=$ntheta NETA=$neta NTHP=$nthp NETP=$netp $plev";
+	my $record_string=" NWPRI $plev";
 	$self -> set_records( 'type' => 'prior',
 		'record_strings' => [$record_string] );
-
-	#update own_print_order
-	if (defined $self->own_print_order and scalar(@{$self->own_print_order})>0){
-		my %leading_order = {'sizes' => 1,'problem'=> 1,'input'=> 1,'bind'=> 1,'data'=> 1,'abbreviated'=> 1,'msfi'=> 1,'contr'=> 1,'subroutine'=> 1};
-		my @new_order =();
-		my $added=0;
-		foreach my $rec (@{$self->own_print_order}){
-			if (not $added and (not $leading_order{$rec}==1)){
-				push (@new_order,'prior');
-				$added = 1;
-			}
-			push (@new_order,$rec);
-		}
-		$self->own_print_order(\@new_order);
-	}else{
-		ui -> print( category => 'all',
-					 message  => "\nError add_prior_distribution, no own_print_order\n");
-	}
 
 
 	#Add ntheta new $THETA FIX. Initial estimates are final THETA estimates from lst-file.
@@ -351,7 +333,7 @@ sub add_prior_distribution
 	my %thetas = %{$ref};
 	for (my $i=1;$i<=$nthp;$i++){
 		my $val=$thetas{'THETA'.$i};
-		$self -> add_records(type => 'theta',
+		$self -> add_records(type => 'thetap',
 			record_strings => ["$val FIX"]);
 	}
 
@@ -384,8 +366,8 @@ sub add_prior_distribution
 		my $index=-1+$i*$i/2;
 		push(@omega_variance,$ref->[$index]);
 	}
-	$self -> add_records(type => 'omega',
-		record_strings => \@record_strings);
+	$self -> add_records(type => 'thetapv',
+						 record_strings => \@record_strings);
 
 	#Add $OMEGA FIX where size is neta and initial estimates are final $OMEGA estimate 
 	#from lst. Form must match original $OMEGA form in lst.
@@ -415,7 +397,7 @@ sub add_prior_distribution
 			$block = 1;
 			if ($record->same()){
 				@record_strings = ('BLOCK SAME');
-				$self->add_records(type=> 'omega',
+				$self->add_records(type=> 'omegap',
 					record_strings => \@record_strings);
 				$set_prior_etas += $size;
 				next;
@@ -439,13 +421,13 @@ sub add_prior_distribution
 		$set_prior_etas += $size;
 		ui -> print( category => 'all',
 					 message  => "Error too many new omegas\n") if ($set_prior_etas > $neta);
-		$self->add_records(type=> 'omega',
+		$self->add_records(type=> 'omegap',
 			record_strings => \@record_strings);
 	}
 
 	my @dflist = split(/,/,$df_string);
 	foreach my $df (@dflist){
-		$self -> add_records(type => 'theta',
+		$self -> add_records(type => 'omegapd',
 			record_strings => ["$df FIX"]);
 	}
 
@@ -1930,12 +1912,10 @@ sub _format_problem
 							  problem_number => { isa => 'Int', optional => 1 },
 							  relative_data_path => { isa => 'Bool', optional => 0 },
 							  write_directory => { isa => 'Str', optional => 0 },
-							  local_print_order => { isa => 'Bool', default => 0, optional => 1 },
 							  number_format => { isa => 'Maybe[Int]', optional => 1 }
 		);
 	my $filename = $parm{'filename'};
 	my $problem_number = $parm{'problem_number'};
-	my $local_print_order = $parm{'local_print_order'};
 	my $number_format = $parm{'number_format'};
 	my $write_directory = $parm{'write_directory'};
 	my $relative_data_path = $parm{'relative_data_path'};
@@ -1956,8 +1936,6 @@ sub _format_problem
     my $record_order;
     if ($self->psn_print_order) {
         $record_order = \@print_order;
-	} elsif ($local_print_order and defined $self->own_print_order and scalar(@{$self->own_print_order}) > 0) {
-	    $record_order = $self->own_print_order;
     } elsif ($self->sde) {
         $record_order = \@sde_print_order;
     } elsif ($self->omega_before_pk) {
@@ -2744,6 +2722,81 @@ sub find_table_with_name
 
     return undef;
 }
+
+sub is_option_set
+{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+		name => { isa => 'Str', optional => 0 },
+		record => { isa => 'Str', optional => 0 },
+		record_number => { isa => 'Int', default => 0, optional => 1 },
+		fuzzy_match => { isa => 'Bool', default => 0, optional => 1 }
+	);
+	my $name = $parm{'name'};
+	my $record = $parm{'record'};
+	my $record_number = $parm{'record_number'};
+	my $found = 0;
+	my $fuzzy_match = $parm{'fuzzy_match'};
+
+	# Usage:
+	# 
+	# if( $prob -> is_option_set( record => 'recordName', name => 'optionName' ) ){
+	#     print "prob has option optionName set in record recordName";
+	# }
+	#
+	# is_option_set checks if an option is set in a given record in given problem.
+	#if record_number is 0 it means 'all', this is the default. -1 means last
+
+	my ( @records, @options );
+	my @record_numbers;
+	my $accessor = $record.'s';
+
+	if ( defined $self -> $accessor ) {
+		@records = @{$self -> $accessor};
+	} else {
+		carp("problem -> is_option_set: No record $record defined");
+		return 0;
+	}
+
+	if ($record_number > 0){
+		push(@record_numbers,$record_number);
+	} elsif ($record_number == 0) {
+		#all record_numbers
+		@record_numbers = 1 .. scalar(@records);
+	} elsif ($record_number == -1) {
+		#last
+		push(@record_numbers,scalar(@records));
+	}else {
+		croak("illegal input record_number $record_number to is_option_set");
+	}
+
+	foreach my $inst (@record_numbers){
+		unless(defined $records[$inst - 1] ){
+			carp("problem -> is_option_set: No record number $inst defined in problem." );
+			next;
+		}
+		if ( defined $records[$inst - 1] -> options ) {
+			@options = @{$records[$inst - 1] -> options};
+		} else {
+			carp("No option defined in record: $record in problem." );
+			next;
+		}
+		foreach my $option ( @options ) {
+			if ( defined $option and $option -> name eq $name ){
+				$found = 1 ;
+			}elsif( $fuzzy_match ){
+				if( index( $name, $option -> name ) == 0 ){
+					$found = 1;
+				}
+			}
+			last if ($found);
+		}
+		last if ($found);
+	}
+
+	return $found;
+}
+
 
 no Moose;
 __PACKAGE__->meta->make_immutable;

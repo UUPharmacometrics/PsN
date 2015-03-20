@@ -188,7 +188,8 @@ my @command_line = (
 	get_command("update_inits") . " pheno.mod -out=run1.mod",
 	get_command("update_inits") . " pheno.mod -out=run2.mod -comment=\"new comment\"",
 	get_command("update_inits") . " mox1.mod -out=run3.mod",
-	get_command("update") . " mox1.mod -out=run4.mod -add_tags"
+	get_command("update") . " mox1.mod -out=run4.mod -add_tags",
+	get_command("update") . " pheno.mod -out=run5.mod -add_prior=1,1"
 );
 foreach my $i (0..$#command_line) {
 	my $command= $command_line[$i];

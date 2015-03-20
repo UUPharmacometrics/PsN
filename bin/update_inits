@@ -330,6 +330,7 @@ if ($mismatch){
 }
 
 my $outfile;
+my $output;
 
 if ( $options{'output_model'} ){
 	$outfile = $options{'output_model'};
@@ -373,7 +374,6 @@ if (defined $options{'from_model'}) {
 	}
 
 } else { 
-	my $output;
 	if( $ARGV[1] ){
 		$output = output -> new( filename => $ARGV[1],
 								 ignore_missing_files => 0);
@@ -515,4 +515,4 @@ if (defined $options{'comment'}) {
 	$model_copy->problems->[0]->problems->[0]->add_comment(new_comment => $options{'comment'});
 }
 
-$model_copy->_write(number_format => $options{'sigdig'}, local_print_order => 1);
+$model_copy->_write(number_format => $options{'sigdig'});

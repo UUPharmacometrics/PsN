@@ -1396,7 +1396,11 @@ sub _read_term
 
 		if ( /^0MINIMIZATION TERMINATED/ ) {
 			$self -> minimization_successful(0);
-			$self -> covariance_step_run(0);
+			unless ($self->input_problem->is_option_set(record => 'covariance',
+														name => 'UNCONDITIONAL',
+														fuzzy_match => 1)){
+				$self -> covariance_step_run(0);
+			}
 			$self->lstfile_pos($start_pos - 1) unless ($success);
 			$success = 1;
 			next;

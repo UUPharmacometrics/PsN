@@ -3533,14 +3533,12 @@ sub _write
         filename => { isa => 'Str', default => $self->full_name, optional => 1 },
         number_format => { isa => 'Maybe[Int]', optional => 1 },
         relative_data_path => { isa => 'Bool', default => $self->relative_data_path, optional => 1 },
-        local_print_order => { isa => 'Bool', default => 0, optional => 1 },
         overwrite => { isa => 'Bool', default => 0, optional => 1 },
         MX_PARAMS_VALIDATE_NO_CACHE => 1,
     );
 	my $filename = $parm{'filename'};
 	my $number_format = $parm{'number_format'};
 	my $relative_data_path = $parm{'relative_data_path'};
-	my $local_print_order = $parm{'local_print_order'};
 	my $overwrite = $parm{'overwrite'};
 
 	my ($writedir,$file) = OSspecific::absolute_path('',$filename);
@@ -3573,8 +3571,7 @@ sub _write
 								 problem_number => ($i + 1),
 								 relative_data_path => $relative_data_path,
 								 write_directory => $writedir,
-								 number_format => $number_format,
-								 local_print_order => $local_print_order ) 
+								 number_format => $number_format)
 			};
 		# Check if the problem is NOT active, if so comment it out.
 		unless ( $active[$i] ) {
@@ -3629,9 +3626,7 @@ sub is_option_set
 	# is_option_set checks if an option is set in a given record in given problem.
 	#if record_number is 0 it means 'all', this is the default. -1 means last
 
-	my ( @problems, @records, @options );
-	my @record_numbers;
-	my $accessor = $record.'s';
+	my @problems;
 	if ( defined $self->problems ) {
 		@problems = @{$self->problems};
 	} else {
@@ -3642,50 +3637,10 @@ sub is_option_set
 		return 0; # No option can be set if no problem exists.
 	}
 
-	if ( defined $problems[$problem_number - 1] -> $accessor ) {
-		@records = @{$problems[$problem_number - 1] -> $accessor};
-	} else {
-		carp("model -> is_option_set: No record $record defined" .
-			" in problem number $problem_number." );
-		return 0;
-	}
-
-
-	if ($record_number > 0){
-		push(@record_numbers,$record_number);
-	} elsif ($record_number == 0) {
-		#all record_numbers
-		@record_numbers = 1 .. scalar(@records);
-	} elsif ($record_number == -1) {
-		#last
-		push(@record_numbers,scalar(@records));
-	}else {
-		croak("illegal input record_number $record_number to is_option_set1");
-	}
-
-	foreach my $inst (@record_numbers){
-		unless(defined $records[$inst - 1] ){
-			carp("model -> is_option_set: No record number $inst defined in model." );
-			next;
-		}
-		if ( defined $records[$inst - 1] -> options ) {
-			@options = @{$records[$inst - 1] -> options};
-		} else {
-			carp("No option defined in record: $record in problem number $problem_number." );
-			next;
-		}
-		foreach my $option ( @options ) {
-			if ( defined $option and $option -> name eq $name ){
-				$found = 1 ;
-			}elsif( $fuzzy_match ){
-				if( index( $name, $option -> name ) == 0 ){
-					$found = 1;
-				}
-			}
-			last if ($found);
-		}
-		last if ($found);
-	}
+	$found = $problems[$problem_number - 1]->is_option_set(name => $name,
+														   record => $record,
+														   record_number => $record_number,
+														   fuzzy_match => $fuzzy_match);
 
 	return $found;
 }
