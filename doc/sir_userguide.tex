@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{SIR user guide}{2015-03-15}
+\guidetitle{SIR user guide}{2015-03-19}
 
 \begin{document}
 
@@ -14,8 +14,9 @@ The SIR procedure is described in
 PAGE 22 (2013) Abstr 2907, Dosne AG, Bergstrand M, Karlsson MO. 
 
 First, parameter vectors will be simulated from the truncated multivariate normal distribution 
-given by the covariance matrix output from NONMEM's covariance step
-(or, if NONMEM's covariance step was not successful, a faked NONMEM covariance matrix).
+given by the covariance matrix output from NONMEM's covariance step.
+Note that the precond script, see precond\_userguide.pdf, can often recover the covariance step
+even if it failed when running the original model.
 Alternatively, a file with simulated parameter vectors can be given directly as input and this simulation is skipped. The last approach is useful when it is
 difficult to obtain a (faked) covariance matrix.
 
@@ -180,6 +181,11 @@ number 123 of estimated parameters in input model
 then the most likely cause is that there is a mismatch between the input files. Make sure that the number of
 estimated parameters (the number of parameters, the FIXED and SAME settings, the DIAGONAL or BLOCK omega/sigma)
 match between the control stream copy at the beginning of the pre-existing lst-file and the input model file.
+\subsection*{raw\_results file with \$PRIOR}
+If the input model has \$PRIOR NWPRI, and the priors are encoded with \$THETA, \$OMEGA and \$SIGMA instead of the
+prior-specific records \$THETAP, \$THETAPV, \$OMEGAP etc, then PsN will not be able to handle the parameter column
+headers correctly in the raw\_results file. The solution is to always use the prior-specific records for
+encoding the prior information.
 \end{document}
 
 \section{Procedure in case of a failed \$COV step}

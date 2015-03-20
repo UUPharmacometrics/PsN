@@ -69,7 +69,8 @@ Changes and bug fixes from PsN 4.2.0 to 4.4.0
 
 - Automatic generation of R plots, see documentation in common_options.pdf
 
-- Major rewrite of retries handling code, updated rules for selecting best retry,
+- Major rewrite of retries handling code, improved check that tweaked omega and sigma blocks are
+  positive definite, updated rules for selecting best retry,
   and a large number of tests for the new code. See documentation in common_options.pdf
 
 - handle spaces in the path (enclose filepath with quotes in $DATA)
@@ -97,7 +98,7 @@ Changes and bug fixes from PsN 4.2.0 to 4.4.0
 
 - Expanded test suite
 
-- support para mode for NMQual, see NMQual section in psn_configuration.pdf.
+- support for para mode of NMQual, see NMQual section in psn_configuration.pdf.
 
 - bugfix broken option -mirror_plots
 
@@ -117,7 +118,7 @@ Changes and bug fixes from PsN 4.2.0 to 4.4.0
 
 - removed attribute rerun
 
-- removed option -prepend_model_to_lst
+- removed options -prepend_model_to_lst, -nonparametric_etas, -nonparametric_marginals
 
 - New runrecord annotation handling
 
@@ -269,6 +270,7 @@ Changes and bug fixes from PsN 4.2.0 to 4.4.0
 
 -  sse will accept running with -samples=1
 
+-  Bug fix for alternative models with METHOD=BAYES.
 
    ___bootstrap___
 
@@ -377,6 +379,8 @@ Changes and bug fixes from PsN 4.2.0 to 4.4.0
 
 - new command-line option copy_data
 
+- Bug fix handling of failed NONMEM runs for samples. Also print successful samples
+  count to sir_results.csv
 
    ___covmat___
 	 
@@ -385,7 +389,7 @@ Changes and bug fixes from PsN 4.2.0 to 4.4.0
 
    ___precond___
 	 
-- New tool, preconditioning of model
+- New tool, preconditioning of model. See precond_userguide.pdf
 
 
    ___pvar___

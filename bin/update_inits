@@ -216,7 +216,7 @@ $help_text{-ensure_posdef} = <<'EOF';
 EOF
 
 $help_text{-add_prior} = <<'EOF';
--add_prior=df
+-add_prior=df1,df2,...
 
     Default not set
 
@@ -227,6 +227,9 @@ $help_text{-add_prior} = <<'EOF';
 	This feature is highly experimental, and you must check $PRIOR 
 	in the new model file manually before using it.
 	Option -add_prior cannot be used together with option -from_model. 
+	Also note that the informative record names $THETAP, $THETAPV etc are used,
+	so the resulting model can only be run with a NONMEM version that 
+	supports this.
 EOF
 
 $help_text{-seed} = <<'EOF';

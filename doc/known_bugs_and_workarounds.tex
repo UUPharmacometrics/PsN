@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{Known bugs and workarounds}{2015-03-04}
+\guidetitle{Known bugs and workarounds}{2015-03-19}
 
 
 \begin{document}
@@ -14,6 +14,18 @@ Work to fix bugs in PsN is ongoing, but often feature addition is prioritized ov
 
 \subsection{Sensitive format for raw results input file in sse, vpc, npc}
 Any column header that contains a comma, e.g. OMEGA(2,1), must be enclosed in double quotes. This is done automatically when PsN creates a raw results file but may be changed if the file is saved in e.g. Excel.
+
+\subsection{Use prior-specific records for \$PRIOR NWPRI}
+When a control stream has multiple \$PROBLEM \emph{and} the first \$PROBLEM has \$PRIOR NWPRI
+\emph{and} the prior parameters are encoded with \$THETA/\$OMEGA/\$SIGMA instead of the
+prior-specific records \$THETAP, \$THETAPV, \$OMEGAP etc, then PsN will not be able to handle the parameter column
+headers correctly in the raw\_results file. The workaround is to always use the prior-specific records 
+(\$THETAP etc) for encoding the prior information.
+
+It especially important to use the prior-specific records when running sir,  
+or bootstrap with option -dofv,
+with a model that has \$PRIOR NWPRI. In
+those two cases PsN will itself create a control stream with multiple \$PROBLEM.
 
 \subsection{Missing estimates in raw\_results.csv when first \$PROBLEM uses \$MSFI}
 When the first \$PROBLEM in the modelfile uses \$MSFI, and \$THETA, \$OMEGA and \$SIGMA are all missing in that \$PROBLEM, then there will be no theta/omega/sigma headers in raw\_results.csv and the parameter estimates will not be printed to the file.
