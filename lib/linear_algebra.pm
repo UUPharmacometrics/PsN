@@ -520,7 +520,7 @@ sub eigenvalue_decomposition
         $G[$index1][$index1] = 1;
     }
 
-    while (abs($extremeVal) > 0.0000000001 and $counter < 100000000) {
+    while (abs($extremeVal) > 0.0000000001 and $counter < 1000000) {
 
         for (my $index1 = 0; $index1 < scalar(@eigenValMatrix); $index1++) {
             for (my $index2 = $index1 + 1; $index2 < scalar(@eigenValMatrix); $index2++) {
@@ -531,6 +531,8 @@ sub eigenvalue_decomposition
                 }
             }
         }
+
+        $extremeVal = $eigenValMatrix[$maxInd1][$maxInd2];
 
         my $theta;
         my $divisor = $eigenValMatrix[$maxInd2][$maxInd2] - $eigenValMatrix[$maxInd1][$maxInd1];
