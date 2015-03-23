@@ -498,32 +498,40 @@ sub create_reparametrized_model
     
 	$model->initial_values(parameter_type => 'theta', new_values => [[@parameter_initial_copy]]);
 
-    # Increase NMTRAN limits on the number of intermediate variables and total number of constants
-    my $size_value = 100000;
-    my %changed_sizes = (DIMCNS => 0, DIMNEW => 0, DIMTMP => 0);
-    if (defined $model->problems->[0]->sizess) {
-        for my $sizes (@{$model->problems->[0]->sizess}) {
-            for my $option (@{$sizes->options}) {
-                for my $relevant (keys %changed_sizes) {
-                    if ($option->name eq $relevant) {
-                        $option->name($relevant);
-                        $option->value($size_value);
-                        $changed_sizes{$relevant} = 1;
+    if ($PsN::nm_major_version >= 8 or ($PsN::nm_major_version == 7 and $PsN::nm_minor_version >= 2)) {
+        # Increase NMTRAN limits on the number of intermediate variables and total number of constants
+        my $size_value = 100000;
+        my %changed_sizes = (DIMCNS => 0, DIMNEW => 0, DIMTMP => 0);
+        if (defined $model->problems->[0]->sizess) {
+            for my $sizes (@{$model->problems->[0]->sizess}) {
+                for my $option (@{$sizes->options}) {
+                    for my $relevant (keys %changed_sizes) {
+                        if ($option->name eq $relevant) {
+                            $option->name($relevant);
+                            $option->value($size_value);
+                            $changed_sizes{$relevant} = 1;
+                        }
                     }
                 }
             }
         }
-    }
-    my @record_strings = ();
-    for my $name (keys %changed_sizes) {
-        if (not $changed_sizes{$name}) {
-            push @record_strings, "$name=$size_value";
+        my @record_strings = ();
+        for my $name (keys %changed_sizes) {
+            if (not $changed_sizes{$name}) {
+                push @record_strings, "$name=$size_value";
+            }
         }
+
+        if (@record_strings) {
+            $model->problems->[0]->add_records(type => 'sizes', record_strings => \@record_strings );
+        }
+    } else {
+        print "Warning: You have an older version of NONMEM than 7.2 which means that it is not possible to set\n";
+        print "\$SIZES for DIMCNS, DIMNEW and DIMTMP which are recommended to be set to at least 100000.\n";
+        print "You have to make sure that these sizes are appropriately set in your version of NONMEM,\n";
+        print "otherwise this run might crash.\n";
     }
 
-    if (@record_strings) {
-        $model->problems->[0]->add_records(type => 'sizes', record_strings => \@record_strings );
-    }
 
     $model->_write;
 

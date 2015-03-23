@@ -207,10 +207,6 @@ EOF
 
 common_options::online_help('precond', \%options, \%help_text, \%required_options, \%optional_options);
 
-if ($PsN::nm_major_version < 7 or $PsN::nm_major_version == 7 and $PsN::nm_minor_version < 2) {
-    die "ERROR: precond requires NONMEM version 7.2 or higher. (You are using NONMEM version " . $PsN::nm_major_version . "." . $PsN::nm_minor_version . ")\n";
-}
-
 my $model_filename = $ARGV[0];
 
 if (@ARGV < 1) {
