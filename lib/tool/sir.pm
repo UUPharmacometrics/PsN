@@ -35,6 +35,7 @@ has 'offset_rawres' => ( is => 'rw', isa => 'Int', default => 1 );
 has 'in_filter' => ( is => 'rw', isa => 'ArrayRef[Str]' );
 has 'inflation' => ( is => 'rw', isa => 'Num', default => 1 );
 has 'mceta' => ( is => 'rw', isa => 'Int', default => 0 );
+has 'problems_per_file' => ( is => 'rw', isa => 'Maybe[Int]', default => 100 );
 
 has 'original_ofv' => ( is => 'rw', isa => 'Num');
 has 'pdf_vector' => ( is => 'rw', isa => 'ArrayRef' );
@@ -56,6 +57,9 @@ sub BUILD
 		}
 		$self->$accessor(\@new_files);
 	}	
+
+	$self->problems_per_file(100) unless defined ($self->problems_per_file);
+	croak("problems_per_file must be larger than 0") unless ($self->problems_per_file > 0);
 
 	croak("No \$PROBLEM in input model") unless 
 		(defined $self ->models()->[0]->problems and scalar(@{$self ->models()->[0]->problems})>0);
@@ -273,6 +277,7 @@ sub modelfit_setup
 	ui -> print( category => 'sir',
 				 message => "Creating parameter vector evaluation models...");
 	my $modelsarr = model::create_maxeval_zero_models_array(
+		problems_per_file => $self->problems_per_file,
 		sampled_params_arr => $sampled_params_arr,
 		mceta => $self->mceta(),
 		ignore_missing_parameters => 1,
@@ -1080,6 +1085,7 @@ sub _modelfit_raw_results_callback
 	my $samples = $self->samples();
 	my $resamples = $self->resamples();
 	my $with_replacement = $self->with_replacement();
+	my $problems_per_file = $self->problems_per_file();
 
 	my $orig_mod = $self ->models()->[$model_number-1];
 
@@ -1093,18 +1099,38 @@ sub _modelfit_raw_results_callback
 
 		$self->raw_line_structure($modelfit -> raw_line_structure());
 
-		my ($start,$len) = split(',',$self->raw_line_structure() -> {1}->{'problem'});
+		#make sure that we have valid raw_line_structure and not from crashed run here
+		my $structure;
+		for (my $i=1;$i <= scalar(keys %{$self->raw_line_structure()}); $i++){
+			if (defined $self->raw_line_structure()->{$i} and defined $self->raw_line_structure()->{$i}->{'ofv'}){
+				$structure = $i; 
+				last;
+			}else{
+				#print "rawline $i not ok!\n";
+			}
+		}
+		croak("could not find defined ofv in raw_line_structure") unless (defined $structure);
+
+		my ($start,$len) = split(',',$self->raw_line_structure() -> {$structure}->{'model'});
+		my $modelindex = $start;
+		my ($start,$len) = split(',',$self->raw_line_structure() -> {$structure}->{'problem'});
 		my $probindex = $start;
-		my ($start,$len) = split(',',$self->raw_line_structure() -> {1}->{'subproblem'});
+		my ($start,$len) = split(',',$self->raw_line_structure() -> {$structure}->{'subproblem'});
 		my $subindex = $start;
-		my ($start,$len) = split(',',$self->raw_line_structure() -> {1}->{'ofv'});
+		my ($start,$len) = split(',',$self->raw_line_structure() -> {$structure}->{'ofv'});
 		my $ofvindex=$start;
 		croak("could not find ofv in raw results header") unless (defined $ofvindex);
 
 		my @delta_ofv=();
+		my @filtered_pdf=();
 		my $index = 0;
 		my $successful_count=0;
+		#new filtered_pdf for rows actually in raw_results_file
+
 		foreach my $row ( @{$modelfit -> raw_results()} ) {
+			#compute index in original pdf vector based on model and problem column
+			#index is (model-1)*problems_per_file + (problem-1)
+			#push this pdf to filtered_pdf
 			my $delta_ofv;
 			if (defined $row->[$ofvindex]){
 				$delta_ofv = $row->[$ofvindex] - $original_ofv;
@@ -1112,27 +1138,60 @@ sub _modelfit_raw_results_callback
 			}else{
 				$delta_ofv = undef;
 			}
+			my $pdf;
+			if (defined $row->[$modelindex] and defined $row->[$probindex] and
+				($row->[$modelindex]>0) and  ($row->[$probindex]>0)){
+				my $tmp =($row->[$modelindex]-1)*$problems_per_file + ($row->[$probindex]-1);
+				if ($tmp > scalar(@{$pdf_vector})){
+					croak("computed index $tmp based on model ".$row->[$modelindex]." problem ".$row->[$probindex].
+						  " and problems_per_file $problems_per_file, ".
+						  " but pdf_vector has length ".scalar(@{$pdf_vector}));
+				}
+				$pdf = $pdf_vector->[$tmp];
+			}else{
+				$pdf = undef;
+			}
+			push(@filtered_pdf,$pdf);
 			push(@delta_ofv,$delta_ofv);
 			$index++;
 		}
 
 		unless ($with_replacement){
 			if ($successful_count < $resamples){
-				croak("Only $successful_count samples gave an ofv-value, but $resamples resamples were requested without replacement\n".
-					  "Many \$PROBLEMs must have terminated with error, check lst-files in\n".$self->directory."m1\n");
+				ui->silent(0);
+				ui->print(category => 'sir',
+						  message => "\n ERROR\n"."Only $successful_count samples gave an ofv-value,\n".
+						  "but $resamples resamples were requested without replacement\n".
+						  "Many \$PROBLEMs must have terminated with error, check lst-files in\n".$self->directory."m1\n".
+						  "Resetting resamples to $successful_count so that some results will be given anyway");
+				$resamples = $successful_count;
 			}
 		}
-		unless (scalar(@delta_ofv)>=$samples){
-			croak("Expected $samples ofv values after running models, but found only ".scalar(@delta_ofv)."\n".
-				  "NONMEM run(s) must have failed, check lst-file(s) in m1.");
+		
+		if ($successful_count == $samples){
+			#check that original pdf and filtered_pdf are the same
+			my $mismatch=0;
+			for (my $j=0; $j < $samples; $j++){
+				unless ($filtered_pdf[$j] == $pdf_vector->[$j]){
+					$mismatch++;
+					ui->print(category => 'sir',
+							  message => "mismatch in pdf $j, filtered is ".$filtered_pdf[$j]." but original is ".$pdf_vector->[$j]);
+				}
+			}
+#			print "mismatch count $mismatch ok $ok\n";
 		}
 
-		my $wghash = tool::sir::compute_weights(pdf_array => $pdf_vector,
+		unless (scalar(@delta_ofv) == $samples){
+			ui->print(category => 'sir',
+					  message => "It seems some runs crashed, only have ".scalar(@delta_ofv)." sample lines in raw_results.\nContinuing anyway.\n");
+		}
+		
+		my $wghash = tool::sir::compute_weights(pdf_array => \@filtered_pdf,
 												dofv_array => \@delta_ofv);
 
 		my @original_weights = @{$wghash->{'weights'}};
 		my $total_weights = $wghash->{'sum_weights'};
-		my @times_sampled = (0) x $samples;
+		my @times_sampled = (0) x scalar(@delta_ofv); #filtered_samples length filtered instead
 
 		for (my $i=0; $i<$resamples; $i++){
 			my $sample_index = tool::sir::weighted_sample(cdf => $wghash->{'cdf'});
@@ -1168,7 +1227,7 @@ sub _modelfit_raw_results_callback
 																			  model => $orig_mod,
 																			  raw_line_structure => \%dummy );
 		$orig_mod -> outputs -> [0] -> flush;
-		$raw_results_row->[0]->[0] = 'input';
+		$raw_results_row->[0]->[0] = 'input'; #model column
 		my @oldrow =@{$raw_results_row->[0]};
 		my $row = [0,@oldrow[0 .. $ofvindex],0,undef,undef,undef,undef,undef,@oldrow[$ofvindex+1 .. $#oldrow]]; 
 		

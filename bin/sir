@@ -29,6 +29,7 @@ my %optional_options = (
 	"covmat_input:s"=>'',
 	'rawres_input:s' => undef,
 	'offset_rawres:i' => undef,
+	'problems_per_file:i' => undef,
 	'in_filter:s' => undef,
 	"mceta:i"=>'',
 	"inflation:f" => '',
@@ -177,6 +178,14 @@ EOF
 	matrix will be multiplied with this number before the parameter vectors
 	are sampled from the truncated multivariate normal distribution.
 EOF
+    $help_text{-problems_per_file} = <<'EOF';
+      -problems_per_file=N
+    Default is 100. The number of $PROBLEM per model file when running
+	MAXEVAL=0 or similar to get ofv:s for parameter vectors. Setting a higher value
+decreases the overhead involved in running each control stream, but increases the 
+risk of losing many samples in case a model file crashes. Setting -problems_per_file=1
+gives maximum robustness to individual crashes, but also maximum overhead cost.
+EOF
 
 
     $help_text{Post_help_message} = <<'EOF';
@@ -270,6 +279,7 @@ my $sir = tool::sir ->
 	inflation				     => $options{'inflation'},
 	covmat_input				     => $options{'covmat_input'},
 	rawres_input        	=> $options{'rawres_input'},
+	problems_per_file        	=> $options{'problems_per_file'},
 	offset_rawres       	=> $options{'offset_rawres'},
 	in_filter             => \@in_filter,
 	copy_data                            => $options{'copy_data'}

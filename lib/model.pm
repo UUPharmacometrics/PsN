@@ -317,7 +317,7 @@ sub create_maxeval_zero_models_array
         mceta => { isa => 'Int', optional => 1 },
         purpose => { isa => 'Str', optional => 0 },
         match_labels => { isa => 'Bool', default => 1, optional => 1 },
-        problems_per_file => { isa => 'Int', optional => 1, default => 100 },
+        problems_per_file => { isa => 'Maybe[Int]', optional => 1, default => 100 },
 	);
 	my $model = $parm{'model'};
 	my $subdirectory = $parm{'subdirectory'};
@@ -328,6 +328,8 @@ sub create_maxeval_zero_models_array
 	my $ignore_missing_parameters = $parm{'ignore_missing_parameters'};
 	my $match_labels = $parm{'match_labels'};
 	my $problems_per_file = $parm{'problems_per_file'};
+
+	$problems_per_file = 100 unless (defined $problems_per_file); #if given and undef
 
 	croak("problems_per_file must be larger than 0") unless ($problems_per_file > 0);
 
