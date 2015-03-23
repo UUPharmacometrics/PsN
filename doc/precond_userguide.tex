@@ -2,13 +2,16 @@
 \guidetitle{PRECOND\footnote{Idea developed by Yasunori Aoki under the supervision of Andrew C. Hooker.}  user guide}{2015-02-27}
 \usepackage{color}
 \usepackage{amsmath}
+\usepackage{tikz}
+\usetikzlibrary{shapes,arrows}
+
 
 \begin{document}
 
 \maketitle
 
 \section{Introduction}
-In order to increase the chance of obtaining successful covariance matrix computation and parameter estimation, the precond script creates and runs a model that is mathematically equivalent to the original model but less sensitive to the computational (rounding) error.  We refer this process as preconditioning and the created model as preconditioned model.
+In order to increase the chance of obtaining successful covariance matrix computation and parameter estimation, the precond script creates and runs a model that is mathematically equivalent to the original model but less sensitive to the computational (rounding) error.  We refer to this process as preconditioning and the created model as preconditioned model.
 
 Preconditioning is designed to save the covariance step that has failed with an error message such as "R MATRIX ALGORITHMICALLY SINGULAR" or "R MATRIX ALGORITHMICALLY NON-POSITIVESEMIDEFINITE"). It is also observed that preconditioning can help avoid failure of the minimization due to rounding error.
 
@@ -18,7 +21,6 @@ Preconditioning can also be used for the modelfits with successful covariance st
 
 Preconditioning of the model will only help to stabilise the computation so that if the model is fundamentally unidentifiable (or have other issues) then the covariance step of the preconditioned model should not be successful.
 
-Note that precond only works with NONMEM 7.2 or later
 \\
 \\
 Example 
@@ -87,7 +89,7 @@ Only relevant in combination with -rawres\_input. Default not used. The paramete
 \end{optionlist}
 
 \section{Output}
-In the terminal window, the precond script printout the condition number of the R matrix that will be used to precondition.  The larger condition number more computationally unstable the original model was.  If the covariance step of the preconditioned model fails then the precond script will display the eigenvalues of the R matrix of the preconditioned model with the condition number and number of negative eigenvalues.  
+In the terminal window, the precond script printout the condition number of the R matrix that will be used to precondition.  A larger condition number means a more computationally unstable original model. If the covariance step of the preconditioned model fails then the precond script will display the eigenvalues of the R matrix of the preconditioned model with the condition number and number of negative eigenvalues.  
 
 Using the normal execution flow (if none of -output\_model or -cov are specified) the model will be preconditioned, run and if the covariance step of the preconditioned model is successful then the resulting covariance matrix will appear in <inputmodel>.cov. This file will also be copied to the calling
 directory if cov is specified in -nm\_ouput.
@@ -129,8 +131,34 @@ The following workflow is suggested
 Every time the covariance matrix cannot be obtained through preconditioning, a message on the command line would suggest the next option to try.  In addition, after every preconditioning, compare the raw\_results files in the original model fit directory and the precond directory to make sure that OFV and esimated parameters are approximately the same.  If OFVs are similar and a parameter is significantly different, then the model is most likely to be an unidentifiable model and no further attempt to obtain the covariance matrix should be made.
 
 
-%\section{Description}
-%
+\section{Workflow}
+
+\tikzstyle{decision} = [diamond, draw, fill=blue!20, 
+    text width=8em, text badly centered, node distance=4cm, inner sep=0pt]
+\tikzstyle{block} = [rectangle, draw, fill=blue!20, 
+    text width=8em, text centered, rounded corners, minimum height=4em]
+\tikzstyle{line} = [draw, -latex']
+\tikzstyle{cloud} = [draw, ellipse,fill=red!20, node distance=4cm,
+    minimum height=2em]
+    
+\begin{tikzpicture}[node distance = 2.5cm, auto]
+    \node [block] (add) {add COV, PRINT=R, FORMAT and UNCONDITIONAL to model};
+    \node [block, below of=add, node distance=4cm] (run) {run model};
+    \node [decision, below of=run] (covsuccess) {covariance step successful?};
+    \node [block, below of=covsuccess, node distance=4cm] (getR) {get R-matrix from run};
+    \node [block, below of=getR] (precond) {precondition model};
+    \node [block, below of=precond] (done) {done};
+
+    \path [line] (add) -- (run);
+    \path [line] (run) -- (covsuccess);
+    \path [line] (covsuccess) -- node {no} (getR);
+    \path [line] (getR) -- (precond);
+    \path [line] (precond) -- (done);
+    \path [line] (covsuccess.east) |- node {yes} (done.east);
+
+\end{tikzpicture}
+
+
 %This section describes in more detail how the preconditioning is done. For the purpose of this section we assume that the \verb;-nodec; option was not chosen.
 %
 %\begin{itemize}
