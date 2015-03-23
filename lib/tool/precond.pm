@@ -155,10 +155,6 @@ sub modelfit_analyze
 		directory => $self->directory
     );
 
-    if ($self->nm_output =~ /(^|,)cov(,|$)/) {
-        copy($result_cov, "..");
-    }
-
     if ($self->_repara_model->is_run) {
         my $output = $self->_repara_model->outputs->[0];
 
