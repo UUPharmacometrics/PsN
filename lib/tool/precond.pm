@@ -306,6 +306,10 @@ sub _set_model_options
 
     $model->problems->[0]->covariance(enabled => 1);
 
+    if ($model->is_option_set(record => 'covariance', name => 'MATRIX', fuzzy_match => 1)) {
+        croak("Error: Option MATRIX set in \$COVARIANCE will not work with precond. Please remove and run again\n");
+    }
+
     if (not $model->is_option_set(record => 'covariance', name => 'UNCONDITIONAL', fuzzy_match => 1)) {
         $model->add_option(record_name => 'covariance', option_name => 'UNCONDITIONAL');
     }
