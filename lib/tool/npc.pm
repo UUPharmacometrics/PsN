@@ -1564,13 +1564,16 @@ sub modelfit_setup
 											 problem_numbers => [$self->simprobnum()],
 											 fuzzy_match => 1) unless ($user_sim_model);
 			
-			if ($self->have_nwpri() or $self->have_tnpri()){
+			if (($self->have_nwpri() or $self->have_tnpri()) and 
+				(defined $model_sims[$i] ->problems -> [0]->priors and
+				 scalar(@{$model_sims[$i] ->problems -> [0]->priors})>0)){
 				my $val= $model_sims[$i] -> get_option_value(record_name => 'simulation',
 															 option_name => 'TRUE',
 															 problem_index => ($self->simprobnum()-1));
 				unless ((defined $val)&& ($val eq 'PRIOR')){
-					croak("Error in \$SIMULATION record in modelfile: when using \$PRIOR\n".
-						  "the option TRUE=PRIOR must be set.");
+					ui->print(category => 'all',
+							  message => "\nWARNING:\nWhen using \$PRIOR\n".
+							  "the option TRUE=PRIOR must usually be set in \$SIMULATION.");
 					
 				}
 			}elsif (defined $self->msfo_file){ #always if $nonp, but even if not $nonp
@@ -1578,9 +1581,9 @@ sub modelfit_setup
 															 option_name => 'TRUE',
 															 problem_index => ($self->simprobnum()-1));
 				unless ((defined $val)&& ($val eq 'FINAL')){
-					croak("Error in \$SIMULATION record in modelfile: when using an msfo-file\n".
-						  "the option TRUE=FINAL must be set.");
-					
+					ui->print(category => 'all',
+							  message => "\nWARNING:\nWhen using an msfo-file\n".
+							  "the option TRUE=PRIOR must usually be set in \$SIMULATION.");
 				}
 			}
 
