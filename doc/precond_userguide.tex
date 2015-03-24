@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{PRECOND\footnote{Idea developed by Yasunori Aoki under the supervision of Andrew C. Hooker.}  user guide}{2015-02-27}
+\guidetitle{PRECOND\footnote{Idea developed by Yasunori Aoki under the supervision of Andrew C. Hooker.}  user guide}{2015-03-24}
 \usepackage{color}
 \usepackage{amsmath}
 \usepackage{tikz}
@@ -15,14 +15,13 @@ In order to increase the chance of obtaining successful covariance matrix comput
 
 Preconditioning is designed to save the covariance step that has failed with an error message such as "R MATRIX ALGORITHMICALLY SINGULAR" or "R MATRIX ALGORITHMICALLY NON-POSITIVESEMIDEFINITE"). It is also observed that preconditioning can help avoid failure of the minimization due to rounding error.
 
-Preconditioning will automatically first run the model normally and get the R-matrix from that run using that to precondition the model. Obtained R-matrix is decomposed using eigendecomposition and used to linearly re-parameterise the model in a way that the R-matrix of the preconditioned model is close to an identity matrix.  This will avoid the R-matrix appearing to be non-positive semi-definite due to the computational instability.  The precond script will initiate the modelfit of the preconditioned model and then convert back the obtained estimated parameter and covariance matrix to the parameter scale of the original model.
+Preconditioning will automatically first run the model normally and if the covariance step failed get the R-matrix from that run using that to precondition the model. Obtained R-matrix is decomposed using eigendecomposition and used to linearly re-parameterise the model in a way that the R-matrix of the preconditioned model is close to an identity matrix.  This will avoid the R-matrix appearing to be non-positive semi-definite due to the computational instability.  The precond script will initiate the modelfit of the preconditioned model and then convert back the obtained estimated parameter and covariance matrix to the parameter scale of the original model.
 
 Preconditioning can also be used for the modelfits with successful covariance step to verify that the resulting computation is not influenced by the computational error.
 
-Preconditioning of the model will only help to stabilise the computation so that if the model is fundamentally unidentifiable (or have other issues) then the covariance step of the preconditioned model should not be successful.
+Preconditioning of the model will only help to stabilise the computation so that if the model is fundamentally unidentifiable (or have other issues) then the covariance step of the preconditioned model should not be successful.\\
 
-\\
-\\
+
 Example 
 
 \begin{verbatim}
@@ -89,15 +88,20 @@ Only relevant in combination with -rawres\_input. Default not used. The paramete
 \end{optionlist}
 
 \section{Output}
+Output of the first normal run will copied as if running a regular execute to the model directory. The raw\_results can be found
+in the precond directory under the name base\_raw\_results.csv
+If the preconditioning step was run the results from that run will not be copied to your model directory but can be found
+in the precond directory:
+
+\begin{itemize}
+    \item The covariance matrix of the preconditioned run can be found in the <modelname>.cov file
+    \item Rawresults are in the raw\_results\_<modelname>.csv
+    \item A copy of the model with updated initial estimates can be found in updated\_model.mod
+\end{itemize}
+ 
+
 In the terminal window, the precond script printout the condition number of the R matrix that will be used to precondition.  A larger condition number means a more computationally unstable original model. If the covariance step of the preconditioned model fails then the precond script will display the eigenvalues of the R matrix of the preconditioned model with the condition number and number of negative eigenvalues.  
 
-Using the normal execution flow (if none of -output\_model or -cov are specified) the model will be preconditioned, run and if the covariance step of the preconditioned model is successful then the resulting covariance matrix will appear in <inputmodel>.cov. This file will also be copied to the calling
-directory if cov is specified in -nm\_ouput.
-
-The file update\_model.mod will always be created in the run directory. It is the original model with updated initial thetas after
-running the preconditioned model and calculating the theta estimates of the original model based on the theta estimates of the preconditioned model.
-
-A raw\_results file will be created with thetas of the original model and their standard errors.
 %
 %\section{Preconditioning matrix}
 %
@@ -111,27 +115,30 @@ A raw\_results file will be created with thetas of the original model and their 
 %
 
 \section{Known issues}
-Preconditioning fails when a \$MIX is present in the model.
-
-Preconditioning does not honour the original parameter bounds hence the NONMEM run can fail if there are some implicite assumption on the range of the parameters.  For the parameters that need to be positive (or negative) we suggest the users to absolute value of the parameter, e.g., abs(THETA(1)).
-
-The current implementation of precond script only precondition THETA variables, if the user wishes to precondition also the ETA and EPS variables, we suggest the users to code ETA and EPS variables using THETA, e.g., THETA(11)*EPS(1), \$SIGMA 1 FIX.
-
-\section{Suggested Workflow}
-The following workflow is suggested
 
 \begin{itemize}
-\item Add FORMAT=s1PE23.16 to the \$EST line and UNCONDITIONAL PRINT=R to the \$COV line of the model file (not necessary but recommended).
-\item Run execute script to conduct the model fit of the original model.
-\item Run precond script.
-\item If covariance matrix cannot be obtained, run precond script with {\bf -perturb} option.
-\item If covariance matrix cannot be obtained, run precond script with {\bf -pre}=precond\_dir1 option.
+    \item Preconditioning fails when a \$MIX is present in the model.
+
+    \item Preconditioning does not honour the original parameter bounds hence the NONMEM run can fail if there are some implicite assumption on the range of the parameters.  For the parameters that need to be positive (or negative) we suggest the users to absolute value of the parameter, e.g., abs(THETA(1)).
+
+    \item The current implementation of precond script only precondition THETA variables, if the user wishes to precondition also the ETA and EPS variables, we suggest the users to code ETA and EPS variables using THETA, e.g., THETA(11)*EPS(1), \$SIGMA 1 FIX.
+
+    \item Using the option \$COV MATRIX=R in the model will currently not work.
+\end{itemize}
+
+\section{Actions if covariance step fails when preconditioning}
+
+\begin{itemize}
+    \item If covariance matrix cannot be obtained, run precond script with \mbox{{\bf -perturb}} option.
+\item If covariance matrix cannot be obtained, run precond script with \\ \mbox{{\bf -pre}}=precond\_dir1 option.
 \end{itemize}
 
 Every time the covariance matrix cannot be obtained through preconditioning, a message on the command line would suggest the next option to try.  In addition, after every preconditioning, compare the raw\_results files in the original model fit directory and the precond directory to make sure that OFV and esimated parameters are approximately the same.  If OFVs are similar and a parameter is significantly different, then the model is most likely to be an unidentifiable model and no further attempt to obtain the covariance matrix should be made.
 
 
 \section{Workflow}
+
+Below is a simple diagram of the precond workflow.
 
 \tikzstyle{decision} = [diamond, draw, fill=blue!20, 
     text width=8em, text badly centered, node distance=4cm, inner sep=0pt]
