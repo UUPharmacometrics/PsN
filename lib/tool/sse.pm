@@ -2460,33 +2460,103 @@ sub cleanup
 	}
 }
 
-sub temp_create_R_plots_code{
+
+sub create_R_plots_code{
 	my $self = shift;
 	my %parm = validated_hash(\@_,
 							  rplot => { isa => 'rplots', optional => 0 }
 		);
 	my $rplot = $parm{'rplot'};
 
-	my ( $ldir, $rawname ) = OSspecific::absolute_path('', $self->raw_results_file->[0]);
-	my $samples = $self->samples;
+	my @names=();
+	my @subjects=();
+	my @rawnames=();
+	my @paramcounts =();
+	my $count = $self->first_alternative();
+	my $namestring = 'model.file.names <- c()';
+	my $rawstring = 'model.rawres.names <- c()';
+	my $subjectstring = 'model.subjects <- c()';
+	my $paramstring = 'model.estimated.params <- c()';
 
+	if ($self->estimate_simulation and defined $self->models and scalar(@{$self->models})){
+		push(@names,$self->models->[0]->filename);
+		push(@rawnames,'simulation');
+		
+		my $ref = $self->models->[0]->problems->[0]->get_estimated_attributes(parameter => 'all',
+																			  attribute => 'coords');
+		my $parcount=0;
+		if (defined $ref){
+			foreach my $coord (@{$ref}){
+				#    thetas                      #diagonal elements
+				if (($coord =~ /^\d+$/) or ($coord =~ /^(\d+),\1$/)){
+					$parcount++;
+				}
+			}
+		}
+		push(@paramcounts,$parcount);
+		my $stem = $self->directory.'/m1/mc-orig-';
+		my $subj = 'NULL';
+		for (my $j=1;$j<=$self->samples;$j++){
+			my $file = $stem.$j.'.lst';
+			if (-e $file){
+				my $outobj = output -> new ('filename'=> $file);
+				if (defined $outobj->nind() and scalar(@{$outobj->nind()})>0){
+					$subj = $outobj->nind()->[0];
+					last;
+				}
+			}
+		}
+		push(@subjects,$subj);
+	}
+
+	if (defined $self -> alternative_models and scalar(@{$self -> alternative_models})>0){
+		foreach my $alt (@{$self -> alternative_models}){
+			push(@names,$alt->filename);
+			push(@rawnames,'mc-alternative_'.$count);
+			my $ref = $alt->problems->[0]->get_estimated_attributes(parameter => 'all',
+																	attribute => 'coords');
+			my $parcount=0;
+			if (defined $ref){
+				foreach my $coord (@{$ref}){
+					#    thetas                      #diagonal elements
+					if (($coord =~ /^\d+$/) or ($coord =~ /^(\d+),\1$/)){
+						$parcount++;
+					}
+				}
+			}
+			push(@paramcounts,$parcount);
+
+			my $stem = $self->directory.'/m1/mc-alt_'.$count.'-';
+			my $subj = 'NULL';
+			for (my $j=1;$j<=$self->samples;$j++){
+				my $file = $stem.$j.'.lst';
+				if (-e $file){
+					my $outobj = output -> new ('filename'=> $file);
+					if (defined $outobj->nind() and scalar(@{$outobj->nind()})>0){
+						$subj = $outobj->nind()->[0];
+						last;
+					}
+				}
+			}
+			push(@subjects,$subj);
+			$count++;
+		}
+
+	}
+	if (scalar(@names)>0){
+		$namestring = "model.file.names <-  c('".join("','",@names)."')";
+		$rawstring = "model.rawres.names <- c('".join("','",@rawnames)."')";
+		$subjectstring = 'model.subjects <- c('.join(',',@subjects).')';
+		$paramstring = 'model.estimated.params <- c('.join(',',@paramcounts).')';
+	}
 	$rplot->add_preamble(code => [
-							 "rawresfile <- '".$rawname."'",
-							 'rawres <- data.frame()',
-							 'oind <- 0',
-							 'sind <- 0'
+							 '#sse-specific preamble',
+							 'samples   <-'.$self->samples,
+							 $namestring,
+							 $rawstring,
+							 $subjectstring,
+							 $paramstring,
 						 ]);
-	$rplot->add_plot(level=>1, code =>[		
-						 'rawres <- read.csv(file=rawresfile,as.is=T)',
-						 "oind <- which(names(rawres)== 'ofv')",
-						 "sind <- which(names(rawres)== 'SIGMA.1.1.')",
-						 "mean1 <- apply(X=rawres[1:".$samples.",oind:sind], MARGIN=2, FUN=mean)",
-						 "cat(mean1,sep=' ')"
-					 ]);
-	$rplot->add_plot(level=>2, code =>[		
-						 "sd1 <- apply(X=rawres[1:".$samples.",oind:sind], MARGIN=2, FUN=sd)",
-						 "cat(sd1,sep=' ')"
-					 ]);
 
 }
 

@@ -43,7 +43,8 @@ chdir('..');
 
 rmtree([$tndir]);
 
-$command = get_command('sse') . " -samples=3 $model_dir/nwpri.mod -seed=630992 -directory=$dir";
+#the template file is rubbish, but we just want to see that rscript generation does not crash, even if R does
+$command = get_command('sse') . " -samples=3 $model_dir/nwpri.mod -seed=630992 -directory=$dir -rplots=1 -template_file=$model_dir/nwpri.mod";
 print "Running $command\n";
 $rc = system($command);
 $rc = $rc >> 8;
