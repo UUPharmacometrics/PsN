@@ -1,4 +1,4 @@
-package so::SOBlock::Simulation::SimulationBlock;
+package so::soblock::simulation::simulationblock;
 
 use strict;
 use warnings;
@@ -6,6 +6,7 @@ use Moose;
 use MooseX::Params::Validate;
 use include_modules;
 use XML::LibXML;
+use so::table;
 
 has 'replicate' => ( is => 'rw', isa => 'Str' );
 has 'SimulatedProfiles' => ( is => 'rw', isa => 'so::table' );
@@ -30,7 +31,7 @@ sub xml
         }
     }
 
-    return $sim;
+    return $block;
 }
 
 no Moose;

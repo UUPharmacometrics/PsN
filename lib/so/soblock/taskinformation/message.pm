@@ -1,4 +1,4 @@
-package so::SOBlock::TaskInformation::Message;
+package so::soblock::taskinformation::message;
 
 use strict;
 use warnings;

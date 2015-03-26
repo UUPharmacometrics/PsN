@@ -1,4 +1,4 @@
-package so::SOBlock::TaskInformation::RunTime;
+package so::soblock::taskinformation::runtime;
 
 use strict;
 use warnings;

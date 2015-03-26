@@ -1,4 +1,4 @@
-package so::SOBlock::Simulation;
+package so::soblock::simulation;
 
 use strict;
 use warnings;
@@ -6,8 +6,9 @@ use Moose;
 use MooseX::Params::Validate;
 use include_modules;
 use XML::LibXML;
+use so::soblock::simulation::simulationblock;
 
-has 'SimulationBlock' => ( is => 'rw', isa => 'ArrayRef[so::SOBlock::Simulation::SimulationBlock]' );
+has 'SimulationBlock' => ( is => 'rw', isa => 'ArrayRef[so::soblock::simulation::simulationblock]' );
 
 sub xml
 {

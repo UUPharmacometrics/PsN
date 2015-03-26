@@ -1,4 +1,4 @@
-package so::SOBlock::Estimation::IndividualEstimates::RandomEffects;
+package so::soblock::estimation::individualestimates::randomeffects;
 
 use strict;
 use warnings;
@@ -6,6 +6,7 @@ use Moose;
 use MooseX::Params::Validate;
 use include_modules;
 use XML::LibXML;
+use so::table;
 
 has 'EffectMean' => ( is => 'rw', isa => 'so::table' );
 has 'EffectMedian' => ( is => 'rw', isa => 'so::table' );

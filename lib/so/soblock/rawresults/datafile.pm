@@ -1,4 +1,4 @@
-package so::SOBlock::RawResults::DataFile;
+package so::soblock::rawresults::datafile;
 
 use strict;
 use warnings;

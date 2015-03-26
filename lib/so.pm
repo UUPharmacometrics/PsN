@@ -1,4 +1,4 @@
-package standardised_output::so;
+package so;
 
 # Class representing an so file
 
@@ -8,35 +8,28 @@ use Moose;
 use MooseX::Params::Validate;
 use include_modules;
 use XML::LibXML;
-use so::SOBlock;
+use so::soblock;
 
-has 'filename' => ( is => 'rw', isa => 'Str' );
+has 'filename' => ( is => 'rw', isa => 'Maybe[Str]' );
 has 'pretty' => ( is => 'rw', isa => 'Bool', default => 0 );
 
-has 'PharmMLRef' => ( is => 'rw', isa => 'Str' );
-has 'SOBlock' => ( is => 'rw', isa => 'ArrayRef[so::SOBlock]', default => sub { [] } );
+has 'PharmMLRef' => ( is => 'rw', isa => 'Maybe[Str]' );
+has 'SOBlock' => ( is => 'rw', isa => 'ArrayRef[so::soblock]', default => sub { [] } );
 
 has '_document' => ( is => 'rw', isa => 'Ref' );
 has '_xpc' => ( is => 'rw', isa => 'Ref' );
 
-sub BUILD
+sub parse
 {
     my $self = shift;
 
-    my $so_xml = standardised_output::xml->new(precision => $self->precision, verbose => $self->verbose);
-    $self->_xml($so_xml);
-    $self->_document($self->_xml->_document);
-}
-
-sub parse
-{
     my $doc = XML::LibXML->load_xml(location => $self->filename);
-    my $xpc = standardised_output::xml::get_xpc();
+    my $xpc = get_xpc();
 
     my @SOBlocks = $xpc->findnodes('/x:SO/x:SOBlock', $doc);
 
     foreach my $node (@SOBlocks) {
-        my $so_block = standardised_output::so::SOBlock->new();
+        my $so_block = so::soblock->new();
         $so_block->parse($node);
         push @{$self->SOBlock}, $so_block;
     }
@@ -80,7 +73,7 @@ sub _create_filename
 
     my $so_filename;
     if (defined $self->SOBlock->[0]->blkId) {
-        $self->filename($self->SOBlock->[0]->blkId . 'SO.xml';
+        $self->filename($self->SOBlock->[0]->blkId . '.SO.xml');
     } else {
         foreach my $block (@{$self->SOBlock}) {
             if (defined $block->Estimation and defined $block->Estimation->PrecisionPopulationEstimates
@@ -98,7 +91,7 @@ sub write
 {
     my $self = shift;
 
-    my $doc = $self->_document;
+    my $doc = XML::LibXML::Document->new('1.0', 'utf-8');
 
     my $SO = $doc->createElement("SO");
     $SO->setAttribute('xmlns' => "http://www.pharmml.org/so/0.1/StandardisedOutput");
@@ -127,9 +120,9 @@ sub write
     if (not defined $self->filename) {
         $self->_create_filename();
     }
+
     $doc->toFile($self->filename, $self->pretty);
 }
-
 
 no Moose;
 __PACKAGE__->meta->make_immutable;

@@ -1,4 +1,4 @@
-package so::SOBlock;
+package so::soblock;
 
 # Class containing an SOBlock
 
@@ -8,15 +8,36 @@ use Moose;
 use MooseX::Params::Validate;
 use include_modules;
 use XML::LibXML;
-use standardised_output::xml;
-use standardised_output::table;
-use standardised_output::matrix;
+use so::xml;
+use so::table;
+use so::matrix;
+use so::soblock::rawresults;
+use so::soblock::taskinformation;
+use so::soblock::estimation;
+use so::soblock::simulation;
 
 has 'blkId' => ( is => 'rw', isa => 'Str' );
-has 'RawResults' => ( is => 'rw', isa => 'so::SOBlock::RawResults' );
-has 'TaskInformation' => ( is => 'rw', isa => 'so::SOBlock::TaskInformation' );
-has 'Estimation' => ( is => 'rw', isa => 'so::SOBlock::Estimation' );
-has 'Simulation' => ( is => 'rw', isa => 'so::SOBlock::Simulation' );
+has 'RawResults' => ( is => 'rw', isa => 'so::soblock::rawresults' );
+has 'TaskInformation' => ( is => 'rw', isa => 'so::soblock::taskinformation' );
+has 'Estimation' => ( is => 'rw', isa => 'so::soblock::estimation' );
+has 'Simulation' => ( is => 'rw', isa => 'so::soblock::simulation' );
+
+sub BUILD
+{
+    my $self = shift;
+
+    my $rr = so::soblock::rawresults->new();
+    $self->RawResults($rr);
+
+    my $ti = so::soblock::taskinformation->new();
+    $self->TaskInformation($ti);
+
+    my $est = so::soblock::estimation->new();
+    $self->Estimation($est);
+
+    my $sim = so::soblock::simulation->new();
+    $self->Simulation($sim);
+}
 
 sub parse
 {
@@ -143,14 +164,23 @@ sub xml
 {
     my $self = shift;
 
-    my $block = XML::LibXML::Element->new("SOBlock");
-    $block->setAttribute("blkId", $self->blkId);
-
     my @attributes = ( "RawResults", "TaskInformation", "Estimation", "Simulation" );
+    my @elements;
     foreach my $attr (@attributes) {
         if (defined $self->$attr) {
             my $xml = $self->$attr->xml();
-            $block->appendChild($xml);
+            if (defined $xml) {
+                push @elements, $xml;
+            }
+        }
+    }
+
+    my $block;
+    if (scalar(@elements) > 0) {
+        $block = XML::LibXML::Element->new("SOBlock");
+        $block->setAttribute("blkId", $self->blkId);
+        foreach my $e (@elements) {
+            $block->appendChild($e);
         }
     }
 

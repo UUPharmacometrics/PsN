@@ -1,4 +1,4 @@
-package standardised_output::matrix;
+package so::matrix;
 
 # Class representing a generic SO matrix
 
@@ -8,8 +8,9 @@ use Moose;
 use MooseX::Params::Validate;
 use include_modules;
 use XML::LibXML;
-use standardised_output::xml;
+use so::xml;
 
+has 'name' => ( is => 'rw', isa => 'Str' );
 has 'RowNames' => ( is => 'rw', isa => 'ArrayRef' );
 has 'ColumnNames' => ( is => 'rw', isa => 'ArrayRef' );
 has 'MatrixRow' => ( is => 'rw', isa => 'ArrayRef' );
@@ -19,7 +20,7 @@ sub parse
     my $self = shift;
     my $node = shift;
 
-    my $xpc = standardised_output::xml::get_xpc();
+    my $xpc = so::xml::get_xpc();
 
     my @row_names = $xpc->findnodes('ct:Matrix/ct:RowNames/*', $node);
     $self->RowNames([]);
@@ -43,6 +44,46 @@ sub parse
             push @{$current_row}, $col->textContent;
         }
     }
+}
+
+sub xml
+{
+    my $self = shift;
+
+    my $matrix_xml = XML::LibXML::Element->new($self->name);
+
+    if (defined $self->RowNames and defined $self->ColumnNames and defined $self->MatrixRow) {
+        $matrix_xml = XML::LibXML::Element->new("ct:Matrix");
+        $matrix_xml->setAttribute(matrixType => "Any");
+
+        my $rownames_xml = XML::LibXML::Element->new("ct:RowNames");
+        $matrix_xml->appendChild($rownames_xml);
+        foreach my $name (@{$self->RowNames}) {
+            my $string = XML::LibXML::Element->new("ct:String");
+            $string->appendTextNode($name);
+            $rownames_xml->appendChild($string);
+        }
+
+        my $colnames_xml = XML::LibXML::Element->new("ct:ColumnNames");
+        $matrix_xml->appendChild($colnames_xml);
+        foreach my $name (@{$self->ColumnNames}) {
+            my $string = XML::LibXML::Element->new("ct:String");
+            $string->appendTextNode($name);
+            $colnames_xml->appendChild($string);
+        }
+
+        for my $row (@{$self->MatrixRow}) {
+            my $matrix_row = XML::LibXML::Element->new("ct:MatrixRow");
+            $matrix_xml->appendChild($matrix_row);
+            for my $element (@$row) {
+                my $real = XML::LibXML::Element->new("ct:Real");
+                $real->appendTextNode($element);
+                $matrix_row->appendChild($real);
+            }
+        }
+    }
+
+    return $matrix_xml;
 }
 
 no Moose;

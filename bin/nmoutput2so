@@ -11,9 +11,10 @@ use output;
 use strict;
 use Getopt::Long;
 use common_options;
-use standardised_output;
 use model;
 use Config;
+use so;
+use so::parsers::nmoutput;
 
 $| = 1; # Make sure autoflush is on
 
@@ -210,18 +211,19 @@ if ($Config{osname} eq 'MSWin32') {
     @files = @ARGV;
 }
 
+
 my $so = so->new(
     filename => $options{'so_filename'},
     pretty => $options{'pretty'},
     PharmMLRef => $options{'pharmml'},
 );
 
-my $nm_parser = so::parser::nmoutput->new(
-    so => $so,
-    lst_files => \@files,
-);
-
-$nm_parser->parse();
+foreach my $lst_file (@files) {
+    my $nm_parser = so::parsers::nmoutput->new(
+        so => $so,
+        lst_file => $lst_file,
+    );
+}
 
 $so->write();
 
@@ -233,7 +235,6 @@ $so->write();
 #    message => $options{'message'},
 #    toolname => $options{'toolname'},
 #    max_replicates => $options{'max_replicates'},
-#    pharmml => $options{'pharmml'},
 #    verbose => $options{'verbose'},
 #    external_tables => $options{'external_tables'},
 #    so_version => $options{'so_version'},

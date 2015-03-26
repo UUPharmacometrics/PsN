@@ -1,4 +1,4 @@
-package so::SOBlock::Estimation::Residual;
+package so::soblock::estimation::residual;
 
 use strict;
 use warnings;
@@ -6,6 +6,7 @@ use Moose;
 use MooseX::Params::Validate;
 use include_modules;
 use XML::LibXML;
+use so::table;
 
 has 'ResidualTable' => ( is => 'rw', isa => 'so::table' );
 

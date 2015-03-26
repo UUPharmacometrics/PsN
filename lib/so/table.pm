@@ -1,4 +1,4 @@
-package standardised_output::table;
+package so::table;
 
 # Class representing a generic SO table
 
@@ -8,8 +8,8 @@ use Moose;
 use MooseX::Params::Validate;
 use include_modules;
 use XML::LibXML;
-use standardised_output::xml;
 use math;
+use so::xml;
 
 has 'columnId' => ( is => 'rw', isa => 'ArrayRef' );
 has 'columnType' => ( is => 'rw', isa => 'ArrayRef' );
@@ -17,8 +17,6 @@ has 'valueType' => ( is => 'rw', isa => 'ArrayRef' );
 has 'columns' => ( is => 'rw', isa => 'ArrayRef' );
 has 'name' => ( is => 'rw', isa => 'Str' );
 has 'table_file' => ( is => 'rw', isa => 'Str' );
-has 'document' => ( is => 'rw', isa => 'Ref' );
-has 'precision' => ( is => 'rw', isa => 'Int' );
 
 
 sub parse
@@ -27,9 +25,8 @@ sub parse
     my $node = shift;
 
     $self->name = $node->nodeName;
-    $self->document = $node->ownerDocument;
 
-    my $xpc = standardised_output::xml::get_xpc();
+    my $xpc = so::xml::get_xpc();
 
     my @columns = $xpc->findnodes('ds:Definition/ds:Column', $node);
 
@@ -59,14 +56,12 @@ sub xml
 {
     my $self = shift;
     
-    my $doc = $self->document;
+    my $table = XML::LibXML::Element->new($self->name);
 
-    my $table = $doc->createElement($self->name);
-
-    my $def = $doc->createElement("ds:Definition");
+    my $def = XML::LibXML::Element->new("ds:Definition");
     $table->appendChild($def);
     for (my $col = 0; $col < scalar(@{$self->columnId}); $col++) {
-        my $column = $doc->createElement("ds:Column");
+        my $column = XML::LibXML::Element->new("ds:Column");
         $column->setAttribute(columnId => $self->columnId->[$col]);
         $column->setAttribute(columnType => $self->columnType->[$col]);
         $column->setAttribute(valueType => $self->valueType->[$col]);
@@ -79,37 +74,37 @@ sub xml
     $numrows = scalar(@{$self->columns->[0]});
 
     if (not defined $self->table_file) {
-        my $tab = $doc->createElement("ds:Table");
+        my $tab = XML::LibXML::Element->new("ds:Table");
         $table->appendChild($tab);
         for (my $row = 0; $row < $numrows; $row++) {
-            my $row_xml = $doc->createElement("ds:Row");
+            my $row_xml = XML::LibXML::Element->new("ds:Row");
             $tab->appendChild($row_xml);
             for (my $col = 0; $col < $numcols; $col++) {
                 my $value_type = uc(substr($self->valueType->[$col], 0, 1)) . substr($self->valueType->[$col], 1);
                 my $column_type = $self->columnType->[$col];
                 my $element;
                 $element = $self->columns->[$col]->[$row];
-                my $value = $doc->createElement("ct:" . $value_type);
+                my $value = XML::LibXML::Element->new("ct:" . $value_type);
                 if ($value_type eq 'String' and $column_type ne 'id') {
                     $value->appendTextNode($element);
                 } else {
-                    $value->appendTextNode(math::to_precision($element, $self->precision));
+                    $value->appendTextNode($element);
                 }
                 $row_xml->appendChild($value);
             }
         }
     } else {
         my $filename = $self->table_file . '_' . $self->name . '.csv';
-        my $data = $doc->createElement("ds:ImportData");
+        my $data = XML::LibXML::Element->new("ds:ImportData");
         $table->appendChild($data);
         $data->setAttribute("oid", $self->name);
-        my $path = $doc->createElement("ds:path");
+        my $path = XML::LibXML::Element->new("ds:path");
         $data->appendChild($path);
         $path->appendTextNode($filename);
-        my $format = $doc->createElement("ds:format");
+        my $format = XML::LibXML::Element->new("ds:format");
         $data->appendChild($format);
         $format->appendTextNode("CSV");
-        my $delimiter = $doc->createElement("ds:delimiter");
+        my $delimiter = XML::LibXML::Element->new("ds:delimiter");
         $data->appendChild($delimiter);
         $delimiter->appendTextNode("COMMA");
 
@@ -124,7 +119,7 @@ sub xml
                 if ($value_type eq 'String' and $column_type ne 'id') {
                     print $fh $element;
                 } else {
-                    print $fh $self->math::to_precision($element, $self->precision);
+                    print $fh $element;
                 }
                 print $fh "," if ($col != $numcols - 1);
             }
@@ -149,7 +144,7 @@ sub single_row
     $self->valueType([ ("real") x scalar(@values) ]);
 
     my @transpose;
-    foreach $val (@values) {
+    foreach my $val (@values) {
         push @transpose, [ $val ];
     }
 

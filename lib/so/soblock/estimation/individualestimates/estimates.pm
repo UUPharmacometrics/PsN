@@ -1,4 +1,4 @@
-package so::SOBlock::Estimation::IndividualEstimates::Estimates;
+package so::soblock::estimation::individualestimates::estimates;
 
 use strict;
 use warnings;
@@ -6,6 +6,7 @@ use Moose;
 use MooseX::Params::Validate;
 use include_modules;
 use XML::LibXML;
+use so::table;
 
 has 'Mean' => ( is => 'rw', isa => 'so::table' );
 has 'Median' => ( is => 'rw', isa => 'so::table' );

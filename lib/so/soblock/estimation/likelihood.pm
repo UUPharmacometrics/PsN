@@ -1,4 +1,4 @@
-package so::SOBlock::Estimation::Likelihood;
+package so::soblock::estimation::likelihood;
 
 use strict;
 use warnings;
