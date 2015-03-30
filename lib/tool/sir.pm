@@ -234,6 +234,23 @@ sub modelfit_setup
 		$covmatrix = get_nonmem_covmatrix(output => $output);
 	}
 
+	#check that covmatrix is numerically posdef
+	unless (defined $self->rawres_input){
+		my $dim = scalar(@{$covmatrix});
+		#copy and check it
+		my @array=();
+		#this gives full matrix
+		for (my $row=0; $row<$dim;$row++){
+			push(@array,[0 x $dim]);
+			for (my $col=0;$col<$dim;$col++){
+				$array[$row]->[$col]=$covmatrix->[$row]->[$col];
+			}
+		}
+		my $err = linear_algebra::cholesky(\@array);
+		if ($err == 1){
+			croak("\nERROR: covariance matrix is numerically not positive definite\n(as checked with Cholesky decomposition without pivoting). Cannot proceed with sir.\n");
+		}
+	}
 
 	my $mu_values = $parameter_hash->{'values'};
 	my $mat = new Math::MatrixReal(1,1);
