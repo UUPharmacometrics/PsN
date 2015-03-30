@@ -1,0 +1,23 @@
+The "Uppsala way" of encoding residual error 
+is to express the standard deviation of the residual error as a parameter W and setting SIGMA 1 FIX. Examples:\\
+{\bf Additive error} 
+\begin{verbatim}
+W     = THETA(5)
+Y     = IPRED+ERR(1)*W
+IRES  = DV-IPRED
+IWRES = IRES/W
+\end{verbatim}
+{\bf Proportional error}
+\begin{verbatim}
+W     = THETA(5)*IPRED
+Y     = IPRED+ERR(1)*W
+IRES  = DV-IPRED
+IWRES = IRES/W
+\end{verbatim}
+{\bf Additive plus proportional error}
+\begin{verbatim}
+W     = SQRT(THETA(5)**2*IPRED**2+THETA(6)**2)
+Y     = IPRED+ERR(1)*W
+IRES  = DV-IPRED
+IWRES = IRES/W
+\end{verbatim}

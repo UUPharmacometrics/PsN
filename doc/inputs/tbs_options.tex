@@ -6,8 +6,10 @@ http://onlinelibrary.wiley.com/doi/10.1111/ j.0006-341X.2000.00065.x/abstract.
 Bill Frame: http://www.ncbi.nlm.nih.gov/pubmed/19904583
  http://www.thtxinfo.com/
  
- Model must be coded “the Uppsala way”, i.e. with the standard deviation of the residual error expressed as a THETA and SIGMA 1 FIX. 
+The model must be coded “the Uppsala way”, see below. 
 Also, the user must use untransformed data (e.g. no log-transformation or similar) in the model, and the possible range of IPRED and DV must not include negative values. If IPRED or DV becomes negative there will be a NONMEM error when running the tbs-modified model. 
+
+\input{inputs/uppsala_way.tex}
 
 \begin{optionlist}
 \optname{tbs}

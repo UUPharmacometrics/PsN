@@ -186,9 +186,11 @@ When set, all these options must be set \emph{before} the first
 By default the value of the covariate function for a parameter is a  product of individual functions of the included covariates, and the typical value (TV) of the parameter is multiplied with the product. With option -logit the user can specify a list of parameters which should be treated as logit transformations, i.e. the value of the covariate function is a sum of individual functions, the sum should be added to the typical value of the parameter, and the value of each individual covariate function should be 0, not 1, when the corresponding THETA is 0. The thetas in a linear or hockey-stick relation on a logit parameter will be given lower and upper boundaries -20 and 20 by default. Important note: When a parameter is a logit transformation, the power and exponential covariate relations are not appropriate to add on this parameter. 
 \nextopt
 \optconfig{time\_varying}{list of covariates}
-Handle time-varying covariates when computing median and mean of covariates. Requires that W is defined in \$ERROR/\$PRED. Assume an ID has the following observations: a,b,c,d
+Handle time-varying covariates when computing median and mean of covariates. Requires that W is defined in \$ERROR/\$PRED,
+where W refers to the "Uppsala way" of encoding residual error, see below
 
-. 
+Assume an ID has the following observations: a,b,c,d
+
 Corresponding covariate values: A,B,C,D
 
 Corresponding residual error magnitudes (W): Wa,Wb,Wc,Wd
@@ -203,6 +205,8 @@ Average covariate value for this individual  AVCOV(ind) will be
 The median/mean for this covariate with respect to the parameter which ETA(1) is on is the median/mean of AVCOV over all individuals.
 
 The derivatives needed for computing the new medians and means will be taken from an estimation of the input model without any included relations, even if included\_relations is defined in the config file. This is because the medians are needed to add the included relations to the model.\\
+
+\input{inputs/uppsala_way.tex}
 \nextopt
 \end{optionlist}
 

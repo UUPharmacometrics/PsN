@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{LINEARIZE user guide}{2015-02-26}
+\guidetitle{LINEARIZE user guide}{2015-03-26}
 
 
 \begin{document}
@@ -37,7 +37,7 @@ exceedingly small and fixed OMEGA value (i.e. 0.00001 FIX). This is to enable ca
 be outputted in the generated dataset. If the value is fixed to zero, NONMEM will not calculate the derivative. 
 
 The linearization is a diagnostics to identify the best extensions of a models stochastic components. Values of fixed effects cannot change in a linearized
-model and the structural model must be reasonable good to make evaluation of stochastic components meaningful. Once the best extended model is identified, 
+model and the structural model must be reasonably good to make evaluation of stochastic components meaningful. Once the best extended model is identified, 
 it is recommended to implement these in the nonlinear version of the model and reestimate all parameters.
 
 
@@ -46,7 +46,7 @@ it is recommended to implement these in the nonlinear version of the model and r
 \item Select a base model with an acceptable structural component and potentially the most influential stochastic parameters included.
 \item If investigating additional ETAs, include in base model but with OMEGA fixed to small value (i.e. 0.00001 FIX) to get derivatives in output dataset.
 \item Run PsN command: linearize runX.mod.
-\item Check OFV agreement, disagreement indicates local minima in MAP estimation (solve by log-transformation to get additive error or use MCETA option
+\item Check OFV agreement. Disagreement indicates local minima in MAP estimation (solve by log-transformation to get additive error or use MCETA option
       in \$ESTIMATION).
 \item Add extensions to the linearized model manually and evaluate.
 \item When decided which extension to include, implement in standard nonlinear format and reestimate.
