@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{SIR user guide}{2015-03-23}
+\guidetitle{SIR user guide}{2015-03-30}
 
 \begin{document}
 
@@ -193,24 +193,13 @@ If the input model has \$PRIOR NWPRI, and the priors are encoded with \$THETA, \
 prior-specific records \$THETAP, \$THETAPV, \$OMEGAP etc, then PsN will not be able to handle the parameter column
 headers correctly in the raw\_results file. The solution is to always use the prior-specific records for
 encoding the prior information.
+\subsection*{Error message that covariance matrix not positive definite}
+The sir program will use a Cholesky decomposition without pivoting for processing of the covariance matrix. 
+This works in most cases, but in some rare case this algorithm can fail for a matrix that is mathematically positive definite
+but requires pivoting for Cholesky decomposition to work.
+When this happens, sir will stop with an error message saying that the covariance matrix is numerically not positive definite.
+Then the user must manually modify the covariance matrix to improve its numerical properties (for example increase the diagonal elements
+and/or change the order of the parameters so that pivoting is not necessary),
+and then use option -covmat\_input to give the modified matrix as input to sir. 
 \end{document}
 
-\section{Procedure in case of a failed \$COV step}
-The sir program currently requires the output from a successful NONMEM \$COV-step to be available. If the \$COV-step failed it is possible, although a little awkward, to trick sir to use fake covariance step output instead.
-\begin{enumerate}
-\item Copy the .mod, .lst and .ext files from a run with successful estimation but failed covariance step. In the following it is assumed that the copies are called run1.mod, run1.lst and run1.ext.
-\item Make sure run1.lst will indicate to sir that the \$COV step was run. At the top of run1.lst there is a copy of the control stream (run1.mod). Make sure that the control stream includes \$COV. Save and close run1.lst.
-\item Edit run1.ext to trick sir that the covariance step was successful. 
-\begin{enumerate}
-\item In the last table of the file, remove the line starting with -1000000001 if it exists. 
-\item Copy the line starting with -1000000000 and insert the copy directly underneath the original line. 
-\item Change the leading -1000000000 of the copy to -1000000001. 
-\item For each THETA/SIGMA/OMEGA that was \emph{not} estimated (because it was zero or FIXED in the control stream) set the value in the copied line to 1.00000E+10 (the NONMEM output value signalling that this value was not estimated).
-\item Save and close run1.ext.
-\end{enumerate}
-\item Create a header to be used in fake run1.cov, run1.coi and run1.cor. Copy the the header (both the TABLE and the ITERATION line) from the last table of run1.ext. Change ITERATION to NAME and remove the column header OBJ from the second line.
-\item Create a fake run1.cov that looks like a true NONMEM cov-file. Use the fake header from the previous step, and row labels copied from the NAME line of the header. For each THETA/SIGMA/OMEGA that was \emph{not} estimated (because it was zero or FIXED in the control stream) set the value in the matrix to 0.00000E+00 (zero). Make sure the matrix is symmetric and invertable. Save and close run1.cov.
-\item Create a fake run1.coi with the true inverse of the matrix in run1.cov. The headers and row labels should be the same as in run1.cov. For each THETA/SIGMA/OMEGA that was not estimated set the value in the matrix to 0.00000E+00. 
-\item Copy run1.coi to run1.cor. The file run1.cor will not be used by sir, but it needs to be present in the same folder as run1.coi when faking a successful covariance step.
-\item Make sure the files run1.mod, run1.lst, run1.cov, run1.coi and run1.cor are all in the same folder. Run the sir program with run1.mod as the input model. 
-\end{enumerate}
