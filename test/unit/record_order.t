@@ -41,10 +41,14 @@ my @test_orders = (
         [ 'simulation' ],
         [ 'problem', 'input', 'data', 'subroutine', 'pk', 'error', 'theta', 'omega', 'sigma', 'estimation', 'covariance', 'table' ],
         [ 'problem', 'input', 'data', 'subroutine', 'pk', 'error', 'theta', 'omega', 'sigma', 'simulation', 'estimation', 'covariance', 'table' ],
+    ],[
+        [ 'simulation' ],
+        [ 'problem', 'input', 'data', 'subroutine', 'pk', 'error', 'theta', 'omega', 'sigma', 'table' ],
+        [ 'problem', 'input', 'data', 'subroutine', 'pk', 'error', 'theta', 'omega', 'sigma', 'simulation', 'table' ],
     ], [
         [ 'simulation' ],
         [ 'problem', 'input', 'data', 'subroutine', 'pk', 'error', 'theta', 'omega', 'sigma', 'covariance', 'table' ],
-        [ 'problem', 'input', 'data', 'subroutine', 'pk', 'error', 'theta', 'omega', 'sigma', 'covariance', 'table', 'simulation' ],
+        [ 'problem', 'input', 'data', 'subroutine', 'pk', 'error', 'theta', 'omega', 'sigma', 'simulation','covariance', 'table' ],
     ], [
         [ 'msfi' ],
         [ 'problem', 'input', 'data', 'subroutine', 'pk', 'error', 'theta', 'omega', 'sigma', 'estimation', 'covariance', 'table' ],
@@ -61,6 +65,101 @@ my @test_orders = (
         [ 'bind', 'prior' ],
         [ 'problem', 'input', 'data', 'subroutine', 'pk', 'error', 'theta', 'omega', 'sigma', 'estimation', 'covariance', 'table' ],
         [ 'problem', 'input', 'bind', 'data', 'prior', 'subroutine', 'pk', 'error', 'theta', 'omega', 'sigma', 'estimation', 'covariance', 'table' ],
+    ],
+	[
+        [ 'pred' ],
+        [ 'problem', 'input', 'data', 'abbreviated', 'omega', 'sigma', 'estimation' ],
+        [ 'problem', 'input', 'data', 'abbreviated', 'pred','omega', 'sigma', 'estimation' ],
+    ],
+	[
+        [ 'pk','error' ],
+        [ 'problem', 'input', 'data', 'abbreviated', 'omega', 'sigma', 'estimation' ],
+        [ 'problem', 'input', 'data', 'abbreviated', 'pk','error','omega', 'sigma', 'estimation' ],
+    ],
+	[
+        [ 'omega' ],
+        [ 'problem', 'input', 'data', 'pred', 'estimation' ],
+        [ 'problem', 'input', 'data', 'pred','omega', 'estimation' ],
+    ],
+	[
+        [ 'omega' ],
+        [ 'problem', 'input', 'data', 'pred','theta', 'estimation' ],
+        [ 'problem', 'input', 'data', 'pred','theta','omega', 'estimation' ],
+    ],
+	[
+        [ 'infn' ],
+        [ 'problem', 'input', 'data', 'pred','theta', 'estimation' ],
+        [ 'problem', 'input', 'data','infn', 'pred','theta', 'estimation' ],
+    ],
+	[
+        [ 'abbreviated' ],
+        [ 'problem', 'input', 'data', 'pk','error','omega', 'sigma', 'estimation' ],
+        [ 'problem', 'input', 'data', 'abbreviated', 'pk','error','omega', 'sigma', 'estimation' ],
+    ],
+	[
+        [ 'subroutine' ],
+        [ 'problem', 'input', 'data', 'des','aes','omega', 'sigma', 'estimation' ],
+        [ 'problem', 'input', 'data', 'subroutine','des','aes','omega', 'sigma', 'estimation' ],
+    ],
+	[
+        [ 'contr' ],
+        [ 'problem', 'input', 'data','subroutine', 'pk', 'error', 'theta', 'omega', 'sigma', 'estimation', 'covariance', 'table' ],
+        [ 'problem', 'input', 'data', 'contr','subroutine', 'pk', 'error', 'theta', 'omega', 'sigma', 'estimation', 'covariance', 'table' ],
+    ],
+	[
+        [ 'nonparametric' ],
+        [ 'problem', 'input', 'data','subroutine', 'pk', 'error', 'theta', 'omega', 'sigma', 'estimation', 'covariance', 'table' ],
+        [ 'problem', 'input', 'data','subroutine', 'pk', 'error', 'theta', 'omega', 'sigma', 'estimation', 'covariance', 'nonparametric','table' ],
+    ],
+	[
+        [ 'estimation' ],
+        [ 'problem', 'input', 'data','subroutine', 'pk', 'error', 'theta', 'omega', 'sigma', 'covariance', 'table' ],
+        [ 'problem', 'input', 'data','subroutine', 'pk', 'error', 'theta', 'omega', 'sigma', 'estimation', 'covariance','table' ],
+    ],
+	[
+        [ 'covariance' ],
+        [ 'problem', 'input', 'data','subroutine', 'pk', 'error', 'theta', 'omega', 'sigma', 'estimation', 'table' ],
+        [ 'problem', 'input', 'data','subroutine', 'pk', 'error', 'theta', 'omega', 'sigma', 'estimation', 'covariance','table' ],
+    ],
+	[
+        [ 'theta' ],
+        [ 'problem', 'input', 'data','subroutine', 'pk', 'error', 'omega', 'sigma', 'estimation', 'covariance', 'table' ],
+        [ 'problem', 'input', 'data','subroutine', 'pk', 'error', 'theta', 'omega', 'sigma', 'estimation', 'covariance', 'table' ],
+    ],
+	[
+        [ 'sigma' ],
+        [ 'problem', 'input', 'data','subroutine', 'pk', 'error', 'estimation', 'covariance', 'table' ],
+        [ 'problem', 'input', 'data','subroutine', 'pk', 'error', 'sigma', 'estimation', 'covariance', 'table' ],
+    ],
+	[
+        [ 'thetap' ],
+        [ 'problem', 'input', 'data','subroutine', 'pk', 'error', 'theta','omega', 'sigma', 'estimation', 'covariance', 'table' ],
+        [ 'problem', 'input', 'data','subroutine', 'pk', 'error', 'theta','thetap', 'omega', 'sigma', 'estimation', 'covariance', 'table' ],
+    ],
+	[
+        [ 'thetapv' ],
+        [ 'problem', 'input', 'data','subroutine', 'pk', 'error', 'theta','omega', 'sigma', 'estimation', 'covariance', 'table' ],
+        [ 'problem', 'input', 'data','subroutine', 'pk', 'error', 'theta','thetapv', 'omega', 'sigma', 'estimation', 'covariance', 'table' ],
+    ],
+	[
+        [ 'omegap' ],
+        [ 'problem', 'input', 'data','subroutine', 'pk', 'error', 'theta','omega', 'sigma', 'estimation', 'covariance', 'table' ],
+        [ 'problem', 'input', 'data','subroutine', 'pk', 'error', 'theta','omega', 'omegap','sigma', 'estimation', 'covariance', 'table' ],
+    ],
+	[
+        [ 'omegapd' ],
+        [ 'problem', 'input', 'data','subroutine', 'pk', 'error', 'theta','omega', 'omegap', 'sigma', 'estimation', 'covariance', 'table' ],
+        [ 'problem', 'input', 'data','subroutine', 'pk', 'error', 'theta','omega', 'omegap', 'omegapd','sigma', 'estimation', 'covariance', 'table' ],
+    ],
+	[
+        [ 'sigmap' ],
+        [ 'problem', 'input', 'data','subroutine', 'pk', 'error', 'theta','omega', 'sigma', 'estimation', 'covariance', 'table' ],
+        [ 'problem', 'input', 'data','subroutine', 'pk', 'error', 'theta','omega', 'sigma','sigmap', 'estimation', 'covariance', 'table' ],
+    ],
+	[
+        [ 'sigmapd' ],
+        [ 'problem', 'input', 'data','subroutine', 'pk', 'error', 'theta','omega', 'sigma', 'estimation', 'covariance', 'table' ],
+        [ 'problem', 'input', 'data','subroutine', 'pk', 'error', 'theta','omega', 'sigma','sigmapd', 'estimation', 'covariance', 'table' ],
     ],
 );
 

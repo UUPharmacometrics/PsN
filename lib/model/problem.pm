@@ -4,8 +4,8 @@ use include_modules;
 use linear_algebra;
 
 my @print_order_omega_before_pk = ('sizes','problem','input','bind','data','abbreviated','msfi','contr','subroutine','prior','thetap','thetapv','omegap','omegapd','sigmap','sigmapd','model','tol','infn','omega','anneal','pk','level','aesinitial','aes','des','error','pred','mix','theta','thetai','thetar','sigma','etas','phis','simulation','estimation','covariance','nonparametric','table','scatter');
-my @print_order = ('sizes','problem','input','bind','data','abbreviated','msfi','contr','subroutine','prior','thetap','thetapv','omegap','omegapd','sigmap','sigmapd','model','tol','infn','pk','level','aesinitial','aes','des','error','pred','mix','theta','thetai','thetar','omega','anneal','sigma','etas','phis','simulation','estimation','covariance','nonparametric','table','scatter');
-my @sde_print_order = ('sizes','problem','input','bind','data','abbreviated','msfi','contr','subroutine','prior','thetap','thetapv','omegap','omegapd','sigmap','sigmapd','model','tol','infn','theta','thetai','thetar','omega','anneal','sigma','etas','phis','pk','level','aesinitial','aes','des','error','pred','mix','simulation','estimation','covariance','nonparametric','table','scatter');
+my @print_order_psn_record_order = ('sizes','problem','input','bind','data','abbreviated','msfi','contr','subroutine','prior','thetap','thetapv','omegap','omegapd','sigmap','sigmapd','model','tol','infn','pk','level','aesinitial','aes','des','error','pred','mix','theta','thetai','thetar','omega','anneal','sigma','etas','phis','simulation','estimation','covariance','nonparametric','table','scatter');
+my @print_order_sde = ('sizes','problem','input','bind','data','abbreviated','msfi','contr','subroutine','prior','thetap','thetapv','omegap','omegapd','sigmap','sigmapd','model','tol','infn','theta','thetai','thetar','omega','anneal','sigma','etas','phis','pk','level','aesinitial','aes','des','error','pred','mix','simulation','estimation','covariance','nonparametric','table','scatter');
 my %abbreviations;
 my %unsupported_records;
 
@@ -15,7 +15,7 @@ my %unsupported_records;
 # allowed record types.
 
 
-foreach my $record_name (@print_order, 'warnings', 'finedata') {
+foreach my $record_name (@print_order_psn_record_order, 'warnings', 'finedata') {
 	my $uc_short_type = _get_uc_short_type($record_name);
 	$abbreviations{$uc_short_type} = $record_name;
 }
@@ -185,7 +185,7 @@ has 'iwres_shrinkage_table' => ( is => 'rw', isa => 'Str' );
 has 'eta_shrinkage_table' => ( is => 'rw', isa => 'Str' );
 has 'own_print_order' => ( is => 'rw', isa => 'Maybe[ArrayRef]' );
 has 'record_order' => ( is => 'rw', isa => 'model::problem::record_order' );
-has 'psn_print_order' => ( is => 'rw', isa => 'Bool', default => 0 );               # Set to use the internal print order otherwise preserve the used order
+has 'psn_record_order' => ( is => 'rw', isa => 'Bool', default => 0 );               # Set to use the internal record order otherwise preserve the used order
 has 'estimated_parameters_hash' => ( is => 'rw', isa => 'HashRef' );
 
 sub BUILD
@@ -1934,47 +1934,44 @@ sub _format_problem
 	# print_order, the file will still be valid, but will look
 	# different from what it used to.
     my $record_order;
-    if ($self->psn_print_order) {
-        $record_order = \@print_order;
+    if ($self->psn_record_order) {
+        $record_order = \@print_order_psn_record_order;
     } elsif ($self->sde) {
-        $record_order = \@sde_print_order;
+        $record_order = \@print_order_sde;
     } elsif ($self->omega_before_pk) {
         $record_order = \@print_order_omega_before_pk;
     } else {
         $self->record_order(model::problem::record_order->new(order => $self->own_print_order));
-        $self->create_print_order;
+        $self->create_print_order();
         $record_order = $self->record_order->order;
     }
 
 
 	foreach my $type (@${record_order}) {
-	  # Create an accessor string for the record being formatted
-	  my $accessor = $type . 's';
+		# Create an accessor string for the record being formatted
+		my $accessor = $type . 's';
 
-	  # Se if we have one or more records of the type given in
-	  # print_order
-	  if (defined $self->$accessor) {
-	    # Loop over all such records and call on the record object
-	    # to format itself.
+		# Se if we have one or more records of the type given in
+		# print_order
+		if (defined $self->$accessor) {
+			# Loop over all such records and call on the record object
+			# to format itself.
 
-	    foreach my $record (@{$self->$accessor}) {
+			foreach my $record (@{$self->$accessor}) {
 
-			my $arr;
-			if ($type eq 'data'){
-				$arr = $record -> _format_record(write_directory => $write_directory,
-												 relative_data_path => $relative_data_path);
-			}else{
-				$arr = $record ->  _format_record( number_format => $number_format) ;
+				my $arr;
+				if ($type eq 'data'){
+					$arr = $record -> _format_record(write_directory => $write_directory,
+													 relative_data_path => $relative_data_path);
+				}else{
+					$arr = $record ->  _format_record( number_format => $number_format) ;
+				}
+				push( @formatted,  @{$arr} );
 			}
-			push( @formatted,  @{$arr} );
-	    }
-	  }
-	  if( $self->shrinkage_module -> enabled and $type eq 'table' ) {
-		  #FIXME if own_print_order might not have a 'table' beforehand, must add it in that case so that 
-		  #shrinkage is added
-	    push( @formatted,
-		  @{$self->shrinkage_module -> format_shrinkage_tables } );
-	  }	
+		}
+		if( $self->shrinkage_module -> enabled and $type eq 'table' ) {
+			push( @formatted, @{$self->shrinkage_module -> format_shrinkage_tables } );
+		}	
 	}
 
 	if( $self->cwres_modules ){
@@ -2510,12 +2507,16 @@ sub create_print_order
 {
     my $self = shift;
 
-    foreach my $record (@print_order) {
+    foreach my $record (@print_order_psn_record_order) {
         my $attribute = $record . 's';
         if (defined $self->$attribute and scalar(@{$self->$attribute}) > 0) {
             $self->record_order->insert($record);
         }
     }
+	if( $self->shrinkage_module -> enabled) {
+		$self->record_order->insert('table');
+	}
+
 }
 
 sub set_estimated_parameters_hash

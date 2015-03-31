@@ -119,6 +119,7 @@ has 'ignore_missing_output_files' => ( is => 'rw', isa => 'Bool', default => 1 )
 has 'outputfile' => ( is => 'rw', isa => 'Maybe[Str]' );
 has 'sde' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'omega_before_pk' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'psn_record_order' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'tbs' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'dtbs' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'tbs_lambda' => ( is => 'rw', isa => 'Maybe[Str]' );
@@ -418,6 +419,7 @@ sub create_maxeval_zero_models_array
 					   ignore_missing_output_files => 1,
 					   sde                         => $run_model->sde,
 					   omega_before_pk             => $run_model->omega_before_pk,
+					   psn_record_order            => $run_model->psn_record_order,
 					   cwres                       => $run_model->cwres,
 					   tbs                         => 0,
 					   dtbs                         => 0,
@@ -4769,6 +4771,7 @@ sub _read_problems
 					ignore_missing_output_files => $self->ignore_missing_output_files,
 					sde                         => $self->sde,
 					omega_before_pk             => $self->omega_before_pk,
+					psn_record_order            => $self->psn_record_order,
 					cwres                       => $self->cwres,
 					tbs                         => $self->tbs,
 					dtbs                         => $self->dtbs,

@@ -8,28 +8,48 @@ use List::Util qw(first);
 
 has 'order' => ( is => 'rw', isa => 'ArrayRef[Str]' );
 
+
+my @code_records = ( 'pred', 'pk', 'error', 'des', 'aes', 'aesinitial', 'mix', 'infn','tol');
+my @parameter_records = ('theta','thetap','thetapv','omega','omegap','omegapd','sigma','sigmap','sigmapd');
 # The rules
 my %must_come_before = (
     'sizes' => [ 'problem' ],
-    'simulation' => [ 'estimation' ],
-    'abbreviated' => [ 'pred', 'pk', 'error', 'des', 'aes', 'aesinitial', 'mix', 'infn' ],
-    'subroutines' => [ 'pred', 'pk', 'error' ],
+    'abbreviated' => [@code_records],
+    'subroutine' => [@code_records],
 );
+
+
+#must repeat what have above, i.e. if A must come before B then B must come after A
 
 my %must_come_after = (
     'msfi' => [ 'data', 'input', 'bind' ],
     'prior' => [ 'data', 'input', 'bind' ],
+    'contr' => [ 'data', 'input', 'bind','msfi','abbreviated' ],
     'bind' => [ 'input' ],
-    'pred' => [ 'subroutines', 'input' ],
-    'pk' => [ 'subroutines', 'input', 'model' ],
-    'error' => [ 'subroutines', 'input', 'model', 'pk' ],
+    'pred' => [ 'input','data','bind','subroutine', 'abbreviated','msfi','prior' ],
+    'pk' => [ 'input','data','bind','subroutine','abbreviated','model' ],
+    'error' => [ 'input','data','bind','subroutine','abbreviated','tol', 'model', 'pk', 'des', 'aes', 'aesinitial' ],
+	'des' => ['input','data','bind','subroutine','abbreviated'],
+	'aes' => ['input','data','bind','subroutine','abbreviated'],
+	'aesinitial' => ['input','data','bind','subroutine','abbreviated'],
+	'mix' => ['input','data','bind','subroutine','abbreviated'],
+	'infn' => ['input','data','bind','subroutine','abbreviated','tol','model'],
+	'tol' => ['input','data','bind','subroutine','abbreviated'],
+	'theta' => [ @code_records ],
+	'omega' => [ 'theta','thetap','thetapv',@code_records ],
+	'sigma' => [ 'theta','thetap','thetapv','omega','omegap','omegapd',@code_records ],
     'thetap' => [ 'theta' ],
     'thetapv' => [ 'theta', 'thetap' ],
     'omegap' => [ 'omega' ],
     'omegapd' => [ 'omega', 'omegap' ],
     'sigmap' => [ 'sigma' ],
     'sigmapd' => [ 'sigma', 'sigmap' ],
+	'simulation' => [@parameter_records,@code_records],
+	'estimation' => ['simulation',@parameter_records,@code_records],
+	'covariance' => ['simulation','estimation',@parameter_records,@code_records],
+	'nonparametric' => ['simulation','estimation','covariance',@parameter_records,@code_records],
 );
+#no rule for table, will put it at the end
 
 sub insert
 {
@@ -47,7 +67,7 @@ sub insert
 
     # Must come before
     if (exists $must_come_before{$record}) {
-        my $index = $self->_find_records(records => $must_come_before{$record});
+        my $index = $self->_find_records(records => $must_come_before{$record}, find_last => 0); #find first
         if (defined $index) {
             splice @{$self->order}, $index, 0, $record;
             $placed = 1;

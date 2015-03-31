@@ -332,6 +332,14 @@ sub sanity_checks
 		if( $options -> {'omega_before_pk'} ){
 			die "You cannot set both sde and omega_before_pk";
 		}
+		if( $options -> {'psn_record_order'} ){
+			die "You cannot set both sde and psn_record_order";
+		}
+	}
+	if( $options -> {'omega_before_pk'} ){
+		if( $options -> {'psn_record_order'} ){
+			die "You cannot set both omega_before_pk and psn_record_order";
+		}
 	}
 	if(defined $options-> {'tbs_zeta'} or defined $options-> {'tbs_delta'}){
 		if ($options->{'tbs'}){
