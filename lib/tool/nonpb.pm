@@ -123,8 +123,7 @@ sub modelfit_setup
 			my $old_category = ui->category();
 			ui->category('pind');
 
-			my $pind = tool::pind -> 
-				new ( %{common_options::restore_options(@common_options::tool_options)},
+			my $pind = tool::pind -> new ( %{common_options::restore_options(@common_options::tool_options)},
 					  top_tool     => 0,
 					  directory      => "pind_dir$id",
 					  models	     => [$bs_model],
@@ -169,8 +168,7 @@ sub modelfit_setup
 		#section 5 nonp_bootstrap_v2shall not be done for original.
 		#fix the options, talk to Pontus
 		$self->tools([]) unless defined $self->tools;
-		push( @{$self->tools}, tool::modelfit ->
-			new( %{common_options::restore_options(@common_options::tool_options)},
+		push( @{$self->tools}, tool::modelfit ->new( %{common_options::restore_options(@common_options::tool_options)},
 				directory => undef,
 				top_tool => 0,
 				models		   => [$new_original],

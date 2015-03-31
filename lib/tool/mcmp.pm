@@ -481,19 +481,18 @@ sub modelfit_setup
 
 	$self->tools([]) unless (defined $self->tools);
 	push( @{$self -> tools},
-		  tool::modelfit ->
-		  new( %{common_options::restore_options(@common_options::tool_options)},
-			   base_directory	 => $self -> directory,
-			   directory		 => $self -> directory.
-			   '/modelfit_dir'.$model_number,
-			   models		 => \@estimate_models,
-			   parent_threads        => 1,
-			   raw_results           => undef,
-			   prepared_models       => undef,
-			   top_tool              => 0,
-			   nm_output => $nmoutopt,
-			   prepend_model_file_name => 1,
-			   copy_data => 0
+		  tool::modelfit -> new( %{common_options::restore_options(@common_options::tool_options)},
+								 base_directory	 => $self -> directory,
+								 directory		 => $self -> directory.
+								 '/modelfit_dir'.$model_number,
+								 models		 => \@estimate_models,
+								 parent_threads        => 1,
+								 raw_results           => undef,
+								 prepared_models       => undef,
+								 top_tool              => 0,
+								 nm_output => $nmoutopt,
+								 prepend_model_file_name => 1,
+								 copy_data => 0
 		  ) );
 	ui -> print (category=>'mcmp', message=> "\nEstimating:");
 }

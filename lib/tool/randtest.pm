@@ -127,20 +127,19 @@ sub modelfit_setup
 			push(@models,$self->base_model) ;
 		}
 
-		my $orig_fit = tool::modelfit ->
-		new( %{common_options::restore_options(@common_options::tool_options)},
-			base_directory	 => $self ->directory(),
-			directory		 => $self ->directory().
-			'/orig_modelfit_dir'.$model_number,
-			models		 => \@models,
-			threads               => $self->threads,
-			 reduced_model_ofv => $base_mod_ofv, #can be undef
-			logfile	         => undef,
-			raw_results           => undef,
-			 prepared_models       => undef,
-			 copy_data            => $self->copy_data,
-			 top_tool              => 0,
-			%subargs );
+		my $orig_fit = tool::modelfit ->new( %{common_options::restore_options(@common_options::tool_options)},
+											 base_directory	 => $self ->directory(),
+											 directory		 => $self ->directory().
+											 '/orig_modelfit_dir'.$model_number,
+											 models		 => \@models,
+											 threads               => $self->threads,
+											 reduced_model_ofv => $base_mod_ofv, #can be undef
+											 logfile	         => undef,
+											 raw_results           => undef,
+											 prepared_models       => undef,
+											 copy_data            => $self->copy_data,
+											 top_tool              => 0,
+											 %subargs );
 
 		ui -> print( category => 'randtest',
 			message => $message );
@@ -295,10 +294,11 @@ sub modelfit_setup
 			my ($model_dir, $filename) = OSspecific::absolute_path( $self ->directory().'/m'.$model_number,
 				'rand_'.($j+1).'.mod' );
 
-			$new_mod = model->new( directory   => $model_dir,
-								   filename    => $filename,
-								   extra_files => $model -> extra_files,
-								   ignore_missing_files => 1);
+			$new_mod = model->new(%{common_options::restore_options(@common_options::model_options)},
+								  directory   => $model_dir,
+								  filename    => $filename,
+								  extra_files => $model -> extra_files,
+								  ignore_missing_files => 1);
 			push( @new_models, $new_mod );
 		}
 		ui -> print( category => 'randtest',
@@ -318,8 +318,7 @@ sub modelfit_setup
 	$self->tools([]) unless (defined $self->tools());
 
 	push( @{$self -> tools()},
-		tool::modelfit ->
-		new( %{common_options::restore_options(@common_options::tool_options)},
+		tool::modelfit ->new( %{common_options::restore_options(@common_options::tool_options)},
 			models		 => \@new_models,
 			threads               => $self->threads,
 			directory             => $self ->directory().'/modelfit_dir'.$model_number,

@@ -110,8 +110,7 @@ sub modelfit_analyze
 			OSspecific::absolute_path( $self -> directory,
 									   $self -> raw_results_file->[$model_number-1] );
 		my $xv_threads = ref( $self -> threads ) eq 'ARRAY' ? $self -> threads -> [1]:$self -> threads;
-		my $mod_eval = tool::modelfit ->
-			new( %{common_options::restore_options(@common_options::tool_options)},
+		my $mod_eval = tool::modelfit->new( %{common_options::restore_options(@common_options::tool_options)},
 				 copy_data  => 0,  #do not copy models to NM_run, use rel path to m1
 				 models           => $self -> prediction_models->[$model_number-1]{'own'},
 				 base_directory   => $self -> directory,
@@ -869,8 +868,7 @@ sub general_setup
 			$model -> add_nonparametric_code;
 		}
 
-		my $orig_fit = tool::modelfit ->
-		new( %{common_options::restore_options(@common_options::tool_options)},
+		my $orig_fit = tool::modelfit ->new( %{common_options::restore_options(@common_options::tool_options)},
 			models                => [$model],
 			threads               => 1,
 			directory             => $self -> directory.'/orig_modelfit_dir'.$model_number,
@@ -1178,8 +1176,7 @@ sub general_setup
 	}
 	$self->tools([]) unless (defined $self->tools);
 	push( @{$self -> tools},
-		$class ->
-		new( %{common_options::restore_options(@common_options::tool_options)},
+		$class ->new( %{common_options::restore_options(@common_options::tool_options)},
 			models                => $new_models[0],
 			 copy_data            => 0, #use relative data path to m1
 			threads               => $subm_threads,

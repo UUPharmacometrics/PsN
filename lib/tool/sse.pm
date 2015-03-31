@@ -1291,8 +1291,8 @@ sub modelfit_setup
 				my ($out_dir, $orig_out) = OSspecific::absolute_path( $self -> directory.'/m'.
 																	  $model_number,
 																	  "mc-orig-$j.lst" );
-				my $est_original = model ->
-					new(%{common_options::restore_options(@common_options::model_options)},
+				my $est_original = 
+					model->new(%{common_options::restore_options(@common_options::model_options)},
 						directory   => $model_dir,
 						 filename    => $orig_name,
 						 outputfile  => $orig_out,
@@ -1326,8 +1326,8 @@ sub modelfit_setup
 				my ($out_dir, $alt_out) = OSspecific::absolute_path( $self -> directory.'/m'.
 																	 $model_number,
 																	 "$filestem-$j.lst" );
-				my $est_alternative = model ->
-					new( %{common_options::restore_options(@common_options::model_options)},
+				my $est_alternative = 
+					model->new( %{common_options::restore_options(@common_options::model_options)},
 						 directory   => $model_dir,
 						 filename    => $alt_name,
 						 outputfile  => $alt_out,
@@ -2499,7 +2499,7 @@ sub create_R_plots_code{
 		for (my $j=1;$j<=$self->samples;$j++){
 			my $file = $stem.$j.'.lst';
 			if (-e $file){
-				my $outobj = output -> new ('filename'=> $file);
+				my $outobj = output -> new('filename'=> $file);
 				if (defined $outobj->nind() and scalar(@{$outobj->nind()})>0){
 					$subj = $outobj->nind()->[0];
 					last;

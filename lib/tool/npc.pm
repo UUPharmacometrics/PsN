@@ -881,11 +881,10 @@ sub modelfit_setup
 	my $model_simulation_output;
 	if (defined $self->sim_model()) {
 		$user_sim_model = 1;
-		my $temp_model = model -> new ( 
-			%{common_options::restore_options(@common_options::model_options)},
-			filename                    => $self->sim_model(),
-			ignore_missing_output_files => 1,
-			cwres                       => (($self->dv eq 'CWRES') and ($PsN::nm_major_version < 7))  );
+		my $temp_model = model->new(%{common_options::restore_options(@common_options::model_options)},
+									filename                    => $self->sim_model(),
+									ignore_missing_output_files => 1,
+									cwres                       => (($self->dv eq 'CWRES') and ($PsN::nm_major_version < 7))  );
 
 
 		if (defined $temp_model->outputs() and 
@@ -962,11 +961,10 @@ sub modelfit_setup
 		close(SIM);
 		close(MOD);
 
-		$model_simulation = model -> new ( 
-			%{common_options::restore_options(@common_options::model_options)},
-			filename                    => $simname,
-			ignore_missing_output_files => 1,
-			cwres                       => (($self->dv eq 'CWRES') and ($PsN::nm_major_version < 7))  );
+		$model_simulation = model -> new (%{common_options::restore_options(@common_options::model_options)},
+										  filename                    => $simname,
+										  ignore_missing_output_files => 1,
+										  cwres                       => (($self->dv eq 'CWRES') and ($PsN::nm_major_version < 7))  );
 	}
 
 	if (defined $model_simulation) {
@@ -1671,8 +1669,7 @@ sub modelfit_setup
 	if ($self->run_the_sim or $self->run_the_original){
 		my %subargs = ();
 		#Kajsa 2013-10-04 changed top tool to 0, to get better raw_result_file name
-		my $modfit = tool::modelfit ->
-			new( %{common_options::restore_options(@common_options::tool_options)},
+		my $modfit = tool::modelfit ->new( %{common_options::restore_options(@common_options::tool_options)},
 				 models		 => \@runmodels,
 				 base_directory      => $self->directory, 
 				 directory => undef,

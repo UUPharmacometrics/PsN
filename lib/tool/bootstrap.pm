@@ -709,20 +709,19 @@ sub general_setup
 			$model -> add_nonparametric_code;
 		}
 
-		my $orig_fit = tool::modelfit ->
-		new( %{common_options::restore_options(@common_options::tool_options)},
-			base_directory	 => $self ->directory(),
-			directory		 => $self ->directory().
-			'/orig_modelfit_dir'.$model_number,
-			models		 => [$model],
-			threads               => $subm_threads,
-			parent_threads        => $own_threads,
-			parent_tool_id        => $self -> tool_id(),
-			logfile	         => undef,
-			raw_results           => undef,
-			prepared_models       => undef,
-			top_tool              => 0,
-			%subargs );
+		my $orig_fit = tool::modelfit ->new( %{common_options::restore_options(@common_options::tool_options)},
+											 base_directory	 => $self ->directory(),
+											 directory		 => $self ->directory().
+											 '/orig_modelfit_dir'.$model_number,
+											 models		 => [$model],
+											 threads               => $subm_threads,
+											 parent_threads        => $own_threads,
+											 parent_tool_id        => $self -> tool_id(),
+											 logfile	         => undef,
+											 raw_results           => undef,
+											 prepared_models       => undef,
+											 top_tool              => 0,
+											 %subargs );
 
 		ui -> print( category => 'bootstrap',
 			message => 'Executing base model.' );
@@ -998,8 +997,7 @@ sub general_setup
 	$self->tools([]) unless (defined $self->tools());
 
 	push( @{$self -> tools()},
-		$class ->
-		new( %{common_options::restore_options(@common_options::tool_options)},
+		$class ->new( %{common_options::restore_options(@common_options::tool_options)},
 			models		 => \@new_models,
 			 copy_data            => 0,
 			threads               => $subm_threads,
@@ -1053,23 +1051,22 @@ sub modelfit_analyze
 
 			ui -> print( category => 'bootstrap',
 				message  => "Running a Jackknife for the BCa estimates" );
-			$jackknife =tool::cdd::jackknife ->
-				new( %{common_options::restore_options(@common_options::tool_options)},
-					 directory        => undef,
-					 models           => [$self->models->[$model_number-1]],
-					 case_column     => $idcol->[0][0],
-					 _raw_results_callback => $self ->
-					 _jackknife_raw_results_callback( model_number => $model_number ),
-					 nm_version       => $self -> nm_version(),
-					 parent_tool_id   => $self -> tool_id(),
-					 threads          => $jk_threads,
-					 bca_mode         => 1,
-					 shrinkage        => $self -> shrinkage(),
-					 nonparametric_marginals => $self -> nonparametric_marginals(),
-					 nonparametric_etas => $self -> nonparametric_etas(),
-					 adaptive         => $self -> adaptive(),
-					 verbose          => $self -> verbose(),
-					 cross_validate   => 0 );
+			$jackknife =tool::cdd::jackknife ->	new( %{common_options::restore_options(@common_options::tool_options)},
+													 directory        => undef,
+													 models           => [$self->models->[$model_number-1]],
+													 case_column     => $idcol->[0][0],
+													 _raw_results_callback => $self ->
+													 _jackknife_raw_results_callback( model_number => $model_number ),
+													 nm_version       => $self -> nm_version(),
+													 parent_tool_id   => $self -> tool_id(),
+													 threads          => $jk_threads,
+													 bca_mode         => 1,
+													 shrinkage        => $self -> shrinkage(),
+													 nonparametric_marginals => $self -> nonparametric_marginals(),
+													 nonparametric_etas => $self -> nonparametric_etas(),
+													 adaptive         => $self -> adaptive(),
+													 verbose          => $self -> verbose(),
+													 cross_validate   => 0 );
 
 			# Create a checkpoint. Log the samples and individuals.
 			open( DONE, ">".$self ->directory()."/jackknife_done.$model_number" ) ;
@@ -1099,22 +1096,21 @@ sub modelfit_analyze
 			my @seed = split(' ',$rows[2]);
 			shift( @seed ); # get rid of 'seed'-word
 			#set bins here to number of ids so that do not have to do it in jackknife.pm
-			$jackknife = tool::cdd::jackknife ->
-				new( %{common_options::restore_options(@common_options::tool_options)},
-					 models           => [$self -> models -> [$model_number -1]],
-					 case_column     => $self -> models -> [$model_number -1]-> idcolumn,
-					 _raw_results_callback => $self ->	_jackknife_raw_results_callback( model_number => $model_number ),
-					 threads          => $jk_threads,
-					 parent_tool_id   => $self -> tool_id(),
-					 directory        => $stored_directory,
-					 bca_mode         => 1,
-					 shrinkage        => $self -> shrinkage(),
-					 nm_version       => $self -> nm_version(),
-					 nonparametric_marginals => $self -> nonparametric_marginals(),
-					 nonparametric_etas => $self -> nonparametric_etas(),
-					 adaptive         => $self -> adaptive(),
-					 verbose          => $self -> verbose(),
-					 cross_validate   => 0 );
+			$jackknife = tool::cdd::jackknife ->new( %{common_options::restore_options(@common_options::tool_options)},
+													 models           => [$self -> models -> [$model_number -1]],
+													 case_column     => $self -> models -> [$model_number -1]-> idcolumn,
+													 _raw_results_callback => $self ->	_jackknife_raw_results_callback( model_number => $model_number ),
+													 threads          => $jk_threads,
+													 parent_tool_id   => $self -> tool_id(),
+													 directory        => $stored_directory,
+													 bca_mode         => 1,
+													 shrinkage        => $self -> shrinkage(),
+													 nm_version       => $self -> nm_version(),
+													 nonparametric_marginals => $self -> nonparametric_marginals(),
+													 nonparametric_etas => $self -> nonparametric_etas(),
+													 adaptive         => $self -> adaptive(),
+													 verbose          => $self -> verbose(),
+													 cross_validate   => 0 );
 
 			random_set_seed( @seed );
 			ui -> print( category => 'bootstrap',
@@ -1202,19 +1198,18 @@ sub modelfit_analyze
 		}
 
 		#we use original data set here, use input copy_data
-		my $modelfit = tool::modelfit -> new( 
-			%{common_options::restore_options(@common_options::tool_options)},
-			top_tool         => 0,
-			models           => $modelsarr,
-			base_directory   => $self -> directory,
-			directory        => $self -> directory.'compute_dofv_dir'.$model_number, 
-			raw_results_file => [$self->directory.'raw_results_dofv.csv'],
-			nmtran_skip_model => 2,
-			parent_tool_id   => $self -> tool_id,
-			_raw_results_callback => $self ->_dofv_raw_results_callback( model_number => $model_number ),
-			logfile	         => undef,
-			copy_data          => $self->copy_data,
-			threads          => $self->threads);
+		my $modelfit = tool::modelfit -> new(	%{common_options::restore_options(@common_options::tool_options)},
+												top_tool         => 0,
+												models           => $modelsarr,
+												base_directory   => $self -> directory,
+												directory        => $self -> directory.'compute_dofv_dir'.$model_number, 
+												raw_results_file => [$self->directory.'raw_results_dofv.csv'],
+												nmtran_skip_model => 2,
+												parent_tool_id   => $self -> tool_id,
+												_raw_results_callback => $self ->_dofv_raw_results_callback( model_number => $model_number ),
+												logfile	         => undef,
+												copy_data          => $self->copy_data,
+												threads          => $self->threads);
 		$modelfit->run;
 
 		#if clean >=3 this file has been deleted, but the raw_results is ok thanks to explicit setting

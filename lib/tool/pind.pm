@@ -299,18 +299,17 @@ sub modelfit_setup
 	my $clean= $self->clean;
 	$clean = 2 if ($clean > 2); #clean cannot be more than 2, then important intermediate results are deleted
 		$self->tools([]) unless defined $self->tools;
-    push( @{$self->tools}, tool::modelfit ->
-		  new( %{common_options::restore_options(@common_options::tool_options)},
-			   models		   => $new_ofv_models,
-			   nmtran_skip_model => 2,
-			   parent_threads        => 1,
-			   base_directory   => $self->directory,
-			   directory        => $self->directory . 'ofv_dir', 
-			   raw_results           => undef,
-			   prepared_models       => undef,
-			   top_tool              => 0,
-			   clean                => $clean,
-			   prepend_model_file_name => 1
+    push( @{$self->tools}, tool::modelfit ->  new( %{common_options::restore_options(@common_options::tool_options)},
+												   models		   => $new_ofv_models,
+												   nmtran_skip_model => 2,
+												   parent_threads        => 1,
+												   base_directory   => $self->directory,
+												   directory        => $self->directory . 'ofv_dir', 
+												   raw_results           => undef,
+												   prepared_models       => undef,
+												   top_tool              => 0,
+												   clean                => $clean,
+												   prepend_model_file_name => 1
 		  ) );
   }
 }

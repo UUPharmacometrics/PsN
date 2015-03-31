@@ -2915,8 +2915,7 @@ sub modelfit_analyze
 				$dir = $self -> directory.'/forward_scm_dir'.$model_number;
 			}
 			my $internal_scm =
-			tool::scm ->
-			new( %{common_options::restore_options(@common_options::tool_options)},
+			tool::scm ->new( %{common_options::restore_options(@common_options::tool_options)},
 				gof                    => $self -> gof(),
 				test_relations         => $self -> test_relations,
 				parameters             => $self -> parameters,
@@ -5221,8 +5220,9 @@ sub write_final_models
 
 	if ($self->linearize()){
 		#create final nonlinear model
-		my $final_nonlin = model -> new ( filename => $self->final_model_directory().'original.mod',
-										  ignore_missing_files => 1);
+		my $final_nonlin = model->new ( %{common_options::restore_options(@common_options::model_options)},
+										filename => $self->final_model_directory().'original.mod',
+										ignore_missing_files => 1);
 		$final_nonlin ->filename('final_'.$self->search_direction().'_nonlinear.mod');
 		#add all included  relations
 
@@ -5360,8 +5360,7 @@ sub modelfit_post_fork_analyze
 		#both directions is set
 
 		my $backward_scm =
-		tool::scm ->
-		new( %{common_options::restore_options(@common_options::tool_options)},
+		tool::scm ->new( %{common_options::restore_options(@common_options::tool_options)},
 			 main_data_file            => undef,
 			gof                    => $self -> gof(),
 			test_relations         => $self -> test_relations,

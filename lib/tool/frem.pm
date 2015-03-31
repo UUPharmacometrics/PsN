@@ -355,8 +355,7 @@ sub create_template_models
 	  ##########################################################################################
 	  #Estimate model 0 and/or data check model
 	  ##########################################################################################
-		my $run1_fit = tool::modelfit ->
-			new( %{common_options::restore_options(@common_options::tool_options)},
+		my $run1_fit = tool::modelfit ->new( %{common_options::restore_options(@common_options::tool_options)},
 				 base_directory	 => $self -> directory(),
 				 directory		 => $self -> directory().'/'.$run1_name.'_modelfit_dir1',
 				 copy_data     => 0,
@@ -771,38 +770,38 @@ sub modelfit_setup
 	close(FH);
 	eval $string;
 	
-    my $frem_model0 = model -> new ( %{common_options::restore_options(@common_options::model_options)},
+    my $frem_model0 = model->new( %{common_options::restore_options(@common_options::model_options)},
 									 filename                    => 'm1/'.$name_model0,
 									 ignore_missing_output_files => 1 );
-    my $frem_model1 = model -> new ( %{common_options::restore_options(@common_options::model_options)},
+    my $frem_model1 = model->new( %{common_options::restore_options(@common_options::model_options)},
 									 filename                    => 'm1/'.$name_model1,
 									 ignore_missing_output_files => 1 );
-    my $frem_model2 = model -> new ( %{common_options::restore_options(@common_options::model_options)},
+    my $frem_model2 = model->new( %{common_options::restore_options(@common_options::model_options)},
 									 filename                    => 'm1/'.$name_model2_all,
 									 ignore_missing_output_files => 1 );
     my $frem_model2_timevar;
 
 	if (-e 'm1/'.$name_model2_timevar){
-		$frem_model2_timevar = model -> new ( %{common_options::restore_options(@common_options::model_options)},
+		$frem_model2_timevar = model->new( %{common_options::restore_options(@common_options::model_options)},
 											  filename                    => 'm1/'.$name_model2_timevar,
 											  ignore_missing_output_files => 1 );
 	}
 	my $frem_model2_invar;
 
 	if (-e 'm1/'.$name_model2_invar){
-		$frem_model2_invar = model -> new ( %{common_options::restore_options(@common_options::model_options)},
+		$frem_model2_invar = model->new( %{common_options::restore_options(@common_options::model_options)},
 											filename                    => 'm1/'.$name_model2_invar,
 											ignore_missing_output_files => 1 );
 	}
 
-    my $frem_model3 = model -> new ( %{common_options::restore_options(@common_options::model_options)},
+    my $frem_model3 = model->new( %{common_options::restore_options(@common_options::model_options)},
 									 filename                    => 'm1/'.$name_model3,
 									 ignore_missing_output_files => 1 );
 
-    my $frem_vpc_model1 = model -> new ( %{common_options::restore_options(@common_options::model_options)},
+    my $frem_vpc_model1 = model->new( %{common_options::restore_options(@common_options::model_options)},
 										 filename                    => 'm1/'.$name_modelvpc_1,
 										 ignore_missing_output_files => 1 );
-    my $frem_vpc_model2 = model -> new ( %{common_options::restore_options(@common_options::model_options)},
+    my $frem_vpc_model2 = model->new( %{common_options::restore_options(@common_options::model_options)},
 										 filename                    => 'm1/'.$name_modelvpc_2,
 										 ignore_missing_data =>1,
 										 ignore_missing_output_files => 1 );
@@ -832,8 +831,8 @@ sub modelfit_setup
 		$rundir = $self -> directory().'/model_0_modelfit_dir1';
 		rmtree([ "$rundir" ]) if (-e $rundir);
 
-		my $zero_fit = tool::modelfit ->
-			new( %{common_options::restore_options(@common_options::tool_options)},
+		my $zero_fit = 
+			tool::modelfit ->new( %{common_options::restore_options(@common_options::tool_options)},
 				 base_directory	 => $frem_model0 -> directory(),
 				 directory		 => $rundir,
 				 models		 => [$frem_model0],
@@ -866,8 +865,8 @@ sub modelfit_setup
 			#estimate model 1 if estimation is requested
 			$rundir = $self -> directory().'/model1_modelfit_dir1';
 			rmtree([ "$rundir" ]) if (-e $rundir);
-			my $one_fit = tool::modelfit ->
-				new( %{common_options::restore_options(@common_options::tool_options)},
+			my $one_fit = 
+				tool::modelfit ->new( %{common_options::restore_options(@common_options::tool_options)},
 					 base_directory	 => $frem_model1 -> directory(),
 					 directory		 => $rundir,
 					 copy_data    => 0,
@@ -901,8 +900,8 @@ sub modelfit_setup
 			#estimate model 2 if estimation is requested
 			$rundir = $self -> directory().'/model2_modelfit_dir1';
 			rmtree([ "$rundir" ]) if (-e $rundir);
-			my $two_fit = tool::modelfit ->
-				new( %{common_options::restore_options(@common_options::tool_options)},
+			my $two_fit = 
+				tool::modelfit ->new( %{common_options::restore_options(@common_options::tool_options)},
 					 base_directory	 => $frem_model2 -> directory(),
 					 directory		 => $rundir,
 					 copy_data      => 0,
@@ -1056,8 +1055,8 @@ sub modelfit_setup
 			#estimate model 3 if estimation is requested
 			$rundir = $self -> directory().'/model3_modelfit_dir1';
 			rmtree([ "$rundir" ]) if (-e $rundir);
-			my $three_fit = tool::modelfit ->
-				new( %{common_options::restore_options(@common_options::tool_options)},
+			my $three_fit = 
+				tool::modelfit ->new( %{common_options::restore_options(@common_options::tool_options)},
 					 base_directory	 => $frem_model3 -> directory(),
 					 directory		 => $rundir,
 					 copy_data		 => 0,
@@ -1100,8 +1099,8 @@ sub modelfit_setup
 			$rundir = $self -> directory().'/vpc1_modelfit_dir1';
 			rmtree([ "$rundir" ]) if (-e $rundir);
 
-			my $vpc1_fit = tool::modelfit ->
-				new( %{common_options::restore_options(@common_options::tool_options)},
+			my $vpc1_fit = 
+				tool::modelfit ->new( %{common_options::restore_options(@common_options::tool_options)},
 					 base_directory	 => $frem_vpc_model1 -> directory(),
 					 directory	 => $rundir,
 					 copy_data	 => 0,

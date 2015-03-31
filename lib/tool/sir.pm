@@ -112,8 +112,8 @@ sub modelfit_setup
 		my @models=();
 		my $message = "Running input model";
 
-		my $orig_fit = tool::modelfit ->
-			new( %{common_options::restore_options(@common_options::tool_options)},
+		my $orig_fit = 
+			tool::modelfit->new( %{common_options::restore_options(@common_options::tool_options)},
 				 base_directory	 => $self ->directory(),
 				 directory		 => $self ->directory().
 				 '/orig_modelfit_dir'.$model_number,
@@ -318,8 +318,7 @@ sub modelfit_setup
 	$self->tools([]) unless (defined $self->tools());
 
 	push( @{$self -> tools()},
-		tool::modelfit ->
-		new( %{common_options::restore_options(@common_options::tool_options)},
+		tool::modelfit ->new( %{common_options::restore_options(@common_options::tool_options)},
 			 models		 => $modelsarr,
 			 directory             => undef,
 			 _raw_results_callback => $self ->

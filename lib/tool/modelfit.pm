@@ -2807,12 +2807,30 @@ sub compute_cwres
 	croak "queue_info is not defined" unless defined $queue_info_ref;
 
 	my $model = $queue_info_ref->{'model'};
+
+	#check in PsN config, or try R --version
+	my $Rexec;
 	if ( defined $PsN::config -> {'_'} -> {'R'} ) {
+		$Rexec = $PsN::config -> {'_'} -> {'R'};
+	}else{
+		my $null = '/dev/null';
+		if ($Config{osname} eq 'MSWin32'){
+			$null = 'NUL';
+		}
+		my $rc = system('R --version >'.$null.' 2>&1');
+		$rc = $rc >> 8;
+		if ($rc == 0){
+			$Rexec = 'R';
+		}
+	}
+
+	if (defined $Rexec and length($Rexec)>0){
 		my $probs = $model->problems();
 		if ( defined $probs ) {
 			foreach my $prob ( @{$probs} ) {
 				if( $prob->cwres_modules ) {
 					my $sdno = $prob->cwres_modules->[0]->sdno();
+
 					my $sim = $prob->cwres_modules->[0]->mirror_plots ? ',sim.suffix="sim"' : '';
 					# Create the short R-script to compute the CWRES.
 					open( RSCRIPT, ">compute_cwres.R" );
@@ -2820,7 +2838,7 @@ sub compute_cwres
 					close( RSCRIPT );
 	
 					# Execute the script
-					system( $PsN::config -> {'_'} -> {'R'}." CMD BATCH compute_cwres.R" );
+					system( $Rexec." CMD BATCH compute_cwres.R" );
 				}
 			}
 		}
