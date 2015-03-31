@@ -177,14 +177,14 @@ if( $options{'shrinkage'} ) {
 }
 
 ## Create new Cdd object:
-my $cdd = tool::cdd -> 
-    new ( eval( $common_options::parameters ),
-	  models	     => [ $model ],
-	  bins		     => $options{'bins'},
-	  selection_method   => $options{'selection_method'},
-	  case_column       => $options{'case_column'},
-	  outside_n_sd_check => $options{'outside_n_sd_check'},
-	  cross_validate     => $options{'xv'} );
+my $cdd = 
+	tool::cdd -> new ( eval( $common_options::parameters ),
+					   models	     => [ $model ],
+					   bins		     => $options{'bins'},
+					   selection_method   => $options{'selection_method'},
+					   case_column       => $options{'case_column'},
+					   outside_n_sd_check => $options{'outside_n_sd_check'},
+					   cross_validate     => $options{'xv'} );
 
 
 $cdd-> print_options (cmd_line => $cmd_line,

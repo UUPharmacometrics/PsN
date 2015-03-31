@@ -268,21 +268,21 @@ if (defined $options{'copy_data'} and (not $options{'copy_data'})){
 }
 
 
-my $sir = tool::sir -> 
-  new ( eval( $common_options::parameters ),
-	top_tool => 1,
-	models				     => [ $model ],
-	with_replacement				     => $options{'with_replacement'},
-	samples				     => $options{'samples'},
-	resamples				     => $options{'resamples'},
-	mceta				     => $options{'mceta'},
-	inflation				     => $options{'inflation'},
-	covmat_input				     => $options{'covmat_input'},
-	rawres_input        	=> $options{'rawres_input'},
-	problems_per_file        	=> $options{'problems_per_file'},
-	offset_rawres       	=> $options{'offset_rawres'},
-	in_filter             => \@in_filter,
-	copy_data                            => $options{'copy_data'}
+my $sir = 
+	tool::sir->new ( eval( $common_options::parameters ),
+					 top_tool => 1,
+					 models				     => [ $model ],
+					 with_replacement				     => $options{'with_replacement'},
+					 samples				     => $options{'samples'},
+					 resamples				     => $options{'resamples'},
+					 mceta				     => $options{'mceta'},
+					 inflation				     => $options{'inflation'},
+					 covmat_input				     => $options{'covmat_input'},
+					 rawres_input        	=> $options{'rawres_input'},
+					 problems_per_file        	=> $options{'problems_per_file'},
+					 offset_rawres       	=> $options{'offset_rawres'},
+					 in_filter             => \@in_filter,
+					 copy_data                            => $options{'copy_data'}
 	);
 
 $sir-> print_options (cmd_line => $cmd_line,

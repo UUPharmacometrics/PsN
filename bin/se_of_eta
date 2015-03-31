@@ -93,8 +93,8 @@ chdir( $directory );
 
 my $modelfit;
 
-$modelfit = tool::modelfit -> 
-    new ( eval( $common_options::parameters ),
+$modelfit = 
+	tool::modelfit->new( eval( $common_options::parameters ),
 	  directory => 'orig_modelfit_dir',
 	  models => [$model] );  
 
@@ -319,10 +319,10 @@ push( @{$data_copy->header}, 'EBAY', 'L2' );
 unlink($data_copy ->full_name);
 $data_copy -> _write;
 
-$modelfit = tool::modelfit -> 
-    new ( eval( $common_options::parameters ),
-	  directory => 'se_of_eta',
-	  models => \@models );  
+$modelfit = 
+	tool::modelfit -> new ( eval( $common_options::parameters ),
+							directory => 'se_of_eta',
+							models => \@models );  
 
 $modelfit -> run;
 

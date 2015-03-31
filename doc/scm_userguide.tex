@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{SCM user guide}{2015-03-30}
+\guidetitle{SCM user guide}{2015-03-31}
 
 \begin{document}
 
@@ -187,7 +187,7 @@ By default the value of the covariate function for a parameter is a  product of 
 \nextopt
 \optconfig{time\_varying}{list of covariates}
 Handle time-varying covariates when computing median and mean of covariates. Requires that W is defined in \$ERROR/\$PRED,
-where W refers to the "Uppsala way" of encoding residual error, see below
+where W refers to the "Uppsala way" of encoding residual error, see below.
 
 Assume an ID has the following observations: a,b,c,d
 
@@ -462,6 +462,10 @@ If the linearization method was used, the logfile also lists the ofv values of t
 \section{Known bugs and problems}
 Two covariates will be mixed up if the complete name of one is the same as the beginning of another. Example: AP and APGR will result in errors, since AP is identical to the beginning of APGR. APX and APGR is okay, since the third letters X and G are different. 
 
+If the concatenated names of a parameter and a covariate contain the string PAR, this can result in errors in the 
+automatic code handling. Example: If the parameter is called SLP and the covariate is called ARM, the concatenation
+is SLPARM which contains PAR, and then PAR will be treated as a placeholder for the parameter name SLP and
+replaced with SLP, resulting in SLSLPM and a crash.
 \section{Tricks}
 To build the full model, use p\_forward=1. Then any parameter inclusion that gives a drop in ofv will be accepted. Since the initial estimates of the model are updated after each parameter inclusion, the forward search may make it easier to estimate the parameters in the full model, compared to when adding all relations at once.
 

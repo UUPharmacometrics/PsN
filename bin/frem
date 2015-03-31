@@ -281,20 +281,20 @@ unless( scalar(@{$est_record}) > 0 ){
   exit;
 }
 
-my $frem = tool::frem -> 
-    new ( eval( $common_options::parameters ),
-		  models	     => [ $model ],
-		  top_tool           => 1,
-		  done_file => $done_file,
-		  parameters => \@parameters,
-		  time_varying => \@time_varying,
-		  invariant => \@invariant,
-		  start_eta => $options{'start_eta'}, 
-		  estimate => $options{'estimate'}, 
-		  check => $options{'check'}, 
-		  vpc => $options{'vpc'}, 
-		  occasion => $options{'occasion'}, 
-		  dv => $options{'dv'}); 
+my $frem = 
+	tool::frem->new( eval( $common_options::parameters ),
+					 models	     => [ $model ],
+					 top_tool           => 1,
+					 done_file => $done_file,
+					 parameters => \@parameters,
+					 time_varying => \@time_varying,
+					 invariant => \@invariant,
+					 start_eta => $options{'start_eta'}, 
+					 estimate => $options{'estimate'}, 
+					 check => $options{'check'}, 
+					 vpc => $options{'vpc'}, 
+					 occasion => $options{'occasion'}, 
+					 dv => $options{'dv'}); 
 
 #ui -> print( category => 'frem',
 #	     message => "have new frem\n" );

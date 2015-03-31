@@ -215,14 +215,14 @@ unless( scalar(@{$est_record}) > 0 ){
   exit;
 }
 
-my $ebe_npde = tool::ebe_npde -> 
-    new ( eval( $common_options::parameters ),
-	  lst_file => $options{'lst_file'},
-	  estimate_input => $options{'estimate_input'},
-	  reminimize => $options{'reminimize'},
-	  gls_data_file => $options{'gls_data_file'},
-	  models	     => [ $model ],
-	  samples            => $options{'samples'} );
+my $ebe_npde = 
+	tool::ebe_npde->new( eval( $common_options::parameters ),
+						 lst_file => $options{'lst_file'},
+						 estimate_input => $options{'estimate_input'},
+						 reminimize => $options{'reminimize'},
+						 gls_data_file => $options{'gls_data_file'},
+						 models	     => [ $model ],
+						 samples            => $options{'samples'} );
 
 
 $ebe_npde-> print_options (cmd_line => $cmd_line,

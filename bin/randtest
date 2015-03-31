@@ -176,8 +176,7 @@ if( $options{'shrinkage'} ) {
 
 my $base_model;
 if (defined $options{'base_model'}){
-    $base_model = model ->
-	new ( eval( $eval_string ),
+    $base_model = model->new( eval( $eval_string ),
 	      filename => $options{'base_model'},
 	      ignore_missing_output_files => 1);
 	unless ( $base_model -> is_run){
@@ -190,19 +189,19 @@ if (defined $options{'base_model'}){
 	}
 }
 
-my $rand = tool::randtest -> 
-  new ( eval( $common_options::parameters ),
-	top_tool => 1,
-	prepend_model_file_name => 1,
-	models				     => [ $model ],
-	samples				     => $options{'samples'},
-	base_model			     => $base_model,
-	match_transitions	             => $options{'match_transitions'},
-	update_inits          	=> $options{'update_inits'},
-	full_model_inits          	=> $options{'full_model_inits'},
-	randomization_column                 => $options{'randomization_column'},
-	stratify_on                          => $options{'stratify_on'},
-	copy_data                            => $options{'copy_data'}
+my $rand = 
+	tool::randtest->new( eval( $common_options::parameters ),
+						 top_tool => 1,
+						 prepend_model_file_name => 1,
+						 models				     => [ $model ],
+						 samples				     => $options{'samples'},
+						 base_model			     => $base_model,
+						 match_transitions	             => $options{'match_transitions'},
+						 update_inits          	=> $options{'update_inits'},
+						 full_model_inits          	=> $options{'full_model_inits'},
+						 randomization_column                 => $options{'randomization_column'},
+						 stratify_on                          => $options{'stratify_on'},
+						 copy_data                            => $options{'copy_data'}
 	);
 
 $rand-> print_options (cmd_line => $cmd_line,

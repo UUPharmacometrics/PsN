@@ -380,8 +380,8 @@ chdir($main_directory);
 my $global_scm;
 my $temp_scm_dir='full_data_statistics';
 
-$global_scm = tool::scm -> 
-    new ( eval( $common_options::parameters ),
+$global_scm = 
+tool::scm->new ( eval( $common_options::parameters ),
 	  models	=> [$model],
 	  config_file => $config_file,
 	  directory => $temp_scm_dir,
@@ -447,8 +447,8 @@ for (my $split=1; $split<= $options{'splits'}; $split++){
         $config_file -> included_relations($original_included);
     }
 #change xv_pred_data to filenames
-    $scm = tool::scm -> 
-	new ( eval( $common_options::parameters ),
+    $scm = 
+tool::scm -> new ( eval( $common_options::parameters ),
 	      models	=> [$model_group],
 	      config_file => $config_file,
 	      directory => 'scm_xv_group'.$group,

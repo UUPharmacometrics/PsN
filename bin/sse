@@ -332,11 +332,11 @@ if ( defined $options{'alternative_models'} ){
   #split string, assume comma separated
   foreach my $altfile (split(/,/,$options{'alternative_models'})){
     if (length($altfile)>0){
-		my $alternative_model = model ->
-			new ( eval( $eval_string ),
-				  filename => $altfile,
-				  ignore_missing_output_files => 1,
-				  ignore_missing_data => 1);
+		my $alternative_model = 
+			model->new( eval( $eval_string ),
+						filename => $altfile,
+						ignore_missing_output_files => 1,
+						ignore_missing_data => 1);
 		push(@alternatives,$alternative_model);
     }
   }
@@ -400,7 +400,7 @@ if ( defined $options{'out_filter'} ){
   }	
 }
 
-my $sse = tool::sse -> new (
+my $sse = tool::sse->new(
 	eval( $common_options::parameters ),
 	estimate_simulation		=> $options{'estimate_simulation'},
 	ref_ofv            		=> $options{'ref_ofv'},

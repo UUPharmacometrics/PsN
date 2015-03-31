@@ -303,17 +303,17 @@ unless( scalar(@{$est_record}) > 0 ){
   exit;
 }
 
-my $gls = tool::gls -> 
-    new ( eval( $common_options::parameters ),
-	  iwres_shrinkage => $options{'iwres_shrinkage'},
-	  ind_shrinkage => $options{'ind_shrinkage'},
-	  reminimize => $options{'reminimize'},
-	  additive_theta => $options{'additive_theta'},
-	  gls_model => $options{'gls_model'},
-	  sim_table => $options{'sim_table'},
-	  set_simest => $options{'set_simest'},
-	  models	     => [ $model ],
-	  samples            => $options{'samples'} );
+my $gls = 
+	tool::gls -> new ( eval( $common_options::parameters ),
+					   iwres_shrinkage => $options{'iwres_shrinkage'},
+					   ind_shrinkage => $options{'ind_shrinkage'},
+					   reminimize => $options{'reminimize'},
+					   additive_theta => $options{'additive_theta'},
+					   gls_model => $options{'gls_model'},
+					   sim_table => $options{'sim_table'},
+					   set_simest => $options{'set_simest'},
+					   models	     => [ $model ],
+					   samples            => $options{'samples'} );
 
 
 $gls-> print_options (cmd_line => $cmd_line,

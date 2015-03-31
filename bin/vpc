@@ -670,8 +670,8 @@ if ($dummymodel){
 	}
 }
 
-my $vpc = tool::npc -> 
-    new ( eval( $common_options::parameters ),
+my $vpc = 
+	tool::npc->new( eval( $common_options::parameters ),
 	  models	     => [ $model ],
 	  stratify_on        => $options{'stratify_on'},
 	  censor             => $options{'censor'},

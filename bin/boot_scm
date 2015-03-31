@@ -847,8 +847,8 @@ for ( my $j = $start_j; $j <= $options{'samples'}; $j++ ) {
 		print ui -> print( category => 'boot_scm',
 						   message => "Starting bootstrap scm forward search $samp\n");
 
-		my $scm = tool::scm -> 
-			new ( eval( $common_options::parameters ),
+		my $scm = 
+			tool::scm -> new ( eval( $common_options::parameters ),
 				  directory => $scmdir,
 				  config_file => $config_file,
 				  models	=> [$new_mod],
@@ -885,8 +885,8 @@ for ( my $j = $start_j; $j <= $options{'samples'}; $j++ ) {
 		$config_file -> p_value( $p_backward ) if( defined $p_backward );
 		$config_file -> search_direction( 'backward' );
 
-		my $scm = tool::scm -> 
-			new ( eval( $common_options::parameters ),
+		my $scm = 
+			tool::scm ->new ( eval( $common_options::parameters ),
 				  directory => $scmdir,
 				  models	=> [$new_mod],
 				  config_file => $config_file,

@@ -423,31 +423,31 @@ if ($dummymodel){
 }
 
 
-my $npc = tool::npc -> 
-    new ( eval( $common_options::parameters ),
-	  models	     => [ $model ],
-	  stratify_on        => $options{'stratify_on'},
-	  censor             => $options{'censor'},
-	  no_of_strata       => $options{'no_of_strata'},
-	  refstrat           => $options{'refstrat'},
-	  samples            => $options{'samples'},
-	  lst_file           => $options{'lst_file'},
-	  msfo_file          => $options{'msfo_file'},
-	  dv                 => $options{'dv'},
-	  copy_data                => $options{'copy_data'},
-	  orig_table         => $options{'orig_table'},
-	  sim_table          => $options{'sim_table'},
-	  irep          => $options{'irep'},
-	  keep_estimation    => $options{'keep_estimation'},
-	  noprediction       => $options{'noprediction'},
-	  n_simulation_models => $options{'n_simulation_models'},
-	  rawres_input => $options{'rawres_input'},
-	  offset_rawres => $options{'offset_rawres'},
-	  covariance_file     => $options{'covariance_file'},
-	  sim_model          => $options{'sim_model'},
-	  flip_comments      => $options{'flip_comments'},
-	  confidence_interval => $options{'confidence_interval'}
-	  );
+my $npc = 
+	tool::npc->new(eval( $common_options::parameters ),
+				   models	     => [ $model ],
+				   stratify_on        => $options{'stratify_on'},
+				   censor             => $options{'censor'},
+				   no_of_strata       => $options{'no_of_strata'},
+				   refstrat           => $options{'refstrat'},
+				   samples            => $options{'samples'},
+				   lst_file           => $options{'lst_file'},
+				   msfo_file          => $options{'msfo_file'},
+				   dv                 => $options{'dv'},
+				   copy_data                => $options{'copy_data'},
+				   orig_table         => $options{'orig_table'},
+				   sim_table          => $options{'sim_table'},
+				   irep          => $options{'irep'},
+				   keep_estimation    => $options{'keep_estimation'},
+				   noprediction       => $options{'noprediction'},
+				   n_simulation_models => $options{'n_simulation_models'},
+				   rawres_input => $options{'rawres_input'},
+				   offset_rawres => $options{'offset_rawres'},
+				   covariance_file     => $options{'covariance_file'},
+				   sim_model          => $options{'sim_model'},
+				   flip_comments      => $options{'flip_comments'},
+				   confidence_interval => $options{'confidence_interval'}
+	);
 
 $npc-> print_options (cmd_line => $cmd_line,
 		      toolname => 'NPC',

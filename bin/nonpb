@@ -150,13 +150,13 @@ my $model = model -> new ( eval( $eval_string ),
 			   filename                    => $ARGV[0],
 			   ignore_missing_output_files => 1 );
 
-my $nonpb = tool::nonpb -> 
-    new ( eval( $common_options::parameters ),
-	  models	     => [$model],
-	  lst_file           => $lst_file,
-	  samples            => $options{'samples'},
-	  etas               => $options{'etas'},
-	  nonpb_version            => $options{'nonpb_version'});
+my $nonpb = 
+	tool::nonpb->new( eval( $common_options::parameters ),
+					  models	     => [$model],
+					  lst_file           => $lst_file,
+					  samples            => $options{'samples'},
+					  etas               => $options{'etas'},
+					  nonpb_version            => $options{'nonpb_version'});
 
 
 $nonpb-> print_options (cmd_line => $cmd_line,
@@ -187,8 +187,8 @@ if ($nonpb ->nonpb_version() == 2){
 
   my $type = defined $options{'bca'} ? 'bca' : undef;
 
-  my $bs = tool::bootstrap -> 
-      new ( eval( $common_options::parameters ),
+  my $bs = 
+	  tool::bootstrap->new( eval( $common_options::parameters ),
 			directory => 'bootstrap',
 			subjects	=> {},
 			models	=> [ $model ],
@@ -204,15 +204,16 @@ if ($nonpb ->nonpb_version() == 2){
 } else {
   # version 1: run regular pind on original model
   # URS section 1 and 2
-
-  my $pind = tool::pind -> 
-      new (   models	     => [$model],
-	      modelname      => 'original',
-	      tablename      => 'original.patab',
-	      ind_param      => 'eta',
-	      lst_file       => $lst_file,
-	      directory      => 'pind_dir1'
-	      );
+	#FIXME pass on common options here
+  my $pind = 
+	  tool::pind->new ( eval( $common_options::parameters ),
+						models	     => [$model],
+						modelname      => 'original',
+						tablename      => 'original.patab',
+						ind_param      => 'eta',
+						lst_file       => $lst_file,
+						directory      => 'pind_dir1'
+	  );
 
   $pind -> run;
   $nonpb->n_individuals($pind->n_individuals);

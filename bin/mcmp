@@ -366,8 +366,8 @@ if (defined $options{'simulation_model'} or
 	$simulation_model = model->create_dummy_model;
 }
 
-my $mcmp = tool::mcmp -> 
-    new ( eval( $common_options::parameters ),
+my $mcmp = 
+	tool::mcmp->new(eval( $common_options::parameters ),
 		  stratify_on        => $options{'stratify_on'},
 		  increment          => $options{'increment'},
 		  start_size         => $options{'start_size'},

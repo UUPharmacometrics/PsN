@@ -423,14 +423,14 @@ if( $direction eq 'forward' or $direction eq 'both' ){
 	
 	$config_file -> search_direction( 'forward' );
 
-	$scm = tool::scm -> 
-		new ( eval( $common_options::parameters ),
-			  models	=> $models_array,
-			  base_criteria_values => \%base_criteria_values,
-			  config_file => $config_file,
-			  both_directions => ($direction eq 'both')? 1 : 0,
-			  p_backward => $p_backward,
-			  ofv_backward => $ofv_backward);
+	$scm = 
+		tool::scm->new ( eval( $common_options::parameters ),
+						 models	=> $models_array,
+						 base_criteria_values => \%base_criteria_values,
+						 config_file => $config_file,
+						 both_directions => ($direction eq 'both')? 1 : 0,
+						 p_backward => $p_backward,
+						 ofv_backward => $ofv_backward);
 	
 	$scm-> print_options (cmd_line => $cmd_line,
 						  toolname => 'scm',
@@ -480,8 +480,8 @@ if( $direction eq 'backward' ){
 
 	$config_file -> search_direction( 'backward' );
 
-	my $scm_back = tool::scm -> 
-		new ( eval( $common_options::parameters ),
+	my $scm_back = 
+		tool::scm->new( eval( $common_options::parameters ),
 			  base_criteria_values => \%base_criteria_values,
 			  directory   => $options{'directory'},
 			  models	=> $models_array,

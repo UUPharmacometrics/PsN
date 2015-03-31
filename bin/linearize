@@ -160,23 +160,23 @@ foreach my $option (@{$model->problems->[0]->inputs->[0]->options()}){
 
 #set do not drop to everything undropped in model
 
-my $scm = tool::scm -> 
-    new ( eval( $common_options::parameters ),
-		  models	=> [$model],
-		  epsilon => $options{'epsilon'},
-		  foce => $options{'foce'},
-		  do_not_drop => \@keep,
-		  lst_file => $lstfile,
-		  error=> $options{'error'},
-		  search_direction => 'forward',
-		  linearize => 1,
-		  max_steps => 0,
-		  test_relations         => {},
-		  categorical_covariates => [],
-		  continuous_covariates  => [],
-		  both_directions => 0,
-		  logfile =>['linlog.txt'],
-		  directory_name_prefix => 'linearize');
+my $scm = 
+	tool::scm->new(eval($common_options::parameters ),
+				   models	=> [$model],
+				   epsilon => $options{'epsilon'},
+				   foce => $options{'foce'},
+				   do_not_drop => \@keep,
+				   lst_file => $lstfile,
+				   error=> $options{'error'},
+				   search_direction => 'forward',
+				   linearize => 1,
+				   max_steps => 0,
+				   test_relations         => {},
+				   categorical_covariates => [],
+				   continuous_covariates  => [],
+				   both_directions => 0,
+				   logfile =>['linlog.txt'],
+				   directory_name_prefix => 'linearize');
 
 $scm-> print_options (cmd_line => $cmd_line,
 					  toolname => 'scm',

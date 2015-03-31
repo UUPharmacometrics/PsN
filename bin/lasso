@@ -205,19 +205,19 @@ my $model = model -> new ( eval( $eval_string ),
 			   filename                    => $ARGV[0],
 			   ignore_missing_output_files => 1);
 
-my $lasso = tool::lasso -> 
-    new ( eval( $common_options::parameters ),
-	  models	     => [ $model ],
-	  cutoff             => $options{'cutoff'},
-	  relations          => $options{'relations'},
-	  start_t            => $options{'start_t'},
-	  stop_t             => $options{'stop_t'},
-	  step_t	     => $options{'step_t'},
-	  pred_ofv_start_t      => $options{'pred_ofv_start_t'},
-	  groups  => $options{'groups'},
-	  convergence        => $options{'convergence'},
-	  stratify_on        => $options{'stratify_on'},
-	  lst_file           => $options{'lst_file'});
+my $lasso = 
+	tool::lasso->new(eval( $common_options::parameters ),
+					 models	     => [ $model ],
+					 cutoff             => $options{'cutoff'},
+					 relations          => $options{'relations'},
+					 start_t            => $options{'start_t'},
+					 stop_t             => $options{'stop_t'},
+					 step_t	     => $options{'step_t'},
+					 pred_ofv_start_t      => $options{'pred_ofv_start_t'},
+					 groups  => $options{'groups'},
+					 convergence        => $options{'convergence'},
+					 stratify_on        => $options{'stratify_on'},
+					 lst_file           => $options{'lst_file'});
 
 $lasso-> print_options (cmd_line => $cmd_line,
 		      toolname => 'LASSO',

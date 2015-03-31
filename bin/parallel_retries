@@ -323,8 +323,8 @@ if (defined $options{'rawres_input'}){
 	}
 }
 #basedirect $main_directory
-$modelfit = tool::modelfit -> 
-    new ( eval( $common_options::parameters ),
+$modelfit = 
+	tool::modelfit->new( eval( $common_options::parameters ),
 	  prepend_model_file_name => 1,
 	  prepend_options_to_lst => $options{'prepend_options_to_lst'},
 	  directory => undef,
