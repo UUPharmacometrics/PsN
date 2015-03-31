@@ -155,12 +155,12 @@ sub eta_shrinkage
 			} elsif( scalar @{$omegas -> [$probnum-1]} == 0 ) {
 				my $mes = "\n".$model -> full_name. 
 					"\nNo omegas found in output for problem $probnum. PsN cannot compute shrinkage.\n";
-				carp($mes);
+				ui->print(category => 'all', messange => $mes);
 			} else {
 				my $mes = "\n". $model -> full_name . "\nCall to output->omegas indicates that results ".
 				"exists in multiple subproblems. PsN cannot compute shrinkage".
 				" on the subproblem level\n";
-				carp($mes);
+				ui->print(category => 'all', messange => $mes);
 			}
 		}
 	}

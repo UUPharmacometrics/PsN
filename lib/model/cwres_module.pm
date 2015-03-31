@@ -7,7 +7,7 @@ use MooseX::Params::Validate;
 
 has 'enabled' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'cwtab_names' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { ['cwtab.est', 'cwtab'] } );
-has 'sdno' => ( is => 'rw', isa => 'Int' );
+has 'sdno' => ( is => 'rw', isa => 'Int',default => 0 );
 has 'mirror_plots' => ( is => 'rw', isa => 'Maybe[Int]' );
 has 'problem' => ( is => 'rw', required => 1, isa => 'model::problem' );
 
@@ -52,39 +52,38 @@ sub BUILD
 							  record_strings => [ "COMRES=".($netas+$neps) ] );
 	}
 
-	# get the table names. They are needed below and further down
-	my @cwtab_names = @{$self -> cwtab_names};
 
 	# Figure out if we have an sdtab and what number it has
 	my ( $sd_ref ) = $prob ->		_option_val_pos( name        => 'FILE',
 													 record_name => 'table',
 													 exact_match => 0 );
+
 	if( defined $sd_ref ) {
 		foreach my $tabname ( @{$sd_ref} ) {
 			if( $tabname =~ /[sd,pa]tab(\d+)/i ) {
 				my $sdno = $1;
-				if( $sdno eq '' ){
-					$sdno = 1;
-				}
 				$self -> sdno($sdno);
-				for( my $i = 0; $i <= $#cwtab_names; $i++ ) {
-
-					# This regular expression is probably quite unneccessary. It
-					# matches evertyhing before the first 'dot' in a filename,
-					# the dot, and the rest of the name(dots included). We can
-					# then inject a number before the first dot. It also handles
-					# no dots, the number will then be injected at the end of
-					# the filename.
-
-					if( $cwtab_names[$i] =~ /([^\.]+)(\.{0,1})(.*)/ ) {
-						$cwtab_names[$i] = $1.$sdno.$mirror_name.$2.$3;
-					}
-				}
-				$self -> cwtab_names( \@cwtab_names);
 				last;
 			}
 		}
 	}
+
+	# get the table names
+	my @cwtab_names = @{$self -> cwtab_names};
+	for( my $i = 0; $i <= $#cwtab_names; $i++ ) {
+
+		# This regular expression is probably quite unneccessary. It
+		# matches evertyhing before the first 'dot' in a filename,
+		# the dot, and the rest of the name(dots included). We can
+		# then inject a number before the first dot. It also handles
+		# no dots, the number will then be injected at the end of
+		# the filename.
+
+		if( $cwtab_names[$i] =~ /([^\.]+)(\.{0,1})(.*)/ ) {
+			$cwtab_names[$i] = $1.$self->sdno.$mirror_name.$2.$3;
+		}
+	}
+	$self -> cwtab_names( \@cwtab_names);
 
 
 	# Figure out wheter we have and 'ADVAN' option. By not using
