@@ -12,7 +12,6 @@ use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages and $path variable definition
 
 use File::Copy 'cp';
-use File::Copy::Recursive 'dircopy';
 use File::Spec;
 
 #in psn.conf must set output_style = SPLUS, otherwise tests will fail. fix by setting here.
@@ -135,49 +134,54 @@ $hashmox_answer{'relative_absolute_bias'}=[9.711418,38.58046,16.495,-60.217,7.17
 
 my $model_dir = $includes::testfiledir . "/";
 
-my $dir = create_test_dir('unit_sse');
+SKIP: {
+    eval { require File::Copy::Recursive };
+    skip "File::Copy::Recursive not installed" if $@;
 
-dircopy($model_dir . 'sse_pheno', $dir);
-chdir($dir);
+	my $dir = create_test_dir('unit_sse');
 
-my $resultsfile = 'sse_test/sse_results_recompute1.csv';
+	File::Copy::Recursive::dircopy($model_dir . 'sse_pheno', $dir);
+	chdir($dir);
 
-unlink($resultsfile);
-my $command = get_command("sse") . " -samples=5 pheno.mod  -recompute=sse_test/raw_results_pheno.csv";
+	my $resultsfile = 'sse_test/sse_results_recompute1.csv';
 
-system $command;
+	unlink($resultsfile);
+	my $command = get_command("sse") . " -samples=5 pheno.mod  -recompute=sse_test/raw_results_pheno.csv";
 
-my ($h1, $h2) = get_stats($resultsfile);
+	system $command;
 
-foreach my $key (keys %hash1_answer) {
-	is_array ($hash1_answer{$key}, $h1->{$key}, "sse sim model compare $key");
+	my ($h1, $h2) = get_stats($resultsfile);
+
+	foreach my $key (keys %hash1_answer) {
+		is_array ($hash1_answer{$key}, $h1->{$key}, "sse sim model compare $key");
+	}
+	foreach my $key (keys %hash2_answer) {
+		is_array ($hash2_answer{$key}, $h2->{$key}, "sse alt model compare $key");
+	}
+	unlink($resultsfile);
+	chdir('..');
+
+	rmtree([$dir]);
+	File::Copy::Recursive::dircopy($model_dir . 'sse_mox', $dir);
+	chdir($dir);
+
+	unlink($resultsfile);
+	$command= get_command("sse") . " -samples=5 moxonidine.mod -recompute=sse_test/raw_results_moxonidine.csv";
+
+	system $command;
+
+	($h1, $h2) = get_stats($resultsfile);
+
+	
+	foreach my $key (keys %hashmox_answer){
+		is_array ($hashmox_answer{$key},$h1->{$key},"sse sim model compare $key");
+	}
+	foreach my $key (keys %hashmox_answer){
+		is_array ($hashmox_answer{$key},$h2->{$key},"sse alt model compare $key");
+	}
+	unlink($resultsfile);
+	
+	remove_test_dir($dir);
+	
 }
-foreach my $key (keys %hash2_answer) {
-	is_array ($hash2_answer{$key}, $h2->{$key}, "sse alt model compare $key");
-}
-unlink($resultsfile);
-chdir('..');
-
-rmtree([$dir]);
-dircopy($model_dir . 'sse_mox', $dir);
-chdir($dir);
-
-unlink($resultsfile);
-$command= get_command("sse") . " -samples=5 moxonidine.mod -recompute=sse_test/raw_results_moxonidine.csv";
-
-system $command;
-
-($h1, $h2) = get_stats($resultsfile);
-
-
-foreach my $key (keys %hashmox_answer){
-    is_array ($hashmox_answer{$key},$h1->{$key},"sse sim model compare $key");
-}
-foreach my $key (keys %hashmox_answer){
-    is_array ($hashmox_answer{$key},$h2->{$key},"sse alt model compare $key");
-}
-unlink($resultsfile);
-
-remove_test_dir($dir);
-
 done_testing();
