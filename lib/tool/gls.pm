@@ -685,7 +685,7 @@ sub modelfit_setup
 				print GLS " PIPR PPRE ISHR\n";
 				print DAT "ISHR\n";
 				for (my $i=2; $i<scalar(@tmp); $i++){
-					chomp $tmp[$i];
+					$tmp[$i] =~ s/\s*$//; # remove trailing whitespace, chomp does not work on windows
 					print GLS $tmp[$i]." ".$shrinkage_arr[$i]."\n";
 					print DAT $shrinkage_arr[$i]."\n";
 				}
