@@ -68,6 +68,7 @@ sub submit
   sleep($self->lsf_sleep) if (defined $self->lsf_sleep);
 
 	$self->job_id($jobId);
+	system('echo '.$jobId.' > jobId');
 	return $jobId;
 }
 
