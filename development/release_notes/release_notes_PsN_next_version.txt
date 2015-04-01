@@ -56,26 +56,14 @@ Changes and bug fixes from PsN 4.2.0 to 4.4.0
 - PsN will now preserve the record order of the input model files. A new option
   -psn_record_order can be used for the legacy built in record order.
 
-- The common option -warn_with_trace was broken and is now working again.
-  It is now just a boolean option not taking any integer argument.
-
-- New option -standardised_output to create DDMoRe standard output .xml
-
-- Less delay (sleep) when jobs are submitted, thank you to Ruben Faelens.
-
-- Guide common_options_defaults_version_psn.pdf has been renamed to common_options.pdf, and
-  the options have been organised according to themes instead of alphabetically.
-  All user guides have been revised.
-
-- Automatic generation of R plots, see documentation in common_options.pdf
+- Automatic generation of R plots, see documentation in common_options.pdf and/or
+  individual user guides for tools that have default template scripts
+  included in the PsN installation package: 
+  execute, bootstrap, vpc, randtest, sse, llp, mcmp, nca, pvar, cdd
 
 - Major rewrite of retries handling code, improved check that tweaked omega and sigma blocks are
   positive definite, updated rules for selecting best retry,
   and a large number of tests for the new code. See documentation in common_options.pdf
-
-- handle spaces in the path (enclose filepath with quotes in $DATA)
-
-- enable option -cwres also for NM 7. 
 
 - Complete redesign of data file handling and generation. PsN will not open the data file unless
   necessary (for bootstrapping, covariate statistics computation, ...). A large number
@@ -87,11 +75,12 @@ Changes and bug fixes from PsN 4.2.0 to 4.4.0
   Internally, PsN will use reference(s) to the data file(s) instead of passing around data objects.
   These changes affect nonpb, randtest, crossval, xv_scm, scm, bootstrap, cdd, lasso, frem 
   
+- handle spaces in the path (enclose filepath with quotes in $DATA)
+
+- enable option -cwres also for NM7. Computation requires R with library xpose4 to be installed.
+
 - Possibility to make PsN installation portable (PsN installation directory movable).
   See documentation in psn_installation.pdf and psn_configuration.pdf
-
-- bugfix in automatic setting of $MSFI when option -maxevals or -handle_crashes is set. Make sure existing 
-  $MSFI and possible options are not overwritten if $MSFI already exists in model file. 
 
 - Possible to set -directory=path/to/folder where path/to does not yest exist. Before you could 
   only specify a path with several levels in -dir if all but the last directory already existed. 
@@ -99,11 +88,6 @@ Changes and bug fixes from PsN 4.2.0 to 4.4.0
 - Expanded test suite
 
 - support for para mode of NMQual, see NMQual section in psn_configuration.pdf.
-
-- bugfix broken option -mirror_plots
-
-- PsN can call the converter toolbox to automatically convert a PharmML-format model
-  to nmtran format, if converter_path in psn.conf is set to the converter classpath and java is installed.
 
 - rewrite of -stop_motion functionality
 
@@ -113,15 +97,6 @@ Changes and bug fixes from PsN 4.2.0 to 4.4.0
   Replaced with PsN's own math::usable_number which uses regexp to see if string interpretation 
   is a number.
 
-- resume functionality internally in modelfit. If model->is_run read existing lst-file, do not run. Run
-  models that are not run, create raw_results. Currently accessible only from bootstrap
-
-- removed attribute rerun
-
-- removed options -prepend_model_to_lst, -nonparametric_etas, -nonparametric_marginals
-
-- New runrecord annotation handling
-
 - change how data class computes median: first compute median for individual and then over individuals
 
 - Nicer formatting for -verbose output
@@ -130,33 +105,64 @@ Changes and bug fixes from PsN 4.2.0 to 4.4.0
 
 - Review of online help for all tools
 
+- The common option -warn_with_trace was broken and is now working again.
+  It is now just a boolean option not taking any integer argument.
+
+- New option -standardised_output to create DDMoRe standard output .xml
+
+- PsN can call the DDMoRe converter toolbox to automatically convert a PharmML-format model
+  to nmtran format, if converter_path in psn.conf is set to the converter classpath and java is installed.
+
+- Less delay (sleep) when jobs are submitted, thank you to Ruben Faelens.
+
+- Guide common_options_defaults_version_psn.pdf has been renamed to common_options.pdf, and
+  the options have been organised according to themes instead of alphabetically.
+  All user guides have been revised.
+
+- bug fix: in automatic setting of $MSFI when option -maxevals or -handle_crashes is set. Make sure existing 
+  $MSFI and possible options are not overwritten if $MSFI already exists in model file. 
+
+- bug fix: broken option -mirror_plots
+
+- removed options -prepend_model_to_lst, -nonparametric_etas, -nonparametric_marginals
+
+- resume functionality internally in modelfit. If model->is_run read existing lst-file, do not run. Run
+  models that are not run, create raw_results. Currently accessible only from bootstrap
+
+- removed attribute rerun
+
+- New runrecord annotation handling
 
    ___Cluster/grid interaction___
 
-- bugfix for run_on_slurm: Request specific format of jobID when using squeue to find finished jobs,
+- bug fix: for run_on_slurm: Request specific format of jobID when using squeue to find finished jobs,
   so that jobID cannot be truncated.
 
-- bugfix in printing slurm sbatch command to file for easier debugging.
+- bug fix: in printing slurm sbatch command to file for easier debugging.
 
+- Add printing of LSF jobId to file named jobId in NM_run subfolders. 
 
    ___NONMEM interaction___
 
-- bugfix handle multiple $SIZES records
+- bug fix: handle multiple $SIZES records
 
-- FIXED and FIXE are allowed as synonyms to FIX in $OMEGA and $SIGMA
+- bug fix: FIXED and FIXE are allowed as synonyms to FIX in $OMEGA and $SIGMA
 
-- bugfix: handle comma-separated sets of parentheses in $THETA, for example $THETA (1 FIX), (2 FIX) 
+- bug fix: handle comma-separated sets of parentheses in $THETA, for example $THETA (1 FIX), (2 FIX) 
 
-- bugfix: support (init,options) and (options,init) form of $OMEGA/$SIGMA in addition 
+- bug fix: support (init,options) and (options,init) form of $OMEGA/$SIGMA in addition 
   to form with space instead of comma. Bugfix in parsing of (low init high) with spaces 
   instead of comma in $THETA. Bugfix pattern matching when searching for CORRELATION, CHOLESKY 
   etc in $SIGMA, match parts of string instead of just whole string. Added tests
 
-- bug fix parsing output from run when NONMEM crashes during covariance step
+- bug fix: parsing output from run when NONMEM crashes during covariance step
 
-- bug fix parsing of eigenvalues in NM7.3 lst-file when ext-file is missing
+- bug fix: reading of covariance matrix from run where MINIMIZATION TERMINATED
+  and $COV UNCONDITIONAL
 
-- bug fix handle value +Infinity and similar in NM7 output files .ext cov coi cor phi 
+- bug fix: parsing of eigenvalues in NM7.3 lst-file when ext-file is missing
+
+- bug fix: handle value +Infinity and similar in NM7 output files .ext cov coi cor phi 
 
 - changed default of -check_nmtran to off.
 
@@ -172,7 +178,7 @@ Changes and bug fixes from PsN 4.2.0 to 4.4.0
   Note: PsN still does not support STANDARD/CORRELATION form when updating a model with final estimates
   from a previous run (update_inits, vpc, frem, ...). 
 
-- bug fix in output parsing. If multiple $EST and a est-step that is not the last had text in 
+- bug fix: Output parsing: If multiple $EST and a est-step that is not the last had text in 
   lst saying "PROGRAM TERMINATED BY OBJ" then PsN would consider the whole run failed, even 
   though a later est-step was successful. 
 
@@ -183,7 +189,7 @@ Changes and bug fixes from PsN 4.2.0 to 4.4.0
 
 - Rewrite of code for parsing shrinkage and etabar.
 
-- Bugfix parsing of lst-files for NM 6.1.
+- Bug fix: parsing of lst-files for NM 6.1.
 
 - If PsN detects an NMtran error as the cause of a missing lst-file, then add the 
   contents of FMSG (the nmtran error message file) to the message that PsN prints to screen 
@@ -197,7 +203,7 @@ Changes and bug fixes from PsN 4.2.0 to 4.4.0
 
 - sumo now prints delta-ofv if the "Based on:" annotation is present in model
 
-- bugfix running sumo on file without extension .res or .lst would cause a crash
+- bug fix: running sumo on file without extension .res or .lst would cause a crash
 
 - output use labels instead of generic coordinates, skip parameter that are fixed or same
 
@@ -223,15 +229,16 @@ Changes and bug fixes from PsN 4.2.0 to 4.4.0
 
 - the vpc_results file will include a column with median idv value for each bin.
 
-- bugfix: if lloq and/or uloq is used, only display mean and delta-mean for real values if 0 real 
+- bug fix: if lloq and/or uloq is used, only display mean and delta-mean for real values if 0 real 
   observations were below lloq or above uloq. 
 
-- bugfix: handle global paths to input files on windows (sim_table, orig_table, sim_model)
+- bug fix: handle global paths to input files on windows (sim_table, orig_table, sim_model)
 
-- bugfix: binning when bin_by_count=0 and either no_of_bins or single_bin_size without overlap,
+- bug fix: binning when bin_by_count=0 and either no_of_bins or single_bin_size without overlap,
   could sometimes get observation(s) with single highest idv in stratum excluded from 
   last bin because of numerical error.
 
+- bug fix: Input check when user sets -flip_comments and model has $PRIOR.
 
    ___scm___
 
@@ -260,7 +267,7 @@ Changes and bug fixes from PsN 4.2.0 to 4.4.0
 
 - updated and corrected warnings related to time-varying covariates 
 
-- bugfix make sure base model is run for each bootstrap data set 
+- bug fix: make sure base model is run for each bootstrap data set 
 
 
    ___sse___
@@ -270,7 +277,7 @@ Changes and bug fixes from PsN 4.2.0 to 4.4.0
 
 -  sse will accept running with -samples=1
 
--  Bug fix for alternative models with METHOD=BAYES.
+-  Bug fix: alternative models with METHOD=BAYES would cause sse to crash.
 
    ___bootstrap___
 
@@ -319,6 +326,8 @@ Changes and bug fixes from PsN 4.2.0 to 4.4.0
 
 - support any extension (.ctl, .mod, .txt) of control stream.
 
+- Modification of option -add_prior to put $PRIOR in appropriate place and
+  to use new informative prior names such as $THETAP, $THETAPV etc.
 
    ___randtest___
 	 
@@ -333,8 +342,7 @@ Changes and bug fixes from PsN 4.2.0 to 4.4.0
 - a new csv-format output file with actual delta-ofv at different p-values, and actual p-values for 
   theoretical dofv:s from chisquare distribution. 
 	 
-- new command-line option copy_data
-
+- new command-line option -copy_data
 
    ___execute___
 	 
@@ -364,14 +372,15 @@ Changes and bug fixes from PsN 4.2.0 to 4.4.0
 
 - new userguide
 
-
    ___sir___
 	 
 - New option -covmat_input	 	 
 
 - New option -rawres_input
 
-- More input checks
+- More input checks and better error handling e.g. in cases when some NONMEM
+  runs fail during the evaluation. Print successful samples
+  count to sir_results.csv.
 
 - Modified algorithm, see user guide.
 
@@ -379,13 +388,14 @@ Changes and bug fixes from PsN 4.2.0 to 4.4.0
 
 - new command-line option copy_data
 
-- Bug fix handling of failed NONMEM runs for samples. Also print successful samples
-  count to sir_results.csv
+- bug fix handling of $CONTR in input model.
+
+- new option -problems_per_file to decide how many $PROBLEM per model file for 
+  the evaluation runs. 
 
    ___covmat___
 	 
 - New script, compute variance-covariance matrix based on -rawres_input
-
 
    ___precond___
 	 
@@ -398,13 +408,11 @@ Changes and bug fixes from PsN 4.2.0 to 4.4.0
 - pvar will also run base model from scm, pvar can handle scm results after clean<=2.
 - Updated pvar_results.csv to include model name.
 
-
    ___frem___
 
 - It will be checked that SIGMA and OMEGA blocks are postive definite, 
   using Cholesky decomposition. If non-positive definite the diagonal will
   be inflated slightly until positive definite
-
 
    ___llp___
 
@@ -412,16 +420,17 @@ Changes and bug fixes from PsN 4.2.0 to 4.4.0
 
 - Updated documentation on omega and sigma input.
 
-- bugfix handling of numerical issues in search for new parameter value guess 
-
-
+- bug fix: handling of numerical issues in search for new parameter value guess 
 
    ___nmoutput2so___
 
 - New tool for creating a standardized output file xml summarizing the outputs of a NONMEM run.
 
-
    ___pind___
 
-- bugfix handle setting of -clean=3
+- bug fix: handle -clean=3
  
+   ___gls___
+
+- bug fix: option -ind_shrinkage on Windows, get rid of extra line break in
+  intermediate data set glsinput.dta that caused NONMEM run to fail.
