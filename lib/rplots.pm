@@ -107,13 +107,23 @@ sub setup
 		$levelstring = $self->level();
 	}
 
+	my $workingdirectory = $self->directory;
+
+	if ($Config{osname} eq 'MSWin32'){
+		#replace \ in path with /
+		$workingdirectory =~ s/\\/\//g;
+		$dir =~ s/\\/\//g;
+	}
+
+
+
 	my @arr =(
 		 'rplots.level <- '.$levelstring,
 		 "xpose.runno <- '".$runno."'",
 		 "toolname <- '".$self->toolname()."'",
 		 "pdf.filename <- paste0('PsN_',toolname,'_plots.pdf')",
 		 "pdf.title <- '".$self->pdf_title."'",
-		 "working.directory<-'".$self->directory."'",
+		 "working.directory<-'".$workingdirectory."'",
 		 "raw.results.file <- '".$self->raw_results_file."'",
 		 "model.directory<-'".$dir."'",
 		 "model.filename<-'".$modelfile."'",
