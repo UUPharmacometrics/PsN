@@ -36,6 +36,7 @@ has 'in_filter' => ( is => 'rw', isa => 'ArrayRef[Str]' );
 has 'inflation' => ( is => 'rw', isa => 'Num', default => 1 );
 has 'mceta' => ( is => 'rw', isa => 'Int', default => 0 );
 has 'problems_per_file' => ( is => 'rw', isa => 'Maybe[Int]', default => 100 );
+has 'full_rawres_header' => ( is => 'rw', isa => 'ArrayRef' );
 
 has 'original_ofv' => ( is => 'rw', isa => 'Num');
 has 'pdf_vector' => ( is => 'rw', isa => 'ArrayRef' );
@@ -1075,7 +1076,9 @@ sub modelfit_analyze
 	);
 	my $model_number = $parm{'model_number'};
 
-	1;
+	$self->full_rawres_header($self->tools()->[0]->raw_results_header);
+
+
 }
 
 
@@ -1446,6 +1449,108 @@ sub format_covmatrix
 		push (@output,$line."\n");
 	}
 	return \@output;
+}
+
+
+sub create_R_plots_code{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+							  rplot => { isa => 'rplots', optional => 0 }
+		);
+	my $rplot = $parm{'rplot'};
+
+	my @cols=();
+	my $paramcount = 0;
+
+	my $maxresamplestring = 'MAX.RESAMPLE <- 1    # maximum resamples for single sample. 1 if without replacement';
+	if ($self->with_replacement){
+		$maxresamplestring = 'MAX.RESAMPLE <- '.$self->resamples;
+	}
+
+	my $labelref = $self->models->[0]->problems->[0]->get_estimated_attributes(parameter => 'all',
+																		  attribute => 'labels');
+	#TODO filter out off-diagonals like in sse? 
+
+	if (defined $labelref){
+		$paramcount = scalar(@{$labelref});
+		#cannot use raw_results_header, has only placeholders for sigma etc
+		my $headerref = $self->full_rawres_header; #ref of array of strings, no quotes
+#		print join(' ',@{$headerref})."\n";
+		@cols = @{get_array_positions(target => $headerref,keys => $labelref)};
+	}
+
+
+	my $colstring = 'COL.ESTIMATED.PARAMS <-  c('.join(',',@cols).')   #column numbers in raw_results for parameters';
+	my $paramstring = 'N.ESTIMATED.PARAMS <- '.$paramcount;
+	my $cistring = 'CI <- 95';
+
+	$rplot->add_preamble(code => [
+							 '#sir-specific preamble',
+							 'SAMPLES   <-'.$self->samples,
+							 'RESAMPLES   <-'.$self->resamples,
+							 $maxresamplestring,
+							 $colstring,
+							 $paramstring,
+							 $cistring,
+						 ]);
+
+}
+
+sub get_array_positions{
+	#static
+	my %parm = validated_hash(\@_,
+							  target => { isa => 'ArrayRef', optional => 0 },
+							  keys => { isa => 'ArrayRef', optional => 0 },
+							  R_indexing => { isa => 'Bool', optional => 1, default => 1 },
+		);
+	my $target = $parm{'target'};
+	my $keys = $parm{'keys'};
+	my $R_indexing = $parm{'R_indexing'};
+	my @cols= ();
+	return \@cols unless (defined $target and defined $keys);
+
+	my @remaining_keys=();
+	foreach my $key (@{$keys}){
+		push(@remaining_keys,$key);
+	}
+	
+	my $start=undef;
+	my $end=undef;
+	my $matched = 0;
+	for (my $i=0; $i< scalar(@{$target}); $i++){
+		$matched = 0;
+		for (my $j=0; $j< scalar(@remaining_keys); $j++){
+			if ($target->[$i] eq $remaining_keys[$j]){
+				if (defined $start){
+					$end = $i+$R_indexing; #add 1 if use R indexing
+				}else{
+					$start = $i+$R_indexing;
+				}
+				splice(@remaining_keys,$j,1); #remove matched element
+				$matched = 1;
+				last;
+			}
+		}
+		if ((not $matched) or (scalar(@remaining_keys)<1) or ($i == (scalar(@{$target})-1)))  {
+			#either did not match or this is last match
+			if (defined $start){
+				if (defined $end){
+					push(@cols,$start.':'.$end);
+				}else{
+					push(@cols,$start);
+				}
+				$start=undef;
+				$end=undef;
+			}
+		}
+
+		last if (scalar(@remaining_keys)<1);
+	}
+	unless (scalar(@remaining_keys)<1){
+		ui->print(category=>'all',
+				  message=> "get_array_positions remaining keys ".join(' ',@remaining_keys));
+	}
+	return \@cols;
 }
 
 no Moose;

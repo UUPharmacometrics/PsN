@@ -285,4 +285,25 @@ like($ref->[0],'/^\s+1\.0000000E\+0+\s+2.0000000E\+0+\s+3\.0000000E\+0+/', "form
 like($ref->[1],'/^\s+4\.0000000E\+0+\s+5.0000000E\+0+\s+6\.0000000E\+0+/', "format covmatrix space no labels 1");
 like($ref->[2],'/^\s+7\.0000000E\+0+\s+8.0000000E\+0+\s+9\.0000000E\+0+/', "format covmatrix space no labels 2");
 
+
+my $target = ['sample.id','model','problem','subproblem','covariance_step_run','minimization_successful',
+	'covariance_step_successful','covariance_step_warnings','estimate_near_boundary','rounding_errors',
+	'zero_gradients','final_zero_gradients','hessian_reset','s_matrix_singular','significant_digits','condition_number',
+	'est_methods','model_run_time','subprob_est_time','subprob_cov_time','ofv','deltaofv','likelihood_ratio','relPDF',
+	'importance_ratio','probability_resample','resamples','CL','V','IVCL','IVV','SIGMA(1,1)','seCL','seV','seIVCL',
+	'seIVV','seSIGMA(1,1)','shrinkage_eta1(%)','shrinkage_eta2(%)','shrinkage_iwres(%)','EI1','EI2','EI3','EI4','EI5'];
+my $keys =['CL','V','IVCL','IVV','SIGMA(1,1)'];
+
+is_deeply(tool::sir::get_array_positions(target => $target,keys=> $keys),['28:32'],'get_array_positions 1 ');
+
+$keys =['CL','IVCL','SIGMA(1,1)'];
+
+is_deeply(tool::sir::get_array_positions(target => $target,keys=> $keys),[28,30,32],'get_array_positions 2 ');
+$keys =['CL','V','IVV','SIGMA(1,1)'];
+
+is_deeply(tool::sir::get_array_positions(target => $target,keys=> $keys),['28:29','31:32'],'get_array_positions 3 ');
+$keys =['CL','V','IVV'];
+
+is_deeply(tool::sir::get_array_positions(target => $target,keys=> $keys),['28:29',31],'get_array_positions 4 ');
+
 done_testing();

@@ -23,6 +23,7 @@ LIBFILES= ui.pm \
 	matlab/bca.m \
 	matlab/histograms.m \
 	matlab/profiles.m \
+	R-scripts/sir_default.R \
 	R-scripts/llp_default.R \
 	R-scripts/cdd_default.R \
 	R-scripts/mcmp_default.R \
