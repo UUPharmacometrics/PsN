@@ -1,0 +1,17 @@
+
+#alphabetical
+
+install.packages("caTools", dependencies=TRUE)
+install.packages("dplyr", dependencies=TRUE)
+install.packages("ggplot2", dependencies=TRUE)
+install.packages("gridExtra", dependencies=TRUE)
+install.packages("MASS", dependencies=TRUE)
+install.packages("ncappc", dependencies=TRUE)
+install.packages("plotrix", dependencies=TRUE)
+install.packages("plyr", dependencies=TRUE)
+install.packages("reshape", dependencies=TRUE)
+install.packages("reshape2", dependencies=TRUE)
+install.packages("scales", dependencies=TRUE)
+install.packages("tidyr", dependencies=TRUE)
+install.packages("xpose4", dependencies=TRUE)
+
