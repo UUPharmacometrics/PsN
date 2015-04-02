@@ -1,0 +1,241 @@
+PsN TODO
+Open wishlist
+
+    Your name: What you would like to see in PsN, described in some detail.
+    Siv: Add to sumo script whether the 0th iteration had a zero gradient,
+    Siv: Make -no-copy_data work with more features in PsN e.g. with SCM.
+    Elodie: VPC of hazard (http://www.page-meeting.org/pdf_assets/9742-1700%20Wed%20Hutmacher.pdf)
+    Elodie: scm allowing for modeling of covariates (set-up fixed median and variance of the concerned covariates)
+    Elodie: Better assessment of run success when several $PROB (if 2nd, which was simulation, failed, current version does not print results in raw_results and does not pass on output of 1st, which was estimation, to main directory)
+    Niclas: Fix parsing of INCLUDE statements. Presently, with multiple INCLUDE on lines following each other, PsN will print out all on the same line, e.g. INCLUDE file1 INCLUDE file2 instead of keeping the INCLUDEs on separate lines. Kajsa: possible workaround add a comment after each INCLUDE to make PsN keep lines separate
+    Niclas: SCM: Add option to exclude all covariates that are not significant (possibly with a separate p-value) in the first step from further testing. Optionally, re-testing the excluded covariates with the final covariate model.
+    Niclas: SCM: Add feature so that the following search algorithm is possible: (a) Test a first set of covariates and then (b) test a second set of covariates with the final model from (a). Would be good if this could be combined with the previous point.
+    Niclas: Adaptive allocation of nodes with parallel execution. For example, instead of specifying -threads and -nodes, which means running "threads" number of nonmem runs at the same time and each run parallelized into "nodes" processes, it would be useful to be able to specify -threads and -max_nodes and have PsN figuring out the optimal -nodes. -max_nodes would specify the overall number of nodes for the psn call, in contrast to -nodes that specifies the number of nodes for each nonmem run within the psn call. Would be useful for late steps in the SCM when the number of runs are much smaller than in the early steps (and when run times tend to be longer).
+    Anne-Gaelle: For EM-methods: column for number of iterations in each phase, use of convergence criteria or not. I also think a dOFV column would be very useful, taking the OFV of the simulation model (or first model if -no-est_sim) as the reference.
+    Mats: multiple -dv and -idv to vpc. Format -dv but do not process.
+    Eliford: Make extended_grid script more robust, safeguard against W=0 or very large IPRED
+    Anders Viberg: Adaptive threads - nodes handling in scm
+    Fredrik Ohrn: When running an sse, append a real dataset to all simulated datasets before estimating. Same real dataset for all different simulated sets.
+    Siv: Try to make scm give a message to the user when the runs fails due to that you left $COV in the model file by mistake (at least that is what I think happened to me and takes long time to figure out).
+    Henrik: An option on SSEs to simulate with uncertainty from a successful $COV step.
+    Paul Mattias Diderichsen: runrecord include the number of degrees of freedom
+    Benjamin: sumo print warnings and errors from #TERM 
+
+Medium to high prio
+
+    sir lmited replacement, e.g. max 10 times. Implement by duplicating rows in raw results and then running witout replacement on that
+    sir individual inflation by giving inflation parameter by parameter on commandline. Extra option inflate all omegas by scalar.
+    sir latin hypercube sampling. Estimate discard rate by test sampling, and then increase samples appropriately, discard some and then report actual samples
+    randtest run base model multiple times if METHOD=SAEM,BAYES,IMP,IMPMAP,DIRECT (not ITS) with $EST SEED= set differently
+    commands with -no-copy_data on command-line will die correctly if file path to data too long. TODO: make sure system tests affected by this are marked as successful even when tmpdir in includes.pm has very long path
+    handle bug in slurm submit spaces in path, also in nmfe73 recompile
+    model-> write handling of linebreaks, avoid inserting extra breaks
+    notify user of parallel_retries if use execute -min_retries with one model only
+    mcmp sampla strukturerat, tex skippa vissa id, eller sampla bara males, eller ngt. Typ out_filter
+    support $CHAIN record
+    serial correlation options to execute, add FIRST verbatim code in $ERROR, Lecture Stoch models residuals
+    verify that lasso handles missing_data_token correctly in stats and others
+    ebe_npde output number of simulated estimations actually used when some failed
+    scm fix bug that if more than 50 items in $INPUT but with DROP and not $SIZES and need filtering then PsN should add $SIZES to filtering model.
+    scm randomization test.
+    test suite reference models for comparing ofv and params across NM versions and systems with and without parallelization
+    resume for randtest, cdd, others? 
+
+Priority not decided
+
+    flip_comments for sse, execute
+    psn -config_file=workflow.conf. Sequence of PsN commands, input is only input model and data...?
+    bootstrap -alternative_models=run2.mod,run3.mod
+    more input checking in scm, match between options in config file, match config file and $INPUT, chosen covariates make sense (e.g. categorical covariate not all values missing...)
+    pvar for linearized scm
+    read all $EST ofv and params, put in raw_results without messing with rawres_input
+    investigare "empty LST files" bug reported by Benjamnin, Kristin. See PsN mail folder
+    mcmp add to set of default pval (For industry, I think having alpha=0.1 or even 0.15 as a default output may be valuable since this tool will be most valuable as an alternative to stats traditional approach when n provided by the later is too high (therefore, industry tend to relax the alpha to reduce cost and n and keep reasonable power).)
+    if retries result in a different set of initial estimates being used for best model, then copy old input model to same_name.orig and overwrite same_name with model file with actual input parameter values used
+    lst-parser tests NM7.3 from example dir
+    $LEVELS gives certain required options in $EST, PsN add them?
+    From Paolo Denti: Possibility to code the OMEGA and SIGMA matrix in correlation terms.
+    bugfix lasso, cuts thetas in core model if they are small. Code might be done, but not tested.
+    Put Bill Denney's NLP method into llp (PAGE presentation 2012)
+    NPDE on other things (AUC)
+    Ron visual diagnostics
+    Bootstrap and others in xpose
+    Diagnostics survey like lasse
+    GPU
+    cloud computing with PsN
+    output_directory (Lasse). Choose a special directory, instead of calling directory, to copy output files to (lst etc)
+    set random seed inside modelfit
+    read_option i record_subs: handle print order, comments together with option, or full line comments always last
+    sse:if -no_estimate and not ref_ofv just 1 alternative model, print warning that you will not get any statistics (first alternative treated as null)
+    scm lst-file also for nonlin, do not rerun to get base ofv
+    user setting for lst-file suffix, e.g. replace 'lst' with 'nmlog' as at Novartis
+    bootstrap: monitor progress, print sort of rawres for each sample that finishes
+    i vpc: plotta enbart simulerade resultat
+    Auto omega reparameterization via Cholesky decomposition
+    tweak-inits from distributions
+    randomization test, sample from observed covariance distribution
+    bootstrap for decision tree in model building
+    QC/QA PsN
+    warn if IGNORE/ACCEPT .EQ. or .NE. in any script that uses $TABLE output as data file and no pre-filtering. Already done in sse.
+    $MIX does not work in precond 
+
+Done
+
+    frem cholesky check that blocks are posdef, otherwise inflate diagonal
+    Niclas: scm filtering step should keep DROP in $INPUT and instead put dummy info in $TABLE, because some DROPs may be necessary to make the (filter) model to run at all
+    -rplots common option to generate xpose script and possibly run it for bootstrap, execute, others?
+    modelfit new attribute reduced_model_ofv, variant of picky: require ofv "at least as good as" (useful when know ofv of base model) 
+
+added as option to execute, used implicitly in randtest
+
+    possibility to restart bootstrap when run when clean=3
+    Oskar Clewe: sumo print delta-ofv if "*Based on" tag is present in model file
+    randtest output relevant percentiles and delta-ofv
+    randtest update_inits alternatives
+    noappend set in vpc, PRED,WRES,RES added explicitly if set in any option
+    purge option rerun
+    setting for mod-file suffix, e.g. replace .mod with .ctl as expected by NMQual
+    document in vpc what is done with initials of -simulation_model where the orig model has a lst-file.
+    Kajsa: in bootstrap make it possible to neither update initial estimates from lst not rerun input model
+    Lena, Chunli, others: vpc binning options by strata
+    use labels in sumo instead of coords
+    Siv: Add to sumo script ii) the shrinkage values from NONMEM output, iii) total number of observed records and individuals from NONMEM output.
+    check if data file path has spaces in it, then enclose with quotes when writing $DATA in control stream to disk
+    Andy: PsN compute cwres even if NM7
+    subproblem.pm _read_minimization_message set success if find #TERE: tag
+    For linearize program: Skip comment SCM-LINEARIZE_CONSTANTS.
+    handle non-unique labels automatically, make check in problem -new after all options parsed. replace label with coords or make unique with change if non-unique labels found.
+    update_inits support renumbering for runN<someletter>.mod
+    update inits support any extension (.txt, .ctl...)
+    make boot_scm -stratify_on ignore data set headers, only use $INPUT regardless of filtering.
+    mcmp make sure phi is included in nm_output set.
+    mcmp save old mcmp_results so not overwritten.
+    use recompute to make sse tests NM-version independent, skip private moxonidine
+    ud_submit_nmfe and similar to circumvent nonmem.pm for all grid type runs, skip nonmem.pm also for nmqual
+    change perturbation factor X from 0.1 in tweak_inits
+    option -degree to parallel_retries
+    setup script handles renaming of old versions on windows so can run with e.g. vpc_3_7_6
+    bug in vpc: for simulation model use common_options restore model options (currently miss omega_before_pk)
+    Option to set array of prediction intervals in vpc
+    FREM
+    PsN nca script with Chayan
+    attribute base_name or similar to a tool, to use instead of the class name
+    Elin: For linearize program: default directory name should be lin_dirX instead of scm_dirX.
+    Benjamin: parallel nonmem on lowprio partition
+    Anne-Gaelle: -tbs option handle power+lambda
+    document nm_version-dependent defaults in psn.conf
+    for PsN 4.0.0 parallel_retries add rawres_input to latex documentation
+    add sse option -random_estimation_inits to userguide: if set then do not simulate with uncertainty, instead set random est inits rather than same inits as in simulation models. If random_est_inits set then rawres_input must also be set.
+    PsN4 document new option keep_tables to sse and bootstrap. Doc sse NSUBS is removed
+    document in scm that TVparameter definitions must be in either $PK or $PRED
+    make PsN look for nonmem_mpi.exe when checking compiler success
+    set nmfe option to true in source code
+    parallel mpi on lowprio partition nmfe hack
+    bugfix sumo set covariance_step WARNINGs based on correct accessor instead of covariance_step_successful
+    Make sure PsN removes NSUBS or similar in existing $SIM record in sse simulation model
+    make optional to keep user $TABLE in sse, default is to remove $TABLE
+    Anne-Gaelle: in sse raw result output, identification of dataset/sse sample used for fitting so as to be able to filter results of all fits on one sample.
+    Paolo: update_inits handle numbering for xxtab123.csv in addition to tab123
+    Siv: Change VPC so you could include several stratification variables in the same VPC, i.e.not need to re-simulate for each stratification.
+    scm not require header in datafile, take from model but in a way that works with boot-scm (extra dummy columns)
+    automatic binning in vpc
+    sumo command output the time elapsed for the run
+    handle time-varying covariates in scm:
+    have $OMEGA after $THETA instead of before $PK
+    arithmetic mean as variable in scm code
+    name raw_results file after model file, i.e. different name in different run directories
+    extra results in raw_results (run time, burn-in, DIC)
+    Allow command update for update_inits
+    Optional add synonyms psn_execute etc for everything
+    Make config_file default input in scm (allow "scm run1.scm" as command)
+    Allow expression EXP (ETA(1)) as NONMEM allows it
+    Give example in scm guide on propadd. How to implement WP and WA
+    Finish sim with uncertainty in sse: computations diff with respect to its own sim parameters, not global
+    PsN installer: windows add PsN documentation on start menu for windows. Ask user where to put documentation, create folder if not there
+    simulation with uncertainty sse: use $PRIOR NWPRI. Print also to raw_results so that can reuse!
+    Filter on minim successful etc in sse rawres input, medium, add it while working on related stuff
+    Filter on minim successful etc in sse output
+    sse sim with uncertainty $PRIOR TNPRI.
+    boot_scm into PsN (40 hours?)
+    Censoring with tte: kaplan.plot can handle censoring via DV, no changes required in PsN code. However more documentation on how to set up models to suit kaplan.plot, including examples, is needed.
+    Retries: New rule for initiating retries, and comparing minimization successful and not when selecting best run
+    vpc sim with uncertainty, use boostrap raw_results input or $PRIOR in model (TNPRI or NWPRI)
+    user-chosen set of output files to copy back up to calling directory. Always copy lst-file, but only user-chosen subset of 11 additional files produced by NM (version 7.2). Default no other files. Configuration on doris is to copy back ext, cov, coi, cor, phi in addition to lst.
+    Force additional retries to previously finished run (stats-runs.csv exists) (Lasse)
+    GLS: the basics plus per-observation iwres-shrinkage
+    sse: make sse reread estimated originals if add_models, do not reestimate them.
+    -tbs option
+    support $BIND
+    degree option to update_inits (tweak_inits)
+    sigdigs option to update_inits (model->_write, problem->_format_problem, record->_format_record, init_option->_format_option, theta_option->format_option)
+    append to command.txt instead of overwrite
+    run_on_lsf_nmfe to circumvent nonmem.pm
+    ebe_npde prototype
+    imp documentation and more general prog, no require simulation. Name changed to mimp
+    redirect ui and debug->die to logfile
+    vpc tte: clean (one of each full and filtered zip, remove unzipped) (clean 3 remove also full)
+    option -no-copy_data till execute
+    transponerad cholesky factor i ebe_npde
+    fix scm wrap errors
+    documentation -no_copy data i npc, vpc
+    rawres_input from sse, accept format (extra leading column...)
+    defined(@array) is deprecated at lib/output_subs.pm line 841.(Maybe you should just omit the defined()?)
+    in ebe script, use iOFV from all MAXEVAL=0 runs to check where iOFV lies in distribution of iOFV. Way to see if problematic individuals show pattern, e.g. in Rifambutin model
+    linearize run1.mod 
+
+Lowprio
+
+    logfile for job-ids on clusters, commands for killing all child jobs
+    intermediate parameter estimates and results from (raw) output and put somewhere.
+    BAYES extra results in raw_results 2.5% 50% 97.5% effectiveN(?)
+    cumulative probabilities in vpc, <=1, <=2, <=3 instead of 0-1, 1-2, 2-3
+    parallel xv_scm: Takayuki System specific or otherwise very very time-consuming. For only Uppsala 4 days.
+    bootstrap istf sim i sse/mcmp: Martin Basic implementation 1 week.
+    add feature for vpc and possibly npc: clean=4 remove remove all of m1
+    add_samples to a bootstrap 2 day
+    rename runx.etas runx.iwres with run number, 4 hours
+    multi-dimensional LLP Need more details.
+    Fix bug: if multiple $PROB with different datasets then PsN cannot handle it (all $DATA changed to same local file copy in NM run.) 2 days.
+    more levels to picky. unpicky to accept also minimization terminated Longest time is for defining what users really want, can take long time to agree. Then 1 day.
+    mcmp multiple reduced models 2-3 days.
+    handling of L2 (two observations MUST have same error) in scm linearization Several days/couple of weeks. Do not even know if I am able do it, derivation will take the most time and is the most uncertain.
+    handle STANDARD/CORRELATION sigma/omega in NM7.2 3-4 days.
+    Random vpc binning for logistic regression ?Program? Context?
+    Spline functions For what? Context?
+    Tracking individual OFVs ???
+    Provide for each eta, the number of individuals with perfect information the CV corresponds to.
+    Hierarchies for covariates in scm
+    Partial derivative correlation as a substitute for estimation correlation ???
+    Check correlation by calculating sum[OFVi(mod 1) - OFVi(mod 2)] Which PsN program? Output where?
+    execute run5.mod -mirror_plots=10 -mirror_from_lst
+    Scm support $PRIOR. Not now
+    Bootstrap handle ignore on id automatically: useful, not high
+    scm logarithmic parameterization as option, low
+    PARCOV= LOG((COV+1)/(median+1))*THETA(1)\\ 
+
+PHI=THETA(1) + ETA(1) + PARCOV
+F1=EXP(PHI)/(1+EXP(PHI))
+
+    SLURM
+    set min-time to something shorter than jonas
+    corresponding to check screen is more on boostrap_pheno_date...
+    email when interesting stuff happens
+    what happens with runs -d afternotok if prev run finishes ok? Automatically cancelled? 
+
+No, at least do not do now
+
+    Skip: NM handles it Improve method to make initial omega matrix pos-def, do not inflate diagonal but decrease off-diagonals. Ask Jocke
+    Skip- NM can handle enough columns now- wrap data functionality, error check, summarize all cases, EVID MDV analysis scm ??
+    (this is done in NM7.3, skip in PsN) round up in diagonal $OMEGA in model->update_inits, regardless of results, turn on/off with global tool-option
+    Adaptations time-to-event vpc when huge datasets. Assuming for now that not necessary, can adjust sampling times to reduce size of dataset.
+    remove $TABLE and PRINT in $EST for bootstrap 2 hours nej
+    remove $TABLE for scm 2 hours, nej
+    -gls in scm (trick with epsilon shrinkage) need more details. Have no idea how long. Vila.
+    runrecord descend into directories 1 day nej
+    Have scm / xv_scm, bootscm output read into Xpose (delta OFV per step;probably more Andy's side) xv_scm very nice formatted output already. Scm output could easily (1 day) be formatted a little better for further processing. The rest is Xpose programming (Andy/Niclas unless I spend a month learning to code R )
+    Would it not be nice to have diagnostic plots generated from each step in the scm What kind of plots? Probably needs Xpose also?
+    Buggar i bootstrap R-script i PsN
+    From Jakob: While you are looking at that R script in PsN; As I recall there are additional bugs. For example, what bootstrap samples to use is hard coded on the script, so no matter what you set in psn.conf or on the command line to bootstrap; for histograms the R script will only use the samples with successful terminations. I almost always want to use all bs samples. 
+
+When you are ready to move bootstrap post-processing into Xpose I can send you an R script that we use at Pfizer for the PsN bootstrap. This provides a full summary of what you may get out of a bootstrap, with nicer graphics, tables summarizing both the nonmem covstep and the non-parametric bootstrap and including optional parameter transformations and bs statistics for secondary parameters. Out script would have to be in Xpose, though, because there are too many options for PsN. And I would have to find time to tweak it a bit; I have written the code only for our ePharm environment in LINUX. Unfortunately I will not find the time to do this in 2011, but it is worth waiting for :>)
+
