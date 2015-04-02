@@ -56,10 +56,12 @@ Changes and bug fixes from PsN 4.2.0 to 4.4.0
 - PsN will now preserve the record order of the input model files. A new option
   -psn_record_order can be used for the legacy built in record order.
 
-- Automatic generation of R plots, see documentation in common_options.pdf and/or
+- Automatic generation of R plots based on templates that can be easily
+  replaced with the user's own custom template(s).
+  See documentation in common_options.pdf and/or
   individual user guides for tools that have default template scripts
   included in the PsN installation package: 
-  execute, bootstrap, vpc, randtest, sse, llp, mcmp, nca, pvar, cdd
+  execute, bootstrap, vpc, randtest, sse, llp, mcmp, nca, pvar, cdd and sir
 
 - Major rewrite of retries handling code, improved check that tweaked omega and sigma blocks are
   positive definite, updated rules for selecting best retry,

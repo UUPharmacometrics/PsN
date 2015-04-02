@@ -1,10 +1,11 @@
 \input{inputs/format_header.tex}
-\guidetitle{SIR user guide}{2015-03-30}
+\guidetitle{SIR user guide}{2015-04-02}
 
 \begin{document}
 
 \maketitle
 
+\newcommand{\guidetoolname}{sir}
 
 \section{Introduction}
 The sir program calculates uncertainty
@@ -112,6 +113,17 @@ If option is unset using -no-copy\_data, the absolute path to the original data 
 \nextopt
 \end{optionlist}
 
+\subsection{Auto-generated R-plots from PsN}
+\newcommand{\rplotsconditions}{The default sir template 
+requires 
+that R libraries
+ggplot2, plyr, dplyr, caTools, reshape and tidyr are installed.
+If the conditions are not fulfilled then no pdf will be generated,
+see the .Rout file in the main run directory for error messages.}
+\input{inputs/rplots_section_body.tex}
+
+\subsubsection*{Diagnostic sir plots}
+Diagnostic rplots for sir will be generated if option -rplots is set >0.
 
 \section{sir program workflow}
 \begin{itemize}
