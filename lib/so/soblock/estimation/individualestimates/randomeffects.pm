@@ -15,16 +15,27 @@ sub xml
 {
     my $self = shift;
 
-    my $est = XML::LibXML::Element->new("RandomEffects");
-    
+    my $mean;
     if (defined $self->EffectMean) {
-        my $xml = $self->EffectMean->xml();
-        $est->appendChild($xml);
+        $mean = $self->EffectMean->xml();
     }
 
+    my $median;
     if (defined $self->EffectMedian) {
-        my $xml = $self->EffectMedian->xml();
-        $est->appendChild($xml);
+        $median = $self->EffectMedian->xml();
+    }
+
+    my $est;
+    if (defined $mean or defined $median) {
+        $est = XML::LibXML::Element->new("RandomEffects");
+
+        if (defined $mean) {
+            $est->appendChild($mean);
+        }
+
+        if (defined $median) {
+            $est->appendChild($median);
+        }
     }
 
     return $est;

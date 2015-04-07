@@ -43,36 +43,44 @@ sub xml
 {
     my $self = shift;
 
-    my $est = XML::LibXML::Element->new("Estimation");
-    
-    if (defined $self->PopulationEstimates) {
-        my $xml = $self->PopulationEstimates->xml();
-        $est->appendChild($xml);
-    }
+    my $est;
 
-    if (defined $self->PrecisionPopulationEstimates) {
-        my $xml = $self->PrecisionPopulationEstimates->xml();
-        $est->appendChild($xml);
-    }
-
-    if (defined $self->IndividualEstimates) {
-        my $xml = $self->IndividualEstimates->xml();
-        $est->appendChild($xml);
-    }
-
-    if (defined $self->Residual) {
-        my $xml = $self->Residual->xml();
-        $est->appendChild($xml);
-    }
-
+    my $pe = $self->PopulationEstimates->xml();
+    my $ppe = $self->PrecisionPopulationEstimates->xml();
+    my $ie = $self->IndividualEstimates->xml();
+    my $res = $self->Residual->xml();
+    my $pred;
     if (defined $self->Predictions) {
-        my $xml = $self->Predictions->xml();
-        $est->appendChild($xml);
+        $pred = $self->Predictions->xml();
     }
+    my $l = $self->Likelihood->xml();
 
-    if (defined $self->Likelihood) {
-        my $xml = $self->Likelihood->xml();
-        $est->appendChild($xml);
+    if (defined $pe or defined $ppe or defined $ie or defined $res or defined $pred or defined $l) {
+        $est = XML::LibXML::Element->new("Estimation");
+
+        if (defined $pe) {
+            $est->appendChild($pe);
+        }
+
+        if (defined $ppe) {
+            $est->appendChild($ppe);
+        }
+
+        if (defined $ie) {
+            $est->appendChild($ie);
+        }
+
+        if (defined $res) {
+            $est->appendChild($res);
+        }
+
+        if (defined $pred) {
+            $est->appendChild($pred);
+        }
+
+        if (defined $l) {
+            $est->appendChild($l);
+        }
     }
 
     return $est;

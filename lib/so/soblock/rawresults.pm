@@ -16,9 +16,10 @@ sub xml
 {
     my $self = shift;
 
-    my $rr = XML::LibXML::Element->new("RawResults");
+    my $rr;
 
     if (defined $self->DataFile) {
+        $rr = XML::LibXML::Element->new("RawResults");
         foreach my $file (@{$self->DataFile}) {
             my $file_xml = $file->xml();
             $rr->appendChild($file_xml);

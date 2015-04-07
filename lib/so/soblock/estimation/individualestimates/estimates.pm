@@ -15,16 +15,27 @@ sub xml
 {
     my $self = shift;
 
-    my $est = XML::LibXML::Element->new("Estimates");
-    
+    my $mean;
     if (defined $self->Mean) {
-        my $xml = $self->Mean->xml();
-        $est->appendChild($xml);
+        $mean = $self->Mean->xml();
     }
 
+    my $median;
     if (defined $self->Median) {
-        my $xml = $self->Median->xml();
-        $est->appendChild($xml);
+        $median = $self->Median->xml();
+    }
+
+    my $est;
+    if (defined $mean or defined $median) {
+        $est = XML::LibXML::Element->new("Estimates");
+
+        if (defined $mean) {
+            $est->appendChild($mean);
+        }
+
+        if (defined $median) {
+            $est->appendChild($median);
+        }
     }
 
     return $est;

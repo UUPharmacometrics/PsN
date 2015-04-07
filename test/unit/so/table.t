@@ -11,11 +11,11 @@ SKIP: {
     eval { require XML::LibXML };
     skip "XML::LibXML not installed" if $@;
 
-    require standardised_output::table;
+    require so::table;
 
     my $doc = XML::LibXML::Document->new('1.0', 'utf-8');
 
-    my $table = standardised_output::table->new(
+    my $table = so::table->new(
         columnId => [ "POP_CL", "POP_V" ],
         columnType => [ "type1", "type2" ],
         valueType => [ "real", "string" ],

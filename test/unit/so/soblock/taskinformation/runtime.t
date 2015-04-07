@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use Test::More;
 use FindBin qw($Bin);
-use lib "$Bin/../.."; #location of includes.pm
+use lib "$Bin/../../../.."; #location of includes.pm
 use includes; #file with paths to PsN packages
 
 
@@ -12,9 +12,12 @@ SKIP: {
     eval { require XML::LibXML };
     skip "XML::LibXML not installed" if $@;
 
-    require so::SOBlock::TaskInformation::RunTime;
+    require so::soblock::taskinformation::runtime;
 
-    my $msg = so::SOBlock::TaskInformation::RunTime->new(
+    my $msg = so::soblock::taskinformation::runtime->new();
+    is ($msg->xml(), undef, "Empty Runtime");
+
+    my $msg = so::soblock::taskinformation::runtime->new(
         Description => 'iamrunning',
         Real => 3.1416,
     );

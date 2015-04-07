@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use Test::More;
 use FindBin qw($Bin);
-use lib "$Bin/../.."; #location of includes.pm
+use lib "$Bin/../../../.."; #location of includes.pm
 use includes; #file with paths to PsN packages
 
 
@@ -12,9 +12,9 @@ SKIP: {
     eval { require XML::LibXML };
     skip "XML::LibXML not installed" if $@;
 
-    require so::SOBlock::TaskInformation::Message;
+    require so::soblock::taskinformation::message;
 
-    my $msg = so::SOBlock::TaskInformation::Message->new(
+    my $msg = so::soblock::taskinformation::message->new(
         type => 'ERROR',
         Toolname => 'myTool',
         Name => 'myName',

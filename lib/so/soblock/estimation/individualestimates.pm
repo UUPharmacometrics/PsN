@@ -34,8 +34,12 @@ sub xml
 
     if (defined $est or defined $rand) {
         $ind_est = XML::LibXML::Element->new("IndividualEstimates");
-        $ind_est->appendChild($est);
-        $ind_est->appendChild($rand);
+        if (defined $est) {
+            $ind_est->appendChild($est);
+        }
+        if (defined $rand) {
+            $ind_est->appendChild($rand);
+        }
     }
 
     return $ind_est;

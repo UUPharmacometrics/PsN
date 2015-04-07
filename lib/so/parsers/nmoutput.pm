@@ -21,17 +21,11 @@ use so::soblock;
 has 'so' => ( is => 'rw', isa => 'so' );
 has 'lst_file' => ( is => 'rw', isa => 'Str' );
 has '_so_block' => ( is => 'rw', isa => 'so::soblock' );
-has 'so_filename' => ( is => 'rw', isa => 'Maybe[Str]' );
-has 'so_version' => ( is => 'rw', isa => 'Num', default => 0.1 );
 has 'precision' => ( is => 'rw', isa => 'Int', default => 10 );
 has 'use_tables' => ( is => 'rw', isa => 'Bool', default => 1 );    # Set to zero if sdtab and patab should not be used
-has 'exclude_elements' => ( is => 'rw', isa => 'Maybe[ArrayRef]' );
-has 'only_include_elements' => ( is => 'rw', isa => 'Maybe[ArrayRef]' );
 has 'message' => ( is => 'rw', isa => 'Maybe[Str]' );
 has 'toolname' => ( is => 'rw', isa => 'Str', default => 'NONMEM' );
 has 'max_replicates' => ( is => 'rw', isa => 'Maybe[Int]' );        # Maximum number of simulation replicates to add
-has 'pretty' => ( is => 'rw', isa => 'Bool', default => 0 );        # Should the xml be indented or not
-has 'pharmml' => ( is => 'rw', isa => 'Maybe[Str]' );               # Name of pharmml file
 has 'verbose' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'external_tables' => ( is => 'rw', isa => 'Bool', default => 0 );   # For now a bool to specify if external tables should be created
 has '_document' => ( is => 'rw', isa => 'Ref' );                    # The XML document 
@@ -56,52 +50,6 @@ sub BUILD
     $self->_parse_lst_file();
 
     push @{$self->so->SOBlock}, $so_block;
-}
-
-sub match_elements
-{
-    my $path1 = shift;
-    my $path2 = shift;
-
-    my @elements1 = split m|/|, $path1;
-    my @elements2 = split m|/|, $path2;
-
-    my $shortest = scalar(@elements1);
-    if (scalar(@elements2) < $shortest) {
-        $shortest = scalar(@elements2);
-    }
-    for (my $i = 0; $i < $shortest; $i++) {
-        if ($elements1[$i] ne $elements2[$i]) {
-            return 0;
-        }
-    }
-    return 1;
-}
-
-sub check_include
-{
-    my $self = shift;
-    my %parm = validated_hash(\@_,
-        element => { isa => 'Str' },
-    );
-    my $element = $parm{'element'};
-
-    if (defined $self->exclude_elements) {
-        foreach my $e (@{$self->exclude_elements}) {
-            if ($e eq $element) {
-                return 0;
-            }
-        }
-        return 1;
-    } elsif (defined $self->only_include_elements) {
-        foreach my $e (@{$self->only_include_elements}) {
-            if (match_elements($e, $element)) {
-                return 1;
-            }
-        }
-        return 0;
-    }
-    return 1;
 }
 
 sub _parse_lst_file
@@ -130,7 +78,7 @@ sub _parse_lst_file
 
     # Check that the output file exist before trying to read it.
     if (not -e $lst_file) {
-        $self->_so_block->TaskInformation(
+        $self->_so_block->TaskInformation->add_message(
             type => "ERROR",
             toolname => $self->toolname,
             name => "File error",
@@ -142,7 +90,7 @@ sub _parse_lst_file
 
         my $outobj = output->new(filename => $lst_file);
         if (not $outobj->parsed_successfully) {
-            $self->_so_block->TaskInformation(
+            $self->_so_block->TaskInformation->add_message(
                 type => "ERROR",
                 toolname => $self->toolname,
                 name => "Parsing error", 
@@ -487,6 +435,7 @@ sub _create_predictions
     my $doc = $self->_document;
 
     my $id = $sdtab->column_to_array(column => "ID");
+    my $id = [ map { int($_) } @$id ];
     my $time = $sdtab->column_to_array(column => "TIME");
     my $pred = $sdtab->column_to_array(column => "PRED");
     my $ipred = $sdtab->column_to_array(column => "IPRED");
@@ -517,6 +466,7 @@ sub _create_residuals
     my $doc = $self->_document;
 
     my $id = $sdtab->column_to_array(column => "ID");
+    my $id = [ map { int($_) } @$id ];
     my $time = $sdtab->column_to_array(column => "TIME");
 
     my @values = ( $id, $time );
@@ -627,6 +577,7 @@ sub _create_individual_estimates
         ($medians[$i], $means[$i]) = _individual_statistics(id => $id, parameter => $parameters[$i]);
     }
     my $unique_ids = array::unique($id);
+    my $unique_ids = [ map { int($_) } @$unique_ids ];
 
     my $table = so::table->new(
         name => "Median",

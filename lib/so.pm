@@ -12,6 +12,9 @@ use so::soblock;
 
 has 'filename' => ( is => 'rw', isa => 'Maybe[Str]' );
 has 'pretty' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'exclude_elements' => ( is => 'rw', isa => 'Maybe[ArrayRef[Str]]' );
+has 'only_include_elements' => ( is => 'rw', isa => 'Maybe[ArrayRef[Str]]' ); 
+has 'so_version' => ( is => 'rw', isa => 'Num' );
 
 has 'PharmMLRef' => ( is => 'rw', isa => 'Maybe[Str]' );
 has 'SOBlock' => ( is => 'rw', isa => 'ArrayRef[so::soblock]', default => sub { [] } );
@@ -105,13 +108,14 @@ sub write
 
     if (defined $self->PharmMLRef) {
         my $ref = XML::LibXML::Element->new("PharmMLRef");
-        $ref->addAttribute("name", $self->PharmMLRef);
+        $ref->setAttribute("name", $self->PharmMLRef);
         $SO->appendChild($ref);
     }
 
     if (defined $self->SOBlock) {
         foreach my $block (@{$self->SOBlock}) {
             my $xml = $block->xml();
+            $self->_exclude_elements($xml);
             $SO->appendChild($xml);
         }
     }
@@ -122,6 +126,21 @@ sub write
     }
 
     $doc->toFile($self->filename, $self->pretty);
+}
+
+sub _exclude_elements
+{
+    my $self = shift;
+    my $xml = shift;
+
+    if (defined $self->exclude_elements) {
+        foreach my $xpath (@{$self->exclude_elements}) {
+            my @nodes = $xml->findnodes($xpath);
+            foreach my $node (@nodes) {
+                $node->unbindNode();
+            }
+        }
+    }
 }
 
 no Moose;

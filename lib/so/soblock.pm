@@ -122,23 +122,26 @@ sub create_sdtab
     my $filename = $parm{'filename'};
 
     my @colnames = ( 'ID', 'TIME' );
-    my @table = ( $self->Predictions->columns->[0], $self->Predictions->columns->[1]);  # FIXME: Assumes too much!
+    my $pred = $self->Estimation->Predictions;
 
-    if (defined $self->Predictions) {
-        for (my $i = 0; $i < scalar(@{$self->Predictions->columnId}); $i++) {
-            my $column_id = $self->Predictions->columnId->[$i];
+    my @table = ( $pred->columns->[0], $pred->columns->[1] );  # FIXME: Assumes too much!
+
+    if (defined $pred) {
+        for (my $i = 0; $i < scalar(@{$pred->columnId}); $i++) {
+            my $column_id = $pred->columnId->[$i];
             if ($column_id ne 'ID' and $column_id ne 'TIME') {
                 push @colnames, $column_id;
-                push @table, $self->Predictions->columns->[$i];
+                push @table, $pred->columns->[$i];
             }
         }
     }
-    if (defined $self->Residuals) {
-        for (my $i = 0; $i < scalar(@{$self->Residuals->columnId}); $i++) {
-            my $column_id = $self->Residuals->columnId->[$i];
+    my $res = $self->Estimation->Residual->ResidualTable;
+    if (defined $res) {
+        for (my $i = 0; $i < scalar(@{$res->columnId}); $i++) {
+            my $column_id = $res->columnId->[$i];
             if ($column_id ne 'ID' and $column_id ne 'TIME') {
                 push @colnames, $column_id;
-                push @table, $self->Residuals->columns->[$i];
+                push @table, $res->columns->[$i];
             }
         }
     }

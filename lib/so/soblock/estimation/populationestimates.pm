@@ -15,11 +15,14 @@ sub xml
 {
     my $self = shift;
 
-    my $est = XML::LibXML::Element->new("PopulationEstimates");
+    my $est;
     
     if (defined $self->MLE) {
+        $est = XML::LibXML::Element->new("PopulationEstimates");
         my $xml = $self->MLE->xml();
-        $est->appendChild($xml);
+        if (defined $xml) {
+            $est->appendChild($xml);
+        }
     }
 
     return $est;

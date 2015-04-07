@@ -14,11 +14,18 @@ sub xml
 {
     my $self = shift;
 
-    my $est = XML::LibXML::Element->new("IndividualEstimates");
-    
+    my $res;
     if (defined $self->ResidualTable) {
-        my $xml = $self->ResidualTable->xml();
-        $est->appendChild($xml);
+        $res = $self->ResidualTable->xml();
+    }
+
+    my $est;
+    if (defined $res) {
+        $est = XML::LibXML::Element->new("Residual");
+    
+        if (defined $res) {
+            $est->appendChild($res);
+        }
     }
 
     return $est;

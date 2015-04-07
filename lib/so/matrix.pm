@@ -50,7 +50,7 @@ sub xml
 {
     my $self = shift;
 
-    my $matrix_xml = XML::LibXML::Element->new($self->name);
+    my $matrix_xml;
 
     if (defined $self->RowNames and defined $self->ColumnNames and defined $self->MatrixRow) {
         $matrix_xml = XML::LibXML::Element->new("ct:Matrix");
@@ -83,7 +83,13 @@ sub xml
         }
     }
 
-    return $matrix_xml;
+    my $element;
+    if (defined $matrix_xml) {
+        $element = XML::LibXML::Element->new($self->name);
+        $element->appendChild($matrix_xml);
+    }
+
+    return $element;
 }
 
 no Moose;

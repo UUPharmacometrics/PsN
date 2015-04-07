@@ -24,18 +24,22 @@ sub xml
 {
     my $self = shift;
 
-    my $ti = XML::LibXML::Element->new("TaskInformation");
-
-    if (defined $self->Message) {
-        foreach my $msg (@{$self->Message}) {
-            my $msg_xml = $msg->xml();
-            $ti->appendChild($msg_xml);
-        }
-    }
-
+    my $ti;
     my $rt = $self->RunTime->xml();
-    if (defined $rt) {
-        $ti->appendChild($rt);
+
+    if (defined $rt or defined $self->Message) {
+        $ti = XML::LibXML::Element->new("TaskInformation");
+
+        if (defined $self->Message) {
+            foreach my $msg (@{$self->Message}) {
+                my $msg_xml = $msg->xml();
+                $ti->appendChild($msg_xml);
+            }
+        }
+
+        if (defined $rt) {
+            $ti->appendChild($rt);
+        }
     }
 
     return $ti;

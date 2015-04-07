@@ -18,26 +18,45 @@ sub xml
 {
     my $self = shift;
 
-    my $est = XML::LibXML::Element->new("MLE");
-    
+    my $cov;
     if (defined $self->CovarianceMatrix) {
-        my $xml = $self->CovarianceMatrix->xml();
-        $est->appendChild($xml);
+        $cov = $self->CovarianceMatrix->xml();
     }
 
+    my $cor;
     if (defined $self->CorrelationMatrix) {
-        my $xml = $self->CorrelationMatrix->xml();
-        $est->appendChild($xml);
+        $cor = $self->CorrelationMatrix->xml();
     }
 
+    my $se;
     if (defined $self->StandardError) {
-        my $xml = $self->StandardError->xml();
-        $est->appendChild($xml);
+        $se = $self->StandardError->xml();
     }
 
+    my $rse;
     if (defined $self->RelativeStandardError) {
-        my $xml = $self->RelativeStandardError->xml();
-        $est->appendChild($xml);
+        $rse = $self->RelativeStandardError->xml();
+    }
+
+    my $est;
+    if (defined $cov or defined $cor or defined $se or defined $rse) {
+        $est = XML::LibXML::Element->new("MLE");
+
+        if (defined $cov) {
+            $est->appendChild($cov);
+        }
+
+        if (defined $cor) {
+            $est->appendChild($cor);
+        }
+
+        if (defined $se) {
+            $est->appendChild($se);
+        }
+
+        if (defined $rse) {
+            $est->appendChild($rse);
+        }
     }
 
     return $est;

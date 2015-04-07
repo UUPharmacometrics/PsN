@@ -216,12 +216,18 @@ my $so = so->new(
     filename => $options{'so_filename'},
     pretty => $options{'pretty'},
     PharmMLRef => $options{'pharmml'},
+    only_include_elements => $only_include_elements,
+    exclude_elements => $exclude_elements,
+    so_version => $options{'so_version'},
 );
 
 foreach my $lst_file (@files) {
     my $nm_parser = so::parsers::nmoutput->new(
         so => $so,
         lst_file => $lst_file,
+        toolname => $options{'toolname'},
+        verbose => $options{'verbose'},
+        max_replicates => $options{'max_replicates'},
     );
 }
 
@@ -230,12 +236,6 @@ $so->write();
 #my $so = standardised_output->new(
 #    precision => $options{'precision'},
 #    use_tables => $options{'use_tables'},
-#    only_include_elements => $only_include_elements,
-#    exclude_elements => $exclude_elements,
 #    message => $options{'message'},
-#    toolname => $options{'toolname'},
-#    max_replicates => $options{'max_replicates'},
-#    verbose => $options{'verbose'},
 #    external_tables => $options{'external_tables'},
-#    so_version => $options{'so_version'},
 #);

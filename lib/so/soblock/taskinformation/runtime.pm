@@ -14,18 +14,21 @@ sub xml
 {
     my $self = shift;
 
-    my $rt = XML::LibXML::Element->new("RunTime");
+    my $rt;
+    if (defined $self->Real) {
+        $rt = XML::LibXML::Element->new("RunTime");
 
-    if (defined $self->Description) {
-        my $desc = XML::LibXML::Element->new("ct:Description");
-        $desc->appendTextNode($self->Description);
-        $rt->appendChild($desc);
+        if (defined $self->Description) {
+            my $desc = XML::LibXML::Element->new("ct:Description");
+            $desc->appendTextNode($self->Description);
+            $rt->appendChild($desc);
+        }
+
+        my $real = XML::LibXML::Element->new("ct:Real");
+        $real->appendTextNode($self->Real);
+
+        $rt->appendChild($real);
     }
-
-    my $real = XML::LibXML::Element->new("ct:Real");
-    $real->appendTextNode($self->Real);
-
-    $rt->appendChild($real);
 
     return $rt;
 }

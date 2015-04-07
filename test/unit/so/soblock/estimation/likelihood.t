@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use Test::More;
 use FindBin qw($Bin);
-use lib "$Bin/../.."; #location of includes.pm
+use lib "$Bin/../../../../"; #location of includes.pm
 use includes; #file with paths to PsN packages
 
 
@@ -12,9 +12,9 @@ SKIP: {
     eval { require XML::LibXML };
     skip "XML::LibXML not installed" if $@;
 
-    require so::SOBlock::Estimation::Likelihood;
+    require so::soblock::estimation::likelihood;
 
-    my $msg = so::SOBlock::Estimation::Likelihood->new(
+    my $msg = so::soblock::estimation::likelihood->new(
         Deviance => 1.56,
     );
 
