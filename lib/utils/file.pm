@@ -18,18 +18,15 @@ our %EXPORT_TAGS = ('all' => [ qw(remove_path get_file_stem directory replace_ex
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 
 our $path_separator;
-our $newline;
 
 sub _set_windows
 {
     $path_separator = "\\";
-    $newline = "\r\x0A";
 }
 
 sub _set_unix
 {
     $path_separator = '/';
-    $newline = "\x0A";
 }
 
 if ($Config{osname} eq 'MSWin32') {
@@ -100,8 +97,7 @@ sub slurp_file
     my @content = ();
     open(FILE, $file);
     while (<FILE>) {
-        tr/\n\r//d;
-        $_ = $_ . $newline;
+        tr/\r//d;   # Remove extra CRs. We can use Windows formatted files in Unix
         push(@content, $_);
     }
     close(FILE);

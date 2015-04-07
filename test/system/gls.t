@@ -4,7 +4,7 @@
 use strict;
 use warnings;
 use File::Path 'rmtree';
-use Test::More tests=>1;
+use Test::More;
 use FindBin qw($Bin);
 use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages and $path variable definition
@@ -19,6 +19,7 @@ my  $rc = system($command);
 $rc = $rc >> 8;
 
 ok ($rc == 0, "gls that should run ok");
+ok (-e "$dir/m1/gls4tab-gls", "gls table created");
 
 remove_test_dir($tempdir);
 
