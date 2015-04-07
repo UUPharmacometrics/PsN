@@ -49,8 +49,11 @@ The complete list of new features and bugfixes in 4.2.0 is found
 </p>
 <h3>Known issues with version 4.2.0</h3>
 <li>
-The nca script prepares input for Chayan Acharya's R package for nca analysis, but this R package will not be made publicly available until the related
-article has been submitted for publication.
+The nca script prepares input for Chayan Acharya's R package ncappc for nca analysis, but it
+does not create any plots. To create the plots
+the user must install the ncappc package from 
+<a href="http://cran.r-project.org/web/packages/ncappc/index.html"  target="_blank">CRAN</a>
+and learn how to use the functions in that package.
 </li>
 <li>
 Installation on Windows: Users who install PsN for the first time need to make sure they install a Perl version where
