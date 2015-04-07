@@ -525,21 +525,16 @@ sub modelfit_analyze
 			( $returns, $prep_models ) = $internal_llp -> run;
 
 			if ( defined $prep_models ) {
-				carp("Inside ".ref($self).
-					 " have called internal llp ".
-					 scalar @{$prep_models} );
+				carp("Inside " . ref($self) . " have called internal llp " . scalar(@{$prep_models}));
 				#FIXME for Moose
-				push ( @{$self -> prepared_models->[$model_number-1]{'subtools'}},
-					   $prep_models );
+				push (@{$self->prepared_models->[$model_number - 1]{'subtools'}}, $prep_models);
 			} else {
-				carp("Inside analyze".ref($self).
-					 " but no prep_models defined from internal llp" );
+				carp("Inside analyze" . ref($self). " but no prep_models defined from internal llp");
 			}
 
 		} else {
-			$self -> raw_results->[$model_number-1] =
-				$self -> tools -> [0] -> raw_results;
-			$self -> update_raw_results( model_number => $model_number );
+			$self->raw_results->[$model_number - 1] = $self->tools->[0]->raw_results;
+			$self->update_raw_results(model_number => $model_number);
 		}
 	} else {
 		$self -> raw_results->[$model_number-1] =

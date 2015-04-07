@@ -727,7 +727,7 @@ sub _create_bootstrap
             foreach my $param (@a) {
                 $param =~ s/\s*//;      # Remove spaces
                 if ($param !~ /^se/) {
-                    push @parameters, $self->_xml->mangle_symbol_idtype($param);   # FIXME: warning?
+                    push @parameters, $self->_xml->mangle_symbol_idtype($param);
                 } else {
                     last;
                 }

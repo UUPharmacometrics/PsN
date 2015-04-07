@@ -106,7 +106,7 @@ sub create_sdtab
     my $filename = $parm{'filename'};
 
     my @colnames = ( 'ID', 'TIME' );
-    my @table = ( $self->Predictions->columns->[0], $self->Predictions->columns->[1]);  # FIXME: Assumes too much!
+    my @table = ( $self->Predictions->columns->[0], $self->Predictions->columns->[1]);
 
     if (defined $self->Predictions) {
         for (my $i = 0; $i < scalar(@{$self->Predictions->columnId}); $i++) {

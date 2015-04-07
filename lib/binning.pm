@@ -296,7 +296,7 @@ sub firstMethod
 	# Cumulative function of the number of occurences of each unique idv value.
 	# cumSumN(i) is the number of data points with idv values equal to any of 
 	# idv(1),...,idv(i) 
-	my @cumSumN = @uniqueMapIdv;				#  FIXME: -1 ?;
+	my @cumSumN = @uniqueMapIdv;
 
 	# Cumulative function of the sum of all idv
 	# cumSumIdv(i) is the sum of all idv values up to unique value i
