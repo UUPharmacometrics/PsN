@@ -5467,6 +5467,8 @@ sub create_R_plots_code{
 							 'have.censored <- '.$censorstring,							 
 							 'is.categorical <- '.$categorical,							 
 							 'is.tte <- '.$tte,							 
+                             "dv <- '" . $self->dv . "'",
+                             "idv <- '" . $self->idv . "'",
 						 ]);
 
 }

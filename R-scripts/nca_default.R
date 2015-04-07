@@ -9,8 +9,8 @@ if (rplots.level > 0) {
 if (rplots.level > 0) {
     data = read.table("nca_original.npctab.dta", header=TRUE, skip=1)
 
-    colnames(data)[names(data) == "TIME"] = "Time"
-    colnames(data)[names(data) == "DV"] = "Conc"
+    colnames(data)[names(data) == idv] = "Time"
+    colnames(data)[names(data) == dv] = "Conc"
 
     dv.plot(data)
 }
