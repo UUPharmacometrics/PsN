@@ -31,8 +31,8 @@ the PsN website http://psn.sourceforge.net/
 Dependencies 
 ************************
 
-- Xpose must, if used, be version 4.2.1 or later to handle PsN-3.5.3 or later 
-  output format. It is recommended to use the latest Xpose release
+- Xpose must, if used, be version 4.2.1 or later.
+  It is recommended to use the latest Xpose release
   from http://xpose.sf.net
 
 ************************
@@ -59,7 +59,7 @@ Changes and bug fixes from PsN 4.2.0 to 4.4.0
 - Automatic generation of R plots based on templates that can be easily
   replaced with the user's own custom template(s).
   See documentation in common_options.pdf and/or
-  individual user guides for tools that have default template scripts
+  individual user guides for tools that have sample template scripts
   included in the PsN installation package: 
   execute, bootstrap, vpc, randtest, sse, llp, mcmp, nca, pvar, cdd and sir
 
@@ -80,9 +80,10 @@ Changes and bug fixes from PsN 4.2.0 to 4.4.0
 - handle spaces in the path (enclose filepath with quotes in $DATA)
 
 - enable option -cwres also for NM7. Computation requires R with library xpose4 to be installed.
+  Either the command R must be in the path, or the R executable has to be defined in psn.conf.
 
-- Possibility to make PsN installation portable (PsN installation directory movable).
-  See documentation in psn_installation.pdf and psn_configuration.pdf
+- Possibility to make PsN installation portable (PsN installation directory movable, 
+  without changing psn.conf). See documentation in psn_installation.pdf and psn_configuration.pdf
 
 - Possible to set -directory=path/to/folder where path/to does not yest exist. Before you could 
   only specify a path with several levels in -dir if all but the last directory already existed. 
@@ -110,7 +111,7 @@ Changes and bug fixes from PsN 4.2.0 to 4.4.0
 - The common option -warn_with_trace was broken and is now working again.
   It is now just a boolean option not taking any integer argument.
 
-- New option -standardised_output to create DDMoRe standard output .xml
+- New option -standardised_output for creating a PharmML standardized output xml.
 
 - PsN can call the DDMoRe converter toolbox to automatically convert a PharmML-format model
   to nmtran format, if converter_path in psn.conf is set to the converter classpath and java is installed.
@@ -134,6 +135,8 @@ Changes and bug fixes from PsN 4.2.0 to 4.4.0
 - removed attribute rerun
 
 - New runrecord annotation handling
+
+- bug fix: handling of Windows type line breaks when using internal function slurp_file.
 
    ___Cluster/grid interaction___
 
@@ -207,7 +210,7 @@ Changes and bug fixes from PsN 4.2.0 to 4.4.0
 
 - bug fix: running sumo on file without extension .res or .lst would cause a crash
 
-- output use labels instead of generic coordinates, skip parameter that are fixed or same
+- output use labels instead of generic parameter names, skip parameters that are fixed or same
 
 - print shrinkage from NMoutput, print number of individuals and observation records 
 
@@ -426,13 +429,9 @@ Changes and bug fixes from PsN 4.2.0 to 4.4.0
 
    ___nmoutput2so___
 
-- New tool for creating a standardized output file xml summarizing the outputs of a NONMEM run.
+- New tool for creating a PharmML standardized output file xml summarizing the outputs of a NONMEM run.
 
    ___pind___
 
 - bug fix: handle -clean=3
  
-   ___gls___
-
-- bug fix: option -ind_shrinkage on Windows, get rid of extra line break in
-  intermediate data set glsinput.dta that caused NONMEM run to fail.
