@@ -9,7 +9,9 @@ the user can easily modify or replace them.
 
 PsN will create a preamble with some run specific information, 
 such as the name of the raw\_results file, the parameter labels and the name of
-the tool results file. Some tools, for example vpc and randtest, also add
+the tool results file. Please note that R plots generation might fail if there are special characters,
+such as $\mu$, in the parameter labels.
+Some tools, for example vpc and randtest, also add
 tool-specific information to the preamble. 
 Then the template file is appended.
 If the template file contains an old preamble, then that preamble will be replaced with 
@@ -56,3 +58,7 @@ will, if set, be set as subset.variable in the preamble,
 and can then be used in the plotting code. 
 \nextopt
 \end{optionlist}
+
+\subsubsection*{Troubleshooting}
+If no pdf was generated even if a template file is available and the appropriate options
+were set, check the .Rout-file in the main run directory for error messages.

@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{MCMP user guide}{2014-05-20}
+\guidetitle{MCMP user guide}{2015-04-09}
 
 
 \begin{document}
@@ -86,7 +86,7 @@ see the .Rout file in the main run directory for error messages.}
 
 
 \section{Output}
-The output from each mcmp is mcmp\_results.csv which contains a table with header total\_X,power at 5\%,power at 1\%,power at 0.1\%, (headers for N from each strata). One row for each total sample size (total\_X). The table can be plotted in excel. The results are also printed to screen as they are produced, and the user can terminate the run with Ctrl-C if the obtained power is deemed sufficient. The file mcmp\_results.csv will contain the values that were computed before the interruption. If mcmp is rerun the previous result file will be copied and kept.
+The output from each mcmp is mcmp\_results.csv which contains a table with header total\_X,power at 5\%,power at 1\%,power at 0.1\%, (headers for N from each stratum). One row for each total sample size (total\_X). The table can be plotted in excel. The results are also printed to screen as they are produced, and the user can terminate the run with Ctrl-C if the obtained power is deemed sufficient. The file mcmp\_results.csv will contain the values that were computed before the interruption. If mcmp is rerun the previous result file will be copied and kept.
 
 \section{Known bugs}
 If estimation of the full and/or reduced model fails but NONMEM 7 still produces a .phi-file with the initial individual ofv-values, then PsN will not detect the failed estimation but continue to bootstrap from the .phi-file.
@@ -99,16 +99,16 @@ If the simulation finished but none of the estimations finished, then start over
 \section{Discussion on strata sample sizes}
 The increment and start\_size options may seem complicated, so here is a detailed background to the design of those options in PsN.
 
-We start with some examples to explain a method which is not implemented in PsN. When the design is perfectly balanced, choosing the number of individuals to sample from each strata in each iteration is trivial. It is more complicated to define an algorithm that works in all cases with any design. Consider the following three cases:
+We start with some examples to explain a method which is not implemented in PsN. When the design is perfectly balanced, choosing the number of individuals to sample from each stratum in each iteration is trivial. It is more complicated to define an algorithm that works in all cases with any design. Consider the following three cases:
 
 \begin{enumerate}
 	\item $N_{total}=400$ where $N_A=200$ and $N_B=200$
 	\item $N_{total}=400$ where $N_A=100$ and $N_B=300$
 	\item	$N_{total}=424$ where $N_A=233$ and $N_B=191$
 \end{enumerate}
-It is easy to see that the ideal sampling scheme in case 1 is to take 1 individual from each strata in the first iteration, 2 from each in the second iteration, and so on. Then the 1:1 balance is perfect in every iteration. The increment, the increase of the total sample size in each iteration, is 2 in this case.
+It is easy to see that the ideal sampling scheme in case 1 is to take 1 individual from each stratum in the first iteration, 2 from each in the second iteration, and so on. Then the 1:1 balance is perfect in every iteration. The increment, the increase of the total sample size in each iteration, is 2 in this case.
 
-Case 2 is also simple, take 1 individual from strata A and 3 from strata B in the first iteration, 2 from strata A and 6 from strata B in the second iteration and so on, thus always preserving the 1:3 relation of the group sizes. 
+Case 2 is also simple, take 1 individual from stratum A and 3 from stratum B in the first iteration, 2 from stratum A and 6 from stratum B in the second iteration and so on, thus always preserving the 1:3 relation of the group sizes. 
 
 Case 3 is more difficult and it is not obvious what the best strategy is. 
 
@@ -116,7 +116,7 @@ The implicit strategy in for case 1 and 2 is the following algorithm:
 
 \begin{enumerate}
 	\item Find the greatest common divisor D of the strata sizes.
-	\item In each iteration, increase the sample size from strata A with $N_A$/D and from strata B with $N_B$/D
+	\item In each iteration, increase the sample size from stratum A with $N_A$/D and from stratum B with $N_B$/D
 \end{enumerate}
 For case 1 D=200 and $N_A$/D=$N_B$/D=1 and for case 2 D=100, $N_A$/D=1 and $N_B$/D=3. For case 3 it turns out the greatest common divisor is 1, giving a useless strategy since it is not okay to sample 233+191 individuals in the first iteration. Hence finding the greatest common divisor is not a strategy which is suitable to implement in PsN.
 
@@ -125,11 +125,11 @@ PsN must be able to handle all cases, keep as good a balance as possible between
 PsN uses the following algorithm:
 \begin{enumerate}
 	\item Compute the desired total sample size $X_{desired_total}$=start\_size+(i-1)*increment, where i, i=1,2,3... 	is the iteration number, increment has default equal the number of strata but can be set by the 	user, and start\_size has default 3*increment but can be set by the user.
-	\item Compute the number of individuals Xi to sample from strata i using the following formula: 	Xi =round\_to\_nearest\_integer($X_{desired_total}$*$N_i$/$N_{total}$). 
+	\item Compute the number of individuals Xi to sample from stratum i using the following formula: 	Xi =round\_to\_nearest\_integer($X_{desired_total}$*$N_i$/$N_{total}$). 
 \end{enumerate}
-With the formula in step 2 strata i:s fraction of the total sample size will always be as close as possible to the fraction of strata i in the original population. The rounding is necessary since the division often has a non-zero remainder, and it is important to note that the actual total sample size $X_{actual_total}$, which is the sum of the individual sample sizes Xi, can differ slightly from $X_{desired_total}$ because of the necessary rounding. If the increment is small it can happen that $X_{actual_total}$ is the same in two consecutive iterations, without there being any error. PsN always reports $X_{actual_total}$ in all output. $X_{desired_total}$ is an internal variable and is never displayed.
+With the formula in step 2 stratum i:s fraction of the total sample size will always be as close as possible to the fraction of stratum i in the original population. The rounding is necessary since the division often has a non-zero remainder, and it is important to note that the actual total sample size $X_{actual_total}$, which is the sum of the individual sample sizes Xi, can differ slightly from $X_{desired_total}$ because of the necessary rounding. If the increment is small it can happen that $X_{actual_total}$ is the same in two consecutive iterations, without there being any error. PsN always reports $X_{actual_total}$ in all output. $X_{desired_total}$ is an internal variable and is never displayed.
 
-If the user has a dataset as case 2 ($N_{total}$=400 where $N_A$=100 and $N_B$=300) the user can set increment to 4 (1+3) which would give a perfect relation between the strata sample sizes in each iteration, since according to PsN:s algorithm strata A will always get 100/400=1/4 of the samples and strata B 300/400=3/4 of the samples and $X_{desired_total}$ would always be a multiple of 4. If the user leaves increment to the default = the number of strata, then the results would still be acceptable. In every other iteration the relation would be perfect ( $X_{desired_total}$ is a multiple of 4). In the rest of the iterations the actual relation would deviate slightly, e.g. if $X_{desired_total}$=10 then XA= round(10*100/400)=3 and XB= round(10*300/400)=8 giving $X_{actual_total}$=3+8=11, but the larger the total sample size is the smaller the deviation will be. 
+If the user has a dataset as case 2 ($N_{total}$=400 where $N_A$=100 and $N_B$=300) the user can set increment to 4 (1+3) which would give a perfect relation between the strata sample sizes in each iteration, since according to PsN:s algorithm stratum A will always get 100/400=1/4 of the samples and stratum B 300/400=3/4 of the samples and $X_{desired_total}$ would always be a multiple of 4. If the user leaves increment to the default = the number of strata, then the results would still be acceptable. In every other iteration the relation would be perfect ( $X_{desired_total}$ is a multiple of 4). In the rest of the iterations the actual relation would deviate slightly, e.g. if $X_{desired_total}$=10 then XA= round(10*100/400)=3 and XB= round(10*300/400)=8 giving $X_{actual_total}$=3+8=11, but the larger the total sample size is the smaller the deviation will be. 
 
 The user can also choose to set start\_size to manipulate the sample sizes, but it is recommended not to set this option to anything other than a multiple of increment.
 
@@ -147,7 +147,11 @@ The user can also choose to set start\_size to manipulate the sample sizes, but 
 \item Estimate the full model unless -table\_full is specified.
 \item Extract iofv-values from full and reduced iofv-tables, and subtract to create delta-iofv-vector.
 \item Stratify delta-iofv-table based on strata.tab/-table\_stratify.
-\item Loop over total sample size starting on -start\_size and incrementing with -increment in each step and continuing as long as total sample size does not exceed -max\_size. For each total sample size and each strata, compute the number of samples to draw from this strata using the formula Z=round(total\_sample\_size*strata\_individuals\_in\_full\_data\_set/individuals\_in\_full\_data\_set) . Draw Z samples from the strata, randomly with replacement. Repeat n\_bootstrap times, sum delta\_iofv for the samples from all strata to generate n\_bootstrap delta\_ofv:s. Compute percentage of delta\_ofv $>$ critical\_ofv=power. In output table, write line with total\_sample\_size, power, sample\_sizes from each strata. Halt if power exceeds target\_power \% three times in a row.
+\item Loop over total sample size starting on -start\_size and incrementing with -increment in each step, continuing as long as total sample size does not exceed -max\_size. For each total sample size and each stratum, compute the number of samples to draw from this stratum using the formula
+Z=round\begin{math}
+(total.sample.size\cdot\frac{n.individuals.in.stratum}{n.individuals.in.total})
+\end{math}
+. Draw Z samples from the stratum, randomly with replacement. Repeat n\_bootstrap times, sum delta\_iofv for the samples from all strata to generate n\_bootstrap delta\_ofv:s. Compute percentage of delta\_ofv $>$ critical\_ofv=power. In output table, write line with total\_sample\_size, power, sample\_sizes from each stratum. Halt if power exceeds target\_power \% three times in a row.
 \end{enumerate}
 
 \begin{thebibliography}{1}

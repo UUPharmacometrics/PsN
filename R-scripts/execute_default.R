@@ -9,7 +9,7 @@ if (rplots.level > 0){
 	#uncomment below to change the idv from TIME to something else such as TAD.
 	#Other xpose preferences could also be changed
 	#xpdb@Prefs@Xvardef$idv="TAD"
-    runsum(xpdb,show.plots=TRUE,dir=model.directory)
+	runsum(xpdb,show.plots=TRUE,dir=model.directory)
 	if (is.null(subset.variable)){
        print(basic.gof(xpdb))
        print(ranpar.hist(xpdb))
@@ -20,19 +20,52 @@ if (rplots.level > 0){
        print(pred.vs.idv(xpdb))
 	    
 	}else{
+	
 		regexp <- paste0('^',subset.variable,'$')
+		#cat(regexp)
 		pos <- grep(regexp,names(xpdb@Data))
-		#below assumes subset.variable is already stored as a factor in xpdb
-		flagvector <- levels(xpdb@Data[pos][subset.variable,])
+		#cat(pos)
+		doloop <- FALSE
+		if (is.factor(xpdb@Data[pos][,subset.variable])){
+		   #below assumes subset.variable is already stored as a factor in xpdb
+		   flagvector <- levels(xpdb@Data[pos][subset.variable,])
+		}else{
+			#using 'by' with Xpose will not work well
+			doloop <- TRUE
+		   flagvector <- levels(as.factor(xpdb@Data[pos][,subset.variable]))
+		}
+		#cat(flagvector)
 		for (flag in flagvector){
 			print(basic.gof(xpdb,subset=paste0(subset.variable,'==',flag)))
 		}
-		print(ranpar.hist(xpdb,by=subset.variable))
-		print(ranpar.qq(xpdb,by=subset.variable))
-		print(dv.preds.vs.idv(xpdb,by=subset.variable))
-		print(dv.vs.idv(xpdb,by=subset.variable))
-		print(ipred.vs.idv(xpdb,by=subset.variable))
-		print(pred.vs.idv(xpdb,by=subset.variable))
+
+		if (doloop){
+			for (flag in flagvector){
+				print(ranpar.hist(xpdb,subset=paste0(subset.variable,'==',flag)))
+			}
+			for (flag in flagvector){
+				print(ranpar.qq(xpdb,subset=paste0(subset.variable,'==',flag)))
+			}
+			for (flag in flagvector){
+				print(dv.preds.vs.idv(xpdb,subset=paste0(subset.variable,'==',flag)))
+			}
+			for (flag in flagvector){
+				print(dv.vs.idv(xpdb,subset=paste0(subset.variable,'==',flag)))
+			}
+			for (flag in flagvector){
+				print(ipred.vs.idv(xpdb,subset=paste0(subset.variable,'==',flag)))
+			}
+			for (flag in flagvector){
+				print(pred.vs.idv(xpdb,subset=paste0(subset.variable,'==',flag)))
+			}
+		}else{
+			print(ranpar.hist(xpdb,by=subset.variable))
+			print(ranpar.qq(xpdb,by=subset.variable))
+			print(dv.preds.vs.idv(xpdb,by=subset.variable))
+			print(dv.vs.idv(xpdb,by=subset.variable))
+			print(ipred.vs.idv(xpdb,by=subset.variable))
+			print(pred.vs.idv(xpdb,by=subset.variable))
+		}
 	}
 
 }

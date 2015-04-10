@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{SSE user guide}{2014-11-24}
+\guidetitle{SSE user guide}{2015-04-10}
 
 \begin{document}
 
@@ -89,6 +89,37 @@ For a complete list see common\_options.pdf,
 or psn\_options -h on the commandline.
 \input{inputs/basic_options.tex}
 
+\subsection{Auto-generated R-plots from PsN}
+\newcommand{\rplotsconditions}{
+Parametric power estimation (PPE) allows to generate data for full power versus sample size curve(s) 
+based on a SSE with full and reduced models performed with a single sample size. The procedure is described in 
+\emph{Accelerating Monte-Carlo Power Studies through Parametric Power Estimation}, 
+PAGE 23 (2014) Abstr 3263, Ueckert S, Karlsson MO, Hooker AC. 
+
+The default sse template will perform all required PPE calculations in R and output the resulting power curve(s). 
+For the template to work, the R libraries ggplot2 and plyr need to be installed. Furthermore, it is recommended 
+to indicate the reduced model associated with a specific full model by adding the 
+suffix `red' (i.e. `run1red.mod' is the reduced model associated with the full model `run1.mod'). 
+If no full and reduced model pair with the expected naming scheme is found, matching will 
+occur by position (i.e., estimation model 1 will be taken to be the full model and estimation model 2 
+the associated reduced model, same for 3 and 4, etc.).}
+
+\input{inputs/rplots_section_body.tex}
+
+\subsubsection*{Basic plots}
+The basic PPE plot will be generated if option -rplots is set >0, and the general rplots conditions fulfilled, see above.
+The plot shows, for each of the provided full/reduced model pairs, 
+a color-coded power versus sample size curve together with 
+a shaded region indicating the uncertainty in the power estimate due to Monte-Carlo noise (-samples option in PsN). 
+By default power curves are drawn from a sample size of 1 to the samples size of 99\% power. 
+
+\subsubsection*{Extended plots}
+Extended PPE plots, will be generated if -rplots>1, and are on the second page of the pdf-output.
+The  extended plots are intended as a diagnostic to evaluate the assumptions of the PPE algorithm. 
+They show separately for each full/reduced model pair the empirical cumulative distribution function (ECDF) of the $\Delta$-OFVs 
+together with a shaded area indicating the 95\% confidence region for the ECDF provided the underlying distributional assumptions 
+of the PPE algorithm are true. The results of the algorithm should be re-evaluated through an alternative method for power estimation 
+when the ECDF curve lies outside the confidence interval. 
 
 \subsection{Special cases}
 To simulate odd-type data, relevant code (with a simulation block) is needed in the input model file, as well as a \$SIMULATION row. It should contain one ordinary (from a normal distribution) seed number and one extra seed number (from a uniform distribution) “\$SIMULATION (11111) (11111 UNIFORM)”. The random number generator handled by PsN will replace the seed numbers in a controlled manner (derived from “–seed=” if provided).
