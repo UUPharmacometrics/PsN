@@ -70,7 +70,7 @@ if (rplots.level > 0){
 
 }
 
-if (rplots.level > 1){
+if ((rplots.level > 1) & (is.null(subset.variable) | length(flagvector)<3 )){
     #individual plots of ten random IDs
 	#find idcolumn
     idvar <- xvardef("id",xpdb)
