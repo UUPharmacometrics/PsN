@@ -1719,10 +1719,11 @@ sub modelfit_analyze
 	trace(tool => 'npc/vpc', message => "done running the models. Do analysis.", level => 1);
 
 	if (defined $self->tte) {
-		$self->get_tte_data;
+		$self->get_tte_data; #FIXME make static
 		return;
 	}
 
+	#FIXME make static
 	$self->get_data_matrix; #creates global @data_matrix and global censor_data_matrix
 
 	my $no_sim= (split(/,/,$self->data_matrix->[0])) - 1;
@@ -1735,6 +1736,7 @@ sub modelfit_analyze
 	$self->n_simulations($no_sim);
 	$self->n_observations(scalar(@{$self->data_matrix}));
 
+	#FIXME make static
 	$self->create_stratified_data(); #identical stratification for censoring variable
 
 	if ($self->is_vpc) {
@@ -1758,18 +1760,19 @@ sub modelfit_analyze
 
 sub create_unique_values_hash
 {
-	my $self = shift;
+	#static no shift
 	my %parm = validated_hash(\@_,
 							  data_column => { isa => 'ArrayRef[Num]', optional => 0 },
-							  reference => { isa => 'Maybe[Num]', optional => 1 }
+							  reference => { isa => 'Maybe[Num]', optional => 1 },
 		);
 	my %value_hash;
 	my @data_column = defined $parm{'data_column'} ? @{$parm{'data_column'}} : ();
 	my $reference = $parm{'reference'};
 
+	my $clear_refstrat = 0;
 	#in @data_column and possibly reference
 	#if reference is set then make sure that value exists, but keep hash 'sorted'
-	#out %value_hash
+	#out %value_hash and bool clear_refstrat
 	my $value_index = 0;
 
 	foreach my $val (sort {$a <=> $b} @data_column){
@@ -1792,18 +1795,16 @@ sub create_unique_values_hash
 			}
 		}
 		unless ($found_reference){
-			print "\n\nERROR: The reference stratum value refstrat was set to ".$self->stratify_on()."=".$reference." but no observations were found where ".
-				$self->stratify_on()."=".$reference.". Continuing analysis with refstrat undefined.\n\n";
-			$self->clear_refstrat;
+			$clear_refstrat=1;
 		}
 	}
 
-	return \%value_hash;
+	return \%value_hash,$clear_refstrat;
 }
 
 sub get_bin_boundaries_overlap_count
 {
-	my $self = shift;
+	#static no shift
 	my %parm = validated_hash(\@_,
 							  value_hash => { isa => 'HashRef', optional => 1 },
 							  overlap_percent => { isa => 'Num', optional => 0 },
@@ -2009,7 +2010,7 @@ sub get_bin_ceilings_from_count
 
 sub get_bin_boundaries_overlap_value
 {
-	my $self = shift;
+	#static no shift
 	my %parm = validated_hash(\@_,
 							  data_column => { isa => 'ArrayRef[Num]', optional => 0 },
 							  data_indices => { isa => 'ArrayRef[Num]', optional => 0 },
@@ -2112,7 +2113,7 @@ sub get_bin_ceilings_from_value
 
 sub index_matrix_binned_values
 {
-	my $self = shift;
+	#static method no shift
 	my %parm = validated_hash(\@_,
 							  value_hash => { isa => 'HashRef[Num]', optional => 0 },
 							  reference_index => { isa => 'Maybe[Int]', optional => 1 },
@@ -2215,9 +2216,9 @@ sub index_matrix_binned_values
 
 sub median
 {
-	my $self = shift;
+	#static no shift
 	my %parm = validated_hash(\@_,
-							  sorted_array => { isa => 'Ref', optional => 1 }
+							  sorted_array => { isa => 'Ref', optional => 0 }
 		);
 	my $sorted_array = $parm{'sorted_array'};
 	my $result;
@@ -2965,13 +2966,15 @@ sub create_binned_data
 		}
 		my @data_indices = (0..$#bin_array);
 
-		my $bin_hash = $self->create_unique_values_hash('data_column' => \@bin_array);
+		my $dirt;
+		my $bin_hash;
+		($bin_hash,$dirt) = create_unique_values_hash('data_column' => \@bin_array);
 
 		my ($bin_floors, $bin_ceilings);
 
 		if ($self->bin_by_count eq '1') {
 			if (defined $self->overlap_percent) {
-				($bin_floors, $bin_ceilings) = $self -> get_bin_boundaries_overlap_count(
+				($bin_floors, $bin_ceilings) = get_bin_boundaries_overlap_count(
 					'data_column'		 => \@bin_array,
 					'value_hash'		 => $bin_hash,
 					'data_indices'	 => \@data_indices,
@@ -2999,7 +3002,7 @@ sub create_binned_data
 			}
 		} elsif ($self->bin_by_count eq '0') {
 			if (defined $self->overlap_percent) {
-				($bin_floors, $bin_ceilings) = $self -> get_bin_boundaries_overlap_value(
+				($bin_floors, $bin_ceilings) = get_bin_boundaries_overlap_value(
 					'data_column'		 => \@bin_array,
 					'data_indices'	 => \@data_indices,
 					'width'				 => $self->single_bin_size,
@@ -3041,7 +3044,7 @@ sub create_binned_data
 			$bin_ceilings = binning::bin_range(\@bin_array, $min, $max, $self->min_points_in_bin, $self->strata_labels->[$strat_ind]);
 		}
 
-		my $bin_matrix = $self -> index_matrix_binned_values(
+		my $bin_matrix = index_matrix_binned_values(
 			'data_column'		=> \@bin_array,
 			'value_hash'		=> $bin_hash,
 			'data_indices'	=> \@data_indices,
@@ -3125,9 +3128,12 @@ sub create_binned_data
 			}
 
 			if ($self->predcorr and (scalar(@pred_values) > 0)){
-				my $new_data = $self->do_predcorr_and_varcorr(pred_array=>\@pred_values, 
-															  data_array => \@bin_data,
-															  bound_array=>\@bound_values) ;
+				my $new_data = do_predcorr_and_varcorr(pred_array=>\@pred_values, 
+													   data_array => \@bin_data,
+													   bound_array=>\@bound_values,
+													   lnDV => $self->lnDV,
+													   DV => $self->dv,
+													   varcorr => $self->varcorr) ;
 				@bin_data = @{$new_data};
 			}
 
@@ -3204,15 +3210,22 @@ sub create_binned_data
 
 sub do_predcorr_and_varcorr
 {
-	my $self = shift;
+	#static no shift
 	my %parm = validated_hash(\@_,
-							  pred_array => { isa => 'Ref', optional => 1 },
-							  bound_array => { isa => 'Ref', optional => 1 },
-							  data_array => { isa => 'Ref', optional => 1 }
+							  pred_array => { isa => 'Ref', optional => 0 },
+							  bound_array => { isa => 'Ref', optional => 0 },
+							  data_array => { isa => 'Ref', optional => 0 },
+							  lnDV => { isa => 'Int', optional => 0},
+							  DV => { isa => 'Str', optional => 0 },
+							  varcorr => { isa => 'Bool', optional => 0 },
 		);
 	my $pred_array = $parm{'pred_array'};
 	my $bound_array = $parm{'bound_array'};
 	my $data_array = $parm{'data_array'};
+	my $lnDV = $parm{'lnDV'};
+	my $DV = $parm{'DV'};
+	my $varcorr = $parm{'varcorr'};
+
 	my @corrected_data_array;
 
 	#this is for one bin
@@ -3234,12 +3247,12 @@ sub do_predcorr_and_varcorr
 	#After discussion with Martin: use all pred even if some observations
 	#have all datasets censored
 
-	my $median_pred = $self->median(sorted_array => [(sort {$a <=> $b} @{$pred_array})]); # PREDnm
+	my $median_pred = median(sorted_array => [(sort {$a <=> $b} @{$pred_array})]); # PREDnm
 	for (my $i=0; $i< $n_pred; $i++){
 		my $pcorr;
 		my @newrow;
 
-		if (($self->lnDV == 2) or ($self->lnDV == 1) or ($self->lnDV == 3)){
+		if (($lnDV == 2) or ($lnDV == 1) or ($lnDV == 3)){
 			#log-transformed data
 			$pcorr=$median_pred-($pred_array->[$i]);
 			my $row = $data_array->[$i]; 
@@ -3258,7 +3271,7 @@ sub do_predcorr_and_varcorr
 			}else {
 				my $message="Found PRED value (".$pred_array->[$i].") lower than the lower bound (".$bound_array->[$i]."). ".
 					"Solve this by setting option -lower_bound and rerunning in the same directory, ".
-					"reusing the already formatted ${\$self->dv} data.";
+					"reusing the already formatted $DV data.";
 				croak($message);
 			}
 			my $row = $data_array->[$i]; 
@@ -3271,7 +3284,7 @@ sub do_predcorr_and_varcorr
 		push (@pc_data_array,\@newrow);
 	}
 
-	if ($self->varcorr){
+	if ($varcorr){
 		my $warn=0;
 		my @stdevs;
 		my $obs_index = 0;
@@ -3281,7 +3294,7 @@ sub do_predcorr_and_varcorr
 			push(@stdevs, (array::stdev(\@values))); #store stdev from simulated values only
 			#stdev handles zero lenght array
 		}
-		my $median_stdev = $self->median(sorted_array => [(sort {$a <=> $b} @stdevs)]);
+		my $median_stdev = median(sorted_array => [(sort {$a <=> $b} @stdevs)]);
 		
 		for (my $i=0; $i < $n_pred; $i++){ #for each observation
 			my $vcorr;
@@ -3623,8 +3636,17 @@ sub create_stratified_data
 				  "does not match number of observations in matrix file.");
 		}
 
-		$strat_hash = $self -> create_unique_values_hash(data_column=>$strat_array,
-														 reference => $self->refstrat());
+		my $clear_refstrat;
+		($strat_hash,$clear_refstrat) = create_unique_values_hash(data_column=>$strat_array,
+																  reference => $self->refstrat());
+		if ($clear_refstrat){
+			ui->print(category=> 'all',
+					  message =>"\n\nERROR: The reference stratum value refstrat was set to ".$self->stratify_on."=".
+					  $self->refstrat." but no observations were found where ".
+					  $self->stratify_on."=".$self->refstrat.". Continuing analysis with refstrat undefined.\n\n");
+			$self->clear_refstrat;
+		}
+
 
 		my $reference_index=undef;
 		if (defined $self->refstrat()){
@@ -3644,11 +3666,11 @@ sub create_stratified_data
 														  'value_hash'=>$strat_hash,
 														  'data_indices'=>\@all_indices,
 														  'n_bins'=>$self->no_of_strata);
-		$strata_matrix = $self -> index_matrix_binned_values(data_column=>$strat_array,
-															 value_hash=>$strat_hash,
-															 reference_index => $reference_index,
-															 data_indices=>\@all_indices,
-															 bin_ceilings=>$strata_ceilings);
+		$strata_matrix = index_matrix_binned_values(data_column=>$strat_array,
+													value_hash=>$strat_hash,
+													reference_index => $reference_index,
+													data_indices=>\@all_indices,
+													bin_ceilings=>$strata_ceilings);
 
 		#create label array for printed report.
 		if (defined $self->no_of_strata && $self->no_of_strata < scalar(keys %{$strat_hash})) {
@@ -4000,7 +4022,7 @@ sub vpc_analyze
 
 	my ($npc_result_column_labels,$npc_result_row_labels);
 	($npc_result_column_labels,$npc_result_row_labels) = 
-		$self->get_npc_result_labels('ci' => $c_i,'pred_intervals' => \@pred_int);
+		get_npc_result_labels('ci' => $c_i,'pred_intervals' => \@pred_int);
 	my @npc_result_labels = ($npc_result_row_labels,$npc_result_column_labels);
 
 	#call get_npc_indices
@@ -4010,9 +4032,9 @@ sub vpc_analyze
 	
 	my ($npc_lower_index,$npc_upper_index,$npc_low_ind,$npc_high_ind);
 	($npc_lower_index,$npc_upper_index,$npc_low_ind,$npc_high_ind)= 
-		$self->get_npc_indices('ci' => $c_i,
-							   'no_sim' => $no_sim,
-							   'pred_intervals' => \@pred_int);
+		get_npc_indices('ci' => $c_i,
+						'no_sim' => $no_sim,
+						'pred_intervals' => \@pred_int);
 	
 	#endof prep VPC diagnostics
 
@@ -4293,7 +4315,7 @@ sub vpc_analyze
 					$lloq_ci_to=$sorted_sim_frac[$high_ci_ind];
 					
 					$median_fraction_sim_below_lloq = 
-						($self->median('sorted_array' => \@sorted_sim_frac));
+						(median('sorted_array' => \@sorted_sim_frac));
 					
 					my $ii = 0;
 					foreach my $mi (@{$self->mirror_set}){
@@ -4337,7 +4359,7 @@ sub vpc_analyze
 					$uloq_ci_from=$sorted_sim_frac[$low_ci_ind];
 					$uloq_ci_to=$sorted_sim_frac[$high_ci_ind];
 					$median_fraction_sim_above_uloq = 
-						($self->median('sorted_array' => \@sorted_sim_frac));
+						(median('sorted_array' => \@sorted_sim_frac));
 					
 					my $ii = 0;
 					foreach my $mi (@{$self->mirror_set}){
@@ -4371,7 +4393,7 @@ sub vpc_analyze
 				$missing_ci_from=$sorted_sim_frac[$low_ci_ind];
 				$missing_ci_to=$sorted_sim_frac[$high_ci_ind];
 				$median_fraction_sim_missing = 
-					($self->median('sorted_array' => \@sorted_sim_frac));
+					(median('sorted_array' => \@sorted_sim_frac));
 				
 				my $ii = 0;
 				foreach my $mi (@{$self->mirror_set}){
@@ -4425,7 +4447,7 @@ sub vpc_analyze
 						push(@categorized_result_row_values,'','','');
 					}else{
 						my @sorted_sim_frac = sort {$a <=> $b} @sim_frac_censored;
-						my $median_count_fraction=($self->median('sorted_array' => \@sorted_sim_frac));
+						my $median_count_fraction=(median('sorted_array' => \@sorted_sim_frac));
 						push(@categorized_result_row_values,$median_count_fraction,
 							 $sorted_sim_frac[$low_ci_ind],
 							 $sorted_sim_frac[$high_ci_ind]);
@@ -4455,7 +4477,7 @@ sub vpc_analyze
 						}
 					}elsif ($perc_limit[$i]==50){
 						#take median
-						$limit[$i]= $self->median('sorted_array' => \@sorted_sim_values);
+						$limit[$i]= median('sorted_array' => \@sorted_sim_values);
 					}else{
 						$limit_index[$i] = round($perc_limit[$i]*($n_merged_censored_sim-1)/100);
 						$limit[$i]=$sorted_sim_values[$limit_index[$i]];
@@ -4468,15 +4490,27 @@ sub vpc_analyze
 			#subset npc must be done on same set as below: take out lloq/uloq if varcorr, 
 			#otherwise only missing. lower and upper index depend on this choice, recomputed
 			#must also recompute low_ind high_ind inside npc?
-			my ($npc_result_values,$npc_realpos,$npc_stats_warnings);
+			my ($npc_result_values,$npc_realpos,$npc_stats_warnings,$npc_alert_written);
 			($npc_result_values,$npc_realpos,$npc_stats_warnings)=
-				$self->subset_npc_analyze('bin_index' => $bin_index,
-										  'strata_index' => $strat_ind,
-										  'low_ind' => $npc_low_ind,
-										  'high_ind' => $npc_high_ind,
-										  'lower_index' => $npc_lower_index,
-										  'upper_index' => $npc_upper_index, 
-										  'pred_intervals' => \@pred_int);
+				subset_npc_analyze(bin_index => $bin_index,
+								   strata_index => $strat_ind,
+								   low_ind => $npc_low_ind,
+								   high_ind => $npc_high_ind,
+								   lower_index => $npc_lower_index,
+								   upper_index => $npc_upper_index, 
+								   pred_intervals => \@pred_int,
+								   censored => (defined $self->censor() or ($self->detection_censored and $self->predcorr)),
+								   ci => $self->confidence_interval(),
+								   no_sim=> $self->n_simulations,
+								   verbose  => $self->verbose,
+								   npc_alert_written  => $self->npc_alert_written,
+								   predcorr  => $self->predcorr,
+								   stratified_data => $self->stratified_data,
+								   binned_data => $self->binned_data,
+								   censor_stratified_data => $self->censor_stratified_data,
+								   censor_binned_data => $self->censor_binned_data,
+				);
+			$self->npc_alert_written($npc_alert_written);
 			#realpos has one arrayref per PI, each array one integer per obs. -1 below, 0 in, 1 above
 			#-99 for missing
 			
@@ -4536,7 +4570,7 @@ sub vpc_analyze
 			my $all_missing_sim=0;
 			my $less_than_10=0;
 			my @sorted_nonmiss = sort {$a <=> $b} @n_non_missing_sim;
-			my $median_nonmiss = $self->median('sorted_array' => \@sorted_nonmiss);
+			my $median_nonmiss = median('sorted_array' => \@sorted_nonmiss);
 
 			for (my $j=0; $j<$no_sim; $j++){
 				if ($n_non_missing_sim[$j] == 0){
@@ -4593,7 +4627,7 @@ sub vpc_analyze
 							}
 						}
 					}elsif ($perc_limit[$i] == 50) {
-						$limit_real[$i] = $self->median('sorted_array' => \@sorted_singleset);
+						$limit_real[$i] = median('sorted_array' => \@sorted_singleset);
 					}else{
 						my $index = round($perc_limit[$i]*(scalar(@censored_real)-1)/100);
 						$limit_real[$i] = $sorted_singleset[$index];
@@ -4602,52 +4636,27 @@ sub vpc_analyze
 			}
 
 			#c) compute PI:s for each simset. Use clever indexing in @merged_uncensored_simvalues to extract values.
+
+			my $uncensored_count = compute_PI_each_simset(
+				limit_singlesim => \@limit_singlesim,
+				merged_uncensored_simvalues => \@merged_uncensored_simvalues,
+				merged_censor_values_sim => \@merged_censor_values_sim,
+				merged_censored_sim => \@merged_censored_sim,
+				predcorr => $self->predcorr,
+				censored => (defined $self->censor() || $self->detection_censored),
+				perc_limit => \@perc_limit,
+				reference_mean_limit_singlesim => \@reference_mean_limit_singlesim,
+				no_sim => $no_sim,
+				no_perc_limits => $no_perc_limits,
+				max_bin_observations => $max_bin_observations,
+				meantext => $meantext,
+				deltameantext => $deltameantext,
+				strat_ind => $strat_ind,
+				bin_index => $bin_index
+				);
+
 			#then determine and save ci:s for each PI boundary	    
 			#recompute low_ci_ind after possibly stricter censoring
-
-
-			my $uncensored_count=0;
-			for (my $col=0;$col<$no_sim; $col++){
-				@singleset=();
-				for (my $row=0; $row<$max_bin_observations; $row++){
-					if (defined $self->censor() || $self->detection_censored){
-						if ($self->predcorr){
-							push(@singleset,$merged_uncensored_simvalues[$col+$row*$no_sim])
-								if ($merged_censor_values_sim[$col+$row*$no_sim] == 0);
-						}else{
-							push(@singleset,$merged_uncensored_simvalues[$col+$row*$no_sim])
-								if ($merged_censor_values_sim[$col+$row*$no_sim] != 1);
-						}
-					}else{
-						push(@singleset,$merged_censored_sim[$col+$row*$no_sim]);
-					}
-				}
-				if (scalar(@singleset) == 0){
-					for (my $i=0; $i<$no_perc_limits; $i++){
-						$limit_singlesim[$i]->[$col] = undef;
-					}
-				}else{
-					$uncensored_count++;
-					my @sorted_singleset = sort {$a <=> $b} @singleset;
-					for (my $i=0; $i<$no_perc_limits; $i++){
-						if ($perc_limit[$i] eq $meantext){
-							$limit_singlesim[$i]->[$col]  = array::mean(\@sorted_singleset);
-						}elsif ($perc_limit[$i] eq $deltameantext){
-							if ($strat_ind == 0){
-								$reference_mean_limit_singlesim[$bin_index]->[$col]  = array::mean(\@sorted_singleset);
-								$limit_singlesim[$i]->[$col] = 0;
-							}else{
-								$limit_singlesim[$i]->[$col] = array::mean(\@sorted_singleset) - $reference_mean_limit_singlesim[$bin_index]->[$col] ;
-							}
-						}elsif ($perc_limit[$i]==50){
-							$limit_singlesim[$i]->[$col]  = $self->median('sorted_array' => \@sorted_singleset);
-						}else{
-							my $index = round($perc_limit[$i]*(scalar(@singleset)-1)/100);
-							$limit_singlesim[$i]->[$col] = $sorted_singleset[$index];
-						}
-					}
-				}
-			}
 
 			#for mirror plots
 			if (defined $self->mirrors){
@@ -4889,6 +4898,112 @@ sub vpc_analyze
 	}
 }
 
+sub compute_perc_limits
+{
+	#static no shift
+	#modifies array
+	#no return value
+	my %parm = validated_hash(\@_,
+							  perc_limit => { isa => 'Ref', optional => 0 },
+							  reference_strata_values => { isa => 'Maybe[Ref]', optional => 0 },
+							  sorted_values => { isa => 'Ref', optional => 0 },
+							  no_perc_limits => { isa => 'Int', optional => 0 },
+							  meantext => { isa => 'Str', optional => 0 },
+							  deltameantext => { isa => 'Str', optional => 0 },
+							  strat_ind => { isa => 'Int', optional => 0 },
+							  bin_index => { isa => 'Int', optional => 0 },
+		);
+
+
+
+}
+
+sub compute_PI_each_simset
+{
+	#return uncensored count
+	#in ref to array limit_singlesim which is modified, make sure handle correctly,
+	#modify also reference_mean_limit_singlesim
+	#static no shift
+	my %parm = validated_hash(\@_,
+							  limit_singlesim => { isa => 'Ref', optional => 0 },
+							  merged_uncensored_simvalues => { isa => 'Maybe[Ref]', optional => 0},
+							  merged_censor_values_sim => { isa => 'Maybe[Ref]', optional => 0 },
+							  merged_censored_sim => { isa => 'Maybe[Ref]', optional => 0 },
+							  predcorr => { isa => 'Bool', optional => 0 },
+							  censored => { isa => 'Bool', optional => 0 },
+							  perc_limit => { isa => 'Ref', optional => 0 },
+							  reference_mean_limit_singlesim => { isa => 'Maybe[Ref]', optional => 0 },
+							  no_sim => { isa => 'Int', optional => 0 },
+							  no_perc_limits => { isa => 'Int', optional => 0 },
+							  max_bin_observations => { isa => 'Int', optional => 0 },
+							  meantext => { isa => 'Str', optional => 0 },
+							  deltameantext => { isa => 'Str', optional => 0 },
+							  strat_ind => { isa => 'Int', optional => 0 },
+							  bin_index => { isa => 'Int', optional => 0 },
+		);
+
+	my $limit_singlesim = $parm{'limit_singlesim'};
+	my $merged_uncensored_simvalues = $parm{'merged_uncensored_simvalues'};
+	my $merged_censor_values_sim = $parm{'merged_censor_values_sim'};
+	my $merged_censored_sim = $parm{'merged_censored_sim'};
+	my $predcorr = $parm{'predcorr'};
+	my $censored = $parm{'censored'};
+	my $perc_limit = $parm{'perc_limit'};
+	my $reference_mean_limit_singlesim = $parm{'reference_mean_limit_singlesim'};
+	my $no_sim = $parm{'no_sim'};
+	my $no_perc_limits = $parm{'no_perc_limits'};
+	my $max_bin_observations = $parm{'max_bin_observations'};
+	my $meantext = $parm{'meantext'};
+	my $deltameantext = $parm{'deltameantext'};
+	my $strat_ind = $parm{'strat_ind'};
+	my $bin_index = $parm{'bin_index'};
+
+	my $uncensored_count=0;
+	for (my $col=0;$col<$no_sim; $col++){
+		my @singleset=();
+		for (my $row=0; $row<$max_bin_observations; $row++){
+			if ($censored){
+				if ($predcorr){
+					push(@singleset,$merged_uncensored_simvalues->[$col+$row*$no_sim])
+						if ($merged_censor_values_sim->[$col+$row*$no_sim] == 0);
+				}else{
+					push(@singleset,$merged_uncensored_simvalues->[$col+$row*$no_sim])
+						if ($merged_censor_values_sim->[$col+$row*$no_sim] != 1);
+				}
+			}else{
+				push(@singleset,$merged_censored_sim->[$col+$row*$no_sim]);
+			}
+		}
+		if (scalar(@singleset) == 0){
+			for (my $i=0; $i<$no_perc_limits; $i++){
+				$limit_singlesim->[$i]->[$col] = undef;
+			}
+		}else{
+			$uncensored_count++;
+			my @sorted_singleset = sort {$a <=> $b} @singleset;
+			for (my $i=0; $i<$no_perc_limits; $i++){
+				if ($perc_limit->[$i] eq $meantext){
+					$limit_singlesim->[$i]->[$col]  = array::mean(\@sorted_singleset);
+				}elsif ($perc_limit->[$i] eq $deltameantext){
+					if ($strat_ind == 0){
+						$reference_mean_limit_singlesim->[$bin_index]->[$col]  = array::mean(\@sorted_singleset);
+						$limit_singlesim->[$i]->[$col] = 0;
+					}else{
+						$limit_singlesim->[$i]->[$col] = array::mean(\@sorted_singleset) - $reference_mean_limit_singlesim->[$bin_index]->[$col] ;
+					}
+				}elsif ($perc_limit->[$i]==50){
+					$limit_singlesim->[$i]->[$col]  = median('sorted_array' => \@sorted_singleset);
+				}else{
+					my $index = round($perc_limit->[$i]*(scalar(@singleset)-1)/100);
+					$limit_singlesim->[$i]->[$col] = $sorted_singleset[$index];
+				}
+			}
+		}
+	}
+
+	return $uncensored_count;
+}
+
 sub npc_analyze
 {
 	my $self = shift;
@@ -4953,14 +5068,14 @@ sub npc_analyze
 	
 	##done general run info
 	
-	($result_column_labels,$result_row_labels) = $self->get_npc_result_labels('ci' => $c_i,
-																			  'pred_intervals' => \@pred_int);
+	($result_column_labels,$result_row_labels) = get_npc_result_labels('ci' => $c_i,
+																	   'pred_intervals' => \@pred_int);
 	my @result_labels = ($result_row_labels,$result_column_labels);
 
 
-	($lower_index,$upper_index,$low_ind,$high_ind)= $self->get_npc_indices('ci' => $c_i,
-																		   'no_sim' => $no_sim,
-																		   'pred_intervals' => \@pred_int);
+	($lower_index,$upper_index,$low_ind,$high_ind)= get_npc_indices('ci' => $c_i,
+																	'no_sim' => $no_sim,
+																	'pred_intervals' => \@pred_int);
 
 	if ($self->verbose){
 		for (my $i=0; $i<$no_pred_ints; $i++){
@@ -4973,14 +5088,24 @@ sub npc_analyze
 	my $realpos; #dirt
 	for (my $strat_ind=0; $strat_ind<$no_of_strata; $strat_ind++){
 		my %return_section;
-		my ($result_values,$stats_warnings);
-		($result_values,$realpos,$stats_warnings)=$self->subset_npc_analyze('strata_index' => $strat_ind,
-																			'low_ind' => $low_ind,
-																			'high_ind' => $high_ind,
-																			'lower_index' => $lower_index,
-																			'upper_index' => $upper_index, 
-																			'pred_intervals' => \@pred_int);
-		
+		my ($result_values,$stats_warnings,$npc_alert_written);
+		($result_values,$realpos,$stats_warnings,$npc_alert_written)=
+			subset_npc_analyze(strata_index => $strat_ind,
+							   low_ind => $low_ind,
+							   high_ind => $high_ind,
+							   lower_index => $lower_index,
+							   upper_index => $upper_index, 
+							   pred_intervals => \@pred_int,
+							   censored => (defined $self->censor() or ($self->detection_censored and $self->predcorr)),
+							   ci => $self->confidence_interval(),
+							   no_sim => $self->n_simulations,
+							   verbose  => $self->verbose,
+							   npc_alert_written  => $self->npc_alert_written,
+							   predcorr  => $self->predcorr,
+							   stratified_data => $self->stratified_data,
+							   censor_stratified_data => $self->censor_stratified_data,
+			);
+		$self->npc_alert_written($npc_alert_written);
 		my $point_counter=scalar(@{$self->strata_matrix->[$strat_ind]});
 		my $result_name = "\nNPC results ".$self->strata_labels->[$strat_ind].
 			"\n$point_counter observations out of $no_observations";
@@ -5009,7 +5134,7 @@ sub npc_analyze
 
 sub get_npc_indices
 {
-	my $self = shift;
+	#static no shift
 	my %parm = validated_hash(\@_,
 							  pred_intervals => { isa => 'Ref', optional => 1 },
 							  ci => { isa => 'Num', optional => 1 },
@@ -5046,10 +5171,10 @@ sub get_npc_indices
 
 sub get_npc_result_labels
 {
-	my $self = shift;
+	#static no shift
 	my %parm = validated_hash(\@_,
-							  pred_intervals => { isa => 'Ref', optional => 1 },
-							  ci => { isa => 'Num', optional => 1 }
+							  pred_intervals => { isa => 'Ref', optional => 0 },
+							  ci => { isa => 'Num', optional => 0 }
 		);
 	my $pred_intervals = $parm{'pred_intervals'};
 	my $ci = $parm{'ci'};
@@ -5076,15 +5201,25 @@ sub get_npc_result_labels
 
 sub subset_npc_analyze
 {
-	my $self = shift;
+	#static no shift
 	my %parm = validated_hash(\@_,
 							  bin_index => { isa => 'Int', optional => 1 },
-							  strata_index => { isa => 'Int', optional => 1 },
-							  pred_intervals => { isa => 'Ref', optional => 1 },
-							  lower_index => { isa => 'Ref', optional => 1 },
-							  upper_index => { isa => 'Ref', optional => 1 },
-							  low_ind => { isa => 'Int', optional => 1 },
-							  high_ind => { isa => 'Int', optional => 1 }
+							  strata_index => { isa => 'Int', optional => 0 },
+							  pred_intervals => { isa => 'Ref', optional => 0 },
+							  lower_index => { isa => 'Ref', optional => 0 },
+							  upper_index => { isa => 'Ref', optional => 0 },
+							  low_ind => { isa => 'Int', optional => 0 },
+							  high_ind => { isa => 'Int', optional => 0 },
+							  censored => { isa => 'Bool', optional => 0 },
+							  ci  => { isa => 'Num', optional => 0 },
+							  no_sim => { isa => 'Int', optional => 0 },
+							  stratified_data => { isa => 'Ref', optional => 0 },
+							  binned_data => { isa => 'Ref', optional => 1 },
+							  verbose  => { isa => 'Bool', optional => 1, default => 0 },
+							  npc_alert_written  => { isa => 'Bool', optional => 1, default => 0 },
+							  predcorr  => { isa => 'Bool', optional => 0},
+							  censor_stratified_data => { isa => 'Maybe[Ref]', optional => 1 },
+							  censor_binned_data => { isa => 'Maybe[Ref]', optional => 1 },
 		);
 	my $bin_index = $parm{'bin_index'};
 	my $strata_index = $parm{'strata_index'};
@@ -5093,11 +5228,23 @@ sub subset_npc_analyze
 	my $upper_index = $parm{'upper_index'};
 	my $low_ind = $parm{'low_ind'};
 	my $high_ind = $parm{'high_ind'};
+
+	my $censored = $parm{'censored'};
+	my $ci = $parm{'ci'};
+	my $no_sim = $parm{'no_sim'};
+	my $stratified_data = $parm{'stratified_data'};
+	my $binned_data = $parm{'binned_data'};
+	my $verbose = $parm{'verbose'};
+	my $npc_alert_written = $parm{'npc_alert_written'};
+	my $predcorr = $parm{'predcorr'};
+	my $censor_stratified_data = $parm{'censor_stratified_data'};
+	my $censor_binned_data = $parm{'censor_binned_data'};
+
+
 	my @result_values;
 	my @real_positions;
 	my @stats_warnings;
 
-	$self->verbose(0);
 
 	#start function, in is bin_index,strata_index,lower_index,upper_index,
 	#pred_intervals,$high_ind,$low_ind
@@ -5112,16 +5259,12 @@ sub subset_npc_analyze
 	#other result_values should be '' if cannot be computed
 	#if censored must recompute all indices, cannot use $high_ind, $low_ind, $lower_index, $upper_index
 	
-	my $censored = 0;
-	$censored = 1 if (defined $self->censor() or ($self->detection_censored and $self->predcorr));
 
-	my $ci = $self->confidence_interval();
-	my $no_sim= $self->n_simulations;
 	my $point_counter=0;
 	if (defined $bin_index){
-		$point_counter = scalar(@{$self->binned_data->[$strata_index]->[$bin_index]});
+		$point_counter = scalar(@{$binned_data->[$strata_index]->[$bin_index]});
 	} else {
-		$point_counter = scalar(@{$self->stratified_data->[$strata_index]});
+		$point_counter = scalar(@{$stratified_data->[$strata_index]});
 	}
 	if ($point_counter < 1){ #empty set of observations
 		return;
@@ -5154,9 +5297,9 @@ sub subset_npc_analyze
 		my @uppers=();
 		my $row;
 		if (defined $bin_index){
-			$row = $self->binned_data->[$strata_index]->[$bin_index]->[$point_index];
+			$row = $binned_data->[$strata_index]->[$bin_index]->[$point_index];
 		} else {
-			$row = $self->stratified_data->[$strata_index]->[$point_index];
+			$row = $stratified_data->[$strata_index]->[$point_index];
 		}
 
 		($orig_value,@values) = split(/,/,$row); 
@@ -5168,13 +5311,13 @@ sub subset_npc_analyze
 			my @remaining = ();
 			my $cens;
 			if (defined $bin_index){
-				$cens = $self->censor_binned_data->[$strata_index]->[$bin_index]->[$point_index];
+				$cens = $censor_binned_data->[$strata_index]->[$bin_index]->[$point_index];
 			}else{
-				$cens = $self->censor_stratified_data->[$strata_index]->[$point_index];
+				$cens = $censor_stratified_data->[$strata_index]->[$point_index];
 			}
 			($orig_cens,@censor) = split(/,/,$cens); 
 			for (my $j=0; $j< $no_sim; $j++){
-				if ($self->predcorr){
+				if ($predcorr){
 					push(@remaining,$values[$j]) if ($censor[$j] == 0); #fully known
 				}else{
 					push(@remaining,$values[$j]) if ($censor[$j] != 1); #not missing
@@ -5202,17 +5345,17 @@ sub subset_npc_analyze
 				}
 				$lower_limit[$i] = $sorted_sim_values[$lower];
 				$upper_limit[$i] = $sorted_sim_values[$upper];	
-				unless ($self->npc_alert_written){
+				unless ($npc_alert_written){
 					if (($lower > 1) && 
 						(($lower_limit[$i] == $sorted_sim_values[$lower -1]) ||
 						 ($lower_limit[$i] == $sorted_sim_values[$lower +1]))) {
 						print $alert_string;
-						$self->npc_alert_written(1);
+						$npc_alert_written = 1;
 					} elsif (($upper < scalar(@sorted_sim_values)) && 
 							 (($upper_limit[$i] == $sorted_sim_values[$upper -1]) ||
 							  ($upper_limit[$i] == $sorted_sim_values[$upper +1]))) {
 						print $alert_string;
-						$self->npc_alert_written(1);
+						$npc_alert_written = 1;
 					}
 				}
 			}
@@ -5226,7 +5369,7 @@ sub subset_npc_analyze
 			#interval it cannot be below limit of any of the remaining.
 			
 			for (my $j=0; $j<= $no_sim; $j++){
-				next if ($censored and (($self->predcorr and $censor[$j] != 0) or
+				next if ($censored and (($predcorr and $censor[$j] != 0) or
 										$censor[$j]==1) );
 				$count_max[$j] += 1;
 				if ($values[$j] < $lower_limit[0]){
@@ -5255,7 +5398,7 @@ sub subset_npc_analyze
 			##For VPC diagnostics: build integer matrix w/ under/above/in info for real data only
 			# 0 means inside.
 
-			if ($censored and (($self->predcorr and $censor[0] != 0) or
+			if ($censored and (($predcorr and $censor[0] != 0) or
 							   $censor[0]==1) ){
 				$real_positions[0]->[$obs_counter]=-99;
 				for (my $i=1; $i<$no_pred_ints; $i++){ #is 1 here for skipping 50-50?
@@ -5288,7 +5431,7 @@ sub subset_npc_analyze
 
 	} #endof foreach row
 
-	if ($self->verbose){
+	if ($verbose){
 		for (my $i=0; $i<$no_pred_ints; $i++){
 			printf "%.0f %.3f %.3f\n",$pred_int[$i],$lower_limit[$i],$upper_limit[$i];
 			for (my $j=0; $j<= $no_sim; $j++){
@@ -5346,7 +5489,7 @@ sub subset_npc_analyze
 		}
 		#endof NPC diagnostics
 		
-		if ($self->verbose){
+		if ($verbose){
 			print "\n $high_ind $low_ind\n";
 			print $lower_count[$i]->[0]." $realperc $warn ".$sorted_arr[$low_ind].
 				" ".$sorted_arr[$high_ind]."\n";
@@ -5387,7 +5530,7 @@ sub subset_npc_analyze
 		}
 		#endof NPC diagnostics
 		
-		if ($self->verbose){
+		if ($verbose){
 			print $upper_count[$i]->[0]." $realperc $warn ".$sorted_arr[$low_ind].
 				" ".$sorted_arr[$high_ind]."\n";
 		}
@@ -5424,14 +5567,13 @@ sub subset_npc_analyze
 		my @sorted_sums = sort {$a <=> $b} @detected_sum_warnings;
 		
 		#median
-		push(@stats_warnings,$self->median('sorted_array'=>\@sorted_sums)); 
+		push(@stats_warnings,median('sorted_array'=>\@sorted_sums)); 
 
 		push(@stats_warnings,$sorted_sums[$low_ind]); #start CI 
 		push(@stats_warnings,$sorted_sums[$high_ind]); #end CI 
 	}
-	$self->verbose(0);
 
-	return \@result_values ,\@real_positions ,\@stats_warnings;
+	return \@result_values ,\@real_positions ,\@stats_warnings, $npc_alert_written;
 }
 
 sub create_R_plots_code{

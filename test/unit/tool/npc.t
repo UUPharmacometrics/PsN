@@ -16,6 +16,19 @@ use model;
 
 my $dummy_model = model::create_dummy_model;
 
+
+#these methods are now static, add tests
+#TODO create_unique_values_hash, with and without reference
+# TODO get_bin_boundaries_overlap_count 
+# TODO get_bin_boundaries_overlap_value
+#TODO 	index_matrix_binned_values
+# TODO median
+# TODO do_predcorr_and_varcorr
+# TODO get_npc_indices
+# TODO get_npc_result_labels
+# TODO subset_npc_analyze
+# compute_PI_each_simset
+
 # new
 lives_ok { tool::npc->new(models => [$dummy_model], is_vpc => 1, idv => 'ID', auto_bin_mode => 'auto', samples => 20) } "Minimal option set";
 
