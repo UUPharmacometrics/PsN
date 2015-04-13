@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{PRECOND\footnote{Idea developed by Yasunori Aoki under the supervision of Andrew C. Hooker.}  user guide}{2015-03-24}
+\guidetitle{PRECOND user guide}{2015-03-24}
 \usepackage{color}
 \usepackage{amsmath}
 \usepackage{tikz}
@@ -11,7 +11,7 @@
 \maketitle
 
 \section{Introduction}
-In order to increase the chance of obtaining successful covariance matrix computation and parameter estimation, the precond script creates and runs a model that is mathematically equivalent to the original model but less sensitive to the computational (rounding) error.  We refer to this process as preconditioning and the created model as preconditioned model.
+In order to increase the chance of obtaining successful covariance matrix computation and parameter estimation, the precond\cite{Page} script creates and runs a model that is mathematically equivalent to the original model but less sensitive to the computational (rounding) error.  We refer to this process as preconditioning and the created model as preconditioned model.
 
 Preconditioning is designed to save the covariance step that has failed with an error message such as "R MATRIX ALGORITHMICALLY SINGULAR" or "R MATRIX ALGORITHMICALLY NON-POSITIVESEMIDEFINITE"). It is also observed that preconditioning can help avoid failure of the minimization due to rounding error.
 
@@ -210,6 +210,10 @@ Below is a simple diagram of the precond workflow.
 %	\end{eqnarray*}
 %	The covariance matrix of the original model $M$ can be found in the file <inputmodel>.cov
 %\end{itemize}
+
+\begin{thebibliography}{99}
+    \bibitem{Page} Yasunori Aoki, Rikard Nordgren and Andrew C. Hooker, {\em Preconditioning of Nonlinear Mixed Effect models for Stabilization of the Covariance Matrix Computation}, 2015, PAGE. Abstracts of the Annual Meeting of the Population Approach Group in Europe, \mbox{www.page-meeting.org/?abstract=3583} 
+\end{thebibliography}
 
 
 \end{document}
