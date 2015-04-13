@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{NCA user guide}{2015-03-04}
+\guidetitle{NCA user guide}{2015-04-13}
 
 \newcommand{\guidetoolname}{nca}
 
@@ -8,8 +8,11 @@
 \maketitle
 
 \section{Introduction}
-The PsN NCA can feed the ncappc R package\cite{Chayan} with simulated data. It is based on the simulation part of the vpc/npc.
-
+The nca script prepares input for Chayan Acharya's R package ncappc for non-compartmental analysis \cite{Chayan}. 
+To be able to create the plots the user must install the ncappc package from CRAN.
+It is recommended to use PsN's rplots functionality with a custom R template file, 
+see section Auto-generated R-plots from PsN, 
+to create the plots.
 \section{Running NCA}
 Example:
 
@@ -112,18 +115,20 @@ Two modified modelfiles are created, one for generating original data table outp
 requires that R libraries
 ggplot2, gridExtra and ncappc are installed.
 If the conditions are not fulfilled then no pdf will be generated,
-see the .Rout file in the main run directory for error messages.}
+see the .Rout file in the main run directory for error messages.
+Please note that the default template only creates a very basic plot, while
+there is a large set of functions available in the ncappc package,
+so it is recommended to create a custom template for your project.}
 \input{inputs/rplots_section_body.tex}
 
 \subsubsection*{Basic plot}
 Basic rplot will be generated if option -rplots is set > 0,
 and the general rplots conditions fulfilled, see above.
-The ncappc R package has many options and it is generally
-hard for PsN to have a good set of default plots. The current
-template will only generate a very basic dv.plot. If you are
+The ncappc R package has many functions and it is difficult
+to create a default template suitable for all cases. 
+The current template will only generate a very basic dv.plot. If you are
 working with nca the recommendation is to customize the
 template to fit your specific needs.
-
 
 
 \begin{thebibliography}{99}

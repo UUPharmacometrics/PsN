@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{Developer's guide}{2015-03-19}
+\guidetitle{Developer's guide}{2015-04-13}
 \usepackage{hyperref}
 
 \begin{document}
@@ -90,11 +90,22 @@ It is possible to run multiple tests in parallel to speed up the testing. This c
 prove -j 4 -r system
 \end{verbatim}
 
+If you want to run the system tests on a cluster using the cluster submission options of PsN 
+you must set the relevant options in psn.conf, for example
+\begin{verbatim}
+[default_options]
+run_on_slurm=1
+slurm_account=admin
+slurm_partition=development
+\end{verbatim}
+
 \subsection{Test issues}
 \begin{itemize}
+    \item The sse unit tests will fail unless File::Copy::Recursive is installed.
 	\item To speed up testing it is advised to set the nmfe option -prdefault in the psn.conf (add the line nmfe\_options=-prdefault).
-
 	\item If the tests are to be run on a cluster a setup of a temporary directory that is reachable from all nodes is needed in includes.pm. Edit test/includes.pm and change the row that sets the \$tempdir to \$tempdir = <my path to an already created temporary directory that is reachable from all nodes>;
+	\item If the tests are to be run on Mac, a setup of a temporary directory is needed in includes.pm. 
+    Edit test/includes.pm and change the row that sets the \$tempdir to \$tempdir = <my path to an already created temporary directory>;
 
 	\item For NONMEM 7.1.0 and 7.1.2 the system tests will print out a lot of warnings like this:
 \begin{verbatim}
@@ -103,15 +114,15 @@ FSUBS.f90:10.132:
 \end{verbatim}
 These warnings are from NONMEM and can be ignored.
 	\item	The PsN developers have not run the test suite with NONMEM 6. There are serveral tests that are known to fail with NONMEM 6. If you are a user of NONMEM 6 and wish to run the test suite please give it a try and send your findings to any of the developers or the mailing list.
-	\item If any test fail using any version of NONMEM 7 this is most likely a bug. Please report this so that it can be fixed.
+	\item If any test fails using any version of NONMEM 7 this is most likely a bug. Please report this so that it can be fixed.
     \item If the PsN installation directory is moved after the initial installation of the test suite, the file includes.pm in the top level of the test directory
     must be edited to include the new path to PsN core and toolkit. 
-    \item The sse unit tests will fail unless File::Copy::Recursive is available.
 \end{itemize} 
 
 \section{nmoutput2so}
 Clone the PsN4 git repository and cd into your clone directory (See chapter 2). A standalone version of nmoutput2so can be built with \verb|make nmoutput2so|. A zip file called nmoutput2so.zip will be created. This can be unzipped
 to any directory and is runnable from that directory.
+Perl module XML::LibXML must be installed before running nmoutput2so.
 
 \section{Build environment}
 The documentation is made in \LaTeX and pdfs can be generated with \verb|make doc|. The
