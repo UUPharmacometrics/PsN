@@ -23,11 +23,24 @@ sub BUILD
     $self->Bootstrap($bs);
 }
 
+sub parse
+{
+    my $self = shift;
+    my $node = shift;
+
+    my $xpc = so::xml::get_xpc();
+
+    (my $mle) = $xpc->findnodes('x:MLE', $node);
+    $self->MLE->parse($mle) if (defined $mle);
+
+    (my $bootstrap) = $xpc->findnodes('x:Bootstrap', $node);
+    $self->Bootstrap->parse($bootstrap) if (defined $bootstrap);
+}
+
 sub xml
 {
     my $self = shift;
 
-   
     my $mle;
     if (defined $self->MLE) {
         $mle = $self->MLE->xml();
@@ -35,7 +48,7 @@ sub xml
 
     my $bootstrap;
     if (defined $self->Bootstrap) {
-        my $bootstrap = $self->Bootstrap->xml();
+        $bootstrap = $self->Bootstrap->xml();
     }
 
     my $est;

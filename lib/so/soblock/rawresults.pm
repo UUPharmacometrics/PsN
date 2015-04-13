@@ -12,6 +12,22 @@ use so::soblock::rawresults::datafile;
 has 'DataFile' => ( is => 'rw', isa => 'ArrayRef[so::soblock::rawresults::datafile]' );
 has '_next_oid' => ( is => 'rw', isa => 'Int', default => 1 );  # The next description oid to use by add_datafile
 
+sub parse
+{
+    my $self = shift;
+    my $node = shift;
+
+    my $xpc = so::xml::get_xpc();
+
+    my @datafiles = $xpc->findnodes('x:DataFile', $node);
+    foreach my $datafile (@datafiles) {
+        $self->DataFile([]) unless defined $self->DataFile;
+        my $file = so::soblock::rawresults::datafile->new();
+        $file->parse($datafile);
+        push @{$self->DataFile}, $file;
+    }
+}
+
 sub xml
 {
     my $self = shift;

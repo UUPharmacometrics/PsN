@@ -10,6 +10,17 @@ use so::table;
 
 has 'ResidualTable' => ( is => 'rw', isa => 'so::table' );
 
+sub parse
+{
+    my $self = shift;
+    my $node = shift;
+
+    my $xpc = so::xml::get_xpc();
+   
+    (my $rt)= $xpc->findnodes($node);
+    $self->ResidualTable->parse($rt) if (defined $rt);
+}
+
 sub xml
 {
     my $self = shift;

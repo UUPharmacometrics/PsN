@@ -47,70 +47,19 @@ sub parse
     my $blk_id = $node->getAttribute('blkId');
     $self->blkId($blk_id);
 
-    my $xpc = standardised_output::xml::get_xpc();
+    my $xpc = so::xml::get_xpc();
 
-    my @datafiles = $xpc->findnodes('x:RawResults/x:DataFile', $node);
-    foreach my $datafile (@datafiles) {
-        (my $desc) = $xpc->findnodes('ct:Description', $datafile);
-        (my $path) = $xpc->findnodes('ds:path', $datafile);
-        $self->DataFile([]) unless defined $self->DataFile;
-        push @{$self->DataFile}, { Description => $desc->textContent(), path => $path->textContent() }; 
-    }
+    (my $ti) = $xpc->findnodes('x:TaskInformation', $node);
+    $self->TaskInformation->parse($ti) if (defined $ti);
 
-    (my $mle) = $xpc->findnodes('x:Estimation/x:PopulationEstimates/x:MLE', $node);
-    if (defined $mle) {
-        my $popest = standardised_output::table->new();
-        $popest->parse($mle);
-        $self->PopulationEstimates($popest);
-    }
+    (my $rr) = $xpc->findnodes('x:RawResults', $node);
+    $self->RawResults->parse($rr) if (defined $rr);
 
-    (my $se_node) = $xpc->findnodes('x:Estimation/x:PrecisionPopulationEstimates/x:MLE/x:StandardError', $node);
+    (my $est) = $xpc->findnodes('x:Estimation', $node);
+    $self->Estimation->parse($est) if (defined $est);
 
-    if (defined $se_node) {
-        my $ses = standardised_output::table->new();
-        $ses->parse($se_node);
-        $self->StandardError($ses);
-    }
-
-    (my $rse_node) = $xpc->findnodes('x:Estimation/x:PrecisionPopulationEstimates/x:MLE/x:RelativeStandardError', $node);
-    if (defined $rse_node) {
-        my $rses = standardised_output::table->new();
-        $rses->parse($rse_node);
-        $self->RelativeStandardError($rses);
-    }
-
-    (my $cov_node) = $xpc->findnodes('x:Estimation/x:PrecisionPopulationEstimates/x:MLE/x:CovarianceMatrix', $node);
-    if (defined $cov_node) {
-        my $cov = standardised_output::matrix->new();
-        $cov->parse($cov_node);
-        $self->CovarianceMatrix($cov);
-    }
-
-    (my $cor_node) = $xpc->findnodes('x:Estimation/x:PrecisionPopulationEstimates/x:MLE/x:CorrelationMatrix', $node);
-    if (defined $cor_node) {
-        my $cor = standardised_output::matrix->new();
-        $cor->parse($cor_node);
-        $self->CorrelationMatrix($cor);
-    }
-
-    (my $dev) = $xpc->findnodes('x:Estimation/x:Likelihood/x:Deviance', $node);
-    if (defined $dev) {
-        $self->Deviance($dev->textContent());
-    }
-
-    (my $res_node) = $xpc->findnodes('x:Estimation/x:Residuals/x:ResidualTable', $node);
-    if (defined $res_node) {
-        my $res = standardised_output::table->new();
-        $res->parse($res_node);
-        $self->Residuals($res);
-    }
-
-    (my $pred_node) = $xpc->findnodes('x:Estimation/x:Predictions', $node);
-    if (defined $pred_node) {
-        my $pred = standardised_output::table->new();
-        $pred->parse($pred_node);
-        $self->Predictions($pred);
-    }
+    (my $sim) = $xpc->findnodes('x:Simulation', $node);
+    $self->Simulation->parse($sim) if (defined $sim);
 }
 
 sub create_sdtab

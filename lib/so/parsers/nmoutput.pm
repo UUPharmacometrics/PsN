@@ -17,20 +17,19 @@ use utils::file;
 use PsN;
 use so;
 use so::soblock;
+use so::soblock::simulation::simulationblock;
 
 has 'so' => ( is => 'rw', isa => 'so' );
 has 'lst_file' => ( is => 'rw', isa => 'Str' );
 has '_so_block' => ( is => 'rw', isa => 'so::soblock' );
 has 'precision' => ( is => 'rw', isa => 'Int', default => 10 );
 has 'use_tables' => ( is => 'rw', isa => 'Bool', default => 1 );    # Set to zero if sdtab and patab should not be used
-has 'message' => ( is => 'rw', isa => 'Maybe[Str]' );
 has 'toolname' => ( is => 'rw', isa => 'Str', default => 'NONMEM' );
 has 'max_replicates' => ( is => 'rw', isa => 'Maybe[Int]' );        # Maximum number of simulation replicates to add
 has 'verbose' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'external_tables' => ( is => 'rw', isa => 'Bool', default => 0 );   # For now a bool to specify if external tables should be created
 has '_document' => ( is => 'rw', isa => 'Ref' );                    # The XML document 
 has '_duplicate_blocknames' => ( is => 'rw', isa => 'HashRef' );    # Contains those blocknames which will have duplicates with next number for block
-has '_first_block' => ( is => 'rw', isa => 'Str' );                 # Name of the first SOBlock
 has '_so_path' => ( is => 'rw', isa => 'Str' );                     # The path of the output SO file
 
 sub BUILD
@@ -43,13 +42,12 @@ sub BUILD
         }
     }
 
-    my $so_block = so::soblock->new();
+    my $file_stem = utils::file::get_file_stem($self->lst_file);
+    my $so_block = $self->so->create_block(name => $file_stem);
 
     $self->_so_block($so_block);
 
     $self->_parse_lst_file();
-
-    push @{$self->so->SOBlock}, $so_block;
 }
 
 sub _parse_lst_file
@@ -71,7 +69,6 @@ sub _parse_lst_file
     my $file_stem = utils::file::get_file_stem($lst_file);
 
     my $block = $self->_so_block;
-    $block->blkId($file_stem);
  
     my $estimation;
     my $simulation;
@@ -226,7 +223,7 @@ sub _parse_lst_file
                         if ($est_values[$i] == 0) {
                             push @rel_se, undef;
                         } else { 
-                            push @rel_se, $se_values[$i] / abs($est_values[$i]);
+                            push @rel_se, 100 * $se_values[$i] / abs($est_values[$i]);
                         }
                     }
                 }
@@ -339,17 +336,6 @@ sub _parse_lst_file
         severity => 0,
     );
 
-    if (not defined $self->_first_block) {
-        $self->_first_block($file_stem);
-        if (defined $self->message) {
-            $self->_so_block->TaskInformation->add_message(
-                type => "INFORMATION",
-                toolname => $self->toolname,
-                name => "User specified message",
-                content => $self->message,
-                severity => 0,
-            );
-        }
 =cut
         if (defined $self->bootstrap_results and scalar(@on_sd_scale) > 0) {
             my $msg;
@@ -369,7 +355,6 @@ sub _parse_lst_file
             );
         }
 =cut
-    }
 }
 
 sub _get_included_columns
@@ -663,7 +648,7 @@ sub _create_simulation
     my $replicate_no = 1;
 
     for (;;) {      # Loop through simulation replicates aka simulation blocks
-        my $sim_block = so::SOBlock::Simulation::SimulationBlock->new(replicate => $replicate_no);
+        my $sim_block = so::soblock::simulation::simulationblock->new(replicate => $replicate_no);
         my $external_table_name = $self->external_tables ? $table_file . "_$replicate_no" : undef;
         my $simulated_profiles = $self->_create_simulated_profiles(
             file => $profiles_table_fh,
@@ -702,7 +687,7 @@ sub _create_simulation
         #}
         if (defined $simulated_profiles or defined $indiv_parameters or defined $covariates) {
             $self->_so_block->Simulation([]) if not defined $self->_so_block->Simulation;
-            push @{$self->_so_block->Simulation}, $sim_block;
+            push @{$self->_so_block->Simulation->SimulationBlock}, $sim_block;
         } else {
             last;
         }

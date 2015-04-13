@@ -9,6 +9,17 @@ use XML::LibXML;
 
 has 'Deviance' => ( is => 'rw', isa => 'Str' );
 
+sub parse
+{
+    my $self = shift;
+    my $node = shift;
+
+    my $xpc = so::xml::get_xpc();
+
+    (my $dev) = $xpc->findnode('x:Deviance', $node);
+    $self->Deviance($dev->textContent) if (defined $dev);
+}
+
 sub xml
 {
     my $self = shift;

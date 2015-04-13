@@ -11,6 +11,20 @@ use so::table;
 has 'Mean' => ( is => 'rw', isa => 'so::table' );
 has 'Median' => ( is => 'rw', isa => 'so::table' );
 
+sub parse
+{
+    my $self = shift;
+    my $node = shift;
+
+    my $xpc = so::xml::get_xpc();
+
+    (my $mean) = $xpc->findnodes('x:Mean', $node);
+    $self->Mean->parse($mean) if (defined $mean);
+
+    (my $median) = $xpc->findnodes('x:Median', $node);
+    $self->Median->parse($median) if (defined $median); 
+}
+
 sub xml
 {
     my $self = shift;

@@ -16,6 +16,20 @@ has 'Covariates' => ( is => 'rw', isa => 'so::table' );
 has 'PopulationParameters' => ( is => 'rw', isa => 'so::table' );
 has 'Dosing' => ( is => 'rw', isa => 'so::table' );
 
+sub parse
+{
+    my $self = shift;
+    my $node = shift;
+
+    my $xpc = so::xml::get_xpc();
+
+    my @attributes = ("SimulatedProfiles", "IndivParameters", "RandomEffects", "Covariates", "PopulationParameters", "Dosing");
+    foreach my $attr (@attributes) {
+        (my $subnode) = $xpc->findnodes("x:$attr", $node);
+        $self->$attr->parse($subnode) if (defined $subnode);
+    }
+}
+
 sub xml
 {
     my $self = shift;

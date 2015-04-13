@@ -16,8 +16,7 @@ has 'columnType' => ( is => 'rw', isa => 'ArrayRef' );
 has 'valueType' => ( is => 'rw', isa => 'ArrayRef' ); 
 has 'columns' => ( is => 'rw', isa => 'ArrayRef' );
 has 'name' => ( is => 'rw', isa => 'Str' );
-has 'table_file' => ( is => 'rw', isa => 'Str' );
-
+has 'table_file' => ( is => 'rw', isa => 'Maybe[Str]' );
 
 sub parse
 {
@@ -85,8 +84,8 @@ sub xml
                 my $element;
                 $element = $self->columns->[$col]->[$row];
                 my $value = XML::LibXML::Element->new("ct:" . $value_type);
-                if ($value_type eq 'String' and $column_type ne 'id') {
-                    $value->appendTextNode($element);
+                if ($value_type eq "Real") {
+                    $value->appendTextNode(math::convert_float_string($element));
                 } else {
                     $value->appendTextNode($element);
                 }
@@ -116,11 +115,7 @@ sub xml
                 my $column_type = $self->columnType->[$col];
                 my $element;
                 $element = $self->columns->[$col]->[$row];
-                if ($value_type eq 'String' and $column_type ne 'id') {
-                    print $fh $element;
-                } else {
-                    print $fh $element;
-                }
+                print $fh $element;
                 print $fh "," if ($col != $numcols - 1);
             }
             print $fh "\n";

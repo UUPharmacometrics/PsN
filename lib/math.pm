@@ -9,7 +9,7 @@ use include_modules;
 
 require Exporter;
 our @ISA = qw(Exporter);
-our %EXPORT_TAGS = ('all' => [ qw(round eps inf ceil usable_number to_precision) ]);
+our %EXPORT_TAGS = ('all' => [ qw(round eps inf ceil usable_number to_precision convert_float_string) ]);
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 
 sub round
@@ -100,6 +100,80 @@ sub to_precision
     my $str = sprintf($form, $number);
 
     return $str;
+}
+
+sub convert_float_string
+{
+    # Convert a string representing a float into another string
+    # given the following rules:
+    # 1. Exponential form will be converted to normal decimal form
+    # 2. No trailing zeroes after decimal point
+    # 3. The same number of decimals must be kept without rounding
+    # 4. Remove starting + sign
+    my $input = shift;
+
+    # Disassemble number into its sign, integer, decimal and exponent parts
+    $input =~ /^([-+]?[0-9]*\.?[0-9]+)([eE][-+]?[0-9]+)?$/;
+    my $number = $1;
+    my $exponent = $2;
+    my $decimal;
+    my $integer;
+    # FIXME: Plus/minus sign on integerpart must also be disassembled!
+    if ($number =~ /\./) {
+        my @a = split /\./, $number;
+        $integer = $a[0];
+        $decimal = $a[1];
+    } else {
+        $integer = $number;
+        $decimal = 0;
+    }
+
+    my $sign;
+    if ($integer =~ /^[-+]/) {
+        $sign = substr($integer, 0, 1);
+    }
+    $integer =~ s/^[-+]//;
+    if ($sign eq "+") {
+        $sign = "";
+    }
+
+    # Handle exponent
+    if (defined $exponent) {
+        $exponent =~ s/(e|E)//;
+        if ($exponent > 0) {
+            for (my $i = 0; $i < $exponent; $i++) {
+                if ($decimal ne "") {
+                    $integer .= substr($decimal, 0, 1);
+                    $decimal = substr($decimal, 1);
+                } else {
+                    $integer .= "0";
+                }
+            }
+        } elsif ($exponent < 0) {
+            for (my $i = 0; $i < abs($exponent); $i++) {
+                if ($integer ne "") {
+                    $decimal = substr($integer, -1) . $decimal;
+                    $integer = substr($integer, 0, -1);
+                } else {
+                    $decimal = "0" . $decimal;
+                }
+            }
+        }
+    }
+
+    # Remove trailing zeroes in decimal part and starting zeroes in the integer part 
+    $decimal =~ s/0+$//;
+    $integer =~ s/^0*//;
+    if ($integer eq "") {
+        $integer = "0";
+    }
+
+    # Put back together
+    if ($decimal eq "") {
+        return $sign . $integer;
+    } else {
+        return "$sign$integer.$decimal";
+    }
 }
 
 1;

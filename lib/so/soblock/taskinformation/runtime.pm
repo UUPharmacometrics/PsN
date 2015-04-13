@@ -10,6 +10,20 @@ use XML::LibXML;
 has 'Description' => ( is => 'rw', isa => 'Str' );
 has 'Real' => ( is => 'rw', isa => 'Str' );
 
+sub parse
+{
+    my $self = shift;
+    my $node = shift;
+
+    my $xpc = so::xml::get_xpc();
+
+    (my $desc) = $xpc->findnodes('ct:Description');
+    $self->Description($desc);
+
+    (my $real) = $xpc->findnodes('ct:Real');
+    $self->Real($real);
+}
+
 sub xml
 {
     my $self = shift;

@@ -77,7 +77,7 @@ sub xml
             $matrix_xml->appendChild($matrix_row);
             for my $element (@$row) {
                 my $real = XML::LibXML::Element->new("ct:Real");
-                $real->appendTextNode($element);
+                $real->appendTextNode(math::convert_float_string($element));
                 $matrix_row->appendChild($real);
             }
         }

@@ -15,6 +15,7 @@ use model;
 use Config;
 use so;
 use so::parsers::nmoutput;
+use so::parsers::bootstrap;
 
 $| = 1; # Make sure autoflush is on
 
@@ -219,6 +220,7 @@ my $so = so->new(
     only_include_elements => $only_include_elements,
     exclude_elements => $exclude_elements,
     so_version => $options{'so_version'},
+    message => $options{'message'},
 );
 
 foreach my $lst_file (@files) {
@@ -228,14 +230,21 @@ foreach my $lst_file (@files) {
         toolname => $options{'toolname'},
         verbose => $options{'verbose'},
         max_replicates => $options{'max_replicates'},
+        external_tables => $options{'external_tables'},
+    );
+}
+
+if (defined $options{'bootstrap_results'}) {
+    my $bootparse = so::parsers::bootstrap->new(
+        so => $so,
+        bootstrap_results => $options{'bootstrap_results'},
+        verbose => $options{'verbose'},
     );
 }
 
 $so->write();
 
 #my $so = standardised_output->new(
-#    precision => $options{'precision'},
+#    precision => $options{'precision'},        # FIXME deprecate option
 #    use_tables => $options{'use_tables'},
-#    message => $options{'message'},
-#    external_tables => $options{'external_tables'},
 #);

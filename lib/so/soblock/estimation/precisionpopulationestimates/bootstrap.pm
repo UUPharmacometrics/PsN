@@ -10,6 +10,16 @@ use so::table;
 
 has 'Percentiles' => ( is => 'rw', isa => 'so::table' );
 
+sub parse
+{
+    my $self = shift;
+    my $node = shift;
+
+    my $xpc = so::xml::get_xpc();
+
+    (my $perc) = $xpc->findnodes('x:Percentiles', $node);
+    $self->Percentiles->parse($perc) if (defined $perc);
+}
 
 sub xml
 {

@@ -11,6 +11,20 @@ use so::table;
 has 'EffectMean' => ( is => 'rw', isa => 'so::table' );
 has 'EffectMedian' => ( is => 'rw', isa => 'so::table' );
 
+sub parse
+{
+    my $self = shift;
+    my $node = shift;
+
+    my $xpc = so::xml::get_xpc();
+
+    (my $em) = $xpc->findnodes('x:EffectMean', $node);
+    $self->EffectMean->parse($em) if (defined $em);
+
+    (my $emed) = $xpc->findnodes('x:EffectMedian', $node);
+    $self->EffectMedian->parse($emed) if (defined $emed);
+}
+
 sub xml
 {
     my $self = shift;

@@ -22,7 +22,6 @@ has 'Residual' => ( is => 'rw', isa => 'so::soblock::estimation::residual' );
 has 'Predictions' => ( is => 'rw', isa => 'so::table' );
 has 'Likelihood' => ( is => 'rw', isa => 'so::soblock::estimation::likelihood' );
 
-
 sub BUILD
 {
     my $self = shift;
@@ -37,6 +36,32 @@ sub BUILD
     $self->Residual($res);
     my $l = so::soblock::estimation::likelihood->new();
     $self->Likelihood($l);
+}
+
+sub parse
+{
+    my $self = shift;
+    my $node = shift;
+
+    my $xpc = so::xml::get_xpc();
+
+    (my $pe) = $xpc->findnodes('x:PopulationEstimates', $node);
+    $self->PopulationEstimates->parse($pe) if (defined $pe);
+
+    (my $ppe) = $xpc->findnodes('x:PrecisionPopulationEstimates', $node);
+    $self->PrecisionPopulationEstimates->parse($ppe) if (defined $ppe);
+
+    (my $ie) = $xpc->findnodes('x:IndividualEstimates', $node);
+    $self->IndividualEstimates->parse($ie) if (defined $ie);
+
+    (my $res) = $xpc->findnodes('x:Residual', $node);
+    $self->Residual->parse($res) if (defined $res);
+
+    (my $pred) = $xpc->findnodes('x:Predictions', $node);
+    $self->Predictions->parse($pred) if (defined $pred);
+
+    (my $ll) = $xpc->findnodes('x:Likelihood', $node);
+    $self->Likelihodd->parse($ll) if (defined $ll);
 }
 
 sub xml

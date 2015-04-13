@@ -11,6 +11,23 @@ has 'oid' => ( is => 'rw', isa => 'Str' );
 has 'Description' => ( is => 'rw', isa => 'Str' );
 has 'path' => ( is => 'rw', isa => 'Str' );
 
+sub parse
+{
+    my $self = shift;
+    my $node = shift;
+
+    my $oid = $node->getAttribute('oid');
+    $self->oid($oid);
+
+    my $xpc = so::xml::get_xpc();
+
+    (my $desc) = $xpc->findnodes('ct:Description', $node);
+    $self->Description($desc);
+
+    (my $path) = $xpc->findnodes('ds:path', $node);
+    $self->path($path);
+}
+
 sub xml
 {
     my $self = shift;

@@ -13,6 +13,30 @@ has 'Name' => ( is => 'rw', isa => 'Str' );
 has 'Content' => ( is => 'rw', isa => 'Str' );
 has 'Severity' => ( is => 'rw', isa => 'Int' );
 
+sub parse
+{
+    my $self = shift;
+    my $node = shift;
+
+    my $type = $node->getAttribute('type');
+    $self->type($type);
+
+    my $xpc = so::xml::get_xpc();
+
+    (my $toolname) = $xpc->findnodes('x:Toolname', $node);
+    $self->Toolname($toolname);
+
+    (my $name) = $xpc->findnodes('x:Name', $node);
+    $self->Name($name);
+
+    (my $content) = $xpc->findnodes('x:Content', $node);
+    $self->Content($content);
+
+    (my $severity) = $xpc->findnodes('x:Severity', $node);
+    $self->Severity($severity);
+
+}
+
 sub xml
 {
     my $self = shift;

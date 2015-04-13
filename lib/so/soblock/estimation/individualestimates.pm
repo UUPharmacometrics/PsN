@@ -23,6 +23,20 @@ sub BUILD
     $self->RandomEffects($rand);
 }
 
+sub parse
+{
+    my $self = shift;
+    my $node = shift;
+
+    my $xpc = so::xml::get_xpc();
+
+    (my $est) = $xpc->findnodes('x:Estimates', $node);
+    $self->Estimates->parse($est) if (defined $est);
+
+    (my $re) = $xpc->findnodes('x:RandomEffects', $node);
+    $self->RandomEffects->parse($re) if (defined $re);
+}
+
 sub xml
 {
     my $self = shift;

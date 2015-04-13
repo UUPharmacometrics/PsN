@@ -15,19 +15,23 @@ has 'pretty' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'exclude_elements' => ( is => 'rw', isa => 'Maybe[ArrayRef[Str]]' );
 has 'only_include_elements' => ( is => 'rw', isa => 'Maybe[ArrayRef[Str]]' ); 
 has 'so_version' => ( is => 'rw', isa => 'Num' );
+has 'message' => ( is => 'rw', isa => 'Maybe[Str]' );
 
 has 'PharmMLRef' => ( is => 'rw', isa => 'Maybe[Str]' );
 has 'SOBlock' => ( is => 'rw', isa => 'ArrayRef[so::soblock]', default => sub { [] } );
 
-has '_document' => ( is => 'rw', isa => 'Ref' );
-has '_xpc' => ( is => 'rw', isa => 'Ref' );
+has '_duplicate_blocknames' => ( is => 'rw', isa => 'HashRef', default => sub { {} } );
+
 
 sub parse
 {
     my $self = shift;
 
     my $doc = XML::LibXML->load_xml(location => $self->filename);
-    my $xpc = get_xpc();
+    my $xpc = so::xml::get_xpc();
+
+    (my $PharmMLRef) = $xpc->findnodes('/x:SO/x:PharmMLRef');
+    $self->PharmMLRef($PharmMLRef->textContent) if (defined $PharmMLRef);
 
     my @SOBlocks = $xpc->findnodes('/x:SO/x:SOBlock', $doc);
 
@@ -36,35 +40,27 @@ sub parse
         $so_block->parse($node);
         push @{$self->SOBlock}, $so_block;
     }
-
-    $self->_document($doc);
-    $self->_xpc($xpc);
 }
 
-#FIXME: Rewrite to handle duplicate names only
 sub create_block
 {
-    # Create a new SOBlock and set the id 
+    # Create a new SOBlock, set the id and add it to this SO 
     my $self = shift;
     my %parm = validated_hash(\@_,
         name => { isa => 'Str' },
     );
     my $name = $parm{'name'};
     
-    my $doc = $self->_document;
-    my %duplicates;
-    if (defined $self->_duplicate_blocknames) {
-        %duplicates = %{$self->_duplicate_blocknames};
-    }
+    my $block = so::soblock->new();
 
-    my $block = $doc->createElement("SOBlock");
-    if (not exists $duplicates{$name}) {
-        $block->setAttribute(blkId => $name);
+    if (not exists $self->_duplicate_blocknames->{$name}) {
+        $block->blkId($name);
     } else {
-        print "$duplicates{$name}";
-        $block->setAttribute(blkId => $name . $duplicates{$name});
-        $self->_duplicate_blocknames->{$name}++;
+        $block->blkId($name . '_' . ($self->_duplicate_blocknames->{$name} + 1));
     }
+    $self->_duplicate_blocknames->{$name}++;
+
+    push @{$self->SOBlock}, $block;
 
     return $block;
 }
@@ -75,17 +71,9 @@ sub _create_filename
     my $self = shift;
 
     my $so_filename;
-    if (defined $self->SOBlock->[0]->blkId) {
+    if (defined $self->SOBlock->[0] and defined $self->SOBlock->[0]->blkId) {
         $self->filename($self->SOBlock->[0]->blkId . '.SO.xml');
     } else {
-        foreach my $block (@{$self->SOBlock}) {
-            if (defined $block->Estimation and defined $block->Estimation->PrecisionPopulationEstimates
-                    and defined $block->Estimation->PrecisionPopulationEstimates->Bootstrap) {
-                $self->filename("bootstrap.SO.xml");
-            }
-        }
-    }
-    if (not defined $self->filename) {
         $self->filename("unnamed.SO.xml");
     }
 }
@@ -112,12 +100,21 @@ sub write
         $SO->appendChild($ref);
     }
 
-    if (defined $self->SOBlock) {
-        foreach my $block (@{$self->SOBlock}) {
-            my $xml = $block->xml();
-            $self->_exclude_elements($xml);
-            $SO->appendChild($xml);
-        }
+    # Add the user defined message to the first block
+    if (defined $self->message and defined $self->SOBlock->[0]) {
+        $self->SOBlock->[0]->TaskInformation->add_message(
+            type => "INFORMATION",
+            toolname => "nmoutput2so",
+            name => "User specified message",
+            content => $self->message,
+            severity => 0,
+        );
+    }
+
+    foreach my $block (@{$self->SOBlock}) {
+        my $xml = $block->xml();
+        $self->_exclude_elements($xml);
+        $SO->appendChild($xml);
     }
 
     $doc->setDocumentElement($SO);
@@ -130,6 +127,8 @@ sub write
 
 sub _exclude_elements
 {
+    # Exclude elements in exclude_elements or not in only_include_elements
+
     my $self = shift;
     my $xml = shift;
 
@@ -141,6 +140,37 @@ sub _exclude_elements
             }
         }
     }
+
+    if (defined $self->only_include_elements) {
+        my @include_nodes;
+        foreach my $xpath (@{$self->only_include_elements}) {
+            my @nodes = $xml->findnodes($xpath);
+            push @include_nodes, @nodes;
+        }
+
+        my @keep;
+        # Find all ancestors and descendants of the only_include nodes
+        foreach my $node (@include_nodes) {
+            push @keep, $node;
+            my $ancestor = $node;
+            while ($ancestor = $ancestor->parentNode) {
+                push @keep, $ancestor;
+            }
+            my @descendants = $node->findnodes("descendant::node()");
+            push @keep, @descendants;
+        }
+
+        my @all_nodes = $xml->findnodes("//*");
+
+        # Remove nodes not in the @keep
+        foreach my $node (@all_nodes) {
+            if (not grep { $_->isSameNode($node) } @keep) {
+                $node->unbindNode();
+            }
+        }
+
+    }
+
 }
 
 no Moose;

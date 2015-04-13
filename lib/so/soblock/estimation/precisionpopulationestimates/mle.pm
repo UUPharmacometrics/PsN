@@ -14,6 +14,26 @@ has 'CorrelationMatrix' => ( is => 'rw', isa => 'so::matrix' );
 has 'StandardError' => ( is => 'rw', isa => 'so::table' );
 has 'RelativeStandardError' => ( is => 'rw', isa => 'so::table' );
 
+sub parse
+{
+    my $self = shift;
+    my $node = shift;
+
+    my $xpc = so::xml::get_xpc();
+
+    (my $cov) = $xpc->findnodes('x:CovarianceMatrix', $node);
+    $self->CovarianceMatrix->parse($cov) if (defined $cov);
+
+    (my $cor) = $xpc->findnodes('x:CorrelationMatrix', $node);
+    $self->CorrelationMatrix->parse($cor) if (defined $cor);
+
+    (my $se) = $xpc->findnodes('x:StandardError', $node);
+    $self->StandardError->parse($se) if (defined $se);
+
+    (my $rse) = $xpc->findnodes('x:RelativeStandardError', $node);
+    $self->RelativeStandardError->parse($rse) if (defined $rse);
+}
+
 sub xml
 {
     my $self = shift;

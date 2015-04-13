@@ -11,6 +11,17 @@ use so::table;
 
 has 'MLE' => ( is => 'rw', isa => 'so::table' );
 
+sub parse
+{
+    my $self = shift;
+    my $node = shift;
+
+    my $xpc = so::xml::get_xpc();
+
+    (my $mle) = $xpc->findnodes('x:MLE', $node);
+    $self->MLE->parse($mle) if (defined $mle);
+}
+
 sub xml
 {
     my $self = shift;

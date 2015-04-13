@@ -20,6 +20,25 @@ sub BUILD
     $self->RunTime($rt);
 }
 
+sub parse
+{
+    my $self = shift;
+    my $node = shift;
+
+    my $xpc = so::xml::get_xpc();
+
+    my @messages = $xpc->findnodes('x:Message', $node);
+    foreach my $msg (@messages) {
+        $self->Message([]) if not defined $self->Message;
+        my $message = so::soblock::taskinformation::message->new();
+        $message->parse($msg);
+        push @{$self->Message}, $message;
+    }
+
+    (my $runtime) = $xpc->findnodes('x:RunTime', $node);
+    $self->RunTime->parse($runtime) if (defined $runtime);
+}
+
 sub xml
 {
     my $self = shift;
