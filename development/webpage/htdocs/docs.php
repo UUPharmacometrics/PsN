@@ -11,16 +11,16 @@
   </dl>
   <h3>Programs/scripts available in PsN</h3>
   <dl>
-    <dt><a href="pdfdocs/common_options_defaults_versions_psn.pdf" target="_blank"><strong>psn</strong></a></dt>
+    <dt><a href="pdfdocs/common_options.pdf" target="_blank"><strong>psn</strong></a></dt>
     <dd>List available PsN scripts.</dd>
 
-    <dt><a href="pdfdocs/common_options_defaults_versions_psn.pdf" target="_blank"><strong>psn_options</strong></a></dt>
+    <dt><a href="pdfdocs/common_options.pdf" target="_blank"><strong>psn_options</strong></a></dt>
     <dd>List options common to most PsN scripts.</dd>
 
     <dt><a href="pdfdocs/execute_userguide.pdf" target="_blank"><strong>execute</strong></a></dt>
     <dd>NONMEM runs are started using one or multiple model files.</dd>
 
-    <dt><a href="pdfdocs/execute_userguide.pdf" target="_blank"><strong>parallel_retries</strong></a></dt>
+    <dt><a href="pdfdocs/parallel_retries_userguide.pdf" target="_blank"><strong>parallel_retries</strong></a></dt>
     <dd>Run multiple copies of a single model with tweaked initial estimates in parallel.</dd>
 
     <dt><a href="pdfdocs/update_inits_userguide.pdf" target="_blank"><strong>update_inits</strong></a></dt>
@@ -29,11 +29,20 @@
     <dt><a href="pdfdocs/bootstrap_userguide.pdf" target="_blank"><strong>bootstrap</strong></a></dt>
     <dd>Bootstrap using the percentile or BCa method.</dd>
 
+    <dt><a href="pdfdocs/sir_userguide.pdf" target="_blank"><strong>sir</strong></a></dt>
+    <dd>Parameter uncertainty from Sampling Importance Resampling</dd>
+    
+    <dt><a href="pdfdocs/precond_userguide.pdf" target="_blank"><strong>precond</strong></a></dt>
+    <dd>Estimate a model using preconditioning.</dd>
+
     <dt><a href="pdfdocs/randtest_userguide.pdf" target="_blank"><strong>randtest</strong></a></dt>
     <dd>Randomization testing.</dd>
 
     <dt><strong>rawresults</strong></dt>
     <dd>Create a rawresults file from a set of list files.</dd>
+
+    <dt><strong>covmat</strong></dt>
+    <dd>Create an empirical covariance matrix based on a rawresults file.</dd>
 
     <dt> <a href="pdfdocs/sse_userguide.pdf" target="_blank"><strong>sse</strong></a> </dt>
     <dd>Stochastic Simulation and Estimation</dd>
@@ -54,7 +63,7 @@ Separate description of <a href="pdfdocs/vpc_binning.pdf" target="_blank"><stron
     <dd>Normalized prediction distribution errors applied on empirical bayes estimates</dd>
 
     <dt><a href="pdfdocs/frem_userguide.pdf" target="_blank"><strong>frem</strong></a></dt>
-    <dd>Full random effects modeling</dd>
+    <dd>Full random effects model</dd>
 
 		<dt><a href="pdfdocs/llp_userguide.pdf" target="_blank"><strong>llp</strong></a></dt>
     <dd>Log-Likelihood Profiling around maximum-likelihood parameter estimates.</dd>
@@ -121,8 +130,8 @@ Some extensively commented example/template configuration files for scm:<br>
     <dt> <strong>se_of_eta</strong></dt>
     <dd>Standard Errors of Etas</dd>
     
-    <dt><a href="pdfdocs/sir_userguide.pdf" target="_blank"><strong>sir</strong></a></dt>
-    <dd>Sampling importance resampling</dd>
+    <dt><a href="pdfdocs/nmoutput2so_userguide.pdf" target="_blank"><strong>nmoutput2so</strong></a></dt>
+    <dd>Convert output from NONMEM to the DDMoRe standardised output format (so).</dd>
     
   </dl>
 
@@ -163,7 +172,7 @@ Some extensively commented example/template configuration files for scm:<br>
 <p> In this example the threads option makes the bootstrap utility run six NONMEM runs
   in parallel (on a cluster of computers or on multiple processors). To list all common PsN  options enter:</p>
 <p> <b><tt>$ psn_options -h</tt></b> </p>
-<p>These common options are described in much more detail in the <a href="pdfdocs/common_options_defaults_versions_psn.pdf" target="_blank">common options userguide</a>.</p>
+<p>These common options are described in much more detail in the <a href="pdfdocs/common_options.pdf" target="_blank">common options userguide</a>.</p>
 
 <h3>PsN Directory structure</h3>
 <p> PsN needs to create quite a few files to keep track of its executions as well as to enable resuming. During the execution the scripts also create many
@@ -190,7 +199,7 @@ Some extensively commented example/template configuration files for scm:<br>
 <h4>Versions</h4>
 <p> To print the version of PsN that you are using enter:</p>
 <p> <tt><b>$ psn -version</b></tt> </p>
-<p>If you want to use other installed versions of PsN <a href="pdfdocs/common_options_defaults_versions_psn.pdf" target="_blank">this document </a>describes how to do that. </p>
+<p>If you want to use other installed versions of PsN <a href="pdfdocs/common_options.pdf" target="_blank">this document </a>describes how to do that. </p>
 <p>To print the versions of NONMEM that PsN has access to, as defined in psn.conf, enter:</p>
 <p> <tt><b>$ psn -nm_version</b></tt> </p>
 <p>You can use a special NONMEM version from this list  via the option -nm_version, for example</p>

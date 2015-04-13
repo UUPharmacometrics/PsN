@@ -33,28 +33,24 @@
     as well as development libraries for method developers. You can read more about the different parts of PsN under <a href="docs.php">Documentation</a>.</p>
 <h3>Latest news</h3>
  <p>
-Version 4.2.0 was released May 21th 2014, and is available <a href="download.php">here</a>.
+Version 4.4.0 was released April 20th 2015, and is available <a href="download.php">here</a>.
 </p>
  <p>
-New features include new scripts nca, pvar, sir, frem and rawresults and a new test library for verification of PsN. Under the hood there have been big changes. PsN has been completely rewritten using the Moose object system. This rewrite will make development faster and collaboration around new tools and debugging much easier.
+New features include precond, a new tool for automatic preconditioning of a NONMEM model to improve its numerical properties,
+major improvements to sir, a tool for obtaining parameter uncertainty that is faster than bootstrap and more reliable than SE:s from the covariance step,
+and the -rplots option, a simple yet powerful mechanism for generating default or custom R plots based on PsN output.
+The preconditioning method will be presented during the Stuart Beal Methodology Session at PAGE 2015.
+</p>
+<p>
+The complete list of new features and bugfixes in 4.4.0 is found  
+<a href="pdfdocs/release_notes_PsN_4_4_0.txt" target="_blank">here</a></dt>.
 </p>
  <p>
 This version of PsN has been extensively tested on Windows, Linux and MacOS X.
 Go to the <a href="download.php">Download page</a> 
-to see which systems and NONMEM versions PsN 4.2.0 has been tested with.
+to see which systems and NONMEM versions PsN 4.4.0 has been tested with.
 </p>
-<p>
-The complete list of new features and bugfixes in 4.2.0 is found  
-<a href="pdfdocs/release_notes_PsN_4_2_0.txt" target="_blank">here</a></dt>.
-</p>
-<h3>Known issues with version 4.2.0</h3>
-<li>
-The nca script prepares input for Chayan Acharya's R package ncappc for nca analysis, but it
-does not create any plots. To create the plots
-the user must install the ncappc package from 
-<a href="http://cran.r-project.org/web/packages/ncappc/index.html"  target="_blank">CRAN</a>
-and learn how to use the functions in that package.
-</li>
+<h3>Known issues with version 4.4.0</h3>
 <li>
 Installation on Windows: Users who install PsN for the first time need to make sure they install a Perl version where
 the needed extra modules are available, see instructions on
@@ -66,6 +62,18 @@ the needed extra modules are available, see instructions on
 
 <div style="text-align:left;"><a style="font-size:small;color:gray;" href="#" id="show_older_changes">Click here to show change notes for older versions</a></div>
 <div id="older_changes" style="display:none;">  
+<h3>PsN 4.2.0</h3>
+<p>
+Version 4.2.0 was released May 21st 2014.
+</p>
+<p>
+New features include new scripts nca, pvar, sir, frem and rawresults and a new test library for verification of PsN. 
+Under the hood there have been big changes. PsN has been completely rewritten using the Moose object system. 
+</p>
+<p>
+The list of new features and bugfixes in 4.2.0 is found
+<a href="pdfdocs/release_notes_PsN_4_2_0.txt" target="_blank">here</a></p>
+
 <h3>PsN 3.7.6</h3>
 <p>
 Version 3.7.6 was released December 4th 2013.

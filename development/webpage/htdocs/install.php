@@ -9,8 +9,8 @@ PsN4 supports standard and NMQual8 installations of NONMEM.
 You must verify that all NONMEM installations you intend to
 use can be run directly via the nmfe/autolog scripts and that they 
 produce complete output files. If you plan to use the parallelization features 
-of NONMEM7.2 or later you must also verify that you can run NONMEM in parallel directly 
-with nmfe72. <p>
+of NONMEM you must also verify that you can run NONMEM in parallel directly 
+with the nmfe script, for example nmfe73. <p>
 If running NONMEM with nmfe/autolog.pl does not work then PsN will not work.
 </li>
 <li>Perl5<p>
@@ -20,7 +20,7 @@ Note 1: For Windows we recommend
 <a target="_blank" href="http://www.activestate.com/activeperl/downloads/">ActiveState Perl</a>.
 Windows users who are installing PsN for the first time should choose one of Strawberry Perl or ActiveState Perl to install.
 If ActiveState is selected it is important to select a version which supports the extra modules needed for PsN.
-On May 21st 2014 the recommended ActiveState Perl version was 5.16. For updated information 
+On April 12th 2015 the recommended ActiveState Perl version was 5.16. For updated information 
 on which version provides which modules in ActiveState Perl see 
 package information pages for 
 <a target="_blank" href="http://code.activestate.com/ppm/Math-Random/">Math::Random</a>, 

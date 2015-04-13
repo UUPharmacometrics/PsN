@@ -21,15 +21,15 @@ PsN is distributed  as a gzipped tarball and zipped file.</p>
     </tr>
     <tr>
         <td style="text-align:center;"> 
-            PsN 4.2.0
+            PsN 4.4.0
         </td>
-	<td rowspan="2" width="70%">Please see the <a href="pdfdocs/release_notes_PsN_4_2_0.txt">change log</a> for details. </td>
-        <td rowspan="2">2014-05-21</td>
+	<td rowspan="2" width="70%">Please see the <a href="pdfdocs/release_notes_PsN_4_4_0.txt">change log</a> for details. </td>
+        <td rowspan="2">2015-04-20</td>
     </tr>
     <tr>
         <td style="text-align:center;">
-            <a href="http://sourceforge.net/projects/psn/files/PsN-4.2.0.zip/download" target="_blank">.zip</a>
-            <a href="http://sourceforge.net/projects/psn/files/PsN-4.2.0.tar.gz/download" target="_blank">.tar.gz</a>
+            <a href="http://sourceforge.net/projects/psn/files/PsN-4.4.0.zip/download" target="_blank">.zip</a>
+            <a href="http://sourceforge.net/projects/psn/files/PsN-4.4.0.tar.gz/download" target="_blank">.tar.gz</a>
         </td>
       </tr>
    </tbody>
@@ -46,6 +46,19 @@ PsN is distributed  as a gzipped tarball and zipped file.</p>
 
     <tr>
         <td style="text-align:center;"> 
+            PsN 4.2.0
+        </td>
+	<td rowspan="2" width="70%">Please see the <a href="pdfdocs/release_notes_PsN_4_2_0.txt">change log</a> for details. </td>
+        <td rowspan="2">2014-05-21</td>
+    </tr>
+    <tr>
+        <td style="text-align:center;">
+            <a href="http://sourceforge.net/projects/psn/files/PsN-4.2.0.zip/download" target="_blank">.zip</a>
+            <a href="http://sourceforge.net/projects/psn/files/PsN-4.2.0.tar.gz/download" target="_blank">.tar.gz</a>
+        </td>
+    </tr>
+    <tr>
+        <td style="text-align:center;"> 
             PsN 3.7.6
         </td>
 	<td rowspan="2" width="70%">Please see the <a href="pdfdocs/release_notes_PsN_3_7_6.txt">change log</a> for details. </td>
@@ -56,7 +69,7 @@ PsN is distributed  as a gzipped tarball and zipped file.</p>
             <a href="http://sourceforge.net/projects/psn/files/PsN-3.7.6.zip/download" target="_blank">.zip</a>
             <a href="http://sourceforge.net/projects/psn/files/PsN-3.7.6.tar.gz/download" target="_blank">.tar.gz</a>
         </td>
-      </tr>
+    </tr>
 
     <tr>
         <td style="text-align:center;"> 
@@ -287,40 +300,45 @@ for more information on how to install from the git repository.</p>
 <h3 class="heading1">Compatibility<br> </h3>
 <p><strong>Grid/Cluster support:</strong> PsN has built-in functionality for submitting 
 the NONMEM runs to SGE, Slurm, LSF, ud and torque. See documentation
-<a href="pdfdocs/common_options_defaults_versions_psn.pdf" target="_blank">here</a>.
+<a href="pdfdocs/common_options.pdf" target="_blank">here</a>.
 </p>
 
-<p><strong>Platforms:</strong> PsN-4.2.0 is tested on the systems listed below. NONMEM is always run via an nmfe or NMQual script, making compiler version irrelevant.</p>
+<p><strong>Platforms:</strong> PsN-4.4.0 is tested on the systems listed below.</p>
 <table>
   <tr>
     <th>Platform</th>
     <th>OS Version</th>
     <th>Perl</th>
     <th>NONMEM </th>
+    <th>Compiler </th>
   </tr>
   <tr>
     <th>Microsoft Windows</th>
     <td>XP 32-bit</td>
     <td>ActiveState Perl 5.16.3</td>
     <td>7.1.0</td>
+    <td>gfortran 4.6.0</td>
   </tr>
   <tr>
     <th>Microsoft Windows</th>
     <td>XP 32-bit</td>
     <td>ActiveState Perl 5.16.3</td>
     <td>7.1.2</td>
+    <td>gfortran 4.6.0</td>
 	</tr>
   <tr>
     <th>Microsoft Windows</th>
     <td>XP 32-bit</td>
     <td>ActiveState Perl 5.16.3</td>
     <td>7.2.0</td>
+    <td>gfortran 4.6.0</td>
   </tr>
   <tr>
     <th>Microsoft Windows</th>
     <td>7 64-bit</td>
     <td>ActiveState Perl 5.16.3</td>
     <td>7.3.0</td>
+    <td>gfortran 4.8.1</td>
   </tr>
   <tr>
     <th>Microsoft Windows</th>
