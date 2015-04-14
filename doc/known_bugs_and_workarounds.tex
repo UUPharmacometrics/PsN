@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{Known bugs and workarounds}{2015-03-19}
+\guidetitle{Known bugs and workarounds}{2015-04-14}
 
 
 \begin{document}
@@ -8,9 +8,17 @@
 
 
 \section{Introduction}
-Work to fix bugs in PsN is ongoing, but often feature addition is prioritized over bug fixing, especially if there is a known workaround for the bug. This document list the most important known bugs, including workarounds when possible.   
+Work to fix bugs in PsN is ongoing, but often feature addition is prioritized over bug fixing, 
+especially if there is a known workaround for the bug. This document list the most important bugs, including workarounds when possible,
+that were known at the time of release of PsN version \psnversion. Please refer to the known bugs wiki
+for a list of bugs that have been discovered after the time of release:\\
+\texttt{http://sourceforge.net/p/psn/wiki/Bug\_list\_current\_release}   
 
 \section{Bugs}
+
+\subsection{sumo does not display ETA correlation when product of variances <= 0.00001}
+If the product of the variances (diagonal OMEGA elements) is l.e. 0.00001, then sumo will not display the correlation between those
+ETAs. Workaround: running sumo with option -ci will make sumo display the untransformed omega estimates, with confidence intervals.
 
 \subsection{Sensitive format for raw results input file in sse, vpc, npc}
 Any column header that contains a comma, e.g. OMEGA(2,1), must be enclosed in double quotes. This is done automatically when PsN creates a raw results file but may be changed if the file is saved in e.g. Excel.
