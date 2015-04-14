@@ -2,7 +2,8 @@
 PsN can automatically generate R plots to visualize results, 
 if a template file is available.
 The PsN installation package includes default template files for some
-tools, but R plots can be generated also for the other tools
+tools, found in the R-scripts subdirectory of the installation directory, 
+but R plots can be generated also for the other tools
 if the user provides the template file.
 Most of the default templates are quite basic, but 
 the user can easily modify or replace them.
@@ -34,19 +35,19 @@ the script will also be run and a number of pdf-format plots be created.
 -rplots=2 means basic and extended plots are generated\\													  
 \nextopt
 \optdefault{template\_file\_rplots}{file}
-When the rplots feature is used, the default template file PsN will use is 
+When the rplots feature is used, the default template file PsN will look for is 
 \guidetoolname\_default.R. 
 The user can choose a different template file
-by setting option -template\_file\_rplots to a different file. 
-PsN will first look for the file relative to the current working directory, 
-and after that in the -template\_directory\_rplots directory.
+by setting option -template\_file\_rplots to a different file name. 
+PsN will look for the file in the 'template\_directory\_rplots' directory, see the help text 
+for that option.
 \nextopt
 \optdefault{template\_directory\_rplots}{path}
-PsN can look for the rplots template file in a number of places. The priority order is the
-following:
+PsN can look for the rplots template file in a number of places. 
+PsN looks in the following places in the order they are listed:
 \begin{enumerate}
-\item template\_directory\_rplots set on command-line 
-\item calling directory (where PsN is started)
+\item template\_directory\_rplots from command-line, if set 
+\item calling directory (where PsN run is started from)
 \item template\_directory\_rplots set in psn.conf 
 \item R-scripts subdirectory of the PsN installation directory
 \end{enumerate}
@@ -55,7 +56,7 @@ following:
 Default not set. The user can specify a subset variable to be used with the -rplots feature. 
 This variable
 will, if set, be set as subset.variable in the preamble,
-and can then be used in the plotting code. 
+and can then be used in the plot code.  
 \nextopt
 \end{optionlist}
 
