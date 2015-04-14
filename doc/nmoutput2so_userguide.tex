@@ -1,12 +1,15 @@
 \input{inputs/format_header.tex}
-\guidetitle{nmoutput2so user guide}{2015-03-02}
+\guidetitle{nmoutput2so user guide}{2015-04-14}
 
 \begin{document}
 
 \maketitle
 
 \section{Introduction}
-The nmoutput2so script creates and populates a DDMoRe standardized output xml (SO 0.1) file given the output from one or more NONMEM runs. It is necessary that the format of the model file and other files follow a set of requirements (see below) for this to work. The Perl module XML::LibXML is required by nmoutput2so, but not PsN in general. Make sure that it is installed before using nmoutput2so. See the PsN installation guide for intructions.
+The nmoutput2so script creates and populates a DDMoRe Standardized Output 
+\cite{Terranova}
+xml (SO 0.1) file given the output from one or more NONMEM runs. 
+It is necessary that the format of the model file and other files follow a set of requirements (see below) for this to work. The Perl module XML::LibXML is required by nmoutput2so, but not PsN in general. Make sure that it is installed before using nmoutput2so. See the PsN installation guide for intructions.
 
 
 Examples
@@ -226,5 +229,13 @@ SO/
                 Dosing
                 RawResultsFile
 \end{verbatim}
+
+\begin{thebibliography}{1}
+\bibitem{Terranova} Nadia Terranova, Marc Lavielle, Mike K. Smith, 
+Emmanuelle Comets, Kajsa Harling, Rikard Nordgren, Andrew C. Hooker, 
+France Mentre, Maciej J. Swat,
+{\em Standardized Output: flexible and tool-independent storage 
+format of typical M\&S results}, PAGE 24 (2015) Abstr 3599.
+\end{thebibliography}
 
 \end{document}
