@@ -36,9 +36,6 @@ The only required argument is a model file.
 \subsection{Optional input}
 
 \begin{optionlist}
-\optname{perturb}
-After the model is preconditioned the initial estimate is perturbed to the direction of the eigenvector that is corresponding negative eigenvalue of the R-matrix.  This will increase the chance of finding the final parameter estimate that is not at the saddle point so that the R-matrix of the preconditioned model will be a positive semi-definite matrix.
-\nextopt
 \optdefault{pre}{psn.rmt}
 With this option the user can manually specify the R-matrix that will be used for preconditioning.  In addition, a modelfit directory created by the execute command of PsN can be specified and R-matrix will be extracted from the directory.  In addition, any symmetric matrix can be provided as a .csv file or NONMEM matrix file.
 \nextopt
@@ -72,6 +69,9 @@ Turn off decomposition of preconditioning matrix.
 \optdefault{output\_model}{run1\_repara.mod}
 This option will break the normal execution flow and have precond only create the preconditioned model without running it.
 The model will be created with the specified name.
+\nextopt
+\optname{perturb}
+After the model is preconditioned the initial estimate is perturbed to the direction of the eigenvector that is corresponding negative eigenvalue of the R-matrix.  This will increase the chance of finding the final parameter estimate that is not at the saddle point so that the R-matrix of the preconditioned model will be a positive semi-definite matrix.
 \nextopt
 \optname{verbose}
 Print the eigenvalues of the matrix that will be used to precondition the model.
