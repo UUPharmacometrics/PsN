@@ -4,6 +4,7 @@ Windows XP 32-bit with ActivePerl 5.16.3, gfortran 4.6.0 and NONMEM 7.1.0, 7.1.2
 Windows 7 64-bit with ActivePerl 5.20.1 (32 bit), gfortran 4.8.1 and NONMEM 7.3.0
 Windows 7 64-bit with ActivePerl 5.16.3 (32 bit), gfortran 4.6.0 and NONMEM 7.3.0
 Windows 7 64-bit with Strawberry Perl 5.18.2, gfortran 4.7.3 and NONMEM 7.2.0 and 7.3.0
+MacOS X 10.10.3 with Perl 5.18.2, gfortran 4.8.0 and NONMEM 7.3.0
 MacOS X 10.6.6 with ActiveState Perl 5.16.3, gfortran 4.6.2 and NONMEM 7.2.0 and 7.3.0
 MacOS X 10.6.6 with ActiveState Perl 5.16.3, ifort 12.0.0 and NONMEM 7.2.0 and 7.3.0
 Ubuntu Linux 14.10 with Perl 5.20.1, gfortran 4.9.1 and NONMEM 7.2.0 and 7.3.0
@@ -34,9 +35,8 @@ the PsN website http://psn.sourceforge.net/
 Dependencies 
 ************************
 
-- Xpose must, if used, be version 4.2.1 or later.
-  It is recommended to use the latest Xpose release
-  from http://xpose.sf.net
+- It is recommended to use Xpose version 4.5.3 for the -cwres functionality 
+  and the default execute, vpc and bootstrap R plots.
 
 ************************
 Known issues 
@@ -73,22 +73,21 @@ Changes and bug fixes from PsN 4.2.0 to 4.4.0
 - Complete redesign of data file handling and generation. PsN will not open the data file unless
   necessary (for bootstrapping, covariate statistics computation, ...). A large number
   of data class tests have been added to the test suite.
-  Covariate statistics computation
-  code for scm, boot_scm, frem and lasso have been moved to the data class.
+  Covariate statistics computation code for scm, boot_scm, frem and lasso have been moved to the data class.
   Data set creation for bootstrap, cdd, randtest have been moved to new data class subroutines
   and are redesigned to return file references to the created files rather than data objects. 
   Internally, PsN will use reference(s) to the data file(s) instead of passing around data objects.
   These changes affect nonpb, randtest, crossval, xv_scm, scm, bootstrap, cdd, lasso, frem 
   
-- handle spaces in the path (enclose filepath with quotes in $DATA)
+- handle spaces in the path (enclose filepath with quotes in $DATA if necessary)
 
-- enable option -cwres also for NM7. Computation requires R with library xpose4 to be installed.
+- enable option -cwres also for NM7. PsN computation of cwres requires R with library xpose4 to be installed.
   Either the command R must be in the path, or the R executable has to be defined in psn.conf.
 
 - Possibility to make PsN installation portable (PsN installation directory movable, 
   without changing psn.conf). See documentation in psn_installation.pdf and psn_configuration.pdf
 
-- Possible to set -directory=path/to/folder where path/to does not yest exist. Before you could 
+- Possible to set option -directory=path/to/folder where path/to does not yest exist. Before you could 
   only specify a path with several levels in -dir if all but the last directory already existed. 
 
 - Expanded test suite
@@ -133,7 +132,7 @@ Changes and bug fixes from PsN 4.2.0 to 4.4.0
 - removed options -prepend_model_to_lst, -nonparametric_etas, -nonparametric_marginals
 
 - resume functionality internally in modelfit. If model->is_run read existing lst-file, do not run. Run
-  models that are not run, create raw_results. Currently accessible only from bootstrap
+  models that are not run, create raw_results. Currently accessible only from bootstrap.
 
 - removed attribute rerun
 
@@ -213,7 +212,7 @@ Changes and bug fixes from PsN 4.2.0 to 4.4.0
 
 - bug fix: running sumo on file without extension .res or .lst would cause a crash
 
-- output use labels instead of generic parameter names, skip parameters that are fixed or same
+- use labels instead of generic parameter names in output, and skip parameters that are fixed or same
 
 - print shrinkage from NMoutput, print number of individuals and observation records 
 
@@ -361,7 +360,7 @@ Changes and bug fixes from PsN 4.2.0 to 4.4.0
 - New option -reduced_model_ofv. Initiate a retry unless ofv is at least as good as this value.
   Option -retries must be set > 0 for it to have effect. See details in execute userguide.
 
-- timestamp option for directory name
+- New option -timestamp for directory name
 
 - option -model_dir_name will skip model extension, and there will be no dot between 
   dir and the number. For example run2.mod will give rundir name run2.dir1. 
@@ -378,7 +377,7 @@ Changes and bug fixes from PsN 4.2.0 to 4.4.0
   will be selected and the output files of this try will be copied
   to the directory of the input model.
 
-- new userguide
+- new userguide parallel_retries_userguide.pdf
 
    ___sir___
 	 
@@ -407,13 +406,15 @@ Changes and bug fixes from PsN 4.2.0 to 4.4.0
 
    ___precond___
 	 
-- New tool, preconditioning of model. See precond_userguide.pdf
-
+- New tool, preconditioning of a model to improve its numerical properties. 
+  See precond_userguide.pdf
 
    ___pvar___
 
 - Added default plot
+
 - pvar will also run base model from scm, pvar can handle scm results after clean<=2.
+
 - Updated pvar_results.csv to include model name.
 
    ___frem___
