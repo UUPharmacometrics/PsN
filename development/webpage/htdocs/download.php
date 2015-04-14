@@ -301,6 +301,7 @@ for more information on how to install from the git repository.</p>
 <p><strong>Grid/Cluster support:</strong> PsN has built-in functionality for submitting 
 the NONMEM runs to SGE, Slurm, LSF, ud and torque. See documentation
 <a href="pdfdocs/common_options.pdf" target="_blank">here</a>.
+The PsN test suite has been run on slurm and locally.
 </p>
 
 <p><strong>Platforms:</strong> PsN-4.4.0 is tested on the systems listed below.</p>
@@ -316,100 +317,84 @@ the NONMEM runs to SGE, Slurm, LSF, ud and torque. See documentation
     <th>Microsoft Windows</th>
     <td>XP 32-bit</td>
     <td>ActiveState Perl 5.16.3</td>
-    <td>7.1.0</td>
-    <td>gfortran 4.6.0</td>
-  </tr>
-  <tr>
-    <th>Microsoft Windows</th>
-    <td>XP 32-bit</td>
-    <td>ActiveState Perl 5.16.3</td>
-    <td>7.1.2</td>
-    <td>gfortran 4.6.0</td>
-	</tr>
-  <tr>
-    <th>Microsoft Windows</th>
-    <td>XP 32-bit</td>
-    <td>ActiveState Perl 5.16.3</td>
-    <td>7.2.0</td>
+    <td>7.1.0, 7.1.2, 7.2.0</td>
     <td>gfortran 4.6.0</td>
   </tr>
   <tr>
     <th>Microsoft Windows</th>
     <td>7 64-bit</td>
-    <td>ActiveState Perl 5.16.3</td>
+    <td>ActiveState Perl 5.20.1 (32-bit)</td>
     <td>7.3.0</td>
     <td>gfortran 4.8.1</td>
   </tr>
   <tr>
     <th>Microsoft Windows</th>
     <td>7 64-bit</td>
-    <td>Strawberry Perl 5.18.2</td>
+    <td>ActiveState Perl 5.16.3 (32-bit)</td>
     <td>7.3.0</td>
+    <td>gfortran 4.6.0</td>
   </tr>
   <tr>
     <th>Microsoft Windows</th>
     <td>7 64-bit</td>
     <td>Strawberry Perl 5.18.2</td>
-    <td>7.2.0</td>
+    <td>7.2.0, 7.3.0</td>
+    <td>gfortran 4.7.3</td>
   </tr>
   <tr>
     <th>Mac</th>
     <td>OS X 10.6.6</td>
     <td>ActiveState Perl 5.16.3</td>
-    <td>7.3.0</td>
+    <td>7.2.0, 7.3.0</td>
+    <td>gfortran 4.6.2</td>
   </tr>
   <tr>
     <th>Mac</th>
     <td>OS X 10.6.6</td>
     <td>ActiveState Perl 5.16.3</td>
-    <td>7.2.0</td>
-	</tr>
+    <td>7.2.0, 7.3.0</td>
+    <td>ifort 12.0.0</td>
+  </tr>
   <tr>
-    <th >Linux</th>
-    <td >Ubuntu 13.10</td>
-    <td >5.14.2</td>
+    <th>Mac</th>
+    <td>OS X 10.10.3</td>
+    <td>Perl 5.18.2</td>
     <td>7.3.0</td>
+    <td>gfortran 4.8.0</td>
   </tr>
   <tr>
     <th >Linux</th>
-    <td >Ubuntu 14.04</td>
-    <td >5.18.2</td>
-    <td>7.3.0</td>
-  </tr>
-  <tr>
-    <th >Linux</th>
-    <td >Ubuntu 14.04</td>
-    <td >5.18.2</td>
-    <td>7.2.0</td>
+    <td >Ubuntu 14.10</td>
+    <td >5.20.1</td>
+    <td>7.2.0, 7.3.0</td>
+    <td>gfortran 4.9.1</td>
   </tr>
   <tr>
     <th >Linux</th>
     <td >Fedora 20</td>
     <td >5.18.2</td>
     <td>7.2.0</td>
+    <td>gfortran 4.8.2</td>
   </tr>
   <tr>
     <th >Linux</th>
     <td >Scientific Linux 6.3</td>
     <td >5.10.1</td>
-    <td>7.2.0</td>
+    <td>7.2.0, 7.3.0</td>
+    <td>gfortran 4.4.7</td>
   </tr>
   <tr>
     <th >Linux</th>
-    <td >Scientific Linux 6.3</td>
+    <td >CentOS 6.5</td>
     <td >5.10.1</td>
+    <td>7.1.0, 7.1.2, 7.3.0</td>
+    <td>gfortran 4.4.7</td>
+  </tr>
+  <tr>
+    <th >Linux</th>
+    <td >Debian 7.5</td>
+    <td >5.14.2</td>
     <td>7.3.0</td>
-  </tr>
-  <tr>
-    <th >Linux</th>
-    <td >CentOS 6.5</td>
-    <td >5.10.1</td>
-    <td>7.1.0</td>
-  </tr>
-  <tr>
-    <th >Linux</th>
-    <td >CentOS 6.5</td>
-    <td >5.10.1</td>
-    <td>7.1.2</td>
+    <td>gfortran 4.7.2</td>
   </tr>
 </table>
