@@ -34,6 +34,7 @@ LIBFILES= ui.pm \
 	R-scripts/bootstrap_default.R \
 	R-scripts/pvar_default.R \
 	R-scripts/nca_default.R \
+	R-scripts/required_packages.R \
 	status_bar.pm \
 	nonmemrun.pm \
 	nonmemrun/localunix.pm \
