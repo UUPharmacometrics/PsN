@@ -1,0 +1,114 @@
+This is a list of the known bugs in PsN 4.2.0 at the time of the next public 
+release (4.4.0 April 2015)
+
+
+* sumo will not display the correlation between ETAs for which the product of the variances 
+(diagonal OMEGA elements) is less than or equal to 0.00001. Workaround: running sumo with 
+option -ci will make sumo display the untransformed omega estimates, with confidence 
+intervals.
+
+* The sse will crash if an alternative model (option -alternative_models) has METHOD=BAYES. 
+There is no workaround other than editing a one-word typo in tool/sse.pm or installing a 
+bug-fixed version.
+
+* vpc bug: The observation(s) with the single highest idv of the stratum will sometimes, 
+due to a numerical error, be missing from the last bin when using either 
+-bin_by_count=0 -no_of_bins=N in combination, or -bin_by_count=0 -single_bin_size=X in 
+combination without -overlap option. The workaround is to use other binning options than 
+the ones mentioned, for example -auto_bin=N where N is the desired number of bins.
+
+* Jobs hang with -run_on_slurm when default squeue output format truncates the jobID: PsN 
+uses the default squeue output format when calling squeue to check if a job has finished. 
+If the jobID is truncated from, say, eight to seven digits by squeue, then PsN will never 
+find an eight-digit jobID in the list of finished jobs, and will consequently treat the job 
+as still running. A workaround is to change the default output format of squeue to never 
+truncate jobIDs.
+
+* Bug in SIGMA/OMEGA parsing: PsN cannot handle comma as a separator in (init options) as in
+    $OMEGA (1,FIXED)
+    The workaround is to use only space as separator inside OMEGA/SIGMA parentheses, for 
+example
+    $OMEGA (1 FIXED)
+    or not use parentheses at all, as in
+    $OMEGA 1 FIXED
+
+* Bug in THETA parsing: PsN cannot handle comma as a separator between different thetas as in
+    $THETA (1 FIX), (2 FIX)
+    The workaround is to use only space as separator between thetas, for example
+    $THETA (1 FIX) (2 FIX)
+
+* Bug in vpc output when lloq and/or uloq is used: The mean of the real observations is 
+displayed in vpc_results.csv even when some real observations are below lloq or above uloq. 
+These values should be replaced with 'NA'.
+
+* Bug in control stream parsing - the text FIXED will lead to parsing errors when it appears 
+on the same line as BLOCK(x). Examples:
+    $OMEGA BLOCK(1) 0.4 FIXED ; will crash
+
+$SIGMA BLOCK(2) FIXED ; will crash
+0.3
+0.001 0.5
+
+$OMEGA BLOCK(1) 0.4 FIX ; will work
+
+$OMEGA 0.4 FIXED ; will work
+
+$SIGMA BLOCK(2) ; will work
+FIXED
+0.3
+0.001 0.5
+
+The workaround is to use FIX (upper case) and no other form. As stated in the documentation, 
+PsN does not support lower case for NMTRAN reserved words, so fix or fixed are not supported.
+
+* Bug in boot_scm: If the lst-file of the input model is present in the same folder as the 
+input model file at the start of the boot_scm run, then the ofv from the lst-file is 
+errouneously used as the base ofv for each of the bootstrap sample scm runs. As a workaround,
+ copy the input model to a folder without the lst-file and start the boot_scm from there.
+
+* The -mirror_plots option to execute is broken, no workaround.
+
+* If the OBJV value is +Infinity or -Infinity in the summary line (-10000000) of the 
+.ext-file then PsN crashes during the parsing of the ext-file. 
+
+* If the .ext-file is not present in the same directory as the lst-file when PsN parses NM7.3 
+output, the eigenvalues will not be parsed corrrectly and the condition number will be 
+missing from sumo output. Also, if a bootstrap is run where the input model has the lst-file 
+present but not the ext-file, then the first line of the raw_results file will have some 
+extra text appended (including the CPUT tag from NM7.3) and this makes it difficult for R to 
+read the raw_results file.
+
+* The unix file permissions are wrong for two of the test suite input files, read permission 
+for 'other' is missing for test_files/pheno_cond.mod and test_files/scm_config.scm. Fix this 
+by manual chmod o+x. If the test suite is installed as root but run as a regular user, two 
+system tests will fail because of these incorrect file permissions.
+
+* Sensitive format for raw results input file in sse, vpc, npc.
+Any column header that contains a comma, e.g. OMEGA(2,1), must be enclosed in double quotes. 
+This is done automatically when PsN creates a raw results file but may be changed if the file
+ is saved in e.g. Excel.
+
+* NONMEM hard crash during $COV step causes PsN to fail to read any output.
+If the estimation step is successful but NONMEM crashes entirely during the covariance step, 
+causing the lst-file to be truncated (for example missing the objective function value of the
+ successful estimation), PsN will fail to read final estimates even though they are available 
+in the .ext-file, and will treat the entire run as crashed. A workaround is to manually add 
+a line with tag 
+#OBJT: after the #TERE: tag in the lst-file.
+
+* Missing estimates in raw_results.csv when first $PROBLEM uses $MSFI
+When the first $PROBLEM in the modelfile uses $MSFI, and $THETA, $OMEGA and $SIGMA are all 
+missing in that $PROBLEM, then there will be no theta/omega/sigma headers in raw_results.csv 
+and the parameter estimates will not be printed to the file.
+
+* Data values with more than five significant digits in sse
+The simulated datasets used in sse are \$TABLE output from NONMEM, and NONMEM rounds off 
+values when printing tables. In NONMEM 6 1013201 is rounded to 1013200 (five significant 
+digits), and if this makes a significant change to the model estimation, for example if the 
+value is a covariate, then the sse results will be wrong. In NONMEM7 it is possible to set 
+the FORMAT option in $TABLE to make sure no important information is lost. With NONMEM 6 the 
+user must make sure the rounding to five significant digits does not harm the results.
+
+* Lower case user defined and reserved words
+Starting with NONMEM 7.2 lower case user defined and reserved words are supported by NONMEM. 
+This is not supported by PsN. For example in $INPUT all reserved words have to be upper case.
