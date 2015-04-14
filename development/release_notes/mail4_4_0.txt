@@ -1,0 +1,17 @@
+Dear PsN users,
+
+PsN 4.4.0 is now available for download from http://psn.sourceforge.net.
+
+New features include 
+
+* precond, a new tool for automatic preconditioning of a NONMEM model to improve its numerical properties. The preconditioning method, which has been developed by Yasunori Aoki, will be presented during the Stuart Beal Methodology Session at PAGE 2015.
+http://www.page-meeting.org/default.asp?abstract=3586
+
+* major additions to sir, a tool for obtaining parameter uncertainty faster than with a bootstrap and more accurately than based on the covariance step.
+
+* the -rplots option, a simple yet powerful feature for generating default or custom R plots for visualizing PsN output. For example, the PsN nca program can, using this new feature and Chayan Acharya's ncappc R package for non-compartmental analysis, create a basic R script that can easily be extended for custom nca analysis for a specific project. The ncappc package is available from CRAN.
+
+The complete list of new features and bug fixes is found on http://psn.sourceforge.net/pdfdocs/release_notes_PsN_4_4_0.txt
+
+Best regards,
+The PsN development team

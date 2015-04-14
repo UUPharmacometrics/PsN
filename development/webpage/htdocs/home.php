@@ -41,7 +41,17 @@ major improvements to sir, a tool for obtaining parameter uncertainty faster tha
 and the -rplots option, a simple yet powerful mechanism for generating default or custom R plots for visualizing PsN output.
 </p>
 <p>
-Yasunori Aoki's preconditioning method will be presented during the Stuart Beal Methodology Session at PAGE 2015.
+The <a href="http://www.page-meeting.org/default.asp?abstract=3586" target="_blank">preconditioning method</a>, 
+which has been developed by Yasunori Aoki, will be presented during the 
+Stuart Beal Methodology Session at PAGE 2015.
+</p>
+<p>
+Default R templates are available for a number of tools, including 
+<a href="http://www.page-meeting.org/default.asp?abstract=3103" target="_blank">nca</a> (non-compartmental 
+analysis using the ncappc package available from CRAN), 
+<a href="http://www.page-meeting.org/default.asp?abstract=2907" target="_blank">sir</a>, 
+sse for <a href="http://www.page-meeting.org/default.asp?abstract=3263" target="_blank">parametric power estimation</a>, vpc, 
+bootstrap and execute.
 </p>
 <p>
 The complete list of new features and bugfixes in 4.4.0 is found  
@@ -1566,7 +1576,7 @@ encountered unfixed bugs and how to work around them.</li>
 <h3>More information</h3>
 <p>
 Perl-speaks-NONMEM is copyright <br>
-&copy;2013-2014 by Mats Karlsson, Andrew Hooker, Rikard Nordgren and Kajsa Harling.<br>
+&copy;2013-2015 by Mats Karlsson, Andrew Hooker, Rikard Nordgren and Kajsa Harling.<br>
 &copy;2008-2012 by Mats Karlsson, Niclas Jonsson, Andrew Hooker and Kajsa Harling.<br>
 &copy;2006-2007 by Lars Lindbom.<br>
 &copy;2000-2005 by Lars Lindbom and Niclas Jonsson.<br>

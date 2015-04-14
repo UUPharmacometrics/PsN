@@ -64,7 +64,7 @@ Changes and bug fixes from PsN 4.2.0 to 4.4.0
   See documentation in common_options.pdf and/or
   individual user guides for tools that have sample template scripts
   included in the PsN installation package: 
-  execute, bootstrap, vpc, randtest, sse, llp, mcmp, nca, pvar, cdd and sir
+  nca, execute, bootstrap, vpc, randtest, sse, llp, mcmp, pvar, cdd and sir
 
 - Major rewrite of retries handling code, improved check that tweaked omega and sigma blocks are
   positive definite, updated rules for selecting best retry,
@@ -205,6 +205,11 @@ Changes and bug fixes from PsN 4.2.0 to 4.4.0
 - Improved handling of NMTRAN error messages and license error messages that appear in the lst-file. 
   Store those pre-run messages in parsing_error_message that can be displayed by e.g. sumo
 
+   ___nca___
+
+- The default R plots template uses the ncappc R package from CRAN. The default
+  template only creates a very basic plot, but it is a good starting point
+  for more advanced non-compartmental analysis using ncappc.
 
    ___sumo___
 
