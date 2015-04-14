@@ -28,7 +28,7 @@
 <h2>Perl-speaks-NONMEM</h2>
   <p>Perl-speaks-NONMEM (PsN) is a collection of Perl modules and programs aiding in the development
     of non-linear mixed effect models using NONMEM. The functionality ranges from solutions to simpler
-    tasks such as parameter estimate extraction from output files, data file sub setting  and resampling,
+    tasks such as parameter estimate extraction from output files, data file sub setting and resampling,
     to advanced computer-intensive statistical methods. PsN includes stand-alone tools for the end-user
     as well as development libraries for method developers. You can read more about the different parts of PsN under <a href="docs.php">Documentation</a>.</p>
 <h3>Latest news</h3>
@@ -37,16 +37,15 @@ Version 4.4.0 was released April 20th 2015, and is available <a href="download.p
 </p>
  <p>
 New features include precond, a new tool for automatic preconditioning of a NONMEM model to improve its numerical properties,
-major improvements to sir, a tool for obtaining parameter uncertainty that is faster than bootstrap and more reliable than SE:s from the covariance step,
-and the -rplots option, a simple yet powerful mechanism for generating default or custom R plots based on PsN output.
-The preconditioning method will be presented during the Stuart Beal Methodology Session at PAGE 2015.
+major improvements to sir, a tool for obtaining parameter uncertainty faster than with a bootstrap and more accurately than based on the covariance step,
+and the -rplots option, a simple yet powerful mechanism for generating default or custom R plots for visualizing PsN output.
+</p>
+<p>
+Yasunori Aoki's preconditioning method will be presented during the Stuart Beal Methodology Session at PAGE 2015.
 </p>
 <p>
 The complete list of new features and bugfixes in 4.4.0 is found  
 <a href="pdfdocs/release_notes_PsN_4_4_0.txt" target="_blank">here</a></dt>.
-</p>
- <p>
-This version of PsN has been extensively tested on Windows, Linux and MacOS X.
 Go to the <a href="download.php">Download page</a> 
 to see which systems and NONMEM versions PsN 4.4.0 has been tested with.
 </p>
