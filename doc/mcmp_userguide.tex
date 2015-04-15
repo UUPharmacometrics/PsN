@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{MCMP user guide}{2015-04-09}
+\guidetitle{MCMP user guide}{2015-04-15}
 
 
 \begin{document}
@@ -84,6 +84,19 @@ If the package is not installed then no pdf will be generated,
 see the .Rout file in the main run directory for error messages.}
 \input{inputs/rplots_section_body.tex}
 
+\subsubsection*{Basic plots}
+A basic mcmp rplot will be generated in file PsN\_mcmp\_plots.pdf if option -rplots is set >0,
+and the general rplots conditions fulfilled, see above.
+The basic plot is the mcmp-generated power curve for
+the signficance level chosen with option -significance\_level, with a mark at the sample size 
+required for 80\% power.
+\subsubsection*{Extended plots}
+Extended mcmp rplots will be generated in file PsN\_mcmp\_plots.pdf if option -rplots is set >1,
+and the general rplots conditions fulfilled, see above.
+The first extended plot is the the mcmp-generated power curves for
+each of the significance levels 5\%, 1\% and 0.1\%, with a mark of the sample size 
+required for 80\% power.
+The second extended plot is a histogram of the individual full-reduced delta-ofv. 
 
 \section{Output}
 The output from each mcmp is mcmp\_results.csv which contains a table with header total\_X,power at 5\%,power at 1\%,power at 0.1\%, (headers for N from each stratum). One row for each total sample size (total\_X). The table can be plotted in excel. The results are also printed to screen as they are produced, and the user can terminate the run with Ctrl-C if the obtained power is deemed sufficient. The file mcmp\_results.csv will contain the values that were computed before the interruption. If mcmp is rerun the previous result file will be copied and kept.

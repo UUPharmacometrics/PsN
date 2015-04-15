@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{LLP user guide}{2015-02-26}
+\guidetitle{LLP user guide}{2015-04-15}
 
 \begin{document}
 
@@ -79,10 +79,22 @@ If the packages are not installed then no pdf will be generated,
 see the .Rout file in the main run directory for error messages.}
 \input{inputs/rplots_section_body.tex}
 
+\subsubsection*{Basic plots}
+A basic llp rplot will be generated in file PsN\_llp\_plots.pdf
+if option -rplots is set >0,
+and the general rplots conditions fulfilled, see above.
+The plot has one panel per evaluated parameter. The parameter value is on the x-axis, and
+the delta-ofv relative the input model on the y-axis. The blue line
+shows the confidence interval computed from the standard error
+under the assumption of normality, and
+the red line shows the llp-computed confidence interval. Each black dot represents
+an evaluated parameter value. The IR-value at the top is the ratio between
+the center-to-upper-limit-distance and the center-to-lower-limit-distance. 
+If the IR is equal to 1 it means the llp-computed confidence interval is symmetric.
 
 \section{Output}
 
 The file llp\_results.csv contains statistics and summaries specific for the llp. \\
-The raw\_results.csv file is a standard PsN file containing raw result data for termination status, parameter estimates, uncertainty estimates etc. for all model estimations. 
+The raw\_results.csv file is a standard PsN file containing raw result data for termination status, parameter estimates, uncertainty estimates etc. for all model estimations. If option -rplots>0 the file PsN\_llp\_plots.pdf is also created.
 
 \end{document}

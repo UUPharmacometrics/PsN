@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{Bootstrap user guide}{2015-02-23}
+\guidetitle{Bootstrap user guide}{2015-04-15}
 \begin{document}
 
 
@@ -99,6 +99,19 @@ If the conditions are not fulfilled then no pdf will be generated,
 see the .Rout file in the main run directory for error messages.}
 \input{inputs/rplots_section_body.tex}
 
+\subsubsection*{Basic plots}
+A basic bootstrap rplot will be generated in file PsN\_bootstrap\_plots.pdf
+if option -rplots is set >0,
+and the general rplots conditions fulfilled, see above.
+The plot is created using the xpose4 boot.hist function
+and shows histograms of each parameter in the model.
+\subsubsection*{Extended plots}
+Extended bootstrap rplots will be generated in file PsN\_bootstrap\_plots.pdf
+if option -rplots is set >1,
+and the general rplots conditions fulfilled, see above.
+The plots are created using the xpose4 boot.hist function
+and show histograms of standard errors, ofv and, if available
+from NONMEM output, eigenvalues.
 
 \section{Output}
 
@@ -115,6 +128,8 @@ included\_keys1.csv: One row per bootstrapped dataset. Each row consists of the 
 sample\_keys1.csv:  One row per bootstrapped dataset. Each row consists of one number C per individual in the dataset, in the order the individuals appear in the original datafile, where C is the number of times the individual is included in the bootstrapped dataset. 
 
 The row order is consistent between the files raw\_results, included\_individuals, included\_keys and sample\_keys so that row j (excluding headers if any) in each of the files concerns the same bootstrapped dataset.
+
+If option -rplots>0 then file PsN\_bootstrap\_plots.pdf is created.
 
 \section{Known bugs and problems}
 

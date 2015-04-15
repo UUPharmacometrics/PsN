@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{VPC and NPC user guide}{2015-03-06}
+\guidetitle{VPC and NPC user guide}{2015-04-15}
 
 \begin{document}
 
@@ -280,13 +280,18 @@ they are not overwritten.
 
 \subsection{Auto-generated R-plots from PsN}
 \newcommand{\rplotsconditions}{The default vpc template 
-requires the xpose4 R library.
+requires the xpose4 R library to be installed.
 If the conditions are not fulfilled then no pdf will be generated,
 see the .Rout file in the main run directory for error messages.}
 \input{inputs/rplots_section_body.tex}
 
-
-
+\subsubsection*{Basic plots}
+A basic vpc rplot created with xpose4 will be created in 
+PsN\_vpc\_plots.pdf if option -rplots is set >0,
+and the general rplots conditions fulfilled, see above.
+The plot is either a continuous vpc, categorical vpc, continuous+categorical vpc or Kaplan-Meier 
+plot, and the type of plot is automatically chosen based on the PsN vpc command-line options.
+Please refer to the xpose4 documentation for advanced options to xpose4 vpc plot functions.
 \section{Running NPC}
 As stated above, the NPC and VPC have many parts in common. All NPC options are available for VPC, and the same rules for them apply.
 

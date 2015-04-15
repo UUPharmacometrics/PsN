@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{EXECUTE user guide}{2015-04-07}
+\guidetitle{EXECUTE user guide}{2015-04-15}
 
 
 \begin{document}
@@ -85,6 +85,19 @@ subsets of the data, via xpose options 'subset' and 'by'.
 If the conditions are not fulfilled then no pdf will be generated,
 see the .Rout file in the main run directory for error messages.}
 \input{inputs/rplots_section_body.tex}
+
+\subsubsection*{Basic plots}
+A pdf-file with 
+basic execute rplots will be generated if option -rplots is set >0,
+and the general rplots conditions fulfilled, see above.
+The basic plots are created with the xpose4 functions
+basic.gof, ranpar.hist, ranpar.qq and a few others. Please
+refer to the xpose4 documentation for details regarding these
+plots.
+
+\subsubsection*{Extended plots}
+Extended execute rplots will be generated if option -rplots is set >1.
+These are individiual plots of ten randomly chosen IDs.
 
 \subsection{Retries}
 \input{inputs/retries_section_body.tex}
