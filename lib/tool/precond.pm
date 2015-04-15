@@ -61,6 +61,7 @@ sub modelfit_setup
             directory => "base_modelfit",
             top_tool => 0,
             nm_output => $nm_output, 
+            clean => 2,
         );
 
         $base_modelfit->run;
