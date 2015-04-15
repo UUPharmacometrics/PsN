@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{SIR user guide}{2015-04-02}
+\guidetitle{SIR user guide}{2015-04-15}
 
 \begin{document}
 
@@ -10,10 +10,14 @@
 \section{Introduction}
 The sir program calculates uncertainty
 on model parameters for the input model using the Sampling Importance Resampling (SIR) procedure.
-The SIR procedure is described in
+The SIR procedure is described in\\
 \emph{Application of Sampling Importance Resampling to estimate parameter uncertainty distributions}, 
-PAGE 22 (2013) Abstr 2907, Dosne AG, Bergstrand M, Karlsson MO. 
-
+PAGE 22 (2013) Abstr 2907, Dosne AG, Bergstrand M, Karlsson MO.\\
+and in\\
+\emph{Determination of Appropriate Settings in the Assessment of Parameter Uncertainty Distributions 
+using Sampling Importance Resampling (SIR)}, 
+PAGE 24 (2015) Abstr 3546, Dosne AG, Bergstrand M, Karlsson MO.
+ 
 First, parameter vectors will be simulated from the truncated multivariate normal distribution 
 given by the covariance matrix output from NONMEM's covariance step.
 Note that the precond script, see precond\_userguide.pdf, can often recover the covariance step
@@ -125,6 +129,26 @@ see the .Rout file in the main run directory for error messages.}
 \subsubsection*{Diagnostic sir plots}
 Diagnostic rplots for sir will be generated if option -rplots is set >0.
 
+The first plot shows 3 comparative dOFV distributions: SIR, reference chi-square and original covariance matrix.
+If on this plot the SIR curve is close to the reference chi-square curve it means that SIR results are good.
+
+The second plot shows the number of resampled values in each bin of the parameter space. 
+Each bin contains the same number of parameter values, which is set to 1/10 of the number of initial samples.
+That is, Bin 1 corresponds to the lowest 10\% of simulated parameter values and Bin 10 to the highest 10\%.
+If on this plot the number of resamples is around the dashed line, it means that the original covariance-matrix 
+is a good approximation of the uncertainty and that SIR results are good.
+If some bins have much more resamples than others, it means that the covariance matrix is different from the true uncertainty. 
+SIR results remain an improvement over the original covariance-matrix but they could potentially be improved by modifying the 
+original covariance matrix.
+For example, one could inflate the variances of parameters that have more resamples than expected in the "outside" bins 
+(diagonal or u-shaped lines).
+
+The third plot shows the 95\% confidence interval for each parameter as determined by SIR and the original covariance matrix.
+If on this plot the 95\% confidence intervals for one parameter are identical, it means that the covariance matrix 
+is a good approximation of the uncertainty for this parameter.
+If the 95\% confidence intervals differ between SIR and the covariance matrix, it means that the covariance matrix is 
+different from the true uncertainty for this parameter.
+
 \section{sir program workflow}
 \begin{itemize}
 \item[\underline{Setup}] The sir program will run the input model unless the lst-file with results is already present. If the lst-file is present, it
@@ -187,6 +211,7 @@ Compute univariate confidence intervals and store in sir\_results.csv.
 \item sir\_results.csv with percentiles and empirical covariance matrix
 \item <modelname>\_sir.cov with the empirical covariance matrix in NONMEM-like format, i.e. 
       fixed width space separated with generic headers in order THETA, SIGMA, OMEGA.
+\item if option -rplots>0: A file PsN\_sir\_plots.pdf with diagnostic sir plots.
 \end{itemize}
 
 
