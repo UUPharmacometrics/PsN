@@ -82,6 +82,8 @@ Under the hood there have been big changes. PsN has been completely rewritten us
 <p>
 The list of new features and bugfixes in 4.2.0 is found
 <a href="pdfdocs/release_notes_PsN_4_2_0.txt" target="_blank">here</a></p>
+The list of bugs in 4.2.0 that were known at release of 4.4.0 is found
+<a href="pdfdocs/bug_list_PsN_4_2_0_at_next_release.txt" target="_blank">here</a></p>
 
 <h3>PsN 3.7.6</h3>
 <p>
