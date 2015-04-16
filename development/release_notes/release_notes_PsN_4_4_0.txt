@@ -1,0 +1,466 @@
+This PsN version has been tested on the following systems:
+
+Windows XP 32-bit with ActivePerl 5.16.3, gfortran 4.6.0 and NONMEM 7.1.0, 7.1.2 and 7.2.0
+Windows 7 64-bit with ActivePerl 5.20.1 (32 bit), gfortran 4.8.1 and NONMEM 7.3.0
+Windows 7 64-bit with ActivePerl 5.16.3 (32 bit), gfortran 4.6.0 and NONMEM 7.3.0
+Windows 7 64-bit with Strawberry Perl 5.18.2, gfortran 4.7.3 and NONMEM 7.2.0 and 7.3.0
+MacOS X 10.10.3 with Perl 5.18.2, gfortran 4.8.0 and NONMEM 7.3.0
+MacOS X 10.6.6 with ActiveState Perl 5.16.3, gfortran 4.6.2 and NONMEM 7.2.0 and 7.3.0
+MacOS X 10.6.6 with ActiveState Perl 5.16.3, ifort 12.0.0 and NONMEM 7.2.0 and 7.3.0
+Ubuntu Linux 14.10 with Perl 5.20.1, gfortran 4.9.1 and NONMEM 7.2.0 and 7.3.0
+Fedora 20 with Perl 5.18.2, gfortran 4.8.2 and NONMEM 7.2.0
+Scientific Linux 6.3 with Perl 5.10.1, gfortran 4.4.7 and NONMEM 7.2.0 and 7.3.0
+CentOS 6.5 with Perl 5.10.1, gfortran 4.4.7 and NONMEM 7.1.0, 7.1.2 and 7.3.0
+Debian 7.5 with Perl 5.14.2, gfortran 4.7.2 and NONMEM 7.3.0
+
+
+************************
+Installation
+************************
+
+Follow the installation instructions on
+http://psn.sourceforge.net/install.php
+
+************************
+Documentation
+************************
+All documentation is found in the doc subdirectory of the PsN 
+installation directory. During installation it is also possible 
+to have all documentation copied to a user-specified directory.
+
+All documentation can also be downloaded from
+the PsN website http://psn.sourceforge.net/
+
+************************
+Dependencies 
+************************
+
+- It is recommended to use Xpose version 4.5.3 for the -cwres functionality 
+  and the default execute, vpc and bootstrap R plots.
+
+************************
+Known issues 
+************************
+
+- Windows users need to be careful to choose 
+  a Perl version where the extra modules needed for PsN are available. See the 
+  instructions on http://psn.sourceforge.net/install.php
+
+- Installation problem on some Windows systems where 
+  perl 'system' command does not work. Make sure perl module File::Copy::Recursive
+  is installed *before* (re)running the installation script setup.pl
+
+*********************************************
+Changes and bug fixes from PsN 4.2.0 to 4.4.0
+*********************************************
+
+   ___precond___
+	 
+- New tool, preconditioning of a model to improve its numerical properties. 
+  See precond_userguide.pdf
+
+   ___nca___
+
+- Code for default R plot. The default R plots template uses the ncappc R package from CRAN. 
+  This template only creates a very basic plot, but it is a good starting point
+  for more advanced non-compartmental analysis using ncappc.
+
+   ___vpc/npc___
+
+- vpc binning can now take multiple arrays for -bin_array or -auto_bin to use for different strata
+
+- When F_FLAG=0 PsN will now also allow ICALL == 4 witout complaining.
+
+- new option -irep to vpc and npc. An alternative way of marking beginning of new simulation sample
+  in -sim_table. This makes it easier to use R-processed data as input, since the NONMEM-type
+  header is not needed at the beginning of each new sample. 
+
+- vpc/npc can be run without an input model when option -sim_table and -orig_table are used.
+
+- vpc/npc will set NOAPPEND in $TABLE, and instead add items DV, PRED, WRES and/or RES explicitly if needed.
+
+- vpc: Added prediction intervals 25% and 75% to -fine_pi, now -fine_pi gives 
+  intervals 0,10,20,25,30,40,50,60,70,75,80,90 and 95% 
+
+- the vpc_results file will include a column with median idv value for each bin.
+
+- bug fix: if lloq and/or uloq is used, only display mean and delta-mean for real values if 0 real 
+  observations were below lloq or above uloq. 
+
+- bug fix: handle global paths to input files on windows (sim_table, orig_table, sim_model)
+
+- bug fix: binning when bin_by_count=0 and either no_of_bins or single_bin_size without overlap,
+  could sometimes get observation(s) with single highest idv in stratum excluded from 
+  last bin because of numerical error.
+
+- bug fix: Relax input check when user sets -flip_comments and model has $PRIOR.
+
+- Added code for default R plots
+
+   ___scm___
+
+- scm now checks that all covariates in the code section are listed as test_relations
+  and gives an error otherwise.
+
+- input check that W is defined in model when using option time_varying
+
+- When scm runs a dummy model to filter the data set on IGNORE/ACCEPT before
+  computing statistics for covariates, any DROP/SKIP in $INPUT will be kept.
+  The first undropped column will be copied to the dropped positions
+  in $TABLE of the filter model, so that the filtered data set still has
+  the same number of columns and the same $INPUT record with its DROPs/SKIPs
+  can be used for the scm models.
+
+- Removed broken scm config file option -base_criteria_values.
+
+- new command-line option -base_ofv to replace -base_criteria_values.
+
+- updated and corrected warnings related to time-varying covariates 
+
+
+   ___boot_scm___
+
+- Removed broken option -base_criteria_values.
+
+- updated and corrected warnings related to time-varying covariates 
+
+- bug fix: make sure base model is run for each bootstrap data set 
+
+
+   ___sse___
+
+-  sse will accept missing data files for alternative models. This is ok since data will be replaced with 
+   simulated data anyway. 
+
+-  sse will accept running with -samples=1
+
+-  Bug fix: alternative models with METHOD=BAYES would cause sse to crash.
+
+-  Added code for default ppe R plot
+
+   ___bootstrap___
+
+-  bootstrap can now be automatically resumed also when -clean=3 in original run. Set -directory to existing 
+   directory of interrupted run, then samples that were finished will be read into memory directly and only samples 
+   that were not finished will be run with NONMEM.
+
+-  New option -no-run_base_model. By default bootstrap will run the base model if lst-file is not available, but 
+   if -no-run_base_model is set then the base model will not be run even if lst-file is missing. If no output 
+   from the base model is available, the bootstrap will still continue and produce results, although there will 
+   be no parameter of ofv for the base model in the raw_results file.
+
+-  New option -no-update_inits. By default the bootstrap models will get the final estimates of the base model 
+   as initial estimates, provided that base model lst-file is available. If option -no-update_inits is set, 
+   the bootstrap models will get the same initial estimates as the base model, even if final estimates are 
+   available from the lst-file.
+
+-  New option -summarize: recompute bootstrap_results.csv based on existing raw_results. 
+
+-  new command-line option copy_data
+
+-  Added error message for bootstrap stratify_on When there are more columns in $INPUT than in the 
+   data file and the stratify_on is set to a column with higher number than the number of columns 
+   in the data file the resulting error message is to hard to understand. Added a separate error 
+   message for this situation.
+
+- Added code for default R plot
+
+   ___update_inits___
+	 
+- New guide update_inits_userguide.pdf
+
+- update is now an alias for update_inits on all platforms.
+  update is versioned like all other scripts.
+  For example: update-4.3.0 will be equivalent to update_inits-4.3.0
+
+- model files with mulitple $PROB are now supported.
+
+- $MSFI filename of second and later $PROB will be updated
+
+- new options -update_fix, -fix_thetas, -unfix_thetas
+
+- removed option -diagonal_dominance. New option -ensure_posdef with same intent (ensure that
+  OMEGA and SIGMA blocks are positive definite) but better algorithm.
+
+- Modified procedure for automatic renumbering, see details in userguide.
+
+- support any extension (.ctl, .mod, .txt) of control stream.
+
+- Modification of option -add_prior to put $PRIOR in appropriate place and
+  to use new informative prior names such as $THETAP, $THETAPV etc.
+
+   ___randtest___
+	 
+- two new options: 1) -update_inits with default true: update initial estimates before estimating 
+  with randomized data 2) -full_model_inits with default false, i.e. use final estimates from full 
+  model estimation on input data rather than base model estimates from input data as initial 
+  estimates for randomized data estimation.
+
+- When a base model is given and retries functionality is turned on (-retries >0, -tweak_inits is on),
+  initiate a retry when the ofv of a sample is worse than the ofv of the base model, i.e. local minimum.
+
+- a new csv-format output file with actual delta-ofv at different p-values, and actual p-values for 
+  theoretical dofv:s from chisquare distribution. 
+	 
+- new command-line option -copy_data
+
+- Added code for default R plot
+
+   ___execute___
+	 
+- Automatically unset display_iterations if -silent is set
+
+- removed options -summarize and fake functionality. 	 
+
+- New option -reduced_model_ofv. Initiate a retry unless ofv is at least as good as this value.
+  Option -retries must be set > 0 for it to have effect. See details in execute userguide.
+
+- New option -timestamp for directory name
+
+- option -model_dir_name will skip model extension, and there will be no dot between 
+  dir and the number. For example run2.mod will give rundir name run2.dir1. 
+
+- Added code for default R plot
+
+   ___parallel_retries___
+	 
+- New option -timestamp for directory name
+
+- option -model_dir_name will skip model extension, and there will be no dot between dir 
+  and the number. For example run2.mod will give rundir name run2.dir1. 
+
+- parallel_retries will behave more like execute, i.e. the best try
+  will be selected and the output files of this try will be copied
+  to the directory of the input model.
+
+- new userguide parallel_retries_userguide.pdf
+
+   ___sir___
+	 
+- New option -covmat_input	 	 
+
+- New option -rawres_input
+
+- More input checks and better error handling e.g. in cases when some NONMEM
+  runs fail during the evaluation. Print successful samples
+  count to sir_results.csv.
+
+- Modified algorithm, see user guide.
+
+- New output file with NONMEM-like format empirical covariance matrix
+
+- new command-line option copy_data
+
+- bug fix handling of $CONTR in input model.
+
+- new option -problems_per_file to decide how many $PROBLEM per model file for 
+  the evaluation runs. 
+
+- Added code for default R plot
+
+   ___sumo___
+
+- sumo now prints delta-ofv if the "Based on:" annotation is present in model
+
+- bug fix: running sumo on file without extension .res or .lst would cause a crash
+
+- use labels instead of generic parameter names in output, and skip parameters that are fixed or same
+
+- print shrinkage from NMoutput, print number of individuals and observation records 
+
+   ___covmat___
+	 
+- New script, compute variance-covariance matrix based on -rawres_input
+
+   ___pvar___
+
+- Added code for default R plot
+
+- pvar will also run base model from scm, pvar can handle scm results after clean<=2.
+
+- Updated pvar_results.csv to include model name.
+
+   ___frem___
+
+- It will be checked that SIGMA and OMEGA blocks are postive definite, 
+  using Cholesky decomposition. If non-positive definite the diagonal will
+  be inflated slightly until positive definite
+
+   ___llp___
+
+- Added code for default R plot
+
+- input check that omega or sigma selected is not part of a BLOCK, which of course cannot be individually FIXED.
+
+- Updated documentation on omega and sigma input.
+
+- bug fix: handling of numerical issues in search for new parameter value guess 
+
+   ___nmoutput2so___
+
+- New tool for creating a PharmML standardized output file xml summarizing the outputs of a NONMEM run.
+
+   ___pind___
+
+- bug fix: handle -clean=3
+ 
+   ___cdd___
+
+- Added code for default R plot
+
+   ___mcmp___
+
+- Added code for default R plot
+
+   ___NONMEM interaction___
+
+- PsN will now preserve the record order of the input control streams. A new option
+  -psn_record_order can be used for the legacy built in record order.
+
+- bug fix: handle multiple $SIZES records
+
+- bug fix: FIXED and FIXE are allowed as synonyms to FIX in $OMEGA and $SIGMA
+
+- bug fix: handle comma-separated sets of parentheses in $THETA, for example $THETA (1 FIX), (2 FIX) 
+
+- bug fix: support (init,options) and (options,init) form of $OMEGA/$SIGMA in addition 
+  to form with space instead of comma. Bugfix in parsing of (low init high) with spaces 
+  instead of comma in $THETA. Bugfix pattern matching when searching for CORRELATION, CHOLESKY 
+  etc in $SIGMA, match parts of string instead of just whole string. Added tests
+
+- bug fix: parsing output from run when NONMEM crashes during covariance step
+
+- bug fix: reading of covariance matrix from run where MINIMIZATION TERMINATED
+  and $COV UNCONDITIONAL
+
+- bug fix: parsing of eigenvalues in NM7.3 lst-file when ext-file is missing
+
+- bug fix: handle value +Infinity and similar in NM7 output files .ext cov coi cor phi 
+
+- changed default of -check_nmtran to off.
+
+- if option -check_nmtran is set and model contains verbatim code, then PsN will try to detect 
+  undefined variables in abbreviated code by creating a dummy model without the verbatim code and 
+  running nmtran on the dummy. If nmtran gives error "UNDEFINED VARIABLE" then PsN will parse nmtran 
+  output for the variable name and print a warning telling the user to double check that the variable 
+  is defined. If the variable is defined in verbatim code then the warning will be printed even 
+  if all is well, but this information is included in the warning. 
+
+- parsing of NONMEM output: STANDARD/CORRELATION form estimates and se:s of OMEGA and SIGMA are 
+  now parsed from lst or ext file.
+  Note: PsN still does not support STANDARD/CORRELATION form when updating a model with final estimates
+  from a previous run (update_inits, vpc, frem, ...). 
+
+- bug fix: Output parsing: If multiple $EST and a est-step that is not the last had text in 
+  lst saying "PROGRAM TERMINATED BY OBJ" then PsN would consider the whole run failed, even 
+  though a later est-step was successful. 
+
+- Rewritten code for reading cov, cor and coi matrices from NONMEM. Rewritten filtering for
+  removing rows and columns for parameters that are not estimated (FIXED or SAME).
+  Now PsN will parse cov, cor, coi independently instead of requiring that all are found
+  in order to parse any.
+
+- Rewrite of code for parsing shrinkage and etabar.
+
+- Bug fix: parsing of lst-files for NM 6.1.
+
+- If PsN detects an NMtran error as the cause of a missing lst-file, then add the 
+  contents of FMSG (the nmtran error message file) to the message that PsN prints to screen 
+  saying that there was an nmtran error. 
+
+- Improved handling of NMTRAN error messages and license error messages that appear in the lst-file. 
+  Store those pre-run messages in parsing_error_message that can be displayed by e.g. sumo
+
+   ___General___
+
+- Automatic generation of R plots based on templates that can be easily
+  replaced with the user's own custom template(s).
+  See documentation in common_options.pdf and/or
+  individual user guides for tools that have sample template scripts
+  included in the PsN installation package: 
+  nca, execute, bootstrap, vpc, randtest, sse, llp, mcmp, pvar, cdd and sir
+
+- Major rewrite of retries handling code, improved check that tweaked omega and sigma blocks are
+  positive definite, updated rules for selecting best retry,
+  and a large number of tests for the new code. See documentation in common_options.pdf
+
+- Complete redesign of data file handling and generation. PsN will not open the data file unless
+  necessary (for bootstrapping, covariate statistics computation, ...). A large number
+  of data class tests have been added to the test suite.
+  Covariate statistics computation code for scm, boot_scm, frem and lasso have been moved to the data class.
+  Data set creation for bootstrap, cdd, randtest have been moved to new data class subroutines
+  and are redesigned to return file references to the created files rather than data objects. 
+  Internally, PsN will use reference(s) to the data file(s) instead of passing around data objects.
+  These changes affect nonpb, randtest, crossval, xv_scm, scm, bootstrap, cdd, lasso, frem 
+  
+- handle spaces in the path (enclose filepath with quotes in $DATA if necessary)
+
+- enable option -cwres also for NM7. PsN computation of cwres requires R with library xpose4 to be installed.
+  Either the command R must be in the path, or the R executable has to be defined in psn.conf.
+
+- Possibility to make PsN installation portable (PsN installation directory movable, 
+  without changing psn.conf). See documentation in psn_installation.pdf and psn_configuration.pdf
+
+- Possible to set option -directory=path/to/folder where path/to does not yest exist. Before you could 
+  only specify a path with several levels in -dir if all but the last directory already existed. 
+
+- Expanded test suite
+
+- support for para mode of NMQual, see NMQual section in psn_configuration.pdf.
+
+- rewrite of -stop_motion functionality
+
+- centralisation of round,ceil and other basic math functions to separate module with new tests.
+
+- Removed all usage of Perl's looks_like_number since it behaves differently on windows and unix. 
+  Replaced with PsN's own math::usable_number which uses regexp to see if string interpretation 
+  is a number.
+
+- change how data class computes median: first compute median for individual and then over individuals
+
+- Nicer formatting for -verbose output
+
+- Allow empty lines (,,,,,,,,,,) in -rawres_input files.
+
+- Review of online help for all tools
+
+- The common option -warn_with_trace was broken and is now working again.
+  It is now just a boolean option not taking any integer argument.
+
+- New option -standardised_output for creating a PharmML standardized output xml.
+
+- PsN can call the DDMoRe converter toolbox to automatically convert a PharmML-format model
+  to nmtran format, if converter_path in psn.conf is set to the converter classpath and java is installed.
+
+- Less delay (sleep) when jobs are submitted, thank you to Ruben Faelens.
+
+- Guide common_options_defaults_version_psn.pdf has been renamed to common_options.pdf, and
+  the options have been organised according to themes instead of alphabetically.
+  All user guides have been revised.
+
+- bug fix: in automatic setting of $MSFI when option -maxevals or -handle_crashes is set. Make sure existing 
+  $MSFI and possible options are not overwritten if $MSFI already exists in model file. 
+
+- bug fix: broken option -mirror_plots
+
+- removed options -prepend_model_to_lst, -nonparametric_etas, -nonparametric_marginals
+
+- resume functionality internally in modelfit. If model->is_run read existing lst-file, do not run. Run
+  models that are not run, create raw_results. Currently accessible only from bootstrap.
+
+- removed attribute rerun
+
+- New runrecord annotation handling
+
+- bug fix: handling of Windows type line breaks when using internal function slurp_file.
+
+   ___Cluster/grid interaction___
+
+- bug fix: for run_on_slurm: Request specific format of jobID when using squeue to find finished jobs,
+  so that jobID cannot be truncated.
+
+- bug fix: in printing slurm sbatch command to file for easier debugging.
+
+- Add printing of LSF jobId to file named jobId in NM_run subfolders. 
+
+
