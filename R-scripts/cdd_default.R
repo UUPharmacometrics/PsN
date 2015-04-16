@@ -1,9 +1,6 @@
 
-if (rplots.level > 0){
-    pdf(file=pdf.filename,width=10,height=7,title=pdf.title)
-}
+pdf(file=pdf.filename,width=10,height=7,title=pdf.title)
 
-if (rplots.level > 0){
     ## PsN R script for plotting results of cdd
     ## Justin Wilkins
     ## November 2005
@@ -129,8 +126,5 @@ if (rplots.level > 0){
     }      
     
     
-}
+dev.off()
 
-if (rplots.level > 0){
-    dev.off()
-}

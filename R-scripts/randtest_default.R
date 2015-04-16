@@ -224,7 +224,7 @@ mod <- paste0(mod.prefix,xpose.runno)
 tabout <- data.frame()
 
 
-if (rplots.level > 0){
+
     
     if (have.base.model){
 
@@ -296,6 +296,6 @@ if (rplots.level > 0){
 	write.table(tabout, file="randtestTable.tsv", sep="\t", row.names=F, col.names=T, quote=F)
 	
 	}
-}
+
 
 

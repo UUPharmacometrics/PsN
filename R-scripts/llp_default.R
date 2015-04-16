@@ -3,11 +3,7 @@ library(reshape)
 library(plyr)
 
 
-if (rplots.level > 0){
-    pdf(file=pdf.filename,title=pdf.title)
-}
-
-if (rplots.level > 0){
+pdf(file=pdf.filename,title=pdf.title)
     
     RUN      <- paste0(mod.prefix,xpose.runno)
     theme_set(theme_bw(base_size = 18))
@@ -83,8 +79,5 @@ if (rplots.level > 0){
     
     
     
-}
+dev.off()
 
-if (rplots.level > 0){
-    dev.off()
-}
