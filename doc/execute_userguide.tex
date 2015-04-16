@@ -82,7 +82,11 @@ the user must ensure that the subset variable
 is printed to one of the xpose tables, for example sdtab, and then
 there will be separate plots created for
 subsets of the data, via xpose options 'subset' and 'by'. 
-If the conditions are not fulfilled then no pdf will be generated,
+Xpose will treat the subset variable as continuous or categorical
+based the number of unique values. The template contains 
+a comment line with the xpose command for changing the default classification. 
+
+If the conditions for creating the plots are not fulfilled then no pdf will be generated,
 see the .Rout file in the main run directory for error messages.}
 \input{inputs/rplots_section_body.tex}
 
