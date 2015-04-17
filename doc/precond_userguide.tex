@@ -16,7 +16,7 @@ In order to increase the numerical stability of the variance covariance matrix c
 
 Preconditioning will automatically first run the model normally and if the covariance step fails get the R-matrix from that run using that to precondition the model. Obtained R-matrix is decomposed using eigendecomposition and used to linearly re-parameterise the model in a way that the R-matrix of the preconditioned model is close to an identity matrix.  This will reduce the influence of the rounding error for the computation of R matrix and often avoid the R-matrix appearing to be non-positive semi-definite.  The precond script will initiate the modelfit of the preconditioned model and then convert back the obtained estimated parameter and covariance matrix to the parameter scale of the original model.
 
-Preconditioning can also be used for the modelfits with successful covariance step to verify that the resulting computation is not influenced by computational error.
+Preconditioning can also be used for the modelfits with successful covariance step to verify that the resulting computation is not influenced by the computational error.
 
 Preconditioning of the model will only help to stabilise the computation so that if the model is fundamentally unidentifiable (or have other issues) then the covariance step of the preconditioned model should not be successful.\\
 
@@ -36,13 +36,13 @@ The only required argument is a model file.
 
 \begin{optionlist}
 \optname{always}
-With this option, the preconditioning will be conducted regardless of if the covariance step of the original model is successful or not.  Using this option and comparing raw\_results\_<modelname>.csv and base\_raw\_results.csv, we can ensure the result of the standard error calculation is not influenced by the computation instability.  In addition by comparing the ofv and the estimated parameters appearing in raw\_results\_<modelname>.csv and base\_raw\_results.csv, if the model is unidentifiable, one may find two different sets of parameters with the same maximised likelihood.
-\nextopt
-\optdefault{pre}{psn.rmt}
-With this option the user can manually specify the R-matrix that will be used for preconditioning.  In addition, a modelfit directory created by the execute command of PsN can be specified and R-matrix will be extracted from the directory.  In addition, any symmetric matrix can be provided as a .csv file or NONMEM matrix file.
+With this option, the preconditioning will be conducted regardless of if the covariance step of the original model is successful or not.  Using this option and comparing raw\_results\_<modelname>.csv and base\_raw\_results.csv, we can observe how much the result of the standard error calculation is influenced by the computation instability.  In addition by comparing the ofv and the estimated parameters appearing in raw\_results\_<modelname>.csv and base\_raw\_results.csv, if the model is not identifiable, one may find two different sets of parameters with the same maximised likelihood.
 \nextopt
 \optdefault{pre}{precond\_dir1}
 With this option the user can also specify a directory.  If the modelfit directory is specified then the R-matrix is automatically extracted.  If precond directory is specified then we can precondition the already preconditioned model.  This will allow us to iteratively precondition deeply ill-conditioned model.  In order for the iterative preconditioning to work properly, ``precMatrix" file should be unmodified and available in the specified precond directory.
+\nextopt
+\optdefault{pre}{run1.rmt}
+With this option the user can manually specify the R-matrix that will be used for preconditioning.  In addition, a modelfit directory created by the execute command of PsN can be specified and R-matrix will be extracted from the directory.  In addition, any symmetric matrix can be provided as a .csv file or NONMEM matrix file; however, the specified matrix needs to be similar to R-matrix to improve the computational stability (i.e., using covariance matrix will reduce the computational stability).
 \nextopt
 \optdefault{update\_model}{filename}
 Copy the model with updated inital thetas to your work directory	
@@ -107,19 +107,18 @@ In the terminal window, the precond script printout the condition number of the 
 \section{Known issues}
 
 \begin{itemize}
-    \item Preconditioning fails when a \$MIX is present in the model.
+    \item The current implementation cannot handle the model file with \$MIX record.
 
-    \item Preconditioning does not honour the original parameter bounds hence the NONMEM run can fail if there are some implicite assumption on the range of the parameters.  For the parameters that need to be positive (or negative) we suggest the users to absolute value of the parameter, e.g., abs(THETA(1)).
+    \item Preconditioning does not honour the original parameter bounds hence the NONMEM run can fail if there are some implicit assumption on the range of the parameters.  For the parameters that need to be positive (or negative) we suggest the users to absolute value of the parameter, e.g., abs(THETA(1)).
 
     \item The current implementation of precond script only precondition THETA variables, if the user wishes to precondition also the ETA and EPS variables, we suggest the users to code ETA and EPS variables using THETA, e.g., THETA(11)*EPS(1), \$SIGMA 1 FIX.
 
-    \item Using the option \$COV MATRIX=R in the model will currently not work.
+    \item Using the option \$COV MATRIX=R in the model will currently not work.  The user can use PRINT=R option to obtain R matrix and then calculate $2R^{-1}$ outside of NONMEM (e.g., using R).
 \end{itemize}
 
 \section{Actions if covariance step fails when preconditioning}
 
 \begin{itemize}
-    \item If covariance matrix cannot be obtained, run precond script with \mbox{{\bf -perturb}} option.
 \item If covariance matrix cannot be obtained, run precond script with \\ \mbox{{\bf -pre}}=precond\_dir1 option.
 \end{itemize}
 
