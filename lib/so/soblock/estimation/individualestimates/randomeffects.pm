@@ -19,10 +19,18 @@ sub parse
     my $xpc = so::xml::get_xpc();
 
     (my $em) = $xpc->findnodes('x:EffectMean', $node);
-    $self->EffectMean->parse($em) if (defined $em);
+    if (defined $em) {
+        my $table = so::table->new();
+        $table->parse($em);
+        $self->EffectMean($table);
+    }
 
     (my $emed) = $xpc->findnodes('x:EffectMedian', $node);
-    $self->EffectMedian->parse($emed) if (defined $emed);
+    if (defined $emed) {
+        my $table = so::table->new();
+        $table->parse($emed);
+        $self->EffectMedian($table);
+    }
 }
 
 sub xml

@@ -18,7 +18,11 @@ sub parse
     my $xpc = so::xml::get_xpc();
 
     (my $perc) = $xpc->findnodes('x:Percentiles', $node);
-    $self->Percentiles->parse($perc) if (defined $perc);
+    if (defined $perc) {
+        my $table  = so::table->new();
+        $table->parse($perc);
+        $self->Percentiles($table);
+    }
 }
 
 sub xml

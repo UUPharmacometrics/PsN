@@ -1,4 +1,4 @@
-package so::soblock::estimation::individualestimates::estimates;
+package so::soblock::estimation::populationestimates;
 
 use strict;
 use warnings;
@@ -6,10 +6,13 @@ use Moose;
 use MooseX::Params::Validate;
 use include_modules;
 use XML::LibXML;
+
 use so::table;
 
+has 'version' => ( is => 'rw', isa => 'Num', required => 1 );
+
 has 'Mean' => ( is => 'rw', isa => 'so::table' );
-has 'Median' => ( is => 'rw', isa => 'so::table' );
+has 'Median' => ( is => 'rw', isa => 'so::table' ); 
 
 sub parse
 {
@@ -37,30 +40,30 @@ sub xml
 {
     my $self = shift;
 
-    my $mean;
-    if (defined $self->Mean) {
-        $mean = $self->Mean->xml();
-    }
+    my $bootstrap;
 
-    my $median;
-    if (defined $self->Median) {
-        $median = $self->Median->xml();
-    }
-
-    my $est;
-    if (defined $mean or defined $median) {
-        $est = XML::LibXML::Element->new("Estimates");
-
-        if (defined $mean) {
-            $est->appendChild($mean);
+    if ($version >= 0.2) {
+        my $mean;
+        if (defined $self->Mean) {
+            $mean = $self->Mean->xml();
+        }
+        my $median;
+        if (defined $self->Median) {
+            $median = $self->Median->xml();
         }
 
-        if (defined $median) {
-            $est->appendChild($median);
+        if (defined $mean or defined $median) {
+            $bootstrap = XML::LibXML::Element->new("Bootstrap");
+            if (defined $mean) {
+                $est->appendChild($mean);
+            }
+            if (defined $median) {
+                $est->appendChild($median);
+            }
         }
     }
 
-    return $est;
+    return $bootstrap;
 }
 
 no Moose;

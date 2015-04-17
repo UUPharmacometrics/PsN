@@ -219,7 +219,7 @@ my $so = so->new(
     PharmMLRef => $options{'pharmml'},
     only_include_elements => $only_include_elements,
     exclude_elements => $exclude_elements,
-    so_version => $options{'so_version'},
+    version => $options{'so_version'},
     message => $options{'message'},
 );
 

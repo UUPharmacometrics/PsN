@@ -22,16 +22,32 @@ sub parse
     my $xpc = so::xml::get_xpc();
 
     (my $cov) = $xpc->findnodes('x:CovarianceMatrix', $node);
-    $self->CovarianceMatrix->parse($cov) if (defined $cov);
+    if (defined $cov) {
+        my $matrix = so::matrix->new();
+        $matrix->parse($cov);
+        $self->CovarianceMatrix($matrix);
+    }
 
     (my $cor) = $xpc->findnodes('x:CorrelationMatrix', $node);
-    $self->CorrelationMatrix->parse($cor) if (defined $cor);
+    if (defined $cor) {
+        my $matrix = so::matrix->new();
+        $matrix->parse($cor);
+        $self->CorrelationMatrix($matrix);
+    }
 
     (my $se) = $xpc->findnodes('x:StandardError', $node);
-    $self->StandardError->parse($se) if (defined $se);
+    if (defined $se) {
+        my $table = so::table->new();
+        $table->parse($se);
+        $self->StandardError($table);
+    }
 
     (my $rse) = $xpc->findnodes('x:RelativeStandardError', $node);
-    $self->RelativeStandardError->parse($rse) if (defined $rse);
+    if (defined $rse) {
+        my $table = so::table->new();
+        $table->parse($rse);
+        $self->RelativeStandardError($table);
+    }
 }
 
 sub xml

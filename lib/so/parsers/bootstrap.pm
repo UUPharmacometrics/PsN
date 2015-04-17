@@ -14,7 +14,8 @@ has 'bootstrap_results' => ( is => 'rw', isa => 'Str' );
 has 'so' => ( is => 'rw', isa => 'so' );
 has 'verbose' => ( is => 'rw', isa => 'Bool', default => 0 );
 has '_so_block' => ( is => 'rw', isa => 'so::soblock' );
-has '_bootstrap' => ( is => 'rw', isa => 'so::soblock::estimation::precisionpopulationestimates::bootstrap' );
+has '_bootstrap' => ( is => 'rw', isa => 'so::soblock::estimation::populationestimates::bootstrap' );
+has '_precision_bootstrap' => ( is => 'rw', isa => 'so::soblock::estimation::precisionpopulationestimates::bootstrap' );
 
 sub BUILD
 {
@@ -31,7 +32,8 @@ sub BUILD
     }
 
     $self->_so_block($so_block);
-    $self->_bootstrap($so_block->Estimation->PrecisionPopulationEstimates->Bootstrap);
+    $self->_bootstrap($so_block->Estimation->PopulationEstimates->Bootstrap);
+    $self->_precision_bootstrap($so_block->Estimation->PrecisionPopulationEstimates->Bootstrap);
 
     $self->_create_bootstrap();
 }
@@ -110,7 +112,7 @@ sub _create_bootstrap
             valueType => [ ('real') x (scalar(@parameters) + 1) ],
             columns => [ \@percentiles, @column ],
         );
-        $self->_bootstrap->Percentiles($table);
+        $self->_precision_bootstrap->Percentiles($table);
     }
 } 
 

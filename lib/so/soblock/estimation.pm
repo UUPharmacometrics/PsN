@@ -14,6 +14,7 @@ use so::soblock::estimation::individualestimates;
 use so::soblock::estimation::residual;
 use so::soblock::estimation::likelihood;
 
+has 'version' => ( is => 'rw', isa => 'Num', required => 1 );
 
 has 'PopulationEstimates' => ( is => 'rw', isa => 'so::soblock::estimation::populationestimates' );
 has 'PrecisionPopulationEstimates' => ( is => 'rw', isa => 'so::soblock::estimation::precisionpopulationestimates' );
@@ -26,7 +27,7 @@ sub BUILD
 {
     my $self = shift;
 
-    my $pe = so::soblock::estimation::populationestimates->new();
+    my $pe = so::soblock::estimation::populationestimates->new(version => $self->version);
     $self->PopulationEstimates($pe);
     my $ppe = so::soblock::estimation::precisionpopulationestimates->new();
     $self->PrecisionPopulationEstimates($ppe);
@@ -58,7 +59,11 @@ sub parse
     $self->Residual->parse($res) if (defined $res);
 
     (my $pred) = $xpc->findnodes('x:Predictions', $node);
-    $self->Predictions->parse($pred) if (defined $pred);
+    if (defined $pred) {
+        my $table = so::table->new();
+        $table->parse($pred);
+        $self->Predictions($table);
+    }
 
     (my $ll) = $xpc->findnodes('x:Likelihood', $node);
     $self->Likelihodd->parse($ll) if (defined $ll);
@@ -110,7 +115,6 @@ sub xml
 
     return $est;
 }
-
 
 no Moose;
 __PACKAGE__->meta->make_immutable;

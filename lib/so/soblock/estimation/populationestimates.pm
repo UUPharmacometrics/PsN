@@ -9,7 +9,18 @@ use XML::LibXML;
 
 use so::table;
 
+has 'version' => ( is => 'rw', isa => 'Num', required => 1 );
+
 has 'MLE' => ( is => 'rw', isa => 'so::table' );
+has 'Bootstrap' => ( is => 'rw', isa => 'so::soblock::estimation::populationestimates::bootstrap' ); 
+
+sub BUILD
+{
+    my $self = shift;
+
+    my $bootstrap = so::soblock::estimation::populationestimates::bootstrap->new(version => $self->version);
+    $self->Bootsrap($bootstrap);
+}
 
 sub parse
 {
@@ -19,7 +30,14 @@ sub parse
     my $xpc = so::xml::get_xpc();
 
     (my $mle) = $xpc->findnodes('x:MLE', $node);
-    $self->MLE->parse($mle) if (defined $mle);
+    if (defined $mle) {
+        my $table = so::table->new();
+        $table->parse($mle);
+        $self->MLE($table);
+    }
+
+    (my $bootstrap) = $xpc->findnodes('x:Bootstrap', $node);
+    $self->Bootstrap->parse($bootstrap) if (defined $bootstrap);
 }
 
 sub xml
@@ -27,12 +45,20 @@ sub xml
     my $self = shift;
 
     my $est;
-    
+
+    my $mle;
     if (defined $self->MLE) {
+        $mle = $self->MLE->xml();
+    }
+    my $bootstrap = $self->Bootstrap->xml();
+
+    if (defined $mle or defined $bootstrap) {
         $est = XML::LibXML::Element->new("PopulationEstimates");
-        my $xml = $self->MLE->xml();
-        if (defined $xml) {
-            $est->appendChild($xml);
+        if (defined $mle) {
+            $est->appendChild($mle);
+        }
+        if (defined $bootstrap) {
+            $est->appendChild($bootstrap);
         }
     }
 

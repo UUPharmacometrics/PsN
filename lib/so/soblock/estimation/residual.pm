@@ -18,7 +18,11 @@ sub parse
     my $xpc = so::xml::get_xpc();
    
     (my $rt)= $xpc->findnodes($node);
-    $self->ResidualTable->parse($rt) if (defined $rt);
+    if (defined $rt) {
+        my $table = so::table->new();
+        $table->parse($rt);
+        $self->ResidualTable($table);
+    }
 }
 
 sub xml

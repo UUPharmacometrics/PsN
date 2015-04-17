@@ -26,7 +26,11 @@ sub parse
     my @attributes = ("SimulatedProfiles", "IndivParameters", "RandomEffects", "Covariates", "PopulationParameters", "Dosing");
     foreach my $attr (@attributes) {
         (my $subnode) = $xpc->findnodes("x:$attr", $node);
-        $self->$attr->parse($subnode) if (defined $subnode);
+        if (defined $subnode) {
+            my $table = so::table->new();
+            $table->parse($subnode);
+            $self->$attr($table);
+        }
     }
 }
 

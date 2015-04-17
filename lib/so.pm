@@ -14,7 +14,7 @@ has 'filename' => ( is => 'rw', isa => 'Maybe[Str]' );
 has 'pretty' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'exclude_elements' => ( is => 'rw', isa => 'Maybe[ArrayRef[Str]]' );
 has 'only_include_elements' => ( is => 'rw', isa => 'Maybe[ArrayRef[Str]]' ); 
-has 'so_version' => ( is => 'rw', isa => 'Num' );
+has 'version' => ( is => 'rw', isa => 'Num' );
 has 'message' => ( is => 'rw', isa => 'Maybe[Str]' );
 
 has 'PharmMLRef' => ( is => 'rw', isa => 'Maybe[Str]' );
@@ -51,7 +51,7 @@ sub create_block
     );
     my $name = $parm{'name'};
     
-    my $block = so::soblock->new();
+    my $block = so::soblock->new(version => $self->version);
 
     if (not exists $self->_duplicate_blocknames->{$name}) {
         $block->blkId($name);

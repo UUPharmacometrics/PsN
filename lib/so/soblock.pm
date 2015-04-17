@@ -16,6 +16,8 @@ use so::soblock::taskinformation;
 use so::soblock::estimation;
 use so::soblock::simulation;
 
+has 'version' => ( is => 'rw', isa => 'Num', required => 1 );
+
 has 'blkId' => ( is => 'rw', isa => 'Str' );
 has 'RawResults' => ( is => 'rw', isa => 'so::soblock::rawresults' );
 has 'TaskInformation' => ( is => 'rw', isa => 'so::soblock::taskinformation' );
@@ -32,7 +34,7 @@ sub BUILD
     my $ti = so::soblock::taskinformation->new();
     $self->TaskInformation($ti);
 
-    my $est = so::soblock::estimation->new();
+    my $est = so::soblock::estimation->new(version => $self->version);
     $self->Estimation($est);
 
     my $sim = so::soblock::simulation->new();
