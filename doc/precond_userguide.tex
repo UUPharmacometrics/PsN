@@ -36,7 +36,7 @@ The only required argument is a model file.
 
 \begin{optionlist}
 \optname{always}
-With this option, the preconditioning will be conducted regardless of if the covariance step of the original model is successful or not.  Using this option and comparing raw\_results\_<modelname>.csv and base\_raw\_results.csv, we can ensure the result of the standard error calculation is not influenced by the computation instability.  In addition by comparing the ofv and the estimated parameters appearing in raw\_results\_<modelname>.csv and base\_raw\_results.csv, if the model is not unidentifiable, one may find two different sets of parameters with the same maximised likelihood.
+With this option, the preconditioning will be conducted regardless of if the covariance step of the original model is successful or not.  Using this option and comparing raw\_results\_<modelname>.csv and base\_raw\_results.csv, we can ensure the result of the standard error calculation is not influenced by the computation instability.  In addition by comparing the ofv and the estimated parameters appearing in raw\_results\_<modelname>.csv and base\_raw\_results.csv, if the model is unidentifiable, one may find two different sets of parameters with the same maximised likelihood.
 \nextopt
 \optdefault{pre}{psn.rmt}
 With this option the user can manually specify the R-matrix that will be used for preconditioning.  In addition, a modelfit directory created by the execute command of PsN can be specified and R-matrix will be extracted from the directory.  In addition, any symmetric matrix can be provided as a .csv file or NONMEM matrix file.
