@@ -8,8 +8,10 @@ library(scales)
 library(MASS)
 library(plotrix)
 library(plyr)
+#library(xpose4) uncomment if want to use randtest.hist
 
-# Check if runs with unseccessful minimization will be ignored
+
+# Check if runs with unsuccessful minimization will be ignored
 ignore.usm <- F
 
 
@@ -275,6 +277,10 @@ tabout <- data.frame()
 
     pdf(file=pdf.filename,title=pdf.title)
 
+	#xpose4 built-in, need library(xpose4)
+	#print(randtest.hist(raw.results.file)) 
+
+
 	print(p0)
 
 	if (rplots.level > 1){
@@ -285,17 +291,18 @@ tabout <- data.frame()
 
 	dev.off()
 
-	tabout <- rbind(tabout, data.frame(Model=mod,KSresult=ksrecord$KSresult,ndata=ksrecord$ndata,
-	KSscore=ksrecord$KSscore,KScritical=ksrecord$KScritical,dKSscore=ksrecord$dKSscore,df=ksrecord$df,
-	EMPcritical=ksrecord$EMPcritical,CHIcritical=ksrecord$CHIcritical,nposdofv=ksrecord$nposdofv,
-	modKSresult=ksrecord$modKSresult,nmoddata=ksrecord$nmoddata,modKSscore=ksrecord$modKSscore,
-	modKScritical=ksrecord$modKScritical,moddKSscore=ksrecord$moddKSscore,moddf=ksrecord$moddf,
-	modEMPcritical=ksrecord$modEMPcritical,modCHIcritical=ksrecord$modCHIcritical,cutoff=ksrecord$cutoff))
+	if (rplots.level > 1){
+	   tabout <- rbind(tabout, data.frame(Model=mod,KSresult=ksrecord$KSresult,ndata=ksrecord$ndata,
+	   KSscore=ksrecord$KSscore,KScritical=ksrecord$KScritical,dKSscore=ksrecord$dKSscore,df=ksrecord$df,
+	   EMPcritical=ksrecord$EMPcritical,CHIcritical=ksrecord$CHIcritical,nposdofv=ksrecord$nposdofv,
+	   modKSresult=ksrecord$modKSresult,nmoddata=ksrecord$nmoddata,modKSscore=ksrecord$modKSscore,
+	   modKScritical=ksrecord$modKScritical,moddKSscore=ksrecord$moddKSscore,moddf=ksrecord$moddf,
+	   modEMPcritical=ksrecord$modEMPcritical,modCHIcritical=ksrecord$modCHIcritical,cutoff=ksrecord$cutoff))
 
 
-	write.table(tabout, file="randtestTable.tsv", sep="\t", row.names=F, col.names=T, quote=F)
-	
+	   write.table(tabout, file="randtestTable.tsv", sep="\t", row.names=F, col.names=T, quote=F)
 	}
+}
 
 
 
