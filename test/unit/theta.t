@@ -2,7 +2,7 @@
 
 use strict;
 use warnings;
-use Test::More tests=>58;
+use Test::More;
 use FindBin qw($Bin);
 use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages
@@ -20,17 +20,19 @@ is ($record->options->[1]->lobnd, 1, "empty init lobnd");
 is ($record->options->[1]->init, '', "empty init");
 is ($record->options->[1]->upbnd, 10, "empty init upbnd");
 
-my $record = model::problem::theta->new(record_arr => ['(28 FIXED)', ' ( .2 4 ) (.1 +2E+00 10 ) ; (-4,) ;hej',
+my $record = model::problem::theta->new(record_arr => ['(28 FIXED); hej', ' ( .2 4 ) (.1 +2E+00 10 ) ; (-4,) ;hej',
 													   '$THETA (0,3) 2 FIXED (0,.6,1) 10 (-INF,-2.7,0) (37 FIXED)']);
 
 is ($record->options->[0]->init, 28, "0 init space");
 is ($record->options->[0]->fix, 1, "0 fixed space ");
+is ($record->options->[0]->label, 'hej', "0 option->label");
 is (eval($record->options->[1]->lobnd), eval(.2), "1 option->lobnd");
 is ($record->options->[1]->init, 4, "1 option->init");
 is ($record->options->[1]->upbnd, undef, "1 option->upbnd");
 is (eval($record->options->[2]->lobnd), eval(.1), "2 option->lobnd");
 is (eval($record->options->[2]->init), eval(2), "2 option->init");
 is ($record->options->[2]->upbnd, 10, "2 option->upbnd");
+
 is ($record->options->[3]->lobnd, 0, "3 option->lobnd");
 is ($record->options->[3]->init, 3, "3 option->init");
 is ($record->options->[3]->fix, 0, "3 fixed  ");
