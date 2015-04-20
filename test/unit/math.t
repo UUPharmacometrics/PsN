@@ -59,4 +59,15 @@ foreach my $number (@is_ok) {
 is (to_precision(12.12345678912, 10), 12.12345679, "to_precision with 10");
 is (to_precision(12.12345678912, 2), 12, "to_precision with 2");
 
+# convert_float_string
+is (convert_float_string("7.2120e-02"), "0.07212", "convert_float_string 1");
+is (convert_float_string("0.001e+04"), "10", "convert_float_string 2");
+is (convert_float_string("12.300"), "12.3", "convert_float_string 3");
+is (convert_float_string("0.0"), "0", "convert_float_string 4");
+is (convert_float_string("1.0"), "1", "convert_float_string 5");
+is (convert_float_string("+23.0"), "23", "convert_float_string 6");
+is (convert_float_string("-12.3"), "-12.3", "convert_float_string 7");
+is (convert_float_string("+1.23456e6"), "1234560", "convert_float_string 8");
+is (convert_float_string("+1.23456e-6"), "0.00000123456", "convert_float_string 9");
+
 done_testing();

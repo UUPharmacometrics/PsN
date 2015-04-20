@@ -11,9 +11,11 @@ use output;
 use strict;
 use Getopt::Long;
 use common_options;
-use standardised_output;
 use model;
 use Config;
+use so;
+use so::parsers::nmoutput;
+use so::parsers::bootstrap;
 
 $| = 1; # Make sure autoflush is on
 
@@ -37,6 +39,7 @@ my %optional_options = (
     'pharmml:s' => undef,
     'verbose!' => undef,
     'external_tables!' => undef,
+    'so_version!' => undef,
 );
 
 
@@ -49,6 +52,7 @@ $defaults{'precision'} = 10;
 $defaults{'use_tables'} = 1; 
 $defaults{'toolname'} = 'NONMEM';
 $defaults{'pretty'} = 0;
+$defaults{'so_version'} = 0.2;
 
 foreach my $opt (keys(%optional_options)) {
   $opt =~ s/[!:|].*//g; #get rid of :s |? :i etcetera
@@ -207,6 +211,13 @@ $help_text{-help} = <<'EOF';
     With -help a longer help message will be printed.
 EOF
 
+$help_text{-so_version} = <<'EOF';
+    -so_version
+
+    Set the version of the so xml format that will
+    be used.
+EOF
+
 common_options::online_help('nmoutput2so', \%options, \%help_text, \%required_options, \%optional_options);
 
 if ($options{'version'}) {
@@ -237,21 +248,39 @@ if ($Config{osname} eq 'MSWin32') {
     @files = @ARGV;
 }
 
-my $so = standardised_output->new(
-    lst_files => \@files,
-    bootstrap_results => $options{'bootstrap_results'},
-    precision => $options{'precision'},
-    so_filename => $options{'so_filename'},
-    use_tables => $options{'use_tables'},
+
+my $so = so->new(
+    filename => $options{'so_filename'},
+    pretty => $options{'pretty'},
+    PharmMLRef => $options{'pharmml'},
     only_include_elements => $only_include_elements,
     exclude_elements => $exclude_elements,
+    version => $options{'so_version'},
     message => $options{'message'},
-    toolname => $options{'toolname'},
-    max_replicates => $options{'max_replicates'},
-    pretty => $options{'pretty'},
-    pharmml => $options{'pharmml'},
-    verbose => $options{'verbose'},
-    external_tables => $options{'external_tables'},
 );
 
-$so->parse;
+foreach my $lst_file (@files) {
+    my $nm_parser = so::parsers::nmoutput->new(
+        so => $so,
+        lst_file => $lst_file,
+        toolname => $options{'toolname'},
+        verbose => $options{'verbose'},
+        max_replicates => $options{'max_replicates'},
+        external_tables => $options{'external_tables'},
+    );
+}
+
+if (defined $options{'bootstrap_results'}) {
+    my $bootparse = so::parsers::bootstrap->new(
+        so => $so,
+        bootstrap_results => $options{'bootstrap_results'},
+        verbose => $options{'verbose'},
+    );
+}
+
+$so->write();
+
+#my $so = standardised_output->new(
+#    precision => $options{'precision'},        # FIXME deprecate option
+#    use_tables => $options{'use_tables'},
+#);

@@ -1,6 +1,6 @@
-package standardised_output;
+package so::parsers::nmoutput;
 
-# Package for creation of a DDMoRe standardised output XML file
+# Package for parsing NONMEM output into an so object
 
 use strict;
 use warnings;
@@ -14,29 +14,23 @@ use array;
 use IO::File;
 use math;
 use utils::file;
-use standardised_output::xml;
 use PsN;
+use so;
+use so::soblock;
+use so::soblock::simulation::simulationblock;
 
-has 'lst_files' => ( is => 'rw', isa => 'ArrayRef[Str]' );
-has 'bootstrap_results' => ( is => 'rw', isa => 'Maybe[Str]' );
-has 'so_filename' => ( is => 'rw', isa => 'Maybe[Str]' );
+has 'so' => ( is => 'rw', isa => 'so' );
+has 'lst_file' => ( is => 'rw', isa => 'Str' );
+has '_so_block' => ( is => 'rw', isa => 'so::soblock' );
 has 'precision' => ( is => 'rw', isa => 'Int', default => 10 );
 has 'use_tables' => ( is => 'rw', isa => 'Bool', default => 1 );    # Set to zero if sdtab and patab should not be used
-has 'exclude_elements' => ( is => 'rw', isa => 'Maybe[ArrayRef]' );
-has 'only_include_elements' => ( is => 'rw', isa => 'Maybe[ArrayRef]' );
-has 'message' => ( is => 'rw', isa => 'Maybe[Str]' );
 has 'toolname' => ( is => 'rw', isa => 'Str', default => 'NONMEM' );
 has 'max_replicates' => ( is => 'rw', isa => 'Maybe[Int]' );        # Maximum number of simulation replicates to add
-has 'pretty' => ( is => 'rw', isa => 'Bool', default => 0 );        # Should the xml be indented or not
-has 'pharmml' => ( is => 'rw', isa => 'Maybe[Str]' );               # Name of pharmml file
 has 'verbose' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'external_tables' => ( is => 'rw', isa => 'Bool', default => 0 );   # For now a bool to specify if external tables should be created
 has '_document' => ( is => 'rw', isa => 'Ref' );                    # The XML document 
 has '_duplicate_blocknames' => ( is => 'rw', isa => 'HashRef' );    # Contains those blocknames which will have duplicates with next number for block
-has '_first_block' => ( is => 'rw', isa => 'Str' );                 # Name of the first SOBlock
 has '_so_path' => ( is => 'rw', isa => 'Str' );                     # The path of the output SO file
-has '_xml' => ( is => 'rw', isa => 'standardised_output::xml' );    # Module to create SO xml
-has '_used_files' => ( is => 'rw', isa => 'HashRef' );              # files to add as RawResults. Empty before starting a new _parse_lst_file 
 
 sub BUILD
 {
@@ -48,206 +42,20 @@ sub BUILD
         }
     }
 
-    my $so_filename;
+    my $file_stem = utils::file::get_file_stem($self->lst_file);
+    my $so_block = $self->so->create_block(name => $file_stem);
 
-    if (not defined $self->so_filename) {   # User specified filename
-        if (defined $self->lst_files and defined $self->lst_files->[0]) {   # Infer filename from name of first .lst file
-            $so_filename = utils::file::replace_extension($self->lst_files->[0], 'SO.xml');
-        } else {
-            $so_filename = 'bootstrap.SO.xml';
-        }
-        $so_filename = utils::file::remove_path($so_filename);
-        $self->so_filename($so_filename);
-        $self->_so_path('./');
-    } else {
-        my $path = utils::file::directory($self->so_filename);
-        $self->_so_path($path);
-    }
+    $self->_so_block($so_block);
 
-    my $so_xml = standardised_output::xml->new(precision => $self->precision, verbose => $self->verbose);
-    $self->_xml($so_xml);
-    $self->_document($self->_xml->_document);
-}
-
-sub create_block
-{
-    # Create a new SOBlock and set the id 
-    my $self = shift;
-    my %parm = validated_hash(\@_,
-        name => { isa => 'Str' },
-    );
-    my $name = $parm{'name'};
-    
-    my $doc = $self->_document;
-    my %duplicates;
-    if (defined $self->_duplicate_blocknames) {
-        %duplicates = %{$self->_duplicate_blocknames};
-    }
-
-    my $block = $doc->createElement("SOBlock");
-    if (not exists $duplicates{$name}) {
-        $block->setAttribute(blkId => $name);
-    } else {
-        print "$duplicates{$name}";
-        $block->setAttribute(blkId => $name . $duplicates{$name});
-        $self->_duplicate_blocknames->{$name}++;
-    }
-
-    return $block;
-}
-
-sub match_elements
-{
-    my $path1 = shift;
-    my $path2 = shift;
-
-    my @elements1 = split m|/|, $path1;
-    my @elements2 = split m|/|, $path2;
-
-    my $shortest = scalar(@elements1);
-    if (scalar(@elements2) < $shortest) {
-        $shortest = scalar(@elements2);
-    }
-    for (my $i = 0; $i < $shortest; $i++) {
-        if ($elements1[$i] ne $elements2[$i]) {
-            return 0;
-        }
-    }
-    return 1;
-}
-
-sub check_include
-{
-    my $self = shift;
-    my %parm = validated_hash(\@_,
-        element => { isa => 'Str' },
-    );
-    my $element = $parm{'element'};
-
-    if (defined $self->exclude_elements) {
-        foreach my $e (@{$self->exclude_elements}) {
-            if ($e eq $element) {
-                return 0;
-            }
-        }
-        return 1;
-    } elsif (defined $self->only_include_elements) {
-        foreach my $e (@{$self->only_include_elements}) {
-            if (match_elements($e, $element)) {
-                return 1;
-            }
-        }
-        return 0;
-    }
-    return 1;
-}
-
-sub parse
-{
-    my $self = shift;
-
-    my $doc = $self->_document;
-
-    my $SO = $doc->createElement("SO");
-    $SO->setAttribute('xmlns' => "http://www.pharmml.org/so/0.1/StandardisedOutput");
-    $SO->setAttribute('xmlns:xsi' => "http://www.w3.org/2001/XMLSchema-instance");
-    $SO->setAttribute('xmlns:ds' => "http://www.pharmml.org/pharmml/0.6/Dataset");
-    $SO->setAttribute('xmlns:ct' => "http://www.pharmml.org/pharmml/0.6/CommonTypes");
-    $SO->setAttribute('xsi:schemaLocation' => "http://www.pharmml.org/so/0.1/StandardisedOutput");
-    $SO->setAttribute('implementedBy' => "MJS");
-    $SO->setAttribute('writtenVersion' => "0.1");
-    $SO->setAttribute('id' => "i1");
-
-    if (defined $self->pharmml) {
-        my $pharmmlref = $self->_xml->create_pharmml_ref(name => $self->pharmml);
-        $SO->appendChild($pharmmlref);
-    }
-
-    # Check for duplicate lst_file names
-    my %duplicates;
-    if (defined $self->lst_files) {
-        foreach my $file (@{$self->lst_files}) {
-            my $stem = utils::file::get_file_stem($file);
-            $duplicates{$stem}++;
-        }
-        foreach my $name (keys %duplicates) {
-            if ($duplicates{$name} == 1) {
-                delete $duplicates{$name};
-            } else {
-                $duplicates{$name} = 1;
-            }
-        }
-    }
-    $self->_duplicate_blocknames(\%duplicates);
-    
-    # Handle lst files
-    if (defined $self->lst_files) {
-        foreach my $file (@{$self->lst_files}) {
-            my $block = $self->_parse_lst_file(lst_file => $file);
-            $SO->appendChild($block);
-        }
-    }
-
-    # Handle bootstrap_results
-    if (defined $self->bootstrap_results) {
-        # Find or create xml structure
-        my $bootstrap_block = $self->_first_block;
-        (my $block) = $SO->findnodes("SOBlock[\@blkId='$bootstrap_block']");
-        if (not defined $block) {
-            $bootstrap_block = "Bootstrap";
-            $block = $self->create_block(name => $bootstrap_block);
-            $SO->appendChild($block);
-        }
-        if ($self->verbose) {
-            print "Adding bootstrap results from file ", $self->bootstrap_results, " to SOBlock \"$bootstrap_block\"\n";
-        }
-        my $estimation = $self->_xml->find_or_create_node(root_node => $block, node_name => "Estimation");
-
-        my $bootstrap_message;
-
-        # Create Bootstrap element
-        if (-e $self->bootstrap_results) {
-            my $ppi = $self->_xml->find_or_create_node(root_node => $estimation, node_name => "PrecisionPopulationEstimates");
-            (my $bootstrap, $bootstrap_message) = $self->_create_bootstrap();
-            if (defined $bootstrap) {
-                $ppi->appendChild($bootstrap);
-            }
-        } else {
-            $bootstrap_message = {
-                type => "ERROR",
-                toolname => $self->toolname,
-                name => "File error",
-                content => "Bootstrap results file \"" . $self->bootstrap_results . "\" does not exist",
-                severity => 10,
-            };
-        }
-
-        # Create Bootstrap messages
-        if (defined $bootstrap_message) {
-            if ($block->exists("TaskInformation")) {
-                (my $ti) = $block->findnodes("TaskInformation");
-                my $message = $self->_xml->create_message(message => $bootstrap_message);
-                my $first_child = $ti->firstChild();
-                $ti->insertBefore($message, $first_child);
-            } else {
-                my $ti = $self->_create_task_information(messages => [ $bootstrap_message ]);
-                $block->appendChild($ti)
-            }
-        }
-    }
-
-    $doc->setDocumentElement($SO);
-    $doc->toFile($self->so_filename, $self->pretty);
+    $self->_parse_lst_file();
 }
 
 sub _parse_lst_file
 {
-    # Parse one lst-file and put it into an SOBlock
     my $self = shift;
-    my %parm = validated_hash(\@_,
-        lst_file => { isa => 'Str' },
-    );
-    my $lst_file = $parm{'lst_file'};
+
+    # Parse one lst-file and put it into an SOBlock
+    my $lst_file = $self->lst_file;
 
     if ($self->verbose) {
         print "Adding $lst_file\n";
@@ -256,47 +64,61 @@ sub _parse_lst_file
     my $path = utils::file::directory($lst_file);
 
     my $elapsed_time = 0;
-    my @messages;
     my @on_sd_scale;
-    my $doc = $self->_document;
 
     my $file_stem = utils::file::get_file_stem($lst_file);
 
-    my $block = $self->create_block(name => $file_stem);
+    my $block = $self->_so_block;
+ 
     my $estimation;
     my $simulation;
 
     # Check that the output file exist before trying to read it.
     if (not -e $lst_file) {
-        push @messages, {
+        $self->_so_block->TaskInformation->add_message(
             type => "ERROR",
             toolname => $self->toolname,
             name => "File error",
             content => "The file: \"" . $lst_file . "\" does not exist",
             severity => 10,
-        };
+        );
     } else {
-        $self->_used_files({$lst_file => "NONMEM results file"});       # Start a new used files hash
+        $self->_so_block->RawResults->add_datafile(name => $lst_file, description => "NONMEM results file");
 
         my $outobj = output->new(filename => $lst_file);
         if (not $outobj->parsed_successfully) {
-            push @messages, {
+            $self->_so_block->TaskInformation->add_message(
                 type => "ERROR",
                 toolname => $self->toolname,
                 name => "Parsing error", 
                 content => "Outputfile not parsed successfully, error message: " . $outobj->parsing_error_message,
                 severity => 10,
-            };
+            );
         } else {
+            my $problems = 0; #TODO check if first $PROB is prior, then should be =1 here, as in e.g. sse script
+            my $sub_problems = 0;  #always 0 since we do not have workflow simulation + estimation?
+
+            if ($outobj->problems->[$problems]->subproblems->[$sub_problems]->NM7_parsed_raw) {
+                $self->_so_block->RawResults->add_datafile(name => "$file_stem.ext", description => "NONMEM Raw output file");
+            }
+
+            my $condition_number = $outobj->problems->[$problems]->subproblems->[$sub_problems]->condition_number;
+            if (defined $condition_number) {
+                $self->_so_block->TaskInformation->add_message(
+                    type => "INFORMATION",
+                    toolname => "NONMEM",
+                    name => "condition_number",
+                    content => $outobj->problems->[$problems]->subproblems->[$sub_problems]->condition_number,
+                    severity => 1,
+                );
+            }
+
             my $model = $outobj->lst_model;
 
             my $eta_shrinkage = $outobj->shrinkage_eta();
             my $eps_shrinkage = $outobj->shrinkage_eps();
             my $observation_records = $outobj->nobs();
             my $individuals = $outobj->nind();
-
-            my $problems = 0; #TODO check if first $PROB is prior, then should be =1 here, as in e.g. sse script
-            my $sub_problems = 0;  #always 0 since we do not have workflow simulation + estimation?
 
             my @etashrinkage = defined $eta_shrinkage -> [$problems][$sub_problems] ? @{$eta_shrinkage -> [$problems][$sub_problems]} : ();
             my @epsshrinkage = defined $eps_shrinkage -> [$problems][$sub_problems] ? @{$eps_shrinkage -> [$problems][$sub_problems]} : ();
@@ -310,12 +132,16 @@ sub _parse_lst_file
                 problem_index =>$problems,
                 subproblem_index => $sub_problems);
 
+            my $covariance_step_run = $outobj->covariance_step_run->[$problems];
+
             my $covariance_step_successful = 0;
-            if ($outobj->covariance_step_run->[$problems]) {
+            if ($covariance_step_run) {
                 if ($outobj->covariance_step_successful->[$problems][$sub_problems] ne '0') {
                     $covariance_step_successful = 1;
                 }
             }
+
+            $self->_add_status_messages(output => $outobj, problem => $problems, subproblem => $sub_problems);
 
             my $simulation_step_run = $outobj->get_single_value(attribute => 'simulationstep', problem_index => $problems);
             my $estimation_step_run = $outobj->get_single_value(attribute => 'estimation_step_run', problem_index => $problems);
@@ -371,26 +197,25 @@ sub _parse_lst_file
             }
 
             if ($estimation_step_run) {
-                $estimation = $doc->createElement("Estimation");
 
                 foreach my $label (@all_labels) {
-                    if (not $self->_xml->match_symbol_idtype($label)) {
+                    if (not so::xml::match_symbol_idtype($label)) {
                         my $old_label = $label;
-                        $label = $self->_xml->mangle_symbol_idtype($label);
-                        push @messages, {
+                        $label = so::xml::mangle_symbol_idtype($label);
+                        $self->_so_block->TaskInformation->add_message(
                             type => "WARNING",
                             toolname => "nmoutput2so",
                             name => "Name change",
                             content => "Parameter label \"$old_label\" not specified or not a legal symbolIdType. Setting/changing it to: $label",
                             severity => 1,
-                        };
+                        );
                     }
                 }
 				#repeat same procedure for filtered_labels, duplication, do not add message again
                 foreach my $label (@filtered_labels) {
-                    if (not $self->_xml->match_symbol_idtype($label)) {
+                    if (not so::xml::match_symbol_idtype($label)) {
                         my $old_label = $label;
-                        $label = $self->_xml->mangle_symbol_idtype($label);
+                        $label = so::xml::mangle_symbol_idtype($label);
                     }
                 }
 
@@ -402,7 +227,7 @@ sub _parse_lst_file
                         if ($est_values[$i] == 0) {
                             push @rel_se, undef;
                         } else { 
-                            push @rel_se, $se_values[$i] / abs($est_values[$i]);
+                            push @rel_se, 100 * $se_values[$i] / abs($est_values[$i]);
                         }
                     }
                 }
@@ -413,10 +238,7 @@ sub _parse_lst_file
 
                 my $undefs = grep { not defined $_ } @est_values;
                 if ($undefs != scalar(@est_values)) {   # Check that not all in list are undef. Should possibly have been done earlier
-                    if ($self->check_include(element => 'Estimation/PopulationEstimates')) {
-                        my $pe = $self->_create_population_estimates(labels => \@all_labels, values => \@est_values);
-                        $estimation->appendChild($pe);
-                    }
+                    $self->_so_block->Estimation->PopulationEstimates->create_MLE(labels => \@all_labels, values => \@est_values);
                 }
 
                 if ($covariance_step_successful) {
@@ -425,22 +247,19 @@ sub _parse_lst_file
                     my $additional = $outobj->problems->[$problems]->subproblems->[$sub_problems]->NM7_parsed_additional;
                     if (defined $additional) {
                         if ($additional->{'cov'}) {
-                            $self->_add_raw_results_file("$file_stem.cov", "NONMEM Covariance matrix");
+                            $self->_so_block->RawResults->add_datafile(name => "$file_stem.cov", description => "NONMEM Covariance matrix");
                         }
                         if ($additional->{'cor'}) {
-                            $self->_add_raw_results_file("$file_stem.cor", "NONMEM Correlation matrix");
+                            $self->_so_block->RawResults->add_datafile(name => "$file_stem.cor", description => "NONMEM Correlation matrix");
                         }
                     }
-                    if ($self->check_include(element => 'Estimation/PrecisionPopulationEstimates')) {
-                        my $ppe = $self->_create_precision_population_estimates(
-                            labels => \@filtered_labels,
-                            standard_errors => \@se_values,
-                            relative_standard_errors => \@rel_se,
-                            correlation_matrix => $correlation_matrix,
-                            covariance_matrix => $covariance_matrix,
-                        );
-                        $estimation->appendChild($ppe);
-                    }
+                    $self->_so_block->Estimation->PrecisionPopulationEstimates->MLE->create(
+                        labels => \@filtered_labels,
+                        standard_errors => \@se_values,
+                        relative_standard_errors => \@rel_se,
+                        correlation_matrix => $correlation_matrix,
+                        covariance_matrix => $covariance_matrix,
+                    );
                 }
 
                 # Loop through the different tables
@@ -449,13 +268,13 @@ sub _parse_lst_file
                     if (defined $table_name_ref and scalar @{$table_name_ref} >= 0) {
                         foreach my $table (@$table_name_ref) {
                             if ($table =~ /^(sdtab|patab)/ and not -e ($path . $table)) {
-                                push @messages, {
+                                $self->_so_block->TaskInformation->add_message(
                                     type => "WARNING",
                                     toolname => $self->toolname,
                                     name => "File error",
                                     content => "Could not find table $path$table. Results from this table could not be added.",
                                     severity => 1,
-                                };
+                                );
                                 next;
                             }
                             if ($table =~ /^sdtab/) {
@@ -465,19 +284,8 @@ sub _parse_lst_file
                                     ignoresign => '@',
                                     parse_header => 1,
                                 );
-                                if ($self->check_include(element => 'Estimation/Residuals')) {
-                                    my $residuals = $self->_create_residuals(sdtab => $sdtab);
-                                    if (defined $residuals) {
-                                        $estimation->appendChild($residuals);
-                                    }
-                                }
-                                if ($self->check_include(element => 'Estimation/Predictions')) {
-                                    my $predictions = $self->_create_predictions(sdtab => $sdtab);
-                                    if (defined $predictions) {
-                                        $estimation->appendChild($predictions);
-                                    }
-                                }
-
+                                $self->_create_residuals(sdtab => $sdtab);
+                                $self->_create_predictions(sdtab => $sdtab);
                             }
                             if ($table =~ /^patab/) {
                                 my $patab = data->new(
@@ -486,43 +294,34 @@ sub _parse_lst_file
                                     ignoresign => '@',
                                     parse_header => 1,
                                 );
-                                if ($self->check_include(element => 'Estimation/IndividualEstimates')) {
-                                    my $individual_estimates = $self->_create_individual_estimates(
-                                        patab => $patab,
-                                        model => $model,
-                                        model_labels => \@all_labels
-                                    );
-                                    if (defined $individual_estimates) {
-                                        $estimation->appendChild($individual_estimates);
-                                    }
-                                }
+                                $self->_create_individual_estimates(
+                                    patab => $patab,
+                                    model => $model,
+                                    model_labels => \@all_labels
+                                );
                             }
                         }
                     }
                 }
 
-                if ($self->check_include(element => 'Estimation/Likelihood')) {
-                    my $likelihood = $self->_create_likelihood(ofv => $ofv);
-                    if (defined $likelihood) {
-                        $estimation->appendChild($likelihood);
-                    }
-                }
+                $self->_so_block->Estimation->Likelihood->Deviance($ofv);
 
                 if (not defined $ofv) {
-                    push @messages, {
+                    $self->_so_block->TaskInformation->add_message(
                         type => 'ERROR',
                         toolname => $self->toolname,
                         name => "Minimzation error",
                         content => join('', @{$minimization_message}),
                         severity => 5,
-                    };
+                    );
                 }
             }
             $outobj->runtime =~ m/(\d+):(\d+):(\d+)/;
             $elapsed_time = $1 + $2 / 60 + $3 / 3600;
+            $self->_so_block->TaskInformation->RunTime->Real($elapsed_time);
 
             if ($simulation_step_run and $self->use_tables) {
-                $simulation = $self->_create_simulation(
+                $self->_create_simulation(
                     model => $model,
                     problem => $model->problems->[$problems],
                     path => $path,
@@ -533,25 +332,15 @@ sub _parse_lst_file
         }
     }
 
-    push @messages, {
+    $self->_so_block->TaskInformation->add_message(
         type => "INFORMATION",
         toolname => "nmoutput2so",
         name => "nmoutput2so_version",
         content => "This SOBlock was created with nmoutput2so version " . $PsN::version,
         severity => 0,
-    };
+    );
 
-    if (not defined $self->_first_block) {
-        $self->_first_block($file_stem);
-        if (defined $self->message) {
-            push @messages, {
-                type => "INFORMATION",
-                toolname => $self->toolname,
-                name => "User specified message",
-                content => $self->message,
-                severity => 0,
-            };
-        }
+=cut
         if (defined $self->bootstrap_results and scalar(@on_sd_scale) > 0) {
             my $msg;
             if (scalar(@on_sd_scale) == 1) {
@@ -561,33 +350,15 @@ sub _parse_lst_file
             } else {
                 $msg = "The parameters " . join(',', @on_sd_scale[0 .. $#on_sd_scale - 1]) . " and " . $on_sd_scale[-1] . " are on sd/corr scale in the model but the bootstrap percentiles for these parameters will be on the var/cov scale";
             }
-            push @messages, {
+            $self->_so_block->TaskInformation->add_message(
                 type => "WARNING",
                 toolname => "PsN",
                 name => "Bootstrap",
                 content => $msg, 
                 severity => 8,
-            };
+            );
         }
-    }
-
-    my $task_information = $self->_create_task_information(messages => \@messages, run_time => $elapsed_time);
-    my $raw_results = $self->_create_raw_results();
-
-    if (defined $raw_results) {
-        $block->appendChild($raw_results);
-    }
-    if (defined $task_information) {
-        $block->appendChild($task_information);
-    }
-    if (defined $estimation) {
-        $block->appendChild($estimation);
-    }
-    if (defined $simulation) {
-        $block->appendChild($simulation);
-    }
-
-    return $block;
+=cut
 }
 
 sub _get_included_columns
@@ -635,250 +406,6 @@ sub _get_remaining_columns
     return \@remaining;
 }
 
-sub _create_population_estimates
-{
-    my $self = shift;
-    my %parm = validated_hash(\@_,
-        labels => { isa => 'ArrayRef' },
-        values => { isa => 'ArrayRef' },
-    );
-    my @labels = @{$parm{'labels'}};
-    my @values = @{$parm{'values'}};
-
-    my $doc = $self->_document;
-
-    my $pe = $doc->createElement("PopulationEstimates");
-
-    my $table = $self->_xml->create_single_row_table(table_name => 'MLE', labels => \@labels, values => \@values);
-    $pe->appendChild($table);
-
-    return $pe;
-}
-
-sub _create_precision_population_estimates
-{
-    my $self = shift;
-    my %parm = validated_hash(\@_,
-        labels => { isa => 'ArrayRef', optional => 1 },
-        standard_errors => { isa => 'ArrayRef', optional => 1 },
-        relative_standard_errors => { isa => 'ArrayRef', optional => 1 },
-        correlation_matrix => { isa => 'ArrayRef[ArrayRef]', optional => 1 },
-        covariance_matrix => { isa => 'ArrayRef[ArrayRef]', optional => 1 },
-    );
-    my @labels = defined $parm{'labels'} ? @{$parm{'labels'}} : ();
-    my @standard_errors = defined $parm{'standard_errors'} ? @{$parm{'standard_errors'}}: ();
-    my @relative_standard_errors = defined $parm{'relative_standard_errors'} ? @{$parm{'relative_standard_errors'}} : ();
-    my $correlation_matrix = $parm{'correlation_matrix'};
-    my $covariance_matrix = $parm{'covariance_matrix'};
-
-    my $doc = $self->_document;
-
-    my $ppe = $doc->createElement("PrecisionPopulationEstimates");
-
-    if (scalar(@labels) > 0) {
-        my $mle = $doc->createElement("MLE");
-        $ppe->appendChild($mle);
-        if ($self->check_include(element => 'Estimation/PrecisionPopulationEstimates/MLE/StandardError')) {
-            my $table = $self->_xml->create_parameter_table(table_name => 'StandardError', name => 'SE', labels => \@labels, values => \@standard_errors);
-            $mle->appendChild($table);
-        }
-        if ($self->check_include(element => 'Estimation/PrecisionPopulationEstimates/MLE/RelativeStandardError')) {
-            my $table = $self->_xml->create_parameter_table(table_name => 'RelativeStandardError', name => 'RSE', labels => \@labels,
-                values => \@relative_standard_errors);
-            $mle->appendChild($table);
-        }
-
-        if ($self->check_include(element => 'Estimation/PrecisionPopulationEstimates/MLE/CorrelationMatrix')) {
-            my $cor = $doc->createElement("CorrelationMatrix");
-            $mle->appendChild($cor);
-            my $matrix = $self->_xml->create_matrix(rownames => \@labels, colnames => \@labels, matrix => $correlation_matrix);
-            $cor->appendChild($matrix);
-        }
-
-        if ($self->check_include(element => 'Estimation/PrecisionPopulationEstimates/MLE/CovarianceMatrix')) {
-            my $cov = $doc->createElement("CovarianceMatrix");
-            $mle->appendChild($cov);
-            my $matrix = $self->_xml->create_matrix(rownames => \@labels, colnames => \@labels, matrix => $covariance_matrix);
-            $cov->appendChild($matrix);
-        }
-    }
-
-    return $ppe;
-}
-
-sub _create_bootstrap
-{
-    my $self = shift;
-
-    my $doc = $self->_document;
-
-    open my $fh, '<', $self->bootstrap_results;
-
-    my @parameters;
-    my @percentiles;
-    my @column;
-
-    while (<$fh>) {
-        if (/^percentile.confidence.intervals$/) {
-            my $header = <$fh>;
-            my @a = split /","/, $header;
-            shift @a;
-            shift @a;
-            foreach my $param (@a) {
-                $param =~ s/\s*//;      # Remove spaces
-                if ($param !~ /^se/) {
-                    push @parameters, $self->_xml->mangle_symbol_idtype($param);
-                } else {
-                    last;
-                }
-            }
-
-            # Loop through percentiles
-            for (my $i = 0; $i < 7; $i++) {
-                my $row = <$fh>;
-                my @a = split /,/, $row;
-                my $percentile = shift @a;
-                $percentile =~ s/^"\s*(.*)%"/\1/;
-                shift @a;
-                my $value;
-                for (my $col = 0; $col < scalar(@parameters); $col++) {
-                    $value = shift @a;
-                    $value =~ s/^\s*(.*)/\1/;
-                    if ($value ne 'NA') {
-                        push @{$column[$col]}, $value;
-                    }
-                }
-                if ($value ne 'NA') {
-                    push @percentiles, $percentile;
-                }
-            }
-        }
-    }
-
-    close $fh;
-
-    # Warning if no percentiles
-    my $message;
-    my $bootstrap;
-    if (scalar(@percentiles) == 0) {
-        $message = {
-            type => "WARNING",
-            toolname => "PsN",
-            name => "Bootstrap",
-            content => "No bootstrap percentiles in " . $self->bootstrap_results . ". No Bootstrap results added.",
-            severity => 2,
-        };
-    } else {
-        my $table = $self->_xml->create_table(
-            table_name => 'Percentiles',
-            column_ids => [ "Percentile", @parameters ],
-            column_types => [ ('undefined') x (scalar(@parameters) + 1) ],
-            column_valuetypes => [ ('real') x (scalar(@parameters) + 1) ],
-            values => [ \@percentiles, @column ],
-        );
-        $bootstrap = $doc->createElement("Bootstrap");
-        $bootstrap->appendChild($table);
-    }
-
-    return ($bootstrap, $message);
-}
-
-sub _create_task_information
-{
-    # Create a list of xml messages from an array of hashes of the following form:
-    #   type ('ERROR', 'WARNING' etc)
-    #   toolname
-    #   name
-    #   content
-    #   severity
-
-    my $self = shift;
-    my %parm = validated_hash(\@_,
-        messages => { isa => 'ArrayRef[HashRef]', optional => 1 },
-        run_time => { isa => 'Num', optional => 1 },
-    );
-    my @messages = defined $parm{'messages'} ? @{$parm{'messages'}} : ();
-    my $run_time = $parm{'run_time'};
-
-    my $doc = $self->_document;
-
-    my $task_information = $doc->createElement("TaskInformation");
-
-    foreach my $message (@messages) {
-        my $element = $self->_xml->create_message(message => $message);
-        $task_information->appendChild($element);
-    }
-
-    if (defined $run_time) {
-        my $xml_run_time = $doc->createElement("RunTime");
-        $task_information->appendChild($xml_run_time);
-        $xml_run_time->appendChild($self->_xml->create_typed_element(type => 'Real', content => $run_time));
-    }
-
-    return $task_information;
-}
-
-sub _create_raw_results
-{
-    my $self = shift;
-
-    return if (not defined $self->_used_files);
-    return if (scalar(keys %{$self->_used_files}) == 0);
-
-    my $doc = $self->_document;
-
-    my $rr = $doc->createElement("RawResults");
-
-    my $no = 1;
-    foreach my $file (keys %{$self->_used_files}) {
-        my $datafile = $doc->createElement("DataFile");
-        $datafile->setAttribute('oid', "d$no");
-        my $description = $doc->createElement("ct:Description");
-        $description->appendTextNode($self->_used_files->{$file});
-        my $path = $doc->createElement("ds:path");
-        $path->appendTextNode(utils::file::remove_path($file));
-        $datafile->appendChild($description);
-        $datafile->appendChild($path);
-        $rr->appendChild($datafile);
-        $no++;
-    }
-
-    return $rr;
-}
-
-sub _add_raw_results_file
-{
-    # Add a file to the RawResults for this SOBlock
-    my $self = shift;
-    my $name = shift;
-    my $description = shift;
-
-    $self->_used_files({}) if (not defined $self->_used_files);
-
-    $self->_used_files->{$name} = $description;
-}
-
-sub _create_likelihood
-{
-    my $self = shift;
-    my %parm = validated_hash(\@_,
-        ofv => { isa => 'Maybe[Num]' },
-    );
-    my $ofv = $parm{'ofv'};
-
-    my $doc = $self->_document;
-    my $likelihood;
-
-    if (defined $ofv) {
-        $likelihood = $doc->createElement("Likelihood");
-        my $deviance = $doc->createElement("Deviance");
-        $deviance->appendTextNode($ofv);
-        $likelihood->appendChild($deviance);
-    }
-
-    return $likelihood;
-}
-
 sub _create_predictions
 {
      my $self = shift;
@@ -892,24 +419,25 @@ sub _create_predictions
         return;
     }
 
-    $self->_add_raw_results_file($sdtab->filename, "sdtab");
+    $self->_so_block->RawResults->add_datafile(name => $sdtab->filename, description => "sdtab");
 
     my $doc = $self->_document;
 
     my $id = $sdtab->column_to_array(column => "ID");
+    my $id = [ map { int($_) } @$id ];
     my $time = $sdtab->column_to_array(column => "TIME");
     my $pred = $sdtab->column_to_array(column => "PRED");
     my $ipred = $sdtab->column_to_array(column => "IPRED");
 
-    my $predictions = $self->_xml->create_table(
-        table_name => "Predictions",
-        column_ids => [ "ID", "TIME", "PRED", "IPRED" ],
-        column_types => [ "id", "undefined", "undefined", "undefined" ],
-        column_valuetypes =>  [ "string", "real", "real", "real" ],
-        values => [ $id, $time, $pred, $ipred ],
+    my $predictions = so::table->new(
+        name => "Predictions",
+        columnId => [ "ID", "TIME", "PRED", "IPRED" ],
+        columnType => [ "id", "undefined", "undefined", "undefined" ],
+        valueType =>  [ "string", "real", "real", "real" ],
+        columns => [ $id, $time, $pred, $ipred ],
     );
 
-    return $predictions;
+    $self->_so_block->Estimation->Predictions($predictions);
 }
 
 sub _create_residuals
@@ -927,6 +455,7 @@ sub _create_residuals
     my $doc = $self->_document;
 
     my $id = $sdtab->column_to_array(column => "ID");
+    my $id = [ map { int($_) } @$id ];
     my $time = $sdtab->column_to_array(column => "TIME");
 
     my @values = ( $id, $time );
@@ -960,21 +489,16 @@ sub _create_residuals
         return;
     }
 
+    $self->_so_block->RawResults->add_datafile(name => $sdtab->filename, description => "sdtab");
 
-    $self->_add_raw_results_file($sdtab->filename, "sdtab");
-
-    my $table = $self->_xml->create_table(
-        table_name => "ResidualTable",
-        column_ids => \@ids,
-        column_types => [ "id", ("undefined") x (scalar(@ids) - 1) ],
-        column_valuetypes =>  [ "string", ("real") x (scalar(@ids) - 1) ],
-        values => \@values,
+    my $table = so::table->new(
+        name => "ResidualTable",
+        columnId => \@ids,
+        columnType => [ "id", ("undefined") x (scalar(@ids) - 1) ],
+        valueType =>  [ "string", ("real") x (scalar(@ids) - 1) ],
+        columns => \@values,
     );
-
-    my $residuals = $doc->createElement("Residuals");
-    $residuals->appendChild($table);
-
-    return $residuals;
+    $self->_so_block->Estimation->Residual->ResidualTable($table);
 }
 
 sub _individual_statistics
@@ -1028,7 +552,6 @@ sub _create_individual_estimates
         return;
     }
 
-    my $doc = $self->_document;
     my $id = $patab->column_to_array(column => "ID");
 
     my @labels = @{_get_remaining_columns(header => $patab->column_head_indices, columns => [ 'ID', 'TIME', @$eta_names, @$model_labels ])};
@@ -1043,33 +566,26 @@ sub _create_individual_estimates
         ($medians[$i], $means[$i]) = _individual_statistics(id => $id, parameter => $parameters[$i]);
     }
     my $unique_ids = array::unique($id);
+    my $unique_ids = [ map { int($_) } @$unique_ids ];
 
-    my $individual_estimates = $doc->createElement("IndividualEstimates");
-    if ($self->check_include(element => 'Estimation/IndividualEstimates/Estimates')) {
-        my $estimates = $doc->createElement("Estimates");
-        $individual_estimates->appendChild($estimates);
-        if ($self->check_include(element => 'Estimation/IndividualEstimates/Estimates/Median')) {
-            my $table = $self->_xml->create_table(
-                table_name => "Median",
-                column_ids => [ "ID", @labels ],
-                column_types => [ "id", ("undefined") x scalar(@labels) ],
-                column_valuetypes => [ "string", ("real") x scalar(@labels) ],
-                values => [ $unique_ids, @medians ],
-            );
-            $estimates->appendChild($table);
-        }
-        if ($self->check_include(element => 'Estimation/IndividualEstimates/Estimates/Mean')) {
-            my $table = $self->_xml->create_table(
-                table_name => "Mean",
-                column_ids => [ "ID", @labels ],
-                column_types => [ "id", ("undefined") x scalar(@labels) ],
-                column_valuetypes => [ "string", ("real") x scalar(@labels) ],
-                values => [ $unique_ids, @means ],
-            );
-            $estimates->appendChild($table);
-        }
-    }
- 
+    my $table = so::table->new(
+        name => "Median",
+        columnId => [ "ID", @labels ],
+        columnType => [ "id", ("undefined") x scalar(@labels) ],
+        valueType => [ "string", ("real") x scalar(@labels) ],
+        columns => [ $unique_ids, @medians ],
+    );
+    $self->_so_block->Estimation->IndividualEstimates->Estimates->Median($table);
+
+    my $table = so::table->new(
+        name => "Mean",
+        columnId => [ "ID", @labels ],
+        columnType => [ "id", ("undefined") x scalar(@labels) ],
+        valueType => [ "string", ("real") x scalar(@labels) ],
+        columns => [ $unique_ids, @means ],
+    );
+    $self->_so_block->Estimation->IndividualEstimates->Estimates->Mean($table);
+
     if (scalar(@$eta_names) > 0) {
         # Filter out etas that does not exist in the patab
         $eta_names = _get_included_columns(header => $patab->column_head_indices, columns => $eta_names);
@@ -1083,37 +599,26 @@ sub _create_individual_estimates
             push @eta_means, $mean;
         }
 
-        if ($self->check_include(element => 'Estimation/IndividualEstimates/RandomEffects')) {
-            my $random_effects = $doc->createElement("RandomEffects");
-            $individual_estimates->appendChild($random_effects);
+        my $table = so::table->new(
+            name => "EffectMedian",
+            columnId => [ "ID", @$eta_names ],
+            columnType => [ "id", ("undefined") x scalar(@$eta_names) ],
+            valueType => [ "string", ("real") x scalar(@$eta_names) ],
+            columns => [ $unique_ids, @eta_medians ],
+        );
+        $self->_so_block->Estimation->IndividualEstimates->RandomEffects->EffectMedian($table);
 
-            if ($self->check_include(element => 'Estimation/IndividualEstimates/RandomEffects/EffectMedian')) {
-                my $table = $self->_xml->create_table(
-                    table_name => "EffectMedian",
-                    column_ids => [ "ID", @$eta_names ],
-                    column_types => [ "id", ("undefined") x scalar(@$eta_names) ],
-                    column_valuetypes => [ "string", ("real") x scalar(@$eta_names) ],
-                    values => [ $unique_ids, @eta_medians ],
-                );
-                $random_effects->appendChild($table);
-            }
-
-            if ($self->check_include(element => 'Estimation/IndividualEstimates/RandomEffects/EffectMean')) {
-                my $table = $self->_xml->create_table(
-                    table_name => "EffectMean",
-                    column_ids => [ "ID", @$eta_names ],
-                    column_types => [ "id", ("undefined") x scalar(@$eta_names) ],
-                    column_valuetypes => [ "string", ("real") x scalar(@$eta_names) ],
-                    values => [ $unique_ids, @eta_means ],
-                );
-                $random_effects->appendChild($table);
-            }
-        }
+        my $table = so::table->new(
+            name => "EffectMean",
+            columnId => [ "ID", @$eta_names ],
+            columnType => [ "id", ("undefined") x scalar(@$eta_names) ],
+            valueType => [ "string", ("real") x scalar(@$eta_names) ],
+            columns => [ $unique_ids, @eta_means ],
+        );
+        $self->_so_block->Estimation->IndividualEstimates->RandomEffects->EffectMean($table);
     }
 
-    $self->_add_raw_results_file($patab->filename, "patab");
-
-    return $individual_estimates;
+    $self->_so_block->RawResults->add_datafile(name => $patab->filename, description => "patab");
 }
 
 sub _create_simulation
@@ -1135,12 +640,9 @@ sub _create_simulation
     my $covariates_table_name = $problem->find_table_with_name(name => '^cotab', path => $path);
     #my $population_table_name = $indiv_table_name;
 
-    unless ($profiles_table_name or $indiv_table_name) {
-        return undef;
+    unless ($profiles_table_name or $indiv_table_name or $covariates_table_name) {
+        return;
     }
-
-    my $doc = $self->_document;
-    my $simulation = $doc->createElement("Simulation");
 
     open my $profiles_table_fh, '<', $path . $profiles_table_name;
     open my $indiv_table_fh, '<', $path . $indiv_table_name;
@@ -1150,8 +652,7 @@ sub _create_simulation
     my $replicate_no = 1;
 
     for (;;) {      # Loop through simulation replicates aka simulation blocks
-        my $sim_block = $doc->createElement("SimulationBlock");
-        $sim_block->setAttribute("replicate", $replicate_no);
+        my $sim_block = so::soblock::simulation::simulationblock->new(replicate => $replicate_no);
         my $external_table_name = $self->external_tables ? $table_file . "_$replicate_no" : undef;
         my $simulated_profiles = $self->_create_simulated_profiles(
             file => $profiles_table_fh,
@@ -1174,22 +675,23 @@ sub _create_simulation
         #);
         #
         if (defined $simulated_profiles) {
-            $sim_block->appendChild($simulated_profiles);
-            $self->_add_raw_results_file($profiles_table_name, "simulated profiles");
+            $sim_block->SimulatedProfiles($simulated_profiles);
+            $self->_so_block->RawResults->add_datafile(name => $profiles_table_name, description => "simulated profiles");
         }
         if (defined $indiv_parameters) {
-            $sim_block->appendChild($indiv_parameters);
-            $self->_add_raw_results_file($indiv_table_name, "patab");
+            $sim_block->IndivParameters($indiv_parameters);
+            $self->_so_block->RawResults->add_datafile(name => $indiv_table_name, description => "patab");
         }
         if (defined $covariates) {
-            $sim_block->appendChild($covariates);
-            $self->_add_raw_results_file($covariates_table_name, "cotab");
+            $sim_block->Covariates($covariates);
+            $self->_so_block->RawResults->add_datafile(name => $covariates_table_name, description => "cotab");
         }
         #if (defined $population_parameters) {
         #    $sim_block->appendChild($population_parameters);
         #}
         if (defined $simulated_profiles or defined $indiv_parameters or defined $covariates) {
-            $simulation->appendChild($sim_block);
+            $self->_so_block->Simulation([]) if not defined $self->_so_block->Simulation;
+            push @{$self->_so_block->Simulation->SimulationBlock}, $sim_block;
         } else {
             last;
         }
@@ -1202,8 +704,6 @@ sub _create_simulation
     close $covariates_table_fh;
     close $indiv_table_fh;
     close $profiles_table_fh;
-
-    return $simulation;
 }
 
 sub _read_header
@@ -1264,12 +764,12 @@ sub _create_simulated_profiles
     }
     @dvid = ((1) x scalar(@id));        # Don't support multiple DVs for now
 
-    my $simulated_profiles = $self->_xml->create_table(
-        table_name => "SimulatedProfiles",
-        column_ids => [ "ID", "DVID", "TIME", "Observation" ],
-        column_types => [ "id", "dvid", "time", "dv" ],
-        column_valuetypes => [ "string", "int", "real", "real" ],
-        values => [ \@id, \@dvid, \@time, \@dv ],
+    my $simulated_profiles = so::table->new(
+        name => "SimulatedProfiles",
+        columnId => [ "ID", "DVID", "TIME", "Observation" ],
+        columnType => [ "id", "dvid", "time", "dv" ],
+        valueType => [ "string", "int", "real", "real" ],
+        columns => [ \@id, \@dvid, \@time, \@dv ],
         table_file => $table_file,
     ); 
 
@@ -1481,17 +981,132 @@ sub _create_occasion_table
         $prev_time = $time;
     }
 
-    my $table = $self->_xml->create_table(
-        table_name => $table_name,
-        column_ids => [ "ID", "OccasionStart", "OccationEnd", @labels ],
-        column_types => [ "id", "time", "time", ("undefined") x scalar(@labels) ],
-        column_valuetypes => [ "string", "real", "real", ("real") x scalar(@labels) ],
-        values => \@rows,
-        row_major => 1,
+    linear_algebra::transpose(\@rows);
+
+    my $table = so::table->new(
+        name => $table_name,
+        columnId => [ "ID", "OccasionStart", "OccationEnd", @labels ],
+        columnType => [ "id", "time", "time", ("undefined") x scalar(@labels) ],
+        valueType => [ "string", "real", "real", ("real") x scalar(@labels) ],
+        columns => \@rows,
         table_file => $table_file,
     );
 
     return $table;
+}
+
+sub _add_status_messages
+{
+    # Add the PsN raw_results status as messages
+    my $self = shift;
+    my %parm = validated_hash(\@_,
+        output => { isa => 'output' },
+        problem => { isa => 'Int' },
+        subproblem => { isa => 'Int' },
+    );
+    my $output = $parm{'output'};
+    my $problem = $parm{'problem'};
+    my $subproblem = $parm{'subproblem'};
+
+    my $covariance_step_run = $output->covariance_step_run->[$problem];
+
+    my $covariance_step_successful = 0;
+    my $covariance_step_warnings = 0;
+    if ($covariance_step_run) {
+        if ($output->covariance_step_successful->[$problem][$subproblem] ne '0') {
+            $covariance_step_successful = 1;
+        }
+        if ($output->covariance_step_warnings->[$problem][$subproblem] ne '0') {
+            $covariance_step_warnings = 1;
+        }
+    }
+
+    $self->_so_block->TaskInformation->add_message(
+        type => "INFORMATION",
+        toolname => "NONMEM",
+        name => "covariance_step_run",
+        content => $covariance_step_run,
+        severity => 1,
+    );
+
+    $self->_so_block->TaskInformation->add_message(
+        type => $covariance_step_successful ? "INFORMATION" : "WARNING",
+        toolname => "NONMEM",
+        name => "covariance_step_successful",
+        content => $covariance_step_successful,
+        severity => 1,
+    );
+
+    $self->_so_block->TaskInformation->add_message(
+        type => $covariance_step_warnings ? "WARNING" : "INFORMATION",
+        toolname => "NONMEM",
+        name => "covariance_step_warnings",
+        content => $covariance_step_warnings,
+        severity => 1,
+    );
+
+    my $rounding_errors = $output->rounding_errors->[$problem][$subproblem] eq '0' ? 0 : 1;
+    $self->_so_block->TaskInformation->add_message(
+        type => $rounding_errors ? "WARNING" : "INFORMATION",
+        toolname => "NONMEM",
+        name => "rounding_errors",
+        content => $rounding_errors,
+        severity => 1,
+    );
+
+    my $hessian_reset = $output->hessian_reset->[$problem][$subproblem];
+    if (defined $hessian_reset) {
+        $self->_so_block->TaskInformation->add_message(
+            type => $hessian_reset eq '0' ? "INFORMATION" : "WARNING",
+            toolname => "NONMEM",
+            name => "hessian_reset",
+            content => $hessian_reset,
+            severity => 1,
+        );
+    }
+
+
+    my $zero_gradients = $output->zero_gradients->[$problem][$subproblem];
+    if (defined $zero_gradients) {
+         $self->_so_block->TaskInformation->add_message(
+            type => $zero_gradients eq '0' ? "INFORMATION" : "WARNING",
+            toolname => "NONMEM",
+            name => "zero_gradients",
+            content => $zero_gradients,
+            severity => 1,
+        );
+    }
+
+    my $final_zero_gradients = $output->final_zero_gradients->[$problem][$subproblem];
+    if (defined $final_zero_gradients) {
+        $self->_so_block->TaskInformation->add_message(
+            type => $final_zero_gradients eq '0' ? "INFORMATION" : "WARNING",
+            toolname => "NONMEM",
+            name => "final_zero_gradients",
+            content => $final_zero_gradients,
+            severity => 1,
+        );
+    }
+
+    my $estimate_near_boundary = $output->estimate_near_boundary->[$problem][$subproblem];
+    $self->_so_block->TaskInformation->add_message(
+        type => $estimate_near_boundary ? "WARNING" : "INFORMATION",
+        toolname => "NONMEM",
+        name => "estimate_near_boundary",
+        content => $estimate_near_boundary,
+        severity => 1,
+    );
+
+
+    my $s_matrix_singular = $output->s_matrix_singular->[$problem][$subproblem];
+    $self->_so_block->TaskInformation->add_message(
+        type => $s_matrix_singular ? "WARNING" : "INFORMATION",
+        toolname => "NONMEM",
+        name => "s_matrix_singular",
+        content => $s_matrix_singular,
+        severity => 1,
+    );
+
 }
 
 no Moose;
