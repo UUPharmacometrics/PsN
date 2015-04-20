@@ -1909,12 +1909,8 @@ sub _compute_comegas_or_csigmas
 			  } else {
 				  $omega_or_sigma_value = $valueshash{$name};
 				  my $denominator = $valueshash{$name_a} * $valueshash{$name_b};
-				  if ( $denominator <= 0.00001 ) { # To avoid division by zero
+				  if ( $denominator <= 1E-20 ) { # To avoid division by zero
 					  $omega_or_sigma_value = undef;
-				  } elsif ( $omega_or_sigma_value >= sqrt($denominator) ) { 
-					  # This rounding handles cases when the offdiagonals
-					  # are greater or equal to one.
-					  $omega_or_sigma_value = $omega_or_sigma_value / ( int( 10000 * sqrt($denominator) ) / 10000 );
 				  } else {
 					  $omega_or_sigma_value = $omega_or_sigma_value / sqrt($denominator);
 				  }
