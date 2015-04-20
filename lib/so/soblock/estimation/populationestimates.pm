@@ -8,18 +8,20 @@ use include_modules;
 use XML::LibXML;
 
 use so::table;
+use so::soblock::estimation::populationestimates::bootstrap;
 
 has 'version' => ( is => 'rw', isa => 'Num', required => 1 );
 
 has 'MLE' => ( is => 'rw', isa => 'so::table' );
 has 'Bootstrap' => ( is => 'rw', isa => 'so::soblock::estimation::populationestimates::bootstrap' ); 
 
+
 sub BUILD
 {
     my $self = shift;
 
     my $bootstrap = so::soblock::estimation::populationestimates::bootstrap->new(version => $self->version);
-    $self->Bootsrap($bootstrap);
+    $self->Bootstrap($bootstrap);
 }
 
 sub parse

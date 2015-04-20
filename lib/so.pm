@@ -14,7 +14,7 @@ has 'filename' => ( is => 'rw', isa => 'Maybe[Str]' );
 has 'pretty' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'exclude_elements' => ( is => 'rw', isa => 'Maybe[ArrayRef[Str]]' );
 has 'only_include_elements' => ( is => 'rw', isa => 'Maybe[ArrayRef[Str]]' ); 
-has 'version' => ( is => 'rw', isa => 'Num' );
+has 'version' => ( is => 'rw', isa => 'Num', default => 0.2 );
 has 'message' => ( is => 'rw', isa => 'Maybe[Str]' );
 
 has 'PharmMLRef' => ( is => 'rw', isa => 'Maybe[Str]' );

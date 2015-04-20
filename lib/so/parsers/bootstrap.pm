@@ -57,9 +57,11 @@ sub _create_bootstrap
     my @parameters;
     my @percentiles;
     my @column;
+    my $means;
+    my $medians;
     while (<$fh>) {
-        if (/^percentile.confidence.intervals$/) {
-            my $header = <$fh>;
+        if (/^means$/) {
+            my $header = <$fh>;         # Get the header only once. means comes first in the file so do it here
             my @a = split /","/, $header;
             shift @a;
             shift @a;
@@ -71,7 +73,15 @@ sub _create_bootstrap
                     last;
                 }
             }
+            $means = _read_line(fh => $fh, parameters => \@parameters);
+
+        } elsif (/^medians$/) {
+            <$fh>;
+            $medians = _read_line(fh => $fh, parameters => \@parameters);
+
+        } elsif (/^percentile.confidence.intervals$/) {
             # Loop through percentiles
+            <$fh>;
             for (my $i = 0; $i < 7; $i++) {
                 my $row = <$fh>;
                 my @a = split /,/, $row;
@@ -101,7 +111,7 @@ sub _create_bootstrap
             type => "WARNING",
             toolname => "PsN",
             name => "Bootstrap",
-            content => "No bootstrap percentiles in " . $self->bootstrap_results . ". No Bootstrap results added.",
+            content => "No bootstrap percentiles in " . $self->bootstrap_results . ". No Bootstrap percentiles added.",
             severity => 2,
         );
     } else {
@@ -114,7 +124,43 @@ sub _create_bootstrap
         );
         $self->_precision_bootstrap->Percentiles($table);
     }
+
+    my $mean_table = so::table->new(name => "Mean", columnId => \@parameters);
+    $mean_table->single_row(values => $means);
+    $self->_bootstrap->Mean($mean_table);
+
+    my $median_table = so::table->new(name => "Median", columnId => \@parameters);
+    $median_table->single_row(values => $medians);
+    $self->_bootstrap->Median($median_table);
 } 
+
+sub _read_line
+{
+    # Read one line of values from the bootstrap results file
+    my %parm = validated_hash(\@_,
+        fh => { isa => 'Ref' },
+        parameters => { isa => 'ArrayRef' },
+    );
+    my $fh = $parm{'fh'};
+    my @parameters = @{$parm{'parameters'}};
+
+    my $row = <$fh>;
+    my @a = split /,/, $row;
+    shift @a;
+    shift @a;
+
+    my $value;
+    my @data_row;
+    for (my $col = 0; $col < scalar(@parameters); $col++) {
+        $value = shift @a;
+        $value =~ s/^\s*(.*)/\1/;
+        if ($value ne 'NA') {
+            push @data_row, $value;
+        }
+    }
+
+    return \@data_row;
+}
 
 no Moose;
 __PACKAGE__->meta->make_immutable;

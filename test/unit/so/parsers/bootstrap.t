@@ -40,6 +40,20 @@ SKIP: {
             [ '0.008183303', '0.01005964', '0.01067467', '0.0223192', '0.02395466', '0.02928763' ]
         ], "Bootstrap percentiles columns");
 
+    my $mean = $so->SOBlock->[0]->Estimation->PopulationEstimates->Bootstrap->Mean;
+    is_deeply($mean->columnId, [ 'CL', 'V', 'IVCL', 'IVV', 'mySIGMA' ], "Bootstrap mean columnId");
+    is_deeply($mean->columnType, [ ('undefined') x 5 ], "Bootstrap mean columnType");
+    is_deeply($mean->name, "Mean", "Bootstrap mean name");
+    is_deeply($mean->valueType, [ ('real') x 5 ], "Boostrap mean valueType");
+    is_deeply($mean->columns, [ [ 0.005616624 ], [ 1.361894 ], [ 0.2532448 ], [ 0.1511835 ], [ 0.01635697 ] ], "Bootstrap mean columns");
+
+    my $median = $so->SOBlock->[0]->Estimation->PopulationEstimates->Bootstrap->Median;
+    is_deeply($median->columnId, [ 'CL', 'V', 'IVCL', 'IVV', 'mySIGMA' ], "Bootstrap median columnId");
+    is_deeply($median->columnType, [ ('undefined') x 5 ], "Bootstrap median columnType");
+    is_deeply($median->name, "Median", "Bootstrap median name");
+    is_deeply($median->valueType, [ ('real') x 5 ], "Boostrap median valueType");
+    is_deeply($median->columns, [ [ 0.005622315 ], [ 1.356135 ], [ 0.256029 ], [ 0.1475405 ], [ 0.01651655 ] ], "Bootstrap median columns");
+
     # non-existing bootstrap file
     my $so = so->new();
     so::parsers::bootstrap->new(so => $so, bootstrap_results => 'nofile.csv');

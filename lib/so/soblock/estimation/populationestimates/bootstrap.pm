@@ -1,4 +1,4 @@
-package so::soblock::estimation::populationestimates;
+package so::soblock::estimation::populationestimates::bootstrap;
 
 use strict;
 use warnings;
@@ -42,7 +42,7 @@ sub xml
 
     my $bootstrap;
 
-    if ($version >= 0.2) {
+    if ($self->version >= 0.2) {
         my $mean;
         if (defined $self->Mean) {
             $mean = $self->Mean->xml();
@@ -55,10 +55,10 @@ sub xml
         if (defined $mean or defined $median) {
             $bootstrap = XML::LibXML::Element->new("Bootstrap");
             if (defined $mean) {
-                $est->appendChild($mean);
+                $bootstrap->appendChild($mean);
             }
             if (defined $median) {
-                $est->appendChild($median);
+                $bootstrap->appendChild($median);
             }
         }
     }
