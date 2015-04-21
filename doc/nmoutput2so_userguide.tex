@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{nmoutput2so user guide}{2015-04-14}
+\guidetitle{nmoutput2so user guide}{2015-04-20}
 
 \begin{document}
 
@@ -8,7 +8,7 @@
 \section{Introduction}
 The nmoutput2so script creates and populates a DDMoRe Standardized Output 
 \cite{Terranova}
-xml (SO 0.1) file given the output from one or more NONMEM runs. 
+xml file given the output from one or more NONMEM runs. 
 It is necessary that the format of the model file and other files follow a set of requirements (see below) for this to work. The Perl module XML::LibXML is required by nmoutput2so, but not PsN in general. Make sure that it is installed before using nmoutput2so. See the PsN installation guide for intructions.
 
 
@@ -64,6 +64,9 @@ Default is to not add intentations and thus to generate as compact xml files as 
 \nextopt
 \optname{so\_filename}
 Set a filename for the resulting SO xml file. If this is not set the file stem of the first .lst file will be used.
+\nextopt
+\optname{so\_version}
+Set the version of the so file to create. Default is 0.2
 \nextopt
 \optname{pharmml}
 Set a name of the pharmml file used to generate the SO
@@ -133,6 +136,11 @@ The following entries will be populated:
         \begin{itemize}
             \item PopulationEstimates
             \begin{itemize}
+                \item Bootstrap
+                \begin{itemize}
+                    \item Mean - From a PsN bootstrap\_results.csv file.
+                    \item Median - From a PsN bootstrap\_results.csv file.
+                \end{itemize}
                 \item MLE - Results will be taken from the .ext file if present otherwise the .lst file. Parameters that are fixed and does not have a label will not be included. The estimated value
                     will be on the standard deviation/correlation scale or variance/covariance scale depending on which scale the initial estimate was on. 
             \end{itemize}
@@ -180,6 +188,25 @@ The following entries will be populated:
             \end{itemize}
         \end{itemize}
 \end{itemize}
+
+\subsection{Information messages}
+A set of tool specific information messages are added in TaskInformation. They are listed table below:
+
+\begin{itemize}
+    \item \textbf{minimization\_successful} \\ Set to 1 if the minimization was successful otherwise set to 0.
+    \item \textbf{covariance\_step\_run} \\ Set to 1 if the covariance step was run otherwise set to 0. The information is taken from the .lst file
+    \item \textbf{covariance\_step\_successful} \\ Set to 1 if the covariance step was successful
+    \item \textbf{covariance\_step\_warnings} \\ Set to 1 if any of "R MATRIX ALGORITHMICALLY SINGULAR" or "S MATRIX ALGORITHMICALLY SINGULAR" is present in the .lst file. Set to 0 otherwise.
+    \item \textbf{rounding\_errors} \\ Set to 1 if "ROUNDING ERRORS" is present in the .lst file.  Set to 0 otherwise.
+    \item \textbf{hessian\_reset} \\ Set to the number of appearances of "RESET HESSIAN" in the .lst file
+    \item \textbf{zero\_gradients} \\ Set to the number of zero gradients in the "GRADIENT" lists of the .lst file
+    \item \textbf{final\_zero\_gradients} \\ Number of zero gradients in the final iteration in the .lst file.
+    \item \textbf{estimate\_near\_boundary} \\ Set to 1 if any of "ESTIMATE OF THETA IS NEAR THE BOUNDARY" or "PARAMETER ESTIMATE IS NEAR ITS BOUNDARY" is present in the .lst file. Set to 0 otherwise.
+    \item \textbf{significant\_digits} \\ NO. OF SIG. DIGITS IN FINAL EST. from .lst file
+    \item \textbf{s\_matrix\_singular} \\ Set to 1 if "S MATRIX ALGORITHMICALLY SINGULAR" present in .lst file. Set to 0 otherwise.
+    \item \textbf{condition\_number} \\ If the eigenvalues of the correlation matrix was printed to the .lst file (i.e. option PRINT=E was given to \$COV) nnmoutput2so calculates the condition number. 
+\end{itemize}
+
 
 \section{Not supported SO elements}
 

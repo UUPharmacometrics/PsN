@@ -128,10 +128,6 @@ sub _parse_lst_file
                 problem_index => $problems,
                 subproblem_index => $sub_problems);
 
-            my $min_success = $outobj -> get_single_value(attribute => 'minimization_successful',
-                problem_index =>$problems,
-                subproblem_index => $sub_problems);
-
             my $covariance_step_run = $outobj->covariance_step_run->[$problems];
 
             my $covariance_step_successful = 0;
@@ -1008,6 +1004,16 @@ sub _add_status_messages
     my $problem = $parm{'problem'};
     my $subproblem = $parm{'subproblem'};
 
+
+    my $minimization_successful = $output->minimization_successful->[$problem][$subproblem];
+    $self->_so_block->TaskInformation->add_message(
+        type => $minimization_successful ? "INFORMATION" : "WARNING",
+        toolname => "NONMEM",
+        name => "minimization_successful",
+        content => $minimization_successful,
+        severity => 1,
+    );
+
     my $covariance_step_run = $output->covariance_step_run->[$problem];
 
     my $covariance_step_successful = 0;
@@ -1107,6 +1113,14 @@ sub _add_status_messages
         severity => 1,
     );
 
+    my $significant_digits = $output->significant_digits->[$problem][$subproblem];
+    $self->_so_block->TaskInformation->add_message(
+        type => "INFORMATION",
+        toolname => "NONMEM",
+        name => "significant_digits",
+        content => $significant_digits,
+        severity => 1,
+    );
 }
 
 no Moose;
