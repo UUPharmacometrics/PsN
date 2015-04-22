@@ -9,10 +9,13 @@ use XML::LibXML;
 use so::matrix;
 use so::table;
 
+has 'version' => ( is => 'rw', isa => 'Num', required => 1 );
+
 has 'CovarianceMatrix' => ( is => 'rw', isa => 'so::matrix' );
 has 'CorrelationMatrix' => ( is => 'rw', isa => 'so::matrix' );
 has 'StandardError' => ( is => 'rw', isa => 'so::table' );
 has 'RelativeStandardError' => ( is => 'rw', isa => 'so::table' );
+has 'ConditionNumber' => ( is => 'rw', isa => 'Num' );      # Added in SO 0.2
 
 sub parse
 {
@@ -48,6 +51,11 @@ sub parse
         $table->parse($rse);
         $self->RelativeStandardError($table);
     }
+
+    (my $cond) = $xpc->findnodes('x:ConditionNumer/ct:Real', $node);
+    if (defined $cond) {
+        $self->ConditionNumber($cond->textContent);
+    }
 }
 
 sub xml
@@ -74,8 +82,16 @@ sub xml
         $rse = $self->RelativeStandardError->xml();
     }
 
+    my $cond;
+    if (defined $self->ConditionNumber and $self->version >= 0.2) {
+        $cond = XML::LibXML::Element->new("ConditionNumber");
+        my $real = XML::LibXML::Element->new("ct:Real");
+        $real->appendText($self->ConditionNumber);
+        $cond->appendChild($real);
+    }
+
     my $est;
-    if (defined $cov or defined $cor or defined $se or defined $rse) {
+    if (defined $cov or defined $cor or defined $se or defined $rse or defined $cond) {
         $est = XML::LibXML::Element->new("MLE");
 
         if (defined $cov) {
@@ -92,6 +108,10 @@ sub xml
 
         if (defined $rse) {
             $est->appendChild($rse);
+        }
+
+        if (defined $cond) {
+            $est->appendChild($cond);
         }
     }
 

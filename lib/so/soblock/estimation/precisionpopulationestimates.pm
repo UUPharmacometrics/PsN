@@ -9,6 +9,7 @@ use XML::LibXML;
 use so::soblock::estimation::precisionpopulationestimates::mle;
 use so::soblock::estimation::precisionpopulationestimates::bootstrap;
 
+has 'version' => ( is => 'rw', isa => 'Num', required => 1 );
 
 has 'MLE' => ( is => 'rw', isa => 'so::soblock::estimation::precisionpopulationestimates::mle' );
 has 'Bootstrap' => ( is => 'rw', isa => 'so::soblock::estimation::precisionpopulationestimates::bootstrap' );
@@ -17,7 +18,7 @@ sub BUILD
 {
     my $self = shift;
 
-    my $mle = so::soblock::estimation::precisionpopulationestimates::mle->new();
+    my $mle = so::soblock::estimation::precisionpopulationestimates::mle->new(version => $self->version);
     $self->MLE($mle);
     my $bs = so::soblock::estimation::precisionpopulationestimates::bootstrap->new();
     $self->Bootstrap($bs);

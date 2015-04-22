@@ -29,7 +29,7 @@ sub BUILD
 
     my $pe = so::soblock::estimation::populationestimates->new(version => $self->version);
     $self->PopulationEstimates($pe);
-    my $ppe = so::soblock::estimation::precisionpopulationestimates->new();
+    my $ppe = so::soblock::estimation::precisionpopulationestimates->new(version => $self->version);
     $self->PrecisionPopulationEstimates($ppe);
     my $ie = so::soblock::estimation::individualestimates->new();
     $self->IndividualEstimates($ie);

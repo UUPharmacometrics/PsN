@@ -104,13 +104,7 @@ sub _parse_lst_file
 
             my $condition_number = $outobj->problems->[$problems]->subproblems->[$sub_problems]->condition_number;
             if (defined $condition_number) {
-                $self->_so_block->TaskInformation->add_message(
-                    type => "INFORMATION",
-                    toolname => "NONMEM",
-                    name => "condition_number",
-                    content => $outobj->problems->[$problems]->subproblems->[$sub_problems]->condition_number,
-                    severity => 1,
-                );
+                $self->_so_block->Estimation->PrecisionPopulationEstimates->MLE->ConditionNumber($condition_number);
             }
 
             my $model = $outobj->lst_model;
