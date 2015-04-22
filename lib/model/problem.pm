@@ -2537,6 +2537,7 @@ sub set_estimated_parameters_hash
 		$hash{'lower_bounds'}=[];
 		$hash{'upper_bounds'}=[];
 		$hash{'param'}=[];
+        $hash{'inits'} = [];
 
 		foreach my $param ('theta','omega','sigma'){
 			my $block_number=0;
@@ -2607,6 +2608,7 @@ sub set_estimated_parameters_hash
 					if (defined $option ->label()) {
 						$name = $option ->label();
 					}
+                    push(@{$hash{'inits'}}, $option->init);
 					push(@{$hash{'labels'}},$name);
 					push(@{$hash{'coordinate_strings'}},$coord);
 					push(@{$hash{'param'}},$param);

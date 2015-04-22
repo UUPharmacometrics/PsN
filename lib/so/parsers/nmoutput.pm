@@ -13,6 +13,7 @@ use data;
 use array;
 use IO::File;
 use math;
+use linear_algebra;
 use utils::file;
 use PsN;
 use so;
@@ -153,8 +154,10 @@ sub _parse_lst_file
             )};
 
             my @filtered_labels = @{$model->problems->[$problems]->get_estimated_attributes(parameter => 'all', attribute => 'labels')};
+            my @filtered_inits = @{$model->problems->[$problems]->get_estimated_attributes(parameter => 'all', attribute => 'inits')};
 
             my @all_labels = @filtered_labels; #will add fix with label here
+            my @all_inits = @filtered_inits;
 
             # Handling parameters that are FIX but have a label
             my @records;
@@ -178,6 +181,7 @@ sub _parse_lst_file
                 if ($option->fix and defined $option->label) {
                     push @est_values, $option->init;
                     push @all_labels, $option->label;
+                    push @all_inits, $option->init;
                 }
                 if ($option->sd or $option->corr) {     # Save labels for parameters on sd/corr scale
                     if (grep { $_ eq $option->label } @all_labels) {
@@ -186,8 +190,7 @@ sub _parse_lst_file
                 }
             }
 
-            if ($estimation_step_run) {
-
+            if ($estimation_step_run or $simulation_step_run) {
                 foreach my $label (@all_labels) {
                     if (not so::xml::match_symbol_idtype($label)) {
                         my $old_label = $label;
@@ -208,7 +211,9 @@ sub _parse_lst_file
                         $label = so::xml::mangle_symbol_idtype($label);
                     }
                 }
-
+            }
+            
+            if ($estimation_step_run) {
                 #Calculate relative standard errors, only for estimated values that have se
                 my @rel_se = ();
 
@@ -315,7 +320,9 @@ sub _parse_lst_file
                     model => $model,
                     problem => $model->problems->[$problems],
                     path => $path,
-                    table_file => $file_stem
+                    table_file => $file_stem,
+                    labels => \@all_labels,
+                    inits => \@all_inits,
                 );
             }
 
@@ -619,16 +626,20 @@ sub _create_simulation
         table_file => { isa => 'Str', optional => 1 },
         model => { isa => 'model' },
         problem => { isa => 'model::problem' },
+        labels => { isa => 'ArrayRef' },
+        inits => { isa => 'ArrayRef' },
     );
     my $path = $parm{'path'};
     my $table_file = $parm{'table_file'};
     my $model = $parm{'model'};
     my $problem = $parm{'problem'};
+    my $labels = $parm{'labels'};
+    my $inits = $parm{'inits'};
 
     my $profiles_table_name = $problem->find_table(columns => [ 'ID', 'TIME', 'DV' ]);
     my $indiv_table_name = $problem->find_table_with_name(name => '^patab', path => $path);
     my $covariates_table_name = $problem->find_table_with_name(name => '^cotab', path => $path);
-    #my $population_table_name = $indiv_table_name;
+    my $population_table_name = $problem->find_table(columns => [ 'TIME' ]);
 
     unless ($profiles_table_name or $indiv_table_name or $covariates_table_name) {
         return;
@@ -637,7 +648,7 @@ sub _create_simulation
     open my $profiles_table_fh, '<', $path . $profiles_table_name;
     open my $indiv_table_fh, '<', $path . $indiv_table_name;
     open my $covariates_table_fh, '<', $path . $covariates_table_name;
-    #open my $population_table_fh, '<', $path. $population_table_name;
+    open my $population_table_fh, '<', $path . $population_table_name;
 
     my $replicate_no = 1;
 
@@ -658,12 +669,13 @@ sub _create_simulation
             file => $covariates_table_fh,
             table_file => $external_table_name
         );
-        #my $population_parameters = $self->_create_population_parameters(
-        #    file => $population_table_fh,
-        #   table_file => $external_table_name,
-        #    problem => $problem,
-        #);
-        #
+        my $population_parameters = $self->_create_population_parameters(
+            file => $population_table_fh,
+            table_file => $external_table_name,
+            labels => $labels,
+            inits => $inits,
+        );
+
         if (defined $simulated_profiles) {
             $sim_block->SimulatedProfiles($simulated_profiles);
             $self->_so_block->RawResults->add_datafile(name => $profiles_table_name, description => "simulated profiles");
@@ -676,21 +688,20 @@ sub _create_simulation
             $sim_block->Covariates($covariates);
             $self->_so_block->RawResults->add_datafile(name => $covariates_table_name, description => "cotab");
         }
-        #if (defined $population_parameters) {
-        #    $sim_block->appendChild($population_parameters);
-        #}
-        if (defined $simulated_profiles or defined $indiv_parameters or defined $covariates) {
+        if (defined $population_parameters) {
+            $sim_block->PopulationParameters($population_parameters);
+        }
+        if (defined $simulated_profiles or defined $indiv_parameters or defined $covariates or defined $population_parameters) {
             $self->_so_block->Simulation([]) if not defined $self->_so_block->Simulation;
             push @{$self->_so_block->Simulation->SimulationBlock}, $sim_block;
         } else {
             last;
         }
-        #last unless (defined $simulated_profiles or defined $indiv_parameters or defined $covariates);# or defined $population_parameters);
+        last unless (defined $simulated_profiles or defined $indiv_parameters or defined $covariates or defined $population_parameters);
         $replicate_no++;
         last if (defined $self->max_replicates and $replicate_no >= $self->max_replicates); 
     }
 
-    #close $population_table_fh;
     close $covariates_table_fh;
     close $indiv_table_fh;
     close $profiles_table_fh;
@@ -825,93 +836,60 @@ sub _create_covariates
 
     return $covariates;
 }
-=cut
+
 sub _create_population_parameters
 {
+    # Assume that the population parameters are constant and find the largest time period of any simulation replicate
+
     my $self = shift;
     my %parm = validated_hash(\@_,
         file => { isa => 'Ref' },
         table_file => { isa => 'Maybe[Str]' },
-        problem => { isa => 'model::problem' },
+        labels => { isa => 'ArrayRef' },
+        inits => { isa => 'ArrayRef' },
     );
     my $file = $parm{'file'};
     my $table_file = $parm{'table_file'};
-    my $problem = $parm{'problem'};
-
-    my $theta_labels = $problem->get_estimated_attributes(parameter => 'theta', attribute => 'labels');
-
+    my $labels = $parm{'labels'};
+    my @inits = @{$parm{'inits'}};
+ 
     my $colnosref = $self->_read_header(file => $file);
     return if not defined $colnosref;
     my %colnos = %{$colnosref};
 
-    my $labels = _get_included_columns(header => \%colnos, columns => $theta_labels);
-    return if (scalar(@$labels) == 0);
-    
-    my $population_parameters = $self->_create_occasion_table(
-        file => $file,
-        labels => $labels,
-        colnos => \%colnos,
-    );
-
-    my @rows;
-
-    my $running_id;
-    my $running_occ_start;
-    my @running_dv;
-    my $prev_time;
-    my $max_time;
+    # Find minimum and maximum of TIME
+    my @time;
 
     for (;;) {
         my $row = <$file>;
+        last if not defined $row;   # EOF
         if ($row =~ /^TABLE NO/) {
             seek($file, -length($row), 1);      # Unread the line for next iteration
-            $row = undef;
-        }
-        if (not defined $row) {
-            push @rows, [ $running_occ_start, $prev_time, @running_dv ];
             last;
         }
         chomp($row);
         $row =~ s/^\s+//;
         my @columns = split /\s+/, $row;
-
-        my $id = $columns[$colnos{'ID'}];
-        my $time = $columns[$colnos{'TIME'}];
-        $max_time = $time if $time > $max_time;
-        my @dv;
-        for my $col (@labels) {
-            push @dv, $columns[$colnos{$col}];
-        }
-        # Check if first id
-        if (not defined $running_id) {
-            $running_id = $id;
-            $running_occ_start = $time;
-            @running_dv = @dv;
-        }
-        # Check if something has changed
-        if ($running_id != $id or not array::is_equal(\@dv, \@running_dv)) {
-            push @rows, [ $running_id, $running_occ_start, $prev_time, @running_dv ];
-            $running_id = $id;
-            $running_occ_start = $time;
-            @running_dv = @dv;
-        }
-        $prev_time = $time;
+        push @time, $columns[$colnos{'TIME'}];
     }
 
-    my $table = $self->_xml->create_table(
-        table_name => "PopulationParameters",
-        column_ids => [ "ID", "OccasionStart", "OccationEnd", @labels ],
-        column_types => [ "id", "time", "time", ("undefined") x scalar(@labels) ],
-        column_valuetypes => [ "string", "real", "real", ("real") x scalar(@labels) ],
-        values => \@rows,
-        row_major => 1,
-        table_file => $table_file,
-    );
+    my @columns;
+    foreach my $e (@inits) {
+        push @columns, [ $e ];
+    }
 
+    my $population_parameters = so::table->new(
+        name => "PopulationParameters",
+        columnId => [ "occasionStart", "occasionEnd", @{$labels} ],
+        columnType => [ "time", "time", ("undefined") x scalar(@inits) ],
+        valueType => [ "real", "real", ("real") x scalar(@inits) ],
+        columns => [ [ scalar(array::min(\@time)) ], [ scalar(array::max(\@time)) ],  @columns ],
+        table_file => $table_file,
+    ); 
 
     return $population_parameters;
 }
-=cut
+
 sub _create_occasion_table
 {
     my $self = shift;
@@ -952,7 +930,7 @@ sub _create_occasion_table
         my $id = $columns[$colnos{'ID'}];
         my $time = $columns[$colnos{'TIME'}];
         my @dv;
-        for my $col (@labels) {
+         for my $col (@labels) {
             push @dv, $columns[$colnos{$col}];
         }
         # Check if first id
@@ -1108,13 +1086,15 @@ sub _add_status_messages
     );
 
     my $significant_digits = $output->significant_digits->[$problem][$subproblem];
-    $self->_so_block->TaskInformation->add_message(
-        type => "INFORMATION",
-        toolname => "NONMEM",
-        name => "significant_digits",
-        content => $significant_digits,
-        severity => 1,
-    );
+    if (defined $significant_digits) {
+        $self->_so_block->TaskInformation->add_message(
+            type => "INFORMATION",
+            toolname => "NONMEM",
+            name => "significant_digits",
+            content => $significant_digits,
+            severity => 1,
+        );
+    }
 }
 
 no Moose;

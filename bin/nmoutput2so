@@ -39,7 +39,7 @@ my %optional_options = (
     'pharmml:s' => undef,
     'verbose!' => undef,
     'external_tables!' => undef,
-    'so_version!' => undef,
+    'so_version:s' => undef,
 );
 
 

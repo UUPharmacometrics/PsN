@@ -118,6 +118,7 @@ $TABLE ID CL V ETA_CL ETA_V NOAPPEND FILE=patab
     \item The full xml file is stored in memory at once. This means that big results, for example big simulations, can potentially use a lot or all of the available memory.
     \item Does not support multiple DVIDs in SimulatedProfiles. Sets all to 1.
     \item Dose rows are included in Residuals, Predictions and SimulatedProfiles. They have value set to 0.
+    \item PopulationParameters for simulations are assumed to be fixed for all individuals and occations thus not supporting \$PRIOR
 \end{itemize}
 
 \section{Output}
@@ -152,6 +153,7 @@ The following entries will be populated:
                     \item CorrelationMatrix - If the covariance step was successful. Results will be taken from the .cor file if present otherwise from the .lst file.
                     \item StandardError - Results will be taken from the .ext file if present otherwise the .lst file. Parameters that are fixed will not be included
                     \item RelativeStandardError - Results will be taken from the .ext file if present otherwise the .lst file. The RSE is calculated has the ratio between the standard error and the estimated value of the parameter. Parameters that are fixed will not be included.
+                    \item ConditionNumber - Calculated from the eigenvalues in the .lst file if PRINT=E was present in the \$COV of the control stream.
                 \end{itemize}
                 \item Bootstrap
                 \begin{itemize}
@@ -185,6 +187,7 @@ The following entries will be populated:
                 \item SimulatedProfiles - Taken from the first table that contains all of ID, TIME and DV
                 \item IndivParameters - Taken from patab
                 \item Covariates - Taken from cotab
+                \item PopulationParameters - Created from the initial estimates of the parameters from the .lst file and the maxímum span of TIME from the first table that contains TIME.
             \end{itemize}
         \end{itemize}
 \end{itemize}
@@ -252,7 +255,6 @@ SO/
         Simulation/
             OriginalDataset
             SimulationBlock/
-                PopulationParameters
                 Dosing
                 RawResultsFile
 \end{verbatim}
