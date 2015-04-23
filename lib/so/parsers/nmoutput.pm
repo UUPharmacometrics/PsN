@@ -1021,6 +1021,10 @@ sub _create_dosing
         return;
     }
 
+    if (not -e $problem->datas->[0]->get_filename) {
+        return;
+    }
+
     my $data = data->new(filename => $problem->datas->[0]->get_filename, idcolumn => $ID_col, ignoresign => $problem->datas->[0]->ignoresign, parse_header => 0);
 
     my $id = $data->column_to_array(column => $ID_col);
