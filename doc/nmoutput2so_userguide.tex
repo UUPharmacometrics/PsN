@@ -117,7 +117,7 @@ $TABLE ID CL V ETA_CL ETA_V NOAPPEND FILE=patab
 \begin{itemize}
     \item The full xml file is stored in memory at once. This means that big results, for example big simulations, can potentially use a lot or all of the available memory.
     \item Does not support multiple DVIDs in SimulatedProfiles. Sets all to 1.
-    \item Dose rows are included in Residuals, Predictions and SimulatedProfiles. They have value set to 0.
+    \item To be able to filter out dose rows for SimulatedProfiles and Residuals and MDV column must be included in the sdtab otherwise all rows will be added.
     \item PopulationParameters for simulations are assumed to be fixed for all individuals and occations thus not supporting \$PRIOR
 \end{itemize}
 
@@ -173,7 +173,7 @@ The following entries will be populated:
                     \item EffectMean - Calculated from the patab if ETAs are named correctly
                 \end{itemize}
             \end{itemize}
-            \item Residuals - Taken from the sdtab if present
+            \item Residuals - Taken from the sdtab if present. If MDV column present only values for which MDV=0 will be added
             \item Predictions - Taken from the sdtab if present
             \item Likelihood
                 \begin{itemize}
@@ -184,7 +184,7 @@ The following entries will be populated:
         \begin{itemize}
             \item SimulationBlock    
             \begin{itemize}
-                \item SimulatedProfiles - Taken from the first table that contains all of ID, TIME and DV
+                \item SimulatedProfiles - Taken from the first table that contains all of ID, TIME and DV. If MDV column is present only DVs for which MDV=0 will be added.
                 \item IndivParameters - Taken from patab
                 \item Covariates - Taken from cotab
                 \item PopulationParameters - Created from the initial estimates of the parameters from the .lst file and the maxímum span of TIME from the first table that contains TIME.

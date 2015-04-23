@@ -477,13 +477,22 @@ sub _create_residuals
     }
     
     if (exists $sdtab->column_head_indices->{'IWRES'}) {
-        my $wres = $sdtab->column_to_array(column => "IWRES");
-        push @values, $wres;
+        my $iwres = $sdtab->column_to_array(column => "IWRES");
+        push @values, $iwres;
         push @ids, "IWRES";
     }
 
     if (scalar(@values) == 2) { # No columns were added
         return;
+    }
+
+    # Remove MDV rows
+    if (exists $sdtab->column_head_indices->{'MDV'}) {
+        my $mdv = $sdtab->column_to_array(column => "MDV");
+        foreach my $column (@values) {
+            my @new_col = map { int($mdv->[$_]) ? () : $column->[$_] } 0 .. scalar(@$mdv) - 1;
+            $column = \@new_col;
+        }
     }
 
     $self->_so_block->RawResults->add_datafile(name => $sdtab->filename, description => "sdtab");
@@ -636,6 +645,11 @@ sub _create_simulation
     my $labels = $parm{'labels'};
     my $inits = $parm{'inits'};
 
+    my $data_columns = $problem->inputs->[0]->get_nonskipped_columns;
+    my $have_AMT = grep { $_ eq 'AMT'  } @$data_columns;
+    my $have_PK = $model->has_code(record => 'pk');
+    #print "QQ: " . $problem->datas->[0]->filename . "\n";
+
     my $profiles_table_name = $problem->find_table(columns => [ 'ID', 'TIME', 'DV' ]);
     my $indiv_table_name = $problem->find_table_with_name(name => '^patab', path => $path);
     my $covariates_table_name = $problem->find_table_with_name(name => '^cotab', path => $path);
@@ -759,9 +773,11 @@ sub _create_simulated_profiles
         chomp($row);
         $row =~ s/^\s+//;
         my @columns = split /\s+/, $row;
-        push @id, $columns[$colnos{'ID'}];
-        push @time, $columns[$colnos{'TIME'}];
-        push @dv, $columns[$colnos{'DV'}];
+        if (not exists $colnos{'MDV'} or $columns[$colnos{'MDV'}] == 0) {
+            push @id, int($columns[$colnos{'ID'}]);
+            push @time, $columns[$colnos{'TIME'}];
+            push @dv, $columns[$colnos{'DV'}];
+        }
     }
     @dvid = ((1) x scalar(@id));        # Don't support multiple DVs for now
 
