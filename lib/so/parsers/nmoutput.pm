@@ -645,10 +645,10 @@ sub _create_simulation
     my $labels = $parm{'labels'};
     my $inits = $parm{'inits'};
 
+    my $dosing = $self->_create_dosing(model => $model, problem => $problem);
     my $data_columns = $problem->inputs->[0]->get_nonskipped_columns;
-    my $have_AMT = grep { $_ eq 'AMT'  } @$data_columns;
+    my $have_AMT = grep { $_ eq 'AMT' } @$data_columns;
     my $have_PK = $model->has_code(record => 'pk');
-    #print "QQ: " . $problem->datas->[0]->filename . "\n";
 
     my $profiles_table_name = $problem->find_table(columns => [ 'ID', 'TIME', 'DV' ]);
     my $indiv_table_name = $problem->find_table_with_name(name => '^patab', path => $path);
@@ -704,6 +704,9 @@ sub _create_simulation
         }
         if (defined $population_parameters) {
             $sim_block->PopulationParameters($population_parameters);
+        }
+        if (defined $dosing) {      # The same for all replicates
+            $sim_block->Dosing($dosing);
         }
         if (defined $simulated_profiles or defined $indiv_parameters or defined $covariates or defined $population_parameters) {
             $self->_so_block->Simulation([]) if not defined $self->_so_block->Simulation;
@@ -974,6 +977,84 @@ sub _create_occasion_table
         valueType => [ "string", "real", "real", ("real") x scalar(@labels) ],
         columns => \@rows,
         table_file => $table_file,
+    );
+
+    return $table;
+}
+
+sub _create_dosing
+{
+    my $self = shift;
+    my %parm = validated_hash(\@_,
+        model => { isa => 'model' },
+        problem => { isa => 'model::problem' },
+    );
+    my $model = $parm{'model'};
+    my $problem = $parm{'problem'};
+ 
+    # Only support $PK
+    if (not $model->has_code(record => 'pk')) {
+        return;
+    }
+
+    my $data_columns = $problem->inputs->[0]->get_nonskipped_columns;
+    my $ID_col;
+    my $TIME_col;
+    my $AMT_col;
+    my $RATE_col;
+    my $SS_col;
+    my $II_col;
+
+    for (my $col = 0; $col < scalar(@{$problem->inputs->[0]->options}); $col++) {
+        my $option = $problem->inputs->[0]->options->[$col];
+        next if ($option->value eq "DROP" or $option->value eq "SKIP" or $option->name eq "DROP" or $option->name eq "SKIP");
+        my $name = $option->name;
+        $ID_col = $col if ($name eq "ID");
+        $TIME_col = $col if ($name eq "TIME");
+        $AMT_col = $col if ($name eq "AMT");
+        $RATE_col = $col if ($name eq "RATE");
+        $SS_col = $col if ($name eq "SS");
+        $II_col = $col if ($name eq "II");
+    }
+
+    if (not defined $ID_col or not defined $TIME_col) {
+        return;
+    }
+
+    my $data = data->new(filename => $problem->datas->[0]->get_filename, idcolumn => $ID_col, ignoresign => $problem->datas->[0]->ignoresign, parse_header => 0);
+
+    my $id = $data->column_to_array(column => $ID_col);
+    $id = [ map { int($_) } @$id ];
+    my $time = $data->column_to_array(column => $TIME_col);
+
+    my @column_id = ( "ID", "TIME" );
+    my @column_type = ( "id", "time" );
+    my @value_type = ( "string", "real" );
+    my @columns = ( $id, $time );
+
+    # have only AMT
+    if (defined $AMT_col and not defined $RATE_col and not defined $SS_col and not defined $II_col) {
+        my $amt = $data->column_to_array(column => $AMT_col);
+        push @column_id, "AMT";
+        push @column_type, "dose";
+        push @value_type, "real";
+        push @columns, $amt;
+        foreach my $column (@columns) {     # Filter out rows with AMT = 0
+            my @new_col = map { $amt->[$_] == 0 ? () : $column->[$_] } 0 .. scalar(@$amt) - 1;
+            $column = \@new_col;
+        }
+        # filter out AMT = 0
+    } else {
+        return;
+    }
+
+    my $table = so::table->new(
+        name => "Dosing",
+        columnId => \@column_id,
+        columnType => \@column_type,
+        valueType => \@value_type,
+        columns => \@columns,
+        #table_file => $table_file,
     );
 
     return $table;

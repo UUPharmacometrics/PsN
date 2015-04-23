@@ -94,7 +94,7 @@ $OMEGA BLOCK(2)
         \end{verbatim}
     \item To be able to populate the Residuals and the Predictions entries an sdtab table must be specified. The name but not the orders of the columns is important. ID and TIME must be in the table. Other columns are optional. The example below shows an sdtab with all columns. The name of the file must start with "sdtab" Example:
         \begin{verbatim}
-$TABLE ID TIME DV PRED IPRED RES IRES WRES IWRES NOAPPEND FILE=sdtab2
+$TABLE ID TIME MDV DV PRED IPRED RES IRES WRES IWRES NOAPPEND FILE=sdtab2
         \end{verbatim}
     \item To be able to populate the IndividualEstimates entry a patab table must be specified. NOAPPEND must be used and the order of the columns is important. The first column must be ID, then comes all individual parameters followed by the ETAs (see below). Example:
         \begin{verbatim}
@@ -188,6 +188,7 @@ The following entries will be populated:
                 \item IndivParameters - Taken from patab
                 \item Covariates - Taken from cotab
                 \item PopulationParameters - Created from the initial estimates of the parameters from the .lst file and the maxímum span of TIME from the first table that contains TIME.
+                \item Dosing - Created from the original dataset. Can currently only handle the AMT column.
             \end{itemize}
         \end{itemize}
 \end{itemize}
@@ -255,7 +256,6 @@ SO/
         Simulation/
             OriginalDataset
             SimulationBlock/
-                Dosing
                 RawResultsFile
 \end{verbatim}
 
