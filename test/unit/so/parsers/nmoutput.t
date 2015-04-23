@@ -22,7 +22,7 @@ SKIP: {
 
         my $doc = XML::LibXML->load_xml(location => $filename);
         my $xpc = XML::LibXML::XPathContext->new($doc);
-        $xpc->registerNs('x' => 'http://www.pharmml.org/so/0.1/StandardisedOutput');
+        $xpc->registerNs('x' => 'http://www.pharmml.org/so/0.2/StandardisedOutput');
 
         return $xpc;
     }
