@@ -26,8 +26,7 @@ our $nm_minor_version;
 
 our $warnings_enabled;
 our @nm7_extensions = ('.ext','.cov','.cor','.coi','.phi','.phm', '.shk','.grd','.xml','.cnv','.smt','.rmt',
-					   '.imp','.npd','.npe','.npi','.fgh','.log.xml');
-
+					   '.imp','.npd','.npe','.npi','.fgh','.log.xml','.cpu','.shm','.agh');
 
 # Default disable all warnings except those coming from Getopt
 # Enable all warnings if $warnings_enabled is set
