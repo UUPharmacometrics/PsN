@@ -29,6 +29,7 @@ has 'toolname' => ( is => 'rw', isa => 'Str', default => 'NONMEM' );
 has 'max_replicates' => ( is => 'rw', isa => 'Maybe[Int]' );        # Maximum number of simulation replicates to add
 has 'verbose' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'external_tables' => ( is => 'rw', isa => 'Bool', default => 0 );   # For now a bool to specify if external tables should be created
+has 'labels_hash' => ( is => 'rw', isa => 'HashRef' );  # List of labels on sd/corr scale etc. Intended for external use i.e. bootstrap
 has '_document' => ( is => 'rw', isa => 'Ref' );                    # The XML document 
 has '_duplicate_blocknames' => ( is => 'rw', isa => 'HashRef' );    # Contains those blocknames which will have duplicates with next number for block
 has '_so_path' => ( is => 'rw', isa => 'Str' );                     # The path of the output SO file
@@ -65,7 +66,7 @@ sub _parse_lst_file
     my $path = utils::file::directory($lst_file);
 
     my $elapsed_time = 0;
-    my @on_sd_scale;
+    my @on_sd_scale = ();
 
     my $file_stem = utils::file::get_file_stem($lst_file);
 
@@ -155,6 +156,7 @@ sub _parse_lst_file
 
             my @filtered_labels = @{$model->problems->[$problems]->get_estimated_attributes(parameter => 'all', attribute => 'labels')};
             my @filtered_inits = @{$model->problems->[$problems]->get_estimated_attributes(parameter => 'all', attribute => 'inits')};
+            my @all_coordinate_labels = @{$model->problems->[$problems]->get_estimated_attributes(parameter => 'all', attribute => 'coordinate_strings')};
 
             my @all_labels = @filtered_labels; #will add fix with label here
             my @all_inits = @filtered_inits;
@@ -182,6 +184,7 @@ sub _parse_lst_file
                     push @est_values, $option->init;
                     push @all_labels, $option->label;
                     push @all_inits, $option->init;
+                    push @all_coordinate_labels, $option->coordinate_string;
                 }
                 if ($option->sd or $option->corr) {     # Save labels for parameters on sd/corr scale
                     if (grep { $_ eq $option->label } @all_labels) {
@@ -190,8 +193,10 @@ sub _parse_lst_file
                 }
             }
 
+            $self->labels_hash({ labels => \@all_labels, on_sd_scale => \@on_sd_scale, coordinate_labels => \@all_coordinate_labels });
+
             if ($estimation_step_run or $simulation_step_run) {
-                foreach my $label (@all_labels) {
+                foreach my $label (@all_labels, @on_sd_scale) {
                     if (not so::xml::match_symbol_idtype($label)) {
                         my $old_label = $label;
                         $label = so::xml::mangle_symbol_idtype($label);
@@ -336,26 +341,6 @@ sub _parse_lst_file
         content => "This SOBlock was created with nmoutput2so version " . $PsN::version,
         severity => 0,
     );
-
-=cut
-        if (defined $self->bootstrap_results and scalar(@on_sd_scale) > 0) {
-            my $msg;
-            if (scalar(@on_sd_scale) == 1) {
-                $msg = "The parameter " . $on_sd_scale[0] . " is on sd/corr scale in the model but the bootstrap percentiles for this parameter will be on var/cov scale";
-            } elsif (scalar(@on_sd_scale) == 2) {
-                $msg = "The parameters " . $on_sd_scale[0] . " and " . $on_sd_scale[1] . " are on sd/corr scale in the model but the bootstrap percentiles for these parameters will be on var/cov scale";
-            } else {
-                $msg = "The parameters " . join(',', @on_sd_scale[0 .. $#on_sd_scale - 1]) . " and " . $on_sd_scale[-1] . " are on sd/corr scale in the model but the bootstrap percentiles for these parameters will be on the var/cov scale";
-            }
-            $self->_so_block->TaskInformation->add_message(
-                type => "WARNING",
-                toolname => "PsN",
-                name => "Bootstrap",
-                content => $msg, 
-                severity => 8,
-            );
-        }
-=cut
 }
 
 sub _get_included_columns
