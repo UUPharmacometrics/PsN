@@ -299,13 +299,16 @@ sub _read_covmatrix
 	
 	# }}}
 
+	my $keep_headers_array = $self->input_problem->get_estimated_attributes(attribute=>'coordinate_strings');
+
 	while ( $_ = @{$self->lstfile}[ $start_pos++ ] ) {
 		if (/T MATRIX/) {
 			while ( $_ = @{$self->lstfile}[ $start_pos++ ] ) {
 				if (/^ TH (\d)/ or /^\s+TH (\d) \| /) { # Read matrix and get out of inner while loop
 					my $temp_matrix;
-					( $start_pos, $temp_matrix, $t_success, $dummyheaders )  = $self ->
-						_read_matrixoestimates( pos => $start_pos-1 );# and last;
+					( $start_pos, $temp_matrix, $t_success, $dummyheaders )  = _read_matrixoestimates( pos => $start_pos-1,
+																									   lstfile => $self->lstfile,
+																									   keep_headers_array => $keep_headers_array);# and last;
 					$self->raw_tmatrix($temp_matrix);
 					last;
 				}
@@ -316,7 +319,9 @@ sub _read_covmatrix
 			while( $_ = @{$self->lstfile}[ $start_pos++ ] ) {
 				if (/^ TH (\d)/ or /^\s+TH (\d) \| /) { # Read matrix and get out of inner while loop
 					my $temp_matrix;
-					( $start_pos, $temp_matrix, $c_success, $dummyheaders ) = $self -> _read_matrixoestimates( pos => $start_pos - 1 );# and last;
+					( $start_pos, $temp_matrix, $c_success, $dummyheaders ) = _read_matrixoestimates( pos => $start_pos - 1,
+																									  lstfile => $self->lstfile,
+																									   keep_headers_array => $keep_headers_array );# and last;
 					unless (defined $self->raw_covmatrix and scalar(@{$self->raw_covmatrix})>0){
 						#only store if not already read from NM7 additional output
 						$self->raw_covmatrix($temp_matrix);
@@ -329,7 +334,9 @@ sub _read_covmatrix
 			while( $_ = @{$self->lstfile}[ $start_pos++ ] ) {
 				if (/^ TH (\d)/ or /^\s+TH (\d) \| /) { # Read matrix and get out of inner while loop
 					my $temp_matrix;
-					( $start_pos, $temp_matrix, $corr_success, $headers ) = $self -> _read_matrixoestimates( pos => $start_pos - 1 );# and last;
+					( $start_pos, $temp_matrix, $corr_success, $headers ) = _read_matrixoestimates( pos => $start_pos - 1,
+																									lstfile => $self->lstfile,
+																									keep_headers_array => $keep_headers_array );# and last;
 					$self->raw_cormatrix($temp_matrix);
 					last;
 				}
@@ -339,7 +346,9 @@ sub _read_covmatrix
 			while( $_ = @{$self->lstfile}[ $start_pos++ ] ) {
 				if (/^ TH (\d)/ or /^\s+TH (\d) \| /) { # Read matrix and get out of inner while loop
 					my $temp_matrix;
-					( $start_pos, $temp_matrix, $i_success, $dummyheaders ) = $self -> _read_matrixoestimates( pos => $start_pos - 1 );# and last;
+					( $start_pos, $temp_matrix, $i_success, $dummyheaders ) = _read_matrixoestimates( pos => $start_pos - 1,
+																									  lstfile => $self->lstfile,
+																									  keep_headers_array => $keep_headers_array );# and last;
 					$self->raw_invcovmatrix($temp_matrix);
 					last;
 				}
@@ -3138,32 +3147,41 @@ sub _return_function
 
 sub _read_matrixoestimates
 {
-	my $self = shift;
+	#static no shift
 	my %parm = validated_hash(\@_,
-		 pos => { isa => 'Int', default => 0, optional => 1 }
+		 pos => { isa => 'Int', default => 0, optional => 1 },
+		 lstfile => { isa => 'ArrayRef', optional => 0 },
+		 keep_headers_array => { isa => 'ArrayRef', optional => 0 },
 	);
 	my $pos = $parm{'pos'};
+	my $lstfile = $parm{'lstfile'};
+	my $keep_headers_array = $parm{'keep_headers_array'};
+
 	my @subprob_matrix;
 	my $success = 0;
 	my @row_headers;
-
+	my @matrix=();
 	# Reads one matrix structure and returns the file handle at
 	# the beginning of the next structure
 
 	#this does not handle TH1 | TH2 type format
-	my $reading_header = 0;
-	while ( $_ = @{$self->lstfile}[ $pos++ ] ) {
-		last if (/^\s*\*/);
-		# Rewind one step if we find something that marks the end of
-		# our structure
-		$pos-- and last if ( /^ PROBLEM.*SUBPROBLEM/ or /^ PROBLEM NO\.:\s+\d/ );
-		$pos-- and last if (/^[a-df-zA-DF-Z]/);
-
+	my $matrix_row=-1;
+	while ( $_ = @{$lstfile}[ $pos++ ] ) {
+		if ( /^\s*\*/ or /^ PROBLEM.*SUBPROBLEM/ or /^ PROBLEM NO\.:\s+\d/ or /^[a-df-zA-DF-Z]/){
+			if ( /^ PROBLEM.*SUBPROBLEM/ or /^ PROBLEM NO\.:\s+\d/ or /^[a-df-zA-DF-Z]/ ){
+				# Rewind one step if we find something that marks the end of
+				# our structure
+				$pos--;
+			}
+			last;
+		}
 		if ( /^ TH/ or /^ OM/ or /^ SG/ ) {	  # Row header row (single space)
+			push(@matrix,[]);
+			$matrix_row++;
 			my $label;
 			chomp;				# Get rid of line-feed
 			s/\s*//g; #get rid of whitespaces
-	    #transform into correct label format
+			#transform into correct label format
 			if (/TH([0-9]+)/) {
 				$label = 'THETA'.$1;
 			} elsif (/(OM|SG)([0-9]+)/) {
@@ -3174,35 +3192,79 @@ sub _read_matrixoestimates
 				} else {
 					croak("unknown $1");
 				}
-	      my $len = length($2); #half of this is number of characters for each index
-	      my $x = substr ($2, 0, ($len/2));
-	      my $y = substr ($2, ($len/2));
-	      #NONMEM may pad with zeros
-	      $x =~ s/^0*//;
-	      $y =~ s/^0*//;
-	      $label .= $y.','.$x.')'; #NONMEM indexes upper triangular matrix
-	    } else {
-	      croak("Unknown format of labels in matrix ".$_);
-	    }
-	    push( @row_headers, $label ) ;
-	    next;
-	  } elsif ( /^\s+TH/ or /^\s+OM/ or /^\s+SG/ ) {	  # Column header (multiple spaces)
-	    next;
-	  }
+				my $len = length($2); #half of this is number of characters for each index
+				my $col = substr ($2, 0, ($len/2));
+				my $row = substr ($2, ($len/2));
+				#NONMEM may pad with zeros
+				$col =~ s/^0*//;
+				$row =~ s/^0*//;
+				$label .= $row.','.$col.')'; #NONMEM indexes lower triangular matrix
+			} else {
+				croak("Unknown format of labels in matrix ".$_);
+			}
+			push( @row_headers, $label ) ;
+			next;
+		} elsif ( /^\s+TH/ or /^\s+OM/ or /^\s+SG/ ) {	  # Column header (multiple spaces)
+			next;
+		}
 
-	  next if ( /^1/ );			  # Those annoying 1's
-	  next if ( /\s*#/ );			  # NONMEM tag
+		next if ( /^1/ );			  # Those annoying 1's
+		next if ( /\s*#/ );			  # NONMEM tag
 
-	  chomp;				# Get rid of line-feed
-	  my @row = split;
+		chomp;				# Get rid of line-feed
+		my @row = split;
 		shift( @row ) if ( $row[0] eq '+' );	   # Get rid of +-sign
 
 		next if ( $#row < 0 );			   # Blank row
-	  
-		push( @subprob_matrix, @row );
+		
+		push( @{$matrix[$matrix_row]}, @row );
 	}
-	$success = 1 if ( scalar @subprob_matrix > 0 );
 
+	#now have triangular matrix, one row per item in @matrix. Labels in @row_headers.
+	#Need to sort rows and cols according to right order 
+	#into new triangular matrix, and then store that as one-dim array
+
+	my @old_indices=();
+
+	for (my $i=0; $i<scalar(@{$keep_headers_array}); $i++){
+		my $found=0;
+		for (my $j=0; $j<scalar(@row_headers); $j++){
+			if ($keep_headers_array->[$i] eq $row_headers[$j]){
+				$found=1;
+				push(@old_indices,$j);
+				last;
+			}
+		}
+		unless ($found){
+			print join(' ',@{$keep_headers_array})."\n";
+			print join(' ',@row_headers)."\n";
+			croak("could not find ".$keep_headers_array->[$i]);
+		}
+	}
+#	print join(' ',@{$keep_headers_array})."\n";
+#	print join(' ',@row_headers)."\n";
+#	print join(' ',@old_indices)."\n\n";
+#	for (my $i=0;$i<scalar(@{$keep_headers_array}); $i++){
+#		print join(' ',@{$matrix[$i]})."\n";
+#	}
+	for (my $i=0;$i<scalar(@{$keep_headers_array}); $i++){
+		my $row_index = $old_indices[$i];
+		my @line=();
+		for (my $j=0; $j<= $i ; $j++){
+			my $column_index = $old_indices[$j];
+			if ($column_index > $row_index){
+				push(@line,$matrix[$column_index]->[$row_index]);
+			}else{
+				push(@line,$matrix[$row_index]->[$column_index]);
+			}
+		}
+#		print join(' ',@line)."\n";
+		push(@subprob_matrix,@line);
+	}
+
+#		push( @subprob_matrix, @row );
+	$success = 1 if ( scalar @subprob_matrix > 0 );
+#	print join(' ',@subprob_matrix)."\n";
 	return $pos ,\@subprob_matrix ,$success ,\@row_headers;
 }
 
