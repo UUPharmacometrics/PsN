@@ -8,6 +8,8 @@ sub read_answers{
 	$answer_hashes[$index]->{file}='nm73/anneal2_V7_30_beta.lst';
 	$answer_hashes[$index]->{parsed_successfully}=1;
 	$answer_hashes[$index]->{estimation_evaluation_problem_number}=1;
+	$answer_hashes[$index]->{problem_count}=1;
+	$answer_hashes[$index]->{subproblem_count}=[1];
 	$answer_hashes[$index]->{answers}={};
 #problem index  0 subproblem index 0
 	$answer_hashes[$index]->{answers}->{0}->{0}->{'ofv'}=859.85332322386887;
@@ -28,6 +30,8 @@ sub read_answers{
 	$answer_hashes[$index]->{file}='multPROB/multEST/withSIM/max100_max100_V7_10_g_reg.lst';
 	$answer_hashes[$index]->{parsed_successfully}=1;
 	$answer_hashes[$index]->{estimation_evaluation_problem_number}=1;
+	$answer_hashes[$index]->{problem_count}=2;
+	$answer_hashes[$index]->{subproblem_count}=[3,2];
 	$answer_hashes[$index]->{answers}={};
 	$answer_hashes[$index]->{answers}->{0}->{0}->{'ofv'}=-276.07618174617875;
 	$answer_hashes[$index]->{answers}->{0}->{0}->{'covariance_step_run'}=0;
@@ -76,6 +80,8 @@ sub read_answers{
 	$answer_hashes[$index]->{file}='multPROB/multEST/withSIM/max100_max100_V7_30_beta.lst';
 	$answer_hashes[$index]->{parsed_successfully}=1;
 	$answer_hashes[$index]->{estimation_evaluation_problem_number}=1;
+	$answer_hashes[$index]->{problem_count}=2;
+	$answer_hashes[$index]->{subproblem_count}=[3,2];
 	$answer_hashes[$index]->{answers}={};
 	$answer_hashes[$index]->{answers}->{0}->{0}->{'ofv'}=-293.36139632157551;
 	$answer_hashes[$index]->{answers}->{0}->{0}->{'covariance_step_run'}=0;
@@ -123,6 +129,8 @@ sub read_answers{
 	$answer_hashes[$index]->{file}='multPROB/oneEST/withSIM/p1_cov_p2_sim_noest_V7_10_g_reg.lst';
 	$answer_hashes[$index]->{parsed_successfully}=1;
 	$answer_hashes[$index]->{estimation_evaluation_problem_number}=1;
+	$answer_hashes[$index]->{problem_count}=2;
+	$answer_hashes[$index]->{subproblem_count}=[1,20];
 	$answer_hashes[$index]->{answers}={};
 	$answer_hashes[$index]->{answers}->{0}->{0}->{'ofv'}=742.05104625255387;
 	$answer_hashes[$index]->{answers}->{0}->{0}->{'covariance_step_successful'}=1;
@@ -147,6 +155,8 @@ sub read_answers{
 	$answer_hashes[$index]->{file}='multPROB/oneEST/noSIM/p1_p2_tab_noest_Vvi_20.lst';
 	$answer_hashes[$index]->{parsed_successfully}=1;
 	$answer_hashes[$index]->{estimation_evaluation_problem_number}=1;
+	$answer_hashes[$index]->{problem_count}=2;
+	$answer_hashes[$index]->{subproblem_count}=[1,1];
 	$answer_hashes[$index]->{answers}={};
 	$answer_hashes[$index]->{answers}->{0}->{0}->{'ofv'}=742.051;
 	$answer_hashes[$index]->{answers}->{0}->{0}->{'covariance_step_run'}=0;
@@ -191,6 +201,8 @@ sub read_answers{
 	$answer_hashes[$index]->{file}='onePROB/oneEST/withSIM/cov_nsub2_Vvi_10.lst';
 	$answer_hashes[$index]->{parsed_successfully}=1;
 	$answer_hashes[$index]->{estimation_evaluation_problem_number}=1;
+	$answer_hashes[$index]->{problem_count}=1;
+	$answer_hashes[$index]->{subproblem_count}=[2];
 	$answer_hashes[$index]->{answers}={};
 	$answer_hashes[$index]->{answers}->{0}->{0}->{'ofv'}=934.044;
 	$answer_hashes[$index]->{answers}->{0}->{0}->{'covariance_step_successful'}=1;
@@ -352,6 +364,8 @@ sub read_answers{
 	$answer_hashes[$index]->{answers}={};
 	$answer_hashes[$index]->{parsed_successfully}=1;
 	$answer_hashes[$index]->{estimation_evaluation_problem_number}=-1;
+	$answer_hashes[$index]->{problem_count}=2;
+	$answer_hashes[$index]->{subproblem_count}=[0,1];
 	$answer_hashes[$index]->{answers}->{1}->{0}->{'covariance_step_run'}=0;
 
 	$index++;
@@ -360,6 +374,8 @@ sub read_answers{
 	$answer_hashes[$index]->{answers}={};
 	$answer_hashes[$index]->{parsed_successfully}=1;
 	$answer_hashes[$index]->{estimation_evaluation_problem_number}=2;
+	$answer_hashes[$index]->{problem_count}=2;
+	$answer_hashes[$index]->{subproblem_count}=[0,1];
 	$answer_hashes[$index]->{answers}->{1}->{0}->{'ofv'}=742.051;
 	$answer_hashes[$index]->{answers}->{1}->{0}->{'covariance_step_run'}=0;
 	$answer_hashes[$index]->{answers}->{1}->{0}->{'rounding_errors'}=0;
@@ -519,6 +535,8 @@ sub read_answers{
 	$answer_hashes[$index]->{answers}={};
 	$answer_hashes[$index]->{parsed_successfully}=1;
 	$answer_hashes[$index]->{estimation_evaluation_problem_number}=1;
+	$answer_hashes[$index]->{problem_count}=2;
+	$answer_hashes[$index]->{subproblem_count}=[1,1];
 	$answer_hashes[$index]->{answers}->{0}->{0}->{'ofv'}=738.19441029848952;
 	$answer_hashes[$index]->{answers}->{0}->{0}->{'covariance_step_run'}=0;
 	$answer_hashes[$index]->{answers}->{0}->{0}->{'rounding_errors'}=0;
@@ -638,6 +656,8 @@ sub read_answers{
 	$answer_hashes[$index]->{answers}={};
 	$answer_hashes[$index]->{parsed_successfully}=1;
 	$answer_hashes[$index]->{estimation_evaluation_problem_number}=1;
+	$answer_hashes[$index]->{problem_count}=1;
+	$answer_hashes[$index]->{subproblem_count}=[1];
 	$answer_hashes[$index]->{answers}->{0}->{0}->{'ofv'}=-631.50031282584780;
 	$answer_hashes[$index]->{answers}->{0}->{0}->{'covariance_step_successful'}=0;
 	$answer_hashes[$index]->{answers}->{0}->{0}->{'covariance_step_run'}=1;
@@ -655,6 +675,8 @@ sub read_answers{
 	$answer_hashes[$index]->{answers}={};
 	$answer_hashes[$index]->{parsed_successfully}=1;
 	$answer_hashes[$index]->{estimation_evaluation_problem_number}=1;
+	$answer_hashes[$index]->{problem_count}=1;
+	$answer_hashes[$index]->{subproblem_count}=[1];
 	$answer_hashes[$index]->{answers}->{0}->{0}->{'ofv'}=-585.76675297099121;
 	$answer_hashes[$index]->{answers}->{0}->{0}->{'rounding_errors'}=1;
 	$answer_hashes[$index]->{answers}->{0}->{0}->{'minimization_successful'}=0;
@@ -668,6 +690,8 @@ sub read_answers{
 	$answer_hashes[$index]->{file}='special_mod/s_matrix_singular.lst';
 	$answer_hashes[$index]->{answers}={};
 	$answer_hashes[$index]->{parsed_successfully}=1;
+	$answer_hashes[$index]->{problem_count}=1;
+	$answer_hashes[$index]->{subproblem_count}=[1];
 	$answer_hashes[$index]->{answers}->{0}->{0}->{'ofv'}=45.143655409090925;
 	$answer_hashes[$index]->{answers}->{0}->{0}->{'covariance_step_successful'}=1;
 	$answer_hashes[$index]->{answers}->{0}->{0}->{'covariance_step_run'}=1;
@@ -861,20 +885,42 @@ sub read_answers{
 	$answer_hashes[$index]->{answers}->{1}->{0}->{'ofv'}=850.2920;
 
 
-$index++;
-$answer_hashes[$index]={};
-$answer_hashes[$index]->{file}='special_mod/minimterm_cov_unconditional.lst';
-$answer_hashes[$index]->{answers}={};
-$answer_hashes[$index]->{parsed_successfully}=1;
-$answer_hashes[$index]->{answers}->{0}->{0}->{'ofv'}=-126.07168897227753;
-$answer_hashes[$index]->{answers}->{0}->{0}->{'covariance_step_successful'}=1;
-$answer_hashes[$index]->{answers}->{0}->{0}->{'covariance_step_run'}=1;
-$answer_hashes[$index]->{answers}->{0}->{0}->{'covariance_step_warnings'}=0;
-$answer_hashes[$index]->{answers}->{0}->{0}->{'rounding_errors'}=0;
-$answer_hashes[$index]->{answers}->{0}->{0}->{'minimization_successful'}=0;
-$answer_hashes[$index]->{answers}->{0}->{0}->{'condition_number'}=64.3499;
-$answer_hashes[$index]->{answers}->{0}->{0}->{'thetas'}=[1.07027E+00,1.01106E+00,1.62179E+00,9.94810E-01,9.91695E-01,9.99383E-01,9.66497E-01,2.96531E+02,1.00943E+00,8.55659E-01,5.80170E-01,0.00000E+00,3.93536E+00,2.94797E-01,6.75100E-03,1.23423E-01,0.00000E+00,9.74910E-02];
-$answer_hashes[$index]->{answers}->{0}->{0}->{'sethetas'}=[5.86046E-01,5.03596E-01,1.43049E-01,5.11541E-01,5.42919E-01,5.40343E-01,2.45831E-01,4.12643E+01,9.77086E-02,2.67354E-02,1.29819E-01,0.00000E+00,5.80841E-01,4.07894E-02,0.00000E+00,4.18430E-02,0.00000E+00,5.58527E-02];
+	$index++;
+	$answer_hashes[$index]={};
+	$answer_hashes[$index]->{file}='special_mod/minimterm_cov_unconditional.lst';
+	$answer_hashes[$index]->{answers}={};
+	$answer_hashes[$index]->{parsed_successfully}=1;
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'ofv'}=-126.07168897227753;
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'covariance_step_successful'}=1;
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'covariance_step_run'}=1;
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'covariance_step_warnings'}=0;
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'rounding_errors'}=0;
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'minimization_successful'}=0;
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'condition_number'}=64.3499;
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'thetas'}=[1.07027E+00,1.01106E+00,1.62179E+00,9.94810E-01,9.91695E-01,9.99383E-01,9.66497E-01,2.96531E+02,1.00943E+00,8.55659E-01,5.80170E-01,0.00000E+00,3.93536E+00,2.94797E-01,6.75100E-03,1.23423E-01,0.00000E+00,9.74910E-02];
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'sethetas'}=[5.86046E-01,5.03596E-01,1.43049E-01,5.11541E-01,5.42919E-01,5.40343E-01,2.45831E-01,4.12643E+01,9.77086E-02,2.67354E-02,1.29819E-01,0.00000E+00,5.80841E-01,4.07894E-02,0.00000E+00,4.18430E-02,0.00000E+00,5.58527E-02];
+
+	$index++;
+	$answer_hashes[$index]->{file}='special_mod/high_correlations.lst';
+	$answer_hashes[$index]->{parsed_successfully}=1; #omega(2,1)-omega(1,1)  omega(2,2)-omega(1,1)  omega(2,2)-omega(2-1)
+	$answer_hashes[$index]->{high_correlations_names}=['OMEGA(2,1) - IIV CL','IIV V - IIV CL','IIV V - OMEGA(2,1)']; 
+	$answer_hashes[$index]->{high_correlations_values}=[0.991,0.964,0.99];
+	$answer_hashes[$index]->{answers}={};
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'minimization_successful'}=1;
+
+	$index++;
+	$answer_hashes[$index]->{file}='special_mod/large_standard_errors.lst';
+	$answer_hashes[$index]->{parsed_successfully}=1;#    4-2             5-2           5-4        22-2             22-4            22-5         33-3 
+	$answer_hashes[$index]->{high_correlations_names}=['KD0 - ln(KL)','L0 - ln(KL)','L0 - KD0','ETA(2) - ln(KL)','ETA(2) - KD0','ETA(2) - L0','ETA(3) - ln(IC50)']; 
+	$answer_hashes[$index]->{high_correlations_values}=[0.998,          -0.996,        -0.990,   -0.986,         -0.989,            0.973,       -0.988];
+	$answer_hashes[$index]->{answers}={};
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'minimization_successful'}=0;
+
+#3.4                             ; ln(BLN)
+#-2.25                           ; ln(KL)
+#-9                              ; ln(IC50)
+#0.119                   	; KD0
+#0.025                           ;  L0
 
 	return \@answer_hashes;
 }

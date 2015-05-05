@@ -52,7 +52,6 @@ has 'parsing_error_message' => ( is => 'rw', isa => 'Str' );
 has 'pval' => ( is => 'rw', isa => 'ArrayRef' );
 has 'raw_cormatrix' => ( is => 'rw', isa => 'ArrayRef' );
 has 'correlation_matrix' => ( is => 'rw', isa => 'ArrayRef' );
-has 'output_matrix_headers' => ( is => 'rw', isa => 'ArrayRef' );
 has 'raw_covmatrix' => ( is => 'rw', isa => 'ArrayRef' );
 has 'raw_invcovmatrix' => ( is => 'rw', isa => 'ArrayRef' );
 has 'raw_omegas' => ( is => 'rw', isa => 'ArrayRef' );
@@ -381,25 +380,7 @@ sub _read_covmatrix
 			}
 		}
 	}
-	unless (defined $self->output_matrix_headers and scalar(@{$self->output_matrix_headers})>0){
-		#only store if not already read from NM7 additional output
-		if (defined $headers) {
-			#need to get rid of row headers for lines with only .....
-			my $row = 1;
-			my $col = 1;
-			foreach my $element ( @{$self->raw_cormatrix } ) {
-				if (($col == 1) and ($element ne '.........' )) {
-					$self->output_matrix_headers([]);
-					push( @{$self->output_matrix_headers}, $headers->[$row - 1]); 
-				}
-				$col++;
-				if ($col > $row) {
-					$col = 1;
-					$row++;
-				}
-			}
-		}
-	}
+
 	#If something has gone right!
 	$self->lstfile_pos($start_pos) if ( $t_success + $c_success + $corr_success + $i_success );
 }
@@ -2076,22 +2057,6 @@ sub thetas
 	return \@values;
 }
 
-sub est_thetanames
-{
-	my $self = shift;
-	my @values;
-
-  if (defined $self->output_matrix_headers) {
-    my @names = @{$self->output_matrix_headers};
-    foreach my $name (@names) {
-      if ($name =~ /THETA/) {
-				push(@values, $name);
-      }
-    }
-  }
-
-	return \@values;
-}
 
 sub thetanames
 {
@@ -2155,22 +2120,6 @@ sub sdcorrform_omegas
 	return \@values;
 }
 
-sub est_omeganames
-{
-	my $self = shift;
-	my @values;
-
-  if (defined $self->output_matrix_headers) {
-    my @names = @{$self->output_matrix_headers};
-    foreach my $name (@names) {
-      if ($name =~ /OMEGA/) {
-				push(@values, $name);
-      }
-    }
-  }
-
-	return \@values;
-}
 
 # Comparison method for omeganames, sigmanames and thetanames
 sub cmp_coords
@@ -2342,22 +2291,6 @@ sub sdcorrform_sigmas
 	return \@values;
 }
 
-sub est_sigmanames
-{
-	my $self = shift;
-	my @values;
-
-  if (defined $self->output_matrix_headers) {
-    my @names = @{$self->output_matrix_headers};
-    foreach my $name (@names) {
-      if ($name =~ /SIGMA/) {
-				push(@values,$name);
-      }
-    }
-  }
-
-	return \@values;
-}
 
 sub sigmanames
 {
@@ -3143,14 +3076,6 @@ sub parse_NM7_additional
 			);
 
 		next unless ($success and defined $matrix_array_ref and scalar(@{$matrix_array_ref}) > 0);
-
-		unless (defined $self->output_matrix_headers and scalar(@{$self->output_matrix_headers})>0){
-			my @column_headers = ();
-			foreach my $ind (@{$index_order_ref}) {
-				push (@column_headers, $header_labels_ref->[$ind]);
-			}
-			$self->output_matrix_headers(\@column_headers);
-		}
 	
 		if ($type eq 'cov') {
 			$self->raw_covmatrix([]);

@@ -63,6 +63,35 @@ for (my $i=0; $i< scalar(@answer_hashes); $i++){
 			   $answer_hashes[$i]->{estimation_evaluation_problem_number},"$fname estimation_evaluation_problem_number");
 	}
 
+	if(defined $answer_hashes[$i]->{problem_count}){
+		cmp_ok($outobj->get_problem_count(),'==',$answer_hashes[$i]->{problem_count},"$fname problem_count");
+	}
+	if(defined $answer_hashes[$i]->{subproblem_count}){
+		for (my $prob=0; $prob<scalar(@{$answer_hashes[$i]->{subproblem_count}}); $prob++){
+			cmp_ok($outobj->problems->[$prob]->get_subproblem_count,
+				   '==',$answer_hashes[$i]->{subproblem_count}->[$prob],"$fname subproblem_count prob $prob ");
+		}
+	}
+
+	if(defined $answer_hashes[$i]->{high_correlations_names}){
+		#assume only for 1 prob 1 subprob
+		my ($high_names,$high_values) = $outobj->high_correlations(problems=>[1],subproblems=>[1],limit=>0.95);
+		is_deeply($high_names->[0][0],$answer_hashes[$i]->{high_correlations_names},"$fname high_correlations names");
+		is_deeply($high_values->[0][0],$answer_hashes[$i]->{high_correlations_values},"$fname high_correlations values");
+#		print join(';',@{$high_names->[0][0]})."\n";
+#		print join(';',@{$answer_hashes[$i]->{high_correlations_names}})."\n";
+	}
+
+	if(defined $answer_hashes[$i]->{large_standard_errors_names}){
+		#assume only for 1 prob 1 subprob
+		my ($high_names,$high_values) = $outobj->large_standard_errors(problems=>[1],subproblems=>[1],
+																	   theta_cv_limit => 0.95,
+																	   omega_cv_limit => 0.95,
+																	   sigma_cv_limit => 0.95,);
+		is_deeply($high_names->[0][0],$answer_hashes[$i]->{large_standard_errors_names},"$fname large_standard_errors names");
+		is_deeply($high_values->[0][0],$answer_hashes[$i]->{large_standard_errors_values},"$fname large_standard_errors values");
+	}
+
 	foreach my $prob (keys %{$answer_hashes[$i]->{answers}}){
 		foreach my $subprob (keys %{$answer_hashes[$i]->{answers}->{$prob}}){
 			foreach my $attr (keys %{$answer_hashes[$i]->{answers}->{$prob}->{$subprob}}){

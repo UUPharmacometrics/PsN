@@ -2,7 +2,7 @@
 
 use strict;
 use warnings;
-use Test::More;# tests=>8;
+use Test::More;
 use FindBin qw($Bin);
 use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages
@@ -27,7 +27,7 @@ $hash{'1E+00'}=1;
 $hash{'1.01E+01'}=10.1;
 $hash{'12345'}=12345;
 
-plan tests => scalar(keys %hash)+7+6+8+9;
+#plan tests => scalar(keys %hash)+7+6+8+9;
 
 foreach my $key (keys %hash){
 	is (output::problem::subproblem::_get_value(val => $key),$hash{$key},"_get_value $key");
@@ -46,6 +46,13 @@ my ($success,$matrix_array_ref,$index_order_ref,$header_labels_ref) =
 														 type => 'cor',
 														 tableref => \@lines);
 is ($success,1,'mox_sir_block2.cor success');
+my @column_headers = ();
+foreach my $ind (@{$index_order_ref}) {
+	push (@column_headers, $header_labels_ref->[$ind]);
+}
+
+is_deeply(\@column_headers,['THETA1','THETA2','THETA3','THETA4','THETA5','OMEGA(1,1)','OMEGA(2,2)','OMEGA(3,2)','OMEGA(3,3)'],' header labels ref 1');
+
 #matrix_array_ref is single arr of lower triangular cleaned and sorted matrix
 is ($matrix_array_ref->[0],eval(2.48443E+00),'mox_sir_block2.cor element (1,1)');
 is ($matrix_array_ref->[11],eval(1.05601E-01),'mox_sir_block2.cor element (5,2)');
@@ -80,6 +87,15 @@ my ($success,$matrix_array_ref,$index_order_ref,$header_labels_ref) =
 														 type => 'cor',
 														 tableref => \@lines);
 is ($success,1,'anneal2_V7_30_beta.cor success');
+
+@column_headers = ();
+foreach my $ind (@{$index_order_ref}) {
+	push (@column_headers, $header_labels_ref->[$ind]);
+}
+
+is_deeply(\@column_headers,['THETA1','THETA2','THETA3','THETA4','OMEGA(1,1)','OMEGA(2,1)','OMEGA(2,2)','OMEGA(3,3)','SIGMA(1,1)'],' header labels ref 2');
+
+
 #matrix_array_ref is single arr of lower triangular cleaned and sorted matrix
 is ($matrix_array_ref->[0],eval(2.01673E-01),'anneal2_V7_30_beta.cor element (1,1)');
 is ($matrix_array_ref->[19],eval(8.53643E-01),'anneal2_V7_30_beta.cor element (6,5)');
@@ -99,6 +115,15 @@ my ($success,$matrix_array_ref,$index_order_ref,$header_labels_ref) =
 														 type => 'cov',
 														 tableref => \@lines);
 is ($success,1,'mox_sir.cov userclean success');
+
+
+@column_headers = ();
+foreach my $ind (@{$index_order_ref}) {
+	push (@column_headers, $header_labels_ref->[$ind]);
+}
+
+is_deeply(\@column_headers,['THETA1','THETA2','THETA3','THETA4','THETA5','OMEGA(1,1)','OMEGA(2,1)','OMEGA(2,2)','OMEGA(3,1)','OMEGA(3,2)','OMEGA(3,3)','SIGMA(1,1)'],' header labels ref 3');
+
 #matrix_array_ref is single arr of lower triangular uncleaned (since skip labels matrix is empty and have_sigmas and have_omegas) and sorted matrix
 is ($matrix_array_ref->[0],eval(6.10693E+00),'mox_sir.cov uncleaned element (1,1)');
 is ($matrix_array_ref->[21],eval(0.00E+00),'mox_sir.cov uncleaned element (7,1)');

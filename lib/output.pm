@@ -193,7 +193,28 @@ sub get_estimation_evaluation_problem_number
 }
 
 
+sub get_problem_count
+{
+	my $self = shift;
 
+	my $answer;
+	if ( $self -> have_output ) {
+		unless ( not_empty($self->problems) ) {
+			$self -> _read_problems;
+		}
+		if( defined $self->problems ) {
+			$answer = scalar(@{$self->problems});
+		} else {
+			$answer= 0;
+		}
+		
+	} else {
+		#print "\nTrying to access output object, that have no data on file(" . $self->full_name . ") or in memory\n" ;
+		$answer= undef;
+	}
+	
+	return $answer;
+}
 
 sub access_any
 {
@@ -285,57 +306,66 @@ sub high_correlations
 							  limit => { isa => 'Num', default => 0.95, optional => 1 },
 							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
 							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 },
-							  parameter_numbers => { isa => 'ArrayRef[Int]', optional => 1 }
 		);
 	my $limit = $parm{'limit'};
-	my @high_correlations;
-	my @found_correlations;
 	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
 	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
-	my @parameter_numbers = defined $parm{'parameter_numbers'} ? @{$parm{'parameter_numbers'}} : ();
 
-	my $correlation_matrix = $self -> correlation_matrix( problems    => \@problems,
-														  subproblems => \@subproblems );
-	my @matrix_headers = @{$self -> output_matrix_headers( problems    => \@problems,
-														   subproblems => \@subproblems )};
+	my @high_names_correlations;
+	my @high_values_correlations;
 
-	my $found_any = 0;
-	for ( my $i = 0; $i < scalar @{$correlation_matrix}; $i++ ) {
-		for ( my $j = 0; $j < scalar @{$correlation_matrix -> [$i]}; $j++ ) {
-			next unless (defined $correlation_matrix -> [$i][$j]);
-			if ((scalar @{$correlation_matrix -> [$i][$j]})>0) {
-				$found_any = 1;
-				last;
-			}
-		}
-		last if $found_any;
+	my $problem_count = $self->get_problem_count(); #will also read output if not already done
+	return [] unless (defined $problem_count);
+
+	if (scalar(@problems) == 0){
+		@problems = (1 .. $problem_count) if ($problem_count > 0);
 	}
-	return unless $found_any;
 
-	for ( my $i = 0; $i < scalar @{$correlation_matrix}; $i++ ) {
-		my ( @prob_corr, @pf_corr );
-		my @names = {$matrix_headers[$i]};
-
-		for ( my $j = 0; $j < scalar @{$correlation_matrix -> [$i]}; $j++ ) {
-			my ( @sp_corr, @spf_corr );;
-			my $idx = 0;
-			for ( my $row = 1; $row <= scalar @names; $row++ ) {
-				for ( my $col = 1; $col <= $row; $col++ ) {
-					if ( not ( $row == $col ) and $correlation_matrix -> [$i][$j][$idx] > $limit or $correlation_matrix -> [$i][$j][$idx] < -$limit ) {
-						push( @sp_corr, $names[$row-1]."-".$names[$col-1] );
-						push( @spf_corr, $correlation_matrix -> [$i][$j][$idx] );
+	foreach my $probnum (@problems){
+		my @prob_high_names_array=();
+		my @prob_high_values_array=();
+		if (defined $self->problems->[$probnum-1]){
+			if (scalar(@subproblems)==0 ){
+				my $subproblem_count = $self->problems->[$probnum-1]->get_subproblem_count();
+				@subproblems = (1 .. $subproblem_count) if ($subproblem_count > 0);
+			}
+			my $init_problem = $self->problems->[$probnum-1]->input_problem;
+			foreach my $subprobnum (@subproblems){
+				my @sub_high_names_array=();
+				my @sub_high_values_array=();
+				if (defined $self->problems->[$probnum-1]->subproblems->[$subprobnum-1]){
+					my $correlation_matrix = $self->problems->[$probnum-1]->subproblems->[$subprobnum-1]->correlation_matrix;
+					if (defined $correlation_matrix and scalar(@{$correlation_matrix})>0){
+						my @names = @{$init_problem->get_estimated_attributes(parameter => 'all',
+																			  attribute => 'labels')};
+						my $idx = 0;
+#						print join(';',@names).", count".scalar(@names)."\n";
+						for ( my $row = 1; $row <= scalar(@names); $row++ ) {
+							for ( my $col = 1; $col <= $row; $col++ ) {
+								if ( ( $row != $col ) and abs($correlation_matrix->[$idx]) > $limit) {
+#									print "row $row col $col, ".$names[$row-1]." - ".$names[$col-1]."\n".join(';',@names)."\n";
+									push( @sub_high_names_array, $names[$row-1]." - ".$names[$col-1] );
+									push( @sub_high_values_array, $correlation_matrix -> [$idx] );
+								}
+								#print $correlation_matrix->[$idx].' ';
+								$idx++;
+							}
+							#print "\n";
+						}
+						#print "\n";
 					}
-					$idx++;
 				}
+				push(@prob_high_names_array,\@sub_high_names_array);
+				push(@prob_high_values_array,\@sub_high_values_array);
 			}
-			push( @prob_corr, \@sp_corr );
-			push( @pf_corr, \@spf_corr );
 		}
-		push( @high_correlations, \@prob_corr );
-		push( @found_correlations, \@pf_corr );
+		push(@high_names_correlations,\@prob_high_names_array); 
+		push(@high_values_correlations,\@prob_high_values_array); 
 	}
-	return \@high_correlations ,\@found_correlations;
+
+	return \@high_names_correlations ,\@high_values_correlations;
 }
+
 
 sub large_standard_errors
 {
@@ -346,57 +376,66 @@ sub large_standard_errors
 							  sigma_cv_limit => { isa => 'Num', default => 0.95, optional => 1 },
 							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
 							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 },
-							  parameter_numbers => { isa => 'ArrayRef[Int]', optional => 1 }
 		);
 	my $theta_cv_limit = $parm{'theta_cv_limit'};
 	my $omega_cv_limit = $parm{'omega_cv_limit'};
 	my $sigma_cv_limit = $parm{'sigma_cv_limit'};
+	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
+	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
+
 	my @large_standard_errors_names;
 	my @large_standard_errors_values;
-	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
-	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : () ;
-	my @parameter_numbers = defined $parm{'parameter_numbers'} ? @{$parm{'parameter_numbers'}} : ();
+	my @params = ( 'theta', 'omega', 'sigma' );
 
-	foreach my $param ( 'theta', 'omega', 'sigma' ) {
-		my @cvs   = eval( '@{$self -> cvse'.$param.'s( problems    => \@problems,'.
-						  'subproblems => \@subproblems )}' );
-		my @allnames   = eval( '@{$self -> '.$param.'names( problems    => \@problems,'.
-							   'subproblems => \@subproblems )}' );
-		for ( my $i = 0; $i <= $#cvs; $i++ ) {
-			#problem
-			if ( $param eq 'theta' ) {
-				$large_standard_errors_names[$i] = [];
+	my $problem_count = $self->get_problem_count(); #will also read output if not already done
+	return [],[] unless (defined $problem_count);
+
+	if (scalar(@problems) == 0){
+		@problems = (1 .. $problem_count) if ($problem_count > 0);
+	}
+
+	foreach my $probnum (@problems){
+		my @prob_high_names_array=();
+		my @prob_high_values_array=();
+		if (defined $self->problems->[$probnum-1]){
+			if (scalar(@subproblems)==0 ){
+				my $subproblem_count = $self->problems->[$probnum-1]->get_subproblem_count();
+				@subproblems = (1 .. $subproblem_count) if ($subproblem_count > 0);
 			}
-			next unless( defined $cvs[$i] );
-			for ( my $j = 0; $j < scalar @{$cvs[$i]}; $j++ ) {
-				#subproblem
-				my (@large_values,@large_names);
-				if ( $param eq 'theta' ) {
-					$large_standard_errors_names[$i][$j] = [] ;
-				}
-				next unless( defined $cvs[$i][$j] );
-				unless ( defined $allnames[$i][$j] ) {
-					croak("no names matching  cvse:s");
-				}
-				my @values = @{$cvs[$i][$j]};
-				my @names = @{$allnames[$i][$j]};
-				unless ( scalar (@names) == scalar (@values) ) {
-					croak("names do not match cvse:s");
-				}
-				for ( my $k = 0; $k < scalar (@values); $k++ ) {
-					if ( abs($values[$k]) > eval('$'.$param.'_cv_limit')) {
-						push (@large_values,$values[$k]);
-						push (@large_names,$names[$k]);
+			my $init_problem = $self->problems->[$probnum-1]->input_problem;
+			foreach my $subprobnum (@subproblems){
+				my @sub_high_names_array=();
+				my @sub_high_values_array=();
+				if (defined $self->problems->[$probnum-1]->subproblems->[$subprobnum-1]){
+					foreach my $param (@params) {
+						my $ref = $self->get_filtered_values(category => 'cvse',
+															 parameter => $param,
+															 problem_index => ($probnum-1),
+															 subproblem_index => ($subprobnum-1));
+						if (defined $ref){
+							my @labels = @{$init_problem->get_estimated_attributes(parameter => $param,
+																				   attribute => 'labels')};
+
+							for (my $k=0; $k<scalar(@labels); $k++){
+								if ( defined ($ref->[$k]) and abs($ref->[$k]) > eval('$'.$param.'_cv_limit')) {
+									push (@sub_high_names_array,$labels[$k]);
+									push (@sub_high_values_array,$ref->[$k]);
+								}
+							}
+						}
 					}
 				}
-				$large_standard_errors_names[$i][$j] = \@large_names ;
-				$large_standard_errors_values[$i][$j] = \@large_values ;
+				push(@prob_high_names_array,\@sub_high_names_array);
+				push(@prob_high_values_array,\@sub_high_values_array);
 			}
 		}
+		push(@large_standard_errors_names,\@prob_high_names_array); 
+		push(@large_standard_errors_values,\@prob_high_values_array); 
 	}
 
 	return \@large_standard_errors_names ,\@large_standard_errors_values;
 }
+
 
 sub near_bounds
 {
@@ -405,7 +444,6 @@ sub near_bounds
 							  zero_limit => { isa => 'Num', default => 0.01, optional => 1 },
 							  significant_digits => { isa => 'Int', default => 2, optional => 1 },
 							  off_diagonal_sign_digits => { isa => 'Int', default => 2, optional => 1 },
-							  parameter_numbers => { isa => 'ArrayRef[Int]', optional => 1 }
 		);
 	my $zero_limit = $parm{'zero_limit'};
 	my $significant_digits = $parm{'significant_digits'};
@@ -413,7 +451,6 @@ sub near_bounds
 	my @near_bounds;
 	my @found_bounds;
 	my @found_estimates;
-	my @parameter_numbers = defined $parm{'parameter_numbers'} ? @{$parm{'parameter_numbers'}} : ();
 
 	sub test_sigdig {
 		my ( $number, $goal, $sigdig, $zerolim ) = @_;
@@ -997,50 +1034,99 @@ sub estimated_omegas
 	return \@estimatedomegas;
 }
 
+
+sub estnames
+{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+							  problems => { isa => 'Maybe[ArrayRef]', optional => 1 },
+							  subproblems => { isa => 'Maybe[ArrayRef]', optional => 1 },
+							  parameter => { isa => 'Str', optional => 0 },
+		);
+	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
+	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
+	my $parameter = $parm{'parameter'};
+
+	#FIXME default all problems all subproblems
+
+	my @estnames =();
+	
+	if ( $self -> have_output ) {
+		unless ( not_empty($self->problems) ) {
+			$self -> _read_problems;
+		}
+		unless (defined $self->problems and scalar(@{$self->problems})>0 ) {
+			return [];
+		}
+	} else {
+		print "\nTrying to access output object, that have no data on file(" . $self->full_name . ") or in memory\n" ;
+		return [];
+	}
+	my $max_prob = scalar(@{$self->problems});
+
+	foreach my $probnum (@problems){
+		if ($probnum > $max_prob){
+			croak("probnum $probnum too high in output->estnames, problem count is $max_prob");
+		}
+		my $init_problem = $self->problems->[$probnum-1]->input_problem;
+		
+		my @coordinate_strings = @{$init_problem->get_estimated_attributes(parameter => $parameter,
+																		   attribute => 'coordinate_strings')};
+		my @arr =();
+		foreach my $subprob (@subproblems){
+			push(@arr,\@coordinate_strings);
+		}
+		push(@estnames,\@arr);
+	}
+	return \@estnames;
+}
+
+
 sub est_thetanames
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
-							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+							  problems => { isa => 'ArrayRef', optional => 1 },
+							  subproblems => { isa => 'ArrayRef', optional => 1 },
 		);
-	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
-	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
-	my @est_thetanames = @{$self->access_any(attribute=>'est_thetanames',problems=>\@problems,subproblems=>\@subproblems)};
+	my $problems = $parm{'problems'};
+	my $subproblems = $parm{'subproblems'};
 
-    # return thetanames from output_matrix_headers
-	return \@est_thetanames;
+	return $self->estnames(problems => $problems,
+						   subproblems => $subproblems,
+						   parameter => 'theta');
 }
 
 sub est_omeganames
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
-							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+							  problems => { isa => 'ArrayRef', optional => 1 },
+							  subproblems => { isa => 'ArrayRef', optional => 1 },
 		);
-	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
-	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
-	my @est_omeganames = @{$self->access_any(attribute=>'est_omeganames',problems=>\@problems,subproblems=>\@subproblems)};
+	my $problems = $parm{'problems'};
+	my $subproblems = $parm{'subproblems'};
 
-    # return omeganames from output_matrix headers
-	return \@est_omeganames;
+	return $self->estnames(problems => $problems,
+						   subproblems => $subproblems,
+						   parameter => 'omega');
 }
 
 sub est_sigmanames
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
-							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+							  problems => { isa => 'ArrayRef', optional => 1 },
+							  subproblems => { isa => 'ArrayRef', optional => 1 },
 		);
-	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
-	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
-	my @est_sigmanames = @{$self->access_any(attribute=>'est_sigmanames',problems=>\@problems,subproblems=>\@subproblems)};
+	my $problems = $parm{'problems'};
+	my $subproblems = $parm{'subproblems'};
 
-    # return sigmanames from output_matrix headers
-	return \@est_sigmanames;
+	return $self->estnames(problems => $problems,
+						   subproblems => $subproblems,
+						   parameter => 'omega');
 }
+
 
 sub fixedsigmas
 {
@@ -1977,20 +2063,6 @@ sub correlation_matrix
 	return \@correlation_matrix;
 }
 
-sub output_matrix_headers
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
-							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-		);
-	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
-	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
-	my @output_matrix_headers = @{$self->access_any(attribute=>'output_matrix_headers',problems=>\@problems,subproblems=>\@subproblems)};
-
-
-	return \@output_matrix_headers;
-}
 
 sub raw_omegas
 {

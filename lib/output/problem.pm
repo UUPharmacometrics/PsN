@@ -115,6 +115,16 @@ sub add_subproblem
 	push( @{$self->subproblems}, output::problem::subproblem->new( %{$parm{'init_data'}} ) );
 }
 
+sub get_subproblem_count
+{
+	my $self = shift;
+	my $count=0;
+	if( defined $self->subproblems ) {
+	    $count = scalar(@{$self->subproblems});
+	}
+	return $count;
+}
+
 sub access_any
 {
 	my $self = shift;
