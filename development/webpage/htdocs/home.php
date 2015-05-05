@@ -61,7 +61,7 @@ to see which systems and NONMEM versions PsN 4.4.0 has been tested with.
 </p>
 <h3>Known issues with version 4.4.0</h3>
 <li>
-It is important that cov,coi,cor are included in the nm_output list in the [default_options] section in psn.conf, otherwise a number of bugs will be triggered. 
+It is important that ext,cov,coi,cor are included in the nm_output list in the [default_options] section in psn.conf, otherwise a number of bugs will be triggered. 
 If psn.conf is created by the installation script then the setting of nm_output will be appropriate. 
 A suitable setting is</br></br>
 [default_options]</br>
