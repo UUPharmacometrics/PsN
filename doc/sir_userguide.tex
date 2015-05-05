@@ -1,5 +1,6 @@
 \input{inputs/format_header.tex}
-\guidetitle{SIR user guide}{2015-04-15}
+\guidetitle{SIR user guide}{2015-04-21}
+\usepackage{amsmath}
 
 \begin{document}
 
@@ -238,5 +239,399 @@ When this happens, sir will stop with an error message saying that the covarianc
 Then the user must manually modify the covariance matrix to improve its numerical properties (for example increase the diagonal elements
 and/or change the order of the parameters so that pivoting is not necessary),
 and then use option -covmat\_input to give the modified matrix as input to sir. 
+
+
+\section{Suggested new workflow}
+NB: if -rawres\_input is specified, then the process starts
+at step 6 using those vectors as the 'resamples\_1' parameter vectors. 
+\begin{itemize}
+\item[\underline{Setup}] The sir program will run the input model unless the lst-file with results is already present. 
+If the lst-file is present, it
+is important that the control stream copy at the top of the lst-file matches the
+actual input model file in terms of which parameters are estimated, 
+FIXED or SAME, otherwise there will be a mis-match between which parameter estimates are read from the
+lst-file and which estimates are needed for the sir procedure.
+\item[\underline{Step 1}] Simulate 'samples\_1' parameter vectors from the 
+(possibly inflated)
+covariance matrix, i.e. the .cov-file given by NONMEM 
+or the matrix given via option -covmat\_input. PsN uses the Perl function\\ 
+Math::Random::random\_multivariate\_normal
+for sampling. If a vector does no fulfill the constraints from \$THETA boundaries
+and positive definiteness of \$OMEGA and
+\$SIGMA blocks (as judged by a PsN-implemented Cholesky decomposition) 
+then that vector is 
+discarded and a new one is drawn.
+\item[\underline{Step 2}] Calculate each vector $x$’s probability 
+given the covariance matrix based on the formula for the probability 
+density function (PDF) of a multivariate normal distribution:\\
+\begin{math}
+\frac{1}{\left(2\pi\right)^{k/2}\left(det\left(A\right)\right)^{1/2}} exp\left(-\frac{1}{2}(\left(x-\mu\right)A^{-1} \left(x-\mu\right)^T\right)
+\end{math}
+\\
+where $k$ is the number of dimensions, 
+$\mu$ is the vector of expectations and $A$ is the (possibly inflated) covariance matrix.
+The values are normalized with the PDF for the vector of expectations $\mu$, giving\\
+\begin{math}
+relPDF=exp\left(-\frac{1}{2}(\left(x-\mu\right)A^{-1} \left(x-\mu\right)^T\right)
+\end{math}
+\\
+NB: NONMEM covariance matrix is used as input, the inverse covariance matrix
+output by NONMEM is not used.
+\item[\underline{Step 3}] evaluate the parameter vectors on the original data.
+Create model files with up to 100 \$PROBLEM based on the original model file but setting MAXEVAL=0
+and replacing inits of nth \$PROBLEM with nth parameter vector, and also set MCETA if option -mceta was used. Compute dOFV 
+(delta-OFV, reference is input model ofv) and store in raw\_results\_1.csv.
+
+\item[\underline{Step 4}] calculate the weights as the ratio $\frac{e^{-0.5\cdot dOFV}}{relPDF}$ and store in 
+raw\_results\_1.csv. 
+\item[\underline{Step 5}] Resample 'resamples\_1' parameter vectors based on weights from above step, 
+with or without replacement depending on option -with\_replacement. 
+Store the number of times each vector was resampled in raw\_results\_1.csv.
+\item[\underline{Step 6}] Box-Cox transform each parameter separately based on the samples from Step 5. Do not allow
+$\lambda$ less than -3 or larger than +3 (?). Use the $\lambda$ that maximizes the correlation coefficient of
+a quantile-quantile plot of the transformed parameter.
+\item[\underline{Step 7}] Determine the means and empirical variance-covariance matrix of 
+transformed parameter vectors.
+\item[\underline{Step 8}] (Repeat Step 1) Sample 'samples\_2' parameter vectors 
+with the new covariance matrix and transformed parameters.
+Discard samples that, after back-transformation to original scale, do not
+fulfill \$THETA boundary conditions and \$OMEGA/\$SIGMA positive definiteness, and instead draw new sample.
+\item[\underline{Step 9}] (Repeat Step 2) Calculate each vectors' probability, 
+use new covariance matrix and Box-Cox transformed parameter vectors for computing each vectors relPDF.
+\item[\underline{Step 10}] (Repeat Step 3) Evaluate the back-transformed parameter vectors on the original data.
+\item[\underline{Step 11}] (Repeat Step 4) Calculate the weights, 
+where weights calculation uses relPDF from step 9 and dOFV from Step 10. 
+Store in raw\_results\_2.csv. 
+\item[\underline{Step 12}] (Repeat Step 5) Resample 'resamples\_2' parameter vectors based on weights from above step, 
+with or without replacement depending on option -with\_replacement. 
+Store the number of times each vector was resampled in raw\_results\_2.csv.
+\item[\underline{Step 13}] Compute final results from Step 12 vectors on original scale.
+\end{itemize}
+
+
+
+\subsubsection*{setup}
+\begin{enumerate}
+\item Count items in parameter vector to get $N$.
+\item Unless have quantile vector for $N$ stored from before:\\ Compute vector $Q$ for $i=1\ldots N$,
+\begin{math}
+\left(
+Q_i=\Phi^{-1}\left(\frac{i-0.5}{N}\right)
+\right)
+\end{math}
+using built-in Perl functions. Also compute $\frac{\sum_i{Q}}{N}$ and 
+$\sqrt{\sum_i{Q^2}-\frac{\left(\sum_i{Q}\right)^2}{N}}$\\ Store results.
+\item Sort parameter vector from smallest to largest to get vector $sorted$.
+\item If $sorted[0]\leq 0$ then compute $\Delta=abs\left(sorted[0]+\delta\right)$ and add scalar $\Delta$ to $sorted$.
+Store $\Delta$.
+\item Evaluate $r(\lambda)$ for starting values for secant algorithm
+\item Run secant algorithm until stops, find optimal value of $\lambda$ and corresponding transformed sorted positive
+vector. Store $\lambda$
+\end{enumerate}
+
+\subsubsection*{Box-Cox}
+Must have $x>0$, so if any $p$ leq 0 then add $abs(p_{min})+\delta$ to all $p$ before Box-Cox.
+\noindent
+\begin{math}
+\lambda = 0: x_{\lambda}=log(p)\\
+\lambda\neq 0: x_{\lambda}=\frac{p^{\lambda}-1}{\lambda}
+\end{math}
+
+\begin{math}
+\frac{dx}{d\lambda}, \lambda=0: undef\\
+\frac{dx}{d\lambda}, \lambda\neq 0: \frac{d}{d\lambda}\frac{p^{\lambda}-1}{\lambda}=\frac{d}{d\lambda}\frac{e^{\lambda log{p}}-1}{\lambda}=
+\frac{\lambda e^{\lambda log{p}}log{p} -(e^{\lambda log{p}}-1) }{\lambda^2}=\frac{1}{\lambda}\left(p^{\lambda}log{p} - \frac{p^{\lambda}-1}{\lambda}\right)
+\end{math}
+
+\subsubsection*{q-q-plot}
+Form N pairs
+\begin{math}
+\left(
+\Phi^{-1}\left(\frac{i-0.5}{N}\right), x_i
+\right)
+\end{math}
+where $\Phi^{-1}$ is the inverse CDF of the normal density and $x_i$ denotes the $i$th sorted value
+of the Box-Cox transformed data.
+For inverse CDF use Perl Math::CDF::qnorm function.
+Compare with Statistics::Distributions::udistr(1-z) where $z=\frac{i-0.5}{N}$
+
+\subsubsection*{Pearson's r}
+x and y do not need to have mean 0. x could Box-Cox transformed (g), y could be inverse CDF.
+\begin{math}
+r=\frac{\sum{xy}-\frac{\sum{x}\sum{y}}{N}}
+{\sqrt{\sum{x^2}-\frac{\left(\sum{x}\right)^2}{N}}\sqrt{\sum{y^2}-\frac{\left(\sum{y}\right)^2}{N}}}
+\end{math}
+When y is inverse CDF then $\sum_iy_i$ is 0, giving 
+\begin{math}
+r=\frac{\sum{xy}}
+{\sqrt{\sum{x^2}-\frac{\left(\sum{x}\right)^2}{N}}\sqrt{\sum{y^2}}}\\
+=\frac{f(\lambda)}{g(\lambda)}
+\end{math}
+
+\begin{math}
+f(\lambda)=\sum{xy}=\sum_i \left(y_i\frac{p_i^{\lambda}-1}{\lambda}\right)
+\end{math}
+
+\begin{math}
+\frac{df(\lambda)}{d\lambda}
+=\sum_i\left(y_i\frac{1}{\lambda}\left(p_i^{\lambda}log{p_i}-\frac{p_i^{\lambda}-1}{\lambda}\right)\right)
+\end{math}
+
+
+\begin{math}
+g(\lambda)=
+\left(\sum_i\left(\frac{p_i^{\lambda}-1}{\lambda}\right)^2-\frac{1}{N}\left(\sum_i \frac{p_i^{\lambda}-1}{\lambda}\right)^2  \right)^{0.5} 
+\sqrt{\sum{y^2}}
+\end{math}
+
+\begin{math}
+\frac{dg(\lambda)}{d\lambda}=
+\sqrt{\sum{y^2}}\cdot
+0.5\cdot\left(\sum_i\left(\frac{p_i^{\lambda}-1}{\lambda}\right)^2-\frac{1}{N}\left(\sum_i \frac{p_i^{\lambda}-1}{\lambda}\right)^2  \right)^{-0.5} 
+\cdot\\
+\left(
+\sum_i2\left(\frac{p_i^{\lambda}-1}{\lambda} \right)\frac{1}{\lambda}\left(p_i^{\lambda}log{p_i}-\frac{p_i^{\lambda}-1}{\lambda}\right)
+-\frac{2}{N}\left(\sum_i \frac{p_i^{\lambda}-1}{\lambda}\right) \left(\sum_i \frac{1}{\lambda}\left(p_i^{\lambda}log{p_i}-\frac{p_i^{\lambda}-1}{\lambda}\right) \right)
+\right)
+\end{math}
+
+\begin{math}
+=
+\sqrt{\sum{y^2}}\cdot
+\left(\sum_i\left(\frac{p_i^{\lambda}-1}{\lambda}\right)^2-\frac{1}{N}\left(\sum_i \frac{p_i^{\lambda}-1}{\lambda}\right)^2  \right)^{-0.5} 
+\cdot\\
+\left(
+\sum_i\left(\frac{p_i^{\lambda}-1}{\lambda} \right)\frac{1}{\lambda}\left(p_i^{\lambda}log{p_i}-\frac{p_i^{\lambda}-1}{\lambda}\right)
+-\frac{1}{N}\left(\sum_i \frac{p_i^{\lambda}-1}{\lambda}\right) \left(\sum_i \frac{1}{\lambda}\left(p_i^{\lambda}log{p_i}-\frac{p_i^{\lambda}-1}{\lambda}\right) \right)
+\right)
+\end{math}
+
+\begin{math}
+\frac{dr}{d\lambda}=\frac{f'g-fg'}{g^2}=g^{-2}\cdot\left(f'g-fg'\right)
+\end{math}
+
+\begin{multline}
+\frac{dr}{d\lambda}=
+\left(\sum_i\left(\frac{p_i^{\lambda}-1}{\lambda}\right)^2-\frac{1}{N}\left(\sum_i \frac{p_i^{\lambda}-1}{\lambda}\right)^2  \right)^{-1} 
+\left(\sum{y^2}\right)^{-1}\cdot  \\
+[
+\left[
+\sum_i\left(\frac{1}{\lambda}\left(p_i^{\lambda}log{p_i}-\frac{p_i^{\lambda}-1}{\lambda}\right)y_i\right)
+\right]  \\
+\left(\sum_i\left(\frac{p_i^{\lambda}-1}{\lambda}\right)^2-\frac{1}{N}\left(\sum_i \frac{p_i^{\lambda}-1}{\lambda}\right)^2  \right)^{0.5} 
+\sqrt{\sum{y^2}}  \\
+-
+\left[\sum_i \left(y_i\frac{p_i^{\lambda}-1}{\lambda}\right)\right]\cdot\\
+\sqrt{\sum{y^2}}\cdot
+\left(\sum_i\left(\frac{p_i^{\lambda}-1}{\lambda}\right)^2-\frac{1}{N}\left(\sum_i \frac{p_i^{\lambda}-1}{\lambda}\right)^2  \right)^{-0.5} 
+\cdot\\
+\left[
+\sum_i\left(\frac{p_i^{\lambda}-1}{\lambda} \right)\frac{1}{\lambda}\left(p_i^{\lambda}log{p_i}-\frac{p_i^{\lambda}-1}{\lambda}\right)
+-\frac{1}{N}\left(\sum_i \frac{p_i^{\lambda}-1}{\lambda}\right) \left(\sum_i \frac{1}{\lambda}\left(p_i^{\lambda}log{p_i}-\frac{p_i^{\lambda}-1}{\lambda}\right) \right)
+\right]
+]
+\end{multline}
+
+
+\begin{multline}
+\frac{dr}{d\lambda}=
+\left(\sum_i\left(\frac{p_i^{\lambda}-1}{\lambda}\right)^2-\frac{1}{N}\left(\sum_i \frac{p_i^{\lambda}-1}{\lambda}\right)^2  \right)^{-0.5} 
+\left(\sum_i{y_i^2}\right)^{-0.5}\cdot  \\
+[
+\left[
+\sum_i\left(\frac{1}{\lambda}\left(p_i^{\lambda}log{p_i}-\frac{p_i^{\lambda}-1}{\lambda}\right)y_i\right)
+\right]  \\
+-
+\left[\sum_i \left(y_i\frac{p_i^{\lambda}-1}{\lambda}\right)\right]\cdot\\
+\left(\sum_i\left(\frac{p_i^{\lambda}-1}{\lambda}\right)^2-\frac{1}{N}\left(\sum_i \frac{p_i^{\lambda}-1}{\lambda}\right)^2  \right)^{-1} 
+\cdot\\
+\left[
+\sum_i\left(\frac{p_i^{\lambda}-1}{\lambda} \right)\frac{1}{\lambda}\left(p_i^{\lambda}log{p_i}-\frac{p_i^{\lambda}-1}{\lambda}\right)
+-\frac{1}{N}\left(\sum_i \frac{p_i^{\lambda}-1}{\lambda}\right) \left(\sum_i \frac{1}{\lambda}\left(p_i^{\lambda}log{p_i}-\frac{p_i^{\lambda}-1}{\lambda}\right) \right)
+\right]
+]
+\end{multline}
+
+\begin{math}
+r=\left(\sum_i{x_i^2}-\frac{\left(\sum_i{x_i}\right)^2}{N}\right)^{-0.5} 
+\left(\sum_i{y_i^2}\right)^{-0.5}\cdot
+\left(\sum_i{y_ix_i}\right)
+\end{math}
+
+\begin{multline}
+\frac{dr}{d\lambda}=
+\left(\sum_i{x_i^2}-\frac{\left(\sum_i{x_i}\right)^2}{N}\right)^{-0.5} 
+\left(\sum_i{y_i^2}\right)^{-0.5}\cdot\frac{1}{\lambda}\cdot  \\
+[
+\sum_i\left(y_ip_i^{\lambda}log{p_i}\right) -  
+\sum_i\left(x_iy_i\right)
+-\\
+\frac{\left(\sum_i{y_ix_i}\right) \cdot
+\left[
+\sum_i \left(x_ip_i^{\lambda}log{p_i}\right) - \sum_i \left(x_i^2\right)
+-\left( \sum_i \left(p_i^{\lambda}log{p_i}\right) -\sum_i \left(x_i\right) \right)\frac{\left(\sum_i{x_i}\right)}{N} 
+\right]}
+{\left(\sum_i{x_i^2}-\frac{\left(\sum_i{x_i}\right)^2}{N}\right)}
+]
+\end{multline}
+
+\subsubsection*{Intermediate sums needed}
+\begin{enumerate}
+\item sum\_x: $\sum_i{x_i}$
+\item sum\_xsquare: $\sum_i{x_i^2}$
+%\item sum\_y: $\sum_i{y_i}$
+\item sum\_ysquare: $\sum_i{y_i^2}$
+\item sum\_xy: $\sum_i{y_ix_i}$
+\item sum\_logterm: $\sum_i{p_i^{\lambda}log{p_i}}$
+\item sum\_xlogterm: $\sum_i{x_ip_i^{\lambda}log{p_i}}$
+\item sum\_ylogterm: $\sum_i{y_ip_i^{\lambda}log{p_i}}$
+
+\end{enumerate}
+
+\subsubsection*{secant method}
+Algorithm secant method (p 366 mathematics handbook):\\
+\begin{math}
+\lambda_{n+1}=\lambda_n-
+r^{'}\left(\lambda_{n}\right)\cdot\frac{\lambda_n-\lambda_{n-1}}{r^{'}\left(\lambda_n\right)-r^{'}\left(\lambda_{n-1}\right)}
+\end{math}\\
+Stop when either
+\begin{enumerate}
+\item $\lambda_{n+1}\geq\lambda_{max}$
+\item $\lambda_{n+1}\leq-\lambda_{max}$
+\item \begin{math}abs\left(r\left(\lambda_n\right)-r\left(\lambda_{n-1}\right)\right)\leq \delta_{r}
+\end{math}
+\item
+\begin{math}
+abs\left(r\left(\lambda_{n}\right)\cdot\frac{\lambda_n-\lambda_{n-1}}{r\left(\lambda_n\right)-r\left(\lambda_{n-1}\right)}\right)\leq\delta_{\lambda}
+\end{math}
+\end{enumerate}
+After stopping criteria met, choose $\lambda$ that gave largest $r$.
+
 \end{document}
 
+\subsubsection*{General y}
+\begin{math}
+r=\frac{\sum{xy}-\frac{\sum{x}\sum{y}}{N}}
+{\sqrt{\sum{x^2}-\frac{\left(\sum{x}\right)^2}{N}}\sqrt{\sum{y^2}-\frac{\left(\sum{y}\right)^2}{N}}}=\frac{f}{g}
+\end{math}
+
+
+\begin{math}
+f(\lambda)=\sum{xy}-\frac{\sum{x}\sum{y}}{N}
+=
+\sum_i \left(y_i\frac{p_i^{\lambda}-1}{\lambda}\right) - \left(\sum_i\frac{p_i^{\lambda}-1}{\lambda}\right)\frac{\sum_iy_i}{N}
+\end{math}
+
+\begin{math}
+\frac{df(\lambda)}{d\lambda}
+=\sum_i\left(y_i\frac{1}{\lambda}\left(p_i^{\lambda}log{p_i}-\frac{p_i^{\lambda}-1}{\lambda}\right)\right)
+-\left( \sum_i\frac{1}{\lambda}\left(p_i^{\lambda}log{p_i}-\frac{p_i^{\lambda}-1}{\lambda}\right)\right)
+\frac{\sum_iy_i}{N} \\
+\end{math}
+
+
+\begin{math}
+g(\lambda)=
+\left(\sum_i\left(\frac{p_i^{\lambda}-1}{\lambda}\right)^2-\frac{1}{N}\left(\sum_i \frac{p_i^{\lambda}-1}{\lambda}\right)^2  \right)^{0.5} 
+\sqrt{\sum{y^2}-\frac{\left(\sum{y}\right)^2}{N}}
+\end{math}
+
+\begin{math}
+\frac{dg(\lambda)}{d\lambda}=
+\sqrt{\sum{y^2}-\frac{\left(\sum{y}\right)^2}{N}}\cdot
+0.5\cdot\left(\sum_i\left(\frac{p_i^{\lambda}-1}{\lambda}\right)^2-\frac{1}{N}\left(\sum_i \frac{p_i^{\lambda}-1}{\lambda}\right)^2  \right)^{-0.5} 
+\cdot\\
+\left(
+\sum_i2\left(\frac{p_i^{\lambda}-1}{\lambda} \right)\frac{1}{\lambda}\left(p_i^{\lambda}log{p_i}-\frac{p_i^{\lambda}-1}{\lambda}\right)
+-\frac{2}{N}\left(\sum_i \frac{p_i^{\lambda}-1}{\lambda}\right) \left(\sum_i \frac{1}{\lambda}\left(p_i^{\lambda}log{p_i}-\frac{p_i^{\lambda}-1}{\lambda}\right) \right)
+\right)
+\end{math}
+
+\begin{math}
+=
+\sqrt{\sum{y^2}-\frac{\left(\sum{y}\right)^2}{N}}\cdot
+\left(\sum_i\left(\frac{p_i^{\lambda}-1}{\lambda}\right)^2-\frac{1}{N}\left(\sum_i \frac{p_i^{\lambda}-1}{\lambda}\right)^2  \right)^{-0.5} 
+\cdot\\
+\left(
+\sum_i\left(\frac{p_i^{\lambda}-1}{\lambda} \right)\frac{1}{\lambda}\left(p_i^{\lambda}log{p_i}-\frac{p_i^{\lambda}-1}{\lambda}\right)
+-\frac{1}{N}\left(\sum_i \frac{p_i^{\lambda}-1}{\lambda}\right) \left(\sum_i \frac{1}{\lambda}\left(p_i^{\lambda}log{p_i}-\frac{p_i^{\lambda}-1}{\lambda}\right) \right)
+\right)
+\end{math}
+
+\begin{math}
+\frac{dr}{d\lambda}=\frac{f'g-fg'}{g^2}=g^{-2}\cdot\left(f'g-fg'\right)
+\end{math}
+
+\begin{multline}
+\frac{dr}{d\lambda}=
+\left(\sum_i\left(\frac{p_i^{\lambda}-1}{\lambda}\right)^2-\frac{1}{N}\left(\sum_i \frac{p_i^{\lambda}-1}{\lambda}\right)^2  \right)^{-1} 
+\left(\sum{y^2}-\frac{\left(\sum{y}\right)^2}{N}\right)^{-1}\cdot  \\
+[
+\left[
+\sum_i\left(\frac{1}{\lambda}\left(p_i^{\lambda}log{p_i}-\frac{p_i^{\lambda}-1}{\lambda}\right)y_i\right) -  
+\left(\sum_i\frac{1}{\lambda}\left(p_i^{\lambda}log{p_i}-\frac{p_i^{\lambda}-1}{\lambda}\right)\right)\left(\sum_iy_i\right)\frac{1}{N}
+\right]  \\
+\left(\sum_i\left(\frac{p_i^{\lambda}-1}{\lambda}\right)^2-\frac{1}{N}\left(\sum_i \frac{p_i^{\lambda}-1}{\lambda}\right)^2  \right)^{0.5} 
+\sqrt{\sum{y^2}-\frac{\left(\sum{y}\right)^2}{N}}  \\
+-
+\left[\sum_i \left(y_i\frac{p_i^{\lambda}-1}{\lambda}\right) - \left(\sum_i\frac{p_i^{\lambda}-1}{\lambda}\right)\frac{\sum_iy_i}{N}\right]\cdot\\
+\sqrt{\sum{y^2}-\frac{\left(\sum{y}\right)^2}{N}}\cdot
+\left(\sum_i\left(\frac{p_i^{\lambda}-1}{\lambda}\right)^2-\frac{1}{N}\left(\sum_i \frac{p_i^{\lambda}-1}{\lambda}\right)^2  \right)^{-0.5} 
+\cdot\\
+\left[
+\sum_i\left(\frac{p_i^{\lambda}-1}{\lambda} \right)\frac{1}{\lambda}\left(p_i^{\lambda}log{p_i}-\frac{p_i^{\lambda}-1}{\lambda}\right)
+-\frac{1}{N}\left(\sum_i \frac{p_i^{\lambda}-1}{\lambda}\right) \left(\sum_i \frac{1}{\lambda}\left(p_i^{\lambda}log{p_i}-\frac{p_i^{\lambda}-1}{\lambda}\right) \right)
+\right]
+]
+\end{multline}
+
+\begin{multline}
+\frac{dr}{d\lambda}=
+\left(\sum_i\left(\frac{p_i^{\lambda}-1}{\lambda}\right)^2-\frac{1}{N}\left(\sum_i \frac{p_i^{\lambda}-1}{\lambda}\right)^2  \right)^{-0.5} 
+\left(\sum_i{y_i^2}-\frac{\left(\sum_i{y_i}\right)^2}{N}\right)^{-0.5}\cdot  \\
+[
+\left[
+\sum_i\left(\frac{1}{\lambda}\left(p_i^{\lambda}log{p_i}-\frac{p_i^{\lambda}-1}{\lambda}\right)y_i\right) -  
+\left(\sum_i\frac{1}{\lambda}\left(p_i^{\lambda}log{p_i}-\frac{p_i^{\lambda}-1}{\lambda}\right)\right)\frac{\left(\sum_iy_i\right)}{N}
+\right]  \\
+-
+\left[\sum_i \left(y_i\frac{p_i^{\lambda}-1}{\lambda}\right) - \left(\sum_i\frac{p_i^{\lambda}-1}{\lambda}\right)\frac{\left(\sum_iy_i\right)}{N}\right]\cdot\\
+\left(\sum_i\left(\frac{p_i^{\lambda}-1}{\lambda}\right)^2-\frac{1}{N}\left(\sum_i \frac{p_i^{\lambda}-1}{\lambda}\right)^2  \right)^{-1} 
+\cdot\\
+\left[
+\sum_i\left(\frac{p_i^{\lambda}-1}{\lambda} \right)\frac{1}{\lambda}\left(p_i^{\lambda}log{p_i}-\frac{p_i^{\lambda}-1}{\lambda}\right)
+-\frac{1}{N}\left(\sum_i \frac{p_i^{\lambda}-1}{\lambda}\right) \left(\sum_i \frac{1}{\lambda}\left(p_i^{\lambda}log{p_i}-\frac{p_i^{\lambda}-1}{\lambda}\right) \right)
+\right]
+]
+\end{multline}
+
+\newpage
+
+\begin{math}
+r=\left(\sum_i{x_i^2}-\frac{\left(\sum_i{x_i}\right)^2}{N}\right)^{-0.5} 
+\left(\sum_i{y_i^2}-\frac{\left(\sum_i{y_i}\right)^2}{N}\right)^{-0.5}\cdot
+\left(\sum_i{y_ix_i} - \frac{\left(\sum_ix_i\right)\left(\sum_iy_i\right)}{N}\right)
+\end{math}
+
+\begin{multline}
+\frac{dr}{d\lambda}=
+\left(\sum_i{x_i^2}-\frac{\left(\sum_i{x_i}\right)^2}{N}\right)^{-0.5} 
+\left(\sum_i{y_i^2}-\frac{\left(\sum_i{y_i}\right)^2}{N}\right)^{-0.5}\cdot\frac{1}{\lambda}\cdot  \\
+[
+\left[
+\sum_i\left(y_ip_i^{\lambda}log{p_i}\right) -  
+\sum_i\left(x_iy_i\right) -  
+\left( \sum_i\left(p_i^{\lambda}log{p_i}\right) - \sum_i\left(x_i\right)  \right)\frac{\left(\sum_iy_i\right)}{N}
+\right]  \\
+-
+\left(\sum_i{y_ix_i} - \frac{\left(\sum_ix_i\right)\left(\sum_iy_i\right)}{N}\right)\cdot
+\left(\sum_i{x_i^2}-\frac{\left(\sum_i{x_i}\right)^2}{N}\right)^{-1} 
+\cdot\\
+\left[
+\sum_i \left(x_ip_i^{\lambda}log{p_i}\right) - \sum_i \left(x_i^2\right)
+-\left( \sum_i \left(p_i^{\lambda}log{p_i}\right) -\sum_i \left(x_i\right) \right)\frac{\left(\sum_i{x_i}\right)}{N} 
+\right]
+]
+\end{multline}
+
+\end{document}
