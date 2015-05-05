@@ -1,6 +1,7 @@
 package answers;
 
-sub read_answers{
+sub read_answers
+{
 
 	my @answer_hashes = ();
 	my $index=0;
@@ -916,12 +917,47 @@ sub read_answers{
 	$answer_hashes[$index]->{answers}={};
 	$answer_hashes[$index]->{answers}->{0}->{0}->{'minimization_successful'}=0;
 
-#3.4                             ; ln(BLN)
-#-2.25                           ; ln(KL)
-#-9                              ; ln(IC50)
-#0.119                   	; KD0
-#0.025                           ;  L0
+	$index++;
+	$answer_hashes[$index]->{file} = 'nm73/theo.lst';
+	$answer_hashes[$index]->{parsed_successfully} = 1;
+    $answer_hashes[$index]->{answers} = {};
+    $answer_hashes[$index]->{answers}->{0}->{0}->{'est_thetanames'} = [ 'THETA1', 'THETA2', 'THETA3' ];
+    $answer_hashes[$index]->{answers}->{0}->{0}->{'est_omeganames'} = [ 'OMEGA(1,1)', 'OMEGA(2,1)', 'OMEGA(2,2)', 'OMEGA(3,1)', 'OMEGA(3,2)', 'OMEGA(3,3)' ];
+    $answer_hashes[$index]->{answers}->{0}->{0}->{'est_sigmanames'} = [ 'SIGMA(1,1)' ]; 
+    $answer_hashes[$index]->{answers}->{0}->{0}->{'thetas'} = [ 2.81E+00, 7.79E-02, 3.62E-02 ];
+    $answer_hashes[$index]->{answers}->{0}->{0}->{'omegas'} = [ 5.71E+00, 7.56E-03, 2.42E-04, -8.48E-02, 9.08E-03, 5.12E-01 ];
+    $answer_hashes[$index]->{answers}->{0}->{0}->{'sigmas'} = [ 3.86E-01 ];
+    $answer_hashes[$index]->{answers}->{0}->{0}->{'covariance_matrix'} = [
+        5.08E-01,   # THETA1
+        1.31E-03, 5.28E-05,  #THETA2
+        9.70E-05, 3.08E-05, 2.02E-05,   #THETA3
+        3.45E+00, 7.30E-03, -2.76E-05, 2.48E+01,    #OMEGA(1,1)
+        4.73E-03, 7.53E-05, 3.80E-05, 2.59E-02, 1.96E-04,   #OMEGA(2,1)
+        1.70E-05, 5.34E-07, 2.64E-07, 5.75E-05, 1.57E-06, 1.72E-08, # OMEGA(2,2)
+        1.12E-02, 1.65E-03, 1.03E-03, -2.45E-01, 5.11E-03, 4.42E-05,  2.31E-01, #OMEGA(3,1)
+        2.05E-04,  1.55E-06, 6.05E-07, -1.18E-03, 2.69E-05, 3.50E-07,  1.27E-03, 1.43E-05,  #OMEGA(3,2)
+        1.03E-02, -2.75E-04, -1.23E-04, -6.10E-02,  6.73E-04,  9.27E-06,  5.43E-02, 7.12E-04,  4.48E-02,    #OMEGA(3,3)
+        -1.54E-02,  2.01E-04,  6.26E-05, -1.56E-01,  6.21E-04,  7.84E-06,  1.66E-02,  1.01E-04, -1.41E-03,  1.13E-02    #SIGMA(1,1)
+    ];
+
+    $index++;
+    $answer_hashes[$index]->{file} = 'nm73/theo_withcov.lst';
+    $answer_hashes[$index]->{parsed_successfully} = 1;
+    $answer_hashes[$index]->{answers} = {};
+    $answer_hashes[$index]->{answers}->{0}->{0}->{'covariance_matrix'} = [
+        5.07786E-01, 
+        0.00131282,  5.27984E-05,
+        9.69754E-05,  3.08185E-05,  2.02063E-05,
+        3.44688E+00,  0.00729906, -2.76244E-05,   2.48296E+01,
+        4.72920E-03,  7.53160E-05,  3.80490E-05,    2.59374E-02,  1.96274E-04,
+        1.69976E-05,  5.33531E-07,  2.63998E-07,    5.74721E-05,  1.57408E-06,  1.71934E-08,
+        1.12427E-02,  0.00164902,  0.00103047,   -2.45394E-01,  5.11372E-03,  4.41910E-05,  2.31016E-01,
+        0.0002047,  1.54755E-06,  6.05472E-07,   -1.17764E-03,  2.68966E-05,  3.50019E-07,  1.27464E-03,  1.43318E-05,
+        1.02500E-02, -2.75206E-04, -1.22964E-04,  -6.09693E-02,  6.72757E-04,  9.26956E-06,  0.0542811,  7.12239E-04,  0.0447782,
+        -1.54293E-02,  2.00946E-04,  6.25539E-05,   -1.55937E-01,  0.000621036,  7.83792E-06,  1.65946E-02,  1.00560E-04, -1.41069E-03,  1.12882E-02 
+    ];
 
 	return \@answer_hashes;
 }
+
 1;

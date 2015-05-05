@@ -33,8 +33,8 @@ sub cmp_array
     $min = scalar(@{$facit}) if (scalar(@{$facit})< $min);
     for (my $i=0; $i<$min; $i++){
     	cmp_ok($func->[$i],'==',$facit->[$i],"$label, index $i");
-    }		
-	
+    }
+
 }
 
 my $ref = answers::read_answers();
@@ -50,9 +50,8 @@ for (my $i=0; $i< scalar(@answer_hashes); $i++){
 	    next;
 	}
 
-	my $outobj = output -> new ('filename' => $outfile);
+	my $outobj = output->new(filename => utils::file::remove_path($outfile), directory => utils::file::directory($outfile));
 	cmp_ok($outobj->parsed_successfully,'==',$answer_hashes[$i]->{parsed_successfully}, "output file $outfile parsed successfully");
-
 	unless( $outobj -> parsed_successfully ){
 		cmp_ok(length($outobj->parsing_error_message),'>',5,'error message exists');
 	    next;
@@ -95,7 +94,7 @@ for (my $i=0; $i< scalar(@answer_hashes); $i++){
 	foreach my $prob (keys %{$answer_hashes[$i]->{answers}}){
 		foreach my $subprob (keys %{$answer_hashes[$i]->{answers}->{$prob}}){
 			foreach my $attr (keys %{$answer_hashes[$i]->{answers}->{$prob}->{$subprob}}){
-				if ($attr =~ /^(sethetas|seomegas|sesigmas|thetas|omegas|sigmas|sdcorrform_)/){
+				if ($attr =~ /^(sethetas|seomegas|sesigmas|thetas|omegas|sigmas|sdcorrform_|est_thetanames|est_sigmanames|est_omeganames|covariance_matrix)/){
 					cmp_array($outobj->get_single_value(problem_index => $prob, 
 														subproblem_index=> $subprob, 
 														attribute=>$attr),

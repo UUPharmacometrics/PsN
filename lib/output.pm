@@ -1124,7 +1124,7 @@ sub est_sigmanames
 
 	return $self->estnames(problems => $problems,
 						   subproblems => $subproblems,
-						   parameter => 'omega');
+						   parameter => 'sigma');
 }
 
 
