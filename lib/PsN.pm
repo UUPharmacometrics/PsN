@@ -38,16 +38,16 @@ $SIG{__WARN__} = sub {
         }
 };
 
+if( -e home() . "/psn.conf" ){
+	$config_file = home() . "/psn.conf";
+}
 $config = ext::Config::Tiny -> read( $config_file );
 
 unless( $config ){
   croak("In PsN configuration file[" . $config_file . "]:" . $ext::Config::Tiny::errstr );
 }
 
-if( -e home() . "/psn.conf" ){
-  my $personal_config = ext::Config::Tiny -> read( home() . '/psn.conf' );
-  %{$config} = (%{$config}, %{$personal_config});
-}
+
 
 unless( exists $config -> {'low_INF'} ){
   $config -> {'low_INF'} = -1000000;
