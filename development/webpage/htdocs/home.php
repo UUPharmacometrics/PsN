@@ -61,7 +61,15 @@ to see which systems and NONMEM versions PsN 4.4.0 has been tested with.
 </p>
 <h3>Known issues with version 4.4.0</h3>
 <li>
-Installation on Windows: Users who install PsN for the first time need to make sure they install a Perl version where
+It is important that cov,coi,cor are included in the nm_output list in the [default_options] section in psn.conf, otherwise a number of bugs will be triggered. 
+If psn.conf is created by the installation script then the setting of nm_output will be appropriate. 
+A suitable setting is</br></br>
+[default_options]</br>
+nm_output=ext,cov,cor,coi,phi</br></br>
+This bug is further described on the 
+<a href="http://sourceforge.net/p/psn/wiki/Bug_list_current_release" target="_blank">knows bugs wiki</a>.
+</li>
+ <li>Installation on Windows: Users who install PsN for the first time need to make sure they install a Perl version where
 the needed extra modules are available, see instructions on
 <a href="install.php">installation page</a>.
 </li>
