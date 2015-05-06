@@ -13,12 +13,13 @@ SKIP: {
     skip "XML::LibXML not installed" if $@;
 
     require so::parsers::bootstrap;
+    require so::parsers::nmoutput;
     require so::soblock::estimation::precisionpopulationestimates::bootstrap;
     require so;
 
     our $tempdir = create_test_dir('unit_standardised_output');
     copy_test_files($tempdir,
-        [ "SO/bootstrap_results.csv" ]);
+        [ "SO/bootstrap_results.csv", "SO/bootstrap_results_sdcorr.csv" ]);
 
     chdir $tempdir;
 
@@ -53,6 +54,31 @@ SKIP: {
     is_deeply($median->name, "Median", "Bootstrap median name");
     is_deeply($median->valueType, [ ('real') x 5 ], "Boostrap median valueType");
     is_deeply($median->columns, [ [ 0.005622315 ], [ 1.356135 ], [ 0.256029 ], [ 0.1475405 ], [ 0.01651655 ] ], "Bootstrap median columns");
+
+    # bootstrap with omegas on sd and corr form without model
+    my $so = so->new();
+    so::parsers::bootstrap->new(so => $so, bootstrap_results => 'bootstrap_results_sdcorr.csv');
+    my $percentiles = $so->SOBlock->[0]->Estimation->PrecisionPopulationEstimates->Bootstrap->Percentiles;
+    is_deeply($percentiles->columns, [ [ '2.5', '5', '95', '97.5' ], 
+            [ 0.005660052, 0.00570095, 0.007192636, 0.007342812 ],
+            [ 1.19874, 1.21128, 1.411374, 1.43194 ],
+            [ 0.05607026, 0.06598894, 0.6062314, 0.6406822 ],
+            [ 0.06605678, 0.06847714, 0.22189, 0.2483232 ],
+            [ 0.05865366, 0.06483184, 0.157961, 0.170973 ],
+            [ 0.009947088, 0.01072602, 0.0233814, 0.02432164 ] ], "bootstrap pheno sd/corr percentiles columns");
+
+    my $mean = $so->SOBlock->[0]->Estimation->PopulationEstimates->Bootstrap->Mean;
+    is_deeply($mean->columns, [ [ 0.006366352 ], [ 1.311643 ], [ 0.268831 ], [ 0.1311976 ], [ 0.1104773 ], [ 0.01641997 ] ], "boottrap pheno sd/corr mean columns");
+    my $median = $so->SOBlock->[0]->Estimation->PopulationEstimates->Bootstrap->Median;
+    is_deeply($median->columns, [ [ 0.00635686 ], [ 1.30753], [ 0.256321 ], [ 0.125554 ], [ 0.108852], [ 0.016365 ] ], "bootstrap pheno sd/corr median columns");
+
+    # bootstrap with omegas on sd and corr form with model
+    my $so = so->new();
+    so::parsers::nmoutput->new(so => $so, lst_file => 'pheno_sdcorr.lst');
+    so::parsers::bootstrap->new(so => $so, bootstrap_results => 'bootstrap_results_sdcorr.csv');
+    my $percentiles = $so->SOBlock->[0]->Estimation->PrecisionPopulationEstimates->Bootstrap->Percentiles;
+    my $mean = $so->SOBlock->[0]->Estimation->PopulationEstimates->Bootstrap->Mean;
+    my $median = $so->SOBlock->[0]->Estimation->PopulationEstimates->Bootstrap->Median;
 
     # non-existing bootstrap file
     my $so = so->new();
