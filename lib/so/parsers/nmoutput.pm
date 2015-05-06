@@ -580,33 +580,35 @@ sub _create_individual_estimates
     if (scalar(@$eta_names) > 0) {
         # Filter out etas that does not exist in the patab
         $eta_names = _get_included_columns(header => $patab->column_head_indices, columns => $eta_names);
+        if (scalar(@$eta_names) > 0) {
 
-        my @eta_medians = ();
-        my @eta_means = ();
-        foreach my $eta (@$eta_names) {
-            my $column = $patab->column_to_array(column => $eta);
-            (my $median, my $mean) = _individual_statistics(id => $id, parameter => $column);
-            push @eta_medians, $median;
-            push @eta_means, $mean;
+            my @eta_medians = ();
+            my @eta_means = ();
+            foreach my $eta (@$eta_names) {
+                my $column = $patab->column_to_array(column => $eta);
+                (my $median, my $mean) = _individual_statistics(id => $id, parameter => $column);
+                push @eta_medians, $median;
+                push @eta_means, $mean;
+            }
+
+            my $table = so::table->new(
+                name => "EffectMedian",
+                columnId => [ "ID", @$eta_names ],
+                columnType => [ "id", ("undefined") x scalar(@$eta_names) ],
+                valueType => [ "string", ("real") x scalar(@$eta_names) ],
+                columns => [ $unique_ids, @eta_medians ],
+            );
+            $self->_so_block->Estimation->IndividualEstimates->RandomEffects->EffectMedian($table);
+
+            my $table = so::table->new(
+                name => "EffectMean",
+                columnId => [ "ID", @$eta_names ],
+                columnType => [ "id", ("undefined") x scalar(@$eta_names) ],
+                valueType => [ "string", ("real") x scalar(@$eta_names) ],
+                columns => [ $unique_ids, @eta_means ],
+            );
+            $self->_so_block->Estimation->IndividualEstimates->RandomEffects->EffectMean($table);
         }
-
-        my $table = so::table->new(
-            name => "EffectMedian",
-            columnId => [ "ID", @$eta_names ],
-            columnType => [ "id", ("undefined") x scalar(@$eta_names) ],
-            valueType => [ "string", ("real") x scalar(@$eta_names) ],
-            columns => [ $unique_ids, @eta_medians ],
-        );
-        $self->_so_block->Estimation->IndividualEstimates->RandomEffects->EffectMedian($table);
-
-        my $table = so::table->new(
-            name => "EffectMean",
-            columnId => [ "ID", @$eta_names ],
-            columnType => [ "id", ("undefined") x scalar(@$eta_names) ],
-            valueType => [ "string", ("real") x scalar(@$eta_names) ],
-            columns => [ $unique_ids, @eta_means ],
-        );
-        $self->_so_block->Estimation->IndividualEstimates->RandomEffects->EffectMean($table);
     }
 
     $self->_so_block->RawResults->add_datafile(name => $patab->filename, description => "patab");
