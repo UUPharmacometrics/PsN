@@ -39,9 +39,11 @@ for (my $i = 0; $i < @input_option_names; $i++) {
 
 # ouput_files method
 my @output_files = qw(pheno.lst pheno.ext pheno.cov pheno.cor pheno.coi pheno.phi pheno.phm pheno.shk pheno.grd pheno.xml pheno.cnv pheno.smt pheno.rmt 
-pheno.imp pheno.npd pheno.npe pheno.npi pheno.fgh pheno.log.xml patab1 phenomsf);
+pheno.imp pheno.npd pheno.npe pheno.npi pheno.fgh pheno.log.xml pheno.cpu pheno.shm pheno.agh patab1 phenomsf);
 
 my $files = $model->output_files;
+use Data::Dumper;
+print Dumper($files);
 
 for (my $i = 0; $i < @output_files; $i++) {
 	is ($$files[$i], $output_files[$i], "output_files method $i");
