@@ -118,32 +118,23 @@ sub _create_bootstrap
             severity => 2,
         );
     } else {
-        for (my $percentile = 0; $percentile < scalar(@percentiles); $percentile++) {
-            my @perc_row;
-            for (my $row = 0; $row < scalar(@parameters); $row++) {
-                push @perc_row, $column[$row]->[$percentile];
-            }
-            (my $used_parameters, my $adjusted_percentiles) = $self->filter_and_recalc(parameters => \@parameters, values => \@perc_row);
-            for (my $row = 0; $row < scalar(@parameters); $row++) {
-                $column[$row]->[$percentile] ## Kan vara färre här!!!
-            }
-        }
+        (my $used_parameters, my $filtered_column) = $self->filter(parameters => \@parameters, values => \@column);
         my $table = so::table->new(
             name => 'Percentiles',
-            columnId => [ "Percentile", @parameters ],
-            columnType => [ ('undefined') x (scalar(@parameters) + 1) ],
-            valueType => [ ('real') x (scalar(@parameters) + 1) ],
-            columns => [ \@percentiles, @column ],
+            columnId => [ "Percentile", @$used_parameters ],
+            columnType => [ ('undefined') x (scalar(@$used_parameters) + 1) ],
+            valueType => [ ('real') x (scalar(@$used_parameters) + 1) ],
+            columns => [ \@percentiles, @$filtered_column ],
         );
         $self->_precision_bootstrap->Percentiles($table);
     }
 
-    (my $used_parameters, my $adjusted_means) = $self->filter_and_recalc(parameters => \@parameters, values => $means);
+    (my $used_parameters, my $adjusted_means) = $self->filter(parameters => \@parameters, values => $means);
     my $mean_table = so::table->new(name => "Mean", columnId => $used_parameters);
     $mean_table->single_row(values => $adjusted_means);
     $self->_bootstrap->Mean($mean_table);
 
-    (my $used_parameters, my $adjusted_medians) = $self->filter_and_recalc(parameters => \@parameters, values => $medians);
+    (my $used_parameters, my $adjusted_medians) = $self->filter(parameters => \@parameters, values => $medians);
     my $median_table = so::table->new(name => "Median", columnId => $used_parameters);
     $median_table->single_row(values => $adjusted_medians);
     $self->_bootstrap->Median($median_table);
@@ -177,7 +168,7 @@ sub _read_line
     return \@data_row;
 }
 
-sub filter_and_recalc
+sub filter
 {
     my $self = shift;
     my %parm = validated_hash(\@_,
@@ -191,54 +182,27 @@ sub filter_and_recalc
         return ($parameters, $values);
     }
 
-    my $labels = $self->labels_hash->{'labels'};
-    # Create hashes for label->coordlabel and coordlabel->label
-    my %coords;
-    my %coords_to_label;
-    for (my $i = 0; $i < scalar(@$labels); $i++) {
-        $coords{$labels->[$i]} = $self->labels_hash->{'coordinate_labels'}->[$i];
-        $coords_to_label{$self->labels_hash->{'coordinate_labels'}->[$i]} = $labels->[$i];
-    }
-
     # Filter out parameters not intended for inclusion (without label and with FIX)
     my @used_parameters;
-    my @used_means;
+    my @used_values;
     for (my $i = 0; $i < scalar(@$parameters); $i++) {
-       if (grep { $_ eq $parameters->[$i] } @$labels) {
+       if (grep { $_ eq $parameters->[$i] } @{$self->labels_hash->{'labels'}}) {
             push @used_parameters, $parameters->[$i];
-            push @used_means, $values->[$i];
+            push @used_values, $values->[$i];
        }
     }
 
-    my @adjusted_means = @used_means;
-    # Recalculate parameters on sd or corr scale
-    foreach my $label (@{$self->labels_hash->{'on_sd_scale'}}) {
-        for (my $i = 0; $i < scalar(@used_parameters); $i++) {
-            if ($label eq $used_parameters[$i]) {
-                $coords{$label} =~ /^(\w+)\((\d+),(\d+)\)/;
-                my $parname = $1;
-                my $ind1 = $2;
-                my $ind2 = $3;
-                if ($ind1 == $ind2) {
-                    # This is a diagonal element, which is a variance.
-                    $adjusted_means[$i] = sqrt($adjusted_means[$i]);
-                } else {
-                    # This is an off-diagonal element, which is a covariance
-                    my $first_var_coord = $parname . '(' . $ind1 . ',' . $ind1 . ')';
-                    my $first_var_label = $coords_to_label{$first_var_coord};
-                    (my $first_var_index) = grep { $used_parameters[$_] eq $first_var_label } 0 .. $#used_parameters;
-                    my $first_var = $used_means[$first_var_index];
-                    my $second_var_coord = $parname . '(' . $ind2 . ',' . $ind2 . ')';
-                    my $second_var_label = $coords_to_label{$second_var_coord};
-                    (my $second_var_index) = grep { $used_parameters[$_] eq $second_var_label } 0 .. $#used_parameters;
-                    my $second_var = $used_means[$second_var_index];
-                    $adjusted_means[$i] = $used_means[$i] / sqrt($first_var * $second_var);
-                }
-            }
+    # Filter out parameters on sd/corr scale
+    my @final_parameters;
+    my @final_values;
+    for (my $i = 0; $i < scalar(@used_parameters); $i++) {
+        if (not grep { $_ eq $used_parameters[$i] } @{$self->labels_hash->{'on_sd_scale'}}) {
+            push @final_parameters, $used_parameters[$i];
+            push @final_values, $used_values[$i];
         }
     }
 
-    return (\@used_parameters, \@adjusted_means);
+    return (\@final_parameters, \@final_values);
 }
 
 no Moose;

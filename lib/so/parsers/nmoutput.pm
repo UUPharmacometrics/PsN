@@ -156,7 +156,6 @@ sub _parse_lst_file
 
             my @filtered_labels = @{$model->problems->[$problems]->get_estimated_attributes(parameter => 'all', attribute => 'labels')};
             my @filtered_inits = @{$model->problems->[$problems]->get_estimated_attributes(parameter => 'all', attribute => 'inits')};
-            my @all_coordinate_labels = @{$model->problems->[$problems]->get_estimated_attributes(parameter => 'all', attribute => 'coordinate_strings')};
 
             my @all_labels = @filtered_labels; #will add fix with label here
             my @all_inits = @filtered_inits;
@@ -184,7 +183,6 @@ sub _parse_lst_file
                     push @est_values, $option->init;
                     push @all_labels, $option->label;
                     push @all_inits, $option->init;
-                    push @all_coordinate_labels, $option->coordinate_string;
                 }
                 if ($option->sd or $option->corr) {     # Save labels for parameters on sd/corr scale
                     if (grep { $_ eq $option->label } @all_labels) {
@@ -193,7 +191,7 @@ sub _parse_lst_file
                 }
             }
 
-            $self->labels_hash({ labels => \@all_labels, on_sd_scale => \@on_sd_scale, coordinate_labels => \@all_coordinate_labels });
+            $self->labels_hash({ labels => \@all_labels, on_sd_scale => \@on_sd_scale });
 
             if ($estimation_step_run or $simulation_step_run) {
                 foreach my $label (@all_labels, @on_sd_scale) {

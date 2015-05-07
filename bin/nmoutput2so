@@ -259,7 +259,7 @@ my $so = so->new(
     message => $options{'message'},
 );
 
-my $first_labelshash;
+my $first_labels_hash;
 
 foreach my $lst_file (@files) {
     my $nm_parser = so::parsers::nmoutput->new(
@@ -270,7 +270,7 @@ foreach my $lst_file (@files) {
         max_replicates => $options{'max_replicates'},
         external_tables => $options{'external_tables'},
     );
-    $first_labelshash = $nm_parser->labels_hash if not defined $first_labelshash;
+    $first_labels_hash = $nm_parser->labels_hash if not defined $first_labels_hash;
 }
 
 if (defined $options{'bootstrap_results'}) {
@@ -278,7 +278,7 @@ if (defined $options{'bootstrap_results'}) {
         so => $so,
         bootstrap_results => $options{'bootstrap_results'},
         verbose => $options{'verbose'},
-        labels_hash => $first_labelshash,
+        labels_hash => $first_labels_hash,
     );
 }
 
