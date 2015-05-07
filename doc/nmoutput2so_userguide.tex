@@ -125,9 +125,10 @@ The resulting standardized output object xml will be written to the file called 
 The following entries will be populated:
 
 \begin{itemize}
-    \item TaskInformation
+    \item RawResults - All used files will be added
+    \item TaskInformation 
         \begin{itemize}
-            \item Message - Errors, warnings etc will be put here
+            \item Message - Errors, warnings etc will be put here. See section "information messages"
             \item RunTime - From the .lst file
         \end{itemize}
     \item Estimation
@@ -136,8 +137,8 @@ The following entries will be populated:
             \begin{itemize}
                 \item Bootstrap
                 \begin{itemize}
-                    \item Mean - From a PsN bootstrap\_results.csv file.
-                    \item Median - From a PsN bootstrap\_results.csv file.
+                    \item Mean - From a PsN bootstrap\_results.csv file. Parameters on sd or corr scale will not be added.
+                    \item Median - From a PsN bootstrap\_results.csv file. Parameters on sd or corr scale will not be added.
                 \end{itemize}
                 \item MLE - Results will be taken from the .ext file if present otherwise the .lst file. Parameters that are fixed and does not have a label will not be included. The estimated value
                     will be on the standard deviation/correlation scale or variance/covariance scale depending on which scale the initial estimate was on. 
@@ -149,12 +150,12 @@ The following entries will be populated:
                     \item CovarianceMatrix - If the covariance step was successful. Results will be taken from the .cov file if present otherwise from the .lst file.
                     \item CorrelationMatrix - If the covariance step was successful. Results will be taken from the .cor file if present otherwise from the .lst file.
                     \item StandardError - Results will be taken from the .ext file if present otherwise the .lst file. Parameters that are fixed will not be included
-                    \item RelativeStandardError - Results will be taken from the .ext file if present otherwise the .lst file. The RSE is calculated has the ratio between the standard error and the estimated value of the parameter. Parameters that are fixed will not be included.
+                    \item RelativeStandardError - Results will be taken from the .ext file if present otherwise the .lst file. The RSE is calculated has the ratio between the standard error and the estimated value of the parameter and expressed as a percentage. Parameters that are fixed will not be included.
                     \item ConditionNumber - Calculated from the eigenvalues in the .lst file if PRINT=E was present in the \$COV of the control stream.
                 \end{itemize}
                 \item Bootstrap
                 \begin{itemize}
-                    \item PercentilesCI - From a PsN bootstrap\_results.csv file. Note that all percentiles will be on the variance/covariance scale even if the parameters are specified on the standard deviation/coorelation scale in the model.
+                    \item PercentilesCI - From a PsN bootstrap\_results.csv file. Parameters on sd or corr scale will not be added.
                 \end{itemize}
             \end{itemize}
             \item IndividualEstimates
@@ -253,6 +254,7 @@ SO/
         Simulation/
             OriginalDataset
             SimulationBlock/
+                RandomEffects
                 RawResultsFile
 \end{verbatim}
 

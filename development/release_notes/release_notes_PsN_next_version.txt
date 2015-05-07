@@ -118,6 +118,27 @@ Changes and bug fixes from PsN 4.0.0 to n.n.n
 
    ___nmoutput2so___
 
+- Support for SO 0.2
+
+- Added .ext as a rawresults file
+
+- Added messages for all special flags and values from raw_results i.e. covariance_step_warnings, s_matrix_singular etc
+
+- Bugfix: RSEs are now a percentage
+
+- Added bootstrap means and medians (SO 0.2)
+
+- New option so_version to control the version of the so format to create
+
+- Remove dosing rows for SimulatedProfiles and Residuals
+
+- Added SimulationBlock/Dosing for plain AMT column
+
+- Added SimulationBlock/PopulationParameters
+
+- Removed parameters on sd/corr scale from bootstrap results
+ 
+- Option -precision removed. Now Using maximum precision available
 
 
    ___pind___
