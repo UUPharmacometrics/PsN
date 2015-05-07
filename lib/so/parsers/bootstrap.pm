@@ -138,6 +138,8 @@ sub _create_bootstrap
     my $median_table = so::table->new(name => "Median", columnId => $used_parameters);
     $median_table->single_row(values => $adjusted_medians);
     $self->_bootstrap->Median($median_table);
+
+    $self->_so_block->RawResults->add_datafile(name => $self->bootstrap_results, description => "PsN Bootstrap results file"); 
 } 
 
 sub _read_line
