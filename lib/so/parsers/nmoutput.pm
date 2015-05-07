@@ -23,7 +23,6 @@ use so::soblock::simulation::simulationblock;
 has 'so' => ( is => 'rw', isa => 'so' );
 has 'lst_file' => ( is => 'rw', isa => 'Str' );
 has '_so_block' => ( is => 'rw', isa => 'so::soblock' );
-has 'precision' => ( is => 'rw', isa => 'Int', default => 10 );
 has 'use_tables' => ( is => 'rw', isa => 'Bool', default => 1 );    # Set to zero if sdtab and patab should not be used
 has 'toolname' => ( is => 'rw', isa => 'Str', default => 'NONMEM' );
 has 'max_replicates' => ( is => 'rw', isa => 'Maybe[Int]' );        # Maximum number of simulation replicates to add

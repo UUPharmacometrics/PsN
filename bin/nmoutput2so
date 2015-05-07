@@ -25,7 +25,6 @@ my %required_options = ();
 my %optional_options = ( 
     'h|?'         => undef,
     'help'        => undef,
-    'precision:f' => undef,
     'bootstrap_results:s' => undef,
     'so_filename:s' => undef,
     'version' => undef,
@@ -48,7 +47,6 @@ exit unless $res;
 
 my %defaults;
 
-$defaults{'precision'} = 10;
 $defaults{'use_tables'} = 1; 
 $defaults{'toolname'} = 'NONMEM';
 $defaults{'pretty'} = 0;
@@ -100,13 +98,6 @@ $help_text{Examples} = <<'EOF';
     This will add the PsN bootstrap results to a lone SOBlock in the file
     called res.SO.xml
 
-EOF
-
-$help_text{-precision} = <<'EOF';
-    -precision='integer'
-
-    Default 10
-    Output precision.
 EOF
 
 $help_text{-use_tables} = <<'EOF';
@@ -285,6 +276,5 @@ if (defined $options{'bootstrap_results'}) {
 $so->write();
 
 #my $so = standardised_output->new(
-#    precision => $options{'precision'},        # FIXME deprecate option
 #    use_tables => $options{'use_tables'},
 #);
