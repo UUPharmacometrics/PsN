@@ -7,7 +7,7 @@ use Config;
 #the version line is extracted in Makefile using regular expression
 # /\$version\s*=\s*.[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*.;/
 # so be careful when you edit!!!
-$version = '4.4.0';
+$version = '4.4.1';
 
 # The following line will be changed by make
 $dev = 1;
