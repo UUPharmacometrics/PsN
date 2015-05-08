@@ -2,7 +2,7 @@
 \setlength{\evensidemargin}{0pt}
 \setlength{\oddsidemargin}{0pt}
 
-\guidetitle{SUMO user guide}{2015-02-26}
+\guidetitle{SUMO user guide}{2015-05-07}
 
 \begin{document}
 
@@ -70,7 +70,7 @@ The first section of the output from sumo contains run diagnostics. They are lar
 \\ 
 Next are the NONMEM minimization messages and \$COV messages, including etabars etc. Following this is the objective function value. If \$COV has been requested with the PRINT=E option (so that NONMEM reports eigenvalues) the condition number is also reported (the ratio between the largest and smallest eigenvalue)
 The column THETA contains the theta estimates as reported in the NONMEM output file and the numbers in parentheses after the theta estimates, are the relative standard errors (SE/Est). The square roots of the estimates of the diagonal elements of the OMEGA and SIGMA matrices in the NONMEM output file are reported in the OMEGA and SIGMA columns (except when -ci is used, see below). The off-diagonal estimates are reported as the corresponding correlations, i.e. 
-$\sqrt{\frac{cov(om1,om2)}{var(om1)*var(om2)}}$. 
+$\frac{cov(om1,om2)}{\sqrt{var(om1)*var(om2)}}$. 
 The numbers in parentheses after the OMEGA and SIGMA columns are the relative SEs of the \emph{variance} and \emph{covariance} estimates, as taken from the NONMEM output file
 (but see option -ci and -sd\_rse below).
 Relative standard errors are not displayed unless NONMEM reports the standard errors in the output file, i.e. when the covariance step has been requested and has terminated successfully.

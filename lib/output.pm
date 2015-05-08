@@ -320,6 +320,8 @@ sub high_correlations
 	if (scalar(@problems) == 0){
 		@problems = (1 .. $problem_count) if ($problem_count > 0);
 	}
+	
+	my $found_any=0;
 
 	foreach my $probnum (@problems){
 		my @prob_high_names_array=();
@@ -336,6 +338,7 @@ sub high_correlations
 				if (defined $self->problems->[$probnum-1]->subproblems->[$subprobnum-1]){
 					my $correlation_matrix = $self->problems->[$probnum-1]->subproblems->[$subprobnum-1]->correlation_matrix;
 					if (defined $correlation_matrix and scalar(@{$correlation_matrix})>0){
+						$found_any=1;
 						my @names = @{$init_problem->get_estimated_attributes(parameter => 'all',
 																			  attribute => 'labels')};
 						my $idx = 0;
@@ -363,7 +366,11 @@ sub high_correlations
 		push(@high_values_correlations,\@prob_high_values_array); 
 	}
 
-	return \@high_names_correlations ,\@high_values_correlations;
+	if ($found_any){
+		return \@high_names_correlations ,\@high_values_correlations;
+	}else{
+		return [];
+	}
 }
 
 
@@ -393,6 +400,7 @@ sub large_standard_errors
 	if (scalar(@problems) == 0){
 		@problems = (1 .. $problem_count) if ($problem_count > 0);
 	}
+	my $found_any=0;
 
 	foreach my $probnum (@problems){
 		my @prob_high_names_array=();
@@ -412,7 +420,8 @@ sub large_standard_errors
 															 parameter => $param,
 															 problem_index => ($probnum-1),
 															 subproblem_index => ($subprobnum-1));
-						if (defined $ref){
+						if (defined $ref and scalar(@{$ref}>0)){
+							$found_any=1;
 							my @labels = @{$init_problem->get_estimated_attributes(parameter => $param,
 																				   attribute => 'labels')};
 
@@ -433,7 +442,11 @@ sub large_standard_errors
 		push(@large_standard_errors_values,\@prob_high_values_array); 
 	}
 
-	return \@large_standard_errors_names ,\@large_standard_errors_values;
+	if ($found_any){
+		return \@large_standard_errors_names ,\@large_standard_errors_values;
+	}else{
+		return [],[];
+	}
 }
 
 
@@ -448,9 +461,9 @@ sub near_bounds
 	my $zero_limit = $parm{'zero_limit'};
 	my $significant_digits = $parm{'significant_digits'};
 	my $off_diagonal_sign_digits = $parm{'off_diagonal_sign_digits'};
-	my @near_bounds;
+	my @found_names;
 	my @found_bounds;
-	my @found_estimates;
+	my @found_values;
 
 	sub test_sigdig {
 		my ( $number, $goal, $sigdig, $zerolim ) = @_;
@@ -464,150 +477,93 @@ sub near_bounds
 		}
 		return $test;
 	}
-	sub cmp_coords {
-		if ($a =~ /THETA/){
-			return substr($a,5) <=> substr($b,5);
-		} else {
-			($a.$b) =~ /\((\d+)\,(\d+)\)[A-Z]*\((\d+)\,(\d+)\)/;
-			return $2+(($1-1)*$1)/2 <=> $4+(($3-1)*$3)/2; 
+
+
+	my $problem_count = $self->get_problem_count(); #will also read output if not already done
+	return [],[],[] unless (defined $problem_count and $problem_count >0);
+
+	my @problems = (1 .. $problem_count);
+	my @subproblems=();
+	my $found_any=0;
+	foreach my $probnum (@problems){
+		my @prob_bounds_array=();
+		my @prob_names_array=();
+		my @prob_values_array=();
+		if (defined $self->problems->[$probnum-1]){
+			my $subproblem_count = $self->problems->[$probnum-1]->get_subproblem_count();
+			@subproblems = (1 .. $subproblem_count) if ($subproblem_count > 0);
+
+			my $init_problem = $self->problems->[$probnum-1]->input_problem;
+			my @lower = @{$init_problem->get_estimated_attributes(parameter => 'all',
+																  attribute => 'lower_bounds')};
+			my @upper = @{$init_problem->get_estimated_attributes(parameter => 'all',
+																  attribute => 'upper_bounds')};
+			my @labels = @{$init_problem->get_estimated_attributes(parameter => 'all',
+																   attribute => 'labels')};
+			my @off_diagonal = @{$init_problem->get_estimated_attributes(parameter => 'all',
+																		 attribute => 'off_diagonal')};
+			#The boundary test for off-diagonal omega elements
+			#are performed by first converting the covariances to the corre-
+			#sponding correlations and then check if they are close to +/-1
+
+			foreach my $subprobnum (@subproblems){
+				my @sub_bounds_array=();
+				my @sub_names_array=();
+				my @sub_values_array=();
+				if (defined $self->problems->[$probnum-1]->subproblems->[$subprobnum-1]){
+					#for thetas and diagonals we want the estimate,
+					# for of-diagonals we want c
+					#make sure arrays are equal length
+					my $estref = $self->get_filtered_values(category => 'estimate',
+															parameter => 'all',
+															problem_index => ($probnum-1),
+															subproblem_index => ($subprobnum-1));
+					my $cref = $self->get_filtered_values(category => 'c',
+														  parameter => 'all',
+														  problem_index => ($probnum-1),
+														  subproblem_index => ($subprobnum-1));
+					
+					if (defined $estref and scalar(@{$estref}>0)){
+						$found_any=1;
+						for (my $k=0; $k<scalar(@labels); $k++){
+							my $value = $estref->[$k];
+							my $sigdig=$significant_digits;
+							my $low = $lower[$k];
+							my $high=$upper[$k];
+							if ($off_diagonal[$k]){
+								$value=$cref->[$k];
+								$sigdig = $off_diagonal_sign_digits;
+								$low=-1;
+								$high=1;
+							}
+
+							if ( defined ($value)){
+								foreach my $limit ($low,$high){
+									if ( test_sigdig( $value, $limit, $sigdig, $zero_limit ) ) {
+#										print $labels[$k]." $value $limit\n ";
+										push( @sub_bounds_array, $limit );
+										push( @sub_names_array, $labels[$k] );
+										push( @sub_values_array, $value );
+									}
+								}
+							}
+						}
+					}
+				}
+				push(@prob_bounds_array,\@sub_bounds_array);
+				push(@prob_names_array,\@sub_names_array);
+				push(@prob_values_array,\@sub_values_array);
+			}
 		}
+		push(@found_bounds,\@prob_bounds_array);
+		push(@found_names,\@prob_names_array);
+		push(@found_values,\@prob_values_array);
 	}
-
-	my @init_problems;
-	if ( not_empty($self->problems) ) {
-	    foreach my $pr (@{$self->problems}) {
-			push(@init_problems,$pr->input_problem());
-	    }
-	} else {
-	    croak("No problems defined in output object in near_bounds");
+	if ($found_any){
+		return \@found_bounds ,\@found_names ,\@found_values;
+	}else{
+		return [],[],[];
 	}
-
-
-	foreach my $param ( 'theta', 'omega', 'sigma' ) {
-		my $setm =  eval( '$self -> '.$param.'s' );
-		my $nameref =  eval( '$self -> '.$param.'names' );
-		next unless( defined $setm and defined $nameref); 
-		my @estimates  = @{$setm};
-		#it is assumed here that 'fixed' has element for "full" lower triangular omega and sigma
-		# lower_theta_bounds etc have elements for all theta 1, 2, 3...
-		for ( my $i = 0; $i <= $#estimates; $i++ ) {
-			#loop problem level
-			next unless( defined $estimates[$i] );
-			
-			#prepare init data
-			next unless (scalar(@init_problems) > $i and defined ($init_problems[$i]));
-			my $accessor = $param.'s';
-			unless( $init_problems[$i]-> can($accessor) ) {
-				croak("Error unknown parameter type: $param" );
-			}
-			my @records;
-			if (defined $init_problems[$i] -> $accessor()) {
-				@records = @{$init_problems[$i] -> $accessor()};
-			}
-			next unless (scalar(@records) > 0); #no parameter in this problem
-
-
-			#loop through records and options of input problem
-			#if record is same or fix then skip
-			#name of own param is coord
-			#prior theta omega sigma always come after the regular inits in input model. Therefore still ok to match on coords
-			#for non-prior parameters
-
-			my %lobnd = {};
-			my %upbnd = {};
-			my %diagonal = {};
-			my %label = {};
-			foreach my $record (@records) {
-				if  ($record->same() or $record->fix() or $record->prior()) {
-					next;
-				}
-				unless (defined $record -> options()) {
-					croak("$param record has no values in near_bounds in output object");
-				}
-				foreach my $option (@{$record -> options()}) {
-					if ($option->fix() or $option->prior()) {
-						next;
-					}
-					my $name = $option -> coordinate_string();
-					if ( $param eq 'theta' ) {
-						$diagonal{$name} = 0; #ensure hash entry defined even if theta
-						$lobnd{$name} = $option ->lobnd();
-						$lobnd{$name} = -1000000 unless (defined $lobnd{$name});
-						$upbnd{$name} = $option ->upbnd();
-						$upbnd{$name} = 1000000 unless (defined $upbnd{$name});
-						if (defined $option ->label()) {
-							$label{$name} = $option ->label();
-						} else {
-							$label{$name} = $name;
-						}
-					} else {    # on_diagonal is only defined for omegas and sigmas
-						if ( (not $option -> on_diagonal()) and $option->init() == 0) {
-							next;
-							#do not check off-diagonal zeros
-						}
-						$diagonal{$name} = $option -> on_diagonal();
-					}
-				}
-			}
-
-			if ( $param eq 'theta' ) {
-				#first round in loop over params
-				$near_bounds[$i] = [];
-				$found_bounds[$i] = [];
-		 		$found_estimates[$i] = [];
-			}
-
-			for ( my $j = 0; $j < scalar @{$estimates[$i]}; $j++ ) {
-				#loop subproblem level
-				if ( $param eq 'theta' ) {
-					#first round in loop over params
-					$near_bounds[$i][$j] = [];
-					$found_bounds[$i][$j] = [];
-					$found_estimates[$i][$j] = [];
-		 		}
-		 		next unless( defined $estimates[$i][$j] and defined $nameref->[$i][$j]);
-		 		my @values = @{$estimates[$i][$j]};
-		 		my @names = @{$nameref->[$i][$j]};
-				
-		 		my $debug_count = 0;
-		 		for (my $k=0; $k< scalar(@values); $k++) {
-					next unless (defined $diagonal{$names[$k]}); #defined also for theta as long as value to check
-					$debug_count++;
-					if ( $param eq 'theta' ) {
-						if ( test_sigdig( $values[$k], $lobnd{$names[$k]}, $significant_digits, $zero_limit ) ) {
-							push( @{$near_bounds[$i][$j]}, $names[$k] );
-							push( @{$found_bounds[$i][$j]}, $lobnd{$names[$k]} );
-							push( @{$found_estimates[$i][$j]}, $values[$k] );
-						}
-						if ( test_sigdig( $values[$k], $upbnd{$names[$k]}, $significant_digits, $zero_limit ) ) {
-							push( @{$near_bounds[$i][$j]},  $names[$k] );
-							push( @{$found_bounds[$i][$j]}, $upbnd{$names[$k]} );
-							push( @{$found_estimates[$i][$j]}, $values[$k] );
-						}
-					} else {
-						#omega or sigma
-						my ( $upper, $lower, $sigdig );
-						if ($diagonal{$names[$k]}) { # on diagonal
-							( $lower, $upper, $sigdig ) = ( 0, 1000000, $significant_digits );
-						} else {
-							( $lower, $upper, $sigdig ) = ( -1, 1, $off_diagonal_sign_digits );
-						}
-						if ( test_sigdig( $values[$k], $lower, $sigdig, $zero_limit ) ) {
-							push( @{$near_bounds[$i][$j]}, $names[$k] );
-							push( @{$found_bounds[$i][$j]}, $lower ); #limit
-							push( @{$found_estimates[$i][$j]}, $values[$k] );
-						}
-						if ( test_sigdig( $values[$k], $upper, $sigdig, $zero_limit ) ) {
-							push( @{$near_bounds[$i][$j]}, $names[$k] );
-							push( @{$found_bounds[$i][$j]}, $upper ); #limit
-							push( @{$found_estimates[$i][$j]}, $values[$k] );
-						}
-					}
-		 		}
-			}
-	 	}
-	}
-	return \@near_bounds ,\@found_bounds ,\@found_estimates;
 }
 
 sub comegas
@@ -1656,8 +1612,21 @@ sub get_single_value
 		} else {
 			1;
 		}
+	} elsif ( ($attribute eq 't_matrix') or
+			  ($attribute eq 'raw_invcovmatrix') 
+		) {
+		$arr = $self->access_any(attribute => $attribute,
+								 problems => [($problem_index + 1)],
+								 subproblems => [($subproblem_index +1)]);
+		if (defined $arr->[0]) {
+			if (ref $arr->[0] eq "ARRAY"){
+				$return_value=$arr->[0]->[0];
+			}else{
+				$return_value=$arr->[0];
+			}
+		}
 	} elsif ( ($attribute eq 'estimation_step_run') or
-			  ($attribute eq 'estimation_step_initiated')
+			  ($attribute eq 'estimation_step_initiated') 
 		) {
 		$arr = $self->access_any(attribute => $attribute,
 								 problems => [($problem_index + 1)],

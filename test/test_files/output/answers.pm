@@ -6,6 +6,34 @@ sub read_answers
 	my @answer_hashes = ();
 	my $index=0;
 	$answer_hashes[$index]={};
+
+
+    $answer_hashes[$index]->{file} = 'special_mod/special_inverse.lst';
+    $answer_hashes[$index]->{parsed_successfully} = 1;
+    $answer_hashes[$index]->{answers} = {};
+	$answer_hashes[$index]->{near_bounds_names}=['CRCL_on_CL']; 
+	$answer_hashes[$index]->{near_bounds_values}=[7.70E-03];
+	$answer_hashes[$index]->{near_bounds_bounds}=[0];
+    $answer_hashes[$index]->{answers}->{0}->{0}->{'raw_invcovmatrix'} = [
+		3.88E+00,
+		-4.64E+01,  1.46E+03,
+		1.52E+00, -4.87E+01,  2.38E+01,
+		1.59E+01,  2.83E+03, -3.74E+01,  1.91E+05,
+		3.60E+01, -1.24E+03,  1.54E+02,  2.50E+03,  4.61E+03,
+		8.56E+02, -1.20E+04,  5.00E+02, -9.66E+04,  4.03E+04,  3.09E+06,
+		-1.26E+01, -5.59E+01, -1.80E+02, -4.00E+03, -1.01E+01,  4.85E+04,  6.14E+03,
+		-1.55E+00,  2.21E+01, -3.37E+00, -1.35E+02, -8.44E+01, -2.45E+03, -1.16E+01,  4.57E+00,
+		2.07E+02, -3.38E+03,  7.97E+01, -4.75E+03,  5.86E+03,  2.25E+05,  2.59E+03, -1.92E+02,  4.79E+04,
+		-2.99E+02,  5.71E+03,  7.67E+01,  2.40E+04, -7.83E+03, -2.86E+05, -5.85E+03,  2.13E+02, -6.13E+04,  1.31E+05,
+		1.23E+02, -2.78E+03, -1.45E+02, -2.39E+04,  2.41E+03,  8.33E+04,  3.04E+03, -3.55E+01,  2.20E+04, -6.59E+04,  5.24E+04,
+		-1.63E-01, -1.75E-01, -1.04E+00, -8.09E+01,  1.37E+00,  1.45E+02,  3.27E+01,  2.18E-01,  9.89E+00, -2.28E+01, 1.38E+01, 2.95E-01,
+		1.48E+02, -1.07E+03,  3.89E+01,  1.69E+04,  2.78E+03,  6.33E+04, -1.10E+03, -8.33E+01,  2.28E+04, -2.42E+04,  5.50E+03, -1.63E+01,  5.81E+04,
+		-2.15E+00,  2.98E+01, -2.55E+01, -5.19E+02, -2.32E+02, -1.43E+03,  2.86E+02,  4.29E+00, -2.12E+02, -2.26E+02, 3.67E+02,  8.08E-01, -3.14E+02,  5.57E+01
+		];
+
+
+    $index++;
+	$answer_hashes[$index]={};
 	$answer_hashes[$index]->{file}='nm73/anneal2_V7_30_beta.lst';
 	$answer_hashes[$index]->{parsed_successfully}=1;
 	$answer_hashes[$index]->{estimation_evaluation_problem_number}=1;
@@ -656,6 +684,9 @@ sub read_answers
 	$answer_hashes[$index]->{file}='special_mod/near_bounds.lst';
 	$answer_hashes[$index]->{answers}={};
 	$answer_hashes[$index]->{parsed_successfully}=1;
+	$answer_hashes[$index]->{near_bounds_names}=['TVV','TVV','IOV CL','IOV KA']; 
+	$answer_hashes[$index]->{near_bounds_values}=[1.15339E+02,1.15339E+02,1.47000E-06,5.06000E-05];
+	$answer_hashes[$index]->{near_bounds_bounds}=[115,115.5,0,0];
 	$answer_hashes[$index]->{estimation_evaluation_problem_number}=1;
 	$answer_hashes[$index]->{problem_count}=1;
 	$answer_hashes[$index]->{subproblem_count}=[1];
@@ -691,6 +722,9 @@ sub read_answers
 	$answer_hashes[$index]->{file}='special_mod/s_matrix_singular.lst';
 	$answer_hashes[$index]->{answers}={};
 	$answer_hashes[$index]->{parsed_successfully}=1;
+	$answer_hashes[$index]->{near_bounds_names}=['CL','SIGMA(1,1)']; 
+	$answer_hashes[$index]->{near_bounds_values}=[4.84185E-03,7.93076E-03];
+	$answer_hashes[$index]->{near_bounds_bounds}=[0,0];
 	$answer_hashes[$index]->{problem_count}=1;
 	$answer_hashes[$index]->{subproblem_count}=[1];
 	$answer_hashes[$index]->{answers}->{0}->{0}->{'ofv'}=45.143655409090925;
@@ -747,6 +781,9 @@ sub read_answers
 	$answer_hashes[$index]->{file}='nm74/icon_examples/delayed.res';
 	$answer_hashes[$index]->{answers}={};
 	$answer_hashes[$index]->{parsed_successfully}=1;
+	$answer_hashes[$index]->{near_bounds_names}=[]; 
+	$answer_hashes[$index]->{near_bounds_values}=[];
+	$answer_hashes[$index]->{near_bounds_bounds}=[];
 	$answer_hashes[$index]->{estimation_evaluation_problem_number}=1;
 	$answer_hashes[$index]->{answers}->{0}->{0}->{'ofv'}=-85.0795013007985;
 	$answer_hashes[$index]->{answers}->{0}->{0}->{'covariance_step_successful'}=1;
@@ -906,14 +943,20 @@ sub read_answers
 	$answer_hashes[$index]->{parsed_successfully}=1; #omega(2,1)-omega(1,1)  omega(2,2)-omega(1,1)  omega(2,2)-omega(2-1)
 	$answer_hashes[$index]->{high_correlations_names}=['OMEGA(2,1) - IIV CL','IIV V - IIV CL','IIV V - OMEGA(2,1)']; 
 	$answer_hashes[$index]->{high_correlations_values}=[0.991,0.964,0.99];
+	$answer_hashes[$index]->{near_bounds_names}=['OMEGA(2,1)']; 
+	$answer_hashes[$index]->{near_bounds_values}=[2.10E-01/sqrt(1.17E-01*(3.79E-01))];
+	$answer_hashes[$index]->{near_bounds_bounds}=[1];
 	$answer_hashes[$index]->{answers}={};
 	$answer_hashes[$index]->{answers}->{0}->{0}->{'minimization_successful'}=1;
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'condition_number'}=(3.03E+00/1.62E-04);
 
 	$index++;
 	$answer_hashes[$index]->{file}='special_mod/large_standard_errors.lst';
 	$answer_hashes[$index]->{parsed_successfully}=1;#    4-2             5-2           5-4        22-2             22-4            22-5         33-3 
 	$answer_hashes[$index]->{high_correlations_names}=['KD0 - ln(KL)','L0 - ln(KL)','L0 - KD0','ETA(2) - ln(KL)','ETA(2) - KD0','ETA(2) - L0','ETA(3) - ln(IC50)']; 
 	$answer_hashes[$index]->{high_correlations_values}=[0.998,          -0.996,        -0.990,   -0.986,         -0.989,            0.973,       -0.988];
+	$answer_hashes[$index]->{large_standard_errors_names}=['L0','ETA(2)','OMEGA(3,1)','OMEGA(3,2)','ETA(3)'];
+	$answer_hashes[$index]->{large_standard_errors_values}=[2.36E-02/abs(2.39E-02),1.75E-02/abs(1.32E-02),2.12E-01/abs(-1.26E-01),3.21E-01/abs(-1.87E-01),1.37E+01/abs(4.37E+00)];
 	$answer_hashes[$index]->{answers}={};
 	$answer_hashes[$index]->{answers}->{0}->{0}->{'minimization_successful'}=0;
 
@@ -956,6 +999,58 @@ sub read_answers
         1.02500E-02, -2.75206E-04, -1.22964E-04,  -6.09693E-02,  6.72757E-04,  9.26956E-06,  0.0542811,  7.12239E-04,  0.0447782,
         -1.54293E-02,  2.00946E-04,  6.25539E-05,   -1.55937E-01,  0.000621036,  7.83792E-06,  1.65946E-02,  1.00560E-04, -1.41069E-03,  1.12882E-02 
     ];
+
+    $index++;
+    $answer_hashes[$index]->{file} = 'special_mod/theo_t_matrix.lst';
+    $answer_hashes[$index]->{parsed_successfully} = 1;
+    $answer_hashes[$index]->{answers} = {};
+    $answer_hashes[$index]->{answers}->{0}->{0}->{'t_matrix'} = [
+		0.00E+00,
+		0.00E+00,  2.38E+03,
+		0.00E+00, -1.09E+04,  5.04E+04,
+		0.00E+00, -2.42E-16,  1.11E-15,  2.46E-35,
+		0.00E+00, -2.01E-11,  9.27E-11,  2.05E-30,  1.71E-25,
+		0.00E+00,  8.21E-09, -3.78E-08, -8.34E-28, -6.95E-23,  2.83E-20,
+		0.00E+00, -1.39E+03,  6.40E+03,  1.41E-16,  1.18E-11, -4.80E-09, 8.13E+02, 
+		0.00E+00,  2.78E-08, -1.28E-07, -2.83E-27, -2.36E-22,  9.60E-20, -1.63E-08, 3.25E-19, 
+		0.00E+00,  6.97E+01, -3.21E+02, -7.08E-18, -5.90E-13,  2.40E-10, -4.07E+01, 8.15E-10,  2.04E+00,
+		0.00E+00,  1.75E+01, -8.07E+01, -1.78E-18, -1.48E-13,  6.05E-11, -1.02E+01, 2.05E-10, 5.13E-01, 1.29E-01,
+		0.00E+00,  1.18E+01, -5.42E+01, -1.20E-18, -9.97E-14,  4.06E-11, -6.88E+00, 1.38E-10, 3.45E-01, 8.67E-02, 5.82E-02
+		];
+
+    $index++;
+    $answer_hashes[$index]->{file} = 'special_mod/two_digit_cov_index.lst';
+    $answer_hashes[$index]->{parsed_successfully} = 1;
+    $answer_hashes[$index]->{answers} = {};
+    $answer_hashes[$index]->{answers}->{0}->{0}->{'raw_invcovmatrix'} = [
+		3.08E+08,
+		-1.07E+08,3.75E+07,
+		-5.30E+07,1.85E+07,9.12E+06,
+		2.58E+07,-9.01E+06,-4.44E+06,2.17E+06,
+		9.89E+07,-3.45E+07,-1.70E+07,8.30E+06,3.18E+07,
+		-1.59E+07,5.55E+06,2.73E+06,-1.33E+06,-5.11E+06,8.21E+05,
+		-3.62E+09,1.26E+09,6.22E+08,-3.03E+08,-1.16E+09,1.87E+08,4.25E+10,
+		-6.08E+08,2.12E+08,1.05E+08,-5.10E+07,-1.95E+08,3.14E+07,7.14E+09,1.20E+09,
+		7.46E+06,-2.60E+06,-1.28E+06,6.26E+05,2.40E+06,-3.85E+05,-8.77E+07,-1.47E+07,1.81E+05,
+		5.07E+08,-1.77E+08,-8.72E+07,4.25E+07,1.63E+08,-2.62E+07,-5.96E+09,-1.00E+09,1.23E+07,8.35E+08,
+		5.45E+08,-1.90E+08,-9.37E+07,4.57E+07,1.75E+08,-2.81E+07,-6.40E+09,-1.08E+09,1.32E+07,8.97E+08,9.65E+08,
+		-5.80E+07,2.02E+07,9.98E+06,-4.87E+06,-1.86E+07,3.00E+06,6.82E+08,1.15E+08,-1.41E+06,-9.56E+07,-1.03E+08,1.09E+07,
+		2.64E+08,-9.20E+07,-4.54E+07,2.21E+07,8.47E+07,-1.36E+07,-3.10E+09,-5.21E+08,6.40E+06,4.35E+08,4.67E+08,-4.97E+07,2.26E+08,
+		9.91E+09,-3.46E+09,-1.70E+09,8.31E+08,3.18E+09,-5.12E+08,-1.16E+11,-1.96E+10,2.40E+08,1.63E+10,1.75E+10,-1.87E+09,8.49E+09,3.19E+11,
+		2.19E+08,-7.64E+07,-3.77E+07,1.84E+07,7.03E+07,-1.13E+07,-2.57E+09,-4.32E+08,5.31E+06,3.61E+08,3.88E+08,-4.13E+07,1.88E+08,7.05E+09,1.56E+08,
+		-9.51E+09,3.32E+09,1.64E+09,-7.98E+08,-3.06E+09,4.91E+08,1.12E+11,1.88E+10,-2.31E+08,-1.57E+10,-1.68E+10,1.79E+09,-8.15E+09,-3.06E+11,-6.77E+09,2.94E+11,
+		-1.37E+08,4.80E+07,2.36E+07,-1.15E+07,-4.42E+07,7.10E+06,1.62E+09,2.71E+08,-3.33E+06,-2.26E+08,-2.43E+08,2.59E+07,-1.18E+08,-4.42E+09,-9.78E+07,4.25E+09,6.15E+07,
+		4.40E+08,-1.54E+08,-7.58E+07,3.70E+07,1.42E+08,-2.27E+07,-5.17E+09,-8.70E+08,1.07E+07,7.25E+08,7.80E+08,-8.30E+07,3.77E+08,1.42E+10,3.13E+08,-1.36E+10,-1.97E+08,6.30E+08,
+		-1.80E+09,6.26E+08,3.09E+08,-1.51E+08,-5.77E+08,9.27E+07,2.11E+10,3.54E+09,-4.35E+07,-2.96E+09,-3.18E+09,3.38E+08,-1.54E+09,-5.78E+10,-1.28E+09,5.55E+10,8.02E+08,-2.57E+09,1.05E+10,
+		1.10E+09,-3.84E+08,-1.89E+08,9.24E+07,3.54E+08,-5.69E+07,-1.29E+10,-2.17E+09,2.67E+07,1.81E+09,1.95E+09,-2.08E+08,9.44E+08,3.54E+10,7.83E+08,-3.40E+10,-4.92E+08,1.58E+09,-6.42E+09,3.94E+09,
+		1.16E+08,-4.05E+07,-2.00E+07,9.75E+06,3.73E+07,-6.00E+06,-1.36E+09,-2.29E+08,2.82E+06,1.91E+08,2.06E+08,-2.19E+07,9.96E+07,3.74E+09,8.26E+07,-3.59E+09,-5.19E+07,1.66E+08,-6.78E+08,4.16E+08,4.38E+07];
+
+
+    $index++;
+    $answer_hashes[$index]->{file} = 'special_mod/sparse_format_cov_matrix.lst';
+    $answer_hashes[$index]->{parsed_successfully} = 1;
+    $answer_hashes[$index]->{answers} = {};
+
 
 	return \@answer_hashes;
 }

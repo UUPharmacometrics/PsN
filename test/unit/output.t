@@ -72,6 +72,16 @@ for (my $i=0; $i< scalar(@answer_hashes); $i++){
 		}
 	}
 
+	if(defined $answer_hashes[$i]->{near_bounds_names}){
+		#assume only for 1 prob 1 subprob
+		my ($bounds,$names,$values) = $outobj->near_bounds(zero_limit=>0.01,
+														   off_diagonal_sign_digits => 2,
+														   significant_digits=>2);
+		is_deeply($bounds->[0][0],$answer_hashes[$i]->{near_bounds_bounds},"$fname near_bounds bounds");
+		is_deeply($names->[0][0],$answer_hashes[$i]->{near_bounds_names},"$fname near_bounds names");
+		is_deeply($values->[0][0],$answer_hashes[$i]->{near_bounds_values},"$fname near_bounds values");
+	}
+
 	if(defined $answer_hashes[$i]->{high_correlations_names}){
 		#assume only for 1 prob 1 subprob
 		my ($high_names,$high_values) = $outobj->high_correlations(problems=>[1],subproblems=>[1],limit=>0.95);
@@ -94,11 +104,16 @@ for (my $i=0; $i< scalar(@answer_hashes); $i++){
 	foreach my $prob (keys %{$answer_hashes[$i]->{answers}}){
 		foreach my $subprob (keys %{$answer_hashes[$i]->{answers}->{$prob}}){
 			foreach my $attr (keys %{$answer_hashes[$i]->{answers}->{$prob}->{$subprob}}){
-				if ($attr =~ /^(sethetas|seomegas|sesigmas|thetas|omegas|sigmas|sdcorrform_|est_thetanames|est_sigmanames|est_omeganames|covariance_matrix)/){
+				if ($attr =~ /^(sethetas|seomegas|sesigmas|thetas|omegas|sigmas|sdcorrform_|est_thetanames|est_sigmanames|est_omeganames)/){
 					cmp_array($outobj->get_single_value(problem_index => $prob, 
 														subproblem_index=> $subprob, 
 														attribute=>$attr),
 							 $answer_hashes[$i]->{answers}->{$prob}->{$subprob}->{$attr},"$fname $attr prob $prob subprob $subprob");
+				}elsif ($attr =~ /^(raw_invcovmatrix|covariance_matrix|correlation_matrix|t_matrix)/){
+#					print join(' ',@{$answer_hashes[$i]->{answers}->{$prob}->{$subprob}->{$attr}})."\n";
+					my $ref = $outobj->get_single_value(problem_index => $prob,subproblem_index=> $subprob, attribute=>$attr);
+#					print "defined ".(defined $ref)."\n";
+					cmp_array($ref, $answer_hashes[$i]->{answers}->{$prob}->{$subprob}->{$attr},"$fname $attr prob $prob subprob $subprob");
 				}elsif ($attr =~ /^condition_number/){
 					my $tval = sprintf ("%.7f",$outobj->get_single_value(problem_index => $prob, 
 																		 subproblem_index=> $subprob,

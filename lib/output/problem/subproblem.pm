@@ -260,7 +260,11 @@ sub _read_covmatrix
 		# get rid of '........'
 		my @clear;
 		foreach ( @matrix ) {
-			unless ( $_ eq '.........' ) {
+			if ( $_ eq '.........' ) {
+				print join(' ',@matrix)."\n";
+				ui->print(category=> 'all', 
+						  message =>"found  ...... in matrix, this is a bug, please report this\n ");
+			}else{
 				if ( $_ eq 'NAN' or $_ eq 'NaN') {
 					push( @clear, 0 );
 				} elsif ( $_ eq 'INF' ) {
@@ -304,7 +308,7 @@ sub _read_covmatrix
 	while ( $_ = @{$self->lstfile}[ $start_pos++ ] ) {
 		if (/T MATRIX/) {
 			while ( $_ = @{$self->lstfile}[ $start_pos++ ] ) {
-				if (/^ TH (\d)/ or /^\s+TH (\d) \| /) { # Read matrix and get out of inner while loop
+				if (/^\s+TH\s+\d+\s*$/ or /^\s+TH\s+\d+\s+\|/) { # Read matrix and get out of inner while loop
 					my $temp_matrix;
 					( $start_pos, $temp_matrix, $t_success, $dummyheaders )  = _read_matrixoestimates( pos => $start_pos-1,
 																									   lstfile => $self->lstfile,
@@ -317,7 +321,7 @@ sub _read_covmatrix
 		}
 		if (/    COVARIANCE MATRIX OF ESTIMATE/) {
 			while( $_ = @{$self->lstfile}[ $start_pos++ ] ) {
-				if (/^ TH (\d)/ or /^\s+TH (\d) \| /) { # Read matrix and get out of inner while loop
+				if (/^\s+TH\s+\d+\s*$/ or /^\s+TH\s+\d+\s+\|/) { # Read matrix and get out of inner while loop
 					my $temp_matrix;
 					( $start_pos, $temp_matrix, $c_success, $dummyheaders ) = _read_matrixoestimates( pos => $start_pos - 1,
 																									  lstfile => $self->lstfile,
@@ -332,7 +336,7 @@ sub _read_covmatrix
 		}
 		if (/    CORRELATION MATRIX OF ESTIMATE/) {
 			while( $_ = @{$self->lstfile}[ $start_pos++ ] ) {
-				if (/^ TH (\d)/ or /^\s+TH (\d) \| /) { # Read matrix and get out of inner while loop
+				if (/^\s+TH\s+\d+\s*$/ or /^\s+TH\s+\d+\s+\|/) { # Read matrix and get out of inner while loop
 					my $temp_matrix;
 					( $start_pos, $temp_matrix, $corr_success, $headers ) = _read_matrixoestimates( pos => $start_pos - 1,
 																									lstfile => $self->lstfile,
@@ -344,7 +348,7 @@ sub _read_covmatrix
 		}
 		if (/    INVERSE COVARIANCE MATRIX OF ESTIMATE/) {
 			while( $_ = @{$self->lstfile}[ $start_pos++ ] ) {
-				if (/^ TH (\d)/ or /^\s+TH (\d) \| /) { # Read matrix and get out of inner while loop
+				if (/^\s+TH\s+\d+\s*$/ or /^\s+TH\s+\d+\s+\|/) { # Read matrix and get out of inner while loop
 					my $temp_matrix;
 					( $start_pos, $temp_matrix, $i_success, $dummyheaders ) = _read_matrixoestimates( pos => $start_pos - 1,
 																									  lstfile => $self->lstfile,
@@ -3161,6 +3165,7 @@ sub _read_matrixoestimates
 	my $success = 0;
 	my @row_headers;
 	my @matrix=();
+	my $sparse_format=0;
 	# Reads one matrix structure and returns the file handle at
 	# the beginning of the next structure
 
@@ -3175,7 +3180,8 @@ sub _read_matrixoestimates
 			}
 			last;
 		}
-		if ( /^ TH/ or /^ OM/ or /^ SG/ ) {	  # Row header row (single space)
+		next if $sparse_format;
+		if ( /^\s\s?\s?\s?(TH|OM|SG)\s*\d+\s*$/  ) {	  # Row header row (single name and at most 4 spaces)
 			push(@matrix,[]);
 			$matrix_row++;
 			my $label;
@@ -3204,6 +3210,9 @@ sub _read_matrixoestimates
 			}
 			push( @row_headers, $label ) ;
 			next;
+		} elsif ( /^\s+TH\s+\d+\s+\|/  ) {	  # sparse format
+			$sparse_format=1;
+			next;
 		} elsif ( /^\s+TH/ or /^\s+OM/ or /^\s+SG/ ) {	  # Column header (multiple spaces)
 			next;
 		}
@@ -3216,9 +3225,20 @@ sub _read_matrixoestimates
 		shift( @row ) if ( $row[0] eq '+' );	   # Get rid of +-sign
 
 		next if ( $#row < 0 );			   # Blank row
+
+#		print join(';',@row)."\n";
 		
 		push( @{$matrix[$matrix_row]}, @row );
 	}
+
+	if ($matrix_row < 0){
+		#we did not find any regular row header. 
+		if ($sparse_format){
+			ui->print(category=> 'all',message => "Info: PsN cannot parse sparse format matrices in lst-file.\n");
+		}
+		return $pos ,[],$success ,[];
+	}
+
 
 	#now have triangular matrix, one row per item in @matrix. Labels in @row_headers.
 	#Need to sort rows and cols according to right order 

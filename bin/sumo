@@ -357,12 +357,11 @@ my $form = '%.' . $options{'precision'} . 'g';
 
 		my $nmversion = $outobj -> nonmem_version();
 
-		my ( $n_b, $f_b, $f_e ) =
-			$model -> near_bounds( zero_limit         => $options{'near_zero_boundary_limit'},
-								   significant_digits => $options{'near_bound_sign_digits'},
-								   off_diagonal_sign_digits => $options{'sign_digits_off_diagonals'},
-								   output_object => $outobj);
-
+		my ( $found_bounds, $found_names, $found_values ) =
+			$outobj -> near_bounds( zero_limit         => $options{'near_zero_boundary_limit'},
+									significant_digits => $options{'near_bound_sign_digits'},
+									off_diagonal_sign_digits => $options{'sign_digits_off_diagonals'});
+		
 
       PROBLEM:
 		for( my $problems = 0; $problems <= $#{$outobj -> problems}; $problems++){
@@ -533,13 +532,12 @@ my $form = '%.' . $options{'precision'} . 'g';
 					}
 
 
-					#near bounds names is the generic labels. 
 
-					if ( defined $n_b -> [$problems] and defined $n_b -> [$problems][$sub_problems] ) {
+					if ( defined $found_names -> [$problems] and defined $found_names -> [$problems][$sub_problems] ) {
 
-						my @near_bounds     = @{$n_b -> [$problems][$sub_problems]};
-						my @found_bounds    = @{$f_b -> [$problems][$sub_problems]};
-						my @found_estimates = @{$f_e -> [$problems][$sub_problems]};
+						my @near_bounds     = @{$found_names -> [$problems][$sub_problems]};
+						my @found_bounds    = @{$found_bounds -> [$problems][$sub_problems]};
+						my @found_estimates = @{$found_values -> [$problems][$sub_problems]};
 
 						for ( my $i = 0; $i <= $#near_bounds; $i++ ) {
 							push @near_bound_parameters, sprintf( "\t%-20s%10g   %10g", $near_bounds[$i],
@@ -550,7 +548,7 @@ my $form = '%.' . $options{'precision'} . 'g';
 						if ( $#near_bound_parameters < 0 ) {
 							$near_bound_mess = acknowledge( 'No parameter near boundary', 'OK');
 						} else {
-							$near_bound_mess = acknowledge( 'Parameter(s) near boundary', 'WARNING');
+							$near_bound_mess = acknowledge( 'Parameter(s) / ETA-/EPS-correlation(s) near boundary', 'WARNING');
 
 						}
 					}
@@ -573,10 +571,10 @@ my $form = '%.' . $options{'precision'} . 'g';
 							if ( defined $l_se -> [$problems] and defined $l_se -> [$problems][$sub_problems] ) {
 								my @large_standard_errors = @{$l_se -> [$problems][$sub_problems]};
 								if ( $#large_standard_errors < 0 ) {
-									$large_se_mess = acknowledge( 'No large standard errors found', 'OK');
+									$large_se_mess = acknowledge( 'No large relative standard errors found', 'OK');
 								} else {
 									my @found_cv = @{$f_cv -> [$problems][$sub_problems]};
-									$large_se_mess = acknowledge( 'Large standard errors found', 'WARNING');
+									$large_se_mess = acknowledge( 'Large relative standard errors found', 'WARNING');
 									for ( my $i = 0; $i <= $#large_standard_errors; $i++ ) {
 										push @large_ses, sprintf( "\t%-20s%10g", $large_standard_errors[$i], $found_cv[$i] );
 									}
@@ -605,7 +603,7 @@ my $form = '%.' . $options{'precision'} . 'g';
 								$corr_mess = acknowledge( 'Large correlations between parameter estimates found', 'WARNING');	
 								
 								for ( my $i = 0; $i <= $#high_correlations; $i++ ) {
-									push @large_corrs,sprintf( "\t%-20s%10g\n", $high_correlations[$i],
+									push @large_corrs,sprintf( "\t%-20s%10g", $high_correlations[$i],
 															   $found_correlations[$i] );
 								}
 							}
