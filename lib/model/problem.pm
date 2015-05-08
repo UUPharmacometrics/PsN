@@ -2570,6 +2570,7 @@ sub set_estimated_parameters_hash
 					if ($option->fix() or $option->prior()) {
 						next;
 					}
+					my $off_diagonal=0;
 					if ($param eq 'theta'){
 						my $lobnd = $option ->lobnd();
 						$lobnd = -1000000 unless (defined $lobnd);
@@ -2592,6 +2593,7 @@ sub set_estimated_parameters_hash
 								#do not check off-diagonal zeros
 								next;
 							}else{
+								$off_diagonal=1;
 								#we handle these with Cholesky
 								push(@{$hash{'lower_bounds'}},-1000000);
 								push(@{$hash{'upper_bounds'}},1000000);
@@ -2608,6 +2610,7 @@ sub set_estimated_parameters_hash
 					if (defined $option ->label()) {
 						$name = $option ->label();
 					}
+                    push(@{$hash{'off_diagonal'}}, $off_diagonal);
                     push(@{$hash{'inits'}}, $option->init);
 					push(@{$hash{'labels'}},$name);
 					push(@{$hash{'coordinate_strings'}},$coord);
