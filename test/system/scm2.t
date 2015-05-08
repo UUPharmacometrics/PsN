@@ -15,23 +15,23 @@ use tool::scm::config_file;
 use tool::scm;
 use common_options;
 
-our $tempdir = create_test_dir('system_scm');
-our $dir = "$tempdir/scm_test";
+our $tempdir = create_test_dir('system_scm2');
+our $dir = "$tempdir/scm_test2";
 our $scm_file_dir = $includes::testfiledir . '/scm';
 our $file_dir = $includes::testfiledir;
 
 my @config_files = qw (
-config_nohead.scm
-config_ignore.scm
-config_included.scm
-config_logit.scm
-config_normal_sum.scm
-config_only_categorical.scm
-config_state5.scm
-config_time_varying.scm
-config_tv.scm
-config_usererror.scm
-config_all_default_codes_explicitly.scm
+config_alternative_parameterizations.scm
+config_centering_bivariate.scm
+config_different_parameterizations_different_covariates.scm
+config_emax.scm
+config_foce_backward.scm
+config_foce_prop.scm
+config_foce_prop_upd.scm
+config_foce.scm
+config_foce_upd.scm
+config_grouping_categorical.scm
+config_hockey.scm
 );
 
 foreach my $cfile (@config_files) {
