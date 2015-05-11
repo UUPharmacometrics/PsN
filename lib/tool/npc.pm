@@ -1945,7 +1945,7 @@ sub get_bin_ceilings_from_count
 		my $count = scalar(@data_indices)/$n_bins;
 		@ideal_count = ($count) x $n_bins;
 		
-	} elsif (defined $single_bin_size){
+	} elsif (defined $single_bin_size and ($single_bin_size != 0)){
 		#translate to $n_bins
 		my $nb = int (scalar(@data_indices)/$single_bin_size); #round down
 		$nb++ if ((scalar(@data_indices)/$single_bin_size)-$nb >= 0.5);
@@ -2090,7 +2090,7 @@ sub get_bin_ceilings_from_value
 			push (@bin_ceilings,($width*$i+$minval));
 		}
 		push (@bin_ceilings,$maxval); #for numerical reasons must use input value as last ceil
-	} elsif (defined $single_bin_size){
+	} elsif (defined $single_bin_size and ($single_bin_size != 0)){
 		#translate to $n_bins
 		my $nb = int(($maxval-$minval)/$single_bin_size); #round down
 		$nb++ if ((($maxval-$minval)/$single_bin_size)-$nb >= 0.5);
@@ -2994,7 +2994,7 @@ sub create_binned_data
 					'value_hash'			=> $bin_hash,
 					'data_indices'		=> \@data_indices,
 					'n_bins'				=> $self->no_of_bins,
-					'single_bin_size'	=> int($self->single_bin_size),
+					'single_bin_size'	=> $self->single_bin_size,
 					'list_counts' 		=> $list_boundaries);
 			}
 		} elsif ($self->bin_by_count eq '0') {
