@@ -486,7 +486,7 @@ sub _create_residuals
         valueType =>  [ "string", ("real") x (scalar(@ids) - 1) ],
         columns => \@values,
     );
-    $self->_so_block->Estimation->Residual->ResidualTable($table);
+    $self->_so_block->Estimation->Residuals->ResidualTable($table);
 }
 
 sub _individual_statistics

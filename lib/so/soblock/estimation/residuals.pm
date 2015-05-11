@@ -1,4 +1,4 @@
-package so::soblock::estimation::residual;
+package so::soblock::estimation::residuals;
 
 use strict;
 use warnings;
@@ -36,7 +36,7 @@ sub xml
 
     my $est;
     if (defined $res) {
-        $est = XML::LibXML::Element->new("Residual");
+        $est = XML::LibXML::Element->new("Residuals");
     
         if (defined $res) {
             $est->appendChild($res);

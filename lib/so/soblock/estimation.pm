@@ -11,7 +11,7 @@ use so::table;
 use so::soblock::estimation::populationestimates;
 use so::soblock::estimation::precisionpopulationestimates;
 use so::soblock::estimation::individualestimates;
-use so::soblock::estimation::residual;
+use so::soblock::estimation::residuals;
 use so::soblock::estimation::likelihood;
 
 has 'version' => ( is => 'rw', isa => 'Num', required => 1 );
@@ -19,7 +19,7 @@ has 'version' => ( is => 'rw', isa => 'Num', required => 1 );
 has 'PopulationEstimates' => ( is => 'rw', isa => 'so::soblock::estimation::populationestimates' );
 has 'PrecisionPopulationEstimates' => ( is => 'rw', isa => 'so::soblock::estimation::precisionpopulationestimates' );
 has 'IndividualEstimates' => ( is => 'rw', isa => 'so::soblock::estimation::individualestimates' );
-has 'Residual' => ( is => 'rw', isa => 'so::soblock::estimation::residual' );
+has 'Residuals' => ( is => 'rw', isa => 'so::soblock::estimation::residuals' );
 has 'Predictions' => ( is => 'rw', isa => 'so::table' );
 has 'Likelihood' => ( is => 'rw', isa => 'so::soblock::estimation::likelihood' );
 
@@ -33,8 +33,8 @@ sub BUILD
     $self->PrecisionPopulationEstimates($ppe);
     my $ie = so::soblock::estimation::individualestimates->new();
     $self->IndividualEstimates($ie);
-    my $res = so::soblock::estimation::residual->new();
-    $self->Residual($res);
+    my $res = so::soblock::estimation::residuals->new();
+    $self->Residuals($res);
     my $l = so::soblock::estimation::likelihood->new();
     $self->Likelihood($l);
 }
@@ -55,8 +55,8 @@ sub parse
     (my $ie) = $xpc->findnodes('x:IndividualEstimates', $node);
     $self->IndividualEstimates->parse($ie) if (defined $ie);
 
-    (my $res) = $xpc->findnodes('x:Residual', $node);
-    $self->Residual->parse($res) if (defined $res);
+    (my $res) = $xpc->findnodes('x:Residuals', $node);
+    $self->Residuals->parse($res) if (defined $res);
 
     (my $pred) = $xpc->findnodes('x:Predictions', $node);
     if (defined $pred) {
@@ -78,7 +78,7 @@ sub xml
     my $pe = $self->PopulationEstimates->xml();
     my $ppe = $self->PrecisionPopulationEstimates->xml();
     my $ie = $self->IndividualEstimates->xml();
-    my $res = $self->Residual->xml();
+    my $res = $self->Residuals->xml();
     my $pred;
     if (defined $self->Predictions) {
         $pred = $self->Predictions->xml();

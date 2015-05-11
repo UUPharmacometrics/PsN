@@ -138,7 +138,7 @@ SKIP: {
         PrecisionPopulationEstimates => 1,
         IndividualEstimates => 1,
         Predictions => 1,
-        Residual => 1,
+        Residuals => 1,
         Likelihood => 1,
     );
 
@@ -160,7 +160,7 @@ SKIP: {
         PrecisionPopulationEstimates => 1,
         IndividualEstimates => 1,
         Predictions => 1,
-        Residual => 1,
+        Residuals => 1,
     );
 
     foreach $node (@nodes) {

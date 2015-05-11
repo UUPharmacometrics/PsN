@@ -86,7 +86,7 @@ sub create_sdtab
             }
         }
     }
-    my $res = $self->Estimation->Residual->ResidualTable;
+    my $res = $self->Estimation->Residuals->ResidualTable;
     if (defined $res) {
         for (my $i = 0; $i < scalar(@{$res->columnId}); $i++) {
             my $column_id = $res->columnId->[$i];
