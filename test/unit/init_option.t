@@ -96,6 +96,8 @@ cmp_ok($new_value,'eq','12000000',' check_and_set NM6 15');
 cmp_ok($new_value,'eq','-1200000',' check_and_set NM6 16');
 
 
+($succ,$err,$new_value) = $option1->check_and_set_init(new_value => 99.38357761418);
+cmp_ok($new_value,'eq','99.38358',' check_and_set NM6 17');
 
 
 $PsN::nm_major_version = undef; #affects formatting in init_option.pm should get nm7 per default
@@ -135,5 +137,7 @@ cmp_ok($new_value,'eq','1',' check_and_set NM7 11');
 
 ($succ,$err,$new_value) = $option1->check_and_set_init(new_value => 0);
 cmp_ok($new_value,'eq','0',' check_and_set NM7 12');
+
+
 
 done_testing();

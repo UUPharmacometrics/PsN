@@ -88,13 +88,15 @@ is ($record->options->[2]->lobnd, undef, "option->lobnd");
 is ($record->options->[2]->init, 100, "option->init");
 is ($record->options->[2]->upbnd, undef, "option->upbnd");
 
+$PsN::nm_major_version = 6; #affects formatting in init_option.pm 
+
 random_set_seed_from_phrase('12345');
 $record->set_random_inits(degree => 0.1);
 is ($record->options->[0]->init, 10, "option->init");
 cmp_float($record->options->[1]->init, 2.098214, "option->init");
-cmp_float($record->options->[2]->init, 107.6874, "option->init");
+cmp_float($record->options->[2]->init, 107.6875, "option->init");
 $record->set_random_inits(degree => 0.1);
 cmp_float($record->options->[1]->init, 1.929032, "option->init");
-cmp_float($record->options->[2]->init, 99.38351, "option->init");
+cmp_float($record->options->[2]->init, 99.38361, "option->init");
 
 done_testing();
