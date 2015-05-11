@@ -48,6 +48,7 @@ my %optional_options = (
 	"ensure_posdef" => undef,
 	"add_prior:s" => undef,
 	"seed:s" => undef,
+	"nm_version:s" => undef,
 	"based_on:i" => undef,
 	"renumber:i" => undef,
 	"fix_thetas" => undef,
@@ -57,14 +58,10 @@ my %optional_options = (
 my $res = GetOptions( \%options,
 					  keys(%optional_options) );
 
-
-unless (defined $options{'seed'}){
-	$options{'seed'} = random_uniform_integer( 1, 100000, 999999 );
-}
-random_set_seed_from_phrase( $options{'seed'} ) if ( defined $options{'seed'} );
-#setup would set degree and initiate tweaking
-
 exit unless $res;
+common_options::setup( \%options, 'update_inits' ); #calls set_globals etc, initiates random sequence, sets nm_version
+#print "seed ".$options{'seed'}."\n";
+#print "nm_vesrion ".$options{'nm_version'}."\n";
 
 my %help_text;
 
@@ -232,6 +229,13 @@ $help_text{-add_prior} = <<'EOF';
 	supports this.
 EOF
 
+$help_text{-nm_version} = <<'EOF';
+    -nm_version='string'
+Default is 'default'. The formatting of the initial estimates will depend on the
+major version number of NONMEM (e.g. 6 or 7) set in psn.conf for the
+NM version chosen.
+EOF
+
 $help_text{-seed} = <<'EOF';
 -seed=some string
 
@@ -265,7 +269,7 @@ $help_text{-renumber} = <<'EOF';
 EOF
 
 
-common_options::online_help( 'update_inits', \%options, \%help_text, \%required_options, \%optional_options);
+common_options::online_help('update_inits', \%options, \%help_text, \%required_options, \%optional_options);
 
 if ( scalar( @ARGV ) < 1 ){
   print "A model file must be specified. Use 'update_inits -h' for help.\n";

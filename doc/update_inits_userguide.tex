@@ -173,6 +173,11 @@ supports this.
 \optdefault{seed}{string}
 The random seed for pertubation if option -degree is set.
 \nextopt
+\optdefault{nm\_version}{string}
+Default is 'default'. The formatting of the initial estimates will depend on the
+major version number of NONMEM (e.g. 6 or 7) set in psn.conf for the
+NM version chosen.
+\nextopt
 \optdefault{based\_on}{integer}
 If the -based\_on option is used, update\_inits will set 
 the runrecord 'Based on' tag (if present, or if option -add\_tags is used) 
