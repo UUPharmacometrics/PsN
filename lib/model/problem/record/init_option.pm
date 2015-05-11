@@ -84,34 +84,39 @@ sub check_and_set_init
 	if ( defined $new_value ) {
 	  $success = 1;
 	  my $original=$new_value;
-	  if ($PsN::nm_major_version < 7){
-	    if ( 
-		 (
-		  (($new_value < 0.000001)and ($new_value > 0) )
-		  or
-		  (($new_value > -0.00001)and ($new_value < 0) )
-		  )
-		 and #either THETA or diagonal OMEGA/SIGMA
-		 ((not defined $self->on_diagonal) or ($self->on_diagonal) ) ){
-	      #replace with 0.000001 or -0.00001, smallest nonzero number
-	      if ($new_value > 0){
-					$new_value = "0.000001";
-	      }else{ 
-					$new_value = "-0.00001";
-	      }
-	      carp($original." is too small, setting $new_value instead ");
-	      $error_code[1] = 1;
+	  if (($PsN::nm_major_version == 5) or ($PsN::nm_major_version == 6)){
+	    if ( (($new_value < 0.000001)and ($new_value > 0) )
+			   or
+			   (($new_value > -0.00001)and ($new_value < 0) )
+			){
+			#replace with 0.000001 or -0.00001, smallest nonzero number
+			if ($new_value > 0){
+				$new_value = "0.000001";
+			}else{ 
+				$new_value = "-0.00001";
+			}
+			carp($original." is too small, setting $new_value instead ");
+			$error_code[1] = 1;
 	    } else {
-	      #still NM6, but absolute value large enough
-	      $new_value = sprintf("%.6f",$new_value); #six decimal places
-	      $new_value = substr($new_value,0,8); #max 8 characters
-	      if (eval($new_value) != eval($original)){
-					carp($original . " is too long, using the truncated " . $new_value . " instead");
-					$error_code[1] = 1;
-	      }
+			#still NM6, but absolute value large enough
+			#we do not handle here input that is larger than max allowed by NM6
+			my $rounded;
+			my $truncated;
+			my $ok = 0;
+			for (my $dec=6; $dec>= 0; $dec--){
+				$rounded = sprintf("%.".$dec."f",$new_value); 
+				if (length($rounded)<=8){
+					$ok=1;
+					#remove trailing zeros, and decimal point if 0 decimals left
+					$new_value = $rounded;
+					$new_value =~ s/\.?0*$// if ($new_value =~ /\./);
+					last;
+				}
+			}
+			
 	    }
 	  } else {
-	    #NM7, E notation or regular as needed, precision as in default raw output
+	    #NM7, E notation or regular as needed, use all info from input
 	    #do not allow larger than 15, doc says double has 15 sigdig
 	    #$temp_value = sprintf("%.".$prec."G",$new_value);
 	    $new_value = sprintf("%.15G",$new_value);
@@ -121,7 +126,7 @@ sub check_and_set_init
 		if ($self->can('lobnd')) {
 			# This is a theta
 			$lobnd = $self->lobnd;
-		} elsif (defined $self->on_diagonal and $self->on_diagonal) {		# This is an omega or a sigma off diagonal
+		} elsif (defined $self->on_diagonal and $self->on_diagonal) {		# This is an omega or a sigma diagonal
 			$lobnd = 0;
 		}
 
@@ -132,11 +137,11 @@ sub check_and_set_init
 
 	  if ( defined $lobnd and $new_value <= $lobnd ) {
 	    $success = 0;
-	    $error_code[2] = 1;
+	    $error_code[1] = 1;
 	  }
 	  if ( defined $upbnd and $new_value >= $upbnd ) {
 	    $success = 0;
-	    $error_code[3] = 1;
+	    $error_code[2] = 1;
 	  }
 	  if ( $success ) {
 	    $self->init($new_value);
