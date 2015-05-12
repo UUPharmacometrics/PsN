@@ -48,16 +48,7 @@ sub setup_paths
 	my $full_path_nmtran = undef;
 
 	PsN::set_nonmem_info($nm_version);
-	my $nmdir = $PsN::nmdir;
-	if (not defined $nmdir) {
-		croak("Unknown NONMEM version $nm_version specified.\n");
-	}
-	my $minor = $PsN::nm_minor_version;
-	my $major = $PsN::nm_major_version;
-	
-	if (not defined $major) {
-		croak("No nonmem major version, error config.\n");
-	}
+	my $nmdir = $PsN::nmdir; #if only name of executable set, and executable is in path, then this is the full path found in PsN.pm
 	
 	if ( defined $nmdir and $nmdir ne '' ) {
 		unless (-e $nmdir) {
@@ -78,6 +69,13 @@ sub setup_paths
 			my $mess = "The NONMEM installation directory is not configured for -nm_version=$nm_version. You must correct this in psn.conf\n";
 			croak($mess);
 		}
+	}
+
+	my $minor = $PsN::nm_minor_version;
+	my $major = $PsN::nm_major_version;
+	
+	unless ((defined $major) and length($major)>0) {
+		croak("No nonmem major version defined, error in psn.conf for -nm_version=$nm_version\n");
 	}
 
 	my $found_nonmem = 0;
@@ -130,59 +128,17 @@ sub setup_paths
 	}else{
 		#not nmqual
 		if (-d $nmdir){
-			my $suffix = '';
-			if ($Config{osname} eq 'MSWin32') {
-				$suffix = '.bat';
-			}
-			my @check_paths = ('/run/', '/util/', '/');
-			if ($major == 7) {
-				if (not defined $minor) {
-					#Try to figure out the subversion
-					my $found = 0;
-					foreach my $subv (('','1','2','3','4','5','6','7','8','9')) {
-						last if $found;
-						foreach my $path (@check_paths) {
-							if (-x "$nmdir$path" . "nmfe7$subv$suffix") {
-								$minor = $subv;
-								$found_nonmem = 1;
-								$full_path_runscript = $nmdir.$path."nmfe7$subv$suffix";
-								$found = 1;
-								last;
-							} 
-						}
-					}
-				}
-				if (defined $minor) {
-					#PsN.pm makes sure this is only one character, no dots
-					#only want subversion number if subversion >1
-					$minor = '' unless ($minor > 1);
-				} else {
-					$minor = '';
-				}
-			}
-			
-			unless ($found_nonmem) {
-				foreach my $path (@check_paths) {
-					if( -x "$nmdir$path"."nmfe$major$minor$suffix") {
-						$full_path_runscript = $nmdir.$path."nmfe$major$minor$suffix";
-						$found_nonmem = 1;
-						last;
-					} 
-				}
-			}
+			my $found_full=	find_nmfe_script(nmdir=>$nmdir,major => $major,minor => $minor);
 
-			if (not $found_nonmem) {
-				my $looked_in = join ' or ', @check_paths;
-				my $err_version = ( defined $nmdir and $nmdir ne '' ) ? $nmdir : '[not configured]';
-				my $mess = "Unable to find executable nmfe$major$minor$suffix ".
+			if  (defined $found_full) {
+				$full_path_runscript = $found_full;
+			}else{
+				my $mess = "Unable to find an executable nmfe script ".
 					"in any of the subdirectories\n".
-					"$looked_in of the NONMEM installation directory.\n".
-					"The NONMEM installation directory is $err_version for version [".
-					$nm_version."] according to psn.conf.";
+					" ./ or /run/ or /util/ of the NONMEM installation directory\n".
+					"$nmdir\n that is set for -nm_version=".$nm_version." in psn.conf.";
 				croak($mess);
 			}
-
-
 		}else{
 			#not a directory
 			if (-x $nmdir){
@@ -202,6 +158,48 @@ sub setup_paths
 
 }
 
+sub find_nmfe_script
+{
+	#static no shift
+	my %parm = validated_hash(\@_,
+							  nmdir => { isa => 'Str', optional => 0 },
+							  major => { isa => 'Str', optional => 0 },
+							  minor => { isa => 'Maybe[Str]', optional => 1 },
+		);
+	my $nmdir = $parm{'nmdir'};
+	my $major = $parm{'major'};
+	my $minor = $parm{'minor'};
+
+	my $found_full_path=undef;
+
+	my $suffix = '';
+	if ($Config{osname} eq 'MSWin32') {
+		$suffix = '.bat';
+	}
+	my @check_paths = ('/run/', '/util/', '/');
+	my @check_subversions=();
+	push (@check_subversions,$minor) if (defined $minor); #make sure this is checked first, if set
+	push (@check_subversions,('','1','2','3','4','5','6','7','8','9'));
+	
+	foreach my $subv (@check_subversions) {
+		last if (defined $found_full_path);
+		foreach my $path (@check_paths) {
+			my $fullp="$nmdir$path"."nmfe$major$subv$suffix";
+			if (-x $fullp) {
+				$found_full_path = $fullp;
+				if (defined $minor and length($minor)>0 and ($minor ne $subv)){
+					#print warning here???
+					1;
+				}
+
+				last;
+			} 
+		}
+	}
+
+	return $found_full_path;
+
+}
 
 sub create_command
 {
