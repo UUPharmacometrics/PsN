@@ -351,7 +351,7 @@ sub create_maxeval_zero_models_array
 		$run_num++;
 
 		$run_model->set_maxeval_zero(need_ofv => 1);
-		if (($PsN::nm_major_version >= 7) and ($PsN::nm_minor_version >= 3)) {
+		if ((not ($PsN::nm_major_version == 5 or $PsN::nm_major_version == 6)) and ($PsN::nm_minor_version >= 3)) {
 			if ($mceta > 0) {
 				$run_model->set_option(problem_numbers => [1],
 									   record_name => 'estimation',
@@ -2207,7 +2207,7 @@ sub set_maxeval_zero
 	}
 
 	$success = 1;
-	if ($PsN::nm_major_version < 7){
+	if ($PsN::nm_major_version == 5 or $PsN::nm_major_version == 6){
 	  $self -> set_option(record_name => 'estimation',option_name => 'MAXEVALS',
 			      fuzzy_match => 1, option_value => '0',
 			      problem_numbers => \@problem_numbers);
@@ -3764,6 +3764,7 @@ sub input_files
 					$msfo_file );
 				push( @file_names, [$dir, $filename] );
 				my $ver = $PsN::nm_major_version;
+				$ver = '7' unless (defined $ver);
 				$ver .= '.'.$PsN::nm_minor_version if (defined $PsN::nm_minor_version);
 				if ($ver > 7.2){
 					push( @file_names, [$dir, $filename.'_ETAS'] );
@@ -4102,7 +4103,7 @@ sub is_estimation
 			$is_est = 0 ;
 		}
 
-		if ($PsN::nm_major_version == 7){
+		if (not ($PsN::nm_major_version == 5 or $PsN::nm_major_version == 6)){
 			# If max evaluations is zero of last $EST we are not estimating
 			# since output discards all but last step this is all we can check
 			if ( defined $problem->estimations){

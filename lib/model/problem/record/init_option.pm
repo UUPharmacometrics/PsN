@@ -215,7 +215,7 @@ sub _format_option
 	if ( defined $self -> init() ) {
 	  $formatted = "$init";
 
-	  if (defined $number_format and $number_format < 15 and ($PsN::nm_major_version > 6)){
+	  if (defined $number_format and $number_format < 15 and (not ($PsN::nm_major_version == 5 or $PsN::nm_major_version == 6))){
 	    my $form = '%.'.$number_format.'G';
 	    $formatted = sprintf("$form",$formatted);
 	  }

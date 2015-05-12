@@ -200,7 +200,7 @@ sub BUILD
 
 		$self->update_prior_information();
 
-		if (defined $self -> estimations() and ($PsN::nm_major_version > 6)){
+		if (defined $self -> estimations() and (not ($PsN::nm_major_version == 5 or $PsN::nm_major_version == 6))){
 			my $default_format='s1PE12.5';
 			my $reset_file = 0;
 			my $reset_nolabel = 0;
@@ -2461,7 +2461,7 @@ sub tbs_transform
 			record_number => -1);
 
 	my $val = 'ccontra_nm7.txt';
-	if ($PsN::nm_major_version < 7){
+	if ($PsN::nm_major_version == 5 or $PsN::nm_major_version == 6){
 		$val = 'ccontra_nm6.txt';
 	}
 	$self-> add_option(option_name  => 'CCONTR',
