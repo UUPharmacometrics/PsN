@@ -41,11 +41,10 @@ perl setup.pl
 \section{Running the development version of PsN without installation to make contributions to the code}
 \begin{itemize}
 \item Install git \cite{git}. 
-\item Do git clone in a suitable place on your computer, and checkout a suitable branch. On linux:
+\item Do git clone in a suitable place on your computer. On linux:
 \begin{verbatim}
 cd ~
 git clone git://git.code.sf.net/p/psn/PsN4 PsN4
-git checkout -b NLP origin/NLP 
 
 \end{verbatim}
 \noindent Then do the following (assuming linux):
@@ -54,10 +53,23 @@ git checkout -b NLP origin/NLP
 You can use PsN4/lib/psn.conf\_template as a template and just fill in the [nm\_version] section,
 according to psn\_configuration.pdf.
 \item Make sure you have the required Perl modules listed in PsN4/README.txt installed.
-\item To be able to push your changes on the git server you need create a SourceForge account, 
-and then ask the PsN team to give you permission to push on PsN4.
-Stay on your branch so that git pull and git push will be on that branch. 
 \end{itemize}
+
+\section{External contributions to PsN}
+If you have followed the instructions in the previous chapter and have made changes to PsN that you wish to contribute
+to the official version of PsN you should follow the instructions below:
+
+\begin{itemize}
+    \item Only have one feature per commit. This makes it easier for the core developers to review changes and to choose to add some features and leave out features deemed not suitable for inclusion.
+    \item Make test cases for your features and include them in the same commits.
+    \item Add or update the documentation for your changes.
+    \item Follow the coding style of the PsN style guide below.
+    \item Place your repository in a public location.
+    \item Ask the core developers to fetch from your repository.
+\end{itemize}
+
+The core developers are grateful for contributions but please keep in mind that we don't have much time to spend on support to external developers.
+The more important the feature you are contributing is the more help with the above bullets you can expect to get.
 
 
 \section{Testing}
