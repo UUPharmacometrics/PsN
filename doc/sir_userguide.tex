@@ -258,6 +258,9 @@ NB: If -rawres\_input is used there is no raw\_results file for the first iterat
 \item <modelname>\_sir.cov with the empirical covariance matrix in NONMEM-like format, i.e. 
       fixed width space separated with generic headers in order THETA, SIGMA, OMEGA.
 \item if option -rplots>0: A file PsN\_sir\_plots.pdf with diagnostic sir plots.
+\item For all but the last iteration: A file with the Box-Cox $\lambda$ for each parameter, plus the $\delta$ used to shift
+the values to positive before Box-Cox transformation. If the $\lambda$ column is empty it means that no transformation was
+needed because the parameter was already close to normally distributed.
 \end{itemize}
 
 

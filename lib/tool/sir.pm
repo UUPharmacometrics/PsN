@@ -280,18 +280,18 @@ sub modelfit_setup
 							defined $boxcox_resulthash->{'covar'});
 				$lambda = $boxcox_resulthash->{'lambda'};
 				$delta = $boxcox_resulthash->{'delta'};
-				if (1){
-					open ( RES, ">" . $self->directory().'delta_lambda_iteration'.($iteration-1).'.csv' );
-					print RES "delta,lambda\n";
-					for (my $k=0; $k< scalar(@{$delta}); $k++){
-						print RES $delta->[$k].','.$lambda->[$k]."\n";
-					}
-					close(RES);
-				}
 				$mu_values = boxcox::shift_and_box_cox(vector=>$parameter_hash->{'values'},
 													   inverse=>0,
 													   lambda=>$lambda,
 													   delta=>$delta);
+				if (1){
+					open ( RES, ">" . $self->directory().'delta_lambda_iteration'.($iteration-1).'.csv' );
+					print RES "delta,lambda,original.estimate,transformed.estimate\n";
+					for (my $k=0; $k< scalar(@{$delta}); $k++){
+						print RES $delta->[$k].','.$lambda->[$k].','.$parameter_hash->{'values'}->[$k].','.$mu_values->[$k]."\n";
+					}
+					close(RES);
+				}
 				$covmatrix = $boxcox_resulthash->{'covar'};
 				my $err = check_matrix_posdef(matrix => $covmatrix);
 				if ($err == 1){
