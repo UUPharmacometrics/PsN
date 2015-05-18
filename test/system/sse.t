@@ -3,7 +3,7 @@
 
 use strict;
 use warnings;
-use Test::More tests=> 2;
+use Test::More;
 #use Test::More;
 use Test::Exception;
 use File::Path 'rmtree';
@@ -48,7 +48,14 @@ $command = get_command('sse') . " -samples=3 $model_dir/nwpri.mod -seed=630992 -
 print "Running $command\n";
 $rc = system($command);
 $rc = $rc >> 8;
-ok ($rc == 0, "$command, sse with prior nwpri should run ok");
+ok ($rc == 0, "$command, sse with rplots should run ok");
+
+
+$command = get_command('sse') . " -samples=3 $model_dir/pheno.mod -alt=$model_dir/sse_append_TYVV_DV.mod -samples=3 -no-est -append_col=TVV,DV";
+print "Running $command\n";
+$rc = system($command);
+$rc = $rc >> 8;
+ok ($rc == 0, "$command, sse with append_col should run ok");
 
 remove_test_dir($tempdir);
 

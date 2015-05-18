@@ -19,6 +19,7 @@ has 'mc_models' => ( is => 'rw', isa => 'ArrayRef[model]', default => sub { [] }
 has 'initial_values' => ( is => 'rw', isa => 'Any', clearer => 'clear_initial_values' );
 has 'first_alternative' => ( is => 'rw', isa => 'Maybe[Int]' );
 has 'simulation_rawres' => ( is => 'rw', isa => 'Str' );
+has 'append_columns' => ( is => 'rw', isa => 'ArrayRef[Str]' );
 has 'in_filter' => ( is => 'rw', isa => 'ArrayRef[Str]' );
 has 'out_filter' => ( is => 'rw', isa => 'ArrayRef[Str]' );
 has 'covariance_file' => ( is => 'rw', isa => 'Str' );
@@ -814,6 +815,12 @@ sub modelfit_setup
 						if ((not $time_in_input) && ($datx_in_input )){
 							push( @table_header, 'TIME');
 						}
+						if (defined $self->append_columns()){
+						    foreach my $col (@{$self->append_columns()}){
+								push(@table_header,$col);
+						    }
+						}
+
 					} else {
 						croak("Trying to construct table for monte-carlo simulation".
 							  " but no headers were found in \$model_number-INPUT" );

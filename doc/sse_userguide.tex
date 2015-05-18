@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{SSE user guide}{2015-04-10}
+\guidetitle{SSE user guide}{2015-05-18}
 
 \begin{document}
 
@@ -38,6 +38,16 @@ The number of parallel processes to start for the simulation step (not the estim
 \optname{keep\_tables}
 By default, all pre-existing \$TABLE will be deleted from the simulation and alternative models, to save disk space. If option -keep\_tables is set, 
 PsN will instead keep \$TABLE and number the file names according to the sample number.
+\nextopt
+\optdefault{append\_columns}{col1,col2,...}
+Optional, only allowed when -add\_models is not set. A comma-separated list of columns to append to the simulated data sets.
+These variables must be defined in the simulation
+model, otherwise all the simulation models will crash with an NMtran-error. 
+PsN will not check that the variables are defined, but simply append them
+to the \$TABLE generating the simulated datasets. This option cannot be used
+in combination with -add\_models, since in that case no simulations will be run.
+The user must ensure that the estimation models have these columns properly
+included in \$INPUT, PsN will not add them to \$INPUT.  
 \nextopt
 \optname{add\_models}
 This option tells PsN to add the alternative models listed with option -alternative\_models to an old sse run. All models given via option -alternative\_models will be estimated from scratch, so the alternatives from the old run should not be listed in the input again. The -add\_models option requires that the old sse run has been completed without errors. It is necessary to also set the general PsN option -directory to the sse directory of the old run,       e.g. -directory=sse\_dir50. The user must ensure that the -samples option in the new sse run is equal to or smaller than in the old run. If some simulated datasets are missing it will result in an error.       The simulation model must still be given as input on the command-line. If the option -estimate\_simulation is set (it is set by default) old estimation results will be reloaded if they exist, otherwise the simulation model will be estimated. The numbering of the extra models will start at the number of the last old alternative plus 1. Results for the added models are in file sse\_results\_add1.csv 

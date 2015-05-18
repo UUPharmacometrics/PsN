@@ -36,6 +36,7 @@ my %optional_options = (
 	'out_filter:s' => undef,
 	'recompute:s' => undef,
 	'add_models'=> undef,
+	'append_columns:s' => undef,
 	'random_estimation_inits' => undef);
 
 my $res = GetOptions( \%options,
@@ -135,6 +136,19 @@ $help_text{-rawres_input} = <<'EOF';
       which must be directly followed by the sigma column. Note that is is 
       possible to generate a file with initial parameter estimates outside of PsN, 
       as long as the file follows the format rules.
+EOF
+
+$help_text{-append_columns} = <<'EOF';
+      -append_columns=COL1,COL2,...
+
+      Optional. Comma-separated list of one or more data columns to append
+    to the simulated data sets. These variables must be defined in the simulation
+    model, otherwise all the simulation models will crash with an NMtran-error. 
+    PsN will not check that the variables are defined, but simply append them
+    to the $TABLE generating the simulated datasets. This option cannot be used
+    in combination with -add_models, since in that case no simulations will be run.
+    The user must ensure that the estimation models have these columns properly
+    included in $INPUT, PsN will not add them.
 EOF
 
 $help_text{-offset_rawres} = <<'EOF';
@@ -400,8 +414,17 @@ if ( defined $options{'out_filter'} ){
   }	
 }
 
+my @append_columns=();
+if (defined $options{'append_columns'}){
+    croak("option append_columns cannot be used in combination with add_models") if $options{'add_models'};
+    foreach my $col (split(/,/,$options{'append_columns'})){
+	push(@append_columns,$col);
+    }
+}
+
 my $sse = tool::sse->new(
 	eval( $common_options::parameters ),
+    append_columns => \@append_columns,
 	estimate_simulation		=> $options{'estimate_simulation'},
 	ref_ofv            		=> $options{'ref_ofv'},
 	parallel_simulations	=> $options{'parallel_simulations'},
