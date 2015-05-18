@@ -1721,10 +1721,10 @@ sub create_R_plots_code{
 
 	$rplot->add_preamble(code => [
 							 '#sir-specific preamble',
-							 'SAMPLES   <-'.$self->samples->[($self->max_iteration-1)],
-							 'RESAMPLES   <-'.$self->resamples->[($self->max_iteration-1)],
-							 'ALL.SAMPLES   <-c('.join(','.@{$self->samples}).')',
-							 'ALL.RESAMPLES   <-c('.join(',',@{$self->resamples}).')',
+							 'SAMPLES          <-'.$self->samples->[($self->max_iteration-1)],
+							 'RESAMPLES        <-'.$self->resamples->[($self->max_iteration-1)],
+							 'ALL.SAMPLES      <-c('.join(',',@{$self->samples}).')',
+							 'ALL.RESAMPLES    <-c('.join(',',@{$self->resamples}).')',
 							 "ALL.RAWRESFILES   <-c('".join("','",@{$self->intermediate_raw_results_files})."')",
 							 $maxresamplestring,
 							 $colstring,
