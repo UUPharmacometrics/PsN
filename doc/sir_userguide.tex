@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{SIR user guide}{2015-04-21}
+\guidetitle{SIR user guide}{2015-05-18}
 \usepackage{amsmath}
 
 \begin{document}
@@ -19,21 +19,25 @@ and in\\
 using Sampling Importance Resampling (SIR)}, 
 PAGE 24 (2015) Abstr 3546, Dosne AG, Bergstrand M, Karlsson MO.
  
-First, parameter vectors will be simulated from the truncated multivariate normal distribution 
+Each iteration consistes of the following three phases: First, parameter vectors will be simulated from the 
+proposal density. Iteration 1 uses the
+truncated multivariate normal distribution 
 given by the covariance matrix output from NONMEM's covariance step.
 Note that the precond script, see precond\_userguide.pdf, can often recover the covariance step
 even if it failed when running the original model.
 Alternatively, a file with simulated parameter vectors can be given directly as input and this simulation is skipped. The last approach is useful when it is
-difficult to obtain a (faked) covariance matrix.
+difficult to obtain a (faked) covariance matrix. Iteration 2 uses the density obtained from the resampling performed in phase 3 of the first iteration.
 
 Second, each of the simulated parameter vectors will be evaluated on the original data (MAXEVAL=0).
 Third, based on these evaluations, weights will be calculated for each of the parameter vectors and the vectors 
-will be resampled according to these weights. Finally, the uncertainty covariance matrix of the parameters 
-will be computed from the resampled parameter vectors.
+will be resampled according to these weights. 
+
+The uncertainty covariance matrix of the parameters 
+will be computed from the resampled parameter vectors of the last iteration.
 
 Example
 \begin{verbatim}
-sir -samples=5000 -resamples=1000 run0.mod
+sir -samples=1000,2000 -resamples=500,1000 run10.mod
 \end{verbatim}
 
 \section{Input and options}
@@ -41,24 +45,29 @@ A model file is required on the command-line.
 If output file (lst) exists, then it is important that the control stream copy at the top of the lst-file matches the actual input model file
 in terms of which parameters are present and which parameters are FIXED or SAME.
 \begin{optionlist}
-\optdefault{samples}{N}
-Required. The number of parameter vectors to generate. Needs to be greater than the number of resamples. A good starting point may be 5 times the number of resamples.
+\optdefault{samples}{M1,M2}
+Required. A comma-separated list of (usually two) integers, the number of parameter vectors to 
+generate in each iteration. In each iteration the number needs to be greater than the number 
+of resamples. A good starting point may be 5 times the number of resamples.
+If option -rawres\_input is used, the first integer in the list will
+not be used, but it must still be set so that the list length is equal to
+list 'resamples'.
 \nextopt
-\optdefault{resamples}{N}
-Required. The number of parameter vectors to resample based on the weights
-computed from delta ofv and the pdf. Only these will be used to compute the uncertainty (confidence intervals) around the model parameters. A good starting point may be 1000 resamples.
+\optdefault{resamples}{m1,m2}
+Required. A comma-separated list of (usually two) integers, the number of parameter vectors to resample 
+in each iteration based on the weights
+computed from delta ofv and the pdf. 
+Only the resampled vectors will be used to compute the uncertainty (confidence intervals) around the model parameters. A good starting point may be 1000 resamples.
+The list length must be equal to list 'samples'.
 \nextopt
 \optdefault{rawres\_input}{filename}
-If rawres\_input is given, sir will take samples sets of parameter
+If rawres\_input is given, in the first iteration sir will take 'resamples item 1' sets of parameter
 vectors from this file, starting on line offset\_rawres+1, instead of
-drawing samples from a truncated multivariate normal distribution 
-based on the input model parameter estimates and 
-covariance matrix.
+running a full first iteration with sampling and resampling.
 This option is not allowed together with covmat\_input. 
-When rawres\_input is given, all vectors will be assigned the same PDF, meaning that only delta-ofv will influence the resampling.
 
 The raw results file must contain at least as many 
-samples as the input -samples to sir, the labels for  THETA/OMEGA/SIGMA 
+samples as the input '-resamples item 1' to sir, the labels for  THETA/OMEGA/SIGMA 
 in the file must match the labels in the model given as input 
 to sir, the theta columns must be directly followed by the omega columns 
 which must be directly followed by the sigma columns, and the first or
@@ -78,7 +87,9 @@ It is not possible to cap replacement at e.g. 5, replacement will be unlimited.
 \nextopt
 \optdefault{covmat\_input}{filename}
 Not allowed together with rawres\_input. If given, this covariance matrix is
-used for sampling parameter vectors and for computing the PDF. 
+used in the first iteration
+for sampling parameter vectors and for computing the PDF.
+The matrix will not be used in any but the first iteration. 
 The format of the file is similar to a NONMEM-generated .cov-file except 
 that the \verb|TABLE NO.| line should be omitted.
 Fixed parameters do not have to be omitted, sir will filter them out. 
@@ -95,14 +106,16 @@ Please note that there is a PsN script called covmat that can be used to generat
 \nextopt
 \optdefault{inflation}{X}
 Default is 1, which is the same as no inflation. If given, the covariance
-matrix will be multiplied with a scalar $X$ multiple of the identity matrix
+matrix will in the first iteration be multiplied with a scalar $X$ multiple of the identity matrix
 before the parameter vectors
 are sampled from the truncated multivariate normal distribution.
 The weights will also be computed based the inflated covariance matrix. 
+Inflation is not used in any but the first iteration.
 \nextopt
 \optdefault{problems\_per\_file}{N}
-Optional, default 100. The number of \$PROBLEM per model file when running
-MAXEVAL=0 or similar to get ofv:s for parameter vectors. Setting a higher value
+Optional, default 100. The number of \$PROBLEM per model file when evaluating the parameter vectors
+on the original data (running
+MAXEVAL=0 or similar to get ofv:s for parameter vectors). Setting a higher value
 decreases the overhead involved in running each control stream, but increases the 
 risk of losing many samples in case a model file crashes. Setting -problems\_per\_file=1
 gives maximum robustness to individual crashes, but also maximum overhead cost.
@@ -128,7 +141,7 @@ see the .Rout file in the main run directory for error messages.}
 \input{inputs/rplots_section_body.tex}
 
 \subsubsection*{Diagnostic sir plots}
-Diagnostic rplots for sir will be generated if option -rplots is set >0.
+Diagnostic rplots for the last iteration of sir will be generated if option -rplots is set >0.
 
 The first plot shows 3 comparative dOFV distributions: SIR, reference chi-square and original covariance matrix.
 If on this plot the SIR curve is close to the reference chi-square curve it means that SIR results are good.
@@ -151,24 +164,41 @@ If the 95\% confidence intervals differ between SIR and the covariance matrix, i
 different from the true uncertainty for this parameter.
 
 \section{sir program workflow}
-\begin{itemize}
-\item[\underline{Setup}] The sir program will run the input model unless the lst-file with results is already present. If the lst-file is present, it
+\subsubsection*{Setup} 
+The sir program will run the input model unless the lst-file with results is already present. If the lst-file is present, it
 is important that the control stream copy at the top of the lst-file matches the
 actual input model file in terms of which parameters are estimated, 
 FIXED or SAME, otherwise there will be a mis-match between which parameter estimates are read from the
 lst-file and which estimates are needed for the sir procedure.
-\item[\underline{Step 1}] Simulate 'samples' parameter vectors from the 
-(possibly inflated)
-covariance matrix, i.e. the .cov-file given by NONMEM 
-or the matrix given via option -covmat\_input. PsN uses the Perl function\\ 
-Math::Random::random\_multivariate\_normal
-for sampling. If a vector does no fulfill the constraints from \$THETA boundaries
+
+\subsubsection*{For each iteration $i$ (each item in list 'samples'):}
+\begin{itemize}
+\item[\underline{Step 1}] (Skipped in first iteration if rawres\_input is used.)
+Simulate 'samples item $i$' parameter vectors from the 
+covariance matrix.
+In iteration 1 the covariance matrix is either from
+the .cov-file given by NONMEM or given via option -covmat\_input,
+and the matrix is inflated if option -inflation is set. 
+In iteration 2 and higher 
+the covariance matrix is the 
+un-inflated
+empirical covariance matrix of Box-Cox transformed resampled parameter vectors from
+Step 6.
+
+The Perl function Math::Random::random\_multivariate\_normal
+is used for sampling. 
+In iteration 1 the sampling is done on the original scale. 
+In iteration 2 and higher
+sampling is done on Box-Cox scale, and 
+then the samples are back-transformed for boundary checks and evaluation.
+
+If a vector (on the original scale) does not fulfill the constraints from \$THETA boundaries
 and positive definiteness of \$OMEGA and
 \$SIGMA blocks (as judged by a PsN-implemented Cholesky decomposition) 
 then that vector is 
 discarded and a new one is drawn.
-NB: Sampling is \emph{not} performed if -rawres\_input is specified.
-\item[\underline{Step 2}] Calculate each vector $x$’s probability 
+\item[\underline{Step 2}] (Skipped in first iteration if rawres\_input is used.)
+Calculate each vector $x$’s probability 
 given the covariance matrix based on the formula for the probability 
 density function (PDF) of a multivariate normal distribution:\\
 \begin{math}
@@ -182,24 +212,38 @@ The values are normalized with the PDF for the vector of expectations $\mu$, giv
 relPDF=exp\left(-\frac{1}{2}(\left(x-\mu\right)A^{-1} \left(x-\mu\right)^T\right)
 \end{math}
 \\
-NB 1: NONMEM covariance matrix is used as input, the inverse covariance matrix
-output by NONMEM is not used.
-NB 2: If -rawres\_input is specified the probability of each vector will be set equal to 1.
-\item[\underline{Step 3}] evaluate the parameter vectors on the original data.
+NB 1: In iteration 1 the NONMEM covariance matrix is used as input (unless option -covmat\_input used), the inverse covariance matrix
+output by NONMEM is not read.
+NB 2: In iteration 2 and higher the vectors, including $\mu$, and covariance matrix are on Box-Cox scale.
+\item[\underline{Step 3}] (Skipped in first iteration if rawres\_input is used.)
+Evaluate the (original scale) parameter vectors on the original data.
 Create model files with up to 100 \$PROBLEM based on the original model file but setting MAXEVAL=0
-and replacing inits of nth \$PROBLEM with nth parameter vector, and also set MCETA if option -mceta was used. Compute dOFV 
-(delta-OFV, reference is input model ofv) and store in raw\_results.csv.
-\item[\underline{Step 4}] calculate the weights as the ratio $\frac{e^{-0.5\cdot dOFV}}{relPDF}$ and store in raw\_results.csv. 
-Resample 'resamples' parameter vectors based on these weights, with or without replacement depending on option -with\_replacement. 
-Store the number of times each vector was resampled in raw\_results.csv.
-Compute the covariance matrix for the resampled parameters (variances and covariances), 
+and replacing inits of nth \$PROBLEM with nth parameter vector on original scale, and also set MCETA if option -mceta was used. Compute dOFV 
+(delta-OFV, reference is input model ofv) and store in raw results file for this iteration.
+\item[\underline{Step 4}] (Skipped in first iteration if rawres\_input is used.)
+Calculate the weights as the ratio $\frac{e^{-0.5\cdot dOFV}}{relPDF}$ and store in raw results file for this iteration. 
+Resample 'resamples item $i$' parameter vectors based on these weights, with or without replacement depending on option -with\_replacement. 
+Store the number of times each vector was resampled in raw results file for this iteration.
+\item[\underline{Step 5}]
+If iteration 1 \emph{and} rawres\_input is used: Read the first 'resamples item 1' parameter vectors
+from file rawres\_input, using offset\_rawres and in\_filter (if set).
+Otherwise read the resampled vectors from Step 4, using multiple copies for vectors that were resampled more than once (only possible if -with\_replacement was set).
+\item[\underline{Step 6}]
+If \emph{not} last iteration: 
+For each parameter, use the 'resamples item $i$' individual values to find the Box-Cox transformation that maximizes the correlation with the normal density.
+Do not allow $\lambda$ less than -3 or larger than +3. The  $\lambda$ used is allowed to differ from the true optimal  $\lambda$
+by at most $0.2$.
+Compute the covariance matrix for the Box-Cox transformed resampled parameter vectors.
+
+\noindent If last iteration: 
+Compute the covariance matrix for the resampled parameters on original scale, 
 store in sir\_results.csv. 
 Compute univariate confidence intervals and store in sir\_results.csv.
 \end{itemize}
 
 \section{Output}
 \begin{itemize}
-\item raw\_results.csv with added columns for\\
+\item raw\_results for each iteration with added columns for\\
 \begin{tabular}{ll}
 \bf{sample.id} & A unique number\\
 \bf{deltaofv} & $\mathrm{ofv} - \mathrm{original}\mbox{\tt\string_}\mathrm{model}\mbox{\tt\string_}\mathrm{ofv}$\\
@@ -209,6 +253,7 @@ Compute univariate confidence intervals and store in sir\_results.csv.
 \bf{probability\_resample} & $\mathrm{importance}\mbox{\tt\string_}\mathrm{ratio}/\sum{\mathrm{importance}\mbox{\tt\string_}\mathrm{ratio}}$ \\
 \bf{resamples} & number of actual resamples with random seed used\\
 \end{tabular}
+NB: If -rawres\_input is used there is no raw\_results file for the first iteration.
 \item sir\_results.csv with percentiles and empirical covariance matrix
 \item <modelname>\_sir.cov with the empirical covariance matrix in NONMEM-like format, i.e. 
       fixed width space separated with generic headers in order THETA, SIGMA, OMEGA.
@@ -240,6 +285,7 @@ Then the user must manually modify the covariance matrix to improve its numerica
 and/or change the order of the parameters so that pivoting is not necessary),
 and then use option -covmat\_input to give the modified matrix as input to sir. 
 
+\end{document}
 
 \section{Suggested new workflow}
 NB: if -rawres\_input is specified, then the process starts
@@ -288,27 +334,28 @@ raw\_results\_1.csv.
 with or without replacement depending on option -with\_replacement. 
 Store the number of times each vector was resampled in raw\_results\_1.csv.
 \item[\underline{Step 6}] Box-Cox transform each parameter separately based on the samples from Step 5. Do not allow
-$\lambda$ less than -3 or larger than +3 (?). Use the $\lambda$ that maximizes the correlation coefficient of
-a quantile-quantile plot of the transformed parameter.
+$\lambda$ less than -3 or larger than +3. Use the $\lambda$ that maximizes the correlation between the normal distribution and
+the distribution of the transformed parameter. The  $\lambda$ used is allowed to differ from the true optimal  $\lambda$
+by at most $0.2$.
 \item[\underline{Step 7}] Determine the means and empirical variance-covariance matrix of 
 transformed parameter vectors.
 \item[\underline{Step 8}] (Repeat Step 1) Sample 'samples\_2' parameter vectors 
 with the new covariance matrix and transformed parameters.
 Discard samples that, after back-transformation to original scale, do not
 fulfill \$THETA boundary conditions and \$OMEGA/\$SIGMA positive definiteness, and instead draw new sample.
-\item[\underline{Step 9}] (Repeat Step 2) Calculate each vectors' probability, 
-use new covariance matrix and Box-Cox transformed parameter vectors for computing each vectors relPDF.
-\item[\underline{Step 10}] (Repeat Step 3) Evaluate the back-transformed parameter vectors on the original data.
+\item[\underline{Step 9}] (Repeat Step 2) Calculate each vector's probability, 
+use new covariance matrix and Box-Cox transformed parameter vectors for computing each vector's relPDF.
+\item[\underline{Step 10}] (Repeat Step 3) Evaluate the sampled parameter vectors, in original scale (back-transformed from Box-Cox), on the original data.
 \item[\underline{Step 11}] (Repeat Step 4) Calculate the weights, 
 where weights calculation uses relPDF from step 9 and dOFV from Step 10. 
 Store in raw\_results\_2.csv. 
-\item[\underline{Step 12}] (Repeat Step 5) Resample 'resamples\_2' parameter vectors based on weights from above step, 
+\item[\underline{Step 12}] (Repeat Step 5) Resample 'resamples\_2' original scale parameter vectors based on weights from above step, 
 with or without replacement depending on option -with\_replacement. 
 Store the number of times each vector was resampled in raw\_results\_2.csv.
-\item[\underline{Step 13}] Compute final results from Step 12 vectors on original scale.
+\item[\underline{Step 13}] Compute final results from Step 12 (parameter vectors on original scale).
 \end{itemize}
 
-
+\end{document}
 
 \subsubsection*{setup}
 \begin{enumerate}

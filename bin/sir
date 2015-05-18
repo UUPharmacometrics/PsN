@@ -23,8 +23,8 @@ Getopt::Long::config("auto_abbrev");
 ## Declare the options
 my %options;
 
-my %required_options = ("samples:i"=>'',
-			"resamples:i"=> '');
+my %required_options = ("samples:s"=>'',
+						"resamples:s"=> '');
 my %optional_options = (
 	"covmat_input:s"=>'',
 	'rawres_input:s' => undef,
@@ -77,7 +77,7 @@ Finally, the uncertainty covariance matrix of the parameters will be
 computed from the resampled parameter vectors.
 EOF
     $help_text{Examples} = <<'EOF';
-	sir -samples=10000 -resamples=200 run89.mod
+	sir -samples=1000,2000 -resamples=500,1000 run89.mod
 EOF
 
     $help_text{Options} = <<'EOF';
@@ -88,16 +88,21 @@ A model file is required as argument. Also, options
 EOF
 
     $help_text{-samples} = <<'EOF';      
-      -samples=N
+      -samples=M1,M2
 
-      The number of parameter vectors to generate.
+	A comma-separated list of (usually two) integers,
+    the number of parameter vectors to generate in each iteration.
+	If option -rawres_input is used, the first integer in the list will
+	not be used, but it must still be set so that the list length is equal to
+	list -resamples.
 EOF
 
     $help_text{-resamples} = <<'EOF';      
-      -resamples=N
+      -resamples=m1,m2
 
-      The number of parameter vectors to resample based on the weights
-	  computed from delta ofv and the pdf.
+	A comma-separated list of (usually two) integers, the number of parameter vectors 
+	to resample in each iteration based on the weights
+	computed from delta ofv and the pdf. List length must be equal to list -samples.
 EOF
     $help_text{-mceta} = <<'EOF';      
       -mceta=N
@@ -109,14 +114,12 @@ EOF
 $help_text{-rawres_input} = <<'EOF';
       -rawres_input=filename
 
-      If rawres_input is given, sir will take samples sets of parameter
+      If rawres_input is given, sir will take 'resamples' m1 sets of parameter
 	  vectors from this file, starting on line offset_rawres+1, instead of
-      drawing samples from a truncated multivariate normal distribution 
-	  based on the input model parameter estimates and 
-	  covariance matrix.
+      resampling in the first iteration.
 	  Not allowed in combination with covmat_input.
       The raw results file must contain at least as many 
-      samples as the input -samples to sir, the labels for  THETA/OMEGA/SIGMA 
+      samples as the first value in input -resamples to sir, the labels for  THETA/OMEGA/SIGMA 
       in the file must match the labels in the model given as input 
       to sir, the theta columns must be directly followed by the omega columns 
       which must be directly followed by the sigma columns, and the first or
@@ -177,6 +180,7 @@ EOF
     Default is 1, which is the same as no inflation. If given, the covariance
 	matrix will be multiplied with this number before the parameter vectors
 	are sampled from the truncated multivariate normal distribution.
+	Inflation is only used in the first iteration.
 EOF
     $help_text{-problems_per_file} = <<'EOF';
       -problems_per_file=N
@@ -267,14 +271,20 @@ if (defined $options{'copy_data'} and (not $options{'copy_data'})){
 	$model->relative_data_path(0);
 }
 
+my @samples = split(/,/,$options{'samples'});
+my @resamples = split(/,/,$options{'resamples'});
 
+if (defined $options{'rawres_input'} and (scalar(@resamples)<2)){
+	print "No point running sir with rawres_input unless running more than one iteration\n";
+	exit;
+}
 my $sir = 
 	tool::sir->new ( eval( $common_options::parameters ),
 					 top_tool => 1,
 					 models				     => [ $model ],
 					 with_replacement				     => $options{'with_replacement'},
-					 samples				     => $options{'samples'},
-					 resamples				     => $options{'resamples'},
+					 samples				     => \@samples,
+					 resamples				     => \@resamples,
 					 mceta				     => $options{'mceta'},
 					 inflation				     => $options{'inflation'},
 					 covmat_input				     => $options{'covmat_input'},

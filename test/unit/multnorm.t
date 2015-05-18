@@ -110,7 +110,7 @@ cmp_ok($covar->[3]->[2],'==',-1.32639E-03,'covar element 4,3');
 cmp_ok($covar->[4]->[4],'==',eval(1.75502E-04),'covar element 5,5');
 
 random_set_seed_from_phrase("hej pa dig");
-my $gotsamples = tool::sir::sample_multivariate_normal(samples=>$nsamples,
+my ($gotsamples,$dirt) = tool::sir::sample_multivariate_normal(samples=>$nsamples,
 													   covmatrix => $covar,
 													   lower_bound => $hash->{'lower_bounds'},
 													   upper_bound => $hash->{'upper_bounds'},
@@ -395,7 +395,7 @@ cmp_ok($covar->[8]->[7],'==',eval(2.52026E-03),'covar element 9,8');
 $nsamples=3;
 
 #random_set_seed_from_phrase("hej pa dig");
-my $gotsamples = tool::sir::sample_multivariate_normal(samples=>$nsamples,
+my ($gotsamples,$dirt) = tool::sir::sample_multivariate_normal(samples=>$nsamples,
 													   covmatrix => $covar,
 													   lower_bound => $hash->{'lower_bounds'},
 													   upper_bound => $hash->{'upper_bounds'},

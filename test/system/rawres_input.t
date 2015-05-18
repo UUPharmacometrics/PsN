@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 use File::Path 'rmtree';
-use Test::More tests=>6;
+use Test::More;
 use File::Copy 'cp';
 use FindBin qw($Bin);
 use lib "$Bin/.."; #location of includes.pm
@@ -23,6 +23,7 @@ my @commands =
 	(get_command('bootstrap') . " -samples=5 pheno.mod -dir=$bootdir",
 	 get_command('parallel_retries') . " pheno.mod -dir=$dir -samples=2 -rawres_input=$bootdir/raw_results_pheno.csv -no-display",
 	 get_command('sir') . " pheno.mod -rawres_input=$bootdir/raw_results_pheno.csv -samples=3 -offset_rawres=1 -in_filter=minimization_successful.eq.1 -resamples=20 -with_replacement -dir=$dir",
+	 get_command('sir') . " pheno.mod -rawres_input=$bootdir/raw_results_pheno.csv -samples=5,10 -offset_rawres=0 -resamples=10,5 -with_replacement -dir=$dir",
 	 get_command('sse') . " pheno.mod -rawres_input=$bootdir/raw_results_pheno.csv -samples=5 -no-est -dir=$dir",
 	 get_command('sse') . " pheno.mod  -samples=20 -dir=$ssedir",
 	 get_command('vpc') . " pheno.mod -rawres_input=$ssedir/raw_results_pheno.csv -offset=0 -samples=20 -auto_bin=unique -dir=$dir");

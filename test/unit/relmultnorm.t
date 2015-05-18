@@ -110,7 +110,7 @@ cmp_ok($covar->[3]->[2],'==',-1.32639E-03,'covar element 4,3');
 cmp_ok($covar->[4]->[4],'==',eval(1.75502E-04),'covar element 5,5');
 
 random_set_seed_from_phrase("hej pa dig");
-my $gotsamples = tool::sir::sample_multivariate_normal(samples=>$nsamples,
+my ($gotsamples,$dirt) = tool::sir::sample_multivariate_normal(samples=>$nsamples,
 													   covmatrix => $covar,
 													   lower_bound => $hash->{'lower_bounds'},
 													   upper_bound => $hash->{'upper_bounds'},
@@ -133,6 +133,12 @@ cmp_float($sampled_params_arr->[0]->{'theta'}->{'V'}, 1.20800900217457, 'sampled
 cmp_float($sampled_params_arr->[0]->{'theta'}->{'THETA3'}, 0.568698687977855, 'sampled THETA3');
 cmp_float($sampled_params_arr->[0]->{'theta'}->{'THETA4'}, 0.369700885223909, 'sampled THETA4');
 cmp_float($sampled_params_arr->[0]->{'theta'}->{'THETA5'}, 0.118821314516974, 'sampled THETA5');
+
+my $statshash = tool::sir::empirical_statistics(sampled_params_arr => $sampled_params_arr,
+												labels_hash=> $hash,
+												do_percentiles => 1,
+												estimated_vector => $thetas,
+												get_lambda_delta => 1);
 
 my $pdf=tool::sir::mvnpdf(inverse_covmatrix => $icm,
 						  mu => $mu,
@@ -221,8 +227,6 @@ cmp_ok($times_sampled[0],'==',39,'times sampled 0');
 cmp_ok($times_sampled[1],'==',46,'times sampled 1');
 cmp_ok($times_sampled[2],'==',15,'times sampled 2');
 
-#my $statshash = tool::sir::empirical_statistics(samples_array => $gotsamples,
-#												sample_counts => \@times_sampled);
 
 
 my $xvec = $icm->new_from_rows( [$gotsamples->[0]] );
@@ -377,7 +381,7 @@ cmp_ok($covar->[8]->[7],'==',eval(2.52026E-03),'covar element 9,8');
 $nsamples=3;
 
 #random_set_seed_from_phrase("hej pa dig");
-my $gotsamples = tool::sir::sample_multivariate_normal(samples=>$nsamples,
+my ($gotsamples,$dirt) = tool::sir::sample_multivariate_normal(samples=>$nsamples,
 													   covmatrix => $covar,
 													   lower_bound => $hash->{'lower_bounds'},
 													   upper_bound => $hash->{'upper_bounds'},

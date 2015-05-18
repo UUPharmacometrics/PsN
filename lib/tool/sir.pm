@@ -15,9 +15,10 @@ use Math::Trig;	# For pi
 use Math::Random;
 use output;
 use array qw(:all);
+use math qw(usable_number);
 use linear_algebra;
 use utils::file;
-
+use boxcox;
 extends 'tool';
 
 has 'sir_raw_results' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
@@ -27,8 +28,10 @@ has 'results_file' => ( is => 'rw', isa => 'Str', default => 'sir_results.csv' )
 has 'copy_data' => ( is => 'rw', isa => 'Bool', default => 1 );
 has 'recompute' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'with_replacement' => ( is => 'rw', isa => 'Bool', default => 0 );
-has 'samples' => ( is => 'rw', required => 1, isa => 'Int' );
-has 'resamples' => ( is => 'rw', required => 1, isa => 'Int' );
+has 'samples' => ( is => 'rw', required => 1, isa => 'ArrayRef' );
+has 'resamples' => ( is => 'rw', required => 1, isa => 'ArrayRef' );
+has 'iteration' => ( is => 'rw', isa => 'Int', default => 1 );
+has 'max_iteration' => ( is => 'rw', isa => 'Int', default => 2 );
 has 'covmat_input' => ( is => 'rw', isa => 'Str' );
 has 'rawres_input' => ( is => 'rw', isa => 'Str' );
 has 'offset_rawres' => ( is => 'rw', isa => 'Int', default => 1 );
@@ -40,7 +43,9 @@ has 'full_rawres_header' => ( is => 'rw', isa => 'ArrayRef' );
 
 has 'original_ofv' => ( is => 'rw', isa => 'Num');
 has 'pdf_vector' => ( is => 'rw', isa => 'ArrayRef' );
+has 'intermediate_raw_results_files' => ( is => 'rw', isa => 'ArrayRef', default => sub{[]} );
 
+our $relativepdf = 1;
 
 sub BUILD
 {
@@ -75,12 +80,20 @@ sub BUILD
 	#TODO support multiple $PROB
 	croak("sir does not yet support more than 1 \$PROB in model ") if (scalar(@{$self ->models()->[0]->problems})>1);
 
-
-	croak("Number of samples must be larger than 0") unless ($self->samples()>0);
-	croak("Number of resamples must be larger than 1") unless ($self->resamples()>1);
-	croak("Number of resamples cannot be larger than samples unless with_replacement is set") unless 
-		(($self->resamples() <= $self->samples) or ($self->with_replacement));
-	
+	unless (scalar(@{$self->samples}) == scalar(@{$self->resamples})){
+		croak("samples and resamples arrays must have equal length");
+	} 
+	unless (scalar(@{$self->samples})>0){
+		croak("samples arrays must have at least length 1");
+	} 
+	$self->max_iteration(scalar(@{$self->samples}));
+	for (my $j=0; $j<scalar(@{$self->samples}); $j++){
+		croak("Number of samples must be larger than 0") unless ($self->samples()->[$j]>0);
+		croak("Number of resamples must be larger than 1") unless ($self->resamples()->[$j]>1);
+		croak("Number of resamples cannot be larger than samples unless with_replacement is set") unless 
+			(($self->resamples()->[$j] <= $self->samples->[$j]) or ($self->with_replacement)
+			or ($j==0 and defined $self->rawres_input));
+	}
 
 }
 
@@ -229,7 +242,7 @@ sub modelfit_setup
 		$covmatrix = make_square($lower_covar);
 
 	}elsif (defined $self->rawres_input){
-		#do not need any matrices at all, will set pdfvec to ones
+		#do not need any matrices at all, not sampling in first iteration
 		1;
 	}else{
 		$covmatrix = get_nonmem_covmatrix(output => $output);
@@ -237,108 +250,183 @@ sub modelfit_setup
 
 	#check that covmatrix is numerically posdef
 	unless (defined $self->rawres_input){
-		my $dim = scalar(@{$covmatrix});
-		#copy and check it
-		my @array=();
-		#this gives full matrix
-		for (my $row=0; $row<$dim;$row++){
-			push(@array,[0 x $dim]);
-			for (my $col=0;$col<$dim;$col++){
-				$array[$row]->[$col]=$covmatrix->[$row]->[$col];
-			}
-		}
-		my $err = linear_algebra::cholesky(\@array);
+		my $err = check_matrix_posdef(matrix => $covmatrix);
 		if ($err == 1){
-			croak("\nERROR: covariance matrix is numerically not positive definite\n(as checked with Cholesky decomposition without pivoting). Cannot proceed with sir.\n");
+			croak("\nERROR: covariance matrix is numerically not positive definite\n".
+				  "(as checked with Cholesky decomposition without pivoting). Cannot proceed with sir.\n");
 		}
 	}
 
-	my $mu_values = $parameter_hash->{'values'};
-	my $mat = new Math::MatrixReal(1,1);
-	my $muvector = $mat->new_from_rows( [$mu_values] );
-	my $sampled_params_arr;
-	my $href;
+
 	my $user_labels;
-	if (defined $self->rawres_input){
-		$user_labels = 1; #we do not have generic labels in rawresults
-		($sampled_params_arr,$href) = model::get_rawres_params(filename => $self->rawres_input,
-															   filter => $self->in_filter,
-															   offset => $self->offset_rawres,
-															   model => $model);
-		my @arr= (1) x scalar(@{$sampled_params_arr});
-		$self->pdf_vector(\@arr);
-	}else{
-		ui -> print( category => 'sir',
-					 message => "Sampling from the truncated multivariate normal distribution");
+	my ($resampled_params_arr,$resamp_href);
+	my $boxcox_resulthash;
+
+	for (my $iteration=1;$iteration<=$self->max_iteration(); $iteration++){
+		$self->iteration($iteration);
+		if (($iteration > 1 ) or (not defined $self->rawres_input)){
+			$user_labels = 0; #using generic labels is safer
+			my $message = "Sampling from the truncated multivariate normal distribution";
+			ui -> print( category => 'sir',	 message => $message);
+			my $mu_values; 
+			my $lambda;
+			my $delta;
+			my $inflation;
+			if ($iteration > 1 ){
+				croak("iteration $iteration boxcox_resulthash not defined") 
+					unless (defined $boxcox_resulthash and 
+							defined $boxcox_resulthash->{'lambda'} and 
+							defined $boxcox_resulthash->{'delta'} and
+							defined $boxcox_resulthash->{'covar'});
+				$lambda = $boxcox_resulthash->{'lambda'};
+				$delta = $boxcox_resulthash->{'delta'};
+				if (1){
+					open ( RES, ">" . $self->directory().'delta_lambda_iteration'.($iteration-1).'.csv' );
+					print RES "delta,lambda\n";
+					for (my $k=0; $k< scalar(@{$delta}); $k++){
+						print RES $delta->[$k].','.$lambda->[$k]."\n";
+					}
+					close(RES);
+				}
+				$mu_values = boxcox::shift_and_box_cox(vector=>$parameter_hash->{'values'},
+													   inverse=>0,
+													   lambda=>$lambda,
+													   delta=>$delta);
+				$covmatrix = $boxcox_resulthash->{'covar'};
+				my $err = check_matrix_posdef(matrix => $covmatrix);
+				if ($err == 1){
+					croak("\nERROR: Empirical covariance matrix obtained after Box-Cox transformation is numerically ".
+						  "not positive definite\n(as checked with Cholesky decomposition without pivoting). Cannot proceed with sir.\n");
+				}
+				$inflation = 1;
+			}else{
+				$mu_values= $parameter_hash->{'values'};
+				$lambda = [];
+				$delta = [];
+				$inflation = $self->inflation();
+				#covmatrix already read
+			}
+			my $mat = new Math::MatrixReal(1,1);
+			my $muvector = $mat->new_from_rows( [$mu_values] );
+			my $sampled_params_arr;
+			my ($vectorsamples,$boxcox_samples) = sample_multivariate_normal(samples=>$self->samples->[($iteration-1)],
+																			 covmatrix => $covmatrix,
+																			 inflation => $inflation,
+																			 lower_bound => $parameter_hash->{'lower_bounds'},
+																			 upper_bound => $parameter_hash->{'upper_bounds'},
+																			 param => $parameter_hash->{'param'},
+																			 coords => $parameter_hash->{'coords'},
+																			 block_number => $parameter_hash->{'block_number'},
+																			 mu => $muvector,
+																			 lambda => $lambda,
+																			 delta => $delta);
 		
-		$user_labels = 0; #using generic labels is safer
-		my $vectorsamples = sample_multivariate_normal(samples=>$self->samples,
-													   covmatrix => $covmatrix,
-													   inflation => $self->inflation,
-													   lower_bound => $parameter_hash->{'lower_bounds'},
-													   upper_bound => $parameter_hash->{'upper_bounds'},
-													   param => $parameter_hash->{'param'},
-													   coords => $parameter_hash->{'coords'},
-													   block_number => $parameter_hash->{'block_number'},
-													   mu => $muvector);
+			$sampled_params_arr = create_sampled_params_arr(samples_array => $vectorsamples,
+															labels_hash => $parameter_hash,
+															user_labels => $user_labels);
+			my $pdfvec;
+			if ($iteration > 1 ){
+				$pdfvec = linear_algebra::mvnpdf_cholesky($covmatrix,$mu_values,$boxcox_samples,$inflation,$relativepdf);
+			}else{
+				$pdfvec= linear_algebra::mvnpdf_cholesky($covmatrix,$mu_values,$vectorsamples,$inflation,$relativepdf)
+			}
+			$self->pdf_vector($pdfvec);
+
+			ui -> print( category => 'sir',
+						 message => "Creating parameter vector evaluation models iteration $iteration...");
+
+			my $modelsarr = model::create_maxeval_zero_models_array(
+				problems_per_file => $self->problems_per_file,
+				sampled_params_arr => $sampled_params_arr,
+				mceta => $self->mceta(),
+				ignore_missing_parameters => 1,
+				basedirectory => $self->directory,
+				subdirectory => $self->directory().'m'.$model_number.'/',
+				model => $model,
+				purpose => 'sir_iteration'.$iteration,
+				match_labels => $user_labels
+				);
 		
-		$sampled_params_arr = create_sampled_params_arr(samples_array => $vectorsamples,
-														labels_hash => $parameter_hash,
-														user_labels => $user_labels);
-		#TODO document relative pdf
-		my $relative = 1;
-		$self->pdf_vector(linear_algebra::mvnpdf_cholesky($covmatrix,$mu_values,$vectorsamples,$self->inflation,$relative));
+			my %subargs = ();
+			if ( defined $self -> subtool_arguments() ) {
+				%subargs = %{$self -> subtool_arguments()};
+			}
+		
+			my $message = "Running iteration ".$self->iteration()." evaluation models";
 
+			my $iteration_evaluation = 
+				tool::modelfit ->new( %{common_options::restore_options(@common_options::tool_options)},
+									  models		 => $modelsarr,
+									  base_directory   => $self -> directory,
+									  raw_results_file => [$self->directory.'raw_results_sir_iteration'.$iteration.'.csv'],
+									  directory             => undef,
+									  directory_name_prefix => 'iteration'.$iteration,
+									  _raw_results_callback => $self ->
+									  _modelfit_raw_results_callback( model_number => $model_number ),
+#								  subtools              => \@subtools,
+									  nmtran_skip_model => 2,
+									  raw_results           => undef,
+									  prepared_models       => undef,
+									  top_tool              => 0,
+									  copy_data             => $self->copy_data,
+									  %subargs );
+
+
+
+			ui -> print( category => 'sir', message => $message );
+
+			if ($iteration < $self->max_iteration()){
+				push(@{$self->intermediate_raw_results_files},'raw_results_sir_iteration'.$iteration.'.csv');
+				$iteration_evaluation -> run;
+				($resampled_params_arr,$resamp_href) = model::get_rawres_params(filename => $iteration_evaluation->raw_results_file()->[0],
+																				require_numeric_ofv => 1,
+																				extra_columns => ['resamples'],
+																				offset => 1, #first is original
+																				model => $model); 
+			}else{
+				#final round
+				my ($dir,$file)= 
+					OSspecific::absolute_path( $self ->directory(),
+											   $self -> raw_results_file()->[$model_number-1] );
+				push(@{$self->intermediate_raw_results_files},$file);
+
+				$self -> prepared_models -> [$model_number-1]{'own'} = $modelsarr;
+				$self->tools([]) unless (defined $self->tools());
+				push( @{$self -> tools()},$iteration_evaluation);
+				trace(tool => 'sir', message => "Created a modelfit object to run all the models in ".
+					  $self ->directory().'m'.$model_number, level => 1);
+			}
+		}else{
+			#first iteration and rawres_input
+			$user_labels = 1; #we do not have generic labels in rawresults
+		
+			($resampled_params_arr,$resamp_href) = model::get_rawres_params(filename => $self->rawres_input,
+																			filter => $self->in_filter,
+																			offset => $self->offset_rawres,
+																			model => $model);
+		}
+
+		if ($iteration < $self->max_iteration()){
+			#not final round
+			#Now we should have resampled_params_arr, either from first iteration or rawresinput, on original scale
+			#Do Box-Cox and get transformed covariance matrix
+			ui -> print( category => 'sir', message => "Find optimal Box-Cox transformation of resampled vectors" );
+			$boxcox_resulthash = empirical_statistics( sampled_params_arr => $resampled_params_arr,
+													   labels_hash => $parameter_hash,
+													   get_lambda_delta => 1,
+													   estimated_vector => $parameter_hash->{'values'},
+													   do_percentiles => 0);
+		}
 	}
-	
 
-	ui -> print( category => 'sir',
-				 message => "Creating parameter vector evaluation models...");
-	my $modelsarr = model::create_maxeval_zero_models_array(
-		problems_per_file => $self->problems_per_file,
-		sampled_params_arr => $sampled_params_arr,
-		mceta => $self->mceta(),
-		ignore_missing_parameters => 1,
-		basedirectory => $self->directory,
-		subdirectory => $self->directory().'m'.$model_number.'/',
-		model => $model,
-		purpose => 'sir',
-		match_labels => $user_labels
-		);
-	
-	$self -> prepared_models -> [$model_number-1]{'own'} = $modelsarr;
 
-	my @subtools = ();
-	@subtools = @{$self -> subtools()} if (defined $self->subtools());
-	shift( @subtools );
-	my %subargs = ();
-	if ( defined $self -> subtool_arguments() ) {
-		%subargs = %{$self -> subtool_arguments()};
-	}
-
-	$self->tools([]) unless (defined $self->tools());
-
-	push( @{$self -> tools()},
-		tool::modelfit ->new( %{common_options::restore_options(@common_options::tool_options)},
-			 models		 => $modelsarr,
-			 directory             => undef,
-			 _raw_results_callback => $self ->
-			 _modelfit_raw_results_callback( model_number => $model_number ),
-			 subtools              => \@subtools,
-			 nmtran_skip_model => 2,
-			 raw_results           => undef,
-			 prepared_models       => undef,
-			 top_tool              => 0,
-			 copy_data             => $self->copy_data,
-			 %subargs ) );
-	
-	trace(tool => 'sir', message => "Created a modelfit object to run all the models in ".
-							$self ->directory().'m'.$model_number, level => 1);
 }
 
 
 
 sub mvnpdf{
+	#Note: this sub is not used in current sir procedure
+
 	my %parm = validated_hash(\@_,
 							  inverse_covmatrix => { isa => 'Math::MatrixReal', optional => 0 },
 							  mu => { isa => 'Math::MatrixReal', optional => 0 },
@@ -397,6 +485,25 @@ sub mvnpdf{
 	return \@pdf_array;
 }
 
+sub check_matrix_posdef{
+	my %parm = validated_hash(\@_,
+							  matrix => { isa => 'ArrayRef', optional => 0 },
+		);
+	my $matrix = $parm{'matrix'};
+
+	my $dim = scalar(@{$matrix});
+	#copy and check it
+	my @array=();
+	#this gives full matrix
+	for (my $row=0; $row<$dim;$row++){
+		push(@array,[0 x $dim]);
+		for (my $col=0;$col<$dim;$col++){
+			$array[$row]->[$col]=$matrix->[$row]->[$col];
+		}
+	}
+	return linear_algebra::cholesky(\@array);
+
+}
 
 sub compute_weights{
 
@@ -481,16 +588,28 @@ sub weighted_sample{
 sub empirical_statistics{
 	my %parm = validated_hash(\@_,
 							  sampled_params_arr => { isa => 'ArrayRef', optional => 0 },
-							  labels_hash => { isa => 'HashRef', optional => 0 }
+							  labels_hash => { isa => 'HashRef', optional => 0 },
+							  do_percentiles => {isa => 'Bool', optional => 1, default => 1},
+							  get_lambda_delta => {isa => 'Bool', optional => 1, default => 0},
+							  absmaxlambda => {isa => 'Num', optional => 1, default => 3},
+							  resolutionlambda => {isa => 'Num', optional => 1, default => 0.2},
+							  estimated_vector => { isa => 'ArrayRef', optional => 1 },
 		);
 	my $sampled_params_arr = $parm{'sampled_params_arr'};
 	my $labels_hash = $parm{'labels_hash'};
+	my $do_percentiles = $parm{'do_percentiles'};
+	my $get_lambda_delta = $parm{'get_lambda_delta'};
+	my $absmaxlambda = $parm{'absmaxlambda'};
+	my $resolutionlambda = $parm{'resolutionlambda'};
+	my $estimated_vector = $parm{'estimated_vector'};
 
 	my $len = scalar(@{$sampled_params_arr});
 	croak("empty set of samples to empirical_statistics") unless ($len >0);
 	my $dim = scalar(@{$labels_hash->{'labels'}});
 	croak("empty set of labels to empirical_statistics") unless ($dim >0);
-	croak("column resamples is missing from sampled_params_arr in empirical_statistics") unless (defined $sampled_params_arr->[0]->{'resamples'});
+
+	my $count_resamples=1;
+	$count_resamples = 0 unless (defined $sampled_params_arr->[0]->{'resamples'}); #assume all included
 
 	my @all_labels=();
 	my @all_params=();
@@ -517,12 +636,16 @@ sub empirical_statistics{
 			push(@vector,$sampled_params_arr->[$i]->{$all_params[$j]}->{$all_labels[$j]});
 		}
 
-		for (my $k=0; $k<$sampled_params_arr->[$i]->{'resamples'} ; $k++){
+		my $max_k=1;
+		if ($count_resamples){
+			$max_k=$sampled_params_arr->[$i]->{'resamples'};
+		}
+		for (my $k=0; $k< $max_k; $k++){
 			$n_resamples++;
 			push(@Amatrix,\@vector);
 			for (my $j=0; $j< $dim; $j++){
 				push(@{$parameter_vectors[$j]},$vector[$j]);
-				$sums[$j] = $sums[$j] + $vector[$j];
+				$sums[$j] = $sums[$j] + $vector[$j] unless ($get_lambda_delta);
 			}
 		}
 	}
@@ -530,49 +653,88 @@ sub empirical_statistics{
 
 	my %resulthash;
 	$resulthash{'covar'}=[];
-	my $err1 = linear_algebra::row_cov(\@Amatrix,$resulthash{'covar'});
-	if ($err1 == 1){
-		croak ("numerical error in linear_algebra rowcov");
-	}elsif ($err1 == 2){
-		croak ("input error to linear_algebra rowcov");
-	}
+	if ($get_lambda_delta){
+		$resulthash{'lambda'}=[];
+		$resulthash{'delta'}=[];
+		my @Bmatrix=();
+		for (my $j=0; $j< $dim; $j++){
+			$sums[$j] =0;
+			my ($lam,$del) = boxcox::get_lambda_delta($parameter_vectors[$j],$absmaxlambda,$estimated_vector->[$j]);
+			if (abs($lam-1)<$resolutionlambda){
+				push(@{$resulthash{'lambda'}},undef);
+				push(@{$resulthash{'delta'}},0);
+			}else{
+				push(@{$resulthash{'lambda'}},$lam);
+				push(@{$resulthash{'delta'}},$del);
+			}
+		}
+		#redo sums and Bmatrix
+		foreach my $vec (@Amatrix){
+			my $trans = boxcox::shift_and_box_cox(vector=>$vec,
+												  lambda => $resulthash{'lambda'},
+												  delta=>$resulthash{'delta'},
+												  inverse=>0);
+			push(@Bmatrix,$trans);
+			for (my $j=0; $j< $dim; $j++){
+				$sums[$j] = $sums[$j] + $trans->[$j];
+			}
+		}
 
-	my @pred_int = sort {$a <=> $b} 0,40,80,90,95;
-	my @temp =();
-	foreach my $pi (@pred_int){
-		if ($pi == 0){
-			push (@temp,50);
-		}else {
-			push (@temp,(100-$pi)/2);
-			push (@temp,(100-(100-$pi)/2));
+		my $err1 = linear_algebra::row_cov(\@Bmatrix,$resulthash{'covar'});
+		if ($err1 == 1){
+			croak ("numerical error in linear_algebra rowcov for boxcox");
+		}elsif ($err1 == 2){
+			croak ("input error to linear_algebra rowcov for boxcox");
+		}
+
+	}else{
+		my $err1 = linear_algebra::row_cov(\@Amatrix,$resulthash{'covar'});
+		if ($err1 == 1){
+			croak ("numerical error in linear_algebra rowcov");
+		}elsif ($err1 == 2){
+			croak ("input error to linear_algebra rowcov");
 		}
 	}
-	my @perc_limit = sort {$a <=> $b} @temp;
-	my @probs;
-	foreach my $lim (@perc_limit){
-		push(@probs,$lim/100);
-	}
-
-	my $no_perc_limits = scalar(@perc_limit);
 
 	$resulthash{'mean'}=[];
-	$resulthash{'percentiles_labels'}=\@perc_limit;
-	$resulthash{'percentiles_values'}=[];
  	for (my $j=0; $j< $dim; $j++){
 		push(@{$resulthash{'mean'}},($sums[$j]/$n_resamples));
 	}
- 	for (my $j=0; $j< scalar(@probs); $j++){
-		push(@{$resulthash{'percentiles_values'}},[(0) x $dim]);
-	}
 
- 	for (my $j=0; $j< $dim; $j++){
-		my @sorted = (sort {$a <=> $b} @{$parameter_vectors[$j]}); #sort ascending
-		my $quantref = quantile(probs => \@probs, numbers=> \@sorted);
-		for (my $k=0; $k< scalar(@probs); $k++){
-			$resulthash{'percentiles_values'}->[$k]->[$j] = $quantref->[$k];
+
+	if ($do_percentiles){
+		my @pred_int = sort {$a <=> $b} 0,40,80,90,95;
+		my @temp =();
+		foreach my $pi (@pred_int){
+			if ($pi == 0){
+				push (@temp,50);
+			}else {
+				push (@temp,(100-$pi)/2);
+				push (@temp,(100-(100-$pi)/2));
+			}
+		}
+		my @perc_limit = sort {$a <=> $b} @temp;
+		my @probs;
+		foreach my $lim (@perc_limit){
+			push(@probs,$lim/100);
+		}
+
+		my $no_perc_limits = scalar(@perc_limit);
+
+		$resulthash{'percentiles_labels'}=\@perc_limit;
+		$resulthash{'percentiles_values'}=[];
+		for (my $j=0; $j< scalar(@probs); $j++){
+			push(@{$resulthash{'percentiles_values'}},[(0) x $dim]);
+		}
+
+		for (my $j=0; $j< $dim; $j++){
+			my @sorted = (sort {$a <=> $b} @{$parameter_vectors[$j]}); #sort ascending
+			my $quantref = quantile(probs => \@probs, numbers=> \@sorted);
+			for (my $k=0; $k< scalar(@probs); $k++){
+				$resulthash{'percentiles_values'}->[$k]->[$j] = $quantref->[$k];
+			}
 		}
 	}
-
 	return \%resulthash;
 }
 
@@ -678,7 +840,9 @@ sub sample_multivariate_normal
 							  block_number => { isa => 'ArrayRef', optional => 0 },
 							  coords => { isa => 'ArrayRef', optional => 0 },
 							  mu => { isa => 'Math::MatrixReal', optional => 0 },							  
-							  inflation => { isa => 'Num', optional => 0 }							  
+							  inflation => { isa => 'Num', optional => 0 },
+							  lambda => { isa => 'ArrayRef', optional => 1 },
+							  delta => { isa => 'ArrayRef', optional => 1 },
 		);
 	my $samples = $parm{'samples'};
 	my $covmatrix = $parm{'covmatrix'};
@@ -689,12 +853,28 @@ sub sample_multivariate_normal
 	my $coords = $parm{'coords'};
 	my $mu = $parm{'mu'};
 	my $inflation = $parm{'inflation'};
-	
+	my $lambda = $parm{'lambda'};
+	my $delta = $parm{'delta'};
+
 	my ($rows,$columns) = $mu->dim();
+	my $dim = $columns;
 	unless ($rows == 1 and $columns > 0){
 		croak("Input error sample_multivariate_normal: mu vector has dimension ($rows,$columns)");
 	}
-	my $dim = $columns;
+
+	my $transform=0;
+	if (defined $lambda){
+		if (scalar(@{$lambda})>0){
+			unless(scalar(@{$lambda})==$dim){
+				croak("Input error sample_multivariate_normal: mu vector has dimension $dim but lambda has dimension ".scalar(@{$lambda}));
+			}
+			unless(scalar(@{$delta})==$dim){
+				croak("Input error sample_multivariate_normal: mu vector has dimension $dim but delta has dimension ".scalar(@{$delta}));
+			}
+			$transform=1;
+		}
+	} 
+
 	unless (scalar(@{$covmatrix})==$dim){
 		croak("Input error sample_multivariate_normal: mu vector has dimension $dim but covmatrix has dimension ".scalar(@{$covmatrix}));
 	}
@@ -828,15 +1008,38 @@ sub sample_multivariate_normal
 
 
 	my @samples_array=();
+	my @boxcox_samples_array=();
 	my $counter=0;
 	my $max_iter=1000;
+	my $discarded=0;
 
 	for (my $j=0; $j<$max_iter; $j++){
 		#we will probably discard some samples, generate twice needed amount to start with
 		my @candidate_samples = Math::Random::random_multivariate_normal((2*$samples), @muvec, @{$use_covmatrix});
 
-		foreach my $xvec (@candidate_samples){
+		for (my $cand=0; $cand < scalar(@candidate_samples); $cand++){
+			my $xvec;
 			my $accept = 1;
+			if ($transform){
+				#back-transform from boxcox
+				$xvec = boxcox::shift_and_box_cox(vector=>$candidate_samples[$cand],
+												  lambda=>$lambda,
+												  delta=>$delta, 
+												  inverse => 1);
+				for (my $i=0; $i< $dim; $i++){
+					unless (usable_number($xvec->[$i])){
+						$accept=0;
+						last;
+					}
+				}
+			}else{
+				$xvec= $candidate_samples[$cand];
+			}
+			unless ($accept){
+				$discarded++;
+				next ;
+			}
+
 			for (my $i=0; $i< $dim; $i++){
 				if ($xvec->[$i] <= $lower_bound->[$i]){
 					$accept=0;
@@ -850,7 +1053,10 @@ sub sample_multivariate_normal
 					last;
 				}
 			}
-			next unless $accept;
+			unless ($accept){
+				$discarded++;
+				next ;
+			}
 			if ($check_sigma_posdef){
 				foreach my $ref (@sigma_hashes){
 					next unless ($ref->{'offdiag'}==1);
@@ -876,7 +1082,10 @@ sub sample_multivariate_normal
 					}
 				}
 			}
-			next unless $accept;
+			unless ($accept){
+				$discarded++;
+				next ;
+			}
 			if ($check_omega_posdef){
 				foreach my $ref (@omega_hashes){
 					next unless ($ref->{'offdiag'}==1);
@@ -911,8 +1120,12 @@ sub sample_multivariate_normal
 					}
 				}
 			}
-			next unless $accept;
+			unless ($accept){
+				$discarded++;
+				next ;
+			}
 			push(@samples_array,$xvec);
+			push(@boxcox_samples_array,$candidate_samples[$cand]) if ($transform);
 			$counter++;
 			last if ($counter == $samples);
 		}
@@ -922,7 +1135,8 @@ sub sample_multivariate_normal
 	unless ($counter == $samples){
 		croak("Failed to generate $samples accepted parameter vectors within the boundaries even after generating ".(2*$max_iter*$samples)." candidates");
 	}
-	return \@samples_array;
+	ui->print(category => 'sir',message=> "Discarded $discarded samples that did not fulfill boundary conditions.\n");
+	return (\@samples_array,\@boxcox_samples_array);
 
 }
 
@@ -1076,8 +1290,9 @@ sub modelfit_analyze
 	);
 	my $model_number = $parm{'model_number'};
 
-	$self->full_rawres_header($self->tools()->[0]->raw_results_header);
-
+	if (defined $self->tools and defined $self->tools()->[0]){
+		$self->full_rawres_header($self->tools()->[0]->raw_results_header);
+	}
 
 }
 
@@ -1093,16 +1308,22 @@ sub _modelfit_raw_results_callback
 	my $model_number = $parm{'model_number'};
 	my $subroutine;
 
-	my ($dir,$file) = 
-		OSspecific::absolute_path( $self ->directory(),
-								   $self -> raw_results_file()->[$model_number-1] );
-	my ($dir,$nonp_file) = 
-		OSspecific::absolute_path( $self ->directory(),
-								   $self -> raw_nonp_file()->[$model_number-1] );
+	my ($dir,$file,$nonp_file); 
+
 	my $original_ofv = $self ->original_ofv();
 	my $pdf_vector = $self->pdf_vector();
-	my $samples = $self->samples();
-	my $resamples = $self->resamples();
+	my $samples = $self->samples()->[($self->iteration-1)];
+	my $resamples = $self->resamples()->[($self->iteration-1)];
+	my $iteration = $self->iteration;
+	my $final_iteration = 0;
+	$final_iteration = 1 if ($self->iteration == $self->max_iteration);
+	($dir,$file)= 
+		OSspecific::absolute_path( $self ->directory(),
+								   $self -> raw_results_file()->[$model_number-1] );
+	($dir,$nonp_file) = 
+		OSspecific::absolute_path( $self ->directory(),
+								   $self -> raw_nonp_file()->[$model_number-1] );
+
 	my $with_replacement = $self->with_replacement();
 	my $problems_per_file = $self->problems_per_file();
 
@@ -1113,15 +1334,18 @@ sub _modelfit_raw_results_callback
 		my $modelfit = shift;
 		my $mh_ref   = shift;
 		my %max_hash = %{$mh_ref};
-		$modelfit -> raw_results_file([$dir.$file] );
-		$modelfit -> raw_nonp_file( [$dir.$nonp_file] );
-
-		$self->raw_line_structure($modelfit -> raw_line_structure());
+		if ($final_iteration){
+			$modelfit -> raw_results_file([$dir.$file] );
+			$modelfit -> raw_nonp_file( [$dir.$nonp_file] );
+		}else{
+			#leave as is
+		}
+#		$self->raw_line_structure($modelfit -> raw_line_structure());
 
 		#make sure that we have valid raw_line_structure and not from crashed run here
 		my $structure;
-		for (my $i=1;$i <= scalar(keys %{$self->raw_line_structure()}); $i++){
-			if (defined $self->raw_line_structure()->{$i} and defined $self->raw_line_structure()->{$i}->{'ofv'}){
+		for (my $i=1;$i <= scalar(keys %{$modelfit->raw_line_structure()}); $i++){
+			if (defined $modelfit->raw_line_structure()->{$i} and defined $modelfit->raw_line_structure()->{$i}->{'ofv'}){
 				$structure = $i; 
 				last;
 			}else{
@@ -1130,13 +1354,13 @@ sub _modelfit_raw_results_callback
 		}
 		croak("could not find defined ofv in raw_line_structure") unless (defined $structure);
 
-		my ($start,$len) = split(',',$self->raw_line_structure() -> {$structure}->{'model'});
+		my ($start,$len) = split(',',$modelfit->raw_line_structure() -> {$structure}->{'model'});
 		my $modelindex = $start;
-		my ($start,$len) = split(',',$self->raw_line_structure() -> {$structure}->{'problem'});
+		my ($start,$len) = split(',',$modelfit->raw_line_structure() -> {$structure}->{'problem'});
 		my $probindex = $start;
-		my ($start,$len) = split(',',$self->raw_line_structure() -> {$structure}->{'subproblem'});
+		my ($start,$len) = split(',',$modelfit->raw_line_structure() -> {$structure}->{'subproblem'});
 		my $subindex = $start;
-		my ($start,$len) = split(',',$self->raw_line_structure() -> {$structure}->{'ofv'});
+		my ($start,$len) = split(',',$modelfit->raw_line_structure() -> {$structure}->{'ofv'});
 		my $ofvindex=$start;
 		croak("could not find ofv in raw results header") unless (defined $ofvindex);
 
@@ -1212,6 +1436,7 @@ sub _modelfit_raw_results_callback
 		my $total_weights = $wghash->{'sum_weights'};
 		my @times_sampled = (0) x scalar(@delta_ofv); #filtered_samples length filtered instead
 
+		ui -> print( category => 'sir', message => "Resampling vectors based on weights" );
 		for (my $i=0; $i<$resamples; $i++){
 			my $sample_index = tool::sir::weighted_sample(cdf => $wghash->{'cdf'});
 			$times_sampled[$sample_index]++;
@@ -1263,31 +1488,39 @@ sub _modelfit_raw_results_callback
 			['sample.id',@old_header[0 .. $headerindex],@extra_headers,@old_header[$headerindex+1 .. $#old_header]]);
 
 		my $extra_header_count = scalar(@extra_headers);
-		foreach my $mod (sort({$a <=> $b} keys %{$self->raw_line_structure()})){
-			foreach my $category (keys %{$self->raw_line_structure() -> {$mod}}){
+		foreach my $mod (sort({$a <=> $b} keys %{$modelfit->raw_line_structure()})){
+			foreach my $category (keys %{$modelfit->raw_line_structure() -> {$mod}}){
 				next if ($category eq 'line_numbers');
-				my ($start,$len) = split(',',$self->raw_line_structure() -> {$mod}->{$category});
+				my ($start,$len) = split(',',$modelfit->raw_line_structure() -> {$mod}->{$category});
 				if ($start > $ofvindex){
-					$self->raw_line_structure() -> {$mod}->{$category} = ($start+$extra_header_count+1).','.$len;#+1 extra for sample.id
+					$modelfit->raw_line_structure() -> {$mod}->{$category} = ($start+$extra_header_count+1).','.$len;#+1 extra for sample.id
 				}else{
-					$self->raw_line_structure() -> {$mod}->{$category} = ($start+1).','.$len; #+1 for sample id
+					$modelfit->raw_line_structure() -> {$mod}->{$category} = ($start+1).','.$len; #+1 for sample id
 				}
 			}
 			my $hc = 0;
-			$self->raw_line_structure() -> {$mod}->{'sample.id'} = ($hc).',1'; #sample has index 0
+			$modelfit->raw_line_structure() -> {$mod}->{'sample.id'} = ($hc).',1'; #sample has index 0
 			$hc++;
 			foreach my $head (@extra_headers){
 				$hc++; #first will be 2
-				$self->raw_line_structure() -> {$mod}->{$head} = ($ofvindex+$hc).',1'; #first has 2 extra relative old ofvindex
-				#			$self->raw_line_structure() -> {$mod}->{'deltaofv'} = ($ofvindex+1).',1';
+				$modelfit->raw_line_structure() -> {$mod}->{$head} = ($ofvindex+$hc).',1'; #first has 2 extra relative old ofvindex
+				#			$modelfit->raw_line_structure() -> {$mod}->{'deltaofv'} = ($ofvindex+1).',1';
 			}
 		}
 		
-		$self->raw_line_structure() -> write( $dir.'raw_results_structure' );
 
-		$self -> raw_results_header($modelfit -> raw_results_header());
-		$self -> raw_results($modelfit -> raw_results());
+		if ($final_iteration){
+			$self->raw_line_structure($modelfit -> raw_line_structure());
+			$self->raw_line_structure() -> write( $dir.'raw_results_structure' );
+			
+			$self -> raw_results_header($modelfit -> raw_results_header());
+			$self -> raw_results($modelfit -> raw_results());
+		}else{
+			my ($dir,$file) = 	OSspecific::absolute_path( $modelfit ->directory(),
+														   $modelfit -> raw_results_file()->[$model_number-1] );
+			$modelfit->raw_line_structure() -> write( $dir.'raw_results_structure' );
 
+		}
 	};
 	return $subroutine;
 }
@@ -1299,6 +1532,7 @@ sub prepare_results
 	ui -> print( category => 'sir',
 				 message => "\nAnalyzing results");
 
+	my $rawresfile;
 	if ($self->recompute()){
 		#change results_file so that old is not overwritten
 		my $fname = $self->results_file();
@@ -1308,10 +1542,10 @@ sub prepare_results
 			$addnum++;
 		}
 		$self->results_file("$fname$addnum".'.csv');
-		$self -> raw_results_file->[0] = $self->directory().$self->recompute();
 	}
 
 #	print "prepare results model name ".$self -> models -> [0]->full_name."\n";
+#	print "prepare results rawres name ".$self->raw_results_file()->[0]."\n";
 	my $model = $self -> models -> [0];
 	my ($sampled_params_arr,$href) = model::get_rawres_params(filename => $self->raw_results_file()->[0],
 															  require_numeric_ofv => 1,
@@ -1328,7 +1562,8 @@ sub prepare_results
 
 	my @datearr=localtime;
 	my $the_date=($datearr[5]+1900).'-'.($datearr[4]+1).'-'.($datearr[3]);
-	$return_section{'values'} = [[$the_date,$self->samples,$len,$self->resamples(),$modelname,'v'.$PsN::version,$self->nm_version]];
+	$return_section{'values'} = [[$the_date,join(' ',@{$self->samples}),$len,join(' ',@{$self->resamples()}),
+								  $modelname,'v'.$PsN::version,$self->nm_version]];
 	#results is initialized in tool.dia
 	push( @{$self -> results->[0]{'own'}},\%return_section );
 
@@ -1464,7 +1699,7 @@ sub create_R_plots_code{
 
 	my $maxresamplestring = 'MAX.RESAMPLE <- 1    # maximum resamples for single sample. 1 if without replacement';
 	if ($self->with_replacement){
-		$maxresamplestring = 'MAX.RESAMPLE <- '.$self->resamples;
+		$maxresamplestring = 'MAX.RESAMPLE <- '.$self->resamples->[($self->max_iteration-1)];
 	}
 
 	my $labelref = $self->models->[0]->problems->[0]->get_estimated_attributes(parameter => 'all',
@@ -1486,8 +1721,11 @@ sub create_R_plots_code{
 
 	$rplot->add_preamble(code => [
 							 '#sir-specific preamble',
-							 'SAMPLES   <-'.$self->samples,
-							 'RESAMPLES   <-'.$self->resamples,
+							 'SAMPLES   <-'.$self->samples->[($self->max_iteration-1)],
+							 'RESAMPLES   <-'.$self->resamples->[($self->max_iteration-1)],
+							 'ALL.SAMPLES   <-c('.join(','.@{$self->samples}).')',
+							 'ALL.RESAMPLES   <-c('.join(',',@{$self->resamples}).')',
+							 "ALL.RAWRESFILES   <-c('".join("','",@{$self->intermediate_raw_results_files})."')",
 							 $maxresamplestring,
 							 $colstring,
 							 $paramstring,
