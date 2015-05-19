@@ -9,7 +9,6 @@ use File::Spec qw(abs2rel catfile);
 extends 'model::problem::record';
 
 has 'ignoresign' => ( is => 'rw', isa => 'Str' );
-has 'ignore_list' => ( is => 'rw', isa => 'ArrayRef[Str]' );
 has 'filename'  => ( isa => 'Str', reader => 'get_filename', writer => '_set_filename' );
 has 'directory'  => ( isa => 'Str', reader => 'get_directory', writer => '_set_directory' );
 has 'model_directory' => ( is => 'rw', isa => 'Maybe[Str]' );
@@ -27,35 +26,42 @@ sub BUILD
 	#remaining opts
 	#if ignoresign is set, i.e. IGNORE or ACCEPT option 
 	#then remove it from set of options and store in ignoresign attribute
+
+	#closing parenthesis is allowed as ignoresign, but not opening
 	my @keep_opts=();
+
 	foreach my $option ( @{$self->options} ) {
 		if ( defined $option){ 
 			if ($option->name eq 'IGNORE' or index('IGNORE',$option ->name ) == 0) {
 				my $value = $option->value;
 				chomp( $value );
 				if (defined $value and length($value)>0){
-					if ( $value =~ /\(*.\)/ ) {
-						$value =~ s/\(//g;
-						$value =~ s/\)//g;
-						my @raw_list = split(',',$value);
-						$self->ignore_list([]) unless defined $self->ignore_list; # In case the reference is undef
-						push( @{$self->ignore_list}, @raw_list );
+					if ( $value =~ /^\(/ ) {
+						#opening parenthesis. This cannot be single ignoresign, NONMEM does not allow it
 						push(@keep_opts,$option);
 					} else {
 						if (($value =~ /^'/) or ($value =~ /^"/)){
 							croak("PsN does not support quoted IGNORE signs in \$DATA");
 						}
-						#do not push to keep_opts, store as attribute
-						$self->ignoresign($value);
+						if (length($value)==1){
+							#do not push to keep_opts, store as attribute
+							$self->ignoresign($value);
+						}else{
+							#could be e.g. IGNORE=c1 which is ok in NONMEM
+							push(@keep_opts,$option);
+						}
 					}
 				}else{
-					print "\nWarning: empty value of IGNORE option in \$DATA\n";
+					push(@keep_opts,$option);
+					#ui->print(category=> 'all',message=> "\nWarning: empty value of IGNORE option in \$DATA\n");
 				}
 			}else{
 				push(@keep_opts,$option);
 			}
 		}
 	}
+
+
 	$self->options(\@keep_opts);
 
 }

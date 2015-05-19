@@ -5,7 +5,7 @@
 
 use strict;
 use warnings;
-use Test::More tests=>115;
+use Test::More;
 use Test::Exception;
 use Math::Random;
 use FindBin qw($Bin);
@@ -131,22 +131,58 @@ $datarec->set_filename(filename=> $homedir.'sub/../other/new3.csv');
 is($datarec ->get_directory,$dir,'data record dir after change 3');
 is($datarec ->get_filename,'new3.csv','data record filename after change 3');
 
-my $datarec_at = model::problem::data->new(record_arr => ['file.csv IGNORE=(DOSE.GT.5)','IGN=@']);
-is($datarec_at->ignoresign,'@','data record ignoresign at');
+$datarec = model::problem::data->new(record_arr => ['file.csv IGNORE=(DOSE.GT.5)','IGN=@']);
+is($datarec->ignoresign,'@','data record ignoresign at');
+is($datarec->_format_record(write_directory=>$datarec->get_directory,relative_data_path=>1)->[0],
+   '$DATA      file.csv IGNORE=@ IGNORE=(DOSE.GT.5)'."\n",'format record ignoresign at');
 
-my $datarec_empty = model::problem::data->new(record_arr => ['file.csv IGNORE=(DOSE.GT.5)']);
-is($datarec_empty->ignoresign,undef,'data record ignoresign undef');
+$datarec = model::problem::data->new(record_arr => ['file.csv IGNORE=(DOSE.GT.5)']);
+is($datarec->ignoresign,undef,'data record ignoresign undef');
+is($datarec->_format_record(write_directory=>$datarec->get_directory,relative_data_path=>1)->[0],
+   '$DATA      file.csv IGNORE=(DOSE.GT.5)'."\n",'format record ignoresign undef');
 
-my $datarec_hash = model::problem::data->new(record_arr => ['file.csv IGNOR=# IGNORE=(DOSE.GT.5)']);
-is($datarec_hash->ignoresign,'#','data record ignoresign hash');
+$datarec = model::problem::data->new(record_arr => ['file.csv IGNOR=# IGNORE =(DOSE.GT.5)']);
+is($datarec->ignoresign,'#','data record ignoresign hash');
+is($datarec->_format_record(write_directory=>$datarec->get_directory,relative_data_path=>1)->[0],
+   '$DATA      file.csv IGNORE=# IGNORE=(DOSE.GT.5)'."\n",'format record ignoresign hash');
 
-my $datarec_I = model::problem::data->new(record_arr => ['file.csv IGNO=I ','IGNOR=(DOSE.GT.5)']);
-is($datarec_I->ignoresign,'I','data record ignoresign I');
+$datarec = model::problem::data->new(record_arr => ['file.csv IGNO=I ','IGNOR=(DOSE.GT.5)']);
+is($datarec->ignoresign,'I','data record ignoresign I');
+is($datarec->_format_record(write_directory=>$datarec->get_directory,relative_data_path=>1)->[0],
+   '$DATA      file.csv IGNORE=I IGNOR=(DOSE.GT.5)'."\n",'format record ignoresign I');
 
-my $datarec_C = model::problem::data->new(record_arr => ['file.csv IGNORE=(DOSE.GT.5)','IGNORE=C REWIND']);
-is($datarec_C->ignoresign,'C','data record ignoresign C');
+$datarec = model::problem::data->new(record_arr => ['file.csv IGNORE = ( DOSE.GT.5)','IGNORE=C REWIND']);
+is($datarec->ignoresign,'C','data record ignoresign C');
+is($datarec->_format_record(write_directory=>$datarec->get_directory,relative_data_path=>1)->[0],
+   '$DATA      file.csv IGNORE=C IGNORE=(DOSE.GT.5) REWIND'."\n",'format record ignoresign C');
+
+$datarec = model::problem::data->new(record_arr => ['file.csv IGNORE=C  IGNORE = ( DOSE.GT.5,',' APGR.LT.2 ) REWIND']);
+is($datarec->ignoresign,'C','data record ignoresign C split list');
+is($datarec->_format_record(write_directory=>$datarec->get_directory,relative_data_path=>1)->[0],
+   '$DATA      file.csv IGNORE=C IGNORE=(DOSE.GT.5, APGR.LT.2) REWIND'."\n",'format record split list');
+
+$datarec = model::problem::data->new(record_arr => ['file.csv IGNORE=C  IGNORE =  ','( DOSE.GT.5,',' APGR.LT.2 ) REWIND']);
+is($datarec->ignoresign,'C','data record ignoresign C split list after =');
+is($datarec->_format_record(write_directory=>$datarec->get_directory,relative_data_path=>1)->[0],
+   '$DATA      file.csv IGNORE=C IGNORE (DOSE.GT.5, APGR.LT.2) REWIND'."\n",'format record split after =');
+
+$datarec = model::problem::data->new(record_arr => ['file.csv IGNORE=C  IGNORE  ( ',' DOSE.GT.5, APGR.LT.2 ) REWIND']);
+is($datarec->ignoresign,'C','data record ignoresign C split list 2');
+is($datarec->_format_record(write_directory=>$datarec->get_directory,relative_data_path=>1)->[0],
+   '$DATA      file.csv IGNORE=C IGNORE ( DOSE.GT.5,APGR.LT.2) REWIND'."\n",'format record split list 2');
+
+$datarec = model::problem::data->new(record_arr => ['file.csv IGNORE=C  IGNORE  (  DOSE.GT.5, APGR.LT.2 ) REWIND']);
+is($datarec->ignoresign,'C','data record ignoresign C list without =');
+is($datarec->_format_record(write_directory=>$datarec->get_directory,relative_data_path=>1)->[0],
+   '$DATA      file.csv IGNORE=C IGNORE (DOSE.GT.5,APGR.LT.2) REWIND'."\n",'format record without =');
+
+$datarec = model::problem::data->new(record_arr => ['file.csv IGNORE=c1  IGNORE  (  DOSE.GT.5, APGR.LT.2 ) REWIND']);
+is($datarec->ignoresign,undef,'data record ignoresign c1 ');
+is($datarec->_format_record(write_directory=>$datarec->get_directory,relative_data_path=>1)->[0],
+   '$DATA      file.csv IGNORE=c1 IGNORE (DOSE.GT.5,APGR.LT.2) REWIND'."\n",'format record c1');
 
 dies_ok { model::problem::data->new(record_arr => ['file.csv IGNORE=(DOSE.GT.5)',"IGNORE=';' REWIND"]) } "Quoted ignoresign";
+dies_ok { model::problem::data->new(record_arr => ['file.csv IGNORE=(',"DOSE.GT.5) REWIND"]) } "split after opening par";
 
 
 #model->idcolumn
@@ -247,4 +283,4 @@ foreach my $test_hash (@datafiletests) {
 	}
 }
 
-#done_testing;
+done_testing();
