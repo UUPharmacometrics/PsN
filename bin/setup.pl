@@ -6,7 +6,7 @@ use File::Glob;
 use lib 'lib';
 use ext::Config::Tiny;
 use ext::File::HomeDir;
-use PsN;
+use PsN (); #pass empty list so that import, which reads config file, is not called
 
 my $version = $PsN::version;
 

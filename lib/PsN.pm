@@ -3,7 +3,9 @@ use ext::Carp;
 use File::Spec;
 use Cwd;
 use Config;
+use strict;
 
+our ($dev,$version,$lib_dir,$config_file,$config);
 #the version line is extracted in Makefile using regular expression
 # /\$version\s*=\s*.[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*.;/
 # so be careful when you edit!!!
@@ -24,6 +26,10 @@ our $nmdir;
 our $nm_major_version;
 our $nm_minor_version;
 
+our $out_miss_data;
+our $output_header;
+our $factorize_strings;
+
 our $warnings_enabled;
 our @nm7_extensions = ('.ext','.cov','.cor','.coi','.phi','.phm', '.shk','.grd','.xml','.cnv','.smt','.rmt',
 					   '.imp','.npd','.npe','.npi','.fgh','.log.xml','.cpu','.shm','.agh');
@@ -41,38 +47,41 @@ $SIG{__WARN__} = sub {
 if( -e home() . "/psn.conf" ){
 	$config_file = home() . "/psn.conf";
 }
-$config = ext::Config::Tiny -> read( $config_file );
 
-unless( $config ){
-  croak("In PsN configuration file[" . $config_file . "]:" . $ext::Config::Tiny::errstr );
+sub import
+{
+	unless ($config){
+		$config = ext::Config::Tiny -> read( $config_file );
+
+		unless( $config ){
+			croak("In PsN configuration file[" . $config_file . "]:" . $ext::Config::Tiny::errstr );
+		}
+
+		unless( exists $config -> {'low_INF'} ){
+			$config -> {'low_INF'} = -1000000;
+		}
+
+		unless( exists $config -> {'high_INF'} ){
+			$config -> {'high_INF'} = 1000000;
+		}
+
+		if ( $config -> {'_'} -> {'output_style'} eq 'SPLUS' ) {
+			$out_miss_data = 'NA';
+			$output_header = 1;
+			$factorize_strings = 0;
+		} elsif ( $config -> {'_'} -> {'output_style'} eq 'MATLAB' ) {
+			$out_miss_data = 'NaN';
+			$output_header = 0;
+			$factorize_strings = 1;
+		} else { # Default style EXCEL
+			$out_miss_data = undef;
+			$output_header = 1;
+			$factorize_strings = 0;
+		}
+	}
+
 }
 
-
-
-unless( exists $config -> {'low_INF'} ){
-  $config -> {'low_INF'} = -1000000;
-}
-
-unless( exists $config -> {'high_INF'} ){
-  $config -> {'high_INF'} = 1000000;
-}
-
-our $out_miss_data;
-our $output_header;
-our $factorize_strings;
-if ( $config -> {'_'} -> {'output_style'} eq 'SPLUS' ) {
-  $out_miss_data = 'NA';
-  $output_header = 1;
-  $factorize_strings = 0;
-} elsif ( $config -> {'_'} -> {'output_style'} eq 'MATLAB' ) {
-  $out_miss_data = 'NaN';
-  $output_header = 0;
-  $factorize_strings = 1;
-} else { # Default style EXCEL
-  $out_miss_data = undef;
-  $output_header = 1;
-  $factorize_strings = 0;
-}
 
 sub set_nonmem_info
 {
@@ -80,7 +89,7 @@ sub set_nonmem_info
   unless (defined $version_label){
     croak("No version label input to set_nonmem_info");
   }
-	$nm_version = $version_label;
+  $nm_version = $version_label;
 
   #reset values if set earlier
   $nmdir = undef;
