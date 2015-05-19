@@ -1,7 +1,7 @@
 LIBFILES= ui.pm \
 	log.pm \
 	pharmml.pm \
-	standardised_output.pm \
+	so.pm \
 	rplots.pm \
 	math.pm \
 	PsN.pm \
@@ -9,7 +9,6 @@ LIBFILES= ui.pm \
 	linear_algebra.pm \
 	npde_util.pm \
 	psn.conf_template \
-	psn.conf \
 	OSspecific.pm \
 	binning.pm \
 	array.pm \
@@ -109,11 +108,30 @@ LIBFILES= ui.pm \
 	output/problem.pm \
 	output.pm \
 	model.pm \
-	standardised_output/xml.pm \
-	standardised_output/matrix.pm \
-	standardised_output/so.pm \
-	standardised_output/table.pm \
-	standardised_output/so/SOBlock.pm \
+	so/xml.pm \
+	so/matrix.pm \
+	so/table.pm \
+	so/soblock.pm \
+	so/parsers/nmoutput.pm \
+	so/parsers/bootstrap.pm \
+	so/soblock/estimation.pm \
+	so/soblock/rawresults.pm \
+	so/soblock/simulation.pm \
+	so/soblock/taskinformation.pm \
+	so/soblock/estimation/individualestimates.pm \
+	so/soblock/estimation/likelihood.pm \
+	so/soblock/estimation/populationestimates.pm \
+	so/soblock/estimation/precisionpopulationestimates.pm \
+	so/soblock/estimation/residuals.pm \
+	so/soblock/estimation/individualestimates/estimates.pm \
+	so/soblock/estimation/individualestimates/randomeffects.pm \
+	so/soblock/estimation/populationestimates/bootstrap.pm \
+	so/soblock/estimation/precisionpopulationestimates/bootstrap.pm \
+	so/soblock/estimation/precisionpopulationestimates/mle.pm \
+	so/soblock/rawresults/datafile.pm \
+	so/soblock/simulation/simulationblock.pm \
+	so/soblock/taskinformation/message.pm \
+	so/soblock/taskinformation/runtime.pm \
 	tool.pm \
 	tool/modelfit.pm \
 	tool/sir.pm \
