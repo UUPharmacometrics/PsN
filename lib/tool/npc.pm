@@ -16,7 +16,7 @@ use binning;
 use Moose;
 use MooseX::Params::Validate;
 use math qw(round);
-use array qw(mean stdev);
+use array qw(mean stdev median);
 
 extends 'tool';
 
@@ -2214,25 +2214,6 @@ sub index_matrix_binned_values
 	return \@index_matrix;
 }
 
-sub median
-{
-	#static no shift
-	my %parm = validated_hash(\@_,
-							  sorted_array => { isa => 'Ref', optional => 0 }
-		);
-	my $sorted_array = $parm{'sorted_array'};
-	my $result;
-
-	my $len = scalar( @{$sorted_array} );
-	
-	if( $len  % 2 ){
-		$result = $sorted_array->[($len-1)/2];
-	} else {
-		$result = ($sorted_array->[$len/2]+$sorted_array->[($len-2)/2])/ 2;
-	}
-
-	return $result;
-}
 
 sub get_data_matrix
 {
@@ -3247,7 +3228,7 @@ sub do_predcorr_and_varcorr
 	#After discussion with Martin: use all pred even if some observations
 	#have all datasets censored
 
-	my $median_pred = median(sorted_array => [(sort {$a <=> $b} @{$pred_array})]); # PREDnm
+	my $median_pred = median($pred_array); # PREDnm
 	for (my $i=0; $i< $n_pred; $i++){
 		my $pcorr;
 		my @newrow;
@@ -3294,7 +3275,7 @@ sub do_predcorr_and_varcorr
 			push(@stdevs, (array::stdev(\@values))); #store stdev from simulated values only
 			#stdev handles zero lenght array
 		}
-		my $median_stdev = median(sorted_array => [(sort {$a <=> $b} @stdevs)]);
+		my $median_stdev = median(\@stdevs);
 		
 		for (my $i=0; $i < $n_pred; $i++){ #for each observation
 			my $vcorr;
@@ -4289,7 +4270,7 @@ sub vpc_analyze
 				if (defined $self->bin_floors->[$strat_ind] );
 
 			#HERE
-			my $tmpmedian = array::median($self->binned_idv->[$strat_ind]->[$bin_index]);
+			my $tmpmedian = median($self->binned_idv->[$strat_ind]->[$bin_index]);
 			my @censored_result_row_values=($st_cens,$self->bin_ceilings->[$strat_ind]->[$bin_index],$tmpmedian,$max_bin_observations);
 			if (defined $self->lloq){
 				#$fraction_real_below_lloq
@@ -4314,8 +4295,7 @@ sub vpc_analyze
 					$lloq_ci_from=$sorted_sim_frac[$low_ci_ind];
 					$lloq_ci_to=$sorted_sim_frac[$high_ci_ind];
 					
-					$median_fraction_sim_below_lloq = 
-						(median('sorted_array' => \@sorted_sim_frac));
+					$median_fraction_sim_below_lloq = median(\@sorted_sim_frac);
 					
 					my $ii = 0;
 					foreach my $mi (@{$self->mirror_set}){
@@ -4358,8 +4338,7 @@ sub vpc_analyze
 					my @sorted_sim_frac = sort {$a <=> $b} @sim_frac_censored;
 					$uloq_ci_from=$sorted_sim_frac[$low_ci_ind];
 					$uloq_ci_to=$sorted_sim_frac[$high_ci_ind];
-					$median_fraction_sim_above_uloq = 
-						(median('sorted_array' => \@sorted_sim_frac));
+					$median_fraction_sim_above_uloq = median(\@sorted_sim_frac);
 					
 					my $ii = 0;
 					foreach my $mi (@{$self->mirror_set}){
@@ -4392,8 +4371,7 @@ sub vpc_analyze
 				my @sorted_sim_frac = sort {$a <=> $b} @sim_frac_censored;
 				$missing_ci_from=$sorted_sim_frac[$low_ci_ind];
 				$missing_ci_to=$sorted_sim_frac[$high_ci_ind];
-				$median_fraction_sim_missing = 
-					(median('sorted_array' => \@sorted_sim_frac));
+				$median_fraction_sim_missing = median(\@sorted_sim_frac);
 				
 				my $ii = 0;
 				foreach my $mi (@{$self->mirror_set}){
@@ -4415,7 +4393,7 @@ sub vpc_analyze
 			
 			#categorized
 			#HERE
-			my $tmpmedian = array::median($self->binned_idv->[$strat_ind]->[$bin_index]);
+			my $tmpmedian = median($self->binned_idv->[$strat_ind]->[$bin_index]);
 			my @categorized_result_row_values=
 				($st_cens,$self->bin_ceilings->[$strat_ind]->[$bin_index],$tmpmedian,$max_bin_observations);
 			if ($self->categorized){
@@ -4447,7 +4425,7 @@ sub vpc_analyze
 						push(@categorized_result_row_values,'','','');
 					}else{
 						my @sorted_sim_frac = sort {$a <=> $b} @sim_frac_censored;
-						my $median_count_fraction=(median('sorted_array' => \@sorted_sim_frac));
+						my $median_count_fraction= median(\@sorted_sim_frac);
 						push(@categorized_result_row_values,$median_count_fraction,
 							 $sorted_sim_frac[$low_ci_ind],
 							 $sorted_sim_frac[$high_ci_ind]);
@@ -4477,7 +4455,7 @@ sub vpc_analyze
 						}
 					}elsif ($perc_limit[$i]==50){
 						#take median
-						$limit[$i]= median('sorted_array' => \@sorted_sim_values);
+						$limit[$i]= median(\@sorted_sim_values);
 					}else{
 						$limit_index[$i] = round($perc_limit[$i]*($n_merged_censored_sim-1)/100);
 						$limit[$i]=$sorted_sim_values[$limit_index[$i]];
@@ -4491,11 +4469,9 @@ sub vpc_analyze
 			#otherwise only missing. lower and upper index depend on this choice, recomputed
 			#must also recompute low_ind high_ind inside npc?
 			my ($npc_result_values,$npc_realpos,$npc_stats_warnings,$npc_alert_written);
-			($npc_result_values,$npc_realpos,$npc_stats_warnings)=
+			($npc_result_values,$npc_realpos,$npc_stats_warnings,$npc_alert_written)=
 				subset_npc_analyze(bin_index => $bin_index,
 								   strata_index => $strat_ind,
-								   low_ind => $npc_low_ind,
-								   high_ind => $npc_high_ind,
 								   lower_index => $npc_lower_index,
 								   upper_index => $npc_upper_index, 
 								   pred_intervals => \@pred_int,
@@ -4570,7 +4546,7 @@ sub vpc_analyze
 			my $all_missing_sim=0;
 			my $less_than_10=0;
 			my @sorted_nonmiss = sort {$a <=> $b} @n_non_missing_sim;
-			my $median_nonmiss = median('sorted_array' => \@sorted_nonmiss);
+			my $median_nonmiss = median(\@sorted_nonmiss);
 
 			for (my $j=0; $j<$no_sim; $j++){
 				if ($n_non_missing_sim[$j] == 0){
@@ -4627,7 +4603,7 @@ sub vpc_analyze
 							}
 						}
 					}elsif ($perc_limit[$i] == 50) {
-						$limit_real[$i] = median('sorted_array' => \@sorted_singleset);
+						$limit_real[$i] = median(\@sorted_singleset);
 					}else{
 						my $index = round($perc_limit[$i]*(scalar(@censored_real)-1)/100);
 						$limit_real[$i] = $sorted_singleset[$index];
@@ -4647,7 +4623,6 @@ sub vpc_analyze
 				perc_limit => \@perc_limit,
 				reference_mean_limit_singlesim => \@reference_mean_limit_singlesim,
 				no_sim => $no_sim,
-				no_perc_limits => $no_perc_limits,
 				max_bin_observations => $max_bin_observations,
 				meantext => $meantext,
 				deltameantext => $deltameantext,
@@ -4693,7 +4668,7 @@ sub vpc_analyze
 			#HERE1
 			my @result_row_values;
 			#new median idv
-			my $tmpmedian = array::median($self->binned_idv->[$strat_ind]->[$bin_index]);
+			my $tmpmedian = median($self->binned_idv->[$strat_ind]->[$bin_index]);
 			@result_row_values=($st,$self->bin_ceilings->[$strat_ind]->[$bin_index],$tmpmedian,$max_bin_observations);
 			#old without median
 			#@result_row_values=($st,$self->bin_ceilings->[$strat_ind]->[$bin_index],$max_bin_observations);
@@ -4934,7 +4909,6 @@ sub compute_PI_each_simset
 							  perc_limit => { isa => 'Ref', optional => 0 },
 							  reference_mean_limit_singlesim => { isa => 'Maybe[Ref]', optional => 0 },
 							  no_sim => { isa => 'Int', optional => 0 },
-							  no_perc_limits => { isa => 'Int', optional => 0 },
 							  max_bin_observations => { isa => 'Int', optional => 0 },
 							  meantext => { isa => 'Str', optional => 0 },
 							  deltameantext => { isa => 'Str', optional => 0 },
@@ -4951,12 +4925,13 @@ sub compute_PI_each_simset
 	my $perc_limit = $parm{'perc_limit'};
 	my $reference_mean_limit_singlesim = $parm{'reference_mean_limit_singlesim'};
 	my $no_sim = $parm{'no_sim'};
-	my $no_perc_limits = $parm{'no_perc_limits'};
 	my $max_bin_observations = $parm{'max_bin_observations'};
 	my $meantext = $parm{'meantext'};
 	my $deltameantext = $parm{'deltameantext'};
 	my $strat_ind = $parm{'strat_ind'};
 	my $bin_index = $parm{'bin_index'};
+
+	my $no_perc_limits = scalar(@{$perc_limit});
 
 	my $uncensored_count=0;
 	for (my $col=0;$col<$no_sim; $col++){
@@ -4992,7 +4967,7 @@ sub compute_PI_each_simset
 						$limit_singlesim->[$i]->[$col] = array::mean(\@sorted_singleset) - $reference_mean_limit_singlesim->[$bin_index]->[$col] ;
 					}
 				}elsif ($perc_limit->[$i]==50){
-					$limit_singlesim->[$i]->[$col]  = median('sorted_array' => \@sorted_singleset);
+					$limit_singlesim->[$i]->[$col]  = median(\@sorted_singleset);
 				}else{
 					my $index = round($perc_limit->[$i]*(scalar(@singleset)-1)/100);
 					$limit_singlesim->[$i]->[$col] = $sorted_singleset[$index];
@@ -5091,14 +5066,12 @@ sub npc_analyze
 		my ($result_values,$stats_warnings,$npc_alert_written);
 		($result_values,$realpos,$stats_warnings,$npc_alert_written)=
 			subset_npc_analyze(strata_index => $strat_ind,
-							   low_ind => $low_ind,
-							   high_ind => $high_ind,
 							   lower_index => $lower_index,
 							   upper_index => $upper_index, 
 							   pred_intervals => \@pred_int,
 							   censored => (defined $self->censor() or ($self->detection_censored and $self->predcorr)),
-							   ci => $self->confidence_interval(),
-							   no_sim => $self->n_simulations,
+							   ci => $c_i,
+							   no_sim => $no_sim,
 							   verbose  => $self->verbose,
 							   npc_alert_written  => $self->npc_alert_written,
 							   predcorr  => $self->predcorr,
@@ -5208,8 +5181,6 @@ sub subset_npc_analyze
 							  pred_intervals => { isa => 'Ref', optional => 0 },
 							  lower_index => { isa => 'Ref', optional => 0 },
 							  upper_index => { isa => 'Ref', optional => 0 },
-							  low_ind => { isa => 'Int', optional => 0 },
-							  high_ind => { isa => 'Int', optional => 0 },
 							  censored => { isa => 'Bool', optional => 0 },
 							  ci  => { isa => 'Num', optional => 0 },
 							  no_sim => { isa => 'Int', optional => 0 },
@@ -5226,8 +5197,6 @@ sub subset_npc_analyze
 	my $pred_intervals = $parm{'pred_intervals'};
 	my $lower_index = $parm{'lower_index'};
 	my $upper_index = $parm{'upper_index'};
-	my $low_ind = $parm{'low_ind'};
-	my $high_ind = $parm{'high_ind'};
 
 	my $censored = $parm{'censored'};
 	my $ci = $parm{'ci'};
@@ -5240,6 +5209,9 @@ sub subset_npc_analyze
 	my $censor_stratified_data = $parm{'censor_stratified_data'};
 	my $censor_binned_data = $parm{'censor_binned_data'};
 
+
+	my $low_ind;
+	my $high_ind;
 
 	my @result_values;
 	my @real_positions;
@@ -5472,6 +5444,7 @@ sub subset_npc_analyze
 		my @sorted_arr = sort {$a <=> $b} @perc_arr;
 		
 		if ($non_zeros> 0){
+#			print "realperc $realperc low ".$sorted_arr[$low_ind]." ".$sorted_arr[$high_ind]."\n";
 			if ((defined $realperc) and (( $realperc<$sorted_arr[$low_ind]) ||($realperc>$sorted_arr[$high_ind]))){
 				$warn='*';
 				$sum_warnings[0] += 1; #NPC diagnostics
@@ -5567,7 +5540,7 @@ sub subset_npc_analyze
 		my @sorted_sums = sort {$a <=> $b} @detected_sum_warnings;
 		
 		#median
-		push(@stats_warnings,median('sorted_array'=>\@sorted_sums)); 
+		push(@stats_warnings,median(\@sorted_sums)); 
 
 		push(@stats_warnings,$sorted_sums[$low_ind]); #start CI 
 		push(@stats_warnings,$sorted_sums[$high_ind]); #end CI 
