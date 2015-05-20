@@ -51,6 +51,7 @@ has 'parsed_successfully' => ( is => 'rw', isa => 'Bool', default => 1 );
 has 'parsing_error_message' => ( is => 'rw', isa => 'Str' );
 has 'pval' => ( is => 'rw', isa => 'ArrayRef' );
 has 'raw_cormatrix' => ( is => 'rw', isa => 'ArrayRef' );
+has 'r_matrix' => ( is => 'rw', isa => 'ArrayRef' );
 has 'correlation_matrix' => ( is => 'rw', isa => 'ArrayRef' );
 has 'raw_covmatrix' => ( is => 'rw', isa => 'ArrayRef' );
 has 'raw_invcovmatrix' => ( is => 'rw', isa => 'ArrayRef' );
@@ -306,7 +307,7 @@ sub _read_covmatrix
 	my $keep_headers_array = $self->input_problem->get_estimated_attributes(attribute=>'coordinate_strings');
 
 	while ( $_ = @{$self->lstfile}[ $start_pos++ ] ) {
-		if (/T MATRIX/) {
+		if (/        T MATRIX/) {
 			while ( $_ = @{$self->lstfile}[ $start_pos++ ] ) {
 				if (/^\s+TH\s+\d+\s*$/ or /^\s+TH\s+\d+\s+\|/) { # Read matrix and get out of inner while loop
 					my $temp_matrix;
@@ -319,13 +320,28 @@ sub _read_covmatrix
 			}
 			last;		 # No covariance matrix will be found!
 		}
+		if (/    R MATRIX /) {
+			while( $_ = @{$self->lstfile}[ $start_pos++ ] ) {
+				if (/^\s+TH\s+\d+\s*$/ or /^\s+TH\s+\d+\s+\|/) { # Read matrix and get out of inner while loop
+					my $temp_matrix;
+					( $start_pos, $temp_matrix, $c_success, $dummyheaders ) = _read_matrixoestimates( pos => $start_pos - 1,
+																									  lstfile => $self->lstfile,
+																									   keep_headers_array => $keep_headers_array );
+					unless (defined $self->r_matrix and scalar(@{$self->r_matrix})>0){
+						#only store if not already read from NM7 additional output
+						$self->r_matrix($temp_matrix);
+					}
+					last;
+				}
+			}
+		}
 		if (/    COVARIANCE MATRIX OF ESTIMATE/) {
 			while( $_ = @{$self->lstfile}[ $start_pos++ ] ) {
 				if (/^\s+TH\s+\d+\s*$/ or /^\s+TH\s+\d+\s+\|/) { # Read matrix and get out of inner while loop
 					my $temp_matrix;
 					( $start_pos, $temp_matrix, $c_success, $dummyheaders ) = _read_matrixoestimates( pos => $start_pos - 1,
 																									  lstfile => $self->lstfile,
-																									   keep_headers_array => $keep_headers_array );# and last;
+																									   keep_headers_array => $keep_headers_array );
 					unless (defined $self->raw_covmatrix and scalar(@{$self->raw_covmatrix})>0){
 						#only store if not already read from NM7 additional output
 						$self->raw_covmatrix($temp_matrix);
@@ -340,7 +356,7 @@ sub _read_covmatrix
 					my $temp_matrix;
 					( $start_pos, $temp_matrix, $corr_success, $headers ) = _read_matrixoestimates( pos => $start_pos - 1,
 																									lstfile => $self->lstfile,
-																									keep_headers_array => $keep_headers_array );# and last;
+																									keep_headers_array => $keep_headers_array );
 					$self->raw_cormatrix($temp_matrix);
 					last;
 				}
@@ -352,7 +368,7 @@ sub _read_covmatrix
 					my $temp_matrix;
 					( $start_pos, $temp_matrix, $i_success, $dummyheaders ) = _read_matrixoestimates( pos => $start_pos - 1,
 																									  lstfile => $self->lstfile,
-																									  keep_headers_array => $keep_headers_array );# and last;
+																									  keep_headers_array => $keep_headers_array );
 					$self->raw_invcovmatrix($temp_matrix);
 					last;
 				}
@@ -3149,6 +3165,128 @@ sub _return_function
 	my $scalar_return = $parm{'scalar_return'};
 }
 
+
+
+sub _get_sparse_indices
+{
+	#static no shift
+	my %parm = validated_hash(\@_,
+		 keep_headers_array => { isa => 'ArrayRef', optional => 0 },
+	);
+	my $keep_headers_array = $parm{'keep_headers_array'};
+
+	my %sparse_indices;
+	
+	for (my $k=0; $k<scalar(@{$keep_headers_array}); $k++){
+		my $label=$keep_headers_array->[$k];
+		if ($label =~ /^THETA(\d+)/){
+			$sparse_indices{'TH'.$1} = $k;
+		}elsif($label =~ /^(OMEGA|SIGMA)\((\d+),(\d+)\)/){
+			my $par=$1;
+			my $txt='OM';
+			$txt='SG' if ($par eq 'SIGMA');
+			my $left=$3;
+			my $right=$2;
+			for (my $len=1; $len<=3;$len++){
+				#we do not know actual padding, try all
+				my $ri =sprintf("%0".$len."s",$right);
+				my $li =sprintf("%0".$len."s",$left);
+				if (length($ri)==length($li)){
+					$sparse_indices{$txt.$li.$ri} = $k;
+				}
+			}
+		}
+	}
+#	print join(' ',keys %sparse_indices)."\n";
+	return \%sparse_indices;
+}
+
+sub _read_sparse_matrixoestimates
+{
+	#static no shift
+	my %parm = validated_hash(\@_,
+		 pos => { isa => 'Int', default => 0, optional => 1 },
+		 lstfile => { isa => 'ArrayRef', optional => 0 },
+		 keep_headers_array => { isa => 'ArrayRef', optional => 0 },
+	);
+	my $pos = $parm{'pos'};
+	my $lstfile = $parm{'lstfile'};
+	my $keep_headers_array = $parm{'keep_headers_array'};
+
+	my @subprob_matrix;
+	my $success = 0;
+	my @row_headers;
+	my @matrix=();
+
+	#here we know format is sparse and we are in right place
+
+	my $sparse_indices = _get_sparse_indices(keep_headers_array=> $keep_headers_array);
+
+	for (my $k=0; $k<scalar(@{$keep_headers_array}); $k++){
+		push(@matrix,[(0) x scalar(@{$keep_headers_array})]);
+	}
+
+	# Reads one matrix structure and returns the file handle at
+	# the beginning of the next structure
+
+	while ($pos < (scalar(@{$lstfile})-1) ){
+		$pos++;
+		$_ =$lstfile->[$pos];
+		if ( /^\s*\*/ or /^ PROBLEM.*SUBPROBLEM/ or /^ PROBLEM NO\.:\s+\d/ or /^[a-df-zA-DF-Z]/){
+			if ( /^ PROBLEM.*SUBPROBLEM/ or /^ PROBLEM NO\.:\s+\d/ or /^[a-df-zA-DF-Z]/ ){
+				# Rewind one step if we find something that marks the end of
+				# our structure
+				$pos--;
+			}
+			last;
+		}
+		if ( /^\s*(TH|OM|SG)\s*\d+\s*|\s*(TH|OM|SG)/  ) {	  # sparse format
+
+			s/(TH)\s+(\d+)/$1$2/g ; #make sure th index attached to TH
+			chomp;				# Get rid of line-feed
+			my @text = split;
+			$pos++;
+			my @values = split(' ',$lstfile->[$pos]);
+			for (my $k=0; $k< scalar(@values);$k++){
+				my $left = $text[$k*3+0];
+				my $right = $text[$k*3+2];
+				die("bug matching") if ($left eq '|' or $right eq '|');
+				my $li = -1;
+				my $ri= -1;
+				foreach my $key (keys %{$sparse_indices}){
+					if ($key eq $right){
+						$ri = $sparse_indices->{$key};
+					}
+					if ($key eq $left){
+						$li = $sparse_indices->{$key};
+					}
+					last if ($li>=0 and $ri >=0);
+				}
+				die ("could not match $left") if ($li == -1);
+				die ("could not match $right") if ($ri == -1);
+				$matrix[$ri]->[$li]=$values[$k];
+				$matrix[$li]->[$ri]=$values[$k];
+			}
+		}elsif ( /^\s\s?\s?\s?(TH|OM|SG)\s*\d+\s*$/  ) {	  # Row header row (single name and at most 4 spaces)
+			croak("Parsing sparse matrix but found regular format row header");
+		} elsif ( /^\s+TH/ or /^\s+OM/ or /^\s+SG/ ) {	  # Column header (multiple spaces)
+			croak("Parsing sparse matrix but found regular format column header");
+		}
+	}
+	$success =1;
+	for (my $k=0; $k<scalar(@{$keep_headers_array}); $k++){
+		for (my $j=0; $j<=$k; $j++){
+			if ($matrix[$k]->[$j] == 0){
+				ui->print(category=> 'all',message => "element in matrix eq 0\n");
+				$success=0;
+			}
+			push(@subprob_matrix,$matrix[$k]->[$j]);
+		}
+	}
+
+	return $pos,\@subprob_matrix,$success;
+}
+
 sub _read_matrixoestimates
 {
 	#static no shift
@@ -3166,10 +3304,12 @@ sub _read_matrixoestimates
 	my @row_headers;
 	my @matrix=();
 	my $sparse_format=0;
+
 	# Reads one matrix structure and returns the file handle at
 	# the beginning of the next structure
 
-	#this does not handle TH1 | TH2 type format
+
+
 	my $matrix_row=-1;
 	while ( $_ = @{$lstfile}[ $pos++ ] ) {
 		if ( /^\s*\*/ or /^ PROBLEM.*SUBPROBLEM/ or /^ PROBLEM NO\.:\s+\d/ or /^[a-df-zA-DF-Z]/){
@@ -3180,7 +3320,6 @@ sub _read_matrixoestimates
 			}
 			last;
 		}
-		next if $sparse_format;
 		if ( /^\s\s?\s?\s?(TH|OM|SG)\s*\d+\s*$/  ) {	  # Row header row (single name and at most 4 spaces)
 			push(@matrix,[]);
 			$matrix_row++;
@@ -3211,8 +3350,15 @@ sub _read_matrixoestimates
 			push( @row_headers, $label ) ;
 			next;
 		} elsif ( /^\s+TH\s+\d+\s+\|/  ) {	  # sparse format
-			$sparse_format=1;
-			next;
+			$pos--;
+			$pos--;
+			my $sparsemat;
+			($pos ,$sparsemat ,$success ) = 
+				_read_sparse_matrixoestimates(pos=> $pos,
+											  lstfile => $lstfile,
+											  keep_headers_array => $keep_headers_array);
+			return $pos ,$sparsemat ,$success ,$keep_headers_array;
+			last;
 		} elsif ( /^\s+TH/ or /^\s+OM/ or /^\s+SG/ ) {	  # Column header (multiple spaces)
 			next;
 		}
@@ -3233,13 +3379,9 @@ sub _read_matrixoestimates
 
 	if ($matrix_row < 0){
 		#we did not find any regular row header. 
-		if ($sparse_format){
-			ui->print(category=> 'all',message => "Info: PsN cannot parse sparse format matrices in lst-file.\n");
-		}
 		return $pos ,[],$success ,[];
 	}
-
-
+	
 	#now have triangular matrix, one row per item in @matrix. Labels in @row_headers.
 	#Need to sort rows and cols according to right order 
 	#into new triangular matrix, and then store that as one-dim array
