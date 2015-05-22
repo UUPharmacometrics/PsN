@@ -5,7 +5,7 @@
 use strict;
 use warnings;
 use File::Path 'rmtree';
-use Test::More tests => 2;
+use Test::More;
 use FindBin qw($Bin);
 use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages and $path variable definition
@@ -14,21 +14,24 @@ use includes; #file with paths to PsN packages and $path variable definition
 our $tempdir = create_test_dir('system_update_inits');
 our $dir = "update_inits_test";
 my $model_dir = $includes::testfiledir;
-copy_test_files($tempdir, ["pheno.mod", "pheno.lst"]);
+copy_test_files($tempdir, ["pheno.mod", "pheno.lst","run45.mod","run45.lst"]);
 
 chdir($tempdir);
 
-my $command2 = get_command('update') . " pheno.mod";
-my $command1 = get_command('update_inits') . " pheno.mod";
+my @command_line = (
+	get_command('update') . " pheno.mod",
+	get_command('update_inits') . " pheno.mod",
+	get_command('update') . " run45.mod -out=run46.mod",
+	get_command('update_inits') . " run45.mod -flip_comments -out=run45sim.mod",
+	);
 
-my  $rc = system($command1);
-$rc = $rc >> 8;
+foreach my $i (0..$#command_line) {
 
-ok ($rc == 0, "update that should run ok");
-my  $rc = system($command2);
-$rc = $rc >> 8;
+	my  $rc = system($command_line[$i]);
+	$rc = $rc >> 8;
 
-ok ($rc == 0, "update_inits that should run ok");
+	ok ($rc == 0, $command_line[$i]." that should run ok");
+}
 
 chdir('..');
 remove_test_dir($tempdir);
