@@ -749,40 +749,41 @@ sub BUILD
 				}
 			}
 		}
-		my $found_synonym = 0;
-		if ($self->models->[0]->is_option_set(record => 'input', name => $self->dv)) {
-			my $value = $self->models->[0]->get_option_value(record_name => 'input', option_name => $self->dv);
-			if (defined $value) {
-				unless ($value =~ /(SKIP|DROP)/ ) {
-					$found_synonym = 1;
-				}
-			} 
-		} else {
-			my $input_record = $self->models->[0]->record(record_name => 'input');
-			if( scalar(@{$input_record}) > 0 ) { #always true
-				foreach my $line ( @{$input_record->[0]} ) {
-					next if ( $line =~ /^\s*;/); #skip comments
-					if ( $line =~ /([\w]+)=([\w]+)[^\w]/ ) {
-						unless ($1 =~ /(SKIP|DROP)/ ) { #synonym
-							$found_synonym = 1 if ($2 eq $self->dv);
-							last;
+		if ($check_it){
+			my $found_synonym = 0;
+			if ($self->models->[0]->is_option_set(record => 'input', name => $self->dv)) {
+				my $value = $self->models->[0]->get_option_value(record_name => 'input', option_name => $self->dv);
+				if (defined $value) {
+					unless ($value =~ /(SKIP|DROP)/ ) {
+						$found_synonym = 1;
+					}
+				} 
+			} else {
+				my $input_record = $self->models->[0]->record(record_name => 'input');
+				if( scalar(@{$input_record}) > 0 ) { #always true
+					foreach my $line ( @{$input_record->[0]} ) {
+						next if ( $line =~ /^\s*;/); #skip comments
+						if ( $line =~ /([\w]+)=([\w]+)[^\w]/ ) {
+							unless ($1 =~ /(SKIP|DROP)/ ) { #synonym
+								$found_synonym = 1 if ($2 eq $self->dv);
+								last;
+							}
 						}
 					}
 				}
 			}
+			ui -> print (category => 'all', 
+						 message=> "****** Warning:\n".
+						 "It seems like a synonym is used for the dependent variable ".
+						 $self->dv . ". PsN will look for a column with header ".
+						 $self->dv . " in the table output, ".
+						 "and if it is not found, for example because NONMEM prints a synonym for ".
+						 $self->dv . " as the header instead, then there will be no output from PsN.") 
+				if ($found_synonym);
+			ui -> print (category=>'all', 
+						 message=>"Consider setting option -dv on the commandline.") 
+				if ($found_synonym and ($self->dv eq 'DV'));
 		}
-		ui -> print (category => 'all', 
-					 message=> "****** Warning:\n".
-					 "It seems like a synonym is used for the dependent variable ".
-					 $self->dv . ". PsN will look for a column with header ".
-					 $self->dv . " in the table output, ".
-					 "and if it is not found, for example because NONMEM prints a synonym for ".
-					 $self->dv . " as the header instead, then there will be no output from PsN.") 
-			if ($found_synonym);
-		ui -> print (category=>'all', 
-					 message=>"Consider setting option -dv on the commandline.") 
-			if ($found_synonym and ($self->dv eq 'DV'));
-
 
 		my $command_file = $self->directory . "/original_command.txt";
 
