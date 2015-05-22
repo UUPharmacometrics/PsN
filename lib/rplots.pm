@@ -56,6 +56,7 @@ sub setup
 	my @xpose_names=("sdtab","mutab","patab","catab","cotab","mytab","xptab","cwtab");
 	my @tables = @{$model->table_names}; #array of arrays without path
 	my $runno;
+	my $is_sim=0;
 	my $tabSuffix='';
 	for (my $i=0; $i<scalar(@tables); $i++){
 		if (defined $tables[$i]){
@@ -64,6 +65,10 @@ sub setup
 				if (defined $tmp->[0]){
 					#have runno
 					$runno = $tmp->[0];
+					#remove trailing sim if there
+					$is_sim=1 if ($runno =~ /sim$/);
+					$runno =~ s/sim$//;
+
 					$tabSuffix = $tmp->[1];
 					last;
 				}
@@ -78,6 +83,9 @@ sub setup
 	my $modPrefix='run'; 
 	if (defined $runno and ($modelfile =~ /$runno/)){
 		($modPrefix,$modSuffix)=split(/$runno/,$modelfile);
+		if ($is_sim){
+			$modSuffix =~ s/^sim//;
+		}
 	}else{
 		my $tmp = $modelfile; 
 		if(	$tmp =~ s/(\.[^.]+)$//){
@@ -232,6 +240,7 @@ sub make_plots{
 	$self->print_R_script();
 	#sometimes run script - need high enough level and defined R executable
 	if ($self->level > 0 and defined ($self->_R_executable)){
+		ui->print(category=> 'all',message => "\nRunning ".$self->filename."...\n");
 		system($self->_R_executable." CMD BATCH ".$self->filename);
 	}
 	chdir($basedir);
