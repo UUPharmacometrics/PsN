@@ -45,6 +45,7 @@ my %optional_options = (
 	"comment:s" => undef,
 	"degree:f" => undef,
 	"add_tags" => undef,
+	"flip_comments" => undef,
 	"ensure_posdef" => undef,
 	"add_prior:s" => undef,
 	"seed:s" => undef,
@@ -199,6 +200,22 @@ $help_text{-add_tags} = <<'EOF';
 	are already present.
 EOF
 
+$help_text{-flip_comments} = <<'EOF';
+-flip_comments
+
+    Default not set
+
+	Between each tag line
+	;Sim_start
+	and
+	;Sim_end
+    remove the first ; on each line that has ; as the first non-blank
+	character, and prepend with ; at each line that does not
+	have a ; as the first non-blank character.
+	This processing will be done as the very first step, so lines
+	that are commented out by this procedure will not be updated any more.
+EOF
+
 $help_text{-ensure_posdef} = <<'EOF';
 -ensure_posdef
 
@@ -325,9 +342,29 @@ $ignore_missing_files = 0 unless ( $ARGV[1] );
 my $model = model -> new ( filename => $ARGV[0],
 						   ignore_missing_files => $ignore_missing_files,
 						   ignore_missing_data =>1);
-my $model_copy = model -> new ( filename => $ARGV[0],
+
+my $copyfile=$ARGV[0];
+
+my $removecopy=0;
+
+if ($options{'flip_comments'}){
+	#flip_comments must be done as very first step, because later processing might
+	#add or modify records so that tags do not do the right thing anymore
+	if ( $options{'output_model'} ){
+		$copyfile = $options{'output_model'};
+	}else{
+		$copyfile = $ARGV[0].'.flipped';
+		$removecopy=1;
+	}
+	model::flip_comments(model_file_name =>$ARGV[0],
+						 new_file_name => $copyfile);
+
+}
+my $model_copy = model -> new ( filename => $copyfile,
 								ignore_missing_files => 1,
 								ignore_missing_data=>1);
+
+unlink $copyfile if ($removecopy);
 
 my $mismatch = $model_copy->msfo_to_msfi_mismatch;
 if ($mismatch){
