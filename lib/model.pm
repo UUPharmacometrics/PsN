@@ -3079,6 +3079,54 @@ sub table_names
 	return \@names;
 }
 
+
+sub flip_comments
+{
+	my %parm = validated_hash(\@_,
+		 model_file_name => { isa => 'Str', optional => 0 },
+		 new_file_name => { isa => 'Str', optional => 0 },
+	);
+
+	my $model_file_name = $parm{'model_file_name'};
+	my $new_file_name = $parm{'new_file_name'};
+
+	if (-e $new_file_name){
+		carp("overwriting existing flip_file\n");
+		unlink($new_file_name);
+	}
+	open(MOD, $model_file_name) || 
+		die("Couldn't open " . $model_file_name." : $!");
+	open(SIM, ">$new_file_name") || die("Couldn't open $new_file_name : $!");
+	my $sim_tag = 0;
+	while(<MOD>) {
+		my $tag_line = 0;
+		
+		# find Sim_end
+		if (/^\s*\;+\s*[Ss]im\_end/) {
+			$sim_tag = 0;
+			$tag_line = 1;
+		}
+		# find Sim_start
+		if (/^\s*\;+\s*[Ss]im\_start/) {
+			$sim_tag = 1;
+			$tag_line=1;
+		}
+		
+		if(($sim_tag==1)and (not $tag_line)) {
+			if(/^\s*\;+/) {
+				s/\;//;
+			} else {
+				$_ = ';'.$_
+			}
+		}
+		print SIM $_;
+
+	}
+	close(SIM);
+	close(MOD);
+
+}
+
 sub units
 {
 	my $self = shift;
