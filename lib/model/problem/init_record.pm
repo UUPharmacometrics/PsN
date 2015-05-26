@@ -268,7 +268,9 @@ sub _read_options
 						unless ( s/^([^\(]+)// ) {
 							croak("Model parsing error: unknown string $_" );
 						}
-						@row = split( " ", $1 );
+                        my $match = $1;
+						$match =~ s/,/ /g; #replace comma with space
+                        @row = split( " ", $match );
 						my ( $digit, $comment, $fixed, $sd, $corr, $chol ) = ( undef, undef, 0, 0, 0, 0 );
 						for ( my $i = 0; $i <= $#row; $i++ ) {
 							# In this code we find all records coded like: init options init options ...

@@ -309,6 +309,9 @@ ok (!$record->sd, 'DIAGONAL case 18 dim 2 1 SD rec ');
 ok (!$record->options->[0]->sd, "DIAGONAL case 18 dim 2 1 SD opt 1");
 ok ($record->options->[1]->sd, "DIAGONAL case 18 dim 2 1 SD opt 2"); 
 
-
+#case19
+$record = model::problem::omega->new(record_arr => [ '$OMEGA 2,FIXED' ]);
+ok ($record->options->[0]->fix, "case 19 fix");
+is ($record->options->[0]->init, 2, "case 19 init");
 
 done_testing();
