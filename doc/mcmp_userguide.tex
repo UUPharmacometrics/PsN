@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{MCMP user guide}{2015-04-15}
+\guidetitle{MCMP user guide}{2015-05-27}
 
 
 \begin{document}
@@ -10,6 +10,22 @@
 
 \section{Introduction}
 MCMP – Monte-Carlo Mapped Power \cite{Vong}  – is a tool for power computations.
+The method is based on the use of individual Objective Function Values (iOFV) 
+and aims to provide a fast and accurate prediction of the power and sample size 
+relationship without any need for adjustment of the significance criterion.
+The principle of the method is as follows:
+\begin{enumerate}
+\item a large dataset (e.g. 1000 individuals) is simulated with a full model, or a separate simulation model if model misspecification will be taken into account.
+\item the full and reduced models are re-estimated with this data set
+\item $iOFV$:s are extracted from the NONMEM .phi-files, and for each subject the difference in $iOFV$ between the full and reduced model is computed ($\Delta iOFV$)
+\item $\Delta iOFV$:s are sampled according to the design for which power is to be calculated and a starting sample size (N)
+\item the $\Delta iOFV$ sum for each sample is calculated ($\sum_i{\Delta iOFV}$) 
+\item steps 4 and 5 are repeated many times 
+\item the percentage of $\sum_i{\Delta iOFV}$ greater than the significance criterion (e.g. 3.84 for one degree of freedom and $\alpha=0.05$) 
+is taken as the power for sample size N, 
+\item steps 4-7 are repeated with increasing N to provide the power at all sample sizes of interest.
+\end{enumerate}
+
 Example\\
 \begin{verbatim}
 mcmp -full_model=mod1.mod -stratify_on=DOSE -reduced_model=mod2.mod -seed=123
@@ -20,16 +36,19 @@ mcmp -full_model=mod1.mod -stratify_on=DOSE -reduced_model=mod2.mod -seed=123
 \subsection{Mcmp-specific input}
 \begin{optionlist}
 \optdefault{simulation\_model}{sim.mod}
-The filename of the simulation model, optional. Default is the -full\_model filename. If both -table\_reduced and -table\_full are specified, then option -simulation\_model will be ignored. Cannot be used with option -simdata. 
+The filename of the simulation model, optional. 
+Default is the -full\_model filename. PsN will modify this model, removing \$EST and adding \$SIM, if it is not already a simulation model.
+If both -table\_reduced and -table\_full are specified, then option -simulation\_model will be ignored. Cannot be used with option -simdata.
 \nextopt
 \optdefault{full\_model}{full.mod}
-The filename of the full model is required, unless -table\_full (see below) is used. 
+The filename of the full model is required, unless -table\_full (see below) is used. This must be an estimation model.
 \nextopt
 \optdefault{reduced\_model}{red.mod}
-The name of the reduced model is required, unless -table\_reduced (see below) is used. 
+The name of the reduced model is required, unless -table\_reduced (see below) is used. This must be an estimation model.
 \nextopt
 \optdefault{stratify\_on}{column}
-The name of the variable to stratify on, optional. Must be all uppercase and (unless NM7) at most 4 characters. Unless -table\_strata is specified, the variable must be possible to request in \$TABLE, i.e. either present in \$INPUT or defined in \$PK/\$PRED/\$ERROR. PsN does not check that the variable is defined. If -reduced\_model is specified then PsN will set \$TABLE there, otherwise \$TABLE will be set in the full model. The stratification table will not be generated from the simulation model. PsN will set \$TABLE ID $\langle$stratify\_on$\rangle$ FIRSTONLY NOAPPEND NOPRINT ONEHEADER FILE=strata.tab 
+The name of the variable to stratify on, optional. Must be all uppercase and (unless NM7) at most 4 characters. 
+Unless -table\_strata is specified, the variable must be possible to request in \$TABLE, i.e. either present in \$INPUT or defined in \$PK/\$PRED/\$ERROR. PsN does not check that the variable is defined. If -reduced\_model is specified then PsN will set \$TABLE there, otherwise \$TABLE will be set in the full model. The stratification table will not be generated from the simulation model. PsN will set \$TABLE ID $\langle$stratify\_on$\rangle$ FIRSTONLY NOAPPEND NOPRINT ONEHEADER FILE=strata.tab 
 \nextopt
 \optname{curve}
 Set by default. Can be disabled with -no-curve. This option controls whether the complete power curve up to the target power should be generated, or if the program should only compute the sample size required to achieve the target power. 
@@ -102,9 +121,11 @@ The second extended plot is a histogram of the individual full-reduced delta-ofv
 The output from each mcmp is mcmp\_results.csv which contains a table with header total\_X,power at 5\%,power at 1\%,power at 0.1\%, (headers for N from each stratum). One row for each total sample size (total\_X). The table can be plotted in excel. The results are also printed to screen as they are produced, and the user can terminate the run with Ctrl-C if the obtained power is deemed sufficient. The file mcmp\_results.csv will contain the values that were computed before the interruption. If mcmp is rerun the previous result file will be copied and kept.
 
 \section{Known bugs}
-If estimation of the full and/or reduced model fails but NONMEM 7 still produces a .phi-file with the initial individual ofv-values, then PsN will not detect the failed estimation but continue to bootstrap from the .phi-file.
+If estimation of the full and/or reduced model fails but NONMEM 7 still produces a .phi-file with the initial individual ofv-values, 
+then PsN will not detect the failed estimation but continue to bootstrap from the .phi-file. Then the power curves will be completely wrong.
 
 The mcmp requires that -nm\_output=phi or -nm\_output=phi,\emph{more file extensions} is set, either on the command-line or in psn.conf.
+The psn.conf that can be auto-generated by the PsN installation script gives the correct settings.
 
 \section{Recovering a crashed/stopped mcmp}
 If the simulation finished but none of the estimations finished, then start over in a new run directory but use option -simdata with the dataset from the simulation step. If one or two of the estimations finished, then start in new directory using option -table\_reduced and/or -table\_full and possibly -table\_strata. 
