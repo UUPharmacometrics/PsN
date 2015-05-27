@@ -81,10 +81,13 @@ Optional unless both -table\_full and -table\_reduced is used and stratify\_on i
 Optional, default 10000. The number of bootstrapped delta-ofv:s to generate for each total sample size. 
 \nextopt
 \optdefault{df}{N}
-Optional, default 1. The number of degrees of freedom for the chi-square test. Allowed values are 1-30 in steps of 1 and 40-100 in steps of 10. PsN will compute the power for significance levels 5\%, 1\% and 0.1\% for the number of degrees of freedom. 
+Optional, default 1. The number of degrees of freedom for the chi-square test. Allowed values are 1-20.
+PsN will compute the power for significance levels 20\%, 15\%, 10\%, 5\%, 1\% and 0.1\% 
+for the number of degrees of freedom. 
 \nextopt
 \optname{significance\_level}
-Optional, default 5 (percent). Permitted values are 5, 1 and 0.1. Convergence check will be based on critical ofv for this significance level. 
+Optional, default 5 (percent). Permitted values are 20, 15, 10, 5, 1 and 0.1. 
+Convergence check will be based on critical ofv for this significance level. 
 \nextopt
 \optname{critical\_ofv}
 Optional, no default. If specified, -critical\_ofv will override the setting of -df. PsN will work with positive values internally (delta\_ofv=reduced-full, check if delta\_ofv $>$ critical\_ofv), but will automatically change the sign if the user gives a negative value. 
@@ -113,12 +116,14 @@ required for 80\% power.
 Extended mcmp rplots will be generated in file PsN\_mcmp\_plots.pdf if option -rplots is set >1,
 and the general rplots conditions fulfilled, see above.
 The first extended plot is the the mcmp-generated power curves for
-each of the significance levels 5\%, 1\% and 0.1\%, with a mark of the sample size 
+each of the significance levels, with a mark of the sample size 
 required for 80\% power.
 The second extended plot is a histogram of the individual full-reduced delta-ofv. 
 
 \section{Output}
-The output from each mcmp is mcmp\_results.csv which contains a table with header total\_X,power at 5\%,power at 1\%,power at 0.1\%, (headers for N from each stratum). One row for each total sample size (total\_X). The table can be plotted in excel. The results are also printed to screen as they are produced, and the user can terminate the run with Ctrl-C if the obtained power is deemed sufficient. The file mcmp\_results.csv will contain the values that were computed before the interruption. If mcmp is rerun the previous result file will be copied and kept.
+The output from each mcmp is mcmp\_results.csv which contains a table with header 
+total\_X,power at 20\%,power at 15\%,power at 10\%,power at 5\%,power at 1\%,power at 0.1\%, (headers for N from each stratum). 
+One row for each total sample size (total\_X). The table can be plotted in excel. The results are also printed to screen as they are produced, and the user can terminate the run with Ctrl-C if the obtained power is deemed sufficient. The file mcmp\_results.csv will contain the values that were computed before the interruption. If mcmp is rerun the previous result file will be copied and kept.
 
 \section{Known bugs}
 If estimation of the full and/or reduced model fails but NONMEM 7 still produces a .phi-file with the initial individual ofv-values, 

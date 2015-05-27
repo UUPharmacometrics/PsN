@@ -41,6 +41,39 @@ library(ggplot2)
             panel.grid.major=element_line(color="gray95"))
     
          
+    # If significance level 20 was used
+    if(sig.level==20){
+        # Define the smallest sample size to reach >= 80 % power with (and put the info in a dataframe, for plotting reasons)
+        vline = data.frame(x=rawres$total_X[which(rawres$power.at.20.>=80)[1]], 
+                           xend=rawres$total_X[which(rawres$power.at.20.>=80)[1]],
+                           y=80, yend=25)
+        
+        # Default plot
+        print(PLoT1+geom_point(data=rawres, aes(x=total_X, y=power.at.20.), size=2.2)+
+            geom_segment(data=vline, aes(x=x, xend=xend, y=y, yend=yend), linetype=2, colour='red', size=0.7))
+    }
+    # If significance level 15 was used
+    if(sig.level==15){
+        # Define the smallest sample size to reach >= 80 % power with (and put the info in a dataframe, for plotting reasons)
+        vline = data.frame(x=rawres$total_X[which(rawres$power.at.15.>=80)[1]], 
+                           xend=rawres$total_X[which(rawres$power.at.15.>=80)[1]],
+                           y=80, yend=25)
+        
+        # Default plot
+        print(PLoT1+geom_point(data=rawres, aes(x=total_X, y=power.at.15.), size=2.2)+
+            geom_segment(data=vline, aes(x=x, xend=xend, y=y, yend=yend), linetype=2, colour='red', size=0.7))
+    }
+    # If significance level 10 was used
+    if(sig.level==10){
+        # Define the smallest sample size to reach >= 80 % power with (and put the info in a dataframe, for plotting reasons)
+        vline = data.frame(x=rawres$total_X[which(rawres$power.at.10.>=80)[1]], 
+                           xend=rawres$total_X[which(rawres$power.at.10.>=80)[1]],
+                           y=80, yend=25)
+        
+        # Default plot
+        print(PLoT1+geom_point(data=rawres, aes(x=total_X, y=power.at.10.), size=2.2)+
+            geom_segment(data=vline, aes(x=x, xend=xend, y=y, yend=yend), linetype=2, colour='red', size=0.7))
+    }
     # If significance level 5 was used
     if(sig.level==5){
         # Define the smallest sample size to reach >= 80 % power with (and put the info in a dataframe, for plotting reasons)
@@ -80,21 +113,21 @@ library(ggplot2)
       
       
       # Rearrange the rawres file (without having to use the package reshape2)
-      Power       = c(rawres$power.at.5., rawres$power.at.1., rawres$power.at.0.1.)
-      Sample_size = rep(rawres$total_X,3)
-      Type        = c(rep('5 %',length(rawres[,1])),rep('1 %',length(rawres[,1])),rep('0.1 %',length(rawres[,1])))
+      Power       = c(rawres$power.at.20.,rawres$power.at.15.,rawres$power.at.10.,rawres$power.at.5., rawres$power.at.1., rawres$power.at.0.1.)
+      Sample_size = rep(rawres$total_X,6) #3
+      Type        = c(rep('20 %',length(rawres[,1])),rep('15 %',length(rawres[,1])),rep('10 %',length(rawres[,1])),rep('5 %',length(rawres[,1])),rep('1 %',length(rawres[,1])),rep('0.1 %',length(rawres[,1])))
       New.rawres  = data.frame(Sample_size, Power, Type)
       
       # Define the smallest sample size to reach >= 80 % power with for each significance level (and put the info in a dataframe, for plotting reasons)
-      vline2 = data.frame(x=c(rawres$total_X[which(rawres$power.at.5.>=80)[1]], rawres$total_X[which(rawres$power.at.1.>=80)[1]], rawres$total_X[which(rawres$power.at.0.1.>=80)[1]]), 
-                          xend=c(rawres$total_X[which(rawres$power.at.5.>=80)[1]], rawres$total_X[which(rawres$power.at.1.>=80)[1]], rawres$total_X[which(rawres$power.at.0.1.>=80)[1]]),
-                          y=80, yend=25, Type=c('5 %', '1 %', '0.1%'))
+      vline2 = data.frame(x=c(rawres$total_X[which(rawres$power.at.20.>=80)[1]],rawres$total_X[which(rawres$power.at.15.>=80)[1]],rawres$total_X[which(rawres$power.at.10.>=80)[1]],rawres$total_X[which(rawres$power.at.5.>=80)[1]], rawres$total_X[which(rawres$power.at.1.>=80)[1]], rawres$total_X[which(rawres$power.at.0.1.>=80)[1]]), 
+                          xend=c(rawres$total_X[which(rawres$power.at.20.>=80)[1]],rawres$total_X[which(rawres$power.at.15.>=80)[1]],rawres$total_X[which(rawres$power.at.10.>=80)[1]],rawres$total_X[which(rawres$power.at.5.>=80)[1]], rawres$total_X[which(rawres$power.at.1.>=80)[1]], rawres$total_X[which(rawres$power.at.0.1.>=80)[1]]),
+                          y=80, yend=25, Type=c('20 %','15 %','10 %','5 %', '1 %', '0.1%'))
       
       # Extended plot1
       print(PLoT1+geom_point(data=New.rawres, aes(x=Sample_size, y=Power, group=Type, shape=Type), size=2.2)+
-              scale_shape_manual(name='Significance \n level', values=c(4,6,19))+
+              scale_shape_manual(name='Significance \n level', values=c(4,6,7,10,15,19))+
               geom_segment(data=vline2, aes(x=x, xend=xend, y=y, yend=yend), linetype=2, colour='red', size=0.7)+
-              theme(legend.position=c(0.9,0.15),
+              theme(legend.position=c(0.9,0.20),
                     legend.background=element_rect(fill="white", colour="black"), 
                     legend.key=element_rect(fill='white'),
                     legend.text=element_text(size=12)))

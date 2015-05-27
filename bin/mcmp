@@ -30,7 +30,7 @@ my %optional_options = ( 'full_model:s' => undef,
                          'simulation_model:s' => undef,
                          'stratify_on:s' => undef,
 						 'start_size:i' => undef,
-						 'significance_level:i' => undef,
+						 'significance_level:f' => undef,
 						 'increment:i' => undef,
 						 'max_size:i' => undef,
 						 'table_full:s' => undef,
@@ -180,8 +180,8 @@ $help_text{-df} = <<'EOF';
       -df=number
 
       Optional, default 1. The number of degrees of freedom for the chi-square 
-      test. Allowed values are 1-30 in steps of 1 and 40-100 in steps of 10. 
-      PsN will compute the power for significance levels 5%, 1% and 0.1% for 
+      test. Allowed values are 1-20. PsN will compute the power for 
+	  significance levels 20%, 15%, 10%, 5%, 1% and 0.1% for 
       the number of degrees of freedom.
 EOF
 
@@ -189,7 +189,7 @@ $help_text{-significance_level} = <<'EOF';
       -significance_level=number
 
       Significance level for the chi-square test.
-      Default 5 (%). Permitted values are 5, 1 and 0.1.
+      Default 5 (%). Permitted values are 20, 15, 10, 5, 1 and 0.1.
 EOF
 
 $help_text{-critical_ofv} = <<'EOF';

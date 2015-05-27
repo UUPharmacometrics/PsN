@@ -22,9 +22,11 @@ has 'strata_ofv' => ( is => 'rw', isa => 'HashRef', default => sub { {} } );
 has 'strata_to_index' => ( is => 'rw', isa => 'HashRef', default => sub { {} } );
 has 'index_to_strata' => ( is => 'rw', isa => 'HashRef', default => sub { {} } );
 has 'n_individuals' => ( is => 'rw', isa => 'Int' );
+has 'allowed_levels' => ( is => 'rw', isa => 'ArrayRef', default => sub{[20,15,10,5,1,0.1]});
 has 'significance_level' => ( is => 'rw', isa => 'Num', default => 5 );
 has 'significance_index' => ( is => 'rw', isa => 'Int', default => 0 );
 has 'simdata' => ( is => 'rw', isa => 'Str' );
+has 'power_header' => ( is => 'rw', isa => 'Str' );
 has 'table_full' => ( is => 'rw', isa => 'Str' );
 has 'table_reduced' => ( is => 'rw', isa => 'Str' );
 has 'table_strata' => ( is => 'rw', isa => 'Str' );
@@ -106,10 +108,15 @@ sub BUILD
 						 message=>"Warning: When option -critical_ofv is used, option -significance_level is ignored");
 		}
 	}else{
-		if  (not ($self->significance_level == 5
-				  or $self->significance_level == 1
-				  or $self->significance_level == 0.1)){
-			croak("option -significance_level must be either 5, 1 or 0.1");
+		my $found=0;
+		for (my $i=0; $i<scalar(@{$self->allowed_levels}); $i++){
+			if  ($self->significance_level == $self->allowed_levels->[$i]){
+				$found =1;
+				last;
+			}
+		}
+		unless($found){
+			croak("option -significance_level must be either ".join(' or ',@{$self->allowed_levels}));
 		}
 	}
 
@@ -138,6 +145,43 @@ sub BUILD
 	}
 }
 
+sub get_df_table
+{
+	#static
+	#Note this is not called in process, but can be used to update hard coded df table
+	my %parm = validated_hash(\@_,
+							  significance_levels => { isa => 'ArrayRef', optional => 1, default => [20,15,10,5,1,0.1] },
+							  max_df => { isa => 'Int', optional => 1, default => 20 }
+		);
+	my $significance_levels = $parm{'significance_levels'};
+	my $max_df = $parm{'max_df'};
+
+	my @pvalues=();
+	my $prev=100;
+	for (my $i=0; $i< scalar(@{$significance_levels}); $i++){
+		unless (($significance_levels->[$i] < $prev) and 
+				($significance_levels->[$i] > 0)){
+			croak("Bad input to get_df_table: signficance_levels must be sorted descending, smaller than 100 and greater than 0");
+		}
+		push(@pvalues,$significance_levels->[$i]/100);
+		$prev = $significance_levels->[$i];
+	}
+
+	my $have_cdf=0;
+	$have_cdf = 1 if eval('require Statistics::Distributions'); #enough, now loaded
+	return unless ($have_cdf);
+
+	my %df_table;
+	for (my $df= 1; $df<= $max_df; $df++){
+		$df_table{$df} = [];
+		foreach my $pval (@pvalues){
+			push(@{$df_table{$df}},Statistics::Distributions::chisqrdistr($df,$pval));
+		}
+	}
+	return \%df_table;
+}
+
+
 sub modelfit_setup
 {
 	my $self = shift;
@@ -153,62 +197,49 @@ sub modelfit_setup
 			$self->critical_array([($self->critical_ofv())]);
 		}
 		$self->significance_index(0);
+		$self->power_header('power');
 	}else{
 		#store table
 		my %df_table;
 		#,,,"Chi-Square Table ",
-		#,"one-tailed",0.050,0.010,0.001
-		$df_table{1}=[(3.84,6.63490,10.828)];
-		$df_table{2}=[(5.99,9.21,13.816)];
-		$df_table{3}=[(7.81,11.34,16.266)];
-		$df_table{4}=[(9.49,13.28,18.467)];
-		$df_table{5}=[(11.07,15.09,20.515)];
-		$df_table{6}=[(12.59,16.81,22.458)];
-		$df_table{7}=[(14.07,18.48,24.322)];
-		$df_table{8}=[(15.51,20.09,26.125)];
-		$df_table{9}=[(16.9190,21.6660,27.877)];
-		$df_table{10}=[(18.3070,23.2093,29.588)];
-		$df_table{11}=[(19.68,24.7250,31.264)];
-		$df_table{12}=[(21.03,26.2170,32.909)];
-		$df_table{13}=[(22.36,27.6883,34.528)];
-		$df_table{14}=[(23.68,29.1413,36.123)];
-		$df_table{15}=[(25,30.5779,37.697)];
-		$df_table{16}=[(26.3,31.9999,39.252)];
-		$df_table{17}=[(27.59,33.4087,40.790)];
-		$df_table{18}=[(28.87,34.8053,42.312)];
-		$df_table{19}=[(30.14,36.1908,43.820)];
-		$df_table{20}=[(31.41,37.5662,45.315)];
-		$df_table{21}=[(32.67,38.9321,46.797)];
-		$df_table{22}=[(33.92,40.2894,48.268)];
-		$df_table{23}=[(35.17,41.6384,49.728)];
-		$df_table{24}=[(36.42,42.9798,51.179)];
-		$df_table{25}=[(37.65,44.3141,52.620)];
-		$df_table{26}=[(38.89,45.6417,54.052)];
-		$df_table{27}=[(40.11,46.9630,55.476)];
-		$df_table{28}=[(41.34,48.2782,56.892)];
-		$df_table{29}=[(42.56,49.5879,58.302)];
-		$df_table{30}=[(43.77,50.8922,59.703)];
-		$df_table{40}=[(55.76,63.6907,73.402)];
-		$df_table{50}=[(67.5,76.1539,86.661)];
-		$df_table{60}=[(79.08,88.3794,99.607)];
-		$df_table{70}=[(90.53,100.425,112.317)];
-		$df_table{80}=[(101.88,112.329,124.839)];
-		$df_table{90}=[(113.15,124.116,137.208)];
-		$df_table{100}=[(124.34,135.807,149.449)];
+		#,"one-tailed" 20,15,10,5,1,0.1
+		$self->power_header('power at '.join('%,power at ',@{$self->allowed_levels}).'%');
+
+		$df_table{1}=[(1.6424,2.0723,2.7055,3.8415,6.6349,10.828)];
+		$df_table{2}=[(3.2189,3.7942,4.6052,5.9915,9.2103,13.816)];
+		$df_table{3}=[(4.6416,5.3171,6.2514,7.8147,11.345,16.266)];
+		$df_table{4}=[(5.9886,6.7449,7.7794,9.4877,13.277,18.467)];
+		$df_table{5}=[(7.2893,8.1152,9.2364,11.070,15.086,20.515)];
+		$df_table{6}=[(8.5581,9.4461,10.645,12.592,16.812,22.458)];
+		$df_table{7}=[(9.8033,10.748,12.017,14.067,18.475,24.322)];
+		$df_table{8}=[(11.030,12.027,13.362,15.507,20.090,26.124)];
+		$df_table{9}=[(12.242,13.288,14.684,16.919,21.666,27.877)];
+		$df_table{10}=[(13.442,14.534,15.987,18.307,23.209,29.588)];
+		$df_table{11}=[(14.631,15.767,17.275,19.675,24.725,31.264)];
+		$df_table{12}=[(15.812,16.989,18.549,21.026,26.217,32.909)];
+		$df_table{13}=[(16.985,18.202,19.812,22.362,27.688,34.528)];
+		$df_table{14}=[(18.151,19.406,21.064,23.685,29.141,36.123)];
+		$df_table{15}=[(19.311,20.603,22.307,24.996,30.578,37.697)];
+		$df_table{16}=[(20.465,21.793,23.542,26.296,32.000,39.252)];
+		$df_table{17}=[(21.615,22.977,24.769,27.587,33.409,40.790)];
+		$df_table{18}=[(22.760,24.155,25.989,28.869,34.805,42.312)];
+		$df_table{19}=[(23.900,25.329,27.204,30.144,36.191,43.820)];
+		$df_table{20}=[(25.038,26.498,28.412,31.410,37.566,45.315)];
 		croak("No internal value for critical ofv at ".$self->df().
 			  " degrees of freedom") unless (defined $df_table{$self->df()});
 		$self->critical_array($df_table{$self->df()});
 
-		if ($self->significance_level() == 5){
-			$self->significance_index(0);
-		}elsif ($self->significance_level() == 1){
-			$self->significance_index(1);
-		}elsif ($self->significance_level() == 0.1){
-			$self->significance_index(2);
-		}else{
-			croak("Illegal value for -significance_level");
+		my $found=0;
+		for (my $index=0; $index < scalar(@{$self->allowed_levels}); $index++){
+			if ($self->significance_level() == $self->allowed_levels->[$index]){
+				$self->significance_index($index);
+				$found=1;
+				last;
+			}
 		}
-
+		unless ($found){
+			croak("Illegal value ".$self->significance_level()." for -significance_level");
+		}
 	}
 
 	$self->target_power(round($self->target_power));
@@ -553,12 +584,7 @@ sub modelfit_analyze
 
 
 	open( RES, ">".$self->results_file()) or die "could not open ".$self->results_file();
-	print RES "total_X,";
-	if ($n_critical == 1){
-		print RES "power";
-	}else{
-		print RES "power at 5%,power at 1%,power at 0.1%";
-	}
+	print RES "total_X,".$self->power_header();
 	if (defined $self->stratify_on()){
 		foreach my $strata (0 .. ($n_strata-1)){
 			print RES ",N ".$self->stratify_on()."=".(sprintf "%d",$index_to_strata{$strata});
