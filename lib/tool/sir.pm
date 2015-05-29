@@ -416,6 +416,11 @@ sub modelfit_setup
 													   get_lambda_delta => 1,
 													   estimated_vector => $parameter_hash->{'values'},
 													   do_percentiles => 0);
+			my( $ldir, $name ) = OSspecific::absolute_path( $self ->directory(),'boxcox_covmatrix_iteration'.$iteration.'.cov');
+			print_empirical_covmatrix(filename=> $ldir.$name,
+									  covar => $boxcox_resulthash->{'covar'},
+									  parameter_hash => $parameter_hash);
+
 		}
 	}
 
@@ -1613,7 +1618,21 @@ sub prepare_results
 	my $basename = $model->create_output_filename();
 	$basename =~ s/\.lst$/_sir.cov/;
 	my( $ldir, $name ) = OSspecific::absolute_path( $self ->directory(),$basename);
-	my $output_covar_file = $ldir.$name;
+	print_empirical_covmatrix(filename=> $ldir.$name, parameter_hash => $parameter_hash, covar => $resulthash->{'covar'});
+
+}
+
+sub print_empirical_covmatrix
+{
+	my %parm = validated_hash(\@_,
+							  filename => { isa => 'Str', optional => 0 },
+							  parameter_hash => { isa => 'HashRef', optional => 0 },
+							  covar => { isa => 'ArrayRef', optional => 0 },
+		);
+	my $filename = $parm{'filename'};
+	my $parameter_hash = $parm{'parameter_hash'};
+	my $covar = $parm{'covar'};
+
 	my @order=();
 	my @coords=();
 	foreach my $param ('theta','sigma','omega'){
@@ -1624,14 +1643,16 @@ sub prepare_results
 			}
 		}
 	}
-	my $copy = linear_algebra::copy_and_reorder_square_matrix($resulthash->{'covar'},\@order);
+	my $copy = linear_algebra::copy_and_reorder_square_matrix($covar,\@order);
 	my $formatted = format_covmatrix(matrix => $copy, header => \@coords, comma => 0, print_labels => 1);
-	open ( RES, ">" . $output_covar_file );
+	open ( RES, ">" . $filename );
 	foreach my $line (@{$formatted}){
 		print RES $line;
 	}
 	close(RES);
+
 }
+
 
 sub format_covmatrix
 {
