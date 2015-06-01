@@ -220,6 +220,7 @@ nmoutput2so: version
 	@ cp -r lib/ nmoutput2so
 	@ rm -r nmoutput2so/lib/tool
 	@ rm -r nmoutput2so/lib/nonmemrun
+	@ mv nmoutput2so/lib/psn.conf_template nmoutput2so/lib/psn.conf
 	@ zip -r nmoutput2so nmoutput2so/
 
 documentation: doc/*.pdf $(PDFFILES)
