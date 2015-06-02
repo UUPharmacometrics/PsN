@@ -1330,15 +1330,6 @@ sub modelfit_setup
 		}
 	}
 
-	# If the number of threads are given per tool, e.g. [2,5] meaning 2 threads for
-	# scm and 5 for the modelfit.
-	my $mfit_threads = ref( $self -> threads ) eq 'ARRAY' ?
-	$self -> threads -> [1]:$self -> threads;
-	my $own_threads = ref( $self -> threads ) eq 'ARRAY' ?
-	$self -> threads -> [0]:$self -> threads;
-	# More threads than models?
-	my $num = scalar @{$self -> models};
-	$own_threads = $num if ( $own_threads > $num );
 
 	#setup linearize here. 
 	if ($self->linearize()){
@@ -1446,8 +1437,6 @@ sub modelfit_setup
 			models         => [$start_model],
 			top_tool       => 0,
 			parent_tool_id => $self->tool_id,
-			threads        => $mfit_threads,
-			parent_threads => $own_threads,
 			copy_data  => (not $self->linearize));
 
 		my $mess = "Estimating base model";
@@ -1521,11 +1510,9 @@ sub modelfit_setup
 			 ( %{common_options::restore_options(@common_options::tool_options)},
 			   _raw_results_callback => $self->_raw_results_callback(model_number => $model_number),
 			   models         => $self->prepared_models->[$model_number-1]{'own'},
-			   threads        => $mfit_threads,
 			   logfile        => [$self->directory."/modelfit".$model_number.".log"],
 			   base_directory => $self->directory,
 			   directory      => $self->directory.'/modelfit_dir'.$model_number,
-			   parent_threads => $own_threads,
 			   parent_tool_id => $self->tool_id,
 			   top_tool       => 0,
 			   copy_data => 0) );
@@ -2625,12 +2612,6 @@ sub modelfit_analyze
 		scalar(keys %{$self->test_relations}) == 0
 			and $self->linearize);
 
-	# Own_threads is used to set parent_threads for child tools
-	my $own_threads = ref( $self -> threads ) eq 'ARRAY' ?
-	$self -> threads -> [0]:$self -> threads;
-	# More threads than models?
-	my $num = scalar @{$self -> models};
-	$own_threads = $num if ( $own_threads > $num );
 
 	my @results = @{$self -> results};
 
@@ -2949,7 +2930,6 @@ sub modelfit_analyze
 				logfile              => [$self -> logfile->[$model_number-1]],
 				base_criteria_values => $new_base_crit_val_ref,
 				parent_tool_id       => $self -> tool_id,
-				parent_threads       => $own_threads , 
 				top_tool             => 0,
 				logit                => $self->logit(),
 				linearize                 => $self->linearize,
@@ -4516,7 +4496,6 @@ sub run_xv_pred_step
 		  top_tool       => 0,
 		  clean => 1,
 		  parent_tool_id   => $self -> tool_id,
-		  threads        => 1,
 		  copy_data => 1); 
 #clean 2 later
 	ui -> print( category => 'xv_scm',
@@ -5327,11 +5306,6 @@ sub modelfit_post_fork_analyze
 		print LOG "Forward search done. Starting backward search inside forward top level directory\n";
 		close LOG;
 
-		# Check the thread number of this tool level:
-		my $threads = ref( $self -> threads ) eq 'ARRAY' ? 
-		$self -> threads -> [0]:$self -> threads;
-		# More threads than models?
-		$threads = 1 if ( $threads > 1);
 
 		if (defined $self->p_backward()){
 			#p_backward will never be defined for other than top level scm
@@ -5346,12 +5320,6 @@ sub modelfit_post_fork_analyze
 		my $cpu_time = defined $self -> cpu_time ? int(($self -> cpu_time)*1.2) : undef;
 		my $num = scalar @{$self -> models};
 
-		# Own_threads is used to set parent_threads for child tools
-		my $own_threads = ref( $self -> threads ) eq 'ARRAY' ?
-		$self -> threads -> [0]:$self -> threads;
-		# More threads than models?
-		my $num = scalar @{$self -> models};
-		$own_threads = $num if ( $own_threads > $num );
 
 		#increase step index and step_number in subtool as always
 		#this stepnumber will be 1 (the default)
@@ -5394,7 +5362,6 @@ sub modelfit_post_fork_analyze
 			logfile              => [$self -> logfile ->[0]],
 			base_criteria_values => $self->base_criteria_values,
 			parent_tool_id       => $self -> tool_id,
-			parent_threads       => $own_threads , 
 			top_tool             => 0,
 			logit                => $self->logit(),
 			linearize                 => $self->linearize,
