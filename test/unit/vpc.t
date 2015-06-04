@@ -100,9 +100,90 @@ my $strat_data2 = [['0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20',
 				   '0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20',
 				   '0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20']];
 
+
+my $cens_data3 =  [['0,1,0,0,0,0,0,0,0,0,0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0',   
+				    '1,1,0,0,0,0,0,0,0,0,0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0']];
+
+my $strat_data3 = [['12,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20',  
+					'5,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20']];
+
+#lower count 0       0,0,2,2,2,2,2,1,1,1,0,0,0,0,0,0,0,0,0,0,0
+#    50              0,0,2,2,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+#90                  0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 
+
+#upper      0        1,0,0,0,0,0,0,1,1,1,1,1,1,0,1,1,0,1,1,1,1
+# 50                 0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1,1,1,1
+#90                  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1
+
+#lower
+#perc real: 0 arr(100,100,100,100,100,50,50,50,0,0,0,0,0,0,0,0,0)            
+#           0 arr(100,100,50,50,0,0,0,0,0,0,0,0,0,0,0,0,0)           
+#           0 arr(50,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)           
+ 
+#upper
+#perc real 100 arr(0,0,0,0,0,50,50,50,50,100,100,100,100,100,100,100,50)           
+#perc real   0 arr(0,0,0,0,0, 0, 0,0, 50, 0,  0,   0,0  ,100,100,100,50)           
+#perc real   0 arr(0,0,0,0,0, 0, 0,0, 50, 0,  0,   0,0  , 0, 0, 0,50)           
+
+
+# count_max        1,0,2,2,2,2,2,2,2,2,2, 1, 1, 0, 1, 1, 0, 1, 1, 1, 2     nonzer0s = 17 lowind 0 highind 16
+
+# sumwarnings      0,-99,0,0,0,0,0,0,0,0,0, 0, 0,-99,0 ,0,-99,0, 0, 0, 0
+
+#
+#sorted simvalues = 2,3,4,5,6,7,8,9,10,11,12,14,15,17,18,19,20   count 17  lmits  10,6,3 upper 10,15,19 
+#                   2,3,4,5,6,7,8,9,10,20                              10   lim   7,4,2  upper 6,9,20 
+
+my @total = (0)x 21;
+my @lower_count = ([(0)x 21],[(0)x 21]);
+my @upper_count = ([(0)x 21],[(0)x 21]);
+tool::npc::update_counts(values =>       [18,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],
+			  censor_values => [0,1,0,0,0,0,0,0,0,0,0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0],
+			  censored => 1,
+			  predcorr => 0,
+			  lower_limit => [10,4],
+			  upper_limit => [15,17],
+			  lower_count => \@lower_count,
+			  upper_count => \@upper_count,
+			  total_count => \@total);
+
+is_deeply (\@lower_count,[[0,0,1,1,1,1,1,1,1,1,0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],[0,0,1,1,0,0,0,0,0,0,0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]],'update_counts 1a');
+is_deeply (\@upper_count,[[1,0,0,0,0,0,0,0,0,0,0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1],[1,0,0,0,0,0,0,0,0,0,0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1]],'update_counts 1b');
+is_deeply (\@total,[1,0,1,1,1,1,1,1,1,1,1, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1],'update_counts 1c');
+
+
+my ($low1,$up1,$alert)= tool::npc::get_lower_and_upper_limits(alert_written => 1,
+															  values => [2,3,4,5,6,7,8,9,10,11,12,14,15,17,18,19,20],
+															  'pred_intervals' => \@pred_int);
+is_deeply ($low1,[10,6,3],'get_lower_and_upper_limits 1a');
+is_deeply ($up1,[10,15,19],'get_lower_and_upper_limits 1b');
+
+($low1,$up1,$alert)= tool::npc::get_lower_and_upper_limits(alert_written => 1,
+															  values => [2,3,4,5,6,7,8,9,10,20],
+															  'pred_intervals' => \@pred_int);
+is_deeply ($low1,[7,4,2],'get_lower_and_upper_limits 2a');
+is_deeply ($up1,[6,9,20],'get_lower_and_upper_limits 2b');
+
+my ($low1,$up1,$low2,$high2)= tool::npc::get_npc_indices('ci' => $c_i,
+														 'no_sim' => 17,
+														 'pred_intervals' => \@pred_int);
+
+# 0 50 90
+is_deeply ($low1,[8,4,1],'get_npc_indices lower_index 2');
+is_deeply ($up1,[8,12,15],'get_npc_indices upper_index 2');
+
+($low1,$up1,$low2,$high2)= tool::npc::get_npc_indices('ci' => $c_i,
+														 'no_sim' => 10,
+														 'pred_intervals' => \@pred_int);
+
+# 0 50 90
+is_deeply ($low1,[5,2,0],'get_npc_indices lower_index 3');
+is_deeply ($up1,[4,7,9],'get_npc_indices upper_index 3');
+
 #array over predint, one 0 per obs
 my $realposanswer = [[-1,-1,1],[-1,-1,0],[0,0,0]];
 my $realposanswer2 = [[-1,-1,-1],[-1,-1,-1],[-1,-1,-1]];
+my $realposanswer3 = [[1,-99],[0,-99],[0,-99]]; #censored
 
 #pi            0   50 95
 #lowerlimit    11  6  2
@@ -139,8 +220,6 @@ my $statswarnanswer2 = [0,0,0,0,0,0];
 
 my ($result_values,$realpos,$stats_warnings,$alert) = tool::npc::subset_npc_analyze(strata_index => 0,
 													   pred_intervals => \@pred_int,
-													   lower_index => $lower_index,
-													   upper_index => $upper_index,
 													   censored => 0,
 													   ci  => $c_i,
 													   no_sim => $no_sim,
@@ -156,8 +235,6 @@ is_deeply($stats_warnings,$statswarnanswer,'subset_npc_analyze statswarn');
 
 ($result_values,$realpos,$stats_warnings,$alert) = tool::npc::subset_npc_analyze(strata_index => 0,
 													   pred_intervals => \@pred_int,
-													   lower_index => $lower_index,
-													   upper_index => $upper_index,
 													   censored => 0,
 													   ci  => $c_i,
 													   no_sim => $no_sim,
@@ -170,6 +247,26 @@ is($alert,1,'subset_npc_analyze alert');
 is_deeply($realpos,$realposanswer2,'subset_npc_analyze real positions 2');
 is_deeply($result_values,$resvalanswer2,'subset_npc_analyze resultvalues 2');
 is_deeply($stats_warnings,$statswarnanswer2,'subset_npc_analyze statswarn 2');
+
+($result_values,$realpos,$stats_warnings,$alert) = tool::npc::subset_npc_analyze(strata_index => 0,
+													   pred_intervals => \@pred_int,
+													   censored => 1,
+													   ci  => $c_i,
+													   no_sim => $no_sim,
+													   stratified_data => $strat_data3,
+													   censor_stratified_data  => $cens_data3,
+													   predcorr  => 0,
+													   npc_alert_written => 0);
+
+my $resvalanswer3 = [[0,0,' ',0,100,1,100,' ',0,100],
+					[0,0,' ',0,100,0,0,' ',0,100],
+					[0,0,' ',0,50,0,0,' ',0,50]];
+
+is($alert,0,'subset_npc_analyze alert');
+is_deeply($realpos,$realposanswer3,'subset_npc_analyze real positions 3');
+is_deeply($result_values,$resvalanswer3,'subset_npc_analyze resultvalues 3');
+is_deeply($stats_warnings,$statswarnanswer2,'subset_npc_analyze statswarn 3');
+
 
 #use two bins three strata, first stratum is refstrat
 my $no_sim=20;

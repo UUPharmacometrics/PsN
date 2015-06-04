@@ -7,10 +7,11 @@ package array;
 use MooseX::Params::Validate;
 use include_modules;
 use POSIX 'floor';
+use math qw(round);
 
 require Exporter;
 our @ISA = qw(Exporter);
-our %EXPORT_TAGS = ('all' => [ qw(not_empty is_empty diff cumsum max min linspace unique add sum mean median variance stdev is_int quantile percentile is_equal) ]);
+our %EXPORT_TAGS = ('all' => [ qw(not_empty is_empty diff cumsum max min linspace unique add sum mean median median_and_ci variance stdev is_int quantile percentile is_equal) ]);
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 
 sub not_empty
@@ -308,6 +309,34 @@ sub median
     } else {
 	    return ($sorted[@sorted / 2] + $sorted[(@sorted - 2) / 2]) / 2;
     }
+}
+
+sub median_and_ci
+{
+    # Calculate the median and ci of an array
+    # return median which is middle value if uneven number of values
+    # or arithemtic mean of two middle values if even number of values
+    # if empty input array then return undef,undef,undef
+	#ci returned as lower and upper percentile limit
+
+    my $ref = shift;
+    my $ci = shift;
+	my $count = scalar(@{$ref});
+    return (undef,undef,undef) if  ($count< 1);
+	if ($ci < 0 or $ci>100){
+		croak("illegal ci $ci to median_and_ci");
+	}
+    my @sorted = sort ({$a <=> $b} @{$ref});
+
+	my $median;
+    if ($count % 2) {
+	    $median = $sorted[$#sorted / 2];
+    } else {
+	    $median = ($sorted[@sorted / 2] + $sorted[(@sorted - 2) / 2]) / 2;
+    }
+	my $low_ci_ind = round((100-$ci)*($count-1)/200);
+	my $high_ci_ind = $count - $low_ci_ind - 1; #index of end  of  c_i% interval
+	return ($median,$sorted[$low_ci_ind],$sorted[$high_ci_ind]);
 }
 
 sub variance

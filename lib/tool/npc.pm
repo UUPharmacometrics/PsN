@@ -16,7 +16,7 @@ use binning;
 use Moose;
 use MooseX::Params::Validate;
 use math qw(round);
-use array qw(mean stdev median);
+use array qw(mean stdev median median_and_ci);
 
 extends 'tool';
 
@@ -4259,8 +4259,6 @@ sub vpc_analyze
 				}
 			}
 			next if (($nonzero_count == 0) and ($n_non_missing_real == 0));
-			my $low_ci_ind = round((100-$c_i)*($nonzero_count-1)/200);
-			my $high_ci_ind = $nonzero_count - $low_ci_ind - 1; #index of end  of  c_i% interval
 			
 			#if defined $self->censor()
 			#add loop over n_non_missing_real, n_non_missing_sim, warn if any below 10
@@ -4280,7 +4278,7 @@ sub vpc_analyze
 				}else{
 					push(@censored_result_row_values,$real_count_below_lloq/$n_non_missing_real);
 				}
-				my @sim_frac_censored;
+				my @sim_frac_censored =();
 				for (my $j=0; $j<$no_sim; $j++){
 					unless ($n_non_missing_sim[$j] == 0){
 						push(@sim_frac_censored,$sim_count_below_lloq[$j]/$n_non_missing_sim[$j]);
@@ -4292,11 +4290,12 @@ sub vpc_analyze
 					}
 					push(@censored_result_row_values,'','','');
 				}else{
-					my @sorted_sim_frac = sort {$a <=> $b} @sim_frac_censored;
-					$lloq_ci_from=$sorted_sim_frac[$low_ci_ind];
-					$lloq_ci_to=$sorted_sim_frac[$high_ci_ind];
+					($median_fraction_sim_below_lloq,$lloq_ci_from,$lloq_ci_to) = median_and_ci(\@sim_frac_censored,$c_i);
+#					my @sorted_sim_frac = sort {$a <=> $b} @sim_frac_censored;
+#					$lloq_ci_from=$sorted_sim_frac[$low_ci_ind];
+#					$lloq_ci_to=$sorted_sim_frac[$high_ci_ind];
 					
-					$median_fraction_sim_below_lloq = median(\@sorted_sim_frac);
+#					$median_fraction_sim_below_lloq = median(\@sorted_sim_frac);
 					
 					my $ii = 0;
 					foreach my $mi (@{$self->mirror_set}){
@@ -4307,8 +4306,7 @@ sub vpc_analyze
 						}
 						$ii++;
 					}
-					push(@censored_result_row_values,$median_fraction_sim_below_lloq,
-						 $lloq_ci_from,$lloq_ci_to);
+					push(@censored_result_row_values,$median_fraction_sim_below_lloq, $lloq_ci_from,$lloq_ci_to);
 				}
 			}else{
 				push(@censored_result_row_values,'','','','');
@@ -4324,7 +4322,7 @@ sub vpc_analyze
 					push(@censored_result_row_values,$real_count_above_uloq/$n_non_missing_real);
 				}
 
-				my @sim_frac_censored;
+				my @sim_frac_censored=();
 				for (my $j=0; $j<$no_sim; $j++){
 					unless ($n_non_missing_sim[$j] == 0){
 						push(@sim_frac_censored,$sim_count_above_uloq[$j]/$n_non_missing_sim[$j]);
@@ -4336,10 +4334,11 @@ sub vpc_analyze
 					}
 					push(@censored_result_row_values,'','','');
 				}else{
-					my @sorted_sim_frac = sort {$a <=> $b} @sim_frac_censored;
-					$uloq_ci_from=$sorted_sim_frac[$low_ci_ind];
-					$uloq_ci_to=$sorted_sim_frac[$high_ci_ind];
-					$median_fraction_sim_above_uloq = median(\@sorted_sim_frac);
+					($median_fraction_sim_above_uloq,$uloq_ci_from,$uloq_ci_to) = median_and_ci(\@sim_frac_censored,$c_i);
+#					my @sorted_sim_frac = sort {$a <=> $b} @sim_frac_censored;
+#					$uloq_ci_from=$sorted_sim_frac[$low_ci_ind];
+#					$uloq_ci_to=$sorted_sim_frac[$high_ci_ind];
+#					$median_fraction_sim_above_uloq = median(\@sorted_sim_frac);
 					
 					my $ii = 0;
 					foreach my $mi (@{$self->mirror_set}){
@@ -4350,8 +4349,7 @@ sub vpc_analyze
 						}
 						$ii++;
 					}
-					push(@censored_result_row_values,$median_fraction_sim_above_uloq,
-						 $uloq_ci_from,$uloq_ci_to);
+					push(@censored_result_row_values,$median_fraction_sim_above_uloq,$uloq_ci_from,$uloq_ci_to);
 				}
 			}else{
 				push(@censored_result_row_values,'','','','');
@@ -4365,14 +4363,15 @@ sub vpc_analyze
 				#$fraction_real_missing
 				push(@censored_result_row_values,$real_count_missing/$max_bin_observations);
 
-				my @sim_frac_censored;
+				my @sim_frac_censored =();
 				for (my $j=0; $j<$no_sim; $j++){
 					push(@sim_frac_censored,$sim_count_missing[$j]/$max_bin_observations);
 				}
-				my @sorted_sim_frac = sort {$a <=> $b} @sim_frac_censored;
-				$missing_ci_from=$sorted_sim_frac[$low_ci_ind];
-				$missing_ci_to=$sorted_sim_frac[$high_ci_ind];
-				$median_fraction_sim_missing = median(\@sorted_sim_frac);
+				($median_fraction_sim_missing,$missing_ci_from,$missing_ci_to) = median_and_ci(\@sim_frac_censored,$c_i);
+#				my @sorted_sim_frac = sort {$a <=> $b} @sim_frac_censored;
+#				$missing_ci_from=$sorted_sim_frac[$low_ci_ind];
+#				$missing_ci_to=$sorted_sim_frac[$high_ci_ind];
+#				$median_fraction_sim_missing = median(\@sorted_sim_frac);
 				
 				my $ii = 0;
 				foreach my $mi (@{$self->mirror_set}){
@@ -4380,8 +4379,7 @@ sub vpc_analyze
 						 ($mirror_count_missing[$ii]/$max_bin_observations));
 					$ii++;
 				}
-				push(@censored_result_row_values,$median_fraction_sim_missing,
-					 $missing_ci_from,$missing_ci_to);
+				push(@censored_result_row_values,$median_fraction_sim_missing,$missing_ci_from,$missing_ci_to);
 			}else{
 				push(@censored_result_row_values,'','','','');
 				foreach my $ii (1..($self->mirrors)){
@@ -4425,11 +4423,10 @@ sub vpc_analyze
 					if (scalar(@sim_frac_censored) == 0){
 						push(@categorized_result_row_values,'','','');
 					}else{
-						my @sorted_sim_frac = sort {$a <=> $b} @sim_frac_censored;
-						my $median_count_fraction= median(\@sorted_sim_frac);
-						push(@categorized_result_row_values,$median_count_fraction,
-							 $sorted_sim_frac[$low_ci_ind],
-							 $sorted_sim_frac[$high_ci_ind]);
+#						my @sorted_sim_frac = sort {$a <=> $b} @sim_frac_censored;
+#						my $median_count_fraction= median(\@sorted_sim_frac);
+						my ($tmpmedian,$tmplow,$tmphigh)= median_and_ci(\@sim_frac_censored,$c_i);
+						push(@categorized_result_row_values,$tmpmedian,$tmplow,$tmphigh);
 					}
 				}
 			}
@@ -4473,8 +4470,6 @@ sub vpc_analyze
 			($npc_result_values,$npc_realpos,$npc_stats_warnings,$npc_alert_written)=
 				subset_npc_analyze(bin_index => $bin_index,
 								   strata_index => $strat_ind,
-								   lower_index => $npc_lower_index,
-								   upper_index => $npc_upper_index, 
 								   pred_intervals => \@pred_int,
 								   censored => (defined $self->censor() or ($self->detection_censored and $self->predcorr)),
 								   ci => $self->confidence_interval(),
@@ -4606,7 +4601,7 @@ sub vpc_analyze
 					}elsif ($perc_limit[$i] == 50) {
 						$limit_real[$i] = median(\@sorted_singleset);
 					}else{
-						my $index = round($perc_limit[$i]*(scalar(@censored_real)-1)/100);
+						my $index = round($perc_limit[$i]*(scalar(@censored_real)-1)/100); #sorted_singleset is sorted censored_real
 						$limit_real[$i] = $sorted_singleset[$index];
 					}
 				}
@@ -4616,9 +4611,9 @@ sub vpc_analyze
 
 			my $uncensored_count = compute_PI_each_simset(
 				limit_singlesim => \@limit_singlesim,
-				merged_uncensored_simvalues => \@merged_uncensored_simvalues,
-				merged_censor_values_sim => \@merged_censor_values_sim,
-				merged_censored_sim => \@merged_censored_sim,
+				merged_uncensored_simvalues => \@merged_uncensored_simvalues, #all sim values
+				merged_censor_values_sim => \@merged_censor_values_sim,       #values of censoring variable. contains dropout 1 lloq 2 uloq 3
+				merged_censored_sim => \@merged_censored_sim,                 # sim values remaining after censoring  
 				predcorr => $self->predcorr,
 				censored => (defined $self->censor() || $self->detection_censored),
 				perc_limit => \@perc_limit,
@@ -4644,8 +4639,6 @@ sub vpc_analyze
 					$mi++;
 				}
 			}
-			my $low_ci_ind = round((100-$c_i)*($uncensored_count-1)/200);
-			my $high_ci_ind = $uncensored_count - $low_ci_ind - 1; #index of end  of  c_i% interval
 
 			for (my $i=0; $i<$no_perc_limits; $i++){
 				#sort only def values of limit
@@ -4657,9 +4650,9 @@ sub vpc_analyze
 					$lower_limit_ci[$i] = undef;
 					$upper_limit_ci[$i] = undef;		
 				}else{
-					my @val_arr = sort {$a <=> $b} @remaining;
-					$lower_limit_ci[$i] = $val_arr[$low_ci_ind];
-					$upper_limit_ci[$i] = $val_arr[$high_ci_ind];		
+					my ($tmpmedian,$tmplow,$tmphigh)= median_and_ci(\@remaining,$c_i);
+					$lower_limit_ci[$i] = $tmplow;
+					$upper_limit_ci[$i] = $tmphigh;		
 				}
 			}
 
@@ -5067,8 +5060,6 @@ sub npc_analyze
 		my ($result_values,$stats_warnings,$npc_alert_written);
 		($result_values,$realpos,$stats_warnings,$npc_alert_written)=
 			subset_npc_analyze(strata_index => $strat_ind,
-							   lower_index => $lower_index,
-							   upper_index => $upper_index, 
 							   pred_intervals => \@pred_int,
 							   censored => (defined $self->censor() or ($self->detection_censored and $self->predcorr)),
 							   ci => $c_i,
@@ -5173,6 +5164,107 @@ sub get_npc_result_labels
 	return \@result_column_labels ,\@result_row_labels;
 }
 
+
+
+sub get_lower_and_upper_limits
+{
+	#static no shift
+	my %parm = validated_hash(\@_,
+							  values => { isa => 'ArrayRef', optional => 0 },
+							  pred_intervals => { isa => 'ArrayRef', optional => 0 },
+							  alert_written => { isa => 'Bool', optional => 0 },
+		);
+	my $values = $parm{'values'};
+	my $pred_intervals = $parm{'pred_intervals'};
+	my $alert_written = $parm{'alert_written'};
+
+	my @pred_int = sort {$a <=> $b} @{$pred_intervals};
+
+	my @upper_limit = (0) x scalar(@pred_int);
+	my @lower_limit = (0) x scalar(@pred_int);
+	
+	my $alert=$alert_written;
+
+	my @sorted = sort {$a <=> $b} @{$values};
+
+	for (my $i=0; $i<scalar(@pred_int); $i++){
+		my $lower = round((100-$pred_int[$i])*(scalar(@sorted)-1)/200);
+		my $upper = (scalar(@sorted) - $lower -1);
+
+		$lower_limit[$i] = $sorted[$lower];
+		$upper_limit[$i] = $sorted[$upper];	
+		unless ($alert){
+			if (($lower > 1) && 
+				(($lower_limit[$i] == $sorted[$lower -1]) ||
+				 ($lower_limit[$i] == $sorted[$lower +1]))) {
+				$alert = 1;
+			} elsif (($upper < scalar(@sorted)) && 
+					 (($upper_limit[$i] == $sorted[$upper -1]) ||
+					  ($upper_limit[$i] == $sorted[$upper +1]))) {
+				$alert = 1;
+			}
+		}
+	}
+	return \@lower_limit,\@upper_limit,$alert;
+
+}
+
+
+
+sub update_counts
+{
+	#static no shift
+	my %parm = validated_hash(\@_,
+							  values => { isa => 'ArrayRef', optional => 0 },
+							  censor_values => { isa => 'Maybe[ArrayRef]', optional => 1 },
+							  censored => { isa => 'Bool', optional => 0 },
+							  predcorr => { isa => 'Bool', optional => 0 },
+							  lower_limit => { isa => 'ArrayRef', optional => 0 },
+							  upper_limit => { isa => 'ArrayRef', optional => 0 },
+							  lower_count => { isa => 'ArrayRef', optional => 0 },
+							  upper_count => { isa => 'ArrayRef', optional => 0 },
+							  total_count => { isa => 'ArrayRef', optional => 0 },
+		);
+	my $values = $parm{'values'};
+	my $censor_values = $parm{'censor_values'};
+	my $censored = $parm{'censored'};
+	my $predcorr = $parm{'predcorr'};
+	my $lower_limit = $parm{'lower_limit'};
+	my $upper_limit = $parm{'upper_limit'};
+	my $lower_count = $parm{'lower_count'};
+	my $upper_count = $parm{'upper_count'};
+	my $total_count = $parm{'total_count'};
+
+
+	for (my $j=0; $j< scalar(@{$values}); $j++){
+		next if ($censored and (($predcorr and $censor_values->[$j] != 0) or
+								$censor_values->[$j]==1) );
+		$total_count->[$j] += 1;
+		if ($values->[$j] < $lower_limit->[0]){
+			$lower_count->[0]->[$j] +=1;
+			for (my $i=1; $i<scalar(@{$lower_limit}); $i++){
+				if ($values->[$j] < $lower_limit->[$i]){
+					$lower_count->[$i]->[$j] +=1;
+				} else {
+					last; #goto next column (next value in @values)
+				}
+			}
+		} elsif ($values->[$j] > $upper_limit->[0]){
+			$upper_count->[0]->[$j] +=1;
+			for (my $i=1; $i<scalar(@{$upper_limit}); $i++){
+				if ($values->[$j] > $upper_limit->[$i]){
+					$upper_count->[$i]->[$j] +=1;
+				} else {
+					last; #goto next $value
+				}
+			}
+		}
+
+	}
+
+
+}
+
 sub subset_npc_analyze
 {
 	#static no shift
@@ -5180,8 +5272,6 @@ sub subset_npc_analyze
 							  bin_index => { isa => 'Int', optional => 1 },
 							  strata_index => { isa => 'Int', optional => 0 },
 							  pred_intervals => { isa => 'Ref', optional => 0 },
-							  lower_index => { isa => 'Ref', optional => 0 },
-							  upper_index => { isa => 'Ref', optional => 0 },
 							  censored => { isa => 'Bool', optional => 0 },
 							  ci  => { isa => 'Num', optional => 0 },
 							  no_sim => { isa => 'Int', optional => 0 },
@@ -5196,8 +5286,6 @@ sub subset_npc_analyze
 	my $bin_index = $parm{'bin_index'};
 	my $strata_index = $parm{'strata_index'};
 	my $pred_intervals = $parm{'pred_intervals'};
-	my $lower_index = $parm{'lower_index'};
-	my $upper_index = $parm{'upper_index'};
 
 	my $censored = $parm{'censored'};
 	my $ci = $parm{'ci'};
@@ -5219,7 +5307,6 @@ sub subset_npc_analyze
 	my @stats_warnings;
 
 
-	#start function, in is bin_index,strata_index,lower_index,upper_index,
 	#pred_intervals,$high_ind,$low_ind
 	# if  bin_index undefined then assume all
 	#out is ref to result_values and real_positions and stats_warnings
@@ -5230,7 +5317,6 @@ sub subset_npc_analyze
 	#but if real observation is missing or predcorr and lloq/uloq
 	#then set -99
 	#other result_values should be '' if cannot be computed
-	#if censored must recompute all indices, cannot use $high_ind, $low_ind, $lower_index, $upper_index
 	
 
 	my $point_counter=0;
@@ -5266,8 +5352,6 @@ sub subset_npc_analyze
 		"identical values to make it possible to report correct counts above and below the PI.\n\n";
 	
 	for (my $point_index=0; $point_index < $point_counter; $point_index++){
-		my @lowers=();
-		my @uppers=();
 		my $row;
 		if (defined $bin_index){
 			$row = $binned_data->[$strata_index]->[$bin_index]->[$point_index];
@@ -5277,11 +5361,10 @@ sub subset_npc_analyze
 
 		($orig_value,@values) = split(/,/,$row); 
 
-		my @sorted_sim_values=();
+		my @remaining=();
 		my ($orig_cens,@censor);
 
 		if ($censored){
-			my @remaining = ();
 			my $cens;
 			if (defined $bin_index){
 				$cens = $censor_binned_data->[$strata_index]->[$bin_index]->[$point_index];
@@ -5296,41 +5379,26 @@ sub subset_npc_analyze
 					push(@remaining,$values[$j]) if ($censor[$j] != 1); #not missing
 				}
 			}
-			@sorted_sim_values = sort {$a <=> $b} @remaining; #sort numerically ascending
 		}else{
-			@sorted_sim_values = sort {$a <=> $b} @values; #sort numerically ascending
+			push(@remaining, @values);
 		}
 
-		if (scalar(@sorted_sim_values) == 0){
+		if (scalar(@remaining) == 0){
 			for (my $i=0; $i<$no_pred_ints; $i++){
 				$lower_limit[$i] = '';
 				$upper_limit[$i] = '';
 			}
-			$obs_counter++;
 		}else{
-			for (my $i=0; $i<$no_pred_ints; $i++){
-				#need to recompute index if censored
-				my $lower = $lower_index->[$i];
-				my $upper = ($upper_index->[$i]);
-				if ($censored){
-					$lower = round((100-$pred_int[$i])*(scalar(@sorted_sim_values)-1)/200);
-					$upper = (scalar(@sorted_sim_values) - $lower -1);
-				}
-				$lower_limit[$i] = $sorted_sim_values[$lower];
-				$upper_limit[$i] = $sorted_sim_values[$upper];	
-				unless ($npc_alert_written){
-					if (($lower > 1) && 
-						(($lower_limit[$i] == $sorted_sim_values[$lower -1]) ||
-						 ($lower_limit[$i] == $sorted_sim_values[$lower +1]))) {
-						print $alert_string;
-						$npc_alert_written = 1;
-					} elsif (($upper < scalar(@sorted_sim_values)) && 
-							 (($upper_limit[$i] == $sorted_sim_values[$upper -1]) ||
-							  ($upper_limit[$i] == $sorted_sim_values[$upper +1]))) {
-						print $alert_string;
-						$npc_alert_written = 1;
-					}
-				}
+			my ($low,$up,$alert)= tool::npc::get_lower_and_upper_limits(alert_written => $npc_alert_written,
+																		values => \@remaining,
+																		pred_intervals => \@pred_int);
+			@lower_limit = @{$low};
+			@upper_limit = @{$up};
+			unless ($npc_alert_written){
+				if ($alert){
+					print $alert_string;
+					$npc_alert_written = 1;
+				} 
 			}
 			
 			unshift @values,($orig_value); #put original value back at the beginning
@@ -5341,31 +5409,16 @@ sub subset_npc_analyze
 			#limit of any interval. Then if value is not below limit of 2nd, 3rd... 
 			#interval it cannot be below limit of any of the remaining.
 			
-			for (my $j=0; $j<= $no_sim; $j++){
-				next if ($censored and (($predcorr and $censor[$j] != 0) or
-										$censor[$j]==1) );
-				$count_max[$j] += 1;
-				if ($values[$j] < $lower_limit[0]){
-					$lower_count[0]->[$j] +=1;
-					for (my $i=1; $i<$no_pred_ints; $i++){
-						if ($values[$j] < $lower_limit[$i]){
-							$lower_count[$i]->[$j] +=1;
-						} else {
-							last; #goto next column (next value in @values)
-						}
-					}
-				} elsif ($values[$j] > $upper_limit[0]){
-					$upper_count[0]->[$j] +=1;
-					for (my $i=1; $i<$no_pred_ints; $i++){
-						if ($values[$j] > $upper_limit[$i]){
-							$upper_count[$i]->[$j] +=1;
-						} else {
-							last; #goto next $value
-						}
-					}
-				}
-
-			}
+			update_counts(values => \@values,
+						  censor_values => \@censor,
+						  censored => $censored,
+						  predcorr => $predcorr,
+						  lower_limit => \@lower_limit,
+						  upper_limit => \@upper_limit,
+						  lower_count => \@lower_count,
+						  upper_count => \@upper_count,
+						  total_count => \@count_max
+				);
 
 
 			##For VPC diagnostics: build integer matrix w/ under/above/in info for real data only
@@ -5397,10 +5450,10 @@ sub subset_npc_analyze
 				}
 			}
 
-			$obs_counter++;
 			### end VPC diagnostics
 			
 		} #endof if at least 1 uncensored sim
+		$obs_counter++;
 
 	} #endof foreach row
 
@@ -5419,15 +5472,12 @@ sub subset_npc_analyze
 		print "\n";
 	}  
 
-	#high_ind and lowind should be based on nonzero_obs
 	my $non_zeros = 0;
 	$sum_warnings[0] = -99 if ($count_max[0] == 0);
 	for (my $j=1; $j<= $no_sim; $j++){
 		$non_zeros++ if ($count_max[$j] > 0);
 		$sum_warnings[$j] = -99 if ($count_max[$j] == 0);
 	}
-	$low_ind = round((100-$ci)*($non_zeros-1)/200); #index of start of ci % interval
-	$high_ind = $non_zeros - $low_ind - 1; #index of end  of  c_i% interval
 
 	#loop over prediction intervals, compute results for each interval
 	for (my $i=0; $i<$no_pred_ints; $i++){
@@ -5442,11 +5492,12 @@ sub subset_npc_analyze
 				push(@perc_arr, 100*$lower_count[$i]->[$j]/$count_max[$j]) ;
 			}
 		}
-		my @sorted_arr = sort {$a <=> $b} @perc_arr;
-		
+
+		my ($dirt,$lowlim,$highlim) = median_and_ci(\@perc_arr,$ci);
+
 		if ($non_zeros> 0){
 #			print "realperc $realperc low ".$sorted_arr[$low_ind]." ".$sorted_arr[$high_ind]."\n";
-			if ((defined $realperc) and (( $realperc<$sorted_arr[$low_ind]) ||($realperc>$sorted_arr[$high_ind]))){
+			if ((defined $realperc) and (( $realperc<$lowlim) ||($realperc>$highlim))){
 				$warn='*';
 				$sum_warnings[0] += 1; #NPC diagnostics
 			}
@@ -5455,8 +5506,8 @@ sub subset_npc_analyze
 		#For NPC diagnostics:
 		for (my $si=1; $si<= $no_sim; $si++){
 			if ($count_max[$si] > 0){
-				if (( (100*$lower_count[$i]->[$si]/$count_max[$si]) < $sorted_arr[$low_ind]) 
-					||((100*$lower_count[$i]->[$si]/$count_max[$si]) > $sorted_arr[$high_ind])){
+				if (( (100*$lower_count[$i]->[$si]/$count_max[$si]) < $lowlim) 
+					||((100*$lower_count[$i]->[$si]/$count_max[$si]) > $highlim)){
 					$sum_warnings[$si] += 1;
 				}
 			}
@@ -5465,12 +5516,10 @@ sub subset_npc_analyze
 		
 		if ($verbose){
 			print "\n $high_ind $low_ind\n";
-			print $lower_count[$i]->[0]." $realperc $warn ".$sorted_arr[$low_ind].
-				" ".$sorted_arr[$high_ind]."\n";
+			print $lower_count[$i]->[0]." $realperc $warn ".$lowlim." ".$highlim."\n";
 		}
 
-		my @result_row_values =($lower_count[$i]->[0],$realperc,$warn,$sorted_arr[$low_ind],
-								$sorted_arr[$high_ind]);
+		my @result_row_values =($lower_count[$i]->[0],$realperc,$warn,$lowlim,$highlim);
 
 		$warn=' ';
 		$realperc = undef;
@@ -5483,11 +5532,11 @@ sub subset_npc_analyze
 				push(@perc_arr, 100*$upper_count[$i]->[$j]/$count_max[$j]);
 			}
 		}
-		my @sorted_arr = sort {$a <=> $b} @perc_arr;
-		
+		($dirt,$lowlim,$highlim) = median_and_ci(\@perc_arr,$ci);
+				
 		if ($non_zeros> 0){
 			#high_ind and lowind based on nonzero_obs, computed above
-			if ((defined $realperc) and (( $realperc<$sorted_arr[$low_ind]) ||($realperc>$sorted_arr[$high_ind]))){
+			if ((defined $realperc) and (( $realperc<$lowlim) ||($realperc>$highlim))){
 				$warn='*';
 				$sum_warnings[0] += 1; #NPC diagnostics
 			}
@@ -5496,8 +5545,8 @@ sub subset_npc_analyze
 		#For NPC diagnostics:
 		for (my $si=1; $si<= $no_sim; $si++){
 			if ($count_max[$si] > 0){
-				if (( (100*$upper_count[$i]->[$si]/$count_max[$si]) < $sorted_arr[$low_ind]) 
-					||((100*$upper_count[$i]->[$si]/$count_max[$si]) > $sorted_arr[$high_ind])){
+				if (( (100*$upper_count[$i]->[$si]/$count_max[$si]) < $lowlim) 
+					||((100*$upper_count[$i]->[$si]/$count_max[$si]) > $highlim)){
 					$sum_warnings[$si] += 1;
 				}
 			}
@@ -5505,11 +5554,9 @@ sub subset_npc_analyze
 		#endof NPC diagnostics
 		
 		if ($verbose){
-			print $upper_count[$i]->[0]." $realperc $warn ".$sorted_arr[$low_ind].
-				" ".$sorted_arr[$high_ind]."\n";
+			print $upper_count[$i]->[0]." $realperc $warn ".$lowlim." ".$highlim."\n";
 		}
-		push (@result_row_values,($upper_count[$i]->[0], $realperc,$warn,$sorted_arr[$low_ind],
-								  $sorted_arr[$high_ind]));
+		push (@result_row_values,($upper_count[$i]->[0], $realperc,$warn,$lowlim,$highlim));
 		
 		push (@result_values,\@result_row_values);
 
@@ -5538,13 +5585,8 @@ sub subset_npc_analyze
 		#number absolute number outside a limit ($low_ind) div by total number of values
 		push(@stats_warnings,($no_pred_ints*2*2*$low_ind/$non_zeros)); #ok
 
-		my @sorted_sums = sort {$a <=> $b} @detected_sum_warnings;
-		
-		#median
-		push(@stats_warnings,median(\@sorted_sums)); 
+		push(@stats_warnings,median_and_ci(\@detected_sum_warnings,$ci));
 
-		push(@stats_warnings,$sorted_sums[$low_ind]); #start CI 
-		push(@stats_warnings,$sorted_sums[$high_ind]); #end CI 
 	}
 
 	return \@result_values ,\@real_positions ,\@stats_warnings, $npc_alert_written;
