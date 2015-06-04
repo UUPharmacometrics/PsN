@@ -464,6 +464,12 @@ sub _create_residuals
         push @ids, "IWRES";
     }
 
+    if (exists $sdtab->column_head_indices->{'CWRES'}) {
+        my $cwres = $sdtab->column_to_array(column => "CWRES");
+        push @values, $cwres;
+        push @ids, "CWRES";
+    }
+
     if (scalar(@values) == 2) { # No columns were added
         return;
     }
