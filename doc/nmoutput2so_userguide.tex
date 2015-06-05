@@ -91,7 +91,7 @@ $OMEGA BLOCK(2)
         \end{verbatim}
     \item To be able to populate the Residuals and the Predictions entries an sdtab table must be specified. The name but not the orders of the columns is important. ID and TIME must be in the table. Other columns are optional. The example below shows an sdtab with all columns. The name of the file must start with "sdtab" Example:
         \begin{verbatim}
-$TABLE ID TIME MDV DV PRED IPRED RES IRES WRES IWRES NOAPPEND FILE=sdtab2
+$TABLE ID TIME MDV DV PRED IPRED RES IRES WRES IWRES CWRES NOAPPEND FILE=sdtab2
         \end{verbatim}
     \item To be able to populate the IndividualEstimates entry a patab table must be specified. NOAPPEND must be used and the order of the columns is important. The first column must be ID, then comes all individual parameters followed by the ETAs (see below). Example:
         \begin{verbatim}
@@ -102,6 +102,7 @@ $TABLE ID CL V ETA_CL ETA_V NOAPPEND FILE=patab
  ETA_CL = ETA(1)
  ETA_V = ETA(2)
         \end{verbatim}
+    \item If multiple DVs are to be used a DVID column must be set in the sdtab.
 \end{itemize}
 
 
@@ -182,7 +183,7 @@ The following entries will be populated:
         \begin{itemize}
             \item SimulationBlock    
             \begin{itemize}
-                \item SimulatedProfiles - Taken from the first table that contains all of ID, TIME and DV. If MDV column is present only DVs for which MDV=0 will be added.
+                \item SimulatedProfiles - Taken from the first table that contains all of ID, TIME and DV. If MDV column is present only DVs for which MDV=0 will be added. DVID will be set according to the DVID column in the same table file. If DVID column is not present DVID will be set to 1.
                 \item IndivParameters - Taken from patab
                 \item Covariates - Taken from cotab
                 \item PopulationParameters - Created from the initial estimates of the parameters from the .lst file and the maxímum span of TIME from the first table that contains TIME.

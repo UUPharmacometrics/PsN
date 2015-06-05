@@ -770,9 +770,13 @@ sub _create_simulated_profiles
             push @id, int($columns[$colnos{'ID'}]);
             push @time, $columns[$colnos{'TIME'}];
             push @dv, $columns[$colnos{'DV'}];
+            if (exists $colnos{'DVID'}) {
+                push @dvid, int($columns[$colnos{'DVID'}]);
+            } else {
+                push @dvid, 1;
+            }
         }
     }
-    @dvid = ((1) x scalar(@id));        # Don't support multiple DVs for now
 
     my $simulated_profiles = so::table->new(
         name => "SimulatedProfiles",
