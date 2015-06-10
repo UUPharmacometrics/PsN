@@ -408,12 +408,24 @@ sub _create_predictions
     my $pred = $sdtab->column_to_array(column => "PRED");
     my $ipred = $sdtab->column_to_array(column => "IPRED");
 
+    my $column_id = [ "ID", "TIME", "PRED", "IPRED" ];
+    my $column_type = [ "id", "undefined", "undefined", "undefined" ];
+    my $value_type = [ "string", "real", "real", "real" ];
+    my $columns = [ $id, $time, $pred, $ipred ];
+
+    if (exists $sdtab->column_head_indices->{'DVID'}) {
+        push @$column_id, "DVID";
+        push @$column_type, "undefined";
+        push @$value_type, "int";
+        push @$columns, $sdtab->column_to_array(column => "DVID");
+    }
+
     my $predictions = so::table->new(
         name => "Predictions",
-        columnId => [ "ID", "TIME", "PRED", "IPRED" ],
-        columnType => [ "id", "undefined", "undefined", "undefined" ],
-        valueType =>  [ "string", "real", "real", "real" ],
-        columns => [ $id, $time, $pred, $ipred ],
+        columnId => $column_id,
+        columnType => $column_type,
+        valueType =>  $value_type,
+        columns => $columns,
     );
 
     $self->_so_block->Estimation->Predictions($predictions);
@@ -439,39 +451,52 @@ sub _create_residuals
 
     my @values = ( $id, $time );
     my @ids = ( "ID", "TIME" );
+    my @value_type = ( "string", "real" );
 
     if (exists $sdtab->column_head_indices->{'RES'}) {
         my $res = $sdtab->column_to_array(column => "RES");
         push @values, $res;
         push @ids, "RES";
+        push @value_type, "real";
     }
 
     if (exists $sdtab->column_head_indices->{'IRES'}) {
         my $ires = $sdtab->column_to_array(column => "IRES");
         push @values, $ires;
         push @ids, "IRES";
+        push @value_type, "real";
     }
 
     if (exists $sdtab->column_head_indices->{'WRES'}) {
         my $wres = $sdtab->column_to_array(column => "WRES");
         push @values, $wres;
         push @ids, "WRES";
+        push @value_type, "real";
     }
     
     if (exists $sdtab->column_head_indices->{'IWRES'}) {
         my $iwres = $sdtab->column_to_array(column => "IWRES");
         push @values, $iwres;
         push @ids, "IWRES";
+        push @value_type, "real";
     }
 
     if (exists $sdtab->column_head_indices->{'CWRES'}) {
         my $cwres = $sdtab->column_to_array(column => "CWRES");
         push @values, $cwres;
         push @ids, "CWRES";
+        push @value_type, "real";
     }
 
     if (scalar(@values) == 2) { # No columns were added
         return;
+    }
+
+    if (exists $sdtab->column_head_indices->{'DVID'}) {
+        my $dvid = $sdtab->column_to_array(column => "DVID");
+        push @values, $dvid;
+        push @ids, "DVID";
+        push @value_type, "int";
     }
 
     # Remove MDV rows
@@ -489,7 +514,7 @@ sub _create_residuals
         name => "ResidualTable",
         columnId => \@ids,
         columnType => [ "id", ("undefined") x (scalar(@ids) - 1) ],
-        valueType =>  [ "string", ("real") x (scalar(@ids) - 1) ],
+        valueType =>  \@value_type,
         columns => \@values,
     );
     $self->_so_block->Estimation->Residuals->ResidualTable($table);
