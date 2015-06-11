@@ -2793,6 +2793,8 @@ sub is_option_set
 			}elsif( $fuzzy_match ){
 				if( index( $name, $option -> name ) == 0 ){
 					$found = 1;
+				}elsif(	index( $option -> name, $name  ) == 0 ){ #experimental
+					$found = 1;
 				}
 			}
 			last if ($found);
