@@ -125,9 +125,9 @@ In the terminal window, the precond script printout the condition number of the 
 Every time the covariance matrix cannot be obtained through preconditioning, a message on the command line would suggest the next option to try.  In addition, after every preconditioning, compare the raw\_results files in the original model fit directory and the precond directory to make sure that OFV and esimated parameters are approximately the same.  If OFVs are similar and a parameter is significantly different, then the model is most likely to be an unidentifiable model and no further attempt to obtain the covariance matrix should be made.
 
 
-\section{Workflow}
+\section{Description}
 
-Below is a simple diagram of the precond workflow.
+Below is a simple diagram of the internal automated precond workflow. Some automatic minor modifications of the model will be made before precond will do its first run to make sure that the R-matrix will be created.
 
 \tikzstyle{decision} = [diamond, draw, fill=blue!20, 
     text width=8em, text badly centered, node distance=4cm, inner sep=0pt]
