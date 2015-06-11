@@ -4283,7 +4283,7 @@ sub add_option
 		 record_number => { isa => 'Int', default => 0, optional => 1 },
 		 record_name => { isa => 'Str', optional => 0 },
 		 option_name => { isa => 'Str', optional => 0 },
-		 option_value => { isa => 'Str', optional => 1 },
+		 option_value => { isa => 'Maybe[Str]', optional => 1 },
 		 add_record => { isa => 'Bool', default => 0, optional => 1 }
 	);
 	my @problem_numbers = defined $parm{'problem_numbers'} ? @{$parm{'problem_numbers'}} : ();
@@ -4318,7 +4318,7 @@ sub set_option
 		record_name => { isa => 'Str', optional => 0 },
 		record_number => { isa => 'Int', default => 0, optional => 1 },
 		option_name => { isa => 'Str', optional => 0 },
-		option_value => { isa => 'Str', optional => 1 },
+		option_value => { isa => 'Maybe[Str]', optional => 1 },
 		fuzzy_match => { isa => 'Bool', default => 0, optional => 1 }
 	);
 	my @problem_numbers = defined $parm{'problem_numbers'} ? @{$parm{'problem_numbers'}} : ();
