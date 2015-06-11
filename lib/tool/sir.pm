@@ -1755,62 +1755,6 @@ sub create_R_plots_code{
 
 }
 
-sub get_array_positions{
-	#static
-	my %parm = validated_hash(\@_,
-							  target => { isa => 'ArrayRef', optional => 0 },
-							  keys => { isa => 'ArrayRef', optional => 0 },
-							  R_indexing => { isa => 'Bool', optional => 1, default => 1 },
-		);
-	my $target = $parm{'target'};
-	my $keys = $parm{'keys'};
-	my $R_indexing = $parm{'R_indexing'};
-	my @cols= ();
-	return \@cols unless (defined $target and defined $keys);
-
-	my @remaining_keys=();
-	foreach my $key (@{$keys}){
-		push(@remaining_keys,$key);
-	}
-	
-	my $start=undef;
-	my $end=undef;
-	my $matched = 0;
-	for (my $i=0; $i< scalar(@{$target}); $i++){
-		$matched = 0;
-		for (my $j=0; $j< scalar(@remaining_keys); $j++){
-			if ($target->[$i] eq $remaining_keys[$j]){
-				if (defined $start){
-					$end = $i+$R_indexing; #add 1 if use R indexing
-				}else{
-					$start = $i+$R_indexing;
-				}
-				splice(@remaining_keys,$j,1); #remove matched element
-				$matched = 1;
-				last;
-			}
-		}
-		if ((not $matched) or (scalar(@remaining_keys)<1) or ($i == (scalar(@{$target})-1)))  {
-			#either did not match or this is last match
-			if (defined $start){
-				if (defined $end){
-					push(@cols,$start.':'.$end);
-				}else{
-					push(@cols,$start);
-				}
-				$start=undef;
-				$end=undef;
-			}
-		}
-
-		last if (scalar(@remaining_keys)<1);
-	}
-	unless (scalar(@remaining_keys)<1){
-		ui->print(category=>'all',
-				  message=> "get_array_positions remaining keys ".join(' ',@remaining_keys));
-	}
-	return \@cols;
-}
 
 no Moose;
 __PACKAGE__->meta->make_immutable;

@@ -184,4 +184,24 @@ ok (array::is_equal([1, 2, 3, 4], [1, 2, 3, 4]), "equal arrays");
 ok (!array::is_equal([1, 2, 3, 4], [1, 2, 3, 5]), "not equal arrays");
 ok (!array::is_equal([1, 2, 3, 4], [1, 2, 3, 4, 5]), "not equal arrays 2");
 
+my $target = ['sample.id','model','problem','subproblem','covariance_step_run','minimization_successful',
+	'covariance_step_successful','covariance_step_warnings','estimate_near_boundary','rounding_errors',
+	'zero_gradients','final_zero_gradients','hessian_reset','s_matrix_singular','significant_digits','condition_number',
+	'est_methods','model_run_time','subprob_est_time','subprob_cov_time','ofv','deltaofv','likelihood_ratio','relPDF',
+	'importance_ratio','probability_resample','resamples','CL','V','IVCL','IVV','SIGMA(1,1)','seCL','seV','seIVCL',
+	'seIVV','seSIGMA(1,1)','shrinkage_eta1(%)','shrinkage_eta2(%)','shrinkage_iwres(%)','EI1','EI2','EI3','EI4','EI5'];
+my $keys =['CL','V','IVCL','IVV','SIGMA(1,1)'];
+
+is_deeply(get_array_positions(target => $target,keys=> $keys),['28:32'],'get_array_positions 1 ');
+
+$keys =['CL','IVCL','SIGMA(1,1)'];
+
+is_deeply(get_array_positions(target => $target,keys=> $keys),[28,30,32],'get_array_positions 2 ');
+$keys =['CL','V','IVV','SIGMA(1,1)'];
+
+is_deeply(get_array_positions(target => $target,keys=> $keys),['28:29','31:32'],'get_array_positions 3 ');
+$keys =['CL','V','IVV'];
+
+is_deeply(get_array_positions(target => $target,keys=> $keys),['28:29',31],'get_array_positions 4 ');
+
 done_testing();
