@@ -321,7 +321,7 @@ sub BUILD
 		my ($directory, $filename) = OSspecific::absolute_path( $model->directory, $model->filename );
 		$model->filename( $filename );
 		$model->directory( $directory );
-		$filename =~ s/(\.ctl|\.mod)$//;
+		$filename =~ s/\.[^.]+$//; #remove last dot and extension
 
 		foreach my $attribute ( 'raw_results_file','raw_nonp_file' ) {
 			if ( $self->top_tool() and $first  ) {
@@ -833,7 +833,7 @@ sub run
 	$self->pre_fork_setup;
 
 	if (scalar(@{$self->models})>1){
-		croak("Cannot have more than one input model in tools other than modelfit");
+#		croak("Cannot have more than one input model in tools other than modelfit"); #or benchmark!
 	}
       
 
