@@ -1068,6 +1068,20 @@ sub read_answers
     4.47E-05 ,  6.18E-05, -1.18E-06, 3.01E-05 ,-5.92E-05,-4.22E-05,-7.90E-05,-5.65E-05,7.95E-06,-9.36E-05,-7.69E-05,-3.98E-05,-1.06E-04,-1.16E-04,5.79E-05 
 		];
 
+
+    $index++;
+    $answer_hashes[$index]->{file} = 'special_mod/zeroruntime.lst';
+    $answer_hashes[$index]->{parsed_successfully} = 1;
+    $answer_hashes[$index]->{runtime} = '00:00:00';
+    $answer_hashes[$index]->{answers} = {};
+
+    $index++;
+    $answer_hashes[$index]->{file} = 'special_mod/postprocesstime.lst';
+    $answer_hashes[$index]->{parsed_successfully} = 1;
+    $answer_hashes[$index]->{runtime} = '0:08:02';
+    $answer_hashes[$index]->{answers} = {};
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'sum_estimation_time'}=478.93;
+
 	return \@answer_hashes;
 }
 

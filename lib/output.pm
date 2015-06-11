@@ -2988,11 +2988,14 @@ sub _read_problems
 				($hour, $min, $sec) = split(':', $tt);
 				my $endtime = timelocal($sec, $min, $hour, $mday, $mon, $year);
 				my $runtime = $endtime - $starttime; # in seconds
-				next if ($runtime == 0);
-				my $seconds = $runtime % 60;
-				my $minutes = (($runtime - $seconds) / 60) % 60;
-				my $hours = ($runtime - $seconds - 60 * $minutes) / 3600;
-				$self->runtime(sprintf "%i:%02i:%02i", $hours, $minutes, $seconds);
+				if ($runtime == 0){
+					$self->runtime('00:00:00');
+				}else{
+					my $seconds = $runtime % 60;
+					my $minutes = (($runtime - $seconds) / 60) % 60;
+					my $hours = ($runtime - $seconds - 60 * $minutes) / 3600;
+					$self->runtime(sprintf "%i:%02i:%02i", $hours, $minutes, $seconds);
+				}
 			}
 			last;
 		}elsif (/^1NONLINEAR MIXED EFFECTS MODEL PROGRAM/){

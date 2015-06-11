@@ -13,8 +13,8 @@ my $nind_exp = ' TOT. NO. OF INDIVIDUALS:\s*(\d+)';
 my $subprob_exp = '^ PROBLEM NO\.:\s*(\d+)\s*SUBPROBLEM NO\.:\s*(\d+|\*\*\*\*)';
 my $star_subprob_number=9999;
 my $method_exp = '^ #METH:\s*(.*)';
-my $est_time_exp = '^ Elapsed estimation time in seconds:\s*(.+)';
-my $cov_time_exp = '^ Elapsed covariance time in seconds:\s*(.+)';
+my $est_time_exp = '^ Elapsed estimation\s* time in seconds:\s*(.+)';
+my $cov_time_exp = '^ Elapsed covariance\s* time in seconds:\s*(.+)';
 my $simulation_exp = '^ SIMULATION STEP PERFORMED';
 
 
