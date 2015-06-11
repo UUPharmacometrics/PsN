@@ -62,6 +62,9 @@ for (my $i=0; $i< scalar(@answer_hashes); $i++){
 			   $answer_hashes[$i]->{estimation_evaluation_problem_number},"$fname estimation_evaluation_problem_number");
 	}
 
+	if(defined $answer_hashes[$i]->{runtime}){
+		cmp_ok($outobj->runtime(),'eq',$answer_hashes[$i]->{runtime},"$fname runtime");
+	}
 	if(defined $answer_hashes[$i]->{problem_count}){
 		cmp_ok($outobj->get_problem_count(),'==',$answer_hashes[$i]->{problem_count},"$fname problem_count");
 	}
