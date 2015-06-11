@@ -46,6 +46,7 @@ sub remove_option
         next if ( $option -> name eq $name );    
 
         next if ( $fuzzy_match and index( $name, $option -> name ) == 0 );
+        next if ( $fuzzy_match and index(  $option -> name,$name ) == 0 ); #experimental
 
         push( @new_options, $option );
     }
