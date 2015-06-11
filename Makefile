@@ -136,6 +136,7 @@ LIBFILES= ui.pm \
 	tool.pm \
 	tool/modelfit.pm \
 	tool/sir.pm \
+	tool/benchmark.pm \
 	tool/llp.pm \
 	tool/cdd.pm \
 	tool/cdd/jackknife.pm \
