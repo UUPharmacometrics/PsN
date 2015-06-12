@@ -51,11 +51,26 @@ Known issues
   is installed *before* (re)running the installation script setup.pl
 
 *********************************************
-Changes and bug fixes from PsN 4.0.0 to n.n.n
+Changes and bug fixes from PsN 4.4.0 to n.n.n
 *********************************************
 
    ___General___
 
+- Bug fix: reading of $DATA when IGNORE=(list) has a list that is split over two or more lines
+
+- Bug fix: added file extensions .cpu, .agh and .shm to output files handled for NM7
+
+- Bug fix: Correct search for nmfe script when major version is 6 and subversion is defined in psn.conf.
+
+- Bug fix: Relax checking of -nmfe_options so that -maxlim=(1,2) does not trigger warning.
+
+- Bug fix: Reading of elapsed estimation time for SAEM.
+
+- Bug fix: Reading of total run time when run time is 0 seconds.
+
+- Bug fix: Parsing of $SIGMA/$OMEGA when comma is used instead of space as in $SIGMA 1,FIX
+
+- Bug fix: Do not require that psn.conf exists during installation
 
    ___Cluster/grid interaction___
 
@@ -66,16 +81,40 @@ Changes and bug fixes from PsN 4.0.0 to n.n.n
    ___nca___
 
 
+   ___mcmp___
+
+- Bug fix: allow option -significance_level=0.1 which did not work
+
+- Add new significance levels 20, 15 and 10% to existing set of 5,1 and 0.1%. Updated rplots template
+  to include the new significance levels.
+
+- Updated documentation.
+
    ___sumo___
 
+- Bug fix: When reading matrices from lst-file, handle also NONMEM's sparse matrix format
 
+- Bug fix: Check for high correlations. 
+
+- Bug fix: Check for large relative standard errors. 
+
+- Bug fix: Reading of matrices from lst-files when .cov, .coi, .cor not available. Make sure rows and columns 
+  	  	   are sorted in correct order.
+
+- Bug fix: Make sure omega/sigma correlations are computed also when variances are small. 
 
    ___vpc/npc___
+
+- Bug fix: Correction in confidence intervals for median of percent censored observations when using option -censor.
+
+- Bug fix: Do not warn that $INPUT uses synonym for DV when -dv is set on command-line.
+
+- Bug fix: Option combination -bin_by_count=1 -bin_array=... 
 
 
    ___scm___
 
-
+- Bug fix: Use -threads set on command-line also in first iteration.
 
    ___boot_scm___
 
@@ -83,6 +122,7 @@ Changes and bug fixes from PsN 4.0.0 to n.n.n
 
    ___sse___
 
+- New option -append_columns=col1,col2,... A comma-separated list of parameters to append to the simulated data sets, if desired.
 
    ___bootstrap___
 
@@ -90,33 +130,58 @@ Changes and bug fixes from PsN 4.0.0 to n.n.n
 
    ___update_inits___
 	 
+- Bug fix: Rounding of negative values and values with absolute value >= 10
+
+- New option -flip_comments
+
+- New option -nm_version, so that rounding of initial estimates is done based on major NM-version (7 or less than 7)
 
    ___randtest___
 	 
 
    ___execute___
 	 
+- Bug fix: minor fix -rplots when detecting xpose run number from table file names: do not include 'sim' in the run number, 
+  	 i.e. for sdtab65sim the run number is just 65
+
+- Document that parentheses in -nmfe_options must be escaped on *nix.
 
    ___parallel_retries___
 	 
 
    ___sir___
 	 
+    sir will print covmatrix in box-cox space for each iteration
+    sir major redesign of algorithm, run multiple iterations where resampled parameters from one iteration is used to generate proposal density for the next. The resampled parameters will be Box-Cox transformed to normality so that a built-in Perl function for sampling from a multivariate normal can be used in the next iteration.
 
 
    ___precond___
 	 
+- Some clarifications in the documentation.
 
    ___pvar___
 
 
-   ___frem___
+   ___runrecord___
+
+Bug fix: Correction in documentation so that tags for interindividual and interoccasion variability 
+		 in documentation match what is expected in the code
 
 
    ___llp___
 
 
    ___nmoutput2so___
+
+- Add DVID to Preditions and Residuals if present in sdtab
+
+- Add support for multiple DVs in simulations
+
+- Add CWRES if present in sdtab
+
+- Residuals renamed from Residual
+  
+- Add bootstrap results file to RawResults
 
 - Support for SO 0.2
 
@@ -136,12 +201,12 @@ Changes and bug fixes from PsN 4.0.0 to n.n.n
 
 - Added SimulationBlock/PopulationParameters
 
-- Removed parameters on sd/corr scale from bootstrap results
- 
 - Option -precision removed. Now Using maximum precision available
 
 
-   ___pind___
+
+
+
 
 
  
