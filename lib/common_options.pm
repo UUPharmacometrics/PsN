@@ -449,18 +449,12 @@ sub sanity_checks
 	}
 
 	if (defined $options->{'nmfe_options'}) {
- 		if ($options->{'nmfe_options'} =~ /\w+,\w+/) {
-			print "\nWarning: You have set -nmfe_options=".$options->{'nmfe_options'}." on the commandline or in psn.conf\n";
-			print "This does not look like valid options to the nmfe script.\n";
-			print "Note that PsN4 will pass them on unchanged to the nmfe script, for help use\nexecute -help nmfe_options\n\n";
-		} else {
-			my @options_list = qw(background prsame prdefault prcompile trskip xmloff);
-			foreach $opt (@options_list) {
-				if ($options->{'nmfe_options'} =~ /\A$opt\Z/) {
-					print "\nWarning: You have set -nmfe_options=".$options->{'nmfe_options'}." on the commandline or in psn.conf\n";
-					print "This does not look a valid option to the nmfe script (the - sign is missing).\n";
-					print "Note that PsN4 will pass this on unchanged to the nmfe script, for help use\nexecute -help nmfe_options\n\n";
-				}
+		my @options_list = qw(background prsame prdefault prcompile trskip xmloff maxlim tprdefault locfile);
+		foreach $opt (@options_list) {
+			if ($options->{'nmfe_options'} =~ /\A$opt\Z/) {
+				print "\nWarning: You have set -nmfe_options=".$options->{'nmfe_options'}." on the commandline or in psn.conf\n";
+				print "This does not look a valid option to the nmfe script (the - sign is missing).\n";
+				print "Note that PsN4 will pass this on unchanged to the nmfe script, for help use\nexecute -help nmfe_options\n\n";
 			}
 		}
 	}
@@ -680,11 +674,9 @@ EOF
     PsN will not check that the options are appropriate. When set on the PsN commandline 
     the string must be enclosed by quotes if it contains any spaces, but when set in 
     psn.conf it must never be enclosed by quotes even if it contains spaces. 
-    Note that before PsN4 this option was given as a comma-separated list of options 
-    that PsN would reformat. What would for PsN3 be specified as 
-    -nmfe_options=xmloff,prdefault
-    must now for PsN4 be specified on the commandline as 
-    -nmfe_options='-xmloff -prdefault'
+	On unix-type systems, but not on windows, any parentheses must be escaped with backslash.
+  Example:
+    -nmfe_options="-xmloff -prdefault"
     or in psn.conf 
     nmfe_options=-xmloff -prdefault
 EOF
