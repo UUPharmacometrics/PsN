@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{BENCHMARK user guide}{2015-06-08}
+\guidetitle{BENCHMARK user guide}{2015-06-15}
 
 
 \begin{document}
@@ -9,18 +9,21 @@
 
 
 \section{Introduction}
-The benchmark tool is intended for systematic comparison of run times, ofv, parameter estimates and other measures
+The benchmark tool is intended for systematic comparison of run times, ofv and parameter estimates
 across NONMEM versions and/or alternative settings of NONMEM options.
 For each model file given on the command-line, PsN will create one copy for each possible combination
 of the modifications listed on the command-line (option -record\_options), and
 then each model copy will be run first with the nonmem version given
 with option -nm\_version (as with any PsN tool) and then also with
 each of the nonmem versions listed with option -alt\_nonmem (if any).
+Each model run will be repeated if option -replicates is set larger than 1.
 
-There will be one raw\_results file produced for each input model, and each raw\_results file will contain one row
-for each combination of model modifications and NONMEM version. The rplots functionality is used to
-read the raw\_results files and
-visualize the run times (as reported by NONMEM in the lst-files), the stability of ofv values and of estimates.
+There will be one raw\_results file produced for each input model, and each raw\_results file will contain 
+'replicates' row(s)
+for each combination of model modifications and NONMEM version. 
+%The rplots functionality is used to
+%read the raw\_results files and
+%visualize the run times (as reported by NONMEM in the lst-files), the stability of ofv values and of estimates.
 
 Note: The run times reported will be estimation step times, covariance step times and total times reported in the NONMEM lst-files.
 PsN will not measure times, only parse the contents of the lst-file. It is up to the user to ensure that the run conditions 
@@ -30,10 +33,10 @@ between NONMEM runs, or run with -threads=1 on standalone computer and no other 
 Examples:
 \begin{verbatim}
 benchmark run1.mod run2.mod -nm_version=nm74alpha 
--record_options=estim:none,FAST
+-record_options=estim:none,FAST -replicates=3
 
 benchmark run3.mod -nm_version=nm73gfortran4 
--alt_nonmem=nm73gfortran5 -merge_rawreults
+-alt_nonmem=nm73gfortran5 -merge_rawreults -replicates=2
 \end{verbatim}
 See below for explanation of each option.
 
@@ -90,18 +93,18 @@ However, the user can choose to override the default procedure
 with option -merge\_rawresults, resulting in all runs being reported in the same raw\_results file,
 and the rplots processing being performed for all models as a single group.
 \nextopt
-\optdefault{dofv\_threshold}{number}
-Default 1 (percent). If the relative difference between the ofv of two model runs in the same raw\_results file
-is greater than this threshold, these models will be flagged in an extra column in the raw\_results file.
-\nextopt
-\optdefault{parameter\_threshold}{number}
-Default 5 (percent). If the relative difference between the parameter estimates of two model runs 
-in the same raw\_results file
-is greater than this threshold, these models will be flagged in an extra column in the raw\_results file.
-\nextopt
-\optdefault{reference\_input}{list}
-Or something. Prerun lst files as reference, one per input model, or only one if -merge
-\nextopt
+%\optdefault{dofv\_threshold}{number}
+%Default 1 (percent). If the relative difference between the ofv of two model runs in the same raw\_results file
+%is greater than this threshold, these models will be flagged in an extra column in the raw\_results file.
+%\nextopt
+%\optdefault{parameter\_threshold}{number}
+%Default 5 (percent). If the relative difference between the parameter estimates of two model runs 
+%in the same raw\_results file
+%is greater than this threshold, these models will be flagged in an extra column in the raw\_results file.
+%\nextopt
+%\optdefault{reference\_input}{list}
+%Or something. Prerun lst files as reference, one per input model, or only one if -merge
+%\nextopt
 \end{optionlist}
 
 \subsection{Some important common PsN options}
@@ -118,6 +121,24 @@ if the individual NONMEM runs are not performed under the same conditions.
 \optname{prepend\_model\_file\_name}
 Default not set. If want to keep and compare table files.
 \end{optionlist}
+
+
+\section{Output}
+The output from benchmark is
+%, in addition to the plots,
+one raw\_results file for each input model, or all input models together if -merge\_rawresults was set.
+In each file the first model run will be used as reference when computing differences in output.
+The raw\_results file(s) will have extra columns for the input model name, each
+modification set via -record\_options, the NONMEM version if -alt\_nonmem was used, and the replicate
+number if -replicates was set.
+%\begin{itemize}
+%\item delta-ofv (dofv) relative to the reference run
+%\item delta-runtime 
+%\item delta-estimates 
+%\end{itemize}
+
+
+\end{document}
 
 \subsection{Auto-generated R-plots from PsN}
 \newcommand{\rplotsconditions}{The default benchmark template 
@@ -137,17 +158,3 @@ Extended diagnostic rplots for each input model, or all input models together if
 will be generated if option -rplots is set >1.
 The extended plots show differences in parameter estimates and standard errors.
 If the estimate difference is greater than a threshold (see option -parameter\_threshold) then this is flagged.
-
-\section{Output}
-The output from benchmark is, in addition to the plots,
-one raw\_results file for each input model, or all input models together if -merge\_rawresults was set.
-In each file the first model run will be used as reference when computing differences in output.
-The raw\_results file(s) will have extra columns for
-\begin{itemize}
-\item delta-ofv (dofv) relative to the reference run
-\item delta-runtime 
-\item delta-estimates 
-\end{itemize}
-
-
-\end{document}
