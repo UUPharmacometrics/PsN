@@ -194,6 +194,7 @@ sub decorrelation{
 				}
 			}
 		}
+		#return here when nparm==1???????
 	}
 	
 	my $sqrt=sqrt($samples-1);
