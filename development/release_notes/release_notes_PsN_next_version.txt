@@ -116,6 +116,9 @@ Changes and bug fixes from PsN 4.4.0 to n.n.n
 
 - Bug fix: Use -threads set on command-line also in first iteration.
 
+- Bug fix: In cases when data filtration step is run, handle $INPUT with items of the form NAME=DROP or NAME=SKIP,
+  in addition to just DROP or SKIP without NAME.
+
    ___boot_scm___
 
 
