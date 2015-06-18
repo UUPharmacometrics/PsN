@@ -16,9 +16,30 @@ my $modeldir = $includes::testfiledir;
 
 my $model = model->new(filename => "$modeldir/pheno.mod", ignore_missing_data => 1);
 $model->filename('run1.mod');
+
+
+
 my $model2 = model->new(filename => "$modeldir/pheno.mod", ignore_missing_data => 1);
 $model2->filename('run2.mod');
+
+
+my $ref = tool::benchmark::parse_theta_inits(
+	theta_inits => 'CL:none,1,2,3,,2:1',
+	models => [$model,$model2]);
+is_deeply($ref,[{'CL' => ['none',1,2,3]},{2 => [1]}],"parse_theta_list 1");
+
+dies_ok {tool::benchmark::parse_theta_inits(
+			 theta_inits => '3:1',models => [$model])} " invalid thetaname";
+dies_ok {tool::benchmark::parse_theta_inits(
+			 theta_inits => '2:1,V:1,2,3',models => [$model])} " missed double comma";
+dies_ok {tool::benchmark::parse_theta_inits(
+			 theta_inits => ':1',models => [$model])} " empty thetaname";
+dies_ok {tool::benchmark::parse_theta_inits(
+			 theta_inits => 'CL:1,2,,V',models => [$model])} " empty list";
+
+
 my $modellists = [[$model],[$model2]];
+
 tool::benchmark::create_record_variant_models(model_lists => $modellists,change_list => [{'estimation' => ['none','FAST']}]);
 
 is(scalar(@{$modellists->[0]}),2,"variant models count 1a");
@@ -59,6 +80,52 @@ is($modellists->[3]->[0]->filename,'run2.none.nm740.1.mod',"replicate models nam
 is($modellists->[3]->[1]->filename,'run2.FAST.nm740.1.mod',"replicate models name 2 n");
 is($modellists->[3]->[2]->filename,'run2.none.nm740.2.mod',"replicate models name 2 o");
 is($modellists->[3]->[3]->filename,'run2.FAST.nm740.2.mod',"replicate models name 2 p");
+
+tool::benchmark::create_theta_variant_models(model_lists => $modellists,theta_list => [{'CL' => ['none',1]}]);
+is($modellists->[0]->[0]->filename,'run1.none.default.1.none.mod',"theta mod models name 3 a");
+is($modellists->[0]->[1]->filename,'run1.FAST.default.1.none.mod',"theta mod models name 3 b");
+is($modellists->[0]->[2]->filename,'run1.none.default.2.none.mod',"theta mod models name 3 c");
+is($modellists->[0]->[3]->filename,'run1.FAST.default.2.none.mod',"theta mod models name 3 d");
+is($modellists->[0]->[4]->filename,'run1.none.default.1.1.mod',"theta mod models name 3 a");
+is($modellists->[0]->[5]->filename,'run1.FAST.default.1.1.mod',"theta mod models name 3 b");
+is($modellists->[0]->[6]->filename,'run1.none.default.2.1.mod',"theta mod models name 3 c");
+is($modellists->[0]->[7]->filename,'run1.FAST.default.2.1.mod',"theta mod models name 3 d");
+cmp_ok($modellists->[0]->[0]->problems->[0]->thetas->[0]->options->[0]->init,'==',0.0105,"theta mod th init 1");
+cmp_ok($modellists->[0]->[4]->problems->[0]->thetas->[0]->options->[0]->init,'==',1,"theta mod th init 2");
+
+is($modellists->[1]->[0]->filename,'run2.none.default.1.none.mod',"theta mod models name 3 e");
+is($modellists->[1]->[1]->filename,'run2.FAST.default.1.none.mod',"theta mod models name 3 f");
+is($modellists->[1]->[2]->filename,'run2.none.default.2.none.mod',"theta mod models name 3 g");
+is($modellists->[1]->[3]->filename,'run2.FAST.default.2.none.mod',"theta mod models name 3 h");
+is($modellists->[1]->[4]->filename,'run2.none.default.1.1.mod',"theta mod models name 3 e");
+is($modellists->[1]->[5]->filename,'run2.FAST.default.1.1.mod',"theta mod models name 3 f");
+is($modellists->[1]->[6]->filename,'run2.none.default.2.1.mod',"theta mod models name 3 g");
+is($modellists->[1]->[7]->filename,'run2.FAST.default.2.1.mod',"theta mod models name 3 h");
+cmp_ok($modellists->[1]->[1]->problems->[0]->thetas->[0]->options->[0]->init,'==',0.0105,"theta mod th init 3");
+cmp_ok($modellists->[1]->[5]->problems->[0]->thetas->[0]->options->[0]->init,'==',1,"theta mod th init 4");
+
+
+is($modellists->[2]->[0]->filename,'run1.none.nm740.1.none.mod',"theta mod models name 3 i");
+is($modellists->[2]->[1]->filename,'run1.FAST.nm740.1.none.mod',"theta mod models name 3 j");
+is($modellists->[2]->[2]->filename,'run1.none.nm740.2.none.mod',"theta mod models name 3 k");
+is($modellists->[2]->[3]->filename,'run1.FAST.nm740.2.none.mod',"theta mod models name 3 l");
+is($modellists->[2]->[4]->filename,'run1.none.nm740.1.1.mod',"theta mod models name 3 i");
+is($modellists->[2]->[5]->filename,'run1.FAST.nm740.1.1.mod',"theta mod models name 3 j");
+is($modellists->[2]->[6]->filename,'run1.none.nm740.2.1.mod',"theta mod models name 3 k");
+is($modellists->[2]->[7]->filename,'run1.FAST.nm740.2.1.mod',"theta mod models name 3 l");
+cmp_ok($modellists->[2]->[2]->problems->[0]->thetas->[0]->options->[0]->init,'==',0.0105,"theta mod th init 5");
+cmp_ok($modellists->[2]->[6]->problems->[0]->thetas->[0]->options->[0]->init,'==',1,"theta mod th init 6");
+
+is($modellists->[3]->[0]->filename,'run2.none.nm740.1.none.mod',"theta mod models name 3 m");
+is($modellists->[3]->[1]->filename,'run2.FAST.nm740.1.none.mod',"theta mod models name 3 n");
+is($modellists->[3]->[2]->filename,'run2.none.nm740.2.none.mod',"theta mod models name 3 o");
+is($modellists->[3]->[3]->filename,'run2.FAST.nm740.2.none.mod',"theta mod models name 3 p");
+is($modellists->[3]->[4]->filename,'run2.none.nm740.1.1.mod',"theta mod models name 3 m");
+is($modellists->[3]->[5]->filename,'run2.FAST.nm740.1.1.mod',"theta mod models name 3 n");
+is($modellists->[3]->[6]->filename,'run2.none.nm740.2.1.mod',"theta mod models name 3 o");
+is($modellists->[3]->[7]->filename,'run2.FAST.nm740.2.1.mod',"theta mod models name 3 p");
+cmp_ok($modellists->[3]->[3]->problems->[0]->thetas->[0]->options->[0]->init,'==',0.0105,"theta mod th init 7");
+cmp_ok($modellists->[3]->[7]->problems->[0]->thetas->[0]->options->[0]->init,'==',1,"theta mod th init 8");
 
 
 my $model = model::create_dummy_model();

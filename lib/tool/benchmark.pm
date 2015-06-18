@@ -24,7 +24,9 @@ has 'results_file' => ( is => 'rw', isa => 'Str', default => 'benchmark_results.
 has 'merge_rawresults' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'alt_nonmem' => ( is => 'rw', isa => 'ArrayRef' , default => sub { [] });
 has 'record_change_list' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
+has 'theta_change_list' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 has 'record_options' => ( is => 'rw', isa => 'Str' );
+has 'theta_inits' => ( is => 'rw', isa => 'Str' );
 has 'dofv_threshold' => ( is => 'rw', isa => 'Num', default => 1 );
 has 'replicates' => ( is => 'rw', isa => 'Int', default => 1 );
 has 'parameter_threshold' => ( is => 'rw', isa => 'Num', default => 5 );
@@ -63,7 +65,94 @@ sub BUILD
 	if (defined $self->record_options){
 		$self->record_change_list(parse_record_options(record_options => $self->record_options));
 	}
+	if (defined $self->theta_inits){
+		$self->theta_change_list(parse_theta_inits(theta_inits => $self->theta_inits,
+												   models => $self->models));
+	}
 }
+
+sub parse_theta_inits
+{
+	my %parm = validated_hash(\@_,
+							  theta_inits => { isa => 'Str', optional => 0 },
+							  models => { isa => 'ArrayRef', optional => 0 },
+	);
+	my $theta_inits = $parm{'theta_inits'};
+	my $models = $parm{'models'};
+
+	my @list=();
+	my @items = split(',,',$theta_inits); #first split on double comma
+
+	my @thetacounts=();
+	foreach my $model (@{$models}){
+		croak("model ".$model->filename." has no problems") unless (defined $model->problems);
+		my $count = 0;
+		foreach my $prob (@{$model->problems}){
+			if (defined $prob->thetas and scalar(@{$prob->thetas})>0){
+				$count = $prob->record_count(record_name => 'theta');
+				last;
+			}
+
+		}
+		push(@thetacounts,$count);
+	}
+
+
+	foreach my $item (@items){
+		unless ($item =~ /:/){
+			croak("Error parsing record_options item $item (no colon : found)");
+		}
+		#then split on :
+		my @leftright = split(':',$item);
+		if (scalar(@leftright) < 2){
+			croak("Error parsing theta_inits item $item (missing theta identifier or inits list?)");
+		}
+		if (scalar(@leftright) > 2){
+			croak("Error parsing theta_inits item $item (too many colon : found. Did you forget to use double comma ,, between items?)");
+		}
+		if (length($leftright[0])<1){
+			croak("Error parsing theta_inits item $item (missing theta identifier?)");
+		}
+		if (length($leftright[1])<1){
+			croak("Error parsing theta_inits item $item (missing inits list?)");
+		}
+		#if left hand is a number, check that models have that many thetas
+		if ($leftright[0] =~ /^(\d+)$/){
+			my $num = $1;
+			if ($num < 1){
+				croak ("Error parsing theta_inits item $item: Theta number must be larger than 0 but is $num");
+			}
+			for (my $i=0; $i< scalar(@{$models}); $i++){
+				if ($num > $thetacounts[$i]){
+					croak("Error parsing theta_inits item $item: Cannot set theta number $num because model ".
+						  $models->[$i]->filename." only has ".$thetacounts[$i]." thetas. Use labels to add new thetas to models");
+				}
+			}
+		}
+
+		#split right hand on comma, check that at least one element
+		#check each item in right hand that there are no duplicates
+		my @opts = split(',',$leftright[1]);
+		unless (scalar(@opts)>0){
+			croak("Error parsing theta_inits item $item: no inits found");
+		}
+
+		my %defined;
+		foreach my $opt (@opts){
+			if ($defined{$opt} ==1){
+				croak("duplicate setting of $opt in $item");
+			}
+			$defined{$opt} =1;
+		}
+		#left hand is key of hash
+		#value in hash is arrayref
+		#push hashref to @list
+		push (@list,{$leftright[0] => \@opts});
+	}
+	return \@list;
+
+}
+
 
 sub parse_record_options
 {
@@ -153,6 +242,67 @@ sub modify_model
 						   option_value => $optionvalue,
 						   add_record => 1);
 		
+	}
+
+}
+
+sub modify_model_theta
+{
+	my %parm = validated_hash(\@_,
+							  model => { isa => 'model', optional => 0 },
+							  theta => { isa => 'Str', optional => 0 },
+							  init => { isa => 'Str', optional => 0 },
+	);
+	my $model = $parm{'model'};
+	my $theta = $parm{'theta'};
+	my $init = $parm{'init'};
+
+	return if ($init eq 'none');
+	for (my $prob=0; $prob< scalar(@{$model->problems}); $prob++){
+		#modify first prob that has any thetas
+		if ((defined $model->problems->[$prob]->thetas) and
+			scalar(@{$model->problems->[$prob]->thetas})>0){
+			if ($theta =~ /^(\d+)$/){
+				#theta number
+				my $num = $1;
+				my $count = 0;
+				for (my $j=0; $j< scalar(@{$model->problems->[$prob]->thetas}); $j++){
+					for (my $i=0; $i< scalar(@{$model->problems->[$prob]->thetas->[$j]->options}); $i++){
+						$count++;
+						if ($num == $count){
+							my ($success,$dirt1,$dirt2)=  
+								$model->problems->[$prob]->thetas->[$j]->options->[$i]->check_and_set_init (new_value => $init);
+							croak("Could not set init $init in theta $theta of ".$model->filename) unless ($success);
+							last;
+						}
+					}
+					last if ($num == $count);
+				}
+				croak("could not find theta $num") unless ($num == $count);
+			}else{
+				#theta label
+				my $found = 0;
+				for (my $j=0; $j< scalar(@{$model->problems->[$prob]->thetas}); $j++){
+					foreach my $opt (@{$model->problems->[$prob]->thetas->[$j]->options}){
+						if (defined $opt->label and ($opt->label eq $theta)){
+							my ($success,$dirt1,$dirt2)= $opt -> check_and_set_init(new_value=>$init); 
+							croak("Could not set init $init in theta $theta of ".$model->filename) unless ($success);
+							$found =1;
+							last;
+						}
+					}
+					last if ($found);
+				}
+				unless ($found){
+					#add a theta
+					$model->problems->[$prob]->add_records( type => 'theta',
+															record_strings => [$init.' ; '.$theta] );
+
+				}
+
+			}
+			last; #found prob with thetas
+		}
 	}
 
 }
@@ -279,6 +429,59 @@ sub create_record_variant_models
 				modify_model(model => $model_lists->[$mi]->[$i],
 							 record => $recordname,
 							 option => $change_list->[$ci]->{$recordname}->[$op]);
+
+			}
+		}
+	}
+
+}
+
+sub create_theta_variant_models
+{
+	my %parm = validated_hash(\@_,
+							  model_lists => { isa => 'ArrayRef', optional => 0 },
+							  theta_list => { isa => 'ArrayRef', optional => 0 },
+	);
+	my $model_lists = $parm{'model_lists'};
+	my $theta_list = $parm{'theta_list'};
+	
+	#loop over model lists mi
+	for (my $mi=0; $mi< scalar(@{$model_lists}); $mi++){
+		#loop over theta list ci
+		for (my $ci=0; $ci < scalar(@{$theta_list}); $ci++){
+			#count models mcount in list mi before making change ci
+			my $mcount = scalar(@{$model_lists->[$mi]});
+			my @keys = keys %{$theta_list->[$ci]}; #always only one key
+			my $thetaname = $keys[0];
+
+			my $optcount = scalar(@{$theta_list->[$ci]->{$thetaname}}); #ref of array of values
+			for (my $op=1; $op < $optcount; $op++){
+				#for each option *in addition to* the first required one in the option list, make a copy of the
+				#mcount first models in list mi at the start of this iteration. push copies to 
+				#model_list mi, write_copy is false, output_same_directory true
+				for (my $i=0; $i< $mcount; $i++){
+					my $newname = get_modified_filename(model => $model_lists->[$mi]->[$i],
+														option => $theta_list->[$ci]->{$thetaname}->[$op]);
+					push(@{$model_lists->[$mi]},$model_lists->[$mi]->[$i]->copy( filename => $newname,
+																				 directory => $model_lists->[$mi]->[$i]->directory,
+																				 write_copy => 0,
+																				 output_same_directory => 1,
+																				 copy_output => 0));
+					modify_model_theta(model => $model_lists->[$mi]->[-1],
+									   theta => $thetaname,
+									   init => $theta_list->[$ci]->{$thetaname}->[$op]);
+				}				
+			}
+			#now we only have the first option in list to set in original models
+			my $op = 0;
+			#set option op in mcount first models
+			for (my $i=0; $i< $mcount; $i++){
+				my $newname = get_modified_filename(model => $model_lists->[$mi]->[$i],
+													option => $theta_list->[$ci]->{$thetaname}->[$op]);
+				$model_lists->[$mi]->[$i]->filename($newname);
+				modify_model_theta(model => $model_lists->[$mi]->[$i],
+								   theta => $thetaname,
+								   init => $theta_list->[$ci]->{$thetaname}->[$op]);
 
 			}
 		}
@@ -419,6 +622,22 @@ sub modelfit_setup
 			push(@{$self->settings_header},$short_name.'.'.$rechash{$short_name});
 		}
 	}
+	if (scalar(@{$self->theta_change_list})>0){
+		#model_lists is modified, extended with copies, write_copy false
+		create_theta_variant_models(model_lists => $model_lists, 
+									theta_list => $self->theta_change_list);
+		#TODO make subroutine for this
+		for (my $ci=0; $ci < scalar(@{$self->theta_change_list}); $ci++){
+			my @keys = keys %{$self->theta_change_list->[$ci]}; #always only one key
+			my $name = $keys[0];
+			if ($name =~ /^\d+$/){
+				#numeric
+				$name = 'TH_'.$name;
+			}
+			push(@{$self->settings_header},$name);
+		}
+	}
+
 
 	if (scalar(@{$self->alt_nonmem})>0){
 		#model list is modified (file names changed) and extended

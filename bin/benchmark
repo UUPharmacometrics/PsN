@@ -25,6 +25,7 @@ my %required_options = ();
 my %optional_options = ( 
 	'alt_nonmem:s' => undef,
 	'record_options:s' => undef,
+	'theta_inits:s' => undef,
 	'merge_rawresults!' => undef,
 	'dofv_threshold:f' => undef,
 	'replicates:i' => undef,
@@ -79,6 +80,11 @@ $help_text{-alt_nonmem} = <<'EOF';
 EOF
 $help_text{-record_options} = <<'EOF';
       -record_options=list
+
+    Default not used. 
+EOF
+$help_text{-theta_inits} = <<'EOF';
+      -theta_inits=list
 
     Default not used. 
 EOF
@@ -143,6 +149,7 @@ my $benchmark =
 					 models	     => \@models,
 					 alt_nonmem => \@alternatives,
 					 record_options  => $options{'record_options'},
+					 theta_inits  => $options{'theta_inits'},
 					 replicates  => $options{'replicates'},
 					 merge_rawresults  => $options{'merge_rawresults'},
 					 dofv_threshold      => $options{'dofv_threshold'},

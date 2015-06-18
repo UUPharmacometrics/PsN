@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{BENCHMARK user guide}{2015-06-15}
+\guidetitle{BENCHMARK user guide}{2015-06-18}
 
 
 \begin{document}
@@ -81,6 +81,29 @@ If more than one record-options combination is desired, the different combinatio
 separated with double comma (,,). Example: \\
 -record\_options=est:none,FAST,,est:ATOL=10,ATOL=8,ATOL=12 
 which would result in six (2 times 3) variants of each model.
+\nextopt
+\optdefault{theta\_inits}{list}
+Default not set.
+A structured list of the \$THETA initial estimates to modify. If used, the 
+\$THETAs in question will be modified regardless of whether they are FIXED in the control stream.
+In the list, the \$THETAs are identified by their order number, where numbering starts at 1,
+or by their PsN format label, as CL in this example:
+\begin{verbatim}
+$THETA (0,1.005) ; CL
+\end{verbatim}
+In the list, after the theta label/number there must be a colon and then a comma-separated list of numbers
+to set as initial estimates. If 'none' is set it means do not change the input model.
+If an additional theta is to be modified, then a double comma separates 
+the two sub-lists. If no \$THETA pre-exists with the label given in the list,
+a \$THETA will be added with that initial estimate and label. 
+If \$THETA number is used but no \$THETA exists with that number then benchmark will halt with an
+error message.
+If the same theta is referred to with both label and theta number, this will not be detected
+by benchmark and will result in incorrect results.
+Example, using both label and theta number
+\begin{verbatim}
+-theta_inits=CL:none,1.5,1.0,,5:8.5,12
+\end{verbatim}
 \nextopt
 \optname{merge\_rawresults}
 Default not set. The default is to create a separate raw\_results file for each input model,
