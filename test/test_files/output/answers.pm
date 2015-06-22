@@ -1094,6 +1094,16 @@ sub read_answers
 
 	$index++;
 	$answer_hashes[$index]={};
+	$answer_hashes[$index]->{file}='multPROB/oneEST/noSIM/multprob_nm712_noext.lst';
+	$answer_hashes[$index]->{answers}={};
+	$answer_hashes[$index]->{parsed_successfully}=1;
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'ofv'}=-559.893;
+	$answer_hashes[$index]->{answers}->{1}->{0}->{'ofv'}=-553.470;
+	$answer_hashes[$index]->{answers}->{2}->{0}->{'ofv'}=-558.539;
+	$answer_hashes[$index]->{answers}->{3}->{0}->{'ofv'}=-560.840;
+
+	$index++;
+	$answer_hashes[$index]={};
 	$answer_hashes[$index]->{file}='multPROB/oneEST/noSIM/multprob_nm710.lst';
 	$answer_hashes[$index]->{answers}={};
 	$answer_hashes[$index]->{parsed_successfully}=1;
