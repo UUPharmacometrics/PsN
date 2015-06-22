@@ -1082,6 +1082,57 @@ sub read_answers
     $answer_hashes[$index]->{answers} = {};
 	$answer_hashes[$index]->{answers}->{0}->{0}->{'sum_estimation_time'}=478.93;
 
+	$index++;
+	$answer_hashes[$index]={};
+	$answer_hashes[$index]->{file}='multPROB/oneEST/noSIM/multprob_nm712.lst';
+	$answer_hashes[$index]->{answers}={};
+	$answer_hashes[$index]->{parsed_successfully}=1;
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'ofv'}=-559.89313598683509;
+	$answer_hashes[$index]->{answers}->{1}->{0}->{'ofv'}=-553.46988748710919;
+	$answer_hashes[$index]->{answers}->{2}->{0}->{'ofv'}=-558.53874243878795;
+	$answer_hashes[$index]->{answers}->{3}->{0}->{'ofv'}=-560.84030244582539;
+
+	$index++;
+	$answer_hashes[$index]={};
+	$answer_hashes[$index]->{file}='multPROB/oneEST/noSIM/multprob_nm710.lst';
+	$answer_hashes[$index]->{answers}={};
+	$answer_hashes[$index]->{parsed_successfully}=1;
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'ofv'}=-555.688;
+	$answer_hashes[$index]->{answers}->{1}->{0}->{'ofv'}=-547.911;
+	$answer_hashes[$index]->{answers}->{2}->{0}->{'ofv'}=-563.021;
+	$answer_hashes[$index]->{answers}->{3}->{0}->{'ofv'}=-560.777;
+
+	$index++;
+	$answer_hashes[$index]={};
+	$answer_hashes[$index]->{file}='multPROB/oneEST/noSIM/multprob_nm720.lst';
+	$answer_hashes[$index]->{answers}={};
+	$answer_hashes[$index]->{parsed_successfully}=1;
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'ofv'}=-555.04235144492679;
+	$answer_hashes[$index]->{answers}->{1}->{0}->{'ofv'}=-559.67920118052928;
+	$answer_hashes[$index]->{answers}->{2}->{0}->{'ofv'}=-563.81626251355419;
+	$answer_hashes[$index]->{answers}->{3}->{0}->{'ofv'}=-560.40149791248427;
+
+	$index++;
+	$answer_hashes[$index]={};
+	$answer_hashes[$index]->{file}='multPROB/oneEST/noSIM/multprob_nm730.lst';
+	$answer_hashes[$index]->{answers}={};
+	$answer_hashes[$index]->{parsed_successfully}=1;
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'ofv'}=-558.25489893903068;
+	$answer_hashes[$index]->{answers}->{1}->{0}->{'ofv'}=-566.20617959163906;
+	$answer_hashes[$index]->{answers}->{2}->{0}->{'ofv'}=-554.14690890054476;
+	$answer_hashes[$index]->{answers}->{3}->{0}->{'ofv'}=-552.94094141583696;
+
+	$index++;
+	$answer_hashes[$index]={};
+	$answer_hashes[$index]->{file}='multPROB/oneEST/noSIM/multprob_nm740beta.lst';
+	$answer_hashes[$index]->{answers}={};
+	$answer_hashes[$index]->{parsed_successfully}=1;
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'ofv'}=-559.24199356206861;
+	$answer_hashes[$index]->{answers}->{1}->{0}->{'ofv'}=-555.55731999512977;
+	$answer_hashes[$index]->{answers}->{2}->{0}->{'ofv'}=-551.85341632298309;
+	$answer_hashes[$index]->{answers}->{3}->{0}->{'ofv'}=-562.36483954451865;
+
+
 	return \@answer_hashes;
 }
 
