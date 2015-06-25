@@ -76,3 +76,25 @@ Compute per individual the order numbers of the decorrelated original ETA values
 
 
 \end{document}
+
+changes (no deadline from Anna's perspective):
+
+Do not perform decorrelation for iofv, if it is done remove it.
+
+New output:
+Standardized iofv, one per individual
+For each individual j compute
+\frac{(iOFV_{observed} - mean (iOFV_{simulated}))^2}{variance(iOFV_{simulated})}
+
+
+In same file, for ebe:
+For each individual j we have vector of ebe:s (length equal to number of ETAs in model), read from phi-file
+
+For each individual j compute
+(ebevector_{observed} - mean (ebevector_{simulated}))^T(covmatrix (ebevector_{simulated}))^{-1}(ebevector_{observed} - mean (ebevector_{simulated}))
+
+
+???
+In a new file file add column for iwres?
+\frac{(IWRES_{observed} - mean (IWRES_{simulated}))^2}{variance(IWRES_{simulated})}
+???
