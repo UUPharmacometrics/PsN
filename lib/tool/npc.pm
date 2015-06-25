@@ -5299,15 +5299,11 @@ sub subset_npc_analyze
 	my $censor_binned_data = $parm{'censor_binned_data'};
 
 
-	my $low_ind;
-	my $high_ind;
-
 	my @result_values;
 	my @real_positions;
 	my @stats_warnings;
 
 
-	#pred_intervals,$high_ind,$low_ind
 	# if  bin_index undefined then assume all
 	#out is ref to result_values and real_positions and stats_warnings
 	#npoints not needed, length of input @row_indices
@@ -5496,7 +5492,6 @@ sub subset_npc_analyze
 		my ($dirt,$lowlim,$highlim) = median_and_ci(\@perc_arr,$ci);
 
 		if ($non_zeros> 0){
-#			print "realperc $realperc low ".$sorted_arr[$low_ind]." ".$sorted_arr[$high_ind]."\n";
 			if ((defined $realperc) and (( $realperc<$lowlim) ||($realperc>$highlim))){
 				$warn='*';
 				$sum_warnings[0] += 1; #NPC diagnostics
@@ -5515,7 +5510,6 @@ sub subset_npc_analyze
 		#endof NPC diagnostics
 		
 		if ($verbose){
-			print "\n $high_ind $low_ind\n";
 			print $lower_count[$i]->[0]." $realperc $warn ".$lowlim." ".$highlim."\n";
 		}
 
@@ -5535,7 +5529,6 @@ sub subset_npc_analyze
 		($dirt,$lowlim,$highlim) = median_and_ci(\@perc_arr,$ci);
 				
 		if ($non_zeros> 0){
-			#high_ind and lowind based on nonzero_obs, computed above
 			if ((defined $realperc) and (( $realperc<$lowlim) ||($realperc>$highlim))){
 				$warn='*';
 				$sum_warnings[0] += 1; #NPC diagnostics
@@ -5583,7 +5576,8 @@ sub subset_npc_analyze
 		#theoretical mean, 
 		#number of PI times times 2*2 for above and below lower and upper PI limit
 		#number absolute number outside a limit ($low_ind) div by total number of values
-		push(@stats_warnings,($no_pred_ints*2*2*$low_ind/$non_zeros)); #ok
+		my $low_ci_ind = round((100-$ci)*($non_zeros-1)/200); #should it be non_zeros here?
+		push(@stats_warnings,($no_pred_ints*2*2*$low_ci_ind/$non_zeros)); 
 
 		push(@stats_warnings,median_and_ci(\@detected_sum_warnings,$ci));
 
