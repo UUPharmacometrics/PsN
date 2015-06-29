@@ -8,6 +8,7 @@ use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages
 use linear_algebra;
 
+
 #subtract, max and absolute
 my @A = ([1, 2, 3], [2.1, 4, 5], [3.25, 5.17, 19]);
 my @B = ([1, 2.1, 3.25], [2, 4, 5.17], [3, 5, 19]);
@@ -191,5 +192,80 @@ my $matrix = [ [1,2,3,4],[2,2,3,4],[3,3,3,4],[4,4,4,4] ];
 
 is_deeply(linear_algebra::copy_and_reorder_square_matrix($matrix,[1,3,0,2]),[ [2,4,2,3],[4,4,4,4],[2,4,1,3],[3,4,3,3] ] , "copy and reorder");
 
+my $omega = [[1,0.2,0.1,0.1],
+			 [0.2,5,0.05,0.2],
+			 [0.1,0.05,3,0.3],
+			 [0.1,0.2,0.3,4] ];
+
+my ($strings,$inits,$code)=linear_algebra::string_cholesky(omega=>$omega,omega_index=>0,theta_count=>1,testing=>1);
+#print "\n";
+
+#for (my $i=0; $i<scalar(@{$params}); $i++){
+#	print 'my '.$params->[$i]." ".$inits->[$i]."\n";
+#}
+
+my ($SD_A1,$SD_A2,$SD_A3,$SD_A4,$SD_A5);
+my ($COR_A21,$COR_A31,$COR_A41,$COR_A51,$COR_A32,$COR_A42,$COR_A52);
+my ($COR_A43,$COR_A53,$COR_A54);
+my ($CH_A22,$CH_A32,$CH_A42,$CH_A52,$CH_A33,$CH_A43,$CH_A53,$CH_A44,$CH_A54,$CH_A55);
+
+
+eval(join(' ',@{$inits}));
+#print (join("\n",@{$code}))."\n";
+#exit;
+eval(join(' ',@{$code}));
+
+my @matrix=();
+for(my $i=0;$i<scalar(@{$strings});$i++){
+	push(@matrix,[ (0) x scalar(@{$strings})]);
+}
+for(my $i=0;$i<scalar(@{$strings});$i++){
+	for (my $j=0; $j<=$i; $j++){
+		my $value = eval($strings->[$j]->[$i]);
+		$matrix[$i]->[$j]=$value;
+	}
+#	print join(' ',@{$matrix[$i]})."\n";
+}
+
+for(my $i=0;$i<scalar(@{$strings});$i++){
+	for (my $j=0; $j<=$i; $j++){
+		my $sum=0;
+		for (my $k=0;$k<scalar(@{$strings});$k++){
+			$sum = $sum+$matrix[$i]->[$k]*$matrix[$j]->[$k];
+		}
+		cmp_float($sum,$omega->[$i]->[$j],"cholesky product element $i,$j is ".$omega->[$i]->[$j]);
+	}
+#	print join(' ',@{$matrix[$i]})."\n";
+}
+#extend to 6x
+my $omega6 = [
+	[1,0.2,0.1,0.1,0.2,-0.2],
+	[0.2,5,0.05,0.2,-0.3,0.2],
+	[0.1,0.05,3,0.3,0.2,-0.1],
+	[0.1,0.2,0.3,4,0.1,0.3],
+	[0.2,-0.3,0.2,0.1,4,0.4],
+	[-0.2,0.2,-0.1,0.3,0.4,2] 
+];
+
+my ($strings,$inits,$code)=linear_algebra::string_cholesky(omega=>$omega6,omega_index=>2,
+																   theta_count=>1,testing=>0);
+
+print join("\n",@{$code})."\n\n";
+
+
+#print join("\n",@{$inits})."\n";
+
+for(my $i=0;$i<scalar(@{$strings});$i++){
+	for (my $j=0; $j<=$i; $j++){
+		print $strings->[$i]->[$j]."\t";
+	}
+	print "\n";
+}
+
+my ($count,$code)=linear_algebra::eta_cholesky_code(
+	stringmatrix=> $strings,
+	eta_count=> 5);
+
+print join("\n",@{$code})."\n\n";
 
 done_testing();

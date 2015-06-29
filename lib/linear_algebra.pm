@@ -415,6 +415,206 @@ sub cholesky_transpose
 	return 0;
 }
 
+sub string_cholesky
+{
+	#lower triangle of block omega
+	#TODO cut thetas
+    my %parm = validated_hash(\@_,
+							  omega => { isa => 'ArrayRef', optional => 0 },
+							  theta_count => { isa => 'Int', optional => 0 },
+							  omega_index => { isa => 'Int', optional => 0 },
+							  testing => { isa => 'Bool', default => 0 },
+		);
+	my $omega = $parm{'omega'};
+    my $theta_count = $parm{'theta_count'};
+	my $omega_index = $parm{'omega_index'};
+	my $testing = $parm{'testing'};
+	
+	my @alphabet=('A','B','C','D','E','F','G','H','I','J','K','L','M',
+				  'N','O','P','Q','R','S','T','U','V','W','X','Y','Z',
+				  'AA','AB','AC','AD','AE','AF','AG','AH','AI','AJ','AK','AL','AM',
+				  'AN','AO','AP','AQ','AR','AS','AT','AU','AV','AW','AX','AY','AZ');
+	croak("too high omega index to string cholesky ") if ($omega_index > $#alphabet);
+	my $letter=$alphabet[$omega_index];
+
+	my $dimension = scalar(@{$omega});
+	my @indices = ('1','2','3','4','5','6','7','8','9');
+	if ($dimension > 9){
+		@indices = ('01','02','03','04','05','06','07','08','09');
+		for (my $i=10; $i<=$dimension; $i++){
+			push(@indices,$i);
+		}
+	}
+
+	my $sqrt='SQRT';
+	$sqrt = 'sqrt' if $testing;
+	my $par='';
+	$par = '$' if $testing;
+	my $term='';
+	$term = ';' if $testing;
+	my $indent='     ';
+	my $sep='';
+	my $sepd='_';
+
+	my @sd_names=();
+	my @corr_names=();
+	my $stringmatrix=[];
+
+	my @theta_inits=();
+	my @code=();
+	for (my $i=0; $i< $dimension; $i++){
+		my $sdparam = $par.'SD'.$sepd.$letter.$indices[$i];
+		push(@sd_names,$sdparam);
+		push(@corr_names,[('') x $dimension]);
+		push(@{$stringmatrix},[('')x $dimension]);
+		my $init = sqrt($omega->[$i]->[$i]); #sqrt of variance
+		if ($testing){
+			push(@theta_inits,"$sdparam=$init;");
+		}else{
+			my $formatted = sprintf("%.8G",$init); 
+			push(@theta_inits,'(0,'.$formatted.') ; '.$sdparam);
+			$theta_count++;
+			push(@code,$indent.$sdparam.'=THETA('.$theta_count.')');#add linebreak?
+		}
+		for (my $j=0; $j< $i; $j++){
+			my $rho = $par.'COR'.$sepd.$letter.$indices[$i].$indices[$j];
+			$corr_names[$i]->[$j]=$rho;
+			my $init = ($omega->[$i]->[$j])/(sqrt($omega->[$i]->[$i])*sqrt($omega->[$j]->[$j]));
+			if ($testing){
+				push(@theta_inits,"$rho=$init;");
+			}else{
+				my $formatted = sprintf("%.8G",$init); 
+				push(@theta_inits,'(-1,'.$formatted.',1) ; '.$rho);
+				$theta_count++;
+				push(@code,$indent.$rho.'=THETA('.$theta_count.')');#add linebreak?
+			}
+		}
+	}
+
+	for (my $i=0; $i< $dimension; $i++){
+		$stringmatrix->[$i]->[$i] = '1';
+		for (my $j=0; $j< $i; $j++){
+			$stringmatrix->[$i]->[$j] = $corr_names[$i]->[$j];
+			$stringmatrix->[$j]->[$i] = $corr_names[$i]->[$j]; #symmetry
+		}
+	}
+
+
+    #Golub p144 Alg 4.2.1
+	#first iter [0][0:dim-1] set
+	#then [1][1:dim-1]
+	#only changing [j][j] and [j][i] where i>j
+	if (1){
+		for (my $j=0; $j< $dimension; $j++){
+			if ($j>0) {
+				#i=j
+				my $sum=$stringmatrix->[0][$j].'**2';
+				for (my $k=1; $k<$j ; $k++){
+					$sum=$sum.'+'.$stringmatrix->[$k][$j].'**2';
+				}
+				my $diff = $stringmatrix->[$j][$j].'-('.$sum.')';
+				$stringmatrix->[$j][$j]=$sqrt.'('.$diff.')';
+				#i=j+1:n
+				my $newvar=$par.'CH'.$sepd.$letter.$indices[$j].$indices[$j];
+				push(@code,$indent.$newvar.'='.$stringmatrix->[$j][$j].$term);
+				$stringmatrix->[$j][$j] = $newvar;
+				for (my $i=($j+1); $i<$dimension; $i++){
+					my $sum=$stringmatrix->[0][$j].'*'.$stringmatrix->[0][$i];
+					my $parleft='';
+					my $parright='';
+					for (my $k=1; $k<$j ; $k++){
+						$parleft='(';
+						$parright=')';
+						$sum=$sum.'+'.$stringmatrix->[$k][$j].'*'.$stringmatrix->[$k][$i];
+					}
+					$stringmatrix->[$j][$i]='('.$stringmatrix->[$j][$i].'-'.$parleft.$sum.$parright.')/'.$stringmatrix->[$j][$j];
+				}
+
+				#create intermediate variable to replace with
+				#only changing [j][j] and [j][i] where i>j
+				for (my $i=($j+1); $i<$dimension; $i++){
+					my $newvar=$par.'CH'.$sepd.$letter.$indices[$i].$indices[$j];
+					push(@code,$indent.$newvar.'='.$stringmatrix->[$j][$i].$term);
+					$stringmatrix->[$j][$i] = $newvar;
+				}
+			} else {
+				#do nothing, this is just division by 1
+#				$stringmatrix->[0][0]='SQRT('.$stringmatrix->[0][0].')'; #we know this is 1
+
+#				for (my $i=1; $i< $dimension; $i++){
+#					$stringmatrix->[0][$i]='('.$stringmatrix->[0][$i].')/('.$stringmatrix->[0][0].')';
+#				}
+				unless ($testing){
+					for (my $i=$j; $i<$dimension; $i++){
+						my $newvar=$par.'CH'.$sepd.$letter.$indices[$i].$indices[$j];
+						push(@code,';'.$indent.$newvar.'='.$stringmatrix->[$j][$i].$term);
+					}				
+				}
+			}
+		}
+	}
+
+
+	if (1){
+		for(my $i=0;$i<$dimension;$i++){
+			for (my $j=0; $j<=$i; $j++){
+				my $sdi = $sd_names[$i];
+				my $par = 'CHOL_'.$letter.'_'.($i+1).'_'.($j+1);
+				my $left='(';
+				my $right=')';
+				if ($j < 1){
+					$left='';
+					$right='';
+				}
+				if ($i==0 and $j==0){
+					$stringmatrix->[$j]->[$i]= $sdi;
+				}else{
+					#TODO use line continuation marker &, example
+					#    CL = THETA(6)+GENDER+        &
+					#    THETA(7)*AGE
+					#make subroutine that splits code line here if too long
+					#need to test to see if NONMEM allows parentheses split over multiline
+					$stringmatrix->[$j]->[$i] = $stringmatrix->[$j]->[$i].'*'.$sdi;
+					$stringmatrix->[$i]->[$j] = $stringmatrix->[$j]->[$i];
+				}
+			}
+		}
+	}
+
+	return ($stringmatrix,\@theta_inits,\@code);
+
+}
+
+sub eta_cholesky_code
+{
+    my %parm = validated_hash(\@_,
+							  stringmatrix => { isa => 'ArrayRef', optional => 0 },
+							  eta_count => { isa => 'Int', optional => 0 },
+		);
+	my $stringmatrix = $parm{'stringmatrix'};
+    my $eta_count = $parm{'eta_count'};
+
+	my $indent='     ';
+
+	my @code=();
+	my $dimension = scalar(@{$stringmatrix});
+	my @nums=();
+	for (my $i=0; $i< $dimension; $i++){
+		push(@nums,($eta_count+$i+1));
+	}
+	for (my $i=0; $i< $dimension; $i++){
+		my $line = $indent.'ETA_'.$nums[$i].'=';
+		for (my $j=0; $j<=$i; $j++){
+			$line .= '+' if ($j>0);
+			$line .= 'ETA('.$nums[$j].')*'.$stringmatrix->[$i]->[$j];
+		}
+		push(@code,$line);
+	}
+
+
+	return ($dimension,\@code);
+}
+
 sub cholesky
 {
     #input is lower triangle, including diagonal, of symmetric positive definite matrix 
