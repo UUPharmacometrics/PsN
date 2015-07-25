@@ -33,12 +33,22 @@ is ($record->options->[2]->init,0.01,'record 1 init 2');
 is ($record->fix,1,'record 1 fix');
 is ($record->type,'BLOCK','record 1 type');
 is ($record->size,2,'record 1 size');
+
+my $matrix = $record->get_matrix();
+is_deeply($matrix,[[0.02,0],[0,0.01]],"get matrix 1");
+
+
 $record->set_random_inits(degree => 0.1);
 is($record->options->[0]->init,0.02,'record 1 init 0');
 is($record->options->[1]->init,0,'record 1 init 1');
 is($record->options->[2]->init,0.01,'record 1 init 2');
+$record->set_1_fix();
+$matrix = $record->get_matrix();
+is_deeply($matrix,[[1,0],[0,1]],"get matrix 1");
 
 $record = model::problem::init_record->new(record_arr => ['DIAGONAL(2) 0.02','0.01']);
+my $vector = $record->get_vector();
+is_deeply($vector,[0.02,0.01],"get vector 1");
 is ($record->options->[0]->init,0.02,'record 2 init 0');
 is ($record->options->[1]->init,0.01,'record 2 init 1');
 is ($record->fix,0,'record 2 fix');
@@ -49,6 +59,11 @@ cmp_float($record->options->[0]->init,0.020982,'record 2 init 0');
 cmp_float ($record->options->[1]->init,0.010769,'record 2 init 1');
 
 $record = model::problem::init_record->new(record_arr => ['BLOCK(3) 0.02','-0.002 0.5','0.003 -0.005 1']);
+
+$matrix = $record->get_matrix();
+is_deeply($matrix,[[0.02,-0.002,0.003],[-0.002,0.5,-0.005],[0.003,-0.005,1]],"get matrix 2");
+
+
 is ($record->options->[0]->init,0.02,'record 3 init 0');
 is ($record->options->[1]->init,-0.002,'record 3 init 1');
 is ($record->options->[2]->init,0.5,'record 3 init 2');
@@ -154,14 +169,23 @@ ok ($record->options->[0]->sd, "DIAGONAL SD 1 0 sd");
 ok (!$record->options->[1]->sd, "DIAGONAL SD 1 1 sd"); 
 
 $record = model::problem::omega->new(record_arr => [ '$OMEGA (1) (STANDARD 28)' ]);
+$vector = $record->get_vector();
+is_deeply($vector,[1,28],"get vector 2");
 ok (!$record->sd, 'DIAGONAL SD 2 sd');
 ok (!$record->options->[0]->sd, "DIAGONAL SD 2 0 sd");
 ok ($record->options->[1]->sd, "DIAGONAL SD 2 1 sd"); 
 
 $record = model::problem::omega->new(record_arr => [ '$OMEGA DIAGONAL(2) 1 (28 STANDARD)' ]);
+$vector = $record->get_vector();
+is_deeply($vector,[1,28],"get vector 3");
 ok (!$record->sd, 'DIAGONAL SD 3 sd');
 ok (!$record->options->[0]->sd, "DIAGONAL SD 3 0 sd");
 ok ($record->options->[1]->sd, "DIAGONAL SD 3 1 sd"); 
+
+$record->set_1_fix();
+$vector = $record->get_vector();
+is_deeply($vector,[1,1],"get vector 4");
+
 
 # DIAGONAL VARIANCE
 $record = model::problem::omega->new(record_arr => [ '$OMEGA (1 VARIANCE) (28)' ]);
