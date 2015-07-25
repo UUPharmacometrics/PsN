@@ -30,7 +30,15 @@ cmp_ok($omega_mat->[1]->[1],'==',0.2500, "get_matrix 1,1");
 cmp_ok($omega_mat->[0]->[1],'==',0, "get_matrix 0,1");
 cmp_ok($omega_mat->[1]->[0],'==',0, "get_matrix 1,0");
 
+#crash tests repara
 
+foreach my $input ('all','omega','sigma','omega,diagonal',
+				   'diagonal','fix','omega,sigma,diagonal','fix,omega','diagonal,sigma',
+				   'o1,s1','o1','s1'){
+	$model = model->new(filename => "$modeldir/pheno.mod");
+	$model->problems->[0]->cholesky_reparameterize(what => $input);
+}
+								  
 
 #
 $model = model->new(filename => "$modeldir/mox1.mod");
@@ -205,4 +213,28 @@ cmp_ok($omega_mat->[1]->[0],'==',0.285, "get_record_matrix row 1,0 after posdef 
 cmp_ok($omega_mat->[1]->[1],'==',0.3, "get_record_matrix row 1,1 after posdef deflate");
 cmp_ok($omega_mat->[0]->[1],'==',0.285, "get_record_matrix row 0,1 after posdef deflate");
 
+my @code =qw(CH_C22=SQRT(1-(COR_C21**2)) CH_C32=(COR_C32-COR_C21*COR_C31)/CH_C22
+CH_C42=(COR_C42-COR_C21*COR_C41)/CH_C22 CH_C52=(COR_C52-COR_C21*COR_C51)/CH_C22
+CH_C62=(COR_C62-COR_C21*COR_C61)/CH_C22 CH_C33=SQRT(1-(COR_C31**2+CH_C32**2))
+CH_C43=(COR_C43-(COR_C31*COR_C41+CH_C32*CH_C42))/CH_C33
+CH_C53=(COR_C53-(COR_C31*COR_C51+CH_C32*CH_C52))/CH_C33
+CH_C63=(COR_C63-(COR_C31*COR_C61+CH_C32*CH_C62))/CH_C33
+CH_C44=SQRT(1-(COR_C41**2+CH_C42**2+CH_C43**2))
+CH_C54=(COR_C54-(COR_C41*COR_C51+CH_C42*CH_C52+CH_C43*CH_C53))/CH_C44
+CH_C64=(COR_C64-(COR_C41*COR_C61+CH_C42*CH_C62+CH_C43*CH_C63))/CH_C44
+CH_C55=SQRT(1-(COR_C51**2+CH_C52**2+CH_C53**2+CH_C54**2))
+CH_C65=(COR_C65-(COR_C51*COR_C61+CH_C52*CH_C62+CH_C53*CH_C63+CH_C54*CH_C64))/CH_C55
+CH_C66=SQRT(1-(COR_C61**2+CH_C62**2+CH_C63**2+CH_C64**2+CH_C65**2))
+ETA_6=ETA(6)*SD_C1
+ETA_7=ETA(6)*COR_C21*SD_C2+ETA(7)*CH_C22*SD_C2
+ETA_8=ETA(6)*COR_C31*SD_C3+ETA(7)*CH_C32*SD_C3+ETA(8)*CH_C33*SD_C3
+ETA_9=ETA(6)*COR_C41*SD_C4+ETA(7)*CH_C42*SD_C4+ETA(8)*CH_C43*SD_C4+ETA(9)*CH_C44*SD_C4
+ETA_10=ETA(6)*COR_C51*SD_C5+ETA(7)*CH_C52*SD_C5+ETA(8)*CH_C53*SD_C5+ETA(9)*CH_C54*SD_C5+ETA(10)*CH_C55*SD_C5
+ETA_11=ETA(6)*COR_C61*SD_C6+ETA(7)*CH_C62*SD_C6+ETA(8)*CH_C63*SD_C6+ETA(9)*CH_C64*SD_C6+ETA(10)*CH_C65*SD_C6+ETA(11)*CH_C66*SD_C6
+);
+
+my $newc= model::problem::reformat_code(code => \@code,
+							  max_length => 50);
+
+print join("\n",@{$newc})."\n";
 done_testing();

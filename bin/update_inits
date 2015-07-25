@@ -42,6 +42,8 @@ my %optional_options = (
 	"from_model:s" => undef,
 	"ignore_missing_parameters" => undef,
 	"update_fix" => undef,
+	"cholesky:s" => undef,
+	"correlation_cutoff:f" => undef,
 	"comment:s" => undef,
 	"degree:f" => undef,
 	"add_tags" => undef,
@@ -141,6 +143,44 @@ $help_text{-update_fix} = <<'EOF';
 	
 	If set, update_inits will update parameters that are FIX in the model. The
 	default is to not update parameters that are fixed.
+EOF
+
+$help_text{-correlation_cutoff} = <<'EOF';
+-correlation_cutoff=number
+
+    Default 0. Ignored unless option -cholesky is set. Value range 0-1.
+
+    If, during cholesky reparameterization, the absolute value of a correlation 
+	in a block $OMEGA or $SIGMA is lower than this cutoff, then set the $THETA 
+	for estimation of this correlation to 0 FIX.
+EOF
+
+$help_text{-cholesky} = <<'EOF';
+-cholesky=records
+
+	Default not set
+ 	
+	If set, update_inits will use cholesky reparameterization to replace the requested
+	$SIGMA and $OMEGA with FIXED identity matrices and a set of THETAs for estimation
+	of standard deviations and (for blocks only) correlations.
+
+  Examples using category input:
+	-cholesky=all                 Reparameterize both $OMEGA and $SIGMA, both BLOCK and DIAGONAL, both FIX and estimated
+	-cholesky=omega               Reparameterize only $OMEGA, only BLOCK, only estimated
+	-cholesky=omega,fix           Reparameterize only $OMEGA, only BLOCK, both FIX and estimated
+	-cholesky=omega,diagonal      Reparameterize only $OMEGA, both BLOCK and diagonal, only estimated
+	-cholesky=omega,diagonal,fix  Reparameterize only $OMEGA, both BLOCK and diagonal, both FIX and estimated
+	-cholesky=sigma,diagonal      Reparameterize only $SIGMA, both BLOCK and diagonal, only estimated
+	-cholesky=diagonal            Reparameterize only $OMEGA (omitting parameter name implies omega), both BLOCK and diagonal,
+	                              only estimated 
+
+  Examples using record list input, cannot be combined with category input:
+	-cholesky=o2,o5,s1               Reparameterize $OMEGA record number 2 and 5, $SIGMA record number 1
+
+	See also related option -correlation_cutoff.
+
+	Correct handling of priors encoded using $OMEGA/$SIGMA is not implemented, priors must 
+	be encoded using special records $OMEGAPD etc.
 EOF
 
 $help_text{-fix_thetas} = <<'EOF';
@@ -383,6 +423,34 @@ if ( $options{'output_model'} ){
 	cp( $ARGV[0], $ARGV[0].'.org' );
 	unlink($ARGV[0]);
 	$outfile = $ARGV[0];
+}
+
+if ( $options{'cholesky'} ){
+	print "work in progress\n";
+	my $cutoff = 0;
+	if ($options{'correlation_cutoff'}){
+		if ($options{'correlation_cutoff'} < 0){
+			die "option -correlation_cutoff must not be less than 0\n";
+		}
+		if ($options{'correlation_cutoff'} > 1){
+			die "option -correlation_cutoff must not be larger than 1\n";
+		}
+		$cutoff = $options{'correlation_cutoff'};
+	}
+	my $warnings = 0;
+	foreach my $problem (@{$model_copy->problems}){
+		$warnings += $problem->cholesky_reparameterize(what => $options{'cholesky'},
+													   correlation_cutoff => $cutoff, #if lower then set 0 FIX
+													   correlation_limit => 0.9, #if higher then warn
+			);
+	}
+	$model_copy -> check_and_set_sizes(LTH => 1); #set LTH if too many thetas. TODO make dependent on nm_version
+	if ($warnings > 0){
+		ui->print(category => 'all',
+				  message => "\n"."Warning: Found $warning instance(s) of high correlations ".
+				  "during cholesky reparameterization\n");
+	}
+
 }
 
 if (defined $options{'from_model'}) {
