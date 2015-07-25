@@ -197,7 +197,7 @@ my $omega = [[1,0.2,0.1,0.1],
 			 [0.1,0.05,3,0.3],
 			 [0.1,0.2,0.3,4] ];
 
-my ($strings,$inits,$code)=linear_algebra::string_cholesky(omega=>$omega,omega_index=>0,theta_count=>1,testing=>1);
+my ($strings,$inits,$code,$warnings)=linear_algebra::string_cholesky_block(value_matrix=>$omega,record_index=>0,theta_count=>1,testing=>1,fix=>0);
 #print "\n";
 
 #for (my $i=0; $i<scalar(@{$params}); $i++){
@@ -247,8 +247,12 @@ my $omega6 = [
 	[-0.2,0.2,-0.1,0.3,0.4,2] 
 ];
 
-my ($strings,$inits,$code)=linear_algebra::string_cholesky(omega=>$omega6,omega_index=>2,
-																   theta_count=>1,testing=>0);
+my ($strings,$inits,$code,$warnings)=linear_algebra::string_cholesky_block(
+	value_matrix=>$omega6,
+	record_index=>2,
+	theta_count=>1,
+	testing=>0,
+	fix=>0);
 
 print join("\n",@{$code})."\n\n";
 
@@ -262,10 +266,59 @@ for(my $i=0;$i<scalar(@{$strings});$i++){
 	print "\n";
 }
 
-my ($count,$code)=linear_algebra::eta_cholesky_code(
+my ($count,$code,$etalist)=linear_algebra::eta_cholesky_code(
 	stringmatrix=> $strings,
-	eta_count=> 5);
+	eta_count=> 5,
+	diagonal => 0);
 
+is_deeply($etalist,[6,7,8,9,10,11],'eta_cholesky_code etalist 1');
+is($count,6,'eta_cholesky_code count');
 print join("\n",@{$code})."\n\n";
+
+my ($count,$code,$etalist)=linear_algebra::eta_cholesky_code(
+	stringmatrix=> ['SD_C1','SD_C2','SD_C3'],
+	eta_count=> 5,
+	diagonal => 1);
+
+is($count,3,'eta_cholesky code count');
+is($code->[0],'ETA_6=ETA(6)*SD_C1','eta_cholesky code diagonal 1');
+is($code->[1],'ETA_7=ETA(7)*SD_C2','eta_cholesky code diagonal 2');
+is($code->[2],'ETA_8=ETA(8)*SD_C3','eta_cholesky code diagonal 3');
+is_deeply($etalist,[6,7,8],'eta_cholesky_code etalist 2');
+
+($count,$code,$etalist)=linear_algebra::eta_cholesky_code(
+	stringmatrix=> [undef,undef,'SD_C3'],
+	eta_count=> 5,
+	diagonal => 1);
+
+is($count,3,'eta_cholesky code count 2');
+is($code->[0],'ETA_8=ETA(8)*SD_C3','eta_cholesky code 2 diagonal 3');
+is($etalist->[0],8,'eta_cholesky code etalist');
+
+$code = ['CL=THETA(2)*EXP(ETA(2))','V=THETA(3)*(1+ETA(3))*(1+ETA(5))'];
+linear_algebra::substitute_etas(code => $code,eta_list => [2,3,5]);
+is($code->[0],'CL=THETA(2)*EXP(ETA_2)','substitute etas 1');
+is($code->[1],'V=THETA(3)*(1+ETA_3)*(1+ETA_5)','substitute etas 2');
+
+$code = ['CL=THETA(2)*EXP(ETA(2))','V=THETA(3)*(1+ETA(3))*(1+ETA(5))'];
+linear_algebra::substitute_etas(code => $code,eta_list => [1,3]);
+is($code->[0],'CL=THETA(2)*EXP(ETA(2))','substitute etas 3');
+is($code->[1],'V=THETA(3)*(1+ETA_3)*(1+ETA(5))','substitute etas 4');
+
+my ($strings,$inits,$code)=linear_algebra::string_cholesky_diagonal(
+	value_matrix=>[4,9,16],
+	record_index=>3,
+	theta_count=>0,
+	testing=>0,
+	fix_vector=>[1,0,1]);
+is($strings->[0],undef,'string cholesky diag 1');
+is($strings->[1],'SD_D2','string cholesky diag 2');
+is($strings->[2],undef,'string cholesky diag 3');
+
+is($inits->[0],'(0,3) ; SD_D2','string cholesky init diag 2');
+
+
+is($code->[0],'SD_D2=THETA(1)','string cholesky code diag 2');
+
 
 done_testing();
