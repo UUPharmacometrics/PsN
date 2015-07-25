@@ -307,6 +307,46 @@ sub BUILD
 	
 }
 
+sub check_and_set_sizes
+{
+	my $self = shift;
+	#TODO add more options to check here
+	my %parm = validated_hash(\@_,
+							  LTH => { isa => 'Bool', default => 0 },
+		);
+	my $LTH = $parm{'LTH'};
+	my $max_theta = 100;
+
+	if ($LTH){
+		my $theta_count = 0;
+		foreach my $prob (@{$self->problems}){
+			my $count = $prob->record_count(record_name=>'theta');
+			$theta_count = $count if ($count > $theta_count);
+		}
+		my $set_lth = $self->get_option_value(record_name => 'sizes',
+											  option_name => 'LTH',
+											  fuzzy_match => 0);
+		if (defined $set_lth and ($set_lth > 0) and ($set_lth < $max_theta)){
+			$max_theta = $set_lth;
+		}
+
+		if ($theta_count > $max_theta){
+			if (defined $self->problems->[0]->sizess and scalar(@{$self->problems->[0]->sizess})>0){
+				$self->problems->[0]->remove_option( record_name => 'sizes',
+													 record_number => 0,
+													 option_name => 'LTH',
+													 fuzzy_match => 0 );
+			}
+			$self->problems->[0]->add_option(record_name => 'sizes',
+											 record_number => 1,
+											 option_name => 'LTH',
+											 option_value => $theta_count,
+											 add_record => 1); #add if not already there
+		}
+
+	}
+
+}
 sub create_maxeval_zero_models_array
 {
 	my %parm = validated_hash(\@_,
