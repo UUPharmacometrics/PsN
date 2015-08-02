@@ -1142,6 +1142,55 @@ sub read_answers
 	$answer_hashes[$index]->{answers}->{2}->{0}->{'ofv'}=-551.85341632298309;
 	$answer_hashes[$index]->{answers}->{3}->{0}->{'ofv'}=-562.36483954451865;
 
+	$index++;
+	$answer_hashes[$index]={};
+	$answer_hashes[$index]->{file}='multPROB/multEST/withSIM/multprobmix_nm730.lst';
+	$answer_hashes[$index]->{answers}={};
+	$answer_hashes[$index]->{parsed_successfully}=1;
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'ofv'}=-560.94860931564199;
+	$answer_hashes[$index]->{answers}->{1}->{0}->{'ofv'}=undef;
+	$answer_hashes[$index]->{answers}->{1}->{1}->{'ofv'}=undef;
+	$answer_hashes[$index]->{answers}->{2}->{0}->{'ofv'}=-496.32222094253308;
+	$answer_hashes[$index]->{answers}->{3}->{0}->{'ofv'}=-475.21574178971809;
+	$answer_hashes[$index]->{answers}->{4}->{0}->{'ofv'}=-722.46794253879420;
+	$answer_hashes[$index]->{answers}->{4}->{1}->{'ofv'}=-712.67215984695213;
+	$answer_hashes[$index]->{answers}->{4}->{2}->{'ofv'}=-705.52435900849582;
+	$answer_hashes[$index]->{answers}->{5}->{0}->{'ofv'}=-569.40860646604642;
+	$answer_hashes[$index]->{answers}->{6}->{0}->{'ofv'}=-551.47787941243621;
+
+#TODO 
+#run same mod on windows xp as well
+#on centosVM 710 and 712 does not print any tables for (Evaluation) to ext,
+#means we get empty ext for sir,
+#but have (Evaluation) printed above for 712 (probably from windows xp VM on Mac).
+
+	$index++;
+	$answer_hashes[$index]={};
+	$answer_hashes[$index]->{file}='multPROB/multEST/withSIM/multprobmix_nm710_centos.lst';
+	$answer_hashes[$index]->{answers}={};
+	$answer_hashes[$index]->{parsed_successfully}=1;
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'ofv'}=-560.94860366519333;
+	$answer_hashes[$index]->{answers}->{1}->{0}->{'ofv'}=undef;
+	$answer_hashes[$index]->{answers}->{1}->{1}->{'ofv'}=undef;
+	$answer_hashes[$index]->{answers}->{2}->{0}->{'ofv'}=-496.322;
+	$answer_hashes[$index]->{answers}->{3}->{0}->{'ofv'}=-475.216;
+	$answer_hashes[$index]->{answers}->{4}->{0}->{'ofv'}=-722.468;
+	$answer_hashes[$index]->{answers}->{4}->{1}->{'ofv'}=-712.672;
+	$answer_hashes[$index]->{answers}->{4}->{2}->{'ofv'}=-705.524;
+	$answer_hashes[$index]->{answers}->{5}->{0}->{'ofv'}=-569.409;
+	$answer_hashes[$index]->{answers}->{6}->{0}->{'ofv'}=-551.478;
+
+#	$index++;
+#	got identical numbers for nm712 on centos
+#	$answer_hashes[$index]->{file}='multPROB/multEST/withSIM/multprobmix_nm712_centos.lst';
+
+
+#TODO
+#	$index++;
+#	$answer_hashes[$index]={};
+#	$answer_hashes[$index]->{file}='multPROB/multEST/withSIM/multprobmix_nm720.lst';
+#	$answer_hashes[$index]->{answers}={};
+#	$answer_hashes[$index]->{parsed_successfully}=1;
 
 	return \@answer_hashes;
 }

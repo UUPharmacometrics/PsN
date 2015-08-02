@@ -42,6 +42,8 @@ has 'n_previous_meth' => ( is => 'rw', isa => 'Int', default => 0 );
 has 'table_number' => ( is => 'rw', isa => 'Maybe[Int]' );
 has 'input_problem' => ( is => 'rw', isa => 'model::problem' );
 has 'nm_major_version' => ( is => 'rw', isa => 'Int' );
+has 'evaluation_missing_from_ext_file' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'ext_file_has_evaluation' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'ignore_missing_files' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'lstfile' => ( is => 'rw', isa => 'ArrayRef[Str]' );
 has 'lstfile_pos' => ( is => 'rw', isa => 'Int', default => 0 );
@@ -73,6 +75,8 @@ has 'msfi_used' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'tables_step_run' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'simulation_step_run' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'estimation_step_initiated' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'last_method_number' => ( is => 'rw', isa => 'Int' );
+
 
 sub BUILD
 {
@@ -241,10 +245,12 @@ sub store_NM7_output
 			foreach my $line (@tmp) {
 				if ($line =~ /^\s*TABLE NO.\s+(\d+):\s*([^:]+)/) {
 					my $number = $1;
-				  my $string = $2;
-				  chomp $string;
-				  $string =~ s/\s*$//; #remove trailing spaces
-			  
+					my $string = $2;
+					chomp $string;
+					$string =~ s/\s*$//; #remove trailing spaces
+					if (($string =~ /\(Evaluation\)/) or ($string =~ /\(EVALUATION\)/)){
+						$self->ext_file_has_evaluation(1);
+					}			  
 				  if ((defined $max_table_number) and ($number > $max_table_number)) {
 				      last; #skip the rest, know we do not need them for this $PROB
 				  }
@@ -778,11 +784,13 @@ sub _read_subproblems
 	my $sum_covariance_time = 0;
 	my $no_est = 0;
 	my $no_meth = 0;
+	my $need_evaluation_in_ext_file = 0;
+
 	while ( $_ = @{$self->lstfile}[ $self -> {'lstfile_pos'}++ ] ) {
 		if( /$method_exp/ ) {
 			# NONMEM will sometimes print #METH also when running without estimation, do not count
 			# these occurences, which have ^1 line directly following #METH
-			# and either empty method string or a string matching Evaluation or EVALUATION 
+			# and either empty method string or a string matching (Evaluation) (?or (EVALUATION)?) 
 			# (MAXEVAL=0 will also have a ^1 line)
 			my $string = $1;
 			$string =~ s/\s*$//; #remove trailing spaces
@@ -793,12 +801,16 @@ sub _read_subproblems
 				#and also right #METH
 				$self->table_number($1);
 			}
-			# should we also check for EVALUATION???
 			unless ($no_est) {
 				$last_method_number++;
 				# when done this will be number of last #METH for this problem
 				$last_method_string = $string;
 				$subprob_method_number++;
+				if ((not defined $self->table_number) and 
+					(($string =~ /\(Evaluation\)/) or ($string =~ /\(EVALUATION\)/))){
+					$need_evaluation_in_ext_file = 1; #have seen results sometimes printed to ext, sometimes not
+					#for NM 7.1 which does not have table numbers as TBLN tag
+				} 
 			}
 
 		} elsif ( /$est_time_exp/ ) {
@@ -849,10 +861,21 @@ sub _read_subproblems
 					}
 				}
 
-				$last_method_number = $self->table_number() if defined ($self->table_number());
+				if (defined $self->table_number()){
+					$last_method_number = $self->table_number();
+				}elsif ($need_evaluation_in_ext_file and (not $self->ext_file_has_evaluation)){
+					$self->evaluation_missing_from_ext_file(1);
+				}
+
 				my %subprob;
-				if ((defined $self->table_numbers_hash and defined $self->table_numbers_hash->{'raw'}) and 
+
+				if ((not $self->evaluation_missing_from_ext_file) and
+					(defined $self->table_numbers_hash and defined $self->table_numbers_hash->{'raw'}) and 
 					(scalar(@{$self->table_numbers_hash->{'raw'}}) > 0) and ($no_meth < 1)) {
+
+#					print "\n no_meth $no_meth table_numbers ".join(' ',@{$self->table_numbers_hash->{'raw'}})."\n";
+#					print "last_method_number $last_method_number\n";
+
 					my $index = 0;
 					my $tab_index = -1;
 					foreach my $num (@{$self->table_numbers_hash->{'raw'}}) {
@@ -908,6 +931,8 @@ sub _read_subproblems
 						sum_estimation_time        => $sum_estimation_time,
 						sum_covariance_time        => $sum_covariance_time});
 
+
+				$self->last_method_number($last_method_number); #to be used by output.pm to set n_previous_meth
 				@subproblem_lstfile = undef;
 				%subprob = undef;
 
