@@ -151,8 +151,8 @@ $help_text{-correlation_cutoff} = <<'EOF';
     Default 0. Ignored unless option -cholesky is set. Value range 0-1.
 
     If, during cholesky reparameterization, the absolute value of a correlation 
-	in a block $OMEGA or $SIGMA is lower than this cutoff, then set the $THETA 
-	for estimation of this correlation to 0 FIX.
+	in a block $OMEGA or $SIGMA is lower than or equal to this cutoff, then set
+	the $THETA for estimation of this correlation to 0 FIX.
 EOF
 
 $help_text{-cholesky} = <<'EOF';
