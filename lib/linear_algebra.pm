@@ -495,8 +495,8 @@ sub string_cholesky_block
 			if ($testing){
 				push(@theta_inits,"$rho=$init;");
 			}else{
-				if (abs($init)< $correlation_cutoff){
-					push(@theta_inits,'0 FIX ; '.$rho.' ; '.$init.' below cutoff');
+				if (abs($init)<= $correlation_cutoff){
+					push(@theta_inits,'0 FIX ; '.$rho.' ; initial '.$init.' <= '.$correlation_cutoff.' cutoff ');
 				}else{
 					my $formatted = sprintf("%.8G",$init); 
 					push(@theta_inits,'(-1,'.$formatted.',1)'.$FIX.' ; '.$rho); #ok bound if FIX?
