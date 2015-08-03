@@ -326,7 +326,7 @@ sub check_and_set_sizes
 		my $set_lth = $self->get_option_value(record_name => 'sizes',
 											  option_name => 'LTH',
 											  fuzzy_match => 0);
-		if (defined $set_lth and ($set_lth > 0) and ($set_lth < $max_theta)){
+		if (defined $set_lth and (length($set_lth) > 0) ){
 			$max_theta = $set_lth;
 		}
 
