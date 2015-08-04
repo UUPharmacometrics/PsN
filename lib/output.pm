@@ -2818,12 +2818,13 @@ sub _read_problems
 	my $problem_start;
 	my $problem_index = 0;
 	my $success = 0;
-	my $tbln; #NONMEM table number from tag #TBLN
+	#my $tbln; #NONMEM table number from tag #TBLN
 	my $n_previous_meth = 0;
 	my $evaluation_missing_from_ext_file = 0;
 	my $lst_version;
 	my $endtime_string;
 	my $starttime_string;
+	my $nm_version_710=0;
 
 	#new in 3.5.10, read control stream from lst-file
 	my $reading_control_stream = 0;
@@ -2941,6 +2942,9 @@ sub _read_problems
 		}elsif (/^1NONLINEAR MIXED EFFECTS MODEL PROGRAM/) {
 			if (/VERSION 7/) {
 				$lst_version = 7;
+				if (/VERSION 7\.1\.0/) {
+					$nm_version_710=1;
+				}
 			} elsif (/VERSION VII /) {
 				$lst_version = 7;
 			} elsif (/VERSION 6/) {
@@ -3009,16 +3013,16 @@ sub _read_problems
 
 	#then read NONMEM output
 	while ( $_ = $lstfile[ $lstfile_pos++ ] ) {
-		if (/^\s*\#TBLN:\s*([0-9]+)/) {
-			$tbln = $1; #used for limiting reading of tables from additional output
-		} elsif ( /^ PROBLEM NO\.:\s+\d+\s+$/ or $lstfile_pos > $#lstfile ) {
+#		if (/^\s*\#TBLN:\s*([0-9]+)/) {
+#			$tbln = $1; #used for limiting reading of tables from additional output
+#		} els
+		if ( /^ PROBLEM NO\.:\s+\d+\s+$/ or $lstfile_pos > $#lstfile ) {
 			if ( defined $problem_start ) {
 				my $adj = 1;
 				my @problem_lstfile =	@lstfile[$problem_start .. ($lstfile_pos - $adj)];
 
 				#We send full raw_file, cov_file... arrays to problem object
 				#the right table number will be extracted there using $n_previous_meth
-				#or $tbln if present
 				#we skip tables that must come from restarted numbering (<= previous number),
 				#NM7 table numbering in additional output is inconsistent and we cannot handle it
 				#those numbers will be taken from lst-file instead, good enough since rare case
@@ -3039,11 +3043,12 @@ sub _read_problems
 										   { lstfile		    => \@problem_lstfile,
 											 ignore_missing_files => $self -> ignore_missing_files(),
 											 nm_major_version     => $lst_version,
+											 nm_version_710       => $nm_version_710,
 											 evaluation_missing_from_ext_file => $evaluation_missing_from_ext_file,
 											 filename_root	      => $self -> filename_root(),
 											 directory	    	  => $self -> directory(),
 											 n_previous_meth      => $n_previous_meth,
-											 table_number         => $tbln,
+#											 table_number         => $tbln,
 											 input_problem        => $self->lst_model->problems->[$problem_index]});
 					
 					my $mes = $self->parsing_error_message();

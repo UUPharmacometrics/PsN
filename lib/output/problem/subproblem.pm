@@ -772,7 +772,7 @@ sub _scan_to_meth
 	my $check_next_to_last_method = 0;
 	my $found_next_to_last_method = 0;
 	my $method_counter = 0;
-	my $found_any_meth = 0;
+	my $objt_has_meth = 0;
 	my $read_terminated_by_obj = 1;
 
 	if ($self->method_string =~ /Objective Function Evaluation by Importance Sampling/ ) {
@@ -781,7 +781,7 @@ sub _scan_to_meth
 
 	while ( $_ = @{$self->lstfile}[ $start_pos++ ] ) { #Large reading loop
 	    if( /$method_exp/ ) {
-			$found_any_meth = 1;
+			$objt_has_meth = 1;
 			$method_counter++;
 			my $string = $1;
 			$string =~ s/\s*$//; #remove trailing spaces
@@ -805,16 +805,24 @@ sub _scan_to_meth
 					 and $check_next_to_last_method) {
 				$found_next_to_last_method = 1;
 			}
-	    } elsif ((not $found_any_meth) and $self->simulationstep and /\(EVALUATION\)/ ) {
-			#when simulation step sometimes no meth printed, do not look for it
-			$self->estimation_step_run(0);
-			last;
-	    } elsif ((not $found_any_meth) and $self->simulationstep and /$objt_exp/ ) {
-			#when simulation step sometimes no meth printed, do not look for it
-			#this is fishy, but do not bail out yet
-			$start_pos = $start_pos - 2; #leave at name of est meth line
-			$self->estimation_step_run(0);
-			last;
+#	    } elsif ((not $found_any_meth) and $self->simulationstep and /\(EVALUATION\)/ ) {
+#			#when simulation step sometimes no meth printed, do not look for it
+#			$self->estimation_step_run(0);
+#			last;
+	    } elsif ($self->simulationstep and /$objt_exp/ ) {
+			if ($objt_has_meth){
+				#no problem, just reset variable
+				$objt_has_meth = 0;
+			}else{
+				#when simulation step sometimes (MAXEVAL=0) no meth printed, do not look for it
+				#this is fishy, but do not bail out yet
+				$method_counter++; #meth line was missing, but count this as EST anyway since there was OBJT
+				if ($method_counter == scalar(@{$self->input_problem()->estimations()})) {
+					$start_pos = $start_pos - 2; #leave at name of est meth line
+					$self->estimation_step_run(0);
+					last;
+				}
+			}
 	    } elsif ($found_next_to_last_method and (not defined $self -> next_to_last_step_successful)) {
 			if ( /$term_exp/ ) {
 				#inner loop to find termination status of next to last step

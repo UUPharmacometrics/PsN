@@ -1158,8 +1158,6 @@ sub read_answers
 	$answer_hashes[$index]->{answers}->{5}->{0}->{'ofv'}=-569.40860646604642;
 	$answer_hashes[$index]->{answers}->{6}->{0}->{'ofv'}=-551.47787941243621;
 
-#TODO nm712 on centos is really duplicate 710
-
 	$index++;
 	$answer_hashes[$index]={};
 	$answer_hashes[$index]->{file}='multPROB/multEST/withSIM/multprobmix_nm710.lst';
@@ -1175,6 +1173,40 @@ sub read_answers
 	$answer_hashes[$index]->{answers}->{4}->{2}->{'ofv'}=-705.524;
 	$answer_hashes[$index]->{answers}->{5}->{0}->{'ofv'}=-569.409;
 	$answer_hashes[$index]->{answers}->{6}->{0}->{'ofv'}=-551.478;
+
+
+
+	$index++;
+	$answer_hashes[$index]={};
+	$answer_hashes[$index]->{file}='multPROB/multEST/withSIM/multprobmix_nm720.lst';
+	$answer_hashes[$index]->{answers}={};
+	$answer_hashes[$index]->{parsed_successfully}=1;
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'ofv'}=-560.94860364775752;
+	$answer_hashes[$index]->{answers}->{1}->{0}->{'ofv'}=undef;
+	$answer_hashes[$index]->{answers}->{1}->{1}->{'ofv'}=undef;
+	$answer_hashes[$index]->{answers}->{2}->{0}->{'ofv'}=-496.32221630076214;
+	$answer_hashes[$index]->{answers}->{3}->{0}->{'ofv'}=-475.21573581031379;
+	$answer_hashes[$index]->{answers}->{4}->{0}->{'ofv'}=-722.46793724366478;
+	$answer_hashes[$index]->{answers}->{4}->{1}->{'ofv'}=-712.67215413061240;
+	$answer_hashes[$index]->{answers}->{4}->{2}->{'ofv'}=-705.52435331302206;
+	$answer_hashes[$index]->{answers}->{5}->{0}->{'ofv'}=-569.40859223812595;
+	$answer_hashes[$index]->{answers}->{6}->{0}->{'ofv'}=-551.47787396093008;
+
+	$index++;
+	$answer_hashes[$index]={};
+	$answer_hashes[$index]->{file}='multPROB/multEST/withSIM/multprobmix_3_nm730.lst';
+	$answer_hashes[$index]->{answers}={};
+	$answer_hashes[$index]->{parsed_successfully}=1;
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'ofv'}=-560.94860931564199;
+	$answer_hashes[$index]->{answers}->{1}->{0}->{'ofv'}=undef;
+	$answer_hashes[$index]->{answers}->{1}->{1}->{'ofv'}=undef;
+	$answer_hashes[$index]->{answers}->{2}->{0}->{'ofv'}=-496.32222094253308;
+	$answer_hashes[$index]->{answers}->{3}->{0}->{'ofv'}=-475.21574178971809;
+	$answer_hashes[$index]->{answers}->{4}->{0}->{'ofv'}=-722.46794253879420;
+	$answer_hashes[$index]->{answers}->{4}->{1}->{'ofv'}=-712.67215984695213;
+	$answer_hashes[$index]->{answers}->{4}->{2}->{'ofv'}=-705.52435900849582;
+	$answer_hashes[$index]->{answers}->{5}->{0}->{'ofv'}=-569.40860646604642;
+	$answer_hashes[$index]->{answers}->{6}->{0}->{'ofv'}=-551.47787941243621;
 
 	$index++;
 
@@ -1192,18 +1224,57 @@ sub read_answers
 	$answer_hashes[$index]->{answers}->{5}->{0}->{'ofv'}=-569.40859691303922;
 	$answer_hashes[$index]->{answers}->{6}->{0}->{'ofv'}=-551.47787398117805;
 
-
-#TODO
 	$index++;
-	$answer_hashes[$index]={};
-	$answer_hashes[$index]->{file}='multPROB/multEST/withSIM/multprobmix_nm720.lst';
+
+	$answer_hashes[$index]->{file}='onePROB/oneEST/withSIM/evaluation_nm730.lst';
+	$answer_hashes[$index]->{answers}={};
+	$answer_hashes[$index]->{parsed_successfully}=1;
+	$answer_hashes[$index]->{estimation_evaluation_problem_number}=-1;
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'ofv'}=782.60689655390649;
+	$answer_hashes[$index]->{answers}->{0}->{1}->{'ofv'}=729.02713435169971;
+
+	$index++;
+	$answer_hashes[$index]->{file}='multPROB/multEST/withSIM/multprobmix_2_nm710.lst';
+	$answer_hashes[$index]->{answers}={};
+	$answer_hashes[$index]->{parsed_successfully}=1;
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'ofv'}=-560.94860354934463;
+	$answer_hashes[$index]->{answers}->{1}->{0}->{'ofv'}=undef;
+	$answer_hashes[$index]->{answers}->{1}->{1}->{'ofv'}=undef;
+	$answer_hashes[$index]->{answers}->{2}->{0}->{'ofv'}=-496.322;
+	$answer_hashes[$index]->{answers}->{3}->{0}->{'ofv'}=-654.386;
+	$answer_hashes[$index]->{answers}->{3}->{1}->{'ofv'}=-691.184;
+	$answer_hashes[$index]->{answers}->{4}->{0}->{'ofv'}=-722.468;
+	$answer_hashes[$index]->{answers}->{4}->{1}->{'ofv'}=-712.672;
+	$answer_hashes[$index]->{answers}->{4}->{2}->{'ofv'}=-705.524;
+	$answer_hashes[$index]->{answers}->{5}->{0}->{'ofv'}=-569.409;
+	$answer_hashes[$index]->{answers}->{6}->{0}->{'ofv'}=-551.478;
+
+	$index++;
+	$answer_hashes[$index]->{file}='multPROB/multEST/withSIM/multprobmix_2_nm712.lst';
+	$answer_hashes[$index]->{answers}={};
+	$answer_hashes[$index]->{parsed_successfully}=1;
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'ofv'}=-560.94860354934463;
+	$answer_hashes[$index]->{answers}->{1}->{0}->{'ofv'}=undef;
+	$answer_hashes[$index]->{answers}->{1}->{1}->{'ofv'}=undef;
+	$answer_hashes[$index]->{answers}->{2}->{0}->{'ofv'}=-496.32221641683088;
+	$answer_hashes[$index]->{answers}->{3}->{0}->{'ofv'}=-654.38616869426903;
+	$answer_hashes[$index]->{answers}->{3}->{1}->{'ofv'}=-691.18369732098222;
+	$answer_hashes[$index]->{answers}->{4}->{0}->{'ofv'}=-722.46793726016938;
+	$answer_hashes[$index]->{answers}->{4}->{1}->{'ofv'}=-712.67215435439618;
+	$answer_hashes[$index]->{answers}->{4}->{2}->{'ofv'}=-705.52435339164538;
+	$answer_hashes[$index]->{answers}->{5}->{0}->{'ofv'}=-569.40859691303922;
+	$answer_hashes[$index]->{answers}->{6}->{0}->{'ofv'}=-551.47787398117805;
+
+	$index++;
+	$answer_hashes[$index]->{file}='multPROB/multEST/withSIM/multprobmix_2_nm720.lst';
 	$answer_hashes[$index]->{answers}={};
 	$answer_hashes[$index]->{parsed_successfully}=1;
 	$answer_hashes[$index]->{answers}->{0}->{0}->{'ofv'}=-560.94860364775752;
 	$answer_hashes[$index]->{answers}->{1}->{0}->{'ofv'}=undef;
 	$answer_hashes[$index]->{answers}->{1}->{1}->{'ofv'}=undef;
 	$answer_hashes[$index]->{answers}->{2}->{0}->{'ofv'}=-496.32221630076214;
-	$answer_hashes[$index]->{answers}->{3}->{0}->{'ofv'}=-475.21573581031379;
+	$answer_hashes[$index]->{answers}->{3}->{0}->{'ofv'}=-654.38616874343393;
+	$answer_hashes[$index]->{answers}->{3}->{1}->{'ofv'}=-691.18369737154046;
 	$answer_hashes[$index]->{answers}->{4}->{0}->{'ofv'}=-722.46793724366478;
 	$answer_hashes[$index]->{answers}->{4}->{1}->{'ofv'}=-712.67215413061240;
 	$answer_hashes[$index]->{answers}->{4}->{2}->{'ofv'}=-705.52435331302206;
