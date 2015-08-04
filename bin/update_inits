@@ -329,8 +329,7 @@ EOF
 common_options::online_help('update_inits', \%options, \%help_text, \%required_options, \%optional_options);
 
 if ( scalar( @ARGV ) < 1 ){
-  print "A model file must be specified. Use 'update_inits -h' for help.\n";
-  exit;
+  die "A model file must be specified. Use 'update_inits -h' for help.\n";
 }
 
 my $ignore_missing_parameters=0;
@@ -388,6 +387,8 @@ my $copyfile=$ARGV[0];
 my $removecopy=0;
 
 if ($options{'flip_comments'}){
+	ui->print(category => 'all',
+			  message => "Flipping comments\n");
 	#flip_comments must be done as very first step, because later processing might
 	#add or modify records so that tags do not do the right thing anymore
 	if ( $options{'output_model'} ){
@@ -425,33 +426,6 @@ if ( $options{'output_model'} ){
 	$outfile = $ARGV[0];
 }
 
-if ( $options{'cholesky'} ){
-	print "work in progress\n";
-	my $cutoff = 0;
-	if ($options{'correlation_cutoff'}){
-		if ($options{'correlation_cutoff'} < 0){
-			die "option -correlation_cutoff must not be less than 0\n";
-		}
-		if ($options{'correlation_cutoff'} > 1){
-			die "option -correlation_cutoff must not be larger than 1\n";
-		}
-		$cutoff = $options{'correlation_cutoff'};
-	}
-	my $warnings = 0;
-	foreach my $problem (@{$model_copy->problems}){
-		$warnings += $problem->cholesky_reparameterize(what => $options{'cholesky'},
-													   correlation_cutoff => $cutoff, #if lower then set 0 FIX
-													   correlation_limit => 0.9, #if higher then warn
-			);
-	}
-	$model_copy -> check_and_set_sizes(LTH => 1); #set LTH if too many thetas. TODO make dependent on nm_version
-	if ($warnings > 0){
-		ui->print(category => 'all',
-				  message => "\n"."Warning: Found $warning instance(s) of high correlations ".
-				  "during cholesky reparameterization\n");
-	}
-
-}
 
 if (defined $options{'from_model'}) {
 	die "No such file: ".$options{'from_model'}."\n" unless (-e $options{'from_model'});
@@ -486,6 +460,7 @@ if (defined $options{'from_model'}) {
 	}
 
 } else { 
+	my $update_inits=0;
 	if( $ARGV[1] ){
 		$output = output -> new( filename => $ARGV[1],
 								 ignore_missing_files => 0);
@@ -496,37 +471,72 @@ if (defined $options{'from_model'}) {
 		unless ($output->parsed_successfully()){
 			die "Failed to parse $ARGV[1]: ".$output -> parsing_error_message();
 		}
+		$update_inits=1;
 	}elsif( defined $model->outputs and -e $model ->outputs -> [0] -> filename ){
 		$output = $model -> outputs -> [0];
 		unless ($output->parsed_successfully()){
 			die "Failed to parse ".$model ->outputs -> [0] -> filename.": ".
 				$output -> parsing_error_message();
 		}
+		$update_inits=1;
 	} else {
-		die "No file to read parameter values from\n";
-	}
-
-	if (scalar (@{$model_copy->problems})>1){
 		ui->print(category => 'all',
-				  message => $ARGV[0].
-				  ' has more than one $PROBLEM. Will update naively $PROB by $PROB from lst-file');
-
+				  message => "No file to read parameter values from, not updating initial estimates\n");
 	}
 
-	my $check = 0;
-	$check = $options{'ensure_posdef'} if (defined $options{'ensure_posdef'});
-	$model_copy -> update_inits( from_output => $output,
-								 ensure_posdef => $check,
-								 ignore_missing_parameters => $ignore_missing_parameters,
-									 update_fix => $update_fix );
+	if ($update_inits){
+		if (scalar (@{$model_copy->problems})>1){
+			ui->print(category => 'all',
+					  message => $ARGV[0].
+					  ' has more than one $PROBLEM. Will update naively $PROB by $PROB from lst-file');
 
+		}
+		ui->print(category => 'all',
+				  message => "Updating initial estimates\n");
+
+		my $check = 0;
+		$check = $options{'ensure_posdef'} if (defined $options{'ensure_posdef'});
+		$model_copy -> update_inits( from_output => $output,
+									 ensure_posdef => $check,
+									 ignore_missing_parameters => $ignore_missing_parameters,
+									 update_fix => $update_fix );
+	}
 }
 $model_copy -> filename( $outfile );
 
-my @record_list=('THETA','OMEGA','SIGMA');
-print "Updating records ".join(' ',@record_list)."\n";
+if ( $options{'cholesky'} ){
+	ui->print(category => 'all',
+				  message => "Doing Cholesky reparameterization\n");
+	my $cutoff = 0;
+	if ($options{'correlation_cutoff'}){
+		if ($options{'correlation_cutoff'} < 0){
+			die "option -correlation_cutoff must not be less than 0\n";
+		}
+		if ($options{'correlation_cutoff'} > 1){
+			die "option -correlation_cutoff must not be larger than 1\n";
+		}
+		$cutoff = $options{'correlation_cutoff'};
+	}
+	my $warnings = 0;
+	foreach my $problem (@{$model_copy->problems}){
+		$warnings += $problem->cholesky_reparameterize(what => $options{'cholesky'},
+													   correlation_cutoff => $cutoff, #if lower then set 0 FIX
+													   correlation_limit => 0.9, #if higher then warn
+			);
+	}
+	$model_copy -> check_and_set_sizes(LTH => 1); #set LTH if too many thetas. TODO make dependent on nm_version
+	if ($warnings > 0){
+		ui->print(category => 'all',
+				  message => "\n"."Warning: Found $warning instance(s) of high correlations ".
+				  "during cholesky reparameterization\n");
+	}
+
+}
+
 
 if (defined $options{'degree'}){
+	ui->print(category => 'all',
+				  message => "Tweaking initial estimates\n");
 	foreach my $prob ( @{$model_copy->problems()}) {
 		$prob -> set_random_inits ( degree => $options{'degree'} );
 	}
@@ -534,6 +544,8 @@ if (defined $options{'degree'}){
 
 
 if ($options{'fix_thetas'}){
+	ui->print(category => 'all',
+				  message => "Fixing THETAs\n");
 	for (my $j=0; $j< scalar(@{$model_copy->problems}); $j++){
 		next unless (defined $model_copy ->problems()->[$j]->thetas());
 		foreach my $rec (@{$model_copy ->problems()->[$j]->thetas()}){
@@ -545,6 +557,8 @@ if ($options{'fix_thetas'}){
 	}
 }
 if ($options{'unfix_thetas'}){
+	ui->print(category => 'all',
+				  message => "Unfixing THETAs\n");
 	for (my $j=0; $j< scalar(@{$model_copy->problems}); $j++){
 		next unless (defined $model_copy ->problems()->[$j]->thetas());
 		foreach my $rec (@{$model_copy ->problems()->[$j]->thetas()}){
@@ -558,6 +572,8 @@ if ($options{'unfix_thetas'}){
 
 
 if ($options{'add_prior'}){
+	ui->print(category => 'all',
+				  message => "Adding prior\n");
 	$model_copy -> problems()->[0]->add_prior_distribution(from_output => $output,
 														   problem_number => 1,
 														   df_string => $options{'add_prior'});
@@ -597,7 +613,7 @@ if (defined $options{'renumber'} and $options{'renumber'} != 0){
 		}
 	}
 	if (scalar(@probtab)+scalar(@probmsfo)+scalar(@probmsfi)){
-		$message = 'and renumbering ';
+		my $message = 'Renumbering ';
 		if(scalar(@probtab) > 0){
 			$message .= '$TABLE FILE= in $PROB '.join(',',@probtab)."\n";
 		}
@@ -607,13 +623,16 @@ if (defined $options{'renumber'} and $options{'renumber'} != 0){
 		if(scalar(@probmsfi) > 0){
 			$message .= '$MSFI <file> in $PROB '.join(',',@probmsfi)."\n";
 		}
-		print $message;
+		ui->print(category => 'all',
+				  message => $message);
 	}
 
 }
 
 #handle PROBLEM update_tags add_tags add_comment
 if ($options{'add_tags'}) {
+	ui->print(category => 'all',
+				  message => "Adding tags\n");
     $model_copy->annotation->add_empty_tags();
 }
 
