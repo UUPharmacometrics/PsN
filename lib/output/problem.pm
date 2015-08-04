@@ -836,14 +836,16 @@ sub _read_subproblems
 		}
 		#new if clause here to handle case if above line was also last in lst-file, make sure add subprob then
 		if( /$subprob_exp/ or $self->lstfile_pos > $#{$self->lstfile} ) {
-			if ($found_new_meth and (not $self->nm_version_710)){
-				#we have found a #METH without the OBJT, and this is not NM7.1.0 which prints excess #METH
-				#this is probably a failed run of some sort, NONMEM crashed before printing OBJT
-				#but there could be a table to read in ext-file, so try to get correct table number
-				$last_method_number++;
-				$subprob_method_number++;
-				$self->table_number($last_found_table_number) if (defined $last_found_table_number);
-				$last_method_string = $last_found_method_string;
+			if ($found_new_meth){
+				if (not $self->nm_version_710){
+					#we have found a #METH without the OBJT, and this is not NM7.1.0 which prints excess #METH
+					#this is probably a failed run of some sort, NONMEM crashed before printing OBJT
+					#but there could be a table to read in ext-file, so try to get correct table number
+					$last_method_number++;
+					$subprob_method_number++;
+					$self->table_number($last_found_table_number) if (defined $last_found_table_number);
+					$last_method_string = $last_found_method_string;
+				}
 				#reset
 				$found_new_meth = 0;
 				$last_found_table_number =undef;
