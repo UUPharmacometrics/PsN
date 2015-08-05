@@ -1281,6 +1281,38 @@ sub read_answers
 	$answer_hashes[$index]->{answers}->{5}->{0}->{'ofv'}=-569.40859223812595;
 	$answer_hashes[$index]->{answers}->{6}->{0}->{'ofv'}=-551.47787396093008;
 
+	$index++;
+	$answer_hashes[$index]->{file}='multPROB/multEST/withSIM/multprobmix_2_nm740alpha.lst';
+	$answer_hashes[$index]->{answers}={};
+	$answer_hashes[$index]->{parsed_successfully}=1;
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'ofv'}=-560.94860931564199;
+	$answer_hashes[$index]->{answers}->{1}->{0}->{'ofv'}=undef;
+	$answer_hashes[$index]->{answers}->{1}->{1}->{'ofv'}=undef;
+	$answer_hashes[$index]->{answers}->{2}->{0}->{'ofv'}=-496.32222094253308;
+	$answer_hashes[$index]->{answers}->{3}->{0}->{'ofv'}=-654.38617413052214;
+	$answer_hashes[$index]->{answers}->{3}->{1}->{'ofv'}=-691.18370265092790;
+	$answer_hashes[$index]->{answers}->{4}->{0}->{'ofv'}=-722.46794253879420;
+	$answer_hashes[$index]->{answers}->{4}->{1}->{'ofv'}=-712.67215984695213;
+	$answer_hashes[$index]->{answers}->{4}->{2}->{'ofv'}=-705.52435900849582;
+	$answer_hashes[$index]->{answers}->{5}->{0}->{'ofv'}=-569.40860646604642;
+	$answer_hashes[$index]->{answers}->{6}->{0}->{'ofv'}=-551.47787941243621;
+
+	$index++;
+	$answer_hashes[$index]={};
+	$answer_hashes[$index]->{file}='multPROB/multEST/withSIM/multprobmix_nm740alpha.lst';
+	$answer_hashes[$index]->{answers}={};
+	$answer_hashes[$index]->{parsed_successfully}=1;
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'ofv'}=-560.94860931564199;
+	$answer_hashes[$index]->{answers}->{1}->{0}->{'ofv'}=undef;
+	$answer_hashes[$index]->{answers}->{1}->{1}->{'ofv'}=undef;
+	$answer_hashes[$index]->{answers}->{2}->{0}->{'ofv'}=-496.32222094253308;
+	$answer_hashes[$index]->{answers}->{3}->{0}->{'ofv'}=-475.21574178971809;
+	$answer_hashes[$index]->{answers}->{4}->{0}->{'ofv'}=-722.46794253879420;
+	$answer_hashes[$index]->{answers}->{4}->{1}->{'ofv'}=-712.67215984695213;
+	$answer_hashes[$index]->{answers}->{4}->{2}->{'ofv'}=-705.52435900849582;
+	$answer_hashes[$index]->{answers}->{5}->{0}->{'ofv'}=-569.40860646604642;
+	$answer_hashes[$index]->{answers}->{6}->{0}->{'ofv'}=-551.47787941243621;
+
 	return \@answer_hashes;
 }
 
