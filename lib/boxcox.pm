@@ -76,13 +76,15 @@ sub compute_r
 
 
    my $squared_x_term = ($sum_xsquare-($sum_x**2)/$N);
+   return (undef, undef) unless ($squared_x_term > 0); #numerical error
    my $root_squared_x_term = sqrt($squared_x_term);
 #   my $root_squared_y_term = sqrt($sum_ysquare-($sum_y**2)/$N); sum_y is 0 
    my $root_squared_y_term = sqrt($sum_ysquare); 
    #my $xy_cross_term = ($sum_xy-($sum_x*$sum_y/$N)); sum_y is 0
    my $xy_cross_term = ($sum_xy);
 
-   my $r= $xy_cross_term/($root_squared_x_term*$root_squared_y_term);
+   return (undef, undef) unless (($root_squared_x_term*$root_squared_y_term) > 0); #numerical error
+   my $r= $xy_cross_term/($root_squared_x_term*$root_squared_y_term); 
    if (defined $derivative){
 	   $derivative=(($sum_ylogterm-$sum_xy)-$xy_cross_term*($sum_xlogterm-$sum_xsquare-($sum_logterm-$sum_x)*$sum_x/$N )/$squared_x_term)/($root_squared_x_term*$root_squared_y_term*$lambda);
    }
@@ -125,7 +127,11 @@ sub evaluate
 		);
 	
 	if ($extra_args->{'type'} eq 'r'){
-		return r_of_lambda($extra_args->{'shifted'},$extra_args->{'yvec'},$l);
+		 my ($r,$deriv) = r_of_lambda($extra_args->{'shifted'},$extra_args->{'yvec'},$l);
+		 unless (defined $r){
+			 croak("\nNumerical error when searching for optimal lambda for Box Cox transformation. Aborting\n");
+		 }
+		 return ($r,$deriv);
 	}elsif($extra_args->{'type'} eq 'second_degree'){
 		my $f= ($extra_args->{'a'})*$l**2+($extra_args->{'b'})*$l+$extra_args->{'c'};
 		my $deriv = ($extra_args->{'a'})*2*$l+($extra_args->{'b'});
@@ -134,6 +140,9 @@ sub evaluate
 		croak("unknown type ".$extra_args->{'type'});
 	}
 }
+
+
+
 
 sub secant_method_maximize
 {

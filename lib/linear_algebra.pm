@@ -439,6 +439,7 @@ sub cholesky
 				$sum=$sum+($Aref->[$k][$j])**2;
 			}
 			my $diff = $Aref->[$j][$j]-$sum;
+			return $numerical_error unless (math::usable_number($diff));
 			return $numerical_error if ($diff < 0);
 			$Aref->[$j][$j]=sqrt($diff);
 			return $numerical_error if ($Aref->[$j][$j] == 0);
