@@ -10,7 +10,7 @@ MacOS X 10.6.6 with ActiveState Perl 5.16.3, ifort 12.0.0 and NONMEM 7.2.0 and 7
 Ubuntu Linux 14.10 with Perl 5.20.1, gfortran 4.9.1 and NONMEM 7.2.0 and 7.3.0
 Fedora 20 with Perl 5.18.2, gfortran 4.8.2 and NONMEM 7.2.0
 Scientific Linux 6.3 with Perl 5.10.1, gfortran 4.4.7 and NONMEM 7.2.0 and 7.3.0
-CentOS 6.5 with Perl 5.10.1, gfortran 4.4.7 and NONMEM 7.1.0, 7.1.2 and 7.3.0
+CentOS 6.5 with Perl 5.10.1, gfortran 4.4.7 and NONMEM 7.1.0 and 7.3.0
 Debian 7.5 with Perl 5.14.2, gfortran 4.7.2 and NONMEM 7.3.0
 
 
@@ -72,6 +72,18 @@ Changes and bug fixes from PsN 4.4.0 to n.n.n
 
 - Bug fix: Do not require that psn.conf exists during installation
 
+- Bug fix: When reading matrices from lst-file, handle also NONMEM's sparse matrix format
+
+- Bug fix: Reading of matrices from lst-files when .cov, .coi, .cor not available. Make sure rows and columns 
+  	  	   are sorted in correct order.
+
+- Bug fix: Parsing of ext-file from NM7.1.2 when there are multiple $PROB with one $EST MAXEVAL=0 each,
+  	  	   as in for example sir program and -dofv functionality of bootstrap. 
+
+- Bug fix: Parsing of ext-file from NM7.2.0 and NM7.3.0 when the #TBLN tag for the desired ext-file table
+  	  	   is missing from the lst-file and the desired table is not the first in the ext-file. 
+		   This happens for $EST MAXEVAL=0 that follows $SIM plus another $EST in the same $PROBLEM.
+
    ___Cluster/grid interaction___
 
 
@@ -92,14 +104,9 @@ Changes and bug fixes from PsN 4.4.0 to n.n.n
 
    ___sumo___
 
-- Bug fix: When reading matrices from lst-file, handle also NONMEM's sparse matrix format
-
 - Bug fix: Check for high correlations. 
 
 - Bug fix: Check for large relative standard errors. 
-
-- Bug fix: Reading of matrices from lst-files when .cov, .coi, .cor not available. Make sure rows and columns 
-  	  	   are sorted in correct order.
 
 - Bug fix: Make sure omega/sigma correlations are computed also when variances are small. 
 
@@ -147,16 +154,19 @@ Changes and bug fixes from PsN 4.4.0 to n.n.n
 - Bug fix: minor fix -rplots when detecting xpose run number from table file names: do not include 'sim' in the run number, 
   	 i.e. for sdtab65sim the run number is just 65
 
-- Document that parentheses in -nmfe_options must be escaped on *nix.
+- Documentation that parentheses in -nmfe_options must be escaped on *nix.
 
    ___parallel_retries___
 	 
 
    ___sir___
 	 
-    sir will print covmatrix in box-cox space for each iteration
-    sir major redesign of algorithm, run multiple iterations where resampled parameters from one iteration is used to generate proposal density for the next. The resampled parameters will be Box-Cox transformed to normality so that a built-in Perl function for sampling from a multivariate normal can be used in the next iteration.
+- sir will now print covmatrix in box-cox space for each iteration
 
+- Major redesign of algorithm: run multiple iterations where resampled parameters 
+  from one iteration is used to generate proposal density for the next. 
+  The resampled parameters will be Box-Cox transformed to normality so that a 
+  built-in Perl function for sampling from a multivariate normal can be used in the next iteration.
 
    ___precond___
 	 

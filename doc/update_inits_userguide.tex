@@ -2,7 +2,7 @@
 \setlength{\evensidemargin}{0pt}
 \setlength{\oddsidemargin}{0pt}
 
-\guidetitle{update\_inits user guide}{2015-03-11}
+\guidetitle{update\_inits user guide}{2015-08-05}
 
 \begin{document}
 
@@ -157,6 +157,21 @@ If option is set then PsN will make a cholesky decomposition of
 each OMEGA and SIGMA block to check positive definiteness, and
 inflate the diagonal elements of the block with 5\% 
 if the cholesky fails.
+\nextopt
+\optname{flip\_comments}
+Default not set. Between each pair of tag lines
+\begin{verbatim}
+;Sim_start
+\end{verbatim}
+and
+\begin{verbatim}
+;Sim_end
+\end{verbatim}
+remove the first ; on each line that has ; as the first non-blank
+character, and prepend with ; at each line that does not
+have a ; as the first non-blank character.
+This processing will be done as the very first step, which means lines
+that are commented out by this procedure will not be updated in the following steps.
 \nextopt
 \optdefault{add\_prior}{df1,df2,...}
 Default not used. Add \$PRIOR NWPRI based on output object. Will automatically read

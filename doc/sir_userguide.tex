@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{SIR user guide}{2015-05-18}
+\guidetitle{SIR user guide}{2015-08-05}
 \usepackage{amsmath}
 
 \begin{document}
@@ -67,7 +67,10 @@ running a full first iteration with sampling and resampling.
 This option is not allowed together with covmat\_input. 
 
 The raw results file must contain at least as many 
-samples as the input '-resamples item 1' to sir, the labels for  THETA/OMEGA/SIGMA 
+samples as the input '-resamples item 1' to sir, and this number must at the very least
+be as large as the number of estimated parameters (also counting off-diagonals)
+for it to be possible to obtain an empirical covariance matrix with full rank.
+The labels for  THETA/OMEGA/SIGMA 
 in the file must match the labels in the model given as input 
 to sir, the theta columns must be directly followed by the omega columns 
 which must be directly followed by the sigma columns, and the first or
