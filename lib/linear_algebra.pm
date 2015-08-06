@@ -439,10 +439,9 @@ sub cholesky
 				$sum=$sum+($Aref->[$k][$j])**2;
 			}
 			my $diff = $Aref->[$j][$j]-$sum;
-			return $numerical_error unless (math::usable_number($diff));
-			return $numerical_error if ($diff < 0);
+			return $numerical_error unless (($diff > 0) and math::usable_number($diff));
 			$Aref->[$j][$j]=sqrt($diff);
-			return $numerical_error if ($Aref->[$j][$j] == 0);
+			return $numerical_error unless ($Aref->[$j][$j] > 0);
 			#i=j+1:n
 			for (my $i=($j+1); $i<$ncol; $i++){
 				my $sum=0;
@@ -452,9 +451,10 @@ sub cholesky
 				$Aref->[$j][$i]=($Aref->[$j][$i]-$sum)/($Aref->[$j][$j]);
 			}
 		} else {
+			return $numerical_error unless (($Aref->[0][0] > 0) and math::usable_number($Aref->[0][0]));
 			$Aref->[0][0]=sqrt($Aref->[0][0]);
-			if ($Aref->[0][0] == 0){
-				print "cholesky leading element is 0";
+			unless ($Aref->[0][0] > 0){
+				print "cholesky leading element not gt 0";
 				return $numerical_error ;
 			}
 			for (my $i=1; $i< $ncol; $i++){

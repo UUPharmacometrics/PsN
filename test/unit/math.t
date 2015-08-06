@@ -42,11 +42,12 @@ is (inf(), inf()+1, "inf()");
 
 #usable_number
 my @not_ok = ('hej','Inf','Infinity','NaN','nan','NAN','NA','.',
-			  '-nan','-1.#IND','-1.#INF','1.#IND','1.#INF','undef',undef,inf());
+			  '-nan','-1.#IND','-1.#INF','1.#IND','1.#INF','undef',undef,inf(),-inf());
 my @is_ok = ('6','1.000','0','0.000','+10e+03','1.0E+01','-1.0E+01','0.000E-00',
 			 ' 6','1.000 ',' 0 ','0.000  ',' +10e+03  ',
 6,1.000,0,0.000,+10e+03,1.0E+01,-1.0E+01,0.000E-00,.123,-.2,.1e4
 );
+
 
 foreach my $number (@not_ok) {
 	is(usable_number($number),0,"not usable number $number");
@@ -69,5 +70,6 @@ is (convert_float_string("+23.0"), "23", "convert_float_string 6");
 is (convert_float_string("-12.3"), "-12.3", "convert_float_string 7");
 is (convert_float_string("+1.23456e6"), "1234560", "convert_float_string 8");
 is (convert_float_string("+1.23456e-6"), "0.00000123456", "convert_float_string 9");
+
 
 done_testing();
