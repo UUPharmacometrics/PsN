@@ -1,0 +1,2746 @@
+Fri Aug  7 08:51:54 CEST 2015
+$PROBLEM    MOXONIDINE PK ANALYSIS 1
+$INPUT      ID VISI XAT2 DGRP DOSE FLAG ONO XIME DVO NEUY SCR AGE SEX
+            NYHA WT COMP ACE DIG DIU NUMB TAD TIME VIDD CLCR AMT SS II
+            VID CMT CONO DV EVID OVID
+$DATA      mox_simulated.csv IGNORE=@
+$ABBREVIATED DERIV2=NO COMRES=6
+$SUBROUTINE ADVAN2 TRANS1
+$PK    
+   TVCL  = THETA(1)
+   TVV   = THETA(2)
+   TVKA  = THETA(3)
+   TVLAG   = THETA(4)
+
+   CL    = TVCL*EXP(ETA(1))
+   V     = TVV*EXP(ETA(2))
+   KA    = TVKA*EXP(ETA(3))
+   LAG   = TVLAG*EXP(0)
+   TVPHI   = LOG(LAG/(1-LAG))
+   PHI   = TVPHI + (0)
+   ALAG1 = EXP(PHI)/(1+EXP(PHI))
+   K     = CL/V
+   S2    = V
+
+$ERROR    
+
+     IPRED = LOG(.025)
+     W     = THETA(5)
+     IF(F.GT.0) IPRED = LOG(F)
+     IRES  = IPRED-DV
+     IWRES = IRES/W
+     Y     = IPRED+ERR(1)*W
+
+$THETA  (0,34.8488030908397)
+ (0,28.4788851140942)
+ (0,0.294703064040853)
+ (0,0.0615579315540197)
+ (0,0.339516872133039)
+$OMEGA  BLOCK(1)
+ 0.481256819078822
+$OMEGA  BLOCK(2)
+ 1.09142347279116
+ 0.00122918255042773 0.16629229817654
+$SIGMA  1  FIX
+$ESTIMATION METHOD=COND INTER LAPLACE MAXEVALS=0
+
+$PROBLEM    MOXONIDINE PK ANALYSIS 2
+$INPUT      ID VISI XAT2 DGRP DOSE FLAG ONO XIME DVO NEUY SCR AGE SEX
+            NYHA WT COMP ACE DIG DIU NUMB TAD TIME VIDD CLCR AMT SS II
+            VID CMT CONO DV EVID OVID
+$DATA      mox_simulated.csv IGNORE=@ REWIND
+$THETA  (0,32.2266000437492)
+ (0,24.6684295434689)
+ (0,0.264246544634778)
+ (0,0.0909786438244239)
+ (0,0.342127454628703)
+$OMEGA  BLOCK(1)
+ 0.481841485896608
+$OMEGA  BLOCK(2)
+ 0.671864822189609
+ -0.0728582057817448 0.253979462016649
+$SIGMA  1  FIX
+$ESTIMATION METHOD=COND INTER LAPLACE MAXEVALS=20
+
+$PROBLEM    MOXONIDINE PK ANALYSIS 3
+$INPUT      ID VISI XAT2 DGRP DOSE FLAG ONO XIME DVO NEUY SCR AGE SEX
+            NYHA WT COMP ACE DIG DIU NUMB TAD TIME VIDD CLCR AMT SS II
+            VID CMT CONO DV EVID OVID
+$DATA      mox_simulated.csv IGNORE=@ REWIND
+$THETA  (0,29.4198020415728)
+ (0,15.5211312494165)
+ (0,0.281033059136737)
+ (0,0.117127251372318)
+ (0,0.32595932141402)
+$OMEGA  BLOCK(1)
+ 0.420955551996451
+$OMEGA  BLOCK(2)
+ 1.29506614090658
+ 0.166334326682063 0.210966646098435
+$SIGMA  1  FIX
+$ESTIMATION METHOD=BAYES INTERACTION NOABORT NBURN=50 NITER=100
+            CTYPE=3 PRINT=50 NOPRIOR=0
+
+$PROBLEM    MOXONIDINE PK ANALYSIS 4
+$INPUT      ID VISI XAT2 DGRP DOSE FLAG ONO XIME DVO NEUY SCR AGE SEX
+            NYHA WT COMP ACE DIG DIU NUMB TAD TIME VIDD CLCR AMT SS II
+            VID CMT CONO DV EVID OVID
+$DATA      mox_simulated.csv IGNORE=@ REWIND
+$THETA  (0,27.113132195712)
+ (0,16.3000792413967)
+ (0,0.306547288052413)
+ (0,0.0953857304613286)
+ (0,0.327872479241371)
+$OMEGA  BLOCK(1)
+ 0.296394938225528
+$OMEGA  BLOCK(2)
+ 1.42347111954326
+ 0.219417306143209 0.236512534208442
+$SIGMA  1  FIX
+$ESTIMATION METH=IMP INTER PRINT=1 NITER=0 ISAMPLE=100 EONLY=1
+            MAPITER=0
+
+$PROBLEM    MOXONIDINE PK ANALYSIS 5
+$INPUT      ID VISI XAT2 DGRP DOSE FLAG ONO XIME DVO NEUY SCR AGE SEX
+            NYHA WT COMP ACE DIG DIU NUMB TAD TIME VIDD CLCR AMT SS II
+            VID CMT CONO DV EVID OVID
+$DATA      mox_simulated.csv IGNORE=@ REWIND
+$THETA  (0,27.113132195712)
+ (0,16.3000792413967)
+ (0,0.306547288052413)
+ (0,0.0953857304613286)
+ (0,0.327872479241371)
+$OMEGA  BLOCK(1)
+ 0.296394938225528
+$OMEGA  BLOCK(2)
+ 1.42347111954326
+ 0.219417306143209 0.236512534208442
+$SIGMA  1  FIX
+$ESTIMATION METH=IMPMAP INTER NITER=50 NBURN=30 ISAMPLE=100 DF=4
+            CTYPE=3 NOABORT PRINT=1 CONSTRAIN=5 SIGL=8
+
+$PROBLEM    MOXONIDINE PK ANALYSIS 5
+$INPUT      ID VISI XAT2 DGRP DOSE FLAG ONO XIME DVO NEUY SCR AGE SEX
+            NYHA WT COMP ACE DIG DIU NUMB TAD TIME VIDD CLCR AMT SS II
+            VID CMT CONO DV EVID OVID
+$DATA      mox_simulated.csv IGNORE=@ REWIND
+$THETA  (0,27.113132195712)
+ (0,16.3000792413967)
+ (0,0.306547288052413)
+ (0,0.0953857304613286)
+ (0,0.327872479241371)
+$OMEGA  BLOCK(1)
+ 0.296394938225528
+$OMEGA  BLOCK(2)
+ 1.42347111954326
+ 0.219417306143209 0.236512534208442
+$SIGMA  1  FIX
+$ESTIMATION METH=IMP INTER NITER=20 ISAMPLE=100 DF=4 CONSTRAIN=0
+            SIGL=8 MAPITER=0
+
+$PROBLEM    MOXONIDINE PK ANALYSIS 6
+$INPUT      ID VISI XAT2 DGRP DOSE FLAG ONO XIME DVO NEUY SCR AGE SEX
+            NYHA WT COMP ACE DIG DIU NUMB TAD TIME VIDD CLCR AMT SS II
+            VID CMT CONO DV EVID OVID
+$DATA      mox_simulated.csv IGNORE=@ REWIND
+$THETA  (0,27.113132195712)
+ (0,16.3000792413967)
+ (0,0.306547288052413)
+ (0,0.0953857304613286)
+ (0,0.327872479241371)
+$OMEGA  BLOCK(1)
+ 0.296394938225528
+$OMEGA  BLOCK(2)
+ 1.42347111954326
+ 0.219417306143209 0.236512534208442
+$SIGMA  1  FIX
+$ESTIMATION METHOD=SAEM NBURN=3000 NITER=2000 PRINT=10 ISAMPLE=2
+
+$PROBLEM    MOXONIDINE PK ANALYSIS 7
+$INPUT      ID VISI XAT2 DGRP DOSE FLAG ONO XIME DVO NEUY SCR AGE SEX
+            NYHA WT COMP ACE DIG DIU NUMB TAD TIME VIDD CLCR AMT SS II
+            VID CMT CONO DV EVID OVID
+$DATA      mox_simulated.csv IGNORE=@ REWIND
+$THETA  (0,27.113132195712)
+ (0,16.3000792413967)
+ (0,0.306547288052413)
+ (0,0.0953857304613286)
+ (0,0.327872479241371)
+$OMEGA  BLOCK(1)
+ 0.296394938225528
+$OMEGA  BLOCK(2)
+ 1.42347111954326
+ 0.219417306143209 0.236512534208442
+$SIGMA  1  FIX
+$ESTIMATION METHOD=ITS INTERACTION LAPLACE NUMERICAL NOABORT PRINT=1
+            CTYPE=3
+
+
+NM-TRAN MESSAGES
+  
+ WARNINGS AND ERRORS (IF ANY) FOR PROBLEM    1
+             
+ (WARNING  2) NM-TRAN INFERS THAT THE DATA ARE POPULATION.
+             
+ (WARNING  66) WITH "LAPLACIAN" AND "INTERACTION", "NUMERICAL" AND "SLOW"
+ ARE ALSO REQUIRED ON $ESTIM RECORD. NM-TRAN HAS SUPPLIED THESE OPTIONS.
+  
+ WARNINGS AND ERRORS (IF ANY) FOR PROBLEM    2
+             
+ (WARNING  2) NM-TRAN INFERS THAT THE DATA ARE POPULATION.
+             
+ (WARNING  66) WITH "LAPLACIAN" AND "INTERACTION", "NUMERICAL" AND "SLOW"
+ ARE ALSO REQUIRED ON $ESTIM RECORD. NM-TRAN HAS SUPPLIED THESE OPTIONS.
+  
+ WARNINGS AND ERRORS (IF ANY) FOR PROBLEM    3
+             
+ (WARNING  2) NM-TRAN INFERS THAT THE DATA ARE POPULATION.
+  
+ WARNINGS AND ERRORS (IF ANY) FOR PROBLEM    4
+             
+ (WARNING  2) NM-TRAN INFERS THAT THE DATA ARE POPULATION.
+  
+ WARNINGS AND ERRORS (IF ANY) FOR PROBLEM    5
+             
+ (WARNING  2) NM-TRAN INFERS THAT THE DATA ARE POPULATION.
+  
+ WARNINGS AND ERRORS (IF ANY) FOR PROBLEM    6
+             
+ (WARNING  2) NM-TRAN INFERS THAT THE DATA ARE POPULATION.
+  
+ WARNINGS AND ERRORS (IF ANY) FOR PROBLEM    7
+             
+ (WARNING  2) NM-TRAN INFERS THAT THE DATA ARE POPULATION.
+  
+ WARNINGS AND ERRORS (IF ANY) FOR PROBLEM    8
+             
+ (WARNING  2) NM-TRAN INFERS THAT THE DATA ARE POPULATION.
+             
+ (WARNING  90) WITH "NUMERICAL", "SLOW" IS ALSO REQUIRED ON $ESTIM RECORD.
+ NM-TRAN HAS SUPPLIED THIS OPTION.
+ CREATING MUMODEL ROUTINE...
+
+License Registered to: Uppsala University
+Expiration Date:    14 MAR 2016
+Current Date:        7 AUG 2015
+Days until program expires : 222
+1NONLINEAR MIXED EFFECTS MODEL PROGRAM (NONMEM) VERSION 7.2.0
+ ORIGINALLY DEVELOPED BY STUART BEAL, LEWIS SHEINER, AND ALISON BOECKMANN
+ CURRENT DEVELOPERS ARE ROBERT BAUER, ICON DEVELOPMENT SOLUTIONS,
+ AND ALISON BOECKMANN. IMPLEMENTATION, EFFICIENCY, AND STANDARDIZATION
+ PERFORMED BY NOUS INFOSYSTEMS.
+ 
+ PROBLEM NO.:         1
+ MOXONIDINE PK ANALYSIS 1                                                
+0DATA CHECKOUT RUN:              NO 
+ DATA SET LOCATED ON UNIT NO.:    2
+ THIS UNIT TO BE REWOUND:        NO 
+ NO. OF DATA RECS IN DATA SET:     1166
+ NO. OF DATA ITEMS IN DATA SET:  34
+ ID DATA ITEM IS DATA ITEM NO.:   1
+ DEP VARIABLE IS DATA ITEM NO.:  31
+ MDV DATA ITEM IS DATA ITEM NO.: 34
+0INDICES PASSED TO SUBROUTINE PRED:
+  32  22  25   0  26  27  29   0   0   0   0
+0LABELS FOR DATA ITEMS:
+ ID VISI XAT2 DGRP DOSE FLAG ONO XIME DVO NEUY SCR AGE SEX NYHA WT COMP ACE DIG DIU NUMB TAD TIME VIDD CLCR AMT SS II VID
+ CMT CONO DV EVID OVID MDV
+0FORMAT FOR DATA:
+ (7E10.0/7E10.0/7E10.0/7E10.0/2E10.0,E11.0,2E10.0,1F2.0)                         
+ 
+ TOT. NO. OF OBS RECS:     1022
+ TOT. NO. OF INDIVIDUALS:     74
+0LENGTH OF THETA:   5
+0DEFAULT THETA BOUNDARY TEST OMITTED:    NO 
+0OMEGA HAS BLOCK FORM:
+  1
+  0  2
+  0  2  2
+0DEFAULT OMEGA BOUNDARY TEST OMITTED:    NO 
+0SIGMA HAS SIMPLE DIAGONAL FORM WITH DIMENSION:   1
+0DEFAULT SIGMA BOUNDARY TEST OMITTED:    NO 
+0INITIAL ESTIMATE OF THETA:
+ LOWER BOUND    INITIAL EST    UPPER BOUND
+  0.0000E+00     0.3485E+02     0.1000E+07
+  0.0000E+00     0.2848E+02     0.1000E+07
+  0.0000E+00     0.2947E+00     0.1000E+07
+  0.0000E+00     0.6156E-01     0.1000E+07
+  0.0000E+00     0.3395E+00     0.1000E+07
+0INITIAL ESTIMATE OF OMEGA:
+ BLOCK SET NO.   BLOCK                                                                    FIXED
+        1                                                                                   NO 
+                  0.4813E+00
+        2                                                                                   NO 
+                  0.1091E+01
+                  0.1229E-02   0.1663E+00
+0INITIAL ESTIMATE OF SIGMA:
+ 0.1000E+01
+0SIGMA CONSTRAINED TO BE THIS INITIAL ESTIMATE
+0ESTIMATION STEP OMITTED:          YES 
+ CONDITIONAL ESTIMATES USED:       YES 
+ CENTERED ETA:                      NO 
+ EPS-ETA INTERACTION:              YES 
+ LAPLACIAN OBJ. FUNC.:             YES 
+ NUMERICAL 2ND DERIVATIVES:        YES 
+
+ THE FOLLOWING LABELS ARE EQUIVALENT
+ PRED=PREDI
+ RES=RESI
+ WRES=WRESI
+1DOUBLE PRECISION PREDPP VERSION 7.2.0     
+ 
+ ONE COMPARTMENT MODEL WITH FIRST-ORDER ABSORPTION (ADVAN2)
+0MAXIMUM NO. OF BASIC PK PARAMETERS:   3
+0BASIC PK PARAMETERS (AFTER TRANSLATION):
+   ELIMINATION RATE (K) IS BASIC PK PARAMETER NO.:  1
+   ABSORPTION RATE (KA) IS BASIC PK PARAMETER NO.:  3
+ 
+0COMPARTMENT ATTRIBUTES 
+ COMPT. NO.   FUNCTION   INITIAL    ON/OFF      DOSE      DEFAULT    DEFAULT
+                         STATUS     ALLOWED    ALLOWED    FOR DOSE   FOR OBS.
+    1         DEPOT        OFF        YES        YES        YES        NO 
+    2         CENTRAL      ON         NO         YES        NO         YES
+    3         OUTPUT       OFF        YES        NO         NO         NO 
+1
+ ADDITIONAL PK PARAMETERS - ASSIGNMENT OF ROWS IN GG
+ COMPT. NO.                             INDICES
+              SCALE      BIOAVAIL.   ZERO-ORDER  ZERO-ORDER  ABSORB
+                         FRACTION    RATE        DURATION    LAG  
+    1           *           *           *           *           4
+    2           5           *           *           *           *
+    3           *           -           -           -           -
+             - PARAMETER IS NOT ALLOWED FOR THIS MODEL
+             * PARAMETER IS NOT SUPPLIED BY PK SUBROUTINE;
+               WILL DEFAULT TO ONE IF APPLICABLE
+0DATA ITEM INDICES USED BY PRED ARE:
+   EVENT ID DATA ITEM IS DATA ITEM NO.:     32
+   TIME DATA ITEM IS DATA ITEM NO.:         22
+   DOSE AMOUNT DATA ITEM IS DATA ITEM NO.:  25
+   STEADY STATE DATA ITEM IS DATA ITEM NO.: 26
+   INTERVAL DATA ITEM IS DATA ITEM NO.:     27
+   COMPT. NO. DATA ITEM IS DATA ITEM NO.:   29
+ 
+0PK SUBROUTINE CALLED WITH EVERY EVENT RECORD.
+ PK SUBROUTINE NOT CALLED AT NONEVENT (ADDITIONAL OR LAGGED) DOSE TIMES.
+0ERROR SUBROUTINE CALLED WITH EVERY EVENT RECORD.
+1
+
+
+ #TBLN:      1
+ #METH: Laplacian Conditional Estimation with Interaction (Evaluation)
+
+1
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ ************************************************************************************************************************
+ ********************                                                                                ********************
+ ********************          LAPLACIAN CONDITIONAL ESTIMATION WITH INTERACTION (EVALUATION)        ********************
+ #OBJT:**************                       MINIMUM VALUE OF OBJECTIVE FUNCTION                      ********************
+ ********************                                                                                ********************
+ ************************************************************************************************************************
+ 
+
+
+
+
+
+ #OBJV:********************************************     -552.018       **************************************************
+1
+ ************************************************************************************************************************
+ ********************                                                                                ********************
+ ********************          LAPLACIAN CONDITIONAL ESTIMATION WITH INTERACTION (EVALUATION)        ********************
+ ********************                             FINAL PARAMETER ESTIMATE                           ********************
+ ********************                                                                                ********************
+ ************************************************************************************************************************
+ 
+
+
+ THETA - VECTOR OF FIXED EFFECTS PARAMETERS   *********
+
+
+         TH 1      TH 2      TH 3      TH 4      TH 5     
+ 
+         3.48E+01  2.85E+01  2.95E-01  6.16E-02  3.40E-01
+ 
+
+
+ OMEGA - COV MATRIX FOR RANDOM EFFECTS - ETAS  ********
+
+
+            ETA1      ETA2      ETA3   
+ 
+ ETA1
++        4.81E-01
+ 
+ ETA2
++        0.00E+00  1.09E+00
+ 
+ ETA3
++        0.00E+00  1.23E-03  1.66E-01
+ 
+
+
+ SIGMA - COV MATRIX FOR RANDOM EFFECTS - EPSILONS  ****
+
+
+            EPS1   
+ 
+ EPS1
++        1.00E+00
+ 
+1
+
+
+ OMEGA - CORR MATRIX FOR RANDOM EFFECTS - ETAS  *******
+
+
+            ETA1      ETA2      ETA3   
+ 
+ ETA1
++        6.94E-01
+ 
+ ETA2
++        0.00E+00  1.04E+00
+ 
+ ETA3
++        0.00E+00  2.89E-03  4.08E-01
+ 
+
+
+ SIGMA - CORR MATRIX FOR RANDOM EFFECTS - EPSILONS  ***
+
+
+            EPS1   
+ 
+ EPS1
++        1.00E+00
+ 
+1
+ PROBLEM NO.:         2
+ MOXONIDINE PK ANALYSIS 2                                                
+0DATA CHECKOUT RUN:              NO 
+ DATA SET LOCATED ON UNIT NO.:    2
+ THIS UNIT TO BE REWOUND:        NO 
+ NO. OF DATA RECS IN DATA SET:     1166
+ NO. OF DATA ITEMS IN DATA SET:  34
+ ID DATA ITEM IS DATA ITEM NO.:   1
+ DEP VARIABLE IS DATA ITEM NO.:  31
+ MDV DATA ITEM IS DATA ITEM NO.: 34
+0INDICES PASSED TO SUBROUTINE PRED:
+  32  22  25   0  26  27  29   0   0   0   0
+0LABELS FOR DATA ITEMS:
+ ID VISI XAT2 DGRP DOSE FLAG ONO XIME DVO NEUY SCR AGE SEX NYHA WT COMP ACE DIG DIU NUMB TAD TIME VIDD CLCR AMT SS II VID
+ CMT CONO DV EVID OVID MDV
+0FORMAT FOR DATA:
+ (7E10.0/7E10.0/7E10.0/7E10.0/2E10.0,E11.0,2E10.0,1F2.0)                         
+ 
+ TOT. NO. OF OBS RECS:     1022
+ TOT. NO. OF INDIVIDUALS:     74
+0LENGTH OF THETA:   5
+0DEFAULT THETA BOUNDARY TEST OMITTED:    NO 
+0OMEGA HAS BLOCK FORM:
+  1
+  0  2
+  0  2  2
+0DEFAULT OMEGA BOUNDARY TEST OMITTED:    NO 
+0SIGMA HAS SIMPLE DIAGONAL FORM WITH DIMENSION:   1
+0DEFAULT SIGMA BOUNDARY TEST OMITTED:    NO 
+0INITIAL ESTIMATE OF THETA:
+ LOWER BOUND    INITIAL EST    UPPER BOUND
+  0.0000E+00     0.3223E+02     0.1000E+07
+  0.0000E+00     0.2467E+02     0.1000E+07
+  0.0000E+00     0.2642E+00     0.1000E+07
+  0.0000E+00     0.9098E-01     0.1000E+07
+  0.0000E+00     0.3421E+00     0.1000E+07
+0INITIAL ESTIMATE OF OMEGA:
+ BLOCK SET NO.   BLOCK                                                                    FIXED
+        1                                                                                   NO 
+                  0.4818E+00
+        2                                                                                   NO 
+                  0.6719E+00
+                 -0.7286E-01   0.2540E+00
+0INITIAL ESTIMATE OF SIGMA:
+ 0.1000E+01
+0SIGMA CONSTRAINED TO BE THIS INITIAL ESTIMATE
+0ESTIMATION STEP OMITTED:           NO 
+ SLOW GRADIENT METHOD USED:        YES 
+ CONDITIONAL ESTIMATES USED:       YES 
+ CENTERED ETA:                      NO 
+ EPS-ETA INTERACTION:              YES 
+ LAPLACIAN OBJ. FUNC.:             YES 
+ NUMERICAL 2ND DERIVATIVES:        YES 
+ NO. OF FUNCT. EVALS. ALLOWED:         20
+ NO. OF SIG. FIGURES REQUIRED:       3
+ INTERMEDIATE PRINTOUT:            YES 
+ ESTIMATE OUTPUT TO MSF:            NO 
+ IND. OBJ. FUNC. VALUES SORTED:     NO 
+
+ THE FOLLOWING LABELS ARE EQUIVALENT
+ PRED=PREDI
+ RES=RESI
+ WRES=WRESI
+1
+ ADDITIONAL PK PARAMETERS - ASSIGNMENT OF ROWS IN GG
+ COMPT. NO.                             INDICES
+              SCALE      BIOAVAIL.   ZERO-ORDER  ZERO-ORDER  ABSORB
+                         FRACTION    RATE        DURATION    LAG  
+    1           *           *           *           *           4
+    2           5           *           *           *           *
+    3           *           -           -           -           -
+             - PARAMETER IS NOT ALLOWED FOR THIS MODEL
+             * PARAMETER IS NOT SUPPLIED BY PK SUBROUTINE;
+               WILL DEFAULT TO ONE IF APPLICABLE
+0DATA ITEM INDICES USED BY PRED ARE:
+   EVENT ID DATA ITEM IS DATA ITEM NO.:     32
+   TIME DATA ITEM IS DATA ITEM NO.:         22
+   DOSE AMOUNT DATA ITEM IS DATA ITEM NO.:  25
+   STEADY STATE DATA ITEM IS DATA ITEM NO.: 26
+   INTERVAL DATA ITEM IS DATA ITEM NO.:     27
+   COMPT. NO. DATA ITEM IS DATA ITEM NO.:   29
+ 
+0PK SUBROUTINE CALLED WITH EVERY EVENT RECORD.
+ PK SUBROUTINE NOT CALLED AT NONEVENT (ADDITIONAL OR LAGGED) DOSE TIMES.
+0ERROR SUBROUTINE CALLED WITH EVERY EVENT RECORD.
+1
+
+
+ #TBLN:      2
+ #METH: Laplacian Conditional Estimation with Interaction
+
+ MONITORING OF SEARCH:
+
+
+0ITERATION NO.:    0    OBJECTIVE VALUE:  -549.689249393267        NO. OF FUNC. EVALS.:  10
+ CUMULATIVE NO. OF FUNC. EVALS.:       10
+ NPARAMETR:  3.2227E+01  2.4668E+01  2.6425E-01  9.0979E-02  3.4213E-01  4.8184E-01  6.7186E-01 -7.2858E-02  2.5398E-01
+ PARAMETER:  1.0000E-01  1.0000E-01  1.0000E-01  1.0000E-01  1.0000E-01  1.0000E-01  1.0000E-01 -1.0000E-01  1.0000E-01
+ GRADIENT:  -3.6024E+00  3.0566E+01 -4.3620E+01  6.6867E-01  2.8387E+01  2.2301E+01 -1.8243E+01 -4.0252E+01  1.1341E+01
+
+0ITERATION NO.:    1    OBJECTIVE VALUE:  -555.082915990142        NO. OF FUNC. EVALS.:  12
+ CUMULATIVE NO. OF FUNC. EVALS.:       22
+ NPARAMETR:  3.2419E+01  2.3453E+01  2.8401E-01  9.0878E-02  3.2644E-01  4.4759E-01  7.1364E-01 -2.5117E-02  2.3790E-01
+ PARAMETER:  1.0596E-01  4.9463E-02  1.7212E-01  9.8894E-02  5.3067E-02  6.3129E-02  1.3016E-01 -3.3449E-02  8.1249E-02
+ GRADIENT:  -2.0227E+00  2.1032E+01 -1.5975E+01 -1.4492E+00 -1.1650E+02  1.2597E+01 -2.0153E+01 -3.2042E+01  1.3091E+01
+
+ #TERM:
+0MINIMIZATION TERMINATED
+ DUE TO MAX. NO. OF FUNCTION EVALUATIONS EXCEEDED
+ NO. OF FUNCTION EVALUATIONS USED:       22
+ NO. OF SIG. DIGITS UNREPORTABLE
+
+ ETABAR IS THE ARITHMETIC MEAN OF THE ETA-ESTIMATES,
+ AND THE P-VALUE IS GIVEN FOR THE NULL HYPOTHESIS THAT THE TRUE MEAN IS 0.
+
+ ETABAR:         1.0652E-02 -1.9238E-02  3.4041E-02
+ SE:             7.3446E-02  9.4916E-02  4.9991E-02
+
+ P VAL.:         8.8469E-01  8.3938E-01  4.9591E-01
+
+ ETAshrink(%):   4.9178E+00  2.6874E+00  1.1232E+01
+ EPSshrink(%):   6.9953E+00
+
+ #TERE:
+ Elapsed estimation time in seconds:     0.93
+1
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ ************************************************************************************************************************
+ ********************                                                                                ********************
+ ********************                LAPLACIAN CONDITIONAL ESTIMATION WITH INTERACTION               ********************
+ #OBJT:**************                       MINIMUM VALUE OF OBJECTIVE FUNCTION                      ********************
+ ********************                                                                                ********************
+ ************************************************************************************************************************
+ 
+
+
+
+
+
+ #OBJV:********************************************     -555.083       **************************************************
+1
+ ************************************************************************************************************************
+ ********************                                                                                ********************
+ ********************                LAPLACIAN CONDITIONAL ESTIMATION WITH INTERACTION               ********************
+ ********************                             FINAL PARAMETER ESTIMATE                           ********************
+ ********************                                                                                ********************
+ ************************************************************************************************************************
+ 
+
+
+ THETA - VECTOR OF FIXED EFFECTS PARAMETERS   *********
+
+
+         TH 1      TH 2      TH 3      TH 4      TH 5     
+ 
+         3.24E+01  2.35E+01  2.84E-01  9.09E-02  3.26E-01
+ 
+
+
+ OMEGA - COV MATRIX FOR RANDOM EFFECTS - ETAS  ********
+
+
+            ETA1      ETA2      ETA3   
+ 
+ ETA1
++        4.48E-01
+ 
+ ETA2
++        0.00E+00  7.14E-01
+ 
+ ETA3
++        0.00E+00 -2.51E-02  2.38E-01
+ 
+
+
+ SIGMA - COV MATRIX FOR RANDOM EFFECTS - EPSILONS  ****
+
+
+            EPS1   
+ 
+ EPS1
++        1.00E+00
+ 
+1
+
+
+ OMEGA - CORR MATRIX FOR RANDOM EFFECTS - ETAS  *******
+
+
+            ETA1      ETA2      ETA3   
+ 
+ ETA1
++        6.69E-01
+ 
+ ETA2
++        0.00E+00  8.45E-01
+ 
+ ETA3
++        0.00E+00 -6.10E-02  4.88E-01
+ 
+
+
+ SIGMA - CORR MATRIX FOR RANDOM EFFECTS - EPSILONS  ***
+
+
+            EPS1   
+ 
+ EPS1
++        1.00E+00
+ 
+1
+ PROBLEM NO.:         3
+ MOXONIDINE PK ANALYSIS 3                                                
+0DATA CHECKOUT RUN:              NO 
+ DATA SET LOCATED ON UNIT NO.:    2
+ THIS UNIT TO BE REWOUND:        NO 
+ NO. OF DATA RECS IN DATA SET:     1166
+ NO. OF DATA ITEMS IN DATA SET:  34
+ ID DATA ITEM IS DATA ITEM NO.:   1
+ DEP VARIABLE IS DATA ITEM NO.:  31
+ MDV DATA ITEM IS DATA ITEM NO.: 34
+0INDICES PASSED TO SUBROUTINE PRED:
+  32  22  25   0  26  27  29   0   0   0   0
+0LABELS FOR DATA ITEMS:
+ ID VISI XAT2 DGRP DOSE FLAG ONO XIME DVO NEUY SCR AGE SEX NYHA WT COMP ACE DIG DIU NUMB TAD TIME VIDD CLCR AMT SS II VID
+ CMT CONO DV EVID OVID MDV
+0FORMAT FOR DATA:
+ (7E10.0/7E10.0/7E10.0/7E10.0/2E10.0,E11.0,2E10.0,1F2.0)                         
+ 
+ TOT. NO. OF OBS RECS:     1022
+ TOT. NO. OF INDIVIDUALS:     74
+0LENGTH OF THETA:   5
+0DEFAULT THETA BOUNDARY TEST OMITTED:    NO 
+0OMEGA HAS BLOCK FORM:
+  1
+  0  2
+  0  2  2
+0DEFAULT OMEGA BOUNDARY TEST OMITTED:    NO 
+0SIGMA HAS SIMPLE DIAGONAL FORM WITH DIMENSION:   1
+0DEFAULT SIGMA BOUNDARY TEST OMITTED:    NO 
+0INITIAL ESTIMATE OF THETA:
+ LOWER BOUND    INITIAL EST    UPPER BOUND
+  0.0000E+00     0.2942E+02     0.1000E+07
+  0.0000E+00     0.1552E+02     0.1000E+07
+  0.0000E+00     0.2810E+00     0.1000E+07
+  0.0000E+00     0.1171E+00     0.1000E+07
+  0.0000E+00     0.3260E+00     0.1000E+07
+0INITIAL ESTIMATE OF OMEGA:
+ BLOCK SET NO.   BLOCK                                                                    FIXED
+        1                                                                                   NO 
+                  0.4210E+00
+        2                                                                                   NO 
+                  0.1295E+01
+                  0.1663E+00   0.2110E+00
+0INITIAL ESTIMATE OF SIGMA:
+ 0.1000E+01
+0SIGMA CONSTRAINED TO BE THIS INITIAL ESTIMATE
+0ESTIMATION STEP OMITTED:           NO 
+ CONDITIONAL ESTIMATES USED:       YES 
+ CENTERED ETA:                      NO 
+ EPS-ETA INTERACTION:              YES 
+ LAPLACIAN OBJ. FUNC.:              NO 
+ NO. OF FUNCT. EVALS. ALLOWED:        528
+ NO. OF SIG. FIGURES REQUIRED:       3
+ INTERMEDIATE PRINTOUT:            YES 
+ ESTIMATE OUTPUT TO MSF:            NO 
+ ABORT WITH PRED EXIT CODE 1:       NO 
+ IND. OBJ. FUNC. VALUES SORTED:     NO 
+
+ THE FOLLOWING LABELS ARE EQUIVALENT
+ PRED=PREDI
+ RES=RESI
+ WRES=WRESI
+1
+ ADDITIONAL PK PARAMETERS - ASSIGNMENT OF ROWS IN GG
+ COMPT. NO.                             INDICES
+              SCALE      BIOAVAIL.   ZERO-ORDER  ZERO-ORDER  ABSORB
+                         FRACTION    RATE        DURATION    LAG  
+    1           *           *           *           *           4
+    2           5           *           *           *           *
+    3           *           -           -           -           -
+             - PARAMETER IS NOT ALLOWED FOR THIS MODEL
+             * PARAMETER IS NOT SUPPLIED BY PK SUBROUTINE;
+               WILL DEFAULT TO ONE IF APPLICABLE
+0DATA ITEM INDICES USED BY PRED ARE:
+   EVENT ID DATA ITEM IS DATA ITEM NO.:     32
+   TIME DATA ITEM IS DATA ITEM NO.:         22
+   DOSE AMOUNT DATA ITEM IS DATA ITEM NO.:  25
+   STEADY STATE DATA ITEM IS DATA ITEM NO.: 26
+   INTERVAL DATA ITEM IS DATA ITEM NO.:     27
+   COMPT. NO. DATA ITEM IS DATA ITEM NO.:   29
+ 
+0PK SUBROUTINE CALLED WITH EVERY EVENT RECORD.
+ PK SUBROUTINE NOT CALLED AT NONEVENT (ADDITIONAL OR LAGGED) DOSE TIMES.
+0ERROR SUBROUTINE CALLED WITH EVERY EVENT RECORD.
+1
+
+
+ #TBLN:      3
+ #METH: MCMC Bayesian Analysis
+
+ EM/BAYES SETUP
+ THETAS THAT ARE MU MODELED:
+ 
+ THETAS THAT ARE GIBBS SAMPLED:
+ 
+ THETAS THAT ARE METROPOLIS-HASTINGS SAMPLED:
+   1   2   3   4   5
+ SIGMAS THAT ARE GIBBS SAMPLED:
+ 
+ SIGMAS THAT ARE METROPOLIS-HASTINGS SAMPLED:
+ 
+ OMEGAS ARE GIBBS SAMPLED
+
+ MONITORING OF SEARCH:
+
+ Burn-in Mode
+ iteration          -50 MCMCOBJ=    615.86056307245929     
+ Sampling Mode
+ iteration            0 MCMCOBJ=   -1116.2221546774176     
+ iteration           50 MCMCOBJ=   -1074.6958218263321     
+ iteration          100 MCMCOBJ=   -1138.5868609526217     
+
+ #TERM:
+ Burn-in not completed
+ STATISTICAL PORTION COMPLETED
+ #TERE:
+ Elapsed estimation time in seconds:     4.56
+ Elapsed covariance time in seconds:     0.00
+1
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ ************************************************************************************************************************
+ ********************                                                                                ********************
+ ********************                              MCMC BAYESIAN ANALYSIS                            ********************
+ #OBJT:**************                       AVERAGE VALUE OF LIKELIHOOD FUNCTION                     ********************
+ ********************                                                                                ********************
+ ************************************************************************************************************************
+ 
+
+
+
+
+
+ #OBJV:********************************************    -1109.334       **************************************************
+ #OBJS:********************************************       25.278 (STD) **************************************************
+1
+ ************************************************************************************************************************
+ ********************                                                                                ********************
+ ********************                              MCMC BAYESIAN ANALYSIS                            ********************
+ ********************                             FINAL PARAMETER ESTIMATE                           ********************
+ ********************                                                                                ********************
+ ************************************************************************************************************************
+ 
+
+
+ THETA - VECTOR OF FIXED EFFECTS PARAMETERS   *********
+
+
+         TH 1      TH 2      TH 3      TH 4      TH 5     
+ 
+         3.09E+01  1.74E+01  3.11E-01  1.07E-01  3.39E-01
+ 
+
+
+ OMEGA - COV MATRIX FOR RANDOM EFFECTS - ETAS  ********
+
+
+            ETA1      ETA2      ETA3   
+ 
+ ETA1
++        4.25E-01
+ 
+ ETA2
++        0.00E+00  2.47E+00
+ 
+ ETA3
++        0.00E+00  5.61E-01  3.26E-01
+ 
+
+
+ SIGMA - COV MATRIX FOR RANDOM EFFECTS - EPSILONS  ****
+
+
+            EPS1   
+ 
+ EPS1
++        1.00E+00
+ 
+1
+
+
+ OMEGA - CORR MATRIX FOR RANDOM EFFECTS - ETAS  *******
+
+
+            ETA1      ETA2      ETA3   
+ 
+ ETA1
++        6.50E-01
+ 
+ ETA2
++        0.00E+00  1.56E+00
+ 
+ ETA3
++        0.00E+00  6.26E-01  5.68E-01
+ 
+
+
+ SIGMA - CORR MATRIX FOR RANDOM EFFECTS - EPSILONS  ***
+
+
+            EPS1   
+ 
+ EPS1
++        1.00E+00
+ 
+1
+ ************************************************************************************************************************
+ ********************                                                                                ********************
+ ********************                              MCMC BAYESIAN ANALYSIS                            ********************
+ ********************                STANDARD ERROR OF ESTIMATE (From Sample Variance)               ********************
+ ********************                                                                                ********************
+ ************************************************************************************************************************
+ 
+
+
+ THETA - VECTOR OF FIXED EFFECTS PARAMETERS   *********
+
+
+         TH 1      TH 2      TH 3      TH 4      TH 5     
+ 
+         9.76E-01  1.26E+00  1.07E-02  1.99E-02  6.30E-03
+ 
+
+
+ OMEGA - COV MATRIX FOR RANDOM EFFECTS - ETAS  ********
+
+
+            ETA1      ETA2      ETA3   
+ 
+ ETA1
++        7.09E-02
+ 
+ ETA2
++        0.00E+00  4.59E-01
+ 
+ ETA3
++        0.00E+00  1.33E-01  6.54E-02
+ 
+
+
+ SIGMA - COV MATRIX FOR RANDOM EFFECTS - EPSILONS  ****
+
+
+            EPS1   
+ 
+ EPS1
++        0.00E+00
+ 
+1
+
+
+ OMEGA - CORR MATRIX FOR RANDOM EFFECTS - ETAS  *******
+
+
+            ETA1      ETA2      ETA3   
+ 
+ ETA1
++        5.43E-02
+ 
+ ETA2
++        0.00E+00  1.44E-01
+ 
+ ETA3
++        0.00E+00  9.01E-02  5.63E-02
+ 
+
+
+ SIGMA - CORR MATRIX FOR RANDOM EFFECTS - EPSILONS  ***
+
+
+            EPS1   
+ 
+ EPS1
++        0.00E+00
+ 
+1
+ ************************************************************************************************************************
+ ********************                                                                                ********************
+ ********************                              MCMC BAYESIAN ANALYSIS                            ********************
+ ********************               COVARIANCE MATRIX OF ESTIMATE (From Sample Variance)             ********************
+ ********************                                                                                ********************
+ ************************************************************************************************************************
+ 
+
+            TH 1      TH 2      TH 3      TH 4      TH 5      OM11      OM12      OM13      OM22      OM23      OM33      SG11
+
+ 
+ TH 1
++        9.53E-01
+ 
+ TH 2
++        7.64E-01  1.60E+00
+ 
+ TH 3
++        5.07E-03  1.11E-02  1.15E-04
+ 
+ TH 4
++       -6.61E-03 -1.22E-03  3.26E-05  3.95E-04
+ 
+ TH 5
++       -9.94E-04 -2.01E-03 -1.04E-05  9.12E-06  3.97E-05
+ 
+ OM11
++       -6.70E-03 -1.36E-02 -5.61E-05 -3.10E-06  3.32E-05  5.03E-03
+ 
+ OM12
++       ......... ......... ......... ......... ......... ......... .........
+ 
+ OM13
++       ......... ......... ......... ......... ......... ......... ......... .........
+ 
+ OM22
++       -9.81E-03  6.54E-02  9.21E-04  1.06E-03  2.05E-04  1.67E-03  0.00E+00  0.00E+00  2.10E-01
+ 
+ OM23
++        4.24E-02  5.24E-02  4.03E-04 -9.36E-05 -8.29E-05 -8.13E-04  0.00E+00  0.00E+00  3.44E-02  1.76E-02
+ 
+ OM33
++        1.26E-02  8.77E-03  4.40E-05 -7.86E-05  3.88E-05 -5.11E-04  0.00E+00  0.00E+00  4.09E-03  5.83E-03  4.28E-03
+ 
+ SG11
++       ......... ......... ......... ......... ......... ......... ......... ......... ......... ......... ......... .........
+ 
+1
+ ************************************************************************************************************************
+ ********************                                                                                ********************
+ ********************                              MCMC BAYESIAN ANALYSIS                            ********************
+ ********************              CORRELATION MATRIX OF ESTIMATE (From Sample Variance)             ********************
+ ********************                                                                                ********************
+ ************************************************************************************************************************
+ 
+
+            TH 1      TH 2      TH 3      TH 4      TH 5      OM11      OM12      OM13      OM22      OM23      OM33      SG11
+
+ 
+ TH 1
++        9.76E-01
+ 
+ TH 2
++        6.19E-01  1.26E+00
+ 
+ TH 3
++        4.84E-01  8.17E-01  1.07E-02
+ 
+ TH 4
++       -3.41E-01 -4.87E-02  1.53E-01  1.99E-02
+ 
+ TH 5
++       -1.62E-01 -2.52E-01 -1.55E-01  7.28E-02  6.30E-03
+ 
+ OM11
++       -9.68E-02 -1.52E-01 -7.38E-02 -2.20E-03  7.42E-02  7.09E-02
+ 
+ OM12
++       ......... ......... ......... ......... ......... ......... .........
+ 
+ OM13
++       ......... ......... ......... ......... ......... ......... ......... .........
+ 
+ OM22
++       -2.19E-02  1.13E-01  1.87E-01  1.16E-01  7.11E-02  5.13E-02  0.00E+00  0.00E+00  4.59E-01
+ 
+ OM23
++        3.27E-01  3.12E-01  2.83E-01 -3.54E-02 -9.90E-02 -8.63E-02  0.00E+00  0.00E+00  5.65E-01  1.33E-01
+ 
+ OM33
++        1.97E-01  1.06E-01  6.28E-02 -6.05E-02  9.43E-02 -1.10E-01  0.00E+00  0.00E+00  1.36E-01  6.71E-01  6.54E-02
+ 
+ SG11
++       ......... ......... ......... ......... ......... ......... ......... ......... ......... ......... ......... .........
+ 
+1
+ ************************************************************************************************************************
+ ********************                                                                                ********************
+ ********************                              MCMC BAYESIAN ANALYSIS                            ********************
+ ********************           INVERSE COVARIANCE MATRIX OF ESTIMATE (From Sample Variance)         ********************
+ ********************                                                                                ********************
+ ************************************************************************************************************************
+ 
+
+            TH 1      TH 2      TH 3      TH 4      TH 5      OM11      OM12      OM13      OM22      OM23      OM33      SG11
+
+ 
+ TH 1
++        2.25E+00
+ 
+ TH 2
++       -7.48E-01  2.51E+00
+ 
+ TH 3
++       -2.94E+01 -2.04E+02  3.08E+04
+ 
+ TH 4
++        3.41E+01  1.07E+01 -3.45E+03  3.43E+03
+ 
+ TH 5
++       -1.64E+01  4.68E+01 -2.04E+03 -3.74E+02  3.01E+04
+ 
+ OM11
++       -2.58E-01  3.09E+00 -2.04E+02  3.89E+01 -7.66E+01  2.09E+02
+ 
+ OM12
++       ......... ......... ......... ......... ......... ......... .........
+ 
+ OM13
++       ......... ......... ......... ......... ......... ......... ......... .........
+ 
+ OM22
++        1.15E+00  9.27E-02 -4.92E+01 -1.17E+00 -1.29E+02 -3.16E+00  0.00E+00  0.00E+00  9.90E+00
+ 
+ OM23
++       -5.40E+00 -9.01E-01 -4.22E+01 -1.73E+01  7.23E+02  5.80E+00  0.00E+00  0.00E+00 -3.29E+01  2.30E+02
+ 
+ OM33
++        2.24E+00  4.22E-01  2.23E+02  9.21E+00 -1.18E+03  1.80E+01  0.00E+00  0.00E+00  3.31E+01 -2.70E+02  5.74E+02
+ 
+ SG11
++       ......... ......... ......... ......... ......... ......... ......... ......... ......... ......... ......... .........
+ 
+1
+ PROBLEM NO.:         4
+ MOXONIDINE PK ANALYSIS 4                                                
+0DATA CHECKOUT RUN:              NO 
+ DATA SET LOCATED ON UNIT NO.:    2
+ THIS UNIT TO BE REWOUND:        NO 
+ NO. OF DATA RECS IN DATA SET:     1166
+ NO. OF DATA ITEMS IN DATA SET:  34
+ ID DATA ITEM IS DATA ITEM NO.:   1
+ DEP VARIABLE IS DATA ITEM NO.:  31
+ MDV DATA ITEM IS DATA ITEM NO.: 34
+0INDICES PASSED TO SUBROUTINE PRED:
+  32  22  25   0  26  27  29   0   0   0   0
+0LABELS FOR DATA ITEMS:
+ ID VISI XAT2 DGRP DOSE FLAG ONO XIME DVO NEUY SCR AGE SEX NYHA WT COMP ACE DIG DIU NUMB TAD TIME VIDD CLCR AMT SS II VID
+ CMT CONO DV EVID OVID MDV
+0FORMAT FOR DATA:
+ (7E10.0/7E10.0/7E10.0/7E10.0/2E10.0,E11.0,2E10.0,1F2.0)                         
+ 
+ TOT. NO. OF OBS RECS:     1022
+ TOT. NO. OF INDIVIDUALS:     74
+0LENGTH OF THETA:   5
+0DEFAULT THETA BOUNDARY TEST OMITTED:    NO 
+0OMEGA HAS BLOCK FORM:
+  1
+  0  2
+  0  2  2
+0DEFAULT OMEGA BOUNDARY TEST OMITTED:    NO 
+0SIGMA HAS SIMPLE DIAGONAL FORM WITH DIMENSION:   1
+0DEFAULT SIGMA BOUNDARY TEST OMITTED:    NO 
+0INITIAL ESTIMATE OF THETA:
+ LOWER BOUND    INITIAL EST    UPPER BOUND
+  0.0000E+00     0.2711E+02     0.1000E+07
+  0.0000E+00     0.1630E+02     0.1000E+07
+  0.0000E+00     0.3065E+00     0.1000E+07
+  0.0000E+00     0.9539E-01     0.1000E+07
+  0.0000E+00     0.3279E+00     0.1000E+07
+0INITIAL ESTIMATE OF OMEGA:
+ BLOCK SET NO.   BLOCK                                                                    FIXED
+        1                                                                                   NO 
+                  0.2964E+00
+        2                                                                                   NO 
+                  0.1423E+01
+                  0.2194E+00   0.2365E+00
+0INITIAL ESTIMATE OF SIGMA:
+ 0.1000E+01
+0SIGMA CONSTRAINED TO BE THIS INITIAL ESTIMATE
+0ESTIMATION STEP OMITTED:           NO 
+ CONDITIONAL ESTIMATES USED:       YES 
+ CENTERED ETA:                      NO 
+ EPS-ETA INTERACTION:              YES 
+ LAPLACIAN OBJ. FUNC.:              NO 
+ NO. OF FUNCT. EVALS. ALLOWED:        528
+ NO. OF SIG. FIGURES REQUIRED:       3
+ INTERMEDIATE PRINTOUT:            YES 
+ ESTIMATE OUTPUT TO MSF:            NO 
+ IND. OBJ. FUNC. VALUES SORTED:     NO 
+
+ THE FOLLOWING LABELS ARE EQUIVALENT
+ PRED=PREDI
+ RES=RESI
+ WRES=WRESI
+1
+ ADDITIONAL PK PARAMETERS - ASSIGNMENT OF ROWS IN GG
+ COMPT. NO.                             INDICES
+              SCALE      BIOAVAIL.   ZERO-ORDER  ZERO-ORDER  ABSORB
+                         FRACTION    RATE        DURATION    LAG  
+    1           *           *           *           *           4
+    2           5           *           *           *           *
+    3           *           -           -           -           -
+             - PARAMETER IS NOT ALLOWED FOR THIS MODEL
+             * PARAMETER IS NOT SUPPLIED BY PK SUBROUTINE;
+               WILL DEFAULT TO ONE IF APPLICABLE
+0DATA ITEM INDICES USED BY PRED ARE:
+   EVENT ID DATA ITEM IS DATA ITEM NO.:     32
+   TIME DATA ITEM IS DATA ITEM NO.:         22
+   DOSE AMOUNT DATA ITEM IS DATA ITEM NO.:  25
+   STEADY STATE DATA ITEM IS DATA ITEM NO.: 26
+   INTERVAL DATA ITEM IS DATA ITEM NO.:     27
+   COMPT. NO. DATA ITEM IS DATA ITEM NO.:   29
+ 
+0PK SUBROUTINE CALLED WITH EVERY EVENT RECORD.
+ PK SUBROUTINE NOT CALLED AT NONEVENT (ADDITIONAL OR LAGGED) DOSE TIMES.
+0ERROR SUBROUTINE CALLED WITH EVERY EVENT RECORD.
+1
+
+
+ #TBLN:      4
+ #METH: Objective Function Evaluation by Importance Sampling
+
+ EM/BAYES SETUP
+ THETAS THAT ARE MU MODELED:
+ 
+ THETAS THAT ARE SIGMA-LIKE:
+ 
+
+ MONITORING OF SEARCH:
+
+ iteration            0  OBJ=  -406.46345448793454 eff.=      25. Smpl.=     100. Fit.= 0.97655
+
+ #TERM:
+ OPTIMIZATION NOT TESTED
+ 
+
+ ETABAR IS THE ARITHMETIC MEAN OF THE ETA-ESTIMATES,
+ AND THE P-VALUE IS GIVEN FOR THE NULL HYPOTHESIS THAT THE TRUE MEAN IS 0.
+
+ ETABAR:         1.2686E-01 -5.4771E-02 -5.2213E-02
+ SE:             6.2571E-02  1.0991E-01  5.0175E-02
+
+ P VAL.:         4.2618E-02  6.1827E-01  2.9805E-01
+
+ ETAshrink(%):   4.5787E-01  2.0210E+01  1.0643E+01
+ EPSshrink(%):  -6.1205E+01
+
+ #TERE:
+ Elapsed estimation time in seconds:     0.15
+1
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ ************************************************************************************************************************
+ ********************                                                                                ********************
+ ********************               OBJECTIVE FUNCTION EVALUATION BY IMPORTANCE SAMPLING             ********************
+ #OBJT:**************                        FINAL VALUE OF OBJECTIVE FUNCTION                       ********************
+ ********************                                                                                ********************
+ ************************************************************************************************************************
+ 
+
+
+
+
+
+ #OBJV:********************************************     -406.463       **************************************************
+1
+ ************************************************************************************************************************
+ ********************                                                                                ********************
+ ********************               OBJECTIVE FUNCTION EVALUATION BY IMPORTANCE SAMPLING             ********************
+ ********************                             FINAL PARAMETER ESTIMATE                           ********************
+ ********************                                                                                ********************
+ ************************************************************************************************************************
+ 
+
+
+ THETA - VECTOR OF FIXED EFFECTS PARAMETERS   *********
+
+
+         TH 1      TH 2      TH 3      TH 4      TH 5     
+ 
+         2.71E+01  1.63E+01  3.07E-01  9.54E-02  3.28E-01
+ 
+
+
+ OMEGA - COV MATRIX FOR RANDOM EFFECTS - ETAS  ********
+
+
+            ETA1      ETA2      ETA3   
+ 
+ ETA1
++        2.96E-01
+ 
+ ETA2
++        0.00E+00  1.42E+00
+ 
+ ETA3
++        0.00E+00  2.19E-01  2.37E-01
+ 
+
+
+ SIGMA - COV MATRIX FOR RANDOM EFFECTS - EPSILONS  ****
+
+
+            EPS1   
+ 
+ EPS1
++        1.00E+00
+ 
+1
+
+
+ OMEGA - CORR MATRIX FOR RANDOM EFFECTS - ETAS  *******
+
+
+            ETA1      ETA2      ETA3   
+ 
+ ETA1
++        5.44E-01
+ 
+ ETA2
++        0.00E+00  1.19E+00
+ 
+ ETA3
++        0.00E+00  3.78E-01  4.86E-01
+ 
+
+
+ SIGMA - CORR MATRIX FOR RANDOM EFFECTS - EPSILONS  ***
+
+
+            EPS1   
+ 
+ EPS1
++        1.00E+00
+ 
+1
+ PROBLEM NO.:         5
+ MOXONIDINE PK ANALYSIS 5                                                
+0DATA CHECKOUT RUN:              NO 
+ DATA SET LOCATED ON UNIT NO.:    2
+ THIS UNIT TO BE REWOUND:        NO 
+ NO. OF DATA RECS IN DATA SET:     1166
+ NO. OF DATA ITEMS IN DATA SET:  34
+ ID DATA ITEM IS DATA ITEM NO.:   1
+ DEP VARIABLE IS DATA ITEM NO.:  31
+ MDV DATA ITEM IS DATA ITEM NO.: 34
+0INDICES PASSED TO SUBROUTINE PRED:
+  32  22  25   0  26  27  29   0   0   0   0
+0LABELS FOR DATA ITEMS:
+ ID VISI XAT2 DGRP DOSE FLAG ONO XIME DVO NEUY SCR AGE SEX NYHA WT COMP ACE DIG DIU NUMB TAD TIME VIDD CLCR AMT SS II VID
+ CMT CONO DV EVID OVID MDV
+0FORMAT FOR DATA:
+ (7E10.0/7E10.0/7E10.0/7E10.0/2E10.0,E11.0,2E10.0,1F2.0)                         
+ 
+ TOT. NO. OF OBS RECS:     1022
+ TOT. NO. OF INDIVIDUALS:     74
+0LENGTH OF THETA:   5
+0DEFAULT THETA BOUNDARY TEST OMITTED:    NO 
+0OMEGA HAS BLOCK FORM:
+  1
+  0  2
+  0  2  2
+0DEFAULT OMEGA BOUNDARY TEST OMITTED:    NO 
+0SIGMA HAS SIMPLE DIAGONAL FORM WITH DIMENSION:   1
+0DEFAULT SIGMA BOUNDARY TEST OMITTED:    NO 
+0INITIAL ESTIMATE OF THETA:
+ LOWER BOUND    INITIAL EST    UPPER BOUND
+  0.0000E+00     0.2711E+02     0.1000E+07
+  0.0000E+00     0.1630E+02     0.1000E+07
+  0.0000E+00     0.3065E+00     0.1000E+07
+  0.0000E+00     0.9539E-01     0.1000E+07
+  0.0000E+00     0.3279E+00     0.1000E+07
+0INITIAL ESTIMATE OF OMEGA:
+ BLOCK SET NO.   BLOCK                                                                    FIXED
+        1                                                                                   NO 
+                  0.2964E+00
+        2                                                                                   NO 
+                  0.1423E+01
+                  0.2194E+00   0.2365E+00
+0INITIAL ESTIMATE OF SIGMA:
+ 0.1000E+01
+0SIGMA CONSTRAINED TO BE THIS INITIAL ESTIMATE
+0ESTIMATION STEP OMITTED:           NO 
+ CONDITIONAL ESTIMATES USED:       YES 
+ CENTERED ETA:                      NO 
+ EPS-ETA INTERACTION:              YES 
+ LAPLACIAN OBJ. FUNC.:              NO 
+ NO. OF FUNCT. EVALS. ALLOWED:        528
+ NO. OF SIG. FIGURES REQUIRED:       3
+ INTERMEDIATE PRINTOUT:            YES 
+ ESTIMATE OUTPUT TO MSF:            NO 
+ ABORT WITH PRED EXIT CODE 1:       NO 
+ IND. OBJ. FUNC. VALUES SORTED:     NO 
+
+ THE FOLLOWING LABELS ARE EQUIVALENT
+ PRED=PREDI
+ RES=RESI
+ WRES=WRESI
+1
+ ADDITIONAL PK PARAMETERS - ASSIGNMENT OF ROWS IN GG
+ COMPT. NO.                             INDICES
+              SCALE      BIOAVAIL.   ZERO-ORDER  ZERO-ORDER  ABSORB
+                         FRACTION    RATE        DURATION    LAG  
+    1           *           *           *           *           4
+    2           5           *           *           *           *
+    3           *           -           -           -           -
+             - PARAMETER IS NOT ALLOWED FOR THIS MODEL
+             * PARAMETER IS NOT SUPPLIED BY PK SUBROUTINE;
+               WILL DEFAULT TO ONE IF APPLICABLE
+0DATA ITEM INDICES USED BY PRED ARE:
+   EVENT ID DATA ITEM IS DATA ITEM NO.:     32
+   TIME DATA ITEM IS DATA ITEM NO.:         22
+   DOSE AMOUNT DATA ITEM IS DATA ITEM NO.:  25
+   STEADY STATE DATA ITEM IS DATA ITEM NO.: 26
+   INTERVAL DATA ITEM IS DATA ITEM NO.:     27
+   COMPT. NO. DATA ITEM IS DATA ITEM NO.:   29
+ 
+0PK SUBROUTINE CALLED WITH EVERY EVENT RECORD.
+ PK SUBROUTINE NOT CALLED AT NONEVENT (ADDITIONAL OR LAGGED) DOSE TIMES.
+0ERROR SUBROUTINE CALLED WITH EVERY EVENT RECORD.
+1
+
+
+ #TBLN:      5
+ #METH: Importance Sampling assisted by MAP Estimation
+
+ EM/BAYES SETUP
+ THETAS THAT ARE MU MODELED:
+ 
+ THETAS THAT ARE SIGMA-LIKE:
+ 
+
+ MONITORING OF SEARCH:
+
+ iteration            0  OBJ=  -565.38782488650645 eff.=     100. Smpl.=     100. Fit.= 0.95295
+ iteration            1  OBJ=  -578.81720231415261 eff.=      43. Smpl.=     100. Fit.= 0.89813
+ iteration            2  OBJ=  -576.11202402430854 eff.=      41. Smpl.=     100. Fit.= 0.89966
+ iteration            3  OBJ=  -578.29518203261557 eff.=      40. Smpl.=     100. Fit.= 0.90180
+ iteration            4  OBJ=  -575.92233171501402 eff.=      39. Smpl.=     100. Fit.= 0.90064
+ iteration            5  OBJ=  -576.63270120560503 eff.=      41. Smpl.=     100. Fit.= 0.90480
+ iteration            6  OBJ=  -576.48751302818471 eff.=      40. Smpl.=     100. Fit.= 0.90214
+ iteration            7  OBJ=  -575.30569601143441 eff.=      39. Smpl.=     100. Fit.= 0.90233
+ iteration            8  OBJ=  -581.02083132436996 eff.=      42. Smpl.=     100. Fit.= 0.90393
+ iteration            9  OBJ=  -579.78398590308177 eff.=      40. Smpl.=     100. Fit.= 0.90146
+ iteration           10  OBJ=  -576.64600925223647 eff.=      40. Smpl.=     100. Fit.= 0.90212
+ iteration           11  OBJ=  -577.72045994459017 eff.=      42. Smpl.=     100. Fit.= 0.90473
+ iteration           12  OBJ=  -576.91653679761237 eff.=      39. Smpl.=     100. Fit.= 0.89934
+ iteration           13  OBJ=  -584.64962214679247 eff.=      44. Smpl.=     100. Fit.= 0.90198
+ iteration           14  OBJ=  -576.67628081355031 eff.=      39. Smpl.=     100. Fit.= 0.89865
+ iteration           15  OBJ=  -577.58973232288542 eff.=      41. Smpl.=     100. Fit.= 0.90149
+ iteration           16  OBJ=  -581.68184159657778 eff.=      42. Smpl.=     100. Fit.= 0.90274
+ Convergence achieved
+
+ #TERM:
+ OPTIMIZATION COMPLETED
+ 
+
+ ETABAR IS THE ARITHMETIC MEAN OF THE ETA-ESTIMATES,
+ AND THE P-VALUE IS GIVEN FOR THE NULL HYPOTHESIS THAT THE TRUE MEAN IS 0.
+
+ ETABAR:         7.3206E-03  8.9169E-03  1.7783E-02
+ SE:             7.3570E-02  1.2154E-01  4.8799E-02
+
+ P VAL.:         9.2074E-01  9.4152E-01  7.1555E-01
+
+ ETAshrink(%):   1.1746E+00  1.0883E+01  1.1197E+01
+ EPSshrink(%):   9.1173E+00
+
+ #TERE:
+ Elapsed estimation time in seconds:    16.50
+1
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ ************************************************************************************************************************
+ ********************                                                                                ********************
+ ********************                  IMPORTANCE SAMPLING ASSISTED BY MAP ESTIMATION                ********************
+ #OBJT:**************                        FINAL VALUE OF OBJECTIVE FUNCTION                       ********************
+ ********************                                                                                ********************
+ ************************************************************************************************************************
+ 
+
+
+
+
+
+ #OBJV:********************************************     -581.682       **************************************************
+1
+ ************************************************************************************************************************
+ ********************                                                                                ********************
+ ********************                  IMPORTANCE SAMPLING ASSISTED BY MAP ESTIMATION                ********************
+ ********************                             FINAL PARAMETER ESTIMATE                           ********************
+ ********************                                                                                ********************
+ ************************************************************************************************************************
+ 
+
+
+ THETA - VECTOR OF FIXED EFFECTS PARAMETERS   *********
+
+
+         TH 1      TH 2      TH 3      TH 4      TH 5     
+ 
+         3.25E+01  1.81E+01  2.93E-01  1.11E-01  3.36E-01
+ 
+
+
+ OMEGA - COV MATRIX FOR RANDOM EFFECTS - ETAS  ********
+
+
+            ETA1      ETA2      ETA3   
+ 
+ ETA1
++        4.16E-01
+ 
+ ETA2
++        0.00E+00  1.40E+00
+ 
+ ETA3
++        0.00E+00  1.55E-01  2.27E-01
+ 
+
+
+ SIGMA - COV MATRIX FOR RANDOM EFFECTS - EPSILONS  ****
+
+
+            EPS1   
+ 
+ EPS1
++        1.00E+00
+ 
+1
+
+
+ OMEGA - CORR MATRIX FOR RANDOM EFFECTS - ETAS  *******
+
+
+            ETA1      ETA2      ETA3   
+ 
+ ETA1
++        6.45E-01
+ 
+ ETA2
++        0.00E+00  1.18E+00
+ 
+ ETA3
++        0.00E+00  2.75E-01  4.76E-01
+ 
+
+
+ SIGMA - CORR MATRIX FOR RANDOM EFFECTS - EPSILONS  ***
+
+
+            EPS1   
+ 
+ EPS1
++        1.00E+00
+ 
+1
+ PROBLEM NO.:         6
+ MOXONIDINE PK ANALYSIS 5                                                
+0DATA CHECKOUT RUN:              NO 
+ DATA SET LOCATED ON UNIT NO.:    2
+ THIS UNIT TO BE REWOUND:        NO 
+ NO. OF DATA RECS IN DATA SET:     1166
+ NO. OF DATA ITEMS IN DATA SET:  34
+ ID DATA ITEM IS DATA ITEM NO.:   1
+ DEP VARIABLE IS DATA ITEM NO.:  31
+ MDV DATA ITEM IS DATA ITEM NO.: 34
+0INDICES PASSED TO SUBROUTINE PRED:
+  32  22  25   0  26  27  29   0   0   0   0
+0LABELS FOR DATA ITEMS:
+ ID VISI XAT2 DGRP DOSE FLAG ONO XIME DVO NEUY SCR AGE SEX NYHA WT COMP ACE DIG DIU NUMB TAD TIME VIDD CLCR AMT SS II VID
+ CMT CONO DV EVID OVID MDV
+0FORMAT FOR DATA:
+ (7E10.0/7E10.0/7E10.0/7E10.0/2E10.0,E11.0,2E10.0,1F2.0)                         
+ 
+ TOT. NO. OF OBS RECS:     1022
+ TOT. NO. OF INDIVIDUALS:     74
+0LENGTH OF THETA:   5
+0DEFAULT THETA BOUNDARY TEST OMITTED:    NO 
+0OMEGA HAS BLOCK FORM:
+  1
+  0  2
+  0  2  2
+0DEFAULT OMEGA BOUNDARY TEST OMITTED:    NO 
+0SIGMA HAS SIMPLE DIAGONAL FORM WITH DIMENSION:   1
+0DEFAULT SIGMA BOUNDARY TEST OMITTED:    NO 
+0INITIAL ESTIMATE OF THETA:
+ LOWER BOUND    INITIAL EST    UPPER BOUND
+  0.0000E+00     0.2711E+02     0.1000E+07
+  0.0000E+00     0.1630E+02     0.1000E+07
+  0.0000E+00     0.3065E+00     0.1000E+07
+  0.0000E+00     0.9539E-01     0.1000E+07
+  0.0000E+00     0.3279E+00     0.1000E+07
+0INITIAL ESTIMATE OF OMEGA:
+ BLOCK SET NO.   BLOCK                                                                    FIXED
+        1                                                                                   NO 
+                  0.2964E+00
+        2                                                                                   NO 
+                  0.1423E+01
+                  0.2194E+00   0.2365E+00
+0INITIAL ESTIMATE OF SIGMA:
+ 0.1000E+01
+0SIGMA CONSTRAINED TO BE THIS INITIAL ESTIMATE
+0ESTIMATION STEP OMITTED:           NO 
+ CONDITIONAL ESTIMATES USED:       YES 
+ CENTERED ETA:                      NO 
+ EPS-ETA INTERACTION:              YES 
+ LAPLACIAN OBJ. FUNC.:              NO 
+ NO. OF FUNCT. EVALS. ALLOWED:        528
+ NO. OF SIG. FIGURES REQUIRED:       3
+ INTERMEDIATE PRINTOUT:            YES 
+ ESTIMATE OUTPUT TO MSF:            NO 
+ IND. OBJ. FUNC. VALUES SORTED:     NO 
+
+ THE FOLLOWING LABELS ARE EQUIVALENT
+ PRED=PREDI
+ RES=RESI
+ WRES=WRESI
+1
+ ADDITIONAL PK PARAMETERS - ASSIGNMENT OF ROWS IN GG
+ COMPT. NO.                             INDICES
+              SCALE      BIOAVAIL.   ZERO-ORDER  ZERO-ORDER  ABSORB
+                         FRACTION    RATE        DURATION    LAG  
+    1           *           *           *           *           4
+    2           5           *           *           *           *
+    3           *           -           -           -           -
+             - PARAMETER IS NOT ALLOWED FOR THIS MODEL
+             * PARAMETER IS NOT SUPPLIED BY PK SUBROUTINE;
+               WILL DEFAULT TO ONE IF APPLICABLE
+0DATA ITEM INDICES USED BY PRED ARE:
+   EVENT ID DATA ITEM IS DATA ITEM NO.:     32
+   TIME DATA ITEM IS DATA ITEM NO.:         22
+   DOSE AMOUNT DATA ITEM IS DATA ITEM NO.:  25
+   STEADY STATE DATA ITEM IS DATA ITEM NO.: 26
+   INTERVAL DATA ITEM IS DATA ITEM NO.:     27
+   COMPT. NO. DATA ITEM IS DATA ITEM NO.:   29
+ 
+0PK SUBROUTINE CALLED WITH EVERY EVENT RECORD.
+ PK SUBROUTINE NOT CALLED AT NONEVENT (ADDITIONAL OR LAGGED) DOSE TIMES.
+0ERROR SUBROUTINE CALLED WITH EVERY EVENT RECORD.
+1
+
+
+ #TBLN:      6
+ #METH: Importance Sampling
+
+ EM/BAYES SETUP
+ THETAS THAT ARE MU MODELED:
+ 
+ THETAS THAT ARE SIGMA-LIKE:
+ 
+
+ MONITORING OF SEARCH:
+
+ iteration            0  OBJ=  -326.14718588917566 eff.=      12. Smpl.=     100. Fit.= 0.97889
+ iteration           20  OBJ=  -294.19239329925557 eff.=      45. Smpl.=     100. Fit.= 0.90049
+
+ #TERM:
+ OPTIMIZATION NOT COMPLETED
+ 
+
+ ETABAR IS THE ARITHMETIC MEAN OF THE ETA-ESTIMATES,
+ AND THE P-VALUE IS GIVEN FOR THE NULL HYPOTHESIS THAT THE TRUE MEAN IS 0.
+
+ ETABAR:         2.8151E-02 -2.0281E-02 -3.0549E-02
+ SE:             7.3144E-02  1.2643E-01  4.6768E-02
+
+ P VAL.:         7.0033E-01  8.7256E-01  5.1363E-01
+
+ ETAshrink(%):   1.7381E+00  1.7833E+01  1.5697E+01
+ EPSshrink(%):  -7.2635E+00
+
+ #TERE:
+ Elapsed estimation time in seconds:    19.68
+1
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ ************************************************************************************************************************
+ ********************                                                                                ********************
+ ********************                               IMPORTANCE SAMPLING                              ********************
+ #OBJT:**************                        FINAL VALUE OF OBJECTIVE FUNCTION                       ********************
+ ********************                                                                                ********************
+ ************************************************************************************************************************
+ 
+
+
+
+
+
+ #OBJV:********************************************     -294.192       **************************************************
+1
+ ************************************************************************************************************************
+ ********************                                                                                ********************
+ ********************                               IMPORTANCE SAMPLING                              ********************
+ ********************                             FINAL PARAMETER ESTIMATE                           ********************
+ ********************                                                                                ********************
+ ************************************************************************************************************************
+ 
+
+
+ THETA - VECTOR OF FIXED EFFECTS PARAMETERS   *********
+
+
+         TH 1      TH 2      TH 3      TH 4      TH 5     
+ 
+         3.12E+01  1.83E+01  3.18E-01  1.03E-01  3.34E-01
+ 
+
+
+ OMEGA - COV MATRIX FOR RANDOM EFFECTS - ETAS  ********
+
+
+            ETA1      ETA2      ETA3   
+ 
+ ETA1
++        4.16E-01
+ 
+ ETA2
++        0.00E+00  1.78E+00
+ 
+ ETA3
++        0.00E+00  2.64E-01  2.31E-01
+ 
+
+
+ SIGMA - COV MATRIX FOR RANDOM EFFECTS - EPSILONS  ****
+
+
+            EPS1   
+ 
+ EPS1
++        1.00E+00
+ 
+1
+
+
+ OMEGA - CORR MATRIX FOR RANDOM EFFECTS - ETAS  *******
+
+
+            ETA1      ETA2      ETA3   
+ 
+ ETA1
++        6.45E-01
+ 
+ ETA2
++        0.00E+00  1.33E+00
+ 
+ ETA3
++        0.00E+00  4.12E-01  4.80E-01
+ 
+
+
+ SIGMA - CORR MATRIX FOR RANDOM EFFECTS - EPSILONS  ***
+
+
+            EPS1   
+ 
+ EPS1
++        1.00E+00
+ 
+1
+ PROBLEM NO.:         7
+ MOXONIDINE PK ANALYSIS 6                                                
+0DATA CHECKOUT RUN:              NO 
+ DATA SET LOCATED ON UNIT NO.:    2
+ THIS UNIT TO BE REWOUND:        NO 
+ NO. OF DATA RECS IN DATA SET:     1166
+ NO. OF DATA ITEMS IN DATA SET:  34
+ ID DATA ITEM IS DATA ITEM NO.:   1
+ DEP VARIABLE IS DATA ITEM NO.:  31
+ MDV DATA ITEM IS DATA ITEM NO.: 34
+0INDICES PASSED TO SUBROUTINE PRED:
+  32  22  25   0  26  27  29   0   0   0   0
+0LABELS FOR DATA ITEMS:
+ ID VISI XAT2 DGRP DOSE FLAG ONO XIME DVO NEUY SCR AGE SEX NYHA WT COMP ACE DIG DIU NUMB TAD TIME VIDD CLCR AMT SS II VID
+ CMT CONO DV EVID OVID MDV
+0FORMAT FOR DATA:
+ (7E10.0/7E10.0/7E10.0/7E10.0/2E10.0,E11.0,2E10.0,1F2.0)                         
+ 
+ TOT. NO. OF OBS RECS:     1022
+ TOT. NO. OF INDIVIDUALS:     74
+0LENGTH OF THETA:   5
+0DEFAULT THETA BOUNDARY TEST OMITTED:    NO 
+0OMEGA HAS BLOCK FORM:
+  1
+  0  2
+  0  2  2
+0DEFAULT OMEGA BOUNDARY TEST OMITTED:    NO 
+0SIGMA HAS SIMPLE DIAGONAL FORM WITH DIMENSION:   1
+0DEFAULT SIGMA BOUNDARY TEST OMITTED:    NO 
+0INITIAL ESTIMATE OF THETA:
+ LOWER BOUND    INITIAL EST    UPPER BOUND
+  0.0000E+00     0.2711E+02     0.1000E+07
+  0.0000E+00     0.1630E+02     0.1000E+07
+  0.0000E+00     0.3065E+00     0.1000E+07
+  0.0000E+00     0.9539E-01     0.1000E+07
+  0.0000E+00     0.3279E+00     0.1000E+07
+0INITIAL ESTIMATE OF OMEGA:
+ BLOCK SET NO.   BLOCK                                                                    FIXED
+        1                                                                                   NO 
+                  0.2964E+00
+        2                                                                                   NO 
+                  0.1423E+01
+                  0.2194E+00   0.2365E+00
+0INITIAL ESTIMATE OF SIGMA:
+ 0.1000E+01
+0SIGMA CONSTRAINED TO BE THIS INITIAL ESTIMATE
+0ESTIMATION STEP OMITTED:           NO 
+ CONDITIONAL ESTIMATES USED:       YES 
+ CENTERED ETA:                      NO 
+ EPS-ETA INTERACTION:               NO 
+ LAPLACIAN OBJ. FUNC.:              NO 
+ NO. OF FUNCT. EVALS. ALLOWED:        528
+ NO. OF SIG. FIGURES REQUIRED:       3
+ INTERMEDIATE PRINTOUT:            YES 
+ ESTIMATE OUTPUT TO MSF:            NO 
+ IND. OBJ. FUNC. VALUES SORTED:     NO 
+
+ THE FOLLOWING LABELS ARE EQUIVALENT
+ PRED=NPRED
+ RES=NRES
+ WRES=NWRES
+1
+ ADDITIONAL PK PARAMETERS - ASSIGNMENT OF ROWS IN GG
+ COMPT. NO.                             INDICES
+              SCALE      BIOAVAIL.   ZERO-ORDER  ZERO-ORDER  ABSORB
+                         FRACTION    RATE        DURATION    LAG  
+    1           *           *           *           *           4
+    2           5           *           *           *           *
+    3           *           -           -           -           -
+             - PARAMETER IS NOT ALLOWED FOR THIS MODEL
+             * PARAMETER IS NOT SUPPLIED BY PK SUBROUTINE;
+               WILL DEFAULT TO ONE IF APPLICABLE
+0DATA ITEM INDICES USED BY PRED ARE:
+   EVENT ID DATA ITEM IS DATA ITEM NO.:     32
+   TIME DATA ITEM IS DATA ITEM NO.:         22
+   DOSE AMOUNT DATA ITEM IS DATA ITEM NO.:  25
+   STEADY STATE DATA ITEM IS DATA ITEM NO.: 26
+   INTERVAL DATA ITEM IS DATA ITEM NO.:     27
+   COMPT. NO. DATA ITEM IS DATA ITEM NO.:   29
+ 
+0PK SUBROUTINE CALLED WITH EVERY EVENT RECORD.
+ PK SUBROUTINE NOT CALLED AT NONEVENT (ADDITIONAL OR LAGGED) DOSE TIMES.
+0ERROR SUBROUTINE CALLED WITH EVERY EVENT RECORD.
+1
+
+
+ #TBLN:      7
+ #METH: Stochastic Approximation Expectation-Maximization
+
+ EM/BAYES SETUP
+ THETAS THAT ARE MU MODELED:
+ 
+ THETAS THAT ARE SIGMA-LIKE:
+ 
+
+ MONITORING OF SEARCH:
+
+ Stochastic/Burn-in Mode
+ iteration        -3000  SAEMOBJ=  -195.86441825509269
+ iteration        -2990  SAEMOBJ=  -1132.1163583460175
+ iteration        -2980  SAEMOBJ=  -1176.6315061767821
+ iteration        -2970  SAEMOBJ=  -1129.7725695469749
+ iteration        -2960  SAEMOBJ=  -1196.8489645430391
+ iteration        -2950  SAEMOBJ=  -1163.3594218151347
+ iteration        -2940  SAEMOBJ=  -1189.4325069858485
+ iteration        -2930  SAEMOBJ=  -1177.1352020128800
+ iteration        -2920  SAEMOBJ=  -1170.8739612602230
+ iteration        -2910  SAEMOBJ=  -1187.8109111247034
+ iteration        -2900  SAEMOBJ=  -1240.3266090195712
+ iteration        -2890  SAEMOBJ=  -1186.8916142831968
+ iteration        -2880  SAEMOBJ=  -1184.7503593519034
+ iteration        -2870  SAEMOBJ=  -1182.0098063551977
+ iteration        -2860  SAEMOBJ=  -1190.9475095953126
+ iteration        -2850  SAEMOBJ=  -1176.5045914669095
+ iteration        -2840  SAEMOBJ=  -1186.9618729882595
+ iteration        -2830  SAEMOBJ=  -1156.2681788269442
+ iteration        -2820  SAEMOBJ=  -1169.5848031963442
+ iteration        -2810  SAEMOBJ=  -1160.4783214978818
+ iteration        -2800  SAEMOBJ=  -1138.4315595986081
+ iteration        -2790  SAEMOBJ=  -1169.9179361458050
+ iteration        -2780  SAEMOBJ=  -1157.6014206695834
+ iteration        -2770  SAEMOBJ=  -1188.5122076662744
+ iteration        -2760  SAEMOBJ=  -1163.0203289916894
+ iteration        -2750  SAEMOBJ=  -1180.8544929714903
+ iteration        -2740  SAEMOBJ=  -1177.1694907333899
+ iteration        -2730  SAEMOBJ=  -1148.3498754394489
+ iteration        -2720  SAEMOBJ=  -1171.1683060343194
+ iteration        -2710  SAEMOBJ=  -1165.0787467653063
+ iteration        -2700  SAEMOBJ=  -1158.1854287670151
+ iteration        -2690  SAEMOBJ=  -1154.7039269085758
+ iteration        -2680  SAEMOBJ=  -1163.3405358641355
+ iteration        -2670  SAEMOBJ=  -1163.3178174399284
+ iteration        -2660  SAEMOBJ=  -1154.5459818973698
+ iteration        -2650  SAEMOBJ=  -1168.8432676610664
+ iteration        -2640  SAEMOBJ=  -1155.2677461551471
+ iteration        -2630  SAEMOBJ=  -1157.1463665702925
+ iteration        -2620  SAEMOBJ=  -1153.2005801158687
+ iteration        -2610  SAEMOBJ=  -1157.9510206546843
+ iteration        -2600  SAEMOBJ=  -1159.2030259194298
+ iteration        -2590  SAEMOBJ=  -1156.1675047926474
+ iteration        -2580  SAEMOBJ=  -1168.3214218265871
+ iteration        -2570  SAEMOBJ=  -1173.6759946029792
+ iteration        -2560  SAEMOBJ=  -1176.3643642689985
+ iteration        -2550  SAEMOBJ=  -1163.7763885252907
+ iteration        -2540  SAEMOBJ=  -1189.6308945919980
+ iteration        -2530  SAEMOBJ=  -1182.0983631544518
+ iteration        -2520  SAEMOBJ=  -1187.0035495796551
+ iteration        -2510  SAEMOBJ=  -1213.7531682980484
+ iteration        -2500  SAEMOBJ=  -1189.7532245232310
+ iteration        -2490  SAEMOBJ=  -1146.8765569914972
+ iteration        -2480  SAEMOBJ=  -1197.2675649661142
+ iteration        -2470  SAEMOBJ=  -1171.9384282958149
+ iteration        -2460  SAEMOBJ=  -1188.7062648333217
+ iteration        -2450  SAEMOBJ=  -1159.0771882383870
+ iteration        -2440  SAEMOBJ=  -1205.0485706410095
+ iteration        -2430  SAEMOBJ=  -1167.7267824914034
+ iteration        -2420  SAEMOBJ=  -1192.4754388654146
+ iteration        -2410  SAEMOBJ=  -1166.2734083614025
+ iteration        -2400  SAEMOBJ=  -1163.2449896413159
+ iteration        -2390  SAEMOBJ=  -1186.9260995648060
+ iteration        -2380  SAEMOBJ=  -1160.9876768316285
+ iteration        -2370  SAEMOBJ=  -1182.2243609289458
+ iteration        -2360  SAEMOBJ=  -1173.5900327163986
+ iteration        -2350  SAEMOBJ=  -1168.9800923992316
+ iteration        -2340  SAEMOBJ=  -1212.2962375368443
+ iteration        -2330  SAEMOBJ=  -1180.5743099325737
+ iteration        -2320  SAEMOBJ=  -1193.4293306860707
+ iteration        -2310  SAEMOBJ=  -1195.8974536987803
+ iteration        -2300  SAEMOBJ=  -1179.0541468639526
+ iteration        -2290  SAEMOBJ=  -1184.7504845633885
+ iteration        -2280  SAEMOBJ=  -1213.2035318826220
+ iteration        -2270  SAEMOBJ=  -1182.2910912768843
+ iteration        -2260  SAEMOBJ=  -1174.7723826030556
+ iteration        -2250  SAEMOBJ=  -1178.6417745794802
+ iteration        -2240  SAEMOBJ=  -1185.0479416709795
+ iteration        -2230  SAEMOBJ=  -1165.1570318689910
+ iteration        -2220  SAEMOBJ=  -1186.1060480404772
+ iteration        -2210  SAEMOBJ=  -1170.4882529471704
+ iteration        -2200  SAEMOBJ=  -1182.7321814595534
+ iteration        -2190  SAEMOBJ=  -1194.8463555007520
+ iteration        -2180  SAEMOBJ=  -1188.7694626756770
+ iteration        -2170  SAEMOBJ=  -1181.9311207269029
+ iteration        -2160  SAEMOBJ=  -1170.4339351145463
+ iteration        -2150  SAEMOBJ=  -1168.6502139705831
+ iteration        -2140  SAEMOBJ=  -1175.1576855437372
+ iteration        -2130  SAEMOBJ=  -1195.0835562342472
+ iteration        -2120  SAEMOBJ=  -1174.2059729567179
+ iteration        -2110  SAEMOBJ=  -1181.6199544305318
+ iteration        -2100  SAEMOBJ=  -1164.8980806567502
+ iteration        -2090  SAEMOBJ=  -1201.0720704564387
+ iteration        -2080  SAEMOBJ=  -1211.9239160926254
+ iteration        -2070  SAEMOBJ=  -1184.5698655826664
+ iteration        -2060  SAEMOBJ=  -1161.5991864878647
+ iteration        -2050  SAEMOBJ=  -1184.0345869820148
+ iteration        -2040  SAEMOBJ=  -1203.5082763326641
+ iteration        -2030  SAEMOBJ=  -1197.2244588309759
+ iteration        -2020  SAEMOBJ=  -1189.4143931117765
+ iteration        -2010  SAEMOBJ=  -1180.4375417431186
+ iteration        -2000  SAEMOBJ=  -1170.9194135700382
+ iteration        -1990  SAEMOBJ=  -1185.7074490327018
+ iteration        -1980  SAEMOBJ=  -1165.1691929262838
+ iteration        -1970  SAEMOBJ=  -1165.0046068140405
+ iteration        -1960  SAEMOBJ=  -1156.4691309087395
+ iteration        -1950  SAEMOBJ=  -1166.3187627815391
+ iteration        -1940  SAEMOBJ=  -1173.2065920583245
+ iteration        -1930  SAEMOBJ=  -1190.2259230818172
+ iteration        -1920  SAEMOBJ=  -1182.3546946951860
+ iteration        -1910  SAEMOBJ=  -1166.1185007232364
+ iteration        -1900  SAEMOBJ=  -1186.2185376154375
+ iteration        -1890  SAEMOBJ=  -1165.2809577447192
+ iteration        -1880  SAEMOBJ=  -1170.3693706030260
+ iteration        -1870  SAEMOBJ=  -1165.8428115947024
+ iteration        -1860  SAEMOBJ=  -1199.0620097905539
+ iteration        -1850  SAEMOBJ=  -1196.8467976919269
+ iteration        -1840  SAEMOBJ=  -1183.0787170704193
+ iteration        -1830  SAEMOBJ=  -1197.7386726894024
+ iteration        -1820  SAEMOBJ=  -1173.3897894399524
+ iteration        -1810  SAEMOBJ=  -1190.2257947985349
+ iteration        -1800  SAEMOBJ=  -1181.0705704732252
+ iteration        -1790  SAEMOBJ=  -1161.3622426322588
+ iteration        -1780  SAEMOBJ=  -1168.1359353269536
+ iteration        -1770  SAEMOBJ=  -1170.5701251088203
+ iteration        -1760  SAEMOBJ=  -1162.2967623319460
+ iteration        -1750  SAEMOBJ=  -1158.7765647557735
+ iteration        -1740  SAEMOBJ=  -1188.3470685913435
+ iteration        -1730  SAEMOBJ=  -1192.7124855304537
+ iteration        -1720  SAEMOBJ=  -1207.0922495493610
+ iteration        -1710  SAEMOBJ=  -1161.8690715742250
+ iteration        -1700  SAEMOBJ=  -1180.7485917236127
+ iteration        -1690  SAEMOBJ=  -1150.9219561854325
+ iteration        -1680  SAEMOBJ=  -1141.4576349329282
+ iteration        -1670  SAEMOBJ=  -1159.8300060598131
+ iteration        -1660  SAEMOBJ=  -1170.8571049777106
+ iteration        -1650  SAEMOBJ=  -1163.9229805799087
+ iteration        -1640  SAEMOBJ=  -1167.9621623112853
+ iteration        -1630  SAEMOBJ=  -1184.7454946445860
+ iteration        -1620  SAEMOBJ=  -1192.5521992831088
+ iteration        -1610  SAEMOBJ=  -1158.9493859333970
+ iteration        -1600  SAEMOBJ=  -1204.5294906902059
+ iteration        -1590  SAEMOBJ=  -1161.6137180558001
+ iteration        -1580  SAEMOBJ=  -1199.7862659647783
+ iteration        -1570  SAEMOBJ=  -1181.6467091553704
+ iteration        -1560  SAEMOBJ=  -1209.1049978621118
+ iteration        -1550  SAEMOBJ=  -1173.0230912777110
+ iteration        -1540  SAEMOBJ=  -1159.3371398276504
+ iteration        -1530  SAEMOBJ=  -1173.6585073323633
+ iteration        -1520  SAEMOBJ=  -1170.6362051255542
+ iteration        -1510  SAEMOBJ=  -1202.6630196040660
+ iteration        -1500  SAEMOBJ=  -1167.5231926888430
+ iteration        -1490  SAEMOBJ=  -1162.8944766744648
+ iteration        -1480  SAEMOBJ=  -1199.3239508430279
+ iteration        -1470  SAEMOBJ=  -1173.6958037844556
+ iteration        -1460  SAEMOBJ=  -1196.5655833360843
+ iteration        -1450  SAEMOBJ=  -1173.5561521096488
+ iteration        -1440  SAEMOBJ=  -1170.2525640262500
+ iteration        -1430  SAEMOBJ=  -1156.9982002719141
+ iteration        -1420  SAEMOBJ=  -1171.6791354691068
+ iteration        -1410  SAEMOBJ=  -1181.5413217527564
+ iteration        -1400  SAEMOBJ=  -1168.4435619245560
+ iteration        -1390  SAEMOBJ=  -1141.6670821617192
+ iteration        -1380  SAEMOBJ=  -1171.9047592682605
+ iteration        -1370  SAEMOBJ=  -1159.7042068268838
+ iteration        -1360  SAEMOBJ=  -1173.6637228025500
+ iteration        -1350  SAEMOBJ=  -1174.2315413936499
+ iteration        -1340  SAEMOBJ=  -1199.8067662364251
+ iteration        -1330  SAEMOBJ=  -1166.4200771562773
+ iteration        -1320  SAEMOBJ=  -1188.4003951049312
+ iteration        -1310  SAEMOBJ=  -1177.0680006422594
+ iteration        -1300  SAEMOBJ=  -1159.1072920284307
+ iteration        -1290  SAEMOBJ=  -1169.7803178811632
+ iteration        -1280  SAEMOBJ=  -1177.2382455490479
+ iteration        -1270  SAEMOBJ=  -1175.5654121625028
+ iteration        -1260  SAEMOBJ=  -1160.2734298973633
+ iteration        -1250  SAEMOBJ=  -1169.5128054916495
+ iteration        -1240  SAEMOBJ=  -1170.0617623755193
+ iteration        -1230  SAEMOBJ=  -1169.0124296153508
+ iteration        -1220  SAEMOBJ=  -1142.7708354307497
+ iteration        -1210  SAEMOBJ=  -1198.7354193174353
+ iteration        -1200  SAEMOBJ=  -1181.8550477720555
+ iteration        -1190  SAEMOBJ=  -1162.0372719780999
+ iteration        -1180  SAEMOBJ=  -1157.6167560310228
+ iteration        -1170  SAEMOBJ=  -1197.2300023841344
+ iteration        -1160  SAEMOBJ=  -1164.2977813871303
+ iteration        -1150  SAEMOBJ=  -1186.0406503594431
+ iteration        -1140  SAEMOBJ=  -1162.9625535582304
+ iteration        -1130  SAEMOBJ=  -1162.0324243232144
+ iteration        -1120  SAEMOBJ=  -1168.8014666109352
+ iteration        -1110  SAEMOBJ=  -1179.8771369137216
+ iteration        -1100  SAEMOBJ=  -1187.0766597240734
+ iteration        -1090  SAEMOBJ=  -1164.4592725069913
+ iteration        -1080  SAEMOBJ=  -1157.1136923245717
+ iteration        -1070  SAEMOBJ=  -1165.8746260170919
+ iteration        -1060  SAEMOBJ=  -1179.2780713971526
+ iteration        -1050  SAEMOBJ=  -1173.4501240662044
+ iteration        -1040  SAEMOBJ=  -1179.5821685410706
+ iteration        -1030  SAEMOBJ=  -1157.4853392977614
+ iteration        -1020  SAEMOBJ=  -1158.6623657785162
+ iteration        -1010  SAEMOBJ=  -1195.8699395224417
+ iteration        -1000  SAEMOBJ=  -1205.7346215789221
+ iteration         -990  SAEMOBJ=  -1189.8808036297100
+ iteration         -980  SAEMOBJ=  -1210.2375434496121
+ iteration         -970  SAEMOBJ=  -1168.6872324101519
+ iteration         -960  SAEMOBJ=  -1200.2654373111036
+ iteration         -950  SAEMOBJ=  -1178.9157460036454
+ iteration         -940  SAEMOBJ=  -1171.0237394106130
+ iteration         -930  SAEMOBJ=  -1167.1945040400806
+ iteration         -920  SAEMOBJ=  -1152.3594343174875
+ iteration         -910  SAEMOBJ=  -1154.4298006523861
+ iteration         -900  SAEMOBJ=  -1159.7997369926752
+ iteration         -890  SAEMOBJ=  -1178.9928465745402
+ iteration         -880  SAEMOBJ=  -1150.5151629076136
+ iteration         -870  SAEMOBJ=  -1165.1799940175533
+ iteration         -860  SAEMOBJ=  -1170.0273065529941
+ iteration         -850  SAEMOBJ=  -1150.7513968875060
+ iteration         -840  SAEMOBJ=  -1170.7899775405626
+ iteration         -830  SAEMOBJ=  -1183.6003369464843
+ iteration         -820  SAEMOBJ=  -1179.4039417145414
+ iteration         -810  SAEMOBJ=  -1178.6975832298758
+ iteration         -800  SAEMOBJ=  -1178.6179109266295
+ iteration         -790  SAEMOBJ=  -1160.6091885954370
+ iteration         -780  SAEMOBJ=  -1202.7186483157384
+ iteration         -770  SAEMOBJ=  -1187.9396285857379
+ iteration         -760  SAEMOBJ=  -1168.7422872829038
+ iteration         -750  SAEMOBJ=  -1185.4492790836741
+ iteration         -740  SAEMOBJ=  -1180.9036955522583
+ iteration         -730  SAEMOBJ=  -1214.3557700521460
+ iteration         -720  SAEMOBJ=  -1154.6724338359286
+ iteration         -710  SAEMOBJ=  -1158.9705920352458
+ iteration         -700  SAEMOBJ=  -1158.3087337905640
+ iteration         -690  SAEMOBJ=  -1187.4493081638348
+ iteration         -680  SAEMOBJ=  -1165.8742062496033
+ iteration         -670  SAEMOBJ=  -1186.0786987301472
+ iteration         -660  SAEMOBJ=  -1171.0394844783532
+ iteration         -650  SAEMOBJ=  -1181.9482397405736
+ iteration         -640  SAEMOBJ=  -1191.5195435303367
+ iteration         -630  SAEMOBJ=  -1187.8639053959459
+ iteration         -620  SAEMOBJ=  -1150.1815639048264
+ iteration         -610  SAEMOBJ=  -1165.7485272147319
+ iteration         -600  SAEMOBJ=  -1176.2452497370180
+ iteration         -590  SAEMOBJ=  -1184.6654042932837
+ iteration         -580  SAEMOBJ=  -1165.1079758028047
+ iteration         -570  SAEMOBJ=  -1159.1723768855386
+ iteration         -560  SAEMOBJ=  -1162.7212821776989
+ iteration         -550  SAEMOBJ=  -1174.2778764456425
+ iteration         -540  SAEMOBJ=  -1174.2470540619961
+ iteration         -530  SAEMOBJ=  -1157.8846606384705
+ iteration         -520  SAEMOBJ=  -1170.2982958594494
+ iteration         -510  SAEMOBJ=  -1150.3718802999754
+ iteration         -500  SAEMOBJ=  -1167.8565005002022
+ iteration         -490  SAEMOBJ=  -1145.5811242475922
+ iteration         -480  SAEMOBJ=  -1166.0262233643402
+ iteration         -470  SAEMOBJ=  -1146.7089375144203
+ iteration         -460  SAEMOBJ=  -1166.5707406551546
+ iteration         -450  SAEMOBJ=  -1155.1107921198795
+ iteration         -440  SAEMOBJ=  -1164.8653820807112
+ iteration         -430  SAEMOBJ=  -1176.2513128624387
+ iteration         -420  SAEMOBJ=  -1184.9024450181691
+ iteration         -410  SAEMOBJ=  -1166.3080015847040
+ iteration         -400  SAEMOBJ=  -1176.9996236843490
+ iteration         -390  SAEMOBJ=  -1177.5821741933130
+ iteration         -380  SAEMOBJ=  -1172.8829806690660
+ iteration         -370  SAEMOBJ=  -1186.9653602958069
+ iteration         -360  SAEMOBJ=  -1169.4945477454319
+ iteration         -350  SAEMOBJ=  -1201.6632449357121
+ iteration         -340  SAEMOBJ=  -1174.4208218306214
+ iteration         -330  SAEMOBJ=  -1195.0997950237047
+ iteration         -320  SAEMOBJ=  -1170.7922961242452
+ iteration         -310  SAEMOBJ=  -1169.5280148192567
+ iteration         -300  SAEMOBJ=  -1181.8866660659039
+ iteration         -290  SAEMOBJ=  -1183.8045307310101
+ iteration         -280  SAEMOBJ=  -1183.7311434885019
+ iteration         -270  SAEMOBJ=  -1157.9517914221613
+ iteration         -260  SAEMOBJ=  -1182.2908216578503
+ iteration         -250  SAEMOBJ=  -1178.7858150375091
+ iteration         -240  SAEMOBJ=  -1194.2826492708789
+ iteration         -230  SAEMOBJ=  -1143.8712889775034
+ iteration         -220  SAEMOBJ=  -1173.8801255973810
+ iteration         -210  SAEMOBJ=  -1130.1897200660503
+ iteration         -200  SAEMOBJ=  -1165.3548469811265
+ iteration         -190  SAEMOBJ=  -1156.4662663776976
+ iteration         -180  SAEMOBJ=  -1151.2107655877255
+ iteration         -170  SAEMOBJ=  -1141.3766937052460
+ iteration         -160  SAEMOBJ=  -1151.8763348175157
+ iteration         -150  SAEMOBJ=  -1159.1480838731427
+ iteration         -140  SAEMOBJ=  -1170.8781767238106
+ iteration         -130  SAEMOBJ=  -1156.9428477144220
+ iteration         -120  SAEMOBJ=  -1176.8698566919638
+ iteration         -110  SAEMOBJ=  -1150.9112413812297
+ iteration         -100  SAEMOBJ=  -1152.5467642656531
+ iteration          -90  SAEMOBJ=  -1172.9271498983830
+ iteration          -80  SAEMOBJ=  -1168.4872917333710
+ iteration          -70  SAEMOBJ=  -1164.0000310232519
+ iteration          -60  SAEMOBJ=  -1169.0098329022842
+ iteration          -50  SAEMOBJ=  -1171.7099062416355
+ iteration          -40  SAEMOBJ=  -1175.8368111256159
+ iteration          -30  SAEMOBJ=  -1127.9808527240157
+ iteration          -20  SAEMOBJ=  -1150.8732530244440
+ iteration          -10  SAEMOBJ=  -1149.0944113826463
+ Reduced Stochastic/Accumulation Mode
+ iteration            0  SAEMOBJ=  -1154.0843999220506
+ iteration           10  SAEMOBJ=  -1184.6419413473770
+ iteration           20  SAEMOBJ=  -1190.2759440542518
+ iteration           30  SAEMOBJ=  -1193.5081939923539
+ iteration           40  SAEMOBJ=  -1195.2747830306030
+ iteration           50  SAEMOBJ=  -1195.8860519332820
+ iteration           60  SAEMOBJ=  -1195.8075903061156
+ iteration           70  SAEMOBJ=  -1196.2576754524969
+ iteration           80  SAEMOBJ=  -1196.0428871696843
+ iteration           90  SAEMOBJ=  -1195.4891815516064
+ iteration          100  SAEMOBJ=  -1194.6251461773234
+ iteration          110  SAEMOBJ=  -1194.2637814548741
+ iteration          120  SAEMOBJ=  -1194.7580789945114
+ iteration          130  SAEMOBJ=  -1194.6863698332766
+ iteration          140  SAEMOBJ=  -1195.0697693145196
+ iteration          150  SAEMOBJ=  -1194.9472307374040
+ iteration          160  SAEMOBJ=  -1194.9816324132612
+ iteration          170  SAEMOBJ=  -1195.0409253665148
+ iteration          180  SAEMOBJ=  -1195.1904884799685
+ iteration          190  SAEMOBJ=  -1195.3623492170511
+ iteration          200  SAEMOBJ=  -1195.3067215844567
+ iteration          210  SAEMOBJ=  -1195.2913803711974
+ iteration          220  SAEMOBJ=  -1195.4994129288348
+ iteration          230  SAEMOBJ=  -1196.0085903225365
+ iteration          240  SAEMOBJ=  -1196.3397260149527
+ iteration          250  SAEMOBJ=  -1196.1306263107635
+ iteration          260  SAEMOBJ=  -1195.9144246709998
+ iteration          270  SAEMOBJ=  -1195.6269325074013
+ iteration          280  SAEMOBJ=  -1195.4324883446845
+ iteration          290  SAEMOBJ=  -1195.5276530649576
+ iteration          300  SAEMOBJ=  -1195.4634059076222
+ iteration          310  SAEMOBJ=  -1195.5074105686208
+ iteration          320  SAEMOBJ=  -1195.8913541544071
+ iteration          330  SAEMOBJ=  -1196.0492138503635
+ iteration          340  SAEMOBJ=  -1195.6192258566277
+ iteration          350  SAEMOBJ=  -1195.5969547909197
+ iteration          360  SAEMOBJ=  -1195.6270449742956
+ iteration          370  SAEMOBJ=  -1195.7421238675818
+ iteration          380  SAEMOBJ=  -1195.6728125411817
+ iteration          390  SAEMOBJ=  -1195.5696723395129
+ iteration          400  SAEMOBJ=  -1195.4652609756304
+ iteration          410  SAEMOBJ=  -1195.4012377555753
+ iteration          420  SAEMOBJ=  -1195.2653410936082
+ iteration          430  SAEMOBJ=  -1195.1480359159964
+ iteration          440  SAEMOBJ=  -1195.0664984046023
+ iteration          450  SAEMOBJ=  -1195.0381638115471
+ iteration          460  SAEMOBJ=  -1195.1615090218893
+ iteration          470  SAEMOBJ=  -1195.2587230226195
+ iteration          480  SAEMOBJ=  -1195.4620473557868
+ iteration          490  SAEMOBJ=  -1195.6018628435966
+ iteration          500  SAEMOBJ=  -1195.6049978283231
+ iteration          510  SAEMOBJ=  -1195.6392472151431
+ iteration          520  SAEMOBJ=  -1195.4428727759648
+ iteration          530  SAEMOBJ=  -1195.3548685996186
+ iteration          540  SAEMOBJ=  -1195.3316565754660
+ iteration          550  SAEMOBJ=  -1195.2078947147986
+ iteration          560  SAEMOBJ=  -1195.1765627228096
+ iteration          570  SAEMOBJ=  -1195.1806723767975
+ iteration          580  SAEMOBJ=  -1195.2342550728465
+ iteration          590  SAEMOBJ=  -1195.1687996551138
+ iteration          600  SAEMOBJ=  -1195.1349972754044
+ iteration          610  SAEMOBJ=  -1195.1076167768069
+ iteration          620  SAEMOBJ=  -1195.0441198762101
+ iteration          630  SAEMOBJ=  -1195.0491795842338
+ iteration          640  SAEMOBJ=  -1195.0640478049204
+ iteration          650  SAEMOBJ=  -1195.1211482433396
+ iteration          660  SAEMOBJ=  -1195.1752779975409
+ iteration          670  SAEMOBJ=  -1195.2700770653810
+ iteration          680  SAEMOBJ=  -1195.2426124803003
+ iteration          690  SAEMOBJ=  -1195.3191811988759
+ iteration          700  SAEMOBJ=  -1195.2198079735945
+ iteration          710  SAEMOBJ=  -1195.1632655953633
+ iteration          720  SAEMOBJ=  -1195.1657198564812
+ iteration          730  SAEMOBJ=  -1195.0306407094884
+ iteration          740  SAEMOBJ=  -1195.0816381661607
+ iteration          750  SAEMOBJ=  -1195.1826910728207
+ iteration          760  SAEMOBJ=  -1195.1437948765201
+ iteration          770  SAEMOBJ=  -1195.0831506447489
+ iteration          780  SAEMOBJ=  -1194.9469665011738
+ iteration          790  SAEMOBJ=  -1195.0065022872318
+ iteration          800  SAEMOBJ=  -1194.9846277736781
+ iteration          810  SAEMOBJ=  -1195.0052427737387
+ iteration          820  SAEMOBJ=  -1194.8322057574592
+ iteration          830  SAEMOBJ=  -1194.8599922991482
+ iteration          840  SAEMOBJ=  -1194.8349725487703
+ iteration          850  SAEMOBJ=  -1194.8786768599450
+ iteration          860  SAEMOBJ=  -1194.8444686090379
+ iteration          870  SAEMOBJ=  -1194.8417868429349
+ iteration          880  SAEMOBJ=  -1194.7903555010828
+ iteration          890  SAEMOBJ=  -1194.7441003751644
+ iteration          900  SAEMOBJ=  -1194.7298666957313
+ iteration          910  SAEMOBJ=  -1194.7529909243010
+ iteration          920  SAEMOBJ=  -1194.7145157690918
+ iteration          930  SAEMOBJ=  -1194.7083323799593
+ iteration          940  SAEMOBJ=  -1194.7255275140396
+ iteration          950  SAEMOBJ=  -1194.7142405291038
+ iteration          960  SAEMOBJ=  -1194.7062146992125
+ iteration          970  SAEMOBJ=  -1194.7078092252143
+ iteration          980  SAEMOBJ=  -1194.7035140281475
+ iteration          990  SAEMOBJ=  -1194.6468750711999
+ iteration         1000  SAEMOBJ=  -1194.6541950066162
+ iteration         1010  SAEMOBJ=  -1194.7042938795978
+ iteration         1020  SAEMOBJ=  -1194.6921338143582
+ iteration         1030  SAEMOBJ=  -1194.7168154814685
+ iteration         1040  SAEMOBJ=  -1194.7017973137019
+ iteration         1050  SAEMOBJ=  -1194.6883734017804
+ iteration         1060  SAEMOBJ=  -1194.6800113165355
+ iteration         1070  SAEMOBJ=  -1194.6781847218494
+ iteration         1080  SAEMOBJ=  -1194.6438285848139
+ iteration         1090  SAEMOBJ=  -1194.6971504018675
+ iteration         1100  SAEMOBJ=  -1194.7950409258181
+ iteration         1110  SAEMOBJ=  -1194.8658789811075
+ iteration         1120  SAEMOBJ=  -1194.8473446293995
+ iteration         1130  SAEMOBJ=  -1194.8563101126540
+ iteration         1140  SAEMOBJ=  -1194.7558273767659
+ iteration         1150  SAEMOBJ=  -1194.7431309476106
+ iteration         1160  SAEMOBJ=  -1194.7646772336514
+ iteration         1170  SAEMOBJ=  -1194.8102107430311
+ iteration         1180  SAEMOBJ=  -1194.7603049113559
+ iteration         1190  SAEMOBJ=  -1194.7031171345504
+ iteration         1200  SAEMOBJ=  -1194.7318549892527
+ iteration         1210  SAEMOBJ=  -1194.7761009689084
+ iteration         1220  SAEMOBJ=  -1194.7593573652198
+ iteration         1230  SAEMOBJ=  -1194.7690719203983
+ iteration         1240  SAEMOBJ=  -1194.7726994905900
+ iteration         1250  SAEMOBJ=  -1194.7245794677497
+ iteration         1260  SAEMOBJ=  -1194.7068771911017
+ iteration         1270  SAEMOBJ=  -1194.5671509279468
+ iteration         1280  SAEMOBJ=  -1194.4734060155324
+ iteration         1290  SAEMOBJ=  -1194.4198823890879
+ iteration         1300  SAEMOBJ=  -1194.2819279564781
+ iteration         1310  SAEMOBJ=  -1194.3069076828385
+ iteration         1320  SAEMOBJ=  -1194.3283598320359
+ iteration         1330  SAEMOBJ=  -1194.3238811309875
+ iteration         1340  SAEMOBJ=  -1194.3170669864894
+ iteration         1350  SAEMOBJ=  -1194.3604871248058
+ iteration         1360  SAEMOBJ=  -1194.3598547184465
+ iteration         1370  SAEMOBJ=  -1194.3649770912414
+ iteration         1380  SAEMOBJ=  -1194.3756063439941
+ iteration         1390  SAEMOBJ=  -1194.4048092629025
+ iteration         1400  SAEMOBJ=  -1194.3756174820169
+ iteration         1410  SAEMOBJ=  -1194.3470954191330
+ iteration         1420  SAEMOBJ=  -1194.3114914873388
+ iteration         1430  SAEMOBJ=  -1194.3002160540150
+ iteration         1440  SAEMOBJ=  -1194.2355616207315
+ iteration         1450  SAEMOBJ=  -1194.2099782691282
+ iteration         1460  SAEMOBJ=  -1194.1415520009984
+ iteration         1470  SAEMOBJ=  -1194.1086030144454
+ iteration         1480  SAEMOBJ=  -1194.0771077926654
+ iteration         1490  SAEMOBJ=  -1193.9794554491059
+ iteration         1500  SAEMOBJ=  -1193.9829222212702
+ iteration         1510  SAEMOBJ=  -1193.9553293185413
+ iteration         1520  SAEMOBJ=  -1193.8892547177595
+ iteration         1530  SAEMOBJ=  -1193.8684416683211
+ iteration         1540  SAEMOBJ=  -1193.8145273790035
+ iteration         1550  SAEMOBJ=  -1193.8081660163205
+ iteration         1560  SAEMOBJ=  -1193.8022510713731
+ iteration         1570  SAEMOBJ=  -1193.8076238481331
+ iteration         1580  SAEMOBJ=  -1193.8343990139745
+ iteration         1590  SAEMOBJ=  -1193.8094533420265
+ iteration         1600  SAEMOBJ=  -1193.7981164751832
+ iteration         1610  SAEMOBJ=  -1193.7587788744695
+ iteration         1620  SAEMOBJ=  -1193.7628477996625
+ iteration         1630  SAEMOBJ=  -1193.7298666204310
+ iteration         1640  SAEMOBJ=  -1193.7396299655682
+ iteration         1650  SAEMOBJ=  -1193.7715499277770
+ iteration         1660  SAEMOBJ=  -1193.7812846883501
+ iteration         1670  SAEMOBJ=  -1193.7938263424869
+ iteration         1680  SAEMOBJ=  -1193.7880573766106
+ iteration         1690  SAEMOBJ=  -1193.7708322187068
+ iteration         1700  SAEMOBJ=  -1193.7075268542333
+ iteration         1710  SAEMOBJ=  -1193.6888984360705
+ iteration         1720  SAEMOBJ=  -1193.6509704452228
+ iteration         1730  SAEMOBJ=  -1193.6795917734787
+ iteration         1740  SAEMOBJ=  -1193.7024643300037
+ iteration         1750  SAEMOBJ=  -1193.6721509579704
+ iteration         1760  SAEMOBJ=  -1193.6200755954123
+ iteration         1770  SAEMOBJ=  -1193.6311891933244
+ iteration         1780  SAEMOBJ=  -1193.6482697902513
+ iteration         1790  SAEMOBJ=  -1193.6313986411951
+ iteration         1800  SAEMOBJ=  -1193.6452185666324
+ iteration         1810  SAEMOBJ=  -1193.6208728307713
+ iteration         1820  SAEMOBJ=  -1193.6137794510237
+ iteration         1830  SAEMOBJ=  -1193.6412951854509
+ iteration         1840  SAEMOBJ=  -1193.6334634782238
+ iteration         1850  SAEMOBJ=  -1193.6458078440455
+ iteration         1860  SAEMOBJ=  -1193.6862745061837
+ iteration         1870  SAEMOBJ=  -1193.6854367672447
+ iteration         1880  SAEMOBJ=  -1193.7156467404639
+ iteration         1890  SAEMOBJ=  -1193.7181067084034
+ iteration         1900  SAEMOBJ=  -1193.7016053494390
+ iteration         1910  SAEMOBJ=  -1193.7010799104496
+ iteration         1920  SAEMOBJ=  -1193.7372361714167
+ iteration         1930  SAEMOBJ=  -1193.7991553036470
+ iteration         1940  SAEMOBJ=  -1193.7960799460259
+ iteration         1950  SAEMOBJ=  -1193.8383478453361
+ iteration         1960  SAEMOBJ=  -1193.8282359360157
+ iteration         1970  SAEMOBJ=  -1193.8323301064895
+ iteration         1980  SAEMOBJ=  -1193.8013512966793
+ iteration         1990  SAEMOBJ=  -1193.8057381187607
+ iteration         2000  SAEMOBJ=  -1193.7469473492595
+
+ #TERM:
+ STOCHASTIC PORTION NOT COMPLETED
+ REDUCED STOCHASTIC PORTION COMPLETED
+
+ ETABAR IS THE ARITHMETIC MEAN OF THE ETA-ESTIMATES,
+ AND THE P-VALUE IS GIVEN FOR THE NULL HYPOTHESIS THAT THE TRUE MEAN IS 0.
+
+ ETABAR:         7.5307E-02 -1.2917E-02 -3.9677E-02
+ SE:             7.2482E-02  1.3960E-01  4.6052E-02
+
+ P VAL.:         2.9882E-01  9.2628E-01  3.8892E-01
+
+ ETAshrink(%):   2.5230E+00  1.8417E+01  3.2921E+01
+ EPSshrink(%):  -5.0227E-02
+
+ #TERE:
+ Elapsed estimation time in seconds:   247.54
+1
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ ************************************************************************************************************************
+ ********************                                                                                ********************
+ ********************                STOCHASTIC APPROXIMATION EXPECTATION-MAXIMIZATION               ********************
+ #OBJT:**************                        FINAL VALUE OF LIKELIHOOD FUNCTION                      ********************
+ ********************                                                                                ********************
+ ************************************************************************************************************************
+ 
+
+
+
+
+
+ #OBJV:********************************************    -1193.747       **************************************************
+1
+ ************************************************************************************************************************
+ ********************                                                                                ********************
+ ********************                STOCHASTIC APPROXIMATION EXPECTATION-MAXIMIZATION               ********************
+ ********************                             FINAL PARAMETER ESTIMATE                           ********************
+ ********************                                                                                ********************
+ ************************************************************************************************************************
+ 
+
+
+ THETA - VECTOR OF FIXED EFFECTS PARAMETERS   *********
+
+
+         TH 1      TH 2      TH 3      TH 4      TH 5     
+ 
+         3.00E+01  2.24E+01  3.74E-01  9.87E-02  3.35E-01
+ 
+
+
+ OMEGA - COV MATRIX FOR RANDOM EFFECTS - ETAS  ********
+
+
+            ETA1      ETA2      ETA3   
+ 
+ ETA1
++        4.15E-01
+ 
+ ETA2
++        0.00E+00  2.20E+00
+ 
+ ETA3
++        0.00E+00  5.76E-01  3.54E-01
+ 
+
+
+ SIGMA - COV MATRIX FOR RANDOM EFFECTS - EPSILONS  ****
+
+
+            EPS1   
+ 
+ EPS1
++        1.00E+00
+ 
+1
+
+
+ OMEGA - CORR MATRIX FOR RANDOM EFFECTS - ETAS  *******
+
+
+            ETA1      ETA2      ETA3   
+ 
+ ETA1
++        6.44E-01
+ 
+ ETA2
++        0.00E+00  1.48E+00
+ 
+ ETA3
++        0.00E+00  6.54E-01  5.95E-01
+ 
+
+
+ SIGMA - CORR MATRIX FOR RANDOM EFFECTS - EPSILONS  ***
+
+
+            EPS1   
+ 
+ EPS1
++        1.00E+00
+ 
+1
+ PROBLEM NO.:         8
+ MOXONIDINE PK ANALYSIS 7                                                
+0DATA CHECKOUT RUN:              NO 
+ DATA SET LOCATED ON UNIT NO.:    2
+ THIS UNIT TO BE REWOUND:        NO 
+ NO. OF DATA RECS IN DATA SET:     1166
+ NO. OF DATA ITEMS IN DATA SET:  34
+ ID DATA ITEM IS DATA ITEM NO.:   1
+ DEP VARIABLE IS DATA ITEM NO.:  31
+ MDV DATA ITEM IS DATA ITEM NO.: 34
+0INDICES PASSED TO SUBROUTINE PRED:
+  32  22  25   0  26  27  29   0   0   0   0
+0LABELS FOR DATA ITEMS:
+ ID VISI XAT2 DGRP DOSE FLAG ONO XIME DVO NEUY SCR AGE SEX NYHA WT COMP ACE DIG DIU NUMB TAD TIME VIDD CLCR AMT SS II VID
+ CMT CONO DV EVID OVID MDV
+0FORMAT FOR DATA:
+ (7E10.0/7E10.0/7E10.0/7E10.0/2E10.0,E11.0,2E10.0,1F2.0)                         
+ 
+ TOT. NO. OF OBS RECS:     1022
+ TOT. NO. OF INDIVIDUALS:     74
+0LENGTH OF THETA:   5
+0DEFAULT THETA BOUNDARY TEST OMITTED:    NO 
+0OMEGA HAS BLOCK FORM:
+  1
+  0  2
+  0  2  2
+0DEFAULT OMEGA BOUNDARY TEST OMITTED:    NO 
+0SIGMA HAS SIMPLE DIAGONAL FORM WITH DIMENSION:   1
+0DEFAULT SIGMA BOUNDARY TEST OMITTED:    NO 
+0INITIAL ESTIMATE OF THETA:
+ LOWER BOUND    INITIAL EST    UPPER BOUND
+  0.0000E+00     0.2711E+02     0.1000E+07
+  0.0000E+00     0.1630E+02     0.1000E+07
+  0.0000E+00     0.3065E+00     0.1000E+07
+  0.0000E+00     0.9539E-01     0.1000E+07
+  0.0000E+00     0.3279E+00     0.1000E+07
+0INITIAL ESTIMATE OF OMEGA:
+ BLOCK SET NO.   BLOCK                                                                    FIXED
+        1                                                                                   NO 
+                  0.2964E+00
+        2                                                                                   NO 
+                  0.1423E+01
+                  0.2194E+00   0.2365E+00
+0INITIAL ESTIMATE OF SIGMA:
+ 0.1000E+01
+0SIGMA CONSTRAINED TO BE THIS INITIAL ESTIMATE
+0ESTIMATION STEP OMITTED:           NO 
+ SLOW GRADIENT METHOD USED:        YES 
+ CONDITIONAL ESTIMATES USED:       YES 
+ CENTERED ETA:                      NO 
+ EPS-ETA INTERACTION:              YES 
+ LAPLACIAN OBJ. FUNC.:             YES 
+ NUMERICAL 2ND DERIVATIVES:        YES 
+ NO. OF FUNCT. EVALS. ALLOWED:        528
+ NO. OF SIG. FIGURES REQUIRED:       3
+ INTERMEDIATE PRINTOUT:            YES 
+ ESTIMATE OUTPUT TO MSF:            NO 
+ ABORT WITH PRED EXIT CODE 1:       NO 
+ IND. OBJ. FUNC. VALUES SORTED:     NO 
+
+ THE FOLLOWING LABELS ARE EQUIVALENT
+ PRED=PREDI
+ RES=RESI
+ WRES=WRESI
+1
+ ADDITIONAL PK PARAMETERS - ASSIGNMENT OF ROWS IN GG
+ COMPT. NO.                             INDICES
+              SCALE      BIOAVAIL.   ZERO-ORDER  ZERO-ORDER  ABSORB
+                         FRACTION    RATE        DURATION    LAG  
+    1           *           *           *           *           4
+    2           5           *           *           *           *
+    3           *           -           -           -           -
+             - PARAMETER IS NOT ALLOWED FOR THIS MODEL
+             * PARAMETER IS NOT SUPPLIED BY PK SUBROUTINE;
+               WILL DEFAULT TO ONE IF APPLICABLE
+0DATA ITEM INDICES USED BY PRED ARE:
+   EVENT ID DATA ITEM IS DATA ITEM NO.:     32
+   TIME DATA ITEM IS DATA ITEM NO.:         22
+   DOSE AMOUNT DATA ITEM IS DATA ITEM NO.:  25
+   STEADY STATE DATA ITEM IS DATA ITEM NO.: 26
+   INTERVAL DATA ITEM IS DATA ITEM NO.:     27
+   COMPT. NO. DATA ITEM IS DATA ITEM NO.:   29
+ 
+0PK SUBROUTINE CALLED WITH EVERY EVENT RECORD.
+ PK SUBROUTINE NOT CALLED AT NONEVENT (ADDITIONAL OR LAGGED) DOSE TIMES.
+0ERROR SUBROUTINE CALLED WITH EVERY EVENT RECORD.
+1
+
+
+ #TBLN:      8
+ #METH: Iterative Two Stage
+
+ EM/BAYES SETUP
+ THETAS THAT ARE MU MODELED:
+ 
+ THETAS THAT ARE SIGMA-LIKE:
+ 
+
+ MONITORING OF SEARCH:
+
+ iteration            0  OBJ=  -544.95791775611792
+ iteration            1  OBJ=  -557.57725865025657
+ iteration            2  OBJ=  -561.57373602462121
+ iteration            3  OBJ=  -560.70180207107080
+ iteration            4  OBJ=  -549.79152265041103
+ iteration            5  OBJ=  -545.70653617446726
+ iteration            6  OBJ=  -551.99711316106243
+ iteration            7  OBJ=  -556.45409169938819
+ iteration            8  OBJ=  -558.46535027650987
+ iteration            9  OBJ=  -560.13568162705542
+ iteration           10  OBJ=  -560.72533313827273
+ iteration           11  OBJ=  -560.81167667230250
+ Convergence achieved
+
+ #TERM:
+ OPTIMIZATION COMPLETED
+ 
+
+ ETABAR IS THE ARITHMETIC MEAN OF THE ETA-ESTIMATES,
+ AND THE P-VALUE IS GIVEN FOR THE NULL HYPOTHESIS THAT THE TRUE MEAN IS 0.
+
+ ETABAR:        -3.9748E-02  2.5245E-01  2.3401E-02
+ SE:             7.3382E-02  1.0992E-01  5.0211E-02
+
+ P VAL.:         5.8805E-01  2.1634E-02  6.4117E-01
+
+ ETAshrink(%):   3.6163E+00  1.4820E+01  6.1910E+00
+ EPSshrink(%):   9.4095E+00
+
+ #TERE:
+ Elapsed estimation time in seconds:     2.73
+1
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ ************************************************************************************************************************
+ ********************                                                                                ********************
+ ********************                               ITERATIVE TWO STAGE                              ********************
+ #OBJT:**************                        FINAL VALUE OF OBJECTIVE FUNCTION                       ********************
+ ********************                                                                                ********************
+ ************************************************************************************************************************
+ 
+
+
+
+
+
+ #OBJV:********************************************     -560.812       **************************************************
+1
+ ************************************************************************************************************************
+ ********************                                                                                ********************
+ ********************                               ITERATIVE TWO STAGE                              ********************
+ ********************                             FINAL PARAMETER ESTIMATE                           ********************
+ ********************                                                                                ********************
+ ************************************************************************************************************************
+ 
+
+
+ THETA - VECTOR OF FIXED EFFECTS PARAMETERS   *********
+
+
+         TH 1      TH 2      TH 3      TH 4      TH 5     
+ 
+         3.41E+01  1.48E+01  2.86E-01  1.15E-01  3.33E-01
+ 
+
+
+ OMEGA - COV MATRIX FOR RANDOM EFFECTS - ETAS  ********
+
+
+            ETA1      ETA2      ETA3   
+ 
+ ETA1
++        4.35E-01
+ 
+ ETA2
++        0.00E+00  1.25E+00
+ 
+ ETA3
++        0.00E+00  1.20E-01  2.15E-01
+ 
+
+
+ SIGMA - COV MATRIX FOR RANDOM EFFECTS - EPSILONS  ****
+
+
+            EPS1   
+ 
+ EPS1
++        1.00E+00
+ 
+1
+
+
+ OMEGA - CORR MATRIX FOR RANDOM EFFECTS - ETAS  *******
+
+
+            ETA1      ETA2      ETA3   
+ 
+ ETA1
++        6.59E-01
+ 
+ ETA2
++        0.00E+00  1.12E+00
+ 
+ ETA3
++        0.00E+00  2.31E-01  4.64E-01
+ 
+
+
+ SIGMA - CORR MATRIX FOR RANDOM EFFECTS - EPSILONS  ***
+
+
+            EPS1   
+ 
+ EPS1
++        1.00E+00
+ 
+Stop Time:
+Fri Aug  7 08:56:48 CEST 2015

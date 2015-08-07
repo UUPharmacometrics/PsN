@@ -249,7 +249,7 @@ sub store_NM7_output
 					my $string = $2;
 					chomp $string;
 					$string =~ s/\s*$//; #remove trailing spaces
-					if (($string =~ /\(Evaluation\)/) or ($string =~ /\(EVALUATION\)/)){
+					if (($type eq 'raw') and (($string =~ /\(Evaluation\)/) or ($string =~ /\(EVALUATION\)/))){
 						$self->ext_file_has_evaluation(1);
 					}			  
 				  if ((defined $max_table_number) and ($number > $max_table_number)) {
@@ -922,7 +922,10 @@ sub _read_subproblems
 							unless (($last_method_string =~ $self->table_strings_hash->{'raw'}->[$tab_index] ) or 
 									($last_method_string eq $self->table_strings_hash->{'raw'}->[$tab_index]) or
 									($self->table_strings_hash->{'raw'}->[$tab_index] =~ $last_method_string  ) ) {
-								croak("method strings\n".$self->table_strings_hash->{'raw'}->[$tab_index] . " and\n"."$last_method_string do not match" );
+								my $mess = "method strings\n".$self->table_strings_hash->{'raw'}->[$tab_index] . " and\n"."$last_method_string do not match";
+								$self -> parsing_error( message => $mess );
+								$self -> finished_parsing(1);
+								return;
 							}
 						}
 						for my $type ('cov','cor','coi','phi') {

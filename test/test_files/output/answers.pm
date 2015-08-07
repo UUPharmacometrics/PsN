@@ -1313,6 +1313,176 @@ sub read_answers
 	$answer_hashes[$index]->{answers}->{5}->{0}->{'ofv'}=-569.40860646604642;
 	$answer_hashes[$index]->{answers}->{6}->{0}->{'ofv'}=-551.47787941243621;
 
+	$index++;
+	$answer_hashes[$index]={};
+	$answer_hashes[$index]->{file}='multPROB/multEST/withSIM/nonclassical_sim_eval_nm710.lst';
+	$answer_hashes[$index]->{answers}={};
+	$answer_hashes[$index]->{parsed_successfully}=1;
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'ofv'}=-638.567;
+	$answer_hashes[$index]->{answers}->{1}->{0}->{'ofv'}=-711.318;
+	$answer_hashes[$index]->{answers}->{2}->{0}->{'ofv'}=-711.318;
+	$answer_hashes[$index]->{answers}->{3}->{0}->{'ofv'}=-714.865;
+	$answer_hashes[$index]->{answers}->{4}->{0}->{'ofv'}=-717.395;
+	$answer_hashes[$index]->{answers}->{5}->{0}->{'ofv'}=-716.040;
+	$answer_hashes[$index]->{answers}->{6}->{0}->{'ofv'}=-716.242;
+	$answer_hashes[$index]->{answers}->{7}->{0}->{'ofv'}=-715.275;
+
+	$index++;
+	$answer_hashes[$index]={};
+	$answer_hashes[$index]->{file}='multPROB/multEST/withSIM/nonclassical_sim_eval_nm712.lst';
+	$answer_hashes[$index]->{answers}={};
+	$answer_hashes[$index]->{parsed_successfully}=1;
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'ofv'}=-638.56653417993152;
+	$answer_hashes[$index]->{answers}->{1}->{0}->{'ofv'}=-711.31791789457054;
+	$answer_hashes[$index]->{answers}->{2}->{0}->{'ofv'}=-711.31791789457054;
+	$answer_hashes[$index]->{answers}->{3}->{0}->{'ofv'}=-714.86478517000364;
+	$answer_hashes[$index]->{answers}->{4}->{0}->{'ofv'}=-717.39450711432698;
+	$answer_hashes[$index]->{answers}->{5}->{0}->{'ofv'}=-716.04032897967079;
+	$answer_hashes[$index]->{answers}->{6}->{0}->{'ofv'}=-716.24197414394575;
+	$answer_hashes[$index]->{answers}->{7}->{0}->{'ofv'}=-715.27546401668803;
+
+	$index++;
+	$answer_hashes[$index]={};
+	$answer_hashes[$index]->{file}='multPROB/multEST/withSIM/nonclassical_sim_eval_nm720.lst';
+	$answer_hashes[$index]->{answers}={};
+	$answer_hashes[$index]->{parsed_successfully}=1;
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'ofv'}=-638.56648451328499;
+	$answer_hashes[$index]->{answers}->{1}->{0}->{'ofv'}=-453.07423710486364;
+	$answer_hashes[$index]->{answers}->{2}->{0}->{'ofv'}=-453.07423710486364;
+	$answer_hashes[$index]->{answers}->{3}->{0}->{'ofv'}=56.563160097905914;
+	$answer_hashes[$index]->{answers}->{4}->{0}->{'ofv'}=-716.67726292164400;
+	$answer_hashes[$index]->{answers}->{5}->{0}->{'ofv'}=-720.38664100574454;
+	$answer_hashes[$index]->{answers}->{6}->{0}->{'ofv'}=-715.92955828277456;
+	$answer_hashes[$index]->{answers}->{7}->{0}->{'ofv'}=-723.72760573090875;
+
+	$index++;
+	$answer_hashes[$index]={};
+	$answer_hashes[$index]->{file}='multPROB/multEST/withSIM/nonclassical_sim_eval_nm730.lst';
+	$answer_hashes[$index]->{answers}={};
+	$answer_hashes[$index]->{parsed_successfully}=1;
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'ofv'}=-638.56654023257147;
+	$answer_hashes[$index]->{answers}->{1}->{0}->{'ofv'}=-607.20740038851068;
+	$answer_hashes[$index]->{answers}->{2}->{0}->{'ofv'}=-607.20740038851068;
+	$answer_hashes[$index]->{answers}->{3}->{0}->{'ofv'}=-188.42534618881257;
+	$answer_hashes[$index]->{answers}->{4}->{0}->{'ofv'}=-717.59956624080212;
+	$answer_hashes[$index]->{answers}->{5}->{0}->{'ofv'}=-716.31781262934385;
+	$answer_hashes[$index]->{answers}->{6}->{0}->{'ofv'}=-719.33153532088102;
+	$answer_hashes[$index]->{answers}->{7}->{0}->{'ofv'}=-719.89250381570514;
+
+	$index++;
+	$answer_hashes[$index]={};
+	$answer_hashes[$index]->{file}='multPROB/multEST/noSIM/nonclassical_eval_nm710.lst';
+	$answer_hashes[$index]->{answers}={};
+	$answer_hashes[$index]->{parsed_successfully}=1;
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'ofv'}=-1110.1422629308533;
+	$answer_hashes[$index]->{answers}->{1}->{0}->{'ofv'}=-560.93430836909511;
+	$answer_hashes[$index]->{answers}->{2}->{0}->{'ofv'}=-560.93689841679998;
+	$answer_hashes[$index]->{answers}->{3}->{0}->{'ofv'}=-566.63780256780785;
+	$answer_hashes[$index]->{answers}->{4}->{0}->{'ofv'}=-567.64906948332782;
+	$answer_hashes[$index]->{answers}->{5}->{0}->{'ofv'}=-567.16451631686448;
+	$answer_hashes[$index]->{answers}->{6}->{0}->{'ofv'}=-560.21345143525684;
+	$answer_hashes[$index]->{answers}->{7}->{0}->{'ofv'}=-565.78309724240592;
+
+	$index++;
+	$answer_hashes[$index]={};
+	$answer_hashes[$index]->{file}='multPROB/multEST/noSIM/nonclassical_eval_nm712.lst';
+	$answer_hashes[$index]->{answers}={};
+	$answer_hashes[$index]->{parsed_successfully}=1;
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'ofv'}=-1117.9654652788195;
+	$answer_hashes[$index]->{answers}->{1}->{0}->{'ofv'}=-560.93430836909511;
+	$answer_hashes[$index]->{answers}->{2}->{0}->{'ofv'}=-560.93689841679998;
+	$answer_hashes[$index]->{answers}->{3}->{0}->{'ofv'}=-566.63780256780785;
+	$answer_hashes[$index]->{answers}->{4}->{0}->{'ofv'}=-567.64906948332782;
+	$answer_hashes[$index]->{answers}->{5}->{0}->{'ofv'}=-567.16451631686448;
+	$answer_hashes[$index]->{answers}->{6}->{0}->{'ofv'}=-560.21345143525684;
+	$answer_hashes[$index]->{answers}->{7}->{0}->{'ofv'}=-565.78309724240592;
+
+	$index++;
+	$answer_hashes[$index]={};
+	$answer_hashes[$index]->{file}='multPROB/multEST/noSIM/nonclassical_eval_nm720.lst';
+	$answer_hashes[$index]->{answers}={};
+	$answer_hashes[$index]->{parsed_successfully}=1;
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'ofv'}=-1113.5980555739311;
+	$answer_hashes[$index]->{answers}->{1}->{0}->{'ofv'}=-406.46345447792271;
+	$answer_hashes[$index]->{answers}->{2}->{0}->{'ofv'}=-406.46345447630506;
+	$answer_hashes[$index]->{answers}->{3}->{0}->{'ofv'}=22.933741995634865;
+	$answer_hashes[$index]->{answers}->{4}->{0}->{'ofv'}=-561.17686549896473;
+	$answer_hashes[$index]->{answers}->{5}->{0}->{'ofv'}=-564.10380486877568;
+	$answer_hashes[$index]->{answers}->{6}->{0}->{'ofv'}=-565.38782488650645;
+	$answer_hashes[$index]->{answers}->{7}->{0}->{'ofv'}=-567.83910930412594;
+
+	$index++;
+	$answer_hashes[$index]={};
+	$answer_hashes[$index]->{file}='multPROB/multEST/noSIM/nonclassical_eval_nm730.lst';
+	$answer_hashes[$index]->{answers}={};
+	$answer_hashes[$index]->{parsed_successfully}=1;
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'ofv'}=-1118.9753506732384;
+	$answer_hashes[$index]->{answers}->{1}->{0}->{'ofv'}=-135.44471964025075;
+	$answer_hashes[$index]->{answers}->{2}->{0}->{'ofv'}=-135.44471964025075;
+	$answer_hashes[$index]->{answers}->{3}->{0}->{'ofv'}=371.96334900769040;
+	$answer_hashes[$index]->{answers}->{4}->{0}->{'ofv'}=-567.50634389076151;
+	$answer_hashes[$index]->{answers}->{5}->{0}->{'ofv'}=-564.75860368263113;
+	$answer_hashes[$index]->{answers}->{6}->{0}->{'ofv'}=-567.50417279554244;
+	$answer_hashes[$index]->{answers}->{7}->{0}->{'ofv'}=-566.67728862856040;
+
+	$index++;
+	$answer_hashes[$index]={};
+	$answer_hashes[$index]->{file}='multPROB/multEST/noSIM/nonclassicalest_nm710.lst';
+	$answer_hashes[$index]->{answers}={};
+	$answer_hashes[$index]->{parsed_successfully}=1;
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'ofv'}=-552.018;
+	$answer_hashes[$index]->{answers}->{1}->{0}->{'ofv'}=-555.083;
+	$answer_hashes[$index]->{answers}->{2}->{0}->{'ofv'}=-1132.929;
+	$answer_hashes[$index]->{answers}->{3}->{0}->{'ofv'}=-560.936;
+	$answer_hashes[$index]->{answers}->{4}->{0}->{'ofv'}=-579.498;
+	$answer_hashes[$index]->{answers}->{5}->{0}->{'ofv'}=-579.199;
+	$answer_hashes[$index]->{answers}->{6}->{0}->{'ofv'}=-526.052;
+	$answer_hashes[$index]->{answers}->{7}->{0}->{'ofv'}=-557.918;
+
+	$index++;
+	$answer_hashes[$index]={};
+	$answer_hashes[$index]->{file}='multPROB/multEST/noSIM/nonclassicalest_nm712.lst';
+	$answer_hashes[$index]->{answers}={};
+	$answer_hashes[$index]->{parsed_successfully}=1;
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'ofv'}=-552.01757029855833;
+	$answer_hashes[$index]->{answers}->{1}->{0}->{'ofv'}=-555.08258287325782;
+	$answer_hashes[$index]->{answers}->{2}->{0}->{'ofv'}=-1117.8375549651769;
+	$answer_hashes[$index]->{answers}->{3}->{0}->{'ofv'}=-560.93821504303935;
+	$answer_hashes[$index]->{answers}->{4}->{0}->{'ofv'}=-579.49823008889052;
+	$answer_hashes[$index]->{answers}->{5}->{0}->{'ofv'}=-579.19854741558197;
+	$answer_hashes[$index]->{answers}->{6}->{0}->{'ofv'}=-1203.0123130048419;
+	$answer_hashes[$index]->{answers}->{7}->{0}->{'ofv'}=-557.91799108431724;
+
+	$index++;
+	$answer_hashes[$index]={};
+	$answer_hashes[$index]->{file}='multPROB/multEST/noSIM/nonclassicalest_nm720.lst';
+	$answer_hashes[$index]->{answers}={};
+	$answer_hashes[$index]->{parsed_successfully}=1;
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'ofv'}=-552.01757018300952;
+	$answer_hashes[$index]->{answers}->{1}->{0}->{'ofv'}=-555.08291599014217;
+	$answer_hashes[$index]->{answers}->{2}->{0}->{'ofv'}=-1109.3335551635189;
+	$answer_hashes[$index]->{answers}->{3}->{0}->{'ofv'}=-406.46345448793454;
+	$answer_hashes[$index]->{answers}->{4}->{0}->{'ofv'}=-581.68184159657778;
+	$answer_hashes[$index]->{answers}->{5}->{0}->{'ofv'}=-294.19239329925557;
+	$answer_hashes[$index]->{answers}->{6}->{0}->{'ofv'}=-1193.7469473492595;
+	$answer_hashes[$index]->{answers}->{7}->{0}->{'ofv'}=-560.81167667230250;
+
+	$index++;
+	$answer_hashes[$index]={};
+	$answer_hashes[$index]->{file}='multPROB/multEST/noSIM/nonclassicalest_nm730.lst';
+	$answer_hashes[$index]->{answers}={};
+	$answer_hashes[$index]->{parsed_successfully}=1;
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'ofv'}=-552.01757592554793;
+	$answer_hashes[$index]->{answers}->{1}->{0}->{'ofv'}=-555.08260427112884;
+	$answer_hashes[$index]->{answers}->{2}->{0}->{'ofv'}=-1134.7257450445243;
+	$answer_hashes[$index]->{answers}->{3}->{0}->{'ofv'}=-135.44471964025075;
+	$answer_hashes[$index]->{answers}->{4}->{0}->{'ofv'}=-579.30483233737800;
+	$answer_hashes[$index]->{answers}->{5}->{0}->{'ofv'}=-574.73365675423122;
+	$answer_hashes[$index]->{answers}->{6}->{0}->{'ofv'}=-1206.0086659764536;
+	$answer_hashes[$index]->{answers}->{7}->{0}->{'ofv'}=-561.03865669614436;
+
+
+
 	return \@answer_hashes;
 }
 
