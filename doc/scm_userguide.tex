@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{SCM user guide}{2015-03-31}
+\guidetitle{SCM user guide}{2015-08-07}
 
 \begin{document}
 
@@ -203,6 +203,9 @@ Average covariate value for this individual  AVCOV(ind) will be
 (Ga/Wa + Gb/Wb + Gc/Wc + Gd/Wd)
 
 The median/mean for this covariate with respect to the parameter which ETA(1) is on is the median/mean of AVCOV over all individuals.
+For non-influential covariates all partial derivatives (Ga etc) will be zero, and then
+the median/mean will be also be 0. In this case scm will stop with an error message "computed median 0 of time-varying...",
+and the user will have to restart the scm without that particular parameter-covariate relation.
 
 The derivatives needed for computing the new medians and means will be taken from an estimation of the input model without any included relations, even if included\_relations is defined in the config file. This is because the medians are needed to add the included relations to the model.\\
 
