@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{SIR user guide}{2015-08-05}
+\guidetitle{SIR user guide}{2015-08-07}
 \usepackage{amsmath}
 
 \begin{document}
@@ -61,8 +61,8 @@ Only the resampled vectors will be used to compute the uncertainty (confidence i
 The list length must be equal to list 'samples'.
 \nextopt
 \optdefault{rawres\_input}{filename}
-If rawres\_input is given, in the first iteration sir will take 'resamples item 1' sets of parameter
-vectors from this file, starting on line offset\_rawres+1, instead of
+If rawres\_input is given, in the first iteration sir will read all parameter
+vectors from this file, starting on line offset\_rawres+1 and skipping any that does not fulfill the filter rules, instead of
 running a full first iteration with sampling and resampling.
 This option is not allowed together with covmat\_input. 
 

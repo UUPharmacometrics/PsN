@@ -404,6 +404,9 @@ sub modelfit_setup
 																			filter => $self->in_filter,
 																			offset => $self->offset_rawres,
 																			model => $model);
+			if (scalar(@{$resampled_params_arr}) < $self->resamples->[0]){
+				croak("Need ".$self->resamples->[0]." parameter vectors from raw results file according to option -resamples, but found only ".scalar(@{$resampled_params_arr}));
+			}
 		}
 
 		if ($iteration < $self->max_iteration()){
@@ -613,6 +616,10 @@ sub empirical_statistics{
 	my $dim = scalar(@{$labels_hash->{'labels'}});
 	croak("empty set of labels to empirical_statistics") unless ($dim >0);
 
+	if ($get_lambda_delta and  $len < (2*$dim)){
+		ui->print(category => 'sir',message=> "\nWarning: Number of vectors is very small compared to number of estimated parameters.\n".
+				  "It is VERY likely that there will be numerical errors\n");
+	}
 	my $count_resamples=1;
 	$count_resamples = 0 unless (defined $sampled_params_arr->[0]->{'resamples'}); #assume all included
 
