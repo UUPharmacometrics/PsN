@@ -83,6 +83,11 @@ is($datarec->format_filename(write_directory=>$tempdir.'other space',
 is($datarec->format_filename(write_directory=>$tempdir,
 							 relative_data_path=>1),'"subdir space'.$dirsep.'file.csv"','format_filname relative down');
 
+$datarec = model::problem::data->new(record_arr => ['$DATA "file.csv" '], model_directory => $tempdir);
+is($datarec->format_filename(write_directory=>$tempdir.'subdir',
+							 relative_data_path=>1),'..'.$dirsep.'file.csv','format_filname '.$datarec->format_filename(write_directory=>$tempdir.'subdir',
+																														relative_data_path=>1));
+
 
 $datarec = model::problem::data->new(record_arr => ["\$DATA '".$tempdir."subdir space".$dirsep."file.csv' "]);
 ($dir,$file)=OSspecific::absolute_path($tempdir.'subdir space','file');

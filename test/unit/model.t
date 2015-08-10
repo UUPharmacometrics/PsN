@@ -246,4 +246,18 @@ is ($model->msfo_to_msfi_mismatch,2,"msfo_to_msfi_mismatch true second prob");
 lives_ok { my $model = model->new(filename => "$modeldir/model/pheno_multiple_sizes.mod") } "multiple sizes should not crash";
 dies_ok { my $model = model->new(filename => "$modeldir/model/pheno_multiple_sizes_not_in_beginning.mod") } "one sizes not in beginning";
 
+
+$model = model->new(filename => "$modeldir/pheno_flip_comments.mod");
+
+my $flipped = model::flip_comments(from_model => $model,
+								   new_file_name => "$modeldir/model/flip.mod",
+								   write => 0);
+
+is_deeply($model->datafiles(absolute_path=>1),$flipped->datafiles(absolute_path=>1),"same datafile abspath after flip_comments");
+
+my ($dir,$file)=OSspecific::absolute_path($model->directory.'/model','file'); 
+my ($dir2,$file2)=OSspecific::absolute_path($flipped->directory,'file'); 
+is($dir,$dir2,'flip_comments output model in subdir');
+
+
 done_testing();
