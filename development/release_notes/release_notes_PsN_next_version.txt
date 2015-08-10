@@ -116,8 +116,9 @@ Changes and bug fixes from PsN 4.4.0 to n.n.n
 
 - Bug fix: Do not warn that $INPUT uses synonym for DV when -dv is set on command-line.
 
-- Bug fix: Option combination -bin_by_count=1 -bin_array=... 
+- Bug fix: Handle option combination -bin_by_count=1 -bin_array=<> 
 
+- Bug fix: Handle option -flip_comments in combination with $DATA that has file name enclosed by quotes.
 
    ___scm___
 
@@ -125,6 +126,8 @@ Changes and bug fixes from PsN 4.4.0 to n.n.n
 
 - Bug fix: In cases when data filtration step is run, handle $INPUT with items of the form NAME=DROP or NAME=SKIP,
   in addition to just DROP or SKIP without NAME.
+
+- Some clarifications in the documentation regarding -time_varying.
 
    ___boot_scm___
 
@@ -161,12 +164,14 @@ Changes and bug fixes from PsN 4.4.0 to n.n.n
 
    ___sir___
 	 
-- sir will now print covmatrix in box-cox space for each iteration
+- Print covmatrix in box-cox space for each iteration
 
 - Major redesign of algorithm: run multiple iterations where resampled parameters 
   from one iteration is used to generate proposal density for the next. 
   The resampled parameters will be Box-Cox transformed to normality so that a 
   built-in Perl function for sampling from a multivariate normal can be used in the next iteration.
+
+- Bug fix: Detection of NaN that string evaluate to 0 (on Windows).
 
    ___precond___
 	 
@@ -177,7 +182,7 @@ Changes and bug fixes from PsN 4.4.0 to n.n.n
 
    ___runrecord___
 
-Bug fix: Correction in documentation so that tags for interindividual and interoccasion variability 
+- Bug fix: Correction in documentation so that tags for interindividual and interoccasion variability 
 		 in documentation match what is expected in the code
 
 
