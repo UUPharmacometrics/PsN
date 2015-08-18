@@ -32,8 +32,40 @@ sub set_1_fix
 	}
 	$self->fix(1);
 
+}
+
+sub unfix
+{
+    my $self = shift;
+	foreach my $opt (@{$self->options}){
+		$opt->fix(0);
+	}
+	$self->fix(0);
 
 }
+
+
+sub set_vector
+{
+    my $self = shift;
+	my %parm = validated_hash(\@_,
+							  vector => { isa => 'ArrayRef', optional => 0 },
+		);
+
+	my $vector = $parm{'vector'};
+	my $ok =1;
+
+	croak("cannot do set_vector on init_record that is SAME") if ($self->same);
+	croak("wrong length of input vector to set_vector") unless (scalar(@{$vector})==scalar(@{$self->options})) ;
+
+	for (my $i=0; $i<scalar(@{$self->options}); $i++){
+		my ($success,$dirt1,$dirt2) = $self->options->[$i]->check_and_set_init(new_value =>$vector->[$i]);
+		$ok = $ok*$success; #will be 0 if any success 0
+	}
+	return $ok;
+}
+
+
 sub get_vector
 {
     my $self = shift;

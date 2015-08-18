@@ -415,6 +415,36 @@ sub cholesky_transpose
 	return 0;
 }
 
+sub record_index_to_letter
+{
+    my %parm = validated_hash(\@_,
+							  index => { isa => 'Int', optional => 1 },
+							  letter => { isa => 'Str', optional => 1 },
+	);
+	my $index = $parm{'index'};
+	my $letter = $parm{'letter'};
+	unless ( ((defined $index) or (defined $letter)) and (not ((defined $index) and (defined $letter)) )){
+		croak("must input letter XOR index in record_index_to_letter");
+	}
+
+	my @alphabet=('A','B','C','D','E','F','G','H','I','J','K','L','M',
+				  'N','O','P','Q','R','S','T','U','V','W','X','Y','Z',
+				  'AA','AB','AC','AD','AE','AF','AG','AH','AI','AJ','AK','AL','AM',
+				  'AN','AO','AP','AQ','AR','AS','AT','AU','AV','AW','AX','AY','AZ');
+
+	my %inverse_alphabet;
+	for (my $index=0; $index < scalar(@alphabet); $index++){
+		$inverse_alphabet{$alphabet[$index]} = $index;
+	}
+	if (defined $index){
+		croak("too high record index  ") if ($index > $#alphabet);
+		return $alphabet[$index];
+	}else{
+		croak("undef letter $letter") unless (defined $inverse_alphabet{$letter});
+		return $inverse_alphabet{$letter};
+	}
+
+}
 
 sub string_cholesky_block
 {
@@ -442,12 +472,7 @@ sub string_cholesky_block
 	$FIX = ' FIX' if $fix;
 	my $warnings = 0;
 	
-	my @alphabet=('A','B','C','D','E','F','G','H','I','J','K','L','M',
-				  'N','O','P','Q','R','S','T','U','V','W','X','Y','Z',
-				  'AA','AB','AC','AD','AE','AF','AG','AH','AI','AJ','AK','AL','AM',
-				  'AN','AO','AP','AQ','AR','AS','AT','AU','AV','AW','AX','AY','AZ');
-	croak("too high record index to string cholesky ") if ($record_index > $#alphabet);
-	my $letter=$alphabet[$record_index];
+	my $letter=record_index_to_letter(index=>$record_index);
 
 	my $dimension = scalar(@{$value_matrix});
 	my @indices = ('1','2','3','4','5','6','7','8','9');
@@ -559,6 +584,7 @@ sub string_cholesky_block
 #					$stringmatrix->[0][$i]='('.$stringmatrix->[0][$i].')/('.$stringmatrix->[0][0].')';
 #				}
 				unless ($testing){
+					push(@code,';Comments below show CH variables for 1st column, too simple to need new variables');
 					for (my $i=$j; $i<$dimension; $i++){
 						my $newvar=$par.'CH'.$sepd.$letter.$indices[$i].$indices[$j];
 						push(@code,';'.$newvar.'='.$stringmatrix->[$j][$i].$term);
@@ -611,12 +637,7 @@ sub string_cholesky_diagonal
 	my $testing = $parm{'testing'};
 	my $reparameterize_fix = $parm{'reparameterize_fix'};
 	
-	my @alphabet=('A','B','C','D','E','F','G','H','I','J','K','L','M',
-				  'N','O','P','Q','R','S','T','U','V','W','X','Y','Z',
-				  'AA','AB','AC','AD','AE','AF','AG','AH','AI','AJ','AK','AL','AM',
-				  'AN','AO','AP','AQ','AR','AS','AT','AU','AV','AW','AX','AY','AZ');
-	croak("too high record index to string cholesky diagonal") if ($record_index > $#alphabet);
-	my $letter=$alphabet[$record_index];
+	my $letter=record_index_to_letter(index=>$record_index);
 
 
 	my @FIX=();
@@ -671,39 +692,107 @@ sub string_cholesky_diagonal
 
 }
 
+sub get_inverse_parameter_list
+{
+	#cut out code between start tag and end tag
+    my %parm = validated_hash(\@_,
+							  code => { isa => 'ArrayRef', optional => 0 },
+		);
+	my $code = $parm{'code'};
+
+
+	my %etaparams;
+	my %epsparams;
+	my %thetaparams;
+	my %record_indices;
+	foreach my $line (@{$code}){
+		if ($line =~ /^\s*ETA_(\d+)\s*=/){
+			$etaparams{$1}=1;
+		}elsif ($line =~ /^\s*EPS_(\d+)\s*=/){
+			$epsparams{$1}=1;
+		}elsif ($line =~ /^\s*(SD|COR)_([A-Z]+)\d+\s*=THETA\((\d+)\)/){
+			$thetaparams{$3}=1;
+			$record_indices{record_index_to_letter(letter => $2)}=1;
+		}
+
+	}
+	my @etalist = (sort {$a <=> $b} keys %etaparams);
+	my @epslist = (sort {$a <=> $b} keys %epsparams);
+	my @thetalist = (sort {$a <=> $b} keys %thetaparams);
+	my @recordlist = (sort {$a <=> $b} keys %record_indices);
+
+	return {'ETA' => \@etalist, 'EPS' => \@epslist, 'THETA' => \@thetalist, 'RECORD' => \@recordlist};
+
+}
 sub substitute_etas
 {
     my %parm = validated_hash(\@_,
 							  code => { isa => 'ArrayRef', optional => 0 },
 							  eta_list => { isa => 'ArrayRef', optional => 0 },
 							  sigma => { isa => 'Bool', default => 0 },
+							  inverse => { isa => 'Bool', default => 0 },
 		);
 	my $code = $parm{'code'};
 	my $eta_list = $parm{'eta_list'};
     my $sigma = $parm{'sigma'};
+    my $inverse = $parm{'inverse'};
 
 	foreach my $num (@{$eta_list}){
 		if ($sigma){
-			foreach (@{$code}){
-				if (/\bEPS_$num\b/ ){
-					croak("found parameter named EPS_$num in model to cholesky reparameterize, ".
-						  "this parameter name is reserved and must be replaced before ".
-						  "reparameterization");
+			#error check
+			if ($inverse){
+				foreach (@{$code}){
+					if (/\bEPS\($num\)/ ){
+						croak("found parameter named EPS($num) in model to inverse cholesky reparameterize, ".
+							  "something must have gone wrong ");
+					}
+				}
+			}else{
+				foreach (@{$code}){
+					if (/\bEPS_$num\b/ ){
+						croak("found parameter named EPS_$num in model to cholesky reparameterize, ".
+							  "this parameter name is reserved and must be replaced before ".
+							  "reparameterization");
+					}
 				}
 			}
-			foreach (@{$code}){
-				s/\bEPS\($num\)/EPS_$num/g;
+			#substitute
+			if ($inverse){
+				foreach (@{$code}){
+					s/\bEPS_$num\b/EPS($num)/g;
+				}
+			}else{
+				foreach (@{$code}){
+					s/\bEPS\($num\)/EPS_$num/g;
+				}
 			}
 		}else{
-			foreach (@{$code}){
-				if (/\bETA_$num\b/ ){
-					croak("found parameter named ETA_$num in model to cholesky reparameterize, ".
-						  "this parameter name is reserved and must be replaced before ".
-						  "reparameterization");
+			#error check
+			if ($inverse){
+				foreach (@{$code}){
+					if (/\bETA\($num\)/ ){
+						croak("found parameter named ETA($num) in model to inverse cholesky reparameterize, ".
+							  "something must have gone wrong ");
+					}
+				}
+			}else{
+				foreach (@{$code}){
+					if (/\bETA_$num\b/ ){
+						croak("found parameter named ETA_$num in model to cholesky reparameterize, ".
+							  "this parameter name is reserved and must be replaced before ".
+							  "reparameterization");
+					}
 				}
 			}
-			foreach (@{$code}){
-				s/\bETA\($num\)/ETA_$num/g;
+			#substitute
+			if ($inverse){
+				foreach (@{$code}){
+					s/\bETA_$num\b/ETA($num)/g;
+				}
+			}else{
+				foreach (@{$code}){
+					s/\bETA\($num\)/ETA_$num/g;
+				}
 			}
 		}
 	}

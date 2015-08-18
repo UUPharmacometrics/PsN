@@ -2,7 +2,7 @@
 \setlength{\evensidemargin}{0pt}
 \setlength{\oddsidemargin}{0pt}
 
-\guidetitle{update\_inits user guide}{2015-03-11}
+\guidetitle{update\_inits user guide}{2015-08-18}
 
 \begin{document}
 
@@ -11,19 +11,16 @@
 
 \section{Overview}
 The update\_inits script is used to update inital estimates in a model file with final
-estimates from NONMEM output.
+estimates from NONMEM output. It can also be used to, for example, update file names in \$TABLE, reparameterize
+the \$OMEGAs or to ``flip comments''. The later operations can be performed in combination with 
+or without updating initial estimates.
 
-The final estimates will either be taken from a lst-file given explicitly as the second 
+If updating initial estimates, the final estimates will either be taken from a lst-file given explicitly as the second 
 command-line argument after the model file name, from another model file given with option -from\_model, 
 or from the lst-file with the same file stem as the model file.
 For example, if no lst-file is given as argument and the model file is called run1.mod then the program will try to read output from
 run1.lst. If run1.ext also exists then final estimates with higher precision will be read from there, 
-but run1.lst must still be present.
-
-In addition to updating initial estimates the program will try to rename table files and
-msfo/msfi files that follow certain naming rules. It is also possible to for example
-add/update runrecord tags,
-randomly perturb initial estimates and add comments to the new model file.
+but only if run1.lst is also present.
 
 If there are multiple \$PROBLEM then update\_inits will try to update \$PROBLEM by \$PROBLEM.
 
@@ -36,11 +33,11 @@ The command \verb|update| can be used as a synonym to \verb|update_inits|.
 update_inits run1.mod run1abc.lst -output_model=run2.mod
 \end{verbatim}
 Note: Option -output\_model can be abbreviated to -out.
-\item Modify file run33.mod and copy original to run33.mod.org. This requires that run33.lst exists.
+\item Modify file run33.mod and copy original to run33.mod.org. This assumes that run33.lst exists.
 \begin{verbatim}
 update_inits run33.mod
 \end{verbatim}
-\item Update a copy of run22.mod and call the new file run23.mod. This requires that run22.lst exists.
+\item Update a copy of run22.mod and call the new file run23.mod. This assumes that run22.lst exists.
 \begin{verbatim}
 update_inits run22.mod -out=run23.mod
 \end{verbatim}
@@ -101,6 +98,64 @@ Examples if the output number is 9:
 \item \$MSFI run8.msf to \$MSFI run9.msf
 \end{itemize}
 
+\section{Cholesky reparameterization}
+The script can perform an automatic Cholesky reparameterization of \$OMEGA and/or \$SIGMA records.
+New THETAs, representing the standard deviations and correlations of ETAs and EPSs, will be
+defined, and the original ETAs and EPSs will be replaced with linear combinations of new, uncorrelated
+ETAs/EPSs with variance 1.
+
+The reparameterization will be performed after updating of initial estimates, if any, but
+reparameterization can be performed without updating estimates from e.g. a lst-file.
+
+See also related option -correlation\_cutoff, which can be used to set correlations smaller than
+a certain threshold to 0 FIX.
+
+Correct handling of priors encoded using \$OMEGA/\$SIGMA is not implemented, priors must 
+be encoded using special records \$OMEGAPD etc.
+
+The script can also perform the inverse of the reparameterization on models that have previously been 
+reparameterized using update\_inits. This however requires that
+the auto-generated \$PK/\$PRED code and the \$THETA labels in the reparameterized model are unchanged,
+otherwise the inversion will fail.
+
+The option is called -cholesky, and it takes either a so-called record category input, a record list input,
+or the inverse argument.
+ 
+\subsubsection*{Examples using record list input}
+Record list input cannot be combined with category input.\\
+\begin{tabular}{ll}
+	-cholesky=o2,o5,s1 &               Reparameterize \$OMEGA record number 2 and 5,\\
+     &  \$SIGMA record number 1\\
+\end{tabular}
+
+\subsubsection*{Examples using category input}
+\begin{tabular}{ll}
+	-cholesky=all &                Reparameterize both \$OMEGA and \$SIGMA,\\
+     & both BLOCK and DIAGONAL, both FIX and\\
+     &  estimated\\
+	-cholesky=omega &              Reparameterize only \$OMEGA, only BLOCK,\\
+     & only estimated\\
+	-cholesky=omega,sigma &              Reparameterize both \$OMEGA and \$SIGMA,\\
+     &  only BLOCK, only estimated\\
+	-cholesky=omega,fix &          Reparameterize only \$OMEGA, only BLOCK,\\
+      &  both FIX and estimated\\
+	-cholesky=omega,diagonal &     Reparameterize only \$OMEGA, both BLOCK\\
+       &  and diagonal, only estimated\\
+	-cholesky=omega,diagonal,fix & Reparameterize only \$OMEGA, both BLOCK\\
+  &  and diagonal, both FIX and estimated\\
+	-cholesky=sigma,diagonal &     Reparameterize only \$SIGMA, both BLOCK\\
+      &  and diagonal, only estimated\\
+	-cholesky=diagonal  &          Reparameterize only \$OMEGA (omitting\\
+      &  parameter name implies omega), both BLOCK\\
+       &  and diagonal, only estimated \\
+\end{tabular}
+
+\subsubsection*{Inversion of the reparameterization}
+\begin{tabular}{ll}
+    -cholesky=inverse &             Inverse reparameterization of a model that has previously\\
+     &  been reparameterized with update\_inits\\
+\end{tabular}
+
 \section{Input and options}
 
 \subsection{Required input}
@@ -130,6 +185,20 @@ of new estimates (lst-file or other model file).
 The name of a model file to copy initial estimates from. 
 Cannot be used together with a named lst-file on the command-line.
 \nextopt
+\optdefault{cholesky}{<categories>|<record list>|inverse}
+Default not set.
+If set, update\_inits will use cholesky reparameterization to replace the requested
+\$SIGMA and \$OMEGA with FIXED identity matrices and a set of THETAs for estimation
+of standard deviations and (for blocks only) correlations, OR, if -cholesky=inverse is set,
+back-transformation of a previously reparameterized model will be performed. See details and
+examples in section Cholesky reparameterization.
+\nextopt
+\optdefault{correlation\_cutoff}{number}
+Default 0. Ignored unless option -cholesky is set. Value range 0-1.
+If, during cholesky reparameterization, the absolute value of a correlation 
+in a block \$OMEGA or \$SIGMA is lower than or equal to this cutoff, then set
+the \$THETA for estimation of this correlation to 0 FIX.
+\nextopt
 \optdefault{comment}{text}
 If the option is used, a new line with <comment> will be inserted 
 directly following the \$PROBLEM row.
@@ -154,9 +223,8 @@ NONMEM sometimes prints OMEGA or SIGMA matrices
 in the lst-file which are not positive definite, and the 
 ensure\_posdef option offers a way to fix this.
 If option is set then PsN will make a cholesky decomposition of
-each OMEGA and SIGMA block to check positive definiteness, and
-inflate the diagonal elements of the block with 5\% 
-if the cholesky fails.
+each OMEGA and SIGMA block to check positive definiteness, and,if the cholesky fails,
+inflate the diagonal elements of the block with 5\% before updating the model.
 \nextopt
 \optdefault{add\_prior}{df1,df2,...}
 Default not used. Add \$PRIOR NWPRI based on output object. Will automatically read
@@ -199,13 +267,13 @@ Default false. If set, update\_inits will set all THETAs that are not part of a 
 \optname{unfix\_thetas}
 Default false. If set, update\_inits will remove FIX, if set, from all THETAs that are not part of a prior.
 \nextopt
-
-%\optdefault{sigdig}{integer}
-%Default 15.
-%Only has effect with NONMEM7 and later and if set to a number <15. 
-%Print parameter
-%estimates with this many digits in the new model file.
-%\nextopt
+\optdefault{sigdig}{integer}
+Default not set.
+Only has effect with NONMEM7 and later and if set to a number <15. 
+Print parameter
+estimates with this many significant digits in the new model file,
+with either scientific or decimal notation depending on which is more compact.
+\nextopt
 \end{optionlist}
 
 \end{document}

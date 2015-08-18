@@ -32,15 +32,51 @@ cmp_ok($omega_mat->[1]->[0],'==',0, "get_matrix 1,0");
 
 #crash tests repara
 
-foreach my $input ('all','omega','sigma','omega,diagonal',
+foreach my $input ('omega','sigma','omega,diagonal',
 				   'diagonal','fix','omega,sigma,diagonal','fix,omega','diagonal,sigma',
 				   'o1,s1','o1','s1'){
 	$model = model->new(filename => "$modeldir/pheno.mod");
 	$model->problems->[0]->cholesky_reparameterize(what => $input);
 }
-								  
-
+$model = model->new(filename => "$modeldir/pheno.mod");
+$model->problems->[0]->cholesky_reparameterize(what => 'all');
+my $start_theta_record_index = $model->problems->[0]->find_start_theta_record_index(theta_number => 3);
+is($start_theta_record_index,2,'pheno start_theta_record_index'); 
+my ($corhash,$sdhash,$esthash) = $model->problems->[0]->get_SD_COR_values(start_theta_record_index => $start_theta_record_index,
+																 theta_record_count => 3);
+cmp_relative($sdhash->{'A'}->{1},sqrt(0.4),7,'SD A 1');
+cmp_relative($sdhash->{'A'}->{2},sqrt(0.25),7,'SD A 2');
+cmp_relative($sdhash->{'B'}->{1},sqrt(0.04),7,'SD B 1');
+is(($esthash->{'A'} == 1),1,'pheno any est');
+is(($esthash->{'B'} == 1),1,'pheno any est');
 #
+#$OMEGA  BLOCK(2) 
+#0.0750   
+#0.0467  0.0564  ; IIV (CL-V) 
+$model = model->new(filename => "$modeldir/mox1.mod");
+$model->problems->[0]->cholesky_reparameterize(what => 'o1');
+is($model->problems->[0]->record_count(record_name => 'theta'),7,'mox 1 theta count after cholesky repara 01');
+my $start_theta_record_index = $model->problems->[0]->find_start_theta_record_index(theta_number => 5);
+is($start_theta_record_index,4,'mox start_theta_record_index'); 
+my ($corhash,$sdhash,$esthash) = $model->problems->[0]->get_SD_COR_values(start_theta_record_index => $start_theta_record_index,
+																 theta_record_count => 3);
+cmp_relative($sdhash->{'A'}->{1},sqrt(0.0750),7,'mox SD A 1');
+cmp_relative($sdhash->{'A'}->{2},sqrt(0.0564),7,'mox SD A 2');
+cmp_relative($corhash->{'A'}->{'2,1'},0.0467/(sqrt(0.0564)*sqrt(0.075)),7,'mox COR A 2,1');
+is(($esthash->{'A'} == 1),1,'mox any est');
+
+my $hashref = model::problem::SD_COR_to_cov_vectors(cor_hash =>{'A' => {'2,1' => 1, '3,1'=>0.2, '3,2'=> 0.5}, 'C' => {'2,1'=> 0.5}},
+									sd_hash =>{'A' => {1=>5,2=>3,3=>2}, 'B' => {1=>3,2=>4}, 'C' => {1=>3,2=>2}, 'D' => {1=>2}  });
+
+is_deeply($hashref->{'A'},[25,15,9,2,3,4],'SD_COR_to_cov_vectors block 3');
+is_deeply($hashref->{'C'},[9,3,4],'SD_COR_to_cov_vectors block 2');
+is_deeply($hashref->{'B'},[9,16],'SD_COR_to_cov_vectors diagonal 2');
+is_deeply($hashref->{'D'},[4],'SD_COR_to_cov_vectors diagonal 1');
+
+$model->problems->[0]->remove_theta_records(start_index => $start_theta_record_index,
+											count => 3);
+is($model->problems->[0]->record_count(record_name => 'theta'),4,'mox 1 theta count after removed thetas index 4 count 3');
+
 $model = model->new(filename => "$modeldir/mox1.mod");
 $problem = $model->problems->[0];
 
@@ -51,6 +87,7 @@ cmp_ok(($problem->check_start_eta(start_eta => 5)),'==',4, "check start_eta 5");
 cmp_ok(($problem->check_start_eta(start_eta => 6)),'==',5, "check start_eta 6");
 cmp_ok(($problem->check_start_eta(start_eta => 7)),'==',6, "check start_eta 7");
 
+is($problem->find_start_theta_record_index(theta_number=> 4),3, 'find_start_theta_record_index');
 #
 $omega_mat = $problem->get_matrix(type => 'omega',
 								  start_row => 1);
@@ -236,5 +273,5 @@ ETA_11=ETA(6)*COR_C61*SD_C6+ETA(7)*CH_C62*SD_C6+ETA(8)*CH_C63*SD_C6+ETA(9)*CH_C6
 my $newc= model::problem::reformat_code(code => \@code,
 							  max_length => 50);
 
-print join("\n",@{$newc})."\n";
+#print join("\n",@{$newc})."\n";
 done_testing();

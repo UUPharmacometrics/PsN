@@ -54,6 +54,7 @@ my %optional_options = (
 	"nm_version:s" => undef,
 	"based_on:i" => undef,
 	"renumber:i" => undef,
+	"sigdig:i" => undef,
 	"fix_thetas" => undef,
  	"unfix_thetas" => undef,
 	);
@@ -155,14 +156,23 @@ $help_text{-correlation_cutoff} = <<'EOF';
 	the $THETA for estimation of this correlation to 0 FIX.
 EOF
 
+$help_text{-sigdig} = <<'EOF';
+-sigdig=number
+
+    Default not used. Only applicable for NONMEM7. If set, the initial estimates
+	of the updated model will be printed with this many significant digits, in
+	either decimal or scientific notation, whichever is more compact.
+EOF
+
 $help_text{-cholesky} = <<'EOF';
--cholesky=records
+-cholesky=records|inverse
 
 	Default not set
  	
 	If set, update_inits will use cholesky reparameterization to replace the requested
 	$SIGMA and $OMEGA with FIXED identity matrices and a set of THETAs for estimation
-	of standard deviations and (for blocks only) correlations.
+	of standard deviations and (for blocks only) correlations, OR, if -cholesky=inverse is set
+	back-transformation of a previously reparameterized model will be performed.
 
   Examples using category input:
 	-cholesky=all                 Reparameterize both $OMEGA and $SIGMA, both BLOCK and DIAGONAL, both FIX and estimated
@@ -505,32 +515,46 @@ if (defined $options{'from_model'}) {
 $model_copy -> filename( $outfile );
 
 if ( $options{'cholesky'} ){
-	ui->print(category => 'all',
-				  message => "Doing Cholesky reparameterization\n");
-	my $cutoff = 0;
-	if ($options{'correlation_cutoff'}){
-		if ($options{'correlation_cutoff'} < 0){
-			die "option -correlation_cutoff must not be less than 0\n";
-		}
-		if ($options{'correlation_cutoff'} > 1){
-			die "option -correlation_cutoff must not be larger than 1\n";
-		}
-		$cutoff = $options{'correlation_cutoff'};
-	}
-	my $warnings = 0;
-	foreach my $problem (@{$model_copy->problems}){
-		$warnings += $problem->cholesky_reparameterize(what => $options{'cholesky'},
-													   correlation_cutoff => $cutoff, #if lower then set 0 FIX
-													   correlation_limit => 0.9, #if higher then warn
-			);
-	}
-	$model_copy -> check_and_set_sizes(LTH => 1); #set LTH if too many thetas. TODO make dependent on nm_version
-	if ($warnings > 0){
-		ui->print(category => 'all',
-				  message => "\n"."Warning: Found $warning instance(s) of high correlations ".
-				  "during cholesky reparameterization\n");
-	}
 
+	if ($options{'cholesky'} eq 'inverse'){
+		ui->print(category => 'all',
+				  message => "Doing inverse Cholesky reparameterization\n");
+		my @errors=();
+		foreach my $problem (@{$model_copy->problems}){
+			push(@errors,@{$problem->inverse_cholesky_reparameterize()});
+		}
+		if (scalar(@errors)> 0){
+			ui->print(category => 'all',
+					  message => "The following errors occurred during inverse Cholesky reparameterization:\n".
+					  join("\n",@errors));
+		}
+	}else{
+		ui->print(category => 'all',
+				  message => "Doing Cholesky reparameterization\n");
+		my $cutoff = 0;
+		if ($options{'correlation_cutoff'}){
+			if ($options{'correlation_cutoff'} < 0){
+				die "option -correlation_cutoff must not be less than 0\n";
+			}
+			if ($options{'correlation_cutoff'} > 1){
+				die "option -correlation_cutoff must not be larger than 1\n";
+			}
+			$cutoff = $options{'correlation_cutoff'};
+		}
+		my $warnings = 0;
+		foreach my $problem (@{$model_copy->problems}){
+			$warnings += $problem->cholesky_reparameterize(what => $options{'cholesky'},
+														   correlation_cutoff => $cutoff, #if lower then set 0 FIX
+														   correlation_limit => 0.9, #if higher then warn
+				);
+		}
+		$model_copy -> check_and_set_sizes(LTH => 1); #set LTH if too many thetas. TODO make dependent on nm_version
+		if ($warnings > 0){
+			ui->print(category => 'all',
+					  message => "\n"."Warning: Found $warning instance(s) of high correlations ".
+					  "during cholesky reparameterization\n");
+		}
+	}
 }
 
 

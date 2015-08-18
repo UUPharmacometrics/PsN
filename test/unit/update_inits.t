@@ -187,9 +187,11 @@ chdir($tempdir);
 my @command_line = (
 	get_command("update_inits") . " pheno.mod -out=run1.mod",
 	get_command("update_inits") . " pheno.mod -out=run2.mod -comment=\"new comment\"",
-	get_command("update_inits") . " mox1.mod -out=run3.mod",
+	get_command("update_inits") . " mox1.mod -out=run3.mod -sigdig=3",
 	get_command("update") . " mox1.mod -out=run4.mod -add_tags",
-	get_command("update") . " pheno.mod -out=run5.mod -add_prior=1,1"
+	get_command("update") . " pheno.mod -out=run5.mod -add_prior=1,1",
+	get_command("update") . " run3.mod -out=run6.mod -cholesky=omega",
+	get_command("update") . " run6.mod -out=run7.mod -cholesky=inverse -sigdig=3",
 );
 foreach my $i (0..$#command_line) {
 	my $command= $command_line[$i];
@@ -198,6 +200,43 @@ foreach my $i (0..$#command_line) {
 	$rc = $rc >> 8;
 	ok ($rc == 0, "$command, should run ok");
 }
+
+#check that cholesky gave identity FIX blocks
+my $cholmodel = model->new(filename => "run6.mod",
+							ignore_missing_data => 1,
+							ignore_missing_files => 1);
+my $hash = $cholmodel-> get_hash_values_to_labels;
+
+is(eval($hash->[0]->{'omega'}->{'OMEGA(1,1)'}),eval(1),'om 1,1');
+is(eval($hash->[0]->{'omega'}->{'OMEGA(2,1)'}),eval(0),'om 2,1');
+is(eval($hash->[0]->{'omega'}->{'IIV KA'}),eval(1),'om 3,3');
+is(eval($hash->[0]->{'omega'}->{'IOV CL'}),eval(1),'om 4,4');
+is(eval($hash->[0]->{'omega'}->{'IOV KA'}),eval(1),'om 6,6');
+
+#check that start was not simple identity matrices
+my $startmodel = model->new(filename => "run3.mod",
+							ignore_missing_data => 1,
+							ignore_missing_files => 1);
+$hash = $startmodel-> get_hash_values_to_labels;
+cmp_relative(eval($hash->[0]->{'omega'}->{'OMEGA(1,1)'}),0.416,3,'om start 1,1');
+cmp_relative(eval($hash->[0]->{'omega'}->{'OMEGA(2,1)'}),0.390,3,'om start 2,1');
+cmp_relative(eval($hash->[0]->{'omega'}->{'IIV KA'}),0.258,3,'om start 3,3');
+
+
+
+#check that cholesky was invertible
+my $endmodel = model->new(filename => "run7.mod",
+						  ignore_missing_data => 1,
+						  ignore_missing_files => 1);
+my $hashend = $endmodel-> get_hash_values_to_labels;
+
+is(eval($hash->[0]->{'omega'}->{'OMEGA(1,1)'}),eval($hashend->[0]->{'omega'}->{'OMEGA(1,1)'}),'inverse om 1,1');
+is(eval($hash->[0]->{'omega'}->{'OMEGA(2,1)'}),eval($hashend->[0]->{'omega'}->{'OMEGA(2,1)'}),'inverse om 2,1');
+is(eval($hash->[0]->{'omega'}->{'IIV KA'}),eval($hashend->[0]->{'omega'}->{'IIV KA'}),'inverse om 3,3');
+is(eval($hash->[0]->{'omega'}->{'IOV CL'}),eval($hashend->[0]->{'omega'}->{'IOV CL'}),'inverse om 4,4');
+is(eval($hash->[0]->{'omega'}->{'IOV KA'}),eval($hashend->[0]->{'omega'}->{'IOV KA'}),'inverse om 6,6');
+
+
 chdir('..');
 
 remove_test_dir($tempdir);

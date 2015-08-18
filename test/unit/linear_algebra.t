@@ -210,6 +210,7 @@ my ($COR_A43,$COR_A53,$COR_A54);
 my ($CH_A22,$CH_A32,$CH_A42,$CH_A52,$CH_A33,$CH_A43,$CH_A53,$CH_A44,$CH_A54,$CH_A55);
 
 
+
 eval(join(' ',@{$inits}));
 #print (join("\n",@{$code}))."\n";
 #exit;
@@ -254,18 +255,16 @@ my ($strings,$inits,$code,$warnings)=linear_algebra::string_cholesky_block(
 	testing=>0,
 	fix=>0);
 
-print join("\n",@{$code})."\n\n";
-
-
-#print join("\n",@{$inits})."\n";
-
-for(my $i=0;$i<scalar(@{$strings});$i++){
-	for (my $j=0; $j<=$i; $j++){
-		print $strings->[$i]->[$j]."\t";
+if (0){
+	print join("\n",@{$code})."\n\n";
+	print join("\n",@{$inits})."\n";
+	for(my $i=0;$i<scalar(@{$strings});$i++){
+		for (my $j=0; $j<=$i; $j++){
+			print $strings->[$i]->[$j]."\t";
+		}
+		print "\n";
 	}
-	print "\n";
 }
-
 my ($count,$code,$etalist)=linear_algebra::eta_cholesky_code(
 	stringmatrix=> $strings,
 	eta_count=> 5,
@@ -273,7 +272,54 @@ my ($count,$code,$etalist)=linear_algebra::eta_cholesky_code(
 
 is_deeply($etalist,[6,7,8,9,10,11],'eta_cholesky_code etalist 1');
 is($count,6,'eta_cholesky_code count');
-print join("\n",@{$code})."\n\n";
+my @anscode =(
+'ETA_6=ETA(6)*SD_C1',
+'ETA_7=ETA(6)*COR_C21*SD_C2+ETA(7)*CH_C22*SD_C2',
+'ETA_8=ETA(6)*COR_C31*SD_C3+ETA(7)*CH_C32*SD_C3+ETA(8)*CH_C33*SD_C3',
+'ETA_9=ETA(6)*COR_C41*SD_C4+ETA(7)*CH_C42*SD_C4+ETA(8)*CH_C43*SD_C4+ETA(9)*CH_C44*SD_C4',
+'ETA_10=ETA(6)*COR_C51*SD_C5+ETA(7)*CH_C52*SD_C5+ETA(8)*CH_C53*SD_C5+ETA(9)*CH_C54*SD_C5+ETA(10)*CH_C55*SD_C5',
+'ETA_11=ETA(6)*COR_C61*SD_C6+ETA(7)*CH_C62*SD_C6+ETA(8)*CH_C63*SD_C6+ETA(9)*CH_C64*SD_C6+ETA(10)*CH_C65*SD_C6+ETA(11)*CH_C66*SD_C6'
+	);
+is_deeply($code,\@anscode,'eta_cholesky code block');
+
+
+my ($SD_C1,$SD_C2,$SD_C3,$SD_C4,$SD_C5,$SD_C6);
+my ($COR_C21,$COR_C31,$COR_C41,$COR_C51,$COR_C61,$COR_C32,$COR_C42,$COR_C52,$COR_C62);
+my ($COR_C43,$COR_C53,$COR_C63,$COR_C54,$COR_C64,$COR_C65);
+my ($CH_C22,$CH_C32,$CH_C42,$CH_C52,$CH_C62,$CH_C33,$CH_C43,$CH_C53,$CH_C63,$CH_C44,$CH_C54,$CH_C64,$CH_C55,$CH_C65,$CH_C66);
+
+my ($strings,$inits,$code,$warnings)=linear_algebra::string_cholesky_block(
+	value_matrix=>$omega6,
+	record_index=>2,
+	theta_count=>1,
+	testing=>1,
+	fix=>0);
+eval(join(' ',@{$inits}));
+eval(join(' ',@{$code}));
+
+my @matrix=();
+for(my $i=0;$i<scalar(@{$strings});$i++){
+	push(@matrix,[ (0) x scalar(@{$strings})]);
+}
+for(my $i=0;$i<scalar(@{$strings});$i++){
+	for (my $j=0; $j<=$i; $j++){
+		my $value = eval($strings->[$j]->[$i]);
+		$matrix[$i]->[$j]=$value;
+	}
+}
+
+for(my $i=0;$i<scalar(@{$strings});$i++){
+	for (my $j=0; $j<=$i; $j++){
+		my $sum=0;
+		for (my $k=0;$k<scalar(@{$strings});$k++){
+			$sum = $sum+$matrix[$i]->[$k]*$matrix[$j]->[$k];
+		}
+		cmp_float($sum,$omega6->[$i]->[$j],"cholesky product element $i,$j is ".$omega6->[$i]->[$j]);
+	}
+#	print join(' ',@{$matrix[$i]})."\n";
+}
+
+
 
 my ($count,$code,$etalist)=linear_algebra::eta_cholesky_code(
 	stringmatrix=> ['SD_C1','SD_C2','SD_C3'],
@@ -299,11 +345,49 @@ $code = ['CL=THETA(2)*EXP(ETA(2))','V=THETA(3)*(1+ETA(3))*(1+ETA(5))'];
 linear_algebra::substitute_etas(code => $code,eta_list => [2,3,5]);
 is($code->[0],'CL=THETA(2)*EXP(ETA_2)','substitute etas 1');
 is($code->[1],'V=THETA(3)*(1+ETA_3)*(1+ETA_5)','substitute etas 2');
+linear_algebra::substitute_etas(code => $code,eta_list => [2,3,5], inverse => 1);
+is($code->[0],'CL=THETA(2)*EXP(ETA(2))','inverse substitute etas 1');
+is($code->[1],'V=THETA(3)*(1+ETA(3))*(1+ETA(5))','inverse substitute etas 2');
 
 $code = ['CL=THETA(2)*EXP(ETA(2))','V=THETA(3)*(1+ETA(3))*(1+ETA(5))'];
 linear_algebra::substitute_etas(code => $code,eta_list => [1,3]);
 is($code->[0],'CL=THETA(2)*EXP(ETA(2))','substitute etas 3');
 is($code->[1],'V=THETA(3)*(1+ETA_3)*(1+ETA(5))','substitute etas 4');
+linear_algebra::substitute_etas(code => $code,eta_list => [1,3], inverse => 1);
+is($code->[0],'CL=THETA(2)*EXP(ETA(2))','inverse substitute etas 3');
+is($code->[1],'V=THETA(3)*(1+ETA(3))*(1+ETA(5))','inverse substitute etas 4');
+
+$code = ['CL=THETA(2)*EXP(EPS(2))','V=THETA(3)*(1+EPS(3))*(1+EPS(5))'];
+linear_algebra::substitute_etas(code => $code,eta_list => [1,2,3], sigma => 1);
+is($code->[0],'CL=THETA(2)*EXP(EPS_2)','substitute etas 5');
+is($code->[1],'V=THETA(3)*(1+EPS_3)*(1+EPS(5))','substitute etas 6');
+linear_algebra::substitute_etas(code => $code,eta_list => [1,2,3], sigma => 1, inverse => 1);
+is($code->[0],'CL=THETA(2)*EXP(EPS(2))','inverse substitute etas 5');
+is($code->[1],'V=THETA(3)*(1+EPS(3))*(1+EPS(5))','inverse substitute etas 6');
+
+my $hashref = linear_algebra::get_inverse_parameter_list(code => [
+													   'SD_A1=THETA(3)',
+													   'SD_A2=THETA(4)',
+													   'COR_A21=THETA(5)',
+													   'SD_A3=THETA(6)',
+													   'COR_A31=THETA(7)',
+													   'COR_A32=THETA(8)',
+													   ';Comments below show CH variables for 1st column, too simple to need new variables',
+													   ';CH_A11=1',
+													   ';CH_A21=COR_A21',
+													   ';CH_A31=COR_A31',
+													   'CH_A22=SQRT(1-(COR_A21**2))',
+													   'CH_A32=(COR_A32-COR_A21*COR_A31)/CH_A22',
+													   'CH_A33=SQRT(1-(COR_A31**2+CH_A32**2))',
+													   'ETA_1=ETA(1)*SD_A1',
+													   'ETA_2=ETA(1)*COR_A21*SD_A2+ETA(2)*CH_A22*SD_A2',
+													   'ETA_3=ETA(1)*COR_A31*SD_A3+ETA(2)*CH_A32*SD_A3+ETA(3)*CH_A33*SD_A3']);
+
+is_deeply($hashref->{'ETA'},[1,2,3],"get inverse parameter list ETA");
+is_deeply($hashref->{'EPS'},[],"get inverse parameter list EPS");
+is_deeply($hashref->{'THETA'},[3,4,5,6,7,8],"get inverse parameter list THETA");
+is_deeply($hashref->{'RECORD'},[0],"get inverse parameter list RECORD");
+
 
 my ($strings,$inits,$code)=linear_algebra::string_cholesky_diagonal(
 	value_matrix=>[4,9,16],
