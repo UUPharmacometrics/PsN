@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{SCM user guide}{2015-08-07}
+\guidetitle{SCM user guide}{2015-08-19}
 
 \begin{document}
 
@@ -255,13 +255,13 @@ file.
 \optconfig{linearize}{1}
 Turn on the linearization method. By default not set. 
 \nextopt
-\optconfig{foce}{0}
-Linearize around empirical Bayes estimates. Default set. If unset (foce=0 is set in the configuration file) 
-linearize around etas equal to 0. 
-\nextopt
-\optconfig{second\_order}{1}
-This option is not fully implemented yet. Default not set. Use a second order Taylor expansion instead of a first order. 
-\nextopt
+%\optconfig{foce}{0}
+%Linearize around empirical Bayes estimates. Default set. If unset (foce=0 is set in the configuration file) 
+%linearize around etas equal to 0. 
+%\nextopt
+%\optconfig{second\_order}{1}
+%This option is not fully implemented yet. Default not set. Use a second order T%aylor expansion instead of a first order. 
+%\nextopt
 \optconfig{lst\_file}{filename}
 Default not used. Update original model with final estimates from this file before running model to obtain derivatives. 
 \nextopt
@@ -311,6 +311,8 @@ Default not set. Only relevant if linearize is set. With this option set, scm wi
 \nextopt
 \end{optionlist}
 
+Note: Options -foce and -second\_order, which are described in earlier versions
+of the userguide, do not work and must not be used.
 
 \section{Configuration file sections}
 All sections have a header enclosed by square brackets. The sections must come after the single line options. All the following sections except 
@@ -463,6 +465,12 @@ The final models are in the final\_models subdirectory of the run directory. The
 If the linearization method was used, the logfile also lists the ofv values of the nonlinear base model (the derivatives model) and the linearized base model. Those two values should be very similar. If they are not, the results cannot be trusted. Check the files derivatives.lst and base\_model\_with\_included\_relations.lst for NONMEM minimization error messages. If the messages give no obvious explanation for why the values could be different the automatic linearization might have failed. Check if the program detected the correct type of ETA relationship (exponential/additive/proportional) for each parameter. 
 
 \section{Known bugs and problems}
+Options -foce and -second\_order, which relate to the linearization method,
+must not be changed from their defaults, otherwise the scm will crash.
+
+When linearization is used (option -linearize) the input model must \emph{not} 
+have METHOD=ZERO.
+
 Two covariates will be mixed up if the complete name of one is the same as the beginning of another. Example: AP and APGR will result in errors, since AP is identical to the beginning of APGR. APX and APGR is okay, since the third letters X and G are different. 
 
 If the concatenated names of a parameter and a covariate contain the string PAR, this can result in errors in the 
