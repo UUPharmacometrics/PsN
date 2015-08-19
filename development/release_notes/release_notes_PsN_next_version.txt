@@ -10,8 +10,7 @@ MacOS X 10.6.6 with ActiveState Perl 5.16.3, ifort 12.0.0 and NONMEM 7.2.0 and 7
 Ubuntu Linux 14.10 with Perl 5.20.1, gfortran 4.9.1 and NONMEM 7.2.0 and 7.3.0
 Fedora 20 with Perl 5.18.2, gfortran 4.8.2 and NONMEM 7.2.0
 Scientific Linux 6.3 with Perl 5.10.1, gfortran 4.4.7 and NONMEM 7.2.0 and 7.3.0
-CentOS 6.5 with Perl 5.10.1, gfortran 4.4.7 and NONMEM 7.1.0, 7.1.2 and 7.3.0
-Debian 7.5 with Perl 5.14.2, gfortran 4.7.2 and NONMEM 7.3.0
+CentOS 6.5 with Perl 5.10.1, gfortran 4.4.7 and NONMEM 7.1.0 and 7.3.0
 
 
 ************************
@@ -84,14 +83,6 @@ Changes and bug fixes from PsN 4.4.0 to n.n.n
   	  	   is missing from the lst-file and the desired table is not the first in the ext-file. 
 		   This happens for $EST MAXEVAL=0 that follows $SIM plus another $EST in the same $PROBLEM.
 
-   ___Cluster/grid interaction___
-
-
-   ___NONMEM interaction___
-
-
-   ___nca___
-
 
    ___mcmp___
 
@@ -102,6 +93,7 @@ Changes and bug fixes from PsN 4.4.0 to n.n.n
 
 - Updated documentation.
 
+
    ___sumo___
 
 - Bug fix: Check for high correlations. 
@@ -109,6 +101,7 @@ Changes and bug fixes from PsN 4.4.0 to n.n.n
 - Bug fix: Check for large relative standard errors. 
 
 - Bug fix: Make sure omega/sigma correlations are computed also when variances are small. 
+
 
    ___vpc/npc___
 
@@ -120,6 +113,7 @@ Changes and bug fixes from PsN 4.4.0 to n.n.n
 
 - Bug fix: Handle option -flip_comments in combination with $DATA that has file name enclosed by quotes.
 
+
    ___scm___
 
 - Bug fix: Use -threads set on command-line also in first iteration.
@@ -129,16 +123,10 @@ Changes and bug fixes from PsN 4.4.0 to n.n.n
 
 - Some clarifications in the documentation regarding -time_varying.
 
-   ___boot_scm___
-
-
 
    ___sse___
 
 - New option -append_columns=col1,col2,... A comma-separated list of parameters to append to the simulated data sets, if desired.
-
-   ___bootstrap___
-
 
 
    ___update_inits___
@@ -149,8 +137,6 @@ Changes and bug fixes from PsN 4.4.0 to n.n.n
 
 - New option -nm_version, so that rounding of initial estimates is done based on major NM-version (7 or less than 7)
 
-   ___randtest___
-	 
 
    ___execute___
 	 
@@ -159,8 +145,6 @@ Changes and bug fixes from PsN 4.4.0 to n.n.n
 
 - Documentation that parentheses in -nmfe_options must be escaped on *nix.
 
-   ___parallel_retries___
-	 
 
    ___sir___
 	 
@@ -177,16 +161,12 @@ Changes and bug fixes from PsN 4.4.0 to n.n.n
 	 
 - Some clarifications in the documentation.
 
-   ___pvar___
-
 
    ___runrecord___
 
 - Bug fix: Correction in documentation so that tags for interindividual and interoccasion variability 
 		 in documentation match what is expected in the code
 
-
-   ___llp___
 
 
    ___nmoutput2so___
@@ -220,11 +200,3 @@ Changes and bug fixes from PsN 4.4.0 to n.n.n
 - Added SimulationBlock/PopulationParameters
 
 - Option -precision removed. Now Using maximum precision available
-
-
-
-
-
-
-
- 
