@@ -15,7 +15,7 @@ NONMEM 7.2 (or later version) parafile. Appends “-parafile=filename” to the 
 Only relevant together with option -parafile. Appends “[nodes]=option\_value” to the nmfe call. This option acts independently of -threads. There is no adjustment of -nodes based on -threads or vice versa, and if -threads=1 it is still possible to use -nodes=10. 
 \nextopt
 \optdefault{extra\_files}{comma-separated list of filenames}
-Default not used. If you need extra files in the directory where NONMEM is run you specify them in the comma separated -extra\_files list. It could for example be fortran subroutines you need compiled with NONMEM, or a file with initial estimates for the NONMEM7 CHAIN command, or a defaults.pnm file (NONMEM 7.2 or later). 
+Default not used. If you need extra files in the directory where NONMEM is run you specify them in the comma separated -extra\_files list. It could for example be fortran subroutines you need compiled with NONMEM, or a file with initial estimates for the NONMEM7 CHAIN command, a defaults.pnm file (NONMEM 7.2 or later), or a file set in \$ETAS with option FILE. 
 \nextopt
 \optname{nmfe}
 Default set.

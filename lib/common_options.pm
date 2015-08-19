@@ -787,10 +787,11 @@ EOF
 
 
     $help_hash{-extra_files} = <<'EOF';
-    -extra_files='extra_file1.dta, extra_file2.dta'
+    -extra_files=mysubroutine.f90,run10.phi
     If you need extra files in the directory where NONMEM is run you
     specify them in the comma separated -extra_files list. It could for 
-    example be fortran subroutines you need compiled with NONMEM.
+    example be fortran subroutines you need compiled with NONMEM,
+	or a phi-file set in record $ETAS with option FILE.
 EOF
 
     $help_hash{-maxevals} = <<'EOF';
