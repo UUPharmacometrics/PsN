@@ -43,15 +43,6 @@ and
 
 <h3>Installing Perl modules</h3>
 You must have internet access for the installation procedure to work.
-<h4>Windows (Strawberry Perl)</h4>
-<ol>
-<li>Start a DOS command window.</li>
-<li>Run the following commands (hit Enter after each command):<br>
-cpan Math::Random<br>
-cpan Statistics::Distributions<br>
-cpan MooseX::Params::Validate<br>
-</li>
-</ol>
 <h4>Windows (ActivePerl)</h4>
 <ol>
 <li>Start a DOS command window.</li>
@@ -61,6 +52,15 @@ ppm install statistics-distributions<br>
 ppm install archive-zip<br>
 ppm install file-copy-recursive<br>
 ppm install moosex-params-validate
+</li>
+</ol>
+<h4>Windows (Strawberry Perl)</h4>
+<ol>
+<li>Start a DOS command window.</li>
+<li>Run the following commands (hit Enter after each command):<br>
+cpan Math::Random<br>
+cpan Statistics::Distributions<br>
+cpan MooseX::Params::Validate<br>
 </li>
 </ol>
 <h4>Linux/Unix/MacOS</h4>

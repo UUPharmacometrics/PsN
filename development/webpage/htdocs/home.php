@@ -33,16 +33,20 @@
     as well as development libraries for method developers. You can read more about the different parts of PsN under <a href="docs.php">Documentation</a>.</p>
 <h3>Latest news</h3>
  <p>
+Version 4.4.6 is planned for release August 31st 2015. Version 4.4.6 has almost no new features, the focus of this release is bug fixes. Many bugs that are in 
+versions 4.4.0, 4.2.0 and 3.7.6 have been fixed, and the test suite has been greatly extended. 
+</p>
+ <p>
 Version 4.4.0 was released April 20th 2015, and is available <a href="download.php">here</a>.
 </p>
  <p>
-New features include precond, a new tool for automatic preconditioning of a NONMEM model to improve its numerical properties,
+New features of version 4.4.0 include precond, a new tool for automatic preconditioning of a NONMEM model to improve its numerical properties,
 major improvements to sir, a tool for obtaining parameter uncertainty faster than with a bootstrap and more accurately than based on the covariance step,
 and the -rplots option, a simple yet powerful mechanism for generating default or custom R plots for visualizing PsN output.
 </p>
 <p>
 The <a href="http://www.page-meeting.org/default.asp?abstract=3586" target="_blank">preconditioning method</a>, 
-which has been developed by Yasunori Aoki, will be presented during the 
+which has been developed by Yasunori Aoki, was presented during the 
 Stuart Beal Methodology Session at PAGE 2015.
 </p>
 <p>
