@@ -50,153 +50,51 @@ Known issues
   is installed *before* (re)running the installation script setup.pl
 
 *********************************************
-Changes and bug fixes from PsN 4.4.0 to n.n.n
+Changes and bug fixes from PsN 4.4.6 to n.n.n
 *********************************************
 
    ___General___
 
-- Bug fix: reading of $DATA when IGNORE=(list) has a list that is split over two or more lines
-
-- Bug fix: added file extensions .cpu, .agh and .shm to output files handled for NM7
-
-- Bug fix: Correct search for nmfe script when major version is 6 and subversion is defined in psn.conf.
-
-- Bug fix: Relax checking of -nmfe_options so that -maxlim=(1,2) does not trigger warning.
-
-- Bug fix: Reading of elapsed estimation time for SAEM.
-
-- Bug fix: Reading of total run time when run time is 0 seconds.
-
-- Bug fix: Parsing of $SIGMA/$OMEGA when comma is used instead of space as in $SIGMA 1,FIX
-
-- Bug fix: Do not require that psn.conf exists during installation
-
-- Bug fix: When reading matrices from lst-file, handle also NONMEM's sparse matrix format
-
-- Bug fix: Reading of matrices from lst-files when .cov, .coi, .cor not available. Make sure rows and columns 
-  	  	   are sorted in correct order.
-
-- Bug fix: Parsing of ext-file from NM7.1.2 when there are multiple $PROB with one $EST MAXEVAL=0 each,
-  	  	   as in for example sir program and -dofv functionality of bootstrap. 
-
-- Bug fix: Parsing of ext-file from NM7.2.0 and NM7.3.0 when the #TBLN tag for the desired ext-file table
-  	  	   is missing from the lst-file and the desired table is not the first in the ext-file. 
-		   This happens for $EST MAXEVAL=0 that follows $SIM plus another $EST in the same $PROBLEM.
 
 
    ___mcmp___
 
-- Bug fix: allow option -significance_level=0.1 which did not work
-
-- Add new significance levels 20, 15 and 10% to existing set of 5,1 and 0.1%. Updated rplots template
-  to include the new significance levels.
-
-- Updated documentation.
 
 
    ___sumo___
 
-- Bug fix: Check for high correlations. 
-
-- Bug fix: Check for large relative standard errors. 
-
-- Bug fix: Make sure omega/sigma correlations are computed also when variances are small. 
 
 
    ___vpc/npc___
 
-- Bug fix: Correction in confidence intervals for median of percent censored observations when using option -censor.
-
-- Bug fix: Do not warn that $INPUT uses synonym for DV when -dv is set on command-line.
-
-- Bug fix: Handle option combination -bin_by_count=1 -bin_array=<> 
-
-- Bug fix: Handle option -flip_comments in combination with $DATA that has file name enclosed by quotes.
+- Bug fix: 
 
 
    ___scm___
 
-- Bug fix: Use -threads set on command-line also in first iteration.
-
-- Bug fix: In cases when data filtration step is run, handle $INPUT with items of the form NAME=DROP or NAME=SKIP,
-  in addition to just DROP or SKIP without NAME.
-
-- Some clarifications in the documentation regarding -time_varying.
-
 
    ___sse___
 
-- New option -append_columns=col1,col2,... A comma-separated list of parameters to append to the simulated data sets, if desired.
-
+- New option 
 
    ___update_inits___
 	 
-- Bug fix: Rounding of negative values and values with absolute value >= 10
 
-- New option -flip_comments
-
-- New option -nm_version, so that rounding of initial estimates is done based on major NM-version (7 or less than 7)
+- New option 
 
 
    ___execute___
 	 
-- Bug fix: minor fix -rplots when detecting xpose run number from table file names: do not include 'sim' in the run number, 
-  	 i.e. for sdtab65sim the run number is just 65
-
-- Documentation that parentheses in -nmfe_options must be escaped on *nix.
-
 
    ___sir___
 	 
-- Major redesign of algorithm: run multiple iterations where resampled parameters 
-  from one iteration is used to generate proposal density for the next. 
-  The resampled parameters will be Box-Cox transformed to normality so that a 
-  built-in Perl function for sampling from a multivariate normal can be used in the next iteration.
-
-- Bug fix: Detection of NaN that string evaluate to 0 (on Windows).
-
-- Print covmatrix in box-cox space for each iteration
 
    ___precond___
 	 
-- Some clarifications in the documentation.
 
 
    ___runrecord___
 
-- Bug fix: Correction in documentation so that tags for interindividual and interoccasion variability 
-		 in documentation match what is expected in the code
-
-
 
    ___nmoutput2so___
 
-- Add DVID to Preditions and Residuals if present in sdtab
-
-- Add support for multiple DVs in simulations
-
-- Add CWRES if present in sdtab
-
-- Residuals renamed from Residual
-  
-- Add bootstrap results file to RawResults
-
-- Support for SO 0.2
-
-- Added .ext as a rawresults file
-
-- Added messages for all special flags and values from raw_results i.e. covariance_step_warnings, s_matrix_singular etc
-
-- Bugfix: RSEs are now a percentage
-
-- Added bootstrap means and medians (SO 0.2)
-
-- New option so_version to control the version of the so format to create
-
-- Remove dosing rows for SimulatedProfiles and Residuals
-
-- Added SimulationBlock/Dosing for plain AMT column
-
-- Added SimulationBlock/PopulationParameters
-
-- Option -precision removed. Now Using maximum precision available
