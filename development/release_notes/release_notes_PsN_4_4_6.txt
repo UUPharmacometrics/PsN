@@ -110,8 +110,8 @@ Changes and bug fixes from PsN 4.4.0 to 4.4.6
 
    ___vpc/npc___
 
-- Bug fix: Correction in confidence intervals for median of percent censored observations 
-  when using option -censor.
+- Bug fix: Computation of median of percent censored observations when using option 
+  -censor.
 
 - Bug fix: Do not warn that $INPUT uses synonym for DV when -dv is set on command-line.
 
