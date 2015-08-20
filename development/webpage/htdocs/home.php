@@ -33,7 +33,7 @@
     as well as development libraries for method developers. You can read more about the different parts of PsN under <a href="docs.php">Documentation</a>.</p>
 <h3>Latest news</h3>
  <p>
-Version 4.4.6 is planned for release August 31st 2015. Version 4.4.6 has almost no new features, the focus of this release is bug fixes. Many bugs that are in 
+Version 4.4.6 is planned for release September 7th 2015. Version 4.4.6 has almost no new features, the focus of this release is bug fixes. Many bugs that are in 
 versions 4.4.0, 4.2.0 and 3.7.6 have been fixed, and the test suite has been greatly extended. 
 </p>
  <p>
