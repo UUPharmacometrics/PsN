@@ -57,19 +57,23 @@ Changes and bug fixes from PsN 4.4.0 to 4.4.8
 
 - Bug fix: reading of data files which, excluding any header, contain a mix of comma,
   space and/or tabs, or multiple tabs, as separator between values. 
-  Before the bug fix PsN would handle some sequences the same way as NONMEM, 
+  Before the bug fix PsN would handle many sequences the same way as NONMEM, 
   for example <value><comma><space><value>, <value><comma><comma><value>, 
   <value><tab><value> and <value><space><space><value>, but not for example 
   <value><space><comma><value>, <value><tab><tab><value> or 
-  <value><comma><tab><value>. "Handle the same way as NONMEM" in this context 
-  means inserting the same number of missing values in a particular sequence of 
-  separators, for example in <comma><comma><space>.
+  <value><comma><tab><value>. 
+
+  "Handle the same way as NONMEM" in this context means inserting the same 
+  number of missing values in a particular sequence of separators. NONMEM 7.3
+  will insert a missing value in <tab><tab>, <space><tab>, <comma><comma>, 
+  <tab><comma> and <comma><tab>, but NONMEM will not insert a missing value
+  in <tab><space>, <space><comma>, <comma><space> or <space><space>. 
 
   This bug can cause errors for programs that read the data file AND where the 
   unhandled combination of column separators appears before (to the left of) 
   the column(s) used by PsN. For example, execute is not affected because execute 
   does not parse the dataset. But bootstrap can be affected if option -stratify_on 
-  is used AND the stratification column comes after the problem separators,
+  is used AND the stratification column comes after the problematic separators,
   possibly leading to stratification being based on the wrong value. Scm can
   also be affected if the data filtering step is not run AND the unhandled combination
   appears before the covariate column(s), leading to the wrong min, max and median
