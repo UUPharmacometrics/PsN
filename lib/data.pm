@@ -2422,11 +2422,14 @@ sub _read_individuals
 			next ROW;
 		}
 
-		s/^\s*//; #skip leading spaces
-		s/\,\s*/\,/g; #spaces after commas
+		s/^\s*//;       # skip leading spaces
+        s/\,[ ]+/\,/g;  # remove spaces after commas
+		s/[ ]+\,/\,/g;  # remove spaces before commas
+        s/[\t]/\,/g;    # replace tabs with commas
+        s/\,[ ]+/\,/g;  # remove spaces after commas (TABs absorb spaces coming after, but not before)
 
-		my @new_row	= split(/\,\s*|\s+/);
-		my $is_data=1;
+		my @new_row	= split(/\,|\s+/);
+		my $is_data = 1;
 
 		if (defined $ignoresign and length($ignoresign)>0){
 			if ($ignoresign eq '@'){
