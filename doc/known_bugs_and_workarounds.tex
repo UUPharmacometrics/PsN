@@ -1,11 +1,10 @@
 \input{inputs/format_header.tex}
-\guidetitle{Known bugs and workarounds}{2015-04-14}
+\guidetitle{Known bugs and workarounds}{2015-08-24}
 
 
 \begin{document}
 
 \maketitle
-
 
 \section{Introduction}
 Work to fix bugs in PsN is ongoing, but often feature addition is prioritized over bug fixing, 
@@ -15,10 +14,17 @@ for a list of bugs that have been discovered after the time of release:\\
 \texttt{http://sourceforge.net/p/psn/wiki/Bug\_list\_current\_release}   
 
 \section{Bugs}
+\subsection{Linearized scm issues}
+Option -foce, which only applies to linearized scm, must not be changed from
+the default value, or the scm cannot run. 
+Also, the input model to a linearized scm must \emph{not}
+have METHOD=ZERO.
 
-\subsection{sumo does not display ETA correlation when product of variances <= 0.00001}
-If the product of the variances (diagonal OMEGA elements) is l.e. 0.00001, then sumo will not display the correlation between those
-ETAs. Workaround: running sumo with option -ci will make sumo display the untransformed omega estimates, with confidence intervals.
+\subsection{boot\_scm with dummy covariates that are time-varying}
+When randomizing data columns to create dummy covariates 
+(option -dummy\_covariates) for boot\_scm, PsN will not properly
+shuffle the time-varying set of values between individuals,
+but instead set all values to the individual's mean in the randomized copy.
 
 \subsection{Sensitive format for raw results input file in sse, vpc, npc}
 Any column header that contains a comma, e.g. OMEGA(2,1), must be enclosed in double quotes. This is done automatically when PsN creates a raw results file but may be changed if the file is saved in e.g. Excel.
@@ -44,8 +50,5 @@ The simulated datasets used in sse are \$TABLE output from NONMEM, and NONMEM ro
 \subsection{Lower case user defined and reserved words}
 Starting with NONMEM 7.2 lower case user defined and reserved words are supported. This is not supported
 by PsN. For example in \$INPUT all reserved words have to be upper case.
-
-\section{Bugs on wiki}
-If any new bugs have been found after the release of this document it can be found on the PsN homepage (http://psn.sourceforge.net/buglist.php).
 
 \end{document}

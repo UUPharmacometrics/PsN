@@ -1,0 +1,247 @@
+This PsN version has been tested on the following systems:
+
+Windows XP 32-bit with ActivePerl 5.16.3, gfortran 4.6.0 and NONMEM 7.1.0, 7.1.2 and 7.2.0
+Windows 7 64-bit with ActivePerl 5.20.1 (32 bit), gfortran 4.8.1 and NONMEM 7.3.0
+Windows 7 64-bit with ActivePerl 5.16.3 (32 bit), gfortran 4.6.0 and NONMEM 7.3.0
+Windows 7 64-bit with Strawberry Perl 5.18.2, gfortran 4.7.3 and NONMEM 7.2.0 and 7.3.0
+MacOS X 10.10.3 with Perl 5.18.2, gfortran 4.8.0 and NONMEM 7.3.0
+MacOS X 10.6.6 with ActiveState Perl 5.16.3, gfortran 4.6.2 and NONMEM 7.2.0 and 7.3.0
+MacOS X 10.6.6 with ActiveState Perl 5.16.3, ifort 12.0.0 and NONMEM 7.2.0 and 7.3.0
+Ubuntu Linux 14.10 with Perl 5.20.1, gfortran 4.9.1 and NONMEM 7.2.0 and 7.3.0
+Fedora 20 with Perl 5.18.2, gfortran 4.8.2 and NONMEM 7.2.0
+Scientific Linux 6.3 with Perl 5.10.1, gfortran 4.4.7 and NONMEM 7.2.0 and 7.3.0
+CentOS 6.5 with Perl 5.10.1, gfortran 4.4.7 and NONMEM 7.1.0 and 7.3.0
+
+
+************************
+Installation
+************************
+
+Follow the installation instructions on
+http://psn.sourceforge.net/install.php
+
+************************
+Documentation
+************************
+All documentation is found in the doc subdirectory of the PsN 
+installation directory. During installation it is also possible 
+to have all documentation copied to a user-specified directory.
+
+All documentation can also be downloaded from
+the PsN website http://psn.sourceforge.net/
+
+************************
+Dependencies 
+************************
+
+- It is recommended to use Xpose version 4.5.3 for the -cwres functionality 
+  and the default execute, vpc and bootstrap R plots.
+
+************************
+Known issues 
+************************
+
+- Windows users need to be careful to choose 
+  a Perl version where the extra modules needed for PsN are available. See the 
+  instructions on http://psn.sourceforge.net/install.php
+
+- Installation problem on some Windows systems where 
+  perl 'system' command does not work. Make sure perl module File::Copy::Recursive
+  is installed *before* (re)running the installation script setup.pl
+
+*********************************************
+Changes and bug fixes from PsN 4.4.0 to 4.4.8
+*********************************************
+
+   ___General___
+
+- Bug fix: reading of data files which, excluding any header, contain a mix of comma,
+  space and/or tabs, or multiple tabs, as separator between values. 
+  Before the bug fix PsN would handle many sequences the same way as NONMEM, 
+  for example <value><comma><space><value>, <value><comma><comma><value>, 
+  <value><tab><value> and <value><space><space><value>, but not for example 
+  <value><space><comma><value>, <value><tab><tab><value> or 
+  <value><comma><tab><value>. 
+
+  "Handle the same way as NONMEM" in this context means inserting the same 
+  number of missing values in a particular sequence of separators. NONMEM 7.3
+  will insert a missing value in <tab><tab>, <space><tab>, <comma><comma>, 
+  <tab><comma> and <comma><tab>, but NONMEM will not insert a missing value
+  in <tab><space>, <space><comma>, <comma><space> or <space><space>. 
+
+  This bug can cause errors for programs that read the data file AND where the 
+  unhandled combination of column separators appears before (to the left of) 
+  the column(s) used by PsN. For example, execute is not affected because execute 
+  does not parse the dataset. But bootstrap can be affected if option -stratify_on 
+  is used AND the stratification column comes after the problematic separators,
+  possibly leading to stratification being based on the wrong value. Scm can
+  also be affected if the data filtering step is not run AND the unhandled combination
+  appears before the covariate column(s), leading to the wrong min, max and median
+  computed for that covariate.
+  
+- Bug fix: reading of $DATA when IGNORE=(list) has a list that is split over two or 
+  more lines
+
+- Bug fix: added file extensions .cpu, .agh and .shm to output files handled for NM7
+
+- Bug fix: Correct search for nmfe script when major version is 6 and subversion is 
+  defined in psn.conf.
+
+- Bug fix: Relax checking of -nmfe_options so that -maxlim=(1,2) does not trigger warning.
+
+- Bug fix: Reading of elapsed estimation time for SAEM.
+
+- Bug fix: Reading of total run time when run time is 0 seconds.
+
+- Bug fix: Parsing of $SIGMA/$OMEGA when comma is used instead of space as in $SIGMA 1,FIX
+
+- Bug fix: Do not require that psn.conf exists during installation
+
+- Bug fix: When reading matrices from lst-file, handle also NONMEM's sparse matrix format
+
+- Bug fix: Reading of matrices from lst-files when .cov, .coi, .cor not available and 
+  	  	   $OMEGA and/or $SIGMA has either at least one block of at least size 3, 
+		   or two or more blocks of at least size 2.
+
+- Bug fix: Parsing of ext-file from NM7.1.2 when there are multiple $PROB with one 
+  	  	   $EST MAXEVAL=0 each, as in for example sir program when option 
+		   -problems_per_file is > 1, and -dofv functionality of bootstrap. 
+
+- Bug fix: Parsing of ext-file from NM7.2.0 and NM7.3.0 for $PROBLEMs where a $SIM 
+  	  	   is followed by at least two $EST where the last $EST has MAXEVAL=0 and 
+		   at least one previous in the same $PROBLEM does not have MAXEVAL=0.
+
+   ___mcmp___
+
+- Bug fix: allow option -significance_level=0.1 which did not work
+
+- Add new significance levels 20, 15 and 10% to existing set of 5,1 and 0.1%. Updated 
+  rplots template to include the new significance levels.
+
+- Updated documentation.
+
+
+   ___sumo___
+
+- Bug fix: Check for high correlations. In older versions high correlations would not 
+  be reported. 
+
+- Bug fix: Check for large relative standard errors. In older versions many large 
+  SEs were missed.
+
+- Bug fix: Make sure omega/sigma correlations are computed also when variances are small. 
+
+
+   ___vpc/npc___
+
+- Bug fix: Computation of median of percent censored observations when using option 
+  -censor.
+
+- Bug fix: Do not warn that $INPUT uses synonym for DV when -dv is set on command-line.
+
+- Bug fix: Handle option combination -bin_by_count=1 -bin_array=<> 
+
+- Bug fix: Handle option -flip_comments in combination with $DATA that has file name 
+  enclosed by quotes.
+
+
+   ___scm___
+
+- Bug fix: Use -threads set on command-line also in first iteration.
+
+- Bug fix: In cases when data filtration step is run, handle $INPUT with items of the 
+  form NAME=DROP or NAME=SKIP, in addition to just DROP or SKIP without NAME.
+
+- Removed the possibility to set foce=0.
+
+- Some clarifications in the documentation regarding -time_varying, documentation
+  regarding METHOD=ZERO in combination with -linearize.
+
+   ___boot_scm___
+
+- Bug fix: Handle option -time_varying for regular covariates in boot_scm. 
+
+- Documentation for known bug that boot_scm does not handle dummy covariates which are time-varying.
+
+- Removed the possibility to set foce=0.
+
+   ___xv_scm___
+
+- Removed the possibility to set foce=0.
+
+   ___sse___
+
+- New option -append_columns=col1,col2,... A comma-separated list of parameters to append 
+  to the simulated data sets, if desired.
+
+   ___update_inits___
+	 
+- Bug fix: Rounding of negative values and values with absolute value >= 10
+
+- New option -flip_comments
+
+- New option -nm_version, so that rounding of initial estimates is done based on major 
+  NM-version (7 or less than 7)
+
+   ___execute___
+	 
+- Bug fix: minor fix -rplots when detecting xpose run number from table file names: 
+  do not include 'sim' in the run number, i.e. for sdtab65sim the run number is just 65
+
+- Documentation that parentheses in -nmfe_options must be escaped on Unix/Linux.
+
+   ___sir___
+	 
+- Major redesign of algorithm: run multiple iterations where resampled parameters 
+  from one iteration is used to generate proposal density for the next. 
+  The resampled parameters will be Box-Cox transformed to normality so that a 
+  built-in Perl function for sampling from a multivariate normal can be used in the next 
+  iteration.
+
+- Bug fix: Detection of NaN that string evaluate to 0 (on Windows).
+
+   ___precond___
+	 
+- Some clarifications in the documentation.
+
+   ___bootstrap___
+	 
+- Better documentation on the contents of bootstrap_results.csv
+
+   ___runrecord___
+
+- Bug fix: Correction in documentation so that tags for interindividual and interoccasion 
+  variability in documentation match what is expected in the code
+
+   ___nmoutput2so___
+
+- Add DVID to Preditions and Residuals if present in sdtab
+
+- Add support for multiple DVs in simulations
+
+- Add CWRES if present in sdtab
+
+- Residuals renamed from Residual
+  
+- Add bootstrap results file to RawResults
+
+- Support for SO 0.2
+
+- Added .ext as a rawresults file
+
+- Added messages for all special flags and values from raw_results i.e. 
+  covariance_step_warnings, s_matrix_singular etc
+
+- Bugfix: RSEs are now a percentage
+
+- Added bootstrap means and medians (SO 0.2)
+
+- New option so_version to control the version of the so format to create
+
+- Remove dosing rows for SimulatedProfiles and Residuals
+
+- Added SimulationBlock/Dosing for plain AMT column
+
+- Added SimulationBlock/PopulationParameters
+
+- Option -precision removed. Now Using maximum precision available

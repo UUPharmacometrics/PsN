@@ -14,6 +14,7 @@ our $dir = "$tempdir/vpc_test";
 my $model_dir = $includes::testfiledir;
 
 my @commands = (
+	get_command('vpc') . " -samples=20 $model_dir/pheno_flip_comments.mod -flip_comments -auto_bin=5 -dir=$tempdir/fliptest",
 	get_command('vpc') . " -samples=20 $model_dir/mox1.mod -stratif=AGE -no_of_strata=3 -auto_bin=12 -dir=$dir",
 	get_command('vpc') . " -samples=20 $model_dir/mox1.mod -bin_by_count=1 -bin_array=500,400,122 -dir=$dir",
 	get_command('vpc') . " -samples=20 $model_dir/mox1.mod -bin_by_count=0 -bin_array=10,20,40 -dir=$dir",

@@ -329,6 +329,9 @@ common_options::setup( \%options, 'scm' );
 if ($config_file->linearize){
 	die "Option -second_order is currently broken" 
 		if $config_file->second_order();
+	die "Cannot set option foce to 0, will crash.\n" 
+		if (defined $config_file->foce() and (not $config_file->foce));
+
 	#two new options, linearize and lst-file
 
 	if ($config_file->second_order()){

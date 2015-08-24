@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{PsN and NONMEM7}{2015-03-18}
+\guidetitle{PsN and NONMEM7}{2015-08-19}
 
 \begin{document}
 
@@ -45,7 +45,8 @@ remove ORDER if found in \$EST.
 \section{Supported new records}
 PsN will accept and handle new records \$SIZES, \$LEVEL, \$ANNEAL, \$PHIS and \$ETAS,
 \$THETAI \$THI \$THETAR \$THR \$THETAP \$THETAPV \$OMEGAP \$OMEGAPD
-\$SIGMAP \$SIGMAPD.
+\$SIGMAP \$SIGMAPD. However, files set with \$ETAS FILE= or \$PHIS FILE= will not automatically be copied to the directory where NONMEM is run. The user
+must use PsN option -extra\_files to make PsN copy the required files to the NONMEM run directory.
 
 \section{Shorthand notation in \$THETA \$OMEGA \$SIGMA}
 PsN does not support VALUES option in \$OMEGA/\$SIGMA. 
@@ -56,14 +57,18 @@ In NONMEM 7.2 and higher it is possible to write the control stream in mixed cas
 need to modify certain options.
 
 \section{New output files in NONMEM 7}
-PsN will set retry numbering for NM7.2 new output 
-files .xml .phm .shk .grd .smt .rmt just as for .lst etc. 
-The numbered files will be cleaned if \mbox{clean $>=2$}.
+PsN handles NONMEM output files .lst
+.ext .cov .cor .coi .phi .phm .shk .grd .cnv .smt .rmt
+.imp .npd .npe .npi .fgh .log.xml .xml .cpu .shm .agh. 
+
+(The .log.xml file is created by NMQual, if used).
+The above output files will be retry numbered, and 
+the numbered files will be cleaned if \mbox{clean $>=2$}.
 
 Only the lst-file will by default be copied back to the calling directory. 
 More files will be copied if the user sets the extensions of those files via the PsN option -nm\_output. Example: -nm\_output=ext,cov,cor. Note it the user lets the installation script create a psn.conf file then nm\_output will be set to -nm\_output=ext,cov,cor,coi,phi 
 
-Cleaning of NM7.2 output files: If \mbox{clean $>=1$} then the following files are removed: LINKC.LNK, compile.lnk, gfortran.txt, ifort.txt, garbage.out, newline, nmexec.set, parafile.set, prcompile.set, prdefault.set, prsame.set, psn.log, rundir.set, runpdir.set, temporaryfile.xml, temp.out, trashfile.xxx, trskip.set, worker.set, xmloff.set, prsizes.f90, licfile.set, background.set, FMSG, FSIZES
+Cleaning of output files: If \mbox{clean $>=1$} then the following files are removed: LINKC.LNK, compile.lnk, gfortran.txt, ifort.txt, garbage.out, newline, nmexec.set, parafile.set, prcompile.set, prdefault.set, prsame.set, psn.log, rundir.set, runpdir.set, temporaryfile.xml, temp.out, trashfile.xxx, trskip.set, worker.set, xmloff.set, prsizes.f90, licfile.set, background.set, FMSG, FSIZES
 
 If \mbox{clean $>=2$} then the temp\_dir subdirectory will be removed.
 

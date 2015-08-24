@@ -158,7 +158,7 @@ sub parameter_table
     my $labels = $parm{'labels'};
     my $values = $parm{'values'};
 
-    $self->columnId([ "parameter", $name ]);
+    $self->columnId([ "Parameter", $name ]);
     $self->columnType([ ("undefined") x 2 ]);
     $self->valueType([ "string", "real" ]);
     $self->columns([ $labels, $values ]);

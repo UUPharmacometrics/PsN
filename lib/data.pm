@@ -23,6 +23,7 @@ has 'directory' => ( is => 'rw', isa => 'Maybe[Str]' );
 has 'filename' => ( is => 'rw', isa => 'Str' );
 has 'cont_column' => ( is => 'rw', isa => 'Int' );
 has 'header' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { [] } );
+# idcolumn is number starting at 1. This is different from data->column_to_array for example, which starts at 0
 has 'idcolumn' => ( is => 'rw', isa => 'Int' );
 has 'ignore_missing_files' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'ignoresign' => ( is => 'rw', isa => 'Maybe[Str]');
@@ -109,7 +110,8 @@ sub add_randomized_input_data
 	#in scalar datafilename, modelfilename
 	#out array xcolumn_names
 
-	my $dataname = $model->datafiles(problem_numbers => [1]);
+	my $dataname = $model->datafiles(problem_numbers => [1],
+									 absolute_path => 1);
 	my $data_obj = data->new(filename => $dataname->[0],
 							 idcolumn => $model->idcolumn(problem_number => 1),
 							 ignoresign => $model->ignoresigns->[0],
@@ -2199,7 +2201,7 @@ sub column_to_array
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		column => { isa => 'Str', optional => 0 },				# Counting from zero
+		column => { isa => 'Str', optional => 0 },				# Indexing is from zero. This is different from data-> idcolumn which is from 1
 		filter => { isa => 'ArrayRef', optional => 1 }		# Warning: Do not use ArrayRef[Int] here. Causes Perl to crash. Bug report filed
 	);
 	my $column = $parm{'column'};
@@ -2396,6 +2398,7 @@ sub _read_individuals
 	my $skip_tables = $parm{'skip_tables'};
 	my $max_individuals = $parm{'max_individuals'};
 
+	# Idcol is number starting at 1. This is different from data->column_to_array for example, which starts at 0
 	my $idcol	= $self->idcolumn;
 	my $filename = $self->full_name;
 	my $ignoresign = $self->ignoresign;
@@ -2421,12 +2424,15 @@ sub _read_individuals
 			}
 			next ROW;
 		}
+		s/\s*$//;       # skip all trailing whitespace, including tab and newline
+		s/^[ ]+//;      # skip leading spaces but not tabs. This is not needed to get splitting right, but for PsN first column value
+		s/[ ]+\,/\,/g;  # remove spaces before original commas
+		s/[\t]/\,/g;    # replace tabs with commas
+		s/\,[ ]+/\,/g;  # remove spaces after original and new commas (TABs absorb spaces coming after, but not before)
+		s/[ ]+/\,/g;    # replace sequence of spaces with commas
 
-		s/^\s*//; #skip leading spaces
-		s/\,\s*/\,/g; #spaces after commas
-
-		my @new_row	= split(/\,\s*|\s+/);
-		my $is_data=1;
+		my @new_row	= split(/\,/); 
+		my $is_data = 1;
 
 		if (defined $ignoresign and length($ignoresign)>0){
 			if ($ignoresign eq '@'){
@@ -2509,7 +2515,7 @@ sub _read_individuals
 			}
 			$old_ID = $new_ID;
 			$full_row = undef;
-		}
+		}#end if (is_data)
 	}
 
 	# if we have ended loop because of max number individuals, init_data will be empty.

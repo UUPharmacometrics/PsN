@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{SCM user guide}{2015-03-31}
+\guidetitle{SCM user guide}{2015-08-24}
 
 \begin{document}
 
@@ -203,6 +203,9 @@ Average covariate value for this individual  AVCOV(ind) will be
 (Ga/Wa + Gb/Wb + Gc/Wc + Gd/Wd)
 
 The median/mean for this covariate with respect to the parameter which ETA(1) is on is the median/mean of AVCOV over all individuals.
+For non-influential covariates all partial derivatives (Ga etc) will be zero, and then
+the median/mean will be also be 0. In this case scm will stop with an error message "computed median 0 of time-varying...",
+and the user will have to restart the scm without that particular parameter-covariate relation.
 
 The derivatives needed for computing the new medians and means will be taken from an estimation of the input model without any included relations, even if included\_relations is defined in the config file. This is because the medians are needed to add the included relations to the model.\\
 
@@ -252,13 +255,13 @@ file.
 \optconfig{linearize}{1}
 Turn on the linearization method. By default not set. 
 \nextopt
-\optconfig{foce}{0}
-Linearize around empirical Bayes estimates. Default set. If unset (foce=0 is set in the configuration file) 
-linearize around etas equal to 0. 
-\nextopt
-\optconfig{second\_order}{1}
-This option is not fully implemented yet. Default not set. Use a second order Taylor expansion instead of a first order. 
-\nextopt
+%\optconfig{foce}{0}
+%Linearize around empirical Bayes estimates. Default set. If unset (foce=0 is set in the configuration file) 
+%linearize around etas equal to 0. 
+%\nextopt
+%\optconfig{second\_order}{1}
+%This option is not fully implemented yet. Default not set. Use a second order T%aylor expansion instead of a first order. 
+%\nextopt
 \optconfig{lst\_file}{filename}
 Default not used. Update original model with final estimates from this file before running model to obtain derivatives. 
 \nextopt
@@ -308,6 +311,8 @@ Default not set. Only relevant if linearize is set. With this option set, scm wi
 \nextopt
 \end{optionlist}
 
+Note: Options -foce and -second\_order, which are described in earlier versions
+of the userguide, do not work and must not be used.
 
 \section{Configuration file sections}
 All sections have a header enclosed by square brackets. The sections must come after the single line options. All the following sections except 
@@ -426,8 +431,14 @@ at the line where it is okay for SCM to start to add the covariate function code
 \end{verbatim}
 before adding any covariate code. If the linearize option is used, the code preceding the SCM-ANCHOR line will be kept in the linearized models. The ANCHOR functionality has no option, it is turned on and off by adding or removing the line in \$PK/\$PRED.
 
-\section{Missing coviariate values}
-The scm program handles missing coviariate values, provided that option missing\_data\_token is set correctly. If the covariate value is equal to missing\_data\_token, the missing value will be replaced by the median of the covariate. In the code this is done in a separate IF statement for missing values where the covariate value has been set to the median and the expression simplified, usually leading to the expression being equal to 1. For time-varying covariates the principle is the same: replace missing values with the median. See above help text for option time\_varying for a description of how to compute medians for time-varying covariates.  
+\section{Missing covariate values}
+The scm program handles missing covariate values, provided that option missing\_data\_token is set correctly and that a numerical value, not a dot (.) is
+used to represent missing values in the data set. It is important to remember that NONMEM will replace dots in the data set with a zero, and once NONMEM
+has read the data set it is no longer possible to distinguish between
+a missing covariate represented with a dot and a 
+non-missing covariate with value 0. 
+
+If the covariate value is equal to missing\_data\_token, PsN will replace the missing value with the median of the covariate. In the code this is done in a separate IF statement for missing values where the covariate value has been set to the median and the expression simplified, usually leading to the expression being equal to 1. For time-varying covariates the principle is the same: replace missing values with the median. See above help text for option time\_varying for a description of how to compute medians for time-varying covariates.  
 
 \section{Example}
 \begin{verbatim}
@@ -460,6 +471,12 @@ The final models are in the final\_models subdirectory of the run directory. The
 If the linearization method was used, the logfile also lists the ofv values of the nonlinear base model (the derivatives model) and the linearized base model. Those two values should be very similar. If they are not, the results cannot be trusted. Check the files derivatives.lst and base\_model\_with\_included\_relations.lst for NONMEM minimization error messages. If the messages give no obvious explanation for why the values could be different the automatic linearization might have failed. Check if the program detected the correct type of ETA relationship (exponential/additive/proportional) for each parameter. 
 
 \section{Known bugs and problems}
+Options -foce and -second\_order, which relate to the linearization method,
+must not be changed from their defaults, otherwise the scm will crash.
+
+When linearization is used (option -linearize) the input model must \emph{not} 
+have METHOD=ZERO.
+
 Two covariates will be mixed up if the complete name of one is the same as the beginning of another. Example: AP and APGR will result in errors, since AP is identical to the beginning of APGR. APX and APGR is okay, since the third letters X and G are different. 
 
 If the concatenated names of a parameter and a covariate contain the string PAR, this can result in errors in the 

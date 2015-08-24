@@ -86,6 +86,10 @@ sub usable_number
 	my $ok = 0;
 	if ($number =~ /^\s*([+-]?)(?=\d|\.\d)\d*(\.\d*)?([Ee]([+-]?\d+))?\s*$/) {
 		$ok = 1;
+		#special check for Windows where types of NaN can string evaluate to 0
+		if ($number =~ /^\s*0\s*$/){
+			$ok = 0 unless (($number+1) == 1);
+		}
 	}
 	return $ok;
 }

@@ -1,0 +1,2896 @@
+Fri Aug  7 09:11:48 CEST 2015
+gfortran
+$PROBLEM    MOXONIDINE PK ANALYSIS 1
+$INPUT      ID VISI XAT2 DGRP DOSE FLAG ONO XIME DVO NEUY SCR AGE SEX
+            NYHA WT COMP ACE DIG DIU NUMB TAD TIME VIDD CLCR AMT SS II
+            VID CMT CONO DV EVID OVID
+$DATA      mox_simulated.csv IGNORE=@
+$ABBREVIATED DERIV2=NO COMRES=6
+$SUBROUTINE ADVAN2 TRANS1
+$PK    
+   TVCL  = THETA(1)
+   TVV   = THETA(2)
+   TVKA  = THETA(3)
+   TVLAG   = THETA(4)
+
+   CL    = TVCL*EXP(ETA(1))
+   V     = TVV*EXP(ETA(2))
+   KA    = TVKA*EXP(ETA(3))
+   LAG   = TVLAG*EXP(0)
+   TVPHI   = LOG(LAG/(1-LAG))
+   PHI   = TVPHI + (0)
+   ALAG1 = EXP(PHI)/(1+EXP(PHI))
+   K     = CL/V
+   S2    = V
+
+$ERROR    
+
+     IPRED = LOG(.025)
+     W     = THETA(5)
+     IF(F.GT.0) IPRED = LOG(F)
+     IRES  = IPRED-DV
+     IWRES = IRES/W
+     Y     = IPRED+ERR(1)*W
+
+$THETA  (0,34.8488030908397)
+ (0,28.4788851140942)
+ (0,0.294703064040853)
+ (0,0.0615579315540197)
+ (0,0.339516872133039)
+$OMEGA  BLOCK(1)
+ 0.481256819078822
+$OMEGA  BLOCK(2)
+ 1.09142347279116
+ 0.00122918255042773 0.16629229817654
+$SIGMA  1  FIX
+$SIMULATION (1234) NSUB=1
+$ESTIMATION METHOD=COND INTER LAPLACE MAXEVALS=0
+
+$PROBLEM    MOXONIDINE PK ANALYSIS 2
+$INPUT      ID VISI XAT2 DGRP DOSE FLAG ONO XIME DVO NEUY SCR AGE SEX
+            NYHA WT COMP ACE DIG DIU NUMB TAD TIME VIDD CLCR AMT SS II
+            VID CMT CONO DV EVID OVID
+$DATA      mox_simulated.csv IGNORE=@ REWIND
+$THETA  (0,27.113132195712)
+ (0,16.3000792413967)
+ (0,0.306547288052413)
+ (0,0.0953857304613286)
+ (0,0.327872479241371)
+$OMEGA  BLOCK(1)
+ 0.296394938225528
+$OMEGA  BLOCK(2)
+ 1.42347111954326
+ 0.219417306143209 0.236512534208442
+$SIGMA  1  FIX
+$SIMULATION (1234) NSUB=1
+$ESTIMATION METH=IMP INTER PRINT=1 NITER=0 ISAMPLE=100 EONLY=0
+
+$PROBLEM    MOXONIDINE PK ANALYSIS 2
+$INPUT      ID VISI XAT2 DGRP DOSE FLAG ONO XIME DVO NEUY SCR AGE SEX
+            NYHA WT COMP ACE DIG DIU NUMB TAD TIME VIDD CLCR AMT SS II
+            VID CMT CONO DV EVID OVID
+$DATA      mox_simulated.csv IGNORE=@ REWIND
+$THETA  (0,27.113132195712)
+ (0,16.3000792413967)
+ (0,0.306547288052413)
+ (0,0.0953857304613286)
+ (0,0.327872479241371)
+$OMEGA  BLOCK(1)
+ 0.296394938225528
+$OMEGA  BLOCK(2)
+ 1.42347111954326
+ 0.219417306143209 0.236512534208442
+$SIGMA  1  FIX
+$SIMULATION (1234) NSUB=1
+$ESTIMATION METH=IMP INTER PRINT=1 NITER=0 ISAMPLE=100 EONLY=1
+
+$PROBLEM    MOXONIDINE PK ANALYSIS 2
+$INPUT      ID VISI XAT2 DGRP DOSE FLAG ONO XIME DVO NEUY SCR AGE SEX
+            NYHA WT COMP ACE DIG DIU NUMB TAD TIME VIDD CLCR AMT SS II
+            VID CMT CONO DV EVID OVID
+$DATA      mox_simulated.csv IGNORE=@ REWIND
+$THETA  (0,27.113132195712)
+ (0,16.3000792413967)
+ (0,0.306547288052413)
+ (0,0.0953857304613286)
+ (0,0.327872479241371)
+$OMEGA  BLOCK(1)
+ 0.296394938225528
+$OMEGA  BLOCK(2)
+ 1.42347111954326
+ 0.219417306143209 0.236512534208442
+$SIGMA  1  FIX
+$SIMULATION (1234) NSUB=1
+$ESTIMATION METH=IMP INTER PRINT=1 NITER=1 ISAMPLE=100 EONLY=1
+
+$PROBLEM    MOXONIDINE PK ANALYSIS 2
+$INPUT      ID VISI XAT2 DGRP DOSE FLAG ONO XIME DVO NEUY SCR AGE SEX
+            NYHA WT COMP ACE DIG DIU NUMB TAD TIME VIDD CLCR AMT SS II
+            VID CMT CONO DV EVID OVID
+$DATA      mox_simulated.csv IGNORE=@ REWIND
+$THETA  (0,27.113132195712)
+ (0,16.3000792413967)
+ (0,0.306547288052413)
+ (0,0.0953857304613286)
+ (0,0.327872479241371)
+$OMEGA  BLOCK(1)
+ 0.296394938225528
+$OMEGA  BLOCK(2)
+ 1.42347111954326
+ 0.219417306143209 0.236512534208442
+$SIGMA  1  FIX
+$SIMULATION (1234) NSUB=1
+$ESTIMATION METH=IMP INTER PRINT=1 NITER=1000 ISAMPLE=100 EONLY=1
+
+$PROBLEM    MOXONIDINE PK ANALYSIS 3
+$INPUT      ID VISI XAT2 DGRP DOSE FLAG ONO XIME DVO NEUY SCR AGE SEX
+            NYHA WT COMP ACE DIG DIU NUMB TAD TIME VIDD CLCR AMT SS II
+            VID CMT CONO DV EVID OVID
+$DATA      mox_simulated.csv IGNORE=@ REWIND
+$THETA  (0,27.113132195712)
+ (0,16.3000792413967)
+ (0,0.306547288052413)
+ (0,0.0953857304613286)
+ (0,0.327872479241371)
+$OMEGA  BLOCK(1)
+ 0.296394938225528
+$OMEGA  BLOCK(2)
+ 1.42347111954326
+ 0.219417306143209 0.236512534208442
+$SIGMA  1  FIX
+$SIMULATION (1234) NSUB=1
+$ESTIMATION METH=IMPMAP INTER NITER=50 EONLY=1 NBURN=30 ISAMPLE=100
+            DF=4 CTYPE=3 NOABORT PRINT=1 SIGL=8
+
+$PROBLEM    MOXONIDINE PK ANALYSIS 3
+$INPUT      ID VISI XAT2 DGRP DOSE FLAG ONO XIME DVO NEUY SCR AGE SEX
+            NYHA WT COMP ACE DIG DIU NUMB TAD TIME VIDD CLCR AMT SS II
+            VID CMT CONO DV EVID OVID
+$DATA      mox_simulated.csv IGNORE=@ REWIND
+$THETA  (0,27.113132195712)
+ (0,16.3000792413967)
+ (0,0.306547288052413)
+ (0,0.0953857304613286)
+ (0,0.327872479241371)
+$OMEGA  BLOCK(1)
+ 0.296394938225528
+$OMEGA  BLOCK(2)
+ 1.42347111954326
+ 0.219417306143209 0.236512534208442
+$SIGMA  1  FIX
+$SIMULATION (1234) NSUB=1
+$ESTIMATION METH=IMPMAP INTER NITER=0 EONLY=1 NBURN=30 ISAMPLE=100
+            DF=4 CTYPE=3 NOABORT PRINT=1 SIGL=8
+
+$PROBLEM    MOXONIDINE PK ANALYSIS 3
+$INPUT      ID VISI XAT2 DGRP DOSE FLAG ONO XIME DVO NEUY SCR AGE SEX
+            NYHA WT COMP ACE DIG DIU NUMB TAD TIME VIDD CLCR AMT SS II
+            VID CMT CONO DV EVID OVID
+$DATA      mox_simulated.csv IGNORE=@ REWIND
+$THETA  (0,27.113132195712)
+ (0,16.3000792413967)
+ (0,0.306547288052413)
+ (0,0.0953857304613286)
+ (0,0.327872479241371)
+$OMEGA  BLOCK(1)
+ 0.296394938225528
+$OMEGA  BLOCK(2)
+ 1.42347111954326
+ 0.219417306143209 0.236512534208442
+$SIGMA  1  FIX
+$SIMULATION (1234) NSUB=1
+$ESTIMATION METH=IMPMAP INTER NITER=1 EONLY=1 NBURN=30 ISAMPLE=100
+            DF=4 CTYPE=3 NOABORT PRINT=1 SIGL=8
+
+ 
+ 
+  
+ WARNINGS AND ERRORS (IF ANY) FOR PROBLEM    1
+             
+ (WARNING  2) NM-TRAN INFERS THAT THE DATA ARE POPULATION.
+             
+ (WARNING  66) WITH "LAPLACIAN" AND "INTERACTION", "NUMERICAL" AND "SLOW"
+ ARE ALSO REQUIRED ON $ESTIM RECORD. NM-TRAN HAS SUPPLIED THESE OPTIONS.
+  
+ WARNINGS AND ERRORS (IF ANY) FOR PROBLEM    2
+             
+ (WARNING  2) NM-TRAN INFERS THAT THE DATA ARE POPULATION.
+  
+ WARNINGS AND ERRORS (IF ANY) FOR PROBLEM    3
+             
+ (WARNING  2) NM-TRAN INFERS THAT THE DATA ARE POPULATION.
+  
+ WARNINGS AND ERRORS (IF ANY) FOR PROBLEM    4
+             
+ (WARNING  2) NM-TRAN INFERS THAT THE DATA ARE POPULATION.
+  
+ WARNINGS AND ERRORS (IF ANY) FOR PROBLEM    5
+             
+ (WARNING  2) NM-TRAN INFERS THAT THE DATA ARE POPULATION.
+  
+ WARNINGS AND ERRORS (IF ANY) FOR PROBLEM    6
+             
+ (WARNING  2) NM-TRAN INFERS THAT THE DATA ARE POPULATION.
+  
+ WARNINGS AND ERRORS (IF ANY) FOR PROBLEM    7
+             
+ (WARNING  2) NM-TRAN INFERS THAT THE DATA ARE POPULATION.
+  
+ WARNINGS AND ERRORS (IF ANY) FOR PROBLEM    8
+             
+ (WARNING  2) NM-TRAN INFERS THAT THE DATA ARE POPULATION.
+ CREATING MUMODEL ROUTINE...
+ 
+ 
+License Registered to: Uppsala University
+Expiration Date:    14 MAR 2016
+Current Date:        7 AUG 2015
+Days until program expires : 222
+1NONLINEAR MIXED EFFECTS MODEL PROGRAM (NONMEM) VERSION 7.1.0
+ ORIGINALLY DEVELOPED BY STUART BEAL, LEWIS SHEINER, AND ALISON BOECKMANN
+ CURRENT DEVELOPERS ARE ROBERT BAUER, ICON DEVELOPMENT SOLUTIONS,
+ AND ALISON BOECKMANN. IMPLEMENTATION, EFFICIENCY, AND STANDARDIZATION
+ PERFORMED BY NOUS INFOSYSTEMS.
+ 
+ PROBLEM NO.:         1
+ MOXONIDINE PK ANALYSIS 1                                                
+0DATA CHECKOUT RUN:              NO 
+ DATA SET LOCATED ON UNIT NO.:    2
+ THIS UNIT TO BE REWOUND:        NO 
+ NO. OF DATA RECS IN DATA SET:     1166
+ NO. OF DATA ITEMS IN DATA SET:  34
+ ID DATA ITEM IS DATA ITEM NO.:   1
+ DEP VARIABLE IS DATA ITEM NO.:  31
+ MDV DATA ITEM IS DATA ITEM NO.: 34
+0INDICES PASSED TO SUBROUTINE PRED:
+ 32 22 25  0 26 27 29  0  0
+  0  0
+ 0LABELS FOR DATA ITEMS:
+  ID VISI XAT2 DGRP DOSE FLAG ONO XIME DVO NEUY SCR AGE SEX NYHA WT COMP ACE DIG DIU NUMB TAD TIME VIDD CLCR AMT SS II VID CMT CONO
+  DV EVID OVID MDV
+0FORMAT FOR DATA:
+ (7E10.0/7E10.0/7E10.0/7E10.0/2E10.0,E11.0,2E10.0,1F2.0)                         
+ 
+ TOT. NO. OF OBS RECS:     1022
+ TOT. NO. OF INDIVIDUALS:     74
+0LENGTH OF THETA:  5
+0DEFAULT THETA BOUNDARY TEST OMITTED:    NO 
+0OMEGA HAS BLOCK FORM:
+  1
+  0  2
+  0  2  2
+0DEFAULT OMEGA BOUNDARY TEST OMITTED:    NO 
+0SIGMA HAS SIMPLE DIAGONAL FORM WITH DIMENSION:  1
+0DEFAULT SIGMA BOUNDARY TEST OMITTED:    NO 
+0INITIAL ESTIMATE OF THETA:
+ LOWER BOUND    INITIAL EST    UPPER BOUND
+  0.0000E+00     0.3485E+02     0.1000E+07
+  0.0000E+00     0.2848E+02     0.1000E+07
+  0.0000E+00     0.2947E+00     0.1000E+07
+  0.0000E+00     0.6156E-01     0.1000E+07
+  0.0000E+00     0.3395E+00     0.1000E+07
+0INITIAL ESTIMATE OF OMEGA:
+ BLOCK SET NO.   BLOCK                                                                    FIXED
+        1                                                                                   NO 
+                  0.4813E+00
+        2                                                                                   NO 
+                  0.1091E+01
+                  0.1229E-02   0.1663E+00
+0INITIAL ESTIMATE OF SIGMA:
+ 0.1000E+01
+0SIGMA CONSTRAINED TO BE THIS INITIAL ESTIMATE
+0SIMULATION STEP OMITTED:    NO 
+ SOURCE  1:
+    SEED1:          1234   SEED2:             0   PSEUDO-NORMAL       
+ NUMBER OF SUBPROBLEMS:    1
+0ESTIMATION STEP OMITTED:          YES 
+ CONDITIONAL ESTIMATES USED:       YES 
+ CENTERED ETA:                      NO 
+ EPS-ETA INTERACTION:              YES 
+ LAPLACIAN OBJ. FUNC.:             YES 
+ NUMERICAL 2ND DERIVATIVES:        YES 
+
+ THE FOLLOWING LABELS ARE EQUIVALENT
+ PRED=PREDI
+ RES=RESI
+ WRES=WRESI
+1DOUBLE PRECISION PREDPP VERSION 7.1.0
+ 
+ ONE COMPARTMENT MODEL WITH FIRST-ORDER ABSORPTION (ADVAN2)
+0MAXIMUM NO. OF BASIC PK PARAMETERS:   3
+0BASIC PK PARAMETERS (AFTER TRANSLATION):
+   ELIMINATION RATE (K) IS BASIC PK PARAMETER NO.:  1
+   ABSORPTION RATE (KA) IS BASIC PK PARAMETER NO.:  3
+ 
+0COMPARTMENT ATTRIBUTES 
+ COMPT. NO.   FUNCTION   INITIAL    ON/OFF      DOSE      DEFAULT    DEFAULT
+                         STATUS     ALLOWED    ALLOWED    FOR DOSE   FOR OBS.
+    1         DEPOT        OFF        YES        YES        YES        NO 
+    2         CENTRAL      ON         NO         YES        NO         YES
+    3         OUTPUT       OFF        YES        NO         NO         NO 
+1
+ ADDITIONAL PK PARAMETERS - ASSIGNMENT OF ROWS IN GG
+ COMPT. NO.                             INDICES
+              SCALE      BIOAVAIL.   ZERO-ORDER  ZERO-ORDER  ABSORB
+                         FRACTION    RATE        DURATION    LAG  
+    1           *           *           *           *           4
+    2           5           *           *           *           *
+    3           *           -           -           -           -
+             - PARAMETER IS NOT ALLOWED FOR THIS MODEL
+             * PARAMETER IS NOT SUPPLIED BY PK SUBROUTINE;
+               WILL DEFAULT TO ONE IF APPLICABLE
+0DATA ITEM INDICES USED BY PRED ARE:
+   EVENT ID DATA ITEM IS DATA ITEM NO.:     32
+   TIME DATA ITEM IS DATA ITEM NO.:         22
+   DOSE AMOUNT DATA ITEM IS DATA ITEM NO.:  25
+   STEADY STATE DATA ITEM IS DATA ITEM NO.: 26
+   INTERVAL DATA ITEM IS DATA ITEM NO.:     27
+   COMPT. NO. DATA ITEM IS DATA ITEM NO.:   29
+ 
+0PK SUBROUTINE CALLED WITH EVERY EVENT RECORD.
+ PK SUBROUTINE NOT CALLED AT NONEVENT (ADDITIONAL OR LAGGED) DOSE TIMES.
+0ERROR SUBROUTINE CALLED WITH EVERY EVENT RECORD.
+1
+ PROBLEM NO.:         1     SUBPROBLEM NO.:      1
+ 
+ SIMULATION STEP PERFORMED
+ SOURCE  1:
+    SEED1:     784882240   SEED2:             0
+1
+
+
+ #METH: Laplacian Conditional Estimation with Interaction (Evaluation)
+1
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ ************************************************************************************************************************
+ ********************                                                                                ********************
+ ********************          LAPLACIAN CONDITIONAL ESTIMATION WITH INTERACTION (EVALUATION)        ********************
+ #OBJT:**************                       MINIMUM VALUE OF OBJECTIVE FUNCTION                      ********************
+ ********************                                                                                ********************
+ ************************************************************************************************************************
+ 
+
+
+
+
+
+ #OBJV:********************************************     -638.567       **************************************************
+1
+ ************************************************************************************************************************
+ ********************                                                                                ********************
+ ********************          LAPLACIAN CONDITIONAL ESTIMATION WITH INTERACTION (EVALUATION)        ********************
+ ********************                             FINAL PARAMETER ESTIMATE                           ********************
+ ********************                                                                                ********************
+ ************************************************************************************************************************
+ 
+
+
+ THETA - VECTOR OF FIXED EFFECTS PARAMETERS   *********
+
+
+         TH 1      TH 2      TH 3      TH 4      TH 5     
+ 
+         3.48E+01  2.85E+01  2.95E-01  6.16E-02  3.40E-01
+ 
+
+
+ OMEGA - COV MATRIX FOR RANDOM EFFECTS - ETAS  ********
+
+
+            ETA1      ETA2      ETA3
+ 
+ ETA1
++        4.81E-01
+ 
+ ETA2
++        0.00E+00  1.09E+00
+ 
+ ETA3
++        0.00E+00  1.23E-03  1.66E-01
+ 
+
+
+ SIGMA - COV MATRIX FOR RANDOM EFFECTS - EPSILONS  ****
+
+
+            EPS1
+ 
+ EPS1
++        1.00E+00
+ 
+1
+ PROBLEM NO.:         2
+ MOXONIDINE PK ANALYSIS 2                                                
+0DATA CHECKOUT RUN:              NO 
+ DATA SET LOCATED ON UNIT NO.:    2
+ THIS UNIT TO BE REWOUND:        NO 
+ NO. OF DATA RECS IN DATA SET:     1166
+ NO. OF DATA ITEMS IN DATA SET:  34
+ ID DATA ITEM IS DATA ITEM NO.:   1
+ DEP VARIABLE IS DATA ITEM NO.:  31
+ MDV DATA ITEM IS DATA ITEM NO.: 34
+0INDICES PASSED TO SUBROUTINE PRED:
+ 32 22 25  0 26 27 29  0  0
+  0  0
+ 0LABELS FOR DATA ITEMS:
+  ID VISI XAT2 DGRP DOSE FLAG ONO XIME DVO NEUY SCR AGE SEX NYHA WT COMP ACE DIG DIU NUMB TAD TIME VIDD CLCR AMT SS II VID CMT CONO
+  DV EVID OVID MDV
+0FORMAT FOR DATA:
+ (7E10.0/7E10.0/7E10.0/7E10.0/2E10.0,E11.0,2E10.0,1F2.0)                         
+ 
+ TOT. NO. OF OBS RECS:     1022
+ TOT. NO. OF INDIVIDUALS:     74
+0LENGTH OF THETA:  5
+0DEFAULT THETA BOUNDARY TEST OMITTED:    NO 
+0OMEGA HAS BLOCK FORM:
+  1
+  0  2
+  0  2  2
+0DEFAULT OMEGA BOUNDARY TEST OMITTED:    NO 
+0SIGMA HAS SIMPLE DIAGONAL FORM WITH DIMENSION:  1
+0DEFAULT SIGMA BOUNDARY TEST OMITTED:    NO 
+0INITIAL ESTIMATE OF THETA:
+ LOWER BOUND    INITIAL EST    UPPER BOUND
+  0.0000E+00     0.2711E+02     0.1000E+07
+  0.0000E+00     0.1630E+02     0.1000E+07
+  0.0000E+00     0.3065E+00     0.1000E+07
+  0.0000E+00     0.9539E-01     0.1000E+07
+  0.0000E+00     0.3279E+00     0.1000E+07
+0INITIAL ESTIMATE OF OMEGA:
+ BLOCK SET NO.   BLOCK                                                                    FIXED
+        1                                                                                   NO 
+                  0.2964E+00
+        2                                                                                   NO 
+                  0.1423E+01
+                  0.2194E+00   0.2365E+00
+0INITIAL ESTIMATE OF SIGMA:
+ 0.1000E+01
+0SIGMA CONSTRAINED TO BE THIS INITIAL ESTIMATE
+0SIMULATION STEP OMITTED:    NO 
+ SOURCE  1:
+    SEED1:          1234   SEED2:             0   PSEUDO-NORMAL       
+ NUMBER OF SUBPROBLEMS:    1
+0ESTIMATION STEP OMITTED:           NO 
+ CONDITIONAL ESTIMATES USED:       YES 
+ CENTERED ETA:                      NO 
+ EPS-ETA INTERACTION:              YES 
+ LAPLACIAN OBJ. FUNC.:              NO 
+ NO. OF FUNCT. EVALS. ALLOWED:        528
+ NO. OF SIG. FIGURES REQUIRED:       3
+ INTERMEDIATE PRINTOUT:            YES 
+ ESTIMATE OUTPUT TO MSF:            NO 
+ IND. OBJ. FUNC. VALUES SORTED:     NO 
+
+ THE FOLLOWING LABELS ARE EQUIVALENT
+ PRED=PREDI
+ RES=RESI
+ WRES=WRESI
+1
+ ADDITIONAL PK PARAMETERS - ASSIGNMENT OF ROWS IN GG
+ COMPT. NO.                             INDICES
+              SCALE      BIOAVAIL.   ZERO-ORDER  ZERO-ORDER  ABSORB
+                         FRACTION    RATE        DURATION    LAG  
+    1           *           *           *           *           4
+    2           5           *           *           *           *
+    3           *           -           -           -           -
+             - PARAMETER IS NOT ALLOWED FOR THIS MODEL
+             * PARAMETER IS NOT SUPPLIED BY PK SUBROUTINE;
+               WILL DEFAULT TO ONE IF APPLICABLE
+0DATA ITEM INDICES USED BY PRED ARE:
+   EVENT ID DATA ITEM IS DATA ITEM NO.:     32
+   TIME DATA ITEM IS DATA ITEM NO.:         22
+   DOSE AMOUNT DATA ITEM IS DATA ITEM NO.:  25
+   STEADY STATE DATA ITEM IS DATA ITEM NO.: 26
+   INTERVAL DATA ITEM IS DATA ITEM NO.:     27
+   COMPT. NO. DATA ITEM IS DATA ITEM NO.:   29
+ 
+0PK SUBROUTINE CALLED WITH EVERY EVENT RECORD.
+ PK SUBROUTINE NOT CALLED AT NONEVENT (ADDITIONAL OR LAGGED) DOSE TIMES.
+0ERROR SUBROUTINE CALLED WITH EVERY EVENT RECORD.
+1
+ PROBLEM NO.:         2     SUBPROBLEM NO.:      1
+ 
+ SIMULATION STEP PERFORMED
+ SOURCE  1:
+    SEED1:     784882240   SEED2:             0
+1
+
+
+ #METH: Importance Sampling
+ EM/BAYES SETUP
+ THETAS THAT ARE MU MODELED:
+ 
+ THETAS THAT ARE SIGMA-LIKE:
+ 
+
+ MONITORING OF SEARCH:
+
+ iteration            0 OBJ=   -711.31791789457054     
+ Elapsed estimation time in seconds:     0.90
+
+ #TERM:
+ OPTIMIZATION NOT TESTED
+ 
+
+ ETABAR IS THE ARITHMETIC MEAN OF THE ETA-ESTIMATES,
+ AND THE P-VALUE IS GIVEN FOR THE NULL HYPOTHESIS THAT THE TRUE MEAN IS 0.
+
+ ETABAR:         3.2353E-02  3.6501E-02 -5.2760E-02
+ SE:             6.7905E-02  1.0276E-01  4.2463E-02
+
+ P VAL.:         6.3376E-01  7.2244E-01  2.1405E-01
+
+ ETAshrink(%):  -8.0285E+00  2.5401E+01  2.4377E+01
+ EPSshrink(%):   1.2016E+01
+
+ #TERE:
+1
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ ************************************************************************************************************************
+ ********************                                                                                ********************
+ ********************                               IMPORTANCE SAMPLING                              ********************
+ #OBJT:**************                        FINAL VALUE OF OBJECTIVE FUNCTION                       ********************
+ ********************                                                                                ********************
+ ************************************************************************************************************************
+ 
+
+
+
+
+
+ #OBJV:********************************************     -711.318       **************************************************
+1
+ ************************************************************************************************************************
+ ********************                                                                                ********************
+ ********************                               IMPORTANCE SAMPLING                              ********************
+ ********************                             FINAL PARAMETER ESTIMATE                           ********************
+ ********************                                                                                ********************
+ ************************************************************************************************************************
+ 
+
+
+ THETA - VECTOR OF FIXED EFFECTS PARAMETERS   *********
+
+
+         TH 1      TH 2      TH 3      TH 4      TH 5     
+ 
+         2.71E+01  1.63E+01  3.07E-01  9.54E-02  3.28E-01
+ 
+
+
+ OMEGA - COV MATRIX FOR RANDOM EFFECTS - ETAS  ********
+
+
+            ETA1      ETA2      ETA3
+ 
+ ETA1
++        2.96E-01
+ 
+ ETA2
++        0.00E+00  1.42E+00
+ 
+ ETA3
++        0.00E+00  2.19E-01  2.37E-01
+ 
+
+
+ SIGMA - COV MATRIX FOR RANDOM EFFECTS - EPSILONS  ****
+
+
+            EPS1
+ 
+ EPS1
++        1.00E+00
+ 
+1
+ PROBLEM NO.:         3
+ MOXONIDINE PK ANALYSIS 2                                                
+0DATA CHECKOUT RUN:              NO 
+ DATA SET LOCATED ON UNIT NO.:    2
+ THIS UNIT TO BE REWOUND:        NO 
+ NO. OF DATA RECS IN DATA SET:     1166
+ NO. OF DATA ITEMS IN DATA SET:  34
+ ID DATA ITEM IS DATA ITEM NO.:   1
+ DEP VARIABLE IS DATA ITEM NO.:  31
+ MDV DATA ITEM IS DATA ITEM NO.: 34
+0INDICES PASSED TO SUBROUTINE PRED:
+ 32 22 25  0 26 27 29  0  0
+  0  0
+ 0LABELS FOR DATA ITEMS:
+  ID VISI XAT2 DGRP DOSE FLAG ONO XIME DVO NEUY SCR AGE SEX NYHA WT COMP ACE DIG DIU NUMB TAD TIME VIDD CLCR AMT SS II VID CMT CONO
+  DV EVID OVID MDV
+0FORMAT FOR DATA:
+ (7E10.0/7E10.0/7E10.0/7E10.0/2E10.0,E11.0,2E10.0,1F2.0)                         
+ 
+ TOT. NO. OF OBS RECS:     1022
+ TOT. NO. OF INDIVIDUALS:     74
+0LENGTH OF THETA:  5
+0DEFAULT THETA BOUNDARY TEST OMITTED:    NO 
+0OMEGA HAS BLOCK FORM:
+  1
+  0  2
+  0  2  2
+0DEFAULT OMEGA BOUNDARY TEST OMITTED:    NO 
+0SIGMA HAS SIMPLE DIAGONAL FORM WITH DIMENSION:  1
+0DEFAULT SIGMA BOUNDARY TEST OMITTED:    NO 
+0INITIAL ESTIMATE OF THETA:
+ LOWER BOUND    INITIAL EST    UPPER BOUND
+  0.0000E+00     0.2711E+02     0.1000E+07
+  0.0000E+00     0.1630E+02     0.1000E+07
+  0.0000E+00     0.3065E+00     0.1000E+07
+  0.0000E+00     0.9539E-01     0.1000E+07
+  0.0000E+00     0.3279E+00     0.1000E+07
+0INITIAL ESTIMATE OF OMEGA:
+ BLOCK SET NO.   BLOCK                                                                    FIXED
+        1                                                                                   NO 
+                  0.2964E+00
+        2                                                                                   NO 
+                  0.1423E+01
+                  0.2194E+00   0.2365E+00
+0INITIAL ESTIMATE OF SIGMA:
+ 0.1000E+01
+0SIGMA CONSTRAINED TO BE THIS INITIAL ESTIMATE
+0SIMULATION STEP OMITTED:    NO 
+ SOURCE  1:
+    SEED1:          1234   SEED2:             0   PSEUDO-NORMAL       
+ NUMBER OF SUBPROBLEMS:    1
+0ESTIMATION STEP OMITTED:           NO 
+ CONDITIONAL ESTIMATES USED:       YES 
+ CENTERED ETA:                      NO 
+ EPS-ETA INTERACTION:              YES 
+ LAPLACIAN OBJ. FUNC.:              NO 
+ NO. OF FUNCT. EVALS. ALLOWED:        528
+ NO. OF SIG. FIGURES REQUIRED:       3
+ INTERMEDIATE PRINTOUT:            YES 
+ ESTIMATE OUTPUT TO MSF:            NO 
+ IND. OBJ. FUNC. VALUES SORTED:     NO 
+
+ THE FOLLOWING LABELS ARE EQUIVALENT
+ PRED=PREDI
+ RES=RESI
+ WRES=WRESI
+1
+ ADDITIONAL PK PARAMETERS - ASSIGNMENT OF ROWS IN GG
+ COMPT. NO.                             INDICES
+              SCALE      BIOAVAIL.   ZERO-ORDER  ZERO-ORDER  ABSORB
+                         FRACTION    RATE        DURATION    LAG  
+    1           *           *           *           *           4
+    2           5           *           *           *           *
+    3           *           -           -           -           -
+             - PARAMETER IS NOT ALLOWED FOR THIS MODEL
+             * PARAMETER IS NOT SUPPLIED BY PK SUBROUTINE;
+               WILL DEFAULT TO ONE IF APPLICABLE
+0DATA ITEM INDICES USED BY PRED ARE:
+   EVENT ID DATA ITEM IS DATA ITEM NO.:     32
+   TIME DATA ITEM IS DATA ITEM NO.:         22
+   DOSE AMOUNT DATA ITEM IS DATA ITEM NO.:  25
+   STEADY STATE DATA ITEM IS DATA ITEM NO.: 26
+   INTERVAL DATA ITEM IS DATA ITEM NO.:     27
+   COMPT. NO. DATA ITEM IS DATA ITEM NO.:   29
+ 
+0PK SUBROUTINE CALLED WITH EVERY EVENT RECORD.
+ PK SUBROUTINE NOT CALLED AT NONEVENT (ADDITIONAL OR LAGGED) DOSE TIMES.
+0ERROR SUBROUTINE CALLED WITH EVERY EVENT RECORD.
+1
+ PROBLEM NO.:         3     SUBPROBLEM NO.:      1
+ 
+ SIMULATION STEP PERFORMED
+ SOURCE  1:
+    SEED1:     784882240   SEED2:             0
+1
+
+
+ #METH: Objective Function Evaluation by Importance Sampling
+ EM/BAYES SETUP
+ THETAS THAT ARE MU MODELED:
+ 
+ THETAS THAT ARE SIGMA-LIKE:
+ 
+
+ MONITORING OF SEARCH:
+
+ iteration            0 OBJ=   -711.31791789457054     
+ Elapsed estimation time in seconds:     0.17
+
+ #TERM:
+ OPTIMIZATION NOT TESTED
+ 
+
+ ETABAR IS THE ARITHMETIC MEAN OF THE ETA-ESTIMATES,
+ AND THE P-VALUE IS GIVEN FOR THE NULL HYPOTHESIS THAT THE TRUE MEAN IS 0.
+
+ ETABAR:         3.2353E-02  3.6501E-02 -5.2760E-02
+ SE:             6.7905E-02  1.0276E-01  4.2463E-02
+
+ P VAL.:         6.3376E-01  7.2244E-01  2.1405E-01
+
+ ETAshrink(%):  -8.0285E+00  2.5401E+01  2.4377E+01
+ EPSshrink(%):   1.2016E+01
+
+ #TERE:
+1
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ ************************************************************************************************************************
+ ********************                                                                                ********************
+ ********************               OBJECTIVE FUNCTION EVALUATION BY IMPORTANCE SAMPLING             ********************
+ #OBJT:**************                        FINAL VALUE OF OBJECTIVE FUNCTION                       ********************
+ ********************                                                                                ********************
+ ************************************************************************************************************************
+ 
+
+
+
+
+
+ #OBJV:********************************************     -711.318       **************************************************
+1
+ ************************************************************************************************************************
+ ********************                                                                                ********************
+ ********************               OBJECTIVE FUNCTION EVALUATION BY IMPORTANCE SAMPLING             ********************
+ ********************                             FINAL PARAMETER ESTIMATE                           ********************
+ ********************                                                                                ********************
+ ************************************************************************************************************************
+ 
+
+
+ THETA - VECTOR OF FIXED EFFECTS PARAMETERS   *********
+
+
+         TH 1      TH 2      TH 3      TH 4      TH 5     
+ 
+         2.71E+01  1.63E+01  3.07E-01  9.54E-02  3.28E-01
+ 
+
+
+ OMEGA - COV MATRIX FOR RANDOM EFFECTS - ETAS  ********
+
+
+            ETA1      ETA2      ETA3
+ 
+ ETA1
++        2.96E-01
+ 
+ ETA2
++        0.00E+00  1.42E+00
+ 
+ ETA3
++        0.00E+00  2.19E-01  2.37E-01
+ 
+
+
+ SIGMA - COV MATRIX FOR RANDOM EFFECTS - EPSILONS  ****
+
+
+            EPS1
+ 
+ EPS1
++        1.00E+00
+ 
+1
+ PROBLEM NO.:         4
+ MOXONIDINE PK ANALYSIS 2                                                
+0DATA CHECKOUT RUN:              NO 
+ DATA SET LOCATED ON UNIT NO.:    2
+ THIS UNIT TO BE REWOUND:        NO 
+ NO. OF DATA RECS IN DATA SET:     1166
+ NO. OF DATA ITEMS IN DATA SET:  34
+ ID DATA ITEM IS DATA ITEM NO.:   1
+ DEP VARIABLE IS DATA ITEM NO.:  31
+ MDV DATA ITEM IS DATA ITEM NO.: 34
+0INDICES PASSED TO SUBROUTINE PRED:
+ 32 22 25  0 26 27 29  0  0
+  0  0
+ 0LABELS FOR DATA ITEMS:
+  ID VISI XAT2 DGRP DOSE FLAG ONO XIME DVO NEUY SCR AGE SEX NYHA WT COMP ACE DIG DIU NUMB TAD TIME VIDD CLCR AMT SS II VID CMT CONO
+  DV EVID OVID MDV
+0FORMAT FOR DATA:
+ (7E10.0/7E10.0/7E10.0/7E10.0/2E10.0,E11.0,2E10.0,1F2.0)                         
+ 
+ TOT. NO. OF OBS RECS:     1022
+ TOT. NO. OF INDIVIDUALS:     74
+0LENGTH OF THETA:  5
+0DEFAULT THETA BOUNDARY TEST OMITTED:    NO 
+0OMEGA HAS BLOCK FORM:
+  1
+  0  2
+  0  2  2
+0DEFAULT OMEGA BOUNDARY TEST OMITTED:    NO 
+0SIGMA HAS SIMPLE DIAGONAL FORM WITH DIMENSION:  1
+0DEFAULT SIGMA BOUNDARY TEST OMITTED:    NO 
+0INITIAL ESTIMATE OF THETA:
+ LOWER BOUND    INITIAL EST    UPPER BOUND
+  0.0000E+00     0.2711E+02     0.1000E+07
+  0.0000E+00     0.1630E+02     0.1000E+07
+  0.0000E+00     0.3065E+00     0.1000E+07
+  0.0000E+00     0.9539E-01     0.1000E+07
+  0.0000E+00     0.3279E+00     0.1000E+07
+0INITIAL ESTIMATE OF OMEGA:
+ BLOCK SET NO.   BLOCK                                                                    FIXED
+        1                                                                                   NO 
+                  0.2964E+00
+        2                                                                                   NO 
+                  0.1423E+01
+                  0.2194E+00   0.2365E+00
+0INITIAL ESTIMATE OF SIGMA:
+ 0.1000E+01
+0SIGMA CONSTRAINED TO BE THIS INITIAL ESTIMATE
+0SIMULATION STEP OMITTED:    NO 
+ SOURCE  1:
+    SEED1:          1234   SEED2:             0   PSEUDO-NORMAL       
+ NUMBER OF SUBPROBLEMS:    1
+0ESTIMATION STEP OMITTED:           NO 
+ CONDITIONAL ESTIMATES USED:       YES 
+ CENTERED ETA:                      NO 
+ EPS-ETA INTERACTION:              YES 
+ LAPLACIAN OBJ. FUNC.:              NO 
+ NO. OF FUNCT. EVALS. ALLOWED:        528
+ NO. OF SIG. FIGURES REQUIRED:       3
+ INTERMEDIATE PRINTOUT:            YES 
+ ESTIMATE OUTPUT TO MSF:            NO 
+ IND. OBJ. FUNC. VALUES SORTED:     NO 
+
+ THE FOLLOWING LABELS ARE EQUIVALENT
+ PRED=PREDI
+ RES=RESI
+ WRES=WRESI
+1
+ ADDITIONAL PK PARAMETERS - ASSIGNMENT OF ROWS IN GG
+ COMPT. NO.                             INDICES
+              SCALE      BIOAVAIL.   ZERO-ORDER  ZERO-ORDER  ABSORB
+                         FRACTION    RATE        DURATION    LAG  
+    1           *           *           *           *           4
+    2           5           *           *           *           *
+    3           *           -           -           -           -
+             - PARAMETER IS NOT ALLOWED FOR THIS MODEL
+             * PARAMETER IS NOT SUPPLIED BY PK SUBROUTINE;
+               WILL DEFAULT TO ONE IF APPLICABLE
+0DATA ITEM INDICES USED BY PRED ARE:
+   EVENT ID DATA ITEM IS DATA ITEM NO.:     32
+   TIME DATA ITEM IS DATA ITEM NO.:         22
+   DOSE AMOUNT DATA ITEM IS DATA ITEM NO.:  25
+   STEADY STATE DATA ITEM IS DATA ITEM NO.: 26
+   INTERVAL DATA ITEM IS DATA ITEM NO.:     27
+   COMPT. NO. DATA ITEM IS DATA ITEM NO.:   29
+ 
+0PK SUBROUTINE CALLED WITH EVERY EVENT RECORD.
+ PK SUBROUTINE NOT CALLED AT NONEVENT (ADDITIONAL OR LAGGED) DOSE TIMES.
+0ERROR SUBROUTINE CALLED WITH EVERY EVENT RECORD.
+1
+ PROBLEM NO.:         4     SUBPROBLEM NO.:      1
+ 
+ SIMULATION STEP PERFORMED
+ SOURCE  1:
+    SEED1:     784882240   SEED2:             0
+1
+
+
+ #METH: Objective Function Evaluation by Importance Sampling
+ EM/BAYES SETUP
+ THETAS THAT ARE MU MODELED:
+ 
+ THETAS THAT ARE SIGMA-LIKE:
+ 
+
+ MONITORING OF SEARCH:
+
+ iteration            0 OBJ=   -711.31791789457054     
+ iteration            1 OBJ=   -714.86478517000364     
+ Elapsed estimation time in seconds:     0.31
+
+ #TERM:
+ OPTIMIZATION NOT TESTED
+ 
+
+ ETABAR IS THE ARITHMETIC MEAN OF THE ETA-ESTIMATES,
+ AND THE P-VALUE IS GIVEN FOR THE NULL HYPOTHESIS THAT THE TRUE MEAN IS 0.
+
+ ETABAR:         3.2289E-02  2.3304E-02 -3.6961E-02
+ SE:             6.7661E-02  1.0550E-01  4.2884E-02
+
+ P VAL.:         6.3320E-01  8.2517E-01  3.8875E-01
+
+ ETAshrink(%):  -7.6395E+00  2.3417E+01  2.3628E+01
+ EPSshrink(%):   1.1686E+01
+
+ #TERE:
+1
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ ************************************************************************************************************************
+ ********************                                                                                ********************
+ ********************               OBJECTIVE FUNCTION EVALUATION BY IMPORTANCE SAMPLING             ********************
+ #OBJT:**************                        FINAL VALUE OF OBJECTIVE FUNCTION                       ********************
+ ********************                                                                                ********************
+ ************************************************************************************************************************
+ 
+
+
+
+
+
+ #OBJV:********************************************     -714.865       **************************************************
+1
+ ************************************************************************************************************************
+ ********************                                                                                ********************
+ ********************               OBJECTIVE FUNCTION EVALUATION BY IMPORTANCE SAMPLING             ********************
+ ********************                             FINAL PARAMETER ESTIMATE                           ********************
+ ********************                                                                                ********************
+ ************************************************************************************************************************
+ 
+
+
+ THETA - VECTOR OF FIXED EFFECTS PARAMETERS   *********
+
+
+         TH 1      TH 2      TH 3      TH 4      TH 5     
+ 
+         2.71E+01  1.63E+01  3.07E-01  9.54E-02  3.28E-01
+ 
+
+
+ OMEGA - COV MATRIX FOR RANDOM EFFECTS - ETAS  ********
+
+
+            ETA1      ETA2      ETA3
+ 
+ ETA1
++        2.96E-01
+ 
+ ETA2
++        0.00E+00  1.42E+00
+ 
+ ETA3
++        0.00E+00  2.19E-01  2.37E-01
+ 
+
+
+ SIGMA - COV MATRIX FOR RANDOM EFFECTS - EPSILONS  ****
+
+
+            EPS1
+ 
+ EPS1
++        1.00E+00
+ 
+1
+ PROBLEM NO.:         5
+ MOXONIDINE PK ANALYSIS 2                                                
+0DATA CHECKOUT RUN:              NO 
+ DATA SET LOCATED ON UNIT NO.:    2
+ THIS UNIT TO BE REWOUND:        NO 
+ NO. OF DATA RECS IN DATA SET:     1166
+ NO. OF DATA ITEMS IN DATA SET:  34
+ ID DATA ITEM IS DATA ITEM NO.:   1
+ DEP VARIABLE IS DATA ITEM NO.:  31
+ MDV DATA ITEM IS DATA ITEM NO.: 34
+0INDICES PASSED TO SUBROUTINE PRED:
+ 32 22 25  0 26 27 29  0  0
+  0  0
+ 0LABELS FOR DATA ITEMS:
+  ID VISI XAT2 DGRP DOSE FLAG ONO XIME DVO NEUY SCR AGE SEX NYHA WT COMP ACE DIG DIU NUMB TAD TIME VIDD CLCR AMT SS II VID CMT CONO
+  DV EVID OVID MDV
+0FORMAT FOR DATA:
+ (7E10.0/7E10.0/7E10.0/7E10.0/2E10.0,E11.0,2E10.0,1F2.0)                         
+ 
+ TOT. NO. OF OBS RECS:     1022
+ TOT. NO. OF INDIVIDUALS:     74
+0LENGTH OF THETA:  5
+0DEFAULT THETA BOUNDARY TEST OMITTED:    NO 
+0OMEGA HAS BLOCK FORM:
+  1
+  0  2
+  0  2  2
+0DEFAULT OMEGA BOUNDARY TEST OMITTED:    NO 
+0SIGMA HAS SIMPLE DIAGONAL FORM WITH DIMENSION:  1
+0DEFAULT SIGMA BOUNDARY TEST OMITTED:    NO 
+0INITIAL ESTIMATE OF THETA:
+ LOWER BOUND    INITIAL EST    UPPER BOUND
+  0.0000E+00     0.2711E+02     0.1000E+07
+  0.0000E+00     0.1630E+02     0.1000E+07
+  0.0000E+00     0.3065E+00     0.1000E+07
+  0.0000E+00     0.9539E-01     0.1000E+07
+  0.0000E+00     0.3279E+00     0.1000E+07
+0INITIAL ESTIMATE OF OMEGA:
+ BLOCK SET NO.   BLOCK                                                                    FIXED
+        1                                                                                   NO 
+                  0.2964E+00
+        2                                                                                   NO 
+                  0.1423E+01
+                  0.2194E+00   0.2365E+00
+0INITIAL ESTIMATE OF SIGMA:
+ 0.1000E+01
+0SIGMA CONSTRAINED TO BE THIS INITIAL ESTIMATE
+0SIMULATION STEP OMITTED:    NO 
+ SOURCE  1:
+    SEED1:          1234   SEED2:             0   PSEUDO-NORMAL       
+ NUMBER OF SUBPROBLEMS:    1
+0ESTIMATION STEP OMITTED:           NO 
+ CONDITIONAL ESTIMATES USED:       YES 
+ CENTERED ETA:                      NO 
+ EPS-ETA INTERACTION:              YES 
+ LAPLACIAN OBJ. FUNC.:              NO 
+ NO. OF FUNCT. EVALS. ALLOWED:        528
+ NO. OF SIG. FIGURES REQUIRED:       3
+ INTERMEDIATE PRINTOUT:            YES 
+ ESTIMATE OUTPUT TO MSF:            NO 
+ IND. OBJ. FUNC. VALUES SORTED:     NO 
+
+ THE FOLLOWING LABELS ARE EQUIVALENT
+ PRED=PREDI
+ RES=RESI
+ WRES=WRESI
+1
+ ADDITIONAL PK PARAMETERS - ASSIGNMENT OF ROWS IN GG
+ COMPT. NO.                             INDICES
+              SCALE      BIOAVAIL.   ZERO-ORDER  ZERO-ORDER  ABSORB
+                         FRACTION    RATE        DURATION    LAG  
+    1           *           *           *           *           4
+    2           5           *           *           *           *
+    3           *           -           -           -           -
+             - PARAMETER IS NOT ALLOWED FOR THIS MODEL
+             * PARAMETER IS NOT SUPPLIED BY PK SUBROUTINE;
+               WILL DEFAULT TO ONE IF APPLICABLE
+0DATA ITEM INDICES USED BY PRED ARE:
+   EVENT ID DATA ITEM IS DATA ITEM NO.:     32
+   TIME DATA ITEM IS DATA ITEM NO.:         22
+   DOSE AMOUNT DATA ITEM IS DATA ITEM NO.:  25
+   STEADY STATE DATA ITEM IS DATA ITEM NO.: 26
+   INTERVAL DATA ITEM IS DATA ITEM NO.:     27
+   COMPT. NO. DATA ITEM IS DATA ITEM NO.:   29
+ 
+0PK SUBROUTINE CALLED WITH EVERY EVENT RECORD.
+ PK SUBROUTINE NOT CALLED AT NONEVENT (ADDITIONAL OR LAGGED) DOSE TIMES.
+0ERROR SUBROUTINE CALLED WITH EVERY EVENT RECORD.
+1
+ PROBLEM NO.:         5     SUBPROBLEM NO.:      1
+ 
+ SIMULATION STEP PERFORMED
+ SOURCE  1:
+    SEED1:     784882240   SEED2:             0
+1
+
+
+ #METH: Objective Function Evaluation by Importance Sampling
+ EM/BAYES SETUP
+ THETAS THAT ARE MU MODELED:
+ 
+ THETAS THAT ARE SIGMA-LIKE:
+ 
+
+ MONITORING OF SEARCH:
+
+ iteration            0 OBJ=   -711.31791789457054     
+ iteration            1 OBJ=   -714.86478517000364     
+ iteration            2 OBJ=   -715.67102918761441     
+ iteration            3 OBJ=   -714.93004179298828     
+ iteration            4 OBJ=   -717.70455118488258     
+ iteration            5 OBJ=   -716.19561115441797     
+ iteration            6 OBJ=   -714.27533371450988     
+ iteration            7 OBJ=   -718.84008897896877     
+ iteration            8 OBJ=   -716.81765963290025     
+ iteration            9 OBJ=   -720.50674368434602     
+ iteration           10 OBJ=   -717.80987556240530     
+ iteration           11 OBJ=   -717.27396892251556     
+ iteration           12 OBJ=   -714.01584059918480     
+ iteration           13 OBJ=   -717.25088496420324     
+ iteration           14 OBJ=   -720.13882444376316     
+ iteration           15 OBJ=   -716.36161706726011     
+ iteration           16 OBJ=   -715.94989328290967     
+ iteration           17 OBJ=   -718.80989916921612     
+ iteration           18 OBJ=   -716.54482226075174     
+ iteration           19 OBJ=   -716.46229990392987     
+ iteration           20 OBJ=   -722.84010364641097     
+ iteration           21 OBJ=   -714.26920496460957     
+ iteration           22 OBJ=   -717.78363329606293     
+ iteration           23 OBJ=   -716.11414198191676     
+ iteration           24 OBJ=   -718.71702187518645     
+ iteration           25 OBJ=   -717.67875689170978     
+ iteration           26 OBJ=   -717.61165204960457     
+ iteration           27 OBJ=   -716.76471010908233     
+ iteration           28 OBJ=   -716.69256363195416     
+ iteration           29 OBJ=   -717.95509036285875     
+ iteration           30 OBJ=   -719.02542442678941     
+ iteration           31 OBJ=   -717.60449249953797     
+ iteration           32 OBJ=   -716.85281581470213     
+ iteration           33 OBJ=   -715.86886211528463     
+ iteration           34 OBJ=   -719.98350484529681     
+ iteration           35 OBJ=   -716.25447577271279     
+ iteration           36 OBJ=   -716.70711334551174     
+ iteration           37 OBJ=   -717.30095033122302     
+ iteration           38 OBJ=   -717.02080062818845     
+ iteration           39 OBJ=   -713.37584466837200     
+ iteration           40 OBJ=   -716.39698339794359     
+ iteration           41 OBJ=   -721.19715976702423     
+ iteration           42 OBJ=   -717.62331565533907     
+ iteration           43 OBJ=   -718.99650136651280     
+ iteration           44 OBJ=   -716.09804124153311     
+ iteration           45 OBJ=   -718.59077434312007     
+ iteration           46 OBJ=   -716.75956059700229     
+ iteration           47 OBJ=   -715.67293632217843     
+ iteration           48 OBJ=   -718.34466394063372     
+ iteration           49 OBJ=   -722.28279047688852     
+ iteration           50 OBJ=   -712.71073121374138     
+ iteration           51 OBJ=   -715.55582381987767     
+ iteration           52 OBJ=   -713.21154224489362     
+ iteration           53 OBJ=   -720.62896801934687     
+ iteration           54 OBJ=   -721.73492778626655     
+ iteration           55 OBJ=   -718.06457908953382     
+ iteration           56 OBJ=   -719.66058217540626     
+ iteration           57 OBJ=   -720.19274440803338     
+ iteration           58 OBJ=   -718.02744999391905     
+ iteration           59 OBJ=   -718.55581864758551     
+ iteration           60 OBJ=   -717.84157243106438     
+ iteration           61 OBJ=   -718.51709047180736     
+ iteration           62 OBJ=   -718.82335638986842     
+ iteration           63 OBJ=   -718.61255719966687     
+ iteration           64 OBJ=   -719.53834028334472     
+ iteration           65 OBJ=   -720.64406233749833     
+ iteration           66 OBJ=   -720.60930453505841     
+ iteration           67 OBJ=   -718.10932727685895     
+ iteration           68 OBJ=   -719.74403580576154     
+ iteration           69 OBJ=   -718.36358313190578     
+ iteration           70 OBJ=   -714.48543076047258     
+ iteration           71 OBJ=   -717.36981235218173     
+ iteration           72 OBJ=   -717.58421398450116     
+ iteration           73 OBJ=   -716.47466925561719     
+ iteration           74 OBJ=   -717.65568600797019     
+ iteration           75 OBJ=   -721.16846751137405     
+ iteration           76 OBJ=   -714.32231289711569     
+ iteration           77 OBJ=   -716.50096230553095     
+ iteration           78 OBJ=   -716.79112949478679     
+ iteration           79 OBJ=   -721.59410301460730     
+ iteration           80 OBJ=   -717.70112151633475     
+ iteration           81 OBJ=   -719.21504660138157     
+ iteration           82 OBJ=   -714.69944287474016     
+ iteration           83 OBJ=   -718.49330352080347     
+ iteration           84 OBJ=   -716.18036343528843     
+ iteration           85 OBJ=   -715.50870083023676     
+ iteration           86 OBJ=   -715.17108253964750     
+ iteration           87 OBJ=   -718.48081715246337     
+ iteration           88 OBJ=   -717.41453950581558     
+ iteration           89 OBJ=   -716.77714046430310     
+ iteration           90 OBJ=   -716.38133328664367     
+ iteration           91 OBJ=   -715.43046613743297     
+ iteration           92 OBJ=   -715.76988659668939     
+ iteration           93 OBJ=   -715.60886384931644     
+ iteration           94 OBJ=   -720.11614451871071     
+ iteration           95 OBJ=   -715.96025734365526     
+ iteration           96 OBJ=   -714.82114123588235     
+ iteration           97 OBJ=   -716.73072455501244     
+ iteration           98 OBJ=   -717.73764930295329     
+ iteration           99 OBJ=   -718.97754407305501     
+ iteration          100 OBJ=   -716.88160646634799     
+ iteration          101 OBJ=   -725.49761525274232     
+ iteration          102 OBJ=   -714.99277608668081     
+ iteration          103 OBJ=   -720.58864537257364     
+ iteration          104 OBJ=   -722.04850988866485     
+ iteration          105 OBJ=   -718.75844607265515     
+ iteration          106 OBJ=   -719.29874026391894     
+ iteration          107 OBJ=   -715.08033540287261     
+ iteration          108 OBJ=   -721.52666095449808     
+ iteration          109 OBJ=   -716.06867277292042     
+ iteration          110 OBJ=   -719.76537948167254     
+ iteration          111 OBJ=   -716.57617457897186     
+ iteration          112 OBJ=   -717.48531245113088     
+ iteration          113 OBJ=   -716.71538618782665     
+ iteration          114 OBJ=   -721.84608134041571     
+ iteration          115 OBJ=   -724.27291523880137     
+ iteration          116 OBJ=   -716.25737393605868     
+ iteration          117 OBJ=   -717.67576067803486     
+ iteration          118 OBJ=   -720.56531559187567     
+ iteration          119 OBJ=   -719.83392425177351     
+ iteration          120 OBJ=   -717.76428065250343     
+ iteration          121 OBJ=   -717.08974854509700     
+ iteration          122 OBJ=   -716.45654789115781     
+ iteration          123 OBJ=   -718.07786914853818     
+ iteration          124 OBJ=   -716.75838777977651     
+ iteration          125 OBJ=   -714.52165880816506     
+ iteration          126 OBJ=   -717.90204620702741     
+ iteration          127 OBJ=   -716.65085552203641     
+ iteration          128 OBJ=   -715.26882604861396     
+ iteration          129 OBJ=   -717.12214896089608     
+ iteration          130 OBJ=   -718.86639928984243     
+ iteration          131 OBJ=   -719.35342579384599     
+ iteration          132 OBJ=   -715.97119155571863     
+ iteration          133 OBJ=   -716.21659578221340     
+ iteration          134 OBJ=   -715.12287388046639     
+ iteration          135 OBJ=   -715.64706273031356     
+ iteration          136 OBJ=   -719.23833269805698     
+ iteration          137 OBJ=   -713.74832133892505     
+ iteration          138 OBJ=   -717.98886372468144     
+ iteration          139 OBJ=   -720.68234256067490     
+ iteration          140 OBJ=   -714.68466487215596     
+ iteration          141 OBJ=   -716.33142473688451     
+ iteration          142 OBJ=   -718.89865772639564     
+ iteration          143 OBJ=   -717.48806635022572     
+ iteration          144 OBJ=   -718.19768103183105     
+ iteration          145 OBJ=   -715.89603925789118     
+ iteration          146 OBJ=   -715.33277177387856     
+ iteration          147 OBJ=   -717.39868986136196     
+ iteration          148 OBJ=   -714.81548843212806     
+ iteration          149 OBJ=   -716.89592742995012     
+ iteration          150 OBJ=   -716.89829053854533     
+ iteration          151 OBJ=   -714.55316548754047     
+ iteration          152 OBJ=   -717.02676155097049     
+ iteration          153 OBJ=   -713.22626013665331     
+ iteration          154 OBJ=   -718.27609704971803     
+ iteration          155 OBJ=   -713.10253878789581     
+ iteration          156 OBJ=   -718.44793245328617     
+ iteration          157 OBJ=   -714.22118102711943     
+ iteration          158 OBJ=   -718.57786846095917     
+ iteration          159 OBJ=   -714.62761605919320     
+ iteration          160 OBJ=   -715.44661728529502     
+ iteration          161 OBJ=   -721.16259064292296     
+ iteration          162 OBJ=   -718.17682412409147     
+ iteration          163 OBJ=   -719.67791282943494     
+ iteration          164 OBJ=   -716.42964200695030     
+ iteration          165 OBJ=   -716.76902363386421     
+ iteration          166 OBJ=   -718.54516335330413     
+ iteration          167 OBJ=   -719.46664305433114     
+ iteration          168 OBJ=   -715.19626357241282     
+ iteration          169 OBJ=   -718.12640057836268     
+ iteration          170 OBJ=   -716.69896223400679     
+ iteration          171 OBJ=   -717.38446801282294     
+ iteration          172 OBJ=   -722.00242957786725     
+ iteration          173 OBJ=   -719.81346695046170     
+ iteration          174 OBJ=   -717.40493977646270     
+ iteration          175 OBJ=   -716.54805508254276     
+ iteration          176 OBJ=   -718.98784294798691     
+ iteration          177 OBJ=   -718.54229047807280     
+ iteration          178 OBJ=   -717.53533550477255     
+ iteration          179 OBJ=   -719.29821902937385     
+ iteration          180 OBJ=   -718.87113113637406     
+ iteration          181 OBJ=   -717.25672845930433     
+ iteration          182 OBJ=   -718.38653737916127     
+ iteration          183 OBJ=   -718.73980017480994     
+ iteration          184 OBJ=   -715.44484026078192     
+ iteration          185 OBJ=   -718.49149749836511     
+ iteration          186 OBJ=   -719.86323575385097     
+ iteration          187 OBJ=   -716.98931499699324     
+ iteration          188 OBJ=   -718.07870557052468     
+ iteration          189 OBJ=   -719.88554179844436     
+ iteration          190 OBJ=   -715.42748800649372     
+ iteration          191 OBJ=   -716.23591472332532     
+ iteration          192 OBJ=   -720.09700646971066     
+ iteration          193 OBJ=   -719.69049070198378     
+ iteration          194 OBJ=   -714.50632751382909     
+ iteration          195 OBJ=   -722.42034908058508     
+ iteration          196 OBJ=   -717.72616509534930     
+ iteration          197 OBJ=   -716.72073319597973     
+ iteration          198 OBJ=   -719.34480664492514     
+ iteration          199 OBJ=   -718.48766678882214     
+ iteration          200 OBJ=   -719.52825268943911     
+ iteration          201 OBJ=   -726.86896070055582     
+ iteration          202 OBJ=   -720.79701252064353     
+ iteration          203 OBJ=   -717.42776356067702     
+ iteration          204 OBJ=   -717.09239396861676     
+ iteration          205 OBJ=   -713.42743174044813     
+ iteration          206 OBJ=   -718.65815914857592     
+ iteration          207 OBJ=   -717.95704638346353     
+ iteration          208 OBJ=   -712.38272848354507     
+ iteration          209 OBJ=   -717.14568039044798     
+ iteration          210 OBJ=   -718.36836801825632     
+ iteration          211 OBJ=   -714.76906872691040     
+ iteration          212 OBJ=   -719.00879680905496     
+ iteration          213 OBJ=   -713.78902630131415     
+ iteration          214 OBJ=   -719.58369440273327     
+ iteration          215 OBJ=   -718.25123082261985     
+ iteration          216 OBJ=   -718.02224919860600     
+ iteration          217 OBJ=   -720.22115211430912     
+ iteration          218 OBJ=   -719.00199986534312     
+ iteration          219 OBJ=   -716.99686257307610     
+ iteration          220 OBJ=   -717.18324703158066     
+ iteration          221 OBJ=   -717.93890270228599     
+ iteration          222 OBJ=   -720.80220004438752     
+ iteration          223 OBJ=   -716.16957166729139     
+ iteration          224 OBJ=   -716.62611825989018     
+ iteration          225 OBJ=   -718.07024407605275     
+ iteration          226 OBJ=   -718.15781599740933     
+ iteration          227 OBJ=   -719.08590293049508     
+ iteration          228 OBJ=   -717.34241962825820     
+ iteration          229 OBJ=   -720.73214868206753     
+ iteration          230 OBJ=   -714.69740196731482     
+ iteration          231 OBJ=   -717.33710081279241     
+ iteration          232 OBJ=   -719.91291391767538     
+ iteration          233 OBJ=   -717.41727919395908     
+ iteration          234 OBJ=   -716.83312420931657     
+ iteration          235 OBJ=   -718.14126013731357     
+ iteration          236 OBJ=   -716.40066004026960     
+ iteration          237 OBJ=   -716.53758192500584     
+ iteration          238 OBJ=   -716.27211935995342     
+ iteration          239 OBJ=   -717.61524033195667     
+ iteration          240 OBJ=   -715.97364145814629     
+ iteration          241 OBJ=   -718.89750466732391     
+ iteration          242 OBJ=   -716.76898398441165     
+ iteration          243 OBJ=   -716.16824848732574     
+ iteration          244 OBJ=   -716.08588299644703     
+ iteration          245 OBJ=   -718.56024557105127     
+ iteration          246 OBJ=   -717.17203431749977     
+ iteration          247 OBJ=   -720.09676620849450     
+ iteration          248 OBJ=   -719.13372884441560     
+ iteration          249 OBJ=   -717.03360173760450     
+ iteration          250 OBJ=   -713.52077307926697     
+ iteration          251 OBJ=   -716.26646874833318     
+ iteration          252 OBJ=   -714.91698956955520     
+ iteration          253 OBJ=   -718.29472199016277     
+ iteration          254 OBJ=   -715.80796404306773     
+ iteration          255 OBJ=   -717.85097978820954     
+ iteration          256 OBJ=   -717.60859229396294     
+ iteration          257 OBJ=   -718.31116921658804     
+ iteration          258 OBJ=   -719.17374437554724     
+ iteration          259 OBJ=   -716.70791663926559     
+ iteration          260 OBJ=   -717.59570875820350     
+ iteration          261 OBJ=   -718.18049856282425     
+ iteration          262 OBJ=   -717.27606060494145     
+ iteration          263 OBJ=   -714.33953419702232     
+ iteration          264 OBJ=   -717.59509561509662     
+ iteration          265 OBJ=   -716.80361869417936     
+ iteration          266 OBJ=   -721.12527469530539     
+ iteration          267 OBJ=   -722.83265591392092     
+ iteration          268 OBJ=   -715.59797739193175     
+ iteration          269 OBJ=   -717.39901317384852     
+ iteration          270 OBJ=   -720.26137033635860     
+ iteration          271 OBJ=   -717.78325522679779     
+ iteration          272 OBJ=   -718.52514443945745     
+ iteration          273 OBJ=   -717.38329424328083     
+ iteration          274 OBJ=   -715.94588560386399     
+ iteration          275 OBJ=   -721.48157963736639     
+ iteration          276 OBJ=   -716.66620436275537     
+ iteration          277 OBJ=   -718.40791434188679     
+ iteration          278 OBJ=   -719.92866607892051     
+ iteration          279 OBJ=   -717.59872497258800     
+ iteration          280 OBJ=   -717.04955765749673     
+ iteration          281 OBJ=   -715.79929526777573     
+ iteration          282 OBJ=   -716.20667936594339     
+ iteration          283 OBJ=   -716.08820579397423     
+ iteration          284 OBJ=   -715.76781581444300     
+ iteration          285 OBJ=   -718.00321821272723     
+ iteration          286 OBJ=   -717.47030456891696     
+ iteration          287 OBJ=   -717.64075960703838     
+ iteration          288 OBJ=   -719.56226460504433     
+ iteration          289 OBJ=   -716.30436384996437     
+ iteration          290 OBJ=   -716.64599282196184     
+ iteration          291 OBJ=   -717.90763239884484     
+ iteration          292 OBJ=   -718.98206981908697     
+ iteration          293 OBJ=   -715.59165745197060     
+ iteration          294 OBJ=   -718.28851972753603     
+ iteration          295 OBJ=   -715.90754466329474     
+ iteration          296 OBJ=   -717.71789127023806     
+ iteration          297 OBJ=   -718.97993206729882     
+ iteration          298 OBJ=   -718.61631572066119     
+ iteration          299 OBJ=   -715.12813408615136     
+ iteration          300 OBJ=   -718.71161763139105     
+ iteration          301 OBJ=   -716.22115666602315     
+ iteration          302 OBJ=   -714.90810971366875     
+ iteration          303 OBJ=   -720.09380949643935     
+ iteration          304 OBJ=   -715.99102641263141     
+ iteration          305 OBJ=   -718.07812829987506     
+ iteration          306 OBJ=   -717.87183131791858     
+ iteration          307 OBJ=   -716.57034299220015     
+ iteration          308 OBJ=   -717.61391387694130     
+ iteration          309 OBJ=   -717.60189177780262     
+ iteration          310 OBJ=   -718.25796376991968     
+ iteration          311 OBJ=   -715.11009944801538     
+ iteration          312 OBJ=   -717.03553117344552     
+ iteration          313 OBJ=   -717.92516632600837     
+ iteration          314 OBJ=   -716.91542521827728     
+ iteration          315 OBJ=   -722.32667716175922     
+ iteration          316 OBJ=   -717.32382325834214     
+ iteration          317 OBJ=   -715.07998975964108     
+ iteration          318 OBJ=   -717.20344780468906     
+ iteration          319 OBJ=   -716.90474018368263     
+ iteration          320 OBJ=   -720.30835454079352     
+ iteration          321 OBJ=   -718.77908728633224     
+ iteration          322 OBJ=   -714.31854944866450     
+ iteration          323 OBJ=   -716.39194688682892     
+ iteration          324 OBJ=   -716.72959356620709     
+ iteration          325 OBJ=   -715.29809877598132     
+ iteration          326 OBJ=   -716.48480580378623     
+ iteration          327 OBJ=   -716.85259953102093     
+ iteration          328 OBJ=   -715.29411139542208     
+ iteration          329 OBJ=   -717.47476305127361     
+ iteration          330 OBJ=   -717.86051026021073     
+ iteration          331 OBJ=   -721.53067303358307     
+ iteration          332 OBJ=   -716.27625212287865     
+ iteration          333 OBJ=   -717.36105561995009     
+ iteration          334 OBJ=   -718.77147191145457     
+ iteration          335 OBJ=   -715.52731527875960     
+ iteration          336 OBJ=   -719.48636364207914     
+ iteration          337 OBJ=   -717.89319080659311     
+ iteration          338 OBJ=   -714.15784682112064     
+ iteration          339 OBJ=   -719.19320265474232     
+ iteration          340 OBJ=   -717.65404603734714     
+ iteration          341 OBJ=   -715.52822933082518     
+ iteration          342 OBJ=   -718.95471628421126     
+ iteration          343 OBJ=   -719.11592395328910     
+ iteration          344 OBJ=   -719.14270486205191     
+ iteration          345 OBJ=   -718.64464624468997     
+ iteration          346 OBJ=   -718.42502872793045     
+ iteration          347 OBJ=   -718.18038943401666     
+ iteration          348 OBJ=   -719.24355510614294     
+ iteration          349 OBJ=   -716.41466460476443     
+ iteration          350 OBJ=   -719.05037850216172     
+ iteration          351 OBJ=   -714.61600685841199     
+ iteration          352 OBJ=   -718.54797717232589     
+ iteration          353 OBJ=   -716.90810037148970     
+ iteration          354 OBJ=   -719.85580075245650     
+ iteration          355 OBJ=   -720.67095228737594     
+ iteration          356 OBJ=   -717.46390954472372     
+ iteration          357 OBJ=   -716.87251035847623     
+ iteration          358 OBJ=   -715.55340706429467     
+ iteration          359 OBJ=   -716.95460699594764     
+ iteration          360 OBJ=   -717.49611970726721     
+ iteration          361 OBJ=   -719.07238346146619     
+ iteration          362 OBJ=   -721.30743732394933     
+ iteration          363 OBJ=   -720.24671108787720     
+ iteration          364 OBJ=   -717.94060261069944     
+ iteration          365 OBJ=   -715.70913264339606     
+ iteration          366 OBJ=   -716.34926113845040     
+ iteration          367 OBJ=   -720.09878826410306     
+ iteration          368 OBJ=   -717.81140196929846     
+ iteration          369 OBJ=   -718.81758088628362     
+ iteration          370 OBJ=   -719.76792622842720     
+ iteration          371 OBJ=   -719.28760380134213     
+ iteration          372 OBJ=   -717.20726719708080     
+ iteration          373 OBJ=   -716.04449313360340     
+ iteration          374 OBJ=   -716.32657809755960     
+ iteration          375 OBJ=   -717.81065496512429     
+ iteration          376 OBJ=   -719.40573910317016     
+ iteration          377 OBJ=   -717.51234396751192     
+ iteration          378 OBJ=   -717.52215974973171     
+ iteration          379 OBJ=   -718.46431448810279     
+ iteration          380 OBJ=   -715.70351074192365     
+ iteration          381 OBJ=   -717.35375222900871     
+ iteration          382 OBJ=   -716.41735842525645     
+ iteration          383 OBJ=   -718.11467666464341     
+ iteration          384 OBJ=   -718.61960713568226     
+ iteration          385 OBJ=   -716.38731273325391     
+ iteration          386 OBJ=   -715.62657782098199     
+ iteration          387 OBJ=   -719.82897127560898     
+ iteration          388 OBJ=   -718.61171693192784     
+ iteration          389 OBJ=   -715.27341970149519     
+ iteration          390 OBJ=   -716.81205453821167     
+ iteration          391 OBJ=   -719.74528048542436     
+ iteration          392 OBJ=   -718.23407922699243     
+ iteration          393 OBJ=   -716.75525279545934     
+ iteration          394 OBJ=   -717.81525145520641     
+ iteration          395 OBJ=   -717.69448176238711     
+ iteration          396 OBJ=   -719.35101558951703     
+ iteration          397 OBJ=   -716.67607716797022     
+ iteration          398 OBJ=   -717.92585719747660     
+ iteration          399 OBJ=   -717.08284886614490     
+ iteration          400 OBJ=   -718.70326584753059     
+ iteration          401 OBJ=   -718.08151448987667     
+ iteration          402 OBJ=   -718.83747672720426     
+ iteration          403 OBJ=   -720.91161345789772     
+ iteration          404 OBJ=   -728.26963590537457     
+ iteration          405 OBJ=   -714.77081303601153     
+ iteration          406 OBJ=   -717.67447880350903     
+ iteration          407 OBJ=   -716.61297206749816     
+ iteration          408 OBJ=   -718.74934176158695     
+ iteration          409 OBJ=   -715.71519896627842     
+ iteration          410 OBJ=   -717.60824601698471     
+ iteration          411 OBJ=   -718.07527773569689     
+ iteration          412 OBJ=   -716.19894066977758     
+ iteration          413 OBJ=   -713.78931952811718     
+ iteration          414 OBJ=   -719.17222366044757     
+ iteration          415 OBJ=   -717.71002534193633     
+ iteration          416 OBJ=   -719.59789865441087     
+ iteration          417 OBJ=   -718.85773560098846     
+ iteration          418 OBJ=   -716.44927271024790     
+ iteration          419 OBJ=   -716.56704127445619     
+ iteration          420 OBJ=   -718.17409391067781     
+ iteration          421 OBJ=   -718.80532446405323     
+ iteration          422 OBJ=   -715.54424991723727     
+ iteration          423 OBJ=   -720.12828155043712     
+ iteration          424 OBJ=   -717.63846958610873     
+ iteration          425 OBJ=   -717.85790314272253     
+ iteration          426 OBJ=   -717.96533629006672     
+ iteration          427 OBJ=   -723.05252633877592     
+ iteration          428 OBJ=   -720.13480814027423     
+ iteration          429 OBJ=   -716.93030032722299     
+ iteration          430 OBJ=   -715.37385147009957     
+ iteration          431 OBJ=   -714.99774927309329     
+ iteration          432 OBJ=   -717.12416843402912     
+ iteration          433 OBJ=   -715.74509560635579     
+ iteration          434 OBJ=   -718.58308899561985     
+ iteration          435 OBJ=   -714.93853927390387     
+ iteration          436 OBJ=   -715.12988894989223     
+ iteration          437 OBJ=   -716.90033109954027     
+ iteration          438 OBJ=   -717.45866310909105     
+ iteration          439 OBJ=   -716.69453188379225     
+ iteration          440 OBJ=   -715.45025801651207     
+ iteration          441 OBJ=   -716.74906097104986     
+ iteration          442 OBJ=   -720.14079130647337     
+ iteration          443 OBJ=   -717.14746781628196     
+ iteration          444 OBJ=   -716.93221633924099     
+ iteration          445 OBJ=   -717.95438983743338     
+ iteration          446 OBJ=   -716.08667743562046     
+ iteration          447 OBJ=   -720.49626231093680     
+ iteration          448 OBJ=   -718.24431390300094     
+ iteration          449 OBJ=   -718.37233858876095     
+ iteration          450 OBJ=   -715.11728013605216     
+ iteration          451 OBJ=   -717.15954757257259     
+ iteration          452 OBJ=   -717.33153687926244     
+ iteration          453 OBJ=   -714.50268494813247     
+ iteration          454 OBJ=   -713.66857232938901     
+ iteration          455 OBJ=   -717.74081554454096     
+ iteration          456 OBJ=   -717.99069616518045     
+ iteration          457 OBJ=   -720.64551010993102     
+ iteration          458 OBJ=   -724.31379027872242     
+ iteration          459 OBJ=   -718.50296634508300     
+ iteration          460 OBJ=   -714.13826214579865     
+ iteration          461 OBJ=   -707.04726721810812     
+ iteration          462 OBJ=   -707.47548149677323     
+ iteration          463 OBJ=   -720.78364658578403     
+ iteration          464 OBJ=   -715.14209352301100     
+ iteration          465 OBJ=   -715.63854152723707     
+ iteration          466 OBJ=   -715.92860861694317     
+ iteration          467 OBJ=   -715.71813205711237     
+ iteration          468 OBJ=   -714.57749005318681     
+ iteration          469 OBJ=   -716.11493838346121     
+ iteration          470 OBJ=   -718.93596123086922     
+ iteration          471 OBJ=   -721.25830751807496     
+ iteration          472 OBJ=   -720.61122312087321     
+ iteration          473 OBJ=   -719.23073642445388     
+ iteration          474 OBJ=   -719.81752137194280     
+ iteration          475 OBJ=   -718.02521241746342     
+ iteration          476 OBJ=   -715.77100716283508     
+ iteration          477 OBJ=   -715.67392944478797     
+ iteration          478 OBJ=   -716.29198842565518     
+ iteration          479 OBJ=   -716.44191613749376     
+ iteration          480 OBJ=   -717.38483185031146     
+ iteration          481 OBJ=   -718.85996300252202     
+ iteration          482 OBJ=   -715.16823393486311     
+ iteration          483 OBJ=   -717.91271279475200     
+ iteration          484 OBJ=   -715.98746211405842     
+ iteration          485 OBJ=   -718.18814088313161     
+ iteration          486 OBJ=   -718.25085006754193     
+ iteration          487 OBJ=   -718.44967164999196     
+ iteration          488 OBJ=   -717.42290828956914     
+ iteration          489 OBJ=   -724.12987494649133     
+ iteration          490 OBJ=   -717.81377760900500     
+ iteration          491 OBJ=   -712.08527220839653     
+ iteration          492 OBJ=   -716.53901027197242     
+ iteration          493 OBJ=   -719.34621733080121     
+ iteration          494 OBJ=   -714.73424971661041     
+ iteration          495 OBJ=   -717.70311742191700     
+ iteration          496 OBJ=   -719.96170589964629     
+ iteration          497 OBJ=   -716.57545194999489     
+ iteration          498 OBJ=   -715.94279880172019     
+ iteration          499 OBJ=   -719.91557653486382     
+ iteration          500 OBJ=   -717.67718905939182     
+ iteration          501 OBJ=   -716.42365507959460     
+ iteration          502 OBJ=   -716.90362864321366     
+ iteration          503 OBJ=   -718.66704328978585     
+ iteration          504 OBJ=   -716.91345607373921     
+ iteration          505 OBJ=   -717.96805858667028     
+ iteration          506 OBJ=   -717.04715872688712     
+ iteration          507 OBJ=   -717.31434784919509     
+ iteration          508 OBJ=   -716.93959719606687     
+ iteration          509 OBJ=   -716.63889418448775     
+ iteration          510 OBJ=   -719.26707610211190     
+ iteration          511 OBJ=   -717.92545658009499     
+ iteration          512 OBJ=   -719.39748353992695     
+ iteration          513 OBJ=   -717.47234735664654     
+ iteration          514 OBJ=   -720.70210480632795     
+ iteration          515 OBJ=   -716.57729827841149     
+ iteration          516 OBJ=   -715.93225165440754     
+ iteration          517 OBJ=   -717.92155738318047     
+ iteration          518 OBJ=   -716.53960750691260     
+ iteration          519 OBJ=   -716.98912322591025     
+ iteration          520 OBJ=   -717.77170430977208     
+ iteration          521 OBJ=   -719.91622770976903     
+ iteration          522 OBJ=   -718.05227860811897     
+ iteration          523 OBJ=   -716.83587558207944     
+ iteration          524 OBJ=   -717.96086123426687     
+ iteration          525 OBJ=   -717.97975757988615     
+ iteration          526 OBJ=   -715.75918717203774     
+ iteration          527 OBJ=   -718.00798278931256     
+ iteration          528 OBJ=   -715.50326259122915     
+ iteration          529 OBJ=   -719.34189454516832     
+ iteration          530 OBJ=   -714.70673792602315     
+ iteration          531 OBJ=   -717.84874587567731     
+ iteration          532 OBJ=   -714.27703953573632     
+ iteration          533 OBJ=   -717.16470900110198     
+ iteration          534 OBJ=   -716.37851282178201     
+ iteration          535 OBJ=   -718.39174524569830     
+ iteration          536 OBJ=   -720.15621065529899     
+ iteration          537 OBJ=   -718.08778683259129     
+ iteration          538 OBJ=   -717.85977453295789     
+ iteration          539 OBJ=   -718.97658480363202     
+ iteration          540 OBJ=   -718.13268029128278     
+ iteration          541 OBJ=   -718.08033584243253     
+ iteration          542 OBJ=   -715.65147817638604     
+ iteration          543 OBJ=   -716.92392557129358     
+ iteration          544 OBJ=   -716.03707805880526     
+ iteration          545 OBJ=   -716.44314368440303     
+ iteration          546 OBJ=   -720.19137911136477     
+ iteration          547 OBJ=   -717.43224695131119     
+ iteration          548 OBJ=   -719.08239402689298     
+ iteration          549 OBJ=   -717.47046408892368     
+ iteration          550 OBJ=   -718.82259986379313     
+ iteration          551 OBJ=   -717.89273870568923     
+ iteration          552 OBJ=   -715.54627722736234     
+ iteration          553 OBJ=   -715.35025993314753     
+ iteration          554 OBJ=   -715.75387716185901     
+ iteration          555 OBJ=   -716.52498166912721     
+ iteration          556 OBJ=   -717.17259800695433     
+ iteration          557 OBJ=   -717.94494740327002     
+ iteration          558 OBJ=   -719.14416951242004     
+ iteration          559 OBJ=   -719.55800949674881     
+ iteration          560 OBJ=   -717.47553706551207     
+ iteration          561 OBJ=   -720.06872998105564     
+ iteration          562 OBJ=   -718.51614613200206     
+ iteration          563 OBJ=   -713.78806270756240     
+ iteration          564 OBJ=   -717.51365385724660     
+ iteration          565 OBJ=   -717.72843083104794     
+ iteration          566 OBJ=   -715.40427963013417     
+ iteration          567 OBJ=   -717.44009141609479     
+ iteration          568 OBJ=   -720.26116989497621     
+ iteration          569 OBJ=   -718.74194103582704     
+ iteration          570 OBJ=   -716.39692541534725     
+ iteration          571 OBJ=   -715.96033259300464     
+ iteration          572 OBJ=   -715.80962544132728     
+ iteration          573 OBJ=   -715.97018552560451     
+ iteration          574 OBJ=   -716.00055622281343     
+ iteration          575 OBJ=   -719.44202409347770     
+ iteration          576 OBJ=   -715.33791984048185     
+ iteration          577 OBJ=   -716.68418981483421     
+ iteration          578 OBJ=   -720.96483500010629     
+ iteration          579 OBJ=   -720.83905532957078     
+ iteration          580 OBJ=   -717.92870886517062     
+ iteration          581 OBJ=   -718.51177284469918     
+ iteration          582 OBJ=   -718.23521953607099     
+ iteration          583 OBJ=   -718.07862176704498     
+ iteration          584 OBJ=   -714.42949675285683     
+ iteration          585 OBJ=   -716.80814848721968     
+ iteration          586 OBJ=   -717.61748904983881     
+ iteration          587 OBJ=   -716.34208906347044     
+ iteration          588 OBJ=   -720.02955784331198     
+ iteration          589 OBJ=   -717.15529256278262     
+ iteration          590 OBJ=   -719.29154088439248     
+ iteration          591 OBJ=   -719.12660663096244     
+ iteration          592 OBJ=   -720.04342324126026     
+ iteration          593 OBJ=   -720.39645264592582     
+ iteration          594 OBJ=   -716.81740396987459     
+ iteration          595 OBJ=   -720.31019463865482     
+ iteration          596 OBJ=   -715.85077066193639     
+ iteration          597 OBJ=   -717.75621180186113     
+ iteration          598 OBJ=   -718.17405678728335     
+ iteration          599 OBJ=   -718.83997490163199     
+ iteration          600 OBJ=   -718.17342763677868     
+ iteration          601 OBJ=   -720.97385229388578     
+ iteration          602 OBJ=   -716.51887591432558     
+ iteration          603 OBJ=   -721.91276134932718     
+ iteration          604 OBJ=   -714.27445940972939     
+ iteration          605 OBJ=   -715.39384276699673     
+ iteration          606 OBJ=   -718.96946446436073     
+ iteration          607 OBJ=   -718.08790535414948     
+ iteration          608 OBJ=   -717.62924152569428     
+ iteration          609 OBJ=   -716.33152431044789     
+ iteration          610 OBJ=   -718.62348874553425     
+ iteration          611 OBJ=   -716.45655721454682     
+ iteration          612 OBJ=   -715.05384709893008     
+ iteration          613 OBJ=   -715.49570289449605     
+ iteration          614 OBJ=   -718.31996759382730     
+ iteration          615 OBJ=   -719.19910273665414     
+ iteration          616 OBJ=   -719.35911794738752     
+ iteration          617 OBJ=   -717.24387424469364     
+ iteration          618 OBJ=   -717.41164123969440     
+ iteration          619 OBJ=   -718.28403907090740     
+ iteration          620 OBJ=   -715.69887132245913     
+ iteration          621 OBJ=   -716.92791975412433     
+ iteration          622 OBJ=   -714.43127514824812     
+ iteration          623 OBJ=   -718.54072158245810     
+ iteration          624 OBJ=   -723.13648993780373     
+ iteration          625 OBJ=   -716.00055538853633     
+ iteration          626 OBJ=   -720.10690999513622     
+ iteration          627 OBJ=   -716.09764471466838     
+ iteration          628 OBJ=   -716.58329590433391     
+ iteration          629 OBJ=   -717.92236874770288     
+ iteration          630 OBJ=   -718.03064391105409     
+ iteration          631 OBJ=   -714.63363854056911     
+ iteration          632 OBJ=   -717.56581498985679     
+ iteration          633 OBJ=   -714.21523480298561     
+ iteration          634 OBJ=   -716.46530616905704     
+ iteration          635 OBJ=   -718.65762783769560     
+ iteration          636 OBJ=   -718.53958560772242     
+ iteration          637 OBJ=   -716.86279763262178     
+ iteration          638 OBJ=   -718.53217798650996     
+ iteration          639 OBJ=   -721.17855153210780     
+ iteration          640 OBJ=   -716.03980698016153     
+ iteration          641 OBJ=   -719.12840681682655     
+ iteration          642 OBJ=   -719.53113368511356     
+ iteration          643 OBJ=   -719.43060193358735     
+ iteration          644 OBJ=   -715.93669600187502     
+ iteration          645 OBJ=   -719.76563873008445     
+ iteration          646 OBJ=   -718.43673090815844     
+ iteration          647 OBJ=   -718.03795788285072     
+ iteration          648 OBJ=   -716.58473563927942     
+ iteration          649 OBJ=   -720.65768312514945     
+ iteration          650 OBJ=   -717.37000673437637     
+ iteration          651 OBJ=   -717.03576094008190     
+ iteration          652 OBJ=   -714.53817627845547     
+ iteration          653 OBJ=   -720.09753154648024     
+ iteration          654 OBJ=   -715.95001367422810     
+ iteration          655 OBJ=   -716.50588977062978     
+ iteration          656 OBJ=   -716.96864900043693     
+ iteration          657 OBJ=   -715.97156718133419     
+ iteration          658 OBJ=   -716.33774963530766     
+ iteration          659 OBJ=   -718.12106478103590     
+ iteration          660 OBJ=   -718.08361548000585     
+ iteration          661 OBJ=   -719.05029421374968     
+ iteration          662 OBJ=   -721.10993249066860     
+ iteration          663 OBJ=   -716.30228049401148     
+ iteration          664 OBJ=   -720.80445058814803     
+ iteration          665 OBJ=   -719.47955454813950     
+ iteration          666 OBJ=   -717.48477804899153     
+ iteration          667 OBJ=   -716.04469051352612     
+ iteration          668 OBJ=   -715.29806831193400     
+ iteration          669 OBJ=   -715.79691563200981     
+ iteration          670 OBJ=   -717.28983726876595     
+ iteration          671 OBJ=   -716.48696061452074     
+ iteration          672 OBJ=   -715.51764754703390     
+ iteration          673 OBJ=   -717.06605515548927     
+ iteration          674 OBJ=   -722.51129896508178     
+ iteration          675 OBJ=   -716.67913514257543     
+ iteration          676 OBJ=   -717.70924166558564     
+ iteration          677 OBJ=   -717.54470173980280     
+ iteration          678 OBJ=   -717.60027770436818     
+ iteration          679 OBJ=   -720.15979101649225     
+ iteration          680 OBJ=   -716.35337721726330     
+ iteration          681 OBJ=   -718.44948127859323     
+ iteration          682 OBJ=   -718.07843437442091     
+ iteration          683 OBJ=   -715.27444533250264     
+ iteration          684 OBJ=   -717.60356336821758     
+ iteration          685 OBJ=   -715.37759462769884     
+ iteration          686 OBJ=   -715.51702272532600     
+ iteration          687 OBJ=   -717.70288599002936     
+ iteration          688 OBJ=   -715.99545805570233     
+ iteration          689 OBJ=   -713.64524206746989     
+ iteration          690 OBJ=   -715.93024387923469     
+ iteration          691 OBJ=   -716.39671497893278     
+ iteration          692 OBJ=   -718.27086652942683     
+ iteration          693 OBJ=   -719.47163401701903     
+ iteration          694 OBJ=   -720.49456655753511     
+ iteration          695 OBJ=   -720.41280887149821     
+ iteration          696 OBJ=   -716.71634403349390     
+ iteration          697 OBJ=   -711.99065436189176     
+ iteration          698 OBJ=   -715.96766337295435     
+ iteration          699 OBJ=   -719.04626995887224     
+ iteration          700 OBJ=   -720.00686594048216     
+ iteration          701 OBJ=   -715.41559246653640     
+ iteration          702 OBJ=   -717.25931612983766     
+ iteration          703 OBJ=   -717.84665113819369     
+ iteration          704 OBJ=   -716.86415103824379     
+ iteration          705 OBJ=   -717.37775244451325     
+ iteration          706 OBJ=   -714.56514390996563     
+ iteration          707 OBJ=   -716.41192742274472     
+ iteration          708 OBJ=   -716.48624454504943     
+ iteration          709 OBJ=   -718.21688707540056     
+ iteration          710 OBJ=   -717.73802512212660     
+ iteration          711 OBJ=   -718.25183569278784     
+ iteration          712 OBJ=   -719.09133103000340     
+ iteration          713 OBJ=   -717.93320496961030     
+ iteration          714 OBJ=   -715.82178542572217     
+ iteration          715 OBJ=   -717.28880285255354     
+ iteration          716 OBJ=   -715.91090537529806     
+ iteration          717 OBJ=   -721.49153358823821     
+ iteration          718 OBJ=   -719.17197675729562     
+ iteration          719 OBJ=   -719.24368391011933     
+ iteration          720 OBJ=   -716.10099523991232     
+ iteration          721 OBJ=   -716.66590410845424     
+ iteration          722 OBJ=   -717.76992374463532     
+ iteration          723 OBJ=   -718.54737785125360     
+ iteration          724 OBJ=   -716.21920640321900     
+ iteration          725 OBJ=   -718.05530136838377     
+ iteration          726 OBJ=   -717.54465966669557     
+ iteration          727 OBJ=   -719.29467548724563     
+ iteration          728 OBJ=   -716.19962307870549     
+ iteration          729 OBJ=   -718.88190143572820     
+ iteration          730 OBJ=   -719.24950398156682     
+ iteration          731 OBJ=   -716.89023492086119     
+ iteration          732 OBJ=   -719.06284387115818     
+ iteration          733 OBJ=   -716.76258559773544     
+ iteration          734 OBJ=   -717.18186627490468     
+ iteration          735 OBJ=   -717.83596647169372     
+ iteration          736 OBJ=   -718.48804494175090     
+ iteration          737 OBJ=   -718.53378164170829     
+ iteration          738 OBJ=   -716.16411602700146     
+ iteration          739 OBJ=   -720.09472192693318     
+ iteration          740 OBJ=   -716.96806846793402     
+ iteration          741 OBJ=   -714.58636495741916     
+ iteration          742 OBJ=   -715.48331145273767     
+ iteration          743 OBJ=   -719.07480228653878     
+ iteration          744 OBJ=   -728.25055566298181     
+ iteration          745 OBJ=   -718.42662770695301     
+ iteration          746 OBJ=   -719.66911919231541     
+ iteration          747 OBJ=   -717.29091483581567     
+ iteration          748 OBJ=   -715.95498203872864     
+ iteration          749 OBJ=   -720.71750833418719     
+ iteration          750 OBJ=   -716.16988657725858     
+ iteration          751 OBJ=   -717.56576493098737     
+ iteration          752 OBJ=   -717.90518594012190     
+ iteration          753 OBJ=   -717.57551343411831     
+ iteration          754 OBJ=   -724.17156839394966     
+ iteration          755 OBJ=   -715.62347237150823     
+ iteration          756 OBJ=   -714.44381866173126     
+ iteration          757 OBJ=   -717.90448706756433     
+ iteration          758 OBJ=   -714.75486600864986     
+ iteration          759 OBJ=   -719.05012387858164     
+ iteration          760 OBJ=   -717.13516757783486     
+ iteration          761 OBJ=   -718.65648739699009     
+ iteration          762 OBJ=   -718.88999897616634     
+ iteration          763 OBJ=   -717.15260641323539     
+ iteration          764 OBJ=   -715.08968557891001     
+ iteration          765 OBJ=   -715.46448417366923     
+ iteration          766 OBJ=   -717.13631147932006     
+ iteration          767 OBJ=   -715.64584015394530     
+ iteration          768 OBJ=   -715.03660566547740     
+ iteration          769 OBJ=   -719.37038605165549     
+ iteration          770 OBJ=   -720.22811988146725     
+ iteration          771 OBJ=   -721.14837709192216     
+ iteration          772 OBJ=   -719.25329363416438     
+ iteration          773 OBJ=   -720.22321202408750     
+ iteration          774 OBJ=   -716.92109406866678     
+ iteration          775 OBJ=   -718.53828175022250     
+ iteration          776 OBJ=   -716.72023738611483     
+ iteration          777 OBJ=   -716.08289180091799     
+ iteration          778 OBJ=   -717.68644103173028     
+ iteration          779 OBJ=   -718.19389334625805     
+ iteration          780 OBJ=   -719.26868393506641     
+ iteration          781 OBJ=   -717.92797886176072     
+ iteration          782 OBJ=   -719.01962224338831     
+ iteration          783 OBJ=   -717.90140973346672     
+ iteration          784 OBJ=   -716.11404969176442     
+ iteration          785 OBJ=   -717.56939962696947     
+ iteration          786 OBJ=   -720.00267408070022     
+ iteration          787 OBJ=   -715.97253524010353     
+ iteration          788 OBJ=   -717.17782954317261     
+ iteration          789 OBJ=   -717.50859814119156     
+ iteration          790 OBJ=   -715.02562543945123     
+ iteration          791 OBJ=   -714.57779454209526     
+ iteration          792 OBJ=   -716.22502248307899     
+ iteration          793 OBJ=   -715.93673390550555     
+ iteration          794 OBJ=   -718.96905135281611     
+ iteration          795 OBJ=   -722.65906748482223     
+ iteration          796 OBJ=   -722.06126187690552     
+ iteration          797 OBJ=   -718.82711372675431     
+ iteration          798 OBJ=   -714.03669471304056     
+ iteration          799 OBJ=   -715.54960557923164     
+ iteration          800 OBJ=   -718.77518162513479     
+ iteration          801 OBJ=   -718.57010072693458     
+ iteration          802 OBJ=   -716.91947530544883     
+ iteration          803 OBJ=   -716.42447582844500     
+ iteration          804 OBJ=   -718.51811114361067     
+ iteration          805 OBJ=   -715.58215790193560     
+ iteration          806 OBJ=   -715.33953794706372     
+ iteration          807 OBJ=   -715.27895065897576     
+ iteration          808 OBJ=   -728.63245648441364     
+ iteration          809 OBJ=   -717.99084154612888     
+ iteration          810 OBJ=   -716.93455527263507     
+ iteration          811 OBJ=   -715.82120155610733     
+ iteration          812 OBJ=   -719.74166237811073     
+ iteration          813 OBJ=   -717.22407711642859     
+ iteration          814 OBJ=   -717.07924253918623     
+ iteration          815 OBJ=   -717.29225413545987     
+ iteration          816 OBJ=   -718.61467889957999     
+ iteration          817 OBJ=   -718.47331260824012     
+ iteration          818 OBJ=   -717.17637942932708     
+ iteration          819 OBJ=   -716.57597680179435     
+ iteration          820 OBJ=   -717.07621402942107     
+ iteration          821 OBJ=   -716.33056643558245     
+ iteration          822 OBJ=   -721.87693333926472     
+ iteration          823 OBJ=   -720.17383803051212     
+ iteration          824 OBJ=   -716.62415427672306     
+ iteration          825 OBJ=   -713.65901856964501     
+ iteration          826 OBJ=   -719.60236500049734     
+ iteration          827 OBJ=   -718.43116415097575     
+ iteration          828 OBJ=   -719.68756830168775     
+ iteration          829 OBJ=   -715.51215862683341     
+ iteration          830 OBJ=   -719.16649378520503     
+ iteration          831 OBJ=   -718.43460588087817     
+ iteration          832 OBJ=   -718.62272480606066     
+ iteration          833 OBJ=   -718.33426813091069     
+ iteration          834 OBJ=   -714.76466828794389     
+ iteration          835 OBJ=   -716.29692277805293     
+ iteration          836 OBJ=   -717.78123026295668     
+ iteration          837 OBJ=   -721.61296072267874     
+ iteration          838 OBJ=   -720.02507987765932     
+ iteration          839 OBJ=   -717.22474084099497     
+ iteration          840 OBJ=   -717.51306568634038     
+ iteration          841 OBJ=   -715.94082741325030     
+ iteration          842 OBJ=   -717.22007105915975     
+ iteration          843 OBJ=   -715.93700942231180     
+ iteration          844 OBJ=   -719.49755413712796     
+ iteration          845 OBJ=   -716.37627359154305     
+ iteration          846 OBJ=   -718.93217772323544     
+ iteration          847 OBJ=   -718.88008362786104     
+ iteration          848 OBJ=   -718.57841612106404     
+ iteration          849 OBJ=   -714.50244933453962     
+ iteration          850 OBJ=   -717.82708750680604     
+ iteration          851 OBJ=   -716.77413367440749     
+ iteration          852 OBJ=   -719.23925902018607     
+ iteration          853 OBJ=   -716.48740830711438     
+ iteration          854 OBJ=   -719.23240174428088     
+ iteration          855 OBJ=   -716.13318183911133     
+ iteration          856 OBJ=   -718.62746624405656     
+ iteration          857 OBJ=   -718.67781937167319     
+ iteration          858 OBJ=   -721.01443540079299     
+ iteration          859 OBJ=   -717.10138013158610     
+ iteration          860 OBJ=   -714.87958208220948     
+ iteration          861 OBJ=   -720.72386906891018     
+ iteration          862 OBJ=   -718.05459454033871     
+ iteration          863 OBJ=   -715.12449577499854     
+ iteration          864 OBJ=   -718.47688196961985     
+ iteration          865 OBJ=   -718.88508509581607     
+ iteration          866 OBJ=   -719.17573108775832     
+ iteration          867 OBJ=   -718.12891143661602     
+ iteration          868 OBJ=   -714.47011022560287     
+ iteration          869 OBJ=   -719.00805717609910     
+ iteration          870 OBJ=   -718.55511144289858     
+ iteration          871 OBJ=   -714.57815009611124     
+ iteration          872 OBJ=   -714.73766986060014     
+ iteration          873 OBJ=   -717.75064834399518     
+ iteration          874 OBJ=   -722.22990127420690     
+ iteration          875 OBJ=   -717.73897134114691     
+ iteration          876 OBJ=   -716.34695466949859     
+ iteration          877 OBJ=   -716.89265664721893     
+ iteration          878 OBJ=   -716.35863928286301     
+ iteration          879 OBJ=   -719.93658262875022     
+ iteration          880 OBJ=   -715.66416653965712     
+ iteration          881 OBJ=   -716.57949386466703     
+ iteration          882 OBJ=   -714.70648983652859     
+ iteration          883 OBJ=   -716.96491774365734     
+ iteration          884 OBJ=   -719.02041528549648     
+ iteration          885 OBJ=   -719.19840042553437     
+ iteration          886 OBJ=   -712.97267951965580     
+ iteration          887 OBJ=   -717.53161781509937     
+ iteration          888 OBJ=   -720.10739678669847     
+ iteration          889 OBJ=   -718.62779436036499     
+ iteration          890 OBJ=   -716.20779890623623     
+ iteration          891 OBJ=   -716.68132093919007     
+ iteration          892 OBJ=   -718.45024417851357     
+ iteration          893 OBJ=   -716.71487750404549     
+ iteration          894 OBJ=   -719.64652713029363     
+ iteration          895 OBJ=   -717.68828046455030     
+ iteration          896 OBJ=   -711.72401885082024     
+ iteration          897 OBJ=   -717.39280191197315     
+ iteration          898 OBJ=   -718.80139705067097     
+ iteration          899 OBJ=   -713.82838015051493     
+ iteration          900 OBJ=   -720.55951359556946     
+ iteration          901 OBJ=   -720.08116124804030     
+ iteration          902 OBJ=   -716.07873825718468     
+ iteration          903 OBJ=   -715.38609889770930     
+ iteration          904 OBJ=   -718.03774000117096     
+ iteration          905 OBJ=   -717.91928213235929     
+ iteration          906 OBJ=   -714.47846001155892     
+ iteration          907 OBJ=   -720.26460719302668     
+ iteration          908 OBJ=   -716.09205722121578     
+ iteration          909 OBJ=   -717.97771084389808     
+ iteration          910 OBJ=   -719.23439562003625     
+ iteration          911 OBJ=   -718.15960612514277     
+ iteration          912 OBJ=   -716.42550008698913     
+ iteration          913 OBJ=   -718.62641682449873     
+ iteration          914 OBJ=   -719.18766740093054     
+ iteration          915 OBJ=   -717.79707394100478     
+ iteration          916 OBJ=   -716.70217522092082     
+ iteration          917 OBJ=   -714.19523595390945     
+ iteration          918 OBJ=   -718.47271540697750     
+ iteration          919 OBJ=   -724.51496961948646     
+ iteration          920 OBJ=   -717.24560709656828     
+ iteration          921 OBJ=   -717.01227618014957     
+ iteration          922 OBJ=   -717.74070029812958     
+ iteration          923 OBJ=   -717.15110459492712     
+ iteration          924 OBJ=   -714.89764215836522     
+ iteration          925 OBJ=   -719.31403643545639     
+ iteration          926 OBJ=   -716.07660214922066     
+ iteration          927 OBJ=   -715.80582542189165     
+ iteration          928 OBJ=   -715.16676822608156     
+ iteration          929 OBJ=   -716.25118592570038     
+ iteration          930 OBJ=   -718.41018106376521     
+ iteration          931 OBJ=   -716.44511317745412     
+ iteration          932 OBJ=   -714.99252740631596     
+ iteration          933 OBJ=   -717.07614605419201     
+ iteration          934 OBJ=   -718.36376337060778     
+ iteration          935 OBJ=   -717.62601012898551     
+ iteration          936 OBJ=   -722.11508659172443     
+ iteration          937 OBJ=   -715.88569738560864     
+ iteration          938 OBJ=   -720.85869434174538     
+ iteration          939 OBJ=   -716.75716671854696     
+ iteration          940 OBJ=   -714.86903795687704     
+ iteration          941 OBJ=   -718.00069198355573     
+ iteration          942 OBJ=   -718.43095857925891     
+ iteration          943 OBJ=   -721.15445841266205     
+ iteration          944 OBJ=   -719.77751383803002     
+ iteration          945 OBJ=   -712.22350979918508     
+ iteration          946 OBJ=   -717.71390737545164     
+ iteration          947 OBJ=   -719.00000348762501     
+ iteration          948 OBJ=   -717.28755400386672     
+ iteration          949 OBJ=   -713.40950527101825     
+ iteration          950 OBJ=   -715.82353219945867     
+ iteration          951 OBJ=   -715.35443762888713     
+ iteration          952 OBJ=   -719.00900652846701     
+ iteration          953 OBJ=   -718.50368459178333     
+ iteration          954 OBJ=   -713.35841526979050     
+ iteration          955 OBJ=   -714.18422389464297     
+ iteration          956 OBJ=   -714.51986684939334     
+ iteration          957 OBJ=   -719.42954468962853     
+ iteration          958 OBJ=   -722.56446044163692     
+ iteration          959 OBJ=   -720.70596914542841     
+ iteration          960 OBJ=   -717.39409924598067     
+ iteration          961 OBJ=   -718.86414894524785     
+ iteration          962 OBJ=   -721.07808307383129     
+ iteration          963 OBJ=   -717.40171786412407     
+ iteration          964 OBJ=   -719.20580108882973     
+ iteration          965 OBJ=   -717.15312216110954     
+ iteration          966 OBJ=   -729.95214684687346     
+ iteration          967 OBJ=   -716.42181901075571     
+ iteration          968 OBJ=   -718.42325718116035     
+ iteration          969 OBJ=   -717.34442774857393     
+ iteration          970 OBJ=   -716.21605757888358     
+ iteration          971 OBJ=   -717.49512251756130     
+ iteration          972 OBJ=   -716.30185584376193     
+ iteration          973 OBJ=   -718.05729931591236     
+ iteration          974 OBJ=   -719.71441030791107     
+ iteration          975 OBJ=   -718.03068387577900     
+ iteration          976 OBJ=   -715.07104426190665     
+ iteration          977 OBJ=   -716.73774282642478     
+ iteration          978 OBJ=   -716.27101140138211     
+ iteration          979 OBJ=   -715.44664731636624     
+ iteration          980 OBJ=   -715.45357977303797     
+ iteration          981 OBJ=   -714.78841608635889     
+ iteration          982 OBJ=   -722.15812390319354     
+ iteration          983 OBJ=   -722.11215107973283     
+ iteration          984 OBJ=   -723.06394515872103     
+ iteration          985 OBJ=   -719.26754154381638     
+ iteration          986 OBJ=   -719.22727760754822     
+ iteration          987 OBJ=   -717.78861423624539     
+ iteration          988 OBJ=   -717.76427784915472     
+ iteration          989 OBJ=   -717.41437306971591     
+ iteration          990 OBJ=   -718.89648694967855     
+ iteration          991 OBJ=   -720.22683845846348     
+ iteration          992 OBJ=   -717.51467855239309     
+ iteration          993 OBJ=   -716.44201022859318     
+ iteration          994 OBJ=   -719.43255016335581     
+ iteration          995 OBJ=   -715.32859850746956     
+ iteration          996 OBJ=   -717.58876391354545     
+ iteration          997 OBJ=   -717.19142251867447     
+ iteration          998 OBJ=   -719.10963434379767     
+ iteration          999 OBJ=   -714.24177910582148     
+ iteration         1000 OBJ=   -717.39450711432698     
+ Elapsed estimation time in seconds:   131.39
+
+ #TERM:
+ OPTIMIZATION NOT TESTED
+ 
+
+ ETABAR IS THE ARITHMETIC MEAN OF THE ETA-ESTIMATES,
+ AND THE P-VALUE IS GIVEN FOR THE NULL HYPOTHESIS THAT THE TRUE MEAN IS 0.
+
+ ETABAR:         3.2361E-02  2.1088E-02 -3.2989E-02
+ SE:             6.7796E-02  1.0695E-01  4.2251E-02
+
+ P VAL.:         6.3313E-01  8.4369E-01  4.3493E-01
+
+ ETAshrink(%):  -7.8549E+00  2.2362E+01  2.4755E+01
+ EPSshrink(%):   1.1019E+01
+
+ #TERE:
+1
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ ************************************************************************************************************************
+ ********************                                                                                ********************
+ ********************               OBJECTIVE FUNCTION EVALUATION BY IMPORTANCE SAMPLING             ********************
+ #OBJT:**************                        FINAL VALUE OF OBJECTIVE FUNCTION                       ********************
+ ********************                                                                                ********************
+ ************************************************************************************************************************
+ 
+
+
+
+
+
+ #OBJV:********************************************     -717.395       **************************************************
+1
+ ************************************************************************************************************************
+ ********************                                                                                ********************
+ ********************               OBJECTIVE FUNCTION EVALUATION BY IMPORTANCE SAMPLING             ********************
+ ********************                             FINAL PARAMETER ESTIMATE                           ********************
+ ********************                                                                                ********************
+ ************************************************************************************************************************
+ 
+
+
+ THETA - VECTOR OF FIXED EFFECTS PARAMETERS   *********
+
+
+         TH 1      TH 2      TH 3      TH 4      TH 5     
+ 
+         2.71E+01  1.63E+01  3.07E-01  9.54E-02  3.28E-01
+ 
+
+
+ OMEGA - COV MATRIX FOR RANDOM EFFECTS - ETAS  ********
+
+
+            ETA1      ETA2      ETA3
+ 
+ ETA1
++        2.96E-01
+ 
+ ETA2
++        0.00E+00  1.42E+00
+ 
+ ETA3
++        0.00E+00  2.19E-01  2.37E-01
+ 
+
+
+ SIGMA - COV MATRIX FOR RANDOM EFFECTS - EPSILONS  ****
+
+
+            EPS1
+ 
+ EPS1
++        1.00E+00
+ 
+1
+ PROBLEM NO.:         6
+ MOXONIDINE PK ANALYSIS 3                                                
+0DATA CHECKOUT RUN:              NO 
+ DATA SET LOCATED ON UNIT NO.:    2
+ THIS UNIT TO BE REWOUND:        NO 
+ NO. OF DATA RECS IN DATA SET:     1166
+ NO. OF DATA ITEMS IN DATA SET:  34
+ ID DATA ITEM IS DATA ITEM NO.:   1
+ DEP VARIABLE IS DATA ITEM NO.:  31
+ MDV DATA ITEM IS DATA ITEM NO.: 34
+0INDICES PASSED TO SUBROUTINE PRED:
+ 32 22 25  0 26 27 29  0  0
+  0  0
+ 0LABELS FOR DATA ITEMS:
+  ID VISI XAT2 DGRP DOSE FLAG ONO XIME DVO NEUY SCR AGE SEX NYHA WT COMP ACE DIG DIU NUMB TAD TIME VIDD CLCR AMT SS II VID CMT CONO
+  DV EVID OVID MDV
+0FORMAT FOR DATA:
+ (7E10.0/7E10.0/7E10.0/7E10.0/2E10.0,E11.0,2E10.0,1F2.0)                         
+ 
+ TOT. NO. OF OBS RECS:     1022
+ TOT. NO. OF INDIVIDUALS:     74
+0LENGTH OF THETA:  5
+0DEFAULT THETA BOUNDARY TEST OMITTED:    NO 
+0OMEGA HAS BLOCK FORM:
+  1
+  0  2
+  0  2  2
+0DEFAULT OMEGA BOUNDARY TEST OMITTED:    NO 
+0SIGMA HAS SIMPLE DIAGONAL FORM WITH DIMENSION:  1
+0DEFAULT SIGMA BOUNDARY TEST OMITTED:    NO 
+0INITIAL ESTIMATE OF THETA:
+ LOWER BOUND    INITIAL EST    UPPER BOUND
+  0.0000E+00     0.2711E+02     0.1000E+07
+  0.0000E+00     0.1630E+02     0.1000E+07
+  0.0000E+00     0.3065E+00     0.1000E+07
+  0.0000E+00     0.9539E-01     0.1000E+07
+  0.0000E+00     0.3279E+00     0.1000E+07
+0INITIAL ESTIMATE OF OMEGA:
+ BLOCK SET NO.   BLOCK                                                                    FIXED
+        1                                                                                   NO 
+                  0.2964E+00
+        2                                                                                   NO 
+                  0.1423E+01
+                  0.2194E+00   0.2365E+00
+0INITIAL ESTIMATE OF SIGMA:
+ 0.1000E+01
+0SIGMA CONSTRAINED TO BE THIS INITIAL ESTIMATE
+0SIMULATION STEP OMITTED:    NO 
+ SOURCE  1:
+    SEED1:          1234   SEED2:             0   PSEUDO-NORMAL       
+ NUMBER OF SUBPROBLEMS:    1
+0ESTIMATION STEP OMITTED:           NO 
+ CONDITIONAL ESTIMATES USED:       YES 
+ CENTERED ETA:                      NO 
+ EPS-ETA INTERACTION:              YES 
+ LAPLACIAN OBJ. FUNC.:              NO 
+ NO. OF FUNCT. EVALS. ALLOWED:        528
+ NO. OF SIG. FIGURES REQUIRED:       3
+ INTERMEDIATE PRINTOUT:            YES 
+ ESTIMATE OUTPUT TO MSF:            NO 
+ ABORT WITH PRED EXIT CODE 1:       NO 
+ IND. OBJ. FUNC. VALUES SORTED:     NO 
+
+ THE FOLLOWING LABELS ARE EQUIVALENT
+ PRED=PREDI
+ RES=RESI
+ WRES=WRESI
+1
+ ADDITIONAL PK PARAMETERS - ASSIGNMENT OF ROWS IN GG
+ COMPT. NO.                             INDICES
+              SCALE      BIOAVAIL.   ZERO-ORDER  ZERO-ORDER  ABSORB
+                         FRACTION    RATE        DURATION    LAG  
+    1           *           *           *           *           4
+    2           5           *           *           *           *
+    3           *           -           -           -           -
+             - PARAMETER IS NOT ALLOWED FOR THIS MODEL
+             * PARAMETER IS NOT SUPPLIED BY PK SUBROUTINE;
+               WILL DEFAULT TO ONE IF APPLICABLE
+0DATA ITEM INDICES USED BY PRED ARE:
+   EVENT ID DATA ITEM IS DATA ITEM NO.:     32
+   TIME DATA ITEM IS DATA ITEM NO.:         22
+   DOSE AMOUNT DATA ITEM IS DATA ITEM NO.:  25
+   STEADY STATE DATA ITEM IS DATA ITEM NO.: 26
+   INTERVAL DATA ITEM IS DATA ITEM NO.:     27
+   COMPT. NO. DATA ITEM IS DATA ITEM NO.:   29
+ 
+0PK SUBROUTINE CALLED WITH EVERY EVENT RECORD.
+ PK SUBROUTINE NOT CALLED AT NONEVENT (ADDITIONAL OR LAGGED) DOSE TIMES.
+0ERROR SUBROUTINE CALLED WITH EVERY EVENT RECORD.
+1
+ PROBLEM NO.:         6     SUBPROBLEM NO.:      1
+ 
+ SIMULATION STEP PERFORMED
+ SOURCE  1:
+    SEED1:     784882240   SEED2:             0
+1
+
+
+ #METH: Objective Function Evaluation by Importance/MAP Sampling
+ EM/BAYES SETUP
+ THETAS THAT ARE MU MODELED:
+ 
+ THETAS THAT ARE SIGMA-LIKE:
+ 
+
+ MONITORING OF SEARCH:
+
+ iteration            0 OBJ=   -716.24197414394575     
+ iteration            1 OBJ=   -715.27546401668803     
+ iteration            2 OBJ=   -718.04190197296214     
+ iteration            3 OBJ=   -721.07377344585052     
+ iteration            4 OBJ=   -713.26190927406583     
+ iteration            5 OBJ=   -717.08074298729241     
+ iteration            6 OBJ=   -722.06648366529714     
+ iteration            7 OBJ=   -720.64675592804940     
+ iteration            8 OBJ=   -719.46794168286351     
+ iteration            9 OBJ=   -719.06369251270758     
+ iteration           10 OBJ=   -717.10752524062980     
+ iteration           11 OBJ=   -716.78695731105893     
+ iteration           12 OBJ=   -718.18192211602309     
+ iteration           13 OBJ=   -718.18999065685455     
+ iteration           14 OBJ=   -717.36287428307821     
+ iteration           15 OBJ=   -719.44167218210589     
+ iteration           16 OBJ=   -720.76728450844860     
+ iteration           17 OBJ=   -720.32994435269632     
+ iteration           18 OBJ=   -722.87166724724682     
+ iteration           19 OBJ=   -719.87835346666111     
+ iteration           20 OBJ=   -727.44376287635669     
+ iteration           21 OBJ=   -710.97368827433479     
+ iteration           22 OBJ=   -718.37714011456126     
+ iteration           23 OBJ=   -721.21908259216139     
+ iteration           24 OBJ=   -719.12619485275980     
+ iteration           25 OBJ=   -718.87850065530358     
+ iteration           26 OBJ=   -717.39464796519314     
+ iteration           27 OBJ=   -720.06674106346645     
+ iteration           28 OBJ=   -716.19386735595799     
+ iteration           29 OBJ=   -718.62160630452070     
+ iteration           30 OBJ=   -716.60688398637694     
+ iteration           31 OBJ=   -715.47247039654906     
+ iteration           32 OBJ=   -713.36577435853042     
+ iteration           33 OBJ=   -718.84726209012274     
+ iteration           34 OBJ=   -715.13341151209795     
+ iteration           35 OBJ=   -716.22623700830229     
+ iteration           36 OBJ=   -718.58905207243629     
+ iteration           37 OBJ=   -724.64768601814831     
+ iteration           38 OBJ=   -714.79925154768569     
+ iteration           39 OBJ=   -720.88532928865186     
+ iteration           40 OBJ=   -721.17407707142104     
+ iteration           41 OBJ=   -720.21963999516356     
+ iteration           42 OBJ=   -718.18737459630472     
+ iteration           43 OBJ=   -716.55644007620094     
+ iteration           44 OBJ=   -720.01325308272874     
+ iteration           45 OBJ=   -718.98850193452699     
+ iteration           46 OBJ=   -718.02947768509046     
+ iteration           47 OBJ=   -715.54178527099418     
+ iteration           48 OBJ=   -716.40104442701761     
+ iteration           49 OBJ=   -715.24862033215652     
+ iteration           50 OBJ=   -716.04032897967079     
+ Elapsed estimation time in seconds:     8.47
+
+ #TERM:
+ OPTIMIZATION NOT TESTED
+ 
+
+ ETABAR IS THE ARITHMETIC MEAN OF THE ETA-ESTIMATES,
+ AND THE P-VALUE IS GIVEN FOR THE NULL HYPOTHESIS THAT THE TRUE MEAN IS 0.
+
+ ETABAR:         3.1701E-02  1.5925E-02 -4.4595E-02
+ SE:             6.7665E-02  1.0511E-01  4.2356E-02
+
+ P VAL.:         6.3943E-01  8.7957E-01  2.9241E-01
+
+ ETAshrink(%):  -7.6466E+00  2.3701E+01  2.4567E+01
+ EPSshrink(%):   1.1789E+01
+
+ #TERE:
+1
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ ************************************************************************************************************************
+ ********************                                                                                ********************
+ ********************             OBJECTIVE FUNCTION EVALUATION BY IMPORTANCE/MAP SAMPLING           ********************
+ #OBJT:**************                        FINAL VALUE OF OBJECTIVE FUNCTION                       ********************
+ ********************                                                                                ********************
+ ************************************************************************************************************************
+ 
+
+
+
+
+
+ #OBJV:********************************************     -716.040       **************************************************
+1
+ ************************************************************************************************************************
+ ********************                                                                                ********************
+ ********************             OBJECTIVE FUNCTION EVALUATION BY IMPORTANCE/MAP SAMPLING           ********************
+ ********************                             FINAL PARAMETER ESTIMATE                           ********************
+ ********************                                                                                ********************
+ ************************************************************************************************************************
+ 
+
+
+ THETA - VECTOR OF FIXED EFFECTS PARAMETERS   *********
+
+
+         TH 1      TH 2      TH 3      TH 4      TH 5     
+ 
+         2.71E+01  1.63E+01  3.07E-01  9.54E-02  3.28E-01
+ 
+
+
+ OMEGA - COV MATRIX FOR RANDOM EFFECTS - ETAS  ********
+
+
+            ETA1      ETA2      ETA3
+ 
+ ETA1
++        2.96E-01
+ 
+ ETA2
++        0.00E+00  1.42E+00
+ 
+ ETA3
++        0.00E+00  2.19E-01  2.37E-01
+ 
+
+
+ SIGMA - COV MATRIX FOR RANDOM EFFECTS - EPSILONS  ****
+
+
+            EPS1
+ 
+ EPS1
++        1.00E+00
+ 
+1
+ PROBLEM NO.:         7
+ MOXONIDINE PK ANALYSIS 3                                                
+0DATA CHECKOUT RUN:              NO 
+ DATA SET LOCATED ON UNIT NO.:    2
+ THIS UNIT TO BE REWOUND:        NO 
+ NO. OF DATA RECS IN DATA SET:     1166
+ NO. OF DATA ITEMS IN DATA SET:  34
+ ID DATA ITEM IS DATA ITEM NO.:   1
+ DEP VARIABLE IS DATA ITEM NO.:  31
+ MDV DATA ITEM IS DATA ITEM NO.: 34
+0INDICES PASSED TO SUBROUTINE PRED:
+ 32 22 25  0 26 27 29  0  0
+  0  0
+ 0LABELS FOR DATA ITEMS:
+  ID VISI XAT2 DGRP DOSE FLAG ONO XIME DVO NEUY SCR AGE SEX NYHA WT COMP ACE DIG DIU NUMB TAD TIME VIDD CLCR AMT SS II VID CMT CONO
+  DV EVID OVID MDV
+0FORMAT FOR DATA:
+ (7E10.0/7E10.0/7E10.0/7E10.0/2E10.0,E11.0,2E10.0,1F2.0)                         
+ 
+ TOT. NO. OF OBS RECS:     1022
+ TOT. NO. OF INDIVIDUALS:     74
+0LENGTH OF THETA:  5
+0DEFAULT THETA BOUNDARY TEST OMITTED:    NO 
+0OMEGA HAS BLOCK FORM:
+  1
+  0  2
+  0  2  2
+0DEFAULT OMEGA BOUNDARY TEST OMITTED:    NO 
+0SIGMA HAS SIMPLE DIAGONAL FORM WITH DIMENSION:  1
+0DEFAULT SIGMA BOUNDARY TEST OMITTED:    NO 
+0INITIAL ESTIMATE OF THETA:
+ LOWER BOUND    INITIAL EST    UPPER BOUND
+  0.0000E+00     0.2711E+02     0.1000E+07
+  0.0000E+00     0.1630E+02     0.1000E+07
+  0.0000E+00     0.3065E+00     0.1000E+07
+  0.0000E+00     0.9539E-01     0.1000E+07
+  0.0000E+00     0.3279E+00     0.1000E+07
+0INITIAL ESTIMATE OF OMEGA:
+ BLOCK SET NO.   BLOCK                                                                    FIXED
+        1                                                                                   NO 
+                  0.2964E+00
+        2                                                                                   NO 
+                  0.1423E+01
+                  0.2194E+00   0.2365E+00
+0INITIAL ESTIMATE OF SIGMA:
+ 0.1000E+01
+0SIGMA CONSTRAINED TO BE THIS INITIAL ESTIMATE
+0SIMULATION STEP OMITTED:    NO 
+ SOURCE  1:
+    SEED1:          1234   SEED2:             0   PSEUDO-NORMAL       
+ NUMBER OF SUBPROBLEMS:    1
+0ESTIMATION STEP OMITTED:           NO 
+ CONDITIONAL ESTIMATES USED:       YES 
+ CENTERED ETA:                      NO 
+ EPS-ETA INTERACTION:              YES 
+ LAPLACIAN OBJ. FUNC.:              NO 
+ NO. OF FUNCT. EVALS. ALLOWED:        528
+ NO. OF SIG. FIGURES REQUIRED:       3
+ INTERMEDIATE PRINTOUT:            YES 
+ ESTIMATE OUTPUT TO MSF:            NO 
+ ABORT WITH PRED EXIT CODE 1:       NO 
+ IND. OBJ. FUNC. VALUES SORTED:     NO 
+
+ THE FOLLOWING LABELS ARE EQUIVALENT
+ PRED=PREDI
+ RES=RESI
+ WRES=WRESI
+1
+ ADDITIONAL PK PARAMETERS - ASSIGNMENT OF ROWS IN GG
+ COMPT. NO.                             INDICES
+              SCALE      BIOAVAIL.   ZERO-ORDER  ZERO-ORDER  ABSORB
+                         FRACTION    RATE        DURATION    LAG  
+    1           *           *           *           *           4
+    2           5           *           *           *           *
+    3           *           -           -           -           -
+             - PARAMETER IS NOT ALLOWED FOR THIS MODEL
+             * PARAMETER IS NOT SUPPLIED BY PK SUBROUTINE;
+               WILL DEFAULT TO ONE IF APPLICABLE
+0DATA ITEM INDICES USED BY PRED ARE:
+   EVENT ID DATA ITEM IS DATA ITEM NO.:     32
+   TIME DATA ITEM IS DATA ITEM NO.:         22
+   DOSE AMOUNT DATA ITEM IS DATA ITEM NO.:  25
+   STEADY STATE DATA ITEM IS DATA ITEM NO.: 26
+   INTERVAL DATA ITEM IS DATA ITEM NO.:     27
+   COMPT. NO. DATA ITEM IS DATA ITEM NO.:   29
+ 
+0PK SUBROUTINE CALLED WITH EVERY EVENT RECORD.
+ PK SUBROUTINE NOT CALLED AT NONEVENT (ADDITIONAL OR LAGGED) DOSE TIMES.
+0ERROR SUBROUTINE CALLED WITH EVERY EVENT RECORD.
+1
+ PROBLEM NO.:         7     SUBPROBLEM NO.:      1
+ 
+ SIMULATION STEP PERFORMED
+ SOURCE  1:
+    SEED1:     784882240   SEED2:             0
+1
+
+
+ #METH: Objective Function Evaluation by Importance/MAP Sampling
+ EM/BAYES SETUP
+ THETAS THAT ARE MU MODELED:
+ 
+ THETAS THAT ARE SIGMA-LIKE:
+ 
+
+ MONITORING OF SEARCH:
+
+ iteration            0 OBJ=   -716.24197414394575     
+ Elapsed estimation time in seconds:     0.18
+
+ #TERM:
+ OPTIMIZATION NOT TESTED
+ 
+
+ ETABAR IS THE ARITHMETIC MEAN OF THE ETA-ESTIMATES,
+ AND THE P-VALUE IS GIVEN FOR THE NULL HYPOTHESIS THAT THE TRUE MEAN IS 0.
+
+ ETABAR:         3.2571E-02  2.3782E-02 -4.5060E-02
+ SE:             6.7824E-02  1.0459E-01  4.2532E-02
+
+ P VAL.:         6.3106E-01  8.2013E-01  2.8940E-01
+
+ ETAshrink(%):  -7.8991E+00  2.4074E+01  2.4255E+01
+ EPSshrink(%):   1.1426E+01
+
+ #TERE:
+1
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ ************************************************************************************************************************
+ ********************                                                                                ********************
+ ********************             OBJECTIVE FUNCTION EVALUATION BY IMPORTANCE/MAP SAMPLING           ********************
+ #OBJT:**************                        FINAL VALUE OF OBJECTIVE FUNCTION                       ********************
+ ********************                                                                                ********************
+ ************************************************************************************************************************
+ 
+
+
+
+
+
+ #OBJV:********************************************     -716.242       **************************************************
+1
+ ************************************************************************************************************************
+ ********************                                                                                ********************
+ ********************             OBJECTIVE FUNCTION EVALUATION BY IMPORTANCE/MAP SAMPLING           ********************
+ ********************                             FINAL PARAMETER ESTIMATE                           ********************
+ ********************                                                                                ********************
+ ************************************************************************************************************************
+ 
+
+
+ THETA - VECTOR OF FIXED EFFECTS PARAMETERS   *********
+
+
+         TH 1      TH 2      TH 3      TH 4      TH 5     
+ 
+         2.71E+01  1.63E+01  3.07E-01  9.54E-02  3.28E-01
+ 
+
+
+ OMEGA - COV MATRIX FOR RANDOM EFFECTS - ETAS  ********
+
+
+            ETA1      ETA2      ETA3
+ 
+ ETA1
++        2.96E-01
+ 
+ ETA2
++        0.00E+00  1.42E+00
+ 
+ ETA3
++        0.00E+00  2.19E-01  2.37E-01
+ 
+
+
+ SIGMA - COV MATRIX FOR RANDOM EFFECTS - EPSILONS  ****
+
+
+            EPS1
+ 
+ EPS1
++        1.00E+00
+ 
+1
+ PROBLEM NO.:         8
+ MOXONIDINE PK ANALYSIS 3                                                
+0DATA CHECKOUT RUN:              NO 
+ DATA SET LOCATED ON UNIT NO.:    2
+ THIS UNIT TO BE REWOUND:        NO 
+ NO. OF DATA RECS IN DATA SET:     1166
+ NO. OF DATA ITEMS IN DATA SET:  34
+ ID DATA ITEM IS DATA ITEM NO.:   1
+ DEP VARIABLE IS DATA ITEM NO.:  31
+ MDV DATA ITEM IS DATA ITEM NO.: 34
+0INDICES PASSED TO SUBROUTINE PRED:
+ 32 22 25  0 26 27 29  0  0
+  0  0
+ 0LABELS FOR DATA ITEMS:
+  ID VISI XAT2 DGRP DOSE FLAG ONO XIME DVO NEUY SCR AGE SEX NYHA WT COMP ACE DIG DIU NUMB TAD TIME VIDD CLCR AMT SS II VID CMT CONO
+  DV EVID OVID MDV
+0FORMAT FOR DATA:
+ (7E10.0/7E10.0/7E10.0/7E10.0/2E10.0,E11.0,2E10.0,1F2.0)                         
+ 
+ TOT. NO. OF OBS RECS:     1022
+ TOT. NO. OF INDIVIDUALS:     74
+0LENGTH OF THETA:  5
+0DEFAULT THETA BOUNDARY TEST OMITTED:    NO 
+0OMEGA HAS BLOCK FORM:
+  1
+  0  2
+  0  2  2
+0DEFAULT OMEGA BOUNDARY TEST OMITTED:    NO 
+0SIGMA HAS SIMPLE DIAGONAL FORM WITH DIMENSION:  1
+0DEFAULT SIGMA BOUNDARY TEST OMITTED:    NO 
+0INITIAL ESTIMATE OF THETA:
+ LOWER BOUND    INITIAL EST    UPPER BOUND
+  0.0000E+00     0.2711E+02     0.1000E+07
+  0.0000E+00     0.1630E+02     0.1000E+07
+  0.0000E+00     0.3065E+00     0.1000E+07
+  0.0000E+00     0.9539E-01     0.1000E+07
+  0.0000E+00     0.3279E+00     0.1000E+07
+0INITIAL ESTIMATE OF OMEGA:
+ BLOCK SET NO.   BLOCK                                                                    FIXED
+        1                                                                                   NO 
+                  0.2964E+00
+        2                                                                                   NO 
+                  0.1423E+01
+                  0.2194E+00   0.2365E+00
+0INITIAL ESTIMATE OF SIGMA:
+ 0.1000E+01
+0SIGMA CONSTRAINED TO BE THIS INITIAL ESTIMATE
+0SIMULATION STEP OMITTED:    NO 
+ SOURCE  1:
+    SEED1:          1234   SEED2:             0   PSEUDO-NORMAL       
+ NUMBER OF SUBPROBLEMS:    1
+0ESTIMATION STEP OMITTED:           NO 
+ CONDITIONAL ESTIMATES USED:       YES 
+ CENTERED ETA:                      NO 
+ EPS-ETA INTERACTION:              YES 
+ LAPLACIAN OBJ. FUNC.:              NO 
+ NO. OF FUNCT. EVALS. ALLOWED:        528
+ NO. OF SIG. FIGURES REQUIRED:       3
+ INTERMEDIATE PRINTOUT:            YES 
+ ESTIMATE OUTPUT TO MSF:            NO 
+ ABORT WITH PRED EXIT CODE 1:       NO 
+ IND. OBJ. FUNC. VALUES SORTED:     NO 
+
+ THE FOLLOWING LABELS ARE EQUIVALENT
+ PRED=PREDI
+ RES=RESI
+ WRES=WRESI
+1
+ ADDITIONAL PK PARAMETERS - ASSIGNMENT OF ROWS IN GG
+ COMPT. NO.                             INDICES
+              SCALE      BIOAVAIL.   ZERO-ORDER  ZERO-ORDER  ABSORB
+                         FRACTION    RATE        DURATION    LAG  
+    1           *           *           *           *           4
+    2           5           *           *           *           *
+    3           *           -           -           -           -
+             - PARAMETER IS NOT ALLOWED FOR THIS MODEL
+             * PARAMETER IS NOT SUPPLIED BY PK SUBROUTINE;
+               WILL DEFAULT TO ONE IF APPLICABLE
+0DATA ITEM INDICES USED BY PRED ARE:
+   EVENT ID DATA ITEM IS DATA ITEM NO.:     32
+   TIME DATA ITEM IS DATA ITEM NO.:         22
+   DOSE AMOUNT DATA ITEM IS DATA ITEM NO.:  25
+   STEADY STATE DATA ITEM IS DATA ITEM NO.: 26
+   INTERVAL DATA ITEM IS DATA ITEM NO.:     27
+   COMPT. NO. DATA ITEM IS DATA ITEM NO.:   29
+ 
+0PK SUBROUTINE CALLED WITH EVERY EVENT RECORD.
+ PK SUBROUTINE NOT CALLED AT NONEVENT (ADDITIONAL OR LAGGED) DOSE TIMES.
+0ERROR SUBROUTINE CALLED WITH EVERY EVENT RECORD.
+1
+ PROBLEM NO.:         8     SUBPROBLEM NO.:      1
+ 
+ SIMULATION STEP PERFORMED
+ SOURCE  1:
+    SEED1:     784882240   SEED2:             0
+1
+
+
+ #METH: Objective Function Evaluation by Importance/MAP Sampling
+ EM/BAYES SETUP
+ THETAS THAT ARE MU MODELED:
+ 
+ THETAS THAT ARE SIGMA-LIKE:
+ 
+
+ MONITORING OF SEARCH:
+
+ iteration            0 OBJ=   -716.24197414394575     
+ iteration            1 OBJ=   -715.27546401668803     
+ Elapsed estimation time in seconds:     0.34
+
+ #TERM:
+ OPTIMIZATION NOT TESTED
+ 
+
+ ETABAR IS THE ARITHMETIC MEAN OF THE ETA-ESTIMATES,
+ AND THE P-VALUE IS GIVEN FOR THE NULL HYPOTHESIS THAT THE TRUE MEAN IS 0.
+
+ ETABAR:         3.2851E-02  2.6322E-02 -3.4818E-02
+ SE:             6.7362E-02  1.0771E-01  4.2929E-02
+
+ P VAL.:         6.2578E-01  8.0695E-01  4.1732E-01
+
+ ETAshrink(%):  -7.1648E+00  2.1806E+01  2.3547E+01
+ EPSshrink(%):   1.1418E+01
+
+ #TERE:
+1
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ ************************************************************************************************************************
+ ********************                                                                                ********************
+ ********************             OBJECTIVE FUNCTION EVALUATION BY IMPORTANCE/MAP SAMPLING           ********************
+ #OBJT:**************                        FINAL VALUE OF OBJECTIVE FUNCTION                       ********************
+ ********************                                                                                ********************
+ ************************************************************************************************************************
+ 
+
+
+
+
+
+ #OBJV:********************************************     -715.275       **************************************************
+1
+ ************************************************************************************************************************
+ ********************                                                                                ********************
+ ********************             OBJECTIVE FUNCTION EVALUATION BY IMPORTANCE/MAP SAMPLING           ********************
+ ********************                             FINAL PARAMETER ESTIMATE                           ********************
+ ********************                                                                                ********************
+ ************************************************************************************************************************
+ 
+
+
+ THETA - VECTOR OF FIXED EFFECTS PARAMETERS   *********
+
+
+         TH 1      TH 2      TH 3      TH 4      TH 5     
+ 
+         2.71E+01  1.63E+01  3.07E-01  9.54E-02  3.28E-01
+ 
+
+
+ OMEGA - COV MATRIX FOR RANDOM EFFECTS - ETAS  ********
+
+
+            ETA1      ETA2      ETA3
+ 
+ ETA1
++        2.96E-01
+ 
+ ETA2
++        0.00E+00  1.42E+00
+ 
+ ETA3
++        0.00E+00  2.19E-01  2.37E-01
+ 
+
+
+ SIGMA - COV MATRIX FOR RANDOM EFFECTS - EPSILONS  ****
+
+
+            EPS1
+ 
+ EPS1
++        1.00E+00
+ 
+Fri Aug  7 09:14:10 CEST 2015

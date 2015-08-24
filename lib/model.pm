@@ -3123,20 +3123,29 @@ sub table_names
 sub flip_comments
 {
 	my %parm = validated_hash(\@_,
-		 model_file_name => { isa => 'Str', optional => 0 },
+		 from_model => { isa => 'model', optional => 0 },
 		 new_file_name => { isa => 'Str', optional => 0 },
+		 write => { isa => 'Bool', default => 0 },
 	);
 
-	my $model_file_name = $parm{'model_file_name'};
+	my $from_model = $parm{'from_model'};
 	my $new_file_name = $parm{'new_file_name'};
+	my $write = $parm{'write'};
 
-	if (-e $new_file_name){
+	#TODO create model object for new file, optional write to disk, use model_lines parameter
+	#handle different dir than input model
+	#after flipping resolve data path in copy, could be different dir
+	#return model object for copy
+
+	if (-e $new_file_name and $write){
 		carp("overwriting existing flip_file\n");
 		unlink($new_file_name);
 	}
-	open(MOD, $model_file_name) || 
-		die("Couldn't open " . $model_file_name." : $!");
-	open(SIM, ">$new_file_name") || die("Couldn't open $new_file_name : $!");
+	#need to read fresh from disk, make sure no PsN rearrangements
+	open(MOD, $from_model->full_name) || die("Couldn't open " . $from_model->full_name." : $!");
+
+	my @simlines=();
+
 	my $sim_tag = 0;
 	while(<MOD>) {
 		my $tag_line = 0;
@@ -3159,12 +3168,29 @@ sub flip_comments
 				$_ = ';'.$_
 			}
 		}
-		print SIM $_;
+		push(@simlines,$_);
 
 	}
-	close(SIM);
 	close(MOD);
 
+	my $newdir;
+	my $filename;
+	($newdir, $filename) = OSspecific::absolute_path(undef,$new_file_name);
+	#first create new model object in dir of old model, to get relative paths to data correct 
+	my $newmodel = model->new(directory => $from_model->directory,
+							  filename => $filename,
+							  model_lines => \@simlines,
+							  ignore_missing_data => 1,
+							  ignore_missing_output_files => 1);
+	#then set new directory, which will make sure data paths are correct for new dir
+	$newmodel->directory($newdir);
+
+	if ($write){
+#		open(SIM, ">$new_file_name") || die("Couldn't open $new_file_name : $!");
+		$newmodel-> _write;
+	}
+
+	return $newmodel;
 }
 
 sub units

@@ -14,14 +14,21 @@ with the nmfe script, for example nmfe73. <p>
 If running NONMEM with nmfe/autolog.pl does not work then PsN will not work.
 </li>
 <li>Perl5<p>
-PsN4 requires at least Perl5 version 5.10.1. Please note that users of the free version of ActiveState Perl need an even higher version to be able to download the needed Perl packages (see note below). Users who are already running an older version of PsN should check if they need to upgrade Perl before installing PsN4. The Perl version can be checked with the command <pre>perl --version</pre>
+PsN4 requires at least Perl5 version 5.10.1. Please note that users of the free version of ActiveState Perl need an even higher version to be able to download the needed Perl packages (see note below). Users who are already running an older version of PsN should check if they need to upgrade Perl before installing PsN4. The Perl version can be checked with the command <pre>perl --version</pre><p>
 Note 1: For Windows we recommend
 <a target="_blank" href="http://strawberryperl.com/">Strawberry Perl</a> and 
 <a target="_blank" href="http://www.activestate.com/activeperl/downloads/">ActiveState Perl</a>.
 Windows users who are installing PsN for the first time should choose one of Strawberry Perl or ActiveState Perl to install.
-If ActiveState is selected it is important to select a version which supports the extra modules needed for PsN.
-On April 12th 2015 the recommended ActiveState Perl version was 5.16. For updated information 
-on which version provides which modules in ActiveState Perl see 
+If ActiveState is selected it is important to select a version which supports the extra Perl modules needed for PsN, see the next bullet point.
+On April 12th 2015 the recommended ActiveState Perl version was 5.16.<p> 
+Note 2: Mac users should check if the version of Perl that came with MacOS is 5.10.1 or above. For older versions of MacOS Perl needs to be upgraded.
+This can be done by installing ActiveState Perl (and installing the needed packages with ppm install).
+</li>
+<li>Perl modules MooseX::Params::Validate, Math::Random, Statistics::Distributions, Archive::Zip and File::Copy::Recursive <p> 
+PsN can be run without Statistics::Distributions, Archive::Zip and File::Copy::Recursive 
+but some features and bugfixes will not be available.
+For updated information 
+on which modules are available for which Perl version in ActiveState Perl see 
 package information pages for 
 <a target="_blank" href="http://code.activestate.com/ppm/Math-Random/">Math::Random</a>, 
 <a target="_blank" href="http://code.activestate.com/ppm/File-Copy-Recursive/">File::Copy::Recursive</a>, 
@@ -29,26 +36,13 @@ package information pages for
 <a target="_blank" href="http://code.activestate.com/ppm/MooseX-Params-Validate">MooseX::Params::Validate</a> 
 and
 <a target="_blank" href="http://code.activestate.com/ppm/Statistics-Distributions/">Statistics::Distributions</a> </br>
-Note 2: Mac users should check if the version of Perl that came with MacOS is 5.10.1 or above. For older versions of MacOS Perl needs to be upgraded.
-This can be done by installing ActiveState Perl (and installing the needed packages with ppm install).</li>
-<li>Perl modules Math::Random, Statistics::Distributions, Archive::Zip and File::Copy::Recursive. 
-PsN can be run without Statistics::Distributions, Archive::Zip and File::Copy::Recursive 
-but some scm/vpc features and a scm bugfix will not be available.</li>
+</li>
 <li>Perl module Storable (needed for Unix only, installation as Math::Random)</li>
 </ul>
 </p>
 
 <h3>Installing Perl modules</h3>
 You must have internet access for the installation procedure to work.
-<h4>Windows (Strawberry Perl)</h4>
-<ol>
-<li>Start a DOS command window.</li>
-<li>Run the following commands (hit Enter after each command):<br>
-cpan Math::Random<br>
-cpan Statistics::Distributions<br>
-cpan MooseX::Params::Validate<br>
-</li>
-</ol>
 <h4>Windows (ActivePerl)</h4>
 <ol>
 <li>Start a DOS command window.</li>
@@ -58,6 +52,15 @@ ppm install statistics-distributions<br>
 ppm install archive-zip<br>
 ppm install file-copy-recursive<br>
 ppm install moosex-params-validate
+</li>
+</ol>
+<h4>Windows (Strawberry Perl)</h4>
+<ol>
+<li>Start a DOS command window.</li>
+<li>Run the following commands (hit Enter after each command):<br>
+cpan Math::Random<br>
+cpan Statistics::Distributions<br>
+cpan MooseX::Params::Validate<br>
 </li>
 </ol>
 <h4>Linux/Unix/MacOS</h4>

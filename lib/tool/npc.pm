@@ -908,59 +908,10 @@ sub modelfit_setup
 		if (-e $simname){
 			unlink($simname);
 		}
-		open(MOD, $self->models->[0]->full_name()) || 
-			die("Couldn't open " . $self->models->[0]->full_name()." : $!");
-		open(SIM, ">$simname") || die("Couldn't open $simname : $!");
-		my $sim_tag = 0;
-		while(<MOD>) {
-			my $remove_line = 0;
-			
-			# find Sim_end
-			if (/^\s*\;+\s*[Ss]im\_end/) {
-				$sim_tag = 0;
-				$remove_line = 1;
-			}
-			# find Sim_start
-			if (/^\s*\;+\s*[Ss]im\_start/) {
-				$sim_tag = 1;
-				$remove_line=1;
-			}
-			if($remove_line==1) {
-				next;
-			} elsif($sim_tag==1) {
-				if(/^\s*\;+/) {
-					s/\;//;
-				} else {
-					$_ = ';'.$_
-				}
-			}
 
-			#change data path unless absolute. do this after flip, might change dataset even
-			if (s/^\s*\$DAT[A]?\s*//) {
-				#remove $DATA, put it back afterwards
-				#now first string is filename
-				my $head = '$DATA ';
-				#Check OS
-				if ($Config{osname} eq 'MSWin32' or $Config{osname} eq 'MSWin64') {
-					unless (/^[A-Za-z]:/) {
-						#if start with volume, absolute path, do not do this
-						$head .= '..\\..\\';
-					}
-				} else {
-					unless (/^\//) {
-						#if start with /, absolute path, do not do this
-						$head .= '../../';
-					}
-				}
-				print SIM $head.$_;
-			} else {
-				print SIM $_;
-			}
-
-		}
-		
-		close(SIM);
-		close(MOD);
+		my $flipcopy = model::flip_comments(from_model =>$self->models->[0],
+											new_file_name => $simname,
+											write => 1);
 
 		$model_simulation = model -> new (%{common_options::restore_options(@common_options::model_options)},
 										  filename                    => $simname,

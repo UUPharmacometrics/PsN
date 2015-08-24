@@ -2818,12 +2818,13 @@ sub _read_problems
 	my $problem_start;
 	my $problem_index = 0;
 	my $success = 0;
-	my $meth_counter = 0;
-	my $tbln; #NONMEM table number from tag #TBLN
+	#my $tbln; #NONMEM table number from tag #TBLN
 	my $n_previous_meth = 0;
+	my $evaluation_missing_from_ext_file = 0;
 	my $lst_version;
 	my $endtime_string;
 	my $starttime_string;
+	my $nm_version_710=0;
 
 	#new in 3.5.10, read control stream from lst-file
 	my $reading_control_stream = 0;
@@ -2941,6 +2942,9 @@ sub _read_problems
 		}elsif (/^1NONLINEAR MIXED EFFECTS MODEL PROGRAM/) {
 			if (/VERSION 7/) {
 				$lst_version = 7;
+				if (/VERSION 7\.1\.0/) {
+					$nm_version_710=1;
+				}
 			} elsif (/VERSION VII /) {
 				$lst_version = 7;
 			} elsif (/VERSION 6/) {
@@ -3009,29 +3013,20 @@ sub _read_problems
 
 	#then read NONMEM output
 	while ( $_ = $lstfile[ $lstfile_pos++ ] ) {
-		if (/^\s*\#METH:/) {
-			#NONMEM will print #METH also when simulation without estimation, do not count
-			# these occurences: #METH line followed by line with 1 and nothing more
-			unless ($lstfile[$lstfile_pos] =~ /^1\s*$/) {
-				$meth_counter++;
-				if ($lstfile[ $lstfile_pos - 2 ] =~ /^\s*\#TBLN:\s*([0-9]+)/) {
-					#if previous line is #TBLN then this will help us find right table in extra output
-					$tbln = $1;
-				}
-			}
-		} elsif ( /^ PROBLEM NO\.:\s+\d+\s+$/ or $lstfile_pos > $#lstfile ) {
+#		if (/^\s*\#TBLN:\s*([0-9]+)/) {
+#			$tbln = $1; #used for limiting reading of tables from additional output
+#		} els
+		if ( /^ PROBLEM NO\.:\s+\d+\s+$/ or $lstfile_pos > $#lstfile ) {
 			if ( defined $problem_start ) {
 				my $adj = 1;
 				my @problem_lstfile =	@lstfile[$problem_start .. ($lstfile_pos - $adj)];
 
 				#We send full raw_file, cov_file... arrays to problem object
 				#the right table number will be extracted there using $n_previous_meth
-				#or $tbln if present
 				#we skip tables that must come from restarted numbering (<= previous number),
 				#NM7 table numbering in additional output is inconsistent and we cannot handle it
 				#those numbers will be taken from lst-file instead, good enough since rare case
 				#if nm_major_version<=6 undefined arrays, okay
-
 
 				if (not (defined $self->lst_model and defined $self->lst_model->problems 
 						 and (scalar(@{$self->lst_model->problems}) >$problem_index)
@@ -3048,24 +3043,28 @@ sub _read_problems
 										   { lstfile		    => \@problem_lstfile,
 											 ignore_missing_files => $self -> ignore_missing_files(),
 											 nm_major_version     => $lst_version,
-											 filename_root	    	=> $self -> filename_root(),
-											 directory	    			=> $self -> directory(),
+											 nm_version_710       => $nm_version_710,
+											 evaluation_missing_from_ext_file => $evaluation_missing_from_ext_file,
+											 filename_root	      => $self -> filename_root(),
+											 directory	    	  => $self -> directory(),
 											 n_previous_meth      => $n_previous_meth,
-											 table_number         => $tbln,
+#											 table_number         => $tbln,
 											 input_problem        => $self->lst_model->problems->[$problem_index]});
-					$problem_index++;
-					my @problems = @{$self->problems};
 					
 					my $mes = $self->parsing_error_message();
-					$mes .= $problems[$#problems] -> parsing_error_message();
+					$mes .= $self->problems->[$problem_index] -> parsing_error_message();
 					$self -> parsing_error_message( $mes );
-					$self -> parsed_successfully($self -> parsed_successfully() * $problems[$#problems] -> parsed_successfully());
+					$self -> parsed_successfully($self -> parsed_successfully() * 
+												 ($self->problems->[$problem_index] -> parsed_successfully()));
 
-					$self -> msfo_has_terminated($self -> msfo_has_terminated() + $problems[$#problems] -> msfo_has_terminated());
+					$self -> msfo_has_terminated($self->msfo_has_terminated()+$self->problems->[$problem_index]->msfo_has_terminated());
+					$n_previous_meth = $self->problems->[$problem_index]->last_method_number if
+						(defined $self->problems->[$problem_index]->last_method_number);
+					$evaluation_missing_from_ext_file = $self->problems->[$problem_index]->evaluation_missing_from_ext_file;
+					$problem_index++;
 				}		  
 				@problem_lstfile = undef;
 				$success = 1;
-				$n_previous_meth = $meth_counter;
 				
 			}  #end if defined problem start
 			$problem_start = $lstfile_pos;
@@ -3076,7 +3075,8 @@ sub _read_problems
 	unless( $success ) {
 		carp('Could not find a PROBLEM NO statement in "' .
 			 $self -> full_name . '"' . "\n" ) unless $self->ignore_missing_files;
-		$self->parsing_error( message => 'Output file seems interrupted, could not find a PROBLEM NO statement in "' . $self->full_name . '"' . "\n" );
+		$self->parsing_error( message => 'Output file seems interrupted, could not find a PROBLEM NO statement in "' . 
+							  $self->full_name . '"' . "\n" );
 		$self->parsed_successfully(0);
 		return 0;
 	}

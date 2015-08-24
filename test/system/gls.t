@@ -13,7 +13,7 @@ our $tempdir = create_test_dir('system_gls');
 our $dir = "$tempdir/gls_test";
 my $model_dir = $includes::testfiledir;
 
-my $command = get_command('gls') . " $model_dir/glstags.mod -samples=3 -set_simest -ind_shrink -dir=$dir";
+my $command = get_command('gls') . " $model_dir/glstags.mod -samples=5 -set_simest -ind_shrink -dir=$dir";
 
 my  $rc = system($command);
 $rc = $rc >> 8;

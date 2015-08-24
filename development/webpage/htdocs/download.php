@@ -304,7 +304,7 @@ the NONMEM runs to SGE, Slurm, LSF, ud and torque. See documentation
 The PsN test suite has been run on slurm and locally.
 </p>
 
-<p><strong>Platforms:</strong> PsN-4.4.0 is tested on the systems listed below.</p>
+<p><strong>Platforms:</strong> PsN-4.4.6 is tested on the systems listed below.</p>
 <table>
   <tr>
     <th>Platform</th>
@@ -389,12 +389,5 @@ The PsN test suite has been run on slurm and locally.
     <td >5.10.1</td>
     <td>7.1.0, 7.1.2, 7.3.0</td>
     <td>gfortran 4.4.7</td>
-  </tr>
-  <tr>
-    <th >Linux</th>
-    <td >Debian 7.5</td>
-    <td >5.14.2</td>
-    <td>7.3.0</td>
-    <td>gfortran 4.7.2</td>
   </tr>
 </table>
