@@ -95,6 +95,10 @@ Changes and bug fixes from PsN 4.4.6 to n.n.n
 
    ___runrecord___
 
+   ___psn___
+
+- The option -nm_versions now also print the path to the psn.conf that was used.
 
    ___nmoutput2so___
 
+- Bug fix: Don't create covariance_step_warnings and covariance_step_successful warnings if $COV not specified
