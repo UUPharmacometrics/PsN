@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 use File::Path 'rmtree';
-use Test::More tests=>3;
+use Test::More;
 use File::Copy 'cp';
 use FindBin qw($Bin);
 use lib "$Bin/.."; #location of includes.pm
@@ -13,22 +13,15 @@ our $tempdir = create_test_dir('system_bootscm');
 our $dir = "boot_scm_test";
 my $model_dir = $includes::testfiledir;
 
-my @needed=("$model_dir/scm/pheno_with_cov.mod",
-			"$model_dir/scm/pheno_ch.csv",
-			"$model_dir/scm/config_foce.scm",
-			"$model_dir/scm_config.scm",
-	);
-my $bootdir = "$tempdir/boot_scm_test";
+copy_test_files($tempdir,["scm/pheno_with_cov.mod","scm/pheno_ignore.mod","scm/config_ignore.scm","scm/pheno_ch.csv","scm/config_foce.scm","scm/config_time_varying.scm",
+				"scm_config.scm"]);
 
-mkdir($bootdir);
-foreach my $file (@needed) {
-	cp($file, "$bootdir/.");
-}
-chdir($bootdir);
+chdir($tempdir);
 my @scmcommands = 
 	(
-	 get_command('boot_scm') . " -samples=2 scm_config.scm -dummy_cov=WGT -stratify_on=CVD1 -dir=$dir",
-	 get_command('boot_scm') . " -samples=2 config_foce.scm -stratify_on=CVD2 -dir=$dir ",
+	 get_command('boot_scm') . " -samples=2 config_time_varying.scm -dummy_cov=WGT -stratify_on=APGR -dir=$dir",
+	 get_command('boot_scm') . " -samples=2 scm_config.scm -dummy_cov=WGT -dir=$dir",
+	 get_command('boot_scm') . " -samples=2 config_ignore.scm -stratify_on=CVD2 -dir=$dir ",
 	 get_command('boot_scm') . " -samples=2 config_foce.scm -stratify_on=CVD2 -dir=$dir -methodA",
 	);
 foreach my $command (@scmcommands){

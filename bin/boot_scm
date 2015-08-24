@@ -202,6 +202,8 @@ common_options::setup( \%options, 'boot_scm' );
 if ($config_file->linearize){
 	die "Option -second_order is currently broken" 
 		if $config_file->second_order();
+	die "Cannot set option foce to 0, will crash.\n" 
+		if (defined $config_file->foce() and (not $config_file->foce));
 	#two new options, linearize and lst-file
 	
 	if ($config_file->second_order()){
@@ -531,7 +533,6 @@ if (defined $options{'dummy_covariates'}){
 								directory            => $preprocessdir.'/',
 								ignore_missing_files => 1));
 	$model->outputs(\@newout);
-
 	my @xcovnames = @{data::add_randomized_input_data(
 						  model => $model,
 						  missing_data_token => $missing_data_token, 
@@ -730,14 +731,16 @@ my $extra_boot_datas;
 if ($need_extra_boot_data){
 	#either based on filtered data from compute_derivatives_dir
 	#or original $model -> datas()->[0];
-	$extra_boot_datas = bootstrap_create_datasets_from_keys( output_directory   => $modeldir,
+	$extra_boot_datas = data::bootstrap_create_datasets_from_keys( output_directory   => $modeldir,
 															 name_stub   => 'original_bsdata',
 															 key_references => $incl_keys,
 															 ignoresign => $ignoresign,
 															 missing_data_token => $missing_data_token,
 															 idcolumn => $idcolumn,
-															 input_filename => $model->datas()->[0] ->filename,
-															 input_directory => $model->datas()->[0] ->directory);
+															 input_filename => $model->datafiles(problem_numbers => [1],
+																								 absolute_path => 1)->[0]
+		);
+#															 input_directory => $model->datas()->[0] ->directory);
 }
 
 #print included individuals
