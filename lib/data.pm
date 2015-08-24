@@ -110,7 +110,8 @@ sub add_randomized_input_data
 	#in scalar datafilename, modelfilename
 	#out array xcolumn_names
 
-	my $dataname = $model->datafiles(problem_numbers => [1]);
+	my $dataname = $model->datafiles(problem_numbers => [1],
+									 absolute_path => 1);
 	my $data_obj = data->new(filename => $dataname->[0],
 							 idcolumn => $model->idcolumn(problem_number => 1),
 							 ignoresign => $model->ignoresigns->[0],
