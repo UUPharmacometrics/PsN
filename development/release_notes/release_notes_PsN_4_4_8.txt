@@ -152,7 +152,22 @@ Changes and bug fixes from PsN 4.4.0 to 4.4.8
 - Bug fix: In cases when data filtration step is run, handle $INPUT with items of the 
   form NAME=DROP or NAME=SKIP, in addition to just DROP or SKIP without NAME.
 
-- Some clarifications in the documentation regarding -time_varying.
+- Removed the possibility to set foce=0.
+
+- Some clarifications in the documentation regarding -time_varying, documentation
+  regarding METHOD=ZERO in combination with -linearize.
+
+   ___boot_scm___
+
+- Bug fix: Handle option -time_varying for regular covariates in boot_scm. 
+
+- Documentation for known bug that boot_scm does not handle dummy covariates which are time-varying.
+
+- Removed the possibility to set foce=0.
+
+   ___xv_scm___
+
+- Removed the possibility to set foce=0.
 
    ___sse___
 
@@ -188,6 +203,10 @@ Changes and bug fixes from PsN 4.4.0 to 4.4.8
    ___precond___
 	 
 - Some clarifications in the documentation.
+
+   ___bootstrap___
+	 
+- Better documentation on the contents of bootstrap_results.csv
 
    ___runrecord___
 
