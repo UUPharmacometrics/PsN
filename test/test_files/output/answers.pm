@@ -1482,7 +1482,6 @@ sub read_answers
 	$answer_hashes[$index]->{answers}->{7}->{0}->{'ofv'}=-561.03865669614436;
 
 
-
 	return \@answer_hashes;
 }
 

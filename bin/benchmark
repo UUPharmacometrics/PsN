@@ -1,0 +1,169 @@
+#!/usr/bin/perl
+
+use FindBin qw($Bin);
+use lib "$Bin/../lib";
+
+# Don't edit the line below, it must look exactly like this.
+# Everything above this line will be replaced #
+
+use PsN;
+use model;
+use tool::benchmark;
+use strict;
+use Getopt::Long;
+use common_options;
+
+my $cmd_line = $0 . " " . join( " ", @ARGV );
+
+## Configure the command line parsing
+Getopt::Long::config("auto_abbrev");
+
+my %options;
+## Declare the options
+
+my %required_options = ();
+my %optional_options = ( 
+	'alt_nonmem:s' => undef,
+	'record_options:s' => undef,
+	'theta_inits:s' => undef,
+	'merge_rawresults!' => undef,
+	'dofv_threshold:f' => undef,
+	'replicates:i' => undef,
+	'parameter_threshold:f'=> undef,
+	);
+
+my $res = GetOptions( \%options,
+		      @common_options::get_opt_strings,
+		      keys(%required_options),
+		      keys(%optional_options) );
+exit unless $res;
+
+common_options::setup( \%options, 'benchmark' ); #calls set_globals etc, initiates random sequence
+
+
+my %help_text;
+
+$help_text{Pre_help_message} = <<'EOF';
+    benchmark tool for systematic comparisons of NONMEM runs
+EOF
+$help_text{Description} = <<'EOF';
+Text
+EOF
+$help_text{Examples} = <<'EOF';
+benchmark run1.mod run2.mod -nm_version=nm74alpha -record_options=estimation:none,FAST
+
+benchmark run3.mod -nm_version=nm73gfortran4 -alt_nonmem=nm73gfortran5 -merge_rawreults
+EOF
+
+$help_text{Options} = <<'EOF';      
+	A model file is required as argument, and enough options to result in the
+comparison of at least two runs.
+
+      The following options are valid:
+EOF
+
+$help_text{-h} = <<'EOF';
+      -h | -?
+      
+      With -h or -? benchmark will print a list of options and exit.
+EOF
+      
+$help_text{-help} = <<'EOF';      
+      -help
+      
+      With -help benchmark will print this, longer, help message.
+EOF
+
+$help_text{-alt_nonmem} = <<'EOF';
+      -alt_nonmem=comma-separated list
+
+EOF
+$help_text{-record_options} = <<'EOF';
+      -record_options=list
+
+    Default not used. 
+EOF
+$help_text{-theta_inits} = <<'EOF';
+      -theta_inits=list
+
+    Default not used. 
+EOF
+
+$help_text{-merge_rawresults} = <<'EOF';
+      -merge_rawresults
+
+    Default not set.
+EOF
+
+$help_text{-dofv_threshold} = <<'EOF';
+      -dofv_threshold=X
+
+    Default 
+EOF
+$help_text{-replicates} = <<'EOF';
+      -replicates=N
+
+    Default 1
+EOF
+
+$help_text{-parameter_threshold} = <<'EOF';
+      -parameter_threshold=X
+
+    Default
+EOF
+
+$help_text{Post_help_message} = <<'EOF';
+    Also see 'psn_options -h' for a description of common PsN options.
+EOF
+
+common_options::online_help( 'benchmark', \%options, \%help_text, \%required_options, \%optional_options);
+
+## Check that we do have a model file
+if ( scalar(@ARGV) < 1 ) {
+  die("A model file must be specified.\n");
+}
+
+
+my $eval_string = common_options::model_parameters(\%options);
+my @models=();
+foreach my $filename (@ARGV){
+#	print "filename $filename\n";
+	push(@models, model->new ( eval( $eval_string ),
+							   filename  => $filename,
+							   ignore_missing_output_files => 1));
+}
+
+my @alternatives=();
+if ( defined $options{'alt_nonmem'} ){
+  #split string, assume comma separated
+  foreach my $alt (split(/,/,$options{'alt_nonmem'})){
+    if (length($alt)>0){
+		push(@alternatives,$alt);
+	}
+  }
+}
+
+
+my $benchmark = 
+	tool::benchmark->new(eval( $common_options::parameters ),
+					 models	     => \@models,
+					 alt_nonmem => \@alternatives,
+					 record_options  => $options{'record_options'},
+					 theta_inits  => $options{'theta_inits'},
+					 replicates  => $options{'replicates'},
+					 merge_rawresults  => $options{'merge_rawresults'},
+					 dofv_threshold      => $options{'dofv_threshold'},
+					 parameter_threshold => $options{'parameter_threshold'},
+	);
+
+$benchmark-> print_options (cmd_line => $cmd_line,
+		      toolname => 'benchmark',
+		      local_options => [keys %optional_options],
+		      common_options => \@common_options::tool_options);
+
+$benchmark -> run;
+$benchmark -> prepare_results;
+$benchmark -> print_results;
+ui -> print( category => 'benchmark',
+	     message  => "\nbenchmark done\n");
+
