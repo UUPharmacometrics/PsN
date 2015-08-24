@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{BOOT\_SCM user guide}{2015-02-26}
+\guidetitle{BOOT\_SCM user guide}{2015-08-24}
 
 
 \begin{document}
@@ -53,6 +53,8 @@ in the output file ofv\_final.csv
 Default not used. If used, a new column for each listed covariate will be added to the dataset, 
 containing a randomly permuted copy of the original covariate column and with header X\verb|<name of original covariate>|. 
 The dummy covariate will be tested for inclusion in the covariate model exactly like the original covariate. 
+However, a known bug is that boot\_scm will not correctly create a 
+dummy covariate based on a time-varying covariate.
 \nextopt
 \optdefault{stratify\_on}{item in \$INPUT}
 Default not used. It may be necessary to use stratification in the resampling procedure. For example, if the original data consists of two groups of patients - say 10 patients with full pharmacokinetic profiles and 90 patients with sparse steady state concentration measurements - it may be wise to restrict the resampling procedure to resample within the two groups, producing bootstrap data sets that all contain 10 rich + 90 sparse data patients but with different compositions. 

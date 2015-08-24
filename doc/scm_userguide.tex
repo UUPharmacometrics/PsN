@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{SCM user guide}{2015-08-19}
+\guidetitle{SCM user guide}{2015-08-24}
 
 \begin{document}
 
@@ -431,8 +431,14 @@ at the line where it is okay for SCM to start to add the covariate function code
 \end{verbatim}
 before adding any covariate code. If the linearize option is used, the code preceding the SCM-ANCHOR line will be kept in the linearized models. The ANCHOR functionality has no option, it is turned on and off by adding or removing the line in \$PK/\$PRED.
 
-\section{Missing coviariate values}
-The scm program handles missing coviariate values, provided that option missing\_data\_token is set correctly. If the covariate value is equal to missing\_data\_token, the missing value will be replaced by the median of the covariate. In the code this is done in a separate IF statement for missing values where the covariate value has been set to the median and the expression simplified, usually leading to the expression being equal to 1. For time-varying covariates the principle is the same: replace missing values with the median. See above help text for option time\_varying for a description of how to compute medians for time-varying covariates.  
+\section{Missing covariate values}
+The scm program handles missing covariate values, provided that option missing\_data\_token is set correctly and that a numerical value, not a dot (.) is
+used to represent missing values in the data set. It is important to remember that NONMEM will replace dots in the data set with a zero, and once NONMEM
+has read the data set it is no longer possible to distinguish between
+a missing covariate represented with a dot and a 
+non-missing covariate with value 0. 
+
+If the covariate value is equal to missing\_data\_token, PsN will replace the missing value with the median of the covariate. In the code this is done in a separate IF statement for missing values where the covariate value has been set to the median and the expression simplified, usually leading to the expression being equal to 1. For time-varying covariates the principle is the same: replace missing values with the median. See above help text for option time\_varying for a description of how to compute medians for time-varying covariates.  
 
 \section{Example}
 \begin{verbatim}

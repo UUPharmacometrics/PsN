@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{Known bugs and workarounds}{2015-08-19}
+\guidetitle{Known bugs and workarounds}{2015-08-24}
 
 
 \begin{document}
@@ -16,9 +16,15 @@ for a list of bugs that have been discovered after the time of release:\\
 \section{Bugs}
 \subsection{Linearized scm issues}
 Option -foce, which only applies to linearized scm, must not be changed from
-the default value, or the scm will crash. 
+the default value, or the scm cannot run. 
 Also, the input model to a linearized scm must \emph{not}
 have METHOD=ZERO.
+
+\subsection{boot\_scm with dummy covariates that are time-varying}
+When randomizing data columns to create dummy covariates 
+(option -dummy\_covariates) for boot\_scm, PsN will not properly
+shuffle the time-varying set of values between individuals,
+but instead set all values to the individual's mean in the randomized copy.
 
 \subsection{Sensitive format for raw results input file in sse, vpc, npc}
 Any column header that contains a comma, e.g. OMEGA(2,1), must be enclosed in double quotes. This is done automatically when PsN creates a raw results file but may be changed if the file is saved in e.g. Excel.
