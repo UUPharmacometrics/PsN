@@ -115,7 +115,24 @@ from NONMEM output, eigenvalues.
 
 \section{Output}
 
-The file bootstrap\_results.csv contains statistics and summaries specific for the bootstrap.
+The file bootstrap\_results.csv contains statistics and summaries specific for the bootstrap:
+\begin{itemize}
+    \item diagnostic.means - Means of all the diagnostics (such as estimate.near.boundary and subproblem.est.time) for the bootstrap runs.
+    \item means - The means of parameter estimates, SEs etc. of the bootstrap distribution.
+    \item bias - The difference between the bootstrap mean and the value for the original model
+    \item standard.error.confidence.intervals - The confidence intervals of the estimates of the base model assuming that it is normally distributed with the standard deviation equal to that of the bootstrap distribution. 
+    \item standard.errors - The standard deviation of parameter estimates, SEs etc. of the bootstrap distribution
+    \item medians - The median values of parameter estimates, SEs etc. of the bootstrap distribution
+    \item percentile.confidence.intervals - Confidence intervals of the bootstrapped distribution. The intervals are calculated using the weighted average at $x_{(n+1)p}$ method:
+    \begin{enumerate}
+        \item Set $n$ = the number of observations + 1
+        \item Set p = number of the percentile to find / 100
+        \item Set i = The integer part of $n\cdot p$
+        \item Set f = The decimal part of $n\cdot p$
+        \item Percentile = $(1-f)x_i + fx_{i+1}$
+    \end{enumerate}
+\end{itemize}
+
 The details of which results are reported depend on the number of successful samples after filtering according to
 option -skip\_minimization\_terminated etc. The minimum count successful samples required to obtain
 percentile confidence intervals is % formula is  (200/limit) -1, i.e. 
