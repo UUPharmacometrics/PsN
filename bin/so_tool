@@ -1,0 +1,40 @@
+#!/usr/bin/perl
+
+# Only for Development
+use FindBin qw($Bin);
+use lib "$Bin/../lib";
+
+# Don't edit the line below, it must look exactly like this.
+# Everything above this line will be replaced #
+
+
+# This script contains some useful tools for handling standardised output files. 
+
+use XML::LibXML;
+use File::Copy qw(cp);
+use so::xml;
+
+my $cmd = shift @ARGV;
+
+if ($cmd eq "merge") {
+    my $dest = shift @ARGV;
+    my $first = shift @ARGV;
+    my $xml = XML::LibXML->load_xml(location => $first);
+    my $xpc = so::xml::get_xpc();
+    (my $so) = $xpc->findnodes('/x:SO', $xml); 
+    print "Merging from file: $first\n";
+    foreach my $file (@ARGV) {
+        print "Merging from file: $file\n";
+        my $doc = XML::LibXML->load_xml(location => $file);
+        my @SOBlocks = $xpc->findnodes('/x:SO/x:SOBlock', $doc);
+        foreach $block (@SOBlocks) {
+            $so->appendChild($block);
+        }
+    }
+    $xml->toFile($dest, 1);
+} elsif ($cmd eq "pretty") {
+    my $xml = XML::LibXML->load_xml(location => $ARGV[0]);
+    $xml->toFile($ARGV[0], 1);
+} else {
+    print("Unknown command: $cmd\n");
+}
