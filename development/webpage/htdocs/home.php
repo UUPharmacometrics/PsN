@@ -33,13 +33,27 @@
     as well as development libraries for method developers. You can read more about the different parts of PsN under <a href="docs.php">Documentation</a>.</p>
 <h3>Latest news</h3>
  <p>
-Version 4.4.6 is planned for release September 7th 2015. Version 4.4.6 has almost no new features, the focus of this release is bug fixes. Many bugs that are in 
-versions 4.4.0, 4.2.0 and 3.7.6 have been fixed, and the test suite has been greatly extended. 
+Version 4.4.8 was released September 7th 2015, and is available <a href="download.php">here</a>.
 </p>
  <p>
-Version 4.4.0 was released April 20th 2015, and is available <a href="download.php">here</a>.
+The focus of this release is bug fixes and extensions of the test suite. Several of the bugs have been in PsN since version 3.7.6, some are even older. There are only minor new features. The sir algorithm has undergone major changes which are described in the sir userguide.
 </p>
- <p>
+
+ <li>Installation on Windows: Users who install PsN for the first time need to make sure they install a Perl version where
+the needed extra modules are available, see instructions on
+<a href="install.php">installation page</a>.
+</li>
+ <li> Click <a href="http://sourceforge.net/p/psn/wiki/Bug_list_current_release" target="_blank">here</a> to open the known bugs wiki with the most recent information regarding known bugs in the latest release.
+</li>
+</p>
+
+<div style="text-align:left;"><a style="font-size:small;color:gray;" href="#" id="show_older_changes">Click here to show change notes for older versions</a></div>
+<div id="older_changes" style="display:none;">  
+<h3>PsN 4.4.0</h3>
+<p>
+Version 4.4.0 was released April 20th 2015.
+</p>
+<p>
 New features of version 4.4.0 include precond, a new tool for automatic preconditioning of a NONMEM model to improve its numerical properties,
 major improvements to sir, a tool for obtaining parameter uncertainty faster than with a bootstrap and more accurately than based on the covariance step,
 and the -rplots option, a simple yet powerful mechanism for generating default or custom R plots for visualizing PsN output.
@@ -60,8 +74,6 @@ bootstrap and execute.
 <p>
 The complete list of new features and bugfixes in 4.4.0 is found  
 <a href="pdfdocs/release_notes_PsN_4_4_0.txt" target="_blank">here</a></dt>.
-Go to the <a href="download.php">Download page</a> 
-to see which systems and NONMEM versions PsN 4.4.0 has been tested with.
 </p>
 <h3>Known issues with version 4.4.0</h3>
 <li>
@@ -73,16 +85,7 @@ nm_output=ext,cov,cor,coi,phi</br></br>
 This bug is further described on the 
 <a href="http://sourceforge.net/p/psn/wiki/Bug_list_current_release" target="_blank">knows bugs wiki</a>.
 </li>
- <li>Installation on Windows: Users who install PsN for the first time need to make sure they install a Perl version where
-the needed extra modules are available, see instructions on
-<a href="install.php">installation page</a>.
-</li>
- <li> Click <a href="http://sourceforge.net/p/psn/wiki/Bug_list_current_release" target="_blank">here</a> to open the known bugs wiki with the most recent information regarding known bugs in the latest release.
-</li>
-</p>
 
-<div style="text-align:left;"><a style="font-size:small;color:gray;" href="#" id="show_older_changes">Click here to show change notes for older versions</a></div>
-<div id="older_changes" style="display:none;">  
 <h3>PsN 4.2.0</h3>
 <p>
 Version 4.2.0 was released May 21st 2014.
@@ -472,7 +475,11 @@ Fixed bug in MSFO-filename renumbering. Complete rewrite to make script more sta
 Made nonpb and pind work with NONMEM7 (removed fortran77 comment line in user-written routine). 
 </ul>
 </li>
-<li>  <a href='pdfdocs/runrecord_userguide.pdf' target="_blank">RunRecord</a>
+<li>  <a href='pdfdocs/runrecord_userguide.pdf'PsN-Toolkit--a collection of computer intensive statistical methods for non-linear mixed effect modeling using NON MEM.
+Comput Methods Programs Biomed. 2005 Sep;79(3):241-57.
+Lindbom L, Ribbing J, Jonsson EN.
+Perl-speaks-NONMEM (PsN)--a Perl module for NONMEM related programming.
+Comput Methods Programs Biomed. 2004 Aug;75(2):85-94. target="_blank">RunRecord</a>
 <ul>
 Handle 'Based on <myself>' input error in runrecord. Print warning and ignore 'Based on' tag. 
 Otherwise this input error would make runrecord produce no output.
@@ -1603,9 +1610,8 @@ PsN is developed and maintained by <a href="mailto:kajsa.harling@farmbio.uu.se">
 
 <p>PsN was originally developed by Niclas Jonsson and continued by Lars 
 Lindbom for his doctoral thesis. Additional implementation has been done by Pontus Pihlgren, Jakob Ribbing, Kristin Karlsson, 
-Maria Kjellsson and Joakim Nyberg. Additional contributions by Radojka Savic, Paul Baverel, Martin Bergstrand, Elodie Plan and many more.</p>
-<p>This website was designed and implemented by <a href="mailto:sebastian.ueckert@farmbio.uu.se">
-  Sebastian Ueckert</a>. It is maintained by <a href="mailto:kajsa.harling@farmbio.uu.se">Kajsa Harling</a>.</p>
+Maria Kjellsson and Joakim Nyberg. Additional contributions by Radojka Savic, Paul Baverel, Martin Bergstrand, Elodie Plan, Yasunori Aoki and many more.</p>
+
 <h4>References</h4>
 <ul>
     <li class="reference"> <a href="http://www.ncbi.nlm.nih.gov/entrez/query.fcgi?db=pubmed&cmd=Retrieve&dopt=AbstractPlus&list_uids=

@@ -21,15 +21,15 @@ PsN is distributed  as a gzipped tarball and zipped file.</p>
     </tr>
     <tr>
         <td style="text-align:center;"> 
-            PsN 4.4.0
+            PsN 4.4.8
         </td>
-	<td rowspan="2" width="70%">Please see the <a href="pdfdocs/release_notes_PsN_4_4_0.txt">change log</a> for details. </td>
-        <td rowspan="2">2015-04-20</td>
+	<td rowspan="2" width="70%">Please see the <a href="pdfdocs/release_notes_PsN_4_4_8.txt">change log</a> for details. </td>
+        <td rowspan="2">2015-09-07</td>
     </tr>
     <tr>
         <td style="text-align:center;">
-            <a href="http://sourceforge.net/projects/psn/files/PsN-4.4.0.zip/download" target="_blank">.zip</a>
-            <a href="http://sourceforge.net/projects/psn/files/PsN-4.4.0.tar.gz/download" target="_blank">.tar.gz</a>
+            <a href="http://sourceforge.net/projects/psn/files/PsN-4.4.8.zip/download" target="_blank">.zip</a>
+            <a href="http://sourceforge.net/projects/psn/files/PsN-4.4.8.tar.gz/download" target="_blank">.tar.gz</a>
         </td>
       </tr>
    </tbody>
@@ -43,6 +43,19 @@ PsN is distributed  as a gzipped tarball and zipped file.</p>
     <tr>
       <th colspan="3" style="text-align:left;">Older releases</th>
 		</tr>
+    <tr>
+        <td style="text-align:center;"> 
+            PsN 4.4.0
+        </td>
+	<td rowspan="2" width="70%">Please see the <a href="pdfdocs/release_notes_PsN_4_4_0.txt">change log</a> for details. </td>
+        <td rowspan="2">2015-04-20</td>
+    </tr>
+    <tr>
+        <td style="text-align:center;">
+            <a href="http://sourceforge.net/projects/psn/files/PsN-4.4.0.zip/download" target="_blank">.zip</a>
+            <a href="http://sourceforge.net/projects/psn/files/PsN-4.4.0.tar.gz/download" target="_blank">.tar.gz</a>
+        </td>
+      </tr>
 
     <tr>
         <td style="text-align:center;"> 
@@ -304,7 +317,7 @@ the NONMEM runs to SGE, Slurm, LSF, ud and torque. See documentation
 The PsN test suite has been run on slurm and locally.
 </p>
 
-<p><strong>Platforms:</strong> PsN-4.4.6 is tested on the systems listed below.</p>
+<p><strong>Platforms:</strong> PsN-4.4.8 is tested on the systems listed below.</p>
 <table>
   <tr>
     <th>Platform</th>
@@ -354,13 +367,6 @@ The PsN test suite has been run on slurm and locally.
     <td>ActiveState Perl 5.16.3</td>
     <td>7.2.0, 7.3.0</td>
     <td>ifort 12.0.0</td>
-  </tr>
-  <tr>
-    <th>Mac</th>
-    <td>OS X 10.10.3</td>
-    <td>Perl 5.18.2</td>
-    <td>7.3.0</td>
-    <td>gfortran 4.8.0</td>
   </tr>
   <tr>
     <th >Linux</th>
