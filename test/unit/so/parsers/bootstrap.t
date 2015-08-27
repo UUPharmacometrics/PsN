@@ -55,6 +55,18 @@ SKIP: {
     is_deeply($median->valueType, [ ('real') x 5 ], "Boostrap median valueType");
     is_deeply($median->columns, [ [ 0.005622315 ], [ 1.356135 ], [ 0.256029 ], [ 0.1475405 ], [ 0.01651655 ] ], "Bootstrap median columns");
 
+    my $precision_estimates = $so->SOBlock->[0]->Estimation->PrecisionPopulationEstimates->Bootstrap->PrecisionEstimates;
+    is_deeply($precision_estimates->columnId, [ 'Parameter', 'StandardError', 'LowerCI', 'UpperCI', 'Alpha' ], "Bootstrap precision estimates columnId");
+    is_deeply($precision_estimates->columnType, [ ('undefined') x 5 ], "Bootstrap precision estimates columnType");
+    is_deeply($precision_estimates->name, "PrecisionEstimates", "Bootstrap precision estimates name");
+    is_deeply($precision_estimates->valueType, [ 'string', ('real') x 4 ], "Boostrap precision estimates valueType");
+    is_deeply($precision_estimates->columns, [ 
+        [ "CL", "V", "IVCL", "IVV", "mySIGMA" ],
+        [ 0.0004901775, 0.08974351, 0.1707019, 0.04351128, 0.003531484 ],
+        [ 0.004592882, 1.160483, -0.0875016777761174, 0.05629889, 0.009493592 ],
+        [ 0.006514378, 1.512277, 0.5816497, 0.2268631, 0.02333701 ],
+        [ (0.05) x 5 ] ], "Bootstrap precision estimates columns");
+
     # bootstrap with omegas on sd and corr form without model
     my $so = so->new();
     so::parsers::bootstrap->new(so => $so, bootstrap_results => 'bootstrap_results_sdcorr.csv');

@@ -61,6 +61,9 @@ sub _create_bootstrap
     my @column;
     my $means;
     my $medians;
+    my $seci_25;
+    my $seci_975;
+    my $ses;
     while (<$fh>) {
         if (/^means$/) {
             my $header = <$fh>;         # Get the header only once. means comes first in the file so do it here
@@ -82,10 +85,25 @@ sub _create_bootstrap
             <$fh>;
             $medians = _read_line(fh => $fh, parameters => \@parameters);
 
+        } elsif (/^standard.error.confidence.intervals$/) {
+            <$fh>;
+            <$fh>;
+            <$fh>;
+            $seci_25 = _read_line(fh => $fh, parameters => \@parameters);
+            <$fh>;
+            <$fh>;
+            $seci_975 = _read_line(fh => $fh, parameters => \@parameters);
+            <$fh>;
+            <$fh>;
+
+        } elsif (/^standard.errors$/) {
+            <$fh>;
+            $ses = _read_line(fh => $fh, parameters => \@parameters);
+
         } elsif (/^percentile.confidence.intervals$/) {
             # Loop through percentiles
             <$fh>;
-            for (my $i = 0; $i < 7; $i++) {
+            for (my $i = 0; $i < 8; $i++) {
                 my $row = <$fh>;
                 my @a = split /,/, $row;
                 my $percentile = shift @a;
@@ -128,6 +146,19 @@ sub _create_bootstrap
         );
         $self->_precision_bootstrap->Percentiles($table);
     }
+
+    (my $used_parameters, my $filtered_seci25) = $self->filter(parameters => \@parameters, values => $seci_25);
+    (undef, my $filtered_seci975) = $self->filter(parameters => \@parameters, values => $seci_975);
+    (undef, my $filtered_ses) = $self->filter(parameters => \@parameters, values => $ses);
+
+    my $precision_estimates = so::table->new(
+        name => "PrecisionEstimates",
+        columnId => [ "Parameter", "StandardError", "LowerCI", "UpperCI", "Alpha" ],
+        columnType => [ ('undefined') x 5 ],
+        valueType => [ "string", ('real') x 4 ],
+        columns => [ $used_parameters, $filtered_ses, $filtered_seci25, $filtered_seci975, [ (0.05) x scalar(@$used_parameters) ] ],
+    );
+    $self->_precision_bootstrap->PrecisionEstimates($precision_estimates);
 
     (my $used_parameters, my $adjusted_means) = $self->filter(parameters => \@parameters, values => $means);
     my $mean_table = so::table->new(name => "Mean", columnId => $used_parameters);
