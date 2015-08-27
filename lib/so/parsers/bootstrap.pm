@@ -170,6 +170,34 @@ sub _create_bootstrap
     $median_table->single_row(values => $adjusted_medians);
     $self->_bootstrap->Median($median_table);
 
+    # warn if any parameter on sd/corr scale
+    if (defined $self->labels_hash) {
+        my @on_sd_corr;
+        for (my $i = 0; $i < scalar(@$used_parameters); $i++) {
+            if (grep { $_ eq $used_parameters->[$i] } @{$self->labels_hash->{'on_sd_scale'}}) {
+                push @on_sd_corr, $used_parameters->[$i];
+            }
+        }
+        if (scalar(@on_sd_corr) > 0) {
+            my $warning_text;
+            if (scalar(@on_sd_corr) == 1) {
+                $warning_text = "The parameter " . $on_sd_corr[0];
+            } else {
+                $warning_text = "The parameters " . join(", ", @on_sd_corr[0 .. $#on_sd_corr - 1]) . " and " . $on_sd_corr[-1];
+            }
+            $warning_text .= " were requested on the sd/corr scale but are given on the var/cov scale in all bootstrap results.";
+
+            $self->_so_block->TaskInformation->add_message(
+                type => "WARNING",
+                toolname => "PsN",
+                name => "bootstrap_parameter_scale",
+                content => $warning_text,
+                severity => 2,
+            );
+        }
+    }
+
+    # add rawresults
     $self->_so_block->RawResults->add_datafile(name => $self->bootstrap_results, description => "PsN Bootstrap results file"); 
 } 
 
@@ -225,17 +253,7 @@ sub filter
        }
     }
 
-    # Filter out parameters on sd/corr scale
-    my @final_parameters;
-    my @final_values;
-    for (my $i = 0; $i < scalar(@used_parameters); $i++) {
-        if (not grep { $_ eq $used_parameters[$i] } @{$self->labels_hash->{'on_sd_scale'}}) {
-            push @final_parameters, $used_parameters[$i];
-            push @final_values, $used_values[$i];
-        }
-    }
-
-    return (\@final_parameters, \@final_values);
+    return (\@used_parameters, \@used_values);
 }
 
 no Moose;
