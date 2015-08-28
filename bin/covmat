@@ -270,6 +270,7 @@ foreach my $param (@list_parameters){
 
 
 my $resulthash = tool::sir::empirical_statistics( sampled_params_arr => $sampled_params_arr,
+												  do_percentiles => 0,
 												  labels_hash => $labels_hash);
 
 
