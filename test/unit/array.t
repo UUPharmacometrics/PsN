@@ -157,6 +157,13 @@ is (array::variance(\@a), 2.25, "A simple variance");
 @a = qw(3 5 9 8);
 cmp_float (array::stdev(\@a), 2.753785273643051, "A simple stdev");
 
+#test of sem
+@a = qw(3 -5 0 -100 3);
+cmp_float(array::sem(\@a),20.103233570746770,"standard error of the mean");
+
+#test of rse
+cmp_float(array::rse(\@a,10),2.0103233570746770,"relative standard error");
+
 # Test of is_int
 ok (array::is_int([1, 2, 3, 4]), "is_int integer array");
 ok (!array::is_int([1, 2, 3, 3.3]), "is_int array with float");
