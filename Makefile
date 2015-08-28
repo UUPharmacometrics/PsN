@@ -217,7 +217,7 @@ nmoutput2so: version
 	@ mkdir nmoutput2so
 	@ mkdir nmoutput2so/bin
 	@ cp bin/nmoutput2so nmoutput2so/bin
-	@ cp bin/so_tool nmoutput2so/so_tool
+	@ cp bin/so_tool nmoutput2so/bin
 	@ cp -r lib/ nmoutput2so
 	@ rm -r nmoutput2so/lib/tool
 	@ rm -r nmoutput2so/lib/nonmemrun
