@@ -18,10 +18,10 @@ my $model_dir = $includes::testfiledir;
 
 my @commands = 
 	(
+	 get_command('sir') . " $model_dir/pheno.mod -samples=50,100 -resamples=25,50 -no-boxcox -dir=$dir", 
 	 get_command('sir') . " $model_dir/pheno.mod -samples=50 -resamples=25 -auto_rawres=0.9 -seed=50032 -dir=$dir",
 	 get_command('sir') . " $model_dir/sir/localmin.mod -samples=50,100 -resamples=25,50 -dir=$dir",
 	 get_command('sir') . " $model_dir/pheno.mod -samples=50,100,100 -resamples=25,50,50 -covmat_input=$model_dir/pheno_fake.cov -dir=$dir",
-	 get_command('sir') . " $model_dir/pheno.mod -samples=50,100 -resamples=25,50 -covmat_input=$model_dir/pheno_fake.cov -dir=$dir", 
 	 get_command('sir') . " $model_dir/pheno.mod -samples=100 -resamples=50 -covmat_input=$model_dir/pheno_fake.cov -dir=$dir",
 	 get_command('sir') . " $model_dir/pheno.mod -samples=10 -resamples=5 -covmat_input=$model_dir/pheno_fake_2.cov -no-copy_data -dir=$dir",
 	 get_command('sir') . " $model_dir/mox_sir_block2.mod -samples=50 -resamples=25 -dir=$dir -problems_per_file=10",

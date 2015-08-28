@@ -36,6 +36,7 @@ my %optional_options = (
 	"inflation:f" => '',
 	"with_replacement!"=>'',
 	"recenter!"=>'',
+	"boxcox!"=>'',
 	"copy_data!"=>'');
 
 my $res = GetOptions( \%options, 
@@ -197,6 +198,13 @@ the sampled parameter vector with the smallest ofv.
 If option is unset using -no-recenter, the original parameter vector will be kept
 and a warning will be printed that some vectors had a negative delta-ofv.
 EOF
+    $help_text{-boxcox} = <<'EOF';
+      -boxcox
+Default set. If option is set, sir will Box-Cox transform parameter vectors before computing
+the covariance matrix used for sampling.
+If option is unset using -no-boxcox, no transformation will be performed before computing covariance matrix
+used for sampling.
+EOF
     $help_text{-covmat_input} = <<'EOF';
       -covmat_input=filename
     Not allowed together with rawres_input. If given, this matrix is
@@ -321,6 +329,7 @@ my $sir =
 					 problems_per_file        	=> $options{'problems_per_file'},
 					 offset_rawres       	=> $options{'offset_rawres'},
 					 recenter       	=> $options{'recenter'},
+					 boxcox       	=> $options{'boxcox'},
 					 in_filter             => \@in_filter,
 					 copy_data                            => $options{'copy_data'}
 	);

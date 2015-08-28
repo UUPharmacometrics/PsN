@@ -27,6 +27,7 @@ has 'results_file' => ( is => 'rw', isa => 'Str', default => 'sir_results.csv' )
 
 has 'copy_data' => ( is => 'rw', isa => 'Bool', default => 1 );
 has 'recenter' => ( is => 'rw', isa => 'Bool', default => 1 );
+has 'boxcox' => ( is => 'rw', isa => 'Bool', default => 1 );
 has 'negative_dofv' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 has 'recompute' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'with_replacement' => ( is => 'rw', isa => 'Bool', default => 0 );
@@ -313,7 +314,7 @@ sub modelfit_setup
 
 	my $user_labels=0; #always use generic labels
 	my ($resampled_params_arr,$resamp_href);
-	my $boxcox_resulthash;
+	my $previous_iteration_resulthash;
 	my $have_previous_iteration = 0;
 
 	for (my $iteration=0;$iteration<=$self->max_iteration(); $iteration++){
@@ -322,51 +323,54 @@ sub modelfit_setup
 		if ($iteration > 0 ) {
 			my $message = "Sampling from the truncated multivariate normal distribution";
 			ui -> print( category => 'sir',	 message => $message);
-			my $mu_values; 
-			my $lambda;
-			my $delta;
-			my $inflation;
+			my $mu_values= $parameter_hash->{'values'};
+			my $lambda = [];
+			my $delta = [];
+			my $inflation = $self->inflation();
+			#covmatrix already read if *not* have previous iteration
 			if ($have_previous_iteration){
-				croak("iteration $iteration boxcox_resulthash not defined") 
-					unless (defined $boxcox_resulthash and 
-							defined $boxcox_resulthash->{'lambda'} and 
-							defined $boxcox_resulthash->{'delta'} and
-							defined $boxcox_resulthash->{'covar'});
+				croak("iteration $iteration iteration_resulthash not defined") 
+					unless (defined $previous_iteration_resulthash and 
+							defined $previous_iteration_resulthash->{'covar'});
+#							defined $previous_iteration_resulthash->{'lambda'} and 
+#							defined $previous_iteration_resulthash->{'delta'} and
 
-				if ($boxcox_resulthash->{'rank_deficient'}){
+				if ($previous_iteration_resulthash->{'rank_deficient'}){
 					croak("The number of parameter vectors obtained in iteration ".($iteration-1)." is smaller than ".
 						"the number of estimated parameters. This gives a rank deficient covariance matrix, so ".
 						"sampling cannot proceed in iteration $iteration.\n");
 				}
-
-				$lambda = $boxcox_resulthash->{'lambda'};
-				$delta = $boxcox_resulthash->{'delta'};
-				$mu_values = boxcox::shift_and_box_cox(vector=>$parameter_hash->{'values'},
-													   inverse=>0,
-													   lambda=>$lambda,
-													   delta=>$delta);
-				if (1){
-					open ( RES, ">" . $self->directory().'delta_lambda_iteration'.($iteration-1).'.csv' );
-					print RES "delta,lambda,original.estimate,transformed.estimate\n";
-					for (my $k=0; $k< scalar(@{$delta}); $k++){
-						print RES $delta->[$k].','.$lambda->[$k].','.$parameter_hash->{'values'}->[$k].','.$mu_values->[$k]."\n";
-					}
-					close(RES);
-				}
-				$covmatrix = $boxcox_resulthash->{'covar'};
+				$covmatrix = $previous_iteration_resulthash->{'covar'};
 				my $err = check_matrix_posdef(matrix => $covmatrix);
 				if ($err == 1){
-					croak("\nERROR: Empirical covariance matrix obtained after Box-Cox transformation is numerically ".
-						  "not positive definite\n(as checked with Cholesky decomposition without pivoting). Cannot proceed with sir.\n");
+					if ($self->boxcox){
+						croak("\nERROR: Empirical covariance matrix obtained after Box-Cox transformation is numerically ".
+							  "not positive definite\n(as checked with Cholesky decomposition without pivoting). Cannot proceed with sir.\n");
+					}else{
+						croak("\nERROR: Empirical covariance matrix obtained after resampling is numerically ".
+							  "not positive definite\n(as checked with Cholesky decomposition without pivoting). Cannot proceed with sir.\n");
+					}
 				}
-				$inflation = 1;
-			}else{
-				$mu_values= $parameter_hash->{'values'};
-				$lambda = [];
-				$delta = [];
-				$inflation = $self->inflation();
-				#covmatrix already read
+				$inflation = 1; #only inflate in first iteration
+
+				if ($self->boxcox){
+					$lambda = $previous_iteration_resulthash->{'lambda'};
+					$delta = $previous_iteration_resulthash->{'delta'};
+					$mu_values = boxcox::shift_and_box_cox(vector=>$parameter_hash->{'values'},
+														   inverse=>0,
+														   lambda=>$lambda,
+														   delta=>$delta);
+					if (1){
+						open ( RES, ">" . $self->directory().'delta_lambda_iteration'.($iteration-1).'.csv' );
+						print RES "delta,lambda,original.estimate,transformed.estimate\n";
+						for (my $k=0; $k< scalar(@{$delta}); $k++){
+							print RES $delta->[$k].','.$lambda->[$k].','.$parameter_hash->{'values'}->[$k].','.$mu_values->[$k]."\n";
+						}
+						close(RES);
+					}
+				}
 			}
+			
 			my $mat = new Math::MatrixReal(1,1);
 			my $muvector = $mat->new_from_rows( [$mu_values] );
 			my $current_samples = update_attempted_samples(samples=>$self->samples,
@@ -395,7 +399,7 @@ sub modelfit_setup
 															labels_hash => $parameter_hash,
 															user_labels => $user_labels);
 			my $pdfvec;
-			if ($have_previous_iteration ){
+			if ($self->boxcox and $have_previous_iteration){
 				$pdfvec = linear_algebra::mvnpdf_cholesky($covmatrix,$mu_values,$boxcox_samples,$inflation,$relativepdf);
 			}else{
 				$pdfvec= linear_algebra::mvnpdf_cholesky($covmatrix,$mu_values,$vectorsamples,$inflation,$relativepdf)
@@ -496,18 +500,24 @@ sub modelfit_setup
 		if ($iteration < $self->max_iteration()){
 			#not final round
 			#Now we should have resampled_params_arr, either from first iteration or rawresinput, on original scale
-			#Do Box-Cox and get transformed covariance matrix
-			ui -> print( category => 'sir', message => "Find optimal Box-Cox transformation of resampled vectors" );
-			$boxcox_resulthash = empirical_statistics( sampled_params_arr => $resampled_params_arr,
-													   labels_hash => $parameter_hash,
-													   get_lambda_delta => 1,
-													   estimated_vector => $parameter_hash->{'values'},
-													   do_percentiles => 0);
+			#Optionally do Box-Cox and get (possibly transformed) covariance matrix
+			my $message = "Find optimal Box-Cox transformation of resampled vectors";
 			my( $ldir, $name ) = OSspecific::absolute_path( $self ->directory(),'boxcox_covmatrix_iteration'.
 															$iteration.'.cov');
+			if (not $self->boxcox){
+				$message = "Computing empirical covariance matrix from resampled vectors without Box-Cox transformation";
+				( $ldir, $name ) = OSspecific::absolute_path( $self ->directory(),'untransformed_covmatrix_iteration'.
+															  $iteration.'.cov');
+			}
+			ui -> print( category => 'sir', message =>  $message);
+			$previous_iteration_resulthash = empirical_statistics( sampled_params_arr => $resampled_params_arr,
+													   labels_hash => $parameter_hash,
+													   get_lambda_delta => $self->boxcox,
+													   estimated_vector => $parameter_hash->{'values'},
+													   do_percentiles => 0);
 			#this does not use mu-vector
 			print_empirical_covmatrix(filename=> $ldir.$name,
-									  covar => $boxcox_resulthash->{'covar'},
+									  covar => $previous_iteration_resulthash->{'covar'},
 									  parameter_hash => $parameter_hash);
 
 		}
@@ -760,7 +770,7 @@ sub empirical_statistics{
 
 	my %resulthash;
 
-	if ($get_lambda_delta and  ($len < $dim)){
+	if ($len < $dim){
 		$resulthash{'rank_deficient'}=1;
 	}
 	my $count_resamples=1;

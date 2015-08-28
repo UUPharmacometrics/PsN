@@ -21,7 +21,7 @@ PAGE 24 (2015) Abstr 3546, Dosne AG, Bergstrand M, Karlsson MO.
  
 Each iteration typically consists of the following three phases: First, parameter vectors will be simulated from the 
 proposal density. The proposal density is either computed based on 
-the Box-Cox transformed resampled vectors from phase 3 of the previous iteration,
+the (optionally Box-Cox transformed) resampled vectors from phase 3 of the previous iteration,
 or, if there is no previous iteration, the truncated multivariate normal distribution 
 given by the covariance matrix.
 Second, each of the simulated parameter vectors will be evaluated on the original data (MAXEVAL=0).
@@ -82,9 +82,13 @@ If the number of vectors read is smaller than
 the number of estimated parameters (also counting off-diagonals),
 it is not possible to obtain an empirical covariance matrix with full rank.
 In this case sir will append copies of the existing vectors, perturbed using the tweak\_inits
-functionality, until the resulting set ov vectors has full rank.
+functionality, until the resulting set of vectors has full rank.
 If option -auto\_rawres=degree is set on the command-line, tweak\_inits will be done by 'degree',
 otherwise the default degree 0.1 will be used.
+If $N$ parameter vectors are read from the rawres file,
+the generation of perturbed parameter vector $i$ is performed according to 
+init\_ij = init\_kj + rand\_uniform(-degree*init\_kj,+degree*init\_kj) where k=i modulo N and init\_kj is the value of 
+parameter $j$ in original rawres vector $k$. 
 
 The labels for  THETA/OMEGA/SIGMA 
 in the file must match the labels in the model given as input 
@@ -95,18 +99,33 @@ possible to generate a file with initial parameter estimates outside
 of PsN, as long as the file follows the format rules.
 \nextopt
 \optdefault{offset\_rawres}{N}
-Default 1. The number of parameter sets to skip in rawres file. Only allowed in combination with rawres\_input.
+Only relevant in combination with -rawres\_input. Default 1. The number of result lines to skip in the input raw results file before starting to read final parameter estimates. In a regular bootstrap raw\_results file, and also in an initial\_estimates.csv file from an sse run, 
+the first line of estimates refers to the input model with the full dataset, so therefore the default offset is 1. 
+\nextopt
+\optdefault{in\_filter}{condition on numerical col}
+Only relevant in combination with -rawres\_input. Default not used. The parameter estimates lines in the file can be filtered on values in the different columns. When specifying which column(s) the filtering should be based on, the exact column name must be used, e.g. minimization\_successful. Filtering can only be based on columns with numeric values. The allowed relations are .gt. (greater than), .lt. (less than) and .eq. (equal to). If the value in the filter column is 'NA' then that parameter set will be skipped, regardless of the defined filter relation. Conditions are separated with commas. If the remaining number of lines after filtering is smaller than -samples, sse will stop with an error message. Then the user must either change the filtering rules or change -samples. If the user has created a file with parameter estimates outside of PsN, filtering can be done on any numeric column in that file. Do not set column headers containing .eq. or .lt. or .gt.in the user-generated file as this would interfere with the in\_filter option syntax.
+
+Example (there must be no linebreaks in the actual command):
+\begin{verbatim}
+-in_filter=minimization_successful.eq.1,
+significant_digits.gt.3.5
+\end{verbatim} \\
 \nextopt
 \optdefault{auto\_rawres}{degree}
 Default not set. Not allowed in combination with covmat\_input. If rawres\_input is not set,
 this option will make sir use the tweak\_inits functionality to automatically create a 
 rawres\_input file with perturbed parameter vectors, and these vectors will then be used
-as if read from a real raw\_results file. If option -auto\_rawres is used
-in combination with rawres\_input, the 'degree' will be used 
+as if read from a real raw\_results file. 
+The generation of perturbed parameter vector i is performed according to 
+init\_ij = init\_0j + rand\_uniform(-degree*init\_0j,+degree*init\_0j)
+where init\_0j is the final estimate of 
+parameter $j$ in the input model. 
+The tweaking procedure makes sure that boundary conditions, including positive definiteness of 
+\$OMEGA and \$SIGMA, are respected.
+
+If option -auto\_rawres is used
+in combination with rawres\_input, tweak\_inits by 'degree' will be used 
 to augment the given rawres\_input file until the matrix has full rank, see help text for -rawres\_input.
-\nextopt
-\optdefault{in\_filter}{condition on numerical col}
-Default not used. Only allowed in combination with rawres\_input.
 \nextopt
 \optname{with\_replacement}
 Default not set. By default, resampling is performed without replacement, but setting this option gives resampling with replacement.
@@ -163,6 +182,13 @@ the sampled parameter vector with the smallest ofv.
 If option is unset using -no-recenter, the original parameter vector will be kept
 and a warning will be printed that some vectors had a negative delta-ofv.
 \nextopt
+\optname{boxcox}
+Default set. 
+If option is set, sir will Box-Cox transform parameter vectors before computing
+the covariance matrix used for sampling.
+If option is unset using -no-boxcox, no transformation will be performed before computing covariance matrix
+used for sampling.
+\nextopt
 \end{optionlist}
 
 
@@ -188,8 +214,9 @@ covariance matrix, using Perl function Math::Random::random\_multivariate\_norma
 
 \noindent If there was a previous iteration, i.e $i>1$ or option -rawres\_input or -auto\_rawres was used, 
 the covariance matrix is the un-inflated
-empirical covariance matrix of Box-Cox transformed resampled parameter vectors from
-Step 6 in the previous iteration. Sampling is done on Box-Cox scale, and 
+empirical covariance matrix of (optionally Box-Cox transformed) resampled parameter vectors from
+Step 6 in the previous iteration. If the vectors were Box-Cox transformed then
+sampling is done on Box-Cox scale, and 
 then the samples are back-transformed for boundary checks and evaluation.
 
 \noindent If there was no previous iteration, the covariance matrix is either from
@@ -210,7 +237,7 @@ density function (PDF) of a multivariate normal distribution:\\
 \end{math}
 \\
 where $k$ is the number of dimensions, 
-$\mu$ is the vector of expectations and $A$ is the (possibly inflated) covariance matrix.
+$\mu$ is the vector of expectations and $A$ is the (optionally inflated) covariance matrix.
 The values are normalized with the PDF for the vector of expectations $\mu$, giving\\
 \begin{math}
 relPDF=exp\left(-\frac{1}{2}(\left(x-\mu\right)A^{-1} \left(x-\mu\right)^T\right)
@@ -218,7 +245,7 @@ relPDF=exp\left(-\frac{1}{2}(\left(x-\mu\right)A^{-1} \left(x-\mu\right)^T\right
 \\
 NB 1: When the NONMEM covariance matrix is used as input, PsN will compute $relPDF$ without reading the inverse covariance matrix
 output by NONMEM.
-NB 2: If $i>0$ or -rawres\_input is used, the vectors (including $\mu$) and covariance matrix are on Box-Cox scale.
+NB 2: If $i>0$ or -rawres\_input is used, the vectors (including $\mu$) and covariance matrix are on Box-Cox scale if option -boxcox was set (the default).
 \item[\underline{Step 3}] 
 Evaluate the (original scale) parameter vectors on the original data.
 Create model files with up to 100 \$PROBLEM based on the original model file but setting MAXEVAL=0
@@ -239,11 +266,14 @@ from file rawres\_input, excluding offset\_rawres and vectors not passing in\_fi
 \noindent Otherwise read the 'resamples item $i$' resampled vectors from Step 4, using multiple copies for vectors that were 
 resampled more than once (only possible if -with\_replacement was set). 
 \item[\underline{Step 6}]
-If \emph{not} last iteration: 
+If \emph{not} last iteration \emph{and} option -boxcox is set (the default): 
 For each parameter individually, find the Box-Cox transformation that maximizes the correlation with the normal density.
 Do not allow $\lambda$ less than -3 or larger than +3. The  $\lambda$ used is allowed to differ from the true optimal  $\lambda$
 by at most $0.2$.
 Compute the covariance matrix for the Box-Cox transformed resampled parameter vectors, and go to Step 1.
+
+\noindent If \emph{not} last iteration \emph{and} option -boxcox is unset with -no-boxcox: 
+Compute the covariance matrix for the resampled parameter vectors on original scale, and go to Step 1.
 
 \noindent If last iteration: 
 Compute the covariance matrix for the resampled parameter vectors on original scale, 
@@ -328,7 +358,8 @@ NB: If -rawres\_input is used there is no raw\_results file for the first iterat
 \item For all but the last iteration: A file with the Box-Cox $\lambda$ for each parameter, plus the $\delta$ used to shift
 the values to positive before Box-Cox transformation. If the $\lambda$ column is empty it means that no transformation was
 needed because the parameter was already close to normally distributed.
-\item For all but the last iteration: A file boxcox\_covmatrix\_iteration\i.cov with the Box-Cox space covariance matrix for iteration $i$.
+\item For all but the last iteration: A file boxcox\_covmatrix\_iteration\_i.cov with the Box-Cox space covariance matrix for iteration $i$,
+or, if -no-boxcox was set on commandline, a file untransformed\_covmatrix\_iteration\_i.cov.
 \item A file summary\_iterations.csv with, for each iteration, 
 the requested samples, attempted samples, successful samples, requested resamples,
 actual resamples, requested samples-resamples ratio, actual samples-resamples ratio, count negative delta-ofv and minimum iteration sample ofv.
@@ -360,7 +391,7 @@ then the user must manually modify the covariance matrix to improve its numerica
 and/or change the order of the parameters so that pivoting is not necessary),
 and then use option -covmat\_input to give the modified matrix as input to sir. 
 If this happens in iteration 1 after a 0th iteration based on -auto\_rawres, or -rawres\_input with augmenting using -auto\_rawres, 
-then it is recommended to either run a new sir with a different random seed, or 
+then it is recommended to either run a new sir with -no-boxcox or a different random seed, or 
 try to run sir with -covmat\_input=tweak\_inits.cov where tweak\_inits.cov is found in the failed sir run directory and
 is the empirical covariance matrix from iteration 0 without Box-Cox transformation.
 \end{document}
