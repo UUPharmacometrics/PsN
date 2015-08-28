@@ -304,29 +304,55 @@ sub house
     my $beta=0;
     $vvec[0]=1;
     for (my $i=1;$i<$n;$i++){
-	$sigma += ($xvec->[$i])**2;
-	$vvec[$i]=$xvec->[$i];
+		$sigma += ($xvec->[$i])**2;
+		$vvec[$i]=$xvec->[$i];
     }
     if ($sigma == 0){
-	$beta=0;
+		$beta=0;
     }else{
-	my $mu = sqrt(($xvec->[0])**2 + $sigma);
-	if ($xvec->[0] <= 0){
-	    $vvec[0] = $xvec->[0]-$mu;
-	}else{
-	    $vvec[0] = -$sigma/($xvec->[0]+$mu);
-	}
-	$beta = 2*($vvec[0])**2/($sigma+($vvec[0])**2);
-	for (my $i=1;$i<$n;$i++){
-	    $vvec[$i]=$vvec[$i]/$vvec[0];
-	}
-	$vvec[0]=1;
+		my $mu = sqrt(($xvec->[0])**2 + $sigma);
+		if ($xvec->[0] <= 0){
+			$vvec[0] = $xvec->[0]-$mu;
+		}else{
+			$vvec[0] = -$sigma/($xvec->[0]+$mu);
+		}
+		$beta = 2*($vvec[0])**2/($sigma+($vvec[0])**2);
+		for (my $i=1;$i<$n;$i++){
+			$vvec[$i]=$vvec[$i]/$vvec[0];
+		}
+		$vvec[0]=1;
     }
     my %answer={};
     $answer{'beta'}=$beta;
     $answer{'vvec'}=\@vvec;
     return \%answer;
 } 
+
+sub full_rank
+{
+    #assume Amatrix is row format
+	my $ref =shift;
+    my @Amatrix = @{$ref};
+
+	my $full_rank=0;
+	my $nparam = scalar(@{$Amatrix[0]});
+	return $full_rank unless (scalar(@Amatrix)>= $nparam);
+
+	my @Atranspose = ();
+	for (my $i=0; $i<$nparam; $i++){
+		push(@Atranspose,[]);
+	}
+	foreach my $line (@Amatrix){
+		for (my $i=0; $i<$nparam; $i++){
+			push(@{$Atranspose[$i]},$line->[$i]);
+		}
+	}
+	my $Rmat=[];
+	unless (QR_factorize(\@Atranspose,$Rmat)){
+		$full_rank = 1;
+	}
+	return $full_rank;
+}
 
 sub QR_factorize
 { 
@@ -347,47 +373,49 @@ sub QR_factorize
     my $input_error = 2;
     my $numerical_error = 1;
 
-    
+    my $singular=0;
+
     for (my $j=0;$j<$ncol;$j++){
-	my @xvec = @{$Amatrix[$j]}[$j..$endrow];
-	#print join(' ',@xvec)."\n";
-	#die;
-	my $href = house(\@xvec);
-	my $beta = $$href{'beta'}; #double $ ?
-	my $vvec = $$href{'vvec'};
-	#house transform A(j:endrow,j:endcol)
-	#for first col know only first comp is number, rest is 0 (R matrix)
-	#w=beta Atrans v
-	my @wvec;
-	for (my $i=0;$i<($ncol-$j);$i++){
-	    my $col=$i+$j;
-	    $wvec[$i]=0;
-	    for (my $k=0;$k<($mrow-$j);$k++){
-		$wvec[$i] += $beta*($vvec->[$k])*$Amatrix[$col][$k+$j];
-	    }      
-	}
-	#col $j gives R
-	my @rcol;
-	@rcol = @{$Amatrix[$j]}[0..($j-1)] if ($j>0);
-	push(@rcol,($Amatrix[$j][$j]-$wvec[0]*$vvec->[0]));
-	push(@{$Rmatrix},\@rcol);
-	#check that rest practically 0 
-	for (my $k=1;$k<($mrow-$j);$k++){
-	    my $val = $Amatrix[$j][$j+$k]-$wvec[0]*$vvec->[$k];
-	    unless ( $val < 0.00001){
-		print "error in house transformation j $j k $k val $val\n";
-		return $numerical_error;
-	    }
-	}
-	#tranform rest of A cols for next iteration
-	for (my $i=1;$i<($ncol-$j);$i++){
-	    for (my $k=0;$k<($mrow-$j);$k++){
-		$Amatrix[$i+$j][$j+$k] = $Amatrix[$i+$j][$j+$k]-$wvec[$i]*$vvec->[$k];
-	    }
-	}
+		my @xvec = @{$Amatrix[$j]}[$j..$endrow];
+		#print join(' ',@xvec)."\n";
+		#die;
+		my $href = house(\@xvec);
+		my $beta = $$href{'beta'}; #double $ ?
+		my $vvec = $$href{'vvec'};
+		#house transform A(j:endrow,j:endcol)
+		#for first col know only first comp is number, rest is 0 (R matrix)
+		#w=beta Atrans v
+		my @wvec;
+		for (my $i=0;$i<($ncol-$j);$i++){
+			my $col=$i+$j;
+			$wvec[$i]=0;
+			for (my $k=0;$k<($mrow-$j);$k++){
+				$wvec[$i] += $beta*($vvec->[$k])*$Amatrix[$col][$k+$j];
+			}      
+		}
+		#col $j gives R
+		my @rcol;
+		@rcol = @{$Amatrix[$j]}[0..($j-1)] if ($j>0);
+		push(@rcol,($Amatrix[$j][$j]-$wvec[0]*$vvec->[0]));
+		push(@{$Rmatrix},\@rcol);
+		$singular = $numerical_error if (abs($rcol[-1])< 0.0000000000001); 
+		#check that rest practically 0 
+		for (my $k=1;$k<($mrow-$j);$k++){
+			my $val = $Amatrix[$j][$j+$k]-$wvec[0]*$vvec->[$k];
+			unless ( $val < 0.00001){
+				print "error in house transformation j $j k $k val $val\n";
+				return $numerical_error;
+			}
+		}
+		#tranform rest of A cols for next iteration
+		for (my $i=1;$i<($ncol-$j);$i++){
+			for (my $k=0;$k<($mrow-$j);$k++){
+				$Amatrix[$i+$j][$j+$k] = $Amatrix[$i+$j][$j+$k]-$wvec[$i]*$vvec->[$k];
+			}
+		}
     }
 
-    return 0;
+    return $singular;
 } 
 
 sub cholesky_transpose
@@ -840,6 +868,8 @@ sub eta_cholesky_code
 
 	return ($dimension,\@code,\@etalist);
 }
+
+
 
 sub cholesky
 {

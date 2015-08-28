@@ -404,5 +404,34 @@ is($inits->[0],'(0,3) ; SD_D2','string cholesky init diag 2');
 
 is($code->[0],'SD_D2=THETA(1)','string cholesky code diag 2');
 
+my @Amatrix =([1,9,1],[2,3,0],[1,2,3],[0,1,0]);
+
+is(linear_algebra::full_rank(\@Amatrix),1,"full rank nice");
+
+my @Amatrix =([1,2,3,4,5],
+			  [9,3,4,1,1],
+			  [1,0,-3,0,1]);
+
+is(linear_algebra::full_rank(\@Amatrix),0,"full rank wide");
+my $Rmat=[];
+my $err1 = linear_algebra::QR_factorize(\@Amatrix,$Rmat);
+
+cmp_relative($Rmat->[0]->[0],8,7.416198487095664,"qr element 1");
+cmp_relative($Rmat->[1]->[0],8,4.854239009735343,"qr element 2");
+cmp_relative($Rmat->[1]->[01],8,9.188926141631764,"qr element 3");
+cmp_relative($Rmat->[2]->[0],8,-0.404519917477945,"qr element 4");
+cmp_relative($Rmat->[2]->[1],8,-0.003957332533002,"qr element 5");
+cmp_relative($Rmat->[2]->[2],8,3.291860868245021,"qr element 6");
+
+is($err1,0,"qr factorize ok");
+my @singular = ([1,2,3,4,5],
+			  [0,1,-5,7,2],
+			  [1,3,-2,11,7]);
+$Rmat=[];
+my $err1 = linear_algebra::QR_factorize(\@singular,$Rmat);
+cmp_relative($Rmat->[0]->[0],8,7.416198487095664,"singular qr element 1");
+
+is($err1,1,"qr factorize singular");
+
 
 done_testing();
