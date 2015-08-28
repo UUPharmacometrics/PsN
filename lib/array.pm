@@ -421,8 +421,8 @@ sub rse
 	my $result = 0;
 	my $val_count = scalar(@{$array});
 	return if (($val_count == 0) or ($val_count == 1));     # Must handle zero length array
-	return if ($true == 0);
-	$result = sem($array)/$true;
+	return if ((not defined $true) or ($true == 0));
+	$result = sem($array)/abs($true);
 	return $result;
 }
 
