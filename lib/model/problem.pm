@@ -3096,6 +3096,14 @@ sub create_print_order
 
 }
 
+sub reset_estimated_parameters_hash
+{
+    my $self = shift;
+	
+	$self->estimated_parameters_hash({});
+
+}
+
 sub set_estimated_parameters_hash
 {
 	#filter out fix and same and prior and off-diagonal zeros, set hash describing what is actually estimated
