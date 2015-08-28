@@ -28,12 +28,14 @@ my %required_options = ("samples:s"=>'',
 my %optional_options = (
 	"covmat_input:s"=>'',
 	'rawres_input:s' => undef,
+	'auto_rawres:f' => undef,
 	'offset_rawres:i' => undef,
 	'problems_per_file:i' => undef,
 	'in_filter:s' => undef,
 	"mceta:i"=>'',
 	"inflation:f" => '',
 	"with_replacement!"=>'',
+	"recenter!"=>'',
 	"copy_data!"=>'');
 
 my $res = GetOptions( \%options, 
@@ -114,12 +116,20 @@ EOF
 $help_text{-rawres_input} = <<'EOF';
       -rawres_input=filename
 
-      If rawres_input is given, sir will take 'resamples' m1 sets of parameter
-	  vectors from this file, starting on line offset_rawres+1, instead of
-      resampling in the first iteration.
-	  Not allowed in combination with covmat_input.
-      The raw results file must contain at least as many 
-      samples as the first value in input -resamples to sir, the labels for  THETA/OMEGA/SIGMA 
+If rawres_input is given, sir will run an intial 0th iteration in which sir will read all parameter
+vectors from this file, starting on line offset_rawres+1 and skipping any that does not fulfill the filter rules, if set.
+These vectors will be Box-Cox transformed and used to create a proposal density for the next iteration.
+This option is not allowed together with covmat_input. 
+
+If the number of vectors read is smaller than 
+the number of estimated parameters (also counting off-diagonals),
+it is not possible to obtain an empirical covariance matrix with full rank.
+In this case sir will append copies of the existing vectors, perturbed using the tweak\_inits
+functionality, until the resulting set ov vectors has full rank.
+If option -auto_rawres=degree is set on the command-line, tweak_inits will be done by 'degree',
+otherwise the default degree 0.1 will be used for tweaking.
+
+	  The labels for  THETA/OMEGA/SIGMA 
       in the file must match the labels in the model given as input 
       to sir, the theta columns must be directly followed by the omega columns 
       which must be directly followed by the sigma columns, and the first or
@@ -157,6 +167,15 @@ $help_text{-in_filter} = <<'EOF';
     
       Example: -in_filter=minimization_successful.eq.1,significant_digits.gt.3.5
 EOF
+$help_text{-auto_rawres} = <<'EOF';
+      -auto_rawres=degree
+
+Default not set. Not allowed in combination with covmat_input. If rawres_input is not set,
+this option will make sir use the tweak_inits functionality to automatically create a 
+rawres_input file with perturbed parameter vectors. If option -auto_rawres is used
+in combination with rawres_input, the 'degree' will be used with tweak_inits
+to augment the given rawres_input file until the matrix has full rank.
+EOF
     $help_text{-copy_data} = <<'EOF';
       -copy_data
     Default set, can be unset with -no-copy_data. By default, the original
@@ -169,6 +188,14 @@ EOF
     By default resampling is done without replacement, but if option
 	-with_replacement is set, resampling will be done with replacement.
 	It is not possible to cap replacement at e.g. 5, replacement will be unlimited.
+EOF
+    $help_text{-recenter} = <<'EOF';
+      -recenter
+Default set. If option is set and any sampled parameter vector has a smaller ofv than the original
+vector mu of final parameter estimates of the input model, then the mu-vector will be replaced with
+the sampled parameter vector with the smallest ofv.
+If option is unset using -no-recenter, the original parameter vector will be kept
+and a warning will be printed that some vectors had a negative delta-ofv.
 EOF
     $help_text{-covmat_input} = <<'EOF';
       -covmat_input=filename
@@ -213,6 +240,10 @@ if( scalar(@ARGV) > 1 ){
 if ( defined $options{'covmat_input'} ){
 	if (defined $options{'rawres_input'}){
 		print "Cannot use option -covmat_input together with option -rawres_input.\n";
+		die;
+	}
+	if (defined $options{'auto_rawres'}){
+		print "Cannot use option -covmat_input together with option -auto_rawres.\n";
 		die;
 	}
 	#set to global filepath here
@@ -274,10 +305,7 @@ if (defined $options{'copy_data'} and (not $options{'copy_data'})){
 my @samples = split(/,/,$options{'samples'});
 my @resamples = split(/,/,$options{'resamples'});
 
-if (defined $options{'rawres_input'} and (scalar(@resamples)<2)){
-	print "No point running sir with rawres_input unless running more than one iteration\n";
-	exit;
-}
+
 my $sir = 
 	tool::sir->new ( eval( $common_options::parameters ),
 					 top_tool => 1,
@@ -287,10 +315,12 @@ my $sir =
 					 resamples				     => \@resamples,
 					 mceta				     => $options{'mceta'},
 					 inflation				     => $options{'inflation'},
-					 covmat_input				     => $options{'covmat_input'},
+					 auto_rawres				     => $options{'auto_rawres'},
+					 covmat_input			 => $options{'covmat_input'},
 					 rawres_input        	=> $options{'rawres_input'},
 					 problems_per_file        	=> $options{'problems_per_file'},
 					 offset_rawres       	=> $options{'offset_rawres'},
+					 recenter       	=> $options{'recenter'},
 					 in_filter             => \@in_filter,
 					 copy_data                            => $options{'copy_data'}
 	);

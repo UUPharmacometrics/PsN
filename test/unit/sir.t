@@ -76,6 +76,99 @@ cmp_ok($hash->{'values'}->[0],'==',2.66825E+01,'hash theta 1');
 cmp_ok($hash->{'values'}->[1],'==',1.10274E+02,'hash theta 2');
 cmp_ok($hash->{'values'}->[2],'==',4.49611E+00,'hash theta 3');
 
+
+my @resampled_params_arr =(
+	{'ofv' =>100, 'theta'=> {'1 TVCL' => 1.0,'2 TVV' => 2.0,'3 TVKA'=> 3.0, '4 LAG' => 4.0,'5 RES ERR' => 5.0,'6 VAR IIV CL' => 6.0,
+	 '7 VAR IIV V' => 7.0, '8 CORR IIV CL-V' => 8.0}, 'omega'=> {'3 IIV KA' => 1.0,'4 IOV CL OCC1' => 2.0,'6 IOV KA OCC1' => 3.0 },'sigma'=> {}},
+	{'ofv' =>10, 'theta'=> {'1 TVCL' => 10.0,'2 TVV' => 10.0,'3 TVKA'=> 10.0, '4 LAG' => 10.0,'5 RES ERR' => 10.0,'6 VAR IIV CL' => 10.0,
+	 '7 VAR IIV V' => 10.0, '8 CORR IIV CL-V' => 10.0}, 'omega'=> {'3 IIV KA' => 10.0,'4 IOV CL OCC1' => 10.0,'6 IOV KA OCC1' => 10.0 },'sigma'=> {}},
+	{'ofv' =>100, 'theta'=> {'1 TVCL' => 1.0,'2 TVV' => 2.0,'3 TVKA'=> 3.0, '4 LAG' => 4.0,'5 RES ERR' => 5.0,'6 VAR IIV CL' => 6.0,
+	 '7 VAR IIV V' => 7.0, '8 CORR IIV CL-V' => 8.0}, 'omega'=> {'3 IIV KA' => 1.0,'4 IOV CL OCC1' => 2.0,'6 IOV KA OCC1' => 3.0 },'sigma'=> {}},
+	{'ofv' =>100, 'theta'=> {'1 TVCL' => 1.0,'2 TVV' => 2.0,'3 TVKA'=> 3.0, '4 LAG' => 4.0,'5 RES ERR' => 5.0,'6 VAR IIV CL' => 6.0,
+	 '7 VAR IIV V' => 7.0, '8 CORR IIV CL-V' => 8.0}, 'omega'=> {'3 IIV KA' => 1.0,'4 IOV CL OCC1' => 2.0,'6 IOV KA OCC1' => 3.0 },'sigma'=> {}}
+);
+
+my ($errors,$newofv) = tool::sir::recenter_mu(sampled_params_arr => \@resampled_params_arr,
+									parameter_hash => $hash);
+cmp_ok(scalar(@{$errors}),'==',0,' count errors recenter_mu');
+cmp_ok($newofv,'==',10,' ofv recenter_mu');
+is_deeply($hash->{'values'},[10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0],'recenter_mu');
+@resampled_params_arr =(
+	{'ofv' =>100, 'theta'=> {'TVCL' => 1.0,'2 TVV' => 2.0,'3 TVKA'=> 3.0, '4 LAG' => 4.0,'5 RES ERR' => 5.0,'6 VAR IIV CL' => 6.0,
+							 '7 VAR IIV V' => 7.0, '8 CORR IIV CL-V' => 8.0}, 'omega'=> {'3 IIV KA' => 1.0,'4 IOV CL OCC1' => 2.0,'6 IOV KA OCC1' => 3.0 },
+	 'sigma'=> {}});
+($errors,$newofv) = tool::sir::recenter_mu(sampled_params_arr => \@resampled_params_arr,
+								 parameter_hash => $hash);
+cmp_ok(scalar(@{$errors}),'==',1,' count errors recenter_mu');
+cmp_ok($newofv,'==',100,' ofv recenter_mu');
+
+my $samples=[100,100,100,100];
+my $resamples=[20,20,20,20];
+my $successful_samples=[];
+my $actual_resamples=[];
+my $attempted_samples=[];
+
+is(tool::sir::update_attempted_samples(samples=>$samples,
+									   successful_samples=>$successful_samples,
+									   attempted_samples=>$attempted_samples,
+									   iteration=> 1),100,"update attempted samples 1");
+is_deeply($attempted_samples,[100],"updated attempted samples 1 array");
+
+is(tool::sir::update_actual_resamples(samples=>$samples,
+									  resamples=>$resamples,
+									  successful_samples=>$successful_samples,
+									  actual_resamples=>$actual_resamples,
+									  successful_count=>90,
+									  iteration=> 1),18,"update actual resamples 10% loss");
+is_deeply($successful_samples,[90],"updated successful samples");
+is_deeply($actual_resamples,[18],"updated actual resamples");
+
+is(tool::sir::update_attempted_samples(samples=>$samples,
+									   successful_samples=>$successful_samples,
+									   attempted_samples=>$attempted_samples,
+									   iteration=> 2),111,"update attempted samples 2 iteration 2");
+is_deeply($attempted_samples,[100,111],"updated attempted samples 2 array");
+
+is(tool::sir::update_actual_resamples(samples=>$samples,
+									  resamples=>$resamples,
+									  successful_samples=>$successful_samples,
+									  actual_resamples=>$actual_resamples,
+									  successful_count=>102,
+									  iteration=> 2),20,"update actual resamples 2% gain");
+is_deeply($successful_samples,[90,102],"updated successful samples");
+is_deeply($actual_resamples,[18,20],"updated actual resamples");
+
+is(tool::sir::update_attempted_samples(samples=>$samples,
+									   successful_samples=>$successful_samples,
+									   attempted_samples=>$attempted_samples,
+									   iteration=> 3),109,"update attempted samples 3");
+is_deeply($attempted_samples,[100,111,109],"updated attempted samples 3 array");
+
+is(tool::sir::update_actual_resamples(samples=>$samples,
+									  resamples=>$resamples,
+									  successful_samples=>$successful_samples,
+									  actual_resamples=>$actual_resamples,
+									  successful_count=>109,
+									  iteration=> 3),22,"update actual resamples 10% gain");
+is_deeply($successful_samples,[90,102,109],"updated successful samples");
+is_deeply($actual_resamples,[18,20,22],"updated actual resamples");
+
+is(tool::sir::update_attempted_samples(samples=>$samples,
+									   successful_samples=>$successful_samples,
+									   attempted_samples=>$attempted_samples,
+									   iteration=> 4),100,"update attempted samples 4");
+is_deeply($attempted_samples,[100,111,109,100],"updated attempted samples 4 array");
+
+is(tool::sir::update_actual_resamples(samples=>$samples,
+									  resamples=>$resamples,
+									  successful_samples=>$successful_samples,
+									  actual_resamples=>$actual_resamples,
+									  successful_count=>98,
+									  iteration=> 4),20,"update actual resamples 2% loss");
+is_deeply($successful_samples,[90,102,109,98],"updated successful samples");
+is_deeply($actual_resamples,[18,20,22,20],"updated actual resamples");
+
+
 $values = $output->get_filtered_values(parameter => 'sigma');
 cmp_ok(scalar(@{$values}),'==',0,' fixed sigma');
 
@@ -286,5 +379,42 @@ like($ref->[1],'/^\s+4\.0000000E\+0+\s+5.0000000E\+0+\s+6\.0000000E\+0+/', "form
 like($ref->[2],'/^\s+7\.0000000E\+0+\s+8.0000000E\+0+\s+9\.0000000E\+0+/', "format covmatrix space no labels 2");
 
 
+#mox_sir_blcok2
 
+my @resampled_params_arr =(
+{'theta'=> {'THETA1' => 1.0,'THETA2' => 1.0,'THETA3'=> 1.0, 'THETA4' => 1.0,'THETA5' => 1.0}, 
+ 'omega'=> {'OMEGA(1,1)' => 1.0,'OMEGA(2,2)' => 1.0,'OMEGA(3,2)' => 0.1,'OMEGA(3,3)' => 1.0 },
+ 'sigma'=> {}},
+{	'theta'=> {'THETA1' => 10.0,'THETA2' => 10.0,'THETA3'=> 10.0, 'THETA4' => 10.0,'THETA5' => 10.0}, 
+	'omega'=> {'OMEGA(1,1)' => 10.0,'OMEGA(2,2)' => 10.0,'OMEGA(3,2)' => 1,'OMEGA(3,3)' => 10.0 },
+ 'sigma'=> {}},
+);
+
+my $modeldir = $includes::testfiledir;
+
+my $model = model->new(filename => "$modeldir/mox_sir_block2.mod", ignore_missing_data => 1);
+
+my $parameter_hash = output::get_nonmem_parameters(output => $model->outputs->[0]);
+
+my $Amatrix = tool::sir::tweak_inits_sampling(sampled_params_arr => \@resampled_params_arr,
+											  parameter_hash => $parameter_hash,
+											  model => $model,
+											  degree => 0.1,
+											  output => $model->outputs->[0],
+	);
+
+#for (my $i=0;$i < scalar(@{$Amatrix}); $i++){
+#	print join("\t",@{$Amatrix->[$i]})."\n";
+#}
+
+my $Amatrix = tool::sir::tweak_inits_sampling(sampled_params_arr => [],
+											  parameter_hash => $parameter_hash,
+											  model => $model,
+											  degree => 0.1,
+											  output => $model->outputs->[0],
+	);
+#for (my $i=0;$i < scalar(@{$Amatrix}); $i++){
+#	print join("\t",@{$Amatrix->[$i]})."\n";
+#}
+#print "\n param ".scalar(@{$parameter_hash->{'values'}})." vectors ".scalar(@{$Amatrix})."\n";
 done_testing();
