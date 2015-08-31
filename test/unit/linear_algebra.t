@@ -408,6 +408,30 @@ my @Amatrix =([1,9,1],[2,3,0],[1,2,3],[0,1,0]);
 
 is(linear_algebra::full_rank(\@Amatrix),1,"full rank nice");
 
+my $cov=[];
+my $err = linear_algebra::row_cov(\@Amatrix,$cov);
+
+cmp_relative($cov->[0]->[0],0.666666666666667,7,"row_cov  1 ");
+cmp_relative($cov->[0]->[1],0.666666666666667,7,"row_cov  2 ");
+cmp_relative($cov->[0]->[2],0,7,"row_cov  3 ");
+cmp_relative($cov->[1]->[1],12.916666666666666,7,"row_cov  4 ");
+cmp_relative($cov->[1]->[2],0,7,"row_cov  5 ");
+cmp_relative($cov->[2]->[2],2,7,"row_cov  6 ");
+is($cov->[0]->[1],$cov->[1]->[0],"row_cov symm 1");
+is($cov->[0]->[2],$cov->[2]->[0],"row_cov symm 2");
+is($cov->[1]->[2],$cov->[2]->[1],"row_cov symm 3");
+
+my $corr=[];
+$err = linear_algebra::covar2sdcorr($cov,$corr);
+cmp_relative($corr->[0]->[0],sqrt(0.666666666666667),7,"sd corr  1 ");
+cmp_relative($corr->[1]->[1],sqrt(12.916666666666666),7,"sdcorr  2 ");
+cmp_relative($corr->[2]->[2],sqrt(2),7,"sdcorr  3 ");
+cmp_relative($corr->[0]->[1],0.227184733698826,7,"corr 2");
+is($corr->[0]->[1],$corr->[1]->[0],"corr symm 1");
+is($corr->[0]->[2],$corr->[2]->[0],"corr symm 2");
+is($corr->[1]->[2],$corr->[2]->[1],"corr symm 3");
+
+
 my @Amatrix =([1,2,3,4,5],
 			  [9,3,4,1,1],
 			  [1,0,-3,0,1]);

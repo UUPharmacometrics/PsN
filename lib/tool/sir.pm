@@ -362,9 +362,10 @@ sub modelfit_setup
 														   delta=>$delta);
 					if (1){
 						open ( RES, ">" . $self->directory().'delta_lambda_iteration'.($iteration-1).'.csv' );
-						print RES "delta,lambda,original.estimate,transformed.estimate\n";
+						print RES "parameter,delta,lambda,original.estimate,transformed.estimate\n";
 						for (my $k=0; $k< scalar(@{$delta}); $k++){
-							print RES $delta->[$k].','.$lambda->[$k].','.$parameter_hash->{'values'}->[$k].','.$mu_values->[$k]."\n";
+							print RES '"'.$parameter_hash->{'labels'}->[$k].'",'.$delta->[$k].','.$lambda->[$k].','.
+								$parameter_hash->{'values'}->[$k].','.$mu_values->[$k]."\n";
 						}
 						close(RES);
 					}
@@ -817,6 +818,7 @@ sub empirical_statistics{
 	croak("Number of resamples is 0 in empirical_statistics") if ($n_resamples < 1);
 
 	$resulthash{'covar'}=[];
+	$resulthash{'sdcorr'}=[];
 	if ($get_lambda_delta){
 		$resulthash{'lambda'}=[];
 		$resulthash{'delta'}=[];
@@ -858,11 +860,19 @@ sub empirical_statistics{
 		}elsif ($err1 == 2){
 			croak ("input error to linear_algebra rowcov");
 		}
+		$err1 = linear_algebra::covar2sdcorr($resulthash{'covar'},$resulthash{'sdcorr'});
+		if ($err1 == 1){
+			croak ("numerical error in linear_algebra covar2sdcorr");
+		}elsif ($err1 == 2){
+			croak ("input error to linear_algebra covar2sdcorr");
+		}
 	}
 
 	$resulthash{'mean'}=[];
+	$resulthash{'median'}=[];
  	for (my $j=0; $j< $dim; $j++){
 		push(@{$resulthash{'mean'}},($sums[$j]/$n_resamples));
+		push(@{$resulthash{'median'}},median($parameter_vectors[$j]));
 	}
 
 
@@ -1417,7 +1427,7 @@ sub tweak_inits_sampling{
 		open ( RES, ">" . $directory.'/'.$filename );
 		print RES 'model,"'.join('","',@{$parameter_hash->{'coordinate_strings'}}).'"'."\n";
 		for (my $i=0;$i < scalar(@Amatrix); $i++){
-			print RES join(',',@{$Amatrix[$i]})."\n";
+			print RES ($i+1).','.join(',',@{$Amatrix[$i]})."\n";
 		}
 		close RES;
 	}
@@ -1981,8 +1991,9 @@ sub prepare_results
 
 	my %se_section;
 	$se_section{'name'}='Summary statistics over resamples';
-	$se_section{'labels'}=[['mean','se','rse','rse_sd'],$parameter_hash->{'labels'}];
-	$se_section{'values'}=[$resulthash->{'mean'},$resulthash->{'standard_error'},$resulthash->{'relative_standard_error'},$resulthash->{'rse_sd_scale'}];
+	$se_section{'labels'}=[['mean','median','se','rse','rse_sd'],$parameter_hash->{'labels'}];
+	$se_section{'values'}=[$resulthash->{'mean'},$resulthash->{'median'},$resulthash->{'standard_error'},
+						   $resulthash->{'relative_standard_error'},$resulthash->{'rse_sd_scale'}];
 	push( @{$self -> results->[0]{'own'}},\%se_section );
 
 	my %perc_section;
@@ -2002,11 +2013,11 @@ sub prepare_results
 	$space_section{'values'}= [[]];
 	push( @{$self -> results->[0]{'own'}},\%space_section );
 
-	my %covar_section;
-	$covar_section{'name'}='Empirical covariance matrix';
-	$covar_section{'labels'}=[$parameter_hash->{'labels'},$parameter_hash->{'labels'}];
-	$covar_section{'values'}=$resulthash->{'covar'};
-	push( @{$self -> results->[0]{'own'}},\%covar_section );
+	my %sdcorr_section;
+	$sdcorr_section{'name'}='Empirical sd-correlation matrix';
+	$sdcorr_section{'labels'}=[$parameter_hash->{'labels'},$parameter_hash->{'labels'}];
+	$sdcorr_section{'values'}=$resulthash->{'sdcorr'};
+	push( @{$self -> results->[0]{'own'}},\%sdcorr_section );
 
 	my $basename = $model->create_output_filename();
 	$basename =~ s/\.lst$/_sir.cov/;

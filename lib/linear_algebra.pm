@@ -1309,6 +1309,40 @@ sub column_cov
     return 0;
 }
 
+sub covar2sdcorr
+{
+    my $varcov=shift;
+    my $sdcorr = shift;
+    my $debug=0;
+    my $input_error = 2;
+    my $numerical_error = 1;
+
+    my $nrow= scalar(@{$varcov});
+    return $input_error if ($nrow < 1);
+    my $ncol = scalar(@{$varcov->[0]});
+	my @sd =();
+
+    for (my $row=0; $row< $nrow; $row++){
+		return $input_error if (scalar(@{$varcov->[$row]}) != $ncol);
+		if ($varcov->[$row]->[$row] <= 0){
+			return $input_error ;
+		}else{
+			push(@sd,sqrt($varcov->[$row]->[$row]));
+		}
+    }
+    for (my $row=0; $row< $nrow; $row++){
+		push(@{$sdcorr},[]);
+		for (my $col=0; $col< $row; $col++){
+			push(@{$sdcorr->[$row]},$sdcorr->[$col]->[$row]);
+		}
+		#diag
+		push(@{$sdcorr->[$row]},$sd[$row]);
+		for (my $col=($row+1); $col< $nrow; $col++){
+			push(@{$sdcorr->[$row]},$varcov->[$row]->[$col]/($sd[$row]*$sd[$col]));
+		}
+	}
+	return 0;
+}
 sub row_cov
 {
     #input is reference to values matrix 
@@ -1316,8 +1350,6 @@ sub row_cov
     #and reference to empty result matrix
     #compute square variance covariance matrix
     #Normalization is done with N-1, input error if N<2
-    #verified with matlab cov function
-
     
     my $Aref=shift;
     my $varcov = shift;

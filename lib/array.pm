@@ -412,17 +412,17 @@ sub variance
 
 sub rse
 {
-    # Calculate the relative standard error of the mean of an array.
-
-    my ($array,$true) = pos_validated_list(\@_,
+    # Calculate the relative standard error of the expectation of an array.
+	#expectation is the estimate
+    my ($array,$expectation) = pos_validated_list(\@_,
 										   { isa => 'ArrayRef'}, 
 										   {isa => 'Num' },
 		);
 	my $result = 0;
 	my $val_count = scalar(@{$array});
 	return if (($val_count == 0) or ($val_count == 1));     # Must handle zero length array
-	return if ((not defined $true) or ($true == 0));
-	$result = sem($array)/abs($true);
+	return if ((not defined $expectation) or ($expectation == 0));
+	$result = stdev($array)/abs($expectation);
 	return $result;
 }
 
