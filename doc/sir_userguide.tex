@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{SIR user guide}{2015-08-28}
+\guidetitle{SIR user guide}{2015-08-31}
 \usepackage{amsmath}
 
 \begin{document}
@@ -40,10 +40,10 @@ There are a number of different ways to obtain the proposal density for the firs
 read the covariance matrix from NONMEM, e.g. run10.cov,  and use it for the sampling in the first iteration.
 \item If the covariance step was not successful, the precond script, see the precond\_userguide.pdf, 
 is recommended. It can often recover the covariance step even if it failed when running the original model.
-\item If precond fails, then the user can compute a proposal covariance matrix $A$ based on the $R$ matrix given by NONMEM,
-e.g. run10.rmt, using $A=2R^{+}$ where $R^{+}$ is the pseudo-inverse of $R$. If precond has been run, the rmt-file is found in the 
-m1 subdirectory of the precond run directory. The $A$ matrix needs to be computed outside of PsN, using e.g. R, and
-then given as input to sir using option -covmat\_input.
+%\item If precond fails, then the user can compute a proposal covariance matrix $A$ based on the $R$ matrix given by NONMEM,
+%e.g. run10.rmt, using $A=2R^{+}$ where $R^{+}$ is the pseudo-inverse of $R$. If precond has been run, the rmt-file is found in the 
+%m1 subdirectory of the precond run directory. The $A$ matrix needs to be computed outside of PsN, using e.g. R, and
+%then given as input to sir using option -covmat\_input.
 \item If a bootstrap has been run, the file with simulated parameter vectors can be given as input, instead of 
 a covariance matrix, with option -rawres\_input. 
 Then the sir procedure starts with a 0th iteration where those vectors are treated as the resampled 
@@ -86,7 +86,7 @@ functionality, until the resulting set of vectors has full rank.
 If option -auto\_rawres=degree is set on the command-line, tweak\_inits will be done by 'degree',
 otherwise the default degree 0.1 will be used.
 If $N$ parameter vectors are read from the rawres file,
-the generation of perturbed parameter vector $i$ is performed according to 
+the generation of perturbed parameter vector $i$, element $j$, is performed according to 
 init\_ij = init\_kj + rand\_uniform(-degree*init\_kj,+degree*init\_kj) where k=i modulo N and init\_kj is the value of 
 parameter $j$ in original rawres vector $k$. 
 
@@ -116,7 +116,7 @@ Default not set. Not allowed in combination with covmat\_input. If rawres\_input
 this option will make sir use the tweak\_inits functionality to automatically create a 
 rawres\_input file with perturbed parameter vectors, and these vectors will then be used
 as if read from a real raw\_results file. 
-The generation of perturbed parameter vector i is performed according to 
+The generation of perturbed parameter vector $i$, element $j$, is performed according to 
 init\_ij = init\_0j + rand\_uniform(-degree*init\_0j,+degree*init\_0j)
 where init\_0j is the final estimate of 
 parameter $j$ in the input model. 
@@ -351,15 +351,17 @@ different from the true uncertainty for this parameter.
 \bf{resamples} & number of actual resamples with random seed used\\
 \end{tabular}
 NB: If -rawres\_input is used there is no raw\_results file for the first iteration.
-\item sir\_results.csv with percentiles and empirical covariance matrix
+\item sir\_results.csv with percentiles and empirical sd-correlation matrix
 \item <modelname>\_sir.cov with the empirical covariance matrix in NONMEM-like format, i.e. 
       fixed width space separated with generic headers in order THETA, SIGMA, OMEGA.
 \item if option -rplots>0: A file PsN\_sir\_plots.pdf with diagnostic sir plots.
-\item For all but the last iteration: A file with the Box-Cox $\lambda$ for each parameter, plus the $\delta$ used to shift
-the values to positive before Box-Cox transformation. If the $\lambda$ column is empty it means that no transformation was
+\item For all but the last iteration: A file with the Box-Cox $\lambda$ for each parameter, the $\delta$ used to shift
+the values to positive before Box-Cox transformation, the original estimate and the transformed estimate. 
+If the $\lambda$ column is empty it means that no transformation was
 needed because the parameter was already close to normally distributed.
-\item For all but the last iteration: A file boxcox\_covmatrix\_iteration\_i.cov with the Box-Cox space covariance matrix for iteration $i$,
-or, if -no-boxcox was set on commandline, a file untransformed\_covmatrix\_iteration\_i.cov.
+\item For all but the last iteration: A file boxcox\_covmatrix\_iterationi.cov with 
+the Box-Cox space covariance matrix for iteration $i$,
+or, if -no-boxcox was set on commandline, a file untransformed\_covmatrix\_iterationi.cov.
 \item A file summary\_iterations.csv with, for each iteration, 
 the requested samples, attempted samples, successful samples, requested resamples,
 actual resamples, requested samples-resamples ratio, actual samples-resamples ratio, count negative delta-ofv and minimum iteration sample ofv.
