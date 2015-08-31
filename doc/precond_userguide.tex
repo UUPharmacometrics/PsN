@@ -47,6 +47,9 @@ With this option the user can manually specify the R-matrix that will be used fo
 \optdefault{update\_model}{filename}
 Copy the model with updated inital thetas to your work directory	
 \nextopt
+\optname{copy\_data}
+Default set. Disable with -no-copy\_data. By default, PsN will copy the datafile into NM\_run1 and set a local path in psn.mod, the actual modelfile run with NONMEM. If -no-copy\_data is set, PsN will not copy the data to NM\_run1 and instead set a global path to the datafile in psn.mod.
+\nextopt
 \end{optionlist}
 
 \subsection{Optional input for methodological research}

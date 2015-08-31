@@ -44,6 +44,7 @@ my %optional_options = (
 	"perturb!" => undef,
 	"eigen_comp_only!" => undef,
     "always!" => undef,
+    "copy_data!" => undef,
 );
 
 my $res = GetOptions( \%options,
@@ -205,6 +206,16 @@ $help_text{-always} = <<'EOF';
       of the covariance step
 EOF
 
+$help_text{-copy_data} = <<'EOF';
+    -copy_data
+    Set by default. Disable with -no-copy_data. By default PsN will copy
+    the data file into NM_run1 and set a local path in psn.mod, the actual
+    model file run with NONMEM. If -no-copy_data is set, PsN will not copy 
+    the data to NM_run1 but instead set a global path to the data file in
+    psn.mod. However, NONMEM will not accept a path longer than 80
+	characters.
+EOF
+
 common_options::online_help('precond', \%options, \%help_text, \%required_options, \%optional_options);
 
 my $model_filename = $ARGV[0];
@@ -227,6 +238,10 @@ if (not defined $options{'offset_rawres'}) {
 
 
 my $eval_string = common_options::model_parameters(\%options);
+
+unless (defined $options{'copy_data'} and (not $options{'copy_data'})) {
+    $options{'copy_data'} = 1;
+}
 
 my $model = model->new(
 	eval($eval_string),
@@ -562,6 +577,7 @@ if ($only_do_pre_step) {
         always => $options{'always'},
         verbose => $options{'verbose'},
         perturb => $options{'perturb'},
+        copy_data => $options{'copy_data'},
     );
 
     $precond->print_options (cmd_line => $cmd_line,
