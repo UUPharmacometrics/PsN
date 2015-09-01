@@ -88,19 +88,19 @@ my @resampled_params_arr =(
 	 '7 VAR IIV V' => 7.0, '8 CORR IIV CL-V' => 8.0}, 'omega'=> {'3 IIV KA' => 1.0,'4 IOV CL OCC1' => 2.0,'6 IOV KA OCC1' => 3.0 },'sigma'=> {}}
 );
 
-my ($errors,$newofv) = tool::sir::recenter_mu(sampled_params_arr => \@resampled_params_arr,
+my ($errors,$newofv,$newvector) = tool::sir::get_min_ofv_values(sampled_params_arr => \@resampled_params_arr,
 									parameter_hash => $hash);
-cmp_ok(scalar(@{$errors}),'==',0,' count errors recenter_mu');
-cmp_ok($newofv,'==',10,' ofv recenter_mu');
-is_deeply($hash->{'values'},[10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0],'recenter_mu');
+cmp_ok(scalar(@{$errors}),'==',0,' count errors get_min_ofv_values');
+cmp_ok($newofv,'==',10,' ofv get_min_ofv_values');
+is_deeply($newvector,[10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0],'get_min_ofv_values');
 @resampled_params_arr =(
 	{'ofv' =>100, 'theta'=> {'TVCL' => 1.0,'2 TVV' => 2.0,'3 TVKA'=> 3.0, '4 LAG' => 4.0,'5 RES ERR' => 5.0,'6 VAR IIV CL' => 6.0,
 							 '7 VAR IIV V' => 7.0, '8 CORR IIV CL-V' => 8.0}, 'omega'=> {'3 IIV KA' => 1.0,'4 IOV CL OCC1' => 2.0,'6 IOV KA OCC1' => 3.0 },
 	 'sigma'=> {}});
-($errors,$newofv) = tool::sir::recenter_mu(sampled_params_arr => \@resampled_params_arr,
+($errors,$newofv,$newvector) = tool::sir::get_min_ofv_values(sampled_params_arr => \@resampled_params_arr,
 								 parameter_hash => $hash);
-cmp_ok(scalar(@{$errors}),'==',1,' count errors recenter_mu');
-cmp_ok($newofv,'==',100,' ofv recenter_mu');
+cmp_ok(scalar(@{$errors}),'==',1,' count errors get_min_ofv_values');
+cmp_ok($newofv,'==',100,' ofv get_min_ofv_values');
 
 my $samples=[100,100,100,100];
 my $resamples=[20,20,20,20];

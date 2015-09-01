@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{SIR user guide}{2015-08-31}
+\guidetitle{SIR user guide}{2015-09-01}
 \usepackage{amsmath}
 
 \begin{document}
@@ -7,6 +7,9 @@
 \maketitle
 
 \newcommand{\guidetoolname}{sir}
+
+%TODO cholesky block check in sampling when reserved labels for sd/corr
+%new template
 
 \section{Introduction}
 The sir program calculates uncertainty
@@ -310,7 +313,7 @@ than requested samples.
 \newcommand{\rplotsconditions}{The default sir template 
 requires 
 that R libraries
-ggplot2, plyr, dplyr, caTools, reshape and tidyr are installed.
+gplots, ggplot2, plyr, dplyr, caTools, reshape, gridExtra, RColorBrewer and tidyr are installed.
 If the conditions are not fulfilled then no pdf will be generated,
 see the .Rout file in the main run directory for error messages.}
 \input{inputs/rplots_section_body.tex}
@@ -318,25 +321,25 @@ see the .Rout file in the main run directory for error messages.}
 \subsubsection*{Diagnostic sir plots}
 Diagnostic rplots for the last iteration of sir will be generated if option -rplots is set >0.
 
-The first plot shows 3 comparative dOFV distributions: SIR, reference chi-square and original covariance matrix.
-If on this plot the SIR curve is close to the reference chi-square curve it means that SIR results are good.
+%The first plot shows 3 comparative dOFV distributions: SIR, reference chi-square and original covariance matrix.
+%If on this plot the SIR curve is close to the reference chi-square curve it means that SIR results are good.
 
-The second plot shows the number of resampled values in each bin of the parameter space. 
-Each bin contains the same number of parameter values, which is set to 1/10 of the number of initial samples.
-That is, Bin 1 corresponds to the lowest 10\% of simulated parameter values and Bin 10 to the highest 10\%.
-If on this plot the number of resamples is around the dashed line, it means that the original covariance-matrix 
-is a good approximation of the uncertainty and that SIR results are good.
-If some bins have much more resamples than others, it means that the covariance matrix is different from the true uncertainty. 
-SIR results remain an improvement over the original covariance-matrix but they could potentially be improved by modifying the 
-original covariance matrix.
-For example, one could inflate the variances of parameters that have more resamples than expected in the "outside" bins 
-(diagonal or u-shaped lines).
+%The second plot shows the number of resampled values in each bin of the parameter space. 
+%Each bin contains the same number of parameter values, which is set to 1/10 of the number of initial samples.
+%That is, Bin 1 corresponds to the lowest 10\% of simulated parameter values and Bin 10 to the highest 10\%.
+%If on this plot the number of resamples is around the dashed line, it means that the original covariance-matrix 
+%is a good approximation of the uncertainty and that SIR results are good.
+%If some bins have much more resamples than others, it means that the covariance matrix is different from the true uncertainty. 
+%SIR results remain an improvement over the original covariance-matrix but they could potentially be improved by modifying the 
+%original covariance matrix.
+%For example, one could inflate the variances of parameters that have more resamples than expected in the "outside" bins 
+%(diagonal or u-shaped lines).
 
-The third plot shows the 95\% confidence interval for each parameter as determined by SIR and the original covariance matrix.
-If on this plot the 95\% confidence intervals for one parameter are identical, it means that the covariance matrix 
-is a good approximation of the uncertainty for this parameter.
-If the 95\% confidence intervals differ between SIR and the covariance matrix, it means that the covariance matrix is 
-different from the true uncertainty for this parameter.
+%The third plot shows the 95\% confidence interval for each parameter as determined by SIR and the original covariance matrix.
+%If on this plot the 95\% confidence intervals for one parameter are identical, it means that the covariance matrix 
+%is a good approximation of the uncertainty for this parameter.
+%If the 95\% confidence intervals differ between SIR and the covariance matrix, it means that the covariance matrix is 
+%different from the true uncertainty for this parameter.
 
 \section{Output}
 \begin{itemize}
@@ -351,7 +354,7 @@ different from the true uncertainty for this parameter.
 \bf{resamples} & number of actual resamples with random seed used\\
 \end{tabular}
 NB: If -rawres\_input is used there is no raw\_results file for the first iteration.
-\item sir\_results.csv with percentiles and empirical sd-correlation matrix
+\item sir\_results.csv with summary statistics, percentiles and empirical sd-correlation matrix
 \item <modelname>\_sir.cov with the empirical covariance matrix in NONMEM-like format, i.e. 
       fixed width space separated with generic headers in order THETA, SIGMA, OMEGA.
 \item if option -rplots>0: A file PsN\_sir\_plots.pdf with diagnostic sir plots.

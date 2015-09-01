@@ -464,11 +464,13 @@ sub modelfit_setup
 											 model => $model); 
 
 				if (($self->negative_dofv->[($iteration-1)] > 0) and ($self->recenter)){
-					my ($errors,$new_ofv) = recenter_mu(sampled_params_arr => $resampled_params_arr,
-														parameter_hash => $parameter_hash);
+					my ($errors,$new_ofv,$new_center) = get_min_ofv_values(sampled_params_arr => $resampled_params_arr,
+																		   parameter_hash => $parameter_hash);
 					if (scalar(@{$errors})>0){
 						croak("Recentering mu failed, error messages are \n".join("\n",@{$errors})."\n");
 					}
+					$parameter_hash->{'values'} = $new_center;
+					
 					$self->reference_ofv($new_ofv);
 					ui->print(category => 'sir',
 							  message => "Recentered mu to parameter vector\n".
@@ -529,7 +531,7 @@ sub modelfit_setup
 }
 
 
-sub recenter_mu{
+sub get_min_ofv_values{
 	#static, no shift
 	my %parm = validated_hash(\@_,
 							  sampled_params_arr => { isa => 'ArrayRef', optional => 0 },
@@ -554,8 +556,7 @@ sub recenter_mu{
 																  parameter_hash => $parameter_hash,
 																  index => $index_lowest_ofv);
 
-	$parameter_hash->{'values'} = $new_center;
-	return ($errors,$lowest_ofv);
+	return ($errors,$lowest_ofv,$new_center);
 }
 
 sub get_vector_from_sampled_params_arr
@@ -868,9 +869,11 @@ sub empirical_statistics{
 		}
 	}
 
+	$resulthash{'center_estimate'}=[];
 	$resulthash{'mean'}=[];
 	$resulthash{'median'}=[];
  	for (my $j=0; $j< $dim; $j++){
+		push(@{$resulthash{'center_estimate'}},$labels_hash->{'values'}->[$j]);
 		push(@{$resulthash{'mean'}},($sums[$j]/$n_resamples));
 		push(@{$resulthash{'median'}},median($parameter_vectors[$j]));
 	}
@@ -913,7 +916,7 @@ sub empirical_statistics{
 		$resulthash{'relative_standard_error'}=[];
 		$resulthash{'rse_sd_scale'}=[];
 		for (my $j=0; $j< $dim; $j++){
-			push(@{$resulthash{'standard_error'}},sem($parameter_vectors[$j]));
+			push(@{$resulthash{'standard_error'}},stdev($parameter_vectors[$j])); #interpretation is SE but formula is stdev
 			push(@{$resulthash{'relative_standard_error'}},rse($parameter_vectors[$j],$labels_hash->{'values'}->[$j]));
 			if ($labels_hash->{'param'}->[$j] eq 'theta'){
 				push(@{$resulthash{'rse_sd_scale'}},'');
@@ -1991,8 +1994,9 @@ sub prepare_results
 
 	my %se_section;
 	$se_section{'name'}='Summary statistics over resamples';
-	$se_section{'labels'}=[['mean','median','se','rse','rse_sd'],$parameter_hash->{'labels'}];
-	$se_section{'values'}=[$resulthash->{'mean'},$resulthash->{'median'},$resulthash->{'standard_error'},
+	$se_section{'labels'}=[['center_estimate','mean','median','se','rse','rse_sd'],$parameter_hash->{'labels'}];
+	$se_section{'values'}=[$resulthash->{'center_estimate'},$resulthash->{'mean'},
+						   $resulthash->{'median'},$resulthash->{'standard_error'},
 						   $resulthash->{'relative_standard_error'},$resulthash->{'rse_sd_scale'}];
 	push( @{$self -> results->[0]{'own'}},\%se_section );
 

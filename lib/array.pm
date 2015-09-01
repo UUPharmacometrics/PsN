@@ -412,6 +412,8 @@ sub variance
 
 sub rse
 {
+	#warning: this is for a specific sir case, is probably
+	#a special definition of rse
     # Calculate the relative standard error of the expectation of an array.
 	#expectation is the estimate
     my ($array,$expectation) = pos_validated_list(\@_,
