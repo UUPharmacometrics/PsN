@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{Developer's guide}{2015-04-13}
+\guidetitle{Developer's guide}{2015-09-01}
 \usepackage{hyperref}
 
 \begin{document}
@@ -110,6 +110,21 @@ run_on_slurm=1
 slurm_account=admin
 slurm_partition=development
 \end{verbatim}
+
+\subsection{Test coverage}
+In the current release we have excellent test coverage for execute (parsing NONMEM control streams, 
+running models, tweaking initial estimates, and reading of final estimates from NONMEM output and reporting 
+them in the raw\_results file). 
+The same well tested code for running NONMEM is used by all other tools. 
+There is also good tests for parsing of data files, which is done by e.g. bootstrap and scm but not by execute or
+vpc.
+Tests are excellent for tool-specific features of precond, sir, parallel\_retries, randtest, sse and sumo. 
+For vpc we have good coverage for the basic vpc features (extracting numbers from NONMEM tables, binning data and 
+computing intervals without censoring or prediction correction), but we have only very basic crash tests for the 
+more advanced features. The bootstrap program has tests for dataset generation and calculation of results.
+%bootstrap needs more detailed dataset unit tests, with and without stratification
+scm has many crash tests, and tests to ensure that the computed means/medians/max/min of covariates are correct, 
+but not of control stream manipulation.
 
 \subsection{Test issues}
 \begin{itemize}
