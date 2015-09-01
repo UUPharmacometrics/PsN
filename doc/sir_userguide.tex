@@ -316,10 +316,14 @@ that R libraries
 gplots, ggplot2, plyr, dplyr, caTools, reshape, gridExtra, RColorBrewer and tidyr are installed.
 If the conditions are not fulfilled then no pdf will be generated,
 see the .Rout file in the main run directory for error messages.}
+
+%\subsubsection*{Diagnostic sir plots}
+Diagnostic rplots for the last iteration of sir will be generated if 
+option -rplots is set >0. The file names are PsN\_plots\_base.pdf
+and (-rplots > 1) PsN\_plots\_extended.pdf.
+
 \input{inputs/rplots_section_body.tex}
 
-\subsubsection*{Diagnostic sir plots}
-Diagnostic rplots for the last iteration of sir will be generated if option -rplots is set >0.
 
 %The first plot shows 3 comparative dOFV distributions: SIR, reference chi-square and original covariance matrix.
 %If on this plot the SIR curve is close to the reference chi-square curve it means that SIR results are good.
