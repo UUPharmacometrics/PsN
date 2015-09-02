@@ -2846,6 +2846,13 @@ sub _read_problems
 			@prerun_messages =();
 			last;
 		}
+        if (/^\d\d\/\d\d\/\d\d\d\d\s*$/) {    # Alternative date format: dd/mm/yyyy\nhh:mm
+            if ($lstfile[$lstfile_pos + 1] =~ /^\d\d:\d\d\s*$/) {
+                $starttime_string = $_ . $lstfile[$lstfile_pos + 1];
+                @prerun_messages = ();
+                last;
+            }
+        }
 		if (/^\s*(;|\$)/){
 			#found control stream
 			$control_stream_start_index=$lstfile_pos;
@@ -3002,7 +3009,20 @@ sub _read_problems
 				}
 			}
 			last;
-		}elsif (/^1NONLINEAR MIXED EFFECTS MODEL PROGRAM/){
+
+        } elsif (/^\d\d\/\d\d\/\d\d\d\d\s*$/) {
+            if ($lstfile[$j + 2] =~ /\d\d:\d\d/) {
+                $endtime_string = $_ . $lstfile[$j + 2];
+                if (defined $starttime_string) {
+                    my $starttime = parse_timestamp($starttime_string);
+                    my $endtime = parse_timestamp($endtime_string);    
+                    my $runtime = $endtime - $starttime;
+                    $self->set_runtime($runtime);
+                }
+                last;
+            }
+
+		} elsif (/^1NONLINEAR MIXED EFFECTS MODEL PROGRAM/) {
 			#if we end up here the lst-file is incomplete, was no end time printed
 			#by nmfe
 			$self->lst_interrupted(1);
@@ -3122,7 +3142,6 @@ sub initsigmas
 	return \@initsigmas;
 }
 
-
 sub get_nonmem_parameters
 {
 	my %parm = validated_hash(\@_,
@@ -3155,6 +3174,49 @@ sub get_nonmem_parameters
 	}
 	return \%hash;
 
+}
+
+sub parse_timestamp
+{
+    # Parses a timestamp and return time value
+    # currently recognizes dd/mm/yyyy\nhh:mm
+
+    my $timestamp = shift;
+    my ($year, $month, $day, $hour, $minute, $second);
+    my $parsed_ok = 0;
+
+    if ($timestamp =~ /\A(\d\d)\/(\d\d)\/(\d\d\d\d)\s*(\d\d):(\d\d)\s*\Z/) {
+        $year = $3;
+        $month = $2 - 1;
+        $day = $1;
+        $hour = $4;
+        $minute = $5;
+        
+        $parsed_ok = 1;
+    }
+
+    my $time;
+    if ($parsed_ok) {
+        $time = timegm($second, $minute, $hour, $day, $month, $year);
+    }
+
+    return $time;
+}
+
+sub set_runtime
+{
+    # Creates a time string +hh:mm:ss from a time in seconds and sets the runtime
+    my $self = shift;
+    my $runtime = shift;
+
+    if ($runtime == 0) {
+	    $self->runtime('00:00:00');
+	} else {
+	    my $seconds = $runtime % 60;
+		my $minutes = (($runtime - $seconds) / 60) % 60;
+		my $hours = ($runtime - $seconds - 60 * $minutes) / 3600;
+		$self->runtime(sprintf "%i:%02i:%02i", $hours, $minutes, $seconds);
+	}
 }
 
 

@@ -90,8 +90,6 @@ for (my $i=0; $i< scalar(@answer_hashes); $i++){
 		my ($high_names,$high_values) = $outobj->high_correlations(problems=>[1],subproblems=>[1],limit=>0.95);
 		is_deeply($high_names->[0][0],$answer_hashes[$i]->{high_correlations_names},"$fname high_correlations names");
 		is_deeply($high_values->[0][0],$answer_hashes[$i]->{high_correlations_values},"$fname high_correlations values");
-#		print join(';',@{$high_names->[0][0]})."\n";
-#		print join(';',@{$answer_hashes[$i]->{high_correlations_names}})."\n";
 	}
 
 	if(defined $answer_hashes[$i]->{large_standard_errors_names}){
@@ -113,9 +111,7 @@ for (my $i=0; $i< scalar(@answer_hashes); $i++){
 														attribute=>$attr),
 							 $answer_hashes[$i]->{answers}->{$prob}->{$subprob}->{$attr},"$fname $attr prob $prob subprob $subprob");
 				}elsif ($attr =~ /^(raw_invcovmatrix|covariance_matrix|correlation_matrix|t_matrix)/){
-#					print join(' ',@{$answer_hashes[$i]->{answers}->{$prob}->{$subprob}->{$attr}})."\n";
 					my $ref = $outobj->get_single_value(problem_index => $prob,subproblem_index=> $subprob, attribute=>$attr);
-#					print "defined ".(defined $ref)."\n";
 					cmp_array($ref, $answer_hashes[$i]->{answers}->{$prob}->{$subprob}->{$attr},"$fname $attr prob $prob subprob $subprob");
 				}elsif ($attr =~ /^condition_number/){
 					my $tval = sprintf ("%.7f",$outobj->get_single_value(problem_index => $prob, 
