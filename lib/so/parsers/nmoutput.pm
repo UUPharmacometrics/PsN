@@ -313,9 +313,12 @@ sub _parse_lst_file
                     );
                 }
             }
-            $outobj->runtime =~ m/(\d+):(\d+):(\d+)/;
-            $elapsed_time = $1 + $2 / 60 + $3 / 3600;
-            $self->_so_block->TaskInformation->RunTime->Real($elapsed_time);
+
+            if (defined $outobj->runtime) {
+                $outobj->runtime =~ m/(\d+):(\d+):(\d+)/;
+                $elapsed_time = $1 + $2 / 60 + $3 / 3600;
+                $self->_so_block->TaskInformation->RunTime->Real($elapsed_time);
+            }
 
             if ($simulation_step_run and $self->use_tables) {
                 $self->_create_simulation(
