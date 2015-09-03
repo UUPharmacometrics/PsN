@@ -775,6 +775,18 @@ foreach my $par ( sort keys %{$config_file -> test_relations} ){
 				}
 			}
 		}
+
+        # Set valid_states default values.
+        if (not defined $config_file->valid_states) {
+            $config_file->valid_states({});
+        }
+        if (not exists $config_file->valid_states->{'categorical'}) {
+            $config_file->valid_states->{'categorical'} = [ 1, 2 ]; 
+        }
+        if (not exists $config_file->valid_states->{'continuous'}) {
+            $config_file->valid_states->{'continuous'} = [ 1, 2, 4 ];
+        }
+
 		#leave error checking of continuous/categorial to scm, here assume
 		#complete and non-overlapping
 

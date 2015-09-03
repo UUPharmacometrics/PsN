@@ -161,6 +161,8 @@ Changes and bug fixes from PsN 4.4.0 to 4.4.8
 
 - Bug fix: Handle option -time_varying for regular covariates in boot_scm. 
 
+- Bug fix: Not supplying valid_states caused boot_scm to crash. Adding same default values as for scm on valid_states. 
+
 - Documentation for known bug that boot_scm does not handle dummy covariates which are time-varying.
 
 - Removed the possibility to set foce=0.
