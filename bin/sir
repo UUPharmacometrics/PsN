@@ -37,6 +37,7 @@ my %optional_options = (
 	"with_replacement!"=>'',
 	"recenter!"=>'',
 	"boxcox!"=>'',
+	"add_iterations"=>'',
 	"copy_data!"=>'');
 
 my $res = GetOptions( \%options, 
@@ -210,6 +211,28 @@ EOF
     Not allowed together with rawres_input. If given, this matrix is
 	used for computing the weights and performing the sampling.
 EOF
+    $help_text{-add_iterations} = <<'EOF';
+      -add_iterations
+
+Default not set. Iterations can be added to a previous sir run, for example 
+if the diagnostic R plots show that convergence has not been achieved. 
+When option -add_iterations is set, option -directory is required,
+and this directory must contain output from at least one complete sir iteration.
+
+The options set on the commandline pertain to new iterations with the last available 
+iteration as starting point. Options -covmat_input and -rawres_input are forbidden 
+in combination with -add_iterations, the model file does not have to be specified 
+(it will be ignored if it is), otherwise the same sir options are required/optional 
+as in a regular sir run.
+
+If some but not all iterations from the previous run had finished, the new run 
+will start with the output from the last complete iteration, and the old sample 
+and resample counts for the non-finished iterations will be dropped. Example: 
+if the old setting was -samples=1000,1000 and the new with -add_iterations 
+is -samples=2000,2000 and the old run was terminated after the first iteration,
+then after the add\_iterations run has finished there will be three iterations 
+in total with sample sequence 1000,2000,2000 after the new run has finished.
+EOF
     $help_text{-inflation} = <<'EOF';
       -inflation=X
     Default is 1, which is the same as no inflation. If given, the covariance
@@ -231,18 +254,37 @@ EOF
       Also see 'psn_options -h' for a description of common options.
 EOF
 
+
 common_options::online_help('sir',\%options, \%help_text, \%required_options, \%optional_options);
 
 
 ## Check that we do have a model file
-if ( scalar(@ARGV) < 1 ) {
-  print "A model file must be specified. Use 'sir -h' for help.\n";
-  exit;
+my $dummymodel=0;
+if (scalar(@ARGV) < 1) {
+	if ((defined $options{'directory'}) && (-d $options{'directory'})
+		&& (-e $options{'directory'}.'/restart_information_do_not_edit.pl')) {
+		$dummymodel = 1;
+	}else{
+		print "A model file must be specified unless you are recovering/continuing an old sir run\n".
+			"Use 'sir -help' for help.\n";
+		die;
+	}
 }
 
 if( scalar(@ARGV) > 1 ){
   print "sir can only handle one modelfile. Use 'sir -h' for help.\n";
-  exit;
+  die;
+}
+
+if ( defined $options{'add_iterations'} and ($options{'add_iterations'}) ){
+	unless ((defined $options{'directory'}) && (-d $options{'directory'})) {
+		print "Cannot set option -add_iterations unless -directory is set to existing sir run directory\n";
+		die;
+	}
+	unless ((defined $options{'samples'}) && (defined $options{'resamples'})) {
+		print "Options -samples and -resamples are required\n";
+		die;
+	}
 }
 
 if ( defined $options{'covmat_input'} ){
@@ -295,23 +337,33 @@ if ( defined $options{'in_filter'} ){
 
 my $eval_string = common_options::model_parameters(\%options);
 
-my $model = model -> new ( eval( $eval_string ),
+
+my $model;
+
+if ($dummymodel){
+	$model = model->create_dummy_model;
+}else{ 
+
+	$model = model -> new ( eval( $eval_string ),
 			   filename                    => @ARGV[0],
 			   ignore_missing_output_files => 1 );
 
-unless (defined $options{'copy_data'} and (not $options{'copy_data'})) {
-    $options{'copy_data'} = 1;
+	unless (defined $options{'copy_data'} and (not $options{'copy_data'})) {
+		$options{'copy_data'} = 1;
+	}
+	
+	unless ($model->copy_data_setting_ok(copy_data => $options{'copy_data'})){
+		die("Cannot set -no-copy_data, absolute data file path is too long.");
+	} 
+	if (defined $options{'copy_data'} and (not $options{'copy_data'})){
+		$model->relative_data_path(0);
+	}
 }
 
-unless ($model->copy_data_setting_ok(copy_data => $options{'copy_data'})){
-	die("Cannot set -no-copy_data, absolute data file path is too long.");
-} 
-if (defined $options{'copy_data'} and (not $options{'copy_data'})){
-	$model->relative_data_path(0);
-}
-
-my @samples = split(/,/,$options{'samples'});
-my @resamples = split(/,/,$options{'resamples'});
+my @samples =();
+@samples = split(/,/,$options{'samples'}) if (defined $options{'samples'});
+my @resamples = ();
+@resamples = split(/,/,$options{'resamples'}) if (defined $options{'resamples'});
 
 
 my $sir = 
@@ -330,6 +382,7 @@ my $sir =
 					 offset_rawres       	=> $options{'offset_rawres'},
 					 recenter       	=> $options{'recenter'},
 					 boxcox       	=> $options{'boxcox'},
+					 add_iterations        => $options{'add_iterations'},
 					 in_filter             => \@in_filter,
 					 copy_data                            => $options{'copy_data'}
 	);
@@ -337,7 +390,7 @@ my $sir =
 $sir-> print_options (cmd_line => $cmd_line,
 		     toolname => 'sir',
 		     local_options => [keys %optional_options],
-		     common_options => \@common_options::tool_options);
+		     common_options => \@common_options::tool_options) unless ($sir->recover);
 
 
 $sir -> run;

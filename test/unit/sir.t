@@ -14,10 +14,13 @@ use Math::Random;
 use output;
 use tool::sir;
 use linear_algebra;
+use File::Copy 'cp';
 
 
 
 
+our $tempdir = create_test_dir('unit_updateinits');
+chdir($tempdir);
 
 my $mat = new Math::MatrixReal(1,1);
 my $mu = $mat->new_from_rows( [[1,2,3]] );
@@ -417,4 +420,111 @@ my $Amatrix = tool::sir::tweak_inits_sampling(sampled_params_arr => [],
 #	print join("\t",@{$Amatrix->[$i]})."\n";
 #}
 #print "\n param ".scalar(@{$parameter_hash->{'values'}})." vectors ".scalar(@{$Amatrix})."\n";
+
+
+chdir($tempdir);
+my $recovery_filename = 'restart_information_do_not_edit.pl';
+
+my $sirdir='sir_dir1';
+mkdir($sirdir);
+chdir($sirdir);
+cp("$modeldir/pheno.mod",'pheno.mod');
+cp("$modeldir/pheno.dta",'pheno.dta');
+
+my @seed_array=(23,23);
+random_set_seed(@seed_array);
+
+my @in = random_get_seed;
+my $err = tool::sir::save_restart_information(
+	parameter_hash => $parameter_hash,
+	nm_version  => 'default',
+	done  => 1,
+	recenter  => 0,
+	copy_data => 0,
+	boxcox => 0,
+	with_replacement => 1,
+	iteration  => 2,
+	mceta  => 3,
+	problems_per_file  => 25,
+	reference_ofv  => 830.4,
+	minimum_ofv => [834,830],
+	negative_dofv => [4,0],
+	samples => [100,100,100],
+	resamples => [50,50,50],
+	attempted_samples => [100,100],
+	successful_samples => [98,97],
+	actual_resamples => [50,50],
+	intermediate_raw_results_files => ['rawres1.csv','rawres2.csv'],
+	model_filename => 'pheno.mod',
+	seed_array => \@in);
+	
+chdir($tempdir); #back up
+random_set_seed(54,89);
+
+my $recoversir =tool::sir->new ( models				     => [model->create_dummy_model ],
+	directory => $sirdir,
+	samples => [],
+	resamples => []
+	);
+
+is($recoversir->nm_version,'default','recovery info 1');
+is($recoversir->done,1,'recovery info 2');
+is($recoversir->recenter,0,'recovery info 3');
+is($recoversir->copy_data,0,'recovery info 4');
+is($recoversir->boxcox,0,'recovery info 5');
+is($recoversir->with_replacement,1,'recovery info 6');
+is($recoversir->iteration,2,'recovery info 7');
+is($recoversir->mceta,3,'recovery info 8');
+is($recoversir->problems_per_file,25,'recovery info 9');
+is($recoversir->reference_ofv,830.4,'recovery info 10');
+is_deeply($recoversir->minimum_ofv,[834,830],'recovery info 11');
+is_deeply($recoversir->negative_dofv,[4,0],'recovery info 12');
+is_deeply($recoversir->samples,[100,100,100],'recovery info 13');
+is_deeply($recoversir->resamples,[50,50,50],'recovery info 14');
+is_deeply($recoversir->attempted_samples,[100,100],'recovery info 15');
+is_deeply($recoversir->successful_samples,[98,97],'recovery info 16');
+is_deeply($recoversir->actual_resamples,[50,50],'recovery info 17');
+is_deeply($recoversir->intermediate_raw_results_files,['rawres1.csv','rawres2.csv'],'recovery info 18');
+is_deeply($recoversir->parameter_hash->{'labels'},$parameter_hash->{'labels'},'recovery info 19');
+is_deeply($recoversir->models->[0]->filename,'pheno.mod','recovery info 20');
+
+my @ans= random_get_seed;
+is_deeply(\@ans,\@seed_array,'reset seeeds');
+
+random_set_seed(98,8105);
+
+$recoversir =tool::sir->new ( models				     => [model->create_dummy_model ],
+	directory => $sirdir,
+	nm_version => 'nm73',
+	add_iterations => 1,
+	samples => [300,400],
+	resamples => [100,100],
+	);
+
+is($recoversir->nm_version,'nm73','add_iterations info 1');
+is($recoversir->done,0,'add_iterations info 2');
+is($recoversir->recenter,1,'add_iterations info 3');
+is($recoversir->copy_data,1,'add_iterations info 4');
+is($recoversir->boxcox,1,'add_iterations info 5');
+is($recoversir->with_replacement,0,'add_iterations info 6');
+is($recoversir->iteration,2,'add_iterations info 7');
+is($recoversir->mceta,0,'add_iterations info 8');
+is($recoversir->problems_per_file,100,'add_iterations info 9');
+is($recoversir->reference_ofv,830.4,'add_iterations info 10');
+is_deeply($recoversir->minimum_ofv,[834,830],'add_iterations info 11');
+is_deeply($recoversir->negative_dofv,[4,0],'add_iterations info 12');
+is_deeply($recoversir->samples,[100,100,300,400],'add_iterations info 13');
+is_deeply($recoversir->resamples,[50,50,100,100],'add_iterations info 14');
+is_deeply($recoversir->attempted_samples,[100,100],'add_iterations info 15');
+is_deeply($recoversir->successful_samples,[98,97],'add_iterations info 16');
+is_deeply($recoversir->actual_resamples,[50,50],'add_iterations info 17');
+is_deeply($recoversir->intermediate_raw_results_files,['rawres1.csv','raw_results_sir_iteration2.csv'],'add_iterations info 18');
+is_deeply($recoversir->parameter_hash->{'labels'},$parameter_hash->{'labels'},'add_iterations info 19');
+is_deeply($recoversir->models->[0]->filename,'pheno.mod','add_iterations info 20');
+
+#my @ans= random_get_seed;
+#is_deeply(\@ans,[98,8105],'no reset seeeds after add_iterations'); tool changes seed also, no control
+
+remove_test_dir($tempdir);
+
 done_testing();

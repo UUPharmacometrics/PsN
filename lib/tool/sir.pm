@@ -19,26 +19,31 @@ use math qw(usable_number round);
 use linear_algebra;
 use utils::file;
 use boxcox;
+use Data::Dumper;
 extends 'tool';
 
 has 'sir_raw_results' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 has 'logfile' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { ['sirlog.csv'] } );
 has 'results_file' => ( is => 'rw', isa => 'Str', default => 'sir_results.csv' );
 
+has 'done' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'recover' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'add_iterations' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'copy_data' => ( is => 'rw', isa => 'Bool', default => 1 );
 has 'recenter' => ( is => 'rw', isa => 'Bool', default => 1 );
 has 'boxcox' => ( is => 'rw', isa => 'Bool', default => 1 );
 has 'negative_dofv' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 has 'recompute' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'with_replacement' => ( is => 'rw', isa => 'Bool', default => 0 );
-has 'samples' => ( is => 'rw', required => 1, isa => 'ArrayRef' );
-has 'resamples' => ( is => 'rw', required => 1, isa => 'ArrayRef' );
+has 'samples' => ( is => 'rw', required => 1, isa => 'ArrayRef' ); 
+has 'resamples' => ( is => 'rw', required => 1, isa => 'ArrayRef' ); 
 has 'attempted_samples' => ( is => 'rw', isa => 'ArrayRef',default => sub { [] } );
 has 'successful_samples' => ( is => 'rw', isa => 'ArrayRef',default => sub { [] } );
 has 'actual_resamples' => ( is => 'rw', isa => 'ArrayRef',default => sub { [] } );
-has 'iteration' => ( is => 'rw', isa => 'Int', default => 1 );
+has 'parameter_hash' => ( is => 'rw', isa => 'HashRef' );
+has 'iteration' => ( is => 'rw', isa => 'Int', default => 0 );
 has 'rawres_samples' => ( is => 'rw', isa => 'Int', default => 0 );
-has 'max_iteration' => ( is => 'rw', isa => 'Int', default => 2 );
+has 'max_iteration' => ( is => 'rw', isa => 'Int');
 has 'covmat_input' => ( is => 'rw', isa => 'Str' );
 has 'auto_rawres' => ( is => 'rw', isa => 'Maybe[Num]' );
 has 'rawres_input' => ( is => 'rw', isa => 'Str' );
@@ -55,23 +60,13 @@ has 'pdf_vector' => ( is => 'rw', isa => 'ArrayRef' );
 has 'intermediate_raw_results_files' => ( is => 'rw', isa => 'ArrayRef', default => sub{[]} );
 
 our $relativepdf = 1;
+our $recovery_filename = 'restart_information_do_not_edit.pl'; #this must be copied to bin also
+
 
 sub BUILD
 {
 	my $self  = shift;
 
-	for my $accessor ('logfile','raw_results_file','raw_nonp_file'){
-		my @new_files=();
-		my @old_files = @{$self->$accessor};
-		for (my $i=0; $i < scalar(@old_files); $i++){
-			my $name;
-			my $ldir;
-			( $ldir, $name ) =
-				OSspecific::absolute_path( $self ->directory(), $old_files[$i] );
-			push(@new_files,$ldir.$name) ;
-		}
-		$self->$accessor(\@new_files);
-	}	
 
 	$self->problems_per_file(100) unless defined ($self->problems_per_file);
 	croak("problems_per_file must be larger than 0") unless ($self->problems_per_file > 0);
@@ -92,9 +87,48 @@ sub BUILD
 	unless (scalar(@{$self->samples}) == scalar(@{$self->resamples})){
 		croak("samples and resamples arrays must have equal length");
 	} 
+
+	if ($self->add_iterations){
+		unless ((-d $self->directory ) and ( -e $self->directory.$recovery_filename )){
+			croak("Cannot use option -add_iterations unless directory contains restart information (file $recovery_filename)");
+		}
+		if (defined $self->covmat_input or defined $self->rawres_input){
+			croak("Not allowed to set covmat_input or rawres_input with -add_iterations");
+		}
+	}elsif ((-d $self->directory ) and ( -e $self->directory.$recovery_filename )){
+		$self->recover(1); #TODO message
+		if (defined $self->covmat_input or defined $self->rawres_input){
+			croak("Not allowed to set covmat_input or rawres_input when auto-recovering an old sir run");
+		}
+	}elsif ((-d $self->directory ) and ( -e $self->directory.$self->models->[0]->filename )){
+		croak("\nThis looks like a restart (run directory already exists with some content) but there ".
+			"is no restart information (file $recovery_filename). Cannot run in this directory.");
+	}
+
+	if ($self->add_iterations or $self->recover){
+		unless ($self->load_restart_information()){
+			croak("Failed to read restart information from $recovery_filename");
+		}
+	}
+
+	for my $accessor ('logfile','raw_results_file','raw_nonp_file'){
+		my @new_files=();
+		my @old_files = @{$self->$accessor};
+		for (my $i=0; $i < scalar(@old_files); $i++){
+			my $name;
+			my $ldir;
+			( $ldir, $name ) =
+				OSspecific::absolute_path( $self ->directory(), $old_files[$i] );
+			push(@new_files,$ldir.$name) ;
+		}
+		$self->$accessor(\@new_files);
+	}	
+
+
 	unless (scalar(@{$self->samples})>0){
 		croak("samples arrays must have at least length 1");
 	} 
+
 	$self->max_iteration(scalar(@{$self->samples}));
 	for (my $j=0; $j<scalar(@{$self->samples}); $j++){
 		croak("Number of samples must be larger than 0") unless ($self->samples()->[$j]>0);
@@ -105,6 +139,9 @@ sub BUILD
 
 	if (defined $self->covmat_input and defined $self->rawres_input){
 		croak("Not allowed to set both covmat_input and rawres_input");
+	}
+	if (defined $self->covmat_input and defined $self->auto_rawres){
+		croak("Not allowed to set both covmat_input and auto_rawres");
 	}
 
 }
@@ -119,89 +156,111 @@ sub modelfit_setup
 
 	my $model = $self ->models() -> [$model_number-1];
 
+	my $first_iteration = $self->iteration +1; #can be > 1 if recover or add
+
+
+	unless ($self->recover or $self->add_iterations ){
+		$first_iteration = 1; #to be safe
+		#print model copy to enable restart
+		my $copymodel =$model -> copy( filename    => $model->filename,
+									   write_copy => 1,
+									   copy_datafile   => 0,
+									   copy_output => 0,
+									   directory => $self->directory);
+	}
+	if ($self->recover and $self->done){
+		ui->print(category => 'sir',
+			message => "The restart information file in ".$self->directory."\n".
+			"indicates that the previous run is finished. Nothing to do.\n");
+		$self->rplots(-1); #rplot generation would crash when no rawres header
+	}
+
 	# ------------------------  Run original run if not already done  -------------------------------
 
 	my $check_output_and_model_match=0;
-	if ( $model -> is_run ) {
-		#check that input model and provided lst-file with control stream copy match
-		$check_output_and_model_match=1 unless (defined $self->rawres_input);
-	}else{
-		my %subargs = ();
-		if ( defined $self -> subtool_arguments() ) {
-			%subargs = %{$self -> subtool_arguments()};
-		}
-
-		if( $self -> nonparametric_etas() or
-			$self -> nonparametric_marginals() ) {
-			$model -> add_nonparametric_code;
-		}
-		my @models=();
-		my $message = "Running input model";
-
-		my $orig_fit = 
-			tool::modelfit->new( %{common_options::restore_options(@common_options::tool_options)},
-				 base_directory	 => $self ->directory(),
-				 directory		 => $self ->directory().
-				 '/orig_modelfit_dir'.$model_number,
-				 models		 => [$model],
-				 threads               => $self->threads,
-				 nm_output => 'ext,cov,coi,cor,phi',
-				 logfile	         => undef,
-				 raw_results           => undef,
-				 prepared_models       => undef,
-				 copy_data             => $self->copy_data,
-				 top_tool              => 0,
-				 %subargs );
-
-		ui -> print( category => 'sir',
-			message => $message );
-
-		$orig_fit -> run;
-
-	}
-
-	my $output = $model -> outputs -> [0];
-	unless (defined $output){
-		croak("No output object from input model");
-	}
-
-	my $original_ofv = $output->get_single_value(attribute => 'ofv');
-	if (defined $original_ofv){
-		$self->reference_ofv($original_ofv);
-	}else{
-		croak("No ofv from input model result files");
-	}
-
-	my $parameter_hash = output::get_nonmem_parameters(output => $output);
-
-	if ($check_output_and_model_match ){
-		#check that the same set of estimated parameter with the same labels
-		#in both input model and existing output file
-
-		my $mod_coords = $model->problems->[0]->get_estimated_attributes(parameter=> 'all',
-																		 attribute => 'coordinate_strings');
-		my $mismatch=0;
-		if (scalar(@{$mod_coords})==scalar(@{$parameter_hash->{'coordinate_strings'}})){
-			for (my $i=0; $i< scalar(@{$mod_coords}); $i++){
-				unless ($mod_coords->[$i] eq $parameter_hash->{'coordinate_strings'}->[$i]){
-					$mismatch = 1;
-					last;
-				}
-			}
+	my $output;
+	unless ($self->recover or $self->add_iterations){
+		if ( $model -> is_run ) {
+			#check that input model and provided lst-file with control stream copy match
+			$check_output_and_model_match=1 unless (defined $self->rawres_input);
 		}else{
-			$mismatch=1;
+			my %subargs = ();
+			if ( defined $self -> subtool_arguments() ) {
+				%subargs = %{$self -> subtool_arguments()};
+			}
+
+			if( $self -> nonparametric_etas() or
+				$self -> nonparametric_marginals() ) {
+				$model -> add_nonparametric_code;
+			}
+			my @models=();
+			my $message = "Running input model";
+
+			my $orig_fit = 
+				tool::modelfit->new( %{common_options::restore_options(@common_options::tool_options)},
+									 base_directory	 => $self ->directory(),
+									 directory		 => $self ->directory().
+									 '/orig_modelfit_dir'.$model_number,
+									 models		 => [$model],
+									 threads               => $self->threads,
+									 nm_output => 'ext,cov,coi,cor,phi',
+									 logfile	         => undef,
+									 raw_results           => undef,
+									 prepared_models       => undef,
+									 copy_data             => $self->copy_data,
+									 top_tool              => 0,
+									 %subargs );
+
+			ui -> print( category => 'sir',
+						 message => $message );
+
+			$orig_fit -> run;
+
 		}
 
-		if ($mismatch){
-			my $message = "\nsir input error:\n".
-				"The input model and the control stream copy and the top of the lst-file do not match\n".
-				"Estimated parameters in the input model are\n".join(' ',@{$mod_coords})."\n".
-				"Estimated parameters in the lst-file model are\n".
-				join(' ',@{$parameter_hash->{'coordinate_strings'}})."\n";
-			croak($message);
+		$output = $model -> outputs -> [0];
+		unless (defined $output){
+			croak("No output object from input model");
 		}
 
-	}
+		my $original_ofv = $output->get_single_value(attribute => 'ofv');
+		if (defined $original_ofv){
+			$self->reference_ofv($original_ofv);
+		}else{
+			croak("No ofv from input model result files");
+		}
+		$self->parameter_hash(output::get_nonmem_parameters(output => $output));
+
+		if ($check_output_and_model_match ){
+			#check that the same set of estimated parameter with the same labels
+			#in both input model and existing output file
+
+			my $mod_coords = $model->problems->[0]->get_estimated_attributes(parameter=> 'all',
+																			 attribute => 'coordinate_strings');
+			my $mismatch=0;
+			if (scalar(@{$mod_coords})==scalar(@{$self->parameter_hash->{'coordinate_strings'}})){
+				for (my $i=0; $i< scalar(@{$mod_coords}); $i++){
+					unless ($mod_coords->[$i] eq $self->parameter_hash->{'coordinate_strings'}->[$i]){
+						$mismatch = 1;
+						last;
+					}
+				}
+			}else{
+				$mismatch=1;
+			}
+
+			if ($mismatch){
+				my $message = "\nsir input error:\n".
+					"The input model and the control stream copy and the top of the lst-file do not match\n".
+					"Estimated parameters in the input model are\n".join(' ',@{$mod_coords})."\n".
+					"Estimated parameters in the lst-file model are\n".
+					join(' ',@{$self->parameter_hash->{'coordinate_strings'}})."\n";
+				croak($message);
+			}
+
+		}
+	}#end unless recover or add_iterations
+
 
 	my $covmatrix;
 	my @covmat_column_headers = ();
@@ -211,23 +270,39 @@ sub modelfit_setup
 	if (defined $self->rawres_input or (defined $self->auto_rawres)){
 		if (defined $self->rawres_input){
 			my $resamp_href;
-			($rawres_resampled_params_arr,$resamp_href) = model::get_rawres_params(filename => $self->rawres_input,
-																				   filter => $self->in_filter,
-																				   offset => $self->offset_rawres,
-																				   model => $model);
+			my $extracolumns=[];
+			my $require_numeric_ofv=0;
+			if ($self->recover or $self->add_iterations){
+				$extracolumns=['resamples'];
+				$require_numeric_ofv=1;
+				#when loading restart filter is set to empty
+				#we read all successful samples even if not resampled. The filtering on resamples column
+				#is done in sub empirical_statistics.
+			}
+
+			($rawres_resampled_params_arr,$resamp_href) = 
+				model::get_rawres_params(filename => $self->rawres_input,
+										 filter => $self->in_filter,
+										 offset => $self->offset_rawres,
+										 extra_columns => $extracolumns,
+										 require_numeric_ofv => $require_numeric_ofv,
+										 model => $model);
 			$self->rawres_samples(scalar(@{$rawres_resampled_params_arr}));
 		}else{
 			$rawres_resampled_params_arr = [];
 		}
 
-		unless (scalar(@{$rawres_resampled_params_arr}) >= scalar(@{$parameter_hash->{'values'}})){
+		unless ($self->recover or $self->add_iterations or
+			(scalar(@{$rawres_resampled_params_arr}) >= scalar(@{$self->parameter_hash->{'values'}}))){
 			my $filename = 'tweak_inits_rawres.csv';
 			my $covfile = 'tweak_inits.cov';
-			my $message = "Have ".scalar(@{$rawres_resampled_params_arr})." parameter vectors but need at least ".(scalar(@{$parameter_hash->{'values'}})).
-				"\n"."Using tweak inits to create fake raw results file tweak_inits_rawres.csv and covmat file $covfile";
+			my $message = "Have ".scalar(@{$rawres_resampled_params_arr}).
+				" parameter vectors but need at least ".(scalar(@{$self->parameter_hash->{'values'}})).
+				"\n".
+				"Using tweak inits to create fake raw results file tweak_inits_rawres.csv and covmat file $covfile";
 			ui -> print( category => 'sir', message =>  $message);
 			my $tweaksamples = tweak_inits_sampling( sampled_params_arr => $rawres_resampled_params_arr,
-													 parameter_hash => $parameter_hash,
+													 parameter_hash => $self->parameter_hash,
 													 model => $model,
 													 output => $output,
 													 degree => $self->auto_rawres,
@@ -236,14 +311,16 @@ sub modelfit_setup
 				);
 				
 			$rawres_resampled_params_arr = create_sampled_params_arr(samples_array => $tweaksamples,
-																	 labels_hash => $parameter_hash,
+																	 labels_hash => $self->parameter_hash,
 																	 user_labels => 1); #otherwise get empty values, zero vectors
 
 			my $resulthash = empirical_statistics( sampled_params_arr => $rawres_resampled_params_arr,
-												   labels_hash => $parameter_hash);
+												   labels_hash => $self->parameter_hash);
 
 			my( $ldir, $name ) = OSspecific::absolute_path( $self ->directory(),$covfile);
-			print_empirical_covmatrix(filename=> $ldir.$name, parameter_hash => $parameter_hash, covar => $resulthash->{'covar'});
+			print_empirical_covmatrix(filename=> $ldir.$name, 
+									  parameter_hash => $self->parameter_hash, 
+									  covar => $resulthash->{'covar'});
 
 		}
 	}
@@ -272,9 +349,9 @@ sub modelfit_setup
 		}
 
 		#error check that column headers match parameters in nonmem output
-		unless ( scalar(@{$index_order_ref}) == scalar(@{$parameter_hash->{'param'}})){
+		unless ( scalar(@{$index_order_ref}) == scalar(@{$self->parameter_hash->{'param'}})){
 			croak("Number of parameters ".scalar(@{$index_order_ref})." in covmat_input does not match number ".
-				  scalar(@{$parameter_hash->{'param'}})." of estimated parameters in input model." );
+				  scalar(@{$self->parameter_hash->{'param'}})." of estimated parameters in input model." );
 		}
 		foreach my $ind (@{$index_order_ref}) {
 			push (@covmat_column_headers, $header_labels_ref->[$ind]);
@@ -283,11 +360,11 @@ sub modelfit_setup
 		for (my $j=0; $j < scalar(@covmat_column_headers); $j++){
 			my $covheader = $covmat_column_headers[$j];
 			my $outheader;
-			my $par = uc($parameter_hash->{'param'}->[$j]);
+			my $par = uc($self->parameter_hash->{'param'}->[$j]);
 			if ($par eq 'THETA'){
-				$outheader = $par.$parameter_hash->{'coords'}->[$j];
+				$outheader = $par.$self->parameter_hash->{'coords'}->[$j];
 			}else{
-				$outheader = $par.'('.$parameter_hash->{'coords'}->[$j].')';
+				$outheader = $par.'('.$self->parameter_hash->{'coords'}->[$j].')';
 			}
 			unless ($covheader eq $outheader){
 				croak("headers $covheader from covmat_input and $outheader from input model does not match\n");
@@ -315,218 +392,424 @@ sub modelfit_setup
 	my $user_labels=0; #always use generic labels
 	my ($resampled_params_arr,$resamp_href);
 	my $previous_iteration_resulthash;
-	my $have_previous_iteration = 0;
+	my $have_resampled_params = 0;
 
-	for (my $iteration=0;$iteration<=$self->max_iteration(); $iteration++){
-		next if ($iteration == 0 and (defined $covmatrix));
-		$self->iteration($iteration);
-		if ($iteration > 0 ) {
-			my $message = "Sampling from the truncated multivariate normal distribution";
-			ui -> print( category => 'sir',	 message => $message);
-			my $mu_values= $parameter_hash->{'values'};
-			my $lambda = [];
-			my $delta = [];
-			my $inflation = $self->inflation();
-			#covmatrix already read if *not* have previous iteration
-			if ($have_previous_iteration){
-				croak("iteration $iteration iteration_resulthash not defined") 
-					unless (defined $previous_iteration_resulthash and 
-							defined $previous_iteration_resulthash->{'covar'});
-#							defined $previous_iteration_resulthash->{'lambda'} and 
-#							defined $previous_iteration_resulthash->{'delta'} and
-
-				if ($previous_iteration_resulthash->{'rank_deficient'}){
-					croak("The number of parameter vectors obtained in iteration ".($iteration-1)." is smaller than ".
-						"the number of estimated parameters. This gives a rank deficient covariance matrix, so ".
-						"sampling cannot proceed in iteration $iteration.\n");
-				}
-				$covmatrix = $previous_iteration_resulthash->{'covar'};
-				my $err = check_matrix_posdef(matrix => $covmatrix);
-				if ($err == 1){
-					if ($self->boxcox){
-						croak("\nERROR: Empirical covariance matrix obtained after Box-Cox transformation is numerically ".
-							  "not positive definite\n(as checked with Cholesky decomposition without pivoting). Cannot proceed with sir.\n");
-					}else{
-						croak("\nERROR: Empirical covariance matrix obtained after resampling is numerically ".
-							  "not positive definite\n(as checked with Cholesky decomposition without pivoting). Cannot proceed with sir.\n");
-					}
-				}
-				$inflation = 1; #only inflate in first iteration
-
-				if ($self->boxcox){
-					$lambda = $previous_iteration_resulthash->{'lambda'};
-					$delta = $previous_iteration_resulthash->{'delta'};
-					$mu_values = boxcox::shift_and_box_cox(vector=>$parameter_hash->{'values'},
-														   inverse=>0,
-														   lambda=>$lambda,
-														   delta=>$delta);
-					if (1){
-						open ( RES, ">" . $self->directory().'delta_lambda_iteration'.($iteration-1).'.csv' );
-						print RES "parameter,delta,lambda,original.estimate,transformed.estimate\n";
-						for (my $k=0; $k< scalar(@{$delta}); $k++){
-							print RES '"'.$parameter_hash->{'labels'}->[$k].'",'.$delta->[$k].','.$lambda->[$k].','.
-								$parameter_hash->{'values'}->[$k].','.$mu_values->[$k]."\n";
-						}
-						close(RES);
-					}
-				}
-			}
-			
-			my $mat = new Math::MatrixReal(1,1);
-			my $muvector = $mat->new_from_rows( [$mu_values] );
-			my $current_samples = update_attempted_samples(samples=>$self->samples,
-														   successful_samples=>$self->successful_samples,
-														   attempted_samples=>$self->attempted_samples,
-														   iteration=> $iteration);
-			if (($current_samples > $self->samples->[($iteration-1)]) and 
-				($self->problems_per_file() > 1)){
-				ui->print(category=> "sir", message => "Setting problems_per_file to 1 to minimize ofv losses");
-				$self->problems_per_file(1);
-			}
-			my $sampled_params_arr;
-			my ($vectorsamples,$boxcox_samples) = sample_multivariate_normal(samples=>$current_samples,
-																			 covmatrix => $covmatrix,
-																			 inflation => $inflation,
-																			 lower_bound => $parameter_hash->{'lower_bounds'},
-																			 upper_bound => $parameter_hash->{'upper_bounds'},
-																			 param => $parameter_hash->{'param'},
-																			 coords => $parameter_hash->{'coords'},
-																			 block_number => $parameter_hash->{'block_number'},
-																			 mu => $muvector,
-																			 lambda => $lambda,
-																			 delta => $delta);
-		
-			$sampled_params_arr = create_sampled_params_arr(samples_array => $vectorsamples,
-															labels_hash => $parameter_hash,
-															user_labels => $user_labels);
-			my $pdfvec;
-			if ($self->boxcox and $have_previous_iteration){
-				$pdfvec = linear_algebra::mvnpdf_cholesky($covmatrix,$mu_values,$boxcox_samples,$inflation,$relativepdf);
-			}else{
-				$pdfvec= linear_algebra::mvnpdf_cholesky($covmatrix,$mu_values,$vectorsamples,$inflation,$relativepdf)
-			}
-			$self->pdf_vector($pdfvec);
-
-			ui -> print( category => 'sir',
-						 message => "Creating parameter vector evaluation models iteration $iteration...");
-
-			my $modelsarr = model::create_maxeval_zero_models_array(
-				problems_per_file => $self->problems_per_file,
-				sampled_params_arr => $sampled_params_arr,
-				mceta => $self->mceta(),
-				ignore_missing_parameters => 1,
-				basedirectory => $self->directory,
-				subdirectory => $self->directory().'m'.$model_number.'/',
-				model => $model,
-				purpose => 'sir_iteration'.$iteration,
-				match_labels => $user_labels
-				);
-		
-			my %subargs = ();
-			if ( defined $self -> subtool_arguments() ) {
-				%subargs = %{$self -> subtool_arguments()};
-			}
-		
-			my $message = "Running iteration ".$self->iteration()." evaluation models";
-
-			my $iteration_evaluation = 
-				tool::modelfit ->new( %{common_options::restore_options(@common_options::tool_options)},
-									  models		 => $modelsarr,
-									  base_directory   => $self -> directory,
-									  raw_results_file => [$self->directory.'raw_results_sir_iteration'.$iteration.'.csv'],
-									  directory             => undef,
-									  directory_name_prefix => 'iteration'.$iteration,
-									  _raw_results_callback => $self ->
-									  _modelfit_raw_results_callback( model_number => $model_number ),
-#								  subtools              => \@subtools,
-									  nmtran_skip_model => 2,
-									  raw_results           => undef,
-									  prepared_models       => undef,
-									  top_tool              => 0,
-									  copy_data             => $self->copy_data,
-									  %subargs );
+	if (defined $rawres_resampled_params_arr ){
+		#rawres either from file or tweak_inits or mix
+		$resampled_params_arr = $rawres_resampled_params_arr;
+	}
 
 
-
-			ui -> print( category => 'sir', message => $message );
-
-			if ($iteration < $self->max_iteration()){
-				#not final round
-				push(@{$self->intermediate_raw_results_files},'raw_results_sir_iteration'.$iteration.'.csv');
-				$iteration_evaluation -> run;
-				#here we read all successful samples even if not resampled. The filtering on resamples column
-				#is done in sub empirical_statistics
-				($resampled_params_arr,$resamp_href) = 
-					model::get_rawres_params(filename => $iteration_evaluation->raw_results_file()->[0],
-											 require_numeric_ofv => 1,
-											 extra_columns => ['resamples'],
-											 offset => 1, #first is original
-											 model => $model); 
-
-				if (($self->negative_dofv->[($iteration-1)] > 0) and ($self->recenter)){
-					my ($errors,$new_ofv,$new_center) = get_min_ofv_values(sampled_params_arr => $resampled_params_arr,
-																		   parameter_hash => $parameter_hash);
-					if (scalar(@{$errors})>0){
-						croak("Recentering mu failed, error messages are \n".join("\n",@{$errors})."\n");
-					}
-					$parameter_hash->{'values'} = $new_center;
-					
-					$self->reference_ofv($new_ofv);
-					ui->print(category => 'sir',
-							  message => "Recentered mu to parameter vector\n".
-							  join(' ',@{$parameter_hash->{'values'}})."\n".
-							  "with lowest ofv $new_ofv");
-				}
-
-			}else{
-				#final round
-				my ($dir,$file)= 
-					OSspecific::absolute_path( $self ->directory(),
-											   $self -> raw_results_file()->[$model_number-1] );
-				push(@{$self->intermediate_raw_results_files},$file);
-
-				$self -> prepared_models -> [$model_number-1]{'own'} = $modelsarr;
-				$self->tools([]) unless (defined $self->tools());
-				push( @{$self -> tools()},$iteration_evaluation);
-				trace(tool => 'sir', message => "Created a modelfit object to run all the models in ".
-					  $self ->directory().'m'.$model_number, level => 1);
-			}
-			#end if iteration > 0
-		}else{
-			#this is iteration 0, rawres either from file or tweak_inits or mix
-
-			$resampled_params_arr = $rawres_resampled_params_arr;
-
-		}
-
-
-		if ($iteration < $self->max_iteration()){
-			#not final round
-			#Now we should have resampled_params_arr, either from first iteration or rawresinput, on original scale
+	for (my $iteration=$first_iteration;$iteration<=$self->max_iteration(); $iteration++){
+		if (defined $resampled_params_arr){
+			#we have resampled_params_arr, either from first iteration or rawresinput, on original scale
 			#Optionally do Box-Cox and get (possibly transformed) covariance matrix
 			my $message = "Find optimal Box-Cox transformation of resampled vectors";
 			my( $ldir, $name ) = OSspecific::absolute_path( $self ->directory(),'boxcox_covmatrix_iteration'.
-															$iteration.'.cov');
+															($iteration-1).'.cov');
 			if (not $self->boxcox){
 				$message = "Computing empirical covariance matrix from resampled vectors without Box-Cox transformation";
 				( $ldir, $name ) = OSspecific::absolute_path( $self ->directory(),'untransformed_covmatrix_iteration'.
-															  $iteration.'.cov');
+															  ($iteration-1).'.cov');
 			}
 			ui -> print( category => 'sir', message =>  $message);
 			$previous_iteration_resulthash = empirical_statistics( sampled_params_arr => $resampled_params_arr,
-													   labels_hash => $parameter_hash,
-													   get_lambda_delta => $self->boxcox,
-													   estimated_vector => $parameter_hash->{'values'},
-													   do_percentiles => 0);
+																   labels_hash => $self->parameter_hash,
+																   get_lambda_delta => $self->boxcox,
+																   estimated_vector => $self->parameter_hash->{'values'},
+																   do_percentiles => 0);
 			#this does not use mu-vector
+			#will overwrite previous iteration if recover
 			print_empirical_covmatrix(filename=> $ldir.$name,
 									  covar => $previous_iteration_resulthash->{'covar'},
-									  parameter_hash => $parameter_hash);
+									  parameter_hash => $self->parameter_hash); #unless recover/restart?? overwrite?
+
+			$have_resampled_params =1;
+		}
+		$self->iteration($iteration);
+
+		my $message = "Sampling from the truncated multivariate normal distribution";
+		ui -> print( category => 'sir',	 message => $message);
+		my $mu_values= $self->parameter_hash->{'values'};
+		my $lambda = [];
+		my $delta = [];
+		my $inflation = $self->inflation();
+		#covmatrix already read if *not* have resampled params
+		if ($have_resampled_params){
+			croak("iteration $iteration iteration_resulthash not defined") 
+				unless (defined $previous_iteration_resulthash and 
+						defined $previous_iteration_resulthash->{'covar'});
+#							defined $previous_iteration_resulthash->{'lambda'} and 
+#							defined $previous_iteration_resulthash->{'delta'} and
+			
+			if ($previous_iteration_resulthash->{'rank_deficient'}){
+				croak("The number of parameter vectors obtained in iteration ".($iteration-1)." is smaller than ".
+					  "the number of estimated parameters. This gives a rank deficient covariance matrix, so ".
+					  "sampling cannot proceed in iteration $iteration.\n");
+			}
+			$covmatrix = $previous_iteration_resulthash->{'covar'};
+			my $err = check_matrix_posdef(matrix => $covmatrix);
+			if ($err == 1){
+				if ($self->boxcox){
+					croak("\nERROR: Empirical covariance matrix obtained after Box-Cox transformation is numerically ".
+						  "not positive definite\n(as checked with Cholesky decomposition without pivoting). Cannot proceed with sir.\n");
+				}else{
+					croak("\nERROR: Empirical covariance matrix obtained after resampling is numerically ".
+						  "not positive definite\n(as checked with Cholesky decomposition without pivoting). Cannot proceed with sir.\n");
+				}
+			}
+			$inflation = 1; #only inflate in first iteration
+
+			if ($self->boxcox){
+				$lambda = $previous_iteration_resulthash->{'lambda'};
+				$delta = $previous_iteration_resulthash->{'delta'};
+				$mu_values = boxcox::shift_and_box_cox(vector=>$self->parameter_hash->{'values'},
+													   inverse=>0,
+													   lambda=>$lambda,
+													   delta=>$delta);
+				if (1){
+					open ( RES, ">" . $self->directory().'delta_lambda_iteration'.($iteration-1).'.csv' );
+					print RES "parameter,delta,lambda,original.estimate,transformed.estimate\n";
+					for (my $k=0; $k< scalar(@{$delta}); $k++){
+						print RES '"'.$self->parameter_hash->{'labels'}->[$k].'",'.$delta->[$k].','.$lambda->[$k].','.
+							$self->parameter_hash->{'values'}->[$k].','.$mu_values->[$k]."\n";
+					}
+					close(RES);
+				}
+			}
+		}#end if have resampled params. otherwise should have covmatrix from covmat input or $COV
+			
+		my $mat = new Math::MatrixReal(1,1);
+		my $muvector = $mat->new_from_rows( [$mu_values] );
+		my $current_samples = update_attempted_samples(samples=>$self->samples,
+													   successful_samples=>$self->successful_samples,
+													   attempted_samples=>$self->attempted_samples,
+													   iteration=> $iteration);
+		if (($current_samples > $self->samples->[($iteration-1)]) and 
+			($self->problems_per_file() > 1)){
+			ui->print(category=> "sir", message => "Setting problems_per_file to 1 to minimize ofv losses");
+			$self->problems_per_file(1);
+		}
+		my $sampled_params_arr;
+		my ($vectorsamples,$boxcox_samples) = sample_multivariate_normal(samples=>$current_samples,
+																		 covmatrix => $covmatrix,
+																		 inflation => $inflation,
+																		 lower_bound => $self->parameter_hash->{'lower_bounds'},
+																		 upper_bound => $self->parameter_hash->{'upper_bounds'},
+																		 param => $self->parameter_hash->{'param'},
+																		 coords => $self->parameter_hash->{'coords'},
+																		 block_number => $self->parameter_hash->{'block_number'},
+																		 mu => $muvector,
+																		 lambda => $lambda,
+																		 delta => $delta);
+		
+		$sampled_params_arr = create_sampled_params_arr(samples_array => $vectorsamples,
+														labels_hash => $self->parameter_hash,
+														user_labels => $user_labels);
+		my $pdfvec;
+		if ($self->boxcox and $have_resampled_params){
+			$pdfvec = linear_algebra::mvnpdf_cholesky($covmatrix,$mu_values,$boxcox_samples,$inflation,$relativepdf);
+		}else{
+			$pdfvec= linear_algebra::mvnpdf_cholesky($covmatrix,$mu_values,$vectorsamples,$inflation,$relativepdf)
+		}
+		$self->pdf_vector($pdfvec);
+		
+		ui -> print( category => 'sir',
+					 message => "Creating parameter vector evaluation models iteration $iteration...");
+		
+		my $modelsarr = model::create_maxeval_zero_models_array(
+			problems_per_file => $self->problems_per_file,
+			sampled_params_arr => $sampled_params_arr,
+			mceta => $self->mceta(),
+			ignore_missing_parameters => 1,
+			basedirectory => $self->directory,
+			subdirectory => $self->directory().'m'.$model_number.'/',
+			model => $model,
+			purpose => 'sir_iteration'.$iteration,
+			match_labels => $user_labels
+			);
+		
+		my %subargs = ();
+		if ( defined $self -> subtool_arguments() ) {
+			%subargs = %{$self -> subtool_arguments()};
+		}
+		
+		my $message = "Running iteration ".$self->iteration()." evaluation models";
+		
+		my $iteration_evaluation = 
+			tool::modelfit ->new( %{common_options::restore_options(@common_options::tool_options)},
+								  models		 => $modelsarr,
+								  base_directory   => $self -> directory,
+								  raw_results_file => [$self->directory.'raw_results_sir_iteration'.$iteration.'.csv'],
+								  directory             => undef,
+								  directory_name_prefix => 'iteration'.$iteration,
+								  _raw_results_callback => $self ->
+								  _modelfit_raw_results_callback( model_number => $model_number ),
+#								  subtools              => \@subtools,
+								  nmtran_skip_model => 2,
+								  raw_results           => undef,
+								  prepared_models       => undef,
+								  top_tool              => 0,
+								  copy_data             => $self->copy_data,
+								  %subargs );
+		
+		
+		
+		ui -> print( category => 'sir', message => $message );
+		
+		if ($iteration < $self->max_iteration()){
+			#not final round
+			push(@{$self->intermediate_raw_results_files},'raw_results_sir_iteration'.$iteration.'.csv');
+			$iteration_evaluation -> run;
+			#here we read all successful samples even if not resampled. The filtering on resamples column
+			#is done in sub empirical_statistics
+			($resampled_params_arr,$resamp_href) = 
+				model::get_rawres_params(filename => $iteration_evaluation->raw_results_file()->[0],
+										 require_numeric_ofv => 1,
+										 extra_columns => ['resamples'],
+										 offset => 1, #first is original
+										 model => $model); 
+
+			if (($self->negative_dofv->[($iteration-1)] > 0) and ($self->recenter)){
+				my ($errors,$new_ofv,$new_center) = get_min_ofv_values(sampled_params_arr => $resampled_params_arr,
+																	   parameter_hash => $self->parameter_hash);
+				if (scalar(@{$errors})>0){
+					croak("Recentering mu failed, error messages are \n".join("\n",@{$errors})."\n");
+				}
+				$self->parameter_hash->{'values'} = $new_center;
+				
+				$self->reference_ofv($new_ofv);
+				ui->print(category => 'sir',
+						  message => "Recentered mu to parameter vector\n".
+						  join(' ',@{$self->parameter_hash->{'values'}})."\n".
+						  "with lowest ofv $new_ofv");
+			}
+
+			my @restartseed = random_get_seed;
+			save_restart_information( parameter_hash => $self->parameter_hash,
+									  nm_version  => $self->nm_version,
+									  model_filename => $model->filename,
+									  done  => 0,
+									  recenter  => $self->recenter,
+									  copy_data => $self->copy_data,
+									  boxcox => $self->boxcox,
+									  with_replacement => $self->with_replacement,
+									  iteration  => $self->iteration,
+									  mceta  => $self->mceta,
+									  problems_per_file  => $self->problems_per_file,
+									  reference_ofv  => $self->reference_ofv,
+									  minimum_ofv => $self->minimum_ofv,
+									  negative_dofv => $self->negative_dofv,
+									  samples => $self->samples,
+									  resamples => $self->resamples,
+									  attempted_samples => $self->attempted_samples,
+									  successful_samples => $self->successful_samples,
+									  actual_resamples => $self->actual_resamples,
+									  intermediate_raw_results_files => $self->intermediate_raw_results_files,
+									  seed_array => \@restartseed
+				);
+
+		}else{
+			#final round
+			my ($dir,$file)= 
+				OSspecific::absolute_path( $self ->directory(),
+										   $self -> raw_results_file()->[$model_number-1] );
+			push(@{$self->intermediate_raw_results_files},$file);
+
+			$self -> prepared_models -> [$model_number-1]{'own'} = $modelsarr;
+			$self->tools([]) unless (defined $self->tools());
+			push( @{$self -> tools()},$iteration_evaluation);
+			trace(tool => 'sir', message => "Created a modelfit object to run all the models in ".
+				  $self ->directory().'m'.$model_number, level => 1);
+		}
+	}#end iteration loop
+
+
+}
+
+sub load_restart_information
+{
+	my $self = shift;
+
+	#have already checked file exists
+
+	#declare variables
+	#these should be same set as "variables to store" in create_template_models
+	my %parameter_hash;
+
+	my $nm_version;
+	my $done;
+	my $iteration;
+	my $recenter;
+	my $copy_data;
+	my $boxcox;
+	my $with_replacement;
+	my $mceta;
+	my $problems_per_file;
+	my $reference_ofv;
+
+	my $model_filename;
+
+	my @negative_dofv;
+	my @samples;
+	my @resamples;
+	my @attempted_samples;
+	my @successful_samples;
+	my @actual_resamples;
+	my @intermediate_raw_results_files;
+	my @minimum_ofv;
+	my @seed_array;
+
+	my $ok = 0;
+
+	if (-e $self->directory.$recovery_filename){
+		open(FH, $self->directory.$recovery_filename) or croak("could not read recovery file");
+		my $string = join(' ',<FH>);
+		close(FH);
+
+		eval $string;
+
+		if ($self->recover){
+			#store everything
+			ui->print(category => 'sir',message => "Reading recovery information from iteration $iteration. "."\n".
+					  "All sir-specific options, plus option -nm_version, will automatically\n".
+					  "be set as in original run, even if set differently on new commandline.\n");
+			$self->done($done);
+			$self->recenter($recenter);
+			$self->copy_data($copy_data);
+			$self->boxcox($boxcox);
+			$self->with_replacement($with_replacement);
+			$self->mceta($mceta);
+			$self->problems_per_file($problems_per_file);
+			$self->samples(\@samples);
+			$self->resamples(\@resamples);
+
+ 			$self->nm_version($nm_version);
+			random_set_seed(@seed_array); 
+
+		}else{
+			#add_iterations
+			ui->print(category => 'sir',message => 'Reading results from iteration $iteration. '."\n".
+					  "Options from original run will not be read.\n");
+			
+			my @new_samples = @samples[0 .. ($iteration-1)];
+			push(@new_samples,@{$self->samples}); #append from commandline
+			$self->samples(\@new_samples);
+
+			my @new_resamples = @resamples[0 .. ($iteration-1)];
+			push(@new_resamples,@{$self->resamples}); #append from commandline
+			$self->resamples(\@new_resamples);
 
 		}
-		$have_previous_iteration=1;
-	}
+		$self->parameter_hash(\%parameter_hash);
+		$self->iteration($iteration);
+		$self->reference_ofv($reference_ofv);
+		$self->negative_dofv(\@negative_dofv);
+		$self->attempted_samples(\@attempted_samples);
+		$self->successful_samples(\@successful_samples);
+		$self->actual_resamples(\@actual_resamples);
+		$self->minimum_ofv(\@minimum_ofv);
 
+		$self->rawres_input($self->directory.$intermediate_raw_results_files[-1]);
+		$self->offset_rawres(1); #first is original
+		$self->in_filter([]); #no in-filter, we will use resamples column
+
+		my $model = model -> new ( filename                    => $self->directory.$model_filename,
+								   ignore_missing_output_files => 1 );
+		unless ($self->copy_data){
+			$model->relative_data_path(0);
+		}
+		$self->models([$model]); 
+
+		if ($done and $self->add_iterations){
+			#we need to copy final raw_results file from last iteration to a numbered raw results file,
+			#and change last item in intermediate_raw_results_files
+			#in order to get this as intermediate rawres in add_iterations run
+			my $newname = 'raw_results_sir_iteration'.$iteration.'.csv';
+			cp($self->directory.$intermediate_raw_results_files[-1],$self->directory.$newname);
+			$intermediate_raw_results_files[-1] = $newname;
+		}
+		$self->intermediate_raw_results_files(\@intermediate_raw_results_files);
+		#redo autoset final rawresults file name
+		my ($directory, $filename) = OSspecific::absolute_path( $model->directory, $model->filename );
+		$model->filename( $filename );
+		$model->directory( $directory );
+		$filename =~ s/\.[^.]+$//; #remove last dot and extension
+		$self->raw_results_file(['raw_results_'.$filename.'.csv']);
+		$self->raw_nonp_file(['raw_nonparametric_results_'.$filename.'.csv']);
+
+		$ok=1;
+	}
+	return $ok;
+}
+
+sub save_restart_information
+{
+	# $rawres_filename = $self->intermediate_raw_results_files->[-1];
+	#static to facilitate testing
+	my %parm = validated_hash(\@_,
+							  parameter_hash => { isa => 'HashRef', optional => 0 },
+							  nm_version  => { isa => 'Str', optional => 0 },
+							  model_filename => { isa => 'Str', optional => 0 },
+							  done  => { isa => 'Bool', optional => 0 },
+							  recenter  => { isa => 'Bool', optional => 0 },
+							  copy_data => { isa => 'Bool', optional => 0 },
+							  boxcox => { isa => 'Bool', optional => 0 },
+							  with_replacement => { isa => 'Bool', optional => 0 },
+							  iteration  => { isa => 'Int', optional => 0 },
+							  mceta  => { isa => 'Int', optional => 0 },
+							  problems_per_file  => { isa => 'Int', optional => 0 },
+							  reference_ofv  => { isa => 'Num', optional => 0 },
+							  minimum_ofv => { isa => 'ArrayRef', optional => 0 },
+							  negative_dofv => { isa => 'ArrayRef', optional => 0 },
+							  samples => { isa => 'ArrayRef', optional => 0 },
+							  resamples => { isa => 'ArrayRef', optional => 0 },
+							  attempted_samples => { isa => 'ArrayRef', optional => 0 },
+							  successful_samples => { isa => 'ArrayRef', optional => 0 },
+							  actual_resamples => { isa => 'ArrayRef', optional => 0 },
+							  intermediate_raw_results_files => { isa => 'ArrayRef', optional => 0 },
+							  seed_array => { isa => 'ArrayRef', optional => 0 },
+		);
+
+
+	my $parameter_hash = $parm{'parameter_hash'};
+	my $nm_version = $parm{'nm_version'};
+	my $model_filename = $parm{'model_filename'};
+	my $done = $parm{'done'};
+	my $iteration = $parm{'iteration'};
+	my $recenter = $parm{'recenter'};
+	my $copy_data = $parm{'copy_data'};
+	my $boxcox = $parm{'boxcox'};
+	my $negative_dofv = $parm{'negative_dofv'};
+	my $with_replacement = $parm{'with_replacement'};
+	my $samples = $parm{'samples'};
+	my $resamples = $parm{'resamples'};
+	my $attempted_samples = $parm{'attempted_samples'};
+	my $successful_samples = $parm{'successful_samples'};
+	my $actual_resamples = $parm{'actual_resamples'};
+	my $intermediate_raw_results_files = $parm{'intermediate_raw_results_files'};
+	my $mceta = $parm{'mceta'};
+	my $problems_per_file = $parm{'problems_per_file'};
+	my $minimum_ofv = $parm{'minimum_ofv'};
+	my $reference_ofv = $parm{'reference_ofv'};
+	my $seed_array = $parm{'seed_array'};
+
+	#local name
+
+	my @dumper_names = qw(*parameter_hash *negative_dofv *intermediate_raw_results_files *samples *resamples *attempted_samples *successful_samples *actual_resamples *seed_array with_replacement mceta problems_per_file *minimum_ofv reference_ofv done iteration recenter copy_data boxcox nm_version model_filename);
+
+
+	open(FH, '>'.$recovery_filename) or return -1; #die "Could not open file $recovery_filename for writing.\n";
+	print FH Data::Dumper->Dump(
+		[$parameter_hash,$negative_dofv,$intermediate_raw_results_files,
+		 $samples,$resamples,$attempted_samples,$successful_samples,$actual_resamples,$seed_array,
+		 $with_replacement,$mceta,
+		 $problems_per_file,$minimum_ofv,$reference_ofv,$done,$iteration,$recenter,$copy_data,$boxcox,$nm_version,
+		$model_filename],
+		\@dumper_names
+		);
+	close FH;
+	return 0;
 
 }
 
@@ -1594,6 +1877,30 @@ sub modelfit_analyze
 		$self->full_rawres_header($self->tools()->[0]->raw_results_header);
 	}
 
+	my @restartseed = random_get_seed;
+	save_restart_information( parameter_hash => $self->parameter_hash,
+							  nm_version  => $self->nm_version,
+							  model_filename => $self->models->[0]->filename,
+							  done  => 1,
+							  recenter  => $self->recenter,
+							  copy_data => $self->copy_data,
+							  boxcox => $self->boxcox,
+							  with_replacement => $self->with_replacement,
+							  iteration  => $self->iteration,
+							  mceta  => $self->mceta,
+							  problems_per_file  => $self->problems_per_file,
+							  reference_ofv  => $self->reference_ofv,
+							  minimum_ofv => $self->minimum_ofv,
+							  negative_dofv => $self->negative_dofv,
+							  samples => $self->samples,
+							  resamples => $self->resamples,
+							  attempted_samples => $self->attempted_samples,
+							  successful_samples => $self->successful_samples,
+							  actual_resamples => $self->actual_resamples,
+							  intermediate_raw_results_files => $self->intermediate_raw_results_files,
+							  seed_array => \@restartseed
+		);
+
 }
 
 
@@ -1979,22 +2286,17 @@ sub prepare_results
 	#results is initialized in tool.dia
 	push( @{$self -> results->[0]{'own'}},\%return_section );
 
-	my $output = $model -> outputs -> [0];
-	unless (defined $output){
-		croak("No output object from input model");
-	}
-
 #	print "output is ".$output->full_name."\n";
 
-	my $parameter_hash = output::get_nonmem_parameters(output => $output);
 	my $resulthash = empirical_statistics( sampled_params_arr => $sampled_params_arr,
-										   labels_hash => $parameter_hash);
+										   labels_hash => $self->parameter_hash);
 
+	#TODO print restart info here
 	#hash
 
 	my %se_section;
 	$se_section{'name'}='Summary statistics over resamples';
-	$se_section{'labels'}=[['center_estimate','mean','median','se','rse','rse_sd'],$parameter_hash->{'labels'}];
+	$se_section{'labels'}=[['center_estimate','mean','median','se','rse','rse_sd'],$self->parameter_hash->{'labels'}];
 	$se_section{'values'}=[$resulthash->{'center_estimate'},$resulthash->{'mean'},
 						   $resulthash->{'median'},$resulthash->{'standard_error'},
 						   $resulthash->{'relative_standard_error'},$resulthash->{'rse_sd_scale'}];
@@ -2007,7 +2309,7 @@ sub prepare_results
 	}
 
 	$perc_section{'name'}='Quantiles (R type=2)';
-	$perc_section{'labels'}=[\@perc_labels,$parameter_hash->{'labels'}];
+	$perc_section{'labels'}=[\@perc_labels,$self->parameter_hash->{'labels'}];
 	$perc_section{'values'}=$resulthash->{'percentiles_values'};
 	push( @{$self -> results->[0]{'own'}},\%perc_section );
 
@@ -2019,14 +2321,16 @@ sub prepare_results
 
 	my %sdcorr_section;
 	$sdcorr_section{'name'}='Empirical sd-correlation matrix';
-	$sdcorr_section{'labels'}=[$parameter_hash->{'labels'},$parameter_hash->{'labels'}];
+	$sdcorr_section{'labels'}=[$self->parameter_hash->{'labels'},$self->parameter_hash->{'labels'}];
 	$sdcorr_section{'values'}=$resulthash->{'sdcorr'};
 	push( @{$self -> results->[0]{'own'}},\%sdcorr_section );
 
 	my $basename = $model->create_output_filename();
 	$basename =~ s/\.lst$/_sir.cov/;
 	my( $ldir, $name ) = OSspecific::absolute_path( $self ->directory(),$basename);
-	print_empirical_covmatrix(filename=> $ldir.$name, parameter_hash => $parameter_hash, covar => $resulthash->{'covar'});
+	print_empirical_covmatrix(filename=> $ldir.$name, 
+							  parameter_hash => $self->parameter_hash, 
+							  covar => $resulthash->{'covar'});
 
 }
 

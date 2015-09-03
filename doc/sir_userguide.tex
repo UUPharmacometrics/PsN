@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{SIR user guide}{2015-09-01}
+\guidetitle{SIR user guide}{2015-09-03}
 \usepackage{amsmath}
 
 \begin{document}
@@ -9,7 +9,9 @@
 \newcommand{\guidetoolname}{sir}
 
 %TODO cholesky block check in sampling when reserved labels for sd/corr
-%new template
+%restart functionality, add iterations (like sse). need new loop conditions in main loop start_iteration,
+%  a 0th iteration that has number > 0 iteraion, etc
+
 
 \section{Introduction}
 The sir program calculates uncertainty
@@ -192,7 +194,38 @@ the covariance matrix used for sampling.
 If option is unset using -no-boxcox, no transformation will be performed before computing covariance matrix
 used for sampling.
 \nextopt
+\optname{add\_iterations}
+Default not set. 
+Iterations can be added to a previous sir run, for example if the diagnostic R plots show that
+convergence has not been achieved. When option -add\_iterations is set, option -directory 
+(see the common options section below) is required,
+and this directory must contain output from at least one complete sir iteration.
+
+The options set on the commandline 
+pertain to \emph{new} iterations with the last available iteration as starting point.
+Options -covmat\_input and -rawres\_input are forbidden in combination with -add\_iterations, 
+the model file does not have to be specified (it will be ignored if it is),
+otherwise the same sir options are required/optional as in a regular sir run.
+
+If some but not all iterations from the previous run had finished, the new run will start with the output
+from the last complete iteration, and the old sample and resample counts for
+the \emph{non-finished} iterations will be dropped. Example: if the old setting was -samples=1000,1000
+and the new with -add\_iterations 
+is -samples=2000,2000 and the old run was terminated after the first iteration,
+then after the add\_iterations run has finished
+there will be three iterations in total with sample sequence 1000,2000,2000 
+after the new run has finished.
+
+\nextopt
 \end{optionlist}
+
+\subsection{Some important common PsN options}
+There are many options that govern how PsN manages NONMEM runs, and
+those options are common to all PsN programs that run NONMEM.
+For a complete list of such options see common\_options.pdf, 
+or psn\_options -h on the commandline. A selection of
+the most important common options relevant for sir is found here.
+\input{inputs/basic_options.tex}
 
 
 \section{sir program workflow}
@@ -283,6 +316,17 @@ Compute the covariance matrix for the resampled parameter vectors on original sc
 store in sir\_results.csv. 
 Compute univariate confidence intervals and store in sir\_results.csv.
 \end{itemize}
+
+\section{Recovering an interrupted run}
+The sir program can automatically recover an interrupted sir run
+if at least one iteration was completed. This process is invoked automatically
+if option -directory is set to an existing sir run directory containing output from
+at least one complete iteration and option -add\_iterations is \emph{not} set.
+
+When recovering an old run, the model file and all sir-specific options plus common options 
+-nm\_version and -seed from
+the new commandline \emph{will be ignored}, instead the model and options
+set in the original run will be used.
 
 \section{Adjusting samples and resamples}
 Sometimes the evaluation run fails for some samples, resulting in fewer successful samples (samples with defined ofv)
