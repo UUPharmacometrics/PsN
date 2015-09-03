@@ -1847,7 +1847,6 @@ sub get_posdef_matrix
 
 }
 
-
 sub get_filled_omega_matrix
 {
 	my $self = shift;
@@ -2803,6 +2802,36 @@ sub is_option_set
 	return $found;
 }
 
+sub ensure_unique_labels
+{
+    my $self = shift;
+
+    my %hash;
+    foreach my $param ('theta', 'omega', 'sigma') {
+        my $accessor = $param . 's';
+        my $ref =  $self->$accessor;
+        next unless (defined $ref);
+        my @records = @{$ref};
+        foreach my $record (@records) {
+            next if ($record->prior() or $record->same);
+            if (defined $record->options) {
+                foreach my $option (@{$record->options}) {
+                    next if ($option->prior());
+                    if (defined $option->label()) {
+                        my $label = $option->label();
+                        if (defined $hash{$label}) {
+                            while (defined $hash{$label}) {
+                                $label .= '_';
+                            }
+                            $option->label($label);
+                        }
+                        $hash{$label} = 1;
+                    }
+                }
+            }
+        }
+    }
+}
 
 no Moose;
 __PACKAGE__->meta->make_immutable;
