@@ -28,12 +28,16 @@ my %required_options = ("samples:s"=>'',
 my %optional_options = (
 	"covmat_input:s"=>'',
 	'rawres_input:s' => undef,
+	'auto_rawres:f' => undef,
 	'offset_rawres:i' => undef,
 	'problems_per_file:i' => undef,
 	'in_filter:s' => undef,
 	"mceta:i"=>'',
 	"inflation:f" => '',
 	"with_replacement!"=>'',
+	"recenter!"=>'',
+	"boxcox!"=>'',
+	"add_iterations"=>'',
 	"copy_data!"=>'');
 
 my $res = GetOptions( \%options, 
@@ -114,12 +118,20 @@ EOF
 $help_text{-rawres_input} = <<'EOF';
       -rawres_input=filename
 
-      If rawres_input is given, sir will take 'resamples' m1 sets of parameter
-	  vectors from this file, starting on line offset_rawres+1, instead of
-      resampling in the first iteration.
-	  Not allowed in combination with covmat_input.
-      The raw results file must contain at least as many 
-      samples as the first value in input -resamples to sir, the labels for  THETA/OMEGA/SIGMA 
+If rawres_input is given, sir will run an intial 0th iteration in which sir will read all parameter
+vectors from this file, starting on line offset_rawres+1 and skipping any that does not fulfill the filter rules, if set.
+These vectors will be Box-Cox transformed and used to create a proposal density for the next iteration.
+This option is not allowed together with covmat_input. 
+
+If the number of vectors read is smaller than 
+the number of estimated parameters (also counting off-diagonals),
+it is not possible to obtain an empirical covariance matrix with full rank.
+In this case sir will append copies of the existing vectors, perturbed using the tweak\_inits
+functionality, until the resulting set ov vectors has full rank.
+If option -auto_rawres=degree is set on the command-line, tweak_inits will be done by 'degree',
+otherwise the default degree 0.1 will be used for tweaking.
+
+	  The labels for  THETA/OMEGA/SIGMA 
       in the file must match the labels in the model given as input 
       to sir, the theta columns must be directly followed by the omega columns 
       which must be directly followed by the sigma columns, and the first or
@@ -157,6 +169,15 @@ $help_text{-in_filter} = <<'EOF';
     
       Example: -in_filter=minimization_successful.eq.1,significant_digits.gt.3.5
 EOF
+$help_text{-auto_rawres} = <<'EOF';
+      -auto_rawres=degree
+
+Default not set. Not allowed in combination with covmat_input. If rawres_input is not set,
+this option will make sir use the tweak_inits functionality to automatically create a 
+rawres_input file with perturbed parameter vectors. If option -auto_rawres is used
+in combination with rawres_input, the 'degree' will be used with tweak_inits
+to augment the given rawres_input file until the matrix has full rank.
+EOF
     $help_text{-copy_data} = <<'EOF';
       -copy_data
     Default set, can be unset with -no-copy_data. By default, the original
@@ -170,10 +191,47 @@ EOF
 	-with_replacement is set, resampling will be done with replacement.
 	It is not possible to cap replacement at e.g. 5, replacement will be unlimited.
 EOF
+    $help_text{-recenter} = <<'EOF';
+      -recenter
+Default set. If option is set and any sampled parameter vector has a smaller ofv than the original
+vector mu of final parameter estimates of the input model, then the mu-vector will be replaced with
+the sampled parameter vector with the smallest ofv.
+If option is unset using -no-recenter, the original parameter vector will be kept
+and a warning will be printed that some vectors had a negative delta-ofv.
+EOF
+    $help_text{-boxcox} = <<'EOF';
+      -boxcox
+Default set. If option is set, sir will Box-Cox transform parameter vectors before computing
+the covariance matrix used for sampling.
+If option is unset using -no-boxcox, no transformation will be performed before computing covariance matrix
+used for sampling.
+EOF
     $help_text{-covmat_input} = <<'EOF';
       -covmat_input=filename
     Not allowed together with rawres_input. If given, this matrix is
 	used for computing the weights and performing the sampling.
+EOF
+    $help_text{-add_iterations} = <<'EOF';
+      -add_iterations
+
+Default not set. Iterations can be added to a previous sir run, for example 
+if the diagnostic R plots show that convergence has not been achieved. 
+When option -add_iterations is set, option -directory is required,
+and this directory must contain output from at least one complete sir iteration.
+
+The options set on the commandline pertain to new iterations with the last available 
+iteration as starting point. Options -covmat_input and -rawres_input are forbidden 
+in combination with -add_iterations, the model file does not have to be specified 
+(it will be ignored if it is), otherwise the same sir options are required/optional 
+as in a regular sir run.
+
+If some but not all iterations from the previous run had finished, the new run 
+will start with the output from the last complete iteration, and the old sample 
+and resample counts for the non-finished iterations will be dropped. Example: 
+if the old setting was -samples=1000,1000 and the new with -add_iterations 
+is -samples=2000,2000 and the old run was terminated after the first iteration,
+then after the add\_iterations run has finished there will be three iterations 
+in total with sample sequence 1000,2000,2000 after the new run has finished.
 EOF
     $help_text{-inflation} = <<'EOF';
       -inflation=X
@@ -196,23 +254,46 @@ EOF
       Also see 'psn_options -h' for a description of common options.
 EOF
 
+
 common_options::online_help('sir',\%options, \%help_text, \%required_options, \%optional_options);
 
 
 ## Check that we do have a model file
-if ( scalar(@ARGV) < 1 ) {
-  print "A model file must be specified. Use 'sir -h' for help.\n";
-  exit;
+my $dummymodel=0;
+if (scalar(@ARGV) < 1) {
+	if ((defined $options{'directory'}) && (-d $options{'directory'})
+		&& (-e $options{'directory'}.'/restart_information_do_not_edit.pl')) {
+		$dummymodel = 1;
+	}else{
+		print "A model file must be specified unless you are recovering/continuing an old sir run\n".
+			"Use 'sir -help' for help.\n";
+		die;
+	}
 }
 
 if( scalar(@ARGV) > 1 ){
   print "sir can only handle one modelfile. Use 'sir -h' for help.\n";
-  exit;
+  die;
+}
+
+if ( defined $options{'add_iterations'} and ($options{'add_iterations'}) ){
+	unless ((defined $options{'directory'}) && (-d $options{'directory'})) {
+		print "Cannot set option -add_iterations unless -directory is set to existing sir run directory\n";
+		die;
+	}
+	unless ((defined $options{'samples'}) && (defined $options{'resamples'})) {
+		print "Options -samples and -resamples are required\n";
+		die;
+	}
 }
 
 if ( defined $options{'covmat_input'} ){
 	if (defined $options{'rawres_input'}){
 		print "Cannot use option -covmat_input together with option -rawres_input.\n";
+		die;
+	}
+	if (defined $options{'auto_rawres'}){
+		print "Cannot use option -covmat_input together with option -auto_rawres.\n";
 		die;
 	}
 	#set to global filepath here
@@ -256,28 +337,35 @@ if ( defined $options{'in_filter'} ){
 
 my $eval_string = common_options::model_parameters(\%options);
 
-my $model = model -> new ( eval( $eval_string ),
+
+my $model;
+
+if ($dummymodel){
+	$model = model->create_dummy_model;
+}else{ 
+
+	$model = model -> new ( eval( $eval_string ),
 			   filename                    => @ARGV[0],
 			   ignore_missing_output_files => 1 );
 
-unless (defined $options{'copy_data'} and (not $options{'copy_data'})) {
-    $options{'copy_data'} = 1;
+	unless (defined $options{'copy_data'} and (not $options{'copy_data'})) {
+		$options{'copy_data'} = 1;
+	}
+	
+	unless ($model->copy_data_setting_ok(copy_data => $options{'copy_data'})){
+		die("Cannot set -no-copy_data, absolute data file path is too long.");
+	} 
+	if (defined $options{'copy_data'} and (not $options{'copy_data'})){
+		$model->relative_data_path(0);
+	}
 }
 
-unless ($model->copy_data_setting_ok(copy_data => $options{'copy_data'})){
-	die("Cannot set -no-copy_data, absolute data file path is too long.");
-} 
-if (defined $options{'copy_data'} and (not $options{'copy_data'})){
-	$model->relative_data_path(0);
-}
+my @samples =();
+@samples = split(/,/,$options{'samples'}) if (defined $options{'samples'});
+my @resamples = ();
+@resamples = split(/,/,$options{'resamples'}) if (defined $options{'resamples'});
 
-my @samples = split(/,/,$options{'samples'});
-my @resamples = split(/,/,$options{'resamples'});
 
-if (defined $options{'rawres_input'} and (scalar(@resamples)<2)){
-	print "No point running sir with rawres_input unless running more than one iteration\n";
-	exit;
-}
 my $sir = 
 	tool::sir->new ( eval( $common_options::parameters ),
 					 top_tool => 1,
@@ -287,10 +375,14 @@ my $sir =
 					 resamples				     => \@resamples,
 					 mceta				     => $options{'mceta'},
 					 inflation				     => $options{'inflation'},
-					 covmat_input				     => $options{'covmat_input'},
+					 auto_rawres				     => $options{'auto_rawres'},
+					 covmat_input			 => $options{'covmat_input'},
 					 rawres_input        	=> $options{'rawres_input'},
 					 problems_per_file        	=> $options{'problems_per_file'},
 					 offset_rawres       	=> $options{'offset_rawres'},
+					 recenter       	=> $options{'recenter'},
+					 boxcox       	=> $options{'boxcox'},
+					 add_iterations        => $options{'add_iterations'},
 					 in_filter             => \@in_filter,
 					 copy_data                            => $options{'copy_data'}
 	);
@@ -298,7 +390,7 @@ my $sir =
 $sir-> print_options (cmd_line => $cmd_line,
 		     toolname => 'sir',
 		     local_options => [keys %optional_options],
-		     common_options => \@common_options::tool_options);
+		     common_options => \@common_options::tool_options) unless ($sir->recover);
 
 
 $sir -> run;

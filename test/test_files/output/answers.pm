@@ -1491,7 +1491,6 @@ sub read_answers
     $answer_hashes[$index]->{runtime} = '0:56:00';
     $answer_hashes[$index]->{answers} = {};
 
-
 	return \@answer_hashes;
 }
 

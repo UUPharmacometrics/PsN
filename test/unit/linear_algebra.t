@@ -8,6 +8,7 @@ use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages
 use linear_algebra;
 
+
 #subtract, max and absolute
 my @A = ([1, 2, 3], [2.1, 4, 5], [3.25, 5.17, 19]);
 my @B = ([1, 2.1, 3.25], [2, 4, 5.17], [3, 5, 19]);
@@ -190,6 +191,271 @@ is_deeply($identity, [ [ 1, 0 ], [ 0, 1 ] ], "identity matrix");
 my $matrix = [ [1,2,3,4],[2,2,3,4],[3,3,3,4],[4,4,4,4] ]; 
 
 is_deeply(linear_algebra::copy_and_reorder_square_matrix($matrix,[1,3,0,2]),[ [2,4,2,3],[4,4,4,4],[2,4,1,3],[3,4,3,3] ] , "copy and reorder");
+
+my $omega = [[1,0.2,0.1,0.1],
+			 [0.2,5,0.05,0.2],
+			 [0.1,0.05,3,0.3],
+			 [0.1,0.2,0.3,4] ];
+
+my ($strings,$inits,$code,$warnings)=linear_algebra::string_cholesky_block(value_matrix=>$omega,record_index=>0,theta_count=>1,testing=>1,fix=>0);
+#print "\n";
+
+#for (my $i=0; $i<scalar(@{$params}); $i++){
+#	print 'my '.$params->[$i]." ".$inits->[$i]."\n";
+#}
+
+my ($SD_A1,$SD_A2,$SD_A3,$SD_A4,$SD_A5);
+my ($COR_A21,$COR_A31,$COR_A41,$COR_A51,$COR_A32,$COR_A42,$COR_A52);
+my ($COR_A43,$COR_A53,$COR_A54);
+my ($CH_A22,$CH_A32,$CH_A42,$CH_A52,$CH_A33,$CH_A43,$CH_A53,$CH_A44,$CH_A54,$CH_A55);
+
+
+
+eval(join(' ',@{$inits}));
+#print (join("\n",@{$code}))."\n";
+#exit;
+eval(join(' ',@{$code}));
+
+my @matrix=();
+for(my $i=0;$i<scalar(@{$strings});$i++){
+	push(@matrix,[ (0) x scalar(@{$strings})]);
+}
+for(my $i=0;$i<scalar(@{$strings});$i++){
+	for (my $j=0; $j<=$i; $j++){
+		my $value = eval($strings->[$j]->[$i]);
+		$matrix[$i]->[$j]=$value;
+	}
+#	print join(' ',@{$matrix[$i]})."\n";
+}
+
+for(my $i=0;$i<scalar(@{$strings});$i++){
+	for (my $j=0; $j<=$i; $j++){
+		my $sum=0;
+		for (my $k=0;$k<scalar(@{$strings});$k++){
+			$sum = $sum+$matrix[$i]->[$k]*$matrix[$j]->[$k];
+		}
+		cmp_float($sum,$omega->[$i]->[$j],"cholesky product element $i,$j is ".$omega->[$i]->[$j]);
+	}
+#	print join(' ',@{$matrix[$i]})."\n";
+}
+#extend to 6x
+my $omega6 = [
+	[1,0.2,0.1,0.1,0.2,-0.2],
+	[0.2,5,0.05,0.2,-0.3,0.2],
+	[0.1,0.05,3,0.3,0.2,-0.1],
+	[0.1,0.2,0.3,4,0.1,0.3],
+	[0.2,-0.3,0.2,0.1,4,0.4],
+	[-0.2,0.2,-0.1,0.3,0.4,2] 
+];
+
+my ($strings,$inits,$code,$warnings)=linear_algebra::string_cholesky_block(
+	value_matrix=>$omega6,
+	record_index=>2,
+	theta_count=>1,
+	testing=>0,
+	fix=>0);
+
+if (0){
+	print join("\n",@{$code})."\n\n";
+	print join("\n",@{$inits})."\n";
+	for(my $i=0;$i<scalar(@{$strings});$i++){
+		for (my $j=0; $j<=$i; $j++){
+			print $strings->[$i]->[$j]."\t";
+		}
+		print "\n";
+	}
+}
+my ($count,$code,$etalist)=linear_algebra::eta_cholesky_code(
+	stringmatrix=> $strings,
+	eta_count=> 5,
+	diagonal => 0);
+
+is_deeply($etalist,[6,7,8,9,10,11],'eta_cholesky_code etalist 1');
+is($count,6,'eta_cholesky_code count');
+my @anscode =(
+'ETA_6=ETA(6)*SD_C1',
+'ETA_7=ETA(6)*COR_C21*SD_C2+ETA(7)*CH_C22*SD_C2',
+'ETA_8=ETA(6)*COR_C31*SD_C3+ETA(7)*CH_C32*SD_C3+ETA(8)*CH_C33*SD_C3',
+'ETA_9=ETA(6)*COR_C41*SD_C4+ETA(7)*CH_C42*SD_C4+ETA(8)*CH_C43*SD_C4+ETA(9)*CH_C44*SD_C4',
+'ETA_10=ETA(6)*COR_C51*SD_C5+ETA(7)*CH_C52*SD_C5+ETA(8)*CH_C53*SD_C5+ETA(9)*CH_C54*SD_C5+ETA(10)*CH_C55*SD_C5',
+'ETA_11=ETA(6)*COR_C61*SD_C6+ETA(7)*CH_C62*SD_C6+ETA(8)*CH_C63*SD_C6+ETA(9)*CH_C64*SD_C6+ETA(10)*CH_C65*SD_C6+ETA(11)*CH_C66*SD_C6'
+	);
+is_deeply($code,\@anscode,'eta_cholesky code block');
+
+
+my ($SD_C1,$SD_C2,$SD_C3,$SD_C4,$SD_C5,$SD_C6);
+my ($COR_C21,$COR_C31,$COR_C41,$COR_C51,$COR_C61,$COR_C32,$COR_C42,$COR_C52,$COR_C62);
+my ($COR_C43,$COR_C53,$COR_C63,$COR_C54,$COR_C64,$COR_C65);
+my ($CH_C22,$CH_C32,$CH_C42,$CH_C52,$CH_C62,$CH_C33,$CH_C43,$CH_C53,$CH_C63,$CH_C44,$CH_C54,$CH_C64,$CH_C55,$CH_C65,$CH_C66);
+
+my ($strings,$inits,$code,$warnings)=linear_algebra::string_cholesky_block(
+	value_matrix=>$omega6,
+	record_index=>2,
+	theta_count=>1,
+	testing=>1,
+	fix=>0);
+eval(join(' ',@{$inits}));
+eval(join(' ',@{$code}));
+
+my @matrix=();
+for(my $i=0;$i<scalar(@{$strings});$i++){
+	push(@matrix,[ (0) x scalar(@{$strings})]);
+}
+for(my $i=0;$i<scalar(@{$strings});$i++){
+	for (my $j=0; $j<=$i; $j++){
+		my $value = eval($strings->[$j]->[$i]);
+		$matrix[$i]->[$j]=$value;
+	}
+}
+
+for(my $i=0;$i<scalar(@{$strings});$i++){
+	for (my $j=0; $j<=$i; $j++){
+		my $sum=0;
+		for (my $k=0;$k<scalar(@{$strings});$k++){
+			$sum = $sum+$matrix[$i]->[$k]*$matrix[$j]->[$k];
+		}
+		cmp_float($sum,$omega6->[$i]->[$j],"cholesky product element $i,$j is ".$omega6->[$i]->[$j]);
+	}
+#	print join(' ',@{$matrix[$i]})."\n";
+}
+
+
+
+my ($count,$code,$etalist)=linear_algebra::eta_cholesky_code(
+	stringmatrix=> ['SD_C1','SD_C2','SD_C3'],
+	eta_count=> 5,
+	diagonal => 1);
+
+is($count,3,'eta_cholesky code count');
+is($code->[0],'ETA_6=ETA(6)*SD_C1','eta_cholesky code diagonal 1');
+is($code->[1],'ETA_7=ETA(7)*SD_C2','eta_cholesky code diagonal 2');
+is($code->[2],'ETA_8=ETA(8)*SD_C3','eta_cholesky code diagonal 3');
+is_deeply($etalist,[6,7,8],'eta_cholesky_code etalist 2');
+
+($count,$code,$etalist)=linear_algebra::eta_cholesky_code(
+	stringmatrix=> [undef,undef,'SD_C3'],
+	eta_count=> 5,
+	diagonal => 1);
+
+is($count,3,'eta_cholesky code count 2');
+is($code->[0],'ETA_8=ETA(8)*SD_C3','eta_cholesky code 2 diagonal 3');
+is($etalist->[0],8,'eta_cholesky code etalist');
+
+$code = ['CL=THETA(2)*EXP(ETA(2))','V=THETA(3)*(1+ETA(3))*(1+ETA(5))'];
+linear_algebra::substitute_etas(code => $code,eta_list => [2,3,5]);
+is($code->[0],'CL=THETA(2)*EXP(ETA_2)','substitute etas 1');
+is($code->[1],'V=THETA(3)*(1+ETA_3)*(1+ETA_5)','substitute etas 2');
+linear_algebra::substitute_etas(code => $code,eta_list => [2,3,5], inverse => 1);
+is($code->[0],'CL=THETA(2)*EXP(ETA(2))','inverse substitute etas 1');
+is($code->[1],'V=THETA(3)*(1+ETA(3))*(1+ETA(5))','inverse substitute etas 2');
+
+$code = ['CL=THETA(2)*EXP(ETA(2))','V=THETA(3)*(1+ETA(3))*(1+ETA(5))'];
+linear_algebra::substitute_etas(code => $code,eta_list => [1,3]);
+is($code->[0],'CL=THETA(2)*EXP(ETA(2))','substitute etas 3');
+is($code->[1],'V=THETA(3)*(1+ETA_3)*(1+ETA(5))','substitute etas 4');
+linear_algebra::substitute_etas(code => $code,eta_list => [1,3], inverse => 1);
+is($code->[0],'CL=THETA(2)*EXP(ETA(2))','inverse substitute etas 3');
+is($code->[1],'V=THETA(3)*(1+ETA(3))*(1+ETA(5))','inverse substitute etas 4');
+
+$code = ['CL=THETA(2)*EXP(EPS(2))','V=THETA(3)*(1+EPS(3))*(1+EPS(5))'];
+linear_algebra::substitute_etas(code => $code,eta_list => [1,2,3], sigma => 1);
+is($code->[0],'CL=THETA(2)*EXP(EPS_2)','substitute etas 5');
+is($code->[1],'V=THETA(3)*(1+EPS_3)*(1+EPS(5))','substitute etas 6');
+linear_algebra::substitute_etas(code => $code,eta_list => [1,2,3], sigma => 1, inverse => 1);
+is($code->[0],'CL=THETA(2)*EXP(EPS(2))','inverse substitute etas 5');
+is($code->[1],'V=THETA(3)*(1+EPS(3))*(1+EPS(5))','inverse substitute etas 6');
+
+my $hashref = linear_algebra::get_inverse_parameter_list(code => [
+													   'SD_A1=THETA(3)',
+													   'SD_A2=THETA(4)',
+													   'COR_A21=THETA(5)',
+													   'SD_A3=THETA(6)',
+													   'COR_A31=THETA(7)',
+													   'COR_A32=THETA(8)',
+													   ';Comments below show CH variables for 1st column, too simple to need new variables',
+													   ';CH_A11=1',
+													   ';CH_A21=COR_A21',
+													   ';CH_A31=COR_A31',
+													   'CH_A22=SQRT(1-(COR_A21**2))',
+													   'CH_A32=(COR_A32-COR_A21*COR_A31)/CH_A22',
+													   'CH_A33=SQRT(1-(COR_A31**2+CH_A32**2))',
+													   'ETA_1=ETA(1)*SD_A1',
+													   'ETA_2=ETA(1)*COR_A21*SD_A2+ETA(2)*CH_A22*SD_A2',
+													   'ETA_3=ETA(1)*COR_A31*SD_A3+ETA(2)*CH_A32*SD_A3+ETA(3)*CH_A33*SD_A3']);
+
+is_deeply($hashref->{'ETA'},[1,2,3],"get inverse parameter list ETA");
+is_deeply($hashref->{'EPS'},[],"get inverse parameter list EPS");
+is_deeply($hashref->{'THETA'},[3,4,5,6,7,8],"get inverse parameter list THETA");
+is_deeply($hashref->{'RECORD'},[0],"get inverse parameter list RECORD");
+
+
+my ($strings,$inits,$code)=linear_algebra::string_cholesky_diagonal(
+	value_matrix=>[4,9,16],
+	record_index=>3,
+	theta_count=>0,
+	testing=>0,
+	fix_vector=>[1,0,1]);
+is($strings->[0],undef,'string cholesky diag 1');
+is($strings->[1],'SD_D2','string cholesky diag 2');
+is($strings->[2],undef,'string cholesky diag 3');
+
+is($inits->[0],'(0,3) ; SD_D2','string cholesky init diag 2');
+
+
+is($code->[0],'SD_D2=THETA(1)','string cholesky code diag 2');
+
+my @Amatrix =([1,9,1],[2,3,0],[1,2,3],[0,1,0]);
+
+is(linear_algebra::full_rank(\@Amatrix),1,"full rank nice");
+
+my $cov=[];
+my $err = linear_algebra::row_cov(\@Amatrix,$cov);
+
+cmp_relative($cov->[0]->[0],0.666666666666667,7,"row_cov  1 ");
+cmp_relative($cov->[0]->[1],0.666666666666667,7,"row_cov  2 ");
+cmp_relative($cov->[0]->[2],0,7,"row_cov  3 ");
+cmp_relative($cov->[1]->[1],12.916666666666666,7,"row_cov  4 ");
+cmp_relative($cov->[1]->[2],0,7,"row_cov  5 ");
+cmp_relative($cov->[2]->[2],2,7,"row_cov  6 ");
+is($cov->[0]->[1],$cov->[1]->[0],"row_cov symm 1");
+is($cov->[0]->[2],$cov->[2]->[0],"row_cov symm 2");
+is($cov->[1]->[2],$cov->[2]->[1],"row_cov symm 3");
+
+my $corr=[];
+$err = linear_algebra::covar2sdcorr($cov,$corr);
+cmp_relative($corr->[0]->[0],sqrt(0.666666666666667),7,"sd corr  1 ");
+cmp_relative($corr->[1]->[1],sqrt(12.916666666666666),7,"sdcorr  2 ");
+cmp_relative($corr->[2]->[2],sqrt(2),7,"sdcorr  3 ");
+cmp_relative($corr->[0]->[1],0.227184733698826,7,"corr 2");
+is($corr->[0]->[1],$corr->[1]->[0],"corr symm 1");
+is($corr->[0]->[2],$corr->[2]->[0],"corr symm 2");
+is($corr->[1]->[2],$corr->[2]->[1],"corr symm 3");
+
+
+my @Amatrix =([1,2,3,4,5],
+			  [9,3,4,1,1],
+			  [1,0,-3,0,1]);
+
+is(linear_algebra::full_rank(\@Amatrix),0,"full rank wide");
+my $Rmat=[];
+my $err1 = linear_algebra::QR_factorize(\@Amatrix,$Rmat);
+
+cmp_relative($Rmat->[0]->[0],8,7.416198487095664,"qr element 1");
+cmp_relative($Rmat->[1]->[0],8,4.854239009735343,"qr element 2");
+cmp_relative($Rmat->[1]->[01],8,9.188926141631764,"qr element 3");
+cmp_relative($Rmat->[2]->[0],8,-0.404519917477945,"qr element 4");
+cmp_relative($Rmat->[2]->[1],8,-0.003957332533002,"qr element 5");
+cmp_relative($Rmat->[2]->[2],8,3.291860868245021,"qr element 6");
+
+is($err1,0,"qr factorize ok");
+my @singular = ([1,2,3,4,5],
+			  [0,1,-5,7,2],
+			  [1,3,-2,11,7]);
+$Rmat=[];
+my $err1 = linear_algebra::QR_factorize(\@singular,$Rmat);
+cmp_relative($Rmat->[0]->[0],8,7.416198487095664,"singular qr element 1");
+
+is($err1,1,"qr factorize singular");
 
 
 done_testing();

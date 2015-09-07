@@ -42,6 +42,8 @@ my %optional_options = (
 	"from_model:s" => undef,
 	"ignore_missing_parameters" => undef,
 	"update_fix" => undef,
+	"cholesky:s" => undef,
+	"correlation_cutoff:f" => undef,
 	"comment:s" => undef,
 	"degree:f" => undef,
 	"add_tags" => undef,
@@ -52,6 +54,7 @@ my %optional_options = (
 	"nm_version:s" => undef,
 	"based_on:i" => undef,
 	"renumber:i" => undef,
+	"sigdig:i" => undef,
 	"fix_thetas" => undef,
  	"unfix_thetas" => undef,
 	);
@@ -141,6 +144,53 @@ $help_text{-update_fix} = <<'EOF';
 	
 	If set, update_inits will update parameters that are FIX in the model. The
 	default is to not update parameters that are fixed.
+EOF
+
+$help_text{-correlation_cutoff} = <<'EOF';
+-correlation_cutoff=number
+
+    Default 0. Ignored unless option -cholesky is set. Value range 0-1.
+
+    If, during cholesky reparameterization, the absolute value of a correlation 
+	in a block $OMEGA or $SIGMA is lower than or equal to this cutoff, then set
+	the $THETA for estimation of this correlation to 0 FIX.
+EOF
+
+$help_text{-sigdig} = <<'EOF';
+-sigdig=number
+
+    Default not used. Only applicable for NONMEM7. If set, the initial estimates
+	of the updated model will be printed with this many significant digits, in
+	either decimal or scientific notation, whichever is more compact.
+EOF
+
+$help_text{-cholesky} = <<'EOF';
+-cholesky=records|inverse
+
+	Default not set
+ 	
+	If set, update_inits will use cholesky reparameterization to replace the requested
+	$SIGMA and $OMEGA with FIXED identity matrices and a set of THETAs for estimation
+	of standard deviations and (for blocks only) correlations, OR, if -cholesky=inverse is set
+	back-transformation of a previously reparameterized model will be performed.
+
+  Examples using category input:
+	-cholesky=all                 Reparameterize both $OMEGA and $SIGMA, both BLOCK and DIAGONAL, both FIX and estimated
+	-cholesky=omega               Reparameterize only $OMEGA, only BLOCK, only estimated
+	-cholesky=omega,fix           Reparameterize only $OMEGA, only BLOCK, both FIX and estimated
+	-cholesky=omega,diagonal      Reparameterize only $OMEGA, both BLOCK and diagonal, only estimated
+	-cholesky=omega,diagonal,fix  Reparameterize only $OMEGA, both BLOCK and diagonal, both FIX and estimated
+	-cholesky=sigma,diagonal      Reparameterize only $SIGMA, both BLOCK and diagonal, only estimated
+	-cholesky=diagonal            Reparameterize only $OMEGA (omitting parameter name implies omega), both BLOCK and diagonal,
+	                              only estimated 
+
+  Examples using record list input, cannot be combined with category input:
+	-cholesky=o2,o5,s1               Reparameterize $OMEGA record number 2 and 5, $SIGMA record number 1
+
+	See also related option -correlation_cutoff.
+
+	Correct handling of priors encoded using $OMEGA/$SIGMA is not implemented, priors must 
+	be encoded using special records $OMEGAPD etc.
 EOF
 
 $help_text{-fix_thetas} = <<'EOF';
@@ -289,8 +339,7 @@ EOF
 common_options::online_help('update_inits', \%options, \%help_text, \%required_options, \%optional_options);
 
 if ( scalar( @ARGV ) < 1 ){
-  print "A model file must be specified. Use 'update_inits -h' for help.\n";
-  exit;
+  die "A model file must be specified. Use 'update_inits -h' for help.\n";
 }
 
 my $ignore_missing_parameters=0;
@@ -346,6 +395,8 @@ my $model = model -> new ( filename => $ARGV[0],
 my $model_copy;
 
 if ($options{'flip_comments'}){
+	ui->print(category => 'all',
+			  message => "Flipping comments\n");
 	#flip_comments must be done as very first step, because later processing might
 	#add or modify records so that tags do not do the right thing anymore
 	$model_copy = model::flip_comments(from_model =>$model,
@@ -376,6 +427,7 @@ if ( $options{'output_model'} ){
 	unlink($ARGV[0]);
 	$outfile = $ARGV[0];
 }
+
 
 if (defined $options{'from_model'}) {
 	die "No such file: ".$options{'from_model'}."\n" unless (-e $options{'from_model'});
@@ -410,6 +462,7 @@ if (defined $options{'from_model'}) {
 	}
 
 } else { 
+	my $update_inits=0;
 	if( $ARGV[1] ){
 		$output = output -> new( filename => $ARGV[1],
 								 ignore_missing_files => 0);
@@ -420,37 +473,86 @@ if (defined $options{'from_model'}) {
 		unless ($output->parsed_successfully()){
 			die "Failed to parse $ARGV[1]: ".$output -> parsing_error_message();
 		}
+		$update_inits=1;
 	}elsif( defined $model->outputs and -e $model ->outputs -> [0] -> filename ){
 		$output = $model -> outputs -> [0];
 		unless ($output->parsed_successfully()){
 			die "Failed to parse ".$model ->outputs -> [0] -> filename.": ".
 				$output -> parsing_error_message();
 		}
+		$update_inits=1;
 	} else {
-		die "No file to read parameter values from\n";
-	}
-
-	if (scalar (@{$model_copy->problems})>1){
 		ui->print(category => 'all',
-				  message => $ARGV[0].
-				  ' has more than one $PROBLEM. Will update naively $PROB by $PROB from lst-file');
-
+				  message => "No file to read parameter values from, not updating initial estimates\n");
 	}
 
-	my $check = 0;
-	$check = $options{'ensure_posdef'} if (defined $options{'ensure_posdef'});
-	$model_copy -> update_inits( from_output => $output,
-								 ensure_posdef => $check,
-								 ignore_missing_parameters => $ignore_missing_parameters,
-									 update_fix => $update_fix );
+	if ($update_inits){
+		if (scalar (@{$model_copy->problems})>1){
+			ui->print(category => 'all',
+					  message => $ARGV[0].
+					  ' has more than one $PROBLEM. Will update naively $PROB by $PROB from lst-file');
 
+		}
+		ui->print(category => 'all',
+				  message => "Updating initial estimates\n");
+
+		my $check = 0;
+		$check = $options{'ensure_posdef'} if (defined $options{'ensure_posdef'});
+		$model_copy -> update_inits( from_output => $output,
+									 ensure_posdef => $check,
+									 ignore_missing_parameters => $ignore_missing_parameters,
+									 update_fix => $update_fix );
+	}
 }
 $model_copy -> filename( $outfile );
 
-my @record_list=('THETA','OMEGA','SIGMA');
-print "Updating records ".join(' ',@record_list)."\n";
+if ( $options{'cholesky'} ){
+
+	if ($options{'cholesky'} eq 'inverse'){
+		ui->print(category => 'all',
+				  message => "Doing inverse Cholesky reparameterization\n");
+		my @errors=();
+		foreach my $problem (@{$model_copy->problems}){
+			push(@errors,@{$problem->inverse_cholesky_reparameterize()});
+		}
+		if (scalar(@errors)> 0){
+			ui->print(category => 'all',
+					  message => "The following errors occurred during inverse Cholesky reparameterization:\n".
+					  join("\n",@errors));
+		}
+	}else{
+		ui->print(category => 'all',
+				  message => "Doing Cholesky reparameterization\n");
+		my $cutoff = 0;
+		if ($options{'correlation_cutoff'}){
+			if ($options{'correlation_cutoff'} < 0){
+				die "option -correlation_cutoff must not be less than 0\n";
+			}
+			if ($options{'correlation_cutoff'} > 1){
+				die "option -correlation_cutoff must not be larger than 1\n";
+			}
+			$cutoff = $options{'correlation_cutoff'};
+		}
+		my $warnings = 0;
+		foreach my $problem (@{$model_copy->problems}){
+			$warnings += $problem->cholesky_reparameterize(what => $options{'cholesky'},
+														   correlation_cutoff => $cutoff, #if lower then set 0 FIX
+														   correlation_limit => 0.9, #if higher then warn
+				);
+		}
+		$model_copy -> check_and_set_sizes(LTH => 1); #set LTH if too many thetas. TODO make dependent on nm_version
+		if ($warnings > 0){
+			ui->print(category => 'all',
+					  message => "\n"."Warning: Found $warning instance(s) of high correlations ".
+					  "during cholesky reparameterization\n");
+		}
+	}
+}
+
 
 if (defined $options{'degree'}){
+	ui->print(category => 'all',
+				  message => "Tweaking initial estimates\n");
 	foreach my $prob ( @{$model_copy->problems()}) {
 		$prob -> set_random_inits ( degree => $options{'degree'} );
 	}
@@ -458,6 +560,8 @@ if (defined $options{'degree'}){
 
 
 if ($options{'fix_thetas'}){
+	ui->print(category => 'all',
+				  message => "Fixing THETAs\n");
 	for (my $j=0; $j< scalar(@{$model_copy->problems}); $j++){
 		next unless (defined $model_copy ->problems()->[$j]->thetas());
 		foreach my $rec (@{$model_copy ->problems()->[$j]->thetas()}){
@@ -469,6 +573,8 @@ if ($options{'fix_thetas'}){
 	}
 }
 if ($options{'unfix_thetas'}){
+	ui->print(category => 'all',
+				  message => "Unfixing THETAs\n");
 	for (my $j=0; $j< scalar(@{$model_copy->problems}); $j++){
 		next unless (defined $model_copy ->problems()->[$j]->thetas());
 		foreach my $rec (@{$model_copy ->problems()->[$j]->thetas()}){
@@ -482,6 +588,8 @@ if ($options{'unfix_thetas'}){
 
 
 if ($options{'add_prior'}){
+	ui->print(category => 'all',
+				  message => "Adding prior\n");
 	$model_copy -> problems()->[0]->add_prior_distribution(from_output => $output,
 														   problem_number => 1,
 														   df_string => $options{'add_prior'});
@@ -521,7 +629,7 @@ if (defined $options{'renumber'} and $options{'renumber'} != 0){
 		}
 	}
 	if (scalar(@probtab)+scalar(@probmsfo)+scalar(@probmsfi)){
-		$message = 'and renumbering ';
+		my $message = 'Renumbering ';
 		if(scalar(@probtab) > 0){
 			$message .= '$TABLE FILE= in $PROB '.join(',',@probtab)."\n";
 		}
@@ -531,13 +639,16 @@ if (defined $options{'renumber'} and $options{'renumber'} != 0){
 		if(scalar(@probmsfi) > 0){
 			$message .= '$MSFI <file> in $PROB '.join(',',@probmsfi)."\n";
 		}
-		print $message;
+		ui->print(category => 'all',
+				  message => $message);
 	}
 
 }
 
 #handle PROBLEM update_tags add_tags add_comment
 if ($options{'add_tags'}) {
+	ui->print(category => 'all',
+				  message => "Adding tags\n");
     $model_copy->annotation->add_empty_tags();
 }
 

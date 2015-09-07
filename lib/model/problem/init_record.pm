@@ -19,6 +19,90 @@ has 'chol' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'corr' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'n_previous_rows' => ( is => 'rw', isa => 'Maybe[Int]', default => 0 );
 
+sub set_1_fix
+{
+    my $self = shift;
+	foreach my $opt (@{$self->options}){
+		if ((defined $opt->on_diagonal) and $opt->on_diagonal ){
+			$opt->init('1');
+		}else{
+			$opt->init('0');
+		}
+		$opt->fix(1) unless ($self->type eq 'BLOCK');
+	}
+	$self->fix(1);
+
+}
+
+sub unfix
+{
+    my $self = shift;
+	foreach my $opt (@{$self->options}){
+		$opt->fix(0);
+	}
+	$self->fix(0);
+
+}
+
+
+sub set_vector
+{
+    my $self = shift;
+	my %parm = validated_hash(\@_,
+							  vector => { isa => 'ArrayRef', optional => 0 },
+		);
+
+	my $vector = $parm{'vector'};
+	my $ok =1;
+
+	croak("cannot do set_vector on init_record that is SAME") if ($self->same);
+	croak("wrong length of input vector to set_vector") unless (scalar(@{$vector})==scalar(@{$self->options})) ;
+
+	for (my $i=0; $i<scalar(@{$self->options}); $i++){
+		my ($success,$dirt1,$dirt2) = $self->options->[$i]->check_and_set_init(new_value =>$vector->[$i]);
+		$ok = $ok*$success; #will be 0 if any success 0
+	}
+	return $ok;
+}
+
+
+sub get_vector
+{
+    my $self = shift;
+	croak("cannot do get_vector on init_record that is type BLOCK") if ($self->type eq 'BLOCK');
+	croak("cannot do get_vector on init_record that is SAME") if ($self->same);
+
+	my @vector=();
+	foreach my $opt (@{$self->options}){
+		push(@vector,$opt->init);
+	}
+	return \@vector;
+}
+sub get_matrix
+{
+    my $self = shift;
+	croak("cannot do get_matrix on init_record that is not type BLOCK") unless ($self->type eq 'BLOCK');
+	croak("cannot do get_matrix on init_record that is SAME") if ($self->same);
+	
+	my @matrix=();
+	for (my $i=0; $i<$self->size; $i++){
+		push(@matrix,[(0)x$self->size]);
+	}
+	my $row=0;
+	my $col=0;
+	foreach my $opt (@{$self->options}){
+		$matrix[$row]->[$col] = $opt->init;
+		$matrix[$col]->[$row] = $opt->init;
+		if ($col == $row){
+			$row++;
+			$col=0;
+		}else{
+			$col++;
+		}
+	}
+	return \@matrix;
+}
+
 sub store_inits
 {
     my $self = shift;

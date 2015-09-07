@@ -9,6 +9,8 @@ my @print_order_sde = ('sizes','problem','input','bind','data','abbreviated','ms
 my %abbreviations;
 my %unsupported_records;
 
+my $choleskystarttag =';; Cholesky reparameterize start, DO NOT EDIT THIS LINE';
+my $choleskyendtag=';; Cholesky reparameterize end, DO NOT EDIT THIS LINE';
 
 # Here we intialize a hash used to find long names for abbreviated
 # record names. We use the print_order array which contains all
@@ -542,7 +544,7 @@ sub record_count
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 record_name => { isa => 'Str', optional => 1 }
+		 record_name => { isa => 'Str', optional => 0 }
 	);
 	my $record_name = $parm{'record_name'};
 	my $return_value = 0;
@@ -1054,6 +1056,32 @@ sub _option_val_pos
 	return \@values ,\@positions;
 }
 
+sub remove_theta_records
+{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+		 start_index => { isa => 'Int', optional => 0 },
+		 count => { isa => 'Int', optional => 0 }
+	);
+	my $start_index = $parm{'start_index'};
+	my $count = $parm{'count'};
+
+	my $have = 0;
+	$have = scalar(@{$self->thetas}) if (defined $self->thetas);
+	unless ($have >=($start_index+$count)){
+		croak("Input error problem->remove_theta_records, do not have ".($start_index+$count)." thetas, only $have ");
+	}
+	my @new = ();
+	for (my $i=0; $i<$start_index; $i++){
+		push (@new, $self->thetas->[$i]);
+	}
+	for (my $i=($start_index+$count); $i<$have; $i++){
+		push (@new, $self->thetas->[$i]);
+	}
+	$self -> thetas(\@new);
+
+}
+
 sub remove_records
 {
 	my $self = shift;
@@ -1064,7 +1092,6 @@ sub remove_records
 	my $type = $parm{'type'};
 	my $keep_last = $parm{'keep_last'};
 
-	my $rec_class = "model::problem::$type";
 	my $accessor = $type.'s';
 	if( $self -> can($accessor) ){
 		if ($keep_last){
@@ -1629,6 +1656,556 @@ sub check_start_eta
 		#should be allowed to have start eta > than neta?
 	}
 	return $start_omega_record;
+}
+
+sub inverse_cholesky_reparameterize
+{
+	#this is the main inverse routine to call from e.g. update_inits
+	my $self = shift;
+
+	my @errors=();
+
+	#get PK or PRED code
+	my @old_code;
+	my $code_record;
+
+	if (defined $self->pks and scalar(@{$self->pks})>0 ) {
+		@old_code = @{$self->pks->[0]->code};
+		$code_record = 'pk';
+	} elsif (defined $self->preds and scalar(@{$self->preds})>0) {
+		@old_code = @{$self->preds->[0]->code};
+		$code_record = 'pred';
+	} else {
+		push(@errors,"Neither PK nor PRED defined in \$PROB to cholesky reparameterize\n");
+		return \@errors;
+	}
+
+	my $new_code=[];
+	my @cut_out_code=();
+	#from PK/PRED cut out everything from-to
+	#$choleskystarttag to $choleskyendtag
+	my $found_start=0;
+	my $found_end=0;
+	foreach my $line (@old_code){
+		if ($line =~ /^\s*$choleskystarttag/){
+			$found_start=1;
+			next;
+		}elsif($line =~ /^\s*$choleskyendtag/){
+			$found_end=1;
+			next;
+		}
+		if ($found_start and (not $found_end)){
+			push(@cut_out_code,$line);
+		}else{
+			push(@{$new_code},$line);
+		}
+	}
+	unless ($found_start and $found_end){
+		push(@errors,"Did not find start tag\n $choleskystarttag \n in PRED/PK") unless ($found_start);
+		push(@errors,"Did not find end tag\n $choleskyendtag \n in PRED/PK") unless ($found_end);
+		return \@errors;
+	}
+	
+	#run linear_algebra::get_inverse_parameter_list on cut out code to get ETA, EPS, THETA, RECORD lists
+	my $hashref = linear_algebra::get_inverse_parameter_list(code => \@cut_out_code);
+	unless (defined $hashref->{'THETA'} and scalar(@{$hashref->{'THETA'}})>0 ){
+		push(@errors, "Found no THETAs for SD/COR in Cholesky PK/PRED code");
+		return(\@errors);
+	}
+	unless (defined $hashref->{'RECORD'} and scalar(@{$hashref->{'RECORD'}})>0 ){
+		push(@errors, "Found no record letters for SD/COR in Cholesky PK/PRED code");
+		return(\@errors);
+	}
+	my $start_theta = $self->find_start_theta_record_index(theta_number => $hashref->{'THETA'}->[0]);
+	my ($corhash,$sdhash,$esthash) = $self->get_SD_COR_values(start_theta_record_index => $start_theta,
+															  theta_record_count => scalar(@{$hashref->{'THETA'}}));
+	my $vectorhash = SD_COR_to_cov_vectors(cor_hash => $corhash,
+										   sd_hash => $sdhash);
+
+	my $errorref = $self->inverse_cholesky_reparameterize_records(vectors => $vectorhash,
+																  record_indices => $hashref->{'RECORD'},
+																  est_hash => $esthash);
+	push(@errors,@{$errorref}) if (scalar(@{$errorref})>0);
+
+	#remove THETAs in list $hashref->{'THETA'}
+	$self->remove_theta_records(start_index => $start_theta,
+								count => scalar(@{$hashref->{'THETA'}}));
+
+	#run linear_algebra::substitute_etas(inverse => 1 on both ETA and EPS list on remaining PK/PRED code
+	foreach my $param ('omega','sigma'){
+		my $str = 'ETA';
+		$str = 'EPS' if ($param eq 'sigma');
+		next unless (defined $hashref->{$str} and (scalar(@{$hashref->{$str}})>0));
+		linear_algebra::substitute_etas(code => $new_code,eta_list => $hashref->{$str},inverse => 1,sigma=>($param eq 'sigma'));
+
+		foreach my $coderec ('error','des'){ #never any ETAs in $MIX
+			my $acc = $coderec.'s';
+			if (defined $self->$acc and scalar(@{$self->$acc})>0 ) {
+				my @extra_code = @{$self->$acc->[0]->code};
+				linear_algebra::substitute_etas(code => \@extra_code,
+												eta_list => $hashref->{$str},
+												inverse => 1,
+												sigma => ($param eq 'sigma'));
+				$self -> set_records( type => $coderec,	record_strings => \@extra_code );
+			}
+		}
+	}
+	#set new PK/PRED code
+	$self -> set_records( type => $code_record,	record_strings => $new_code );
+	
+	return \@errors;
+
+}
+
+sub find_start_theta_record_index
+{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+							  theta_number  => {isa => 'Int', optional => 0},
+		);
+	my $theta_number = $parm{'theta_number'};
+
+	my $index=0;
+	my $count=0;
+	foreach my $record ( @{$self->thetas} ){
+		last if ($count == ($theta_number-1));
+		if( defined $record -> options ){
+		    $count += @{$record -> options};
+		}
+		$index++;
+	}
+	return $index;
+
+}
+
+sub SD_COR_to_cov_vectors
+{
+	#static no shift
+	my %parm = validated_hash(\@_,
+							  cor_hash => {isa => 'HashRef', optional => 0},
+							  sd_hash => {isa => 'HashRef', optional => 0},
+		);
+	my $cor_hash = $parm{'cor_hash'};
+	my $sd_hash = $parm{'sd_hash'};
+
+	my %vectors;
+
+	foreach my $letter (keys %{$sd_hash}){
+		$vectors{$letter}=[];
+		if (defined $cor_hash->{$letter}->{'2,1'}){
+			#block
+			for (my $row=1; $row<100; $row++){
+				if (defined $sd_hash->{$letter}->{$row}){
+					my $missing=0;
+					for (my $col=1; $col<$row; $col++){
+						if (defined $cor_hash->{$letter}->{$row.','.$col}){
+							push(@{$vectors{$letter}},
+								 ($cor_hash->{$letter}->{$row.','.$col})*($sd_hash->{$letter}->{$row})*($sd_hash->{$letter}->{$col}));
+						}else{
+							$missing=1;
+							last;
+						}
+					}
+					last if ($missing);
+					push(@{$vectors{$letter}},($sd_hash->{$letter}->{$row})**2);
+				}else{
+					last;
+				}
+			}
+		}else{
+			#diagonal, or BLOCK(1)
+			for (my $row=1; $row<100; $row++){
+				if (defined $sd_hash->{$letter}->{$row}){
+					push(@{$vectors{$letter}},($sd_hash->{$letter}->{$row})**2);
+				}else{
+					last;
+				}
+			}
+		}
+	}
+
+	return \%vectors;
+}
+
+sub get_SD_COR_values
+{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+							  start_theta_record_index => {isa => 'Int', optional => 0},
+							  theta_record_count => {isa => 'Int', optional => 0},
+		);
+	my $start_theta_record_index = $parm{'start_theta_record_index'};
+	my $theta_record_count = $parm{'theta_record_count'};
+
+	my %COR;
+	my %SD;
+	my %anyest;
+
+	for (my $index = $start_theta_record_index; $index < ($start_theta_record_index+$theta_record_count); $index++){
+		my $label = $self->thetas->[$index]->options->[0]->label;
+		my $value = $self->thetas->[$index]->options->[0]->init;
+		my $is_fix = $self->thetas->[$index]->options->[0]->fix;
+		if ($label =~ /^(SD|COR)_([A-Z]+)(\d+)/ ){
+			my $type = $1;
+			my $letter = $2;
+			my $place = $3; # 0 padding if dim > 9 
+			$anyest{$letter} = 1 if (not $is_fix);
+			if ($type eq 'COR'){
+#				print $label."\n";
+				if (length($place)==2){
+					#no padding
+					$COR{$letter}->{substr($place,0,1).','.substr($place,1,1)} = $value;
+				}else{
+					my $row = substr($place,0,2);
+					my $col = substr($place,2,2);
+					$row =~ s/^0//;
+					$col =~ s/^0//;
+					$COR{$letter}->{$row.','.$col} = $value;
+				}
+			}elsif($type eq 'SD'){
+				$place =~ s/^0//;
+				$SD{$letter}->{$place} = $value;
+			}else{
+				croak("type is $type");
+			}
+		}else{
+			croak("error inverse cholesky, label for theta $index is $label");
+		}
+	}
+	return (\%COR,\%SD,\%anyest);
+}
+
+
+
+sub inverse_cholesky_reparameterize_records
+{
+	#assume have already run update_inits on self, if have output
+
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+							  record_indices => {isa => 'ArrayRef', optional => 0},
+							  vectors => {isa => 'HashRef', optional => 0},
+							  est_hash => {isa => 'HashRef', optional => 0},
+		);
+	my $record_indices = $parm{'record_indices'}; #we assume these are sorted ascending
+	my $vectors = $parm{'vectors'};
+	my $est_hash = $parm{'est_hash'};
+
+	my @indices = @{$record_indices};
+	my $todo=scalar(@indices);
+	my $done=0;
+	my $next_index = shift(@indices);
+	my $letter = linear_algebra::record_index_to_letter(index => $next_index);
+
+	my $record_index=-1;
+	my @errors=();
+	foreach my $param ('omega','sigma'){
+		my $accessor = $param.'s';
+		next unless (defined $self->$accessor);
+		foreach my $record (@{$self->$accessor}){
+			$record_index++;
+			if($record_index == $next_index){
+				for (my $loop=1;$loop<2;$loop++){
+					#loop of only one round so that can easily break out with last
+					if ($record->same){
+						push(@errors,"Error inverse Cholesky, appear to have SD/COR values for block $letter which is SAME");
+						last;
+					}
+					my $needed_length = scalar(@{$record->options});
+					if (defined $vectors->{$letter}){
+						my $len = scalar(@{$vectors->{$letter}});
+						if ($len< $needed_length){ 
+							push(@errors,"Not enough SD/COR values for record $letter to perform inverse Cholesky. ".
+								 "Have values to compute leading $len entries of record, but need $needed_length");
+							last;
+						}
+						if ($len> $needed_length ){
+							push(@errors,"Too many SD/COR values for block $letter to perform inverse Cholesky. ".
+								 "Have values to compute leading $len entries of record, but only need $needed_length");
+							last;
+						}
+					}else{
+						push(@errors,"Missing SD 1 value for record $letter to perform inverse Cholesky");
+						last;
+					}
+					if ($est_hash->{$letter}==1){
+						#any element is estimated
+						$record->unfix();
+						#otherwise leave as fix which it will be from cholesky
+					}
+					my $ok = $record->set_vector(vector=> $vectors->{$letter});
+					if ($ok){
+						$done++;
+					}else{
+						push(@errors,"Failed setting record $letter to ".
+							 join(',',@{$vectors->{$letter}})." because of boundary violations");
+					}
+				}#end loop of one
+				last unless (scalar(@indices)>0);
+				$next_index = shift(@indices);
+				$letter = linear_algebra::record_index_to_letter(index => $next_index);
+			}
+
+		}
+	}	
+
+	unless ($done == $todo){
+		push(@errors,"Had $todo records to inverse parameterize, but managed with $done.");
+	}
+	return \@errors;
+}
+
+sub cholesky_reparameterize
+{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+							  what => {isa => 'Str', optional => 0},
+							  correlation_cutoff => { isa => 'Num', default=> 0,optional => 1 },
+							  correlation_limit => { isa => 'Num', default=> 0.9,optional => 1 },
+
+		);
+	my $what = $parm{'what'};
+	my $correlation_cutoff = $parm{'correlation_cutoff'};
+	my $correlation_limit = $parm{'correlation_limit'};
+
+	my $reparameterize_diagonal=0;
+	my $reparameterize_fix=0;
+	my $reparameterize_sigma=0;
+	my $reparameterize_omega=0;
+	my %record_list;
+	my $use_list=0;
+	my $inverse = 0;
+
+	# o4,s1 (regardless, cannot combine with below) Handle errors (SAME) 
+	# omega
+	# diagonal
+	# fix
+	# sigma
+	# all
+	if ($what eq 'all'){
+		$reparameterize_diagonal=1;
+		$reparameterize_fix=1;
+		$reparameterize_sigma=1;
+		$reparameterize_omega=1;
+	}else{
+		my @settings = split(',',$what);
+		my $param=0;
+		foreach my $set (@settings){
+			if($set eq 'omega'){
+				$reparameterize_omega=1;
+				$param = 1;
+			}elsif($set eq 'sigma'){
+				$reparameterize_sigma=1;
+				$param = 1;
+			}elsif($set eq 'fix'){
+				$reparameterize_fix=1;
+				$param = 1;
+			}elsif($set eq 'diagonal'){
+				$reparameterize_diagonal=1;
+				$param = 1;
+			}elsif($set =~ /^[oO](\d+)$/){
+				my $index = $1-1;
+				$record_list{$index}=1;
+				$use_list=1;
+			}elsif($set =~ /^[sS](\d+)$/){
+				my $index = $1-1;
+				my $offset =0;
+				$offset = scalar(@{$self->omegas}) if (defined $self->omegas);
+				$record_list{($offset+$index)}=1;
+				$use_list=1;
+			}elsif($set eq 'all'){
+				croak("Cannot combine 'all' with other parameters in cholesky reparameterization");
+			}else{
+				croak("Unrecognized parameter $set as input to cholesky reparameterization");
+			}
+		}
+		if ($use_list and $param){
+			croak("Cannot use both text input and a record list as input to cholesky reparameterization");
+		}
+		if ($param and (not $reparameterize_omega) and (not $reparameterize_sigma)){
+			$reparameterize_omega = 1; #assume per default
+		}
+	}
+
+
+	my @old_code;
+	my $code_record;
+
+	if (defined $self->pks and scalar(@{$self->pks})>0 ) {
+		@old_code = @{$self->pks->[0]->code};
+		$code_record = 'pk';
+	} elsif (defined $self->preds and scalar(@{$self->preds})>0) {
+		@old_code = @{$self->preds->[0]->code};
+		$code_record = 'pred';
+	} else {
+		croak("Neither PK nor PRED defined in \$PROB to cholesky reparameterize\n");
+	}
+
+	my @new_code=();
+	my @inits =();
+	my $warnings=0;
+	my $record_matrix;
+	my $theta_count=$self->record_count(record_name=>'theta');
+	my $record_index=-1; #continue count for sigmas, so not duplicate parameter names
+
+	foreach my $param ('omega','sigma'){
+		my @substitute_param_list=();
+		my $accessor = $param.'s';
+		my $eta_count=0;
+		my $done_previous=0;
+		my $previous_diagonal=0;
+		next unless (defined $self->$accessor);
+		foreach my $record (@{$self->$accessor}){
+			$record_index++;
+			#always count record to get reversible reparameterization, no shortcuts outside count loop
+			next if ($accessor eq 'sigmas' and (not $use_list) and (not $reparameterize_sigma));
+			next if ($accessor eq 'omegas' and (not $use_list) and (not $reparameterize_omega));
+			my $done_this=0;
+			my ($count,$code,$warn,$init);
+			my $do_same=0;
+			if ($record->same){
+				if ($done_previous){ #we do not care about use_list or not here, determined only by logic
+					$do_same=1;	#but compute no new matrix
+				}#else do nothing, just increase counters below
+			}elsif ($record->type eq 'BLOCK'){
+				if (
+					($use_list and ($record_list{$record_index}==1)) or
+					((not $use_list) and (not $record->fix)) or
+					((not $use_list) and ($record->fix) and $reparameterize_fix )) 
+				{
+					($record_matrix,$init,$code,$warn)=linear_algebra::string_cholesky_block(
+						value_matrix=>$record->get_matrix,
+						record_index=>$record_index,
+						theta_count=>$theta_count,
+						correlation_cutoff => ($record->fix ? 0 : $correlation_cutoff),
+						correlation_limit => $correlation_limit,
+						testing=>0,
+						fix=>$record->fix);
+					$done_this=1;
+					$previous_diagonal=0;
+				}#else do nothing, just increase counters below
+			}elsif ( #this is diagonal
+				($use_list and ($record_list{$record_index}==1) ) or
+				((not $use_list) and $reparameterize_diagonal)) {
+				my @fix_vector = ();
+				foreach my $opt (@{$record->options}){
+					push(@fix_vector,$opt->fix);
+				}
+				($record_matrix,$init,$code)=linear_algebra::string_cholesky_diagonal(
+					value_matrix=>$record->get_vector,
+					record_index=>$record_index,
+					theta_count=>$theta_count,
+					testing=>0,
+					reparameterize_fix => $reparameterize_fix,
+					fix_vector=>\@fix_vector);
+				$previous_diagonal=1;
+				$done_this=1;
+			}
+
+			if ($done_this){
+				push(@new_code,@{$code});
+				push(@inits,@{$init});
+				$warnings += $warn;
+				$done_previous=1;
+				$theta_count += scalar(@{$init});
+				$record->set_1_fix();
+			}
+			if($do_same or $done_this){
+				my $numlist;
+				($count,$code,$numlist)=linear_algebra::eta_cholesky_code(
+					stringmatrix=> $record_matrix,
+					eta_count=> $eta_count,
+					diagonal => $previous_diagonal,
+					sigma => ($param eq 'sigma'));
+				push(@new_code,@{$code});
+				push(@substitute_param_list,@{$numlist});
+			}else{
+				#just count etas
+				if (defined $record->size){
+					$count = $record->size;
+				}else{
+					$count = scalar(@{$record->options});
+				}
+				$done_previous=0;
+			}
+			$eta_count += $count;
+		}
+
+		#substitute here, before adding new code
+		linear_algebra::substitute_etas(code => \@old_code,
+										eta_list => \@substitute_param_list,
+										sigma => ($param eq 'sigma'));
+		foreach my $coderec ('error','des'){ #never any ETAs in $MIX
+			my $acc = $coderec.'s';
+			if (defined $self->$acc and scalar(@{$self->$acc})>0 ) {
+				my @extra_code = @{$self->$acc->[0]->code};
+				linear_algebra::substitute_etas(code => \@extra_code,
+												eta_list => \@substitute_param_list,
+												sigma => ($param eq 'sigma'));
+				$self -> set_records( type => $coderec,	record_strings => \@extra_code );
+			}
+		}
+	}
+	foreach my $init (@inits){
+		$self->add_records( type => 'theta',
+							record_strings => [$init] );
+	}
+
+	#make sure lines not too long
+	@new_code = @{reformat_code(code => \@new_code)};
+
+	unshift(@new_code,$choleskystarttag);
+	push(@new_code,$choleskyendtag);
+	#FIXME handle anchor here?
+	push(@new_code,@old_code);
+	$self -> set_records( type => $code_record,	record_strings => \@new_code );
+
+	return $warnings;
+}
+
+sub reformat_code
+{
+	#static no shift
+	my %parm = validated_hash(\@_,
+							  code => {isa => 'ArrayRef', optional => 0},
+							  max_length => {isa => 'Int', default => 70},
+							  indent => {isa => 'Str', default => '   '},
+		);
+	my $code = $parm{'code'};
+	my $max_length = $parm{'max_length'};
+	my $indent = $parm{'indent'};
+
+	#for each new_code check line not too long
+	#use line continuation marker &, example
+	#    CL = THETA(6)+GENDER+        &
+	#    THETA(7)*AGE
+
+	my @formatted=();
+	foreach my $line (@{$code}){
+		if ($line =~ /^\s*;/){
+			push(@formatted,$indent.$line);
+			next;
+		}
+		if (length($line) <= $max_length){
+			push(@formatted,$indent.$line);
+			next;
+		}
+		$line =~ s/^\s*//;
+		$line =~ s/\s*$//;
+		my @terms = split(/\+/,$line);
+		my $newline = $indent.$terms[0];
+		for (my $i=1; $i<scalar(@terms); $i++){
+			if ( (length($newline)+1+$terms[$i]) > $max_length){
+				push(@formatted,$newline.'+        &');
+				$newline = $indent.$indent.$terms[$i];
+			}else{
+				$newline .= '+'.$terms[$i];
+			}
+		}
+		push(@formatted,$newline);
+	}
+	return \@formatted;
+
 }
 
 sub get_record_matrix
@@ -2518,6 +3095,14 @@ sub create_print_order
 
 }
 
+sub reset_estimated_parameters_hash
+{
+    my $self = shift;
+	
+	$self->estimated_parameters_hash({});
+
+}
+
 sub set_estimated_parameters_hash
 {
 	#filter out fix and same and prior and off-diagonal zeros, set hash describing what is actually estimated
@@ -2791,6 +3376,8 @@ sub is_option_set
 				$found = 1 ;
 			}elsif( $fuzzy_match ){
 				if( index( $name, $option -> name ) == 0 ){
+					$found = 1;
+				}elsif(	index( $option -> name, $name  ) == 0 ){ #experimental
 					$found = 1;
 				}
 			}

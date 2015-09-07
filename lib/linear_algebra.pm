@@ -304,29 +304,55 @@ sub house
     my $beta=0;
     $vvec[0]=1;
     for (my $i=1;$i<$n;$i++){
-	$sigma += ($xvec->[$i])**2;
-	$vvec[$i]=$xvec->[$i];
+		$sigma += ($xvec->[$i])**2;
+		$vvec[$i]=$xvec->[$i];
     }
     if ($sigma == 0){
-	$beta=0;
+		$beta=0;
     }else{
-	my $mu = sqrt(($xvec->[0])**2 + $sigma);
-	if ($xvec->[0] <= 0){
-	    $vvec[0] = $xvec->[0]-$mu;
-	}else{
-	    $vvec[0] = -$sigma/($xvec->[0]+$mu);
-	}
-	$beta = 2*($vvec[0])**2/($sigma+($vvec[0])**2);
-	for (my $i=1;$i<$n;$i++){
-	    $vvec[$i]=$vvec[$i]/$vvec[0];
-	}
-	$vvec[0]=1;
+		my $mu = sqrt(($xvec->[0])**2 + $sigma);
+		if ($xvec->[0] <= 0){
+			$vvec[0] = $xvec->[0]-$mu;
+		}else{
+			$vvec[0] = -$sigma/($xvec->[0]+$mu);
+		}
+		$beta = 2*($vvec[0])**2/($sigma+($vvec[0])**2);
+		for (my $i=1;$i<$n;$i++){
+			$vvec[$i]=$vvec[$i]/$vvec[0];
+		}
+		$vvec[0]=1;
     }
     my %answer={};
     $answer{'beta'}=$beta;
     $answer{'vvec'}=\@vvec;
     return \%answer;
 } 
+
+sub full_rank
+{
+    #assume Amatrix is row format
+	my $ref =shift;
+    my @Amatrix = @{$ref};
+
+	my $full_rank=0;
+	my $nparam = scalar(@{$Amatrix[0]});
+	return $full_rank unless (scalar(@Amatrix)>= $nparam);
+
+	my @Atranspose = ();
+	for (my $i=0; $i<$nparam; $i++){
+		push(@Atranspose,[]);
+	}
+	foreach my $line (@Amatrix){
+		for (my $i=0; $i<$nparam; $i++){
+			push(@{$Atranspose[$i]},$line->[$i]);
+		}
+	}
+	my $Rmat=[];
+	unless (QR_factorize(\@Atranspose,$Rmat)){
+		$full_rank = 1;
+	}
+	return $full_rank;
+}
 
 sub QR_factorize
 { 
@@ -347,47 +373,49 @@ sub QR_factorize
     my $input_error = 2;
     my $numerical_error = 1;
 
-    
+    my $singular=0;
+
     for (my $j=0;$j<$ncol;$j++){
-	my @xvec = @{$Amatrix[$j]}[$j..$endrow];
-	#print join(' ',@xvec)."\n";
-	#die;
-	my $href = house(\@xvec);
-	my $beta = $$href{'beta'}; #double $ ?
-	my $vvec = $$href{'vvec'};
-	#house transform A(j:endrow,j:endcol)
-	#for first col know only first comp is number, rest is 0 (R matrix)
-	#w=beta Atrans v
-	my @wvec;
-	for (my $i=0;$i<($ncol-$j);$i++){
-	    my $col=$i+$j;
-	    $wvec[$i]=0;
-	    for (my $k=0;$k<($mrow-$j);$k++){
-		$wvec[$i] += $beta*($vvec->[$k])*$Amatrix[$col][$k+$j];
-	    }      
-	}
-	#col $j gives R
-	my @rcol;
-	@rcol = @{$Amatrix[$j]}[0..($j-1)] if ($j>0);
-	push(@rcol,($Amatrix[$j][$j]-$wvec[0]*$vvec->[0]));
-	push(@{$Rmatrix},\@rcol);
-	#check that rest practically 0 
-	for (my $k=1;$k<($mrow-$j);$k++){
-	    my $val = $Amatrix[$j][$j+$k]-$wvec[0]*$vvec->[$k];
-	    unless ( $val < 0.00001){
-		print "error in house transformation j $j k $k val $val\n";
-		return $numerical_error;
-	    }
-	}
-	#tranform rest of A cols for next iteration
-	for (my $i=1;$i<($ncol-$j);$i++){
-	    for (my $k=0;$k<($mrow-$j);$k++){
-		$Amatrix[$i+$j][$j+$k] = $Amatrix[$i+$j][$j+$k]-$wvec[$i]*$vvec->[$k];
-	    }
-	}
+		my @xvec = @{$Amatrix[$j]}[$j..$endrow];
+		#print join(' ',@xvec)."\n";
+		#die;
+		my $href = house(\@xvec);
+		my $beta = $$href{'beta'}; #double $ ?
+		my $vvec = $$href{'vvec'};
+		#house transform A(j:endrow,j:endcol)
+		#for first col know only first comp is number, rest is 0 (R matrix)
+		#w=beta Atrans v
+		my @wvec;
+		for (my $i=0;$i<($ncol-$j);$i++){
+			my $col=$i+$j;
+			$wvec[$i]=0;
+			for (my $k=0;$k<($mrow-$j);$k++){
+				$wvec[$i] += $beta*($vvec->[$k])*$Amatrix[$col][$k+$j];
+			}      
+		}
+		#col $j gives R
+		my @rcol;
+		@rcol = @{$Amatrix[$j]}[0..($j-1)] if ($j>0);
+		push(@rcol,($Amatrix[$j][$j]-$wvec[0]*$vvec->[0]));
+		push(@{$Rmatrix},\@rcol);
+		$singular = $numerical_error if (abs($rcol[-1])< 0.0000000000001); 
+		#check that rest practically 0 
+		for (my $k=1;$k<($mrow-$j);$k++){
+			my $val = $Amatrix[$j][$j+$k]-$wvec[0]*$vvec->[$k];
+			unless ( $val < 0.00001){
+				print "error in house transformation j $j k $k val $val\n";
+				return $numerical_error;
+			}
+		}
+		#tranform rest of A cols for next iteration
+		for (my $i=1;$i<($ncol-$j);$i++){
+			for (my $k=0;$k<($mrow-$j);$k++){
+				$Amatrix[$i+$j][$j+$k] = $Amatrix[$i+$j][$j+$k]-$wvec[$i]*$vvec->[$k];
+			}
+		}
     }
 
-    return 0;
+    return $singular;
 } 
 
 sub cholesky_transpose
@@ -414,6 +442,434 @@ sub cholesky_transpose
 	}
 	return 0;
 }
+
+sub record_index_to_letter
+{
+    my %parm = validated_hash(\@_,
+							  index => { isa => 'Int', optional => 1 },
+							  letter => { isa => 'Str', optional => 1 },
+	);
+	my $index = $parm{'index'};
+	my $letter = $parm{'letter'};
+	unless ( ((defined $index) or (defined $letter)) and (not ((defined $index) and (defined $letter)) )){
+		croak("must input letter XOR index in record_index_to_letter");
+	}
+
+	my @alphabet=('A','B','C','D','E','F','G','H','I','J','K','L','M',
+				  'N','O','P','Q','R','S','T','U','V','W','X','Y','Z',
+				  'AA','AB','AC','AD','AE','AF','AG','AH','AI','AJ','AK','AL','AM',
+				  'AN','AO','AP','AQ','AR','AS','AT','AU','AV','AW','AX','AY','AZ');
+
+	my %inverse_alphabet;
+	for (my $index=0; $index < scalar(@alphabet); $index++){
+		$inverse_alphabet{$alphabet[$index]} = $index;
+	}
+	if (defined $index){
+		croak("too high record index  ") if ($index > $#alphabet);
+		return $alphabet[$index];
+	}else{
+		croak("undef letter $letter") unless (defined $inverse_alphabet{$letter});
+		return $inverse_alphabet{$letter};
+	}
+
+}
+
+sub string_cholesky_block
+{
+    my %parm = validated_hash(\@_,
+							  value_matrix => { isa => 'ArrayRef', optional => 0 },
+							  theta_count => { isa => 'Int', optional => 0 },
+							  record_index => { isa => 'Int', optional => 0 },
+							  testing => { isa => 'Bool', default => 0 },
+							  fix => { isa => 'Bool', default => 0 },
+							  correlation_cutoff => { isa => 'Num', default=> 0,optional => 1 },
+							  correlation_limit => { isa => 'Num', default=> 0.9,optional => 1 },
+		);
+	my $value_matrix = $parm{'value_matrix'};
+    my $theta_count = $parm{'theta_count'};
+	my $record_index = $parm{'record_index'};
+	my $testing = $parm{'testing'};
+	my $fix = $parm{'fix'};
+	my $correlation_cutoff = $parm{'correlation_cutoff'};
+	my $correlation_limit = $parm{'correlation_limit'};
+
+	croak("correlation_cutoff cannot be negative") if ($correlation_cutoff < 0);
+	croak("correlation_limit cannot be negative") if ($correlation_limit < 0);
+
+	my $FIX='';
+	$FIX = ' FIX' if $fix;
+	my $warnings = 0;
+	
+	my $letter=record_index_to_letter(index=>$record_index);
+
+	my $dimension = scalar(@{$value_matrix});
+	my @indices = ('1','2','3','4','5','6','7','8','9');
+	if ($dimension > 9){
+		@indices = ('01','02','03','04','05','06','07','08','09');
+		for (my $i=10; $i<=$dimension; $i++){
+			push(@indices,$i);
+		}
+	}
+
+	my $sqrt='SQRT';
+	$sqrt = 'sqrt' if $testing;
+	my $par='';
+	$par = '$' if $testing;
+	my $term='';
+	$term = ';' if $testing;
+	my $sep='';
+	my $sepd='_';
+
+	my @sd_names=();
+	my @corr_names=();
+	my $stringmatrix=[];
+
+	my @theta_inits=();
+	my @code=();
+	for (my $i=0; $i< $dimension; $i++){
+		my $sdparam = $par.'SD'.$sepd.$letter.$indices[$i];
+		push(@sd_names,$sdparam);
+		push(@corr_names,[('') x $dimension]);
+		push(@{$stringmatrix},[('')x $dimension]);
+		my $init = sqrt($value_matrix->[$i]->[$i]); #sqrt of variance
+		if ($testing){
+			push(@theta_inits,"$sdparam=$init;");
+		}else{
+			my $formatted = sprintf("%.8G",$init); 
+			push(@theta_inits,'(0,'.$formatted.')'.$FIX.' ; '.$sdparam);
+			$theta_count++;
+			push(@code,$sdparam.'=THETA('.$theta_count.')');
+		}
+		for (my $j=0; $j< $i; $j++){
+			my $rho = $par.'COR'.$sepd.$letter.$indices[$i].$indices[$j];
+			$corr_names[$i]->[$j]=$rho;
+			my $init = ($value_matrix->[$i]->[$j])/(sqrt($value_matrix->[$i]->[$i])*sqrt($value_matrix->[$j]->[$j]));
+			$warnings++ if (abs($init)> $correlation_limit);
+			if ($testing){
+				push(@theta_inits,"$rho=$init;");
+			}else{
+				if (abs($init)<= $correlation_cutoff){
+					push(@theta_inits,'0 FIX ; '.$rho.' ; initial '.$init.' <= '.$correlation_cutoff.' cutoff ');
+				}else{
+					my $formatted = sprintf("%.8G",$init); 
+					push(@theta_inits,'(-1,'.$formatted.',1)'.$FIX.' ; '.$rho); #ok bound if FIX?
+				}
+				$theta_count++;
+				push(@code,$rho.'=THETA('.$theta_count.')');
+			}
+		}
+	}
+
+	for (my $i=0; $i< $dimension; $i++){
+		$stringmatrix->[$i]->[$i] = '1';
+		for (my $j=0; $j< $i; $j++){
+			$stringmatrix->[$i]->[$j] = $corr_names[$i]->[$j];
+			$stringmatrix->[$j]->[$i] = $corr_names[$i]->[$j]; #symmetry
+		}
+	}
+
+
+    #Golub p144 Alg 4.2.1
+
+	if (1){
+		for (my $j=0; $j< $dimension; $j++){
+			if ($j>0) {
+				#i=j
+				my $sum=$stringmatrix->[0][$j].'**2';
+				for (my $k=1; $k<$j ; $k++){
+					$sum=$sum.'+'.$stringmatrix->[$k][$j].'**2';
+				}
+				my $diff = $stringmatrix->[$j][$j].'-('.$sum.')';
+				$stringmatrix->[$j][$j]=$sqrt.'('.$diff.')';
+				#i=j+1:n
+				my $newvar=$par.'CH'.$sepd.$letter.$indices[$j].$indices[$j];
+				push(@code,$newvar.'='.$stringmatrix->[$j][$j].$term);
+				$stringmatrix->[$j][$j] = $newvar;
+				for (my $i=($j+1); $i<$dimension; $i++){
+					my $sum=$stringmatrix->[0][$j].'*'.$stringmatrix->[0][$i];
+					my $parleft='';
+					my $parright='';
+					for (my $k=1; $k<$j ; $k++){
+						$parleft='(';
+						$parright=')';
+						$sum=$sum.'+'.$stringmatrix->[$k][$j].'*'.$stringmatrix->[$k][$i];
+					}
+					$stringmatrix->[$j][$i]='('.$stringmatrix->[$j][$i].'-'.$parleft.$sum.$parright.')/'.$stringmatrix->[$j][$j];
+				}
+
+				#create intermediate variable to replace with
+				#only changing [j][j] and [j][i] where i>j
+				for (my $i=($j+1); $i<$dimension; $i++){
+					my $newvar=$par.'CH'.$sepd.$letter.$indices[$i].$indices[$j];
+					push(@code,$newvar.'='.$stringmatrix->[$j][$i].$term);
+					$stringmatrix->[$j][$i] = $newvar;
+				}
+			} else {
+				#do nothing, this is just division by 1
+#				$stringmatrix->[0][0]='SQRT('.$stringmatrix->[0][0].')'; #we know this is 1
+
+#				for (my $i=1; $i< $dimension; $i++){
+#					$stringmatrix->[0][$i]='('.$stringmatrix->[0][$i].')/('.$stringmatrix->[0][0].')';
+#				}
+				unless ($testing){
+					push(@code,';Comments below show CH variables for 1st column, too simple to need new variables');
+					for (my $i=$j; $i<$dimension; $i++){
+						my $newvar=$par.'CH'.$sepd.$letter.$indices[$i].$indices[$j];
+						push(@code,';'.$newvar.'='.$stringmatrix->[$j][$i].$term);
+					}				
+				}
+			}
+		}
+	}
+
+
+	if (1){
+		for(my $i=0;$i<$dimension;$i++){
+			for (my $j=0; $j<=$i; $j++){
+				my $sdi = $sd_names[$i];
+				my $par = 'CHOL_'.$letter.'_'.($i+1).'_'.($j+1);
+				my $left='(';
+				my $right=')';
+				if ($j < 1){
+					$left='';
+					$right='';
+				}
+				if ($i==0 and $j==0){
+					$stringmatrix->[$j]->[$i]= $sdi;
+				}else{
+					$stringmatrix->[$j]->[$i] = $stringmatrix->[$j]->[$i].'*'.$sdi;
+					$stringmatrix->[$i]->[$j] = $stringmatrix->[$j]->[$i];
+				}
+			}
+		}
+	}
+
+	return ($stringmatrix,\@theta_inits,\@code,$warnings);
+
+}
+
+sub string_cholesky_diagonal
+{
+    my %parm = validated_hash(\@_,
+							  value_matrix => { isa => 'ArrayRef', optional => 0 },
+							  fix_vector => { isa => 'ArrayRef', optional => 0 },
+							  theta_count => { isa => 'Int', optional => 0 },
+							  record_index => { isa => 'Int', optional => 0 },
+							  testing => { isa => 'Bool', default => 0 },
+							  reparameterize_fix => { isa => 'Bool', default => 0 },
+		);
+	my $value_matrix = $parm{'value_matrix'};
+	my $fix_vector = $parm{'fix_vector'};
+    my $theta_count = $parm{'theta_count'};
+	my $record_index = $parm{'record_index'};
+	my $testing = $parm{'testing'};
+	my $reparameterize_fix = $parm{'reparameterize_fix'};
+	
+	my $letter=record_index_to_letter(index=>$record_index);
+
+
+	my @FIX=();
+	foreach my $f (@{$fix_vector}){
+		if ($f){
+			push(@FIX,' FIX');
+		}else{
+			push(@FIX,'');
+		}
+	}
+
+	my $dimension = scalar(@{$value_matrix});
+	my @indices = ('1','2','3','4','5','6','7','8','9');
+	if ($dimension > 9){
+		@indices = ('01','02','03','04','05','06','07','08','09');
+		for (my $i=10; $i<=$dimension; $i++){
+			push(@indices,$i);
+		}
+	}
+
+	my $sqrt='SQRT';
+	$sqrt = 'sqrt' if $testing;
+	my $par='';
+	$par = '$' if $testing;
+	my $term='';
+	$term = ';' if $testing;
+	my $sep='';
+	my $sepd='_';
+
+	my $stringarray=[];
+
+	my @theta_inits=();
+	my @code=();
+	for (my $i=0; $i< $dimension; $i++){
+		if ($fix_vector->[$i] and (not $reparameterize_fix)){
+			push(@{$stringarray},undef);
+			next;
+		}
+		my $sdparam = $par.'SD'.$sepd.$letter.$indices[$i];
+		push(@{$stringarray},$sdparam);
+		my $init = sqrt($value_matrix->[$i]); #sqrt of variance
+		if ($testing){
+			push(@theta_inits,"$sdparam=$init;");
+		}else{
+			my $formatted = sprintf("%.8G",$init); 
+			push(@theta_inits,'(0,'.$formatted.')'.$FIX[$i].' ; '.$sdparam);
+			$theta_count++;
+			push(@code,$sdparam.'=THETA('.$theta_count.')');
+		}
+	}
+	return ($stringarray,\@theta_inits,\@code);
+
+}
+
+sub get_inverse_parameter_list
+{
+	#cut out code between start tag and end tag
+    my %parm = validated_hash(\@_,
+							  code => { isa => 'ArrayRef', optional => 0 },
+		);
+	my $code = $parm{'code'};
+
+
+	my %etaparams;
+	my %epsparams;
+	my %thetaparams;
+	my %record_indices;
+	foreach my $line (@{$code}){
+		if ($line =~ /^\s*ETA_(\d+)\s*=/){
+			$etaparams{$1}=1;
+		}elsif ($line =~ /^\s*EPS_(\d+)\s*=/){
+			$epsparams{$1}=1;
+		}elsif ($line =~ /^\s*(SD|COR)_([A-Z]+)\d+\s*=THETA\((\d+)\)/){
+			$thetaparams{$3}=1;
+			$record_indices{record_index_to_letter(letter => $2)}=1;
+		}
+
+	}
+	my @etalist = (sort {$a <=> $b} keys %etaparams);
+	my @epslist = (sort {$a <=> $b} keys %epsparams);
+	my @thetalist = (sort {$a <=> $b} keys %thetaparams);
+	my @recordlist = (sort {$a <=> $b} keys %record_indices);
+
+	return {'ETA' => \@etalist, 'EPS' => \@epslist, 'THETA' => \@thetalist, 'RECORD' => \@recordlist};
+
+}
+sub substitute_etas
+{
+    my %parm = validated_hash(\@_,
+							  code => { isa => 'ArrayRef', optional => 0 },
+							  eta_list => { isa => 'ArrayRef', optional => 0 },
+							  sigma => { isa => 'Bool', default => 0 },
+							  inverse => { isa => 'Bool', default => 0 },
+		);
+	my $code = $parm{'code'};
+	my $eta_list = $parm{'eta_list'};
+    my $sigma = $parm{'sigma'};
+    my $inverse = $parm{'inverse'};
+
+	foreach my $num (@{$eta_list}){
+		if ($sigma){
+			#error check
+			if ($inverse){
+				foreach (@{$code}){
+					if (/\bEPS\($num\)/ ){
+						croak("found parameter named EPS($num) in model to inverse cholesky reparameterize, ".
+							  "something must have gone wrong ");
+					}
+				}
+			}else{
+				foreach (@{$code}){
+					if (/\bEPS_$num\b/ ){
+						croak("found parameter named EPS_$num in model to cholesky reparameterize, ".
+							  "this parameter name is reserved and must be replaced before ".
+							  "reparameterization");
+					}
+				}
+			}
+			#substitute
+			if ($inverse){
+				foreach (@{$code}){
+					s/\bEPS_$num\b/EPS($num)/g;
+				}
+			}else{
+				foreach (@{$code}){
+					s/\bEPS\($num\)/EPS_$num/g;
+				}
+			}
+		}else{
+			#error check
+			if ($inverse){
+				foreach (@{$code}){
+					if (/\bETA\($num\)/ ){
+						croak("found parameter named ETA($num) in model to inverse cholesky reparameterize, ".
+							  "something must have gone wrong ");
+					}
+				}
+			}else{
+				foreach (@{$code}){
+					if (/\bETA_$num\b/ ){
+						croak("found parameter named ETA_$num in model to cholesky reparameterize, ".
+							  "this parameter name is reserved and must be replaced before ".
+							  "reparameterization");
+					}
+				}
+			}
+			#substitute
+			if ($inverse){
+				foreach (@{$code}){
+					s/\bETA_$num\b/ETA($num)/g;
+				}
+			}else{
+				foreach (@{$code}){
+					s/\bETA\($num\)/ETA_$num/g;
+				}
+			}
+		}
+	}
+
+}
+
+sub eta_cholesky_code
+{
+    my %parm = validated_hash(\@_,
+							  stringmatrix => { isa => 'ArrayRef', optional => 0 },
+							  eta_count => { isa => 'Int', optional => 0 },
+							  diagonal => { isa => 'Bool', optional => 0 },
+							  sigma => { isa => 'Bool', default => 0 },
+		);
+	my $stringmatrix = $parm{'stringmatrix'};
+    my $eta_count = $parm{'eta_count'};
+    my $diagonal = $parm{'diagonal'};
+    my $sigma = $parm{'sigma'};
+
+
+	my $ETA = 'ETA';
+	$ETA = 'EPS' if $sigma;
+	my @etalist=();
+	my @code=();
+	my $dimension = scalar(@{$stringmatrix});
+	my @nums=();
+	for (my $i=0; $i< $dimension; $i++){
+		push(@nums,($eta_count+$i+1));
+	}
+	for (my $i=0; $i< $dimension; $i++){
+		my $line = $ETA.'_'.$nums[$i].'=';
+		if ($diagonal){
+			next unless (defined $stringmatrix->[$i]);
+			$line .= $ETA.'('.$nums[$i].')*'.$stringmatrix->[$i];
+		}else{
+			for (my $j=0; $j<=$i; $j++){
+				$line .= '+' if ($j>0);
+				$line .= $ETA.'('.$nums[$j].')*'.$stringmatrix->[$i]->[$j];
+			}
+		}
+		push(@etalist,$nums[$i]);
+		push(@code,$line);
+	}
+
+
+	return ($dimension,\@code,\@etalist);
+}
+
+
 
 sub cholesky
 {
@@ -853,6 +1309,40 @@ sub column_cov
     return 0;
 }
 
+sub covar2sdcorr
+{
+    my $varcov=shift;
+    my $sdcorr = shift;
+    my $debug=0;
+    my $input_error = 2;
+    my $numerical_error = 1;
+
+    my $nrow= scalar(@{$varcov});
+    return $input_error if ($nrow < 1);
+    my $ncol = scalar(@{$varcov->[0]});
+	my @sd =();
+
+    for (my $row=0; $row< $nrow; $row++){
+		return $input_error if (scalar(@{$varcov->[$row]}) != $ncol);
+		if ($varcov->[$row]->[$row] <= 0){
+			return $input_error ;
+		}else{
+			push(@sd,sqrt($varcov->[$row]->[$row]));
+		}
+    }
+    for (my $row=0; $row< $nrow; $row++){
+		push(@{$sdcorr},[]);
+		for (my $col=0; $col< $row; $col++){
+			push(@{$sdcorr->[$row]},$sdcorr->[$col]->[$row]);
+		}
+		#diag
+		push(@{$sdcorr->[$row]},$sd[$row]);
+		for (my $col=($row+1); $col< $nrow; $col++){
+			push(@{$sdcorr->[$row]},$varcov->[$row]->[$col]/($sd[$row]*$sd[$col]));
+		}
+	}
+	return 0;
+}
 sub row_cov
 {
     #input is reference to values matrix 
@@ -860,8 +1350,6 @@ sub row_cov
     #and reference to empty result matrix
     #compute square variance covariance matrix
     #Normalization is done with N-1, input error if N<2
-    #verified with matlab cov function
-
     
     my $Aref=shift;
     my $varcov = shift;

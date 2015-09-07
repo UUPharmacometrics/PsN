@@ -55,6 +55,12 @@ $help_text{Examples} = <<'EOF';
 
 	Use generic labels:
 	covmat -rawres_input=raw_results_run5.csv run5.mod
+
+	The covmat script prints output to screen. On unix the output can be
+	redirected to a file using >. Example
+
+	covmat -rawres_input=raw_results_run5.csv run5.mod > run5_empirical.cov
+
 EOF
 
 $help_text{Options} = <<'EOF';      
@@ -270,6 +276,7 @@ foreach my $param (@list_parameters){
 
 
 my $resulthash = tool::sir::empirical_statistics( sampled_params_arr => $sampled_params_arr,
+												  do_percentiles => 0,
 												  labels_hash => $labels_hash);
 
 

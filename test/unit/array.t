@@ -159,6 +159,14 @@ cmp_float (array::stdev(\@a), 2.753785273643051, "A simple stdev");
 @a = qw(1);
 is (array::stdev(\@a), undef, "stdev of only one value");
 
+#test of rse
+cmp_float(array::rse(\@a,10),0.2753785273643051,"relative standard error of expectation");
+
+#test of sem
+@a = qw(3 -5 0 -100 3);
+cmp_float(array::sem(\@a),20.103233570746770,"standard error of the mean");
+
+
 # Test of is_int
 ok (array::is_int([1, 2, 3, 4]), "is_int integer array");
 ok (!array::is_int([1, 2, 3, 3.3]), "is_int array with float");

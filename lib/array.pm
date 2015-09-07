@@ -11,7 +11,7 @@ use math qw(round);
 
 require Exporter;
 our @ISA = qw(Exporter);
-our %EXPORT_TAGS = ('all' => [ qw(not_empty is_empty diff cumsum max min linspace unique add sum mean median median_and_ci variance stdev is_int quantile percentile is_equal get_array_positions) ]);
+our %EXPORT_TAGS = ('all' => [ qw(not_empty is_empty diff cumsum max min linspace unique add sum mean median median_and_ci variance stdev is_int quantile percentile is_equal get_array_positions sem rse) ]);
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 
 sub get_array_positions{
@@ -408,6 +408,39 @@ sub variance
 	}
 
 	return (1 / (scalar(@$ref) - 1)) * $sum;
+}
+
+sub rse
+{
+	#warning: this is for a specific sir case, is probably
+	#a special definition of rse
+    # Calculate the relative standard error of the expectation of an array.
+	#expectation is the estimate
+    my ($array,$expectation) = pos_validated_list(\@_,
+										   { isa => 'ArrayRef'}, 
+										   {isa => 'Num' },
+		);
+	my $result = 0;
+	my $val_count = scalar(@{$array});
+	return if (($val_count == 0) or ($val_count == 1));     # Must handle zero length array
+	return if ((not defined $expectation) or ($expectation == 0));
+	$result = stdev($array)/abs($expectation);
+	return $result;
+}
+
+sub sem
+{
+    # Calculate the standard error of the mean of an array.
+
+    my ($array) = pos_validated_list(\@_,
+        { isa => 'ArrayRef' },
+    );
+
+	my $result = 0;
+	my $val_count = scalar(@{$array});
+	return if (($val_count == 0) or ($val_count == 1));     # Must handle zero length array
+	$result = stdev($array)/sqrt($val_count);
+	return $result;
 }
 
 sub stdev
