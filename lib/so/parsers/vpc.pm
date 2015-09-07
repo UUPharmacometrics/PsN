@@ -55,8 +55,6 @@ sub _create_vpc
 
     # find vpctab
     my $vpcdir = utils::file::directory($self->vpc_results);
-    print "YYY ", $self->vpc_results, "\n";
-    print "QQQ $vpcdir\n";
     (my $vpctab) = glob "$vpcdir/vpctab*";
 
     $self->_so_block->RawResults->add_datafile(name => $vpctab, description => "PsN vpctab"); 
