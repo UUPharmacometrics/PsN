@@ -115,6 +115,7 @@ LIBFILES= ui.pm \
 	so/soblock.pm \
 	so/parsers/nmoutput.pm \
 	so/parsers/bootstrap.pm \
+	so/parsers/psn.pm \
 	so/soblock/estimation.pm \
 	so/soblock/rawresults.pm \
 	so/soblock/simulation.pm \
