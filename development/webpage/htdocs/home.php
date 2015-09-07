@@ -36,7 +36,7 @@
 Version 4.4.8 was released September 7th 2015, and is available <a href="download.php">here</a>.
 </p>
  <p>
-The focus of this release is bug fixes and extensions of the test suite. Several of the bugs have been in PsN since version 3.7.6, some are even older. There are only minor new features. The sir algorithm has undergone major changes which are described in the sir userguide.
+The focus of this release is bug fixes and extensions of the test suite. Several of the bugs have been in PsN since version 3.7.6, some are even older. There are only minor new features.
 </p>
 
  <li>Installation on Windows: Users who install PsN for the first time need to make sure they install a Perl version where
@@ -74,6 +74,8 @@ bootstrap and execute.
 <p>
 The complete list of new features and bugfixes in 4.4.0 is found  
 <a href="pdfdocs/release_notes_PsN_4_4_0.txt" target="_blank">here</a></dt>.
+</p><p>The list of bugs in 4.4.0 that were known at release of 4.4.8 is found
+<a href="pdfdocs/bug_list_PsN_4_4_0_at_next_release.txt" target="_blank">here</a>
 </p>
 <h3>Known issues with version 4.4.0</h3>
 <li>
