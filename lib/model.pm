@@ -1539,9 +1539,6 @@ sub get_rawres_params
 			push(@{$sigmalabels[0]},$header[$j]);
 		}
 	}
-#	print "theta ".join(' ',@{$thetalabels[0]})."\n";
-#	print "omega ".join(' ',@{$omegalabels[0]})."\n";
-#	print "sigma ".join(' ',@{$sigmalabels[0]})."\n";
 
 	if (scalar(@thetalabels) != 1 or scalar(@omegalabels) != 1 or scalar(@sigmalabels) != 1){
 		croak("get_rawres_params can only be done if exactly one \$PROB");
@@ -1646,7 +1643,7 @@ sub get_rawres_params
 
 	if ($pos > scalar(@header)){
 		croak("assigned position for theta/omega/sigma greater than number ".
-			  "of items in raw_res header");
+			  "of items in raw_res header. This could happen if there are multiple parameters having the same label.");
 	}
 	
 	#skip the offset first lines of @file

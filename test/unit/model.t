@@ -42,8 +42,6 @@ my @output_files = qw(pheno.lst pheno.ext pheno.cov pheno.cor pheno.coi pheno.ph
 pheno.imp pheno.npd pheno.npe pheno.npi pheno.fgh pheno.log.xml pheno.cpu pheno.shm pheno.agh patab1 phenomsf);
 
 my $files = $model->output_files;
-use Data::Dumper;
-print Dumper($files);
 
 for (my $i = 0; $i < @output_files; $i++) {
 	is ($$files[$i], $output_files[$i], "output_files method $i");
@@ -129,8 +127,6 @@ is($arr->[0]->{'model'},1,'method get_rawres_params, model 0');
 is($arr->[1]->{'model'},2,'method get_rawres_params, model 1');
 is($arr->[2]->{'model'},5,'method get_rawres_params, model 2');
 
-
-
 my $vectorsamples = $model->create_vectorsamples(sampled_params_arr => $arr);
 is($vectorsamples->[0]->[0],1.1,'create vectorsamples 0,0');
 is($vectorsamples->[0]->[1],1.2,'create vectorsamples 0,1');
@@ -147,6 +143,15 @@ is($vectorsamples->[2]->[1],3.2,'create vectorsamples 2,1');
 is($vectorsamples->[2]->[2],3.3,'create vectorsamples 2,2');
 is($vectorsamples->[2]->[3],3.4,'create vectorsamples 2,3');
 is($vectorsamples->[2]->[4],3.5,'create vectorsamples 2,4');
+
+# get_rawres_params with rawres
+dies_ok { ($arr,$hashref) = model::get_rawres_params(filename => $modeldir.'/rawres_for_get_rawres_params_duplicated.csv',
+										   string_filter => ['method.eq.bootstrap'],
+										   require_numeric_ofv => 1,
+										   offset => 1,
+										   rawres_structure_filename => $modeldir.'/rawres_for_get_rawres_params_structure');
+                                   } 'get_rawres_paramas cannot handle duplicated parameter labels';
+
 
 ($arr,$hashref) = model::get_rawres_params(filename => $modeldir.'/rawres_for_get_rawres_params.csv',
 										   string_filter => ['method.eq.bootstrap'],
