@@ -1,0 +1,39 @@
+Starting 1 NONMEM executions. 1 in parallel.
+S:1 .. 
+All executions started.
+Starting NMTRAN
+  
+ WARNINGS AND ERRORS (IF ANY) FOR PROBLEM    1
+             
+ (WARNING  2) NM-TRAN INFERS THAT THE DATA ARE POPULATION.
+Note: The following floating-point exceptions are signalling: IEEE_INVALID_FLAG IEEE_DIVIDE_BY_ZERO
+Pathlist information for compiler and MPI systems are located in nmpathlist.txt
+
+Building NONMEM Executable
+Starting nonmem execution ...
+License Registered to: Uppsala University
+Expiration Date:    14 MAR 2016
+Current Date:        7 SEP 2015
+Days until program expires : 192
+
+
+ First Order
+ MONITORING OF SEARCH:
+
+
+0ITERATION NO.:    0    OBJECTIVE VALUE:   68.1157844466480        NO. OF FUNC. EVALS.:   5
+ CUMULATIVE NO. OF FUNC. EVALS.:        5
+ NPARAMETR:  1.0500E-02  1.0500E+00  4.0000E-01  2.5000E-01  4.0000E-02
+ PARAMETER:  1.0000E-01  1.0000E-01  1.0000E-01  1.0000E-01  1.0000E-01
+ GRADIENT:   3.9335E+00 -1.9318E+01  2.2470E+00  5.7457E+00  7.8189E+00
+
+0ITERATION NO.:   16    OBJECTIVE VALUE:   51.6809291910970        NO. OF FUNC. EVALS.:   0
+ CUMULATIVE NO. OF FUNC. EVALS.:      103
+ NPARAMETR:  4.7758E-03  1.4176E+00  1.8266E-01  8.2529E-02  7.3844E-03
+ PARAMETER: -6.8781E-01  4.0017E-01 -2.9192E-01 -4.5416E-01 -7.4476E-01
+ GRADIENT:  -2.1486E-05  5.0414E-05  2.5062E-06  2.0249E-06 -5.6368E-06
+ Elapsed estimation  time in seconds:     0.00
+ Elapsed postprocess time in seconds:     0.00
+Done with nonmem execution
+F:1 .. 
+execute done

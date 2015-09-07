@@ -1,0 +1,7 @@
+Starting 3 NONMEM executions. 3 in parallel.
+S:1 .. 
+Warning: No model to estimate. Will only simulate.
+S:2 .. S:3 .. Waiting for all NONMEM runs to finish:
+F:1 .. F:2 .. F:3 ..  done
+
+sse done

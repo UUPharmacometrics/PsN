@@ -1,0 +1,11 @@
+Starting 2 NONMEM executions. 2 in parallel.
+S:1 .. S:2 .. Waiting for all NONMEM runs to finish:
+F:2 .. F:1 ..  done
+
+Reading and formatting DV data. This can take a while...
+Reading sample 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 
+Done reading and formatting data, finishing run.
+Auto binning evaluating N =  2
+Auto binning: using 2 bins
+Auto binning: bin edges -25.6,73.5,169.366666666667
+vpc done

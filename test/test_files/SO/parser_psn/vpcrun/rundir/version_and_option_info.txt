@@ -1,0 +1,83 @@
+PsN version: 4.5.1
+Run started: 2015-09-07 at 14:47
+version_and_option_info.txt is overwitten if the run is restarted later using option -directory.
+The original file from the first call is saved as original_version_and_option_info.txt.
+
+Command:
+/home/kajsa/kod-psn/PsN4/bin/vpc -auto_b=2 -min_points=5 -samples=20 pheno5.mod -dir=rundir -rplots=-1 -clean=3
+
+NONMEM:
+/opt/nm740
+
+Actual values optional vpc options (undefined values not listed):
+-bin_array=
+-boxcox_lambda=0
+-confidence_interval=95
+-copy_data=1
+-dv=DV
+-fine_pi=0
+-flip_comments=0
+-idv=TIME
+-keep_estimation=0
+-levels=
+-lnDV=0
+-min_points_in_bin=5
+-n_simulation_models=1
+-noprediction=0
+-offset_rawres=1
+-predcorr=0
+-varcorr=0
+
+Actual values optional PsN (common) options (undefined values not listed):
+-abort_on_fail=0
+-accepted_ofv_difference=0.5
+-add_retries=0
+-check_nmtran=0
+-clean=3
+-compress=0
+-condition_number_limit=1000
+-correlation_limit=0.85
+-crash_restarts=4
+-degree=0.1
+-directory=/home/kajsa/kod-psn/PsN4/test/test_files/SO/parser_psn/vpcrun/rundir/
+-display_iterations=0
+-handle_crashes=1
+-handle_msfo=0
+-large_omega_cv_limit=0.8
+-large_sigma_cv_limit=0.8
+-large_theta_cv_limit=0.5
+-last_est_complete=0
+-lsf_sleep=3
+-min_retries=0
+-missing_data_token=-99
+-near_bound_sign_digits=2
+-near_zero_boundary_limit=0.01
+-nice=19
+-nm_version=default
+-nmfe=1
+-nmfe_options=-tprdefault -xmloff
+-nmqual=0
+-nodes=0
+-parafile=none
+-picky=0
+-prepend_model_file_name=0
+-quick_summarize=0
+-retries=0
+-rplots=-1
+-run_on_lsf=0
+-run_on_sge=0
+-run_on_slurm=0
+-run_on_torque=0
+-run_on_ud=0
+-run_on_zink=0
+-seed=865025
+-send_email=0
+-shrinkage=0
+-sign_digits_off_diagonals=2
+-significant_digits_accept=0
+-standardised_output=0
+-template_directory_rplots=/home/kajsa/kod-psn/PsN4/R-scripts/
+-template_file_rplots=vpc_default.R
+-threads=4
+-tweak_inits=1
+-verbose=0
