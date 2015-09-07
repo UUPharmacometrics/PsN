@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{Known bugs and workarounds}{2015-08-24}
+\guidetitle{Known bugs and workarounds}{2015-09-07}
 
 
 \begin{document}
@@ -14,6 +14,12 @@ for a list of bugs that have been discovered after the time of release:\\
 \texttt{http://sourceforge.net/p/psn/wiki/Bug\_list\_current\_release}   
 
 \section{Bugs}
+\subsection{Sensitive format for raw results input file in sse, vpc, npc, sir}
+The parameter labels in the column headers for THETA, OMEGA and SIGMA must be unique. If two parameters have the same
+column header then Psn will crash during reading of the raw results file.
+
+Any column header that contains a comma, e.g. OMEGA(2,1), must be enclosed in double quotes. This is done automatically when PsN creates a raw results file but may be changed if the file is saved in e.g. Excel.
+
 \subsection{Linearized scm issues}
 Option -foce, which only applies to linearized scm, must not be changed from
 the default value, or the scm cannot run. 
@@ -25,9 +31,6 @@ When randomizing data columns to create dummy covariates
 (option -dummy\_covariates) for boot\_scm, PsN will not properly
 shuffle the time-varying set of values between individuals,
 but instead set all values to the individual's mean in the randomized copy.
-
-\subsection{Sensitive format for raw results input file in sse, vpc, npc}
-Any column header that contains a comma, e.g. OMEGA(2,1), must be enclosed in double quotes. This is done automatically when PsN creates a raw results file but may be changed if the file is saved in e.g. Excel.
 
 \subsection{Use prior-specific records for \$PRIOR NWPRI}
 When a control stream has multiple \$PROBLEM \emph{and} the first \$PROBLEM has \$PRIOR NWPRI
