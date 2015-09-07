@@ -3,15 +3,16 @@ package tool::bootstrap;
 use include_modules;
 use strict;
 use File::Copy 'cp';
-use data;
-use log;
-use OSspecific;
-use tool::llp;
-use tool::cdd::jackknife;
 use ext::Statistics::Distributions 'udistr', 'uprob';
 use Math::Random;
 use Moose;
 use MooseX::Params::Validate;
+use array;
+use log;
+use data;
+use OSspecific;
+use tool::llp;
+use tool::cdd::jackknife;
 
 extends 'tool';
 
@@ -136,7 +137,6 @@ sub BUILD
 	}
 }
 
-
 sub modelfit_setup
 {
 	my $self = shift;
@@ -183,7 +183,6 @@ sub llp_setup
 		class        => 'tool::llp');
 }
 
-
 sub calculate_diagnostic_means
 {
 	my $self = shift;
@@ -194,7 +193,7 @@ sub calculate_diagnostic_means
 	my $model_number = $parm{'model_number'};
 	my @parameter_names = defined $parm{'parameter_names'} ? @{$parm{'parameter_names'}} : ();
 
-	my ( @sum, @diagsum, %diag_idx );
+	my ( @sum, %diag_idx );
 	for ( my $i = 0; $i < scalar @{$self -> diagnostic_parameters()}; $i++ ) {
 		$diag_idx{$self -> diagnostic_parameters() -> [$i]} = $i;
 	}
@@ -242,7 +241,7 @@ sub calculate_means
 	my $model_number = $parm{'model_number'};
 	my @parameter_names = defined $parm{'parameter_names'} ? @{$parm{'parameter_names'}} : ();
 
-	my ( @sum, @diagsum );
+	my @sum;
 	# Prepared model, skip the first (the original)
 	for ( my $k = 1; $k < scalar @{$self -> bootstrap_estimates ->[$model_number-1]}; $k++ ) {
 		# Estimates
@@ -267,9 +266,9 @@ sub calculate_means
 			$self->result_parameters->{'large_bias'} -> [$model_number-1][0][$l] = 0;
 		}
 	}
-	$self->result_parameters->{'means_labels'} -> [$model_number-1] = [[],\@parameter_names];
+	$self->result_parameters->{'means_labels'} -> [$model_number-1] = [[], \@parameter_names];
 
-	$self->result_parameters->{'bias_labels'} -> [$model_number-1] = [[],\@parameter_names];
+	$self->result_parameters->{'bias_labels'} -> [$model_number-1] = [[], \@parameter_names];
 }
 
 sub calculate_bca_confidence_intervals
@@ -488,27 +487,17 @@ sub calculate_medians
 
 	my @medians;
 	# Loop the parameters
-	for ( my $l = 0; $l < scalar @{$self -> bootstrap_estimates->
-		[$model_number-1][0]}; $l++ ) {
+	for (my $l = 0; $l < scalar(@{$self->bootstrap_estimates->[$model_number - 1][0]}); $l++) {
 		my @parameter_array;
 		# From 1 to get rid of original model
-		for ( my $k = 1; $k < scalar @{$self -> bootstrap_estimates->
-			[$model_number-1]}; $k++ ) {
-			$parameter_array[$k-1] =
-			$self -> bootstrap_estimates->[$model_number-1][$k][$l];
+		for (my $k = 1; $k < scalar @{$self->bootstrap_estimates->[$model_number - 1]}; $k++) {
+			$parameter_array[$k - 1] = $self->bootstrap_estimates->[$model_number - 1][$k][$l];
 		}
-		my @sorted = sort {$a <=> $b} @parameter_array;
-		# median postition is half the ( array length - 1 ).
-		my $median_position = ( $#sorted ) / 2;
-		my ($int_med,$frac_med)   = split(/\./, $median_position );
-		$frac_med = eval("0.".$frac_med);
-		my $median_low  = $sorted[ $int_med ];
-		my $median_high = ( $sorted[ $int_med + 1 ] - $sorted[ $int_med ] ) * $frac_med;
-		$medians[$l] = $median_low + $median_high;
+		$medians[$l] = array::median(\@parameter_array);
 	}
 	# The [0] in the index is there to indicate the 'model' level. Mostly used for printing
-	$self->result_parameters->{'medians'} -> [$model_number-1][0] = \@medians;
-	$self->result_parameters->{'medians_labels'} -> [$model_number-1] = [[],\@parameter_names];
+	$self->result_parameters->{'medians'} -> [$model_number - 1][0] = \@medians;
+	$self->result_parameters->{'medians_labels'} -> [$model_number - 1] = [[],\@parameter_names];
 }
 
 sub calculate_standard_errors
@@ -522,27 +511,16 @@ sub calculate_standard_errors
 	my @parameter_names = defined $parm{'parameter_names'} ? @{$parm{'parameter_names'}} : ();
 
 	my @se;
-	# Prepared model, skip the first (the original)
-	for ( my $k = 1; $k < scalar @{$self -> bootstrap_estimates->[$model_number-1]}; $k++ ) {
-		# Estimate
-		for ( my $l = 0; $l <
-			scalar @{$self -> bootstrap_estimates->[$model_number-1][$k]}; $l++ ) {
-			$se[$l] += ( $self -> bootstrap_estimates->[$model_number-1][$k][$l] - 
-				$self->result_parameters->{'means'}->[$model_number-1][0][$l] )**2;
+	for (my $l = 0; $l < scalar(@{$self->bootstrap_estimates->[$model_number - 1][0]}); $l++) {
+		my @parameter_array;
+		# From 1 to get rid of original model
+		for (my $k = 1; $k < scalar @{$self->bootstrap_estimates->[$model_number - 1]}; $k++) {
+			$parameter_array[$k - 1] = $self->bootstrap_estimates->[$model_number - 1][$k][$l];
 		}
+		$se[$l] = array::stdev(\@parameter_array);
 	}
-	# divide by the number of bootstrap samples -1 (-2 to get rid of the original model)
-	# The [0] in the index is there to indicate the 'model' level.
-	for ( my $l = 0; $l <
-		scalar @{$self -> bootstrap_estimates->[$model_number-1][0]}; $l++ ) {
-		my $div = ( scalar @{$self -> bootstrap_estimates->[$model_number-1]} - 2 );
-		if( defined $div and not $div == 0 ) { 
-			$self->result_parameters->{'standard_errors'} -> [$model_number-1][0][$l] =
-			($se[$l] / $div  )**0.5;
-		} else {
-			$self->result_parameters->{'standard_errors'} -> [$model_number-1][0][$l] = undef;
-		}
-	}
+	# The [0] in the index is there to indicate the 'model' level. Mostly used for printing
+	$self->result_parameters->{'standard_errors'} -> [$model_number - 1][0] = \@se;
 	$self->result_parameters->{'standard_errors_labels'} -> [$model_number-1] = [[],\@parameter_names];
 }
 
@@ -1899,7 +1877,8 @@ sub create_R_scripts
 	}
 }
 
-sub create_R_plots_code{
+sub create_R_plots_code
+{
 	my $self = shift;
 	my %parm = validated_hash(\@_,
 							  rplot => { isa => 'rplots', optional => 0 }

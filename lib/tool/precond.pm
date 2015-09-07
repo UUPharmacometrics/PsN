@@ -25,6 +25,7 @@ has 'negaEigenIndex' =>  ( is => 'rw', isa => 'ArrayRef' );
 has 'always' =>  ( is => 'rw', isa => 'Bool', default => 0 );
 has 'verbose' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'perturb' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'copy_data' => ( is => 'rw', isa => 'Bool', default => 1 );
 has '_no_precond' => ( is => 'rw', isa => 'Bool', default => 0 );       # Did we run a preconditioned model?
 has '_repara_model' => ( is => 'rw', isa => 'model' );
 
@@ -62,6 +63,7 @@ sub modelfit_setup
             top_tool => 0,
             nm_output => $nm_output, 
             clean => 2,
+            copy_data => $self->copy_data,
         );
 
         $base_modelfit->run;
@@ -124,6 +126,7 @@ sub modelfit_setup
 		directory => "repara_modelfit",
 		top_tool => 0,
         nm_output => 'ext,cov,rmt',
+        copy_data => $self->copy_data,
 	);
 
 	$self->_repara_model($model);
