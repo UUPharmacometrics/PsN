@@ -156,11 +156,12 @@ is (array::variance(\@a), 2.25, "A simple variance");
 # Test of stdev
 @a = qw(3 5 9 8);
 cmp_float (array::stdev(\@a), 2.753785273643051, "A simple stdev");
+#test of rse
+cmp_float(array::rse(\@a,10),0.2753785273643051,"relative standard error of expectation");
+
 @a = qw(1);
 is (array::stdev(\@a), undef, "stdev of only one value");
 
-#test of rse
-cmp_float(array::rse(\@a,10),0.2753785273643051,"relative standard error of expectation");
 
 #test of sem
 @a = qw(3 -5 0 -100 3);
