@@ -15,6 +15,7 @@ use so::soblock::rawresults;
 use so::soblock::taskinformation;
 use so::soblock::estimation;
 use so::soblock::simulation;
+use so::soblock::modeldiagnostic;
 
 has 'version' => ( is => 'rw', isa => 'Num', required => 1 );
 
@@ -23,6 +24,7 @@ has 'RawResults' => ( is => 'rw', isa => 'so::soblock::rawresults' );
 has 'TaskInformation' => ( is => 'rw', isa => 'so::soblock::taskinformation' );
 has 'Estimation' => ( is => 'rw', isa => 'so::soblock::estimation' );
 has 'Simulation' => ( is => 'rw', isa => 'so::soblock::simulation' );
+has 'ModelDiagnostic' => ( is => 'rw', isa => 'so::soblock::modeldiagnostic' );
 
 sub BUILD
 {
@@ -39,6 +41,9 @@ sub BUILD
 
     my $sim = so::soblock::simulation->new();
     $self->Simulation($sim);
+
+    my $md = so::soblock::modeldiagnostic->new();
+    $self->ModelDiagnostic($md);
 }
 
 sub parse
@@ -62,6 +67,9 @@ sub parse
 
     (my $sim) = $xpc->findnodes('x:Simulation', $node);
     $self->Simulation->parse($sim) if (defined $sim);
+
+    (my $md) = $xpc->findnodes('x:ModelDiagnostic', $node);
+    $self->ModelDiagnostic->parse($md) if (defined $md);
 }
 
 sub create_sdtab
@@ -118,7 +126,7 @@ sub xml
 {
     my $self = shift;
 
-    my @attributes = ( "RawResults", "TaskInformation", "Estimation", "Simulation" );
+    my @attributes = ( "RawResults", "TaskInformation", "Estimation", "Simulation", "ModelDiagnostic" );
     my @elements;
     foreach my $attr (@attributes) {
         if (defined $self->$attr) {
