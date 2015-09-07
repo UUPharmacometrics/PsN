@@ -314,4 +314,5 @@ if ((defined $options{'nm_versions'}) || (defined $options{'nm_version'})) {
   } else {
     print "No default version is defined\n\n";
   }
+  print "The psn.conf in use is ", $PsN::config_file, "\n\n"; 
 }

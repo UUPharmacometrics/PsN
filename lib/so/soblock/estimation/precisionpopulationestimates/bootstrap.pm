@@ -9,6 +9,7 @@ use XML::LibXML;
 use so::table;
 
 has 'Percentiles' => ( is => 'rw', isa => 'so::table' );
+has 'PrecisionEstimates' => ( is => 'rw', isa => 'so::table' );
 
 sub parse
 {
@@ -23,21 +24,36 @@ sub parse
         $table->parse($perc);
         $self->Percentiles($table);
     }
+
+    (my $prec) = $xpc->findnodes('x:PrecisionEstimates', $node);
+    if (defined $prec) {
+        my $table = so::table->new();
+        $table->parse($prec);
+        $self->PrecisionEstimates($table);
+    }
 }
 
 sub xml
 {
     my $self = shift;
 
-    my $est;
+    my $bootstrap;
 
-    if (defined $self->Percentiles) {
-        $est = XML::LibXML::Element->new("Bootstrap");
-        my $xml = $self->Percentiles->xml();
-        $est->appendChild($xml);
+    if (defined $self->Percentiles or defined $self->PrecisionEstimates) {
+        $bootstrap = XML::LibXML::Element->new("Bootstrap");
     }
 
-    return $est;
+    if (defined $self->PrecisionEstimates) {
+        my $xml = $self->PrecisionEstimates->xml();
+        $bootstrap->appendChild($xml);
+    }
+
+    if (defined $self->Percentiles) {
+        my $xml = $self->Percentiles->xml();
+        $bootstrap->appendChild($xml);
+    }
+
+    return $bootstrap;
 }
 
 no Moose;

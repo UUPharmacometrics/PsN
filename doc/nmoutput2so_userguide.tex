@@ -116,6 +116,8 @@ $TABLE ID CL V ETA_CL ETA_V NOAPPEND FILE=patab
     \item The full xml file is stored in memory at once. This means that big results, for example big simulations, can potentially use a lot or all of the available memory.
     \item To be able to filter out dose rows for SimulatedProfiles and Residuals and MDV column must be included in the sdtab otherwise all rows will be added.
     \item PopulationParameters for simulations are assumed to be fixed for all individuals and occations thus not supporting \$PRIOR
+    \item All parameters in a bootstrap will be on the var/cov scale regardless of the scale used in the model.
+    \item Parameters with no labels will not generate any warnings for bootstrap when given on the sd/corr scale.
 \end{itemize}
 
 \section{Output}
@@ -137,8 +139,8 @@ The following entries will be populated:
             \begin{itemize}
                 \item Bootstrap
                 \begin{itemize}
-                    \item Mean - From a PsN bootstrap\_results.csv file. Parameters on sd or corr scale will not be added.
-                    \item Median - From a PsN bootstrap\_results.csv file. Parameters on sd or corr scale will not be added.
+                    \item Mean - From a PsN bootstrap\_results.csv file. All random effects will be on the var/cov scale.
+                    \item Median - From a PsN bootstrap\_results.csv file. All random effects will be on the var/cov scale.
                 \end{itemize}
                 \item MLE - Results will be taken from the .ext file if present otherwise the .lst file. Parameters that are fixed and does not have a label will not be included. The estimated value
                     will be on the standard deviation/correlation scale or variance/covariance scale depending on which scale the initial estimate was on. 
@@ -155,7 +157,8 @@ The following entries will be populated:
                 \end{itemize}
                 \item Bootstrap
                 \begin{itemize}
-                    \item PercentilesCI - From a PsN bootstrap\_results.csv file. Parameters on sd or corr scale will not be added.
+                    \item PrecisionEstimates - From a PsN bootstrap\_results.csv file. Will give the SE for all parameters and the calculated percentiles at 2.5\% and 97.5\%
+                    \item PercentilesCI - From a PsN bootstrap\_results.csv file. All random effects will be on var/cov form.
                 \end{itemize}
             \end{itemize}
             \item IndividualEstimates
@@ -230,8 +233,6 @@ SO/
                     FIM
                     AsymptoticCI
                 Bayesian
-                Bootstrap/
-                    PrecisionEstimates
                 LLP
                 SIR
                 MultiDimLLP

@@ -9,6 +9,7 @@ sub read_answers
 
 
     $answer_hashes[$index]->{file} = 'special_mod/special_inverse.lst';
+    $answer_hashes[$index]->{runtime} = '0:00:28';
     $answer_hashes[$index]->{parsed_successfully} = 1;
     $answer_hashes[$index]->{answers} = {};
 	$answer_hashes[$index]->{near_bounds_names}=['CRCL_on_CL']; 
@@ -35,6 +36,7 @@ sub read_answers
     $index++;
 	$answer_hashes[$index]={};
 	$answer_hashes[$index]->{file}='nm73/anneal2_V7_30_beta.lst';
+	$answer_hashes[$index]->{runtime}='0:01:37';
 	$answer_hashes[$index]->{parsed_successfully}=1;
 	$answer_hashes[$index]->{estimation_evaluation_problem_number}=1;
 	$answer_hashes[$index]->{problem_count}=1;
@@ -57,6 +59,7 @@ sub read_answers
 	$index++;
 	$answer_hashes[$index]={};
 	$answer_hashes[$index]->{file}='multPROB/multEST/withSIM/max100_max100_V7_10_g_reg.lst';
+	$answer_hashes[$index]->{runtime} = '0:00:54';
 	$answer_hashes[$index]->{parsed_successfully}=1;
 	$answer_hashes[$index]->{estimation_evaluation_problem_number}=1;
 	$answer_hashes[$index]->{problem_count}=2;
@@ -1002,6 +1005,7 @@ sub read_answers
 
     $index++;
     $answer_hashes[$index]->{file} = 'special_mod/theo_t_matrix.lst';
+    $answer_hashes[$index]->{runtime} = '0:00:01';
     $answer_hashes[$index]->{parsed_successfully} = 1;
     $answer_hashes[$index]->{answers} = {};
     $answer_hashes[$index]->{answers}->{0}->{0}->{'t_matrix'} = [
@@ -1481,6 +1485,11 @@ sub read_answers
 	$answer_hashes[$index]->{answers}->{6}->{0}->{'ofv'}=-1206.0086659764536;
 	$answer_hashes[$index]->{answers}->{7}->{0}->{'ofv'}=-561.03865669614436;
 
+    $index++;
+    $answer_hashes[$index]->{file} = 'special_mod/UseCase1.lst';
+    $answer_hashes[$index]->{parsed_successfully} = 1;
+    $answer_hashes[$index]->{runtime} = '0:56:00';
+    $answer_hashes[$index]->{answers} = {};
 
 
 	return \@answer_hashes;

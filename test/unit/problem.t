@@ -205,4 +205,11 @@ cmp_ok($omega_mat->[1]->[0],'==',0.285, "get_record_matrix row 1,0 after posdef 
 cmp_ok($omega_mat->[1]->[1],'==',0.3, "get_record_matrix row 1,1 after posdef deflate");
 cmp_ok($omega_mat->[0]->[1],'==',0.285, "get_record_matrix row 0,1 after posdef deflate");
 
+# ensure_unique_labels
+my $model = model->new(filename => "$modeldir/model/pheno_not_unique_labels.mod", ignore_missing_data => 1);
+is ($model->problems->[0]->thetas->[0]->options->[0]->label, "CL", "ensure_unique_labels THETA1");
+is ($model->problems->[0]->thetas->[1]->options->[0]->label, "V", "ensure_unique_labels THETA2");
+is ($model->problems->[0]->omegas->[0]->options->[0]->label, "CL_", "ensure_unique_labels OMEGA1");
+is ($model->problems->[0]->omegas->[0]->options->[1]->label, "CL__", "ensure_unique_labels OMEGA2");
+
 done_testing();

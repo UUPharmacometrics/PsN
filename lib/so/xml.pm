@@ -84,7 +84,7 @@ sub get_xpc
 {
     # class (static) method
     my $xpc = XML::LibXML::XPathContext->new();
-    $xpc->registerNs('x' => 'http://www.pharmml.org/so/0.1/StandardisedOutput');
+    $xpc->registerNs('x' => 'http://www.pharmml.org/so/0.2/StandardisedOutput');
     $xpc->registerNs('ds' => 'http://www.pharmml.org/pharmml/0.6/Dataset');
     $xpc->registerNs('ct' => 'http://www.pharmml.org/pharmml/0.6/CommonTypes');
 

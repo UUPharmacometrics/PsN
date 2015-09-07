@@ -108,7 +108,7 @@ my @utilities = (
 	'pind','nonpb','extended_grid','psn','psn_options','psn_clean',
 	'runrecord','mcmp','lasso','mimp','xv_scm','parallel_retries',
 	'boot_scm','gls','ebe_npde','frem','randtest','linearize', 'crossval', 'pvar', 'nca', 'vpctable','sir','rawresults',
-	'precond', 'covmat','nmoutput2so'
+	'precond', 'covmat', 'nmoutput2so', 'so_tool'
 	);
 
 my @win_modules = ('Moose', 'MooseX::Params::Validate', 'Math::Random');

@@ -313,9 +313,12 @@ sub _parse_lst_file
                     );
                 }
             }
-            $outobj->runtime =~ m/(\d+):(\d+):(\d+)/;
-            $elapsed_time = $1 + $2 / 60 + $3 / 3600;
-            $self->_so_block->TaskInformation->RunTime->Real($elapsed_time);
+
+            if (defined $outobj->runtime) {
+                $outobj->runtime =~ m/(\d+):(\d+):(\d+)/;
+                $elapsed_time = $1 + $2 / 60 + $3 / 3600;
+                $self->_so_block->TaskInformation->RunTime->Real($elapsed_time);
+            }
 
             if ($simulation_step_run and $self->use_tables) {
                 $self->_create_simulation(
@@ -1108,17 +1111,6 @@ sub _add_status_messages
 
     my $covariance_step_run = $output->covariance_step_run->[$problem];
 
-    my $covariance_step_successful = 0;
-    my $covariance_step_warnings = 0;
-    if ($covariance_step_run) {
-        if ($output->covariance_step_successful->[$problem][$subproblem] ne '0') {
-            $covariance_step_successful = 1;
-        }
-        if ($output->covariance_step_warnings->[$problem][$subproblem] ne '0') {
-            $covariance_step_warnings = 1;
-        }
-    }
-
     $self->_so_block->TaskInformation->add_message(
         type => "INFORMATION",
         toolname => "NONMEM",
@@ -1127,21 +1119,33 @@ sub _add_status_messages
         severity => 1,
     );
 
-    $self->_so_block->TaskInformation->add_message(
-        type => $covariance_step_successful ? "INFORMATION" : "WARNING",
-        toolname => "NONMEM",
-        name => "covariance_step_successful",
-        content => $covariance_step_successful,
-        severity => 1,
-    );
+    if ($covariance_step_run) {
+        my $covariance_step_successful = 0;
+        if ($output->covariance_step_successful->[$problem][$subproblem] ne '0') {
+            $covariance_step_successful = 1;
+        }
 
-    $self->_so_block->TaskInformation->add_message(
-        type => $covariance_step_warnings ? "WARNING" : "INFORMATION",
-        toolname => "NONMEM",
-        name => "covariance_step_warnings",
-        content => $covariance_step_warnings,
-        severity => 1,
-    );
+        $self->_so_block->TaskInformation->add_message(
+            type => $covariance_step_successful ? "INFORMATION" : "WARNING",
+            toolname => "NONMEM",
+            name => "covariance_step_successful",
+            content => $covariance_step_successful,
+            severity => 1,
+        );
+
+
+        my $covariance_step_warnings = 0;
+        if ($output->covariance_step_warnings->[$problem][$subproblem] ne '0') {
+            $covariance_step_warnings = 1;
+        }
+        $self->_so_block->TaskInformation->add_message(
+            type => $covariance_step_warnings ? "WARNING" : "INFORMATION",
+            toolname => "NONMEM",
+            name => "covariance_step_warnings",
+            content => $covariance_step_warnings,
+            severity => 1,
+        );
+    }
 
     my $rounding_errors = $output->rounding_errors->[$problem][$subproblem] eq '0' ? 0 : 1;
     $self->_so_block->TaskInformation->add_message(

@@ -96,6 +96,19 @@ Changes and bug fixes from PsN 4.4.6 to n.n.n
 
    ___runrecord___
 
+   ___psn___
+
+- The option -nm_versions now also print the path to the psn.conf that was used.
 
    ___nmoutput2so___
 
+- Bug fix: misspelling of Parameter in SE and RSE table
+- Bug fix: Don't create covariance_step_warnings and covariance_step_successful warnings if $COV not specified
+- Add Bootstrap/PrecisionEstimates. Currently with one single alpha.
+- Add bootstrap parameters not on var/cov scale. Also add a warning listing these parameters.
+
+   ___so_tool___
+
+- New tool with the purpose of collecting small standardised output utilities
+- New function 'merge' that can merge multiple so-files with multiple SOBlocks into one file
+- New function 'pretty' that makes an so human readable (for example so:s created with nmoutput2so without -pretty) 

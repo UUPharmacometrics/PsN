@@ -187,31 +187,7 @@ sub BUILD
 	#ensure unique labels per param
 	foreach my $prob (@{$self->problems}) {
 		next unless (defined $prob);
-		foreach my $param ('theta', 'omega', 'sigma') {
-			my $accessor = $param . 's';
-			my $ref =  $prob->$accessor;
-			next unless (defined $ref);
-			my @records = @{$ref};
-			my %hash;
-			foreach my $record (@records) {
-				next if ($record->prior() or $record->same);
-				if (defined $record->options) {
-					foreach my $option (@{$record->options}) {
-						next if ($option->prior());
-						if (defined $option->label()) {
-							my $label = $option->label();
-							if (defined $hash{$label}) {
-								my $newlabel = $label . '_';
-								#print "changing non-unique label $label to $newlabel\n";
-								$option->label($newlabel);
-								$label = $option->label();
-							}
-							$hash{$label} = 1;
-						}
-					}
-				}
-			}
-		}
+        $prob->ensure_unique_labels();
 	}
 
 	if ($self->maxevals > 0) {
