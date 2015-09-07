@@ -2,7 +2,7 @@ Dear PsN users,
 
 PsN 4.4.8 is now available for download from http://psn.sourceforge.net.
 
-The focus of this release is bug fixes and extensions of the test suite. Several of the bugs have been in PsN since version 3.7.6, some are even older. There are only minor new features. The sir algorithm has undergone major changes which are described in the sir userguide.
+The focus of this release is bug fixes and extensions of the test suite. Several of the bugs have been in PsN since version 3.7.6, some are even older. There are only minor new features. 
 
 The complete list of bug fixes and new features is found on http://psn.sourceforge.net/pdfdocs/release_notes_PsN_4_4_8.txt
 

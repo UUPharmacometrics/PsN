@@ -194,11 +194,11 @@ Changes and bug fixes from PsN 4.4.0 to 4.4.8
 
    ___sir___
 	 
-- Major redesign of algorithm: run multiple iterations where resampled parameters 
+- New feature: run multiple iterations where resampled parameters 
   from one iteration is used to generate proposal density for the next. 
-  The resampled parameters will be Box-Cox transformed to normality so that a 
-  built-in Perl function for sampling from a multivariate normal can be used in the next 
-  iteration.
+  The resampled parameters are Box-Cox transformed to normality so that a 
+  built-in Perl function for sampling from a multivariate normal can be 
+  used in the next iteration. 
 
 - Bug fix: Detection of NaN that string evaluate to 0 (on Windows).
 
