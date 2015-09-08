@@ -119,6 +119,7 @@ sub write
             name => "User specified message",
             content => $self->error,
             severity => 5,
+        );
     }
 
     foreach my $block (@{$self->SOBlock}) {
