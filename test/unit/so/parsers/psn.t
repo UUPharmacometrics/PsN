@@ -35,7 +35,7 @@ SKIP: {
 
 	chdir($tempdir);
 	chdir('executerun');
-	is(so::parsers::psn::_get_toolname(directory => 'rundir'),undef,'_get_toolname execute');
+	is(so::parsers::psn::_get_toolname(directory => 'rundir'),'execute','_get_toolname execute');
 	($ref,$opt) = so::parsers::psn::_connector_get_files(directory => 'rundir',
 															pharmml => 'pheno5.mod');
 	is_deeply($ref,['pheno5.lst'],' get files');
@@ -80,6 +80,13 @@ SKIP: {
 	is((-e 'npctab.dta'),1,'rseultsfile exist vpc4');
 
 	chdir($tempdir);
+
+	chdir('windows');
+	is(so::parsers::psn::_get_toolname(directory => 'boot'),'bootstrap','_get_toolname windows bootstrap');
+	is(so::parsers::psn::_get_toolname(directory => 'exec'),'execute','_get_toolname windows execute');
+	is(so::parsers::psn::_get_toolname(directory => 'vpcdir'),'vpc','_get_toolname windows vpc');
+
+
 	remove_test_dir($tempdir);
 
 }

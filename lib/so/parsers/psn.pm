@@ -9,6 +9,7 @@ use MooseX::Params::Validate;
 use include_modules;
 use File::Copy qw/cp mv/;
 use Cwd;
+use OSspecific;
 
 #<#assign outputFile = (job.executionFileName)?replace("\\.[A-Za-z0-9]{1,3}$", ".lst", "r")>
 #<#assign psnlogFile = (job.executionFileName)?replace("\\.[A-Za-z0-9]{1,3}$", ".psn.log", "r")>
@@ -76,19 +77,41 @@ sub _connector_get_files
     my $logfile = _get_logfile(pharmml => $pharmml);
     my $lstfile = _get_lstfile(pharmml => $pharmml);
     my $sofilename = _get_sofile(pharmml => $pharmml);	
+	my $errorstring;
 
     my @files=();
     my $bootstrap_results;
     my $tool= _get_toolname(directory => $directory); #can be undef
+	my $errorfile='errorMessages';
 
     if ( (not (-d $directory))  or 
-        ( (not defined $tool) and (not -e $lstfile)) or
-        (defined $tool and (not -e $directory.'/'.$tool.'_results.csv'))
-    ){
-        #$options{'message'} = 'run failure';
-        #cp($logfile,'errorMessages');  #skip copying, change design
+		 ( (not defined $tool) and (not -e $lstfile)) or
+		 (defined $tool and ($tool ne 'execute') and (not -e $directory.'/'.$tool.'_results.csv'))
+		){
+		#generic failure
+        #$errorstring = 'run failure';
+        cp($logfile,$errorfile);  #skip copying, change design
         @files = ($logfile); #treat error messages as lstfile
+	}elsif (($tool eq 'execute') and (not -e $lstfile)) {
+		#execute failure
+		if (-e $directory.'/NM_run1/psn.lst') {
+			cp($directory.'/NM_run1/psn.lst',$lstfile);
+			@files = ($lstfile);
+		}elsif(-e $directory.'/NM_run1/psn-1.lst'){
+			cp($directory.'/NM_run1/psn-1.lst',$lstfile);
+			@files = ($lstfile);
+		}elsif(-e $directory.'/NM_run1/nmtran_error.txt'){
+			cp($directory.'/NM_run1/nmtran_error.txt',$errorfile);
+			@files = ($errorfile);
+		}elsif( (-e $directory.'/NM_run1/FMSG') and ( not -e $directory.'/NM_run1/FREPORT')) {
+			cp($directory.'/NM_run1/FMSG',$errorfile);
+			@files = ($errorfile);
+		}else{
+			cp($logfile,$errorfile); 
+			@files = ($logfile); 
+		}
     }else {
+		#success
         my @copyfiles = <$directory/*.csv>;
         push(@copyfiles,$directory.'/version_and_option_info.txt') if (-e $directory.'/version_and_option_info.txt');
         foreach my $f (@copyfiles){
@@ -124,7 +147,7 @@ sub _connector_get_files
 
     }
 
-    return (\@files, $bootstrap_results, $sofilename);
+    return (\@files, $bootstrap_results, $sofilename, $errorstring);
 }
 
 sub _get_toolname
@@ -139,26 +162,30 @@ sub _get_toolname
 
     my $tool;
 
-    if ( (-e $directory.'/bootstrap_results.csv') or
-        (-e $directory.'/sample_keys1.csv') or
-        (-e $directory.'/included_keys1.csv') or
-        (-e $directory.'/bootstraplog.csv') 
-    ){
-        $tool = 'bootstrap';
-    }elsif ((-e $directory.'/vpc_results.csv') or
-        (-e $directory.'/vpc_bins.txt') or
-        (-e $directory.'/m1/vpc_original.mod') or
-        (-e $directory.'/m1/vpc_simulation.1.mod') 
-    ){
-        $tool = 'vpc';
-    }elsif ((-e $directory.'/sse_results.csv') or
-        (-e $directory.'/simulation_initial_values') or
-        (-e $directory.'/m1/mc-1.sim')
-    ){
-        $tool = 'sse';
-    }
+	my $command;
+    if (-e $directory.'/command.txt'){
+		open( COM, $directory.'/command.txt') or return $tool;
+		my @read_file = <COM>;
+		close( COM );
+		my @fields = split(' ',$read_file[0]);
+		my @path = split(/\\|\//,$fields[0]);
+#		print join("\t",@path)."\n";
+		$command = $path[-1];
+	}
+
+	if ($command =~ /^bootstrap/){
+		$tool = 'bootstrap';
+	}elsif($command =~ /^vpc/){
+		$tool = 'vpc';
+	}elsif($command =~ /^sse/){
+		$tool = 'sse';
+	}elsif($command =~ /^execute/){
+		$tool = 'execute';
+	}
 
     return $tool; #can be undef
+
+
 }
 
 no Moose;

@@ -1,0 +1,1 @@
+C:\see\\perl\bin/vpc --samples=100 --seed=1 -n_sim=4 -auto_bin=5 UseCase8.ctl -directory=rundir
