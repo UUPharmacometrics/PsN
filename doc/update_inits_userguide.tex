@@ -2,7 +2,7 @@
 \setlength{\evensidemargin}{0pt}
 \setlength{\oddsidemargin}{0pt}
 
-\guidetitle{update\_inits user guide}{2015-08-18}
+\guidetitle{update\_inits user guide}{2015-09-08}
 
 \begin{document}
 
@@ -155,6 +155,49 @@ Record list input cannot be combined with category input.\\
     -cholesky=inverse &             Inverse reparameterization of a model that has previously\\
      &  been reparameterized with update\_inits\\
 \end{tabular}
+
+\subsection{Numerical considerations}
+The correlations between ETAs and EPSs
+will be larger than $-1$ and smaller than $1$. This is necessary \emph{but not sufficient}
+for positive definiteness of a block \$OMEGA/\$SIGMA if the block size is larger than 2.
+
+Example: If we have an omega block matrix
+\[
+A=
+\left(
+\begin{array}{cccc}
+1          & 0          & \sqrt{0.5} & 0.1\\
+0          & 1          & \sqrt{0.5} & 0\\
+\sqrt{0.5} & \sqrt{0.5} & 1          & 0\\
+0.1        & 0          & 0          & 1\\
+\end{array}
+\right)
+\]
+where $\sqrt{0.5}\approx 0.7071$
+then the naive boundary conditions on the correlations and standard deviations are clearly fulfilled, but this
+matrix is singular.
+If a singular matrix is set as initial value for an \$OMEGA then NONMEM will
+give a clear error message saying that omega is not positive definite, but NONMEM cannot make that check
+in a model file where the \$OMEGAs have been Cholesky reparameterized.
+
+In the Cholesky decomposition
+a singular matrix leads to diagonal elements that are zero
+when computing the Cholesky factors needed for linear combination of the new ETAs,
+and there can also be division by zero.
+Similarly, if we have a matrix that is \emph{close} to singular, as in
+\[
+\left(
+\begin{array}{cccc}
+1          & 0          & 0.7071     & 0.1\\
+0          & 1          & 0.7071     & 0\\
+0.7071     & 0.7071     & 1          & 0\\
+0.1        & 0          & 0          & 1\\
+\end{array}
+\right)
+\]
+,
+then we will get division by a very small number in one of the Cholesky factors,
+which will give a very large factor for one of the ETAs, which can lead to problems.
 
 \section{Input and options}
 
