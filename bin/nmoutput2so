@@ -229,17 +229,18 @@ EOF
 $help_text{-psn_connector} = <<'EOF';
     -psn_connector
 
-    Do not use! Only for the PsN connector.
+    Do not use! Only for internal use by the PsN connector.
 EOF
 
 common_options::online_help('nmoutput2so', \%options, \%help_text, \%required_options, \%optional_options);
 
 if ($options{'psn_connector'}) {
-    (my $files, my $bootstrap_results, my $sofilename) = _connector_get_files(directory => 'rundir', pharmml => $options{'pharmml'}) 
+    (my $files, my $bootstrap_results, my $sofilename, my $error) = so::parsers::psn::_connector_get_files(directory => 'rundir', pharmml => $options{'pharmml'}); 
     @ARGV = @$files;
     $options{'bootstrap_results'} = $bootstrap_results;
     $options{'so_filename'} = $sofilename;
     $options{'toolname'} = 'PsN';
+    $options{'error'} = $error;
 }
 
 if ($options{'version'}) {
