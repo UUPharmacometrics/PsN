@@ -16,6 +16,7 @@ has 'exclude_elements' => ( is => 'rw', isa => 'Maybe[ArrayRef[Str]]' );
 has 'only_include_elements' => ( is => 'rw', isa => 'Maybe[ArrayRef[Str]]' ); 
 has 'version' => ( is => 'rw', isa => 'Num', default => 0.2 );
 has 'message' => ( is => 'rw', isa => 'Maybe[Str]' );
+has 'error' => ( is => 'rw', isa => 'Maybe[Str]' );
 
 has 'PharmMLRef' => ( is => 'rw', isa => 'Maybe[Str]' );
 has 'SOBlock' => ( is => 'rw', isa => 'ArrayRef[so::soblock]', default => sub { [] } );
@@ -100,7 +101,7 @@ sub write
         $SO->appendChild($ref);
     }
 
-    # Add the user defined message to the first block
+    # Add the user defined message and/or error to the first block
     if (defined $self->message and defined $self->SOBlock->[0]) {
         $self->SOBlock->[0]->TaskInformation->add_message(
             type => "INFORMATION",
@@ -109,6 +110,15 @@ sub write
             content => $self->message,
             severity => 0,
         );
+    }
+
+    if (defined $self->error and defined $self->SOBlock->[0]) {
+        $self->SOBlock->[0]->TaskInformation->add_message(
+            type => "ERROR",
+            toolname => "nmoutput2so",
+            name => "User specified message",
+            content => $self->error,
+            severity => 5,
     }
 
     foreach my $block (@{$self->SOBlock}) {

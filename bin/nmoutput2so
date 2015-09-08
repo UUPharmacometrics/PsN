@@ -17,6 +17,7 @@ use so;
 use so::parsers::nmoutput;
 use so::parsers::bootstrap;
 use so::parsers::vpc;
+use so::parsers::psn;
 
 $| = 1; # Make sure autoflush is on
 
@@ -34,6 +35,7 @@ my %optional_options = (
     'exclude_elements:s' => undef,
     'only_include_elements:s' => undef,
     'message:s' => undef,
+    'error:s' => undef,
     'toolname:s' => undef,
     'max_replicates:i' => undef,
     'pretty!' => undef,
@@ -41,6 +43,7 @@ my %optional_options = (
     'verbose!' => undef,
     'external_tables!' => undef,
     'so_version:s' => undef,
+    'psn_connector!' => undef,
 );
 
 
@@ -130,6 +133,12 @@ $help_text{-message} = <<'EOF';
     Specify a string to be added as an information message in the TaskInformation of the first SOBlock
 EOF
 
+$help_text{-error} = <<'EOF';
+    -error='string' 
+
+    Specify a string to be added as an error message in the TaskInformation of the first SOBlock
+EOF
+
 $help_text{-toolname} = <<'EOF';
     -toolname='string' 
 
@@ -217,7 +226,21 @@ $help_text{-so_version} = <<'EOF';
     be used.
 EOF
 
+$help_text{-psn_connector} = <<'EOF';
+    -psn_connector
+
+    Do not use! Only for the PsN connector.
+EOF
+
 common_options::online_help('nmoutput2so', \%options, \%help_text, \%required_options, \%optional_options);
+
+if ($options{'psn_connector'}) {
+    (my $files, my $bootstrap_results, my $sofilename) = _connector_get_files(directory => 'rundir', pharmml => $options{'pharmml'}) 
+    @ARGV = @$files;
+    $options{'bootstrap_results'} = $bootstrap_results;
+    $options{'so_filename'} = $sofilename;
+    $options{'toolname'} = 'PsN';
+}
 
 if ($options{'version'}) {
     print "PsN version: $PsN::version\n";
@@ -256,6 +279,7 @@ my $so = so->new(
     exclude_elements => $exclude_elements,
     version => $options{'so_version'},
     message => $options{'message'},
+    error => $options{'error'},
 );
 
 my $first_labels_hash;
