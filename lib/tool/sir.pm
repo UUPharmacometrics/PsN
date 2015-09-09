@@ -288,6 +288,17 @@ sub modelfit_setup
 										 require_numeric_ofv => $require_numeric_ofv,
 										 model => $model);
 			$self->rawres_samples(scalar(@{$rawres_resampled_params_arr}));
+
+			if (scalar(@{$rawres_resampled_params_arr}) >= scalar(@{$self->parameter_hash->{'values'}})){
+				unless (params_arr_full_rank(sampled_params_arr => $rawres_resampled_params_arr,
+											 parameter_hash => $self->parameter_hash)){
+					my $message = "The set of parameter vectors read from ".$self->rawres_input;
+					$message .= " using filter ".join(',',@{$self->in_filter}) if (scalar(@{$self->in_filter})>0);
+					$message .= " does not have full rank (vectors are too similar).";
+					$message .= " Cannot proceed with sir\n";
+					croak($message);
+				}
+			}
 		}else{
 			$rawres_resampled_params_arr = [];
 		}
@@ -841,6 +852,29 @@ sub get_min_ofv_values{
 
 	return ($errors,$lowest_ofv,$new_center);
 }
+
+sub params_arr_full_rank{
+	#static, no shift
+	my %parm = validated_hash(\@_,
+							  sampled_params_arr => { isa => 'ArrayRef', optional => 0 },
+							  parameter_hash => { isa => 'HashRef', optional => 0 },
+		);
+	my $sampled_params_arr = $parm{'sampled_params_arr'};
+	my $parameter_hash = $parm{'parameter_hash'};
+
+	my @Amatrix=();
+
+	for (my $i=0; $i<scalar(@{$sampled_params_arr}); $i++){
+		my ($vector,$errors) = get_vector_from_sampled_params_arr(sampled_params_arr => $sampled_params_arr,
+																  parameter_hash => $parameter_hash,
+																  index => $i);
+		push(@Amatrix,$vector);
+	}
+
+	return linear_algebra::full_rank(\@Amatrix);
+
+}
+
 
 sub get_vector_from_sampled_params_arr
 {
