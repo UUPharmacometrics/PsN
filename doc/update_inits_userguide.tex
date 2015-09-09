@@ -2,7 +2,7 @@
 \setlength{\evensidemargin}{0pt}
 \setlength{\oddsidemargin}{0pt}
 
-\guidetitle{update\_inits user guide}{2015-09-08}
+\guidetitle{update\_inits user guide}{2015-09-09}
 
 \begin{document}
 
@@ -101,8 +101,42 @@ Examples if the output number is 9:
 \section{Cholesky reparameterization}
 The script can perform an automatic Cholesky reparameterization of \$OMEGA and/or \$SIGMA records.
 New THETAs, representing the standard deviations and correlations of ETAs and EPSs, will be
-defined, and the original ETAs and EPSs will be replaced with linear combinations of new, uncorrelated
-ETAs/EPSs with variance 1.
+defined. The standard deviation THETAs will be labelled SD\_<letter><number>, for example SD\_A2, where <letter> 
+is the ``index'' of the \$OMEGA/\$SIGMA record and the number is the row number in that record. 
+The correlation THETAs will be labelled COR\_<letter><number><number>, for example COR\_A21,  where <letter> 
+is the ``index'' of the \$OMEGA/\$SIGMA record and the two numbers are the row and column numbers in that record. 
+A set of variables for the Cholesky factors will be defined in the code, and these will be named
+CH\_<letter><number><number> analogously to the correlation variables.
+Using the new variables, the original ETAs and EPSs will be replaced with linear combinations of new, uncorrelated
+ETAs/EPSs with variance 1. Example:
+
+\begin{verbatim}
+SD_A1=THETA(5)
+SD_A2=THETA(6)
+COR_A21=THETA(7)
+SD_A3=THETA(8)
+COR_A31=THETA(9)
+COR_A32=THETA(10)
+SD_A4=THETA(11)
+COR_A41=THETA(12)
+COR_A42=THETA(13)
+COR_A43=THETA(14)
+;Comments below show CH variables for 1st column, too simple to need new variables
+;CH_A11=1
+;CH_A21=COR_A21
+;CH_A31=COR_A31
+;CH_A41=COR_A41
+CH_A22=SQRT(1-(COR_A21**2))
+CH_A32=(COR_A32-COR_A21*COR_A31)/CH_A22
+CH_A42=(COR_A42-COR_A21*COR_A41)/CH_A22
+CH_A33=SQRT(1-(COR_A31**2+CH_A32**2))
+CH_A43=(COR_A43-(COR_A31*COR_A41+CH_A32*CH_A42))/CH_A33
+CH_A44=SQRT(1-(COR_A41**2+CH_A42**2+CH_A43**2))
+ETA_1=ETA(1)*SD_A1
+ETA_2=ETA(1)*COR_A21*SD_A2+ETA(2)*CH_A22*SD_A2
+ETA_3=ETA(1)*COR_A31*SD_A3+ETA(2)*CH_A32*SD_A3+ETA(3)*CH_A33*SD_A3
+ETA_4=ETA(1)*COR_A41*SD_A4+ETA(2)*CH_A42*SD_A4+ETA(3)*CH_A43*SD_A4+ETA(4)*CH_A44*SD_A4
+\end{verbatim}
 
 The reparameterization will be performed after updating of initial estimates, if any, but
 reparameterization can be performed without updating estimates from e.g. a lst-file.
@@ -181,9 +215,8 @@ give a clear error message saying that omega is not positive definite, but NONME
 in a model file where the \$OMEGAs have been Cholesky reparameterized.
 
 In the Cholesky decomposition
-a singular matrix leads to diagonal elements that are zero
-when computing the Cholesky factors needed for linear combination of the new ETAs,
-and there can also be division by zero.
+a singular matrix leads to diagonal elements that are zero,
+and there can also be division by zero during computation of the CH factors.
 Similarly, if we have a matrix that is \emph{close} to singular, as in
 \[
 \left(
@@ -196,8 +229,8 @@ Similarly, if we have a matrix that is \emph{close} to singular, as in
 \right)
 \]
 ,
-then we will get division by a very small number in one of the Cholesky factors,
-which will give a very large factor for one of the ETAs, which can lead to problems.
+then we will get division by a very small number in one of the CH factors,
+which will give a very large multiplier for an ETA, which can lead to problems.
 
 \section{Input and options}
 
