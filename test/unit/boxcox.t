@@ -128,6 +128,11 @@ my @V=(1.55158,1.3027,1.61882,1.13856,1.37955,1.59477,1.62951,1.59514,1.09566,
 #($lambda,$delta)=boxcox::get_lambda_delta(\@V,3);
 
 
+my @flat=(0.9,0.9,0.9,0.9,0.9,0.9,0.9,0.9,0.9,0.9,0.9,0.9,0.9,0.9,0.9,0.9,0.9,0.9);
+
+my ($lambda,$delta,$numerr)=boxcox::get_lambda_delta(\@flat,3,1);
+is($numerr,1,"numerical error get_lambda_delta");
+
 random_set_seed_from_phrase('12345');
 
 my $N=100;
@@ -139,14 +144,16 @@ foreach my $lambda (-2,-0.5,-0.2,-0.1,0,0.2,1.5){
 
 	my ($parvec,$delt)= boxcox::sort_and_shift_to_positive($vector,10);
 	my $yvec =boxcox::get_quantile_data($N);
-	my ($lambda_r,$dirt) = boxcox::r_of_lambda($parvec,$yvec,$lambda);
+	my ($lambda_r,$dirt,$numerr1) = boxcox::r_of_lambda($parvec,$yvec,$lambda);
 
 	#print "values ".join(' ',@{$vector})."\n";
-	my ($found,$delta)=boxcox::get_lambda_delta($vector,3,1);
-	my ($own_r,$dirt) = boxcox::r_of_lambda($parvec,$yvec,$found);
+	my ($found,$delta,$numerr2)=boxcox::get_lambda_delta($vector,3,1);
+	my ($own_r,$dirt,$numerr3) = boxcox::r_of_lambda($parvec,$yvec,$found);
 
 #	print "found $own_r nominal $lambda_r\n";
 	cmp_ok($own_r,'>=',$lambda_r,"get lambda $lambda");
+	cmp_ok($numerr1,'==',$numerr2,"numerr $lambda");
+	cmp_ok($numerr3,'==',$numerr2,"numerr2 $lambda");
 }
 
 my %extra;
@@ -154,16 +161,18 @@ $extra{'type'}='second_degree';
 $extra{'a'}=-1;
 $extra{'b'}=-2;
 $extra{'c'}=15;
-my $x = boxcox::secant_method_maximize(10,0.005,30,\%extra);
+my ($x,$numerr) = boxcox::secant_method_maximize(10,0.005,30,\%extra);
 
 cmp_float($x,-1,"second order 1");
+cmp_ok($numerr,'==',0,"numerr second degree");
 
 $extra{'a'}=-1;
 $extra{'b'}=3;
 $extra{'c'}=-1;
-$x = boxcox::secant_method_maximize(10,0.005,30,\%extra);
+($x,$numerr) = boxcox::secant_method_maximize(10,0.005,30,\%extra);
 
 cmp_float($x,1.5,"second order 2");
+cmp_ok($numerr,'==',0,"numerr second degree 2");
 
 
 done_testing();

@@ -1109,8 +1109,17 @@ sub empirical_statistics{
 		my @Bmatrix=();
 		for (my $j=0; $j< $dim; $j++){
 			$sums[$j] =0;
-			my ($lam,$del) = boxcox::get_lambda_delta($parameter_vectors[$j],$absmaxlambda,$estimated_vector->[$j]);
-			if (abs($lam-1)<$resolutionlambda){
+			#label is $all_labels[$j]
+			my ($lam,$del,$numerr) = boxcox::get_lambda_delta($parameter_vectors[$j],$absmaxlambda,$estimated_vector->[$j]);
+			if ($numerr){
+				ui->print(category=>'sir',
+						  message => "Numerical error when searching for optimal lambda for Box Cox ".
+						  "transformation of ".$all_labels[$j].
+						  ". This might be caused by the parameter samples being too similar. ".
+						  "Skipping transformation of this parameter in this iteration."."\n");
+				push(@{$resulthash{'lambda'}},undef);
+				push(@{$resulthash{'delta'}},0);
+			}elsif (abs($lam-1)<$resolutionlambda){
 				push(@{$resulthash{'lambda'}},undef);
 				push(@{$resulthash{'delta'}},0);
 			}else{

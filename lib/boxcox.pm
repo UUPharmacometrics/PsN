@@ -29,8 +29,9 @@ sub r_of_lambda
    my $transformed = box_cox($vector,$lambda);
 
    my ($r,$drdlambda) = compute_r($transformed,$qvec,$lambda,$vector);
-
-   return ($r,$drdlambda);
+   my $numerr = 0;
+   $numerr = 1 unless (defined $r);
+   return ($r,$drdlambda,$numerr);
 
 }
 
@@ -114,9 +115,9 @@ sub get_lambda_delta
    $extra{'yvec'} = $yvec;
    $extra{'type'} = 'r';
 
-   my $lambda = secant_method_maximize($absmax,$min_step,$max_iter,\%extra);
+   my ($lambda,$numerr) = secant_method_maximize($absmax,$min_step,$max_iter,\%extra);
    
-   return($lambda,$delta);
+   return($lambda,$delta,$numerr);
 }
 
 sub evaluate
@@ -127,15 +128,12 @@ sub evaluate
 		);
 	
 	if ($extra_args->{'type'} eq 'r'){
-		 my ($r,$deriv) = r_of_lambda($extra_args->{'shifted'},$extra_args->{'yvec'},$l);
-		 unless (defined $r){
-			 croak("\nNumerical error when searching for optimal lambda for Box Cox transformation. Aborting\n");
-		 }
-		 return ($r,$deriv);
+		 my ($r,$deriv,$numerr) = r_of_lambda($extra_args->{'shifted'},$extra_args->{'yvec'},$l);
+		 return ($r,$deriv,$numerr);
 	}elsif($extra_args->{'type'} eq 'second_degree'){
 		my $f= ($extra_args->{'a'})*$l**2+($extra_args->{'b'})*$l+$extra_args->{'c'};
 		my $deriv = ($extra_args->{'a'})*2*$l+($extra_args->{'b'});
-		return ($f,$deriv);
+		return ($f,$deriv,0);
 	}else{
 		croak("unknown type ".$extra_args->{'type'});
 	}
@@ -159,6 +157,7 @@ sub secant_method_maximize
     );
 
 	my $verbose=0;
+	my $numerr = 0;
    #Figure out search area, cannot run over lambda=0
 
 	my @lambdas=();
@@ -167,7 +166,8 @@ sub secant_method_maximize
 	my $r;
 	my $deriv;
 	my $next_l=1;
-	($r,$deriv) = evaluate($next_l,$extra_args);
+	($r,$deriv,$numerr) = evaluate($next_l,$extra_args);
+	return(undef,$numerr) if ($numerr);
 
 	push(@lambdas,$next_l);
 	push(@rs,$r);
@@ -182,7 +182,8 @@ sub secant_method_maximize
 	if ($deriv < 0){
 		#negative at 1
 		$next_l = -1;
-		($r,$deriv) = evaluate($next_l,$extra_args);
+		($r,$deriv,$numerr) = evaluate($next_l,$extra_args);
+		return(undef,$numerr) if ($numerr);
 		push(@lambdas,$next_l);
 		push(@rs,$r);
 		push(@derivatives,$deriv);
@@ -195,7 +196,8 @@ sub secant_method_maximize
 		}else{
 			#positive at -1, negative at 1
 			$next_l = -0.1;
-			($r,$deriv) = evaluate($next_l,$extra_args);
+			($r,$deriv,$numerr) = evaluate($next_l,$extra_args);
+			return(undef,$numerr) if ($numerr);
 			push(@lambdas,$next_l);
 			push(@rs,$r);
 			push(@derivatives,$deriv);
@@ -210,12 +212,14 @@ sub secant_method_maximize
 				#positive at -0.1, negative at 1
 				#evaluate 0
 				$next_l=0;
-				($r,$deriv) = evaluate($next_l,$extra_args);
+				($r,$deriv,$numerr) = evaluate($next_l,$extra_args);
+				return(undef,$numerr) if ($numerr);
 				push(@lambdas,$next_l);
 				push(@rs,$r);
 				push(@derivatives,undef);
 				$next_l = 0.1;
-				($r,$deriv) = evaluate($next_l,$extra_args);
+				($r,$deriv,$numerr) = evaluate($next_l,$extra_args);
+				return(undef,$numerr) if ($numerr);
 				push(@lambdas,$next_l);
 				push(@rs,$r);
 				push(@derivatives,$deriv);
@@ -251,7 +255,8 @@ sub secant_method_maximize
 			$done =1;
 		}
 
-		($r,$deriv) = evaluate($next_l,$extra_args);
+		($r,$deriv,$numerr) = evaluate($next_l,$extra_args);
+		return(undef,$numerr) if ($numerr);
 		push(@lambdas,$next_l);
 		push(@rs,$r);
 		push(@derivatives,$deriv);
@@ -288,7 +293,7 @@ sub secant_method_maximize
 		}
 		print "\nFinal\n".$lambdas[$index].','.$rs[$index].','.$derivatives[$index]."\n\n\n\n";
 	}
-	return $lambdas[$index];
+	return ($lambdas[$index],0); #numerr is 0
 	
 
 }

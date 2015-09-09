@@ -429,6 +429,9 @@ number 123 of estimated parameters in input model
 then the most likely cause is that there is a mismatch between the input files. Make sure that the number of
 estimated parameters (the number of parameters, the FIXED and SAME settings, the DIAGONAL or BLOCK omega/sigma)
 match between the control stream copy at the beginning of the pre-existing lst-file and the input model file.
+%\subsection*{Numerical error during Box-Cox transformation}
+%If there is a message ``Numerical error when searching for optimal lambda for Box Cox transformation...''
+%it is recommended to inspect the raw results file to see if parameter vectors very similar
 \subsection*{raw\_results file with \$PRIOR}
 If the input model has \$PRIOR NWPRI, and the priors are encoded with \$THETA, \$OMEGA and \$SIGMA instead of the
 prior-specific records \$THETAP, \$THETAPV, \$OMEGAP etc, then PsN will not be able to handle the parameter column
