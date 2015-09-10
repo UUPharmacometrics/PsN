@@ -55,6 +55,7 @@ Changes and bug fixes from PsN 4.4.6 to n.n.n
 
    ___General___
 
+- The option -degree can now take degrees greater than 1.
 
 
    ___mcmp___
@@ -77,17 +78,20 @@ Changes and bug fixes from PsN 4.4.6 to n.n.n
 
 - New option 
 
+
    ___update_inits___
 	 
 
-- New option 
+- The option -degree can now take degrees greater than 1.
 
 
    ___execute___
 	 
 
    ___sir___
-	 
+	
+- The option -auto_rawres can now take degrees greater than 1.
+
 
    ___precond___
 

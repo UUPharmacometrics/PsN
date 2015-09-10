@@ -493,8 +493,8 @@ sub set_random_inits
 
 	my $any_set = 0;
 
-	if (($degree >= 1) or ($degree <= 0)){
-		croak("Illegal input to set_random_inits, degree $degree is not between 0 and 1");
+	if ($degree <= 0) {
+		croak("Illegal input to set_random_inits, degree $degree must be a positive number");
 	}
 
 	my $bound_problem;

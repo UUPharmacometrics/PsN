@@ -16,8 +16,8 @@ sub get_range
 	);
 	#helper routine to set_random_inits
 	my $degree = $parm{'degree'};
-	if (($degree >= 1) or ($degree <= 0)){
-		croak("Illegal input to theta_option->get_range, degree $degree is not between 0 and 1");
+	if ($degree <= 0) {
+		croak("Illegal input to theta_option->get_range, degree $degree must be a positive number");
 	}
 	my $low = $self->init - abs($degree *$self->init) ;
 	if (defined $self->lobnd and $low <= $self->lobnd){

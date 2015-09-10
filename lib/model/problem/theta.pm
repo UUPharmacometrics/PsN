@@ -18,8 +18,8 @@ sub set_random_inits
 	#this is a overloaded set_random_inits , this is only for theta
 	my $degree = $parm{'degree'};
 	my $bound_record = $parm{'bound_record'};
-	if (($degree >= 1) or ($degree <= 0)){
-		croak("Illegal input to theta->set_random_inits, degree $degree is not between 0 and 1");
+	if ($degree <= 0) {
+		croak("Illegal input to theta->set_random_inits, degree $degree must be a positive number");
 	}
 
 	return if ($self->fix or $self->prior);

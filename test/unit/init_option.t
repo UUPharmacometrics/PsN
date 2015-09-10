@@ -29,6 +29,10 @@ my $range = $option1->get_range(degree=> 0.5);
 cmp_float($range->[0],(0.01-0.5*0.01), "Option1->range lower");
 cmp_float($range->[1],(0.01+0.5*0.01), "Option1->range upper");
 
+my $range = $option1->get_range(degree => 3);
+cmp_float($range->[0], 1e-10, "Option1->range degree=3 lower");
+cmp_float($range->[1], (0.01 + 3 * 0.01), "Option1->range degree=3 upper");
+
 $range = $option2->get_range(degree=> 0.9);
 cmp_float($range->[0],(0.009-0.9*0.009), "Option2->range lower");
 cmp_float($range->[1],(0.009+0.9*0.009), "Option2->range upper");

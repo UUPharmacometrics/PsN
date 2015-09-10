@@ -95,8 +95,8 @@ $record->set_random_inits(degree => 0.1);
 is ($record->options->[0]->init, 10, "option->init");
 cmp_float($record->options->[1]->init, 2.098214, "option->init");
 cmp_float($record->options->[2]->init, 107.6875, "option->init");
-$record->set_random_inits(degree => 0.1);
-cmp_float($record->options->[1]->init, 1.929032, "option->init");
-cmp_float($record->options->[2]->init, 99.38361, "option->init");
+$record->set_random_inits(degree => 2);
+cmp_float($record->options->[1]->init, 1.512751, "option->init");
+cmp_float($record->options->[2]->init, -58.3903, "option->init");
 
 done_testing();

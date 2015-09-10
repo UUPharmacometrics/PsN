@@ -550,11 +550,10 @@ if ( $options{'cholesky'} ){
 }
 
 
-if (defined $options{'degree'}){
-	ui->print(category => 'all',
-				  message => "Tweaking initial estimates\n");
-	foreach my $prob ( @{$model_copy->problems()}) {
-		$prob -> set_random_inits ( degree => $options{'degree'} );
+if (defined $options{'degree'}) {
+	ui->print(category => 'all', message => "Tweaking initial estimates\n");
+	foreach my $prob (@{$model_copy->problems}) {
+		$prob->set_random_inits(degree => $options{'degree'});
 	}
 }
 

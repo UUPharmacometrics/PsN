@@ -44,7 +44,6 @@ sub unfix
 
 }
 
-
 sub set_vector
 {
     my $self = shift;
@@ -65,7 +64,6 @@ sub set_vector
 	return $ok;
 }
 
-
 sub get_vector
 {
     my $self = shift;
@@ -78,6 +76,7 @@ sub get_vector
 	}
 	return \@vector;
 }
+
 sub get_matrix
 {
     my $self = shift;
@@ -136,8 +135,8 @@ sub set_random_inits
 	my $degree = $parm{'degree'};
 	my $bound_record = $parm{'bound_record'};
 
-	if (($degree >= 1) or ($degree <= 0)){
-		croak("Illegal input to init_record->set_random_inits, degree $degree is not between 0 and 1");
+	if ($degree <= 0) {
+		croak("Illegal input to init_record->set_random_inits, degree $degree must be a positive number");
 	}
 
 	return if ($self->fix or $self->prior or $self->same);
@@ -218,7 +217,6 @@ sub set_random_inits
 			#if get numerical error on cholesky then do not accept
 			my $err = linear_algebra::cholesky($matrix );
 			if ($err == 1){
-#				print "redo $attempt\n";
 				$accept = 0;
 			}
 		}

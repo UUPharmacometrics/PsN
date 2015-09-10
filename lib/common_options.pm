@@ -299,10 +299,9 @@ sub sanity_checks
 	my $options = shift;
 	my $tool = shift;
 
-	if (defined $options->{'degree'}){
-		if ($options->{'degree'} <=0 or $options->{'degree'}>=1){
-			my $mes = "option degree must be larger than 0 and smaller than 1.\n";
-			croak($mes);
+	if (defined $options->{'degree'}) {
+		if ($options->{'degree'} <= 0) {
+			croak("option degree must be a positive number.\n");
 		}
 	}
 
@@ -1260,7 +1259,7 @@ EOF
 	When tweaking initial estimates in retries/parallel_retries, this number decides the range for the 
     new estimates. The new number will be within 'degree'*oldinitial from the old initial estimate,
 	unless restricted by upper or lower boundaries.
-    A number larger than 0 and smaller than 1. Default 0.1.
+    A number larger than 0. Default 0.1
 EOF
 
     $help_hash{-extra_output} = <<'EOF';

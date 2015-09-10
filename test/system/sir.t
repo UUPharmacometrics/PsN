@@ -21,7 +21,7 @@ my @commands =
 	 get_command('sir') . " $model_dir/pheno.mod -samples=50,100 -resamples=25,50 -no-boxcox -dir=$dir", 
 	 get_command('sir') . "  -dir=$dir", 
 	 get_command('sir') . " -samples=50 -resamples=25 -add_iterations -dir=$dir", 
-	 get_command('sir') . " $model_dir/pheno.mod -samples=50 -resamples=25 -auto_rawres=0.9 -seed=50032 -dir=$dir",
+	 get_command('sir') . " $model_dir/pheno.mod -samples=50 -resamples=25 -auto_rawres=1.1 -seed=50032 -dir=$dir",
 	 get_command('sir') . " $model_dir/sir/localmin.mod -samples=50,100 -resamples=25,50 -dir=$dir",
 	 get_command('sir') . " $model_dir/pheno.mod -samples=50,100,100 -resamples=25,50,50 -covmat_input=$model_dir/pheno_fake.cov -dir=$dir",
 	 get_command('sir') . " $model_dir/pheno.mod -samples=100 -resamples=50 -covmat_input=$model_dir/pheno_fake.cov -dir=$dir",

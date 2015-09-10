@@ -365,4 +365,11 @@ $record = model::problem::omega->new(record_arr => [ '$OMEGA 2,FIXED' ]);
 ok ($record->options->[0]->fix, "case 19 fix");
 is ($record->options->[0]->init, 2, "case 19 init");
 
+# set_random_inits for degree > 1
+$record = model::problem::init_record->new(record_arr => ['BLOCK(2) 0.02','0 0.01']);
+$record->set_random_inits(degree => 2);
+is($record->options->[0]->init, 0.035443, 'record 1 init 0 degee=2');
+is($record->options->[1]->init, 0, 'record 1 init 1 degree=2');
+is($record->options->[2]->init, 0.02127, 'record 1 init 2 degree=2');
+
 done_testing();
