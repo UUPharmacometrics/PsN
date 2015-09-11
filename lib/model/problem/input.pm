@@ -48,6 +48,10 @@ sub get_filter_table_names
 	my $datx_in_input = 0;
 	my $time_added = 0;
 
+	
+	#not including DROP SKIP
+	#my @reserved = qw(ID L1 L2 DV MDV RAW_ MRG_ RPT_ TIME DATE DAT1 DAT2 DAT3 EVID AMT RATE SS II ADDL CMT PCMT CALL CONT);
+
 	foreach my $option (@{$self->options}) {
 		if ($option->name ne 'DROP' && $option->name ne 'SKIP' && $option->value ne 'SKIP' && $option->value ne 'DROP') {
 			unless (defined $first_undropped){
@@ -72,7 +76,7 @@ sub get_filter_table_names
 	unless (defined $first_undropped){
 		return (undef,0); #croak("found no undropped columns in model");
 	}
-
+	#FIXME what about synonyms? do we want reserved label or synonym here?
 	foreach my $option (@{$self->options}) {
 		if ($option->name ne 'DROP' && $option->name ne 'SKIP' && $option->value ne 'SKIP' && $option->value ne 'DROP') {
 			push (@filter_table_names, $option->name); 

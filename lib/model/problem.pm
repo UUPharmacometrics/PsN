@@ -2376,6 +2376,7 @@ sub get_matrix
 sub get_posdef_matrix
 {
 	#static no shift
+	#only used in frem. move to linalg?
 	my %parm = validated_hash(\@_,
 							  old_matrix => { isa => 'Ref', optional => 0 },
 							  covmatrix => { isa => 'Maybe[Ref]', optional => 1 }
@@ -2385,7 +2386,7 @@ sub get_posdef_matrix
 	my $old_matrix = $parm{'old_matrix'};
 	my $new_size = scalar(@{$old_matrix});
 
-	my $smallnum=0.0001;
+	my $correlation=0.01;
 	my $last_i = 100;
 
 	for (my $i=0 ; $i<= $last_i; $i++){
@@ -2399,11 +2400,13 @@ sub get_posdef_matrix
 				if (($i >= ($last_i-1)) and ($row == $col)) {
 					#inflate diagonal 10%
 					$value = $value*(1.1);
-				}elsif ($value == 0){
-					if ($i < 2 and defined $covmatrix and (abs($covmatrix->[$row][$col]) > $smallnum)  ){
+				}elsif ($value == 0){#must be offdiag
+					my $proposal = sqrt($old_matrix->[$row][$row])*sqrt($old_matrix->[$col][$col])*$correlation;
+
+					if ($i < 2 and defined $covmatrix and (abs($covmatrix->[$row][$col]) > $proposal)  ){
 						$value = $covmatrix->[$row][$col];
 					}else{
-						$value = $smallnum;
+						$value = $proposal;
 					}
 				}
 				push(@line,$value);
@@ -2415,7 +2418,7 @@ sub get_posdef_matrix
 		#return this if cholesky check posdef, otherwise decrease smallnum
 		my $err = linear_algebra::cholesky(\@testmatrix);
 		if ($err == 1){
-			$smallnum = $smallnum/10;
+			$correlation = $correlation/2;
 		}else{
 			return \@newmatrix;
 		}

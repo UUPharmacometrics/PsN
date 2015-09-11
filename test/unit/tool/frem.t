@@ -12,6 +12,7 @@ use tool::frem;
 use model;
 
 our $tempdir = create_test_dir('unit_frem');
+chdir($tempdir);
 my $modeldir = $includes::testfiledir;
 my $model = model->new(filename => "$modeldir/mox_no_bov.mod", 
 					   ignore_missing_data => 1);
@@ -105,22 +106,50 @@ is_deeply($full->[2],[sqrt(3)*sqrt(2)*0.01,sqrt(4)*sqrt(2)*0.01 ,2,0.4,0.2],"cre
 is_deeply($full->[3],[sqrt(3)*sqrt(4)*0.01,sqrt(4)*sqrt(4)*0.01 ,0.4,4,0.1],"create full_block 3");
 is_deeply($full->[4],[sqrt(3)*sqrt(5)*0.01,sqrt(4)*sqrt(5)*0.01 ,0.2,0.1,5],"create full_block 4");
 
+my ($filtered_data_model,$indices,$first_timevar_type,$extra_input_items,$message) = 
+	tool::frem::create_data2_model( model => $model,
+									filename => 'filterdata.mod',
+									filtered_datafile => 'filtertype0.dta',
+									bov_parameters => scalar(@{$bov_parameters}), 
+									dv  => 'DV',
+									time_varying  => $time_varying,
+									invariant  => $invariant,
+									occasion  => 'VISI');
+
+my $formatted = $filtered_data_model->problems->[0]->tables->[0]->_format_record;
+my @ans = qw (ID VISI XAT2 DGRP DOSE FLAG ONO XIME DVO NEUY SCR AGE SEX NYHA WT COMP ACE DIG DIU NUMB TAD TIME VIDD CLCR AMT SS II VID CMT CONO DV EVID OVID FREMTYPE NOAPPEND);
+for (my $i=0; $i<scalar(@ans); $i++){
+	is($filtered_data_model->problems->[0]->tables->[0]->options->[$i]->name, $ans[$i], 'table record options '.$i);
+}
+is($first_timevar_type,scalar(@{$invariant})+1,'first timevar type create_data2');
+is_deeply($extra_input_items,['FREMTYPE'],'extra_input_items create_data2');
+is($message,"Running dummy model to filter data and add FREMTYPE for Data set 2",'create_data2 message');
+
+is($indices->{'occ_index'},1,'occ index');
+is($indices->{'evid_index'},31,'evid index');
+is($indices->{'mdv_index'},undef,'mdv index');
+is($indices->{'type_index'},33,'type index');
+is_deeply($indices->{'cov_indices'},[30,11,12,23,14],'cov indices');
+
+
+$model = model->new(filename => "$modeldir/pheno.mod", 
+					ignore_missing_data => 1);
+my @code = ('TVCL=THETA(1)','TVV=THETA(2)','CL=TVCL*EXP(ETA(1))','V=TVV*EXP(ETA(2))','S1=V');
+$model->set_code(record => 'pk', code => \@code);
+
+tool::frem::replace_tvpar_with_ctvpar( model => $model, 
+									   ctvpar => ['V']);
+
+@code = @{$model->get_code(record => 'pk')};
+is_deeply(\@code,['TVCL=THETA(1)','TVV=CTVV','CL=TVCL*EXP(ETA(1))','V=TVV*EXP(ETA(2))','S1=V'],"replace tvpar with ctvpar");
+
+#set_frem_records FIXME
+#more dataset handling FIXME
+#set_frem_code FIXME
+
 done_testing();
 exit;
 
-tool::frem::replace_tvpar_with_ctvpar( model => $model,
-									   ctvpar => $ctv_parameters);
 
-my ($filtered_data_model,$filtered_datafile,$indices,$first_timevar_type,$extra_input_items,$message) = 
-	tool::frem::create_data2_model( model => $model,
-									filename => 'dummydata',
-									bov_parameters => 2,
-									dv  => 'DV',
-									time_varying  => [],
-									invariant  => [],
-									occasion  => 'VISI');
 
-#set_frem_records
-
-#set_frem_code
 done_testing();

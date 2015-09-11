@@ -309,7 +309,8 @@ $frem-> print_options (cmd_line => $cmd_line,
 $frem -> run;
 
 if ($frem->vpc and -e $frem->directory.'frem_vpc.mod'){
-	print "The prepared frem vpc model is ".$frem->directory."frem_vpc.mod\n";
+	ui -> print( category => 'frem',
+				 message => "The prepared frem vpc model is ".$frem->directory."frem_vpc.mod\n" );
 }
 
 #$frem -> prepare_results;
