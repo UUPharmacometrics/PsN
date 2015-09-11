@@ -50,13 +50,14 @@ Known issues
   is installed *before* (re)running the installation script setup.pl
 
 *********************************************
-Changes and bug fixes from PsN 4.4.6 to n.n.n
+Changes and bug fixes from PsN 4.4.8 to n.n.n
 *********************************************
 
    ___General___
 
-- The option -degree can now take degrees greater than 1.
+- The option -degree used for tweak_inits can now take degrees greater than 1.
 
+- Bug fix: Detection of non-unique parameter labels when reading a raw results file.
 
    ___mcmp___
 
@@ -71,8 +72,18 @@ Changes and bug fixes from PsN 4.4.6 to n.n.n
 - Bug fix: 
 
 
+   ___frem___
+
+- Refactoring. Unit tests.
+
+
    ___scm___
 
+- More robust filtering on IGNORE/ACCEPT
+
+   ___boot_scm___
+
+- More robust filtering on IGNORE/ACCEPT
 
    ___sse___
 
@@ -80,18 +91,22 @@ Changes and bug fixes from PsN 4.4.6 to n.n.n
 
 
    ___update_inits___
-	 
 
 - The option -degree can now take degrees greater than 1.
-
+- New functionality for automatic Cholesky reparameterization of OMEGA and SIGMA
+- Not required to have model or lst-file to read parameter values from, can update other model properties anyway
 
    ___execute___
 	 
 
    ___sir___
 	
-- The option -auto_rawres can now take degrees greater than 1.
-
+- New options -auto_rawres,-boxcox
+- Recentering, stats for local minima
+- more output
+- Algorithm changes, boxcox is new
+- Resume/Restart functionality
+- Automatic rplots
 
    ___precond___
 
