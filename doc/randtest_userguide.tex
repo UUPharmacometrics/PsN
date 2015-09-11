@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{RANDTEST user guide}{2015-03-05}
+\guidetitle{RANDTEST user guide}{2015-09-11}
 
 \begin{document}
 
@@ -127,6 +127,10 @@ the modified deltaOFV (mod.deltaOFV).
 
 The only column that will change during shuffling is the randomization column. All other columns will be intact, and the order and numbering of individuals will be preserved. Shuffling can only be done on the level of individuals. If stratification is requested via option -stratify\_on, then shuffling will be done separately within the groups defined by unique values in the stratification column. PsN will only look at the value of the stratification column for the first record of each individual. If other records for the same individual have a different stratification value, PsN will print a warning and then ignore the new value.
 During shuffling the sequence of randomization column values from the records of one individual will be copied to another individual. PsN will handle copying also when the number of data set records differs between individuals.
+
+PsN will not filter the data set based on any IGNORE/ACCEPT statements in the NONMEM model file before randomization. This means that
+during shuffling the
+values in the randomization column of an IGNOREd data record can be copied to a record that is not IGNOREd, and vice versa.
 
 \subsection{If -match\_transitions is not set, the default}
 
