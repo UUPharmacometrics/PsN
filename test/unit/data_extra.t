@@ -38,18 +38,18 @@ my $resultref = data::frem_compute_covariate_properties(filename => $tempdir.'fr
 														first_timevar_type => 3,    #index 3 in cov_indices
 														missing_data_token => '-99');
 
-if (defined $resultref){
-	is($resultref->{'occasionlist'}->[0],3,'frem occasion 1');
-	is($resultref->{'occasionlist'}->[1],8,'frem occasion 2');
-	is($resultref->{'invariant_median'}->[0],1,'frem median SEX');
-	is($resultref->{'invariant_median'}->[1],8,'frem median DGRP');
-	cmp_float($resultref->{'invariant_covmatrix'}->[0]->[0],0.163828211773417,'frem inv covmatrix 1,1');
-	cmp_float($resultref->{'invariant_covmatrix'}->[0]->[1],-0.013698630136986,'frem inv covmatrix 1,2');
-	cmp_float($resultref->{'invariant_covmatrix'}->[1]->[0],-0.013698630136986,'frem inv covmatrix 2,1');
-	cmp_float($resultref->{'invariant_covmatrix'}->[1]->[1],0.657534246575342,'frem inv covmatrix 2,2');
-	is($resultref->{'timevar_median'}->[0],77.5,'frem median WT');
-	cmp_float($resultref->{'timevar_covmatrix'}->[0]->[0],241.6312939651981,'frem var covmatrix 1,1');
-}
+
+is($resultref->{'occasionlist'}->[0],3,'frem occasion 1');
+is($resultref->{'occasionlist'}->[1],8,'frem occasion 2');
+is($resultref->{'invariant_median'}->[0],1,'frem median SEX');
+is($resultref->{'invariant_median'}->[1],8,'frem median DGRP');
+cmp_float($resultref->{'invariant_covmatrix'}->[0]->[0],0.163828211773417,'frem inv covmatrix 1,1');
+cmp_float($resultref->{'invariant_covmatrix'}->[0]->[1],-0.013698630136986,'frem inv covmatrix 1,2');
+cmp_float($resultref->{'invariant_covmatrix'}->[1]->[0],-0.013698630136986,'frem inv covmatrix 2,1');
+cmp_float($resultref->{'invariant_covmatrix'}->[1]->[1],0.657534246575342,'frem inv covmatrix 2,2');
+is($resultref->{'timevar_median'}->[0],77.5,'frem median WT');
+cmp_float($resultref->{'timevar_covmatrix'}->[0]->[0],241.6312939651981,'frem var covmatrix 1,1');
+
 remove_test_dir($tempdir);
 
 #TODO datarec new must use base directory model file directory, not cwd, when not absolute input name

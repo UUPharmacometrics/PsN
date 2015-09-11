@@ -18,8 +18,8 @@ my $problem = $model->problems->[0];
 my $full_omega = $problem->get_filled_omega_matrix(start_eta => 1);
 
 cmp_ok($full_omega->[0]->[0],'==',0.4000, "get_filled_omega_matrix 0,0");
-cmp_ok($full_omega->[0]->[1],'==',0.0001, "get_filled_omega_matrix 0,1");
-cmp_ok($full_omega->[1]->[0],'==',0.0001, "get_filled_omega_matrix 1,0");
+cmp_float($full_omega->[0]->[1],sqrt(0.4)*sqrt(0.25)*0.01, "get_filled_omega_matrix 0,1");
+cmp_ok($full_omega->[1]->[0],'==',$full_omega->[0]->[1], "get_filled_omega_matrix 1,0");
 cmp_ok($full_omega->[1]->[1],'==',0.2500, "get_filled_omega_matrix 1,1");
 
 #
@@ -166,8 +166,8 @@ cmp_ok($full_omega->[0]->[1],'==',0.003, "get_filled_omega_matrix 0,1");
 cmp_ok($full_omega->[1]->[1],'==',0.506, "get_filled_omega_matrix 1,1");
 cmp_ok($full_omega->[2]->[0],'==',0.004, "get_filled_omega matrix 2,0");
 cmp_ok($full_omega->[0]->[2],'==',0.004, "get_filled_omega matrix 0,2");
-cmp_ok($full_omega->[2]->[1],'==',0.0001, "get_filled_omega matrix 2,1");
-cmp_ok($full_omega->[1]->[2],'==',0.0001, "get_filled_omega matrix 1,2");
+cmp_float($full_omega->[2]->[1],(0.506*0.01), "get_filled_omega matrix 2,1");
+cmp_ok($full_omega->[1]->[2],'==',$full_omega->[2]->[1], "get_filled_omega matrix 1,2");
 cmp_ok($full_omega->[2]->[2],'==',0.506, "get_filled_omega matrix 2,2");
 
 $omega_mat = $problem->get_record_matrix(type => 'omega',

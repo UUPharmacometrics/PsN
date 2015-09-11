@@ -8,7 +8,7 @@ use warnings;
 use Test::More;
 use Test::Exception;
 use FindBin qw($Bin);
-use lib "$Bin/.."; #location of includes.pm
+use lib "$Bin/../.."; #location of includes.pm
 use includes; #file with paths to PsN packages
 use tool::modelfit;
 use math;
