@@ -237,18 +237,18 @@ my ($sampled_params_arr,$labels_hash) = model::get_rawres_params(filename => $op
 if (defined $sampled_params_arr) {
 	unless (scalar(@{$sampled_params_arr}) >= $min_samples) {
 		if (scalar(@in_filter)>0) {
-			croak("Too few sets (lines) of parameter values in\n".
+			die "Too few sets (lines) of parameter values in\n".
 				  $options{'rawres_input'}."\nafter filtering. Have ".scalar(@{$sampled_params_arr}).
-				  " but need at least $min_samples.\n");
+				  " but need at least $min_samples.\n";
 		} else {
-			croak("Too few sets (lines) of parameter values in\n".
+			die "Too few sets (lines) of parameter values in\n".
 				  $options{'rawres_input'}.". Have ".scalar(@{$sampled_params_arr}).
 				  " but need at least ".
-				  ($min_samples + $options{'offset_rawres'}).".\n");
+				  ($min_samples + $options{'offset_rawres'}).".\n";
 		}
 	}
 } else {
-	croak("get_rawres_params returned undef");
+    die "get_rawres_params returned undef";
 }
 
 my $len = scalar(@{$sampled_params_arr});
@@ -277,6 +277,7 @@ foreach my $param (@list_parameters){
 
 my $resulthash = tool::sir::empirical_statistics( sampled_params_arr => $sampled_params_arr,
 												  do_percentiles => 0,
+												  do_sdcorr => 0,
 												  labels_hash => $labels_hash);
 
 

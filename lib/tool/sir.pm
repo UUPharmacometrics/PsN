@@ -1069,6 +1069,7 @@ sub empirical_statistics{
 							  sampled_params_arr => { isa => 'ArrayRef', optional => 0 },
 							  labels_hash => { isa => 'HashRef', optional => 0 },
 							  do_percentiles => {isa => 'Bool', optional => 1, default => 1},
+							  do_sdcorr => {isa => 'Bool', optional => 1, default => 1},
 							  get_lambda_delta => {isa => 'Bool', optional => 1, default => 0},
 							  absmaxlambda => {isa => 'Num', optional => 1, default => 3},
 							  resolutionlambda => {isa => 'Num', optional => 1, default => 0.2},
@@ -1077,6 +1078,7 @@ sub empirical_statistics{
 	my $sampled_params_arr = $parm{'sampled_params_arr'};
 	my $labels_hash = $parm{'labels_hash'};
 	my $do_percentiles = $parm{'do_percentiles'};
+	my $do_sdcorr = $parm{'do_sdcorr'};
 	my $get_lambda_delta = $parm{'get_lambda_delta'};
 	my $absmaxlambda = $parm{'absmaxlambda'};
 	my $resolutionlambda = $parm{'resolutionlambda'};
@@ -1187,11 +1189,17 @@ sub empirical_statistics{
 		}elsif ($err1 == 2){
 			croak ("input error to linear_algebra rowcov");
 		}
-		$err1 = linear_algebra::covar2sdcorr($resulthash{'covar'},$resulthash{'sdcorr'});
-		if ($err1 == 1){
-			croak ("numerical error in linear_algebra covar2sdcorr");
-		}elsif ($err1 == 2){
-			croak ("input error to linear_algebra covar2sdcorr");
+		if ($do_sdcorr){
+			$err1 = linear_algebra::covar2sdcorr($resulthash{'covar'},$resulthash{'sdcorr'});
+			if ($err1 == 1){
+				croak ("numerical error in linear_algebra covar2sdcorr");
+			}elsif ($err1 == 2){
+				foreach my $line (@{$resulthash{'covar'}}){
+					print join("\t",@{$line})."\n";
+				}
+
+				croak ("input error to linear_algebra covar2sdcorr");
+			}
 		}
 	}
 
