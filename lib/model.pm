@@ -1585,13 +1585,14 @@ sub get_rawres_params
 	my $modelindex=-1;
 	my @extra_indices = (-1) x $extra_count;
 	#scan for ofv label and first theta label. Then following should be rest of theta,omega,sigma
+	#sometimes first theta label is identical to other label, so only set $pos once
 	for (my $i=0; $i<scalar(@header);$i++){
 	    if ($header[$i] eq 'ofv'){
 			$ofvindex = $i;
 	    }elsif ($header[$i] eq 'model'){
 			$modelindex = $i;
 	    }elsif ($header[$i] eq $thetalabels[0]->[0]){
-			$pos = $i;
+			$pos = $i if ($pos == -1); #do not match multiple times
 	    }elsif($extra_count > 0){
 			for (my $j=0; $j< $extra_count; $j++){
 				if ($header[$i] eq $extra_columns[$j]){
@@ -1623,29 +1624,33 @@ sub get_rawres_params
 	$labels_hash{'param'}=[];;
 
 	foreach my $lab (@{$thetalabels[0]}){
+		if (defined $thetapos{$lab}){
+			croak("More than one THETA has label $lab, this is not supported when when reading a raw results file");
+		}
 		$thetapos{$lab} = $pos;
 		$pos++;
 		push(@{$labels_hash{'labels'}},$lab);
 		push(@{$labels_hash{'param'}},'theta');
 	}
 	foreach my $lab (@{$omegalabels[0]}){
+		if (defined $omegapos{$lab}){
+			croak("More than one OMEGA has label $lab, this is not supported when reading a raw results file");
+		}
 		$omegapos{$lab} = $pos;
 		$pos++;
 		push(@{$labels_hash{'labels'}},$lab);
 		push(@{$labels_hash{'param'}},'omega');
 	}
 	foreach my $lab (@{$sigmalabels[0]}){
+		if (defined $sigmapos{$lab}){
+			croak("More than one SIGMA has label $lab, this is not supported when reading a raw results file");
+		}
 		$sigmapos{$lab} = $pos;
 		$pos++;
 		push(@{$labels_hash{'labels'}},$lab);
 		push(@{$labels_hash{'param'}},'sigma');
 	}
 
-	if ($pos > scalar(@header)){
-		croak("assigned position for theta/omega/sigma greater than number ".
-			  "of items in raw_res header. This could happen if there are multiple parameters having the same label.");
-	}
-	
 	#skip the offset first lines of @file
 	for (my $i=0; $i< $offset; $i++){
 	    my $dirt = shift @file;
