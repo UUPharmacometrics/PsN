@@ -426,5 +426,21 @@ $pdf=tool::sir::mvnpdf(inverse_covmatrix => $icm,
 
 cmp_float($pdf->[0], 1.898546535891817e-03,'mvnpdf well conditioned with inflation 3');
 
+#$output = output->new(filename => '/home/kajsa/colleagues_issues/joao/sir/run390.lst');
+#my $model = model->new(filename => '/home/kajsa/colleagues_issues/joao/sir/run390.mod', ignore_missing_data => 1);
+ 
+#$hash = output::get_nonmem_parameters(output => $output);
+#my ($paramsarr,$hashref) = model::get_rawres_params(filename => '/home/kajsa/colleagues_issues/joao/sir/raw_results_sir_iteration1.csv',
+#											  filter => ['resamples.gt.0'],
+#											  require_numeric_ofv => 1,
+#											  offset => 1,
+#											  model => $model);
+#
+#ui->category('sir');
+#$statshash = tool::sir::empirical_statistics(sampled_params_arr => $paramsarr,
+#											 labels_hash=> $hash,
+#											 do_percentiles => 0,
+#											 estimated_vector => $hash->{'values'},
+#											 get_lambda_delta => 1);
 
 done_testing();
