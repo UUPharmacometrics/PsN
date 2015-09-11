@@ -436,30 +436,18 @@ if ($do_filtering){
 											   output_same_directory => 1);
 	my @filter_table_header;
 	my $datafile = 'filtered.dta';
-	my $dummycounter=0;
 	if( defined $filtered_data_model->problems()->[0] -> inputs and 
 		defined $filtered_data_model->problems()->[0] -> inputs -> [0] -> options ) {
-		foreach my $option ( @{$filtered_data_model->problems()->[0] -> inputs -> [0] -> options} ) {
-			if ($option->name eq 'DROP' or $option->name eq 'SKIP'){
-				if (defined $option->value and $option->value ne '' and not ($option->value eq 'DROP' or $option->value eq 'SKIP') ){
-					push( @filter_table_header, $option -> value );
-				}else{
-					#simple drop used in $INPUT without name. Set dummy name as placeholder here.
-					$dummycounter++;
-					$option->value('DUMMY'.$dummycounter);
-					push( @filter_table_header, $option -> value );
-				}
-			}else{
-				push( @filter_table_header, $option -> name );
-			}
-		}
+		my ($arr,$time_added) = $filtered_data_model->problems()->[0] -> inputs -> [0]->get_filter_table_names; 
+		croak ("found no undropped data column in \$INPUT ") unless (defined $arr);
+		croak ("automatic filtering cannot yet handle \$INPUT with DATX but without TIME") if ($time_added);
+		@filter_table_header = @{$arr};
 	} else {
 		die( "Trying to construct table for filtering data".
 			 " but no headers were found in \$INPUT" );
 	}
 	
-	foreach my $remove_rec ('abbreviated','msfi','contr','subroutine','prior','model','tol','infn','omega','pk','aesinitial','aes','des','error','pred','mix','theta','sigma','simulation','estimation','covariance','nonparametric','table','scatter','input'){
-		#removing input also, will add it back without DROP below
+	foreach my $remove_rec ('abbreviated','msfi','contr','subroutine','prior','model','tol','infn','omega','pk','aesinitial','aes','des','error','pred','mix','theta','sigma','simulation','estimation','covariance','nonparametric','table','scatter'){
 		$filtered_data_model -> remove_records(type => $remove_rec);
 	}
 	
@@ -479,11 +467,6 @@ if ($do_filtering){
 		type           => 'table',
 		record_strings => [ join( ' ', @filter_table_header ).
 							' NOAPPEND NOPRINT ONEHEADER FILE='.$datafile]);
-	
-	#put back input without DROP
-	$filtered_data_model -> add_records(
-		type => 'input',
-		record_strings => [join(' ',@filter_table_header)]);
 	
 	$filtered_data_model->_write();
 	# run model in data_filtering_dir clean=3

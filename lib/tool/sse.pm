@@ -265,6 +265,7 @@ sub modelfit_setup
 						write_copy => 0,
 						copy_output => 0);
 
+					#FIXME use input::get_filter_table_names instead
 					if ($sim_model-> is_option_set(record=>'input',name=>'TIME')) {
 						#this assumes no synonym, and TIME is always option, not value.
 						$time_in_input = 1;
@@ -560,6 +561,7 @@ sub modelfit_setup
 						$est_original -> problems->[$in]->datas->[0]->ignoresign('@');
 					}
 
+					#FIXME use input::get_filter_table_names instead
 					#remove any DATX from est_original $INPUT
 					if ($datx_in_input){
 						foreach my $col ('DATE','DAT1','DAT2','DAT3'){
@@ -803,7 +805,9 @@ sub modelfit_setup
 					#when copying $INPUT to $TABLE: remove DATX
 					#if not TIME present, remove TIME
 					#if not TIME present but DATX then add back TIME at the end
-					
+
+					#FIXME use input::get_filter_table_names instead
+
 					if( defined $prob -> inputs and defined $prob -> inputs -> [0] -> options ) {
 						foreach my $option ( @{$prob -> inputs -> [0] -> options} ) {
 							push( @table_header, $option -> name ) unless 

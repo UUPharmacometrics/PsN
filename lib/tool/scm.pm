@@ -5850,29 +5850,14 @@ sub preprocess_data
 
 	my $only_filter = 0;
 
-	#must handle DROP here without header name.
-	my $dummycounter=0;
-	my $first_undropped;
+	my $time_added=0;
 	if( defined $filtered_data_model->problems()->[0] -> inputs and 
 		defined $filtered_data_model->problems()->[0] -> inputs -> [0] -> options ) {
-		foreach my $option ( @{$filtered_data_model->problems()->[0] -> inputs -> [0] -> options} ) {
-			unless ($option->name eq 'DROP' or $option->name eq 'SKIP' or
-				$option->value eq 'DROP' or $option->value eq 'SKIP'){
-				$first_undropped = $option->name;
-				last;
-			}
-		}
-		unless (defined $first_undropped){
-			croak("found no undropped columns in model");
-		}
-		foreach my $option ( @{$filtered_data_model->problems()->[0] -> inputs -> [0] -> options} ) {
-			if ($option->name eq 'DROP' or $option->name eq 'SKIP' or 
-				$option->value eq 'DROP' or $option->value eq 'SKIP'){
-				push( @filter_table_header, $first_undropped );
-			}else{
-				push( @filter_table_header, $option -> name );
-			}
-		}
+		my $arr;
+		($arr,$time_added) = $filtered_data_model->problems()->[0] -> inputs -> [0]->get_filter_table_names; 
+		croak ("found no undropped data column in \$INPUT ") unless (defined $arr);
+		croak ("automatic filtering cannot yet handle \$INPUT with DATX but without TIME") if ($time_added);
+		@filter_table_header = @{$arr};
 	} else {
 		croak("Trying to construct table for filtering data".
 			" but no headers were found in \$INPUT" );

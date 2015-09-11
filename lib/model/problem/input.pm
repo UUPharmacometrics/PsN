@@ -38,6 +38,58 @@ sub get_nonskipped_columns
 	return \@option_list;
 }
 
+sub get_filter_table_names
+{
+	my $self = shift;
+
+	my @filter_table_names = ();
+	my $first_undropped;
+	my $time_in_input = 0;
+	my $datx_in_input = 0;
+	my $time_added = 0;
+
+	foreach my $option (@{$self->options}) {
+		if ($option->name ne 'DROP' && $option->name ne 'SKIP' && $option->value ne 'SKIP' && $option->value ne 'DROP') {
+			unless (defined $first_undropped){
+				$first_undropped =  $option->name;
+			}
+			unless ($time_in_input){
+				if (($option->name eq 'TIME') or ($option->value eq 'TIME')){
+					$time_in_input=1;
+				}
+			}
+		}
+		unless ($datx_in_input){
+			#regardless if drop or not
+			foreach my $col ('DATE','DAT1','DAT2','DAT3') {
+				if (($option->name eq $col) or ($option->value eq $col)){
+					$datx_in_input=1;
+					last;
+				}
+			}
+		}
+	}
+	unless (defined $first_undropped){
+		return (undef,0); #croak("found no undropped columns in model");
+	}
+
+	foreach my $option (@{$self->options}) {
+		if ($option->name ne 'DROP' && $option->name ne 'SKIP' && $option->value ne 'SKIP' && $option->value ne 'DROP') {
+			push (@filter_table_names, $option->name); 
+		}else{
+			push (@filter_table_names,$first_undropped);
+		}
+	}
+
+	unless ($time_in_input){
+		if ($datx_in_input){
+			push (@filter_table_names,'TIME');
+			$time_added=1;
+		}
+	}
+	return (\@filter_table_names,$time_added);
+}
+
 no Moose;
 __PACKAGE__->meta->make_immutable;
 1;
