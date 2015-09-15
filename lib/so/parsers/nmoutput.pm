@@ -318,6 +318,7 @@ sub _parse_lst_file
                 $outobj->runtime =~ m/(\d+):(\d+):(\d+)/;
                 $elapsed_time = $1 + $2 / 60 + $3 / 3600;
                 $self->_so_block->TaskInformation->RunTime->Real($elapsed_time);
+                $self->_so_block->TaskInformation->RunTime->Description("Run time in hours");
             }
 
             if ($simulation_step_run and $self->use_tables) {
