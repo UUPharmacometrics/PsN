@@ -12,6 +12,9 @@ LIBFILES= ui.pm \
 	OSspecific.pm \
 	binning.pm \
 	array.pm \
+	table.pm \
+	nmtable.pm \
+	nmtablefile.pm \
 	boxcox.pm \
 	include_modules.pm \
 	ext/Math/SigFigs.pm \
