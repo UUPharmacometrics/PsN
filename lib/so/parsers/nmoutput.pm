@@ -1100,15 +1100,18 @@ sub _add_status_messages
     my $problem = $parm{'problem'};
     my $subproblem = $parm{'subproblem'};
 
+    my $estimation_step_run = $output->problems->[$problem]->subproblems->[$subproblem]->estimation_step_run;
 
-    my $minimization_successful = $output->minimization_successful->[$problem][$subproblem];
-    $self->_so_block->TaskInformation->add_message(
-        type => $minimization_successful ? "INFORMATION" : "WARNING",
-        toolname => "NONMEM",
-        name => "minimization_successful",
-        content => $minimization_successful,
-        severity => 1,
-    );
+    if ($estimation_step_run) {
+        my $minimization_successful = $output->minimization_successful->[$problem][$subproblem];
+        $self->_so_block->TaskInformation->add_message(
+            type => $minimization_successful ? "INFORMATION" : "WARNING",
+            toolname => "NONMEM",
+            name => "minimization_successful",
+            content => $minimization_successful,
+            severity => 1,
+        );
+    }
 
     my $covariance_step_run = $output->covariance_step_run->[$problem];
 
