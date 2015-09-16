@@ -27,7 +27,7 @@ Required argument is a list of nonmem results files (.lst). Wildcards will work 
 
 \begin{optionlist}
 \optname{bootstrap\_results}
-A PsN bootstrap\_results.csv file to use for filling the Bootstrap element.
+A PsN bootstrap\_results.csv file to use for filling the Bootstrap elements.
 \nextopt
 \optname{use\_tables}
 Default set. Will use table files (sdtab and patab) to populate the elements of the SO that needs these. Use -no-use\_tables to not use any table files.
@@ -137,7 +137,7 @@ The following entries will be populated:
     \item TaskInformation 
         \begin{itemize}
             \item Message - Errors, warnings etc will be put here. See section "information messages"
-            \item RunTime - From the .lst file
+            \item RunTime - From the .lst file. Remember that RunTime only reflects the run time reported by NONMEM in the .lst file. No PsN runtime will be reported.
         \end{itemize}
     \item Estimation
         \begin{itemize}
