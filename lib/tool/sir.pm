@@ -277,7 +277,7 @@ sub modelfit_setup
 				$require_numeric_ofv=1;
 				#when loading restart filter is set to empty
 				#we read all successful samples even if not resampled. The filtering on resamples column
-				#is done in sub empirical_statistics.
+				#is done in empirical_statistics.
 			}
 
 			($rawres_resampled_params_arr,$resamp_href) = 
@@ -573,7 +573,7 @@ sub modelfit_setup
 			push(@{$self->intermediate_raw_results_files},'raw_results_sir_iteration'.$iteration.'.csv');
 			$iteration_evaluation -> run;
 			#here we read all successful samples even if not resampled. The filtering on resamples column
-			#is done in sub empirical_statistics
+			#is done in empirical_statistics
 			($resampled_params_arr,$resamp_href) = 
 				model::get_rawres_params(filename => $iteration_evaluation->raw_results_file()->[0],
 										 require_numeric_ofv => 1,

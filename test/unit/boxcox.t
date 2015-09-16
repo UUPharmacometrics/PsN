@@ -131,8 +131,9 @@ my @V=(1.55158,1.3027,1.61882,1.13856,1.37955,1.59477,1.62951,1.59514,1.09566,
 my @flat=(0.9,0.9,0.9,0.9,0.9,0.9,0.9,0.9,0.9,0.9,0.9,0.9,0.9,0.9,0.9,0.9,0.9,0.9);
 
 my ($lambda,$delta,$numerr)=boxcox::get_lambda_delta(\@flat,3,1);
-is($numerr,1,"numerical error get_lambda_delta");
+is($numerr,0,"numerical error get_lambda_delta");
 
+#print "lam $lambda del $delta \n";
 random_set_seed_from_phrase('12345');
 
 my $N=100;
@@ -161,7 +162,7 @@ $extra{'type'}='second_degree';
 $extra{'a'}=-1;
 $extra{'b'}=-2;
 $extra{'c'}=15;
-my ($x,$numerr) = boxcox::secant_method_maximize(10,0.005,30,\%extra);
+my ($x,$numerr) = boxcox::secant_method_maximize(10,0.005,30,[15,0,-2],\%extra);
 
 cmp_float($x,-1,"second order 1");
 cmp_ok($numerr,'==',0,"numerr second degree");
@@ -169,10 +170,118 @@ cmp_ok($numerr,'==',0,"numerr second degree");
 $extra{'a'}=-1;
 $extra{'b'}=3;
 $extra{'c'}=-1;
-($x,$numerr) = boxcox::secant_method_maximize(10,0.005,30,\%extra);
+($x,$numerr) = boxcox::secant_method_maximize(10,0.005,30,[-1,0,3],\%extra);
 
 cmp_float($x,1.5,"second order 2");
 cmp_ok($numerr,'==',0,"numerr second degree 2");
 
+my $arr =[];
+
+boxcox::insert_sort_ascending($arr,[3,0],0);
+
+is_deeply($arr->[0],[3,0],"insert sort 1");
+
+boxcox::insert_sort_ascending($arr,[2,0],0);
+is_deeply($arr->[0],[2,0],"insert sort 2");
+is_deeply($arr->[1],[3,0],"insert sort 3");
+
+boxcox::insert_sort_ascending($arr,[4,0],0);
+is_deeply($arr->[0],[2,0],"insert sort 4");
+is_deeply($arr->[1],[3,0],"insert sort 5");
+is_deeply($arr->[2],[4,0],"insert sort 6");
+
+boxcox::insert_sort_ascending($arr,[3.5,0],0);
+is_deeply($arr->[0],[2,0],"insert sort 7");
+is_deeply($arr->[1],[3,0],"insert sort 8");
+is_deeply($arr->[2],[3.5,0],"insert sort 9");
+is_deeply($arr->[3],[4,0],"insert sort 10");
+
+my $matrix = [[],$arr,[[1,0],[5,0]]];
+
+my ($small,$best) = boxcox::get_smallest_best_index($matrix);
+is($small,1,'get smallest index 1');
+is($best,2,'get  best index 1');
+
+$matrix = [[[1,0],[5,0]],$arr,[[1,0],[2,0]]];
+
+($small,$best) = boxcox::get_smallest_best_index($matrix);
+is($small,0,'get smallest index 2');
+is($best,0,'get  best index 2');
+
+$matrix = [[[1,0],[2,0]],$arr];
+
+($small,$best) = boxcox::get_smallest_best_index($matrix);
+is($small,0,'get smallest index 3');
+is($best,1,'get  best index 3');
+
+%extra;
+$extra{'type'}='second_degree';
+$extra{'a'}=-1;
+$extra{'b'}=2;
+$extra{'c'}=3;
+
+$matrix = [[[3,0]],[],[],[],[]];
+($small,$best) = boxcox::get_smallest_best_index($matrix);
+is($small,0,'get smallest index 4');
+is($best,0,'get  best index 4');
+
+boxcox::make_splits($matrix,[0],3,\%extra);
+is_deeply($matrix->[1]->[0],[0,-1],"after split 1a");
+is_deeply($matrix->[1]->[1],[3,0],"after split 1b");
+is_deeply($matrix->[1]->[2],[4,1],"after split 1c");
+
+($small,$best) = boxcox::get_smallest_best_index($matrix);
+is($small,1,'get smallest index 5');
+is($best,1,'get  best index 5');
+
+boxcox::make_splits($matrix,[1],3,\%extra);
+is_deeply($matrix->[1]->[0],[0,-1],"after split 2a");
+is_deeply($matrix->[1]->[1],[3,0],"after split 2b");
+is_deeply($matrix->[2]->[2],[4,1],"after split 2c");
+cmp_float($matrix->[2]->[0]->[1],(1+1/3),"after split 2d");
+cmp_float($matrix->[2]->[1]->[1],(1-1/3),"after split 2e");
+
+is((boxcox::turn([20,0.3],[19,1],[0.1,3]) > 0),1," convex ");
+is((boxcox::turn([20,0.3],[1,1],[0.7,3]) < 0),1," concave ");
+is((boxcox::turn([2,1],[3,2],[4,3]) == 0),1," straight ");
+
+%extra;
+$extra{'type'}='second_degree';
+$extra{'a'}=-7;
+$extra{'b'}=-8;
+$extra{'c'}=10;
+
+#
+my $opt = boxcox::direct_search_maximize(1.5,6,30,\%extra);
+cmp_relative($opt->[0],10+16/7,6,"direct 2nd y");
+cmp_relative($opt->[1],-4/7,1,"direct 2nd x");
+
+%extra;
+$extra{'type'}='second_degree';
+$extra{'a'}=-1;
+$extra{'b'}=2;
+$extra{'c'}=5;
+
+#
+my $opt = boxcox::direct_search_maximize(4.5,6,20,\%extra);
+cmp_float($opt->[0],6,"direct 2nd y");
+cmp_float($opt->[1],1,"direct 2nd x");
+
+#Joao very skewed
+open( RRES, $includes::testfiledir . '/boxcoxtestvectors.csv') or die "could not open";
+my @read_file = <RRES>;
+close( RRES );
+
+#print "delete  \n";
+my $index=0;
+foreach my $line (@read_file){
+	$index++;
+	chomp $line;
+	my @vals=split(',',$line);
+	my $est = shift(@vals);
+#	print "\n"."A$index=[";
+	my ($lam,$del,$numerr) = boxcox::get_lambda_delta(\@vals,3,$est);
+
+}
 
 done_testing();
