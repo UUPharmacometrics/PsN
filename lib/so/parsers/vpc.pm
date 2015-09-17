@@ -11,14 +11,20 @@ use include_modules;
 use so::soblock;
 use utils::file;
 
+has 'rundir' => ( is => 'rw', isa => 'Str' );
 has 'vpc_results' => ( is => 'rw', isa => 'Str' );
 has 'so' => ( is => 'rw', isa => 'so' );
 has 'verbose' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'labels_hash' => ( is => 'rw', isa => 'Maybe[HashRef]' );
 has '_so_block' => ( is => 'rw', isa => 'so::soblock' );
 
 sub BUILD
 {
     my $self = shift;
+
+    if (defined $self->rundir) {
+        $self->vpc_results($self->rundir  . "/vpc_results.csv");
+    }
 
     my $so_block = $self->so->SOBlock->[0];
 
@@ -51,13 +57,13 @@ sub _create_vpc
     }
 
     # add rawresults
-    $self->_so_block->RawResults->add_datafile(name => $self->vpc_results, description => "PsN vpc results file"); 
+    $self->_so_block->RawResults->add_datafile(name => $self->vpc_results, description => "PsN vpc results file", oid => "PsN_VPC_results"); 
 
     # find vpctab
     my $vpcdir = utils::file::directory($self->vpc_results);
     (my $vpctab) = glob "$vpcdir/vpctab*";
 
-    $self->_so_block->RawResults->add_datafile(name => $vpctab, description => "PsN vpctab"); 
+    $self->_so_block->RawResults->add_datafile(name => $vpctab, description => "PsN vpctab", oid => "PsN_VPC_vpctab"); 
 } 
 
 no Moose;
