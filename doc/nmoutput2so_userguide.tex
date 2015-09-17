@@ -79,6 +79,9 @@ Set to print information, such as all errors and warnings, during conversion to 
 This option will probably change its format.
 Set to use external tables for the simulations
 \nextopt
+\optname{rundir}
+Extract results from a PsN rundir. Currently supports bootstrap and sse
+\nextopt
 \optname{psn\_connector}
 Do not use! Only for internal use by the PsN connector.
 \nextopt
@@ -209,6 +212,8 @@ Some special raw results files in the RawResults section of the SO will have a s
       PsN\_bootstrap\_results & bootstrap\_results.csv \\
       PsN\_bootstrap\_included\_individuals & included\_individuals1.csv \\
       PsN\_bootstrap\_raw\_results & raw\_results\_<model>.csv \\
+      PsN\_SSE\_results & sse\_results.csv \\
+      PsN\_SSE\_raw\_results & raw\_results\_<model>.csv
 \end{tabular}
 
 

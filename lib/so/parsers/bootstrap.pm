@@ -12,6 +12,7 @@ use utils::file;
 use so::soblock;
 
 has 'bootstrap_results' => ( is => 'rw', isa => 'Str' );
+has 'rundir' => ( is => 'rw', isa => 'Str' );
 has 'so' => ( is => 'rw', isa => 'so' );
 has 'verbose' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'labels_hash' => ( is => 'rw', isa => 'Maybe[HashRef]' );
@@ -22,6 +23,10 @@ has '_precision_bootstrap' => ( is => 'rw', isa => 'so::soblock::estimation::pre
 sub BUILD
 {
     my $self = shift;
+
+    if (defined $self->rundir) {
+        $self->bootstrap_results($self->rundir . "/bootstrap_results.csv");
+    }
 
     my $so_block = $self->so->SOBlock->[0];
 
