@@ -53,9 +53,11 @@ sub add_datafile
     my %parm = validated_hash(\@_,
         name => { isa => 'Str' },
         description => { isa => 'Str' },
+        oid => { isa => 'Str', optional => 1 },     # Will be used as oid if specified. Otherwise a default numbered oid will be used
     );
     my $name = $parm{'name'};
     my $description = $parm{'description'};
+    my $oid = $parm{'oid'};
 
     $name = utils::file::remove_path($name);
 
@@ -69,8 +71,12 @@ sub add_datafile
         }
     }
 
-    my $df = so::soblock::rawresults::datafile->new(Description => $description, path => $name, oid => 'd' . $self->_next_oid);
-    $self->_next_oid($self->_next_oid + 1);
+    if (not defined $oid) {
+        $oid = 'd' . $self->_next_oid;
+        $self->_next_oid($self->_next_oid + 1);
+    }
+
+    my $df = so::soblock::rawresults::datafile->new(Description => $description, path => $name, oid => $oid);
 
     $self->DataFile([]) if not defined $self->DataFile;
     push @{$self->DataFile}, $df;

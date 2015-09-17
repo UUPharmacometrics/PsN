@@ -133,7 +133,7 @@ The resulting standardized output object xml will be written to the file called 
 The following entries will be populated:
 
 \begin{itemize}
-    \item RawResults - All used files will be added
+    \item RawResults - All used files and some selected not used files will be added. See the section on raw results for more info
     \item TaskInformation 
         \begin{itemize}
             \item Message - Errors, warnings etc will be put here. See section "information messages"
@@ -199,6 +199,19 @@ The following entries will be populated:
             \end{itemize}
         \end{itemize}
 \end{itemize}
+
+\subsection{Raw results}
+Some special raw results files in the RawResults section of the SO will have a specific oid set. This makes it easier to programatically find the files. Here follows a list of these files and oids:
+
+\begin{tabular}{ l l}
+      oid & file \\
+    \hline
+      PsN\_bootstrap\_results & bootstrap\_results.csv \\
+      PsN\_bootstrap\_included\_individuals & included\_individuals1.csv \\
+      PsN\_bootstrap\_raw\_results & raw\_results\_<model>.csv \\
+\end{tabular}
+
+
 
 \subsection{Information messages}
 A set of tool specific information messages are added in TaskInformation. They are listed table below:

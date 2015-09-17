@@ -123,8 +123,11 @@ Changes and bug fixes from PsN 4.4.8 to n.n.n
 
 - Bug fix: misspelling of Parameter in SE and RSE table
 - Bug fix: Don't create covariance_step_warnings and covariance_step_successful warnings if $COV not specified
+- Bug fix: Don't give message minimization_successful after simulation
 - Add Bootstrap/PrecisionEstimates. Currently with one single alpha.
 - Add bootstrap parameters not on var/cov scale. Also add a warning listing these parameters.
+- Add description to TimeStamp explaining that unit is hours.
+- Add more PsN result files to RawResults. Also set specific oids for easier retrieval
 
    ___so_tool___
 
