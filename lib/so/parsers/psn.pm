@@ -80,7 +80,6 @@ sub _connector_get_files
 	my $errorstring;
 
     my @files=();
-    my $bootstrap_results;
     my $tool= _get_toolname(directory => $directory); #can be undef
 	my $errorfile='errorMessages';
 
@@ -120,7 +119,6 @@ sub _connector_get_files
 
         #we have already checked existence of tool_results.csv and copied the csv up here
         if ($tool eq 'bootstrap'){
-            $bootstrap_results = 'bootstrap_results.csv';
             @files = ($lstfile);
         }elsif ($tool eq 'vpc'){
             cp($directory.'/m1/vpc_simulation.1.lst','.');
@@ -147,7 +145,7 @@ sub _connector_get_files
 
     }
 
-    return (\@files, $bootstrap_results, $sofilename, $errorstring);
+    return (\@files, $sofilename, $errorstring);
 }
 
 sub _get_toolname
@@ -169,7 +167,6 @@ sub _get_toolname
 		close( COM );
 		my @fields = split(' ',$read_file[0]);
 		my @path = split(/\\|\//,$fields[0]);
-#		print join("\t",@path)."\n";
 		$command = $path[-1];
 	}
 
@@ -184,8 +181,6 @@ sub _get_toolname
 	}
 
     return $tool; #can be undef
-
-
 }
 
 no Moose;

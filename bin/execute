@@ -15,12 +15,11 @@ use Getopt::Long;
 use Math::Random;
 # PsN includes #
 use PsN;
-use tool::modelfit;
-use model;
 use common_options;
 use ui;
 use Cwd;
 use include_modules;
+# More PsN dependencies included with require further down
 
 my $cmd_line = $0 . " " . join( " ", @ARGV );
 
@@ -100,7 +99,6 @@ $help_text{-predict_data} = <<'EOF';
 	(MAXEVAL=0 or corresponding), change data file to -predict_data and then run.
 EOF
 
-
 $help_text{-predict_model} = <<'EOF';
     -predict_model='string'
     Only allowed in combination with -predict_data.
@@ -155,6 +153,7 @@ EOF
     input to e.g. sumo, vpc or update_inits. Option can be disabled with 
     -no-prepend_options_to_lst if it is set in psn.conf. 
 EOF
+
     $help_text{-tail_output} = <<'EOF';
     -tail_output
     This option only works for execute under Windows.
@@ -194,6 +193,8 @@ EOF
 
 common_options::online_help('execute', \%options,\%help_text, \%required_options, \%optional_options);
 
+require tool::modelfit;
+require model;
 
 #bad to request user input if wrapper script was used to start PsN. Just make this easy to invoke 
 #manually after installing

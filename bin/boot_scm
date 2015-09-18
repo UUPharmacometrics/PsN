@@ -7,11 +7,6 @@ use lib "$Bin/../lib";
 # Everything above this line will be replaced #
 
 use PsN;
-use file;
-use model;
-use data;
-use tool::scm;
-use tool::scm::config_file;
 use Math::Random;
 use strict;
 use Getopt::Long;
@@ -20,6 +15,7 @@ use common_options;
 use ui;
 use OSspecific;
 use File::Copy qw/cp mv/;
+# More PsN dependencies included with require further down
 
 my $cmd_line = $0 . " " . join( " ", @ARGV );
 
@@ -157,6 +153,12 @@ if ( $options{'samples'} eq '' ){
 	print "Option -samples is required. \n";
 	exit;
 }
+
+require file;
+require model;
+require data;
+require tool::scm;
+require tool::scm::config_file;
 
 my $config_file;
 if( -e $options{'config_file'} ){

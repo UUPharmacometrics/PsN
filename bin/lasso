@@ -7,11 +7,11 @@ use lib "$Bin/../lib";
 # Everything above this line will be replaced #
 
 use PsN;
-use model;
-use tool::lasso;
 use strict;
 use Getopt::Long;
 use common_options;
+use ui;
+# More PsN dependencies included with require further down
 
 my $cmd_line = $0 . " " . join( " ", @ARGV );
 
@@ -198,6 +198,9 @@ unless ( $options{'retries'}>0 ){
       "may need as many as 5 retries, but zero is generally sufficient if\n".
       "rounding errors during cross-validation are accepted.\n";
 }
+
+require model;
+require tool::lasso;
 
 my $eval_string = common_options::model_parameters(\%options);
 

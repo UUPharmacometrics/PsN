@@ -19,10 +19,8 @@ use PsN;
 use ui;
 use common_options;
 use Cwd;
-use model;
 use linear_algebra;
-use tool::precond;
-use tool::sir;
+# More PsN dependencies included with require further down
 
 my $cmd_line = $0 . " " . join( " ", @ARGV );
 my %options;
@@ -236,6 +234,9 @@ if (not defined $options{'offset_rawres'}) {
   $options{'offset_rawres'} = 0;
 }
 
+require model;
+require tool::precond;
+require tool::sir;
 
 my $eval_string = common_options::model_parameters(\%options);
 

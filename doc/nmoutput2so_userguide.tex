@@ -27,7 +27,7 @@ Required argument is a list of nonmem results files (.lst). Wildcards will work 
 
 \begin{optionlist}
 \optname{bootstrap\_results}
-A PsN bootstrap\_results.csv file to use for filling the Bootstrap element.
+A PsN bootstrap\_results.csv file to use for filling the Bootstrap elements.
 \nextopt
 \optname{use\_tables}
 Default set. Will use table files (sdtab and patab) to populate the elements of the SO that needs these. Use -no-use\_tables to not use any table files.
@@ -78,6 +78,9 @@ Set to print information, such as all errors and warnings, during conversion to 
 \optname{external\_tables}
 This option will probably change its format.
 Set to use external tables for the simulations
+\nextopt
+\optname{rundir}
+Extract results from a PsN rundir. Currently supports bootstrap and sse
 \nextopt
 \optname{psn\_connector}
 Do not use! Only for internal use by the PsN connector.
@@ -133,11 +136,11 @@ The resulting standardized output object xml will be written to the file called 
 The following entries will be populated:
 
 \begin{itemize}
-    \item RawResults - All used files will be added
+    \item RawResults - All used files and some selected not used files will be added. See the section on raw results for more info
     \item TaskInformation 
         \begin{itemize}
             \item Message - Errors, warnings etc will be put here. See section "information messages"
-            \item RunTime - From the .lst file
+            \item RunTime - From the .lst file. Remember that RunTime only reflects the run time reported by NONMEM in the .lst file. No PsN runtime will be reported.
         \end{itemize}
     \item Estimation
         \begin{itemize}
@@ -199,6 +202,23 @@ The following entries will be populated:
             \end{itemize}
         \end{itemize}
 \end{itemize}
+
+\subsection{Raw results}
+Some special raw results files in the RawResults section of the SO will have a specific oid set. This makes it easier to programatically find the files. Here follows a list of these files and oids:
+
+\begin{tabular}{ l l}
+      oid & file \\
+    \hline
+      PsN\_bootstrap\_results & bootstrap\_results.csv \\
+      PsN\_bootstrap\_included\_individuals & included\_individuals1.csv \\
+      PsN\_bootstrap\_raw\_results & raw\_results\_<model>.csv \\
+      PsN\_SSE\_results & sse\_results.csv \\
+      PsN\_SSE\_raw\_results & raw\_results\_<model>.csv \\
+      PsN\_VPC\_results & vpc\_results.csv \\
+      PsN\_VPC\_vpctab & vpctab<num> \\
+\end{tabular}
+
+
 
 \subsection{Information messages}
 A set of tool specific information messages are added in TaskInformation. They are listed table below:

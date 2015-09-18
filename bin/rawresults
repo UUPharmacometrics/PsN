@@ -15,14 +15,13 @@ use Getopt::Long;
 use Math::Random;
 # PsN includes #
 use PsN;
-use tool::modelfit;
-use model;
 use common_options;
 use ui;
 use Cwd;
 use File::Glob;
 use File::Copy qw/cp mv/;
 use File::Path 'rmtree';
+# More PsN dependencies included with require further down
 
 
 my %options;
@@ -89,6 +88,9 @@ if ((-e $path.'/mc-orig-1.mod') or (-e $path.'/mc-alt_1-1.mod')){
 my @counts=();
 my @modnames=();
 
+
+require tool::modelfit;
+require model;
 
 print "Processing...\n";
 if (not $sse){

@@ -7,14 +7,14 @@ use lib "$Bin/../lib";
 # Everything above this line will be replaced #
 
 use PsN;
-use model;
-use tool::npc;
 use strict;
 use Getopt::Long;
 use common_options;
 use ui;
 use Cwd;
 use OSspecific;
+use array;
+# More PsN dependencies included with require further down
 
 my $cmd_line = $0 . " " . join( " ", @ARGV );
 
@@ -625,6 +625,9 @@ if (defined $options{'auto_bin'}) {
 if (defined $options{'min_points_in_bin'} and not defined $auto_bin_mode) {
 	die "The option -min_points_in_bin can only be used in conjunction with the -auto_bin option\n";
 }
+
+require model;
+require tool::npc;
 
 my $eval_string = common_options::model_parameters(\%options);
 

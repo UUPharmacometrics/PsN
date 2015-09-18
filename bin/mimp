@@ -15,11 +15,10 @@ use Getopt::Long;
 use Math::Random;
 # PsN includes #
 use PsN;
-use tool::modelfit;
-use model;
 use common_options;
 use ui;
 use Cwd;
+# More PsN dependencies included with require further down
 
 my $cmd_line = $0 . " " . join( " ", @ARGV );
 
@@ -188,6 +187,9 @@ if ( defined $options{'sim_model'}){
 	}
 	$options{'samples'}=1;
 }
+
+require tool::modelfit;
+require model;
 
 my $main_directory = tool::get_rundir(create => 1,
 									  basename => 'mimp_dir',

@@ -8,9 +8,11 @@ use Moose;
 use MooseX::Params::Validate;
 use include_modules;
 
+use utils::file;
 use so::soblock;
 
 has 'bootstrap_results' => ( is => 'rw', isa => 'Str' );
+has 'rundir' => ( is => 'rw', isa => 'Str' );
 has 'so' => ( is => 'rw', isa => 'so' );
 has 'verbose' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'labels_hash' => ( is => 'rw', isa => 'Maybe[HashRef]' );
@@ -21,6 +23,10 @@ has '_precision_bootstrap' => ( is => 'rw', isa => 'so::soblock::estimation::pre
 sub BUILD
 {
     my $self = shift;
+
+    if (defined $self->rundir) {
+        $self->bootstrap_results($self->rundir . "/bootstrap_results.csv");
+    }
 
     my $so_block = $self->so->SOBlock->[0];
 
@@ -198,8 +204,17 @@ sub _create_bootstrap
     }
 
     # add rawresults
-    $self->_so_block->RawResults->add_datafile(name => $self->bootstrap_results, description => "PsN Bootstrap results file"); 
-} 
+    $self->_so_block->RawResults->add_datafile(name => $self->bootstrap_results, description => "PsN Bootstrap results file", oid => 'PsN_bootstrap_results'); 
+    $self->_so_block->RawResults->add_datafile(name => 'included_individuals1.csv', description => "PsN Bootstrap included individuals", oid => 'PsN_bootstrap_included_individuals'); 
+
+    my $dir = utils::file::directory($self->bootstrap_results);
+    (my $raw_results) = glob("$dir/raw_results_*.csv");
+    $raw_results = utils::file::remove_path($raw_results);
+
+    if (defined $raw_results) {
+        $self->_so_block->RawResults->add_datafile(name => $raw_results, description => "PsN Bootstrap raw results", oid => 'PsN_bootstrap_raw_results'); 
+    } 
+}
 
 sub _read_line
 {

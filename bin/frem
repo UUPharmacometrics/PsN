@@ -7,14 +7,13 @@ use lib "$Bin/../lib";
 # Everything above this line will be replaced #
 
 use PsN;
-use model;
-use tool::frem;
 use strict;
 use Getopt::Long;
 use common_options;
 use Cwd;
 use OSspecific;
 use ui;
+# More PsN dependencies included with require further down
 
 my $cmd_line = $0 . " " . join( " ", @ARGV );
 
@@ -234,6 +233,9 @@ if (defined $options{'parameters'}){
 		}
     }
 }
+
+require model;
+require tool::frem;
 
 my $eval_string = common_options::model_parameters(\%options);
 

@@ -318,6 +318,7 @@ sub _parse_lst_file
                 $outobj->runtime =~ m/(\d+):(\d+):(\d+)/;
                 $elapsed_time = $1 + $2 / 60 + $3 / 3600;
                 $self->_so_block->TaskInformation->RunTime->Real($elapsed_time);
+                $self->_so_block->TaskInformation->RunTime->Description("Run time in hours");
             }
 
             if ($simulation_step_run and $self->use_tables) {
@@ -1099,15 +1100,18 @@ sub _add_status_messages
     my $problem = $parm{'problem'};
     my $subproblem = $parm{'subproblem'};
 
+    my $estimation_step_run = $output->problems->[$problem]->subproblems->[$subproblem]->estimation_step_run;
 
-    my $minimization_successful = $output->minimization_successful->[$problem][$subproblem];
-    $self->_so_block->TaskInformation->add_message(
-        type => $minimization_successful ? "INFORMATION" : "WARNING",
-        toolname => "NONMEM",
-        name => "minimization_successful",
-        content => $minimization_successful,
-        severity => 1,
-    );
+    if ($estimation_step_run) {
+        my $minimization_successful = $output->minimization_successful->[$problem][$subproblem];
+        $self->_so_block->TaskInformation->add_message(
+            type => $minimization_successful ? "INFORMATION" : "WARNING",
+            toolname => "NONMEM",
+            name => "minimization_successful",
+            content => $minimization_successful,
+            severity => 1,
+        );
+    }
 
     my $covariance_step_run = $output->covariance_step_run->[$problem];
 

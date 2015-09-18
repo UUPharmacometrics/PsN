@@ -7,12 +7,12 @@ use lib "$Bin/../lib";
 # Everything above this line will be replaced #
 
 use PsN;
-use model;
-use tool::sir;
 use strict;
 use Getopt::Long;
 use common_options;
 use OSspecific;
+use ui;
+# More PsN dependencies included with require further down
 
 my $cmd_line = $0 . " " . join( " ", @ARGV );
 
@@ -205,6 +205,9 @@ if (0){
 
 }
 
+require model;
+require tool::sir;
+
 my $eval_string = common_options::model_parameters(\%options);
 
 my $model;
@@ -274,12 +277,10 @@ foreach my $param (@list_parameters){
 }
 
 
-
 my $resulthash = tool::sir::empirical_statistics( sampled_params_arr => $sampled_params_arr,
 												  do_percentiles => 0,
 												  do_sdcorr => 0,
 												  labels_hash => $labels_hash);
-
 
 
 my $print_header = 1;
@@ -297,5 +298,3 @@ my $formatted = tool::sir::format_covmatrix(matrix => $resulthash->{'covar'},
 foreach my $line (@{$formatted}){
 	print $line;
 }
-
-

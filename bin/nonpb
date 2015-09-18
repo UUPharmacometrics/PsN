@@ -7,13 +7,12 @@ use lib "$Bin/../lib";
 # Everything above this line will be replaced #
 
 use PsN;
-use model;
-use tool::nonpb;
-use tool::bootstrap;
 use strict;
 use Getopt::Long;
 use common_options;
 use Cwd;
+use ui;
+# More PsN dependencies included with require further down
 
 my $cmd_line = $0 . " " . join( " ", @ARGV );
 
@@ -143,6 +142,10 @@ if ( defined $options{'clean'} and $options{'clean'}>2){
 
 ui -> category( 'nonpb' );
 ui -> silent(1) if( $options{'silent'} );
+
+require model;
+require tool::nonpb;
+require tool::bootstrap;
 
 my $eval_string = common_options::model_parameters(\%options);
 
