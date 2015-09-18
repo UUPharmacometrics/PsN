@@ -7,18 +7,11 @@ use lib "$Bin/../lib";
 # Everything above this line will be replaced #
 
 use PsN;
-use output;
 use strict;
 use Getopt::Long;
 use common_options;
-use model;
 use Config;
-use so;
-use so::parsers::nmoutput;
-use so::parsers::bootstrap;
-use so::parsers::vpc;
-use so::parsers::sse;
-use so::parsers::psn;
+# More PsN dependencies included with require further down
 
 $| = 1; # Make sure autoflush is on
 
@@ -243,6 +236,15 @@ $help_text{-rundir} = <<'EOF';
 EOF
 
 common_options::online_help('nmoutput2so', \%options, \%help_text, \%required_options, \%optional_options);
+
+require output;
+require model;
+require so;
+require so::parsers::nmoutput;
+require so::parsers::bootstrap;
+require so::parsers::vpc;
+require  so::parsers::sse;
+require so::parsers::psn;
 
 if ($options{'psn_connector'}) {
     (my $files, my $sofilename, my $error) = so::parsers::psn::_connector_get_files(directory => 'rundir', pharmml => $options{'pharmml'}); 

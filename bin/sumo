@@ -7,11 +7,10 @@ use lib "$Bin/../lib";
 # Everything above this line will be replaced #
 
 use PsN;
-use output;
-use model;
 use strict;
 use Getopt::Long;
 use common_options;
+# More PsN dependencies included with require further down
 
 $| = 1; # Make sure autoflush is on
 
@@ -323,6 +322,9 @@ if( $options{'confidence_interval'} ) {
 
 
 my $form = '%.' . $options{'precision'} . 'g';
+
+require output;
+require model;
 
 ## Start processing the files
  OUTFILE:

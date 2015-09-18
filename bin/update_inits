@@ -8,13 +8,12 @@ use lib "$Bin/../lib";
 # Everything above this line will be replaced #
 
 use PsN;
-use model;
-use output;
 use Getopt::Long;
 use File::Copy qw/cp mv/;
 use common_options;
 use Math::Random;
 use ui;
+# More PsN dependencies included with require further down
 
 sub search_record {
   #input is string $row and array ref $list
@@ -358,6 +357,9 @@ unless( $ARGV[0] ){
 unless( -e $ARGV[0] ){
 	die "No such file: $ARGV[0]\n";
 }
+
+require model;
+require output;
 
 my $input_run_number;
 $input_run_number = model::get_run_number_string(filename => $ARGV[0]) if ($ARGV[0]);

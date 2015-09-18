@@ -7,12 +7,11 @@ use lib "$Bin/../lib";
 # Everything above this line will be replaced #
 
 use PsN;
-use model;
-use tool::randtest;
 use strict;
 use ui;
 use Getopt::Long;
 use common_options;
+# More PsN dependencies included with require further down
 
 my $cmd_line = $0 . " " . join( " ", @ARGV );
 
@@ -149,6 +148,9 @@ foreach my $required (keys %required_options){
 		die("Option $required is required");
 	}
 }
+
+require model;
+require tool::randtest;
 
 my $eval_string = common_options::model_parameters(\%options);
 

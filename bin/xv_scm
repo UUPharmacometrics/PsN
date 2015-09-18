@@ -7,12 +7,6 @@ use lib "$Bin/../lib";
 # Everything above this line will be replaced #
 
 use PsN;
-use file;
-use model;
-use tool::xv_step;
-use tool::scm;
-use tool::scm::config_file;
-use tool::modelfit;
 use Math::Random;
 use strict;
 use Getopt::Long;
@@ -21,6 +15,7 @@ use common_options;
 use ui;
 use OSspecific;
 use File::Copy qw/cp mv/;
+# More PsN dependencies included with require further down
 
 my $cmd_line = $0 . " " . join( " ", @ARGV );
 
@@ -227,6 +222,13 @@ if ( $options{'config_file'} eq '' ){
   print "Please specify a config file \n";
   exit;
 }
+
+require file;
+require model;
+require tool::xv_step;
+require tool::scm;
+require tool::scm::config_file;
+require tool::modelfit;
 
 my $config_file;
 if( -e $options{'config_file'} ){

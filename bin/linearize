@@ -7,10 +7,6 @@ use lib "$Bin/../lib";
 # Everything above this line will be replaced #
 
 use PsN;
-use file;
-use model;
-use tool::scm;
-use tool::modelfit;
 use strict;
 use Getopt::Long;
 use Cwd;
@@ -20,6 +16,7 @@ use OSspecific;
 use File::Path 'rmtree';
 use File::Copy qw/cp mv/;
 use include_modules;
+# More PsN dependencies included with require further down
 
 my $cmd_line = $0 . " " . join( " ", @ARGV );
 
@@ -134,6 +131,11 @@ die "linearize only works with NONMEM7" unless ($PsN::nm_major_version == 7);
 if ( scalar( @ARGV ) < 1 ) {
    croak("A model file must be specified. Use linearize -help for help");
 }
+
+require file;
+require model;
+require tool::scm;
+require tool::modelfit;
 
 my $eval_string = common_options::model_parameters(\%options);
 

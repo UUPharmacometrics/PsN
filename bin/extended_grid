@@ -15,12 +15,10 @@ use Getopt::Long;
 use Math::Random;
 # PsN includes #
 use PsN;
-use tool::modelfit;
-use model;
 use common_options;
 use ui;
 use File::Copy 'cp';
-use data;
+# More PsN dependencies included with require further down
 
 ################################################################################
 #
@@ -125,6 +123,10 @@ unless( defined $options{'id_column'} ){
 }
 
 my( $base_dir, $dummy) = OSspecific::absolute_path( '', '' );
+
+require tool::modelfit;
+require model;
+require data;
 
 my $directory = tool::get_rundir(create => 1,
 								 basename => 'extended_grid_dir',

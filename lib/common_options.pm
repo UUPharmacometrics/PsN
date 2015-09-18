@@ -10,6 +10,7 @@ use Cwd;
 use OSspecific;
 use PsN;
 use log;
+use ui;
 
 ## Configure the command line parsing
 Getopt::Long::config("auto_abbrev");

@@ -7,7 +7,6 @@ use lib "$Bin/../lib";
 # Everything above this line will be replaced #
 
 use PsN;
-use model;
 use strict;
 use Getopt::Long;
 use common_options;
@@ -15,6 +14,7 @@ use charnames ':full';
 use Encode qw(encode decode);
 use Time::Local;
 use POSIX;
+# More PsN dependencies included with require further down
 
 my $cmd_line = $0 . " " . join( " ", @ARGV );
 
@@ -170,6 +170,8 @@ $parameter_names{'sesigma'}    = [];
 $parameter_names{'cvsethetas'} = [];
 $parameter_names{'cvseomegas'} = [];
 $parameter_names{'cvsesigmas'} = [];
+
+require model;
 
 for( my $run = $from; $run <= $to; $run++ ){
 	next unless( -e $root.$run.".".$mod_ext and -e $root.$run.".".$out_ext);
