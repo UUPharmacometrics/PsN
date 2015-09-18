@@ -83,55 +83,61 @@ sub import
 }
 
 
+sub get_nmversion_info
+{
+    # Gets the information about a specific nmversion from the psn.conf
+    my $nmversion = shift;
+
+    if (not defined $nmversion) {
+        croak("No version label input to get_nmversion_info");
+    }
+
+    my @list = split(/,/, $config->{'nm_versions'}->{$nmversion});
+
+    my $dir = shift(@list);
+    $dir =~ s/^\s+//g;
+    my $version = shift(@list);
+    $version =~ s/\s+//g;
+
+    if (not defined $dir or not defined $version) {
+        croak("No NONMEM version with name \"".$nmversion.
+                    "\" defined in psn.conf. Format should be: name=directory,version");
+    }
+
+    my @version_list = split(/\./, $version);
+    my $major_version = shift(@version_list);
+    my $minor_version = shift(@version_list);
+
+    #make sure minor version is one character
+    $minor_version = substr($minor_version, 0, 1) if (defined $minor_version);
+
+    unless ($major_version =~ /^(5|6|7)$/) {
+        croak(" NONMEM major version must be either 5,6 or 7. Could not ".
+            "extract version from \"".$nmversion.
+            "\" in psn.conf. Format should be: name=directory,version");
+    }
+
+    return ($dir, $major_version, $minor_version);
+}
+
 sub set_nonmem_info
 {
-  my $version_label = shift;
-  unless (defined $version_label){
-    croak("No version label input to set_nonmem_info");
-  }
-  $nm_version = $version_label;
+    my $version_label = shift;
+    unless (defined $version_label){
+        croak("No version label input to set_nonmem_info");
+    }
+    $nm_version = $version_label;
 
-  #reset values if set earlier
-  $nmdir = undef;
-  $nm_major_version = undef;
-  $nm_minor_version = undef;
-  my $version = undef;
-  my @list = split(/,/ , $config -> {'nm_versions'} -> { $version_label } );
-  $nmdir = shift(@list);
-  $nmdir =~ s/^\s+//g;
-  $version = shift(@list);
-  $version =~ s/\s+//g;
+    ($nmdir, $nm_major_version, $nm_minor_version) = get_nmversion_info($version_label);
 
-  unless (defined $nmdir){
-    croak("No NONMEM version with name \"".$version_label.
-                    "\" defined in psn.conf. Format should be: name=directory,version");
-  }
-  unless (defined $version){
-    croak("No NONMEM version with name \"".$version_label.
-                    "\" defined in psn.conf. Format should be: name=directory,version");
-  }
+    #now handle $nmdir that is just name of executable, when in path. Only for run local
+    #this is when no slashes, forward or backward, in $nmdir
+    #then use which or where to find full path and replace $nmdir with full path after checking exists
 
-  my @list2 = split(/\./ , $version);
-  $nm_major_version = shift(@list2);
-  my $minor = shift(@list2);
-  #make sure minor version is one character
-  $nm_minor_version = substr($minor,0,1) if (defined $minor);
-
-  unless ($nm_major_version =~ /^(5|6|7)$/){
-    croak(" NONMEM major version must be either 5,6 or 7. Could not ".
-                    "extract version from \"".$version_label.
-                    "\" in psn.conf. Format should be: name=directory,version");
-  }
-
-  #now handle $nmdir that is just name of executable, when in path. Only for run local
-  #this is when no slashes, forward or backward, in $nmdir
-  #then use which or where to find full path and replace $nmdir with full path after checking exists
-
-  my $result = find_nmfe_from_system_path($nmdir);
-  if ($result){
-	  $nmdir = $result;
-  }
-
+    my $result = find_nmfe_from_system_path($nmdir);
+    if ($result) {
+        $nmdir = $result;
+    }
 }
 
 sub find_nmfe_from_system_path

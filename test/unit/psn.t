@@ -3,6 +3,7 @@
 use strict;
 use warnings;
 use Test::More;
+use Test::Exception;
 use FindBin qw($Bin);
 use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages
@@ -10,6 +11,25 @@ use Math::Random;
 use PsN;
 use Config;
 use Env qw(PATH);
+
+
+# get_nmversion_info
+$PsN::config->{'nm_versions'}->{nm73} = "/opt/NONMEM/nm73,7.3";
+my @result = PsN::get_nmversion_info("nm73");
+is ($result[0], "/opt/NONMEM/nm73", "get_nmversion_info path");
+is ($result[1], 7, "get_nmversion_info major");
+is ($result[2], 3, "get_nmversion_info minor");
+
+$PsN::config->{'nm_versions'}->{nm74} = "/opt/NONMEM/nm74";
+dies_ok { PsN::get_nmversion_info("nm74") } "get_nmversion_info missing version";
+
+$PsN::config->{'nm_versions'}->{nm74} = undef;
+dies_ok { PsN::get_nmversion_info("nm74") } "get_nmversion_info missing info";
+
+$PsN::config->{'nm_versions'}->{nm74} = "/path,4.3";
+dies_ok { PsN::get_nmversion_info("nm74") } "get_nmversion_info non supported major version";
+
+dies_ok { PsN::get_nmversion_info() } "get_nmversion_info no input";
 
 SKIP: {
 
