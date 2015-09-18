@@ -211,8 +211,10 @@ sub _create_bootstrap
     (my $raw_results) = glob("$dir/raw_results_*.csv");
     $raw_results = utils::file::remove_path($raw_results);
 
-    $self->_so_block->RawResults->add_datafile(name => $raw_results, description => "PsN Bootstrap raw results", oid => 'PsN_bootstrap_raw_results'); 
-} 
+    if (defined $raw_results) {
+        $self->_so_block->RawResults->add_datafile(name => $raw_results, description => "PsN Bootstrap raw results", oid => 'PsN_bootstrap_raw_results'); 
+    } 
+}
 
 sub _read_line
 {

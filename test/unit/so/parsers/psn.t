@@ -26,40 +26,36 @@ SKIP: {
 	#bootrun  executerun  failrun  sserun  vpcrun
 	chdir('bootrun');
 	is(so::parsers::psn::_get_toolname(directory => 'rundir'),'bootstrap','_get_toolname bootstrap');
-	my ($ref,$opt) = so::parsers::psn::_connector_get_files(directory => 'rundir',
+	my ($ref) = so::parsers::psn::_connector_get_files(directory => 'rundir',
 															pharmml => 'pheno5.mod');
 	is_deeply($ref,['pheno5.lst'],' get files');
-	is($opt,'bootstrap_results.csv','bootstrap_results');
 	is((-e 'bootstrap_results.csv'),1,'rseultsfile exist boot 1');
 	is((-e 'raw_results_pheno5.csv'),1,'rseultsfile exist boot 2');
 
 	chdir($tempdir);
 	chdir('executerun');
 	is(so::parsers::psn::_get_toolname(directory => 'rundir'),'execute','_get_toolname execute');
-	($ref,$opt) = so::parsers::psn::_connector_get_files(directory => 'rundir',
+	($ref) = so::parsers::psn::_connector_get_files(directory => 'rundir',
 															pharmml => 'pheno5.mod');
 	is_deeply($ref,['pheno5.lst'],' get files');
-	is($opt,undef,'bootstrap_results undef');
 	is((-e 'raw_results_pheno5.csv'),1,'rseultsfile exist');
 
 
 	chdir($tempdir);
 	chdir('failrun');
 	is(so::parsers::psn::_get_toolname(directory => 'rundir'),undef,'_get_toolname fail');
-	($ref,$opt) = so::parsers::psn::_connector_get_files(directory => 'rundir',
+	($ref) = so::parsers::psn::_connector_get_files(directory => 'rundir',
 															pharmml => 'pheno5.mod');
 	is_deeply($ref,['pheno5.psn.log'],' get files failrun');
-	is($opt,undef,'bootstrap_results undef');
 	is((-e 'pheno5.psn.log'),1,'rseultsfile exist');
 
 
 	chdir($tempdir);
 	chdir('sserun');
 	is(so::parsers::psn::_get_toolname(directory => 'rundir'),'sse','_get_toolname sse');
-	($ref,$opt) = so::parsers::psn::_connector_get_files(directory => 'rundir',
+	($ref) = so::parsers::psn::_connector_get_files(directory => 'rundir',
 															pharmml => 'pheno5.mod');
 	is_deeply($ref,['mc-1.lst','mc-2.lst','mc-3.lst'],' get files');
-	is($opt,undef,'bootstrap_results undef');
 	is((-e 'sse_results.csv'),1,'rseultsfile exist sse 1');
 	is((-e 'mc-1.lst'),1,'rseultsfile exist sse 2');
 	is((-e 'mc-2.lst'),1,'rseultsfile exist sse 3');
@@ -70,10 +66,9 @@ SKIP: {
 	chdir($tempdir);
 	chdir('vpcrun');
 	is(so::parsers::psn::_get_toolname(directory => 'rundir'),'vpc','_get_toolname vpc');
-	($ref,$opt) = so::parsers::psn::_connector_get_files(directory => 'rundir',
+	($ref) = so::parsers::psn::_connector_get_files(directory => 'rundir',
 															pharmml => 'pheno5.mod');
 	is_deeply($ref,['vpc_simulation.1.lst'],' get files');
-	is($opt,undef,'bootstrap_results undef');
 	is((-e 'vpc_simulation.1.lst'),1,'rseultsfile exist vpc1');
 	is((-e 'vpctab'),1,'rseultsfile exist vpc2');
 	is((-e 'vpc_results.csv'),1,'rseultsfile exist vpc3');
