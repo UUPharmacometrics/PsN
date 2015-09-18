@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{EBE\_NPDE user guide}{2014-05-20}
+\guidetitle{EBE\_NPDE user guide}{2015-09-18}
 
 \begin{document}
 
@@ -9,7 +9,21 @@
 
 \section{Overview}
 
-The ebe\_npde script is work in progress and is not fully functional yet.
+The ebe\_npde program is a tool for simulation-evaluation based diagnostics. The principle is 
+\begin{enumerate}
+\item Simulate N data sets from final model
+\item Apply final model to each data set (evaluate or reestimate parameters)
+\item Extract output for diagnostics
+\begin{description}
+\item[OFV] population
+\item[iOFV] individual
+\item[EBE] parameter
+\item[IWRES] residual
+\end{description}
+\item Provide reference distributions for ”observed” OFV, iOFV, EBE and IWRES
+\end{enumerate}
+The program computes normalized prediction distribution errors for EBE:s and IWRES 
+using the procedure described in \cite{Comets}, with example use in \cite{Keizer} and \cite{Largajolli}.
 
 Example call
 \begin{verbatim}
@@ -32,7 +46,7 @@ Default not set. By default PsN will, before copying the input model to the simu
 Default set. By default, PsN will rerun the input model to get parameter estimates unless an output file is found or option -lst\_file is set. But if option -estimate\_input is unset with -no-estimate\_input and no lst-file is found then the parameter estimates set in the input model will be used for simulations. 
 \nextopt
 \optdefault{samples}{N}
-Default 300. The number of simulations and reestimations to run. 
+Default 300. The number of simulations and reestimations/evaluations to run. 
 \nextopt
 \optname{reminimize}
 Default not set. By default, simulated datasets will be run with MAXEVAL=0 (or equivalent for non-classical estimation methods). If option -reminimize is set then \$EST will be the same as in the input model. 
@@ -40,12 +54,10 @@ Default not set. By default, simulated datasets will be run with MAXEVAL=0 (or e
 \optdefault{gls\_data\_file}{filename}
 Default gls\_data.dta. A file with input data for the gls program is always generated. This option changes the name of that file. After this file is created, the gls program can be run with option \mbox{-gls\_model} and -ind\_shrinkage with minimum runtime, see gls\_userguide.pdf 
 \nextopt
-\optdefault{iov}{list}
-TODO: list of iov etas, to be treated from all other etas assumed to be iiv. 
-\nextopt
+%\optdefault{iov}{list}
+%TODO: list of iov etas, to be treated from all other etas assumed to be iiv. 
+%\nextopt
 \end{optionlist}
-
-
 
 \subsection{Some important common PsN options}
 For a complete list see common\_options.pdf, 
@@ -56,45 +68,66 @@ or psn\_options -h on the commandline.
 
 \section{Output}
 
-The results are in eta\_npde.csv and iwres\_npde.csv. Also there are files decorrelated\_original\_eta.csv and decorrelated\_original\_iwres.csv with decorrelated original values. Original values are in raw\_original\_eta.csv and raw\_original\_iwres.csv. npd of raw values (normalized pd, not decorrelated) are in eta\_npd.csv and iwres\_npd.csv.
+\subsubsection*{Main output}
+\begin{description}
+\item[ebe\_npde.csv] NPDE of EBE. One row per individual. Columns: ID,
+standardized observed EBE (a scalar) where 
+$ebe_{standardized}= \\
+\left(\overline{ebe}_{obs} - mean (\overline{ebe}_{sim})\right)\left((cov(\overline{ebe}_{sim})\right)^{-1}
+\left(\overline{ebe}_{obs} - mean (\overline{ebe}_{sim})\right)^T$,\\ 
+NPDE:s for each EBE
+\item[iwres\_npde.csv] NPDE of IWRES. One row per data record. Columns: ID, MDV, NPDE for IWRES.
+\item[summary\_iofv.csv] One row per individual. Columns: ID, iOFV for observed data, standard deviation 
+of iOFV for evaluation of simulated data,
+mean of iOFV for evaluation of simulated data, standardized observed iOFV where
+$iOFV_{standardized}=\frac{(iOFV_{observed} - mean (iOFV_{simulated}))^2}{variance(iOFV_{simulated})}$
+\item[raw\_results\_<model>.csv] e.g. raw\_results\_run1.csv with ofv for evaluation of simulated data
+\end{description}
+
+\subsubsection*{Additional output}
+\begin{description}
+\item[decorrelated\_original\_ebe.csv] One row per individual. Columns: ID, decorrelated observed EBE:s
+\item[decorrelated\_original\_iwres.csv] One row per data record. Columns: ID, MDV, decorrelated observed IWRES
+\item[raw\_original\_ebe.csv]  One row per individual. Columns: ID, observed EBE:s
+\item[raw\_original\_iwres.csv] One row per data record. Columns: ID, MDV, observed IWRES
+\item[raw\_all\_iofv.csv] First row is ID numbers to be used as column identifiers, second row is observed iOFV, following rows
+are all simulated iOFV
+\item[ebe\_pde.csv] One row per individual. Columns: ID, PDE of EBE:s
+\item[ebe\_npd.csv] One row per individual. Columns: ID, NPD of EBE:s (normalized PD, not decorrelated)
+\item[iwres\_npd.csv]  One row per data record. Columns: ID, MDV, NPD of IWRES (normalized pd, not decorrelated)
+\end{description}
 
 \section{Algorithm overview}
 
 \begin{enumerate}
 \item Remove MSFO option from \$EST.
-\item Add \$TABLE for printing IDs and individual ETAs to file. Only print ETAs for which diagonal element in \$OMEGA is not 0 FIX. Keep track of which ETA labels are printed.
-\item If \$SIM not present, create simple \$SIM as in sse. Create 'samples' copies of modified input model with order number of copy indicated in filename. In each copy set unique seed in \$SIM and set NSUB=1, remove old \$TABLE if present, set unique filename for ETA output in \$TABLE, if option reminimize is not set then set MAXEVAL=0, and add \$TABLE IWRES ID NOPRINT ONEHEADER NOAPPEND FILE=iwres-$\langle$ordernum$\rangle$.dta. 
+\item Read model file to find set of IIV ETAs. An ETA is assumed to be IIV if the corresponding \$OMEGA is not SAME
+\emph{and} the next \$OMEGA is not SAME either. Also find set of IOV ETAs, grouped by occasions.
+An ETA is assumed to belong to IOV occasion 1 if the corresponding \$OMEGA is not SAME, but the next \$OMEGA is SAME. 
+An ETA is assumed to belong to IOV occasion 1+$i$ if the corresponding \$OMEGA the $i$th consecutive SAME \$OMEGA. 
+\item If \$SIM not present, create simple \$SIM as in sse. Create 'samples' copies of modified input model with order number of copy indicated in filename. In each copy set unique seed in \$SIM and set NSUB=1, remove old \$TABLE if present, 
+if option reminimize is not set then set MAXEVAL=0, and add \$TABLE IWRES ID NOPRINT ONEHEADER NOAPPEND FILE=iwres-$\langle$ordernum$\rangle$.dta. 
 \item In 'original' input model: Remove \$SIM if present. Add \$TABLE $\langle$all undropped items in \$INPUT$\rangle$ IPRED PRED IWRES NOPRINT ONEHEADER NOAPPEND FILE=orig\_pred.dta. Add \$TABLE IWRES ID MDV NOPRINT ONEHEADER NOAPPEND FILE=original\_iwres.dta. 
 \item run modified original input model and 'samples' sim models.
-\item Read all iwres\_$\langle$order number$\rangle$.dta files, storing IWRES values per data point. Compute, per data point, ISHR\_ij=1-sd(IWRES\_ij). Open orig\_pred.dta, append ISHR column with computed values, and print to gls\_input.dta. Print also shrinkage column to new file ind\_iwres\_shrinkage.dta. File gls\_input.dta can be used as input when running gls program, see gls\_userguide.pdf.
-\item Read all eta files. For each individual do the following: Collect the simulated ETA values in a matrix A, where rows go from simulation 1 to simulation 'samples' and columns go from 1 to 'number of ETA'. Compute the empirical variance-covariance matrix of A. 
-(The matlab code for this would be cov(A), while PsN computes RTR*diag(1/(samples-1)) where R is the upper triangular matrix from the QR-decomposition of a matrix B which is matrix A where the column mean has been subtracted from each column,  and diag(1/(samples-1)) is a diagonal matrix where all elements are equal to 1/(samples-1)). 
-The original and simulated ETA vectors are all decorrelated by subtracting the mean and multiplying them with the inverse of the Cholesky factor of the variance-covariance matrix. (In PsN the system  R*diag(1/sqrt(samples-1))*vec\_decorr=vec is solved by back substitution followed by multiplication with sqrt(samples-1) )
-Compute per individual the order numbers of the decorrelated original ETA values in a sorted array of all the decorrelated simulated values. In file eta\_rank.csv, print values ID,rank where rank =ordernum/(samples+1). In file decorrelated\_eta.csv print the decorrelated original ETA. These two files will have one line per individual.
-\item (Not necessary, division preserves rank) For each data point do the following: Compute the variance of the simulated IWRES\_ij values (normalize with samples-1). Divide the original IWRES value minus the mean and all simulated values minus the mean with the variance. Compute the order number of the transformed original IWRES value in a sorted array of all the transformed simulated values. In file iwres\_rank.csv, print values ID,MDV,rank for each data point where rank =ordernum/(samples+1).  
+\item Read all iwres\_$\langle$order number$\rangle$.dta files, storing IWRES values per data point. Compute, per data point, ISHR\_ij=1-sd(IWRES\_ij). Open orig\_pred.dta, append ISHR column with computed values, and print to gls\_input.dta. Print also shrinkage column to new file ind\_iwres\_shrinkage.dta. File gls\_input.dta can be used as input when running gls program, see gls\_userguide.pdf. 
+\item Compute npde for IWRES according to \cite{Comets}.
+\item Read ETA values from 
+phi-files for original and simulated data, and compute npde for EBE:s according to \cite{Comets}.
+Perform computations for IIV, and also for IOV for different occasions, separately. 
 \end{enumerate}
+
+\begin{thebibliography}{99}
+\bibitem{Comets} E. Comets, K. Brendel and F. Mentré,
+{\em Computing normalised prediction distribution errors to evaluate nonlinear mixed-effect models: The npde add-on package for R},
+CMPB 90 (2008) 154–166.
+\bibitem{Keizer} R. Keizer, K. Harling and M. O. Karlsson,
+{\em Extended NPDE diagnostics for the between-subject variability and residual error model},
+PAGE 21 (2012) Abstr 2538 \mbox{www.page-meeting.org/?abstract=2538}.
+\bibitem{Largajolli} A. Largajolli, S. Jönsson and M. O. Karlsson,
+{\em The OFVPPC: A simulation objective function based diagnostic}
+PAGE 23 (2014) Abstr 3208 \mbox{www.page-meeting.org/?abstract=3208}.
+\end{thebibliography}     
 
 
 \end{document}
 
-changes (no deadline from Anna's perspective):
-
-Do not perform decorrelation for iofv, if it is done remove it.
-
-New output:
-Standardized iofv, one per individual
-For each individual j compute
-\frac{(iOFV_{observed} - mean (iOFV_{simulated}))^2}{variance(iOFV_{simulated})}
-
-
-In same file, for ebe:
-For each individual j we have vector of ebe:s (length equal to number of ETAs in model), read from phi-file
-
-For each individual j compute
-(ebevector_{observed} - mean (ebevector_{simulated}))^T(covmatrix (ebevector_{simulated}))^{-1}(ebevector_{observed} - mean (ebevector_{simulated}))
-
-
-???
-In a new file file add column for iwres?
-\frac{(IWRES_{observed} - mean (IWRES_{simulated}))^2}{variance(IWRES_{simulated})}
-???

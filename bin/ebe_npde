@@ -232,5 +232,6 @@ $ebe_npde-> print_options (cmd_line => $cmd_line,
 
    
 $ebe_npde -> run;
+$ebe_npde -> print_results; #for rplots
 ui -> print( category => 'ebe_npde',
 	     message => "\nebe_npde done\n" );

@@ -2,7 +2,7 @@
 
 use strict;
 use warnings;
-use Test::More;	#count them!
+use Test::More;
 use Test::Exception;
 use File::Path 'rmtree';	
 use FindBin qw($Bin);
@@ -10,7 +10,51 @@ use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages
 use npde_util;
 use file;
+use model;
+use model::problem::init_record;
 use tool::ebe_npde;
+
+
+my @arr = qw(0 1 2 3 4 5 6 7 ); #first is orig
+cmp_float(npde_util::pde(\@arr),1/7,"pde zero below all");
+$arr[0]=0.5;
+cmp_float(npde_util::pde(\@arr),1/7,"pde below all");
+$arr[0]=8;
+cmp_float(npde_util::pde(\@arr),(1-1/7),"pde above all");
+$arr[0]=3;
+cmp_float(npde_util::pde(\@arr),2/7,"pde middle");
+
+
+is(tool::ebe_npde::formatfloat(0.3456),'0.34560000','format float regular');
+is(tool::ebe_npde::formatfloat(-99),'','format float missing');
+
+my $model = model->new(filename => $includes::testfiledir."/mox1.mod", ignore_missing_data => 1);
+my ($iiv,$iov)=tool::ebe_npde::get_eta_headers(problem => $model->problems->[0]);
+is_deeply($iiv,['ETA(1)','ETA(2)','ETA(3)'],"get eta headers iiv");
+is(scalar(@{$iov}),2,"get eta headers two occasions");
+is($iov->[0]->[0],'ETA(4)',"get eta headers iov 1 occasion 1 et1 ");
+is($iov->[0]->[1],'ETA(6)',"get eta headers iov 1 occasion 1 et 2");
+is($iov->[1]->[0],'ETA(5)',"get eta headers iov 1 occasion 2 et 1");
+is($iov->[1]->[1],'ETA(7)',"get eta headers iov 1 occasion 2 et 2");
+$model = model->new(filename => $includes::testfiledir."/pheno.mod", ignore_missing_data => 1);
+my ($iiv,$iov)=tool::ebe_npde::get_eta_headers(problem => $model->problems->[0]);
+is_deeply($iiv,['ETA(1)','ETA(2)'],"get eta headers iiv 2");
+is(scalar(@{$iov}),0,"get eta headers no iov");
+
+$model->problems->[0]->remove_records(type => 'omega');
+$model->problems->[0]->add_records(type => 'omega',record_strings =>['BLOCK(2) 0.02','-0.002 0.5']);
+$model->problems->[0]->add_records(type => 'omega',record_strings =>['BLOCK(3) 0.02','-0.002 0.5','0.003 -0.005 1']);
+$model->problems->[0]->add_records(type => 'omega',record_strings =>['BLOCK(3) SAME']);
+$model->problems->[0]->add_records(type => 'omega',record_strings =>['BLOCK(3) SAME']);
+$model->problems->[0]->add_records(type => 'omega',record_strings =>['BLOCK(3) 0.02','-0.002 0.5','0.003 -0.005 1']);
+$model->problems->[0]->add_records(type => 'omega',record_strings =>['BLOCK(3) SAME']);
+$model->problems->[0]->add_records(type => 'omega',record_strings =>['BLOCK(3) SAME']);
+
+my ($iiv,$iov)=tool::ebe_npde::get_eta_headers(problem => $model->problems->[0]);
+is_deeply($iiv,['ETA(1)','ETA(2)'],"get eta headers iiv 3");
+is_deeply($iov->[0],['ETA(3)','ETA(4)','ETA(5)','ETA(12)','ETA(13)','ETA(14)'],"get eta headers 2 iov occasion 1");
+is_deeply($iov->[1],['ETA(6)','ETA(7)','ETA(8)','ETA(15)','ETA(16)','ETA(17)'],"get eta headers 2 iov occasion 2");
+is_deeply($iov->[2],['ETA(9)','ETA(10)','ETA(11)','ETA(18)','ETA(19)','ETA(20)'],"get eta headers 2 iov occasion 3");
 
 my $filedir = $includes::testfiledir . '/npde/';
 my @file_array=($filedir.'original.phi',$filedir.'sim-1.phi',$filedir.'sim-2.phi',$filedir.'sim-3.phi');
@@ -27,6 +71,7 @@ my $ok = npde_util::read_table_files(\@file_array,\@headers,$est_matrix,$mean_ma
 
 is ($ok, 0, "read_table_files return status");
 
+#this is stored in ebe_npde.m in matlab/old/
 cmp_ok($est_matrix->[0]->[0]->[0],'==',-5.50879E-02,'ETA1 ind 1 original');
 cmp_ok($est_matrix->[0]->[1]->[0],'==',-3.34657E-01,'ETA1 ind 2 original');
 cmp_ok($est_matrix->[1]->[3]->[0],'==',-4.50197E-01,'ETA2 ind 4 original');
@@ -62,11 +107,17 @@ if (0){
 }
 
 my $decorr = [];
-my $shrink;
+my $shrink =[];
 $ok = npde_util::decorrelation($est_matrix,$mean_matrix,$decorr,$shrink);
 is ($ok, 0, "decorrelation return status");
 
 #param #indiv $sample
+#this is stored in ebe_npde.m in matlab/old/ formula
+#is   matrix = A1(2:end,:); %sim
+#original = A1(index,:);
+#bvec=(original -mean(matrix))';
+#decorrorig(1,:)=((inv( (chol(cov(matrix)))'  ))*bvec)';
+
 
 cmp_ok(abs($decorr->[0]->[0]->[0]-(0.6059160950135)),'<',$diff,'decorr orig ETA1 ind 1');
 cmp_ok(abs($decorr->[1]->[0]->[0]-(9.2945678814619)),'<',$diff,'decorr orig ETA2 ind 1');
@@ -101,28 +152,44 @@ cmp_ok(abs($decorr->[1]->[3]->[3]-(-0.748626468429881)),'<',$diff,'decorr sim3 E
 cmp_ok(abs($decorr->[0]->[4]->[3]-(-0.046093664205007)),'<',$diff,'decorr sim3 ETA1 ind 5');
 cmp_ok(abs($decorr->[1]->[4]->[3]-(1.153780181600242)),'<',$diff,'decorr sim3 ETA2 ind 5');
 
-for (my $i=0;$i < scalar(@{$decorr->[0]}); $i++){
-	for (my $k=0;$k < scalar(@{$decorr->[0]->[$i]}); $k++){
-		for (my $j=0;$j < scalar(@{$decorr}); $j++){
-			print $decorr->[$j]->[$i]->[$k]." ";
+if (0){
+	for (my $i=0;$i < scalar(@{$decorr->[0]}); $i++){
+		for (my $k=0;$k < scalar(@{$decorr->[0]->[$i]}); $k++){
+			for (my $j=0;$j < scalar(@{$decorr}); $j++){
+				print $decorr->[$j]->[$i]->[$k]." ";
+			}
+			print "\n";
 		}
 		print "\n";
 	}
-	print "\n";
 }
-   
 my $npde = [];
 my $pde = [];
 $ok = npde_util::npde_comp($decorr, $pde, $npde);
 is ($ok, 0, "npde_comp eta return status");
+# first ind ETA 2 $pde_matrix->[1]->[0]
+#for (my $i=0;$i < scalar(@{$pde->[0]}); $i++) {
+#for (my $j=0;$j < scalar(@{$pde}); $j++) {#loop ETA first ind
+cmp_float($pde->[0]->[0],2/3,'pde ETA1 first ID');
+cmp_float($pde->[1]->[0],2/3,'pde ETA2 first ID');
+cmp_float($pde->[0]->[3],2/3,'pde ETA1 4th ID');
+cmp_float($pde->[1]->[3],1/3,'pde ETA2 4th ID');
 
-for (my $i=0;$i < scalar(@{$pde->[0]}); $i++) {
-	for (my $j=0;$j < scalar(@{$pde}); $j++) {
-		print $pde->[$j]->[$i].' ';
+#relative matlab
+cmp_relative($npde->[0]->[0],0.430727299295457,4,'npde ETA1 first ID');
+cmp_relative($npde->[1]->[0],0.430727299295457,4,'npde ETA2 first ID');
+cmp_relative($npde->[0]->[3],0.430727299295457,4,'npde ETA1 4th ID');
+cmp_relative($npde->[1]->[3],-0.430727299295458,4,'npde ETA2 4th ID');
+
+
+if(0){
+	for (my $i=0;$i < scalar(@{$npde->[0]}); $i++) {
+		for (my $j=0;$j < scalar(@{$npde}); $j++) {
+			print $npde->[$j]->[$i].' ';
+		}
+		print "\n";
 	}
-	print "\n";
 }
-
 
 @headers = ('OBJ');
 $est_matrix=[];
@@ -170,7 +237,7 @@ if (0){
 }
 
 $decorr = [];
-$shrink;
+$shrink =[];
 $ok = npde_util::decorrelation($est_matrix,$mean_matrix,$decorr,$shrink);
 is ($ok, 0, "decorrelation iwres return status");
 

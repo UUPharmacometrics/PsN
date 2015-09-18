@@ -4,7 +4,9 @@ use FindBin qw($Bin);
 use lib "$Bin/../lib";
 use strict;
 use include_modules;
+use MooseX::Params::Validate;
 
+our $missing=-99;
 
 sub read_table_files { 
 	#in array of file names
@@ -143,14 +145,23 @@ sub read_table_files {
 }
 
 sub decorrelation{
-	my $estimate_matrix = shift;
+	#has unit tests
+	my ($estimate_matrix,$mean_matrix,$decorrelated_estmatrix,$stdev_arr) = pos_validated_list(\@_,
+																							   { isa => 'ArrayRef' },
+																							   { isa => 'ArrayRef' },
+																							   { isa => 'ArrayRef' },
+																							   { isa => 'ArrayRef' },
+		);
+	#$estimate_matrix
 	# reference to array  [over columns][over individuals][over samples/files]
-	my $mean_matrix = shift;
+	# $mean_matrix 
 	#reference to mean array  [over columns][over individuals]
 
 	# reference to empty array to put decorrelated results [over columns][over individuals][over samples]
-	my $decorrelated_estmatrix = shift;
-	my $stdev_arr = shift; #ref to empty array
+	# $decorrelated_estmatrix 
+	# $stdev_arr
+	# $standardized
+	#\frac{(iOFV_{observed} - mean (iOFV_{simulated}))^2}{variance(iOFV_{simulated})}
 
     my $input_error = 2;
     my $numerical_error = 1;
@@ -178,7 +189,8 @@ sub decorrelation{
 
 			push(@{$stdev_arr},$stdev);
 
-			if (($stdev > 0) and (not ($origval==0))) {
+#			if (($stdev > 0) and (not ($origval==0))) {
+			if ($stdev > 0) {
 				my $original = ($origval-$mean)/$stdev;
 				$decorrelated_estmatrix->[0]->[$i]=[$original];
 				#loop over simulations, start at 1 since 0 is original
@@ -187,148 +199,162 @@ sub decorrelation{
 					push (@{$decorrelated_estmatrix->[0]->[$i]},$transf);
 				}
 			}else{
-				$decorrelated_estmatrix->[0]->[$i]=[0];
+				$decorrelated_estmatrix->[0]->[$i]=[$missing];
 				#loop over simulations, start at 1 since 0 is original
 				for (my $k = 1; $k < scalar(@{$estimate_matrix->[0]->[$i]}); $k++){ 
-					push (@{$decorrelated_estmatrix->[0]->[$i]},0);
+					push (@{$decorrelated_estmatrix->[0]->[$i]},$missing);
 				}
 			}
 		}
 		#return here when nparm==1???????
-	}
+	}else{
 	
-	my $sqrt=sqrt($samples-1);
-	for (my $i=0;$i<$individuals;$i++){
-		my @Amat;
-		my @original;
-		my @meanvec;
-		for (my $j=0;$j<$nparm;$j++){
-			my $mean = $mean_matrix->[$j][$i];
-			push (@meanvec,$mean);
-			my $origval = $estimate_matrix->[$j]->[$i]->[0];
-			push(@original,($origval-$mean));
-			#loop over simulations, start at 1 since 0 is original
-			for (my $k = 1; $k < scalar(@{$estimate_matrix->[$j]->[$i]}); $k++){ 
-				push(@{$Amat[$j]},($estimate_matrix->[$j]->[$i]->[$k])-$mean);
-			}
-		}
-
-		my $Rmat = [];
-		my $numerr = linear_algebra::QR_factorize(\@Amat,$Rmat);
-		#TODO handle numerr
-
-		#want to multiply with inverse 'square root' (in a loose sense) of 
-		#empirical variance-covariance matrix of A'A
-		#i.e. we want to multiply with inv(R*diag(1/sqrt(N-1))
-		#i.e. we want to solve orig=(R*diag(1/sqrt(N-1))*transf
-
-		#Rmat->[$col][$row]
-
-		#have already subtracted $mean from original
-
-		my $ncol = scalar(@{$Rmat});
-
-		#solve diag(1/sqrt(N-1))*bvec=yvec
-		for (my $j=0;$j<$ncol;$j++){
-			$original[$j]=$original[$j]*$sqrt;
-		}
-		
-		#solve R'* transf=bvec
-		#Golub p 88
-    
-		my $numerr = linear_algebra::upper_triangular_transpose_solve($Rmat,\@original);
-		#TODO handle numerr
- 
-		for (my $j=0;$j<$nparm;$j++){
-			if ( ($estimate_matrix->[$j]->[$i]->[0]) == 0){
-				$decorrelated_estmatrix->[$j]->[$i]=[0];
-			}else{
-				$decorrelated_estmatrix->[$j]->[$i]=[$original[$j]];
-			}
-		}
-
-		#transform estmatrix for each simulation of id $i
-    
-		for (my $k = 1; $k < ($samples+1); $k++){ 
-			my @simvec;
+		my $sqrt=sqrt($samples-1);
+		for (my $i=0;$i<$individuals;$i++){
+			my @Amat;
+			my @original;
+			my @meanvec;
 			for (my $j=0;$j<$nparm;$j++){
-				#must subtract mean here also
-				push(@simvec,(($estimate_matrix->[$j]->[$i]->[$k]) - $meanvec[$j]));
-			}
-			
-			#solve R'*x=simvec
-			
-			my $numerr = linear_algebra::upper_triangular_transpose_solve($Rmat,\@simvec);
-			#TODO handle numerr
-  
-			#solve diag(1/sqrt(N-1))*transf=x
-			for (my $j=0;$j<$ncol;$j++){
-				$simvec[$j]=$simvec[$j]*$sqrt;
-			}
-
-			for (my $j=0;$j<$nparm;$j++){
-				if ( ($decorrelated_estmatrix->[$j]->[$i]->[0])==0){
-					push(@{$decorrelated_estmatrix->[$j][$i]},0);
-				}else{
-					push(@{$decorrelated_estmatrix->[$j][$i]},$simvec[$j]);
+				my $mean = $mean_matrix->[$j][$i];
+				push (@meanvec,$mean);
+				my $origval = $estimate_matrix->[$j]->[$i]->[0];
+				push(@original,($origval-$mean));
+				#loop over simulations, start at 1 since 0 is original
+				for (my $k = 1; $k < scalar(@{$estimate_matrix->[$j]->[$i]}); $k++){ 
+					push(@{$Amat[$j]},($estimate_matrix->[$j]->[$i]->[$k])-$mean);
 				}
 			}
-		}
-		
-	} #end loop over id
-	
+
+			my $Rmat = [];
+			my $numerr = linear_algebra::QR_factorize(\@Amat,$Rmat);
+			#TODO handle numerr
+
+			#want to multiply with inverse 'square root' (in a loose sense) of 
+			#empirical variance-covariance matrix of A'A
+			#i.e. we want to multiply with inv(R*diag(1/sqrt(N-1))
+			#i.e. we want to solve orig=(R*diag(1/sqrt(N-1))*transf
+
+			#Rmat->[$col][$row]
+
+			#have already subtracted $mean from original
+
+			my $ncol = scalar(@{$Rmat});
+
+			#solve diag(1/sqrt(N-1))*bvec=yvec
+			for (my $j=0;$j<$ncol;$j++){
+				$original[$j]=$original[$j]*$sqrt;
+			}
+			
+			#solve R'* transf=bvec
+			#Golub p 88
+			
+			my $numerr = linear_algebra::upper_triangular_transpose_solve($Rmat,\@original);
+			#TODO handle numerr
+			
+			for (my $j=0;$j<$nparm;$j++){
+#				if ( ($estimate_matrix->[$j]->[$i]->[0]) == 0){
+#					$decorrelated_estmatrix->[$j]->[$i]=[0];
+#				}else{
+					$decorrelated_estmatrix->[$j]->[$i]=[$original[$j]];
+#				}
+			}
+
+			#transform estmatrix for each simulation of id $i
+			
+			for (my $k = 1; $k < ($samples+1); $k++){ 
+				my @simvec;
+				for (my $j=0;$j<$nparm;$j++){
+					#must subtract mean here also
+					push(@simvec,(($estimate_matrix->[$j]->[$i]->[$k]) - $meanvec[$j]));
+				}
+				
+				#solve R'*x=simvec
+				
+				my $numerr = linear_algebra::upper_triangular_transpose_solve($Rmat,\@simvec);
+				#TODO handle numerr
+				
+				#solve diag(1/sqrt(N-1))*transf=x
+				for (my $j=0;$j<$ncol;$j++){
+					$simvec[$j]=$simvec[$j]*$sqrt;
+				}
+
+				for (my $j=0;$j<$nparm;$j++){
+#					if ( ($decorrelated_estmatrix->[$j]->[$i]->[0])==0){
+#						push(@{$decorrelated_estmatrix->[$j][$i]},0);
+#					}else{
+						push(@{$decorrelated_estmatrix->[$j][$i]},$simvec[$j]);
+#					}
+				}
+			}
+			
+		} #end loop over id
+	}
 	return 0;
 	
 }
 
-sub npde_comp{
-	#in matrix over params -> inds -> samples
-	my $decorrelated = shift;
-	#reference to empty matrix
-	my $pde_matrix = shift;
-	#reference to empty matrix
-	my $npde_matrix = shift;
+sub pde
+{
+	#has unit tests
+	my ($vector) = pos_validated_list(\@_,
+									  { isa => 'ArrayRef' },
+		);
+	
+	my $pde;
+	my $original = $vector->[0];
+	my $samples = scalar(@{$vector})-1; #-1 for original
+	if ($original == $missing){
+		$pde = $missing;
+	}else{
+		my $count=0;
+		for (my $k = 1; $k <= $samples; $k++){ 
+			$count++ if (($vector->[$k])< $original);
+		}
+		if ($count == 0){
+			$pde = (1/$samples);
+		}elsif ($count == $samples){
+			$pde = 1-(1/$samples);
+		}else{
+			$pde =$count/$samples;
+		}
+	}
 
-	#TODO input untransformed and compute normalized pd in addition to normalized pde
+	return $pde;
+}
+
+sub npde_comp{
+	#has unit tests
+	#in matrix over params -> inds -> samples
+	my ($decorrelated,$pde_matrix,$npde_matrix) = pos_validated_list(\@_,
+									  { isa => 'ArrayRef' },
+									  { isa => 'ArrayRef' },
+									  { isa => 'ArrayRef' },
+		);
+	#decorrelated matrix, empty matrix, empty matrix
 
 	my $have_CDF=0;
 	$have_CDF=1 if eval('require Statistics::Distributions'); #enough, now loaded
 
+	#TODO input untransformed and compute normalized pd in addition to normalized pde
     my $input_error = 2;
     my $numerical_error = 1;
 
-	my $nparm = scalar(@{$decorrelated});
-	return $input_error unless ($nparm>0);
-	my $individuals = scalar(@{$decorrelated->[0]});
-	return $input_error unless ($individuals>0);
-	my $samples = scalar(@{$decorrelated->[0]->[0]})-1; #-1 for original
-	return $input_error unless ($samples > 1);
+	return $input_error unless (scalar(@{$decorrelated}) >0);
+	return $input_error unless (scalar(@{$decorrelated->[0]})>0);
+	return $input_error unless (scalar(@{$decorrelated->[0]->[0]}) > 2);
 
-	for (my $i=0;$i<$individuals;$i++){
-		for (my $j=0;$j<$nparm;$j++){
-			my $original = $decorrelated->[$j]->[$i]->[0];
-			if ($original == 0){
-				$pde_matrix->[$j]->[$i] = -99;
-				$npde_matrix->[$j]->[$i] = -99;
+
+	for (my $j=0;$j<scalar(@{$decorrelated});$j++){
+		push(@{$pde_matrix},[]);
+	}
+	for (my $i=0;$i<scalar(@{$decorrelated->[0]});$i++){
+		for (my $j=0;$j<scalar(@{$decorrelated}) ;$j++){
+			$pde_matrix->[$j]->[$i] = pde($decorrelated->[$j]->[$i]);
+			if ($have_CDF and ($pde_matrix->[$j]->[$i] != $missing)){
+				$npde_matrix->[$j]->[$i] = -(Statistics::Distributions::udistr($pde_matrix->[$j]->[$i]));
 			}else{
-				my $count=0;
-				for (my $k = 1; $k < ($samples+1); $k++){ 
-					$count++ if (($decorrelated->[$j]->[$i]->[$k])< $original);
-				}
-				if ($count == 0){
-					$pde_matrix->[$j]->[$i]= (1/$samples);
-				}elsif ($count == $samples){
-					$pde_matrix->[$j]->[$i]= 1-(1/$samples);
-				}else{
-					$pde_matrix->[$j]->[$i]=$count/$samples;
-				}
-				if ($have_CDF){
-					$npde_matrix->[$j]->[$i] = -(Statistics::Distributions::udistr($pde_matrix->[$j]->[$i]));
-				}else{
-					$npde_matrix->[$j]->[$i] =-99;
-				}
+				$npde_matrix->[$j]->[$i] =$missing;
 			}
-
 		}
 	}
 	return 0;

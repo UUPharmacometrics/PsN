@@ -23,6 +23,7 @@ LIBFILES= ui.pm \
 	matlab/bca.m \
 	matlab/histograms.m \
 	matlab/profiles.m \
+	R-scripts/ebe_npde_default.R \
 	R-scripts/sse_default.R \
 	R-scripts/sir_default.R \
 	R-scripts/llp_default.R \
