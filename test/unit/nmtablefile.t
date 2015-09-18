@@ -12,7 +12,7 @@ use nmtablefile;
 my $dir = $includes::testfiledir;
 
 # parse nmtable
-my $t = nmtablefile->new(filename => "$dir/pheno5.ext");
+my $t = nmtablefile->new(filename => "$dir/output/nm73/pheno5.ext");
 is (scalar(@{$t->tables}), 1, "nmtablefile number of tables");
 is ($t->tables->[0]->table_number, 1, "nmtablefile table_number");
 is ($t->tables->[0]->method, "First Order", "nmtablefile method");
