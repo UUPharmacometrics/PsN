@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{LINEARIZE user guide}{2015-03-26}
+\guidetitle{LINEARIZE user guide}{2015-09-16}
 
 
 \begin{document}
@@ -17,8 +17,9 @@ linearize runX.mod
 
 \noindent The linearization was developed with the aim to facilitate the development of nonlinear mixed effects models by establishing a 
 diagnostic method for evaluation of stochastic model components. A full description of the methodology and it's performance is presented in
-\emph{Use of a linearization approximation facilitating stochastic model building}, J PKPD (2014) EM Svensson and MO Karlsson. The online supplementary 
-material includes a comprehensive code example. The methodology utilizes first order Taylor expansions and substantially shortens run times. 
+\cite{Svensson}. The online supplementary 
+material includes a comprehensive code example. 
+The methodology utilizes first order Taylor expansions and substantially shortens run times \cite{Khandelwal}. 
 Examples of extensions  that can be evaluated with the linearized model are addition of inter individual or inter occasion variability parameters, 
 correlation structures and more complex residual error models. 
 
@@ -85,5 +86,15 @@ the most important common options is found here.
 
 \section{Output}
 Linearized model file with name runX\_linbase.mod and data file with name runX\_linbase.dta.
+
+\begin{thebibliography}{99}
+\bibitem{Svensson} E. M. Svensson and M. O. Karlsson,
+{\em Use of a linearization approximation facilitating stochastic model building},
+J PKPD. 2014, 41:153-158.
+\bibitem{Khandelwal}  A. Khandelwal, K. Harling, E. N. Jonsson, A. C. Hooker and M. O. Karlsson,
+\emph{A fast method for testing covariates in population PK/PD Models.},
+AAPS J. 2011 Sep;13(3):464-72. 
+\end{thebibliography}
+
 
 \end{document}

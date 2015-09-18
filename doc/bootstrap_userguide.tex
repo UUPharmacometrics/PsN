@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{Bootstrap user guide}{2015-08-19}
+\guidetitle{Bootstrap user guide}{2015-09-16}
 \begin{document}
 
 
@@ -10,6 +10,8 @@
 \section{Introduction}
 
 Bootstrap is a tool for calculating bias, standard errors and confidence intervals of parameter estimates. It does so by generating a set of new datasets by sampling individuals with replacement from the original dataset, and fitting the model to each new dataset \cite{Efron}. 
+See also \cite{Niebecker} for diagnostics using option -dofv.
+
 Example:
 \begin{verbatim}
 bootstrap run12.mod -samples=500 -seed=12345 -threads=5
@@ -26,7 +28,9 @@ A model file is required on the command-line.
 The number of bootstrapped datasets to generate. Default is 200. 
 \nextopt
 \optdefault{sample\_size}{M}
-The number of subjects in each bootstrap data set. The default       value is set to the number of individuals in the original data set. When the resampling is stratified, the sample\_size option can be used to specify the exact number of samples that should be drawn from each strata. Below follows an example of the syntax that should be used in such a case. Stratification is here done based on the study number, STUD, with the values 1001, 1002 and 1003.  -sample\_size=''1001$=>$12,1002$=>$24,1003$=>$10''                          Note the double quotes, single quotes will not work on Windows. This example specifies that the bootstrap should use 12 samples from study 1001, 24 samples from 1002 and 10 from study 1003. If only one sample size is used together with stratified resampling (the default case; sample\_size=number of individuals in the data set), the strata are assigned samples in proportion to their size in the data set. Please note that this usage of the sample\_size option does not guarantee that the sum of the samples of the strata is equal to the given sample\_size since PsN needs to round the figures to the closest integer. For a sample size equal to the number of individuals in the data set, the sum will however always be correct. 
+The number of subjects in each bootstrap data set. The default       
+value is set to the number of individuals in the original data set. When the resampling is stratified, the sample\_size option can be used to specify the exact number of samples that should be drawn from each strata. Below follows an example of the syntax that should be used in such a case. Stratification is here done based on the study number, STUD, with the values 1001, 1002 and 1003.  -sample\_size=''1001$=>$12,1002$=>$24,1003$=>$10''                          
+Note the double quotes, single quotes will not work on Windows. This example specifies that the bootstrap should use 12 samples from study 1001, 24 samples from 1002 and 10 from study 1003. If only one sample size is used together with stratified resampling (the default case; sample\_size=number of individuals in the data set), the strata are assigned samples in proportion to their size in the data set. Please note that this usage of the sample\_size option does not guarantee that the sum of the samples of the strata is equal to the given sample\_size since PsN needs to round the figures to the closest integer. For a sample size equal to the number of individuals in the data set, the sum will however always be correct. 
 \nextopt
 \optdefault{stratify\_on}{column name}
 It may be necessary to use stratification in the resampling procedure. For example, if the original data consists of two groups of patients - say 10 patients with full pharmacokinetic profiles and 90 patients with sparse steady state concentration measurements - it may be wise to restrict the resampling procedure to resample within the two groups, producing bootstrap data sets that all contain 10 rich + 90 sparse data patients but with different compositions. The default is not to use stratification. Set -stratify\_on to the column (the name in \$INPUT) that defines the two groups. Note that the option sample\_size has a different behaviour when stratified resampling is used. 
@@ -176,6 +180,7 @@ The model parameters are estimated with each dataset, including the original, re
 
 \section{Computing delta-ofv}
 
+The delta-ofv distribution can be used as a diagnostic of the bootstrap \cite{Niebecker}.
 If option -dofv is set, PsN will perform a MAXEVAL=0 run for each set of bootstrap parameter estimates using the original model and data. This is done after all other runs and computations are completed, including any Bca step. The results will be printed to a csv file called delta\_ofv.csv where the first column is bootstrap data id and the second delta-ofv which is computed as 
 $\mathrm{ofv}_{bs,maxev=0}$ – $\mathrm{ofv}_{original}$. If option -mceta=N is set and NM7.3 or later is used and the estimation method is classical then option MCETA=N will be set in \$ESTIMATION. There will be up to 200 \$PROBLEMs defined in each model file (control stream) to reduce PsN overhead when calling NONMEM.
 
@@ -208,8 +213,9 @@ Rerun the same bootstrap command (command.txt) but set options -summarize
 and -directory=name\_of\_existing\_directory and change the
 run selection options such as -no-skip\_minimization\_terminated. 
 
-\begin{thebibliography}{1}
-\bibitem{Efron} Efron B, {\em An Introduction to the Bootstrap}, Chap. \& Hall, London UK, 1993
+\begin{thebibliography}{99}
+\bibitem{Efron} B. Efron, {\em An Introduction to the Bootstrap}, Chap. \& Hall, London UK, 1993
+\bibitem{Niebecker} R. Niebecker and M. O. Karlsson, {\em Are datasets for NLME models large enough for a bootstrap to provide reliable parameter uncertainty distributions?} PAGE 22 (2013) Abstr 2899 \mbox{www.page-meeting.org/?abstract=2899}.
 \end{thebibliography}
 
 \end{document}

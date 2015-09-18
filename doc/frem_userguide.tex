@@ -9,11 +9,10 @@
 
 
 \section{Introduction}
-The frem program is an aid to the method described in
-\emph{A full model approach based on the covariance matrix of parameters and covariates},
-PAGE 21 (2012) Abstr 2455, M Karlsson. 
+The frem program is an aid to the method described in \cite{Karlsson}, \cite{Ivaturi}, \cite{Yun}.
 The program step by step builds the model with full random effects.
 If option -vpc is set then script will prepare model that can be run with vpc.
+
 
 Example call
 \begin{verbatim}
@@ -447,6 +446,22 @@ k\times k & k\times (n-k)\\
 \item We want the upper $k\times k$ submatrix of $\Omega^{-1}=G^{-T}G^{-1}$.
 \end{enumerate}
 %Ok to run on block from BOV omega?
+
+\begin{thebibliography}{99}
+\bibitem{Karlsson} M. O. Karlsson,
+{\em A full model approach based on the covariance matrix of parameters and covariates},
+PAGE 21 (2012) Abstr 2455 \mbox{www.page-meeting.org/?abstract=2455} 
+\bibitem{Ivaturi}
+V. Ivaturi, R. Keizer and M. O. Karlsson,
+{\em A Full Random Effects Model for Characterising Covariate Relations},
+WCOP (2012) Abstract W-152.
+\bibitem{Yun}
+H. Yun, R. Niebecker, E. M. Svensson and M. O. Karlsson,       
+{\em Evaluation of FREM and FFEM including use of model linearization},
+PAGE 22 (2013) Abstr 2900 \mbox{www.page-meeting.org/?abstract=2900}    
+\end{thebibliography}     
+                          
+
 
 \end{document} 
 

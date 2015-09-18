@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{SIR user guide}{2015-09-03}
+\guidetitle{SIR user guide}{2015-09-16}
 \usepackage{amsmath}
 
 \begin{document}
@@ -9,9 +9,6 @@
 \newcommand{\guidetoolname}{sir}
 
 %TODO cholesky block check in sampling when reserved labels for sd/corr
-%restart functionality, add iterations (like sse). need new loop conditions in main loop start_iteration,
-%  a 0th iteration that has number > 0 iteraion, etc
-
 
 \section{Introduction}
 The sir program calculates uncertainty
@@ -303,9 +300,9 @@ from file rawres\_input, excluding offset\_rawres and vectors not passing in\_fi
 resampled more than once (only possible if -with\_replacement was set). 
 \item[\underline{Step 6}]
 If \emph{not} last iteration \emph{and} option -boxcox is set (the default): 
-For each parameter individually, find the Box-Cox transformation that maximizes the correlation with the normal density.
+For each parameter individually, find the Box-Cox transformation that maximizes the correlation (Pearson's r) with the normal density.
 Do not allow $\lambda$ less than -3 or larger than +3. The  $\lambda$ used is allowed to differ from the true optimal  $\lambda$
-by at most $0.2$.
+by at most $0.2$. The optimization is done with the DIRECT algorithm \cite{direct}.
 Compute the covariance matrix for the Box-Cox transformed resampled parameter vectors, and go to Step 1.
 
 \noindent If \emph{not} last iteration \emph{and} option -boxcox is unset with -no-boxcox: 
@@ -450,6 +447,13 @@ If this happens in iteration 1 after a 0th iteration based on -auto\_rawres, or 
 then it is recommended to either run a new sir with -no-boxcox or a different random seed, or 
 try to run sir with -covmat\_input=tweak\_inits.cov where tweak\_inits.cov is found in the failed sir run directory and
 is the empirical covariance matrix from iteration 0 without Box-Cox transformation.
+
+
+\begin{thebibliography}{99}
+    \bibitem{direct} D. R. Jones, C. D. Perttunen and B. E. Stuckman, {\em Lipschitzian optimization without the Lipschitz constant},
+Journal of Optimization Theory and Application: 79:1, 1993.
+\end{thebibliography}
+
 \end{document}
 
 \section{Suggested new workflow}

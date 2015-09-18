@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{MIMP user guide}{2013-12-04}
+\guidetitle{MIMP user guide}{2015-09-16}
 
 \begin{document}
 
@@ -8,7 +8,7 @@
 
 
 \section{Overview}
-The mimp program implements the multiple imputation method\cite{Johansson}.
+The mimp program implements the multiple imputation method \cite{Johansson1}, \cite{Johansson2}.
 Example
 \begin{verbatim}
 mimp -base_model=base.mod -reg_model=reg.mod -mi_model=mi.mod
@@ -76,9 +76,13 @@ The results are in the raw\_results file of mi\_dirJ, J=1:'imputations', (the mu
 
 
 
-\begin{thebibliography}{1}
-
-\bibitem{Johansson} Åsa Johansson, {\em Comparison of methods for handling missing covariate data}, www.page-meeting.org/?abstract=1982, PAGE 20 Abstract 1982, 2011
+\begin{thebibliography}{99}
+\bibitem{Johansson1} Å. Johansson and M. O. Karlsson, 
+{\em Multiple Imputation of Missing Covariates in NONMEM and Evaluation of the Method’s Sensitivity to $\eta$-Shrinkage},
+AAPS J. 2013 Oct; 15(4): 1035–1042.
+\bibitem{Johansson2} Å. Johansson and M. O. Karlsson, 
+{\em Comparison of methods for handling missing covariate data}, 
+AAPS J. 2013 Oct; 15(4): 1232–1241. 
 \end{thebibliography}
 
 \end{document}

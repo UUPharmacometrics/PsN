@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{SCM user guide}{2015-08-24}
+\guidetitle{SCM user guide}{2015-09-16}
 
 \begin{document}
 
@@ -222,7 +222,7 @@ The derivatives needed for computing the new medians and means will be taken fro
 
 \subsection{Options  for the linearization method}
 
-Add covariates to a linearized version of the  original model. All these options must be set before the first 
+Add covariates to a linearized version of the  original model \cite{Khandelwal}. All these options must be set before the first 
 \verb|[|\emph{section}\verb|]|
 of the configuration file. 
 The linearization method can only be used with models where the eta on each parameter (CL, V,...) to be tested is unique to that parameter, i.e. if  CL is listed in test\_relations and CL=TVCL*EXP(ETA(5)) then ETA(5) must not appear anywhere else in the model. Also, the linearization method is restricted to a certain set of models for the inter-individual variation, see below. Different parameters may have different ETA relations as long as each one is found in the list below.
@@ -525,5 +525,10 @@ Default state 5: Power function. Continuous covariates only.
 PARCOV= ((COV/median)**THETA(1))
 \end{verbatim}
 
+\begin{thebibliography}{99}
+\bibitem{Khandelwal}  A. Khandelwal, K. Harling, E. N. Jonsson, A. C. Hooker and M. O. Karlsson,
+\emph{A fast method for testing covariates in population PK/PD Models.},
+AAPS J. 2011 Sep;13(3):464-72. 
+\end{thebibliography}
 
 \end{document}
