@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{EBE\_NPDE user guide}{2015-09-18}
+\guidetitle{EBE\_NPDE user guide}{2015-09-21}
 
 \begin{document}
 
@@ -70,17 +70,19 @@ or psn\_options -h on the commandline.
 
 \subsubsection*{Main output}
 \begin{description}
-\item[ebe\_npde.csv] NPDE of EBE. One row per individual. Columns: ID,
+\item[ebe\_npde.csv] NPDE of EBE. One row per subject. Columns: ID,
 standardized observed EBE (a scalar) where 
 $ebe_{standardized}= \\
 \left(\overline{ebe}_{obs} - mean (\overline{ebe}_{sim})\right)\left((cov(\overline{ebe}_{sim})\right)^{-1}
 \left(\overline{ebe}_{obs} - mean (\overline{ebe}_{sim})\right)^T$,\\ 
 NPDE:s for each EBE
-\item[iwres\_npde.csv] NPDE of IWRES. One row per data record. Columns: ID, MDV, NPDE for IWRES.
-\item[summary\_iofv.csv] One row per individual. Columns: ID, iOFV for observed data, standard deviation 
-of iOFV for evaluation of simulated data,
-mean of iOFV for evaluation of simulated data, standardized observed iOFV where
-$iOFV_{standardized}=\frac{(iOFV_{observed} - mean (iOFV_{simulated}))^2}{variance(iOFV_{simulated})}$
+\item[summary\_iwres.csv] NPDE of IWRES. One row per data record. Columns: ID, MDV, observed IWRES, NPDE for IWRES.
+\item[summary\_iofv.csv] One row per subject. Columns: ID, observed iOFV,
+mean of iOFV for evaluation of simulated data,
+standard deviation of iOFV for evaluation of simulated data,
+standardized observed iOFV where
+$iOFV_{standardized}=\frac{(iOFV_{observed} - mean (iOFV_{simulated}))^2}{variance(iOFV_{simulated})}$, NPDE of iOFV
+\item[raw\_all\_iofv.csv] One row per subject. Columns: ID, observed iOFV, sample.1 iOFV, sample.2 iOFV, etc. 
 \item[raw\_results\_<model>.csv] e.g. raw\_results\_run1.csv with ofv for evaluation of simulated data
 \end{description}
 
@@ -89,9 +91,7 @@ $iOFV_{standardized}=\frac{(iOFV_{observed} - mean (iOFV_{simulated}))^2}{varian
 \item[decorrelated\_original\_ebe.csv] One row per individual. Columns: ID, decorrelated observed EBE:s
 \item[decorrelated\_original\_iwres.csv] One row per data record. Columns: ID, MDV, decorrelated observed IWRES
 \item[raw\_original\_ebe.csv]  One row per individual. Columns: ID, observed EBE:s
-\item[raw\_original\_iwres.csv] One row per data record. Columns: ID, MDV, observed IWRES
-\item[raw\_all\_iofv.csv] First row is ID numbers to be used as column identifiers, second row is observed iOFV, following rows
-are all simulated iOFV
+%\item[raw\_original\_iwres.csv] One row per data record. Columns: ID, MDV, observed IWRES %skip, in summary
 \item[ebe\_pde.csv] One row per individual. Columns: ID, PDE of EBE:s
 \item[ebe\_npd.csv] One row per individual. Columns: ID, NPD of EBE:s (normalized PD, not decorrelated)
 \item[iwres\_npd.csv]  One row per data record. Columns: ID, MDV, NPD of IWRES (normalized pd, not decorrelated)

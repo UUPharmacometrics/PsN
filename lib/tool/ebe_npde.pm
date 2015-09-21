@@ -516,10 +516,16 @@ sub modelfit_analyze
 				print "\nError in npde_comp for iwres: $ret. iwres results cannot be computed\n";
 				last;
 			}
-			open(DAT, ">iwres_npde.csv") || die("Couldn't open iwres_npde.csv : $!");
-			print DAT "ID,MDV,NPDE\n";
+			open(DAT, ">summary_iwres.csv") || die("Couldn't open summary_iwres.csv : $!");
+			print DAT "ID,MDV,ORIGINAL,NPDE\n";
 			for (my $i=0; $i<scalar(@{$npde->[0]});$i++){
-				print DAT $id_mdv_matrix->[0]->[$i]->[0].','.$id_mdv_matrix->[1]->[$i]->[0].','.formatfloat($npde->[0]->[$i])."\n";
+				print DAT $id_mdv_matrix->[0]->[$i]->[0].','.$id_mdv_matrix->[1]->[$i]->[0];
+				if ($id_mdv_matrix->[1]->[$i]->[0] == 0){
+					#not missing DV
+					print DAT ','.formatfloat($est_matrix->[0]->[$i]->[0]).','.formatfloat($npde->[0]->[$i])."\n";
+				}else{
+					print DAT ',,'."\n";
+				}
 			}
 			close (DAT);
 
@@ -541,17 +547,16 @@ sub modelfit_analyze
 		open(ORI, ">decorrelated_original_iwres.csv") || 
 			die("Couldn't open decorrelated_original_iwres.csv : $!");
 		print ORI "ID,MDV,IWRES_STAR\n";
-		open(ORI2, ">raw_original_iwres.csv") || 
-			die("Couldn't open raw_original_iwres.csv : $!");
-		print ORI2 "ID,MDV,IWRES\n";
+#		open(ORI2, ">raw_original_iwres.csv") || 	die("Couldn't open raw_original_iwres.csv : $!");
+#		print ORI2 "ID,MDV,IWRES\n";
 		for (my $i=0; $i<scalar(@{$decorr->[0]});$i++){
 			print ORI $id_mdv_matrix->[0]->[$i]->[0].','.$id_mdv_matrix->[1]->[$i]->[0].','.
 				formatfloat($decorr->[0]->[$i]->[0])."\n";
-			print ORI2 $id_mdv_matrix->[0]->[$i]->[0].','.$id_mdv_matrix->[1]->[$i]->[0].','.
-				formatfloat($est_matrix->[0]->[$i]->[0])."\n";
+#			print ORI2 $id_mdv_matrix->[0]->[$i]->[0].','.$id_mdv_matrix->[1]->[$i]->[0].','.
+#				formatfloat($est_matrix->[0]->[$i]->[0])."\n";
 		}
 		close ORI;
-		close ORI2;
+#		close ORI2;
 		last; #must have last here, we do not want to loop
 	}
 
@@ -742,26 +747,34 @@ sub modelfit_analyze
 			last;
 		}
 		open(ORI, ">raw_all_iofv.csv") || die("Couldn't open raw_all_iofv.csv : $!");
-#		my @head = ('ID','ORIGINAL');
-#		for (my $j=1; $j<scalar(@{$est_matrix->[0]->[0]});$j++){
-#			push(@head,'sample.'.$j);
-#		}
-#							$estimate_matrix->[column][$id_index][sample];
-#		print ORI join(',',@head)."\n";
-		#id num is header
-		for (my $i=0; $i<scalar(@{$est_matrix->[0]});$i++){
-			print ORI ',' if ($i>0);
-			print ORI $id_matrix->[0]->[$i]->[0];
+		my @head = ('ID','ORIGINAL');
+		for (my $j=1; $j<scalar(@{$est_matrix->[0]->[0]});$j++){
+			push(@head,'sample.'.$j);
 		}
-		print ORI "\n";
-		for (my $j=0; $j<scalar(@{$est_matrix->[0]->[0]});$j++){
-			for (my $i=0; $i<scalar(@{$est_matrix->[0]});$i++){
-				print ORI ',' if ($i>0);
-				print ORI formatfloat($est_matrix->[0]->[$i]->[$j]);
+		print ORI join(',',@head)."\n";
+		for (my $i=0; $i<scalar(@{$est_matrix->[0]});$i++){
+			print ORI $id_matrix->[0]->[$i]->[0];
+			for (my $j=0; $j<scalar(@{$est_matrix->[0]->[0]});$j++){
+				print ORI ','.formatfloat($est_matrix->[0]->[$i]->[$j]);
 			}
 			print ORI "\n";
 		}
 		close ORI;
+
+#							$estimate_matrix->[column][$id_index][sample];
+		#id num is header
+#		for (my $i=0; $i<scalar(@{$est_matrix->[0]});$i++){
+#			print ORI ',' if ($i>0);
+#			print ORI $id_matrix->[0]->[$i]->[0];
+#		}
+#		print ORI "\n";
+#		for (my $j=0; $j<scalar(@{$est_matrix->[0]->[0]});$j++){
+#			for (my $i=0; $i<scalar(@{$est_matrix->[0]});$i++){
+#				print ORI ',' if ($i>0);
+#				print ORI formatfloat($est_matrix->[0]->[$i]->[$j]);
+#			}
+#			print ORI "\n";
+#		}
 
 
 		$ret = npde_util::decorrelation($est_matrix,$mean_matrix,$decorr,$stdev);
@@ -769,17 +782,27 @@ sub modelfit_analyze
 			print "\nError in decorrelation for iofv: $ret. iofv results cannot be computed\n";
 			last;
 		}
+		$ret = npde_util::npde_comp($decorr,$pde,$npde);
+#		unless ($ret ==0){
+#			print "\nError in npde_comp for iofv: $ret. iofv results cannot be computed\n";
+#			last;
+#		}
 		open(ORI, ">summary_iofv.csv") || die("Couldn't open summary_iofv.csv : $!");
-		print ORI "ID,OBSERVED,MEAN_SIM,SD_SIM,STAND_OBS\n";
+		print ORI "ID,OBSERVED,MEAN_SIM,SD_SIM,STAND_OBS,NPDE\n";
 		for (my $i=0; $i<scalar(@{$est_matrix->[0]});$i++){
 			print ORI $id_matrix->[0]->[$i]->[0].','.formatfloat($est_matrix->[0]->[$i]->[0]).','.
 				formatfloat($mean_matrix->[0]->[$i]).','.formatfloat($stdev->[$i]).','.
-				formatfloat(($decorr->[0]->[$i]->[0])**2)."\n";
+				formatfloat(($decorr->[0]->[$i]->[0])**2).',';
+			if ($ret == 0){
+				print ORI formatfloat($npde->[0]->[$i]);
+			}
+			print ORI "\n";
 		}
 		close ORI;
 
-		#do not perform decorrelation for iofv according to Anna summer 2015
+
 		if (0){
+			#have square of decorr in summary iofv
 			open(ORI, ">decorrelated_original_iofv.csv") || 
 				die("Couldn't open decorrelated_original_iofv.csv : $!");
 			print ORI "ID,OFV\n";
@@ -787,12 +810,8 @@ sub modelfit_analyze
 				print ORI $id_matrix->[0]->[$i]->[0].','.formatfloat($decorr->[0]->[$i]->[0])."\n";
 			}
 			close ORI;
-
-			$ret = npde_util::npde_comp($decorr,$pde,$npde);
-			unless ($ret ==0){
-				print "\nError in npde_comp for iofv: $ret. iofv results cannot be computed\n";
-				last;
-			}
+		}
+		if (0){
 			open(DAT, ">iofv_pde.csv") || 
 				die("Couldn't open iofv_pde.csv : $!");
 			print DAT "ID,OFV_PDE\n";
@@ -800,14 +819,18 @@ sub modelfit_analyze
 				print DAT $id_matrix->[0]->[$i]->[0].','.formatfloat($pde->[0]->[$i])."\n";
 			}
 			close (DAT);
+		}
 
-			if ($self->have_CDF()){
+		if ($self->have_CDF()){
+			if (0){
 				open(DAT, ">iofv_npde.csv") || 	die("Couldn't open iofv_npde.csv : $!");
-				print DAT "ID,OFV_NPDE\n";
+				print DAT "ID,IOFV_NPDE\n";
 				for (my $i=0; $i<scalar(@{$npde->[0]});$i++){
 					print DAT $id_matrix->[0]->[$i]->[0].','.formatfloat($npde->[0]->[$i])."\n";
 				}
 				close (DAT);
+			}
+			if (0){
 				$ret = npde_util::npde_comp($est_matrix,$pd,$npd);
 				unless ($ret ==0){
 					print "\nError in npde_comp for iofv: $ret. iofv results cannot be computed\n";
@@ -819,7 +842,6 @@ sub modelfit_analyze
 					print DAT $id_matrix->[0]->[$i]->[0].','.formatfloat($npd->[0]->[$i])."\n";
 				}
 				close (DAT);
-
 			}
 		}
 		last; #must break while here
