@@ -124,6 +124,7 @@ LIBFILES= ui.pm \
 	so/soblock/rawresults.pm \
 	so/soblock/simulation.pm \
 	so/soblock/taskinformation.pm \
+	so/soblock/modeldiagnostic.pm \
 	so/soblock/estimation/individualestimates.pm \
 	so/soblock/estimation/likelihood.pm \
 	so/soblock/estimation/populationestimates.pm \
