@@ -1129,7 +1129,7 @@ sub mean
 	# are defined only the hi_cutoff will be used.  See L</max>.
 
 	my $first_id = $self->individuals->[0];
-	die "data->median: No individuals defined in data object based on ",
+	die "data->mean: No individuals defined in data object based on ",
 	$self->full_name,"\n" unless defined $first_id;
 
 	my @data_row = split(/,/, $first_id->subject_data ->[0]);
