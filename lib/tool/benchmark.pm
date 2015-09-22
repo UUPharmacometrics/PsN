@@ -23,6 +23,7 @@ has 'results_file' => ( is => 'rw', isa => 'Str', default => 'benchmark_results.
 
 has 'merge_rawresults' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'alt_nonmem' => ( is => 'rw', isa => 'ArrayRef' , default => sub { [] });
+has 'reference_lst' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] });
 has 'record_change_list' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 has 'theta_change_list' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 has 'record_options' => ( is => 'rw', isa => 'Str' );
@@ -33,12 +34,13 @@ has 'parameter_threshold' => ( is => 'rw', isa => 'Num', default => 5 );
 has 'nonmem_paths' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 has 'full_rawres_headers' => ( is => 'rw', isa => 'ArrayRef' , default => sub { [] });
 has 'settings_header' => ( is => 'rw', isa => 'ArrayRef' , default => sub { [] });
+has '_reference_raw_results' => ( is => 'rw', isa => 'ArrayRef' );
 
 sub BUILD
 {
 	my $self  = shift;
-
-	for my $accessor ('logfile','raw_nonp_file'){
+	
+    for my $accessor ('logfile','raw_nonp_file'){
 		my @new_files=();
 		my @old_files = @{$self->$accessor};
 		for (my $i=0; $i < scalar(@old_files); $i++){
@@ -66,10 +68,35 @@ sub BUILD
 		$self->record_change_list(parse_record_options(record_options => $self->record_options));
 	}
 	if (defined $self->theta_inits){
-		$self->theta_change_list(parse_theta_inits(theta_inits => $self->theta_inits,
-												   models => $self->models));
+		$self->theta_change_list(parse_theta_inits(theta_inits => $self->theta_inits, models => $self->models));
 	}
+
+    my $ref = $self->parse_reference_lst();
+    $self->_reference_raw_results($ref);
 }
+
+sub parse_reference_lst
+{
+    my $self = shift;
+    my @raw_results = ();
+
+    for my $lst_name (@{$self->reference_lst}) {
+        my $output = output->new(filename => $lst_name);
+        my $model = $output->lst_model;
+        $model->outputs->[0] = $output;
+        my $modelfit = tool::modelfit->new(models => [ $model]);
+        my ($raw_results_row, $nonp_row) = $modelfit->create_raw_results_rows(
+            max_hash => $modelfit->max_hash,
+            model => $modelfit->models->[0],
+            model_number => 1,
+            raw_line_structure => $modelfit->raw_line_structure
+        );
+        push @raw_results, $raw_results_row->[0];
+    }
+
+    return \@raw_results;
+}
+
 
 sub parse_theta_inits
 {
@@ -152,7 +179,6 @@ sub parse_theta_inits
 	return \@list;
 
 }
-
 
 sub parse_record_options
 {
@@ -547,6 +573,7 @@ sub get_modified_filename
 
 
 }
+
 sub modelfit_setup
 {
 	my $self = shift;
@@ -691,35 +718,27 @@ sub modelfit_setup
 			my $evaluation = 
 				tool::modelfit ->new( %{common_options::restore_options(@common_options::tool_options)},
 									  nm_version => $nonmems[$i],
-									  models		 => $model_lists->[$offset+$j],
-									  base_directory   => $self -> directory,
+									  models		 => $model_lists->[$offset + $j],
+									  base_directory   => $self->directory,
 									  raw_results_file => [$self->raw_results_file->[$j]], 
-									  raw_results_append => ($i>0), #when writing rawres file
+									  raw_results_append => ($i > 0), #when writing rawres file
 									  directory             => $dir,
 									  _raw_results_callback => 
 									  $self->_modelfit_raw_results_callback(model_names => \@model_names,
-																			offset => scalar(@model_names)*$i,
+																			offset => scalar(@model_names) * $i,
 																			settings_header => $self->settings_header,
 																			replicates => $self->replicates),
 									  raw_results           => undef,
 									  prepared_models       => undef,
 									  top_tool              => 0,
-#									  copy_data             => $self->copy_data,
-#								  %subargs 
 				);
-			push( @{$self -> tools()},$evaluation);
+			push(@{$self->tools}, $evaluation);
 
-
-#		ui -> print( category => 'benchmark', message => $message );
 		}
 	}
 
 
 }
-
-
-
-
 
 sub modelfit_analyze
 {
@@ -736,7 +755,6 @@ sub modelfit_analyze
 			}
 		}
 	}
-
 }
 
 sub prepare_results
@@ -744,7 +762,6 @@ sub prepare_results
 	my $self = shift;
 
 }
-
 
 sub _modelfit_raw_results_callback
 {
@@ -768,47 +785,57 @@ sub _modelfit_raw_results_callback
 		my $mh_ref   = shift;
 		my %max_hash = %{$mh_ref};
 
-#		$modelfit -> raw_results_file([$dir.$file] );
-#		$modelfit -> raw_nonp_file( [$dir.$nonp_file] );
-
-		my $base = round(scalar(@{$model_names})/$replicates);
-		my @newarr=();
-		if ($replicates > 1){
+		my $base = round(scalar(@{$model_names}) / $replicates);
+		my @newarr = ();
+		if ($replicates > 1) {
 			#sort so that replicates together
-			for (my $i=0; $i<$base; $i++){
-				push(@newarr,[]);
+			for (my $i = 0; $i < $base; $i++) {
+				push(@newarr, []);
 			}
 		}
 
 		foreach my $row ( @{$modelfit -> raw_results()} ) {
 			#modify model column
 			my $nameline = $row->[0];
-			my @oldrow =@{$row};
+			my @oldrow = @{$row};
 			#insert settings after model name
-			$row = [$oldrow[0],@{$model_names->[$nameline-1]},@oldrow[1 .. $#oldrow]]; 
+			$row = [$oldrow[0], @{$model_names->[$nameline-1]}, @oldrow[1 .. $#oldrow]]; 
 			if ($replicates > 1){
 				my $modulo = $nameline % $base; #modulo division
-				push(@{$newarr[$modulo-1]},[$oldrow[0],@{$model_names->[$nameline-1]},@oldrow[1 .. $#oldrow]]);
+				push(@{$newarr[$modulo - 1]}, [$oldrow[0], @{$model_names->[$nameline-1]}, @oldrow[1 .. $#oldrow]]);
 			}
 		}
-		if ($replicates > 1){
+		if ($replicates > 1) {
 			$modelfit->raw_results([]);
-			for (my $i=0; $i<$base; $i++){
-				push(@{$modelfit->raw_results},@{$newarr[$i]});#multiple array refs
+			for (my $i = 0; $i < $base; $i++) {
+				push(@{$modelfit->raw_results}, @{$newarr[$i]});#multiple array refs
 			}
 		}
+
+        if (not $modelfit->raw_results_append) {        # Is this the first call?
+            if (scalar(@{$self->reference_lst}) > 0) {
+                my $model_index = 0;
+                my $ref_index = 1;
+                for my $row (@{$self->_reference_raw_results}) {
+                    my $nameline = $row->[0];
+                    my @oldrow = @$row;
+                    use Data::Dumper;
+                    print Dumper($model_names->[$nameline - 1]);
+			        my $new_row = [ $model_index, utils::file::get_file_stem($self->reference_lst->[$ref_index - 1]), ("ref$ref_index") x (scalar(@{$model_names->[$nameline - 1]}) - 1), @oldrow[1 .. $#oldrow] ]; 
+                    $ref_index++;
+                    $model_index--;
+                    unshift @{$modelfit->raw_results}, $new_row;
+                }
+            }
+        }
 
 		#TODO raw_line_structure
 		my @old_header = @{$modelfit -> raw_results_header()};
 		$modelfit -> raw_results_header([$old_header[0],@{$settings_header},@old_header[1 .. $#old_header]]);
-
-
-
 	};
+
 	return $subroutine;
 }
-
-
 
 sub create_R_plots_code{
 	my $self = shift;
@@ -859,8 +886,6 @@ sub create_R_plots_code{
 						 ]);
 
 }
-
-
 
 no Moose;
 __PACKAGE__->meta->make_immutable;

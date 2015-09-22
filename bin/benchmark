@@ -30,6 +30,7 @@ my %optional_options = (
 	'dofv_threshold:f' => undef,
 	'replicates:i' => undef,
 	'parameter_threshold:f'=> undef,
+    'reference_lst:s' => undef,
 	);
 
 my $res = GetOptions( \%options,
@@ -112,6 +113,12 @@ $help_text{-parameter_threshold} = <<'EOF';
     Default
 EOF
 
+$help_text{-reference_lst} = <<'EOF';
+      -reference_lst=list of lst files
+
+    Add the results from one or more .lst files to all raw_results.
+EOF
+
 $help_text{Post_help_message} = <<'EOF';
     Also see 'psn_options -h' for a description of common PsN options.
 EOF
@@ -121,17 +128,6 @@ common_options::online_help( 'benchmark', \%options, \%help_text, \%required_opt
 ## Check that we do have a model file
 if ( scalar(@ARGV) < 1 ) {
   die("A model file must be specified.\n");
-}
-
-require model;
-require tool::benchmark;
-
-my $eval_string = common_options::model_parameters(\%options);
-my @models=();
-foreach my $filename (@ARGV){
-	push(@models, model->new ( eval( $eval_string ),
-							   filename  => $filename,
-							   ignore_missing_output_files => 1));
 }
 
 my @alternatives = ();
@@ -145,6 +141,29 @@ if (defined $options{'alt_nonmem'}) {
   }
 }
 
+my @reference_lst = ();
+if (defined $options{'reference_lst'}) {
+    foreach my $ref (split(/,/, $options{'reference_lst'})) {
+        if (length($ref) > 0) {
+            if (not -e $ref) {
+                die "Could not find reference .lst file \"$ref\"\n";
+            }
+            push @reference_lst, $ref;
+        }
+    }
+}
+
+require model;
+require tool::benchmark;
+
+my $eval_string = common_options::model_parameters(\%options);
+my @models=();
+foreach my $filename (@ARGV) {
+	push(@models, model->new ( eval( $eval_string ),
+							   filename  => $filename,
+							   ignore_missing_output_files => 1));
+}
+
 
 my $benchmark = 
 	tool::benchmark->new(eval( $common_options::parameters ),
@@ -156,6 +175,7 @@ my $benchmark =
 					 merge_rawresults  => $options{'merge_rawresults'},
 					 dofv_threshold      => $options{'dofv_threshold'},
 					 parameter_threshold => $options{'parameter_threshold'},
+                     reference_lst => \@reference_lst,
 	);
 
 $benchmark-> print_options (cmd_line => $cmd_line,
