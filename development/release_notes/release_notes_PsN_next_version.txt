@@ -85,9 +85,13 @@ Changes and bug fixes from PsN 4.4.8 to n.n.n
 
 - More robust filtering on IGNORE/ACCEPT
 
-   ___sse___
+   ___ebe_npde___
 
-- New option 
+- Separate decorrelation of iiv etas, ans iov etas per occasion
+
+- New output files
+
+- New rplots template 
 
 
    ___update_inits___
