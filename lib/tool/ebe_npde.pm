@@ -15,6 +15,7 @@ extends 'tool';
 
 has 'samples' => ( is => 'rw', isa => 'Int' );
 has 'successful_samples' => ( is => 'rw', isa => 'Int' );
+has 'subjects' => ( is => 'rw', isa => 'Int' );
 has 'lst_file' => ( is => 'rw', isa => 'Str' );
 has 'estimate_input' => ( is => 'rw', isa => 'Bool', default => 1 );
 has 'have_CDF' => ( is => 'rw', isa => 'Bool', default => 0 );
@@ -31,6 +32,12 @@ has 'occasions' => ( is => 'rw', isa => 'Int',default => 0 );
 has 'all_eta_files' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { [] } );
 has 'all_iwres_files' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { [] } );
 has 'missing' => ( is => 'rw', isa => 'Int',default => -99 );
+
+our $iofv_file = 'summary_iofv.csv';
+our $iwres_file = 'summary_iwres.csv';
+our $ebe_npde_file = 'ebe_npde.csv';
+our $all_iofv_file = 'raw_all_iofv.csv';
+our $all_iwres_file = 'raw_all_iwres.csv';
 
 sub BUILD
 {
@@ -477,6 +484,28 @@ sub modelfit_analyze
 			last;
 		}
 
+		open(ORI, ">$all_iwres_file") || die("Couldn't open $all_iwres_file : $!");
+		my @head = ('ID','MDV','ORIGINAL');
+		for (my $j=1; $j<scalar(@{$est_matrix->[0]->[0]});$j++){
+			push(@head,'sample.'.$j);
+		}
+		print ORI join(',',@head)."\n";
+		for (my $i=0; $i<scalar(@{$est_matrix->[0]});$i++){
+			print ORI $id_mdv_matrix->[0]->[$i]->[0].','.$id_mdv_matrix->[1]->[$i]->[0];
+			if ($id_mdv_matrix->[1]->[$i]->[0] == 0){
+					#not missing DV
+				for (my $j=0; $j<scalar(@{$est_matrix->[0]->[0]});$j++){
+					print ORI ','.formatfloat($est_matrix->[0]->[$i]->[$j]);
+				}
+			}else{
+				for (my $j=0; $j<scalar(@{$est_matrix->[0]->[0]});$j++){
+					print ORI ',';
+				}
+			}
+			print ORI "\n";
+		}
+		close ORI;
+
 
 		#append to datafile, also print to own file
 		my $fname = 'm'.$model_number.'/orig_pred.dta'; 
@@ -516,7 +545,7 @@ sub modelfit_analyze
 				print "\nError in npde_comp for iwres: $ret. iwres results cannot be computed\n";
 				last;
 			}
-			open(DAT, ">summary_iwres.csv") || die("Couldn't open summary_iwres.csv : $!");
+			open(DAT, ">$iwres_file") || die("Couldn't open $iwres_file : $!");
 			print DAT "ID,MDV,ORIGINAL,NPDE\n";
 			for (my $i=0; $i<scalar(@{$npde->[0]});$i++){
 				print DAT $id_mdv_matrix->[0]->[$i]->[0].','.$id_mdv_matrix->[1]->[$i]->[0];
@@ -579,7 +608,7 @@ sub modelfit_analyze
 			push(@found_files,$file) if (-e $file);
 		}
 		$self->successful_samples(scalar(@found_files)-1); # -1 for original
-
+		$self->subjects(scalar(@{$id_matrix->[0]}));
 		my @etatypes=();
 		my $have_iiv=0;
 		if (scalar(@{$self->iiv_eta})>0){
@@ -699,7 +728,7 @@ sub modelfit_analyze
 			}
 		}#end loop etatypes
 		if ($self->have_CDF()){
-			open(DAT, ">ebe_npde.csv") || die("Couldn't open ebe_npde.csv : $!");
+			open(DAT, ">$ebe_npde_file") || die("Couldn't open $ebe_npde_file : $!");
 			print DAT "ID,STAND_EBE,".join(',',@all_eta_headers)."\n";
 			for (my $i=0; $i<scalar(@all_npde);$i++){
 				print DAT $id_matrix->[0]->[$i]->[0].','.formatfloat($standardized[$i]);
@@ -746,7 +775,7 @@ sub modelfit_analyze
 			print "\nError in read_table_files for iofv: $ret. iofv results cannot be computed\n";
 			last;
 		}
-		open(ORI, ">raw_all_iofv.csv") || die("Couldn't open raw_all_iofv.csv : $!");
+		open(ORI, ">$all_iofv_file") || die("Couldn't open $all_iofv_file : $!");
 		my @head = ('ID','ORIGINAL');
 		for (my $j=1; $j<scalar(@{$est_matrix->[0]->[0]});$j++){
 			push(@head,'sample.'.$j);
@@ -787,7 +816,7 @@ sub modelfit_analyze
 #			print "\nError in npde_comp for iofv: $ret. iofv results cannot be computed\n";
 #			last;
 #		}
-		open(ORI, ">summary_iofv.csv") || die("Couldn't open summary_iofv.csv : $!");
+		open(ORI, ">$iofv_file") || die("Couldn't open $iofv_file : $!");
 		print ORI "ID,OBSERVED,MEAN_SIM,SD_SIM,STAND_OBS,NPDE\n";
 		for (my $i=0; $i<scalar(@{$est_matrix->[0]});$i++){
 			print ORI $id_matrix->[0]->[$i]->[0].','.formatfloat($est_matrix->[0]->[$i]->[0]).','.
@@ -1140,9 +1169,12 @@ sub create_R_plots_code{
 							 '#ebe_npde-specific preamble',
 							 'samples   <-'.$self->samples,
 							 'successful.samples  <- '.$self->successful_samples,
-							 "ebe.npde.file <- 'ebe_npde.csv'",
-							 "iofv.file <- 'summary_iofv.csv'",
-							 "iwres.file <- 'iwres_npde.csv'",
+							 'n.subjects   <-'.$self->subjects,
+							 "ebe.npde.file <- '".$ebe_npde_file."'",
+							 "iofv.file <- '".$iofv_file."'",
+							 "iwres.file <- '".$iwres_file."'",
+							 "all.iofv.file <- '".$all_iofv_file."'",
+							 "all.iwres.file <- '".$all_iwres_file."'",
 							 'occasions   <-'.$self->occasions,
 							 "all.eta.names <-  c('".join("','",@all_eta)."')",
 							 $iiv_eta,
