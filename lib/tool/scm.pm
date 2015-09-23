@@ -115,28 +115,7 @@ sub BUILD
 				newline => 1);
 		}
 		unless (defined $self->derivatives_data or $self->skip_filtering){
-			my @check_list;
-			my $ignorelist = $self -> models->[0]-> get_option_value(record_name=>'data',
-				option_name=>'IGNORE',
-				option_index => 'all');
-			push (@check_list,@{$ignorelist}) if (defined $ignorelist);
-			my $accept_list = $self -> models->[0]-> get_option_value(record_name=>'data',
-				option_name=>'ACCEPT',
-				option_index => 'all');
-			push (@check_list,@{$accept_list}) if (defined $accept_list);
-			foreach my $val (@check_list){
-				unless (length($val)==1){
-					ui -> print( category => 'scm',
-						message  => "\nWarning:\n".
-						"IGNORE/ACCEPT statement found in \$DATA.\n".
-						"Will try to filter data automatically before computing statistics",
-						newline => 1);
-
-					$do_filtering=1;
-
-					last;
-				} 
-			}
+			$do_filtering = $self -> models->[0]->need_data_filtering();
 		}
 	}
 

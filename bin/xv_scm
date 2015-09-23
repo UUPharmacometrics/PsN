@@ -379,7 +379,12 @@ my $maxlev=0;
 #bounds of covariate thetas. Filter on IGNORE we do not do yet.
 #have missing data must also be global
 #need to know the covariates here.
+if ($model->need_data_filtering()){
+    ui -> print( category => 'xv_scm',
+		     message => "WARNING: IGNORE/ACCEPT found in \$DATA, but statistics and dataset splitting is done on entire data set",
+             newline =>1);
 
+}
 chdir($main_directory);
 my $global_scm;
 my $temp_scm_dir='full_data_statistics';

@@ -15,11 +15,25 @@ my $ver = $PsN::nm_major_version;
 
 my $modeldir = $includes::testfiledir;
 
-my $model = model->new(filename => "$modeldir/warfarin_saem_noest.mod", ignore_missing_data => 1);
+my $model = model->new(filename => "$modeldir/scm/pheno_ignore.mod", ignore_missing_data => 1);
+
+is($model->need_data_filtering,1,'need data filtering 1');
+
+$model = model->new(filename => "$modeldir/warfarin_saem_noest.mod", ignore_missing_data => 1);
+
+is($model->need_data_filtering,0,'need data filtering 2');
+
+my ( $values_ref, $positions_ref ) = $model ->_get_option_val_pos ( problem_numbers => [1], 
+																	name        => 'NR',
+																	record_name => 'input',
+																	global_position => 1  );
+is($positions_ref -> [0],3,"column number in input 1");
+
 #print "is est ".$model->is_estimation(problem_number => 1)."\n";
 is ($model->get_estimation_evaluation_problem_number,-1,"get_estimation_evaluation_problem_number saem-foci");
 
 $model = model->new(filename => "$modeldir/pheno.mod");
+is($model->need_data_filtering,0,'need data filtering 3');
 
 is ($model->get_estimation_evaluation_problem_number,1,"get_estimation_evaluation_problem_number");
 
@@ -223,6 +237,12 @@ $dummy->filename('model');
 is($dummy->create_output_filename, 'model.lst', "create_output_filename no extension");
 
 $model = model->new(filename => "$modeldir/mox_sir_block2.mod");
+( $values_ref, $positions_ref ) = $model ->_get_option_val_pos ( problem_numbers => [1], 
+																	name        => 'NYHA',
+																	record_name => 'input',
+																	global_position => 1  );
+is($positions_ref -> [0],14,"column number in input 2");
+
 is ($model->get_estimation_evaluation_problem_number,1,"get_estimation_evaluation_problem_number");
 is_deeply($model->fixed_or_same(parameter_type => 'theta')->[0],[0,0,0,0,0],'fixed or same theta ');
 is_deeply($model->fixed_or_same(parameter_type => 'omega')->[0],[0,0,0,0],'fixed or same omega ');

@@ -361,27 +361,12 @@ if( $options{'shrinkage'} ) {
 #must do filtering on IGNORE/ACCEPT here if in model
 #Do not edit input model to remove that statement,
 #want final models to be correct for original data
-my $do_filtering=0;
-my @check_list;
-my $ignorelist = $model-> get_option_value(record_name=>'data',
-										   option_name=>'IGNORE',
-										   option_index => 'all');
-push (@check_list,@{$ignorelist}) if (defined $ignorelist);
-my $accept_list = $model-> get_option_value(record_name=>'data',
-											option_name=>'ACCEPT',
-											option_index => 'all');
-push (@check_list,@{$accept_list}) if (defined $accept_list);
-foreach my $val (@check_list){
-	unless (length($val)==1){
-		ui -> print( category => 'boot_scm',
-					 message => "Running dummy model to filter data on IGNORE/ACCEPT before".
-					 " bootstrapping.",newline =>1 );
-		$do_filtering=1;
-		last;
-	} 
-}
+my $do_filtering= $model->need_data_filtering();
 
 if ($do_filtering){
+	ui -> print( category => 'boot_scm',
+				 message => "Running dummy model to filter data on IGNORE/ACCEPT before".
+				 " bootstrapping.",newline =>1 );
 	# If certain ID:s are ignored, this will interfere with bootstrap. Warn user, exit
 
 	#look for synonym
@@ -390,6 +375,15 @@ if ($do_filtering){
 											option_name=>'ID');
 	#we do not look for <synonym>=ID since PsN won't accept it anyway
 	#look for ignore/accept of ID/synonym
+	my @check_list;
+	my $ignorelist = $model -> get_option_value(record_name=>'data',
+										  option_name=>'IGNORE',
+										  option_index => 'all');
+	push (@check_list,@{$ignorelist}) if (defined $ignorelist);
+	my $accept_list = $model -> get_option_value(record_name=>'data',
+												option_name=>'ACCEPT',
+												option_index => 'all');
+	push (@check_list,@{$accept_list}) if (defined $accept_list);
 
 	foreach my $igval (@check_list){
 		if (($igval =~ /[^a-zA-Z0-9_]+(ID)[^a-zA-Z0-9_]+/ ) ||
