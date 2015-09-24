@@ -2608,7 +2608,7 @@ sub lasso_calculate_covariate_statistics
 
 	if ($function == 1){
 		#linear categorical
-		return lasso_get_categorical_statistics(column_number => $column_number,
+		return $self->lasso_get_categorical_statistics(column_number => $column_number,
 												missing_data_token => $missing_data_token);
 
 	}elsif ($function == 3){
