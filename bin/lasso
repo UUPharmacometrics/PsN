@@ -165,7 +165,7 @@ $help_text{-relations} = <<'EOF';
     The relations option is required. The parameter-covariate pairs to test 
     and the parameterizations to use. The parameterizations are: 
     1)categorical covariate (treated as nominal scale), 2)linear continuous 
-    covariate, 3)piece-wise linear -Y´hockey-stick¡ for continuous covariate.
+    covariate, 3)piece-wise linear "hockey-stick" for continuous covariate.
     The syntax is sensitive and must follow the form below. Note colons, 
     commas. There must be no spaces in the list of relations. There are double 
     commas before a new parameter. It is optional to input the breakpoint for 
@@ -207,6 +207,13 @@ my $eval_string = common_options::model_parameters(\%options);
 my $model = model -> new ( eval( $eval_string ),
 			   filename                    => $ARGV[0],
 			   ignore_missing_output_files => 1);
+
+if ($model->need_data_filtering()){
+    ui -> print( category => 'all',
+				 message => "WARNING: IGNORE/ACCEPT found in \$DATA, but statistics and dataset splitting is done on entire data set",
+				 newline =>1);
+
+}
 
 my $lasso = 
 	tool::lasso->new(eval( $common_options::parameters ),

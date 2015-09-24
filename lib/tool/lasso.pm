@@ -17,12 +17,9 @@ has 'relations' => ( is => 'rw', required => 1, isa => 'Str' );
 has 'covariate_statistics_file' => ( is => 'rw', isa => 'Str', default => 'covariate_statistics.txt' );
 has 'lasso_model_file' => ( is => 'rw', isa => 'Str', default => 'lasso_start_model.mod' );
 has 'logfile' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { ['lasso.log'] } );
-has 'blank' => ( is => 'rw', isa => 'Str' );
-has 'row_length' => ( is => 'rw', isa => 'Int', default => 80 );
-has 'dec_str' => ( is => 'rw', isa => 'Str' );
-has 'sign_dec_str' => ( is => 'rw', isa => 'Str' );
 has 'model_optimal' => ( is => 'rw', isa => 'model' );
 has 'NOABORT_added' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'adaptive' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'use_pred' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'lst_file' => ( is => 'rw', isa => 'Str' );
 has 'convergence' => ( is => 'rw', isa => 'Str', default => 'FIRSTMIN' );
@@ -35,7 +32,15 @@ has 'start_t' => ( is => 'rw', isa => 'Num', default => 0 );
 has 'stop_t' => ( is => 'rw', isa => 'Num', default => 1 );
 has 'pred_ofv_start_t' => ( is => 'rw', isa => 'Num' );
 has 'groups' => ( is => 'rw', isa => 'Int', default => 5 );
+has 't_theta_number' => ( is => 'rw', isa => 'Int', default => 0);
 has 'results_file' => ( is => 'rw', isa => 'Str', default => 'lasso_results.csv' );
+
+our $blank = "    ";
+our $row_length = 80;
+our $decimal_points =5;
+our $dec_str = "%.$decimal_points". "f";
+our	$sign_dec_str = "%+.$decimal_points". "f";
+our $theta_initial_value = 0.0001; 
 
 
 sub BUILD
@@ -121,11 +126,11 @@ sub BUILD
 
 sub parse_row
 {
-	my $self = shift;
+	#sub for splitting too long lines of newly generated code
 	my %parm = validated_hash(\@_,
-		parse_str => { isa => 'Str', optional => 1 },
-		parse_operator => { isa => 'Str', optional => 1 },
-		max_length => { isa => 'Int', optional => 1 }
+		parse_str => { isa => 'Str', optional => 0 },
+		parse_operator => { isa => 'Str', optional => 0 },
+		max_length => { isa => 'Int', optional => 0 }
 	);
 	my $parse_str = $parm{'parse_str'};
 	my $parse_operator = $parm{'parse_operator'};
@@ -181,29 +186,148 @@ sub parse_row
 	return \@rows;
 }
 
+sub factor_string
+{
+	#have unit tests
+	my %parm = validated_hash(\@_,
+							  parameter => { isa => 'Str', optional => 0 },
+							  covariate => { isa => 'Str', optional => 0 },
+							  thetanumber => {isa => 'Int', optional => 0},
+							  mean => {isa => 'Num', optional => 0},
+							  sd => { isa => 'Num', optional => 0 },
+		);
+	my $parameter = $parm{'parameter'};
+	my $covariate = $parm{'covariate'};
+	my $thetanumber = $parm{'thetanumber'};
+	my $mean = $parm{'mean'};
+	my $sd = $parm{'sd'};
+
+	my $string = $parameter.$covariate. " = THETA(" .$thetanumber.")*($covariate".
+		sprintf($sign_dec_str,-$mean).")/".sprintf($dec_str,$sd)."*FACTOR";
+
+	return $string;
+}
+
+sub add_lasso_theta
+{
+	#have unit tests
+	my %parm = validated_hash(\@_,
+							  model => { isa => 'model', optional => 0 },
+							  parameter => { isa => 'Str', optional => 0 },
+							  covariate => { isa => 'Str', optional => 0 },
+							  thetanumber => {isa => 'Int', optional => 0},
+							  mean => {isa => 'Num', optional => 0},
+							  sd => { isa => 'Num', optional => 0 },
+							  max => { isa => 'Num', optional => 0 },
+							  min => { isa => 'Num', optional => 0 },
+		);
+	my $model = $parm{'model'};
+	my $parameter = $parm{'parameter'};
+	my $covariate = $parm{'covariate'};
+	my $thetanumber = $parm{'thetanumber'};
+	my $mean = $parm{'mean'};
+	my $sd = $parm{'sd'};
+	my $max = $parm{'max'};
+	my $min = $parm{'min'};
+
+	$model->initial_values(parameter_type => 'theta',
+						   parameter_numbers => [[$thetanumber]],
+						   new_values =>[[$theta_initial_value]],
+						   add_if_absent => 1);
+
+
+	my	$upper_val=sprintf($dec_str,-1/(($min-$mean)/$sd));
+	my 	$lower_val=sprintf($dec_str,-1/(($max-$mean)/$sd));
+
+	$model -> lower_bounds(parameter_type =>  'theta',
+						   parameter_numbers =>[[$thetanumber]],
+						   new_values => [[$lower_val]] );
+	$model -> upper_bounds(parameter_type =>  'theta',
+						   parameter_numbers =>[[$thetanumber]],
+						   new_values => [[$upper_val]] );
+	$model -> labels( parameter_type     => 'theta',
+					  parameter_numbers => [[$thetanumber]],
+					  new_values        => [['TH'.($thetanumber)." $parameter$covariate"]] );
+	
+	
+}
+
+sub check_name
+{
+	my %parm = validated_hash(\@_,
+							  parameter => { isa => 'Str', optional => 0 },
+							  covariate => { isa => 'Str', optional => 0 },
+							  factor => {isa => 'Str', optional => 1, default => ''},
+							  H => {isa => 'Str', optional => 1, default => ''},
+							  version => {isa => 'Int', optional => 0},
+		);
+	my $parameter = $parm{'parameter'};
+	my $covariate = $parm{'covariate'};
+	my $factor = $parm{'factor'};
+	my $H = $parm{'H'};
+	my $version = $parm{'version'};
+
+	my $name = $parameter.$H.$covariate.$factor;
+
+	if ($version < 7 and length($name)>6){
+		my $shorten = (length($covariate)>= length($parameter))? $covariate : $parameter;
+		croak("Lasso parameter name ".$name.' is '.
+			  "longer than 6 characters, not allowed by NONMEM".$version.
+			  ". Shorten the name for $shorten or use NONMEM7.");
+	}
+
+}
+
+sub get_abssum
+{
+	my %parm = validated_hash(\@_,
+							  adaptive => {isa => 'Bool', optional => 0},
+							  old_thetas => {isa => 'Int', optional => 0},
+							  nthetas => {isa => 'Int', optional => 0},
+		);
+	my $adaptive = $parm{'adaptive'};
+	my $old_thetas = $parm{'old_thetas'};
+	my $nthetas = $parm{'nthetas'};
+
+	my $tmpstr = "ABSSUM = ";
+	my $first = 1;
+	my $i;
+	for ($i=$old_thetas+1; $i<=$nthetas; $i++){
+		if ($first) {
+			$tmpstr = $tmpstr . "ABS(THETA($i))";
+			$first=0;
+		} else {
+			$tmpstr = $tmpstr . "+ABS(THETA($i))";
+		}
+	}
+	return $tmpstr;
+}
+
 sub setup_lasso_model
 {
-	my $self = shift;
 	my %parm = validated_hash(\@_,
-		lasso_model => { isa => 'model', optional => 1 },
-		parameter_covariate_form => { isa => 'HashRef', optional => 1 }
-	);
+							  lasso_model => { isa => 'model', optional => 0 },
+							  parameter_covariate_form => { isa => 'HashRef', optional => 0 },
+							  t_value =>{isa => 'Num', optional => 0},
+							  statistics => { isa => 'HashRef', optional => 0 },
+							  missing_data_token => {isa => 'Str', optional => 0},
+							  adaptive => {isa => 'Bool', optional => 1, default => 0},
+		);
 	my $lasso_model = $parm{'lasso_model'};
 	my %parameter_covariate_form = defined $parm{'parameter_covariate_form'} ? %{$parm{'parameter_covariate_form'}} : ();
+	my $t_value = $parm{'t_value'};
+	my $statistics = $parm{'statistics'};
+	my $missing_data_token = $parm{'missing_data_token'};
+	my $adaptive = $parm{'adaptive'};
+	#if adaptive make sure t value is still last theta, thetanumber == nthetas
 
-	my $t_value = $self->start_t();
-	$self->row_length(80);
-	my $initial_value = 0.0001;  ##Initial value for thetas
-	my $decimal_points =5;
-	$self->blank("    ");
-	$self->dec_str("%.$decimal_points". "f");
-	$self->sign_dec_str("%+.$decimal_points". "f");
+
 	my @old_code;
 	@old_code = @{$lasso_model->get_code(record => 'pk')};
-	$self->use_pred(0);
+	my $use_pred = 0;
 	unless ($#old_code > 0) {
 		@old_code = @{$lasso_model->get_code(record => 'pred')};
-		$self->use_pred(1);
+		$use_pred = 1;
 	}
 	if ( $#old_code <= 0 ) {
 		croak("Neither PK or PRED defined in " .
@@ -220,11 +344,6 @@ sub setup_lasso_model
 	unshift @new_code, ";;; LASSO-END\n";
 
 	my $tmpstr;
-	my $tmpfactor;
-
-	## Create boundaries and inital values and labels for the THETAS
-	my $lower_val;
-	my $upper_val;
 
 	foreach my $par (keys %parameter_covariate_form){
 		$tmpstr = $par . "COV = ";
@@ -236,189 +355,107 @@ sub setup_lasso_model
 				$tmpstr = $tmpstr . "*";
 			}
 			if ($parameter_covariate_form{$par}{$covariate} == 2){
-				if ($PsN::nm_major_version < 7 and length($par.$covariate)>6){
-					my $shorten = (length($covariate)>= length($par))? $covariate : $par;
-					croak("Lasso parameter name ".$par.$covariate.' is '.
-						"longer than 6 characters, not allowed by NONMEM".$PsN::nm_major_version.
-						". Shorten the name for $shorten or use NONMEM7.");
-				}
-				## Create COV-code for the linear continuous
+				check_name(parameter => $par,covariate=>$covariate,version => $PsN::nm_major_version);
 				$tmpstr = $tmpstr . "($par" ."$covariate+1)";
-				## Create FACTOR-code for all the linear continuous covariates
-				$tmpfactor = $par.$covariate. " = THETA(" .++$nthetas .
-				")*($covariate" . 
-				sprintf($self->sign_dec_str,-$self->statistics->{$covariate}{2}{'mean'}) .
-				")/" . sprintf($self->dec_str,$self->statistics->{$covariate}{2}{'sd'}) . 
-				"*FACTOR";
-				push @factor_code, @{$self->parse_row(parse_str => $self->blank . $tmpfactor,
-				parse_operator =>"*",
-				max_length => $self->row_length)};
+				$nthetas++;
+				push (@factor_code,$blank.factor_string(parameter => $par,
+														covariate => $covariate,
+														thetanumber => $nthetas,
+														mean => $statistics->{$covariate}{2}{'mean'},
+														sd => $statistics->{$covariate}{2}{'sd'}));
 
-				#boundaries and initial values and labels for linear continuous
-				$lasso_model->initial_values(parameter_type => 'theta',
-					parameter_numbers => [[$nthetas]],
-					new_values =>[[$initial_value]],
-					add_if_absent => 1);
-
-
-				$upper_val=sprintf($self->dec_str,-1/(($self->statistics->{$covariate}{2}{'min'}
-							- $self->statistics->{$covariate}{2}{'mean'}) / 
-						$self->statistics->{$covariate}{2}{'sd'}));
-				$lower_val=sprintf($self->dec_str,-1/(($self->statistics->{$covariate}{2}{'max'}
-							-  $self->statistics->{$covariate}{2}{'mean'}) / 
-						$self->statistics->{$covariate}{2}{'sd'}));
-
-				$lasso_model -> lower_bounds(parameter_type =>  'theta',
-					parameter_numbers =>[[$nthetas]],
-					new_values => [[$lower_val]] );
-				$lasso_model -> upper_bounds(parameter_type =>  'theta',
-					parameter_numbers =>[[$nthetas]],
-					new_values => [[$upper_val]] );
-				$lasso_model -> labels( parameter_type     => 'theta',
-					parameter_numbers => [[$nthetas]],
-					new_values        => [['TH'.($nthetas)." $par$covariate"]] );
+				add_lasso_theta(model => $lasso_model,
+								parameter => $par,
+								covariate => $covariate,
+								thetanumber => $nthetas,
+								mean => $statistics->{$covariate}{2}{'mean'},
+								sd => $statistics->{$covariate}{2}{'sd'},
+								max => $statistics->{$covariate}{2}{'max'},
+								min => $statistics->{$covariate}{2}{'min'});
+				
 
 			}elsif ($parameter_covariate_form{$par}{$covariate} == 3){
-				##Create COV-code for all the hockey sticks
-				if ($PsN::nm_major_version < 7 and length($par.'H'.$covariate)>6){
-					my $shorten = (length($covariate)>= length($par))? $covariate : $par;
-					croak("Lasso parameter name ".$par.'H'.$covariate.' is '.
-						"longer than 6 characters, not allowed by NONMEM".$PsN::nm_major_version.
-						". Shorten the name for $shorten or use NONMEM7.");
-				}
+				check_name(parameter => $par,covariate=>$covariate,version => $PsN::nm_major_version, H => 'H');
 				$tmpstr = $tmpstr . "($par" ."$covariate+1)*("."$par"."H"."$covariate"."+1)";
-				#FACTOR for hockey-stick
-				$tmpfactor = $par.$covariate. " = THETA(" .++$nthetas .
-				")*($covariate" . 
-				sprintf($self->sign_dec_str,-$self->statistics->{$covariate}{3}{'mean'}) .
-				")/" . sprintf($self->dec_str,$self->statistics->{$covariate}{3}{'sd'}) . 
-				"*FACTOR";
-				push @factor_code, @{$self->parse_row(parse_str => $self->blank . $tmpfactor,
-				parse_operator =>"*",
-				max_length => $self->row_length)};
-				$tmpfactor = $par."H$covariate". " = THETA(" .++$nthetas .
-				")*(H$covariate" . 
-				sprintf($self->sign_dec_str,-$self->statistics->{$covariate}{3}{'H-mean'}) .
-				")/" . sprintf($self->dec_str,$self->statistics->{$covariate}{3}{'H-sd'}) 
-				. "*FACTOR";
-				push @factor_code, @{$self->parse_row(parse_str => $self->blank . $tmpfactor,
-				parse_operator =>"*",
-				max_length => $self->row_length)};
+				$nthetas++;
+				push (@factor_code,$blank.factor_string(parameter => $par,
+														covariate => $covariate,
+														thetanumber => $nthetas,
+														mean => $statistics->{$covariate}{3}{'mean'},
+														sd => $statistics->{$covariate}{3}{'sd'}));
+				add_lasso_theta(model => $lasso_model,
+								parameter => $par,
+								covariate => $covariate,
+								thetanumber => $nthetas,
+								mean => $statistics->{$covariate}{3}{'mean'},
+								sd => $statistics->{$covariate}{3}{'sd'},
+								max => $statistics->{$covariate}{3}{'max'},
+								min => $statistics->{$covariate}{3}{'min'});
+
+				$nthetas++;
+				push (@factor_code,$blank.factor_string(parameter => $par,
+														covariate => 'H'.$covariate,
+														thetanumber => $nthetas,
+														mean => $statistics->{$covariate}{3}{'H-mean'},
+														sd => $statistics->{$covariate}{3}{'H-sd'}));
+
+				add_lasso_theta(model => $lasso_model,
+								parameter => $par,
+								covariate => 'H'.$covariate,
+								thetanumber => $nthetas,
+								mean => $statistics->{$covariate}{3}{'H-mean'},
+								sd => $statistics->{$covariate}{3}{'H-sd'},
+								max => ($statistics->{$covariate}{3}{'max'}-$statistics->{$covariate}{3}{'breakpoint'}),
+								min => 0);
 
 				##IF hockey-stick covariates
 				unless ($if_printed{$covariate}{3}){
-					my $cut_off =  $self->statistics->{$covariate}{3}{'breakpoint'};
-					push @zero_statements, $self->blank . "H".$covariate . " = 0\n";
-					push @if_statements, $self->blank . "IF ($covariate .GT. " . sprintf($self->dec_str,$cut_off) .
-					") H$covariate = $covariate" .sprintf($self->sign_dec_str,-$cut_off) ."\n";
+					my $cut_off =  $statistics->{$covariate}{3}{'breakpoint'};
+					push @zero_statements, $blank . "H".$covariate . " = 0\n";
+					push @if_statements, $blank . "IF ($covariate .GT. " . sprintf($dec_str,$cut_off) .
+						") H$covariate = $covariate" .sprintf($sign_dec_str,-$cut_off) ."\n";
 					$if_printed{$covariate}{3}=1;
 				}	
 
-				#boundaries and initial values and labels for hockey-stick
-				$lasso_model->initial_values(parameter_type => 'theta',
-					parameter_numbers => [[$nthetas-1]],
-					new_values =>[[$initial_value]],
-					add_if_absent => 1);
-				$lasso_model->initial_values(parameter_type => 'theta',
-					parameter_numbers => [[$nthetas]],
-					new_values =>[[$initial_value]],
-					add_if_absent => 1);
-
-				$upper_val=sprintf($self->dec_str,-1/(($self->statistics->{$covariate}{3}{'min'}
-							- $self->statistics->{$covariate}{3}{'mean'}) / 
-						$self->statistics->{$covariate}{3}{'sd'}));
-				$lower_val=sprintf($self->dec_str,-1/(($self->statistics->{$covariate}{3}{'max'}
-							-  $self->statistics->{$covariate}{3}{'mean'}) / 
-						$self->statistics->{$covariate}{3}{'sd'}));
-
-				$lasso_model -> lower_bounds(parameter_type =>  'theta',
-					parameter_numbers =>[[$nthetas-1]],
-					new_values => [[$lower_val]] );
-				$lasso_model -> upper_bounds(parameter_type =>  'theta',
-					parameter_numbers =>[[$nthetas-1]],
-					new_values => [[$upper_val]] );
-
-				$upper_val=sprintf($self->dec_str,-1/((-$self->statistics->{$covariate}{3}{'H-mean'}) /
-						$self->statistics->{$covariate}{3}{'H-sd'}));
-				$lower_val=sprintf($self->dec_str,-1/((($self->statistics->{$covariate}{3}{'max'}
-								-  $self->statistics->{$covariate}{3}{'breakpoint'})
-							-  $self->statistics->{$covariate}{3}{'H-mean'}) /
-						$self->statistics->{$covariate}{3}{'H-sd'}));
-
-				$lasso_model -> lower_bounds(parameter_type =>  'theta',
-					parameter_numbers =>[[$nthetas]],
-					new_values => [[$lower_val]] );
-				$lasso_model -> upper_bounds(parameter_type =>  'theta',
-					parameter_numbers =>[[$nthetas]],
-					new_values => [[$upper_val]] );
-
-				$lasso_model -> labels( parameter_type     => 'theta',
-					parameter_numbers => [[$nthetas-1]],
-					new_values        => [['TH'.($nthetas-1)." $par$covariate"]] );
-
-				$lasso_model -> labels( parameter_type     => 'theta',
-					parameter_numbers => [[$nthetas]],
-					new_values     => [['TH'.($nthetas)." $par"."H$covariate"]] );
-
-
 			}elsif ($parameter_covariate_form{$par}{$covariate} == 1){
-				my $most_common_key = $self -> statistics->{$covariate}{1}{'most_common'};
+				my $most_common_key = $statistics->{$covariate}{1}{'most_common'};
 				my $first_cat = 1;
-				foreach my $fact (sort {$a<=>$b} keys %{$self -> statistics->{$covariate}{1}{'cat_hash'}}) {
-					my %mean = %{$self -> statistics->{$covariate}{1}{'mean'}};
-					my %sd = %{$self -> statistics->{$covariate}{1}{'sd'}};
-					if (($fact ne $most_common_key) and 
-						($fact ne $self->missing_data_token)){
-
-						if ($PsN::nm_major_version < 7 and length($par.$covariate.$fact)>6){
-							my $shorten = (length($covariate)>= length($par))? $covariate : $par;
-							croak("Lasso parameter name ".$par.$covariate.$fact.' is '.
-								"longer than 6 characters, not allowed by NONMEM".$PsN::nm_major_version.
-								". Shorten the name for $shorten or use NONMEM7.");
-						}
-						#COV code for the categorical
+				foreach my $fact (sort {$a<=>$b} keys %{$statistics->{$covariate}{1}{'cat_hash'}}) {
+					my %mean = %{$statistics->{$covariate}{1}{'mean'}};
+					my %sd = %{$statistics->{$covariate}{1}{'sd'}};
+					if (($fact ne $most_common_key) and ($fact ne $missing_data_token)){
+						check_name(parameter => $par,covariate=>$covariate,version => $PsN::nm_major_version, factor => $fact);
 						$tmpstr .= '*' unless $first_cat;
 						$first_cat = 0;
 						$tmpstr = $tmpstr . "(".$par.$covariate.$fact . "+1)";
-						#FACTOR code for the categorical
-						$tmpfactor = $par.$covariate.$fact. " = THETA(" .++$nthetas .
-						")*($covariate$fact" . 	sprintf($self->sign_dec_str,-$mean{$fact}) .
-						")/" . sprintf($self->dec_str,$sd{$fact}) . "*FACTOR";
-						push @factor_code, @{$self->parse_row(parse_str => $self->blank . $tmpfactor,
-						parse_operator =>"*",
-						max_length => $self->row_length)};
-						# IF statements
+						$nthetas++;
+						push (@factor_code,$blank.factor_string(parameter => $par,
+																covariate => $covariate.$fact,
+																thetanumber => $nthetas,
+																mean => $mean{$fact},
+																sd => $sd{$fact}));
 						unless ($if_printed{$covariate}{1}){
-							push @zero_statements, $self->blank . $covariate.$fact ." = 0\n";
-							push @if_statements, $self->blank . "IF ($covariate .EQ. $fact) $covariate$fact=1\n";
+							push @zero_statements, $blank . $covariate.$fact ." = 0\n";
+							push @if_statements, $blank . "IF ($covariate .EQ. $fact) $covariate$fact=1\n";
 						}
+							  
+						add_lasso_theta(model => $lasso_model,
+										parameter => $par,
+										covariate => $covariate.$fact,
+										thetanumber => $nthetas,
+										mean => $mean{$fact},
+										sd => $sd{$fact},
+										max => 1,
+										min => 0);
 
-						#boundaries and initial values and labels for categorical
-						$lasso_model->initial_values(parameter_type => 'theta',
-							parameter_numbers => [[$nthetas]],
-							new_values =>[[$initial_value]],
-							add_if_absent => 1);
-
-						$upper_val=sprintf($self->dec_str,-1/((0-$mean{$fact})/$sd{$fact}));
-						$lower_val=sprintf($self->dec_str,-1/((1-$mean{$fact})/$sd{$fact}));
-
-						$lasso_model -> lower_bounds(parameter_type =>  'theta',
-							parameter_numbers =>[[$nthetas]],
-							new_values => [[$lower_val]] );
-						$lasso_model -> upper_bounds(parameter_type =>  'theta',
-							parameter_numbers =>[[$nthetas]],
-							new_values => [[$upper_val]] );
-						$lasso_model -> labels( parameter_type     => 'theta',
-							parameter_numbers => [[$nthetas]],
-							new_values        => [['TH'.($nthetas)." $par$covariate$fact"]] );
 					}
 				}
 				$if_printed{$covariate}{1}=1;
 			}
 		}
-		unshift @new_code, @{$self->parse_row(parse_str => $self->blank . $tmpstr,
-		parse_operator =>"*",
-		max_length => $self->row_length)};
+		unshift @new_code, @{parse_row(parse_str => $blank . $tmpstr,
+									   parse_operator =>"*",
+									   max_length => $row_length)};
 	}
 	unshift @new_code, "\n";
 	unshift @new_code, @factor_code;
@@ -428,39 +465,33 @@ sub setup_lasso_model
 	unshift @new_code, "\n";
 
 	#add FACTOR
-	unshift @new_code, $self->blank . "FACTOR = EXP(1-RATIO)\n";
-	unshift @new_code, $self->blank . "IF (RATIO .GT. 5) EXIT 1 1\n";
-	unshift @new_code, $self->blank . "RATIO = ABSSUM/TVALUE\n";
+	unshift @new_code, $blank . "FACTOR = EXP(1-RATIO)\n";
+	unshift @new_code, $blank . "IF (RATIO .GT. 5) EXIT 1 1\n";
+	unshift @new_code, $blank . "RATIO = ABSSUM/TVALUE\n";
 	unshift @new_code, "\n";
 
-	$tmpstr = "ABSSUM = ";
-	my $first = 1;
-	my $i;
-	for ($i=$old_thetas+1; $i<=$nthetas; $i++){
-		if ($first) {
-			$tmpstr = $tmpstr . "ABS(THETA($i))";
-			$first=0;
-		} else {
-			$tmpstr = $tmpstr . "+ABS(THETA($i))";
-		}
-	}
-	unshift @new_code, @{$self->parse_row(parse_str => $self->blank . $tmpstr,
-	parse_operator => "+",
-	max_length => $self->row_length)};
-	## Set the initial t-value and make it a fixed variable
-	unshift @new_code, $self->blank . "TVALUE  = THETA(".++$nthetas.")\n";
-	$lasso_model->initial_values(parameter_type => 'theta',
-		parameter_numbers => [[$nthetas]],
-		new_values =>[[$t_value]],
-		add_if_absent => 1);
-	$lasso_model -> fixed(parameter_type => 'theta',
-		parameter_numbers => [[$nthetas]],
-		new_values => [[1]] );
-	$lasso_model -> labels( parameter_type     => 'theta',
-		parameter_numbers => [[$nthetas]],
-		new_values        => [['TH'.($nthetas)." T-VALUE"]] );
+	$tmpstr = get_abssum(old_thetas => $old_thetas,nthetas => $nthetas,adaptive => $adaptive);
 
-	unshift @new_code, $self->blank . "\n;;; LASSO-BEGIN\n";
+	unshift @new_code, @{parse_row(parse_str => $blank . $tmpstr,
+								   parse_operator => "+",
+								   max_length => $row_length)};
+	## Set the initial t-value and make it a fixed variable
+
+	$nthetas++;
+	
+	unshift @new_code, $blank . "TVALUE  = THETA(".$nthetas.")\n";
+	$lasso_model->initial_values(parameter_type => 'theta',
+								 parameter_numbers => [[$nthetas]],
+								 new_values =>[[$t_value]],
+								 add_if_absent => 1);
+	$lasso_model -> fixed(parameter_type => 'theta',
+						  parameter_numbers => [[$nthetas]],
+						  new_values => [[1]] );
+	$lasso_model -> labels( parameter_type     => 'theta',
+							parameter_numbers => [[$nthetas]],
+							new_values        => [['TH'.($nthetas)." T-VALUE"]] );
+
+	unshift @new_code, $blank . "\n;;; LASSO-BEGIN\n";
 
 	## Add the multiplication of the Typical Values with the 
 	#covariate for all params.
@@ -472,15 +503,15 @@ sub setup_lasso_model
 			#want to find last occurrence of TVpar set
 			if ( /[^A-Z0-9_]*TV(\w+)\s*=\s*/ and $1 eq $parameter){
 				#add new definition line after last occurence
-				$_ = $_."\n".$self->blank.
-				"TV$parameter = TV$parameter"."*$parameter"."COV\n";
+				$_ = $_."\n".$blank.
+					"TV$parameter = TV$parameter"."*$parameter"."COV\n";
 				$success = 1;
 				last; #only change the last line where appears
 			}
 		}
 		unless ( $success ) {
 			croak("Could not determine a good place to add the covariate relation.\n".
-				" i.e. No TV$parameter was found\n" );
+				  " i.e. No TV$parameter was found\n" );
 		}
 	}
 
@@ -489,11 +520,12 @@ sub setup_lasso_model
 
 	## Set the new code to the new model
 
-	if ($self->use_pred) {
+	if ($use_pred) {
 		$lasso_model->set_code(record => 'pred', code => \@new_code);
 	} else {
 		$lasso_model->set_code(record => 'pk', code => \@new_code);
 	}
+	return $use_pred;
 }
 
 sub xv_step_init
@@ -800,28 +832,20 @@ sub general_setup
 	my $subm_threads = $parm{'subm_threads'};
 }
 
-sub modelfit_setup
+sub parse_relations
 {
-	my $self = shift;
+	#have unit test
 	my %parm = validated_hash(\@_,
-		model_number => { isa => 'Int', optional => 1 }
+							  relations => { isa => 'Str', optional => 0 },
 	);
-	my $model_number = $parm{'model_number'};
-
-	ui -> print( category => 'lasso',
-		message  => "Parsing relations and calculating covariate statistics" );
-	#parse and store relations
-	my @sets = split( ',,' , $self->relations() );
+	my $relations = $parm{'relations'};
 	#a hash {parameter}{covariate}{form}
 	my %parameter_covariate_form;
 
-	# Assume one $PROBLEM one model
-	my $model = $self -> models -> [0];
-	my $dataobj = data->new(filename => $model->datafiles(absolute_path=>1)->[0],
-							idcolumn => $model->idcolumn,
-							missing_data_token => $self->missing_data_token,
-							ignoresign => $model->ignoresigns->[0]);
-
+	my @sets = split( ',,' , $relations);
+	#example relations
+	#CL:WGT-2,SEX-1,RACE-1,,V:WGT-3-45.2,,KA:WGT-3,APGR-2
+	my %breakpoints;
 	foreach my $set (@sets){
 		my @parlist = split (':',$set);
 		croak("Error parsing relations: expected exactly one : in $set but found ".
@@ -835,46 +859,104 @@ sub modelfit_setup
 			my @pair = split ('-',$covform);
 			my $breakpoint;
 			if (scalar(@pair)==3){
-				croak("Can only specify breakpoint (number after second dash) if ".
-					  "parameterization is 3, but found $covform ".
-					  "where parameterization is ".$pair[1])	unless ($pair[1] eq '3');
+				unless ($pair[1] eq '3'){
+					croak("Can only specify breakpoint (number after second dash) if ".
+						  "parameterization is 3, but found $covform ".
+						  "where parameterization is ".$pair[1])	;
+				}
 				$breakpoint = $pair[2];
 			}else{
-				croak("Error parsing relations: expected exactly one - in $covform but found ".
-					  (scalar(@pair)-1))	unless (scalar(@pair)==2);
+				unless (scalar(@pair)==2){
+					croak("Error parsing relations: expected exactly one - in $covform but found ".
+						  (scalar(@pair)-1))	;
+				}
 			}
 			my $covariate=$pair[0];
 			my $function=$pair[1];
 
-			my $column_number;
-			# Check normal data object first
-			my ( $values_ref, $positions_ref ) = $model ->
-				_get_option_val_pos ( problem_numbers => [1], 
-									  name        => $covariate,
-									  record_name => 'input',
-									  global_position => 1  );
-			$column_number = $positions_ref -> [0];
-
-			croak("Cannot find $covariate in \$INPUT" )	unless ( defined $column_number );
-			#check if $covariate in data is done when computing statistics
-			#check if $function 1-5
-			croak("Error parsing relations: ".
-				  "parameterization in $covform must be in the set [1,2,3]")
-				unless ($function =~ /^(1|2|3)$/);
-
-			unless (defined $self -> statistics->{$covariate}{$function}){
-				$self -> statistics->{$covariate}{$function} =
-					$dataobj -> lasso_calculate_covariate_statistics
-					( 	missing_data_token =>$self->missing_data_token,
-						column_number => $column_number,
-						function => $function,
-						breakpoint => $breakpoint);
+			unless ($function =~ /^(1|2|3)$/){
+				croak("Error parsing relations: parameterization in $covform must be in the set [1,2,3]");
+			}
+			if (defined $parameter_covariate_form{$parameter}{$covariate}){
+				croak("Error parsing relations: Multiple definitions of relation $parameter:$covariate");
 			}
 			$parameter_covariate_form{$parameter}{$covariate}=$function;
-
+			$breakpoints{$parameter.':'.$covariate}=$breakpoint;
 		}
-
 	}
+
+	return (\%parameter_covariate_form,\%breakpoints);
+
+}
+sub setup_covariates
+{
+	my %parm = validated_hash(\@_,
+							  relations => { isa => 'Str', optional => 0 },
+							  data => { isa => 'data', optional => 0 },
+							  model => { isa => 'model', optional => 0 },
+	);
+	my $relations = $parm{'relations'};
+	my $data = $parm{'data'};
+	my $model = $parm{'model'};
+
+	#a hash {parameter}{covariate}{form}
+	my ($parameter_covariate_form,$breakpoints)=parse_relations(relations => $relations);
+	my $statistics = {}; #hashref
+
+	foreach my $parameter (keys %{$parameter_covariate_form}){
+		foreach my $covariate (keys %{$parameter_covariate_form->{$parameter}}){
+			my $column_number;
+			my ( $values_ref, $positions_ref ) = $model ->_get_option_val_pos ( problem_numbers => [1], 
+																				name        => $covariate,
+																				record_name => 'input',
+																				global_position => 1  );
+			$column_number = $positions_ref -> [0];
+			croak("Cannot find $covariate in \$INPUT" )	unless ( defined $column_number );
+
+			my $function = $parameter_covariate_form->{$parameter}->{$covariate};
+			my $breakpoint;
+			if ($function == 3){
+				$breakpoint = $breakpoints->{$parameter.':'.$covariate}; #can be undef, allowed
+			}
+			unless (defined $statistics->{$covariate}{$function}){
+				#unless already computed this statistic
+				$statistics->{$covariate}{$function} = 	$data -> lasso_calculate_covariate_statistics( 	
+					missing_data_token =>$data->missing_data_token,
+					column_number => $column_number,
+					function => $function,
+					breakpoint => $breakpoint);
+			}
+		}
+	}
+
+	return ($parameter_covariate_form,$statistics);
+}
+
+sub modelfit_setup
+{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+		model_number => { isa => 'Int', optional => 1 }
+	);
+	my $model_number = $parm{'model_number'};
+
+	# Assume one $PROBLEM one model
+	my $model = $self -> models -> [0];
+	my $dataobj = data->new(filename => $model->datafiles(absolute_path=>1)->[0],
+							idcolumn => $model->idcolumn,
+							missing_data_token => $self->missing_data_token,
+							ignoresign => $model->ignoresigns->[0]);
+
+	ui -> print( category => 'lasso',
+		message  => "Parsing relations and calculating covariate statistics" );
+
+	my ($ref1,$ref2) = setup_covariates(relations => $self->relations,
+										data => $dataobj,
+										model => $model);
+
+	#a hash {parameter}{covariate}{form}
+	my %parameter_covariate_form = %{$ref1};
+	$self->statistics($ref2);
 
 	$dataobj = undef;
 	ui -> print( category => 'lasso',
@@ -910,8 +992,12 @@ sub modelfit_setup
 								  copy_output => 0,
 								  write_copy => 0);
 	
-	$self->setup_lasso_model(lasso_model => $lasso_model,
-		parameter_covariate_form => \%parameter_covariate_form);
+	my $usepred = setup_lasso_model(lasso_model => $lasso_model,
+									parameter_covariate_form => \%parameter_covariate_form,
+									t_value => $self->start_t,
+									statistics => $self->statistics,
+									missing_data_token => $self->missing_data_token);
+	$self->use_pred($usepred);
 	$lasso_model->_write();
 	my $added_thetas = ($lasso_model->nthetas()-$basic_model->nthetas());
 
@@ -1263,7 +1349,7 @@ sub modelfit_setup
 	my @new_code;
 	push @new_code, "\n";
 	foreach my $par (keys %parameter_covariate_form){
-		push @new_code, $self->blank . $par . "COV=1\n";
+		push @new_code, $blank . $par . "COV=1\n";
 	}
 
 	my $nthetas = $basic_model ->nthetas();
@@ -1277,10 +1363,10 @@ sub modelfit_setup
 
 				my $name = $par."$covariate";
 				if (defined $keep_parameters{$name}){
-					my $mean = $self -> statistics->{$covariate}{2}{'mean'};
+					my $mean = $self->statistics->{$covariate}{2}{'mean'};
 					my @tmp = split(' ',$keep_parameters{$name});
-					push @new_code, $self->blank . "$name = THETA(". $tmp[4] .")*(".$covariate .
-					sprintf($self->sign_dec_str,-$mean). ")\n";
+					push @new_code, $blank . "$name = THETA(". $tmp[4] .")*(".$covariate .
+					sprintf($sign_dec_str,-$mean). ")\n";
 					if (defined $selected_cont{$par}){ 
 						$selected_cont{$par} = $selected_cont{$par}. " ". $name;
 					}else { 
@@ -1296,12 +1382,12 @@ sub modelfit_setup
 					my @tmp = split(' ',$keep_parameters{$hname});
 					#only if statement if parHcov is in keep_parameters
 					unless ($if_printed{'H'.$covariate}){
-						push @new_code, $self->blank . "H".$covariate . " = 0\n";
-						push @new_code, $self->blank . "IF ($covariate .GT. " . sprintf($self->dec_str,$break) .
-						") H$covariate = $covariate" .sprintf($self->sign_dec_str,-$break) ."\n";
+						push @new_code, $blank . "H".$covariate . " = 0\n";
+						push @new_code, $blank . "IF ($covariate .GT. " . sprintf($dec_str,$break) .
+						") H$covariate = $covariate" .sprintf($sign_dec_str,-$break) ."\n";
 						$if_printed{'H'.$covariate}=1;
 					}
-					push @new_code, $self->blank . "$hname = THETA(". $tmp[4] .")*(H$covariate)\n";
+					push @new_code, $blank . "$hname = THETA(". $tmp[4] .")*(H$covariate)\n";
 					if (defined $selected_cont{$par}){ 
 						$selected_cont{$par} = $selected_cont{$par}. " ". $hname;
 					}else { 
@@ -1311,8 +1397,8 @@ sub modelfit_setup
 				}
 				if (defined $keep_parameters{$name}){
 					my @tmp = split(' ',$keep_parameters{$name});
-					push @new_code, $self->blank . "$name = THETA(". $tmp[4] .
-					")*($covariate".sprintf($self->sign_dec_str,-$break).")\n";
+					push @new_code, $blank . "$name = THETA(". $tmp[4] .
+					")*($covariate".sprintf($sign_dec_str,-$break).")\n";
 					if (defined $selected_cont{$par}){ 
 						$selected_cont{$par} = $selected_cont{$par}. " ". $name;
 					}else { 
@@ -1328,7 +1414,7 @@ sub modelfit_setup
 					my $name = $par.$covariate.$fact;
 					if (defined $keep_parameters{$name}){
 						my @tmp = split(' ',$keep_parameters{$name});
-						push @new_code,$self->blank ."IF (".$covariate." .EQ. $fact) ".$par."COV=".$par."COV*(1+THETA(".$tmp[4]."))\n";
+						push @new_code,$blank ."IF (".$covariate." .EQ. $fact) ".$par."COV=".$par."COV*(1+THETA(".$tmp[4]."))\n";
 					}
 				}
 			}
@@ -1341,9 +1427,9 @@ sub modelfit_setup
 		foreach my $t (@tmp) {
 			$str = $str . "*($t+1)";
 		}
-		push @new_code,@{$self->parse_row(parse_str => $self->blank . $str,
-		parse_operator =>"*",
-		max_length => $self->row_length)};
+		push @new_code,@{parse_row(parse_str => $blank . $str,
+								   parse_operator =>"*",
+								   max_length => $row_length)};
 
 
 	}
