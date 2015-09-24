@@ -56,7 +56,7 @@ Changes and bug fixes from PsN 4.4.8 to n.n.n
    ___General___
 
 - The option -degree used for tweak_inits can now take degrees greater than 1.
-
+- Faster -help, -h, -version and some option error checking.
 - Bug fix: Detection of non-unique parameter labels when reading a raw results file.
 
    ___mcmp___
@@ -118,6 +118,11 @@ Changes and bug fixes from PsN 4.4.8 to n.n.n
 
 
    ___runrecord___
+
+
+   ___benchmark___
+
+- New tool
 
    ___psn___
 
