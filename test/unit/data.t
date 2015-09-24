@@ -215,25 +215,28 @@ cmp_float($statistics->{'sd'}{1},sqrt((4/81+1/81+1/81)/2),"lasso_get_categorical
 
 
 # mean
-is ($data->mean(column => 3),5, "data->mean of small data set column 1");
-is ($data->mean(column => 3, global_mean => 1 ),6.9, "global data->mean of small data set column 1");
-is ($data->mean(column => 4),5.5, "data->mean of small data set column 2");
-is ($data->mean(column => 4,global_mean=> 1),eval(23/5), "global data->mean of small data set column 2");
+is ($data->mean(column => 3), 5, "data->mean of small data set column 1");
+is ($data->mean(column => 3, global_mean => 1 ), 6.9, "global data->mean of small data set column 1");
+is ($data->mean(column => 4), 5.5, "data->mean of small data set column 2");
+is ($data->mean(column => 4,global_mean=> 1), eval(23/5), "global data->mean of small data set column 2");
 dies_ok { $data->mean(column => 5) } "data->mean for non existing column";
-is ($data->mean(column_head => 'TEST'),5.5, "data->mean with column name");
-#is ($data->mean(column => 2, hi_cutoff => 10), 0, "data->mean with hi_cutoff");
+is ($data->mean(column_head => 'TEST'), 5.5, "data->mean with column name");
+is ($data->mean(column => 3, hi_cutoff => 4), 2, "data->mean with hi_cutoff");
+is ($data->mean(column => 4, hi_cutoff => 4), 1.75, "data->mean with hi_cutoff");
 
 #sd
 my $sd = (((2-5)**2+(10-5)**2+(3-5)**2)/2)**0.5;
-is ($data->sd(column => 3),$sd, "data->sd of small data set column 1");
+is ($data->sd(column => 3), $sd, "data->sd of small data set column 1");
 $sd = (((1-6.9)**2+(2-6.9)**2+(3-6.9)**2+((10-6.9)**2)*6+(3-6.9)**2)/9)**0.5;
-is ($data->sd(column => 3, global_sd => 1),$sd, "data->sd of small data set column 1");
+is ($data->sd(column => 3, global_sd => 1), $sd, "data->sd of small data set column 1");
+cmp_float ($data->sd(column => 3, hi_cutoff => 4), 3.4641016151378, "data->sd with hi_cutoff");
+cmp_float ($data->sd(column => 4, hi_cutoff => 4), 1.25, "data->sd with hi_cutoff");
 
 #min
 is ($data->min(column => 3), 1, "data->min of small data set column 1");
 is ($data->min(column => 4), 3, "data->min of small data set column 2");
 dies_ok { $data->min(column => 8) } "data->min for non existing column";
-is ($data->min(column_head => 'TEST'),3, "data->min with column name");
+is ($data->min(column_head => 'TEST'), 3, "data->min with column name");
 
 #max
 is ($data->max(column => 3), 10, "data->max of small data set column 1");
