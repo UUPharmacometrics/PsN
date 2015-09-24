@@ -2606,58 +2606,10 @@ sub lasso_calculate_covariate_statistics
 	my $missing_data_token = $parm{'missing_data_token'};
 	my %statistics;
 
-	my $have_missing_data = $self->have_missing_data(column => $column_number);
-
-    #check 'Non-unique values found' => 1
-	my $n_individuals = $self->count_ind();
 	if ($function == 1){
 		#linear categorical
-		# Sort by frequency
-		my %temp_factors = %{$self->lasso_get_categories(column_number => $column_number)};
-		#here we may have floating point categories. Redefine to integer
-		my $all_integer=1;
-		foreach my $fact (keys %temp_factors){
-			my $tmp = sprintf("%.0f",$fact);
-			$all_integer = 0 unless ($tmp == $fact);
-		}
-		my %factors;
-		if ($all_integer){
-			foreach my $fact (keys %temp_factors){
-				my $tmp = sprintf("%.0f",$fact);
-				$factors{$tmp}=$temp_factors{$fact};
-			}
-		}else{
-			croak("the lasso can currently not handle non-integer categorical values for covariates. ".
-				"You need to change your dataset so that all categorical covariates only have integer values.");
-		}
-		$statistics{'cat_hash'} = \%factors;
-		#sort most first
-		my @sorted = sort {$factors{$b}<=>$factors{$a}} keys (%factors);
-		if ($sorted[0] ne $missing_data_token or (scalar (@sorted)==1 )){
-			$statistics{'most_common'} = $sorted[0]; # First element of the sorted array
-			# (the factor that most subjects have)
-		}else{
-			$statistics{'most_common'} = $sorted[1];
-		} 
-		foreach my $fact (@sorted){
-			next if ($fact eq $statistics{'most_common'});
-			#mean is number of subjects with this factor divided by N ind
-			$statistics{'mean'}{$fact} = $factors{$fact}/$n_individuals;
-			my $sd_sum = 0;
-			foreach my $individual ( @{$self -> individuals} ){
-				my $ifactors = $individual -> subject_data;
-				my $value = 0;
-				for(my $i=0; $i<=$#{$ifactors}; $i++ ){
-					my @recor = split(',', $ifactors -> [$i], $column_number+1);
-					my $type = $recor[$column_number-1];
-					if ($type eq $fact){
-						$value+=1/($#{$ifactors}+1);
-					}
-				}
-				$sd_sum+=($value-$statistics{'mean'}{$fact})**2;
-			}
-			$statistics{'sd'}{$fact}=sqrt($sd_sum/($n_individuals-1));
-		}
+		return lasso_get_categorical_statistics(column_number => $column_number,
+												missing_data_token => $missing_data_token);
 
 	}elsif ($function == 3){
 		#max and min ignores missing data
@@ -2688,39 +2640,104 @@ sub lasso_calculate_covariate_statistics
 	return \%statistics;
 }
 
-sub lasso_get_categories
+sub lasso_get_categorical_statistics
 {
+	#unit tests in data.t
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		column_number => { isa => 'Int', optional => 0 }
-	);
+							  column_number => { isa => 'Int', optional => 0 },
+							  missing_data_token => { isa => 'Maybe[Num]', optional => 0 }
+		);
 	my $column_number = $parm{'column_number'};
-	my %categories;
+	my $missing_data_token = $parm{'missing_data_token'};
+
+	my %statistics;
+
+	my %sums;
+	my %factors;
 
 	my @individuals = @{$self->individuals};
 	my $first_id = $individuals[0];
 	croak("data -> factor: No individuals defined in data object based on ",
 		  $self->filename,"\n") unless defined $first_id;
 
-	my $type;
-
+	my $n_ind = scalar(@individuals);
+	my @individual_sums =();
+	
 	foreach my $individual ( @individuals ) {
 		my $ifactors = $individual -> subject_data;
-
-		for(my $i=0; $i<=$#{$ifactors}; $i++ ) {
+		my $count = scalar(@{$ifactors});
+		push(@individual_sums,{});
+		my $weight=1;
+		if ($count > 0){
+			$weight = 1/$count;
+		}
+		for(my $i=0; $i< $count; $i++ ) {
 			my @recor = split(',', $ifactors -> [$i], $column_number+1);
-			$type = $recor[$column_number-1];
-			#Weight the individual data
-			my $value = 1/($#{$ifactors}+1);
-			if (exists $categories{$type}){
-				$categories{$type}+=$value;
+			my $type = $recor[$column_number-1];
+			if (exists $sums{$type}){
+				$sums{$type}+=$weight;
 			} else {
-				$categories{$type}=$value;
+				$sums{$type}=$weight;
+			}
+			if (exists $individual_sums[-1]->{$type}){
+				$individual_sums[-1]->{$type}+=$weight;
+			} else {
+				$individual_sums[-1]->{$type}=$weight;
 			}
 		}
 	}
 
-	return \%categories;
+	#here we may have floating point categories. Redefine to integer
+	my $all_integer=1;
+	foreach my $fact (keys %sums){
+		my $tmp = sprintf("%.0f",$fact);
+		$all_integer = 0 unless ($tmp == $fact);
+	}
+	unless ($all_integer){
+		croak("the lasso can currently not handle non-integer categorical values for covariates. ".
+			  "You need to change your dataset so that all categorical covariates only have integer values.");
+	}
+
+	my %oldkeys;
+	foreach my $fact (keys %sums){
+		my $integerkey = sprintf("%.0f",$fact);
+		$oldkeys{$integerkey}=$fact;
+		$factors{$integerkey}=$sums{$fact};
+	}
+	
+	$statistics{'cat_hash'} = \%factors;
+
+	#sort most first
+	my @sorted = sort {$factors{$b}<=>$factors{$a}} keys (%factors);
+	if ($sorted[0] ne $missing_data_token or (scalar (@sorted)==1 )){
+		$statistics{'most_common'} = $sorted[0]; # First element of the sorted array
+		# (the factor that most subjects have)
+	}else{
+		$statistics{'most_common'} = $sorted[1];
+	} 
+
+	my %sd_sums;
+	foreach my $factor (keys %factors){
+		$statistics{'mean'}{$factor} = $factors{$factor}/$n_ind;
+		$sd_sums{$factor} = 0;
+	}
+
+	for (my $ind=0; $ind<scalar(@individual_sums); $ind++){
+		foreach my $factor (keys %factors){
+			my $type = $oldkeys{$factor};
+			if (exists $individual_sums[$ind]->{$type}){
+				$sd_sums{$factor} += ($individual_sums[$ind]->{$type}-$statistics{'mean'}{$factor})**2;
+			}else{
+				$sd_sums{$factor} += (0-$statistics{'mean'}{$factor})**2;
+			}
+		}
+	}
+	foreach my $factor (keys %factors){
+		$statistics{'sd'}{$factor} = sqrt($sd_sums{$factor}/($n_ind-1));
+	}
+
+	return \%statistics;
 }
 
 sub scm_calculate_covariate_statistics

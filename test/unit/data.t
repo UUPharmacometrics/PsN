@@ -177,6 +177,43 @@ my $data = data->new(filename => $filename,
 					 ignoresign => '@', 
 					 parse_header => 1);
 
+my $statistics = $data->lasso_get_categorical_statistics(column_number => 4,
+														 missing_data_token => '-99');
+
+is($statistics->{'most_common'},7,"lasso_get_categorical_statistics most common");
+cmp_float($statistics->{'cat_hash'}{-99},4/3,"lasso_get_categorical_statistics sum -99");
+cmp_float($statistics->{'cat_hash'}{5},1/3,"lasso_get_categorical_statistics sum 5");
+cmp_float($statistics->{'cat_hash'}{3},1/3,"lasso_get_categorical_statistics sum 3");
+cmp_float($statistics->{'cat_hash'}{7},1,"lasso_get_categorical_statistics sum 7");
+cmp_float($statistics->{'mean'}{-99},4/9,"lasso_get_categorical_statistics mean -99");
+cmp_float($statistics->{'mean'}{5},1/9,"lasso_get_categorical_statistics mean 5");
+cmp_float($statistics->{'mean'}{3},1/9,"lasso_get_categorical_statistics mean 3");
+cmp_float($statistics->{'mean'}{7},1/3,"lasso_get_categorical_statistics mean 7");
+cmp_float($statistics->{'sd'}{-99},sqrt((25/81+1/81+16/81)/2),"lasso_get_categorical_statistics sd -99");
+cmp_float($statistics->{'sd'}{5},sqrt((1/81+4/81+1/81)/2) ,"lasso_get_categorical_statistics sd 5");
+cmp_float($statistics->{'sd'}{3},sqrt((1/81+4/81+1/81)/2),"lasso_get_categorical_statistics sd 3");
+cmp_float($statistics->{'sd'}{7},sqrt((1/9+1/9+4/9)/2),"lasso_get_categorical_statistics sd 7");
+
+$statistics = $data->lasso_get_categorical_statistics(column_number => 3,
+														 missing_data_token => '-99');
+
+is($statistics->{'most_common'},3,"lasso_get_categorical_statistics most common");
+cmp_float($statistics->{'cat_hash'}{10},1,"lasso_get_categorical_statistics sum 10");
+cmp_float($statistics->{'cat_hash'}{3},4/3,"lasso_get_categorical_statistics sum 3");
+cmp_float($statistics->{'cat_hash'}{2},1/3,"lasso_get_categorical_statistics sum 2");
+cmp_float($statistics->{'cat_hash'}{1},1/3,"lasso_get_categorical_statistics sum 1");
+cmp_float($statistics->{'mean'}{10},1/3,"lasso_get_categorical_statistics mean 10");
+cmp_float($statistics->{'mean'}{3},4/9,"lasso_get_categorical_statistics mean 3");
+cmp_float($statistics->{'mean'}{2},1/9,"lasso_get_categorical_statistics mean 2");
+cmp_float($statistics->{'mean'}{1},1/9,"lasso_get_categorical_statistics mean 1");
+cmp_float($statistics->{'sd'}{10},sqrt((1/9+1/9+4/9)/2),"lasso_get_categorical_statistics sd 10");
+cmp_float($statistics->{'sd'}{3},sqrt((1/81+16/81+25/81)/2) ,"lasso_get_categorical_statistics sd 3");
+cmp_float($statistics->{'sd'}{2},sqrt((4/81+1/81+1/81)/2),"lasso_get_categorical_statistics sd 2");
+cmp_float($statistics->{'sd'}{1},sqrt((4/81+1/81+1/81)/2),"lasso_get_categorical_statistics sd 1");
+
+
+
+
 # mean
 is ($data->mean(column => 3),5, "data->mean of small data set column 1");
 is ($data->mean(column => 3, global_mean => 1 ),6.9, "global data->mean of small data set column 1");
