@@ -210,6 +210,44 @@ If option pred\_ofv\_start\_t is given then go to step 6 (change t again), other
 \item Add the covariate relations and parameters from the optimal lasso model run (only relations with thetas larger than cutoff) to the input model, fix the selected covariate thetas as the lasso restriction has been removed and run the input model on the whole dataset.
 \end{enumerate}
 
+\section{Covariate relations}
+\subsection{Linear continuous covariate}
+The individual mean for a continuous covariate is calculated as
+\[\bar{x}_{j,ind} = \frac{1}{N_j} \sum_{i=1}^N x_{ji}
+\]
+where $N_j$ is the number of samples for individual j and $x_{ji}$ is the sample value $i$ for individual $j$. Missing values are ignored.
+
+The population mean of a continuous covariate is calculated as the mean of the individual means
+\[\bar{x}_{pop} = \frac{1}{M} \sum_{j=1}^M \bar{x}_{j,ind}
+\]
+where $M$ is the number of individuals. If an individual has all values missing it is ignored.
+
+The population standard deviation for a continuous covariate is calculated as the standard deviation of the individual means.
+\[sd_{pop} = \sqrt{\frac{1}{M-1} \sum_{j=1}^M(\bar{x}_{j,ind} - \bar{x}_{pop})^2}
+\]
+If an individual has all values missing are imputed as having the population mean.
+
+ 
+\subsection{Piece-wise linear covariates}
+Covariates that are set to be piece-wise linear will be added to the model in the same manner as the linear covariates together with an extra dummy covariate which is truncated below its breakpoint according to:
+\[   x_{ijk,dummy} = \left\{
+        \begin{array}{ll}
+            x_{ijk} - breakpoint & \textrm{if} \;  x_{ijk} > breakpoint \\
+            0 & \textrm{otherwise} \\
+        \end{array} 
+    \right. \]
+
+\subsection{The model}
+\begin{enumerate}
+    \item Calculate the absolute sum of the added thetas $\sum_{j=1}^N |\theta_j|$ 
+    \item Calculate the ratio between the absolute sum and the t-value $r = \frac{\sum{|\theta_j|}}{t}$
+    \item This ratio should be a positive value less than or equal to one according to the LASSO constraint $\sum{|\theta_i \le t|}$. This is accomplished by letting the variables be affected by a factor $f=e^{1-r}$.
+    \item The covariates are standardized to 0 mean and variance 1. This is done by subtracting the population mean and dividing by the population standard deviation.
+    \item The variables are added to the model as the standardized covariates multiplied with the factor $f$ and the corresponding theta. $v_k = \theta_k \cdot \frac{x_{ij} - \bar{x}_{pop}}{sd_{pop}} \cdot f$ where $k$ is the number of created variables and $f$ the factor defined above.
+    \item The typical values are estimated as $TV_a = TV_a \cdot \prod_{i=1}^N ( 1+v_a)$ where $N$ is the number of created variables for a specific parameter $a$ e.g. CL.
+\end{enumerate}
+
+
 
 \begin{thebibliography}{1}
 \bibitem{Ribbing} Jakob Ribbing, Joakim Nyberg, Ola Caster, E. Niclas Jonsson, {\em The lasso—a novel method for predictive covariate model building in nonlinear mixed effects models}, C. J Pharmacokinet Pharmacodyn (2007) 34:485–51
