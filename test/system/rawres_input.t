@@ -20,7 +20,7 @@ my $model_dir = $includes::testfiledir;
 
 my @commands = 
 	(
-	 get_command('sir') . " pheno.mod -rawres_input=raw_pheno_for_rawres_input.csv -samples=10 -offset_rawres=12 -auto_rawres=0.2 -seed=5000 -resamples=5 -dir=$dir",
+	 get_command('sir') . " pheno.mod -rawres_input=raw_pheno_for_rawres_input.csv -samples=10 -offset_rawres=12 -auto_rawres=0.2 -seed=2000 -resamples=5 -dir=$dir",
 	 get_command('sir') . " pheno.mod -rawres_input=raw_pheno_for_rawres_input.csv -samples=10 -offset_rawres=1 -resamples=5 -dir=$dir",
 	 get_command('parallel_retries') . " pheno.mod -dir=$dir -samples=2 -rawres_input=raw_pheno_for_rawres_input.csv -no-display",
 	 get_command('sse') . " pheno.mod -rawres_input=raw_pheno_for_rawres_input.csv -samples=5 -no-est -dir=$dir",
