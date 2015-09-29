@@ -1,4 +1,3 @@
-
 #############################################################################################################
 ### Diagnostics for SIR
 ### Author: AG Dosne
@@ -55,7 +54,8 @@ parnames            <- names(rawres)[COL.ESTIMATED.PARAMS]
 
 ### Create SIR specification file
 
-sir_spec           <- ddply(rawres,.(ITERATION),summarize,"NSAMP"=length(resamples),"NRESAMP"=sum(resamples)) # take only successful samples, can differ from ALL.SAMPLES
+summary_it         <- read.csv("summary_iterations.csv")
+sir_spec           <- data.frame("ITERATION"=summary_it$iteration,"NSAMP"=summary_it$successful.samples,"NRESAMP"=summary_it$actual.resamples) 
 msir_spec          <- melt(sir_spec,measure.vars=c("NSAMP","NRESAMP"))
 msir_spec$variable <- factor(msir_spec$variable,labels=c("m","M"),levels=c("NRESAMP","NSAMP"))  
 msir_spec$ITERATION<- factor(msir_spec$ITERATION,levels=seq(0,length(ALL.RESAMPLES)),labels=c("REF",seq(length(ALL.RESAMPLES)))) 
@@ -93,7 +93,7 @@ dOFV_all$ITERATION    <- factor(dOFV_all$ITERATION,levels=seq(0,length(ALL.RESAM
 # Calculate df for all distributions
 df_est                <- ddply(dOFV_all,.(ITERATION,DISTRIBUTION,TYPE), summarise, "df"=round(mean(dOFV),1))  # get df for eac hdistribution
 df_est$perc           <- seq(0.1,0.9,length.out=nrow(df_est))  
-df_est$order          <- rank(df_est$df)                                             # set x and y for plotting
+df_est$order          <- rank(df_est$df,ties.method="first")                                             # set x and y for plotting
 df_est2               <- ddply(dOFV_all,.(ITERATION,DISTRIBUTION), summarise, "perc_value"=quantile(dOFV,probs=df_est$perc,na.rm=TRUE),"perc"=df_est$perc)
 df_est                <- left_join(df_est,df_est2)  
 df_est$TYPE2          <- ifelse(df_est$DISTRIBUTION=="REF","",paste(df_est$TYPE))
@@ -106,14 +106,14 @@ ref_full$dOFV <- qchisq(ref_full$QUANT,df=ref_full$df)
 
 # Calculate resampling noise around SIR dOFV curves
 N    <- 2000        # number of times resampling will be done
-res  <- matrix(NA,ncol=4,nrow=N*sum(ALL.RESAMPLES),dimnames=list(NULL,c("ITERATION","NSAMP","NRESAMP","sample.id")))
+res  <- matrix(NA,ncol=4,nrow=N*sum(sir_spec$NRESAMP),dimnames=list(NULL,c("ITERATION","NSAMP","NRESAMP","sample.id")))
 for (i in seq(N)) { # need to resample in a loop to sample without replacement
     res.cur   <- ddply(rawres,.(ITERATION,NSAMP,NRESAMP),summarize,"sample.id"=sample(sample.id,unique(NRESAMP),prob=importance_ratio))
-    res[seq((i-1)*sum(ALL.RESAMPLES)+1,i*sum(ALL.RESAMPLES)),]       <- as.matrix(res.cur,ncol=5)
+    res[seq((i-1)*sum(sir_spec$NRESAMP)+1,i*sum(sir_spec$NRESAMP)),]       <- as.matrix(res.cur,ncol=5)
 }
 
 res              <- as.data.frame(res)
-res$NOISE        <- rep(seq(N),each=sum(ALL.RESAMPLES))
+res$NOISE        <- rep(seq(N),each=sum(sir_spec$NRESAMP))
 res              <- left_join(res,rawres[,c("sample.id","deltaofv","ITERATION")])
 dOFV_sir_noise   <- ddply(res,.(ITERATION,NOISE), summarize, "dOFV"=quantile(deltaofv,probs=QUANT,na.rm=TRUE), "QUANT"=QUANT)
 qdOFV_sir_noise  <- ddply(dOFV_sir_noise,.(ITERATION,QUANT), summarize, "PLOW"=quantile(dOFV,probs=0.025,na.rm=TRUE), "PHIGH"=quantile(dOFV,probs=0.975,na.rm=TRUE))
@@ -125,7 +125,7 @@ set.seed(123)
 LASTIT              <- length(ALL.RESAMPLES)                  # only plot this diagnostic for the last iteration
 N1                  <- 10                                     # number of bins for simulated parameters
 N2                  <- 5                                      # number of bins for resampled parameters
-resamp              <- ddply(rawres, .(ITERATION), summarize, "sample.id"=sample(sample.id,NRESAMP,prob=importance_ratio), "ORDER"=rep(seq(1,N2,1),each=unique(NRESAMP)/N2)) # need to resample because need to track order of sampling
+resamp              <- ddply(rawres, .(ITERATION), summarize, "sample.id"=sample(sample.id,NRESAMP,prob=importance_ratio), "ORDER"=sort(rep(seq(1,N2,1),length.out=unique(NRESAMP)))) # need to resample because need to track order of sampling
 resamp$resamples2   <- 1 
 paramCI_covbin      <- ddply(mrawres[,c("ITERATION","Parameter","value")], .(ITERATION,Parameter),summarise, "interval"=list(unname(quantile(value,probs=seq(1/N1,1-1/N1,by=1/N1),na.rm=TRUE)))) # create bins for all parameter values
 mrawres_bin         <- left_join(mrawres,paramCI_covbin)
@@ -178,12 +178,12 @@ colITER <- gg_color_hue(length(levels(dOFV_all$ITERATION)))     # default ggplot
 colITER <- c("darkgrey",colITER[-1])                            # replace the first by black for reference dOFV distribution
 
 qdOFV_all <- ggplot(dOFV_all,aes(x=QUANT,color=ITERATION)) + 
-  geom_ribbon(data=qdOFV_sir_noise,aes(group=ITERATION,ymin=PLOW,ymax=PHIGH),show_guide=FALSE,fill="lightgrey",color="lightgrey") +
+  geom_ribbon(data=qdOFV_sir_noise[qdOFV_sir_noise$ITERATION %in% c(LASTIT-1,LASTIT),],aes(group=ITERATION,ymin=PLOW,ymax=PHIGH,fill=ITERATION),show_guide=FALSE,alpha=0.3,color=NA) +
   geom_line(aes(y=dOFV,group=interaction(TYPE,ITERATION),linetype=TYPE),size=1) +
-  geom_line(data=filter(ref_full,TYPE=="SIR"),aes(y=dOFV,group=ITERATION),color="grey") +
   labs(x="Distribution quantiles") +
   scale_linetype_manual(name="Iteration step",drop=FALSE,values=c(2,1)) +
   scale_color_manual(name="Iteration number",drop=FALSE,values=colITER) +
+  scale_fill_manual(name="Iteration number",drop=FALSE,values=colITER) +
 #   geom_text(data=df_est, aes(x = perc,y=1.1*perc_value,label=df),show_guide=FALSE) +
   geom_text(data=df_est, aes(x = 0.7,y=order*qchisq(0.95,df=N.ESTIMATED.PARAMS)/(2*nrow(df_est)),label=paste(df," (",TYPE2,ITERATION,")",sep="")),show_guide=FALSE,hjust=0,size=5) +
   annotate("text",x = 0.7,y=(nrow(df_est)+1)*qchisq(0.95,df=N.ESTIMATED.PARAMS)/(2*nrow(df_est)),label="Estimated df",hjust=0,fontface="italic",size=5) +
@@ -229,7 +229,7 @@ mM_ratio.cur <- ggplot(filter(mrawres_bin_ratio,ITERATION==i),aes(x=BIN,y=mM)) +
   geom_hline(aes(yintercept=0),linetype=1,color="white") + 
   facet_wrap(ITERATION~Parameter) +
   scale_x_continuous(breaks=seq(1,N1),limits=c(1,N1)) +
-  labs(x="Percentile bin of initial samples",y="Proportion resampled",title=paste("Adequacy of proposal density of iteration",i))
+  labs(x="Percentile bin of initial samples",y="Proportion resampled",title=paste("Adequacy of proposal density \n Iteration",i))
 mM_ratio[[i]] <- mM_ratio.cur
 
 m2_maxbin.cur  <- ggplot(filter(resamp_prop_max,IDBIN==1 & ITERATION==i),aes(x=ORDER,y=m2)) +
@@ -240,7 +240,7 @@ m2_maxbin.cur  <- ggplot(filter(resamp_prop_max,IDBIN==1 & ITERATION==i),aes(x=O
   facet_wrap(ITERATION~Parameter+BIN,scales="free_y",drop=TRUE) +
   scale_x_continuous(breaks=seq(1,N2,by=1),limits=c(1,N2)) +
   scale_y_continuous(limits=c(0,unique(filter(resamp_prop_max,IDBIN==1 & ITERATION==LASTIT)$NSAMP)/(N1*N2))) +
-  labs(x="Percentile bin of resamples",y="Number of parameters resampled",title=paste("Exhaustion of samples of iteration",i,"by parameter")) 
+  labs(x="Percentile bin of resamples",y="Number of parameters resampled",title=paste("Exhaustion of samples \n Iteration",i)) 
 m2_maxbin[[i]] <- m2_maxbin.cur
 
 all_maxbin.cur  <- ggplot(filter(resamp_prop_max,IDBIN==1 & ITERATION==i),aes(x=ORDER,y=m2,group=Parameter)) +
@@ -249,7 +249,7 @@ all_maxbin.cur  <- ggplot(filter(resamp_prop_max,IDBIN==1 & ITERATION==i),aes(x=
   geom_smooth(aes(group=1),color="blue",size=2,se=FALSE) +
   scale_x_continuous(breaks=seq(1,N2,by=1),limits=c(1,N2)) +
   scale_y_continuous(limits=c(0,2*unique(filter(resamp_prop_max,IDBIN==1 & ITERATION==i)$NRESAMP)/(N1*N2))) +
-  labs(x="Percentile bin of resamples",y="Number of parameters resampled",title=paste("Exhaustion of samples of iteration",i, "over all parameters")) 
+  labs(x="Percentile bin of resamples",y="Number of parameters resampled",title=paste("Exhaustion of samples \n Iteration",i, ",all parameters")) 
 all_maxbin[[i]] <- all_maxbin.cur
 
 }
