@@ -44,7 +44,8 @@ psn -nm_versions
 \end{verbatim}
 \nextopt
 \optdefault{threads}{'integer'}
-Default 1. Use the threads option to enable parallel execution of multiple models.
+Default 5 (if default PsN config file is used). 
+Use the threads option to enable parallel execution of multiple models.
 This option decides how many models PsN will run at the same time, and it is completely
 independent of whether the individual models are run with serial NONMEM or parallel NONMEM.
 If you want to run a single model in parallel you must use options -parafile and -nodes.
