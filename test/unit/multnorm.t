@@ -178,6 +178,7 @@ cmp_ok(abs($wghash->{'weights'}->[2]-3.077141488472004e-08),'<',0.000000000001e-
 cmp_ok(abs($wghash->{'cdf'}->[0]-1.312150724294432e-06),'<',0.000000000001e-06,'cdf 1 recompute');
 cmp_ok(abs($wghash->{'cdf'}->[1]-1.312150724294432e-06),'<',0.000000000001e-06,'cdf 2 recompute');
 cmp_ok(abs($wghash->{'cdf'}->[2]-1.342922139179152e-06),'<',0.000000000001e-06,'cdf 3 recompute');
+cmp_ok(abs($wghash->{'sum_weights'}-1.342922139179152e-06),'<',0.000000000001e-06,'sum weights 3 recompute');
 
 
 tool::sir::recompute_weights(weight_hash => $wghash,
@@ -190,6 +191,7 @@ cmp_ok(abs($wghash->{'weights'}->[2]-3.077141488472004e-08),'<',0.000000000001e-
 cmp_ok($wghash->{'cdf'}->[0],'==',0,'cdf 1 recompute');
 cmp_ok($wghash->{'cdf'}->[1],'==',0,'cdf 2 recompute');
 cmp_ok(abs($wghash->{'cdf'}->[2]-3.077141488472004e-08),'<',0.000000000001e-08,'cdf 3 recompute');
+cmp_ok(abs($wghash->{'sum_weights'}-3.077141488472004e-08),'<',0.000000000001e-08,'sum weights 3 recompute');
 
 #start over
 $wghash = tool::sir::compute_weights(pdf_array => $pdf,

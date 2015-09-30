@@ -19,8 +19,9 @@ use File::Copy 'cp';
 
 
 
-our $tempdir = create_test_dir('unit_updateinits');
+our $tempdir = create_test_dir('unit_sir');
 chdir($tempdir);
+
 
 my $mat = new Math::MatrixReal(1,1);
 my $mu = $mat->new_from_rows( [[1,2,3]] );

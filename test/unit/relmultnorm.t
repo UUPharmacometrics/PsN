@@ -177,6 +177,7 @@ cmp_relative($wghash->{'weights'}->[2],1.373954254589559e-01,11,'weight 3 recomp
 cmp_relative($wghash->{'cdf'}->[0],5.858798099018610e+00,11,'cdf 1 recompute');
 cmp_relative($wghash->{'cdf'}->[1],5.858798099018610e+00,11,'cdf 2 recompute');
 cmp_relative($wghash->{'cdf'}->[2],5.996193524477566,11,'cdf 3 recompute');
+cmp_relative($wghash->{'sum_weights'},5.996193524477566,11,'sum weights recompute');
 
 
 tool::sir::recompute_weights(weight_hash => $wghash,
@@ -189,6 +190,8 @@ cmp_relative($wghash->{'weights'}->[2],1.373954254589559e-01,11,'weight 3 recomp
 cmp_ok($wghash->{'cdf'}->[0],'==',0,'cdf 1 recompute');
 cmp_ok($wghash->{'cdf'}->[1],'==',0,'cdf 2 recompute');
 cmp_relative($wghash->{'cdf'}->[2],1.373954254589559e-01,11,'cdf 3 recompute');
+cmp_relative($wghash->{'sum_weights'},1.373954254589559e-01,11,'sum weights 3 recompute');
+
 
 #start over
 $wghash = tool::sir::compute_weights(pdf_array => $pdf,
@@ -426,5 +429,30 @@ $pdf=tool::sir::mvnpdf(inverse_covmatrix => $icm,
 
 cmp_float($pdf->[0], 1.898546535891817e-03,'mvnpdf well conditioned with inflation 3');
 
+$wghash->{'weights'}=[0,0,1.373954254589559e-01];
+$wghash->{'cdf'}=[0,0,1.373954254589559e-01];
+$wghash->{'sum_weights'}=1.373954254589559e-01;
+
+my @times_sampledarr=(0,0,0);
+my $ok_resamples = tool::sir::do_resampling(times_sampled => \@times_sampledarr,
+											with_replacement => 0,
+											wghash => $wghash,
+											current_resamples => 2);
+is($ok_resamples,1,'do_resampling ok resamples');
+is_deeply(\@times_sampledarr,[0,0,1],'do_resampling times_sampled');
+
+
+$pdf = [1.035247587409e-01,2.982414449872e-01,5.974361835534e-01];
+
+$wghash = tool::sir::compute_weights(pdf_array => $pdf,
+									 dofv_array => [9.8,8.1,9.5]);
+
+my @times_sampledarr=(0,0,0);
+my $ok_resamples = tool::sir::do_resampling(times_sampled => \@times_sampledarr,
+											with_replacement => 0,
+											wghash => $wghash,
+											current_resamples => 3);
+is($ok_resamples,3,'do_resampling ok resamples 2');
+is_deeply(\@times_sampledarr,[1,1,1],'do_resampling times_sampled 2');
 
 done_testing();

@@ -1022,7 +1022,6 @@ sub compute_weights{
 		push(@{$hash{'cdf'}},$cumsum);
 	}
 	$hash{'sum_weights'}=$cumsum;
-	croak("total weights is 0 in compute_weights") unless ($hash{'sum_weights'}>0);
 	return \%hash;
 }
 
@@ -1046,6 +1045,7 @@ sub recompute_weights{
 		$cumsum = $cumsum+$weight_hash->{'weights'}->[$i]; #first round this wgt is 0
 		$weight_hash->{'cdf'}->[$i] = $cumsum;
 	}
+	$weight_hash->{'sum_weights'}=$cumsum;
 }
 
 sub weighted_sample{
@@ -2122,14 +2122,21 @@ sub _modelfit_raw_results_callback
 		my @times_sampled = (0) x scalar(@delta_ofv); #filtered_samples length filtered instead
 
 		ui -> print( category => 'sir', message => "Resampling vectors based on weights" );
-		for (my $i=0; $i<$current_resamples; $i++){
-			my $sample_index = tool::sir::weighted_sample(cdf => $wghash->{'cdf'});
-			$times_sampled[$sample_index]++;
-			unless ($with_replacement or $i==$current_resamples){
-				tool::sir::recompute_weights(weight_hash => $wghash,
-											 reset_index => $sample_index);
-			}
+
+		my $ok_resamples = do_resampling(times_sampled => \@times_sampled,
+										 current_resamples => $current_resamples,
+										 wghash => $wghash,
+										 with_replacement => $with_replacement);
+
+		unless ($ok_resamples == $current_resamples){
+			#reset current_resamples to what was possible, reset total weights
+			ui -> print( category => 'sir', message => "\n Error: After resampling $ok_resamples vectors the probability".
+						 " of resampling is 0 for all remaining vectors. Stopping resampling." );
+			$ok_resamples = 1 if ($ok_resamples == 0); #avoid div by zero below
+			$self->actual_resamples->[-1] = $ok_resamples;
+			$total_weights = 1 if ($total_weights == 0); #to avoid division by 0 when printing results
 		}
+
 
 		my @extra_headers = ('deltaofv','likelihood_ratio','relPDF','importance_ratio','probability_resample','resamples');
 		$index=0;
@@ -2215,6 +2222,40 @@ sub _modelfit_raw_results_callback
 	};
 	return $subroutine;
 }
+
+
+sub do_resampling
+{
+	#static
+	my %parm = validated_hash(\@_,
+							  times_sampled => { isa => 'ArrayRef', optional => 0 },
+							  current_resamples => { isa => 'Int', optional => 0 },
+							  wghash => { isa => 'HashRef', optional => 0 },
+							  with_replacement => { isa => 'Bool', optional => 0 },
+		);
+	my $times_sampled = $parm{'times_sampled'};
+	my $current_resamples = $parm{'current_resamples'};
+	my $wghash = $parm{'wghash'};
+	my $with_replacement = $parm{'with_replacement'};
+
+	my $ok_resamples=0;
+
+	for (my $i=0; $i<$current_resamples; $i++){
+		unless ($wghash->{'sum_weights'}>0){
+			last; #stop sampling if all probs are 0
+		}
+		my $sample_index = weighted_sample(cdf => $wghash->{'cdf'});
+		$times_sampled->[$sample_index]++;
+		$ok_resamples++;
+		unless ($with_replacement ){
+			recompute_weights(weight_hash => $wghash,
+							  reset_index => $sample_index);
+		}
+	}
+	return $ok_resamples;
+}
+
+
 
 sub update_actual_resamples
 {
