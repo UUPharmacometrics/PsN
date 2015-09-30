@@ -2,7 +2,7 @@
 \setlength{\evensidemargin}{0pt}
 \setlength{\oddsidemargin}{0pt}
 
-\guidetitle{SUMO user guide}{2015-05-07}
+\guidetitle{SUMO user guide}{2015-09-30}
 
 \begin{document}
 
@@ -67,16 +67,21 @@ THETA3  0.0398 (-0.08266)  OMEGA(3,2)  0.9187  (-0.848)
 
 The first section of the output from sumo contains run diagnostics. They are largely self-explanatory but some of them depends on cut-off values. For example, the diagnostics for a large condition number compares the obtained condition number to a cut-off value, normally 1000. The default values for the cut-off values can be changed by setting them in 
 \verb|[default_sumo_options]| in psn.conf. It is possible to override a default value by specifying it as an option to sumo (see below).
-\\ 
+
 Next are the NONMEM minimization messages and \$COV messages, including etabars etc. Following this is the objective function value. If \$COV has been requested with the PRINT=E option (so that NONMEM reports eigenvalues) the condition number is also reported (the ratio between the largest and smallest eigenvalue)
-The column THETA contains the theta estimates as reported in the NONMEM output file and the numbers in parentheses after the theta estimates, are the relative standard errors (SE/Est). The square roots of the estimates of the diagonal elements of the OMEGA and SIGMA matrices in the NONMEM output file are reported in the OMEGA and SIGMA columns (except when -ci is used, see below). The off-diagonal estimates are reported as the corresponding correlations, i.e. 
+
+The column THETA contains the theta estimates as reported in the NONMEM output file and the numbers in parentheses after the theta estimates, are the relative standard errors (SE/Est). 
+
+The square roots of the estimates of the diagonal elements of the OMEGA and SIGMA matrices in the NONMEM output file are reported in the OMEGA and SIGMA columns (except when -ci is used, see below). The off-diagonal estimates are reported as the corresponding correlations, i.e. 
 $\frac{cov(om1,om2)}{\sqrt{var(om1)*var(om2)}}$. 
 The numbers in parentheses after the OMEGA and SIGMA columns are the relative SEs of the \emph{variance} and \emph{covariance} estimates, as taken from the NONMEM output file
 (but see option -ci and -sd\_rse below).
 Relative standard errors are not displayed unless NONMEM reports the standard errors in the output file, i.e. when the covariance step has been requested and has terminated successfully.
 
 If the user has set labels for the parameters in the control stream, those labels are used instead of the
-generic THETA1, OMEGA(1,1) and so on. Parameters that are FIXED or SAME are excluded from the table.
+generic THETA1, OMEGA(1,1) etc. Parameters that are FIXED or SAME are excluded from the table.
+PsN will read the control stream copy at the top of the lst-file to investigate which parameters are estimated. It is a known
+bug that if the control stream has \$MSFI, and hence no \$THETA, \$OMEGA or \$SIGMA records, the table with population parameters will be empty.
 
 \section{Input and options}
 
