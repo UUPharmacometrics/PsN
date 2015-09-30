@@ -3125,6 +3125,7 @@ sub set_estimated_parameters_hash
 		$hash{'upper_bounds'}=[];
 		$hash{'param'}=[];
         $hash{'inits'} = [];
+        $hash{'off_diagonal'} = [];
 
 		foreach my $param ('theta','omega','sigma'){
 			my $block_number=0;

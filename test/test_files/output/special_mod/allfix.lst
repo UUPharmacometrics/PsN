@@ -1,0 +1,413 @@
+Mon Sep 28 14:52:07 CEST 2015
+$PROBLEM    MOXONIDINE PK,FINAL ESTIMATES,ALL DATA
+;;
+
+;; run 1, FOCEI, Lag model, all data
+
+;;
+$ABBREVIATED DERIV2=NO COMRES=6
+$INPUT      ID VISI XAT2=DROP DGRP=DROP DOSE=DROP FLAG=DROP ONO=DROP ;2
+            XIME=DROP DVO=DROP NEUY=DROP SCR=DROP AGE SEX NYHA=DROP WT ;3
+            COMP ACE DIG DIU NUMB=DROP TAD TIME VIDD=DROP CLCR AMT SS ;9
+            II VID CMT=DROP CONO=DROP DV EVID=DROP OVID=DROP ;3
+            SHR SHR2=DROP ;1
+$DATA      mx19.csv IGNORE=@
+$SUBROUTINE ADVAN2 TRANS1
+$PK 
+
+;-----------OCCASIONS----------
+   VIS3               = 0
+   IF(VISI.EQ.3) VIS3 = 1
+   VIS8               = 0
+   IF(VISI.EQ.8) VIS8 = 1
+
+;----------IOV--------------------
+
+   KPCL  = VIS3*ETA(4)+VIS8*ETA(5)
+   KPKA  = VIS3*ETA(6)+VIS8*ETA(7)
+
+;---------- PK model ------------------
+
+   TVCL  = THETA(1)*(1+THETA(6)*(CLCR-65))
+   TVV   = THETA(2)*WT
+
+   CL    = TVCL*EXP(ETA(1)+KPCL)
+   V     = TVV*EXP(ETA(2))
+   KA    = THETA(3)*EXP(ETA(3)+KPKA)
+   ALAG1 = THETA(4)
+   K     = CL/V
+   S2    = V
+
+$ERROR 
+
+     IPRED = LOG(.025)
+     W     = THETA(5)
+     IF(F.GT.0) IPRED = LOG(F)
+     IRES  = IPRED-DV
+     IWRES = IRES/W
+     Y     = IPRED+ERR(1)*W
+
+$THETA  (0,26.6) FIX ; TVCL
+$THETA  (0,1.43) FIX ; TVV
+$THETA  (0,4.45) FIX ; TVKA
+$THETA  (0,.240) FIX ; LAG
+$THETA  (0,.33) FIX ; RES ERR
+$THETA  (0,.00758,.02941) FIX ; CRCL on CL
+$OMEGA  BLOCK(2) FIX
+ 0.0444
+ 0.027 0.0241  ; IIV (CL-V)
+$OMEGA  BLOCK(1) FIX
+ 3.0  ;     IIV KA
+$OMEGA  BLOCK(1) FIX
+ 0.0165  ;     IOV CL
+$OMEGA  BLOCK(1) SAME
+$OMEGA  BLOCK(1) FIX
+ 0.495  ;     IOV KA
+$OMEGA  BLOCK(1) SAME
+$SIGMA  1  FIX
+$ESTIMATION METHOD=1 INTER MAXEVALS=0 PRINT=2 POSTHOC
+;$COVARIANCE PRINT=E
+$TABLE      ID TAD IPRED IWRES VISI ONEHEADER NOPRINT FILE=sdtab1
+$TABLE      ID CL V KA ALAG1 ETA(1) ETA(2) ETA(3) ONEHEADER NOPRINT
+            FILE=patab1
+$TABLE      ID AGE WT CLCR ONEHEADER NOPRINT FILE=cotab1
+$TABLE      ID SEX ACE DIG DIU COMP ONEHEADER NOPRINT FILE=catab1
+$TABLE      ID TAD NPRED NRES NWRES PREDI RESI WRESI CPRED CRES CWRES
+            CPREDI CRESI CWRESI EPRED ERES EWRES PRED RES WRES NPDE
+            ECWRES NOPRINT ONEHEADER FILE=mytab1
+
+
+NM-TRAN MESSAGES
+  
+ WARNINGS AND ERRORS (IF ANY) FOR PROBLEM    1
+             
+ (WARNING  2) NM-TRAN INFERS THAT THE DATA ARE POPULATION.
+Note: The following floating-point exceptions are signalling: IEEE_INVALID_FLAG IEEE_DIVIDE_BY_ZERO
+
+License Registered to: Uppsala University
+Expiration Date:    14 MAR 2016
+Current Date:       28 SEP 2015
+Days until program expires : 171
+1NONLINEAR MIXED EFFECTS MODEL PROGRAM (NONMEM) VERSION 7.3.0
+ ORIGINALLY DEVELOPED BY STUART BEAL, LEWIS SHEINER, AND ALISON BOECKMANN
+ CURRENT DEVELOPERS ARE ROBERT BAUER, ICON DEVELOPMENT SOLUTIONS,
+ AND ALISON BOECKMANN. IMPLEMENTATION, EFFICIENCY, AND STANDARDIZATION
+ PERFORMED BY NOUS INFOSYSTEMS.
+ 
+ PROBLEM NO.:         1
+ MOXONIDINE PK,FINAL ESTIMATES,ALL DATA                                  
+0DATA CHECKOUT RUN:              NO 
+ DATA SET LOCATED ON UNIT NO.:    2
+ THIS UNIT TO BE REWOUND:        NO 
+ NO. OF DATA RECS IN DATA SET:     1166
+ NO. OF DATA ITEMS IN DATA SET:  20
+ ID DATA ITEM IS DATA ITEM NO.:   1
+ DEP VARIABLE IS DATA ITEM NO.:  17
+ MDV DATA ITEM IS DATA ITEM NO.: 20
+0INDICES PASSED TO SUBROUTINE PRED:
+  19  11  13   0  14  15   0   0   0   0   0
+0LABELS FOR DATA ITEMS:
+ ID VISI AGE SEX WT COMP ACE DIG DIU TAD TIME CLCR AMT SS II VID DV SHR EVID MDV
+0(NONBLANK) LABELS FOR PRED-DEFINED ITEMS:
+ CL V KA ALAG1 IPRED IWRES
+0FORMAT FOR DATA:
+ (2(6E11.0/),6E11.0,2F2.0)                                                       
+ 
+ TOT. NO. OF OBS RECS:     1022
+ TOT. NO. OF INDIVIDUALS:     74
+0LENGTH OF THETA:   6
+0DEFAULT THETA BOUNDARY TEST OMITTED:    NO 
+0OMEGA HAS BLOCK FORM:
+  1
+  1  1
+  0  0  2
+  0  0  0  3
+  0  0  0  0  3
+  0  0  0  0  0  4
+  0  0  0  0  0  0  4
+0DEFAULT OMEGA BOUNDARY TEST OMITTED:    NO 
+0SIGMA HAS SIMPLE DIAGONAL FORM WITH DIMENSION:   1
+0DEFAULT SIGMA BOUNDARY TEST OMITTED:    NO 
+0INITIAL ESTIMATE OF THETA:
+ LOWER BOUND    INITIAL EST    UPPER BOUND
+  0.2660E+02     0.2660E+02     0.2660E+02
+  0.1430E+01     0.1430E+01     0.1430E+01
+  0.4450E+01     0.4450E+01     0.4450E+01
+  0.2400E+00     0.2400E+00     0.2400E+00
+  0.3300E+00     0.3300E+00     0.3300E+00
+  0.7580E-02     0.7580E-02     0.7580E-02
+0INITIAL ESTIMATE OF OMEGA:
+ BLOCK SET NO.   BLOCK                                                                    FIXED
+        1                                                                                  YES 
+                  0.4440E-01
+                  0.2700E-01   0.2410E-01
+        2                                                                                  YES 
+                  0.3000E+01
+        3                                                                                  YES 
+                  0.1650E-01
+        4                                                                                  YES 
+                  0.4950E+00
+0INITIAL ESTIMATE OF SIGMA:
+ 0.1000E+01
+0SIGMA CONSTRAINED TO BE THIS INITIAL ESTIMATE
+0TABLES STEP OMITTED:    NO 
+ NO. OF TABLES:           5
+ SEED NUMBER (SEED):    11456       
+ RANMETHOD:                                 
+ MC SAMPLES (ESEED):    300         
+ WRES SQUARE ROOT TYPE:            EIGENVALUE
+0-- TABLE   1 --
+ PRINTED:                NO 
+ HEADERS:               ONE
+ FILE TO BE FORWARDED:   NO 
+ FORMAT:                S1PE11.4
+ LFORMAT:               
+ RFORMAT:               
+0USER-CHOSEN ITEMS:
+ ID TAD IPRED IWRES VISI
+0-- TABLE   2 --
+ PRINTED:                NO 
+ HEADERS:               ONE
+ FILE TO BE FORWARDED:   NO 
+ FORMAT:                S1PE11.4
+ LFORMAT:               
+ RFORMAT:               
+0USER-CHOSEN ITEMS:
+ ID CL V KA ALAG1 ETA1 ETA2 ETA3
+0-- TABLE   3 --
+ PRINTED:                NO 
+ HEADERS:               ONE
+ FILE TO BE FORWARDED:   NO 
+ FORMAT:                S1PE11.4
+ LFORMAT:               
+ RFORMAT:               
+0USER-CHOSEN ITEMS:
+ ID AGE WT CLCR
+0-- TABLE   4 --
+ PRINTED:                NO 
+ HEADERS:               ONE
+ FILE TO BE FORWARDED:   NO 
+ FORMAT:                S1PE11.4
+ LFORMAT:               
+ RFORMAT:               
+0USER-CHOSEN ITEMS:
+ ID SEX ACE DIG DIU COMP
+0-- TABLE   5 --
+ PRINTED:                NO 
+ HEADERS:               ONE
+ FILE TO BE FORWARDED:   NO 
+ FORMAT:                S1PE11.4
+ LFORMAT:               
+ RFORMAT:               
+0USER-CHOSEN ITEMS:
+ ID TAD NPRED NRES NWRES PREDI RESI WRESI CPRED CRES CWRES CPREDI CRESI CWRESI EPRED ERES EWRES NPDE ECWRES
+1DOUBLE PRECISION PREDPP VERSION 7.3.0
+ 
+ ONE COMPARTMENT MODEL WITH FIRST-ORDER ABSORPTION (ADVAN2)
+0MAXIMUM NO. OF BASIC PK PARAMETERS:   3
+0BASIC PK PARAMETERS (AFTER TRANSLATION):
+   ELIMINATION RATE (K) IS BASIC PK PARAMETER NO.:  1
+   ABSORPTION RATE (KA) IS BASIC PK PARAMETER NO.:  3
+ 
+0COMPARTMENT ATTRIBUTES 
+ COMPT. NO.   FUNCTION   INITIAL    ON/OFF      DOSE      DEFAULT    DEFAULT
+                         STATUS     ALLOWED    ALLOWED    FOR DOSE   FOR OBS.
+    1         DEPOT        OFF        YES        YES        YES        NO 
+    2         CENTRAL      ON         NO         YES        NO         YES
+    3         OUTPUT       OFF        YES        NO         NO         NO 
+1
+ ADDITIONAL PK PARAMETERS - ASSIGNMENT OF ROWS IN GG
+ COMPT. NO.                             INDICES
+              SCALE      BIOAVAIL.   ZERO-ORDER  ZERO-ORDER  ABSORB
+                         FRACTION    RATE        DURATION    LAG  
+    1            *           *           *           *           4
+    2            5           *           *           *           *
+    3            *           -           -           -           -
+             - PARAMETER IS NOT ALLOWED FOR THIS MODEL
+             * PARAMETER IS NOT SUPPLIED BY PK SUBROUTINE;
+               WILL DEFAULT TO ONE IF APPLICABLE
+0DATA ITEM INDICES USED BY PRED ARE:
+   EVENT ID DATA ITEM IS DATA ITEM NO.:     19
+   TIME DATA ITEM IS DATA ITEM NO.:         11
+   DOSE AMOUNT DATA ITEM IS DATA ITEM NO.:  13
+   STEADY STATE DATA ITEM IS DATA ITEM NO.: 14
+   INTERVAL DATA ITEM IS DATA ITEM NO.:     15
+ 
+0PK SUBROUTINE CALLED WITH EVERY EVENT RECORD.
+ PK SUBROUTINE NOT CALLED AT NONEVENT (ADDITIONAL OR LAGGED) DOSE TIMES.
+0ERROR SUBROUTINE CALLED WITH EVERY EVENT RECORD.
+1
+
+
+ #TBLN:      1
+ #METH: First Order Conditional Estimation with Interaction (Evaluation)
+
+ ESTIMATION STEP OMITTED:                 YES 
+ ANALYSIS TYPE:                           POPULATION
+ CONDITIONAL ESTIMATES USED:              YES 
+ CENTERED ETA:                            NO  
+ EPS-ETA INTERACTION:                     YES 
+ LAPLACIAN OBJ. FUNC.:                    NO  
+ NUMERICAL DERIVATIVE 
+       FILE REQUEST (NUMDER):             NONE
+ MAP (ETAHAT) ESTIMATION METHOD (OPTMAP): 0           
+ ETA HESSIAN EVALUATION METHOD (ETADER):  0           
+ INITIAL ETA FOR MAP ESTIMATION (MCETA):  0           
+ SIGDIGITS FOR MAP ESTIMATION (SIGLO):    100         
+ GRADIENT SIGDIGITS OF 
+       FIXED EFFECTS PARAMETERS (SIGL):   100         
+ EXCLUDE TITLE (NOTITLE):                 NO 
+ EXCLUDE COLUMN LABELS (NOLABEL):         NO 
+ NOPRIOR SETTING (NOPRIOR):               OFF
+ NOCOV SETTING (NOCOV):                   OFF
+ DERCONT SETTING (DERCONT):               OFF
+ ABSOLUTE TOLERANCE-ADVAN 9,13 ONLY(ATOL):-100        
+ FINAL ETA RE-EVALUATION (FNLETA):        ON 
+ EXCLUDE NON-INFLUENTIAL (NON-INFL.) ETAS 
+       IN SHRINKAGE (ETASTYPE):           NO 
+ NON-INFL. ETA CORRECTION (NONINFETA):    OFF
+ FORMAT FOR ADDITIONAL FILES (FORMAT):    S1PE12.5
+ PARAMETER ORDER FOR OUTPUTS (ORDER):     TSOL
+ ADDITIONAL CONVERGENCE TEST (CTYPE=4)?:  NO
+ EM OR BAYESIAN METHOD USED:                NONE
+
+
+ THE FOLLOWING LABELS ARE EQUIVALENT
+ PRED=PREDI
+ RES=RESI
+ WRES=WRESI
+ IWRS=IWRESI
+ IPRD=IPREDI
+ IRS=IRESI
+
+1
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ ************************************************************************************************************************
+ ********************                                                                                ********************
+ ********************         FIRST ORDER CONDITIONAL ESTIMATION WITH INTERACTION (EVALUATION)       ********************
+ #OBJT:**************                       MINIMUM VALUE OF OBJECTIVE FUNCTION                      ********************
+ ********************                                                                                ********************
+ ************************************************************************************************************************
+ 
+
+
+
+
+
+ #OBJV:********************************************     -753.566       **************************************************
+1
+ ************************************************************************************************************************
+ ********************                                                                                ********************
+ ********************         FIRST ORDER CONDITIONAL ESTIMATION WITH INTERACTION (EVALUATION)       ********************
+ ********************                             FINAL PARAMETER ESTIMATE                           ********************
+ ********************                                                                                ********************
+ ************************************************************************************************************************
+ 
+
+
+ THETA - VECTOR OF FIXED EFFECTS PARAMETERS   *********
+
+
+         TH 1      TH 2      TH 3      TH 4      TH 5      TH 6     
+ 
+         2.66E+01  1.43E+00  4.45E+00  2.40E-01  3.30E-01  7.58E-03
+ 
+
+
+ OMEGA - COV MATRIX FOR RANDOM EFFECTS - ETAS  ********
+
+
+            ETA1      ETA2      ETA3      ETA4      ETA5      ETA6      ETA7   
+ 
+ ETA1
++        4.44E-02
+ 
+ ETA2
++        2.70E-02  2.41E-02
+ 
+ ETA3
++        0.00E+00  0.00E+00  3.00E+00
+ 
+ ETA4
++        0.00E+00  0.00E+00  0.00E+00  1.65E-02
+ 
+ ETA5
++        0.00E+00  0.00E+00  0.00E+00  0.00E+00  1.65E-02
+ 
+ ETA6
++        0.00E+00  0.00E+00  0.00E+00  0.00E+00  0.00E+00  4.95E-01
+ 
+ ETA7
++        0.00E+00  0.00E+00  0.00E+00  0.00E+00  0.00E+00  0.00E+00  4.95E-01
+ 
+
+
+ SIGMA - COV MATRIX FOR RANDOM EFFECTS - EPSILONS  ****
+
+
+            EPS1   
+ 
+ EPS1
++        1.00E+00
+ 
+1
+
+
+ OMEGA - CORR MATRIX FOR RANDOM EFFECTS - ETAS  *******
+
+
+            ETA1      ETA2      ETA3      ETA4      ETA5      ETA6      ETA7   
+ 
+ ETA1
++        2.11E-01
+ 
+ ETA2
++        8.25E-01  1.55E-01
+ 
+ ETA3
++        0.00E+00  0.00E+00  1.73E+00
+ 
+ ETA4
++        0.00E+00  0.00E+00  0.00E+00  1.28E-01
+ 
+ ETA5
++        0.00E+00  0.00E+00  0.00E+00  0.00E+00  1.28E-01
+ 
+ ETA6
++        0.00E+00  0.00E+00  0.00E+00  0.00E+00  0.00E+00  7.04E-01
+ 
+ ETA7
++        0.00E+00  0.00E+00  0.00E+00  0.00E+00  0.00E+00  0.00E+00  7.04E-01
+ 
+
+
+ SIGMA - CORR MATRIX FOR RANDOM EFFECTS - EPSILONS  ***
+
+
+            EPS1   
+ 
+ EPS1
++        1.00E+00
+ 
+ #CPUT: Total CPU Time in Seconds,        1.312
+Stop Time:
+Mon Sep 28 14:52:09 CEST 2015

@@ -1491,6 +1491,12 @@ sub read_answers
     $answer_hashes[$index]->{runtime} = '0:56:00';
     $answer_hashes[$index]->{answers} = {};
 
+    $index++;
+    $answer_hashes[$index]->{file} = 'special_mod/allfix.lst';
+    $answer_hashes[$index]->{parsed_successfully} = 1;
+    $answer_hashes[$index]->{answers} = {};
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'ofv'}=-753.566;
+
 	return \@answer_hashes;
 }
 
