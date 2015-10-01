@@ -59,6 +59,7 @@ has 'percentile_confidence_intervals_level' => ( is => 'rw', isa => 'Num', defau
 has 'bca_confidence_intervals_check' => ( is => 'rw', isa => 'Num', default => 0 );
 has 'bca_confidence_intervals_level' => ( is => 'rw', isa => 'Num', default => 5 );
 has 'large_bias_limit' => ( is => 'rw', isa => 'Num', default => 0.05 );
+has 'raw_results_dofv' => ( is => 'rw', isa => 'Str', default => 'raw_results_dofv.csv');
 
 sub BUILD
 {
@@ -1181,7 +1182,7 @@ sub modelfit_analyze
 												models           => $modelsarr,
 												base_directory   => $self -> directory,
 												directory        => $self -> directory.'compute_dofv_dir'.$model_number, 
-												raw_results_file => [$self->directory.'raw_results_dofv.csv'],
+												raw_results_file => [$self->directory.$self->raw_results_dofv],
 												nmtran_skip_model => 2,
 												parent_tool_id   => $self -> tool_id,
 												_raw_results_callback => $self ->_dofv_raw_results_callback( model_number => $model_number ),
@@ -1892,7 +1893,28 @@ sub create_R_plots_code
 	my $covWarnings = $self->skip_with_covstep_warnings() ? 'TRUE' : 'FALSE';
 	my $boundary = $self->skip_estimate_near_boundary() ? 'TRUE' : 'FALSE';
 
+	#todo add bool dofv
+	my $paramcount = 0;
+	my $labelref = $self->models->[0]->problems->[0]->get_estimated_attributes(parameter => 'all',
+																			   attribute => 'labels');
+	if (defined $labelref){
+		#we should not filter out off-diagonals like in sse. Verified. 
+		$paramcount = scalar(@{$labelref});
+	}
+
+
+	my $paramstring = 'N.ESTIMATED.PARAMS <- '.$paramcount;
+
+	my $rawresdofvstring;
+	if ($self->dofv){
+		$rawresdofvstring = "dofv.raw.results.file <- '".$self->raw_results_dofv."'";
+	}
+
 	$rplot->add_preamble(code => [
+							 '#bootstrap-specific preamble',
+							 $paramstring,
+							 'dofv.is.run <- '.$self->dofv,
+							 $rawresdofvstring,
 							 "included.ids.file <- '".$inclIdFile."'",
 							 "skip.minimization.terminated=$minFailed",
 							 "skip.covariance.step.terminated=$covFailed",
