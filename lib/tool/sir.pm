@@ -2529,7 +2529,7 @@ sub create_R_plots_code{
 
 	my $labelref = $self->models->[0]->problems->[0]->get_estimated_attributes(parameter => 'all',
 																		  attribute => 'labels');
-	#TODO filter out off-diagonals like in sse? 
+	#we should not filter out off-diagonals like in sse. Verified. 
 
 	if (defined $labelref){
 		$paramcount = scalar(@{$labelref});
