@@ -52,7 +52,29 @@ ebenpde_obs <- ebenpde_tmp[,seq(3,n.eta+2)]
 chart.Correlation(ebenpde_obs, histogram = TRUE, method = c("spearman"))
 
 #outlier graph
-#TODO
+if (require("PEIP")){
+ebenpde_tmp <- read.csv(ebe.npde.file)
+ebenpde_obs <- ebenpde_tmp[,seq(3,n.eta+2)]
+emp_distance <- array(0,c(n.subjects,1))
+mean_ebenpde<- array(0,c(1,n.eta))
+var_ebenpde<- diag(1,n.eta,n.eta)
+identityline <- seq(1,n.subjects,by=1)
+for(i in 1:n.subjects){ 
+emp_distance[i]<- (as.matrix(ebenpde_obs[i,]-mean_ebenpde)%*%as.matrix(solve(var_ebenpde))%*%as.matrix(t(ebenpde_obs[i,]-mean_ebenpde)))
+}
+index_emp_distance<-sort(emp_distance,index.return=TRUE)
+emp_distance_sort <- emp_distance[index_emp_distance$ix]
+ebe_npde_quant <- seq( (1-0.5)/n.subjects , (n.subjects-0.5)/n.subjects ,by=(1/n.subjects))
+theor_distance<-chi2inv(ebe_npde_quant,n.eta)
+plot(emp_distance_sort,theor_distance, xlab = "Ordered robust empirical MD^2" ,ylab= "Theoretical ChiSq MD^2", main=paste('ChiSq Q-Q plot ',model.filename))
+vector_text<-array('',c(n.subjects,1))
+index_text <- index_emp_distance$ix[ (n.subjects-10 ): n.subjects ] # plot the ID of the last 10 subjects
+vector_text[(n.subjects-10 ): n.subjects ] <- ebenpde_tmp$ID[index_text]
+text(emp_distance_sort,theor_distance, paste("", vector_text),col="red")
+matplot(identityline,identityline,type="l",col="red",add=T)
+} else{
+  print("library PEIP not installed, cannot create outlier graph for ebe npde")
+}
 
 dev.off()
 
@@ -133,6 +155,7 @@ iOFV_obs <- all.iOFV_sim$ORIGINAL
 iOFV_res<- array(0,c(samples,n.subjects))
 iOFV_res_median <- array(0,c(n.subjects,1))
 iOFV_res_ord <- array(0,c(samples,n.subjects))
+id_sorted <- array(0,c(n.subjects,1))
 for (i in 1:n.subjects) {
       iOFV_sim <- all.iOFV_sim[i,3:(samples+2)]
       iOFV_sim <- iOFV_sim[!is.na(iOFV_sim)]
@@ -154,11 +177,14 @@ for (i in 1:n.subjects) {
 }
 for (i in 1:n.subjects) {
   iOFV_res_ord[,i]=iOFV_res[,result$ix[i]]
+  id_sorted[i]=all.iOFV_sim$ID[result$ix[i]]  
 }
 boxplot(iOFV_res_ord, outline=FALSE, range=0.001,names=as.character(all.iOFV_sim$ID[result$ix]),xlab="ID",ylab="iOFV RES")
 vector_text<-array('',c(n.subjects,1))
+#this are indices in plotted sorted arr which are outside lim. always the last few, if any
 index_text<-which(((iOFV_res_median[result$ix])> 3)  | ((iOFV_res_median[result$ix]) < -3))
-vector_text[index_text]<-all.iOFV_sim$ID[index_text]
+
+vector_text[index_text]<-id_sorted[index_text]
 text(1:n.subjects,iOFV_res_median[result$ix]-1, paste("", vector_text),col="red")
 abline(h=0, lwd=2, lty=3, col="black") 
 abline(h=-3, lwd=2, lty=3, col="black") 
@@ -222,6 +248,7 @@ dev.off()
 cat("\014")
 rm(list=ls())
 graphics.off()
+
 
 
 

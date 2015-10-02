@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{EBE\_NPDE user guide}{2015-09-21}
+\guidetitle{EBE\_NPDE user guide}{2015-10-01}
 
 \begin{document}
 
@@ -9,7 +9,8 @@
 
 \section{Overview}
 
-The ebe\_npde program is a tool for simulation-evaluation based diagnostics. The principle is 
+The ebe\_npde program is a tool for simulation-evaluation based diagnostics. The name of
+the program is a little misleading since it does a lot more than compute npde:s for EBE:s. The principle is 
 \begin{enumerate}
 \item Simulate N data sets from final model
 \item Apply final model to each data set (evaluate or reestimate parameters)
@@ -24,10 +25,12 @@ The ebe\_npde program is a tool for simulation-evaluation based diagnostics. The
 \end{enumerate}
 The program computes normalized prediction distribution errors for EBE:s and IWRES 
 using the procedure described in \cite{Comets}, with example use in \cite{Keizer} and \cite{Largajolli}.
+It also performs OFV diagnostics. Diagnostics plots are created via the -rplots option, see section 
+Auto-generated R-plots from PsN.
 
 Example call
 \begin{verbatim}
-ebe_npde run1.mod
+ebe_npde run1.mod -rplots=1
 \end{verbatim}
 
 \section{Input and options}
@@ -64,7 +67,14 @@ For a complete list see common\_options.pdf,
 or psn\_options -h on the commandline.
 \input{inputs/basic_options.tex}
 
+\subsection{Auto-generated R-plots from PsN}
+\newcommand{\rplotsconditions}{The default ebe\_npde template 
+requires that library PerformanceAnalytics is installed.
+If the conditions are not fulfilled then no pdf will be generated,
+see the .Rout file in the main run directory for error messages.}
+\input{inputs/rplots_section_body.tex}
 
+%\subsubsection*{Basic plots}
 
 \section{Output}
 
