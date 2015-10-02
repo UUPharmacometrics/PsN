@@ -45,10 +45,20 @@ KLD <- function(px, py, base=exp(1))
 
 pdf(file=pdf.filename,width=10,height=7,title=pdf.title)
 
-#EBE-NPDE correlation graph
-library(PerformanceAnalytics)
+#EBE npde standard deviation graph
 ebenpde_tmp <- read.csv(ebe.npde.file)
 ebenpde_obs <- ebenpde_tmp[,seq(3,n.eta+2)]
+standdev <- c(1:n.eta)
+etanum <- c(1:n.eta)
+for(i in 1:n.eta){ 
+  standdev[i] <- sd(ebenpde_obs[,i])
+}
+plot(etanum,standdev,xlab = "ETA" ,ylab= "SD", main=paste('Standard deviation of EBE NPDE ',model.filename),xaxt="n")
+abline(h=1, lwd=2, lty=3, col="black") 
+axis(1,at=1:n.eta)
+
+#EBE-NPDE correlation graph
+library(PerformanceAnalytics)
 chart.Correlation(ebenpde_obs, histogram = TRUE, method = c("spearman"))
 
 #outlier graph
