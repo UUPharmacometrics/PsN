@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{SIR user guide}{2015-09-16}
+\guidetitle{SIR user guide}{2015-10-07}
 \usepackage{amsmath}
 
 \begin{document}
@@ -12,30 +12,34 @@
 
 \section{Introduction}
 The sir program calculates uncertainty
-on model parameters for the input model using the Sampling Importance Resampling (SIR) procedure.
-The SIR procedure is described in\\
-\emph{Application of Sampling Importance Resampling to estimate parameter uncertainty distributions}, 
-PAGE 22 (2013) Abstr 2907, Dosne AG, Bergstrand M, Karlsson MO.\\
-and in\\
-\emph{Determination of Appropriate Settings in the Assessment of Parameter Uncertainty Distributions 
-using Sampling Importance Resampling (SIR)}, 
-PAGE 24 (2015) Abstr 3546, Dosne AG, Bergstrand M, Karlsson MO.
+on model parameters for the input model using the Sampling Importance Resampling (SIR) procedure 
+\cite{Dosne2013},\cite{Dosne2015}.
+The output of the SIR procedure is a set of parameter vectors representing the uncertainty around 
+model parameters, just like a bootstrap. 
+Confidence intervals around the parameters are also computed, based on this set of parameter vectors.
  
-Each iteration typically consists of the following three phases: First, parameter vectors will be simulated from the 
-proposal density. The proposal density is either computed based on 
-the (optionally Box-Cox transformed) resampled vectors from phase 3 of the previous iteration,
-or, if there is no previous iteration, the truncated multivariate normal distribution 
-given by the covariance matrix.
-Second, each of the simulated parameter vectors will be evaluated on the original data (MAXEVAL=0).
-Third, based on these evaluations, weights will be calculated for each of the parameter vectors and the vectors 
-will be resampled according to these weights. 
+The SIR procedure gets to the final set of parameter vectors via N successive iterations. 
+Each iteration consists of 3 steps. 
+First, M parameter vectors are simulated from a “proposal” uncertainty. Then, for each parameter vector, 
+an “importance ratio” IR (representing how well the vector represents the uncertainty) is calculated. 
+Finally, m parameter vectors (m<M) are then resampled from the M simulated vectors based on these IR.  
+They are called the “posterior” or SIR uncertainty. This is the end of an iteration. In the next iteration, 
+the m parameter vectors are then used as the new proposal uncertainty, and a new set of M parameter vectors 
+are simulated from this new proposal. 
+IR are evaluated for the new set of parameter vectors and m vectors are resampled based on their IR. 
+In practice, the number of samples (M) and resamples (m) can vary between iterations. The procedure should be 
+repeated until there is no change between the proposal uncertainty and the posterior uncertainty, meaning that 
+the SIR procedure has converged to the true uncertainty.
+Because the number of iterations is chosen by the user, diagnostics plots have been developed to assess whether 
+this number of iterations was enough for SIR to converge, and these can be generated via the -rplots option,
+see section Diagnostic sir plots.
 
-Example command:
+Example command for two iterations:
 \begin{verbatim}
-sir -samples=1000,2000 -resamples=500,1000 run10.mod
+sir -samples=1000,2000 -resamples=500,1000 -rplots=1 run10.mod
 \end{verbatim}
 
-\section{Obtaining a proposal density}
+\section{Obtaining a proposal uncertainty}
 There are a number of different ways to obtain the proposal density for the first iteration.
 \begin{enumerate}
 \item The covariance matrix from a successful NONMEM covariance step. If the covariance step was successful, sir will automatically
@@ -216,6 +220,23 @@ after the new run has finished.
 \nextopt
 \end{optionlist}
 
+
+\subsection{Diagnostic sir plots}
+\newcommand{\rplotsconditions}{
+See section Output, subsections Basic and Extended diagnostic plots,
+for descriptions of the default sir plots.
+The default sir template 
+requires 
+that R libraries
+gplots, ggplot2, plyr, dplyr, caTools, reshape, gridExtra, RColorBrewer and tidyr are installed.
+If the conditions are not fulfilled then no pdf will be generated,
+see the .Rout file in the main run directory for error messages.
+}
+
+\input{inputs/rplots_section_body.tex}
+
+ 
+
 \subsection{Some important common PsN options}
 There are many options that govern how PsN manages NONMEM runs, and
 those options are common to all PsN programs that run NONMEM.
@@ -350,20 +371,6 @@ Note that the number of actual resamples can be both greater and smaller than th
 requested samples, because the attempted samples adjustment can make 
 the number of successful samples both greater and smaller
 than requested samples.
-\subsection{Auto-generated R-plots from PsN}
-\newcommand{\rplotsconditions}{The default sir template 
-requires 
-that R libraries
-gplots, ggplot2, plyr, dplyr, caTools, reshape, gridExtra, RColorBrewer and tidyr are installed.
-If the conditions are not fulfilled then no pdf will be generated,
-see the .Rout file in the main run directory for error messages.}
-
-%\subsubsection*{Diagnostic sir plots}
-Diagnostic rplots for the last iteration of sir will be generated if 
-option -rplots is set >0. The file names are PsN\_plots\_base.pdf
-and (-rplots > 1) PsN\_plots\_extended.pdf.
-
-\input{inputs/rplots_section_body.tex}
 
 
 %The first plot shows 3 comparative dOFV distributions: SIR, reference chi-square and original covariance matrix.
@@ -415,6 +422,48 @@ the requested samples, attempted samples, successful samples, requested resample
 actual resamples, requested samples-resamples ratio, actual samples-resamples ratio, count negative delta-ofv and minimum iteration sample ofv.
 \end{itemize}
 
+\subsection{Basic diagnostic plots}
+Basic diagnostic rplots for the last iteration of sir will be generated 
+in file  PsN\_plots\_base.pdf 
+if option -rplots is set >0.
+
+\subsubsection{dOFV plot}
+\begin{description}
+\item[Purpose] Determine whether the SIR procedure has converged, i.e. whether SIR results are final.
+\item[Description] This plot shows the distribution of the dOFV for the N proposal (PROPOSAL, dotted colored lines) and N posterior uncertainties (SIR, full colored lines) of the SIR procedure. The distributions are represented by plotting the value of the dOFV (on the y-axis) for the different quantiles (on the x-axis). The colors correspond to the iterations. A reference distribution corresponding to a chi-square distribution with degrees of freedom equal to the total number of estimated parameters is displayed (full grey line). The shaded areas correspond to resampling noise over the last 2 iterations. The estimated degree of freedom for each distribution is displayed at the bottom right.
+\item[Interpretation] SIR results are final if the two last SIR posterior uncertainties are similar, i.e. within resampling noise. If this is not the case, further iterations should be performed until it is the case. The dOFV curve of the final posterior uncertainty should resemble a chi-square distribution with degree of freedom equal or less than the total number of estimated parameters, i.e. be below the reference chi-square.
+\end{description}
+\subsubsection{CI plot}
+\begin{description}
+\item[Purpose] Visualize the estimated uncertainty of the model parameters over all SIR iterations. 
+\item[Description] This plot displays the confidence intervals (colored error bars on the y-axis, default CI95\%) 
+of all model parameters over all iterations of the SIR procedure (on the x-axis). It also includes the CI of the first proposal density, i.e. the SIR starting point (NONMEM’s covariance matrix for example). The points correspond to the median and the horizontal dashed lines to the final estimates of the model (from NONMEM’s .ext file). The final results of the SIR procedure are the last CI on the right in each panel.
+\item[Interpretation] Final median and outer percentiles of a parameter’s CI can be read off this plot. Be \emph{very} 
+careful when looking at trends over iterations (stabilization/increase/decrease), as the number of resamples from which the CI are computed can be very variable. The outer bounds of wide CI (such as the default 95\% here) 
+can vary a lot because of random noise, so this pot should in general not be used to diagnose SIR convergence.
+\end{description}
+
+
+\subsection{Extended diagnostic plots}
+Extended diagnostic plots will be generated
+in file PsN\_plots\_extended.pdf if option -rplots is set >1.
+
+\subsubsection{Adequacy of proposal density}
+\begin{description}
+\item[Purpose] Evaluate how good the proposal uncertainties describe the true parameter uncertainty (by iteration).
+\item[Description] This plot shows separately for each parameter and each iteration the proportion of resampled parameters (on the y-axis) over different parts of the parameter space defined by the simulated parameters, which is divided into 10 equally sized bins ordered by increasing parameter values on the x-axis. 
+The horizontal dotted line at $\frac{m_{total}}{M_{total}}$ 
+corresponds to the expected value of this proportion were the proposal uncertainty the true uncertainty. The grey shaded area corresponds to stochastic noise, computed as the CI95\% 
+around the expected proportion.
+\item[Interpretation] 4 types of trends can be observed in this plot. If the observed proportion is within the stochastic noise around the expected proportion for all percentile bins (horizontal trend), it means that the proposal density of the last iteration is close to the true uncertainty. If the observed proportion is higher in the center and lower at the ends (bell-shaped trend), it means that the proposal density is too wide. Oppositely, if the observed proportion is lower in the center and higher at the ends (u-shaped trend), it means that the proposal density is too narrow. Lastly, if the proportion is higher at one end and lower at the other (diagonal trend), it means that the proposal density is not asymmetric enough. No action should be taken based on this plot as it does not tell us whether the resampling was able to compensate for these trends.
+\end{description}
+
+\subsubsection{Exhaustion of samples (2 plots: by parameter, and over all parameters)}
+\begin{description}
+\item[Purpose] Support determination of whether the SIR procedure has converged, i.e. whether SIR results are final.
+\item[Description] These 2 plots show the number of resampled parameters (on the y-axis) that belong to “sample bin X” over different parts of the parameter space defined by the resampled parameters (on the x-axis). The resampled parameter space is divided into 5 equally sized “resample” bins ordered by resampling order. For each parameter, the focus is only on the sample bin with the highest proportion identified in the previous plot (“sample bin X”) as this is the limiting factor for SIR to converge. The first plot looks at the exhaustion of samples separately for each parameter and the second plot at the exhaustion of samples over all parameters. In the first plot, the horizontal dotted line corresponds to the observed number of resamples in resample bin X divided by 5 (mbinX/5) and the grey shaded area corresponds to stochastic noise, computed as the CI95\% around the number of resamples. In the second plot, the blue line corresponds to a smooth of the number of parameters resampled over all parameters.
+\item[Interpretation] Only 1 type of trend needs to be detected in this plot. If the number of resampled vectors decreases over the resample bins (diagonal downward trend), it means that there were not enough samples in the SIR procedure to fully correct the proposal uncertainty. Further SIR iterations should thus be performed.
+\end{description}
 
 \section{Troubleshooting}
 \subsection*{Mismatch between input files}
@@ -436,10 +485,16 @@ headers correctly in the raw\_results file. The solution is to always use the pr
 encoding the prior information.
 \subsection*{Error in iteration 1 that covariance matrix not positive definite}
 The sir program will use a Cholesky decomposition without pivoting for processing of the covariance matrix. 
-This works in most cases, but in some rare case this algorithm can fail for a matrix that is mathematically positive definite
-but requires pivoting for Cholesky decomposition to work.
-When this happens, sir will stop with an error message saying that the covariance matrix is numerically not positive definite.
-If this happens in iteration 1 when option -covmat\_input was used, or the default NONMEM covariance matrix, 
+This works in most cases, but sometimes this algorithm can fail for a matrix that is mathematically positive definite
+but requires pivoting for Cholesky decomposition to work. Another cause of failure can be rounding. 
+Since NONMEM performs rounding before writing 
+the covariance matrix to the .cov-file, it can happen that the matrix in the cov-file is not positive definite
+although NONMEM's internally stored covariance matrix was invertible. A third cause of failure
+is when NONMEM writes something other than the covariance matrix, for example the S-matrix, to the .cov-file.
+
+When the sir program's Cholesky decomposition of the covariance matrix fails, 
+sir will stop with an error message saying that the covariance matrix is numerically not positive definite. 
+If this happens in iteration 1 when option -covmat\_input or the default NONMEM covariance matrix was used, 
 then the user must manually modify the covariance matrix to improve its numerical properties (for example increase the diagonal elements
 and/or change the order of the parameters so that pivoting is not necessary),
 and then use option -covmat\_input to give the modified matrix as input to sir. 
@@ -450,7 +505,14 @@ is the empirical covariance matrix from iteration 0 without Box-Cox transformati
 
 
 \begin{thebibliography}{99}
-    \bibitem{direct} D. R. Jones, C. D. Perttunen and B. E. Stuckman, {\em Lipschitzian optimization without the Lipschitz constant},
+\bibitem{Dosne2013} A. G. Dosne, M. Bergstrand and M. O. Karlsson, 
+{\em Application of Sampling Importance Resampling to estimate parameter uncertainty distributions},
+PAGE 22 (2013) Abstr 2907 \mbox{www.page-meeting.org/?abstract=2907}.
+\bibitem{Dosne2015} A. G. Dosne, M. Bergstrand and M. O. Karlsson, 
+{\em Determination of Appropriate Settings in the Assessment of Parameter Uncertainty Distributions 
+using Sampling Importance Resampling (SIR)},
+PAGE 24 (2015) Abstr 3546 \mbox{www.page-meeting.org/?abstract=3546}.
+\bibitem{direct} D. R. Jones, C. D. Perttunen and B. E. Stuckman, {\em Lipschitzian optimization without the Lipschitz constant},
 Journal of Optimization Theory and Application: 79:1, 1993.
 \end{thebibliography}
 
