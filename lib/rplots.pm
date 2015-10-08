@@ -275,7 +275,7 @@ sub add_preamble
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-							  code => { isa => 'ArrayRef[Str]', optional => 0 }
+							  code => { isa => 'ArrayRef', optional => 0 }
 		);
 	my $code = $parm{'code'};
 
