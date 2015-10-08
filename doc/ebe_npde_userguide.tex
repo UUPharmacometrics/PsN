@@ -9,11 +9,13 @@
 
 \section{Overview}
 
-The ebe\_npde program is a tool for simulation-evaluation based diagnostics. The name of
-the program is a little misleading since it does a lot more than compute npde:s for EBE:s. The principle is 
+The ebe\_npde program is a tool for simulation-evaluation based diagnostics.
+%based on objective functiuon value (OFV), individual function value (iOFV)
+%and empirical Bayes estimates (EBEs). 
+The principle is 
 \begin{enumerate}
 \item Simulate N data sets from final model
-\item Apply final model to each data set (evaluate or reestimate parameters)
+\item Apply final model to each data set (evaluate given the model parameters used for simulation or evaluate with model parameters that are re-estimated for each simulated data set)
 \item Extract output for diagnostics
 \begin{description}
 \item[OFV] population
