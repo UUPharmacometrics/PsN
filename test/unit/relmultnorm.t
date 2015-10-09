@@ -434,12 +434,15 @@ $wghash->{'cdf'}=[0,0,1.373954254589559e-01];
 $wghash->{'sum_weights'}=1.373954254589559e-01;
 
 my @times_sampledarr=(0,0,0);
+my @sampleorder=(0,0,0);
 my $ok_resamples = tool::sir::do_resampling(times_sampled => \@times_sampledarr,
+											sample_order => \@sampleorder,
 											with_replacement => 0,
 											wghash => $wghash,
 											current_resamples => 2);
 is($ok_resamples,1,'do_resampling ok resamples');
 is_deeply(\@times_sampledarr,[0,0,1],'do_resampling times_sampled');
+is_deeply(\@sampleorder,[0,0,1],'do_resampling sampleorder');
 
 
 $pdf = [1.035247587409e-01,2.982414449872e-01,5.974361835534e-01];
@@ -447,12 +450,15 @@ $pdf = [1.035247587409e-01,2.982414449872e-01,5.974361835534e-01];
 $wghash = tool::sir::compute_weights(pdf_array => $pdf,
 									 dofv_array => [9.8,8.1,9.5]);
 
-my @times_sampledarr=(0,0,0);
+@times_sampledarr=(0,0,0);
+@sampleorder=(0,0,0);
 my $ok_resamples = tool::sir::do_resampling(times_sampled => \@times_sampledarr,
+											sample_order => \@sampleorder,
 											with_replacement => 0,
 											wghash => $wghash,
 											current_resamples => 3);
 is($ok_resamples,3,'do_resampling ok resamples 2');
 is_deeply(\@times_sampledarr,[1,1,1],'do_resampling times_sampled 2');
+is(($sampleorder[0]+$sampleorder[1]+$sampleorder[2]),6,'do_resampling sampleorder 2');
 
 done_testing();

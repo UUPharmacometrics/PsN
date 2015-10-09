@@ -34,6 +34,7 @@ my %optional_options = (
 	"mceta:i"=>'',
 	"inflation:f" => '',
 	"with_replacement!"=>'',
+	"cap_resampling:i"=>'',
 	"recenter!"=>'',
 	"boxcox!"=>'',
 	"add_iterations"=>'',
@@ -184,11 +185,19 @@ EOF
 	If -no-copy_data is set, the absolute path to the original dataset will be 
 	used instead.
 EOF
-    $help_text{-with_replacement} = <<'EOF';
+$help_text{-with_replacement} = <<'EOF';
       -with_replacement
-    By default resampling is done without replacement, but if option
-	-with_replacement is set, resampling will be done with replacement.
-	It is not possible to cap replacement at e.g. 5, replacement will be unlimited.
+Default not set. By default, resampling is performed without replacement, but setting this option gives resampling 
+with unlimited replacement.
+To cap resampling at e.g. 5, use option -cap_resampling instead.
+EOF
+$help_text{-cap_resampling} = <<'EOF';
+      -cap_resampling=N
+
+Default 1. The maximum number of times a single parameter vector can be resampled in each iteration. 
+Value 1 means regular sampling without replacement. 
+A value equal to the maximum value of the 'resamples' array will give the same
+result as unlimited replacement. Any value in between gives limited replacement. 
 EOF
     $help_text{-recenter} = <<'EOF';
       -recenter
@@ -286,6 +295,12 @@ if ( defined $options{'add_iterations'} and ($options{'add_iterations'}) ){
 	}
 }
 
+if ( defined $options{'with_replacement'} and ($options{'with_replacement'}) ){
+	if (defined $options{'cap_resampling'}){
+		print "Cannot set -with_replacement together with -cap_resampling";
+		die;
+	}
+}
 if ( defined $options{'covmat_input'} ){
 	if (defined $options{'rawres_input'}){
 		print "Cannot use option -covmat_input together with option -rawres_input.\n";
@@ -371,7 +386,8 @@ my $sir =
 	tool::sir->new ( eval( $common_options::parameters ),
 					 top_tool => 1,
 					 models				     => [ $model ],
-					 with_replacement				     => $options{'with_replacement'},
+					 with_replacement			 => $options{'with_replacement'},
+					 cap_resampling		 => $options{'cap_resampling'},
 					 samples				     => \@samples,
 					 resamples				     => \@resamples,
 					 mceta				     => $options{'mceta'},

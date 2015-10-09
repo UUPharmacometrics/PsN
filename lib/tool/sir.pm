@@ -31,10 +31,12 @@ has 'recover' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'add_iterations' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'copy_data' => ( is => 'rw', isa => 'Bool', default => 1 );
 has 'recenter' => ( is => 'rw', isa => 'Bool', default => 1 );
+has 'center_rawresults_vector' => ( is => 'rw', isa => 'ArrayRef',default => sub { [] } );
 has 'boxcox' => ( is => 'rw', isa => 'Bool', default => 1 );
 has 'negative_dofv' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 has 'recompute' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'with_replacement' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'cap_resampling' => ( is => 'rw', isa => 'Int', default => 1 );
 has 'samples' => ( is => 'rw', required => 1, isa => 'ArrayRef' ); 
 has 'resamples' => ( is => 'rw', required => 1, isa => 'ArrayRef' ); 
 has 'attempted_samples' => ( is => 'rw', isa => 'ArrayRef',default => sub { [] } );
@@ -143,7 +145,12 @@ sub BUILD
 	if (defined $self->covmat_input and defined $self->auto_rawres){
 		croak("Not allowed to set both covmat_input and auto_rawres");
 	}
-
+	if ($self->with_replacement and ($self->cap_resampling > 1)){
+		croak("Cannot set both with_replacement and cap_resampling");
+	}
+	if ($self->cap_resampling < 1){
+		croak("Cannot set cap_resampling less than 1");
+	}
 }
 
 sub modelfit_setup
@@ -578,7 +585,7 @@ sub modelfit_setup
 				model::get_rawres_params(filename => $iteration_evaluation->raw_results_file()->[0],
 										 require_numeric_ofv => 1,
 										 extra_columns => ['resamples'],
-										 offset => 1, #first is original
+										 offset => 1, #first is center
 										 model => $model); 
 
 			if (($self->negative_dofv->[($iteration-1)] > 0) and ($self->recenter)){
@@ -598,8 +605,10 @@ sub modelfit_setup
 
 			my @restartseed = random_get_seed;
 			save_restart_information( parameter_hash => $self->parameter_hash,
+									  center_rawresults_vector => $self->center_rawresults_vector,
 									  nm_version  => $self->nm_version,
 									  model_filename => $model->filename,
+									  cap_resampling => $self->cap_resampling,
 									  done  => 0,
 									  recenter  => $self->recenter,
 									  copy_data => $self->copy_data,
@@ -655,12 +664,14 @@ sub load_restart_information
 	my $copy_data;
 	my $boxcox;
 	my $with_replacement;
+	my $cap_resampling;
 	my $mceta;
 	my $problems_per_file;
 	my $reference_ofv;
 
 	my $model_filename;
 
+	my @center_rawresults_vector;
 	my @negative_dofv;
 	my @samples;
 	my @resamples;
@@ -690,6 +701,7 @@ sub load_restart_information
 			$self->copy_data($copy_data);
 			$self->boxcox($boxcox);
 			$self->with_replacement($with_replacement);
+			$self->cap_resampling($cap_resampling);
 			$self->mceta($mceta);
 			$self->problems_per_file($problems_per_file);
 			$self->samples(\@samples);
@@ -720,6 +732,7 @@ sub load_restart_information
 		$self->successful_samples(\@successful_samples);
 		$self->actual_resamples(\@actual_resamples);
 		$self->minimum_ofv(\@minimum_ofv);
+		$self->center_rawresults_vector(\@center_rawresults_vector);
 
 		$self->rawres_input($self->directory.$intermediate_raw_results_files[-1]);
 		$self->offset_rawres(1); #first is original
@@ -768,9 +781,11 @@ sub save_restart_information
 							  boxcox => { isa => 'Bool', optional => 0 },
 							  with_replacement => { isa => 'Bool', optional => 0 },
 							  iteration  => { isa => 'Int', optional => 0 },
+							  cap_resampling  => { isa => 'Int', optional => 0 },
 							  mceta  => { isa => 'Int', optional => 0 },
 							  problems_per_file  => { isa => 'Int', optional => 0 },
 							  reference_ofv  => { isa => 'Num', optional => 0 },
+							  center_rawresults_vector => { isa => 'ArrayRef', optional => 0 },
 							  minimum_ofv => { isa => 'ArrayRef', optional => 0 },
 							  negative_dofv => { isa => 'ArrayRef', optional => 0 },
 							  samples => { isa => 'ArrayRef', optional => 0 },
@@ -789,10 +804,12 @@ sub save_restart_information
 	my $done = $parm{'done'};
 	my $iteration = $parm{'iteration'};
 	my $recenter = $parm{'recenter'};
+	my $cap_resampling = $parm{'cap_resampling'};
 	my $copy_data = $parm{'copy_data'};
 	my $boxcox = $parm{'boxcox'};
 	my $negative_dofv = $parm{'negative_dofv'};
 	my $with_replacement = $parm{'with_replacement'};
+	my $center_rawresults_vector = $parm{'center_rawresults_vector'};
 	my $samples = $parm{'samples'};
 	my $resamples = $parm{'resamples'};
 	my $attempted_samples = $parm{'attempted_samples'};
@@ -807,16 +824,16 @@ sub save_restart_information
 
 	#local name
 
-	my @dumper_names = qw(*parameter_hash *negative_dofv *intermediate_raw_results_files *samples *resamples *attempted_samples *successful_samples *actual_resamples *seed_array with_replacement mceta problems_per_file *minimum_ofv reference_ofv done iteration recenter copy_data boxcox nm_version model_filename);
+	my @dumper_names = qw(*parameter_hash *center_rawresults_vector *negative_dofv *intermediate_raw_results_files *samples *resamples *attempted_samples *successful_samples *actual_resamples *seed_array with_replacement mceta problems_per_file *minimum_ofv reference_ofv done iteration recenter copy_data boxcox nm_version model_filename cap_resampling);
 
 
 	open(FH, '>'.$recovery_filename) or return -1; #die "Could not open file $recovery_filename for writing.\n";
 	print FH Data::Dumper->Dump(
-		[$parameter_hash,$negative_dofv,$intermediate_raw_results_files,
+		[$parameter_hash,$center_rawresults_vector,$negative_dofv,$intermediate_raw_results_files,
 		 $samples,$resamples,$attempted_samples,$successful_samples,$actual_resamples,$seed_array,
 		 $with_replacement,$mceta,
 		 $problems_per_file,$minimum_ofv,$reference_ofv,$done,$iteration,$recenter,$copy_data,$boxcox,$nm_version,
-		$model_filename],
+		$model_filename, $cap_resampling],
 		\@dumper_names
 		);
 	close FH;
@@ -1011,6 +1028,8 @@ sub compute_weights{
 		#we check in mvnpdf that pdf is not zero??
 		my $wgt;
 		if (not defined $dofv_array->[$i]){
+			$wgt = 0;
+		}elsif (not defined $pdf_array->[$i]){
 			$wgt = 0;
 		}elsif ($pdf_array->[$i] > 0){
 			$wgt=exp(-0.5*($dofv_array->[$i]))/($pdf_array->[$i]);
@@ -1936,7 +1955,9 @@ sub modelfit_analyze
 							  recenter  => $self->recenter,
 							  copy_data => $self->copy_data,
 							  boxcox => $self->boxcox,
+							  center_rawresults_vector => $self->center_rawresults_vector, 
 							  with_replacement => $self->with_replacement,
+							  cap_resampling => $self->cap_resampling,
 							  iteration  => $self->iteration,
 							  mceta  => $self->mceta,
 							  problems_per_file  => $self->problems_per_file,
@@ -2022,12 +2043,15 @@ sub _modelfit_raw_results_callback
 		my $ofvindex=$start;
 		croak("could not find ofv in raw results header") unless (defined $ofvindex);
 
+
+
 		my @delta_ofv=();
 		my @filtered_pdf=();
 		my $index = 0;
 		my $successful_count=0;
 		my $negative_count = 0;
 		my $this_minimum_ofv = 1000000;
+		my @minimum_ofv_row=();
 		#new filtered_pdf for rows actually in raw_results_file
 
 		foreach my $row ( @{$modelfit -> raw_results()} ) {
@@ -2043,6 +2067,7 @@ sub _modelfit_raw_results_callback
 				}
 				if ($row->[$ofvindex] < $this_minimum_ofv){
 					$this_minimum_ofv = $row->[$ofvindex]; 
+					@minimum_ofv_row = @{$row};
 				}
 			}else{
 				$delta_ofv = undef;
@@ -2062,7 +2087,6 @@ sub _modelfit_raw_results_callback
 			}
 			push(@filtered_pdf,$pdf);
 			push(@delta_ofv,$delta_ofv);
-			$index++;
 		}
 
 		push(@{$self->minimum_ofv},$this_minimum_ofv);
@@ -2108,22 +2132,29 @@ sub _modelfit_raw_results_callback
 			}
 		}
 
-#		unless (scalar(@delta_ofv) == $self->samples()->[($iteration-1)]){
-#			ui->print(category => 'sir',
-#					  message => "It seems some runs crashed, only have ".scalar(@delta_ofv).
-#					  " sample lines in raw_results.\nContinuing anyway.\n");
-#		}
-		
+		if ($self->cap_resampling > 1){
+			my $hashref = tool::sir::augment_rawresults( raw_results => $modelfit->raw_results,
+														 filtered_pdf => \@filtered_pdf,
+														 dofv_array => \@delta_ofv,
+														 cap_resampling => $self->cap_resampling);
+			$modelfit -> raw_results($hashref->{'raw'});
+			@filtered_pdf = @{$hashref->{'pdf'}};
+			@delta_ofv = @{$hashref->{'dofv'}};
+		}
+
+
 		my $wghash = tool::sir::compute_weights(pdf_array => \@filtered_pdf,
 												dofv_array => \@delta_ofv);
 
 		my @original_weights = @{$wghash->{'weights'}};
 		my $total_weights = $wghash->{'sum_weights'};
-		my @times_sampled = (0) x scalar(@delta_ofv); #filtered_samples length filtered instead
+		my @times_sampled = (0) x scalar(@delta_ofv); #this is the filtered_samples length 
+		my @sample_order = (0) x scalar(@delta_ofv); 
 
 		ui -> print( category => 'sir', message => "Resampling vectors based on weights" );
 
 		my $ok_resamples = do_resampling(times_sampled => \@times_sampled,
+										 sample_order => \@sample_order,
 										 current_resamples => $current_resamples,
 										 wghash => $wghash,
 										 with_replacement => $with_replacement);
@@ -2138,7 +2169,7 @@ sub _modelfit_raw_results_callback
 		}
 
 
-		my @extra_headers = ('deltaofv','likelihood_ratio','relPDF','importance_ratio','probability_resample','resamples');
+		my @extra_headers = ('deltaofv','likelihood_ratio','relPDF','importance_ratio','probability_resample','resamples','sample_order');
 		$index=0;
 		foreach my $row ( @{$modelfit -> raw_results()} ) {
 			my @oldrow =@{$row};
@@ -2146,28 +2177,40 @@ sub _modelfit_raw_results_callback
 					@oldrow[0 .. $ofvindex],
 					$delta_ofv[$index],
 					((defined $delta_ofv[$index]) ? exp(-0.5*$delta_ofv[$index]): undef), #likelihood_ratio
-					$pdf_vector->[$index],
+					$filtered_pdf[$index],
 					$original_weights[$index], #importance_ratio
 					$original_weights[$index]/$total_weights, #probability_resample
 					$times_sampled[$index],
+					$sample_order[$index],
 					@oldrow[$ofvindex+1 .. $#oldrow]]; 
 			$index++;
 		}
 
 		# The prepare_raw_results in the modelfit will fix the
 		# raw_results for each maxev0 model, we must add
-		# the result for the original model.
+		# the result for the center model.
 
-		my %dummy;
-		my ($raw_results_row, $nonp_rows) = $self -> create_raw_results_rows( max_hash => $mh_ref,
-																			  model => $orig_mod,
-																			  raw_line_structure => \%dummy );
-		$orig_mod -> outputs -> [0] -> flush;
-		$raw_results_row->[0]->[0] = 'input'; #model column
-		my @oldrow =@{$raw_results_row->[0]};
-		my $row = [0,@oldrow[0 .. $ofvindex],0,undef,undef,undef,undef,undef,@oldrow[$ofvindex+1 .. $#oldrow]]; 
+		if ($iteration == 1){
+			my %dummy;
+			my ($raw_results_row, $nonp_rows) = $self -> create_raw_results_rows( max_hash => $mh_ref,
+																				  model => $orig_mod,
+																				  raw_line_structure => \%dummy );
+			$orig_mod -> outputs -> [0] -> flush;
+			$raw_results_row->[0]->[0] = 'input'; #model column #FIXME add to restart info
+			$self->center_rawresults_vector($raw_results_row->[0]);
+		}
+		my @oldrow =@{$self->center_rawresults_vector};
+
+		#sample.id                      'deltaofv','likelihood_ratio','relPDF','importance_ratio','probability_resample','resamples','sample_order'
+		my $row = [0,@oldrow[0 .. $ofvindex],0,undef,undef,undef,undef,undef,undef,@oldrow[$ofvindex+1 .. $#oldrow]]; 
 		
 		unshift( @{$modelfit -> raw_results()}, @{[$row]} );
+
+		#recenter for next iteration
+		if (($negative_count > 0) and $self->recenter){
+			$minimum_ofv_row[0]='center';
+			$self->center_rawresults_vector(\@minimum_ofv_row);
+		}
 
 		#fix the header
 		
@@ -2196,7 +2239,7 @@ sub _modelfit_raw_results_callback
 			foreach my $head (@extra_headers){
 				$hc++; #first will be 2
 				$modelfit->raw_line_structure() -> {$mod}->{$head} = ($ofvindex+$hc).',1'; #first has 2 extra relative old ofvindex
-				#			$modelfit->raw_line_structure() -> {$mod}->{'deltaofv'} = ($ofvindex+1).',1';
+				#	$modelfit->raw_line_structure() -> {$mod}->{'deltaofv'} = ($ofvindex+1).',1';
 			}
 		}
 		
@@ -2223,17 +2266,52 @@ sub _modelfit_raw_results_callback
 	return $subroutine;
 }
 
+sub augment_rawresults
+{
+	#static
+	my %parm = validated_hash(\@_,
+							  raw_results => { isa => 'ArrayRef', optional => 0 },
+							  filtered_pdf => { isa => 'ArrayRef', optional => 0 },
+							  dofv_array => { isa => 'ArrayRef', optional => 0 },
+							  cap_resampling => { isa => 'Int', optional => 0 },
+		);
+	my $raw_results = $parm{'raw_results'};
+	my $filtered_pdf = $parm{'filtered_pdf'};
+	my $dofv_array = $parm{'dofv_array'};
+	my $cap_resampling = $parm{'cap_resampling'};
+
+	my @augmented_raw=();
+	my @augmented_pdf=();
+	my @augmented_dofv=();
+	
+	my $count = scalar(@{$raw_results});
+	for (my $i=0; $i< $count ; $i++){
+		my $max = 1;
+		if (defined $filtered_pdf->[$i] and defined $dofv_array->[$i]){
+			$max = $cap_resampling;
+		}
+		for (my $j=0; $j<$max; $j++){
+			push(@augmented_raw,$raw_results->[$i]);
+			push(@augmented_pdf,$filtered_pdf->[$i]);
+			push(@augmented_dofv,$dofv_array->[$i]);
+		}
+	}
+	return {'raw' => \@augmented_raw,'dofv' => \@augmented_dofv, 'pdf' => \@augmented_pdf};
+
+}
 
 sub do_resampling
 {
 	#static
 	my %parm = validated_hash(\@_,
 							  times_sampled => { isa => 'ArrayRef', optional => 0 },
+							  sample_order => { isa => 'ArrayRef', optional => 0 },
 							  current_resamples => { isa => 'Int', optional => 0 },
 							  wghash => { isa => 'HashRef', optional => 0 },
 							  with_replacement => { isa => 'Bool', optional => 0 },
 		);
 	my $times_sampled = $parm{'times_sampled'};
+	my $sample_order = $parm{'sample_order'};
 	my $current_resamples = $parm{'current_resamples'};
 	my $wghash = $parm{'wghash'};
 	my $with_replacement = $parm{'with_replacement'};
@@ -2247,6 +2325,7 @@ sub do_resampling
 		my $sample_index = weighted_sample(cdf => $wghash->{'cdf'});
 		$times_sampled->[$sample_index]++;
 		$ok_resamples++;
+		$sample_order->[$sample_index] = $ok_resamples; #may overwrite if with_replacement
 		unless ($with_replacement ){
 			recompute_weights(weight_hash => $wghash,
 							  reset_index => $sample_index);

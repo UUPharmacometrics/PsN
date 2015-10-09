@@ -432,6 +432,8 @@ chdir($sirdir);
 cp("$modeldir/pheno.mod",'pheno.mod');
 cp("$modeldir/pheno.dta",'pheno.dta');
 
+my @center_rawresults_vector=(1,2,3,4,5);
+
 my @seed_array=(23,23);
 random_set_seed(@seed_array);
 
@@ -444,10 +446,12 @@ my $err = tool::sir::save_restart_information(
 	copy_data => 0,
 	boxcox => 0,
 	with_replacement => 1,
+	cap_resampling => 1,
 	iteration  => 2,
 	mceta  => 3,
 	problems_per_file  => 25,
 	reference_ofv  => 830.4,
+	center_rawresults_vector => [1,2,3,4,5],
 	minimum_ofv => [834,830],
 	negative_dofv => [4,0],
 	samples => [100,100,100],
@@ -474,10 +478,12 @@ is($recoversir->recenter,0,'recovery info 3');
 is($recoversir->copy_data,0,'recovery info 4');
 is($recoversir->boxcox,0,'recovery info 5');
 is($recoversir->with_replacement,1,'recovery info 6');
+is($recoversir->cap_resampling,1,'recovery info 6.5');
 is($recoversir->iteration,2,'recovery info 7');
 is($recoversir->mceta,3,'recovery info 8');
 is($recoversir->problems_per_file,25,'recovery info 9');
 is($recoversir->reference_ofv,830.4,'recovery info 10');
+is_deeply($recoversir->center_rawresults_vector,\@center_rawresults_vector,'recovery info 10.5');
 is_deeply($recoversir->minimum_ofv,[834,830],'recovery info 11');
 is_deeply($recoversir->negative_dofv,[4,0],'recovery info 12');
 is_deeply($recoversir->samples,[100,100,100],'recovery info 13');
@@ -498,6 +504,7 @@ $recoversir =tool::sir->new ( models				     => [model->create_dummy_model ],
 	directory => $sirdir,
 	nm_version => 'nm73',
 	add_iterations => 1,
+	cap_resampling => 5,
 	samples => [300,400],
 	resamples => [100,100],
 	);
@@ -508,10 +515,12 @@ is($recoversir->recenter,1,'add_iterations info 3');
 is($recoversir->copy_data,1,'add_iterations info 4');
 is($recoversir->boxcox,1,'add_iterations info 5');
 is($recoversir->with_replacement,0,'add_iterations info 6');
+is($recoversir->cap_resampling,5,'add_iterations info 6.5');
 is($recoversir->iteration,2,'add_iterations info 7');
 is($recoversir->mceta,0,'add_iterations info 8');
 is($recoversir->problems_per_file,100,'add_iterations info 9');
 is($recoversir->reference_ofv,830.4,'add_iterations info 10');
+is_deeply($recoversir->center_rawresults_vector,\@center_rawresults_vector,'add_iterations info 10.5');
 is_deeply($recoversir->minimum_ofv,[834,830],'add_iterations info 11');
 is_deeply($recoversir->negative_dofv,[4,0],'add_iterations info 12');
 is_deeply($recoversir->samples,[100,100,300,400],'add_iterations info 13');
@@ -525,6 +534,23 @@ is_deeply($recoversir->models->[0]->filename,'pheno.mod','add_iterations info 20
 
 #my @ans= random_get_seed;
 #is_deeply(\@ans,[98,8105],'no reset seeeds after add_iterations'); tool changes seed also, no control
+
+
+my @rawres = ();
+
+my $hashref = tool::sir::augment_rawresults(
+	raw_results => [[1,1,1],[2,2,2],[3,3,3]],
+	filtered_pdf => [1,undef,2],
+	dofv_array => [3,undef,5],
+	cap_resampling => 3);
+
+is(scalar(@{$hashref->{'raw'}}),7,'augment rawresults total');
+is_deeply($hashref->{'pdf'},[1,1,1,undef,2,2,2],'augment pdf');
+is_deeply($hashref->{'dofv'},[3,3,3,undef,5,5,5],'augment dofv');
+is_deeply($hashref->{'raw'}->[0],[1,1,1],'augment rawres 0');
+is_deeply($hashref->{'raw'}->[1],[1,1,1],'augment rawres 1');
+is_deeply($hashref->{'raw'}->[3],[2,2,2],'augment rawres 3');
+is_deeply($hashref->{'raw'}->[4],[3,3,3],'augment rawres 4');
 
 remove_test_dir($tempdir);
 
