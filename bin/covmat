@@ -29,6 +29,7 @@ my %optional_options = (
 	'in_filter:s' => '',
 #	'parameters:s' => '',
 	'raw_results_structure:s' => '',
+	'require_numeric_ofv!' => '',
 	'header!' => '',
 	'comma' => '',
 );
@@ -56,7 +57,7 @@ $help_text{Examples} = <<'EOF';
 	Use generic labels:
 	covmat -rawres_input=raw_results_run5.csv run5.mod
 
-	The covmat script prints output to screen. On unix the output can be
+	The covmat script prints output to screen, but the output can be
 	redirected to a file using >. Example
 
 	covmat -rawres_input=raw_results_run5.csv run5.mod > run5_empirical.cov
@@ -116,12 +117,20 @@ $help_text{-header} = <<'EOF';
       Default set.
       By default the covariance matrix is printed with headers. 
 Setting -no-header skips the headers in the output.
+$help_text{-require_numeric_ofv} = <<'EOF';
+      -require_numeric_ofv
+
+      Default set.
+      By default the covmat program assumes there is a column with header ofv in the raw results file,
+	and that all lines that do not have a number in that column should be filtered out (because the run crashed).
+	However, if the input file comes from another source than a PsN run and does not have an ofv column, the user 
+	must set -no-require_numeric_ofv, otherwise covmat will crash with an error message saying that the ofv column cannot be found.
 EOF
 
 $help_text{-comma} = <<'EOF';
       -comma
 
-      Default no set.
+      Default not set.
       By default the covariance matrix is printed with space separation 
 and fixed width of the numeric fields.
 	Setting -comma changes the format to comma-separated variable width.
@@ -185,10 +194,10 @@ unless (-e $options{'rawres_input'}){
     exit;
 }
 
-my @list_parameters=('theta','omega','sigma');
+my @list_parameters=('theta','sigma','omega'); #order in sir is theta sigma omega
+#my @list_parameters=('theta','omega','sigma'); #order in sir is theta sigma omega
 
 if (0){
-	#this must be disabled, not implemented resorting of matrix yet
 	if (defined $options{'parameters'}){
 		@list_parameters=split(/,/,$options{'parameters'});
 		my $num = scalar(@list_parameters);
@@ -232,10 +241,16 @@ if ( defined $options{'in_filter'} ){
   }	
 }
 
+
+my $numeric = 1;
+$numeric = 0 if (defined $options{'require_numeric_ofv'} and (not $options{'require_numeric_ofv'}));
+
+
 my ($sampled_params_arr,$labels_hash) = model::get_rawres_params(filename => $options{'rawres_input'},
 																 filter => \@in_filter,
 																 offset => $options{'offset_rawres'},
 																 model => $model,
+																 require_numeric_ofv => $numeric,
 																 rawres_structure_filename => $options{'raw_results_structure'});
 if (defined $sampled_params_arr) {
 	unless (scalar(@{$sampled_params_arr}) >= $min_samples) {
@@ -259,23 +274,6 @@ for (my $i=0; $i< $len; $i++){
 	$sampled_params_arr->[$i]->{'resamples'}=1;
 }
 
-my @headers=();
-
-#TODO handle model undef
-foreach my $param (@list_parameters){
-	if (defined $model){
-		my @temp= @{$model -> labels( parameter_type => $param,
-									  generic => 1)};
-		push(@headers,@{$temp[0]}); #first $PROBLEM
-	}else{
-		for (my $j=0; $j<scalar(@{$labels_hash->{'param'}}); $j++){
-			if ($labels_hash->{'param'}->[$j] eq $param){
-				push(@headers,$labels_hash->{'labels'}->[$j]);
-			}
-		} 
-	}
-}
-
 
 my $resulthash = tool::sir::empirical_statistics( sampled_params_arr => $sampled_params_arr,
 												  do_percentiles => 0,
@@ -290,10 +288,33 @@ my $comma = 0;
 $comma = 1 if (defined $options{'comma'} and ($options{'comma'}));
 
 
-my $formatted = tool::sir::format_covmatrix(matrix => $resulthash->{'covar'}, 
-											header => \@headers, 
-											comma => $comma, 
-											print_labels => $print_header);
+
+
+my @order=();
+my @headers=();
+if (defined $model){
+	my $params = $model->problems->[0]->get_estimated_attributes(parameter => 'all', attribute => 'param');
+	my $coords = $model->problems->[0]->get_estimated_attributes(parameter => 'all', attribute => 'coordinate_strings');
+	foreach my $param (@list_parameters){
+		for (my $i=0; $i<scalar(@{$params}); $i++){
+			if ($params->[$i] eq $param){
+				push(@headers, $coords->[$i]) ;
+				push(@order, $i);
+			}
+		}
+	}
+}else{
+	foreach my $param (@list_parameters){
+		for (my $i=0; $i<scalar(@{$labels_hash->{'labels'}}); $i++){
+			if ($labels_hash->{'param'}->[$i] eq $param){
+				push(@headers, $labels_hash->{'labels'}->[$i]) ;
+				push(@order, $i);
+			}
+		}
+	}
+}
+my $copy = linear_algebra::copy_and_reorder_square_matrix($resulthash->{'covar'},\@order);
+my $formatted = tool::sir::format_covmatrix(matrix => $copy, header => \@headers, comma => $comma, print_labels => $print_header);
 
 foreach my $line (@{$formatted}){
 	print $line;
