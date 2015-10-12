@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{SCM user guide}{2015-09-16}
+\guidetitle{SCM user guide}{2015-10-12}
 
 \begin{document}
 
@@ -33,6 +33,11 @@ The input control stream should always be the ``clean'' base model without any
 candidate relations added, even if section 
 \verb|[included_relations]|
 is used in the scm config file (see below). 
+
+If \$PRIOR NWPRI is used, it is essential to use the prior-specific records
+or NONMEM (\$THETAP etc) for the prior information. If the prior information
+is encoded using the last \$THETAs of the model there will be errors when
+running the scm, since scm adds new \$THETAs after the existing ones. 
 
 \section{Valid states for the parameter-covariate relations}
 There is a fixed set of parameter-covariate parameterizations, \emph{states}, 
