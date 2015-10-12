@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{Bootstrap user guide}{2015-10-01}
+\guidetitle{Bootstrap user guide}{2015-10-12}
 \begin{document}
 
 
@@ -159,6 +159,44 @@ sample\_keys1.csv:  One row per bootstrapped dataset. Each row consists of one n
 The row order is consistent between the files raw\_results, included\_individuals, included\_keys and sample\_keys so that row j (excluding headers if any) in each of the files concerns the same bootstrapped dataset.
 
 If option -rplots>0 then file PsN\_bootstrap\_plots.pdf is created.
+
+
+\subsection{Computing a covariance matrix}
+It is possible to use the covmat program to compute a covariance matrix based on the bootstrap samples. The -in\_filter option of covmat must be set to match the settings of bootstrap options -skip\_covariance\_step\_terminated,
+-skip\_estimate\_near\_boundary, -skip\_minimization\_terminated and
+-skip\_with\_covstep\_warnings. The settings of those options can be checked in the version\_and\_option\_info.txt file in
+the bootstrap run directory.
+
+Option -in\_filter is a comma-separated list of conditions.
+If bootstrap option -skip\_minimization\_terminated was true, then add 
+\verb|minimization_successful.eq.1|
+to -in\_filter. 
+If bootstrap option -skip\_estimate\_near\_boundary was true, then add 
+\verb|estimate_near_boundary.eq.0| 
+to -in\_filter. 
+If the bootstrap model has \$COV \emph{and} bootstrap option -skip\_covariance\_step\_terminated was true, then add
+\verb|covariance_step_successful.eq.1| 
+to -in\_filter. 
+If the bootstrap model has \$COV \emph{and} bootstrap option -skip\_with\_covstep\_warnings was true, then add
+\verb|covariance_step_warnings.eq.0| 
+to -in\_filter. 
+If the bootstrap model does \emph{not} have \$COV, then -in\_filter should not include conditions on covariance\_step\_successful or
+covariance\_step\_warnings.
+
+Example: If the bootstrap was run with
+\begin{verbatim}
+bootstrap run12.mod -samples=500 -dir=boot_run12 -skip_estimate_near_boundary 
+-skip_minimization_terminated
+\end{verbatim}
+and run12.mod does \emph{not} have \$COV, then a covariance matrix can be obtained with (all in one command)
+
+\begin{verbatim}
+covmat run12.mod -rawres_input=boot_run12/raw_results_run12.csv -offset=1 
+-in_filter=minimization_successful.eq.1,estimate_near_boundary.eq.0
+\end{verbatim}
+
+By default the matrix is printed to screen, but it can be redirected to a file using the > operator.
+
 
 \section{Known bugs and problems}
 
