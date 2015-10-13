@@ -2506,7 +2506,7 @@ sub prepare_results
 	open ( RES, ">" . $iterationfile );
 	print RES "iteration,commandline.samples,attempted.samples,successful.samples,".
 		"commandline.resamples,actual.resamples,requested.ratio,actual.ratio,negative.dOFV,minimum.sample.ofv\n";
-	if (defined $self->rawres_input){
+	if (defined $self->rawres_input and (not $self->recover) and (not $self->add_iterations)){
 		print RES "0, , , , ,".$self->rawres_samples().", , , , \n";
 	}
 
