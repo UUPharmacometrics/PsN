@@ -244,16 +244,16 @@ my $xvectors=[[0,0,0],
 
 
 #matlab code in sir.m
-#inflation 1 relative no
-my $results = linear_algebra::mvnpdf_cholesky($covar,$mu,$xvectors,1,0);
+#inflation none relative no
+my $results = linear_algebra::mvnpdf_cholesky($covar,$mu,$xvectors,[],0);
 
 cmp_relative($results->[0],7.722424963030007e-04,12,'mvnpdf_chol vs matlab builtin mvnpdf 1');
 cmp_relative($results->[1],9.222143261486746e-03,12,'mvnpdf_chol vs matlab builtin mvnpdf 2');
 cmp_relative($results->[2],1.434657987390218e-03,12,'mvnpdf_chol vs matlab builtin mvnpdf 3');
 cmp_relative($results->[3],6.415825193748951e-06,12,'mvnpdf_chol vs matlab builtin mvnpdf 4');
 
-#relative yes
-$results = linear_algebra::mvnpdf_cholesky($covar,$mu,$xvectors,1,1);
+#inflation none relative yes
+$results = linear_algebra::mvnpdf_cholesky($covar,$mu,$xvectors,[],1);
 
 cmp_relative($results->[0],8.373785511747774e-02,12,'rel mvnpdf_chol vs matlab builtin mvnpdf 1');
 cmp_relative($results->[1],1.000000000000000e+00,12,'rel mvnpdf_chol vs matlab builtin mvnpdf 2');
@@ -261,20 +261,35 @@ cmp_relative($results->[2],1.555666558967475e-01,12,'rel mvnpdf_chol vs matlab b
 cmp_relative($results->[3], 6.956978450489421e-04,12,'rel mvnpdf_chol vs matlab builtin mvnpdf 4');
 
 
-#inflation 3 relative no
-$results = linear_algebra::mvnpdf_cholesky($covar,$mu,$xvectors,3,0);
+#inflation [3,3,3] relative no
+$results = linear_algebra::mvnpdf_cholesky($covar,$mu,$xvectors,[3,3,3],0);
 cmp_relative($results->[0],7.764686515437722e-04,12,'infl mvnpdf_chol vs matlab builtin mvnpdf 1');
 cmp_relative($results->[1],1.774802298174889e-03,12,'infl mvnpdf_chol vs matlab builtin mvnpdf 2');
 cmp_relative($results->[2],9.545283267243817e-04,12,'infl mvnpdf_chol vs matlab builtin mvnpdf 3');
 cmp_relative($results->[3],1.572619060514979e-04,12,'infl mvnpdf_chol vs matlab builtin mvnpdf 4');
 
-#relative yes
-$results = linear_algebra::mvnpdf_cholesky($covar,$mu,$xvectors,3,1);
+#inflation [3,3,3] relative yes
+$results = linear_algebra::mvnpdf_cholesky($covar,$mu,$xvectors,[3,3,3],1);
 cmp_relative($results->[0],4.374958564918756e-01,12,'infl rel mvnpdf_chol vs matlab builtin mvnpdf 1');
 cmp_relative($results->[1],1.000000000000000e+00,12,'infl rel mvnpdf_chol vs matlab builtin mvnpdf 2');
 cmp_relative($results->[2],5.378223409480409e-01,12,'infl rel mvnpdf_chol vs matlab builtin mvnpdf 3');
 cmp_relative($results->[3],8.860812621958941e-02,12,'infl rel mvnpdf_chol vs matlab builtin mvnpdf 4');
 
+
+#inflation [5,1,2] relative yes
+$results = linear_algebra::mvnpdf_cholesky($covar,$mu,$xvectors,[5,1,2],1);
+cmp_relative($results->[0],2.695714028188652e-01,12,'ind infl rel mvnpdf_chol vs matlab builtin mvnpdf 1');
+cmp_relative($results->[1],1.000000000000000e+00,12,'ind infl rel mvnpdf_chol vs matlab builtin mvnpdf 2');
+cmp_relative($results->[2],5.409298739477048e-01,12,'ind infl rel mvnpdf_chol vs matlab builtin mvnpdf 3');
+cmp_relative($results->[3],2.171039717093587e-02,12,'ind infl rel mvnpdf_chol vs matlab builtin mvnpdf 4');
+
+#inflation [7,3,4] relative no
+$results = linear_algebra::mvnpdf_cholesky($covar,$mu,$xvectors,[7,3,4],0);
+cmp_relative($results->[0],5.386256507016714e-04,12,'ind infl abs mvnpdf_chol vs matlab builtin mvnpdf 1');
+cmp_relative($results->[1],1.006218322987856e-03,12,'ind infl abs mvnpdf_chol vs matlab builtin mvnpdf 2');
+cmp_relative($results->[2],7.237635960362615e-04,12,'ind infl abs mvnpdf_chol vs matlab builtin mvnpdf 3');
+cmp_relative($results->[3],1.599715462696341e-04,12,'ind infl abs mvnpdf_chol vs matlab builtin mvnpdf 4');
+     
 #check covar not destoryed
 is_deeply($covar,[[3,0.1,0.2],[0.1,8,0.3],[0.2,0.3,2]],'covar not destryed ');
 is_deeply($mu,[1,2,3],'mu not destoryed');
@@ -323,8 +338,8 @@ my $xvectors=[
 [27.4687,111.924,4.95307,0.231575,0.0723104,0.0456784,0.0403753,2.5557,0.0171464,0.715062,0.123952],
 [26.2775,106.028,4.11019,0.249755,0.0667135,0.0519199,0.0793815,3.19723,0.0158766,0.584682,0.119545]  ];
 
-#absolute
-$results = linear_algebra::mvnpdf_cholesky($moxo_covar,$mu,$xvectors,1,0);
+#absolute, no inflation
+$results = linear_algebra::mvnpdf_cholesky($moxo_covar,$mu,$xvectors,[],0);
 
 my $matlababs=[8.408615352278130e+06, 3.320492620781928e+07,1.363184286581484e+04,2.934253934734758e+04,8.543514599035780e+07,1.943559169652895e+07,
 2.039801927640183e+05,6.082921464337746e+06, 2.313966448511987e+04,1.309139347567398e+06, 3.638346261905838e+04,1.528343354309707e+07,
@@ -334,8 +349,8 @@ for (my $i=0; $i< scalar(@{$results}); $i++){
 	cmp_relative($results->[$i],$matlababs->[$i],12,'abs moxo mvnpdf_chol vs matlab builtin mvnpdf '.$i);
 }
 
-#relative
-$results = linear_algebra::mvnpdf_cholesky($moxo_covar,$mu,$xvectors,1,1);
+#relative, no inflation
+$results = linear_algebra::mvnpdf_cholesky($moxo_covar,$mu,$xvectors,[],1);
 my $matlabrel=[ 9.923550589244195e-03, 3.918728009673332e-02, 1.608781905654550e-05, 3.462902766165926e-05, 1.008275391149960e-01, 2.293719826060845e-02, 
 2.407302126799157e-04, 7.178848877348236e-03, 2.730861402454468e-05, 1.544999979150610e-03, 4.293847640613998e-05, 1.803696798916897e-02, 
 3.471682602053407e-02, 1.796995004341245e-02, 6.102074832828437e-03, 5.132004103367098e-04];
@@ -397,6 +412,42 @@ my @resampled_params_arr =(
 my $modeldir = $includes::testfiledir;
 
 my $model = model->new(filename => "$modeldir/mox_sir_block2.mod", ignore_missing_data => 1);
+# 5 theta 4 omega 0 sigma
+is_deeply(tool::sir::setup_inflation(model => $model,
+									theta_inflation => '1',
+									omega_inflation => '2',
+									sigma_inflation => '1'),[1,1,1,1,1,2,2,2,2],'inflation 1');
+is_deeply(tool::sir::setup_inflation(model => $model,
+									theta_inflation => '1,2,3,4,5',
+									omega_inflation => '3',
+									sigma_inflation => '1'),[1,2,3,4,5,3,3,3,3],'inflation 2');
+is_deeply(tool::sir::setup_inflation(model => $model,
+									theta_inflation => '1,2,3,4,5',
+									omega_inflation => '6,7,8,9',
+									sigma_inflation => '1'),[1,2,3,4,5,6,7,8,9],'inflation 3');
+is_deeply(tool::sir::setup_inflation(model => $model,
+									theta_inflation => '1,1,1,1,1',
+									omega_inflation => '1',
+									sigma_inflation => '1'),[],'inflation 4');
+
+
+dies_ok {tool::sir::setup_inflation(model => $model,
+									theta_inflation => '1',
+									omega_inflation => '1',
+									sigma_inflation => '2')} 'illegal inflation 1';
+dies_ok {tool::sir::setup_inflation(model => $model,
+									theta_inflation => '1,2,3,4',
+									omega_inflation => '1',
+									sigma_inflation => '1')} 'illegal inflation 2';
+dies_ok {tool::sir::setup_inflation(model => $model,
+									theta_inflation => '1',
+									omega_inflation => '1,2,3',
+									sigma_inflation => '1')} 'illegal inflation 3';
+dies_ok {tool::sir::setup_inflation(model => $model,
+									theta_inflation => '-11',
+									omega_inflation => '1',
+									sigma_inflation => '1')} 'illegal inflation 4';
+
 
 my $parameter_hash = output::get_nonmem_parameters(output => $model->outputs->[0]);
 

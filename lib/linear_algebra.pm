@@ -177,7 +177,8 @@ sub mvnpdf_cholesky
     croak("input xvectors to mvnpdf_cholesky undefined ") unless (defined $xvectors);
     croak("input xvectors to mvnpdf_cholesky is empty ") unless (scalar(@{$xvectors})>0);
     croak("input xvectors to mvnpdf_cholesky has wrong dim ".scalar(@{$xvectors->[0]})) unless ($ncol == scalar(@{$xvectors->[0]}));
-    croak("input inflation to mvnpdf_cholesky is not positive: $inflation") unless ($inflation > 0);
+    croak("input inflation to mvnpdf_cholesky has illegal length ".scalar(@{$inflation})) unless 
+		(scalar(@{$inflation}) == 0 or scalar(@{$inflation})== $ncol );
     croak("input relative to mvnpdf_cholesky is $relative") unless (($relative == 1) or ($relative==0));
 
 	my @covar_copy=();
@@ -193,16 +194,17 @@ sub mvnpdf_cholesky
 	croak("failed cholesky in mvnpdf_cholesky") unless ($err==0);
 	my @arr=();
 	for (my $i=0; $i< $ncol; $i++){
-		push(@arr,$covar_copy[$i][$i]);
+		my $value = $covar_copy[$i][$i]; #pick out diagonal elements
+		unless (scalar(@{$inflation}) == 0){
+			$value = $value*sqrt($inflation->[$i]);  
+		}
+		push(@arr,$value); 
 	}
 	my @sorted = sort { $a <=> $b } @arr; #sort ascending
 
 	my $root_determinant = $sorted[0];
 	for (my $i=1; $i< $ncol; $i++){
 		$root_determinant = $root_determinant*$sorted[$i];
-	}
-	unless ($inflation == 1){
-		$root_determinant = $root_determinant*($inflation**($ncol/2));
 	}
 
 
@@ -212,17 +214,22 @@ sub mvnpdf_cholesky
 		my @diff = 0 x $ncol;
 		for (my $j=0; $j< $ncol; $j++){
 			$diff[$j]= ($xvec->[$j] - $mu->[$j]);
+			unless (scalar(@{$inflation}) == 0){
+				$diff[$j] = $diff[$j]/(sqrt($inflation->[$j]));  
+			}
 		}
 		$err = linear_algebra::upper_triangular_transpose_solve(\@covar_copy,\@diff);
 		croak("failed solve in mvnpdf_cholesky") unless ($err==0);
 
-		my @sorted = sort { $a <=> $b } @diff; #sort ascending for numerical safety
+		my @squared = ();
+		for (my $i=0; $i< $ncol; $i++){
+			push(@squared,($diff[$i])**2);
+		}
+
+		my @sorted = sort { $a <=> $b } @squared; #sort ascending for numerical safety
 		my $sum = 0;
 		for (my $i=0; $i< $ncol; $i++){
-			$sum = $sum + ($sorted[$i])**2;
-		}
-		unless ($inflation == 1){
-			$sum = $sum/$inflation;
+			$sum = $sum + ($sorted[$i]);
 		}
 
 		if ($relative){

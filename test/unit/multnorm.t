@@ -116,7 +116,7 @@ my ($gotsamples,$dirt) = tool::sir::sample_multivariate_normal(samples=>$nsample
 													   upper_bound => $hash->{'upper_bounds'},
 													   param => $hash->{'param'},
 													   coords => $hash->{'coords'},
-													   inflation => 1,
+													   inflation => [],
 													   block_number => $hash->{'block_number'},
 													   mu => $mu
 	);
@@ -350,18 +350,18 @@ cmp_ok($covar->[6]->[3],'==',2.75131E-03,'covar element 7,4');
 cmp_ok($covar->[4]->[6],'==',-3.05686E-04,'covar element 5,7');
 
 my $inflated=tool::sir::inflate_covmatrix(matrix => $covar,
-										  inflation => 2);
+										  inflation => [2,2,2,2,2,2,2,2]);
 
-cmp_ok($inflated->[0]->[0],'==',eval(2*6.10693E+00),'inflated covar element 1,1');
-cmp_ok($inflated->[1]->[5],'==',eval(2*1.18743E-02),'inflated covar element 2,6');
-cmp_ok($inflated->[2]->[2],'==',eval(2*3.75907E-04),'inflated covar element 3,3');
-cmp_ok($inflated->[3]->[1],'==',eval(2*-4.02777E-02),'inflated covar element 4,2');
-cmp_ok($inflated->[4]->[7],'==',eval(2*6.19395E-05),'inflated covar element 5,8');
-cmp_ok($inflated->[7]->[0],'==',eval(2*1.53110E-02),'inflated covar element 8,1');
-cmp_ok($inflated->[6]->[5],'==',eval(2*7.25938E-03),'inflated covar element 7,6');
-cmp_ok($inflated->[7]->[7],'==',eval(2*1.69362E-03),'inflated covar element 8,8');
-cmp_ok($inflated->[6]->[3],'==',eval(2*2.75131E-03),'inflated covar element 7,4');
-cmp_ok($inflated->[4]->[6],'==',eval(2*-3.05686E-04),'inflated covar element 5,7');
+cmp_float($inflated->[0]->[0],eval(2*6.10693E+00),'inflated covar element 1,1');
+cmp_float($inflated->[1]->[5],eval(2*1.18743E-02),'inflated covar element 2,6');
+cmp_float($inflated->[2]->[2],eval(2*3.75907E-04),'inflated covar element 3,3');
+cmp_float($inflated->[3]->[1],eval(2*-4.02777E-02),'inflated covar element 4,2');
+cmp_float($inflated->[4]->[7],eval(2*6.19395E-05),'inflated covar element 5,8');
+cmp_float($inflated->[7]->[0],eval(2*1.53110E-02),'inflated covar element 8,1');
+cmp_float($inflated->[6]->[5],eval(2*7.25938E-03),'inflated covar element 7,6');
+cmp_float($inflated->[7]->[7],eval(2*1.69362E-03),'inflated covar element 8,8');
+cmp_float($inflated->[6]->[3],eval(2*2.75131E-03),'inflated covar element 7,4');
+cmp_float($inflated->[4]->[6],eval(2*-3.05686E-04),'inflated covar element 5,7');
 
 cmp_ok($covar->[0]->[0],'==',6.10693E+00,'covar element 1,1 after inflation not changed');
 cmp_ok($covar->[1]->[5],'==',1.18743E-02,'covar element 2,6 after inflation not changed');
@@ -403,7 +403,7 @@ my ($gotsamples,$dirt) = tool::sir::sample_multivariate_normal(samples=>$nsample
 													   upper_bound => $hash->{'upper_bounds'},
 													   param => $hash->{'param'},
 													   coords => $hash->{'coords'},
-													   inflation => 1,
+													   inflation => [],
 													   block_number => $hash->{'block_number'},
 													   mu => $mu
 	);

@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{SIR user guide}{2015-10-09}
+\guidetitle{SIR user guide}{2015-10-12}
 \usepackage{amsmath}
 
 \begin{document}
@@ -66,17 +66,16 @@ If output file (lst) exists, then it is important that the control stream copy a
 in terms of which parameters are present and which parameters are FIXED or SAME.
 \begin{optionlist}
 \optdefault{samples}{M1,M2}
-Required. A comma-separated list of (usually two) integers, the number of parameter vectors to 
+Default 1000,1000,1000,2000,2000.
+A comma-separated list of integers, the number of parameter vectors to 
 generate in each iteration. In each iteration the number needs to be greater than the number 
-of resamples. A good starting point may be 5 times the number of resamples.
+of resamples, unless sampling is with replacement.
 \nextopt
 \optdefault{resamples}{m1,m2}
-Required. A comma-separated list of (usually two) integers, the number of parameter vectors to resample 
+Default 200,400,500,1000,1000.
+A comma-separated list of integers, the number of parameter vectors to resample 
 in each iteration based on the weights
-computed from delta ofv and the pdf. 
-Only the resampled vectors will be used to compute the uncertainty (confidence intervals) around the model parameters. 
-A good starting point may be 1000 resamples.
-The list length must be equal to list 'samples'.
+computed from delta ofv and the pdf. The list length must be equal to list 'samples'.
 \nextopt
 \optdefault{rawres\_input}{filename}
 If rawres\_input is given, sir will run an intial 0th iteration in which sir will read all parameter
@@ -163,13 +162,36 @@ The rows and columns must be sorted with THETAs first.
 
 Please note that there is a PsN script called covmat that can be used to generate a covariance matrix from a raw\_results file.
 \nextopt
-\optdefault{inflation}{X}
-Default is 1, which is the same as no inflation. If given, the covariance
-matrix will in the first iteration be multiplied with a scalar $X$ multiple of the identity matrix
+\optdefault{theta\_inflation}{X}
+Either a positive vector with length equal to the number of \emph{estimated} (not FIX) \$THETAs, or
+a positive scalar which will be interpreted as a vector of lenght n(\$THETA) and all equal values.
+Default is the scalar 1, which is the same as no inflation. 
+If given, the variance
+of each estimated \$THETA 
+will in the first iteration be inflated with the factor from the inflation vector
 before the parameter vectors
 are sampled from the truncated multivariate normal distribution.
 The weights will also be computed based the inflated covariance matrix. 
 Inflation is not used in any but the first iteration.
+\nextopt
+\optdefault{omega\_inflation}{X}
+Either a positive vector with length equal to the number of \emph{estimated} (not FIX) \$OMEGA elements, both diagonal
+and off-diagonal, or
+a positive scalar which will be interpreted as a vector of the required length and all equal values.
+Default is the scalar 1, which is the same as no inflation. 
+If given, the variance
+of each estimated \$OMEGA element
+will in the first iteration be inflated with the factor from the inflation vector
+before the parameter vectors
+are sampled from the truncated multivariate normal distribution.
+%FIXME
+%When off-diagonal $i,j$ is estimated, the correlation will be un-inflated if the 
+%inflation vector element is equal to the product of 
+The weights will also be computed based the inflated covariance matrix. 
+Inflation is not used in any but the first iteration.
+\nextopt
+\optdefault{sigma\_inflation}{X}
+See help text for omega\_inflation.
 \nextopt
 \optdefault{problems\_per\_file}{N}
 Optional, default 100. The number of \$PROBLEM per model file when evaluating the parameter vectors
@@ -282,7 +304,8 @@ then the samples are back-transformed for boundary checks and evaluation.
 
 \noindent If there was no previous iteration, the covariance matrix is either from
 the .cov-file given by NONMEM or given via option -covmat\_input.
-The matrix is inflated if option -inflation is set, and the sampling is done on the original scale. 
+The matrix is inflated if either of options -theta\_inflation, -omega\_inflation or -sigma\_inflation 
+is set, and the sampling is done on the original scale. 
 
 \noindent If a vector (on the original scale) does not fulfill the constraints from \$THETA boundaries
 and positive definiteness of \$OMEGA and

@@ -37,8 +37,8 @@ has 'negative_dofv' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 has 'recompute' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'with_replacement' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'cap_resampling' => ( is => 'rw', isa => 'Int', default => 1 );
-has 'samples' => ( is => 'rw', required => 1, isa => 'ArrayRef' ); 
-has 'resamples' => ( is => 'rw', required => 1, isa => 'ArrayRef' ); 
+has 'samples' => ( is => 'rw', required => 1, isa => 'ArrayRef' ); #default in bin script
+has 'resamples' => ( is => 'rw', required => 1, isa => 'ArrayRef' ); #default in bin script
 has 'attempted_samples' => ( is => 'rw', isa => 'ArrayRef',default => sub { [] } );
 has 'successful_samples' => ( is => 'rw', isa => 'ArrayRef',default => sub { [] } );
 has 'actual_resamples' => ( is => 'rw', isa => 'ArrayRef',default => sub { [] } );
@@ -51,7 +51,10 @@ has 'auto_rawres' => ( is => 'rw', isa => 'Maybe[Num]' );
 has 'rawres_input' => ( is => 'rw', isa => 'Str' );
 has 'offset_rawres' => ( is => 'rw', isa => 'Int', default => 1 );
 has 'in_filter' => ( is => 'rw', isa => 'ArrayRef[Str]' );
-has 'inflation' => ( is => 'rw', isa => 'Num', default => 1 );
+has 'inflation' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
+has 'theta_inflation' => ( is => 'rw', isa => 'Str', default => '1' );
+has 'omega_inflation' => ( is => 'rw', isa => 'Str', default => '1' );
+has 'sigma_inflation' => ( is => 'rw', isa => 'Str', default => '1' );
 has 'mceta' => ( is => 'rw', isa => 'Int', default => 0 );
 has 'problems_per_file' => ( is => 'rw', isa => 'Maybe[Int]', default => 100 );
 has 'full_rawres_header' => ( is => 'rw', isa => 'ArrayRef' );
@@ -111,6 +114,12 @@ sub BUILD
 		unless ($self->load_restart_information()){
 			croak("Failed to read restart information from $recovery_filename");
 		}
+	}else{
+		#we only inflate if first iteration of new run
+		$self->inflation(setup_inflation(theta_inflation => $self->theta_inflation,
+										 omega_inflation => $self->omega_inflation,
+										 sigma_inflation => $self->sigma_inflation,
+										 model => $self ->models()->[0]));
 	}
 
 	for my $accessor ('logfile','raw_results_file','raw_nonp_file'){
@@ -135,8 +144,10 @@ sub BUILD
 	for (my $j=0; $j<scalar(@{$self->samples}); $j++){
 		croak("Number of samples must be larger than 0") unless ($self->samples()->[$j]>0);
 		croak("Number of resamples must be larger than 1") unless ($self->resamples()->[$j]>1);
-		croak("Number of resamples cannot be larger than samples unless with_replacement is set") unless 
-			(($self->resamples()->[$j] <= $self->samples->[$j]) or ($self->with_replacement));
+		croak("Number of resamples cannot be larger than samples unless with_replacement is set or ".
+			  "cap_resampling is large enough") unless 
+			(($self->resamples()->[$j] <= ($self->samples->[$j]*$self->cap_resampling)) or 
+			 ($self->with_replacement));
 	}
 
 	if (defined $self->covmat_input and defined $self->rawres_input){
@@ -151,6 +162,61 @@ sub BUILD
 	if ($self->cap_resampling < 1){
 		croak("Cannot set cap_resampling less than 1");
 	}
+}
+
+sub setup_inflation
+{
+	my %parm = validated_hash(\@_,
+							  theta_inflation => {isa => 'Str', optional => 0},
+							  omega_inflation => {isa => 'Str', optional => 0},
+							  sigma_inflation => {isa => 'Str', optional => 0},
+							  model => {isa => 'model', optional => 0},
+		);
+	my %inflation;
+	$inflation{'theta'} = $parm{'theta_inflation'};
+	$inflation{'omega'} = $parm{'omega_inflation'};
+	$inflation{'sigma'} = $parm{'sigma_inflation'};
+	my $model = $parm{'model'};
+
+	my @inflationvec=();
+	my $any_not_one=0;
+
+	foreach my $param ('theta','omega','sigma'){
+		my $coords = $model->problems->[0]->get_estimated_attributes(parameter => $param,
+																	 attribute => 'coordinate_strings');
+		my $needed_length = scalar(@{$coords});
+		my @given = split(/,/,$inflation{$param});
+		if ($needed_length == 0){
+			#check that not set on commandline
+			unless(scalar(@given)==1 and $given[0]==1){
+				croak("illegal input $param inflation ".$inflation{$param}.": there are no estimated $param in model");
+			}
+		}else{
+			#check that either length 1 or same length
+			unless ( (scalar(@given) == $needed_length)
+					 or (scalar(@given) == 1)){
+				croak("illegal input $param inflation ".$inflation{$param}.": there are $needed_length estimated $param ".
+					"elements in model, but ".scalar(@given)." values were given for inflation");
+			}
+		}
+		foreach my $val (@given){
+			unless (usable_number($val) and ($val>0)){
+				croak("value $val in $param inflation is not a positive number");
+			}
+			$any_not_one = 1 unless ($val == 1);
+		}
+
+		if (scalar(@given) == $needed_length){
+			push(@inflationvec,@given);
+		}elsif ($needed_length > 0){
+			push(@inflationvec,($given[0]) x $needed_length);
+		} #else nothing
+
+	}
+	unless ($any_not_one){
+		@inflationvec=();
+	}
+	return \@inflationvec;
 }
 
 sub modelfit_setup
@@ -451,10 +517,17 @@ sub modelfit_setup
 		my $mu_values= $self->parameter_hash->{'values'};
 		my $lambda = [];
 		my $delta = [];
+
 		my $inflation = $self->inflation();
+#		my $inflation = [];
+#		$inflation = $self->inflation() if ($iteration == 1); #only inflate in first iteration
+		#FIXME do inflation in first iteration if rawres input or auto_rawres?
+
+
 		#covmatrix already read if *not* have resampled params
 		if ($have_resampled_params){
-			croak("iteration $iteration iteration_resulthash not defined") 
+			$inflation = []; #FIXME do inflation if first iteration with rawres input?
+			croak("iteration ".($iteration-1)."iteration_resulthash not defined") 
 				unless (defined $previous_iteration_resulthash and 
 						defined $previous_iteration_resulthash->{'covar'});
 #							defined $previous_iteration_resulthash->{'lambda'} and 
@@ -476,7 +549,6 @@ sub modelfit_setup
 						  "not positive definite\n(as checked with Cholesky decomposition without pivoting). Cannot proceed with sir.\n");
 				}
 			}
-			$inflation = 1; #only inflate in first iteration
 
 			if ($self->boxcox){
 				$lambda = $previous_iteration_resulthash->{'lambda'};
@@ -922,7 +994,7 @@ sub get_vector_from_sampled_params_arr
 }
 sub mvnpdf{
 	#Note: this sub is not used in current sir procedure
-
+	#inflation should be vector
 	my %parm = validated_hash(\@_,
 							  inverse_covmatrix => { isa => 'Math::MatrixReal', optional => 0 },
 							  mu => { isa => 'Math::MatrixReal', optional => 0 },
@@ -1287,6 +1359,8 @@ sub empirical_statistics{
 
 sub get_determinant_factor
 {
+	#Note not used
+	#inflation should be vector
 	my %parm = validated_hash(\@_,
 							  inverse_covmatrix => { isa => 'Math::MatrixReal', optional => 0 },
 							  k => { isa => 'Int', optional => 0 },
@@ -1350,7 +1424,7 @@ sub sample_multivariate_normal
 							  block_number => { isa => 'ArrayRef', optional => 0 },
 							  coords => { isa => 'ArrayRef', optional => 0 },
 							  mu => { isa => 'Math::MatrixReal', optional => 0 }, #required for multnorm							  
-							  inflation => { isa => 'Num', optional => 0 }, #required for multnorm
+							  inflation => { isa => 'ArrayRef', optional => 0 }, #required for multnorm
 #							  degree => { isa => 'Num', optional => 1 }, #required for uniform
 							  lambda => { isa => 'ArrayRef', optional => 1 }, #not allowed for uniform?
 							  delta => { isa => 'ArrayRef', optional => 1 }, #not allowed for uniform?
@@ -1431,7 +1505,7 @@ sub sample_multivariate_normal
 	unless (scalar(@{$covmatrix->[0]})==$dim){
 		croak("Input error sample_multivariate_normal: covmatrix is not square ");
 	}
-	if ($inflation != 1){
+	if (scalar(@{$inflation}) != 0){
 		$use_covmatrix = inflate_covmatrix(matrix => $covmatrix,
 										   inflation => $inflation);
 	}else{
@@ -1831,7 +1905,7 @@ sub inflate_covmatrix
 {
 	my %parm = validated_hash(\@_,
 							  matrix => { isa => 'ArrayRef[ArrayRef]', optional => 0 },
-							  inflation => { isa => 'Num', optional => 0 }
+							  inflation => { isa => 'ArrayRef', optional => 0 }
 		);
 	my $matrix = $parm{'matrix'};
 	my $inflation = $parm{'inflation'};
@@ -1843,15 +1917,23 @@ sub inflate_covmatrix
 	unless (scalar(@{$matrix->[0]})==$dim){
 		croak("Input error inflate_covmatrix: covmatrix is not square ");
 	}
-	unless ($inflation > 0){
-		croak("Input error inflate_covmatrix: inflation must be larger than 0");
+	unless (scalar(@{$inflation}) == $dim){
+		croak("Input error inflate_covmatrix: inflation must have length equal to matrix dim $dim");
+	}
+	my @rootinfl = ();
+	foreach my $val (@{$inflation}){
+		croak("Input error inflate_covmatrix: inflation must be positive") unless ($val > 0);
+		push(@rootinfl,sqrt($val));
 	}
 
 	my @copy=();
 	for (my $i=0;$i< $dim; $i++){
 		push(@copy,[0 x $dim]);
-		for (my $j=0;$j< $dim; $j++){
-			$copy[$i]->[$j] = ($matrix->[$i]->[$j])*$inflation;
+		for (my $j=0;$j< $i; $j++){
+			$copy[$i]->[$j] = $copy[$j]->[$i]; 
+		}
+		for (my $j=$i;$j< $dim; $j++){
+			$copy[$i]->[$j] = ($matrix->[$i]->[$j])*$rootinfl[$i]*$rootinfl[$j];
 		}
 	}
 	return \@copy;

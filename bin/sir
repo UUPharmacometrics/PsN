@@ -22,9 +22,10 @@ Getopt::Long::config("auto_abbrev");
 ## Declare the options
 my %options;
 
-my %required_options = ("samples:s"=>'',
-						"resamples:s"=> '');
+my %required_options = ();
 my %optional_options = (
+	"samples:s"=>'',
+	"resamples:s"=> '',
 	"covmat_input:s"=>'',
 	'rawres_input:s' => undef,
 	'auto_rawres:f' => undef,
@@ -32,7 +33,9 @@ my %optional_options = (
 	'problems_per_file:i' => undef,
 	'in_filter:s' => undef,
 	"mceta:i"=>'',
-	"inflation:f" => '',
+	"theta_inflation:s" => '',
+	"omega_inflation:s" => '',
+	"sigma_inflation:s" => '',
 	"with_replacement!"=>'',
 	"cap_resampling:i"=>'',
 	"recenter!"=>'',
@@ -94,19 +97,17 @@ EOF
     $help_text{-samples} = <<'EOF';      
       -samples=M1,M2
 
-	A comma-separated list of (usually two) integers,
+	A comma-separated list of integers,
     the number of parameter vectors to generate in each iteration.
-	If option -rawres_input is used, the first integer in the list will
-	not be used, but it must still be set so that the list length is equal to
-	list -resamples.
+	Default is 1000,1000,1000,2000,2000
 EOF
 
     $help_text{-resamples} = <<'EOF';      
       -resamples=m1,m2
 
-	A comma-separated list of (usually two) integers, the number of parameter vectors 
-	to resample in each iteration based on the weights
-	computed from delta ofv and the pdf. List length must be equal to list -samples.
+	A comma-separated list of integers, the number of parameter vectors 
+	to resample in each iteration. List length must be equal to list -samples.
+	Default is 200,400,500,1000,1000
 EOF
     $help_text{-mceta} = <<'EOF';      
       -mceta=N
@@ -241,12 +242,38 @@ is -samples=2000,2000 and the old run was terminated after the first iteration,
 then after the add\_iterations run has finished there will be three iterations 
 in total with sample sequence 1000,2000,2000 after the new run has finished.
 EOF
-    $help_text{-inflation} = <<'EOF';
-      -inflation=X
-    Default is 1, which is the same as no inflation. If given, the covariance
-	matrix will be multiplied with this number before the parameter vectors
-	are sampled from the truncated multivariate normal distribution.
-	Inflation is only used in the first iteration.
+$help_text{-theta_inflation} = <<'EOF';
+      -theta_inflation=X
+
+Either a positive vector with length equal to the number of estimated (not FIX) $THETAs, or
+a positive scalar which will be interpreted as a vector of lenght n($THETA) and all equal values.
+Default is the scalar 1, which is the same as no inflation. 
+If given, the variance
+of each estimated $THETA 
+will in the first iteration be inflated with the factor from the inflation vector
+before the parameter vectors
+are sampled from the truncated multivariate normal distribution.
+The weights will also be computed based the inflated covariance matrix. 
+Inflation is not used in any but the first iteration.
+EOF
+$help_text{-omega_inflation} = <<'EOF';
+      -omega_inflation=X
+
+Either a positive vector with length equal to the number of estimated (not FIX) $OMEGA elements, both diagonal
+and off-diagonal, or
+a positive scalar which will be interpreted as a vector of the required length and all equal values.
+Default is the scalar 1, which is the same as no inflation. 
+If given, the variance
+of each estimated $OMEGA element
+will in the first iteration be inflated with the factor from the inflation vector
+before the parameter vectors
+are sampled from the truncated multivariate normal distribution.
+The weights will also be computed based the inflated covariance matrix. 
+Inflation is not used in any but the first iteration.
+EOF
+$help_text{-sigma_inflation} = <<'EOF';
+      -sigma_inflation=X
+	See help text for omega_inflation
 EOF
     $help_text{-problems_per_file} = <<'EOF';
       -problems_per_file=N
@@ -377,10 +404,17 @@ if ($dummymodel){
 }
 
 my @samples =();
-@samples = split(/,/,$options{'samples'}) if (defined $options{'samples'});
+if (defined $options{'samples'}){
+	@samples = split(/,/,$options{'samples'}) ;
+}else{
+	@samples=(1000,1000,1000,2000,2000);
+}
 my @resamples = ();
-@resamples = split(/,/,$options{'resamples'}) if (defined $options{'resamples'});
-
+if (defined $options{'resamples'}){
+	@resamples = split(/,/,$options{'resamples'});
+}else{
+	@resamples = (200,400,500,1000,1000);
+}
 
 my $sir = 
 	tool::sir->new ( eval( $common_options::parameters ),
@@ -391,7 +425,9 @@ my $sir =
 					 samples				     => \@samples,
 					 resamples				     => \@resamples,
 					 mceta				     => $options{'mceta'},
-					 inflation				     => $options{'inflation'},
+					 theta_inflation				     => $options{'theta_inflation'},
+					 omega_inflation				     => $options{'omega_inflation'},
+					 sigma_inflation				     => $options{'sigma_inflation'},
 					 auto_rawres				     => $options{'auto_rawres'},
 					 covmat_input			 => $options{'covmat_input'},
 					 rawres_input        	=> $options{'rawres_input'},
