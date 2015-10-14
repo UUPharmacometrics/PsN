@@ -189,6 +189,10 @@ are sampled from the truncated multivariate normal distribution.
 %inflation vector element is equal to the product of 
 The weights will also be computed based the inflated covariance matrix. 
 Inflation is not used in any but the first iteration.
+
+NB: There is no check that individual inflation for e.g. OMEGA(2,1) is matched to inflation for OMEGA(1,1) and OMEGA(2,2). 
+The user must make sure that the ETA1-ETA2 correlation is inflated/the same/deflated appropriately by setting a suitable 
+-omega\_inflation vector.
 \nextopt
 \optdefault{sigma\_inflation}{X}
 See help text for omega\_inflation.
@@ -212,7 +216,7 @@ If option is unset using -no-copy\_data, the absolute path to the original data 
 \nextopt
 \optname{recenter}
 Default set. If option is set and any sampled parameter vector has a smaller ofv than the original
-vector $\mu$ of final parameter estimates of the input model, then vector $\mu$ will be replaced with
+vector $\mu$ of final parameter estimates of the input model, then vector $\mu$ for the \emph{next} iteration will be replaced with
 the sampled parameter vector with the smallest ofv.
 If option is unset using -no-recenter, the original parameter vector will be kept
 and a warning will be printed that some vectors had a negative delta-ofv.
@@ -437,8 +441,14 @@ than requested samples.
 \bf{sample\_order} & order number of resample \\
 \end{tabular}
 
-NB 1: If -rawres\_input is used there is no raw\_results file for the first iteration.
-NB 2: If unlimited replacement then sample\_order is the sample order of the last resample.
+The first line is the result for vector $\mu$ of the current iteration. Normally this is the final estimates of the
+input model, but if option -recenter was set and a parameter vector had a lower ofv, then $\mu$ for the \emph{next} iteration
+will be that new vector.
+
+If -rawres\_input is used there is no raw\_results file for the first iteration. 
+If unlimited replacement then sample\_order is the sample order of the last resample. 
+In the raw results file there will be '-cap\_resampling' (default 1) identical line(s) for each sample vector.
+
 \item sir\_results.csv with summary statistics, percentiles and empirical sd-correlation matrix
 \item <modelname>\_sir.cov with the empirical covariance matrix in NONMEM-like format, i.e. 
       fixed width space separated with generic headers in order THETA, SIGMA, OMEGA.
