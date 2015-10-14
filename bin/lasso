@@ -23,6 +23,7 @@ my %options;
 
 my %required_options = ( 'relations:s' => undef);
 my %optional_options = ( 'start_t:f' => undef,
+			 'run_final_model!' => undef,
 			 'stop_t:f' => undef,
 			 'step_t:f' => undef,
 			 'cutoff:f' => undef,
@@ -30,7 +31,7 @@ my %optional_options = ( 'start_t:f' => undef,
 			 'groups:i'=> undef,
 			 'convergence:s'=> undef,
 			 'stratify_on:s'=> undef,
-			 'lst_file:s'=> undef);
+	);
 
 my $res = GetOptions( \%options,
 		      @common_options::get_opt_strings,
@@ -92,6 +93,12 @@ $help_text{-help} = <<'EOF';
       With -help lasso will print this, longer, help message.
 EOF
 
+$help_text{-run_final_model} = <<'EOF';
+      -run_final_model
+
+    Default not set. If set, the input model will be run with covariate
+	relations added and THETAs fixed to estimates from the lasso procedure.
+EOF
 $help_text{-step_t} = <<'EOF';
       -step_t=X
 
@@ -153,12 +160,6 @@ $help_text{-pred_ofv_start_t} = <<'EOF';
     If the value is given this will save time.
 EOF
 
-$help_text{-lst_file} = <<'EOF';
-      -lst_file=filename
-
-    Name of the lst-file with estimates for the input model. Default 
-    is the name of the input model with a .mod extension replaced with .lst.
-EOF
 $help_text{-relations} = <<'EOF';
       -relations
 
@@ -218,6 +219,7 @@ if ($model->need_data_filtering()){
 my $lasso = 
 	tool::lasso->new(eval( $common_options::parameters ),
 					 models	     => [ $model ],
+					 run_final_model    => $options{'run_final_model'},
 					 cutoff             => $options{'cutoff'},
 					 relations          => $options{'relations'},
 					 start_t            => $options{'start_t'},
@@ -226,8 +228,7 @@ my $lasso =
 					 pred_ofv_start_t      => $options{'pred_ofv_start_t'},
 					 groups  => $options{'groups'},
 					 convergence        => $options{'convergence'},
-					 stratify_on        => $options{'stratify_on'},
-					 lst_file           => $options{'lst_file'});
+					 stratify_on        => $options{'stratify_on'});
 
 $lasso-> print_options (cmd_line => $cmd_line,
 		      toolname => 'LASSO',

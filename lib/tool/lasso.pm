@@ -19,9 +19,9 @@ has 'lasso_model_file' => ( is => 'rw', isa => 'Str', default => 'lasso_start_mo
 has 'logfile' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { ['lasso.log'] } );
 has 'model_optimal' => ( is => 'rw', isa => 'model' );
 has 'NOABORT_added' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'run_final_model' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'adaptive' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'use_pred' => ( is => 'rw', isa => 'Bool', default => 0 );
-has 'lst_file' => ( is => 'rw', isa => 'Str' );
 has 'convergence' => ( is => 'rw', isa => 'Str', default => 'FIRSTMIN' );
 has 'statistics' => ( is => 'rw', isa => 'HashRef', default => sub { {} } );
 has 'cutoff' => ( is => 'rw', isa => 'Num', default => 0.005 );
@@ -55,20 +55,6 @@ sub BUILD
 		croak('The input model must contain exactly one problem.');
 	}
 
-	if (defined $self->lst_file()){
-		#create output object to check that can be parsed correctly, and to 
-		#extract data for error checking
-		my $outputObject= output -> new(filename => '../'.$self -> lst_file);
-		unless ($outputObject->parsed_successfully()){
-			croak("lst file ".$self->lst_file." could not be parsed.");
-		}
-	}elsif (defined $self-> models->[0] ->outputs() and 
-		defined $self-> models->[0] ->outputs()->[0] and
-		$self-> models->[0] ->outputs()->[0]-> have_output()){
-		1;
-	}else{
-		croak("No output found for model. Set option -lst_file.");
-	}
 
 	if ($self->groups()<2){
 		croak("groups must be at least 2");
@@ -1333,16 +1319,16 @@ sub modelfit_setup
 									update_fix => 1);
 
 
-	my ($refm,$factor)=setup_optimal_model(lasso_optimal => $lasso_optimal,
-										   base_model => $basic_model,
-										   parameter_covariate_form => \%parameter_covariate_form,
-										   t_optimal => $t_optimal,
-										   cutoff => $self->cutoff,
-										   statistics => $self->statistics,
-										   use_pred => $self->use_pred,
-										   NOABORT_added => $self->NOABORT_added,
-										   directory => $self->directory,
-										   cutoff_thetas => $self->cutoff_thetas );
+	my ($refm,$factor,$lassonames,$lassovalues)=setup_optimal_model(lasso_optimal => $lasso_optimal,
+																	base_model => $basic_model,
+																	parameter_covariate_form => \%parameter_covariate_form,
+																	t_optimal => $t_optimal,
+																	cutoff => $self->cutoff,
+																	statistics => $self->statistics,
+																	use_pred => $self->use_pred,
+																	NOABORT_added => $self->NOABORT_added,
+																	directory => $self->directory,
+																	cutoff_thetas => $self->cutoff_thetas );
 	$self->model_optimal($refm);
 	$self->model_optimal->_write;
 	
@@ -1351,17 +1337,25 @@ sub modelfit_setup
 		$self->warnings($self->warnings()+1);
 	}
 
-	ui -> print( category => 'lasso',
-		message  => "Running normal model with covariate relations added.\n" );
+	open(LOG, '>'.$self->directory.'lasso_coefficients.csv'); 
+	print LOG 'F,'.join(',',@{$lassonames})."\n";
+	print LOG $factor.','.join(',',@{$lassovalues})."\n";
+	close LOG;
+	
 
 	$self->tools([]) unless (defined $self->tools);
-	push( @{$self -> tools},
-		tool::modelfit -> new (%{common_options::restore_options(@common_options::tool_options)},
-			seed => $common_seed,
-			models    => [$self->model_optimal],
-			threads    => 1,
-			base_directory => $self->directory(),
-			directory => $self->directory().'final_model_modelfit_dir'));
+	if ($self->run_final_model){
+		ui -> print( category => 'lasso',
+					 message  => "Running normal model with covariate relations added.\n" );
+
+		push( @{$self -> tools},
+			  tool::modelfit -> new (%{common_options::restore_options(@common_options::tool_options)},
+									 seed => $common_seed,
+									 models    => [$self->model_optimal],
+									 threads    => 1,
+									 base_directory => $self->directory(),
+									 directory => $self->directory().'final_model_modelfit_dir'));
+	}
 }
 
 sub setup_optimal_model
@@ -1414,7 +1408,20 @@ sub setup_optimal_model
 		$theta_values{$th_num}=$init_val;
 	}
 	my $factor = exp(1-($abssum/$t_optimal));
-	
+	my @lasso_coefficients_values=();
+	my @lasso_coefficients_names=();
+
+	foreach my $th_num (@{$cutoff_thetas}) {
+		my $label = $lasso_optimal ->labels( parameter_type    => 'theta',
+										   parameter_numbers => [[$th_num]])->[0][0];
+		$label =~ s/^\s*TH\d+\s*//;
+		push(@lasso_coefficients_names,$label);
+		if (abs($theta_values{$th_num}) > $cutoff){ 
+			push(@lasso_coefficients_values,$factor*$theta_values{$th_num});
+		}else{
+			push(@lasso_coefficients_values,0);
+		}
+	}	
 	#have %parameter_covariate_form here
 	my $index=0;
 
@@ -1593,7 +1600,7 @@ sub setup_optimal_model
 		$model_optimal->remove_option(record_name => 'estimation',
 			option_name => 'NOABORT');
 	}
-	return ($model_optimal,$factor);
+	return ($model_optimal,$factor,\@lasso_coefficients_names,\@lasso_coefficients_values);
 }
 
 
@@ -1620,8 +1627,9 @@ sub modelfit_analyze
 
 	return unless (defined $self -> model_optimal);
 
-	if (not defined $self -> model_optimal-> outputs -> [0] or 
-		not $self->model_optimal->outputs->[0]->get_single_value(attribute =>'minimization_successful')){
+	if ($self->run_final_model and (
+		(not defined $self -> model_optimal-> outputs -> [0] or 
+		not $self->model_optimal->outputs->[0]->get_single_value(attribute =>'minimization_successful')))){
 		my $round;
 		if (defined $self -> model_optimal->outputs->[0]->get_single_value (attribute => 'rounding_errors')
 				and $self -> model_optimal->outputs->[0]->get_single_value (attribute => 'rounding_errors')){

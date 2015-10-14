@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{LASSO user guide}{2014-05-20}
+\guidetitle{LASSO user guide}{2015-10-14}
 
 
 \begin{document}
@@ -26,9 +26,6 @@ The lasso program does not support \$PRIOR in the input model.
 \optdefault{relations}{list}
 The relations option is required. The parameter-covariate pairs to test and the parameterizations to use. The parameterizations are: 1)categorical covariate (treated as nominal scale), 2)linear continuous covariate, 3)piece-wise linear “hockey-stick” for continuous covariate. The syntax is sensitive and must follow the form below. Note colons, commas. There must be no spaces in the list of relations. There are double commas before a new parameter. It is optional to input the breakpoint for the piece-wise linear relation (3), the number is then set after a second dash (-) as in WGT-3-45.2. Example (everything should be on the same line):		-relations= CL:WGT-2,SEX-1,RACE-1,,V:WGT-3-45.2,,KA:WGT-3,APGR-2 
 \nextopt
-\optdefault{lst\_file}{file.lst}
-Name of the lst-file with estimates for the input model. Default is the name of the input model with a .mod extension	replaced with .lst. 
-\nextopt
 \optdefault{groups}{N}
 The number of validation groups in the cross-validation. Default 5, must be in the range 2-number of individuals in dataset. The larger the number the longer the cross-validation run-time. 
 \nextopt
@@ -52,6 +49,10 @@ Default not used. The total predicted ofv for the model with t=start\_t.  If the
 \nextopt
 \optdefault{stratify\_on}{variable}
 Default not used. If the option is set, PsN will try to preserve the relative proportions of the values of this variable when creating the cross-validation datasets. The variable must be in the dataset (not in an extra data file). 
+\nextopt
+\optname{run\_final\_model}
+Default not set. If set, the input model will be run with selected covariate
+relations added and THETAs fixed to estimates from the lasso procedure.
 \nextopt
 \end{optionlist}
 
@@ -199,7 +200,8 @@ Subsequent models tested during cross-validation have other values of T-VALUE.
 \begin{enumerate}
 \item Input checking.
 \item Compute covariate statistics.
-\item Create the lasso model by adding all covariate relations to input model. Normalize parameters using covariate statistics. See details in lasso reference article.
+\item Create the lasso model by adding all covariate relations to input model. Normalize parameters using covariate statistics. See details in lasso reference article. Note: Basic model parameters are \emph{not} updated with final estimates even if input model
+lst-file exists. 
 \item Create cross-validation data sets, possibly using stratification. Divide data into N groups. Create N estimation datasets where estimation dataset j is the total dataset minus group j. There are N prediction datasets where prediction dataset j is identical to group j. 
 \item Set t=start\_t. The default starting position is start\_t=0.
 If option pred\_ofv\_start\_t is given then go to step 6 (change t again), otherwise go to step 7 (run an xv step).

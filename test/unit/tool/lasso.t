@@ -204,21 +204,21 @@ $lassomodel->update_inits(update_fix => 1,
 						  from_hash => \%finalhash);
 
 
-my ($refm,$factor)=tool::lasso::setup_optimal_model(lasso_optimal => $lassomodel,
-													base_model => $model,
-													parameter_covariate_form => $parameter_covariate_form,
-													t_optimal => 0.1,
-													cutoff => 0.005,
-													statistics => $statistics,
-													use_pred => $usepred,
-													NOABORT_added => 0,
-													directory => 'dirname',
-													cutoff_thetas => $cutoffref );
+my ($refm,$factor,$lassonames,$lassovalues)=tool::lasso::setup_optimal_model(lasso_optimal => $lassomodel,
+														   base_model => $model,
+														   parameter_covariate_form => $parameter_covariate_form,
+														   t_optimal => 0.1,
+														   cutoff => 0.005,
+														   statistics => $statistics,
+														   use_pred => $usepred,
+														   NOABORT_added => 0,
+														   directory => 'dirname',
+														   cutoff_thetas => $cutoffref );
 my $abssum = abs($finalhash{'theta'}->{'TH5 CLAGE'})+abs($finalhash{'theta'}->{'TH6 CLHAGE'})+
 	abs($finalhash{'theta'}->{'TH7 CLSEX2'})+abs($finalhash{'theta'}->{'TH8 VACE0'})+
 	abs($finalhash{'theta'}->{'TH9 VAGE'})+abs($finalhash{'theta'}->{'TH10 VDIG0'})+
 	abs($finalhash{'theta'}->{'TH11 VWT'});
-cmp_float($factor,exp(1-($abssum/0.1)),'setup_optimal_model factor');
+cmp_float($factor,exp(1-($abssum/0.1)),'setup_optimal_model factor '.$factor);
 
 is($refm->problems->[0]->thetas->[0]->options->[0]->init,$finalhash{'theta'}->{'TVCL'},'setup_optimal_model init 1');
 is($refm->problems->[0]->thetas->[1]->options->[0]->init,$finalhash{'theta'}->{'TVV'},'setup_optimal_model init 2');
@@ -227,11 +227,11 @@ is($refm->problems->[0]->thetas->[3]->options->[0]->init,$finalhash{'theta'}->{'
 
 my $sd =sprintf("%.5f",$statistics->{'AGE'}{3}{'sd'});
 my $init = exp(1-($abssum/0.1))*$finalhash{'theta'}->{'TH5 CLAGE'}/($sd);
-cmp_float($refm->problems->[0]->thetas->[4]->options->[0]->init,$init,'setup_optimal_model init 5'); #CLSEX2
+cmp_float($refm->problems->[0]->thetas->[4]->options->[0]->init,$init,'setup_optimal_model init 5'); #CLAGE
 
 $sd =sprintf("%.5f",$statistics->{'AGE'}{3}{'H-sd'});
 $init = exp(1-($abssum/0.1))*$finalhash{'theta'}->{'TH6 CLHAGE'}/($sd);
-cmp_float($refm->problems->[0]->thetas->[5]->options->[0]->init,$init,'setup_optimal_model init 6'); #CLSEX2
+cmp_float($refm->problems->[0]->thetas->[5]->options->[0]->init,$init,'setup_optimal_model init 6'); #CLHAGE2
 
 
 $sd =sprintf("%.5f",$statistics->{'SEX'}{1}{'sd'}{2});
@@ -245,6 +245,20 @@ is($refm->problems->[0]->thetas->[7]->options->[0]->init,$init,'setup_optimal_mo
 $sd =sprintf("%.5f",$statistics->{'AGE'}{2}{'sd'});
 $init = exp(1-($abssum/0.1))*$finalhash{'theta'}->{'TH9 VAGE'}/($sd);
 is($refm->problems->[0]->thetas->[8]->options->[0]->init,$init,'setup_optimal_model init 9'); #VAGE
+
+my $lassocoeff={
+	'CLAGE' => (0.01)*$factor,
+	'CLHAGE' => (0.01)*$factor,
+	'CLSEX2' => (1.44E-02)*$factor,
+	'VACE0' => (-6.31E-02)*$factor,
+	'VAGE' => (-2.25E-02)*$factor,
+	'VDIG0' => 0,
+	'VWT' => 0};
+
+for(my $i=0; $i< scalar(@{$lassonames}); $i++){
+	my $key = $lassonames->[$i];
+	cmp_float($lassovalues->[$i],$lassocoeff->{$key},"lasso coefficient $key");
+}
 
 $model = model->new(filename => "$modeldir/pheno.mod", ignore_missing_data => 1);
 
