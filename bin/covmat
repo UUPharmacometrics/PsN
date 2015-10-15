@@ -135,6 +135,16 @@ $help_text{-comma} = <<'EOF';
 and fixed width of the numeric fields.
 	Setting -comma changes the format to comma-separated variable width.
 EOF
+$help_text{-require_numeric_ofv} = <<'EOF';
+      -require_numeric_ofv
+
+      Default set, unset with -no-require_numeric_ofv
+      By default the script will assume the raw_results file has a column
+	named ofv, and will filter out all rows where the ofv column does not
+	have a numeric value, as would be the case e.g. for crashed bootstrap
+	samples. If the raw_results file does not have an ofv column, or
+	if non-numeric ofv rows should be kept, run covmat with -no-require_numeric_ofv.
+EOF
 
 #this is not yet implemented for the values, only for the headers
 #$help_text{-parameters} = <<'EOF';
