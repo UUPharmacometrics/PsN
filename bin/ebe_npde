@@ -45,17 +45,13 @@ $help_text{Pre_help_message} = <<'EOF';
 Normalised prediction distribution errors
 EOF
 $help_text{Description} = <<'EOF';      
-The ebe_npde program is work in progress, it is not fully functional yet.
-It computes normalised prediction distribution errors for
+The ebe_npde program computes normalised prediction distribution errors for
 the empirical Bayes estimates, similar to the procedure described in
 
 Comets, Computing normalised prediction distribution errors
 to evaluate nonlinear mixed-effect models: The npde add-on package for R,
 J CMPB 90(2008) 154–166.
 
-Important note: When IOV is included in the random effects model, the calculation 
-of EBEnpde by the ebe_npde program is not correct for the etas related to the IOV.
-This is because the IOVeta are on a level of random effects below the IIV.	  
 EOF
 $help_text{Examples} = <<'EOF';      
 	ebe_npde run2.mod

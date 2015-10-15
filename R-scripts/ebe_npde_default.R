@@ -45,17 +45,23 @@ KLD <- function(px, py, base=exp(1))
 
 pdf(file=pdf.filename,width=10,height=7,title=pdf.title)
 
-#EBE npde standard deviation graph
+#EBE npde summary statistics table
+library(gridExtra)
 ebenpde_tmp <- read.csv(ebe.npde.file)
 ebenpde_obs <- ebenpde_tmp[,seq(3,n.eta+2)]
-standdev <- c(1:n.eta)
+variance <- c(1:n.eta)
+mymean <- c(1:n.eta)
+p_mean_not_0 <- c(1:n.eta)
+p_var_not_1 <- c(1:n.eta)
 etanum <- c(1:n.eta)
 for(i in 1:n.eta){ 
-  standdev[i] <- sd(ebenpde_obs[,i])
+  variance[i] <- var(ebenpde_obs[,i])
+  mymean[i] <- mean(ebenpde_obs[,i])
+  p_mean_not_0[i] <- wilcox.test(ebenpde_obs[,i])$p.value
+  p_var_not_1[i]  <- ks.test(ebenpde_obs[,i],pnorm,mean=mean(ebenpde_obs[,i]),sd=1)$p.value
 }
-plot(etanum,standdev,xlab = "ETA" ,ylab= "SD", main=paste('Standard deviation of EBE NPDE ',model.filename),xaxt="n")
-abline(h=1, lwd=2, lty=3, col="black") 
-axis(1,at=1:n.eta)
+mydataframe<-data.frame('EBE NPDE' = format(etanum), mean = format(mymean,digits=5),'p-value (H_0: mean==0)'=format(p_mean_not_0,digits=3),variance=format(variance,digits=5),'p-value (H_0: var==1)'=format(p_var_not_1,digits=3),check.names=FALSE)
+grid.table(mydataframe,show.rownames=FALSE)
 
 #EBE-NPDE correlation graph
 library(PerformanceAnalytics)
