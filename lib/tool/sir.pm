@@ -399,7 +399,9 @@ sub modelfit_setup
 																	 user_labels => 1); #otherwise get empty values, zero vectors
 
 			my $resulthash = empirical_statistics( sampled_params_arr => $rawres_resampled_params_arr,
-												   labels_hash => $self->parameter_hash);
+												   labels_hash => $self->parameter_hash,
+												   do_percentiles => 0,
+												   do_sdcorr => 0);
 
 			my( $ldir, $name ) = OSspecific::absolute_path( $self ->directory(),$covfile);
 			print_empirical_covmatrix(filename=> $ldir.$name, 
@@ -501,7 +503,8 @@ sub modelfit_setup
 																   labels_hash => $self->parameter_hash,
 																   get_lambda_delta => $self->boxcox,
 																   estimated_vector => $self->parameter_hash->{'values'},
-																   do_percentiles => 0);
+																   do_percentiles => 0,
+																   do_sdcorr => 0);
 			#this does not use mu-vector
 			#will overwrite previous iteration if recover
 			print_empirical_covmatrix(filename=> $ldir.$name,
@@ -1268,28 +1271,30 @@ sub empirical_statistics{
 
 		my $err1 = linear_algebra::row_cov(\@Bmatrix,$resulthash{'covar'});
 		if ($err1 == 1){
-			croak ("numerical error in linear_algebra rowcov for boxcox");
+			ui->print (category=> 'all',
+					   message => "numerical error in linear_algebra rowcov for boxcox, cannot compute covmatrix");
 		}elsif ($err1 == 2){
-			croak ("input error to linear_algebra rowcov for boxcox");
+			ui->print (category=> 'all',
+					   message => "input error in linear_algebra rowcov for boxcox, cannot compute covmatrix");
 		}
 
 	}else{
 		my $err1 = linear_algebra::row_cov(\@Amatrix,$resulthash{'covar'});
 		if ($err1 == 1){
-			croak ("numerical error in linear_algebra rowcov");
+			ui->print (category=> 'all',
+					   message => "numerical error in linear_algebra rowcov, cannot compute covmatrix");
 		}elsif ($err1 == 2){
-			croak ("input error to linear_algebra rowcov");
+			ui->print (category=> 'all',
+					   message => "input error in linear_algebra rowcov, cannot compute covmatrix");
 		}
 		if ($do_sdcorr){
 			$err1 = linear_algebra::covar2sdcorr($resulthash{'covar'},$resulthash{'sdcorr'});
 			if ($err1 == 1){
-				croak ("numerical error in linear_algebra covar2sdcorr");
+				ui->print (category=> 'all',
+						   message => "numerical error in linear_algebra covar2sdcorr, cannot compute correlation matrix");
 			}elsif ($err1 == 2){
-				foreach my $line (@{$resulthash{'covar'}}){
-					print join("\t",@{$line})."\n";
-				}
-
-				croak ("input error to linear_algebra covar2sdcorr");
+				ui->print (category=> 'all',
+						   message => "input error to linear_algebra covar2sdcorr, cannot compute correlation matrix");
 			}
 		}
 	}
