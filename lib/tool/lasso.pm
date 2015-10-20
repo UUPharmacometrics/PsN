@@ -36,6 +36,8 @@ has 't_thetanumber' => ( is => 'rw', isa => 'Int', default => 0);
 has 'lambda_thetanumber' => ( is => 'rw', isa => 'Maybe[Int]');
 has 'results_file' => ( is => 'rw', isa => 'Str', default => 'lasso_results.csv' );
 has 'cutoff_thetas' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
+has 'cutoff_thetas_estimates' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
+has 'factor_estimate' => ( is => 'rw', isa => 'Num' );
 has 'weight_thetas' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 
 
@@ -183,20 +185,145 @@ sub factor_string
 							  parameter => { isa => 'Str', optional => 0 },
 							  covariate => { isa => 'Str', optional => 0 },
 							  thetanumber => {isa => 'Int', optional => 0},
+							  adaptive=> {isa => 'Bool', optional => 0},
 							  mean => {isa => 'Num', optional => 0},
 							  sd => { isa => 'Num', optional => 0 },
 		);
 	my $parameter = $parm{'parameter'};
 	my $covariate = $parm{'covariate'};
 	my $thetanumber = $parm{'thetanumber'};
+	my $adaptive = $parm{'adaptive'};
 	my $mean = $parm{'mean'};
 	my $sd = $parm{'sd'};
 
-	my $string = $parameter.$covariate. " = THETA(" .$thetanumber.")*($covariate".
+	my $name = $parameter.$covariate;
+	my $adstring='';
+	if ($adaptive){
+		$adstring = '*AL_'.$name;
+	}
+
+	my $string = $name." = THETA(" .$thetanumber.")".$adstring."*($covariate".
 		sprintf($sign_dec_str,-$mean).")/".sprintf($dec_str,$sd)."*FACTOR";
 
 	return $string;
 }
+
+sub add_adaptive_lasso_theta
+{
+	#have unit tests
+	my %parm = validated_hash(\@_,
+							  model => { isa => 'model', optional => 0 },
+							  parameter => { isa => 'Str', optional => 0 },
+							  covariate => { isa => 'Str', optional => 0 },
+							  thetanumber => {isa => 'Int', optional => 0},
+		);
+	my $model = $parm{'model'};
+	my $parameter = $parm{'parameter'};
+	my $covariate = $parm{'covariate'};
+	my $thetanumber = $parm{'thetanumber'};
+
+	my $name = "AL_$parameter$covariate";
+	my $code = $name.' = THETA('.$thetanumber.') ; FIXED';
+
+	$model->initial_values(parameter_type => 'theta',
+						   parameter_numbers => [[$thetanumber]],
+						   new_values =>[[1]],
+						   add_if_absent => 1);
+
+	$model->fixed(parameter_type => 'theta',
+				  parameter_numbers => [[$thetanumber]],
+				  new_values => [[1]] );
+	$model -> lower_bounds(parameter_type =>  'theta',
+						   parameter_numbers =>[[$thetanumber]],
+						   new_values => [[undef]] );
+	$model -> upper_bounds(parameter_type =>  'theta',
+						   parameter_numbers =>[[$thetanumber]],
+						   new_values => [[undef]] );
+
+	$model -> labels( parameter_type     => 'theta',
+					  parameter_numbers => [[$thetanumber]],
+					  new_values        => [['TH'.($thetanumber)." $name"]] );
+	
+	return $code;
+}
+
+sub update_adaptive_theta
+{
+	#have unit tests
+	my %parm = validated_hash(\@_,
+							  model => { isa => 'model', optional => 0 },
+							  coefficient => { isa => 'Num', optional => 0 },
+							  thetanumber => {isa => 'Int', optional => 0},
+							  al_thetanumber => {isa => 'Int', optional => 0},
+		);
+	my $model = $parm{'model'};
+	my $coefficient = $parm{'coefficient'};
+	my $thetanumber = $parm{'thetanumber'};
+	my $al_thetanumber = $parm{'al_thetanumber'};
+
+	$coefficient = sprintf($dec_str,abs($coefficient));
+
+	if ($coefficient == 0){
+		#set both thetas to 0 FIX
+		$model->initial_values(parameter_type => 'theta',
+							   parameter_numbers => [[$thetanumber]],
+							   new_values =>[[0]]);
+		$model -> lower_bounds(parameter_type =>  'theta',
+							   parameter_numbers =>[[$thetanumber]],
+							   new_values => [[undef]] );
+		$model -> upper_bounds(parameter_type =>  'theta',
+							   parameter_numbers =>[[$thetanumber]],
+							   new_values => [[undef]] );
+
+		$model->fixed(parameter_type => 'theta',
+					  parameter_numbers => [[$thetanumber]],
+					  new_values => [[1]] );
+
+		$model->initial_values(parameter_type => 'theta',
+							   parameter_numbers => [[$al_thetanumber]],
+							   new_values =>[[0]]);
+
+		#al already FIX
+	}else{
+		#update al_thetanumber to coefficient, still fix
+		#reset thetanumber to small init, since starting new xv with small t
+		#update bounds based on coefficient
+
+		#FIXME if many iterations pick up old value of coefficient, now it is 1
+
+		my $lower_val = $model ->lower_bounds( parameter_type    => 'theta',
+											   parameter_numbers => [[$thetanumber]])->[0][0];
+		my $upper_val = $model ->upper_bounds( parameter_type    => 'theta',
+											   parameter_numbers => [[$thetanumber]])->[0][0];
+
+		#FIXME this only works one iteration, otherwise need sd and mean
+		$upper_val=sprintf($dec_str,$upper_val/$coefficient);
+		$lower_val=sprintf($dec_str,$lower_val/$coefficient);
+
+		$model -> lower_bounds(parameter_type =>  'theta',
+							   parameter_numbers =>[[$thetanumber]],
+							   new_values => [[$lower_val]] );
+		$model -> upper_bounds(parameter_type =>  'theta',
+							   parameter_numbers =>[[$thetanumber]],
+							   new_values => [[$upper_val]] );
+
+		my $init=$theta_initial_value;
+		unless (($init > $lower_val) and ($init < $upper_val)){
+			$init = $lower_val + ($upper_val-$lower_val)*(0.05);
+		}
+		$model->initial_values(parameter_type => 'theta',
+							   parameter_numbers => [[$thetanumber]],
+							   new_values =>[[$init]]);
+
+
+		$model->initial_values(parameter_type => 'theta',
+							   parameter_numbers => [[$al_thetanumber]],
+							   new_values =>[[$coefficient]]);
+
+	}
+
+}
+
 
 sub final_theta_string
 {
@@ -342,18 +469,13 @@ sub check_name
 sub get_abssum
 {
 	my %parm = validated_hash(\@_,
-							  adaptive => {isa => 'Bool', optional => 0},
-							  old_thetas => {isa => 'Int', optional => 0},
-							  nthetas => {isa => 'Int', optional => 0},
+							  cutoff_thetas => {isa => 'ArrayRef', optional => 0},
 		);
-	my $adaptive = $parm{'adaptive'};
-	my $old_thetas = $parm{'old_thetas'};
-	my $nthetas = $parm{'nthetas'};
+	my $cutoff_thetas = $parm{'cutoff_thetas'};
 
 	my $tmpstr = "ABSSUM = ";
 	my $first = 1;
-	my $i;
-	for ($i=$old_thetas+1; $i<=$nthetas; $i++){
+	foreach my $i (@{$cutoff_thetas}){
 		if ($first) {
 			$tmpstr = $tmpstr . "ABS(THETA($i))";
 			$first=0;
@@ -372,7 +494,7 @@ sub setup_lasso_model
 							  t_value =>{isa => 'Num', optional => 0},
 							  statistics => { isa => 'HashRef', optional => 0 },
 							  missing_data_token => {isa => 'Str', optional => 0},
-							  adaptive => {isa => 'Bool', optional => 1, default => 0},
+							  adaptive => {isa => 'Bool', optional => 0},
 		);
 	my $lasso_model = $parm{'lasso_model'};
 	my %parameter_covariate_form = %{$parm{'parameter_covariate_form'}};
@@ -401,6 +523,7 @@ sub setup_lasso_model
 	my @new_code;
 	my @if_statements; #only once for each covariate, not for each param.
 	my @zero_statements; #only once for each covariate, not for each param.
+	my @lasso_coefficient_code =(); #adaptive only
 	my %if_printed;
 	my @factor_code;
 	my $nthetas =  $lasso_model->nthetas();
@@ -423,10 +546,12 @@ sub setup_lasso_model
 				$tmpstr = $tmpstr . "($par" ."$covariate+1)";
 				$nthetas++;
 				$parameter_covariate_form{$par}{$covariate}{'theta'}=$nthetas;
+				$parameter_covariate_form{$par}{$covariate}{'lasso_coefficient'}=1;
 				push(@cutoff_thetas,$nthetas);
 				push (@factor_code,$blank.factor_string(parameter => $par,
 														covariate => $covariate,
 														thetanumber => $nthetas,
+														adaptive => $adaptive,
 														mean => $statistics->{$covariate}{2}{'mean'},
 														sd => $statistics->{$covariate}{2}{'sd'}));
 
@@ -438,17 +563,26 @@ sub setup_lasso_model
 								sd => $statistics->{$covariate}{2}{'sd'},
 								max => $statistics->{$covariate}{2}{'max'},
 								min => $statistics->{$covariate}{2}{'min'});
-				
+				if ($adaptive){
+					$nthetas++;
+					$parameter_covariate_form{$par}{$covariate}{'al_theta'}=$nthetas;
+					push(@lasso_coefficient_code,$blank.add_adaptive_lasso_theta(model => $lasso_model,
+																				 parameter => $par,
+																				 covariate => $covariate,
+																				 thetanumber => $nthetas));
+				}
 
 			}elsif ($parameter_covariate_form{$par}{$covariate}{'form'} == 3){
 				check_name(parameter => $par,covariate=>$covariate,version => $PsN::nm_major_version, H => 'H');
 				$tmpstr = $tmpstr . "($par" ."$covariate+1)*("."$par"."H"."$covariate"."+1)";
 				$nthetas++;
 				$parameter_covariate_form{$par}{$covariate}{'theta'}=$nthetas;
+				$parameter_covariate_form{$par}{$covariate}{'lasso_coefficient'}=1;
 				push(@cutoff_thetas,$nthetas);
 				push (@factor_code,$blank.factor_string(parameter => $par,
 														covariate => $covariate,
 														thetanumber => $nthetas,
+														adaptive => $adaptive,
 														mean => $statistics->{$covariate}{3}{'mean'},
 														sd => $statistics->{$covariate}{3}{'sd'}));
 				add_lasso_theta(model => $lasso_model,
@@ -460,12 +594,23 @@ sub setup_lasso_model
 								max => $statistics->{$covariate}{3}{'max'},
 								min => $statistics->{$covariate}{3}{'min'});
 
+				if ($adaptive){
+					$nthetas++;
+					$parameter_covariate_form{$par}{$covariate}{'al_theta'}=$nthetas;
+					push(@lasso_coefficient_code,$blank.add_adaptive_lasso_theta(model => $lasso_model,
+																				 parameter => $par,
+																				 covariate => $covariate,
+																				 thetanumber => $nthetas));
+				}
+
 				$nthetas++;
 				$parameter_covariate_form{$par}{$covariate}{'Htheta'}=$nthetas;
+				$parameter_covariate_form{$par}{$covariate}{'Hlasso_coefficient'}=1;
 				push(@cutoff_thetas,$nthetas);
 				push (@factor_code,$blank.factor_string(parameter => $par,
 														covariate => 'H'.$covariate,
 														thetanumber => $nthetas,
+														adaptive => $adaptive,
 														mean => $statistics->{$covariate}{3}{'H-mean'},
 														sd => $statistics->{$covariate}{3}{'H-sd'}));
 
@@ -477,6 +622,15 @@ sub setup_lasso_model
 								sd => $statistics->{$covariate}{3}{'H-sd'},
 								max => ($statistics->{$covariate}{3}{'max'}-$statistics->{$covariate}{3}{'breakpoint'}),
 								min => 0);
+
+				if ($adaptive){
+					$nthetas++;
+					$parameter_covariate_form{$par}{$covariate}{'Hal_theta'}=$nthetas;
+					push(@lasso_coefficient_code,$blank.add_adaptive_lasso_theta(model => $lasso_model,
+																				 parameter => $par,
+																				 covariate => 'H'.$covariate,
+																				 thetanumber => $nthetas));
+				}
 
 				##IF hockey-stick covariates
 				unless ($if_printed{$covariate}{3}){
@@ -501,10 +655,12 @@ sub setup_lasso_model
 						$tmpstr = $tmpstr . "(".$par.$covariate.$fact . "+1)";
 						$nthetas++;
 						$parameter_covariate_form{$par}{$covariate}{'thetas'}->{$fact}=$nthetas;
+						$parameter_covariate_form{$par}{$covariate}{'lasso_coefficients'}->{$fact}=1;
 						push(@cutoff_thetas,$nthetas);
 						push (@factor_code,$blank.factor_string(parameter => $par,
 																covariate => $covariate.$fact,
 																thetanumber => $nthetas,
+																adaptive => $adaptive,
 																mean => $mean{$fact},
 																sd => $sd{$fact}));
 						unless ($if_printed{$covariate}{1}){
@@ -520,7 +676,14 @@ sub setup_lasso_model
 										sd => $sd{$fact},
 										max => 1,
 										min => 0);
-
+						if ($adaptive){
+							$nthetas++;
+							$parameter_covariate_form{$par}{$covariate}{'al_thetas'}->{$fact}=$nthetas;
+							push(@lasso_coefficient_code,$blank.add_adaptive_lasso_theta(model => $lasso_model,
+																						 parameter => $par,
+																						 covariate => $covariate.$fact,
+																						 thetanumber => $nthetas));
+						}
 					}
 				}
 				$if_printed{$covariate}{1}=1;
@@ -537,6 +700,10 @@ sub setup_lasso_model
 	unshift @new_code, "\n";
 	unshift @new_code,@if_statements;
 	unshift @new_code,@zero_statements;
+	if ($adaptive){
+		unshift @new_code, "\n";
+		unshift(@new_code,@lasso_coefficient_code);
+	}
 	unshift @new_code, "\n";
 
 	#add FACTOR
@@ -545,7 +712,7 @@ sub setup_lasso_model
 	unshift @new_code, $blank . "RATIO = ABSSUM/TVALUE\n";
 	unshift @new_code, "\n";
 
-	$tmpstr = get_abssum(old_thetas => $old_thetas,nthetas => $nthetas,adaptive => $adaptive);
+	$tmpstr = get_abssum(cutoff_thetas => \@cutoff_thetas);
 
 	unshift @new_code, @{parse_row(parse_str => $blank . $tmpstr,
 								   parse_operator => "+",
@@ -1211,20 +1378,245 @@ sub modelfit_setup
 			message  => "\n$mess");
 	}
 
+	my ($lasso_optimal,$t_optimal) = $self->run_lasso_iteration(iteration => 1,
+																common_seed =>  $common_seed,
+																est_filename =>  $est_filename,
+																pred_filename =>  $pred_filename,
+																basic_model =>  $basic_model,
+																lasso_model =>  $lasso_model,
+																coeff_table =>  $coeff_table,
+																data_xv_step=>  $data_xv_step);
+	return unless (defined $lasso_optimal);
+	
+	#lasso optimal is written and run and updated with final estimates but not rewritten
+	
+	my $lasso_adaptive = $lasso_optimal -> copy(filename => $self->directory()."m1/lasso_adaptive_1.mod",
+												copy_datafile => 0,
+												output_same_directory => 1,
+												write_copy => 0,
+												copy_output => 0);
+
+	my $refm =setup_optimal_model(lasso_model => $lasso_adaptive,
+								  adaptive => $self->adaptive,
+								  base_model => $basic_model,
+								  parameter_covariate_form => \%parameter_covariate_form,
+								  factor => $self->factor_estimate,
+								  cutoff => $self->cutoff,
+								  statistics => $self->statistics,
+								  use_pred => $self->use_pred,
+								  NOABORT_added => $self->NOABORT_added,
+								  directory => $self->directory,
+								  cutoff_thetas => $self->cutoff_thetas,
+								  cutoff_thetas_estimates => $self->cutoff_thetas_estimates);
+
+	if ($self->factor_estimate <0.9 or $self->factor_estimate >1.1) {
+		$self->write_log(message =>"WARNING: Factor for the final lasso model: ".$self->factor_estimate);
+		$self->warnings($self->warnings()+1);
+	}
+	write_lasso_coefficients(parameter_covariate_form => \%parameter_covariate_form,
+							 factor => $self->factor_estimate,
+							 statistics => $self->statistics,
+							 directory => $self->directory);
+
+	if ($self->adaptive){
+		#reset t to 0, reset pred inits etc
+
+		my $iteration = 1;
+		foreach my $exponent ((1)){
+			$lasso_adaptive->_write;
+			$iteration++;
+			#run xv again
+			$lasso_optimal = undef;
+			($lasso_optimal,$t_optimal) = $self->run_lasso_iteration(iteration => $iteration,
+																	 common_seed =>  $common_seed,
+																	 est_filename =>  $est_filename,
+																	 pred_filename =>  $pred_filename,
+																	 basic_model =>  $basic_model,
+																	 lasso_model =>  $lasso_adaptive,
+																	 coeff_table =>  $coeff_table,
+																	 data_xv_step=>  $data_xv_step);
+			return unless (defined $lasso_optimal);
+			
+			$lasso_adaptive = undef;
+			
+			$lasso_adaptive = $lasso_optimal->copy(filename => $self->directory()."m1/lasso_adaptive_".$iteration.".mod",
+												   copy_datafile => 0,
+												   output_same_directory => 1,
+												   write_copy => 0,
+												   copy_output => 0);
+			
+			$refm =setup_optimal_model(lasso_model => $lasso_adaptive,
+									   adaptive => $self->adaptive,
+									   base_model => $basic_model,
+									   parameter_covariate_form => \%parameter_covariate_form,
+									   factor => $self->factor_estimate,
+									   cutoff => $self->cutoff,
+									   statistics => $self->statistics,
+									   use_pred => $self->use_pred,
+									   NOABORT_added => $self->NOABORT_added,
+									   directory => $self->directory,
+									   cutoff_thetas => $self->cutoff_thetas,
+									   cutoff_thetas_estimates => $self->cutoff_thetas_estimates);
+
+			if ($self->factor_estimate<0.9 or $self->factor_estimate>1.1) {
+				$self->write_log(message =>"WARNING: Factor for the final lasso model: ".$self->factor_estimate);
+				$self->warnings($self->warnings()+1);
+			}
+			write_lasso_coefficients(parameter_covariate_form => \%parameter_covariate_form,
+									 factor => $self->factor_estimate,
+									 statistics => $self->statistics,
+									 directory => $self->directory);
+			
+		}
+	}
+		
+	$self->model_optimal($refm);
+	$self->model_optimal->_write;
+	
+	$self->tools([]) unless (defined $self->tools);
+	if ($self->run_final_model){
+		ui -> print( category => 'lasso',
+					 message  => "Running normal model with covariate relations added.\n" );
+
+		push( @{$self -> tools},
+			  tool::modelfit -> new (%{common_options::restore_options(@common_options::tool_options)},
+									 seed => $common_seed,
+									 models    => [$self->model_optimal],
+									 threads    => 1,
+									 base_directory => $self->directory(),
+									 raw_results_file => [$self->directory().'raw_results_final_model.csv'],
+									 directory => $self->directory().'final_model_modelfit_dir'));
+	}
+}
+
+sub _optimal_lasso_raw_results_callback
+{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+		model_number => { isa => 'Int', optional => 1 }
+	);
+	my $model_number = $parm{'model_number'};
+	my ($subroutine,$dir,$file, $nonp_file);
+
+
+	($dir,$file)= 
+		OSspecific::absolute_path( $self ->directory(),
+								   $self -> raw_results_file()->[$model_number-1] );
+	($dir,$nonp_file) = 
+		OSspecific::absolute_path( $self ->directory(),
+								   $self -> raw_nonp_file()->[$model_number-1] );
+
+	$subroutine = sub {
+		my $modelfit = shift;
+		my $mh_ref   = shift;
+		my %max_hash = %{$mh_ref};
+
+		$modelfit -> raw_results_file([$dir.$file] );
+		$modelfit -> raw_nonp_file( [$dir.$nonp_file] );
+
+		my ($start,$len) = split(',',$modelfit->raw_line_structure() -> {1}->{'theta'});
+		my $thetaindex=$start;
+		croak("could not find theta in raw results header") unless (defined $thetaindex);
+		#FIXME user prepare results to write coefficients, so that is based on raw results that will be used for updating and eval
+		foreach my $row ( @{$modelfit -> raw_results()} ) {
+			#only one row ever
+			my $abssum=0;
+			my @estimates=();
+			foreach my $num (@{$self->cutoff_thetas}){
+				$abssum += abs($row->[$thetaindex+$num-1]);
+				push(@estimates,$row->[$thetaindex+$num-1]);
+			}
+			my $tval = $row->[$thetaindex+($self->t_thetanumber)-1];
+			my $factor;
+			if ($tval > 0){
+				$factor = exp(1-($abssum/$tval));
+			}
+			my @oldrow =@{$row};
+			$oldrow[0]=$oldrow[0]+($modelfit->raw_results_append); #FIXME only works if max one extra iteration
+			$row = [@oldrow[0 .. ($thetaindex-1)],$factor,@oldrow[$thetaindex .. $#oldrow]]; 
+			$self->cutoff_thetas_estimates(\@estimates);
+			$self->factor_estimate($factor);
+			if (0){
+				print "callback\n";
+				print "factor\t tvalue\t inits\n";
+				print "$factor\t"."$tval\t".join("\t",@estimates)."\n";
+			}
+		}
+
+
+
+		my @old_header = @{$modelfit -> raw_results_header()};
+		my $headerindex;
+		for (my $k=0; $k<scalar(@old_header);$k++){
+			$headerindex = $k if ($old_header[$k] eq 'theta');
+		}
+		$modelfit -> raw_results_header(
+			[@old_header[0 .. ($headerindex-1)],'FACTOR',@old_header[$headerindex .. $#old_header]]);
+		
+		foreach my $mod (sort({$a <=> $b} keys %{$modelfit->raw_line_structure()})){
+			foreach my $category (keys %{$modelfit->raw_line_structure() -> {$mod}}){
+				next if ($category eq 'line_numbers');
+				my ($start,$len) = split(',',$modelfit->raw_line_structure() -> {$mod}->{$category});
+				#we know model comes before ofv
+				if ($start >= $thetaindex){
+					$modelfit->raw_line_structure() -> {$mod}->{$category} = ($start+1).','.$len; #+1 for FACTOR
+				}
+			}
+			$modelfit->raw_line_structure() -> {$mod}->{'factor'} = $thetaindex.',1';
+		}
+
+		$self->raw_line_structure($modelfit -> raw_line_structure());
+		$self->raw_line_structure() -> write( $dir.'raw_results_structure' );
+		
+		$self -> raw_results_header($modelfit -> raw_results_header());
+		$self -> raw_results($modelfit -> raw_results());
+
+	};
+
+	return $subroutine;
+}
+
+
+sub run_lasso_iteration{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+							  iteration => { isa => 'Int', optional => 0 },
+							  common_seed =>  { isa => 'Str', optional => 0 },
+							  est_filename =>  { isa => 'Str', optional => 0 },
+							  pred_filename =>  { isa => 'Str', optional => 0 },
+							  basic_model =>  { isa => 'model', optional => 0 },
+							  lasso_model =>  { isa => 'model', optional => 0 },
+							  coeff_table =>  { isa => 'Str', optional => 0 }, 
+							  data_xv_step=>  { isa => 'Ref', optional => 0 }, 
+	);
+	my $iteration = $parm{'iteration'};
+	my $common_seed = $parm{'common_seed'};
+	my $est_filename = $parm{'est_filename'};
+	my $pred_filename = $parm{'pred_filename'};
+	my $basic_model = $parm{'basic_model'};
+	my $lasso_model = $parm{'lasso_model'};
+	my $coeff_table = $parm{'coeff_table'};
+	my $data_xv_step  = $parm{'data_xv_step'};
+
+
 	my $t_optimal;
 
 	if ($self->start_t() == $self->stop_t()){
 		$t_optimal = $self->start_t()
 	}else{
+		my $message = "Running the cross-validation to find optimal t-value";
+		if ($self->adaptive){
+			$message .= ' iteration '.$iteration;
+		}
 		ui -> print( category => 'lasso',
-			message  => "Running the cross-validation to find optimal t-value.\n" );
+					 message  => "$message.\n" );
 
 		#run the xv
 
 		my $cvobject = tool::xv->new(%{common_options::restore_options(@common_options::tool_options)},
 									 models => [$lasso_model],
 									 base_directory   => $self -> directory,
-									 directory        => $self -> directory.'xv_dir'.$model_number, 
+									 directory        => $self -> directory.'xv_dir_it'.$iteration, 
 									 subtool_arguments => 
 									 {xv_step => {%{common_options::restore_options(@common_options::tool_options)},
 												  seed => $common_seed,
@@ -1272,14 +1664,14 @@ sub modelfit_setup
 	
 	if ($t_optimal<=0){
 		ui -> print( category => 'lasso',
-			message =>"Of the *tested* t_values, none gave a better model than the model".
-			" without covariates (t_value=0). No use running lasso model.\n");
-		return;
+					 message =>"Of the *tested* t_values, none gave a better model than the model".
+					 " without covariates (t_value=0). No use running lasso model.\n");
+		return undef;
 	}
 	ui -> print( category => 'lasso',
-		message  => "The optimal t-value is $t_optimal. Running lasso model with t=$t_optimal\n" );
-
-	my $lasso_optimal = $lasso_model -> copy(filename => $self->directory()."m1/lasso_optimal.mod",
+				 message  => "The optimal t-value is $t_optimal. Running lasso model with t=$t_optimal\n" );
+	
+	my $lasso_optimal = $lasso_model -> copy(filename => $self->directory()."m1/lasso_optimal_".$iteration.".mod",
 											 copy_datafile => 0,
 											 output_same_directory => 1,
 											 write_copy => 0,
@@ -1292,24 +1684,29 @@ sub modelfit_setup
 
 	# Run a modelfit on the the whole data set, with the 'best' t-value
 
+	my $append = 0;
+	$append = 1 if ($iteration > 1);
 	my $mfitobj = tool::modelfit -> new (%{common_options::restore_options(@common_options::tool_options)},
-		models    => [$lasso_optimal],
-		seed => $common_seed,
-		cut_thetas_rounding_errors => 1,
-		handle_hessian_npd => 0,
-		cutoff => $self->cutoff(),
+										 models    => [$lasso_optimal],
+										 seed => $common_seed,
+										 cut_thetas_rounding_errors => 1,
+										 handle_hessian_npd => 0,
+										 cutoff => $self->cutoff(),
 #		cutoff_thetas => [$self->cutoff_thetas], #array of arrayref, is this right?????
-		cutoff_thetas => $self->cutoff_thetas, #try this
-		base_directory => $self->directory(),
-		directory => $self->directory().'optimal_lasso_modelfit_dir',
-		top_tool =>1,
-		rplots => -1,
-		parent_threads=>1);
+										 cutoff_thetas => $self->cutoff_thetas, #try this
+										 base_directory => $self->directory(),
+										 directory => $self->directory().'optimal_lasso_'.$iteration.'_modelfit_dir',
+										 top_tool =>0,
+										 rplots => -1,
+										 raw_results_append => $append,
+										 raw_results_file => [$self->raw_results_file->[0]],
+										 _raw_results_callback => $self->_optimal_lasso_raw_results_callback(model_number => 1),
+										 parent_threads=>1);
 
 	$mfitobj->run();
-
+	
 	if (not defined $lasso_optimal -> outputs -> [0] 
-			or not defined $lasso_optimal -> outputs ->[0]->get_single_value(attribute => 'ofv')){
+		or not defined $lasso_optimal -> outputs ->[0]->get_single_value(attribute => 'ofv')){
 		croak("Couldn't execute the LASSO - optimal model\n");
 	}
 	#print minimization status to log file
@@ -1318,53 +1715,70 @@ sub modelfit_setup
 	$lasso_optimal -> update_inits( from_output => $lasso_optimal->outputs->[0],
 									update_fix => 1);
 
-
-	my ($refm,$factor,$lassonames,$lassovalues)=setup_optimal_model(lasso_optimal => $lasso_optimal,
-																	base_model => $basic_model,
-																	parameter_covariate_form => \%parameter_covariate_form,
-																	t_optimal => $t_optimal,
-																	cutoff => $self->cutoff,
-																	statistics => $self->statistics,
-																	use_pred => $self->use_pred,
-																	NOABORT_added => $self->NOABORT_added,
-																	directory => $self->directory,
-																	cutoff_thetas => $self->cutoff_thetas );
-	$self->model_optimal($refm);
-	$self->model_optimal->_write;
-	
-	if ($factor<0.9 or $factor>1.1) {
-		$self->write_log(message =>"WARNING: Factor for the final lasso model: $factor");
-		$self->warnings($self->warnings()+1);
-	}
-
-	open(LOG, '>'.$self->directory.'lasso_coefficients.csv'); 
-	print LOG 'F,'.join(',',@{$lassonames})."\n";
-	print LOG $factor.','.join(',',@{$lassovalues})."\n";
-	close LOG;
-	
-
-	$self->tools([]) unless (defined $self->tools);
-	if ($self->run_final_model){
-		ui -> print( category => 'lasso',
-					 message  => "Running normal model with covariate relations added.\n" );
-
-		push( @{$self -> tools},
-			  tool::modelfit -> new (%{common_options::restore_options(@common_options::tool_options)},
-									 seed => $common_seed,
-									 models    => [$self->model_optimal],
-									 threads    => 1,
-									 base_directory => $self->directory(),
-									 directory => $self->directory().'final_model_modelfit_dir'));
-	}
+	return ($lasso_optimal,$t_optimal);
 }
+
+
+sub write_lasso_coefficients{
+	my %parm = validated_hash(\@_,
+							  parameter_covariate_form => { isa => 'HashRef', optional => 0 },
+							  directory => {isa => 'Str',optional => 0},
+							  statistics => { isa => 'HashRef', optional => 0 },
+							  factor =>  {isa => 'Num',optional => 0},
+		);
+	my %parameter_covariate_form = %{$parm{'parameter_covariate_form'}};
+	my $directory = $parm{'directory'};
+	my $factor = $parm{'factor'};
+	my $statistics = $parm{'statistics'};
+	
+	my @lassonames=();
+	my @lassovalues=();
+	
+	foreach my $par (sort {lc($a) cmp lc($b)} keys %parameter_covariate_form){
+		foreach my $covariate (sort {lc($a) cmp lc($b)} keys %{$parameter_covariate_form{$par}}){
+			if ($parameter_covariate_form{$par}{$covariate}{'form'} == 2){
+#				push(@lassovalues,sprintf($dec_str,$parameter_covariate_form{$par}{$covariate}{'lasso_coefficient'}));
+				push(@lassovalues,$parameter_covariate_form{$par}{$covariate}{'lasso_coefficient'});
+				push(@lassonames,$par."$covariate");
+			}elsif ($parameter_covariate_form{$par}{$covariate}{'form'} == 3){
+#				push(@lassovalues,sprintf($dec_str,$parameter_covariate_form{$par}{$covariate}{'lasso_coefficient'}));
+				push(@lassovalues,$parameter_covariate_form{$par}{$covariate}{'lasso_coefficient'});
+				push(@lassonames,$par."$covariate");
+#				push(@lassovalues,sprintf($dec_str,$parameter_covariate_form{$par}{$covariate}{'Hlasso_coefficient'}));
+				push(@lassovalues,$parameter_covariate_form{$par}{$covariate}{'Hlasso_coefficient'});
+				push(@lassonames,$par."H$covariate");
+			}elsif ($parameter_covariate_form{$par}{$covariate}{'form'} == 1){
+				foreach my $fact (sort {$a<=>$b} keys %{$statistics->{$covariate}{1}{'cat_hash'}}) {
+					my $thnum = $parameter_covariate_form{$par}{$covariate}{'thetas'}{$fact};
+					next unless (defined $thnum);
+#					push(@lassovalues,sprintf($dec_str,$parameter_covariate_form{$par}{$covariate}{'lasso_coefficients'}{$fact}));
+					push(@lassovalues,$parameter_covariate_form{$par}{$covariate}{'lasso_coefficients'}{$fact});
+					push(@lassonames,$par.$covariate.$fact);
+				}
+			} 
+		} #end loop parameters
+	}
+	my $file = $directory.'lasso_coefficients.csv'; 
+	my $printheader=1;
+	if (-e $file){
+		$printheader=0;
+	}
+	open(LOG, '>>'.$directory.'lasso_coefficients.csv'); 
+#	print LOG 'F,'.join(',',@lassonames)."\n" if ($printheader);
+#	print LOG sprintf($dec_str,$factor).','.join(',',@lassovalues)."\n";
+	print LOG join(',',@lassonames)."\n" if ($printheader);
+	print LOG join(',',@lassovalues)."\n";
+	close LOG;
+
+}
+
 
 sub setup_optimal_model
 {
 	my %parm = validated_hash(\@_,
-							  lasso_optimal => { isa => 'model', optional => 0 },
+							  lasso_model => { isa => 'model', optional => 0 },
 							  base_model => { isa => 'model', optional => 0 },
 							  parameter_covariate_form => { isa => 'HashRef', optional => 0 },
-							  t_optimal =>{isa => 'Num', optional => 0},
 							  cutoff =>{isa => 'Num', optional => 0},
 							  statistics => { isa => 'HashRef', optional => 0 },
 							  adaptive => {isa => 'Bool', optional => 1, default => 0},
@@ -1372,11 +1786,12 @@ sub setup_optimal_model
 							  NOABORT_added => {isa => 'Bool', optional => 0},
 							  directory => {isa => 'Str', optional => 0},
 							  cutoff_thetas => { isa => 'ArrayRef', optional => 0 },
+							  cutoff_thetas_estimates => { isa => 'ArrayRef', optional => 0 },
+							  factor =>{isa => 'Num', optional => 0},
 		);
-	my $lasso_optimal = $parm{'lasso_optimal'};
+	my $lasso_model = $parm{'lasso_model'};
 	my $base_model = $parm{'base_model'};
 	my %parameter_covariate_form = %{$parm{'parameter_covariate_form'}};
-	my $t_optimal = $parm{'t_optimal'};
 	my $cutoff = $parm{'cutoff'};
 	my $statistics = $parm{'statistics'};
 	my $adaptive = $parm{'adaptive'};
@@ -1384,6 +1799,8 @@ sub setup_optimal_model
 	my $NOABORT_added = $parm{'NOABORT_added'};
 	my $directory = $parm{'directory'};
 	my $cutoff_thetas = $parm{'cutoff_thetas'};
+	my $cutoff_thetas_estimates = $parm{'cutoff_thetas_estimates'};
+	my $factor = $parm{'factor'};
 
 	my $model_optimal = $base_model -> copy(filename =>$directory. "m1/optimal_model.mod",
 											copy_datafile => 0, 
@@ -1391,37 +1808,21 @@ sub setup_optimal_model
 											write_copy => 0,
 											output_same_directory => 1);
 
-	my $finalvalues = $lasso_optimal->get_hash_values_to_labels(); #array over probs of hashes 
+	my $finalvalues = $lasso_model->get_hash_values_to_labels(); #array over probs of hashes 
 
 	$model_optimal ->update_inits(from_hash => $finalvalues->[0], #first prob
 								  ignore_missing_parameters => 1);
 	
 	my $nthetas = $base_model->nthetas; #initiate counter for remainder thetas
 	
-
-	my $abssum = 0;
 	my %theta_values;
-	foreach my $th_num (@{$cutoff_thetas}) {
-		my $init_val = $lasso_optimal ->initial_values( parameter_type    => 'theta',
-														parameter_numbers => [[$th_num]])->[0][0];
-		$abssum+=abs($init_val);
+
+	for (my $i=0; $i< scalar(@{$cutoff_thetas}); $i++) {
+		my $th_num = $cutoff_thetas->[$i];
+		my $init_val = $cutoff_thetas_estimates->[$i];
 		$theta_values{$th_num}=$init_val;
 	}
-	my $factor = exp(1-($abssum/$t_optimal));
-	my @lasso_coefficients_values=();
-	my @lasso_coefficients_names=();
 
-	foreach my $th_num (@{$cutoff_thetas}) {
-		my $label = $lasso_optimal ->labels( parameter_type    => 'theta',
-										   parameter_numbers => [[$th_num]])->[0][0];
-		$label =~ s/^\s*TH\d+\s*//;
-		push(@lasso_coefficients_names,$label);
-		if (abs($theta_values{$th_num}) > $cutoff){ 
-			push(@lasso_coefficients_values,$factor*$theta_values{$th_num});
-		}else{
-			push(@lasso_coefficients_values,0);
-		}
-	}	
 	#have %parameter_covariate_form here
 	my $index=0;
 
@@ -1441,7 +1842,9 @@ sub setup_optimal_model
 		foreach my $covariate (sort {lc($a) cmp lc($b)} keys %{$parameter_covariate_form{$par}}){
 			if ($parameter_covariate_form{$par}{$covariate}{'form'} == 2){
 				my $thnum = $parameter_covariate_form{$par}{$covariate}{'theta'};
+				my $coeff;
 				if (abs($theta_values{$thnum}) > $cutoff){ 
+					$coeff=$factor*$theta_values{$thnum};
 					my $name = $par."$covariate";
 					if (defined $selected_cont{$par}){ 
 						push(@{$selected_cont{$par}},$name);
@@ -1460,12 +1863,24 @@ sub setup_optimal_model
 									  factor => $factor,
 									  sd => $statistics->{$covariate}{2}{'sd'},
 									  estimate => $theta_values{$thnum}	);
+				}else{
+					$coeff=0;
+				}
+				my $old = abs($parameter_covariate_form{$par}{$covariate}{'lasso_coefficient'});
+#				print "old coeff is $old, new is $coeff, product is ".($coeff*$old)."\n";
+				$parameter_covariate_form{$par}{$covariate}{'lasso_coefficient'} = $coeff*$old;
+				if ($adaptive){
+					update_adaptive_theta(model=>$lasso_model,
+										  coefficient => $coeff*$old,
+										  thetanumber => $parameter_covariate_form{$par}{$covariate}{'theta'},
+										  al_thetanumber => $parameter_covariate_form{$par}{$covariate}{'al_theta'});
 				}
 			}elsif ($parameter_covariate_form{$par}{$covariate}{'form'} == 3){
 				my $thnum = $parameter_covariate_form{$par}{$covariate}{'theta'};
 				croak("bug hstick thnum 1 $par $covariate") unless (defined $thnum);
-#				my $break =  $statistics->{$covariate}{3}{'breakpoint'};
+				my $coeff;
 				if (abs($theta_values{$thnum}) > $cutoff){ 
+					$coeff=$factor*$theta_values{$thnum};
 					my $name = $par."$covariate";
 					if (defined $selected_cont{$par}){ 
 						push(@{$selected_cont{$par}},$name);
@@ -1473,8 +1888,6 @@ sub setup_optimal_model
 						$selected_cont{$par} = [$name];
 					}
 					$nthetas++;
-					#FIXME different centering here, why??? #what if user defined breakpoint instead of median
-#					push @new_code, $blank . "$name = THETA(".$nthetas.")*($covariate".sprintf($sign_dec_str,-$break).")\n"; 
 					push (@factor_code, $blank .final_theta_string(parameter => $par,
 																covariate => $covariate,
 																thetanumber=>$nthetas, 
@@ -1486,10 +1899,22 @@ sub setup_optimal_model
 									  factor => $factor,
 									  sd => $statistics->{$covariate}{3}{'sd'},
 									  estimate => $theta_values{$thnum}	);
+				}else{
+					$coeff=0;
 				}
+				my $old = abs($parameter_covariate_form{$par}{$covariate}{'lasso_coefficient'});
+				$parameter_covariate_form{$par}{$covariate}{'lasso_coefficient'}=$coeff*$old;
+				if ($adaptive){
+					update_adaptive_theta(model=>$lasso_model,
+										  coefficient => $coeff*$old,
+										  thetanumber => $parameter_covariate_form{$par}{$covariate}{'theta'},
+										  al_thetanumber => $parameter_covariate_form{$par}{$covariate}{'al_theta'});
+				}
+
 				$thnum = $parameter_covariate_form{$par}{$covariate}{'Htheta'};
 				croak("bug hstick thnum 2 $par $covariate") unless (defined $thnum);
 				if (abs($theta_values{$thnum}) > $cutoff){ 
+					$coeff=$factor*$theta_values{$thnum};
 					my $name = $par."H$covariate";
 
 					if (defined $selected_cont{$par}){ 
@@ -1519,13 +1944,26 @@ sub setup_optimal_model
 									  factor => $factor,
 									  sd => $statistics->{$covariate}{3}{'H-sd'},
 									  estimate => $theta_values{$thnum}	);
+				}else{
+					$coeff=0;
 				}
+				my $old = abs($parameter_covariate_form{$par}{$covariate}{'Hlasso_coefficient'});
+				$parameter_covariate_form{$par}{$covariate}{'Hlasso_coefficient'}=$coeff*$old;
+				if ($adaptive){
+					update_adaptive_theta(model=>$lasso_model,
+										  coefficient => $coeff*$old,
+										  thetanumber => $parameter_covariate_form{$par}{$covariate}{'Htheta'},
+										  al_thetanumber => $parameter_covariate_form{$par}{$covariate}{'Hal_theta'});
+				}
+
+
 			}elsif ($parameter_covariate_form{$par}{$covariate}{'form'} == 1){
 				foreach my $fact (sort {$a<=>$b} keys %{$statistics->{$covariate}{1}{'cat_hash'}}) {
 					my $thnum = $parameter_covariate_form{$par}{$covariate}{'thetas'}{$fact};
 					next unless (defined $thnum);
-
+					my $coeff;
 					if (abs($theta_values{$thnum}) > $cutoff){ 
+						$coeff=$factor*$theta_values{$thnum};
 						my $name = $par.$covariate.$fact;
 						$nthetas++;
 						#FIXME centering is missing!!!!
@@ -1556,7 +1994,18 @@ sub setup_optimal_model
 										  sd => $statistics->{$covariate}{1}{'sd'}{$fact},
 										  estimate => $theta_values{$thnum}	);
 						
+					}else{
+						$coeff=0;
 					}
+					my $old = abs($parameter_covariate_form{$par}{$covariate}{'lasso_coefficients'}{$fact});
+					$parameter_covariate_form{$par}{$covariate}{'lasso_coefficients'}{$fact}=$coeff*$old;
+					if ($adaptive){
+						update_adaptive_theta(model=>$lasso_model,
+											  coefficient => $coeff*$old,
+											  thetanumber => $parameter_covariate_form{$par}{$covariate}{'thetas'}{$fact},
+											  al_thetanumber => $parameter_covariate_form{$par}{$covariate}{'al_thetas'}{$fact});
+					}
+
 				}
 			}else{
 				croak("unknown form par $par covariate $covariate form ".$parameter_covariate_form{$par}{$covariate}{'form'});
@@ -1600,7 +2049,7 @@ sub setup_optimal_model
 		$model_optimal->remove_option(record_name => 'estimation',
 			option_name => 'NOABORT');
 	}
-	return ($model_optimal,$factor,\@lasso_coefficients_names,\@lasso_coefficients_values);
+	return $model_optimal;
 }
 
 

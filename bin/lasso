@@ -23,6 +23,7 @@ my %options;
 
 my %required_options = ( 'relations:s' => undef);
 my %optional_options = ( 'start_t:f' => undef,
+			 'adaptive!' => undef,
 			 'run_final_model!' => undef,
 			 'stop_t:f' => undef,
 			 'step_t:f' => undef,
@@ -98,6 +99,11 @@ $help_text{-run_final_model} = <<'EOF';
 
     Default not set. If set, the input model will be run with covariate
 	relations added and THETAs fixed to estimates from the lasso procedure.
+EOF
+$help_text{-adaptive} = <<'EOF';
+      -adaptive
+
+    Default not set. If set, run adaptive lasso algorithm.
 EOF
 $help_text{-step_t} = <<'EOF';
       -step_t=X
@@ -220,6 +226,7 @@ my $lasso =
 	tool::lasso->new(eval( $common_options::parameters ),
 					 models	     => [ $model ],
 					 run_final_model    => $options{'run_final_model'},
+					 adaptive           => $options{'adaptive'},
 					 cutoff             => $options{'cutoff'},
 					 relations          => $options{'relations'},
 					 start_t            => $options{'start_t'},

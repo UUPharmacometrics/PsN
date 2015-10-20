@@ -38,8 +38,10 @@ is($ref1->{'KA'}{'WGT'}{'form'},3,"lasso parse_relations 5");
 is($ref1->{'KA'}{'APGR'}{'form'},2,"lasso parse_relations 6");
 is((scalar(keys %{$ref1})),3,'lasso parse relations count parameters');
 
-is(tool::lasso::factor_string(parameter => 'CL',covariate => 'WT',thetanumber=>5, mean => 3, sd => 2),
+is(tool::lasso::factor_string(parameter => 'CL',covariate => 'WT',thetanumber=>5, mean => 3, sd => 2,adaptive=> 0),
    'CLWT = THETA(5)*(WT-3.00000)/2.00000*FACTOR', "factor string 1");
+is(tool::lasso::factor_string(parameter => 'CL',covariate => 'WT',thetanumber=>5, mean => 3, sd => 2,adaptive=> 1),
+   'CLWT = THETA(5)*AL_CLWT*(WT-3.00000)/2.00000*FACTOR', "factor string 2");
 
 is(tool::lasso::final_theta_string(parameter => 'V',covariate => 'HAPGR',thetanumber=>3, mean => 2),
    'VHAPGR = THETA(3)*(HAPGR-2.00000)', "final_theta_string 1");
@@ -83,7 +85,7 @@ tool::lasso::add_lasso_theta(model => $model,
 							 sd => $sd2,
 							 max => 3.6,
 							 min => 0.6);
-is($model->problems->[0]->thetas->[-1]->options->[0]->label,'TH'.$nthetas.' CLWGT','add_lasso_theta label');
+is($model->problems->[0]->thetas->[-1]->options->[0]->label,'TH4 CLWGT','add_lasso_theta label');
 is($model->problems->[0]->thetas->[-1]->options->[0]->init,0.0001,'add_lasso_theta init');
 cmp_float($model->problems->[0]->thetas->[-1]->options->[0]->lobnd,-0.33962,'add_lasso_theta lowbnd cont');
 cmp_float($model->problems->[0]->thetas->[-1]->options->[0]->upbnd,0.76134,'add_lasso_theta upbnd cont');
@@ -116,9 +118,39 @@ is($model->problems->[0]->thetas->[-1]->options->[0]->init,0.0001,'add_lasso_the
 cmp_float($model->problems->[0]->thetas->[-1]->options->[0]->lobnd,-0.44348,'add_lasso_theta lowbnd hstick hi');
 cmp_float($model->problems->[0]->thetas->[-1]->options->[0]->upbnd,0.89452,'add_lasso_theta upbnd hstick hi');
 
+$nthetas++;
+my $str = tool::lasso::add_adaptive_lasso_theta(model=>$model,parameter=>'CL',covariate=>'WGT',thetanumber=>$nthetas);
+is($str,'AL_CLWGT = THETA(7) ; FIXED','add_adaptive_lasso_theta code');
+is($model->problems->[0]->thetas->[-1]->options->[0]->label,'TH'.$nthetas.' AL_CLWGT','add_adaptive_lasso_theta label');
+is($model->problems->[0]->thetas->[-1]->options->[0]->init,1,'add_adaptive lasso_theta init');
+is($model->problems->[0]->thetas->[-1]->options->[0]->fix,1,'add_adaptive lasso_theta fix');
 
-is(tool::lasso::get_abssum(old_thetas => 2,nthetas => 6,adaptive => 0),
-   'ABSSUM = ABS(THETA(3))+ABS(THETA(4))+ABS(THETA(5))+ABS(THETA(6))','get_abssum no adaptive');
+tool::lasso::update_adaptive_theta(model => $model,
+								   thetanumber => 4,
+								   al_thetanumber => 7,
+								   coefficient => 10);
+is($model->problems->[0]->thetas->[(4-1)]->options->[0]->label,'TH4 CLWGT','add_lasso_theta label');
+is($model->problems->[0]->thetas->[(4-1)]->options->[0]->init,0.0001,'update adaptive_theta init');
+cmp_float($model->problems->[0]->thetas->[(4-1)]->options->[0]->lobnd,-0.03396,'update adaptive_theta lowbnd cont');
+cmp_float($model->problems->[0]->thetas->[(4-1)]->options->[0]->upbnd,0.07613,'update adaptive theta upbnd cont');
+is($model->problems->[0]->thetas->[(7-1)]->options->[0]->init,10,'add_lasso_theta init');
+is($model->problems->[0]->thetas->[(7-1)]->options->[0]->fix,1,'add_lasso_theta fix');
+is($model->problems->[0]->thetas->[(4-1)]->options->[0]->fix,0,'add_lasso_theta fix');
+
+tool::lasso::update_adaptive_theta(model => $model,
+								   thetanumber => 4,
+								   al_thetanumber => 7,
+								   coefficient => 0);
+is($model->problems->[0]->thetas->[(4-1)]->options->[0]->init,0,'update adaptive_theta init 2');
+is($model->problems->[0]->thetas->[(4-1)]->options->[0]->lobnd,undef,'update adaptive_theta lowbnd 2');
+is($model->problems->[0]->thetas->[(4-1)]->options->[0]->upbnd,undef,'update adaptive theta upbnd 2');
+is($model->problems->[0]->thetas->[(7-1)]->options->[0]->init,0,'add_lasso_theta init 2');
+is($model->problems->[0]->thetas->[(7-1)]->options->[0]->fix,1,'add_lasso_theta fix 2');
+is($model->problems->[0]->thetas->[(4-1)]->options->[0]->fix,1,'add_lasso_theta fix 2');
+
+
+is(tool::lasso::get_abssum(cutoff_thetas => [3,4,5,6]),
+   'ABSSUM = ABS(THETA(3))+ABS(THETA(4))+ABS(THETA(5))+ABS(THETA(6))','get_abssum ');
 
 
 my $dataobj = data->new(filename => $modeldir.'/pheno.dta',
@@ -136,7 +168,8 @@ my ($usepred,$cutoffref,$t_theta,$weightref,$lambda_theta) =
 								   parameter_covariate_form => $parameter_covariate_form,
 								   t_value => 0.1,
 								   statistics => $statistics,
-								   missing_data_token => '-99');
+								   missing_data_token => '-99',
+								   adaptive => 0);
 
 is($usepred,0,'usepred setup_lasso_model');
 is_deeply($cutoffref,[3,4,5,6,7,8,9,10,11,12,13,14],'cutoff thetas setup_lasso_model');
@@ -159,6 +192,7 @@ is($parameter_covariate_form->{'V'}{'APGR'}{'form'},3,'parcovform pheno 13');
 is($parameter_covariate_form->{'V'}{'APGR'}{'theta'},13,'parcovform pheno 14');
 is($parameter_covariate_form->{'V'}{'APGR'}{'Htheta'},14,'parcovform pheno 15');
 
+
 $model = model->new(filename => "$modeldir/mox1.mod", ignore_missing_data => 1);
 my $dataobj = data->new(filename => "$modeldir/mox_simulated.csv",
 						idcolumn => 1,
@@ -177,6 +211,7 @@ $lassomodel = model->new(filename => "$modeldir/mox1.mod", ignore_missing_data =
 								   parameter_covariate_form => $parameter_covariate_form,
 								   t_value => 0.1,
 								   statistics => $statistics,
+								   adaptive => 0,
 								   missing_data_token => '-99');
 my %finalhash;
 $finalhash{'theta'}={
@@ -203,22 +238,26 @@ $finalhash{'sigma'}={'SIGMA(1,1)'=> 3.35E-01};
 $lassomodel->update_inits(update_fix => 1,
 						  from_hash => \%finalhash);
 
-
-my ($refm,$factor,$lassonames,$lassovalues)=tool::lasso::setup_optimal_model(lasso_optimal => $lassomodel,
-														   base_model => $model,
-														   parameter_covariate_form => $parameter_covariate_form,
-														   t_optimal => 0.1,
-														   cutoff => 0.005,
-														   statistics => $statistics,
-														   use_pred => $usepred,
-														   NOABORT_added => 0,
-														   directory => 'dirname',
-														   cutoff_thetas => $cutoffref );
 my $abssum = abs($finalhash{'theta'}->{'TH5 CLAGE'})+abs($finalhash{'theta'}->{'TH6 CLHAGE'})+
 	abs($finalhash{'theta'}->{'TH7 CLSEX2'})+abs($finalhash{'theta'}->{'TH8 VACE0'})+
 	abs($finalhash{'theta'}->{'TH9 VAGE'})+abs($finalhash{'theta'}->{'TH10 VDIG0'})+
 	abs($finalhash{'theta'}->{'TH11 VWT'});
-cmp_float($factor,exp(1-($abssum/0.1)),'setup_optimal_model factor '.$factor);
+
+my @finalest = ($finalhash{'theta'}->{'TH5 CLAGE'},$finalhash{'theta'}->{'TH6 CLHAGE'},$finalhash{'theta'}->{'TH7 CLSEX2'},
+				$finalhash{'theta'}->{'TH8 VACE0'},$finalhash{'theta'}->{'TH9 VAGE'},$finalhash{'theta'}->{'TH10 VDIG0'},
+				$finalhash{'theta'}->{'TH11 VWT'});
+my $factor = exp(1-($abssum/0.1));
+my $refm =tool::lasso::setup_optimal_model(lasso_model => $lassomodel,
+													base_model => $model,
+													parameter_covariate_form => $parameter_covariate_form,
+													factor => $factor,
+													cutoff => 0.005,
+													statistics => $statistics,
+													use_pred => $usepred,
+													NOABORT_added => 0,
+													directory => 'dirname',
+													cutoff_thetas => $cutoffref,
+													cutoff_thetas_estimates => \@finalest);
 
 is($refm->problems->[0]->thetas->[0]->options->[0]->init,$finalhash{'theta'}->{'TVCL'},'setup_optimal_model init 1');
 is($refm->problems->[0]->thetas->[1]->options->[0]->init,$finalhash{'theta'}->{'TVV'},'setup_optimal_model init 2');
@@ -255,10 +294,15 @@ my $lassocoeff={
 	'VDIG0' => 0,
 	'VWT' => 0};
 
-for(my $i=0; $i< scalar(@{$lassonames}); $i++){
-	my $key = $lassonames->[$i];
-	cmp_float($lassovalues->[$i],$lassocoeff->{$key},"lasso coefficient $key");
-}
+cmp_float($parameter_covariate_form->{'CL'}{'AGE'}{'lasso_coefficient'},$lassocoeff->{'CLAGE'},'lasso coefficient CLAGE');
+cmp_float($parameter_covariate_form->{'CL'}{'AGE'}{'Hlasso_coefficient'},$lassocoeff->{'CLHAGE'},'lasso coefficient CLHAGE');
+cmp_float($parameter_covariate_form->{'CL'}{'SEX'}{'lasso_coefficients'}{2},$lassocoeff->{'CLSEX2'},'lasso coefficient CLSEX2');
+cmp_float($parameter_covariate_form->{'V'}{'ACE'}{'lasso_coefficients'}{0},$lassocoeff->{'VACE0'},'lasso coefficient VACE0');
+cmp_float($parameter_covariate_form->{'V'}{'AGE'}{'lasso_coefficient'},$lassocoeff->{'VAGE'},'lasso coefficient VAGE');
+cmp_float($parameter_covariate_form->{'V'}{'DIG0'}{'lasso_coefficients'}{0},$lassocoeff->{'VDIG0'},'lasso coefficient VDIG0');
+cmp_float($parameter_covariate_form->{'V'}{'WT'}{'lasso_coefficient'},$lassocoeff->{'VWT'},'lasso coefficient VWT');
+
+
 
 $model = model->new(filename => "$modeldir/pheno.mod", ignore_missing_data => 1);
 
