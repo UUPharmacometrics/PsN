@@ -819,8 +819,6 @@ sub _modelfit_raw_results_callback
                 for my $row (@{$self->_reference_raw_results}) {
                     my $nameline = $row->[0];
                     my @oldrow = @$row;
-                    use Data::Dumper;
-                    print Dumper($model_names->[$nameline - 1]);
 			        my $new_row = [ $model_index, utils::file::get_file_stem($self->reference_lst->[$ref_index - 1]), ("ref$ref_index") x (scalar(@{$model_names->[$nameline - 1]}) - 1), @oldrow[1 .. $#oldrow] ]; 
                     $ref_index++;
                     $model_index--;
