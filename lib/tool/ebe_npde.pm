@@ -1165,10 +1165,22 @@ sub create_R_plots_code{
 		$iov_eta .= ')';
 	}
 
+	my @all_eta_numbers=();
+	foreach my $eta (@all_eta){
+		$eta =~ /^ETA\((\d+)\)/;
+		push(@all_eta_numbers,$1);
+	}
+
+	my $succ = $self->successful_samples;
+	$succ = 2 if ($succ == 0);
+	my $outlying = 'outlying_criteria <- '.-(Statistics::Distributions::udistr(1/($succ))).
+		'  # for successful samples='.$succ;
+
 	$rplot->add_preamble(code => [
 							 '#ebe_npde-specific preamble',
 							 'samples   <-'.$self->samples,
 							 'successful.samples  <- '.$self->successful_samples,
+							 $outlying,
 							 'n.subjects   <-'.$self->subjects,
 							 "ebe.npde.file <- '".$ebe_npde_file."'",
 							 "iofv.file <- '".$iofv_file."'",
@@ -1177,6 +1189,7 @@ sub create_R_plots_code{
 							 "all.iwres.file <- '".$all_iwres_file."'",
 							 'occasions   <-'.$self->occasions,
 							 "all.eta.names <-  c('".join("','",@all_eta)."')",
+							 'all.eta.numbers <-  c('.join(',',@all_eta_numbers).')',
 							 $iiv_eta,
 							 $iov_eta
 						 ]);

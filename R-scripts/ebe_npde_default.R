@@ -1,3 +1,4 @@
+do_outlier_plot <- 0
 
 ###########################################################################
 # Kullback-Leibler Divergence (KLD)                                       #
@@ -53,14 +54,14 @@ variance <- c(1:n.eta)
 mymean <- c(1:n.eta)
 p_mean_not_0 <- c(1:n.eta)
 p_var_not_1 <- c(1:n.eta)
-etanum <- c(1:n.eta)
 for(i in 1:n.eta){ 
   variance[i] <- var(ebenpde_obs[,i])
   mymean[i] <- mean(ebenpde_obs[,i])
   p_mean_not_0[i] <- wilcox.test(ebenpde_obs[,i])$p.value
   p_var_not_1[i]  <- ks.test(ebenpde_obs[,i],pnorm,mean=mean(ebenpde_obs[,i]),sd=1)$p.value
 }
-mydataframe<-data.frame('EBE NPDE' = format(etanum), mean = format(mymean,digits=5),'p-value (H_0: mean==0)'=format(p_mean_not_0,digits=3),variance=format(variance,digits=5),'p-value (H_0: var==1)'=format(p_var_not_1,digits=3),check.names=FALSE)
+#ETAs are not sorted if any iov eta, use all.eta.numbers from preamble
+mydataframe<-data.frame('EBE NPDE' = all.eta.numbers, mean = format(mymean,digits=5),'p-value (H_0: mean==0)'=format(p_mean_not_0,digits=3),variance=format(variance,digits=5),'p-value (H_0: var==1)'=format(p_var_not_1,digits=3),check.names=FALSE)
 grid.table(mydataframe,show.rownames=FALSE)
 
 #EBE-NPDE correlation graph
@@ -68,31 +69,103 @@ library(PerformanceAnalytics)
 chart.Correlation(ebenpde_obs, histogram = TRUE, method = c("spearman"))
 
 #outlier graph
+#outlier table
 if (require("PEIP")){
-ebenpde_tmp <- read.csv(ebe.npde.file)
-ebenpde_obs <- ebenpde_tmp[,seq(3,n.eta+2)]
 emp_distance <- array(0,c(n.subjects,1))
 mean_ebenpde<- array(0,c(1,n.eta))
 var_ebenpde<- diag(1,n.eta,n.eta)
-identityline <- seq(1,n.subjects,by=1)
+identityline <- seq(1,n.subjects,by=1) #only for plot
+vector_theor_dist<- array(0,c(1,n.subjects))
+noutlier<-0
 for(i in 1:n.subjects){ 
-emp_distance[i]<- (as.matrix(ebenpde_obs[i,]-mean_ebenpde)%*%as.matrix(solve(var_ebenpde))%*%as.matrix(t(ebenpde_obs[i,]-mean_ebenpde)))
+  emp_distance[i]<- (as.matrix(ebenpde_obs[i,]-mean_ebenpde)%*%as.matrix(solve(var_ebenpde))%*%as.matrix(t(ebenpde_obs[i,]-mean_ebenpde)))
 }
-index_emp_distance<-sort(emp_distance,index.return=TRUE)
+index_emp_distance<-sort(emp_distance,index.return=TRUE) #keep
 emp_distance_sort <- emp_distance[index_emp_distance$ix]
 ebe_npde_quant <- seq( (1-0.5)/n.subjects , (n.subjects-0.5)/n.subjects ,by=(1/n.subjects))
 theor_distance<-chi2inv(ebe_npde_quant,n.eta)
-plot(emp_distance_sort,theor_distance, xlab = "Ordered robust empirical MD^2" ,ylab= "Theoretical ChiSq MD^2", main=paste('ChiSq Q-Q plot ',model.filename))
-vector_text<-array('',c(n.subjects,1))
-index_text <- index_emp_distance$ix[ (n.subjects-10 ): n.subjects ] # plot the ID of the last 10 subjects
-vector_text[(n.subjects-10 ): n.subjects ] <- ebenpde_tmp$ID[index_text]
-text(emp_distance_sort,theor_distance, paste("", vector_text),col="red")
-matplot(identityline,identityline,type="l",col="red",add=T)
+out_distance<- (theor_distance[n.subjects]-emp_distance_sort[(n.subjects)])/sqrt(2)
+vector_theor_dist[n.subjects]<-theor_distance[n.subjects]
+flag<-0
+if(out_distance< outlying_criteria){  #criteria to define outlying individual
+  flag<-1
+  if (do_outlier_plot){
+    plot(emp_distance_sort,theor_distance, xlab = "Ordered robust empirical MD^2" ,ylab= "Theoretical ChiSq MD^2", main=paste('ChiSq Q-Q plot ',model.filename))
+  	vector_text<-array('',c(n.subjects,1))
+  	index_text <- index_emp_distance$ix[ n.subjects ] # plot the ID of the outlying individual
+  	vector_text[ n.subjects ] <- ebenpde_tmp$ID[index_text]
+  	text(emp_distance_sort,theor_distance, paste("", vector_text),col="red")
+  	matplot(identityline,identityline,type="l",col="red",add=T)
+   }
+  noutlier<-noutlier+1
+} else {
+  if (do_outlier_plot){
+    plot(emp_distance_sort,theor_distance, xlab = "Ordered robust empirical MD^2" ,ylab= "Theoretical ChiSq MD^2", main=paste('ChiSq Q-Q plot ',model.filename))
+  	vector_text<-array('',c(n.subjects,1))
+  	matplot(identityline,identityline,type="l",col="red",add=T)
+  }
+}
+  
+i<-1
+while(i<n.subjects){
+  flag1<-0
+  ebe_npde_quant <- seq( (1-0.5)/(n.subjects-i) , ((n.subjects-i)-0.5)/(n.subjects-i) ,by=(1/(n.subjects-i)))
+  theor_distance<-chi2inv(ebe_npde_quant,n.eta) #keep
+  vector_theor_dist[n.subjects-i]<-theor_distance[n.subjects-i] #keep
+  out_distance<- (theor_distance[(n.subjects-i)]-emp_distance_sort[(n.subjects-i)])/sqrt(2)
+  if(out_distance< outlying_criteria &&flag==1){flag1 <- 1} #criteria to define outlying individual
+  if(flag1==1){
+    if (do_outlier_plot){
+	    identityline <- seq(1,(n.subjects-i),by=1)
+    	emp_distance_sort1 <- emp_distance_sort[1:(n.subjects-i)]
+    	theor_distance1 <- theor_distance[1:(n.subjects-i)]
+    	plot(emp_distance_sort1,theor_distance1, xlab = "Ordered robust empirical MD^2" ,ylab= "Theoretical ChiSq MD^2", main=paste('ChiSq Q-Q plot ',model.filename))
+    	vector_text<-array('',c(n.subjects-i,1))
+    	index_text <- index_emp_distance$ix[ n.subjects-i ] # plot the ID of the last 10 subjects
+    	vector_text[n.subjects-i ] <- ebenpde_tmp$ID[index_text]
+    	text(emp_distance_sort,theor_distance, paste("", vector_text),col="red")
+    	matplot(identityline,identityline,type="l",col="red",add=T)
+	}
+    noutlier<-noutlier+1
+    flag<-1
+  }
+  i<-i+1
+}
+
+#CREATE FINAL TABLE
+if(noutlier>0){
+ ncolunmns<-(3+n.eta)
+ fortable <- array(0,c(noutlier,ncolunmns))
+ for(i in 1:noutlier){ 
+   index_text <- index_emp_distance$ix[ n.subjects -i +1 ] # plot the ID of the last subjects
+   fortable[i,1]<- ebenpde_tmp$ID[index_text]
+   fortable[i,2]<- format((vector_theor_dist[n.subjects-i +1]-emp_distance_sort[(n.subjects-i +1)])/sqrt(2),digits=5)
+   fortable[i,3]<- format(emp_distance_sort[(n.subjects-i +1)],digits=5)
+   for(j in 1:n.eta){  
+        fortable[i,3+j]<- ebenpde_obs[index_text,j]
+   }   
+}                      
+
+
+fortable1<-as.data.frame(fortable)
+colnames(fortable1) <- c("ID", "outlying criteria","MD distance",paste0('ebe npde ',all.eta.numbers))
+
+}else{
+	#no outliers
+ fortable1 <- data.frame('1' = c(' '))
+ colnames(fortable1) <- c("No outliers detected")
+
+
+}
+frame()
+grid.table(fortable1,show.rownames=FALSE)
+
 } else{
-  print("library PEIP not installed, cannot create outlier graph for ebe npde")
+  print("library PEIP not installed, cannot create outlier results for ebe npde")
 }
 
 dev.off()
+
 
 #new pdf for OFV
 pdf.filename <- paste0('PsN_OFV_plots.pdf')
@@ -261,9 +334,9 @@ legend("topright", col=c('red', 'green', 'green','green'), leg.txt, lty=c(1,4,3,
 dev.off()
 
 # clear workspace and console and previous graphs
-cat("\014")
-rm(list=ls())
-graphics.off()
+#cat("\014")
+#rm(list=ls())
+#graphics.off()
 
 
 
