@@ -261,7 +261,8 @@ sub update_adaptive_theta
 	my $thetanumber = $parm{'thetanumber'};
 	my $al_thetanumber = $parm{'al_thetanumber'};
 
-	$coefficient = sprintf($dec_str,abs($coefficient));
+#	$coefficient = sprintf($dec_str,abs($coefficient)); then lasso_coeff.csv is wrong
+	$coefficient = abs($coefficient);
 
 	if ($coefficient == 0){
 		#set both thetas to 0 FIX
@@ -502,7 +503,10 @@ sub setup_lasso_model
 	my $statistics = $parm{'statistics'};
 	my $missing_data_token = $parm{'missing_data_token'};
 	my $adaptive = $parm{'adaptive'};
-	
+	#add $adjusted
+	#add full_model. as lasso except FACTOR is always 1, not depending on abssum or t
+	#error message if full model does not have $COV
+	#only edit full_model if adjusted and adaptive
 
 	my @cutoff_thetas=();
 	my @weight_thetas=();
@@ -1236,7 +1240,13 @@ sub modelfit_setup
 			option_name => 'NOABORT');
 		$self->NOABORT_added(1);
 	}
-	## Kill the covariance record
+	## Kill the covariance record #FIXME copy model to full_model before removing cov
+	#	my $full_model= $model->copy(filename => $self -> directory().'m'.$model_number.'/full_model.mod',
+#								  copy_datafile => 0,
+#								  output_same_directory => 0,
+#								  copy_output => 0,
+#								  write_copy => 0);
+
 	$model -> remove_records( type => 'covariance');
 
 	my $basic_model= $model->copy(filename => $self -> directory().'m'.$model_number.'/basic.mod',
@@ -1244,11 +1254,12 @@ sub modelfit_setup
 								  copy_output => 0);
 	## Create the new model object
 	#must do this in setup, not new
+	#FIXME output_same_directory
 	my $lasso_model= $model->copy(filename => $self -> directory().'m'.$model_number.'/lasso_initial.mod',
 								  copy_datafile => 0,
 								  copy_output => 0,
 								  write_copy => 0);
-	
+	#FIXME input full_model also, add option adjusted
 	my ($usepred,$cutoffref,$t_theta,$weightref,$lambda_theta) = 
 		setup_lasso_model(lasso_model => $lasso_model,
 						  parameter_covariate_form => \%parameter_covariate_form,
