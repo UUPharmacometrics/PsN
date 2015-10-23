@@ -23,8 +23,19 @@ dies_ok { tool::lasso::check_name(parameter => 'CL',covariate=>'APGR',factor => 
 dies_ok { tool::lasso::check_name(parameter => 'V',covariate=>'HEJSAN',H => 'H',version => 6) } "check name too long v 6";
 lives_ok { tool::lasso::check_name(parameter => 'KA',covariate=>'OTHER',version => 7) } "check name long v 7";
 
+is_deeply(tool::lasso::compute_lasso_coefficients(al_coefficients=>[1,2,1],theta_estimates=>[-2,4,0.0000001],factor=>1,cutoff=>0.005),
+		  [-2,8,0],'compute lasso coeff');
 
-my $model = model->new(filename => "$modeldir/pheno.mod", ignore_missing_data => 1);
+my $model = model->new(filename => "$modeldir/mox_sir.mod", ignore_missing_data => 1);
+
+is_deeply(tool::lasso::get_adjusted_al_coefficients(model => $model, 
+									cutoff_thetas =>[1,3,5]),
+		  [abs(3.28661E+01)/2.47122E+00,abs(2.92049E-01)/1.93883E-02,abs(3.34511E-01)/8.55395E-03],'get al coeff');
+
+is_deeply(tool::lasso::get_covrecord(model=>$model,adjusted=>1),[''],'get covrecord 1');
+$model = model->new(filename => "$modeldir/pheno.mod", ignore_missing_data => 1);
+
+is_deeply(tool::lasso::get_covrecord(model=>$model,adjusted=>1),['PRINT=E'],'get covrecord 2');
 
 my $relations = 'CL:WGT-2,SEX-1,RACE-1,,V:WGT-3-45.2,,KA:WGT-3,APGR-2';
 
@@ -213,6 +224,16 @@ $lassomodel = model->new(filename => "$modeldir/mox1.mod", ignore_missing_data =
 								   statistics => $statistics,
 								   adaptive => 0,
 								   missing_data_token => '-99');
+
+my $full_model= $lassomodel->copy(filename => 'full_model.mod',
+								  copy_datafile => 0,
+								  output_same_directory=> 1,
+								  copy_output => 0,
+								  write_copy => 0);
+tool::lasso::setup_full_model(model=>$full_model,
+				 covariance => [''],
+				 use_pred => $usepred);
+
 my %finalhash;
 $finalhash{'theta'}={
 'TVCL' => 3.29E+01,
@@ -247,17 +268,20 @@ my @finalest = ($finalhash{'theta'}->{'TH5 CLAGE'},$finalhash{'theta'}->{'TH6 CL
 				$finalhash{'theta'}->{'TH8 VACE0'},$finalhash{'theta'}->{'TH9 VAGE'},$finalhash{'theta'}->{'TH10 VDIG0'},
 				$finalhash{'theta'}->{'TH11 VWT'});
 my $factor = exp(1-($abssum/0.1));
-my $refm =tool::lasso::setup_optimal_model(lasso_model => $lassomodel,
-													base_model => $model,
-													parameter_covariate_form => $parameter_covariate_form,
-													factor => $factor,
-													cutoff => 0.005,
-													statistics => $statistics,
-													use_pred => $usepred,
-													NOABORT_added => 0,
-													directory => 'dirname',
-													cutoff_thetas => $cutoffref,
-													cutoff_thetas_estimates => \@finalest);
+my $lassocoefficients = tool::lasso::compute_lasso_coefficients( al_coefficients => [1,1,1,1,1,1,1],
+											 theta_estimates => \@finalest,
+											 factor => $factor,
+											 cutoff => 0.005);
+
+my $refm =tool::lasso::setup_optimal_model(finalvalues => $lassomodel->get_hash_values_to_labels,
+										   base_model => $model,
+										   parameter_covariate_form => $parameter_covariate_form,
+										   statistics => $statistics,
+										   use_pred => $usepred,
+										   NOABORT_added => 0,
+										   directory => 'dirname',
+										   cutoff_thetas => $cutoffref,
+										   lasso_coefficients => $lassocoefficients);
 
 is($refm->problems->[0]->thetas->[0]->options->[0]->init,$finalhash{'theta'}->{'TVCL'},'setup_optimal_model init 1');
 is($refm->problems->[0]->thetas->[1]->options->[0]->init,$finalhash{'theta'}->{'TVV'},'setup_optimal_model init 2');
@@ -294,13 +318,13 @@ my $lassocoeff={
 	'VDIG0' => 0,
 	'VWT' => 0};
 
-cmp_float($parameter_covariate_form->{'CL'}{'AGE'}{'lasso_coefficient'},$lassocoeff->{'CLAGE'},'lasso coefficient CLAGE');
-cmp_float($parameter_covariate_form->{'CL'}{'AGE'}{'Hlasso_coefficient'},$lassocoeff->{'CLHAGE'},'lasso coefficient CLHAGE');
-cmp_float($parameter_covariate_form->{'CL'}{'SEX'}{'lasso_coefficients'}{2},$lassocoeff->{'CLSEX2'},'lasso coefficient CLSEX2');
-cmp_float($parameter_covariate_form->{'V'}{'ACE'}{'lasso_coefficients'}{0},$lassocoeff->{'VACE0'},'lasso coefficient VACE0');
-cmp_float($parameter_covariate_form->{'V'}{'AGE'}{'lasso_coefficient'},$lassocoeff->{'VAGE'},'lasso coefficient VAGE');
-cmp_float($parameter_covariate_form->{'V'}{'DIG0'}{'lasso_coefficients'}{0},$lassocoeff->{'VDIG0'},'lasso coefficient VDIG0');
-cmp_float($parameter_covariate_form->{'V'}{'WT'}{'lasso_coefficient'},$lassocoeff->{'VWT'},'lasso coefficient VWT');
+cmp_float($lassocoefficients->[0],$lassocoeff->{'CLAGE'},'lasso coefficient CLAGE');
+cmp_float($lassocoefficients->[1],$lassocoeff->{'CLHAGE'},'lasso coefficient CLHAGE');
+cmp_float($lassocoefficients->[2],$lassocoeff->{'CLSEX2'},'lasso coefficient CLSEX2');
+cmp_float($lassocoefficients->[3],$lassocoeff->{'VACE0'},'lasso coefficient VACE0');
+cmp_float($lassocoefficients->[4],$lassocoeff->{'VAGE'},'lasso coefficient VAGE');
+cmp_float($lassocoefficients->[5],$lassocoeff->{'VDIG0'},'lasso coefficient VDIG0');
+cmp_float($lassocoefficients->[6],$lassocoeff->{'VWT'},'lasso coefficient VWT');
 
 
 
@@ -311,9 +335,8 @@ tool::lasso::add_optimal_theta(model => $model,
 							 parameter => 'CL',
 							 covariate => 'WGT',
 							 thetanumber => $nthetas,
-							 factor => 3,
-							 sd => 2,
-							 estimate => 4);
+							 coefficient => 12,
+							 sd => 2);
 
 is($model->problems->[0]->thetas->[-1]->options->[0]->label,'TH'.$nthetas.' CLWGT','add_optimal_theta label');
 cmp_float($model->problems->[0]->thetas->[-1]->options->[0]->init,6,'add_optimal_theta init');

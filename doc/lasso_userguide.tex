@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{LASSO user guide}{2015-10-20}
+\guidetitle{LASSO user guide}{2015-10-23}
 
 
 \begin{document}
@@ -55,7 +55,10 @@ Default not set. If set, the input model will be run with selected covariate
 relations added and THETAs fixed to estimates from the lasso procedure.
 \nextopt
 \optname{adaptive}
-Default not set. If set, run adaptive lasso algorithm.
+Default not set. If set, run adaptive lasso algorithm. This option will be set automatically if option -adjusted is set.
+\nextopt
+\optname{adjusted}
+Default not set. If set, run adjusted adaptive lasso algorithm.
 \nextopt
 \end{optionlist}
 
@@ -90,6 +93,8 @@ The number of parallel processes to start for the model runs on a parallel compu
 \end{optionlist}
 
 \section{Output}
+The raw\_results csv-file contains the parameter estimates of the final lasso model(s), as well as the FACTOR and
+the final lasso coefficients. The file lasso\_coefficients.csv contains the final lasso coefficients.
 
 The optimal lasso model and the original model with the optimal covariate relations added are in the m1 subdirectory of the run directory. Located directly in the run directory: the file lasso.log contains the sequence of estimation and prediction ofv:s and the corresponding t-values. The files est\_ofv.log and pred\_ofv.log contain the estimation and prediction ofv in table format. The file coeff\_table.log lists the estimated theta values for the covariates for each value of t in the cross-validation.
 
@@ -196,23 +201,60 @@ $ESTIMATION MAXEVAL=9999 SIGDIGITS=4 POSTHOC METHOD=1
 \end{verbatim}
 
 Subsequent models tested during cross-validation have other values of T-VALUE.
-
+If the adaptive or adjusted adaptive lasso is run, fixed adaptive lasso coefficients are included in the lasso model 
+code. Example:
+\begin{verbatim}
+    VWGT = THETA(8)*(WGT-1.52542)/0.70456*FACTOR
+\end{verbatim}
+is replaced with
+\begin{verbatim}
+    VWGT = THETA(8)*AL_VWGT *(WGT-1.52542)/0.70456*FACTOR
+\end{verbatim}
+where AL\_VWGT is the adaptive lasso coefficient for VWGT and is equal to a FIXED \$THETA. 
 
 \section{Step-by-step overview of algorithm}
 
 \begin{enumerate}
 \item Input checking.
 \item Compute covariate statistics.
-\item Create the lasso model by adding all covariate relations to input model. Normalize parameters using covariate statistics. See details in lasso reference article. Note: Basic model parameters are \emph{not} updated with final estimates even if input model
-lst-file exists. 
+\item Create the lasso model by adding all covariate relations to a copy of the input model with \$COV removed. 
+Normalize parameters using covariate statistics. See details in lasso reference article. 
+Note: Basic model parameters are \emph{not} updated with final estimates even if input model
+lst-file exists. If adaptive lasso is run, AL coefficients, FIX and equal to 1, 
+for adaptive lasso are also added to the model.
 \item Create cross-validation data sets, possibly using stratification. Divide data into N groups. Create N estimation datasets where estimation dataset j is the total dataset minus group j. There are N prediction datasets where prediction dataset j is identical to group j. 
-\item Set t=start\_t. The default starting position is start\_t=0.
-If option pred\_ofv\_start\_t is given then go to step 6 (change t again), otherwise go to step 7 (run an xv step).
-\item Set t=t+step\_t. 
-\item Run an xv step with lasso model. An xv step consists of N estimations, one for each estimation dataset, and N predictions, one for each prediction dataset. The prediction j is a MAXEVAL=0 run with initial estimates set to the final estimates from estimation run j. Note: if t=0 the lasso model collapses to the base model.
-\item Check convergence. If convergence is not reached, go back to step 6. If converged continue to 9.
+\item Only if adjusted adaptive lasso is run: 
+\begin{enumerate}
+\item Create the full model by copying the lasso model and removing the
+lasso constraint on the covariate relation \$THETAs. 
+\item Add \$COV. 
+\item Run the full model to obtain estimates and standard errors of the covariate relation \$THETAs.
+\item Compute AL-coefficients for each covariate relation \$THETAs 
+as $\frac{abs(theta)}{se_{theta}}$
+and update the lasso model with these FIX values.
+\end{enumerate}
+\item Run a cross-validation to find the optimal value of t, 
+starting at start\_t and ending when the prediction ofv increases compared to the
+previous t or when stop\_t is reached.
+%\item Set t=start\_t. The default starting position is start\_t=0.
+%If option pred\_ofv\_start\_t is given then go to step 6 (change t again), otherwise go to step 7 (run an xv step).
+%\item Set t=t+step\_t. 
+%\item Run an xv step with lasso model. An xv step consists of N estimations, one for each estimation dataset, and N predictions, one for each prediction dataset. The prediction j is a MAXEVAL=0 run with initial estimates set to the final estimates from estimation run j. Note: if t=0 the lasso model collapses to the base model.
+%\item Check convergence. If convergence is not reached, go back to step 6. If converged continue to 9.
 \item Run the lasso model with optimal t on the whole (original) dataset. 
-\item Add the covariate relations and parameters from the optimal lasso model run (only relations with thetas larger than cutoff) to the input model, fix the selected covariate thetas as the lasso restriction has been removed and run the input model on the whole dataset.
+\item Compute lasso coefficients as $FACTOR*theta*ALtheta$, where AL\_theta is equal to 1 unless adjusted adaptive lasso 
+is run.
+\item Only if adaptive lasso, but not adjusted adaptive lasso, is run:
+\begin{enumerate}
+\item Compute AL-coefficients for each covariate relation \$THETAs 
+as $abs(theta)\cdot FACTOR$
+and update the lasso model with these FIX values.
+\item Run a cross-validation to find the optimal value of t, 
+starting at start\_t and ending when the prediction ofv increases compared to the
+previous t or when stop\_t is reached.
+\item Compute lasso coefficients as $FACTOR*theta*ALtheta$.
+\end{enumerate}
+%\item Add the covariate relations and parameters from the optimal lasso model run (only relations with thetas larger than cutoff) to the input model, fix the selected covariate thetas as the lasso restriction has been removed and run the input model on the whole dataset.
 \end{enumerate}
 
 \section{Covariate relations}
