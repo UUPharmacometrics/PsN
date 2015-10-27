@@ -787,7 +787,7 @@ sub load_restart_information
 
 		}else{
 			#add_iterations
-			ui->print(category => 'sir',message => 'Reading results from iteration $iteration. '."\n".
+			ui->print(category => 'sir',message => "Reading results from iteration $iteration. "."\n".
 					  "Options from original run will not be read.\n");
 			
 			my @new_samples = @samples[0 .. ($iteration-1)];
