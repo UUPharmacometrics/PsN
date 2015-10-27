@@ -49,13 +49,17 @@ is($ref1->{'KA'}{'WGT'}{'form'},3,"lasso parse_relations 5");
 is($ref1->{'KA'}{'APGR'}{'form'},2,"lasso parse_relations 6");
 is((scalar(keys %{$ref1})),3,'lasso parse relations count parameters');
 
-is(tool::lasso::factor_string(parameter => 'CL',covariate => 'WT',thetanumber=>5, mean => 3, sd => 2,adaptive=> 0),
+is(tool::lasso::factor_string(parameter => 'CL',covariate => 'WT',thetanumber=>5, mean => 3, sd => 2,adaptive=> 0,normalize=>1),
    'CLWT = THETA(5)*(WT-3.00000)/2.00000*FACTOR', "factor string 1");
-is(tool::lasso::factor_string(parameter => 'CL',covariate => 'WT',thetanumber=>5, mean => 3, sd => 2,adaptive=> 1),
+is(tool::lasso::factor_string(parameter => 'CL',covariate => 'WT',thetanumber=>5, mean => 3, sd => 2,adaptive=> 1,normalize=>1),
    'CLWT = THETA(5)*AL_CLWT*(WT-3.00000)/2.00000*FACTOR', "factor string 2");
+is(tool::lasso::factor_string(parameter => 'CL',covariate => 'WT',thetanumber=>5, mean => 3, sd => 2,adaptive=> 1,normalize=>0),
+   'CLWT = THETA(5)*AL_CLWT*WT*FACTOR', "factor string 3");
 
-is(tool::lasso::final_theta_string(parameter => 'V',covariate => 'HAPGR',thetanumber=>3, mean => 2),
+is(tool::lasso::final_theta_string(parameter => 'V',covariate => 'HAPGR',thetanumber=>3, mean => 2,normalize=>1),
    'VHAPGR = THETA(3)*(HAPGR-2.00000)', "final_theta_string 1");
+is(tool::lasso::final_theta_string(parameter => 'V',covariate => 'HAPGR',thetanumber=>3, mean => 2,normalize=>0),
+   'VHAPGR = THETA(3)*HAPGR', "final_theta_string 2");
 
 #WGT
 my $mean2=1.52542372881356;
@@ -80,6 +84,7 @@ tool::lasso::add_lasso_theta(model => $model,
 							 thetanumber => $nthetas,
 							 mean => $mean1,
 							 sd => $sd1,
+							 normalize=>1,
 							 max => 1,
 							 min => 0);
 is($model->problems->[0]->thetas->[-1]->options->[0]->label,'TH'.$nthetas.' CLSEX0','add_lasso_theta label');
@@ -93,6 +98,7 @@ tool::lasso::add_lasso_theta(model => $model,
 							 covariate => 'WGT',
 							 thetanumber => $nthetas,
 							 mean => $mean2,
+							 normalize=>1,
 							 sd => $sd2,
 							 max => 3.6,
 							 min => 0.6);
@@ -107,6 +113,7 @@ tool::lasso::add_lasso_theta(model => $model,
 							 covariate => 'APGR',
 							 thetanumber => $nthetas,
 							 mean => $mean,
+							 normalize=>1,
 							 sd => $sd,
 							 max => 10,
 							 min => 1);
@@ -121,6 +128,7 @@ tool::lasso::add_lasso_theta(model => $model,
 							 covariate => 'HAPGR',
 							 thetanumber => $nthetas,
 							 mean => $hmean,
+							 normalize=>1,
 							 sd => $hsd,
 							 max => (10-$break),
 							 min => 0);
@@ -135,6 +143,38 @@ is($str,'AL_CLWGT = THETA(7) ; FIXED','add_adaptive_lasso_theta code');
 is($model->problems->[0]->thetas->[-1]->options->[0]->label,'TH'.$nthetas.' AL_CLWGT','add_adaptive_lasso_theta label');
 is($model->problems->[0]->thetas->[-1]->options->[0]->init,1,'add_adaptive lasso_theta init');
 is($model->problems->[0]->thetas->[-1]->options->[0]->fix,1,'add_adaptive lasso_theta fix');
+
+$nthetas++;
+tool::lasso::add_lasso_theta(model => $model,
+							 parameter => 'CL',
+							 covariate => 'HAPGR',
+							 thetanumber => $nthetas,
+							 mean => $hmean,
+							 normalize=>0,
+							 sd => $hsd,
+							 max => 10,
+							 min => 0);
+is($model->problems->[0]->thetas->[-1]->options->[0]->label,'TH'.$nthetas.' CLHAPGR','add_lasso_theta label');
+is($model->problems->[0]->thetas->[-1]->options->[0]->init,0.0001,'add_lasso_theta init');
+cmp_float($model->problems->[0]->thetas->[-1]->options->[0]->lobnd,-0.1,'add_lasso_theta lowbnd hstick hi nonorm');
+is($model->problems->[0]->thetas->[-1]->options->[0]->upbnd,undef,'add_lasso_theta upbnd hstick hi nonorm');
+
+$nthetas++;
+tool::lasso::add_lasso_theta(model => $model,
+							 parameter => 'CL',
+							 covariate => 'HAPGR',
+							 thetanumber => $nthetas,
+							 mean => $hmean,
+							 normalize=>0,
+							 sd => $hsd,
+							 max => 10,
+							 min => 2);
+is($model->problems->[0]->thetas->[-1]->options->[0]->label,'TH'.$nthetas.' CLHAPGR','add_lasso_theta label');
+is($model->problems->[0]->thetas->[-1]->options->[0]->init,0.0001,'add_lasso_theta init');
+cmp_float($model->problems->[0]->thetas->[-1]->options->[0]->lobnd,-0.1,'add_lasso_theta lowbnd hstick hi nonorm 2');
+cmp_float($model->problems->[0]->thetas->[-1]->options->[0]->upbnd,-0.5,'add_lasso_theta upbnd hstick hi nonorm 2');
+
+
 
 tool::lasso::update_adaptive_theta(model => $model,
 								   thetanumber => 4,
@@ -174,10 +214,11 @@ my $lassomodel = model->new(filename => "$modeldir/pheno.mod", ignore_missing_da
 my ($parameter_covariate_form,$statistics) = tool::lasso::setup_covariates(relations => 'CL:WGT-2,APGR-1,,V:APGR-3',
 																		   data => $dataobj,
 																		   model => $model);
-my ($usepred,$cutoffref,$t_theta,$weightref,$lambda_theta) = 
+my ($usepred,$cutoffref,$t_theta,$weightref,$lambda_theta,$theta_labels) = 
 	tool::lasso::setup_lasso_model(lasso_model => $lassomodel,
 								   parameter_covariate_form => $parameter_covariate_form,
 								   t_value => 0.1,
+								   normalize=>1,
 								   statistics => $statistics,
 								   missing_data_token => '-99',
 								   adaptive => 0);
@@ -186,6 +227,9 @@ is($usepred,0,'usepred setup_lasso_model');
 is_deeply($cutoffref,[3,4,5,6,7,8,9,10,11,12,13,14],'cutoff thetas setup_lasso_model');
 is($t_theta,15,'t theta setup_lasso_model');
 is_deeply($weightref,[],'weight thetas setup_lasso_model');
+is_deeply($theta_labels,
+		  ['CLAPGR1','CLAPGR2','CLAPGR3','CLAPGR4','CLAPGR5','CLAPGR6','CLAPGR7','CLAPGR9','CLAPGR10','CLWGT','VAPGR','VHAPGR'],
+		  'theta labels setup_lasso_model');
 is($lambda_theta,undef,'lambda theta setup_lasso_model');
 is($parameter_covariate_form->{'CL'}{'APGR'}{'form'},1,'parcovform pheno 3');
 is($parameter_covariate_form->{'CL'}{'APGR'}{'thetas'}{1},3,'parcovform pheno 4');
@@ -217,12 +261,13 @@ my ($parameter_covariate_form,$statistics) =
 
 $lassomodel = model->new(filename => "$modeldir/mox1.mod", ignore_missing_data => 1);
 
-($usepred,$cutoffref,$t_theta,$weightref,$lambda_theta) = 
+($usepred,$cutoffref,$t_theta,$weightref,$lambda_theta,$theta_labels) = 
 	tool::lasso::setup_lasso_model(lasso_model => $lassomodel,
 								   parameter_covariate_form => $parameter_covariate_form,
 								   t_value => 0.1,
 								   statistics => $statistics,
 								   adaptive => 0,
+								   normalize=>1,
 								   missing_data_token => '-99');
 
 my $full_model= $lassomodel->copy(filename => 'full_model.mod',
@@ -233,6 +278,11 @@ my $full_model= $lassomodel->copy(filename => 'full_model.mod',
 tool::lasso::setup_full_model(model=>$full_model,
 				 covariance => [''],
 				 use_pred => $usepred);
+
+tool::lasso::remove_covariate_normalization(model=>$full_model,
+											theta_labels => $theta_labels,
+											use_pred => $usepred);
+
 
 my %finalhash;
 $finalhash{'theta'}={
@@ -277,6 +327,7 @@ my $refm =tool::lasso::setup_optimal_model(finalvalues => $lassomodel->get_hash_
 										   base_model => $model,
 										   parameter_covariate_form => $parameter_covariate_form,
 										   statistics => $statistics,
+										   normalize=>1,
 										   use_pred => $usepred,
 										   NOABORT_added => 0,
 										   directory => 'dirname',
@@ -336,6 +387,7 @@ tool::lasso::add_optimal_theta(model => $model,
 							 covariate => 'WGT',
 							 thetanumber => $nthetas,
 							 coefficient => 12,
+							   normalize=>1,
 							 sd => 2);
 
 is($model->problems->[0]->thetas->[-1]->options->[0]->label,'TH'.$nthetas.' CLWGT','add_optimal_theta label');

@@ -11,6 +11,8 @@ use strict;
 use Getopt::Long;
 use common_options;
 use ui;
+use Cwd;
+use OSspecific;
 # More PsN dependencies included with require further down
 
 my $cmd_line = $0 . " " . join( " ", @ARGV );
@@ -25,6 +27,7 @@ my %required_options = ( 'relations:s' => undef);
 my %optional_options = ( 'start_t:f' => undef,
 			 'adaptive!' => undef,
 			 'adjusted!' => undef,
+			 'normalize!' => undef,
 			 'run_final_model!' => undef,
 			 'stop_t:f' => undef,
 			 'step_t:f' => undef,
@@ -32,6 +35,7 @@ my %optional_options = ( 'start_t:f' => undef,
 			 'pred_ofv_start_t:f'=> undef,
 			 'groups:i'=> undef,
 			 'convergence:s'=> undef,
+			 'external_data:s'=> undef,
 			 'stratify_on:s'=> undef,
 	);
 
@@ -106,6 +110,16 @@ $help_text{-adaptive} = <<'EOF';
 
     Default not set. If set, run adaptive lasso algorithm.
 EOF
+$help_text{-adjusted} = <<'EOF';
+      -adjusted
+
+    Default not set. If set, run adjusted adaptive lasso algorithm.
+EOF
+$help_text{-normalize} = <<'EOF';
+      -normalize
+
+    Default set. If unset with -no-normalize, PsN will not normalize covariates to mean 0 variance 1.
+EOF
 $help_text{-step_t} = <<'EOF';
       -step_t=X
 
@@ -159,6 +173,12 @@ $help_text{-groups} = <<'EOF';
     must be in the range 2-number of individuals in dataset. The larger 
     the number the longer the cross-validation run-time.
 EOF
+$help_text{-external_data} = <<'EOF';
+      -external_data=filename
+
+	Default not used. A filename for external validation of the final model.
+EOF
+
 $help_text{-pred_ofv_start_t} = <<'EOF';
       -pred_ofv_start_t=X
 
@@ -223,14 +243,27 @@ if ($model->need_data_filtering()){
 
 }
 
+if (defined $options{'external_data'}){
+	my ( $dir, $file ) = OSspecific::absolute_path(cwd(), $options{'external_data'});
+$options{'external_data'} = $dir . $file;
+
+}
+
+my $normalize=1;
+if (defined $options{'normalize'} and not ($options{'normalize'})){
+	$normalize = 0;
+}
+
 my $lasso = 
 	tool::lasso->new(eval( $common_options::parameters ),
 					 models	     => [ $model ],
 					 run_final_model    => $options{'run_final_model'},
 					 adaptive           => $options{'adaptive'},
 					 adjusted           => $options{'adjusted'},
+					 normalize          => $normalize,
 					 cutoff             => $options{'cutoff'},
 					 relations          => $options{'relations'},
+					 external_data      => $options{'external_data'},
 					 start_t            => $options{'start_t'},
 					 stop_t             => $options{'stop_t'},
 					 step_t	     => $options{'step_t'},
