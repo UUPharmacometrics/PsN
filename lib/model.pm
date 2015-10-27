@@ -677,8 +677,8 @@ sub datafiles
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 new_names => { isa => 'ArrayRef[Str]', optional => 1 },
-		 problem_numbers => { isa => 'ArrayRef[Int]', optional => 1 },
+		 new_names => { isa => 'ArrayRef', optional => 1 },
+		 problem_numbers => { isa => 'ArrayRef', optional => 1 },
 		 absolute_path => { isa => 'Bool', default => 0, optional => 1 }
 	);
 	my @new_names = defined $parm{'new_names'} ? @{$parm{'new_names'}} : ();
