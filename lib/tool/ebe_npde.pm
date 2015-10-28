@@ -21,6 +21,7 @@ has 'estimate_input' => ( is => 'rw', isa => 'Bool', default => 1 );
 has 'have_CDF' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'reminimize' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'gls_data_file' => ( is => 'rw', isa => 'Str', default => 'gls_data.dta' );
+has 'have_iwres' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'have_nwpri' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'have_tnpri' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'probnum' => ( is => 'rw', isa => 'Int', default => 1 );
@@ -94,6 +95,22 @@ sub BUILD
 			croak('Input model must have an estimation record');
 		}
 
+	}
+
+	my $problem_index = (0+$self->have_tnpri());
+	foreach my $coderec ('error','des','pred','pk','mix'){ 
+		my $acc = $coderec.'s';
+		if (defined $self->models->[0]->problems->[$problem_index]->$acc 
+			and scalar(@{$self->models->[0]->problems->[$problem_index]->$acc})>0 ) {
+			my @extra_code = @{$self->models->[0]->problems->[$problem_index]->$acc->[0]->code};
+			foreach my $line (@extra_code){
+				if ($line =~ /^\s*IWRES\s*=/){
+					$self->have_iwres(1);
+					last;
+				}
+			}
+			last if ($self->have_iwres);
+		}
 	}
 
 	my $meth = $self->models->[0]->get_option_value( record_name  => 'estimation',
@@ -187,15 +204,16 @@ sub modelfit_setup
 		croak("Trying to construct table for simulation".
 			  " but no headers were found in \$model_number-INPUT" );
 	}
-	#never IWRES in orig model, only in sims
+
 	$oprob -> add_records( type           => 'table',
 						   record_strings => [ join( ' ', @table_header ).
 											   ' IPRED PRED NOPRINT NOAPPEND ONEHEADER FILE=orig_pred.dta']);
-	$oprob -> add_records( type           => 'table',
-						   record_strings => ['IWRES ID MDV NOPRINT NOAPPEND ONEHEADER FILE=original_iwres.dta']);
-	
-	push( @all_iwres_files, $self->directory . 'm' . $model_number . '/original_iwres.dta' );
-
+	if ($self->have_iwres){
+		$oprob -> add_records( type           => 'table',
+							   record_strings => ['IWRES ID MDV NOPRINT NOAPPEND ONEHEADER FILE=original_iwres.dta']);
+		
+		push( @all_iwres_files, $self->directory . 'm' . $model_number . '/original_iwres.dta' );
+	}
 	my ($iivref,$iovref) = get_eta_headers(problem => $oprob);
 	$self->iiv_eta($iivref);
 	$self->iov_eta($iovref);
@@ -308,11 +326,11 @@ sub modelfit_setup
 			}
 
 			# set $TABLE record
-
-			$sim_model -> add_records( type           => 'table',
-									   problem_numbers => [($self->probnum())],
-									   record_strings => ['IWRES ID NOPRINT NOAPPEND ONEHEADER FILE=dummy']);
-
+			if ($self->have_iwres){
+				$sim_model -> add_records( type           => 'table',
+										   problem_numbers => [($self->probnum())],
+										   record_strings => ['IWRES ID NOPRINT NOAPPEND ONEHEADER FILE=dummy']);
+			}
 			unless ($self->reminimize()){
 				$sim_model -> set_maxeval_zero(print_warning => 1,
 											   last_est_complete => $self->last_est_complete(),
@@ -361,19 +379,20 @@ sub modelfit_setup
 		$prob -> set_records( type => 'simulation',
 							  record_strings => \@new_record );
 
-		my $iwres_file = "iwres-$sim_no.dta";
-		$prob -> remove_option( record_name  => 'table',
+		if ($self->have_iwres){
+			my $iwres_file = "iwres-$sim_no.dta";
+			$prob -> remove_option( record_name  => 'table',
+									option_name  => 'FILE',
+									fuzzy_match => 1,
+									record_number => 1);
+
+			$prob -> add_option(record_name  => 'table',
+								record_number  => 1,
 								option_name  => 'FILE',
-								fuzzy_match => 1,
-								record_number => 1);
+								option_value => $iwres_file );   
 
-		$prob -> add_option(record_name  => 'table',
-							record_number  => 1,
-							option_name  => 'FILE',
-							option_value => $iwres_file );   
-
-		push( @all_iwres_files, $self->directory . 'm' . $model_number . '/' . $iwres_file );
-
+			push( @all_iwres_files, $self->directory . 'm' . $model_number . '/' . $iwres_file );
+		}
 
 		$sim_model -> _write();
 		push( @orig_and_sim_models, $sim_model );
@@ -446,6 +465,8 @@ sub modelfit_analyze
 
 	#FIXME output actual number of successful sims
 	while (1){
+		last unless ($self->have_iwres);
+
 		my @extra_headers=('ID','MDV');
 		my @headers = ('IWRES');
 		my $id_mdv_matrix = [];
