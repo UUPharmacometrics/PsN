@@ -17,6 +17,10 @@ Default not used. Compute the individual contributions to the objective function
 \optname{shrinkage}
 Default not used. Calculate the shrinkage for the model run.  Shrinkage is calculated as 1-(sd(eta(x))/omega(x)) and measures the shrinkage of the empirical Bayes estimates (EBEs) towards the mean of the expected distribution.  A 'large' shrinkage means that diagnostics using EBEs cannot be trusted. The shrinkage values appear in the file raw\_results.csv. 
 PsN does not use the NONMEM7 shrinkage values. When shrinkage is requested, PsN adds two \$TABLE to the modelfile so that NONMEM will output data needed for the shrinkage computation. For eta shrinkage the table requests items ID ETA1 ETA2... and for iwres shrinkage it requests items ID IWRES EVID. 
+%From andy 
+%There are occasions where NONMEM gets the calculation wrong.  
+%Mostly for computing EPS shrinkage if you have a more complicated residual variability model.  
+%In previous versions of NONMEM (prior to 7.3) then the ETA shrinkage calculations were often wrong in NONMEM as well (by including individuals with ETA values of zero in the calculation).
 \nextopt
 \optdefault{mirror\_plots}{'integer'}
 Default 0. This command creates a set of simulations from a model file that can then be read into Xpose 4 for mirror plotting. The command requires an integer value -mirror\_plots=XX where XX is an integer representing the number of simulations to perform. This command uses the MSFO file created by runN.mod to get final estimates used in the simulations. If this file is not available run1.mod is run again.  If run times are long, and you did not create an MSFO file with your initial NONMEM run, you can combine the above command with the -mirror\_from\_lst option to avoid running the model again (PsN then reads from the *.lst file to get final parameter estimates for the simulations). 
