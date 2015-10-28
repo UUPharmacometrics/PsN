@@ -6,6 +6,7 @@ use strict;
 use warnings;
 use Moose;
 use MooseX::Params::Validate;
+use File::Spec;
 use include_modules;
 
 use utils::file;
@@ -25,7 +26,7 @@ sub BUILD
     my $self = shift;
 
     if (defined $self->rundir) {
-        $self->bootstrap_results($self->rundir . "/bootstrap_results.csv");
+        $self->bootstrap_results(File::Spec->catfile($self->rundir, "bootstrap_results.csv"));
     }
 
     my $so_block = $self->so->SOBlock->[0];
@@ -204,12 +205,13 @@ sub _create_bootstrap
     }
 
     # add rawresults
-    $self->_so_block->RawResults->add_datafile(name => $self->bootstrap_results, description => "PsN Bootstrap results file", oid => 'PsN_bootstrap_results'); 
+    my $bootstrap_results = File::Spec->splitpath($self->bootstrap_results);
+    $self->_so_block->RawResults->add_datafile(name => $bootstrap_results, description => "PsN Bootstrap results file", oid => 'PsN_bootstrap_results'); 
     $self->_so_block->RawResults->add_datafile(name => 'included_individuals1.csv', description => "PsN Bootstrap included individuals", oid => 'PsN_bootstrap_included_individuals'); 
 
     my $dir = utils::file::directory($self->bootstrap_results);
     (my $raw_results) = glob("$dir/raw_results_*.csv");
-    $raw_results = utils::file::remove_path($raw_results);
+    $raw_results = File::Spec->splitpath($raw_results);
 
     if (defined $raw_results) {
         $self->_so_block->RawResults->add_datafile(name => $raw_results, description => "PsN Bootstrap raw results", oid => 'PsN_bootstrap_raw_results'); 

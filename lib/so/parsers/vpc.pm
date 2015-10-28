@@ -6,6 +6,7 @@ use strict;
 use warnings;
 use Moose;
 use MooseX::Params::Validate;
+use File::Spec;
 use include_modules;
 
 use so::soblock;
@@ -23,7 +24,7 @@ sub BUILD
     my $self = shift;
 
     if (defined $self->rundir) {
-        $self->vpc_results($self->rundir  . "/vpc_results.csv");
+        $self->vpc_results(File::Spec->catfile($self->rundir, "/vpc_results.csv"));
     }
 
     my $so_block = $self->so->SOBlock->[0];
@@ -57,12 +58,13 @@ sub _create_vpc
     }
 
     # add rawresults
-    $self->_so_block->RawResults->add_datafile(name => $self->vpc_results, description => "PsN vpc results file", oid => "PsN_VPC_results"); 
+    my $vpc_results = File::Spec->splitpath($self->vpc_results);
+    $self->_so_block->RawResults->add_datafile(name => $vpc_results, description => "PsN vpc results file", oid => "PsN_VPC_results"); 
 
     # find vpctab
     my $vpcdir = utils::file::directory($self->vpc_results);
     (my $vpctab) = glob "$vpcdir/vpctab*";
-
+    $vpctab = File::Spec->splitpath($vpctab);
     $self->_so_block->RawResults->add_datafile(name => $vpctab, description => "PsN vpctab", oid => "PsN_VPC_vpctab"); 
 } 
 

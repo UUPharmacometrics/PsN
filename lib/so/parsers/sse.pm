@@ -6,6 +6,7 @@ use strict;
 use warnings;
 use Moose;
 use MooseX::Params::Validate;
+use File::Spec;
 use include_modules;
 
 use so::soblock;
@@ -36,8 +37,7 @@ sub BUILD
 
     (my $raw_results) = glob($self->rundir . "/raw_results_*.csv");
     if (defined $raw_results) {
-        $raw_results = utils::file::remove_path($raw_results);
-
+        $raw_results = File::Spec->splitpath($raw_results);
         $so_block->RawResults->add_datafile(name => $raw_results, description => "PsN SSE raw results", oid => 'PsN_SSE_raw_results');
     }
 }
