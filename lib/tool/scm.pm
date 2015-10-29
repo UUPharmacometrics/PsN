@@ -3618,10 +3618,11 @@ sub _create_models
 					my @table_names = @{$applicant_model -> table_names};
 					for ( my $i = 0; $i <= $#table_names; $i++ ) {
 						for ( my $j = 0; $j < scalar @{$table_names[$i]}; $j++ ) {
+                            (undef, undef, my $name_of_table) = File::Spec->splitpath($table_names[$i][$j]);
 							$table_names[$i][$j] = $self -> directory.
 							'/m'.$model_number.'/'.
 							$filename.'.'.
-							utils::file::remove_path($table_names[$i][$j]);
+							$name_of_table;
 						}
 					}
 					$applicant_model -> table_names( new_names            => \@table_names,
