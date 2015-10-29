@@ -2447,14 +2447,22 @@ sub get_data_matrix
 					#first table, parse header
 					$line =~ s/^\s*//;
 					my @header = split (/\s+/,$line);
+					my $found_stratify_on=0;
 					for (my $i=0; $i<scalar(@header);$i++){
 						if ($header[$i] eq $self->dv){
 							$dv_index = $i;
-							last;
+						}elsif (defined $self->stratify_on and ($header[$i] eq $self->stratify_on)){
+							$found_stratify_on=1;
 						}
 					}
 					unless (defined $dv_index){
 						croak("Could not find column with header for dependent variable ".$self->dv." in $sim_file\n");
+					}
+					if (defined $self->sim_table and $found_stratify_on){
+						ui->print(category => 'all',
+								  message => "\nWarning: stratification will only be based on the value of the ".
+								  "stratification variable in observed data. The stratification variable is ".
+								  "assumed to be identical in simulated data.\n\n");
 					}
 					if (defined $self->censor){
 						for (my $i=0; $i<scalar(@header);$i++){

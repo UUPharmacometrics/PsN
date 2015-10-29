@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{VPC and NPC user guide}{2015-04-15}
+\guidetitle{VPC and NPC user guide}{2015-10-29}
 
 \begin{document}
 
@@ -71,7 +71,8 @@ is optional, unless the model has \$NONP record then an msfo-file 	is required. 
 is optional, but forbidden together with -msfo\_file. Use final parameter estimates from this lst-file for the simulation. By default PsN will look for a file with the same name as the regular input model, or the simulation model if option -sim\_model is used, but with suffix .lst instead of .mod. If such a file is found then option -lst\_file=$<$modelfile$>$.lst is set automatically. VPC does not perform estimation. 
 \nextopt
 \optdefault{stratify\_on}{variable}
-is optional. See subsection Stratification options below. The stratify\_on option may be a comma-separated list of several variable names. 
+is optional. See subsection Stratification options below. The stratify\_on option may be a comma-separated list of several variable names. Note that is is
+\emph{not} possible to stratify on a variable that differs between simulations. 
 \nextopt
 \optdefault{no\_of\_strata}{N}
 is optional, only allowed when -stratify\_on is used. See subsection Stratification options.  
@@ -245,9 +246,16 @@ It is possible to simulate with uncertainty in npc/vpc, either by using option -
 \subsection{Stratification options}
 -stratify\_on=$<$variable$>$ The user can stratify on a variable found in \$INPUT or define a variable called STRT in the model code and then set -stratify\_on=STRT. The later alternative allows the user to do stratification on any combination of data columns or model variable, since STRT may be defined in any way the user chooses. The vpc program will add STRT to the \$TABLE record, and if STRT is not defined in the model-file NONMEM will exit with an error. 
 
+Note that is is
+\emph{not} possible to stratify on a variable that differs between simulations. 
+Observation $i$ of individual $j$ must belong to the same stratum in
+both observed and simulated data, otherwise it is not supported. 
+There is no check in PsN that the
+stratification variable is the same across simulations and observations.
+
 The user may set -stratify\_on to a comma-separated list of variables. In that case stratification will be performed on the first variable in the list, and the following variables will simply be added to \$TABLE. This way the user can request any extra variables in \$TABLE, for example for altenative stratification in later analyses without having to rerun any models.
 
-The user may not stratify on DV even if it is in the \$INPUT record, since this variable will differ between simulations of the same observation. It is however possible to stratify on e.g. PRED.
+%The user may not stratify on DV, since this variable will differ between simulations of the same observation. It is however possible to stratify on PRED unless simulation with uncertainty is used.
 
 Setting -no\_of\_strata=N means group the observations into N groups by the value of the stratification variable so that the number of observations is approximately equal in each group.
 
