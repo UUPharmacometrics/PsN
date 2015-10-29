@@ -58,7 +58,7 @@ sub _create_vpc
     }
 
     # add rawresults
-    my $vpc_results = File::Spec->splitpath($self->vpc_results);
+    (undef, undef, my $vpc_results) = File::Spec->splitpath($self->vpc_results);
     $self->_so_block->RawResults->add_datafile(name => $vpc_results, description => "PsN vpc results file", oid => "PsN_VPC_results"); 
 
     # find vpctab

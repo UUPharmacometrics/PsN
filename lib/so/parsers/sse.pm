@@ -37,7 +37,7 @@ sub BUILD
 
     (my $raw_results) = glob($self->rundir . "/raw_results_*.csv");
     if (defined $raw_results) {
-        $raw_results = File::Spec->splitpath($raw_results);
+        (undef, undef, $raw_results) = File::Spec->splitpath($raw_results);
         $so_block->RawResults->add_datafile(name => $raw_results, description => "PsN SSE raw results", oid => 'PsN_SSE_raw_results');
     }
 }

@@ -205,13 +205,13 @@ sub _create_bootstrap
     }
 
     # add rawresults
-    my $bootstrap_results = File::Spec->splitpath($self->bootstrap_results);
+    (undef, undef, my $bootstrap_results) = File::Spec->splitpath($self->bootstrap_results);
     $self->_so_block->RawResults->add_datafile(name => $bootstrap_results, description => "PsN Bootstrap results file", oid => 'PsN_bootstrap_results'); 
     $self->_so_block->RawResults->add_datafile(name => 'included_individuals1.csv', description => "PsN Bootstrap included individuals", oid => 'PsN_bootstrap_included_individuals'); 
 
     my $dir = utils::file::directory($self->bootstrap_results);
     (my $raw_results) = glob("$dir/raw_results_*.csv");
-    $raw_results = File::Spec->splitpath($raw_results);
+    (undef, undef, $raw_results) = File::Spec->splitpath($raw_results);
 
     if (defined $raw_results) {
         $self->_so_block->RawResults->add_datafile(name => $raw_results, description => "PsN Bootstrap raw results", oid => 'PsN_bootstrap_raw_results'); 

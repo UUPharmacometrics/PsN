@@ -6,6 +6,7 @@ use Moose;
 use MooseX::Params::Validate;
 use include_modules;
 use XML::LibXML;
+use File::Spec;
 use utils::file;
 use so::soblock::rawresults::datafile;
 
@@ -59,7 +60,7 @@ sub add_datafile
     my $description = $parm{'description'};
     my $oid = $parm{'oid'};
 
-    $name = utils::file::remove_path($name);
+    (undef, undef, $name) = File::Spec->splitpath($name);
 
     # Check if file already added
     if (defined $self->DataFile) {
