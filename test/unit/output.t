@@ -7,15 +7,16 @@ use warnings;
 use Test::More;# tests=>1716;
 use Test::Exception;
 use Math::Random;
+use File::Spec;
 use FindBin qw($Bin);
 use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages
 
-unshift @INC, $includes::testfiledir . '/output';
+unshift @INC, File::Spec->catfile($includes::testfiledir, 'output');
 require answers;
 use output;
 
-our $test_files = $includes::testfiledir . '/output/';
+our $test_files = File::Spec->catfile($includes::testfiledir, 'output');
 
 $SIG{__WARN__} = sub {
 	my $message = shift;
@@ -43,14 +44,15 @@ my @answer_hashes = @{$ref};
 
 for (my $i=0; $i< scalar(@answer_hashes); $i++){
 	my $fname = $answer_hashes[$i]->{file};
-	my $outfile = $test_files.$answer_hashes[$i]->{file};
+	my $outfile = File::Spec->catfile($test_files, $answer_hashes[$i]->{file});
 	ok(-e $outfile, "output file $outfile exists");
 	unless(-e $outfile) {
 		print "file $outfile does not exist\n";
 	    next;
 	}
 
-	my $outobj = output->new(filename => utils::file::remove_path($outfile), directory => utils::file::directory($outfile));
+    (undef, undef, my $filename) = File::Spec->splitpath($outfile);
+	my $outobj = output->new(filename => $filename, directory => utils::file::directory($outfile));
 	cmp_ok($outobj->parsed_successfully,'==',$answer_hashes[$i]->{parsed_successfully}, "output file $outfile parsed successfully");
 	unless( $outobj -> parsed_successfully ){
 		cmp_ok(length($outobj->parsing_error_message),'>',5,'error message exists');
