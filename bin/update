@@ -3,6 +3,7 @@
 # Only for Development
 use FindBin qw($Bin);
 use lib "$Bin/../lib";
+use File::Spec;
 
 # Don't edit the line below, it must look exactly like this.
 # Everything above this line will be replaced #
@@ -16,7 +17,7 @@ use utils::file;
 
 my $version;
 
-my $filename = utils::file::remove_path($0);
+(undef, undef, my $filename) = File::Spec->splitpath($0);
 my $path = utils::file::directory($0);
 
 my @name_and_version = split '-', $filename;
