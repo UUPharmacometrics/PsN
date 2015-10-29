@@ -3,7 +3,7 @@ package nonmemrun::zink;
 use include_modules;
 use Moose;
 use MooseX::Params::Validate;
-use utils::file;
+use File::Spec;
 
 extends 'nonmemrun';
 
@@ -43,7 +43,7 @@ sub submit
     print $FH "COMMAND: $command\n";
     close $FH;
     LockFile::Simple::unlock $jobId;
-    $jobId = utils::file::remove_path($jobId);
+    (undef, undef, $jobId) = File::Spec->splitpath($jobId);
 
     $self->job_id($jobId);
     return $jobId;
