@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{LASSO user guide}{2015-10-23}
+\guidetitle{LASSO user guide}{2015-10-29}
 
 
 \begin{document}
@@ -59,6 +59,14 @@ Default not set. If set, run adaptive lasso algorithm. This option will be set a
 \nextopt
 \optname{adjusted}
 Default not set. If set, run adjusted adaptive lasso algorithm.
+\nextopt
+\optname{normalize}
+Default set. If unset with -no-normalize, no normalization of covariates will
+be performed.
+\nextopt
+\optname{log\_scale}
+Default not set. If set, covariates will be added to LN of TV instead
+of multiplied with TV.
 \nextopt
 \end{optionlist}
 

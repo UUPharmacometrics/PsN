@@ -18,6 +18,7 @@ has 'covariate_statistics_file' => ( is => 'rw', isa => 'Str', default => 'covar
 has 'lasso_model_file' => ( is => 'rw', isa => 'Str', default => 'lasso_start_model.mod' );
 has 'logfile' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { ['lasso.log'] } );
 has 'model_optimal' => ( is => 'rw', isa => 'model' );
+has 'log_scale' => ( is => 'rw', isa => 'Bool', default=> 0 );
 has 'NOABORT_added' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'run_final_model' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'adaptive' => ( is => 'rw', isa => 'Bool', default => 0 );
@@ -311,27 +312,33 @@ sub update_adaptive_theta
 		#reset thetanumber to small init, since starting new xv with small t
 		#update bounds based on coefficient
 
+		my $init=$theta_initial_value;
+
 		#FIXME if many iterations pick up old value of coefficient, now it is 1
+
+
 
 		my $lower_val = $model ->lower_bounds( parameter_type    => 'theta',
 											   parameter_numbers => [[$thetanumber]])->[0][0];
 		my $upper_val = $model ->upper_bounds( parameter_type    => 'theta',
 											   parameter_numbers => [[$thetanumber]])->[0][0];
 
-		#FIXME this only works one iteration, otherwise need sd and mean
-		$upper_val=sprintf($dec_str,$upper_val/$coefficient);
-		$lower_val=sprintf($dec_str,$lower_val/$coefficient);
+		if (defined $upper_val or defined $lower_val){
+			#will be undef if log scale
+			#FIXME this only works one iteration, otherwise need sd and mean
+			$upper_val=sprintf($dec_str,$upper_val/$coefficient);
+			$lower_val=sprintf($dec_str,$lower_val/$coefficient);
 
-		$model -> lower_bounds(parameter_type =>  'theta',
-							   parameter_numbers =>[[$thetanumber]],
-							   new_values => [[$lower_val]] );
-		$model -> upper_bounds(parameter_type =>  'theta',
-							   parameter_numbers =>[[$thetanumber]],
-							   new_values => [[$upper_val]] );
+			$model -> lower_bounds(parameter_type =>  'theta',
+								   parameter_numbers =>[[$thetanumber]],
+								   new_values => [[$lower_val]] );
+			$model -> upper_bounds(parameter_type =>  'theta',
+								   parameter_numbers =>[[$thetanumber]],
+								   new_values => [[$upper_val]] );
 
-		my $init=$theta_initial_value;
-		unless (($init > $lower_val) and ($init < $upper_val)){
-			$init = $lower_val + ($upper_val-$lower_val)*(0.05);
+			unless (($init > $lower_val) and ($init < $upper_val)){
+				$init = $lower_val + ($upper_val-$lower_val)*(0.05);
+			}
 		}
 		$model->initial_values(parameter_type => 'theta',
 							   parameter_numbers => [[$thetanumber]],
@@ -382,6 +389,7 @@ sub add_lasso_theta
 							  parameter => { isa => 'Str', optional => 0 },
 							  covariate => { isa => 'Str', optional => 0 },
 							  normalize=> {isa => 'Bool', optional => 0},
+							  log_scale => {isa => 'Bool', optional => 0},
 							  thetanumber => {isa => 'Int', optional => 0},
 							  mean => {isa => 'Num', optional => 0},
 							  sd => { isa => 'Num', optional => 0 },
@@ -397,27 +405,29 @@ sub add_lasso_theta
 	my $max = $parm{'max'};
 	my $min = $parm{'min'};
 	my $normalize = $parm{'normalize'};
+	my $log_scale = $parm{'log_scale'};
 
 	$model->initial_values(parameter_type => 'theta',
 						   parameter_numbers => [[$thetanumber]],
 						   new_values =>[[$theta_initial_value]],
 						   add_if_absent => 1);
 
-	my $upper_val;
-	my $lower_val;
+	my $upper_val=undef;
+	my $lower_val=undef;
 
-	if ($normalize){
-		$upper_val=sprintf($dec_str,-1/(($min-$mean)/$sd));
-		$lower_val=sprintf($dec_str,-1/(($max-$mean)/$sd));
-	}else{
-		if ($min == 0){
-			$upper_val=undef;
+	unless ($log_scale){
+		if ($normalize){
+			$upper_val=sprintf($dec_str,-1/(($min-$mean)/$sd));
+			$lower_val=sprintf($dec_str,-1/(($max-$mean)/$sd));
 		}else{
-			$upper_val=sprintf($dec_str,-1/$min); 
+			if ($min == 0){
+				$upper_val=undef;
+			}else{
+				$upper_val=sprintf($dec_str,-1/$min); 
+			}
+			$lower_val=sprintf($dec_str,-1/$max);
 		}
-		$lower_val=sprintf($dec_str,-1/$max);
 	}
-
 	$model -> lower_bounds(parameter_type =>  'theta',
 						   parameter_numbers =>[[$thetanumber]],
 						   new_values => [[$lower_val]] );
@@ -754,6 +764,7 @@ sub setup_lasso_model
 							  t_value =>{isa => 'Num', optional => 0},
 							  statistics => { isa => 'HashRef', optional => 0 },
 							  normalize=> {isa => 'Bool', optional => 0},
+							  log_scale=> {isa => 'Bool', optional => 0},
 							  missing_data_token => {isa => 'Str', optional => 0},
 							  adaptive => {isa => 'Bool', optional => 0},
 		);
@@ -764,6 +775,7 @@ sub setup_lasso_model
 	my $missing_data_token = $parm{'missing_data_token'};
 	my $adaptive = $parm{'adaptive'};
 	my $normalize = $parm{'normalize'};
+	my $log_scale = $parm{'log_scale'};
 
 	my @cutoff_thetas=();
 	my @cutoff_thetas_labels=();
@@ -792,6 +804,13 @@ sub setup_lasso_model
 	my $old_thetas = $nthetas;
 	unshift @new_code, ";;; LASSO-END\n";
 
+	my $sign = '*';
+	my $plus1 = '+1';
+	if ($log_scale){
+		$sign = '+' ;
+		$plus1 = '';
+	}
+
 	my $tmpstr;
 
 	foreach my $par (sort {lc($a) cmp lc($b)} keys %parameter_covariate_form){
@@ -801,11 +820,11 @@ sub setup_lasso_model
 			if ($first == 1){
 				$first=0;
 			} else {
-				$tmpstr = $tmpstr . "*";
+				$tmpstr = $tmpstr . $sign;
 			}
 			if ($parameter_covariate_form{$par}{$covariate}{'form'} == 2){
 				check_name(parameter => $par,covariate=>$covariate,version => $PsN::nm_major_version);
-				$tmpstr = $tmpstr . "($par" ."$covariate+1)";
+				$tmpstr = $tmpstr . "($par" ."$covariate$plus1)";
 				$nthetas++;
 				$parameter_covariate_form{$par}{$covariate}{'theta'}=$nthetas;
 				$parameter_covariate_form{$par}{$covariate}{'lasso_coefficient'}=1;
@@ -824,6 +843,7 @@ sub setup_lasso_model
 								covariate => $covariate,
 								thetanumber => $nthetas,
 								normalize => $normalize,
+								log_scale => $log_scale,
 								mean => $statistics->{$covariate}{2}{'mean'},
 								sd => $statistics->{$covariate}{2}{'sd'},
 								max => $statistics->{$covariate}{2}{'max'},
@@ -839,7 +859,7 @@ sub setup_lasso_model
 
 			}elsif ($parameter_covariate_form{$par}{$covariate}{'form'} == 3){
 				check_name(parameter => $par,covariate=>$covariate,version => $PsN::nm_major_version, H => 'H');
-				$tmpstr = $tmpstr . "($par" ."$covariate+1)*("."$par"."H"."$covariate"."+1)";
+				$tmpstr = $tmpstr . "($par" ."$covariate$plus1)".$sign."("."$par"."H"."$covariate"."$plus1)";
 				$nthetas++;
 				$parameter_covariate_form{$par}{$covariate}{'theta'}=$nthetas;
 				$parameter_covariate_form{$par}{$covariate}{'lasso_coefficient'}=1;
@@ -857,6 +877,7 @@ sub setup_lasso_model
 								covariate => $covariate,
 								thetanumber => $nthetas,
 								normalize => $normalize,
+								log_scale => $log_scale,
 								mean => $statistics->{$covariate}{3}{'mean'},
 								sd => $statistics->{$covariate}{3}{'sd'},
 								max => $statistics->{$covariate}{3}{'max'},
@@ -889,6 +910,7 @@ sub setup_lasso_model
 								covariate => 'H'.$covariate,
 								thetanumber => $nthetas,
 								normalize => $normalize,
+								log_scale => $log_scale,
 								mean => $statistics->{$covariate}{3}{'H-mean'},
 								sd => $statistics->{$covariate}{3}{'H-sd'},
 								max => ($statistics->{$covariate}{3}{'max'}-$statistics->{$covariate}{3}{'breakpoint'}),
@@ -921,9 +943,9 @@ sub setup_lasso_model
 					my %sd = %{$statistics->{$covariate}{1}{'sd'}};
 					if (($fact ne $most_common_key) and ($fact ne $missing_data_token)){
 						check_name(parameter => $par,covariate=>$covariate,version => $PsN::nm_major_version, factor => $fact);
-						$tmpstr .= '*' unless $first_cat;
+						$tmpstr .= $sign unless $first_cat;
 						$first_cat = 0;
-						$tmpstr = $tmpstr . "(".$par.$covariate.$fact . "+1)";
+						$tmpstr = $tmpstr . "(".$par.$covariate.$fact . "$plus1)";
 						$nthetas++;
 						$parameter_covariate_form{$par}{$covariate}{'thetas'}->{$fact}=$nthetas;
 						$parameter_covariate_form{$par}{$covariate}{'lasso_coefficients'}->{$fact}=1;
@@ -946,6 +968,7 @@ sub setup_lasso_model
 										covariate => $covariate.$fact,
 										thetanumber => $nthetas,
 										normalize => $normalize,
+										log_scale => $log_scale,
 										mean => $mean{$fact},
 										sd => $sd{$fact},
 										max => 1,
@@ -966,7 +989,7 @@ sub setup_lasso_model
 			}
 		}
 		unshift @new_code, @{parse_row(parse_str => $blank . $tmpstr,
-									   parse_operator =>"*",
+									   parse_operator =>$sign,
 									   max_length => $row_length)};
 	}
 	unshift @new_code, "\n";
@@ -1012,7 +1035,7 @@ sub setup_lasso_model
 
 	## Add the multiplication of the Typical Values with the 
 	#covariate for all params.
-	add_tv_multiplication(code => \@old_code, parameters =>[keys %parameter_covariate_form]);
+	add_tv_multiplication(code => \@old_code, parameters =>[keys %parameter_covariate_form], log_scale=> $log_scale);
 
 	## Merge the old_code and new_code
 	@new_code = (@new_code, @old_code);
@@ -1032,27 +1055,36 @@ sub add_tv_multiplication
 	my %parm = validated_hash(\@_,
 							  code => { isa => 'ArrayRef', optional => 0 },
 							  parameters => { isa => 'ArrayRef', optional => 0 },
+							  log_scale => { isa => 'Bool', optional => 0 },
 		);
 	my $code = $parm{'code'};
 	my $parameters = $parm{'parameters'};
+	my $log_scale = $parm{'log_scale'};
 	#handle if/else clauses here, like in scm
+
+	my $var='TV';
+	my $sign = '*';
+	if ($log_scale){
+		$var = 'LNTV';
+		$sign = '+';
+	}
 
 	my $success;
 	foreach my $parameter (sort {lc($a) cmp lc($b)} @{$parameters}){
 		$success = 0;
 		for ( reverse @{$code} ) {
 			#want to find last occurrence of TVpar set
-			if ( /[^A-Z0-9_]*TV(\w+)\s*=\s*/ and $1 eq $parameter){
+			if ( /[^A-Z0-9_]*$var(\w+)\s*=\s*/ and $1 eq $parameter){
 				#add new definition line after last occurence
 				$_ = $_."\n".
-					$blank."TV$parameter = TV$parameter"."*$parameter"."COV\n";
+					$blank."$var$parameter = $var$parameter"."$sign$parameter"."COV\n";
 				$success = 1;
 				last; #only change the last line where appears
 			}
 		}
 		unless ( $success ) {
 			croak("Could not determine a good place to add the covariate relation.\n".
-				  " i.e. No TV$parameter was found\n" );
+				  " i.e. No $var$parameter was found\n" );
 		}
 	}
 
@@ -1683,6 +1715,7 @@ sub modelfit_setup
 						  t_value => $self->start_t,
 						  statistics => $self->statistics,
 						  normalize => $self->normalize,
+						  log_scale => $self->log_scale,
 						  missing_data_token => $self->missing_data_token,
 						  adaptive => $self->adaptive);
 	$self->use_pred($usepred);
@@ -1855,6 +1888,7 @@ sub modelfit_setup
 										  base_model => $basic_model,
 										  parameter_covariate_form => \%parameter_covariate_form,
 										  normalize => $self->normalize,
+										  log_scale => $self->log_scale,
 										  statistics => $self->statistics,
 										  use_pred => $self->use_pred,
 										  NOABORT_added => $self->NOABORT_added,
@@ -1930,6 +1964,7 @@ sub modelfit_setup
 										   parameter_covariate_form => \%parameter_covariate_form,
 										   statistics => $self->statistics,
 										   normalize => $self->normalize,
+										   log_scale=> $self->log_scale,
 										   use_pred => $self->use_pred,
 										   NOABORT_added => $self->NOABORT_added,
 										   directory => $self->directory,
@@ -2291,6 +2326,7 @@ sub setup_optimal_model
 							  statistics => { isa => 'HashRef', optional => 0 },
 							  use_pred => {isa => 'Bool', optional => 0},
 							  normalize => {isa => 'Bool', optional => 0},
+							  log_scale => {isa => 'Bool', optional => 0},
 							  NOABORT_added => {isa => 'Bool', optional => 0},
 							  directory => {isa => 'Str', optional => 0},
 							  cutoff_thetas => { isa => 'ArrayRef', optional => 0 },
@@ -2302,6 +2338,7 @@ sub setup_optimal_model
 	my $statistics = $parm{'statistics'};
 	my $use_pred = $parm{'use_pred'};
 	my $normalize = $parm{'normalize'};
+	my $log_scale = $parm{'log_scale'};
 	my $NOABORT_added = $parm{'NOABORT_added'};
 	my $directory = $parm{'directory'};
 	my $cutoff_thetas = $parm{'cutoff_thetas'};
@@ -2474,10 +2511,16 @@ sub setup_optimal_model
 	push @new_code, "\n";
 	push @new_code, @factor_code;
 	push @new_code, "\n";
+	my $plus1='+1';
+	my $sign='*';
+	if ($log_scale){
+		$plus1='';
+		$sign = '+';
+	}
 	foreach my $par (sort {lc($a) cmp lc($b)} keys %selected_cont){
-		my $str = $par .'COV = ('.join('+1)*(',@{$selected_cont{$par}}).'+1)';
+		my $str = $par .'COV = ('.join("$plus1)$sign(",@{$selected_cont{$par}})."$plus1)";
 		push @new_code,@{parse_row(parse_str => $blank . $str,
-								   parse_operator =>"*",
+								   parse_operator =>$sign,
 								   max_length => $row_length)};
 	}
 
@@ -2487,7 +2530,7 @@ sub setup_optimal_model
 	} else {
 		@old_code = @{$model_optimal->get_code(record => 'pk')};
 	}
-	add_tv_multiplication(code => \@old_code, parameters =>[keys %selected_cont]);
+	add_tv_multiplication(code => \@old_code, parameters =>[keys %selected_cont],log_scale => $log_scale);
 
 #	print join("\n",@new_code)."\n";
 	push @new_code,@old_code;

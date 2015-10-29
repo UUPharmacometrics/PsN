@@ -28,6 +28,7 @@ my %optional_options = ( 'start_t:f' => undef,
 			 'adaptive!' => undef,
 			 'adjusted!' => undef,
 			 'normalize!' => undef,
+			 'log_scale' => undef,
 			 'run_final_model!' => undef,
 			 'stop_t:f' => undef,
 			 'step_t:f' => undef,
@@ -114,6 +115,11 @@ $help_text{-adjusted} = <<'EOF';
       -adjusted
 
     Default not set. If set, run adjusted adaptive lasso algorithm.
+EOF
+$help_text{-log_scale} = <<'EOF';
+      -log_scale
+
+    Default not set. If set, assume parameters on log scale, covariates added on log scale.
 EOF
 $help_text{-normalize} = <<'EOF';
       -normalize
@@ -260,6 +266,7 @@ my $lasso =
 					 run_final_model    => $options{'run_final_model'},
 					 adaptive           => $options{'adaptive'},
 					 adjusted           => $options{'adjusted'},
+					 log_scale           => $options{'log_scale'},
 					 normalize          => $normalize,
 					 cutoff             => $options{'cutoff'},
 					 relations          => $options{'relations'},

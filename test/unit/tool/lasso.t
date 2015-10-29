@@ -85,6 +85,7 @@ tool::lasso::add_lasso_theta(model => $model,
 							 mean => $mean1,
 							 sd => $sd1,
 							 normalize=>1,
+							 log_scale=> 0,
 							 max => 1,
 							 min => 0);
 is($model->problems->[0]->thetas->[-1]->options->[0]->label,'TH'.$nthetas.' CLSEX0','add_lasso_theta label');
@@ -99,6 +100,7 @@ tool::lasso::add_lasso_theta(model => $model,
 							 thetanumber => $nthetas,
 							 mean => $mean2,
 							 normalize=>1,
+							 log_scale=> 0,
 							 sd => $sd2,
 							 max => 3.6,
 							 min => 0.6);
@@ -113,6 +115,7 @@ tool::lasso::add_lasso_theta(model => $model,
 							 covariate => 'APGR',
 							 thetanumber => $nthetas,
 							 mean => $mean,
+							 log_scale=> 0,
 							 normalize=>1,
 							 sd => $sd,
 							 max => 10,
@@ -129,6 +132,7 @@ tool::lasso::add_lasso_theta(model => $model,
 							 thetanumber => $nthetas,
 							 mean => $hmean,
 							 normalize=>1,
+							 log_scale=> 0,
 							 sd => $hsd,
 							 max => (10-$break),
 							 min => 0);
@@ -149,6 +153,7 @@ tool::lasso::add_lasso_theta(model => $model,
 							 parameter => 'CL',
 							 covariate => 'HAPGR',
 							 thetanumber => $nthetas,
+							 log_scale=> 0,
 							 mean => $hmean,
 							 normalize=>0,
 							 sd => $hsd,
@@ -163,6 +168,7 @@ $nthetas++;
 tool::lasso::add_lasso_theta(model => $model,
 							 parameter => 'CL',
 							 covariate => 'HAPGR',
+							 log_scale=> 0,
 							 thetanumber => $nthetas,
 							 mean => $hmean,
 							 normalize=>0,
@@ -173,6 +179,22 @@ is($model->problems->[0]->thetas->[-1]->options->[0]->label,'TH'.$nthetas.' CLHA
 is($model->problems->[0]->thetas->[-1]->options->[0]->init,0.0001,'add_lasso_theta init');
 cmp_float($model->problems->[0]->thetas->[-1]->options->[0]->lobnd,-0.1,'add_lasso_theta lowbnd hstick hi nonorm 2');
 cmp_float($model->problems->[0]->thetas->[-1]->options->[0]->upbnd,-0.5,'add_lasso_theta upbnd hstick hi nonorm 2');
+
+$nthetas++;
+tool::lasso::add_lasso_theta(model => $model,
+							 parameter => 'CL',
+							 covariate => 'HAPGR',
+							 log_scale=> 1,
+							 thetanumber => $nthetas,
+							 mean => $hmean,
+							 normalize=>0,
+							 sd => $hsd,
+							 max => 10,
+							 min => 2);
+is($model->problems->[0]->thetas->[-1]->options->[0]->label,'TH'.$nthetas.' CLHAPGR','add_lasso_theta label');
+is($model->problems->[0]->thetas->[-1]->options->[0]->init,0.0001,'add_lasso_theta init');
+cmp_float($model->problems->[0]->thetas->[-1]->options->[0]->lobnd,undef,'add_lasso_theta lowbnd hstick hi nonorm log');
+cmp_float($model->problems->[0]->thetas->[-1]->options->[0]->upbnd,undef,'add_lasso_theta upbnd hstick hi nonorm log');
 
 
 
@@ -220,6 +242,7 @@ my ($usepred,$cutoffref,$t_theta,$weightref,$lambda_theta,$theta_labels) =
 								   t_value => 0.1,
 								   normalize=>1,
 								   statistics => $statistics,
+								   log_scale=> 0,
 								   missing_data_token => '-99',
 								   adaptive => 0);
 
@@ -266,6 +289,7 @@ $lassomodel = model->new(filename => "$modeldir/mox1.mod", ignore_missing_data =
 								   parameter_covariate_form => $parameter_covariate_form,
 								   t_value => 0.1,
 								   statistics => $statistics,
+								   log_scale=> 0,
 								   adaptive => 0,
 								   normalize=>1,
 								   missing_data_token => '-99');
@@ -329,6 +353,7 @@ my $refm =tool::lasso::setup_optimal_model(finalvalues => $lassomodel->get_hash_
 										   statistics => $statistics,
 										   normalize=>1,
 										   use_pred => $usepred,
+										   log_scale=> 0,
 										   NOABORT_added => 0,
 										   directory => 'dirname',
 										   cutoff_thetas => $cutoffref,
