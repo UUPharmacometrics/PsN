@@ -12,23 +12,16 @@ use Config;
 
 use utils::file qw(:all);
 
-# remove_path
-utils::file::_set_unix();      # Force unix
-is (remove_path('/usr/bin/myfile'), 'myfile', "remove_path 1");
-is (remove_path('/tmp/host/model.SO.xml'), 'model.SO.xml', "remove_path 2");
-is (remove_path('justfile.pm'), 'justfile.pm', "remove_path only file in unix");
-utils::file::_set_windows();    # Force windows
-is (remove_path('C:\mydir\dir2\myfile'), 'myfile', "remove_path 3");
-is (remove_path('this\that\myfile.SO.xml'), 'myfile.SO.xml', "remove_path 4");
-is (remove_path('myfile.ctl'), 'myfile.ctl', "remove_path only file in Windows");
-
 # get_file_stem
-utils::file::_set_unix();
-is (get_file_stem('/usr/bin/thisfile.rexx'), 'thisfile', "get_file_stem 1");
-is (get_file_stem('pheno.SO.xml'), 'pheno.SO', "get_file_stem 2");
-utils::file::_set_windows();
-is (get_file_stem('C:\mydir\dir2\myfile.ctl'), 'myfile', "get_file_stem 3");
-is (get_file_stem('mod.2.ctl'), 'mod.2', "get_file_stem 4");
+if ($Config{osname} ne 'MSWin32') {
+    utils::file::_set_unix();
+    is (get_file_stem('/usr/bin/thisfile.rexx'), 'thisfile', "get_file_stem 1");
+    is (get_file_stem('pheno.SO.xml'), 'pheno.SO', "get_file_stem 2");
+} else {
+    utils::file::_set_windows();
+    is (get_file_stem('C:\mydir\dir2\myfile.ctl'), 'myfile', "get_file_stem 3");
+    is (get_file_stem('mod.2.ctl'), 'mod.2', "get_file_stem 4");
+}
 
 # replace_extension
 is (replace_extension("pheno.lst", "SO.xml"), "pheno.SO.xml", "replace_extension lst");

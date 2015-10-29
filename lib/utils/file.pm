@@ -7,6 +7,7 @@ package utils::file;
 use strict;
 use warnings;
 use MooseX::Params::Validate;
+use File::Spec;
 use include_modules;
 
 use Config;
@@ -14,7 +15,7 @@ use OSspecific;
 
 require Exporter;
 our @ISA = qw(Exporter);
-our %EXPORT_TAGS = ('all' => [ qw(remove_path get_file_stem directory replace_extension slurp_file) ]);
+our %EXPORT_TAGS = ('all' => [ qw(get_file_stem directory replace_extension slurp_file) ]);
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 
 our $path_separator;
@@ -35,23 +36,12 @@ if ($Config{osname} eq 'MSWin32') {
     _set_unix();
 }
 
-sub remove_path
-{
-    # Remove the path from a filename
-    my $full_name = shift;
-
-    my @tmp = split /\Q$path_separator\E/, $full_name;
-    my $nopath = pop @tmp;
-
-    return $nopath;
-}
-
 sub get_file_stem
 {
     # Remove the path and extension from a filename
     my $name = shift;
 
-    $name = remove_path($name); 
+    (undef, undef, $name) = File::Spec->splitpath($name); 
     $name =~ s/(.*)\..*/$1/;
 
     return $name;
