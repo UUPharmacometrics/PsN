@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{nmoutput2so user guide}{2015-06-10}
+\guidetitle{nmoutput2so user guide}{2015-09-03}
 
 \begin{document}
 
@@ -30,7 +30,7 @@ Required argument is a list of nonmem results files (.lst). Wildcards will work 
 A PsN bootstrap\_results.csv file to use for filling the Bootstrap elements.
 \nextopt
 \optname{use\_tables}
-Default set. Will use table files (sdtab and patab) to populate the elements of the SO that needs these. Use -no-use\_tables to not use any table files.
+Default set. Will use table files (sdtab, patab and cotab) to populate the elements of the SO that needs these. Use -no-use\_tables to not use any table files.
 \nextopt
 \optname{exclude\_elements}
 Set a comma separated list of simple XPaths relative the SOBlock to exclude from the SO.
@@ -98,13 +98,17 @@ $OMEGA BLOCK(2)
  0.01    ; CORR_CL_V
  0.1     ; PPV_V
         \end{verbatim}
-    \item To be able to populate the Residuals and the Predictions entries an sdtab table must be specified. The name but not the orders of the columns is important. ID and TIME must be in the table. Other columns are optional. The example below shows an sdtab with all columns. The name of the file must start with "sdtab" Example:
+    \item To be able to populate the Residuals and the Predictions entries (or SimulatedProfiles for simulations) an sdtab table must be specified. The names but not the order of the columns is important. ID and TIME must be in the table. Other columns are optional. The example below shows an sdtab with all columns. The name of the file must start with "sdtab" Example:
         \begin{verbatim}
 $TABLE ID TIME MDV DV PRED IPRED RES IRES WRES IWRES CWRES NOAPPEND FILE=sdtab2
         \end{verbatim}
-    \item To be able to populate the IndividualEstimates entry a patab table must be specified. NOAPPEND must be used and the order of the columns is important. The first column must be ID, then comes all individual parameters followed by the ETAs (see below). Example:
+    \item To be able to populate the IndividualEstimates (or the IndivParameters for simulations) entry a patab table must be specified. NOAPPEND must be used and the order of the columns is important. The first column must be ID, then comes all individual parameters followed by the ETAs (see below). Example:
         \begin{verbatim}
 $TABLE ID CL V ETA_CL ETA_V NOAPPEND FILE=patab
+        \end{verbatim}
+    \item To be able to populate the Covariates entry in Simulation a cotab table must be specified. The names but not the order of the columns are important. ID and TIME must be in the table. Other columns are covariates. The name of the file must start with "cotab". Example:
+        \begin{verbatim}
+$TABLE ID TIME WGT NOPRINT NOAPPEND FILE=cotab
         \end{verbatim}
     \item To be able to populate the RandomEffects entry all ETAs must be defined in the main code block (\$PK or \$PRED). One ETA should be defined per row with nothing more on the row (except for spaces) than one assignment. Example:
         \begin{verbatim}
