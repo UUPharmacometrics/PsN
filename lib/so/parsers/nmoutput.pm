@@ -1014,7 +1014,7 @@ sub _create_dosing
     );
     my $model = $parm{'model'};
     my $problem = $parm{'problem'};
- 
+
     # Only support $PK
     if (not $model->has_code(record => 'pk')) {
         return;
@@ -1072,6 +1072,11 @@ sub _create_dosing
         }
         # filter out AMT = 0
     } else {
+        return;
+    }
+
+    # Was everything filtered out?
+    if (scalar(@{$columns[0]}) == 0) {
         return;
     }
 
