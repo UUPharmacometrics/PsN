@@ -683,22 +683,22 @@ sub setup_evaluation_model
 
 	if ($adjusted){
 		if ($iteration == 1){
-			$filename = 'evaluation_type_3_sample_'.$number.'.mod';
-			$tablename = 'dvpred_type_3_sample_'.$number.'.tab';
+			$filename = 'evaluation_type_aal_sample_'.$number.'.mod';
+			$tablename = 'dvpred_type_aal_sample_'.$number.'.tab';
 		}else{
 			croak("only one iteration with adjusted or regular");
 		}
 	}else{
 		#adaptive
 		if ($iteration == 1){
-			$filename = 'evaluation_type_1_sample_'.$number.'.mod';
-			$tablename = 'dvpred_type_1_sample_'.$number.'.tab';
+			$filename = 'evaluation_type_l_sample_'.$number.'.mod';
+			$tablename = 'dvpred_type_l_sample_'.$number.'.tab';
 		}else{
 			unless ($adaptive){
 				croak("only one iteration with adjusted or regular");
 			}
-			$filename = 'evaluation_type_2_sample_'.$number.'.mod';
-			$tablename = 'dvpred_type_2_sample_'.$number.'.tab';
+			$filename = 'evaluation_type_al_sample_'.$number.'.mod';
+			$tablename = 'dvpred_type_al_sample_'.$number.'.tab';
 		}
 	}
 
@@ -716,7 +716,7 @@ sub setup_evaluation_model
 
 	#For mae
 	$model -> add_records(type => 'table',
-						  record_strings => ['ID MDV DV PRED NOAPPEND NOPRINT ONEHEADER FILE='.$tablename],
+						  record_strings => ['ID EVID DV PRED NOAPPEND NOPRINT ONEHEADER FILE='.$tablename],
 						  problem_numbers => [1]);
 
 	$model->set_maxeval_zero(need_ofv=> 1);

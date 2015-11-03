@@ -19,12 +19,22 @@ lasso run2.mod -relations=CL:CLCR-2,WT-3,,V:WT-2 -seed=2011
 \section{Input and options}
 
 \subsection{lasso-specific input}
-A model file is required on the command-line.
+A model file is required on the command-line. Each parameter, e.g. CL and V, listed with option
+-relations (see below) must in the model have the typical value encoded as TV\emph{parameter}, e.g. TVCL and TVV.
+The covariate effects will be added multiplicatively to the TV variables, see the example lasso model code 
+below. If option -log\_scale is set, then instead the logarithm of the typical value must be encoded as
+LNTV\emph{parameter}, e.g. LNTVCL, and the covariate effects will be added additively to the LNTV variables.
+
 The lasso program does not support \$PRIOR in the input model.
 
 \begin{optionlist}
 \optdefault{relations}{list}
-The relations option is required. The parameter-covariate pairs to test and the parameterizations to use. The parameterizations are: 1)categorical covariate (treated as nominal scale), 2)linear continuous covariate, 3)piece-wise linear “hockey-stick” for continuous covariate. The syntax is sensitive and must follow the form below. Note colons, commas. There must be no spaces in the list of relations. There are double commas before a new parameter. It is optional to input the breakpoint for the piece-wise linear relation (3), the number is then set after a second dash (-) as in WGT-3-45.2. Example (everything should be on the same line):		-relations= CL:WGT-2,SEX-1,RACE-1,,V:WGT-3-45.2,,KA:WGT-3,APGR-2 
+The relations option is required. The parameter-covariate pairs to test and the parameterizations to use. The parameterizations are: 1)categorical covariate (treated as nominal scale), 2)linear continuous covariate, 3)piece-wise linear “hockey-stick” for continuous covariate. The syntax is sensitive and must be followed exactly. Each parameter
+is followed by a colon and then a comma-separated list of \emph{covariate}-\emph{form}. There are double commas
+before each new parameter, and there must be no spaces in the list of relations.  
+See example below.
+It is optional to input the breakpoint for the piece-wise linear relation (3), the number is then set after a second dash (-) as in AGE-3-45.2. Example (everything should be on the same line):\\
+-relations= CL:CRCL-2,SEX-1,,V:AGE-3-45.2,SEX-1,,KA:WGT-3,DIU-1
 \nextopt
 \optdefault{groups}{N}
 The number of validation groups in the cross-validation. Default 5, must be in the range 2-number of individuals in dataset. The larger the number the longer the cross-validation run-time. 
@@ -56,17 +66,28 @@ relations added and THETAs fixed to estimates from the lasso procedure.
 \nextopt
 \optname{adaptive}
 Default not set. If set, run adaptive lasso algorithm. This option will be set automatically if option -adjusted is set.
+See section Lasso procedure for a description of the extra steps run when this option is set.
 \nextopt
 \optname{adjusted}
-Default not set. If set, run adjusted adaptive lasso algorithm.
+Default not set. If set, run adjusted adaptive lasso algorithm. See section Lasso procedure for a
+description of the extra steps run when this option is set.
 \nextopt
 \optname{normalize}
 Default set. If unset with -no-normalize, no normalization of covariates will
 be performed.
 \nextopt
 \optname{log\_scale}
-Default not set. If set, covariates will be added to LN of TV instead
-of multiplied with TV.
+Default not set. If set, covariates will be added to LNTV instead
+of multiplied with TV. For example, if the input model has
+\begin{verbatim}
+LNTVCL=THETA(1)
+\end{verbatim}
+then the lasso model will get
+\begin{verbatim}
+LNTVCL=THETA(1)
+LNTVCL=LNTVCL+CLCOV
+\end{verbatim}
+where CLCOV is a sum of covariate effects.
 \nextopt
 \end{optionlist}
 
@@ -220,7 +241,7 @@ is replaced with
 \end{verbatim}
 where AL\_VWGT is the adaptive lasso coefficient for VWGT and is equal to a FIXED \$THETA. 
 
-\section{Step-by-step overview of algorithm}
+\section{Lasso procedure}
 
 \begin{enumerate}
 \item Input checking.
