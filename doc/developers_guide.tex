@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{Developer's guide}{2015-09-01}
+\guidetitle{Developer's guide}{2015-11-03}
 \usepackage{hyperref}
 
 \begin{document}
@@ -109,6 +109,12 @@ you must set the relevant options in psn.conf, for example
 run_on_slurm=1
 slurm_account=admin
 slurm_partition=development
+\end{verbatim}
+
+If a test fails, you can get more detailed output information by running it
+with perl instead of prove, e.g.
+\begin{verbatim}
+perl bootstrap.t
 \end{verbatim}
 
 \subsection{Test coverage}
