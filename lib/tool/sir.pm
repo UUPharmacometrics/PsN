@@ -183,8 +183,20 @@ sub setup_inflation
 
 	foreach my $param ('theta','omega','sigma'){
 		my $coords = $model->problems->[0]->get_estimated_attributes(parameter => $param,
-																	 attribute => 'coordinate_strings');
-		my $needed_length = scalar(@{$coords});
+																	 attribute => 'coords');
+		my $off_diagonals = $model->problems->[0]->get_estimated_attributes(parameter => $param,
+																			attribute => 'off_diagonal');
+		my $needed_length = 0;
+		my $have_off_diagonals=0;
+		my $full_length = scalar(@{$coords});
+		for (my $i=0; $i<scalar(@{$off_diagonals}); $i++){
+			if ($off_diagonals->[$i] == 1){
+				$have_off_diagonals=1;
+			}else{
+				$needed_length++;
+			}
+		}
+
 		my @given = split(/,/,$inflation{$param});
 		if ($needed_length == 0){
 			#check that not set on commandline
@@ -193,10 +205,12 @@ sub setup_inflation
 			}
 		}else{
 			#check that either length 1 or same length
+			my $diagonal = '';
+			$diagonal = 'diagonal' unless ($param eq 'theta');
 			unless ( (scalar(@given) == $needed_length)
 					 or (scalar(@given) == 1)){
 				croak("illegal input $param inflation ".$inflation{$param}.": there are $needed_length estimated $param ".
-					"elements in model, but ".scalar(@given)." values were given for inflation");
+					"$diagonal elements in model, but ".scalar(@given)." values were given for inflation");
 			}
 		}
 		foreach my $val (@given){
@@ -207,9 +221,45 @@ sub setup_inflation
 		}
 
 		if (scalar(@given) == $needed_length){
-			push(@inflationvec,@given);
-		}elsif ($needed_length > 0){
-			push(@inflationvec,($given[0]) x $needed_length);
+			if ($have_off_diagonals){
+				#add derived values for off-diagonals
+				my %diagvalues;
+				my $index = 0;
+				for (my $i=0; $i<scalar(@{$off_diagonals}); $i++){
+					unless ($off_diagonals->[$i] == 1){
+						$diagvalues{$coords->[$i]} = sqrt($given[$index]);
+						$index++;
+					}
+				}
+
+				my @augmented = ();
+				$index = 0;
+				for (my $i=0; $i<scalar(@{$off_diagonals}); $i++){
+					if ($off_diagonals->[$i] == 1){
+						my $str = $coords->[$i];
+						if ($str =~ /(\d+),(\d+)/){
+							my $left = $1;
+							my $right = $2;
+							if (defined $diagvalues{$left.','.$left} and (defined $diagvalues{$right.','.$right})){
+								push(@augmented,(($diagvalues{$left.','.$left})*($diagvalues{$right.','.$right})));
+							}else{
+								croak("bug finding diagvalues for $param $left and $right");
+							}
+
+						}else{
+							croak("bug string $param matching for $str");
+						}
+					}else{
+						push(@augmented,$given[$index]);
+						$index++;
+					}
+				}
+				push(@inflationvec,@augmented);
+			}else{
+				push(@inflationvec,@given);
+			}
+		}elsif ($full_length > 0){
+			push(@inflationvec,($given[0]) x $full_length);
 		} #else nothing
 
 	}
@@ -522,14 +572,10 @@ sub modelfit_setup
 		my $delta = [];
 
 		my $inflation = $self->inflation();
-#		my $inflation = [];
-#		$inflation = $self->inflation() if ($iteration == 1); #only inflate in first iteration
-		#FIXME do inflation in first iteration if rawres input or auto_rawres?
-
 
 		#covmatrix already read if *not* have resampled params
 		if ($have_resampled_params){
-			$inflation = []; #FIXME do inflation if first iteration with rawres input?
+			$inflation = [] unless ($iteration ==1); #keep inflation if rawres input and first iteration
 			croak("iteration ".($iteration-1)."iteration_resulthash not defined") 
 				unless (defined $previous_iteration_resulthash and 
 						defined $previous_iteration_resulthash->{'covar'});
@@ -2134,6 +2180,7 @@ sub _modelfit_raw_results_callback
 
 		my @delta_ofv=();
 		my @filtered_pdf=();
+		my @sample_id=();
 		my $index = 0;
 		my $successful_count=0;
 		my $negative_count = 0;
@@ -2174,6 +2221,8 @@ sub _modelfit_raw_results_callback
 			}
 			push(@filtered_pdf,$pdf);
 			push(@delta_ofv,$delta_ofv);
+			$index++;
+			push(@sample_id,$index); #starts at 1
 		}
 
 		push(@{$self->minimum_ofv},$this_minimum_ofv);
@@ -2223,10 +2272,12 @@ sub _modelfit_raw_results_callback
 			my $hashref = tool::sir::augment_rawresults( raw_results => $modelfit->raw_results,
 														 filtered_pdf => \@filtered_pdf,
 														 dofv_array => \@delta_ofv,
+														 id_array => \@sample_id,
 														 cap_resampling => $self->cap_resampling);
 			$modelfit -> raw_results($hashref->{'raw'});
 			@filtered_pdf = @{$hashref->{'pdf'}};
 			@delta_ofv = @{$hashref->{'dofv'}};
+			@sample_id = @{$hashref->{'id'}};
 		}
 
 
@@ -2260,7 +2311,7 @@ sub _modelfit_raw_results_callback
 		$index=0;
 		foreach my $row ( @{$modelfit -> raw_results()} ) {
 			my @oldrow =@{$row};
-			$row = [($index+1),
+			$row = [$sample_id[$index],
 					@oldrow[0 .. $ofvindex],
 					$delta_ofv[$index],
 					((defined $delta_ofv[$index]) ? exp(-0.5*$delta_ofv[$index]): undef), #likelihood_ratio
@@ -2360,16 +2411,19 @@ sub augment_rawresults
 							  raw_results => { isa => 'ArrayRef', optional => 0 },
 							  filtered_pdf => { isa => 'ArrayRef', optional => 0 },
 							  dofv_array => { isa => 'ArrayRef', optional => 0 },
+							  id_array => { isa => 'ArrayRef', optional => 0 },
 							  cap_resampling => { isa => 'Int', optional => 0 },
 		);
 	my $raw_results = $parm{'raw_results'};
 	my $filtered_pdf = $parm{'filtered_pdf'};
 	my $dofv_array = $parm{'dofv_array'};
+	my $id_array = $parm{'id_array'};
 	my $cap_resampling = $parm{'cap_resampling'};
 
 	my @augmented_raw=();
 	my @augmented_pdf=();
 	my @augmented_dofv=();
+	my @augmented_id=();
 	
 	my $count = scalar(@{$raw_results});
 	for (my $i=0; $i< $count ; $i++){
@@ -2381,9 +2435,10 @@ sub augment_rawresults
 			push(@augmented_raw,$raw_results->[$i]);
 			push(@augmented_pdf,$filtered_pdf->[$i]);
 			push(@augmented_dofv,$dofv_array->[$i]);
+			push(@augmented_id,$id_array->[$i]);
 		}
 	}
-	return {'raw' => \@augmented_raw,'dofv' => \@augmented_dofv, 'pdf' => \@augmented_pdf};
+	return {'raw' => \@augmented_raw,'dofv' => \@augmented_dofv, 'pdf' => \@augmented_pdf, 'id' => \@augmented_id};
 
 }
 

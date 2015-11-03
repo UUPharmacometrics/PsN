@@ -423,8 +423,8 @@ is_deeply(tool::sir::setup_inflation(model => $model,
 									sigma_inflation => '1'),[1,2,3,4,5,3,3,3,3],'inflation 2');
 is_deeply(tool::sir::setup_inflation(model => $model,
 									theta_inflation => '1,2,3,4,5',
-									omega_inflation => '6,7,8,9',
-									sigma_inflation => '1'),[1,2,3,4,5,6,7,8,9],'inflation 3');
+									omega_inflation => '6,16,25',
+									sigma_inflation => '1'),[1,2,3,4,5,6,16,20,25],'inflation 3');
 is_deeply(tool::sir::setup_inflation(model => $model,
 									theta_inflation => '1,1,1,1,1',
 									omega_inflation => '1',
@@ -441,7 +441,7 @@ dies_ok {tool::sir::setup_inflation(model => $model,
 									sigma_inflation => '1')} 'illegal inflation 2';
 dies_ok {tool::sir::setup_inflation(model => $model,
 									theta_inflation => '1',
-									omega_inflation => '1,2,3',
+									omega_inflation => '1,2,3,4',
 									sigma_inflation => '1')} 'illegal inflation 3';
 dies_ok {tool::sir::setup_inflation(model => $model,
 									theta_inflation => '-11',
@@ -593,10 +593,12 @@ my $hashref = tool::sir::augment_rawresults(
 	raw_results => [[1,1,1],[2,2,2],[3,3,3]],
 	filtered_pdf => [1,undef,2],
 	dofv_array => [3,undef,5],
+	id_array => [1,2,3],
 	cap_resampling => 3);
 
 is(scalar(@{$hashref->{'raw'}}),7,'augment rawresults total');
 is_deeply($hashref->{'pdf'},[1,1,1,undef,2,2,2],'augment pdf');
+is_deeply($hashref->{'id'},[1,1,1,2,3,3,3],'augment id');
 is_deeply($hashref->{'dofv'},[3,3,3,undef,5,5,5],'augment dofv');
 is_deeply($hashref->{'raw'}->[0],[1,1,1],'augment rawres 0');
 is_deeply($hashref->{'raw'}->[1],[1,1,1],'augment rawres 1');

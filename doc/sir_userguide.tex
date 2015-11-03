@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{SIR user guide}{2015-10-13}
+\guidetitle{SIR user guide}{2015-11-03}
 \usepackage{amsmath}
 
 \begin{document}
@@ -132,16 +132,16 @@ If option -auto\_rawres is used
 in combination with rawres\_input, tweak\_inits by 'degree' will be used 
 to augment the given rawres\_input file until the matrix has full rank, see help text for -rawres\_input.
 \nextopt
-\optname{with\_replacement}
-Default not set. By default, resampling is performed without replacement, but setting this option gives resampling 
-with unlimited replacement.
-To cap resampling at e.g. 5, use option -cap\_resampling.
+%\optname{with\_replacement}
+%Default not set. By default, resampling is performed without replacement, but setting this option gives resampling 
+%with unlimited replacement.
+%To cap resampling at e.g. 5, use option -cap\_resampling.
 \nextopt
 \optdefault{cap\_resampling}{N}
 Default 1. The maximum number of times a single parameter vector can be resampled in each iteration. 
 Value 1 means regular sampling without replacement. 
-A value equal to the maximum value of the 'resamples' array will give the same
-result as unlimited replacement. Any value in between gives limited replacement. 
+A value equal to the maximum value of the 'resamples' array will give
+unlimited replacement, but this is not recommended. Any value in between gives limited replacement. 
 \nextopt
 \optdefault{covmat\_input}{filename}
 Not allowed together with rawres\_input or auto\_rawres. If given, this covariance matrix is
@@ -164,7 +164,7 @@ Please note that there is a PsN script called covmat that can be used to generat
 \nextopt
 \optdefault{theta\_inflation}{X}
 Either a positive vector with length equal to the number of \emph{estimated} (not FIX) \$THETAs, or
-a positive scalar which will be interpreted as a vector of lenght n(\$THETA) and all equal values.
+a positive scalar which will be interpreted as a vector of the required length and all equal values.
 Default is the scalar 1, which is the same as no inflation. 
 If given, the variance
 of each estimated \$THETA 
@@ -175,24 +175,26 @@ The weights will also be computed based the inflated covariance matrix.
 Inflation is not used in any but the first iteration.
 \nextopt
 \optdefault{omega\_inflation}{X}
-Either a positive vector with length equal to the number of \emph{estimated} (not FIX) \$OMEGA elements, both diagonal
-and off-diagonal, or
+Either a positive vector with length equal to the number of \emph{estimated} (not FIX) 
+%\$OMEGA elements, both diagonal
+\$OMEGA \emph{diagonal} elements
+%, both diagonal
+%and off-diagonal, 
+or
 a positive scalar which will be interpreted as a vector of the required length and all equal values.
 Default is the scalar 1, which is the same as no inflation. 
 If given, the variance
 of each estimated \$OMEGA element
 will in the first iteration be inflated with the factor from the inflation vector
 before the parameter vectors
-are sampled from the truncated multivariate normal distribution.
-%FIXME
-%When off-diagonal $i,j$ is estimated, the correlation will be un-inflated if the 
-%inflation vector element is equal to the product of 
+are sampled from the truncated multivariate normal distribution. Inflation for off-diagonal
+omega elements will be automatically computed based on inflation for diagonals so that the correlation is unchanged.
+For example, the variance of OM(2,1) will be inflated by 
+\[
+\sqrt{inflation(OM(1,1))}\cdot\sqrt{inflation(OM(2,2))}
+\].
 The weights will also be computed based the inflated covariance matrix. 
 Inflation is not used in any but the first iteration.
-
-NB: There is no check that individual inflation for e.g. OMEGA(2,1) is matched to inflation for OMEGA(1,1) and OMEGA(2,2). 
-The user must make sure that the ETA1-ETA2 correlation is inflated/the same/deflated appropriately by setting a suitable 
--omega\_inflation vector.
 \nextopt
 \optdefault{sigma\_inflation}{X}
 See help text for omega\_inflation.
@@ -298,18 +300,21 @@ or by default the .cov-file of the input model run.
 \item[\underline{Step 1}] 
 Simulate 'samples item $i$' parameter vectors from the 
 covariance matrix, using Perl function Math::Random::random\_multivariate\_normal.
+If this is iteration 1, $i==1$, 
+the covariance matrix is inflated before sampling 
+if either of options -theta\_inflation, -omega\_inflation or -sigma\_inflation is set. 
 
 \noindent If there was a previous iteration, i.e $i>1$ or option -rawres\_input or -auto\_rawres was used, 
-the covariance matrix is the un-inflated
+the covariance matrix used in this step is the
 empirical covariance matrix of (optionally Box-Cox transformed) resampled parameter vectors from
-Step 6 in the previous iteration. If the vectors were Box-Cox transformed then
+Step 6 in the previous iteration. 
+If the vectors were Box-Cox transformed then
 sampling is done on Box-Cox scale, and 
 then the samples are back-transformed for boundary checks and evaluation.
 
 \noindent If there was no previous iteration, the covariance matrix is either from
 the .cov-file given by NONMEM or given via option -covmat\_input.
-The matrix is inflated if either of options -theta\_inflation, -omega\_inflation or -sigma\_inflation 
-is set, and the sampling is done on the original scale. 
+The sampling is done on the original scale. 
 
 \noindent If a vector (on the original scale) does not fulfill the constraints from \$THETA boundaries
 and positive definiteness of \$OMEGA and
@@ -341,9 +346,10 @@ and replacing inits of nth \$PROBLEM with nth parameter vector on original scale
 (delta-OFV, reference is input model ofv) and store in raw results file for this iteration.
 \item[\underline{Step 4}] 
 Calculate the weights as the ratio $\frac{e^{-0.5\cdot dOFV}}{relPDF}$ and store in raw results file for this iteration. 
-Resample 'resamples item $i$' parameter vectors based on these weights, with or without replacement depending on option 
--with\_replacement. 
-Store the number of times each vector was resampled in raw results file for this iteration.
+Resample 'resamples item $i$' parameter vectors based on these weights, with or without limited replacement depending on option 
+-cap\_resampling.
+Store '-cap\_resampling' copies of each vector in the raw results file for this iteration, with a 1 or 0 in the 'resamples'
+column indicating if the copy was resampled or not.
 
 \noindent If any sample(s) had a negative dOFV and option -recenter is set (the default), reset the $mu$-vector
 to be used in the next iteration to the parameter vector with the lowest ofv.
@@ -351,8 +357,9 @@ to be used in the next iteration to the parameter vector with the lowest ofv.
 If this is iteration $0$, i.e. rawres\_input is used and the procedure starts here: Read all parameter vectors
 from file rawres\_input, excluding offset\_rawres and vectors not passing in\_filter (if set).
 
-\noindent Otherwise read the 'resamples item $i$' resampled vectors from Step 4, using multiple copies for vectors that were 
-resampled more than once (only possible if -with\_replacement was set). 
+\noindent Otherwise read the 'resamples item $i$' resampled vectors from the raw results file of Step 4.
+%, using multiple copies for vectors that were 
+%resampled more than once (only possible if -with\_replacement was set). 
 \item[\underline{Step 6}]
 If \emph{not} last iteration \emph{and} option -boxcox is set (the default): 
 For each parameter individually, find the Box-Cox transformation that maximizes the correlation (Pearson's r) with the normal density.
@@ -407,31 +414,12 @@ the number of successful samples both greater and smaller
 than requested samples.
 
 
-%The first plot shows 3 comparative dOFV distributions: SIR, reference chi-square and original covariance matrix.
-%If on this plot the SIR curve is close to the reference chi-square curve it means that SIR results are good.
-
-%The second plot shows the number of resampled values in each bin of the parameter space. 
-%Each bin contains the same number of parameter values, which is set to 1/10 of the number of initial samples.
-%That is, Bin 1 corresponds to the lowest 10\% of simulated parameter values and Bin 10 to the highest 10\%.
-%If on this plot the number of resamples is around the dashed line, it means that the original covariance-matrix 
-%is a good approximation of the uncertainty and that SIR results are good.
-%If some bins have much more resamples than others, it means that the covariance matrix is different from the true uncertainty. 
-%SIR results remain an improvement over the original covariance-matrix but they could potentially be improved by modifying the 
-%original covariance matrix.
-%For example, one could inflate the variances of parameters that have more resamples than expected in the "outside" bins 
-%(diagonal or u-shaped lines).
-
-%The third plot shows the 95\% confidence interval for each parameter as determined by SIR and the original covariance matrix.
-%If on this plot the 95\% confidence intervals for one parameter are identical, it means that the covariance matrix 
-%is a good approximation of the uncertainty for this parameter.
-%If the 95\% confidence intervals differ between SIR and the covariance matrix, it means that the covariance matrix is 
-%different from the true uncertainty for this parameter.
 
 \section{Output}
 \begin{itemize}
 \item raw\_results for each iteration with added columns for\\
 \begin{tabular}{ll}
-\bf{sample.id} & A unique number\\
+\bf{sample.id} & A unique number for each simulated vector\\
 \bf{deltaofv} & $\mathrm{ofv} - \mathrm{original}\mbox{\tt\string_}\mathrm{model}\mbox{\tt\string_}\mathrm{ofv}$\\
 \bf{likelihood\_ratio} & $e^{-0.5\cdot \mathrm{deltaofv}}$ \\
 \bf{relPDF} & relative PDF \\
@@ -445,9 +433,8 @@ The first line is the result for vector $\mu$ of the current iteration. Normally
 input model, but if option -recenter was set and a parameter vector had a lower ofv, then $\mu$ for the \emph{next} iteration
 will be that new vector.
 
-If -rawres\_input is used there is no raw\_results file for the first iteration. 
-If unlimited replacement then sample\_order is the sample order of the last resample. 
-In the raw results file there will be '-cap\_resampling' (default 1) identical line(s) for each sample vector.
+In the raw results file there will be '-cap\_resampling' (default 1) almost identical line(s) for each parameter vector,
+the only differences will be in the resamples and sample\_order columns.
 
 \item sir\_results.csv with summary statistics, percentiles and empirical sd-correlation matrix
 \item <modelname>\_sir.cov with the empirical covariance matrix in NONMEM-like format, i.e. 

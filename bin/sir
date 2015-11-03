@@ -36,7 +36,7 @@ my %optional_options = (
 	"theta_inflation:s" => '',
 	"omega_inflation:s" => '',
 	"sigma_inflation:s" => '',
-	"with_replacement!"=>'',
+#	"with_replacement!"=>'',
 	"cap_resampling:i"=>'',
 	"recenter!"=>'',
 	"boxcox!"=>'',
@@ -127,7 +127,7 @@ This option is not allowed together with covmat_input.
 If the number of vectors read is smaller than 
 the number of estimated parameters (also counting off-diagonals),
 it is not possible to obtain an empirical covariance matrix with full rank.
-In this case sir will append copies of the existing vectors, perturbed using the tweak\_inits
+In this case sir will append copies of the existing vectors, perturbed using the tweak_inits
 functionality, until the resulting set ov vectors has full rank.
 If option -auto_rawres=degree is set on the command-line, tweak_inits will be done by 'degree',
 otherwise the default degree 0.1 will be used for tweaking.
@@ -186,19 +186,19 @@ EOF
 	If -no-copy_data is set, the absolute path to the original dataset will be 
 	used instead.
 EOF
-$help_text{-with_replacement} = <<'EOF';
-      -with_replacement
-Default not set. By default, resampling is performed without replacement, but setting this option gives resampling 
-with unlimited replacement.
-To cap resampling at e.g. 5, use option -cap_resampling instead.
-EOF
+#$help_text{-with_replacement} = <<'EOF';
+#      -with_replacement
+#Default not set. By default, resampling is performed without replacement, but setting this option gives resampling 
+#with unlimited replacement.
+#To cap resampling at e.g. 5, use option -cap_resampling instead.
+#EOF
 $help_text{-cap_resampling} = <<'EOF';
       -cap_resampling=N
 
 Default 1. The maximum number of times a single parameter vector can be resampled in each iteration. 
 Value 1 means regular sampling without replacement. 
-A value equal to the maximum value of the 'resamples' array will give the same
-result as unlimited replacement. Any value in between gives limited replacement. 
+A value equal to the maximum value of the 'resamples' array will give
+unlimited replacement, but this is not recommended. Any value in between gives limited replacement. 
 EOF
     $help_text{-recenter} = <<'EOF';
       -recenter
@@ -259,15 +259,18 @@ EOF
 $help_text{-omega_inflation} = <<'EOF';
       -omega_inflation=X
 
-Either a positive vector with length equal to the number of estimated (not FIX) $OMEGA elements, both diagonal
-and off-diagonal, or
+Either a positive vector with length equal to the number of estimated (not FIX) $OMEGA diagonal elements
+#, both diagonal
+#and off-diagonal, 
+or
 a positive scalar which will be interpreted as a vector of the required length and all equal values.
 Default is the scalar 1, which is the same as no inflation. 
 If given, the variance
 of each estimated $OMEGA element
 will in the first iteration be inflated with the factor from the inflation vector
 before the parameter vectors
-are sampled from the truncated multivariate normal distribution.
+are sampled from the truncated multivariate normal distribution. Inflation for off-diagonal
+elements will be automatically computed based on inflation for diagonals so that the correlation is unchanged.
 The weights will also be computed based the inflated covariance matrix. 
 Inflation is not used in any but the first iteration.
 EOF
@@ -322,12 +325,13 @@ if ( defined $options{'add_iterations'} and ($options{'add_iterations'}) ){
 	}
 }
 
-if ( defined $options{'with_replacement'} and ($options{'with_replacement'}) ){
-	if (defined $options{'cap_resampling'}){
-		print "Cannot set -with_replacement together with -cap_resampling";
-		die;
-	}
-}
+#if ( defined $options{'with_replacement'} and ($options{'with_replacement'}) ){
+#	if (defined $options{'cap_resampling'}){
+#		print "Cannot set -with_replacement together with -cap_resampling";
+#		die;
+#	}
+#}
+
 if ( defined $options{'covmat_input'} ){
 	if (defined $options{'rawres_input'}){
 		print "Cannot use option -covmat_input together with option -rawres_input.\n";
@@ -420,7 +424,7 @@ my $sir =
 	tool::sir->new ( eval( $common_options::parameters ),
 					 top_tool => 1,
 					 models				     => [ $model ],
-					 with_replacement			 => $options{'with_replacement'},
+#					 with_replacement			 => $options{'with_replacement'},
 					 cap_resampling		 => $options{'cap_resampling'},
 					 samples				     => \@samples,
 					 resamples				     => \@resamples,
