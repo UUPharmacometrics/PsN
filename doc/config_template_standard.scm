@@ -49,8 +49,8 @@ categorical_covariates=CVD1
 ;;relations to obtain a reference ofv value to be used when computing 
 ;;p-values for the candidate models. If the user already knows the ofv 
 ;;value for the base model with included relations, time can be saved by 
-;;giving scm that ofv-value 
-;base_criteria_values={ofv=>-1209}
+;;giving scm that ofv-value on the command-line (not in the config file)
+;;using option -base_ofv
 
 ;;By default option parallel_states=0 and scm tries parameterizations
 ;;one at a time, in the order set in valid_states. Only if the covariate

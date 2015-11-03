@@ -40,8 +40,8 @@ categorical_covariates=CVD1
 ;;relations to obtain a reference ofv value to be used when computing 
 ;;p-values for the candidate models. If the user already knows the ofv 
 ;;value for the base model with included relations, time can be saved by 
-;;giving scm that ofv-value 
-;base_criteria_values={ofv=>-1209}
+;;giving scm that ofv-value on the command-line (not in the config file)
+;;using option -base_ofv
 
 ;;These general PsN options that can be set in the configuration file. 
 ;;Most general PsN options must however be set on the command-line
