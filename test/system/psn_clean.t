@@ -23,7 +23,7 @@ chdir($tempdir);
 system("execute pheno.mod -dir=mydir -clean=0");
 ok (-e "mydir/NM_run1", "NM_run1 ok");
 ok (-e "mydir/NM_run1/patab1", "patab1 ok");
-ok (-e "mydir/NM_run1/psn-1.mod", "psn-1.mod ok");
+ok (((-e "mydir/NM_run1/psn-1.mod") or (-e "mydir/NM_run1/psn-1.ctl")) , "psn-1.mod ok");
 
 # remove tables
 system("psn_clean mydir -no-interactive -tab");
@@ -32,7 +32,7 @@ ok (not (-e "mydir/NM_run1/patab1"), "psn_clean removed sdtab");
 # remove restart files
 create_file("mydir/NM_run1/psn-1.mod");
 system("psn_clean mydir -no-interactive");
-ok (not (-e "mydir/NM_run1/psn-1.mod"), "psn_clean removed psn-1.mod");
+ok (not ((-e "mydir/NM_run1/psn-1.mod") or (-e "mydir/NM_run1/psn-1.ctl")), "psn_clean removed psn-1.mod");
 
 # lst
 create_file("mydir/NM_run1/testing.lst");

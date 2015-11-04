@@ -59,8 +59,12 @@ sub remove_files {
   
   my @files;
   if ($restart){
-    @files = <$dir/psn-*.mod $dir/psn-*.lst $dir/compilation_output-*.txt>;
+    @files = <$dir/psn-*.mod $dir/psn-*.ctl $dir/psn-*.lst $dir/compilation_output-*.txt>;
     push (@files,<$dir/psn-*.ext $dir/psn-*.cov $dir/psn-*.cor $dir/psn-*.coi $dir/psn-*.phi >);
+    push (@files,<$dir/psn-*.phm $dir/psn-*.shk $dir/psn-*.grd $dir/psn-*.xml $dir/psn-*.cnv >);
+    push (@files,<$dir/psn-*.smt $dir/psn-*.rmt $dir/psn-*.imp $dir/psn-*.npd $dir/psn-*.npe >);
+    push (@files,<$dir/psn-*.npi $dir/psn-*.fgh $dir/psn-*.log.xml $dir/psn-*.cpu $dir/psn-*.shm $dir/psn-*.agh >);
+
     remove_list(\@files,$interactive,$topdir);
     @files = <$dir/*tab*-[1-9] $dir/*tab*-[1-9][0-9]>;
     my @templist;
