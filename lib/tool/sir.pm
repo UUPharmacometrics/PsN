@@ -386,8 +386,6 @@ sub modelfit_setup
 
 
 	my $covmatrix;
-	my @covmat_column_headers = ();
-
 
 	my $rawres_resampled_params_arr;
 	if (defined $self->rawres_input or (defined $self->auto_rawres)){
@@ -463,52 +461,59 @@ sub modelfit_setup
 
 
 	if (defined $self->covmat_input){
-		#read user matrix
-		#use keep_labels_hash from input model problem
-		my %keep_labels_hash;
-		foreach my $coord (@{$output->problems->[0]->input_problem->get_estimated_attributes(attribute=>'coordinate_strings')}){
-			$keep_labels_hash{$coord}=1;
-		}
+		my $strings = $output->problems->[0]->input_problem->get_estimated_attributes(attribute=>'coordinate_strings');
 
-		my @lines = utils::file::slurp_file($self->covmat_input);
-		my ($success,$lower_covar,$index_order_ref,$header_labels_ref) = 
-			output::problem::subproblem::parse_additional_table (covariance_step_run => 1,
-																 have_omegas => 1,
-																 have_sigmas => 1,
-																 method_string => ' ',
-																 type => 'cov',
-																 keep_labels_hash => \%keep_labels_hash,
-																 tableref => \@lines);
-		@lines=undef;
-		unless ($success){
-			croak("failed to parse covmat_input file ".$self->covmat_input);
-		}
-
-		#error check that column headers match parameters in nonmem output
-		unless ( scalar(@{$index_order_ref}) == scalar(@{$self->parameter_hash->{'param'}})){
-			croak("Number of parameters ".scalar(@{$index_order_ref})." in covmat_input does not match number ".
-				  scalar(@{$self->parameter_hash->{'param'}})." of estimated parameters in input model." );
-		}
-		foreach my $ind (@{$index_order_ref}) {
-			push (@covmat_column_headers, $header_labels_ref->[$ind]);
-		}
-
-		for (my $j=0; $j < scalar(@covmat_column_headers); $j++){
-			my $covheader = $covmat_column_headers[$j];
-			my $outheader;
-			my $par = uc($self->parameter_hash->{'param'}->[$j]);
-			if ($par eq 'THETA'){
-				$outheader = $par.$self->parameter_hash->{'coords'}->[$j];
-			}else{
-				$outheader = $par.'('.$self->parameter_hash->{'coords'}->[$j].')';
+		if ($self->covmat_input eq 'identity'){
+			$covmatrix = linear_algebra::get_identity_matrix(scalar(@{$strings}));
+		}else{
+			#read user matrix
+			#use keep_labels_hash from input model problem
+			my %keep_labels_hash;
+			foreach my $coord (@{$strings}){
+				$keep_labels_hash{$coord}=1;
 			}
-			unless ($covheader eq $outheader){
-				croak("headers $covheader from covmat_input and $outheader from input model does not match\n");
+
+			my @lines = utils::file::slurp_file($self->covmat_input);
+			my ($success,$lower_covar,$index_order_ref,$header_labels_ref) = 
+				output::problem::subproblem::parse_additional_table (covariance_step_run => 1,
+																	 have_omegas => 1,
+																	 have_sigmas => 1,
+																	 method_string => ' ',
+																	 type => 'cov',
+																	 keep_labels_hash => \%keep_labels_hash,
+																	 tableref => \@lines);
+			@lines=undef;
+			unless ($success){
+				croak("failed to parse covmat_input file ".$self->covmat_input);
 			}
+
+			#error check that column headers match parameters in nonmem output
+			unless ( scalar(@{$index_order_ref}) == scalar(@{$self->parameter_hash->{'param'}})){
+				croak("Number of parameters ".scalar(@{$index_order_ref})." in covmat_input does not match number ".
+					  scalar(@{$self->parameter_hash->{'param'}})." of estimated parameters in input model." );
+			}
+			my @covmat_column_headers = ();
+
+			foreach my $ind (@{$index_order_ref}) {
+				push (@covmat_column_headers, $header_labels_ref->[$ind]);
+			}
+
+			for (my $j=0; $j < scalar(@covmat_column_headers); $j++){
+				my $covheader = $covmat_column_headers[$j];
+				my $outheader;
+				my $par = uc($self->parameter_hash->{'param'}->[$j]);
+				if ($par eq 'THETA'){
+					$outheader = $par.$self->parameter_hash->{'coords'}->[$j];
+				}else{
+					$outheader = $par.'('.$self->parameter_hash->{'coords'}->[$j].')';
+				}
+				unless ($covheader eq $outheader){
+					croak("headers $covheader from covmat_input and $outheader from input model does not match\n");
+				}
+			}
+
+			$covmatrix = make_square($lower_covar);
 		}
-
-		$covmatrix = make_square($lower_covar);
-
 	}elsif (defined $self->rawres_input or (defined $self->auto_rawres)){
 		#do not need any matrices at all, not sampling in 0th iteration
 		1;

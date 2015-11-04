@@ -219,6 +219,9 @@ EOF
       -covmat_input=filename
     Not allowed together with rawres_input. If given, this matrix is
 	used for computing the weights and performing the sampling.
+	If the user wants to input an identity matrix, it is not necessary to create the .cov-file.
+Instead set option -covmat_input=identity. Option -covmat_input=identity can be combined
+with inflation to get any diagonal covariance matrix without creating the .cov-file.
 EOF
     $help_text{-add_iterations} = <<'EOF';
       -add_iterations
@@ -342,12 +345,16 @@ if ( defined $options{'covmat_input'} ){
 		die;
 	}
 	#set to global filepath here
-	unless (-e $options{'covmat_input'}){
-		print "The covmat_input file ".$options{'covmat_input'}." does not exist.\n"; 
-		die;
+	if ($options{'covmat_input'} eq 'identity'){
+		#special
+	}else{
+		unless (-e $options{'covmat_input'}){
+			print "The covmat_input file ".$options{'covmat_input'}." does not exist.\n"; 
+			die;
+		}
+		my ( $dir, $file ) = OSspecific::absolute_path(cwd(), $options{'covmat_input'});
+		$options{'covmat_input'} = $dir . $file;
 	}
-	my ( $dir, $file ) = OSspecific::absolute_path(cwd(), $options{'covmat_input'});
-	$options{'covmat_input'} = $dir . $file;
 }
 
 if ( defined $options{'rawres_input'} ){

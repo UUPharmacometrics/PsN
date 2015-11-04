@@ -56,6 +56,9 @@ Then the sir procedure starts with a 0th iteration where those vectors are treat
 vectors from the third phase (Box-Cox transformation etc). This approach is useful when it is difficult to obtain a (faked) covariance matrix. 
 If there are too few bootstrap vectors for full rank, sir will automatically fill in extra vectors using the
 tweak\_inits functionality.
+\item If the user can guess a reasonable variance for each parameter, then options -covmat\_input=diagonal,
+-theta\_inflation, -omega\_inflation and -sigma\_inflation can be combined to obtain any diagonal covariance matrix
+without having to create the .cov-file.
 \item If none of the above alternatives are possible, the -auto\_rawres option can be used.
 Then sir will create a complete rawres\_input file using the tweak\_inits functionality.
 \end{enumerate}
@@ -148,7 +151,12 @@ Not allowed together with rawres\_input or auto\_rawres. If given, this covarian
 used in iteration 1
 for sampling parameter vectors and for computing the PDF.
 The matrix will not be used in any but the first iteration. 
-The format of the file is similar to a NONMEM-generated .cov-file except 
+
+If the user wants to input an identity matrix, it is not necessary to create the .cov-file.
+Instead set option -covmat\_input=identity. Option -covmat\_input=identity can be combined
+with inflation to get any diagonal covariance matrix without creating the .cov-file.
+
+If a file is used, the format of the file is similar to a NONMEM-generated .cov-file except 
 that the \verb|TABLE NO.| line should be omitted.
 Fixed parameters do not have to be omitted, sir will filter them out. 
 The covmat\_input file must be formatted to contain a space- or tab-separated  $N\times N$ symmetric covariance matrix.
