@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{VPC and NPC user guide}{2015-10-29}
+\guidetitle{VPC and NPC user guide}{2015-11-04}
 
 \begin{document}
 
@@ -212,6 +212,23 @@ A simple way to simulate with uncertainty. Instead of using identical parameter 
 \optdefault{offset\_rawres}{N}
 Only relevant in combination with -rawres\_input. Default 1. The number of result lines to skip in the input raw results file before starting to read final parameter estimates. In a regular bootstrap raw\_results file the first line of estimates refers to the input model with the full dataset, so therefore the default offset is 1. 
 \nextopt
+\optdefault{in\_filter}{comma-separated list of conditions}
+Only relevant in combination with -rawres\_input. Default not used. 
+The parameter estimates lines in the file can be filtered on values in the different columns. When specifying which column(s) the 
+filtering should be based on, the exact column name must be used, e.g. minimization\_successful. Filtering can only be based on columns 
+with numeric values. The allowed relations are .gt. (greater than), .lt. (less than) and .eq. (equal to). If the value in the filter 
+column is 'NA' then that parameter set will be skipped, regardless of the defined filter relation. Conditions are separated with commas. 
+If the remaining number of lines after filtering is smaller than -samples, the program will stop with an error message. 
+Then the user must either change the filtering rules or change -samples. If the user has created a file with parameter estimates outside 
+of PsN, filtering can be done on any numeric column in that file. Do not set column headers containing .eq. or .lt. or .gt.in the 
+user-generated file as this would interfere with the in\_filter option syntax.
+
+Example (there must be no linebreaks in the actual command):
+\begin{verbatim}
+-in_filter=minimization_successful.eq.1,
+significant_digits.gt.3.5
+\end{verbatim} \\
+\nextopt
 \optname{copy\_data}
 Default set. Disable with -no-copy\_data. By default, PsN will copy the datafile into NM\_run1 and set a local path in psn.mod, the actual modelfile run with NONMEM. If -no-copy\_data is set, PsN will not copy the data to NM\_run1 and instead set the absolute path in \$DATA in psn.mod. However, 
 the absolute path must not be too long, since NONMEM will not accept more than 80 characters for the filename in \$DATA.  
@@ -369,6 +386,9 @@ is optional. As VPC.
 is optional. As VPC.    
 \nextopt
 \optdefault{offset\_rawres}{N}
+optional. As VPC. 
+\nextopt
+\optdefault{in\_filter}{text}
 optional. As VPC. 
 \nextopt
 \optname{copy\_data}

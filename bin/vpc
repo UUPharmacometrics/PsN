@@ -28,7 +28,8 @@ my %required_options = ('samples:i' => undef);
 my %optional_options = ( 'idv:s' => undef,
     'rawres_input:s' => undef,
     'offset_rawres:i' => undef,
-    "stratify_on:s" => undef,
+	'in_filter:s' => undef,
+    'stratify_on:s' => undef,
     'no_of_strata:i' => undef,
     'refstrat:f' => undef,
     'lst_file:s' => undef,
@@ -392,6 +393,26 @@ $help_text{-offset_rawres} = <<'EOF';
       bootstrap raw_results file the first line of estimates refers to the
       input model with the full dataset, so therefore the default offset is 1.
 EOF
+$help_text{-in_filter} = <<'EOF';
+      -in_filter=comma-separated list of conditions
+
+      Only relevant in combination with rawres_input. Default not used.
+      The parameter estimates lines in the file can be filtered on values 
+      in the different columns. When specifying which column(s) the filtering 
+      should be based on, the exact column name must be used, 
+      e.g. minimization_successful. Filtering can only be based on columns 
+      with numeric values. The allowed relations are .gt. (greater than), 
+      .lt. (less than) and .eq. (equal to). Conditions are separated with commas. 
+      If the remaining number of lines after filtering is smaller than -samples, 
+      the program will stop with an error message. Then the user must either change the 
+      filtering rules or change -samples. If the user has created a file with 
+      parameter estimates outside of PsN, filtering can be done on any numeric 
+      column in that file. Do not set column headers containing .eq. or .lt. 
+      or .gt.in the user-generated file as this would interfere with the in_filter 
+      option syntax.
+    
+      Example: -in_filter=minimization_successful.eq.1,significant_digits.gt.3.5
+EOF
 
 $help_text{-noprediction} = <<'EOF';
       -noprediction
@@ -513,6 +534,27 @@ if (defined $options{'rawres_input'}) {
     exit;
   }
 }
+
+my @in_filter=();
+if ( defined $options{'in_filter'} ){
+  unless (defined $options{'rawres_input'}){
+    print "Cannot use option -in_filter without option -rawres_input.\n";
+    exit;
+  }
+  #split string, assume comma separated
+  foreach my $filt (split(/,/,$options{'in_filter'})){
+    if ($filt =~ /.\.(gt|lt|eq)\.\d+\.?\d*/){
+      push(@in_filter,$filt);
+    }else{
+      die "Input filter $filt does not fulfill the format rules.\n";
+    }
+  }
+  if (scalar(@in_filter)<1){
+    die "Error: Option in_filter used, but list of conditions could not be parsed.\n";
+  }	
+}
+
+
 if (defined $options{'covariance_file'}) {
     print "Cannot use option covariance_file, removed.";
     exit;
@@ -710,6 +752,7 @@ my $vpc =
 	  copy_data	     => $options{'copy_data'},
 	  rawres_input	     => $options{'rawres_input'},
 	  offset_rawres	     => $options{'offset_rawres'},
+	in_filter             => \@in_filter,
 	  covariance_file     => $options{'covariance_file'},
 	  n_simulation_models => $options{'n_simulation_models'},
 	  boxcox_lambda      => $options{'boxcox_lambda'},

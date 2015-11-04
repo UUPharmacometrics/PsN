@@ -28,6 +28,7 @@ has 'confidence_interval' => ( is => 'rw', isa => 'Int', default => 95 );
 has 'covariance_file' => ( is => 'rw', isa => 'Str' );
 has 'rawres_input' => ( is => 'rw', isa => 'Str' );
 has 'offset_rawres' => ( is => 'rw', isa => 'Int', default => 1 );
+has 'in_filter' => ( is => 'rw', isa => 'ArrayRef[Str]' );
 has 'have_nwpri' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'have_tnpri' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'copy_data' => ( is => 'rw', isa => 'Bool', default => 1 );
@@ -1400,17 +1401,26 @@ sub modelfit_setup
 		if (defined $model_simulation){
 			($sampled_params_arr,$href) = model::get_rawres_params(filename => $self->rawres_input(),
 																   offset => $self->offset_rawres(),
+																   filter => $self->in_filter,
 																   model => $model_simulation);
 		}else{
 			($sampled_params_arr,$href) = model::get_rawres_params(filename => $self->rawres_input(),
 																   offset => $self->offset_rawres(),
+																   filter => $self->in_filter,
 																   model => $model_orig);
 		}
 		if (defined $sampled_params_arr){
 			unless (scalar(@{$sampled_params_arr}) >= ($self->samples())){
-				croak("Too few sets (lines) of parameter values in\n".
-					  $self->rawres_input()."\nNeed at least ".
-					  ($self->samples()+$self->offset_rawres())."\n");
+				if (defined $self->in_filter) {
+					croak("Too few sets (lines) of parameter values in\n".
+						  $self->rawres_input."\nafter filtering. Have ".scalar(@{$sampled_params_arr}).
+						  " but need at least ".$self->samples.".\n");
+				} else {
+					croak("Too few sets (lines) of parameter values in\n".
+						  $self->rawres_input.". Have ".scalar(@{$sampled_params_arr}).
+						  " but need at least ".
+						  ($self->samples + $self->offset_rawres).".\n");
+				}
 			}
 		}else{
 			croak("get_rawres_params returned undef");
