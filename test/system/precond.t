@@ -24,7 +24,7 @@ SKIP: {
 
     my @commands =  (
         get_command('execute') . " run1.mod -dir=modelfit_dir1 -clean=2",
-        get_command('precond') . " run1.mod -clean=2",
+        get_command('precond') . " run1.mod -clean=2 --always",
     );
 
     foreach my $command (@commands) {
