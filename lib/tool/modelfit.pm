@@ -3143,10 +3143,10 @@ sub copy_model_and_output
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		final_model => { isa => 'model', optional => 0 },
-		model => { isa => 'model', optional => 0 },
-		use_run => { isa => 'Str', default => '', optional => 1 }
-	);
+							  final_model => { isa => 'model', optional => 0 },
+							  model => { isa => 'model', optional => 0 },
+							  use_run => { isa => 'Str', default => '', optional => 1 }
+		);
 	my $final_model = $parm{'final_model'};
 	my $model = $parm{'model'};
 	my $use_run = $parm{'use_run'};
@@ -3155,7 +3155,7 @@ sub copy_model_and_output
 	my $outfilename = $model -> outputs -> [0] -> full_name;
 
 	my ($dir, $model_filename) = OSspecific::absolute_path($model -> directory,
-		$model -> filename );
+														   $model -> filename );
 
 	# This is used with 'prepend_model_file_name'
 	#this regex must be the same as used when finding lst-file name in model.pm, for consistency
@@ -3251,9 +3251,9 @@ sub copy_model_and_output
 	}
 
 	trace(tool => 'modelfit', message => "Best retry is $use_run.\nCopied psn-".
-		$use_run.".".$self->modext." to psn.".$self->modext.", psn-$use_run".".lst to psn.lst etc.\n".
-		"Copied psn.lst and other output to this models 'home directory' $dir ".
-		"using filestems for $model_filename", level => 1);
+		  $use_run.".".$self->modext." to psn.".$self->modext.", psn-$use_run".".lst to psn.lst etc.\n".
+		  "Copied psn.lst and other output to this models 'home directory' $dir ".
+		  "using filestems for $model_filename", level => 1);
 
 	if ($self->clean >= 1 and $PsN::warnings_enabled == 0) {
 		unlink 'nonmem', 'nonmem5','nonmem6','nonmem7',
@@ -3272,87 +3272,89 @@ sub copy_model_and_output
 		unlink 'modelname';
 
 		unlink( <worker*/*> );
-			my @removedir = <worker*>;
-			foreach my $remdir (@removedir){
+		my @removedir = <worker*>;
+		foreach my $remdir (@removedir){
 			rmdir ($remdir) if (-d $remdir);
-			}
-
-			if( defined $final_model -> extra_files ){
-			foreach my $x_file( @{$final_model -> extra_files} ){
-			my ( $dir, $filename ) = OSspecific::absolute_path( $final_model -> directory,
-			$x_file );
-			unlink( $filename );
-			}
-			}
-			trace(tool => 'modelfit', message => "Clean level is >=1. Removed NONMEM intermediate files ".
-                "like FDATA and such", level => 2);
-
-			if( $self->clean >= 2 ){
-			unlink( <temp_dir/*> );
-		rmdir( 'temp_dir' );
-		my $msfo=$final_model -> get_option_value(record_name => 'estimation',
-			option_name => 'MSFO');
-		if (defined $msfo){
-			$msfo = get_retry_name( filename => $msfo,
-									retry => $use_run-1,
-									nm_major_version => $PsN::nm_major_version,
-									nm_minor_version => $PsN::nm_minor_version );
 		}
-		my $max_retry = $self->retries;
-		$max_retry = $self->min_retries if ($self->min_retries > $max_retry);
-		$max_retry++; #first run with number 1 is not a retry
-		for ( my $i = 1; $i <= $max_retry; $i++ ) {
-			foreach my $filename ( @output_files,'psn.'.$self->modext,'compilation_output.txt','nmqual_messages.txt'){
 
-				my $use_name = get_retry_name( filename => $filename,
-											   retry => $i-1,
-											   nm_major_version => $PsN::nm_major_version,
-											   nm_minor_version => $PsN::nm_minor_version );
-				unlink( $use_name );
-				my $crash=1;
-				my $del_name = get_retry_name( filename => $filename,
-											   retry => $i-1,
-											   crash => $crash,
-											   nm_major_version => $PsN::nm_major_version,
-											   nm_minor_version => $PsN::nm_minor_version);
-				while (-e $del_name){
-					$crash++;
-					my $next_name = get_retry_name( filename => $filename,
-													retry => $i-1,
-													crash => $crash,
-													nm_major_version => $PsN::nm_major_version,
-													nm_minor_version => $PsN::nm_minor_version);
-					unlink( $del_name ) unless (($use_name eq $msfo) and 
-						(not -e $next_name));
-					$del_name = $next_name;
+		if( defined $final_model -> extra_files ){
+			foreach my $x_file( @{$final_model -> extra_files} ){
+				my ( $dir, $filename ) = OSspecific::absolute_path( $final_model -> directory,
+																	$x_file );
+				unlink( $filename );
+			}
+		}
+		trace(tool => 'modelfit', message => "Clean level is >=1. Removed NONMEM intermediate files ".
+			  "like FDATA and such", level => 2);
+
+		if( $self->clean >= 2 ){
+			unlink( <temp_dir/*> );
+			rmdir( 'temp_dir' );
+			my $msfo=$final_model -> get_option_value(record_name => 'estimation',
+													  option_name => 'MSFO');
+			if (defined $msfo){
+				$msfo = get_retry_name( filename => $msfo,
+										retry => $use_run-1,
+										nm_major_version => $PsN::nm_major_version,
+										nm_minor_version => $PsN::nm_minor_version );
+			}
+			my $max_retry = $self->retries;
+			$max_retry = $self->min_retries if ($self->min_retries > $max_retry);
+			$max_retry++; #first run with number 1 is not a retry
+			for ( my $i = 1; $i <= $max_retry; $i++ ) {
+				foreach my $filename ( @output_files,'psn.'.$self->modext,'compilation_output.txt','nmqual_messages.txt'){
+
+					my $use_name = get_retry_name( filename => $filename,
+												   retry => $i-1,
+												   nm_major_version => $PsN::nm_major_version,
+												   nm_minor_version => $PsN::nm_minor_version );
+					unlink( $use_name );
+					my $crash=1;
+					my $del_name = get_retry_name( filename => $filename,
+												   retry => $i-1,
+												   crash => $crash,
+												   nm_major_version => $PsN::nm_major_version,
+												   nm_minor_version => $PsN::nm_minor_version);
+					while (-e $del_name){
+						$crash++;
+						my $next_name = get_retry_name( filename => $filename,
+														retry => $i-1,
+														crash => $crash,
+														nm_major_version => $PsN::nm_major_version,
+														nm_minor_version => $PsN::nm_minor_version);
+						unlink( $del_name ) unless (($use_name eq $msfo) and 
+													(not -e $next_name));
+						$del_name = $next_name;
+					}
 				}
 			}
+			unlink( @{$model -> datafiles} );
+			unlink 'psn.nmqual_out';
+			trace(tool => 'modelfit', message => "Clean level is >=2. Removed all numbered retry files", level => 2);
 		}
-		unlink( @{$model -> datafiles} );
-		unlink 'psn.nmqual_out';
-		trace(tool => 'modelfit', message => "Clean level is >=2. Removed all numbered retry files", level => 2);
 	}
-}
 
-if ( $self->clean >= 3 ) {
-	# Do nothing. "run_nonmem" will remove entire work directory
-	# before returning.
-} else {
-	system('tar cz --remove-files -f nonmem_files.tgz *')
-	if ( $self->compress and $Config{osname} ne 'MSWin32' );
-	system('compact /c /s /q > NUL')
-	if ( $self->compress and $Config{osname} eq 'MSWin32' );
-}
+	if ( $self->clean >= 3 ) {
+		# Do nothing. "run_nonmem" will remove entire work directory
+		# before returning.
+	} else {
+		system('tar cz --remove-files -f nonmem_files.tgz *')
+			if ( $self->compress and $Config{osname} ne 'MSWin32' );
+		system('compact /c /s /q > NUL')
+			if ( $self->compress and $Config{osname} eq 'MSWin32' );
+	}
 
     if ($self->standardised_output) {
         if (not eval("require so; require so::parsers::nmoutput;")) {
-            croak("Unable to create the standardised output: the option -standardised_output needs to have the XML::LibXML module installed");
-        }
-        my $so = so->new();
-        my $nm_parser = so::parsers::nmoutput->new(so => $so, lst_file => $final_lst);
-        $so->write();
-        cp($so->filename, $model->directory);
-        unlink($so->filename);
+            ui->print(category=> 'all',
+					  message=> "Unable to create the standardised output: the option -standardised_output needs to have the XML::LibXML module installed");
+        }else{
+			my $so = so->new();
+			my $nm_parser = so::parsers::nmoutput->new(so => $so, lst_file => $final_lst);
+			$so->write();
+			cp($so->filename, $model->directory);
+			unlink($so->filename);
+		}
     }
 }
 
