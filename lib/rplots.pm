@@ -242,6 +242,7 @@ sub make_plots{
 	if ($self->level > 0 and defined ($self->_R_executable)){
 		ui->print(category=> 'all',message => "\nRunning ".$self->filename."...\n");
 		system($self->_R_executable." CMD BATCH ".$self->filename);
+		unlink('.RData');
 	}
 	chdir($basedir);
 }
