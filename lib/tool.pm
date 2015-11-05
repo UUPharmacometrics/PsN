@@ -1574,6 +1574,7 @@ sub print_options
 	PsN::set_nonmem_info($self->nm_version);
 	print CMD "NONMEM:\n" . $PsN::nmdir . "\n\n";
 
+    # Don't change the string "Actual values optinal". It is used to find the toolname by nmoutput2so 
 	print CMD "Actual values optional $toolname options (undefined values not listed):\n";
 	foreach my $opt (sort(@{$local_options})){
 		$opt =~ s/[!:|].*//g; #get rid of :s |? :i etcetera

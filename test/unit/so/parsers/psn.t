@@ -76,12 +76,6 @@ SKIP: {
 
 	chdir($tempdir);
 
-	chdir('windows');
-	is(so::parsers::psn::_get_toolname(directory => 'boot'),'bootstrap','_get_toolname windows bootstrap');
-	is(so::parsers::psn::_get_toolname(directory => 'exec'),'execute','_get_toolname windows execute');
-	is(so::parsers::psn::_get_toolname(directory => 'vpcdir'),'vpc','_get_toolname windows vpc');
-
-
 	remove_test_dir($tempdir);
 
 }

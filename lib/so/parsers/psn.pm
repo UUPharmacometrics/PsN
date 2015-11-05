@@ -161,22 +161,25 @@ sub _get_toolname
     my $tool;
 
 	my $command;
-    if (-e $directory.'/command.txt'){
-		open( COM, $directory.'/command.txt') or return $tool;
-		my @read_file = <COM>;
-		close( COM );
-		my @fields = split(' ',$read_file[0]);
-		my @path = split(/\\|\//,$fields[0]);
-		$command = $path[-1];
+    if (-e $directory . '/version_and_option_info.txt') {
+		open(COM, $directory . '/version_and_option_info.txt') or return $tool;
+		while (<COM>) {
+            if (/^Actual values optional (\w+)/) {
+                $command = lc($1);
+		        close(COM);
+                last;
+            }
+        }
+        close(COM);
 	}
 
-	if ($command =~ /^bootstrap/){
+	if ($command =~ /^bootstrap/) {
 		$tool = 'bootstrap';
-	}elsif($command =~ /^vpc/){
+	} elsif ($command =~ /^vpc/) {
 		$tool = 'vpc';
-	}elsif($command =~ /^sse/){
+	} elsif ($command =~ /^sse/) {
 		$tool = 'sse';
-	}elsif($command =~ /^execute/){
+	} elsif ($command =~ /^execute/) {
 		$tool = 'execute';
 	}
 
