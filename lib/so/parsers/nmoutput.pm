@@ -571,13 +571,22 @@ sub _create_individual_estimates
     my $model_labels = $parm{'model_labels'};
 
     my $eta_names = $model->get_eta_names();
+
+    (my $occasion, my $iov_etas) = $self->_get_iov_etas(model => $model);
+
     if (not exists $patab->column_head_indices->{'ID'}) {
         return;
     }
 
     my $id = $patab->column_to_array(column => "ID");
 
-    my @labels = @{_get_remaining_columns(header => $patab->column_head_indices, columns => [ 'ID', 'TIME', @$eta_names, @$model_labels ])};
+    my @columns_to_remove = ( 'ID', 'TIME', @$eta_names, @$model_labels);
+    if (defined $occasion) {
+        push @columns_to_remove, $occasion;
+        push @columns_to_remove, @$iov_etas;
+    }
+
+    my @labels = @{_get_remaining_columns(header => $patab->column_head_indices, columns => \@columns_to_remove)};
 
     return if scalar(@labels) == 0;
 
@@ -644,6 +653,34 @@ sub _create_individual_estimates
     }
 
     $self->_so_block->RawResults->add_datafile(name => $patab->filename, description => "patab");
+}
+
+sub _get_iov_etas
+{
+    my $self = shift;
+    my %parm = validated_hash(\@_,
+        model => { isa => 'model' },
+    );
+    my $model = $parm{'model'};
+
+    my @code;
+	if ($model->has_code(record => 'pk')) {
+		@code = @{$model->get_code(record => 'pk')};
+	} else {
+		@code = @{$model->get_code(record => 'pred')};
+	}
+
+    my @names;
+    my $occasion;
+
+    foreach my $line (@code) {
+        if ($line =~ /^\s*(\w+)\s*=\s*ETA\((\w+)_\1\)/) {
+            push @names, $1;
+            $occasion = $2;
+        }
+    }
+
+    return ($occasion, \@names); 
 }
 
 sub _create_simulation
