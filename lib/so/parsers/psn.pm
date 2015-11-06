@@ -132,7 +132,7 @@ sub _connector_get_files
             chdir($directory);
             open my $fh, '<', "version_and_option_info.txt";
             while (<$fh>) {
-                if (/^-append_columns=(\w*)/) {
+                if (/^-append_columns=(.*)$/) {
                     if ($1 ne "") {
                         $append_columns = $1;
                         last;

@@ -744,7 +744,7 @@ sub _create_simulation
             $extra_output_simulated_profiles = $self->_create_simulated_profiles(
                 file => $extra_output_table_fh,
                 table_file => $external_table_name,
-                name => "append_columns_" . join('_', @{$self->extra_output}),
+                name => "append_columns",
                 dv_columns => $self->extra_output,
             ); 
         }
