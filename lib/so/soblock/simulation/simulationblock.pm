@@ -7,9 +7,10 @@ use MooseX::Params::Validate;
 use include_modules;
 use XML::LibXML;
 use so::table;
+use so::soblock::simulation::simulationblock::simulationtable;
 
 has 'replicate' => ( is => 'rw', isa => 'Str' );
-has 'SimulatedProfiles' => ( is => 'rw', isa => 'so::table' );
+has 'SimulatedProfiles' => ( is => 'rw', isa => 'ArrayRef[so::soblock::simulation::simulationblock::simulationtable]', default => sub { [] } );
 has 'IndivParameters' => ( is => 'rw', isa => 'so::table' );
 has 'RandomEffects' => ( is => 'rw', isa => 'so::table' );
 has 'Covariates' => ( is => 'rw', isa => 'so::table' );
@@ -23,7 +24,14 @@ sub parse
 
     my $xpc = so::xml::get_xpc();
 
-    my @attributes = ("SimulatedProfiles", "IndivParameters", "RandomEffects", "Covariates", "PopulationParameters", "Dosing");
+    my @subnodes = $xpc->findnodes("x:SimulatedProfiles", $node);
+    foreach my $a (@subnodes) {
+        my $table = so::soblock::simulation::simulationblock::simulationtable->new();
+        $table->parse($a);
+        push @{$self->SimulatedProfiles}, $table;
+    }
+
+    my @attributes = ("IndivParameters", "RandomEffects", "Covariates", "PopulationParameters", "Dosing");
     foreach my $attr (@attributes) {
         (my $subnode) = $xpc->findnodes("x:$attr", $node);
         if (defined $subnode) {
@@ -41,7 +49,14 @@ sub xml
     my $block = XML::LibXML::Element->new("SimulationBlock");
     $block->setAttribute("replicate", $self->replicate);
 
-    my @attributes = ("SimulatedProfiles", "IndivParameters", "RandomEffects", "Covariates", "PopulationParameters", "Dosing");
+    if (defined $self->SimulatedProfiles) {
+        foreach my $a (@{$self->SimulatedProfiles}) {
+            my $xml = $a->xml();
+            $block->appendChild($xml); 
+        }
+    }
+
+    my @attributes = ("IndivParameters", "RandomEffects", "Covariates", "PopulationParameters", "Dosing");
     foreach my $attr (@attributes) {
         if (defined $self->$attr) {
             my $xml = $self->$attr->xml();

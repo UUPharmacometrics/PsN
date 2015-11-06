@@ -29,6 +29,7 @@ has 'max_replicates' => ( is => 'rw', isa => 'Maybe[Int]' );        # Maximum nu
 has 'verbose' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'external_tables' => ( is => 'rw', isa => 'Bool', default => 0 );   # For now a bool to specify if external tables should be created
 has 'labels_hash' => ( is => 'rw', isa => 'HashRef' );  # List of labels on sd/corr scale etc. Intended for external use i.e. bootstrap
+has 'extra_output' => ( is => 'rw', isa => 'Maybe[ArrayRef]' );
 has '_document' => ( is => 'rw', isa => 'Ref' );                    # The XML document 
 has '_duplicate_blocknames' => ( is => 'rw', isa => 'HashRef' );    # Contains those blocknames which will have duplicates with next number for block
 has '_so_path' => ( is => 'rw', isa => 'Str' );                     # The path of the output SO file
@@ -711,6 +712,11 @@ sub _create_simulation
     my $covariates_table_name = $problem->find_table_with_name(name => '^cotab', path => $path);
     my $population_table_name = $problem->find_table(columns => [ 'TIME' ]);
 
+    my $extra_output_table_name;
+    if (defined $self->extra_output) {
+        $extra_output_table_name = $problem->find_table(columns => [ 'ID', 'TIME', @{$self->extra_output} ]);
+    }
+
     unless ($profiles_table_name or $indiv_table_name or $covariates_table_name) {
         return;
     }
@@ -719,6 +725,10 @@ sub _create_simulation
     open my $indiv_table_fh, '<', $path . $indiv_table_name;
     open my $covariates_table_fh, '<', $path . $covariates_table_name;
     open my $population_table_fh, '<', $path . $population_table_name;
+    my $extra_output_table_fh;
+    if (defined $extra_output_table_name) {
+        open $extra_output_table_fh, '<', $path . $extra_output_table_name;
+    }
 
     my $replicate_no = 1;
 
@@ -727,8 +737,17 @@ sub _create_simulation
         my $external_table_name = $self->external_tables ? $table_file . "_$replicate_no" : undef;
         my $simulated_profiles = $self->_create_simulated_profiles(
             file => $profiles_table_fh,
-            table_file => $external_table_name
+            table_file => $external_table_name,
         );
+        my $extra_output_simulated_profiles;
+        if (defined $extra_output_table_fh) {
+            $extra_output_simulated_profiles = $self->_create_simulated_profiles(
+                file => $extra_output_table_fh,
+                table_file => $external_table_name,
+                name => "append_columns_" . join('_', @{$self->extra_output}),
+                dv_columns => $self->extra_output,
+            ); 
+        }
         my $indiv_parameters = $self->_create_indiv_parameters(
             file => $indiv_table_fh,
             table_file => $external_table_name,
@@ -747,8 +766,12 @@ sub _create_simulation
         );
 
         if (defined $simulated_profiles) {
-            $sim_block->SimulatedProfiles($simulated_profiles);
+            push @{$sim_block->SimulatedProfiles}, $simulated_profiles;
             $self->_so_block->RawResults->add_datafile(name => $profiles_table_name, description => "simulated profiles");
+        }
+        if (defined $extra_output_simulated_profiles) {
+           push @{$sim_block->SimulatedProfiles}, $extra_output_simulated_profiles;
+           $self->_so_block->RawResults->add_datafile(name => $extra_output_table_name, description => "simulated profiles");
         }
         if (defined $indiv_parameters) {
             $sim_block->IndivParameters($indiv_parameters);
@@ -778,6 +801,9 @@ sub _create_simulation
     close $covariates_table_fh;
     close $indiv_table_fh;
     close $profiles_table_fh;
+    if (defined $extra_output_table_fh) {
+        close $extra_output_table_fh;
+    }
 }
 
 sub _read_header
@@ -809,9 +835,13 @@ sub _create_simulated_profiles
     my %parm = validated_hash(\@_,
         file => { isa => 'Ref' },
         table_file => { isa => 'Maybe[Str]' },
+        name => { isa => 'Str', optional => 1 },
+        dv_columns => { isa => 'ArrayRef', optional => 1 },
     );
     my $file = $parm{'file'};
     my $table_file = $parm{'table_file'};
+    my $name = $parm{'name'};
+    my $dv_columns = $parm{'dv_columns'};
 
     my $colnosref = $self->_read_header(file => $file);
     return if not defined $colnosref;
@@ -821,6 +851,8 @@ sub _create_simulated_profiles
     my @time;
     my @dvid;
     my @dv;
+
+    my @extra;
 
     for (;;) {
         my $row = <$file>;
@@ -835,23 +867,45 @@ sub _create_simulated_profiles
         if (not exists $colnos{'MDV'} or $columns[$colnos{'MDV'}] == 0) {
             push @id, int($columns[$colnos{'ID'}]);
             push @time, $columns[$colnos{'TIME'}];
-            push @dv, $columns[$colnos{'DV'}];
-            if (exists $colnos{'DVID'}) {
-                push @dvid, int($columns[$colnos{'DVID'}]);
+            if (defined $dv_columns) {
+                for (my $i = 0; $i < scalar(@$dv_columns); $i++) {
+                    push @{$extra[$i]}, $columns[$colnos{$dv_columns->[$i]}];
+                }
             } else {
-                push @dvid, 1;
+                push @dv, $columns[$colnos{'DV'}];
+                if (exists $colnos{'DVID'}) {
+                    push @dvid, int($columns[$colnos{'DVID'}]);
+                } else {
+                    push @dvid, 1;
+                }
             }
         }
     }
 
-    my $simulated_profiles = so::table->new(
-        name => "SimulatedProfiles",
-        columnId => [ "ID", "DVID", "TIME", "Observation" ],
-        columnType => [ "id", "dvid", "time", "dv" ],
-        valueType => [ "string", "int", "real", "real" ],
-        columns => [ \@id, \@dvid, \@time, \@dv ],
-        table_file => $table_file,
-    ); 
+    my $simulated_profiles;
+    if (defined $dv_columns) {    # This duplicated code is due to possible future usage of real output names from PharmML instead of DVID
+        $simulated_profiles = so::soblock::simulation::simulationblock::simulationtable->new(
+            name => "SimulatedProfiles",
+            columnId => [ "ID", "TIME", @$dv_columns ],
+            columnType => [ "id", "time", ("dv") x scalar(@$dv_columns) ],
+            valueType => [ "string", "real", ("real") x scalar(@$dv_columns) ],
+            columns => [ \@id, \@time, @extra ],
+            table_file => $table_file,
+        ); 
+    } else {
+        $simulated_profiles = so::soblock::simulation::simulationblock::simulationtable->new(
+            name => "SimulatedProfiles",
+            columnId => [ "ID", "DVID", "TIME", "Observation" ],
+            columnType => [ "id", "dvid", "time", "dv" ],
+            valueType => [ "string", "int", "real", "real" ],
+            columns => [ \@id, \@dvid, \@time, \@dv ],
+            table_file => $table_file,
+        );
+    }
+
+    if (defined $name) {
+        $simulated_profiles->attr_name($name);
+    }
 
     return $simulated_profiles;
 }

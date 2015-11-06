@@ -82,6 +82,7 @@ sub _connector_get_files
     my @files=();
     my $tool= _get_toolname(directory => $directory); #can be undef
 	my $errorfile='errorMessages';
+    my $append_columns;
 
     if ( (not (-d $directory))  or 
 		 ( (not defined $tool) and (not -e $lstfile)) or
@@ -126,8 +127,20 @@ sub _connector_get_files
             @files = ('vpc_simulation.1.lst');
             my @tab = <$directory/vpctab*>;
             cp($tab[0],'.');
-        }elsif ($tool eq 'sse'){
-            my $curdir=getcwd();
+        } elsif ($tool eq 'sse') {
+            my $curdir = getcwd();
+            chdir($directory);
+            open my $fh, '<', "version_and_option_info.txt";
+            while (<$fh>) {
+                if (/^-append_columns=(\w*)/) {
+                    if ($1 ne "") {
+                        $append_columns = $1;
+                        last;
+                    }
+                }
+            }
+            close $fh;
+            chdir($curdir);
             chdir($directory.'/m1');
             @files = <*.lst>;
             my @ssedata =  <mc-sim-*.dat>; 
@@ -145,7 +158,7 @@ sub _connector_get_files
 
     }
 
-    return (\@files, $sofilename, $errorstring);
+    return (\@files, $sofilename, $errorstring, $append_columns);
 }
 
 sub _get_toolname

@@ -39,6 +39,7 @@ my %optional_options = (
     'so_version:s' => undef,
     'psn_connector!' => undef,
     'rundir:s' => undef,
+    'extra_output:s' => undef,
 );
 
 
@@ -235,6 +236,13 @@ $help_text{-rundir} = <<'EOF';
     user guide.
 EOF
 
+$help_text{-extra_output} = <<'EOF';
+    -extra_output
+
+    A comma separated list of tabulated model variables to add in
+    a separate SimulatedProfiles element.
+EOF
+
 common_options::online_help('nmoutput2so', \%options, \%help_text, \%required_options, \%optional_options);
 
 require output;
@@ -248,12 +256,13 @@ require so::parsers::execute;
 require so::parsers::psn;
 
 if ($options{'psn_connector'}) {
-    (my $files, my $sofilename, my $error) = so::parsers::psn::_connector_get_files(directory => 'rundir', pharmml => $options{'pharmml'}); 
+    (my $files, my $sofilename, my $error, my $append_columns) = so::parsers::psn::_connector_get_files(directory => 'rundir', pharmml => $options{'pharmml'}); 
     @ARGV = @$files;
     $options{'so_filename'} = $sofilename;
     $options{'toolname'} = 'PsN';
     $options{'error'} = $error;
     $options{'rundir'} = 'rundir';
+    $options{'extra_output'} = $append_columns;
 }
 
 if ($options{'version'}) {
@@ -284,6 +293,10 @@ if ($Config{osname} eq 'MSWin32') {
     @files = @ARGV;
 }
 
+my $extra_output_columns;
+if (defined $options{'extra_output'}) {
+   $extra_output_columns = [ split /,/, $options{'extra_output'} ];
+}
 
 my $so = so->new(
     filename => $options{'so_filename'},
@@ -306,6 +319,7 @@ foreach my $lst_file (@files) {
         verbose => $options{'verbose'},
         max_replicates => $options{'max_replicates'},
         external_tables => $options{'external_tables'},
+        extra_output => $extra_output_columns,
     );
     $first_labels_hash = $nm_parser->labels_hash if not defined $first_labels_hash;
 }
