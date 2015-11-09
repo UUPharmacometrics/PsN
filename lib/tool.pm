@@ -636,45 +636,48 @@ sub read_raw_results
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 model_number => { isa => 'Int', optional => 1 }
-	);
+							  model_number => { isa => 'Int', optional => 1 }
+		);
 	my $model_number = $parm{'model_number'};
 
 	$self->clear_raw_results_header;
 	for ( my $i = 1; $i <= scalar @{$self->models}; $i++ ) { # All models
-	  if ( defined $self->raw_results_file and -e $self->raw_results_file->[$i-1] ) {
-	    open( RRES, $self->raw_results_file->[$i - 1] );
-	    my @read_file = <RRES>;
-	    close( RRES );
-	    my @file;
-	    
-	    foreach (@read_file){
-	      chomp;
-	      if (/\"\,\".*/ ) {
+		if ( defined $self->raw_results_file and -e $self->raw_results_file->[$i-1] ) {
+			open( RRES, $self->raw_results_file->[$i - 1] );
+			my @read_file = <RRES>;
+			close( RRES );
+			my @file;
+			
+			foreach (@read_file){
+				chomp;
+				if (/\"\,\".*/ ) {
 					s/^\"//;
 					s/\"$//;
 					my @tmp = split('\"\,\"',$_);
 					push (@file,\@tmp);
-	      } else {
+				} else {
+					#substitute NA with undef, assuming first col not NA 
+					#positive lookahead ,NA followed by either , or eol
+					s/,NA(?=(,|$))/,/g;
 					my @tmp = split(',',$_);
 					push (@file,\@tmp);
-	      }
-	    }
+				}
+			}
 			$self->raw_results_header([]) unless defined $self->raw_results_header;
-	    $self->raw_results_header->[$i - 1] = shift @file;
+			$self->raw_results_header->[$i - 1] = shift @file;
 			$self->raw_results([]) unless defined $self->raw_results;
-	    $self->raw_results->[$i - 1] = \@file;
-	  }else{
-	    1;
-	  }
-	  if ( defined $self->raw_nonp_file and ref $self->raw_nonp_file eq 'ARRAY' and
-	       -e $self->raw_nonp_file->[$i - 1] ) {
-	    open( RRES, $self->raw_nonp_file->[$i - 1] );
-	    my @file = <RRES>;
-	    close( RRES );
-	    map { chomp; my @tmp = split(',',$_); $_ = \@tmp } @file ;
-	    $self -> {'raw_nonp_results'} -> [$i-1] = \@file;
-	  }
+			$self->raw_results->[$i - 1] = \@file;
+		}else{
+			1;
+		}
+		if ( defined $self->raw_nonp_file and ref $self->raw_nonp_file eq 'ARRAY' and
+			 -e $self->raw_nonp_file->[$i - 1] ) {
+			open( RRES, $self->raw_nonp_file->[$i - 1] );
+			my @file = <RRES>;
+			close( RRES );
+			map { chomp; my @tmp = split(',',$_); $_ = \@tmp } @file ;
+			$self -> {'raw_nonp_results'} -> [$i-1] = \@file;
+		}
 	}
 }
 

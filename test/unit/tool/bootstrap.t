@@ -402,4 +402,20 @@ cmp_float_matrix($bootstrap->result_parameters->{'standard_error_confidence_inte
 
 remove_test_dir($tempdir);
 
+our $tempdir = create_test_dir("unit_bootstrap");
+
+my $bootstrap = tool::bootstrap->new(directory => $tempdir, skip_minimization_terminated => 0, models => [ $model ]);
+cp("$test_files/bootstrap/somecrash/raw_results_pheno.csv", "$tempdir/raw_results.csv");
+cp("$test_files/bootstrap/somecrash/raw_results_structure", $tempdir);
+
+$bootstrap->prepare_results();
+
+cmp_float_array($bootstrap->result_parameters->{'medians'}[0][0],
+[
+'49799.4128124538','6.20975','0.190016','27.6995','0.554973','0.119979','0.444006','0.359015','0.00469665','0.000402798','0.993','0.00644243','0.363992','0.568475','3.77029','0.353088','2.69817','2.46658','3.59998','-0.755512','0.777093','1.92376','0','24.4024','1.34101'
+], "bootstrap medians crash filter");
+
+
+remove_test_dir($tempdir);
+
 done_testing();

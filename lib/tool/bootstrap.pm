@@ -1488,6 +1488,8 @@ sub prepare_results
 		my ($start,$length) = split(',',$self->raw_line_structure()->{$valid_raw_line}->{$self -> diagnostic_parameters() -> [$i]});
 		$diag_idx{$self -> diagnostic_parameters() -> [$i]} = $start;
 	}
+	my ($start_check,$l) = split(',',$self->raw_line_structure()->{$valid_raw_line}->{'theta'});
+
 	# ---------------------  Get data from raw_results  -------------------------
 
 	# Divide the data into diagnostics and estimates. Included in estimates are
@@ -1509,6 +1511,7 @@ sub prepare_results
 			for ( my $i = 0; $i < scalar @{$self->$rawres}; $i++ ) { # All models
 
 				# {{{ Get the number of columns with estimates 
+				my $estimate_columns=0;
 
 				my $cols_orig = 0;
 				foreach my $param ( 'theta', 'omega', 'sigma' ) {
@@ -1517,6 +1520,7 @@ sub prepare_results
 					# we can't use labels directly since different models may have different
 					# labels (still within the same modelfit)
 					my $numpar = scalar @{$labels -> [0]} if ( defined $labels and defined $labels -> [0] );
+					$estimate_columns += $numpar if (defined $numpar);
 					$cols_orig += ( $numpar*3 ); # est + SE + eigen values
 				}
 				# nonparametric omegas and shrinkage
@@ -1536,7 +1540,6 @@ sub prepare_results
 				$return_section{'name'} = 'Warnings';
 				my ( $skip_term, $skip_cov, $skip_warn, $skip_bound, $skip_crash );
 				my $included = 0;
-
 				for ( my $j = 0; $j < scalar @{$self->$rawres->[$i]}; $j++ ) { # orig model + prepared_models
 					my $columns = scalar @{$self->$rawres->[$i][$j]};
 
@@ -1550,6 +1553,19 @@ sub prepare_results
 					if ( not defined $self->$rawres->[$i][$j][$diag_idx{'minimization_successful'}] ) {
 						$skip_crash++;
 						$use_run = 0;
+					}else{
+						for (my $m=$start_check; $m< ($start_check+$estimate_columns);$m++){
+							#start at first theta col, all estimates
+							if (not defined $self->$rawres->[$i][$j][$m] ){
+								$skip_crash++;
+								$use_run = 0;
+								last;
+							}
+						}
+					}
+
+					if (not $use_run){
+						#do not bother with the rest of the filtering
 					}elsif ( $self -> skip_minimization_terminated and 
 							 ( not $self->$rawres->[$i][$j][$diag_idx{'minimization_successful'}] ) ) {
 						$skip_term++;
