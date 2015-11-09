@@ -128,6 +128,7 @@ my %optional_options = (
     "csv" => undef,
     "dta" => undef,
     "messages" => undef,
+    "rdata" => undef,
     "all_nm" => undef,
     "all_mx" => undef,
     "modelfit" => undef,
@@ -156,6 +157,7 @@ my $tab = $options{'tab'};
 my $lst = $options{'lst'};
 my $csv = $options{'csv'};
 my $dta = $options{'dta'};
+my $rdata = $options{'rdata'};
 my $messages = $options{'messages'};
 my $all_nm = $options{'all_nm'};
 my $all_mx = $options{'all_mx'};
@@ -229,6 +231,10 @@ $help_text{-dta} = <<'EOF';
 -dta
 Remove all files ending with .dta or .dat
 EOF
+$help_text{-rdata} = <<'EOF';
+-rdata
+Remove .RData files in the main run directory
+EOF
 $help_text{-csv} = <<'EOF';
 -csv
 Remove all files ending with .csv except stats-runs.csv
@@ -282,13 +288,16 @@ if ($level == 2){
     $restart = 1;
     $csv = 1;
     $dta = 1;
+	$rdata = 1;
     $messages = 1;
 }elsif ($level == 3){
   $all_nm = 1;
   $modelfit = 1;
+  $rdata = 1;
 }elsif ($level == 4){
   $all_mx = 1;
   $all_nm = 1;
+  $rdata = 1;
   $modelfit = 1;
 }else{
   die "option level must be 2, 3 or 4\n";
@@ -343,6 +352,9 @@ foreach my $tdir ( @top_directories ) {
 	}
 	my $topdir = $homedir.'/'.$tdir; 
 	chdir($topdir);
+	if ($rdata){
+		remove_list(['.RData'],$interactive,$topdir) if (-e '.RData');
+	}
 	while (1){
 		foreach my $stem ('modelfit_dir','orig_modelfit_dir','simulation_dir','base_modelfit_dir',
 						  'derivatives_modelfit_dir','xv_dir/xv_pred_dir','xv_dir/derivatives_xv_pred_dir',
