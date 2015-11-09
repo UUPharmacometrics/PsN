@@ -12,6 +12,8 @@ use model::problem::table;
 use model::problem::problem;
 use model;
 
+open STDERR, '>', File::Spec->devnull();	# Silence STDERR
+
 our $tempdir = create_test_dir('unit_updateinits');
 my $modeldir = $includes::testfiledir;
 

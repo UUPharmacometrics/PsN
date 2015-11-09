@@ -18,6 +18,8 @@ use output;
 
 our $test_files = File::Spec->catfile($includes::testfiledir, 'output');
 
+open STDERR, '>', File::Spec->devnull();	# Silence STDERR
+
 $SIG{__WARN__} = sub {
 	my $message = shift;
 };
