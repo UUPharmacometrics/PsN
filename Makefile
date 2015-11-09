@@ -140,6 +140,7 @@ LIBFILES= ui.pm \
 	so/soblock/estimation/precisionpopulationestimates/mle.pm \
 	so/soblock/rawresults/datafile.pm \
 	so/soblock/simulation/simulationblock.pm \
+	so/soblock/simulation/simulationblock/simulationtable.pm \
 	so/soblock/taskinformation/message.pm \
 	so/soblock/taskinformation/runtime.pm \
 	tool.pm \
