@@ -450,6 +450,43 @@ dies_ok {tool::sir::setup_inflation(model => $model,
 
 
 my $parameter_hash = output::get_nonmem_parameters(output => $model->outputs->[0]);
+# 5 theta 4 omega 0 sigma
+#print join(',',@{$parameter_hash->{'values'}})."\n";
+my @moxvalues =(32.8872,20.9156,0.296626,0.0992828,0.3337,0.409882,1.24558,0.136766,0.218255);
+my @ans1=((32.8872*(0.2))**2,(20.9156*(0.2))**2,(0.296626*(0.2))**2,(0.0992828*(0.2))**2,(0.3337*(0.2))**2,
+	(0.409882*(0.1))**2,(1.24558*(0.1))**2,(0.136766/(sqrt(1.24558)*sqrt(0.218255)))*(0.218255*(0.1))*(1.24558*(0.1)),(0.218255*(0.1))**2);
+is_deeply(tool::sir::setup_variancevec_from_cv(cv_theta => 20,
+											   cv_omega=> 10,
+											   cv_sigma=> 20,
+											   parameter_hash => $parameter_hash),\@ans1,'setup_variancevec 1');
+
+@ans1=((32.8872*(0.2))**2,(20.9156*(0.3))**2,(0.296626*(0.4))**2,(0.0992828*(0.3))**2,(0.3337*(0.1))**2,
+	(0.409882*(0.15))**2,(1.24558*(0.30))**2,(0.136766/(sqrt(1.24558)*sqrt(0.218255)))*(0.218255*(0.3))*(1.24558*(0.2)),(0.218255*(0.2))**2);
+is_deeply(tool::sir::setup_variancevec_from_cv(cv_theta => '20,30,40,30,10',
+											   cv_omega=> '15,30,20',
+											   cv_sigma=> '',
+											   parameter_hash => $parameter_hash),\@ans1,'setup_variancevec 2');
+
+dies_ok{tool::sir::setup_variancevec_from_cv(cv_theta => '20,30,40,30,10',
+											 cv_omega=> '0',
+											 cv_sigma=> '10',
+											 parameter_hash => $parameter_hash)}, 'illegal setup_variancevec 1';
+dies_ok{tool::sir::setup_variancevec_from_cv(cv_theta => '20,30,40,30,10',
+											 cv_omega=> '1,2,3,4',
+											 cv_sigma=> '10',
+											 parameter_hash => $parameter_hash)}, 'illegal setup_variancevec 2';
+dies_ok{tool::sir::setup_variancevec_from_cv(cv_theta => '20,40,30,10',
+											 cv_omega=> '1,2,3',
+											 cv_sigma=> '10',
+											 parameter_hash => $parameter_hash)}, 'illegal setup_variancevec 3';
+
+my $cov = tool::sir::setup_covmatrix_from_variancevec(variance => [1,2,3]);
+is_deeply($cov->[0],[1,0,0],'covmatrix from variancevec 0');
+is_deeply($cov->[1],[0,2,0],'covmatrix from variancevec 1');
+is_deeply($cov->[2],[0,0,3],'covmatrix from variancevec 2');
+
+#FIXME input check when 0 sigma or omega
+
 
 my $Amatrix = tool::sir::tweak_inits_sampling(sampled_params_arr => \@resampled_params_arr,
 											  parameter_hash => $parameter_hash,

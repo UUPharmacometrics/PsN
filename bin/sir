@@ -36,7 +36,9 @@ my %optional_options = (
 	"theta_inflation:s" => '',
 	"omega_inflation:s" => '',
 	"sigma_inflation:s" => '',
-#	"with_replacement!"=>'',
+	"cv_theta:s" => '',
+	"cv_omega:s" => '',
+	"cv_sigma:s" => '',
 	"cap_resampling:i"=>'',
 	"recenter!"=>'',
 	"boxcox!"=>'',
@@ -245,6 +247,38 @@ is -samples=2000,2000 and the old run was terminated after the first iteration,
 then after the add\_iterations run has finished there will be three iterations 
 in total with sample sequence 1000,2000,2000 after the new run has finished.
 EOF
+$help_text{-cv_theta} = <<'EOF';
+      -cv_theta=X
+
+Default not used. Used for giving the proposal density as CV%, e.g. 30 for 30% CV.
+Not allowed in combination with -inflation, -covmat_input, -rawres_input or -auto_rawres.
+Either a positive vector with length equal to the number of estimated (not FIX) $THETAs, or
+a positive scalar which will be interpreted as a vector of the appropriate length and all equal values.
+When this option is used, the variances of theta(i) in the proposal density will be computed
+as (-cv_theta(i)*(final estimate theta (i))/100)^2
+EOF
+$help_text{-cv_omega} = <<'EOF';
+      -cv_omega=X
+
+Default not used. Used for giving the proposal density as CV%, e.g. 30 for 30% CV.
+Not allowed in combination with -inflation, -covmat_input, -rawres_input or -auto_rawres.
+Either a positive vector with length equal to the number of estimated (not FIX) $OMEGA 
+diagonal elements or a positive scalar which will be interpreted as a vector of the required 
+length and all equal values. When this option is used, the variances of omega(i,i) in the 
+proposal density will be computed as (-cv_omega(i,i)*(final estimate omega (i,i))/100)^2
+The variances of off-diagonal elements will be computed so that the correlation from the 
+final estimate is unchanged.
+If -cv_theta is set to a scalar when option -cv_omega is not used, -cv_omega will 
+automatically be set to the same scalar as -cv_theta. If -cv_theta is set to a vector and 
+-cv_omega is not set at all, or if -cv_omega is set when -cv_theta is not, then there will 
+be an error message.
+EOF
+$help_text{-cv_sigma} = <<'EOF';
+      -cv_sigma=X
+
+Default not used. See help text for -cv_omega.
+EOF
+
 $help_text{-theta_inflation} = <<'EOF';
       -theta_inflation=X
 
@@ -317,128 +351,41 @@ if( scalar(@ARGV) > 1 ){
   die;
 }
 
-if ( defined $options{'add_iterations'} and ($options{'add_iterations'}) ){
-	unless ((defined $options{'directory'}) && (-d $options{'directory'})) {
-		print "Cannot set option -add_iterations unless -directory is set to existing sir run directory\n";
-		die;
-	}
-	unless ((defined $options{'samples'}) && (defined $options{'resamples'})) {
-		print "Options -samples and -resamples are required\n";
-		die;
-	}
-}
 
-#if ( defined $options{'with_replacement'} and ($options{'with_replacement'}) ){
-#	if (defined $options{'cap_resampling'}){
-#		print "Cannot set -with_replacement together with -cap_resampling";
-#		die;
-#	}
-#}
-
-if ( defined $options{'covmat_input'} ){
-	if (defined $options{'rawres_input'}){
-		print "Cannot use option -covmat_input together with option -rawres_input.\n";
-		die;
-	}
-	if (defined $options{'auto_rawres'}){
-		print "Cannot use option -covmat_input together with option -auto_rawres.\n";
-		die;
-	}
-	#set to global filepath here
-	if ($options{'covmat_input'} eq 'identity'){
-		#special
-	}else{
-		unless (-e $options{'covmat_input'}){
-			print "The covmat_input file ".$options{'covmat_input'}." does not exist.\n"; 
-			die;
-		}
-		my ( $dir, $file ) = OSspecific::absolute_path(cwd(), $options{'covmat_input'});
-		$options{'covmat_input'} = $dir . $file;
-	}
-}
-
-if ( defined $options{'rawres_input'} ){
-	unless (-e $options{'rawres_input'}){
-		print "The rawres_input file ".$options{'rawres_input'}." does not exist.\n"; 
-		die;
-	}
-	my ( $dir, $file ) = OSspecific::absolute_path(cwd(), $options{'rawres_input'});
-	$options{'rawres_input'} = $dir . $file;
-}
-my @in_filter=();
-
-if ( defined $options{'in_filter'} ){
-	unless (defined $options{'rawres_input'}){
-		print "Cannot use option -in_filter without option -rawres_input.\n";
-		exit;
-	}
-	#split string, assume comma separated
-	foreach my $filt (split(/,/,$options{'in_filter'})){
-		if ($filt =~ /.\.(gt|lt|eq)\.\d+\.?\d*/){
-			push(@in_filter,$filt);
-		}else{
-			die "Input filter $filt does not fulfill the format rules.\n";
-		}
-	}
-	if (scalar(@in_filter)<1){
-		die "Error: Option in_filter used, but list of conditions could not be parsed.\n";
-	}	
-}
-
-
+require input_checking;
 require model;
-require tool::sir;
 
 my $eval_string = common_options::model_parameters(\%options);
-
 
 my $model;
 
 if ($dummymodel){
 	$model = model->create_dummy_model;
 }else{ 
-
 	$model = model -> new ( eval( $eval_string ),
-			   filename                    => @ARGV[0],
-			   ignore_missing_output_files => 1 );
-
-	unless (defined $options{'copy_data'} and (not $options{'copy_data'})) {
-		$options{'copy_data'} = 1;
-	}
-	
-	unless ($model->copy_data_setting_ok(copy_data => $options{'copy_data'})){
-		die("Cannot set -no-copy_data, absolute data file path is too long.");
-	} 
-	if (defined $options{'copy_data'} and (not $options{'copy_data'})){
-		$model->relative_data_path(0);
-	}
+							filename                    => @ARGV[0],
+							ignore_missing_output_files => 1 );
 }
 
-my @samples =();
-if (defined $options{'samples'}){
-	@samples = split(/,/,$options{'samples'}) ;
-}else{
-	@samples=(1000,1000,1000,2000,2000);
-}
-my @resamples = ();
-if (defined $options{'resamples'}){
-	@resamples = split(/,/,$options{'resamples'});
-}else{
-	@resamples = (200,400,500,1000,1000);
-}
+input_checking::check_options(tool => 'sir', options => \%options, model => $model);
+
+
+require tool::sir;
 
 my $sir = 
 	tool::sir->new ( eval( $common_options::parameters ),
 					 top_tool => 1,
 					 models				     => [ $model ],
-#					 with_replacement			 => $options{'with_replacement'},
 					 cap_resampling		 => $options{'cap_resampling'},
-					 samples				     => \@samples,
-					 resamples				     => \@resamples,
+					 samples				     => $options{'samples'},
+					 resamples				     => $options{'resamples'},
 					 mceta				     => $options{'mceta'},
-					 theta_inflation				     => $options{'theta_inflation'},
-					 omega_inflation				     => $options{'omega_inflation'},
-					 sigma_inflation				     => $options{'sigma_inflation'},
+					 theta_inflation			 => $options{'theta_inflation'},
+					 omega_inflation			 => $options{'omega_inflation'},
+					 sigma_inflation			 => $options{'sigma_inflation'},
+					 cv_theta				     => $options{'cv_theta'},
+					 cv_omega				     => $options{'cv_omega'},
+					 cv_sigma				     => $options{'cv_sigma'},
 					 auto_rawres				     => $options{'auto_rawres'},
 					 covmat_input			 => $options{'covmat_input'},
 					 rawres_input        	=> $options{'rawres_input'},
@@ -447,7 +394,7 @@ my $sir =
 					 recenter       	=> $options{'recenter'},
 					 boxcox       	=> $options{'boxcox'},
 					 add_iterations        => $options{'add_iterations'},
-					 in_filter             => \@in_filter,
+					 in_filter             => $options{'in_filter'},
 					 copy_data                            => $options{'copy_data'}
 	);
 
