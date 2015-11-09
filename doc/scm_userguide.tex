@@ -215,6 +215,16 @@ and the user will have to restart the scm without that particular parameter-cova
 The derivatives needed for computing the new medians and means will be taken from an estimation of the input model without any included relations, even if included\_relations is defined in the config file. This is because the medians are needed to add the included relations to the model.\\
 
 \input{inputs/uppsala_way.tex}
+
+If a truly time-varying continuous covariate is not listed with option -time\_varying, scm uses the following procedure:
+the median for each individual is computed, 
+skipping missing\_data\_token, and then the median of these medians is used. The mean is computed using the same principle.
+For categorical time-varying covariates, the following procedure is used:
+For each category, the number of individuals with at least one data record of this category is counted. Additional data records with 
+the same category in the same individual makes no difference.
+The 'median', i.e. the most common category, is the category for which the most indivduals have at least one occurrence. 
+If missing\_data\_token is most common, the second most common category is used instead.
+
 \nextopt
 \end{optionlist}
 
