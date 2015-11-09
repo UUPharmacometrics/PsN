@@ -255,7 +255,7 @@ Not allowed in combination with -inflation, -covmat_input, -rawres_input or -aut
 Either a positive vector with length equal to the number of estimated (not FIX) $THETAs, or
 a positive scalar which will be interpreted as a vector of the appropriate length and all equal values.
 When this option is used, the variances of theta(i) in the proposal density will be computed
-as (-cv_theta(i)*(final estimate theta (i))/100)^2
+as (cv_theta(i)*(final estimate theta (i))/100)^2
 EOF
 $help_text{-cv_omega} = <<'EOF';
       -cv_omega=X
@@ -265,7 +265,7 @@ Not allowed in combination with -inflation, -covmat_input, -rawres_input or -aut
 Either a positive vector with length equal to the number of estimated (not FIX) $OMEGA 
 diagonal elements or a positive scalar which will be interpreted as a vector of the required 
 length and all equal values. When this option is used, the variances of omega(i,i) in the 
-proposal density will be computed as (-cv_omega(i,i)*(final estimate omega (i,i))/100)^2
+proposal density will be computed as (cv_omega(i,i)*(final estimate omega (i,i))/100)^2
 The variances of off-diagonal elements will be computed so that the correlation from the 
 final estimate is unchanged.
 If -cv_theta is set to a scalar when option -cv_omega is not used, -cv_omega will 

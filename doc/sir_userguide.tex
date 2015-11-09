@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{SIR user guide}{2015-11-03}
+\guidetitle{SIR user guide}{2015-11-09}
 \usepackage{amsmath}
 
 \begin{document}
@@ -56,7 +56,11 @@ Then the sir procedure starts with a 0th iteration where those vectors are treat
 vectors from the third phase (Box-Cox transformation etc). This approach is useful when it is difficult to obtain a (faked) covariance matrix. 
 If there are too few bootstrap vectors for full rank, sir will automatically fill in extra vectors using the
 tweak\_inits functionality.
-\item If the user can guess a reasonable variance for each parameter, then options -covmat\_input=diagonal,
+\item If the user can guess a reasonable CV for each parameter, then 
+options -cv\_theta, -cv\_omega and -cv\_sigma can be combined
+to obtain a proposal density without having to create the .cov-file.
+\item If the user can guess a reasonable variance for each parameter, then 
+options -covmat\_input=diagonal,
 -theta\_inflation, -omega\_inflation and -sigma\_inflation can be combined to obtain any diagonal covariance matrix
 without having to create the .cov-file.
 \item If none of the above alternatives are possible, the -auto\_rawres option can be used.
@@ -206,6 +210,41 @@ Inflation is not used in any but the first iteration.
 \nextopt
 \optdefault{sigma\_inflation}{X}
 See help text for omega\_inflation.
+\nextopt
+\optdefault{cv\_theta}{X}
+Default not used. Used for giving the proposal density as CV\%, e.g. 30 for 30\% CV.
+Not allowed in combination with inflation, -covmat\_input, -rawres\_input or -auto\_rawres.
+Either a positive vector with length equal to the number of estimated (not FIX) \$THETAs, or
+a positive scalar which will be interpreted as a vector of the appropriate length and all equal values.
+When this option is used, the variances of theta(i) in the proposal density will be computed
+as 
+\[
+\left(theta(i)*cv_{theta}(i)/100\right)^2
+\]
+\nextopt
+\optdefault{cv\_omega}{X}
+Default not used. Used for giving the proposal density as CV\%, e.g. 30 for 30\% CV.
+Not allowed in combination with inflation, -covmat\_input, -rawres\_input or -auto\_rawres.
+Either a positive vector with length equal to the number of estimated (not FIX) \$OMEGA 
+diagonal elements or a positive scalar which will be interpreted as a vector of the required 
+length and all equal values. When this option is used, the variances of omega(i,i) in the 
+proposal density will be computed as 
+\[
+var_{omega(i,i)}=\left(omega(i,i)*cv_{omega}(i)/100\right)^2
+\]
+The variances of off-diagonal elements will be computed so that the correlation from the 
+final estimate is unchanged, i.e.
+\[
+var_{omega(i,j)}=\sqrt{var_{omega(i,i)}}\cdot\sqrt{var_{omega(j,j)}}
+\cdot\frac{omega(i,j)}{\sqrt{omega(i,i)\cdot omega(j,j)}}
+\]
+If -cv\_theta is set to a scalar when option -cv\_omega is not given, -cv\_omega will 
+automatically be set to the same scalar as -cv\_theta. If -cv\_theta is set to a vector and 
+-cv\_omega is not set at all, or if -cv\_omega is set when -cv\_theta is not, then there will 
+be an error message.
+\nextopt
+\optdefault{cv\_sigma}{X}
+See help text for cv\_omega.
 \nextopt
 \optdefault{problems\_per\_file}{N}
 Optional, default 100. The number of \$PROBLEM per model file when evaluating the parameter vectors
