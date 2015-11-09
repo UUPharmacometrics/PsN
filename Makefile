@@ -6,6 +6,7 @@ LIBFILES= ui.pm \
 	math.pm \
 	PsN.pm \
 	common_options.pm \
+	input_checking.pm \
 	linear_algebra.pm \
 	npde_util.pm \
 	psn.conf_template \
