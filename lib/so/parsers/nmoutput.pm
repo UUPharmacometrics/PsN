@@ -1171,7 +1171,7 @@ sub _create_occasion_table
             $row = undef;
         }
         if (not defined $row) {
-            push @rows, [ $running_id, $running_occ_start, $prev_time, @running_dv ];
+            push @rows, [ int($running_id), $running_occ_start, $prev_time, @running_dv ];
             last;
         }
         chomp($row);
@@ -1192,7 +1192,7 @@ sub _create_occasion_table
         }
         # Check if something has changed
         if ($running_id != $id or not array::is_equal(\@dv, \@running_dv)) {
-            push @rows, [ $running_id, $running_occ_start, $prev_time, @running_dv ];
+            push @rows, [ int($running_id), $running_occ_start, $prev_time, @running_dv ];
             $running_id = $id;
             $running_occ_start = $time;
             @running_dv = @dv;
