@@ -22,6 +22,48 @@ my $model = model->new(
     ignore_missing_data => 1,
 );
 
+$model->set_records(type => 'data',
+					problem_numbers => [1],
+					record_strings => ['pheno.dta',' IGNORE=@ ',
+									   'IGNORE(TYPE.LT.3)        ; Keep only .. observation (',
+									   'IGNORE(PERFL.NE.1)       ; Ignore data in screening and down-taper period',
+									   ';Ignore subjects',
+									   'IGN=(ID.EQ.3)   IGN=(ID.EQ.7)   IGN=(ID.EQ.9)   IGN=(ID.EQ.10)']);
+
+dies_ok{ tool::bootstrap::check_ignore_id(model=> $model, allow_ignore_id => 0)} 'ignore= on id';
+
+$model->set_records(type => 'data',
+					problem_numbers => [1],
+					record_strings => ['pheno.dta',' IGNORE=@ ',
+									   'ACCE=(ID.GT.3)']);
+
+dies_ok{ tool::bootstrap::check_ignore_id(model=> $model, allow_ignore_id => 0)} 'accept= on id';
+
+$model->set_records(type => 'data',
+					problem_numbers => [1],
+					record_strings => ['pheno.dta',' IGNORE=@ ',
+									   'ACCEP(ID.GT.3)']);
+
+dies_ok{ tool::bootstrap::check_ignore_id(model=> $model, allow_ignore_id => 0)} 'accept( on id';
+
+$model->set_records(type => 'data',
+					problem_numbers => [1],
+					record_strings => ['pheno.dta',' IGNORE=@ ',
+									   'IGNORE(TYPE.LT.3)        ; Keep only .. observation (',
+									   'IGNORE(PERFL.NE.1)       ; Ignore data in screening and down-taper period',
+									   ';Ignore subjects',
+									   'IGNORE(ID.EQ.3)   IGNORE(ID.EQ.7)   IGNORE(ID.EQ.9)   IGNORE(ID.EQ.10)',
+									   'IGNORE(ID.EQ.23)  IGNORE(ID.EQ.27)  IGNORE(ID.EQ.29)  IGNORE(ID.EQ.31)',
+									   'IGNORE(ID.EQ.34)  IGNORE(ID.EQ.35)  IGNORE(ID.EQ.38)  IGNORE(ID.EQ.41)']);
+dies_ok{ tool::bootstrap::check_ignore_id(model=> $model, allow_ignore_id => 0)} 'ignore on id';
+
+$model = model->new(
+    filename => "$test_files/pheno.mod",
+    ignore_missing_files => 1,
+    skip_data_parsing => 1,
+    ignore_missing_data => 1,
+);
+
 my $bootstrap = tool::bootstrap->new(directory => $tempdir, skip_estimate_near_boundary => 1, models => [ $model ]);
 cp("$test_files/bootstrap/raw_results_pheno.csv", "$tempdir/raw_results.csv");
 cp("$test_files/bootstrap/raw_results_structure", $tempdir);

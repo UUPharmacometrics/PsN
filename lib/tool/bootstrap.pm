@@ -77,67 +77,100 @@ sub BUILD
 		$self->$accessor(\@new_files);
 	}	
 
+	check_ignore_id(model => $self ->models()->[0], allow_ignore_id => $self->allow_ignore_id);
+
+}
+
+sub check_ignore_id
+{
+	my %parm = validated_hash(\@_,
+							  model => { isa => 'model', optional => 0 },
+							  allow_ignore_id => {isa => 'Bool',optional => 0},				  
+		);
+	my $model = $parm{'model'};
+	my $allow_ignore_id = $parm{'allow_ignore_id'};
+
 	# If certain ID:s are ignored, this will interfere with bootstrap. Warn user, exit
 	#look for synonym
 	my $id_synonym;
-	$id_synonym = $self ->models()->[0]-> get_option_value(record_name=>'input',
-		option_name=>'ID');
+	$id_synonym = $model-> get_option_value(record_name=>'input',
+											option_name=>'ID');
 	#we do not look for <synonym>=ID since PsN won't accept it anyway
 	#look for ignore/accept of ID/synonym
 
 	my @check_list=();
-	my $ignore_list = $self ->models()->[0]-> get_option_value(record_name=>'data',
-		option_name=>'IGNORE',
-		option_index => 'all');
+	my $ignore_list = $model-> get_option_value(record_name=>'data',
+												option_name=>'IGNORE',
+												option_index => 'all',
+												fuzzy_match => 1);
 	push (@check_list,@{$ignore_list});
-	my $accept_list = $self ->models()->[0]-> get_option_value(record_name=>'data',
-		option_name=>'ACCEPT',
-		option_index => 'all');
+	my $accept_list = $model-> get_option_value(record_name=>'data',
+												option_name=>'ACCEPT',
+												option_index => 'all',
+												fuzzy_match => 1);
 	push (@check_list,@{$accept_list});
 	my $warning = "Dangerous IGNORE/ACCEPT statement found in \$DATA.\n".
-	"Bootstrap program cannot at present safely handle IGNORE or\n".
-	"ACCEPT statements involving the ID column, since individuals are\n".
-	"renumbered during resampling. ";
+		"Bootstrap program cannot at present safely handle IGNORE or\n".
+		"ACCEPT statements involving the ID column, since individuals are\n".
+		"renumbered during resampling. ";
 	foreach my $igval (@check_list){
 		if (($igval =~ /[^a-zA-Z0-9_]+(ID)[^a-zA-Z0-9_]+/ ) ||
 			($id_synonym && ($igval =~ /[^a-zA-Z0-9_]+($id_synonym)[^a-zA-Z0-9_]+/ ) )){
-			if ($self->allow_ignore_id()){
-				print "\nWarning:\n".
-				$warning."It is recommended to edit the datafile\n".
-				"manually instead, before running the bootstrap.\n\n";
+			if ($allow_ignore_id){
+				ui->print(category=> 'all',message => "\nWarning:\n".
+						  $warning."It is recommended to edit the datafile\n".
+						  "manually instead, before running the bootstrap.\n\n");
 			} else {
 				croak($warning."Please edit the datafile ".
-					"manually instead, before running the bootstrap.\n");
+					  "manually instead, before running the bootstrap.\n");
 			}
 		}
 	}
 
+	my $options = $model-> problems->[0]->datas->[0]->options;
+	if (defined $options){
+		foreach my $opt (@{$options}){
+			unless (defined $opt->value and length($opt->value)>0 ){
+				if (($opt->name =~ /^(IGN|ACC)[^(]*\(ID\./) or 
+					($id_synonym and ($opt->name =~ /^(IGN|ACC)[^(]*\($id_synonym\./))){
+					if ($allow_ignore_id){
+						ui->print(category=> 'all',message => "\nWarning:\n".
+								  $warning."It is recommended to edit the datafile\n".
+								  "manually instead, before running the bootstrap.\n\n");
+					} else {
+						croak($warning."Please edit the datafile ".
+							  "manually instead, before running the bootstrap.\n");
+					}
+				}
+			}
+		}
+	}
 	#warn if code records with ID/synonym detected
 	@check_list = ();
-	my $record_ref = $self->models->[0]->record(record_name => 'pk');	
-	push (@check_list, @{$self->models->[0]->get_code(record => 'pk')})
+	my $record_ref = $model->record(record_name => 'pk');	
+	push (@check_list, @{$model->get_code(record => 'pk')})
+		if (scalar(@{$record_ref}) > 0);
+	
+	$record_ref = $model->record(record_name => 'pred');
+	push (@check_list, @{$model->get_code(record => 'pred')})
 	if (scalar(@{$record_ref}) > 0);
 
-	$record_ref = $self->models->[0]->record(record_name => 'pred');
-	push (@check_list, @{$self->models->[0]->get_code(record => 'pred')})
-	if (scalar(@{$record_ref}) > 0);
-
-	$record_ref = $self->models->[0]->record(record_name => 'error');
-	push (@check_list, @{$self->models->[0]->get_code(record => 'error')})
+	$record_ref = $model->record(record_name => 'error');
+	push (@check_list, @{$model->get_code(record => 'error')})
 	if (scalar(@{$record_ref}) > 0);
 
 	foreach my $line (@check_list){
 		next if ($line =~ /^\s*;/); #skip comments
 		if (($line =~ /(^|[^a-zA-Z0-9_]+)ID([^a-zA-Z0-9_]+|$)/ ) ||
 			($id_synonym && ($line =~ /(^|[^a-zA-Z0-9_]+)($id_synonym)([^a-zA-Z0-9_]+|$)/ ) )){
-			print "\nWarning:\nID/ID-synonym found in \$PK/\$PRED/\$ERROR.\n".
-			"Bootstrap script renumbers individuals, which means that code\n".
-			"based on ID-value might not give the expected results.\n\n";
+			ui->print(category=> 'all',message=> "\nWarning:\nID/ID-synonym found in \$PK/\$PRED/\$ERROR.\n".
+					  "Bootstrap script renumbers individuals, which means that code\n".
+					  "based on ID-value might not give the expected results.\n\n");
 			last;
 		}
 	}
-}
 
+}
 sub modelfit_setup
 {
 	my $self = shift;
