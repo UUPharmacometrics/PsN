@@ -780,6 +780,7 @@ sub _create_simulation
 
     my $profiles_table_name = $problem->find_table(columns => [ 'ID', 'TIME', 'DV' ]);
     my $indiv_table_name = $problem->find_table_with_name(name => '^patab', path => $path);
+    my $random_effects_table_name = $problem->find_table_with_name(name => '^patab', path => $path);
     my $covariates_table_name = $problem->find_table_with_name(name => '^cotab', path => $path);
     my $population_table_name = $problem->find_table(columns => [ 'TIME' ]);
 
@@ -794,6 +795,7 @@ sub _create_simulation
 
     open my $profiles_table_fh, '<', $path . $profiles_table_name;
     open my $indiv_table_fh, '<', $path . $indiv_table_name;
+    open my $random_effects_table_fh, '<', $path . $random_effects_table_name;
     open my $covariates_table_fh, '<', $path . $covariates_table_name;
     open my $population_table_fh, '<', $path . $population_table_name;
     my $extra_output_table_fh;
@@ -825,12 +827,12 @@ sub _create_simulation
             model => $model,
             problem => $problem
         );
-        #my $random_effects = $self->_create_random_effects(
-        #    file => $indiv_table_fh,
-        #    table_file => $external_table_name,
-        #    model => $model,
-        #    problem => $problem
-        #);
+        my $random_effects = $self->_create_random_effects(
+            file => $random_effects_table_fh,
+            table_file => $external_table_name,
+            model => $model,
+            problem => $problem
+        );
         my $covariates = $self->_create_covariates(
             file => $covariates_table_fh,
             table_file => $external_table_name
@@ -854,10 +856,10 @@ sub _create_simulation
             $sim_block->IndivParameters($indiv_parameters);
             $self->_so_block->RawResults->add_datafile(name => $indiv_table_name, description => "patab");
         }
-        #if (defined $random_effects) {
-        #    $sim_block->RandomEffects($random_effects);
-        #    $self->_so_Block->RawResults->add_datafile(name => $indiv_table_name, description => "patab");
-        #}
+        if (defined $random_effects) {
+            $sim_block->RandomEffects($random_effects);
+            $self->_so_block->RawResults->add_datafile(name => $random_effects_table_name, description => "patab");
+        }
         if (defined $covariates) {
             $sim_block->Covariates($covariates);
             $self->_so_block->RawResults->add_datafile(name => $covariates_table_name, description => "cotab");
@@ -868,19 +870,20 @@ sub _create_simulation
         if (defined $dosing) {      # The same for all replicates
             $sim_block->Dosing($dosing);
         }
-        if (defined $simulated_profiles or defined $indiv_parameters or defined $covariates or defined $population_parameters) {
+        if (defined $simulated_profiles or defined $indiv_parameters or defined $random_effects or defined $covariates or defined $population_parameters) {
             $self->_so_block->Simulation([]) if not defined $self->_so_block->Simulation;
             push @{$self->_so_block->Simulation->SimulationBlock}, $sim_block;
         } else {
             last;
         }
-        last unless (defined $simulated_profiles or defined $indiv_parameters or defined $covariates or defined $population_parameters);
+        last unless (defined $simulated_profiles or defined $indiv_parameters or defined $random_effects or defined $covariates or defined $population_parameters);
         $replicate_no++;
         last if (defined $self->max_replicates and $replicate_no >= $self->max_replicates); 
     }
 
     close $covariates_table_fh;
     close $indiv_table_fh;
+    close $random_effects_table_fh;
     close $profiles_table_fh;
     if (defined $extra_output_table_fh) {
         close $extra_output_table_fh;
@@ -1011,7 +1014,9 @@ sub _create_indiv_parameters
     return if not defined $colnosref;
     my %colnos = %{$colnosref};
 
-    my $labels = _get_remaining_columns(header => \%colnos, columns => [ 'ID', 'TIME', @all_labels ]); 
+    my $eta_names = $model->get_eta_names();
+
+    my $labels = _get_remaining_columns(header => \%colnos, columns => [ 'ID', 'TIME', @all_labels, @$eta_names ]); 
 
     my $indiv_parameters = $self->_create_occasion_table(
         file => $file,
@@ -1024,20 +1029,37 @@ sub _create_indiv_parameters
     return $indiv_parameters;
 }
 
-#sub _create_random_effects
-#{
-#    my $self = shift;
-#    my %parm = validated_hash(\@_,
-#        file => { isa => 'Ref' },
-#       table_file => { isa => 'Maybe[Str]' },
-#       model => { isa => 'model' },
-#       problem => { isa => 'model::problem' },
-#   );
-#   my $file = $parm{'file'};
-#   my $table_file = $parm{'table_file'};
-#    my $model = $parm{'model'};
-#   my $problem = $parm{'problem'};
-#}
+sub _create_random_effects
+{
+    my $self = shift;
+    my %parm = validated_hash(\@_,
+        file => { isa => 'Ref' },
+        table_file => { isa => 'Maybe[Str]' },
+        model => { isa => 'model' },
+        problem => { isa => 'model::problem' },
+    );
+    my $file = $parm{'file'};
+    my $table_file = $parm{'table_file'};
+    my $model = $parm{'model'};
+    my $problem = $parm{'problem'};
+
+    my $colnosref = $self->_read_header(file => $file);
+    return if not defined $colnosref;
+
+    my $eta_names = $model->get_eta_names();
+
+    (my $occasion, my $iov_etas) = $self->_get_iov_etas(model => $model);
+
+    my $random_effects = $self->_create_occasion_table(
+        file => $file,
+        labels => $eta_names,
+        table_file => $table_file,
+        table_name => 'RandomEffects',
+        colnos => $colnosref,
+    );
+
+    return $random_effects;
+}
 
 sub _create_covariates
 {
