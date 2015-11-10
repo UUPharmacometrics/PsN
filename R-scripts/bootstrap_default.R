@@ -14,9 +14,6 @@ bootplots<-boot.hist(results.file=raw.results.file,incl.ids.file=included.ids.fi
 print(bootplots[1]) #parameters
 
 
-if (rplots.level > 1){
-    print(bootplots[2:4]) #SEs ofv eigenvalues
-}
 
 #############################################################################################################
 ### Plot dOFV distribution of bootstrap -dofv option 
@@ -90,6 +87,11 @@ print(qdOFV_all)
 
 ### END
 #############################################################################################################
+
+
+if (rplots.level > 1){
+    print(bootplots[2:4]) #SEs ofv eigenvalues
+}
 
 dev.off()
 

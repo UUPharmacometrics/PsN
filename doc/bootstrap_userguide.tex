@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{Bootstrap user guide}{2015-10-12}
+\guidetitle{Bootstrap user guide}{2015-11-10}
 \begin{document}
 
 
@@ -88,6 +88,18 @@ Optional, default not used. If option -dofv is set and NM version 7.3 or later i
 \nextopt
 \end{optionlist}
 
+\subsection{Diagnostic R plots}
+\newcommand{\rplotsconditions}{
+See section Output, subsections Basic and Extended plots,
+for descriptions of the default bootstrap plots.
+The default bootstrap template 
+requires the xpose4 R library of at least version 4.5.0,
+and that R libraries ggplot2, plyr, dplyr are installed.
+If the conditions are not fulfilled then no pdf will be generated,
+see the .Rout file in the main run directory for error messages.
+}
+\input{inputs/rplots_section_body.tex}
+
 \subsection{Some important common PsN options}
 There are many options that govern how PsN manages NONMEM runs, and
 those options are common to all PsN programs that run NONMEM.
@@ -96,31 +108,8 @@ or psn\_options -h on the commandline. A selection of
 the most important common options is found here.
 \input{inputs/basic_options.tex}
 
-\subsection{Auto-generated R-plots from PsN}
-\newcommand{\rplotsconditions}{The default bootstrap template 
-requires the xpose4 R library of at least version 4.5.0. 
-If the conditions are not fulfilled then no pdf will be generated,
-see the .Rout file in the main run directory for error messages.}
-\input{inputs/rplots_section_body.tex}
-
-\subsubsection*{Basic plots}
-A basic bootstrap rplot will be generated in file PsN\_bootstrap\_plots.pdf
-if option -rplots is set >0,
-and the general rplots conditions fulfilled, see above.
-The plot is created using the xpose4 boot.hist function
-and shows histograms of each parameter in the model.
-
-If option -dofv is set, there will also be a plot of the dOFV distribution. 
-\subsubsection*{Extended plots}
-Extended bootstrap rplots will be generated in file PsN\_bootstrap\_plots.pdf
-if option -rplots is set >1,
-and the general rplots conditions fulfilled, see above.
-The plots are created using the xpose4 boot.hist function
-and show histograms of standard errors, ofv and, if available
-from NONMEM output, eigenvalues.
 
 \section{Output}
-
 The file bootstrap\_results.csv contains statistics and summaries specific for the bootstrap:
 \begin{itemize}
     \item diagnostic.means - Means of all the diagnostics (such as estimate.near.boundary and subproblem.est.time) for the bootstrap runs.
@@ -158,7 +147,36 @@ sample\_keys1.csv:  One row per bootstrapped dataset. Each row consists of one n
 
 The row order is consistent between the files raw\_results, included\_individuals, included\_keys and sample\_keys so that row j (excluding headers if any) in each of the files concerns the same bootstrapped dataset.
 
-If option -rplots>0 then file PsN\_bootstrap\_plots.pdf is created.
+\subsection{Basic plots}
+A basic bootstrap rplot will be generated in file PsN\_bootstrap\_plots.pdf
+if option -rplots is set >0,
+and the general rplots conditions fulfilled, see above.
+The plot is created using the xpose4 boot.hist function
+and shows histograms of each parameter in the model.
+
+If option -dofv is set, there will also be a dOFV plot.
+The dOFV are computed as the difference between the OFV of the 
+bootstrap parameter vector evaluated on the original dataset minus the OFV 
+of the final parameter estimates on the original dataset. 
+This plot shows 3 dOFV distributions:  
+\begin{enumerate}
+\item that of all bootstrap samples, whether minimization on the bootstrap dataset was successful or not ('yes+no', red dotted line), 
+\item that of bootstrap samples for which minimization was successful ('yes', red full line) and 
+\item that of a chi-square distribution with degrees of freedom equal to the total number of estimated parameters in the 
+model (blue full line). 
+\end{enumerate}
+In theory the bootstrap dOFV distribution should be at or below the reference chi-square. If it is not, another method for estimating parameter uncertainty, such as SIR, should be considered. Differences between the 2 red curves indicate that bootstrap results are likely to differ depending on whether the termination status is taken into account or not. 
+
+\subsection{Extended plots}
+Extended bootstrap rplots will be generated in file PsN\_bootstrap\_plots.pdf
+if option -rplots is set >1,
+and the general rplots conditions fulfilled, see above.
+The plots are created using the xpose4 boot.hist function
+and show histograms of standard errors, ofv and, if available
+from NONMEM output, eigenvalues.
+Be aware of the difference between OFV in the extended ofv plot,
+that correspond to OFV obtained by estimation on the bootstrap datasets,
+and the dOFV in Basic plots.
 
 
 \subsection{Computing a covariance matrix}
@@ -220,9 +238,14 @@ The model parameters are estimated with each dataset, including the original, re
 
 \section{Computing delta-ofv}
 
-The delta-ofv distribution can be used as a diagnostic of the bootstrap \cite{Niebecker}.
+The delta-ofv distribution can be used as a 
+diagnostic of the bootstrap \cite{Niebecker}.
 If option -dofv is set, PsN will perform a MAXEVAL=0 run for each set of bootstrap parameter estimates using the original model and data. This is done after all other runs and computations are completed, including any Bca step. The results will be printed to a csv file called delta\_ofv.csv where the first column is bootstrap data id and the second delta-ofv which is computed as 
-$\mathrm{ofv}_{bs,maxev=0}$ – $\mathrm{ofv}_{original}$. If option -mceta=N is set and NM7.3 or later is used and the estimation method is classical then option MCETA=N will be set in \$ESTIMATION. There will be up to 200 \$PROBLEMs defined in each model file (control stream) to reduce PsN overhead when calling NONMEM.
+$\mathrm{ofv}_{bs,maxev=0}$ – $\mathrm{ofv}_{original}$. 
+If option -rplots is set >0, a plot with the delta-ofv distribution is
+generated, see Basic plots in section Auto-generated R-plots from PsN. 
+
+If option -mceta=N is set and NM7.3 or later is used and the estimation method is classical then option MCETA=N will be set in \$ESTIMATION. There will be up to 200 \$PROBLEMs defined in each model file (control stream) to reduce PsN overhead when calling NONMEM.
 
 It is possible to restart a previously run bootstrap to compute delta-ofv without rerunning all bootstrap estimations, provided that option -clean was set to 2 or less in the original run. Simply run bootstrap again with option -directory set to the existing run directory. PsN will intiate reruns of all bootstrap samples, but reread existing output instead of really starting NONMEM. Then the delta-ofv models will be run. If option -bca was set in the original bootstrap run it is important to set -bca also in the restart, otherwise the jackknife results will be overwritten. 
 
