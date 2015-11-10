@@ -208,7 +208,11 @@ SKIP: {
 
     is_deeply(\%hash, \%results_hash, "pheno.lst with no-use_tables has all elements under Estimation");
 
-
+# _create_eta_table
+    my $eta_table = so::parsers::nmoutput::_create_eta_table(id => [ 1, 1, 2, 2], etas => [ [ 23, 23, 24, 24  ], [ 7, 7, 9, 9 ] ]);
+    is_deeply($eta_table, [ [ 1, 2 ], [ 23, 24 ], [ 7, 9 ] ], "create_eta_table 1");
+    $eta_table = so::parsers::nmoutput::_create_eta_table(id => [ 1, 1, 2, 2 ], occ => [ 1, 2, 1, 2 ], etas => [ [ 23, 23, 24, 24 ], [ 7, 7, 9, 9 ] ]);
+    is_deeply($eta_table, [ [ 1, 1, 2, 2 ], [ 1, 2, 1, 2], [ 23, 23, 24, 24 ], [ 7, 7, 9, 9 ] ], "create_eta_table 2");
 
 # option pharmml
     my $so = so->new(PharmMLRef => 'test.xml');

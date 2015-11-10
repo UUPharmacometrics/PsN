@@ -301,6 +301,31 @@ sub unique
 	}
 }
 
+sub remove_adjacent_duplicates
+{
+    # Remove the adjacent dumplicates of elements in an array
+    # Example: 1,1,1,2,2,2,1,1,1,2,2,2 becomes 1,2,1,2
+
+    my $a = shift;
+
+    if (not defined $a) {
+        return;
+    }
+
+    my @result;
+
+
+    my $previous;
+    foreach my $e (@$a) {
+        if ($e != $previous) {
+            push @result, $e;
+            $previous = $e;
+        }
+    }
+
+    return \@result;
+}
+
 sub add
 {
     # Add one array to another

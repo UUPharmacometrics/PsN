@@ -100,6 +100,13 @@ foreach my $i (0..@$a - 1) {
 	is ($$a[$i], $unique_res[$i], "unique in scalar context $i");
 }
 
+# Test of remove_adjacent_duplicates
+is_deeply (array::remove_adjacent_duplicates([ 1, 1, 1, 2, 2, 2, 2, 2, 1, 1, 2]), [ 1, 2, 1, 2 ], "remove_adjacent_duplicates 1");
+is_deeply (array::remove_adjacent_duplicates([ 23 ]), [ 23 ], "remove_adjacent_duplicates 2");
+is_deeply (array::remove_adjacent_duplicates([ 1, 2, 3, 4, 4, 4, 5, 1, 2, 3, 5, 5 ]), [ 1, 2, 3, 4, 5, 1, 2, 3, 5 ], "remove_adjacent_duplicates 3");
+is_deeply (array::remove_adjacent_duplicates([ ]), [ ], "remove_adjacent_duplicates 4");
+
+
 # Test of add
 @a = qw(1 2 3 4);
 @b = qw(-2 3 7 0);

@@ -525,6 +525,49 @@ sub _create_residuals
     $self->_so_block->Estimation->Residuals->ResidualTable($table);
 }
 
+sub _create_eta_table
+{
+    my %parm = validated_hash(\@_,
+        id => { isa => 'ArrayRef' },
+        occ => { isa => 'Maybe[ArrayRef]', optional => 1 },
+        etas => { isa => 'ArrayRef' },
+    );
+    my $id = $parm{'id'};
+    my $occ = $parm{'occ'};
+    my $etas = $parm{'etas'};
+
+    my $numcols = 1 + scalar(@$etas);
+    if (defined $occ) {
+        $numcols++;
+    }
+
+    my @results;
+    for (my $i = 0; $i < $numcols; $i++) {
+        push @results, [];
+    }
+
+    my $prev_id, my $prev_occ;
+    for (my $i = 0; $i < scalar(@$id); $i++) {
+        if ($id->[$i] != $prev_id or (defined $occ and $occ->[$i] != $prev_occ)) {
+            $prev_id = $id->[$i];
+            if (defined $occ) {
+                $prev_occ = $occ->[$i];
+            }
+            push @{$results[0]}, $id->[$i];
+            my $k = 1;
+            if (defined $occ) {
+                push @{$results[1]}, $occ->[$i];
+                $k++;
+            }
+            for (my $j = 0; $j < scalar(@$etas); $j++) {
+                push @{$results[$k++]}, $etas->[$j]->[$i];
+            }
+        }
+    }
+
+    return \@results;
+}
+
 sub _individual_statistics
 {
     # Calculate the median of each individual and return in individual order 
@@ -580,6 +623,7 @@ sub _create_individual_estimates
     }
 
     my $id = $patab->column_to_array(column => "ID");
+    $id = [ map { int($_) } @$id ];
 
     my @columns_to_remove = ( 'ID', 'TIME', @$eta_names, @$model_labels);
     if (defined $occasion) {
@@ -598,15 +642,14 @@ sub _create_individual_estimates
         $parameters[$i] = $patab->column_to_array(column => $labels[$i]);
         ($medians[$i], $means[$i]) = _individual_statistics(id => $id, parameter => $parameters[$i]);
     }
-    my $unique_ids = array::unique($id);
-    my $unique_ids = [ map { int($_) } @$unique_ids ];
+    my $array_of_ids = array::remove_adjacent_duplicates($id);
 
     my $table = so::table->new(
         name => "Median",
         columnId => [ "ID", @labels ],
         columnType => [ "id", ("undefined") x scalar(@labels) ],
         valueType => [ "string", ("real") x scalar(@labels) ],
-        columns => [ $unique_ids, @medians ],
+        columns => [ $array_of_ids, @medians ],
     );
     $self->_so_block->Estimation->IndividualEstimates->Estimates->Median($table);
 
@@ -615,39 +658,67 @@ sub _create_individual_estimates
         columnId => [ "ID", @labels ],
         columnType => [ "id", ("undefined") x scalar(@labels) ],
         valueType => [ "string", ("real") x scalar(@labels) ],
-        columns => [ $unique_ids, @means ],
+        columns => [ $array_of_ids, @means ],
     );
     $self->_so_block->Estimation->IndividualEstimates->Estimates->Mean($table);
 
+    if (defined $occasion) {
+        push @$eta_names, @$iov_etas;
+    }
+
     if (scalar(@$eta_names) > 0) {
+        
         # Filter out etas that does not exist in the patab
         $eta_names = _get_included_columns(header => $patab->column_head_indices, columns => $eta_names);
         if (scalar(@$eta_names) > 0) {
 
             my @eta_medians = ();
             my @eta_means = ();
+            my @etas;
             foreach my $eta (@$eta_names) {
                 my $column = $patab->column_to_array(column => $eta);
-                (my $median, my $mean) = _individual_statistics(id => $id, parameter => $column);
-                push @eta_medians, $median;
-                push @eta_means, $mean;
+                push @etas, $column;
             }
+
+            my $occasion_data;
+            if (defined $occasion) {
+                $occasion_data = $patab->column_to_array(column => $occasion);
+            }
+            my $eta_table = _create_eta_table(id => $id, occ => $occasion_data, etas => \@etas); 
+
+            my @columnId = ( "ID" );
+            if (defined $occasion) {
+                push @columnId, $occasion;
+            }
+            push @columnId, @$eta_names;
+
+            my @columnType = ( "id" );
+            if (defined $occasion) {
+                push @columnType, "occasion";
+            }
+            push @columnType, ("undefined") x scalar(@$eta_names);
+
+            my @valueType = ( "string" );
+            if (defined $occasion) {
+                push @valueType, "real";
+            }
+            push @valueType, ( "real" ) x scalar(@$eta_names);
 
             my $table = so::table->new(
                 name => "EffectMedian",
-                columnId => [ "ID", @$eta_names ],
-                columnType => [ "id", ("undefined") x scalar(@$eta_names) ],
-                valueType => [ "string", ("real") x scalar(@$eta_names) ],
-                columns => [ $unique_ids, @eta_medians ],
+                columnId => \@columnId,
+                columnType => \@columnType,
+                valueType => \@valueType,
+                columns => $eta_table,
             );
             $self->_so_block->Estimation->IndividualEstimates->RandomEffects->EffectMedian($table);
 
             my $table = so::table->new(
                 name => "EffectMean",
-                columnId => [ "ID", @$eta_names ],
-                columnType => [ "id", ("undefined") x scalar(@$eta_names) ],
-                valueType => [ "string", ("real") x scalar(@$eta_names) ],
-                columns => [ $unique_ids, @eta_means ],
+                columnId => \@columnId,
+                columnType => \@columnType,
+                valueType => \@valueType,
+                columns => $eta_table,
             );
             $self->_so_block->Estimation->IndividualEstimates->RandomEffects->EffectMean($table);
         }
@@ -754,6 +825,12 @@ sub _create_simulation
             model => $model,
             problem => $problem
         );
+        #my $random_effects = $self->_create_random_effects(
+        #    file => $indiv_table_fh,
+        #    table_file => $external_table_name,
+        #    model => $model,
+        #    problem => $problem
+        #);
         my $covariates = $self->_create_covariates(
             file => $covariates_table_fh,
             table_file => $external_table_name
@@ -777,6 +854,10 @@ sub _create_simulation
             $sim_block->IndivParameters($indiv_parameters);
             $self->_so_block->RawResults->add_datafile(name => $indiv_table_name, description => "patab");
         }
+        #if (defined $random_effects) {
+        #    $sim_block->RandomEffects($random_effects);
+        #    $self->_so_Block->RawResults->add_datafile(name => $indiv_table_name, description => "patab");
+        #}
         if (defined $covariates) {
             $sim_block->Covariates($covariates);
             $self->_so_block->RawResults->add_datafile(name => $covariates_table_name, description => "cotab");
@@ -942,6 +1023,21 @@ sub _create_indiv_parameters
 
     return $indiv_parameters;
 }
+
+#sub _create_random_effects
+#{
+#    my $self = shift;
+#    my %parm = validated_hash(\@_,
+#        file => { isa => 'Ref' },
+#       table_file => { isa => 'Maybe[Str]' },
+#       model => { isa => 'model' },
+#       problem => { isa => 'model::problem' },
+#   );
+#   my $file = $parm{'file'};
+#   my $table_file = $parm{'table_file'};
+#    my $model = $parm{'model'};
+#   my $problem = $parm{'problem'};
+#}
 
 sub _create_covariates
 {
