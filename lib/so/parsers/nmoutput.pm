@@ -1016,7 +1016,13 @@ sub _create_indiv_parameters
 
     my $eta_names = $model->get_eta_names();
 
-    my $labels = _get_remaining_columns(header => \%colnos, columns => [ 'ID', 'TIME', @all_labels, @$eta_names ]); 
+    (my $occasion, my $iov_etas) = $self->_get_iov_etas(model => $model);
+    my @columns_for_removal = ( 'ID', 'TIME', @all_labels, @$eta_names );
+    if (defined $occasion) {
+        push @columns_for_removal, @$iov_etas, $occasion;
+    }
+
+    my $labels = _get_remaining_columns(header => \%colnos, columns => \@columns_for_removal); 
 
     my $indiv_parameters = $self->_create_occasion_table(
         file => $file,
@@ -1049,6 +1055,9 @@ sub _create_random_effects
     my $eta_names = $model->get_eta_names();
 
     (my $occasion, my $iov_etas) = $self->_get_iov_etas(model => $model);
+    if (defined $occasion) {
+        push @$eta_names, @$iov_etas;
+    }
 
     my $random_effects = $self->_create_occasion_table(
         file => $file,
@@ -1056,6 +1065,7 @@ sub _create_random_effects
         table_file => $table_file,
         table_name => 'RandomEffects',
         colnos => $colnosref,
+        occasion => $occasion,
     );
 
     return $random_effects;
@@ -1150,17 +1160,20 @@ sub _create_occasion_table
         table_file => { isa => 'Maybe[Str]' },
         table_name => { isa => 'Str' },
         colnos => { isa => 'HashRef' },
+        occasion => { isa => 'Maybe[Str]', optional => 1 },
     );
     my $file = $parm{'file'};
     my @labels = @{$parm{'labels'}};
     my $table_file = $parm{'table_file'};
     my $table_name = $parm{'table_name'};
     my %colnos = %{$parm{'colnos'}};
+    my $occasion = $parm{'occasion'};
 
     my @rows;
 
     my $running_id;
     my $running_occ_start;
+    my $running_occ;
     my @running_dv;
     my $prev_time;
 
@@ -1171,7 +1184,11 @@ sub _create_occasion_table
             $row = undef;
         }
         if (not defined $row) {
-            push @rows, [ int($running_id), $running_occ_start, $prev_time, @running_dv ];
+            my @new_row = ( int($running_id), $running_occ_start, $prev_time, @running_dv );
+            if (defined $occasion) {
+                push @new_row, int($running_occ);
+            }
+            push @rows, \@new_row;
             last;
         }
         chomp($row);
@@ -1180,6 +1197,10 @@ sub _create_occasion_table
 
         my $id = $columns[$colnos{'ID'}];
         my $time = $columns[$colnos{'TIME'}];
+        my $occ;
+        if (defined $occasion) {
+            $occ = $columns[$colnos{$occasion}];
+        }
         my @dv;
          for my $col (@labels) {
             push @dv, $columns[$colnos{$col}];
@@ -1188,13 +1209,19 @@ sub _create_occasion_table
         if (not defined $running_id) {
             $running_id = $id;
             $running_occ_start = $time;
+            $running_occ = $occ;
             @running_dv = @dv;
         }
         # Check if something has changed
-        if ($running_id != $id or not array::is_equal(\@dv, \@running_dv)) {
-            push @rows, [ int($running_id), $running_occ_start, $prev_time, @running_dv ];
+        if ($running_id != $id or not array::is_equal(\@dv, \@running_dv) or (defined $occasion and $running_occ != $occ)) {
+            my @new_row = ( int($running_id), $running_occ_start, $prev_time, @running_dv );
+            if (defined $occasion) {
+                push @new_row, int($running_occ);
+            }
+            push @rows, \@new_row;
             $running_id = $id;
             $running_occ_start = $time;
+            $running_occ = $occ;
             @running_dv = @dv;
         }
         $prev_time = $time;
@@ -1202,11 +1229,19 @@ sub _create_occasion_table
 
     linear_algebra::transpose(\@rows);
 
+    my @columnId = ( "ID", "OccasionStart", "OccasionEnd", @labels );
+    my @columnType = ( "id", "time", "time", ("undefined") x scalar(@labels) );
+    my @valueType = ( "string", "real", "real", ("real") x scalar(@labels) );
+    if (defined $occasion) {
+        push @columnId, $occasion;
+        push @columnType, "occasion";
+        push @valueType, "real";
+    }
     my $table = so::table->new(
         name => $table_name,
-        columnId => [ "ID", "OccasionStart", "OccationEnd", @labels ],
-        columnType => [ "id", "time", "time", ("undefined") x scalar(@labels) ],
-        valueType => [ "string", "real", "real", ("real") x scalar(@labels) ],
+        columnId => \@columnId,
+        columnType => \@columnType,
+        valueType => \@valueType,
         columns => \@rows,
         table_file => $table_file,
     );
