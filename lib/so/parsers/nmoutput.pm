@@ -631,6 +631,11 @@ sub _create_individual_estimates
         push @columns_to_remove, @$iov_etas;
     }
 
+    my $occasion_data;
+    if (defined $occasion) {
+        $occasion_data = $patab->column_to_array(column => $occasion);
+    }
+
     my @labels = @{_get_remaining_columns(header => $patab->column_head_indices, columns => \@columns_to_remove)};
 
     return if scalar(@labels) == 0;
@@ -640,25 +645,42 @@ sub _create_individual_estimates
     my @means;
     for (my $i = 0; $i < scalar(@labels); $i++) {
         $parameters[$i] = $patab->column_to_array(column => $labels[$i]);
-        ($medians[$i], $means[$i]) = _individual_statistics(id => $id, parameter => $parameters[$i]);
     }
-    my $array_of_ids = array::remove_adjacent_duplicates($id);
+
+    my $parameter_table = _create_eta_table(id => $id, occ => $occasion_data , etas => \@parameters);
+    my @columnId = ( "ID" );
+    if (defined $occasion) {
+        push @columnId, $occasion;
+    }
+    push @columnId, @labels;
+
+    my @columnType = ( "id" );
+    if (defined $occasion) {
+        push @columnType, "occasion";
+    }
+    push @columnType, ("undefined") x scalar(@labels);
+
+    my @valueType = ( "string" );
+    if (defined $occasion) {
+        push @valueType, "real";
+    }
+    push @valueType, ( "real" ) x scalar(@labels);
 
     my $table = so::table->new(
         name => "Median",
-        columnId => [ "ID", @labels ],
-        columnType => [ "id", ("undefined") x scalar(@labels) ],
-        valueType => [ "string", ("real") x scalar(@labels) ],
-        columns => [ $array_of_ids, @medians ],
+        columnId => \@columnId,
+        columnType => \@columnType,
+        valueType => \@valueType,
+        columns => $parameter_table,
     );
     $self->_so_block->Estimation->IndividualEstimates->Estimates->Median($table);
 
     my $table = so::table->new(
         name => "Mean",
-        columnId => [ "ID", @labels ],
-        columnType => [ "id", ("undefined") x scalar(@labels) ],
-        valueType => [ "string", ("real") x scalar(@labels) ],
-        columns => [ $array_of_ids, @means ],
+        columnId => \@columnId,
+        columnType => \@columnType,
+        valueType => \@valueType,
+        columns => $parameter_table,
     );
     $self->_so_block->Estimation->IndividualEstimates->Estimates->Mean($table);
 
@@ -680,10 +702,6 @@ sub _create_individual_estimates
                 push @etas, $column;
             }
 
-            my $occasion_data;
-            if (defined $occasion) {
-                $occasion_data = $patab->column_to_array(column => $occasion);
-            }
             my $eta_table = _create_eta_table(id => $id, occ => $occasion_data, etas => \@etas); 
 
             my @columnId = ( "ID" );
