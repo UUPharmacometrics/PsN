@@ -535,6 +535,10 @@ SKIP: {
 [ -1.00000E+00, -1.00000E+00, 1.00000E+00, -1.00000E+00, 1.00000E+00, 1.29423E-02 ] ]
 , "Simeoni Correlation matrix MatrixRow");
 
+    is_deeply($so->SOBlock->[0]->Estimation->IndividualEstimates->Estimates->Mean->columnId, [ 'ID', 'K10', 'K12', 'K21', 'V1', 'PSI', 'LAMBDA0' ], "Simeoni: Individual Estimates Mean columnId");
+    is_deeply($so->SOBlock->[0]->Estimation->IndividualEstimates->Estimates->Mean->columnType, [ 'id', ('undefined') x 6 ], "Simeoni: Individual Estimates Mean columnType");
+    is_deeply($so->SOBlock->[0]->Estimation->IndividualEstimates->Estimates->Mean->valueType, [ 'string', ('real') x 6 ], "Simeoni: Individual Estimates Mean valueType");
+    # is_deeply($so->SOBlock->[0]->Estimation->IndividualEstimates->Estimates->Mean->columns, [ 'string', ('real') x 6 ], "Simeoni: Individual Estimates Mean valueType");
 
     remove_test_dir($tempdir);
 }

@@ -114,11 +114,46 @@ $TABLE ID CL V ETA_CL ETA_V NOAPPEND FILE=patab
         \begin{verbatim}
 $TABLE ID TIME WGT NOPRINT NOAPPEND FILE=cotab
         \end{verbatim}
-    \item To be able to populate the RandomEffects entry all ETAs must be defined in the main code block (\$PK or \$PRED). One ETA should be defined per row with nothing more on the row (except for spaces) than one assignment. Example:
+    \item To be able to populate the RandomEffects entries all ETAs must be defined in the main code block (\$PK or \$PRED). One ETA should be defined per row with nothing more on the row (except for spaces) than one assignment. Example:
         \begin{verbatim}
  ETA_CL = ETA(1)
  ETA_V = ETA(2)
         \end{verbatim}
+    \item ETAs used for interoccasion variability must be handled like this:
+        \begin{itemize}
+            \item The \$OMEGA record describing the first occation is a normal omega BLOCK record and the following occasions are BLOCK SAME. Currently SAME(n) is not supported so each occasion must have its separate \$OMEGA record. Example for three different occasions:
+            \begin{verbatim}
+$OMEGA BLOCK(4)
+0.1 ; BOV_CL
+0
+0.1 ; BOV_V
+0
+0
+0.1 ; BOV_KA
+0
+0
+0
+0.1 ; BOV_TL
+
+$OMEGA BLOCK(4) SAME
+
+$OMEGA BLOCK(4) SAME
+            \end{verbatim}
+            \item In the main code block (\$PK or \$PRED) the ETAs for the different occasions must be combined with the special \$ABBR syntax. Example for two occasions:
+            \begin{verbatim}
+$ABBR REPLACE ETA(OCC_ETA_BOV_CL) = ETA(5,9)
+$ABBR REPLACE ETA(OCC_ETA_BOV_V) = ETA(6,10)
+$ABBR REPLACE ETA(OCC_ETA_BOV_KA) = ETA(7,11)
+$ABBR REPLACE ETA(OCC_ETA_BOV_TL) = ETA(8,12)
+            \end{verbatim}
+        \item In the main code block (\$PK or \$PRED) the combined ETAs must be assigned to variables using the correct name of the ETA and the correct name of the occasion. Example:
+            \begin{verbatim}
+ETA_BOV_CL = ETA(OCC_ETA_BOV_CL)
+ETA_BOV_V = ETA(OCC_ETA_BOV_V)
+ETA_BOV_KA = ETA(OCC_ETA_BOV_KA)
+ETA_BOV_TL = ETA(OCC_ETA_BOV_TL)
+            \end{verbatim}
+        \end{itemize}
     \item If multiple DVs are to be used a DVID column must be set in the sdtab.
 \end{itemize}
 
