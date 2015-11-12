@@ -86,8 +86,9 @@ sub _connector_get_files
 
     if ( (not (-d $directory))  or 
 		 ( (not defined $tool) and (not -e $lstfile)) or
-		 (defined $tool and ($tool ne 'execute') and (not -e $directory.'/'.$tool.'_results.csv'))
-		){
+		 (defined $tool and ($tool ne 'execute') and ($tool ne 'nca') and (not -e $directory.'/'.$tool.'_results.csv')) or
+         ($tool eq 'nca' and (not -e $directory . '/' . 'nca_simulation.1.npctab.dta'))
+		) {
 		#generic failure
         #$errorstring = 'run failure';
         cp($logfile,$errorfile);  #skip copying, change design
@@ -127,6 +128,22 @@ sub _connector_get_files
             @files = ('vpc_simulation.1.lst');
             my @tab = <$directory/vpctab*>;
             cp($tab[0],'.');
+        } elsif ($tool eq 'nca') {
+            cp($directory.'/m1/nca_simulation.1.lst', '.');
+            cp($directory.'/nca_simulation.1.npctab.dta', 'npctab.dta'); 
+            @files = ('nca_simulation.1.lst');
+            open my $fh, '<', 'npctab.dta';
+            <$fh>;
+            my $row = <$fh>;
+            $row =~ s/\s+//;
+            my @columns = split /\s+/, $row;
+            for my $e (@columns) {
+                if ($e ne 'ID' and $e ne 'TIME' and $e ne 'MDV') {
+                    $append_columns .= "$e,"
+                }
+            }
+            chop $append_columns;   # Remove final ,
+            close $fh;
         } elsif ($tool eq 'sse') {
             my $curdir = getcwd();
             chdir($directory);
@@ -151,7 +168,7 @@ sub _connector_get_files
             foreach my $fl (@ssedata){
                 cp ($directory.'/m1/'.$fl,$fl); 
             }
-        }else{
+        } else {
             #execute or successful other tool
             @files = ($lstfile);
         }
@@ -164,7 +181,7 @@ sub _connector_get_files
 sub _get_toolname
 {
     # Figure out which tool was run in this directory
-    #for now will return undef for all but bootstrap,vpc or sse
+    #for now will return undef for most tools
     my %parm = validated_hash(\@_,
         directory => { isa => 'Str',optional=>0 },
     );
@@ -190,6 +207,8 @@ sub _get_toolname
 		$tool = 'bootstrap';
 	} elsif ($command =~ /^vpc/) {
 		$tool = 'vpc';
+    } elsif ($command =~ /^nca/) {
+        $tool = 'nca';
 	} elsif ($command =~ /^sse/) {
 		$tool = 'sse';
 	} elsif ($command =~ /^execute/) {

@@ -252,6 +252,7 @@ require so::parsers::nmoutput;
 require so::parsers::bootstrap;
 require so::parsers::vpc;
 require so::parsers::sse;
+require so::parsers::nca;
 require so::parsers::execute;
 require so::parsers::psn;
 
@@ -342,7 +343,7 @@ if (defined $options{'vpc_results'}) {
 
 if (defined $options{'rundir'}) {
     my $toolname = so::parsers::psn::_get_toolname(directory => $options{'rundir'});
-    unless ($toolname eq "bootstrap" or $toolname eq "sse" or $toolname eq "vpc" or $toolname eq "execute") {
+    unless ($toolname eq "bootstrap" or $toolname eq "sse" or $toolname eq "vpc" or $toolname eq "execute" or $toolname eq "nca") {
         die "Option rundir gives a directory for a tool that is not (yet) supported\n";
     }
 
