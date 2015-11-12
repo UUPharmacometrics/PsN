@@ -28,7 +28,7 @@ has 'confidence_interval' => ( is => 'rw', isa => 'Int', default => 95 );
 has 'covariance_file' => ( is => 'rw', isa => 'Str' );
 has 'rawres_input' => ( is => 'rw', isa => 'Str' );
 has 'offset_rawres' => ( is => 'rw', isa => 'Int', default => 1 );
-has 'in_filter' => ( is => 'rw', isa => 'ArrayRef[Str]' );
+has 'in_filter' => ( is => 'rw', isa => 'ArrayRef',default => sub { [] } );
 has 'have_nwpri' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'have_tnpri' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'copy_data' => ( is => 'rw', isa => 'Bool', default => 1 );
