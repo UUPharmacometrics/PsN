@@ -191,6 +191,7 @@ SKIP: {
 # no-use_tables
     my $so = so->new();
     so::parsers::nmoutput->new(so => $so, lst_file => "pheno.lst", use_tables => 0);
+    
     $so->write();
     my $xpc = get_xml("pheno.SO.xml");
 
@@ -274,9 +275,44 @@ SKIP: {
           [ 0.258, 0.46, -0.183, 0.0349, -0.0045 ],
           [ 0.0541, 0.0784, 0.134, -0.0045, 0.00339 ] ], "Pheno CorrelationMatrix MatrixRow");
 
+
     unlink "pheno.SO.xml";
     my $so = so->new();
     so::parsers::nmoutput->new(so => $so, lst_file => "pheno.lst", use_tables => 1);
+
+
+    is_deeply($so->SOBlock->[0]->Estimation->IndividualEstimates->Estimates->Mean->columnId, [ 'ID', 'TVCL', 'TVV' ], "Pheno: Individual Estimates Mean columnId");
+    is_deeply($so->SOBlock->[0]->Estimation->IndividualEstimates->Estimates->Mean->columnType, [ 'id', ('undefined') x 2 ], "Pheno: Individual Estimates Mean columnType");
+    is_deeply($so->SOBlock->[0]->Estimation->IndividualEstimates->Estimates->Mean->valueType, [ 'string', ('real') x 2 ], "Pheno: Individual Estimates Mean valueType");
+     is_deeply($so->SOBlock->[0]->Estimation->IndividualEstimates->Estimates->Mean->columns, 
+[ [ (1..59) ], 
+[ ('5.5536E-03') x 59 ],
+[ ('1.3364E+00') x 59 ],
+], "Simeoni: Individual Estimates Mean valueType");
+
+    is_deeply($so->SOBlock->[0]->Estimation->IndividualEstimates->RandomEffects->EffectMean->columnId, [ 'ID', 'ETA_CL', 'ETA_V' ], "Pheno: RandomEffects EffectMean columnId");
+    is_deeply($so->SOBlock->[0]->Estimation->IndividualEstimates->RandomEffects->EffectMean->columnType, [ 'id', 'undefined', 'undefined' ], "Pheno: RandomEffects EffectMean columnType");
+    is_deeply($so->SOBlock->[0]->Estimation->IndividualEstimates->RandomEffects->EffectMean->valueType, [ 'string', 'real', 'real' ], "Pheno: RandomEffects EffectMean valueType");
+    is_deeply($so->SOBlock->[0]->Estimation->IndividualEstimates->RandomEffects->EffectMean->columns,
+[ [ (1 .. 59) ],
+[ '-7.2231E-02', '-3.1672E-01', '3.5414E-01', '-2.9573E-01', '2.8434E-01', '-8.9678E-02', '-7.6765E-02',
+ '2.6307E-04', '-1.6139E-01',  '1.2774E-01',  '1.0385E-01',  '3.6670E-02', '-2.8186E-01', '3.9043E-02',  '6.0713E-02',
+'-3.1078E-01', '-3.1421E-01',  '2.5095E-01', '-3.0838E-02',  '3.7305E-02', '2.9768E-01', '5.5099E-02',  '4.8199E-01',
+ '6.8286E-01', '-4.4888E-01',  '2.3037E-01',  '2.0168E-01',  '4.9683E-03', '-1.1982E-01',  '4.0466E-01', '-9.2750E-04',
+ '1.2184E-01',  '5.9511E-03',  '9.7250E-02',  '3.8826E-02',  '3.5663E-01', '-4.5052E-02',  '2.4976E-01',  '5.0822E-01',
+'-8.7975E-04',  '9.5203E-02',  '1.9230E-01', '-1.1837E-02', '1.9503E-01', '-2.7395E-01', '-2.9906E-03',  '6.8518E-02',
+'-1.4038E+00',  '4.0623E-02', '-1.4838E-01', '-3.7865E-01', '-5.8515E-03', '-9.9951E-02',  '3.1131E-02',  '8.4074E-02',
+'-1.9180E-01',  '2.5603E-01',  '1.4262E-01', '-2.8016E-01' ],
+[ qw(4.9380E-02 5.4754E-03 2.2366E-01 -3.9072E-01 3.3195E-01 2.5281E-02 -2.4741E-01 -3.6548E-01
+ -7.8470E-02 3.9657E-02 3.2448E-01 5.1533E-02 -3.7635E-01 -3.4878E-01 4.2274E-02 -5.9049E-02 -2.0001E-01
+ -2.4897E-01 -2.2312E-01 -2.3420E-01 1.8600E-01 2.8633E-02 6.8679E-01 8.2787E-01 -1.7685E-01 7.2344E-01
+ 1.3880E-02 6.5015E-01 -2.8092E-01 3.2300E-01 -1.1372E-01 1.0595E+00  1.4750E-01  1.3830E-01  3.7058E-01
+ 1.3774E-02 -8.7319E-02  5.8649E-02  2.6826E-01  1.9017E-02  3.4759E-01  9.3407E-01 -4.9606E-01  9.9125E-02
+-3.5943E-01 -1.9316E-01  4.6323E-01 -5.0007E-01  7.0094E-02 -4.3567E-01 -1.0422E-01 -7.1755E-01  1.5743E-01
+ 3.9987E-02  1.9037E-01 -7.2781E-01  3.8824E-01 -1.2430E-01 -3.0386E-01) ]
+], "Pheno: RandomEffects EffectMean columns");
+
+
 
     $so->SOBlock->[0]->create_sdtab(filename => 'sdtab.out');
 
@@ -477,6 +513,9 @@ SKIP: {
 [ -3.52642E-01, 6.47557E-01, 5.00777E-01, 3.73786E+01, -2.96282E-01 ],
 [ 5.23714E-01, 2.73184E-01, -2.07485E-01, -2.96282E-01, 1.28301E-02 ] ], "DelBene: Correlation matrix MatrixRow");
 
+    is_deeply($so->SOBlock->[0]->Estimation->IndividualEstimates->xml(), undef, "Delbene: No Individual Estimates");
+
+
 
     remove_test_dir($tempdir);
 
@@ -538,7 +577,117 @@ SKIP: {
     is_deeply($so->SOBlock->[0]->Estimation->IndividualEstimates->Estimates->Mean->columnId, [ 'ID', 'K10', 'K12', 'K21', 'V1', 'PSI', 'LAMBDA0' ], "Simeoni: Individual Estimates Mean columnId");
     is_deeply($so->SOBlock->[0]->Estimation->IndividualEstimates->Estimates->Mean->columnType, [ 'id', ('undefined') x 6 ], "Simeoni: Individual Estimates Mean columnType");
     is_deeply($so->SOBlock->[0]->Estimation->IndividualEstimates->Estimates->Mean->valueType, [ 'string', ('real') x 6 ], "Simeoni: Individual Estimates Mean valueType");
-    # is_deeply($so->SOBlock->[0]->Estimation->IndividualEstimates->Estimates->Mean->columns, [ 'string', ('real') x 6 ], "Simeoni: Individual Estimates Mean valueType");
+     is_deeply($so->SOBlock->[0]->Estimation->IndividualEstimates->Estimates->Mean->columns, [ [ 1, 2], [ "2.0832E+01", "2.0832E+01" ], [ '1.4400E-01', '1.4400E-01' ], [ '2.0112E+00', '2.0112E+00' ], [ '8.1000E-01', '8.1000E-01' ], [ '2.0000E+01', '2.0000E+01' ], [ '2.9872E-01', '2.9872E-01' ] ], "Simeoni: Individual Estimates Mean valueType");
+
+    is_deeply($so->SOBlock->[0]->Estimation->IndividualEstimates->RandomEffects->EffectMean->columnId, [ 'ID', 'eta_OMEGA_LAMBDA0' ], "Simeoni: RandomEffects EffectMean columnId");
+    is_deeply($so->SOBlock->[0]->Estimation->IndividualEstimates->RandomEffects->EffectMean->columnType, [ 'id', 'undefined' ], "Simeoni: RandomEffects EffectMean columnType");
+    is_deeply($so->SOBlock->[0]->Estimation->IndividualEstimates->RandomEffects->EffectMean->valueType, [ 'string', 'real' ], "Simeoni: RandomEffects EffectMean valueType");
+    is_deeply($so->SOBlock->[0]->Estimation->IndividualEstimates->RandomEffects->EffectMean->columns, [ [ 1, 2], [ '0.0000E+00', '0.0000E+00' ] ], "Simeoni: RandomEffects EffectMean columns");
+
+
+    remove_test_dir($tempdir);
+
+
+    our $tempdir = create_test_dir('unit_standardised_output');
+    copy_test_files($tempdir,
+        ["SO/BOV/run3.lst",
+		 "SO/BOV/patab",
+		]);
+
+    chdir $tempdir;
+
+    my $so = so->new();
+    so::parsers::nmoutput->new(so => $so, lst_file => "run3.lst", use_tables => 1);
+
+    is_deeply($so->SOBlock->[0]->Estimation->IndividualEstimates->Estimates->Mean->columnId, [ 'ID', 'OCC', 'CL', 'V', 'KA', 'TL' ], "BOV: Individual Estimates Mean columnId");
+    is_deeply($so->SOBlock->[0]->Estimation->IndividualEstimates->Estimates->Mean->columnType, [ 'id', 'occasion', ('undefined') x 4 ], "BOV: Individual Estimates Mean columnType");
+    is_deeply($so->SOBlock->[0]->Estimation->IndividualEstimates->Estimates->Mean->valueType, [ 'string', ('real') x 5 ], "BOV: Individual Estimates Mean valueType");
+    is_deeply($so->SOBlock->[0]->Estimation->IndividualEstimates->Estimates->Mean->columns,
+ [
+[ qw(1 1 2 2 3 3 4 4 5 5 6 6 7 7 8 8 9 9 10 10 12 12 13 13 14 14 15 15 16 16 17 17 18 18 19 19 20 20 22 22 23 23 24 24 25 25 26 26 28 28 30 30 32 32 33 33) ], 
+[ ('1.0000E+00', '2.0000E+00') x 28 ],
+[ '6.3058E-02', '1.2934E-01', '1.0687E-01', '1.6547E-01', '1.6024E-01', '1.2100E-01', '8.3581E-02', '6.6153E-02', '1.5523E-01', '6.6576E-02',
+'9.8316E-02', '1.5472E-01', '2.2338E-01', '1.2572E-01', '1.0222E-01', '1.1658E-01', '8.2783E-02', '1.3661E-01', '4.1597E-02', '5.7156E-02',
+'1.3816E-01', '1.1630E-01', '7.7010E-02', '1.0140E-01', '1.4539E-01', '7.1227E-02', '7.2849E-02', '1.0030E-01', '1.3399E-01', '1.2618E-01',
+'5.9995E-02', '1.3095E-01', '1.1097E-01', '8.6728E-02', '7.3611E-02', '2.0642E-01', '7.2516E-02', '1.0383E-01', '1.2004E-01', '1.0664E-01',
+'7.6405E-02', '1.4928E-01', '8.1024E-02', '1.2154E-01', '1.0236E-01', '1.1334E-01', '9.9044E-02', '2.1108E-01', '1.3764E-01', '1.0848E-01',
+'1.1693E-01', '1.8901E-01', '9.8119E-02', '1.4357E-01', '8.5855E-02', '1.2541E-01' ],
+
+[ '6.9217E+00', '7.9959E+00', '1.7188E+01', '5.0314E+00', '1.5101E+01', '3.9503E+00', '4.7144E+00', '1.2941E+01', '6.3007E+00',
+'5.1414E+00', '7.1592E+00', '1.0697E+01', '4.5321E+00', '5.0688E+00', '1.1819E+01', '1.6318E+01', '6.2796E+00', '4.6366E+00',
+'6.0399E+00', '7.5251E+00', '1.4468E+01', '1.1572E+01', '7.1344E+00', '3.9302E+00', '1.5787E+01', '6.3942E+00', '5.2562E+00',
+'3.6068E+00', '6.7291E+00', '1.8034E+01', '4.0737E+00', '9.4103E+00', '9.9442E+00', '1.1902E+01', '1.1733E+01', '6.9907E+00',
+'6.9197E+00', '9.5471E+00', '8.4782E+00', '8.1461E+00', '7.9246E+00', '4.9983E+00', '7.5600E+00', '1.0880E+01', '4.8229E+00',
+'9.5686E+00', '8.0577E+00', '8.3499E+00', '5.3902E+00', '1.0560E+01', '2.1568E+01', '1.0700E+01', '5.6796E+00', '1.0871E+01',
+'1.8200E+01', '1.2000E+01' ],
+
+[ '1.0841E+01', '4.2922E-01', '1.1755E+00', '1.1690E+00', '1.2603E+00', '5.4366E-01', '4.7471E-01', '1.4463E+00', '1.6643E+00', '1.2434E+00',
+'1.2187E+00', '1.1868E+00', '1.0141E+00', '1.1024E+00', '2.2180E+00', '8.4001E-01', '6.1014E-01', '4.1296E-01', '1.1127E+00', '1.1363E+00',
+'1.6205E+00', '1.1147E+00', '2.7641E+00', '9.3123E-01', '6.9672E-01', '1.1622E+00', '9.8418E-01', '6.3646E-01', '1.0046E+00', '5.3990E-01',
+'1.0967E+00', '1.1917E+00', '1.1558E+00', '1.1539E+00', '1.1513E+00', '1.2081E+00', '1.1379E+00', '1.1664E+00', '1.1770E+00', '1.1654E+00',
+'1.1526E+00', '1.1828E+00', '1.1358E+00', '1.1687E+00', '1.0902E+00', '1.1574E+00', '1.1450E+00', '1.2196E+00', '1.1164E+00', '1.1560E+00',
+'1.1639E+00', '1.1689E+00', '1.1007E+00', '1.1698E+00', '1.1724E+00', '1.1811E+00' ],
+
+[ ('9.6176E-01') x 56 ]
+]
+     
+        , "BOV: Individual Estimates Mean columns");
+
+    is_deeply($so->SOBlock->[0]->Estimation->IndividualEstimates->RandomEffects->EffectMean->columnId, [ 'ID', 'OCC', 'ETA_BSV_CL', 'ETA_BSV_V', 'ETA_BSV_KA', 'ETA_BSV_TL', 'ETA_BOV_CL', 'ETA_BOV_V', 'ETA_BOV_KA', 'ETA_BOV_TL' ], "BOV: RandomEffects EffectMean columnId");
+    is_deeply($so->SOBlock->[0]->Estimation->IndividualEstimates->RandomEffects->EffectMean->columnType, [ 'id', 'occasion', ('undefined') x 8 ], "BOV: RandomEffects EffectMean columnType");
+    is_deeply($so->SOBlock->[0]->Estimation->IndividualEstimates->RandomEffects->EffectMean->valueType, [ 'string', ('real') x 9 ], "BOV: RandomEffects EffectMean valueType");
+    is_deeply($so->SOBlock->[0]->Estimation->IndividualEstimates->RandomEffects->EffectMean->columns, 
+       [
+[ qw(1 1 2 2 3 3 4 4 5 5 6 6 7 7 8 8 9 9 10 10 12 12 13 13 14 14 15 15 16 16 17 17 18 18 19 19 20 20 22 22 23 23 24 24 25 25 26 26 28 28 30 30 32 32 33 33) ], 
+[ ('1.0000E+00', '2.0000E+00') x 28 ],
+
+[ '-1.5877E-04', '-1.5877E-04', '2.5793E-04', '2.5793E-04', '3.0747E-04', '3.0747E-04', '-5.1496E-04', '-5.1496E-04', '3.8169E-04', '3.8169E-04',
+'7.8889E-05', '7.8889E-05', '5.9253E-04', '5.9253E-04', '-1.9661E-04', '-1.9661E-04', '2.4999E-04', '2.4999E-04', '-8.6156E-04', '-8.6156E-04',
+'3.9539E-05', '3.9539E-05', '-2.8014E-04', '-2.8014E-04', '-1.2815E-04', '-1.2815E-04', '1.4785E-05', '1.4785E-05', '3.6493E-04', '3.6493E-04',
+'-6.6049E-05', '-6.6049E-05', '-1.9605E-04', '-1.9605E-04', '8.4755E-05', '8.4755E-05', '-1.6466E-04', '-1.6466E-04', '1.4295E-04', '1.4295E-04',
+'1.3469E-04', '1.3469E-04', '-1.3348E-04', '-1.3348E-04', '-8.1874E-05', '-8.1874E-05', '2.5658E-04', '2.5658E-04', '1.9982E-05', '1.9982E-05',
+'3.4926E-05', '3.4926E-05', '-4.4011E-05', '-4.4011E-05', '4.9783E-05', '4.9783E-05' ],
+
+[ '-8.6627E-06', '-8.6627E-06', '1.5906E-05', '1.5906E-05', '-4.5381E-06', '-4.5381E-06', '-2.3319E-05', '-2.3319E-05', '1.8149E-05', '1.8149E-05',
+'-4.1361E-06', '-4.1361E-06', '-4.5412E-05', '-4.5412E-05', '2.7074E-05', '2.7074E-05', '-1.2293E-05', '-1.2293E-05', '-2.4821E-05', '-2.4821E-05',
+'2.9537E-05', '2.9537E-05', '-5.9448E-05', '-5.9448E-05', '1.1070E-05', '1.1070E-05', '-3.5913E-05', '-3.5913E-05', '5.2442E-05', '5.2442E-05',
+'-1.3492E-05', '-1.3492E-05', '1.5949E-05', '1.5949E-05', '5.2390E-07', '5.2390E-07', '6.1487E-06', '6.1487E-06', '1.1573E-05', '1.1573E-05',
+'-1.1691E-05', '-1.1691E-05', '2.7604E-06', '2.7604E-06', '-3.4048E-05', '-3.4048E-05', '-1.0384E-05', '-1.0384E-05', '-2.7139E-05', '-2.7139E-05',
+'2.3174E-05', '2.3174E-05', '-2.7112E-05', '-2.7112E-05', '7.4949E-05', '7.4949E-05' ],
+
+[ '4.4695E-05', '4.4695E-05', '9.2032E-07', '9.2032E-07', '-2.4057E-05', '-2.4057E-05', '-2.3983E-05', '-2.3983E-05', '1.5614E-05', '1.5614E-05',
+'2.7589E-06', '2.7589E-06', '-6.4869E-06', '-6.4869E-06', '1.1846E-05', '1.1846E-05', '-5.9961E-05', '-5.9961E-05', '-2.0683E-06', '-2.0683E-06',
+'1.0738E-05', '1.0738E-05', '2.3445E-05', '2.3445E-05', '-1.8063E-05', '-1.8063E-05', '-2.7276E-05', '-2.7276E-05', '-3.2443E-05', '-3.2443E-05',
+'-8.8044E-07', '-8.8044E-07', '-1.5227E-07', '-1.5227E-07', '1.3535E-06', '1.3535E-06', '-3.2696E-07', '-3.2696E-07', '8.5716E-07', '8.5716E-07',
+'6.3571E-07', '6.3571E-07', '-3.2136E-07', '-3.2136E-07', '-2.1407E-06', '-2.1407E-06', '1.4970E-06', '1.4970E-06', '-1.3323E-06', '-1.3323E-06',
+'5.6231E-07', '5.6231E-07', '-1.4160E-06', '-1.4160E-06', '1.1962E-06', '1.1962E-06' ],
+
+[ ('0.0000E+00') x 56 ],
+
+[ '-5.0647E-01', '2.1193E-01', '2.0657E-02', '4.5783E-01', '4.2565E-01', '1.4475E-01', '-3.6073E-01', '-5.9457E-01', '7.7731E-01', '-6.9241E-02',
+'-1.5354E-01', '2.9989E-01', '8.3699E-01', '2.6221E-01', '-2.4809E-01', '-1.1663E-01', '-1.8578E-02', '4.8233E-01', '-9.5802E-01', '-6.4026E-01',
+'1.2280E-01', '-4.9446E-02', '-3.9743E-01', '-1.2226E-01', '2.3792E-01', '-4.7565E-01', '-1.4618E-01', '1.7361E-01', '3.6850E-01', '3.0849E-01',
+'-4.5155E-01', '3.2902E-01', '-5.8598E-02', '-3.0509E-01', '-4.3694E-01', '5.9417E-01', '-3.3220E-01', '2.6736E-02', '1.9178E-01', '7.3410E-02',
+'-2.0995E-01', '4.5982E-01', '-3.2657E-01', '7.8949E-02', '-1.2686E-01', '-2.5028E-02', '-1.4034E-01', '6.1633E-01', '1.3754E-01', '-1.0047E-01',
+'-2.0770E-01', '2.7249E-01', '-2.3115E-01', '1.4950E-01', '-1.4328E-01', '2.3564E-01' ],
+
+[ '-1.5081E-01', '-6.5380E-03', '7.5871E-01', '-4.6980E-01', '6.2926E-01', '-7.1168E-01', '-7.1666E-01', '2.9312E-01', '2.6649E-01', '6.3147E-02',
+'-2.3835E-01', '1.6323E-01', '-4.6838E-01', '-3.5646E-01', '8.4568E-02', '4.0719E-01', '4.0021E-02', '-2.6330E-01', '-3.3535E-01', '-1.1549E-01',
+'3.7994E-01', '1.5655E-01', '-2.4177E-01', '-8.3800E-01', '5.5244E-01', '-3.5137E-01', '-1.3786E-01', '-5.1445E-01', '-1.6664E-02', '9.6918E-01',
+'-5.4116E-01', '2.9610E-01', '5.4988E-02', '2.3470E-01', '2.6369E-01', '-2.5417E-01', '-1.0509E-01', '2.1677E-01', '1.2508E-01', '8.5118E-02',
+'1.2427E-01', '-3.3661E-01', '-1.5697E-01', '2.0711E-01', '-6.5176E-01', '3.3346E-02', '-1.1211E-01', '-7.6497E-02', '-5.8269E-01', '8.9759E-02',
+'5.6093E-01', '-1.4000E-01', '-5.7082E-01', '7.8380E-02', '8.8892E-01', '4.7240E-01' ],
+
+[ '2.2372E+00', '-9.9194E-01', '1.5578E-02', '1.0063E-02', '8.5254E-02', '-7.5551E-01', '-8.9112E-01', '2.2293E-01', '3.6328E-01', '7.1738E-02',
+'5.1681E-02', '2.5185E-02', '-1.3212E-01', '-4.8608E-02', '6.5049E-01', '-3.2046E-01', '-6.4012E-01', '-1.0305E+00', '-3.9299E-02', '-1.8327E-02',
+'3.3664E-01', '-3.7487E-02', '8.7057E-01', '-2.1738E-01', '-5.0746E-01', '4.2185E-03', '-1.6202E-01', '-5.9791E-01', '-1.4144E-01', '-7.6244E-01',
+'-5.3772E-02', '2.9242E-02', '-1.3038E-03', '-2.9386E-03', '-5.2322E-03', '4.2941E-02', '-1.6919E-02', '7.8092E-03', '1.6900E-02', '6.9814E-03',
+'-4.0487E-03', '2.1760E-02', '-1.8774E-02', '9.8209E-03', '-5.9732E-02', '8.8889E-05', '-1.0721E-02', '5.2428E-02', '-3.5990E-02', '-1.1280E-03',
+'5.6778E-03', '9.9889E-03', '-5.0160E-02', '1.0709E-02', '1.2963E-02', '2.0363E-02' ],
+
+[ ('0.0000E+00') x 56 ]
+]
+        , "BOV: RandomEffects EffectMean columns");
 
     remove_test_dir($tempdir);
 }
