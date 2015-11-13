@@ -124,6 +124,7 @@ LIBFILES= ui.pm \
 	so/parsers/sse.pm \
 	so/parsers/vpc.pm \
 	so/parsers/psn.pm \
+	so/parsers/nca.pm \
 	so/soblock/estimation.pm \
 	so/soblock/rawresults.pm \
 	so/soblock/simulation.pm \
