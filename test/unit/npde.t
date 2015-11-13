@@ -64,12 +64,19 @@ my @headers = ('ETA(1)','ETA(2)');
 my $est_matrix = [];
 my $mean_matrix = [];
 
-my $ok = npde_util::read_table_files(\@file_array,\@headers,$est_matrix,$mean_matrix,1);
+my $nmtablefiles = npde_util::get_nmtablefiles(files => \@file_array);
+my $ok = npde_util::get_columns_ids_samples(nmtablefiles => $nmtablefiles,
+											header_strings => \@headers,
+											values_matrix => $est_matrix,
+											mean_matrix => $mean_matrix,
+											filter_all_zero => 1);
+#my $ok = npde_util::read_table_files(\@file_array,\@headers,$est_matrix,$mean_matrix,1);
 	#in reference to empty array to put results [over columns][over individuals][over samples/files]
 	#in reference to empty array to put mean [over columns][over individuals] without original
 
 
-is ($ok, 0, "read_table_files return status");
+is ($ok, 0, "get_columns_ids_samples return status");
+#is ($ok, 0, "read_table_files return status");
 
 #this is stored in ebe_npde.m in matlab/old/
 cmp_ok($est_matrix->[0]->[0]->[0],'==',-5.50879E-02,'ETA1 ind 1 original');
@@ -191,15 +198,71 @@ if(0){
 	}
 }
 
-@headers = ('OBJ');
-$est_matrix=[];
-$mean_matrix=[];
-my $ok = npde_util::read_table_files(\@file_array,\@headers,$est_matrix,$mean_matrix,1);
+
+my @file_array=($filedir.'original.phi',$filedir.'sim-two.phi',$filedir.'sim-3.phi');
+
+my @headers = ('ETA(1)','ETA(2)');
+
+my $est_matrix = [];
+my $mean_matrix = [];
+
+my $nmtablefiles = npde_util::get_nmtablefiles(files => \@file_array);
+my $ok = npde_util::get_columns_ids_samples(nmtablefiles => $nmtablefiles,
+											header_strings => \@headers,
+											values_matrix => $est_matrix,
+											mean_matrix => $mean_matrix,
+											filter_all_zero => 1);
+#my $ok = npde_util::read_table_files(\@file_array,\@headers,$est_matrix,$mean_matrix,1);
 	#in reference to empty array to put results [over columns][over individuals][over samples/files]
 	#in reference to empty array to put mean [over columns][over individuals] without original
 
 
-is ($ok, 0, "read_table_files obj return status");
+is ($ok, 0, "get_columns_ids_samples multi return status");
+#is ($ok, 0, "read_table_files return status");
+
+#this is stored in ebe_npde.m in matlab/old/
+cmp_ok($est_matrix->[0]->[0]->[0],'==',-5.50879E-02,'ETA1 ind 1 original');
+cmp_ok($est_matrix->[0]->[1]->[0],'==',-3.34657E-01,'ETA1 ind 2 original');
+cmp_ok($est_matrix->[1]->[3]->[0],'==',-4.50197E-01,'ETA2 ind 4 original');
+cmp_ok($est_matrix->[0]->[0]->[1],'==',-2.46807E-01,'ETA1 ind 1 sim 1');
+cmp_ok($est_matrix->[1]->[0]->[1],'==',2.10681E-01,'ETA2 ind 1 sim 1');
+cmp_ok($est_matrix->[1]->[4]->[1],'==',1.16354E-01,'ETA2 ind 5 sim 1');
+cmp_ok($est_matrix->[0]->[1]->[2],'==',1.44944E-01,'ETA1 ind 2 sim 2');
+cmp_ok($est_matrix->[1]->[2]->[2],'==',1.14446E-01,'ETA2 ind 3 sim 2');
+cmp_ok($est_matrix->[1]->[4]->[2],'==',-4.12498E-01,'ETA2 ind 5 sim 2');
+cmp_ok($est_matrix->[0]->[1]->[3],'==',-4.66493E-02,'ETA1 ind 2 sim 3');
+cmp_ok($est_matrix->[1]->[2]->[3],'==',-1.60687E-01,'ETA2 ind 3 sim 3');
+cmp_ok($est_matrix->[1]->[4]->[3],'==',9.17580E-02,'ETA2 ind 5 sim 3');
+
+my $diff = 1E-10;
+cmp_ok(abs($mean_matrix->[0]->[0]-(-0.4060175/3)),'<',$diff,'mean ETA1 ind 1');
+cmp_ok(abs($mean_matrix->[0]->[2]-(-0.1616416/3)),'<',$diff,'mean ETA1 ind 3');
+cmp_ok(abs($mean_matrix->[0]->[4]-0.272154/3),'<',$diff,'mean ETA1 ind 5');
+cmp_ok(abs($mean_matrix->[1]->[1]-0.76082/3),'<',$diff,'mean ETA2 ind 2');
+cmp_ok(abs($mean_matrix->[1]->[3]-0.0576/3),'<',$diff,'mean ETA2 ind 4');
+cmp_ok(abs($mean_matrix->[1]->[4]-(-0.204386/3)),'<',$diff,'mean ETA2 ind 5');
+
+
+
+
+
+@headers = ('OBJ');
+$est_matrix=[];
+$mean_matrix=[];
+#my $ok = npde_util::read_table_files(\@file_array,\@headers,$est_matrix,$mean_matrix,1);
+	#in reference to empty array to put results [over columns][over individuals][over samples/files]
+	#in reference to empty array to put mean [over columns][over individuals] without original
+my $nmtablefiles = npde_util::get_nmtablefiles(files => \@file_array);
+my $ok = npde_util::get_columns_ids_samples(nmtablefiles => $nmtablefiles,
+											header_strings => \@headers,
+											values_matrix => $est_matrix,
+											mean_matrix => $mean_matrix,
+											filter_all_zero => 0);
+
+
+#is ($ok, 0, "read_table_files obj return status");
+is ($ok, 0, "get_columns_ids_samples obj return status");
+
 cmp_ok($est_matrix->[0]->[0]->[0],'==',6.2233704337784372,'objv ind 1 original');
 cmp_ok($est_matrix->[0]->[3]->[0],'==',11.873179897235525,'objv ind 4 original');
 cmp_ok($est_matrix->[0]->[1]->[1],'==',8.5706676932580130,'objv ind 2 sim 1');
@@ -212,8 +275,18 @@ cmp_ok($est_matrix->[0]->[4]->[3],'==',8.4664237311178105,'objv ind 5 sim 3');
 @headers = ('IWRES');
 $est_matrix=[];
 $mean_matrix=[];
-my $ok = npde_util::read_table_files(\@file_array,\@headers,$est_matrix,$mean_matrix,1);
-is ($ok, 0, "read_table_files iwres return status");
+#my $ok = npde_util::read_table_files(\@file_array,\@headers,$est_matrix,$mean_matrix,1);
+#is ($ok, 0, "read_table_files iwres return status");
+
+my $nmtablefiles = npde_util::get_nmtablefiles(files => \@file_array);
+my $ok = npde_util::get_columns_ids_samples(nmtablefiles => $nmtablefiles,
+											header_strings => \@headers,
+											values_matrix => $est_matrix,
+											mean_matrix => $mean_matrix,
+											filter_all_zero => 0);
+is ($ok, 0, "get_columns_ids_samples iwres return status");
+
+
 cmp_ok($est_matrix->[0]->[1]->[0],'==',-8.2625E-03,'iwres rec 2 original');
 cmp_ok($est_matrix->[0]->[26]->[0],'==',-0.00096254,'iwres rec 27 original');
 cmp_ok($est_matrix->[0]->[69]->[0],'==',-1.0819E-01,'iwres rec 70 original');
@@ -269,14 +342,47 @@ cmp_ok(abs($decorr->[0]->[57]->[0]-(0.248672597279443)),'<',$diff,'decorr iwres 
 cmp_ok(abs($decorr->[0]->[62]->[0]-(0.177695160276012)),'<',$diff,'decorr iwres orig obs 63');
 cmp_ok(abs($decorr->[0]->[69]->[0]-(-1.781701458701277)),'<',$diff,'decorr iwres orig obs 70');
 
+@file_array=($filedir.'original_iwres.dta',$filedir.'iwres-two.dta',$filedir.'iwres-3.dta');
+@headers = ('IWRES');
+$est_matrix=[];
+$mean_matrix=[];
+#my $ok = npde_util::read_table_files(\@file_array,\@headers,$est_matrix,$mean_matrix,1);
+#is ($ok, 0, "read_table_files iwres return status");
+
+my $nmtablefiles = npde_util::get_nmtablefiles(files => \@file_array);
+my $ok = npde_util::get_columns_ids_samples(nmtablefiles => $nmtablefiles,
+											header_strings => \@headers,
+											values_matrix => $est_matrix,
+											mean_matrix => $mean_matrix,
+											filter_all_zero => 0);
+is ($ok, 0, "get_columns_ids_samples iwres multi return status");
+
+
+cmp_ok($est_matrix->[0]->[1]->[0],'==',-8.2625E-03,'iwres rec 2 original');
+cmp_ok($est_matrix->[0]->[26]->[0],'==',-0.00096254,'iwres rec 27 original');
+cmp_ok($est_matrix->[0]->[69]->[0],'==',-1.0819E-01,'iwres rec 70 original');
+cmp_ok($est_matrix->[0]->[19]->[1],'==',-5.9717E-02,'iwres rec 20 sim1');
+cmp_ok($est_matrix->[0]->[55]->[1],'==',-0.071941,'iwres rec 56 sim1');
+cmp_ok(abs(0.047954 - $est_matrix->[0]->[11]->[2]),'<',0.0000005,'iwres rec 12  sim2');
+cmp_ok($est_matrix->[0]->[35]->[2],'==',0.044685,'iwres rec 36 sim2');
+cmp_ok($est_matrix->[0]->[41]->[3],'==',-0.027903,'iwres rec 42 sim3');
+cmp_ok($est_matrix->[0]->[69]->[3],'==',-0.00014352,'iwres rec 70  sim3');
 
 
 @file_array=($filedir.'original_iwres.dta');
 @headers = ('ID','MDV');
 $est_matrix=[];
 $mean_matrix=[];
-my $ok = npde_util::read_table_files(\@file_array,\@headers,$est_matrix,$mean_matrix,0);
-is ($ok, 0, "read_table_files id mdv return status");
+#my $ok = npde_util::read_table_files(\@file_array,\@headers,$est_matrix,$mean_matrix,0);
+#is ($ok, 0, "read_table_files id mdv return status");
+
+my $nmtablefiles = npde_util::get_nmtablefiles(files => \@file_array);
+my $ok = npde_util::get_columns_ids_samples(nmtablefiles => $nmtablefiles,
+											header_strings => \@headers,
+											values_matrix => $est_matrix,
+											filter_all_zero => 0);
+
+is ($ok, 0, "get_columns_ids_samples id mdv return status");
 
 cmp_ok($est_matrix->[0]->[0]->[0],'==',1,'id rec 1 original');
 cmp_ok($est_matrix->[0]->[39]->[0],'==',3,'id rec 40 original');

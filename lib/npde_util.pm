@@ -5,8 +5,108 @@ use lib "$Bin/../lib";
 use strict;
 use include_modules;
 use MooseX::Params::Validate;
+use nmtablefile;
+use array qw(any_nonzero);
 
 our $missing=-99;
+#	$ret = npde_util::read_table_files(\@found_files,\@eta_headers,$est_matrix,$mean_matrix,1);
+# add id matrix, always return that
+sub get_nmtablefiles{
+	my %parm = validated_hash(\@_,
+							  files => { isa => 'ArrayRef', optional => 0 },
+		);
+	my $files = $parm{'files'};
+
+	my @nmtablefiles = ();
+	foreach my $file (@{$files}){
+		push(@nmtablefiles,nmtablefile->new(filename => $file));
+	}
+	return \@nmtablefiles;
+}
+
+sub get_columns_ids_samples{
+	my %parm = validated_hash(\@_,
+							  nmtablefiles => { isa => 'ArrayRef', optional => 0 },
+							  header_strings => { isa => 'ArrayRef', optional => 0 },
+							  values_matrix => { isa => 'ArrayRef', optional => 0 },
+							  mean_matrix => { isa => 'ArrayRef', optional => 1 },
+							  filter_all_zero => { isa => 'Bool', optional => 0 },
+		);
+	my $nmtablefiles = $parm{'nmtablefiles'};
+	my $header_strings = $parm{'header_strings'};
+	my $values_matrix = $parm{'values_matrix'};
+	my $mean_matrix = $parm{'mean_matrix'};
+	my $filter_all_zero = $parm{'filter_all_zero'};
+	
+	my $get_mean = 0;
+	$get_mean=1 if (defined $mean_matrix);
+
+	#assume first file is original
+
+    my $input_error = 2;
+    my $file_read_error = 1;
+
+	my @column_indices=();
+	return $input_error unless (scalar(@{$nmtablefiles})>0);
+	return $input_error unless (scalar(@{$header_strings})>0);
+
+
+	if ($filter_all_zero){
+		my @filtered_headers =();
+		foreach my $header (@{$header_strings}){
+			if (any_nonzero($nmtablefiles->[0]->tables->[0]->get_column(name=> $header))){
+				push(@filtered_headers,$header);
+			}else{
+				ui->print(category=>'ebe_npde',
+						  message => "\nWarning: Removed ".$header.
+						  " from npde calculation because no non-zero values found first table\n");
+
+			}
+		}
+		$header_strings = \@filtered_headers;
+	}
+
+	my $first_table=1;
+	my $sample_count=0;
+	#FIXME empty files, empty tables
+	foreach my $tablefile (@{$nmtablefiles}){
+		foreach my $nmtable (@{$tablefile->tables}){
+			if ($first_table){
+				for (my $hi=0; $hi < scalar(@{$header_strings}); $hi++){
+					my $col = $nmtable->get_column(name=> $header_strings->[$hi]);
+					for (my $ind = 0; $ind < scalar(@{$col}); $ind++){
+						$values_matrix->[$hi][$ind]=[$col->[$ind]];
+						$mean_matrix->[$hi][$ind] = 0 if ($get_mean); #first table is original, do not count it
+					}
+				}
+				$first_table = 0;
+			}else{
+				for (my $hi=0; $hi < scalar(@{$header_strings}); $hi++){
+					my $col = $nmtable->get_column(name=> $header_strings->[$hi]);
+					for (my $ind = 0; $ind < scalar(@{$col}); $ind++){
+						push(@{$values_matrix->[$hi][$ind]},$col->[$ind]);
+						$mean_matrix->[$hi][$ind] += ($col->[$ind]) if ($get_mean);
+					}
+				}
+				$sample_count++;
+			}
+		}
+	}
+	if ($get_mean){
+		return $file_read_error unless ($sample_count > 0);
+		for (my $j=0;$j<scalar(@{$header_strings});$j++){
+			for (my $i=0;$i<scalar(@{$mean_matrix->[$j]});$i++){
+				#loop over individuals
+				$mean_matrix->[$j][$i] = $mean_matrix->[$j][$i]/$sample_count;
+			} 
+		}
+	}
+
+	return 0;
+
+
+}
+
 
 sub read_table_files { 
 	#in array of file names

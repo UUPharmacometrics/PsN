@@ -12,6 +12,11 @@ use array qw(:all);
 
 my (@a, @b, $a, $b, $c);
 
+#any_nonzero
+ok (!array::any_nonzero([0, 0, 0]), "any_nonzero all zeros");
+ok (!array::any_nonzero([]), "any_nonzero empty array");
+ok (array::any_nonzero([0,-2,0]), "any_nonzero neg");
+
 # not_empty
 ok (array::not_empty([1, 2, 3]), "not_empty for filled array");
 ok (!array::not_empty([]), "not not_empty for empty array");

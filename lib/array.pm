@@ -11,7 +11,7 @@ use math qw(round);
 
 require Exporter;
 our @ISA = qw(Exporter);
-our %EXPORT_TAGS = ('all' => [ qw(not_empty is_empty diff cumsum max min linspace unique add sum mean median median_and_ci variance stdev is_int quantile percentile is_equal get_array_positions sem rse) ]);
+our %EXPORT_TAGS = ('all' => [ qw(not_empty is_empty diff cumsum max min linspace unique add sum mean median median_and_ci variance stdev is_int quantile percentile is_equal get_array_positions sem rse any_nonzero) ]);
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 
 sub get_array_positions{
@@ -105,6 +105,22 @@ sub diff
 	}
 
 	return \@d;
+}
+
+sub any_nonzero
+{
+    # Does array have any non-zero element?
+	my $a = shift;		# Array reference
+
+	my $found_nonzero=0;
+	foreach my $val (@{$a}) {
+		if ($val != 0){
+			$found_nonzero = 1;
+			last;
+		}
+	}
+
+	return $found_nonzero;
 }
 
 sub cumsum

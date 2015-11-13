@@ -486,17 +486,30 @@ sub modelfit_analyze
 			print "\nError iwres: original iwres file not found, iwres results cannot be computed\n";
 			last;
 		}
-		my $ret = npde_util::read_table_files([$self->all_iwres_files->[0]],\@extra_headers,$id_mdv_matrix,$dummy_matrix,0);
-		unless ($ret ==0){
-			print "\nError in read_table_files for iwres: $ret. iwres results cannot be computed\n";
-			last;
-		}
+#		my $ret = npde_util::read_table_files([$self->all_iwres_files->[0]],\@extra_headers,$id_mdv_matrix,$dummy_matrix,0);
 		foreach my $file (@{$self->all_iwres_files}) {
 			push(@found_files,$file) if (-e $file);
 		}
-		$ret = npde_util::read_table_files(\@found_files,\@headers,$est_matrix,$mean_matrix,1);
+		my $nmtablefiles = npde_util::get_nmtablefiles(files => \@found_files);
+
+		my $ret = npde_util::get_columns_ids_samples(nmtablefiles => [$nmtablefiles->[0]], #arrayref of one
+													 header_strings => \@extra_headers,
+													 values_matrix => $id_mdv_matrix,
+													 filter_all_zero => 0);
+
+		unless ($ret ==0){
+			print "\nError in get_columns_ids_samples for iwres: $ret. iwres results cannot be computed\n";
+			last;
+		}
+#		$ret = npde_util::read_table_files(\@found_files,\@headers,$est_matrix,$mean_matrix,1);
+		$ret = npde_util::get_columns_ids_samples(nmtablefiles => $nmtablefiles,
+												  header_strings => \@headers,
+												  mean_matrix => $mean_matrix,
+												  values_matrix => $est_matrix,
+												  filter_all_zero => 0);
+
 		unless ($ret == 0) {
-			print "\nError in read_table_files for iwres: $ret. iwres results cannot be computed\n";
+			print "\nError in get_columns_ids_samples for iwres: $ret. iwres results cannot be computed\n";
 			last;
 		}
 		$ret = npde_util::decorrelation($est_matrix,$mean_matrix,$decorr,$stdev);
@@ -620,9 +633,14 @@ sub modelfit_analyze
 			print "\nError ebe: original eta file not found, ebe results cannot be computed\n";
 			last;
 		}
-		my $ret = npde_util::read_table_files([$self->all_eta_files->[0]],\@extra_headers,$id_matrix,$dummy_matrix,0);
+#		my $ret = npde_util::read_table_files([$self->all_eta_files->[0]],\@extra_headers,$id_matrix,$dummy_matrix,0);
+		my $ret = npde_util::get_columns_ids_samples(files => [$self->all_eta_files->[0]],
+												  header_strings => \@extra_headers,
+												  values_matrix => $id_matrix,
+												  filter_all_zero => 0);
+
 		unless ($ret ==0){
-			print "\nError in read_table_files for eta: $ret. ebe results cannot be computed\n";
+			print "\nError in get_columns_ids_samples for eta: $ret. ebe results cannot be computed\n";
 			last;
 		}
 		foreach my $file (@{$self->all_eta_files}){
@@ -664,9 +682,14 @@ sub modelfit_analyze
 			my $pd=[];
 
 
-			$ret = npde_util::read_table_files(\@found_files,\@eta_headers,$est_matrix,$mean_matrix,1);
+#			$ret = npde_util::read_table_files(\@found_files,\@eta_headers,$est_matrix,$mean_matrix,1);
+			$ret = npde_util::get_columns_ids_samples(files => \@found_files,
+												  header_strings => \@eta_headers,
+												  mean_matrix => $mean_matrix,
+												  values_matrix => $est_matrix,
+												  filter_all_zero => 1);
 			unless ($ret ==0){
-				print "\nError in read_table_files for ebe: $ret. ebe results cannot be computed\n";
+				print "\nError in get_columns_ids_samples for ebe: $ret. ebe results cannot be computed\n";
 				last;
 			}
 
@@ -783,17 +806,26 @@ sub modelfit_analyze
 			print "\nError ebe: original phi file not found, iofv results cannot be computed\n";
 			last;
 		}
-		my $ret = npde_util::read_table_files([$self->all_eta_files->[0]],\@extra_headers,$id_matrix,$dummy_matrix,0);
+#		my $ret = npde_util::read_table_files([$self->all_eta_files->[0]],\@extra_headers,$id_matrix,$dummy_matrix,0);
+		my $ret = npde_util::get_columns_ids_samples(files => [$self->all_eta_files->[0]],
+												  header_strings => \@extra_headers,
+												  values_matrix => $id_matrix,
+												  filter_all_zero => 0);
 		unless ($ret ==0){
-			print "\nError in read_table_files for iofv: $ret. iofv results cannot be computed\n";
+			print "\nError in get_columns_ids_samples for iofv: $ret. iofv results cannot be computed\n";
 			last;
 		}
 		foreach my $file (@{$self->all_eta_files}){
 			push(@found_files,$file) if (-e $file);
 		}
-		$ret = npde_util::read_table_files(\@found_files,\@headers,$est_matrix,$mean_matrix,1);
+#		$ret = npde_util::read_table_files(\@found_files,\@headers,$est_matrix,$mean_matrix,1);
+		$ret = npde_util::get_columns_ids_samples(files => \@found_files,
+												  header_strings => \@headers,
+												  mean_matrix => $mean_matrix,
+												  values_matrix => $est_matrix,
+												  filter_all_zero => 0);
 		unless ($ret ==0){
-			print "\nError in read_table_files for iofv: $ret. iofv results cannot be computed\n";
+			print "\nError in get_columns_ids_samples for iofv: $ret. iofv results cannot be computed\n";
 			last;
 		}
 		open(ORI, ">$all_iofv_file") || die("Couldn't open $all_iofv_file : $!");
