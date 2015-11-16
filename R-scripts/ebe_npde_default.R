@@ -176,8 +176,6 @@ if (require("PEIP")){
 
 dev.off()
 
-dev.off()
-
 #new pdf for OFV
 pdf.filename <- paste0('PsN_OFV_plots.pdf')
 pdf.title <- paste0('ofv diagnostic plots run ',xpose.runno)
