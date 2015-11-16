@@ -7,6 +7,7 @@ use warnings;
 use Moose;
 use MooseX::Params::Validate;
 use File::Spec;
+use File::Basename;
 use include_modules;
 
 use utils::file;
@@ -209,7 +210,7 @@ sub _create_bootstrap
     $self->_so_block->RawResults->add_datafile(name => $bootstrap_results, description => "PsN Bootstrap results file", oid => 'PsN_bootstrap_results'); 
     $self->_so_block->RawResults->add_datafile(name => 'included_individuals1.csv', description => "PsN Bootstrap included individuals", oid => 'PsN_bootstrap_included_individuals'); 
 
-    my $dir = utils::file::directory($self->bootstrap_results);
+    (undef, my $dir) = fileparse($self->bootstrap_results);
     (my $raw_results) = glob("$dir/raw_results_*.csv");
     (undef, undef, $raw_results) = File::Spec->splitpath($raw_results);
 

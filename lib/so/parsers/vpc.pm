@@ -6,11 +6,10 @@ use strict;
 use warnings;
 use Moose;
 use MooseX::Params::Validate;
-use File::Spec;
+use File::Basename;
 use include_modules;
 
 use so::soblock;
-use utils::file;
 
 has 'rundir' => ( is => 'rw', isa => 'Str' );
 has 'vpc_results' => ( is => 'rw', isa => 'Str' );
@@ -58,13 +57,12 @@ sub _create_vpc
     }
 
     # add rawresults
-    (undef, undef, my $vpc_results) = File::Spec->splitpath($self->vpc_results);
+    (my $vpc_results, my $vpcdir) = fileparse($self->vpc_results);
     $self->_so_block->RawResults->add_datafile(name => $vpc_results, description => "PsN vpc results file", oid => "PsN_VPC_results"); 
 
     # find vpctab
-    my $vpcdir = utils::file::directory($self->vpc_results);
-    (my $vpctab) = glob "$vpcdir/vpctab*";
-    $vpctab = File::Spec->splitpath($vpctab);
+    (my $vpctab) = glob($vpcdir . "vpctab*");
+    $vpctab = fileparse($vpctab);
     $self->_so_block->RawResults->add_datafile(name => $vpctab, description => "PsN vpctab", oid => "PsN_VPC_vpctab"); 
 } 
 

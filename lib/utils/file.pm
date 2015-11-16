@@ -15,7 +15,7 @@ use OSspecific;
 
 require Exporter;
 our @ISA = qw(Exporter);
-our %EXPORT_TAGS = ('all' => [ qw(get_file_stem directory replace_extension slurp_file) ]);
+our %EXPORT_TAGS = ('all' => [ qw(get_file_stem replace_extension slurp_file) ]);
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 
 our $path_separator;
@@ -60,23 +60,6 @@ sub replace_extension
     }
 
     return $filename;
-}
-
-sub directory
-{
-    # Extract the path from a filename
-    my $file = shift;
-
-    my @tmp;
-    my $directory;
-    if ($file =~ /\Q$path_separator\E/) {
-        @tmp = split(/\Q$path_separator\E/, $file);
-        $directory = join($path_separator, @tmp[0 .. $#tmp - 1]) . $path_separator;
-    } else {
-        $directory = ".$path_separator";
-    }
-
-    return $directory;
 }
 
 sub slurp_file

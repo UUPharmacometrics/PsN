@@ -8,6 +8,7 @@ use Moose;
 use MooseX::Params::Validate;
 use include_modules;
 use XML::LibXML;
+use File::Basename;
 use output;
 use data;
 use array;
@@ -63,7 +64,7 @@ sub _parse_lst_file
         print "Adding $lst_file\n";
     }
 
-    my $path = utils::file::directory($lst_file);
+    (undef, my $path) = fileparse($lst_file);
 
     my $elapsed_time = 0;
     my @on_sd_scale = ();

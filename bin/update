@@ -3,7 +3,7 @@
 # Only for Development
 use FindBin qw($Bin);
 use lib "$Bin/../lib";
-use File::Spec;
+use File::Basename;
 
 # Don't edit the line below, it must look exactly like this.
 # Everything above this line will be replaced #
@@ -17,8 +17,7 @@ use utils::file;
 
 my $version;
 
-(undef, undef, my $filename) = File::Spec->splitpath($0);
-my $path = utils::file::directory($0);
+(my $filename, my $path) = fileparse($0);
 
 my @name_and_version = split '-', $filename;
 

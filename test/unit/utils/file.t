@@ -27,14 +27,6 @@ if ($Config{osname} ne 'MSWin32') {
 is (replace_extension("pheno.lst", "SO.xml"), "pheno.SO.xml", "replace_extension lst");
 is (replace_extension("noext", "lst"), "noext.lst", "replace_extension noext");
 
-# directory
-utils::file::_set_unix();
-is (directory('/etc/share/tjo.c'), '/etc/share/', "directory with dir on unix");
-is (directory('nodir'), './', "directory nodir in unix");
-utils::file::_set_windows();
-is (directory('C:\dir\dir2\file.h'), "C:\\dir\\dir2\\", "directory with dir on windows");
-is (directory('nodir'), ".\\", "directory nodir in windows");
-
 # slurp_file
 my $testdir = create_test_dir("utils_file_test");
 chdir $testdir;

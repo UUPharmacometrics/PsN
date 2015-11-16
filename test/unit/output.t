@@ -8,6 +8,7 @@ use Test::More;# tests=>1716;
 use Test::Exception;
 use Math::Random;
 use File::Spec;
+use File::Basename;
 use FindBin qw($Bin);
 use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages
@@ -53,8 +54,8 @@ for (my $i=0; $i< scalar(@answer_hashes); $i++){
 	    next;
 	}
 
-    (undef, undef, my $filename) = File::Spec->splitpath($outfile);
-	my $outobj = output->new(filename => $filename, directory => utils::file::directory($outfile));
+    (my $filename, my $dirs) = fileparse($outfile);
+	my $outobj = output->new(filename => $filename, directory => $dirs);
 	cmp_ok($outobj->parsed_successfully,'==',$answer_hashes[$i]->{parsed_successfully}, "output file $outfile parsed successfully");
 	unless( $outobj -> parsed_successfully ){
 		cmp_ok(length($outobj->parsing_error_message),'>',5,'error message exists');
