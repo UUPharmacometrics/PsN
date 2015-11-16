@@ -1675,7 +1675,17 @@ sub modelfit_analyze
 		foreach my $filename (glob '*.dta') {
 			rename $filename, "../$filename";
 		}
+        chdir '..';
         $self->cleanup();
+        if (eval("require Archive::Zip")) {
+            my $simulation_table = "nca_simulation.1.npctab.dta";
+            my $zip = Archive::Zip->new();
+			$zip->addFile($simulation_table);
+			if ($zip->writeToFileNamed($simulation_table . ".zip") == 'AZ_OK') {
+                unlink($simulation_table);
+			}
+        }
+
 		return;
 	}
 
@@ -2814,10 +2824,9 @@ sub get_tte_data
 					 "wrong with the simulations. Expect errors if trying to plot results.\n");
 	}
 
-	my $zip_files=1;
 	my $remove_after_zip=1;
 	my $done_zip=0;
-	if($zip_files == 1 and eval("require Archive::Zip")){
+	if(eval("require Archive::Zip")){
 
 		unless ($self->clean() > 2){
 			my $zip = Archive::Zip->new();
