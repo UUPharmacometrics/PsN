@@ -14,6 +14,8 @@ sub check_options
 							  options => {isa => 'HashRef', optional => 0},
 							  rawres_input => {isa => 'Bool', default => 0},
 							  copy_data => {isa => 'Bool', default => 0},
+							  msfi => {isa => 'Bool', default => 0},
+							  single_prob_or_tnpri => {isa => 'Bool', default => 0},
 							  tool => {isa => 'Str', optional => 0},
 							  model => {isa=> 'model',optional => 1},
 		);
@@ -22,7 +24,10 @@ sub check_options
 	my $copy_data = $parm{'copy_data'};
 	my $tool = $parm{'tool'};
 	my $model = $parm{'model'};
+	my $msfi = $parm{'msfi'};
+	my $single_prob_or_tnpri = $parm{'single_prob_or_tnpri'};
 
+	my $require_est = 0;
 	my $error = '';
 
 	if ($tool eq 'sir'){
@@ -31,17 +36,115 @@ sub check_options
 		$error .= check_sir(options => $options, model => $model);
 	}
 
+	if ($tool eq 'ebe_npde'){
+		$msfi = 1;
+		$single_prob_or_tnpri = 1;
+		$require_est = 1;
+		$error .= check_simeval(options => $options, model => $model);
+	}
+	
 	if ($rawres_input){
 		$error .= check_rawres_input(options => $options);
 	}
 	if ($copy_data and (defined $model)){
-		$error .= check_copy_data(model => $model, options => \%options);
+		$error .= check_copy_data(model => $model, options => $options);
+	}
+	if ($msfi and (defined $model)){
+		$error .= check_msfi(model => $model, options => $options);
+	}
+	if ($single_prob_or_tnpri and (defined $model)){
+		#check_msfi must be run before check tnpri
+		$error .= check_single_prob_or_tnpri(model => $model, options => $options, require_est => $require_est);
 	}
 
 	if (length($error)> 0){
 		ui->print(category=> 'all',message => "\n"."Input error:\n".$error);
 		die;
 	}
+}
+
+sub check_single_prob_or_tnpri
+{
+	my %parm = validated_hash(\@_,
+							  options => {isa => 'HashRef', optional => 0},
+							  model =>  {isa => 'model', optional => 0},
+							  require_est => {isa => 'Bool', optional => 0},
+		);
+	my $options = $parm{'options'};
+	my $model = $parm{'model'};
+	my $require_est = $parm{'require_est'};
+	
+	my $error = '';
+	my $tnpri=0;
+	if ( scalar (@{$model-> problems}) > 2 ){
+		$error .= "Cannot have more than two $PROB in the input model.n";
+	}elsif  (scalar (@{$model-> problems}) == 2 ){
+		if ((defined $model-> problems->[0]->priors()) and 
+			scalar(@{$model-> problems->[0] -> priors()})>0 ){
+			foreach my $rec (@{$model-> problems->[0] -> priors()}){
+				foreach my $option ( @{$rec -> options} ) {
+					if ((defined $option) and 
+						(($option->name eq 'TNPRI') || (index('TNPRI',$option ->name ) == 0))){
+						$tnpri=1;
+					}
+				}
+			}
+		}
+		if ($tnpri){
+			unless( defined $model-> extra_files ){
+				$error .= 'When using $PRIOR TNPRI you must set option -extra_files to '.
+					'the msf-file, otherwise the msf-file will not be copied to the NONMEM '.
+					'run directory.'."\n";
+			}
+		}else{
+			$error .= 'The input model must contain exactly one problem, unless'.
+				' first $PROB has $PRIOR TNPRI'."\n";
+		}
+	}
+	if ($require_est){
+		my $est_record = $model -> record( problem_number => (1+$tnpri),
+										   record_name => 'estimation' );
+		unless( scalar(@{$est_record}) > 0 ){
+			$error .=  "The input model must have a \$EST record\n";
+		}
+	}
+	return $error;
+}
+
+sub check_msfi
+{
+	my %parm = validated_hash(\@_,
+							  options => {isa => 'HashRef', optional => 0},
+							  model =>  {isa => 'model', optional => 0},
+		);
+	my $options = $parm{'options'};
+	my $model = $parm{'model'};
+
+	my $error = '';
+	#this just adds msfi to extra input files, does not check msfi file exists
+	if( defined $model -> msfi_names() ){
+		my @needed_files;
+		foreach my $msfi_files( @{$model -> msfi_names()} ){
+			#loop $PROB
+			if (defined $msfi_files){
+				foreach my $msfi_file( @{$msfi_files} ){
+					#loop instances
+					if ( defined $msfi_file ){
+						my ( $dir, $file ) = OSspecific::absolute_path(cwd(),$msfi_file);
+						push (@needed_files,$dir.$file) ;
+					}
+				}
+			}
+		}
+		if (scalar(@needed_files)>0){
+			if( defined $model -> extra_files ){
+				push(@{$model -> extra_files},@needed_files);
+			}else{
+				$model -> extra_files(\@needed_files);
+			}
+		}
+	}
+	return $error;
 }
 
 sub check_copy_data
@@ -203,6 +306,52 @@ sub check_sir
 		@resamples = (200,400,500,1000,1000);
 	}
 	$options->{'resamples'} = \@resamples;
+
+	return $error;
+}
+
+sub check_simeval
+{
+	my %parm = validated_hash(\@_,
+							  options => {isa => 'HashRef', optional => 0},
+							  model =>  {isa => 'model', optional => 0},
+		);
+	my $options = $parm{'options'};
+	my $model = $parm{'model'};
+	
+	my $error = '';
+	if (defined $options->{'samples'}) {
+		unless ($options->{'samples'} > 0){
+			$error .= "samples must be larger than 0\n";
+		}
+	}else{
+		$options->{'samples'}=300;
+	}
+
+	if (defined $options->{'n_simulation_models'}){
+		unless ($options->{'n_simulation_models'} > 0){
+			$error .= "n_simulation_models must be larger than 0\n";
+		}
+		if ($options->{'n_simulation_models'} > $options->{'samples'}){
+			$options->{'n_simulation_models'} = $options->{'samples'};
+		}
+	}else{
+		if (defined $options->{'threads'} and ($options->{'threads'}>0) ){
+			$options->{'n_simulation_models'} = $options->{'threads'};
+		}else{
+			$options->{'n_simulation_models'} = 1;
+		}
+	}
+
+	#here we have not yet checked that single prob or msfi. just check last $PROB
+	my $prob = scalar(@{$model->problems})-1;
+	my $meth = $model->get_option_value( record_name  => 'estimation',
+										 problem_index => $prob,
+										 option_name  => 'METHOD',
+										 option_index => 0);
+	if (not (defined $meth) or ($meth eq '0') or ($meth =~ /^ZE/)){
+		$error .= 'Cannot run ebe_npde if METHOD=0, all ETAs will be 0'."\n";
+	}
 
 	return $error;
 }

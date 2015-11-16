@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{EBE\_NPDE user guide}{2015-10-01}
+\guidetitle{EBE\_NPDE user guide}{2015-11-16}
 
 \begin{document}
 
@@ -52,6 +52,11 @@ Default set. By default, PsN will rerun the input model to get parameter estimat
 \nextopt
 \optdefault{samples}{N}
 Default 300. The number of simulations and reestimations/evaluations to run. 
+\nextopt
+\optdefault{n\_simulation\_models}{N}
+Default equal to the number of threads.
+By setting this option to a number N greater than 1, the 'samples' simulations and evaluations
+will be split equally between N model files, which can be run in parallel.
 \nextopt
 \optname{reminimize}
 Default not set. By default, simulated datasets will be run with MAXEVAL=0 (or equivalent for non-classical estimation methods). If option -reminimize is set then \$EST will be the same as in the input model. 
@@ -117,11 +122,17 @@ $iOFV_{standardized}=\frac{(iOFV_{observed} - mean (iOFV_{simulated}))^2}{varian
 \emph{and} the next \$OMEGA is not SAME either. Also find set of IOV ETAs, grouped by occasions.
 An ETA is assumed to belong to IOV occasion 1 if the corresponding \$OMEGA is not SAME, but the next \$OMEGA is SAME. 
 An ETA is assumed to belong to IOV occasion 1+$i$ if the corresponding \$OMEGA the $i$th consecutive SAME \$OMEGA. 
-\item If \$SIM not present, create simple \$SIM as in sse. Create 'samples' copies of modified input model with order number of copy indicated in filename. In each copy set unique seed in \$SIM and set NSUB=1, remove old \$TABLE if present, 
-if option reminimize is not set then set MAXEVAL=0, and add \$TABLE IWRES ID NOPRINT ONEHEADER NOAPPEND FILE=iwres-$\langle$ordernum$\rangle$.dta. 
+\item If \$SIM not present, create simple \$SIM as in sse. Create 'n\_simulation\_models' copies of modified
+input model with order number of copy indicated in filename. In each copy set unique seed in \$SIM and set
+NSUB so that sum of simulations is equal to 'samples', remove old \$TABLE if present, 
+if option reminimize is not set then set MAXEVAL=0, and
+add \$TABLE IWRES ID NOPRINT ONEHEADER NOAPPEND FILE=iwres-$\langle$ordernum$\rangle$.dta. 
 \item In 'original' input model: Remove \$SIM if present. Add \$TABLE $\langle$all undropped items in \$INPUT$\rangle$ IPRED PRED IWRES NOPRINT ONEHEADER NOAPPEND FILE=orig\_pred.dta. Add \$TABLE IWRES ID MDV NOPRINT ONEHEADER NOAPPEND FILE=original\_iwres.dta. 
-\item run modified original input model and 'samples' sim models.
-\item Read all iwres\_$\langle$order number$\rangle$.dta files, storing IWRES values per data point. Compute, per data point, ISHR\_ij=1-sd(IWRES\_ij). Open orig\_pred.dta, append ISHR column with computed values, and print to gls\_input.dta. Print also shrinkage column to new file ind\_iwres\_shrinkage.dta. File gls\_input.dta can be used as input when running gls program, see gls\_userguide.pdf. 
+\item run modified original input model and 'n\_simulation\_models' sim models.
+\item Read all iwres\_$\langle$order number$\rangle$.dta files,
+storing IWRES values per data point. Compute, per data point, ISHR\_ij=1-sd(IWRES\_ij). Open orig\_pred.dta, append ISHR column with
+computed values, and print to gls\_input.dta. Print also shrinkage column to new file ind\_iwres\_shrinkage.dta. File gls\_input.dta
+can be used as input when running gls program, see gls\_userguide.pdf. 
 \item Compute npde for IWRES according to \cite{Comets}.
 \item Read ETA values from 
 phi-files for original and simulated data, and compute npde for EBE:s according to \cite{Comets}.

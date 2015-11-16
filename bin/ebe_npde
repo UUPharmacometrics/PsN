@@ -25,10 +25,11 @@ my %options;
 
 my %required_options = ();
 my %optional_options = ( 'samples:i' => undef,
-			 'estimate_input!' => undef,
-			 'lst_file:s' => undef,
-			 'reminimize!' => undef,
-			 'gls_data_file!' => undef);
+						 'estimate_input!' => undef,
+						 'lst_file:s' => undef,
+						 'n_simulation_models:i' => undef,
+						 'reminimize!' => undef,
+						 'gls_data_file!' => undef);
 
 my $res = GetOptions( \%options,
 		      @common_options::get_opt_strings,
@@ -102,6 +103,13 @@ $help_text{-estimate_input} = <<'EOF';
       for simulations.
 EOF
 
+$help_text{-n_simulation_models} = <<'EOF';
+      -n_simulation_models=N
+
+      Default equal to the number of threads.
+      By setting this option to a number N greater than 1, the 'samples' simulations
+      will be split equally between N model files, which can be run in parallel.
+EOF
 $help_text{-reminimize} = <<'EOF';
       -reminimize
 
@@ -133,17 +141,14 @@ if ( scalar(@ARGV) < 1 ) {
 }
 
 if( scalar(@ARGV) > 1 ){
-  print "EBE_NPDE can only handle one modelfile, you listed: ",join(',',@ARGV),". Use 'ebe_npde -h' for help.\n";die;
+  print "ebe_npde can only handle one modelfile, you listed: ",join(',',@ARGV),". Use 'ebe_npde -h' for help.\n";die;
   exit;
 }
 
 
-unless ( defined $options{'samples'}) {
-  $options{'samples'}=300;
-}
 
 require model;
-require tool::ebe_npde;
+require input_checking;
 
 my $eval_string = common_options::model_parameters(\%options);
 
@@ -151,83 +156,23 @@ my $model = model -> new ( eval( $eval_string ),
 			   filename                    => $ARGV[0],
 			   ignore_missing_output_files => 1);
 
-if( defined $model -> msfi_names() ){
-  my @needed_files;
-  foreach my $msfi_files( @{$model -> msfi_names()} ){
-    #loop $PROB
-    if (defined $msfi_files){
-      foreach my $msfi_file( @{$msfi_files} ){
-	#loop instances
-	if ( defined $msfi_file ){
-	  my ( $dir, $file ) = OSspecific::absolute_path(cwd(),$msfi_file);
-	  push (@needed_files,$dir.$file) ;
-	}
-      }
-    }
-  }
-  if (scalar(@needed_files)>0){
-    if( defined $model -> extra_files ){
-      push(@{$model -> extra_files},@needed_files);
-    }else{
-      $model -> extra_files(\@needed_files);
-    }
-  }
+input_checking::check_options(tool => 'ebe_npde', options => \%options, model => $model);
 
-}
+require tool::ebe_npde;
 
-my $tnpri=0;
-if ( scalar (@{$model-> problems}) > 2 ){
-  die('Cannot have more than two $PROB in the input model.');
-}elsif  (scalar (@{$model-> problems}) == 2 ){
-  if ((defined $model-> problems->[0]->priors()) and 
-      scalar(@{$model-> problems->[0] -> priors()})>0 ){
-    foreach my $rec (@{$model-> problems->[0] -> priors()}){
-      foreach my $option ( @{$rec -> options} ) {
-	if ((defined $option) and 
-	    (($option->name eq 'TNPRI') || (index('TNPRI',$option ->name ) == 0))){
-	  $tnpri=1;
-	}
-      }
-    }
-  }
-  if ($tnpri){
-    unless( defined $model-> extra_files ){
-      die('When using $PRIOR TNPRI you must set option -extra_files to '.
-		     'the msf-file, otherwise the msf-file will not be copied to the NONMEM '.
-		     'run directory.');
-    }
-
-  }else{
-    print 'The input model must contain exactly one problem, unless'.
-	' first $PROB has $PRIOR TNPRI'."\n";
-    exit;
-  }
-}
-
-
-
-
-my $est_record = $model -> record( problem_number => (1+$tnpri),
-				   record_name => 'estimation' );
-unless( scalar(@{$est_record}) > 0 ){
-  print "The input model must have a \$EST record\n";
-  exit;
-}
-
-my $ebe_npde = 
-	tool::ebe_npde->new( eval( $common_options::parameters ),
-						 lst_file => $options{'lst_file'},
-						 estimate_input => $options{'estimate_input'},
-						 reminimize => $options{'reminimize'},
-						 gls_data_file => $options{'gls_data_file'},
-						 models	     => [ $model ],
-						 samples            => $options{'samples'} );
-
+my $ebe_npde = tool::ebe_npde->new( eval( $common_options::parameters ),
+									lst_file => $options{'lst_file'},
+									estimate_input => $options{'estimate_input'},
+									reminimize => $options{'reminimize'},
+									n_simulation_models => $options{'n_simulation_models'},
+									gls_data_file => $options{'gls_data_file'},
+									models	     => [ $model ],
+									samples            => $options{'samples'} );
 
 $ebe_npde-> print_options (cmd_line => $cmd_line,
-		      toolname => 'EBE_NPDE',
-		      local_options => [keys %optional_options],
-		      common_options => \@common_options::tool_options);
+						   toolname => 'ebe_npde',
+						   local_options => [keys %optional_options],
+						   common_options => \@common_options::tool_options);
 
    
 $ebe_npde -> run;
