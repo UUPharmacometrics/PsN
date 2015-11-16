@@ -1675,6 +1675,7 @@ sub modelfit_analyze
 		foreach my $filename (glob '*.dta') {
 			rename $filename, "../$filename";
 		}
+        $self->cleanup();
 		return;
 	}
 
