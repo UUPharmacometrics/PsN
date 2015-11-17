@@ -303,6 +303,7 @@ tool::lasso::setup_full_model(model=>$full_model,
 				 covariance => [''],
 				 use_pred => $usepred);
 
+
 tool::lasso::remove_covariate_normalization(model=>$full_model,
 											theta_labels => $theta_labels,
 											use_pred => $usepred);

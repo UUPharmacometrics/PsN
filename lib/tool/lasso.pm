@@ -17,7 +17,7 @@ has 'relations' => ( is => 'rw', required => 1, isa => 'Str' );
 has 'covariate_statistics_file' => ( is => 'rw', isa => 'Str', default => 'covariate_statistics.txt' );
 has 'lasso_model_file' => ( is => 'rw', isa => 'Str', default => 'lasso_start_model.mod' );
 has 'logfile' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { ['lasso.log'] } );
-has 'model_optimal' => ( is => 'rw', isa => 'model' );
+has 'model_optimal' => ( is => 'rw', isa => 'ArrayRef' , default => sub { [] } );
 has 'log_scale' => ( is => 'rw', isa => 'Bool', default=> 0 );
 has 'NOABORT_added' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'run_final_model' => ( is => 'rw', isa => 'Bool', default => 0 );
@@ -622,13 +622,16 @@ sub remove_covariate_normalization
 	my @new_code=();
 	my @labels = @{$theta_labels};
 	my $nextlabel = shift(@labels);
+	my $index = 0;
+
 	foreach my $line (@old_code){
 		if ($line =~ /^\s*$nextlabel/){
-			$line =~ s/-\d+\.\d+//; #subtract mean
-			$line =~ s/\/\d+\.\d+//; #division sd
+			$line =~ s/[+-]\d+\.\d+//; #subtract mean
+			$line =~ s/\/\d+\.\d+//; #division sd #we do not adjust coeffs with sd
 			push(@new_code,$line);
 			if (scalar(@labels)> 0){
 				$nextlabel = shift(@labels);
+				$index++;
 			}else{
 				$nextlabel = 'done';
 			}
@@ -646,7 +649,7 @@ sub remove_covariate_normalization
 }
 
 
-sub setup_evaluation_model
+sub setup_regular_model
 {
 	my %parm = validated_hash(\@_,
 							  lasso_model => { isa => 'model', optional => 0 },
@@ -656,7 +659,7 @@ sub setup_evaluation_model
 							  iteration =>{isa => 'Int', optional => 0},
 							  number =>{isa => 'Maybe[Int]', optional => 1},
 							  normalize=> {isa => 'Bool', optional => 0},
-							  external_data =>{isa => 'Str', optional => 0},
+							  external_data =>{isa => 'Str', optional => 1},
 							  directory =>{isa => 'Str', optional => 0},
 							  cutoff_thetas => { isa => 'ArrayRef', optional => 0 },
 							  cutoff_thetas_labels => { isa => 'ArrayRef', optional => 0 },
@@ -675,33 +678,65 @@ sub setup_evaluation_model
 	my $lasso_coefficients = $parm{'lasso_coefficients'};
 	my $normalize = $parm{'normalize'};
 
+	my $for_evaluation = 0;
+	if (defined $external_data){
+		$for_evaluation = 1;
+	}
+	
 	my $filename;
 	my $tablename;
 	unless (defined $number){
 		$number = 0;
 	}
 
-	if ($adjusted){
-		if ($iteration == 1){
-			$filename = 'evaluation_type_aal_sample_'.$number.'.mod';
-			$tablename = 'dvpred_type_aal_sample_'.$number.'.tab';
-		}else{
-			croak("only one iteration with adjusted or regular");
-		}
-	}else{
-		#adaptive
-		if ($iteration == 1){
-			$filename = 'evaluation_type_l_sample_'.$number.'.mod';
-			$tablename = 'dvpred_type_l_sample_'.$number.'.tab';
-		}else{
-			unless ($adaptive){
+	if ($for_evaluation){
+		if ($adjusted){
+			if ($iteration == 1){
+				$filename = 'evaluation_type_aal_sample_'.$number.'.mod';
+				$tablename = 'dvpred_type_aal_sample_'.$number.'.tab';
+			}else{
 				croak("only one iteration with adjusted or regular");
 			}
-			$filename = 'evaluation_type_al_sample_'.$number.'.mod';
-			$tablename = 'dvpred_type_al_sample_'.$number.'.tab';
+		}else{
+			#adaptive
+			if ($iteration == 1){
+				$filename = 'evaluation_type_l_sample_'.$number.'.mod';
+				$tablename = 'dvpred_type_l_sample_'.$number.'.tab';
+			}else{
+				unless ($adaptive){
+					croak("only one iteration with adjusted or regular");
+				}
+				$filename = 'evaluation_type_al_sample_'.$number.'.mod';
+				$tablename = 'dvpred_type_al_sample_'.$number.'.tab';
+			}
+		}
+	}else{
+		my $temp;
+		if ($number == 0){
+			#regular lasso, no workflow
+			$temp = '';
+		}else{
+			$temp = '_sample_'.$number;
+		}
+		if ($adjusted){
+			if ($iteration == 1){
+				$filename = 'optimal_type_aal'.$temp.'.mod';
+			}else{
+				croak("only one iteration with adjusted or regular");
+			}
+		}else{
+			#adaptive
+			if ($iteration == 1){
+				$filename = 'optimal_type_l'.$temp.'.mod';
+			}else{
+				unless ($adaptive){
+					croak("only one iteration with adjusted or regular");
+				}
+				$filename = 'optimal_type_al'.$temp.'.mod';
+			}
 		}
 	}
-
+		
 	my $model = $lasso_model -> copy(filename => $directory.$filename,
 									 copy_datafile => 0,
 									 output_same_directory => 1,
@@ -709,21 +744,26 @@ sub setup_evaluation_model
 									 copy_output => 0);
 
 	remove_lasso_constraint(model => $model,use_pred => $use_pred);
+
 	if ($normalize){
 		#lasso was run with normalization
-		remove_covariate_normalization(model => $model,use_pred => $use_pred,theta_labels => $cutoff_thetas_labels);
+		remove_covariate_normalization(model => $model,
+									   use_pred => $use_pred,
+									   theta_labels => $cutoff_thetas_labels);
 	}
 
-	#For mae
-	$model -> add_records(type => 'table',
-						  record_strings => ['ID EVID DV PRED NOAPPEND NOPRINT ONEHEADER FILE='.$tablename],
-						  problem_numbers => [1]);
+	if ($for_evaluation){
+		#For mae
+		$model -> add_records(type => 'table',
+							  record_strings => ['ID EVID DV PRED NOAPPEND NOPRINT ONEHEADER FILE='.$tablename],
+							  problem_numbers => [1]);
 
-	$model->set_maxeval_zero(need_ofv=> 1);
+		$model->set_maxeval_zero(need_ofv=> 1);
 
-	$model->ignore_missing_data(1);
-	$model->datafiles(new_names =>[$external_data],problem_numbers => [1]);
-	$model->relative_data_path(0);
+		$model->ignore_missing_data(1);
+		$model->datafiles(new_names =>[$external_data],problem_numbers => [1]);
+		$model->relative_data_path(0);
+	}
 
 	my $count = scalar(@{$cutoff_thetas});
 	
@@ -732,7 +772,6 @@ sub setup_evaluation_model
 							   cutoff_thetas => $cutoff_thetas,
 							   coefficients => [(1) x $count]); #set all 1 FIX
 	}
-
 	for (my $i=0; $i<$count; $i++){
 		my $thetanumber = $cutoff_thetas->[$i];
 		my $value = $lasso_coefficients->[$i];
@@ -1884,18 +1923,22 @@ sub modelfit_setup
 														 theta_estimates => $self->cutoff_thetas_estimates,
 														 factor => $self->factor_estimate,
 														 cutoff => $self->cutoff);
-	my $modeloptimal =setup_optimal_model(finalvalues => $lasso_optimal->get_hash_values_to_labels(),
-										  base_model => $basic_model,
-										  parameter_covariate_form => \%parameter_covariate_form,
-										  normalize => $self->normalize,
-										  log_scale => $self->log_scale,
-										  statistics => $self->statistics,
-										  use_pred => $self->use_pred,
-										  NOABORT_added => $self->NOABORT_added,
-										  directory => $self->directory,
-										  cutoff_thetas => $self->cutoff_thetas,
-										  lasso_coefficients => $lasso_coefficients);
+	my $modeloptimal =  setup_regular_model(lasso_model => $lasso_optimal,
+											directory => $self->directory.'m1/',
+											adjusted => $self->adjusted,
+											normalize => $self->normalize,
+											iteration => 1,
+											number => $self->evaluation_number,
+											cutoff_thetas => $self->cutoff_thetas,
+											cutoff_thetas_labels => $self->cutoff_thetas_labels,
+											adaptive => $self->adaptive,
+											use_pred => $self->use_pred,
+											lasso_coefficients => $lasso_coefficients);
+	$modeloptimal->_write;
+	push(@{$self->model_optimal},$modeloptimal);
 
+
+	
 	if ($self->factor_estimate <0.9 or $self->factor_estimate >1.1) {
 		$self->write_log(message =>"WARNING: Factor for the final lasso model: ".$self->factor_estimate);
 		$self->warnings($self->warnings()+1);
@@ -1908,7 +1951,7 @@ sub modelfit_setup
 					   filename => 'lasso_coefficients.csv');
 
 	if (defined $self->external_data){
-		my $evaluation_model = setup_evaluation_model(lasso_model => $lasso_optimal,
+		my $evaluation_model = setup_regular_model(lasso_model => $lasso_optimal,
 													  directory => $self->directory.'m1/',
 													  adjusted => $self->adjusted,
 													  normalize => $self->normalize,
@@ -1925,6 +1968,7 @@ sub modelfit_setup
 
 	if ($self->adaptive and not ($self->adjusted)){
 		#reset t to 0, reset pred inits etc
+		@{$al_coefficients} = @{$lasso_coefficients}; #HERE
 
 		my $iteration = 1;
 #		foreach my $exponent ((1)){
@@ -1935,7 +1979,7 @@ sub modelfit_setup
 													copy_output => 0);
 		update_al_coefficients(model => $lasso_adaptive,
 							   cutoff_thetas => $self->cutoff_thetas,
-							   coefficients => $lasso_coefficients);
+							   coefficients => $al_coefficients);
 		$lasso_adaptive->_write;
 
 
@@ -1958,19 +2002,23 @@ sub modelfit_setup
 														  theta_estimates => $self->cutoff_thetas_estimates,
 														  factor => $self->factor_estimate,
 														  cutoff => $self->cutoff);
-		#FIXME update adaptive model with coeff
-		$modeloptimal =setup_optimal_model(finalvalues => $lasso_optimal->get_hash_values_to_labels(),
-										   base_model => $basic_model,
-										   parameter_covariate_form => \%parameter_covariate_form,
-										   statistics => $self->statistics,
-										   normalize => $self->normalize,
-										   log_scale=> $self->log_scale,
-										   use_pred => $self->use_pred,
-										   NOABORT_added => $self->NOABORT_added,
-										   directory => $self->directory,
-										   cutoff_thetas => $self->cutoff_thetas,
-										   lasso_coefficients => $lasso_coefficients);
+		#FIXME change sub
+		my $modeloptimal2 = setup_regular_model(lasso_model => $lasso_optimal,
+												directory => $self->directory.'m1/',
+												adjusted => $self->adjusted,
+												normalize => $self->normalize,
+												iteration => $iteration,
+												number => $self->evaluation_number,
+												cutoff_thetas => $self->cutoff_thetas,
+												cutoff_thetas_labels => $self->cutoff_thetas_labels,
+												adaptive => $self->adaptive,
+												use_pred => $self->use_pred,
+												lasso_coefficients => $lasso_coefficients);
 
+		$modeloptimal2->_write;
+		push(@{$self->model_optimal},$modeloptimal2);
+
+		
 		if ($self->factor_estimate<0.9 or $self->factor_estimate>1.1) {
 			$self->write_log(message =>"WARNING: Factor for the final lasso model: ".$self->factor_estimate);
 			$self->warnings($self->warnings()+1);
@@ -1983,25 +2031,23 @@ sub modelfit_setup
 						   directory => $self->directory);
 
 		if (defined $self->external_data){
-			my $evaluation_model = setup_evaluation_model(lasso_model => $lasso_optimal,
-														  directory => $self->directory.'m1/',
-														  adjusted => $self->adjusted,
-														  normalize => $self->normalize,
-														  iteration => $iteration,
-														  number => $self->evaluation_number,
-														  external_data => $self->external_data,
-														  cutoff_thetas => $self->cutoff_thetas,
-														  cutoff_thetas_labels => $self->cutoff_thetas_labels,
-														  adaptive => $self->adaptive,
-														  use_pred => $self->use_pred,
-														  lasso_coefficients => $lasso_coefficients);
+			my $evaluation_model = setup_regular_model(lasso_model => $lasso_optimal,
+													   directory => $self->directory.'m1/',
+													   adjusted => $self->adjusted,
+													   normalize => $self->normalize,
+													   iteration => $iteration,
+													   number => $self->evaluation_number,
+													   external_data => $self->external_data,
+													   cutoff_thetas => $self->cutoff_thetas,
+													   cutoff_thetas_labels => $self->cutoff_thetas_labels,
+													   adaptive => $self->adaptive,
+													   use_pred => $self->use_pred,
+													   lasso_coefficients => $lasso_coefficients);
 			$evaluation_model->_write;
 		}
 #		} end loop exponents
 	}
 		
-	$self->model_optimal($modeloptimal);
-	$self->model_optimal->_write;
 
 	
 	$self->tools([]) unless (defined $self->tools);
@@ -2012,7 +2058,7 @@ sub modelfit_setup
 		push( @{$self -> tools},
 			  tool::modelfit -> new (%{common_options::restore_options(@common_options::tool_options)},
 									 seed => $common_seed,
-									 models    => [$self->model_optimal],
+									 models    => $self->model_optimal, #arrayref
 									 threads    => 1,
 									 base_directory => $self->directory(),
 									 raw_results_file => [$self->directory().'raw_results_final_model.csv'],
@@ -2344,6 +2390,8 @@ sub setup_optimal_model
 	my $cutoff_thetas = $parm{'cutoff_thetas'};
 	my $lasso_coefficients = $parm{'lasso_coefficients'};
 
+	#FIXME remove centering. Drop sd, do not recompute coefficients to include sd
+	
 	my $model_optimal = $base_model -> copy(filename =>$directory. "m1/optimal_model.mod",
 											copy_datafile => 0, 
 											copy_output => 0,
@@ -2573,8 +2621,8 @@ sub modelfit_analyze
 	return unless (defined $self -> model_optimal);
 
 	if ($self->run_final_model and (
-		(not defined $self -> model_optimal-> outputs -> [0] or 
-		not $self->model_optimal->outputs->[0]->get_single_value(attribute =>'minimization_successful')))){
+		(not defined $self -> model_optimal-> [-1]-> outputs -> [0] or 
+		not $self->model_optimal->[-1]->outputs->[0]->get_single_value(attribute =>'minimization_successful')))){
 		my $round;
 		if (defined $self -> model_optimal->outputs->[0]->get_single_value (attribute => 'rounding_errors')
 				and $self -> model_optimal->outputs->[0]->get_single_value (attribute => 'rounding_errors')){
