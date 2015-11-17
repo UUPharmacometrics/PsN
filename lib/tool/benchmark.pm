@@ -34,6 +34,7 @@ has 'parameter_threshold' => ( is => 'rw', isa => 'Num', default => 5 );
 has 'nonmem_paths' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 has 'full_rawres_headers' => ( is => 'rw', isa => 'ArrayRef' , default => sub { [] });
 has 'settings_header' => ( is => 'rw', isa => 'ArrayRef' , default => sub { [] });
+has 'copy_data' => ( is => 'rw', isa => 'Bool', default => 1 );
 has '_reference_raw_results' => ( is => 'rw', isa => 'ArrayRef' );
 
 sub BUILD
@@ -690,6 +691,12 @@ sub modelfit_setup
             $model_lists->[$j]->[$i]->outputfile($model_lists->[$j]->[$i]->directory.$filename);
             $model_lists->[$j]->[$i]->set_outputfile();
 			$model_lists->[$j]->[$i]->_write();
+            if (not $self->copy_data) {
+                if (not $model_lists->[$j]->[$i]->copy_data_setting_ok(copy_data => $self->copy_data)){
+                    croak("Cannot set -no-copy_data, absolute data file path is too long.");
+                } 
+                $model_lists->[$j]->[$i]->relative_data_path(0);
+            }
 		}
 	}
 
@@ -731,6 +738,7 @@ sub modelfit_setup
 									  raw_results           => undef,
 									  prepared_models       => undef,
 									  top_tool              => 0,
+                                      copy_data => $self->copy_data,
 				);
 			push(@{$self->tools}, $evaluation);
 

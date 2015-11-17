@@ -31,6 +31,7 @@ my %optional_options = (
 	'replicates:i' => undef,
 	'parameter_threshold:f'=> undef,
     'reference_lst:s' => undef,
+    'copy_data!' => undef,
 	);
 
 my $res = GetOptions( \%options,
@@ -119,6 +120,16 @@ $help_text{-reference_lst} = <<'EOF';
     Add the results from one or more .lst files to all raw_results.
 EOF
 
+$help_text{-copy_data} = <<'EOF';
+    -copy_data
+    Set by default. Disable with -no-copy_data. By default PsN will copy
+    the data file into NM_run1 and set a local path in psn.mod, the actual
+    model file run with NONMEM. If -no-copy_data is set, PsN will not copy 
+    the data to NM_run1 but instead set a global path to the data file in
+    psn.mod. However, NONMEM will not accept a path longer than 80
+	characters.
+EOF
+
 $help_text{Post_help_message} = <<'EOF';
     Also see 'psn_options -h' for a description of common PsN options.
 EOF
@@ -153,6 +164,10 @@ if (defined $options{'reference_lst'}) {
     }
 }
 
+if (not defined $options{'copy_data'}) {
+    $options{'copy_data'} = 1;
+}
+
 require model;
 require tool::benchmark;
 
@@ -176,6 +191,7 @@ my $benchmark =
 					 dofv_threshold      => $options{'dofv_threshold'},
 					 parameter_threshold => $options{'parameter_threshold'},
                      reference_lst => \@reference_lst,
+                     copy_data => $options{'copy_data'},
 	);
 
 $benchmark-> print_options (cmd_line => $cmd_line,

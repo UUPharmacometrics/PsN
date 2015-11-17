@@ -128,6 +128,9 @@ and the rplots processing being performed for all models as a single group.
 %\optdefault{reference\_input}{list}
 %Or something. Prerun lst files as reference, one per input model, or only one if -merge
 %\nextopt
+\optname{copy\_data}
+Default set. Disable with -no-copy\_data. By default, PsN will copy the datafile into NM\_run1 and set a local path in psn.mod, the actual modelfile run with NONMEM. If -no-copy\_data is set, PsN will not copy the data to NM\_run1 and instead set a global path to the datafile in psn.mod.
+\nextopt
 \end{optionlist}
 
 \subsection{Some important common PsN options}
