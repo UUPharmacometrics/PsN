@@ -16,6 +16,7 @@ use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages and $path variable definition
 use File::Copy 'cp';
 use tool::modelfit;
+use common_options;
 
 sub check_diff
 {
@@ -48,28 +49,25 @@ my $dir='mfit';
 
 chdir($tempdir);
 
-#figure out if we are running nmqual or nmfe
-my $dummy_model = model::create_dummy_model;
-my $tool = tool::modelfit->new(models => [$dummy_model], directory=> 'dummy');
-our $modext = $tool->modext; # mod by default, ctl if nmqual
-our $lstext = 'lst'; #unclear if this should be variable
-
-#if ($tool->nmqual){
-#	$lstext='lst';
-#}
-
-
+#figure out if we are running nmqual or nmfe, which decides control stream extension
+my %options = ();
+common_options::setup( \%options, 'execute' ); #
+our $modext = 'mod';
+our $lstext = 'lst'; 
+if (defined $options{'nmqual'} and $options{'nmqual'}==1){
+	$modext = 'ctl';
+}
 
 my @command_line = (
-	get_command('execute') . " phenomaxeval10.mod -nmfe -clean=1 -no-tweak_inits -min_retries=0 -retries=0 -maxevals=9999 -handle_msfo -directory=$dir",
-	get_command('execute') . " phenomaxeval10.mod -nmfe -clean=1 -tweak_inits  -min_retries=0 -retries=0 -maxevals=0 -directory=$dir",
-	get_command('execute') . " phenomaxeval10.mod -nmfe -clean=1 -tweak_inits  -min_retries=0 -retries=1 -maxevals=0 -directory=$dir",
-	get_command('execute') . " pheno.mod -clean=1 -nmfe -tweak_inits  -min_retries=0 -retries=1 -reduced_model_ofv=70 -directory=$dir",
-	get_command('execute') . " phenomaxeval0.mod -nmfe -clean=1 -tweak_inits  -min_retries=0 -retries=1 -maxevals=0 -directory=$dir",
-	get_command('execute') . " phenomaxeval0.mod -nmfe -clean=1 -tweak_inits  -min_retries=1 -retries=0 -maxevals=0 -directory=$dir",
+	get_command('execute') . " phenomaxeval10.mod -clean=1 -no-tweak_inits -min_retries=0 -retries=0 -maxevals=9999 -handle_msfo -directory=$dir",
+	get_command('execute') . " phenomaxeval10.mod -clean=1 -tweak_inits  -min_retries=0 -retries=0 -maxevals=0 -directory=$dir",
+	get_command('execute') . " phenomaxeval10.mod -clean=1 -tweak_inits  -min_retries=0 -retries=1 -maxevals=0 -directory=$dir",
+	get_command('execute') . " pheno.mod -clean=1 -tweak_inits  -min_retries=0 -retries=1 -reduced_model_ofv=70 -directory=$dir",
+	get_command('execute') . " phenomaxeval0.mod -clean=1 -tweak_inits  -min_retries=0 -retries=1 -maxevals=0 -directory=$dir",
+	get_command('execute') . " phenomaxeval0.mod -clean=1 -tweak_inits  -min_retries=1 -retries=0 -maxevals=0 -directory=$dir",
 	get_command('execute') . " create_tnpri_msf.mod ",
-	get_command('execute') . " tnpri.mod -nmfe -clean=1 -tweak_inits  -min_retries=0 -retries=1 -extra_files=msf_tnpri -directory=$dir",
-	get_command('execute') . " tnpri.mod -nmfe -clean=1 -tweak_inits  -min_retries=1 -retries=0 -extra_files=msf_tnpri -maxevals=0 -directory=$dir",
+	get_command('execute') . " tnpri.mod -clean=1 -tweak_inits  -min_retries=0 -retries=1 -extra_files=msf_tnpri -directory=$dir",
+	get_command('execute') . " tnpri.mod -clean=1 -tweak_inits  -min_retries=1 -retries=0 -extra_files=msf_tnpri -maxevals=0 -directory=$dir",
 );
 
 # If we are running on Windows remove ' in command line
