@@ -568,15 +568,19 @@ sub run
 																					 source => '../', 
 																					 run_nmtran => $run_nmtran,
 																					 check_verbatim => $check_verbatim);
+				
 				$queue_info{$run}{'model'} = $models[$run];
 				$queue_info{$run}{'have_accepted_run'} = 0;
 				$queue_info{$run}{'tries'} = 0;
 				$queue_info{$run}{'crashes'} = 0;
+				$queue_info{$run}{'submit_crashes'} = 0;
 				$queue_info{$run}{'evals'} = 0;
 				$queue_info{$run}{'run_results'} = [];
 				$queue_info{$run}{'raw_results'} = [];
 				$queue_info{$run}{'raw_nonp_results'} = [];
 
+
+				
 				# printing progress
 
 				# We don't want to print all starting models if they are
@@ -1718,7 +1722,6 @@ sub diagnose_lst_errors
 	my $store_general_error=0;
 
 	if (not (-e 'FDATA')) {
-		#FIXME check for signs that nmfe did not start at all. set restart possible? record slurm jobs status F
 		if (-e 'locfile.set' or -e 'maxlim.set' or -e 'background.set' or -e 'licfile.set' or -e 'nmexec.set' or -e 'rundir.set' or -e 'runpdir.set' or -e 'worker.set'){
 			$failure = 'There was an error when running nmfe, NMtran could not be initiated (the NMtran output file FDATA is missing)';
 			$failure_mess = "\nThere was an error when running nmfe, NMtran could not be initiated for model ".($run_no+1).' ';
@@ -1741,7 +1744,14 @@ sub diagnose_lst_errors
 				}
 				close( MESS );
 			}else{
-				$failure .= ' - check cluster status and cluster settings in psn.conf';
+				if ($missing and (not $have_stats_runs) and (not -e 'nmfe_output.txt')){
+					$restart_possible = 1; #will only restart if configured handle_submit_crashes > 0
+					$failure .= ' - this could be a cluster submit error';
+					$failure_mess = "\nNMtran could not be initiated (the NMtran output file FDATA is missing in NM_run".($run_no+1).'). '.
+						' - this could be a cluster submit error';
+				}else{
+					$failure .= ' - check cluster status and cluster settings in psn.conf';
+				}
 			}
 		}
 		$store_general_error=1 unless ($have_stats_runs);
@@ -2373,6 +2383,7 @@ sub restart_needed
 	}
 	unless (-e 'psn.lst'){
 		trace(tool => 'modelfit',message => "no psn.lst at all, try to diagnose", level => 2);
+
 		my $ref = diagnose_lst_errors(missing => 1, 
 									  have_stats_runs => 0,
 									  run_no => $run_no,
@@ -2383,11 +2394,23 @@ sub restart_needed
 
 		$failure = $ref->[0];
 		$failure_mess = $ref->[1];
-		$self->general_error(message => $failure_mess) if ($ref->[3]); #if store_general_error is true
-
-		ui -> print( category => 'all', message  => $failure_mess,newline => 1 );
-		$run_results -> [${$tries}] -> {'failed'} = $failure; #different texts for different causes
-		return(0); #must always return 0 unless either modified model or increased crash number
+		my $restart_possible = $ref->[2];
+		if ($restart_possible and
+			( defined $PsN::config -> {'_'} -> {'handle_submit_crashes'} ) and
+			($PsN::config -> {'_'} -> {'handle_submit_crashes'} > $queue_info_ref -> {'submit_crashes'})){
+			$queue_info_ref -> {'submit_crashes'}++; #not a renumbered crash, not a retry
+			ui -> print( category => 'all', 
+						 message  => $failure_mess.', doing new submit '.$queue_info_ref -> {'submit_crashes'},
+						 newline => 1 );
+			#here we do not move retry files, since no output generated. reuse same psn.mod. assume no
+			#special cleanup needed
+			return(1);
+		}else{
+			$self->general_error(message => $failure_mess) if ($ref->[3]); #if store_general_error is true
+			ui -> print( category => 'all', message  => $failure_mess,newline => 1 );
+			$run_results -> [${$tries}] -> {'failed'} = $failure; #different texts for different causes
+			return(0); #must always return 0 unless either modified model or increased crash number
+		}
 	} 
 
 	#now we know psn.lst exists. 

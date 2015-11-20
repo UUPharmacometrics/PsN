@@ -181,10 +181,35 @@ cmp_ok($selected,'==',2,' pick global when success not good enough ');
 our $tempdir = create_test_dir('unit_modelfit');
 our $dir = "$tempdir/fail_test";
 mkdir($dir);
+chdir($dir);
 #put pheno.mod in testdir so that .ext etc in testfiledir are not modified
 
+my $ref = tool::modelfit::diagnose_lst_errors(missing => 1, 
+							  run_no => 0,
+							  have_stats_runs => 0,
+							  modext  => 'mod',
+							  run_local => 1,
+							  nmtran_error_file => 'nmtran_error.txt',
+							  nmqual => 0);
+cmp_ok($ref->[0],'eq','NMtran could not be initiated (the NMtran output file FDATA is missing) - check that the nmfe script can be run independent of PsN',
+	   'failure nmtran init ');
+cmp_ok($ref->[2],'==',0,'restart possible nmtran init local');
+cmp_ok($ref->[3],'==',1,'store error nmtran init ');
+
+my $ref = tool::modelfit::diagnose_lst_errors(missing => 1, 
+							  run_no => 0,
+							  have_stats_runs => 0,
+							  modext  => 'mod',
+							  run_local => 0,
+							  nmtran_error_file => 'nmtran_error.txt',
+							  nmqual => 0);
+cmp_ok($ref->[0],'eq','NMtran could not be initiated (the NMtran output file FDATA is missing) - this could be a cluster submit error',
+	   'failure nmtran init ');
+cmp_ok($ref->[2],'==',1,'restart possible nmtran init not local');
+cmp_ok($ref->[3],'==',1,'store error nmtran init ');
+
+
 copy_test_files($dir,["modelfit/diagnose_lst_errors/FMSG", "modelfit/diagnose_lst_errors/locfile.set", "modelfit/diagnose_lst_errors/psn.lst"]);
-chdir($dir);
 my $ref = tool::modelfit::diagnose_lst_errors(missing => 0, 
 							  run_no => 0,
 							  have_stats_runs => 0,
