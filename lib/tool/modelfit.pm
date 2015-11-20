@@ -1718,6 +1718,7 @@ sub diagnose_lst_errors
 	my $store_general_error=0;
 
 	if (not (-e 'FDATA')) {
+		#FIXME check for signs that nmfe did not start at all. set restart possible? record slurm jobs status F
 		if (-e 'locfile.set' or -e 'maxlim.set' or -e 'background.set' or -e 'licfile.set' or -e 'nmexec.set' or -e 'rundir.set' or -e 'runpdir.set' or -e 'worker.set'){
 			$failure = 'There was an error when running nmfe, NMtran could not be initiated (the NMtran output file FDATA is missing)';
 			$failure_mess = "\nThere was an error when running nmfe, NMtran could not be initiated for model ".($run_no+1).' ';
