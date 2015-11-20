@@ -139,13 +139,15 @@ sub modelfit_setup
 		$self -> tools( [ tool::modelfit -> new ( 'models' => $self -> estimation_models,
 												  %modf_args,
 												  nmtran_skip_model => 2,
-												  copy_data => 0
+												  copy_data => 0,
+												  directory_name_prefix => 'estimation'
 				) ] );
 	} elsif( not $self -> estimate_only ) {
 		$self -> tools( [ tool::modelfit -> new ( 'models' => $self -> prediction_models,
 												  %modf_args,
 												  nmtran_skip_model => 2,
-												  copy_data => 0
+												  copy_data => 0,
+												  directory_name_prefix => 'prediction'
 						  ) ] );
 	}
 	
@@ -329,7 +331,8 @@ sub modelfit_post_subtool_analyze
 		push( @{$self -> tools}, tool::modelfit -> new ( 'models' => \@models_to_run,
 														 %modelfit_arg,
 														 nmtran_skip_model => 2,
-														 copy_data => 0
+														 copy_data => 0,
+														 directory_name_prefix => 'prediction'
 			) );
 	}
 }
