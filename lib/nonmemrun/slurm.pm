@@ -75,9 +75,11 @@ sub submit
 	}
 
 	my $command = $self->create_command;
-	(my $directory, my $filename) = OSspecific::absolute_path('.', 'psn.mod' );
-	my $modfile = $directory.$filename;
-	my $lstfile = $directory.'psn.lst';
+	my $modfile = 'psn.mod';
+	if ($self->nmqual){
+		$modfile = 'psn.ctl';
+	}
+	my $lstfile = 'psn.lst';
 
 	system("echo sbatch $flags $command \"2>&1\" > sbatchcommand");
 
@@ -86,6 +88,8 @@ sub submit
 		#also make sure psn.lst is NOT here, i.e. moving of old output is finished
 		my $outp = readpipe("sbatch $flags 2>&1 <<EOF
 #!/bin/bash  -l
+printenv | sed \'/^HOSTNAME=/!d; s///;q\' > hostname 
+
 for J in 1 2 3 4 5 6 7 8 9 10
 do
 if test -f $lstfile 
@@ -97,8 +101,6 @@ echo \"did not find $lstfile, ok\"
 break
 fi
 done
-
-printenv | sed \'/^HOSTNAME=/!d; s///;q\' > hostname 
 
 for J in 1 2 3 4 5 6 7 8 9 10
 do
