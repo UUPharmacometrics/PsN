@@ -98,6 +98,8 @@ break
 fi
 done
 
+printenv | sed \'/^HOSTNAME=/!d; s///;q\' > hostname 
+
 for J in 1 2 3 4 5 6 7 8 9 10
 do
 if test -f $modfile -a -r $modfile
