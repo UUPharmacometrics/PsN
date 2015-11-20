@@ -9,7 +9,7 @@
 The nmoutput2so script creates and populates a DDMoRe Standardized Output 
 \cite{Terranova}
 xml file given the output from one or more NONMEM runs. 
-It is necessary that the format of the model file and other files follow a set of requirements (see below) for this to work. The Perl module XML::LibXML is required by nmoutput2so, but not PsN in general. Make sure that it is installed before using nmoutput2so. See the PsN installation guide for intructions.
+It is necessary that the format of the model file and other files follow a set of requirements (see below) for this to work. The Perl module XML::LibXML is required by nmoutput2so, but not PsN in general. Make sure that it is installed before using nmoutput2so (If you are using ActivePerl on Windows please read the section on installation below). See the PsN installation guide for intructions.
 
 
 Examples
@@ -327,6 +327,16 @@ SO/
                 RandomEffects
                 RawResultsFile
 \end{verbatim}
+
+\section{Installation on Windows and ActivePerl}
+If you are running windows and ActivePerl installation is a bit more involved and can only be recommended for people highly skilled in perl package installation and in manual installation of dll:s in Windows. It is strongly recommended to use Strawberry perl instead of ActivePerl if you intend to run nmoutput2so.
+
+\begin{itemize}
+    \item Not all versions of the ppm system comes with XML-LibXML precompiled. If not you'll need to compile it yourself either manually or by installing from cpan.
+    \item ActivePerl (unlike Strawberry perl) does not come with libxml2, which is a dependency of the XML-LibXML package, bundled. You will need to install the appropriate dll:s manually. The libxml2 webpage has information on how to do this.
+\end{itemize}
+
+Describing any of the above procedures is beyond the scope of this documentation.
 
 \begin{thebibliography}{1}
 \bibitem{Terranova} Nadia Terranova, Marc Lavielle, Mike K. Smith, 
