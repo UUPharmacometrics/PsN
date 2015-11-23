@@ -16,16 +16,29 @@ The nmtran check requires that it is the installation directory to NONMEM that i
 %Default not used. PsN will compress the contents of 'NM\_runX' to the file 'nonmem\_files.tgz' if the -compress option is used and if you have the archive and compress programs tar and gzip installed. If you use the -clean options, run files will be removed before the compression.  
 %\nextopt
 \optname{handle\_crashes}
-Default used. Disable with -no-handle\_crashes. PsN tries to recognize NONMEM runs that crashed for various reasons, e.g. a computer crash or a NONMEM run deliberately killed, and restart those runs without changing initial parameter estimates. 
+Default used. Disable with -no-handle\_crashes. PsN tries to recognize if a NONMEM run has crashed for
+%FIXME add description of logic for crash detection
+a reason where submitting the run again might help. Such a reason might be
+a computer crash, run being killed by system due to job timeout, or nmfe failing to even start due to file sync errors on a cluster.
+If handle\_crashes is set and the number of actual crash restarts is smaller than the setting of option
+-crash\_restarts, PsN will restart those runs. The crash handling machinery is independent of the retries machinery.
+
+If option -handle\_msfo was also set \emph{and} lst-file and msfo-file from the crashed run are found, PsN will automatically use the
+msfo file in \$MSFI of a modified control stream file, and then restart the run from the state that was saved in the msfo-file.
+This functionality is useful on clusters where there is a hard run time limit for jobs.
+
+If option -handle\_msfo was \emph{not} set, or if no lst-file or other sign that nmfe even started are found,
+PsN will simply try to run the same control stream again. Initial parameter estimates are not changed.  
 \nextopt
 \optdefault{crash\_restarts}{'integer'}
-Default 4. If a NONMEM output-file is produced but PsN is unable to read it properly it is assumed that NONMEM crashed, probably due to something in the operating system, and PsN will start the run again. But PsN will not consider it a retry and will not change initial estimates. 
+Default 4. The number of times PsN will restart a crashed run. Initial estimates are not tweaked in a crash restart, see option
+-handle\_crashes.
 \nextopt
 \optname{handle\_msfo}
 Default not used. Feature for handling resumes using msfo and msfi files. 
 \nextopt
 \optname{maxevals}
-Default not used. Will only work for classical estimation methods. NONMEM only allows 9999 function evaluations. PsN can expand this limit by adding an MSFO option to \$ESTIMATION. Later when NONMEM hits the max number of function evaluations allowed by NONMEM (9999) PsN will remove initial estimates from the model-file and add \$MSFI and restart NONMEM. This will be repeated until the number of function evaluations specified with option -maxevals has been reached. Note: PsN does not change the MAXEVALS setting in the model-file, therefore the number of evaluations set on the command-line may be exceeded before PsN does the check if the run should be restarted with msfi or not. 
+Default not used. Will only work for classical estimation methods. NONMEM only allows 9999 function evaluations. PsN can expand this limit by adding an MSFO option to \$ESTIMATION. Later when NONMEM hits the max number of function evaluations allowed by NONMEM (9999) PsN will remove initial estimates from the model-file and add \$MSFI and restart NONMEM. This will be repeated until the number of function evaluations specified with option -maxevals has been reached. Note: PsN does not change the MAXEVALS setting in the model-file, therefore the number of evaluations set on the command-line may be exceeded before PsN performs the check if the run should be restarted with msfi or not. 
 \nextopt
 \optdefault{nice}{'integer'}
 Default 19. This option only has effect on Unix like operating systems. It  sets the priority (or nice value) on a process. You can give any value that is legal for the "nice" command, likely it is between 0 and 19, where 0 is the highest priority. Execute "man nice" on the Unix system for details. 

@@ -573,7 +573,6 @@ sub run
 				$queue_info{$run}{'have_accepted_run'} = 0;
 				$queue_info{$run}{'tries'} = 0;
 				$queue_info{$run}{'crashes'} = 0;
-				$queue_info{$run}{'submit_crashes'} = 0;
 				$queue_info{$run}{'evals'} = 0;
 				$queue_info{$run}{'run_results'} = [];
 				$queue_info{$run}{'raw_results'} = [];
@@ -1745,10 +1744,10 @@ sub diagnose_lst_errors
 				close( MESS );
 			}else{
 				if ($missing and (not $have_stats_runs) and (not -e 'nmfe_output.txt')){
-					$restart_possible = 1; #will only restart if configured handle_submit_crashes > 0
-					$failure .= ' - this could be a cluster submit error';
+					$restart_possible = 1; #will only restart if handle_crashes and crash_restarts > 0
+					$failure .= ' - this could be a cluster file sync error';
 					$failure_mess = "\nNMtran could not be initiated (the NMtran output file FDATA is missing in NM_run".($run_no+1).'). '.
-						' - this could be a cluster submit error';
+						' - this could be a cluster file sync error';
 				}else{
 					$failure .= ' - check cluster status and cluster settings in psn.conf';
 				}
@@ -2395,12 +2394,16 @@ sub restart_needed
 		$failure = $ref->[0];
 		$failure_mess = $ref->[1];
 		my $restart_possible = $ref->[2];
-		if ($restart_possible and
-			( defined $PsN::config -> {'_'} -> {'handle_submit_crashes'} ) and
-			($PsN::config -> {'_'} -> {'handle_submit_crashes'} > $queue_info_ref -> {'submit_crashes'})){
-			$queue_info_ref -> {'submit_crashes'}++; #not a renumbered crash, not a retry
+		if ($restart_possible and ($self->handle_crashes and $queue_info_ref->{'crashes'} < $self->crash_restarts)){
+			$queue_info_ref->{'crashes'}++;
+			update_crash_number(modext => $self->modext,
+								queue_info => $queue_info_ref,
+								retry => ${$tries},
+								nm_major_version => $PsN::nm_major_version,
+								nm_minor_version => $PsN::nm_minor_version);
+
 			ui -> print( category => 'all', 
-						 message  => $failure_mess.', doing new submit '.$queue_info_ref -> {'submit_crashes'},
+						 message  => $failure_mess.', doing new submit '.$queue_info_ref -> {'crashes'},
 						 newline => 1 );
 			#here we do not move retry files, since no output generated. reuse same psn.mod. assume no
 			#special cleanup needed
@@ -2508,7 +2511,7 @@ sub restart_needed
 
 	if($model_crashed){
 		#here we do have a lst-file, but perhaps is completely empty
-		#check for signs of NMtran error, compilation error. Do not handle that as crash
+		#check for signs of NMtran error, compilation error.
 
 		my $ref = diagnose_lst_errors(missing => 0,
 									  have_stats_runs => 0,
@@ -2536,20 +2539,14 @@ sub restart_needed
 		$queue_info_ref->{'crashes'}++;
 
 		if($model_crashed){
-			carp("Restarting crashed run " . $output_file->full_name . "\n" . $output_file->parsing_error_message);
 			#not if handle maxevals exceeded
-			#now we could be restarting after the main PsN process has been killed, and
-			#the crashes counter has been reset. Therefore check existence of files from 
-			#previous crashes
-			my $crash_no = $queue_info_ref -> {'crashes'};
-			while (-e get_retry_name( filename => 'psn.'.$self->modext,
-									  retry => ${$tries},
-									  crash => $crash_no,
-									  nm_major_version => $PsN::nm_major_version,
-									  nm_minor_version => $PsN::nm_minor_version)){
-				$crash_no++;
-			}	  
-			$queue_info_ref -> {'crashes'} = $crash_no;
+			carp("Restarting crashed run " . $output_file->full_name . "\n" . $output_file->parsing_error_message);
+			update_crash_number(modext => $self->modext,
+								queue_info => $queue_info_ref,
+								retry => ${$tries},
+								nm_major_version => $PsN::nm_major_version,
+								nm_minor_version => $PsN::nm_minor_version);
+
 			my $message = "\nModel in NM_run".($run_no+1)." crashed, restart attempt nr ". ($queue_info_ref -> {'crashes'} );
 			ui -> print( category => 'all',  message  => $message,
 						 newline => 1);
@@ -2713,6 +2710,34 @@ sub restart_needed
 	$output_file -> flush;
 	return $marked_for_rerun;
 
+}
+
+sub update_crash_number {
+	my %parm = validated_hash(\@_,
+							  modext => { isa => 'Str', optional => 0 },
+							  queue_info => { isa => 'HashRef', optional => 0 },
+							  retry =>  { isa => 'Int', optional => 0 },
+							  nm_major_version => { isa => 'Int', optional => 0 },
+							  nm_minor_version => { isa => 'Maybe[Num]', optional => 1 }
+		);
+	my $modext = $parm{'modext'};
+	my $queue_info = $parm{'queue_info'};
+	my $retry = $parm{'retry'};
+	my $nm_major_version = $parm{'nm_major_version'};
+	my $nm_minor_version = $parm{'nm_minor_version'};
+
+	#now we could be restarting after the main PsN process has been killed, and
+	#the crashes counter has been reset. Therefore check existence of files from 
+	#previous crashes
+	my $crash_no = $queue_info -> {'crashes'};
+	while (-e get_retry_name( filename => 'psn.'.$modext,
+							  retry => $retry,
+							  crash => $crash_no,
+							  nm_major_version => $PsN::nm_major_version,
+							  nm_minor_version => $PsN::nm_minor_version)){
+		$crash_no++;
+	}	  
+	$queue_info -> {'crashes'} = $crash_no;
 }
 
 sub compute_iofv
