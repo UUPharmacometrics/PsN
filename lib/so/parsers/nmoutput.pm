@@ -765,7 +765,7 @@ sub _get_iov_etas
     my $occasion;
 
     foreach my $line (@code) {
-        if ($line =~ /^\s*(\w+)\s*=\s*ETA\((\w+)_\1\)/) {
+        if ($line =~ /^\s*(\w+)\s*=\s*ETA\(([A-Za-z0-9]+)_\w+\)/) {
             push @names, $1;
             $occasion = $2;
         }
