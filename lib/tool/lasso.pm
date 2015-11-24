@@ -2365,6 +2365,7 @@ sub write_coefficients{
 
 sub setup_optimal_model
 {
+	#NOT used anywhere
 	my %parm = validated_hash(\@_,
 							  finalvalues => { isa => 'ArrayRef', optional => 0 },
 							  base_model => { isa => 'model', optional => 0 },

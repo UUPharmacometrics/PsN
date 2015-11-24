@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{LASSO user guide}{2015-10-29}
+\guidetitle{LASSO user guide}{2015-11-24}
 
 
 \begin{document}
@@ -242,27 +242,53 @@ is replaced with
 where AL\_VWGT is the adaptive lasso coefficient for VWGT and is equal to a FIXED \$THETA. 
 
 \section{Lasso procedure}
-
 \begin{enumerate}
-\item Input checking.
-\item Compute covariate statistics.
-\item Create the lasso model by adding all covariate relations to a copy of the input model with \$COV removed. 
-Normalize parameters using covariate statistics. See details in lasso reference article. 
-Note: Basic model parameters are \emph{not} updated with final estimates even if input model
-lst-file exists. If adaptive lasso is run, AL coefficients, FIX and equal to 1, 
-for adaptive lasso are also added to the model.
-\item Create cross-validation data sets, possibly using stratification. Divide data into N groups. Create N estimation datasets where estimation dataset j is the total dataset minus group j. There are N prediction datasets where prediction dataset j is identical to group j. 
+\item Read input model. Basic model parameters are \emph{not} updated with final estimates even if input model
+lst-file exists. 
+\item Read data set and compute mean and standard deviation of covariates in full data set.
+\item Create the lasso model:
+\begin{itemize}
+\item Normalize covariates by subtracting the mean and dividing by the standard deviation, example:
+\begin{verbatim}
+(WGT-1.52542)/0.70456
+\end{verbatim}
+\item Add code for each parameter-covariate relation as a lasso THETA to be estimated multiplied with
+the normalized covariate multiplied with the lasso-constraint FACTOR variable.
+If adaptive lasso is run (option -adaptive and/or -adjusted) then also multiply with a FIXED adaptive lasso (AL)
+coefficient. To begin with, the AL coefficients are set equal to 1.
+\begin{verbatim}
+CLWGT = THETA(4)*AL_CLWGT*(WGT-1.52542)/0.70456*FACTOR
+\end{verbatim}
+\item Add code for covariates in expressions for typical values of parameters. The default is to include
+the relations multiplicatively:
+\begin{verbatim}
+CLCOV = (CLWGT+1)*(CLSEX0+1)
+TVCL  = THETA(1)
+TVCL = TVCL*CLCOV
+\end{verbatim}
+but if option -log\_scale is set then relations are included additively:
+\begin{verbatim}
+CLCOV = CLWGT+CLSEX0
+LNTVCL  = THETA(1)
+LNTVCL = LNTVCL+CLCOV
+\end{verbatim}
+\item Add code for lasso constraint, which involves sum of absolute lasso THETAs (not AL THETAs) and
+the t-value.
+\end{itemize}
+\item Create cross-validation data sets, possibly using stratification. Divide data into N groups.
+Create N estimation datasets where estimation dataset j is the total dataset minus group j.
+There are N prediction datasets where prediction dataset j is identical to group j. 
 \item Only if adjusted adaptive lasso is run: 
 \begin{enumerate}
-\item Create the full model by copying the lasso model and removing the
-lasso constraint on the covariate relation \$THETAs. 
+\item Create the full model by copying the lasso model created as above and removing the
+lasso constraint. 
 \item Add \$COV. 
-\item Run the full model to obtain estimates and standard errors of the covariate relation \$THETAs.
-\item Compute AL-coefficients for each covariate relation \$THETAs 
-as $\frac{abs(theta)}{se_{theta}}$
-and update the lasso model with these FIX values.
+\item Run the full model to obtain estimates and standard errors of the lasso \$THETAs.
+\item Compute new AL-coefficients for each parameter-covariate relation 
+as $\frac{abs(lasso theta)}{se_{lasso theta}}$
+\item Change the AL coefficients in the lasso model from 1 FIXED to these new FIXED values.
 \end{enumerate}
-\item Run a cross-validation to find the optimal value of t, 
+\item Run a cross-validation with the lasso model to find the optimal value of t, 
 starting at start\_t and ending when the prediction ofv increases compared to the
 previous t or when stop\_t is reached.
 %\item Set t=start\_t. The default starting position is start\_t=0.
@@ -271,19 +297,64 @@ previous t or when stop\_t is reached.
 %\item Run an xv step with lasso model. An xv step consists of N estimations, one for each estimation dataset, and N predictions, one for each prediction dataset. The prediction j is a MAXEVAL=0 run with initial estimates set to the final estimates from estimation run j. Note: if t=0 the lasso model collapses to the base model.
 %\item Check convergence. If convergence is not reached, go back to step 6. If converged continue to 9.
 \item Run the lasso model with optimal t on the whole (original) dataset. 
-\item Compute lasso coefficients as $FACTOR*theta*ALtheta$, where AL\_theta is equal to 1 unless adjusted adaptive lasso 
-is run.
-\item Only if adaptive lasso, but not adjusted adaptive lasso, is run:
+\item Compute final lasso coefficients as described below in subsection
+``Computing final lasso coefficients''.
+\item Create regular model as described below in subsection ``Creating regular model''
+\item Only if adaptive lasso, but \emph{not} adjusted adaptive lasso, is run:
 \begin{enumerate}
-\item Compute AL-coefficients for each covariate relation \$THETAs 
-as $abs(theta)\cdot FACTOR$
-and update the lasso model with these FIX values.
-\item Run a cross-validation to find the optimal value of t, 
+\item Change the AL coefficients in the lasso model from 1 FIXED to the absolute values
+of the lasso coefficients computed above (step 8).
+\item Run a cross-validation with the updated lasso model to find the optimal value of t, 
 starting at start\_t and ending when the prediction ofv increases compared to the
 previous t or when stop\_t is reached.
-\item Compute lasso coefficients as $FACTOR*theta*ALtheta$.
+\item Run the lasso model with optimal t on the whole (original) dataset. 
+\item Compute final adaptive lasso coefficients as described below in subsection
+``Computing final lasso coefficients''.
+\item Create regular model as described below in subsection ``Creating regular model''
 \end{enumerate}
 %\item Add the covariate relations and parameters from the optimal lasso model run (only relations with thetas larger than cutoff) to the input model, fix the selected covariate thetas as the lasso restriction has been removed and run the input model on the whole dataset.
+\end{enumerate}
+
+\subsubsection*{Computing final lasso coefficients}
+\begin{itemize}
+\item If (adjusted) adaptive lasso: Compute final lasso coefficients as
+$FACTOR*lassotheta*ALtheta$. If $abs(lassotheta)\cdot ALtheta\leq 0.005$ then set lasso coefficient to 0.
+\item If regular lasso:
+Compute final lasso coefficients as $FACTOR*lassotheta$. If $abs(lassotheta)\leq 0.005$ then
+set lasso coefficient to 0.
+\end{itemize}
+
+\subsubsection*{Creating regular model}
+Final lasso coefficients, either from regular, adaptive or adjusted adaptive lasso is needed as input. 
+\begin{enumerate}
+\item Copy the lasso model, and update non-fix parameters with final estimates from
+lasso model run with optimal t on full data set.
+\item Remove lasso constraint from the model by setting variable FACTOR equal to 1 and remove code involving
+the t-value.
+\item Remove the covariate normalization (subtraction of mean and division by standard deviation) by just dropping
+it from the model code. Example:
+\begin{verbatim}
+CLWGT = THETA(4)*AL_CLWGT*(WGT-1.52542)/0.70456*FACTOR
+\end{verbatim}
+becomes
+\begin{verbatim}
+CLWGT = THETA(4)*AL_CLWGT*(WGT)*FACTOR
+\end{verbatim}
+\item ``Remove'' AL coefficients by setting them to 1 FIX (if only regular lasso is run then AL coefficients are not
+in the model at all). Note: AL coefficients, if used, are included in regular model via final lasso coefficients.
+\item Set the parameter-covariate (lasso) thetas
+(e.g. THETA(4) in above example) equal to the corresponding final lasso coefficients
+computed as above
+and FIX them. Note 1: In current version of program
+the parameter-covariate thetas are not updated based on standard deviation used in normalization. In older
+version of program the thetas were multiplied with the standard deviation.
+Note 2: Some lasso coefficients will be 0.
+\item If an external validation data set was given: Copy regular model, set MAXEVAL=0 and change data set to
+external data set.
+\item Run regular model with full data set, i.e. reestimate model parameters.
+\item If an external validation data set was given: Copy regular model again, update initial estimates
+with final estimates from estimation in previous step, set MAXEVAL=0 and change data set to
+external data set.
 \end{enumerate}
 
 \section{Covariate relations}
