@@ -1,6 +1,5 @@
 #!/usr/bin/perl
 
-# Unit tests for llp.pm
 # Note that only a small portion of the module is tested
 
 use strict;
@@ -941,6 +940,14 @@ dies_ok {tool::modelfit::retries_decide_what_to_do( estimation_step_run => 1,
  
 
 
-
+my $hash ={};
+tool::modelfit::make_delay(threads => 2,
+						   run => 1, 
+						   min_fork_delay => $hash->{'min_fork_delay'},
+						   max_fork_delay => $hash->{'max_fork_delay'});
+tool::modelfit::make_delay(threads => 2,
+						   run => 1, 
+						   min_fork_delay => 100000,
+						   max_fork_delay => 1);
 
 done_testing;

@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{PsN configuration}{2015-03-19}
+\guidetitle{PsN configuration}{2015-11-25}
 \begin{document}
 
 \maketitle
@@ -191,4 +191,34 @@ as described in section Running nmfe from within PsN.
 
 In PsN4 no compiler instructions can be set.
 
+\section{Job submission delays}
+When more than one model will be run in parallel (threads > 1 and more than one model to run), it is possible to
+make PsN pause between submissions of new models. The relevant configuration variables are
+\verb|min_fork_delay| and \verb|max_fork_delay|, which if used must be set \emph{before} the first section
+in psn.conf, i.e. before the first \verb|[section_name]| header.
+\verb|max_fork_delay| is the maximum delay in seconds, and \verb|min_fork_delay| is
+the step-length in micro-seconds between each check if output from the previous model in the list has appeared. If
+output from previous run is visible the pause ends.
+Example:
+\begin{verbatim}
+min_fork_delay=100000
+max_fork_delay=1
+\end{verbatim}
+which will give at most 1 second pause in steps of 0.1 seconds.
+Of course, if \verb|min_fork_delay| is set larger than
+$10^6\cdot$\verb|max_fork_delay| then the delay will be longer than
+\verb|max_fork_delay| seconds. This is a method to make
+the delay independent of the output generation from other models.
+
+\section{Polling interval}
+By default, PsN will check for finished jobs every 1 second.
+By setting \verb|job_polling_interval| in psn.conf before the first \verb|[section_name]| header, the interval can be changed.
+However, it cannot be set to 0.
+Example:
+\begin{verbatim}
+job_polling_interval=2
+\end{verbatim}
+which will make PsN check for finished jobs every 2 seconds.
+
 \end{document}
+

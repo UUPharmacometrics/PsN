@@ -494,37 +494,10 @@ sub run
 			}
 
 			# delay code (to avoid overload of new processes)
-
-			if ($threads > 1) {
-
-				if ($run > 0) {
-					my $start_sleep = Time::HiRes::time();
-
-					my ($min_sleep, $max_sleep); # min_sleep is in microseconds and max_sleep is in seconds.
-
-					if( defined $PsN::config -> {'_'} -> {'min_fork_delay'} ) {
-						$min_sleep = $PsN::config -> {'_'} -> {'min_fork_delay'};
-					} else {
-						$min_sleep = 0;
-					}
-
-					if( defined $PsN::config -> {'_'} -> {'max_fork_delay'} ) {
-						$max_sleep = $PsN::config -> {'_'} -> {'max_fork_delay'};
-					} else {
-						$max_sleep = 0;
-					}
-
-					if ($min_sleep > $max_sleep * 1000000) {
-						$max_sleep = $min_sleep;
-					}
-
-					while ((not(-e 'NM_run' . ($run) . '/psn.lst')) and 
-						   (Time::HiRes::time() - $start_sleep) < $max_sleep) {
-						Time::HiRes::usleep($min_sleep);
-					}
-				}
-
-			}
+			make_delay(threads => $threads,
+					   run => $run, 
+					   min_fork_delay => $PsN::config -> {'_'} -> {'min_fork_delay'}, #can be undef
+					   max_fork_delay => $PsN::config -> {'_'} -> {'max_fork_delay'});
 
 			# Call to run_nonmem 
 
@@ -878,6 +851,48 @@ sub run
 	return \@results;
 }
 
+
+sub make_delay{
+	my %parm = validated_hash(\@_,
+							  threads => { isa => 'Int', optional => 0 },
+							  run => { isa => 'Int', optional => 0 },
+							  min_fork_delay => { isa => 'Maybe[Num]', optional => 0 },
+							  max_fork_delay => { isa => 'Maybe[Num]', optional => 0 },
+		);
+	my $threads = $parm{'threads'};
+	my $run = $parm{'run'};
+	my $min_fork_delay = $parm{'min_fork_delay'}; #100000
+	my $max_fork_delay = $parm{'max_fork_delay'}; #1
+	
+	if ($threads > 1) {
+		if ($run > 0) {
+			my $start_sleep = Time::HiRes::time();
+
+			my ($min_sleep, $max_sleep); # min_sleep is in microseconds and max_sleep is in seconds.
+
+			if( defined $min_fork_delay ) {
+				$min_sleep = $min_fork_delay;
+			} else {
+				$min_sleep = 0;
+			}
+
+			if( defined $max_fork_delay ) {
+				$max_sleep = $max_fork_delay;
+			} else {
+				$max_sleep = 0;
+			}
+
+#			my $slept = 0;
+			while ((not(-e 'NM_run' . ($run) . '/psn.lst')) and 
+				   (Time::HiRes::time() - $start_sleep) < $max_sleep) {
+				Time::HiRes::usleep($min_sleep);
+#				$slept++;
+			}
+#			print "slept ".(($slept*$min_sleep)/1000000)." seconds\n";
+		}
+
+	}
+}
 
 sub select_best_retry
 {
