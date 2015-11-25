@@ -11,7 +11,7 @@ extends 'tool';
 has 'xv_steps' => ( is => 'rw', isa => 'ArrayRef[xv_step]' );
 has 'subtools' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { ['xv_step'] } );
 has 'warnings' => ( is => 'rw', isa => 'Int', default => 0 );
-
+has 'step_counter' => ( is => 'rw', isa => 'Int', default => 1 );
 
 sub BUILD
 {
@@ -48,9 +48,12 @@ sub xv_step_pre_fork_setup
 		%step_args = %{$self -> subtool_arguments -> {'xv_step'}};
 	} 
 
+	my $dir = 'xv_step_dir'.$self->step_counter;
+	$self->step_counter($self->step_counter+1);
 	my $xv_step = tool::xv_step -> new( models => [$self -> models -> [0]], 
 										subtools => $subtools,
 										%step_args,
+										directory => $dir,
 										subtool_arguments => $self->subtool_arguments);
 
 	$xv_step -> create_data_sets;
@@ -122,6 +125,8 @@ sub xv_step_post_subtool_analyze
 		if (defined $self -> subtool_arguments and defined $self -> subtool_arguments -> {'xv_step'}){
 			%step_args = %{$self -> subtool_arguments -> {'xv_step'}};
 		} 
+		my $dir = 'xv_step_dir'.$self->step_counter;
+		$self->step_counter($self->step_counter+1);
 		
 		$self -> xv_steps -> [$model_number -1] = 
 			tool::xv_step -> new( models => [$self -> models -> [$model_number - 1]],
@@ -130,6 +135,7 @@ sub xv_step_post_subtool_analyze
 								  stratify_on => $first_xv_step -> stratify_on, 
 								  subtools => $subtools,
 								  %step_args,
+								  directory => $dir,
 								  subtool_arguments => $self->subtool_arguments );
 		
 		$self->tools([]) unless (defined $self->tools);
