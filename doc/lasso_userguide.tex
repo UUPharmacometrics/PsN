@@ -328,27 +328,25 @@ set lasso coefficient to 0.
 Final lasso coefficients, either from regular, adaptive or adjusted adaptive lasso is needed as input. 
 \begin{enumerate}
 \item Copy the lasso model, and update non-fix parameters with final estimates from
-lasso model run with optimal t on full data set.
-\item Remove lasso constraint from the model by setting variable FACTOR equal to 1 and remove code involving
-the t-value.
-\item Remove the covariate normalization (subtraction of mean and division by standard deviation) by just dropping
-it from the model code. Example:
+previous estimation of lasso model with optimal t on full data set.
+\item Remove lasso constraint from the model by removing code involving the t-value and removing FACTOR.
+\item Set the parameter-covariate (lasso) thetas
+(e.g. THETA(4) in below example) equal to the corresponding final lasso coefficients
+computed as above divided by the standard deviation of the covariate
+and FIX them. Remove division by sd from the code, and also remove AL coefficients and FACTOR.
+Note 1: if only regular lasso is run then AL coefficients are not
+in the model at all. Note 2: Values of AL coefficients, if used, are included in regular model via final lasso coefficients.
+Example:
 \begin{verbatim}
 CLWGT = THETA(4)*AL_CLWGT*(WGT-1.52542)/0.70456*FACTOR
 \end{verbatim}
 becomes
 \begin{verbatim}
-CLWGT = THETA(4)*AL_CLWGT*(WGT)*FACTOR
+CLWGT = THETA(4)*(WGT-1.52542)
 \end{verbatim}
-\item ``Remove'' AL coefficients by setting them to 1 FIX (if only regular lasso is run then AL coefficients are not
-in the model at all). Note: AL coefficients, if used, are included in regular model via final lasso coefficients.
-\item Set the parameter-covariate (lasso) thetas
-(e.g. THETA(4) in above example) equal to the corresponding final lasso coefficients
-computed as above
-and FIX them. Note 1: In current version of program
-the parameter-covariate thetas are not updated based on standard deviation used in normalization. In older
-version of program the thetas were multiplied with the standard deviation.
-Note 2: Some lasso coefficients will be 0.
+where THETA(4) is set to final lasso coefficient for CLWGT divided by 0.70456 and FIXED.
+Note: Some lasso coefficients will be 0.
+\item Set THETAs for AL coefficients, if any, to 1 FIX. 
 \item If an external validation data set was given: Copy regular model, set MAXEVAL=0 and change data set to
 external data set.
 \item Run regular model with full data set, i.e. reestimate model parameters.

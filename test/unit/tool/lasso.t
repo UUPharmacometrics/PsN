@@ -304,10 +304,11 @@ tool::lasso::setup_full_model(model=>$full_model,
 				 use_pred => $usepred);
 
 
-tool::lasso::remove_covariate_normalization(model=>$full_model,
-											theta_labels => $theta_labels,
-											use_pred => $usepred);
-
+my $sdref = tool::lasso::remove_covariate_normalization(model=>$full_model,
+														theta_labels => $theta_labels,
+														use_pred => $usepred,
+														adaptive => 0);
+cmp_float_array($sdref,[7.81198,3.80400,0.40476,0.48468,7.81198,0.47477,15.50568],'sd from removing normalization');
 
 my %finalhash;
 $finalhash{'theta'}={

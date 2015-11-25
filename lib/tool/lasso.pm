@@ -565,10 +565,12 @@ sub remove_lasso_constraint
 	my %parm = validated_hash(\@_,
 							  model => { isa => 'model', optional => 0 },
 							  use_pred =>{isa => 'Bool', optional => 0},
+							  delete_factor => {isa => 'Bool', optional => 1, default=> 0},
 		);
 	my $model = $parm{'model'};
 	my $use_pred = $parm{'use_pred'};
-
+	my $delete_factor = $parm{'delete_factor'};
+	
 	my @old_code;
 	if ($use_pred){
 		@old_code = @{$model->get_code(record => 'pred')};
@@ -583,11 +585,13 @@ sub remove_lasso_constraint
 	my @new_code=();
 	foreach my $line (@old_code){
 		if ($line =~ /^\s*TVALUE  = THETA/){
-			push(@new_code,$line);
+			push(@new_code,$line) unless ($delete_factor);
 			$copy=0;
 		}elsif($line =~ /^\s*FACTOR = EXP/){
-			push(@new_code,$blank.'FACTOR = 1');
+			push(@new_code,$blank.'FACTOR = 1') unless ($delete_factor);
 			$copy=1;
+		}elsif($line =~ /\s*;;; LASSO/){ #begin or end
+			next;
 		}elsif($copy){
 			push(@new_code,$line);
 		}
@@ -606,12 +610,14 @@ sub remove_covariate_normalization
 	my %parm = validated_hash(\@_,
 							  model => { isa => 'model', optional => 0 },
 							  use_pred =>{isa => 'Bool', optional => 0},
+							  adaptive =>{isa => 'Bool', optional => 0},
 							  theta_labels =>{isa => 'ArrayRef', optional => 0},
 		);
 	my $model = $parm{'model'};
 	my $use_pred = $parm{'use_pred'};
 	my $theta_labels = $parm{'theta_labels'};
-
+	my $adaptive = $parm{'adaptive'};
+	
 	my @old_code;
 	if ($use_pred){
 		@old_code = @{$model->get_code(record => 'pred')};
@@ -621,17 +627,27 @@ sub remove_covariate_normalization
 
 	my @new_code=();
 	my @labels = @{$theta_labels};
+	my $count = scalar(@labels);
 	my $nextlabel = shift(@labels);
 	my $index = 0;
+	my $nextal = 'AL_'.$theta_labels->[$index];
+	my @sd = ();
 
 	foreach my $line (@old_code){
-		if ($line =~ /^\s*$nextlabel/){
-			$line =~ s/[+-]\d+\.\d+//; #subtract mean
-			$line =~ s/\/\d+\.\d+//; #division sd #we do not adjust coeffs with sd
+		if ($adaptive and ($line =~ /^\s*$nextal/)){
+			$index++;
+			$nextal = 'AL_'.$theta_labels->[$index] if ($index < $count);
+			next;
+		}elsif ($line =~ /^\s*$nextlabel/){
+			$line =~ s/\*FACTOR//;
+			if ($adaptive){
+				$line =~ s/\*AL_$nextlabel//;
+			}
+			$line =~ s/\/(\d+\.\d+)//; #remove sd and store it 
+			push(@sd,$1);
 			push(@new_code,$line);
 			if (scalar(@labels)> 0){
 				$nextlabel = shift(@labels);
-				$index++;
 			}else{
 				$nextlabel = 'done';
 			}
@@ -645,7 +661,7 @@ sub remove_covariate_normalization
 	} else {
 		$model->set_code(record => 'pk', code => \@new_code);
 	}
-
+	return \@sd;
 }
 
 
@@ -743,13 +759,18 @@ sub setup_regular_model
 									 write_copy => 0,
 									 copy_output => 0);
 
-	remove_lasso_constraint(model => $model,use_pred => $use_pred);
+	remove_lasso_constraint(model => $model,
+							use_pred => $use_pred,
+							delete_factor => 1);
 
+	my $count = scalar(@{$cutoff_thetas});
+	my $sd;
 	if ($normalize){
 		#lasso was run with normalization
-		remove_covariate_normalization(model => $model,
-									   use_pred => $use_pred,
-									   theta_labels => $cutoff_thetas_labels);
+		$sd = remove_covariate_normalization(model => $model,
+											 use_pred => $use_pred,
+											 theta_labels => $cutoff_thetas_labels,
+											 adaptive => $adaptive);
 	}
 
 	if ($for_evaluation){
@@ -765,7 +786,6 @@ sub setup_regular_model
 		$model->relative_data_path(0);
 	}
 
-	my $count = scalar(@{$cutoff_thetas});
 	
 	if ($adaptive){
 		update_al_coefficients(model => $model,
@@ -775,6 +795,9 @@ sub setup_regular_model
 	for (my $i=0; $i<$count; $i++){
 		my $thetanumber = $cutoff_thetas->[$i];
 		my $value = $lasso_coefficients->[$i];
+		if ($normalize and ($sd->[$i] != 0)){
+			$value = $value/($sd->[$i]);
+		}
 		#change bounds first so that init update will not be rejected
 		$model -> lower_bounds(parameter_type =>  'theta',
 							   parameter_numbers =>[[$thetanumber]],
