@@ -31,6 +31,7 @@ has 'verbose' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'external_tables' => ( is => 'rw', isa => 'Bool', default => 0 );   # For now a bool to specify if external tables should be created
 has 'labels_hash' => ( is => 'rw', isa => 'HashRef' );  # List of labels on sd/corr scale etc. Intended for external use i.e. bootstrap
 has 'extra_output' => ( is => 'rw', isa => 'Maybe[ArrayRef]' );
+has '_idv' => ( is => 'rw', isa => 'Str' );                         # The name of the idv column
 has '_document' => ( is => 'rw', isa => 'Ref' );                    # The XML document 
 has '_duplicate_blocknames' => ( is => 'rw', isa => 'HashRef' );    # Contains those blocknames which will have duplicates with next number for block
 has '_so_path' => ( is => 'rw', isa => 'Str' );                     # The path of the output SO file
@@ -160,6 +161,25 @@ sub _parse_lst_file
 
             my @all_labels = @filtered_labels; #will add fix with label here
             my @all_inits = @filtered_inits;
+
+            # Get name of the IDV (TIME) column
+            my $input = $model->problems->[$problems]->inputs->[0];
+            foreach my $option (@{$input->options}) {
+                if ($option->name eq "TIME") {
+                    if (defined $option->value and $option->value ne "") {
+                        $self->_idv($option->value);
+                    } else {
+                        $self->_idv($option->name);
+                    }
+                }
+                if ($option->value eq "TIME") {
+                    if (defined $option->name and $option->name ne "") {
+                        $self->_idv($option->name);
+                    } else {
+                        $self->_idv($option->value);
+                    }
+                }
+            }
 
             # Handling parameters that are FIX but have a label
             my @records;
@@ -399,7 +419,7 @@ sub _create_predictions
     );
     my $sdtab = $parm{'sdtab'};
 
-    if (not (exists $sdtab->column_head_indices->{'ID'} and exists $sdtab->column_head_indices->{'TIME'}
+    if (not (exists $sdtab->column_head_indices->{'ID'} and exists $sdtab->column_head_indices->{$self->_idv}
         and exists $sdtab->column_head_indices->{'PRED'} and exists $sdtab->column_head_indices->{'IPRED'})) {
         return;
     }
@@ -410,12 +430,12 @@ sub _create_predictions
 
     my $id = $sdtab->column_to_array(column => "ID");
     my $id = [ map { int($_) } @$id ];
-    my $time = $sdtab->column_to_array(column => "TIME");
+    my $time = $sdtab->column_to_array(column => $self->_idv);
     my $pred = $sdtab->column_to_array(column => "PRED");
     my $ipred = $sdtab->column_to_array(column => "IPRED");
 
-    my $column_id = [ "ID", "TIME", "PRED", "IPRED" ];
-    my $column_type = [ "id", "undefined", "undefined", "undefined" ];
+    my $column_id = [ "ID", $self->_idv, "PRED", "IPRED" ];
+    my $column_type = [ "id", "idv", "undefined", "undefined" ];
     my $value_type = [ "string", "real", "real", "real" ];
     my $columns = [ $id, $time, $pred, $ipred ];
 
@@ -445,7 +465,7 @@ sub _create_residuals
     );
     my $sdtab = $parm{'sdtab'};
 
-    if (not (exists $sdtab->column_head_indices->{'ID'} and exists $sdtab->column_head_indices->{'TIME'})) {
+    if (not (exists $sdtab->column_head_indices->{'ID'} and exists $sdtab->column_head_indices->{$self->_idv})) {
         return;
     }
 
@@ -453,10 +473,10 @@ sub _create_residuals
 
     my $id = $sdtab->column_to_array(column => "ID");
     my $id = [ map { int($_) } @$id ];
-    my $time = $sdtab->column_to_array(column => "TIME");
+    my $time = $sdtab->column_to_array(column => $self->_idv);
 
     my @values = ( $id, $time );
-    my @ids = ( "ID", "TIME" );
+    my @ids = ( "ID", $self->_idv );
     my @value_type = ( "string", "real" );
 
     if (exists $sdtab->column_head_indices->{'RES'}) {
@@ -519,7 +539,7 @@ sub _create_residuals
     my $table = so::table->new(
         name => "ResidualTable",
         columnId => \@ids,
-        columnType => [ "id", ("undefined") x (scalar(@ids) - 1) ],
+        columnType => [ "id", "idv", ("undefined") x (scalar(@ids) - 2) ],
         valueType =>  \@value_type,
         columns => \@values,
     );
