@@ -313,7 +313,8 @@ sub _read_covmatrix
 					my $temp_matrix;
 					( $start_pos, $temp_matrix, $t_success, $dummyheaders )  = _read_matrixoestimates( pos => $start_pos-1,
 																									   lstfile => $self->lstfile,
-																									   keep_headers_array => $keep_headers_array);# and last;
+																									   keep_headers_array => $keep_headers_array,
+						silent => 1);
 					$self->raw_tmatrix($temp_matrix);
 					last;
 				}
@@ -326,7 +327,8 @@ sub _read_covmatrix
 					my $temp_matrix;
 					( $start_pos, $temp_matrix, $c_success, $dummyheaders ) = _read_matrixoestimates( pos => $start_pos - 1,
 																									  lstfile => $self->lstfile,
-																									   keep_headers_array => $keep_headers_array );
+																									  keep_headers_array => $keep_headers_array,
+						silent => 1);
 					unless (defined $self->r_matrix and scalar(@{$self->r_matrix})>0){
 						#only store if not already read from NM7 additional output
 						$self->r_matrix($temp_matrix);
@@ -3213,14 +3215,16 @@ sub _read_sparse_matrixoestimates
 {
 	#static no shift
 	my %parm = validated_hash(\@_,
-		 pos => { isa => 'Int', default => 0, optional => 1 },
-		 lstfile => { isa => 'ArrayRef', optional => 0 },
-		 keep_headers_array => { isa => 'ArrayRef', optional => 0 },
+							  pos => { isa => 'Int', default => 0, optional => 1 },
+							  lstfile => { isa => 'ArrayRef', optional => 0 },
+							  keep_headers_array => { isa => 'ArrayRef', optional => 0 },
+							  silent => { isa => 'Bool', default => 0, optional => 1 },
 	);
 	my $pos = $parm{'pos'};
 	my $lstfile = $parm{'lstfile'};
 	my $keep_headers_array = $parm{'keep_headers_array'};
-
+	my $silent = $parm{'silent'};
+	
 	my @subprob_matrix;
 	my $success = 0;
 	my @row_headers;
@@ -3284,8 +3288,8 @@ sub _read_sparse_matrixoestimates
 	$success =1;
 	for (my $k=0; $k<scalar(@{$keep_headers_array}); $k++){
 		for (my $j=0; $j<=$k; $j++){
-			if ($matrix[$k]->[$j] == 0){
-				ui->print(category=> 'all',message => "element in matrix eq 0\n");
+			if ($success and ($matrix[$k]->[$j] == 0)){
+				ui->print(category=> 'all',message => "element in matrix eq 0\n") unless ($silent);
 				$success=0;
 			}
 			push(@subprob_matrix,$matrix[$k]->[$j]);
@@ -3302,11 +3306,13 @@ sub _read_matrixoestimates
 		 pos => { isa => 'Int', default => 0, optional => 1 },
 		 lstfile => { isa => 'ArrayRef', optional => 0 },
 		 keep_headers_array => { isa => 'ArrayRef', optional => 0 },
+		 silent => { isa => 'Bool', optional => 1, default => 0 },
 	);
 	my $pos = $parm{'pos'};
 	my $lstfile = $parm{'lstfile'};
 	my $keep_headers_array = $parm{'keep_headers_array'};
-
+	my $silent = $parm{'silent'};
+	
 	my @subprob_matrix;
 	my $success = 0;
 	my @row_headers;
@@ -3364,7 +3370,8 @@ sub _read_matrixoestimates
 			($pos ,$sparsemat ,$success ) = 
 				_read_sparse_matrixoestimates(pos=> $pos,
 											  lstfile => $lstfile,
-											  keep_headers_array => $keep_headers_array);
+											  keep_headers_array => $keep_headers_array,
+											  silent => $silent);
 			return $pos ,$sparsemat ,$success ,$keep_headers_array;
 			last;
 		} elsif ( /^\s+TH/ or /^\s+OM/ or /^\s+SG/ ) {	  # Column header (multiple spaces)
