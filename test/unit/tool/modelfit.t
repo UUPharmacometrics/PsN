@@ -203,7 +203,7 @@ my $ref = tool::modelfit::diagnose_lst_errors(missing => 1,
 							  run_local => 0,
 							  nmtran_error_file => 'nmtran_error.txt',
 							  nmqual => 0);
-cmp_ok($ref->[0],'eq','NMtran could not be initiated (the NMtran output file FDATA is missing) - this could be a cluster submit error',
+cmp_ok($ref->[0],'eq','NMtran could not be initiated (the NMtran output file FDATA is missing) - this could be a cluster file sync error',
 	   'failure nmtran init ');
 cmp_ok($ref->[2],'==',1,'restart possible nmtran init not local');
 cmp_ok($ref->[3],'==',1,'store error nmtran init ');
