@@ -1389,6 +1389,7 @@ sub _add_status_messages
     my $subproblem = $parm{'subproblem'};
 
     my $estimation_step_run = $output->problems->[$problem]->subproblems->[$subproblem]->estimation_step_run;
+    my $covariance_step_run = $output->covariance_step_run->[$problem];
 
     if ($estimation_step_run) {
         my $minimization_successful = $output->minimization_successful->[$problem][$subproblem];
@@ -1399,17 +1400,15 @@ sub _add_status_messages
             content => $minimization_successful,
             severity => 1,
         );
+
+        $self->_so_block->TaskInformation->add_message(
+            type => "INFORMATION",
+            toolname => "NONMEM",
+            name => "covariance_step_run",
+            content => $covariance_step_run,
+            severity => 1,
+        );
     }
-
-    my $covariance_step_run = $output->covariance_step_run->[$problem];
-
-    $self->_so_block->TaskInformation->add_message(
-        type => "INFORMATION",
-        toolname => "NONMEM",
-        name => "covariance_step_run",
-        content => $covariance_step_run,
-        severity => 1,
-    );
 
     if ($covariance_step_run) {
         my $covariance_step_successful = 0;
@@ -1439,77 +1438,78 @@ sub _add_status_messages
         );
     }
 
-    my $rounding_errors = $output->rounding_errors->[$problem][$subproblem] eq '0' ? 0 : 1;
-    $self->_so_block->TaskInformation->add_message(
-        type => $rounding_errors ? "WARNING" : "INFORMATION",
-        toolname => "NONMEM",
-        name => "rounding_errors",
-        content => $rounding_errors,
-        severity => 1,
-    );
-
-    my $hessian_reset = $output->hessian_reset->[$problem][$subproblem];
-    if (defined $hessian_reset) {
+    if ($estimation_step_run) {
+        my $rounding_errors = $output->rounding_errors->[$problem][$subproblem] eq '0' ? 0 : 1;
         $self->_so_block->TaskInformation->add_message(
-            type => $hessian_reset eq '0' ? "INFORMATION" : "WARNING",
+            type => $rounding_errors ? "WARNING" : "INFORMATION",
             toolname => "NONMEM",
-            name => "hessian_reset",
-            content => $hessian_reset,
+            name => "rounding_errors",
+            content => $rounding_errors,
             severity => 1,
         );
-    }
 
+        my $hessian_reset = $output->hessian_reset->[$problem][$subproblem];
+        if (defined $hessian_reset) {
+            $self->_so_block->TaskInformation->add_message(
+                type => $hessian_reset eq '0' ? "INFORMATION" : "WARNING",
+                toolname => "NONMEM",
+                name => "hessian_reset",
+                content => $hessian_reset,
+                severity => 1,
+            );
+        }
 
-    my $zero_gradients = $output->zero_gradients->[$problem][$subproblem];
-    if (defined $zero_gradients) {
-         $self->_so_block->TaskInformation->add_message(
-            type => $zero_gradients eq '0' ? "INFORMATION" : "WARNING",
-            toolname => "NONMEM",
-            name => "zero_gradients",
-            content => $zero_gradients,
-            severity => 1,
-        );
-    }
+        my $zero_gradients = $output->zero_gradients->[$problem][$subproblem];
+        if (defined $zero_gradients) {
+            $self->_so_block->TaskInformation->add_message(
+                type => $zero_gradients eq '0' ? "INFORMATION" : "WARNING",
+                toolname => "NONMEM",
+                name => "zero_gradients",
+                content => $zero_gradients,
+                severity => 1,
+            );
+        }
 
-    my $final_zero_gradients = $output->final_zero_gradients->[$problem][$subproblem];
-    if (defined $final_zero_gradients) {
+        my $final_zero_gradients = $output->final_zero_gradients->[$problem][$subproblem];
+        if (defined $final_zero_gradients) {
+            $self->_so_block->TaskInformation->add_message(
+                type => $final_zero_gradients eq '0' ? "INFORMATION" : "WARNING",
+                toolname => "NONMEM",
+                name => "final_zero_gradients",
+                content => $final_zero_gradients,
+                severity => 1,
+            );
+        }
+
+        my $estimate_near_boundary = $output->estimate_near_boundary->[$problem][$subproblem];
         $self->_so_block->TaskInformation->add_message(
-            type => $final_zero_gradients eq '0' ? "INFORMATION" : "WARNING",
+            type => $estimate_near_boundary ? "WARNING" : "INFORMATION",
             toolname => "NONMEM",
-            name => "final_zero_gradients",
-            content => $final_zero_gradients,
+            name => "estimate_near_boundary",
+            content => $estimate_near_boundary,
             severity => 1,
         );
-    }
-
-    my $estimate_near_boundary = $output->estimate_near_boundary->[$problem][$subproblem];
-    $self->_so_block->TaskInformation->add_message(
-        type => $estimate_near_boundary ? "WARNING" : "INFORMATION",
-        toolname => "NONMEM",
-        name => "estimate_near_boundary",
-        content => $estimate_near_boundary,
-        severity => 1,
-    );
 
 
-    my $s_matrix_singular = $output->s_matrix_singular->[$problem][$subproblem];
-    $self->_so_block->TaskInformation->add_message(
-        type => $s_matrix_singular ? "WARNING" : "INFORMATION",
-        toolname => "NONMEM",
-        name => "s_matrix_singular",
-        content => $s_matrix_singular,
-        severity => 1,
-    );
-
-    my $significant_digits = $output->significant_digits->[$problem][$subproblem];
-    if (defined $significant_digits) {
+        my $s_matrix_singular = $output->s_matrix_singular->[$problem][$subproblem];
         $self->_so_block->TaskInformation->add_message(
-            type => "INFORMATION",
+            type => $s_matrix_singular ? "WARNING" : "INFORMATION",
             toolname => "NONMEM",
-            name => "significant_digits",
-            content => $significant_digits,
+            name => "s_matrix_singular",
+            content => $s_matrix_singular,
             severity => 1,
         );
+
+        my $significant_digits = $output->significant_digits->[$problem][$subproblem];
+        if (defined $significant_digits) {
+            $self->_so_block->TaskInformation->add_message(
+                type => "INFORMATION",
+                toolname => "NONMEM",
+                name => "significant_digits",
+                content => $significant_digits,
+                severity => 1,
+            );
+        }
     }
 }
 
