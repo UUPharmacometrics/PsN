@@ -268,7 +268,7 @@ sub setup_variancevec_from_cv
 					my $correlation = $estimate/
 						(($diag_est{$param}->{$left.','.$left})*($diag_est{$param}->{$right.','.$right}));
 					push(@variancevec,
-						 ($correlation*($diag_sd{$param}->{$left.','.$left})*($diag_sd{$param}->{$right.','.$right})));
+						 (abs($correlation)*($diag_sd{$param}->{$left.','.$left})*($diag_sd{$param}->{$right.','.$right})));
 				}else{
 					croak("bug finding diagvalues for $param $left and $right");
 				}

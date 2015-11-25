@@ -236,7 +236,7 @@ The variances of off-diagonal elements will be computed so that the correlation 
 final estimate is unchanged, i.e.
 \[
 var_{omega(i,j)}=\sqrt{var_{omega(i,i)}}\cdot\sqrt{var_{omega(j,j)}}
-\cdot\frac{omega(i,j)}{\sqrt{omega(i,i)\cdot omega(j,j)}}
+\cdot\frac{abs(omega(i,j))}{\sqrt{omega(i,i)\cdot omega(j,j)}}
 \]
 If -cv\_theta is set to a scalar when option -cv\_omega is not given, -cv\_omega will 
 automatically be set to the same scalar as -cv\_theta. If -cv\_theta is set to a vector and 

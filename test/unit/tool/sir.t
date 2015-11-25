@@ -642,6 +642,21 @@ is_deeply($hashref->{'raw'}->[1],[1,1,1],'augment rawres 1');
 is_deeply($hashref->{'raw'}->[3],[2,2,2],'augment rawres 3');
 is_deeply($hashref->{'raw'}->[4],[3,3,3],'augment rawres 4');
 
+
+my $outobj = output->new(filename => $dir.'for_cv_matrix.lst');
+my $parameter_hash = output::get_nonmem_parameters(output => $outobj);
+my $cvtheta ='3,3,30,10,10,3,3,50,10,30,10,10,10,10,10,10,10,10,50,10,10,10';
+my $cvomega ='5,5,10,5,5,20,30,10,10,10,30,30,10,30,30';
+my $cvsigma ='5,5,5,5';
+	
+my $ref = tool::sir::setup_variancevec_from_cv(cv_theta => $cvtheta,
+	cv_omega=> $cvomega,
+	cv_sigma=> $cvsigma,
+	parameter_hash => $parameter_hash);
+
+my $covmatrix = tool::sir::setup_covmatrix_from_variancevec(variance => $ref);
+is (tool::sir::check_matrix_posdef(matrix => $covmatrix),0,'cv covmatrix from neg covariance is posdef');
+
 remove_test_dir($tempdir);
 
 done_testing();
