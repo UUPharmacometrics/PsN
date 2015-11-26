@@ -82,6 +82,10 @@ sub _create_filename
 sub write
 {
     my $self = shift;
+    my %parm = validated_hash(\@_,
+        compress => { isa => 'Bool', default => 0 },
+    );
+    my $compress = $parm{'compress'};
 
     my $doc = XML::LibXML::Document->new('1.0', 'utf-8');
 
@@ -133,7 +137,12 @@ sub write
         $self->_create_filename();
     }
 
-    $doc->toFile($self->filename, $self->pretty);
+    my $output_file_name = $self->filename;
+    if ($compress) {
+        $output_file_name .= '.gz';
+        $doc->setCompression(5);
+    }
+    $doc->toFile($output_file_name, $self->pretty);
 }
 
 sub _exclude_elements

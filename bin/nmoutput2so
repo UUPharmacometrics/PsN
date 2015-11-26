@@ -40,6 +40,7 @@ my %optional_options = (
     'psn_connector!' => undef,
     'rundir:s' => undef,
     'extra_output:s' => undef,
+    'compress!' => undef,
 );
 
 
@@ -243,6 +244,12 @@ $help_text{-extra_output} = <<'EOF';
     a separate SimulatedProfiles element.
 EOF
 
+$help_text{-compress} = <<'EOF';
+    -compress
+
+    Set to automatically gzip compress the output SO file
+EOF
+
 common_options::online_help('nmoutput2so', \%options, \%help_text, \%required_options, \%optional_options);
 
 require output;
@@ -356,7 +363,7 @@ if (defined $options{'rundir'}) {
     );
 }
 
-$so->write();
+$so->write(compress => $options{'compress'});
 
 #my $so = standardised_output->new(
 #    use_tables => $options{'use_tables'},
