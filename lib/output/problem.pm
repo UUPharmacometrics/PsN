@@ -73,10 +73,10 @@ has 'pre_run_errors' => ( is => 'rw', isa => 'Str' );
 has 'estimation_step_run' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'nonparametric_step_run' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'msfi_used' => ( is => 'rw', isa => 'Bool', default => 0 );
-has 'tables_step_run' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'simulation_step_run' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'estimation_step_initiated' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'last_method_number' => ( is => 'rw', isa => 'Int' );
+has 'tables_step_error' => ( is => 'rw', isa => 'Maybe[Str]', default => undef );
 
 
 sub BUILD
@@ -107,6 +107,8 @@ sub BUILD
 	}
 
 	$self->parsing_error_message($mes);
+
+    $self->_check_tables_error();
 
 	$self->lstfile([]);
 }
@@ -495,52 +497,6 @@ sub _read_eststep
 
 }
 
-sub _read_tablesstep
-{
-	my $self = shift;
-
-	# The tables step is optional
-  my $start_pos = $self->lstfile_pos;
-	my $success = 0;
-
-	while( $_ = @{$self->lstfile}[ $start_pos++ ] ) {
-  	if ( /^1\s*$/ ) {
-    	# This is ok, the tables step was not used.
-    	$start_pos -= 2;
-    	$success = 1;
-    	last;
-  	}
-  	if( /^ PROBLEM NO\.:\s+\d/ or /^0MINIMIZATION/ ) {
-    	# This should not happen, raise error
-    	my $errmess = "Found $_ while searching for the (optional) tables step indicator\n";
-			carp($errmess."$!" );
-			$self -> parsing_error( message => $errmess."$!" );
-			return;
-		}
-
-		if ( ($start_pos + 1) == scalar @{$self->lstfile} ) {
-			#EOF This should not happen, raise error
-    	my $errmess = "Reached end of file while  searching for the (optional) tables step indicator\n";
-			carp($errmess."$!" );
-			$self -> parsing_error( message => $errmess."$!" );
-			return;
-		}
-
-		if (/^0TABLES STEP OMITTED:\s*\b(.*)\b/) {
-			$self->tables_step_run(0) if $1 eq 'YES';
-			$self->tables_step_run(1) if $1 eq 'NO';
-			$success = 1;
-			last;
-		}
-	}
-
-	unless ( $success ) {
-  	carp("rewinding to first position..." );
-	} else {
-  	$self->lstfile_pos($start_pos);
-	}
-}
-
 sub _read_prior
 {
 	my $self = shift;
@@ -633,10 +589,9 @@ sub _read_steps_allowed
 
 	unless( ( $self -> estimation_step_initiated()    * $est_allowed ) or
 		( $self -> covariance_step_run()    * $cov_allowed ) or
-		( $self -> nonparametric_step_run() * $nonp_allowed ) or
-		( $self -> tables_step_run() * $tables_allowed ) ) {
-  	# If this happens, NONMEM aborts so we are finished reading
-  	$self -> finished_parsing(1);
+		( $self -> nonparametric_step_run() * $nonp_allowed ) ) {
+  	    # If this happens, NONMEM aborts so we are finished reading
+  	    $self -> finished_parsing(1);
 	}
 
 }
@@ -1309,6 +1264,33 @@ sub _read_block_structures
 	}
 
 }
+
+sub _check_tables_error
+{
+    my $self = shift;
+
+    return if not defined $self->lstfile;
+
+    my $start_message;
+    my $end_message;
+
+    for (my $i = 0; $i < scalar(@{$self->lstfile}); $i++) {
+        if ($self->lstfile->[$i] =~ /^0PROGRAM TERMINATED BY FNLETA/) {
+           $start_message = $i;
+        }
+        if ($self->lstfile->[$i] =~ /^ MESSAGE ISSUED FROM TABLE STEP/) {
+            $end_message = $i;
+            last;
+        }
+    }
+
+    my @error;
+    if (defined $start_message and defined $end_message) {
+        @error = @{$self->lstfile}[$start_message .. $end_message];
+        $self->tables_step_error(join("", @error));
+    }
+}
+
 
 no Moose;
 __PACKAGE__->meta->make_immutable;

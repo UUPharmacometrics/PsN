@@ -107,6 +107,10 @@ for (my $i=0; $i< scalar(@answer_hashes); $i++){
 		is_deeply($high_values->[0][0],$answer_hashes[$i]->{large_standard_errors_values},"$fname large_standard_errors values");
 	}
 
+    if (defined $answer_hashes[$i]->{tables_step_error}) {
+        is (defined $outobj->problems->[0]->tables_step_error ? 1 : 0, $answer_hashes[$i]->{tables_step_error}, "$fname tables_step_error");
+    }
+
 	foreach my $prob (keys %{$answer_hashes[$i]->{answers}}){
 		foreach my $subprob (keys %{$answer_hashes[$i]->{answers}->{$prob}}){
 			foreach my $attr (keys %{$answer_hashes[$i]->{answers}->{$prob}->{$subprob}}){

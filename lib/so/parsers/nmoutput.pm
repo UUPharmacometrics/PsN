@@ -102,6 +102,17 @@ sub _parse_lst_file
             my $problems = 0; #TODO check if first $PROB is prior, then should be =1 here, as in e.g. sse script
             my $sub_problems = 0;  #always 0 since we do not have workflow simulation + estimation?
 
+            my $tables_step_error = $outobj->problems->[$problems]->tables_step_error;
+            if (defined $tables_step_error) {
+                $self->_so_block->TaskInformation->add_message(
+                    type => "ERROR",
+                    toolname => "NONMEM",
+                    name => "tables_step_error",
+                    content => $tables_step_error,
+                    severity => 5,
+                );
+            }
+
             if ($outobj->problems->[$problems]->subproblems->[$sub_problems]->NM7_parsed_raw) {
                 $self->_so_block->RawResults->add_datafile(name => "$file_stem.ext", description => "NONMEM Raw output file");
             }
@@ -329,7 +340,7 @@ sub _parse_lst_file
                     $self->_so_block->TaskInformation->add_message(
                         type => 'ERROR',
                         toolname => $self->toolname,
-                        name => "Minimzation error",
+                        name => "Minimization error",
                         content => join('', @{$minimization_message}),
                         severity => 5,
                     );

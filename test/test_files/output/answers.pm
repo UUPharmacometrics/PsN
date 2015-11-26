@@ -985,6 +985,7 @@ sub read_answers
         1.03E-02, -2.75E-04, -1.23E-04, -6.10E-02,  6.73E-04,  9.27E-06,  5.43E-02, 7.12E-04,  4.48E-02,    #OMEGA(3,3)
         -1.54E-02,  2.01E-04,  6.26E-05, -1.56E-01,  6.21E-04,  7.84E-06,  1.66E-02,  1.01E-04, -1.41E-03,  1.13E-02    #SIGMA(1,1)
     ];
+    $answer_hashes[$index]->{tables_step_error} = 0;
 
     $index++;
     $answer_hashes[$index]->{file} = 'nm73/theo_withcov.lst';
@@ -1496,6 +1497,11 @@ sub read_answers
     $answer_hashes[$index]->{parsed_successfully} = 1;
     $answer_hashes[$index]->{answers} = {};
 	$answer_hashes[$index]->{answers}->{0}->{0}->{'ofv'}=-753.566;
+
+    $index++;
+    $answer_hashes[$index]->{file} = 'nm73/UseCase7.lst';
+    $answer_hashes[$index]->{parsed_successfully} = 1;
+    $answer_hashes[$index]->{tables_step_error} = 1;
 
 	return \@answer_hashes;
 }
