@@ -29,9 +29,9 @@ has 'missing_data_token' => ( is => 'rw', isa => 'Str|Ref', default => sub { \''
 has 'model' => ( is => 'rw', isa => 'Str|Ref', default => sub { \'' } );
 has 'nm_version' => ( is => 'rw', isa => 'Str|Ref', default => sub { \'' } );
 has 'nmfe_options' => ( is => 'rw', isa => 'Str|Ref', default => sub { \'' } );
-has 'ofv_backward' => ( is => 'rw', isa => 'HashRef', default => sub { {} } );
-has 'ofv_change' => ( is => 'rw', isa => 'HashRef', default => sub { {} } );
-has 'ofv_forward' => ( is => 'rw', isa => 'HashRef', default => sub { {} } );
+has 'ofv_backward' => ( is => 'rw', isa => 'HashRef', default => sub { {'SCALAR' => undef} } );
+has 'ofv_change' => ( is => 'rw', isa => 'HashRef', default => sub { {'SCALAR' => undef} } );
+has 'ofv_forward' => ( is => 'rw', isa => 'HashRef', default => sub { {'SCALAR' => undef} } );
 has 'p_backward' => ( is => 'rw', isa => 'Num|Ref', default => sub { \'' } );
 has 'p_forward' => ( is => 'rw', isa => 'Num|Ref', default => sub { \'' } );
 has 'p_value' => ( is => 'rw', isa => 'Num|Ref', default => sub { \'' } );
@@ -104,6 +104,8 @@ sub BUILD
 				my @list = keys %{ $self -> $key };
 				if( $list[0] eq 'ARRAY' ){
 					$valid_hash_options{$key} = 'ARRAY';
+				}elsif( $list[0] eq 'SCALAR' ){
+					$valid_hash_options{$key} = 'SCALAR';
 				} else {
 					carp("Type specification of $key is weird\n" );
 				}
@@ -399,10 +401,9 @@ sub parse_config
 				}
 			}
 		} elsif ( $self -> valid_hash_options->{$section} eq 'SCALAR' ) { 
-
+			$self -> $section({}) unless (defined $self->$section());
 			foreach my $left_side( keys %{$config_tiny -> {$section}} ){
 				my $right_side = $config_tiny -> {$section} -> {$left_side};
-
 				$right_side =~ s/\\//g;
 
 				my @left_side_list;

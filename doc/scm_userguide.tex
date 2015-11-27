@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{SCM user guide}{2015-10-12}
+\guidetitle{SCM user guide}{2015-11-26}
 
 \begin{document}
 
@@ -423,6 +423,31 @@ CL:*-2=0.01
 The left hand side is of the form “PARAMETER:COVARIATE-STATE”. Both PARAMETER and COVARIATE can be an asterisk (*), which is a wildcard and is the same as repeating the line for each parameter and/or covariate. The STATE can be any one of 2-5 or a new state defined by the user in the code section. For the “inits” section the right hand side is a comma separated list of initial values for theta parameters put into the abbreviated code corresponding to the combination. Unless the states are redefined using the code option, for continuous variables the list for state 2 should be one value, for state 3 two values and for states 4 and 5 one value. For categorical covariates where STATE can only be 2 it is the number of categories that decides the number of initial values. The lower\_bounds and upper\_bounds sections follows the same rules and corresponds to the bounds for the theta parameters put into the abbreviated code. If you specify too few or too many values, those you exclude will be replaced by defaults and the extraneous will be ignored. 
 
 It is possible to use the variables maximum, minimum, mean and median in the inits and bounds sections. See more details in the \verb|[code]| help. 
+
+\subsection{[ofv\_changes]}
+This section will only be used if option -gof is set to 'ofv'. It will not
+be used if option -gof is 'p\_value' (the default). Here the user can set
+the change in ofv required for significance
+for each change in degrees of freedom.
+Example:
+\begin{verbatim}
+[ofv_changes]
+1=3.84
+2=5.99
+3=7.81
+4=9.49
+5=11.07
+6=12.59
+7=14.07
+8=15.51
+9=16.92
+10=18.31
+\end{verbatim}
+is the ofv-changes for p-value=0.05. It is important to list values for all
+possible degrees-of-freedom changes in the chosen parameter-covariate relations.
+With categorical covariates with many categories the number can be large.
+The ofv changes can also be set separately for forward and backward searches
+using \verb|ofv_forward| and \verb|ofv_backward|.
 
 \section{Resuming a crashed/interrupted scm}
 \begin{enumerate}

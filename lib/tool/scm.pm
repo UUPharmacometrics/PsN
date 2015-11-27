@@ -3533,9 +3533,9 @@ sub _create_models
 			$self->main_data_file($string);		
 		}else{
 			unless (defined $self->main_data_file and length($self->main_data_file)>0){
-				if ($self->step_number > 1){
-					croak("step_number is ".$self->step_number." but main_data_file is not set. This is a bug");
-				}
+#				if ($self->step_number > 1){
+#					croak("step_number is ".$self->step_number." but main_data_file is not set. This is a bug");
+#				}
 				$self->main_data_file($orig_model->datafiles(absolute_path => 1)->[0]);
 			}
 		}
@@ -5392,6 +5392,7 @@ sub read_config_file
 		next if( $config_option eq 'model' );
 		next if( $config_option eq 'p_forward' );
 		next if( $config_option eq 'p_backward' );
+		next if( $config_option eq 'ofv_forward' );
 		next if( $config_option eq 'ofv_backward' );
 		next if( $config_option eq 'upper_bounds' );
 		next if( $config_option eq 'lower_bounds' );

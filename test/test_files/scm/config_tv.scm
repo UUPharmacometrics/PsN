@@ -1,15 +1,25 @@
 model=pheno_with_tv.mod
 linearize=1
 search_direction=backward
-logfile=scmlog1.txt
-p_forward=1
-p_backward=0.01
+gof=ofv
 abort_on_fail=0
 retries=3
 update_derivatives=1
 
 continuous_covariates=WGT,APGR,CV1,CV2,CV3
 categorical_covariates=CVD1,CVD2,CVD3
+
+[ofv_backward]
+1=10
+2=20
+3=30
+4=40
+5=50
+6=51
+7=52
+8=53
+9=54
+10=55
 
 [test_relations]
 CL=WGT
