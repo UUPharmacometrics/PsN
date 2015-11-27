@@ -93,6 +93,14 @@ For a complete list see common\_options.pdf,
 or psn\_options -h on the commandline.
 \input{inputs/basic_options.tex}
 
+\section{Initial values off-diagonal OMEGA}
+
+
+
+%variance (\hat Cov(X,Y)) = q(n)/n * (Cov(X,Y)^2 + Var(X) Var(Y))
+%Jonas  q(n) = 1 if ML-estiamtes for \hat Cov(X,Y), and converge to 1 when n-> 1 for other estimators.
+% N=2\frac{var^2}{SE^2}+1  where var is variance est from NONMEM, SE is SE of variance from NONMEM
+
 
 \section{Workflow}
 The script first generates a set of template models in the m1 subdirectory, and performs the runs necessary to generate
