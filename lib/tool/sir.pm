@@ -181,6 +181,41 @@ sub setup_covmatrix_from_variancevec
 	return $covmatrix;
 }
 
+sub get_offdiagonal_variance{
+	my %parm = validated_hash(\@_,
+							  covariance => {isa => 'Num', optional => 0},
+							  cv_i => {isa => 'Num', optional => 0},
+							  cv_j => {isa => 'Num', optional => 0},
+							  var_i => {isa => 'Num', optional => 0},
+							  var_j => {isa => 'Num', optional => 0},
+							  type =>  {isa => 'Int', default => 1},
+		);
+	my $covariance = $parm{'covariance'};
+	my $cv_i = $parm{'cv_i'};
+	my $cv_j = $parm{'cv_j'};
+	my $var_i = $parm{'var_i'};
+	my $var_j = $parm{'var_j'};
+	my $type = $parm{'type'};
+	
+	croak("illegal cv_i $cv_i") unless ($cv_i > 0);
+	croak("illegal cv_j $cv_j") unless ($cv_j > 0);
+	croak("illegal var_i $var_i") unless ($var_i > 0);
+	croak("illegal var_j $var_j") unless ($var_j > 0);
+
+	my $N = (100/$cv_i)**2+(100/$cv_j)**2+1;
+	my $variance = ($covariance**2+$var_j*$var_i)/$N;
+
+	if ($type == 2){
+		#old
+#		my $correlation = $covariance/sqrt($var_i*$var_j);
+#		my $sd_i = ($var_i*$cv_i/100);
+#		my $sd_j = ($var_j*$cv_j/100);
+		$variance =abs($covariance)*sqrt($var_i*$var_j)*$cv_i*$cv_j/(100**2);
+	}
+	return $variance;
+	
+}
+
 	 
 sub setup_variancevec_from_cv
 {
@@ -189,13 +224,14 @@ sub setup_variancevec_from_cv
 							  cv_omega => {isa => 'Str', optional => 0},
 							  cv_sigma => {isa => 'Str', optional => 0},
 							  parameter_hash => {isa => 'HashRef', optional => 0},
+							  type =>  {isa => 'Int', default => 1},
 		);
 	my %cv;
 	$cv{'theta'} = $parm{'cv_theta'};
 	$cv{'omega'} = $parm{'cv_omega'};
 	$cv{'sigma'} = $parm{'cv_sigma'};
 	my $parameter_hash = $parm{'parameter_hash'};
-
+	my $type = $parm{'type'};
 
 	#param => $self->parameter_hash->{'param'},
 	#coords => $self->parameter_hash->{'coords'},
@@ -207,9 +243,10 @@ sub setup_variancevec_from_cv
 	my @given;
 	my %givencount;
 	my %needed;
-	my %diag_sd;
-	my %diag_est;
-
+	my %diag_uncert_sd;
+	my %diag_est_var;
+	my %cv_hash;
+	
 	for (my $i=0; $i<scalar(@{$parameter_hash->{'param'}}); $i++){
 		my $coord = $parameter_hash->{'coords'}->[$i];
 		my $estimate = $parameter_hash->{'values'}->[$i];
@@ -217,7 +254,8 @@ sub setup_variancevec_from_cv
 		unless ($parameter_hash->{'param'}->[$i] eq $param){
 			#new param
 			$param = $parameter_hash->{'param'}->[$i];
-			$needed{$param}=0; 
+			$needed{$param}=0;
+			$cv_hash{$param}={};
 			@given = split(/,/,$cv{$param});
 			foreach my $val (@given){
 				unless (usable_number($val) and ($val>0)){
@@ -225,22 +263,23 @@ sub setup_variancevec_from_cv
 				}
 			}
 			$givencount{$param}=scalar(@given);
-			$diag_sd{$param}={};
-			$diag_est{$param}={};
+			$diag_uncert_sd{$param}={};
+			$diag_est_var{$param}={};
 		}
 		unless ($parameter_hash->{'off_diagonal'}->[$i]==1){
-			$diag_est{$param}->{$coord} = sqrt($estimate) if ($estimate > 0);
+			$diag_est_var{$param}->{$coord} = $estimate;
 			$needed{$param}++;
 			if ($givencount{$param} == 1){
 				$thiscv=$given[0];
 			}elsif($givencount{$param} >= $needed{$param}){
 				$thiscv=$given[($needed{$param}-1)];
 			}
+			$cv_hash{$param}->{$coord}= $thiscv;
 		}
 		if (defined $thiscv){
 			#this is diag, compute sd
 			#as (cv_theta(i)*(final estimate theta (i))/100)
-			$diag_sd{$param}->{$coord} = ($thiscv*($estimate)/100);
+			$diag_uncert_sd{$param}->{$coord} = ($thiscv*($estimate)/100);
 		}
 	}
 	foreach my $param ('theta','omega','sigma'){
@@ -263,12 +302,15 @@ sub setup_variancevec_from_cv
 			if ($coord =~ /(\d+),(\d+)/){
 				my $left = $1;
 				my $right = $2;
-				if (defined $diag_est{$param}->{$left.','.$left} and (defined $diag_est{$param}->{$right.','.$right})
-					and defined $diag_sd{$param}->{$left.','.$left} and (defined $diag_sd{$param}->{$right.','.$right})){
-					my $correlation = $estimate/
-						(($diag_est{$param}->{$left.','.$left})*($diag_est{$param}->{$right.','.$right}));
-					push(@variancevec,
-						 (abs($correlation)*($diag_sd{$param}->{$left.','.$left})*($diag_sd{$param}->{$right.','.$right})));
+				if (defined $diag_est_var{$param}->{$left.','.$left} and (defined $diag_est_var{$param}->{$right.','.$right})
+					and defined $cv_hash{$param}->{$left.','.$left} and (defined $cv_hash{$param}->{$right.','.$right})){
+						push(@variancevec,get_offdiagonal_variance(covariance => $estimate,
+																   cv_i => $cv_hash{$param}->{$left.','.$left},
+																   cv_j => $cv_hash{$param}->{$right.','.$right},
+																   var_i => $diag_est_var{$param}->{$left.','.$left},
+																   var_j => $diag_est_var{$param}->{$right.','.$right},
+																   type => $type));
+
 				}else{
 					croak("bug finding diagvalues for $param $left and $right");
 				}
@@ -277,7 +319,7 @@ sub setup_variancevec_from_cv
 				croak("bug string $param matching for $coord");
 			}
 		}else{
-			push(@variancevec,($diag_sd{$param}->{$coord})**2);
+			push(@variancevec,($diag_uncert_sd{$param}->{$coord})**2);
 		}
 	}
 	return \@variancevec;

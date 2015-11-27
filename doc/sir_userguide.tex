@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{SIR user guide}{2015-11-10}
+\guidetitle{SIR user guide}{2015-11-27}
 \usepackage{amsmath}
 
 \begin{document}
@@ -230,14 +230,25 @@ diagonal elements or a positive scalar which will be interpreted as a vector of 
 length and all equal values. When this option is used, the variances of omega(i,i) in the 
 proposal density will be computed as 
 \[
-var_{omega(i,i)}=\left(omega(i,i)*cv_{omega}(i)/100\right)^2
+var_{om(i,i)}=\left(om(i,i)*cv_{om}(i)/100\right)^2
 \]
-The variances of off-diagonal elements will be computed so that the correlation from the 
-final estimate is unchanged, i.e.
+%variance (\hat Cov(X,Y)) = q(n)/n * (Cov(X,Y)^2 + Var(X) Var(Y))
+%Jonas  q(n) = 1 if ML-estiamtes for \hat Cov(X,Y), and converge to 1 when n-> 1 for other estimators.
+% N=2\frac{var^2}{SE^2}+1  where var is variance est from NONMEM, SE is SE of variance from NONMEM
+The variances of off-diagonal elements will be computed according to
 \[
-var_{omega(i,j)}=\sqrt{var_{omega(i,i)}}\cdot\sqrt{var_{omega(j,j)}}
-\cdot\frac{abs(omega(i,j))}{\sqrt{omega(i,i)\cdot omega(j,j)}}
+var_{om(i,j)}= \frac{1}{\hat{N}} \cdot \left(om(i,j)^2 + om(i,i)\cdot om(j,j) \right)
 \]
+where
+\[
+\hat{N} = \frac{om(i,i)^2}{var_{om(i,i)}}+\frac{om(j,j)^2}{var_{om(j,j)}}+1 =\left(\frac{100}{cv_{om}(i)}\right)^2+\left(\frac{100}{cv_{om}(j)}\right)^2+1
+\]
+
+%old version
+%\[
+%var_{omega(i,j)}=\sqrt{var_{omega(i,i)}}\cdot\sqrt{var_{omega(j,j)}}
+%\cdot\frac{abs(omega(i,j))}{\sqrt{omega(i,i)\cdot omega(j,j)}}
+%\]
 If -cv\_theta is set to a scalar when option -cv\_omega is not given, -cv\_omega will 
 automatically be set to the same scalar as -cv\_theta. If -cv\_theta is set to a vector and 
 -cv\_omega is not set at all, or if -cv\_omega is set when -cv\_theta is not, then there will 

@@ -458,14 +458,20 @@ my @ans1=((32.8872*(0.2))**2,(20.9156*(0.2))**2,(0.296626*(0.2))**2,(0.0992828*(
 is_deeply(tool::sir::setup_variancevec_from_cv(cv_theta => 20,
 											   cv_omega=> 10,
 											   cv_sigma=> 20,
-											   parameter_hash => $parameter_hash),\@ans1,'setup_variancevec 1');
+											   parameter_hash => $parameter_hash,
+											   type => 2),\@ans1,'setup_variancevec 1');
 
 @ans1=((32.8872*(0.2))**2,(20.9156*(0.3))**2,(0.296626*(0.4))**2,(0.0992828*(0.3))**2,(0.3337*(0.1))**2,
 	(0.409882*(0.15))**2,(1.24558*(0.30))**2,(0.136766/(sqrt(1.24558)*sqrt(0.218255)))*(0.218255*(0.3))*(1.24558*(0.2)),(0.218255*(0.2))**2);
 is_deeply(tool::sir::setup_variancevec_from_cv(cv_theta => '20,30,40,30,10',
 											   cv_omega=> '15,30,20',
 											   cv_sigma=> '',
-											   parameter_hash => $parameter_hash),\@ans1,'setup_variancevec 2');
+											   parameter_hash => $parameter_hash,
+											   type => 2),\@ans1,'setup_variancevec 2');
+
+cmp_float(tool::sir::get_offdiagonal_variance(type=> 1, covariance => 0.03, cv_i=>20, cv_j=> 40, var_i=> 3, var_j=> 0.5),
+	(0.03**2+1.5)/(25+(2.5)**2+1),'get offdiag variance type 1');
+
 
 dies_ok{tool::sir::setup_variancevec_from_cv(cv_theta => '20,30,40,30,10',
 											 cv_omega=> '0',
