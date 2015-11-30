@@ -71,7 +71,7 @@ $help_text{Post_help_message} = <<'EOF';
 EOF
 
 $help_text{Description} = <<'EOF';
-    The nmoutput2so script creates and populates a DDMoRe standardized output
+    The nmoutput2so script creates and populates a DDMoRe standard output
     xml file given the output from one or more NONMEM runs. It can
     also add PsN specific output to the SO. The XML::LibXML perl module is
     required so make sure it is installed. 
