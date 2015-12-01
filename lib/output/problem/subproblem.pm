@@ -1295,19 +1295,26 @@ sub _read_significant_digits
 			return;
 		}
 
-		if ( / NO. OF SIG. DIGITS UNREPORTABLE/ ) {
-			# This is ok
+		if ( / NO. OF SIG. DIGITS / ) {
+			my $tmp = _get_significant_digits($_);
+			$self -> significant_digits($tmp) if (defined $tmp);
 			last;
 		}
 
-		if ( / NO. OF SIG. DIGITS IN FINAL EST.:\s*(-?\d*\.*\d*)/ ){
-			$self -> significant_digits($1);
-			last;
-		}
 	}
 	$self->lstfile_pos($start_pos);
 }
 
+sub _get_significant_digits
+{
+	my $string = shift;
+	my $num;
+	if ( $string =~ /NO. OF SIG. DIGITS IN FINAL EST.:\s*(.*)/ ){
+		$num = _get_value(val=>$1); 
+	}
+	return $num;
+}
+	
 sub _read_simulation
 {
 	my $self = shift;

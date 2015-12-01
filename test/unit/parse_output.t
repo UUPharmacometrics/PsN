@@ -33,6 +33,19 @@ foreach my $key (keys %hash){
 	is (output::problem::subproblem::_get_value(val => $key),$hash{$key},"_get_value $key");
 }
 
+is (output::problem::subproblem::_get_significant_digits('NO. OF SIG. DIGITS IN FINAL EST.:  2.0'),2.0,
+	"_get_significant_digits 2.0");
+is (output::problem::subproblem::_get_significant_digits('NO. OF SIG. DIGITS IN FINAL EST.:  NaN'),undef,
+	"_get_significant_digits NaN");
+is (output::problem::subproblem::_get_significant_digits('NO. OF SIG. DIGITS UNREPORTABLE'),undef,
+	"_get_significant_digits unreportable");
+is (output::problem::subproblem::_get_significant_digits('NO. OF SIG. DIGITS IN FINAL EST.:  *******'),undef,
+	"_get_significant_digits asterisks");
+is (output::problem::subproblem::_get_significant_digits('NO. OF SIG. DIGITS IN FINAL EST.:  1E+02'),100,
+	"_get_significant_digits e notation");
+
+
+	
 
 my $file = $includes::testfiledir.'/mox_sir_block2.cor';
 my @lines = utils::file::slurp_file($file);
