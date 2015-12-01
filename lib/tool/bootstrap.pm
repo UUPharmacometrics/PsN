@@ -161,9 +161,10 @@ sub check_ignore_id
 
 	foreach my $line (@check_list){
 		next if ($line =~ /^\s*;/); #skip comments
-		if (($line =~ /(^|[^a-zA-Z0-9_]+)ID([^a-zA-Z0-9_]+|$)/ ) ||
-			($id_synonym && ($line =~ /(^|[^a-zA-Z0-9_]+)($id_synonym)([^a-zA-Z0-9_]+|$)/ ) )){
-			ui->print(category=> 'all',message=> "\nWarning:\nID/ID-synonym found in \$PK/\$PRED/\$ERROR.\n".
+		$line =~ s/;.*//; #remove comments
+		if (($line =~ /(\bID\b)/ ) ||
+			($id_synonym && ($line =~ /\b($id_synonym)\b/ ) )){
+			ui->print(category=> 'all',message=> "\nWarning:\nID/ID-synonym found in \$PK/\$PRED/\$ERROR:\n".$line.
 					  "Bootstrap script renumbers individuals, which means that code\n".
 					  "based on ID-value might not give the expected results.\n\n");
 			last;
