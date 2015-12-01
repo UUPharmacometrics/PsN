@@ -107,7 +107,7 @@ sub BUILD
 		}
 	}
 
-	if ($self->models->[0]->filename =~ /^sample(\d)\.mod/){
+	if ($self->models->[0]->filename =~ /^sample(\d+)\.mod/){
 		my $num = $1;
 		$self->evaluation_number($1);
 	}
