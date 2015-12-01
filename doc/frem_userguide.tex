@@ -95,12 +95,32 @@ or psn\_options -h on the commandline.
 
 \section{Initial values off-diagonal OMEGA}
 
+Manuscript says ``In FREM due to nature of parameterization via var-cov matrix the parameter-covariate
+relationship
+takes an exponential form``. Is that not assuming the parameter, e.g. CL, has exponential BSV eta to begin with?
 
+Definitions:
+Base frem model: Two omega blocks: One full omega block for model parameter etas and then separate full block for
+covariate etas.
+
+Full frem model: Single full omega block for all etas.
+
+We have difficulties:
+1) Obtaining good Initial estimates for OMEGA in full FREM model based on output from base FREM model,
+to get successful estimation.
+
+2) Get successful cov step for full FREM model after estimating full FREM model.
+Is Jonas formula for this issue, i.e. getting covariances without running covstep, assuming we have
+successful cov step for base FREM model, but only estimates for full FREM model?
 
 %variance (\hat Cov(X,Y)) = q(n)/n * (Cov(X,Y)^2 + Var(X) Var(Y))
 %Jonas  q(n) = 1 if ML-estiamtes for \hat Cov(X,Y), and converge to 1 when n-> 1 for other estimators.
 % N=2\frac{var^2}{SE^2}+1  where var is variance est from NONMEM, SE is SE of variance from NONMEM
 
+Coefficient is computed as
+\[
+\frac{cov_{par,cov}}{var_{cov}}=\frac{sd_{par}sd_{cov}corr_{par,cov}}{sd_{cov}sd_{cov}}=\frac{sd_{par}}{sd_{cov}}corr_{par,cov}
+\]
 
 \section{Workflow}
 The script first generates a set of template models in the m1 subdirectory, and performs the runs necessary to generate
