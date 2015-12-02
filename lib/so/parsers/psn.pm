@@ -145,6 +145,7 @@ sub _connector_get_files
             chop $append_columns;   # Remove final ,
             close $fh;
         } elsif ($tool eq 'sse') {
+            my $keep_tables;
             my $curdir = getcwd();
             chdir($directory);
             open my $fh, '<', "version_and_option_info.txt";
@@ -152,21 +153,29 @@ sub _connector_get_files
                 if (/^-append_columns=(.*)$/) {
                     if ($1 ne "") {
                         $append_columns = $1;
-                        last;
                     }
+                } elsif (/^-keep_tables/) {
+                    $keep_tables = 1;
                 }
             }
             close $fh;
             chdir($curdir);
-            chdir($directory.'/m1');
-            @files = <*.lst>;
-            my @ssedata =  <mc-sim-*.dat>; 
-            chdir($curdir);
-            foreach my $fl (@files){
-                cp ($directory.'/m1/'.$fl,$fl); 
-            }
-            foreach my $fl (@ssedata){
-                cp ($directory.'/m1/'.$fl,$fl); 
+            chdir($directory . '/m1');
+            if (not $keep_tables) {
+                @files = <*.lst>;
+                my @ssedata =  <mc-sim-*.dat>; 
+                chdir($curdir);
+                foreach my $fl (@files) {
+                    cp ($directory . '/m1/' . $fl, $fl); 
+                }
+                foreach my $fl (@ssedata) {
+                    cp ($directory . '/m1/' . $fl, $fl); 
+                }
+            } else {
+                _merge_simulated_tables(destination => $curdir);
+                chdir($curdir);
+                cp($directory . '/m1/mc-1.lst', '.'); 
+                @files = ( "mc-1.lst" );
             }
         } else {
             #execute or successful other tool
@@ -216,6 +225,53 @@ sub _get_toolname
 	}
 
     return $tool; #can be undef
+}
+
+sub _merge_simulated_tables
+{
+    my %parm = validated_hash(\@_,
+        destination => { isa => 'Str' },
+    );
+    my $destination = $parm{'destination'};
+
+    my @tables = glob "mc-sim-*";
+    my $numsamples = scalar(@tables);
+
+    open my $dest_cotab, '>', "$destination/cotab-sim-1";
+    open my $dest_sdtab, '>', "$destination/sdtab-sim-1";
+    open my $dest_patab, '>', "$destination/patab-sim-1";
+    open my $dest_mc, '>', "$destination/mc-sim-1.dat";
+
+    for (my $i = 1; $i <= $numsamples; $i++) {
+        open my $cotab, '<', "cotab-sim-$i";
+        while (my $line = <$cotab>) {
+            print $dest_cotab $line;
+        }
+        close $cotab;
+
+        open my $sdtab, '<', "sdtab-sim-$i";
+        while (my $line = <$sdtab>) {
+            print $dest_sdtab $line;
+        }
+        close $sdtab;
+
+        open my $patab, '<', "patab-sim-$i";
+        while (my $line = <$patab>) {
+            print $dest_patab $line;
+        }
+        close $patab;
+
+        open my $mc, '<', "mc-sim-$i.dat";
+        while (my $line = <$mc>) {
+            print $dest_mc $line;
+        }
+        close $mc;
+    }
+
+    close $dest_mc;
+    close $dest_patab;
+    close $dest_sdtab;
+    close $dest_cotab;
 }
 
 no Moose;
