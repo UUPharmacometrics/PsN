@@ -104,7 +104,7 @@ my $name_safe_version = $version;
 $name_safe_version =~ s/\./_/g;
 my @utilities = (
 	'bootstrap', 'cdd', 'execute', 'llp', 'scm', 'sumo', 'sse',
-	'data_stats', 'se_of_eta', 'update_inits', 'update', 'npc', 'vpc',
+	'data_stats', 'update_inits', 'update', 'npc', 'vpc',
 	'pind','nonpb','extended_grid','psn','psn_options','psn_clean',
 	'runrecord','mcmp','lasso','mimp','xv_scm','parallel_retries',
 	'boot_scm','gls','ebe_npde','frem','randtest','linearize', 'crossval', 'pvar', 'nca', 'vpctable','sir','rawresults',

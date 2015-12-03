@@ -271,7 +271,6 @@ COMPFILES=boot_scm \
 	rawresults \
 	runrecord \
 	scm \
-	se_of_eta \
 	sse \
 	sumo \
 	update_inits \
