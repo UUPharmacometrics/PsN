@@ -67,6 +67,7 @@ sub get_nmtabledata{
 	}
 	for (my $k=0; $k< scalar(@{$header_strings_array}); $k++){
 		if (defined $mean_matrix_array->[$k]){
+			#mean now contains sums
 			#header 0 individual 0 , -1 for original
 			return $file_read_error unless ((defined $values_matrix_array->[$k])
 											and (defined $values_matrix_array->[$k][0])
@@ -75,7 +76,7 @@ sub get_nmtabledata{
 			return $file_read_error unless ($sample_count > 0);
 			for (my $j=0;$j<scalar(@{$header_strings_array->[$k]});$j++){
 				for (my $i=0;$i<scalar(@{$mean_matrix_array->[$k][$j]});$i++){
-					#loop over individuals
+					#loop over individuals, change sums to means
 					$mean_matrix_array->[$k][$j][$i] = $mean_matrix_array->[$k][$j][$i]/$sample_count;
 				} 
 			}
