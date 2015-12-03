@@ -1282,17 +1282,9 @@ sub check_matrix_posdef{
 		);
 	my $matrix = $parm{'matrix'};
 
-	my $dim = scalar(@{$matrix});
 	#copy and check it
-	my @array=();
-	#this gives full matrix
-	for (my $row=0; $row<$dim;$row++){
-		push(@array,[0 x $dim]);
-		for (my $col=0;$col<$dim;$col++){
-			$array[$row]->[$col]=$matrix->[$row]->[$col];
-		}
-	}
-	return linear_algebra::cholesky(\@array);
+	my @copy = map { [@$_] } @{$matrix};
+	return linear_algebra::cholesky(\@copy);
 
 }
 
