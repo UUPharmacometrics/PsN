@@ -9,6 +9,7 @@ use linear_algebra;
 use ui;
 use File::Copy qw/cp mv/;
 use File::Path 'rmtree';
+use nmtablefile;
 
 
 use Moose;
@@ -122,6 +123,175 @@ sub BUILD
 		croak("Trying to check parameters in input model".
 			" but no headers were found in \$INPUT" );
 	}
+}
+
+sub get_filled_omega_block
+{
+	#must have already done update inits on model so that get_matrix is estimated values, where available
+	my %parm = validated_hash(\@_,
+							  model => { isa => 'model', optional => 0 },
+							  problem_index  => { isa => 'Int', default => 0 },
+							  table_index  => { isa => 'Int', default => 0 },
+							  start_eta_1 => { isa => 'Int', optional => 0 },
+							  end_eta_1 => { isa => 'Int', optional => 0 },
+							  start_eta_2 => { isa => 'Int', optional => 1 },
+							  end_eta_2 => { isa => 'Int', optional => 1 },
+	);
+	my $model = $parm{'model'};
+	my $problem_index = $parm{'problem_index'};
+	my $table_index = $parm{'table_index'};
+	my $start_eta_1 = $parm{'start_eta_1'};
+	my $end_eta_1 = $parm{'end_eta_1'};
+	my $start_eta_2 = $parm{'start_eta_2'};
+	my $end_eta_2 = $parm{'end_eta_2'};
+
+	my $error = 0;
+	my $message = '';
+	my $corrmatrix;
+	my $size1 = $end_eta_1-$start_eta_1+1;
+	my $size2 = 0;
+	$size2 = $end_eta_2-$start_eta_2+1 if (defined $start_eta_2 and defined $end_eta_2);
+	my @sd = ();
+	my @mergematrix = ();
+	
+	#local coords
+	($corrmatrix,$message) = get_correlation_matrix_from_phi(start_eta_1 => $start_eta_1,
+															 end_eta_1 => $end_eta_1,
+															 start_eta_2 => $start_eta_2,
+															 end_eta_2 => $end_eta_2,
+															 problem_index => $problem_index,
+															 table_index => $table_index,
+															 model => $model);
+	return([],$message) unless (length($message) == 0);
+
+	@sd = (0) x ($size1+$size2);
+	for (my $i=0; $i<($size1+$size2); $i++){
+		push(@mergematrix,[(0) x ($size1+$size2)]);
+	}
+	
+	#omega block. Do not assume all that are nonzero are estimated
+	#get inits from model. local coords
+	my $init_matrix_1 = $model->problems->[$problem_index]->get_matrix(type => 'omega',
+																	   start_row => $start_eta_1,
+																	   end_row => $end_eta_1);
+
+	for (my $i=0; $i<$size1; $i++){
+		for (my $j=0; $j<$size1; $j++){
+			$mergematrix[$i]->[$j] = $init_matrix_1->[$i][$j];
+		}
+		$sd[$i] = sqrt($init_matrix_1->[$i][$i]) if ($init_matrix_1->[$i][$i] > 0);
+	}
+
+	if (defined $start_eta_2 and defined $end_eta_2){
+		my $init_matrix_2 = $model->problems->[$problem_index]->get_matrix(type => 'omega',
+																		   start_row => $start_eta_2,
+																		   end_row => $end_eta_2);
+		for (my $i=0; $i<$size2; $i++){
+			for (my $j=0; $j<$size2; $j++){
+				$mergematrix[$size1+$i]->[$size1+$j] = $init_matrix_2->[$i][$j];
+			}
+			$sd[$size1+$i] = sqrt($init_matrix_2->[$i][$i]) if ($init_matrix_2->[$i][$i] > 0);
+		}
+	}
+
+	#now we have sd and valuematrix that are inits/estimates or 0.
+	#for each value in mergematrix that is still 0, compute covar using correlation and sd
+
+	for (my $i = 0; $i < ($size1+$size2); $i++){
+		for (my $j = 0; $j < $i; $j++){
+			#copy
+			$mergematrix[$i]->[$j] = $mergematrix[$j]->[$i]; 
+		}
+		for (my $j = ($i+1); $j < ($size1+$size2); $j++){
+			next unless ($mergematrix[$i]->[$j] == 0);
+			#compute new
+			$mergematrix[$i]->[$j] = ($corrmatrix->[$i][$j])*($sd[$i])*($sd[$j]);
+		}
+	}
+
+	my ($posdefmatrix,$diff)=linear_algebra::get_symmetric_posdef(\@mergematrix);
+	
+	return($posdefmatrix,'');	
+}
+
+sub get_correlation_matrix_from_phi
+{
+	my %parm = validated_hash(\@_,
+							  model => { isa => 'model', optional => 0 },
+							  problem_index  => { isa => 'Int', default => 0 },
+							  table_index  => { isa => 'Int', default => 0 },
+							  start_eta_1 => { isa => 'Int', optional => 0 },
+							  end_eta_1 => { isa => 'Int', optional => 0 },
+							  start_eta_2 => { isa => 'Maybe[Int]', optional => 1 },
+							  end_eta_2 => { isa => 'Maybe[Int]', optional => 1 },
+	);
+	my $model = $parm{'model'};
+	my $problem_index = $parm{'problem_index'};
+	my $table_index = $parm{'table_index'};
+	my $start_eta_1 = $parm{'start_eta_1'};
+	my $end_eta_1 = $parm{'end_eta_1'};
+	my $start_eta_2 = $parm{'start_eta_2'};
+	my $end_eta_2 = $parm{'end_eta_2'};
+
+	my $error = 0;
+	my $message = '';
+
+	my $filename = $model->outputs->[0]->problems->[$problem_index]->full_name_NM7_file(file_type => 'phi');
+
+	unless (length($filename)> 0){
+		$error = 2;
+		$message .= 'Empty phi file name';
+	}
+	unless (-e $filename){
+		$error = 2;
+		$message .= ' File '.$filename.' does not exist';
+	}
+	unless (($start_eta_1 > 0) and ($end_eta_1 >=$start_eta_1)){
+		$error = 2;
+		$message .= " Input error start, end eta 1: $start_eta_1, $end_eta_1";
+	}
+	if (defined $start_eta_2 and defined $end_eta_2){
+		unless (($start_eta_2 > 0) and ($end_eta_2 >=$start_eta_2) and ($start_eta_2 > $end_eta_1)){
+			$error = 2;
+			$message .= " Input error end_eta_1, start 2, end eta 2: $end_eta_1,$start_eta_2, $end_eta_2";
+		}
+	}	
+	return([],$message) unless ($error == 0);
+	
+	my $nmtablefile = nmtablefile->new(filename => $filename);
+	my @matrix = ();
+	my $covariance = [];
+	my $sdcorr = [];
+	
+	for (my $i = $start_eta_1; $i <= $end_eta_1; $i++){
+		push(@matrix,$nmtablefile->tables->[$table_index]->get_column(name=> 'ETA('.$i.')'));
+	}
+	if (defined $start_eta_2 and defined $end_eta_2){
+		for (my $i = $start_eta_2; $i <= $end_eta_2; $i++){
+			push(@matrix,$nmtablefile->tables->[$table_index]->get_column(name=> 'ETA('.$i.')'));
+		}
+	}
+	$error = linear_algebra::column_cov(\@matrix,$covariance);
+	unless ($error == 0){
+		if ($error == 1){
+			$message = 'Numerical error column_cov';
+		}else{
+			$message = 'Input error column_cov';
+		}
+		return([],$message);
+	}
+	
+	$error = linear_algebra::covar2sdcorr($covariance,$sdcorr);
+	unless ($error == 0){
+		if ($error == 1){
+			$message = 'Numerical error covar2sdcorr';
+		}else{
+			$message = 'Input error covar2sdcorr';
+		}
+		return([],$message);
+	}
+
+	return ($sdcorr,'');
 }
 
 sub get_CTV_parameters
@@ -390,45 +560,43 @@ sub create_template_models
 	my $filter_data_model;
 	my $data_check_model;
 	my $data2_data_record;
-	my $mod0_ofv;
+	my $mod0_ofv = $undefined;
 	my $data2name = 'frem_data2.dta';
-
-	if ($model -> is_run()){
-		$output_0 =  $model ->outputs()->[0];
-		if ( defined $output_0){
-			$mod0_ofv = $output_0->get_single_value(attribute=> 'ofv');
-		}else{
-			$mod0_ofv = $undefined;
-		}
-	}else{
-		$mod0_ofv = $undefined;
-	}
+	my $BSV_par_block;
 	
-	#copy original data to m1. Then only use that file, use relative data path in modelfits
-	#only set data record string in all models, do not mess with data object and chdir and such
-	#since we are not running any models here
-	my $original_data_name = $model->datafiles(absolute_path=>1)->[0];
 
 	($start_eta,$total_orig_etas,$bsv_parameters,$start_omega_record)=get_start_numbers(model=>$model,
 																						n_invariant => scalar(@{$self->invariant}),
 																						start_eta => $self->start_eta());
+	#assume first prob
 
+	if ($model -> is_run() and (defined $model->outputs->[0] )) {
+		$model -> update_inits ( from_output => $model->outputs->[0]);
+		if ($bsv_parameters < 1){
+			$BSV_par_block = [];
+			$mod0_ofv = $model ->outputs()->[0]->get_single_value(attribute=> 'ofv');
+			$output_0 = $model ->outputs()->[0];
+		}elsif (-e $model->outputs->[0]->problems->[0]->full_name_NM7_file(file_type => 'phi')){
+			my $err;
+			($BSV_par_block,$err) = get_filled_omega_block(model => $model,
+														   start_eta_1 => $start_eta,
+														   end_eta_1 => $start_eta+$bsv_parameters-1);
+			#FIXME error handling
+			$mod0_ofv = $model ->outputs()->[0]->get_single_value(attribute=> 'ofv');
+			$output_0 = $model ->outputs()->[0];
+		} #else need to rerun mod0
+	}
 	
 	##########################################################################################
 	#Create Model 0
 	##########################################################################################
+
+	#since copy_datafile was set, the physical datafile will be copied to m1 and the model written with relative data path
 	$frem_model0 = $model ->  copy( filename    => $self -> directory().'m1/'.$name_model0,
 									output_same_directory => 1,
-									write_copy => 0,
+									write_copy => 1,
 									copy_datafile   => 1,
 									copy_output => 0);
-	#Update inits from output, if any
-	if (defined $output_0){
-		$frem_model0 -> update_inits ( from_output => $output_0,
-									   problem_number => 1);
-	}
-	#since copy_datafile was set, the physical datafile will be copied to m1 and the model written with relative data path
-	$frem_model0 ->_write();
 
 	my ($CTVref,$etanum_to_parameter) = get_CTV_parameters(model => $frem_model0,
 														   bov_parameters => $self->parameters);
@@ -535,8 +703,8 @@ sub create_template_models
 	my $run1_message = "\nExecuting ";
 	my $run1_name = '';
 
-	if ((not defined $output_0) and (($self->estimate() >= 0) or ($self->check()))){
-		#estimate model 0 if no lst-file found and estimation is requested or check of dataset is requested
+	if ((not defined $BSV_par_block)  or ($self->check())){
+		#estimate model 0 if need new output or check of dataset is requested
 		push(@run1_models,$frem_model0);
 		$run1_message = 'FREM Model 0 ';
 		$run1_message .= 'and ' if ($self->check());
@@ -560,26 +728,25 @@ sub create_template_models
 				 models		 => \@run1_models,
 				 top_tool              => 0);
 #		   raw_results           => undef,
-		
+
+		tool::add_to_nmoutput(run => $run1_fit, extensions => ['phi','ext']);		
 		ui -> print( category => 'all', message =>  $run1_message);
 		$run1_fit -> run;
 		if ($frem_model0 -> is_run()){
-			$output_0 = $frem_model0 -> outputs -> [0] ;
+			$mod0_ofv = $frem_model0 -> outputs -> [0]->get_single_value(attribute=> 'ofv') ;
+			my $err;
+			($BSV_par_block,$err) = get_filled_omega_block(model => $frem_model0,
+													start_eta_1 => $start_eta,
+														   end_eta_1 => $start_eta+$bsv_parameters-1);
+			#FIXME error handling
+			$output_0 = $frem_model0 -> outputs -> [0];
 		}
 	}
 	if ($self->check()){
 		#compare ofv. print this to log file
-		my $mod0_ofv;
-		my $check_ofv;
-		if ( defined $output_0){
-			$mod0_ofv = $output_0->get_single_value(attribute=> 'ofv');
-		}else{
-			$mod0_ofv = 'undefined';
-		}
+		my $check_ofv = 'undefined';
 		if ($data_check_model->is_run()){
 			$check_ofv = $data_check_model->outputs -> [0]->get_single_value(attribute=> 'ofv');
-		}else{
-			$check_ofv = 'undefined';
 		}
 		print "\nModel 0 ofv is    $mod0_ofv\n";
 		print   "Data check ofv is $check_ofv\n";
@@ -604,9 +771,7 @@ sub create_template_models
 	}
 
 	if (scalar(@{$self->invariant}) > 0){
-		#	  print "using empirical omega fill\n";
-		my $BSV_par_block = $frem_model1-> problems -> [0]->get_filled_omega_matrix(start_eta => $start_eta);
-		
+		croak('BSV_par undefined') unless (defined $BSV_par_block);
 		@leading_omega_records = ();
 		for (my $i=0; $i< ($start_omega_record-1);$i++){
 			#if start_omega_record is 1 we will push nothing
@@ -616,10 +781,8 @@ sub create_template_models
 
 		#reset $start_omega_record and on, not not kill all
 		$frem_model1 -> problems -> [0]-> omegas(\@leading_omega_records);
-	
 		$frem_model1-> problems -> [0]->add_omega_block(new_omega => $BSV_par_block,
 														labels => $labelshash{'bsv_par_labels'});
-		$frem_model1-> problems -> [0]->ensure_posdef();
 	}
 
 	$frem_model1 ->_write();
@@ -667,6 +830,7 @@ sub create_template_models
 					 parameters => $self->parameters,
 		);
 
+	#FIXME use spdarise
 	$frem_model2-> problems -> [0]->ensure_posdef();
 	$frem_model2->_write();
 
@@ -712,7 +876,7 @@ sub create_template_models
 						 time_varying => $self->time_varying,
 						 parameters => $self->parameters,
 			);
-		
+		#FIXME spdarise
 		$frem_model2_invar-> problems -> [0]->ensure_posdef();
 		$frem_model2_invar->_write();
 	}
@@ -758,6 +922,7 @@ sub create_template_models
 						 time_varying => $self->time_varying,
 						 parameters => $self->parameters,
 			);
+		#FIXME spdarise
 		$frem_model2_timevar-> problems -> [0]->ensure_posdef();
 		
 		$frem_model2_timevar->_write();
@@ -776,7 +941,9 @@ sub create_template_models
 	$frem_model3->datafiles(problem_numbers => [1],
 							new_names => [$self -> directory().'m1/'.$data2name]);
 	$frem_model3->problems->[0]->datas->[0]->ignoresign('@');
-	
+
+	#FIXME input BSV_par_block.
+	#FIXME change create omega block so that can take covariate data as input for BSV_all_block
 	#set theta omega sigma code input
 	set_frem_records(model => $frem_model3,
 					 start_eta => $start_eta,
@@ -796,7 +963,7 @@ sub create_template_models
 					 time_varying => $self->time_varying,
 					 parameters => $self->parameters,
 		);
-#	
+	#FIXME spdarise	
 	$frem_model3-> problems -> [0]->ensure_posdef();
 
 	$frem_model3->_write();
@@ -1039,7 +1206,7 @@ sub modelfit_setup
 				 models		 => [$frem_model0],
 				 copy_data    => 0,
 				 top_tool              => 0);
-		
+		tool::add_to_nmoutput(run => $zero_fit, extensions => ['phi','ext']);		
 		ui -> print( category => 'all', message => "\nExecuting FREM Model 0" );
 		$zero_fit -> run;
 		$output_0 = $frem_model0 -> outputs -> [0] if ($frem_model0 -> is_run());
@@ -1059,6 +1226,7 @@ sub modelfit_setup
 										   update_fix => 1,
 										   skip_output_zeros => 1,
 										   problem_number => 1);
+			#FIXME spdarise
 			$frem_model1-> problems -> [0]->ensure_posdef();
 			$frem_model1->_write(overwrite => 1);
 		}
@@ -1073,7 +1241,7 @@ sub modelfit_setup
 					 copy_data    => 0,
 					 models		 => [$frem_model1],
 					 top_tool              => 0);
-			
+			tool::add_to_nmoutput(run => $one_fit, extensions => ['phi','ext']);		
 			ui -> print( category => 'all', message => "\nExecuting FREM Model 1" );
 			$one_fit -> run;
 			$output_1 = $frem_model1 -> outputs -> [0] if ($frem_model1 -> is_run());
@@ -1093,6 +1261,7 @@ sub modelfit_setup
 										   update_fix => 1,
 										   skip_output_zeros => 1,
 										   problem_number => 1);
+			#FIXME spdarise
 			$frem_model2-> problems -> [0]->ensure_posdef();
 			$frem_model2 ->_write(overwrite => 1);
 		}
@@ -1108,7 +1277,8 @@ sub modelfit_setup
 					 copy_data      => 0,
 					 models		 => [$frem_model2],
 					 top_tool              => 0);
-			
+
+			tool::add_to_nmoutput(run => $two_fit, extensions => ['phi','ext']);		
 			ui -> print( category => 'all', message => "\nExecuting FREM Model 2" );
 			$two_fit -> run;
 			$output_2 = $frem_model2 -> outputs -> [0] if ($frem_model2 -> is_run());
@@ -1124,7 +1294,7 @@ sub modelfit_setup
 		$frem_model2_invar -> update_inits ( from_output => $output_1,
 											 ignore_missing_parameters => 1,
 											 problem_number => 1);
-		$frem_model2_invar-> problems -> [0]->ensure_posdef();
+		$frem_model2_invar-> problems -> [0]->ensure_posdef(); #FIXME
 		$frem_model2_invar->_write(overwrite => 1);
 	}
    
@@ -1141,7 +1311,7 @@ sub modelfit_setup
 											   update_fix => 1,
 											   skip_output_zeros => 1,
 											   problem_number => 1);
-		$frem_model2_invar-> problems -> [0]->ensure_posdef();
+		$frem_model2_invar-> problems -> [0]->ensure_posdef(); #FIXME
 		$frem_model2_timevar->_write(overwrite => 1);
 	}
 	
@@ -1224,7 +1394,7 @@ sub modelfit_setup
 
 			}
 
-			$frem_model3-> problems -> [0]->ensure_posdef();
+			$frem_model3-> problems -> [0]->ensure_posdef(); #FIXME
 			$frem_model3->_write(overwrite => 1);
 		}elsif (defined $output_1){ 
 			$frem_model3 -> update_inits ( from_output => $output_1,
@@ -1232,7 +1402,7 @@ sub modelfit_setup
 										   update_fix => 1,
 										   skip_output_zeros => 1,
 										   problem_number => 1);
-			$frem_model3-> problems -> [0]->ensure_posdef();
+			$frem_model3-> problems -> [0]->ensure_posdef(); #FIXME
 			$frem_model3->_write(overwrite => 1);
 		}
 
@@ -1248,7 +1418,8 @@ sub modelfit_setup
 					 copy_data		 => 0,
 					 models		 => [$frem_model3],
 					 top_tool              => 0);
-			
+
+			tool::add_to_nmoutput(run => $three_fit, extensions => ['phi','ext']);		
 			ui -> print( category => 'all', message => "\nExecuting FREM Model 3" );
 			$three_fit -> run;
 			$output_3 = $frem_model3 -> outputs -> [0] if ($frem_model3 -> is_run());
@@ -1270,7 +1441,7 @@ sub modelfit_setup
 												   ignore_missing_parameters => 1,
 												   update_fix => 1,
 												   problem_number => 1);
-				$frem_vpc_model1-> problems -> [0]->ensure_posdef(percent => 1);
+				$frem_vpc_model1-> problems -> [0]->ensure_posdef(percent => 1); #FIXME
 			}
 
 			#fix omega
@@ -1292,7 +1463,8 @@ sub modelfit_setup
 					 copy_data	 => 0,
 					 models		 => [$frem_vpc_model1],
 					 top_tool              => 0);
-			
+
+			tool::add_to_nmoutput(run => $vpc1_fit, extensions => ['phi','ext']);		
 			ui -> print( category => 'all', message => "\nExecuting FREM vpc model 1" );
 			$vpc1_fit -> run;
 			$output_vpc_1 = $frem_vpc_model1 -> outputs -> [0] if ($frem_vpc_model1 -> is_run());
@@ -1749,6 +1921,7 @@ sub set_frem_records
 												  labels => $labelshash{'bsv_cov_labels'});
 		if($model_type == 3){
 			#replace with BSV_all (full block from BSV_par + BSV_cov
+			#FIXME use new code here omega_block, make sure update inits done and have input from mod 2 and not 1!
 			my $BSV_all_block = $model-> problems -> [0]->get_filled_omega_matrix(start_eta => $start_eta);
 
 			my $start_omega_record = $model-> problems -> [0]->check_start_eta(start_eta => $start_eta);
