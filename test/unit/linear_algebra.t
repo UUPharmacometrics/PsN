@@ -8,9 +8,10 @@ use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages
 use linear_algebra;
 
-
 #subtract, max and absolute
 my @A = ([1, 2, 3], [2.1, 4, 5], [3.25, 5.17, 19]);
+
+
 my @B = ([1, 2.1, 3.25], [2, 4, 5.17], [3, 5, 19]);
 my $C = linear_algebra::subtract(\@A, \@B);
 is_deeply($C, [[ 0.  , -0.1 , -0.25], [ 0.1 ,  0.  , -0.17], [ 0.25,  0.17,  0.  ]], "matrix subtraction");
@@ -457,5 +458,17 @@ cmp_relative($Rmat->[0]->[0],8,7.416198487095664,"singular qr element 1");
 
 is($err1,1,"qr factorize singular");
 
+my @A =([1,0,0],[0,-0.1,0],[0,0,1]);
+
+
+my ($pos,$diff) = linear_algebra::get_symmetric_posdef(\@A);
+	
+cmp_float_matrix($pos,[[1,0,0],[0,0.0000000001,0],[0,0,1]],'ensure diagonal posdef');
+
+my @A =([1,0.1,0.2],[0.1,1,0.3],[0.2,0.3,1]);
+($pos,$diff) = linear_algebra::spdarise(matrix=>\@A);
+
+cmp_float_matrix($pos,\@A,'spdarise posdef matrix');
+is(abs($diff)<1E-20,1,'spdarise posdef diff');
 
 done_testing();

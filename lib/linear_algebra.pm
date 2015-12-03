@@ -961,6 +961,74 @@ sub LU_factorization
 	return 0;
 }
 
+sub get_symmetric_posdef
+{
+	my $A = shift;
+
+    (my $eigenvalues, my $Q) = eigenvalue_decomposition($A);
+
+	my $minEigen=0.0000000001;
+
+	if (min($eigenvalues) < $minEigen){
+		return spdarise(matrix => $A,eigenvalues => $eigenvalues, Q => $Q, minEigen => $minEigen); #new A,frob norm diff
+	}else{
+		return($A,0);
+	}
+}
+
+sub spdarise
+{
+	#Takes a symmetric matrix and modify it to the symmetric positive definite 
+	#matrix with the specified minimum eigen value (probably the closest to the 
+	#original matrix in Frobenius norm sense).
+    my %parm = validated_hash(\@_,
+							  matrix => { isa => 'ArrayRef', optional => 0 },
+							  eigenvalues => { isa => 'ArrayRef', optional => 1 },
+							  Q => { isa => 'ArrayRef', optional => 1 },
+							  minEigen => { isa => 'Num', default => 0.0000000001 },
+	);
+	my $matrix = $parm{'matrix'};
+    my $eigenvalues = $parm{'eigenvalues'};
+	my $Q = $parm{'Q'};
+	my $minEigen = $parm{'minEigen'};
+
+	unless (defined $Q and defined $eigenvalues){
+		($eigenvalues, $Q) = eigenvalue_decomposition($matrix);
+	}
+	unless ($minEigen > 0){
+		croak("minEigen $minEigen is not > 0");
+	}
+		
+    my @posdefmatrix = map { [@$_] } @$matrix;
+    my @tempA = map { [@$_] } @$matrix;
+
+    for (my $index = 0; $index < scalar(@$eigenvalues); $index++) {
+        if ($eigenvalues->[$index]<$minEigen){
+            $eigenvalues->[$index]=$minEigen;
+        }
+    }
+    
+    for (my $index1 = 0; $index1 < scalar(@{$matrix}); $index1++) {
+        for (my $index2 = 0; $index2 < scalar(@{$matrix}); $index2++) {
+            @tempA->[$index1]->[$index2] = $Q->[$index1]->[$index2] * $eigenvalues->[$index2];        
+		}
+    }
+    my $fNormDiff=0;
+    for (my $index1 = 0; $index1 < scalar(@{$matrix}); $index1++) {
+        for (my $index2 = 0; $index2 < scalar(@{$matrix}); $index2++) {
+			$posdefmatrix[$index1]->[$index2] =0;
+			for (my $index3 = 0; $index3 < scalar(@{$matrix}); $index3++) {
+				$posdefmatrix[$index1]->[$index2] =
+					$posdefmatrix[$index1]->[$index2] +  @tempA->[$index1]->[$index3]*$Q->[$index2]->[$index3] ;
+			}
+			$fNormDiff=$fNormDiff+($posdefmatrix[$index1]->[$index2]-$matrix->[$index1]->[$index2])*($posdefmatrix[$index1]->[$index2]-$matrix->[$index1]->[$index2]) ;
+        }
+    }
+    
+	return(\@posdefmatrix,$fNormDiff);
+}
+
+
 sub eigenvalue_decomposition
 {
     # Perfor an eigenvalue decomposition of a symmetric matrix
