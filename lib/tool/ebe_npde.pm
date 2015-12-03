@@ -219,18 +219,7 @@ sub modelfit_setup
 			copy_data => 0,
 			abort_on_fail => $self->abort_on_fail);
 
-		if (defined $run_orig->nm_output and length($run_orig->nm_output)>0){
-			my $old = $run_orig->nm_output;
-			unless ($run_orig->nm_output =~ /phi/){
-				$old .= ',phi';
-			}
-			unless ($run_orig->nm_output =~ /ext/){
-				$old .= ',ext';
-			}
-			$run_orig->nm_output($old);
-		}else{
-			$run_orig->nm_output('phi,ext');
-		}
+		tool::add_to_nmoutput(run => $run_orig, extensions => ['phi','ext']);		
 
 		ui -> print( category => 'ebe_npde',
 					 message  => "Running original model to get final parameter estimates for simulation" );
@@ -385,18 +374,8 @@ sub modelfit_setup
 		_raw_results_callback => $self -> _modelfit_raw_results_callback( model_number => $model_number ),
 		copy_data =>0,
 		abort_on_fail => $self->abort_on_fail);
-	if (defined $run_sim->nm_output and length($run_sim->nm_output)>0){
-		my $old = $run_sim->nm_output;
-		unless ($run_sim->nm_output =~ /phi/){
-			$old .= ',phi';
-		}
-		unless ($run_sim->nm_output =~ /ext/){
-			$old .= ',ext';
-		}
-		$run_sim->nm_output($old);
-	}else{
-		$run_sim->nm_output('phi,ext');
-	}
+
+	tool::add_to_nmoutput(run => $run_sim, extensions => ['phi','ext']);		
 
 	my $typerun = 'evaluations';
 	$typerun = 'reestimations' if $self->reminimize;

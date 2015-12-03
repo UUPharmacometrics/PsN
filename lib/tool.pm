@@ -349,6 +349,28 @@ sub BUILD
 	}
 }
 
+sub add_to_nmoutput
+{
+	my %parm = validated_hash(\@_,
+							  run => { isa => 'tool', optional => 0 },
+							  extensions => {isa => 'ArrayRef', optional => 0}
+	);
+	my $run = $parm{'run'};
+	my $extensions = $parm{'extensions'};
+	
+	if (defined $run->nm_output and length($run->nm_output)>0){
+		my $old = $run->nm_output;
+		foreach my $extension (@{$extensions}){
+			unless ($run->nm_output =~ /$extension/){
+				$old .= ','.$extension;
+			}
+		}
+	}else{
+		$run->nm_output(join(',',@{$extensions}));
+	}
+
+}
+
 sub add_model
 {
 	my ($self, %parm) = validated_hash(@_, 
