@@ -17,6 +17,55 @@ my $modeldir = $includes::testfiledir;
 my $model = model->new(filename => "$modeldir/mox_no_bov.mod", 
 					   ignore_missing_data => 1);
 
+my ($corr,$message) = tool::frem::get_correlation_matrix_from_phi(start_eta_1 => 1,
+																  end_eta_1 => 3,
+																  model => $model);
+my $ans=[[0.6389949068,0.9566914852,0.1573687298],
+		 [0.9566914852, 0.996786336,0.0799357334 ],
+		 [0.1573687298, 0.0799357334, 0.4438842175]];
+
+cmp_float_matrix($corr,$ans,'get_correlation_matrix_from_phi 1');
+is (length($message),0,'no error get_correlation_matrix 1');
+
+($corr,$message) = tool::frem::get_correlation_matrix_from_phi(start_eta_1 => 1,
+																  end_eta_1 => 1,
+																  start_eta_2 => 3,
+																  end_eta_2 => 3,
+																  model => $model);
+$ans=[[0.6389949068,0.1573687298],
+		 [0.1573687298, 0.4438842175]];
+
+cmp_float_matrix($corr,$ans,'get_correlation_matrix_from_phi 2');
+is (length($message),0,'no error get_correlation_matrix 2');
+
+($corr,$message) = tool::frem::get_correlation_matrix_from_phi(start_eta_1 => 1,
+																  end_eta_1 => 3,
+																  start_eta_2 => 2,
+																  end_eta_2 => 3,
+																  model => $model);
+is ($message," Input error end_eta_1, start 2, end eta 2: 3,2, 3",'input error get_correlation_matrix');
+
+$model = model->new(filename => "$modeldir/mox_sir.mod", 
+					ignore_missing_data => 1);
+
+$model->update_inits(from_output => $model->outputs->[0]);
+
+my ($block,$message) = tool::frem::get_filled_omega_block(model => $model,
+														  start_eta_1 => 1,
+														  end_eta_1 => 2,
+														  start_eta_2 => 3,
+														  end_eta_2 => 3);
+$ans=[[4.08636E-01,sqrt(4.08636E-01)*sqrt(1.10186)*0.7853246843,sqrt(4.08636E-01)*sqrt(2.07708E-01)*0.0428450599],
+	  [sqrt(4.08636E-01)*sqrt(1.10186)*0.7853246843,1.10186E+00, -2.37832958e-03],
+	  [sqrt(4.08636E-01)*sqrt(2.07708E-01)*0.0428450599,-2.37832958e-03, 2.07708E-01]];
+
+cmp_float_matrix($block,$ans,'get_filled_omega_block 1');
+
+
+
+$model = model->new(filename => "$modeldir/mox_no_bov.mod", 
+					ignore_missing_data => 1);
+
 my $bov_parameters = ['PHI','LAG','CL','V','KA'];
 my ($ctv_parameters,$etanum_to_parameterhash) =  tool::frem::get_CTV_parameters(model=> $model,
 																				bov_parameters => $bov_parameters);
@@ -146,10 +195,5 @@ is_deeply(\@code,['TVCL=THETA(1)','TVV=CTVV','CL=TVCL*EXP(ETA(1))','V=TVV*EXP(ET
 #set_frem_records FIXME
 #more dataset handling FIXME
 #set_frem_code FIXME
-
-done_testing();
-exit;
-
-
 
 done_testing();
