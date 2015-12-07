@@ -154,8 +154,8 @@ sub _connector_get_files
                     if ($1 ne "") {
                         $append_columns = $1;
                     }
-                } elsif (/^-keep_tables/) {
-                    $keep_tables = 1;
+                } elsif (/^-keep_tables=(.*)$/) {
+                    $keep_tables = $1;
                 }
             }
             close $fh;
