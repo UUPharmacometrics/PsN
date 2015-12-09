@@ -44,10 +44,22 @@ is (length($message),0,'no error get_correlation_matrix 2');
 																  end_eta_2 => 3,
 																  model => $model);
 is ($message," Input error end_eta_1, start 2, end eta 2: 3,2, 3",'input error get_correlation_matrix');
+my $model = model->new(filename => "$modeldir/mox1.mod", 
+					   ignore_missing_data => 1);
+my $bov_param = tool::frem::get_parameters_to_etas(model => $model,
+												   use_pred => 0,
+												   etas => [2,4]);
+is_deeply($bov_param,['V','KPCL'],'get_parameters_to_etas 1');
+lives_ok {tool::frem::check_input_bov(input_bov_parameters => $bov_param,parameters_bov => ['KA','KPCL','V']) } " check_input_bov 1";
+dies_ok {tool::frem::check_input_bov(input_bov_parameters => $bov_param,parameters_bov => ['KA','V']) } " check_input_bov 2";
 
 $model = model->new(filename => "$modeldir/mox_sir.mod", 
 					ignore_missing_data => 1);
 
+is_deeply(tool::frem::get_parameters_to_etas(model => $model,
+											 use_pred => 0,
+											 etas => [3]),['KA'],'get_parameters_to_etas 2');
+		  
 $model->update_inits(from_output => $model->outputs->[0]);
 
 my ($block,$message) = tool::frem::get_filled_omega_block(model => $model,
@@ -87,21 +99,19 @@ is($etanum_to_parameterhash->{3},'KA',"get_CTV_parameters etanum_to_parameterhas
 my $time_varying = ['CLCR','WT'];
 my $invariant = ['AGE','SEX'];
 
-my($start_eta,$total_orig_etas,$bsv_parameters,$start_omega_record)=
+my($total_bsv_etas,$bsv_parameters,$start_omega_record,$bovref)=
 	tool::frem::get_start_numbers(model=>$model,
-					  n_invariant => 0, 
-					  start_eta => undef);
-is($start_eta,4,"get_start_numbers start_eta");
-is($total_orig_etas,3,"get_start_numbers total_orig_etas");
-is($bsv_parameters,0,"get_start_numbers bsv_parameters");
-is($start_omega_record,3,"get_start_numbers start_omega_record");
+								  n_invariant => 0, 
+								  skip_etas => 0);
+is($total_bsv_etas,3,"get_start_numbers total_bsv_etas");
+is($bsv_parameters,3,"get_start_numbers bsv_parameters");
+is($start_omega_record,1,"get_start_numbers start_omega_record");
 
-($start_eta,$total_orig_etas,$bsv_parameters,$start_omega_record)=
+($total_bsv_etas,$bsv_parameters,$start_omega_record,$bovref)=
 	tool::frem::get_start_numbers(model=>$model,
 								  n_invariant => scalar(@{$invariant}), 
-								  start_eta => undef);
-is($start_eta,1,"get_start_numbers start_eta");
-is($total_orig_etas,3,"get_start_numbers total_orig_etas");
+								  skip_etas => 0);
+is($total_bsv_etas,5,"get_start_numbers total_orig_etas");
 is($bsv_parameters,3,"get_start_numbers bsv_parameters");
 is($start_omega_record,1,"get_start_numbers start_omega_record");
 
@@ -111,7 +121,7 @@ my $labelshash = tool::frem::create_labels(invariant => $invariant,
 										   etanum_to_parameter => $etanum_to_parameterhash,
 										   occasionlist => [3,8],
 										   occasion => 'VISI',
-										   start_eta => $start_eta,
+										   start_eta => 1,
 										   bsv_parameters => $bsv_parameters);
 
 is_deeply($labelshash->{'occasion_labels'},['VISI=3','VISI=8'],"create labels occasion");
@@ -120,12 +130,11 @@ is_deeply($labelshash->{'bov_cov_labels'},['BOV cov CLCR','BOV cov WT'],"create 
 is_deeply($labelshash->{'bsv_par_labels'},['BSV par CL','BSV par V','BSV par KA'],"create labels bsv par");
 is_deeply($labelshash->{'bsv_cov_labels'},['BSV cov AGE','BSV cov SEX'],"create labels bsv cov");
 
-($start_eta,$total_orig_etas,$bsv_parameters,$start_omega_record)=
+($total_bsv_etas,$bsv_parameters,$start_omega_record,$bovref)=
 	tool::frem::get_start_numbers(model=>$model,
-					  n_invariant => scalar(@{$invariant}), 
-					  start_eta => 3);
-is($start_eta,3,"get_start_numbers start_eta");
-is($total_orig_etas,3,"get_start_numbers total_orig_etas");
+								  n_invariant => scalar(@{$invariant}), 
+								  skip_etas => 2);
+is($total_bsv_etas,3,"get_start_numbers total_orig_etas");
 is($bsv_parameters,1,"get_start_numbers bsv_parameters");
 is($start_omega_record,2,"get_start_numbers start_omega_record");
 #what is bsv_parameters????
@@ -135,7 +144,7 @@ $labelshash = tool::frem::create_labels(invariant => $invariant,
 										   etanum_to_parameter => $etanum_to_parameterhash,
 										   occasionlist => [3,8],
 										   occasion => 'VISI',
-										   start_eta => $start_eta,
+										   start_eta => 3,
 										   bsv_parameters => $bsv_parameters);
 
 is_deeply($labelshash->{'occasion_labels'},['VISI=3','VISI=8'],"create labels occasion");
@@ -195,5 +204,7 @@ is_deeply(\@code,['TVCL=THETA(1)','TVV=CTVV','CL=TVCL*EXP(ETA(1))','V=TVV*EXP(ET
 #set_frem_records FIXME
 #more dataset handling FIXME
 #set_frem_code FIXME
+
+
 
 done_testing();

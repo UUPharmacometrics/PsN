@@ -27,12 +27,12 @@ my %required_options = ();
 my %optional_options = ( 'invariant:s' => undef,
 						 'time_varying:s' => undef,
 						 'occasion:s' => undef,
-						 'parameters:s' => undef,
+						 'parameters_bov:s' => undef,
 						 'dv:s' => undef,
 						 'vpc!' => undef,
 						 'check!' => undef,
 						 'estimate:i' => undef,
-						 'start_eta:i' => undef);
+						 'skip_etas:i' => undef);
 
 my $res = GetOptions( \%options,
 		      @common_options::get_opt_strings,
@@ -64,7 +64,7 @@ the estimated models, and dataset 2 (the frem dataset).
 EOF
 
 $help_text{Examples} = <<'EOF';      
-frem run1.mod -time_varying=WT -occasion=VISI -parameters=PHI,LAG -invariant=SEX,DGRP -vpc -no-check
+frem run1.mod -time_varying=WT -occasion=VISI -parameters_bov=PHI,LAG -invariant=SEX,DGRP -vpc -no-check
 EOF
 $help_text{Options} = <<'EOF';      
 	A model file is required as argument.
@@ -107,8 +107,8 @@ Name used in $INPUT, not data set. Needed if -time_varying
 is set, otherwise ignored.
 EOF
 
-$help_text{-parameters} = <<'EOF';
-      -parameters=list
+$help_text{-parameters_bov} = <<'EOF';
+      -parameters_bov=list
 
 A comma-separated list of model parameters that should have
 between-occasion variability added. Required if -time_varying
@@ -121,14 +121,13 @@ $help_text{-dv} = <<'EOF';
       Default is DV. The name of the dependent variable. Name
 used in $INPUT.
 EOF
-$help_text{-start_eta} = <<'EOF';
-      -start_eta=x
+$help_text{-skip_etas} = <<'EOF';
+      -skip_etas=x
 
-      The order number of the first BSV ETA to get correlation with
-time invariant covariate ETAs. The default is 1, which means
-all BSV ETAs will be correlated to time invariant covariates.
-Not allowed if restarting an old run, not allowed if -invariant
-is not set.
+      The number of input model leading ETAs to exclude from correlation with covariates.
+The default is 0, which means
+all model ETAs will be correlated to covariates.
+Not allowed if restarting an old run.
 EOF
 
 $help_text{-vpc} = <<'EOF';
@@ -178,8 +177,8 @@ if( scalar(@ARGV) > 1 ){
 my $done_file = 'template_models_done.pl';
 if (defined $options{'directory'} and -d $options{'directory'}){
 	if(-e $options{'directory'}.'/'.$done_file){
-		#use done file parameters, ignore command-line
-		foreach my $opt ('invariant','time_varying','parameters','start_eta','occasion','dv'){
+		#use done file parameters_bov, ignore command-line
+		foreach my $opt ('invariant','time_varying','parameters_bov','skip_etas','occasion','dv'){
 			if (defined $options{$opt}){
 				print "The file $done_file already exists in directory ".$options{'directory'}.", option -$opt not allowed.";
 				exit;
@@ -195,8 +194,8 @@ if (defined $options{'directory'} and -d $options{'directory'}){
 		print "At least one of options invariant or time_varying must be given when starting a new run.\n";
 		exit;
     }
-    if ((defined $options{'time_varying'}) xor ( defined $options{'parameters'})){
-		print "Options time_varying and parameters must either be both given or both not given\n";
+    if ((defined $options{'time_varying'}) xor ( defined $options{'parameters_bov'})){
+		print "Options time_varying and parameters_bov must either be both given or both not given\n";
 		exit;
     }
 	
@@ -224,12 +223,12 @@ if (defined $options{'time_varying'}){
     }
 }
 
-my @parameters=();
-if (defined $options{'parameters'}){
+my @parameters_bov=();
+if (defined $options{'parameters_bov'}){
     #comma-separated list of names
-    foreach my $name (split(/,/,$options{'parameters'})){
+    foreach my $name (split(/,/,$options{'parameters_bov'})){
 		if (length($name)>0){
-			push(@parameters,$name);
+			push(@parameters_bov,$name);
 		}
     }
 }
@@ -288,10 +287,10 @@ my $frem =
 					 models	     => [ $model ],
 					 top_tool           => 1,
 					 done_file => $done_file,
-					 parameters => \@parameters,
+					 parameters_bov => \@parameters_bov,
 					 time_varying => \@time_varying,
 					 invariant => \@invariant,
-					 start_eta => $options{'start_eta'}, 
+					 skip_etas => $options{'skip_etas'}, 
 					 estimate => $options{'estimate'}, 
 					 check => $options{'check'}, 
 					 vpc => $options{'vpc'}, 
