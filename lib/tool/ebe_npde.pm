@@ -174,10 +174,10 @@ sub modelfit_setup
 		
 		push( @all_iwres_files, $self->directory . 'm' . $model_number . '/original_iwres.dta' );
 	}
-	my ($iivref,$iovref) = get_eta_headers(problem => $oprob);
-	$self->iiv_eta($iivref);
-	$self->iov_eta($iovref);
-	$self->occasions(scalar(@{$iovref}));
+	my $ref = $oprob->get_eta_sets(header_strings => 1);
+	$self->iiv_eta($ref->{'iiv'});
+	$self->iov_eta($ref->{'iov'});
+	$self->occasions(scalar(@{$ref->{'iov'}}));
 	my $orig_model_output;
 	if (defined  $self->lst_file()){
 		$orig_model_output= output -> new(filename => '../'.$self->lst_file);
@@ -1031,79 +1031,6 @@ sub max_and_min
 	return $maximum, $minimum;
 }
 
-sub get_eta_headers
-{
-	my %parm = validated_hash(\@_,
-							  problem => { isa => 'model::problem', optional => 0 },
-		);
-	my $problem = $parm{'problem'};
-	
-	my @use_etas=();
-	my @these=();
-	my @prev=();
-	my @eta_headers=();
-	my @iov_eta_headers=(); #array over base eta over occasions
-	my $iov_eta_counter=0;
-	for (my $j=0; $j<scalar(@{$problem->omegas}); $j++){
-		my $record= $problem->omegas->[$j];
-		@these=();
-		my $all_fix=0;
-		my $is_iov=0;
-		last if ($record->prior());
-		if  ($record->same() ){
-			#this is iov for sure
-			push(@these,@prev);
-		}else{
-			if (($j+1) < scalar(@{$problem->omegas})){
-				#not last omega
-				$is_iov=1 if ($problem->omegas->[$j+1]->same()); #next is same, assume this is new eta first occasion
-			}
-			if  ($record->fix()){
-				$all_fix = 1; 
-			}
-			foreach my $option (@{$record -> options()}) {
-				if ($option->on_diagonal()){
-					if (($option->fix() or $all_fix )and ($option->init() == 0)){
-						push(@these,0);
-					}else{
-						my $val = 1;
-						if ($is_iov){
-							$iov_eta_counter++; #1 or larger
-							$val = 1+$iov_eta_counter; #2 or larger
-						}
-						push(@these,$val); 
-					}
-				}
-			}
-		}
-		push(@use_etas,@these);
-		@prev = @these;
-	}
-
-	my %occasion=();
-	for (my $i=1; $i<=scalar(@use_etas); $i++){
-		if ($use_etas[$i-1] == 1){
-			push(@eta_headers,'ETA('.$i.')') ; #only iiv
-		}elsif ($use_etas[$i-1] > 1){
-			my $num = $use_etas[$i-1] -1; #1 or larger
-			if (defined $occasion{$num}){
-				$occasion{$num} = $occasion{$num}+1;
-			}else{
-				$occasion{$num}=1;
-			}
-
-			if (scalar(@iov_eta_headers)< $occasion{$num}){
-				#first eta at this occasion
-				push(@iov_eta_headers,['ETA('.$i.')']) ; 
-			}else{
-				#new eta old occasion
-				push(@{$iov_eta_headers[$occasion{$num}-1]},'ETA('.$i.')'); 
-			}
-		}
-	} 
-
-	return (\@eta_headers,\@iov_eta_headers);
-}
 
 sub cleanup
 {
