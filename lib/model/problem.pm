@@ -1611,18 +1611,19 @@ sub _read_records
     $self->own_print_order(\@local_print_order);
 }
 
-sub check_start_eta
+sub check_skip_etas
 {
 	#in frem check that start_eta parameter is acceptable
 	# return order number (starts at 1) of omega record that starts with start eta
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-							  start_eta => {isa => 'Int', optional => 0}
+							  skip_etas => {isa => 'Int', optional => 0}
 		);
-	my $start_eta = $parm{'start_eta'};
+	my $skip_etas = $parm{'skip_etas'};
 	my $omega_record_count=0;
 	my $start_omega_record;
-	croak ("start_eta must be positive") if ($start_eta < 1);
+	croak ("skip_etas must be non-negative") if ($skip_etas < 0);
+	my $start_eta = $skip_etas+1;
 	my $netas = 0;
 	my $prev;
 	foreach my $omega (@{$self->omegas} ) {
@@ -1632,7 +1633,7 @@ sub check_start_eta
 			$start_omega_record=$omega_record_count;
 			last;
 		}elsif($netas > ($start_eta -1)){
-			croak("start_eta value illegal, start_eta must be first eta of an \$OMEGA record. Rewrite model.");
+			croak("skip_etas value illegal, skip_etas must be last eta of an \$OMEGA record. Rewrite model.");
 		}
 		my $size = $omega -> size;
 		my $type = $omega -> type;
@@ -1652,7 +1653,11 @@ sub check_start_eta
 		
 	}
 	unless (defined $start_omega_record){
-		croak("could not determine start omega record");
+		if ($netas == $skip_etas){
+			$start_omega_record = scalar(@{$self->omegas})+1;
+		}else{
+			croak("could not determine start omega record");
+		}
 		#should be allowed to have start eta > than neta?
 	}
 	return $start_omega_record;
@@ -3423,6 +3428,100 @@ sub ensure_unique_labels
         }
     }
 }
+
+sub get_eta_sets
+{
+    my $self = shift;
+	my %parm = validated_hash(\@_,
+							  header_strings => { isa => 'Bool', optional => 0 },
+							  skip_etas => { isa => 'Int', default => 0 },
+		);
+	my $header_strings = $parm{'header_strings'};
+	my $skip_etas = $parm{'skip_etas'};
+
+	my $start_omega_record = 1;
+	$start_omega_record = $self->check_skip_etas(skip_etas => $skip_etas);
+	
+	my @use_etas=();
+	my @these=();
+	my @prev=();
+	my @iiv_eta_set=();
+	my @iov_eta_sets=(); #array over base eta over occasions
+	my $iov_eta_counter=0;
+	for (my $j=($start_omega_record-1); $j<scalar(@{$self->omegas}); $j++){
+		my $record= $self->omegas->[$j];
+		@these=();
+		my $all_fix=0;
+		my $is_iov=0;
+		last if ($record->prior());
+		if  ($record->same() ){
+			#this is iov for sure
+			push(@these,@prev);
+		}else{
+			if (($j+1) < scalar(@{$self->omegas})){
+				#not last omega
+				$is_iov=1 if ($self->omegas->[$j+1]->same()); #next is same, assume this is new eta first occasion
+			}
+			if  ($record->fix()){
+				$all_fix = 1; 
+			}
+			foreach my $option (@{$record -> options()}) {
+				if ($option->on_diagonal()){
+					if (($option->fix() or $all_fix )and ($option->init() == 0)){
+						push(@these,0);
+					}else{
+						my $val = 1;
+						if ($is_iov){
+							$iov_eta_counter++; #1 or larger
+							$val = 1+$iov_eta_counter; #2 or larger
+						}
+						push(@these,$val); 
+					}
+				}
+			}
+		}
+		push(@use_etas,@these);
+		@prev = @these;
+	}
+
+	my %occasion=();
+	for (my $i=1; $i<=scalar(@use_etas); $i++){
+		my $et = $i+$skip_etas;
+		if ($use_etas[$i-1] == 1){
+			if ($header_strings){
+				push(@iiv_eta_set,'ETA('.$et.')') ; #only iiv
+			}else{
+				push(@iiv_eta_set,$et) ; #only iiv
+			}
+		}elsif ($use_etas[$i-1] > 1){
+			my $num = $use_etas[$i-1] -1; #1 or larger
+			if (defined $occasion{$num}){
+				$occasion{$num} = $occasion{$num}+1;
+			}else{
+				$occasion{$num}=1;
+			}
+
+			if (scalar(@iov_eta_sets)< $occasion{$num}){
+				#first eta at this occasion
+				if ($header_strings){
+					push(@iov_eta_sets,['ETA('.$et.')']) ;
+				}else{
+					push(@iov_eta_sets,[$et]) ;
+				}
+			}else{
+				#new eta old occasion
+				if ($header_strings){
+					push(@{$iov_eta_sets[$occasion{$num}-1]},'ETA('.$et.')');
+				}else{
+					push(@{$iov_eta_sets[$occasion{$num}-1]},$et);
+				}
+			}
+		}
+	} 
+
+	return {'iiv' => \@iiv_eta_set, 'iov' => \@iov_eta_sets};
+}
+
 
 no Moose;
 __PACKAGE__->meta->make_immutable;

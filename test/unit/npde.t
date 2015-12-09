@@ -28,33 +28,6 @@ cmp_float(npde_util::pde(\@arr),2/7,"pde middle");
 is(tool::ebe_npde::formatfloat(0.3456),'0.34560000','format float regular');
 is(tool::ebe_npde::formatfloat(-99),'','format float missing');
 
-my $model = model->new(filename => $includes::testfiledir."/mox1.mod", ignore_missing_data => 1);
-my ($iiv,$iov)=tool::ebe_npde::get_eta_headers(problem => $model->problems->[0]);
-is_deeply($iiv,['ETA(1)','ETA(2)','ETA(3)'],"get eta headers iiv");
-is(scalar(@{$iov}),2,"get eta headers two occasions");
-is($iov->[0]->[0],'ETA(4)',"get eta headers iov 1 occasion 1 et1 ");
-is($iov->[0]->[1],'ETA(6)',"get eta headers iov 1 occasion 1 et 2");
-is($iov->[1]->[0],'ETA(5)',"get eta headers iov 1 occasion 2 et 1");
-is($iov->[1]->[1],'ETA(7)',"get eta headers iov 1 occasion 2 et 2");
-$model = model->new(filename => $includes::testfiledir."/pheno.mod", ignore_missing_data => 1);
-my ($iiv,$iov)=tool::ebe_npde::get_eta_headers(problem => $model->problems->[0]);
-is_deeply($iiv,['ETA(1)','ETA(2)'],"get eta headers iiv 2");
-is(scalar(@{$iov}),0,"get eta headers no iov");
-
-$model->problems->[0]->remove_records(type => 'omega');
-$model->problems->[0]->add_records(type => 'omega',record_strings =>['BLOCK(2) 0.02','-0.002 0.5']);
-$model->problems->[0]->add_records(type => 'omega',record_strings =>['BLOCK(3) 0.02','-0.002 0.5','0.003 -0.005 1']);
-$model->problems->[0]->add_records(type => 'omega',record_strings =>['BLOCK(3) SAME']);
-$model->problems->[0]->add_records(type => 'omega',record_strings =>['BLOCK(3) SAME']);
-$model->problems->[0]->add_records(type => 'omega',record_strings =>['BLOCK(3) 0.02','-0.002 0.5','0.003 -0.005 1']);
-$model->problems->[0]->add_records(type => 'omega',record_strings =>['BLOCK(3) SAME']);
-$model->problems->[0]->add_records(type => 'omega',record_strings =>['BLOCK(3) SAME']);
-
-my ($iiv,$iov)=tool::ebe_npde::get_eta_headers(problem => $model->problems->[0]);
-is_deeply($iiv,['ETA(1)','ETA(2)'],"get eta headers iiv 3");
-is_deeply($iov->[0],['ETA(3)','ETA(4)','ETA(5)','ETA(12)','ETA(13)','ETA(14)'],"get eta headers 2 iov occasion 1");
-is_deeply($iov->[1],['ETA(6)','ETA(7)','ETA(8)','ETA(15)','ETA(16)','ETA(17)'],"get eta headers 2 iov occasion 2");
-is_deeply($iov->[2],['ETA(9)','ETA(10)','ETA(11)','ETA(18)','ETA(19)','ETA(20)'],"get eta headers 2 iov occasion 3");
 
 my $filedir = $includes::testfiledir . '/npde/';
 my @file_array=($filedir.'original.phi',$filedir.'sim-1.phi',$filedir.'sim-2.phi',$filedir.'sim-3.phi');
