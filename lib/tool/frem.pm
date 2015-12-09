@@ -1604,6 +1604,8 @@ sub modelfit_setup
 	my $frem_model3 = $self->do_model3(model => $frem_model2,
 									   fremdataname => $frem_dataset,
 									   bsv_parameter_count => $bsv_parameter_count,
+									   start_omega_record=> $start_omega_record,
+									   labelshash => $labelshash,									   
 									   ntheta =>$ntheta,
 									   epsnum => $epsnum);
 
