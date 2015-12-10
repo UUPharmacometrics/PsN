@@ -1549,8 +1549,8 @@ sub get_rawres_params
 
 	my $sum = scalar(@{$thetalabels[0]})+scalar(@{$omegalabels[0]})+scalar(@{$sigmalabels[0]});
 	$sum += scalar(@filter); #@filter is always defined, but may be empty - bug, may count some cols twice here
-	
-	unless (scalar(@header) > $sum and (($header[0] eq 'model') or ($header[1] eq 'model') or ($header[2] eq 'model')) ){
+	$sum += 1;	#need model also. bug if filter is on model col
+	unless (scalar(@header) >= $sum and (($header[0] eq 'model') or ($header[1] eq 'model') or ($header[2] eq 'model')) ){
 	    ui -> print( category => 'all',
 					 message  => "\n\nThe found headers are\n".join("   ",@header)."\n\n");
 
@@ -1702,7 +1702,7 @@ sub get_rawres_params
 			unless (math::usable_number($val) ){
 				$skip =1;
 				ui -> print( category => 'all',
-							 message  => "\nWarning rawres input: $val in column $label does not look like a parameter value\n");
+							 message  => "\nWarning rawres input: $val in column $label does not look like a parameter value, skipping line\n");
 			}
 			$theta{$label} = $val;
 		}
@@ -1711,7 +1711,7 @@ sub get_rawres_params
 			unless (math::usable_number($val) ){
 				$skip =1;
 				ui -> print( category => 'all',
-							 message  => "\nWarning rawres input: $val in column $label does not look like a parameter value\n");
+							 message  => "\nWarning rawres input: $val in column $label does not look like a parameter value, skipping line\n");
 			}
 			$omega{$label} = $val;
 		}
@@ -1720,7 +1720,7 @@ sub get_rawres_params
 			unless (math::usable_number($val) ){
 				$skip =1;
 				ui -> print( category => 'all',
-							 message  => "\nWarning rawres input: $val in column $label does not look like a parameter value\n");
+							 message  => "\nWarning rawres input: $val in column $label does not look like a parameter value, skipping line\n");
 			}
 			$sigma{$label} = $val;
 		}
