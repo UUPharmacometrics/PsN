@@ -3,6 +3,7 @@
 use strict;
 use warnings;
 use Test::More;
+use Test::Exception;
 use FindBin qw($Bin);
 use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages
@@ -81,6 +82,7 @@ $model = model->new(filename => "$modeldir/mox1.mod");
 $problem = $model->problems->[0];
 
 cmp_ok(($problem->check_skip_etas(skip_etas => 0)),'==',1, "check skip_etas 0");
+dies_ok  { $problem->check_skip_etas(skip_etas => 1) } "check skip_etas 1";
 cmp_ok(($problem->check_skip_etas(skip_etas => 2)),'==',2, "check skip_etas 2");
 cmp_ok(($problem->check_skip_etas(skip_etas => 3)),'==',3, "check skip_etas 3");
 cmp_ok(($problem->check_skip_etas(skip_etas => 4)),'==',4, "check skip_etas 4");

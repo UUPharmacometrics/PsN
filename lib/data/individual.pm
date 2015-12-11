@@ -71,14 +71,16 @@ sub add_frem_lines
 	my $self = shift;
 	my %parm = validated_hash(\@_,
 		 type_index => { isa => 'Int', optional => 0 },
+		 N_parameter_blocks => { isa => 'Int', optional => 0 },
 		 occ_index => { isa => 'Maybe[Int]', optional => 1 },
 		 mdv_index => { isa => 'Maybe[Int]', optional => 1 },
 		 evid_index => { isa => 'Maybe[Int]', optional => 1 },
 		 missing_data_token => { isa => 'Str', default => "-99", optional => 1 },
-		 cov_indices => { isa => 'Ref', optional => 1 },
+		 cov_indices => { isa => 'Ref', optional => 0 },
 		 first_timevar_type => { isa => 'Int', optional => 0 }
 	);
 	my $type_index = $parm{'type_index'};
+	my $N_parameter_blocks = $parm{'N_parameter_blocks'};
 	my $occ_index = $parm{'occ_index'};
 	my $mdv_index = $parm{'mdv_index'};
 	my $evid_index = $parm{'evid_index'};
@@ -88,6 +90,9 @@ sub add_frem_lines
 	my @invariant_values;
 	my @timevar_values;
 
+	if ($N_parameter_blocks > 99){
+		croak("Not more than 99 parameter blocks supported");
+	}
 	sub format_array{
 		my $arr = shift;
 		for (my $i=0; $i < scalar(@{$arr}); $i++){
@@ -139,7 +144,6 @@ sub add_frem_lines
 			for (my $type=1; $type < $first_timevar_type; $type++){
 				my $cov_index = $cov_indices->[$type];
 				my @row = @data_row; #copy
-				$row[$type_index] = $type; #type value
 				$row[$dv_index] = $row[$cov_index]; #set DV column to whatever cov value
 				push(@invariant_values,$row[$cov_index]);
 				if ($row[$cov_index] == $missing_data_token){
@@ -152,10 +156,14 @@ sub add_frem_lines
 					$row[$evid_index]=0 if (defined $evid_index) ;
 				}
 
-				if ($format_data){
-					format_array(\@row);
+				for (my $k= 0; $k<$N_parameter_blocks; $k++){
+					#add one line per parameter block
+					$row[$type_index] = ($type+(0.01*$k))  ; #type value
+					if ($format_data){
+						format_array(\@row);
+					}
+					push(@newlines,join( ',', @row));
 				}
-				push(@newlines,join( ',', @row));
 			}
 			$done_invariant = 1;
 		}

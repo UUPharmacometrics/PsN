@@ -99,30 +99,41 @@ is($etanum_to_parameterhash->{3},'KA',"get_CTV_parameters etanum_to_parameterhas
 my $time_varying = ['CLCR','WT'];
 my $invariant = ['AGE','SEX'];
 
-my($total_bsv_etas,$bsv_parameters,$start_omega_record,$bovref)=
+my($start_omega_record,$parameter_blocks,$eta_mapping)=
 	tool::frem::get_start_numbers(model=>$model,
-								  n_invariant => 0, 
+								  n_covariates => 4, 
 								  skip_etas => 0);
-is($total_bsv_etas,3,"get_start_numbers total_bsv_etas");
-is($bsv_parameters,3,"get_start_numbers bsv_parameters");
 is($start_omega_record,1,"get_start_numbers start_omega_record");
+is(scalar(@{$parameter_blocks}),2,"get_start_numbers parameter_blocks");
+is($parameter_blocks->[0]->options->[0]->coordinate_string,'OMEGA(1,1)','parameter block 1');
+is($parameter_blocks->[0]->options->[1]->coordinate_string,'OMEGA(2,1)','parameter block 2');
+is($parameter_blocks->[0]->options->[2]->coordinate_string,'OMEGA(2,2)','parameter block 3');
+is($parameter_blocks->[1]->options->[0]->coordinate_string,'OMEGA(7,7)','parameter block 4');
+is($parameter_blocks->[1]->options->[0]->init,'.3','parameter block 4 init');
+is_deeply($eta_mapping->{'eta_from'}->[0],[1,2],"get_start_numbers eta mapping from 1");
+is_deeply($eta_mapping->{'eta_from'}->[1],[3],"get_start_numbers eta mapping from 2");
+is_deeply($eta_mapping->{'eta_to'}->[0],[1,2],"get_start_numbers eta mapping to 1");
+is_deeply($eta_mapping->{'eta_to'}->[1],[7],"get_start_numbers eta mapping to 2");
 
-($total_bsv_etas,$bsv_parameters,$start_omega_record,$bovref)=
+($start_omega_record,$parameter_blocks,$eta_mapping)=
 	tool::frem::get_start_numbers(model=>$model,
-								  n_invariant => scalar(@{$invariant}), 
-								  skip_etas => 0);
-is($total_bsv_etas,5,"get_start_numbers total_orig_etas");
-is($bsv_parameters,3,"get_start_numbers bsv_parameters");
-is($start_omega_record,1,"get_start_numbers start_omega_record");
+								  n_covariates => scalar(@{$invariant}), 
+								  skip_etas => 2);
+is($start_omega_record,2,"get_start_numbers start_omega_record 2");
+is(scalar(@{$parameter_blocks}),1,"get_start_numbers parameter_blocks 2");
+is($parameter_blocks->[0]->options->[0]->coordinate_string,'OMEGA(3,3)','parameter block 5');
+is_deeply($eta_mapping->{'eta_from'}->[0],[3],"get_start_numbers eta mapping from 3");
+is_deeply($eta_mapping->{'eta_to'}->[0],[3],"get_start_numbers eta mapping to 3");
 
-my $labelshash = tool::frem::create_labels(invariant => $invariant,
+
+my $labelshash = tool::frem::create_labels(covariates => $invariant,
 										   bov_parameters => $bov_parameters,
 										   time_varying => $time_varying,
 										   etanum_to_parameter => $etanum_to_parameterhash,
 										   occasionlist => [3,8],
 										   occasion => 'VISI',
 										   start_eta => 1,
-										   bsv_parameters => $bsv_parameters);
+										   bsv_parameters => 3);
 
 is_deeply($labelshash->{'occasion_labels'},['VISI=3','VISI=8'],"create labels occasion");
 is_deeply($labelshash->{'bov_par_labels'},['BOV par PHI','BOV par KA'],"create labels bov par");
@@ -130,22 +141,14 @@ is_deeply($labelshash->{'bov_cov_labels'},['BOV cov CLCR','BOV cov WT'],"create 
 is_deeply($labelshash->{'bsv_par_labels'},['BSV par CL','BSV par V','BSV par KA'],"create labels bsv par");
 is_deeply($labelshash->{'bsv_cov_labels'},['BSV cov AGE','BSV cov SEX'],"create labels bsv cov");
 
-($total_bsv_etas,$bsv_parameters,$start_omega_record,$bovref)=
-	tool::frem::get_start_numbers(model=>$model,
-								  n_invariant => scalar(@{$invariant}), 
-								  skip_etas => 2);
-is($total_bsv_etas,3,"get_start_numbers total_orig_etas");
-is($bsv_parameters,1,"get_start_numbers bsv_parameters");
-is($start_omega_record,2,"get_start_numbers start_omega_record");
-#what is bsv_parameters????
-$labelshash = tool::frem::create_labels(invariant => $invariant,
+$labelshash = tool::frem::create_labels(covariates => $invariant,
 										   bov_parameters => $bov_parameters,
 										   time_varying => $time_varying,
 										   etanum_to_parameter => $etanum_to_parameterhash,
 										   occasionlist => [3,8],
 										   occasion => 'VISI',
 										   start_eta => 3,
-										   bsv_parameters => $bsv_parameters);
+										   bsv_parameters => 1);
 
 is_deeply($labelshash->{'occasion_labels'},['VISI=3','VISI=8'],"create labels occasion");
 is_deeply($labelshash->{'bov_par_labels'},['BOV par PHI','BOV par KA'],"create labels bov par");
@@ -171,7 +174,7 @@ my ($filtered_data_model,$indices,$first_timevar_type,$extra_input_items,$messag
 									bov_parameters => scalar(@{$bov_parameters}), 
 									dv  => 'DV',
 									time_varying  => $time_varying,
-									invariant  => $invariant,
+									covariates  => $invariant,
 									occasion  => 'VISI');
 
 my $formatted = $filtered_data_model->problems->[0]->tables->[0]->_format_record;

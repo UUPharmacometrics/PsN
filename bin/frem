@@ -23,15 +23,10 @@ Getopt::Long::config("auto_abbrev");
 my %options;
 ## Declare the options
 
-my %required_options = ();
-my %optional_options = ( 'invariant:s' => undef,
-						 'time_varying:s' => undef,
-						 'occasion:s' => undef,
-						 'parameters_bov:s' => undef,
-						 'dv:s' => undef,
+my %required_options = ('covariates:s');
+my %optional_options = ( 'dv:s' => undef,
 						 'vpc!' => undef,
 						 'check!' => undef,
-						 'estimate:i' => undef,
 						 'skip_etas:i' => undef);
 
 my $res = GetOptions( \%options,
@@ -64,7 +59,7 @@ the estimated models, and dataset 2 (the frem dataset).
 EOF
 
 $help_text{Examples} = <<'EOF';      
-frem run1.mod -time_varying=WT -occasion=VISI -parameters_bov=PHI,LAG -invariant=SEX,DGRP -vpc -no-check
+frem run1.mod -covariates=WT,SEX,DGRP -vpc -no-check
 EOF
 $help_text{Options} = <<'EOF';      
 	A model file is required as argument.
@@ -84,35 +79,11 @@ $help_text{-help} = <<'EOF';
       With -help frem will print this, longer, help message.
 EOF
 
-$help_text{-invariant} = <<'EOF';
-      -invariant=list
+$help_text{-covariates} = <<'EOF';
+      -covariates=list
 
-A comma-separated list of covariates that are time invariant.
-Names used in $INPUT. Optional if -time_varying is given, not
-allowed if restarting an old run, otherwise required.
-EOF
-$help_text{-time_varying} = <<'EOF';
-      -time_varying=list
-
-A comma-separated list of time-varying covariates. Names
-used in $INPUT. Optional if -invariant is given, not allowed
-if restarting an old run, otherwise required.
-EOF
-
-$help_text{-occasion} = <<'EOF';
-      -occasion=column
-
-Default OCC. The name of the column that defines occasions.
-Name used in $INPUT, not data set. Needed if -time_varying
-is set, otherwise ignored.
-EOF
-
-$help_text{-parameters_bov} = <<'EOF';
-      -parameters_bov=list
-
-A comma-separated list of model parameters that should have
-between-occasion variability added. Required if -time_varying
-is set, otherwise not allowed.
+A comma-separated list of covariates, required.
+Names used in $INPUT.
 EOF
 
 $help_text{-dv} = <<'EOF';
@@ -145,18 +116,6 @@ $help_text{-check} = <<'EOF';
 data set 2 generation.
 EOF
 
-$help_text{-estimate} = <<'EOF';
-      -estimate=N
-
-Optional, default 3. The number (0, 1, 2 or 3) of the last model
-to estimate in the frem sequence. All models with a higher
-number will still be created, but not estimated. When restart-
-ing in an existing frem run directory, estimation of models that
-have an existing lst-file will be skipped even if the 
--estimate option is set to a higher number.
-EOF
-
-
 $help_text{Post_help_message} = <<'EOF';
     Also see 'psn_options -h' for a description of common PsN options.
 EOF
@@ -166,72 +125,26 @@ common_options::online_help( 'frem', \%options, \%help_text, \%required_options,
 ## Check that we do have a model file
 if ( scalar(@ARGV) < 1 ) {
   print "An input model file must be specified. Use 'frem -h' for help.\n";
-  exit;
+  die;
 }
 
 if( scalar(@ARGV) > 1 ){
-  print "FREM can only handle one modelfile, you listed: ",join(',',@ARGV),". Use 'frem -h' for help.\n";die;
-  exit;
-}
-
-my $done_file = 'template_models_done.pl';
-if (defined $options{'directory'} and -d $options{'directory'}){
-	if(-e $options{'directory'}.'/'.$done_file){
-		#use done file parameters_bov, ignore command-line
-		foreach my $opt ('invariant','time_varying','parameters_bov','skip_etas','occasion','dv'){
-			if (defined $options{$opt}){
-				print "The file $done_file already exists in directory ".$options{'directory'}.", option -$opt not allowed.";
-				exit;
-			}
-		}
-	}else{
-		print "Cannot restart in existing directory ".$options{'directory'}." because file $done_file is not found there.";
-		exit;
-	}
-}else{
-	#input checks
-    unless (defined $options{'invariant'} or defined $options{'time_varying'}){
-		print "At least one of options invariant or time_varying must be given when starting a new run.\n";
-		exit;
-    }
-    if ((defined $options{'time_varying'}) xor ( defined $options{'parameters_bov'})){
-		print "Options time_varying and parameters_bov must either be both given or both not given\n";
-		exit;
-    }
-	
+  print "FREM can only handle one modelfile, you listed: ",join(',',@ARGV),". Use 'frem -h' for help.\n";
+  die;
 }
 
 
 #parse input
-my @invariant=();
-if (defined $options{'invariant'}){
+my @covariates=();
+if (defined $options{'covariates'}){
     #comma-separated list of names
-    foreach my $name (split(/,/,$options{'invariant'})){
+    foreach my $name (split(/,/,$options{'covariates'})){
 		if (length($name)>0){
-			push(@invariant,$name);
+			push(@covariates,$name);
 		}
     }
 }
 
-my @time_varying=();
-if (defined $options{'time_varying'}){
-    #comma-separated list of names
-    foreach my $name (split(/,/,$options{'time_varying'})){
-		if (length($name)>0){
-			push(@time_varying,$name);
-		}
-    }
-}
-
-my @parameters_bov=();
-if (defined $options{'parameters_bov'}){
-    #comma-separated list of names
-    foreach my $name (split(/,/,$options{'parameters_bov'})){
-		if (length($name)>0){
-			push(@parameters_bov,$name);
-		}
-    }
-}
 
 require model;
 require tool::frem;
@@ -272,34 +185,25 @@ if( defined $model -> msfi_names() ){
 
 if ( scalar (@{$model-> problems}) > 1 ){
     print "Cannot have more than one \$PROB in the input model.\n";
-    exit;
+    die;
 }
 
 my $est_record = $model -> record( problem_number => 1,
 				   record_name => 'estimation' );
 unless( scalar(@{$est_record}) > 0 ){
   print "The input model must have a \$EST record\n";
-  exit;
+  die;
 }
 
 my $frem = 
 	tool::frem->new( eval( $common_options::parameters ),
 					 models	     => [ $model ],
 					 top_tool           => 1,
-					 done_file => $done_file,
-					 parameters_bov => \@parameters_bov,
-					 time_varying => \@time_varying,
-					 invariant => \@invariant,
+					 covariates => \@covariates,
 					 skip_etas => $options{'skip_etas'}, 
-					 estimate => $options{'estimate'}, 
 					 check => $options{'check'}, 
 					 vpc => $options{'vpc'}, 
-					 occasion => $options{'occasion'}, 
 					 dv => $options{'dv'}); 
-
-#ui -> print( category => 'frem',
-#	     message => "have new frem\n" );
-
 
 $frem-> print_options (cmd_line => $cmd_line,
 		      toolname => 'frem',

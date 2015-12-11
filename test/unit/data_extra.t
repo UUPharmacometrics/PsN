@@ -34,6 +34,7 @@ my $resultref = data::frem_compute_covariate_properties(filename => $tempdir.'fr
 														evid_index => 31,
 														mdv_index => undef,
 														type_index => 33,
+														N_parameter_blocks => 1,
 														cov_indices => [30,12,3,14], #DV SEX DGRP WT
 														first_timevar_type => 3,    #index 3 in cov_indices
 														missing_data_token => '-99');

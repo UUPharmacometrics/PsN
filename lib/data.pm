@@ -290,6 +290,7 @@ sub frem_compute_covariate_properties
 							  directory => { isa => 'Maybe[Str]', optional => 1 },
 							  filename => { isa => 'Str', optional => 0 },
 							  idcolumn => { isa => 'Int', optional => 0 },
+							  N_parameter_blocks => { isa => 'Int', optional => 0 },
 							  invariant_covariates => { isa => 'Maybe[ArrayRef]', optional => 1},
 							  occ_index => { isa => 'Maybe[Int]', optional => 1 },
 							  data2name => { isa => 'Str', optional => 0 },
@@ -304,6 +305,7 @@ sub frem_compute_covariate_properties
 	my $directory = $parm{'directory'};
 	my $filename = $parm{'filename'};
 	my $idcolumn = $parm{'idcolumn'};
+	my $N_parameter_blocks = $parm{'N_parameter_blocks'};
 	my @invariant_covariates = (defined $parm{'invariant_covariates'})? @{$parm{'invariant_covariates'}}: ();
 	my $occ_index = $parm{'occ_index'};
 	my $data2name = $parm{'data2name'};
@@ -327,10 +329,8 @@ sub frem_compute_covariate_properties
 
 		if ( $strata{'Non-unique values found'} eq '1' ) {
 			ui -> print( category => 'all',
-						 message => "\nWarning: Individuals were found to have multiple values ".
-						 "in the $covariate column, which will not be handled correctly by the frem script. ".
-						 "Consider terminating this run and setting ".
-						 "covariate $covariate as time-varying instead.\n" );
+						 message => "\nWarning: Individuals were found to have multiple values in the $covariate column,".
+						 " but the frem script will just use the first value for the individual.\n");
 		}
 	}
 
@@ -359,6 +359,7 @@ sub frem_compute_covariate_properties
 																		  mdv_index => $mdv_index,
 																		  type_index => $type_index,
 																		  cov_indices => \@cov_indices,
+																		  N_parameter_blocks => $N_parameter_blocks,
 																		  first_timevar_type => $first_timevar_type);
 
 	$results->{'invariant_median'}= [];
@@ -395,6 +396,7 @@ sub add_frem_lines
 	my $self = shift;
 	my %parm = validated_hash(\@_,
 		type_index => { isa => 'Int', optional => 0 },
+		N_parameter_blocks => { isa => 'Int', optional => 0 },
 		occ_index => { isa => 'Maybe[Int]', optional => 1 },
 		evid_index => { isa => 'Maybe[Int]', optional => 1 },
 		mdv_index => { isa => 'Maybe[Int]', optional => 1 },
@@ -402,6 +404,7 @@ sub add_frem_lines
 		first_timevar_type => { isa => 'Int', optional => 0 }
 	);
 	my $type_index = $parm{'type_index'};
+	my $N_parameter_blocks = $parm{'N_parameter_blocks'};
 	my $occ_index = $parm{'occ_index'};
 	my $evid_index = $parm{'evid_index'};
 	my $mdv_index = $parm{'mdv_index'};
@@ -418,6 +421,7 @@ sub add_frem_lines
 	foreach my $individual ( @{$self->individuals()} ) {
 		my ($invariants,$timevar) =  $individual->add_frem_lines( occ_index => $occ_index,
 																  evid_index => $evid_index,
+																  N_parameter_blocks => $N_parameter_blocks,
 																  missing_data_token => $self->missing_data_token(),
 																  mdv_index => $mdv_index,
 																  type_index => $type_index,
