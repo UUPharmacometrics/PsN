@@ -2666,14 +2666,14 @@ sub modelfit_analyze
 	);
 	my $model_number = $parm{'model_number'};
 
-	return unless (defined $self -> model_optimal);
+	return unless (defined $self -> model_optimal and scalar(@{$self->model_optimal})>0);
 
 	if ($self->run_final_model and (
 		(not defined $self -> model_optimal-> [-1]-> outputs -> [0] or 
 		not $self->model_optimal->[-1]->outputs->[0]->get_single_value(attribute =>'minimization_successful')))){
 		my $round;
-		if (defined $self -> model_optimal->outputs->[0]->get_single_value (attribute => 'rounding_errors')
-				and $self -> model_optimal->outputs->[0]->get_single_value (attribute => 'rounding_errors')){
+		if (defined $self -> model_optimal->[-1]->outputs->[0]->get_single_value (attribute => 'rounding_errors')
+				and $self -> model_optimal->[-1]->outputs->[0]->get_single_value (attribute => 'rounding_errors')){
 			$round = ', rounding errors';
 		}
 
