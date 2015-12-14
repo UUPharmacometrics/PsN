@@ -26,6 +26,7 @@ has 'adjusted' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'normalize' => ( is => 'rw', isa => 'Bool', default => 1 );
 has 'use_pred' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'convergence' => ( is => 'rw', isa => 'Str', default => 'FIRSTMIN' );
+has 'al_coefficients' => ( is => 'rw', isa => 'Str');
 has 'statistics' => ( is => 'rw', isa => 'HashRef', default => sub { {} } );
 has 'cutoff' => ( is => 'rw', isa => 'Num', default => 0.005 );
 has 'stratify_on' => ( is => 'rw', isa => 'Str' );
@@ -1654,7 +1655,16 @@ sub get_adjusted_al_coefficients
 	    $output -> _read_problems;
 	}
 	unless ($output->get_single_value(attribute => 'covariance_step_successful')){
-		croak("Covariance step of full model failed. Cannot proceed\n");
+#	unless (0){
+	    my @labels = ();
+	    foreach my $thnum (@{$cutoff_thetas}){
+			push(@labels,'THETA'.$thnum);
+	    }
+	    croak("Covariance step of full model ".$model->filename." failed, cannot proceed\n".
+			  "You must give abs(estimate)/(standard error) for full model parameters\n".
+			  join(', ',@labels)."\n".
+			  "as input to a new adaptive lasso run using option -al_coefficients.\n".
+			  "The order must be as above.\n");
 	}
 	my $coordinate_strings = $model->problems->[0]->get_estimated_attributes(parameter => 'theta',
 																			 attribute => 'coordinate_strings');
@@ -1826,9 +1836,23 @@ sub modelfit_setup
 						 use_pred => $usepred);
 		$full_model->_write();
 
-		#run full model, get SE:s and compute coefficients, one value per cutoff_theta
-		$al_coefficients = $self->run_full_model(model=> $full_model);
-		$rawres_append=1;
+		if (defined $self->al_coefficients){
+			my @values = split(',',$self->al_coefficients);
+			unless(scalar(@values) == scalar(@{$self->cutoff_thetas})){
+				croak("Input error al_coefficients: need ".scalar(@{$self->cutoff_thetas}).
+					" values in comma-separated list, but ".scalar(@values)." were given" );
+			}
+			foreach my $val (@values){
+				unless ($val > 0){
+					croak("Input error al_coefficients: all values must be positive");
+				}
+			}
+			$al_coefficients = \@values;
+		}else{
+			#run full model, get SE:s and compute coefficients, one value per cutoff_theta
+			$al_coefficients = $self->run_full_model(model=> $full_model);
+			$rawres_append=1; #FIXME
+		}
 		#update AL factors in lasso_model
 		update_al_coefficients(model => $lasso_model,
 							   cutoff_thetas => $self->cutoff_thetas,
@@ -2138,11 +2162,11 @@ sub _optimal_lasso_raw_results_callback
 			my $type='';
 			if ($self->adaptive){
 				if ($self->adjusted){
-					if (not $modelfit->raw_results_append){
+					if ((defined $self->al_coefficients) or ($modelfit->raw_results_append)){
+						$type = 'aalasso';
+					}else{
 						$type='full';
 						$factor=undef;
-					}else{
-						$type = 'aalasso';
 					}
 				}else{
 					if (not $modelfit->raw_results_append){

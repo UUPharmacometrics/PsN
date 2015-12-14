@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{LASSO user guide}{2015-11-24}
+\guidetitle{LASSO user guide}{2015-12-14}
 
 
 \begin{document}
@@ -71,6 +71,14 @@ See section Lasso procedure for a description of the extra steps run when this o
 \optname{adjusted}
 Default not set. If set, run adjusted adaptive lasso algorithm. See section Lasso procedure for a
 description of the extra steps run when this option is set.
+\nextopt
+\optdefault{al\_coefficients}{comma-separated list}
+Default not used, only allowed with adjusted adaptive lasso algorithm.
+A comma-separated list of absolute value of full model coefficient estimate
+divided by the standard error of the estimate.
+The values must be in the same order as the coefficients in the auto-generated
+full model. This vector will be used instead of values from an estimation of the full model.
+Values must only be give for the lasso coefficients, no other THETAs.
 \nextopt
 \optname{normalize}
 Default set. If unset with -no-normalize, no normalization of covariates will
@@ -282,9 +290,10 @@ There are N prediction datasets where prediction dataset j is identical to group
 \begin{enumerate}
 \item Create the full model by copying the lasso model created as above and removing the
 lasso constraint. 
-\item Add \$COV. 
-\item Run the full model to obtain estimates and standard errors of the lasso \$THETAs.
-\item Compute new AL-coefficients for each parameter-covariate relation 
+\item Add \$COV.
+\item Unless AL-coefficients given with option -al\_coefficients:
+Run the full model to obtain estimates and standard errors of the lasso \$THETAs,
+and compute new AL-coefficients for each parameter-covariate relation 
 as $\frac{abs(lasso theta)}{se_{lasso theta}}$
 \item Change the AL coefficients in the lasso model from 1 FIXED to these new FIXED values.
 \end{enumerate}

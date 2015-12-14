@@ -37,6 +37,7 @@ my %optional_options = ( 'start_t:f' => undef,
 			 'groups:i'=> undef,
 			 'convergence:s'=> undef,
 			 'external_data:s'=> undef,
+			 'al_coefficients:s'=> undef,
 			 'stratify_on:s'=> undef,
 	);
 
@@ -115,6 +116,15 @@ $help_text{-adjusted} = <<'EOF';
       -adjusted
 
     Default not set. If set, run adjusted adaptive lasso algorithm.
+EOF
+$help_text{-al_coefficients} = <<'EOF';
+      -al_coefficients
+
+    Default not used, only allowed with adjusted adaptive lasso algorithm.
+    A comma-separated list of absolute value of full model coefficient estimate
+    divided by the standard error of the estimate.
+    The values must be in the same order as the coefficients in the auto-generated
+    full model. This vector will be used instead of values from an estimation of the full model.
 EOF
 $help_text{-log_scale} = <<'EOF';
       -log_scale
@@ -271,6 +281,7 @@ my $lasso =
 					 cutoff             => $options{'cutoff'},
 					 relations          => $options{'relations'},
 					 external_data      => $options{'external_data'},
+					 al_coefficients  => $options{'al_coefficients'},
 					 start_t            => $options{'start_t'},
 					 stop_t             => $options{'stop_t'},
 					 step_t	     => $options{'step_t'},
