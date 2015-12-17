@@ -21,13 +21,14 @@ my $data = data->new(
 	directory            => $includes::testfiledir,
 	ignoresign => '@',
 	ignore_missing_files => 0);
-
+is($data->column_count,9,'column count 1');
 my $dotdata = data->new( 
 	idcolumn             => 1,
 	filename             => 'testdata_with_dot.csv',
 	directory            => $includes::testfiledir,
 	ignoresign => '@',
 	ignore_missing_files => 0);
+is($dotdata->column_count,9,'column count 2');
 
 
 
@@ -299,6 +300,51 @@ close $fh;
 
 my $data_spec = data->new(filename => $filename_spec, directory => $tempdir, ignoresign => '@',parse_header =>1);
 is_deeply ($data_spec->individuals->[0]->subject_data, ['1,0,1', ',0,1', ',,1'], "data->new starts with commas");
+
+
+# New
+my $filename = "$tempdir/test.dta";
+open my $fh, '>', $filename;
+print $fh "ID,A,SMTH,TEST\n";
+print $fh "0,-99,1,-99\n";
+print $fh "0,-99,2,-99\n";
+print $fh "0,-99,3,-99\n";
+print $fh "1,2,9,5\n";
+print $fh "1,2,9,-99\n";
+print $fh "1,2,9,3\n";
+print $fh "1,2,9,3\n";
+print $fh "1,2,9,-99\n";
+print $fh "1,2,9,5\n";
+print $fh "2,1,3,7\n";
+print $fh "3,1,3,7\n";
+close $fh;
+
+my $data = data->new(filename => $filename, 
+					 directory => $tempdir,
+					 ignoresign => '@', 
+					 parse_header => 1);
+
+my ($mapping,$new_indices,$new_categorical) = $data->append_bivariate_columns(indices => [1,2,3]); 
+
+is_deeply($mapping->[0],[],'mapping 0 only two nonmiss');
+is_deeply($mapping->[1],[9,3,2],'mapping 1');
+is_deeply($mapping->[2],[7,5],'mapping 2');
+
+is_deeply($new_indices,[1,4,5,6,7,8],'new indices');
+
+is($data->column_count,9,'column count after append');
+is_deeply($data->header,['ID','A','SMTH','TEST','SMTH_9','SMTH_3','SMTH_2','TEST_7','TEST_5'],'new header after append');
+is_deeply($new_categorical,['A','SMTH_9','SMTH_3','SMTH_2','TEST_7','TEST_5'],'new categorical');
+
+$data = data->new(filename => $filename, 
+					 directory => $tempdir,
+					 ignoresign => '@', 
+					 parse_header => 1);
+
+my ($mapping,$new_indices,$new_categorical) = $data->append_bivariate_columns(indices => [1,2,3],
+															 start_header => ['ID','F','G','H']); 
+is_deeply($data->header,['ID','F','G','H','G_9','G_3','G_2','H_7','H_5'],'new header after append 2');
+is_deeply($new_categorical,['F','G_9','G_3','G_2','H_7','H_5'],'new categorical');
 
 remove_test_dir($tempdir);
 

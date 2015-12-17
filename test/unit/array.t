@@ -213,18 +213,29 @@ my $target = ['sample.id','model','problem','subproblem','covariance_step_run','
 	'est_methods','model_run_time','subprob_est_time','subprob_cov_time','ofv','deltaofv','likelihood_ratio','relPDF',
 	'importance_ratio','probability_resample','resamples','CL','V','IVCL','IVV','SIGMA(1,1)','seCL','seV','seIVCL',
 	'seIVV','seSIGMA(1,1)','shrinkage_eta1(%)','shrinkage_eta2(%)','shrinkage_iwres(%)','EI1','EI2','EI3','EI4','EI5'];
-my $keys =['CL','V','IVCL','IVV','SIGMA(1,1)'];
 
+my $keys =['CL','V','IVCL','IVV','SIGMA(1,1)'];
 is_deeply(get_array_positions(target => $target,keys=> $keys),['28:32'],'get_array_positions 1 ');
 
 $keys =['CL','IVCL','SIGMA(1,1)'];
-
 is_deeply(get_array_positions(target => $target,keys=> $keys),[28,30,32],'get_array_positions 2 ');
+
 $keys =['CL','V','IVV','SIGMA(1,1)'];
-
 is_deeply(get_array_positions(target => $target,keys=> $keys),['28:29','31:32'],'get_array_positions 3 ');
-$keys =['CL','V','IVV'];
 
+$keys =['CL','V','IVV'];
 is_deeply(get_array_positions(target => $target,keys=> $keys),['28:29',31],'get_array_positions 4 ');
+
+$keys =['CL','V','IVCL','IVV','SIGMA(1,1)'];
+is_deeply(get_array_positions(target => $target,keys=> $keys, R_indexing => 0),[27,28,29,30,31],'get_array_positions 5 ');
+
+$keys =['CL','IVCL','SIGMA(1,1)'];
+is_deeply(get_array_positions(target => $target,keys=> $keys, R_indexing => 0),[27,29,31],'get_array_positions 6 ');
+
+$keys =['CL','V','IVV','SIGMA(1,1)'];
+is_deeply(get_array_positions(target => $target,keys=> $keys, R_indexing => 0),[27,28,30,31],'get_array_positions 7 ');
+
+$keys =['CL','V','IVV'];
+is_deeply(get_array_positions(target => $target,keys=> $keys, R_indexing => 0),[27,28,30],'get_array_positions 8 ');
 
 done_testing();

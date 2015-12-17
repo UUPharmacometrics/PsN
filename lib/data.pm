@@ -18,11 +18,11 @@ use linear_algebra;
 has 'individuals' => ( is => 'rw', isa => 'ArrayRef[data::individual]' );
 has 'column_head_indices' => ( is => 'rw', isa => 'HashRef[Str]', default => sub { {} } );
 has 'found_missing_data' => ( is => 'rw', isa => 'HashRef[Str]', default => sub { {} } );
-has 'comment' => ( is => 'rw', isa => 'ArrayRef[Str]' );
+has 'comment' => ( is => 'rw', isa => 'ArrayRef' );
 has 'directory' => ( is => 'rw', isa => 'Maybe[Str]' );
 has 'filename' => ( is => 'rw', isa => 'Str' );
 has 'cont_column' => ( is => 'rw', isa => 'Int' );
-has 'header' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { [] } );
+has 'header' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 # idcolumn is number starting at 1. This is different from data->column_to_array for example, which starts at 0
 has 'idcolumn' => ( is => 'rw', isa => 'Int' );
 has 'ignore_missing_files' => ( is => 'rw', isa => 'Bool', default => 0 );
@@ -282,55 +282,139 @@ sub _bootstrap_from_keys
 	return \@boot_samples;
 }
 
+sub column_count
+{
+	my $self = shift;
+	if (defined $self->individuals and (defined $self->individuals->[0]) and
+		(defined $self->individuals->[0]->subject_data) and
+		(defined $self->individuals->[0]->subject_data->[0])){
+		my @data_row = split( /,/ , $self->individuals()->[0]->subject_data ->[0] );
+		return scalar(@data_row);
+	}else{
+		return 0;
+	}
+}
+
+sub append_bivariate_columns
+{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+		 indices => { isa => 'ArrayRef', optional => 0 },
+		 start_header => { isa => 'ArrayRef', optional => 1 },
+	);
+	my $indices = $parm{'indices'};
+	my $start_header = $parm{'start_header'};
+
+	unless (defined $start_header){
+		$start_header = $self->header;
+	}
+	my $column_count = $self->column_count;
+	unless ($column_count >0){
+		croak("No columns in data object");
+	}
+	unless (scalar(@{$start_header}) == $column_count){
+		croak("column count is $column_count but input header length is ".scalar(@{$start_header}));
+	}
+	
+	my @mapping = (); #at each index pos have ref of array of old value that translates to non-zero in appended
+	my @new_indices = (); 
+	my $any_change = 0;
+	my @new_header = @{$start_header};
+	my @new_categorical = ();
+	
+	foreach my $index (@{$indices}){
+		my $label = $start_header->[$index];
+		unless (defined $label and length($label)>0){
+			$label = 'I'.$index;
+			$new_header[$index] = $label;
+		}
+		my @col_mapping = ();
+		my %factors = %{$self->factors(column => $index+1, #column number in data set
+									   return_occurences => 1,
+									   unique_in_individual => 0,									   
+									   ignore_missing => 1)};
+		#check if more than two non-missing. If not then empty colmap If yes then set mapping
+		my $non_missing = 0;
+		foreach my $key (keys (%factors)){
+			$non_missing++ unless ($key == $self->missing_data_token);
+		}
+		if ($non_missing > 2){
+			$any_change = 1;
+			my @sorted = sort {$b<=>$a} keys (%factors); #descending numerically in keys
+			foreach my $key (@sorted){
+				next if ($key == $self->missing_data_token);
+				push(@col_mapping,$key);
+ 				push(@new_indices,$column_count);
+				push(@new_header,$label.'_'.$key);
+				push(@new_categorical,$label.'_'.$key);
+				$column_count++;
+				last if (scalar(@col_mapping) == ($non_missing-1));
+			}
+		}else{
+			push(@new_indices,$index); #keep old col index, no change to header
+			push(@new_categorical,$label);
+		}
+		push(@mapping,\@col_mapping);
+	}
+
+	if ($any_change){
+		foreach my $individual (@{$self->individuals()}) {
+			$individual->append_bivariate_columns(categorical_indices => $indices,
+												  mapping => \@mapping,
+												  missing_data_token => $self->missing_data_token);
+		}
+		$self->header(\@new_header);
+	}
+	
+	return (\@mapping,\@new_indices,\@new_categorical);
+}
+
+
 sub frem_compute_covariate_properties
 {
 	#static method, no self
 	#one unit test in data_extra.t
 	my %parm = validated_hash(\@_,
-							  directory => { isa => 'Maybe[Str]', optional => 1 },
-							  filename => { isa => 'Str', optional => 0 },
-							  idcolumn => { isa => 'Int', optional => 0 },
-							  invariant_covariates => { isa => 'Maybe[ArrayRef]', optional => 1},
+							  filtered_data => { isa => 'data', optional => 0 },
+							  N_parameter_blocks => { isa => 'Int', optional => 0 },
+							  invariant_covariates => { isa => 'ArrayRef', optional => 0},
+							  is_log => { isa => 'ArrayRef', optional => 0},
 							  occ_index => { isa => 'Maybe[Int]', optional => 1 },
 							  data2name => { isa => 'Str', optional => 0 },
 							  evid_index => { isa => 'Maybe[Int]', optional => 1 },
 							  mdv_index => { isa => 'Maybe[Int]', optional => 1 },
 							  type_index => { isa => 'Int', optional => 0 },
-							  cov_indices => { isa => 'Maybe[ArrayRef]', optional => 1 },
+							  dv_index => { isa => 'Int', optional => 0 },
+							  cov_indices => { isa => 'ArrayRef', optional => 0 },
 							  first_timevar_type => { isa => 'Int', optional => 0 },
-							  missing_data_token => { isa => 'Maybe[Num]', optional => 1 }
 		);
 	#ref of hash of cov names to column numbers
-	my $directory = $parm{'directory'};
-	my $filename = $parm{'filename'};
-	my $idcolumn = $parm{'idcolumn'};
-	my @invariant_covariates = (defined $parm{'invariant_covariates'})? @{$parm{'invariant_covariates'}}: ();
+	my $filtered_data = $parm{'filtered_data'};
+	my $N_parameter_blocks = $parm{'N_parameter_blocks'};
+	my $invariant_covariates =  $parm{'invariant_covariates'};
+	my $is_log =  $parm{'is_log'};
 	my $occ_index = $parm{'occ_index'};
 	my $data2name = $parm{'data2name'};
 	my $evid_index = $parm{'evid_index'};
 	my $mdv_index = $parm{'mdv_index'};
 	my $type_index = $parm{'type_index'};
-	my @cov_indices = (defined $parm{'cov_indices'})? @{$parm{'cov_indices'}}: ();
+	my $dv_index = $parm{'type_index'};
+	my $cov_indices = $parm{'cov_indices'};
 	my $first_timevar_type = $parm{'first_timevar_type'};
-	my $missing_data_token = $parm{'missing_data_token'};
 
 	my $results={};
-
-	my $filtered_data = data->new(filename => $directory.$filename,
-								  ignoresign => '@', idcolumn => $idcolumn);
 	
-	foreach my $covariate (@invariant_covariates){
-		my %strata = %{$filtered_data->factors(column_head => $covariate,
+	for (my $i=0; $i<scalar(@{$invariant_covariates}); $i++){
+		my $covariate = $invariant_covariates->[$i-1]; #cov name
+		my %strata = %{$filtered_data->factors(column => $cov_indices->[$i]+1, #column number in data set
 											   return_occurences => 1,
 											   unique_in_individual => 1,
 											   ignore_missing => 1)};
 
 		if ( $strata{'Non-unique values found'} eq '1' ) {
 			ui -> print( category => 'all',
-						 message => "\nWarning: Individuals were found to have multiple values ".
-						 "in the $covariate column, which will not be handled correctly by the frem script. ".
-						 "Consider terminating this run and setting ".
-						 "covariate $covariate as time-varying instead.\n" );
+						 message => "\nWarning: Individuals were found to have multiple values in the $covariate column,".
+						 " but the frem script will just use the first value for the individual.\n");
 		}
 	}
 
@@ -357,8 +441,11 @@ sub frem_compute_covariate_properties
 	($invariant_matrix,$timevar_matrix) = $filtered_data->add_frem_lines( occ_index => $occ_index,
 																		  evid_index => $evid_index,
 																		  mdv_index => $mdv_index,
+																		  dv_index => $dv_index,
 																		  type_index => $type_index,
-																		  cov_indices => \@cov_indices,
+																		  cov_indices => $cov_indices,
+																		  is_log => $is_log,
+																		  N_parameter_blocks => $N_parameter_blocks,
 																		  first_timevar_type => $first_timevar_type);
 
 	$results->{'invariant_median'}= [];
@@ -369,7 +456,7 @@ sub frem_compute_covariate_properties
 	my $err = linear_algebra::row_cov_median($invariant_matrix,
 											 $results->{'invariant_covmatrix'},
 											 $results->{'invariant_median'},
-											 $missing_data_token);
+											 $filtered_data->missing_data_token);
 	if ($err != 0){
 		print "failed to compute invariant covariates covariance\n";
 		$results->{'invariant_median'}= [];
@@ -379,7 +466,7 @@ sub frem_compute_covariate_properties
 	$err = linear_algebra::row_cov_median($timevar_matrix,
 										  $results->{'timevar_covmatrix'},
 										  $results->{'timevar_median'},
-										  $missing_data_token);
+										  $filtered_data->missing_data_token);
 	if ($err != 0){
 		print "failed to compute time-varying covariates covariance\n";
 		$results->{'timevar_median'} = [];
@@ -395,17 +482,23 @@ sub add_frem_lines
 	my $self = shift;
 	my %parm = validated_hash(\@_,
 		type_index => { isa => 'Int', optional => 0 },
+		N_parameter_blocks => { isa => 'Int', optional => 0 },
 		occ_index => { isa => 'Maybe[Int]', optional => 1 },
 		evid_index => { isa => 'Maybe[Int]', optional => 1 },
 		mdv_index => { isa => 'Maybe[Int]', optional => 1 },
-		cov_indices => { isa =>'Ref', optional => 1 },
+		dv_index => { isa => 'Int', optional => 0 },
+		cov_indices => { isa =>'ArrayRef', optional => 0 },
+		is_log => { isa =>'ArrayRef', optional => 0 },
 		first_timevar_type => { isa => 'Int', optional => 0 }
 	);
 	my $type_index = $parm{'type_index'};
+	my $N_parameter_blocks = $parm{'N_parameter_blocks'};
 	my $occ_index = $parm{'occ_index'};
 	my $evid_index = $parm{'evid_index'};
 	my $mdv_index = $parm{'mdv_index'};
+	my $dv_index = $parm{'dv_index'};
 	my $cov_indices = $parm{'cov_indices'};
+	my $is_log = $parm{'is_log'};
 	my $first_timevar_type = $parm{'first_timevar_type'};
 	my @invariant_matrix;
 	my @timevar_matrix;
@@ -418,10 +511,13 @@ sub add_frem_lines
 	foreach my $individual ( @{$self->individuals()} ) {
 		my ($invariants,$timevar) =  $individual->add_frem_lines( occ_index => $occ_index,
 																  evid_index => $evid_index,
+																  N_parameter_blocks => $N_parameter_blocks,
 																  missing_data_token => $self->missing_data_token(),
 																  mdv_index => $mdv_index,
+																  dv_index => $dv_index,
 																  type_index => $type_index,
 																  cov_indices => $cov_indices,
+																  is_log => $is_log,
 																  first_timevar_type => $first_timevar_type);
 		push(@invariant_matrix,$invariants);
 		push(@timevar_matrix,$timevar);

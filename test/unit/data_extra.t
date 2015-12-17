@@ -26,17 +26,24 @@ use File::Spec qw(catfile);
 my $tempdir = create_test_dir('unit_data_extra');
 
 cp($includes::testfiledir.'/frem_filtered_data.dta',$tempdir);
-my $resultref = data::frem_compute_covariate_properties(filename => $tempdir.'frem_filtered_data.dta',
-														idcolumn => 1,  #number not index
+
+my $filtered_data = data->new(filename => $tempdir.'frem_filtered_data.dta',
+							  ignoresign => '@', 
+							  idcolumn => 1,
+							  missing_data_token => -99);
+
+my $resultref = data::frem_compute_covariate_properties(filtered_data => $filtered_data,
 														invariant_covariates => ['SEX','DGRP'],
 														occ_index => 1,
 														data2name => 'findme.dta', #ends up in tempdir
 														evid_index => 31,
 														mdv_index => undef,
+														dv_index => 30,
 														type_index => 33,
-														cov_indices => [30,12,3,14], #DV SEX DGRP WT
-														first_timevar_type => 3,    #index 3 in cov_indices
-														missing_data_token => '-99');
+														N_parameter_blocks => 1,
+														cov_indices => [12,3,14], #SEX DGRP WT
+														is_log => [0,0,0],
+														first_timevar_type => 2);    #index 3 in cov_indices
 
 
 is($resultref->{'occasionlist'}->[0],3,'frem occasion 1');
