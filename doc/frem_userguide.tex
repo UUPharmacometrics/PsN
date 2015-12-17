@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{FREM userguide}{2015-12-10}
+\guidetitle{FREM userguide}{2015-12-14}
 
 
 \begin{document}
@@ -50,8 +50,23 @@ A model file is required on the command-line.
 %\nextopt
 %\optdefault{invariant}{list}
 \optdefault{covariates}{list}
-A comma-separated list of covariates, required. Names used in \$INPUT.
+A comma-separated list of covariates, required. Must be the names used in \$INPUT, the data file headers are ignored.
 %Optional if -time\_varying is given, not allowed if restarting an old run, otherwise required. 
+\nextopt
+\optdefault{log}{list}
+Optional, default empty. A comma-separated list of covariates 
+that should have the natural logarithm
+of the input data set value as the observed value in the DV column of the frem dataset.
+The -log list must be a subset of the -covariate list.
+If any covariate listed with option -log is not in the list -covariates there will be an error message.
+There must be no covariate listed with both log and -categorical.
+\nextopt
+\optdefault{categorical}{list}
+Optional, default empty. A comma-separated list of categorical covariates that are to be transformed from
+one covariate with Y categories into Y-1 bivariate covariates.
+The -categorical list must be a subset of the -covariate list.
+If any covariate listed with option -categorical is not in the list -covariates there will be an error message.
+There must be no covariate listed with both -categorical and -log.
 \nextopt
 \optdefault{skip\_etas}{non-negative integer}
 The number of leading input model ETAs to \emph{not} include when estimating covariances
@@ -61,16 +76,20 @@ input model ETAs will be correlated to covariates.
 The non-included ETAs, if any, must be the first 1 to 'skip\_etas' ETAs in the model.
 If the input model has BOV, the BOV ETAs must be skipped using this option. 
 \nextopt
+\optname{estimate\_final\_model}
+Default set. If unset with -no-estimate\_final\_model then script will not estimate
+the final frem model.
+\nextopt
 \optname{vpc}
 Default not set. If set then script will create a frem model that can be run with the vpc script (in a separate call to the vpc pscript).  
 \nextopt
 \optname{check}
 Set by default, disable with -no-check. Run safety check after frem data set generation. 
 \nextopt
-\optdefault{dv}{name}
-Default is DV. The name of the dependent variable. This must be the name used in \$INPUT,
-the data file header is ignored. 
-\nextopt
+%\optdefault{dv}{name}
+%Default is DV. The name of the dependent variable. This must be the name used in \$INPUT,
+%the data file header is ignored. 
+%\nextopt
 %\optdefault{estimate}{number}
 %Optional, default 3. The number (0, 1, 2 or 3) of the last model to estimate in the frem sequence. All models with a higher number will still be created, but not estimated. When restarting in an existing frem run directory, estimation of models that have an existing lst-file will be skipped even if the -estimate option is set to a higher number.
 %\nextopt
@@ -85,7 +104,7 @@ or psn\_options -h on the commandline.
 \begin{itemize}
 %	\item Time-varying covariates must only vary between occasions, not within occasions. 
 	\item There must be no parameter called FREMTYPE in \$INPUT/\$PK/\$PRED/\$ERROR.
-	\item Categorical covariates must be bivariate.
+	\item Categorical covariates must be bivariate, unless listed with option -categorical.
     \item All input model ETAs that are not to have covariance with covariate ETAs estimated must have ETA number
     <= skip\_etas. This includes any BOV ETAs in input model.
     \item All input model ETAs that are to have covariance with covariate ETAs estimated must
@@ -132,15 +151,16 @@ An ETA is assumed to belong to BOV occasion 1+$i$ if the corresponding \$OMEGA t
 \item Check that the first (non-skipped) parameter ETA is the first in a new \$OMEGA record, otherwise give error message.
 \item Unless input model is already run \emph{and} its phi-file is found,
 run a copy of the input model to get estimates and phi-file.
-\item Count the number of \$OMEGA blocks used for parameter ETAs, N\_parameter\_blocks.
-Any diagonal \$OMEGA of size N > 1 is counted as N separate \$OMEGA of size 1. 
+\item Count the number of parameter \$OMEGA blocks, N\_parameter\_blocks, that are needed in the frem model:
+Initiate N\_parameter\_blocks = 0. Skip all \$OMEGA for ETA <= skip\_etas.
+Then add 1 for each full block \$OMEGA and add N for each diagonal \$OMEGA of size N.
 \item Create frem dataset according to section FREM dataset below, include covariate observations 'N\_parameter\_blocks' times.
 %\item Create Model 1, model without covariates, with full \$OMEGA block for parameter BSV ETAs but without
 %and parameter BOV ETAs (pre-existing BOV ETAs removed), according to section below. Original data set.
 %\item Run Model 1.
 \item Create Model 2, model with covariates but without
 estimation of covariances between parameter and covariate ETAs, according to section below. FREM dataset.
-THETA and OMEGA for PK parameters are FIXED in this model. Include \$COV.
+THETA and OMEGA and SIGMA for PK parameters are FIXED in this model. Include \$COV.
 \item Run Model 2.
 \item Create FREM regular parameterization model,
 where there are N\_parameter\_blocks full \$OMEGA blocks with all covariances between parameter and covariate ETAs,
@@ -150,7 +170,7 @@ Use Model 2 ETA output in phi-file to compute initial estimates for correlations
 between parameter and covariate ETAS based on phi-file.
 \item Cholesky reparameterize \$OMEGA block for parameter-covariate ETAs. FIX
 everything in model except parameter-covariate correlation THETAs.
-\item Estimate Cholesky frem model, include \$COV step (?).
+\item Estimate Cholesky frem model, include \$COV step.
 \item Take final estimates from Cholesky frem model and transform back to regular \$OMEGA block for FREM regular model.
 \item Reestimate FREM regular model (everything or just \$OMEGA??). Run \$COV step.
 %\item If option -vpc is set, the script will also 
@@ -168,15 +188,22 @@ Create a new data set.
 	\item In input dataset: Find EVID and/or MDV columns. If neither found then MDV will be added. Find DV column.
     For each covariate  determine a unique (set of N\_parameter\_blocks) FREMTYPE value(s) > 0.
     FREMTYPE=0 is reserved for original observations.
-    \item Create a filter model. This is either a dummy NONMEM model or, if MDV has to be added, the original model with MAXEVAL=0 METHOD=ZERO and without \$COV. 
+    \item Find each column listed with -categorical and count the number of categories Y. Missing values are not counted as
+    a category. 
+    \item Create a filter model. This is either a dummy NONMEM model or, if MDV has to be added,
+    the original model with MAXEVAL=0 METHOD=ZERO and without \$COV.
 	\item Run the filter model where FREMTYPE=0 to filter the original data on any IGNORE/ACCEPT and to get a new data file
     from \$TABLE where the column headers are the same as in \$INPUT but a FREMTYPE column is added with all zeros as values.
     Also add MDV if not EVID or MDV in data set. In the dummy models no columns are DROPped or SKIPped.
+    \item  In new data file, append columns for Y-1 new bivariate covariate variables for each
+          categorical covariate where number of categories Y>2. In subsequent analysis steps, replace old covariate with
+          Y-1 new variables.
 \item Then loop over each individual: 
 \begin{enumerate}
 	\item Copy first observation line for individual. i.e. first line where MDV/EVID ==0. 
 Loop over each covariate: Add N\_parameter\_blocks new line(s) just before first observation line for individual. 
-On each copied line, set value in DV column to covariate value and FREMTYPE to a unique type-value for this covariate. 
+On each copied line, set value in DV column to covariate value, or ln(value) if this covariate is listed with option -log,
+and FREMTYPE to a unique type-value for this covariate and parameter block. 
 If MDV column present then MDV=0 if have covariate value, MDV=1 if value is missing. 
 Else if EVID present then EVID=0 if non-missing covariate value, otherwise EVID=2. 
 Store non-missing covariate values in array, one array per covariate, to be able to compute medians and 

@@ -66,6 +66,45 @@ sub copy
     return $individual_copy;
 }
 
+
+sub append_bivariate_columns
+{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+							  categorical_indices => { isa => 'ArrayRef', optional => 0 },
+							  mapping => { isa => 'ArrayRef', optional => 0 },
+							  missing_data_token => {isa => 'Maybe[Num]'}
+	);
+	my $categorical_indices = $parm{'categorical_indices'};
+	my $mapping = $parm{'mapping'};
+	my $missing_data_token = $parm{'missing_data_token'};
+
+	for( my $i = 0 ; $i < scalar(@{$self->subject_data}); $i++ ) {
+		my @values = split( /,/ , $self->subject_data->[$i] );
+		my @newvalues = ();
+		for (my $j=0; $j< scalar(@{$categorical_indices}); $j++){
+			my $oldval = $values[$categorical_indices->[$j]];
+			my $missing = 0;
+			$missing = 1 if ($oldval == $missing_data_token);
+			for (my $k=0; $k< scalar(@{$mapping->[$j]}); $k++){
+				if ($oldval == $mapping->[$j]->[$k]){
+					push(@newvalues,$oldval);
+				}elsif ($missing){
+					push(@newvalues,$missing_data_token);
+				}else{
+					#which is the 'not' value?
+					if ($mapping->[$j]->[$k] == 0){
+						push(@newvalues,1); #true values is 0, not value is 1
+					}else{
+						push(@newvalues,0); #true value is nonzero, not value is 0
+					}
+				}
+			}
+		}
+		$self->subject_data->[$i] .= ','.join(',',@newvalues) if (scalar(@newvalues)>0);		
+	}
+	
+}
 sub add_frem_lines
 {
 	my $self = shift;
@@ -74,18 +113,22 @@ sub add_frem_lines
 		 N_parameter_blocks => { isa => 'Int', optional => 0 },
 		 occ_index => { isa => 'Maybe[Int]', optional => 1 },
 		 mdv_index => { isa => 'Maybe[Int]', optional => 1 },
+		 dv_index => { isa => 'Int', optional => 0 },
 		 evid_index => { isa => 'Maybe[Int]', optional => 1 },
 		 missing_data_token => { isa => 'Str', default => "-99", optional => 1 },
-		 cov_indices => { isa => 'Ref', optional => 0 },
+		 cov_indices => { isa => 'ArrayRef', optional => 0 },
+		 is_log => { isa => 'ArrayRef', optional => 0 },
 		 first_timevar_type => { isa => 'Int', optional => 0 }
 	);
 	my $type_index = $parm{'type_index'};
 	my $N_parameter_blocks = $parm{'N_parameter_blocks'};
 	my $occ_index = $parm{'occ_index'};
 	my $mdv_index = $parm{'mdv_index'};
+	my $dv_index = $parm{'dv_index'};
 	my $evid_index = $parm{'evid_index'};
 	my $missing_data_token = $parm{'missing_data_token'};
 	my $cov_indices = $parm{'cov_indices'};
+	my $is_log = $parm{'is_log'};
 	my $first_timevar_type = $parm{'first_timevar_type'};
 	my @invariant_values;
 	my @timevar_values;
@@ -103,7 +146,7 @@ sub add_frem_lines
 	my $format_data=1; 
 
 	#in is ref of array cov_indices where position index is value to set in type column and the value is the column index
-	#           for the covariate in the data set. this array must be longer than 1. first pos(index 0) is dv
+	#           for the covariate in the data set. this array must be longer than 1. first pos(index 0) is not dv anymore, first cov
 	#in occ_index of occasion column, can be undef 
 	#in mdv_index of mdv column, can be undef
 	#in evid_index of evid column, can be undef
@@ -113,7 +156,6 @@ sub add_frem_lines
 	#out array of arrays timevar_matrix with data values found in timevar columns
 
 	my @data = @{$self -> subject_data()};
-	my $dv_index = $cov_indices->[0];
 	my @timevar_matrix;
 
 	my @newlines = ();
@@ -125,7 +167,7 @@ sub add_frem_lines
 	}
 
 	my $done_invariant = 0;
-	$done_invariant = 1 if ($first_timevar_type == 1); #no time invariant at all
+	$done_invariant = 1 if ($first_timevar_type == 0); #no time invariant at all
 	my $n_var = scalar(@{$cov_indices}) - $first_timevar_type; #number of time-varying cov
 	#initialize timevar_matrix
 	for (my $type= $first_timevar_type; $type < scalar(@{$cov_indices}) ;$type++){
@@ -141,11 +183,15 @@ sub add_frem_lines
 		}
 		unless ($done_invariant or $not_obs){
 			#first loop over invariate covariates
-			for (my $type=1; $type < $first_timevar_type; $type++){
-				my $cov_index = $cov_indices->[$type];
+			for (my $pos=0; $pos < $first_timevar_type; $pos++){
+				my $cov_index = $cov_indices->[$pos];
 				my @row = @data_row; #copy
-				$row[$dv_index] = $row[$cov_index]; #set DV column to whatever cov value
-				push(@invariant_values,$row[$cov_index]);
+				if ($is_log->[$pos] and ($row[$cov_index] != $missing_data_token )){
+					$row[$dv_index] = log($row[$cov_index]); 
+				}else{
+					$row[$dv_index] = $row[$cov_index]; #set DV column to whatever cov value
+				}
+				push(@invariant_values,$row[$dv_index]);
 				if ($row[$cov_index] == $missing_data_token){
 					#cov value is missing
 					$row[$mdv_index]=1 if (defined $mdv_index);
@@ -158,7 +204,7 @@ sub add_frem_lines
 
 				for (my $k= 0; $k<$N_parameter_blocks; $k++){
 					#add one line per parameter block
-					$row[$type_index] = ($type+(0.01*$k))  ; #type value
+					$row[$type_index] = (($pos+1)+(0.01*$k))  ; #fremtype value
 					if ($format_data){
 						format_array(\@row);
 					}
@@ -174,10 +220,10 @@ sub add_frem_lines
 			#have not already handled this occasion OR this is not observation
 			#found new occasion, loop over time-varying
 			$occasions{$occ}=1;
-			for (my $type= $first_timevar_type; $type < scalar(@{$cov_indices}) ;$type++){
-				my $cov_index = $cov_indices->[$type];
+			for (my $pos= $first_timevar_type; $pos < scalar(@{$cov_indices}) ;$pos++){
+				my $cov_index = $cov_indices->[$pos];
 				my @row = @data_row; #copy
-				$row[$type_index] = $type; #type value
+				$row[$type_index] = ($pos+1); #fremtype value
 				$row[$dv_index] = $row[$cov_index]; #set DV column to whatever cov value is here
 				if ($row[$cov_index] == $missing_data_token){
 					#cov value is missing
@@ -186,7 +232,7 @@ sub add_frem_lines
 
 				}else{
 					#cov value not missing
-					push(@{$timevar_matrix[$type-$first_timevar_type]},$row[$cov_index]);
+					push(@{$timevar_matrix[$pos-$first_timevar_type]},$row[$cov_index]);
 					$row[$mdv_index]=0 if (defined $mdv_index);
 					$row[$evid_index]=0 if (defined $evid_index) ;
 				}

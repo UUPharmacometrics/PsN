@@ -99,11 +99,14 @@ is($etanum_to_parameterhash->{3},'KA',"get_CTV_parameters etanum_to_parameterhas
 my $time_varying = ['CLCR','WT'];
 my $invariant = ['AGE','SEX'];
 
-my($start_omega_record,$parameter_blocks,$eta_mapping)=
-	tool::frem::get_start_numbers(model=>$model,
-								  n_covariates => 4, 
-								  skip_etas => 0);
+my $start_omega_record=	tool::frem::get_start_numbers(model=>$model,
+													  skip_etas => 0);
 is($start_omega_record,1,"get_start_numbers start_omega_record");
+
+my ($parameter_blocks,$eta_mapping) = tool::frem::get_parameter_blocks(model => $model,
+														   skip_etas => 0,
+														   n_covariates => 4,
+														   start_omega_record => $start_omega_record);
 is(scalar(@{$parameter_blocks}),2,"get_start_numbers parameter_blocks");
 is($parameter_blocks->[0]->options->[0]->coordinate_string,'OMEGA(1,1)','parameter block 1');
 is($parameter_blocks->[0]->options->[1]->coordinate_string,'OMEGA(2,1)','parameter block 2');
@@ -115,10 +118,14 @@ is_deeply($eta_mapping->{'eta_from'}->[1],[3],"get_start_numbers eta mapping fro
 is_deeply($eta_mapping->{'eta_to'}->[0],[1,2],"get_start_numbers eta mapping to 1");
 is_deeply($eta_mapping->{'eta_to'}->[1],[7],"get_start_numbers eta mapping to 2");
 
-($start_omega_record,$parameter_blocks,$eta_mapping)=
-	tool::frem::get_start_numbers(model=>$model,
-								  n_covariates => scalar(@{$invariant}), 
-								  skip_etas => 2);
+$start_omega_record=tool::frem::get_start_numbers(model=>$model,
+												  skip_etas => 2);
+
+($parameter_blocks,$eta_mapping) = tool::frem::get_parameter_blocks(model => $model,
+														n_covariates => scalar(@{$invariant}), 
+														skip_etas => 2,
+														start_omega_record => $start_omega_record);
+
 is($start_omega_record,2,"get_start_numbers start_omega_record 2");
 is(scalar(@{$parameter_blocks}),1,"get_start_numbers parameter_blocks 2");
 is($parameter_blocks->[0]->options->[0]->coordinate_string,'OMEGA(3,3)','parameter block 5');
@@ -167,7 +174,7 @@ is_deeply($full->[2],[sqrt(3)*sqrt(2)*0.01,sqrt(4)*sqrt(2)*0.01 ,2,0.4,0.2],"cre
 is_deeply($full->[3],[sqrt(3)*sqrt(4)*0.01,sqrt(4)*sqrt(4)*0.01 ,0.4,4,0.1],"create full_block 3");
 is_deeply($full->[4],[sqrt(3)*sqrt(5)*0.01,sqrt(4)*sqrt(5)*0.01 ,0.2,0.1,5],"create full_block 4");
 
-my ($filtered_data_model,$indices,$first_timevar_type,$extra_input_items,$message) = 
+my ($filtered_data_model,$filter_table_header,$extra_input_items,$message) = 
 	tool::frem::create_data2_model( model => $model,
 									filename => 'filterdata.mod',
 									filtered_datafile => 'filtertype0.dta',
@@ -182,15 +189,18 @@ my @ans = qw (ID VISI XAT2 DGRP DOSE FLAG ONO XIME DVO NEUY SCR AGE SEX NYHA WT 
 for (my $i=0; $i<scalar(@ans); $i++){
 	is($filtered_data_model->problems->[0]->tables->[0]->options->[$i]->name, $ans[$i], 'table record options '.$i);
 }
-is($first_timevar_type,scalar(@{$invariant})+1,'first timevar type create_data2');
+@ans = qw (ID VISI XAT2 DGRP DOSE FLAG ONO XIME DVO NEUY SCR AGE SEX NYHA WT COMP ACE DIG DIU NUMB TAD TIME VIDD CLCR AMT SS II VID CMT CONO DV EVID OVID FREMTYPE);
+is_deeply($filter_table_header,\@ans,'filter table header');
 is_deeply($extra_input_items,['FREMTYPE'],'extra_input_items create_data2');
 is($message,"Running dummy model to filter data and add FREMTYPE for Data set 2",'create_data2 message');
 
-is($indices->{'occ_index'},1,'occ index');
-is($indices->{'evid_index'},31,'evid index');
-is($indices->{'mdv_index'},undef,'mdv index');
-is($indices->{'type_index'},33,'type index');
-is_deeply($indices->{'cov_indices'},[30,11,12,23,14],'cov indices');
+my $first_timevar_type;
+#is($first_timevar_type,scalar(@{$invariant})+1,'first timevar type create_data2');
+my $indices = tool::frem::get_indices(target=>$filter_table_header, keys => ['VISI','EVID','MDV','FREMTYPE']);
+is($indices->{'VISI'},1,'occ index');
+is($indices->{'EVID'},31,'evid index');
+is($indices->{'MDV'},undef,'mdv index');
+is($indices->{'FREMTYPE'},33,'type index');
 
 
 $model = model->new(filename => "$modeldir/pheno.mod", 
@@ -204,6 +214,16 @@ tool::frem::replace_tvpar_with_ctvpar( model => $model,
 @code = @{$model->get_code(record => 'pk')};
 is_deeply(\@code,['TVCL=THETA(1)','TVV=CTVV','CL=TVCL*EXP(ETA(1))','V=TVV*EXP(ETA(2))','S1=V'],"replace tvpar with ctvpar");
 
+
+my @head = qw (ID AGE SEX NYHA WT TYPE CLCR DV EVID OVID FREMTYPE);
+my @newhead = qw (ID AGE SEX NYHA WT TYPE CLCR DV EVID OVID FREMTYPE NYHA_2 NYHA_1 TYPE_2 TYPE_1 TYPE_0);
+
+
+my $reg = tool::frem::get_regular_covariates(categorical => ['SEX','NYHA','TYPE'],
+											 covariates => ['WT','SEX','NYHA','CLCR','TYPE'],
+											 log => []);
+
+is_deeply($reg,['WT','CLCR'],'get regular cov');
 #set_frem_records FIXME
 #more dataset handling FIXME
 #set_frem_code FIXME

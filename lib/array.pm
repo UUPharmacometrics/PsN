@@ -39,35 +39,40 @@ sub get_array_positions{
 		$matched = 0;
 		for (my $j=0; $j< scalar(@remaining_keys); $j++){
 			if ($target->[$i] eq $remaining_keys[$j]){
-				if (defined $start){
-					$end = $i+$R_indexing; #add 1 if use R indexing
+				if ($R_indexing){
+					if (defined $start){
+						$end = $i+1; #add 1 if use R indexing
+					}else{
+						$start = $i+1;
+					}
 				}else{
-					$start = $i+$R_indexing;
+					$start = $i;
 				}
 				splice(@remaining_keys,$j,1); #remove matched element
 				$matched = 1;
 				last;
 			}
 		}
-		if ((not $matched) or (scalar(@remaining_keys)<1) or ($i == (scalar(@{$target})-1)))  {
-			#either did not match or this is last match
-			if (defined $start){
-				if (defined $end){
-					push(@cols,$start.':'.$end);
-				}else{
-					push(@cols,$start);
+		if ($R_indexing){
+			if ((not $matched) or (scalar(@remaining_keys)<1) or ($i == (scalar(@{$target})-1)))  {
+				#either did not match or this is last match
+				if (defined $start){
+					if (defined $end){
+						push(@cols,$start.':'.$end);
+					}else{
+						push(@cols,$start);
+					}
+					$start=undef;
+					$end=undef;
 				}
-				$start=undef;
-				$end=undef;
 			}
+		}else{
+			push(@cols,$start) if ($matched);
 		}
 
 		last if (scalar(@remaining_keys)<1);
 	}
-	unless (scalar(@remaining_keys)<1){
-		ui->print(category=>'all',
-				  message=> "get_array_positions remaining keys ".join(' ',@remaining_keys));
-	}
+
 	return \@cols;
 }
 

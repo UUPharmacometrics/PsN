@@ -10,13 +10,14 @@ use ui;
 use File::Copy qw/cp mv/;
 use File::Path 'rmtree';
 use nmtablefile;
-
+use array;
 
 use Moose;
 use MooseX::Params::Validate;
 
 extends 'tool';
 
+#FIXME dv synonym automatic handling
 
 my $fremtype = 'FREMTYPE'; 
 my $smallcorrelation = 0.01; #FIXME
@@ -34,9 +35,12 @@ has 'check' => ( is => 'rw', isa => 'Bool', default => 1 );
 has 'vpc' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'dv' => ( is => 'rw', isa => 'Str', default => 'DV' );
 has 'occasion' => ( is => 'rw', isa => 'Str');
-has 'parameters_bov' => ( is => 'rw', isa => 'ArrayRef[Str]' );
-has 'time_varying' => ( is => 'rw', isa => 'ArrayRef[Str]' );
-has 'covariates' => ( is => 'rw', isa => 'ArrayRef[Str]' );
+has 'parameters_bov' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
+has 'time_varying' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
+has 'covariates' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
+has 'categorical' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
+has 'log' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
+has 'regular' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 has 'logfile' => ( is => 'rw', isa => 'ArrayRef', default => sub { ['frem.log'] } );
 has 'results_file' => ( is => 'rw', isa => 'Str', default => 'frem_results.csv' );
 has 'use_pred' => ( is => 'rw', isa => 'Bool', default => 1 );
@@ -74,10 +78,45 @@ sub BUILD
 		croak('Cannot have more than one $PROB in the input model.');
 	}
 
-	#checks left for frem->new:
-#dv exist in $INPUT if needed. type exists in $INPUT if given. 
-	#must have dv in $input
+	unless (scalar(@{$self->covariates})>0){
+		croak("Must have at least one covariate");
+	}
+	
+	if (scalar(@{$self->log})> 0){
+		my $indices = array::get_array_positions(target => $self->covariates,
+												 keys=> $self->log, 
+												 R_indexing => 0);
+		unless (scalar(@{$indices}) == scalar(@{$self->log})){
+			croak("-log list:".join(',',@{$self->log})." is not a subset of ".
+				" -covariates:".join(',',@{$self->covariates}));
+		}
 
+	}
+	if (scalar(@{$self->categorical})> 0){
+		my $indices = array::get_array_positions(target => $self->covariates,
+												 keys=> $self->categorical, 
+												 R_indexing => 0);
+		unless (scalar(@{$indices}) == scalar(@{$self->categorical})){
+			croak("-categorical list:".join(',',@{$self->categorical})." is not a subset of ".
+				  " -covariates:".join(',',@{$self->covariates}));
+		}
+	}
+	if (scalar(@{$self->log})> 0){
+		my $indices = array::get_array_positions(target => $self->categorical,
+												 keys=> $self->log, 
+												 R_indexing => 0);
+		if (scalar(@{$indices})>0){
+			croak("-log list:".join(',',@{$self->log})." must have no elements in common with ".
+				  " -categorical:".join(',',@{$self->categorical}));
+		}
+		
+	}
+
+	my $regular = get_regular_covariates(covariates => $self->covariates,
+										 categorical => $self->categorical,
+										 log => $self->log);
+	$self->regular($regular);
+	
 	my $dv_ok=0;
 
 	my $prob = $self -> models->[0]-> problems -> [0];
@@ -508,13 +547,9 @@ sub get_start_numbers
 	my %parm = validated_hash(\@_,
 							  model => { isa => 'model', optional => 0 },
 							  skip_etas => {isa => 'Int', optional => 0},
-							  n_covariates => {isa => 'Int', optional => 0},
 	);
 	my $model = $parm{'model'};
 	my $skip_etas = $parm{'skip_etas'};
-	my $n_covariates = $parm{'n_covariates'};
-
-	croak("must have n_covariates > 0") unless ($n_covariates > 0);
 
 	my $start_omega_record = $model-> problems -> [0]->check_skip_etas(skip_etas => $skip_etas);
 	my $ref = $model->problems->[0]->get_eta_sets(header_strings => 0,
@@ -525,17 +560,8 @@ sub get_start_numbers
 	unless (scalar(@{$ref->{'iiv'}})>0){
 		croak("No ETAs left after skip_etas, nothing to do in frem");
 	}
-
 	
-	my ($parameter_blocks,$eta_mapping) = get_parameter_blocks(model => $model,
-															   skip_etas => $skip_etas,
-															   n_covariates => $n_covariates,
-															   start_omega_record => $start_omega_record);
-	unless (scalar(@{$parameter_blocks})>0){
-		croak("No omega in parameter blocks, nothing to do in frem");
-	}
-	
-	return($start_omega_record,$parameter_blocks,$eta_mapping);
+	return $start_omega_record;
 }
 
 sub get_parameter_blocks
@@ -707,6 +733,56 @@ sub do_model0
 
 }
 
+sub get_regular_covariates
+{
+	my %parm = validated_hash(\@_,
+							  categorical => { isa => 'ArrayRef', optional => 0 },
+							  log => { isa => 'ArrayRef', optional => 0 },
+							  covariates => { isa => 'ArrayRef', optional => 0 },
+		);
+	my $categorical = $parm{'categorical'};
+	my $log = $parm{'log'};
+	my $covariates = $parm{'covariates'};
+	
+	my @regular = ();
+	my @special = @{$log};
+	push(@special,@{$categorical});
+	
+	foreach my $cov (@{$covariates}){
+		my $matched = 0;
+		foreach my $new (@special){
+			if ($new eq $cov){
+				$matched = 1;
+				last;
+			}
+		}
+		push(@regular,$cov) unless ($matched);
+	}
+	return \@regular;
+}
+
+sub get_indices
+{
+	my %parm = validated_hash(\@_,
+							  target => { isa => 'ArrayRef', optional => 0 },
+							  keys => { isa => 'ArrayRef', optional => 0 },
+		);
+	my $target = $parm{'target'};
+	my $keys = $parm{'keys'};
+
+	my %indices;
+	foreach my $col (@{$keys}){
+		my $pos = array::get_array_positions(target => $target,
+											 keys=> [$col], 
+											 R_indexing => 0);
+		$indices{$col}=undef;
+		if (scalar(@{$pos}>0)){
+			$indices{$col}=$pos->[0];
+		}
+	}
+	return \%indices;
+}
+
 sub do_frem_dataset
 {
 	my $self = shift;
@@ -730,7 +806,7 @@ sub do_frem_dataset
 		$do_check = 0; #assume get same result second time
 	}
 	
-	my ($filtered_data_model,$indices,$first_timevar_type,$extra_input_items,$message) = 
+	my ($filtered_data_model,$data_set_headers,$extra_input_items,$message) = 
 		create_data2_model(model=>$model,
 						   filename => $self -> directory().'m1/filter_data_model.mod',
 						   filtered_datafile => $filtered_datafile,
@@ -756,20 +832,73 @@ sub do_frem_dataset
 					 newline => 1 );
 		$filter_fit -> run;
 	}
+
+	my $filtered_data = data->new(filename => $filtered_data_model->directory.$filtered_datafile,
+							  ignoresign => '@', 
+							  idcolumn => $model->idcolumns->[0],
+							  missing_data_token => $self->missing_data_token);
+
+	my $indices = get_indices(target => $data_set_headers,
+							  keys => ['EVID','MDV',$fremtype,$self->dv]);
+
+	my @cov_indices = ();
+	my @is_log = ();
+	my @cov_names = (); 
+	
+	if (scalar(@{$self->log}) > 0){
+		#we assume all found already, error check in createdata2model
+		my $log_indices = array::get_array_positions(target => $data_set_headers,
+													 keys=> $self->log, 
+													 R_indexing => 0);
+		
+		my @new_log =();
+		foreach my $cov (@{$self->log}){
+			push(@new_log,'LN'.$cov);
+		}
+		$self->log(\@new_log);
+		push(@cov_indices,@{$log_indices});
+		push(@cov_names,@new_log);
+		push(@is_log,(1) x scalar(@new_log));
+	}
+	
+	if (scalar(@{$self->regular}) > 0){
+		my $regular_indices = array::get_array_positions(target => $data_set_headers,
+														 keys=> $self->regular, 
+														 R_indexing => 0);
+		push(@cov_indices,@{$regular_indices});
+		push(@cov_names,@{$self->regular});
+		push(@is_log,(0) x scalar(@{$self->regular}));
+	}
+
+	if (scalar(@{$self->categorical}) > 0){
+		my $categorical_indices = array::get_array_positions(target => $data_set_headers,
+														  keys=> $self->categorical, 
+														  R_indexing => 0);
+		my ($mapping,$new_indices,$new_categorical) = $filtered_data->append_bivariate_columns(indices => $categorical_indices,
+																							   start_header => $data_set_headers);
+		$categorical_indices = $new_indices;
+		$self->categorical($new_categorical); #these are now bivariate
+		push(@cov_indices,@{$categorical_indices});
+		push(@cov_names,@{$new_categorical});
+		push(@is_log,(0) x scalar(@{$new_categorical}));
+	}
+
+	
+	#compute new indices now, after appending categorical. then change name of log. update covariates with union
+	$self->covariates(\@cov_names);
 	
 	#this writes dataset to disk
-	my $resultref = data::frem_compute_covariate_properties(directory  => $filtered_data_model->directory,
-															filename => $filtered_datafile,
-															idcolumn => $model->idcolumns->[0],
-															invariant_covariates => $self->covariates,
-															occ_index => $indices->{'occ_index'},
+	my $resultref = data::frem_compute_covariate_properties(filtered_data  => $filtered_data,
+															invariant_covariates => \@cov_names,
+															is_log => \@is_log,
+															occ_index => undef,
 															data2name => $fremdataname,
-															evid_index => $indices->{'evid_index'},
-															mdv_index => $indices->{'mdv_index'},
-															type_index => $indices->{'type_index'},
-															cov_indices => $indices->{'cov_indices'},
-															first_timevar_type => $first_timevar_type,
-															missing_data_token => $self->missing_data_token);
+															evid_index => $indices->{'EVID'},
+															mdv_index => $indices->{'MDV'},
+															dv_index => $indices->{$self->dv},
+															type_index => $indices->{$fremtype},
+															cov_indices => \@cov_indices,
+															first_timevar_type => scalar(@cov_indices));
 
 	if (defined $resultref){
 		$self->occasionlist($resultref->{'occasionlist'}) if (defined $resultref->{'occasionlist'}); 
@@ -919,13 +1048,19 @@ sub do_model2
 	my $self = shift;
 	my %parm = validated_hash(\@_,
 							  model => { isa => 'model', optional => 0 },
+							  parameter_blocks => {isa => 'ArrayRef', optional => 0},
+							  eta_mapping => {isa => 'HashRef', optional => 0},
 							  fremdataname => { isa => 'Str', optional => 0 },
-							  bsv_parameter_count => { isa => 'Int', optional => 0 },
+							  start_omega_record => { isa => 'Int', optional => 0 },
 	);
 	my $model = $parm{'model'};
 	my $fremdataname = $parm{'fremdataname'};
-	my $bsv_parameter_count = $parm{'bsv_parameter_count'};
-
+	my $parameter_blocks = $parm{'parameter_blocks'};
+	my $eta_mapping = $parm{'eta_mapping'};
+	my $start_omega_record = $parm{'start_omega_record'};
+	
+	my $N_parameter_blocks = scalar(@{$parameter_blocks});
+	my $bsv_parameter_count; #FIXME
 	my $name_model = 'model_2.mod';
 	
 	my $frem_model;
@@ -947,8 +1082,6 @@ sub do_model2
 									   copy_datafile   => 0,
 									   copy_output => 0);
 		
-		
-	
 		#DATA changes
 		#we want to clear all old options from DATA
 		$frem_model->problems->[0]->datas->[0]->options([]);
@@ -956,6 +1089,30 @@ sub do_model2
 		$frem_model->datafiles(problem_numbers => [1],
 							   new_names => [$self -> directory().'m1/'.$fremdataname]);
 
+		renumber_etas(model=> $frem_model,
+					  eta_mapping => $eta_mapping);
+
+		#TODO implement
+		my $covariate_etanumbers = set_BSV_omegas(model => $frem_model,
+												  start_omega_record => $start_omega_record,
+												  parameter_blocks => $parameter_blocks,
+												  covariate_covmatrix => $self->invariant_covmatrix,
+												  covnames => $self->covariates);
+
+		#TODO implement
+		my $covariate_thetanumbers = add_covariate_thetas(model => $frem_model,
+														  covnames => $self->covariates,
+														  N_parameter_blocks => scalar(@{$parameter_blocks}),
+														  covariate_medians => $self->invariant_median);
+		#TODO
+		add_covariate_est_code(model=>$frem_model,
+							   etanumbers => $covariate_etanumbers,
+							   thetanumbers => $covariate_thetanumbers,
+							   epsnum => $epsnum);
+
+		update_parameter_code(model=> $frem_model,
+							  etanumbers => $covariate_etanumbers,
+							  eta_mapping => $eta_mapping);
 		#set theta omega sigma code input
 		#FIXME input Mod 0 BOV if available, use model0 updated + phifile
 		set_frem_records(model => $frem_model,
@@ -1458,28 +1615,29 @@ sub modelfit_setup
 	my $model_number = $parm{'model_number'};
 
 	my $model = $self -> models -> [$model_number-1];
+	my $start_omega_record=	get_start_numbers(model=>$model,
+											  skip_etas => $self->skip_etas());
 
-
-	my ($start_omega_record,$parameter_blocks,$eta_mapping)=
-		get_start_numbers(model=>$model,
-						  n_covariates=>scalar(@{$self->covariates}),
-						  skip_etas => $self->skip_etas());
-
-	##########################################################################################
-	#Mod 0, always create, run if needed
-	##########################################################################################
 	my ($mod0_ofv, $phi_file_0, $frem_model0) = $self-> do_model0(model => $model);
 
+	my ($mod2_parameter_blocks,$eta_mapping) = get_parameter_blocks(model => $frem_model0,
+																	skip_etas => $self->skip_etas,
+																	n_covariates => scalar(@{$self->covariates}),
+																	start_omega_record => $start_omega_record);
+	unless (scalar(@{$mod2_parameter_blocks})>0){
+		croak("No omega in parameter blocks, nothing to do in frem");
+	}
+	
 	#FIXME we renumber according to eta_mapping, should get_CTV be done after or before that?
 	my ($CTV_parameters,$etanum_to_parameter) = get_CTV_parameters(model => $frem_model0);
 
 
 	my $frem_dataset = 'frem_dataset.dta';
 	$self->do_frem_dataset(model => $frem_model0,
-						   N_parameter_blocks => scalar(@{$parameter_blocks}),
+						   N_parameter_blocks => scalar(@{$mod2_parameter_blocks}),
 						   mod0_ofv => $mod0_ofv,
 						   fremdataname => $frem_dataset);
-
+	
 	my $bsv_parameter_count; #FIXME
 	my $BSV_par_block; #FIXME
 	my $labelshash = create_labels(	 covariates => $self->covariates,
@@ -1487,15 +1645,10 @@ sub modelfit_setup
 									 start_eta => ($self->skip_etas +1),
 									 bsv_parameters => $bsv_parameter_count);
 
-	my ($frem_model1,$leading_omega_records) = $self->do_model1(model => $frem_model0,
-																BSV_par_block => $BSV_par_block,
-																start_omega_record=> $start_omega_record,
-																labelshash => $labelshash);
-	
-
-	my ($frem_model2,$ntheta,$epsnum) = $self->do_model2(model => $frem_model1,
+	#parameter_blocks already have the right coordinates for new model
+	my ($frem_model2,$ntheta,$epsnum) = $self->do_model2(model => $frem_model0,
 														 fremdataname => $frem_dataset,
-														 bsv_parameter_count => $bsv_parameter_count);
+														 parameter_blocks => $mod2_parameter_blocks);
 
 
 	my $frem_model3 = $self->do_model3(model => $frem_model2,
@@ -1737,14 +1890,7 @@ sub create_data2_model
 		record_strings => [ join( ' ', @filter_table_header ).
 			' NOAPPEND NOPRINT ONEHEADER FORMAT=sG15.7 FILE='.$filtered_datafile]);
 
-	my %indices;
-	$indices{'occ_index'}=$occ_index;
-	$indices{'evid_index'}=$evid_index;
-	$indices{'mdv_index'}=$mdv_index;
-	$indices{'type_index'}=$type_index;
-	$indices{'cov_indices'}=\@cov_indices;
-
-	return ($filtered_data_model,\%indices,$first_timevar_type,$extra_input_items,$message);
+	return ($filtered_data_model,\@filter_table_header,$extra_input_items,$message);
 
 }
 
