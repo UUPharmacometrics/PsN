@@ -36,9 +36,9 @@ my %optional_options = (
 	"theta_inflation:s" => '',
 	"omega_inflation:s" => '',
 	"sigma_inflation:s" => '',
-	"cv_theta:s" => '',
-	"cv_omega:s" => '',
-	"cv_sigma:s" => '',
+	"rse_theta:s" => '',
+	"rse_omega:s" => '',
+	"rse_sigma:s" => '',
 	"cap_resampling:i"=>'',
 	"recenter!"=>'',
 	"boxcox!"=>'',
@@ -247,36 +247,36 @@ is -samples=2000,2000 and the old run was terminated after the first iteration,
 then after the add\_iterations run has finished there will be three iterations 
 in total with sample sequence 1000,2000,2000 after the new run has finished.
 EOF
-$help_text{-cv_theta} = <<'EOF';
-      -cv_theta=X
+$help_text{-rse_theta} = <<'EOF';
+      -rse_theta=X
 
-Default not used. Used for giving the proposal density as CV%, e.g. 30 for 30% CV.
+Default not used. Used for giving the proposal density as RSE%, e.g. 30 for 30% RSE.
 Not allowed in combination with -inflation, -covmat_input, -rawres_input or -auto_rawres.
 Either a positive vector with length equal to the number of estimated (not FIX) $THETAs, or
 a positive scalar which will be interpreted as a vector of the appropriate length and all equal values.
 When this option is used, the variances of theta(i) in the proposal density will be computed
-as (cv_theta(i)*(final estimate theta (i))/100)^2
+as (rse_theta(i)*(final estimate theta (i))/100)^2
 EOF
-$help_text{-cv_omega} = <<'EOF';
-      -cv_omega=X
+$help_text{-rse_omega} = <<'EOF';
+      -rse_omega=X
 
-Default not used. Used for giving the proposal density as CV%, e.g. 30 for 30% CV.
+Default not used. Used for giving the proposal density as RSE%, e.g. 30 for 30% RSE.
 Not allowed in combination with -inflation, -covmat_input, -rawres_input or -auto_rawres.
 Either a positive vector with length equal to the number of estimated (not FIX) $OMEGA 
 diagonal elements or a positive scalar which will be interpreted as a vector of the required 
 length and all equal values. When this option is used, the variances of omega(i,i) in the 
-proposal density will be computed as (cv_omega(i,i)*(final estimate omega (i,i))/100)^2
+proposal density will be computed as (rse_omega(i,i)*(final estimate omega (i,i))/100)^2
 The variances of off-diagonal elements will be computed so that the correlation from the 
 final estimate is unchanged.
-If -cv_theta is set to a scalar when option -cv_omega is not used, -cv_omega will 
-automatically be set to the same scalar as -cv_theta. If -cv_theta is set to a vector and 
--cv_omega is not set at all, or if -cv_omega is set when -cv_theta is not, then there will 
+If -rse_theta is set to a scalar when option -rse_omega is not used, -rse_omega will 
+automatically be set to the same scalar as -rse_theta. If -rse_theta is set to a vector and 
+-rse_omega is not set at all, or if -rse_omega is set when -rse_theta is not, then there will 
 be an error message.
 EOF
-$help_text{-cv_sigma} = <<'EOF';
-      -cv_sigma=X
+$help_text{-rse_sigma} = <<'EOF';
+      -rse_sigma=X
 
-Default not used. See help text for -cv_omega.
+Default not used. See help text for -rse_omega.
 EOF
 
 $help_text{-theta_inflation} = <<'EOF';
@@ -383,9 +383,9 @@ my $sir =
 					 theta_inflation			 => $options{'theta_inflation'},
 					 omega_inflation			 => $options{'omega_inflation'},
 					 sigma_inflation			 => $options{'sigma_inflation'},
-					 cv_theta				     => $options{'cv_theta'},
-					 cv_omega				     => $options{'cv_omega'},
-					 cv_sigma				     => $options{'cv_sigma'},
+					 rse_theta				     => $options{'rse_theta'},
+					 rse_omega				     => $options{'rse_omega'},
+					 rse_sigma				     => $options{'rse_sigma'},
 					 auto_rawres				     => $options{'auto_rawres'},
 					 covmat_input			 => $options{'covmat_input'},
 					 rawres_input        	=> $options{'rawres_input'},

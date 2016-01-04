@@ -55,9 +55,9 @@ has 'inflation' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 has 'theta_inflation' => ( is => 'rw', isa => 'Str', default => '1' );
 has 'omega_inflation' => ( is => 'rw', isa => 'Str', default => '1' );
 has 'sigma_inflation' => ( is => 'rw', isa => 'Str', default => '1' );
-has 'cv_theta' => ( is => 'rw', isa => 'Str');
-has 'cv_omega' => ( is => 'rw', isa => 'Str');
-has 'cv_sigma' => ( is => 'rw', isa => 'Str');
+has 'rse_theta' => ( is => 'rw', isa => 'Str');
+has 'rse_omega' => ( is => 'rw', isa => 'Str');
+has 'rse_sigma' => ( is => 'rw', isa => 'Str');
 has 'mceta' => ( is => 'rw', isa => 'Int', default => 0 );
 has 'problems_per_file' => ( is => 'rw', isa => 'Maybe[Int]', default => 100 );
 has 'full_rawres_header' => ( is => 'rw', isa => 'ArrayRef' );
@@ -184,52 +184,52 @@ sub setup_covmatrix_from_variancevec
 sub get_offdiagonal_variance{
 	my %parm = validated_hash(\@_,
 							  covariance => {isa => 'Num', optional => 0},
-							  cv_i => {isa => 'Num', optional => 0},
-							  cv_j => {isa => 'Num', optional => 0},
+							  rse_i => {isa => 'Num', optional => 0},
+							  rse_j => {isa => 'Num', optional => 0},
 							  var_i => {isa => 'Num', optional => 0},
 							  var_j => {isa => 'Num', optional => 0},
 							  type =>  {isa => 'Int', default => 1},
 		);
 	my $covariance = $parm{'covariance'};
-	my $cv_i = $parm{'cv_i'};
-	my $cv_j = $parm{'cv_j'};
+	my $rse_i = $parm{'rse_i'};
+	my $rse_j = $parm{'rse_j'};
 	my $var_i = $parm{'var_i'};
 	my $var_j = $parm{'var_j'};
 	my $type = $parm{'type'};
 	
-	croak("illegal cv_i $cv_i") unless ($cv_i > 0);
-	croak("illegal cv_j $cv_j") unless ($cv_j > 0);
+	croak("illegal rse_i $rse_i") unless ($rse_i > 0);
+	croak("illegal rse_j $rse_j") unless ($rse_j > 0);
 	croak("illegal var_i $var_i") unless ($var_i > 0);
 	croak("illegal var_j $var_j") unless ($var_j > 0);
 
-	my $N = (100/$cv_i)**2+(100/$cv_j)**2+1;
+	my $N = (100/$rse_i)**2+(100/$rse_j)**2+1;
 	my $variance = ($covariance**2+$var_j*$var_i)/$N;
 
 	if ($type == 2){
 		#old
 #		my $correlation = $covariance/sqrt($var_i*$var_j);
-#		my $sd_i = ($var_i*$cv_i/100);
-#		my $sd_j = ($var_j*$cv_j/100);
-		$variance =abs($covariance)*sqrt($var_i*$var_j)*$cv_i*$cv_j/(100**2);
+#		my $sd_i = ($var_i*$rse_i/100);
+#		my $sd_j = ($var_j*$rse_j/100);
+		$variance =abs($covariance)*sqrt($var_i*$var_j)*$rse_i*$rse_j/(100**2);
 	}
 	return $variance;
 	
 }
 
 	 
-sub setup_variancevec_from_cv
+sub setup_variancevec_from_rse
 {
 	my %parm = validated_hash(\@_,
-							  cv_theta => {isa => 'Str', optional => 0},
-							  cv_omega => {isa => 'Str', optional => 0},
-							  cv_sigma => {isa => 'Str', optional => 0},
+							  rse_theta => {isa => 'Str', optional => 0},
+							  rse_omega => {isa => 'Str', optional => 0},
+							  rse_sigma => {isa => 'Str', optional => 0},
 							  parameter_hash => {isa => 'HashRef', optional => 0},
 							  type =>  {isa => 'Int', default => 1},
 		);
-	my %cv;
-	$cv{'theta'} = $parm{'cv_theta'};
-	$cv{'omega'} = $parm{'cv_omega'};
-	$cv{'sigma'} = $parm{'cv_sigma'};
+	my %rse;
+	$rse{'theta'} = $parm{'rse_theta'};
+	$rse{'omega'} = $parm{'rse_omega'};
+	$rse{'sigma'} = $parm{'rse_sigma'};
 	my $parameter_hash = $parm{'parameter_hash'};
 	my $type = $parm{'type'};
 
@@ -245,21 +245,21 @@ sub setup_variancevec_from_cv
 	my %needed;
 	my %diag_uncert_sd;
 	my %diag_est_var;
-	my %cv_hash;
+	my %rse_hash;
 	
 	for (my $i=0; $i<scalar(@{$parameter_hash->{'param'}}); $i++){
 		my $coord = $parameter_hash->{'coords'}->[$i];
 		my $estimate = $parameter_hash->{'values'}->[$i];
-		my $thiscv = undef;
+		my $thisrse = undef;
 		unless ($parameter_hash->{'param'}->[$i] eq $param){
 			#new param
 			$param = $parameter_hash->{'param'}->[$i];
 			$needed{$param}=0;
-			$cv_hash{$param}={};
-			@given = split(/,/,$cv{$param});
+			$rse_hash{$param}={};
+			@given = split(/,/,$rse{$param});
 			foreach my $val (@given){
 				unless (usable_number($val) and ($val>0)){
-					croak("value $val in cv $param is not a positive number");
+					croak("value $val in rse $param is not a positive number");
 				}
 			}
 			$givencount{$param}=scalar(@given);
@@ -270,16 +270,16 @@ sub setup_variancevec_from_cv
 			$diag_est_var{$param}->{$coord} = $estimate;
 			$needed{$param}++;
 			if ($givencount{$param} == 1){
-				$thiscv=$given[0];
+				$thisrse=$given[0];
 			}elsif($givencount{$param} >= $needed{$param}){
-				$thiscv=$given[($needed{$param}-1)];
+				$thisrse=$given[($needed{$param}-1)];
 			}
-			$cv_hash{$param}->{$coord}= $thiscv;
+			$rse_hash{$param}->{$coord}= $thisrse;
 		}
-		if (defined $thiscv){
+		if (defined $thisrse){
 			#this is diag, compute sd
-			#as (cv_theta(i)*(final estimate theta (i))/100)
-			$diag_uncert_sd{$param}->{$coord} = ($thiscv*($estimate)/100);
+			#as (rse_theta(i)*(final estimate theta (i))/100)
+			$diag_uncert_sd{$param}->{$coord} = ($thisrse*($estimate)/100);
 		}
 	}
 	foreach my $param ('theta','omega','sigma'){
@@ -287,8 +287,8 @@ sub setup_variancevec_from_cv
 		$diagonal = 'diagonal' unless ($param eq 'theta');
 		unless ($givencount{$param} == 1){
 			if ($needed{$param} != $givencount{$param}){
-				croak("illegal input cv $param ".$cv{$param}.": there are ".$needed{$param}." estimated $param ".
-					  "$diagonal elements in model, but ".$givencount{$param}." cv values were given");
+				croak("illegal input rse $param ".$rse{$param}.": there are ".$needed{$param}." estimated $param ".
+					  "$diagonal elements in model, but ".$givencount{$param}." rse values were given");
 			}
 		}
 	}
@@ -303,10 +303,10 @@ sub setup_variancevec_from_cv
 				my $left = $1;
 				my $right = $2;
 				if (defined $diag_est_var{$param}->{$left.','.$left} and (defined $diag_est_var{$param}->{$right.','.$right})
-					and defined $cv_hash{$param}->{$left.','.$left} and (defined $cv_hash{$param}->{$right.','.$right})){
+					and defined $rse_hash{$param}->{$left.','.$left} and (defined $rse_hash{$param}->{$right.','.$right})){
 						push(@variancevec,get_offdiagonal_variance(covariance => $estimate,
-																   cv_i => $cv_hash{$param}->{$left.','.$left},
-																   cv_j => $cv_hash{$param}->{$right.','.$right},
+																   rse_i => $rse_hash{$param}->{$left.','.$left},
+																   rse_j => $rse_hash{$param}->{$right.','.$right},
 																   var_i => $diag_est_var{$param}->{$left.','.$left},
 																   var_j => $diag_est_var{$param}->{$right.','.$right},
 																   type => $type));
@@ -680,10 +680,10 @@ sub modelfit_setup
 	}elsif (defined $self->rawres_input or (defined $self->auto_rawres)){
 		#do not need any matrices at all, not sampling in 0th iteration
 		1;
-	}elsif (defined $self->cv_theta){
-		my $variances = setup_variancevec_from_cv(cv_theta => $self->cv_theta,
-												  cv_omega => $self->cv_omega,
-												  cv_sigma => $self->cv_sigma,
+	}elsif (defined $self->rse_theta){
+		my $variances = setup_variancevec_from_rse(rse_theta => $self->rse_theta,
+												  rse_omega => $self->rse_omega,
+												  rse_sigma => $self->rse_sigma,
 												  parameter_hash => $self->parameter_hash);
 		$covmatrix = setup_covmatrix_from_variancevec(variance => $variances);
 	}else{

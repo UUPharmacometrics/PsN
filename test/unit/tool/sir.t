@@ -455,35 +455,35 @@ my $parameter_hash = output::get_nonmem_parameters(output => $model->outputs->[0
 my @moxvalues =(32.8872,20.9156,0.296626,0.0992828,0.3337,0.409882,1.24558,0.136766,0.218255);
 my @ans1=((32.8872*(0.2))**2,(20.9156*(0.2))**2,(0.296626*(0.2))**2,(0.0992828*(0.2))**2,(0.3337*(0.2))**2,
 	(0.409882*(0.1))**2,(1.24558*(0.1))**2,(0.136766/(sqrt(1.24558)*sqrt(0.218255)))*(0.218255*(0.1))*(1.24558*(0.1)),(0.218255*(0.1))**2);
-is_deeply(tool::sir::setup_variancevec_from_cv(cv_theta => 20,
-											   cv_omega=> 10,
-											   cv_sigma=> 20,
+is_deeply(tool::sir::setup_variancevec_from_rse(rse_theta => 20,
+											   rse_omega=> 10,
+											   rse_sigma=> 20,
 											   parameter_hash => $parameter_hash,
 											   type => 2),\@ans1,'setup_variancevec 1');
 
 @ans1=((32.8872*(0.2))**2,(20.9156*(0.3))**2,(0.296626*(0.4))**2,(0.0992828*(0.3))**2,(0.3337*(0.1))**2,
 	(0.409882*(0.15))**2,(1.24558*(0.30))**2,(0.136766/(sqrt(1.24558)*sqrt(0.218255)))*(0.218255*(0.3))*(1.24558*(0.2)),(0.218255*(0.2))**2);
-is_deeply(tool::sir::setup_variancevec_from_cv(cv_theta => '20,30,40,30,10',
-											   cv_omega=> '15,30,20',
-											   cv_sigma=> '',
+is_deeply(tool::sir::setup_variancevec_from_rse(rse_theta => '20,30,40,30,10',
+											   rse_omega=> '15,30,20',
+											   rse_sigma=> '',
 											   parameter_hash => $parameter_hash,
 											   type => 2),\@ans1,'setup_variancevec 2');
 
-cmp_float(tool::sir::get_offdiagonal_variance(type=> 1, covariance => 0.03, cv_i=>20, cv_j=> 40, var_i=> 3, var_j=> 0.5),
+cmp_float(tool::sir::get_offdiagonal_variance(type=> 1, covariance => 0.03, rse_i=>20, rse_j=> 40, var_i=> 3, var_j=> 0.5),
 	(0.03**2+1.5)/(25+(2.5)**2+1),'get offdiag variance type 1');
 
 
-dies_ok{tool::sir::setup_variancevec_from_cv(cv_theta => '20,30,40,30,10',
-											 cv_omega=> '0',
-											 cv_sigma=> '10',
+dies_ok{tool::sir::setup_variancevec_from_rse(rse_theta => '20,30,40,30,10',
+											 rse_omega=> '0',
+											 rse_sigma=> '10',
 											 parameter_hash => $parameter_hash)}, 'illegal setup_variancevec 1';
-dies_ok{tool::sir::setup_variancevec_from_cv(cv_theta => '20,30,40,30,10',
-											 cv_omega=> '1,2,3,4',
-											 cv_sigma=> '10',
+dies_ok{tool::sir::setup_variancevec_from_rse(rse_theta => '20,30,40,30,10',
+											 rse_omega=> '1,2,3,4',
+											 rse_sigma=> '10',
 											 parameter_hash => $parameter_hash)}, 'illegal setup_variancevec 2';
-dies_ok{tool::sir::setup_variancevec_from_cv(cv_theta => '20,40,30,10',
-											 cv_omega=> '1,2,3',
-											 cv_sigma=> '10',
+dies_ok{tool::sir::setup_variancevec_from_rse(rse_theta => '20,40,30,10',
+											 rse_omega=> '1,2,3',
+											 rse_sigma=> '10',
 											 parameter_hash => $parameter_hash)}, 'illegal setup_variancevec 3';
 
 my $cov = tool::sir::setup_covmatrix_from_variancevec(variance => [1,2,3]);
@@ -651,17 +651,17 @@ is_deeply($hashref->{'raw'}->[4],[3,3,3],'augment rawres 4');
 
 my $outobj = output->new(filename => $dir.'for_cv_matrix.lst');
 my $parameter_hash = output::get_nonmem_parameters(output => $outobj);
-my $cvtheta ='3,3,30,10,10,3,3,50,10,30,10,10,10,10,10,10,10,10,50,10,10,10';
-my $cvomega ='5,5,10,5,5,20,30,10,10,10,30,30,10,30,30';
-my $cvsigma ='5,5,5,5';
+my $rsetheta ='3,3,30,10,10,3,3,50,10,30,10,10,10,10,10,10,10,10,50,10,10,10';
+my $rseomega ='5,5,10,5,5,20,30,10,10,10,30,30,10,30,30';
+my $rsesigma ='5,5,5,5';
 	
-my $ref = tool::sir::setup_variancevec_from_cv(cv_theta => $cvtheta,
-	cv_omega=> $cvomega,
-	cv_sigma=> $cvsigma,
+my $ref = tool::sir::setup_variancevec_from_rse(rse_theta => $rsetheta,
+	rse_omega=> $rseomega,
+	rse_sigma=> $rsesigma,
 	parameter_hash => $parameter_hash);
 
 my $covmatrix = tool::sir::setup_covmatrix_from_variancevec(variance => $ref);
-is (tool::sir::check_matrix_posdef(matrix => $covmatrix),0,'cv covmatrix from neg covariance is posdef');
+is (tool::sir::check_matrix_posdef(matrix => $covmatrix),0,'rse covmatrix from neg covariance is posdef');
 
 remove_test_dir($tempdir);
 
