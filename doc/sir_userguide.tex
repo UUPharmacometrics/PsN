@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{SIR user guide}{2016-01-04}
+\guidetitle{SIR user guide}{2016-01-11}
 \usepackage{amsmath}
 
 \begin{document}
@@ -553,7 +553,7 @@ around the expected proportion.
 \item[Interpretation] Only 1 type of trend needs to be detected in this plot. If the number of resampled vectors decreases over the resample bins (diagonal downward trend), it means that there were not enough samples in the SIR procedure to fully correct the proposal uncertainty. Further SIR iterations should thus be performed.
 \end{description}
 
-\section{Troubleshooting}
+\section{Known problems}
 \subsection*{Mismatch between input files}
 If you use the covmat\_input option and get an error message similar to
 \begin{verbatim}
@@ -591,6 +591,14 @@ then it is recommended to either run a new sir with -no-boxcox or a different ra
 try to run sir with -covmat\_input=tweak\_inits.cov where tweak\_inits.cov is found in the failed sir run directory and
 is the empirical covariance matrix from iteration 0 without Box-Cox transformation.
 
+\subsection*{Do not use parallel (MPI) NONMEM}
+It is \emph{not} recommended to use parallelization of the NONMEM process when using sir.
+First, because sir already runs multiple control streams in parallel (the number can be controlled
+used the –problems\_per\_file and –threads options), there is no additional value in parallelization within
+a single control stream.
+In addition, problems have been observed when running parallel NONMEM (version 7.3) on multiple \$PROBLEMS,
+with OFVs reported without error messages in the lst-file even if the OFV of some individuals could not be evaluated and
+thus the reported total OFV was actually that of a subset of individuals only.
 
 \begin{thebibliography}{99}
 \bibitem{Dosne2013} A. G. Dosne, M. Bergstrand and M. O. Karlsson, 
