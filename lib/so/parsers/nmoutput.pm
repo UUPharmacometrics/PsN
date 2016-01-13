@@ -125,12 +125,12 @@ sub _parse_lst_file
             my $model = $outobj->lst_model;
 
             my $eta_shrinkage = $outobj->shrinkage_eta();
+            my @etashrinkage = defined $eta_shrinkage -> [$problems][$sub_problems] ? @{$eta_shrinkage -> [$problems][$sub_problems]} : ();
             my $eps_shrinkage = $outobj->shrinkage_eps();
+            my @epsshrinkage = defined $eps_shrinkage -> [$problems][$sub_problems] ? @{$eps_shrinkage -> [$problems][$sub_problems]} : ();
+
             my $observation_records = $outobj->nobs();
             my $individuals = $outobj->nind();
-
-            my @etashrinkage = defined $eta_shrinkage -> [$problems][$sub_problems] ? @{$eta_shrinkage -> [$problems][$sub_problems]} : ();
-            my @epsshrinkage = defined $eps_shrinkage -> [$problems][$sub_problems] ? @{$eps_shrinkage -> [$problems][$sub_problems]} : ();
 
             ## Termination
             my $ofv = $outobj -> get_single_value(attribute => 'ofv',
