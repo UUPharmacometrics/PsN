@@ -204,7 +204,7 @@ sub add_frem_lines
 
 				for (my $k= 0; $k<$N_parameter_blocks; $k++){
 					#add one line per parameter block
-					$row[$type_index] = (($pos+1)+(0.01*$k))  ; #fremtype value
+					$row[$type_index] = ((100*($pos+1))+$k)  ; #fremtype value
 					if ($format_data){
 						format_array(\@row);
 					}
@@ -223,7 +223,7 @@ sub add_frem_lines
 			for (my $pos= $first_timevar_type; $pos < scalar(@{$cov_indices}) ;$pos++){
 				my $cov_index = $cov_indices->[$pos];
 				my @row = @data_row; #copy
-				$row[$type_index] = ($pos+1); #fremtype value
+				$row[$type_index] = ($pos+1); #fremtype value #FIXME if used
 				$row[$dv_index] = $row[$cov_index]; #set DV column to whatever cov value is here
 				if ($row[$cov_index] == $missing_data_token){
 					#cov value is missing

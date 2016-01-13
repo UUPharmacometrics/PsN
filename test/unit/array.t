@@ -238,4 +238,7 @@ is_deeply(get_array_positions(target => $target,keys=> $keys, R_indexing => 0),[
 $keys =['CL','V','IVV'];
 is_deeply(get_array_positions(target => $target,keys=> $keys, R_indexing => 0),[27,28,30],'get_array_positions 8 ');
 
+$keys =['IVCL','CL','SIGMA(1,1)','V','IVV'];
+is_deeply(get_positions(target => $target,keys=> $keys),[29,27,31,28,30],'get_positions 1 ');
+
 done_testing();

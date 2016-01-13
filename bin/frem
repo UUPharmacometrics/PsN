@@ -24,10 +24,13 @@ my %options;
 ## Declare the options
 
 my %required_options = ('covariates:s');
-my %optional_options = ( 'dv:s' => undef,
-						 'vpc!' => undef,
-						 'check!' => undef,
-						 'skip_etas:i' => undef);
+my %optional_options = ( 
+#	'dv:s' => undef,
+	'vpc!' => undef,
+	'check!' => undef,
+	'categorical:s' => undef,
+	'log:s' => undef,
+	'skip_etas:i' => undef);
 
 my $res = GetOptions( \%options,
 		      @common_options::get_opt_strings,
@@ -134,76 +137,32 @@ if( scalar(@ARGV) > 1 ){
 }
 
 
-#parse input
-my @covariates=();
-if (defined $options{'covariates'}){
-    #comma-separated list of names
-    foreach my $name (split(/,/,$options{'covariates'})){
-		if (length($name)>0){
-			push(@covariates,$name);
-		}
-    }
-}
-
 
 require model;
-require tool::frem;
 
 my $eval_string = common_options::model_parameters(\%options);
 
 my $model = model -> new ( eval( $eval_string ),
 			   filename                    => $ARGV[0],
 			   ignore_missing_output_files => 1);
-if ($model->tbs){
-	die "frem is incompatible with option -tbs\n";
-}
 
-if( defined $model -> msfi_names() ){
-    my @needed_files;
-    foreach my $msfi_files( @{$model -> msfi_names()} ){
-		#loop $PROB
-		if (defined $msfi_files){
-			foreach my $msfi_file( @{$msfi_files} ){
-				#loop instances
-				if ( defined $msfi_file ){
-					my ( $dir, $file ) = OSspecific::absolute_path(cwd(),$msfi_file);
-					push (@needed_files,$dir.$file) ;
-				}
-			}
-		}
-    }
-    if (scalar(@needed_files)>0){
-		if( defined $model -> extra_files ){
-			push(@{$model -> extra_files},@needed_files);
-		}else{
-			$model -> extra_files(\@needed_files);
-		}
-    }
-    
-}
+require input_checking;
+input_checking::check_options(tool => 'frem', options => \%options, model => $model);
 
 
-if ( scalar (@{$model-> problems}) > 1 ){
-    print "Cannot have more than one \$PROB in the input model.\n";
-    die;
-}
+require tool::frem;
 
-my $est_record = $model -> record( problem_number => 1,
-				   record_name => 'estimation' );
-unless( scalar(@{$est_record}) > 0 ){
-  print "The input model must have a \$EST record\n";
-  die;
-}
-
-my $frem = 
-	tool::frem->new( eval( $common_options::parameters ),
-					 models	     => [ $model ],
-					 top_tool           => 1,
-					 covariates => \@covariates,
-					 skip_etas => $options{'skip_etas'}, 
-					 check => $options{'check'}, 
-					 vpc => $options{'vpc'}, 
-					 dv => $options{'dv'}); 
+my $frem = tool::frem->new( eval( $common_options::parameters ),
+							models	     => [ $model ],
+							top_tool           => 1,
+							covariates => $options{'covariates'},
+							categorical => $options{'categorical'},
+							log => $options{'log'},
+							skip_etas => $options{'skip_etas'}, 
+							check => $options{'check'}, 
+							vpc => $options{'vpc'}, 
+#							dv => $options{'dv'}
+	); 
 
 $frem-> print_options (cmd_line => $cmd_line,
 		      toolname => 'frem',

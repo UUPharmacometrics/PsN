@@ -30,6 +30,11 @@ sub check_options
 	my $require_est = 0;
 	my $error = '';
 
+	if ($tool eq 'frem'){
+		$msfi = 1;
+		$error .= check_frem(options => $options, model => $model);
+	}
+
 	if ($tool eq 'sir'){
 		$rawres_input = 1;
 		$copy_data = 1;
@@ -357,6 +362,54 @@ sub check_simeval
 }
 
 
+sub check_frem
+{
+	my %parm = validated_hash(\@_,
+							  options => {isa => 'HashRef', optional => 0},
+							  model =>  {isa => 'model', optional => 0},
+		);
+	my $options = $parm{'options'};
+	my $model = $parm{'model'};
+
+	my $error = '';
+
+
+	my @covariates =();
+	if (defined $options->{'covariates'}){
+		@covariates = split(/,/,$options->{'covariates'}) ;
+	}else{
+		$error .= 'Option -covariates is required'."\n";
+	}
+	$options->{'covariates'} = \@covariates;
+
+	my @categorical = ();
+	if (defined $options->{'categorical'}){
+		@categorical = split(/,/,$options->{'categorical'});
+	}
+	$options->{'categorical'} = \@categorical;
+
+	my @log = ();
+	if (defined $options->{'log'}){
+		@log = split(/,/,$options->{'log'});
+	}
+	$options->{'log'} = \@log;
+
+	if ($model->tbs){
+		$error.= "frem is incompatible with option -tbs.\n";
+	}
+	
+	if ( scalar (@{$model-> problems}) > 1 ){
+		$error .= "Cannot have more than one \$PROB in the input model.\n";
+	}
+
+	my $est_record = $model -> record( problem_number => 1,
+									   record_name => 'estimation' );
+	unless( scalar(@{$est_record}) > 0 ){
+		$error .=  "The input model must have a \$EST record.\n";
+	}
+	
+	return $error;
+}
 
 
 1;

@@ -1741,7 +1741,10 @@ sub inverse_cholesky_reparameterize
 		my $str = 'ETA';
 		$str = 'EPS' if ($param eq 'sigma');
 		next unless (defined $hashref->{$str} and (scalar(@{$hashref->{$str}})>0));
-		linear_algebra::substitute_etas(code => $new_code,eta_list => $hashref->{$str},inverse => 1,sigma=>($param eq 'sigma'));
+		linear_algebra::substitute_etas(code => $new_code,
+										eta_list => $hashref->{$str},
+										inverse => 1,
+										sigma=>($param eq 'sigma'));
 
 		foreach my $coderec ('error','des'){ #never any ETAs in $MIX
 			my $acc = $coderec.'s';
@@ -2300,12 +2303,36 @@ sub get_matrix
 	}else{
 		croak('Unknown parameter type '.$type.' in problem->get_matrix');
 	}
+	if (0){
+		my @formatted=();
+		my $count=0;
+		foreach my $record (@{$self->$accessor}) {
+			$count++;
+			my $arr;
+			if ($count == 3){
+				$arr = $record ->  _format_record();
+				push( @formatted,  @{$arr} );
+				print join (' ',@formatted)."\n";
+				print "options ".scalar(@{$record->options})."\n";
+				print "comment rec ".join(',',@{$record->comment})."\n";
+				print "label opt ".$record->options->[0]->label."\n";
+				print "unit opt ".$record->options->[0]->unit."\n";
+			}
+		}
+	}
+	
 	my $sa = 'n'.$accessor;
 	my $old_size = $self->$sa(with_correlations => 0, with_same => 1);
 	if ($old_size < $start_row){
 		croak ("Illegal input to get_matrix, start_row $start_row larger than size $old_size");
 	}
-	$end_row = $old_size unless (defined $end_row);
+	if (defined $end_row){
+		if ($old_size < $end_row){
+			croak ("Illegal input to get_matrix, end_row $end_row larger than size $old_size");
+		}
+	}else{
+		$end_row = $old_size;
+	}
 	if ($end_row < $start_row){
 		croak ("Illegal input to get_matrix, end_row $end_row smaller than start_row $start_row");
 	}
@@ -2338,12 +2365,13 @@ sub get_matrix
 			croak("$type record has no values");
 		}
 		if (defined $records[$i] -> size() and ($records[$i] -> size() > 0)){
-			$block_size = $records[$i]->size();
+			$block_size = $records[$i]->size(); #could be diagonal
 		}else{
 			$block_size = 1;
 		}
 		foreach my $option (@{$records[$i] -> options()}) {
 			my $name = $option -> coordinate_string();
+			print ' '.$name if (0);
 			croak("unknown coord $name ") unless ($name =~ /A\((\d+),(\d+)\)/ );
 			croak("row in $name outside size $old_size") if ($1 > $old_size );
 			croak("col in $name outside size $old_size") if ($2 > $old_size );
@@ -2364,14 +2392,23 @@ sub get_matrix
 			$new_matrix[$i][$j] = $old_matrix[$i+$diff][$j+$diff];
 		}
 	}
-
+	if (0){
+		print "\nold, $old_size:\n";
+		for (my $i=0; $i < $old_size; $i++){
+			print join("\t",@{$old_matrix[$i]})."\n";
+		}
+		print "new, $new_size:\n";
+		for (my $i=0; $i< scalar(@new_matrix); $i++){
+			print join("\t",@{$new_matrix[$i]})."\n";
+		}
+	}
 	unless ($new_matrix[$new_size-1][$new_size-1] > 0){
 		print "\n";
 		for (my $i=0; $i< scalar(@new_matrix); $i++){
 			print join(' ',@{$new_matrix[$i]})."\n";
 		}
 
-		croak ("Error in problem->get_matrix: new matrix not filled up. start_row $start_row");
+		croak ("Error in problem->get_matrix: new matrix not filled up. start_row $start_row end $end_row");
 	}
 
 	return \@new_matrix;
@@ -2455,38 +2492,6 @@ sub get_filled_omega_matrix
 	return $new_full_omega;
 }
 
-sub add_omega_block
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		 new_omega => { isa => 'Ref', optional => 0 },
-		 labels => { isa => 'Ref', optional => 1 }
-	);
-	my $new_omega = $parm{'new_omega'};
-	my $labels = $parm{'labels'};
-
-	#input is $new_omega as $new_omega->[$row][$col]
-	#
-	# add new BLOCK(size)
-
-	my $size = scalar(@{$new_omega});
-	return if ($size < 1);
-	my @record_lines=();
-	push(@record_lines,'BLOCK('.$size.') ');
-	my $form = '  %.6G';
-	for (my $row=0; $row< $size; $row++){
-		my $line;
-		for (my $col=0; $col<=$row; $col++){
-			my $str= sprintf("$form",$new_omega->[$row][$col]); 
-			$line = $line.' '.$str;
-		}
-		my $comment ='';
-		$comment = '; '.$labels->[$row] if (defined $labels and scalar(@{$labels}) > $row);
-		push(@record_lines,$line.$comment);
-	}
-	$self -> add_records( record_strings => \@record_lines, 
-		type => 'omega' );
-}
 
 sub _format_problem
 {

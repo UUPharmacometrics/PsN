@@ -22,6 +22,7 @@ extends 'tool';
 my $fremtype = 'FREMTYPE'; 
 my $smallcorrelation = 0.01; #FIXME
 my $bov_variance_init = 0.1; #FIXME
+my $indentation = '     ';
 
 has 'skip_etas' => ( is => 'rw', isa => 'Int', default=> 0);
 has 'estimate' => ( is => 'rw', isa => 'Int', default => 3 );
@@ -31,6 +32,9 @@ has 'invariant_median' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] }
 has 'timevar_median' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 has 'invariant_covmatrix' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 has 'timevar_covmatrix' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
+has 'input_model_fix_thetas' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
+has 'input_model_fix_omegas' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
+has 'input_model_fix_sigmas' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 has 'check' => ( is => 'rw', isa => 'Bool', default => 1 );
 has 'vpc' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'dv' => ( is => 'rw', isa => 'Str', default => 'DV' );
@@ -150,191 +154,109 @@ sub BUILD
 		croak("Neither PK or PRED defined in model");
 	}
 	$self->use_pred($use_pred);
-	
-}
 
-sub get_filled_omega_block
-{
-	#must have already done update inits on model so that get_matrix is estimated values, where available
-	my %parm = validated_hash(\@_,
-							  model => { isa => 'model', optional => 0 },
-							  phi_file  => { isa => 'Maybe[Str]', optional => 1 },
-							  problem_index  => { isa => 'Int', default => 0 },
-							  table_index  => { isa => 'Int', default => 0 },
-							  start_eta_1 => { isa => 'Int', optional => 0 },
-							  end_eta_1 => { isa => 'Int', optional => 0 },
-							  start_eta_2 => { isa => 'Int', optional => 1 },
-							  end_eta_2 => { isa => 'Int', optional => 1 },
-	);
-	my $model = $parm{'model'};
-	my $phi_file = $parm{'phi_file'};
-	my $problem_index = $parm{'problem_index'};
-	my $table_index = $parm{'table_index'};
-	my $start_eta_1 = $parm{'start_eta_1'};
-	my $end_eta_1 = $parm{'end_eta_1'};
-	my $start_eta_2 = $parm{'start_eta_2'};
-	my $end_eta_2 = $parm{'end_eta_2'};
-
-	my $error = 0;
-	my $message = '';
-	my $corrmatrix;
-	my $size1 = $end_eta_1-$start_eta_1+1;
-	my $size2 = 0;
-	$size2 = $end_eta_2-$start_eta_2+1 if (defined $start_eta_2 and defined $end_eta_2);
-	my @sd = ();
-	my @mergematrix = ();
-
-	unless (defined $phi_file){
-		$phi_file = $model->outputs->[0]->problems->[$problem_index]->full_name_NM7_file(file_type => 'phi');
-	}
-	
-	#local coords
-	($corrmatrix,$message) = get_correlation_matrix_from_phi(start_eta_1 => $start_eta_1,
-															 end_eta_1 => $end_eta_1,
-															 start_eta_2 => $start_eta_2,
-															 end_eta_2 => $end_eta_2,
-															 table_index => $table_index,
-															 phi_file => $phi_file);
-	return([],$message) unless (length($message) == 0);
-
-	@sd = (0) x ($size1+$size2);
-	for (my $i=0; $i<($size1+$size2); $i++){
-		push(@mergematrix,[(0) x ($size1+$size2)]);
-	}
-	
-	#omega block. Do not assume all that are nonzero are estimated
-	#get inits from model. local coords
-	my $init_matrix_1 = $model->problems->[$problem_index]->get_matrix(type => 'omega',
-																	   start_row => $start_eta_1,
-																	   end_row => $end_eta_1);
-
-	for (my $i=0; $i<$size1; $i++){
-		for (my $j=0; $j<$size1; $j++){
-			$mergematrix[$i]->[$j] = $init_matrix_1->[$i][$j];
+	my @input_model_fix = ();
+	for (my $i=0; $i< scalar(@{$self -> models->[0]->problems->[0]->thetas}); $i++){
+		for (my $j=0; $j< scalar(@{$self -> models->[0]->problems->[0]->thetas->[$i]->options}); $j++){
+			push(@input_model_fix,$self -> models->[0]->problems->[0]->thetas->[$i]->options->[$j]->fix);
 		}
-		$sd[$i] = sqrt($init_matrix_1->[$i][$i]) if ($init_matrix_1->[$i][$i] > 0);
 	}
+	$self->input_model_fix_thetas(\@input_model_fix);
 
-	if (defined $start_eta_2 and defined $end_eta_2){
-		my $init_matrix_2 = $model->problems->[$problem_index]->get_matrix(type => 'omega',
-																		   start_row => $start_eta_2,
-																		   end_row => $end_eta_2);
-		for (my $i=0; $i<$size2; $i++){
-			for (my $j=0; $j<$size2; $j++){
-				$mergematrix[$size1+$i]->[$size1+$j] = $init_matrix_2->[$i][$j];
+	@input_model_fix = ();
+	for (my $i=0; $i< scalar(@{$self -> models->[0]->problems->[0]->omegas}); $i++){
+		push(@input_model_fix,[]);
+		if ($self -> models->[0]->problems->[0]->omegas->[$i]->type eq 'BLOCK'){
+			push(@{$input_model_fix[$i]},$self -> models->[0]->problems->[0]->omegas->[$i]->fix);
+		}else{#diagonal
+			for (my $j=0; $j< scalar(@{$self -> models->[0]->problems->[0]->omegas->[$i]->options}); $j++){
+				push(@{$input_model_fix[$i]},$self -> models->[0]->problems->[0]->omegas->[$i]->options->[$j]->fix);
 			}
-			$sd[$size1+$i] = sqrt($init_matrix_2->[$i][$i]) if ($init_matrix_2->[$i][$i] > 0);
 		}
 	}
+	$self->input_model_fix_omegas(\@input_model_fix);
 
-	#now we have sd and valuematrix that are inits/estimates or 0.
-	#for each value in mergematrix that is still 0, compute covar using correlation and sd
-
-	for (my $i = 0; $i < ($size1+$size2); $i++){
-		for (my $j = 0; $j < $i; $j++){
-			#copy
-			$mergematrix[$i]->[$j] = $mergematrix[$j]->[$i]; 
-		}
-		for (my $j = ($i+1); $j < ($size1+$size2); $j++){
-			next unless ($mergematrix[$i]->[$j] == 0);
-			#compute new
-			$mergematrix[$i]->[$j] = ($corrmatrix->[$i][$j])*($sd[$i])*($sd[$j]);
+	@input_model_fix = ();
+	for (my $i=0; $i< scalar(@{$self -> models->[0]->problems->[0]->sigmas}); $i++){
+		push(@input_model_fix,[]);
+		if ($self -> models->[0]->problems->[0]->sigmas->[$i]->type eq 'BLOCK'){
+			push(@{$input_model_fix[$i]},$self -> models->[0]->problems->[0]->sigmas->[$i]->fix);
+		}else{#diagonal
+			for (my $j=0; $j< scalar(@{$self -> models->[0]->problems->[0]->sigmas->[$i]->options}); $j++){
+				push(@{$input_model_fix[$i]},$self -> models->[0]->problems->[0]->sigmas->[$i]->options->[$j]->fix);
+			}
 		}
 	}
+	$self->input_model_fix_sigmas(\@input_model_fix);
 
-	my ($posdefmatrix,$diff)=linear_algebra::get_symmetric_posdef(\@mergematrix);
 	
-	return($posdefmatrix,'');	
 }
 
-sub get_correlation_matrix_from_phi
+sub get_parcov_blocks
 {
 	my %parm = validated_hash(\@_,
-							  model => { isa => 'model', optional => 1 },
-							  phi_file  => { isa => 'Maybe[Str]', optional => 1 },
-							  problem_index  => { isa => 'Int', default => 0 },
-							  table_index  => { isa => 'Int', default => 0 },
-							  start_eta_1 => { isa => 'Int', optional => 0 },
-							  end_eta_1 => { isa => 'Int', optional => 0 },
-							  start_eta_2 => { isa => 'Maybe[Int]', optional => 1 },
-							  end_eta_2 => { isa => 'Maybe[Int]', optional => 1 },
+							  model => { isa => 'model', optional => 0 },
+							  skip_etas  => { isa => 'Int', optional => 0 },
+							  start_omega_record  => { isa => 'Int', optional => 0 },
+							  join_records  => { isa => 'Bool', optional => 0 },
+							  covariate_etanumbers  => { isa => 'ArrayRef', optional => 0 },
+							  parameter_etanumbers => { isa => 'ArrayRef', optional => 0 },
 	);
 	my $model = $parm{'model'};
-	my $phi_file = $parm{'phi_file'};
-	my $problem_index = $parm{'problem_index'};
-	my $table_index = $parm{'table_index'};
-	my $start_eta_1 = $parm{'start_eta_1'};
-	my $end_eta_1 = $parm{'end_eta_1'};
-	my $start_eta_2 = $parm{'start_eta_2'};
-	my $end_eta_2 = $parm{'end_eta_2'};
-
-	my $error = 0;
-	my $message = '';
-
-	unless (defined $phi_file){
-		if (defined $model){
-			$phi_file = $model->outputs->[0]->problems->[$problem_index]->full_name_NM7_file(file_type => 'phi');
-		}else{
-			$error = 2;
-			$message .= 'Either model or phi_file name is required ';
-		}
-	}
-
-	unless (length($phi_file)> 0){
-		$error = 2;
-		$message .= 'Empty phi file name';
-	}
-	unless (-e $phi_file){
-		$error = 2;
-		$message .= ' File '.$phi_file.' does not exist';
-	}
-	unless (($start_eta_1 > 0) and ($end_eta_1 >=$start_eta_1)){
-		$error = 2;
-		$message .= " Input error start, end eta 1: $start_eta_1, $end_eta_1";
-	}
-	if (defined $start_eta_2 and defined $end_eta_2){
-		unless (($start_eta_2 > 0) and ($end_eta_2 >=$start_eta_2) and ($start_eta_2 > $end_eta_1)){
-			$error = 2;
-			$message .= " Input error end_eta_1, start 2, end eta 2: $end_eta_1,$start_eta_2, $end_eta_2";
-		}
-	}	
-	return([],$message) unless ($error == 0);
+	my $skip_etas = $parm{'skip_etas'};
+	my $start_omega_record = $parm{'start_omega_record'};
+	my $join_records = $parm{'join_records'};
+	my $covariate_etanumbers = $parm{'covariate_etanumbers'};
+	my $parameter_etanumbers = $parm{'parameter_etanumbers'};
 	
-	my $nmtablefile = nmtablefile->new(filename => $phi_file);
-	my @matrix = ();
-	my $covariance = [];
-	my $sdcorr = [];
-	
-	for (my $i = $start_eta_1; $i <= $end_eta_1; $i++){
-		push(@matrix,$nmtablefile->tables->[$table_index]->get_column(name=> 'ETA('.$i.')'));
+	my $num = scalar(@{$covariate_etanumbers});
+	unless ($num == scalar(@{$parameter_etanumbers})){
+		croak("num is $num but parameter num is ".scalar(@{$parameter_etanumbers}));
 	}
-	if (defined $start_eta_2 and defined $end_eta_2){
-		for (my $i = $start_eta_2; $i <= $end_eta_2; $i++){
-			push(@matrix,$nmtablefile->tables->[$table_index]->get_column(name=> 'ETA('.$i.')'));
-		}
-	}
-	$error = linear_algebra::column_cov(\@matrix,$covariance);
-	unless ($error == 0){
-		if ($error == 1){
-			$message = 'Numerical error column_cov';
-		}else{
-			$message = 'Input error column_cov';
-		}
-		return([],$message);
-	}
-	
-	$error = linear_algebra::covar2sdcorr($covariance,$sdcorr);
-	unless ($error == 0){
-		if ($error == 1){
-			$message = 'Numerical error covar2sdcorr';
-		}else{
-			$message = 'Input error covar2sdcorr';
-		}
-		return([],$message);
-	}
+	#FIXME should etas from evaluation have priority over inits?
+	my @omega_records = ();
+	my $n_previous_rows = $skip_etas;
+	my $rec_index = $start_omega_record-1;
+	my $loop=1;
+	$loop=2 if ($join_records);
 
-	return ($sdcorr,'');
+	for (my $i=0; $i<$num; $i++){
+		my @labels = ();
+		for (my $k=0; $k < $loop; $k++){
+			foreach my $opt (@{$model->problems->[0]->omegas->[$rec_index]->options}){
+				if ($opt->on_diagonal){
+					if (defined $opt->label){
+						push(@labels,$opt->label);
+					}else{
+						push(@labels,undef);
+					}
+				}
+			}
+			$rec_index++;
+		}
+		my ($initblock,$message) = get_filled_omega_block(model => $model,
+											   problem_index => 0,
+											   start_eta_1 => $parameter_etanumbers->[$i]->[0],
+											   end_eta_1 => $parameter_etanumbers->[$i]->[-1],
+											   start_eta_2 => $covariate_etanumbers->[$i]->[0],
+											   end_eta_2 => $covariate_etanumbers->[$i]->[-1]);
+
+		my $size = scalar(@{$initblock});
+		unless ($size > 0){
+			croak("size of initblock is 0, message is $message\n");
+		}
+		my $omega_lines = get_omega_lines(new_omega => $initblock,
+										  labels => \@labels);
+		push(@omega_records,model::problem::omega->new(record_arr => $omega_lines, 
+													   n_previous_rows => $n_previous_rows));
+		$n_previous_rows += $size;
+
+	}
+	return \@omega_records;
 }
+
+
+
 
 sub get_filled_omega_block
 {
@@ -361,9 +283,17 @@ sub get_filled_omega_block
 	my $corrmatrix;
 	my $size1 = $end_eta_1-$start_eta_1+1;
 	my $size2 = 0;
-	$size2 = $end_eta_2-$start_eta_2+1 if (defined $start_eta_2 and defined $end_eta_2);
+
+	croak("end_eta_2 must be defined when start_eta_2 is defined") 
+		if ((defined $start_eta_2) and (not defined $end_eta_2));
+	if (defined $start_eta_2 and defined $end_eta_2){
+		croak("start_eta_2 cannot be larger than end_eta_2") if ($start_eta_2 > $end_eta_2);
+		$size2 = $end_eta_2-$start_eta_2+1 ;
+	}
 	my @sd = ();
 	my @mergematrix = ();
+
+	croak("start_eta_1 cannot be larger than end_eta_1") if ($start_eta_1 > $end_eta_1);
 	
 	#local coords
 	($corrmatrix,$message) = get_correlation_matrix_from_phi(start_eta_1 => $start_eta_1,
@@ -491,9 +421,14 @@ sub get_correlation_matrix_from_phi
 		}
 		return([],$message);
 	}
+
 	
 	$error = linear_algebra::covar2sdcorr($covariance,$sdcorr);
 	unless ($error == 0){
+		print "cov\n";
+		foreach my $line (@{$covariance}){
+			print join("\t",@{$line})."\n";
+		}
 		if ($error == 1){
 			$message = 'Numerical error covar2sdcorr';
 		}else{
@@ -733,6 +668,98 @@ sub get_start_numbers
 	return $start_omega_record;
 }
 
+sub get_omega_lines
+{
+	my %parm = validated_hash(\@_,
+							  new_omega => { isa => 'ArrayRef', optional => 0 },
+							  labels => { isa => 'ArrayRef', optional => 0 },
+		);
+	my $new_omega = $parm{'new_omega'};
+	my $labels = $parm{'labels'};
+	
+	#input is $new_omega as $new_omega->[$row][$col]
+	#
+	# add new BLOCK(size)
+
+	my $size = scalar(@{$new_omega});
+	return () if ($size < 1);
+	my @record_lines=();
+	push(@record_lines,'BLOCK('.$size.') ');
+	my $form = '  %.6G';
+	for (my $row=0; $row< $size; $row++){
+		my $line;
+		for (my $col=0; $col<=$row; $col++){
+			my $str= sprintf("$form",$new_omega->[$row][$col]); 
+			$line = $line.' '.$str;
+		}
+		my $comment ='';
+		$comment = '; '.$labels->[$row] if (defined $labels and scalar(@{$labels}) > $row);
+		push(@record_lines,$line.$comment);
+	}
+	return \@record_lines;
+}
+
+sub set_model2_omega_blocks
+{
+	my %parm = validated_hash(\@_,
+							  model => { isa => 'model', optional => 0 },
+							  start_omega_record => {isa => 'Int', optional => 0},
+							  skip_etas => {isa => 'Int', optional => 0},
+							  parameter_blocks => {isa => 'ArrayRef', optional => 0},
+							  covariate_covmatrix => {isa => 'ArrayRef', optional => 0},
+							  covariate_labels => {isa => 'ArrayRef', optional => 0},
+	);
+
+	my $model = $parm{'model'};
+	my $start_omega_record = $parm{'start_omega_record'};
+	my $skip_etas = $parm{'skip_etas'};
+	my $parameter_blocks = $parm{'parameter_blocks'};
+	my $covariate_covmatrix = $parm{'covariate_covmatrix'};
+	my $covariate_labels = $parm{'covariate_labels'};
+
+	my $covariate_size = scalar(@{$covariate_covmatrix});
+	croak("too few labels") unless (scalar(@{$covariate_labels}) == $covariate_size);
+	
+	my @omega_records = ();
+	my @covariate_etanumbers = ();
+	my @parameter_etanumbers = ();
+	my @covariate_code = ();
+	for (my $i=0; $i< ($start_omega_record-1);$i++){
+		#if start_omega_record is 1 we will push nothing
+		push(@omega_records,$model-> problems -> [0]->omegas->[$i]);
+		if ($omega_records[$i]->type eq 'BLOCK'){
+			$omega_records[$i]->fix(1) unless ($omega_records[$i]->same);
+		}else{
+			for (my $j=0; $j< scalar(@{$omega_records[$i]->options}); $j++){
+				$omega_records[$i]->options->[$j]->fix(1);
+			}
+		}
+	}
+	
+	my $n_previous_rows = $skip_etas;
+	for (my $i=0; $i< scalar(@{$parameter_blocks}); $i++){
+		push(@omega_records,$parameter_blocks->[$i]);
+		$omega_records[-1]->fix(1);
+		push(@parameter_etanumbers,[(($n_previous_rows+1) .. ($n_previous_rows+$parameter_blocks->[$i]->size) )]);
+		$n_previous_rows += $parameter_blocks->[$i]->size;
+		my @labels = ();
+		foreach my $lab (@{$covariate_labels}){
+			push(@labels,'BSV_'.$lab.'_'.($i+1));
+		}
+		my $omega_lines = get_omega_lines(new_omega => $covariate_covmatrix,
+										  labels => \@labels);
+		push(@omega_records,model::problem::omega->new(record_arr => $omega_lines, 
+													   n_previous_rows => $n_previous_rows));
+		push(@covariate_etanumbers,[(($n_previous_rows+1) .. ($n_previous_rows+$covariate_size) )]);
+		for (my $j=0; $j< $covariate_size; $j++){
+			push(@covariate_code,$indentation.$labels[$j].' = ETA('.($n_previous_rows+1+$j).')');
+		}
+		$n_previous_rows += $covariate_size;
+	}
+	$model -> problems -> [0]-> omegas(\@omega_records);
+	return (\@covariate_etanumbers,\@parameter_etanumbers,\@covariate_code);
+}
+
 sub get_parameter_blocks
 {
 	my %parm = validated_hash(\@_,
@@ -741,7 +768,7 @@ sub get_parameter_blocks
 							  skip_etas => {isa => 'Int', optional => 0},
 							  n_covariates => {isa => 'Int', optional => 0},
 	);
-	my $model = $parm{'model'};
+ 	my $model = $parm{'model'};
 	my $start_omega_record = $parm{'start_omega_record'};
 	my $skip_etas = $parm{'skip_etas'};
 	my $n_covariates = $parm{'n_covariates'};
@@ -757,7 +784,14 @@ sub get_parameter_blocks
 	for (my $i=($start_omega_record-1); $i < scalar(@{$model-> problems -> [0]->omegas()}); $i++){
 		if ($model->problems->[0]->omegas->[$i]->type eq 'BLOCK'){
 			my $formatted = $model->problems->[0]->omegas->[$i]->_format_record();
-			push(@parameter_blocks,model::problem::omega->new(record_arr => $formatted, n_previous_rows => $n_previous_new_rows));
+			my @lines =();
+			for (my $j=0; $j < scalar(@{$formatted}); $j++){
+				push(@lines,split("\n",$formatted->[$j]));
+			}
+			#print "count ".scalar(@lines)."\n";
+			push(@parameter_blocks,
+				 model::problem::omega->new(record_arr => \@lines, 
+											n_previous_rows => $n_previous_new_rows));
 			my $size = $model->problems->[0]->omegas->[$i]->size; #cannot have BLOCK SAME w/o size, then error message earlier;
 			push(@eta_from,[($n_previous_old_rows+1) .. ($n_previous_old_rows+$size)]);
 			push(@eta_to,[($n_previous_new_rows+1) .. ($n_previous_new_rows+$size)]);
@@ -766,8 +800,9 @@ sub get_parameter_blocks
 			$n_previous_new_rows += $n_covariates; #BSV_cov block to be inserted later
 		}else{
 			foreach my $opt (@{$model->problems->[0]->omegas->[$i]->options}){
-				my ($formatted,$no_break) = $opt -> _format_option(is_block => 0);
-				push(@parameter_blocks,model::problem::omega->new(record_arr => [$formatted], n_previous_rows => $n_previous_new_rows));
+				my ($formatted,$no_break) = $opt -> _format_option(is_block => 0); #is_blocks makes formatting add FIX if set
+				push(@parameter_blocks,model::problem::omega->new(record_arr => ['BLOCK (1)',$formatted], 
+																  n_previous_rows => $n_previous_new_rows));
 				push(@eta_from,[($n_previous_old_rows+1)]);
 				push(@eta_to,[($n_previous_new_rows+1)]);
 				$n_previous_new_rows++;
@@ -838,7 +873,7 @@ sub get_parameters_to_etas{
 
 
 
-sub do_model0
+sub do_model1
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
@@ -846,7 +881,7 @@ sub do_model0
 	);
 	my $model = $parm{'model'};
 
-	my $name_model = 'model_0.mod';
+	my $name_model = 'model_1.mod';
 	my $output;
 	my $frem_model;
 
@@ -874,7 +909,7 @@ sub do_model0
 		$output = $model->outputs->[0];
 	}else{
 		#run it
-		my $rundir = $self -> directory().'/model0_modelfit_dir1';
+		my $rundir = $self -> directory().'/model1_modelfit_dir1';
 		rmtree([ "$rundir" ]) if (-e $rundir);
 		my $run = tool::modelfit ->new( %{common_options::restore_options(@common_options::tool_options)},
 										base_directory	 => $self -> directory(),
@@ -883,7 +918,7 @@ sub do_model0
 										models		 => [$frem_model],
 										top_tool              => 0);
 		tool::add_to_nmoutput(run => $run, extensions => ['phi','ext']);		
-		ui -> print( category => 'all', message =>  'Estimating Model 0 (the input model)');
+		ui -> print( category => 'all', message =>  'Estimating Model 1 (the input model)');
 		$run-> run;
 		if (defined $frem_model->outputs and (defined $frem_model->outputs->[0])){
 			$output = $frem_model->outputs->[0] ;
@@ -895,10 +930,9 @@ sub do_model0
 	}
 	
 	$frem_model->update_inits (from_output => $output);
-	my $mod0_ofv = $output->get_single_value(attribute=> 'ofv');
-	my $phi_file = $output->problems->[0]->full_name_NM7_file(file_type => 'phi');
+	my $mod_ofv = $output->get_single_value(attribute=> 'ofv');
 	
-	return ($mod0_ofv, $phi_file, $frem_model); 
+	return ($mod_ofv, $frem_model); 
 
 }
 
@@ -942,40 +976,23 @@ sub get_indices
 
 	my %indices;
 	foreach my $col (@{$keys}){
-		my $pos = array::get_array_positions(target => $target,
-											 keys=> [$col], 
-											 R_indexing => 0);
-		$indices{$col}=undef;
-		if (scalar(@{$pos}>0)){
-			$indices{$col}=$pos->[0];
-		}
+		my $pos = array::get_positions(target => $target,
+									   keys=> [$col]);
+		$indices{$col}=$pos->[0];
 	}
 	return \%indices;
 }
 
-sub do_frem_dataset
+sub do_filter_dataset_and_append_bivariate
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
 							  model => { isa => 'Ref', optional => 0 },
-							  mod0_ofv => { isa => 'Num', optional => 0 },
-							  N_parameter_blocks => {isa => 'Int', optional => 0},
-							  fremdataname => { isa => 'Str', optional => 0 },
-	);
+		);
 	my $model = $parm{'model'};
-	my $mod0_ofv = $parm{'mod0_ofv'};
-	my $N_parameter_blocks = $parm{'N_parameter_blocks'};
-	my $fremdataname = $parm{'fremdataname'};
 	
 	my $filtered_datafile = 'filtered_plus_type0.dta';
 
-
-	my $do_check = $self->check;
-	if (-e $self -> directory().'m1/'.$fremdataname){
-		unlink($self -> directory().'m1/'.$fremdataname);
-		$do_check = 0; #assume get same result second time
-	}
-	
 	my ($filtered_data_model,$data_set_headers,$extra_input_items,$message) = 
 		create_data2_model(model=>$model,
 						   filename => $self -> directory().'m1/filter_data_model.mod',
@@ -1004,9 +1021,9 @@ sub do_frem_dataset
 	}
 
 	my $filtered_data = data->new(filename => $filtered_data_model->directory.$filtered_datafile,
-							  ignoresign => '@', 
-							  idcolumn => $model->idcolumns->[0],
-							  missing_data_token => $self->missing_data_token);
+								  ignoresign => '@', 
+								  idcolumn => $model->idcolumns->[0],
+								  missing_data_token => $self->missing_data_token);
 
 	my $indices = get_indices(target => $data_set_headers,
 							  keys => ['EVID','MDV',$fremtype,$self->dv]);
@@ -1017,9 +1034,8 @@ sub do_frem_dataset
 	
 	if (scalar(@{$self->log}) > 0){
 		#we assume all found already, error check in createdata2model
-		my $log_indices = array::get_array_positions(target => $data_set_headers,
-													 keys=> $self->log, 
-													 R_indexing => 0);
+		my $log_indices = array::get_positions(target => $data_set_headers,
+											   keys=> $self->log);
 		
 		my @new_log =();
 		foreach my $cov (@{$self->log}){
@@ -1032,18 +1048,16 @@ sub do_frem_dataset
 	}
 	
 	if (scalar(@{$self->regular}) > 0){
-		my $regular_indices = array::get_array_positions(target => $data_set_headers,
-														 keys=> $self->regular, 
-														 R_indexing => 0);
+		my $regular_indices = array::get_positions(target => $data_set_headers,
+												   keys=> $self->regular); 
 		push(@cov_indices,@{$regular_indices});
 		push(@cov_names,@{$self->regular});
 		push(@is_log,(0) x scalar(@{$self->regular}));
 	}
 
 	if (scalar(@{$self->categorical}) > 0){
-		my $categorical_indices = array::get_array_positions(target => $data_set_headers,
-														  keys=> $self->categorical, 
-														  R_indexing => 0);
+		my $categorical_indices = array::get_positions(target => $data_set_headers,
+													   keys=> $self->categorical);
 		my ($mapping,$new_indices,$new_categorical) = $filtered_data->append_bivariate_columns(indices => $categorical_indices,
 																							   start_header => $data_set_headers);
 		$categorical_indices = $new_indices;
@@ -1053,22 +1067,55 @@ sub do_frem_dataset
 		push(@is_log,(0) x scalar(@{$new_categorical}));
 	}
 
+#	print "\n".join("\t",@cov_names)."\n";
+#	print join("\t",@cov_indices)."\n";
+#	print join("\t",@{$data_set_headers})."\n";
 	
-	#compute new indices now, after appending categorical. then change name of log. update covariates with union
 	$self->covariates(\@cov_names);
+
+	$indices->{'cov_indices'} = \@cov_indices;
+	$indices->{'is_log'} = \@is_log;
+	
+	return ($filtered_data,$indices);
+}
+
+sub do_frem_dataset
+{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+							  model => { isa => 'Ref', optional => 0 },
+							  filtered_data => { isa => 'data', optional => 0 },
+							  indices => { isa => 'HashRef', optional => 0 },
+							  mod0_ofv => { isa => 'Num', optional => 0 },
+							  N_parameter_blocks => {isa => 'Int', optional => 0},
+							  fremdataname => { isa => 'Str', optional => 0 },
+	);
+	my $model = $parm{'model'};
+	my $mod0_ofv = $parm{'mod0_ofv'};
+	my $indices = $parm{'indices'};
+	my $filtered_data = $parm{'filtered_data'};
+	my $N_parameter_blocks = $parm{'N_parameter_blocks'};
+	my $fremdataname = $parm{'fremdataname'};
+	
+	my $do_check = $self->check;
+	if (-e $self -> directory().'m1/'.$fremdataname){
+		unlink($self -> directory().'m1/'.$fremdataname);
+		$do_check = 0; #assume get same result second time
+	}
 	
 	#this writes dataset to disk
 	my $resultref = data::frem_compute_covariate_properties(filtered_data  => $filtered_data,
-															invariant_covariates => \@cov_names,
-															is_log => \@is_log,
+															invariant_covariates => $self->covariates,
+															N_parameter_blocks => $N_parameter_blocks,
+															is_log => $indices->{'is_log'},
 															occ_index => undef,
 															data2name => $fremdataname,
 															evid_index => $indices->{'EVID'},
 															mdv_index => $indices->{'MDV'},
 															dv_index => $indices->{$self->dv},
 															type_index => $indices->{$fremtype},
-															cov_indices => \@cov_indices,
-															first_timevar_type => scalar(@cov_indices));
+															cov_indices => $indices->{'cov_indices'});
+#															first_timevar_type => scalar(@cov_indices));
 
 	if (defined $resultref){
 		$self->occasionlist($resultref->{'occasionlist'}) if (defined $resultref->{'occasionlist'}); 
@@ -1123,95 +1170,38 @@ sub do_frem_dataset
 		if ($data_check_model->is_run()){
 			$check_ofv = $data_check_model->outputs -> [0]->get_single_value(attribute=> 'ofv');
 		}
-		print "\nModel 0 ofv is    $mod0_ofv\n";
+		print "\nModel 1 ofv is    $mod0_ofv\n";
 		print   "Data check ofv is $check_ofv\n";
 	}
 	
 }
 
-sub do_model1
+sub renumber_etas
 {
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-							  model => { isa => 'model', optional => 0 },
-							  BSV_par_block => { isa => 'ArrayRef', optional => 0 },
-							  labelshash => { isa => 'HashRef', optional => 0 },
-							  start_omega_record => { isa => 'Int', optional => 0 },
-	);
-	my $model = $parm{'model'};
-	my $BSV_par_block = $parm{'BSV_par_block'};
-	my $labelshash = $parm{'labelshash'};
-	my $start_omega_record = $parm{'start_omega_record'};
-	
-	my $name_model = 'model_1.mod';
-	my @leading_omega_records = ();
-	my $frem_model;
+    my %parm = validated_hash(\@_,
+							  code => { isa => 'ArrayRef', optional => 0 },
+							  eta_from => { isa => 'ArrayRef', optional => 0 },
+							  eta_to => { isa => 'ArrayRef', optional => 0 },
+		);
+	my $code = $parm{'code'};
+	my $eta_from = $parm{'eta_from'};
+	my $eta_to = $parm{'eta_to'};
 
-	if (-e $self -> directory().'m1/'.$name_model){
-		$frem_model = model->new( %{common_options::restore_options(@common_options::model_options)},
-								  filename                    => 'm1/'.$name_model,
-								  ignore_missing_output_files => 1 );
+	croak('from and to lists must have equal length') 
+		unless (scalar(@{$eta_from}) == scalar(@{$eta_to}));
 
-		if (scalar(@{$self->covariates}) > 0){
-			croak('BSV_par undefined') unless (defined $BSV_par_block);
-			for (my $i=0; $i< ($start_omega_record-1);$i++){
-				#if start_omega_record is 1 we will push nothing
-				#if no invariant stuff we will push all
-				push(@leading_omega_records,$frem_model-> problems -> [0]->omegas->[$i]);
+	for (my $i=0; $i<scalar(@{$eta_from}); $i++){
+		croak('from and to lists must have equal length') 
+			unless (scalar(@{$eta_from->[$i]}) == scalar(@{$eta_to->[$i]}));
+		for (my $j=0; $j<scalar(@{$eta_from->[$i]}); $j++){
+			my $from = $eta_from->[$i]->[$j];
+			my $to = $eta_to->[$i]->[$j];
+			foreach (@{$code}){
+				s/\bETA\($from\)/ETA\($to\)/g;
 			}
 		}
-
-	}else{	
-		#here we use original data file. It has been copied before to m1
-		# input model 0 inits have already been updated
-		$frem_model = $model ->  copy( filename    => $self -> directory().'m1/'.$name_model,
-									   output_same_directory => 1,
-									   write_copy => 0,
-									   copy_datafile   => 0,
-									   copy_output => 0);
-		
-
-		if (scalar(@{$self->covariates}) > 0){
-			croak('BSV_par undefined') unless (defined $BSV_par_block);
-			for (my $i=0; $i< ($start_omega_record-1);$i++){
-				#if start_omega_record is 1 we will push nothing
-				#if no invariant stuff we will push all
-				push(@leading_omega_records,$frem_model-> problems -> [0]->omegas->[$i]);
-			}
-
-			#reset $start_omega_record and on, do not kill all
-			$frem_model -> problems -> [0]-> omegas(\@leading_omega_records);
-			$frem_model-> problems -> [0]->add_omega_block(new_omega => $BSV_par_block,
-														   labels => $labelshash->{'bsv_par_labels'});
-		}
-
-		#FIXME if pre-existing BOV then replace with 0 in code
-		
-		$frem_model ->_write();
 	}
-
-	unless ($frem_model->is_run){
-		my $rundir = $self -> directory().'/model1_modelfit_dir1';
-		rmtree([ "$rundir" ]) if (-e $rundir);
-		my $run = tool::modelfit ->new( %{common_options::restore_options(@common_options::tool_options)},
-										base_directory	 => $self -> directory(),
-										directory		 => $rundir,
-										copy_data     => 0,
-										models		 => [$frem_model],
-										top_tool              => 0);
-		tool::add_to_nmoutput(run => $run, extensions => ['phi','ext']);		
-		ui -> print( category => 'all', message =>  'Estimating Model 1');
-		$run-> run;
-	}
-	if (defined $frem_model->outputs and (defined $frem_model->outputs->[0])){
-		$frem_model->update_inits(from_output=> $frem_model->outputs->[0]) ;
-	}else{
-		croak("No output from Model 1, cannot proceed with frem");
-	}
-
-	return ($frem_model,\@leading_omega_records);
 }
-
 
 sub do_model2
 {
@@ -1222,28 +1212,41 @@ sub do_model2
 							  eta_mapping => {isa => 'HashRef', optional => 0},
 							  fremdataname => { isa => 'Str', optional => 0 },
 							  start_omega_record => { isa => 'Int', optional => 0 },
+							  skip_etas => {isa => 'Int', optional => 0},
 	);
 	my $model = $parm{'model'};
 	my $fremdataname = $parm{'fremdataname'};
-	my $parameter_blocks = $parm{'parameter_blocks'};
+	my $parameter_blocks = $parm{'parameter_blocks'}; #this is omega records w/ block form for parameters, ready for model2
 	my $eta_mapping = $parm{'eta_mapping'};
 	my $start_omega_record = $parm{'start_omega_record'};
+	my $skip_etas = $parm{'skip_etas'};
 	
 	my $N_parameter_blocks = scalar(@{$parameter_blocks});
-	my $bsv_parameter_count; #FIXME
 	my $name_model = 'model_2.mod';
 	
 	my $frem_model;
 
 	my $ntheta = $model ->nthetas(problem_number => 1);
+	my $newtheta = 0;
 	my $epsnum = 1 + $model->problems()->[0]->nsigmas(with_correlations => 0,
 															   with_same => 1);
-
+	my $covariate_etanumbers;
+	my $parameter_etanumbers;
+	
 	if (-e $self -> directory().'m1/'.$name_model){
 		$frem_model = model->new( %{common_options::restore_options(@common_options::model_options)},
 								  filename                    => 'm1/'.$name_model,
 								  ignore_missing_output_files => 1 );
-
+		my $previous = $skip_etas;
+		my $Ncov = scalar(@{$self->covariates});
+		$covariate_etanumbers = [];
+		foreach my $block (@{$parameter_blocks}){
+			push(@{$parameter_etanumbers},[(($previous+1) .. ($previous+$block->size) )]);
+			$previous += $block->size;
+			push(@{$covariate_etanumbers},[(($previous+1) .. ($previous+$Ncov) )]);
+			$previous += $Ncov;
+		}
+		
 	}else{	
 		# input model  inits have already been updated
 		$frem_model = $model ->  copy( filename    => $self -> directory().'m1/'.$name_model,
@@ -1259,50 +1262,91 @@ sub do_model2
 		$frem_model->datafiles(problem_numbers => [1],
 							   new_names => [$self -> directory().'m1/'.$fremdataname]);
 
-		renumber_etas(model=> $frem_model,
-					  eta_mapping => $eta_mapping);
+		foreach my $coderec ('error','des','pk','pred'){ #never any ETAs in $MIX
+			my $acc = $coderec.'s';
+			if (defined $frem_model->problems->[0]->$acc and 
+				scalar(@{$frem_model->problems->[0]->$acc})>0 ) {
+				my @extra_code = @{$frem_model->problems->[0]->$acc->[0]->code};
+				renumber_etas(code => \@extra_code,
+							  eta_from => $eta_mapping->{'eta_from'},
+							  eta_to => $eta_mapping->{'eta_to'});
+				$frem_model->problems->[0]-> set_records( type => $coderec,	
+														  record_strings => \@extra_code );
+			}
+		}
+		
+		#INPUT changes
+		foreach my $item (@{$self->extra_input_items}){
+			#mdv and fremtype
+			$frem_model -> add_option(problem_numbers => [1],
+									  record_name => 'input',
+									  option_name => $item);
+			#we do not have to add for example bivariate-ized categoricals, they enter in DV col for special fremtype
+		}
 
-		#TODO implement
-		my $covariate_etanumbers = set_BSV_omegas(model => $frem_model,
-												  start_omega_record => $start_omega_record,
-												  parameter_blocks => $parameter_blocks,
-												  covariate_covmatrix => $self->invariant_covmatrix,
-												  covnames => $self->covariates);
+		#SIGMA changes
+		foreach my $record (@{$model-> problems -> [0]->sigmas}){
+			if ($record->type eq 'BLOCK'){
+				$record->fix(1) unless ($record->same);
+			}else{
+				for (my $j=0; $j< scalar(@{$record->options}); $j++){
+					$record->options->[$j]->fix(1);
+				}
+			}
+		}
 
-		#TODO implement
-		my $covariate_thetanumbers = add_covariate_thetas(model => $frem_model,
-														  covnames => $self->covariates,
-														  N_parameter_blocks => scalar(@{$parameter_blocks}),
-														  covariate_medians => $self->invariant_median);
-		#TODO
-		add_covariate_est_code(model=>$frem_model,
-							   etanumbers => $covariate_etanumbers,
-							   thetanumbers => $covariate_thetanumbers,
-							   epsnum => $epsnum);
+		$frem_model->add_records(type => 'sigma',
+								 problem_numbers => [1],
+								 record_strings => ['0.0000001 FIX ; EPSCOV']);
 
-		update_parameter_code(model=> $frem_model,
-							  etanumbers => $covariate_etanumbers,
-							  eta_mapping => $eta_mapping);
-		#set theta omega sigma code input
-		#FIXME input Mod 0 BOV if available, use model0 updated + phifile
-		set_frem_records(model => $frem_model,
-						 start_eta => ($self->skip_etas+1),
-						 epsnum => $epsnum,
-						 ntheta => $ntheta,
-						 vpc => 0,
-						 bsv_parameters => $bsv_parameter_count,
-						 model_type =>2,
-						 occasionlist =>  $self->occasionlist,
-						 occasion => $self->occasion,
-						 extra_input_items => $self->extra_input_items,
-						 invariant_median => $self->invariant_median,
-						 timevar_median => $self->timevar_median,
-						 invariant_covmatrix => $self->invariant_covmatrix,
-						 timevar_covmatrix => $self->timevar_covmatrix,
-						 covariates => $self->covariates,
-						 time_varying => $self->time_varying,
-						 parameters_bov => $self->parameters_bov,
-			);
+		#OMEGA changes
+		my $pk_pred_code;
+		($covariate_etanumbers,$parameter_etanumbers,$pk_pred_code) = 
+			set_model2_omega_blocks(model => $frem_model,
+									start_omega_record => $start_omega_record,
+									skip_etas => $skip_etas,
+									parameter_blocks => $parameter_blocks,
+									covariate_covmatrix => $self->invariant_covmatrix,
+									covariate_labels => $self->covariates);
+
+
+
+		#THETA changes
+		#FIX all existing
+		for (my $i=0; $i< scalar(@{$frem_model->problems->[0]->thetas}); $i++){
+			for (my $j=0; $j< scalar(@{$frem_model->problems->[0]->thetas->[$i]->options}); $j++){
+				$frem_model->problems->[0]->thetas->[$i]->options->[$j]->fix(1);
+			}
+		}
+
+		
+		my @theta_strings =();
+		my @covariate_thetanumbers = ();
+		for (my $i=0; $i< scalar(@{$self->covariates}); $i++){
+			my $val=$self->invariant_median->[$i];
+			$val=0.001 if ($val==0);
+			for (my $j=0; $j< $N_parameter_blocks; $j++){
+				my $label = 'TV_'.$self->covariates->[$i].'_'.($j+1);
+				push(@covariate_thetanumbers,[]) if ($i==0);
+				push(@theta_strings,' '.sprintf("%.12G",$val).'; '.$label);
+				$newtheta++;
+				my $num = ($ntheta+$newtheta);
+				push(@{$covariate_thetanumbers[$j]},$num);
+				push(@{$pk_pred_code},$indentation.$label.'=THETA('.$num.')');
+			}
+		}
+		
+		$frem_model->add_records(type => 'theta',
+								 problem_numbers => [1],
+								 record_strings => \@theta_strings);
+		
+		add_pk_pred_error_code(model=>$frem_model,
+							   pk_pred_code => $pk_pred_code,
+							   N_parameter_blocks => $N_parameter_blocks,
+							   covariates => $self->covariates,
+							   epsnum => $epsnum,
+							   use_pred => $self->use_pred);
+
 		#FIXME use spdarise
 		$frem_model-> problems -> [0]->ensure_posdef();
 		$frem_model->_write();
@@ -1328,44 +1372,33 @@ sub do_model2
 		croak("No output from Model 2, cannot proceed with frem");
 	}
 
-	return ($frem_model,$ntheta,$epsnum);
+	return ($frem_model,$ntheta,$epsnum,$covariate_etanumbers,$parameter_etanumbers);
 		
 }
 
-
 sub do_model3
 {
-	#FIXME input eta numbers
 	my $self = shift;
 	my %parm = validated_hash(\@_,
 							  model => { isa => 'model', optional => 0 },
-							  fremdataname => { isa => 'Str', optional => 0 },
-							  ntheta => { isa => 'Int', optional => 0 },
-							  epsnum => { isa => 'Int', optional => 0 },
-							  bsv_parameter_count => { isa => 'Int', optional => 0 },
 							  start_omega_record => { isa => 'Int', optional => 0 },
-							  labelshash => { isa => 'HashRef', optional => 0 },
+							  parcov_blocks => { isa => 'ArrayRef', optional => 0}
 	);
 	my $model = $parm{'model'};
-	my $fremdataname = $parm{'fremdataname'};
-	my $ntheta = $parm{'ntheta'};
-	my $epsnum = $parm{'epsnum'};
-	my $bsv_parameter_count = $parm{'bsv_parameter_count'};
 	my $start_omega_record = $parm{'start_omega_record'};
-	my $labelshash = $parm{'labelshash'};
-	
-	my $name_model = 'frem_model.mod';
-	my $frem_model2; #FIXME undef
-	my $mod3_bov_record; #FIXME undef
-	
+	my $parcov_blocks = $parm{'parcov_blocks'};
+
+	my $modnum=3;
+
+	my $name_model = 'model_'.$modnum.'.mod';
 	my $frem_model;
-	#FIXME original code uses copy of model 1, here we input model 2 for better initial estimates
-	#need to replace pk/pred code for BOV
+	my $est_records = $model->problems->[0]->estimations;
+	
 	if (-e $self -> directory().'m1/'.$name_model){
 		$frem_model = model->new( %{common_options::restore_options(@common_options::model_options)},
 								  filename                    => 'm1/'.$name_model,
 								  ignore_missing_output_files => 1 );
-
+		
 	}else{	
 		# input model  inits have already been updated
 		$frem_model = $model ->  copy( filename    => $self -> directory().'m1/'.$name_model,
@@ -1374,78 +1407,27 @@ sub do_model3
 									   copy_datafile   => 0,
 									   copy_output => 0);
 
-		#continue FIXME
-		#use model 2 phi for full blocks, BSV_all and BOV all, need model 2 eta numbers
-		$frem_model->problems->[0]->datas->[0]->options([]);
-		$frem_model->datafiles(problem_numbers => [1],
-							   new_names => [$self -> directory().'m1/'.$fremdataname]);
-		$frem_model->problems->[0]->datas->[0]->ignoresign('@');
+		my @omega_records = ();
+		for (my $i=0; $i< ($start_omega_record-1);$i++){
+			#if start_omega_record is 1 we will push nothing
+			push(@omega_records,$model-> problems -> [0]->omegas->[$i]);
+		}
+	
+		for (my $i=0; $i< scalar(@{$parcov_blocks}); $i++){
+			push(@omega_records,$parcov_blocks->[$i]);
+		}
 
-		#FIXME input BSV_par_block.
-		#FIXME change create omega block so that can take covariate data as input for BSV_all_block
-		#set theta omega sigma code input
-		set_frem_records(model => $frem_model,
-						 start_eta => $self->skip_etas+1,
-						 epsnum => $epsnum, #same as going into model 2
-						 ntheta => $ntheta, #same as into model 2
-						 bsv_parameters => $bsv_parameter_count,
-						 vpc => 0,
-						 model_type =>3,
-						 occasionlist =>  $self->occasionlist,
-						 occasion => $self->occasion,
-						 extra_input_items => $self->extra_input_items,
-						 invariant_median => $self->invariant_median,
-						 timevar_median => $self->timevar_median,
-						 invariant_covmatrix => $self->invariant_covmatrix,
-						 timevar_covmatrix => $self->timevar_covmatrix,
-						 covariates => $self->covariates,
-						 time_varying => $self->time_varying,
-						 parameters_bov => $self->parameters_bov,
-			);
-		#FIXME spdarise	
-		$frem_model-> problems -> [0]->ensure_posdef();
+		$frem_model -> problems -> [0]-> omegas(\@omega_records);
+		$frem_model -> set_maxeval_zero(print_warning => 1,
+								   last_est_complete => $self->last_est_complete,
+								   niter_eonly => $self->niter_eonly,
+								   need_ofv => 0);
 		$frem_model->_write();
 
-		my @leading_omega_records=();
-
-		#create new BOV_all_occ1 to add
-		if (scalar(@{$self->time_varying}) > 0){
-			for (my $i=0; $i< ($mod3_bov_record-1);$i++){
-				push(@leading_omega_records,$frem_model-> problems -> [0]->omegas->[$i]);
-			}
-			#reset omega
-			$frem_model -> problems -> [0]-> omegas(\@leading_omega_records);
-
-			my $mod2_bov_record=$start_omega_record;
-			$mod2_bov_record=$start_omega_record+2 if (scalar(@{$self->covariates})>0);
-			my $BOV_par_occ1 = $frem_model2->problems->[0]->get_record_matrix(type => 'omega',
-																			  record_number => $mod2_bov_record);
-			my $BOV_cov_occ1 = $frem_model2->problems->[0]->get_record_matrix(type => 'omega',
-																			  record_number => ($mod2_bov_record+scalar(@{$self->occasionlist()})));
-
-			#create full block to add to mod3
-			#FIXME do better
-			my $BOV_all_occ1 = create_full_block(top_block => $BOV_par_occ1,
-												 bottom_block => $BOV_cov_occ1,
-												 correlation => $smallcorrelation);
-
-			my @all_labels = @{$labelshash->{'bov_par_labels'}};
-			push(@all_labels,@{$labelshash->{'bov_cov_labels'}});
-			$frem_model -> problems -> [0]-> add_omega_block(new_omega => $BOV_all_occ1,
-															  labels=>\@all_labels);
-
-			#BOV_all_occ2-end
-			for (my $i=1; $i< scalar(@{$self->occasionlist()}); $i++){
-				$frem_model -> add_records (type => 'omega',
-											 record_strings => ['BLOCK SAME ;'.$labelshash->{'occasion_labels'}->[$i]]);
-				
-			}
-
-		}
-		
 	}
+
 	unless ($frem_model->is_run){
-		my $rundir = $self -> directory().'/frem_modelfit_dir1';
+		my $rundir = $self -> directory().'/model'.$modnum.'_modelfit_dir1';
 		rmtree([ "$rundir" ]) if (-e $rundir);
 		my $run = tool::modelfit ->new( %{common_options::restore_options(@common_options::tool_options)},
 										base_directory	 => $self -> directory(),
@@ -1454,17 +1436,90 @@ sub do_model3
 										models		 => [$frem_model],
 										top_tool              => 0);
 		tool::add_to_nmoutput(run => $run, extensions => ['phi','ext']);		
-		ui -> print( category => 'all', message =>  'Estimating FREM model');
+		ui -> print( category => 'all', message =>  'Estimating Model '.$modnum);
 		$run-> run;
 	}
 	if (defined $frem_model->outputs and (defined $frem_model->outputs->[0])){
 		$frem_model->update_inits(from_output=> $frem_model->outputs->[0]) ;
 	}else{
-		croak("No output from frem model, cannot proceed");
+		croak("No output from Model $modnum, cannot proceed with frem");
+	}
+
+	return ($frem_model,$est_records);
+
+}
+
+sub do_model4
+{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+							  model => { isa => 'model', optional => 0 },
+							  start_omega_record => { isa => 'Int', optional => 0 },
+							  parcov_blocks => { isa => 'ArrayRef', optional => 0},
+							  est_records => { isa => 'ArrayRef', optional => 0}
+	);
+	my $model = $parm{'model'};
+	my $start_omega_record = $parm{'start_omega_record'};
+	my $parcov_blocks = $parm{'parcov_blocks'};
+	my $est_records = $parm{'est_records'};
+	
+	my $modnum=4;
+
+	my $name_model = 'model_'.$modnum.'.mod';
+	my $frem_model;
+	
+	if (-e $self -> directory().'m1/'.$name_model){
+		$frem_model = model->new( %{common_options::restore_options(@common_options::model_options)},
+								  filename                    => 'm1/'.$name_model,
+								  ignore_missing_output_files => 1 );
+		
+	}else{	
+		# input model  inits have already been updated
+		$frem_model = $model ->  copy( filename    => $self -> directory().'m1/'.$name_model,
+									   output_same_directory => 1,
+									   write_copy => 0,
+									   copy_datafile   => 0,
+									   copy_output => 0);
+
+		my @omega_records = ();
+		for (my $i=0; $i< ($start_omega_record-1);$i++){
+			#if start_omega_record is 1 we will push nothing
+			push(@omega_records,$model-> problems -> [0]->omegas->[$i]);
+		}
+	
+		for (my $i=0; $i< scalar(@{$parcov_blocks}); $i++){
+			push(@omega_records,$parcov_blocks->[$i]);
+		}
+
+		$frem_model -> problems -> [0]-> omegas(\@omega_records);
+		$frem_model -> problems -> [0]->estimations($est_records);
+		$frem_model->_write();
+
+	}
+
+	unless ($frem_model->is_run){
+		my $rundir = $self -> directory().'/model'.$modnum.'_modelfit_dir1';
+		rmtree([ "$rundir" ]) if (-e $rundir);
+		my $run = tool::modelfit ->new( %{common_options::restore_options(@common_options::tool_options)},
+										base_directory	 => $self -> directory(),
+										directory		 => $rundir,
+										copy_data     => 0,
+										models		 => [$frem_model],
+										top_tool              => 0);
+		tool::add_to_nmoutput(run => $run, extensions => ['phi','ext']);		
+		ui -> print( category => 'all', message =>  'Estimating Model '.$modnum);
+		$run-> run;
+	}
+	if (defined $frem_model->outputs and (defined $frem_model->outputs->[0])){
+		$frem_model->update_inits(from_output=> $frem_model->outputs->[0]) ;
+	}else{
+		croak("No output from Model $modnum, cannot proceed with frem");
 	}
 
 	return $frem_model;
-}	
+
+}
+
 
 sub do_model_vpc1
 {
@@ -1785,48 +1840,70 @@ sub modelfit_setup
 	my $start_omega_record=	get_start_numbers(model=>$model,
 											  skip_etas => $self->skip_etas());
 
-	my ($mod0_ofv, $phi_file_0, $frem_model0) = $self-> do_model0(model => $model);
+	my ($mod1_ofv, $frem_model1) = $self-> do_model1(model => $model);
 
-	my ($mod2_parameter_blocks,$eta_mapping) = get_parameter_blocks(model => $frem_model0,
+	#this modifies $self->covariates
+	my ($filtered_data,$indices) = $self->do_filter_dataset_and_append_bivariate(model => $frem_model1);
+
+	my ($mod2_parameter_blocks,$eta_mapping) = get_parameter_blocks(model => $frem_model1,
 																	skip_etas => $self->skip_etas,
 																	n_covariates => scalar(@{$self->covariates}),
 																	start_omega_record => $start_omega_record);
 	unless (scalar(@{$mod2_parameter_blocks})>0){
 		croak("No omega in parameter blocks, nothing to do in frem");
 	}
-	
-	#FIXME we renumber according to eta_mapping, should get_CTV be done after or before that?
-	my ($CTV_parameters,$etanum_to_parameter) = get_CTV_parameters(model => $frem_model0);
-
 
 	my $frem_dataset = 'frem_dataset.dta';
-	$self->do_frem_dataset(model => $frem_model0,
+	$self->do_frem_dataset(model => $frem_model1,
 						   N_parameter_blocks => scalar(@{$mod2_parameter_blocks}),
-						   mod0_ofv => $mod0_ofv,
+						   filtered_data => $filtered_data,
+						   indices => $indices,
+						   mod0_ofv => $mod1_ofv,
 						   fremdataname => $frem_dataset);
 	
-	my $bsv_parameter_count; #FIXME
-	my $BSV_par_block; #FIXME
-	my $labelshash = create_labels(	 covariates => $self->covariates,
-									 etanum_to_parameter => $etanum_to_parameter,
-									 start_eta => ($self->skip_etas +1),
-									 bsv_parameters => $bsv_parameter_count);
+	my ($frem_model2,$ntheta,$epsnum,$covariate_etanumbers,$parameter_etanumbers) = 
+		$self->do_model2(model => $frem_model1,
+						 fremdataname => $frem_dataset,
+						 start_omega_record => $start_omega_record,
+						 eta_mapping => $eta_mapping,
+						 skip_etas => $self->skip_etas,
+						 parameter_blocks => $mod2_parameter_blocks);
 
-	#parameter_blocks already have the right coordinates for new model
-	my ($frem_model2,$ntheta,$epsnum) = $self->do_model2(model => $frem_model0,
-														 fremdataname => $frem_dataset,
-														 parameter_blocks => $mod2_parameter_blocks);
+	my $mod3_parcov_blocks = get_parcov_blocks(model => $frem_model2,
+											   join_records => 1,
+											   skip_etas => $self->skip_etas,
+											   covariate_etanumbers => $covariate_etanumbers,
+											   parameter_etanumbers => $parameter_etanumbers,
+											   start_omega_record => $start_omega_record);
+	
+	my ($frem_model3,$est_records) = $self->do_model3(model => $frem_model2,
+													 start_omega_record => $start_omega_record,
+													 parcov_blocks => $mod3_parcov_blocks);
 
+	my $mod4_parcov_blocks = get_parcov_blocks(model => $frem_model3,
+											   join_records => 0,
+											   skip_etas => $self->skip_etas,
+											   covariate_etanumbers => $covariate_etanumbers,
+											   parameter_etanumbers => $parameter_etanumbers,
+											   start_omega_record => $start_omega_record);
+	
+	my $frem_model4 = $self->do_model4(model => $frem_model3,
+									   start_omega_record => $start_omega_record,
+									   parcov_blocks => $mod4_parcov_blocks,
+									   est_records => $est_records);
 
-	my $frem_model3 = $self->do_model3(model => $frem_model2,
-									   fremdataname => $frem_dataset,
-									   bsv_parameter_count => $bsv_parameter_count,
-									   start_omega_record=> $start_omega_record,
-									   labelshash => $labelshash,									   
-									   ntheta =>$ntheta,
-									   epsnum => $epsnum);
-
+	#cholesky!
+	
 	if ($self->vpc()){
+		#FIXME we renumber according to eta_mapping, should get_CTV be done after or before that?
+		my $bsv_parameter_count; #FIXME
+		my ($CTV_parameters,$etanum_to_parameter) = get_CTV_parameters(model => $frem_model1);
+
+		my $labelshash = create_labels(	 covariates => $self->covariates,
+										 etanum_to_parameter => $etanum_to_parameter,
+										 start_eta => ($self->skip_etas +1),
+										 bsv_parameters => $bsv_parameter_count);
+		my $BSV_par_block; #FIXME
 		my $joindata = 'frem_vpc.dta';
 		my ($vpc_model1,$vpc2_input_par) = $self->do_model_vpc1(model => $frem_model3,
 																joindata => $joindata,
@@ -2062,7 +2139,7 @@ sub create_data2_model
 }
 
 sub set_frem_records
-{
+{ #not used
 	my %parm = validated_hash(\@_,
 							  model => { isa => 'Ref', optional => 0 },
 							  skip_covariates => { isa => 'Bool', default => 0 },
@@ -2125,44 +2202,6 @@ sub set_frem_records
 
     my $n_occasions = scalar(@{$occasionlist});
 
-    #INPUT changes. This would be undone for vpc2, but does not hurt to do it here
-	if (not $vpc){
-		foreach my $item (@{$extra_input_items}){
-			#mdv and fremtype
-			$model -> add_option(problem_numbers => [1],
-								 record_name => 'input',
-								 option_name => $item);
-		}
-	}
-    
-    #SIGMA changes
-    $model->add_records(type => 'sigma',
-						problem_numbers => [1],
-						record_strings => ['0.0000001 FIX ; EPSCOV']);
-
-
-    #THETA changes from Mod 1
-	
-	if (not $vpc){
-		my @theta_strings =();
-		unless ($skip_covariates){
-			for (my $i=0; $i< $n_covariates; $i++){
-				my $val=$invariant_median->[$i];
-				$val=0.001 if ($val==0);
-				push(@theta_strings,' '.sprintf("%.12G",$val).'; TV'.$covariates->[$i]);
-			}
-		}
-		unless ($skip_time_varying){
-			for (my $i=0; $i< $n_time_varying; $i++){
-				my $val=$timevar_median->[$i];
-				$val=0.001 if ($val==0);
-				push(@theta_strings,' '.sprintf("%.12G",$val).'; TV'.$time_varying->[$i]);
-			}
-		}
-		$model->add_records(type => 'theta',
-							problem_numbers => [1],
-							record_strings => \@theta_strings);
-	}
 
     #OMEGA changes starting from Mod1
 	#BSV part
@@ -2268,7 +2307,85 @@ sub set_frem_records
 	
 }
 
+sub	add_pk_pred_error_code
+{
+	my %parm = validated_hash(\@_,
+							  model => { isa => 'model', optional => 0 },
+							  pk_pred_code => { isa => 'ArrayRef', optional => 0 },
+							  N_parameter_blocks => { isa => 'Int', optional => 0 },
+							  covariates => { isa => 'ArrayRef', optional => 0 },
+							  epsnum => { isa => 'Int', optional => 0 },
+							  use_pred => { isa => 'Bool', optional => 0 },
+		);
+	my $model = $parm{'model'}; 
+	my $pk_pred_code = $parm{'pk_pred_code'};
+	my $N_parameter_blocks = $parm{'N_parameter_blocks'};
+	my $covariates = $parm{'covariates'};
+	my $epsnum = $parm{'epsnum'};
+	my $use_pred = $parm{'use_pred'};
 
+    my @code;
+	if ($use_pred){
+		@code = @{$model->get_code(record => 'pred')};
+	}else{
+		@code = @{$model->get_code(record => 'pk')};
+	}
+	
+    #PK/PRED changes at beginning A
+	my @begin_code =(';;;FREM CODE BEGIN');
+	push(@begin_code,@{$pk_pred_code});
+	push(@begin_code,';;;FREM CODE END' );
+
+
+    my @end_code =();
+
+	@end_code = (';;;FREM CODE BEGIN');
+	for (my $i=0; $i< scalar(@{$covariates}); $i++){
+		for (my $j=0; $j< $N_parameter_blocks; $j++){
+			my $label = '_'.$covariates->[$i].'_'.($j+1);
+			push(@end_code, $indentation.'Y'.$label.' = TV'.$label.' + BSV'.$label);
+		}
+	}
+	for (my $i=0; $i< scalar(@{$covariates}); $i++){
+		for (my $j=0; $j< $N_parameter_blocks; $j++){
+			my $label = '_'.$covariates->[$i].'_'.($j+1);
+			my $num = 100*($i+1)+$j;
+			push(@end_code,$indentation.'IF ('.$fremtype.'.EQ.'.$num.') THEN' );
+			push(@end_code,$indentation.'   Y = Y'.$label.'+EPS('.$epsnum.')' );
+			push(@end_code,$indentation.'   IPRED = Y'.$label );
+			push(@end_code,$indentation.'END IF' );
+		}
+	}
+	push(@end_code,';;;FREM CODE END' );
+	
+    my $found_anchor = -1;
+    my $i = 0;
+    for ( @code ) {
+		if ( /^;;;FREM-ANCHOR/) {
+			$found_anchor = $i;
+			last;
+		}
+		$i++
+    }
+    if ($found_anchor >= 0){
+		my @block1 =  (@code[0..$found_anchor]);
+		my @block2 =  (@code[($found_anchor+1)..$#code]);
+		@code = (@block1,@begin_code,@block2);
+    }else{
+		unshift(@code,@begin_code);
+    }
+    
+	if ( $use_pred ) {
+		push(@code,@end_code);
+		$model->set_code(record => 'pred', code => \@code);
+	} else {
+		$model->set_code(record => 'pk', code => \@code);
+		my @error = @{$model->get_code(record => 'error')};
+		push(@error,@end_code);
+		$model->set_code(record => 'error', code => \@error);
+	}
+	
+}
 
 sub set_frem_code
 {
@@ -2488,7 +2605,7 @@ sub set_frem_code
 
 }
 sub create_template_models
-{
+{ #not used
 	my $self = shift;
 	my %parm = validated_hash(\@_,
 							  model => { isa => 'Ref', optional => 0 }
@@ -2619,6 +2736,90 @@ sub cleanup
   }
 
 }
+
+sub olddo_model1
+{#not used
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+							  model => { isa => 'model', optional => 0 },
+							  BSV_par_block => { isa => 'ArrayRef', optional => 0 },
+							  labelshash => { isa => 'HashRef', optional => 0 },
+							  start_omega_record => { isa => 'Int', optional => 0 },
+	);
+	my $model = $parm{'model'};
+	my $BSV_par_block = $parm{'BSV_par_block'};
+	my $labelshash = $parm{'labelshash'};
+	my $start_omega_record = $parm{'start_omega_record'};
+	
+	my $name_model = 'model_1.mod';
+	my @leading_omega_records = ();
+	my $frem_model;
+
+	if (-e $self -> directory().'m1/'.$name_model){
+		$frem_model = model->new( %{common_options::restore_options(@common_options::model_options)},
+								  filename                    => 'm1/'.$name_model,
+								  ignore_missing_output_files => 1 );
+
+		if (scalar(@{$self->covariates}) > 0){
+			croak('BSV_par undefined') unless (defined $BSV_par_block);
+			for (my $i=0; $i< ($start_omega_record-1);$i++){
+				#if start_omega_record is 1 we will push nothing
+				#if no invariant stuff we will push all
+				push(@leading_omega_records,$frem_model-> problems -> [0]->omegas->[$i]);
+			}
+		}
+
+	}else{	
+		#here we use original data file. It has been copied before to m1
+		# input model 0 inits have already been updated
+		$frem_model = $model ->  copy( filename    => $self -> directory().'m1/'.$name_model,
+									   output_same_directory => 1,
+									   write_copy => 0,
+									   copy_datafile   => 0,
+									   copy_output => 0);
+		
+
+		if (scalar(@{$self->covariates}) > 0){
+			croak('BSV_par undefined') unless (defined $BSV_par_block);
+			for (my $i=0; $i< ($start_omega_record-1);$i++){
+				#if start_omega_record is 1 we will push nothing
+				#if no invariant stuff we will push all
+				push(@leading_omega_records,$frem_model-> problems -> [0]->omegas->[$i]);
+			}
+
+			#reset $start_omega_record and on, do not kill all
+			$frem_model -> problems -> [0]-> omegas(\@leading_omega_records);
+			$frem_model-> problems -> [0]->add_omega_block(new_omega => $BSV_par_block,
+														   labels => $labelshash->{'bsv_par_labels'});
+		}
+
+		#FIXME if pre-existing BOV then replace with 0 in code
+		
+		$frem_model ->_write();
+	}
+
+	unless ($frem_model->is_run){
+		my $rundir = $self -> directory().'/model1_modelfit_dir1';
+		rmtree([ "$rundir" ]) if (-e $rundir);
+		my $run = tool::modelfit ->new( %{common_options::restore_options(@common_options::tool_options)},
+										base_directory	 => $self -> directory(),
+										directory		 => $rundir,
+										copy_data     => 0,
+										models		 => [$frem_model],
+										top_tool              => 0);
+		tool::add_to_nmoutput(run => $run, extensions => ['phi','ext']);		
+		ui -> print( category => 'all', message =>  'Estimating Model 1');
+		$run-> run;
+	}
+	if (defined $frem_model->outputs and (defined $frem_model->outputs->[0])){
+		$frem_model->update_inits(from_output=> $frem_model->outputs->[0]) ;
+	}else{
+		croak("No output from Model 1, cannot proceed with frem");
+	}
+
+	return ($frem_model,\@leading_omega_records);
+}
+
 
 no Moose;
 __PACKAGE__->meta->make_immutable;

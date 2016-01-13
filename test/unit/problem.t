@@ -344,4 +344,35 @@ is_deeply($ref->{'iov'}->[1],['ETA(6)','ETA(7)','ETA(8)','ETA(15)','ETA(16)','ET
 is_deeply($ref->{'iov'}->[2],['ETA(9)','ETA(10)','ETA(11)','ETA(18)','ETA(19)','ETA(20)'],"get eta headers 2 iov occasion 3");
 
 
+
+
+$problem->set_records(type=>'omega',
+					  record_strings => ['BLOCK(1) FIX',' 0.394415  ;    IOV LAG']); #1
+$problem->add_records(type=>'omega',
+					  record_strings => ['BLOCK(1) SAME']); #2
+$problem->add_records(type=>'omega',
+					  record_strings => ['BLOCK(2) FIX',
+										 ' 0.415933  ;     IIV CL ',
+										 ' 0.392094 0.583808  ;      IIV V']); # 3,4
+$problem->add_records(type=>'omega',
+					  record_strings => ['BLOCK(2)',
+										 ' 0.0420795  ; BSV_LNWT_1',
+										 ' 0.00103171 0.648676  ; BSV_DGRP_1']); #5,6
+$problem->add_records(type=>'omega',
+					  record_strings => ['BLOCK(1) FIX',
+										 ' 0.224389  ;     IIV KA']); #7
+$problem->add_records(type=>'omega',
+					  record_strings => ['BLOCK(2)',
+										 ' 0.0420799  ; BSV_LNWT_2',
+										 ' 0.00103185 0.648675  ; BSV_DGRP_2']); #8,9
+$omega_mat = $problem->get_matrix(type => 'omega',
+								  start_row => 3,
+								  end_row => 4);
+cmp_ok($omega_mat->[0]->[0],'==',0.415933, "get_matrix 0,0");
+cmp_ok($omega_mat->[0]->[1],'==',0, "get_matrix 0,1");
+cmp_ok($omega_mat->[1]->[0],'==',0.392094, "get_matrix 1,0");
+cmp_ok($omega_mat->[1]->[1],'==',0.583808, "get_matrix 1,1");
+
+	
+
 done_testing();

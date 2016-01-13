@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{FREM userguide}{2015-12-14}
+\guidetitle{FREM userguide}{2016-01-07}
 
 
 \begin{document}
@@ -27,6 +27,9 @@ frem run1.mod -covariates=SEX,DGRP,WGT
 %frem run1.mod -invariant=SEX,DGRP
 
 \section{Output}
+
+{\Large \texttt{More text here. Start with main default files}}
+
 The main run directory will contain the frem\_vpc model and frem\_vpc dataset, if option -vpc was set.
 The m1 subdirectory of the frem run directory will contain all other generated models, 
 lst-files for the estimated models, and the frem dataset. 
@@ -61,8 +64,11 @@ The -log list must be a subset of the -covariate list.
 If any covariate listed with option -log is not in the list -covariates there will be an error message.
 There must be no covariate listed with both log and -categorical.
 \nextopt
+\optdefault{ordered}{?} 
+{\Large \texttt{??? Should there be special case for ordered categorical?}}
 \optdefault{categorical}{list}
-Optional, default empty. A comma-separated list of categorical covariates that are to be transformed from
+Optional, default empty.
+A comma-separated list of categorical covariates that are to be transformed from
 one covariate with Y categories into Y-1 bivariate covariates.
 The -categorical list must be a subset of the -covariate list.
 If any covariate listed with option -categorical is not in the list -covariates there will be an error message.
@@ -76,9 +82,17 @@ input model ETAs will be correlated to covariates.
 The non-included ETAs, if any, must be the first 1 to 'skip\_etas' ETAs in the model.
 If the input model has BOV, the BOV ETAs must be skipped using this option. 
 \nextopt
-\optname{estimate\_final\_model}
-Default set. If unset with -no-estimate\_final\_model then script will not estimate
-the final frem model.
+\optname{estimate\_cholesky\_final\_model}
+Default not set.
+If set then script will estimate
+the final cholesky parameterized frem model, otherwise the model will be
+created but not estimated.
+\nextopt
+\optname{estimate\_regular\_final\_model}
+Default not set.
+If set then script will estimate
+the final regular parameterization frem model, otherwise the model will be
+created but not estimated.
 \nextopt
 \optname{vpc}
 Default not set. If set then script will create a frem model that can be run with the vpc script (in a separate call to the vpc pscript).  
@@ -86,6 +100,9 @@ Default not set. If set then script will create a frem model that can be run wit
 \optname{check}
 Set by default, disable with -no-check. Run safety check after frem data set generation. 
 \nextopt
+\optdefault{rplots}{level}
+{\Large \texttt{Later}}
+
 %\optdefault{dv}{name}
 %Default is DV. The name of the dependent variable. This must be the name used in \$INPUT,
 %the data file header is ignored. 
@@ -150,36 +167,57 @@ An ETA is assumed to belong to BOV occasion 1+$i$ if the corresponding \$OMEGA t
 %\item Check that there are no non-BOV ETAs after the first non-skipped BOV ETA, otherwise give error message.
 \item Check that the first (non-skipped) parameter ETA is the first in a new \$OMEGA record, otherwise give error message.
 \item Unless input model is already run \emph{and} its phi-file is found,
-run a copy of the input model to get estimates and phi-file.
-\item Count the number of parameter \$OMEGA blocks, N\_parameter\_blocks, that are needed in the frem model:
+run a copy of the input model (Model 1) to get estimates and phi-file.
+\item Count the number of parameter \$OMEGA blocks, N\_parameter\_blocks,
+that are needed in the frem model:
 Initiate N\_parameter\_blocks = 0. Skip all \$OMEGA for ETA <= skip\_etas.
-Then add 1 for each full block \$OMEGA and add N for each diagonal \$OMEGA of size N.
+Then add 1 for each block \$OMEGA and add N for each diagonal \$OMEGA of size N.
 \item Create frem dataset according to section FREM dataset below, include covariate observations 'N\_parameter\_blocks' times.
 %\item Create Model 1, model without covariates, with full \$OMEGA block for parameter BSV ETAs but without
 %and parameter BOV ETAs (pre-existing BOV ETAs removed), according to section below. Original data set.
 %\item Run Model 1.
 \item Create Model 2, model with covariates but without
-estimation of covariances between parameter and covariate ETAs, according to section below. FREM dataset.
-THETA and OMEGA and SIGMA for PK parameters are FIXED in this model. Include \$COV.
+estimation of covariances between parameter and covariate ETAs,
+according to section below. FREM dataset.
+THETA and OMEGA and SIGMA for PK parameters are FIXED in this model.
+Include \$COV.
 \item Run Model 2.
-\item Create FREM regular parameterization model,
+\item Create Model 3, FREM regular parameterization model,
 where there are N\_parameter\_blocks full \$OMEGA blocks with all covariances between parameter and covariate ETAs,
 according to section below.
 Use Model 2 ETA output in phi-file to compute initial estimates for correlations between parameter and covariate ETAs.
-\item Evaluate FREM model with MAXEVAL=0 to get more accurate phi-file ETAs. Recompute correlations
-between parameter and covariate ETAS based on phi-file.
-\item Cholesky reparameterize \$OMEGA block for parameter-covariate ETAs. FIX
+\item Evaluate Model 3 with MAXEVAL=0 to get more accurate phi-file ETAs.
+\item Recompute correlations
+between parameter and covariate ETAS based on phi-file from Model 3 evaluation,
+use these to create Model 4, which is same as Model 3 except
+with updated initial estimates for OMEGA off-diagonals.
+\item Create Model 5 by
+Cholesky reparameterizing the N\_parameter\_blocks \$OMEGA block(s)
+for parameter-covariate ETAs in Model 4. FIX
 everything in model except parameter-covariate correlation THETAs.
-\item Estimate Cholesky frem model, include \$COV step.
-\item Take final estimates from Cholesky frem model and transform back to regular \$OMEGA block for FREM regular model.
-\item Reestimate FREM regular model (everything or just \$OMEGA??). Run \$COV step.
+\item Estimate Model 5, include \$COV step.
+\item Create Model 6 (final Cholesky FREM model)
+by copying Model 5 and updating initial estimates from
+estimation of Model 5, and then un-FIX everything except parameters that
+were FIX in input model (Model 1).
+\item Create Model 7 by taking final estimates from Model 5 and 
+transforming back to regular \$OMEGA block(s) and FIX everything except
+the N\_parameter\_blocks \$OMEGA block(s) for parameter-covariate ETAs.
+\item Create Model 8 by copying Model 7 and un-FIXing everything except
+parameters that were FIX in input model (Model 1).
+\item Only if option -estimate\_cholesky\_final\_model is set:
+Estimate Model 6, include \$COV step.
+\item Only if option -estimate\_regular\_final\_model is set:
+Estimate Model 7 and Model 8 (FREM regular model) in parallel
+(also in parallel with cholesky final model, if requested).
+Include \$COV step.
 %\item If option -vpc is set, the script will also 
 %run the vpc1 model using estimates from FREM model as initial estimates,
 %and finally process output to generate a frem vpc model.
 \end{enumerate}
 
 
-\section{Model 0}
+\section{Model 1}
 The input model, input dataset.
 
 \section{FREM Dataset}
@@ -193,8 +231,8 @@ Create a new data set.
     \item Create a filter model. This is either a dummy NONMEM model or, if MDV has to be added,
     the original model with MAXEVAL=0 METHOD=ZERO and without \$COV.
 	\item Run the filter model where FREMTYPE=0 to filter the original data on any IGNORE/ACCEPT and to get a new data file
-    from \$TABLE where the column headers are the same as in \$INPUT but a FREMTYPE column is added with all zeros as values.
-    Also add MDV if not EVID or MDV in data set. In the dummy models no columns are DROPped or SKIPped.
+    from \$TABLE where the column headers are the same as in \$INPUT but a FREMTYPE column is added with only zeros as values.
+    Also add MDV if not EVID or MDV in data set. In the dummy model columns that are DROPped or SKIPped are replaced with an undropped column so that the filtered data set has the same number of columns as the original data set.
     \item  In new data file, append columns for Y-1 new bivariate covariate variables for each
           categorical covariate where number of categories Y>2. In subsequent analysis steps, replace old covariate with
           Y-1 new variables.
@@ -222,14 +260,15 @@ variance-covariance matrix later to be used as initial estimates in \$THETA and 
 %    \item[] (end inner loop over time-varying cov)
 %\end{enumerate}
 %\item[] (end loop over occasions)
-\item Compute median of time-varying cov over occasions for this individual, median is one scalar per covariate.
-\item Then store non-missing medians in array, one array per time-varying covariate, (to compute 
-median of medians later for \$THETA, and variance-covariance matrix  to be used in \$OMEGA).
+%\item Compute median of time-varying cov over occasions for this individual, median is one scalar per covariate.
+%\item Then store non-missing medians in array, one array per time-varying covariate, (to compute 
+%median of medians later for \$THETA, and variance-covariance matrix  to be used in \$OMEGA).
 \item[] (end loop over individuals)
 \end{enumerate}
 
 	\item Compute medians of %invariant and time-varying
-    covariates. Also compute variance-covariance matrix %of invariant covariates, and of medians (over occasions) for time-varying. Two separate variance-covariance matrices.
+    covariates. Warn if any median has absolute value less than $10^{-2}$ since additive error will be inappropriate for that covariate.
+    Also compute variance-covariance matrix %of invariant covariates, and of medians (over occasions) for time-varying. Two separate variance-covariance matrices.
     If missing values then just skip.
 \end{enumerate}
 
@@ -237,7 +276,7 @@ This dataset is used for Model 2 and frem models.
 
 \section{Data check model, FREM Dataset}
 \subsection{Initiation}
-Copy Model 0.
+Copy Model 1.
 
 \subsection{DATA changes}
 Set \$DATA to FREM dataset. Skip old IGNORE/ACCEPT. Set IGNORE=@ IGNORE=(FREMTYPE.GT.0)
@@ -245,7 +284,7 @@ Set \$DATA to FREM dataset. Skip old IGNORE/ACCEPT. Set IGNORE=@ IGNORE=(FREMTYP
 \subsection{INPUT changes}
 Append extra items to \$INPUT: MDV(possibly) and FREMTYPE.
 
-For safety check, done if option -check is set: Estimate Data check model. OFV should be identical to Model 0 OFV.
+For safety check, done if option -check is set: Estimate Data check model. OFV should be identical to Model 1 OFV.
 
 
 \section{Model 2-all covariates}
@@ -260,9 +299,9 @@ For safety check, done if option -check is set: Estimate Data check model. OFV s
 %Count number n\_theta of already present THETAS in Model 0. Count number bsv\_parameters, which is
 %equal to already present ETAs 
 %(dimensionality of total \$OMEGAs in Model 0) minus (start\_eta-1). 
-Count number of n\_eps already present (dimension of \$SIGMA in Model 0), set epsnum=n\_eps+1.
-Build Model 2 based on copy of Model 0, after updating initial estimates with final estimates
-from estimation of Model 0.
+Count number of n\_eps already present (dimension of \$SIGMA in Model 1), set epsnum=n\_eps+1.
+Build Model 2 based on copy of Model 1, after updating initial estimates with final estimates
+from estimation of Model 1.
 
 \subsection{DATA changes}
 Set \$DATA to FREM dataset. Skip old IGNORE/ACCEPT. Set IGNORE=@.
@@ -273,7 +312,7 @@ Append extra items to \$INPUT: MDV(sometimes) and FREMTYPE.
 \subsection{OMEGA changes}
 For the set of non-skipped parameter ETAs, change any diagonal \$OMEGA of size N>1
 to N \$OMEGA of size 1.
-FIX all \$OMEGAs from Model 0.
+FIX all \$OMEGAs from Model 1.
 %If have have time-invariant covariates:
 After each of the 'N\_parameter\_blocks' \$OMEGA for non-skipped ETAs, insert  
 a full BLOCK(N\_covariates) where initials is variance-covariance matrix of
@@ -282,10 +321,10 @@ Renumber existing parameter BSV ETA:s accordingly in \$PK/\$PRED.
 \noindent 
 \subsection{SIGMA changes}
 In \$SIGMA add 
-\$SIGMA 0.0000001 FIX; EPSCOV
+\$SIGMA 0.000001 FIX; EPSCOV
 %only one sigma even if many N\_parameter\_blocks
 \subsection{THETA changes}
-FIX all \$THETAs from Model 0.
+FIX all \$THETAs from Model 1.
 Loop over all covariates, j=1...N\_covariates, with inner loop over k=1...N\_parameter\_blocks, add lines\\
 \$THETA init\_j ; TVcov\_j\_k\\
 where init\_j is median of covariate j computed during creation of new data set, cov\_j is the name of covariate
@@ -344,13 +383,35 @@ END IF
 (do not define a case for FREMTYPE=0, original obs. Leave original code as it is for that)
 
 
-\section{FREM Model }
+\section{Model 3}
 
 This models is a copy of Model 2, but each pair of input model BSV and covariate blocks is combined
 into one large full block. Initial values for the new covariances are computed from
 phi-file from estimation of Model 2.
 
+only rectangular block from phi, triangles from inits.
+
+\section{Practical considerations}
+It can be expected that not all models in the frem sequence minimize successfully, and that this in turns 
+causes problems or errors in subsequent steps. 
+When this happens, the user can copy the problematic model and data from the m1 subdirectory and experiment with
+different initial estimates to get the minimization to succeed. Then the user should manually remove old output files for the
+failed run from the m1 subdirectory and replace them with output from the manipulated successful run, using the same 
+output file names. It is important to keep output files for all the successful runs preceeding the failed run, 
+otherwise PsN would rerun all models that do not have output files
+in m1. Output files from all steps after the manipulated step should also be removed.
+Finally the frem run should be restarted setting option -directory to the existing directory, and skipping 
+options that are not allowed when restarting a run (see information in list of options). The script
+will then use the existing output files as a starting point when continuing the analysis.
+
+%It can happen that final estimate OMEGA blocks in Model 3 are not positive definite due to rounding errors. Then the scripts
+%will halt with an error messages. In that case the user should remove all vpc\_model\_1 output files from
+%the m1 directory, open model\_3.ext and carefully add a small value to the diagonal elements of the problematic omega block,
+%save the edited model\_3.ext in m1, and restart frem. The program will then read the omega block from model\_3.ext
+%without running model 3 and then use that block instead.
+
 \section{Creating FREM vpc model}
+Needs to be revised.
 Done if option -vpc is given to FREM script. This part of the recipe describes modifications needed to FREM model and data set before running vpc. Definitions of model types (Model 2 and FREM Model) and names of \$OMEGA blocks are as in description above. 
 
 \subsection{Step 1: Obtain typical parameter values conditional on covariate info}
@@ -368,8 +429,8 @@ on them.
 %First take all parameters listed with option -parameters\_bov, since they have had BOV ETAs added. Then find additional
 Find parameters
 that have BSV ETA %already
-in model 0.
-To do this: Find all code lines starting with TV$<$par$>=$ in Model 0. Then find the lines starting with the corresponding $<$par$>=$ and
+in model 1.
+To do this: Find all code lines starting with TV$<$par$>=$ in Model 1. Then find the lines starting with the corresponding $<$par$>=$ and
 check if there is any ETA in the right hand side expression. If yes, then store the parameter name $<$par$>$.  
 % If not find THETA number then raise error.
 	\item Add \$TABLE with list of all undropped \$INPUT variables plus names of parameters that have BSV eta  + ONEHEADER NOAPPEND NOPRINT FILE=frem\_vpc.dta
@@ -380,7 +441,7 @@ check if there is any ETA in the right hand side expression. If yes, then store 
 \subsection{Step 3:  Calculate parameter OMEGA conditional on covariate OMEGA}
 Create frem\_vpc2.mod
 \begin{enumerate}
-	\item Base this model on Model 0. %1.
+	\item Base this model on Model 1. %1.
     \item Make the same SIGMA changes as in Model 2. 
 %    \item Make similar OMEGA changes as in Model 2, but no not add any BSV\_cov block or BOV\_cov\_occN blocks.
     \item Do not add any THETAs.
@@ -405,24 +466,6 @@ on them.
 \subsection{Step 4: Prepare to run  vpc}
 Now a regular vpc can be run on frem\_vpc2.mod found in the frem run directory.
 
-\section{Practical considerations}
-It can be expected that not all models in the frem sequence minimize successfully, and that this in turns 
-causes problems or errors in subsequent steps. 
-When this happens, the user can copy the problematic model and data from the m1 subdirectory and experiment with
-different initial estimates to get the minimization to succeed. Then the user should manually remove old output files for the
-failed run from the m1 subdirectory and replace them with output from the manipulated successful run, using the same 
-output file names. It is important to keep output files for all the successful runs preceeding the failed run, 
-otherwise PsN would rerun all models that do not have output files
-in m1. Output files from all steps after the manipulated step should also be removed.
-Finally the frem run should be restarted setting option -directory to the existing directory, and skipping 
-options that are not allowed when restarting a run (see information in list of options). The script
-will then use the existing output files as a starting point when continuing the analysis.
-
-%It can happen that final estimate OMEGA blocks in Model 3 are not positive definite due to rounding errors. Then the scripts
-%will halt with an error messages. In that case the user should remove all vpc\_model\_1 output files from
-%the m1 directory, open model\_3.ext and carefully add a small value to the diagonal elements of the problematic omega block,
-%save the edited model\_3.ext in m1, and restart frem. The program will then read the omega block from model\_3.ext
-%without running model 3 and then use that block instead.
 
 \section{Appendix: Compute conditional omega block}
 To calculate the conditional covariance matrix, 

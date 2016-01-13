@@ -341,12 +341,18 @@ sub append_bivariate_columns
 		if ($non_missing > 2){
 			$any_change = 1;
 			my @sorted = sort {$b<=>$a} keys (%factors); #descending numerically in keys
-			foreach my $key (@sorted){
+			for (my $i=0; $i < scalar(@sorted); $i++){
+				my $key = $sorted[$i];
 				next if ($key == $self->missing_data_token);
+				my $rounded = sprintf("%f",$key);
+				if ($rounded =~ /\./){ #if contains decimal
+					$rounded =~ s/0*$//; #remove trailing 0
+					$rounded =~ s/\.//; #remove decimal point
+				}
 				push(@col_mapping,$key);
  				push(@new_indices,$column_count);
-				push(@new_header,$label.'_'.$key);
-				push(@new_categorical,$label.'_'.$key);
+				push(@new_header,$label.'_'.$rounded);
+				push(@new_categorical,$label.'_'.$rounded);
 				$column_count++;
 				last if (scalar(@col_mapping) == ($non_missing-1));
 			}
@@ -386,7 +392,7 @@ sub frem_compute_covariate_properties
 							  type_index => { isa => 'Int', optional => 0 },
 							  dv_index => { isa => 'Int', optional => 0 },
 							  cov_indices => { isa => 'ArrayRef', optional => 0 },
-							  first_timevar_type => { isa => 'Int', optional => 0 },
+							  first_timevar_type => { isa => 'Int', optional => 1 },
 		);
 	#ref of hash of cov names to column numbers
 	my $filtered_data = $parm{'filtered_data'};
@@ -398,16 +404,26 @@ sub frem_compute_covariate_properties
 	my $evid_index = $parm{'evid_index'};
 	my $mdv_index = $parm{'mdv_index'};
 	my $type_index = $parm{'type_index'};
-	my $dv_index = $parm{'type_index'};
+	my $dv_index = $parm{'dv_index'};
 	my $cov_indices = $parm{'cov_indices'};
 	my $first_timevar_type = $parm{'first_timevar_type'};
 
 	my $results={};
+
+	unless (defined $first_timevar_type){
+		unless (scalar(@{$invariant_covariates}) == scalar(@{$cov_indices})){
+			croak("cov names count and cov indices count are different");
+		}
+		$first_timevar_type = scalar(@{$cov_indices});
+	}
 	
 	for (my $i=0; $i<scalar(@{$invariant_covariates}); $i++){
-		my $covariate = $invariant_covariates->[$i-1]; #cov name
-		my %strata = %{$filtered_data->factors(column => $cov_indices->[$i]+1, #column number in data set
+		my $covariate = $invariant_covariates->[$i]; #cov name
+		my $column = ($cov_indices->[$i])+1;
+#		print "covariate $covariate col $column\n";
+		my %strata = %{$filtered_data->factors(column => $column, #column number in data set
 											   return_occurences => 1,
+											   verbose => 0,
 											   unique_in_individual => 1,
 											   ignore_missing => 1)};
 
@@ -916,11 +932,13 @@ sub factors
 		 column => { isa => 'Int', optional => 1 },
 		 column_head => { isa => 'Str', optional => 1 },
 		 unique_in_individual => { isa => 'Bool', default => 1, optional => 1 },
+		 verbose => { isa => 'Bool', default => 0, optional => 1 },
 		 ignore_missing => { isa => 'Bool', default => 0, optional => 1 },
 		 return_occurences => { isa => 'Bool', default => 0, optional => 1 }
 	);
 	my $column = $parm{'column'};
 	my $column_head = $parm{'column_head'};
+	my $verbose = $parm{'verbose'};
 	my $unique_in_individual = $parm{'unique_in_individual'};
 	my $ignore_missing = $parm{'ignore_missing'};
 	my $return_occurences = $parm{'return_occurences'};
@@ -980,6 +998,7 @@ sub factors
 					($ifactors[0] == $self->missing_data_token ||
 					 $ifactors[1] == $self->missing_data_token)){ 
 				%factors = ( 'Non-unique values found' => 1 );
+				print "Individual ".$individual->idnumber." factors ".join(',',@ifactors)."\n" if ($verbose);
 			}
 		}
 		croak("No value found in column $column in individual ".

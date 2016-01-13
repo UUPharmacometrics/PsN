@@ -230,5 +230,20 @@ is_deeply($reg,['WT','CLCR'],'get regular cov');
 #more dataset handling FIXME
 #set_frem_code FIXME
 
+my $code = ['CL=THETA(2)*EXP(ETA(2))',
+			'V=TVV+ETA(33)',
+			'KA=THETA(4)*EXP(1+ETA(4))',
+			'Y=ETA(5)+ETA(6)'];
+my $ans = ['CL=THETA(2)*EXP(ETA(7))',
+			'V=TVV+ETA(33)',
+			'KA=THETA(4)*EXP(1+ETA(8))',
+			'Y=ETA(10)+ETA(11)'];
 
+tool::frem::renumber_etas(code => $code,
+						  eta_from => [[2,4,3,5,6]],
+						  eta_to => [[7,8,9,10,11]]);
+is($code->[0],$ans->[0],'renumber etas 1');
+is($code->[1],$ans->[1],'renumber etas 2');
+is($code->[2],$ans->[2],'renumber etas 3');
+is($code->[3],$ans->[3],'renumber etas 4');
 done_testing();

@@ -11,8 +11,34 @@ use math qw(round);
 
 require Exporter;
 our @ISA = qw(Exporter);
-our %EXPORT_TAGS = ('all' => [ qw(not_empty is_empty diff cumsum max min linspace unique add sum mean median median_and_ci variance stdev is_int quantile percentile is_equal get_array_positions sem rse any_nonzero) ]);
+our %EXPORT_TAGS = ('all' => [ qw(not_empty is_empty diff cumsum max min linspace unique add sum mean median median_and_ci variance stdev is_int quantile percentile is_equal get_array_positions get_positions sem rse any_nonzero) ]);
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
+
+
+sub get_positions{
+	#static
+	my %parm = validated_hash(\@_,
+							  target => { isa => 'ArrayRef', optional => 0 },
+							  keys => { isa => 'ArrayRef', optional => 0 },
+		);
+	my $target = $parm{'target'};
+	my $keys = $parm{'keys'};
+	my @cols= ();
+	return \@cols unless (defined $target and defined $keys);
+
+	for (my $i=0; $i< scalar(@{$keys}); $i++){
+		my $matched = undef;
+		for (my $j=0; $j< scalar(@{$target}); $j++){
+			if ($keys->[$i] eq $target->[$j]){
+				$matched = $j;
+				last;
+			}
+		}
+		push(@cols,$matched);
+	}
+	return \@cols; #this is sorted according to keys
+}
+
 
 sub get_array_positions{
 	#static
@@ -73,7 +99,7 @@ sub get_array_positions{
 		last if (scalar(@remaining_keys)<1);
 	}
 
-	return \@cols;
+	return \@cols; #this is sorted according to target, not keys
 }
 
 sub not_empty
