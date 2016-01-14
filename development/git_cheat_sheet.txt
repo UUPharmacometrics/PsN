@@ -1,0 +1,20 @@
+Remote branches for private backup purposes,
+i.e. single person working on branch:
+
+git branch <branch>				#create branch locally
+git push origin <branch>  	  	#push empty branch to origin
+git checkout <branch>   	  	#switch to branch locally
+
+{ #iterate until done with branch
+ #work on branch, commit, work, commit
+ git push origin <branch>  		#push work to origin branch
+}
+
+git checkout master				#switch to master locally
+git merge <branch>  			#merge local branch to local master
+git push    					# push master, with merged branch, to origin
+git push origin --delete <branch>   #remove branch from origin
+git branch -d <branch> 	 			#remove branch locally
+
+
+#check with gitk!
