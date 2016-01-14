@@ -67,6 +67,8 @@ Changes and bug fixes from PsN 4.4.8 to n.n.n
 - Bug fix: Centering of categorical covariates and covariates with piece-wise 
   linear relations in final model.
 - More documentation.
+- New options -adaptive, -adjusted, -al_coefficients, -log_scale, -normalize, -run_final_model
+- Removed option -lst_file (check)
 
    ___sumo___
 
@@ -79,7 +81,9 @@ Changes and bug fixes from PsN 4.4.8 to n.n.n
 
    ___frem___
 
-- Refactoring. Unit tests.
+- Complete rewrite of program.
+
+- New tests
 
 
    ___scm___
@@ -90,7 +94,9 @@ Changes and bug fixes from PsN 4.4.8 to n.n.n
 
 - More robust filtering on IGNORE/ACCEPT
 
-   ___ebe_npde___
+   ___simeval___ (was ebe_npde)
+
+- Renamed from ebe_npde to simeval
 
 - Separate decorrelation of iiv etas, ans iov etas per occasion
 
@@ -98,11 +104,12 @@ Changes and bug fixes from PsN 4.4.8 to n.n.n
 
 - New rplots template 
 
+- New option -n_simulation_models, allowing more than one sample per NONMEM control stream
 
    ___update_inits___
 
 - The option -degree can now take degrees greater than 1.
-- New functionality for automatic Cholesky reparameterization of OMEGA and SIGMA
+- New functionality for automatic Cholesky reparameterization of OMEGA and SIGMA, and inverse
 - Not required to have model or lst-file to read parameter values from, can update other model properties anyway
 
    ___execute___
@@ -116,6 +123,7 @@ Changes and bug fixes from PsN 4.4.8 to n.n.n
 - Algorithm changes, boxcox is new
 - Resume/Restart functionality
 - Automatic rplots with diagnostic graphs
+- Defaults for -samples and -resamples
 
    ___precond___
 
@@ -148,3 +156,7 @@ Changes and bug fixes from PsN 4.4.8 to n.n.n
 - New tool with the purpose of collecting small standardised output utilities
 - New function 'merge' that can merge multiple so-files with multiple SOBlocks into one file
 - New function 'pretty' that makes an so human readable (for example so:s created with nmoutput2so without -pretty) 
+
+   ___se_of_eta___
+
+- Program is removed, because the program output is given by NONMEM in phi-file.
