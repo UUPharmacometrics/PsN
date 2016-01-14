@@ -83,7 +83,7 @@ sub get_bin_files{
 		'data_stats', 'se_of_eta', 'update_inits', 'update', 'npc', 'vpc',
 		'pind','nonpb','extended_grid','psn','psn_options','psn_clean',
 		'runrecord','mcmp','lasso','mimp','xv_scm','parallel_retries',
-		'boot_scm','gls','ebe_npde','frem','randtest','linearize', 'crossval', 'pvar', 'nca', 'vpctable','sir','rawresults',
+		'boot_scm','gls','simeval','ebe_npde','frem','randtest','linearize', 'crossval', 'pvar', 'nca', 'vpctable','sir','rawresults',
 		'precond', 'covmat','nmoutput2so'
 		);
 

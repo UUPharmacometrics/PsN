@@ -1,15 +1,15 @@
 \input{inputs/format_header.tex}
-\guidetitle{EBE\_NPDE user guide}{2015-11-16}
+\guidetitle{SIMEVAL user guide}{2016-01-14}
 
 \begin{document}
 
 \maketitle
-\newcommand{\guidetoolname}{ebe\_npde}
+\newcommand{\guidetoolname}{simeval}
 
 
 \section{Overview}
 
-The ebe\_npde program is a tool for simulation-evaluation based diagnostics.
+The simeval program is a tool for simulation-evaluation based diagnostics.
 %based on objective functiuon value (OFV), individual function value (iOFV)
 %and empirical Bayes estimates (EBEs). 
 The principle is 
@@ -32,7 +32,7 @@ Auto-generated R-plots from PsN.
 
 Example call
 \begin{verbatim}
-ebe_npde run1.mod -rplots=1
+simeval run1.mod -rplots=1
 \end{verbatim}
 
 \section{Input and options}
@@ -75,7 +75,7 @@ or psn\_options -h on the commandline.
 \input{inputs/basic_options.tex}
 
 \subsection{Auto-generated R-plots from PsN}
-\newcommand{\rplotsconditions}{The default ebe\_npde template 
+\newcommand{\rplotsconditions}{The default simeval template 
 requires that library PerformanceAnalytics is installed.
 If the conditions are not fulfilled then no pdf will be generated,
 see the .Rout file in the main run directory for error messages.}

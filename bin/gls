@@ -174,7 +174,7 @@ $help_text{-gls_model} = <<'EOF';
       Then PsN will add the GLSP code to the gls model and run it directly, saving 
       the original model run.
 
-      Note that a run with the ebe_npde program will automatically generate
+      Note that a run with the simeval program will automatically generate
       a complete input file for gls (including PRED IPRED and per-observation shrinkage).
 EOF
 

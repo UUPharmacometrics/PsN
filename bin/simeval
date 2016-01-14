@@ -37,7 +37,7 @@ my $res = GetOptions( \%options,
 		      keys(%optional_options) );
 exit unless $res;
 
-common_options::setup( \%options, 'ebe_npde' ); #get defaults, 
+common_options::setup( \%options, 'simeval' ); #get defaults, 
 #calls set_globals etc, initiates random sequence
 
 my %help_text;
@@ -46,7 +46,7 @@ $help_text{Pre_help_message} = <<'EOF';
 Normalised prediction distribution errors
 EOF
 $help_text{Description} = <<'EOF';      
-The ebe_npde program computes normalised prediction distribution errors for
+The simeval program computes normalised prediction distribution errors for
 the empirical Bayes estimates, similar to the procedure described in
 
 Comets, Computing normalised prediction distribution errors
@@ -55,7 +55,7 @@ J CMPB 90(2008) 154–166.
 
 EOF
 $help_text{Examples} = <<'EOF';      
-	ebe_npde run2.mod
+	simeval run2.mod
 EOF
 
 $help_text{Options} = <<'EOF';      
@@ -67,13 +67,13 @@ EOF
 $help_text{-h} = <<'EOF';
       -h | -?
       
-      With -h or -? ebe_npde will print a list of options and exit.
+      With -h or -? simeval will print a list of options and exit.
 EOF
       
 $help_text{-help} = <<'EOF';      
       -help
       
-      With -help ebe_npde will print this, longer, help message.
+      With -help simeval will print this, longer, help message.
 EOF
 
 $help_text{-samples} = <<'EOF';
@@ -132,16 +132,16 @@ $help_text{Post_help_message} = <<'EOF';
     Also see 'psn_options -h' for a description of common PsN options.
 EOF
 
-common_options::online_help( 'ebe_npde', \%options, \%help_text, \%required_options, \%optional_options);
+common_options::online_help( 'simeval', \%options, \%help_text, \%required_options, \%optional_options);
 
 ## Check that we do have a model file
 if ( scalar(@ARGV) < 1 ) {
-  print "An input model file must be specified. Use 'ebe_npde -h' for help.\n";
+  print "An input model file must be specified. Use 'simeval -h' for help.\n";
   exit;
 }
 
 if( scalar(@ARGV) > 1 ){
-  print "ebe_npde can only handle one modelfile, you listed: ",join(',',@ARGV),". Use 'ebe_npde -h' for help.\n";die;
+  print "simeval can only handle one modelfile, you listed: ",join(',',@ARGV),". Use 'simeval -h' for help.\n";die;
   exit;
 }
 
@@ -156,11 +156,11 @@ my $model = model -> new ( eval( $eval_string ),
 			   filename                    => $ARGV[0],
 			   ignore_missing_output_files => 1);
 
-input_checking::check_options(tool => 'ebe_npde', options => \%options, model => $model);
+input_checking::check_options(tool => 'simeval', options => \%options, model => $model);
 
-require tool::ebe_npde;
+require tool::simeval;
 
-my $ebe_npde = tool::ebe_npde->new( eval( $common_options::parameters ),
+my $simeval = tool::simeval->new( eval( $common_options::parameters ),
 									lst_file => $options{'lst_file'},
 									estimate_input => $options{'estimate_input'},
 									reminimize => $options{'reminimize'},
@@ -169,13 +169,13 @@ my $ebe_npde = tool::ebe_npde->new( eval( $common_options::parameters ),
 									models	     => [ $model ],
 									samples            => $options{'samples'} );
 
-$ebe_npde-> print_options (cmd_line => $cmd_line,
-						   toolname => 'ebe_npde',
+$simeval-> print_options (cmd_line => $cmd_line,
+						   toolname => 'simeval',
 						   local_options => [keys %optional_options],
 						   common_options => \@common_options::tool_options);
 
    
-$ebe_npde -> run;
-$ebe_npde -> print_results; #for rplots
-ui -> print( category => 'ebe_npde',
-	     message => "\nebe_npde done\n" );
+$simeval -> run;
+$simeval -> print_results; #for rplots
+ui -> print( category => 'simeval',
+	     message => "\nsimeval done\n" );

@@ -41,7 +41,7 @@ sub check_options
 		$error .= check_sir(options => $options, model => $model);
 	}
 
-	if ($tool eq 'ebe_npde'){
+	if ($tool eq 'simeval'){
 		$msfi = 1;
 		$single_prob_or_tnpri = 1;
 		$require_est = 1;
@@ -355,7 +355,7 @@ sub check_simeval
 										 option_name  => 'METHOD',
 										 option_index => 0);
 	if (not (defined $meth) or ($meth eq '0') or ($meth =~ /^ZE/)){
-		$error .= 'Cannot run ebe_npde if METHOD=0, all ETAs will be 0'."\n";
+		$error .= 'Cannot run simeval if METHOD=0, all ETAs will be 0'."\n";
 	}
 
 	return $error;

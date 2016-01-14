@@ -1,4 +1,4 @@
-package tool::ebe_npde;
+package tool::simeval;
 
 use include_modules;
 use tool::modelfit;
@@ -6,7 +6,7 @@ use log;
 use Math::Random;
 use Config;
 use linear_algebra;
-use npde_util;
+use simeval_util;
 use Moose;
 use MooseX::Params::Validate;
 use utils::file;
@@ -25,8 +25,8 @@ has 'have_iwres' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'have_nwpri' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'have_tnpri' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'probnum' => ( is => 'rw', isa => 'Int', default => 1 );
-has 'logfile' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { ['ebe_npde.log'] } );
-has 'results_file' => ( is => 'rw', isa => 'Str', default => 'ebe_npde_results.csv' );
+has 'logfile' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { ['simeval.log'] } );
+has 'results_file' => ( is => 'rw', isa => 'Str', default => 'simeval_results.csv' );
 has 'iiv_eta' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { [] } );
 has 'iov_eta' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 has 'occasions' => ( is => 'rw', isa => 'Int',default => 0 );
@@ -221,7 +221,7 @@ sub modelfit_setup
 
 		tool::add_to_nmoutput(run => $run_orig, extensions => ['phi','ext']);		
 
-		ui -> print( category => 'ebe_npde',
+		ui -> print( category => 'simeval',
 					 message  => "Running original model to get final parameter estimates for simulation" );
 
 		$run_orig -> run;
@@ -379,7 +379,7 @@ sub modelfit_setup
 
 	my $typerun = 'evaluations';
 	$typerun = 'reestimations' if $self->reminimize;
-	ui -> print( category => 'ebe_npde',
+	ui -> print( category => 'simeval',
 				 message  => "Running simulations and $typerun" );
 	$self->tools([]) unless defined $self->tools;
 	push( @{$self->tools}, $run_sim);
@@ -428,7 +428,7 @@ sub modelfit_analyze
 		my $filter_all_zero_array = [0,0];
 		my $init_only_array = [0,1];
 
-		my $ret = npde_util::get_nmtabledata(filenames => \@found_files,
+		my $ret = simeval_util::get_nmtabledata(filenames => \@found_files,
 											 header_strings_array => $headers_array,
 											 values_matrix_array => $values_matrix_array,
 											 mean_matrix_array => $mean_matrix_array,
@@ -454,7 +454,7 @@ sub modelfit_analyze
 		my $npd = [];
 		my $pd = [];
 
-		$ret = npde_util::decorrelation($est_matrix,$mean_matrix,$decorr,$stdev);
+		$ret = simeval_util::decorrelation($est_matrix,$mean_matrix,$decorr,$stdev);
 		unless ($ret ==0){
 			ui->print(category=> 'all',
 					  message =>"\nError in decorrelation for iwres: $ret. iwres results cannot be computed\n");
@@ -514,7 +514,7 @@ sub modelfit_analyze
 		}
 
 		if ($self->have_CDF()){
-			$ret = npde_util::npde_comp($decorr,$pde,$npde);
+			$ret = simeval_util::npde_comp($decorr,$pde,$npde);
 			unless ($ret ==0){
 				ui->print(category=> 'all',
 						  message => "\nError in npde_comp for iwres: $ret. iwres results cannot be computed\n");
@@ -533,7 +533,7 @@ sub modelfit_analyze
 			}
 			close (DAT);
 
-			$ret = npde_util::npde_comp($est_matrix,$pd,$npd);
+			$ret = simeval_util::npde_comp($est_matrix,$pd,$npd);
 			unless ($ret ==0){
 				ui->print(category=> 'all',
 						  message => "\nError in npde_comp for iwres: $ret. iwres results cannot be computed\n");
@@ -610,7 +610,7 @@ sub modelfit_analyze
 			push(@{$init_only_array},0);
 		}
 
-		my $ret = npde_util::get_nmtabledata(filenames => \@found_files,
+		my $ret = simeval_util::get_nmtabledata(filenames => \@found_files,
 											 header_strings_array => $headers_array,
 											 values_matrix_array => $values_matrix_array,
 											 mean_matrix_array => $mean_matrix_array,
@@ -672,12 +672,12 @@ sub modelfit_analyze
 #		}
 
 
-		$ret = npde_util::decorrelation($est_matrix,$mean_matrix,$decorr,$stdev);
+		$ret = simeval_util::decorrelation($est_matrix,$mean_matrix,$decorr,$stdev);
 		unless ($ret ==0){
 			print "\nError in decorrelation for iofv: $ret. iofv results cannot be computed\n";
 			last;
 		}
-		$ret = npde_util::npde_comp($decorr,$pde,$npde);
+		$ret = simeval_util::npde_comp($decorr,$pde,$npde);
 #		unless ($ret ==0){
 #			print "\nError in npde_comp for iofv: $ret. iofv results cannot be computed\n";
 #			last;
@@ -726,7 +726,7 @@ sub modelfit_analyze
 				close (DAT);
 			}
 			if (0){
-				$ret = npde_util::npde_comp($est_matrix,$pd,$npd);
+				$ret = simeval_util::npde_comp($est_matrix,$pd,$npd);
 				unless ($ret ==0){
 					print "\nError in npde_comp for iofv: $ret. iofv results cannot be computed\n";
 					last;
@@ -772,7 +772,7 @@ sub modelfit_analyze
 			}
 			close ORI;
 			
-			$ret = npde_util::decorrelation($est_matrix,$mean_matrix,$decorr,$dummy);
+			$ret = simeval_util::decorrelation($est_matrix,$mean_matrix,$decorr,$dummy);
 			unless ($ret ==0){
 				print "\nError in decorrelation for ebe: $ret. ebe results cannot be computed\n";
 				last;
@@ -792,7 +792,7 @@ sub modelfit_analyze
 			}
 			close ORI;
 			
-			$ret = npde_util::npde_comp($decorr,$pde,$npde);
+			$ret = simeval_util::npde_comp($decorr,$pde,$npde);
 			unless ($ret ==0){
 				print "\nError in npde_comp for eta: $ret. ebe results cannot be computed\n";
 				last;
@@ -817,7 +817,7 @@ sub modelfit_analyze
 
 
 
-				$ret = npde_util::npde_comp($est_matrix,$pd,$npd);
+				$ret = simeval_util::npde_comp($est_matrix,$pd,$npd);
 				unless ($ret ==0){
 					print "\nError in npde_comp for ebe: $ret. ebe results cannot be computed\n";
 					last;
@@ -888,7 +888,7 @@ sub _modelfit_raw_results_callback
 		#it happens to be from second $PROB
 
 		if ( defined $modelfit -> raw_results() ) {
-			trace(tool => 'ebe_npde', message => "Preparing to rearrange raw_results in memory, adding ".
+			trace(tool => 'simeval', message => "Preparing to rearrange raw_results in memory, adding ".
 									"model name information", level => 1);
 
 			my $n_rows = scalar(@{$modelfit -> raw_results()});
@@ -913,7 +913,7 @@ sub _modelfit_raw_results_callback
 					$type='simulation';
 				}
 				if ($step < 0){
-					ui -> print( category => 'ebe_npde',
+					ui -> print( category => 'simeval',
 								 message  => "Warning: It seems the raw_results is not sorted");
 				}else {
 
@@ -964,7 +964,7 @@ sub _modelfit_raw_results_callback
 					$type='simulation';
 				}
 				if ($step < 0){
-					ui -> print( category => 'ebe_npde',
+					ui -> print( category => 'simeval',
 								 message  => "Warning: It seems the raw_nonp_results is not sorted");
 				} else {
 					$sample += $step; #normally +1, sometimes 0,sometimes 2 or more
@@ -1080,7 +1080,7 @@ sub create_R_plots_code{
 		'  # for successful samples='.$succ;
 
 	$rplot->add_preamble(code => [
-							 '#ebe_npde-specific preamble',
+							 '#simeval-specific preamble',
 							 'samples   <-'.$self->samples,
 							 'successful.samples  <- '.$self->successful_samples,
 							 $outlying,

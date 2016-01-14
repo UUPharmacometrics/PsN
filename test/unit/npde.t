@@ -8,25 +8,25 @@ use File::Path 'rmtree';
 use FindBin qw($Bin);
 use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages
-use npde_util;
+use simeval_util;
 use file;
 use model;
 use model::problem::init_record;
-use tool::ebe_npde;
+use tool::simeval;
 
 
 my @arr = qw(0 1 2 3 4 5 6 7 ); #first is orig
-cmp_float(npde_util::pde(\@arr),1/7,"pde zero below all");
+cmp_float(simeval_util::pde(\@arr),1/7,"pde zero below all");
 $arr[0]=0.5;
-cmp_float(npde_util::pde(\@arr),1/7,"pde below all");
+cmp_float(simeval_util::pde(\@arr),1/7,"pde below all");
 $arr[0]=8;
-cmp_float(npde_util::pde(\@arr),(1-1/7),"pde above all");
+cmp_float(simeval_util::pde(\@arr),(1-1/7),"pde above all");
 $arr[0]=3;
-cmp_float(npde_util::pde(\@arr),2/7,"pde middle");
+cmp_float(simeval_util::pde(\@arr),2/7,"pde middle");
 
 
-is(tool::ebe_npde::formatfloat(0.3456),'0.34560000','format float regular');
-is(tool::ebe_npde::formatfloat(-99),'','format float missing');
+is(tool::simeval::formatfloat(0.3456),'0.34560000','format float regular');
+is(tool::simeval::formatfloat(-99),'','format float missing');
 
 
 my $filedir = $includes::testfiledir . '/npde/';
@@ -38,7 +38,7 @@ my $values_matrix_array = [[],[],[]];
 my $filter_all_zero_array = [1,0,0];
 my $init_only_array = [0,0,1];
 
-my $ok = npde_util::get_nmtabledata(filenames => \@file_array,
+my $ok = simeval_util::get_nmtabledata(filenames => \@file_array,
 									header_strings_array => $headers_array,
 									values_matrix_array => $values_matrix_array,
 									mean_matrix_array => $mean_matrix_array,
@@ -46,9 +46,9 @@ my $ok = npde_util::get_nmtabledata(filenames => \@file_array,
 									init_only_array => $init_only_array);
 
 
-#my $nmtablefiles = npde_util::get_nmtablefiles(files => \@file_array);
+#my $nmtablefiles = simeval_util::get_nmtablefiles(files => \@file_array);
 
-#my $ok = npde_util::read_table_files(\@file_array,\@headers,$est_matrix,$mean_matrix,1);
+#my $ok = simeval_util::read_table_files(\@file_array,\@headers,$est_matrix,$mean_matrix,1);
 	#in reference to empty array to put results [over columns][over individuals][over samples/files]
 	#in reference to empty array to put mean [over columns][over individuals] without original
 
@@ -107,7 +107,7 @@ if (0){
 
 my $decorr = [];
 my $shrink =[];
-$ok = npde_util::decorrelation($est_matrix,$mean_matrix,$decorr,$shrink);
+$ok = simeval_util::decorrelation($est_matrix,$mean_matrix,$decorr,$shrink);
 is ($ok, 0, "decorrelation return status");
 
 #param #indiv $sample
@@ -164,7 +164,7 @@ if (0){
 }
 my $npde = [];
 my $pde = [];
-$ok = npde_util::npde_comp($decorr, $pde, $npde);
+$ok = simeval_util::npde_comp($decorr, $pde, $npde);
 is ($ok, 0, "npde_comp eta return status");
 # first ind ETA 2 $pde_matrix->[1]->[0]
 #for (my $i=0;$i < scalar(@{$pde->[0]}); $i++) {
@@ -198,7 +198,7 @@ my $values_matrix_array = [[],[],[]];
 my $filter_all_zero_array = [1,0,0];
 my $init_only_array = [0,0,1];
 
-my $ok = npde_util::get_nmtabledata(filenames => \@file_array,
+my $ok = simeval_util::get_nmtabledata(filenames => \@file_array,
 									header_strings_array => $headers_array,
 									values_matrix_array => $values_matrix_array,
 									mean_matrix_array => $mean_matrix_array,
@@ -208,7 +208,7 @@ my $ok = npde_util::get_nmtabledata(filenames => \@file_array,
 
 
 
-#my $ok = npde_util::read_table_files(\@file_array,\@headers,$est_matrix,$mean_matrix,1);
+#my $ok = simeval_util::read_table_files(\@file_array,\@headers,$est_matrix,$mean_matrix,1);
 	#in reference to empty array to put results [over columns][over individuals][over samples/files]
 	#in reference to empty array to put mean [over columns][over individuals] without original
 
@@ -243,7 +243,7 @@ cmp_ok(abs($mean_matrix->[1]->[4]-(-0.204386/3)),'<',$diff,'mean ETA2 ind 5');
 
 
 @file_array=($filedir.'original_iwres.dta',$filedir.'iwres-1.dta',$filedir.'iwres-2.dta',$filedir.'iwres-3.dta');
-#my $ok = npde_util::read_table_files(\@file_array,\@headers,$est_matrix,$mean_matrix,1);
+#my $ok = simeval_util::read_table_files(\@file_array,\@headers,$est_matrix,$mean_matrix,1);
 #is ($ok, 0, "read_table_files iwres return status");
 
 my $headers_array = [['IWRES'],['ID','MDV']];
@@ -252,7 +252,7 @@ my $values_matrix_array = [[],[]];
 my $filter_all_zero_array = [0,0];
 my $init_only_array = [0,1];
 
-my $ok = npde_util::get_nmtabledata(filenames => \@file_array,
+my $ok = simeval_util::get_nmtabledata(filenames => \@file_array,
 									header_strings_array => $headers_array,
 									values_matrix_array => $values_matrix_array,
 									mean_matrix_array => $mean_matrix_array,
@@ -276,7 +276,7 @@ cmp_ok($est_matrix->[0]->[69]->[3],'==',-0.00014352,'iwres rec 70  sim3');
 
 $decorr = [];
 $shrink =[];
-$ok = npde_util::decorrelation($est_matrix,$mean_matrix,$decorr,$shrink);
+$ok = simeval_util::decorrelation($est_matrix,$mean_matrix,$decorr,$shrink);
 is ($ok, 0, "decorrelation iwres return status");
 
 if (0){
@@ -314,7 +314,7 @@ my $values_matrix_array = [[],[]];
 my $filter_all_zero_array = [0,0];
 my $init_only_array = [0,1];
 
-my $ok = npde_util::get_nmtabledata(filenames => \@file_array,
+my $ok = simeval_util::get_nmtabledata(filenames => \@file_array,
 									header_strings_array => $headers_array,
 									values_matrix_array => $values_matrix_array,
 									mean_matrix_array => $mean_matrix_array,

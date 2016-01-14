@@ -43,15 +43,15 @@ $options{'cv_theta'} = '12,13';
 dies_ok { input_checking::check_options(tool => 'sir', options => \%options, model => $model) } "check cv_omega undef when cv_theta array ";
 
 %options=();
-dies_ok { input_checking::check_options(tool => 'ebe_npde', options => \%options, model => $model) } "ebe_npde croak METHOD=ZERO ";
+dies_ok { input_checking::check_options(tool => 'simeval', options => \%options, model => $model) } "simeval croak METHOD=ZERO ";
 
 
 %options=();
 $model = model->new(filename => "$modeldir/pheno_cond.mod", ignore_missing_data => 1);
 $options{'threads'}=2;
-input_checking::check_options(tool => 'ebe_npde', options => \%options, model => $model); 
-is($options{'samples'},300,'check ebe_npde default samples');
-is($options{'n_simulation_models'},2,'check ebe_npde default n_simulation_models');
+input_checking::check_options(tool => 'simeval', options => \%options, model => $model); 
+is($options{'samples'},300,'check simeval default samples');
+is($options{'n_simulation_models'},2,'check simeval default n_simulation_models');
 
 
 done_testing();

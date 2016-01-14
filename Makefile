@@ -8,7 +8,7 @@ LIBFILES= ui.pm \
 	common_options.pm \
 	input_checking.pm \
 	linear_algebra.pm \
-	npde_util.pm \
+	simeval_util.pm \
 	psn.conf_template \
 	OSspecific.pm \
 	binning.pm \
@@ -27,7 +27,7 @@ LIBFILES= ui.pm \
 	matlab/bca.m \
 	matlab/histograms.m \
 	matlab/profiles.m \
-	R-scripts/ebe_npde_default.R \
+	R-scripts/simeval_default.R \
 	R-scripts/sse_default.R \
 	R-scripts/sir_default.R \
 	R-scripts/llp_default.R \
@@ -155,7 +155,7 @@ LIBFILES= ui.pm \
 	tool/sse.pm \
 	tool/gls.pm \
 	tool/frem.pm \
-	tool/ebe_npde.pm \
+	tool/simeval.pm \
 	tool/xv_step.pm \
 	tool/xv.pm \
 	tool/lasso.pm \
@@ -248,7 +248,7 @@ COMPFILES=boot_scm \
 	bootstrap \
 	cdd \
 	crossval \
-	ebe_npde \
+	simeval \
 	execute \
 	extended_grid \
 	frem \

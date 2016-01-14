@@ -25,7 +25,6 @@ my %optional_options = (
 			 'covmat' => '',
 			 'crossval' => '',
 			 'data_stats' => '',
-			 'ebe_npde' => '',
 			 'execute' =>'',
 			 'extended_grid' => '',
 			 'frem' => '',
@@ -50,7 +49,7 @@ my %optional_options = (
 			 'rawresults' => '',
 			 'runrecord' => '',
 			 'scm' => '',
-			 'se_of_eta' => '',
+			 'simeval' => '',
 			 'sir' => '',
 			 'sse' => '',
 			 'sumo' => '',
@@ -112,9 +111,9 @@ $help_text{-data_stats} = <<'EOF';
 	Run 'data_stats -help' for details.
 EOF
 
-$help_text{-ebe_npde} = <<'EOF';
-    ebe_npde - Normalized prediction distribution errors applied on empirical bayes estimates
-	See ebe_npde_userguide.pdf for details. 
+$help_text{-simeval} = <<'EOF';
+    simeval - simulation-evaluation diagnostics of outliers.
+	See simeval_userguide.pdf for details. 
 EOF
 
 $help_text{-execute} = <<'EOF';
@@ -235,11 +234,6 @@ EOF
 $help_text{-scm} = <<'EOF';
     scm - Stepwise Covariate Model-building
 	See scm_userguide.pdf for details.
-EOF
-
-$help_text{-se_of_eta} = <<'EOF';
-    se_of_eta - Standard Errors of Etas
-	Run 'se_of_eta -help' for details.
 EOF
 
 $help_text{-sir} = <<'EOF';
