@@ -59,8 +59,8 @@ Separate description of <a href="pdfdocs/vpc_binning.pdf" target="_blank"><stron
     <dt><a href="pdfdocs/cdd_userguide.pdf" target="_blank"><strong>cdd</strong></a></dt>
     <dd>Case Deletion Diagnostics</dd>
 
-    <dt><a href="pdfdocs/ebe_npde_userguide.pdf" target="_blank"><strong>ebe_npde</strong></a></dt>
-    <dd>Normalized prediction distribution errors applied on empirical bayes estimates</dd>
+    <dt><a href="pdfdocs/simeval_userguide.pdf" target="_blank"><strong>simeval</strong></a></dt>
+    <dd>Simulation-Evaluation diagnostics of outliers. Was ebe_npde.</dd>
 
     <dt><a href="pdfdocs/frem_userguide.pdf" target="_blank"><strong>frem</strong></a></dt>
     <dd>Full random effects model</dd>
