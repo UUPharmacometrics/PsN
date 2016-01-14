@@ -81,7 +81,12 @@ The default is 0, which means all
 input model ETAs will be correlated to covariates.
 The non-included ETAs, if any, must be the first 1 to 'skip\_etas' ETAs in the model.
 If the input model has BOV, the BOV ETAs must be skipped using this option, so if the model has BOV the ETAs must
-be the the first 1 to 'skip\_etas' ETAs. 
+be the the first 1 to 'skip\_etas' ETAs.
+This option is not allowed in combination with skip\_omegas.
+\nextopt
+\optdefault{skip\_omegas}{comma-separated list of record order numbers} 
+{\Large \texttt{??? TODO: alternative to skip\_etas. If set, then put the skipped omegas as the first ones, renumber all
+etas accordingly, and automatically set skip\_etas to correct number. Added as first step setup Model 2}}
 \nextopt
 \optname{estimate\_cholesky\_final\_model}
 Default not set.
@@ -169,13 +174,13 @@ An ETA is assumed to belong to BOV occasion 1+$i$ if the corresponding \$OMEGA t
 \item Check that the first (non-skipped) parameter ETA is the first in a new \$OMEGA record, otherwise give error message.
 \item Unless input model is already run \emph{and} its phi-file is found,
 run a copy of the input model (Model 1) to get estimates and phi-file.
-\item Count the number of parameter \$OMEGA blocks, N\_parameter\_blocks,
-that are needed in the frem model:
-Initiate N\_parameter\_blocks = 0. Skip all \$OMEGA for ETA <= skip\_etas.
-Then add 1 for each block \$OMEGA and add N for each diagonal \$OMEGA of size N.
-\item Create frem dataset according to section FREM dataset below, include covariate observations 'N\_parameter\_blocks' time(s).
-\\
-\emph{Alternative:} include covariate observations 1 time
+%\item Count the number of parameter \$OMEGA blocks, N\_parameter\_blocks,
+%that are needed in the frem model:
+%Initiate N\_parameter\_blocks = 0. Skip all \$OMEGA for ETA <= skip\_etas.
+%Then add 1 for each block \$OMEGA and add N for each diagonal \$OMEGA of size N.
+%\item Create frem dataset according to section FREM dataset below, include covariate observations 'N\_parameter\_blocks' time(s).
+%\emph{Alternative:} 
+\item Create frem dataset according to section FREM dataset below, include covariate observations 1 time.
 
 %\item Create Model 1, model without covariates, with full \$OMEGA block for parameter BSV ETAs but without
 %and parameter BOV ETAs (pre-existing BOV ETAs removed), according to section below. Original data set.
@@ -186,35 +191,45 @@ according to section below. FREM dataset.
 THETA and OMEGA and SIGMA for PK parameters are FIXED in this model.
 Include \$COV.
 \item Estimate Model 2.
-\item Create Model 3, FREM regular parameterization model,
-where there are N\_parameter\_blocks full \$OMEGA blocks with all covariances between parameter and covariate ETAs,
-according to section below.
-Use Model 2 ETA output in phi-file to compute initial estimates for correlations between parameter and covariate ETAs.
-\item Evaluate Model 3 with MAXEVAL=0 to get more accurate phi-file ETAs.
+\item Create Model 3, 
+%where there are N\_parameter\_blocks full \$OMEGA blocks with all covariances between parameter and covariate ETAs,
+%according to section below.
+where there is a single full \$OMEGA blocks with all covariances between parameter and covariate ETAs.
+
+Model 3 is a copy of Model 2, but all non-skipped Model 1 omega plus covariate omega are combined
+into single large block. For covariances between parameter omegas that did
+not have covariance in Model 1, set very very small init $10^{-7}$.
+Initial values for covariances between parameter-covariate ETAs are computed from
+phi-file from estimation of Model 2.
+Set MAXEVAL=0.
+\item Evaluate Model 3 to get more accurate phi-file ETAs.
 \item Recompute correlations
-between parameter and covariate ETAS based on phi-file from Model 3 evaluation,
-use these to create Model 4, which is same as Model 3 except
-with updated initial estimates for OMEGA off-diagonals. Do not estimate Model 4(?).
-\item Create Model 5 by
-Cholesky reparameterizing the N\_parameter\_blocks \$OMEGA block(s)
-for parameter-covariate ETAs in Model 4. FIX
-everything in model except parameter-covariate correlation THETAs.
+between parameter and covariate ETAs based on phi-file from Model 3 evaluation,
+use these to create Model 4.
+
+Model 4 is a copy of model 3, but update parameter-covariate covariances from phi-file from evaluation of Model 3
+(a rectangular part of \$OMEGA block).
+Leave all parameter-parameter and covariate-covariate covariances as is.
+Set estimation record back to what it was in Model 1.
+Unfix the parameter-covariate \$OMEGA block, and unfix everything that was not fix in Model 1.
+Model 4 is the (unestimated) regular parameterization FREM model.
+\item
+Create Model 5 by
+Cholesky reparameterizing the \$OMEGA block
+for parameter-covariate ETAs in Model 4.
+Set to 0 FIX the parameter-parameter correlations that are 0 in Model 1 (separate blocks in Model 1).
+FIX everything in model except parameter-covariate correlation THETAs.
 \item Estimate Model 5, include \$COV step.
-\item Create Model 6 (final Cholesky FREM model)
+\item Create Model 6 
 by copying Model 5 and updating initial estimates from
 estimation of Model 5, and then un-FIX everything except parameters that
-were FIX in input model (Model 1).
-\item Create Model 7 by taking final estimates from Model 5 and 
-transforming back to regular \$OMEGA block(s) and FIX everything except
-the N\_parameter\_blocks \$OMEGA block(s) for parameter-covariate ETAs.
-\item Create Model 8 by copying Model 7 and un-FIXing everything except
-parameters that were FIX in input model (Model 1).
+were FIX in input model (Model 1) and correlations that are exactly 0.
+Model 6 is the (unestimated) Cholesky parameterization FREM model.
 \item Only if option -estimate\_cholesky\_final\_model is set:
 Estimate Model 6, include \$COV step.
 \item Only if option -estimate\_regular\_final\_model is set:
-Estimate Model 7 and Model 8 (FREM regular model) in parallel
-(also in parallel with cholesky final model, if requested).
-Include \$COV step.
+Estimate Model 4 (FREM regular model), include \$COV step.
+Estimation in parallel with Model 6, if that was requested.
 %\item If option -vpc is set, the script will also 
 %run the vpc1 model using estimates from FREM model as initial estimates,
 %and finally process output to generate a frem vpc model.
@@ -228,7 +243,9 @@ The input model, input dataset.
 Create a new data set.
 \begin{enumerate} 
 	\item In input dataset: Find EVID and/or MDV columns. If neither found then MDV will be added. Find DV column.
-    For each covariate  determine a unique (set of N\_parameter\_blocks) FREMTYPE value(s) > 0.
+    For each covariate  determine a unique %(set of N\_parameter\_blocks)
+    FREMTYPE value %(s)
+    > 0.
     FREMTYPE=0 is reserved for original observations.
     \item Find each column listed with -categorical and count the number of categories Y. Missing values are not counted as
     a category. 
@@ -243,9 +260,11 @@ Create a new data set.
 \item Then loop over each individual: 
 \begin{enumerate}
 	\item Copy first observation line for individual. i.e. first line where MDV/EVID ==0. 
-Loop over each covariate: Add N\_parameter\_blocks new line(s) just before first observation line for individual. 
+Loop over each covariate: Add one % N\_parameter\_blocks
+new line %(s)
+just before first observation line for individual. 
 On each copied line, set value in DV column to covariate value, or ln(value) if this covariate is listed with option -log,
-and FREMTYPE to a unique type-value for this covariate and parameter block. 
+and FREMTYPE to a unique type-value for this covariate. % and parameter block. 
 If MDV column present then MDV=0 if have covariate value, MDV=1 if value is missing. 
 Else if EVID present then EVID=0 if non-missing covariate value, otherwise EVID=2. 
 Store non-missing covariate values in array, one array per covariate, to be able to compute medians and 
@@ -276,7 +295,7 @@ variance-covariance matrix later to be used as initial estimates in \$THETA and 
     If missing values then just skip.
 \end{enumerate}
 
-This dataset is used for Model 2 and frem models.
+This dataset is used for Model 2 and on.
 
 \section{Data check model, FREM Dataset}
 \subsection{Initiation}
@@ -307,6 +326,10 @@ Count number of n\_eps already present (dimension of \$SIGMA in Model 1), set ep
 Build Model 2 based on copy of Model 1, after updating initial estimates with final estimates
 from estimation of Model 1.
 
+\subsection{TODO}
+Automatically add BOV \$OMEGAs to skip\_omegas. Reorder \$OMEGA based on -skip\_omegas, and renumber ETAs. Auto-set skip\_etas. 
+Error message if no ETAs remain.
+
 \subsection{DATA changes}
 Set \$DATA to FREM dataset. Skip old IGNORE/ACCEPT. Set IGNORE=@.
 
@@ -314,20 +337,16 @@ Set \$DATA to FREM dataset. Skip old IGNORE/ACCEPT. Set IGNORE=@.
 Append extra items to \$INPUT: MDV(sometimes) and FREMTYPE.
 
 \subsection{OMEGA changes}
-For the set of non-skipped parameter ETAs, change any diagonal \$OMEGA of size N>1
-to N \$OMEGA of size 1.
-\\
-\emph{Alternative:} Do not change diagonal omega
+%For the set of non-skipped parameter ETAs, change any diagonal \$OMEGA of size N>1
+%to N \$OMEGA of size 1.
 
 FIX all \$OMEGAs from Model 1.
 
-%If have have time-invariant covariates:
-After each of the 'N\_parameter\_blocks' \$OMEGA for non-skipped ETAs, insert  
+%After each of the 'N\_parameter\_blocks' \$OMEGA for non-skipped ETAs, insert  
+Insert
 a full BLOCK(N\_covariates) where initials is variance-covariance matrix of
 covariates computed during creation of dataset.
-Renumber existing parameter BSV ETA:s accordingly in \$PK/\$PRED.
-\\
-\emph{Alternative:} Insert only one full BLOCK after last OMEGA for non-skipped ETAs. Do not renumber any BSV eta.
+%Renumber existing parameter BSV ETA:s accordingly in \$PK/\$PRED.
 
 \noindent 
 \subsection{SIGMA changes}
@@ -338,23 +357,26 @@ Add\\
 
 \subsection{THETA changes}
 FIX all \$THETAs from Model 1.
-Loop over all covariates, j=1...N\_covariates, with inner loop over k=1...N\_parameter\_blocks, add lines\\
-\$THETA init\_j ; TVcov\_j\_k\\
+Loop over all covariates, j=1...N\_covariates, %with inner loop over k=1...N\_parameter\_blocks,
+add lines\\
+%\$THETA init\_j ; TVcov\_j\_k\\
+\$THETA init\_j ; TVcov\_j\\
 where init\_j is median of covariate j computed during creation of new data set, cov\_j is the name of covariate
-j and k is the order number of the parameter block. If median is exactly zero set
+j. %and k is the order number of the parameter block.
+If median is exactly zero set
 init to a very small positive value. 
 Store the mapping between the theta label and the theta number.%TVcovname – THETA(n\_theta+j). 
 %TODO: Possibly set boundaries to max and min for covariate, in that case need to find that during generation of dataset 2.
 \subsection{PK/PRED changes at beginning}
 In \$PK or \$PRED, whichever is present:
 At the very beginning (unless have FREM-ANCHOR similar to scm- anchor) the following code: \\
-Loop over covariates j=1...N\_covariates, parameter blocks k=1...N\_parameter\_blocks, add lines
+Loop over covariates j=1...N\_covariates, %parameter blocks k=1...N\_parameter\_blocks,
+add lines
 
-\noindent BSV\_$<$cov\_j$>$\_k = ETA(orig\_etas+(j-1)*N\_parameter\_blocks +k)\\
-\noindent TV\_$<$cov\_j$>$\_k = THETA(orig\_thetas+(j-1)*N\_parameter\_blocks +k)
-\\
-\emph{Alternative:} Do not loop over N \_parameter\_blocks, insert code only once for each covariate
-%FIXME: repeat N\_parameter\_blocks times???
+%\noindent BSV\_$<$cov\_j$>$\_k = ETA(orig\_etas+(j-1)*N\_parameter\_blocks +k)\\
+%\noindent TV\_$<$cov\_j$>$\_k = THETA(orig\_thetas+(j-1)*N\_parameter\_blocks +k)
+\noindent BSV\_$<$cov\_j$>$ = ETA(orig\_etas+j)\\
+\noindent TV\_$<$cov\_j$>$ = THETA(orig\_thetas+j)
 
 %\noindent Loop over parameters\_bov, initialize BOV PK (provided there are any time-varying cov)
 %\noindent BOV$<$parameter$>$=0
@@ -380,62 +402,47 @@ Loop over covariates j=1...N\_covariates, parameter blocks k=1...N\_parameter\_b
 \subsection{PRED or ERROR changes at end}
 In \$PRED or \$ERROR, whichever is present:
 At the very end\\
-Loop over covariates, j=1...N\_covariates, parameter blocks k=1...N\_parameter\_blocks
+Loop over covariates, j=1...N\_covariates %, parameter blocks k=1...N\_parameter\_blocks
+%\begin{verbatim}
+%Y_<cov_j>_k = TV_<cov_j>_k + BSV_<cov_j>_k
+%\end{verbatim}
 \begin{verbatim}
-Y_<cov_j>_k = TV_<cov_j>_k + BSV_<cov_j>_k
+Y_<cov_j> = TV_<cov_j> + BSV_<cov_j>
 \end{verbatim}
 
-\emph{Alternative:} Do not loop over N\_parameter\_blocks, insert code only once for each covariate
+
 %Loop over time-varying covariates, j=(N\_invariant+1)...(N\_invariant+N\_time-var), use THETA-covname mapping, add lines
 %\begin{verbatim}
 %Y<j> = THETA(cov) + BOV<cov>
 %\end{verbatim}
-Loop over covariates j=1...N\_covariates, parameter blocks k=1...N\_parameter\_blocks
+Loop over covariates j=1...N\_covariates %, parameter blocks k=1...N\_parameter\_blocks
+%\begin{verbatim}
+%IF (FREMTYPE .EQ.((j-1)*N_parameter_blocks +k)) THEN
+%Y=Y_<cov_j>_k+EPS(epsnum)
+%IPRED=Y_<cov_j>_k
+%END IF
+%\end{verbatim}
 \begin{verbatim}
-IF (FREMTYPE .EQ.((j-1)*N_parameter_blocks +k)) THEN
-Y=Y_<cov_j>_k+EPS(epsnum)
-IPRED=Y_<cov_j>_k
+IF (FREMTYPE .EQ. j) THEN
+Y=Y_<cov_j>+EPS(epsnum)
+IPRED=Y_<cov_j
 END IF
 \end{verbatim}
 
-\emph{Alternative:} Do not loop over N \_parameter\_blocks, insert code only once for each covariate
+%\emph{Alternative:} Do not loop over N \_parameter\_blocks, insert code only once for each covariate
 
 (do not define a case for FREMTYPE=0, original obs. Leave original code as it is for that)
 
 
-\section{Model 3}
+\section{Models 3-6}
 
-This models is a copy of Model 2, but each pair of input model BSV and covariate blocks is combined
-into one large full block. Initial values for the new covariances are computed from
-phi-file from estimation of Model 2.
-Set MAXEVAL=0.
+Described above in workflow
 
-only rectangular block from phi, triangles from inits.
-\\
-\emph{Alternative:} Combine all non-skipped omega to single large block. For covariances between parameter omegas that did
-not have covariance in Model 1, set very very small init $10^-6$.
-Initial values for covariances between parameter-covariates are computed from
-phi-file from estimation of Model 2.
+%This models is a copy of Model 2, but each pair of input model BSV and covariate blocks is combined
+%into one large full block. Initial values for the new covariances are computed from
+%phi-file from estimation of Model 2.
+%Set MAXEVAL=0.
 
-\section{Model 4}
-Update parameter-covariate covariances from phi-file from evaluation of Model 3.
-\\
-\emph{Alternative:}
-Keep inits for covariances between parameter-parameter omegas that did
-not have covariance in Model 1 very very small.
-Update covariances between parameter-covariates from phi-file from evaluation of Model 3. Keep remaining parameter-parameter
-covariances to final estimates from Model 1 (fixed in Model 2), and 
-covariate-covariate covariances to final estimates from Model 2.
-
-Note: Model 4 is not estimated or evaluated.
-
-\section{Model 5}
-Create Model 5 by
-Cholesky reparameterizing all non-skipped OMEGA of Model 4.
-FIX
-everything in model except parameter-covariate correlation THETAs.
-\\
-\emph{Alternative:} Same except set parameter-parameter correlations to 0 FIX if 0 in Model 1.
 
 
 \section{Practical considerations}
