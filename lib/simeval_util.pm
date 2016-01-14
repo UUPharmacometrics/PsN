@@ -1,4 +1,4 @@
-package npde_util;
+package simeval_util;
 
 use FindBin qw($Bin);
 use lib "$Bin/../lib";
@@ -9,7 +9,7 @@ use nmtablefile;
 use array qw(any_nonzero);
 
 our $missing=-99;
-#	$ret = npde_util::read_table_files(\@found_files,\@eta_headers,$est_matrix,$mean_matrix,1);
+#	$ret = simeval_util::read_table_files(\@found_files,\@eta_headers,$est_matrix,$mean_matrix,1);
 # add id matrix, always return that
 
 sub get_nmtabledata{
@@ -118,7 +118,7 @@ sub add_columns_ids_samples{
 			if (any_nonzero($nmtablefile->tables->[0]->get_column(name=> $header))){
 				push(@filtered_headers,$header);
 			}else{
-				ui->print(category=>'ebe_npde',
+				ui->print(category=>'simeval',
 						  message => "\nWarning: Removed ".$header.
 						  " from npde calculation because no non-zero values found first table\n");
 			}
