@@ -1345,6 +1345,44 @@ sub nomegas
 	return $nomegas;
 }
 
+sub etas_per_omega
+{
+	#no shift
+	my %parm = validated_hash(\@_,
+		 problem => { isa => 'model::problem', optional => 0 },
+	);
+
+	my $problem = $parm{'problem'};
+
+	my $prev = undef;
+	my $nomegas=0;
+	my @etas = ();
+	
+	foreach my $omega ( @{$problem->omegas} ) {
+		last if ($omega->prior());
+		my $first = $nomegas +1;
+		my $size = $omega -> size;
+		my $type = $omega -> type;
+		if ($omega->same()){
+			croak("First \$OMEGA cannot be SAME") unless (defined $prev);
+			$nomegas += $prev;
+		} elsif( defined $size ) {
+			$nomegas += $size;
+			$prev = $size;
+		} elsif (defined $omega->options) {
+			$nomegas += scalar @{$omega -> options};
+			$prev = scalar @{$omega -> options};
+		} else {
+			croak("Failed to parse \$OMEGA." );
+		}
+		push(@etas,[($first .. $nomegas)]);
+	}
+
+	return \@etas;
+}
+
+
+
 sub nsigmas
 {
 	my $self = shift;
@@ -3450,6 +3488,8 @@ sub get_eta_sets
 	my @use_etas=();
 	my @these=();
 	my @prev=();
+	my @iiv_omega_numbers =();
+	my @iov_omega_numbers =();
 	my @iiv_eta_set=();
 	my @iov_eta_sets=(); #array over base eta over occasions
 	my $iov_eta_counter=0;
@@ -3462,10 +3502,20 @@ sub get_eta_sets
 		if  ($record->same() ){
 			#this is iov for sure
 			push(@these,@prev);
+			push(@iov_omega_numbers,($j+1));
 		}else{
 			if (($j+1) < scalar(@{$self->omegas})){
 				#not last omega
-				$is_iov=1 if ($self->omegas->[$j+1]->same()); #next is same, assume this is new eta first occasion
+				if ($self->omegas->[$j+1]->same()){
+					$is_iov=1; #next is same, assume this is new eta first occasion
+					push(@iov_omega_numbers,($j+1));
+				}else{
+					#not last omega, not same and next is not same: this is iiv
+					push(@iiv_omega_numbers,($j+1));
+				}
+			}else{
+				#last omega and not same, this is iiv
+				push(@iiv_omega_numbers,($j+1));
 			}
 			if  ($record->fix()){
 				$all_fix = 1; 
@@ -3524,7 +3574,10 @@ sub get_eta_sets
 		}
 	} 
 
-	return {'iiv' => \@iiv_eta_set, 'iov' => \@iov_eta_sets};
+	return {'iiv' => \@iiv_eta_set,
+			'iiv_omega_numbers' => \@iiv_omega_numbers, 
+			'iov' => \@iov_eta_sets,
+			'iov_omega_numbers' => \@iov_omega_numbers};
 }
 
 

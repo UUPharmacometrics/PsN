@@ -7,6 +7,7 @@ use PsN;
 use ui;
 use model;
 use MooseX::Params::Validate;
+use array qw(max min);
 
 sub check_options
 {
@@ -407,6 +408,46 @@ sub check_frem
 	unless( scalar(@{$est_record}) > 0 ){
 		$error .=  "The input model must have a \$EST record.\n";
 	}
+
+	my @skip = ();
+	if (defined $options->{'skip_omegas'}){
+		@skip = split(/,/,$options->{'skip_omegas'});
+		if (scalar(@skip) > 0){
+			if (max(\@skip) > scalar(@{$model->problems->[0]->omegas})){
+				$error .=  "skip_omegas has number that is larger than number of omega records ".
+					scalar(@{$model->problems->[0]->omegas})." in model.\n";
+			}
+			if (min(\@skip) < 1){
+				$error .=  "skip_omegas has number smaller than 1, but numbering starts at 1 "."\n";
+			}
+		}
+	}
+	my $ref = $model->problems->[0]->get_eta_sets(header_strings => 0);
+	foreach my $bovomega (@{$ref->{'iov_omega_numbers'}}){
+		my $found = 0;
+		foreach my $num (@skip){
+			if ($num == $bovomega){
+				$found = 1;
+				last;
+			}
+		}
+		unless ($found){
+			push(@skip,$bovomega);
+		}
+	}
+	#we do not handle duplicated numbers in user list
+	if (scalar(@{$model->problems->[0]->omegas}) <= scalar(@skip) ){
+		$error .=  "no omegas left after skipping user list plus bov omegas"."\n";
+	}
+	foreach my $omega ( @{$model->problems->[0]->omegas} ) {
+		if ($omega->prior()){
+			$error .=  "frem does not support models with priors encoded using regular omega record. Use prior-specific NM7.3-records instead."."\n";
+		}
+	}
+
+
+	my @skip_omegas = sort { $a <=> $b } @skip; #sort ascending
+	$options->{'skip_omegas'} = \@skip_omegas;
 	
 	return $error;
 }

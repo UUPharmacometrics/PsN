@@ -297,6 +297,12 @@ is($ref->{'iov'}->[0]->[0],'ETA(4)',"get eta headers iov 1 occasion 1 et1 ");
 is($ref->{'iov'}->[0]->[1],'ETA(6)',"get eta headers iov 1 occasion 1 et 2");
 is($ref->{'iov'}->[1]->[0],'ETA(5)',"get eta headers iov 1 occasion 2 et 1");
 is($ref->{'iov'}->[1]->[1],'ETA(7)',"get eta headers iov 1 occasion 2 et 2");
+is_deeply($ref->{'iiv_omega_numbers'},[1,2],"get eta headers iiv_omega_numbers");
+is_deeply($ref->{'iov_omega_numbers'},[3,4,5,6],"get eta headers iov_omega_numbers");
+
+$ref = model::problem::etas_per_omega(problem => $model->problems->[0]);
+is_deeply($ref,[[1,2],[3],[4],[5],[6],[7]],'eta_per_omega');
+
 $ref = $model->problems->[0]->get_eta_sets(header_strings => 0);
 is_deeply($ref->{'iiv'},[1,2,3],"get eta headers iiv");
 is(scalar(@{$ref->{'iov'}}),2,"get eta headers two occasions");
@@ -304,6 +310,8 @@ is($ref->{'iov'}->[0]->[0],4,"get eta headers iov 1 occasion 1 et1 ");
 is($ref->{'iov'}->[0]->[1],6,"get eta headers iov 1 occasion 1 et 2");
 is($ref->{'iov'}->[1]->[0],5,"get eta headers iov 1 occasion 2 et 1");
 is($ref->{'iov'}->[1]->[1],7,"get eta headers iov 1 occasion 2 et 2");
+is_deeply($ref->{'iiv_omega_numbers'},[1,2],"get eta headers iiv_omega_numbers 2");
+is_deeply($ref->{'iov_omega_numbers'},[3,4,5,6],"get eta headers iov_omega_numbers 2");
 
 $ref = $model->problems->[0]->get_eta_sets(header_strings => 0,skip_etas => 2);
 is_deeply($ref->{'iiv'},[3],"get eta headers iiv skip2");
@@ -312,6 +320,8 @@ is($ref->{'iov'}->[0]->[0],4,"get eta headers iov 1 occasion 1 et1 skip2 ");
 is($ref->{'iov'}->[0]->[1],6,"get eta headers iov 1 occasion 1 et 2 skip2");
 is($ref->{'iov'}->[1]->[0],5,"get eta headers iov 1 occasion 2 et 1 skip2");
 is($ref->{'iov'}->[1]->[1],7,"get eta headers iov 1 occasion 2 et 2 skip2");
+is_deeply($ref->{'iiv_omega_numbers'},[2],"get eta headers iiv_omega_numbers skip2");
+is_deeply($ref->{'iov_omega_numbers'},[3,4,5,6],"get eta headers iov_omega_numbers skip2");
 
 $ref = $model->problems->[0]->get_eta_sets(header_strings => 0,skip_etas => 3);
 is_deeply($ref->{'iiv'},[],"get eta headers iiv skip3");
@@ -320,6 +330,8 @@ is($ref->{'iov'}->[0]->[0],4,"get eta headers iov 1 occasion 1 et1  skip3");
 is($ref->{'iov'}->[0]->[1],6,"get eta headers iov 1 occasion 1 et 2 skip3");
 is($ref->{'iov'}->[1]->[0],5,"get eta headers iov 1 occasion 2 et 1 skip3");
 is($ref->{'iov'}->[1]->[1],7,"get eta headers iov 1 occasion 2 et 2 skip3");
+is_deeply($ref->{'iiv_omega_numbers'},[],"get eta headers iiv_omega_numbers skip3");
+is_deeply($ref->{'iov_omega_numbers'},[3,4,5,6],"get eta headers iov_omega_numbers skip3");
 
 
 
@@ -327,6 +339,11 @@ $model = model->new(filename => $includes::testfiledir."/pheno.mod", ignore_miss
 $ref = $model->problems->[0]->get_eta_sets(header_strings => 1);
 is_deeply($ref->{'iiv'},['ETA(1)','ETA(2)'],"get eta headers iiv 2");
 is(scalar(@{$ref->{'iov'}}),0,"get eta headers no iov");
+is_deeply($ref->{'iiv_omega_numbers'},[1],"get eta headers iiv_omega_numbers no iov");
+is_deeply($ref->{'iov_omega_numbers'},[],"get eta headers iov_omega_numbers no iov");
+$ref = model::problem::etas_per_omega(problem => $model->problems->[0]);
+is_deeply($ref,[[1,2]],'eta_per_omega');
+
 
 $model->problems->[0]->remove_records(type => 'omega');
 $model->problems->[0]->add_records(type => 'omega',record_strings =>['BLOCK(2) 0.02','-0.002 0.5']);
@@ -342,6 +359,8 @@ is_deeply($ref->{'iiv'},['ETA(1)','ETA(2)'],"get eta headers iiv 3");
 is_deeply($ref->{'iov'}->[0],['ETA(3)','ETA(4)','ETA(5)','ETA(12)','ETA(13)','ETA(14)'],"get eta headers 2 iov occasion 1");
 is_deeply($ref->{'iov'}->[1],['ETA(6)','ETA(7)','ETA(8)','ETA(15)','ETA(16)','ETA(17)'],"get eta headers 2 iov occasion 2");
 is_deeply($ref->{'iov'}->[2],['ETA(9)','ETA(10)','ETA(11)','ETA(18)','ETA(19)','ETA(20)'],"get eta headers 2 iov occasion 3");
+is_deeply($ref->{'iiv_omega_numbers'},[1],"get eta headers iiv_omega_numbers added");
+is_deeply($ref->{'iov_omega_numbers'},[2,3,4,5,6,7],"get eta headers iov_omega_numbers added");
 
 
 
