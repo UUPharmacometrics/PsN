@@ -73,6 +73,11 @@ Changes and bug fixes from PsN 4.4.8 to n.n.n
    ___sumo___
 
 
+   ___bootstrap___
+
+- Bug fix: Summary calculations in bootstrap_results.csv were wrong if original model was skipped
+- Bug fix: Summary calculations in bootstrap_results.csv were missing if original model was not estimated or had no .lst-file
+           when using -no-run_base_model
 
    ___vpc/npc___
 

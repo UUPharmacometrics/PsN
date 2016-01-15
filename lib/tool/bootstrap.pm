@@ -60,6 +60,7 @@ has 'bca_confidence_intervals_check' => ( is => 'rw', isa => 'Num', default => 0
 has 'bca_confidence_intervals_level' => ( is => 'rw', isa => 'Num', default => 5 );
 has 'large_bias_limit' => ( is => 'rw', isa => 'Num', default => 0.05 );
 has 'raw_results_dofv' => ( is => 'rw', isa => 'Str', default => 'raw_results_dofv.csv');
+has '_number_of_parameters' => ( is => 'rw', isa => 'Int' );
 
 sub BUILD
 {
@@ -291,7 +292,11 @@ sub calculate_means
 	for ( my $l = 0; $l <= $#sum; $l++ ) {
 		my $mean = $sum[$l] / $samples;
 		$self->result_parameters->{'means'} -> [$model_number-1][0][$l] = $mean;
-		my $bias = $mean - $self ->	bootstrap_estimates -> [$model_number-1][0][$l];
+        my $bias;
+        my $estimated_value = $self->bootstrap_estimates->[$model_number - 1][0][$l];
+        if (defined $estimated_value) {
+		    $bias = $mean - $estimated_value;
+        }
 		$self->result_parameters->{'bias'} -> [$model_number-1][0][$l] = $bias;
 		if ( $self->bootstrap_estimates -> [$model_number-1][0][$l] != 0 and
 			$bias/$self->bootstrap_estimates -> [$model_number-1][0][$l]
@@ -522,7 +527,7 @@ sub calculate_medians
 
 	my @medians;
 	# Loop the parameters
-	for (my $l = 0; $l < scalar(@{$self->bootstrap_estimates->[$model_number - 1][0]}); $l++) {
+	for (my $l = 0; $l < $self->_number_of_parameters; $l++) {
 		my @parameter_array;
 		# From 1 to get rid of original model
 		for (my $k = 1; $k < scalar @{$self->bootstrap_estimates->[$model_number - 1]}; $k++) {
@@ -546,7 +551,7 @@ sub calculate_standard_errors
 	my @parameter_names = defined $parm{'parameter_names'} ? @{$parm{'parameter_names'}} : ();
 
 	my @se;
-	for (my $l = 0; $l < scalar(@{$self->bootstrap_estimates->[$model_number - 1][0]}); $l++) {
+	for (my $l = 0; $l < $self->_number_of_parameters; $l++) {
 		my @parameter_array;
 		# From 1 to get rid of original model
 		for (my $k = 1; $k < scalar @{$self->bootstrap_estimates->[$model_number - 1]}; $k++) {
@@ -574,16 +579,15 @@ sub calculate_standard_error_confidence_intervals
 	foreach my $limit ( @limits ) {
 		my ( @lower_limits, @upper_limits, @within_ci );
 		# Loop the estimates of the first (original) model
-		for ( my $l = 0; $l < scalar @{$self -> bootstrap_estimates->
-			[$model_number-1][0]}; $l++ ) {
+		for ( my $l = 0; $l < $self->_number_of_parameters; $l++ ) {
 			my $lower_limit =
-			$self -> bootstrap_estimates->[$model_number-1][0][$l] -
-			$self->result_parameters->{'standard_errors'}->[$model_number-1][0][$l] *
-			$self -> confidence_limits ->{$limit};
+                $self -> bootstrap_estimates->[$model_number-1][0][$l] -
+                $self->result_parameters->{'standard_errors'}->[$model_number-1][0][$l] *
+                $self -> confidence_limits ->{$limit};
 			my $upper_limit =
-			$self -> bootstrap_estimates->[$model_number-1][0][$l] +
-			$self->result_parameters->{'standard_errors'}->[$model_number-1][0][$l] *
-			$self -> confidence_limits ->{$limit};
+                $self -> bootstrap_estimates->[$model_number-1][0][$l] +
+                $self->result_parameters->{'standard_errors'}->[$model_number-1][0][$l] *
+                $self -> confidence_limits ->{$limit};
 			push( @lower_limits, $lower_limit );
 			push(  @upper_limits, $upper_limit );
 			if ( $self -> se_confidence_intervals_check < $upper_limit and
@@ -627,8 +631,7 @@ sub calculate_percentile_confidence_intervals
 	foreach my $limit ( @limits ) {
 		my ( @lower_limits, @upper_limits, @within_ci );
 		# Loop the estimates of the first (original) model
-		for ( my $l = 0; $l < scalar @{$self -> bootstrap_estimates->
-			[$model_number-1][0]}; $l++ ) {
+		for ( my $l = 0; $l < $self->_number_of_parameters; $l++ ) {
 			my @parameter_array;
 			# Loop the bootstrap samples from 1 to get rid of original model
 			for ( my $k = 1; $k < scalar @{$self -> bootstrap_estimates->
@@ -1583,53 +1586,57 @@ sub prepare_results
 						$self->$diagnostics->[$i][$j][$m] =
 						$self->$rawres->[$i][$j][$diag_idx{$self -> diagnostic_parameters() -> [$m]}];
 					}
-					my $use_run = 1;
-					if ( not defined $self->$rawres->[$i][$j][$diag_idx{'minimization_successful'}] ) {
-						$skip_crash++;
-						$use_run = 0;
-					}else{
-						for (my $m=$start_check; $m< ($start_check+$estimate_columns);$m++){
-							#start at first theta col, all estimates
-							if (not defined $self->$rawres->[$i][$j][$m] ){
-								$skip_crash++;
-								$use_run = 0;
-								last;
-							}
-						}
-					}
 
-					if (not $use_run){
-						#do not bother with the rest of the filtering
-					}elsif ( $self -> skip_minimization_terminated and 
-							 ( not $self->$rawres->[$i][$j][$diag_idx{'minimization_successful'}] ) ) {
-						$skip_term++;
-						$use_run = 0;
-					} elsif ( $self -> skip_covariance_step_terminated and not
-						$self->$rawres->
-						[$i][$j][$diag_idx{'covariance_step_successful'}] ) {
-						$skip_cov++;
-						$use_run = 0;
-					} elsif ( $self -> skip_with_covstep_warnings and
-						$self->$rawres->
-						[$i][$j][$diag_idx{'covariance_step_warnings'}] ) {
-						$skip_warn++;
-						$use_run = 0;
-					} elsif ( $self -> skip_estimate_near_boundary and
-						$self->$rawres->
-						[$i][$j][$diag_idx{'estimate_near_boundary'}] ) {
-						$skip_bound++;
-						$use_run = 0;
-					} 
+                    my $use_run = 1;
+                    if ($j != 0) {  # Don't check for failures on original model
+                        if ( not defined $self->$rawres->[$i][$j][$diag_idx{'minimization_successful'}] ) {
+                            $skip_crash++;
+                            $use_run = 0;
+                        }else{
+                            for (my $m=$start_check; $m< ($start_check+$estimate_columns);$m++){
+                                #start at first theta col, all estimates
+                                if (not defined $self->$rawres->[$i][$j][$m] ){
+                                    $skip_crash++;
+                                    $use_run = 0;
+                                    last;
+                                }
+                            }
+                        }
 
+                        if (not $use_run){
+                            #do not bother with the rest of the filtering
+                        }elsif ( $self -> skip_minimization_terminated and 
+                            ( not $self->$rawres->[$i][$j][$diag_idx{'minimization_successful'}] ) ) {
+                            $skip_term++;
+                            $use_run = 0;
+                        } elsif ( $self -> skip_covariance_step_terminated and not
+                            $self->$rawres->
+                            [$i][$j][$diag_idx{'covariance_step_successful'}] ) {
+                            $skip_cov++;
+                            $use_run = 0;
+                        } elsif ( $self -> skip_with_covstep_warnings and
+                            $self->$rawres->
+                            [$i][$j][$diag_idx{'covariance_step_warnings'}] ) {
+                            $skip_warn++;
+                            $use_run = 0;
+                        } elsif ( $self -> skip_estimate_near_boundary and
+                            $self->$rawres->
+                            [$i][$j][$diag_idx{'estimate_near_boundary'}] ) {
+                            $skip_bound++;
+                            $use_run = 0;
+                        } 
+                    }
 					# ------------------------  Estimates  ------------------------------
 
-					if( $use_run ) {
-
-						my ($start,$l) = split(',',$self->raw_line_structure()->{$valid_raw_line}->{'ofv'});
-						for (my $m=0; $m< ($columns-$start);$m++){
-							my $val = $self->$rawres->[$i][$j][$start+$m];
+					if ($use_run) {
+						my ($start,$l) = split(',', $self->raw_line_structure->{$valid_raw_line}->{'ofv'});
+						for (my $m = 0; $m < ($columns - $start); $m++) {
+							my $val = $self->$rawres->[$i][$j][$start + $m];
 							$self->$estimates->[$i][$included][$m] = $val;
 						}
+                        if ($j == $valid_raw_line) {
+                            $self->_number_of_parameters($columns - $start);
+                        }
 						$included++;
 					}
 				}

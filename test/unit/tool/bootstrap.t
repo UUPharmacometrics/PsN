@@ -446,6 +446,98 @@ remove_test_dir($tempdir);
 
 our $tempdir = create_test_dir("unit_bootstrap");
 
+my $bootstrap = tool::bootstrap->new(directory => $tempdir, skip_estimate_near_boundary => 1, models => [ $model ]);
+cp("$test_files/bootstrap/missing_original_model/raw_results_pheno.csv", "$tempdir/raw_results.csv");
+cp("$test_files/bootstrap/missing_original_model/raw_results_structure", $tempdir);
+
+$bootstrap->prepare_results();
+
+cmp_float_array($bootstrap->result_parameters->{'means'}[0][0],
+[
+          '730.902946197108',
+          '0.00563684035532995',
+          '1.35622050761421',
+          '0.237140052532995',
+          '0.146171840101523',
+          '0.0163695091878173',
+          '0.00041359852284264',
+          '0.0807385228426395',
+          '0.12380654822335',
+          '0.0363546182741117',
+          '0.00340842791878173',
+          0,
+          0,
+          0,
+          '0.292248584263959',
+          '0.496992284263959',
+          '0.793996030456853',
+          '1.33788835532995',
+          '2.0788745177665'
+        ], "bootstrap missing_original_model means");
+
+cmp_float_array($bootstrap->result_parameters->{'bias'}[0][0], [ ('NA') x 19 ], "bootstrap missing_original_model bias");
+
+
+remove_test_dir($tempdir);
+our $tempdir = create_test_dir("unit_bootstrap");
+
+my $bootstrap = tool::bootstrap->new(directory => $tempdir, skip_estimate_near_boundary => 1, models => [ $model ]);
+cp("$test_files/bootstrap/skipped_original_model/raw_results_pheno.csv", "$tempdir/raw_results.csv");
+cp("$test_files/bootstrap/skipped_original_model/raw_results_structure", $tempdir);
+
+$bootstrap->prepare_results();
+
+cmp_float_array($bootstrap->result_parameters->{'bias'}[0][0],
+[
+              '-11.1480988723555',
+              '8.32103553299471e-05',
+              '0.0198405076142132',
+              '-0.00993394746700524',
+              '0.00459084010152278',
+              '-4.57908121827416e-05',
+              '1.88355228426395e-05',
+              '0.000836722842639553',
+              '-0.0317234517766498',
+              '0.00146051827411168',
+              '1.37679187817256e-05',
+              '0',
+              '0',
+              '0',
+              '-0.176389415736041',
+              '-0.0841857157360409',
+              '-0.181597969543147',
+              '0.18839835532995',
+              '0.253774517766497'
+], "bootstrap skipped_original_model bias");
+
+cmp_float_array($bootstrap->result_parameters->{'medians'}[0][0],
+[
+          '726.695910906915',
+          '0.00565429',
+          '1.35331',
+          '0.243549',
+          '0.143187',
+          '0.0160961',
+          '0.000375761',
+          '0.0806145',
+          '0.152033',
+          '0.0351743',
+          '0.00329674',
+          '0',
+          '0',
+          '0',
+          '0.288063',
+          '0.505534',
+          '0.811818',
+          '1.32975',
+          '2.03628'
+        ], "bootstrap skipped_original_model medians");
+
+
+remove_test_dir($tempdir);
+
+our $tempdir = create_test_dir("unit_bootstrap");
+
 my $bootstrap = tool::bootstrap->new(directory => $tempdir, skip_minimization_terminated => 0, models => [ $model ]);
 cp("$test_files/bootstrap/somecrash/raw_results_pheno.csv", "$tempdir/raw_results.csv");
 cp("$test_files/bootstrap/somecrash/raw_results_structure", $tempdir);
