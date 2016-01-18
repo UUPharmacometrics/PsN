@@ -26,6 +26,7 @@ my $indentation = '     ';
 
 has 'skip_omegas' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 has 'skip_etas' => ( is => 'rw', isa => 'Int', default=> 0);
+has 'start_omega_record' => ( is => 'rw', isa => 'Int', default=> 1);
 has 'estimate' => ( is => 'rw', isa => 'Int', default => 3 );
 has 'occasionlist' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 has 'extra_input_items' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
@@ -155,13 +156,13 @@ sub BUILD
 		croak("Neither PK or PRED defined in model");
 	}
 	$self->use_pred($use_pred);
-
+	
 	$self->input_model_fix_thetas(get_or_set_fix(model => $self->models->[0],
-												 type => 'thetas');
+												 type => 'thetas'));
 	$self->input_model_fix_omegas(get_or_set_fix(model => $self->models->[0],
-												 type => 'omegas');
+												 type => 'omegas'));
 	$self->input_model_fix_sigmas(get_or_set_fix(model => $self->models->[0],
-												 type => 'sigmas');
+												 type => 'sigmas'));
 
 	
 }
@@ -186,7 +187,9 @@ sub get_or_set_fix
 		for (my $i=0; $i< scalar(@{$model->problems->[0]->thetas}); $i++){
 			for (my $j=0; $j< scalar(@{$model->problems->[0]->thetas->[$i]->options}); $j++){
 				if (defined $set_array){
-					$model->problems->[0]->thetas->[$i]->options->[$j]->fix($set_array->[$index]);
+					if (scalar(@{$set_array}) > $index){
+						$model->problems->[0]->thetas->[$i]->options->[$j]->fix($set_array->[$index]);
+					} #else assume did not exist in input model
 					$index++;
 				}else{
 					push(@input_model_fix,$model->problems->[0]->thetas->[$i]->options->[$j]->fix);
@@ -198,15 +201,19 @@ sub get_or_set_fix
 			push(@input_model_fix,[]) if (defined $set_array);
 			if ($model->problems->[0]->$type->[$i]->type eq 'BLOCK'){
 				if (defined $set_array){
-					$model->problems->[0]->$type->[$i]->fix($set_array->[$i]->[0]) unless
-						$model->problems->[0]->$type->[$i]->same;
+					if (scalar(@{$set_array}) > $i){
+						$model->problems->[0]->$type->[$i]->fix($set_array->[$i]->[0]) unless
+							$model->problems->[0]->$type->[$i]->same;
+					}
 				}else{
 					push(@{$input_model_fix[$i]},$model->problems->[0]->$type->[$i]->fix); #ok SAME?
 				}
 			}else{#diagonal
 				for (my $j=0; $j< scalar(@{$model->problems->[0]->$type->[$i]->options}); $j++){
 					if (defined $set_array){
-						$model->problems->[0]->$type->[$i]->options->[$j]->fix($set_array->[$i]->[$j]);
+						if (scalar(@{$set_array}) > $i){
+							$model->problems->[0]->$type->[$i]->options->[$j]->fix($set_array->[$i]->[$j]);
+						}
 					}else{
 						push(@{$input_model_fix[$i]},$model->problems->[0]->$type->[$i]->options->[$j]->fix);
 					}
@@ -223,60 +230,59 @@ sub get_parcov_blocks
 							  model => { isa => 'model', optional => 0 },
 							  skip_etas  => { isa => 'Int', optional => 0 },
 							  start_omega_record  => { isa => 'Int', optional => 0 },
-							  join_records  => { isa => 'Bool', optional => 0 },
 							  covariate_etanumbers  => { isa => 'ArrayRef', optional => 0 },
 							  parameter_etanumbers => { isa => 'ArrayRef', optional => 0 },
 	);
 	my $model = $parm{'model'};
 	my $skip_etas = $parm{'skip_etas'};
 	my $start_omega_record = $parm{'start_omega_record'};
-	my $join_records = $parm{'join_records'};
 	my $covariate_etanumbers = $parm{'covariate_etanumbers'};
 	my $parameter_etanumbers = $parm{'parameter_etanumbers'};
 	
-	my $num = scalar(@{$covariate_etanumbers});
-	unless ($num == scalar(@{$parameter_etanumbers})){
-		croak("num is $num but parameter num is ".scalar(@{$parameter_etanumbers}));
-	}
+	#my $num = scalar(@{$covariate_etanumbers});
+	#unless ($num == scalar(@{$parameter_etanumbers})){
+	#	croak("num is $num but parameter num is ".scalar(@{$parameter_etanumbers}));
+	#}
 	#FIXME should etas from evaluation have priority over inits?
+
 	my @omega_records = ();
 	my $n_previous_rows = $skip_etas;
-	my $rec_index = $start_omega_record-1;
-	my $loop=1;
-	$loop=2 if ($join_records);
 
-	for (my $i=0; $i<$num; $i++){
-		my @labels = ();
-		for (my $k=0; $k < $loop; $k++){
-			foreach my $opt (@{$model->problems->[0]->omegas->[$rec_index]->options}){
-				if ($opt->on_diagonal){
-					if (defined $opt->label){
-						push(@labels,$opt->label);
-					}else{
-						push(@labels,undef);
-					}
+	my @start_etas = ();
+	my @end_etas = ();
+	foreach my $par (@{$parameter_etanumbers}){
+		push(@start_etas,$par->[0]);
+		push(@end_etas,$par->[-1]);
+	}
+	push(@start_etas,$covariate_etanumbers->[0]);
+	push(@end_etas,$covariate_etanumbers->[-1]);
+	
+	my @labels = ();
+	for (my $k=($start_omega_record-1); $k < scalar(@{$model->problems->[0]->omegas}); $k++){
+		foreach my $opt (@{$model->problems->[0]->omegas->[$k]->options}){
+			if ($opt->on_diagonal){
+				if (defined $opt->label){
+					push(@labels,$opt->label);
+				}else{
+					push(@labels,undef);
 				}
 			}
-			$rec_index++;
 		}
-		my ($initblock,$message) = get_filled_omega_block(model => $model,
-											   problem_index => 0,
-											   start_eta_1 => $parameter_etanumbers->[$i]->[0],
-											   end_eta_1 => $parameter_etanumbers->[$i]->[-1],
-											   start_eta_2 => $covariate_etanumbers->[$i]->[0],
-											   end_eta_2 => $covariate_etanumbers->[$i]->[-1]);
-
-		my $size = scalar(@{$initblock});
-		unless ($size > 0){
-			croak("size of initblock is 0, message is $message\n");
-		}
-		my $omega_lines = get_omega_lines(new_omega => $initblock,
-										  labels => \@labels);
-		push(@omega_records,model::problem::omega->new(record_arr => $omega_lines, 
-													   n_previous_rows => $n_previous_rows));
-		$n_previous_rows += $size;
-
 	}
+	my ($initblock,$message) = get_filled_omega_block(model => $model,
+													  problem_index => 0,
+													  start_etas => \@start_etas,
+													  end_etas => \@end_etas,);
+
+	my $size = scalar(@{$initblock});
+	unless ($size > 0){
+		croak("size of initblock is 0, message is $message\n");
+	}
+	my $omega_lines = get_omega_lines(new_omega => $initblock,
+									  labels => \@labels);
+	push(@omega_records,model::problem::omega->new(record_arr => $omega_lines, 
+												   n_previous_rows => $n_previous_rows));
+
 	return \@omega_records;
 }
 
@@ -288,18 +294,18 @@ sub put_skipped_omegas_first
 							  model => { isa => 'model', optional => 0 },
 							  problem_index  => { isa => 'Int', default => 0 },
 							  skip_omegas  => { isa => 'ArrayRef', optional => 0 },
-							  input_fix_omegas => { isa => 'ArrayRef', optional => 0 },
+							  input_model_fix_omegas => { isa => 'ArrayRef', optional => 0 },
 	);
 	my $model = $parm{'model'};
 	my $problem_index = $parm{'problem_index'};
 	my $skip_omegas = $parm{'skip_omegas'};
-	my $input_fix_omegas = $parm{'input_fix_omegas'};
+	my $input_model_fix_omegas = $parm{'input_model_fix_omegas'};
 
 	my $start_omega_record = scalar(@{$skip_omegas})+1;
 	my @parameter_etanumbers = ();
 	my $skip_etas = 0;
 	my @fix_omegas;
-	$need_to_move = 0;
+	my $need_to_move = 0;
 
 	my $maxeta =  $model->problems()->[0]->nomegas(with_correlations => 0,
 												   with_same => 1);
@@ -312,6 +318,7 @@ sub put_skipped_omegas_first
 			last;
 		}
 	}
+
 	if ($need_to_move){
 		my @old_omega_order = (1 .. scalar(@{$model->problems->[$problem_index]->omegas}));
 		my @new_omega_order = @{$skip_omegas};
@@ -384,9 +391,6 @@ sub put_skipped_omegas_first
 			push(@new_records,
 				 model::problem::omega->new(record_arr => \@lines, 
 											n_previous_rows => $n_previous_rows));
-			if ($k >= scalar(@{$skip_omegas})){
-				push(@parameter_etanumbers,(($n_previous_rows+1) .. ($n_previous_rows+$size) ))
-			}
 			$n_previous_rows += $size;
 		}
 		$model -> problems -> [0]-> omegas(\@new_records);
@@ -395,10 +399,15 @@ sub put_skipped_omegas_first
 									   type => 'omegas')};
 		
 	}else{
-		@fix_omegas = @{$input_fix_omegas};
-		@parameter_etanumbers = (1 .. $maxeta)
+		@fix_omegas = @{$input_model_fix_omegas};
 	}
 
+	my $etas_per_omega = model::problem::etas_per_omega(problem => $model->problems->[0]);
+	for (my $j=0; $j< scalar(@{$etas_per_omega}); $j++){
+		if ($j >= scalar(@{$skip_omegas})){
+			push(@parameter_etanumbers,$etas_per_omega->[$j]);
+		}
+	}
 	return $skip_etas,\@fix_omegas,$start_omega_record,\@parameter_etanumbers;
 }
 
@@ -409,39 +418,64 @@ sub get_filled_omega_block
 							  model => { isa => 'model', optional => 0 },
 							  problem_index  => { isa => 'Int', default => 0 },
 							  table_index  => { isa => 'Int', default => 0 },
-							  start_eta_1 => { isa => 'Int', optional => 0 },
-							  end_eta_1 => { isa => 'Int', optional => 0 },
-							  start_eta_2 => { isa => 'Int', optional => 1 },
-							  end_eta_2 => { isa => 'Int', optional => 1 },
+							  start_etas => { isa => 'ArrayRef', optional => 0 },
+							  end_etas => { isa => 'ArrayRef', optional => 0 },
 	);
 	my $model = $parm{'model'};
 	my $problem_index = $parm{'problem_index'};
 	my $table_index = $parm{'table_index'};
-	my $start_eta_1 = $parm{'start_eta_1'};
-	my $end_eta_1 = $parm{'end_eta_1'};
-	my $start_eta_2 = $parm{'start_eta_2'};
-	my $end_eta_2 = $parm{'end_eta_2'};
+	my $start_etas = $parm{'start_etas'};
+	my $end_etas = $parm{'end_etas'};
 
+	unless (scalar(@{$start_etas}) > 0){
+		croak("start_etas array must be larger than 0");
+	}
+	unless (scalar(@{$start_etas}) == scalar(@{$end_etas})){
+		croak("start_etas array must equal length to end_etas");
+	}
+	my $total_size = 0;
+	my @sizes = ();
+	for (my $i=0; $i <scalar(@{$start_etas}); $i++){
+		unless (defined $start_etas->[$i]){
+			croak("start_etas $i is undef");
+		}
+		unless (defined $end_etas->[$i]){
+			croak("end_etas $i is undef");
+		}
+		if ($i > 0){
+			unless ($start_etas->[$i] > $end_etas->[($i-1)]){
+				croak("start_eta $i must be larger than end_eta ".($i-1));
+			}
+		}
+		croak("start_eta $i cannot be larger than end_eta $i ") if ($start_etas->[$i] > $end_etas->[$i]);
+		my $si = ($end_etas->[$i] - $start_etas->[$i] +1);
+		$total_size += $si;
+		push(@sizes,$si);
+	}
+
+	my $start_eta_1 = $start_etas->[0];
+	my $end_eta_1 = $end_etas->[0];
+	my $start_eta_2;
+	my $end_eta_2;
+	my $end_eta_top = $end_eta_1;
+	
+	if (scalar(@{$start_etas}) > 1){
+		$start_eta_2 = $start_etas->[-1]; #last
+		$end_eta_2  = $end_etas->[-1]; #last
+		$end_eta_top = $end_etas->[-2]; #second to last, can be $end_eta_1. This usage assumes all consecutive
+	}
+	my $top_size = $end_eta_top - $start_eta_1 +1; #this assumes no gaps
+	
 	my $error = 0;
 	my $message = '';
 	my $corrmatrix;
-	my $size1 = $end_eta_1-$start_eta_1+1;
-	my $size2 = 0;
 
-	croak("end_eta_2 must be defined when start_eta_2 is defined") 
-		if ((defined $start_eta_2) and (not defined $end_eta_2));
-	if (defined $start_eta_2 and defined $end_eta_2){
-		croak("start_eta_2 cannot be larger than end_eta_2") if ($start_eta_2 > $end_eta_2);
-		$size2 = $end_eta_2-$start_eta_2+1 ;
-	}
 	my @sd = ();
 	my @mergematrix = ();
 
-	croak("start_eta_1 cannot be larger than end_eta_1") if ($start_eta_1 > $end_eta_1);
-	
 	#local coords
 	($corrmatrix,$message) = get_correlation_matrix_from_phi(start_eta_1 => $start_eta_1,
-															 end_eta_1 => $end_eta_1,
+															 end_eta_1 => $end_eta_top, #can be from multiple blocks here, or end_eta_1
 															 start_eta_2 => $start_eta_2,
 															 end_eta_2 => $end_eta_2,
 															 problem_index => $problem_index,
@@ -449,48 +483,45 @@ sub get_filled_omega_block
 															 model => $model);
 	return([],$message) unless (length($message) == 0);
 
-	@sd = (0) x ($size1+$size2);
-	for (my $i=0; $i<($size1+$size2); $i++){
-		push(@mergematrix,[(0) x ($size1+$size2)]);
+	@sd = (0) x ($total_size);
+	for (my $i=0; $i<($total_size); $i++){
+		push(@mergematrix,[(0) x $total_size]);
 	}
 	
 	#omega block. Do not assume all that are nonzero are estimated
 	#get inits from model. local coords
-	my $init_matrix_1 = $model->problems->[$problem_index]->get_matrix(type => 'omega',
-																	   start_row => $start_eta_1,
-																	   end_row => $end_eta_1);
 
-	for (my $i=0; $i<$size1; $i++){
-		for (my $j=0; $j<$size1; $j++){
-			$mergematrix[$i]->[$j] = $init_matrix_1->[$i][$j];
-		}
-		$sd[$i] = sqrt($init_matrix_1->[$i][$i]) if ($init_matrix_1->[$i][$i] > 0);
-	}
-
-	if (defined $start_eta_2 and defined $end_eta_2){
-		my $init_matrix_2 = $model->problems->[$problem_index]->get_matrix(type => 'omega',
-																		   start_row => $start_eta_2,
-																		   end_row => $end_eta_2);
-		for (my $i=0; $i<$size2; $i++){
-			for (my $j=0; $j<$size2; $j++){
-				$mergematrix[$size1+$i]->[$size1+$j] = $init_matrix_2->[$i][$j];
+	my $old_size=0;
+	for (my $k=0; $k <scalar(@{$start_etas}); $k++){
+		my $init_matrix = $model->problems->[$problem_index]->get_matrix(type => 'omega',
+																		 start_row => $start_etas->[$k],
+																		 end_row => $end_etas->[$k]);
+		for (my $i=0; $i<$sizes[$k]; $i++){
+			for (my $j=0; $j<$sizes[$k]; $j++){
+				$mergematrix[$old_size+$i]->[$old_size+$j] = $init_matrix->[$i][$j];
 			}
-			$sd[$size1+$i] = sqrt($init_matrix_2->[$i][$i]) if ($init_matrix_2->[$i][$i] > 0);
+			$sd[$old_size+$i] = sqrt($init_matrix->[$i][$i]) if ($init_matrix->[$i][$i] > 0);
 		}
+		$old_size += $sizes[$k];
 	}
 
 	#now we have sd and valuematrix that are inits/estimates or 0.
-	#for each value in mergematrix that is still 0, compute covar using correlation and sd
+	#for each value in mergematrix that is still 0, compute covar using correlation and sd,
+	#or set very small 
 
-	for (my $i = 0; $i < ($size1+$size2); $i++){
+	for (my $i = 0; $i < $total_size; $i++){
 		for (my $j = 0; $j < $i; $j++){
-			#copy
+			#copy to make symmetric
 			$mergematrix[$i]->[$j] = $mergematrix[$j]->[$i]; 
 		}
-		for (my $j = ($i+1); $j < ($size1+$size2); $j++){
+		for (my $j = ($i+1); $j < $total_size; $j++){
 			next unless ($mergematrix[$i]->[$j] == 0);
-			#compute new
-			$mergematrix[$i]->[$j] = ($corrmatrix->[$i][$j])*($sd[$i])*($sd[$j]);
+			if (($j >= $sizes[0]) and ($j < $top_size)){
+				$mergematrix[$i]->[$j] = 0.0000001;
+			}else{
+				#compute new
+				$mergematrix[$i]->[$j] = ($corrmatrix->[$i][$j])*($sd[$i])*($sd[$j]);
+			}
 		}
 	}
 
@@ -845,6 +876,48 @@ sub get_omega_lines
 
 sub set_model2_omega_blocks
 {
+	my %parm = validated_hash(\@_,
+							  model => { isa => 'model', optional => 0 },
+							  start_omega_record => {isa => 'Int', optional => 0},
+							  skip_etas => {isa => 'Int', optional => 0},
+							  covariate_covmatrix => {isa => 'ArrayRef', optional => 0},
+							  covariate_labels => {isa => 'ArrayRef', optional => 0},
+	);
+
+	my $model = $parm{'model'};
+	my $start_omega_record = $parm{'start_omega_record'};
+	my $skip_etas = $parm{'skip_etas'};
+	my $covariate_covmatrix = $parm{'covariate_covmatrix'};
+	my $covariate_labels = $parm{'covariate_labels'};
+
+	my $covariate_size = scalar(@{$covariate_covmatrix});
+	croak("too few labels") unless (scalar(@{$covariate_labels}) == $covariate_size);
+	
+	my @covariate_etanumbers = ();
+	
+	my @covariate_code = ();
+	
+	my $n_previous_rows =  $model->problems()->[0]->nomegas(with_correlations => 0,
+															with_same => 1);
+	my $omega_lines = get_omega_lines(new_omega => $covariate_covmatrix,
+									  labels => $covariate_labels);
+	
+	push(@{$model -> problems -> [0]-> omegas},model::problem::omega->new(record_arr => $omega_lines, 
+																		  n_previous_rows => $n_previous_rows));
+	for (my $i=0; $i < scalar(@{$model -> problems -> [0]-> omegas}); $i++){
+		if ($model -> problems -> [0]-> omegas->[$i]->type eq 'BLOCK'){
+			$model -> problems -> [0]-> omegas->[$i]->fix(1) unless ($model -> problems -> [0]-> omegas->[$i]->same);
+		}else{
+			for (my $j=0; $j< scalar(@{$model -> problems -> [0]-> omegas->[$i]->options}); $j++){
+				$model -> problems -> [0]-> omegas->[$i]->options->[$j]->fix(1);
+			}
+		}
+	}
+	
+}
+
+sub old_set_model2_omega_blocks
+{ #not used, kept as backup
 	my %parm = validated_hash(\@_,
 							  model => { isa => 'model', optional => 0 },
 							  start_omega_record => {isa => 'Int', optional => 0},
@@ -1366,41 +1439,36 @@ sub do_model2
 #	my $start_omega_record = $parm{'start_omega_record'};
 	my $skip_omegas = $parm{'skip_omegas'};
 	
-	my $N_parameter_blocks = scalar(@{$parameter_blocks});
+#	my $N_parameter_blocks = scalar(@{$parameter_blocks});
 	my $name_model = 'model_2.mod';
 	
 	my $frem_model;
 	my $maxeta =  $model->problems()->[0]->nomegas(with_correlations => 0,
 												   with_same => 1);
-
 	
 	my ($skip_etas,$fix_omegas,$start_omega_record,$parameter_etanumbers) = put_skipped_omegas_first(model => $model,
-																			   skip_omegas => $skip_omegas,
-																			   input_fix_omegas => $self->input_fix_omegas);
-	$self->input_fix_omegas($fix_omegas);
+																									 skip_omegas => $skip_omegas,
+																									 input_model_fix_omegas => $self->input_model_fix_omegas);
+	$self->input_model_fix_omegas($fix_omegas);
+	$self->skip_etas($skip_etas);
+	$self->start_omega_record($start_omega_record);
 	
 	my $ntheta = $model ->nthetas(problem_number => 1);
 	my $newtheta = 0;
 	my $epsnum = 1 + $model->problems()->[0]->nsigmas(with_correlations => 0,
-															   with_same => 1);
+													  with_same => 1);
 	my $Ncov = scalar(@{$self->covariates});
-	my $covariate_etanumbers = [(($maxeta+1) .. ($maxeta+$Ncov)] ;
+	my $covariate_etanumbers = [(($maxeta+1) .. ($maxeta+$Ncov))] ;
 
+	my @pk_pred_code =();
+	my @labels = ();
+	for (my $j=0; $j< scalar(@{$self->covariates}); $j++){
+		my $label = 'BSV_'.$self->covariates->[$j];
+		push(@pk_pred_code,$indentation.$label.' = ETA('.($maxeta+1+$j).')');
+		push (@labels, $label);
+	}
 	
-	if (-e $self -> directory().'m1/'.$name_model){
-		$frem_model = model->new( %{common_options::restore_options(@common_options::model_options)},
-								  filename                    => 'm1/'.$name_model,
-								  ignore_missing_output_files => 1 );
-#		my $previous = $skip_etas;
-#		$covariate_etanumbers = [];
-#		foreach my $block (@{$parameter_blocks}){
-#			push(@{$parameter_etanumbers},[(($previous+1) .. ($previous+$block->size) )]);
-#			$previous += $block->size;
-#			push(@{$covariate_etanumbers},[(($previous+1) .. ($previous+$Ncov) )]);
-#			$previous += $Ncov;
-#		}
-		
-	}else{	
+	unless (-e $self -> directory().'m1/'.$name_model){
 		# input model  inits have already been updated
 		#omegas have been reordered
 		$frem_model = $model ->  copy( filename    => $self -> directory().'m1/'.$name_model,
@@ -1416,18 +1484,19 @@ sub do_model2
 		$frem_model->datafiles(problem_numbers => [1],
 							   new_names => [$self -> directory().'m1/'.$fremdataname]);
 
-		foreach my $coderec ('error','des','pk','pred'){ #never any ETAs in $MIX
-			my $acc = $coderec.'s';
-			if (defined $frem_model->problems->[0]->$acc and 
-				scalar(@{$frem_model->problems->[0]->$acc})>0 ) {
-				my @extra_code = @{$frem_model->problems->[0]->$acc->[0]->code};
-				renumber_etas(code => \@extra_code,
-							  eta_from => $eta_mapping->{'eta_from'},
-							  eta_to => $eta_mapping->{'eta_to'});
-				$frem_model->problems->[0]-> set_records( type => $coderec,	
-														  record_strings => \@extra_code );
-			}
-		}
+
+#		foreach my $coderec ('error','des','pk','pred'){ #never any ETAs in $MIX
+#			my $acc = $coderec.'s';
+#			if (defined $frem_model->problems->[0]->$acc and 
+#				scalar(@{$frem_model->problems->[0]->$acc})>0 ) {
+#				my @extra_code = @{$frem_model->problems->[0]->$acc->[0]->code};
+#				renumber_etas(code => \@extra_code,
+#							  eta_from => $eta_mapping->{'eta_from'},
+#							  eta_to => $eta_mapping->{'eta_to'});
+#				$frem_model->problems->[0]-> set_records( type => $coderec,	
+#														  record_strings => \@extra_code );
+#			}
+#		}
 		
 		#INPUT changes
 		foreach my $item (@{$self->extra_input_items}){
@@ -1453,18 +1522,11 @@ sub do_model2
 								 problem_numbers => [1],
 								 record_strings => ['0.0000001 FIX ; EPSCOV']);
 
-		#OMEGA changes
-		#FIXME here we do not have to renumber, just add the blocks for covs
-		#make small sub for just adding, use it both here and in set_model2_om...
-		my $pk_pred_code;
-		($covariate_etanumbers,$parameter_etanumbers,$pk_pred_code) = 
-			set_model2_omega_blocks(model => $frem_model,
-									start_omega_record => $start_omega_record,
-									skip_etas => $skip_etas,
-									parameter_blocks => $parameter_blocks,
-									covariate_covmatrix => $self->invariant_covmatrix,
-									covariate_labels => $self->covariates);
-
+		set_model2_omega_blocks(model => $frem_model,
+								start_omega_record => $start_omega_record,
+								skip_etas => $skip_etas,
+								covariate_covmatrix => $self->invariant_covmatrix,
+								covariate_labels => \@labels);
 
 
 		#THETA changes
@@ -1481,15 +1543,12 @@ sub do_model2
 		for (my $i=0; $i< scalar(@{$self->covariates}); $i++){
 			my $val=$self->invariant_median->[$i];
 			$val=0.001 if ($val==0);
-			for (my $j=0; $j< $N_parameter_blocks; $j++){
-				my $label = 'TV_'.$self->covariates->[$i].'_'.($j+1);
-				push(@covariate_thetanumbers,[]) if ($i==0);
-				push(@theta_strings,' '.sprintf("%.12G",$val).'; '.$label);
-				$newtheta++;
-				my $num = ($ntheta+$newtheta);
-				push(@{$covariate_thetanumbers[$j]},$num);
-				push(@{$pk_pred_code},$indentation.$label.'=THETA('.$num.')');
-			}
+			my $label = 'TV_'.$self->covariates->[$i];
+			push(@theta_strings,' '.sprintf("%.12G",$val).'; '.$label);
+			$newtheta++;
+			my $num = ($ntheta+$newtheta);
+			push(@covariate_thetanumbers,$num);
+			push(@pk_pred_code,$indentation.$label.'=THETA('.$num.')');
 		}
 		
 		$frem_model->add_records(type => 'theta',
@@ -1497,8 +1556,9 @@ sub do_model2
 								 record_strings => \@theta_strings);
 		
 		add_pk_pred_error_code(model=>$frem_model,
-							   pk_pred_code => $pk_pred_code,
-							   N_parameter_blocks => $N_parameter_blocks,
+							   pk_pred_code => \@pk_pred_code,
+#							   N_parameter_blocks => $N_parameter_blocks,
+							   N_parameter_blocks => 1,
 							   covariates => $self->covariates,
 							   epsnum => $epsnum,
 							   use_pred => $self->use_pred);
@@ -1509,6 +1569,22 @@ sub do_model2
 
 	}
 
+	#reread from disk
+	$frem_model = model->new( %{common_options::restore_options(@common_options::model_options)},
+							  filename                    => 'm1/'.$name_model,
+							  ignore_missing_output_files => 1 );
+#		my $previous = $skip_etas;
+#		$covariate_etanumbers = [];
+#		foreach my $block (@{$parameter_blocks}){
+#			push(@{$parameter_etanumbers},[(($previous+1) .. ($previous+$block->size) )]);
+#			$previous += $block->size;
+#			push(@{$covariate_etanumbers},[(($previous+1) .. ($previous+$Ncov) )]);
+#			$previous += $Ncov;
+#		}
+		
+	#}
+
+	
 	unless ($frem_model->is_run){
 		my $rundir = $self -> directory().'/model2_modelfit_dir1';
 		rmtree([ "$rundir" ]) if (-e $rundir);
@@ -1550,12 +1626,7 @@ sub do_model3
 	my $frem_model;
 	my $est_records = $model->problems->[0]->estimations;
 	
-	if (-e $self -> directory().'m1/'.$name_model){
-		$frem_model = model->new( %{common_options::restore_options(@common_options::model_options)},
-								  filename                    => 'm1/'.$name_model,
-								  ignore_missing_output_files => 1 );
-		
-	}else{	
+	unless (-e $self -> directory().'m1/'.$name_model){
 		# input model  inits have already been updated
 		$frem_model = $model ->  copy( filename    => $self -> directory().'m1/'.$name_model,
 									   output_same_directory => 1,
@@ -1582,6 +1653,12 @@ sub do_model3
 
 	}
 
+	#reread from disk
+	$frem_model = model->new( %{common_options::restore_options(@common_options::model_options)},
+							  filename                    => 'm1/'.$name_model,
+							  ignore_missing_output_files => 1 );
+		
+
 	unless ($frem_model->is_run){
 		my $rundir = $self -> directory().'/model'.$modnum.'_modelfit_dir1';
 		rmtree([ "$rundir" ]) if (-e $rundir);
@@ -1592,9 +1669,10 @@ sub do_model3
 										models		 => [$frem_model],
 										top_tool              => 0);
 		tool::add_to_nmoutput(run => $run, extensions => ['phi','ext']);		
-		ui -> print( category => 'all', message =>  'Estimating Model '.$modnum);
+		ui -> print( category => 'all', message =>  'Evaluating Model '.$modnum);
 		$run-> run;
 	}
+	
 	if (defined $frem_model->outputs and (defined $frem_model->outputs->[0])){
 		$frem_model->update_inits(from_output=> $frem_model->outputs->[0]) ;
 	}else{
@@ -1624,12 +1702,7 @@ sub do_model4
 	my $name_model = 'model_'.$modnum.'.mod';
 	my $frem_model;
 	
-	if (-e $self -> directory().'m1/'.$name_model){
-		$frem_model = model->new( %{common_options::restore_options(@common_options::model_options)},
-								  filename                    => 'm1/'.$name_model,
-								  ignore_missing_output_files => 1 );
-		
-	}else{	
+	unless (-e $self -> directory().'m1/'.$name_model){
 		# input model  inits have already been updated
 		$frem_model = $model ->  copy( filename    => $self -> directory().'m1/'.$name_model,
 									   output_same_directory => 1,
@@ -1637,6 +1710,19 @@ sub do_model4
 									   copy_datafile   => 0,
 									   copy_output => 0);
 
+		get_or_set_fix(model => $frem_model,
+					   type => 'thetas',
+					   set_array => $self->input_model_fix_thetas);
+		get_or_set_fix(model => $frem_model,
+					   type => 'sigmas',
+					   set_array => $self->input_model_fix_sigmas);
+
+		#FIXME inpt omegas should only go up to startomega -1
+		get_or_set_fix(model => $frem_model,
+					   type => 'omegas',
+					   set_array => $self->input_model_fix_omegas);
+
+		
 		my @omega_records = ();
 		for (my $i=0; $i< ($start_omega_record-1);$i++){
 			#if start_omega_record is 1 we will push nothing
@@ -1653,6 +1739,12 @@ sub do_model4
 
 	}
 
+	#reread from disk so that omegas are properly stored
+	$frem_model = model->new( %{common_options::restore_options(@common_options::model_options)},
+							  filename                    => 'm1/'.$name_model,
+							  ignore_missing_output_files => 1 );
+		
+	#FIXME estimation of model 4 should be mobed to optional step
 	unless ($frem_model->is_run){
 		my $rundir = $self -> directory().'/model'.$modnum.'_modelfit_dir1';
 		rmtree([ "$rundir" ]) if (-e $rundir);
@@ -2030,25 +2122,23 @@ sub modelfit_setup
 		);
 
 	my $mod3_parcov_blocks = get_parcov_blocks(model => $frem_model2,
-											   join_records => 1,
 											   skip_etas => $self->skip_etas,
 											   covariate_etanumbers => $covariate_etanumbers,
 											   parameter_etanumbers => $parameter_etanumbers,
-											   start_omega_record => $start_omega_record);
+											   start_omega_record => $self->start_omega_record);
 	
 	my ($frem_model3,$est_records) = $self->do_model3(model => $frem_model2,
-													 start_omega_record => $start_omega_record,
+													 start_omega_record => $self->start_omega_record,
 													 parcov_blocks => $mod3_parcov_blocks);
 
 	my $mod4_parcov_blocks = get_parcov_blocks(model => $frem_model3,
-											   join_records => 0,
 											   skip_etas => $self->skip_etas,
 											   covariate_etanumbers => $covariate_etanumbers,
 											   parameter_etanumbers => $parameter_etanumbers,
-											   start_omega_record => $start_omega_record);
+											   start_omega_record => $self->start_omega_record);
 	
 	my $frem_model4 = $self->do_model4(model => $frem_model3,
-									   start_omega_record => $start_omega_record,
+									   start_omega_record => $self->start_omega_record,
 									   parcov_blocks => $mod4_parcov_blocks,
 									   est_records => $est_records);
 
@@ -2078,7 +2168,7 @@ sub modelfit_setup
 							 vpc2_input_params => $vpc2_input_par,
 							 labelshash => $labelshash,
 							 bsv_parameter_count => $bsv_parameter_count,
-							 start_omega_record => $start_omega_record	);
+							 start_omega_record => $self->start_omega_record	);
 
 	}
 }
@@ -2502,13 +2592,19 @@ sub	add_pk_pred_error_code
 	@end_code = (';;;FREM CODE BEGIN');
 	for (my $i=0; $i< scalar(@{$covariates}); $i++){
 		for (my $j=0; $j< $N_parameter_blocks; $j++){
-			my $label = '_'.$covariates->[$i].'_'.($j+1);
+			my $label = '_'.$covariates->[$i];
+			if ($N_parameter_blocks > 1){
+				$label .= '_'.($j+1);
+			}
 			push(@end_code, $indentation.'Y'.$label.' = TV'.$label.' + BSV'.$label);
 		}
 	}
 	for (my $i=0; $i< scalar(@{$covariates}); $i++){
 		for (my $j=0; $j< $N_parameter_blocks; $j++){
-			my $label = '_'.$covariates->[$i].'_'.($j+1);
+			my $label = '_'.$covariates->[$i];
+			if ($N_parameter_blocks > 1){
+				$label .= '_'.($j+1);
+			}
 			my $num = 100*($i+1)+$j;
 			push(@end_code,$indentation.'IF ('.$fremtype.'.EQ.'.$num.') THEN' );
 			push(@end_code,$indentation.'   Y = Y'.$label.'+EPS('.$epsnum.')' );

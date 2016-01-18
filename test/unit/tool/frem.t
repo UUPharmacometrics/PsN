@@ -65,16 +65,25 @@ is_deeply(tool::frem::get_parameters_to_etas(model => $model,
 $model->update_inits(from_output => $model->outputs->[0]);
 
 my ($block,$message) = tool::frem::get_filled_omega_block(model => $model,
-														  start_eta_1 => 1,
-														  end_eta_1 => 2,
-														  start_eta_2 => 3,
-														  end_eta_2 => 3);
+														  start_etas => [1,3],
+														  end_etas => [2,3]);
+
+
 $ans=[[4.08636E-01,sqrt(4.08636E-01)*sqrt(1.10186)*0.7853246843,sqrt(4.08636E-01)*sqrt(2.07708E-01)*0.0428450599],
 	  [sqrt(4.08636E-01)*sqrt(1.10186)*0.7853246843,1.10186E+00, -2.37832958e-03],
 	  [sqrt(4.08636E-01)*sqrt(2.07708E-01)*0.0428450599,-2.37832958e-03, 2.07708E-01]];
 
 cmp_float_matrix($block,$ans,'get_filled_omega_block 1');
 
+($block,$message) = tool::frem::get_filled_omega_block(model => $model,
+														  start_etas => [1,2,3],
+														  end_etas => [1,2,3]);
+
+$ans=[[4.08636E-01,1E-07,sqrt(4.08636E-01)*sqrt(2.07708E-01)*0.0428450599],
+	  [1E-07,1.10186E+00, -2.37832958e-03],
+	  [sqrt(4.08636E-01)*sqrt(2.07708E-01)*0.0428450599,-2.37832958e-03, 2.07708E-01]];
+
+cmp_float_matrix($block,$ans,'get_filled_omega_block 2');
 
 
 $model = model->new(filename => "$modeldir/mox_no_bov.mod", 
