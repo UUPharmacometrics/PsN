@@ -151,6 +151,11 @@ sub _parse_lst_file
             my $simulation_step_run = $outobj->get_single_value(attribute => 'simulationstep', problem_index => $problems);
             my $estimation_step_run = $outobj->get_single_value(attribute => 'estimation_step_run', problem_index => $problems);
 
+            my $is_evaluation;
+            if ($outobj->problems->[$problems]->subproblems->[$sub_problems]->method_string =~ /.*\(Evaluation\)/) {
+                $is_evaluation = 1;
+            }
+
             my @est_values = @{$outobj->get_filtered_values(
                 problem_index => $problems,
                 subproblem_index => $sub_problems,
@@ -225,7 +230,7 @@ sub _parse_lst_file
 
             $self->labels_hash({ labels => \@all_labels, on_sd_scale => \@on_sd_scale });
 
-            if ($estimation_step_run or $simulation_step_run) {
+            if ($is_evaluation or $estimation_step_run or $simulation_step_run) {
                 foreach my $label (@all_labels, @on_sd_scale) {
                     if (not so::xml::match_symbol_idtype($label)) {
                         my $old_label = $label;
@@ -247,8 +252,8 @@ sub _parse_lst_file
                     }
                 }
             }
-            
-            if ($estimation_step_run) {
+
+            if ($estimation_step_run or $is_evaluation) {
                 #Calculate relative standard errors, only for estimated values that have se
                 my @rel_se = ();
 
