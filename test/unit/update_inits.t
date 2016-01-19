@@ -194,6 +194,8 @@ my @command_line = (
 	get_command("update") . " pheno.mod -out=run5.mod -add_prior=1,1",
 	get_command("update") . " run3.mod -out=run6.mod -cholesky=omega",
 	get_command("update") . " run6.mod -out=run7.mod -cholesky=inverse -sigdig=3",
+    get_command("update_inits") . " run2.mod -out=run8.mod",
+    get_command("update_inits") . " run8.mod",
 );
 foreach my $i (0..$#command_line) {
 	my $command= $command_line[$i];
@@ -202,6 +204,10 @@ foreach my $i (0..$#command_line) {
 	$rc = $rc >> 8;
 	ok ($rc == 0, "$command, should run ok");
 }
+
+#Check based_on
+my $run8 = model->new(filename => "run8.mod", ignore_missing_data => 1, ignore_missing_files => 1);
+is ($run8->annotation->get_based_on(), 2, "based_on after update_inits");
 
 #check that cholesky gave identity FIX blocks
 my $cholmodel = model->new(filename => "run6.mod",

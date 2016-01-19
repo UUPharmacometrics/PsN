@@ -62,6 +62,14 @@ somewhere after the number, then everthing from the first digit to the first dot
 \item Run54abc.ctl gives number 54abc
 \item run55 gives nothing (since there is no dot anywhere after the number)
 \end{itemize}
+
+The 'Based on' tag will not be updated if the input and output model file is the same. For example none of the following will update the 'Based on' tag.
+\begin{verbatim}
+update_inits run2.mod -out=run2.mod
+update_inits run3.mod
+\end{verbatim}
+
+
 \subsubsection*{Output number for \$TABLE, \$ESTIMATION, \$MSFI}
 If option -renumber is manually set to a number other than 0, the output run number will
 be set to this number. If -renumber is not set but option -output\_model is set,

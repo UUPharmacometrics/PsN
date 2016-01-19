@@ -653,10 +653,12 @@ if ($options{'add_tags'}) {
     $model_copy->annotation->add_empty_tags();
 }
 
-my $based_on = $input_run_number;
-$based_on = $options{'based_on'} if (defined $options{'based_on'});
-if (defined $based_on) {
-    $model_copy->annotation->set_based_on($based_on);
+if (defined $options{'output_model'} and $options{'output_model'} ne $ARGV[0]) {
+    my $based_on = $input_run_number;
+    $based_on = $options{'based_on'} if (defined $options{'based_on'});
+    if (defined $based_on) {
+        $model_copy->annotation->set_based_on($based_on);
+    }
 }
 
 if (defined $options{'comment'}) {
