@@ -157,12 +157,6 @@ Changes and bug fixes from PsN 4.4.8 to n.n.n
 - Add description to TimeStamp explaining that unit is hours.
 - Add more PsN result files to RawResults. Also set specific oids for easier retrieval
 
-   ___so_tool___
-
-- New tool with the purpose of collecting small standardised output utilities
-- New function 'merge' that can merge multiple so-files with multiple SOBlocks into one file
-- New function 'pretty' that makes an so human readable (for example so:s created with nmoutput2so without -pretty) 
-
    ___se_of_eta___
 
 - Program is removed, because the program output is given by NONMEM in phi-file.
