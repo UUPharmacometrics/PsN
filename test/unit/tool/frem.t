@@ -203,7 +203,7 @@ for (my $i=0; $i<scalar(@ans); $i++){
 @ans = qw (ID VISI XAT2 DGRP DOSE FLAG ONO XIME DVO NEUY SCR AGE SEX NYHA WT COMP ACE DIG DIU NUMB TAD TIME VIDD CLCR AMT SS II VID CMT CONO DV EVID OVID FREMTYPE);
 is_deeply($filter_table_header,\@ans,'filter table header');
 is_deeply($extra_input_items,['FREMTYPE'],'extra_input_items create_data2');
-is($message,"Running dummy model to filter data and add FREMTYPE for Data set 2",'create_data2 message');
+is($message,"Running dummy model to filter data and add FREMTYPE for FREM data set",'create_data2 message');
 
 my $first_timevar_type;
 #is($first_timevar_type,scalar(@{$invariant})+1,'first timevar type create_data2');
@@ -255,4 +255,41 @@ is($code->[0],$ans->[0],'renumber etas 1');
 is($code->[1],$ans->[1],'renumber etas 2');
 is($code->[2],$ans->[2],'renumber etas 3');
 is($code->[3],$ans->[3],'renumber etas 4');
+
+
+$model = model->new(filename => "$modeldir/mox1.mod", 
+					ignore_missing_data => 1);
+
+my @code = @{$model->problems->[0]->pks->[0]->code};
+is ($code[9],'   KPCL  = VIS3*ETA(4)+VIS8*ETA(5)'."\n",' pk before renumbering line 9');
+is ($code[10],'   KPKA  = VIS3*ETA(6)+VIS8*ETA(7)'."\n",' pk before renumbering line 10');
+is ($code[17],'   CL    = TVCL*EXP(ETA(1)+KPCL)'."\n",' pk before renumbering line 17');
+is ($code[18],'   V     = TVV*EXP(ETA(2))'."\n",' pk before renumbering line 18');
+is ($code[19],'   KA    = THETA(3)*EXP(ETA(3)+KPKA)'."\n",'pk before renumbering line 19');
+
+
+my $input_model_fix_omegas = tool::frem::get_or_set_fix(model => $model,
+														type => 'omegas');
+
+my ($skip_etas,$fix_omegas,$start_omega_record,$parameter_etanumbers) = 
+	tool::frem::put_skipped_omegas_first(model => $model,
+	skip_omegas => [3,4,5,6],
+	input_model_fix_omegas => $input_model_fix_omegas);
+
+is($start_omega_record,5,'put skipped first start omega');
+is($skip_etas,4,'put skipped first skip_etas');
+is_deeply($parameter_etanumbers,[[5,6],[7]],'put skipped first parameter_etanumbers');
+is($model->problems->[0]->omegas->[0]->same,0,'reordered model record 1 not same');
+is($model->problems->[0]->omegas->[1]->same,1,'reordered model record 2 same');
+is($model->problems->[0]->omegas->[2]->same,0,'reordered model record 3 not same');
+is($model->problems->[0]->omegas->[3]->same,1,'reordered model record 4 same');
+
+my @code = @{$model->problems->[0]->pks->[0]->code};
+is ($code[9],'   KPCL  = VIS3*ETA(1)+VIS8*ETA(2)'."\n",' pk renumbered line 9');
+is ($code[10],'   KPKA  = VIS3*ETA(3)+VIS8*ETA(4)'."\n",' pk renumbered line 10');
+is ($code[17],'   CL    = TVCL*EXP(ETA(5)+KPCL)'."\n",' pk renumbered line 17');
+is ($code[18],'   V     = TVV*EXP(ETA(6))'."\n",' pk renumbered line 18');
+is ($code[19],'   KA    = THETA(3)*EXP(ETA(7)+KPKA)'."\n",'pk renumbered line 19');
+
+
 done_testing();

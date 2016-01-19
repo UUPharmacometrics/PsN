@@ -111,6 +111,25 @@ is($ind->subject_data->[0], join(',',@{$ans->[0]}), "append_bivariate_columns 0"
 is($ind->subject_data->[1], join(',',@{$ans->[1]}), "append_bivariate_columns 1");
 is($ind->subject_data->[2], join(',',@{$ans->[2]}), "append_bivariate_columns 2");
 
+$ind = data::individual->new(idcolumn => 1, subject_data => ['1,0,1,0,70,1,0', 
+															 '1,34,0,10,-99,2,0',
+															 '1,21,0,20,70,3,35']);
+
+my $indices = [4,5,6];
+$ind->append_binary_columns(categorical_indices => [4,5,6],
+							mapping => [[1,70],[3,2],[35,0]],
+							missing_data_token => -99);
+
+$ans = [
+	[1,0,1,0,70,1,   0 ,0  ,1 ,0,0,0 ,1],
+	[1,34,0,10,-99,2,0 ,-99,-99,0,1,0 ,1],
+	[1,21,0,20,70,3 ,35,0  ,1 ,1,0,1,0]
+];
+
+is($ind->subject_data->[0], join(',',@{$ans->[0]}), "append_binary_columns 0");
+is($ind->subject_data->[1], join(',',@{$ans->[1]}), "append_binary_columns 1");
+is($ind->subject_data->[2], join(',',@{$ans->[2]}), "append_binary_columns 2");
+
 
 
 done_testing;

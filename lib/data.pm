@@ -295,7 +295,7 @@ sub column_count
 	}
 }
 
-sub append_bivariate_columns
+sub append_binary_columns
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
@@ -365,7 +365,7 @@ sub append_bivariate_columns
 
 	if ($any_change){
 		foreach my $individual (@{$self->individuals()}) {
-			$individual->append_bivariate_columns(categorical_indices => $indices,
+			$individual->append_binary_columns(categorical_indices => $indices,
 												  mapping => \@mapping,
 												  missing_data_token => $self->missing_data_token);
 		}

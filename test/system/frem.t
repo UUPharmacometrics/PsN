@@ -18,8 +18,9 @@ my $model_dir = $includes::testfiledir;
 
 my @commands = (
 #	get_command('frem') . " -time_var=WT -occ=VISI -param=PHI,LAG -invar=SEX,DGRP -no-check $model_dir/mox_no_bov.mod -dir=$dir",
+#	get_command('frem') . " -covar=WT,DGRP,SEX -skip_omegas=1,2  -log=WT -categorical=DGRP -no-check $model_dir/moxfrem.mod -dir=$dir",
+	get_command('frem') . " -covar=AGE,SEX -categorical=SEX -no-check $model_dir/mox1.mod -dir=$dir",
 	get_command('frem') . " -covar=WT,DGRP -skip_omegas=1,2  -categorical=DGRP -no-check $model_dir/moxfrem.mod -dir=$dir",
-	get_command('frem') . " -covar=WT,DGRP,SEX -skip_omegas=1,2  -log=WT -categorical=DGRP -no-check $model_dir/moxfrem.mod -dir=$dir",
 	get_command('frem') . " -covar=SEX,WT -skip_omegas=1,2,3 -check $model_dir/moxfrem.mod -dir=$dir",
 #	get_command('frem') . " -time_var=WT,NYHA -occ=VISI -param=PHI -invar=SEX -start_eta=3 $model_dir/mox_no_bov.mod  -dir=$dir",
 #	get_command('frem') . " -time_var=WT,NYHA -occ=VISI -param=CL -invar=SEX -no-check $model_dir/mox_no_bov.mod -dir=$dir",
