@@ -23,7 +23,7 @@ SKIP: {
     my $xml = $df->xml();
     my $xml_string = $xml->toString();
     
-    is ($xml_string, '<DataFile oid="d1"><ct:Description>myDesc</ct:Description><ds:path>aPath</ds:path></DataFile>', "DataFile"); 
+    is ($xml_string, '<DataFile><ds:ExternalFile oid="d1"><ct:Description>myDesc</ct:Description><ds:path>aPath</ds:path></ds:ExternalFile></DataFile>', "DataFile"); 
 }
 
 done_testing();

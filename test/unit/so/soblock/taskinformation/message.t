@@ -24,7 +24,7 @@ SKIP: {
 
     my $xml = $msg->xml();
     my $xml_string = $xml->toString();
-    is ($xml_string, '<Message type="ERROR"><Toolname><ct:String>myTool</ct:String></Toolname><Name><ct:String>myName</ct:String></Name><Content><ct:String>TheContent</ct:String></Content><Severity><ct:Int>3</ct:Int></Severity></Message>', "Message");
+    is ($xml_string, '<Message type="ERROR"><Toolname>myTool</Toolname><Name>myName</Name><Content>TheContent</Content><Severity>3</Severity></Message>', "Message");
 }
 
 done_testing();

@@ -22,7 +22,7 @@ SKIP: {
 
         my $doc = XML::LibXML->load_xml(location => $filename);
         my $xpc = XML::LibXML::XPathContext->new($doc);
-        $xpc->registerNs('x' => 'http://www.pharmml.org/so/0.2/StandardisedOutput');
+        $xpc->registerNs('x' => 'http://www.pharmml.org/so/0.3/StandardisedOutput');
 
         return $xpc;
     }
@@ -122,7 +122,7 @@ SKIP: {
     so::parsers::nmoutput->new(so => $so, lst_file => "missingmodel.lst", toolname => "MyTool");
     $so->write();
     my $xpc = get_xml("missingmodel.SO.xml");
-    (my $node) = $xpc->findnodes('/x:SO/x:SOBlock/x:TaskInformation/x:Message[@type="ERROR"]/x:Toolname/ct:String');
+    (my $node) = $xpc->findnodes('/x:SO/x:SOBlock/x:TaskInformation/x:Message[@type="ERROR"]/x:Toolname');
     is ($node->textContent, "MyTool", "Toolname");
 
 # normal model pheno.lst
@@ -139,7 +139,7 @@ SKIP: {
         IndividualEstimates => 1,
         Predictions => 1,
         Residuals => 1,
-        Likelihood => 1,
+        OFMeasures => 1,
     );
 
     foreach $node (@nodes) {
@@ -149,7 +149,7 @@ SKIP: {
     is_deeply(\%hash, \%results_hash, "pheno.lst has all elements under Estimation");
 
 # exclude_elements
-    my $so = so->new(exclude_elements => [ 'Estimation/PopulationEstimates', 'Estimation/Likelihood' ]);
+    my $so = so->new(exclude_elements => [ 'Estimation/PopulationEstimates', 'Estimation/OFMeasures' ]);
     so::parsers::nmoutput->new(so => $so, lst_file => "pheno.lst");
     $so->write();
     my $xpc = get_xml("pheno.SO.xml");
@@ -170,7 +170,7 @@ SKIP: {
     is_deeply(\%hash, \%results_hash, "pheno.lst with exclution has all elements under Estimation");
 
 # only_include_elements
-    my $so = so->new(only_include_elements => [ 'Estimation/PopulationEstimates', 'Estimation/Likelihood' ]);
+    my $so = so->new(only_include_elements => [ 'Estimation/PopulationEstimates', 'Estimation/OFMeasures' ]);
     so::parsers::nmoutput->new(so => $so, lst_file => "pheno.lst");
     $so->write();
     my $xpc = get_xml("pheno.SO.xml");
@@ -179,7 +179,7 @@ SKIP: {
     my %hash;
     my %results_hash = (
         PopulationEstimates => 1,
-        Likelihood => 1,
+        OFMeasures => 1,
     );
 
     foreach $node (@nodes) {
@@ -200,7 +200,7 @@ SKIP: {
     my %results_hash = (
         PopulationEstimates => 1,
         PrecisionPopulationEstimates => 1,
-        Likelihood => 1,
+        OFMeasures => 1,
     );
 
     foreach $node (@nodes) {
@@ -252,7 +252,7 @@ SKIP: {
     is_deeply($so->SOBlock->[0]->Estimation->PrecisionPopulationEstimates->MLE->RelativeStandardError->valueType, [ 'string', 'real' ], "Pheno: RelativeStandardError value types");
     is_deeply($so->SOBlock->[0]->Estimation->PrecisionPopulationEstimates->MLE->RelativeStandardError->columns, [ [ 'CL', 'V', 'IVCL', 'IVV', 'SIGMA_1_1_' ], [ 7.11711711711712, 5.96268656716418, 63.1578947368421, 24.5774647887324, 20.6707317073171 ]  ], "Pheno: RelativeStandardError columns");
 
-    is($so->SOBlock->[0]->Estimation->Likelihood->Deviance, 742.051, "Pheno: Deviance");
+    is($so->SOBlock->[0]->Estimation->OFMeasures->Deviance, 742.051, "Pheno: Deviance");
 
     is(scalar(@{$so->SOBlock->[0]->RawResults->DataFile}), 1, "Pheno: Number of RawResults files");
     is($so->SOBlock->[0]->RawResults->DataFile->[0]->{path}, "pheno.lst", "Pheno: Name of lst file");
@@ -351,7 +351,7 @@ SKIP: {
         PopulationEstimates => 1,
         PrecisionPopulationEstimates => 1,
         IndividualEstimates => 1,
-        Likelihood => 1,
+        OFMeasures => 1,
     );
 
     foreach $node (@nodes) {
@@ -372,7 +372,7 @@ SKIP: {
     my %results_hash = (
         PopulationEstimates => 1,
         PrecisionPopulationEstimates => 1,
-        Likelihood => 1,
+        OFMeasures => 1,
     );
 
     foreach $node (@nodes) {

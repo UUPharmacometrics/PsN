@@ -26,11 +26,11 @@ SKIP: {
     # small pheno bootstrap
     my $so = so->new();
     so::parsers::bootstrap->new(so => $so, bootstrap_results => 'bootstrap_results.csv');
-    my $percentiles = $so->SOBlock->[0]->Estimation->PrecisionPopulationEstimates->Bootstrap->Percentiles;
+    my $percentiles = $so->SOBlock->[0]->Estimation->PrecisionPopulationEstimates->Bootstrap->PercentilesCI;
 
     is_deeply($percentiles->columnId, [ 'Percentile', 'CL', 'V', 'IVCL', 'IVV', 'mySIGMA' ], "Boostrap percentiles columnId");
     is_deeply($percentiles->columnType, [ ('undefined') x 6 ], "Boostrap percentiles columnType");
-    is($percentiles->name, "Percentiles", "Boostrap percentiles name");
+    is($percentiles->name, "PercentilesCI", "Boostrap percentiles name");
     is_deeply($percentiles->valueType, [ ('real') x 6 ], "Boostrap percentiles valueType");
     is_deeply($percentiles->columns, 
         [ [ '0.5', '2.5', '5', '95', '97.5', '99.5' ],
@@ -55,22 +55,22 @@ SKIP: {
     is_deeply($median->valueType, [ ('real') x 5 ], "Boostrap median valueType");
     is_deeply($median->columns, [ [ 0.005622315 ], [ 1.356135 ], [ 0.256029 ], [ 0.1475405 ], [ 0.01651655 ] ], "Bootstrap median columns");
 
-    my $precision_estimates = $so->SOBlock->[0]->Estimation->PrecisionPopulationEstimates->Bootstrap->PrecisionEstimates;
-    is_deeply($precision_estimates->columnId, [ 'Parameter', 'StandardError', 'LowerCI', 'UpperCI', 'Alpha' ], "Bootstrap precision estimates columnId");
-    is_deeply($precision_estimates->columnType, [ ('undefined') x 5 ], "Bootstrap precision estimates columnType");
-    is_deeply($precision_estimates->name, "PrecisionEstimates", "Bootstrap precision estimates name");
-    is_deeply($precision_estimates->valueType, [ 'string', ('real') x 4 ], "Boostrap precision estimates valueType");
+    my $precision_estimates = $so->SOBlock->[0]->Estimation->PrecisionPopulationEstimates->Bootstrap->AsymptoticCI;
+    is_deeply($precision_estimates->columnId, [ 'Parameter', 'CI', 'LowerBound', 'UpperBound' ], "Bootstrap precision estimates columnId");
+    is_deeply($precision_estimates->columnType, [ ('undefined') x 4 ], "Bootstrap precision estimates columnType");
+    is_deeply($precision_estimates->name, "AsymptoticCI", "Bootstrap precision estimates name");
+    is_deeply($precision_estimates->valueType, [ 'string', ('real') x 3 ], "Boostrap precision estimates valueType");
     is_deeply($precision_estimates->columns, [ 
         [ "CL", "V", "IVCL", "IVV", "mySIGMA" ],
-        [ 0.0004901775, 0.08974351, 0.1707019, 0.04351128, 0.003531484 ],
+        [ (0.95) x 5 ],
         [ 0.004592882, 1.160483, -0.0875016777761174, 0.05629889, 0.009493592 ],
         [ 0.006514378, 1.512277, 0.5816497, 0.2268631, 0.02333701 ],
-        [ (0.05) x 5 ] ], "Bootstrap precision estimates columns");
+         ], "Bootstrap precision estimates columns");
 
     # bootstrap with omegas on sd and corr form without model
     my $so = so->new();
     so::parsers::bootstrap->new(so => $so, bootstrap_results => 'bootstrap_results_sdcorr.csv');
-    my $percentiles = $so->SOBlock->[0]->Estimation->PrecisionPopulationEstimates->Bootstrap->Percentiles;
+    my $percentiles = $so->SOBlock->[0]->Estimation->PrecisionPopulationEstimates->Bootstrap->PercentilesCI;
     is_deeply($percentiles->columns, [ [ '2.5', '5', '95', '97.5' ], 
             [ 0.005660052, 0.00570095, 0.007192636, 0.007342812 ],
             [ 1.19874, 1.21128, 1.411374, 1.43194 ],
@@ -89,7 +89,7 @@ SKIP: {
     my $so = so->new();
     my $nmparser = so::parsers::nmoutput->new(so => $so, lst_file => 'pheno_sdcorr.lst');
     so::parsers::bootstrap->new(so => $so, bootstrap_results => 'bootstrap_results_sdcorr.csv', labels_hash => $nmparser->labels_hash);
-    my $percentiles = $so->SOBlock->[0]->Estimation->PrecisionPopulationEstimates->Bootstrap->Percentiles;
+    my $percentiles = $so->SOBlock->[0]->Estimation->PrecisionPopulationEstimates->Bootstrap->PercentilesCI;
     is_deeply($percentiles->columns, [ [ '2.5', '5', '95', '97.5' ], 
             [ 0.005660052, 0.00570095, 0.007192636, 0.007342812 ],
             [ 1.19874, 1.21128, 1.411374, 1.43194 ],
@@ -106,7 +106,7 @@ SKIP: {
     # non-existing bootstrap file
     my $so = so->new();
     so::parsers::bootstrap->new(so => $so, bootstrap_results => 'nofile.csv');
-    is ($so->SOBlock->[0]->Estimation->PrecisionPopulationEstimates->Bootstrap->Percentiles, undef, "Bootstrap with non-existing file");
+    is ($so->SOBlock->[0]->Estimation->PrecisionPopulationEstimates->Bootstrap->PercentilesCI, undef, "Bootstrap with non-existing file");
     is($so->SOBlock->[0]->TaskInformation->Message->[0]->type, "ERROR", "Bootstrap with non-existing file get error");
 
     remove_test_dir($tempdir);

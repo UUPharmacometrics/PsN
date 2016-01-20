@@ -12,16 +12,16 @@ SKIP: {
     eval { require XML::LibXML };
     skip "XML::LibXML not installed" if $@;
 
-    require so::soblock::estimation::likelihood;
+    require so::soblock::estimation::ofmeasures;
 
-    my $msg = so::soblock::estimation::likelihood->new(
+    my $msg = so::soblock::estimation::ofmeasures->new(
         Deviance => 1.56,
     );
 
     my $xml = $msg->xml();
     my $xml_string = $xml->toString();
 
-    is ($xml_string, '<Likelihood><Deviance>1.56</Deviance></Likelihood>', "Likelihood");
+    is ($xml_string, '<OFMeasures><Deviance>1.56</Deviance></OFMeasures>', "OFMeasures");
 }
 
 done_testing();

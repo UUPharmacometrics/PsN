@@ -36,7 +36,7 @@ SKIP: {
     
     my $xml_string = $rr->xml()->toString();
     
-    is ($xml_string, '<RawResults><DataFile oid="d1"><ct:Description>new</ct:Description><ds:path>sdtab28</ds:path></DataFile></RawResults>',
+    is ($xml_string, '<RawResults><DataFile><ds:ExternalFile oid="d1"><ct:Description>new</ct:Description><ds:path>sdtab28</ds:path></ds:ExternalFile></DataFile></RawResults>',
         "RawResults"); 
 }
 

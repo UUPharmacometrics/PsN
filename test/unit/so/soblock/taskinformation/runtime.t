@@ -12,20 +12,16 @@ SKIP: {
     eval { require XML::LibXML };
     skip "XML::LibXML not installed" if $@;
 
-    require so::soblock::taskinformation::runtime;
+    require so::soblock::taskinformation;
 
-    my $msg = so::soblock::taskinformation::runtime->new();
-    is ($msg->xml(), undef, "Empty Runtime");
-
-    my $msg = so::soblock::taskinformation::runtime->new(
-        Description => 'iamrunning',
-        Real => 3.1416,
+    my $msg = so::soblock::taskinformation->new(
+        RunTime => 3.1416,
     );
 
     my $xml = $msg->xml();
     my $xml_string = $xml->toString();
 
-    is ($xml_string, '<RunTime><ct:Description>iamrunning</ct:Description><ct:Real>3.1416</ct:Real></RunTime>', "RunTime");
+    is ($xml_string, '<TaskInformation><RunTime>3.1416</RunTime></TaskInformation>', "RunTime");
 }
 
 done_testing();

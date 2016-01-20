@@ -21,13 +21,9 @@ SKIP: {
 
     # Only runtime
     my $ti = so::soblock::taskinformation->new();
-    $ti->RunTime->Real(28);
+    $ti->RunTime(28);
     my $xml = $ti->xml();
-    is ($xml->toString(), "<TaskInformation><RunTime><ct:Real>28</ct:Real></RunTime></TaskInformation>", "TaskInformation with only runtime");
-
-    # Runtime and description
-    $ti->RunTime->Description("myDescri");
-    is ($ti->xml()->toString(), "<TaskInformation><RunTime><ct:Description>myDescri</ct:Description><ct:Real>28</ct:Real></RunTime></TaskInformation>", "TaskInformation with runtime+description");
+    is ($xml->toString(), "<TaskInformation><RunTime>28</RunTime></TaskInformation>", "TaskInformation with only runtime");
 
     # add_message
     my $ti = so::soblock::taskinformation->new();
@@ -38,12 +34,12 @@ SKIP: {
         content => "theContent",
         severity => 9,
     );
-    is_deeply($ti, { Message => [ { type => "ERROR", Toolname => "PsN", Name => "ourName", Content => "theContent", Severity => 9 } ], RunTime => {  } }, "add_message"); 
+    is_deeply($ti, { Message => [ { type => "ERROR", Toolname => "PsN", Name => "ourName", Content => "theContent", Severity => 9 } ] }, "add_message"); 
 
     # message and runtime
-    $ti->RunTime->Real(28);
+    $ti->RunTime(28);
     is ($ti->xml()->toString(),
-        '<TaskInformation><Message type="ERROR"><Toolname><ct:String>PsN</ct:String></Toolname><Name><ct:String>ourName</ct:String></Name><Content><ct:String>theContent</ct:String></Content><Severity><ct:Int>9</ct:Int></Severity></Message><RunTime><ct:Real>28</ct:Real></RunTime></TaskInformation>', "TaskInformation message and runtime");
+        '<TaskInformation><Message type="ERROR"><Toolname>PsN</Toolname><Name>ourName</Name><Content>theContent</Content><Severity>9</Severity></Message><RunTime>28</RunTime></TaskInformation>', "TaskInformation message and runtime");
 }
 
 done_testing();
