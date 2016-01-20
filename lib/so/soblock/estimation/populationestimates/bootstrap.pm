@@ -53,7 +53,8 @@ sub xml
         }
 
         if (defined $mean or defined $median) {
-            $bootstrap = XML::LibXML::Element->new("Bootstrap");
+            $bootstrap = XML::LibXML::Element->new("OtherMethod");
+            $bootstrap->setAttribute('method', "Bootstrap");
             if (defined $mean) {
                 $bootstrap->appendChild($mean);
             }

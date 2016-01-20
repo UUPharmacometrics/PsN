@@ -34,7 +34,7 @@ sub parse
     (my $mle) = $xpc->findnodes('x:MLE', $node);
     $self->MLE->parse($mle) if (defined $mle);
 
-    (my $bootstrap) = $xpc->findnodes('x:Bootstrap', $node);
+    (my $bootstrap) = $xpc->findnodes('x:OtherMethod', $node);
     $self->Bootstrap->parse($bootstrap) if (defined $bootstrap);
 }
 

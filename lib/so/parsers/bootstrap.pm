@@ -146,13 +146,13 @@ sub _create_bootstrap
     } else {
         (my $used_parameters, my $filtered_column) = $self->filter(parameters => \@parameters, values => \@column);
         my $table = so::table->new(
-            name => 'Percentiles',
+            name => 'PercentilesCI',
             columnId => [ "Percentile", @$used_parameters ],
             columnType => [ ('undefined') x (scalar(@$used_parameters) + 1) ],
             valueType => [ ('real') x (scalar(@$used_parameters) + 1) ],
             columns => [ \@percentiles, @$filtered_column ],
         );
-        $self->_precision_bootstrap->Percentiles($table);
+        $self->_precision_bootstrap->PercentilesCI($table);
     }
 
     (my $used_parameters, my $filtered_seci25) = $self->filter(parameters => \@parameters, values => $seci_25);
@@ -160,13 +160,22 @@ sub _create_bootstrap
     (undef, my $filtered_ses) = $self->filter(parameters => \@parameters, values => $ses);
 
     my $precision_estimates = so::table->new(
-        name => "PrecisionEstimates",
-        columnId => [ "Parameter", "StandardError", "LowerCI", "UpperCI", "Alpha" ],
-        columnType => [ ('undefined') x 5 ],
-        valueType => [ "string", ('real') x 4 ],
-        columns => [ $used_parameters, $filtered_ses, $filtered_seci25, $filtered_seci975, [ (0.05) x scalar(@$used_parameters) ] ],
+        name => "AsymptoticCI",
+        columnId => [ "Parameter", "CI", "LowerBound", "UpperBound" ],
+        columnType => [ ('undefined') x 4 ],
+        valueType => [ "string", ('real') x 3 ],
+        columns => [ $used_parameters,  [ (0.95) x scalar(@$used_parameters) ], $filtered_seci25, $filtered_seci975 ],
     );
-    $self->_precision_bootstrap->PrecisionEstimates($precision_estimates);
+    $self->_precision_bootstrap->AsymptoticCI($precision_estimates);
+
+    my $se_table = so::table->new(
+        name => "StandardError",
+        columnId => [ "Parameter", "SE" ],
+        columnType => [ "undefined", "undefined" ],
+        valueType => [ "string", "real" ],
+        columns => [ $used_parameters, $filtered_ses ],
+    );
+    $self->_precision_bootstrap->StandardError($se_table);
 
     (my $used_parameters, my $adjusted_means) = $self->filter(parameters => \@parameters, values => $means);
     my $mean_table = so::table->new(name => "Mean", columnId => $used_parameters);

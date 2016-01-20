@@ -8,8 +8,9 @@ use include_modules;
 use XML::LibXML;
 use so::table;
 
-has 'Percentiles' => ( is => 'rw', isa => 'so::table' );
-has 'PrecisionEstimates' => ( is => 'rw', isa => 'so::table' );
+has 'PercentilesCI' => ( is => 'rw', isa => 'so::table' );
+has 'AsymptoticCI' => ( is => 'rw', isa => 'so::table' );
+has 'StandardError' => ( is => 'rw', isa => 'so::table' );
 
 sub parse
 {
@@ -18,18 +19,25 @@ sub parse
 
     my $xpc = so::xml::get_xpc();
 
-    (my $perc) = $xpc->findnodes('x:Percentiles', $node);
+    (my $perc) = $xpc->findnodes('x:PercentilesCI', $node);
     if (defined $perc) {
         my $table  = so::table->new();
         $table->parse($perc);
-        $self->Percentiles($table);
+        $self->PercentilesCI($table);
     }
 
-    (my $prec) = $xpc->findnodes('x:PrecisionEstimates', $node);
+    (my $prec) = $xpc->findnodes('x:AsymptoticCI', $node);
     if (defined $prec) {
         my $table = so::table->new();
         $table->parse($prec);
-        $self->PrecisionEstimates($table);
+        $self->AsymptoticCI($table);
+    }
+
+    (my $prec) = $xpc->findnodes('x:StandardError', $node);
+    if (defined $prec) {
+        my $table = so::table->new();
+        $table->parse($prec);
+        $self->StandardError($table);
     }
 }
 
@@ -39,17 +47,23 @@ sub xml
 
     my $bootstrap;
 
-    if (defined $self->Percentiles or defined $self->PrecisionEstimates) {
-        $bootstrap = XML::LibXML::Element->new("Bootstrap");
+    if (defined $self->PercentilesCI or defined $self->AsymptoticCI or defined $self->StandardError) {
+        $bootstrap = XML::LibXML::Element->new("OtherMethod");
+        $bootstrap->setAttribute("method", "Bootstrap");
     }
 
-    if (defined $self->PrecisionEstimates) {
-        my $xml = $self->PrecisionEstimates->xml();
+    if (defined $self->StandardError) {
+        my $xml = $self->StandardError->xml();
         $bootstrap->appendChild($xml);
     }
 
-    if (defined $self->Percentiles) {
-        my $xml = $self->Percentiles->xml();
+    if (defined $self->AsymptoticCI) {
+        my $xml = $self->AsymptoticCI->xml();
+        $bootstrap->appendChild($xml);
+    }
+
+    if (defined $self->PercentilesCI) {
+        my $xml = $self->PercentilesCI->xml();
         $bootstrap->appendChild($xml);
     }
 
