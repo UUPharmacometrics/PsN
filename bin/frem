@@ -28,9 +28,13 @@ my %optional_options = (
 #	'dv:s' => undef,
 	'vpc!' => undef,
 	'check!' => undef,
+	'estimate_regular_final_model!' => undef,
+	'estimate_cholesky_final_model!' => undef,
 	'categorical:s' => undef,
 	'log:s' => undef,
-	'skip_etas:i' => undef);
+#	'skip_etas:i' => undef
+	'skip_omegas:s' => undef
+);
 
 my $res = GetOptions( \%options,
 		      @common_options::get_opt_strings,
@@ -95,13 +99,14 @@ $help_text{-dv} = <<'EOF';
       Default is DV. The name of the dependent variable. Name
 used in $INPUT.
 EOF
-$help_text{-skip_etas} = <<'EOF';
-      -skip_etas=x
+$help_text{-skip_omegas} = <<'EOF';
+      -skip_omegas=list
 
-      The number of input model leading ETAs to exclude from correlation with covariates.
-The default is 0, which means
-all model ETAs will be correlated to covariates.
-Not allowed if restarting an old run.
+      A comma-separated list of the $OMEGA records that should be excluded when covariances
+      between original model ETAs and new covariate ETAs are estimated. Numbering starts at 1.
+      Numbering goes strictly by the text $OMEGA in the control stream, without concern
+      about the type or size of the record. OMEGAs for BOV ETAs will be automatically skipped,
+      even if option -skip_omegas was not set.
 EOF
 
 $help_text{-vpc} = <<'EOF';
@@ -157,8 +162,10 @@ my $frem = tool::frem->new( eval( $common_options::parameters ),
 							top_tool           => 1,
 							covariates => $options{'covariates'},
 							categorical => $options{'categorical'},
+							estimate_regular_final_model => $options{'estimate_regular_final_model'},
+							estimate_cholesky_final_model => $options{'estimate_cholesky_final_model'},
 							log => $options{'log'},
-							skip_etas => $options{'skip_etas'}, 
+							skip_omegas => $options{'skip_omegas'}, 
 							check => $options{'check'}, 
 							vpc => $options{'vpc'}, 
 #							dv => $options{'dv'}

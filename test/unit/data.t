@@ -324,7 +324,7 @@ my $data = data->new(filename => $filename,
 					 ignoresign => '@', 
 					 parse_header => 1);
 
-my ($mapping,$new_indices,$new_categorical) = $data->append_bivariate_columns(indices => [1,2,3]); 
+my ($mapping,$new_indices,$new_categorical) = $data->append_binary_columns(indices => [1,2,3]); 
 
 is_deeply($mapping->[0],[],'mapping 0 only two nonmiss');
 is_deeply($mapping->[1],['9.0','3.0','2.0'],'mapping 1');
@@ -341,7 +341,7 @@ $data = data->new(filename => $filename,
 					 ignoresign => '@', 
 					 parse_header => 1);
 
-my ($mapping,$new_indices,$new_categorical) = $data->append_bivariate_columns(indices => [1,2,3],
+my ($mapping,$new_indices,$new_categorical) = $data->append_binary_columns(indices => [1,2,3],
 															 start_header => ['ID','F','G','H']); 
 is_deeply($data->header,['ID','F','G','H','G_9','G_3','G_2','H_7','H_51'],'new header after append 2');
 is_deeply($new_categorical,['F','G_9','G_3','G_2','H_7','H_51'],'new categorical');

@@ -69,6 +69,7 @@ sub copy
 
 sub append_bivariate_columns
 {
+	#not used
 	my $self = shift;
 	my %parm = validated_hash(\@_,
 							  categorical_indices => { isa => 'ArrayRef', optional => 0 },
@@ -105,6 +106,43 @@ sub append_bivariate_columns
 	}
 	
 }
+
+sub append_binary_columns
+{
+
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+							  categorical_indices => { isa => 'ArrayRef', optional => 0 },
+							  mapping => { isa => 'ArrayRef', optional => 0 },
+							  missing_data_token => {isa => 'Maybe[Num]'}
+	);
+	my $categorical_indices = $parm{'categorical_indices'};
+	my $mapping = $parm{'mapping'};
+	my $missing_data_token = $parm{'missing_data_token'};
+
+	for( my $i = 0 ; $i < scalar(@{$self->subject_data}); $i++ ) {
+		my @values = split( /,/ , $self->subject_data->[$i] );
+		my @newvalues = ();
+		for (my $j=0; $j< scalar(@{$categorical_indices}); $j++){
+			my $oldval = $values[$categorical_indices->[$j]];
+			my $missing = 0;
+			$missing = 1 if ($oldval == $missing_data_token);
+			for (my $k=0; $k< scalar(@{$mapping->[$j]}); $k++){
+				if ($oldval == $mapping->[$j]->[$k]){
+					push(@newvalues,1);
+				}elsif ($missing){
+					push(@newvalues,$missing_data_token);
+				}else{
+					push(@newvalues,0); #true value is nonzero, not value is 0
+				}
+			}
+		}
+		$self->subject_data->[$i] .= ','.join(',',@newvalues) if (scalar(@newvalues)>0);		
+	}
+	
+}
+
+
 sub add_frem_lines
 {
 	my $self = shift;
