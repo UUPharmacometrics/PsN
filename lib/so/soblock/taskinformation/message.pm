@@ -45,24 +45,16 @@ sub xml
     $message->setAttribute('type', $self->type);
 
     my $toolname = XML::LibXML::Element->new("Toolname");
-    my $tool_str = XML::LibXML::Element->new("ct:String");
-    $tool_str->appendTextNode($self->Toolname);
-    $toolname->appendChild($tool_str);
+    $toolname->appendTextNode($self->Toolname);
 
     my $name = XML::LibXML::Element->new("Name");
-    my $name_str = XML::LibXML::Element->new("ct:String");
-    $name_str->appendTextNode($self->Name);
-    $name->appendChild($name_str);
+    $name->appendTextNode($self->Name);
 
     my $content = XML::LibXML::Element->new("Content");
-    my $content_str = XML::LibXML::Element->new("ct:String");
-    $content_str->appendTextNode($self->Content);
-    $content->appendChild($content_str);
+    $content->appendTextNode($self->Content);
 
     my $severity = XML::LibXML::Element->new("Severity");
-    my $severity_str = XML::LibXML::Element->new("ct:Int");
-    $severity_str->appendTextNode($self->Severity);
-    $severity->appendChild($severity_str);
+    $severity->appendTextNode($self->Severity);
 
     $message->appendChild($toolname);
     $message->appendChild($name);

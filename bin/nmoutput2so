@@ -52,7 +52,7 @@ my %defaults;
 $defaults{'use_tables'} = 1; 
 $defaults{'toolname'} = 'NONMEM';
 $defaults{'pretty'} = 0;
-$defaults{'so_version'} = 0.2;
+$defaults{'so_version'} = 0.3;
 
 foreach my $opt (keys(%optional_options)) {
   $opt =~ s/[!:|].*//g; #get rid of :s |? :i etcetera

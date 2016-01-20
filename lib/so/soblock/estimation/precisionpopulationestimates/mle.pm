@@ -15,7 +15,7 @@ has 'CovarianceMatrix' => ( is => 'rw', isa => 'so::matrix' );
 has 'CorrelationMatrix' => ( is => 'rw', isa => 'so::matrix' );
 has 'StandardError' => ( is => 'rw', isa => 'so::table' );
 has 'RelativeStandardError' => ( is => 'rw', isa => 'so::table' );
-has 'ConditionNumber' => ( is => 'rw', isa => 'Num' );      # Added in SO 0.2
+has 'ConditionNumber' => ( is => 'rw', isa => 'Num' );
 
 sub parse
 {
@@ -85,9 +85,7 @@ sub xml
     my $cond;
     if (defined $self->ConditionNumber and $self->version >= 0.2) {
         $cond = XML::LibXML::Element->new("ConditionNumber");
-        my $real = XML::LibXML::Element->new("ct:Real");
-        $real->appendText($self->ConditionNumber);
-        $cond->appendChild($real);
+        $cond->appendText($self->ConditionNumber);
     }
 
     my $est;

@@ -16,10 +16,12 @@ sub parse
     my $self = shift;
     my $node = shift;
 
+    my $xpc = so::xml::get_xpc();
+
+    my $node = $xpc->findnodes('ds:ExternalFile', $node);
+
     my $oid = $node->getAttribute('oid');
     $self->oid($oid);
-
-    my $xpc = so::xml::get_xpc();
 
     (my $desc) = $xpc->findnodes('ct:Description', $node);
     $self->Description($desc);
@@ -32,7 +34,9 @@ sub xml
 {
     my $self = shift;
 
-    my $datafile = XML::LibXML::Element->new("DataFile");
+    my $top = XML::LibXML::Element->new("DataFile");
+    my $datafile = XML::LibXML::Element->new("ds:ExternalFile");
+    $top->appendChild($datafile);
     $datafile->setAttribute('oid', $self->oid);
     my $description = XML::LibXML::Element->new("ct:Description");
     $description->appendTextNode($self->Description);
@@ -41,7 +45,7 @@ sub xml
     $datafile->appendChild($description);
     $datafile->appendChild($path);
 
-    return $datafile;
+    return $top;
 }
 
 no Moose;

@@ -7,18 +7,9 @@ use MooseX::Params::Validate;
 use include_modules;
 use XML::LibXML;
 use so::soblock::taskinformation::message;
-use so::soblock::taskinformation::runtime;
 
 has 'Message' => ( is => 'rw', isa => 'ArrayRef[so::soblock::taskinformation::message]' );
-has 'RunTime' => ( is => 'rw', isa => 'so::soblock::taskinformation::runtime' );
-
-sub BUILD
-{
-    my $self = shift;
-
-    my $rt = so::soblock::taskinformation::runtime->new();
-    $self->RunTime($rt);
-}
+has 'RunTime' => ( is => 'rw', isa => 'Maybe[Num]' );
 
 sub parse
 {
@@ -36,7 +27,7 @@ sub parse
     }
 
     (my $runtime) = $xpc->findnodes('x:RunTime', $node);
-    $self->RunTime->parse($runtime) if (defined $runtime);
+    $self->RunTime($runtime);
 }
 
 sub xml
@@ -44,9 +35,8 @@ sub xml
     my $self = shift;
 
     my $ti;
-    my $rt = $self->RunTime->xml();
 
-    if (defined $rt or defined $self->Message) {
+    if (defined $self->RunTime or defined $self->Message) {
         $ti = XML::LibXML::Element->new("TaskInformation");
 
         if (defined $self->Message) {
@@ -56,7 +46,9 @@ sub xml
             }
         }
 
-        if (defined $rt) {
+        if (defined $self->RunTime) {
+            my $rt = XML::LibXML::Element->new("RunTime");
+            $rt->appendTextNode($self->RunTime);
             $ti->appendChild($rt);
         }
     }

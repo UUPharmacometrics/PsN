@@ -14,7 +14,7 @@ has 'filename' => ( is => 'rw', isa => 'Maybe[Str]' );
 has 'pretty' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'exclude_elements' => ( is => 'rw', isa => 'Maybe[ArrayRef[Str]]' );
 has 'only_include_elements' => ( is => 'rw', isa => 'Maybe[ArrayRef[Str]]' ); 
-has 'version' => ( is => 'rw', isa => 'Num', default => 0.2 );
+has 'version' => ( is => 'rw', isa => 'Num', default => 0.3 );
 has 'message' => ( is => 'rw', isa => 'Maybe[Str]' );
 has 'error' => ( is => 'rw', isa => 'Maybe[Str]' );
 
@@ -92,8 +92,8 @@ sub write
     my $SO = $doc->createElement("SO");
     $SO->setAttribute('xmlns' => "http://www.pharmml.org/so/" . $self->version . "/StandardisedOutput");
     $SO->setAttribute('xmlns:xsi' => "http://www.w3.org/2001/XMLSchema-instance");
-    $SO->setAttribute('xmlns:ds' => "http://www.pharmml.org/pharmml/0.6/Dataset");
-    $SO->setAttribute('xmlns:ct' => "http://www.pharmml.org/pharmml/0.6/CommonTypes");
+    $SO->setAttribute('xmlns:ds' => "http://www.pharmml.org/pharmml/0.8/Dataset");
+    $SO->setAttribute('xmlns:ct' => "http://www.pharmml.org/pharmml/0.8/CommonTypes");
     $SO->setAttribute('xsi:schemaLocation' => "http://www.pharmml.org/so/" . $self->version . "/StandardisedOutput");
     $SO->setAttribute('implementedBy' => "MJS");
     $SO->setAttribute('writtenVersion' => $self->version);

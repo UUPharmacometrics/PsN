@@ -1,4 +1,4 @@
-package so::soblock::estimation::likelihood;
+package so::soblock::estimation::ofmeasures;
 
 use strict;
 use warnings;
@@ -27,7 +27,7 @@ sub xml
     my $l;
 
     if (defined $self->Deviance) {
-        $l = XML::LibXML::Element->new("Likelihood");
+        $l = XML::LibXML::Element->new("OFMeasures");
         my $dev = XML::LibXML::Element->new("Deviance");
         $dev->appendTextNode($self->Deviance);
         $l->appendChild($dev);

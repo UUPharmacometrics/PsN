@@ -339,7 +339,7 @@ sub _parse_lst_file
                     }
                 }
 
-                $self->_so_block->Estimation->Likelihood->Deviance($ofv);
+                $self->_so_block->Estimation->OFMeasures->Deviance($ofv);
 
                 if (not defined $ofv) {
                     $self->_so_block->TaskInformation->add_message(
@@ -355,8 +355,7 @@ sub _parse_lst_file
             if (defined $outobj->runtime) {
                 $outobj->runtime =~ m/(\d+):(\d+):(\d+)/;
                 $elapsed_time = $1 + $2 / 60 + $3 / 3600;
-                $self->_so_block->TaskInformation->RunTime->Real($elapsed_time);
-                $self->_so_block->TaskInformation->RunTime->Description("Run time in hours");
+                $self->_so_block->TaskInformation->RunTime($elapsed_time);
             }
 
             if ($simulation_step_run and $self->use_tables) {

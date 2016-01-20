@@ -12,7 +12,7 @@ use so::soblock::estimation::populationestimates;
 use so::soblock::estimation::precisionpopulationestimates;
 use so::soblock::estimation::individualestimates;
 use so::soblock::estimation::residuals;
-use so::soblock::estimation::likelihood;
+use so::soblock::estimation::ofmeasures;
 
 has 'version' => ( is => 'rw', isa => 'Num', required => 1 );
 
@@ -21,7 +21,7 @@ has 'PrecisionPopulationEstimates' => ( is => 'rw', isa => 'so::soblock::estimat
 has 'IndividualEstimates' => ( is => 'rw', isa => 'so::soblock::estimation::individualestimates' );
 has 'Residuals' => ( is => 'rw', isa => 'so::soblock::estimation::residuals' );
 has 'Predictions' => ( is => 'rw', isa => 'so::table' );
-has 'Likelihood' => ( is => 'rw', isa => 'so::soblock::estimation::likelihood' );
+has 'OFMeasures' => ( is => 'rw', isa => 'so::soblock::estimation::ofmeasures' );
 
 sub BUILD
 {
@@ -35,8 +35,8 @@ sub BUILD
     $self->IndividualEstimates($ie);
     my $res = so::soblock::estimation::residuals->new();
     $self->Residuals($res);
-    my $l = so::soblock::estimation::likelihood->new();
-    $self->Likelihood($l);
+    my $l = so::soblock::estimation::ofmeasures->new();
+    $self->OFMeasures($l);
 }
 
 sub parse
@@ -65,8 +65,8 @@ sub parse
         $self->Predictions($table);
     }
 
-    (my $ll) = $xpc->findnodes('x:Likelihood', $node);
-    $self->Likelihodd->parse($ll) if (defined $ll);
+    (my $ll) = $xpc->findnodes('x:OFMeasures', $node);
+    $self->OFMeasures->parse($ll) if (defined $ll);
 }
 
 sub xml
@@ -83,7 +83,7 @@ sub xml
     if (defined $self->Predictions) {
         $pred = $self->Predictions->xml();
     }
-    my $l = $self->Likelihood->xml();
+    my $l = $self->OFMeasures->xml();
 
     if (defined $pe or defined $ppe or defined $ie or defined $res or defined $pred or defined $l) {
         $est = XML::LibXML::Element->new("Estimation");
