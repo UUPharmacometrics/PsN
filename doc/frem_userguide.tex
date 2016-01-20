@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{FREM userguide}{2016-01-18}
+\guidetitle{FREM userguide}{2016-01-20}
 
 
 \begin{document}
@@ -74,19 +74,22 @@ The -categorical list must be a subset of the -covariate list.
 If any covariate listed with option -categorical is not in the list -covariates there will be an error message.
 There must be no covariate listed with both -categorical and -log.
 \nextopt
-\optdefault{skip\_etas}{non-negative integer}
-The number of leading input model ETAs to \emph{not} include when estimating covariances
-between parameter and covariate ETAs.
-The default is 0, which means all 
-input model ETAs will be correlated to covariates.
-The non-included ETAs, if any, must be the first 1 to 'skip\_etas' ETAs in the model.
-If the input model has BOV, the BOV ETAs must be skipped using this option, so if the model has BOV the ETAs must
-be the the first 1 to 'skip\_etas' ETAs.
-This option is not allowed in combination with skip\_omegas.
-\nextopt
-\optdefault{skip\_omegas}{comma-separated list of record order numbers} 
-{\Large \texttt{??? TODO: alternative to skip\_etas. If set, then put the skipped omegas as the first ones, renumber all
-etas accordingly, and automatically set skip\_etas to correct number. Added as first step setup Model 2}}
+%\optdefault{skip\_etas}{non-negative integer}
+%The number of leading input model ETAs to \emph{not} include when estimating covariances
+%between parameter and covariate ETAs. The default is 0, which means all 
+%input model ETAs will be correlated to covariates.
+%The non-included ETAs, if any, must be the first 1 to 'skip\_etas' ETAs in the model.
+%If the input model has BOV, the BOV ETAs must be skipped using this option, so if the model has BOV the ETAs must
+%be the the first 1 to 'skip\_etas' ETAs. This option is not allowed in combination with skip\_omegas.
+%\nextopt
+\optdefault{skip\_omegas}{comma-separated list of record numbers}
+Default is all BOV omega records, if any.
+An \$OMEGA is classified as a BOV record either if it is SAME, or if the next \$OMEGA is SAME. 
+If -skip\_omegas is set,
+then these records will be excluded from the full parameter-covariate covariance block.
+The omega records will be reordered and ETAs renumbered so that all non-skipped
+omegas/ETAs are last in the model, so that the covariate omega and non-skipped parameter omega
+can be combined into a single large block.
 \nextopt
 \optname{estimate\_cholesky\_final\_model}
 Default not set.
@@ -101,6 +104,7 @@ the final regular parameterization frem model, otherwise the model will be
 created but not estimated.
 \nextopt
 \optname{vpc}
+{\Large \texttt{Later}}
 Default not set. If set then script will create a frem model that can be run with the vpc script (in a separate call to the vpc pscript).  
 \nextopt
 \optname{check}
@@ -128,15 +132,14 @@ or psn\_options -h on the commandline.
 %	\item Time-varying covariates must only vary between occasions, not within occasions. 
 	\item There must be no parameter called FREMTYPE in \$INPUT/\$PK/\$PRED/\$ERROR.
 	\item Categorical covariates must be bivariate, unless listed with option -categorical.
-    \item All input model ETAs that are not to have covariance with covariate ETAs estimated must have ETA number
-    <= skip\_etas. This includes any BOV ETAs in input model.
-    \item All input model ETAs that are to have covariance with covariate ETAs estimated must
-    have ETA number > skip\_etas. 
-%    \item The input model code must not include covariates that are listed in 
-%    options -invariant or -time\_varying.
-    \item Only if option -vpc is set: All model parameters (for example CL, V, KA) with ETA number > skip\_etas must be defined using \\
-    TV$<$par$>$= expression possibly based on THETA, and\\
-    $<$par$>$= expression using TV$<$par$>$ and BSV ETA
+    \item All input model ETAs that are not to have covariance with covariate ETAs estimated must
+    belong to a skipped omega record (either explicitly set with option -skip\_omegas or
+    automatically skipped since it is a BOV ETA).
+    \item The input model code must not include covariates that are listed with 
+    -covariates.
+%    \item Only if option -vpc is set: All model parameters (for example CL, V, KA) with ETA number > skip\_etas must be defined using \\
+ %   TV$<$par$>$= expression possibly based on THETA, and\\
+  %  $<$par$>$= expression using TV$<$par$>$ and BSV ETA
 %    \item Parameters listed with option -parameters\_bov must be defined in the mode following pattern:
 %    \begin{itemize}
 %    \item  {\bf BOV ETAs already in input model:}
@@ -163,17 +166,15 @@ or psn\_options -h on the commandline.
 \section{Workflow}
 \begin{enumerate}
 \item Input checks, for example that DV is found in \$INPUT.
-\item Check that all BOV ETAs, if any, have number <=  skip\_etas.
-An ETA is assumed to belong to BOV occasion 1 if the corresponding \$OMEGA is not SAME, but the next \$OMEGA is SAME. 
-An ETA is assumed to belong to BOV occasion 1+$i$ if the corresponding \$OMEGA the $i$th consecutive SAME \$OMEGA.
 %Skip ETAs with number <= skip\_etas. For all remaining BOV ETAs, if any,
 %check which parameter they are on by searching for expressions of the form\\
 %$<$par$>$= expression using TV$<$par$>$ and BOV ETA.
 %If the parameter found is not listed with option -parameters\_bov there will be an error message.
 %\item Check that there are no non-BOV ETAs after the first non-skipped BOV ETA, otherwise give error message.
-\item Check that the first (non-skipped) parameter ETA is the first in a new \$OMEGA record, otherwise give error message.
-\item Unless input model is already run \emph{and} its phi-file is found,
-run a copy of the input model (Model 1) to get estimates and phi-file.
+
+%\item Check that the first (non-skipped) parameter ETA is the first in a new \$OMEGA record, otherwise give error message.
+\item Unless input model is already run,
+run a copy of the input model (Model 1) to get estimates.
 %\item Count the number of parameter \$OMEGA blocks, N\_parameter\_blocks,
 %that are needed in the frem model:
 %Initiate N\_parameter\_blocks = 0. Skip all \$OMEGA for ETA <= skip\_etas.
@@ -189,19 +190,17 @@ run a copy of the input model (Model 1) to get estimates and phi-file.
 estimation of covariances between parameter and covariate ETAs,
 according to section below. FREM dataset.
 THETA and OMEGA and SIGMA for PK parameters are FIXED in this model.
-Include \$COV.
+%Include \$COV.
 \item Estimate Model 2.
-\item Create Model 3, 
+\item Create Model 3.
 %where there are N\_parameter\_blocks full \$OMEGA blocks with all covariances between parameter and covariate ETAs,
 %according to section below.
-where there is a single full \$OMEGA blocks with all covariances between parameter and covariate ETAs.
-
 Model 3 is a copy of Model 2, but all non-skipped Model 1 omega plus covariate omega are combined
 into single large block. For covariances between parameter omegas that did
 not have covariance in Model 1, set very very small init $10^{-7}$.
 Initial values for covariances between parameter-covariate ETAs are computed from
-phi-file from estimation of Model 2.
-Set MAXEVAL=0.
+phi-file from estimation of Model 2. Finally, check that omega block is positive definite.
+Set MAXEVAL=0 and remove \$COV.
 \item Evaluate Model 3 to get more accurate phi-file ETAs.
 \item Recompute correlations
 between parameter and covariate ETAs based on phi-file from Model 3 evaluation,
@@ -209,8 +208,10 @@ use these to create Model 4.
 
 Model 4 is a copy of model 3, but update parameter-covariate covariances from phi-file from evaluation of Model 3
 (a rectangular part of \$OMEGA block).
-Leave all parameter-parameter and covariate-covariate covariances as is.
+Leave all parameter-parameter and covariate-covariate covariances as is, but
+finally check that updated omega block is positive definite.
 Set estimation record back to what it was in Model 1.
+Set covariance record back to what it was in Model 2.
 Unfix everything that was not fix in Model 1.
 Model 4 is the (unestimated) regular parameterization FREM model.
 \item
@@ -326,10 +327,6 @@ Count number of n\_eps already present (dimension of \$SIGMA in Model 1), set ep
 Build Model 2 based on copy of Model 1, after updating initial estimates with final estimates
 from estimation of Model 1.
 
-\subsection{TODO}
-Automatically add BOV \$OMEGAs to skip\_omegas. Reorder \$OMEGA based on -skip\_omegas, and renumber ETAs. Auto-set skip\_etas. 
-Error message if no ETAs remain.
-
 \subsection{DATA changes}
 Set \$DATA to FREM dataset. Skip old IGNORE/ACCEPT. Set IGNORE=@.
 
@@ -339,6 +336,11 @@ Append extra items to \$INPUT: MDV(sometimes) and FREMTYPE.
 \subsection{OMEGA changes}
 %For the set of non-skipped parameter ETAs, change any diagonal \$OMEGA of size N>1
 %to N \$OMEGA of size 1.
+Automatically add BOV \$OMEGAs to skip\_omegas.
+Reorder \$OMEGA based on -skip\_omegas, so that all skipped come first, and renumber ETAs.
+All non-skipped diagonal \$OMEGA of size $N>1$
+are replaced with $N$ \$OMEGA of size 1.
+Auto-set skip\_etas, error message if no ETAs remain.
 
 FIX all \$OMEGAs from Model 1.
 
@@ -348,7 +350,6 @@ a full BLOCK(N\_covariates) where initials is variance-covariance matrix of
 covariates computed during creation of dataset.
 %Renumber existing parameter BSV ETA:s accordingly in \$PK/\$PRED.
 
-\noindent 
 \subsection{SIGMA changes}
 FIX all \$SIGMA from Model 1.
 Add\\
@@ -433,6 +434,11 @@ END IF
 
 (do not define a case for FREMTYPE=0, original obs. Leave original code as it is for that)
 
+\subsection{\$COV changes}
+If there was no \$COV record in Model 1, add
+\begin{verbatim}
+$COVARIANCE PRINT=R UNCONDITIONAL
+\end{verbatim}
 
 \section{Models 3-6}
 

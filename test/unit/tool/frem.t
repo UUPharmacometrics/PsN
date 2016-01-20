@@ -291,5 +291,27 @@ is ($code[17],'   CL    = TVCL*EXP(ETA(5)+KPCL)'."\n",' pk renumbered line 17');
 is ($code[18],'   V     = TVV*EXP(ETA(6))'."\n",' pk renumbered line 18');
 is ($code[19],'   KA    = THETA(3)*EXP(ETA(7)+KPKA)'."\n",'pk renumbered line 19');
 
+$model = model->new(filename => "$modeldir/pheno.mod", 
+					ignore_missing_data => 1);
+
+
+my $input_model_fix_omegas = tool::frem::get_or_set_fix(model => $model,
+														type => 'omegas');
+
+my ($skip_etas,$fix_omegas,$start_omega_record,$parameter_etanumbers) = 
+	tool::frem::put_skipped_omegas_first(model => $model,
+										 skip_omegas => [],
+										 input_model_fix_omegas => $input_model_fix_omegas);
+
+is_deeply($fix_omegas,[],' put skipped first fix omegas');
+is($start_omega_record,1,'put skipped first start omega 2');
+is($skip_etas,0,'put skipped first skip_etas 2');
+is_deeply($parameter_etanumbers,[[1],[2]],'put skipped first parameter_etanumbers');
+is($model->problems->[0]->omegas->[0]->size,1,'reordered model record 1 size 1');
+is($model->problems->[0]->omegas->[1]->size,1,'reordered model record 2 size 1');
+is($model->problems->[0]->omegas->[0]->type,'BLOCK','reordered model record 1 size 1');
+is($model->problems->[0]->omegas->[1]->type,'BLOCK','reordered model record 2 size 1');
+
+
 
 done_testing();
