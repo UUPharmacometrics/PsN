@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{nmoutput2so user guide}{2015-09-03}
+\guidetitle{nmoutput2so user guide}{2016-01-20}
 
 \begin{document}
 
@@ -43,7 +43,7 @@ For example:
 Set a comma separated list of simple XPaths relative the SOBlock. These elements will be the only ones used.
 For example: 
 \begin{verbatim}
--only_include_elements=Estimation/Likelihood
+-only_include_elements=Estimation/OFMeasures
 \end{verbatim}
 \nextopt
 \optname{message}
@@ -69,7 +69,7 @@ Set to automatically gzip compress the output SO file.
 Set a filename for the resulting SO xml file. If this is not set the file stem of the first .lst file will be used.
 \nextopt
 \optname{so\_version}
-Set the version of the so file to create. Default is 0.2
+Set the version of the so file to create. Default is 0.3
 \nextopt
 \optname{pharmml}
 Set a name of the pharmml file used to generate the SO
@@ -212,7 +212,8 @@ The following entries will be populated:
                 \end{itemize}
                 \item Bootstrap
                 \begin{itemize}
-                    \item PrecisionEstimates - From a PsN bootstrap\_results.csv file. Will give the SE for all parameters and the calculated percentiles at 2.5\% and 97.5\%
+                    \item StandardError - From a PsN bootstrap\_results.csv file. Will give the SE for all parameters. 
+                    \item AsymptoticCI - From a PsN bootstrap\_results.csv file. Will give the calculated percentiles at 2.5\% and 97.5\%
                     \item PercentilesCI - From a PsN bootstrap\_results.csv file. All random effects will be on var/cov form.
                 \end{itemize}
             \end{itemize}
@@ -231,7 +232,7 @@ The following entries will be populated:
             \end{itemize}
             \item Residuals - Taken from the sdtab if present. If MDV column present only values for which MDV=0 will be added. If DVID column present in sdtab it will be added.
             \item Predictions - Taken from the sdtab if present. If DVID column present in sdtab it will be added.
-            \item Likelihood
+            \item OFMeasures
                 \begin{itemize}
                     \item Deviance - This is the NONMEM ofv value taken from the .lst file
                 \end{itemize}
@@ -320,8 +321,10 @@ SO/
             PrecisionIndividualEstimates
             Residuals/
                 PD and NPDE columns
-            Likelihood/
+            OFMeasures/
+                Likelihood
                 LogLikelihood
+                ToolObjFunction
                 IndividualContribToLL
                 InformationCriteria
         Simulation/
