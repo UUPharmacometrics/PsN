@@ -418,7 +418,7 @@ sub _get_columnType
     my $column_type;
 
     if ($param eq 'theta') {
-        $column_type = 'popParameter';
+        $column_type = 'structParameter';
     } else {
         if ($sdcorrform) {
             if ($off_diagonal) {
