@@ -74,13 +74,15 @@ sub create_MLE
     my %parm = validated_hash(\@_,
         labels => { isa => 'ArrayRef' },
         values => { isa => 'ArrayRef' },
+        types => { isa => 'ArrayRef' },
     );
     my @labels = @{$parm{'labels'}};
     my @values = @{$parm{'values'}};
+    my @types = @{$parm{'types'}};
 
     my $table = so::table->new(name => "MLE");
     $table->columnId(\@labels);
-    $table->single_row(values => \@values);
+    $table->single_row(values => \@values, types => \@types);
     $self->MLE($table); 
 }
 

@@ -132,10 +132,16 @@ sub single_row
     my $self = shift;
     my %parm = validated_hash(\@_,
         values => { isa => 'ArrayRef' },
+        types => { isa => 'ArrayRef', optional => 1 },
     );
     my @values = @{$parm{'values'}};
+    my $types = $parm{'types'};
 
-    $self->columnType([ ("undefined") x scalar(@values) ]);
+    if (defined $types) {
+        $self->columnType($types) 
+    } else {
+        $self->columnType([ ("undefined") x scalar(@values) ]);
+    }
     $self->valueType([ ("real") x scalar(@values) ]);
 
     my @transpose;

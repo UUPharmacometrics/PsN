@@ -238,7 +238,7 @@ SKIP: {
     is ($so->SOBlock->[0]->blkId, 'pheno', "Pheno: name of SOBlock");
 
     is_deeply($so->SOBlock->[0]->Estimation->PopulationEstimates->MLE->columnId, [ 'CL', 'V', 'IVCL', 'IVV', 'SIGMA_1_1_' ], "Pheno: PopulationEstimates names");
-    is_deeply($so->SOBlock->[0]->Estimation->PopulationEstimates->MLE->columnType, [ ('undefined') x 5 ], "Pheno: PopulationEstimates column types");
+    is_deeply($so->SOBlock->[0]->Estimation->PopulationEstimates->MLE->columnType, [ 'popParameter', 'popParameter', 'varParameter_var', 'varParameter_var', 'varParameter_var' ], "Pheno: PopulationEstimates column types");
     is_deeply($so->SOBlock->[0]->Estimation->PopulationEstimates->MLE->valueType, [ ('real') x 5 ], "Pheno: PopulationEstimates value types");
     is_deeply($so->SOBlock->[0]->Estimation->PopulationEstimates->MLE->columns, [ [0.00555], [1.34], [0.247], [0.142], [0.0164] ], "Pheno: PopulationEstimates columns");
 
@@ -397,7 +397,7 @@ SKIP: {
     is ($so->SOBlock->[0]->blkId, 'Nock_2013_Carboplatin_PK_MONOLIX', "Nock: name of SOBlock");
     
     is_deeply($so->SOBlock->[0]->Estimation->PopulationEstimates->MLE->columnId, [ 'THCL', 'THV1', 'THQ', 'THV2', 'SDADD','SDPROP','CLCLCR_COV','V1KG_COV','OMCL','OMV1','SIGMA' ], "Nock: PopulationEstimates names");
-    is_deeply($so->SOBlock->[0]->Estimation->PopulationEstimates->MLE->columnType, [ ('undefined') x 11 ], "Nock: PopulationEstimates column types");
+    is_deeply($so->SOBlock->[0]->Estimation->PopulationEstimates->MLE->columnType, [ ('popParameter') x 8, ('varParameter_var') x 3 ], "Nock: PopulationEstimates column types");
     is_deeply($so->SOBlock->[0]->Estimation->PopulationEstimates->MLE->valueType, [ ('real') x 11 ], "Nock: PopulationEstimates value types");
     is_deeply($so->SOBlock->[0]->Estimation->PopulationEstimates->MLE->columns, [ [6.80426E+00], [2.13669E+01], [7.02052E-01], [2.89742E+01], [1.23705E-02], [1.92477E-01], [1.38350E+00], [9.92102E-01], [1.88014E-02], ["0.0"], ["1.0"] ], "Nock: PopulationEstimates columns");
 
@@ -451,7 +451,7 @@ SKIP: {
     is ($so->SOBlock->[0]->blkId, 'warfarin_ddmore', "warfarin SAEM: name of SOBlock");
 
     is_deeply($so->SOBlock->[0]->Estimation->PopulationEstimates->MLE->columnId, [ 'POP_CL','POP_V','POP_KA','POP_TLAG','RUV_PROP','RUV_ADD','PPV_CL','CORR_PPV_CL_V','PPV_V','PPV_KA','PPV_TLAG','BETA_CL_WT','BETA_V_WT' ], "warfarin SAEM: PopulationEstimates names");
-    is_deeply($so->SOBlock->[0]->Estimation->PopulationEstimates->MLE->columnType, [ ('undefined') x 13 ], "warfarin SAEM: PopulationEstimates column types");
+    is_deeply($so->SOBlock->[0]->Estimation->PopulationEstimates->MLE->columnType, [ ('popParameter') x 6, 'varParameter_stdev', 'varParameter_corr', ('varParameter_stdev') x 3, ('popParameter') x 2 ], "warfarin SAEM: PopulationEstimates column types");
     is_deeply($so->SOBlock->[0]->Estimation->PopulationEstimates->MLE->valueType, [ ('real') x 13 ], "warfarin SAEM: PopulationEstimates value types");
     is_deeply($so->SOBlock->[0]->Estimation->PopulationEstimates->MLE->columns, [ [1.32779E-01], [8.14751E+00], [  1.78924E+00 ], [8.74897E-01], [  1.06388E-01], 
 																 [ -1.35376E-15], [2.62728E-01],[  2.34500E-01], 
@@ -482,7 +482,7 @@ SKIP: {
 
     is_deeply($so->SOBlock->[0]->Estimation->PopulationEstimates->MLE->columnId, ['LAMBDA0','K1','K2','N0','CV','SIGMA_RES_W'], 
 			  "DelBene: PopulationEstimates names");
-    is_deeply($so->SOBlock->[0]->Estimation->PopulationEstimates->MLE->columnType, [ ('undefined') x 6 ], "DelBene: PopulationEstimates column types");
+    is_deeply($so->SOBlock->[0]->Estimation->PopulationEstimates->MLE->columnType, [ ('popParameter') x 5, 'varParameter_var' ], "DelBene: PopulationEstimates column types");
     is_deeply($so->SOBlock->[0]->Estimation->PopulationEstimates->MLE->valueType, [ ('real') x 6 ], "DelBene: PopulationEstimates value types");
     is_deeply($so->SOBlock->[0]->Estimation->PopulationEstimates->MLE->columns, 
 			  [ [2.89324E-02 ],[ 7.37283E-02],[  8.20023E-02],[  2.15178E+03 ],[ 1.09068E-01], ["1.0"] ], "DelBene: PopulationEstimates columns");
@@ -539,7 +539,7 @@ SKIP: {
 
     is_deeply($so->SOBlock->[0]->Estimation->PopulationEstimates->MLE->columnId, ['POP_LAMBDA0','LAMBDA1','K1','K2','W0','CV','OMEGA_LAMBDA0','SIGMA_RES_W'], 
 			  "Simeoni: PopulationEstimates names");
-    is_deeply($so->SOBlock->[0]->Estimation->PopulationEstimates->MLE->columnType, [ ('undefined') x 8 ], "Simeoni: PopulationEstimates column types");
+    is_deeply($so->SOBlock->[0]->Estimation->PopulationEstimates->MLE->columnType, [ ('popParameter') x 6, ('varParameter_var') x 2 ], "Simeoni: PopulationEstimates column types");
     is_deeply($so->SOBlock->[0]->Estimation->PopulationEstimates->MLE->valueType, [ ('real') x 8 ], "Simeoni: PopulationEstimates value types");
     is_deeply($so->SOBlock->[0]->Estimation->PopulationEstimates->MLE->columns, 
 			  [ [2.98716E-01],[7.74151E-01],[7.86758E-01],[7.14701E-01],[4.21873E-02],[1.00394E-01], ["0.0"], ["1.0"] ], 

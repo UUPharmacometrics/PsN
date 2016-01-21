@@ -174,9 +174,11 @@ sub _parse_lst_file
 
             my @filtered_labels = @{$model->problems->[$problems]->get_estimated_attributes(parameter => 'all', attribute => 'labels')};
             my @filtered_inits = @{$model->problems->[$problems]->get_estimated_attributes(parameter => 'all', attribute => 'inits')};
+            my @filtered_types = _get_parameter_columnTypes(problem => $model->problems->[$problems]);
 
             my @all_labels = @filtered_labels; #will add fix with label here
             my @all_inits = @filtered_inits;
+            my @all_types = @filtered_types;
 
             # Get name of the IDV (TIME) column
             my $input = $model->problems->[$problems]->inputs->[0];
@@ -220,6 +222,7 @@ sub _parse_lst_file
                     push @est_values, $option->init;
                     push @all_labels, $option->label;
                     push @all_inits, $option->init;
+                    push @all_types, _get_columnType(param => lc(substr($option->coordinate_string, 0, 5)), sdcorrform => ($option->sd or $option->corr), off_diagonal => (not $option->on_diagonal));
                 }
                 if ($option->sd or $option->corr) {     # Save labels for parameters on sd/corr scale
                     if (grep { $_ eq $option->label } @all_labels) {
@@ -273,7 +276,7 @@ sub _parse_lst_file
 
                 my $undefs = grep { not defined $_ } @est_values;
                 if ($undefs != scalar(@est_values)) {   # Check that not all in list are undef. Should possibly have been done earlier
-                    $self->_so_block->Estimation->PopulationEstimates->create_MLE(labels => \@all_labels, values => \@est_values);
+                    $self->_so_block->Estimation->PopulationEstimates->create_MLE(labels => \@all_labels, values => \@est_values, types => \@all_types);
                 }
 
                 if ($covariance_step_successful) {
@@ -379,6 +382,60 @@ sub _parse_lst_file
         content => "This SOBlock was created with nmoutput2so version " . $PsN::version,
         severity => 0,
     );
+}
+
+sub _get_parameter_columnTypes
+{
+    # Get the columnTypes for all filtered parameters
+    my %parm = validated_hash(\@_,
+        problem => { isa => 'model::problem' },
+    );
+    my $problem = $parm{'problem'};
+
+    my @types = @{$problem->get_estimated_attributes(parameter => 'all', attribute => 'param')};
+    my @sdcorrform = @{$problem->get_estimated_attributes(parameter => 'all', attribute => 'sdcorrform')};
+    my @off_diagonal = @{$problem->get_estimated_attributes(parameter => 'all', attribute => 'off_diagonal')};
+    my @column_types;
+
+    for (my $i = 0; $i < scalar(@types); $i++) {
+        push @column_types, _get_columnType(param => $types[$i], sdcorrform => $sdcorrform[$i], off_diagonal => $off_diagonal[$i]);
+    }
+
+    return @column_types;
+}
+
+sub _get_columnType
+{
+    my %parm = validated_hash(\@_,
+        param => { isa => 'Str' },
+        sdcorrform => { isa => 'Bool', default => 0 },
+        off_diagonal => { isa => 'Bool', default => 0 },
+    );
+    my $param = $parm{'param'};
+    my $sdcorrform = $parm{'sdcorrform'};
+    my $off_diagonal = $parm{'off_diagonal'}; 
+
+    my $column_type;
+
+    if ($param eq 'theta') {
+        $column_type = 'popParameter';
+    } else {
+        if ($sdcorrform) {
+            if ($off_diagonal) {
+                $column_type = 'varParameter_corr';
+            } else {
+                $column_type = 'varParameter_stdev';
+            }
+        } else {
+            if ($off_diagonal) {
+                $column_type = 'varParameter_cov';
+            } else {
+                $column_type = 'varParameter_var';
+            }
+        }
+    }
+
+    return $column_type;
 }
 
 sub _get_included_columns
