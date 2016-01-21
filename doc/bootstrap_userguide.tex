@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{Bootstrap user guide}{2015-11-10}
+\guidetitle{Bootstrap user guide}{2016-01-21}
 \begin{document}
 
 
@@ -55,7 +55,8 @@ PsN will instead keep \$TABLE, which can require much disk space.
 Default not used. When used, the bootstrap utility will calculate the confidence intervals through the BCa method \cite{Efron}. The BCa is intended for calculation of second-order correct confidence intervals. Warning: Using bca is very time-consuming. 
 \nextopt
 \optname{skip\_minimization\_terminated}
-Used by default. When used, the bootstrap will skip all samples where the NONMEM run terminated the minimization step. Disable with -no-skip\_minimization\_terminated. 
+Used by default. When used, the bootstrap will skip all samples where the NONMEM run terminated the minimization step.
+Disable with -no-skip\_minimization\_terminated. 
 \nextopt
 \optname{skip\_covariance\_step\_terminated}
 Default not used. When true/used, the bootstrap will skip all samples where the NONMEM run terminated the covariance step. 
@@ -64,7 +65,8 @@ Default not used. When true/used, the bootstrap will skip all samples where the 
 Default not used. When used the bootstrap will skip all samples where the NONMEM run had warnings from the covariance step. 
 \nextopt
 \optname{skip\_estimate\_near\_boundary}
-Default not used. When used, the bootstrap will skip all samples where the NONMEM run signal that some estimates are near its boundary. 
+Used by default. When used, the bootstrap will skip all samples where the NONMEM run signal that some estimates are near its boundary.
+Disable with -no-skip\_estimate\_near\_boundary.
 \nextopt
 \optname{allow\_ignore\_id}
 Default not used. When not used, i.e. by default, bootstrap will print a message and terminate if an IGNORE or ACCEPT statement based on the ID column is found in the \$DATA record. This is done because it would interfere with the internal renumbering of individuals that the script does, producing errors. If -allow\_ignore\_id is used (not recommended), a warning is printed but the program continues execution. Note: The IGNORE statement can safely be used in conjunction with any other column than ID. 
