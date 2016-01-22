@@ -107,8 +107,10 @@ if (0){
 
 my $decorr = [];
 my $shrink =[];
-$ok = simeval_util::decorrelation($est_matrix,$mean_matrix,$decorr,$shrink);
+my $message;
+($ok,$message) = simeval_util::decorrelation($est_matrix,$mean_matrix,$decorr,$shrink);
 is ($ok, 0, "decorrelation return status");
+is ($message,'','decorrelation message');
 
 #param #indiv $sample
 #this is stored in ebe_npde.m in matlab/old/ formula
@@ -276,9 +278,9 @@ cmp_ok($est_matrix->[0]->[69]->[3],'==',-0.00014352,'iwres rec 70  sim3');
 
 $decorr = [];
 $shrink =[];
-$ok = simeval_util::decorrelation($est_matrix,$mean_matrix,$decorr,$shrink);
+($ok,$message) = simeval_util::decorrelation($est_matrix,$mean_matrix,$decorr,$shrink);
 is ($ok, 0, "decorrelation iwres return status");
-
+is ($message,'','decorrelation iwres message');
 if (0){
 	for (my $i=0;$i < scalar(@{$decorr->[0]}); $i++){
 #		for (my $k=0;$k < scalar(@{$decorr->[0]->[$i]}); $k++){

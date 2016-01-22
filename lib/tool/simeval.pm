@@ -405,7 +405,7 @@ sub modelfit_analyze
 		);
 	my $model_number = $parm{'model_number'};
 
-
+	my $errmess;
 	unless (defined $self->tools->[0]->raw_results){
 		croak("Running simulations failed. Check output in ".$self->tools->[0]->directory);
 	}
@@ -454,10 +454,10 @@ sub modelfit_analyze
 		my $npd = [];
 		my $pd = [];
 
-		$ret = simeval_util::decorrelation($est_matrix,$mean_matrix,$decorr,$stdev);
+		($ret,$errmess) = simeval_util::decorrelation($est_matrix,$mean_matrix,$decorr,$stdev);
 		unless ($ret ==0){
 			ui->print(category=> 'all',
-					  message =>"\nError in decorrelation for iwres: $ret. iwres results cannot be computed\n");
+					  message =>"\nError in decorrelation for iwres: $ret. iwres results cannot be computed\n".$errmess);
 			last;
 		}
 
@@ -536,7 +536,7 @@ sub modelfit_analyze
 			$ret = simeval_util::npde_comp($est_matrix,$pd,$npd);
 			unless ($ret ==0){
 				ui->print(category=> 'all',
-						  message => "\nError in npde_comp for iwres: $ret. iwres results cannot be computed\n");
+						  message => "\nError in npde_comp for iwres: $ret. iwres results pd and npd cannot be computed\n");
 				last;
 			}
 
@@ -672,9 +672,10 @@ sub modelfit_analyze
 #		}
 
 
-		$ret = simeval_util::decorrelation($est_matrix,$mean_matrix,$decorr,$stdev);
+		($ret,$errmess) = simeval_util::decorrelation($est_matrix,$mean_matrix,$decorr,$stdev);
 		unless ($ret ==0){
-			print "\nError in decorrelation for iofv: $ret. iofv results cannot be computed\n";
+			ui->print(category=> 'all',
+					  message => "\nError in decorrelation for iofv: $ret. iofv results cannot be computed\n".$errmess);
 			last;
 		}
 		$ret = simeval_util::npde_comp($decorr,$pde,$npde);
@@ -772,9 +773,10 @@ sub modelfit_analyze
 			}
 			close ORI;
 			
-			$ret = simeval_util::decorrelation($est_matrix,$mean_matrix,$decorr,$dummy);
+			($ret,$errmess) = simeval_util::decorrelation($est_matrix,$mean_matrix,$decorr,$dummy);
 			unless ($ret ==0){
-				print "\nError in decorrelation for ebe: $ret. ebe results cannot be computed\n";
+				ui->print(category=> 'all',
+						  message => "\nError in decorrelation for ebe: $ret. ebe results cannot be computed\n".$errmess);
 				last;
 			}
 

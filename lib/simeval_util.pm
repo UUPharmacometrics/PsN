@@ -178,14 +178,27 @@ sub decorrelation{
 
     my $input_error = 2;
     my $numerical_error = 1;
-
+	my $message = '';
+	my $result = 0;
+	
 	my $nparm = scalar(@{$estimate_matrix});
-	return $input_error unless ($nparm>0);
+	unless ($nparm>0){
+		$result = $input_error;
+		$message .= "number of parameters (columns in estimate matrix) is 0\n";
+	}
 	my $individuals = scalar(@{$estimate_matrix->[0]});
-	return $input_error unless ($individuals>0);
+	unless ($individuals>0){
+		$result = $input_error;
+		$message .= "number of individuals (rows in estimate matrix) is 0\n";
+	}
 	my $samples = scalar(@{$estimate_matrix->[0]->[0]})-1; #-1 for original
-	return $input_error unless ($samples > 1);
+	unless ($samples > 1){
+		$result = $input_error;
+		$message .= "number of samples (3rd dim in estimate matrix) is not > 1\n";
+	}
 
+	return ($result,$message) if ($result);
+	
 	if ($nparm == 1){
 		for (my $i=0;$i<$individuals;$i++){
 			my $mean=$mean_matrix->[0]->[$i];
@@ -240,7 +253,11 @@ sub decorrelation{
 
 			my $Rmat = [];
 			my $numerr = linear_algebra::QR_factorize(\@Amat,$Rmat);
-			#TODO handle numerr
+			unless ($numerr == 0){
+				$result = $numerr;
+				$message .= "QR factorization revealed that matrix was not full rank\n";
+				return ($result,$message);
+			}
 
 			#want to multiply with inverse 'square root' (in a loose sense) of 
 			#empirical variance-covariance matrix of A'A
@@ -262,7 +279,11 @@ sub decorrelation{
 			#Golub p 88
 			
 			my $numerr = linear_algebra::upper_triangular_transpose_solve($Rmat,\@original);
-			#TODO handle numerr
+			unless ($numerr == 0){
+				$result = $numerr;
+				$message .= "Solving of triangular system 1 with R matrix broke down, diagonal element of R == 0\n";
+				return ($result,$message);
+			}
 			
 			for (my $j=0;$j<$nparm;$j++){
 #				if ( ($estimate_matrix->[$j]->[$i]->[0]) == 0){
@@ -284,7 +305,11 @@ sub decorrelation{
 				#solve R'*x=simvec
 				
 				my $numerr = linear_algebra::upper_triangular_transpose_solve($Rmat,\@simvec);
-				#TODO handle numerr
+				unless ($numerr == 0){
+					$result = $numerr;
+					$message .= "Solving of triangular system sim $k with R matrix broke down, diagonal element of R == 0\n";
+					return ($result,$message);
+				}
 				
 				#solve diag(1/sqrt(N-1))*transf=x
 				for (my $j=0;$j<$ncol;$j++){
@@ -302,7 +327,7 @@ sub decorrelation{
 			
 		} #end loop over id
 	}
-	return 0;
+	return (0,$message);
 	
 }
 

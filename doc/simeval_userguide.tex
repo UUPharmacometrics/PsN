@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{SIMEVAL user guide}{2016-01-14}
+\guidetitle{SIMEVAL user guide}{2016-01-22}
 
 \begin{document}
 
@@ -15,7 +15,9 @@ The simeval program is a tool for simulation-evaluation based diagnostics.
 The principle is 
 \begin{enumerate}
 \item Simulate N data sets from final model
-\item Apply final model to each data set (evaluate given the model parameters used for simulation or evaluate with model parameters that are re-estimated for each simulated data set)
+\item Apply final model to each data set
+(evaluate given the model parameters used for simulation or evaluate with
+model parameters that are re-estimated for each simulated data set)
 \item Extract output for diagnostics
 \begin{description}
 \item[OFV] population
@@ -118,26 +120,58 @@ $iOFV_{standardized}=\frac{(iOFV_{observed} - mean (iOFV_{simulated}))^2}{varian
 
 \begin{enumerate}
 \item Remove MSFO option from \$EST.
-\item Read model file to find set of IIV ETAs. An ETA is assumed to be IIV if the corresponding \$OMEGA is not SAME
+\item Read model file to find set of IIV ETAs. An ETA is assumed to be IIV if the
+corresponding \$OMEGA is not SAME
 \emph{and} the next \$OMEGA is not SAME either. Also find set of IOV ETAs, grouped by occasions.
-An ETA is assumed to belong to IOV occasion 1 if the corresponding \$OMEGA is not SAME, but the next \$OMEGA is SAME. 
-An ETA is assumed to belong to IOV occasion 1+$i$ if the corresponding \$OMEGA the $i$th consecutive SAME \$OMEGA. 
-\item If \$SIM not present, create simple \$SIM as in sse. Create 'n\_simulation\_models' copies of modified
-input model with order number of copy indicated in filename. In each copy set unique seed in \$SIM and set
+An ETA is assumed to belong to IOV occasion 1 if the corresponding \$OMEGA is not SAME,
+but the next \$OMEGA is SAME. 
+An ETA is assumed to belong to IOV occasion 1+$i$ if the corresponding \$OMEGA the $i$th consecutive SAME \$OMEGA.
+\item Check if IWRES is defined in model code. If it is not defined, exclude
+IWRES from all \$TABLE listed below, and skip iwres reading and analysis.
+\item If \$SIM not present, add a basic \$SIM with a seed and, if \$PRIOR in the model, TRUE=PRIOR.
+Create 'n\_simulation\_models' copies of modified
+input model with order number of copy indicated in filename. In each copy set unique
+seed in \$SIM and set
 NSUB so that sum of simulations is equal to 'samples', remove old \$TABLE if present, 
 if option reminimize is not set then set MAXEVAL=0, and
 add \$TABLE IWRES ID NOPRINT ONEHEADER NOAPPEND FILE=iwres-$\langle$ordernum$\rangle$.dta. 
-\item In 'original' input model: Remove \$SIM if present. Add \$TABLE $\langle$all undropped items in \$INPUT$\rangle$ IPRED PRED IWRES NOPRINT ONEHEADER NOAPPEND FILE=orig\_pred.dta. Add \$TABLE IWRES ID MDV NOPRINT ONEHEADER NOAPPEND FILE=original\_iwres.dta. 
+\item In 'original' input model:
+Remove \$SIM if present.
+Add \$TABLE $\langle$all undropped items in
+\$INPUT$\rangle$ IPRED PRED IWRES NOPRINT ONEHEADER NOAPPEND FILE=orig\_pred.dta.
+Add \$TABLE IWRES ID MDV NOPRINT ONEHEADER NOAPPEND FILE=original\_iwres.dta. 
 \item run modified original input model and 'n\_simulation\_models' sim models.
 \item Read all iwres\_$\langle$order number$\rangle$.dta files,
-storing IWRES values per data point. Compute, per data point, ISHR\_ij=1-sd(IWRES\_ij). Open orig\_pred.dta, append ISHR column with
-computed values, and print to gls\_input.dta. Print also shrinkage column to new file ind\_iwres\_shrinkage.dta. File gls\_input.dta
+storing IWRES values per data point. Compute, per data point, ISHR\_ij=1-sd(IWRES\_ij).
+Open orig\_pred.dta, append ISHR column with
+computed values,
+and print to gls\_input.dta. Print also shrinkage column to new file ind\_iwres\_shrinkage.dta. File gls\_input.dta
 can be used as input when running gls program, see gls\_userguide.pdf. 
 \item Compute npde for IWRES according to \cite{Comets}.
 \item Read ETA values from 
 phi-files for original and simulated data, and compute npde for EBE:s according to \cite{Comets}.
 Perform computations for IIV, and also for IOV for different occasions, separately. 
 \end{enumerate}
+
+\subsection{Handling of zero-valued EBE:s}
+PsN will read the EBE:s from the phi-file from the evaluation/estimation of the simulated data set.
+Each EBE column from evaluation of the \emph{first} simulated data set is checked for the existence of
+non-zero EBEs. If \emph{all} values in a column are identical to zero, that ETA number will not be read
+for any simulation number, and the ETA number will be excluded from all further analysis.
+If a few, but not all, EBEs in a column are equal to zero, then those zeros will be treated like
+any other number.
+
+If the EBE are linearly dependent, then the decorrelation will break down, and the EBE analysis will
+be interrupted with an error message.
+
+\subsection{Handling of IWRES}
+The simeval program will check the model code for a line that defines IWRES.
+If not found then the IWRES processing will be skipped.
+If is IWRES defined then IWRES will be read per observation (as checked with MDV==0)
+and npde:s computed for each observation.
+The file summary\_iwres.csv contains columns with ID,MDV,IWRES,npde\_IWRES,
+where IWRES and npde-columns will be empty if MDV-column not 0.
+Currently there is no rplots code that utilizes the iwres output from simeval.
 
 \begin{thebibliography}{99}
 \bibitem{Comets} E. Comets, K. Brendel and F. Mentré,
