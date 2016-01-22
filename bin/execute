@@ -195,6 +195,7 @@ common_options::online_help('execute', \%options,\%help_text, \%required_options
 
 require tool::modelfit;
 require model;
+require input_checking;
 
 #bad to request user input if wrapper script was used to start PsN. Just make this easy to invoke 
 #manually after installing
@@ -245,9 +246,6 @@ my $models_array;
 
 
 my $eval_string = common_options::model_parameters(\%options);
-unless (defined $options{'copy_data'} and (not $options{'copy_data'})) {
-    $options{'copy_data'} = 1;
-}
 
 foreach my $model_name ( @ARGV ){  
 	my $model;
@@ -255,60 +253,14 @@ foreach my $model_name ( @ARGV ){
 							filename                    => $model_name,
 							ignore_missing_output_files => 1 );
 
-		unless ($model->copy_data_setting_ok(copy_data => $options{'copy_data'})){
-			die("Cannot set -no-copy_data, absolute data file path is too long.");
-		} 
-		my $mismatch = $model->msfo_to_msfi_mismatch;
-		if ($mismatch){
-			ui->print(category => 'all',
-					  message => "Warning: \$MSFI of \$PROBLEM number $mismatch in ".$model_name.
-					  " does not match previous \$EST MSFO. Check results carefully.\n");
-		}
-
-
-		if (defined $options{'copy_data'} and (not $options{'copy_data'})){
-			$model->relative_data_path(0);
-		}
-		if( $options{'nonparametric_etas'} or
-			$options{'nonparametric_marginals'} ) {
-			$model -> add_nonparametric_code;
-		}
-		
-		if( $options{'shrinkage'} ) {
-			$model -> shrinkage_stats( enabled => 1 );
-		}
+	input_checking::check_options(tool => 'execute', options => \%options, model => $model);
 
 	push( @{$models_array}, $model );
 
 }
-my %hash =(eval( $common_options::parameters ));
-if ($options{'reduced_model_ofv'} and not $hash{'retries'}){
-	croak("Illegal input: option reduced_model_ofv is set but cannot be used since -retries is not larger than 0\n");
-}
-
-
-if($options{'tail_output'} ) {
-	if($Config{osname} ne 'MSWin32'){
-		print "Warning: option -tail_output only works on Windows.\n";
-		$options{'tail_output'}=0;
-	}
-	unless (defined $options{'wintail_exe'} ) {
-		print "Warning: option -wintail_exe is not set, -tail_output will not work\n";
-		$options{'tail_output'}=0;
-	}
-	unless (defined $options{'wintail_command'} ) {
-		print "Warning: option -wintail_command is not set, -tail_output will not work\n";
-		$options{'tail_output'}=0;
-	}
-}
 
 my $modelfit;
-if ( defined $options{'predict_data'} and (not defined $options{'predict_model'} ) ){
-	die( "Cannot set -predict_data without -predict_model");
-}
-if ( defined $options{'predict_model'} and (not defined $options{'predict_data'} ) ){
-	die( "Cannot set -predict_model without -predict_data");
-}
+
 if ( defined $options{'predict_data'} and defined $options{'predict_model'} ) {
 	if( scalar @{$models_array} > 1 ) {
 		die( "When using predict_data and predict_model, no "

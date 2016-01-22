@@ -8,6 +8,7 @@ use ui;
 use model;
 use MooseX::Params::Validate;
 use array qw(max min);
+use Config;
 
 sub check_options
 {
@@ -32,8 +33,13 @@ sub check_options
 	my $error = '';
 
 	if ($tool eq 'frem'){
-		$msfi = 1;
+		$msfi = 1; #redundant???
 		$error .= check_frem(options => $options, model => $model);
+	}
+	if ($tool eq 'execute'){
+#		$msfi = 1; no need, already done via model->input_files
+		$copy_data = 1;
+		$error .= check_execute(options => $options, model => $model);
 	}
 
 	if ($tool eq 'sir'){
@@ -43,7 +49,7 @@ sub check_options
 	}
 
 	if ($tool eq 'simeval'){
-		$msfi = 1;
+		$msfi = 1; #redundant?
 		$single_prob_or_tnpri = 1;
 		$require_est = 1;
 		$error .= check_simeval(options => $options, model => $model);
@@ -449,6 +455,66 @@ sub check_frem
 	my @skip_omegas = sort { $a <=> $b } @skip; #sort ascending
 	$options->{'skip_omegas'} = \@skip_omegas;
 	
+	return $error;
+}
+
+sub check_execute
+{
+	my %parm = validated_hash(\@_,
+							  options => {isa => 'HashRef', optional => 0},
+							  model =>  {isa => 'model', optional => 0},
+		);
+	my $options = $parm{'options'};
+	my $model = $parm{'model'};
+	
+	my $error = '';
+
+	if( $options->{'nonparametric_etas'} or
+		$options->{'nonparametric_marginals'} ) {
+		$model -> add_nonparametric_code;
+	}
+		
+	if( $options->{'shrinkage'} ) {
+		$model -> shrinkage_stats( enabled => 1 );
+	}
+
+	my $mismatch = $model->msfo_to_msfi_mismatch;
+	if ($mismatch){
+		ui->print(category => 'all',
+				  message => "Warning: \$MSFI of \$PROBLEM number $mismatch in ".$model->file_name.
+				  " does not match previous \$EST MSFO. Check results carefully.\n");
+	}
+
+	if ($options->{'reduced_model_ofv'} and (not (defined $options->{'retries'} and ($options->{'retries'} > 0)))){
+		$error .= "Illegal input: option reduced_model_ofv is set but cannot be used since -retries is not larger than 0\n";
+	}
+
+	if($options->{'tail_output'} ) {
+		if($Config{osname} ne 'MSWin32'){
+			print "Warning: option -tail_output only works on Windows.\n";
+			$options->{'tail_output'}=0;
+		}
+	}
+	if($options->{'tail_output'} ) {
+		unless (defined $options->{'wintail_exe'} ) {
+			print "Warning: option -wintail_exe is not set, -tail_output will not work\n";
+			$options->{'tail_output'}=0;
+		}
+	}
+	if($options->{'tail_output'} ) {
+		unless (defined $options->{'wintail_command'} ) {
+			print "Warning: option -wintail_command is not set, -tail_output will not work\n";
+			$options->{'tail_output'}=0;
+		}
+	}
+
+	if ( defined $options->{'predict_data'} and (not defined $options->{'predict_model'} ) ){
+		$error .= "Cannot set -predict_data without -predict_model"."\n";
+	}
+	if ( defined $options->{'predict_model'} and (not defined $options->{'predict_data'} ) ){
+		$error .=  "Cannot set -predict_model without -predict_data"."\n";
+	}
+
 	return $error;
 }
 
