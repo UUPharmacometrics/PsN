@@ -2009,6 +2009,7 @@ sub modelfit_setup
 	my $message;
 	my $frem_model2;
 	my $frem_model3;
+	my $frem_model4;
 	my $frem_model5;
 	
 	#this runs input model, if necessary
@@ -2067,6 +2068,12 @@ sub modelfit_setup
 						  est_records => $est_records,
 						  cov_records => $cov_records);
 
+	#FIXME subtool instead?
+	my @final_numbers = ();
+
+	push(@final_numbers,4) if $self->estimate_regular_final_model;
+
+
 	$self->prepare_model5(start_omega_record => $self->start_omega_record,
 						  first_cholesky_theta => scalar(@{$frem_model3->problems->[0]->thetas}),
 						  parameter_etanumbers => $parameter_etanumbers);
@@ -2074,21 +2081,16 @@ sub modelfit_setup
 	($frem_model5,$message) = $self->run_unless_run(numbers => [5]);
 	if (defined $message){
 		ui->print(category => 'frem',
-				  message => $message);
-		exit;
+				  message => "Estimation of model 5 failed, cannot prepare model 6 (final Cholesky model)");
+	}else{
+		$self->prepare_model6(model => $frem_model5,
+							  first_cholesky_theta => scalar(@{$frem_model3->problems->[0]->thetas}),
+							  start_omega_record => $self->start_omega_record,
+							  parameter_etanumbers => $parameter_etanumbers);
+		
+		push(@final_numbers,6) if $self->estimate_cholesky_final_model;
 	}
-
-	$self->prepare_model6(model => $frem_model5,
-						  first_cholesky_theta => scalar(@{$frem_model3->problems->[0]->thetas}),
-						  start_omega_record => $self->start_omega_record,
-						  parameter_etanumbers => $parameter_etanumbers);
-
-	#FIXME subtool instead?
-	my @final_numbers = ();
-
-	push(@final_numbers,4) if $self->estimate_regular_final_model;
-	push(@final_numbers,6) if $self->estimate_cholesky_final_model;
-
+	
 	my ($final_models,$mes) = $self->run_unless_run(numbers => \@final_numbers) if (scalar(@final_numbers)>0);
 	
 	if ($self->vpc()){
