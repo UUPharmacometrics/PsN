@@ -393,5 +393,69 @@ cmp_ok($omega_mat->[1]->[0],'==',0.392094, "get_matrix 1,0");
 cmp_ok($omega_mat->[1]->[1],'==',0.583808, "get_matrix 1,1");
 
 	
+my $code = ['CL=THETA(2)*EXP(ETA(2))',
+			'V=TVV+ETA(33)',
+			'KA=THETA(4)*EXP(1+ETA(4))',
+			'Y=ETA(5)+ETA(6)'];
+my $ans = ['CL=THETA(2)*EXP(ETA(7))',
+			'V=TVV+ETA(33)',
+			'KA=THETA(4)*EXP(1+ETA(8))',
+			'Y=ETA(10)+ETA(11)'];
+
+model::problem::renumber_etas(code => $code,
+							  eta_from => [[2,4,3,5,6]],
+							  eta_to => [[7,8,9,10,11]]);
+is($code->[0],$ans->[0],'renumber etas 1');
+is($code->[1],$ans->[1],'renumber etas 2');
+is($code->[2],$ans->[2],'renumber etas 3');
+is($code->[3],$ans->[3],'renumber etas 4');
+
+my $code = ['CL=THETA(2)*EXP(ETA(2))',
+			'V=TVV+ETA(33)',
+			'KA=THETA(4)*EXP(1+ETA(4))',
+			'Y=ETA(5)+ETA(6)'];
+my $ans = ['CL=THETA(2)*EXP((ETA(2)*ASD_ETA_2))',
+			'V=TVV+ETA(33)',
+			'KA=THETA(4)*EXP(1+(ETA(4)*ASD_ETA_4))',
+			'Y=(ETA(5)*ASD_ETA_5)+(ETA(6)*ASD_ETA_6)'];
+my $orig = ['CL=THETA(2)*EXP(ETA(2))',
+			'V=TVV+ETA(33)',
+			'KA=THETA(4)*EXP(1+ETA(4))',
+			'Y=ETA(5)+ETA(6)'];
+
+model::problem::substitute_scaled_etas(code => $code,
+									   eta_list => [2,4,3,5,6],
+									   inverse => 0);
+
+is($code->[0],$ans->[0],'subst etas 1');
+is($code->[1],$ans->[1],'subst etas 2');
+is($code->[2],$ans->[2],'subst etas 3');
+is($code->[3],$ans->[3],'subst etas 4');
+
+model::problem::substitute_scaled_etas(code => $code,
+									   eta_list => [2,4,3,5,6],
+									   inverse => 1);
+
+is($code->[0],$orig->[0],'subst etas 1 i');
+is($code->[1],$orig->[1],'subst etas 2 i');
+is($code->[2],$orig->[2],'subst etas 3 i');
+is($code->[3],$orig->[3],'subst etas 4 i');
+
+my $model = model->new(filename => $includes::testfiledir."/mox1.mod", ignore_missing_data => 1);
+
+model::problem::rescale_etas(problem => $model->problems->[0],
+							 use_pred =>0,
+							 omega_indices =>[0,1]);
+
+is($model->problems->[0]-> record_count( record_name => 'theta' ),7,'theta count after rescale');
+
+cmp_float($model->problems->[0]->thetas->[4]->options->[0]->init,sqrt(0.0750),'theta init 1');
+is($model->problems->[0]->thetas->[4]->options->[0]->fix,1,'theta fix 1');
+
+cmp_float($model->problems->[0]->thetas->[5]->options->[0]->init,sqrt(0.0564),'theta init 2');
+is($model->problems->[0]->thetas->[5]->options->[0]->fix,1,'theta fix 2');
+cmp_float($model->problems->[0]->thetas->[6]->options->[0]->init,sqrt(2.82),'theta init 3');
+is($model->problems->[0]->thetas->[6]->options->[0]->fix,1,'theta fix 3');
+
 
 done_testing();

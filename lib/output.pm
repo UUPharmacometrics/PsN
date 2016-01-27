@@ -449,6 +449,57 @@ sub large_standard_errors
 	}
 }
 
+sub perfect_individual_count
+{ 
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+							  problem_index => { isa => 'Int', default => 0 },
+							  subproblem_index => { isa => 'Int', default => 0 },
+							  remove_off_diagonals => { isa => 'Bool', optional => 0 },
+		);
+	my $problem_index = $parm{'problem_index'};
+	my $subproblem_index = $parm{'subproblem_index'};
+	my $remove_off_diagonals = $parm{'remove_off_diagonals'};
+	
+	my @individual_count = ();
+
+	my $problem_count = $self->get_problem_count(); #will also read output if not already done
+	return [] unless (defined $problem_count and ($problem_count > $problem_index)
+					  and (defined $self->problems->[$problem_index]) and
+					  (defined $self->problems->[$problem_index]->subproblems ) and
+					  (defined $self->problems->[$problem_index]->subproblems->[$subproblem_index]));
+
+	my $seref = $self->get_filtered_values(category => 'se',
+										   parameter => 'omega',
+										   problem_index => $problem_index,
+										   subproblem_index => $subproblem_index);
+	my $estref = $self->get_filtered_values(category => 'estimate',
+											parameter => 'omega',
+											problem_index => $problem_index,
+											subproblem_index => $subproblem_index);
+	
+	my $init_problem = $self->problems->[$problem_index]->input_problem;
+	my @off_diagonal = @{$init_problem->get_estimated_attributes(parameter => 'omega',
+																 attribute => 'off_diagonal')};
+
+	if (defined $seref and scalar(@{$seref}>0)){
+		for (my $k=0; $k < scalar(@{$seref}); $k++){
+			if ($off_diagonal[$k] == 1 ){
+				push(@individual_count,undef) unless $remove_off_diagonals;
+			}else{
+				#this is a diagonal omega (variance)
+				if ((defined $seref->[$k]) and ($seref->[$k] > 0)){
+					#we have se 
+					push(@individual_count,2*((($estref->[$k])/($seref->[$k]))**2)+1 );
+				}else{
+					push(@individual_count,undef);
+				}
+			}
+		}
+	}
+	return \@individual_count;
+}
+
 
 sub near_bounds
 {

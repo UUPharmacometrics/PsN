@@ -39,6 +39,7 @@ has 'input_model_fix_thetas' => ( is => 'rw', isa => 'ArrayRef', default => sub 
 has 'input_model_fix_omegas' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 has 'input_model_fix_sigmas' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 has 'check' => ( is => 'rw', isa => 'Bool', default => 1 );
+has 'rescale' => ( is => 'rw', isa => 'Bool', default => 1 );
 has 'vpc' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'dv' => ( is => 'rw', isa => 'Str', default => 'DV' );
 has 'occasion' => ( is => 'rw', isa => 'Str');
@@ -361,9 +362,9 @@ sub put_skipped_omegas_first
 #				print "\n intermediate ".join(' ',@intermediate_etas)."\n";
 #				print "before\n".join(' ',@code)."\n";
 				# rename all existing ETA\((\d+)\) to ETA(o\d+)
-				renumber_etas(code => \@code,
-							  eta_from => [\@old_etas],
-							  eta_to => [\@intermediate_etas]);
+				model::problem::renumber_etas(code => \@code,
+											  eta_from => [\@old_etas],
+											  eta_to => [\@intermediate_etas]);
 #				print "\n intermediate ".join(' ',@code)."\n";
 				#for each omega record
 				#rename from ETA\(o(\d+)\) to ETA(newnum) , also if oldnum and newnum the same
@@ -381,9 +382,9 @@ sub put_skipped_omegas_first
 				}
 #				print "\n from ".join(' ',@from)."\n";
 #				print "\n to ".join(' ',@to)."\n";
-				renumber_etas(code => \@code,
-							  eta_from => [\@from],
-							  eta_to => [\@to]);
+				model::problem::renumber_etas(code => \@code,
+											  eta_from => [\@from],
+											  eta_to => [\@to]);
 				
 #				print "after\n".join(' ',@code)."\n";
 				$model->problems->[0]-> set_records( type => $coderec,	
@@ -1436,32 +1437,6 @@ sub do_frem_dataset
 	
 }
 
-sub renumber_etas
-{
-    my %parm = validated_hash(\@_,
-							  code => { isa => 'ArrayRef', optional => 0 },
-							  eta_from => { isa => 'ArrayRef', optional => 0 },
-							  eta_to => { isa => 'ArrayRef', optional => 0 },
-		);
-	my $code = $parm{'code'};
-	my $eta_from = $parm{'eta_from'};
-	my $eta_to = $parm{'eta_to'};
-
-	croak('from and to lists must have equal length') 
-		unless (scalar(@{$eta_from}) == scalar(@{$eta_to}));
-
-	for (my $i=0; $i<scalar(@{$eta_from}); $i++){
-		croak('from and to lists must have equal length') 
-			unless (scalar(@{$eta_from->[$i]}) == scalar(@{$eta_to->[$i]}));
-		for (my $j=0; $j<scalar(@{$eta_from->[$i]}); $j++){
-			my $from = $eta_from->[$i]->[$j];
-			my $to = $eta_to->[$i]->[$j];
-			foreach (@{$code}){
-				s/\bETA\($from\)/ETA\($to\)/g;
-			}
-		}
-	}
-}
 
 sub get_covrecord
 {
@@ -1627,6 +1602,12 @@ sub prepare_model2
 							   epsnum => $epsnum,
 							   use_pred => $self->use_pred);
 
+		if ($self->rescale){
+			model::problem::rescale_etas(problem => $frem_model->problems->[0],
+										 use_pred =>$self->use_pred,
+										 omega_indices => [($start_omega_record-1) .. (scalar(@{$frem_model->problems->[0]->omegas})-1)]);
+		}
+		
 		unless (defined $frem_model->problems->[0]->covariances and 
 				scalar(@{$frem_model->problems->[0]->covariances})>0){
 			$frem_model->problems->[0] -> add_records( record_strings => ['PRINT=R UNCONDITIONAL'], 

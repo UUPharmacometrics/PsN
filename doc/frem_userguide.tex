@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{FREM userguide}{2016-01-20}
+\guidetitle{FREM userguide}{2016-01-27}
 
 
 \begin{document}
@@ -102,6 +102,9 @@ Default not set.
 If set then script will estimate
 the final regular parameterization frem model, otherwise the model will be
 created but not estimated.
+\nextopt
+\optname{rescale}
+Set by default, disable with -no-rescale. Rescale ETAs in Model 2 to SD close to 1 in order to facilitate estimation.
 \nextopt
 \optname{vpc}
 {\Large \texttt{Later}}
@@ -311,7 +314,7 @@ Append extra items to \$INPUT: MDV(possibly) and FREMTYPE.
 For safety check, done if option -check is set: Estimate Data check model. OFV should be identical to Model 1 OFV.
 
 
-\section{Model 2-all covariates}
+\section{Model 2}
 
 %For BOV the script defines a variable BOV$<$par$>$ for each parameter, and then BOV$<$par$>$ is set equal to different ETAs depending on the occasion. Same for BOV$<$covariate$>$. See details below. 
 %This method is safer to implement than having switch variables for occasions that are 1 or 0 depending on the occasion, and then use a long sum of products between switch variables and ETAs. 
@@ -439,6 +442,24 @@ If there was no \$COV record in Model 1, add
 \begin{verbatim}
 $COVARIANCE PRINT=R UNCONDITIONAL
 \end{verbatim}
+
+\subsection{Rescaling of ETAs}
+Unless option -no-rescale is set:
+For each non-skipped \$OMEGA and new \$OMEGA for covariates:
+\begin{enumerate}
+\item Find the ETA numbers for this \$OMEGA.
+\item Compute the initial values for the standard deviations (SD) as the square root of the diagonal
+element(s) of this \$OMEGA.
+\item Add a new THETA FIX for each SD. Set label ASD\_(label for diagonal omega)
+\item In \$PK or \$PRED, whichever is present:
+At the very beginning (unless have FREM-ANCHOR similar to scm- anchor) add the following code: \\
+\begin{verbatim}
+ASD_ETA_N = THETA(k)
+\end{verbatim}
+where ASD stands for approximate SD, N is the ETA number, and k is the THETA number.
+\item Divide \$OMEGA row and column initial values with for this ETA with the SD
+\item In all code records (PK, PRED, ERROR...) replace all instances of ETA(N) with (ETA(N)*ASD\_ETA\_N)
+\end{enumerate}
 
 \section{Models 3-6}
 

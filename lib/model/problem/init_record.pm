@@ -102,6 +102,29 @@ sub get_matrix
 	return \@matrix;
 }
 
+sub set_matrix
+{
+    my $self = shift;
+	my %parm = validated_hash(\@_,
+							  matrix => { isa => 'ArrayRef', optional => 0 },
+		);
+
+	my $matrix = $parm{'matrix'};
+
+	croak("cannot do set_matrix on init_record that is not type BLOCK") unless ($self->type eq 'BLOCK');
+	croak("cannot do set_matrix on init_record that is SAME") if ($self->same);
+
+	my $index = 0;
+
+	for (my $row=0; $row<$self->size; $row++){
+		for (my $col=0; $col<= $row; $col++){
+			$self->options->[$index]->init($matrix->[$row]->[$col]);
+			$index++;
+		}
+	}
+
+}
+
 sub store_inits
 {
     my $self = shift;

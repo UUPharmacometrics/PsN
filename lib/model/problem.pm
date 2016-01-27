@@ -1345,6 +1345,165 @@ sub nomegas
 	return $nomegas;
 }
 
+sub renumber_etas
+{
+    my %parm = validated_hash(\@_,
+							  code => { isa => 'ArrayRef', optional => 0 },
+							  eta_from => { isa => 'ArrayRef', optional => 0 },
+							  eta_to => { isa => 'ArrayRef', optional => 0 },
+		);
+	my $code = $parm{'code'};
+	my $eta_from = $parm{'eta_from'};
+	my $eta_to = $parm{'eta_to'};
+
+	croak('from and to lists must have equal length') 
+		unless (scalar(@{$eta_from}) == scalar(@{$eta_to}));
+
+	for (my $i=0; $i<scalar(@{$eta_from}); $i++){
+		croak('from and to lists must have equal length') 
+			unless (scalar(@{$eta_from->[$i]}) == scalar(@{$eta_to->[$i]}));
+		for (my $j=0; $j<scalar(@{$eta_from->[$i]}); $j++){
+			my $from = $eta_from->[$i]->[$j];
+			my $to = $eta_to->[$i]->[$j];
+			foreach (@{$code}){
+				s/\bETA\($from\)/ETA\($to\)/g;
+			}
+		}
+	}
+}
+
+sub substitute_scaled_etas
+{
+    my %parm = validated_hash(\@_,
+							  code => { isa => 'ArrayRef', optional => 0 },
+							  eta_list => { isa => 'ArrayRef', optional => 0 },
+							  inverse => { isa => 'Bool', optional => 0 },
+		);
+	my $code = $parm{'code'};
+	my $eta_list = $parm{'eta_list'};
+	my $inverse = $parm{'inverse'};
+
+	for (my $i=0; $i<scalar(@{$eta_list}); $i++){
+		my $num = $eta_list->[$i];
+		foreach (@{$code}){
+			if ($inverse){
+				s/\(ETA\($num\)\*ASD_ETA_$num\)/ETA\($num\)/g;
+			}else{
+				s/\bETA\($num\)/\(ETA\($num\)\*ASD_ETA_$num\)/g;
+			}
+		}
+	}
+}
+
+sub rescale_etas
+{ 
+	#if this is to be used outside frem then need to add support for diagonal omega, and IOV omega.
+	#same principle, but need to either store matrix from previous record (SAME) or
+	#use get vector from diagonal
+	my %parm = validated_hash(\@_,
+							  problem => { isa => 'model::problem', optional => 0 },
+							  omega_indices  => { isa => 'ArrayRef', optional => 0 },
+							  use_pred  => { isa => 'Bool', optional => 0 },
+	);
+	my $problem = $parm{'problem'};
+	my $omega_indices = $parm{'omega_indices'};
+	my $use_pred = $parm{'use_pred'};
+	
+	my $indentation = '     ';
+
+	my $etas_per_omega = etas_per_omega(problem => $problem);
+	my @asd = ();
+	my @thetalabels = ();
+	my @eta_numbers = ();
+	my @theta_code = ();
+	my $ntheta = $problem-> record_count( record_name => 'theta' );
+	
+	foreach my $index (@{$omega_indices}){
+		my $covar = $problem->omegas->[$index]->get_matrix; #we will only support block omegas for now
+		my $sdcorr = [];
+		my $err = linear_algebra::covar2sdcorr($covar,$sdcorr);
+
+		push (@eta_numbers,@{$etas_per_omega->[$index]});
+		my $size = scalar(@{$etas_per_omega->[$index]});
+		my $optindex = 0;
+		for (my $row = 0; $row < $size; $row++){
+			my $sd = $sdcorr->[$row]->[$row];
+			push(@asd,$sd);
+			$sdcorr->[$row]->[$row] = 1;
+			$ntheta++;
+			my $num = $etas_per_omega->[$index]->[$row];
+			my $defaultlabel = 'ASD_ETA_'.$num;
+			my $opt = $problem->omegas->[$index]->options->[$optindex];
+			unless ($opt->on_diagonal){
+				croak("bug in rescale etas");
+			}
+			if (defined $opt->label and length($opt->label)>0){
+				push(@thetalabels,$opt->label);
+			}else{
+				push(@thetalabels,$defaultlabel);
+			}
+			push(@theta_code,$indentation.$defaultlabel.'=THETA('.$ntheta.')'."\n");
+			$optindex += ($row+2);
+		}
+		$problem->omegas->[$index]->set_matrix(matrix => $sdcorr);
+	}
+
+	#in pk or pred, set @theta_code
+    my @code;
+	if ($use_pred){
+		@code = @{$problem->preds->[0]->code};
+	}else{ #pk
+		@code = @{$problem->pks->[0]->code};
+	}
+    my $found_anchor = -1;
+    my $i = 0;
+    for ( @code ) {
+		if ( /^;;;FREM-ANCHOR/) {
+			$found_anchor = $i;
+			last;
+		}
+		$i++
+    }
+    if ($found_anchor >= 0){
+		my @block1 =  (@code[0..$found_anchor]);
+		my @block2 =  (@code[($found_anchor+1)..$#code]);
+		@code = (@block1,@theta_code,@block2);
+    }else{
+		unshift(@code,@theta_code);
+    }
+	if ( $use_pred ) {
+		$problem->preds->[0]->code(\@code);
+	} else {
+		$problem->pks->[0]->code(\@code);
+	}
+
+	#loop code records, replace ETA(N) with (ETA(N)*ASD_ETA_N) , use @eta_numbers
+	foreach my $coderec ('error','des','pk','pred'){ #never any ETAs in $MIX
+		my $acc = $coderec.'s';
+		if (defined $problem->$acc and 
+			scalar(@{$problem->$acc})>0 ) {
+			my @code = @{$problem->$acc->[0]->code};
+			substitute_scaled_etas(code => \@code,
+								   eta_list => \@eta_numbers,
+								   inverse => 0);
+			$problem-> set_records( type => $coderec,	
+									record_strings => \@code );
+#			print join(' ',@code);
+		}
+	}
+
+	
+	#add record thetas use @thetalabels and @asd
+	#FIXME format init
+	for (my $k=0; $k< scalar(@asd); $k++){
+		$problem->add_records( type => 'theta',
+#							   record_strings => [sprintf("%.10G",$asd[$k]).' FIX ; '.$thetalabels[$k]] );
+							   record_strings => [$asd[$k].' FIX ; '.$thetalabels[$k]] );
+	}
+
+	
+}
+
 sub etas_per_omega
 {
 	#no shift

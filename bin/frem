@@ -28,6 +28,7 @@ my %optional_options = (
 #	'dv:s' => undef,
 #	'vpc!' => undef,
 	'check!' => undef,
+	'rescale!' => undef,
 	'estimate_regular_final_model!' => undef,
 	'estimate_cholesky_final_model!' => undef,
 	'categorical:s' => undef,
@@ -137,6 +138,11 @@ $help_text{-check} = <<'EOF';
       Set by default, disable with -no-check. Run safety check after
 frem data set generation.
 EOF
+$help_text{-rescale} = <<'EOF';
+      -rescale
+
+      Set by default, disable with -no-rescale. Rescale ETAs in Model 2.
+EOF
 
 $help_text{Post_help_message} = <<'EOF';
     Also see 'psn_options -h' for a description of common PsN options.
@@ -181,6 +187,7 @@ my $frem = tool::frem->new( eval( $common_options::parameters ),
 							log => $options{'log'},
 							skip_omegas => $options{'skip_omegas'}, 
 							check => $options{'check'}, 
+							rescale => $options{'rescale'}, 
 							vpc => $options{'vpc'}, 
 #							dv => $options{'dv'}
 	); 
