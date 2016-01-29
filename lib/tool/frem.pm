@@ -39,7 +39,7 @@ has 'input_model_fix_thetas' => ( is => 'rw', isa => 'ArrayRef', default => sub 
 has 'input_model_fix_omegas' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 has 'input_model_fix_sigmas' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 has 'check' => ( is => 'rw', isa => 'Bool', default => 1 );
-has 'rescale' => ( is => 'rw', isa => 'Bool', default => 1 );
+has 'rescale' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'vpc' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'dv' => ( is => 'rw', isa => 'Str', default => 'DV' );
 has 'occasion' => ( is => 'rw', isa => 'Str');
@@ -1178,7 +1178,7 @@ sub do_model1
 										copy_data     => 0,
 										models		 => [$frem_model],
 										top_tool              => 0);
-		tool::add_to_nmoutput(run => $run, extensions => ['phi','ext']);		
+		tool::add_to_nmoutput(run => $run, extensions => ['phi','ext','cov']);		
 		ui -> print( category => 'all', message =>  'Estimating Model 1 (the input model)');
 		$run-> run;
 		if (defined $frem_model->outputs and (defined $frem_model->outputs->[0])){
@@ -1347,12 +1347,12 @@ sub do_frem_dataset
 							  model => { isa => 'Ref', optional => 0 },
 							  filtered_data => { isa => 'data', optional => 0 },
 							  indices => { isa => 'HashRef', optional => 0 },
-							  mod0_ofv => { isa => 'Num', optional => 0 },
+							  mod1_ofv => { isa => 'Num', optional => 0 },
 							  N_parameter_blocks => {isa => 'Int', optional => 0},
 							  fremdataname => { isa => 'Str', optional => 0 },
 	);
 	my $model = $parm{'model'};
-	my $mod0_ofv = $parm{'mod0_ofv'};
+	my $mod1_ofv = $parm{'mod1_ofv'};
 	my $indices = $parm{'indices'};
 	my $filtered_data = $parm{'filtered_data'};
 	my $N_parameter_blocks = $parm{'N_parameter_blocks'};
@@ -1378,9 +1378,19 @@ sub do_frem_dataset
 															cov_indices => $indices->{'cov_indices'});
 #															first_timevar_type => scalar(@cov_indices));
 
+	
 	if (defined $resultref){
-		$self->occasionlist($resultref->{'occasionlist'}) if (defined $resultref->{'occasionlist'}); 
-		$self->invariant_median($resultref->{'invariant_median'}) if (defined $resultref->{'invariant_median'});
+		$self->occasionlist($resultref->{'occasionlist'}) if (defined $resultref->{'occasionlist'});
+		if (defined $resultref->{'invariant_median'}){
+			$self->invariant_median($resultref->{'invariant_median'}) ;
+			for (my $i=0; $i< scalar(@{$self->covariates}); $i++){
+				if (abs($resultref->{'invariant_median'}->[$i])<0.01){
+					ui -> print( category => 'all', message => 'Warning: abs(median) for '.$self->covariates->[$i].
+						' is '.abs($resultref->{'invariant_median'}->[$i]).
+						', the additive error may not be appropriate for this covariate'."\n");
+				}
+			}
+		}
 		$self->invariant_covmatrix($resultref->{'invariant_covmatrix'}) if (defined $resultref->{'invariant_covmatrix'});
 		$self->timevar_median($resultref->{'timevar_median'}) if (defined $resultref->{'timevar_median'});
 		$self->timevar_covmatrix($resultref->{'timevar_covmatrix'}) if (defined $resultref->{'timevar_covmatrix'});
@@ -1431,7 +1441,7 @@ sub do_frem_dataset
 		if ($data_check_model->is_run()){
 			$check_ofv = $data_check_model->outputs -> [0]->get_single_value(attribute=> 'ofv');
 		}
-		print "\nModel 1 ofv is    $mod0_ofv\n";
+		print "\nModel 1 ofv is    $mod1_ofv\n";
 		print   "Data check ofv is $check_ofv\n";
 	}
 	
@@ -1952,7 +1962,7 @@ sub run_unless_run
 										copy_data     => 0,
 										models		 => \@models,
 										top_tool              => 0);
-		tool::add_to_nmoutput(run => $run, extensions => ['phi','ext']);		
+		tool::add_to_nmoutput(run => $run, extensions => ['phi','ext','cov']);		
 		my $text = 'Estimating ';
 		$text = 'Evaluating ' if ($numbers->[0] == 3);
 		$text .= 'Model '.join(' and ',@{$numbers});
@@ -2000,11 +2010,11 @@ sub modelfit_setup
 	my ($filtered_data,$indices) = $self->do_filter_dataset_and_append_binary(model => $frem_model1);
 
 	my $frem_dataset = 'frem_dataset.dta';
-	$self->do_frem_dataset(model => $frem_model1,
+	$self->do_frem_dataset(model => $model, #must be input model here, not updated with final ests
 						   N_parameter_blocks => 1,
 						   filtered_data => $filtered_data,
 						   indices => $indices,
-						   mod0_ofv => $mod1_ofv,
+						   mod1_ofv => $mod1_ofv,
 						   fremdataname => $frem_dataset);
 	
 	my ($ntheta,$epsnum,$covariate_etanumbers,$parameter_etanumbers) = 
@@ -2421,7 +2431,7 @@ sub do_model_vpc1
 										models		 => [$frem_vpc_model],
 										top_tool              => 0);
 		
-		tool::add_to_nmoutput(run => $run, extensions => ['phi','ext']);		
+		tool::add_to_nmoutput(run => $run, extensions => ['phi','ext','cov']);		
 		ui -> print( category => 'all', message => "\nExecuting FREM vpc model 1" );
 		$run -> run;
 		unless (-e $frem_vpc_model->directory().$joindata){
@@ -3298,7 +3308,7 @@ sub olddo_model1
 										copy_data     => 0,
 										models		 => [$frem_model],
 										top_tool              => 0);
-		tool::add_to_nmoutput(run => $run, extensions => ['phi','ext']);		
+		tool::add_to_nmoutput(run => $run, extensions => ['phi','ext','cov']);		
 		ui -> print( category => 'all', message =>  'Estimating Model 1');
 		$run-> run;
 	}

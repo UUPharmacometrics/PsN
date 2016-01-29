@@ -104,7 +104,7 @@ the final regular parameterization frem model, otherwise the model will be
 created but not estimated.
 \nextopt
 \optname{rescale}
-Set by default, disable with -no-rescale. Rescale ETAs in Model 2 to SD close to 1 in order to facilitate estimation.
+Default not used. Rescale ETAs in Model 2 to SD close to 1.% in order to facilitate estimation.
 \nextopt
 \optname{vpc}
 {\Large \texttt{Later}}
@@ -202,7 +202,7 @@ Model 3 is a copy of Model 2, but all non-skipped Model 1 omega plus covariate o
 into single large block. For covariances between parameter omegas that did
 not have covariance in Model 1, set very very small init $10^{-7}$.
 Initial values for covariances between parameter-covariate ETAs are computed from
-phi-file from estimation of Model 2. Finally, check that omega block is positive definite.
+phi-file from estimation of Model 2. Finally, ensure that omega block is positive definite.
 Set MAXEVAL=0 and remove \$COV.
 \item Evaluate Model 3 to get more accurate phi-file ETAs.
 \item Recompute correlations
@@ -233,10 +233,11 @@ Model 6 is the (unestimated) Cholesky parameterization FREM model.
 Estimate Model 6, include \$COV step.
 \item Only if option -estimate\_regular\_final\_model is set:
 Estimate Model 4 (FREM regular model), include \$COV step.
-Estimation in parallel with Model 6, if that was requested.
+Estimation is done in parallel with Model 6, if estimation of Model 6 was requested.
 %\item If option -vpc is set, the script will also 
 %run the vpc1 model using estimates from FREM model as initial estimates,
 %and finally process output to generate a frem vpc model.
+\item Only if covariance step of Model 4 was not successful:
 \end{enumerate}
 
 
@@ -444,7 +445,7 @@ $COVARIANCE PRINT=R UNCONDITIONAL
 \end{verbatim}
 
 \subsection{Rescaling of ETAs}
-Unless option -no-rescale is set:
+Only if option -rescale is set:
 For each non-skipped \$OMEGA and new \$OMEGA for covariates:
 \begin{enumerate}
 \item Find the ETA numbers for this \$OMEGA.

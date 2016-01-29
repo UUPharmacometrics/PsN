@@ -141,7 +141,7 @@ EOF
 $help_text{-rescale} = <<'EOF';
       -rescale
 
-      Set by default, disable with -no-rescale. Rescale ETAs in Model 2.
+      Default not used. Rescale ETAs in Model 2.
 EOF
 
 $help_text{Post_help_message} = <<'EOF';
