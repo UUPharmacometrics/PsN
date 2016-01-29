@@ -245,7 +245,7 @@ sub check_sir
 	}
 
 	if ( defined $options->{'covmat_input'} ){
-		foreach my $opt ('rawres_input','cv_theta','auto_rawres'){
+		foreach my $opt ('rawres_input','rse_theta','auto_rawres'){
 			if (defined $options->{$opt}){
 				$error .=  "Cannot use option $opt together with option -covmat_input.\n";
 			}
@@ -262,42 +262,42 @@ sub check_sir
 		}
 	}
 
-	if (defined $options->{'cv_theta'}){
+	if (defined $options->{'rse_theta'}){
 		foreach my $opt ('covmat_input','rawres_input','auto_rawres','theta_inflation','omega_inflation','sigma_inflation'){
 			if (defined $options->{$opt}){
-				$error .=  "Cannot use option $opt together with option -cv_theta.\n";
+				$error .=  "Cannot use option $opt together with option -rse_theta.\n";
 			}
 		}
 		foreach my $param ('omega','sigma'){
-			my $opt = 'cv_'.$param;
+			my $opt = 'rse_'.$param;
 			if (not defined $options->{$opt}){
 				my $coords = $model->problems->[0]->get_estimated_attributes(parameter => $param,
 																			 attribute => 'coords');
-				if ($options->{'cv_theta'} =~ /,/){
+				if ($options->{'rse_theta'} =~ /,/){
 					#not a scalar
 					if (scalar(@{$coords})> 0){
 						#any $param estimated
-						$error .= "Must also set option $opt when -cv_theta is set to a list of values\n";
+						$error .= "Must also set option $opt when -rse_theta is set to a list of values\n";
 					}else{
 						#no param estimated. Set to empty string
 						$options->{$opt}='';
 					}
 				}else{
 					#scalar (no comma)
-					$options->{$opt}=$options->{'cv_theta'};
+					$options->{$opt}=$options->{'rse_theta'};
 				}
 			}
 		}
 	}else{
-		foreach my $opt ('cv_omega','cv_sigma'){
+		foreach my $opt ('rse_omega','rse_sigma'){
 			if (defined $options->{$opt}){
 				my $coords = $model->problems->[0]->get_estimated_attributes(parameter => 'theta',
 																			 attribute => 'coords');
 				if (scalar(@{$coords})> 0){
-					$error .=  "Cannot use option $opt without -cv_theta.\n";
+					$error .=  "Cannot use option $opt without -rse_theta.\n";
 				}else{
 					#no theta estimated. Set to empty string
-					$options->{'cv_theta'}='';
+					$options->{'rse_theta'}='';
 				}
 			}
 		}
