@@ -238,8 +238,42 @@ Estimation is done in parallel with Model 6, if estimation of Model 6 was reques
 %run the vpc1 model using estimates from FREM model as initial estimates,
 %and finally process output to generate a frem vpc model.
 \item Only if covariance step of Model 4 was not successful:
+Use sir to estimate the uncertainty of Model 4 parameters, see section Model 4 sir.
 \end{enumerate}
 
+\section{Model 4 sir}
+
+Need a proposal density, must compile uncertainty information from several runs, or just guess.
+
+
+Make vector of coordinate\_strings for Model 4 estimated parameters.
+Make empty covmatrix.
+Make vector of coordinate\_strings for Model 2 estimated parameters.
+Find mapping of model 2 to model 4 indices.
+Copy all available Model 2 covariance matrix elements to empty covmatrix using mapping.
+
+Approximate Model 4 par-cov omega element variances using omega element estimates from model 4 and
+par sd:s and cov sd:s from model 2. Formula variance stuff.
+
+If have successful covariance step from Model 1:
+Make vector of coordinate\_strings for Model 1 estimated parameters.
+Find mapping of model 1 to reordered (if any skip omegas) model 1 parameters.
+Find mapping of (reordered) model 1 to model 4 indices.
+Copy all available Model 1 covariance matrix elements to empty covmatrix using mapping.
+
+Unless have successful covariance step from Model 1, make copy of Model 2 (model 7).
+Update model 7 with final parameter estimates.
+Then unfix everything that was
+not fixed in model 1, fix the covariate omega block and fix the covariate thetas. 
+Estimate this model, include cov step.
+Make vector of coordinate\_strings for Model 7 estimated parameters.
+Find mapping of model 7 to model 4 indices.
+Copy all available Model 7 covariance matrix elements to empty covmatrix using mapping.
+
+Any par-par omega elements not included in model 1 (separate blocks, 1E-07 init in model 4) are given very small variance (5 percent rse or something)
+
+Verify that all diagonals non-zero. Print proposal covmatrix to disk.
+Run sir with -covmat\_input.
 
 \section{Model 1}
 The input model, input dataset.
