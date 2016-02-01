@@ -33,14 +33,14 @@ dies_ok { input_checking::check_options(tool => 'sir', options => \%options, mod
 
 %options=();
 $model = model->new(filename => "$modeldir/pheno.mod", ignore_missing_data => 1);
-$options{'cv_theta'} = '12';
+$options{'rse_theta'} = '12';
 input_checking::check_options(tool => 'sir', options => \%options, model => $model); 
-is($options{'cv_omega'},'12','check sir default cv_omega');
-is($options{'cv_sigma'},'12','check sir default cv_sigma');
+is($options{'rse_omega'},'12','check sir default rse_omega');
+is($options{'rse_sigma'},'12','check sir default rse_sigma');
 
 %options=();
-$options{'cv_theta'} = '12,13';
-dies_ok { input_checking::check_options(tool => 'sir', options => \%options, model => $model) } "check cv_omega undef when cv_theta array ";
+$options{'rse_theta'} = '12,13';
+dies_ok { input_checking::check_options(tool => 'sir', options => \%options, model => $model) } "check rse_omega undef when rse_theta array ";
 
 %options=();
 dies_ok { input_checking::check_options(tool => 'simeval', options => \%options, model => $model) } "simeval croak METHOD=ZERO ";
