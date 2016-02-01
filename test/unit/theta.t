@@ -15,7 +15,7 @@ my $record = model::problem::theta->new(record_arr => ['(28) FIXED (1,,10)']);
 is ($record->options->[0]->lobnd, undef, "option->lobnd");
 is ($record->options->[0]->init, 28, "option->init");
 is ($record->options->[0]->fix, 1, " undef init fix");
-is ($record->options->[1]->fix, 0, " undef init fix");
+is ($record->options->[1]->fix, 0, " empty init fix");
 is ($record->options->[1]->lobnd, 1, "empty init lobnd");
 is ($record->options->[1]->init, '', "empty init");
 is ($record->options->[1]->upbnd, 10, "empty init upbnd");
@@ -68,6 +68,9 @@ is ($str[1], '28', "record->_format_record");
 is ($str[2], '(1,2,10)', "record->_format_record");
 
 $record = model::problem::theta->new(record_arr => ['(-INF .43 INF), (-INF 2 INF FIXED)']);
+is_deeply($record->get_estimated_coordinate_strings,
+		  ['THETA1'],
+		  'estimated coordinate strings 4');
 
 is ($record->options->[0]->lobnd, $PsN::config -> {'low_INF'}, "space option->lobnd");
 is (eval($record->options->[0]->init), eval(.43), "option->init");
@@ -81,6 +84,11 @@ is ($record->options->[1]->fix, 1, " fixed ");
 
 
 $record = model::problem::theta->new(record_arr => ['10 FIX (1,2,10),(100)']);
+is_deeply($record->get_estimated_coordinate_strings,
+		  ['THETA2','THETA3'],
+		  'estimated coordinate strings 5');
+
+
 is ($record->options->[0]->lobnd, undef, "option->lobnd");
 is ($record->options->[0]->init, 10, "option->init");
 is ($record->options->[0]->upbnd, undef, "option->upbnd");

@@ -9,6 +9,8 @@ use includes; #file with paths to PsN packages
 use Math::Random;
 use model::problem::init_record;
 use model::problem::omega;
+use model::problem::sigma;
+use model::problem::theta;
 use Test::Exception;
 use ui;
 
@@ -26,13 +28,14 @@ is ($str[1], '2', "record->_format_record");
 
 random_set_seed_from_phrase('12345');
 
-$record = model::problem::init_record->new(record_arr => ['BLOCK(2) 0.02','0 0.01 FIX']);
+$record = model::problem::omega->new(record_arr => ['BLOCK(2) 0.02','0 0.01 FIX']);
 is ($record->options->[0]->init,0.02,'record 1 init 0');
 is ($record->options->[1]->init,0,'record 1 init 1');
 is ($record->options->[2]->init,0.01,'record 1 init 2');
 is ($record->fix,1,'record 1 fix');
 is ($record->type,'BLOCK','record 1 type');
 is ($record->size,2,'record 1 size');
+is_deeply($record->get_estimated_coordinate_strings,[],'estimated coordinate strings 1');
 
 my $matrix = $record->get_matrix();
 is_deeply($matrix,[[0.02,0],[0,0.01]],"get matrix 1");
@@ -49,7 +52,10 @@ is_deeply($matrix,[[1,0],[0,1]],"get matrix 1");
 $record->unfix();
 is ($record->fix,0,'record unfix');
 
-$record = model::problem::init_record->new(record_arr => ['DIAGONAL(2) 0.02','0.01']);
+$record = model::problem::sigma->new(record_arr => ['DIAGONAL(2) 0.02','0.01']);
+is_deeply($record->get_estimated_coordinate_strings,['SIGMA(1,1)','SIGMA(2,2)'],
+		  'estimated coordinate strings 2');
+
 my $vector = $record->get_vector();
 is_deeply($vector,[0.02,0.01],"get vector 1");
 is ($record->options->[0]->init,0.02,'record 2 init 0');
@@ -65,7 +71,10 @@ is ($ok,1,'set_vector diag ok');
 is ($record->options->[0]->init,5,'set_vector diag init 0');
 is ($record->options->[1]->init,4,'set_vector diag init 1');
 
-$record = model::problem::init_record->new(record_arr => ['BLOCK(3) 0.02','-0.002 0.5','0.003 -0.005 1']);
+$record = model::problem::omega->new(record_arr => ['BLOCK(3) 0.02','-0.002 0.5','0.003 -0.005 1']);
+is_deeply($record->get_estimated_coordinate_strings,
+		  ['OMEGA(1,1)','OMEGA(2,1)','OMEGA(2,2)','OMEGA(3,1)','OMEGA(3,2)','OMEGA(3,3)'],
+		  'estimated coordinate strings 3');
 
 $matrix = $record->get_matrix();
 is_deeply($matrix,[[0.02,-0.002,0.003],[-0.002,0.5,-0.005],[0.003,-0.005,1]],"get matrix 2");
@@ -89,7 +98,7 @@ cmp_float ($record->options->[4]->init,-0.00476,'record 3 init 4');
 cmp_float ($record->options->[5]->init,1.048290,'record 3 init 5');
 
 #make band
-$record = model::problem::init_record->new(record_arr => ['BLOCK(3) 0.02','-0.002 0.5','0 -0.005 1']);
+$record = model::problem::omega->new(record_arr => ['BLOCK(3) 0.02','-0.002 0.5','0 -0.005 1']);
 is ($record->options->[0]->init,0.02,'record 3.5 init 0');
 is ($record->options->[1]->init,-0.002,'record 3.5 init 1');
 is ($record->options->[2]->init,0.5,'record 3.5 init 2');
@@ -106,7 +115,7 @@ cmp_float ($record->options->[5]->init,0.922923,'record 3.5 init 5');
 
 #nonposdef, to make cholesky fail couple of times and need deflation off-diag
 $PsN::nm_major_version = 7; #affects formatting in init_option.pm
-$record = model::problem::init_record->new(record_arr => ['BLOCK(3) 2','2 2','2 2 2']);
+$record = model::problem::sigma->new(record_arr => ['BLOCK(3) 2','2 2','2 2 2']);
 $record->set_random_inits(degree => 0.1);
 cmp_float ($record->options->[0]->init,2.2419228741762,'record 3.6 init 0');
 cmp_float ($record->options->[1]->init,1.2739668420972,'record 3.6 init 1');
@@ -118,7 +127,7 @@ cmp_float ($record->options->[5]->init,1.9604655709679,'record 3.6 init 5');
 
 #very high degree, to get cholesky fail a couple of times
 $PsN::nm_major_version = 6; #affects formatting in init_option.pm
-$record = model::problem::init_record->new(record_arr => ['BLOCK(3) 2','2 2','0 2 2']);
+$record = model::problem::omega->new(record_arr => ['BLOCK(3) 2','2 2','0 2 2']);
 $record->set_random_inits(degree => 0.9);
 cmp_float ($record->options->[0]->init,4.859981,'record 3.7 init 0');
 cmp_float ($record->options->[1]->init,2.316453,'record 3.7 init 1');
@@ -147,7 +156,7 @@ is ($str[2], 'FIX', "_format_record 4");
 is ($str[3], 28, "_format record 4");
 
 
-my $record = model::problem::init_record->new(record_arr => ['2 ; Malta', '; Corse']);
+my $record = model::problem::theta->new(record_arr => ['2 ; Malta', '; Corse']);
 is ($record->comment->[0], "; Corse\n", "init_record full line comment");
 my $r = $record->_format_record;
 is ($r->[1], "; Corse\n", "init_record full line comment after _format_record");
@@ -155,6 +164,11 @@ is ($r->[1], "; Corse\n", "init_record full line comment after _format_record");
 $record = model::problem::omega->new(record_arr => ['$OMEGA','(0.01642,FIXED) 0.112 FIXED  (FIXED, 1.0724 )',
 														  ' (0.45)   ;; ETA(4)',
 														  '  0.4 SD CHOLESK 0.09     ;; ETA(6)']);
+
+is_deeply($record->get_estimated_coordinate_strings,
+		  ['OMEGA(4,4)','OMEGA(5,5)','OMEGA(6,6)'],
+		  'estimated coordinate strings 4');
+
 is ($record->fix, 0, 'record 5 fix');
 is ($record->options->[0]->init, 0.01642, 'record 5 1 init');
 ok ($record->options->[0]->fix, 'record 5 1 fix');

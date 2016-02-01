@@ -19,6 +19,22 @@ has 'chol' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'corr' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'n_previous_rows' => ( is => 'rw', isa => 'Maybe[Int]', default => 0 );
 
+sub get_estimated_coordinate_strings
+{
+    my $self = shift;
+	my @array = ();
+	unless ($self->same() or $self->fix() or $self->prior()) {
+		foreach my $option (@{$self-> options()}) {
+			if ($option->fix() or $option->prior()) {
+				next;
+			}
+			push(@array,$option -> coordinate_string());
+		}
+	}
+	return \@array;
+}
+
+			
 sub set_1_fix
 {
     my $self = shift;
