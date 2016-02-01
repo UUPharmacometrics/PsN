@@ -17,6 +17,19 @@ my $modeldir = $includes::testfiledir;
 my $model = model->new(filename => "$modeldir/mox_no_bov.mod", 
 					   ignore_missing_data => 1);
 
+
+is_deeply(tool::frem::get_reordered_coordinate_strings(problem => $model->problems->[0],
+													   omega_order => [1,2]),
+		  $model->problems->[0]->get_estimated_attributes(),
+		  'get reordered coordinate strings 1');
+
+my $ans = ['THETA1','THETA2','THETA3','THETA4','THETA5',
+		   'OMEGA(3,3)','OMEGA(1,1)','OMEGA(2,1)','OMEGA(2,2)'];
+is_deeply(tool::frem::get_reordered_coordinate_strings(problem => $model->problems->[0],
+													   omega_order => [2,1]),
+		  $ans,
+		  'get reordered coordinate strings 2');
+
 my ($corr,$message) = tool::frem::get_correlation_matrix_from_phi(start_eta_1 => 1,
 																  end_eta_1 => 3,
 																  model => $model);
@@ -47,6 +60,13 @@ is ($message," Input error end_eta_1, start 2, end eta 2: 3,2, 3",'input error g
 
 my $model = model->new(filename => "$modeldir/mox1.mod", 
 					   ignore_missing_data => 1);
+my ($arr,$need) = tool::frem::get_new_omega_order(model=> $model,skip_omegas=>[3,4,5,6]);
+is($need,1,'get new omega order 1');
+is_deeply($arr,[3,4,5,6,1,2],'get new omega order 2');
+($arr,$need) = tool::frem::get_new_omega_order(model=> $model,skip_omegas=>[1,3,4,5,6]);
+is($need,1,'get new omega order 3');
+is_deeply($arr,[1,3,4,5,6,2],'get new omega order 4');
+
 my $bov_param = tool::frem::get_parameters_to_etas(model => $model,
 												   use_pred => 0,
 												   etas => [2,4]);
@@ -88,6 +108,13 @@ cmp_float_matrix($block,$ans,'get_filled_omega_block 2');
 
 $model = model->new(filename => "$modeldir/mox_no_bov.mod", 
 					ignore_missing_data => 1);
+
+($arr,$need) = tool::frem::get_new_omega_order(model=> $model,skip_omegas=>[]);
+is($need,0,'get new omega order 5');
+is_deeply($arr,[1,2],'get new omega order 6');
+($arr,$need) = tool::frem::get_new_omega_order(model=> $model,skip_omegas=>[1]);
+is($need,0,'get new omega order 7');
+is_deeply($arr,[1,2],'get new omega order 8');
 
 my $bov_parameters = ['PHI','LAG','CL','V','KA'];
 my ($ctv_parameters,$etanum_to_parameterhash) =  tool::frem::get_CTV_parameters(model=> $model,
@@ -255,12 +282,17 @@ is ($code[19],'   KA    = THETA(3)*EXP(ETA(3)+KPKA)'."\n",'pk before renumbering
 my $input_model_fix_omegas = tool::frem::get_or_set_fix(model => $model,
 														type => 'omegas');
 
-my ($skip_etas,$fix_omegas,$start_omega_record,$parameter_etanumbers) = 
+my ($new_omega_order,$need_to_move_omegas)=tool::frem::get_new_omega_order(model =>$model,
+																		   skip_omegas => [3,4,5,6]);
+is($need_to_move_omegas,1,'need to move 1');
+is_deeply($new_omega_order,[3,4,5,6,1,2],'new order 1');
+my ($skip_etas,$fix_omegas,$parameter_etanumbers) = 
 	tool::frem::put_skipped_omegas_first(model => $model,
-	skip_omegas => [3,4,5,6],
-	input_model_fix_omegas => $input_model_fix_omegas);
+										 new_omega_order => $new_omega_order,
+										 need_to_move => $need_to_move_omegas,
+										 start_omega_record => 5,
+										 input_model_fix_omegas => $input_model_fix_omegas);
 
-is($start_omega_record,5,'put skipped first start omega');
 is($skip_etas,4,'put skipped first skip_etas');
 is_deeply($parameter_etanumbers,[[5,6],[7]],'put skipped first parameter_etanumbers');
 is($model->problems->[0]->omegas->[0]->same,0,'reordered model record 1 not same');
@@ -281,14 +313,19 @@ $model = model->new(filename => "$modeldir/pheno.mod",
 
 my $input_model_fix_omegas = tool::frem::get_or_set_fix(model => $model,
 														type => 'omegas');
+($new_omega_order,$need_to_move_omegas)=tool::frem::get_new_omega_order(model =>$model,
+																		   skip_omegas => []);
+is($need_to_move_omegas,0,'need to move 0');
+is_deeply($new_omega_order,[1],'new order 0');
 
-my ($skip_etas,$fix_omegas,$start_omega_record,$parameter_etanumbers) = 
+my ($skip_etas,$fix_omegas,$parameter_etanumbers) = 
 	tool::frem::put_skipped_omegas_first(model => $model,
-										 skip_omegas => [],
+										 new_omega_order => $new_omega_order,
+										 need_to_move => $need_to_move_omegas,
+										 start_omega_record => 1,
 										 input_model_fix_omegas => $input_model_fix_omegas);
 
 is_deeply($fix_omegas,[],' put skipped first fix omegas');
-is($start_omega_record,1,'put skipped first start omega 2');
 is($skip_etas,0,'put skipped first skip_etas 2');
 is_deeply($parameter_etanumbers,[[1],[2]],'put skipped first parameter_etanumbers');
 is($model->problems->[0]->omegas->[0]->size,1,'reordered model record 1 size 1');

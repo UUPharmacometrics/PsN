@@ -293,31 +293,18 @@ sub get_parcov_blocks
 	return \@omega_records;
 }
 
-
-sub put_skipped_omegas_first
+sub get_new_omega_order
 {
-
 	my %parm = validated_hash(\@_,
 							  model => { isa => 'model', optional => 0 },
 							  problem_index  => { isa => 'Int', default => 0 },
 							  skip_omegas  => { isa => 'ArrayRef', optional => 0 },
-							  input_model_fix_omegas => { isa => 'ArrayRef', optional => 0 },
 	);
 	my $model = $parm{'model'};
 	my $problem_index = $parm{'problem_index'};
 	my $skip_omegas = $parm{'skip_omegas'};
-	my $input_model_fix_omegas = $parm{'input_model_fix_omegas'};
 
-	my $start_omega_record = scalar(@{$skip_omegas})+1;
-	my @parameter_etanumbers = ();
-	my $skip_etas = 0;
-	my @fix_omegas;
 	my $need_to_move = 0;
-
-	my $maxeta =  $model->problems()->[0]->nomegas(with_correlations => 0,
-												   with_same => 1);
-
-
 	#we assume skip_omegas already sorted ascending thanks to input_checking.pm
 	for (my $i=0; $i<scalar(@{$skip_omegas}); $i++){
 		unless ($skip_omegas->[$i] == ($i+1)){
@@ -328,9 +315,6 @@ sub put_skipped_omegas_first
 
 	my @old_omega_order = (1 .. scalar(@{$model->problems->[$problem_index]->omegas}));
 	my @new_omega_order = ();
-	#for each omega find old eta numbers and new eta numbers
-	my $etas_per_omega = model::problem::etas_per_omega(problem => $model->problems->[0]);
-	
 	if ($need_to_move){
 		@new_omega_order = @{$skip_omegas};
 		for (my $j=1; $j<= scalar(@{$model->problems->[$problem_index]->omegas}); $j++){
@@ -346,12 +330,45 @@ sub put_skipped_omegas_first
 		unless (scalar(@new_omega_order) == scalar(@old_omega_order)){
 			croak("coding error put skipped first");
 		}
+	}else{
+		@new_omega_order = (1 .. scalar(@{$model->problems->[$problem_index]->omegas}));
+	}
+	return(\@new_omega_order,$need_to_move);
+}
+
+sub put_skipped_omegas_first
+{
+
+	my %parm = validated_hash(\@_,
+							  model => { isa => 'model', optional => 0 },
+							  problem_index  => { isa => 'Int', default => 0 },
+							  start_omega_record  => { isa => 'Int', optional => 0 },
+							  need_to_move  => { isa => 'Bool', optional => 0 },
+							  new_omega_order  => { isa => 'ArrayRef', optional => 0 },
+							  input_model_fix_omegas => { isa => 'ArrayRef', optional => 0 },
+	);
+	my $model = $parm{'model'};
+	my $problem_index = $parm{'problem_index'};
+	my $start_omega_record = $parm{'start_omega_record'};
+	my $need_to_move = $parm{'need_to_move'};
+	my $new_omega_order = $parm{'new_omega_order'};
+	my $input_model_fix_omegas = $parm{'input_model_fix_omegas'};
+
+	my @parameter_etanumbers = ();
+	my $skip_etas = 0;
+	my @fix_omegas;
+		
+	my $maxeta =  $model->problems()->[0]->nomegas(with_correlations => 0,
+												   with_same => 1);
+	#for each omega find old eta numbers and new eta numbers
+	my $etas_per_omega = model::problem::etas_per_omega(problem => $model->problems->[0]);
+	
+	if ($need_to_move){
 		my @old_etas = (1 .. $maxeta);
 		my @intermediate_etas =();
 		foreach my $eta (@old_etas){
 			push(@intermediate_etas,'o'.$eta);
 		}
-		
 		
 		foreach my $coderec ('error','des','pk','pred'){ #never any ETAs in $MIX
 			my $acc = $coderec.'s';
@@ -371,7 +388,7 @@ sub put_skipped_omegas_first
 				my $new_eta_count = 0;
 				my @from = ();
 				my @to = ();
-				foreach my $pos (@new_omega_order) {
+				foreach my $pos (@{$new_omega_order}) {
 					my $j = $pos-1;
 					my $size = scalar(@{$etas_per_omega->[$j]});
 					foreach my $eta (@{$etas_per_omega->[$j]}){
@@ -392,23 +409,20 @@ sub put_skipped_omegas_first
 			}
 		}
 		
-	}else{
-		#no need to move, only check non-skipped are not diagonal size > 1
-		@new_omega_order = (1 .. scalar(@{$model->problems->[$problem_index]->omegas}));
 	}
-
+	
 	#reorder omega records and check non-skipped are not diagonal size > 1
 	my @new_records = ();
 	my $n_previous_rows = 0;
-	for (my $k=0; $k<scalar(@new_omega_order); $k++){
-		if ($k==scalar(@{$skip_omegas})){
+	for (my $k=0; $k<scalar(@{$new_omega_order}); $k++){
+		if ($k==($start_omega_record-1)){ #	$start_omega_record = scalar(@{$skip_omegas})+1;
 			$skip_etas = $n_previous_rows;
 		}
-		my $i = $new_omega_order[$k]-1; #old index
+		my $i = $new_omega_order->[$k]-1; #old index
 		my $size = scalar(@{$etas_per_omega->[$i]});
 
 		if (($model->problems->[0]->omegas->[$i]->type eq 'BLOCK') or
-			($k < scalar(@{$skip_omegas}))){
+			($k < ($start_omega_record-1))){ #	$start_omega_record = scalar(@{$skip_omegas})+1;
 			my $formatted = $model->problems->[0]->omegas->[$i]->_format_record();
 			my @lines =();
 			for (my $j=0; $j < scalar(@{$formatted}); $j++){
@@ -436,11 +450,40 @@ sub put_skipped_omegas_first
 
 	#reset etas per omega
 	$etas_per_omega = model::problem::etas_per_omega(problem => $model->problems->[0]);
-	for (my $j = scalar(@{$skip_omegas}); $j< scalar(@{$etas_per_omega}); $j++){
+	for (my $j = ($start_omega_record-1); $j< scalar(@{$etas_per_omega}); $j++){
 		push(@parameter_etanumbers,$etas_per_omega->[$j]);
 	}
 
-	return $skip_etas,\@fix_omegas,$start_omega_record,\@parameter_etanumbers;
+	return $skip_etas,\@fix_omegas,\@parameter_etanumbers;
+}
+
+sub get_reordered_coordinate_strings{
+	my %parm = validated_hash(\@_,
+							  problem => { isa => 'model::problem', optional => 0 },
+							  omega_order => { isa => 'ArrayRef', optional => 0 },
+		);
+	my $problem = $parm{'problem'};
+	my $omega_order = $parm{'omega_order'};
+
+	unless (scalar(@{$omega_order})==scalar(@{$problem->omegas})){
+		croak("omega order length is ".scalar(@{$omega_order}).
+			  " but number of old omega records is ".scalar(@{$problem->omegas}));
+	}
+	
+	my @reordered_coordinate_strings = ();
+	push(@reordered_coordinate_strings,
+		 @{$problem->get_estimated_attributes(parameter => 'theta',
+											  attribute=>'coordinate_strings')});
+	foreach my $num (@{$omega_order}){
+		my $oldindex = $num-1;
+		push(@reordered_coordinate_strings,
+			 @{$problem->omegas->[$oldindex]->get_estimated_coordinate_strings});
+	}
+	push(@reordered_coordinate_strings,
+		 @{$problem->get_estimated_attributes(parameter => 'sigma',
+											  attribute=>'coordinate_strings')});
+
+	return \@reordered_coordinate_strings;
 }
 
 sub get_filled_omega_block
@@ -1473,35 +1516,20 @@ sub prepare_model2
 	my $self = shift;
 	my %parm = validated_hash(\@_,
 							  model => { isa => 'model', optional => 0 },
-#							  parameter_blocks => {isa => 'ArrayRef', optional => 0},
-#							  eta_mapping => {isa => 'HashRef', optional => 0},
+							  skip_etas => {isa => 'Int', optional => 0},
 							  fremdataname => { isa => 'Str', optional => 0 },
-#							  start_omega_record => { isa => 'Int', optional => 0 },
-#							  skip_etas => {isa => 'Int', optional => 0},
-							  skip_omegas => {isa => 'ArrayRef', optional => 0},
+							  start_omega_record => { isa => 'Int', optional => 0 },
 	);
 	my $model = $parm{'model'};
 	my $fremdataname = $parm{'fremdataname'};
-#	my $parameter_blocks = $parm{'parameter_blocks'}; #this is omega records w/ block form for parameters, ready for model2
-#	my $eta_mapping = $parm{'eta_mapping'};
-#	my $start_omega_record = $parm{'start_omega_record'};
-	my $skip_omegas = $parm{'skip_omegas'};
+	my $start_omega_record = $parm{'start_omega_record'};
+	my $skip_etas = $parm{'skip_etas'};
 	
-#	my $N_parameter_blocks = scalar(@{$parameter_blocks});
 	my $name_model = 'model_2.mod';
 	
 	my $frem_model;
 	my $maxeta =  $model->problems()->[0]->nomegas(with_correlations => 0,
 												   with_same => 1);
-	
-	my ($skip_etas,$fix_omegas,$start_omega_record,$parameter_etanumbers) = 
-		put_skipped_omegas_first(model => $model,
-								 skip_omegas => $skip_omegas,
-								 input_model_fix_omegas => $self->input_model_fix_omegas);
-
-	$self->input_model_fix_omegas($fix_omegas);
-	$self->skip_etas($skip_etas);
-	$self->start_omega_record($start_omega_record);
 	
 	my $ntheta = $model ->nthetas(problem_number => 1);
 	my $newtheta = 0;
@@ -1628,7 +1656,7 @@ sub prepare_model2
 
 	}
 
-	return ($ntheta,$epsnum,$covariate_etanumbers,$parameter_etanumbers);
+	return ($ntheta,$epsnum,$covariate_etanumbers);
 		
 }
 
@@ -2003,7 +2031,7 @@ sub modelfit_setup
 	my $frem_model4;
 	my $frem_model5;
 	
-	#this runs input model, if necessary
+	#this runs input model, if necessary, and updates inits
 	my ($frem_model1,$mod1_ofv)=  $self-> do_model1(model => $model);
 	
 	#this modifies $self->covariates
@@ -2016,11 +2044,41 @@ sub modelfit_setup
 						   indices => $indices,
 						   mod1_ofv => $mod1_ofv,
 						   fremdataname => $frem_dataset);
+
+	$self->start_omega_record(scalar(@{$self->skip_omegas})+1);
+
+	my $model1_original_estimated_coordinate_strings = 
+		$frem_model1->problems->[0]->get_estimated_attributes(parameter => 'all',
+															  attribute => 'coordinate_strings');
 	
-	my ($ntheta,$epsnum,$covariate_etanumbers,$parameter_etanumbers) = 
+	my ($new_omega_order,$need_to_move_omegas)=get_new_omega_order(model =>$frem_model1,
+																   skip_omegas => $self->skip_omegas);
+
+	#to be used for reordering covmatrix
+	my $model1_reordered_estimated_coordinate_strings =
+		get_reordered_coordinate_strings(problem => $frem_model1->problems->[0],
+										 omega_order => $new_omega_order);
+
+	my ($skip_etas,$fix_omegas,$parameter_etanumbers) = 
+		put_skipped_omegas_first(model => $frem_model1,
+								 start_omega_record =>$self->start_omega_record,
+								 new_omega_order =>$new_omega_order,
+								 need_to_move =>$need_to_move_omegas,
+								 input_model_fix_omegas => $self->input_model_fix_omegas);
+
+	#now model1 is reordered
+	my $model1_new_estimated_coordinate_strings = 
+		$frem_model1->problems->[0]->get_estimated_attributes(parameter => 'all',
+															  attribute => 'coordinate_strings');
+	
+	$self->input_model_fix_omegas($fix_omegas);
+	$self->skip_etas($skip_etas);
+
+	my ($ntheta,$epsnum,$covariate_etanumbers) = 
 		$self->prepare_model2(model => $frem_model1,
 							  fremdataname => $frem_dataset,
-							  skip_omegas => $self->skip_omegas
+							  skip_etas => $self->skip_etas,
+							  start_omega_record => $self->start_omega_record
 		);
 	
 	($frem_model2,$message) = $self->run_unless_run(numbers => [2]);
@@ -2029,6 +2087,9 @@ sub modelfit_setup
 				  message => $message);
 		exit;
 	}
+	my $model2_estimated_coordinate_strings = 
+		$frem_model2->problems->[0]->get_estimated_attributes(parameter => 'all',
+															  attribute => 'coordinate_strings');
 	
 	my $mod3_parcov_block = get_parcov_blocks(model => $frem_model2,
 											  skip_etas => $self->skip_etas,

@@ -252,8 +252,28 @@ Make vector of coordinate\_strings for Model 2 estimated parameters.
 Find mapping of model 2 to model 4 indices.
 Copy all available Model 2 covariance matrix elements to empty covmatrix using mapping.
 
-Approximate Model 4 par-cov omega element variances using omega element estimates from model 4 and
-par sd:s and cov sd:s from model 2. Formula variance stuff.
+Approximate Model 4 parameter eta-covariate eta covariance uncertainties (variances)
+using covariance and variance estimates from model 4 and
+approximate ``perfect individual'' counts from model 1 and 2.
+This formula is also used for the undertainty of parameter eta-parameter eta covariances
+that were not estimated until in Model 4 (introduced to make full block).
+
+\[
+var\left(cov(x,y)\right)\approx \frac{1}{\hat{N}_{x,y}}
+\left( cov(x,y)^2 + var(x)\cdot var(y) \right)
+\]
+
+where estimates of variances and covariance are from model 4 and where
+\[
+\hat{N}_{x,y} =
+\sqrt{
+\left(1+2\left(\frac{var(x)}{se\left(var(x)\right)}\right)^2\right)\cdot
+\left(1+2\left(\frac{var(y)}{se\left(var(y)\right)}\right)^2\right)\cdot
+}
+\]
+, the geometric mean number of individuals with
+perfect information, computed from variance estimates and se of variance
+estimates from model 2 (covariate etas) and model 1 (parameter etas).
 
 If have successful covariance step from Model 1:
 Make vector of coordinate\_strings for Model 1 estimated parameters.
@@ -261,7 +281,7 @@ Find mapping of model 1 to reordered (if any skip omegas) model 1 parameters.
 Find mapping of (reordered) model 1 to model 4 indices.
 Copy all available Model 1 covariance matrix elements to empty covmatrix using mapping.
 
-Unless have successful covariance step from Model 1, make copy of Model 2 (model 7).
+Unless have successful covariance step from Model 1, make copy of Model 2 (model 7).    
 Update model 7 with final parameter estimates.
 Then unfix everything that was
 not fixed in model 1, fix the covariate omega block and fix the covariate thetas. 
