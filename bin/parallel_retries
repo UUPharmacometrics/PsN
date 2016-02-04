@@ -31,6 +31,8 @@ my %required_options = ();
 my %optional_options = ("prepend_options_to_lst!"=> undef,
 						"model_dir_name!" => undef,
 						"timestamp!" => undef,
+						"keep_table_files!" => undef,
+						"keep_nm_output!" => undef,
 						'rawres_input:s' => undef,
 						'offset_rawres:i' => undef,
 						'samples:i' => undef,
@@ -121,6 +123,16 @@ $help_text{-timestamp} = <<'EOF';
   Example: parallel_retries run1.mod -timestamp
 	gives run directory name run1-PsN-2014-06-12-152502 for a run 
    that was started at 15:25:02 June 12th in year 2014
+EOF
+$help_text{-keep_table_files} = <<'EOF';
+    -keep_table_files
+    Default not set. If set then do not clean table files for the not-chosen
+retry models from the main run directory.
+EOF
+$help_text{-keep_nm_output} = <<'EOF';
+    -keep_nm_output
+    Default not set. If set then do not clean nm_output files for the not-chosen
+retry models from the main run directory.
 EOF
 
 $help_text{-samples} = <<'EOF';
@@ -427,10 +439,10 @@ if ($modelfit->clean > 2){
 			my $from = $mod->directory.$mod->output_files->[$i];
 			my $tabfrom = $mod->directory.$filestem.'.'.$mod->output_files->[$i];
 			if (-e $from){
-				unlink($from);
+				unlink($from) unless ($options{'keep_nm_output'});
 #				ui -> print( category => 'parallel_retries', message => "cleaning $from\n" );
 			}elsif(-e $tabfrom){
-				unlink($tabfrom);
+				unlink($tabfrom) unless ($options{'keep_table_files'});
 #				ui -> print( category => 'parallel_retries', message => "cleaning $tabfrom\n" );
 			}
 		}

@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{PARALLEL\_RETRIES user guide}{2015-03-10}
+\guidetitle{PARALLEL\_RETRIES user guide}{2016-02-04}
 
 \begin{document}
 
@@ -65,6 +65,13 @@ Only valid in combination with -rawres\_input, see above. Default 1.
 The number of result lines to skip in the input raw results file before starting to read final parameter estimates. In a regular
 bootstrap raw\_results file the first line of estimates refers to the input model with the full dataset, so therefore the default offset is 1.
 \nextopt
+\optname{keep\_table\_files}
+Default not set. If set then do not clean table files for the not-chosen
+retry models from the main run directory.
+\nextopt
+\optname{keep\_nm\_output}
+Default not set. If set then do not clean nm\_output files for the not-chosen
+retry models from the main run directory.
 \optname{model\_dir\_name}
 Default not used. This option changes the basename of the run directory from 
 parallel\_retries\_dir to $\langle$modelfile$\rangle$.dir. where $\langle$modelfile$\rangle$ 
