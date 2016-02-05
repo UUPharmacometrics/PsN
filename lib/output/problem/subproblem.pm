@@ -243,6 +243,24 @@ sub parsing_error
 	$self->parsing_error_message( $message );
 }
 
+sub make_square {
+	my $m_ref = shift;
+	my @matrix = @{$m_ref};
+	# Make the matrix square:
+	my $elements = scalar @matrix; # = M*(M+1)/2
+	my $M = -0.5 + sqrt( 0.25 + 2 * $elements );
+	my @square;
+	for ( my $m = 1; $m <= $M; $m++ ) {
+		for ( my $n = 1; $n <= $m; $n++ ) {
+			push( @{$square[$m-1]}, $matrix[($m-1)*$m/2 + $n - 1] );
+			unless ( $m == $n ) {
+				push( @{$square[$n-1]}, $matrix[($m-1)*$m/2 + $n - 1] );
+			}
+		}
+	}
+	return \@square;
+}
+
 sub _read_covmatrix
 {
 	my $self = shift;
@@ -282,28 +300,7 @@ sub _read_covmatrix
 
 	# }}}
 
-# {{{ sub make square
 	
-	sub make_square {
-		my $m_ref = shift;
-		my @matrix = @{$m_ref};
-		# Make the matrix square:
-		my $elements = scalar @matrix; # = M*(M+1)/2
-		my $M = -0.5 + sqrt( 0.25 + 2 * $elements );
-		my @square;
-		for ( my $m = 1; $m <= $M; $m++ ) {
-			for ( my $n = 1; $n <= $m; $n++ ) {
-				push( @{$square[$m-1]}, $matrix[($m-1)*$m/2 + $n - 1] );
-				unless ( $m == $n ) {
-					push( @{$square[$n-1]}, $matrix[($m-1)*$m/2 + $n - 1] );
-				}
-			}
-		}
-		return \@square;
-	}
-	
-	# }}}
-
 	my $keep_headers_array = $self->input_problem->get_estimated_attributes(attribute=>'coordinate_strings');
 
 	while ( $_ = @{$self->lstfile}[ $start_pos++ ] ) {
