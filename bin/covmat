@@ -225,6 +225,7 @@ if (0){
 }
 
 require model;
+require tool;
 require tool::sir;
 
 my $eval_string = common_options::model_parameters(\%options);
@@ -324,7 +325,7 @@ if (defined $model){
 	}
 }
 my $copy = linear_algebra::copy_and_reorder_square_matrix($resulthash->{'covar'},\@order);
-my $formatted = tool::sir::format_covmatrix(matrix => $copy, header => \@headers, comma => $comma, print_labels => $print_header);
+my $formatted = tool::format_covmatrix(matrix => $copy, header => \@headers, comma => $comma, print_labels => $print_header);
 
 foreach my $line (@{$formatted}){
 	print $line;

@@ -349,6 +349,59 @@ sub BUILD
 	}
 }
 
+sub format_covmatrix
+{
+	my %parm = validated_hash(\@_,
+							  matrix => { isa => 'ArrayRef', optional => 0 },
+							  header => { isa => 'ArrayRef', optional => 0 },
+							  print_labels => { isa => 'Bool', optional => 0 },
+							  comma => { isa => 'Bool', optional => 0 },
+		);
+	my $matrix = $parm{'matrix'};
+	my $header = $parm{'header'};
+	my $print_labels = $parm{'print_labels'};
+	my $comma = $parm{'comma'};
+	
+	my @output = ();
+
+	if ($print_labels){
+		my $line;
+		if ($comma){
+			$line = '"NAME"';
+		}else{
+			$line = ' NAME             ';
+		}
+		foreach my $head (@{$header}){
+			if ($comma){
+				$line .= ',"'.$head.'"';
+			}else{
+				$line .= sprintf("%-15s",$head);
+			}
+		}
+		push (@output,$line."\n");
+	}
+	for (my $row=0; $row< scalar(@{$matrix}); $row++){
+		my $line = '';
+		if ($print_labels){
+			if ($comma){
+				$line = '"'.$header->[$row].'"';
+			}else{
+				$line = sprintf(" %-15s",$header->[$row]);
+			}
+		}
+		for (my $col=0; $col< scalar(@{$matrix}); $col++){
+			if ($comma){
+				$line .= ',' if (($col > 0) or ($print_labels));
+				$line .= $matrix->[$row][$col];
+			}else{
+				$line .= sprintf(" %14.7E",$matrix->[$row][$col]);
+			}
+		}
+		push (@output,$line."\n");
+	}
+	return \@output;
+}
+
 sub add_to_nmoutput
 {
 	my %parm = validated_hash(\@_,

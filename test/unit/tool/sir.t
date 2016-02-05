@@ -360,21 +360,21 @@ for (my $i=0; $i< scalar(@{$results}); $i++){
 }
 
 
-my $ref = tool::sir::format_covmatrix(matrix => [[1,2,3],[4,5,6],[7,8,9]], 
+my $ref = tool::format_covmatrix(matrix => [[1,2,3],[4,5,6],[7,8,9]], 
 											header => ['anna','bertil','cecilia'], 
 											comma => 1, 
 											print_labels => 1);
 
 is_deeply($ref,['"NAME","anna","bertil","cecilia"'."\n",'"anna",1,2,3'."\n",'"bertil",4,5,6'."\n",'"cecilia",7,8,9'."\n"], "format covmatrix comma with labels");
 
-$ref = tool::sir::format_covmatrix(matrix => [[1,2,3],[4,5,6],[7,8,9]], 
+$ref = tool::format_covmatrix(matrix => [[1,2,3],[4,5,6],[7,8,9]], 
 											header => ['anna','bertil','cecilia'], 
 											comma => 1, 
 											print_labels => 0);
 
 is_deeply($ref,['1,2,3'."\n",'4,5,6'."\n",'7,8,9'."\n"], "format covmatrix comma no labels");
 
-my $ref = tool::sir::format_covmatrix(matrix => [[1,2,3],[4,5,6],[7,8,9]], 
+my $ref = tool::format_covmatrix(matrix => [[1,2,3],[4,5,6],[7,8,9]], 
 											header => ['anna','bertil','cecilia'], 
 											comma => 0, 
 											print_labels => 1);
@@ -387,7 +387,7 @@ like($ref->[2],'/^ bertil  \s+4\.0000000E\+0+\s+5\.0000000E\+0+\s+6\.0000000E\+0
 like($ref->[3],'/^ cecilia \s+7\.0000000E\+0+\s+8\.0000000E\+0+\s+9\.0000000E\+0+/', "format covmatrix space with labels 3");
 
 
-my $ref = tool::sir::format_covmatrix(matrix => [[1,2,3],[4,5,6],[7,8,9]], 
+my $ref = tool::format_covmatrix(matrix => [[1,2,3],[4,5,6],[7,8,9]], 
 											header => ['anna','bertil','cecilia'], 
 											comma => 0, 
 											print_labels => 0);

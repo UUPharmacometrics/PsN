@@ -675,7 +675,7 @@ sub modelfit_setup
 				}
 			}
 
-			$covmatrix = make_square($lower_covar);
+			$covmatrix = output::problem::subproblem::make_square($lower_covar);
 		}
 	}elsif (defined $self->rawres_input or (defined $self->auto_rawres)){
 		#do not need any matrices at all, not sampling in 0th iteration
@@ -1608,24 +1608,6 @@ sub get_determinant_factor
 
 }
 
-sub make_square {
-	#copied from output::problem::subproblem local subroutine inside another sub
-	my $m_ref = shift;
-	my @matrix = @{$m_ref};
-	# Make the matrix square:
-	my $elements = scalar @matrix; # = M*(M+1)/2
-	my $M = -0.5 + sqrt( 0.25 + 2 * $elements );
-	my @square;
-	for ( my $m = 1; $m <= $M; $m++ ) {
-	    for ( my $n = 1; $n <= $m; $n++ ) {
-			push( @{$square[$m-1]}, $matrix[($m-1)*$m/2 + $n - 1] );
-			unless ( $m == $n ) {
-				push( @{$square[$n-1]}, $matrix[($m-1)*$m/2 + $n - 1] );
-			}
-	    }
-	}
-	return \@square;
-}
 
 
 sub sample_multivariate_normal
@@ -2188,7 +2170,7 @@ sub get_nonmem_covmatrix
 		croak("Trying get_nonmem_covmatrix but the covariance matrix is undefined. Parsing error? Output file is\n".$output->full_name."\n");
 	}
 
-	my $covar = make_square( $lower_covar);
+	my $covar = output::problem::subproblem::make_square( $lower_covar);
 	return $covar;
 }
 
@@ -2835,7 +2817,7 @@ sub print_empirical_covmatrix
 		}
 	}
 	my $copy = linear_algebra::copy_and_reorder_square_matrix($covar,\@order);
-	my $formatted = format_covmatrix(matrix => $copy, header => \@coords, comma => 0, print_labels => 1);
+	my $formatted = tool::format_covmatrix(matrix => $copy, header => \@coords, comma => 0, print_labels => 1);
 	open ( RES, ">" . $filename );
 	foreach my $line (@{$formatted}){
 		print RES $line;
@@ -2845,58 +2827,6 @@ sub print_empirical_covmatrix
 }
 
 
-sub format_covmatrix
-{
-	my %parm = validated_hash(\@_,
-							  matrix => { isa => 'ArrayRef', optional => 0 },
-							  header => { isa => 'ArrayRef', optional => 0 },
-							  print_labels => { isa => 'Bool', optional => 0 },
-							  comma => { isa => 'Bool', optional => 0 },
-		);
-	my $matrix = $parm{'matrix'};
-	my $header = $parm{'header'};
-	my $print_labels = $parm{'print_labels'};
-	my $comma = $parm{'comma'};
-	
-	my @output = ();
-
-	if ($print_labels){
-		my $line;
-		if ($comma){
-			$line = '"NAME"';
-		}else{
-			$line = ' NAME             ';
-		}
-		foreach my $head (@{$header}){
-			if ($comma){
-				$line .= ',"'.$head.'"';
-			}else{
-				$line .= sprintf("%-15s",$head);
-			}
-		}
-		push (@output,$line."\n");
-	}
-	for (my $row=0; $row< scalar(@{$matrix}); $row++){
-		my $line = '';
-		if ($print_labels){
-			if ($comma){
-				$line = '"'.$header->[$row].'"';
-			}else{
-				$line = sprintf(" %-15s",$header->[$row]);
-			}
-		}
-		for (my $col=0; $col< scalar(@{$matrix}); $col++){
-			if ($comma){
-				$line .= ',' if (($col > 0) or ($print_labels));
-				$line .= $matrix->[$row][$col];
-			}else{
-				$line .= sprintf(" %14.7E",$matrix->[$row][$col]);
-			}
-		}
-		push (@output,$line."\n");
-	}
-	return \@output;
-}
 
 
 sub create_R_plots_code{
