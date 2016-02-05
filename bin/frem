@@ -33,6 +33,8 @@ my %optional_options = (
 	'estimate_cholesky_final_model!' => undef,
 	'categorical:s' => undef,
 	'log:s' => undef,
+	'rse:f' => undef,
+	'run_sir!' => undef,
 #	'skip_etas:i' => undef
 	'skip_omegas:s' => undef
 );
@@ -110,6 +112,16 @@ $help_text{-skip_omegas} = <<'EOF';
       even if option -skip_omegas was not set.
 EOF
 
+$help_text{-rse} = <<'EOF';
+      -rse=number
+
+Default 30 \%.
+If the covariance step of both Model 4 and either/both of Model 1 and Model 2 fails, then
+this is the guess of relative standard error that will be used for parameters for which there is no other
+information that can be used to guess the variance needed for 
+a proposal density for a sir run with Model 4.
+EOF
+
 $help_text{-estimate_regular_final_model} = <<'EOF';
     -estimate_regular_final_model
 
@@ -142,6 +154,12 @@ $help_text{-rescale} = <<'EOF';
       -rescale
 
       Default not used. Rescale ETAs in Model 2.
+EOF
+$help_text{-run_sir} = <<'EOF';
+      -run_sir
+
+      Default set. Disable with -no-run_sir. If covariance step of Model 4 fails, run sir
+      to obtain standard errors of parameters.
 EOF
 
 $help_text{Post_help_message} = <<'EOF';
@@ -185,10 +203,12 @@ my $frem = tool::frem->new( eval( $common_options::parameters ),
 							estimate_regular_final_model => $options{'estimate_regular_final_model'},
 							estimate_cholesky_final_model => $options{'estimate_cholesky_final_model'},
 							log => $options{'log'},
+							rse => $options{'rse'},
 							skip_omegas => $options{'skip_omegas'}, 
 							check => $options{'check'}, 
 							rescale => $options{'rescale'}, 
 							vpc => $options{'vpc'}, 
+							run_sir => $options{'run_sir'}, 
 #							dv => $options{'dv'}
 	); 
 

@@ -454,6 +454,14 @@ sub check_frem
 
 	my @skip_omegas = sort { $a <=> $b } @skip; #sort ascending
 	$options->{'skip_omegas'} = \@skip_omegas;
+
+	if (defined $options->{'rse'}){
+		if ($options->{'rse'} <= 0){
+			$error .= 'Option -rse must be positive'."\n";
+		}elsif ($options->{'rse'} >= 100){
+			$error .= 'Option -rse must be less than 100'."\n";
+		}
+	}
 	
 	return $error;
 }

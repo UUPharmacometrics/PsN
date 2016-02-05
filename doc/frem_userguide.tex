@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{FREM userguide}{2016-01-27}
+\guidetitle{FREM userguide}{2016-02-05}
 
 
 \begin{document}
@@ -105,6 +105,17 @@ created but not estimated.
 \nextopt
 \optname{rescale}
 Default not used. Rescale ETAs in Model 2 to SD close to 1.% in order to facilitate estimation.
+\nextopt
+\optname{run\_sir}
+Default set. Disable with -no-run\_sir. If covariance step of Model 4 fails, run sir
+to obtain standard errors of parameters.
+\nextopt
+\optdefault{rse}{number}
+Default 30 \%.
+If the covariance step of both Model 4 and either/both of Model 1 and Model 2 fails, then
+this is the guess of relative standard error that will be used for parameters for which there is no other
+information that can be used to guess the variance needed for 
+a proposal density for a sir run with Model 4.
 \nextopt
 \optname{vpc}
 {\Large \texttt{Later}}
@@ -243,56 +254,39 @@ Use sir to estimate the uncertainty of Model 4 parameters, see section Model 4 s
 
 \section{Model 4 sir}
 
-Need a proposal density, must compile uncertainty information from several runs, or just guess.
+Create a proposal density to use with -covmat\_input option to sir:
+\begin{enumerate}
+\item Create an empty covariance matrix with dimensions for Model 4 estimated parameters.
+This matrix will hold the joined proposal covariance matrix.
+\item If covariance step of Model 1 was run and was successful: Copy all available
+elements to joined matrix. Reorder them if Model 1 was reordered because of skipped omegas.
+\item If covariance step of Model 2 was successful: Copy all available
+elements to joined matrix
+\item For each diagonal element of joined matrix that is still not filled and is
+the variance of a Model 4 OMEGA element: If a ``perfect individual'' count $\hat{N}_{x,y}$ can
+be computed using formula below, then set variance to
+\[
+var\left(OMEGA(x,y)\right)\approx \frac{1}{\hat{N}_{x,y}}
+\left( OMEGA(x,y)^2 + OMEGA(x,x)\cdot OMEGA(y,y) \right)
+\]
+where OMEGA estimates are from Model 4.
+\item For remaining diagonal elements of joined matrix that could not yet be filled,
+compute a variance guess based on input option -rse and parameter estimate from Model 4.
+\end{enumerate}
 
-
-Make vector of coordinate\_strings for Model 4 estimated parameters.
-Make empty covmatrix.
-Make vector of coordinate\_strings for Model 2 estimated parameters.
-Find mapping of model 2 to model 4 indices.
-Copy all available Model 2 covariance matrix elements to empty covmatrix using mapping.
-
-Approximate Model 4 parameter eta-covariate eta covariance uncertainties (variances)
-using covariance and variance estimates from model 4 and
-approximate ``perfect individual'' counts from model 1 and 2.
-This formula is also used for the undertainty of parameter eta-parameter eta covariances
-that were not estimated until in Model 4 (introduced to make full block).
+Perfect individual counts:
+\[
+\hat{N}_{x}=1+2\left(\frac{OMEGA(x,x)}{se\left(OMEGA(x,x)\right)}\right)^2
+\]
+where OMEGA(x,x) estimates and se are from covariance step of Model 1 or Model 2, wherever the
+OMEGA was estimated.
 
 \[
-var\left(cov(x,y)\right)\approx \frac{1}{\hat{N}_{x,y}}
-\left( cov(x,y)^2 + var(x)\cdot var(y) \right)
-\]
+\hat{N}_{x,y} = \sqrt{\hat{N}_{x}\cdot \hat{N}_{y}}
+\] if available standard errors allow both $\hat{N}_{y}$ and $\hat{N}_{x}$ to be computed.
+If only $\hat{N}_{x}$ or $\hat{N}_{y}$ available, used that. If neither available then
+cannot use formula, use rse fallback instead.
 
-where estimates of variances and covariance are from model 4 and where
-\[
-\hat{N}_{x,y} =
-\sqrt{
-\left(1+2\left(\frac{var(x)}{se\left(var(x)\right)}\right)^2\right)\cdot
-\left(1+2\left(\frac{var(y)}{se\left(var(y)\right)}\right)^2\right)\cdot
-}
-\]
-, the geometric mean number of individuals with
-perfect information, computed from variance estimates and se of variance
-estimates from model 2 (covariate etas) and model 1 (parameter etas).
-
-If have successful covariance step from Model 1:
-Make vector of coordinate\_strings for Model 1 estimated parameters.
-Find mapping of model 1 to reordered (if any skip omegas) model 1 parameters.
-Find mapping of (reordered) model 1 to model 4 indices.
-Copy all available Model 1 covariance matrix elements to empty covmatrix using mapping.
-
-Unless have successful covariance step from Model 1, make copy of Model 2 (model 7).    
-Update model 7 with final parameter estimates.
-Then unfix everything that was
-not fixed in model 1, fix the covariate omega block and fix the covariate thetas. 
-Estimate this model, include cov step.
-Make vector of coordinate\_strings for Model 7 estimated parameters.
-Find mapping of model 7 to model 4 indices.
-Copy all available Model 7 covariance matrix elements to empty covmatrix using mapping.
-
-Any par-par omega elements not included in model 1 (separate blocks, 1E-07 init in model 4) are given very small variance (5 percent rse or something)
-
-Verify that all diagonals non-zero. Print proposal covmatrix to disk.
 Run sir with -covmat\_input.
 
 \section{Model 1}

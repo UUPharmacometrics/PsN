@@ -18,11 +18,11 @@ my $model_dir = $includes::testfiledir;
 
 my @commands = (
 #	get_command('frem') . " -time_var=WT -occ=VISI -param=PHI,LAG -invar=SEX,DGRP -no-check $model_dir/mox_no_bov.mod -dir=$dir",
-	get_command('frem') . " -covar=WT,DGRP,SEX -skip_omegas=2  -log=WT -categorical=DGRP -check $model_dir/mox_frem.mod -dir=$dir",
-	get_command('frem') . " -covar=WT,DGRP -categorical=DGRP -no-check $model_dir/mox_frem.mod -dir=$dir",
-	get_command('frem') . " -covar=DIG,WT -no-check $model_dir/mox_frem.mod -dir=$dir",
-	get_command('frem') . " -covar=SEX,DGRP -skip_om=2 -categorical=SEX,DGRP -estimate_chole -estimate_reg -no-check $model_dir/mox1.mod -dir=$dir",
-	get_command('frem') . " -covar=AGE,SEX -categorical=SEX -no-check $model_dir/mox1.mod -dir=$dir",
+	get_command('frem') . " -covar=WT,DGRP,SEX -skip_omegas=2  -log=WT -categorical=DGRP -check $model_dir/mox_frem.mod -estimate_reg -no-run_sir -dir=$dir",
+	get_command('frem') . " -covar=WT,DGRP -categorical=DGRP -no-check $model_dir/mox_frem.mod -dir=$dir -estimate_reg -no-run_sir ",
+	get_command('frem') . " -covar=DIG,WT -no-check $model_dir/mox_frem.mod -dir=$dir -estimate_reg -no-run_sir",
+	get_command('frem') . " -covar=SEX,DGRP -skip_om=2 -categorical=SEX,DGRP -estimate_chole -estimate_reg -no-run_sir -no-check $model_dir/mox1.mod -dir=$dir",
+	get_command('frem') . " -covar=AGE,SEX -categorical=SEX -no-check $model_dir/mox1.mod -dir=$dir -estimate_reg -no-run_sir",
 #	get_command('frem') . " -time_var=WT,NYHA -occ=VISI -param=PHI -invar=SEX -start_eta=3 $model_dir/mox_no_bov.mod  -dir=$dir",
 #	get_command('frem') . " -time_var=WT,NYHA -occ=VISI -param=CL -invar=SEX -no-check $model_dir/mox_no_bov.mod -dir=$dir",
 #	get_command('frem') . " -time_var=WT,NYHA -occ=VISI -param=V -invar=SEX -no-check $model_dir/mox_no_bov.mod -est=0  -dir=$dir",
