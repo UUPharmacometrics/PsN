@@ -345,10 +345,10 @@ sub countN{
 
 #our $test_files = File::Spec->catfile($includes::testfiledir, 'output');
 
-my $output = output -> new ('filename'=> '/home/kajsa/kod-psn/devel/frem_dir19/m1/model_4.lst');
-my $model1 = model->new(filename => "/home/kajsa/kod-psn/devel/frem_dir19/m1/model_1.mod", 
+my $output = output -> new ('filename'=> $modeldir.'/frem/model_4.lst');
+my $model1 = model->new(filename => "$modeldir/frem/model_1.mod", 
 					   ignore_missing_data => 1);
-my $model2 = model->new(filename => "/home/kajsa/kod-psn/devel/frem_dir19/m1/model_2.mod", 
+my $model2 = model->new(filename => "$modeldir/frem/model_2.mod", 
 					   ignore_missing_data => 1);
 
 
