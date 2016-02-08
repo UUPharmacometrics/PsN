@@ -145,10 +145,11 @@ sub _create_bootstrap
         );
     } else {
         (my $used_parameters, my $filtered_column) = $self->filter(parameters => \@parameters, values => \@column);
+        my $columnTypes = $self->get_column_types(parameters => $used_parameters);
         my $table = so::table->new(
             name => 'PercentilesCI',
             columnId => [ "Percentile", @$used_parameters ],
-            columnType => [ ('undefined') x (scalar(@$used_parameters) + 1) ],
+            columnType => [ 'undefined', @$columnTypes ],
             valueType => [ ('real') x (scalar(@$used_parameters) + 1) ],
             columns => [ \@percentiles, @$filtered_column ],
         );
@@ -178,19 +179,19 @@ sub _create_bootstrap
     $self->_precision_bootstrap->StandardError($se_table);
 
     (my $used_parameters, my $adjusted_means) = $self->filter(parameters => \@parameters, values => $means);
+    my $columnTypes = $self->get_column_types(parameters => $used_parameters);
     my $mean_table = so::table->new(name => "Mean", columnId => $used_parameters);
-    $mean_table->single_row(values => $adjusted_means);
+    $mean_table->single_row(values => $adjusted_means, types => $columnTypes);
     $self->_bootstrap->Mean($mean_table);
 
     (my $used_parameters, my $adjusted_medians) = $self->filter(parameters => \@parameters, values => $medians);
+    my $columnTypes = $self->get_column_types(parameters => $used_parameters);
     my $median_table = so::table->new(name => "Median", columnId => $used_parameters);
-    $median_table->single_row(values => $adjusted_medians);
+    $median_table->single_row(values => $adjusted_medians, types => $columnTypes);
     $self->_bootstrap->Median($median_table);
 
     # warn if any parameter on sd/corr scale
     if (defined $self->labels_hash) {
-        use Data::Dumper;
-        print Dumper($self->labels_hash);
         my @on_sd_corr;
         for (my $i = 0; $i < scalar(@$used_parameters); $i++) {
             if (grep { $_ eq $used_parameters->[$i] } @{$self->labels_hash->{'on_sd_scale'}}) {
@@ -283,6 +284,40 @@ sub filter
     }
 
     return (\@used_parameters, \@used_values);
+}
+
+sub get_column_types
+{
+    my $self = shift;    
+    my %parm = validated_hash(\@_,
+        parameters => { isa => 'ArrayRef' },
+    );
+    my $parameters = $parm{'parameters'};
+
+    # Create a hash from labels to column_types
+    my %hash;
+    if (defined $self->labels_hash) {
+        @hash{@{$self->labels_hash->{labels}}} = @{$self->labels_hash->{column_types}}; 
+    }
+
+    my @column_types;
+
+    for my $p (@$parameters) {
+        if (exists $hash{$p}) {
+            my $column_type = $hash{$p};
+            if ($column_type =~ /^varParameter_stdev/) {
+                push @column_types, "varParameter_var";
+            } elsif ($column_type =~ /^varParameter_corr/) {
+                push @column_types, "varParameter_cov";
+            } else {
+                push @column_types, $column_type;
+            }   
+        } else {
+            push @column_types, "undefined";
+        }
+    }
+
+    return \@column_types;
 }
 
 no Moose;
