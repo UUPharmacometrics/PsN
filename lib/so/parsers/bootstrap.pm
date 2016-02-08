@@ -189,6 +189,8 @@ sub _create_bootstrap
 
     # warn if any parameter on sd/corr scale
     if (defined $self->labels_hash) {
+        use Data::Dumper;
+        print Dumper($self->labels_hash);
         my @on_sd_corr;
         for (my $i = 0; $i < scalar(@$used_parameters); $i++) {
             if (grep { $_ eq $used_parameters->[$i] } @{$self->labels_hash->{'on_sd_scale'}}) {
