@@ -131,7 +131,7 @@ LIBFILES= ui.pm \
 	so/soblock/taskinformation.pm \
 	so/soblock/modeldiagnostic.pm \
 	so/soblock/estimation/individualestimates.pm \
-	so/soblock/estimation/likelihood.pm \
+	so/soblock/estimation/ofmeasures.pm \
 	so/soblock/estimation/populationestimates.pm \
 	so/soblock/estimation/precisionpopulationestimates.pm \
 	so/soblock/estimation/residuals.pm \
@@ -144,7 +144,6 @@ LIBFILES= ui.pm \
 	so/soblock/simulation/simulationblock.pm \
 	so/soblock/simulation/simulationblock/simulationtable.pm \
 	so/soblock/taskinformation/message.pm \
-	so/soblock/taskinformation/runtime.pm \
 	tool.pm \
 	tool/modelfit.pm \
 	tool/sir.pm \
