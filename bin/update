@@ -3,7 +3,6 @@
 # Only for Development
 use FindBin qw($Bin);
 use lib "$Bin/../lib";
-use File::Basename;
 
 # Don't edit the line below, it must look exactly like this.
 # Everything above this line will be replaced #
@@ -13,19 +12,9 @@ use File::Basename;
 # It makes it possible to call versioned update scripts
 # For example: update-4.2.0 will call update_inits-4.2.0
 
-use utils::file;
+my $command = $0;
+$command =~ s/(.*)update/$1update_inits/;
 
-my $version;
-
-(my $filename, my $path) = fileparse($0);
-
-my @name_and_version = split '-', $filename;
-
-if ($name_and_version[1]) {
-	$version = '-' . $name_and_version[1];
-    $version =~ s/\.pl$//;
-}
-
-my $command = "${path}update_inits$version @ARGV";
+$command = "$command @ARGV";
 
 system $command;
