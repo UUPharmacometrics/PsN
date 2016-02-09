@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{FREM userguide}{2016-02-05}
+\guidetitle{FREM userguide}{2016-02-08}
 
 
 \begin{document}
@@ -104,7 +104,10 @@ the final regular parameterization frem model, otherwise the model will be
 created but not estimated.
 \nextopt
 \optname{rescale}
-Default not used. Rescale ETAs in Model 2 to SD close to 1.% in order to facilitate estimation.
+Default not used. Rescale ETAs in Model 2 to SD close to 1.
+Note: If this option is set, the construction of a proposal density for sir,
+in case the covariance step of Model 4 fails, will not be done correctly.
+% in order to facilitate estimation.
 \nextopt
 \optname{run\_sir}
 Default set. Disable with -no-run\_sir. If covariance step of Model 4 fails, run sir
