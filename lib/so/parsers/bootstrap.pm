@@ -69,8 +69,14 @@ sub _create_bootstrap
     my @column;
     my $means;
     my $medians;
+    my $seci_05;
+    my $seci_5;
     my $seci_25;
+    my $seci_50;
+    my $seci_950;
     my $seci_975;
+    my $seci_995;
+    my $seci_9995;
     my $ses;
     while (<$fh>) {
         if (/^means$/) {
@@ -95,14 +101,14 @@ sub _create_bootstrap
 
         } elsif (/^standard.error.confidence.intervals$/) {
             <$fh>;
-            <$fh>;
-            <$fh>;
+            $seci_05 = _read_line(fh => $fh, parameters => \@parameters);
+            $seci_5 = _read_line(fh => $fh, parameters => \@parameters);
             $seci_25 = _read_line(fh => $fh, parameters => \@parameters);
-            <$fh>;
-            <$fh>;
+            $seci_50 = _read_line(fh => $fh, parameters => \@parameters);
+            $seci_950 = _read_line(fh => $fh, parameters => \@parameters);
             $seci_975 = _read_line(fh => $fh, parameters => \@parameters);
-            <$fh>;
-            <$fh>;
+            $seci_995 = _read_line(fh => $fh, parameters => \@parameters);
+            $seci_9995 = _read_line(fh => $fh, parameters => \@parameters);
 
         } elsif (/^standard.errors$/) {
             <$fh>;
@@ -156,16 +162,27 @@ sub _create_bootstrap
         $self->_precision_bootstrap->PercentilesCI($table);
     }
 
-    (my $used_parameters, my $filtered_seci25) = $self->filter(parameters => \@parameters, values => $seci_25);
+    (my $used_parameters, my $filtered_seci05) = $self->filter(parameters => \@parameters, values => $seci_05);
+    (undef, my $filtered_seci5) = $self->filter(parameters => \@parameters, values => $seci_5);
+    (undef, my $filtered_seci25) = $self->filter(parameters => \@parameters, values => $seci_25);
+    (undef, my $filtered_seci50) = $self->filter(parameters => \@parameters, values => $seci_50);
+    (undef, my $filtered_seci950) = $self->filter(parameters => \@parameters, values => $seci_950);
     (undef, my $filtered_seci975) = $self->filter(parameters => \@parameters, values => $seci_975);
+    (undef, my $filtered_seci995) = $self->filter(parameters => \@parameters, values => $seci_995);
+    (undef, my $filtered_seci9995) = $self->filter(parameters => \@parameters, values => $seci_9995);
     (undef, my $filtered_ses) = $self->filter(parameters => \@parameters, values => $ses);
+
+    my @aci_parameters = (@$used_parameters, @$used_parameters, @$used_parameters, @$used_parameters);
+    my @aci_CIs = ( (0.90) x scalar(@$used_parameters), (0.95) x scalar(@$used_parameters), (0.99) x scalar(@$used_parameters), (0.999) x scalar(@$used_parameters));
+    my @aci_lower = (@$filtered_seci50, @$filtered_seci25, @$filtered_seci5, @$filtered_seci05);
+    my @aci_upper = (@$filtered_seci950, @$filtered_seci975, @$filtered_seci995, @$filtered_seci9995);
 
     my $precision_estimates = so::table->new(
         name => "AsymptoticCI",
         columnId => [ "Parameter", "CI", "LowerBound", "UpperBound" ],
         columnType => [ ('undefined') x 4 ],
         valueType => [ "string", ('real') x 3 ],
-        columns => [ $used_parameters,  [ (0.95) x scalar(@$used_parameters) ], $filtered_seci25, $filtered_seci975 ],
+        columns => [ \@aci_parameters, \@aci_CIs, \@aci_lower, \@aci_upper ],
     );
     $self->_precision_bootstrap->AsymptoticCI($precision_estimates);
 
