@@ -7,6 +7,7 @@ use FindBin qw($Bin);
 use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages
 use output::problem::subproblem;
+use output::problem;
 use utils::file;
 
 my %hash;
@@ -147,5 +148,20 @@ is ($matrix_array_ref->[65],eval(1.69362E-03),'mox_sir.cov uncleaned element (11
 is ($index_order_ref->[0],1,'mox_sir.cov uncleaned index order 0');
 is ($index_order_ref->[5],7,'mox_sir.cov uncleaned index order 5');
 is ($index_order_ref->[11],6,'mox_sir.cov uncleaned index order 11');
+
+my ($is_time,$sec) = output::problem::is_timestamp(['2011-12-03'],0);
+my $sec2;
+is($is_time,0,'is_timestamp 1');
+($is_time,$sec) = output::problem::is_timestamp(['2011-12-03','12:03'],0);
+is($is_time,1,'is_timestamp 2');
+($is_time,$sec) = output::problem::is_timestamp(['','09/02/2016 ','13:12'],1);
+is($is_time,1,'is_timestamp 3');
+($is_time,$sec2) = output::problem::is_timestamp(['Stop Time:',
+												  'Tue Feb  9 13:12:00 CET 2016'],1);
+is($is_time,1,'is_timestamp 4');
+is($sec,$sec2,'is_timestamp 5, same time different format');
+($is_time,$sec2) = output::problem::is_timestamp(['','2016-02-09 ','13:12'],1);
+is($is_time,1,'is_timestamp 6');
+is($sec,$sec2,'is_timestamp 7, same time different format');
 
 done_testing();

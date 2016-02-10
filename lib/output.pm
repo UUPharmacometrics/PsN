@@ -6,7 +6,6 @@ use OSspecific;
 use Storable;
 use Config;
 use ext::Math::SigFigs;
-use Time::Local;
 use model;
 use array qw(:all);
 use Moose;
@@ -2845,19 +2844,6 @@ sub _read_problems
 	# This is a private method, and should not be used outside
 	# this file.
 
-	my %months;
-	$months{'Jan'} = 0;
-	$months{'Feb'} = 1;
-	$months{'Mar'} = 2;
-	$months{'Apr'} = 3;
-	$months{'May'} = 4;
-	$months{'Jun'} = 5;
-	$months{'Jul'} = 6;
-	$months{'Aug'} = 7;
-	$months{'Sep'} = 8;
-	$months{'Oct'} = 9;
-	$months{'Nov'} = 10;
-	$months{'Dec'} = 11;
 
 
 	my @lstfile = utils::file::slurp_file($self->full_name);
@@ -2874,8 +2860,9 @@ sub _read_problems
 	my $n_previous_meth = 0;
 	my $evaluation_missing_from_ext_file = 0;
 	my $lst_version;
-	my $endtime_string;
-	my $starttime_string;
+	my $endtime;
+	my $starttime;
+	my $is_timestamp=0;
 	my $nm_version_710=0;
 
 	#new in 3.5.10, read control stream from lst-file
@@ -2893,18 +2880,11 @@ sub _read_problems
 	while ($lstfile_pos < $#lstfile){
 		$lstfile_pos++;
 		$_ = $lstfile[$lstfile_pos];
-		if (/^\s*(Sun|Mon|Tue|Wed|Thu|Fri|Sat)\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)/) {
-			$starttime_string = $_;
+		($is_timestamp,$starttime) = output::problem::is_timestamp(\@lstfile,$lstfile_pos);
+		if ($is_timestamp){
 			@prerun_messages =();
 			last;
 		}
-        if (/^\d\d\/\d\d\/\d\d\d\d\s*$/) {    # Alternative date format: dd/mm/yyyy\nhh:mm
-            if ($lstfile[$lstfile_pos + 1] =~ /^\d\d:\d\d\s*$/) {
-                $starttime_string = $_ . $lstfile[$lstfile_pos + 1];
-                @prerun_messages = ();
-                last;
-            }
-        }
 		if (/^\s*(;|\$)/){
 			#found control stream
 			$control_stream_start_index=$lstfile_pos;
@@ -2921,7 +2901,7 @@ sub _read_problems
 		push(@prerun_messages, $_) if /\w/;
 	}
 	
-	unless (defined $starttime_string or defined $control_stream_start_index){
+	unless (defined $starttime or defined $control_stream_start_index){
 		#something went wrong. Store error messages and finish
 		$self->parsing_error( message => "It seems there was an error before NONMEM started, messages are:\n".join("\n",@prerun_messages)."\n");
 		$self->parsed_successfully(0);
@@ -3035,45 +3015,14 @@ sub _read_problems
 
 	#then read endtime
 	my $j = $#lstfile;
+	$is_timestamp = 0;
 	while ( $_ = $lstfile[ $j -- ] ) {
-		if (/^\s*(Sun|Mon|Tue|Wed|Thu|Fri|Sat)\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)/){
-			$endtime_string = $_;
-			if (defined $starttime_string) {
-				$starttime_string =~ s/\s*$//; #remove trailing spaces
-				my ($wday, $mon, $mday, $tt, $zone, $year) = split(/\s+/, $starttime_string);
-				$mon = $months{$mon}; #convert to numeric
-				my ($hour, $min, $sec) = split(':',$tt);
-				my $starttime = timelocal($sec, $min, $hour, $mday, $mon, $year);
-
-				$endtime_string =~ s/\s*$//; #remove trailing spaces
-				($wday, $mon, $mday, $tt, $zone, $year) = split(/\s+/, $endtime_string);
-				$mon = $months{$mon}; #convert to numeric
-				($hour, $min, $sec) = split(':', $tt);
-				my $endtime = timelocal($sec, $min, $hour, $mday, $mon, $year);
-				my $runtime = $endtime - $starttime; # in seconds
-				if ($runtime == 0){
-					$self->runtime('00:00:00');
-				}else{
-					my $seconds = $runtime % 60;
-					my $minutes = (($runtime - $seconds) / 60) % 60;
-					my $hours = ($runtime - $seconds - 60 * $minutes) / 3600;
-					$self->runtime(sprintf "%i:%02i:%02i", $hours, $minutes, $seconds);
-				}
+		($is_timestamp,$endtime) = output::problem::is_timestamp(\@lstfile,($j + 1));
+		if ($is_timestamp){
+			if (defined $starttime) {
+				$self->set_runtime(($endtime - $starttime));
 			}
 			last;
-
-        } elsif (/^\d\d\/\d\d\/\d\d\d\d\s*$/) {
-            if ($lstfile[$j + 2] =~ /\d\d:\d\d/) {
-                $endtime_string = $_ . $lstfile[$j + 2];
-                if (defined $starttime_string) {
-                    my $starttime = parse_timestamp($starttime_string);
-                    my $endtime = parse_timestamp($endtime_string);    
-                    my $runtime = $endtime - $starttime;
-                    $self->set_runtime($runtime);
-                }
-                last;
-            }
-
 		} elsif (/^1NONLINEAR MIXED EFFECTS MODEL PROGRAM/) {
 			#if we end up here the lst-file is incomplete, was no end time printed
 			#by nmfe
@@ -3082,7 +3031,7 @@ sub _read_problems
 		}
 	}
 
-
+#	print "runtime is ".$self->runtime."\n";
 	#then read NONMEM output
 	while ( $_ = $lstfile[ $lstfile_pos++ ] ) {
 #		if (/^\s*\#TBLN:\s*([0-9]+)/) {
@@ -3111,6 +3060,7 @@ sub _read_problems
 					$mes .= ' lst-file corrupted, could not find control stream copy for all PROBLEM NO ';
 					$self -> parsing_error_message( $mes );
 				}else{
+#					print "adding problem\n";
 					$self -> add_problem ( init_data => 
 										   { lstfile		    => \@problem_lstfile,
 											 ignore_missing_files => $self -> ignore_missing_files(),
@@ -3228,32 +3178,6 @@ sub get_nonmem_parameters
 
 }
 
-sub parse_timestamp
-{
-    # Parses a timestamp and return time value
-    # currently recognizes dd/mm/yyyy\nhh:mm
-
-    my $timestamp = shift;
-    my ($year, $month, $day, $hour, $minute, $second);
-    my $parsed_ok = 0;
-
-    if ($timestamp =~ /\A(\d\d)\/(\d\d)\/(\d\d\d\d)\s*(\d\d):(\d\d)\s*\Z/) {
-        $year = $3;
-        $month = $2 - 1;
-        $day = $1;
-        $hour = $4;
-        $minute = $5;
-        
-        $parsed_ok = 1;
-    }
-
-    my $time;
-    if ($parsed_ok) {
-        $time = timegm($second, $minute, $hour, $day, $month, $year);
-    }
-
-    return $time;
-}
 
 sub set_runtime
 {

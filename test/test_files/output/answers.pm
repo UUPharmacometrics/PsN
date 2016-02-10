@@ -1503,6 +1503,10 @@ sub read_answers
     $answer_hashes[$index]->{parsed_successfully} = 1;
     $answer_hashes[$index]->{tables_step_error} = 1;
 
+	$index++;
+    $answer_hashes[$index]->{file} = 'special_mod/allfix_estimation.lst';
+    $answer_hashes[$index]->{parsed_successfully} = 0;
+
 	return \@answer_hashes;
 }
 

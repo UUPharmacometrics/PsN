@@ -5,6 +5,7 @@ use Moose;
 use MooseX::Params::Validate;
 use output::problem::subproblem;
 use utils::file;
+use Time::Local;
 
 my $nrec_exp1 = '^\s*NO. OF DATA RECS IN DATA SET:\s*(\d+)';
 my $nrec_exp2 = '^\s*TOT. NO. OF DATA RECS:\s*(\d+)';
@@ -947,85 +948,85 @@ sub _scan_to_subproblems
 	if (defined $self->input_problem->estimations) {
 		$self -> estimation_step_initiated(1);
 		if ($self->nm_major_version < 7) {
-		  #check if maxeval=0 in any $EST (can be split on multiple lines)
-		  my @options;
-		  foreach my $rec (@{$self->input_problem->estimations}) {
+			#check if maxeval=0 in any $EST (can be split on multiple lines)
+			my @options;
+			foreach my $rec (@{$self->input_problem->estimations}) {
 				push(@options, @{$rec->options});
 			}
-		  my $found = 0;
-		  foreach my $option ( @options ) {
+			my $found = 0;
+			foreach my $option ( @options ) {
 				if ( defined $option and (($option -> name eq 'MAXEVALS') or ( index( 'MAXEVALS', $option -> name ) == 0 ))) {
 					$found = 1 if ($option->value eq '0');
-			  	last;
+					last;
 				}
-		  }
-		  $self->estimation_step_run(1) unless ($found);
+			}
+			$self->estimation_step_run(1) unless ($found);
 		} else {
-		  $self->estimation_step_run(1); 
-		  #incorrect if MAXEVAL=0 and NM7. if NM7 check for (Evaluation) string on #METH line of last subprob
-		  #if (Evaluation) found then estimation_step was not run
+			$self->estimation_step_run(1); 
+			#incorrect if MAXEVAL=0 and NM7. if NM7 check for (Evaluation) string on #METH line of last subprob
+			#if (Evaluation) found then estimation_step was not run
 		}
 
 	} elsif (defined $self->input_problem()->simulations()) {
 		my @options;
-	  foreach my $rec (@{$self->input_problem()->simulations()}) {
-		  push(@options,@{$rec->options()});
-	  }
+		foreach my $rec (@{$self->input_problem()->simulations()}) {
+			push(@options,@{$rec->options()});
+		}
 		my $onlysim = 0;
-	  foreach my $option ( @options ) {
-		  if ( defined $option and (($option -> name eq 'ONLYSIMULATION') or ( index( 'ONLYSIMULATION', $option -> name ) == 0 ))) {
-		  	$onlysim = 1;
-		    last;
-		  }
-	  }   
+		foreach my $option ( @options ) {
+			if ( defined $option and (($option -> name eq 'ONLYSIMULATION') or ( index( 'ONLYSIMULATION', $option -> name ) == 0 ))) {
+				$onlysim = 1;
+				last;
+			}
+		}   
 		unless ($onlysim) {
-		  $self -> estimation_step_initiated(1);
-		  $meth_printed = 0; #what if cov also? cannot be since would have $est and not end up here.
+			$self -> estimation_step_initiated(1);
+			$meth_printed = 0; #what if cov also? cannot be since would have $est and not end up here.
 		}
 	} elsif (defined $self->input_problem()->covariances()) {
 		$self -> estimation_step_initiated(1) ;
 	} else {
 		my $tnpri=0;
-	  if ((defined $self->input_problem()->priors()) and scalar(@{$self->input_problem()->priors()}) > 0 ) {
-		  foreach my $rec (@{$self->input_problem()->priors()}) {
-		  	foreach my $option ( @{$rec -> options} ) {
-			  	if ((defined $option) and (($option->name eq 'TNPRI') || (index('TNPRI',$option ->name ) == 0))) {
-			      $tnpri=1;
-			  	}
-		    }
-		  }
-	  }
-    #if $PRIOR TNPRI and neither $SIM nor $EST then estimation step not initiated
-    # (NONMEM does not allow task records, see nmhelp7 task, in this case)
-    #otherwise
-    #if end up here assume second $PROB and only $TABLE, or $MSFI and $TAB or $COV
-    #then NM will still print maxeval etc
-    #which we handle as estimation_step_initiated
-    #NM will complain if neither simulation nor estimation nor correct $PRIOR TNPRI in first $PROB. 
-    #Let nonmem handle it
+		if ((defined $self->input_problem()->priors()) and scalar(@{$self->input_problem()->priors()}) > 0 ) {
+			foreach my $rec (@{$self->input_problem()->priors()}) {
+				foreach my $option ( @{$rec -> options} ) {
+					if ((defined $option) and (($option->name eq 'TNPRI') || (index('TNPRI',$option ->name ) == 0))) {
+						$tnpri=1;
+					}
+				}
+			}
+		}
+		#if $PRIOR TNPRI and neither $SIM nor $EST then estimation step not initiated
+		# (NONMEM does not allow task records, see nmhelp7 task, in this case)
+		#otherwise
+		#if end up here assume second $PROB and only $TABLE, or $MSFI and $TAB or $COV
+		#then NM will still print maxeval etc
+		#which we handle as estimation_step_initiated
+		#NM will complain if neither simulation nor estimation nor correct $PRIOR TNPRI in first $PROB. 
+		#Let nonmem handle it
 
-    $self->estimation_step_initiated(1) unless $tnpri;
-  }
-	  
-  $self->simulation_step_run(0);
-  if (defined $self->input_problem()->simulations()) {
+		$self->estimation_step_initiated(1) unless $tnpri;
+	}
+	
+	$self->simulation_step_run(0);
+	if (defined $self->input_problem()->simulations()) {
 		$self->simulation_step_run(1);
-  }
+	}
 
 	$self->nonparametric_step_run(0);
 	if (defined $self->input_problem()->nonparametrics()) {
 		$self -> nonparametric_step_run(1);
 	}
-	  
-  $self -> covariance_step_run(0);
+	
+	$self -> covariance_step_run(0);
 	if (defined $self->input_problem()->covariances()) {
-	  $self -> covariance_step_run(1);
+		$self -> covariance_step_run(1);
 	}
-	  
+	
 	if ((not $self->simulation_step_run()) and ($self->nm_major_version < 7) and (not $self -> estimation_step_initiated())) {
 		#nothing to read in this $PROB (only table info or $PRIOR TNPRI
-	  $self -> finished_parsing(1);
-	  return;
+		$self -> finished_parsing(1);
+		return;
 	}
 
 	my $start_pos = $self->lstfile_pos;
@@ -1033,24 +1034,24 @@ sub _scan_to_subproblems
 	my $endstring;
 	if ($self->simulation_step_run()) {
 		# $endstring = $subprob_exp; #not always ok!!! if one prob one subprob and 7.1.2 then no subprob
-	  #check for both if simulation_step
-	  $endstring = $simulation_exp;
+		#check for both if simulation_step
+		$endstring = $simulation_exp;
 	} else {
 		if ($self->nm_major_version >= 7) {
 			#meth is not always printed with nm7, but happens only if simulation is run,
-		  #so no problem here
-		  $endstring =  '^\s*\#METH:';
-	  } else {
-		  #NM6
-		  if ($self -> estimation_step_run()) {
-		    $endstring = 'MONITORING OF SEARCH';
-		  } elsif ($self -> estimation_step_initiated()) {
-		    $endstring = 'MINIMUM VALUE OF OBJECTIVE FUNCTION';
-		  } else {
-		      #BUG, should already have returned
-		      croak("BUG: should not end up here in scan_to_subproblems");
-		  }
-	  }
+			#so no problem here
+			$endstring =  '^\s*\#METH:';
+		} else {
+			#NM6
+			if ($self -> estimation_step_run()) {
+				$endstring = 'MONITORING OF SEARCH';
+			} elsif ($self -> estimation_step_initiated()) {
+				$endstring = 'MINIMUM VALUE OF OBJECTIVE FUNCTION';
+			} else {
+				#BUG, should already have returned
+				croak("BUG: should not end up here in scan_to_subproblems");
+			}
+		}
 	}
 
 	#		  /^0ITERATION NO./ or /^0MINIMIZATION/ or
@@ -1062,64 +1063,129 @@ sub _scan_to_subproblems
 	
 
 	my $found_endtime = 0;
-
+	my $is_timestamp = 0;
+	my $endtime;
+	
 	while( $_ = @{$self->lstfile}[ $start_pos++ ] ) {
 
-	  if ( /^ INITIAL ESTIMATE OF OMEGA HAS A NONZERO BLOCK WHICH IS NUMERICALLY NOT POSITIVE DEFINITE/ ) {
-	  	$self -> parsing_error( message => $_ );
-	    $self -> pre_run_errors($_);
-	    $self -> finished_parsing(1);
-	    return;
-	  } elsif ( /^\s*0INPUT MODEL SPECIFICATION FILE GENERATED FROM A NON-TERMINATING ESTIMATION STEP/ ) {
-	  	if( @{$self->lstfile}[ $start_pos ] =~ / BUT CONTINUING ESTIMATION STEP NOT IMPLEMENTED/ ) {
-		  	# If this happens, NONMEM aborts so we are finished reading
-		  	$self -> parsing_error( message => "INPUT MODEL SPECIFICATION FILE GENERATED FROM A NON-TERMINATING ESTIMATION STEP" );
-		  	$self -> finished_parsing(1);
-		  	return;
-	    }
-	  } elsif ( /^\s*0MODEL SPECIFICATION FILE IS EMPTY/ ) {
-	      # If this happens, NONMEM aborts so we are finished reading
-	      $self -> parsing_error( message => $_ );
-	      $self -> finished_parsing(1);
-	      return;
-	  } elsif (( /^\s*0OBJ. FUNCT. IS NOT DEFINED/ ) and ($self -> estimation_step_initiated())) {
-	      #this message does not necessarily mean failure!! only if we expect an estimation
-	      $self -> parsing_error( message => $_ );
-	      $self -> finished_parsing(1);
-	      return;
-	  } elsif ( /^\s*0RUN TERMINATED/ ) {
-	      $self -> parsing_error( message => $_ );
-	      $self -> finished_parsing(1);
-	      return;
-	  } elsif ($self->simulation_step_run() and /$subprob_exp/) {
-	      last;
-	  } elsif ( /$endstring/ ){
-	      last;
-	  } elsif (/^\s*(Sun|Mon|Tue|Wed|Thu|Fri|Sat)\s*(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)/) {
-	      #end time stamp, means nmfe finished fine
-	      $found_endtime = 1;
-	  } elsif (/^\s*Finished\s*(Sun|Mon|Tue|Wed|Thu|Fri|Sat)\s*/){
-	      #end time stamp, means nmfe finished fine
-	      $found_endtime = 1;
-	  }
+		if ( /^ INITIAL ESTIMATE OF OMEGA HAS A NONZERO BLOCK WHICH IS NUMERICALLY NOT POSITIVE DEFINITE/ ) {
+			$self -> parsing_error( message => "NONMEM terminated with message:\n".$_ );
+			$self -> pre_run_errors($_);
+			$self -> finished_parsing(1);
+			return;
+		} elsif ( /^\s*0INPUT MODEL SPECIFICATION FILE GENERATED FROM A NON-TERMINATING ESTIMATION STEP/ ) {
+			my $mes = $_;
+			if( @{$self->lstfile}[ $start_pos ] =~ / BUT CONTINUING ESTIMATION STEP NOT IMPLEMENTED/ ) {
+				# If this happens, NONMEM aborts so we are finished reading
+				$self -> parsing_error( message => "NONMEM terminated with message:\n".$mes );
+				$self -> pre_run_errors($mes);
+				$self -> finished_parsing(1);
+				return;
+			}
+		} elsif ( /^\s*0MODEL SPECIFICATION FILE IS EMPTY/ ) {
+			# If this happens, NONMEM aborts so we are finished reading
+			$self -> parsing_error( message => "NONMEM terminated with message:\n".$_ );
+			$self -> pre_run_errors($_);
+			$self -> finished_parsing(1);
+			return;
+		} elsif (( /^\s*0OBJ. FUNCT. IS NOT DEFINED/ ) and ($self -> estimation_step_initiated())) {
+			#this message does not necessarily mean failure!! only if we expect an estimation
+			$self -> parsing_error( message => "NONMEM terminated with message:\n".$_ );
+			$self -> pre_run_errors($_);
+			$self -> finished_parsing(1);
+			return;
+		} elsif (/^\s*0ESTIMATION STEP IMPLEMENTED/ ) {
+			if( @{$self->lstfile}[ $start_pos ] =~ / BUT THE NUMBER OF PARAMETERS TO BE ESTIMATED IS 0/ ) {
+				# If this happens, NONMEM aborts so we are finished reading
+				my $mes = "NONMEM terminated with message:\nESTIMATION STEP IMPLEMENTED\n".
+					"BUT THE NUMBER OF PARAMETERS TO BE ESTIMATED IS 0\n";
+				$self -> parsing_error( message =>  $mes);
+				$self -> pre_run_errors($mes);
+				$self -> finished_parsing(1);
+				return;
+			}
+		} elsif ( /^\s*0RUN TERMINATED/ ) {
+			$self -> parsing_error( message => "NONMEM terminated with message:\n".$_ );
+			$self -> finished_parsing(1);
+			return;
+		} elsif ($self->simulation_step_run() and /$subprob_exp/) {
+			last;
+		} elsif ( /$endstring/ ){
+			last;
+		} elsif (/^\s*Finished\s*(Sun|Mon|Tue|Wed|Thu|Fri|Sat)\s*/){
+			#end time stamp, means nmfe finished fine
+			$found_endtime = 1;
+		} elsif (/^\s*Stop Time:\s*$/){
+			#end time stamp, means nmfe finished fine
+			$found_endtime = 1;
+		} elsif (not $found_endtime){
+			($is_timestamp,$endtime)=is_timestamp($self->lstfile,($start_pos-1)); 
+			#end time stamp, means nmfe finished fine
+			$found_endtime = 1 if ($is_timestamp);
+		}
 
-	  if ( $start_pos > $#{$self->lstfile} ) { #we found end of file
-	  	if ($found_endtime) {
-		  	#run did not crash since nmfe printed end time, but nothing to parse
-		  	$self -> parsing_error( message => "Found end of lst-file before any run information." );
-		  	$self -> finished_parsing(1);
-		  	return;
-	  	} else {
-		  	#EOF This should not happen, raise error
-		  	my $errmess = "Reached end of file while scanning for subproblems\n";
-		  	carp($errmess . "$!" );
-		  	$self -> parsing_error( message => $errmess . "$!" );
-		  	return;
+		if ( $start_pos > $#{$self->lstfile} ) { #we found end of file
+			if ($found_endtime) {
+				#run did not crash since nmfe printed end time, but nothing to parse
+				$self -> parsing_error( message => "nmfe finished before printing any run output.\n" );
+				$self -> finished_parsing(1);
+				return;
+			} else {
+				#EOF This should not happen, raise error
+				my $errmess = "Reached end of file while scanning for subproblems\n";
+				$self -> parsing_error( message => $errmess );
+				return;
 			}
 		}
 	}
 	$self->lstfile_pos($start_pos - 1);
 
+}
+
+sub is_timestamp
+{
+	my $arrayref = shift;
+	my $index = shift;
+	my $line1 = $arrayref->[$index];
+	my $is_time = 0;
+	my $seconds = undef;
+	my ($wday, $mon, $mday, $tt, $zone, $year, $hour, $min, $sec);
+	if ($line1 =~ /^\s*(Sun|Mon|Tue|Wed|Thu|Fri|Sat)\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)/) {
+		$is_time = 1;
+		my %months = ('Jan'=> 0,'Feb' => 1, 'Mar' => 2, 'Apr' => 3, 'May' => 4, 'Jun' => 5,
+					  'Jul' => 6, 'Aug' => 7, 'Sep' => 8, 'Oct' => 9, 'Nov' => 10, 'Dec' => 11);
+		
+		$line1 =~ s/\s*$//; #remove trailing spaces
+		($wday, $mon, $mday, $tt, $zone, $year) = split(/\s+/, $line1);
+		$mon = $months{$mon}; #convert to numeric
+		($hour, $min, $sec) = split(':',$tt);
+	}elsif ($line1 =~ /^(\d\d)\/(\d\d)\/(\d\d\d\d)\s*$/)  {    
+		# Alternative date format: dd/mm/yyyy\nhh:mm 
+        $year = $3;
+        $mon = $2 - 1;
+        $mday = $1;
+		if ((scalar(@{$arrayref}) > ($index+1)) and 
+			($arrayref->[$index+1] =~ /^(\d\d):(\d\d)\s*$/)) {
+			$hour = $1;
+			$min = $2;
+			$is_time = 1;
+		}
+	}elsif ($line1 =~ /^(\d\d\d\d)-(\d\d)-(\d\d)\s*$/) {    
+		# Alternative date format: yyyy-mm-dd\nhh:mm
+        $year = $1;
+        $mon = $2 - 1;
+        $mday = $3;
+		if ((scalar(@{$arrayref}) > ($index+1)) and 
+			($arrayref->[$index+1] =~ /^(\d\d):(\d\d)\s*$/)) {
+			$hour = $1;
+			$min = $2;
+			$is_time = 1;
+		}
+	}
+	if ($is_time){
+		$seconds = timelocal($sec, $min, $hour, $mday, $mon, $year);
+	}
+	return($is_time,$seconds);
 }
 
 sub _read_block_structures
