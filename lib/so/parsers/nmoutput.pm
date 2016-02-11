@@ -1468,7 +1468,7 @@ sub _add_status_messages
         $self->_so_block->TaskInformation->add_message(
             type => $minimization_successful ? "INFORMATION" : "WARNING",
             toolname => "NONMEM",
-            name => "minimization_successful",
+            name => "estimation_successful",
             content => $minimization_successful,
             severity => 1,
         );
