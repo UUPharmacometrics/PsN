@@ -1,0 +1,41 @@
+#!/usr/bin/perl
+
+# Runs the system tests for multiple versions of NONMEM
+# All arguments starting with "-" will be passed through to prove
+# All other arguemnts are treated as nonmem versions to run
+# For example: runsystem nm72 nm73 -j4
+
+use strict;
+use Config;
+use includes;
+
+my @prove_args;
+my @nm_versions;
+
+foreach my $arg (@ARGV) {
+    if ($arg =~ /^-/) {
+        push @prove_args, $arg;
+    } else {
+        push @nm_versions, $arg;
+    }
+}
+
+if (scalar(@nm_versions) == 0) {
+    push @nm_versions, "default";
+}
+
+# If the first nmversion is "all" get all versions from psn.conf
+if ($nm_versions[0] eq "all") {
+    @nm_versions = ();
+    foreach my $version (keys %{$PsN::config->{nm_versions}}) {
+        if ($version ne "default") {
+            push @nm_versions, $version;
+        }
+    }
+}
+
+foreach my $nmversion (@nm_versions) {
+    if (system("prove system -r @prove_args :: -nm_version=$nmversion") != 0) {
+        die;
+    }
+}

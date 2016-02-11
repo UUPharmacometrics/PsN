@@ -117,6 +117,18 @@ with perl instead of prove, e.g.
 perl bootstrap.t
 \end{verbatim}
 
+\subsection{System tests for multiple NONMEM versions}
+Multiple versions of NONMEM can be tested automatically with the \verb|runsystem| perl script. This script takes
+an array of NONMEM versions as arguments and all arguments staring with "-" will be tunnelled through to prove.
+The following example will run all system tests once for nm72 and once for nm73 using 4 parallel threads.
+\begin{verbatim}
+./runsystem nm72 nm73 -j4
+\end{verbatim}
+There is also an option to run the system tests for all NONMEM versions available in psn.conf:
+\begin{verbatim}
+./runsystem all
+\end{verbatim}
+
 \subsection{Test coverage}
 In the current release we have excellent test coverage for execute (parsing NONMEM control streams, 
 running models, tweaking initial estimates, and reading of final estimates from NONMEM output and reporting 

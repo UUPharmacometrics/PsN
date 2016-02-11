@@ -24,7 +24,6 @@ foreach my $command (@commands) {
 	my $rc = system($command);
 	$rc = $rc >> 8;
 	ok ($rc == 0, "$command, should run ok");
-	rmtree([$dir]);
 }
 
 remove_test_dir($tempdir);
