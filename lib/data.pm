@@ -465,24 +465,29 @@ sub frem_compute_covariate_properties
 																		  first_timevar_type => $first_timevar_type);
 
 	$results->{'invariant_median'}= [];
+	$results->{'invariant_mean'}= [];
 	$results->{'invariant_covmatrix'}= [];
 	$results->{'timevar_median'} = [];
+	$results->{'timevar_mean'} = [];
 	$results->{'timevar_covmatrix'} = [];
 
-	my $err = linear_algebra::row_cov_median($invariant_matrix,
-											 $results->{'invariant_covmatrix'},
-											 $results->{'invariant_median'},
-											 $filtered_data->missing_data_token);
+	my $err = linear_algebra::row_cov_median_mean($invariant_matrix,
+												  $results->{'invariant_covmatrix'},
+												  $results->{'invariant_median'},
+												  $results->{'invariant_mean'},
+												  $filtered_data->missing_data_token);
 	if ($err != 0){
 		print "failed to compute invariant covariates covariance\n";
 		$results->{'invariant_median'}= [];
+		$results->{'invariant_mean'}= [];
 		$results->{'invariant_covmatrix'}= [];
 	}
 
-	$err = linear_algebra::row_cov_median($timevar_matrix,
-										  $results->{'timevar_covmatrix'},
-										  $results->{'timevar_median'},
-										  $filtered_data->missing_data_token);
+	$err = linear_algebra::row_cov_median_mean($timevar_matrix,
+											   $results->{'timevar_covmatrix'},
+											   $results->{'timevar_median'},
+											   $results->{'timevar_mean'},
+											   $filtered_data->missing_data_token);
 	if ($err != 0){
 		print "failed to compute time-varying covariates covariance\n";
 		$results->{'timevar_median'} = [];

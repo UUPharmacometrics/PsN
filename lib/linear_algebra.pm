@@ -1329,7 +1329,6 @@ sub column_cov
     #and reference to empty result matrix
     #compute square variance covariance matrix
     #Normalization is done with N-1, input error if N<2
-    #verified with matlab cov function
 
     my $Aref=shift;
     my $varcov = shift;
@@ -1483,12 +1482,13 @@ sub row_cov
     return 0;
 }
 
-sub row_cov_median
+sub row_cov_median_mean
 {
     #input is reference to values matrix 
     #in *row format*, Aref->[row][col]
     #and reference to empty result matrix covariance
     #and reference to empty result array median
+    #and reference to empty result array mean
     #and missing data token
     #compute square variance covariance matrix
     #Normalization is done with N-1, input error if N<2
@@ -1500,6 +1500,7 @@ sub row_cov_median
     my $Aref=shift;
     my $varcov = shift;
     my $median = shift;
+    my $mean = shift;
     my $missing_data_token = shift;
     my $debug=0;
     my $input_error = 2;
@@ -1512,7 +1513,7 @@ sub row_cov_median
     }
 
     my @sum = (0) x $ncol;
-    my @mean = (0) x $ncol;
+    push(@{$mean}, (0) x $ncol);
     my @N_array = (0) x $ncol; #smaller N if missing values
 
     #initialize square result matrix
@@ -1531,14 +1532,14 @@ sub row_cov_median
 			}
 		}
 		return $input_error if ($N_array[$col]<2);
-		$mean[$col]=$sum[$col]/$N_array[$col];
-		print "mean $col is ".$mean[$col]."\n" if $debug;
+		$mean->[$col]=$sum[$col]/$N_array[$col];
+		print "mean $col is ".$mean->[$col]."\n" if $debug;
 		$median->[$col]=median(\@values);
 		#variance
 		my $sum_errors_pow2=0;
 		for (my $row=0; $row< $nrow; $row++){
 			unless ($Aref->[$row][$col] == $missing_data_token){
-				$sum_errors_pow2 = $sum_errors_pow2 + ($Aref->[$row][$col] - $mean[$col])**2;
+				$sum_errors_pow2 = $sum_errors_pow2 + ($Aref->[$row][$col] - $mean->[$col])**2;
 			}
 		}
 		unless ( $sum_errors_pow2 == 0 ){
@@ -1558,7 +1559,7 @@ sub row_cov_median
 			for (my $i=0; $i< $nrow; $i++){
 				if (($Aref->[$i][$col] != $missing_data_token) and ($Aref->[$i][$j] != $missing_data_token)){
 					#have both values
-					$sum_errors_prod = $sum_errors_prod + ($Aref->[$i][$col] - $mean[$col])*($Aref->[$i][$j] - $mean[$j]);
+					$sum_errors_prod = $sum_errors_prod + ($Aref->[$i][$col] - $mean->[$col])*($Aref->[$i][$j] - $mean->[$j]);
 					$N_local++;
 				}elsif (($Aref->[$i][$col] == $missing_data_token) xor ($Aref->[$i][$j] == $missing_data_token)){
 					$N_local++;
@@ -1755,52 +1756,6 @@ if (0){
     print "\n";
 
 }
-if (0){
-    #to verify column_cov function
-    my @Bmatrix=();
-    push(@Bmatrix,[9.6900000e-02,6.7600000e-02,7.0400000e-02,-9.3500000e-01,1.9500000e+00,3.4300000e+00,-8.9000000e-03,-4.2900000e-02,3.6100000e-02,7.7700000e-03]);
-    push(@Bmatrix,[0.01,6.0600000e-02,-4.2100000e-03,-4.1300000e-01,2.5300000e+00,2.4500000e+00,-3.6600000e-02,-1.9100000e-02,1.3600000e-02,-7.8100000e-03]);
-    push(@Bmatrix,[0.01,0.01,2.3400000e+00,9.7000000e-01,-4.0800000e-01,-2.2500000e+00,-6.9700000e-02,-2.2500000e-01,-9.0900000e-02,7.2200000e-03]);
 
-    my $covmatrix=[];
-    my $err1 = column_cov(\@Bmatrix,$covmatrix);
-    for (my $row=0; $row<3; $row++){
-	for (my $col=0; $col<3; $col++){
-	    printf("  %.4f",$covmatrix->[$row][$col]); #matlab format
-	}
-	print "\n";
-    }
-    print "\n";
-
-
-}
-
-if (0){
-    #to verify row_cov_median function
-    my @Bmatrix=();
-
-    push(@Bmatrix,[-99,6.7600000e-02,7.0400000e-02,-9.3500000e-01,1.9500000e+00,3.4300000e+00,-8.9000000e-03,-4.2900000e-02,3.6100000e-02,7.7700000e-03]);
-    push(@Bmatrix,[0.01,-99,-4.2100000e-03,-4.1300000e-01,2.5300000e+00,2.4500000e+00,-3.6600000e-02,-1.9100000e-02,1.3600000e-02,-7.8100000e-03]);
-    push(@Bmatrix,[0.01,0.01,-99,9.7000000e-01,-4.0800000e-01,-2.2500000e+00,-6.9700000e-02,-2.2500000e-01,-9.0900000e-02,7.2200000e-03]);
-    push(@Bmatrix,[9.6900000e-02,6.0600000e-02,2.3400000e+00,9.7000000e-01,-4.0800000e-01,-2.2500000e+00,-6.9700000e-02,-2.2500000e-01,-9.0900000e-02,7.2200000e-03]);
-
-
-    my $covmatrix=[];
-    my $median=[];
-    my $err1 = row_cov_median(\@Bmatrix,$covmatrix,$median,'-99');
-#    my $err1 = row_cov(\@Bmatrix,$covmatrix);
-    for (my $row=0; $row<10; $row++){
-	for (my $col=0; $col<10; $col++){
-	    printf("  %.4f",$covmatrix->[$row][$col]); #matlab format
-	}
-	print "\n";
-    }
-    print "\n";
-
-    for (my $row=0; $row<10; $row++){
-	printf("  %.4f",$median->[$row]); #matlab format
-    }
-    print "\n";
-}
 
 1;

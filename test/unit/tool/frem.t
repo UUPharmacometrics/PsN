@@ -11,7 +11,6 @@ use includes; #file with paths to PsN packages
 use tool::frem;
 use model;
 
-open STDERR, '>', File::Spec->devnull();	# Silence STDERR
 
 our $tempdir = create_test_dir('unit_frem');
 chdir($tempdir);
@@ -31,6 +30,15 @@ is_deeply(tool::frem::get_reordered_coordinate_strings(problem => $model->proble
 													   omega_order => [2,1]),
 		  $ans,
 		  'get reordered coordinate strings 2');
+
+is_deeply(tool::frem::get_eta_mapping(problem => $model->problems->[0],
+									  omega_order => [2,1]),
+		  {1 => 2,2=> 3,3=>1},
+		  'get_eta_mapping 1');
+is_deeply(tool::frem::get_eta_mapping(problem => $model->problems->[0],
+									  omega_order => [1,2]),
+		  {1 => 1,2=> 2,3=>3},
+		  'get_eta_mapping 2');
 
 my ($corr,$message) = tool::frem::get_correlation_matrix_from_phi(start_eta_1 => 1,
 																  end_eta_1 => 3,
@@ -355,10 +363,10 @@ my $model2 = model->new(filename => "$modeldir/frem/model_2.mod",
 my $ans = $output->perfect_individual_count();
 
 my $true = {1=>countN(8.12648E-02,1.29305E-02),
-		 2=>countN(2.85876E+00,7.23777E-01),
-		 3=>countN(5.91259E-02,1.40023E-02),
-		 4=>countN(2.46471E+02,4.12291E+01),
-		 5=>countN(1.61613E-01,2.77878E-02)};
+			2=>countN(2.85876E+00,7.23777E-01),
+			3=>countN(5.91259E-02,1.40023E-02),
+			4=>countN(2.46471E+02,4.12291E+01),
+			5=>countN(1.61613E-01,2.77878E-02)};
 	
 is($ans->{1},$true->{1},'perfect individual count 1');
 is($ans->{2},$true->{2},'perfect individual count 2');
@@ -366,12 +374,14 @@ is($ans->{3},$true->{3},'perfect individual count 3');
 is($ans->{4},$true->{4},'perfect individual count 4');
 is($ans->{5},$true->{5},'perfect individual count 5');
 
-$ans = tool::frem::perfect_individuals(output1=>$model1->outputs->[0],output2=> $model2->outputs->[0], omega_order1 => [1,2,3]);
+$ans = tool::frem::perfect_individuals(output1=>$model1->outputs->[0],
+									   output2=> $model2->outputs->[0], 
+									   omega_order1 => [1,2]);
 my $true2 = {1=>countN(8.15324E-02,1.27723E-02),   
-		 2=>countN(2.79894E+00,8.12892E-01),     
-		 3=>countN(5.22103E-02,1.33110E-02),
-		 4=>countN(2.46465E+02,4.12278E+01),
-		 5=>countN(1.61606E-01,2.77883E-02)};
+			 2=>countN(2.79894E+00,8.12892E-01),     
+			 3=>countN(5.22103E-02,1.33110E-02),
+			 4=>countN(2.46465E+02,4.12278E+01),
+			 5=>countN(1.61606E-01,2.77883E-02)};
 
 is($ans->{1},$true2->{1},'perfect individual  1');
 is($ans->{2},$true2->{2},'perfect individual  2');
@@ -379,10 +389,10 @@ is($ans->{3},$true2->{3},'perfect individual  3');
 is($ans->{4},$true2->{4},'perfect individual  4');
 is($ans->{5},$true2->{5},'perfect individual  5');
 
-$ans = tool::frem::perfect_individuals(output1=>$model1->outputs->[0],output2=> $model2->outputs->[0], omega_order1 => [2,3,1]);
-is($ans->{1},$true2->{2},'perfect individual  6');
-is($ans->{2},$true2->{3},'perfect individual  7');
-is($ans->{3},$true2->{1},'perfect individual  8');
+$ans = tool::frem::perfect_individuals(output1=>$model1->outputs->[0],output2=> $model2->outputs->[0], omega_order1 => [2,1]);
+is($ans->{1},$true2->{3},'perfect individual  6');
+is($ans->{2},$true2->{1},'perfect individual  7');
+is($ans->{3},$true2->{2},'perfect individual  8');
 is($ans->{4},$true2->{4},'perfect individual  9');
 is($ans->{5},$true2->{5},'perfect individual  10');
 
@@ -444,16 +454,6 @@ my $join = [
 	[0,0,15,19,0,0,0 ,0,0,22,0,0,24,25]	
 	];
 
-my $ans = tool::frem::join_covmats(full_strings => $fullstr,
-								   rse_guess_hash => {'OM11'=> 0.11,'OM21'=> 0.22,'OM22'=> 0.33,'OM31'=> 0.44,
-												  'OM32'=> 0.55,'OM33'=> 0.66,'OM41'=> 0.77,'OM42'=> 0.88,'OM43'=> 0.99,'OM44'=> 0.951},
-								   variance_guess_hash => {'OM11'=> 0.1,'OM21'=> 0.2,'OM22'=> 0.3,
-												  'OM32'=> 0.5,'OM33'=> 0.6,'OM41'=> 0.7,'OM42'=> 0.8,'OM43'=> 0.9,'OM44'=> 0.95},
-								   partial_strings =>[$str1,$str2],
-								   partial_covmats => [$cov1,$cov2]);
-
-is_deeply($ans,$join,'join covmats');
-
 
 my $guess_hash = tool::frem::get_variance_guesses(values => [4,1,9,25,2,20],
 												  strings => ['OMEGA(1,1)','OMEGA(2,1)','OMEGA(2,2)','OMEGA(3,3)','OMEGA(4,3)','OMEGA(4,4)',],
@@ -466,5 +466,18 @@ cmp_float($guess_hash->{'OMEGA(2,2)'},(9**2+9*9)/9,'variance guess 3');
 cmp_float($guess_hash->{'OMEGA(3,3)'},(25**2+25*25)/16,'variance guess 4');
 cmp_float($guess_hash->{'OMEGA(4,3)'},(2**2+25*20)/20,'variance guess 5');
 cmp_float($guess_hash->{'OMEGA(4,4)'},(20**2+20*20)/25,'variance guess 6');
+
+open STDERR, '>', File::Spec->devnull();	# Silence STDERR
+my $ans = tool::frem::join_covmats(full_strings => $fullstr,
+								   rse_guess_hash => {'OM11'=> 0.11,'OM21'=> 0.22,'OM22'=> 0.33,'OM31'=> 0.44,
+												  'OM32'=> 0.55,'OM33'=> 0.66,'OM41'=> 0.77,'OM42'=> 0.88,'OM43'=> 0.99,'OM44'=> 0.951},
+								   variance_guess_hash => {'OM11'=> 0.1,'OM21'=> 0.2,'OM22'=> 0.3,
+												  'OM32'=> 0.5,'OM33'=> 0.6,'OM41'=> 0.7,'OM42'=> 0.8,'OM43'=> 0.9,'OM44'=> 0.95},
+								   partial_strings =>[$str1,$str2],
+								   partial_covmats => [$cov1,$cov2]);
+
+is_deeply($ans,$join,'join covmats');
+
+
 
 done_testing();

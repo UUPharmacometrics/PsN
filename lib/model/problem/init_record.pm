@@ -22,13 +22,29 @@ has 'n_previous_rows' => ( is => 'rw', isa => 'Maybe[Int]', default => 0 );
 sub get_estimated_coordinate_strings
 {
     my $self = shift;
+	my %parm = validated_hash(\@_,
+							  only_eta_eps => { isa => 'Bool', default=> 0 },
+		);
+	
+	my $only_eta_eps = $parm{'only_eta_eps'};
 	my @array = ();
 	unless ($self->same() or $self->fix() or $self->prior()) {
 		foreach my $option (@{$self-> options()}) {
 			if ($option->fix() or $option->prior()) {
 				next;
 			}
-			push(@array,$option -> coordinate_string());
+			if ($only_eta_eps and (not $option->on_diagonal)){
+				next;
+			}
+			if ($only_eta_eps){
+				if ($option -> coordinate_string() =~ /^(SIGM|OMEG)A\((\d+),\2\)/){
+					push(@array,$2);
+				}else{
+					croak('on diagonal but string is '.$option -> coordinate_string());
+				}
+			}else{
+				push(@array,$option -> coordinate_string());
+			}
 		}
 	}
 	return \@array;

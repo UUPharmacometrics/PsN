@@ -35,14 +35,16 @@ has 'estimate' => ( is => 'rw', isa => 'Int', default => 3 );
 has 'occasionlist' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 has 'extra_input_items' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 has 'invariant_median' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
+has 'invariant_mean' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 has 'timevar_median' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 has 'invariant_covmatrix' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 has 'timevar_covmatrix' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 has 'input_model_fix_thetas' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 has 'input_model_fix_omegas' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 has 'input_model_fix_sigmas' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
-has 'check' => ( is => 'rw', isa => 'Bool', default => 1 );
+has 'check' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'rescale' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'rescale_data' => ( is => 'rw', isa => 'Bool', default => 1 );
 has 'vpc' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'dv' => ( is => 'rw', isa => 'Str', default => 'DV' );
 has 'occasion' => ( is => 'rw', isa => 'Str');
@@ -55,7 +57,7 @@ has 'regular' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 has 'logfile' => ( is => 'rw', isa => 'ArrayRef', default => sub { ['frem.log'] } );
 has 'results_file' => ( is => 'rw', isa => 'Str', default => 'frem_results.csv' );
 has 'use_pred' => ( is => 'rw', isa => 'Bool', default => 1 );
-has 'estimate_regular_final_model' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'estimate_regular_final_model' => ( is => 'rw', isa => 'Bool', default => 1 );
 has 'estimate_cholesky_final_model' => ( is => 'rw', isa => 'Bool', default => 0 );
 
 
@@ -488,6 +490,36 @@ sub get_reordered_coordinate_strings{
 
 	return \@reordered_coordinate_strings;
 }
+
+sub get_eta_mapping{
+	my %parm = validated_hash(\@_,
+							  problem => { isa => 'model::problem', optional => 0 },
+							  omega_order => { isa => 'ArrayRef', optional => 0 },
+		);
+	my $problem = $parm{'problem'};
+	my $omega_order = $parm{'omega_order'};
+
+	unless (scalar(@{$omega_order})==scalar(@{$problem->omegas})){
+		croak("omega order length is ".scalar(@{$omega_order}).
+			  " but number of old omega records is ".scalar(@{$problem->omegas}));
+	}
+
+	my @reordered_etas =();
+	foreach my $num (@{$omega_order}){
+		my $oldindex = $num-1;
+		push(@reordered_etas,
+			 @{$problem->omegas->[$oldindex]->get_estimated_coordinate_strings(only_eta_eps => 1)});
+	}
+	
+	my %eta_mapping;
+	for (my $i=0; $i<scalar(@reordered_etas); $i++){
+		my $newnum = $i+1; #position in reordered array
+		my $oldnum = $reordered_etas[$i];
+		$eta_mapping{$oldnum} = $newnum;
+	}
+	return \%eta_mapping;
+}
+
 
 sub get_filled_omega_block
 {
@@ -966,6 +998,7 @@ sub set_model2_omega_blocks
 	my %parm = validated_hash(\@_,
 							  model => { isa => 'model', optional => 0 },
 							  start_omega_record => {isa => 'Int', optional => 0},
+							  rescale => {isa => 'Bool', optional => 0},
 							  skip_etas => {isa => 'Int', optional => 0},
 							  covariate_covmatrix => {isa => 'ArrayRef', optional => 0},
 							  covariate_labels => {isa => 'ArrayRef', optional => 0},
@@ -973,6 +1006,7 @@ sub set_model2_omega_blocks
 
 	my $model = $parm{'model'};
 	my $start_omega_record = $parm{'start_omega_record'};
+	my $rescale = $parm{'rescale'};
 	my $skip_etas = $parm{'skip_etas'};
 	my $covariate_covmatrix = $parm{'covariate_covmatrix'};
 	my $covariate_labels = $parm{'covariate_labels'};
@@ -997,9 +1031,19 @@ sub set_model2_omega_blocks
 		}
 	}
 
-	my $omega_lines = get_omega_lines(new_omega => $covariate_covmatrix,
-									  labels => $covariate_labels);
-
+	my $omega_lines;
+	if ($rescale){
+		my $sdcorr = [];
+		my $err = linear_algebra::covar2sdcorr($covariate_covmatrix,$sdcorr);
+		for (my $row=0; $row< scalar(@{$sdcorr}); $row++){
+			$sdcorr->[$row][$row]=1;
+		}
+		$omega_lines = get_omega_lines(new_omega => $sdcorr,
+									   labels => $covariate_labels);
+	}else{
+		$omega_lines = get_omega_lines(new_omega => $covariate_covmatrix,
+									   labels => $covariate_labels);
+	}
 	push(@{$model -> problems -> [0]-> omegas},model::problem::omega->new(record_arr => $omega_lines, 
 																		  n_previous_rows => $n_previous_rows));
 	
@@ -1231,7 +1275,7 @@ sub	print_proposal_density
 																	 parameter => 'all',
 																	 problem_index => 0,
 																	 subproblem_index => 0);
-	unless (defined $full_values and scalar(@{$full_values})>0){
+	unless (defined $full_values and scalar(@{$full_values})>0  and defined $full_values->[0]){
 		$full_values = $full_model->problems->[0]->get_estimated_attributes(parameter => 'all',
 																			attribute => 'inits');
 	}
@@ -1255,7 +1299,10 @@ sub	print_proposal_density
 							   partial_strings =>[$strings1,$strings2],
 							   partial_covmats => [$covmat1,$covmat2]);
 
-	my $formatted = tool::format_covmatrix(matrix => $fullmat, 
+	
+	my ($posdefmatrix,$diff)=linear_algebra::get_symmetric_posdef($fullmat);
+
+	my $formatted = tool::format_covmatrix(matrix => $posdefmatrix, 
 									 header => $full_strings, 
 									 comma => 0, 
 									 print_labels => 1);
@@ -1277,6 +1324,20 @@ sub get_rse_guesses
 	my $rse = $parm{'rse'};
 
 	my $parameter_hash = output::get_nonmem_parameters(output => $output);
+
+	my $full_values = $output->get_filtered_values(category => 'estimate',
+												   parameter => 'all',
+												   problem_index => 0,
+												   subproblem_index => 0);
+	unless (defined $full_values and scalar(@{$full_values})>0 and (defined $full_values->[0])){
+		$full_values = $output->problems->[0]->input_problem->get_estimated_attributes(parameter => 'all',
+																					   attribute => 'inits');
+		for (my $i=0; $i< scalar(@{$full_values}); $i++){
+			$parameter_hash->{'values'}->[$i] = $full_values->[$i]; 
+		}
+	}
+
+	
 	my $variances = tool::sir::setup_variancevec_from_rse(rse_theta => $rse,
 														  rse_omega => $rse,
 														  rse_sigma => $rse,
@@ -1349,12 +1410,8 @@ sub perfect_individuals
 
 	my ($error,$message) = check_covstep(output => $output1);
 
-	my %mapping1 = ();
-	for (my $i=0; $i<scalar(@{$omega_order1}); $i++){
-		my $newnum = $i+1; #position in reordered array
-		my $oldnum = $omega_order1->[$i];
-		$mapping1{$oldnum} = $newnum;
-	}
+	my $mapping1 = get_eta_mapping( problem => $output1->problems->[0]->input_problem,
+									omega_order => $omega_order1);
 	
 	($error,$message) = check_covstep(output => $output2);
 	my %hash=();
@@ -1365,7 +1422,10 @@ sub perfect_individuals
 		foreach my $key (keys %{$hashref}){
 			my $etanum = $key;
 			if ($is_output1){
-				$etanum = $mapping1{$key};
+				unless (defined $mapping1->{$key}){
+					croak("mapping for ETA $key is undefined, only have for ".join(' ',(keys %{$mapping1})));
+				}
+				$etanum = $mapping1->{$key};
 			}
 			if (defined $hash{$etanum}){
 				croak("perfect count for ETA $etanum already read from model 1, this is a coding error");
@@ -1383,6 +1443,7 @@ sub old_set_model2_omega_blocks
 							  model => { isa => 'model', optional => 0 },
 							  start_omega_record => {isa => 'Int', optional => 0},
 							  skip_etas => {isa => 'Int', optional => 0},
+							  rescale => {isa => 'Bool', optional => 0},
 							  parameter_blocks => {isa => 'ArrayRef', optional => 0},
 							  covariate_covmatrix => {isa => 'ArrayRef', optional => 0},
 							  covariate_labels => {isa => 'ArrayRef', optional => 0},
@@ -1391,6 +1452,7 @@ sub old_set_model2_omega_blocks
 	my $model = $parm{'model'};
 	my $start_omega_record = $parm{'start_omega_record'};
 	my $skip_etas = $parm{'skip_etas'};
+	my $rescale = $parm{'rescale'};
 	my $parameter_blocks = $parm{'parameter_blocks'};
 	my $covariate_covmatrix = $parm{'covariate_covmatrix'};
 	my $covariate_labels = $parm{'covariate_labels'};
@@ -1424,13 +1486,14 @@ sub old_set_model2_omega_blocks
 		foreach my $lab (@{$covariate_labels}){
 			push(@labels,'BSV_'.$lab.'_'.($i+1));
 		}
+		#if rescale change covmatrix
 		my $omega_lines = get_omega_lines(new_omega => $covariate_covmatrix,
 										  labels => \@labels);
 		push(@omega_records,model::problem::omega->new(record_arr => $omega_lines, 
 													   n_previous_rows => $n_previous_rows));
 		push(@covariate_etanumbers,[(($n_previous_rows+1) .. ($n_previous_rows+$covariate_size) )]);
 		for (my $j=0; $j< $covariate_size; $j++){
-			push(@covariate_code,$indentation.$labels[$j].' = ETA('.($n_previous_rows+1+$j).')');
+			push(@covariate_code,$indentation.$labels[$j].' = ETA('.($n_previous_rows+1+$j).')'); #mult sd if rescale
 		}
 		$n_previous_rows += $covariate_size;
 	}
@@ -1798,13 +1861,25 @@ sub do_frem_dataset
 	
 	if (defined $resultref){
 		$self->occasionlist($resultref->{'occasionlist'}) if (defined $resultref->{'occasionlist'});
-		if (defined $resultref->{'invariant_median'}){
-			$self->invariant_median($resultref->{'invariant_median'}) ;
+		if (0){
+			if (defined $resultref->{'invariant_median'}){
+				$self->invariant_median($resultref->{'invariant_median'}) ;
+				for (my $i=0; $i< scalar(@{$self->covariates}); $i++){
+					if (abs($resultref->{'invariant_median'}->[$i])<0.01){
+						ui -> print( category => 'all', message => 'Warning: abs(median) for '.$self->covariates->[$i].
+									 ' is '.abs($resultref->{'invariant_median'}->[$i]).
+									 ', the additive error may not be appropriate for this covariate'."\n");
+					}
+				}
+			}
+		}
+		if (defined $resultref->{'invariant_mean'}){
+			$self->invariant_mean($resultref->{'invariant_mean'}) ;
 			for (my $i=0; $i< scalar(@{$self->covariates}); $i++){
-				if (abs($resultref->{'invariant_median'}->[$i])<0.01){
-					ui -> print( category => 'all', message => 'Warning: abs(median) for '.$self->covariates->[$i].
-						' is '.abs($resultref->{'invariant_median'}->[$i]).
-						', the additive error may not be appropriate for this covariate'."\n");
+				if (abs($resultref->{'invariant_mean'}->[$i])<0.01){
+					ui -> print( category => 'all', message => 'Warning: abs(mean) for '.$self->covariates->[$i].
+								 ' is '.abs($resultref->{'invariant_mean'}->[$i]).
+								 ', the additive error may not be appropriate for this covariate'."\n");
 				}
 			}
 		}
@@ -1913,7 +1988,11 @@ sub prepare_model2
 	my @labels = ();
 	for (my $j=0; $j< scalar(@{$self->covariates}); $j++){
 		my $label = 'BSV_'.$self->covariates->[$j];
-		push(@pk_pred_code,$indentation.$label.' = ETA('.($maxeta+1+$j).')');
+		my $sd = '';
+		if ($self->rescale){
+			$sd = '*'.sprintf("%.12G",sqrt($self->invariant_covmatrix()->[$j][$j]));
+		}
+		push(@pk_pred_code,$indentation.$label.' = ETA('.($maxeta+1+$j).')'.$sd); 
 		push (@labels, $label);
 	}
 	
@@ -1972,8 +2051,9 @@ sub prepare_model2
 								 record_strings => [$smallnum.' FIX ; EPSCOV']);
 
 		set_model2_omega_blocks(model => $frem_model,
-								start_omega_record => $start_omega_record,
+								start_omega_record => $start_omega_record, 
 								skip_etas => $skip_etas,
+								rescale => $self->rescale,
 								covariate_covmatrix => $self->invariant_covmatrix,
 								covariate_labels => \@labels);
 
@@ -1989,7 +2069,7 @@ sub prepare_model2
 		my @theta_strings =();
 		my @covariate_thetanumbers = ();
 		for (my $i=0; $i< scalar(@{$self->covariates}); $i++){
-			my $val=$self->invariant_median->[$i];
+			my $val=$self->invariant_mean->[$i]; 
 			$val=0.001 if ($val==0);
 			my $label = 'TV_'.$self->covariates->[$i];
 			push(@theta_strings,' '.sprintf("%.12G",$val).'; '.$label);
@@ -2011,11 +2091,11 @@ sub prepare_model2
 							   epsnum => $epsnum,
 							   use_pred => $self->use_pred);
 
-		if ($self->rescale){
-			model::problem::rescale_etas(problem => $frem_model->problems->[0],
-										 use_pred =>$self->use_pred,
-										 omega_indices => [($start_omega_record-1) .. (scalar(@{$frem_model->problems->[0]->omegas})-1)]);
-		}
+#		if (0 ){
+#			model::problem::rescale_etas(problem => $frem_model->problems->[0],
+#										 use_pred =>$self->use_pred,
+#										 omega_indices => [($start_omega_record-1) .. (scalar(@{$frem_model->problems->[0]->omegas})-1)]);
+#		}
 		
 		unless (defined $frem_model->problems->[0]->covariances and 
 				scalar(@{$frem_model->problems->[0]->covariances})>0){
@@ -2409,6 +2489,7 @@ sub modelfit_setup
 	
 	#this modifies $self->covariates
 	my ($filtered_data,$indices) = $self->do_filter_dataset_and_append_binary(model => $frem_model1);
+#																			  rescale_data => $self->rescale_data);
 
 	my $frem_dataset = 'frem_dataset.dta';
 	$self->do_frem_dataset(model => $model, #must be input model here, not updated with final ests
@@ -2430,7 +2511,7 @@ sub modelfit_setup
 								 need_to_move =>$need_to_move_omegas,
 								 input_model_fix_omegas => $self->input_model_fix_omegas);
 
-	#now model1 is reordered
+	#now model1 is reordered, and diagonal N -> N block 1
 	
 	$self->input_model_fix_omegas($fix_omegas);
 	$self->skip_etas($skip_etas);
@@ -2535,6 +2616,7 @@ sub modelfit_setup
 				my %options;
 				$options{'samples'}=3000;
 				$options{'resamples'}=1000;
+				$options{'problems_per_file'}=25;
 				$options{'covmat_input'} = $self->directory.$proposal_filename;
 				input_checking::check_options(tool => 'sir', options => \%options, model => $final_models->[0]);
 
@@ -2548,7 +2630,7 @@ sub modelfit_setup
 
 				$sir-> print_options (cmd_line => 'sir m1/model_4.mod -covmat_input='.$proposal_filename,
 									  toolname => 'sir',
-									  local_options => ["samples:s","resamples:s","covmat_input:s"],
+									  local_options => ["samples:s","resamples:s","covmat_input:s","problems_per_file:i"],
 									  common_options => \@common_options::tool_options) ;
 				$sir -> run;
 				$sir -> prepare_results();

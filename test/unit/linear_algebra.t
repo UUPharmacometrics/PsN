@@ -432,6 +432,26 @@ is($corr->[0]->[1],$corr->[1]->[0],"corr symm 1");
 is($corr->[0]->[2],$corr->[2]->[0],"corr symm 2");
 is($corr->[1]->[2],$corr->[2]->[1],"corr symm 3");
 
+my @Amatrix =([1,9,1],[2,3,0],[1,2,3],[0,1,0]);
+
+my $cov=[];
+my $median=[];
+my $mean=[];
+my $err = linear_algebra::row_cov_median_mean(\@Amatrix,$cov,$median,$mean,'-99');
+
+cmp_relative($cov->[0]->[0],0.666666666666667,7,"row_cov_median  1 ");
+cmp_relative($cov->[0]->[1],0.666666666666667,7,"row_cov_median  2 ");
+cmp_relative($cov->[0]->[2],0,7,"row_cov_median  3 ");
+cmp_relative($cov->[1]->[1],12.916666666666666,7,"row_cov_median  4 ");
+cmp_relative($cov->[1]->[2],0,7,"row_cov_median  5 ");
+cmp_relative($cov->[2]->[2],2,7,"row_cov_meidna  6 ");
+is_deeply($median,[1,2.5,0.5],'row_cov_median_mean median');
+is_deeply($mean,[1,15/4,1],'row_cov_median_mean mean');
+is($cov->[0]->[1],$cov->[1]->[0],"row_cov_median symm 1");
+is($cov->[0]->[2],$cov->[2]->[0],"row_cov_median symm 2");
+is($cov->[1]->[2],$cov->[2]->[1],"row_cov_median symm 3");
+
+
 
 my @Amatrix =([1,2,3,4,5],
 			  [9,3,4,1,1],
@@ -470,5 +490,20 @@ my @A =([1,0.1,0.2],[0.1,1,0.3],[0.2,0.3,1]);
 
 cmp_float_matrix($pos,\@A,'spdarise posdef matrix');
 is(abs($diff)<1E-20,1,'spdarise posdef diff');
+
+my @Amatrix =([1,2,1,0],[9,3,2,1],[1,0,3,0]);
+
+my $cov=[];
+my $err = linear_algebra::column_cov(\@Amatrix,$cov);
+
+cmp_relative($cov->[0]->[0],0.666666666666667,7,"col_cov  1 ");
+cmp_relative($cov->[0]->[1],0.666666666666667,7,"col_cov  2 ");
+cmp_relative($cov->[0]->[2],0,7,"col_cov  3 ");
+cmp_relative($cov->[1]->[1],12.916666666666666,7,"col_cov  4 ");
+cmp_relative($cov->[1]->[2],0,7,"col_cov  5 ");
+cmp_relative($cov->[2]->[2],2,7,"col_cov  6 ");
+is($cov->[0]->[1],$cov->[1]->[0],"col_cov symm 1");
+is($cov->[0]->[2],$cov->[2]->[0],"col_cov symm 2");
+is($cov->[1]->[2],$cov->[2]->[1],"col_cov symm 3");
 
 done_testing();

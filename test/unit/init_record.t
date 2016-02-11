@@ -55,6 +55,8 @@ is ($record->fix,0,'record unfix');
 $record = model::problem::sigma->new(record_arr => ['DIAGONAL(2) 0.02','0.01']);
 is_deeply($record->get_estimated_coordinate_strings,['SIGMA(1,1)','SIGMA(2,2)'],
 		  'estimated coordinate strings 2');
+is_deeply($record->get_estimated_coordinate_strings(only_eta_eps => 1),[1,2],
+		  'estimated coordinate strings 2 b');
 
 my $vector = $record->get_vector();
 is_deeply($vector,[0.02,0.01],"get vector 1");
@@ -75,6 +77,8 @@ $record = model::problem::omega->new(record_arr => ['BLOCK(3) 0.02','-0.002 0.5'
 is_deeply($record->get_estimated_coordinate_strings,
 		  ['OMEGA(1,1)','OMEGA(2,1)','OMEGA(2,2)','OMEGA(3,1)','OMEGA(3,2)','OMEGA(3,3)'],
 		  'estimated coordinate strings 3');
+is_deeply($record->get_estimated_coordinate_strings(only_eta_eps => 1),
+		  [1,2,3],'estimated coordinate strings 3b');
 
 $matrix = $record->get_matrix();
 is_deeply($matrix,[[0.02,-0.002,0.003],[-0.002,0.5,-0.005],[0.003,-0.005,1]],"get matrix 2");
@@ -168,6 +172,9 @@ $record = model::problem::omega->new(record_arr => ['$OMEGA','(0.01642,FIXED) 0.
 is_deeply($record->get_estimated_coordinate_strings,
 		  ['OMEGA(4,4)','OMEGA(5,5)','OMEGA(6,6)'],
 		  'estimated coordinate strings 4');
+is_deeply($record->get_estimated_coordinate_strings(only_eta_eps=>1),
+		  [4,5,6],
+		  'estimated coordinate strings 4b');
 
 is ($record->fix, 0, 'record 5 fix');
 is ($record->options->[0]->init, 0.01642, 'record 5 1 init');

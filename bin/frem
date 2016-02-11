@@ -125,8 +125,10 @@ EOF
 $help_text{-estimate_regular_final_model} = <<'EOF';
     -estimate_regular_final_model
 
-Default not set. Set if the final regular parameterization frem model
-should be estimated.
+Default set.
+If set then script will estimate
+the final regular parameterization frem model, otherwise the model will be
+created but not estimated.
 EOF
 
 $help_text{-estimate_cholesky_final_model} = <<'EOF';
@@ -147,13 +149,13 @@ EOF
 $help_text{-check} = <<'EOF';
       -check
 
-      Set by default, disable with -no-check. Run safety check after
-frem data set generation.
+Default not set. Run evaluation with frem records ignored after frem data set 
+generation, to check ofv is the same.
 EOF
 $help_text{-rescale} = <<'EOF';
       -rescale
 
-      Default not used. Rescale ETAs in Model 2.
+      Default not used. Rescale covariates in frem dataset to sd=1.
 EOF
 $help_text{-run_sir} = <<'EOF';
       -run_sir
