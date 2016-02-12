@@ -105,7 +105,7 @@ ref_full      <- merge(df_est,ref_full)
 ref_full$dOFV <- qchisq(ref_full$QUANT,df=ref_full$df)
 
 # Calculate resampling noise around SIR dOFV curves
-N    <- 2000        # number of times resampling will be done
+N    <- 500        # number of times resampling will be done
 res  <- matrix(NA,ncol=4,nrow=N*sum(sir_spec$NRESAMP),dimnames=list(NULL,c("ITERATION","NSAMP","NRESAMP","sample.id")))
 for (i in seq(N)) { # need to resample in a loop to sample without replacement
     res.cur   <- ddply(rawres,.(ITERATION,NSAMP,NRESAMP),summarize,"sample.id"=sample(sample.id,unique(NRESAMP),prob=importance_ratio))
@@ -123,6 +123,7 @@ qdOFV_sir_noise$ITERATION    <- factor(qdOFV_sir_noise$ITERATION,levels=seq(0,le
 
 set.seed(123)
 LASTIT              <- length(ALL.RESAMPLES)                  # only plot this diagnostic for the last iteration
+if(rplots.level>1) {
 N1                  <- 10                                     # number of bins for simulated parameters
 N2                  <- 5                                      # number of bins for resampled parameters
 resamp              <- ddply(rawres, .(ITERATION), summarize, "sample.id"=sample(sample.id,NRESAMP,prob=importance_ratio), "ORDER"=sort(rep(seq(1,N2,1),length.out=unique(NRESAMP)))) # need to resample because need to track order of sampling
@@ -157,7 +158,7 @@ max_bin2               <- left_join(max_bin2,max_bin[,c("ITERATION","Parameter",
 resamp_prop_max        <- left_join(resamp_prop,max_bin2)
 resamp_prop_max$IDBIN  <- ifelse(resamp_prop_max$BIN==resamp_prop_max$MAXBIN,1,0) 
 resamp_prop_max$MAXBIN <- paste("INIT BIN",resamp_prop_max$MAXBIN)
-  
+}  
 #############################################################################################################
 ### Do plots
 #############################################################################################################
@@ -211,6 +212,8 @@ ci <- ggplot(paramCI_all,aes(x=interaction(TYPE,ITERATION),y=PMED,color=ITERATIO
 ci_sir <- ci %+% filter(paramCI_all, TYPE=="SIR" | (TYPE=="PROPOSAL" & ITERATION=="1"))  +  labs(title="CI of SIR densities over iterations") + theme(legend.position="none") 
 # ci_sir
 
+if(rplots.level>1) {
+
 #############################################################################################################
 ### Parameter bin plots by iteration
 #############################################################################################################
@@ -254,7 +257,7 @@ all_maxbin[[i]] <- all_maxbin.cur
 
 }
 
-
+}
 #############################################################################################################
 ### Output plots
 #############################################################################################################

@@ -1943,12 +1943,17 @@ sub sample_multivariate_normal
 			last if ($counter == $samples);
 		}
 		last if ($counter == $samples);
+		if (($j > 0) and (($j+1) % 100 == 0) and ($j<($max_iter-1))){
+			ui->print(category=> 'sir',
+					  message => "Only have $counter accepted parameter vectors within the boundaries ".
+					  "after generating ".(2*($j+1)*$samples)." candidates, drawing more candidates\n");
+		}
 	}
 	
 	unless ($counter == $samples){
 		croak("Failed to generate $samples accepted parameter vectors within the boundaries even after generating ".(2*$max_iter*$samples)." candidates");
 	}
-	ui->print(category => 'sir',message=> "Resimulated $discarded samples that did not fulfill boundary conditions.\n");
+	ui->print(category => 'sir',message=> "Redrew $discarded samples that did not fulfill boundary conditions.\n");
 	return (\@samples_array,\@boxcox_samples_array);
 
 }
