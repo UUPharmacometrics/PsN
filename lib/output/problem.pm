@@ -232,9 +232,11 @@ sub store_NM7_output
 	$self->table_numbers_hash({});
 	$self->table_strings_hash({});
 
-	$self->nm_output_files({ 'raw' => [], 'cov' => [], 'coi' => [], 'cor' => [], 'phi' => [] });
+#	$self->nm_output_files({ 'raw' => [], 'cov' => [], 'coi' => [], 'cor' => [], 'phi' => [] });
+	$self->nm_output_files({ 'raw' => [], 'cov' => [], 'coi' => [], 'cor' => [] });
 
-	foreach my $type ('raw','cov','coi','cor','phi') {
+#	foreach my $type ('raw','cov','coi','cor','phi') {
+	foreach my $type ('raw','cov','coi','cor') {
 		my $filename = $self -> full_name_NM7_file('file_type' => $type);
 		if (-e $filename) {
 			my @tmp = utils::file::slurp_file($filename);
@@ -884,7 +886,8 @@ sub _read_subproblems
 								return;
 							}
 						}
-						for my $type ('cov','cor','coi','phi') {
+#						for my $type ('cov','cor','coi','phi') {
+						for my $type ('cov','cor','coi') {
 							if (defined $self->table_numbers_hash and defined $self->table_numbers_hash->{$type}) {
 								for (my $i = 0; $i < scalar(@{$self->table_numbers_hash->{$type}}); $i++ ) {
 									if ($last_method_number == $self->table_numbers_hash->{$type}->[$i]) {
@@ -905,7 +908,8 @@ sub _read_subproblems
 						lstfile      							 => \@subproblem_lstfile,
 						ignore_missing_files       => $self -> {'ignore_missing_files'},
 						input_problem              => $self->input_problem(),
-						nm_output_files			   => { 'raw' => $subprob{'raw'}, 'cov' => $subprob{'cov'}, 'cor' => $subprob{'cor'}, 'coi' => $subprob{'coi'}, 'phi' => $subprob{'phi'} },
+#						nm_output_files			   => { 'raw' => $subprob{'raw'}, 'cov' => $subprob{'cov'}, 'cor' => $subprob{'cor'}, 'coi' => $subprob{'coi'}, 'phi' => $subprob{'phi'} },
+						nm_output_files			   => { 'raw' => $subprob{'raw'}, 'cov' => $subprob{'cov'}, 'cor' => $subprob{'cor'}, 'coi' => $subprob{'coi'}},
 						method_string              => $last_method_string,
 						classical_method           => $classical_method,
 						nm_major_version           => $self -> nm_major_version(),

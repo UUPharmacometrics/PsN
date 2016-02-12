@@ -2735,26 +2735,26 @@ sub get_NM7_tables_all_types
 			@coi_table = @{$coi_ref};
 	  }
 
-	  if (defined $phi_array) {
-			($phi_ref,$not_found) = 
-				$self->get_NM7_tables('line_array' => $phi_array, 'table_numbers' => $table_numbers);
-			for (my $i = 0; $i < $number_count; $i++) { 
-				carp("did not find table ".$table_numbers->[$i]." in phi_file array" )
-					if ($not_found->[$i]); 
-			}
-	    if (($number_count == 1) && (not $not_found->[0])) {
-				($check_string,$not_found_single) = 
-					$self->get_NM7_table_method('line_array' => $phi_ref, 'table_number' => $table_numbers ->[0]);
-				croak("Could not find table".$table_numbers ->[0]." in phi_file array" )
-					if ($not_found_single); 
-
-	      unless (($method_string =~ $check_string) || ($method_string eq $check_string)) {
-					croak("strings $method_string from raw and ".
-							"$check_string from phi do not match" );
-				}
-			}
-			@phi_table = @{$phi_ref};
+	if (0 and (defined $phi_array)) {
+		($phi_ref,$not_found) = 
+			$self->get_NM7_tables('line_array' => $phi_array, 'table_numbers' => $table_numbers);
+		for (my $i = 0; $i < $number_count; $i++) { 
+			carp("did not find table ".$table_numbers->[$i]." in phi_file array" )
+				if ($not_found->[$i]); 
 		}
+	    if (($number_count == 1) && (not $not_found->[0])) {
+			($check_string,$not_found_single) = 
+				$self->get_NM7_table_method('line_array' => $phi_ref, 'table_number' => $table_numbers ->[0]);
+			croak("Could not find table".$table_numbers ->[0]." in phi_file array" )
+				if ($not_found_single); 
+
+			unless (($method_string =~ $check_string) || ($method_string eq $check_string)) {
+				croak("strings $method_string from raw and ".
+					  "$check_string from phi do not match" );
+			}
+		}
+		@phi_table = @{$phi_ref};
+	}
 
 	return \@raw_table ,\@cov_table ,\@cor_table ,\@coi_table ,\@phi_table;
 }
