@@ -28,9 +28,6 @@ sub read_table_row
 	);
     my $row = $parm{'row'};
 
-    if ($row =~ /TABLE NO.\s+(\d+)/) {
-        $self->table_number($1);
-    }
     if ($row =~ /TABLE NO.\s+(\d+):\s*(.*):\s*Problem=(\d+)\s+Subproblem=(\d+)\s+Superproblem1=(\d+)\s+Iteration1=(\d+)\s+Superproblem2=(\d+)\s+Iteration2=(\d+)/) {
         $self->table_number($1);
         $self->problem($3);
@@ -39,6 +36,10 @@ sub read_table_row
         $self->iteration1($6);
         $self->superproblem2($7);
         $self->iteration2($8);
+	}elsif ($row =~ /TABLE NO.\s+(\d+):\s*(.*)\s*$/) {
+        $self->table_number($1);
+    }elsif ($row =~ /TABLE NO.\s+(\d+)/) {
+        $self->table_number($1);
     }
 
     $self->_parse_method_string($2); 
