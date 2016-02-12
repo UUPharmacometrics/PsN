@@ -41,7 +41,7 @@ my %optional_options = (
 	"lu!" => undef,
 	"perturb!" => undef,
 	"eigen_comp_only!" => undef,
-    "always!" => undef,
+    "notalways!" => undef,
     "copy_data!" => undef,
 );
 
@@ -197,11 +197,10 @@ $help_text{-eigen_comp_only} = <<'EOF';
       preconditioning.  Use this option with {\bf-verbose} option.
 EOF
 
-$help_text{-always} = <<'EOF';
-    -always
+$help_text{-notalways} = <<'EOF';
+    -notalways
 
-      Preconditioning will always be run regardless of the status
-      of the covariance step
+      Continue onto preconditioning only if the covariance step of the original model fails. 
 EOF
 
 $help_text{-copy_data} = <<'EOF';
@@ -575,7 +574,7 @@ if ($only_do_pre_step) {
         precond_model => $model,
         update_model => $options{'update_model'},
         negaEigenIndex => \@negaEigIndex,
-        always => $options{'always'},
+		notalways => $options{'notalways'},
         verbose => $options{'verbose'},
         perturb => $options{'perturb'},
         copy_data => $options{'copy_data'},

@@ -17,6 +17,7 @@ has 'covariance_step_successful' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'estimate_near_boundary' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'covariance_step_warnings' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 's_matrix_singular' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 's_matrix_unobtainable' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'csigmas' => ( is => 'rw', isa => 'ArrayRef' );
 has 'cvseomegas' => ( is => 'rw', isa => 'ArrayRef' );
 has 'cvsesigmas' => ( is => 'rw', isa => 'ArrayRef' );
@@ -243,24 +244,6 @@ sub parsing_error
 	$self->parsing_error_message( $message );
 }
 
-sub make_square {
-	my $m_ref = shift;
-	my @matrix = @{$m_ref};
-	# Make the matrix square:
-	my $elements = scalar @matrix; # = M*(M+1)/2
-	my $M = -0.5 + sqrt( 0.25 + 2 * $elements );
-	my @square;
-	for ( my $m = 1; $m <= $M; $m++ ) {
-		for ( my $n = 1; $n <= $m; $n++ ) {
-			push( @{$square[$m-1]}, $matrix[($m-1)*$m/2 + $n - 1] );
-			unless ( $m == $n ) {
-				push( @{$square[$n-1]}, $matrix[($m-1)*$m/2 + $n - 1] );
-			}
-		}
-	}
-	return \@square;
-}
-
 sub _read_covmatrix
 {
 	my $self = shift;
@@ -300,7 +283,28 @@ sub _read_covmatrix
 
 	# }}}
 
+# {{{ sub make square
 	
+	sub make_square {
+		my $m_ref = shift;
+		my @matrix = @{$m_ref};
+		# Make the matrix square:
+		my $elements = scalar @matrix; # = M*(M+1)/2
+		my $M = -0.5 + sqrt( 0.25 + 2 * $elements );
+		my @square;
+		for ( my $m = 1; $m <= $M; $m++ ) {
+			for ( my $n = 1; $n <= $m; $n++ ) {
+				push( @{$square[$m-1]}, $matrix[($m-1)*$m/2 + $n - 1] );
+				unless ( $m == $n ) {
+					push( @{$square[$n-1]}, $matrix[($m-1)*$m/2 + $n - 1] );
+				}
+			}
+		}
+		return \@square;
+	}
+	
+	# }}}
+
 	my $keep_headers_array = $self->input_problem->get_estimated_attributes(attribute=>'coordinate_strings');
 
 	while ( $_ = @{$self->lstfile}[ $start_pos++ ] ) {
@@ -1357,7 +1361,9 @@ sub _read_term
 
 	while ( $_ = @{$self->lstfile}[ $start_pos++ ] ) {
 		$self->s_matrix_singular(1) if ( /^0S MATRIX ALGORITHMICALLY SINGULAR/ );
-		if ( /^0R MATRIX ALGORITHMICALLY SINGULAR/ or 
+        $self->s_matrix_unobtainable(1) if ( /^0S MATRIX UNOBTAINABLE/ );
+
+		if ( /^0R MATRIX ALGORITHMICALLY SINGULAR/ or
 			 /^0S MATRIX ALGORITHMICALLY SINGULAR/ ) {
 			$self -> covariance_step_warnings(1);
 			next;

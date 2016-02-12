@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{PRECOND user guide}{2015-04-17}
+\guidetitle{PRECOND\footnote{Yasunori Aoki, Rikard Nordgren, and Andrew C. Hooker: Preconditioning of Nonlinear Mixed Models for Stabilisation of Variance-Covariance Matrix Computations, {\it The AAPS Journal}, DOI: 10.1208/s12248-016-9866-5}  user guide}{2016-02-03}
 \usepackage{color}
 \usepackage{amsmath}
 \usepackage{tikz}
@@ -35,8 +35,11 @@ The only required argument is a model file.
 \subsection{Optional input}
 
 \begin{optionlist}
-\optname{always}
-With this option, the preconditioning will be conducted regardless of if the covariance step of the original model is successful or not.  Using this option and comparing raw\_results\_<modelname>.csv and base\_raw\_results.csv, we can observe how much the result of the standard error calculation is influenced by the computation instability.  In addition by comparing the ofv and the estimated parameters appearing in raw\_results\_<modelname>.csv and base\_raw\_results.csv, if the model is not identifiable, one may find two different sets of parameters with the same maximised likelihood.
+\optname{perturb}
+After the model is preconditioned the initial estimate is perturbed to the direction of the eigenvector that is corresponding negative eigenvalue of the R-matrix.  This will increase the chance of finding the final parameter estimate that is not at the saddle point so that the R-matrix of the preconditioned model will be a positive semi-definite matrix.
+\nextopt
+\optdefault{notalways}{}
+Continue onto preconditioning only if the covariance step of the original model fails.  (without this option, precond script will always continue onto preconditioning to improve the the accuracy of the covariance matrix computation and also to potentially unveil the non-estimability of the model parameters)  Note that in the previous version there was an option called {\bf -always}, now this setting is default hence {\bf -always} option was replaced by {\bf -notalways}.
 \nextopt
 \optdefault{pre}{precond\_dir1}
 With this option the user can also specify a directory.  If the modelfit directory is specified then the R-matrix is automatically extracted.  If precond directory is specified then we can precondition the already preconditioned model.  This will allow us to iteratively precondition deeply ill-conditioned model.  In order for the iterative preconditioning to work properly, ``precMatrix" file should be unmodified and available in the specified precond directory.
@@ -107,6 +110,30 @@ in the precond directory:
 
 In the terminal window, the precond script printout the condition number of the R matrix that will be used to precondition.  A larger condition number means a more computationally unstable original model. If the covariance step of the preconditioned model fails then the precond script will display the eigenvalues of the R matrix of the preconditioned model with the condition number and number of negative eigenvalues.  
 
+\section{NONMEM techniques that can be useful}
+The current implementation of  preconditioning in PsN can only precondition fixed effect parameters.  Additionally, all the bounds for the parameters will be removed.  To accommodate these limitations, the following tricks for the NONMEM model file can be useful.
+\subsection{Re-parameterisation of OMEGA by THETA} \label{app::repara}
+In order to precondition the random effects portion of the nonlinear mixed effects model using the PsN script, we need to rewrite the variance and covariance of the inter individual variability ("OMEGA block") in terms of the fixed effect parameters ("THETAs").  The individual parameters ("ETAs") can be re-parameterized as follows (an example of three random effect parameters with correlation):\\
+\$PRED, \$PK etc.\\
+ETA\_1=THETA(18)*ETA(1)\\
+ETA\_2=THETA(19)*ETA(1)+THETA(20)*ETA(2)\\
+ETA\_3=THETA(21)*ETA(1)+THETA(22)*ETA(2)+THETA(23)*ETA(3)\\
+\\
+\$OMEGA\\  1  FIX\\
+ 1  FIX\\
+ 1  FIX\\
+ \\
+This gives THETA(18,...23) to be the Cholesky decomposition of the variance-covariance matrix of the inter-individual variability (OMEGA matrix).  Similar re-parameterisation can be done for the variances of the residual errors (SIGMA).
+
+\subsection{Boundary of the parameter} \label{app::abs}
+The boundaries of the models are treated using nonlinear transformations of the parameter space internally in NONMEM.  We have observed that this nonlinear transformation can introduce additional computational instability including computational environment dependencies. Thus we have removed all the boundaries on the fixed effect parameters when running the numerical experiments.
+In order to avoid  termination of  parameter estimation due to having the "incorrect" sign of one of the variables (e.g., NONMEM implicitly requires clearance and volume to be positive real values in the predefined models of ADVAN 1-4 and if these variables become negative during  parameter estimation, the parameter estimation terminates), we can impose the positivity of the variables and parameters by taking the absolute values.  If this technique is used for a parameter, the final estimate of the parameter may be negative; however, the correctly signed parameter estimate can be obtained by taking the absolute value of the final estimate.  For example we can force a clearance value to be positive, independent of the sign of estimated parameter value for THETA(1), as follows:\\
+\$PK\\
+CL     = ABS(THETA(1))*EXP(ETA(1)).\\
+\\
+\$THETA 0.1\\
+\$OMEGA 0.1\\
+
 \section{Known issues}
 
 \begin{itemize}
@@ -119,13 +146,47 @@ In the terminal window, the precond script printout the condition number of the 
     \item Using the option \$COV MATRIX=R in the model will currently not work.  The user can use PRINT=R option to obtain R matrix and then calculate $2R^{-1}$ outside of NONMEM (e.g., using R).
 \end{itemize}
 
-\section{Actions if covariance step fails when preconditioning}
+%\section{Actions if covariance step fails when preconditioning}
+%
+%\begin{itemize}
+%\item If covariance matrix cannot be obtained, run precond script with \\ \mbox{{\bf -pre}}=precond\_dir1 option.
+%\end{itemize}
+%
+%Every time the covariance matrix cannot be obtained through preconditioning, a message on the command line would suggest the next option to try.  In addition, after every preconditioning, compare the raw\_results files in the original model fit directory and the precond directory to make sure that OFV and esimated parameters are approximately the same.  If OFVs are similar and a parameter is significantly different, then the model is most likely to be an unidentifiable model and no further attempt to obtain the covariance matrix should be made.
 
-\begin{itemize}
-\item If covariance matrix cannot be obtained, run precond script with \\ \mbox{{\bf -pre}}=precond\_dir1 option.
-\end{itemize}
+\section{PRECOND Script Workflow}
+\begin{enumerate}
+    \item Read in the model file <model\_name>.mod (we refer to it as the "original model").
+    \item Estimate the model parameters and variance-covariance matrix of the original model using NONMEM and obtain the $R$-matrix (note again that the $R$-matrix is relatively problem free to calculate, the inverse is the step that may give problems).  The estimated parameters and their standard errors (if the variance-covariance matrix computation is successful) are saved as a text file.
+ %   If the variance-covariance matrix computation of the original model is successful, then the script terminates and will not proceed to the following steps.
+   % \item Pad or truncate the $R$-matrix so that it will be a full rank $n \times n$ matrix, where $n$ is the number of fixed effect parameters as the $R$-matrix obtained from NONMEM can contain zero rows and columns if the parameters are fixed to a value.
+    \item Create preconditioning matrix P from the $R$-matrix of the original model.
+    \item Fixed effect parameters are reparametrized as $\boldsymbol{\theta} = P \,\hat{\boldsymbol{\theta}}$, where $\boldsymbol{\theta}$ is the vector of fixed effect parameters of the original model and $\hat{\boldsymbol{\theta}}$ is the vector of the fixed effect parameters of the preconditioned model.
+     For example considering an original model with two fixed effect parameters, this reparameterization can be found in the preconditioned model as follows:\\
+\\
+        \$PK\\
+        IF (NEWIND == 0) THEN\\
+        THE\_1 = $p_{11}$ * THETA(1) +$p_{12}$ * THETA(2)\\
+        THE\_2 = $p_{21}$ * THETA(1) +$p_{22}$ * THETA(2)\\
+        END IF\\
+        \\
+              In this case the vectors  ${\boldsymbol{\theta}}$ and $\hat{\boldsymbol{\theta}}$ are\\
+        \indent $\boldsymbol{\theta}=$[THE\_1, THE\_2]$^\textrm{T}$\\
+        \indent $\hat{\boldsymbol{\theta}}=$[THETA(1), THETA(2)]$^\textrm{T}$\\
+        For models with many THETAs it is necessary to increase the bounds of the number of variables and constants used by NONMEM. These are set using \$SIZES for DIMTMP, DIMCNS and DIMNEW. To save computational time THE\_x are only calculated as often as the THETAs are updated (using the "IF (NEWIND == 0) THEN ... END IF" structure).
+    \item THETA(x) in the original model file are replaced with THE\_x in all relevant code blocks (currently pk, pred, error, des, aes, aesinitial and infn)
+        For example: $CL$ = THETA(1) in the original model will be replaced with $CL$ = THE\_1 in the preconditioned model.
 
-Every time the covariance matrix cannot be obtained through preconditioning, a message on the command line would suggest the next option to try.  In addition, after every preconditioning, compare the raw\_results files in the original model fit directory and the precond directory to make sure that OFV and esimated parameters are approximately the same.  If OFVs are similar and a parameter is significantly different, then the model is most likely to be an unidentifiable model and no further attempt to obtain the covariance matrix should be made.
+	\item All bounds for thetas in the preconditioned model are removed and the initial estimate of of the parameters are updated by $\hat{\boldsymbol{\theta}}_\textrm{init}$ where
+	\begin{eqnarray*}
+	    \hat{\boldsymbol{\theta}}_\textrm{init}= P^{-1} \,{\boldsymbol{\theta}}_\textrm{init}.
+	\end{eqnarray*}
+	The preconditioned model can be found in m1/<modelname>\_repara.mod in the precond run directory.
+	\item Estimate the parameters $\hat{\boldsymbol{\theta}}$ and variance-covariance matrix $\hat{M}$ of the preconditioned model using NONMEM.
+	\item If $\hat{\boldsymbol{\theta}}$ was obtained, then the estimated parameter vector of the original model $\boldsymbol{\theta}$ is calculated and saved as a text file.
+	\item If $\hat{M}$ was obtained, then the variance-covariance matrix of the original model $M$ is calculated and saved as a text file. Standard errors of $\boldsymbol{\theta}$ are computed from $M$ and saved to the file created in the previous step.
+\end{enumerate}
+
 
 
 \section{Description}

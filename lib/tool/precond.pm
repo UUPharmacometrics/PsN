@@ -22,7 +22,7 @@ has 'precond_model' => ( is => 'rw', isa => 'model' );
 has 'base_model' => ( is => 'rw', isa => 'model' );
 has 'update_model' => ( is => 'rw', isa => 'Maybe[Str]' );
 has 'negaEigenIndex' =>  ( is => 'rw', isa => 'ArrayRef' );
-has 'always' =>  ( is => 'rw', isa => 'Bool', default => 0 );
+has 'notalways' =>  ( is => 'rw', isa => 'Bool', default => 0 );
 has 'verbose' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'perturb' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'copy_data' => ( is => 'rw', isa => 'Bool', default => 1 );
@@ -78,25 +78,28 @@ sub modelfit_setup
         }
 
         if (not $base_model->is_run) {
-            croak("model " . $self->precond_model->filename . " could not be run\n");
+            croak("\n\nmodel " . $self->precond_model->filename . " could not be run\n");
         }
         if (not $base_model->outputs->[0]->covariance_step_run->[0]) {
-            croak("Covariance step was not run\n");
+            croak("\nCovariance step of the preconditioned model did not run (most likely the parameter estimation had failed).   See .lst file at $self->directory/base_modelfit/NM_run1/psn.lst for the reason.\n\n  One common issue is due to the boundaries of the parameters, see PRECOND user guide section 4.2 for workaround.  Otherwise, update the initial estimates with the final estimate update_inits ",$self->precond_model->filename,". If the model is very instable try with MAXEVAL=0 after update_inits (not recommended as it will make precond ignore the issues on parameter estimation).\n\n");
+        }
+		if ($base_model->outputs->[0]->s_matrix_unobtainable->[0][0]) {
+            print "\n\nS matrix was unobtainable, precond is intended to stablise covariance step by reducing the R-matrix related computational issues, hence most unlikely to remedy this issues with S matrix.\n";
         }
 
         my $cov_successful = $base_model->outputs->[0]->covariance_step_successful->[0][0];
 
-        if ($cov_successful and not $self->always) {
+        if ($cov_successful and $self->notalways) {
             $self->tools([]);
             $self->_no_precond(1);
-            print "\nCovariance step successful. No preconditioning necessary\n";
+            print "\nCovariance step of the original model successful, as -notalways option has been specified, will not proceed to preconditioning.\n";
             return;
         }
 
         if (not $cov_successful) {
-            print "\nCovariance step failed will now run preconditioning\n";
+            print "\nCovariance step of the original model failed will now run preconditioning\n";
         } else {
-            print "\nWill now run preconditioning\n";
+            print "\nOriginal model run finished.  Will now run preconditioning\n";
         }
 
         my $rmt_filename = $base_model->directory . utils::file::replace_extension($base_model->filename, 'rmt');
@@ -205,6 +208,48 @@ sub modelfit_analyze
         }
 
 
+#######################################
+#######################################
+#######################################
+		my $isEstimable=1;
+		
+		my $foldername=(split(/\//, $self->directory))[-1];
+
+
+		if (defined $self->base_model){
+			if($self->base_model->is_run){
+				my $theta_original = $self->base_model->outputs->[0]->get_single_value(attribute => 'thetas');
+				
+				my $ofv_original=$self->base_model->outputs->[0]->ofv()->[0][0];
+				my $ofv_precond=$self->_repara_model->outputs->[0]->ofv()->[0][0];
+				my $para_diff=0;
+				
+				# compare the parameters found by the original model and preconditioned model and give a worning if it is more than 10% differences
+				
+				if (abs($ofv_original-$ofv_precond)<0.1){
+					for (my $i=0; $i<@$new_theta;$i++){
+						if (abs($new_theta->[$i] + $theta_original->[$i])>0){
+							my $para_diff=abs($new_theta->[$i] - $theta_original->[$i])/abs($new_theta->[$i] + $theta_original->[$i])*200;
+							my $abscheck=abs($new_theta->[$i] - $theta_original->[$i])/abs(abs($new_theta->[$i]) + abs($theta_original->[$i]))*200;
+
+							if($para_diff>10&&int($abscheck)!=200){
+							print "\nWarning: THETA(", $i + 1, ") is most likely to be non-estimable from the data.  Precond has found a set of parameters that are ", int($para_diff*100)/100 ,"% different from eachother ($theta_original->[$i] and $new_theta->[$i]) but gives almost identical ofv (dOFV=",int(abs($ofv_original-$ofv_precond)*100)/100,"). \n";
+							$isEstimable=0;
+							}	
+						}
+					}
+					
+				}else{
+					if(($ofv_original-$ofv_precond<0)){
+						print "\nWarning: parameter estimation seems to be unstable (the ofvs of the original model and preconditioned model differ by ", int(($ofv_original-$ofv_precond)*100)/100, " (in theory they should be the same), try 'update_inits ", $self->base_model->filename,"' and re-run preconditioning.  If the model is very instable try with MAXEVAL=0 after update_inits (not recommended as it will make precond ignore the issues on parameter estimation).";
+					}else{
+						print "\nWarning: precond has found a set of parameters with lower ofv than the original model, hence the parameters found by the original model is not at the maximum likelihood. try 'update_inits $self->base_model->filename -from_model", $foldername,"/updated_model.mod' and re-run precond.";
+					}
+				}
+			}
+		}
+
+
         # Print raw results
         my $modelfit = $self->tools->[0];
         my $filename = $self->precond_model->filename;
@@ -219,6 +264,8 @@ sub modelfit_analyze
             $modelfit->raw_results->[0]->[$theta_pos + $i] = $new_theta->[$i];
         }
         my $se_pos = $modelfit->raw_line_structure->{1}->{setheta};
+		my $ofv_pos= $modelfit->raw_line_structure->{1}->{ofv};
+		
         $se_pos =~ s/(.*),.*/$1/;
 
 		my $covSuccess=0;
@@ -237,7 +284,106 @@ sub modelfit_analyze
 			for (my $i = 0; $i < @$new_theta; $i++) {
 				$modelfit->raw_results->[0]->[$se_pos + $i] = sqrt($cov_matrix->[$i]->[$i]);
 			}
-			print "\n\n  preconditioning successful \n";
+			
+			if (defined $self->base_model){
+				  my $filename = $self->base_model->filename;
+				    $filename =~ s/\.mod$/.cov/;
+				    my $cov_filename = 'm1/' . $filename;
+				    my $model = $self->base_model;
+
+				    my @cov_lines;
+
+				    if (-e $cov_filename) {
+
+				        open(my $fh, '<', $cov_filename);
+				        while (my $tline = <$fh>) {
+				            chomp $tline;
+				            push @cov_lines, $tline;
+				        }
+
+				        my @originalCov;
+
+				        my $rowCount = 0;
+				        my $found_table;
+				        my @header_labels;
+				        my $header_ok;
+				        my $given_header_warning;
+
+				        for (my $k = 0; $k < scalar(@cov_lines); $k++) {
+				            my $line = $cov_lines[$k]; 
+				            if ($line =~ /^\s*TABLE NO.\s+(\d+):/) {
+				                croak("two tables found where 1 expected") if $found_table;
+				                $found_table = 1;
+				            } elsif ($line =~ /^\s*NAME/ ) {
+				                $line =~ s/^\s*//; #get rid of leading spaces
+				                @header_labels = split /\s+/, $line;
+				                $header_ok = 1 if ($header_labels[0] eq 'NAME');
+				            } else {
+				                unless ((scalar(@header_labels > 2)) or $given_header_warning or $header_ok) {
+				                    my $mes = "\n\n\***Warning***\n".
+				                    "Too few elements in parameter label array in additional output file. ".
+				                    "Is label row missing, or is the ".
+				                    "delimiter something other than spaces (default)? ".
+				                    "Parsing is likely to fail".
+				                    "\n*************\n";
+				                    print $mes;
+				                    $given_header_warning = 1;
+				                }
+				                $line =~ s/^\s*//; #get rid of leading spaces
+				                my @line_values = split /\s+/,$line;
+				                my $max_column;
+
+				                my @new_line;
+				                $max_column = scalar(@header_labels) ; #store full matrix
+				                for (my $j = 0; $j < $max_column; $j++) {
+				                    my $i = $j + 1; #must permute omega-sigma
+				                    if ($line_values[$i] eq 'NaN') {
+				                        push(@new_line, undef);
+				                        $originalCov[$rowCount][$j]=undef;
+				                    } else {
+				                        push(@new_line, eval($line_values[$i]));
+				                        $originalCov[$rowCount][$j]=eval($line_values[$i]);
+				                    }
+
+				                }
+				                $rowCount++;
+				            }
+				        }
+				
+					if ($isEstimable){
+						my $standardErrorConsistent=1;
+						my $maxchange=0;
+				
+						for (my $i = 0; $i < @$new_theta; $i++) {
+							if (@originalCov->[$i]->[$i]!=0){
+								my $change=((abs(sqrt($cov_matrix->[$i]->[$i])-sqrt(@originalCov->[$i]->[$i]))/abs(sqrt($cov_matrix->[$i]->[$i])+sqrt(@originalCov->[$i]->[$i])))*200);
+								if( sqrt($cov_matrix->[$i]->[$i])/sqrt(@originalCov->[$i]->[$i])>2){
+									print "\nWarning: standard error of THETA(",$i+1,") has grown more than twice after preconditioning, non-estimability of THETA(",$i+1,") is suspected. Repeat preconditioning using -pre=",$foldername," option to see if the standard error grows more.";
+									$standardErrorConsistent=0;
+								}elsif($change>10){
+									$standardErrorConsistent=0;
+								}
+								if ($change>$maxchange){
+                                    $maxchange=$change;
+								}
+							}
+							
+						}	
+						if ($standardErrorConsistent==1){
+							print "\nStandard errors are consistent (maximum difference is ", int($maxchange*100)/100," %) between the original model and preconditioned model, hence the calculated variance-covariance matrix can be trusted."
+						}else{
+							print "\nWarning: Standard errors are not consistent (maximum difference is ", int($maxchange*100)/100," %) between the original model and preconditioned model, hence use calculated variance-covariance matrix with caution."
+						}
+				
+					}
+				}
+			
+            #	print "\n\n  preconditioning successful \n";
+		}
+		if (!$isEstimable){
+			#$modelfit->raw_results->[0]->[$ofv_pos]="NaN";
+			print "If a parameter is non-estimable, the variance-covariance matrix in theory does not exist, hence it is correct for NONMEM and precond to ''fail'' covariance step.";
+		}
 		}
 
         $modelfit->print_raw_results;
@@ -309,6 +455,12 @@ sub _set_model_options
 	my $model = $parm{'model'};
 
     $model->problems->[0]->covariance(enabled => 1);
+    if ($model->is_option_set(record => 'covariance', name => 'MATRIX', fuzzy_match => 1)) {
+        print "\nprecond is designed for the covariance matrix defined as R^(-1)SR^(-1) (i.e., the sandwich matrix) hence does not work with option MATRIX set in \$COVARIANCE, we have removed option MATRIX.\n";
+        #    croak("Error: Option MATRIX set in \$COVARIANCE will not work with precond. Please remove and run again\n");
+    }
+    $model->remove_option(record_name => 'covariance', option_name => 'MATRIX');
+    
 
     if ($model->is_option_set(record => 'covariance', name => 'MATRIX', fuzzy_match => 1)) {
         croak("Error: Option MATRIX set in \$COVARIANCE will not work with precond. Please remove and run again\n");
@@ -702,8 +854,10 @@ sub convert_reparametrized_cov
     } else {
         $cov_filename = utils::file::replace_extension($cov_filename, 'rmt');
         #$cov_filename = "repara_modelfit/NM_run1/psn.rmt";
+		 my $foldername=(split(/\//, $directory))[-1];
+		 my $filename=$model->filename;
 
-        open(my $fh, '<', $cov_filename) or croak("\nCovariance step of the preconditioned model did not run. See .lst file for the reason\n\n");
+        open(my $fh, '<', $cov_filename) or croak("\nCovariance step of the preconditioned model did not run (most likely the parameter estimation had failed).   See .lst file at $foldername/repara_modelfit/NM_run1/psn.lst for the reason.\n\n  One common issue is due to the boundaries of the parameters, see PRECOND user guide section 4.2 for workaround.  Otherwise, update the initial estimates with the final estimate update_inits ",$filename,". If the model is very instable try with MAXEVAL=0 after update_inits (not recommended as it will make precond ignore the issues on parameter estimation).\n\n");
 
         while (my $tline = <$fh>) {
             chomp $tline;
@@ -794,12 +948,15 @@ sub convert_reparametrized_cov
 
         my $foldername=(split(/\//, $directory))[-1];
 
-        if (int(log($maxEigen/$minEigen) / log(10)) < 1 and $negaCounter > 0) {
-            print "\nCovariance step of the preconditioned model failed \n\n";
+        if($model->outputs->[0]->s_matrix_unobtainable->[0][0]){
+			print "\nS matrix was unobtainable, precond is intended to stablise covariance step by reducing the R-matrix related computational issues, hence cannot remedy this issues with S matrix.\n";
+	
+		}elsif (int(log($maxEigen/$minEigen) / log(10)) < 3 and $negaCounter > 0) {
+            print "\nCovariance step of the preconditioned model failed \n\nThe estimated parameter is mostlikely at the saddle of the likelihood surface. \n try -pre=$foldername -perturb option\n\n";
         } elsif($negaCounter > 0) {
-            print "\nCovariance step of the preconditioned model failed \n\n";
-        } else {
             print "\nCovariance step of the preconditioned model failed \n\ntry -pre=$foldername option\n\n";
+        } else {
+            print "\nCovariance step of the preconditioned model failed \n\nTHETA part of the R-matrix is positive-definite hence the issues are from the OMEGA and SIGMA part of the Covariance Matrix.\n  Reparameterise OMEGA and SIGMA using THETAs and re-run preconditioning See section 4.1 of PRECOND user guide. \n\n.";
         }
 
         my @G;
