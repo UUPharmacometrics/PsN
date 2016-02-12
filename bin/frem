@@ -30,11 +30,11 @@ my %optional_options = (
 	'check!' => undef,
 	'rescale!' => undef,
 	'estimate_regular_final_model!' => undef,
-	'estimate_cholesky_final_model!' => undef,
 	'categorical:s' => undef,
 	'log:s' => undef,
 	'rse:f' => undef,
 	'run_sir!' => undef,
+	'cholesky!' => undef,
 #	'skip_etas:i' => undef
 	'skip_omegas:s' => undef
 );
@@ -125,17 +125,14 @@ EOF
 $help_text{-estimate_regular_final_model} = <<'EOF';
     -estimate_regular_final_model
 
-Default set.
-If set then script will estimate
-the final regular parameterization frem model, otherwise the model will be
-created but not estimated.
+Default set. If set then script will estimate the final regular parameterization frem model, 
+otherwise the model will be created but not estimated.
 EOF
 
-$help_text{-estimate_cholesky_final_model} = <<'EOF';
-    -estimate_cholesky_final_model
+$help_text{-cholesky} = <<'EOF';
+    -cholesky
 
-Default not set. Set if the final cholesky parameterization frem model
-should be estimated.
+Default not set. If set then script will create and estimate Model 5 and Model 6.
 EOF
 
 #$help_text{-vpc} = <<'EOF';
@@ -203,7 +200,7 @@ my $frem = tool::frem->new( eval( $common_options::parameters ),
 							covariates => $options{'covariates'},
 							categorical => $options{'categorical'},
 							estimate_regular_final_model => $options{'estimate_regular_final_model'},
-							estimate_cholesky_final_model => $options{'estimate_cholesky_final_model'},
+							cholesky => $options{'cholesky'},
 							log => $options{'log'},
 							rse => $options{'rse'},
 							skip_omegas => $options{'skip_omegas'}, 

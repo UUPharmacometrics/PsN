@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{FREM userguide}{2016-02-08}
+\guidetitle{FREM userguide}{2016-02-11}
 
 
 \begin{document}
@@ -91,11 +91,9 @@ The omega records will be reordered and ETAs renumbered so that all non-skipped
 omegas/ETAs are last in the model, so that the covariate omega and non-skipped parameter omega
 can be combined into a single large block.
 \nextopt
-\optname{estimate\_cholesky\_final\_model}
+\optname{cholesky}
 Default not set.
-If set then script will estimate
-the final cholesky parameterized frem model, otherwise the model will be
-created but not estimated.
+If set then script will create and run Model 5 and Model 6, see below.
 \nextopt
 \optname{estimate\_regular\_final\_model}
 Default set.
@@ -104,9 +102,7 @@ the final regular parameterization frem model, otherwise the model will be
 created but not estimated.
 \nextopt
 \optname{rescale}
-Default not used. Rescale ETAs in Model 2 to SD close to 1.
-Note: If this option is set, the construction of a proposal density for sir,
-in case the covariance step of Model 4 fails, will not be done correctly.
+Default not used. Rescale covariate ETAs in Model 2 to SD close to 1.
 % in order to facilitate estimation.
 \nextopt
 \optname{run\_sir}
@@ -232,18 +228,18 @@ Set covariance record back to what it was in Model 2.
 Unfix everything that was not fix in Model 1.
 Model 4 is the (unestimated) regular parameterization FREM model.
 \item
-Create Model 5 by
+Only if option -cholesky is set: Create Model 5 by
 Cholesky reparameterizing the \$OMEGA block
 for parameter-covariate ETAs in Model 4.
 Set to 0 FIX the parameter-parameter correlations that are 0 in Model 1 (separate blocks in Model 1).
 FIX everything in model except parameter-covariate correlation THETAs.
-\item Estimate Model 5, include \$COV step.
-\item Create Model 6 
+\item Only if option -cholesky is set: Estimate Model 5, include \$COV step.
+\item Only if option -cholesky is set: Create Model 6 
 by copying Model 5 and updating initial estimates from
 estimation of Model 5, and then un-FIX everything except parameters that
 were FIX in input model (Model 1) and correlations that are exactly 0.
 Model 6 is the (unestimated) Cholesky parameterization FREM model.
-\item Only if option -estimate\_cholesky\_final\_model is set:
+\item Only if option -cholesky is set:
 Estimate Model 6, include \$COV step.
 \item Only if option -estimate\_regular\_final\_model is set:
 Estimate Model 4 (FREM regular model), include \$COV step.
@@ -256,6 +252,13 @@ Use sir to estimate the uncertainty of Model 4 parameters, see section Model 4 s
 \end{enumerate}
 
 \section{Model 4 sir}
+
+If estimation of Model 4 failed to even produce an ofv:
+\begin{enumerate}
+\item Create Model 7, which is a copy of Model 4 but with MAXEVAL=0.
+\item Run (Evaluate) Model 7.
+\item If evaluation of Model 7 also failed, then stop frem.
+\end{enumerate}
 
 Create a proposal density to use with -covmat\_input option to sir:
 \begin{enumerate}
@@ -272,7 +275,7 @@ be computed using formula below, then set variance to
 var\left(OMEGA(x,y)\right)\approx \frac{1}{\hat{N}_{x,y}}
 \left( OMEGA(x,y)^2 + OMEGA(x,x)\cdot OMEGA(y,y) \right)
 \]
-where OMEGA estimates are from Model 4.
+where OMEGA estimates are from Model 4 (initial values if estimation failed to produce estimates).
 \item For remaining diagonal elements of joined matrix that could not yet be filled,
 compute a variance guess based on input option -rse and parameter estimate from Model 4.
 \end{enumerate}
@@ -290,7 +293,7 @@ OMEGA was estimated.
 If only $\hat{N}_{x}$ or $\hat{N}_{y}$ available, used that. If neither available then
 cannot use formula, use rse fallback instead.
 
-Run sir with -covmat\_input.
+Run sir with -covmat\_input and Model 4 or, if estimation of Model 4 did not produce ofv, Model 7.
 
 \section{Model 1}
 The input model, input dataset.
@@ -524,18 +527,9 @@ Described above in workflow
 
 
 
-\section{Practical considerations}
-It can be expected that not all models in the frem sequence minimize successfully, and that this in turns 
-causes problems or errors in subsequent steps. 
-When this happens, the user can copy the problematic model and data from the m1 subdirectory and experiment with
-different initial estimates to get the minimization to succeed. Then the user should manually remove old output files for the
-failed run from the m1 subdirectory and replace them with output from the manipulated successful run, using the same 
-output file names. It is important to keep output files for all the successful runs preceeding the failed run, 
-otherwise PsN would rerun all models that do not have output files
-in m1. Output files from all steps after the manipulated step should also be removed.
-Finally the frem run should be restarted setting option -directory to the existing directory, and skipping 
-options that are not allowed when restarting a run (see information in list of options). The script
-will then use the existing output files as a starting point when continuing the analysis.
+\section{Known issues}
+Setting option -cholesky will often fail with NONMEM versions older than NM7.3, since the Fortran 95 code line continuation
+\& is not recognized by nmtran.
 
 %It can happen that final estimate OMEGA blocks in Model 3 are not positive definite due to rounding errors. Then the scripts
 %will halt with an error messages. In that case the user should remove all vpc\_model\_1 output files from

@@ -58,7 +58,7 @@ has 'logfile' => ( is => 'rw', isa => 'ArrayRef', default => sub { ['frem.log'] 
 has 'results_file' => ( is => 'rw', isa => 'Str', default => 'frem_results.csv' );
 has 'use_pred' => ( is => 'rw', isa => 'Bool', default => 1 );
 has 'estimate_regular_final_model' => ( is => 'rw', isa => 'Bool', default => 1 );
-has 'estimate_cholesky_final_model' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'cholesky' => ( is => 'rw', isa => 'Bool', default => 0 );
 
 
 sub BUILD
@@ -2406,6 +2406,39 @@ sub prepare_model6
 }
 
 
+sub prepare_model7
+{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+							  model => { isa => 'model', optional => 0 },
+	);
+	my $model = $parm{'model'};
+	
+	my $modnum=7;
+
+	my $name_model = 'model_'.$modnum.'.mod';
+	my $frem_model;
+	
+	unless (-e $self -> directory().'m1/'.$name_model){
+		$frem_model = $model ->  copy( filename    => $self -> directory().'m1/'.$name_model,
+									   output_same_directory => 1,
+									   write_copy => 0,
+									   copy_datafile   => 0,
+									   copy_output => 0);
+
+		$frem_model -> set_maxeval_zero(print_warning => 0,
+										last_est_complete => $self->last_est_complete,
+										niter_eonly => $self->niter_eonly,
+										need_ofv => 1);
+
+		$frem_model->problems->[0] -> remove_records(type => 'covariance' );
+		
+		$frem_model->_write();
+
+	}
+
+
+}
 
 
 sub run_unless_run
@@ -2445,7 +2478,7 @@ sub run_unless_run
 										top_tool              => 0);
 		tool::add_to_nmoutput(run => $run, extensions => ['phi','ext','cov']);		
 		my $text = 'Estimating ';
-		$text = 'Evaluating ' if ($numbers->[0] == 3);
+		$text = 'Evaluating ' if ($numbers->[0] == 3 or $numbers->[0] == 7);
 		$text .= 'Model '.join(' and ',@{$numbers});
 		ui -> print( category => 'all', message =>  $text);
 		$run-> run;
@@ -2483,6 +2516,7 @@ sub modelfit_setup
 	my $frem_model3;
 	my $frem_model4;
 	my $frem_model5;
+	my $frem_model7;
 	
 	#this runs input model, if necessary, and updates inits
 	my ($frem_model1,$output_model1)=  $self-> do_model1(model => $model);
@@ -2568,22 +2602,23 @@ sub modelfit_setup
 
 	push(@final_numbers,4) if $self->estimate_regular_final_model;
 
-
-	$self->prepare_model5(start_omega_record => $self->start_omega_record,
-						  first_cholesky_theta => scalar(@{$frem_model3->problems->[0]->thetas}),
-						  parameter_etanumbers => $parameter_etanumbers);
-						  
-	($frem_model5,$message) = $self->run_unless_run(numbers => [5]);
-	if (defined $message){
-		ui->print(category => 'frem',
-				  message => "Estimation of model 5 failed, cannot prepare model 6 (final Cholesky model)");
-	}else{
-		$self->prepare_model6(model => $frem_model5,
+	if ($self->cholesky){
+		$self->prepare_model5(start_omega_record => $self->start_omega_record,
 							  first_cholesky_theta => scalar(@{$frem_model3->problems->[0]->thetas}),
-							  start_omega_record => $self->start_omega_record,
 							  parameter_etanumbers => $parameter_etanumbers);
 		
-		push(@final_numbers,6) if $self->estimate_cholesky_final_model;
+		($frem_model5,$message) = $self->run_unless_run(numbers => [5]);
+		if (defined $message){
+			ui->print(category => 'frem',
+					  message => "Estimation of model 5 failed, cannot prepare model 6 (final Cholesky model)");
+		}else{
+			$self->prepare_model6(model => $frem_model5,
+								  first_cholesky_theta => scalar(@{$frem_model3->problems->[0]->thetas}),
+								  start_omega_record => $self->start_omega_record,
+								  parameter_etanumbers => $parameter_etanumbers);
+			
+			push(@final_numbers,6);
+		}
 	}
 	
 	my ($final_models,$mes) = $self->run_unless_run(numbers => \@final_numbers,
@@ -2593,14 +2628,33 @@ sub modelfit_setup
 		#model 4
 		my ($error,$message) = check_covstep(output => $final_models->[0]->outputs->[0]);
 		if ($error){
-			ui->print(category => 'frem',
-					  message => 'Covariance step of Model 4 not successful. Trying to create proposal density to use in sir');
+			my $sir_model;
+			my $mod4ofv = $final_models->[0]->outputs->[0]->get_single_value(attribute => 'ofv');
+			if (not defined $mod4ofv){
+				ui->print(category => 'frem',
+						  message => 'Estimation of Model 4 failed to give ofv value. Creating Model 7.');
+				$self->prepare_model7(model => $final_models->[0]);
+				($frem_model7,$message) = $self->run_unless_run(numbers => [7]);
+				if (defined $message){
+					ui->print(category => 'frem',
+							  message => $message);
+					exit;
+				}else{
+					$sir_model = $frem_model7;
+					ui->print(category => 'frem',
+							  message => 'Trying to create proposal density to use in sir with Model 7');
+				}
+			}else{
+				$sir_model = $final_models->[0];
+				ui->print(category => 'frem',
+						  message => 'Covariance step of Model 4 not successful. Trying to create proposal density to use in sir');
+			}
 
-			my $proposal_filename = 'proposal_density4.cov';
-			#FIXME if recscaled ETA then cov from Model 1 will not be ok
+			my $proposal_filename = 'proposal_density.cov';
+
 			print_proposal_density(omega_orders => [$new_omega_order,[]],
 								   partial_outputs => [$output_model1,$frem_model2->outputs->[0]],
-								   full_model => $final_models->[0],# frem_model4, not updated
+								   full_model => $sir_model,# not updated
 								   reordered_model1 => $frem_model1,
 								   rse => $self->rse,
 								   directory => $self->directory,
@@ -2614,21 +2668,21 @@ sub modelfit_setup
 						  message => 'Starting sir');
 				ui->category('sir');
 				my %options;
-				$options{'samples'}=3000;
+				$options{'samples'}=2000;
 				$options{'resamples'}=1000;
 				$options{'problems_per_file'}=25;
 				$options{'covmat_input'} = $self->directory.$proposal_filename;
-				input_checking::check_options(tool => 'sir', options => \%options, model => $final_models->[0]);
+				input_checking::check_options(tool => 'sir', options => \%options, model => $sir_model);
 
 				my $sir = tool::sir->new ( %{common_options::restore_options(@common_options::tool_options)},
 										   %options,
 										   top_tool => 1,
-										   models				     => [ $final_models->[0] ],
+										   models				     => [ $sir_model ],
 										   template_file_rplots => 'sir_default.R',
 										   directory => $self->directory.'sir_dir1',
 					);
 
-				$sir-> print_options (cmd_line => 'sir m1/model_4.mod -covmat_input='.$proposal_filename,
+				$sir-> print_options (cmd_line => 'sir m1/'.$sir_model->filename.' -covmat_input='.$proposal_filename,
 									  toolname => 'sir',
 									  local_options => ["samples:s","resamples:s","covmat_input:s","problems_per_file:i"],
 									  common_options => \@common_options::tool_options) ;
