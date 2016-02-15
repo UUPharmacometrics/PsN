@@ -1681,7 +1681,7 @@ sub modelfit_analyze
             my $simulation_table = "nca_simulation.1.npctab.dta";
             my $zip = Archive::Zip->new();
 			$zip->addFile($simulation_table);
-			if ($zip->writeToFileNamed($simulation_table . ".zip") == 'AZ_OK') {
+			if ($zip->writeToFileNamed($simulation_table . ".zip") == 0) {
                 unlink($simulation_table);
 			}
         }
