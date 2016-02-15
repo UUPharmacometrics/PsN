@@ -83,7 +83,7 @@ sub modelfit_setup
         if (not $base_model->outputs->[0]->covariance_step_run->[0]) {
             croak("\nCovariance step of the preconditioned model did not run (most likely the parameter estimation had failed).   See .lst file at $self->directory/base_modelfit/NM_run1/psn.lst for the reason.\n\n  One common issue is due to the boundaries of the parameters, see PRECOND user guide section 4.2 for workaround.  Otherwise, update the initial estimates with the final estimate update_inits ",$self->precond_model->filename,". If the model is very instable try with MAXEVAL=0 after update_inits (not recommended as it will make precond ignore the issues on parameter estimation).\n\n");
         }
-		if ($base_model->outputs->[0]->s_matrix_unobtainable->[0][0]) {
+		if ($base_model->outputs->[0]->problems->[0]->subproblems->[0]->s_matrix_unobtainable) {
             print "\n\nS matrix was unobtainable, precond is intended to stablise covariance step by reducing the R-matrix related computational issues, hence most unlikely to remedy this issues with S matrix.\n";
         }
 
