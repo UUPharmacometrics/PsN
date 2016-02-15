@@ -136,7 +136,7 @@ Changes and bug fixes from PsN 4.4.8 to n.n.n
    ___precond___
 
 - New option -copy_data. Used in the same way as for execute 
-
+- Cleanup of error messages and information about unidentifiability
 
    ___runrecord___
 
