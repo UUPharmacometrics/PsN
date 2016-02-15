@@ -1,0 +1,2 @@
+/home/rikard/PsN4/bin/bootstrap pheno.mod -samples=1 -zip
+/home/rikard/PsN4/bin/bootstrap pheno.mod -dir=bootstrap_dir32 -samples=1 -zip

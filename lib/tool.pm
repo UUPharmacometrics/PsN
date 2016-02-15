@@ -4,9 +4,10 @@ use include_modules;
 use strict;
 use Cwd;
 use File::Copy 'cp';
-use File::Path qw(mkpath);
+use File::Path qw(mkpath rmtree);
 use OSspecific;
 use Math::Random;
+use Archive::Zip;
 use ui;
 use Config;
 our $AUTOLOAD;
@@ -142,6 +143,7 @@ has 'template_directory_rplots' => ( is => 'rw', isa => 'Str');
 has 'template_file_rplots' => ( is => 'rw', isa => 'Str');
 has 'standardised_output' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'subset_variable_rplots' => ( is => 'rw', isa => 'Str');
+has 'zip' => ( is => 'rw', isa => 'Bool', default => 0 );
 
 
 sub BUILDARGS
@@ -291,6 +293,8 @@ sub BUILD
 		my $dir;
 		( $dir, $dummy ) = OSspecific::absolute_path( $parm{'directory'}, '');
 		$self->directory($dir);
+        # Unzip if m1 if zipped
+        $self->uncompress_m1();
 	} else {
 		my $tool_name;
 		if (defined $self->directory_name_prefix) {
@@ -705,6 +709,35 @@ sub print_results
 
 	$self->create_R_script() if ($self->top_tool);
 
+    if ($self->zip) {
+        $self->compress_m1();
+    }
+}
+
+sub compress_m1
+{
+    my $self = shift;
+
+    my $dir = $self->directory;
+    my $zip = Archive::Zip->new();
+    $zip->addTree("${dir}m1", "m1");
+    map { $_->desiredCompressionLevel(9) } $zip->members(); 
+    if ($zip->writeToFileNamed("${dir}m1.zip") == 0) {
+        rmtree(["${dir}m1"]);
+    }
+}
+
+sub uncompress_m1
+{
+    my $self = shift;
+    my $dir = $self->directory;
+
+    my $zip_name = "${dir}m1.zip";
+    if ((not (-d "${dir}m1")) and (-e $zip_name)) {
+        my $zip = Archive::Zip->new($zip_name);
+        $zip->extractTree(undef, $dir);
+        unlink($zip_name);
+    }
 }
 
 sub read_raw_results

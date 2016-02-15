@@ -88,6 +88,41 @@ $dir = tool::get_rundir(create => 0,
 is(substr($dir,0,-1),$tempdir.'updir','tool get_rundir 6');
 
 
+# compress_m1
+my $dir = "$tempdir/bootstrap_dir1";
+mkdir($dir);
+mkdir("$dir/m1");
+copy_test_files($dir, ["bootstrap/bootstrap_dir1/command.txt"]);
+copy_test_files("$dir/m1", ["bootstrap/bootstrap_dir1/m1/bs_pr1_1.cor"]);
+my $model = model->create_dummy_model();
+my $tool = tool->new(models => [ $model ], directory => $dir);
+
+$tool->compress_m1();
+
+ok (-e "$dir/m1.zip", "compress_m1 m1.zip exists");
+ok (not (-e "$dir/m1"), "compress_m1 m1 folder was removed");
+ok (-e "$dir/command.txt", "compress_m1 command.txt still exists");
+
+# uncompress_m1
+
+$tool->uncompress_m1();
+
+ok (not (-e "$dir/m1.zip"), "uncompress_m1 m1.zip was removed");
+ok (-e "$dir/m1", "uncompress_m1 m1 folder was created");
+ok (-e "$dir/m1/bs_pr1_1.cor", "uncompress_m1 file inside m1 was created");
+ok (-e "$dir/command.txt", "uncompress_m1 command.txt still exists");
+
+# tool->new with compressed m1
+$tool->compress_m1();
+my $tool = tool->new(models => [ $model ], directory => $dir);
+
+ok (not (-e "$dir/m1.zip"), "tool->new m1.zip was removed");
+ok (-e "$dir/m1", "tool->new m1 folder was created");
+ok (-e "$dir/m1/bs_pr1_1.cor", "tool->new file inside m1 was created");
+ok (-e "$dir/command.txt", "tool->new command.txt still exists");
+
+
+
 remove_test_dir($tempdir);
 
 done_testing();

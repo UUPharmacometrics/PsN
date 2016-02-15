@@ -52,8 +52,6 @@ Getopt::Long::config("auto_abbrev");
 		  "nmfe_options:s",
 		  "nmqual!",
 		  "nodes:i",
-#		  "nonparametric_etas",
-#		  "nonparametric_marginals",
 		  "parafile:s",
 		  "picky!",
 		  "prepend_model_file_name!",
@@ -89,6 +87,7 @@ Getopt::Long::config("auto_abbrev");
 		  "near_zero_boundary_limit:f",
 		  "precision:i",
           "standardised_output!",
+          "zip!",
     );
 
 
@@ -685,14 +684,6 @@ EOF
   -d2u
 Default not set. If set then run dos2unix on model files and regular data files.
 EOF
-
-# these options are turned off
-#    $help_hash{-nonparametric_marginals} = <<'EOF';
-#  -nonparametric_marginals
-#EOF
-#    $help_hash{-nonparametric_etas} = <<'EOF';
-#  -nonparametric_etas
-#EOF
 
     $help_hash{-nmqual} = <<'EOF';
     -nmqual
@@ -1362,6 +1353,12 @@ EOF
     Create an additional DDMoRe standardised output xml file.
     Note that the file format is still under development
     and that this option should be considered experimental.
+EOF
+    
+$help_hash{-zip} = <<'EOF';
+    -zip
+    All m1 directories will be zipped to save space.
+    PsN will automatically unzip the m1 folders if needed.
 EOF
 
     $help_hash{'-h'} = $help_hash{'-?'};
