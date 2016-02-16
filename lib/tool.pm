@@ -723,7 +723,14 @@ sub compress_m1
     $zip->addTree("${dir}m1", "m1");
     map { $_->desiredCompressionLevel(9) } $zip->members(); 
     if ($zip->writeToFileNamed("${dir}m1.zip") == 0) {
-        rmtree(["${dir}m1"]);
+        if (-e "${dir}m1.zip") {
+            rmtree(["${dir}m1"]);
+        }
+    } else {
+        # in case of zip fail and zip file was created. Remove it
+        if (-e "${dir}m1.zip") {
+            unlink "${dir}m1.zip";
+        }
     }
 }
 
@@ -733,7 +740,28 @@ sub uncompress_m1
     my $dir = $self->directory;
 
     my $zip_name = "${dir}m1.zip";
-    if ((not (-d "${dir}m1")) and (-e $zip_name)) {
+    my $m1_name = "${dir}m1";
+    if (-e $zip_name) {
+        if (-z $zip_name) {
+            unlink($zip_name);
+            return;
+        }
+
+        if (-d $m1_name) {
+            # Check if m1 is empty
+            opendir my $dh, $m1_name or die $!;
+            my $empty_m1;
+            if (not (grep ! /^\.\.?$/, readdir $dh)) {
+                $empty_m1 = 1;
+            }
+            closedir $dh;
+            if ($empty_m1) {
+                rmdir $m1_name;
+            } else {
+                croak("Both $zip_name and $m1_name exists. Please remove one of them before restarting.\n");
+            }
+        }
+
         my $zip = Archive::Zip->new($zip_name);
         $zip->extractTree(undef, $dir);
         unlink($zip_name);

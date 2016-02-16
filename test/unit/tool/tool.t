@@ -3,7 +3,9 @@
 use strict;
 use warnings;
 use File::Path 'rmtree';
+use File::Copy 'cp';
 use Test::More;
+use Test::Exception;
 use FindBin qw($Bin);
 use lib "$Bin/../.."; #location of includes.pm
 use includes; #file with paths to PsN packages and $path variable definition
@@ -92,6 +94,8 @@ is(substr($dir,0,-1),$tempdir.'updir','tool get_rundir 6');
 my $dir = "$tempdir/bootstrap_dir1";
 mkdir($dir);
 mkdir("$dir/m1");
+my $m1_zip = "$dir/m1.zip";
+my $m1_dir = "$dir/m1";
 copy_test_files($dir, ["bootstrap/bootstrap_dir1/command.txt"]);
 copy_test_files("$dir/m1", ["bootstrap/bootstrap_dir1/m1/bs_pr1_1.cor"]);
 my $model = model->create_dummy_model();
@@ -105,6 +109,10 @@ ok (-e "$dir/command.txt", "compress_m1 command.txt still exists");
 
 # uncompress_m1
 
+mkdir("$tempdir/bak");
+cp("$dir/m1.zip", "$tempdir/bak");
+
+# m1.zip exists and is non-empty, m1 does not exist
 $tool->uncompress_m1();
 
 ok (not (-e "$dir/m1.zip"), "uncompress_m1 m1.zip was removed");
@@ -112,7 +120,99 @@ ok (-e "$dir/m1", "uncompress_m1 m1 folder was created");
 ok (-e "$dir/m1/bs_pr1_1.cor", "uncompress_m1 file inside m1 was created");
 ok (-e "$dir/command.txt", "uncompress_m1 command.txt still exists");
 
+# m1=empty, m1.zip=empty
+rmtree([$dir]);
+mkdir($dir);
+mkdir($m1_dir);
+copy_test_files($dir, ["bootstrap/bootstrap_dir1/command.txt"]);
+open my $fh, ">", $m1_zip; 
+close $fh;
+$tool->uncompress_m1();
+ok (-e "$m1_dir", "uncompress_m1 (empty, empty) m1 exists");
+ok (not (-e "$m1_zip"), "uncompress_m1 (empty, empty) m1.zip does not exist"); 
+ok (-e "$dir/command.txt", "uncompress_m1 (empty, empty) command.txt still exists");
+
+# m1=empty, m1.zip=non-existing
+rmtree([$dir]);
+mkdir($dir);
+mkdir($m1_dir);
+copy_test_files($dir, ["bootstrap/bootstrap_dir1/command.txt"]);
+$tool->uncompress_m1();
+ok (-e "$m1_dir", "uncompress_m1 (empty, non-existing) m1 exists");
+ok (-e "$dir/command.txt", "uncompress_m1 (empty, non-existing) command.txt still exists");
+
+# m1=empty, m1.zip=not-empty
+rmtree([$dir]);
+mkdir($dir);
+mkdir($m1_dir);
+copy_test_files($dir, ["bootstrap/bootstrap_dir1/command.txt"]);
+cp("$tempdir/bak/m1.zip", $dir);
+$tool->uncompress_m1();
+ok (-e $m1_dir, "uncompress_m1 (empty, exists) m1 created");
+ok (-e "$dir/command.txt", "uncompress_m1 (empty, exists) command.txt still exists");
+ok (-e "$dir/m1/bs_pr1_1.cor", "uncompress_m1 (empty, non-existing) inside m1 was created");
+ok (not (-e "$dir/m1.zip"), "uncompress_m1 (empty, non-existing) m1.zip was removed");
+
+# m1=not-empty, m1.zip=empty
+rmtree([$dir]);
+mkdir($dir);
+mkdir($m1_dir);
+copy_test_files($dir, ["bootstrap/bootstrap_dir1/command.txt"]);
+copy_test_files("$dir/m1", ["bootstrap/bootstrap_dir1/m1/bs_pr1_1.cor"]);
+open my $fh, ">", $m1_zip; 
+close $fh;
+$tool->uncompress_m1();
+ok (-e $m1_dir, "uncompress_m1 (non-empty, empty) m1 still exists");
+ok (-e "$dir/command.txt", "uncompress_m1 (non-empty, empty) command.txt still exists");
+ok (-e "$dir/m1/bs_pr1_1.cor", "uncompress_m1 (non-empty, empty) inside m1 still exists");
+ok (not (-e "$dir/m1.zip"), "uncompress_m1 (non-empty, empty) m1.zip was removed");
+
+# m1=not-empty, m1.zip=non-existing
+rmtree([$dir]);
+mkdir($dir);
+mkdir($m1_dir);
+copy_test_files($dir, ["bootstrap/bootstrap_dir1/command.txt"]);
+copy_test_files("$dir/m1", ["bootstrap/bootstrap_dir1/m1/bs_pr1_1.cor"]);
+$tool->uncompress_m1();
+ok (-e $m1_dir, "uncompress_m1 (non-empty, non-existing) m1 still exists");
+ok (-e "$dir/command.txt", "uncompress_m1 (non-empty, non-existing) command.txt still exists");
+ok (-e "$dir/m1/bs_pr1_1.cor", "uncompress_m1 (non-empty, non-existing) inside m1 still exists");
+ok (not (-e "$dir/m1.zip"), "uncompress_m1 (non-empty, non-existing) m1.zip still does not exist");
+
+#m1=not-empty, m1.zip=not-empty
+rmtree([$dir]);
+mkdir($dir);
+mkdir($m1_dir);
+copy_test_files($dir, ["bootstrap/bootstrap_dir1/command.txt"]);
+copy_test_files("$dir/m1", ["bootstrap/bootstrap_dir1/m1/bs_pr1_1.cor"]);
+cp("$tempdir/bak/m1.zip", $dir);
+dies_ok { $tool->uncompress_m1() } "uncompress_m1 (non-empty, non-empty) dies";
+
+#m1=non-existing, m1.zip=empty
+rmtree([$dir]);
+mkdir($dir);
+copy_test_files($dir, ["bootstrap/bootstrap_dir1/command.txt"]);
+open my $fh, ">", $m1_zip; 
+close $fh;
+$tool->uncompress_m1();
+ok (-e "$dir/command.txt", "uncompress_m1 (non-existing, empty) command.txt still exists");
+ok (not (-e "$dir/m1.zip"), "uncompress_m1 (non-existing, empty) m1.zip removed");
+
+#m1=non-existing, m1.zip=non-existing
+rmtree([$dir]);
+mkdir($dir);
+copy_test_files($dir, ["bootstrap/bootstrap_dir1/command.txt"]);
+$tool->uncompress_m1();
+ok (-e "$dir/command.txt", "uncompress_m1 (non-existing, non-exisitng) command.txt still exists");
+
+
 # tool->new with compressed m1
+rmtree([$dir]);
+mkdir($dir);
+mkdir($m1_dir);
+copy_test_files($dir, ["bootstrap/bootstrap_dir1/command.txt"]);
+copy_test_files("$dir/m1", ["bootstrap/bootstrap_dir1/m1/bs_pr1_1.cor"]);
+
 $tool->compress_m1();
 my $tool = tool->new(models => [ $model ], directory => $dir);
 
@@ -120,6 +220,7 @@ ok (not (-e "$dir/m1.zip"), "tool->new m1.zip was removed");
 ok (-e "$dir/m1", "tool->new m1 folder was created");
 ok (-e "$dir/m1/bs_pr1_1.cor", "tool->new file inside m1 was created");
 ok (-e "$dir/command.txt", "tool->new command.txt still exists");
+
 
 
 
