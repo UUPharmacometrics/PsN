@@ -62,6 +62,12 @@ Changes and bug fixes from PsN 4.4.8 to n.n.n
 - Bug fix: Detection of non-unique parameter labels when reading a raw results file.
 - Bug fix: Reading of NONMEM lst-file when there were no unfixed parameters in the model,
   or when $MSFI was used, i.e. no $THETA/$OMEGA/$SIGMA in the model file.
+- Inside NM_run subdirectories, the selected (re)try files will be moved,
+  instead of copied, to psn.mod, psn.lst etc. This is to save disk I/O.
+  This means that the numbered (re)try files for the selected run will
+  not be left in NM_run.
+- Skip parsing of phi-files for a regular modelfit run. 
+- Refactored parsing of ext-files.
 
    ___lasso___
 

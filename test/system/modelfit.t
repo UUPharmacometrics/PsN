@@ -17,7 +17,7 @@ use includes; #file with paths to PsN packages and $path variable definition
 use File::Copy 'cp';
 use tool::modelfit;
 use common_options;
-
+use Math::Random;
 sub check_diff
 {
 	my $file1 = shift;
@@ -57,17 +57,16 @@ our $lstext = 'lst';
 if (defined $options{'nmqual'} and $options{'nmqual'}==1){
 	$modext = 'ctl';
 }
-
 my @command_line = (
-	get_command('execute') . " phenomaxeval10.mod -clean=1 -no-tweak_inits -min_retries=0 -retries=0 -maxevals=9999 -handle_msfo -directory=$dir",
-	get_command('execute') . " phenomaxeval10.mod -clean=1 -tweak_inits  -min_retries=0 -retries=0 -maxevals=0 -directory=$dir",
-	get_command('execute') . " phenomaxeval10.mod -clean=1 -tweak_inits  -min_retries=0 -retries=1 -maxevals=0 -directory=$dir",
-	get_command('execute') . " pheno.mod -clean=1 -tweak_inits  -min_retries=0 -retries=1 -reduced_model_ofv=70 -directory=$dir",
-	get_command('execute') . " phenomaxeval0.mod -clean=1 -tweak_inits  -min_retries=0 -retries=1 -maxevals=0 -directory=$dir",
-	get_command('execute') . " phenomaxeval0.mod -clean=1 -tweak_inits  -min_retries=1 -retries=0 -maxevals=0 -directory=$dir",
-	get_command('execute') . " create_tnpri_msf.mod ",
-	get_command('execute') . " tnpri.mod -clean=1 -tweak_inits  -min_retries=0 -retries=1 -extra_files=msf_tnpri -directory=$dir",
-	get_command('execute') . " tnpri.mod -clean=1 -tweak_inits  -min_retries=1 -retries=0 -extra_files=msf_tnpri -maxevals=0 -directory=$dir",
+	get_command('execute') . " -seed=1 phenomaxeval10.mod -no-disp -clean=1 -no-tweak_inits -min_retries=0 -retries=0 -maxevals=9999 -handle_msfo -directory=$dir",
+	get_command('execute') . " -seed=1  phenomaxeval10.mod -no-disp -clean=1 -tweak_inits  -min_retries=0 -retries=0 -maxevals=0 -directory=$dir",
+	get_command('execute') . " -seed=1  phenomaxeval10.mod -no-disp -clean=1 -tweak_inits  -min_retries=0 -retries=1 -maxevals=0 -directory=$dir",
+	get_command('execute') . " -seed=1  pheno.mod -clean=1 -no-disp -tweak_inits  -min_retries=0 -retries=1 -reduced_model_ofv=70 -directory=$dir",
+	get_command('execute') . " -seed=1  phenomaxeval0.mod -no-disp -clean=1 -tweak_inits  -min_retries=0 -retries=1 -maxevals=0 -directory=$dir",
+	get_command('execute') . " -seed=1  phenomaxeval0.mod -no-disp -clean=1 -tweak_inits  -min_retries=1 -retries=0 -maxevals=0 -directory=$dir",
+	get_command('execute') . " -seed=1  create_tnpri_msf.mod  -no-disp",
+	get_command('execute') . " -seed=1  tnpri.mod -clean=1 -tweak_inits  -no-disp -min_retries=0 -retries=1 -extra_files=msf_tnpri -directory=$dir",
+	get_command('execute') . " -seed=1  tnpri.mod -clean=1 -tweak_inits  -no-disp -min_retries=1 -retries=0 -extra_files=msf_tnpri -maxevals=0 -directory=$dir",
 );
 
 # If we are running on Windows remove ' in command line
@@ -79,7 +78,6 @@ if ($Config{osname} eq 'MSWin32') {
 
 
 foreach my $i (0..$#command_line) {
-
 	my $command= $command_line[$i];
 	print "Running $command\n";
 	my $rc = system($command);
@@ -87,20 +85,20 @@ foreach my $i (0..$#command_line) {
 	ok ($rc == 0, "$command, should run ok");
 	if ($i == 0){
 		ok (-e $dir.'/NM_run1/psn-1-step1.'.$lstext," step files exist for maxevals>0");
-		ok (not (-e $dir.'/NM_run1/psn-2.'.$modext)," not retry files exist for maxevals>0 without tweak");
+		ok (not (-e $dir.'/NM_run1/psn-1.'.$modext)," not retry files exist for maxevals>0 without tweak");
 	}elsif($i == 1){
-		ok (not (-e $dir.'/NM_run1/psn-2.'.$modext)," retry files not exist for no retry");
+		ok (not (-e $dir.'/NM_run1/psn-1.'.$modext)," retry files not exist for no retry");
 	}elsif($i == 2){
-		ok ((-e $dir.'/NM_run1/psn-2.'.$modext)," retry files exist for retry maxeval exceeded");
-		ok(check_diff($dir.'/NM_run1/psn-2.'.$modext,$dir.'/NM_run1/psn-1.'.$modext,1),'retry file is tweaked 1');
+		ok ((-e $dir.'/NM_run1/psn-1.'.$modext)," retry files exist for retry maxeval exceeded");
+		ok(check_diff($dir.'/NM_run1/psn-1.'.$modext,$dir.'/NM_run1/psn.'.$modext,1),'retry file is tweaked 1');
 	}elsif($i == 3){
 		ok ((-e $dir.'/NM_run1/psn-2.'.$modext)," retry files exist for retry local min");
-		ok(check_diff($dir.'/NM_run1/psn-2.'.$modext,$dir.'/NM_run1/psn-1.'.$modext,1),'retry file is tweaked 2');
+		ok(check_diff($dir.'/NM_run1/psn-2.'.$modext,$dir.'/NM_run1/psn.'.$modext,1),'retry file is tweaked 2');
 	}elsif($i == 4){
-		ok (not (-e $dir.'/NM_run1/psn-2.'.$modext)," not retry files exist for no minimization step run");
+		ok (not (-e $dir.'/NM_run1/psn-1.'.$modext)," not retry files exist for no minimization step run");
 	}elsif($i == 5){
-		ok ((-e $dir.'/NM_run1/psn-2.'.$modext)," retry files exist for no minimization step run but min_retries");
-		ok(check_diff($dir.'/NM_run1/psn-2.'.$modext,$dir.'/NM_run1/psn-1.'.$modext,1),'retry file is tweaked 3');
+		ok ((-e $dir.'/NM_run1/psn-1.'.$modext)," retry files exist for no minimization step run but min_retries");
+		ok(check_diff($dir.'/NM_run1/psn-1.'.$modext,$dir.'/NM_run1/psn.'.$modext,1),'retry file is tweaked 3');
 	}elsif($i == 6){
 		ok ((-e 'msf_tnpri')," msf file");
 	}elsif($i == 7){

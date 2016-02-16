@@ -527,7 +527,7 @@ sub run
 			# Initiate queue_info entry (unless its a retry)
 
 			unless (exists $queue_info{$run}) {
-				#if stats-runs.csv exists then copy_model_and_input does not do anything
+				#if stats-runs.csv exists then move_model_and_input does not do anything
 				#but read psn.mod into candidate_model object
 				my $run_nmtran = 0;
 				my $check_verbatim = 0;
@@ -537,14 +537,14 @@ sub run
 						$check_verbatim = 1;
 					}
 				}
-				$queue_info{$run}{'candidate_model'} = $self -> copy_model_and_input(model => $models[$run], 
-																					 source => '../', 
-																					 run_nmtran => $run_nmtran,
-																					 check_verbatim => $check_verbatim);
+				($queue_info{$run}{'candidate_model'},$queue_info{$run}{'tries'}) = 
+					$self -> copy_model_and_input(model => $models[$run], 
+												  source => '../', 
+												  run_nmtran => $run_nmtran,
+												  check_verbatim => $check_verbatim);
 				
 				$queue_info{$run}{'model'} = $models[$run];
 				$queue_info{$run}{'have_accepted_run'} = 0;
-				$queue_info{$run}{'tries'} = 0;
 				$queue_info{$run}{'crashes'} = 0;
 				$queue_info{$run}{'evals'} = 0;
 				$queue_info{$run}{'run_results'} = [];
@@ -1029,7 +1029,7 @@ sub select_best_model
 											   nm_minor_version => $PsN::nm_minor_version);
 				
 				# Copy files to final files in NM_run, to be clear about which one was selected
-				cp( $use_name, $filename ) if (-e $use_name);
+				mv( $use_name, $filename ) if (-e $use_name); 
 			}
 
 			if ( $self->clean >= 1 and $PsN::warnings_enabled == 0 ) {
@@ -1072,7 +1072,7 @@ sub select_best_model
 			if (defined $self->raw_nonp_results and defined $queue_info_ref -> {'raw_nonp_results'} -> [$selected-1]);
 
 
-			$self -> copy_model_and_output( final_model   => $candidate_model,
+			$self -> move_model_and_output( final_model   => $candidate_model,
 											model         => $model,
 											use_run       => $selected ? $selected : '' );
 		}
@@ -2359,7 +2359,7 @@ sub restart_needed
 
   
   # We need the trail of files to select the most appropriate at the end
-  # (see copy_model_and_output)
+  # (see move_model_and_output)
 
 	unless (defined $parm{'queue_info'}) {
 		# The queue_info must be defined here!
@@ -2910,6 +2910,20 @@ sub compute_cwres
 
 }
 
+sub get_selected
+{
+	my $file = shift;
+	my @lines = utils::file::slurp_file($file);
+	my $selected;
+	for (my $i=1; $i<= scalar(@lines); $i++){
+		if ($lines[-$i] =~ /\s*Selected\s*(\d+)/){
+			$selected = $1;
+			last;
+		}
+	}
+	return $selected;
+}
+
 sub copy_model_and_input
 {
 	my $self = shift;
@@ -2925,38 +2939,42 @@ sub copy_model_and_input
 	my $check_verbatim = $parm{'check_verbatim'};
 	my $candidate_model;
 
+	my $tries = 0;
 	if (-e 'stats-runs.csv' and $self->add_retries) {
 		#possible reasons: 
 		#a) Restart after -clean > 1. Then we do not know the true restart number of psn.lst
 		#b) Restart after completed run -clean <= 1. Best retry is copied to psn.lst, don't know which.
-		
-		#remove stats-runs here. Then pick highest retry file in directory as
+
+		#read selected retry from stats-runs
+		my $selected_retry = get_selected('stats-runs.csv');
+		#remove stats-runs here.
+		unlink 'stats-runs.csv';
+
+		#Then pick highest retry file in directory as
 		#candidate model, otherwise psn.mod
 		#If do not have any retry file must copy input again, was removed during clean=2
 		trace(tool => 'modelfit', message => "have stats-runs but doing add_retries", level => 2);
 
-		unlink 'stats-runs.csv';
-		if (-e 'psn-1.'.$self->modext) {
+		if ((-e 'psn-1.'.$self->modext ) or (-e 'psn-2.'.$self->modext)) {
 			trace(tool => 'modelfit', message => "old clean<2", level => 2);
 			
-			#clean 1. Data is left. Remove psn.mod and psn.lst
+			#clean 1. Data is left. Move psn.mod and psn.lst to selected retry number. #HERE
 			#use last retry as candidate model. move last retry to psn.mod and
 			# .lst, as if had just been run.
-			unlink 'psn.lst';
-			unlink 'psn.'.$self->modext;
-			unlink 'psn.cov';
-			unlink 'psn.coi';
-			unlink 'psn.cor';
+			foreach my $ext (@PsN::nm7_extensions,'.'.$self->modext,'.lst'){
+				mv('psn'.$ext,'psn-'.$selected_retry.$ext) if (-e 'psn'.$ext);
+			}
+			trace(tool => 'modelfit', message => "moved psn.lst etc to psn-$selected_retry.lst etc", level => 2);
 			
 			my $last_retry = 1;
 			while (-e 'psn-'.($last_retry+1).'.'.$self->modext) {
 				$last_retry++;
 			}
-			mv('psn-'.($last_retry).'.'.$self->modext,'psn.'.$self->modext);
-			mv('psn-'.($last_retry).'.lst','psn.lst') if (-e 'psn-'.($last_retry).'.lst');
-			mv('psn-'.($last_retry).'.cov','psn.cov') if (-e 'psn-'.($last_retry).'.cov');
-			mv('psn-'.($last_retry).'.cor','psn.cor') if (-e 'psn-'.($last_retry).'.cor');
-			mv('psn-'.($last_retry).'.coi','psn.coi') if (-e 'psn-'.($last_retry).'.coi');
+			$tries = $last_retry-1;
+			foreach my $ext (@PsN::nm7_extensions,'.'.$self->modext,'.lst'){
+				mv('psn-'.$last_retry.$ext,'psn'.$ext) if (-e 'psn-'.$last_retry.$ext);
+			}
+			trace(tool => 'modelfit', message => "moved psn-$last_retry.lst to psn.lst etc", level => 2);
 			
 			$candidate_model = model->new(
 				outputfile                  => 'psn.lst',
@@ -2968,6 +2986,7 @@ sub copy_model_and_input
 			trace(tool => 'modelfit', message => "old clean>1", level => 2);
 			#clean 2. 
 			#must copy input again
+			$tries = $selected_retry-1;
 			
 			if ($model->tbs or $model->dtbs){
 				$self->write_tbs_files(thetanum => $model->tbs_thetanum());
@@ -2978,7 +2997,7 @@ sub copy_model_and_input
 				# $file is a ref to an array with two elements, the first is a
 				# path, the second is a name.
 				
-				cp( $file->[0] . $file -> [1], $file -> [1] );
+				cp( $file->[0] . $file -> [1], $file -> [1] ); #FIXME symlink if on linux?
 				
 			}
 			
@@ -3039,7 +3058,7 @@ sub copy_model_and_input
 			# $file is a ref to an array with two elements, the first is a
 			# path, the second is a name.
 			
-			cp( $file->[0] . $file -> [1], $file -> [1] );
+			cp( $file->[0] . $file -> [1], $file -> [1] ); #FIXME symlink if unix?
 			
 		}
 		
@@ -3129,7 +3148,7 @@ sub copy_model_and_input
             " to psn.".$self->modext." in current directory. Modified table names.", level => 2)
 	}
 
-	return $candidate_model;
+	return ($candidate_model,$tries);
 }
 
 sub write_tbs_files
@@ -3203,7 +3222,8 @@ sub write_tbs_files
 	close(FILE);
 }
 
-sub copy_model_and_output
+#sub copy_model_and_output
+sub move_model_and_output
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
@@ -3279,14 +3299,16 @@ sub copy_model_and_output
 									   nm_minor_version => $PsN::nm_minor_version );
 
 		# Copy $use_run files to final files in NM_run, to be clear about which one was selected
-		cp( $use_name, $filename ) if (-e $use_name);
+#		cp( $use_name, $filename ) if (-e $use_name); 
+		mv( $use_name, $filename ) if (-e $use_name); 
 		next if( $filename eq 'psn.'.$self->modext );
 		next if( $filename eq 'nmqual_messages.txt' );
 
 		# Don't prepend the model file name to psn.lst, but use the name
 		# from the $model object.
 		if ($filename eq 'psn.lst') {
-			cp($use_name, $outfilename);
+			cp($filename, $outfilename); 
+#			mv($use_name, $outfilename); 
             $final_lst = $outfilename;
 			next;
 		}
@@ -3297,7 +3319,7 @@ sub copy_model_and_output
 				foreach my $out (@nmout){
 					$out =~ s/^\.//;
 					if ('.'.$out eq $ext){
-						my $ok = cp( $use_name, $dir.$dotless_model_filename.$ext);
+						my $ok = cp( $filename, $dir.$dotless_model_filename.$ext);
 						last;
 					}
 				}
@@ -3307,14 +3329,15 @@ sub copy_model_and_output
 		next if ($found_ext);
 
 		if ( $self->prepend_model_file_name ) {
-			cp( $use_name, $dir . $dotless_model_filename . '.' . $filename );
+			cp( $filename, $dir . $dotless_model_filename . '.' . $filename );
 		} else {
-			cp( $use_name, $dir .$filename );
+			cp( $filename, $dir .$filename );
 		}
 
 	}
 
-	trace(tool => 'modelfit', message => "Best retry is $use_run.\nCopied psn-".
+#	trace(tool => 'modelfit', message => "Best retry is $use_run.\nCopied psn-".
+	trace(tool => 'modelfit', message => "Best retry is $use_run.\nMoved psn-".
 		  $use_run.".".$self->modext." to psn.".$self->modext.", psn-$use_run".".lst to psn.lst etc.\n".
 		  "Copied psn.lst and other output to this models 'home directory' $dir ".
 		  "using filestems for $model_filename", level => 1);

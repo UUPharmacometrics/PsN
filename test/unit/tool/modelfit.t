@@ -950,4 +950,6 @@ tool::modelfit::make_delay(threads => 2,
 						   min_fork_delay => 100000,
 						   max_fork_delay => 1);
 
+is(tool::modelfit::get_selected($includes::testfiledir.'/modelfit/stats-runs.csv'),1,'get selected');
+
 done_testing;
