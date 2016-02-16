@@ -6,8 +6,12 @@ use Test::More;
 use FindBin qw($Bin);
 use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages
+use Test::Exception;
 
 use model::problem::record::theta_option;
+
+dies_ok {model::problem::record::theta_option->new(option_string => ' (0,82.11705' )} "theta unmatched parentheses 1";
+dies_ok {model::problem::record::theta_option->new(option_string => '); CL' )} "theta unmatched parentheses 2";
 
 # Test new and read option
 my $option1 = model::problem::record::theta_option->new(option_string => '(0,0.0105,2)');

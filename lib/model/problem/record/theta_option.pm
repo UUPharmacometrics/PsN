@@ -2,6 +2,7 @@ package model::problem::record::theta_option;
 
 use Moose;
 use MooseX::Params::Validate;
+use include_modules;
 
 extends 'model::problem::record::init_option';
 
@@ -107,8 +108,13 @@ sub _read_option
 
 	# $line should be one theta now
 	chomp( $line );
-	$line =~ s/\)//g;
-	$line =~ s/\(//g;
+	#check that both opening and closing parenthesis, or neither
+	$line =~ s/(.*)\((.*)\)/$1$2/;
+	if ($line =~ /[()]/){
+		croak("unmatched parenthesis in THETA:\n$line\nThis would trigger an NMTRAN error, aborting.\n");
+	}
+#	$line =~ s/\)//g;
+#	$line =~ s/\(//g;
 	$line =~ s/\s+//g;
 
 	## Find fix
