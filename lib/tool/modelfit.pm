@@ -1036,7 +1036,7 @@ sub select_best_model
 				unlink 'nonmem', 'nonmem5','nonmem6','nonmem7',
 				'nonmem5_adaptive','nonmem6_adaptive','nonmem7_adaptive', 
 				'nonmem.exe','nonmem_mpi.exe','nonmem_mpi','NONMEM_MPI.exe','FDATA', 'FREPORT', 'FSUBS', 'FSUBS.f','FSUBS.f90', 
-				'FSUBS.for', 'LINK.LNK', 'FSTREAM', 'FCON.orig', 'FLIB', 'FCON','PRDERR',
+				'FSUBS.for', 'LINK.LNK', 'FSTREAM', 'FCON.orig', 'FLIB', 'FCON',#'PRDERR', save for error check
 				'nmprd4p.mod','nul',
 				'fsubs','fsubs.f','fsubs.for','fsubs.f90','FSUBS2','FSUBS_MU.F90';
 
