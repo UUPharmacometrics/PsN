@@ -489,7 +489,7 @@ sub check_execute
 	my $mismatch = $model->msfo_to_msfi_mismatch;
 	if ($mismatch){
 		ui->print(category => 'all',
-				  message => "Warning: \$MSFI of \$PROBLEM number $mismatch in ".$model->file_name.
+				  message => "Warning: \$MSFI of \$PROBLEM number $mismatch in ".$model->filename.
 				  " does not match previous \$EST MSFO. Check results carefully.\n");
 	}
 
