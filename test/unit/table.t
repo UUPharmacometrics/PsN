@@ -13,6 +13,7 @@ use table;
 my $t = table->new();
 $t->set_header(header => "  CL  V  IVV");
 is_deeply($t->header, { CL => 0, V => 1, IVV => 2 }, "set_header");
+is_deeply($t->get_header, ['CL','V','IVV'], "get_header");
 
 # add_row
 $t->add_row(row => "   50 28   34");

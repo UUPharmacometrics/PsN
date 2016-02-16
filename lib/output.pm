@@ -12,6 +12,7 @@ use Moose;
 use MooseX::Params::Validate;
 use output::problem;
 use utils::file;
+use nmtablefile;
 
 has 'problems' => ( is => 'rw', isa => 'ArrayRef[output::problem]' );
 has 'lst_model' => ( is => 'rw', isa => 'model' );
@@ -3032,6 +3033,9 @@ sub _read_problems
 	}
 
 #	print "runtime is ".$self->runtime."\n";
+	my $ext_file = nmtablefile->new(filename => $self -> directory().$self -> filename_root().'.ext', 
+									is_ext_file => 1) if (-e $self -> directory().$self -> filename_root().'.ext');
+
 	#then read NONMEM output
 	while ( $_ = $lstfile[ $lstfile_pos++ ] ) {
 #		if (/^\s*\#TBLN:\s*([0-9]+)/) {
@@ -3070,6 +3074,7 @@ sub _read_problems
 											 filename_root	      => $self -> filename_root(),
 											 directory	    	  => $self -> directory(),
 											 n_previous_meth      => $n_previous_meth,
+											 ext_file             => $ext_file,
 #											 table_number         => $tbln,
 											 input_problem        => $self->lst_model->problems->[$problem_index]});
 					

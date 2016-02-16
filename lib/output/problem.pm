@@ -6,6 +6,7 @@ use MooseX::Params::Validate;
 use output::problem::subproblem;
 use utils::file;
 use Time::Local;
+use nmtablefile;
 
 my $nrec_exp1 = '^\s*NO. OF DATA RECS IN DATA SET:\s*(\d+)';
 my $nrec_exp2 = '^\s*TOT. NO. OF DATA RECS:\s*(\d+)';
@@ -19,6 +20,7 @@ my $cov_time_exp = '^ Elapsed covariance\s* time in seconds:\s*(.+)';
 my $simulation_exp = '^ SIMULATION STEP PERFORMED';
 
 
+has 'ext_file' => ( is => 'rw', isa => 'Maybe[nmtablefile]' );
 has 'table_numbers_hash' => ( is => 'rw', isa => 'HashRef' );
 has 'table_strings_hash' => ( is => 'rw', isa => 'HashRef' );
 has 'subproblems' => ( is => 'rw', isa => 'ArrayRef[output::problem::subproblem]' );
@@ -94,7 +96,7 @@ sub BUILD
 	
 	if ($self->nm_major_version() >= 7 and ($self -> estimation_step_initiated() or $self->covariance_step_run())) {
 		#we have output to read
-	  $self->store_NM7_output(max_table_number => $self->table_number()); 
+		$self->store_NM7_output(max_table_number => $self->table_number()); 
 	}
 
 	$self -> _read_subproblems() if ( $self -> parsed_successfully() and not $self -> finished_parsing() );
@@ -233,10 +235,10 @@ sub store_NM7_output
 	$self->table_strings_hash({});
 
 #	$self->nm_output_files({ 'raw' => [], 'cov' => [], 'coi' => [], 'cor' => [], 'phi' => [] });
-	$self->nm_output_files({ 'raw' => [], 'cov' => [], 'coi' => [], 'cor' => [] });
+	$self->nm_output_files({'cov' => [], 'coi' => [], 'cor' => [] });
 
 #	foreach my $type ('raw','cov','coi','cor','phi') {
-	foreach my $type ('raw','cov','coi','cor') {
+	foreach my $type ('cov','coi','cor') {
 		my $filename = $self -> full_name_NM7_file('file_type' => $type);
 		if (-e $filename) {
 			my @tmp = utils::file::slurp_file($filename);
@@ -257,48 +259,48 @@ sub store_NM7_output
 					if (($type eq 'raw') and (($string =~ /\(Evaluation\)/) or ($string =~ /\(EVALUATION\)/))){
 						$self->ext_file_has_evaluation(1);
 					}			  
-				  if ((defined $max_table_number) and ($number > $max_table_number)) {
-				      last; #skip the rest, know we do not need them for this $PROB
-				  }
-				  if ($prev_num == 0) {
-				      #first table, no lines to store
-				      1; #ok
-				  } elsif ($line_count == 0) {
-				      #not first table but still no lines to store
-				      #NONMEM sometimes prints table header without body, skip those headers,
-				      #replace previously stored number and string
-				      1; #ok
-				  } elsif ($number <= $prev_num) {
-				      #not first table, lines to store, but inconsistent numbering
-				      last; #skip the rest, we can't handle it anyway
-				      #we skip tables that must come from restarted numbering (<= previous number),
-				      #NM7 onumbering in additional output is inconsistent and we cannot handle it
-				  }
-				  $prev_string = $string;
-				  $prev_num = $number;
-				  $line_count = 0;
-		  	    
+					if ((defined $max_table_number) and ($number > $max_table_number)) {
+						last; #skip the rest, know we do not need them for this $PROB
+					}
+					if ($prev_num == 0) {
+						#first table, no lines to store
+						1; #ok
+					} elsif ($line_count == 0) {
+						#not first table but still no lines to store
+						#NONMEM sometimes prints table header without body, skip those headers,
+						#replace previously stored number and string
+						1; #ok
+					} elsif ($number <= $prev_num) {
+						#not first table, lines to store, but inconsistent numbering
+						last; #skip the rest, we can't handle it anyway
+						#we skip tables that must come from restarted numbering (<= previous number),
+						#NM7 onumbering in additional output is inconsistent and we cannot handle it
+					}
+					$prev_string = $string;
+					$prev_num = $number;
+					$line_count = 0;
+					
 				} elsif ($line =~  /[0-9A-Za-z]/) {
 					if ($line_count == 0 and ($prev_num > 0)) {
-				  	#this is the first data/header line of new table 
-				  	#store string and number that we must have just read in previous loop iteration
-				  	if (defined $prev_string) {
-					  	push(@{$self->table_strings_hash->{$type}}, $prev_string);
+						#this is the first data/header line of new table 
+						#store string and number that we must have just read in previous loop iteration
+						if (defined $prev_string) {
+							push(@{$self->table_strings_hash->{$type}}, $prev_string);
 						}
-				    $tab_index++;
-				    push(@{$self->table_numbers_hash->{$type}}, $prev_num);
-				  } elsif($line_count == 0 and ($prev_num == 0)) {
-				  	#NONMEM gives some tables number 0. skip them
-				    next;
-				  }
-				  push (@{$self->nm_output_files->{$type}->[$tab_index]}, $line);
-				  $line_count++;
+						$tab_index++;
+						push(@{$self->table_numbers_hash->{$type}}, $prev_num);
+					} elsif($line_count == 0 and ($prev_num == 0)) {
+						#NONMEM gives some tables number 0. skip them
+						next;
+					}
+					push (@{$self->nm_output_files->{$type}->[$tab_index]}, $line);
+					$line_count++;
 				}
 			}
 
 		} else {
-		  my $mes = "Could not find NM7 output file $filename ";
-		  carp($mes) unless $self->ignore_missing_files;
+			my $mes = "Could not find NM7 output file $filename ";
+			carp($mes) unless $self->ignore_missing_files;
 		}
 	}
 
@@ -847,40 +849,31 @@ sub _read_subproblems
 
 				if (defined $self->table_number()){
 					$last_method_number = $self->table_number();
-				}elsif ($need_evaluation_in_ext_file and (not $self->ext_file_has_evaluation)){
-					$self->evaluation_missing_from_ext_file(1);
+				}elsif ($need_evaluation_in_ext_file and 
+						(not (defined $self->ext_file and $self->ext_file->has_evaluation))){
+					$self->evaluation_missing_from_ext_file(1); 
 				}
 
 				my %subprob;
-
+				my $ext_table;
 				if ((not $self->evaluation_missing_from_ext_file) and
-					(defined $self->table_numbers_hash and defined $self->table_numbers_hash->{'raw'}) and 
-					(scalar(@{$self->table_numbers_hash->{'raw'}}) > 0) and ($no_meth < 1)) {
+					(defined $self->ext_file and scalar(@{$self->ext_file->tables})>0) and 
+					($no_meth < 1)) { #FIXME
 
 #					print "\n no_meth $no_meth table_numbers ".join(' ',@{$self->table_numbers_hash->{'raw'}})."\n";
 #					print "last_method_number $last_method_number\n";
 
-					my $index = 0;
-					my $tab_index = -1;
-					foreach my $num (@{$self->table_numbers_hash->{'raw'}}) {
-						if ($last_method_number == $num) {
-							$tab_index = $index;
-							last;
-						}
-						$index++;
-					}
-
-					if ($tab_index < 0) {
+					$ext_table = $self->ext_file->get_table(number => $last_method_number);
+					if (not defined $ext_table){
 						carp("table $last_method_number not found in raw output" ); 
 					} else {
 						# retrieve table and check that strings match
-						$subprob{'raw'} = $self->nm_output_files->{'raw'}->[$tab_index];
 						if ((defined $last_method_string) and length($last_method_string)>0){ 
-							#method string can be missing if simulation followed by e.g. MAXEVAL=0
-							unless (($last_method_string =~ $self->table_strings_hash->{'raw'}->[$tab_index] ) or 
-									($last_method_string eq $self->table_strings_hash->{'raw'}->[$tab_index]) or
-									($self->table_strings_hash->{'raw'}->[$tab_index] =~ $last_method_string  ) ) {
-								my $mess = "method strings\n".$self->table_strings_hash->{'raw'}->[$tab_index] . " and\n"."$last_method_string do not match";
+							my $mstring = $ext_table->method;
+							unless (($last_method_string =~ $mstring ) or 
+									($last_method_string eq $mstring) or
+									($mstring =~ $last_method_string  ) ) {
+								my $mess = "method strings\n".$mstring . " and\n"."$last_method_string do not match";
 								$self -> parsing_error( message => $mess );
 								$self -> finished_parsing(1);
 								return;
@@ -909,7 +902,8 @@ sub _read_subproblems
 						ignore_missing_files       => $self -> {'ignore_missing_files'},
 						input_problem              => $self->input_problem(),
 #						nm_output_files			   => { 'raw' => $subprob{'raw'}, 'cov' => $subprob{'cov'}, 'cor' => $subprob{'cor'}, 'coi' => $subprob{'coi'}, 'phi' => $subprob{'phi'} },
-						nm_output_files			   => { 'raw' => $subprob{'raw'}, 'cov' => $subprob{'cov'}, 'cor' => $subprob{'cor'}, 'coi' => $subprob{'coi'}},
+						nm_output_files			   => {'cov' => $subprob{'cov'}, 'cor' => $subprob{'cor'}, 'coi' => $subprob{'coi'}},
+						ext_table                  => $ext_table,
 						method_string              => $last_method_string,
 						classical_method           => $classical_method,
 						nm_major_version           => $self -> nm_major_version(),

@@ -10,6 +10,7 @@ use nmtable;
 has 'filename' => ( is => 'rw', isa => 'Str' );
 has 'tables' => ( is => 'rw', isa => 'ArrayRef[nmtable]', default => sub { [] } );
 has 'is_ext_file' => ( is => 'rw', isa => 'Bool', default => 0);
+has 'has_evaluation' => ( is => 'rw', isa => 'Bool', default => 0);
 has 'table_lookup' => ( is => 'rw', isa => 'HashRef', default => sub { {} } );
 has 'problem_lookup' => ( is => 'rw', isa => 'HashRef', default => sub { {} } );
 
@@ -80,9 +81,14 @@ sub read_nmtable
     open my $fh, '<', $filename;
 
     my $table_row = <$fh>;
-
-    TABLE: while (1) {
+	
+    TABLE: while (defined $table_row) {
         my $table = nmtable->new();
+		if ($self->is_ext_file){
+			if (($table_row =~ /\(Evaluation\)/) or ($table_row =~ /\(EVALUATION\)/)){
+				$self->has_evaluation(1);
+			}
+		}
         $table->read_table_row(row => $table_row);
         my $header_row = <$fh>;
         if ($header_row =~ /^TABLE NO./) {   #Header row is actually new table row
@@ -106,7 +112,7 @@ sub read_nmtable
                 last ROW;
             }
 			if ($self->is_ext_file){
-				next unless ($row =~ /\s*-100000000\d/);
+				next unless ($row =~ /\s*-100000000[0-6]/);
 			}
             $table->add_row(row => $row);
         }

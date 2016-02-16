@@ -10,6 +10,7 @@ has 'columns' => ( is => 'rw', isa => 'ArrayRef[ArrayRef]', default => sub { [] 
 has 'header' => ( is => 'rw', isa => 'HashRef[Str]' );
 has 'delimiter' => ( is => 'rw', isa => 'Str', default => '\s+');   # Delimiter of elements on a row
 has 'skip_leading_whitespace' => ( is => 'rw', isa => 'Bool', default => 1 );
+has 'header_array' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 
 sub set_header
 {
@@ -22,19 +23,26 @@ sub set_header
 
 
     my @array = $self->_split_row($header);
-
+	$self->header_array(\@array);
     my %hash;
     my $i = 0;
     foreach my $e (@array) {
         if (not exists $hash{$e}) {
             $hash{$e} = $i++;
-        } else {
-            croak("Duplicate column names in header");
         }
+		#we allow duplicate names, okay if table directly from nonmem
     }
 
     $self->header(\%hash);
 }
+
+sub get_header
+{
+	my $self = shift;
+	#	return [sort {$self->header->{$a} <=> $self->header->{$b}} (keys %{$self->header})];
+	return $self->header_array;
+}
+
 
 sub add_row
 {
@@ -71,9 +79,15 @@ sub get_column
 
     my $my_index = $index;
     if (defined $name) {
+		unless (defined $self->header->{$name}){
+			croak("header does not contain $name");
+		}
         $my_index = $self->header->{$name};
     }
-
+	if ($my_index >= scalar(@{$self->columns})){
+		croak("no table column with index $my_index");
+	}
+	
     return $self->columns->[$my_index];
 }
 

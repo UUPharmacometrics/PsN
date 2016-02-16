@@ -142,4 +142,23 @@ my $t = nmtablefile->new(filename => "$dir/output/multPROB/multEST/withSIM/multp
 is($t->get_table(index => -2)->method,'First Order Conditional Estimation','get table index nm720');
 is($t->get_table(problem => 5, subproblem => 1)->method,'First Order Conditional Estimation','get table number nm720');
 
+my $t = nmtablefile->new(filename => "$dir/output/special_mod/minimterm_cov_unconditional.ext", is_ext_file => 1);
+my $table = $t->get_table(index => 0); 
+is_deeply($table->get_iteration_lookup(),
+		  {'est' =>0 ,'se' => 1,'eigen' =>2 ,'matrix'=>3, 'sd'=>4,'sdse'=>5,'extra'=>6},'get iteration lookup');
+my $results = $table->parse_ext_table();
+cmp_float($results->{'ofv'},-126.07168897227753,'ext ofv');
+cmp_float($results->{'eigenvalues'}->[1],1.42044E-01,'ext eigen');
+cmp_float($results->{'highest_eigenvalue'},3.26135E+00,'ext highest eigen');
+cmp_float($results->{'lowest_eigenvalue'},5.06815E-02,'ext lowest eigen');
+cmp_float($results->{'condition_number'},6.43499E+01,'ext condition');
+cmp_float($results->{'thetacoordval'}->{'THETA4'},9.94810E-01,'ext theta est');
+cmp_float($results->{'sethetacoordval'}->{'THETA6'},5.40343E-01,'ext theta se');
+cmp_float($results->{'omegacoordval'}->{'OMEGA(2,2)'},6.32550E-02,'ext omega est');
+cmp_float($results->{'seomegacoordval'}->{'OMEGA(2,2)'},5.11406E-02,'ext omega se');
+cmp_float($results->{'sdcorrform_omegacoordval'}->{'OMEGA(2,2)'},2.51505E-01,'ext omega sd est');
+cmp_float($results->{'sdcorrform_seomegacoordval'}->{'OMEGA(2,2)'},1.01669E-01,'ext omega sd se');
+cmp_float($results->{'sigmacoordval'}->{'SIGMA(1,1)'},1.00000E+00,'ext sigma est');
+cmp_float($results->{'sdcorrform_sigmacoordval'}->{'SIGMA(2,2)'},1.00000E+00,'ext sigma sd est');
+
 done_testing();

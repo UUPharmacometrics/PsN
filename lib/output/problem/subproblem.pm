@@ -8,7 +8,9 @@ use array;
 use Moose;
 use MooseX::Params::Validate;
 use math;
+use nmtable;
 
+has 'ext_table' => ( is => 'rw', isa => 'Maybe[nmtable]' );
 has 'keep_labels_hash' => ( is => 'rw', isa => 'HashRef' );
 has 'next_to_last_step_successful' => ( is => 'rw', isa => 'Bool' );
 has 'comegas' => ( is => 'rw', isa => 'ArrayRef' );
@@ -159,7 +161,7 @@ sub BUILD
 
 		if( $self -> estimation_step_initiated() ) {
 			#this is often true even if do not have $EST. Sometimes there will be a #METH, sometimes not.
-			$self -> parse_NM7_raw() if (defined $self->nm_output_files->{'raw'});
+			$self -> parse_NM7_raw($self->ext_table) if (defined $self->ext_table);
 
 			$self -> _read_ofv()                  unless ($self -> NM7_parsed_raw());
 			last unless ($self -> parsed_successfully() and not $self -> finished_parsing());
@@ -2612,7 +2614,7 @@ sub get_NM7_tables
 	return \@tableline_array ,\@not_found_array;
 }
 
-sub get_NM7_tables_all_types
+sub not_used_get_NM7_tables_all_types
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
@@ -2642,98 +2644,98 @@ sub get_NM7_tables_all_types
 	#$table_numbers (mandatory)
 	#out: @raw_table,@cov_table,@cor_table,@coi_table,@phi_table
 
-	  my $not_found;
-	  my $not_found_single;
-	  my $number_count = scalar (@{$table_numbers});
-	  my ($method_string,$check_string);
+	my $not_found;
+	my $not_found_single;
+	my $number_count = scalar (@{$table_numbers});
+	my ($method_string,$check_string);
 
-	  my ($raw_ref,$cov_ref,$cor_ref,$coi_ref,$phi_ref);
+	my ($raw_ref,$cov_ref,$cor_ref,$coi_ref,$phi_ref);
 
-	  ($raw_ref,$not_found) = 
-	      $self->get_NM7_tables('line_array' => $raw_array,
-				    'table_numbers' => $table_numbers);
-	  for (my $i = 0; $i < $number_count; $i++) { 
+	($raw_ref,$not_found) = 
+		$self->get_NM7_tables('line_array' => $raw_array,
+							  'table_numbers' => $table_numbers);
+	for (my $i = 0; $i < $number_count; $i++) { 
 	    croak("did not find table " . $table_numbers->[$i] . " in raw_file array" )
-				if ($not_found->[$i]); 
-	  }
-	  if ($number_count == 1) {
+			if ($not_found->[$i]); 
+	}
+	if ($number_count == 1) {
 	    ($method_string,$not_found_single) = 
-		$self->get_NM7_table_method('line_array' => $raw_ref, 'table_number' => $table_numbers->[0]);
+			$self->get_NM7_table_method('line_array' => $raw_ref, 'table_number' => $table_numbers->[0]);
 	    croak("Could not find table".$table_numbers ->[0]." in raw_file array" )
-				if ($not_found_single); 
-	  }
-	  @raw_table = @{$raw_ref};
+			if ($not_found_single); 
+	}
+	@raw_table = @{$raw_ref};
 
-	  my $expect_cov = $covariance_step_run;
-	  $expect_cov = 0 if ($method_string =~ /Stochastic Approximation/ );
+	my $expect_cov = $covariance_step_run;
+	$expect_cov = 0 if ($method_string =~ /Stochastic Approximation/ );
 
-	  if (defined $cov_array and $expect_cov) {
+	if (defined $cov_array and $expect_cov) {
 	    ($cov_ref,$not_found) = 
-		$self->get_NM7_tables('line_array' => $cov_array,
-				      'table_numbers' => $table_numbers);
+			$self->get_NM7_tables('line_array' => $cov_array,
+								  'table_numbers' => $table_numbers);
 	    for (my $i= 0; $i < $number_count; $i++) { 
-	      carp("did not find table " . $table_numbers->[$i] . " in cov_file array" )
-					if ($not_found->[$i]);
+			carp("did not find table " . $table_numbers->[$i] . " in cov_file array" )
+				if ($not_found->[$i]);
 	    }
 	    if (($number_count == 1) && ($not_found->[0] == 0)) {
-	      ($check_string,$not_found_single) = 
-		  $self->get_NM7_table_method('line_array' => $cov_ref,
-					      'table_number' => $table_numbers ->[0]);
-	      croak("Could not find table".$table_numbers ->[0]." in cov_file array" )
-					if ($not_found_single); 
-	      
-				unless (($method_string =~ $check_string) || ($method_string eq $check_string)) {
-					croak("strings $method_string from raw and ".
-							"$check_string from cov do not match" );
-				}
+			($check_string,$not_found_single) = 
+				$self->get_NM7_table_method('line_array' => $cov_ref,
+											'table_number' => $table_numbers ->[0]);
+			croak("Could not find table".$table_numbers ->[0]." in cov_file array" )
+				if ($not_found_single); 
+			
+			unless (($method_string =~ $check_string) || ($method_string eq $check_string)) {
+				croak("strings $method_string from raw and ".
+					  "$check_string from cov do not match" );
 			}
-			@cov_table = @{$cov_ref};
 		}
+		@cov_table = @{$cov_ref};
+	}
 
-		if (defined $cor_array and $expect_cov){
-			($cor_ref,$not_found) = 
-				$self->get_NM7_tables('line_array' => $cor_array, 'table_numbers' => $table_numbers);
+	if (defined $cor_array and $expect_cov){
+		($cor_ref,$not_found) = 
+			$self->get_NM7_tables('line_array' => $cor_array, 'table_numbers' => $table_numbers);
 	    for (my $i = 0; $i < $number_count; $i++) { 
-	      carp("did not find table ".$table_numbers->[$i]." in cor_file array" )
-		  if ($not_found->[$i]); 
+			carp("did not find table ".$table_numbers->[$i]." in cor_file array" )
+				if ($not_found->[$i]); 
 	    }
 	    if (($number_count == 1) && (not $not_found->[0])) {
-	      ($check_string,$not_found_single) = 
-		  $self->get_NM7_table_method('line_array' => $cor_ref,
-					      'table_number' => $table_numbers ->[0]);
-	      croak("Could not find table".$table_numbers ->[0]." in cor_file array" )
-					if ($not_found_single); 
-	      
-	      unless (($method_string =~ $check_string) || ($method_string eq $check_string)) {
-					croak("strings $method_string from raw and ".
-							"$check_string from cor do not match" );
-				}
+			($check_string,$not_found_single) = 
+				$self->get_NM7_table_method('line_array' => $cor_ref,
+											'table_number' => $table_numbers ->[0]);
+			croak("Could not find table".$table_numbers ->[0]." in cor_file array" )
+				if ($not_found_single); 
+			
+			unless (($method_string =~ $check_string) || ($method_string eq $check_string)) {
+				croak("strings $method_string from raw and ".
+					  "$check_string from cor do not match" );
 			}
-			@cor_table = @{$cor_ref};
-	  }
+		}
+		@cor_table = @{$cor_ref};
+	}
 
 
-	  if (defined $coi_array and $expect_cov) {
+	if (defined $coi_array and $expect_cov) {
 	    ($coi_ref,$not_found) = 
-		$self->get_NM7_tables('line_array' => $coi_array,
-				      'table_numbers' => $table_numbers);
+			$self->get_NM7_tables('line_array' => $coi_array,
+								  'table_numbers' => $table_numbers);
 	    for (my $i = 0; $i < $number_count; $i++){ 
-	      carp("did not find table ".$table_numbers->[$i]." in coi_file array" )
-					if ($not_found->[$i]); 
+			carp("did not find table ".$table_numbers->[$i]." in coi_file array" )
+				if ($not_found->[$i]); 
 	    }
 	    if (($number_count == 1) && (not $not_found->[0])) {
-	      ($check_string,$not_found_single) = 
-					$self->get_NM7_table_method('line_array' => $coi_ref, 'table_number' => $table_numbers ->[0]);
-				croak("Could not find table".$table_numbers ->[0]." in coi_file array" )
-					if ($not_found_single); 
-	      
-				unless (($method_string =~ $check_string) || ($method_string eq $check_string)) {
-					croak("strings $method_string from raw and ".
-							"$check_string from coi do not match" );
-				}
+			($check_string,$not_found_single) = 
+				$self->get_NM7_table_method('line_array' => $coi_ref, 'table_number' => $table_numbers ->[0]);
+			croak("Could not find table".$table_numbers ->[0]." in coi_file array" )
+				if ($not_found_single); 
+			
+			unless (($method_string =~ $check_string) || ($method_string eq $check_string)) {
+				croak("strings $method_string from raw and ".
+					  "$check_string from coi do not match" );
 			}
-			@coi_table = @{$coi_ref};
-	  }
+		}
+		@coi_table = @{$coi_ref};
+	}
 
 	if (0 and (defined $phi_array)) {
 		($phi_ref,$not_found) = 
@@ -2776,31 +2778,12 @@ sub _get_value{
 sub parse_NM7_raw
 {
 	my $self = shift;
-
-	#Assume that we have only one table now, in $self->nm_output_files->{'raw'}
-	#Assume whitespace as field separator
-	#add error checking of separator
-
-	my $found_table = 0; #for error checking
-	my @header_labels = ();
-	my %final_values;
-	my %standard_errors;
-	my %correlation_matrix_data;
-	my $n_eigenvalues = 0;
-	my (@theta,@standard_errors_theta);
-	my @omega;
-	my @sigma;
-	my @eigenvalues;
-	my $read_standard_errors = 0;
-	my $given_header_warning = 0;
-	my (%thetacoordval, %omegacoordval, %sigmacoordval);
-	my (%sethetacoordval, %seomegacoordval, %sesigmacoordval);
-	my (%sdcorrform_omegacoordval, %sdcorrform_sigmacoordval);
-	my (%sdcorrform_seomegacoordval, %sdcorrform_sesigmacoordval);
-	my $header_ok = 0;
-	my $found_ofv_line = 0;
-
-    
+	my $nmtable = shift;
+	my $hash = $nmtable->parse_ext_table;
+	return unless ($hash->{'any_est'});
+	
+	$self->ofv($hash->{'ofv'}) if (defined $hash->{'ofv'});
+	
 	if (defined $self->input_problem ){
 		my %keep_labels_hash;
 		foreach my $coord (@{$self->input_problem->get_estimated_attributes(attribute=>'coordinate_strings')}){
@@ -2809,187 +2792,57 @@ sub parse_NM7_raw
 		$self->keep_labels_hash(\%keep_labels_hash);
 	}
 
-	foreach my $line (@{$self->nm_output_files->{'raw'}}) {
-		if ($line =~ /^\s*TABLE NO.\s+(\d+):/ ) {
-			croak("two tables found where 1 expected" ) if $found_table;
-			$found_table = 1;
-		} elsif ($line =~ /^\s*ITERATION/ ) {
-			$line =~ s/^\s*//; #get rid of leading spaces
-			@header_labels = split /\s+/,$line;
-			$header_ok = 1 if ($header_labels[0] eq 'ITERATION');
-		}
-
-		next unless ($line =~ /^\s*(-100000000\d)/ ); #only want neg iteration numbers = special values
-		
-		if ($1 == -1000000000 ) {
-			$found_ofv_line = 1;
-			#final values
-			#check that we have labels in array. Otherwise missing label row or wrong delimiter
-			unless ((scalar(@header_labels > 2)) or $given_header_warning or $header_ok){
-				my $mes = "\n\n\***Warning***\n".
-					"Too few elements in parameter label array in raw output file. ".
-					"Is label row missing, or is the ".
-					"delimiter something other than spaces (default)? ".
-					"Parsing is likely to fail".
-					"\n*************\n";
-				print $mes;
-				$given_header_warning = 1;
-			}
-			$line =~ s/^\s*//; #get rid of leading spaces
-			my @values = split /\s+/, $line;
-			for (my $i = 1; $i < scalar(@values); $i++) {
-				my $val = _get_value(val => $values[$i]);
-				if (defined $val){
-					if ($header_labels[$i] =~ /THETA/){
-						$thetacoordval{$header_labels[$i]} = $val; 
-					} elsif ($header_labels[$i] =~ /OMEGA/) {
-						$omegacoordval{$header_labels[$i]} = $val;
-					} elsif ($header_labels[$i] =~ /SIGMA/) {
-						$sigmacoordval{$header_labels[$i]} = $val;
-					} elsif ($header_labels[$i] =~ /OBJ/) {
-						$self->ofv($val);
-					} else { 
-						my $mes = "Unknown header label ".$header_labels[$i]." in raw output.";
-						croak($mes);
-					}
-				}
-			}
-		} elsif ($1 == -1000000001) {
-			#standard errors
-			$line =~ s/^\s*//; #get rid of leading spaces
-			my @values = split /\s+/,$line;
-			for (my $i = 1; $i < scalar(@values); $i++) {
-				my $val = _get_value(val => $values[$i]);
-				if (defined $val){
-					if ($header_labels[$i] =~ /THETA/) {
-						$sethetacoordval{$header_labels[$i]} = $val;
-					} elsif ($header_labels[$i] =~ /OMEGA/) {
-						$seomegacoordval{$header_labels[$i]} = $val;
-					} elsif ($header_labels[$i] =~ /SIGMA/) {
-						$sesigmacoordval{$header_labels[$i]} = $val;
-					} elsif ($header_labels[$i] =~ /OBJ/) {
-					} else { 
-						my $mes = "Unknown header label ".$header_labels[$i]." in raw output.";
-						croak($mes);
-					}
-				}
-			}
-			$read_standard_errors = 1;
-		} elsif ($1 == -1000000002) {
-			#eigenvalues
-			$line =~ s/^\s*//; #get rid of leading spaces
-			my @values = split /\s+/,$line;
-			for (my $i = 1; $i < scalar(@values); $i++) {
-				last if ($values[$i] == 0); #array is padded with zeros
-				$n_eigenvalues++;
-				my $val = _get_value(val => $values[$i]);
-				push (@eigenvalues, $val); #push also undefs
-			}
-			$self->eigens([]) unless defined $self->eigens;
-			@{$self->eigens} = @eigenvalues;
-		} elsif ($1 == -1000000003) {
-			#matrix properties
-			$line =~ s/^\s*//; #get rid of leading spaces
-			my @values = split /\s+/,$line;
-			$correlation_matrix_data{'condition_number'} = eval($values[1]);
-			$correlation_matrix_data{'lowest_eigenvalue'} = eval($values[2]);
-			$correlation_matrix_data{'highest_eigenvalue'} = eval($values[3]);
-			$self->condition_number($correlation_matrix_data{'condition_number'});
-		} elsif ($1 == -1000000004 ) {
-			#sd_form omega,sigma
-			#final values
-			$line =~ s/^\s*//; #get rid of leading spaces
-			my @values = split /\s+/, $line;
-			for (my $i = 1; $i < scalar(@values); $i++) {
-				my $val = _get_value(val => $values[$i]);
-				if (defined $val){
-					if ($header_labels[$i] =~ /THETA/){
-						next; 
-					} elsif ($header_labels[$i] =~ /OMEGA/) {
-						$sdcorrform_omegacoordval{$header_labels[$i]} = $val;
-					} elsif ($header_labels[$i] =~ /SIGMA/) {
-						$sdcorrform_sigmacoordval{$header_labels[$i]} = $val;
-					} elsif ($header_labels[$i] =~ /OBJ/) {
-						next;
-					} else { 
-						my $mes = "Unknown header label ".$header_labels[$i]." in raw output.";
-						croak($mes);
-					}
-				}
-			}
-		} elsif ($1 == -1000000005) {
-			#sdcorrform standard errors
-			$line =~ s/^\s*//; #get rid of leading spaces
-			my @values = split /\s+/,$line;
-			for (my $i = 1; $i < scalar(@values); $i++) {
-				my $val = _get_value(val => $values[$i]);
-				if (defined $val){
-					if ($header_labels[$i] =~ /THETA/) {
-						next;
-					} elsif ($header_labels[$i] =~ /OMEGA/) {
-						$sdcorrform_seomegacoordval{$header_labels[$i]} = $val;
-					} elsif ($header_labels[$i] =~ /SIGMA/) {
-						$sdcorrform_sesigmacoordval{$header_labels[$i]} = $val;
-					} elsif ($header_labels[$i] =~ /OBJ/) {
-						next;
-					} else { 
-						my $mes = "Unknown header label ".$header_labels[$i]." in raw output.";
-						croak($mes);
-					}
-				}
-			}
-			$read_standard_errors = 1;
-		}
+ 	if (defined $hash->{'eigenvalues'}){
+		$self->eigens($hash->{'eigenvalues'});
+	}
+ 	if (defined $hash->{'condition_number'}){
+		$self->condition_number($hash->{'condition_number'});
+	}
+ 	if (defined $hash->{'thetacoordval'}){
+		$self->thetacoordval($hash->{'thetacoordval'}); 
+	}
+ 	if (defined $hash->{'sethetacoordval'}){
+		$self->sethetacoordval($hash->{'sethetacoordval'}); 
+	}
+ 	if (defined $hash->{'omegacoordval'}){
+		$self->omegacoordval($hash->{'omegacoordval'});
+	}
+ 	if (defined $hash->{'seomegacoordval'}){
+		$self->seomegacoordval($hash->{'seomegacoordval'});
+	}
+ 	if (defined $hash->{'sdcorrform_omegacoordval'}){
+		$self->sdcorrform_omegacoordval($hash->{'sdcorrform_omegacoordval'});
+	}
+ 	if (defined $hash->{'sdcorrform_seomegacoordval'}){
+		$self->sdcorrform_seomegacoordval($hash->{'sdcorrform_seomegacoordval'});
+	}
+ 	if (defined $hash->{'sigmacoordval'}){
+		$self->sigmacoordval($hash->{'sigmacoordval'});
+	}
+ 	if (defined $hash->{'sesigmacoordval'}){
+		$self->sesigmacoordval($hash->{'sesigmacoordval'});
+	}
+ 	if (defined $hash->{'sdcorrform_sigmacoordval'}){
+		$self->sdcorrform_sigmacoordval($hash->{'sdcorrform_sigmacoordval'});
+	}
+ 	if (defined $hash->{'sdcorrform_sesigmacoordval'}){
+		$self->sdcorrform_sesigmacoordval($hash->{'sdcorrform_sesigmacoordval'});
 	}
 
-	return unless ($found_ofv_line);
-
-	#store rest of values in $self
-	$self->thetacoordval(\%thetacoordval); 
-	$self->omegacoordval(\%omegacoordval);
-	$self->sigmacoordval(\%sigmacoordval);
-	$self->sethetacoordval(\%sethetacoordval);
-	$self->seomegacoordval(\%seomegacoordval);
-	$self->sesigmacoordval(\%sesigmacoordval);
-
-	$self->sdcorrform_omegacoordval(\%sdcorrform_omegacoordval);
-	$self->sdcorrform_sigmacoordval(\%sdcorrform_sigmacoordval);
-	$self->sdcorrform_seomegacoordval(\%sdcorrform_seomegacoordval);
-	$self->sdcorrform_sesigmacoordval(\%sdcorrform_sesigmacoordval);
-
-	
-	if (%sethetacoordval) { #at least one value
+	if ($hash->{'any_se'}){
 		$self->covariance_step_successful(1);
 	}
-	
-	delete $self->nm_output_files->{'raw'};
+
 	$self->NM7_parsed_raw(1);
 	
 	#verify that not have_omegas/sigmas is correct
 	unless ($self->have_sigmas()) {
-		my $count = 0;
-		foreach my $lab(@header_labels) {
-			$count++ if ($lab =~ /SIGMA/);
-		}
-		if ($count > 1) {
-			$self->have_sigmas(1); #never more than one dummy column
-		} elsif (defined $sesigmacoordval{'SIGMA(1,1)'}) {
-			$self->have_sigmas(1) if (defined $sesigmacoordval{'SIGMA(1,1)'} and 
-									  $sesigmacoordval{'SIGMA(1,1)'} != 0);
-		}
+		$self->have_sigmas(1) if ($hash->{'have_sigmas'});
 	}
 	unless ($self->have_omegas()) {
-		my $count = 0;
-		foreach my $lab(@header_labels){
-			$count++ if ($lab =~ /OMEGA/);
-		}
-		if ($count > 1) {
-			$self->have_omegas(1); #never more than one dummy column
-		} elsif (defined $seomegacoordval{'OMEGA(1,1)'}) {
-			$self->have_omegas(1) if (defined $seomegacoordval{'OMEGA(1,1)'} and
-									  $seomegacoordval{'OMEGA(1,1)'} != 0);
-		}
-	}
+		$self->have_omegas(1) if ($hash->{'have_omegas'});
+	}	
+	
 }
 
 sub parse_additional_table
