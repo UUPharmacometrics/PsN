@@ -1361,7 +1361,10 @@ sub _dofv_raw_results_callback
 
 			my $si=0;
 			foreach my $row ( @{$modelfit -> raw_results()} ) {
-				my $delta_ofv = $row->[$ofvindex] - $orig_ofv;
+				my $delta_ofv;
+				if (defined $row->[$ofvindex]){
+					$delta_ofv = $row->[$ofvindex] - $orig_ofv;
+				}
 				my @oldrow =@{$row};
 				$row = [@oldrow[0 .. $problemindex],$dofv_samples[$si],@oldrow[$problemindex+1 .. $ofvindex],$delta_ofv,@oldrow[$ofvindex+1 .. $#oldrow]]; 
 				$si++;
