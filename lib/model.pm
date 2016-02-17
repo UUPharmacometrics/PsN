@@ -185,11 +185,12 @@ sub BUILD
 	}
 
 	#ensure unique labels per param
-	foreach my $prob (@{$self->problems}) {
-		next unless (defined $prob);
-        $prob->ensure_unique_labels();
+	if ( defined $self->problems ) {
+		foreach my $prob (@{$self->problems}) {
+			next unless (defined $prob);
+			$prob->ensure_unique_labels();
+		}
 	}
-
 	if ($self->maxevals > 0) {
 		if ( defined $self->problems ) {
 			my $n_prob = scalar(@{$self->problems});
