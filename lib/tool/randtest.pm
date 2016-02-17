@@ -292,8 +292,7 @@ sub modelfit_setup
 		# Reinitiate the model objects
 		for ( my $j = 1; $j <= $self->samples(); $j++ ) {
 			my ($model_dir, $filename) = OSspecific::absolute_path( $self ->directory().'/m'.$model_number,
-				'rand_'.($j+1).'.mod' );
-
+																	'rand_'.($j).'.mod' );
 			$new_mod = model->new(%{common_options::restore_options(@common_options::model_options)},
 								  directory   => $model_dir,
 								  filename    => $filename,
@@ -302,8 +301,8 @@ sub modelfit_setup
 			push( @new_models, $new_mod );
 		}
 		ui -> print( category => 'randtest',
-			message  => "Using $stored_samples previously randomized ".
-			"data sets sets from $stored_filename" )
+					 message  => "Using $stored_samples previously randomized ".
+					 "data sets sets from $stored_filename" );
 	}
 
 	$self -> prepared_models -> [$model_number-1]{'own'} = \@new_models;
@@ -315,6 +314,7 @@ sub modelfit_setup
 	if ( defined $self -> subtool_arguments() ) {
 		%subargs = %{$self -> subtool_arguments()};
 	}
+	$subargs{'resume'}=$done; #do not rerun models that have lst-file in m1
 	$self->tools([]) unless (defined $self->tools());
 
 	push( @{$self -> tools()},
@@ -468,7 +468,10 @@ sub _modelfit_raw_results_callback
 			croak("could not find ofv in raw results header") unless (defined $ofvindex);
 
 			foreach my $row ( @{$modelfit -> raw_results()} ) {
-				my $delta_ofv = $row->[$ofvindex] - $base_mod_ofv->[($row->[$probindex]-1)]->[($row->[$subindex]-1)];
+				my $delta_ofv;
+				if (defined $row->[$ofvindex] ){
+					$delta_ofv = $row->[$ofvindex] - $base_mod_ofv->[($row->[$probindex]-1)]->[($row->[$subindex]-1)];
+				}
 				my @oldrow =@{$row};
 				$row = [@oldrow[0 .. $ofvindex],$delta_ofv,@oldrow[$ofvindex+1 .. $#oldrow]]; 
 			}
