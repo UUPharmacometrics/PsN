@@ -613,10 +613,10 @@ sub run
 		my $pid = 0;
 
 		# Get potiential finished pid
-
+		my $firstpid;
 		while (not $pid) {
-
-			foreach my $check_pid (keys %queue_map) {
+			$firstpid=1;
+			foreach my $check_pid (sort {$queue_map{$a} <=> $queue_map{$b} } keys %queue_map) {
 				if ($check_pid =~ /^rerun_/) {
 					
 					# A pid that starts with "rerun" is a rerun and is always
@@ -640,6 +640,8 @@ sub run
 				if ($pid) {
 					last; #we found a finished run, do not loop over more running pid
 				}
+				Time::HiRes::usleep(10000) unless ($firstpid or $self->run_local); #in microseconds
+				$firstpid=0;
 			}
 
 			if (not $pid) {
