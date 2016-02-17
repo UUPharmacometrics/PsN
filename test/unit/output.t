@@ -59,6 +59,10 @@ for (my $i=0; $i< scalar(@answer_hashes); $i++){
 	cmp_ok($outobj->parsed_successfully,'==',$answer_hashes[$i]->{parsed_successfully}, "output file $outfile parsed successfully");
 	unless( $outobj -> parsed_successfully ){
 		cmp_ok(length($outobj->parsing_error_message),'>',5,'error message exists');
+		if(defined $answer_hashes[$i]->{iterations_interrupted}){
+			cmp_ok($outobj->iterations_interrupted,'==',$answer_hashes[$i]->{iterations_interrupted}, 
+				   "output file $outfile iterations interrupted");
+		}
 	    next;
 	}
 

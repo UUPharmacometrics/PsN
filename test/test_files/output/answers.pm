@@ -388,6 +388,7 @@ sub read_answers
 	$answer_hashes[$index]={};
 	$answer_hashes[$index]->{file}='msfi/cov_V7_30_beta.lst';
 	$answer_hashes[$index]->{parsed_successfully}=0;
+	$answer_hashes[$index]->{iterations_interrupted} = 0;
 	$answer_hashes[$index]->{answers}={};
 
 	$index++;
@@ -846,46 +847,55 @@ sub read_answers
 	$answer_hashes[$index]={};
 	$answer_hashes[$index]->{file}='special_mod/license_dummy.lst';
 	$answer_hashes[$index]->{parsed_successfully}=0;
+	$answer_hashes[$index]->{iterations_interrupted} = 0;
 
 	$index++;
 	$answer_hashes[$index]={};
 	$answer_hashes[$index]->{file}='special_mod/license_missing.lst';
 	$answer_hashes[$index]->{parsed_successfully}=0;
+	$answer_hashes[$index]->{iterations_interrupted} = 0;
 
 	$index++;
 	$answer_hashes[$index]={};
 	$answer_hashes[$index]->{file}='special_mod/license_expired.lst';
 	$answer_hashes[$index]->{parsed_successfully}=0;
+	$answer_hashes[$index]->{iterations_interrupted} = 0;
 
 	$index++;
 	$answer_hashes[$index]={};
 	$answer_hashes[$index]->{file}='special_mod/data_missing.lst';
 	$answer_hashes[$index]->{parsed_successfully}=0;
+	$answer_hashes[$index]->{iterations_interrupted} = 0;
 
 	$index++;
 	$answer_hashes[$index]={};
 	$answer_hashes[$index]->{file}='special_mod/missingmodel.lst';
 	$answer_hashes[$index]->{parsed_successfully}=0;
+	$answer_hashes[$index]->{iterations_interrupted} = 0;
 
 	$index++;
 	$answer_hashes[$index]={};
 	$answer_hashes[$index]->{file}='special_mod/psnmissingmodel.out';
 	$answer_hashes[$index]->{parsed_successfully}=0;
+	$answer_hashes[$index]->{iterations_interrupted} = 0;
 
 	$index++;
 	$answer_hashes[$index]={};
 	$answer_hashes[$index]->{file}='special_mod/psnmissingdata.out';
 	$answer_hashes[$index]->{parsed_successfully}=0;
+	$answer_hashes[$index]->{iterations_interrupted} = 0;
 
 	$index++;
 	$answer_hashes[$index]={};
 	$answer_hashes[$index]->{file}='special_mod/empty.lst';
 	$answer_hashes[$index]->{parsed_successfully}=0;
+	$answer_hashes[$index]->{iterations_interrupted} = 0;
 
 	$index++;
 	$answer_hashes[$index]={};
 	$answer_hashes[$index]->{file}='special_mod/empty_lines.lst';
 	$answer_hashes[$index]->{parsed_successfully}=0;
+	$answer_hashes[$index]->{iterations_interrupted} = 0;
 
 	$index++;
 	$answer_hashes[$index]->{file}='onePROB/multEST/firstEstTerm.lst';
@@ -915,6 +925,7 @@ sub read_answers
 	$answer_hashes[$index]->{file}='special_mod/covcrash_noext.lst';
 	$answer_hashes[$index]->{answers}={};
 	$answer_hashes[$index]->{parsed_successfully}=0;
+	$answer_hashes[$index]->{iterations_interrupted} = 0;
 
 	$index++;
 	$answer_hashes[$index]->{file}='multPROB/noEST/withSIM/sim_noest_V7_30.lst';
@@ -1506,6 +1517,32 @@ sub read_answers
 	$index++;
     $answer_hashes[$index]->{file} = 'special_mod/allfix_estimation.lst';
     $answer_hashes[$index]->{parsed_successfully} = 0;
+	$answer_hashes[$index]->{iterations_interrupted} = 0;
+
+	$index++;
+    $answer_hashes[$index]->{file} = 'special_mod/nonclassical_interrupted/interrupt_bayes.lst';
+    $answer_hashes[$index]->{parsed_successfully} = 0;
+	$answer_hashes[$index]->{iterations_interrupted} = 1;
+
+	$index++;
+    $answer_hashes[$index]->{file} = 'special_mod/nonclassical_interrupted/interrupt_imp.lst';
+    $answer_hashes[$index]->{parsed_successfully} = 0;
+	$answer_hashes[$index]->{iterations_interrupted} = 1;
+
+	$index++;
+    $answer_hashes[$index]->{file} = 'special_mod/nonclassical_interrupted/interrupt_impmap.lst';
+    $answer_hashes[$index]->{parsed_successfully} = 0;
+	$answer_hashes[$index]->{iterations_interrupted} = 1;
+
+	$index++;
+    $answer_hashes[$index]->{file} = 'special_mod/nonclassical_interrupted/interrupt_its.lst';
+    $answer_hashes[$index]->{parsed_successfully} = 0;
+	$answer_hashes[$index]->{iterations_interrupted} = 1;
+
+	$index++;
+    $answer_hashes[$index]->{file} = 'special_mod/nonclassical_interrupted/interrupt_saem.lst';
+    $answer_hashes[$index]->{parsed_successfully} = 0;
+	$answer_hashes[$index]->{iterations_interrupted} = 1;
 
 	return \@answer_hashes;
 }

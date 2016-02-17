@@ -28,9 +28,12 @@ has 'abort_on_fail' => ( is => 'rw', isa => 'Bool', default => 1 );
 has 'parsed_successfully' => ( is => 'rw', isa => 'Bool', default => 1 );
 has 'msfo_has_terminated' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'runtime' => ( is => 'rw', isa => 'Str' );
-has 'lst_interrupted' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'iterations_interrupted' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'parsed' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'append_nm_OUTPUT' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'could_append_OUTPUT' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'parsing_error_message' => ( is => 'rw', isa => 'Str' );
+has 'iterations_interrupted' => ( is => 'rw', isa => 'Bool', default => 0 );
 
 # {{{ description
 
@@ -2846,11 +2849,13 @@ sub _read_problems
 	# this file.
 
 
-
+#	print "slurp ".$self->full_name."\n";
 	my @lstfile = utils::file::slurp_file($self->full_name);
-
-
-
+	if ($self->append_nm_OUTPUT and -e $self->directory.'OUTPUT'){
+		my @extra = utils::file::slurp_file($self->directory.'OUTPUT');
+		push(@lstfile,@extra);
+	}
+	
 	my $lstfile_pos = -1;
 	$self->parsed_successfully(1);
 
@@ -2968,6 +2973,8 @@ sub _read_problems
 	
 
 	#then read NMtran messages and license and nmversion
+	my $found_license=0;
+	my $found_nonmem = 0;
 	while ($lstfile_pos < $#lstfile){
 		$lstfile_pos++;
 		$_ = $lstfile[$lstfile_pos];
@@ -2976,10 +2983,12 @@ sub _read_problems
 			$found_nmtran_message=1;
 			@prerun_messages = ();
 		}elsif (/^\s*License /) {
+			$found_license=1;
 			@prerun_messages = (); #probably nmtran was ok, reset
 		}elsif (/^\s*ERROR reading license file /) {
 			@prerun_messages = (); #probably nmtran was ok, reset
 		}elsif (/^1NONLINEAR MIXED EFFECTS MODEL PROGRAM/) {
+			$found_nonmem=1;
 			if (/VERSION 7/) {
 				$lst_version = 7;
 				if (/VERSION 7\.1\.0/) {
@@ -3009,6 +3018,9 @@ sub _read_problems
 	}
 
 	unless (defined $lst_version){
+		if (not $found_license and not $found_nonmem and -e 'OUTPUT'){
+			$self->could_append_OUTPUT(1);
+		}
 		$self->parsing_error( message => "It seems there was an error before NONMEM started, messages are:\n".join("\n",@prerun_messages)."\n");
 		$self->parsed_successfully(0);
 		return 0;
@@ -3027,7 +3039,6 @@ sub _read_problems
 		} elsif (/^1NONLINEAR MIXED EFFECTS MODEL PROGRAM/) {
 			#if we end up here the lst-file is incomplete, was no end time printed
 			#by nmfe
-			$self->lst_interrupted(1);
 			last;
 		}
 	}
@@ -3083,6 +3094,10 @@ sub _read_problems
 					$self -> parsing_error_message( $mes );
 					$self -> parsed_successfully($self -> parsed_successfully() * 
 												 ($self->problems->[$problem_index] -> parsed_successfully()));
+
+					if (not $self->iterations_interrupted and $self->problems->[$problem_index]->iterations_interrupted){
+						$self->iterations_interrupted(1);
+					}
 
 					$self -> msfo_has_terminated($self->msfo_has_terminated()+$self->problems->[$problem_index]->msfo_has_terminated());
 					$n_previous_meth = $self->problems->[$problem_index]->last_method_number if

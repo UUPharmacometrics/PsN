@@ -1022,13 +1022,14 @@ sub select_best_model
 
 			#partial cleaning
 			# TODO update move_retry_files and use it here?
-			foreach my $filename ('psn.'.$self->modext,'psn.lst' ){
+			foreach my $ext (@PsN::nm7_extensions,'.'.$self->modext,'.lst'){
+				my $filename = 'psn'.$ext;
 				my $use_name = get_retry_name( filename => $filename,
 											   retry => $selected-1,
 											   nm_major_version => $PsN::nm_major_version,
 											   nm_minor_version => $PsN::nm_minor_version);
 				
-				# Copy files to final files in NM_run, to be clear about which one was selected
+				# move files to final files in NM_run, to be clear about which one was selected
 				mv( $use_name, $filename ) if (-e $use_name); 
 			}
 
@@ -1801,20 +1802,19 @@ sub diagnose_lst_errors
 			}
 		}
 		$store_general_error=1 unless ($have_stats_runs);
-	} elsif (not $missing and (defined $interrupted and not $interrupted)) {
-		$failure = 'NONMEM run failed';
-		$failure_mess = "NONMEM run failed. Check the lst-file in NM_run" . ($run_no+1) . " for errors";
-		$store_general_error=1 unless ($have_stats_runs);
-
-	}elsif ($have_stats_runs and (-e 'OUTPUT' or -e 'output')){
-		$failure = 'NONMEM run interrupted';
+	} elsif (not $missing and (defined $interrupted) and $interrupted){
+		$restart_possible = 1;
+		$failure = 'NONMEM iterations interrupted';
+		$failure_mess = "It seems NONMEM iterations were interrupted before finishing";
 	} else{
 		if ($missing){
 			$failure = 'the lst-file does not exist in NM_run'.($run_no+1);
 			$failure_mess = 'NONMEM run failed: the lst-file does not exist in NM_run'.($run_no+1);
 			$store_general_error=1 unless ($have_stats_runs);
 		}else{
-			$restart_possible = 1;
+			$failure = 'NONMEM run failed';
+			$failure_mess = "NONMEM run failed. Check the lst-file in NM_run" . ($run_no+1) . " for errors";
+			$store_general_error=1 unless ($have_stats_runs);
 		}
 	}
 
@@ -2445,7 +2445,23 @@ sub restart_needed
 	my $evaluation_probnum = $output_file->get_estimation_evaluation_problem_number(); #if neg then no est step run
 
 	trace(tool => 'modelfit', message => "parsed NONMEM output file ".$output_file->filename(), level => 2);
+	my $model_crashed = 0;
+	my $iterations_interrupted = 0;
+	if (( $output_file -> parsed_successfully() and
+							 not defined $output_file -> problems ) or
+						   (not $output_file -> parsed_successfully()) ){
+		$model_crashed = 1;
+		$iterations_interrupted = $output_file->iterations_interrupted;
+		if (-e 'OUTPUT' and $output_file->could_append_OUTPUT){
+			trace(tool => 'modelfit', message => "will try append OUTPUT", level => 2);
+			my $tmp_output_file = output->new(filename => $output_file->filename, 
+											  append_nm_OUTPUT => 1);
+			$iterations_interrupted = $tmp_output_file->iterations_interrupted;
+			print "tried append output, $iterations_interrupted\n";
+		}
+	}
 
+	
 	($stopmess,$eta_shrinkage_name,$iwres_shrinkage_name) = move_retry_files(filenames => \@outputfilelist,
 																			 retry => ${$tries},
 																			 nm_major_version => $PsN::nm_major_version,
@@ -2503,14 +2519,8 @@ sub restart_needed
 	# Check for minimization successfull and try to find out if lst file is truncated
 
 
-	my $model_crashed = 0;
 	my $restart_possible = 0;
 	my $maxevals_exceeded = 0;
-	if (( $output_file -> parsed_successfully() and
-							 not defined $output_file -> problems ) or
-						   (not $output_file -> parsed_successfully()) ){
-		$model_crashed = 1;
-	}
 
 	$maxevals_exceeded = maxeval_exceeded(output => $output_file,
 										  probnum => $evaluation_probnum); #return 0 if not, actual evals if yes
@@ -2527,11 +2537,11 @@ sub restart_needed
 	if($model_crashed){
 		#here we do have a lst-file, but perhaps is completely empty
 		#check for signs of NMtran error, compilation error.
-
+		
 		my $ref = diagnose_lst_errors(missing => 0,
 									  have_stats_runs => 0,
 									  parsed_successfully => 0,
-									  interrupted => $output_file -> lst_interrupted(),
+									  interrupted => $iterations_interrupted,
 									  run_no => $run_no,
 									  modext  => $self->modext,
 									  run_local => $self->run_local,

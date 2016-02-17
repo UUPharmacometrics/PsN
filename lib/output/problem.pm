@@ -80,6 +80,7 @@ has 'simulation_step_run' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'estimation_step_initiated' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'last_method_number' => ( is => 'rw', isa => 'Int' );
 has 'tables_step_error' => ( is => 'rw', isa => 'Maybe[Str]', default => undef );
+has 'iterations_interrupted' => ( is => 'rw', isa => 'Bool', default => 0 );
 
 
 sub BUILD
@@ -926,7 +927,9 @@ sub _read_subproblems
 				$sum_estimation_time = 0;
 				$sum_covariance_time = 0;
 				$no_meth = 0;
-
+				if (not $self->iterations_interrupted and $self->subproblems->[-1]->iterations_interrupted){
+					$self->iterations_interrupted(1);
+				}
 			}
 			unless ( $self->lstfile_pos > $#{$self->lstfile} ) {
 				$subproblem_start = $self->lstfile_pos;

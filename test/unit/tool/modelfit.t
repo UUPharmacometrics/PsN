@@ -261,6 +261,19 @@ cmp_ok($ref->[0],'eq','NONMEM run failed','failure NONMEM failed ');
 cmp_ok($ref->[2],'==',0,'restart possible NONMEM fail ');
 cmp_ok($ref->[3],'==',1,'store error NONMEM fail ');
 
+$ref = tool::modelfit::diagnose_lst_errors(missing => 0, 
+										   run_no => 0,
+										   interrupted => 1,
+										   have_stats_runs => 0,
+										   modext  => 'mod',
+										   run_local => 1,
+										   nmtran_error_file => 'nmtran_error.txt',
+										   nmqual => 0);
+
+cmp_ok($ref->[0],'eq','NONMEM iterations interrupted','failure iterations interrupted ');
+cmp_ok($ref->[2],'==',1,'restart possible iterations interrupted ');
+cmp_ok($ref->[3],'==',0,'store error iterations interrupted ');
+
 $ref = tool::modelfit::diagnose_lst_errors(missing => 1, 
 										   run_no => 0,
 										   have_stats_runs => 0,

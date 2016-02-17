@@ -117,6 +117,7 @@ has 'sum_covariance_time' => ( is => 'rw', isa => 'Num' );
 has 'burn_in_convergence' => ( is => 'rw', isa => 'Bool' );
 has 'covariance_matrix' => ( is => 'rw', isa => 'ArrayRef' );
 has 'burn_in_iterations' => ( is => 'rw', isa => 'Int' );
+has 'iterations_interrupted' => ( is => 'rw', isa => 'Bool', default => 0 );
 
 	
 sub BUILD
@@ -501,7 +502,8 @@ sub _read_iteration_path
 	my $burn_in_start;
 	my $burn_in_end;
 	my $read_terminated_by_obj = 1;
-
+	my $found_iteration = 0;
+	
 	my $method_exp = '^ #METH:\s*(.*)';
 	my $term_exp = '^ #TERM:';
 	my $tere_exp = '^ #TERE:';
@@ -527,7 +529,7 @@ sub _read_iteration_path
 			}
 		}   
 	}
-	
+
 	if ($self->nm_major_version >= 7) {
 		#If NM7 we should now be directly at right #METH line, check this
 	    $_ = @{$self->lstfile}[ $start_pos ];
@@ -571,20 +573,29 @@ sub _read_iteration_path
 			$success = 1 unless ($self->classical_method() and $estprint);
 			last;
 		} elsif ( $found_monitoring and $start_pos >= scalar @{$self->lstfile} ) {
-			# This is probably (we cannot be really sure but it is
-			# likely) a "NONMEM black hole"-situation. We stop parsing
-			# but do not indicate that we had problems parsing the
-			# file.
+			if ($self->classical_method() ){
+				# This is probably (we cannot be really sure but it is
+				# likely) a "NONMEM black hole"-situation. We stop parsing
+				# but do not indicate that we had problems parsing the
+				# file.
 
-			$self -> parsing_error_message("Found \" MONITORING OF SEARCH:\" but no".
-										   " records of the iterations before the end".
-										   " of the output file. This is a sign of a".
-										   " \"NONMEM black hole\"-situation. We cannot ".
-										   "be 100% sure of this based on this type of".
-										   " output so please take a good look at the files\n");
-			$self -> parsed_successfully(1);
-			$self -> finished_parsing(1);
-			return;
+
+				$self -> parsing_error_message("Found \" MONITORING OF SEARCH:\" but no".
+											   " records of the iterations before the end".
+											   " of the output file. This is a sign of a".
+											   " \"NONMEM black hole\"-situation. We cannot ".
+											   "be 100% sure of this based on this type of".
+											   " output so please take a good look at the files\n");
+				$self -> parsed_successfully(1);
+				$self -> finished_parsing(1);
+				return;
+			}else{
+				if ($found_iteration or /^\s*iteration/){
+					$self->iterations_interrupted(1);
+				}
+				$self -> parsing_error( message => "Error in reading iterations, EOF found" );
+				return;
+			}
 		} elsif ($found_monitoring and ( /Burn-in Mode/ )  ) {
 			$burn_in_area = 1;
 		} elsif ($burn_in_area and ( /^\s*Convergence achieved/ )) {
@@ -594,6 +605,7 @@ sub _read_iteration_path
 				$self->burn_in_iterations(($burn_in_start-$burn_in_end));
 			}
 		} elsif ($burn_in_area and (/^\s*iteration\s*-([0-9]+)/)  ) {
+			$found_iteration=1;
 			if (defined $burn_in_start) {
 				$burn_in_end = $1;
 			} else {
@@ -604,8 +616,9 @@ sub _read_iteration_path
 			if (defined $burn_in_start and defined $burn_in_end) {
 				$self->burn_in_iterations(($burn_in_start-$burn_in_end));
 			}
+		} elsif (not $found_iteration and (/^\s*iteration/) ) {
+			$found_iteration=1;
 		}
-
 	    
 		if ( $read_terminated_by_obj and /0PROGRAM TERMINATED BY OBJ/ ) {
 			# This is an error message which terminates NONMEM. We
@@ -660,6 +673,7 @@ sub _read_iteration_path
 						$_ = @{$self->lstfile}[ ++$start_pos ];
 						if( $start_pos >= scalar @{$self->lstfile} ) {
 							$self -> parsing_error( message => "Error in reading iteration path!\nEOF found\n" );
+							$self->iterations_interrupted(1);
 							return;
 						}
 					} while ( not /^ GRADIENT:\s*/ );
@@ -669,6 +683,7 @@ sub _read_iteration_path
 						$_ = @{$self->lstfile}[ ++$start_pos ];
 						if( $start_pos >= scalar @{$self->lstfile} ) {
 							$self -> parsing_error( message => "Error in reading iteration path!\nEOF found\n" );
+							$self->iterations_interrupted(1);
 							return;
 						}
 					} while ( not /[a-zA-DF-X]/ ); #not #TERM either
@@ -678,6 +693,7 @@ sub _read_iteration_path
 						$_ = @{$self->lstfile}[ ++$start_pos ];
 						if( $start_pos >= scalar @{$self->lstfile} ) {
 							$self -> parsing_error( message => "Error in reading iteration path!\nEOF found\n" );
+							$self->iterations_interrupted(1);
 							return;
 						}
 					} while ( not /[a-zA-DF-X]/ ); #not #TERM either
@@ -686,6 +702,7 @@ sub _read_iteration_path
 						$_ = @{$self->lstfile}[ ++$start_pos ];
 						if( $start_pos >= scalar @{$self->lstfile} ) {
 							$self -> parsing_error( message => "Error in reading iteration path!\nEOF found\n" );
+							$self->iterations_interrupted(1);
 							return;
 						}
 					} while ( not /[a-zA-DF-X]/ ); #not #TERM either
@@ -732,6 +749,7 @@ sub _read_iteration_path
 		if (($kill_found == 1) or $file_end) { #Crash before last iteration
 			my $errstr = $kill_found ? "NONMEM killed" : "EOF found\n";
 			$self -> parsing_error( message => "Error in reading iteration path!\n$errstr" );
+			$self->iterations_interrupted(1);
 			return;
 		}
 	}
