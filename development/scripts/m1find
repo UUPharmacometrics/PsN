@@ -1,0 +1,156 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+use Cwd;
+use File::Basename;
+
+sub usage
+{
+    my $name = basename($0);
+    print("Usage: $name <zip|remove|ask|list> <dir>\n\n");
+    print("zip    - All m1 directories below <dir> will be found and listed.\n");
+    print("         The user will have the option to zip and remove all.\n");
+    print("remove - All m1 directories below <dir> will be found and listed.\n");
+    print("         The user will have the option to remove all.\n");
+    print("rmzip  - All m1.zip files below <dir> will be found and listed.\n");
+    print("         The user will have the option to remove all.\n");
+    print("ask    - All m1 directories below <dir> will be found and presented one by one.\n"); 
+    print("         The user has the option to zip,remove or skip each directory separately\n");
+    print("list   - All m1 directories below <dir> will be found and listed.\n");
+    print("         No zipping or removing will take place.\n");
+    print("\n");
+    exit;
+}
+
+# check for -h
+foreach my $arg (@ARGV) {
+    if ($arg =~ /^--?h/) {
+        usage();
+    }
+}
+
+if (scalar(@ARGV) < 2) {
+    print "Too few arguments\n\n";
+    usage();
+}
+
+my $command = $ARGV[0];
+$command = "" if not defined $command;
+my $dir = $ARGV[1];
+
+if ($command ne "zip" and $command ne "remove" and $command ne "ask" and $command ne "list" and $command ne "rmzip") {
+    print "Unkown argument: $command\n\n";
+    usage();
+}
+
+if (not (-e $dir)) {
+    die "Error: $dir does not exist\n";
+}
+
+if (not (-d $dir)) {
+    die "Error: $dir is not a directory\n";
+}
+
+#chdir($dir) or die "Error: Cannot change directory to $dir\n";
+my $basedir = getcwd();
+
+my $output;
+if ($command ne "rmzip") {
+    $output = readpipe("find $dir -name 'm1' -type d 2>/dev/null");
+} else {
+    $output = readpipe("find $dir -name 'm1.zip' -type f 2>/dev/null");
+}
+
+my @lines = split /\n/, $output;
+
+if (scalar(@lines) == 0) {
+    die "Did not find any m1 directories. Exiting.\n";
+}
+
+if ($command eq "list") {
+    print "$_\n" for @lines;
+    print "Found ", scalar(@lines), " m1 directories.\n";
+    die "Did not zip or remove anything. Exiting\n";
+}
+
+if ($command ne "ask") {
+    print "$_\n" for @lines;
+    my $read_line;
+    while (1) {
+        print "Found ", scalar(@lines), " m1 directories. Do you want to ", $command, " them all? [y|n]: ";
+        $read_line = <STDIN>;
+        chomp $read_line;
+        last if ($read_line =~ /^[yn]$/);
+    }
+    if ($read_line eq "n") {
+        die "Did not zip or remove anything. Exiting\n";
+    }
+} else {
+    print "Found ", scalar(@lines), " m1 directories.\n";
+}
+
+foreach my $line (@lines) {
+    my $do_remove;
+    my $do_zip;
+    $do_remove = 1 if ($command eq "remove");
+    $do_zip = 1 if ($command eq "zip");
+    if ($command eq "ask") {
+        my $read_line;
+        while (1) {
+            print "$line [r(emove)|z(ip)|s(kip)|q(uit)]: ";
+            $read_line = <STDIN>;
+            chomp $read_line;
+            last if ($read_line =~ /^[qrsz]$/);
+        }
+        if ($read_line eq "r") {
+            $do_remove = 1;
+        } elsif ($read_line eq "z") {
+            $do_zip = 1;
+        } elsif ($read_line eq "q") {
+            die "Exiting\n";
+        } else {
+            next;
+        }
+    }
+
+    if ($do_remove) {
+
+        chdir($line) or die "Error: Could not change directory to $line";
+        chdir("..") or die "Error: Could not change directory to $line/..";
+        if (-e "m1") {
+            print("Removing $line\n");
+            system("rm -rf m1");
+        }
+        if (-e "m1.zip") {
+            print("Removing $line.zip\n");
+            system("rm -f m1.zip");
+        }
+        chdir($basedir) or die "Error: Could not change directory to $basedir";
+
+    } elsif ($do_zip) {
+
+        my $zip = "$line.zip";
+
+        if (not (-e $zip)) {
+            print "Starting to zip $line\n";
+            chdir($line) or die "Error: Could not change directory to $line";
+            chdir("..") or die "Error: Could not change directory to $line/..";
+            system("zip -r m1.zip m1 >/dev/null && rm -rf m1");
+            if (-e "m1.zip") {
+                if (not (-e "m1")) {
+                    print "\tZipping and removing m1 successful\n";
+                } else {
+                    print "\tDirectory still present after zipping. Something went wrong.\n";
+                }
+            } else {
+                print "\tZipping failed\n";
+            }
+            chdir($basedir) or die "Error: Could not change directory to $basedir";
+        } else {
+            if (-d $line) {
+                print "Both $line and $line.zip exists. Please check this. Something might have gone wrong in a previous run.\n";
+            }
+        }
+    }
+}
