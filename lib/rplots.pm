@@ -170,9 +170,13 @@ sub setup
 		}
 		my $nomegas = $model->nomegas(problem_numbers=>[1], with_same => 1, with_correlations => 0);
 		my $nsigmas = $model->nsigmas(problem_numbers=>[1], with_same => 1, with_correlations => 0);
+		my $neta=0;
+		my $neps=0;
+		$neta = $nomegas->[0] if (defined $nomegas->[0]);
+		$neps = $nsigmas->[0] if (defined $nsigmas->[0]);
 		push(@arr,
-			 'n.eta <- '.$nomegas->[0],
-			 'n.eps <- '.$nsigmas->[0]
+			 'n.eta <- '.$neta,
+			 'n.eps <- '.$neps
 			);
 	}
 
