@@ -11,10 +11,10 @@ use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages and $path variable definition
 
 our $tempdir = create_test_dir('system_crossval');
-our $dir = "$tempdir/crossval_test";
+chdir($tempdir);
 my $model_dir = $includes::testfiledir;
 
-my $command = get_command('crossval') . " $model_dir/mox1.mod -groups=3 -dir=$dir -clean=1";
+my $command = get_command('crossval') . " $model_dir/mox1.mod -groups=3 -clean=1";
 
 my  $rc = system($command);
 $rc = $rc >> 8;

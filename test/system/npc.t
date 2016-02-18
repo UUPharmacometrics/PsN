@@ -12,13 +12,12 @@ use includes; #file with paths to PsN packages and $path variable definition
 #black box testing of data class and progs that are not covered by other test files
 
 our $tempdir = create_test_dir('system_npc');
-our $dir = "$tempdir/npc_test";
 my $model_dir = $includes::testfiledir;
-
+chdir($tempdir);
 my @commands = 
 	(
-	 get_command('npc') . " -samples=20 $model_dir/mox2.mod -dir=$dir",
-	 get_command('npc') . " -samples=20 $model_dir/pheno5.mod -dir=$dir -no-copy_data",
+	 get_command('npc') . " -samples=20 $model_dir/mox2.mod ",
+	 get_command('npc') . " -samples=20 $model_dir/pheno5.mod -no-copy_data",
 	 );
 
 foreach my $command (@commands){
@@ -26,7 +25,6 @@ foreach my $command (@commands){
 	my $rc = system($command);
 	$rc = $rc >> 8;
 	ok ($rc == 0, "$command, should run ok");
-	rmtree([$dir]);
 }
 
 remove_test_dir($tempdir);

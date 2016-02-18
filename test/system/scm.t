@@ -64,12 +64,11 @@ foreach my $file (@extra_files){
 }
 chdir($tempdir);
 foreach my $cfile (@config_files) {
-	my $command = 'scm '.$cfile.' -dir=rundir';
+	my $command = 'scm '.$cfile.' ';
 	my $rc = system($command);
 	$rc = $rc >> 8;
 	ok ($rc == 0, "scm $cfile crash test");
 
-	rmtree(['rundir']);
 }
 
 remove_test_dir($tempdir);

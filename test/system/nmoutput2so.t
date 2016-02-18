@@ -14,21 +14,19 @@ SKIP: {
     skip "XML::LibXML not installed" if $@;
 
     our $tempdir = create_test_dir('system_nmoutput2so');
-    our $dir = "nmoutput2so_test";
     my $model_dir = $includes::testfiledir;
     copy_test_files($tempdir, [ "pheno.lst", "pheno.mod", "pheno.dta" ]);
+    chdir($tempdir);
 
     my @commands = (
         get_command('nmoutput2so') . " pheno.lst",
-        get_command('execute') . " $tempdir" . "pheno.mod -standardised_output -directory=$dir",
+        get_command('execute') ." pheno.mod -standardised_output ",
     );
-    chdir($tempdir);
     foreach my $command (@commands){
         print "Running $command\n";
         my $rc = system($command);
         $rc = $rc >> 8;
         ok ($rc == 0, "$command, should run ok");
-        rmtree(["$dir"]);
     }
 
     remove_test_dir($tempdir);

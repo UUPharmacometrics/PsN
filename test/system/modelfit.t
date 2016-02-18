@@ -45,7 +45,6 @@ our $tempdir = create_test_dir('system_modelfit');
 my $model_dir = $includes::testfiledir;
 #put pheno.mod in testdir so that .ext etc in testfiledir are not modified
 copy_test_files($tempdir,["phenomaxeval10.mod","phenomaxeval0.mod", "pheno.dta","pheno.mod",'tnpri.mod','create_tnpri_msf.mod','data_tnpri.csv']);
-my $dir='mfit';
 
 chdir($tempdir);
 
@@ -58,15 +57,15 @@ if (defined $options{'nmqual'} and $options{'nmqual'}==1){
 	$modext = 'ctl';
 }
 my @command_line = (
-	get_command('execute') . " -seed=1 phenomaxeval10.mod -no-disp -clean=1 -no-tweak_inits -min_retries=0 -retries=0 -maxevals=9999 -handle_msfo -directory=$dir",
-	get_command('execute') . " -seed=1  phenomaxeval10.mod -no-disp -clean=1 -tweak_inits  -min_retries=0 -retries=0 -maxevals=0 -directory=$dir",
-	get_command('execute') . " -seed=1  phenomaxeval10.mod -no-disp -clean=1 -tweak_inits  -min_retries=0 -retries=1 -maxevals=0 -directory=$dir",
-	get_command('execute') . " -seed=1  pheno.mod -clean=1 -no-disp -tweak_inits  -min_retries=0 -retries=1 -reduced_model_ofv=70 -directory=$dir",
-	get_command('execute') . " -seed=1  phenomaxeval0.mod -no-disp -clean=1 -tweak_inits  -min_retries=0 -retries=1 -maxevals=0 -directory=$dir",
-	get_command('execute') . " -seed=1  phenomaxeval0.mod -no-disp -clean=1 -tweak_inits  -min_retries=1 -retries=0 -maxevals=0 -directory=$dir",
+	get_command('execute') . " -seed=1 phenomaxeval10.mod -no-disp -clean=1 -no-tweak_inits -min_retries=0 -retries=0 -maxevals=9999 -handle_msfo -directory=dir0",
+	get_command('execute') . " -seed=1  phenomaxeval10.mod -no-disp -clean=1 -tweak_inits  -min_retries=0 -retries=0 -maxevals=0 -directory=dir1",
+	get_command('execute') . " -seed=1  phenomaxeval10.mod -no-disp -clean=1 -tweak_inits  -min_retries=0 -retries=1 -maxevals=0 -directory=dir2",
+	get_command('execute') . " -seed=1  pheno.mod -clean=1 -no-disp -tweak_inits  -min_retries=0 -retries=1 -reduced_model_ofv=70 -directory=dir3",
+	get_command('execute') . " -seed=1  phenomaxeval0.mod -no-disp -clean=1 -tweak_inits  -min_retries=0 -retries=1 -maxevals=0 -directory=dir4",
+	get_command('execute') . " -seed=1  phenomaxeval0.mod -no-disp -clean=1 -tweak_inits  -min_retries=1 -retries=0 -maxevals=0 -directory=dir5",
 	get_command('execute') . " -seed=1  create_tnpri_msf.mod  -no-disp",
-	get_command('execute') . " -seed=1  tnpri.mod -clean=1 -tweak_inits  -no-disp -min_retries=0 -retries=1 -extra_files=msf_tnpri -directory=$dir",
-	get_command('execute') . " -seed=1  tnpri.mod -clean=1 -tweak_inits  -no-disp -min_retries=1 -retries=0 -extra_files=msf_tnpri -maxevals=0 -directory=$dir",
+	get_command('execute') . " -seed=1  tnpri.mod -clean=1 -tweak_inits  -no-disp -min_retries=0 -retries=1 -extra_files=msf_tnpri -directory=dir6",
+	get_command('execute') . " -seed=1  tnpri.mod -clean=1 -tweak_inits  -no-disp -min_retries=1 -retries=0 -extra_files=msf_tnpri -maxevals=0 -directory=dir7",
 );
 
 # If we are running on Windows remove ' in command line
@@ -78,6 +77,7 @@ if ($Config{osname} eq 'MSWin32') {
 
 
 foreach my $i (0..$#command_line) {
+	my $dir='dir'.$i;
 	my $command= $command_line[$i];
 	print "Running $command\n";
 	my $rc = system($command);
@@ -107,7 +107,6 @@ foreach my $i (0..$#command_line) {
 		ok (not (-e $dir.'/NM_run1/psn-2.'.$modext)," not retry files exist for onlysim but min_retries but no params to tweak");
 	}
 
-	rmtree([$dir]);
 }
 
 remove_test_dir($tempdir);

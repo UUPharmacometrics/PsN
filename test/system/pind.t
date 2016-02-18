@@ -10,11 +10,10 @@ use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages and $path variable definition
 
 our $tempdir = create_test_dir('system_pind');
-our $dir = "pind_test";
 my $model_dir = $includes::testfiledir;
 
 my @commands = 
-	(get_command('pind') . " $model_dir/pheno5.mod  -dir=$dir -clean=3",
+	(get_command('pind') . " $model_dir/pheno5.mod -clean=3",
 	);
 chdir($tempdir);
 foreach my $command (@commands){
@@ -22,7 +21,6 @@ foreach my $command (@commands){
 	my $rc = system($command);
 	$rc = $rc >> 8;
 	ok ($rc == 0, "$command, should run ok");
-	rmtree(["$dir"]);
 }
 
 remove_test_dir($tempdir);

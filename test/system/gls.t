@@ -10,16 +10,16 @@ use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages and $path variable definition
 
 our $tempdir = create_test_dir('system_gls');
-our $dir = "$tempdir/gls_test";
-my $model_dir = $includes::testfiledir;
 
-my $command = get_command('gls') . " $model_dir/glstags.mod -samples=5 -set_simest -ind_shrink -dir=$dir";
+my $model_dir = $includes::testfiledir;
+chdir($tempdir);
+my $command = get_command('gls') . " $model_dir/glstags.mod -samples=5 -set_simest -ind_shrink -dir=glsdir";
 
 my  $rc = system($command);
 $rc = $rc >> 8;
 
 ok ($rc == 0, "gls that should run ok");
-ok (-e "$dir/m1/gls4tab-gls", "gls table created");
+ok (-e "glsdir/m1/gls4tab-gls", "gls table created");
 
 remove_test_dir($tempdir);
 

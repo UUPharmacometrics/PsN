@@ -46,22 +46,22 @@ sub compare_bins
 my $model_dir = $includes::testfiledir;
 
 my @a;
+our $dir1 = "$tempdir/vpc_test1";
 
 # Commands that should return error
-my @command_line = (get_command('vpc') ." -samples=20 $model_dir/pheno.mod -min_points_in_bin=28 -bin_array=10,20,30 -directory=$dir",       # Min points in bin without -auto_bin
-					get_command('vpc') . " -samples=20 $model_dir/pheno.mod -auto_bin=20 -bin_array=10,20,30 -directory=$dir",     # Mixing auto_bin with bin_array
-					get_command('vpc') . " -samples=20 $model_dir/pheno.mod -auto_bin=auto -bin_by_count=0 -directory=$dir",       # Mixing auto_bin with bin_by_count
+my @command_line = (get_command('vpc') ." -samples=20 $model_dir/pheno.mod -min_points_in_bin=28 -bin_array=10,20,30 -directory=$dir1",       # Min points in bin without -auto_bin
+					get_command('vpc') . " -samples=20 $model_dir/pheno.mod -auto_bin=20 -bin_array=10,20,30 -directory=$dir1",     # Mixing auto_bin with bin_array
+					get_command('vpc') . " -samples=20 $model_dir/pheno.mod -auto_bin=auto -bin_by_count=0 -directory=$dir1",       # Mixing auto_bin with bin_by_count
                  ); 
 my $rc;
 
 foreach my $i (0..$#command_line) {
-  $rc = system($command_line[$i]);
-  $rc = $rc >> 8;
-
+	$rc = system($command_line[$i]);
+	$rc = $rc >> 8;
 	ok ($rc != 0, "Command that should return error: $command_line[$i]");
 }
 
-rmtree([$dir]);
+rmtree([$dir1]);
 
 # Commands that should store bins in vpc_bins.txt
 my @results = ([-8.888, 16.5, 42.65, 68.15, 93, 127.9, 148.4, 204.8, 390.1888],
@@ -85,7 +85,7 @@ my $is_equal;
 foreach my $i (0..$#command_line) {
   system $command_line[$i];
 
-  @a = get_bins;
+  @a = get_bins();
 
 	$is_equal = compare_bins(\@a, $results[$i]);
 

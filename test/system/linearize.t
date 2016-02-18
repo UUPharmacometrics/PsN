@@ -10,19 +10,17 @@ use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages and $path variable definition
 
 our $tempdir = create_test_dir('system_linearize');
-our $dir = "linearize_test";
+chdir($tempdir);
 my $model_dir = $includes::testfiledir;
 
 my @commands = 
-	(get_command('linearize') . " $model_dir/mox1.mod -dir=$dir",
+	(get_command('linearize') . " $model_dir/mox1.mod ",
 	);
-chdir($tempdir);
 foreach my $command (@commands){
 	print "Running $command\n";
 	my $rc = system($command);
 	$rc = $rc >> 8;
 	ok ($rc == 0, "$command, should run ok");
-	rmtree(["$dir"]);
 }
 
 remove_test_dir($tempdir);

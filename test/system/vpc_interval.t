@@ -11,7 +11,7 @@ use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages and $path variable definition
 
 our $tempdir = create_test_dir('system_vpcinterval');
-our $dir = "$tempdir"."vpc_test";
+
 
 my $truematrix=
 [[1.7300E+01,1.5591E+01,2.0031E+01,1.3769E+01,1.7572E+01,1.3515E+01,4.1674E+01,2.6360E+01,9.6451E+00,4.4075E+01,1.1120E+01,2.2924E+01,2.9936E+01,1.4643E+01,1.5146E+01,3.2476E+01,2.2444E+01,1.7241E+01,3.6800E+01,2.0314E+01,1.3952E+01],
@@ -56,7 +56,8 @@ my $truestats=[
 
 sub get_dv_matrix
 {
-  open (FILE, "$dir/m1/DV_matrix.csv");
+	my $directory = shift;
+  open (FILE, "$directory/m1/DV_matrix.csv");
   my @arr = <FILE>;
   close FILE;
 
@@ -85,7 +86,8 @@ sub is_array{
 
 sub get_stats
 {
-  open my $fh, "<", "$dir/vpc_results.csv";
+	my $directory = shift;
+  open my $fh, "<", "$directory/vpc_results.csv";
 
   my @arr = <$fh>;
   close $fh;
@@ -119,11 +121,11 @@ my $model_dir = $includes::testfiledir;
 
 #do not copy lst and ext here
 copy_test_files($tempdir,["pheno5.mod", "pheno5.dta","vpc/orig.tab","vpc/sim.tab","vpc/simNID.tab"]);
-
-my $command = get_command('vpc') . " -samples=20 $tempdir/pheno5.mod -sim_table=$tempdir/sim.tab -orig_table=$tempdir/orig.tab -auto_bin=2 -directory=$dir -seed=12345 -min_point=5";
+chdir($tempdir);
+my $command = get_command('vpc') . " -samples=20 pheno5.mod -sim_table=sim.tab -orig_table=orig.tab -auto_bin=2 -directory=dir1 -seed=12345 -min_point=5";
 system $command;
 
-my $newmatrix = get_dv_matrix();
+my $newmatrix = get_dv_matrix('dir1');
 
 is (scalar(@{$newmatrix}),scalar(@{$truematrix}),"DV matrices, equal num rows");
 my $num = scalar(@{$newmatrix});
@@ -132,18 +134,18 @@ for (my $i = 0; $i < $num; $i++) {
 	is_array ($newmatrix->[$i],$truematrix->[$i],"DV matrix row index $i");
 }
 
-my $stats = get_stats();
+my $stats = get_stats('dir1');
 for (my $i = 0; $i < 2; $i++){
 	is_array ($stats->[$i],$truestats->[$i],"stats row index $i");
 }
 
-rmtree([$dir]);
+rmtree(['dir1']);
 
 #use irep option and dummy model
-my $command = get_command('vpc') . " -samples=20 -irep=NID -sim_table=$tempdir/simNID.tab -orig_table=$tempdir/orig.tab -auto_bin=2 -directory=$dir -seed=12345 -min_point=5";
+my $command = get_command('vpc') . " -samples=20 -irep=NID -sim_table=simNID.tab -orig_table=orig.tab -auto_bin=2 -directory=dir2 -seed=12345 -min_point=5";
 system $command;
 
-my $newmatrix = get_dv_matrix();
+my $newmatrix = get_dv_matrix('dir2');
 
 is (scalar(@{$newmatrix}),scalar(@{$truematrix}),"DV matrices, equal num rows");
 my $num = scalar(@{$newmatrix});
@@ -152,20 +154,20 @@ for (my $i = 0; $i < $num; $i++) {
 	is_array ($newmatrix->[$i],$truematrix->[$i],"DV matrix row index $i");
 }
 
-my $stats = get_stats();
+my $stats = get_stats('dir2');
 for (my $i = 0; $i < 2; $i++){
 	is_array ($stats->[$i],$truestats->[$i],"stats row index $i");
 }
 
-rmtree([$dir]);
+rmtree(['dir2']);
 
 
 
 #split simulation over multiple tabs
-$command = get_command('vpc') . " -samples=20 $tempdir/pheno5.mod -auto_bin=2 -directory=$dir -seed=12345 -min_point=5 -n_sim=2";
+$command = get_command('vpc') . " -samples=20 pheno5.mod -auto_bin=2 -directory=dir3 -seed=12345 -min_point=5 -n_sim=2";
 system $command;
 
-$newmatrix = get_dv_matrix();
+$newmatrix = get_dv_matrix('dir3');
 
 is (scalar(@{$newmatrix}), scalar(@{$truematrix2}), "DV matrices n_sim=2, equal num rows");
 $num = scalar(@{$newmatrix});

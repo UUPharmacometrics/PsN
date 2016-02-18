@@ -9,39 +9,37 @@ use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages and $path variable definition
 
 our $tempdir = create_test_dir('system_bootstrap');
-our $dir = "$tempdir/bootstrap_test";
+
 my $model_dir = $includes::testfiledir;
 
-copy_test_files($tempdir,["pheno5.mod", "pheno5.dta", "mox1.mod", "mox_simulated.csv"]);
-
-my $command = get_command('execute') . " $tempdir/pheno5.mod -dir=$dir";
+copy_test_files($tempdir,["pheno5.mod", "pheno5.dta", "pheno5.lst", "mox1.mod","mox1.lst", "mox_simulated.csv"]);
+chdir($tempdir);
+my $command = get_command('execute') . " pheno5.mod ";
 my $rc = system($command);
-rmtree([$dir]);
-$command = get_command('bootstrap') . " $tempdir/pheno5.mod -samples=10 -bca -seed=12345 -dir=$dir -no-skip_minim ";
+
+$command = get_command('bootstrap') . " pheno5.mod -samples=10 -bca -seed=12345 -dir=boot1 -no-skip_minim ";
 
 $rc = system($command);
 $rc = $rc >> 8;
 
 ok ($rc == 0, "bootstrap 1 that should run ok");
 
-$command = get_command('bootstrap') . " $tempdir/pheno5.mod -samples=10 -seed=12345 -dir=$dir -dofv ";
+$command = get_command('bootstrap') . " pheno5.mod -samples=10 -seed=12345 -dir=boot1 -dofv ";
 
 $rc = system($command);
 $rc = $rc >> 8;
 
 ok ($rc == 0, "bootstrap 1b that should run ok");
 
-rmtree([$dir]);
-
-$command = get_command('bootstrap') . " $tempdir/mox1.mod -samples=10 -stratify_on=DGRP -dir=$dir -no-skip_minim -no-skip_est -clean=3";
+$command = get_command('bootstrap') . " mox1.mod -samples=10 -stratify_on=DGRP -dir=boot2 -no-skip_minim -no-skip_est -clean=3";
 
 $rc = system($command);
 $rc = $rc >> 8;
 
 ok ($rc == 0, "bootstrap 2 that should run ok");
-unlink($dir.'/m1/bs_pr1_1.lst');
-unlink($dir.'/m1/bs_pr1_1.ext');
-$command = get_command('bootstrap') . " $tempdir/mox1.mod -samples=10 -stratify_on=DGRP -dir=$dir -no-skip_minim  -no-skip_est";
+unlink('boot2/m1/bs_pr1_1.lst');
+unlink('boot2/m1/bs_pr1_1.ext');
+$command = get_command('bootstrap') . " mox1.mod -samples=10 -stratify_on=DGRP  -no-skip_minim  -no-skip_est";
 
 $rc = system($command);
 $rc = $rc >> 8;

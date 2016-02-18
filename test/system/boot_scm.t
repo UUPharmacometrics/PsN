@@ -19,10 +19,10 @@ copy_test_files($tempdir,["scm/pheno_with_cov.mod","scm/pheno_ignore.mod","scm/c
 chdir($tempdir);
 my @scmcommands = 
 	(
-	 get_command('boot_scm') . " -samples=2 config_time_varying.scm -dummy_cov=WGT -stratify_on=APGR -dir=$dir",
-	 get_command('boot_scm') . " -samples=2 scm_config.scm -dummy_cov=WGT -dir=$dir",
-	 get_command('boot_scm') . " -samples=2 config_ignore.scm -stratify_on=CVD2 -dir=$dir ",
-	 get_command('boot_scm') . " -samples=2 config_foce.scm -stratify_on=CVD2 -dir=$dir -methodA",
+	 get_command('boot_scm') . " -samples=2 config_time_varying.scm -dummy_cov=WGT -stratify_on=APGR ",
+	 get_command('boot_scm') . " -samples=2 scm_config.scm -dummy_cov=WGT ",
+	 get_command('boot_scm') . " -samples=2 config_ignore.scm -stratify_on=CVD2 ",
+	 get_command('boot_scm') . " -samples=2 config_foce.scm -stratify_on=CVD2 -nm_out=ext,cov -methodA",
 	);
 foreach my $command (@scmcommands){
 	print "Running $command\n";
@@ -30,7 +30,6 @@ foreach my $command (@scmcommands){
 	$rc = $rc >> 8;
 	print "\n"; #Something is fishy when test harness runs this test. To print something extra here fixes it.	
 	ok ($rc == 0, "$command, should run ok");
-	rmtree(["./$dir"]);
 }
 
 remove_test_dir($tempdir);

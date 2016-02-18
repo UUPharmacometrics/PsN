@@ -18,7 +18,7 @@ use File::Copy 'cp';
 
 
 our $tempdir = create_test_dir('system_execute');
-our $dir = "$tempdir/execute_test";
+
 my $model_dir = $includes::testfiledir;
 #put pheno.mod in testdir so that .ext etc in testfiledir are not modified
 copy_test_files($tempdir,["pheno.mod", "pheno.dta","notable.mod"]);
@@ -47,19 +47,19 @@ my @shrinking_results = (40.5600924453085, -0.185810314125491, 89.4892871889343)
 my @shrinking_headings = ('shrinkage_eta1(%)', 'shrinkage_eta2(%)', 'shrinkage_iwres(%)');
 
 my @command_line = (
-	get_command('execute') . " $tempdir/notable.mod -shrinkage -directory=$dir",
-	get_command('execute') . " $tempdir/notable.mod -cwres -directory=$dir",
-	get_command('execute') . " $tempdir/pheno.mod -min_retries=2 -directory=$dir",
-	get_command('execute') . " $tempdir/pheno.mod -mirror_plots=2 -mirror_from_lst -directory=$dir",
-	get_command('execute') . " $model_dir/tbs1.mod -tbs  -directory=$dir", #prop
-	get_command('execute') . " $model_dir/tbs1.mod -dtbs  -directory=$dir", #prop
-	get_command('execute') . " $model_dir/tbs1a.mod -tbs  -directory=$dir", #add
-	get_command('execute') . " $model_dir/tbs1a.mod -dtbs  -directory=$dir", #add
-	get_command('execute') . " $model_dir/tbs1.mod -tbs_delta='(-1,0.01,1)'  -directory=$dir",
-	get_command('execute') . " $model_dir/tbs1a.mod -tbs_delta='(-1,0.01,1)'  -directory=$dir",
-	get_command('execute') . " $model_dir/tbs1a.mod -tbs_zeta='(-1,0.01,1)'  -directory=$dir",
-	get_command('execute') . " $model_dir/tbs1.mod -tbs_lambda='(-2,1,2)'  -directory=$dir",
-	get_command('execute') . " $model_dir/tbs1.mod -tbs_lambda='(-2,1,2)' -dtbs  -directory=$dir",
+	get_command('execute') . " notable.mod -shrinkage -dir=shrink",
+	get_command('execute') . " notable.mod -cwres ",
+	get_command('execute') . " pheno.mod -min_retries=2 ",
+	get_command('execute') . " pheno.mod -mirror_plots=2 -mirror_from_lst ",
+	get_command('execute') . " $model_dir/tbs1.mod -tbs  ", #prop
+	get_command('execute') . " $model_dir/tbs1.mod -dtbs  ", #prop
+	get_command('execute') . " $model_dir/tbs1a.mod -tbs  ", #add
+	get_command('execute') . " $model_dir/tbs1a.mod -dtbs  ", #add
+	get_command('execute') . " $model_dir/tbs1.mod -tbs_delta='(-1,0.01,1)'  ",
+	get_command('execute') . " $model_dir/tbs1a.mod -tbs_delta='(-1,0.01,1)'  ",
+	get_command('execute') . " $model_dir/tbs1a.mod -tbs_zeta='(-1,0.01,1)'  ",
+	get_command('execute') . " $model_dir/tbs1.mod -tbs_lambda='(-2,1,2)'  ",
+	get_command('execute') . " $model_dir/tbs1.mod -tbs_lambda='(-2,1,2)' -dtbs  ",
 );
 
 # If we are running on Windows remove ' in command line
@@ -77,7 +77,7 @@ foreach my $i (0..$#command_line) {
 	  #shrinkage
 	  system $command_line[$i];
 	  # Search the raw_results file for the specific columns and compare values
-	  open my $fh, "<", "$dir/raw_results_notable.csv";
+	  open my $fh, "<", "shrink/raw_results_notable.csv";
 	  
 	  my $headings = <$fh>;
 	  my @head_array = split /\"/, $headings;
@@ -104,7 +104,7 @@ foreach my $i (0..$#command_line) {
 		  ok(-e 'cwtab0.est',"cwres intermediate results exist");
 	  }
   }
-  rmtree([$dir]);
+
 }
 
 remove_test_dir($tempdir);

@@ -15,7 +15,6 @@ SKIP: {
     skip "too old NONMEM version for precond" if ($PsN::nm_major_version < 7 or ($PsN::nm_major_version == 7 and $PsN::nm_minor_version < 2));
 
     our $tempdir = create_test_dir('system_precond');
-    our $dir = "$tempdir/precond_test";
     my $model_dir = $includes::testfiledir;
 
     copy_test_files($tempdir, ["run1.mod", "data.csv"]);
@@ -32,9 +31,7 @@ SKIP: {
         my $rc = system($command);
         $rc = $rc >> 8;
         ok ($rc == 0, "$command, should run ok");
-        rmtree(["$dir"]);
     }
-    rmtree(["$dir"]);
     remove_test_dir($tempdir);
 
 }

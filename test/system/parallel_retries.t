@@ -10,12 +10,12 @@ use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages and $path variable definition
 
 our $tempdir = create_test_dir('system_parallel_retries');
-our $dir = "parallel_retries_test";
+
 my $model_dir = $includes::testfiledir;
 copy_test_files($tempdir,["pheno.mod", "pheno.dta"]);
 
 my @commands = 
-	(get_command('parallel_retries') . " pheno.mod -dir=$dir -min_retries=2 -no-display -no-check",
+	(get_command('parallel_retries') . " pheno.mod -min_retries=2 -no-display -no-check",
 	);
 chdir($tempdir);
 foreach my $command (@commands){
@@ -23,7 +23,6 @@ foreach my $command (@commands){
 	my $rc = system($command);
 	$rc = $rc >> 8;
 	ok ($rc == 0, "$command, should run ok");
-	rmtree(["$dir"]);
 }
 
 remove_test_dir($tempdir);

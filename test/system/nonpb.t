@@ -12,7 +12,6 @@ use includes; #file with paths to PsN packages and $path variable definition
 
 
 our $tempdir = create_test_dir('system_nonpb');
-our $dir = "nonpb_test";
 my $model_dir = $includes::testfiledir;
 copy_test_files($tempdir,["pheno5.mod", "pheno5.dta","pheno5.lst"]);
 

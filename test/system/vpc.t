@@ -10,11 +10,11 @@ use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages and $path variable definition
 
 our $tempdir = create_test_dir('system_vpc');
-our $dir = "$tempdir/vpc_test";
+chdir($tempdir);
 my $model_dir = $includes::testfiledir;
-
+my $dir='vpctest';
 my @commands = (
-	get_command('vpc') . " -samples=20 $model_dir/pheno_flip_comments.mod -flip_comments -auto_bin=5 -dir=$tempdir/fliptest",
+	get_command('vpc') . " -samples=20 $model_dir/pheno_flip_comments.mod -flip_comments -auto_bin=5 -dir=fliptest",
 	get_command('vpc') . " -samples=20 $model_dir/mox1.mod -stratif=AGE -no_of_strata=3 -auto_bin=12 -dir=$dir",
 	get_command('vpc') . " -samples=20 $model_dir/mox1.mod -bin_by_count=1 -bin_array=500,400,122 -dir=$dir",
 	get_command('vpc') . " -samples=20 $model_dir/mox1.mod -bin_by_count=0 -bin_array=10,20,40 -dir=$dir",
@@ -34,7 +34,6 @@ foreach my $command (@commands){
 	my $rc = system($command);
 	$rc = $rc >> 8;
 	ok ($rc == 0, "$command, should run ok");
-#	rmtree([$dir]); #do not remove here, want to reuse simulations
 }
 
 remove_test_dir($tempdir);
