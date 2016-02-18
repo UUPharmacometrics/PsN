@@ -1656,7 +1656,7 @@ sub do_model1
 		my $run = tool::modelfit ->new( %{common_options::restore_options(@common_options::tool_options)},
 										base_directory	 => $self -> directory(),
 										directory		 => $rundir,
-										copy_data     => 0,
+										copy_data     => 1,
 										models		 => [$frem_model],
 										top_tool              => 0);
 		tool::add_to_nmoutput(run => $run, extensions => ['phi','ext','cov']);		
@@ -1753,7 +1753,7 @@ sub do_filter_dataset_and_append_binary
 			  directory      => $rundir,
 			  models         => [$filtered_data_model],
 			  top_tool       => 0,
-			  copy_data      => 0,
+			  copy_data      => 1,
 			  clean => 2  );
 		ui -> print( category => 'all',
 					 message  => $message,
