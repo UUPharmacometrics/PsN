@@ -7,10 +7,11 @@ library(grid)
 library(xpose4) 
 pdf(file=pdf.filename,title=pdf.title)
 
+#does not work for undef deltaofv
 #xpose4 built-in, need library(xpose4)
-print(randtest.hist(raw.results.file,df=length(extra.thetas),p.val=pvalue)) 
+#print(randtest.hist(raw.results.file,df=length(extra.thetas),p.val=pvalue)) 
 
-if (rplots.level > 1){
+#if (rplots.level > 1){
 # required packages
 library(ggplot2)
 library(reshape2)
@@ -50,7 +51,7 @@ legend.text = element_text(size=8,face="bold"),
 legend.title = element_blank()))
 
 ## KS test
-KStestOFV <- function(objdf=NULL,dfRange=seq(0.0001,5,0.01),flNm=NULL,ignore.usm=T,alpha=0.95){
+KStestOFV <- function(objdf=NULL,dfRange=seq(0.0001,5,0.01),flNm=NULL,ignore.usm=F,alpha=0.95){
 if (is.null(flNm)) flNm <- match.call(expand.dots=F)[[2]]
 if (is.null(objdf)){stop("No input file was provided")}
 
@@ -241,9 +242,10 @@ tabout <- data.frame()
 
 # Read randtest raw result file
 odf <- read.csv(raw.results.file)
+odf <- subset(odf,!is.na(deltaofv))
 # Check if only successful minimization runs will be included
 if (ignore.usm){
-df <- subset(odf, minimization_successful==1)
+ df <- subset(odf, minimization_successful==1)
 }else{
 df <- odf
 }
@@ -304,7 +306,7 @@ modEMPcritical=ksrecord$modEMPcritical,modCHIcritical=ksrecord$modCHIcritical,cu
 
 
 write.table(tabout, file="randtestTable.tsv", sep="\t", row.names=F, col.names=T, quote=F)
-}
+#} end if level>1
 	dev.off()
 }
 
