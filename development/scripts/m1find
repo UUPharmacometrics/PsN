@@ -65,7 +65,11 @@ if ($command ne "rmzip") {
 my @lines = split /\n/, $output;
 
 if (scalar(@lines) == 0) {
-    die "Did not find any m1 directories. Exiting.\n";
+    if ($command ne "rmzip") {
+        die "Did not find any m1 directories. Exiting.\n";
+    } else {
+        die "Did not find any m1.zip files. Exiting.\n";
+    }
 }
 
 if ($command eq "list") {
@@ -77,8 +81,17 @@ if ($command eq "list") {
 if ($command ne "ask") {
     print "$_\n" for @lines;
     my $read_line;
+    my $files_or_dir;
+    my $command_text;
+    if ($command eq "rmzip") {
+        $files_or_dir = "m1.zip files";
+        $command_text = "remove";
+    } else {
+        $files_or_dir = "m1 directories";
+        $command_text = $command;
+    }
     while (1) {
-        print "Found ", scalar(@lines), " m1 directories. Do you want to ", $command, " them all? [y|n]: ";
+        print "Found ", scalar(@lines), " $files_or_dir. Do you want to ", $command_text, " them all? [y|n]: ";
         $read_line = <STDIN>;
         chomp $read_line;
         last if ($read_line =~ /^[yn]$/);
