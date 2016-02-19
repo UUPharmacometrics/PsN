@@ -1,3 +1,5 @@
+
+
 #############################################################################################################
 ### Diagnostics for SIR
 ### Author: AG Dosne
@@ -16,16 +18,11 @@
 ###     - a plot of the number of resampled values in the bin with the highest proportion as the number of samples increases, iteration by iteration (all parameters together)
 ### COMMENTS ################################################################################################
 
-require(ggplot2)             # check that you have all the packages installed
-require(dplyr) 						   # important to load plyr after dplyr even if get warning
-require(plyr)
-require(caTools)
-require(reshape)
-require(tidyr)
-require(gridExtra)
-require(gplots)
-require(RColorBrewer)
+pkg1 <- c("ggplot2","dplyr","plyr","reshape","tidyr","gridExtra","gplots","RColorBrewer")  # check that you have all the packages installed
+pkg2 <- paste0("package:",pkg1)
+lapply(pkg1, require, character.only = TRUE)                                               # important to load plyr after dplyr even if get warning
 theme_set(theme_bw(base_size=20))
+# lapply(pkg2, detach, character.only = TRUE, unload = TRUE)
 
 ### The rest of the code should be left as is (but can be changed if you want to improve the graphical output of course)
 #############################################################################################################
@@ -56,6 +53,7 @@ parnames            <- names(rawres)[COL.ESTIMATED.PARAMS]
 
 summary_it         <- read.csv("summary_iterations.csv")
 sir_spec           <- data.frame("ITERATION"=summary_it$iteration,"NSAMP"=summary_it$successful.samples,"NRESAMP"=summary_it$actual.resamples) 
+sir_spec           <- filter(sir_spec, ITERATION != 0) # ITERATION=0 only used with rawres input to estimate mutlivariate normal
 msir_spec          <- melt(sir_spec,measure.vars=c("NSAMP","NRESAMP"))
 msir_spec$variable <- factor(msir_spec$variable,labels=c("m","M"),levels=c("NRESAMP","NSAMP"))  
 msir_spec$ITERATION<- factor(msir_spec$ITERATION,levels=seq(0,length(ALL.RESAMPLES)),labels=c("REF",seq(length(ALL.RESAMPLES)))) 
@@ -104,45 +102,90 @@ ref_full      <- expand.grid("df"=df_est[,"df"],"QUANT"=QUANT) # take only 1 col
 ref_full      <- merge(df_est,ref_full)
 ref_full$dOFV <- qchisq(ref_full$QUANT,df=ref_full$df)
 
-# Calculate resampling noise around SIR dOFV curves
-N    <- 500        # number of times resampling will be done
-res  <- matrix(NA,ncol=4,nrow=N*sum(sir_spec$NRESAMP),dimnames=list(NULL,c("ITERATION","NSAMP","NRESAMP","sample.id")))
+# Calculate resampling noise around last SIR dOFV curve
+N    <- 2000        # number of times resampling will be done
+res  <- matrix(NA,ncol=4,nrow=N*sir_spec$NRESAMP[nrow(sir_spec)],dimnames=list(NULL,c("ITERATION","NSAMP","NRESAMP","sample.id")))
 for (i in seq(N)) { # need to resample in a loop to sample without replacement
-    res.cur   <- ddply(rawres,.(ITERATION,NSAMP,NRESAMP),summarize,"sample.id"=sample(sample.id,unique(NRESAMP),prob=importance_ratio))
-    res[seq((i-1)*sum(sir_spec$NRESAMP)+1,i*sum(sir_spec$NRESAMP)),]       <- as.matrix(res.cur,ncol=5)
+    res.cur   <- ddply(filter(rawres,ITERATION==nrow(sir_spec)),.(ITERATION,NSAMP,NRESAMP),summarize,"sample.id"=sample(sample.id,unique(NRESAMP),prob=importance_ratio))
+    res[seq((i-1)*sir_spec$NRESAMP[nrow(sir_spec)]+1,i*sir_spec$NRESAMP[nrow(sir_spec)]),]       <- as.matrix(res.cur,ncol=5)
 }
 
 res              <- as.data.frame(res)
-res$NOISE        <- rep(seq(N),each=sum(sir_spec$NRESAMP))
+res$NOISE        <- rep(seq(N),each=sir_spec$NRESAMP[nrow(sir_spec)])
 res              <- left_join(res,rawres[,c("sample.id","deltaofv","ITERATION")])
 dOFV_sir_noise   <- ddply(res,.(ITERATION,NOISE), summarize, "dOFV"=quantile(deltaofv,probs=QUANT,na.rm=TRUE), "QUANT"=QUANT)
 qdOFV_sir_noise  <- ddply(dOFV_sir_noise,.(ITERATION,QUANT), summarize, "PLOW"=quantile(dOFV,probs=0.025,na.rm=TRUE), "PHIGH"=quantile(dOFV,probs=0.975,na.rm=TRUE))
 qdOFV_sir_noise$ITERATION    <- factor(qdOFV_sir_noise$ITERATION,levels=seq(0,length(ALL.RESAMPLES)),labels=c("REF",seq(length(ALL.RESAMPLES)))) 
 
+### Covmat visualization (Only for proposal and final) 
+
+LASTIT       <- length(ALL.RESAMPLES)                  # last iteration
+cov.proposal <- var(filter(rawres,ITERATION==1)[,COL.ESTIMATED.PARAMS ])
+cov.final    <- var(filter(rawres,ITERATION==LASTIT & resamples==1)[,COL.ESTIMATED.PARAMS ])
+
+paramCI_all$asym <- (paramCI_all$PHIGH-paramCI_all$PMED)/(paramCI_all$PMED-paramCI_all$PLOW) # ratio between distances median-CI bound
+asym.proposal    <- filter(paramCI_all,ITERATION==1 & TYPE=="PROPOSAL")
+asym.final       <- filter(paramCI_all,ITERATION==LASTIT & TYPE=="SIR")
+
+plot.cor <- function (cov,asym,final_est,title) { 
+  
+  mat       <- as.matrix(cov)
+  var       <- diag(mat)
+  cor       <- cov2cor(mat)                  # returns 1 on the diagonal, needs to be replaced by SD
+  diag(cor) <- sqrt(var)
+  cor[lower.tri(cor)] <- NA                  # plot only lower triangular part of  symmetric matrix
+  rse       <- as.matrix(100*abs(diag(cor)/as.matrix(final_est[,2]))) # compute RSE=100*SE/FINAL_EST
+  diag(cor)     <- rse                   # replace SE by RSE
+  cor           <- as.data.frame(cor) 
+  colnames(cor) <- rownames(cor)
+  cor$Parameter <- rownames(cor)
+  
+  mcor           <- melt(cor,id.var="Parameter")
+  mcor$Parameter <- ordered(mcor$Parameter, levels=rownames(cor)) 
+  mcor$variable  <- ordered(mcor$variable, levels=rev(rownames(cor)))
+  mcor           <- mcor[!is.na(mcor$value),]
+  mcor$Fvalue    <- factor(findInterval(abs(mcor$value),seq(0,0.9,0.1)),levels=seq(10),labels=paste(seq(0,0.9,0.1),"-",seq(0.1,1,0.1),sep=""))
+  mcor[mcor$variable==mcor$Parameter,]$Fvalue    <- NA # identify diagonal element
+  mcor           <- left_join(mcor,asym[,c("Parameter","asym")]) # add asymmetry measurement  
+  mcor[!is.na(mcor$Fvalue),]$asym      <- NA 
+  mcor$Fvalue2   <- factor(findInterval(mcor$asym,c(0.5,1,1.5,2)),levels=seq(0,4),labels=c("<0.5",paste(c(0.5,1,1.25),"-",c(1,1.25,2),sep=""),">2"))
+
+  col <- rev(brewer.pal(n=10,name="RdYlGn"))
+  
+  corplot       <-  ggplot(mcor,aes(x=Parameter,y=variable)) +
+    geom_tile(aes(fill=Fvalue)) +
+    scale_fill_manual(values=col,name="Correlation level",drop=FALSE) +
+    scale_color_manual(values=col[c(9,7,2,7,9)],name="Asymmetry",drop=FALSE) +
+    geom_text(data=mcor[is.na(mcor$Fvalue2),],aes(label=round(value,2)),size=7) +
+    geom_text(data=mcor[!is.na(mcor$Fvalue2),],aes(label=round(value,2),color=Fvalue2),size=7) +
+    labs(x="",y="",title=paste(title,"\nRSE (%) - correlation (-) plot")) +
+    theme(axis.text.x=element_text(angle=90),axis.ticks=element_blank(),panel.grid = element_blank())
+  corplot
+  
+  return(corplot)  # return plot
+}
+
 ### Number of resamples per bin
+if(rplots.level>1) {
 
 set.seed(123)
-LASTIT              <- length(ALL.RESAMPLES)                  # only plot this diagnostic for the last iteration
-if(rplots.level>1) {
 N1                  <- 10                                     # number of bins for simulated parameters
 N2                  <- 5                                      # number of bins for resampled parameters
-resamp              <- ddply(rawres, .(ITERATION), summarize, "sample.id"=sample(sample.id,NRESAMP,prob=importance_ratio), "ORDER"=sort(rep(seq(1,N2,1),length.out=unique(NRESAMP)))) # need to resample because need to track order of sampling
-resamp$resamples2   <- 1 
+resamp              <- ddply(rawres[rawres$resamples!=0,], .(ITERATION), summarize, "sample.id"=sample.id, "ORDER"=findInterval(sample_order,seq(0,unique(NRESAMP),length.out=(N2+1)),all.inside=T)) # need to resample because need to track order of sampling
 paramCI_covbin      <- ddply(mrawres[,c("ITERATION","Parameter","value")], .(ITERATION,Parameter),summarise, "interval"=list(unname(quantile(value,probs=seq(1/N1,1-1/N1,by=1/N1),na.rm=TRUE)))) # create bins for all parameter values
 mrawres_bin         <- left_join(mrawres,paramCI_covbin)
 bin                 <- ddply (mrawres_bin,.(ITERATION,Parameter), summarize, "sample.id"=sample.id, "BIN"=(findInterval(value,unique(unlist(interval)))+1))
 mrawres_bin         <- left_join(mrawres_bin,bin)
 mrawres_bin         <- filter(mrawres_bin,!is.na(importance_ratio))
 mrawres_bin         <- left_join(mrawres_bin,resamp)  # add column to identify resampled models and their order
-mrawres_bin$resamples2[is.na(mrawres_bin$resamples2)] <- 0
-mrawres_bin_ratio   <- ddply(mrawres_bin,.(ITERATION,Parameter,BIN),summarize, "m"=sum(resamples2), "M"=length(resamples2),"mM"=sum(resamples2)/length(resamples2))
+mrawres_bin_ratio   <- ddply(mrawres_bin,.(ITERATION,Parameter,BIN),summarize, "m"=sum(resamples), "M"=length(resamples),"mM"=sum(resamples)/length(resamples))
 mrawres_bin_ratio   <- left_join(mrawres_bin_ratio,sir_spec)
 # mrawres_bin_ratio$mM2 <- mrawres_bin_ratio$m/mrawres_bin_ratio$NRESAMP # alternative proportion, but not used  
 
 # Test bin exhaustion
 
-resamp_prop         <- ddply(filter(mrawres_bin,!is.na(ORDER)),.(ITERATION,Parameter,BIN,ORDER),summarize, "m2"=length(ORDER)) # calculate the number of resampled parameters in each sample bin and for each resample bin 
-resamp_prop_dummy   <- expand.grid("ITERATION"=unique(resamp_prop$ITERATION),"BIN"=unique(resamp_prop$BIN),"ORDER"=unique(resamp_prop$ORDER),"Parameter"=unique(resamp_prop$Parameter))   # because ORDERS that have no match in BINS do not appear in previous dataset 
+resamp_prop         <- ddply(filter(mrawres_bin,sample_order!=0),.(ITERATION,Parameter,BIN,ORDER),summarize, "m2"=length(sample_order)) # calculate the number of resampled parameters in each sample bin and for each resample bin 
+resamp_prop_dummy   <- expand.grid("ITERATION"=unique(resamp_prop$ITERATION),"BIN"=unique(resamp_prop$BIN),"ORDER"=unique(resamp_prop$ORDER),"Parameter"=unique(resamp_prop$Parameter))   # because sample_order that have no match in BINS do not appear in previous dataset 
 resamp_prop         <- left_join(resamp_prop_dummy,resamp_prop)
 resamp_prop$m2[is.na(resamp_prop$m2)]  <- 0 
 resamp_prop         <- left_join(resamp_prop,mrawres_bin_ratio[,c("ITERATION","Parameter","BIN","m","M","NSAMP","NRESAMP")])  
@@ -178,20 +221,25 @@ colDIST <- c("darkgrey",colDIST[-1])                            # replace the fi
 colITER <- gg_color_hue(length(levels(dOFV_all$ITERATION)))     # default ggplot colors
 colITER <- c("darkgrey",colITER[-1])                            # replace the first by black for reference dOFV distribution
 
+warn <- ""  # print warning if proposal < chi-square > 25% of the time
+if (sum(filter(dOFV_all,ITERATION==1)$dOFV>filter(dOFV_all,ITERATION=="REF")$dOFV)/length(filter(dOFV_all,ITERATION=="REF")$dOFV)>0.25) warn <- "The proposal is not entirely above the reference chi-square.\n It is advised to restart SIR with an inflated proposal (e.g. -inflation=1.5)"
+
 qdOFV_all <- ggplot(dOFV_all,aes(x=QUANT,color=ITERATION)) + 
-  geom_ribbon(data=qdOFV_sir_noise[qdOFV_sir_noise$ITERATION %in% c(LASTIT-1,LASTIT),],aes(group=ITERATION,ymin=PLOW,ymax=PHIGH,fill=ITERATION),show_guide=FALSE,alpha=0.3,color=NA) +
+  geom_ribbon(data=qdOFV_sir_noise[qdOFV_sir_noise$ITERATION %in% c(LASTIT-1,LASTIT),],aes(group=ITERATION,ymin=PLOW,ymax=PHIGH,fill=ITERATION),show.legend=FALSE,alpha=0.3,color=NA) +
   geom_line(aes(y=dOFV,group=interaction(TYPE,ITERATION),linetype=TYPE),size=1) +
   labs(x="Distribution quantiles") +
   scale_linetype_manual(name="Iteration step",drop=FALSE,values=c(2,1)) +
   scale_color_manual(name="Iteration number",drop=FALSE,values=colITER) +
   scale_fill_manual(name="Iteration number",drop=FALSE,values=colITER) +
-#   geom_text(data=df_est, aes(x = perc,y=1.1*perc_value,label=df),show_guide=FALSE) +
-  geom_text(data=df_est, aes(x = 0.7,y=order*qchisq(0.95,df=N.ESTIMATED.PARAMS)/(2*nrow(df_est)),label=paste(df," (",TYPE2,ITERATION,")",sep="")),show_guide=FALSE,hjust=0,size=5) +
+#   geom_text(data=df_est, aes(x = perc,y=1.1*perc_value,label=df),show.legend=FALSE) +
+  geom_text(data=df_est, aes(x = 0.7,y=order*qchisq(0.95,df=N.ESTIMATED.PARAMS)/(2*nrow(df_est)),label=paste(df," (",TYPE2,ITERATION,")",sep="")),show.legend=FALSE,hjust=0,size=5) +
   annotate("text",x = 0.7,y=(nrow(df_est)+1)*qchisq(0.95,df=N.ESTIMATED.PARAMS)/(2*nrow(df_est)),label="Estimated df",hjust=0,fontface="italic",size=5) +
+  annotate("text",x = 0,y=2*qchisq(0.95,df=N.ESTIMATED.PARAMS),label=warn,hjust=0,fontface="italic",size=4,color="red") +
   coord_cartesian(ylim=c(0,2*qchisq(0.95,df=N.ESTIMATED.PARAMS))) +
   theme(legend.position="bottom",legend.box="horizontal") + labs(title="All dOFV distributions") +
   guides(colour = guide_legend(order = 1,title.position="top",nrow=1), linetype = guide_legend(order = 2,title.position="top",nrow=1))
 # qdOFV_all
+
 
 #############################################################################################################
 ### Comparative CI
@@ -212,11 +260,17 @@ ci <- ggplot(paramCI_all,aes(x=interaction(TYPE,ITERATION),y=PMED,color=ITERATIO
 ci_sir <- ci %+% filter(paramCI_all, TYPE=="SIR" | (TYPE=="PROPOSAL" & ITERATION=="1"))  +  labs(title="CI of SIR densities over iterations") + theme(legend.position="none") 
 # ci_sir
 
-if(rplots.level>1) {
+#############################################################################################################
+### Covmat visualization
+#############################################################################################################
+
+cor.prop  <- plot.cor(cov.proposal,asym.proposal,final_est,title="Proposal")
+cor.final <- plot.cor(cov.final,asym.final,final_est,title="SIR")
 
 #############################################################################################################
 ### Parameter bin plots by iteration
 #############################################################################################################
+if(rplots.level>1) {
 
 mM_ratio   <-  vector('list', LASTIT)
 m2_maxbin  <-  vector('list', LASTIT)
@@ -231,7 +285,8 @@ mM_ratio.cur <- ggplot(filter(mrawres_bin_ratio,ITERATION==i),aes(x=BIN,y=mM)) +
   geom_hline(aes(yintercept=NRESAMP/NSAMP),linetype=2,color="black") +
   geom_hline(aes(yintercept=0),linetype=1,color="white") + 
   facet_wrap(ITERATION~Parameter) +
-  scale_x_continuous(breaks=seq(1,N1),limits=c(1,N1)) +
+  scale_x_continuous(breaks=seq(1,N1)) +
+  coord_cartesian(xlim=c(1,N1)) +
   labs(x="Percentile bin of initial samples",y="Proportion resampled",title=paste("Adequacy of proposal density \n Iteration",i))
 mM_ratio[[i]] <- mM_ratio.cur
 
@@ -241,8 +296,8 @@ m2_maxbin.cur  <- ggplot(filter(resamp_prop_max,IDBIN==1 & ITERATION==i),aes(x=O
   geom_hline(aes(yintercept=p*M/N2),linetype=2) +
   geom_ribbon(aes(ymin=(p-qnorm(0.975)*se)*(M/N2),ymax=(p+qnorm(0.975)*se)*(M/N2)),alpha=0.2) +
   facet_wrap(ITERATION~Parameter+BIN,scales="free_y",drop=TRUE) +
-  scale_x_continuous(breaks=seq(1,N2,by=1),limits=c(1,N2)) +
-  scale_y_continuous(limits=c(0,unique(filter(resamp_prop_max,IDBIN==1 & ITERATION==LASTIT)$NSAMP)/(N1*N2))) +
+  scale_x_continuous(breaks=seq(1,N2,by=1)) +
+  coord_cartesian(xlim=c(1,N2),ylim=c(0,c(0,unique(filter(resamp_prop_max,IDBIN==1 & ITERATION==LASTIT)$NSAMP)/(N1*N2)))) +
   labs(x="Percentile bin of resamples",y="Number of parameters resampled",title=paste("Exhaustion of samples \n Iteration",i)) 
 m2_maxbin[[i]] <- m2_maxbin.cur
 
@@ -250,32 +305,35 @@ all_maxbin.cur  <- ggplot(filter(resamp_prop_max,IDBIN==1 & ITERATION==i),aes(x=
   geom_point() +
   geom_line(alpha=0.2) +
   geom_smooth(aes(group=1),color="blue",size=2,se=FALSE) +
-  scale_x_continuous(breaks=seq(1,N2,by=1),limits=c(1,N2)) +
-  scale_y_continuous(limits=c(0,2*unique(filter(resamp_prop_max,IDBIN==1 & ITERATION==i)$NRESAMP)/(N1*N2))) +
+  scale_x_continuous(breaks=seq(1,N2,by=1)) +
+  coord_cartesian(xlim=c(1,N2),ylim=c(0,2*unique(filter(resamp_prop_max,IDBIN==1 & ITERATION==i)$NRESAMP)/(N1*N2))) +
   labs(x="Percentile bin of resamples",y="Number of parameters resampled",title=paste("Exhaustion of samples \n Iteration",i, ",all parameters")) 
 all_maxbin[[i]] <- all_maxbin.cur
 
 }
-
 }
+
 #############################################################################################################
 ### Output plots
 #############################################################################################################
 
 if(rplots.level>=1) {
-  pdf(file=paste(working.directory,"PsN_plots_base.pdf",sep=""),title=pdf.title,width=10,height=10)  
+  pdf(file=paste(working.directory,"PsN_plots_base.pdf",sep=""),title=pdf.title,width=20,height=10)  
   print(qdOFV_all)
   print(ci_sir)
+  print(cor.prop)
+  print(cor.final)
   dev.off()
 }
 
 if(rplots.level>1) {
   pdf(file=paste(working.directory,"PsN_plots_extended.pdf",sep=""),title=pdf.title,width=15,height=15)
-  print(do.call("grid.arrange", c(mM_ratio, ncol=ceiling(LASTIT/2))))
-  print(do.call("grid.arrange", c(m2_maxbin, ncol=ceiling(LASTIT/2))))
-  print(do.call("grid.arrange", c(all_maxbin, ncol=ceiling(LASTIT/2))))
+  print(mM_ratio)
+  print(m2_maxbin)
+  print(all_maxbin)
   dev.off()
 }
 
 ### END
 #############################################################################################################
+
