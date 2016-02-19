@@ -185,6 +185,8 @@ PDFFILES=$(TEXFILES:.tex=.pdf)
 ZIPFILE=`sed -n 's/.*\$version\s*=\s*.\([0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\).;/PsN-\1.zip/p' lib/PsN.pm`
 TARFILE=`sed -n 's/.*\$version\s*=\s*.\([0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\).;/PsN-\1.tar.gz/p' lib/PsN.pm`
 
+main:
+	@ cp bin/update_inits bin/update
 
 .PHONY : clean
 
@@ -199,7 +201,7 @@ doc/%.pdf: version doc/%.tex
 
 doc: $(PDFFILES) 
 
-release: completion rel_dir $(RELFILES) $(PDFFILES)
+release: main completion rel_dir $(RELFILES) $(PDFFILES)
 	@ rm -f $(ZIPFILE)
 	@ rm -f $(TARFILE)
 	@ mkdir -p PsN-Source/development

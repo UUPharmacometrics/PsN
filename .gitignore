@@ -5,6 +5,7 @@
 old_packages/*
 PsN-Source/*
 nmoutput2so/*
+bin/update
 doc/*.aux
 doc/*.log
 doc/*.pdf
