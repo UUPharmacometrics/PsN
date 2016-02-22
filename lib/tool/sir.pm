@@ -1951,7 +1951,7 @@ sub sample_multivariate_normal
 	}
 	
 	unless ($counter == $samples){
-		croak("Failed to generate $samples accepted parameter vectors within the boundaries even after generating ".(2*$max_iter*$samples)." candidates");
+		croak("Failed to generate $samples accepted parameter vectors within the boundaries even after generating ".(2*$max_iter*$samples)." candidates, only have $counter accepted.");
 	}
 	ui->print(category => 'sir',message=> "Redrew $discarded samples that did not fulfill boundary conditions.\n");
 	return (\@samples_array,\@boxcox_samples_array);
