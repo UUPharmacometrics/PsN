@@ -948,7 +948,7 @@ sub convert_reparametrized_cov
 
         my $foldername=(split(/\//, $directory))[-1];
 
-        if($model->outputs->[0]->s_matrix_unobtainable->[0][0]){
+		if ($model->outputs->[0]->problems->[0]->subproblems->[0]->s_matrix_unobtainable) {
 			print "\nS matrix was unobtainable, precond is intended to stablise covariance step by reducing the R-matrix related computational issues, hence cannot remedy this issues with S matrix.\n";
 	
 		}elsif (int(log($maxEigen/$minEigen) / log(10)) < 3 and $negaCounter > 0) {
