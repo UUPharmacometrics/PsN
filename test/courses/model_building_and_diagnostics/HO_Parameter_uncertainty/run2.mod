@@ -1,0 +1,73 @@
+;; 1. Based on: 1
+$PROBLEM    MOXONIDINE PK,ALL DATA
+;; No covariates 
+
+;; IOV on CL, KA
+$INPUT      ID VISI XAT2=DROP DGRP=DROP DOSE=DROP FLAG=DROP ONO=DROP
+            XIME=DROP DVO=DROP NEUY=DROP SCR AGE SEX NYHA WT DROP ACE
+            DIG DIU NUMB=DROP TAD TIME VIDD=DROP CLCR AMT SS II DROP
+            CMT=DROP CONO=DROP DV EVID=DROP OVID=DROP DROP SHR2=DROP
+$DATA      mx19_1.csv IGNORE=@ IGN(VISI>3)
+$SUBROUTINE ADVAN2 TRANS1
+$PK
+;; Cholesky reparameterize start, DO NOT EDIT THIS LINE
+   SD_A1=ABS(THETA(6))
+   SD_A2=ABS(THETA(7))
+   COR_A21=THETA(8)
+   ;Comments below show CH variables for 1st column, too simple to need new variables
+   ;CH_A11=1
+   ;CH_A21=COR_A21
+   CH_A22=SQRT(1-(COR_A21**2))
+   ETA_1=ETA(1)*SD_A1
+   ETA_2=ETA(1)*COR_A21*SD_A2+ETA(2)*CH_A22*SD_A2
+   SD_B1=ABS(THETA(9))
+   ;Comments below show CH variables for 1st column, too simple to need new variables
+   ;CH_B11=1
+   ETA_3=ETA(3)*SD_B1
+;; Cholesky reparameterize end, DO NOT EDIT THIS LINE
+
+
+   TVCL  = ABS(THETA(1))
+   TVV   = ABS(THETA(2))
+
+   CL    = TVCL*EXP(ETA_1)
+   V     = TVV*EXP(ETA_2)
+   KA    = ABS(THETA(3))*EXP(ETA_3)
+   ALAG1 = ABS(THETA(4))
+   K     = CL/V
+   S2    = V
+
+$ERROR 
+
+     IPRED = LOG(.025)
+     WA     = ABS(THETA(5))
+     W      = WA
+     IF(F.GT.0) IPRED = LOG(F)
+     IRES  = IPRED-DV
+     IWRES = IRES/W
+     Y     = IPRED+ERR(1)*W
+
+$THETA  (0,26.7264) ; TVCL
+$THETA  (0,106.068) ; TVV
+$THETA  (0,4.14479) ; TVKA
+$THETA  (0,0.216316) ; LAG
+$THETA  (0,0.308505) ; RUV
+$THETA  (0,0.30132308) ; SD_A1
+$THETA  (0,0.23137286) ; SD_A2
+$THETA  (-1,0.93305051,1) ; COR_A21
+$THETA  (0,1.5607915) ; SD_B1
+$OMEGA  BLOCK(2) FIX
+ 1  ;     IIV CL
+ 0  ;   COV CL-V
+ 1  ;      IIV V
+$OMEGA  BLOCK(1) FIX
+ 1  ;     IIV KA
+$SIGMA  1  FIX
+$ESTIMATION METHOD=1 MAXEVALS=9999
+$COVARIANCE
+$TABLE      ID TIME IPRED IWRES CWRES NOPRINT ONEHEADER FILE=sdtab2
+$TABLE      ID CL V ETA(1) ETA(2) NOPRINT NOAPPEND ONEHEADER
+            FILE=patab2
+$TABLE      ID AGE SEX ACE DIG DIU NYHA SCR CLCR WT NOPRINT NOAPPEND
+            ONEHEADER FILE=cotab2
+

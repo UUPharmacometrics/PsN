@@ -1,2 +1,8 @@
-#HO Count task 1
-execute run65.mod -model_dir_name
+#Task 1
+execute run1.mod
+# Task 2
+update_inits run1.mod -out=run2a.mod -cholesky=omega,diagonal
+# Task 2b
+precond run2.mod
+# Task 3
+sir run1.mod -samples=1000,1000,1000 -resamples=200,400,500 -rplots=2
