@@ -584,6 +584,21 @@ cmp_float_array($bootstrap->result_parameters->{'means'}[0][0],
 '1'
 ], "bootstrap means summarize after dofv ");
 
+cmp_float_array($bootstrap->result_parameters->{'medians'}[0][0],
+[
+'-584.7907597303',
+'32.8402',
+'20.6578',
+'0.301956',
+'0.0982782',
+'0.334512',
+'0.365295',
+'1.07944',
+'0.105121',
+'0.212412',
+'1'
+], "bootstrap medians summarize after dofv ");
+
 remove_test_dir($tempdir);
 
 done_testing();
