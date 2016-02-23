@@ -1516,19 +1516,23 @@ sub prepare_results
 	#make sure that we have valid raw_line_structure and not from crashed run here
 	my $valid_raw_line;
 	for (my $i=1;$i <= $self->samples; $i++){
-		if (defined $self->raw_line_structure()->{$i}->{$self -> diagnostic_parameters() -> [0]}){
+		if (defined $self->raw_line_structure()->{$i}->{'ofv'}) {
 			$valid_raw_line = $i;
 			last;
-		}else{
-			#print "rawline $i not ok!\n";
 		}
 	}
 
+    my %rawres_structure = %{$self->raw_line_structure->{$valid_raw_line}};
+    # Check if the raw_results_structure file was created with -dofv. In that case it has to be adjusted
+    if (exists $rawres_structure{'bs_sample'} and exists $rawres_structure{'deltaofv'}) {   # bs_sample corresponds to the bs_data_id column
+        _adjust_rawres_structure(\%rawres_structure);
+    }
+
 	for ( my $i = 0; $i < scalar @{$self -> diagnostic_parameters()}; $i++ ) {
-		my ($start,$length) = split(',',$self->raw_line_structure()->{$valid_raw_line}->{$self -> diagnostic_parameters() -> [$i]});
+		my ($start,$length) = split(',', $rawres_structure{$self -> diagnostic_parameters() -> [$i]});
 		$diag_idx{$self -> diagnostic_parameters() -> [$i]} = $start;
 	}
-	my ($start_check,$l) = split(',',$self->raw_line_structure()->{$valid_raw_line}->{'theta'});
+	my ($start_check,$l) = split(',', $rawres_structure{'theta'});
 
 	# ---------------------  Get data from raw_results  -------------------------
 
@@ -1632,7 +1636,7 @@ sub prepare_results
 					# ------------------------  Estimates  ------------------------------
 
 					if ($use_run) {
-						my ($start,$l) = split(',', $self->raw_line_structure->{$valid_raw_line}->{'ofv'});
+						my ($start, $l) = split(',', $rawres_structure->{'ofv'});
 						for (my $m = 0; $m < ($columns - $start); $m++) {
 							my $val = $self->$rawres->[$i][$j][$start + $m];
 							$self->$estimates->[$i][$included][$m] = $val;
@@ -1703,7 +1707,7 @@ sub prepare_results
 		# which is one more for
 		# the method column added
 		# with a bca run.
-		my ($start,$l) = split(',',$self->raw_line_structure()->{$valid_raw_line}->{'ofv'});
+		my ($start, $l) = split(',', $rawres_structure{'ofv'});
 
 		my @param_names = @{$self -> raw_results_header()->[$i]}[$start .. (scalar @{$self -> raw_results_header->[$i]} - 1)];
 		my ( @diagnostic_names, @tmp_names );
@@ -1983,6 +1987,47 @@ sub create_R_plots_code
 						 ]);
 
 }
+
+sub _adjust_rawres_structure
+{
+    # Adjust rawres_structure for extra columns after dofv run.
+
+    my $struct = shift;
+
+    sub getind
+    {
+        my $pair = shift;
+        my @a = split /,/, $pair;
+        return $a[0];
+    }
+
+    sub decrement
+    {
+        my $pair = shift;
+        my $dec = shift;
+
+        my @a = split /,/, $pair;
+        $a[0] -= $dec;
+
+        return $a[0] . "," . $a[1];
+    }
+
+    my $bs_sample_ind = $struct->{'bs_sample'};
+    my $dofv_ind = $struct->{'deltaofv'};
+
+    foreach my $header (keys %$struct) {
+        my $dec;
+        if (getind($struct->{$header}) > $dofv_ind) {
+            $dec = 2;
+        } elsif (getind($struct->{$header}) > $bs_sample_ind) {
+            $dec = 1;
+        } else {
+            $dec = 0;
+        }
+        $struct->{$header} = decrement($struct->{$header}, $dec);
+    }
+}
+
 
 no Moose;
 __PACKAGE__->meta->make_immutable;
