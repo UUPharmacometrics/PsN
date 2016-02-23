@@ -136,7 +136,7 @@ if ($command ne "ask") {
 
 my $logfh;
 if ($command eq "remove" or $command eq "ask") {
-    open $logfh, ">>", $ENV{'HOME'} . '/.removed' or die "Error: Could not open log file for removed files\n";;
+    open $logfh, ">>", $ENV{'HOME'} . '/removed_by_m1find' or die "Error: Could not open log file for removed files\n";;
     my $time = localtime;
     my $date = sprintf("Removed files %04d-%02d-%02d:\n", $time->year + 1900, $time->mon + 1, $time->mday);
     print $logfh $date;
