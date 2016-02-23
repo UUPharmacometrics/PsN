@@ -535,6 +535,7 @@ sub calculate_medians
 		}
 		$medians[$l] = array::median(\@parameter_array);
 	}
+
 	# The [0] in the index is there to indicate the 'model' level. Mostly used for printing
 	$self->result_parameters->{'medians'} -> [$model_number - 1][0] = \@medians;
 	$self->result_parameters->{'medians_labels'} -> [$model_number - 1] = [[],\@parameter_names];
@@ -1636,12 +1637,12 @@ sub prepare_results
 					# ------------------------  Estimates  ------------------------------
 
 					if ($use_run) {
-						my ($start, $l) = split(',', $rawres_structure->{'ofv'});
+						my ($start, $l) = split(',', $rawres_structure{'ofv'});
 						for (my $m = 0; $m < ($columns - $start); $m++) {
 							my $val = $self->$rawres->[$i][$j][$start + $m];
 							$self->$estimates->[$i][$included][$m] = $val;
 						}
-                        if ($j == $valid_raw_line) {
+                        if ($j == $valid_raw_line) {  # FIXME: Kajsa
                             $self->_number_of_parameters($columns - $start);
                         }
 						$included++;
