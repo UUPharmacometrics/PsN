@@ -1,0 +1,6 @@
+#Task 1
+simeval run1.mod -rplots=2 -dir=task1
+# Task 2
+simeval run1.mod -rplots=2 -reminimize -dir=task2
+
+

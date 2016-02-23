@@ -549,6 +549,40 @@ cmp_float_array($bootstrap->result_parameters->{'medians'}[0][0],
 '49799.4128124538','6.20975','0.190016','27.6995','0.554973','0.119979','0.444006','0.359015','0.00469665','0.000402798','0.993','0.00644243','0.363992','0.568475','3.77029','0.353088','2.69817','2.46658','3.59998','-0.755512','0.777093','1.92376','0','24.4024','1.34101'
 ], "bootstrap medians crash filter");
 
+remove_test_dir($tempdir);
+
+our $tempdir = create_test_dir("unit_bootstrap");
+$model = model->new(
+    filename => "$test_files/mox_sir_block2.mod",
+    ignore_missing_files => 1,
+    skip_data_parsing => 1,
+    ignore_missing_data => 1,
+	);
+
+my $bootstrap = tool::bootstrap->new(directory => $tempdir, 
+	skip_minimization_terminated => 1, 
+	skip_covariance_step_terminated => 0,
+	skip_with_covstep_warnings => 0,
+	skip_estimate_near_boundary => 1,
+	models => [ $model ]);
+cp("$test_files/bootstrap/with_dofv/raw_results_mox_sir_block2.csv", "$tempdir/raw_results.csv");
+cp("$test_files/bootstrap/with_dofv/raw_results_structure", $tempdir);
+
+$bootstrap->prepare_results();
+
+cmp_float_array($bootstrap->result_parameters->{'means'}[0][0],
+['-586.2686945617',
+'33.0546977778',
+'21.4036333333',
+'0.3031221111',
+'0.0926071533',
+'0.3334211333',
+'0.3780672444',
+'1.1023393111',
+'0.1155104729',
+'0.2142288',
+'1'
+], "bootstrap means summarize after dofv ");
 
 remove_test_dir($tempdir);
 
