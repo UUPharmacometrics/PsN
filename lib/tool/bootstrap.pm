@@ -236,7 +236,8 @@ sub calculate_diagnostic_means
 		# From 1 to get rid of original model
 		for (my $k = 1; $k < scalar @{$self->bootstrap_diagnostics->[$model_number - 1]}; $k++) {
 			next unless ((defined $self->bootstrap_diagnostics->[$model_number - 1][$k]) and 
-						 (defined $self->bootstrap_diagnostics->[$model_number - 1][$k][$l]));
+						 (defined $self->bootstrap_diagnostics->[$model_number - 1][$k][$l]) and
+						 ($self->bootstrap_diagnostics->[$model_number - 1][$k][$l] ne ''));
 			push(@parameter_array, $self->bootstrap_diagnostics->[$model_number - 1][$k][$l]);
 		}
 		if (scalar(@parameter_array)>0){
