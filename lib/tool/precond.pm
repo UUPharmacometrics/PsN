@@ -943,7 +943,7 @@ sub convert_reparametrized_cov
         }
         print("================= \n");
 
-        print "Condition Number : 10^" . int(log($maxEigen/$minEigen)/log(10)) . "\n";
+        print "Condition number of the R-matrix : 10^" . int(log($maxEigen/$minEigen)/log(10)) . "\n";
         print("Number of negative eigenvalues : $negaCounter\n");
 
         my $foldername=(split(/\//, $directory))[-1];
@@ -1067,7 +1067,7 @@ sub eigenvalue_decomposition
 
     $self->negaEigenIndex(\@negaEigIndex);
 
-    print "\nCondition Number : 10^" . int(log($maxEigen / $minEigen) / log(10)) . "\n";
+    print "\nCondition number of the R-matrix : 10^" . int(log($maxEigen / $minEigen) / log(10)) . "\n";
     print "Number of negative eigenvalues : $negaCounter\n";
 
     if ($self->verbose) {

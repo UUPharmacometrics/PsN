@@ -410,7 +410,7 @@ if (defined $options{'pre'} or defined $options{'rawres_input'}) {
                 }
             }
 
-            print "Condition Number : 10^" . int(log($maxEigen / $minEigen) / log(10)) . "\n";
+            print "Condition number of the R-matrix : 10^" . int(log($maxEigen / $minEigen) / log(10)) . "\n";
             print "Number of negative eigenvalues : $negaCounter\n";
 
             if ($options{'verbose'} or $options{'eigen_comp_only'}) {
@@ -507,7 +507,7 @@ if (defined $options{'pre'} or defined $options{'rawres_input'}) {
                     }
 
                     print "===Reconstructed R-matrix of the original model===\n";
-                    print "Condition Number : 10^" . int(log($maxEigen/$minEigen)/log(10)) . "\n";
+                    print "Condition number of the R-matrix : 10^" . int(log($maxEigen/$minEigen)/log(10)) . "\n";
                     print "Number of negative eigenvalues : $negaCounter\n";
 
                     if ($options{'verbose'} or $options{'eigen_comp_only'}) {
