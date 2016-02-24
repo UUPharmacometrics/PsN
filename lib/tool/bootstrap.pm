@@ -228,43 +228,28 @@ sub calculate_diagnostic_means
 	);
 	my $model_number = $parm{'model_number'};
 	my @parameter_names = defined $parm{'parameter_names'} ? @{$parm{'parameter_names'}} : ();
-
-	my ( @sum, %diag_idx );
-	for ( my $i = 0; $i < scalar @{$self -> diagnostic_parameters()}; $i++ ) {
-		$diag_idx{$self -> diagnostic_parameters() -> [$i]} = $i;
-	}
-
-	my $def = 0;
-	# Prepared model, skip the first (the original)
-	for ( my $k = 1; $k < scalar @{$self -> bootstrap_diagnostics ->
-		[$model_number-1]}; $k++ ) {
-		# Diagnostics
-		if( defined $self -> bootstrap_diagnostics ->
-			[$model_number-1][$k] ) {
-			$def++;
-			for ( my $l = 0; $l < scalar @{$self -> bootstrap_diagnostics ->
-				[$model_number-1][$k]}; $l++ ) {
-				$sum[$l] += $self -> bootstrap_diagnostics ->
-				[$model_number-1][$k][$l];
-			}
+	#FIXME jackknife diagnostics
+	my @means=();
+	# Loop the columns
+	for (my $l = 0; $l < scalar @{$self -> diagnostic_parameters()}; $l++) {
+		my @parameter_array=();
+		# From 1 to get rid of original model
+		for (my $k = 1; $k < scalar @{$self->bootstrap_diagnostics->[$model_number - 1]}; $k++) {
+			next unless ((defined $self->bootstrap_diagnostics->[$model_number - 1][$k]) and 
+						 (defined $self->bootstrap_diagnostics->[$model_number - 1][$k][$l]));
+			push(@parameter_array, $self->bootstrap_diagnostics->[$model_number - 1][$k][$l]);
+		}
+		if (scalar(@parameter_array)>0){
+			$means[$l] = array::mean(\@parameter_array);
+		}else{
+			$means[$l] = undef;
 		}
 	}
 
-	# divide by the number of bootstrap samples (-1 to get rid of the original
-	# model) The [0] in the index is there to indicate the 'model' level. Mostly
-	# used for printing
-	for ( my $l = 0; $l <= $#sum; $l++ ) {
-		if( $l == $diag_idx{'significant_digits'} ) {
-			$self->result_parameters->{'diagnostic_means'} -> [$model_number-1][0][$l] =
-			$sum[$l] / $def;
-		} else {
-			$self->result_parameters->{'diagnostic_means'} -> [$model_number-1][0][$l] =
-			$sum[$l] / ( scalar @{$self -> bootstrap_diagnostics ->
-				[$model_number-1]} - 1);
-		}
+	for ( my $l = 0; $l < scalar(@means); $l++ ) {
+		$self->result_parameters->{'diagnostic_means'} -> [$model_number-1][0][$l] = $means[$l];
 	}
-	$self->result_parameters->{'diagnostic_means_labels'} -> [$model_number-1] =
-	[[],\@parameter_names];
+	$self->result_parameters->{'diagnostic_means_labels'} -> [$model_number-1] =[[],\@parameter_names];
 }
 
 sub calculate_means
@@ -276,25 +261,30 @@ sub calculate_means
 	);
 	my $model_number = $parm{'model_number'};
 	my @parameter_names = defined $parm{'parameter_names'} ? @{$parm{'parameter_names'}} : ();
+	#FIXME jackknife estimates
 
-	my @sum;
-	# Prepared model, skip the first (the original)
-	for ( my $k = 1; $k < scalar @{$self -> bootstrap_estimates ->[$model_number-1]}; $k++ ) {
-		# Estimates
-		for ( my $l = 0; $l < scalar @{$self -> bootstrap_estimates ->	[$model_number-1][$k]}; $l++ ) {
-			$sum[$l] += $self -> bootstrap_estimates ->	[$model_number-1][$k][$l];
+	my @means=();
+	# Loop the parameters
+	for (my $l = 0; $l < $self->_number_of_columns; $l++) {
+		my @parameter_array=();
+		# From 1 to get rid of original model
+		for (my $k = 1; $k < scalar @{$self->bootstrap_estimates->[$model_number - 1]}; $k++) {
+			next unless (defined $self->bootstrap_estimates->[$model_number - 1][$k][$l]);
+			push(@parameter_array, $self->bootstrap_estimates->[$model_number - 1][$k][$l]);
+		}
+		if (scalar(@parameter_array)>0){
+			$means[$l] = array::mean(\@parameter_array);
+		}else{
+			$means[$l] = undef;
 		}
 	}
-	# divide by the number of bootstrap samples (-1 to get rid of the original
-	# model) The [0] in the index is there to indicate the 'model' level. Mostly
-	# used for printing
-	my $samples = scalar @{$self -> bootstrap_estimates ->	[$model_number-1]} - 1;
-	for ( my $l = 0; $l <= $#sum; $l++ ) {
-		my $mean = $sum[$l] / $samples;
+
+	for (my $l = 0; $l < $self->_number_of_columns; $l++) {
+		my $mean = $means[$l];
 		$self->result_parameters->{'means'} -> [$model_number-1][0][$l] = $mean;
         my $bias;
         my $estimated_value = $self->bootstrap_estimates->[$model_number - 1][0][$l];
-        if (defined $estimated_value) {
+        if (defined $estimated_value and (defined $mean)) {
 		    $bias = $mean - $estimated_value;
         }
 		$self->result_parameters->{'bias'} -> [$model_number-1][0][$l] = $bias;
@@ -399,30 +389,23 @@ sub calculate_bca_confidence_intervals
 	}
 	my ( @bootstrap_array, @jackknife_array, @new_alphas, @z0, @acc );
 	# Loop the estimates of the first (original) model
-	for ( my $l = 0; $l < scalar @{$self -> bootstrap_estimates->
-		[$model_number-1][0]}; $l++ ) {
+	for ( my $l = 0; $l < scalar @{$self -> bootstrap_estimates->[$model_number-1][0]}; $l++ ) {
 		my ( @unsorted_array1, @unsorted_array2 );
 		# Loop the bootstrap samples from 1 to get rid of original model
-		for ( my $k = 1; $k < scalar @{$self -> bootstrap_estimates->
-			[$model_number-1]}; $k++ ) {
-			$unsorted_array1[$k-1] =
-			$self -> bootstrap_estimates->[$model_number-1][$k][$l];
+		for ( my $k = 1; $k < scalar @{$self -> bootstrap_estimates->[$model_number-1]}; $k++ ) {
+			$unsorted_array1[$k-1] = $self -> bootstrap_estimates->[$model_number-1][$k][$l]; #can be undef
 		}
 		@{$bootstrap_array[$l]} = sort {$a <=> $b} @unsorted_array1;
 
 		# Loop the jackknife samples from 1 to get rid of original model
-		for ( my $k = 1; $k < scalar @{$self -> jackknife_estimates->
-			[$model_number-1]}; $k++ ) {
-			$unsorted_array2[$k-1] =
-			$self -> jackknife_estimates->[$model_number-1][$k][$l];
+		for ( my $k = 1; $k < scalar @{$self -> jackknife_estimates->[$model_number-1]}; $k++ ) {
+			$unsorted_array2[$k-1] =$self -> jackknife_estimates->[$model_number-1][$k][$l]; #can be undef
 		}
 		@{$jackknife_array[$l]} = sort {$a <=> $b} @unsorted_array2;
 		$z0[$l]         = c_get_z0     ( $bootstrap_array[$l],
-			$self -> bootstrap_estimates ->
-			[$model_number-1][0][$l] );
+										 $self -> bootstrap_estimates -> [$model_number-1][0][$l] );
 		$acc[$l]        = c_get_acc    ( $jackknife_array[$l],
-			$self->result_parameters->{'jackknife_means'} ->
-			[$model_number-1][0][$l] );
+										 $self->result_parameters->{'jackknife_means'} ->[$model_number-1][0][$l] );
 		$new_alphas[$l] = c_get_alphas ( \@limits, $acc[$l], $z0[$l] );
 	}
 	# Loop limits
@@ -483,7 +466,7 @@ sub calculate_jackknife_means
 	);
 	my $model_number = $parm{'model_number'};
 	my @parameter_names = defined $parm{'parameter_names'} ? @{$parm{'parameter_names'}} : ();
-
+	#FIXME this code does not handle undefs
 	my @sum;
 	# Prepared model, skip the first (the original)
 	if( defined $self -> jackknife_estimates ){
@@ -498,8 +481,7 @@ sub calculate_jackknife_means
 				", cannot compute jackknife means.\n";
 				return;
 			}
-			for ( my $l = 0; $l <
-				scalar @{$self -> jackknife_estimates->[$model_number-1][$k]}; $l++ ) {
+			for ( my $l = 0; $l <scalar @{$self -> jackknife_estimates->[$model_number-1][$k]}; $l++ ) {
 				$sum[$l] += $self -> jackknife_estimates->[$model_number-1][$k][$l];
 			}
 		}
@@ -524,16 +506,22 @@ sub calculate_medians
 	);
 	my $model_number = $parm{'model_number'};
 	my @parameter_names = defined $parm{'parameter_names'} ? @{$parm{'parameter_names'}} : ();
+	#FIXME jackknife estimates
 
 	my @medians;
 	# Loop the parameters
 	for (my $l = 0; $l < $self->_number_of_columns; $l++) {
-		my @parameter_array;
+		my @parameter_array=();
 		# From 1 to get rid of original model
 		for (my $k = 1; $k < scalar @{$self->bootstrap_estimates->[$model_number - 1]}; $k++) {
-			$parameter_array[$k - 1] = $self->bootstrap_estimates->[$model_number - 1][$k][$l];
+			next unless (defined $self->bootstrap_estimates->[$model_number - 1][$k][$l]);
+			push(@parameter_array, $self->bootstrap_estimates->[$model_number - 1][$k][$l]);
 		}
-		$medians[$l] = array::median(\@parameter_array);
+		if (scalar(@parameter_array)>0){
+			$medians[$l] = array::median(\@parameter_array);
+		}else{
+			$medians[$l] = undef;
+		}
 	}
 
 	# The [0] in the index is there to indicate the 'model' level. Mostly used for printing
@@ -553,12 +541,17 @@ sub calculate_standard_errors
 
 	my @se;
 	for (my $l = 0; $l < $self->_number_of_columns; $l++) {
-		my @parameter_array;
+		my @parameter_array=();
 		# From 1 to get rid of original model
 		for (my $k = 1; $k < scalar @{$self->bootstrap_estimates->[$model_number - 1]}; $k++) {
-			$parameter_array[$k - 1] = $self->bootstrap_estimates->[$model_number - 1][$k][$l];
+			next unless (defined $self->bootstrap_estimates->[$model_number - 1][$k][$l]);
+			push(@parameter_array, $self->bootstrap_estimates->[$model_number - 1][$k][$l]);
 		}
-		$se[$l] = array::stdev(\@parameter_array);
+		if (scalar(@parameter_array)>0){
+			$se[$l] = array::stdev(\@parameter_array);
+		}else{
+			$se[$l] = undef;
+		}
 	}
 	# The [0] in the index is there to indicate the 'model' level. Mostly used for printing
 	$self->result_parameters->{'standard_errors'} -> [$model_number - 1][0] = \@se;
@@ -635,8 +628,7 @@ sub calculate_percentile_confidence_intervals
 		for ( my $l = 0; $l < $self->_number_of_columns; $l++ ) {
 			my @parameter_array;
 			# Loop the bootstrap samples from 1 to get rid of original model
-			for ( my $k = 1; $k < scalar @{$self -> bootstrap_estimates->
-				[$model_number-1]}; $k++ ) {
+			for ( my $k = 1; $k < scalar @{$self -> bootstrap_estimates->[$model_number-1]}; $k++ ) {
 				my $val = $self -> bootstrap_estimates->[$model_number-1][$k][$l];
 				# get rid of undefined values (these were probably deleted
 				# when the bootstrap_estimates was created
@@ -1638,22 +1630,24 @@ sub prepare_results
 					# ------------------------  Estimates  ------------------------------
 
 					if ($use_run) {
-						unless (defined $self->_number_of_columns or ($j==0)){
-							$self->_number_of_columns($totalcolumns-$startcolumn);
-#							print "\ntotalcolumn is $totalcolumns, start column $startcolumn number is ".$self->_number_of_columns."\n";
-#						}else{
-#							unless ($j==0 or ($self->_number_of_columns == ($totalcolumns-$startcolumn))){
-#								print "\ntotalcolumn is $totalcolumns, start column $startcolumn, number would be ".($totalcolumns-$startcolumn)."\n";
-#							}
+						unless ($j==0){#do not use original row ($j==0)
+							if (not defined $self->_number_of_columns){
+								$self->_number_of_columns($totalcolumns-$startcolumn);
+#								print "\ntotal is $totalcolumns, start $startcolumn, number is ".$self->_number_of_columns."\n";
+							}elsif ($self->_number_of_columns < ($totalcolumns-$startcolumn)){
+								#if e.g. this has cov step successful but first included did not
+								$self->_number_of_columns($totalcolumns-$startcolumn);
+#								print "\ntotal is $totalcolumns, start $startcolumn, number is ".$self->_number_of_columns."\n";
+							}
+							$included++; 
 						}
 						for (my $m = $startcolumn; $m < $totalcolumns ; $m++) {
 							$self->$estimates->[$i][$included][($m-$startcolumn)] = $self->$rawres->[$i][$j][$m];
 						}
-						$included++;
 					}
 				}
 
-				if ($included < 2){ #original plus at least one more
+				if ($included < 1){ 
 					croak("No runs passed the run exclusion critera. Statistics cannot be calculated by PsN. ".
 						"Run bootstrap again with option -summarize and different exclusion criteria.");
 				}

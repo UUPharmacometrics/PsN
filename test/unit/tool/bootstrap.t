@@ -601,4 +601,66 @@ cmp_float_array($bootstrap->result_parameters->{'medians'}[0][0],
 
 remove_test_dir($tempdir);
 
+our $tempdir = create_test_dir("unit_bootstrap");
+my $bootstrap = tool::bootstrap->new(directory => $tempdir, 
+	skip_minimization_terminated => 0, 
+	skip_covariance_step_terminated => 0,
+	skip_with_covstep_warnings => 0,
+	skip_estimate_near_boundary => 0,
+	models => [ $model ]);
+cp("$test_files/bootstrap/some_covstep_fail/raw_results_mox_sir_block2.csv", "$tempdir/raw_results.csv");
+cp("$test_files/bootstrap/some_covstep_fail/raw_results_structure", $tempdir);
+
+$bootstrap->prepare_results();
+
+cmp_float_array($bootstrap->result_parameters->{'means'}[0][0],
+[
+'-596.9881162915',
+'32.7712909091',
+'22.2971909091',
+'0.2944600909',
+'0.0741762727',
+'0.3300864545',
+'0.3848421818',
+'1.0535450909',
+'0.1362522618',
+'0.2472101818',
+'1',
+'2.4218914286',
+'3.7750871429',
+'0.0203821429',
+'0.0388025857',
+'0.00845522857',
+'0.0679633286',
+'0.2562745714',
+'0.0875501571',
+'0.0503794429'
+], "bootstrap means summarize some covstep fail ");
+
+cmp_float_array($bootstrap->result_parameters->{'medians'}[0][0],
+[
+'-583.9535185699',
+'32.6068',
+'20.9756',
+'0.299538',
+'0.078438',
+'0.331981',
+'0.397558',
+'1.03863',
+'0.129545',
+'0.233083',
+'1',
+'2.34547',
+'3.39637',
+'0.0205196',
+'0.0344605',
+'0.00832988',
+'0.0704831',
+'0.277494',
+'0.089499',
+'0.0492683'
+], "bootstrap medians summarize some covstep fail ");
+
+remove_test_dir($tempdir);
+
 done_testing();
