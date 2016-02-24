@@ -599,6 +599,10 @@ cmp_float_array($bootstrap->result_parameters->{'medians'}[0][0],
  '1',
 ], "bootstrap medians summarize after dofv ");
 
+cmp_float_array($bootstrap->result_parameters->{'diagnostic_means'}[0][0],
+    [ 0, 0.92, 0, 0, 0.02, 0.04, 0.04, 0.04, 0, 0, 3.3729166667, undef, 0, 0, 11.364, 0 ]
+    , "bootstrap diagnostic_means");
+
 remove_test_dir($tempdir);
 
 our $tempdir = create_test_dir("unit_bootstrap");
