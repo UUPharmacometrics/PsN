@@ -60,7 +60,7 @@ has 'bca_confidence_intervals_check' => ( is => 'rw', isa => 'Num', default => 0
 has 'bca_confidence_intervals_level' => ( is => 'rw', isa => 'Num', default => 5 );
 has 'large_bias_limit' => ( is => 'rw', isa => 'Num', default => 0.05 );
 has 'raw_results_dofv' => ( is => 'rw', isa => 'Str', default => 'raw_results_dofv.csv');
-has '_number_of_parameters' => ( is => 'rw', isa => 'Int' );
+has '_number_of_columns' => ( is => 'rw', isa => 'Int' );
 
 sub BUILD
 {
@@ -527,7 +527,7 @@ sub calculate_medians
 
 	my @medians;
 	# Loop the parameters
-	for (my $l = 0; $l < $self->_number_of_parameters; $l++) {
+	for (my $l = 0; $l < $self->_number_of_columns; $l++) {
 		my @parameter_array;
 		# From 1 to get rid of original model
 		for (my $k = 1; $k < scalar @{$self->bootstrap_estimates->[$model_number - 1]}; $k++) {
@@ -552,7 +552,7 @@ sub calculate_standard_errors
 	my @parameter_names = defined $parm{'parameter_names'} ? @{$parm{'parameter_names'}} : ();
 
 	my @se;
-	for (my $l = 0; $l < $self->_number_of_parameters; $l++) {
+	for (my $l = 0; $l < $self->_number_of_columns; $l++) {
 		my @parameter_array;
 		# From 1 to get rid of original model
 		for (my $k = 1; $k < scalar @{$self->bootstrap_estimates->[$model_number - 1]}; $k++) {
@@ -580,7 +580,7 @@ sub calculate_standard_error_confidence_intervals
 	foreach my $limit ( @limits ) {
 		my ( @lower_limits, @upper_limits, @within_ci );
 		# Loop the estimates of the first (original) model
-		for ( my $l = 0; $l < $self->_number_of_parameters; $l++ ) {
+		for ( my $l = 0; $l < $self->_number_of_columns; $l++ ) {
 			my $lower_limit =
                 $self -> bootstrap_estimates->[$model_number-1][0][$l] -
                 $self->result_parameters->{'standard_errors'}->[$model_number-1][0][$l] *
@@ -632,7 +632,7 @@ sub calculate_percentile_confidence_intervals
 	foreach my $limit ( @limits ) {
 		my ( @lower_limits, @upper_limits, @within_ci );
 		# Loop the estimates of the first (original) model
-		for ( my $l = 0; $l < $self->_number_of_parameters; $l++ ) {
+		for ( my $l = 0; $l < $self->_number_of_columns; $l++ ) {
 			my @parameter_array;
 			# Loop the bootstrap samples from 1 to get rid of original model
 			for ( my $k = 1; $k < scalar @{$self -> bootstrap_estimates->
@@ -1528,6 +1528,7 @@ sub prepare_results
     if (exists $rawres_structure{'bs_sample'} and exists $rawres_structure{'deltaofv'}) {   # bs_sample corresponds to the bs_data_id column
         _adjust_rawres_structure(\%rawres_structure);
     }
+	my ($startcolumn, $l) = split(',', $rawres_structure{'ofv'});
 
 	for ( my $i = 0; $i < scalar @{$self -> diagnostic_parameters()}; $i++ ) {
 		my ($start,$length) = split(',', $rawres_structure{$self -> diagnostic_parameters() -> [$i]});
@@ -1586,7 +1587,7 @@ sub prepare_results
 				my ( $skip_term, $skip_cov, $skip_warn, $skip_bound, $skip_crash );
 				my $included = 0;
 				for ( my $j = 0; $j < scalar @{$self->$rawres->[$i]}; $j++ ) { # orig model + prepared_models
-					my $columns = scalar @{$self->$rawres->[$i][$j]};
+					my $totalcolumns = scalar @{$self->$rawres->[$i][$j]};
 
 					# -----------------------  Diagnostics  -----------------------------
 
@@ -1637,19 +1638,22 @@ sub prepare_results
 					# ------------------------  Estimates  ------------------------------
 
 					if ($use_run) {
-						my ($start, $l) = split(',', $rawres_structure{'ofv'});
-						for (my $m = 0; $m < ($columns - $start); $m++) {
-							my $val = $self->$rawres->[$i][$j][$start + $m];
-							$self->$estimates->[$i][$included][$m] = $val;
+						unless (defined $self->_number_of_columns or ($j==0)){
+							$self->_number_of_columns($totalcolumns-$startcolumn);
+#							print "\ntotalcolumn is $totalcolumns, start column $startcolumn number is ".$self->_number_of_columns."\n";
+#						}else{
+#							unless ($j==0 or ($self->_number_of_columns == ($totalcolumns-$startcolumn))){
+#								print "\ntotalcolumn is $totalcolumns, start column $startcolumn, number would be ".($totalcolumns-$startcolumn)."\n";
+#							}
 						}
-                        if ($j == $valid_raw_line) {  # FIXME: Kajsa
-                            $self->_number_of_parameters($columns - $start);
-                        }
+						for (my $m = $startcolumn; $m < $totalcolumns ; $m++) {
+							$self->$estimates->[$i][$included][($m-$startcolumn)] = $self->$rawres->[$i][$j][$m];
+						}
 						$included++;
 					}
 				}
 
-				if ($included < 1){
+				if ($included < 2){ #original plus at least one more
 					croak("No runs passed the run exclusion critera. Statistics cannot be calculated by PsN. ".
 						"Run bootstrap again with option -summarize and different exclusion criteria.");
 				}

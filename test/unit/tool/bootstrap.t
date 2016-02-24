@@ -596,7 +596,7 @@ cmp_float_array($bootstrap->result_parameters->{'medians'}[0][0],
 '1.07944',
 '0.105121',
 '0.212412',
-'1'
+ '1',
 ], "bootstrap medians summarize after dofv ");
 
 remove_test_dir($tempdir);
