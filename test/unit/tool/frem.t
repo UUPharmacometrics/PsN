@@ -477,6 +477,7 @@ my $ans = tool::frem::join_covmats(full_strings => $fullstr,
 								   partial_covmats => [$cov1,$cov2]);
 
 is_deeply($ans,$join,'join covmats');
+remove_test_dir($tempdir);
 
 
 
