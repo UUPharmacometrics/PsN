@@ -228,7 +228,7 @@ sub calculate_diagnostic_means
 	);
 	my $model_number = $parm{'model_number'};
 	my @parameter_names = defined $parm{'parameter_names'} ? @{$parm{'parameter_names'}} : ();
-	#FIXME jackknife diagnostics
+	#FIXME jackknife diagnostics?
 	my @means=();
 	# Loop the columns
 	for (my $l = 0; $l < scalar @{$self -> diagnostic_parameters()}; $l++) {
@@ -466,35 +466,41 @@ sub calculate_jackknife_means
 	);
 	my $model_number = $parm{'model_number'};
 	my @parameter_names = defined $parm{'parameter_names'} ? @{$parm{'parameter_names'}} : ();
-	#FIXME this code does not handle undefs
-	my @sum;
-	# Prepared model, skip the first (the original)
-	if( defined $self -> jackknife_estimates ){
-		unless (defined $self -> jackknife_estimates->[$model_number-1]){
-			print "Jackknife estimates missing, cannot compute jackknife means.\n";
+
+	my $maxcol=0;
+	return unless (defined $self -> jackknife_estimates);
+	unless (defined $self -> jackknife_estimates->[$model_number-1]){
+		print "Jackknife estimates missing, cannot compute jackknife means.\n";
+		return;
+	}
+	for ( my $k = 1; $k < scalar @{$self -> jackknife_estimates->[$model_number-1]}; $k++ ) {
+		unless (defined $self -> jackknife_estimates->[$model_number-1][$k]){
+			print "Jackknife estimates missing for model ".($k+1).", cannot compute jackknife means.\n";
 			return;
 		}
-		for ( my $k = 1; $k < scalar @{$self -> jackknife_estimates->[$model_number-1]}; $k++ ) {
-			# Estimate
-			unless (defined $self -> jackknife_estimates->[$model_number-1][$k]){
-				print "Jackknife estimates missing for model ".($k+1).
-				", cannot compute jackknife means.\n";
-				return;
-			}
-			for ( my $l = 0; $l <scalar @{$self -> jackknife_estimates->[$model_number-1][$k]}; $l++ ) {
-				$sum[$l] += $self -> jackknife_estimates->[$model_number-1][$k][$l];
-			}
+		if (scalar(@{$self -> jackknife_estimates->[$model_number-1][$k]})>$maxcol){
+			$maxcol = scalar(@{$self -> jackknife_estimates->[$model_number-1][$k]});
 		}
-		# divide by the number of jackknife samples (-1 to get rid of the original model)
-		# The [0] in the index is there to indicate the 'model' level. Mostly used for printing
-		for ( my $l = 0; $l <	scalar @sum; $l++ ) {
-			if( ( scalar @{$self -> jackknife_estimates->[$model_number-1]} - 1) != 0 ) {
-				$self->result_parameters->{'jackknife_means'} -> [$model_number-1][0][$l] =
-				$sum[$l] / ( scalar @{$self -> jackknife_estimates->[$model_number-1]} - 1);
-			}
-		}
-		$self->result_parameters->{'jackknife_means_labels'} -> [$model_number-1] = [[],\@parameter_names];
 	}
+	
+	my @means;
+	for (my $l = 0; $l < $maxcol; $l++) {
+		my @parameter_array=();
+		# From 1 to get rid of original model
+		for (my $k = 1; $k < scalar @{$self->jackknife_estimates->[$model_number - 1]}; $k++) {
+			next unless (defined $self->jackknife_estimates->[$model_number - 1][$k][$l]);
+			push(@parameter_array, $self->jackknife_estimates->[$model_number - 1][$k][$l]);
+		}
+		if (scalar(@parameter_array)>0){
+			$means[$l] = array::median(\@parameter_array);
+		}else{
+			$means[$l] = undef;
+		}
+		$self->result_parameters->{'jackknife_means'} -> [$model_number-1][0][$l] = $means[$l];
+	}
+
+	$self->result_parameters->{'jackknife_means_labels'} -> [$model_number-1] = [[],\@parameter_names];
+
 }
 
 sub calculate_medians
@@ -506,7 +512,7 @@ sub calculate_medians
 	);
 	my $model_number = $parm{'model_number'};
 	my @parameter_names = defined $parm{'parameter_names'} ? @{$parm{'parameter_names'}} : ();
-	#FIXME jackknife estimates
+	#FIXME jackknife estimates?
 
 	my @medians;
 	# Loop the parameters

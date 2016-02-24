@@ -39,7 +39,7 @@ $rc = $rc >> 8;
 ok ($rc == 0, "bootstrap 2 that should run ok");
 unlink('boot2/m1/bs_pr1_1.lst');
 unlink('boot2/m1/bs_pr1_1.ext');
-$command = get_command('bootstrap') . " mox1.mod -samples=10 -stratify_on=DGRP  -no-skip_minim  -no-skip_est";
+$command = get_command('bootstrap') . " mox1.mod -samples=10 -stratify_on=DGRP  -no-skip_minim  -no-skip_est -dir=boot2";
 
 $rc = system($command);
 $rc = $rc >> 8;
