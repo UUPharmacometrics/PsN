@@ -43,7 +43,10 @@ KLD <- function(px, py, base=exp(1)){
 
 #End
 
-pdf(file=pdf.filename,width=10,height=7,title=pdf.title)
+#pdf for ebe_npde
+
+pdf.title <- paste0('ebe npde diagnostic plots run ',xpose.runno)
+pdf(file='PsN_ebe_npde_plots.pdf',width=10,height=7,title=pdf.title)
 
 #EBE npde summary statistics table
 library(gridExtra)

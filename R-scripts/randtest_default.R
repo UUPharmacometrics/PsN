@@ -7,11 +7,10 @@ library(grid)
 library(xpose4) 
 pdf(file=pdf.filename,title=pdf.title)
 
-#does not work for undef deltaofv
 #xpose4 built-in, need library(xpose4)
-#print(randtest.hist(raw.results.file,df=length(extra.thetas),p.val=pvalue)) 
+print(randtest.hist(raw.results.file,df=length(extra.thetas),p.val=pvalue)) 
 
-#if (rplots.level > 1){
+if (rplots.level > 1){
 # required packages
 library(ggplot2)
 library(reshape2)
@@ -306,7 +305,7 @@ modEMPcritical=ksrecord$modEMPcritical,modCHIcritical=ksrecord$modCHIcritical,cu
 
 
 write.table(tabout, file="randtestTable.tsv", sep="\t", row.names=F, col.names=T, quote=F)
-#} end if level>1
+} #end if level>1
 	dev.off()
 }
 
