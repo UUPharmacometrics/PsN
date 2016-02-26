@@ -3417,9 +3417,10 @@ sub update_inits
 			#if fix but not ignore_missing we still match values to see if any missing
 			#name of own param is label if from_model defined and label defined, otherwise coord
 			#look up value in namesvalues hash, replace value with "matched"
-
+			
 			my $any_same=0;
 			foreach my $record (@records){
+				my $blockfix = 0;
 				next if ($record->prior());
 				my $store_rec = 1;
 				if  ($record->same() ){
@@ -3432,6 +3433,9 @@ sub update_inits
 				}
 				unless (defined $record -> options()){
 					croak("$param record has no values");
+				}
+				if ($record->type eq 'BLOCK' and $record->fix){
+					$blockfix = 1;
 				}
 				foreach my $option (@{$record -> options()}) {
 					next if ($option->prior());
@@ -3460,8 +3464,11 @@ sub update_inits
 						$namesvalues{$name} = 'matched';
 					} else {
 						unless ($ignore_missing_parameters){
-							unless (($option->fix) or
-									($option->value() == 0 and (not $option->on_diagonal()))){
+							unless (($option->fix) 
+									or 
+									 ($blockfix) or
+									($option->init() == 0 and (defined $option->on_diagonal) and (not $option->on_diagonal()))
+								){
 								my $mes = "update_inits: No match for $param $name found in $from_string";
 								carp($mes);
 								ui -> print( category => 'all',
