@@ -356,6 +356,41 @@ sub append_individual
 	$self->subject_data(\@newlines); #replace old data
 }
 
+sub factor_list
+{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+							  column => { isa => 'Int', optional => 0 },			# Counting from one
+							  mdv_evid_indices => { isa => 'ArrayRef', optional => 0 },
+	);
+	my $column = $parm{'column'};
+	my $mdv_evid_indices = $parm{'mdv_evid_indices'};
+
+	my @factors=();
+	my %hash;
+	
+	my @data = @{$self->subject_data};
+
+	for (my $i = 0; $i <= $#data; $i++) {
+		my @data_row = split(/,/, $data[$i]);
+		my $not_obs=0;
+		foreach my $check (@{$mdv_evid_indices}){ #check that MDV and EVID are 0
+			$not_obs = 1 unless ($data_row[$check] == 0);
+		}
+		if ($not_obs){
+			next;
+		}else{
+			unless (defined $hash{$data_row[$column-1]}){
+				#found new factor
+				push(@factors,$data_row[$column-1]); #can be missing
+				$hash{$data_row[$column-1]}=1;
+			}
+		}
+	}
+
+	return \@factors;
+}
+
 sub factors
 {
 	my $self = shift;

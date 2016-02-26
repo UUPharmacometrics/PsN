@@ -1379,7 +1379,12 @@ sub get_variance_guesses
 			my $y= $2;
 			my $N=0;
 			if (defined $perfect_individuals->{$x} and defined( $perfect_individuals->{$y})){
-				$N = sqrt($perfect_individuals->{$x}* $perfect_individuals->{$y}); #geometric mean
+				#take minimum
+				if ($perfect_individuals->{$x} < $perfect_individuals->{$y}){
+					$N = $perfect_individuals->{$x};
+				}else{
+					$N = $perfect_individuals->{$y};
+				}
 			}elsif (defined $perfect_individuals->{$x}){
 				$N = $perfect_individuals->{$x};
 			}elsif (defined $perfect_individuals->{$y}){
@@ -1799,8 +1804,21 @@ sub do_filter_dataset_and_append_binary
 	if (scalar(@{$self->categorical}) > 0){
 		my $categorical_indices = array::get_positions(target => $data_set_headers,
 													   keys=> $self->categorical);
-		my ($mapping,$new_indices,$new_categorical) = $filtered_data->append_binary_columns(indices => $categorical_indices,
-																							start_header => $data_set_headers);
+		my @mdv_evid_indices =();
+		push(@mdv_evid_indices,$indices->{'MDV'}) if (defined $indices->{'MDV'});
+		push(@mdv_evid_indices,$indices->{'EVID'}) if (defined $indices->{'EVID'});
+		my ($mapping,$new_indices,$new_categorical,$warn_multiple) = 
+			$filtered_data->append_binary_columns(indices => $categorical_indices,
+												  baseline_only => 1,
+												  mdv_evid_indices => \@mdv_evid_indices,
+												  start_header => $data_set_headers);
+		if (scalar(@{$warn_multiple})>0){
+			ui -> print( category => 'all',
+						 message => "\nWarning: Individuals were found to have multiple values in the ".join(' ',@{$warn_multiple}).
+						 " column(s),".
+						 " but the frem script will just use the first value for the individual.\n");
+		}
+
 		$categorical_indices = $new_indices;
 		$self->categorical($new_categorical); #these are now binary
 		push(@cov_indices,@{$categorical_indices});
@@ -2070,9 +2088,9 @@ sub prepare_model2
 		my @covariate_thetanumbers = ();
 		for (my $i=0; $i< scalar(@{$self->covariates}); $i++){
 			my $val=$self->invariant_mean->[$i]; 
-			$val=0.001 if ($val==0);
+			#$val=0.001 if ($val==0); #can be 0 since FIXed
 			my $label = 'TV_'.$self->covariates->[$i];
-			push(@theta_strings,' '.sprintf("%.12G",$val).'; '.$label);
+			push(@theta_strings,' '.sprintf("%.12G",$val).' FIX ; '.$label);
 			$newtheta++;
 			my $num = ($ntheta+$newtheta);
 			push(@covariate_thetanumbers,$num);
@@ -2365,10 +2383,10 @@ sub prepare_model6
 									   copy_datafile   => 0,
 									   copy_output => 0);
 
-		#must add zeros for covariate thetas that are not covered by
+		#add values for covariate thetas that are not covered by
 		#input model fix thetas.
 		my @array = @{$self->input_model_fix_thetas};
-		push(@array,((0) x scalar(@{$self->covariates})));
+		push(@array,((1) x scalar(@{$self->covariates})));
 
 		get_or_set_fix(model => $frem_model,
 					   type => 'thetas',

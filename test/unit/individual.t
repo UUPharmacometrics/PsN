@@ -48,6 +48,9 @@ my $ind = data::individual->new(idcolumn => 1, subject_data => ['1,0,1,0,70,1,35
 																'1,34,0,10,70,1,35,0',
 																'1,21,0,20,70,1,35,0']);
 
+is_deeply($ind->factor_list(column => 5,mdv_evid_indices =>[2]),[70],'baseline factor 1');
+is_deeply($ind->factor_list(column => 2,mdv_evid_indices =>[2]),[34,21],'baseline factor 2');
+
 $ind->add_frem_lines(type_index => 7,
 					 N_parameter_blocks => 2,
 					 mdv_index => 2,
@@ -74,6 +77,8 @@ $ind = data::individual->new(idcolumn => 1, subject_data => ['1,0,1,0,70,1,35,0'
 																'1,34,0,10,70,1,35,0',
 																'1,21,0,20,70,1,35,0']);
 
+is_deeply($ind->factor_list(column => 4,mdv_evid_indices =>[2]),[10,20],'baseline factor 3');
+
 $ind->add_frem_lines(type_index => 7,
 					 N_parameter_blocks => 1,
 					 mdv_index => 2,
@@ -95,6 +100,9 @@ cmp_float_array(\@arr,$ans->[1], "add_frem_lines 7");
 $ind = data::individual->new(idcolumn => 1, subject_data => ['1,0,1,0,70,1,0', 
 															 '1,34,0,10,-99,2,0',
 															 '1,21,0,20,70,3,35']);
+
+is_deeply($ind->factor_list(column => 5,mdv_evid_indices =>[2]),[-99,70],'baseline factor 4');
+is_deeply($ind->factor_list(column => 5,mdv_evid_indices =>[0]),[],'baseline factor 5');
 
 my $indices = [4,5,6];
 $ind->append_bivariate_columns(categorical_indices => [4,5,6],

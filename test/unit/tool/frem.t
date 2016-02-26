@@ -461,10 +461,10 @@ my $guess_hash = tool::frem::get_variance_guesses(values => [4,1,9,25,2,20],
 												  perfect_individuals => {1=>4,2=>9,3=>16,4=>25});
 
 cmp_float($guess_hash->{'OMEGA(1,1)'},(4**2+4*4)/4,'variance guess 1');
-cmp_float($guess_hash->{'OMEGA(2,1)'},(1+36)/6,'variance guess 2');
+cmp_float($guess_hash->{'OMEGA(2,1)'},(1+36)/4,'variance guess 2');
 cmp_float($guess_hash->{'OMEGA(2,2)'},(9**2+9*9)/9,'variance guess 3');
 cmp_float($guess_hash->{'OMEGA(3,3)'},(25**2+25*25)/16,'variance guess 4');
-cmp_float($guess_hash->{'OMEGA(4,3)'},(2**2+25*20)/20,'variance guess 5');
+cmp_float($guess_hash->{'OMEGA(4,3)'},(2**2+25*20)/16,'variance guess 5');
 cmp_float($guess_hash->{'OMEGA(4,4)'},(20**2+20*20)/25,'variance guess 6');
 
 open STDERR, '>', File::Spec->devnull();	# Silence STDERR

@@ -300,11 +300,15 @@ sub append_binary_columns
 	my $self = shift;
 	my %parm = validated_hash(\@_,
 		 indices => { isa => 'ArrayRef', optional => 0 },
+		 baseline_only => { isa => 'Bool', optional => 0 },
 		 start_header => { isa => 'ArrayRef', optional => 1 },
+		 mdv_evid_indices => { isa => 'ArrayRef', optional => 1 },
 	);
 	my $indices = $parm{'indices'};
+	my $baseline_only = $parm{'baseline_only'};
 	my $start_header = $parm{'start_header'};
-
+	my $mdv_evid_indices = $parm{'mdv_evid_indices'};
+	
 	unless (defined $start_header){
 		$start_header = $self->header;
 	}
@@ -321,7 +325,8 @@ sub append_binary_columns
 	my $any_change = 0;
 	my @new_header = @{$start_header};
 	my @new_categorical = ();
-	
+
+	my @baseline_and_multiple = ();
 	foreach my $index (@{$indices}){
 		my $label = $start_header->[$index];
 		unless (defined $label and length($label)>0){
@@ -329,10 +334,24 @@ sub append_binary_columns
 			$new_header[$index] = $label;
 		}
 		my @col_mapping = ();
-		my %factors = %{$self->factors(column => $index+1, #column number in data set
-									   return_occurences => 1,
-									   unique_in_individual => 0,									   
-									   ignore_missing => 1)};
+		my %factors; 
+		if ($baseline_only){
+			unless (defined $mdv_evid_indices){
+				croak("must set mdv evid index array when checking baseline factors");
+			}
+			my ($ref,$found_multiple) = $self->baseline_factors(column => $index+1, #column number in data set
+																mdv_evid_indices => $mdv_evid_indices,
+																ignore_missing => 1);
+			%factors = %{$ref};
+			if ($found_multiple){
+				push(@baseline_and_multiple,$label);
+			}
+		}else{
+			%factors = %{$self->factors(column => $index+1, #column number in data set
+										return_occurences => 1,
+										unique_in_individual => 0,									   
+										ignore_missing => 1)};
+		}
 		#check if more than two non-missing. If not then empty colmap If yes then set mapping
 		my $non_missing = 0;
 		foreach my $key (keys (%factors)){
@@ -372,7 +391,7 @@ sub append_binary_columns
 		$self->header(\@new_header);
 	}
 	
-	return (\@mapping,\@new_indices,\@new_categorical);
+	return (\@mapping,\@new_indices,\@new_categorical,\@baseline_and_multiple);
 }
 
 
@@ -1030,6 +1049,58 @@ sub factors
 	}
 
 	return \%factors;
+}
+sub baseline_factors
+{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+		 column => { isa => 'Int', optional => 0 },
+		 ignore_missing => { isa => 'Bool', default => 0, optional => 1 },
+		 mdv_evid_indices => { isa => 'ArrayRef', optional => 0 },
+	);
+	my $column = $parm{'column'};
+	my $ignore_missing = $parm{'ignore_missing'};
+	my $mdv_evid_indices = $parm{'mdv_evid_indices'};
+	my $found_multiple = 0;
+	my %factors;
+
+	croak("No individuals stored from " . $self->full_name) unless (defined $self->individuals);
+	my $first_id = $self->individuals->[0];
+
+	croak("No individuals defined in data object based on ".
+		      $self->full_name) unless (defined $first_id);
+
+	my @data_row = split(/,/, $first_id->subject_data->[0]);
+
+	if (defined $column and $column > scalar(@data_row)) {
+		croak("Error: The column number to get factors for ($column) is greater than the number of" .
+			"data columns in the data file (" . scalar(@data_row) . '). Please check your $INPUT and your data file');
+	}
+
+	unless (defined $column && defined($data_row[$column - 1])) {
+	    croak("Error in data->baseline_factors: ".
+			  "invalid column number: \"$column\".\n".
+			  "Valid column numbers are 1 to " . scalar @data_row . "\n");
+	}
+
+	my $key = 0;
+	foreach my $individual (@{$self->individuals}) {
+		my $ifactors = $individual->factor_list( column => $column,
+												 mdv_evid_indices => $mdv_evid_indices);
+		my $count=0;
+		foreach my $ifa (@{$ifactors}){
+			unless ($ignore_missing and ($ifa == $self->missing_data_token)){
+				if ($count == 0){
+					$factors{$ifa} = 1; #baseline factor
+				}else{
+					$found_multiple =1;
+				}
+				$count++;
+			}
+		}
+	}
+
+	return (\%factors,$found_multiple);
 }
 
 sub fractions

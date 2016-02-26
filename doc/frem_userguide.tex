@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{FREM userguide}{2016-02-11}
+\guidetitle{FREM userguide}{2016-02-26}
 
 
 \begin{document}
@@ -236,8 +236,8 @@ FIX everything in model except parameter-covariate correlation THETAs.
 \item Only if option -cholesky is set: Estimate Model 5, include \$COV step.
 \item Only if option -cholesky is set: Create Model 6 
 by copying Model 5 and updating initial estimates from
-estimation of Model 5, and then un-FIX everything except parameters that
-were FIX in input model (Model 1) and correlations that are exactly 0.
+estimation of Model 5, and then un-FIX parameters that
+were not FIX in input model (Model 1) and correlations that are not exactly 0.
 Model 6 is the (unestimated) Cholesky parameterization FREM model.
 \item Only if option -cholesky is set:
 Estimate Model 6, include \$COV step.
@@ -288,9 +288,9 @@ where OMEGA(x,x) estimates and se are from covariance step of Model 1 or Model 2
 OMEGA was estimated.
 
 \[
-\hat{N}_{x,y} = \sqrt{\hat{N}_{x}\cdot \hat{N}_{y}}
+\hat{N}_{x,y} = minimum(\hat{N}_{x}, \hat{N}_{y})
 \] if available standard errors allow both $\hat{N}_{y}$ and $\hat{N}_{x}$ to be computed.
-If only $\hat{N}_{x}$ or $\hat{N}_{y}$ available, used that. If neither available then
+If only $\hat{N}_{x}$ or $\hat{N}_{y}$ available, use the available. If neither available then
 cannot use formula, use rse fallback instead.
 
 Run sir with -covmat\_input and Model 4 or, if estimation of Model 4 did not produce ofv, Model 7.
@@ -306,13 +306,16 @@ Create a new data set.
     FREMTYPE value %(s)
     > 0.
     FREMTYPE=0 is reserved for original observations.
-    \item Find each column listed with -categorical and count the number of categories Y. Missing values are not counted as
-    a category. 
     \item Create a filter model. This is either a dummy NONMEM model or, if MDV has to be added,
     the original model with MAXEVAL=0 METHOD=ZERO and without \$COV.
 	\item Run the filter model where FREMTYPE=0 to filter the original data on any IGNORE/ACCEPT and to get a new data file
     from \$TABLE where the column headers are the same as in \$INPUT but a FREMTYPE column is added with only zeros as values.
     Also add MDV if not EVID or MDV in data set. In the dummy model columns that are DROPped or SKIPped are replaced with an undropped column so that the filtered data set has the same number of columns as the original data set.
+    \item In filtered data set,
+    find each column listed with -categorical and count the number of categories Y for baseline values.
+    A warning is printed if there are individuals who have some covariate values that are different from the
+    baseline value. Missing values are not counted as a category. 
+
     \item  In new data file, append columns for Y-1 new bivariate covariate variables for each
           categorical covariate where number of categories Y>2. In subsequent analysis steps, replace old covariate with
           Y-1 new variables.
@@ -404,8 +407,10 @@ FIX all \$OMEGAs from Model 1.
 
 %After each of the 'N\_parameter\_blocks' \$OMEGA for non-skipped ETAs, insert  
 Insert
-a full BLOCK(N\_covariates) where initials is variance-covariance matrix of
-covariates computed during creation of dataset.
+a full BLOCK(N\_covariates) where initials is, if option -rescale is \emph{not} set,
+variance-covariance matrix of covariates computed during creation of dataset, or, if
+option -rescale \emph{is} set, the correlation matrix of covariates computed during
+creation of dataset.
 %Renumber existing parameter BSV ETA:s accordingly in \$PK/\$PRED.
 
 \subsection{SIGMA changes}
@@ -419,11 +424,10 @@ FIX all \$THETAs from Model 1.
 Loop over all covariates, j=1...N\_covariates, %with inner loop over k=1...N\_parameter\_blocks,
 add lines\\
 %\$THETA init\_j ; TVcov\_j\_k\\
-\$THETA init\_j ; TVcov\_j\\
-where init\_j is median of covariate j computed during creation of new data set, cov\_j is the name of covariate
+\$THETA init\_j FIX ; TVcov\_j\\
+where init\_j is mean of covariate j computed during creation of new data set, cov\_j is the name of covariate
 j. %and k is the order number of the parameter block.
-If median is exactly zero set
-init to a very small positive value. 
+%If mean is exactly zero set init to a very small positive value. 
 Store the mapping between the theta label and the theta number.%TVcovname – THETA(n\_theta+j). 
 %TODO: Possibly set boundaries to max and min for covariate, in that case need to find that during generation of dataset 2.
 \subsection{PK/PRED changes at beginning}
@@ -434,8 +438,11 @@ add lines
 
 %\noindent BSV\_$<$cov\_j$>$\_k = ETA(orig\_etas+(j-1)*N\_parameter\_blocks +k)\\
 %\noindent TV\_$<$cov\_j$>$\_k = THETA(orig\_thetas+(j-1)*N\_parameter\_blocks +k)
+\noindent TV\_$<$cov\_j$>$ = THETA(orig\_thetas+j)\\
+\noindent if option -rescale is \emph{not} set:\\
 \noindent BSV\_$<$cov\_j$>$ = ETA(orig\_etas+j)\\
-\noindent TV\_$<$cov\_j$>$ = THETA(orig\_thetas+j)
+\noindent or if option -rescale \emph{is} set:\\
+\noindent BSV\_$<$cov\_j$>$ = ETA(orig\_etas+j)*\emph{sd of baseline covariate}
 
 %\noindent Loop over parameters\_bov, initialize BOV PK (provided there are any time-varying cov)
 %\noindent BOV$<$parameter$>$=0
@@ -498,23 +505,6 @@ If there was no \$COV record in Model 1, add
 $COVARIANCE PRINT=R UNCONDITIONAL
 \end{verbatim}
 
-\subsection{Rescaling of ETAs}
-Only if option -rescale is set:
-For each non-skipped \$OMEGA and new \$OMEGA for covariates:
-\begin{enumerate}
-\item Find the ETA numbers for this \$OMEGA.
-\item Compute the initial values for the standard deviations (SD) as the square root of the diagonal
-element(s) of this \$OMEGA.
-\item Add a new THETA FIX for each SD. Set label ASD\_(label for diagonal omega)
-\item In \$PK or \$PRED, whichever is present:
-At the very beginning (unless have FREM-ANCHOR similar to scm- anchor) add the following code: \\
-\begin{verbatim}
-ASD_ETA_N = THETA(k)
-\end{verbatim}
-where ASD stands for approximate SD, N is the ETA number, and k is the THETA number.
-\item Divide \$OMEGA row and column initial values with for this ETA with the SD
-\item In all code records (PK, PRED, ERROR...) replace all instances of ETA(N) with (ETA(N)*ASD\_ETA\_N)
-\end{enumerate}
 
 \section{Models 3-6}
 
@@ -775,3 +765,21 @@ invGT=  inv(cholFullA'); %compute only leading k block
 [q,R]=qr(invGT(:,1:k));
 invR=inv(R(1:k,1:k));
 result2=invR*invR' 
+
+\subsection{Rescaling of ETAs}
+Only if option -rescale is set:
+For each non-skipped \$OMEGA and new \$OMEGA for covariates:
+\begin{enumerate}
+\item Find the ETA numbers for this \$OMEGA.
+\item Compute the initial values for the standard deviations (SD) as the square root of the diagonal
+element(s) of this \$OMEGA.
+\item Add a new THETA FIX for each SD. Set label ASD\_(label for diagonal omega)
+\item In \$PK or \$PRED, whichever is present:
+At the very beginning (unless have FREM-ANCHOR similar to scm- anchor) add the following code: \\
+\begin{verbatim}
+ASD_ETA_N = THETA(k)
+\end{verbatim}
+where ASD stands for approximate SD, N is the ETA number, and k is the THETA number.
+\item Divide \$OMEGA row and column initial values with for this ETA with the SD
+\item In all code records (PK, PRED, ERROR...) replace all instances of ETA(N) with (ETA(N)*ASD\_ETA\_N)
+\end{enumerate}

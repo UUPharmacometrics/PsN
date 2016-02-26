@@ -324,11 +324,35 @@ my $data = data->new(filename => $filename,
 					 ignoresign => '@', 
 					 parse_header => 1);
 
-my ($mapping,$new_indices,$new_categorical) = $data->append_binary_columns(indices => [1,2,3]); 
+my ($mapping,$new_indices,$new_categorical,$warn) = $data->append_binary_columns(indices => [1,2,3],
+																				 baseline_only => 1,
+																				 mdv_evid_indices => []); 
+
+is_deeply($mapping->[0],[],'mapping 0 only two nonmiss baseline');
+is_deeply($mapping->[1],['9.0','3.0'],'mapping 1 baseline skipping 2');
+is_deeply($mapping->[2],[],'mapping 2 baseline only two nonmiss');
+is_deeply($warn,['SMTH','TEST'],'baseline warn multiple');
+
+is_deeply($new_indices,[1,4,5,3],'new indices baseline');
+
+is($data->column_count,6,'column count after append baseline');
+is_deeply($data->header,['ID','A','SMTH','TEST','SMTH_9','SMTH_3'],'new header after append basline');
+is_deeply($new_categorical,['A','SMTH_9','SMTH_3','TEST'],'new categorical baseline');
+
+
+
+my $data = data->new(filename => $filename, 
+					 directory => $tempdir,
+					 ignoresign => '@', 
+					 parse_header => 1);
+
+my ($mapping,$new_indices,$new_categorical,$warn) = $data->append_binary_columns(indices => [1,2,3],
+																		   baseline_only => 0); 
 
 is_deeply($mapping->[0],[],'mapping 0 only two nonmiss');
 is_deeply($mapping->[1],['9.0','3.0','2.0'],'mapping 1');
 is_deeply($mapping->[2],[7,5.1],'mapping 2');
+is_deeply($warn,[],'regular warn multiple');
 
 is_deeply($new_indices,[1,4,5,6,7,8],'new indices');
 
@@ -341,10 +365,12 @@ $data = data->new(filename => $filename,
 					 ignoresign => '@', 
 					 parse_header => 1);
 
-my ($mapping,$new_indices,$new_categorical) = $data->append_binary_columns(indices => [1,2,3],
-															 start_header => ['ID','F','G','H']); 
+my ($mapping,$new_indices,$new_categorical,$warn) = $data->append_binary_columns(indices => [1,2,3],
+																		   baseline_only => 0,
+																		   start_header => ['ID','F','G','H']); 
 is_deeply($data->header,['ID','F','G','H','G_9','G_3','G_2','H_7','H_51'],'new header after append 2');
 is_deeply($new_categorical,['F','G_9','G_3','G_2','H_7','H_51'],'new categorical');
+is_deeply($warn,[],'regular warn multiple 2');
 
 remove_test_dir($tempdir);
 
