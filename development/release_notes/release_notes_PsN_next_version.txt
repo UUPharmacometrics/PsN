@@ -68,6 +68,10 @@ Changes and bug fixes from PsN 4.4.8 to n.n.n
   not be left in NM_run.
 - Skip parsing of phi-files for a regular modelfit run. 
 - Refactored parsing of ext-files.
+- If a NONMEM run is killed by a system, for example due to a job time limit, the file OUTPUT
+  with iteration results will not be appended to the lst-file by the nmfe script. If PsN
+  option -handle_crashes or -handle_msfo is set, PsN will parse OUTPUT if the lst-file appears
+  to not have had OUTPUT appended, and initiate a crash restart if it appears to be useful.
 
    ___lasso___
 
@@ -84,8 +88,10 @@ Changes and bug fixes from PsN 4.4.8 to n.n.n
    ___bootstrap___
 
 - Bug fix: Summary calculations in bootstrap_results.csv were wrong if original model was skipped
-- Bug fix: Summary calculations in bootstrap_results.csv were missing if original model was not estimated or had no .lst-file
-           when using -no-run_base_model
+- Bug fix: Summary calculations in bootstrap_results.csv were missing if original model was not
+  estimated or had no .lst-file when using -no-run_base_model
+- Bug fix: Summary calculations for standard errors were wrong if only a subset of non-skipped samples
+  had successful covariance steps.	
 
    ___vpc/npc___
 
