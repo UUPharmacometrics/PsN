@@ -81,7 +81,7 @@ my @m1_zipfiles = ();
 my $basedir = getcwd();
 
 foreach my $dir (@ARGV){
-	$dir = readpipe("realpath $dir");
+	$dir = readpipe("readlink -f $dir");
 	chomp $dir;
 
 	if (not (-e $dir)) {
