@@ -222,7 +222,9 @@ colITER <- gg_color_hue(length(levels(dOFV_all$ITERATION)))     # default ggplot
 colITER <- c("darkgrey",colITER[-1])                            # replace the first by black for reference dOFV distribution
 
 warn <- ""  # print warning if proposal < chi-square > 25% of the time
-if (sum(filter(dOFV_all,ITERATION==1)$dOFV>filter(dOFV_all,ITERATION=="REF")$dOFV)/length(filter(dOFV_all,ITERATION=="REF")$dOFV)>0.25) warn <- "The proposal is not entirely above the reference chi-square.\n It is advised to restart SIR with an inflated proposal (e.g. -inflation=1.5)"
+msg  <- "The proposal is not entirely above the reference chi-square.\n It is advised to restart SIR with an inflated proposal (e.g. -inflation=1.5)"
+test <- sum(filter(dOFV_all,ITERATION==1 & TYPE=="PROPOSAL")$dOFV<filter(dOFV_all,ITERATION=="REF")$dOFV)/length(filter(dOFV_all,ITERATION=="REF")$dOFV)>0.25
+warn <- ifelse(test==TRUE,msg,warn)
 
 qdOFV_all <- ggplot(dOFV_all,aes(x=QUANT,color=ITERATION)) + 
   geom_ribbon(data=qdOFV_sir_noise[qdOFV_sir_noise$ITERATION %in% c(LASTIT-1,LASTIT),],aes(group=ITERATION,ymin=PLOW,ymax=PHIGH,fill=ITERATION),show.legend=FALSE,alpha=0.3,color=NA) +
@@ -234,7 +236,7 @@ qdOFV_all <- ggplot(dOFV_all,aes(x=QUANT,color=ITERATION)) +
 #   geom_text(data=df_est, aes(x = perc,y=1.1*perc_value,label=df),show.legend=FALSE) +
   geom_text(data=df_est, aes(x = 0.7,y=order*qchisq(0.95,df=N.ESTIMATED.PARAMS)/(2*nrow(df_est)),label=paste(df," (",TYPE2,ITERATION,")",sep="")),show.legend=FALSE,hjust=0,size=5) +
   annotate("text",x = 0.7,y=(nrow(df_est)+1)*qchisq(0.95,df=N.ESTIMATED.PARAMS)/(2*nrow(df_est)),label="Estimated df",hjust=0,fontface="italic",size=5) +
-  annotate("text",x = 0,y=2*qchisq(0.95,df=N.ESTIMATED.PARAMS),label=warn,hjust=0,fontface="italic",size=4,color="red") +
+  annotate("text",x = 0,y=1.8*qchisq(0.95,df=N.ESTIMATED.PARAMS),label=warn,hjust=0,fontface="italic",size=4,color="red") +
   coord_cartesian(ylim=c(0,2*qchisq(0.95,df=N.ESTIMATED.PARAMS))) +
   theme(legend.position="bottom",legend.box="horizontal") + labs(title="All dOFV distributions") +
   guides(colour = guide_legend(order = 1,title.position="top",nrow=1), linetype = guide_legend(order = 2,title.position="top",nrow=1))
