@@ -35,6 +35,7 @@ my $filtered_data = data->new(filename => $tempdir.'frem_filtered_data.dta',
 my $resultref = data::frem_compute_covariate_properties(filtered_data => $filtered_data,
 														invariant_covariates => ['SEX','DGRP'],
 														occ_index => 1,
+														directory => $filtered_data->directory,
 														data2name => 'findme.dta', #ends up in tempdir
 														evid_index => 31,
 														mdv_index => undef,

@@ -406,6 +406,7 @@ sub frem_compute_covariate_properties
 							  is_log => { isa => 'ArrayRef', optional => 0},
 							  occ_index => { isa => 'Maybe[Int]', optional => 1 },
 							  data2name => { isa => 'Str', optional => 0 },
+							  directory => { isa => 'Str', optional => 0 },
 							  evid_index => { isa => 'Maybe[Int]', optional => 1 },
 							  mdv_index => { isa => 'Maybe[Int]', optional => 1 },
 							  type_index => { isa => 'Int', optional => 0 },
@@ -420,6 +421,7 @@ sub frem_compute_covariate_properties
 	my $is_log =  $parm{'is_log'};
 	my $occ_index = $parm{'occ_index'};
 	my $data2name = $parm{'data2name'};
+	my $directory = $parm{'directory'};
 	my $evid_index = $parm{'evid_index'};
 	my $mdv_index = $parm{'mdv_index'};
 	my $type_index = $parm{'type_index'};
@@ -468,6 +470,7 @@ sub frem_compute_covariate_properties
 		$results->{'occasionlist'}=\@temp; 
 	}
 
+	$filtered_data -> directory($directory);
 	$filtered_data -> filename($data2name); #change name so that when writing to disk get new file
 	my $invariant_matrix; #array of arrays
 	my $timevar_matrix; #array of arrays of arrays

@@ -1857,8 +1857,8 @@ sub do_frem_dataset
 	my $fremdataname = $parm{'fremdataname'};
 	
 	my $do_check = $self->check;
-	if (-e $self -> directory().'m1/'.$fremdataname){
-		unlink($self -> directory().'m1/'.$fremdataname);
+	if (-e $self -> directory().$fremdataname){
+		unlink($self -> directory().$fremdataname);
 		$do_check = 0; #assume get same result second time
 	}
 	
@@ -1868,6 +1868,7 @@ sub do_frem_dataset
 															N_parameter_blocks => $N_parameter_blocks,
 															is_log => $indices->{'is_log'},
 															occ_index => undef,
+															directory => $self->directory,
 															data2name => $fremdataname,
 															evid_index => $indices->{'EVID'},
 															mdv_index => $indices->{'MDV'},
@@ -1917,7 +1918,7 @@ sub do_frem_dataset
 		# have filtered data so can skip old accept/ignores. Need ignore=@ since have a header
 		#have only one $PROB by input check
 		$data_check_model->datafiles(problem_numbers => [1],
-									 new_names => [$self -> directory().'m1/'.$fremdataname]);
+									 new_names => [$self -> directory().$fremdataname]);
 		$data_check_model->problems->[0]->datas->[0]->ignoresign('@');
 		$data_check_model->remove_option( record_name => 'data',
 										  option_name => 'ACCEPT',
@@ -2028,7 +2029,7 @@ sub prepare_model2
 		$frem_model->problems->[0]->datas->[0]->options([]);
 		$frem_model->problems->[0]->datas->[0]->ignoresign('@');
 		$frem_model->datafiles(problem_numbers => [1],
-							   new_names => [$self -> directory().'m1/'.$fremdataname]);
+							   new_names => [$self -> directory().$fremdataname]);
 
 
 #		foreach my $coderec ('error','des','pk','pred'){ #never any ETAs in $MIX
@@ -2209,9 +2210,9 @@ sub prepare_model4
 	my $name_model = 'model_'.$modnum.'.mod';
 	my $frem_model;
 	
-	unless (-e $self -> directory().'m1/'.$name_model){
+	unless (-e $self -> directory().'final_models/'.$name_model){
 		# input model  inits have already been updated
-		$frem_model = $model ->  copy( filename    => $self -> directory().'m1/'.$name_model,
+		$frem_model = $model ->  copy( filename    => $self -> directory().'final_models/'.$name_model,
 									   output_same_directory => 1,
 									   write_copy => 0,
 									   copy_datafile   => 0,
@@ -2270,7 +2271,7 @@ sub prepare_model5
 	unless (-e $self -> directory().'m1/'.$name_model){
 		#read model 4 from disk, then copy it
 		my $model = model->new( %{common_options::restore_options(@common_options::model_options)},
-								filename                    => 'm1/model_4.mod',
+								filename                    => 'final_models/model_4.mod',
 								ignore_missing_output_files => 1 );
 
 		$frem_model = $model ->  copy( filename    => $self -> directory().'m1/'.$name_model,
@@ -2376,8 +2377,8 @@ sub prepare_model6
 	my $name_model = 'model_'.$modnum.'.mod';
 	my $frem_model;
 	
-	unless (-e $self -> directory().'m1/'.$name_model){
-		$frem_model = $model ->  copy( filename    => $self -> directory().'m1/'.$name_model,
+	unless (-e $self -> directory().'final_models/'.$name_model){
+		$frem_model = $model ->  copy( filename    => $self -> directory().'final_models/'.$name_model,
 									   output_same_directory => 1,
 									   write_copy => 0,
 									   copy_datafile   => 0,
@@ -2437,8 +2438,8 @@ sub prepare_model7
 	my $name_model = 'model_'.$modnum.'.mod';
 	my $frem_model;
 	
-	unless (-e $self -> directory().'m1/'.$name_model){
-		$frem_model = $model ->  copy( filename    => $self -> directory().'m1/'.$name_model,
+	unless (-e $self -> directory().'final_models/'.$name_model){
+		$frem_model = $model ->  copy( filename    => $self -> directory().'final_models/'.$name_model,
 									   output_same_directory => 1,
 									   write_copy => 0,
 									   copy_datafile   => 0,
@@ -2463,12 +2464,14 @@ sub run_unless_run
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 numbers => { isa => 'ArrayRef', optional => 0 },
-		 final => { isa => 'Bool', default => 0 }
+							  numbers => { isa => 'ArrayRef', optional => 0 },
+							  final => { isa => 'Bool', default => 0 },
+							  subdirectory => {isa => 'Str', default => 'm1'}
 	);
 	my $numbers = $parm{'numbers'};
 	my $final = $parm{'final'};
-
+	my $subdirectory = $parm{'subdirectory'};
+	
 	croak("no numbers to run") unless (scalar(@{$numbers})>0 and defined $numbers->[0]);
 
 	my @models = ();	
@@ -2478,7 +2481,7 @@ sub run_unless_run
 		#reread from disk so that omegas are properly stored
 		my $name_model = 'model_'.$numbers->[$i].'.mod';
 		push(@models,model->new( %{common_options::restore_options(@common_options::model_options)},
-								 filename                    => 'm1/'.$name_model,
+								 filename                    => $subdirectory.'/'.$name_model,
 								 ignore_missing_output_files => 1 ));
 		unless ($models[$i]->is_run){
 			$do_run = 1;
@@ -2508,7 +2511,7 @@ sub run_unless_run
 	}else{
 		if (defined $models[0]->outputs and (defined $models[0]->outputs->[0])){
 			my $from_coordval = $models[0]->outputs->[0]-> thetacoordval( subproblems => [1] );
-			if (defined $from_coordval->[0]->[0]){
+			if (defined $from_coordval->[0]->[0] and scalar(keys %{$from_coordval->[0]->[0]})>0){
 				$models[0]->update_inits(from_output=> $models[0]->outputs->[0]) ;
 			}else{
 				$message = "No parameter estimates from Model ".$numbers->[0].", cannot proceed with frem";
@@ -2609,6 +2612,9 @@ sub modelfit_setup
 											  parameter_etanumbers => $parameter_etanumbers,
 											  start_omega_record => $self->start_omega_record);
 	
+	my $finaldir= $self->directory.'final_models';
+	mkdir($finaldir) unless (-d $finaldir);
+
 	$self->prepare_model4(model => $frem_model3,
 						  start_omega_record => $self->start_omega_record,
 						  parcov_blocks => $mod4_parcov_block,
@@ -2640,6 +2646,7 @@ sub modelfit_setup
 	}
 	
 	my ($final_models,$mes) = $self->run_unless_run(numbers => \@final_numbers,
+													subdirectory => 'final_models',
 													final => 1) if (scalar(@final_numbers)>0);
 
 	if ($self->estimate_regular_final_model){
@@ -2652,7 +2659,8 @@ sub modelfit_setup
 				ui->print(category => 'frem',
 						  message => 'Estimation of Model 4 failed to give ofv value. Creating Model 7.');
 				$self->prepare_model7(model => $final_models->[0]);
-				($frem_model7,$message) = $self->run_unless_run(numbers => [7]);
+				($frem_model7,$message) = $self->run_unless_run(numbers => [7],
+																subdirectory => 'final_models');
 				if (defined $message){
 					ui->print(category => 'frem',
 							  message => $message);
@@ -2700,7 +2708,7 @@ sub modelfit_setup
 										   directory => $self->directory.'sir_dir1',
 					);
 
-				$sir-> print_options (cmd_line => 'sir m1/'.$sir_model->filename.' -covmat_input='.$proposal_filename,
+				$sir-> print_options (cmd_line => 'sir final_models/'.$sir_model->filename.' -covmat_input='.$proposal_filename,
 									  toolname => 'sir',
 									  local_options => ["samples:s","resamples:s","covmat_input:s","problems_per_file:i"],
 									  common_options => \@common_options::tool_options) ;
@@ -2743,6 +2751,7 @@ sub modelfit_setup
 							 start_omega_record => $self->start_omega_record	);
 
 	}
+
 }
 
 sub _modelfit_raw_results_callback
@@ -2792,9 +2801,9 @@ sub modelfit_analyze
 sub prepare_results
 {
 	my $self = shift;
-	my %parm = validated_hash(\@_,
-		arg1  => { isa => 'Int', optional => 1 }
-	);
+
+	
+	
 }
 
 sub create_data2_model
